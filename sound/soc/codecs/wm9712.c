@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * wm9712.c  --  ALSA Soc WM9712 codec support
  *
@@ -7,116 +6,116 @@
  * Author: Liam Girdwood <lrg@slimlogic.co.uk>
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/mfd/wm97xx.h>
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/device.h>
-#समावेश <linux/regmap.h>
-#समावेश <sound/core.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/ac97_codec.h>
-#समावेश <sound/ac97/codec.h>
-#समावेश <sound/ac97/compat.h>
-#समावेश <sound/initval.h>
-#समावेश <sound/soc.h>
-#समावेश <sound/tlv.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/mfd/wm97xx.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/device.h>
+#include <linux/regmap.h>
+#include <sound/core.h>
+#include <sound/pcm.h>
+#include <sound/ac97_codec.h>
+#include <sound/ac97/codec.h>
+#include <sound/ac97/compat.h>
+#include <sound/initval.h>
+#include <sound/soc.h>
+#include <sound/tlv.h>
 
-#घोषणा WM9712_VENDOR_ID 0x574d4c12
-#घोषणा WM9712_VENDOR_ID_MASK 0xffffffff
+#define WM9712_VENDOR_ID 0x574d4c12
+#define WM9712_VENDOR_ID_MASK 0xffffffff
 
-काष्ठा wm9712_priv अणु
-	काष्ठा snd_ac97 *ac97;
-	अचिन्हित पूर्णांक hp_mixer[2];
-	काष्ठा mutex lock;
-	काष्ठा wm97xx_platक्रमm_data *mfd_pdata;
-पूर्ण;
+struct wm9712_priv {
+	struct snd_ac97 *ac97;
+	unsigned int hp_mixer[2];
+	struct mutex lock;
+	struct wm97xx_platform_data *mfd_pdata;
+};
 
-अटल स्थिर काष्ठा reg_शेष wm9712_reg_शेषs[] = अणु
-	अणु 0x02, 0x8000 पूर्ण,
-	अणु 0x04, 0x8000 पूर्ण,
-	अणु 0x06, 0x8000 पूर्ण,
-	अणु 0x08, 0x0f0f पूर्ण,
-	अणु 0x0a, 0xaaa0 पूर्ण,
-	अणु 0x0c, 0xc008 पूर्ण,
-	अणु 0x0e, 0x6808 पूर्ण,
-	अणु 0x10, 0xe808 पूर्ण,
-	अणु 0x12, 0xaaa0 पूर्ण,
-	अणु 0x14, 0xad00 पूर्ण,
-	अणु 0x16, 0x8000 पूर्ण,
-	अणु 0x18, 0xe808 पूर्ण,
-	अणु 0x1a, 0x3000 पूर्ण,
-	अणु 0x1c, 0x8000 पूर्ण,
-	अणु 0x20, 0x0000 पूर्ण,
-	अणु 0x22, 0x0000 पूर्ण,
-	अणु 0x26, 0x000f पूर्ण,
-	अणु 0x28, 0x0605 पूर्ण,
-	अणु 0x2a, 0x0410 पूर्ण,
-	अणु 0x2c, 0xbb80 पूर्ण,
-	अणु 0x2e, 0xbb80 पूर्ण,
-	अणु 0x32, 0xbb80 पूर्ण,
-	अणु 0x34, 0x2000 पूर्ण,
-	अणु 0x4c, 0xf83e पूर्ण,
-	अणु 0x4e, 0xffff पूर्ण,
-	अणु 0x50, 0x0000 पूर्ण,
-	अणु 0x52, 0x0000 पूर्ण,
-	अणु 0x56, 0xf83e पूर्ण,
-	अणु 0x58, 0x0008 पूर्ण,
-	अणु 0x5c, 0x0000 पूर्ण,
-	अणु 0x60, 0xb032 पूर्ण,
-	अणु 0x62, 0x3e00 पूर्ण,
-	अणु 0x64, 0x0000 पूर्ण,
-	अणु 0x76, 0x0006 पूर्ण,
-	अणु 0x78, 0x0001 पूर्ण,
-	अणु 0x7a, 0x0000 पूर्ण,
-पूर्ण;
+static const struct reg_default wm9712_reg_defaults[] = {
+	{ 0x02, 0x8000 },
+	{ 0x04, 0x8000 },
+	{ 0x06, 0x8000 },
+	{ 0x08, 0x0f0f },
+	{ 0x0a, 0xaaa0 },
+	{ 0x0c, 0xc008 },
+	{ 0x0e, 0x6808 },
+	{ 0x10, 0xe808 },
+	{ 0x12, 0xaaa0 },
+	{ 0x14, 0xad00 },
+	{ 0x16, 0x8000 },
+	{ 0x18, 0xe808 },
+	{ 0x1a, 0x3000 },
+	{ 0x1c, 0x8000 },
+	{ 0x20, 0x0000 },
+	{ 0x22, 0x0000 },
+	{ 0x26, 0x000f },
+	{ 0x28, 0x0605 },
+	{ 0x2a, 0x0410 },
+	{ 0x2c, 0xbb80 },
+	{ 0x2e, 0xbb80 },
+	{ 0x32, 0xbb80 },
+	{ 0x34, 0x2000 },
+	{ 0x4c, 0xf83e },
+	{ 0x4e, 0xffff },
+	{ 0x50, 0x0000 },
+	{ 0x52, 0x0000 },
+	{ 0x56, 0xf83e },
+	{ 0x58, 0x0008 },
+	{ 0x5c, 0x0000 },
+	{ 0x60, 0xb032 },
+	{ 0x62, 0x3e00 },
+	{ 0x64, 0x0000 },
+	{ 0x76, 0x0006 },
+	{ 0x78, 0x0001 },
+	{ 0x7a, 0x0000 },
+};
 
-अटल bool wm9712_अस्थिर_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	हाल AC97_REC_GAIN:
-		वापस true;
-	शेष:
-		वापस regmap_ac97_शेष_अस्थिर(dev, reg);
-	पूर्ण
-पूर्ण
+static bool wm9712_volatile_reg(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case AC97_REC_GAIN:
+		return true;
+	default:
+		return regmap_ac97_default_volatile(dev, reg);
+	}
+}
 
-अटल स्थिर काष्ठा regmap_config wm9712_regmap_config = अणु
+static const struct regmap_config wm9712_regmap_config = {
 	.reg_bits = 16,
 	.reg_stride = 2,
 	.val_bits = 16,
-	.max_रेजिस्टर = 0x7e,
+	.max_register = 0x7e,
 	.cache_type = REGCACHE_RBTREE,
 
-	.अस्थिर_reg = wm9712_अस्थिर_reg,
+	.volatile_reg = wm9712_volatile_reg,
 
-	.reg_शेषs = wm9712_reg_शेषs,
-	.num_reg_शेषs = ARRAY_SIZE(wm9712_reg_शेषs),
-पूर्ण;
+	.reg_defaults = wm9712_reg_defaults,
+	.num_reg_defaults = ARRAY_SIZE(wm9712_reg_defaults),
+};
 
-#घोषणा HPL_MIXER	0x0
-#घोषणा HPR_MIXER	0x1
+#define HPL_MIXER	0x0
+#define HPR_MIXER	0x1
 
-अटल स्थिर अक्षर *wm9712_alc_select[] = अणु"None", "Left", "Right", "Stereo"पूर्ण;
-अटल स्थिर अक्षर *wm9712_alc_mux[] = अणु"Stereo", "Left", "Right", "None"पूर्ण;
-अटल स्थिर अक्षर *wm9712_out3_src[] = अणु"Left", "VREF", "Left + Right",
-	"Mono"पूर्ण;
-अटल स्थिर अक्षर *wm9712_spk_src[] = अणु"Speaker Mix", "Headphone Mix"पूर्ण;
-अटल स्थिर अक्षर *wm9712_rec_adc[] = अणु"Stereo", "Left", "Right", "Mute"पूर्ण;
-अटल स्थिर अक्षर *wm9712_base[] = अणु"Linear Control", "Adaptive Boost"पूर्ण;
-अटल स्थिर अक्षर *wm9712_rec_gain[] = अणु"+1.5dB Steps", "+0.75dB Steps"पूर्ण;
-अटल स्थिर अक्षर *wm9712_mic[] = अणु"Mic 1", "Differential", "Mic 2",
-	"Stereo"पूर्ण;
-अटल स्थिर अक्षर *wm9712_rec_sel[] = अणु"Mic", "NC", "NC", "Speaker Mixer",
-	"Line", "Headphone Mixer", "Phone Mixer", "Phone"पूर्ण;
-अटल स्थिर अक्षर *wm9712_ng_type[] = अणु"Constant Gain", "Mute"पूर्ण;
-अटल स्थिर अक्षर *wm9712_dअगरf_sel[] = अणु"Mic", "Line"पूर्ण;
+static const char *wm9712_alc_select[] = {"None", "Left", "Right", "Stereo"};
+static const char *wm9712_alc_mux[] = {"Stereo", "Left", "Right", "None"};
+static const char *wm9712_out3_src[] = {"Left", "VREF", "Left + Right",
+	"Mono"};
+static const char *wm9712_spk_src[] = {"Speaker Mix", "Headphone Mix"};
+static const char *wm9712_rec_adc[] = {"Stereo", "Left", "Right", "Mute"};
+static const char *wm9712_base[] = {"Linear Control", "Adaptive Boost"};
+static const char *wm9712_rec_gain[] = {"+1.5dB Steps", "+0.75dB Steps"};
+static const char *wm9712_mic[] = {"Mic 1", "Differential", "Mic 2",
+	"Stereo"};
+static const char *wm9712_rec_sel[] = {"Mic", "NC", "NC", "Speaker Mixer",
+	"Line", "Headphone Mixer", "Phone Mixer", "Phone"};
+static const char *wm9712_ng_type[] = {"Constant Gain", "Mute"};
+static const char *wm9712_diff_sel[] = {"Mic", "Line"};
 
-अटल स्थिर DECLARE_TLV_DB_SCALE(मुख्य_tlv, -3450, 150, 0);
-अटल स्थिर DECLARE_TLV_DB_SCALE(boost_tlv, 0, 2000, 0);
+static const DECLARE_TLV_DB_SCALE(main_tlv, -3450, 150, 0);
+static const DECLARE_TLV_DB_SCALE(boost_tlv, 0, 2000, 0);
 
-अटल स्थिर काष्ठा soc_क्रमागत wm9712_क्रमागत[] = अणु
+static const struct soc_enum wm9712_enum[] = {
 SOC_ENUM_SINGLE(AC97_PCI_SVID, 14, 4, wm9712_alc_select),
 SOC_ENUM_SINGLE(AC97_VIDEO, 12, 4, wm9712_alc_mux),
 SOC_ENUM_SINGLE(AC97_AUX, 9, 4, wm9712_out3_src),
@@ -128,10 +127,10 @@ SOC_ENUM_SINGLE(AC97_MIC, 5, 4, wm9712_mic),
 SOC_ENUM_SINGLE(AC97_REC_SEL, 8, 8, wm9712_rec_sel),
 SOC_ENUM_SINGLE(AC97_REC_SEL, 0, 8, wm9712_rec_sel),
 SOC_ENUM_SINGLE(AC97_PCI_SVID, 5, 2, wm9712_ng_type),
-SOC_ENUM_SINGLE(0x5c, 8, 2, wm9712_dअगरf_sel),
-पूर्ण;
+SOC_ENUM_SINGLE(0x5c, 8, 2, wm9712_diff_sel),
+};
 
-अटल स्थिर काष्ठा snd_kcontrol_new wm9712_snd_ac97_controls[] = अणु
+static const struct snd_kcontrol_new wm9712_snd_ac97_controls[] = {
 SOC_DOUBLE("Speaker Playback Volume", AC97_MASTER, 8, 0, 31, 1),
 SOC_SINGLE("Speaker Playback Switch", AC97_MASTER, 15, 1, 1),
 SOC_DOUBLE("Headphone Playback Volume", AC97_HEADPHONE, 8, 0, 31, 1),
@@ -149,12 +148,12 @@ SOC_SINGLE("ALC Target Volume", AC97_CODEC_CLASS_REV, 12, 15, 0),
 SOC_SINGLE("ALC Hold Time", AC97_CODEC_CLASS_REV, 8, 15, 0),
 SOC_SINGLE("ALC Decay Time", AC97_CODEC_CLASS_REV, 4, 15, 0),
 SOC_SINGLE("ALC Attack Time", AC97_CODEC_CLASS_REV, 0, 15, 0),
-SOC_ENUM("ALC Function", wm9712_क्रमागत[0]),
+SOC_ENUM("ALC Function", wm9712_enum[0]),
 SOC_SINGLE("ALC Max Volume", AC97_PCI_SVID, 11, 7, 0),
 SOC_SINGLE("ALC ZC Timeout", AC97_PCI_SVID, 9, 3, 1),
 SOC_SINGLE("ALC ZC Switch", AC97_PCI_SVID, 8, 1, 0),
 SOC_SINGLE("ALC NG Switch", AC97_PCI_SVID, 7, 1, 0),
-SOC_ENUM("ALC NG Type", wm9712_क्रमागत[10]),
+SOC_ENUM("ALC NG Type", wm9712_enum[10]),
 SOC_SINGLE("ALC NG Threshold", AC97_PCI_SVID, 0, 31, 1),
 
 SOC_SINGLE("Mic Headphone  Volume", AC97_VIDEO, 12, 7, 1),
@@ -183,7 +182,7 @@ SOC_SINGLE("3D Upper Cut-off Switch", AC97_3D_CONTROL, 5, 1, 1),
 SOC_SINGLE("3D Lower Cut-off Switch", AC97_3D_CONTROL, 4, 1, 1),
 SOC_SINGLE("3D Playback Volume", AC97_3D_CONTROL, 0, 15, 0),
 
-SOC_ENUM("Bass Control", wm9712_क्रमागत[5]),
+SOC_ENUM("Bass Control", wm9712_enum[5]),
 SOC_SINGLE("Bass Cut-off Switch", AC97_MASTER_TONE, 12, 1, 1),
 SOC_SINGLE("Tone Cut-off Switch", AC97_MASTER_TONE, 4, 1, 1),
 SOC_SINGLE("Playback Attenuate (-6dB) Switch", AC97_MASTER_TONE, 6, 1, 0),
@@ -191,171 +190,171 @@ SOC_SINGLE("Bass Volume", AC97_MASTER_TONE, 8, 15, 1),
 SOC_SINGLE("Treble Volume", AC97_MASTER_TONE, 0, 15, 1),
 
 SOC_SINGLE("Capture Switch", AC97_REC_GAIN, 15, 1, 1),
-SOC_ENUM("Capture Volume Steps", wm9712_क्रमागत[6]),
+SOC_ENUM("Capture Volume Steps", wm9712_enum[6]),
 SOC_DOUBLE("Capture Volume", AC97_REC_GAIN, 8, 0, 63, 0),
 SOC_SINGLE("Capture ZC Switch", AC97_REC_GAIN, 7, 1, 0),
 
-SOC_SINGLE_TLV("Mic 1 Volume", AC97_MIC, 8, 31, 1, मुख्य_tlv),
-SOC_SINGLE_TLV("Mic 2 Volume", AC97_MIC, 0, 31, 1, मुख्य_tlv),
+SOC_SINGLE_TLV("Mic 1 Volume", AC97_MIC, 8, 31, 1, main_tlv),
+SOC_SINGLE_TLV("Mic 2 Volume", AC97_MIC, 0, 31, 1, main_tlv),
 SOC_SINGLE_TLV("Mic Boost Volume", AC97_MIC, 7, 1, 0, boost_tlv),
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक wm9712_mixer_mute_regs[] = अणु
+static const unsigned int wm9712_mixer_mute_regs[] = {
 	AC97_VIDEO,
 	AC97_PCM,
 	AC97_LINE,
 	AC97_PHONE,
 	AC97_CD,
 	AC97_PC_BEEP,
-पूर्ण;
+};
 
 /* We have to create a fake left and right HP mixers because
  * the codec only has a single control that is shared by both channels.
  * This makes it impossible to determine the audio path.
  */
-अटल पूर्णांक wm9712_hp_mixer_put(काष्ठा snd_kcontrol *kcontrol,
-	काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_soc_dapm_context *dapm = snd_soc_dapm_kcontrol_dapm(kcontrol);
-	काष्ठा snd_soc_component *component = snd_soc_dapm_to_component(dapm);
-	काष्ठा wm9712_priv *wm9712 = snd_soc_component_get_drvdata(component);
-	अचिन्हित पूर्णांक val = ucontrol->value.पूर्णांकeger.value[0];
-	काष्ठा soc_mixer_control *mc =
-		(काष्ठा soc_mixer_control *)kcontrol->निजी_value;
-	अचिन्हित पूर्णांक mixer, mask, shअगरt, old;
-	काष्ठा snd_soc_dapm_update update = अणुपूर्ण;
+static int wm9712_hp_mixer_put(struct snd_kcontrol *kcontrol,
+	struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_dapm_context *dapm = snd_soc_dapm_kcontrol_dapm(kcontrol);
+	struct snd_soc_component *component = snd_soc_dapm_to_component(dapm);
+	struct wm9712_priv *wm9712 = snd_soc_component_get_drvdata(component);
+	unsigned int val = ucontrol->value.integer.value[0];
+	struct soc_mixer_control *mc =
+		(struct soc_mixer_control *)kcontrol->private_value;
+	unsigned int mixer, mask, shift, old;
+	struct snd_soc_dapm_update update = {};
 	bool change;
 
-	mixer = mc->shअगरt >> 8;
-	shअगरt = mc->shअगरt & 0xff;
-	mask = 1 << shअगरt;
+	mixer = mc->shift >> 8;
+	shift = mc->shift & 0xff;
+	mask = 1 << shift;
 
 	mutex_lock(&wm9712->lock);
 	old = wm9712->hp_mixer[mixer];
-	अगर (ucontrol->value.पूर्णांकeger.value[0])
+	if (ucontrol->value.integer.value[0])
 		wm9712->hp_mixer[mixer] |= mask;
-	अन्यथा
+	else
 		wm9712->hp_mixer[mixer] &= ~mask;
 
 	change = old != wm9712->hp_mixer[mixer];
-	अगर (change) अणु
+	if (change) {
 		update.kcontrol = kcontrol;
-		update.reg = wm9712_mixer_mute_regs[shअगरt];
+		update.reg = wm9712_mixer_mute_regs[shift];
 		update.mask = 0x8000;
-		अगर ((wm9712->hp_mixer[0] & mask) ||
+		if ((wm9712->hp_mixer[0] & mask) ||
 		    (wm9712->hp_mixer[1] & mask))
 			update.val = 0x0;
-		अन्यथा
+		else
 			update.val = 0x8000;
 
-		snd_soc_dapm_mixer_update_घातer(dapm, kcontrol, val,
+		snd_soc_dapm_mixer_update_power(dapm, kcontrol, val,
 			&update);
-	पूर्ण
+	}
 
 	mutex_unlock(&wm9712->lock);
 
-	वापस change;
-पूर्ण
+	return change;
+}
 
-अटल पूर्णांक wm9712_hp_mixer_get(काष्ठा snd_kcontrol *kcontrol,
-	काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_soc_dapm_context *dapm = snd_soc_dapm_kcontrol_dapm(kcontrol);
-	काष्ठा snd_soc_component *component = snd_soc_dapm_to_component(dapm);
-	काष्ठा wm9712_priv *wm9712 = snd_soc_component_get_drvdata(component);
-	काष्ठा soc_mixer_control *mc =
-		(काष्ठा soc_mixer_control *)kcontrol->निजी_value;
-	अचिन्हित पूर्णांक shअगरt, mixer;
+static int wm9712_hp_mixer_get(struct snd_kcontrol *kcontrol,
+	struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_dapm_context *dapm = snd_soc_dapm_kcontrol_dapm(kcontrol);
+	struct snd_soc_component *component = snd_soc_dapm_to_component(dapm);
+	struct wm9712_priv *wm9712 = snd_soc_component_get_drvdata(component);
+	struct soc_mixer_control *mc =
+		(struct soc_mixer_control *)kcontrol->private_value;
+	unsigned int shift, mixer;
 
-	mixer = mc->shअगरt >> 8;
-	shअगरt = mc->shअगरt & 0xff;
+	mixer = mc->shift >> 8;
+	shift = mc->shift & 0xff;
 
-	ucontrol->value.पूर्णांकeger.value[0] =
-		(wm9712->hp_mixer[mixer] >> shअगरt) & 1;
+	ucontrol->value.integer.value[0] =
+		(wm9712->hp_mixer[mixer] >> shift) & 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा WM9712_HP_MIXER_CTRL(xname, xmixer, xshअगरt) अणु \
-	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER, .name = xname, \
+#define WM9712_HP_MIXER_CTRL(xname, xmixer, xshift) { \
+	.iface = SNDRV_CTL_ELEM_IFACE_MIXER, .name = xname, \
 	.info = snd_soc_info_volsw, \
 	.get = wm9712_hp_mixer_get, .put = wm9712_hp_mixer_put, \
-	.निजी_value = SOC_SINGLE_VALUE(SND_SOC_NOPM, \
-		(xmixer << 8) | xshअगरt, 1, 0, 0) \
-पूर्ण
+	.private_value = SOC_SINGLE_VALUE(SND_SOC_NOPM, \
+		(xmixer << 8) | xshift, 1, 0, 0) \
+}
 
 /* Left Headphone Mixers */
-अटल स्थिर काष्ठा snd_kcontrol_new wm9712_hpl_mixer_controls[] = अणु
+static const struct snd_kcontrol_new wm9712_hpl_mixer_controls[] = {
 	WM9712_HP_MIXER_CTRL("PCBeep Bypass Switch", HPL_MIXER, 5),
 	WM9712_HP_MIXER_CTRL("Aux Playback Switch", HPL_MIXER, 4),
 	WM9712_HP_MIXER_CTRL("Phone Bypass Switch", HPL_MIXER, 3),
 	WM9712_HP_MIXER_CTRL("Line Bypass Switch", HPL_MIXER, 2),
 	WM9712_HP_MIXER_CTRL("PCM Playback Switch", HPL_MIXER, 1),
 	WM9712_HP_MIXER_CTRL("Mic Sidetone Switch", HPL_MIXER, 0),
-पूर्ण;
+};
 
 /* Right Headphone Mixers */
-अटल स्थिर काष्ठा snd_kcontrol_new wm9712_hpr_mixer_controls[] = अणु
+static const struct snd_kcontrol_new wm9712_hpr_mixer_controls[] = {
 	WM9712_HP_MIXER_CTRL("PCBeep Bypass Switch", HPR_MIXER, 5),
 	WM9712_HP_MIXER_CTRL("Aux Playback Switch", HPR_MIXER, 4),
 	WM9712_HP_MIXER_CTRL("Phone Bypass Switch", HPR_MIXER, 3),
 	WM9712_HP_MIXER_CTRL("Line Bypass Switch", HPR_MIXER, 2),
 	WM9712_HP_MIXER_CTRL("PCM Playback Switch", HPR_MIXER, 1),
 	WM9712_HP_MIXER_CTRL("Mic Sidetone Switch", HPR_MIXER, 0),
-पूर्ण;
+};
 
 /* Speaker Mixer */
-अटल स्थिर काष्ठा snd_kcontrol_new wm9712_speaker_mixer_controls[] = अणु
+static const struct snd_kcontrol_new wm9712_speaker_mixer_controls[] = {
 	SOC_DAPM_SINGLE("PCBeep Bypass Switch", AC97_PC_BEEP, 11, 1, 1),
 	SOC_DAPM_SINGLE("Aux Playback Switch", AC97_CD, 11, 1, 1),
 	SOC_DAPM_SINGLE("Phone Bypass Switch", AC97_PHONE, 14, 1, 1),
 	SOC_DAPM_SINGLE("Line Bypass Switch", AC97_LINE, 14, 1, 1),
 	SOC_DAPM_SINGLE("PCM Playback Switch", AC97_PCM, 14, 1, 1),
-पूर्ण;
+};
 
 /* Phone Mixer */
-अटल स्थिर काष्ठा snd_kcontrol_new wm9712_phone_mixer_controls[] = अणु
+static const struct snd_kcontrol_new wm9712_phone_mixer_controls[] = {
 	SOC_DAPM_SINGLE("PCBeep Bypass Switch", AC97_PC_BEEP, 7, 1, 1),
 	SOC_DAPM_SINGLE("Aux Playback Switch", AC97_CD, 7, 1, 1),
 	SOC_DAPM_SINGLE("Line Bypass Switch", AC97_LINE, 13, 1, 1),
 	SOC_DAPM_SINGLE("PCM Playback Switch", AC97_PCM, 13, 1, 1),
 	SOC_DAPM_SINGLE("Mic 1 Sidetone Switch", AC97_MIC, 14, 1, 1),
 	SOC_DAPM_SINGLE("Mic 2 Sidetone Switch", AC97_MIC, 13, 1, 1),
-पूर्ण;
+};
 
 /* ALC headphone mux */
-अटल स्थिर काष्ठा snd_kcontrol_new wm9712_alc_mux_controls =
-SOC_DAPM_ENUM("Route", wm9712_क्रमागत[1]);
+static const struct snd_kcontrol_new wm9712_alc_mux_controls =
+SOC_DAPM_ENUM("Route", wm9712_enum[1]);
 
 /* out 3 mux */
-अटल स्थिर काष्ठा snd_kcontrol_new wm9712_out3_mux_controls =
-SOC_DAPM_ENUM("Route", wm9712_क्रमागत[2]);
+static const struct snd_kcontrol_new wm9712_out3_mux_controls =
+SOC_DAPM_ENUM("Route", wm9712_enum[2]);
 
 /* spk mux */
-अटल स्थिर काष्ठा snd_kcontrol_new wm9712_spk_mux_controls =
-SOC_DAPM_ENUM("Route", wm9712_क्रमागत[3]);
+static const struct snd_kcontrol_new wm9712_spk_mux_controls =
+SOC_DAPM_ENUM("Route", wm9712_enum[3]);
 
 /* Capture to Phone mux */
-अटल स्थिर काष्ठा snd_kcontrol_new wm9712_capture_phone_mux_controls =
-SOC_DAPM_ENUM("Route", wm9712_क्रमागत[4]);
+static const struct snd_kcontrol_new wm9712_capture_phone_mux_controls =
+SOC_DAPM_ENUM("Route", wm9712_enum[4]);
 
 /* Capture left select */
-अटल स्थिर काष्ठा snd_kcontrol_new wm9712_capture_selectl_controls =
-SOC_DAPM_ENUM("Route", wm9712_क्रमागत[8]);
+static const struct snd_kcontrol_new wm9712_capture_selectl_controls =
+SOC_DAPM_ENUM("Route", wm9712_enum[8]);
 
 /* Capture right select */
-अटल स्थिर काष्ठा snd_kcontrol_new wm9712_capture_selectr_controls =
-SOC_DAPM_ENUM("Route", wm9712_क्रमागत[9]);
+static const struct snd_kcontrol_new wm9712_capture_selectr_controls =
+SOC_DAPM_ENUM("Route", wm9712_enum[9]);
 
 /* Mic select */
-अटल स्थिर काष्ठा snd_kcontrol_new wm9712_mic_src_controls =
-SOC_DAPM_ENUM("Mic Source Select", wm9712_क्रमागत[7]);
+static const struct snd_kcontrol_new wm9712_mic_src_controls =
+SOC_DAPM_ENUM("Mic Source Select", wm9712_enum[7]);
 
-/* dअगरf select */
-अटल स्थिर काष्ठा snd_kcontrol_new wm9712_dअगरf_sel_controls =
-SOC_DAPM_ENUM("Route", wm9712_क्रमागत[11]);
+/* diff select */
+static const struct snd_kcontrol_new wm9712_diff_sel_controls =
+SOC_DAPM_ENUM("Route", wm9712_enum[11]);
 
-अटल स्थिर काष्ठा snd_soc_dapm_widget wm9712_dapm_widमाला_लो[] = अणु
+static const struct snd_soc_dapm_widget wm9712_dapm_widgets[] = {
 SND_SOC_DAPM_MUX("ALC Sidetone Mux", SND_SOC_NOPM, 0, 0,
 	&wm9712_alc_mux_controls),
 SND_SOC_DAPM_MUX("Out3 Mux", SND_SOC_NOPM, 0, 0,
@@ -373,8 +372,8 @@ SND_SOC_DAPM_MUX("Left Mic Select Source", SND_SOC_NOPM, 0, 0,
 SND_SOC_DAPM_MUX("Right Mic Select Source", SND_SOC_NOPM, 0, 0,
 	&wm9712_mic_src_controls),
 SND_SOC_DAPM_MUX("Differential Source", SND_SOC_NOPM, 0, 0,
-	&wm9712_dअगरf_sel_controls),
-SND_SOC_DAPM_MIXER("AC97 Mixer", SND_SOC_NOPM, 0, 0, शून्य, 0),
+	&wm9712_diff_sel_controls),
+SND_SOC_DAPM_MIXER("AC97 Mixer", SND_SOC_NOPM, 0, 0, NULL, 0),
 SND_SOC_DAPM_MIXER("Left HP Mixer", AC97_INT_PAGING, 9, 1,
 	&wm9712_hpl_mixer_controls[0], ARRAY_SIZE(wm9712_hpl_mixer_controls)),
 SND_SOC_DAPM_MIXER("Right HP Mixer", AC97_INT_PAGING, 8, 1,
@@ -384,19 +383,19 @@ SND_SOC_DAPM_MIXER("Phone Mixer", AC97_INT_PAGING, 6, 1,
 SND_SOC_DAPM_MIXER("Speaker Mixer", AC97_INT_PAGING, 7, 1,
 	&wm9712_speaker_mixer_controls[0],
 	ARRAY_SIZE(wm9712_speaker_mixer_controls)),
-SND_SOC_DAPM_MIXER("Mono Mixer", SND_SOC_NOPM, 0, 0, शून्य, 0),
+SND_SOC_DAPM_MIXER("Mono Mixer", SND_SOC_NOPM, 0, 0, NULL, 0),
 SND_SOC_DAPM_DAC("Left DAC", "Left HiFi Playback", AC97_INT_PAGING, 14, 1),
 SND_SOC_DAPM_DAC("Right DAC", "Right HiFi Playback", AC97_INT_PAGING, 13, 1),
 SND_SOC_DAPM_DAC("Aux DAC", "Aux Playback", SND_SOC_NOPM, 0, 0),
 SND_SOC_DAPM_ADC("Left ADC", "Left HiFi Capture", AC97_INT_PAGING, 12, 1),
 SND_SOC_DAPM_ADC("Right ADC", "Right HiFi Capture", AC97_INT_PAGING, 11, 1),
-SND_SOC_DAPM_PGA("Headphone PGA", AC97_INT_PAGING, 4, 1, शून्य, 0),
-SND_SOC_DAPM_PGA("Speaker PGA", AC97_INT_PAGING, 3, 1, शून्य, 0),
-SND_SOC_DAPM_PGA("Out 3 PGA", AC97_INT_PAGING, 5, 1, शून्य, 0),
-SND_SOC_DAPM_PGA("Line PGA", AC97_INT_PAGING, 2, 1, शून्य, 0),
-SND_SOC_DAPM_PGA("Phone PGA", AC97_INT_PAGING, 1, 1, शून्य, 0),
-SND_SOC_DAPM_PGA("Mic PGA", AC97_INT_PAGING, 0, 1, शून्य, 0),
-SND_SOC_DAPM_PGA("Differential Mic", SND_SOC_NOPM, 0, 0, शून्य, 0),
+SND_SOC_DAPM_PGA("Headphone PGA", AC97_INT_PAGING, 4, 1, NULL, 0),
+SND_SOC_DAPM_PGA("Speaker PGA", AC97_INT_PAGING, 3, 1, NULL, 0),
+SND_SOC_DAPM_PGA("Out 3 PGA", AC97_INT_PAGING, 5, 1, NULL, 0),
+SND_SOC_DAPM_PGA("Line PGA", AC97_INT_PAGING, 2, 1, NULL, 0),
+SND_SOC_DAPM_PGA("Phone PGA", AC97_INT_PAGING, 1, 1, NULL, 0),
+SND_SOC_DAPM_PGA("Mic PGA", AC97_INT_PAGING, 0, 1, NULL, 0),
+SND_SOC_DAPM_PGA("Differential Mic", SND_SOC_NOPM, 0, 0, NULL, 0),
 SND_SOC_DAPM_MICBIAS("Mic Bias", AC97_INT_PAGING, 10, 1),
 SND_SOC_DAPM_OUTPUT("MONOOUT"),
 SND_SOC_DAPM_OUTPUT("HPOUTL"),
@@ -410,318 +409,318 @@ SND_SOC_DAPM_INPUT("PHONE"),
 SND_SOC_DAPM_INPUT("PCBEEP"),
 SND_SOC_DAPM_INPUT("MIC1"),
 SND_SOC_DAPM_INPUT("MIC2"),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_soc_dapm_route wm9712_audio_map[] = अणु
-	/* भव mixer - mixes left & right channels क्रम spk and mono */
-	अणु"AC97 Mixer", शून्य, "Left DAC"पूर्ण,
-	अणु"AC97 Mixer", शून्य, "Right DAC"पूर्ण,
+static const struct snd_soc_dapm_route wm9712_audio_map[] = {
+	/* virtual mixer - mixes left & right channels for spk and mono */
+	{"AC97 Mixer", NULL, "Left DAC"},
+	{"AC97 Mixer", NULL, "Right DAC"},
 
 	/* Left HP mixer */
-	अणु"Left HP Mixer", "PCBeep Bypass Switch", "PCBEEP"पूर्ण,
-	अणु"Left HP Mixer", "Aux Playback Switch",  "Aux DAC"पूर्ण,
-	अणु"Left HP Mixer", "Phone Bypass Switch",  "Phone PGA"पूर्ण,
-	अणु"Left HP Mixer", "Line Bypass Switch",   "Line PGA"पूर्ण,
-	अणु"Left HP Mixer", "PCM Playback Switch",  "Left DAC"पूर्ण,
-	अणु"Left HP Mixer", "Mic Sidetone Switch",  "Mic PGA"पूर्ण,
-	अणु"Left HP Mixer", शून्य,  "ALC Sidetone Mux"पूर्ण,
+	{"Left HP Mixer", "PCBeep Bypass Switch", "PCBEEP"},
+	{"Left HP Mixer", "Aux Playback Switch",  "Aux DAC"},
+	{"Left HP Mixer", "Phone Bypass Switch",  "Phone PGA"},
+	{"Left HP Mixer", "Line Bypass Switch",   "Line PGA"},
+	{"Left HP Mixer", "PCM Playback Switch",  "Left DAC"},
+	{"Left HP Mixer", "Mic Sidetone Switch",  "Mic PGA"},
+	{"Left HP Mixer", NULL,  "ALC Sidetone Mux"},
 
 	/* Right HP mixer */
-	अणु"Right HP Mixer", "PCBeep Bypass Switch", "PCBEEP"पूर्ण,
-	अणु"Right HP Mixer", "Aux Playback Switch",  "Aux DAC"पूर्ण,
-	अणु"Right HP Mixer", "Phone Bypass Switch",  "Phone PGA"पूर्ण,
-	अणु"Right HP Mixer", "Line Bypass Switch",   "Line PGA"पूर्ण,
-	अणु"Right HP Mixer", "PCM Playback Switch",  "Right DAC"पूर्ण,
-	अणु"Right HP Mixer", "Mic Sidetone Switch",  "Mic PGA"पूर्ण,
-	अणु"Right HP Mixer", शून्य,  "ALC Sidetone Mux"पूर्ण,
+	{"Right HP Mixer", "PCBeep Bypass Switch", "PCBEEP"},
+	{"Right HP Mixer", "Aux Playback Switch",  "Aux DAC"},
+	{"Right HP Mixer", "Phone Bypass Switch",  "Phone PGA"},
+	{"Right HP Mixer", "Line Bypass Switch",   "Line PGA"},
+	{"Right HP Mixer", "PCM Playback Switch",  "Right DAC"},
+	{"Right HP Mixer", "Mic Sidetone Switch",  "Mic PGA"},
+	{"Right HP Mixer", NULL,  "ALC Sidetone Mux"},
 
 	/* speaker mixer */
-	अणु"Speaker Mixer", "PCBeep Bypass Switch", "PCBEEP"पूर्ण,
-	अणु"Speaker Mixer", "Line Bypass Switch",   "Line PGA"पूर्ण,
-	अणु"Speaker Mixer", "PCM Playback Switch",  "AC97 Mixer"पूर्ण,
-	अणु"Speaker Mixer", "Phone Bypass Switch",  "Phone PGA"पूर्ण,
-	अणु"Speaker Mixer", "Aux Playback Switch",  "Aux DAC"पूर्ण,
+	{"Speaker Mixer", "PCBeep Bypass Switch", "PCBEEP"},
+	{"Speaker Mixer", "Line Bypass Switch",   "Line PGA"},
+	{"Speaker Mixer", "PCM Playback Switch",  "AC97 Mixer"},
+	{"Speaker Mixer", "Phone Bypass Switch",  "Phone PGA"},
+	{"Speaker Mixer", "Aux Playback Switch",  "Aux DAC"},
 
 	/* Phone mixer */
-	अणु"Phone Mixer", "PCBeep Bypass Switch",  "PCBEEP"पूर्ण,
-	अणु"Phone Mixer", "Line Bypass Switch",    "Line PGA"पूर्ण,
-	अणु"Phone Mixer", "Aux Playback Switch",   "Aux DAC"पूर्ण,
-	अणु"Phone Mixer", "PCM Playback Switch",   "AC97 Mixer"पूर्ण,
-	अणु"Phone Mixer", "Mic 1 Sidetone Switch", "Mic PGA"पूर्ण,
-	अणु"Phone Mixer", "Mic 2 Sidetone Switch", "Mic PGA"पूर्ण,
+	{"Phone Mixer", "PCBeep Bypass Switch",  "PCBEEP"},
+	{"Phone Mixer", "Line Bypass Switch",    "Line PGA"},
+	{"Phone Mixer", "Aux Playback Switch",   "Aux DAC"},
+	{"Phone Mixer", "PCM Playback Switch",   "AC97 Mixer"},
+	{"Phone Mixer", "Mic 1 Sidetone Switch", "Mic PGA"},
+	{"Phone Mixer", "Mic 2 Sidetone Switch", "Mic PGA"},
 
-	/* inमाला_दो */
-	अणु"Line PGA", शून्य, "LINEINL"पूर्ण,
-	अणु"Line PGA", शून्य, "LINEINR"पूर्ण,
-	अणु"Phone PGA", शून्य, "PHONE"पूर्ण,
-	अणु"Mic PGA", शून्य, "MIC1"पूर्ण,
-	अणु"Mic PGA", शून्य, "MIC2"पूर्ण,
+	/* inputs */
+	{"Line PGA", NULL, "LINEINL"},
+	{"Line PGA", NULL, "LINEINR"},
+	{"Phone PGA", NULL, "PHONE"},
+	{"Mic PGA", NULL, "MIC1"},
+	{"Mic PGA", NULL, "MIC2"},
 
 	/* microphones */
-	अणु"Differential Mic", शून्य, "MIC1"पूर्ण,
-	अणु"Differential Mic", शून्य, "MIC2"पूर्ण,
-	अणु"Left Mic Select Source", "Mic 1", "MIC1"पूर्ण,
-	अणु"Left Mic Select Source", "Mic 2", "MIC2"पूर्ण,
-	अणु"Left Mic Select Source", "Stereo", "MIC1"पूर्ण,
-	अणु"Left Mic Select Source", "Differential", "Differential Mic"पूर्ण,
-	अणु"Right Mic Select Source", "Mic 1", "MIC1"पूर्ण,
-	अणु"Right Mic Select Source", "Mic 2", "MIC2"पूर्ण,
-	अणु"Right Mic Select Source", "Stereo", "MIC2"पूर्ण,
-	अणु"Right Mic Select Source", "Differential", "Differential Mic"पूर्ण,
+	{"Differential Mic", NULL, "MIC1"},
+	{"Differential Mic", NULL, "MIC2"},
+	{"Left Mic Select Source", "Mic 1", "MIC1"},
+	{"Left Mic Select Source", "Mic 2", "MIC2"},
+	{"Left Mic Select Source", "Stereo", "MIC1"},
+	{"Left Mic Select Source", "Differential", "Differential Mic"},
+	{"Right Mic Select Source", "Mic 1", "MIC1"},
+	{"Right Mic Select Source", "Mic 2", "MIC2"},
+	{"Right Mic Select Source", "Stereo", "MIC2"},
+	{"Right Mic Select Source", "Differential", "Differential Mic"},
 
 	/* left capture selector */
-	अणु"Left Capture Select", "Mic", "MIC1"पूर्ण,
-	अणु"Left Capture Select", "Speaker Mixer", "Speaker Mixer"पूर्ण,
-	अणु"Left Capture Select", "Line", "LINEINL"पूर्ण,
-	अणु"Left Capture Select", "Headphone Mixer", "Left HP Mixer"पूर्ण,
-	अणु"Left Capture Select", "Phone Mixer", "Phone Mixer"पूर्ण,
-	अणु"Left Capture Select", "Phone", "PHONE"पूर्ण,
+	{"Left Capture Select", "Mic", "MIC1"},
+	{"Left Capture Select", "Speaker Mixer", "Speaker Mixer"},
+	{"Left Capture Select", "Line", "LINEINL"},
+	{"Left Capture Select", "Headphone Mixer", "Left HP Mixer"},
+	{"Left Capture Select", "Phone Mixer", "Phone Mixer"},
+	{"Left Capture Select", "Phone", "PHONE"},
 
 	/* right capture selector */
-	अणु"Right Capture Select", "Mic", "MIC2"पूर्ण,
-	अणु"Right Capture Select", "Speaker Mixer", "Speaker Mixer"पूर्ण,
-	अणु"Right Capture Select", "Line", "LINEINR"पूर्ण,
-	अणु"Right Capture Select", "Headphone Mixer", "Right HP Mixer"पूर्ण,
-	अणु"Right Capture Select", "Phone Mixer", "Phone Mixer"पूर्ण,
-	अणु"Right Capture Select", "Phone", "PHONE"पूर्ण,
+	{"Right Capture Select", "Mic", "MIC2"},
+	{"Right Capture Select", "Speaker Mixer", "Speaker Mixer"},
+	{"Right Capture Select", "Line", "LINEINR"},
+	{"Right Capture Select", "Headphone Mixer", "Right HP Mixer"},
+	{"Right Capture Select", "Phone Mixer", "Phone Mixer"},
+	{"Right Capture Select", "Phone", "PHONE"},
 
 	/* ALC Sidetone */
-	अणु"ALC Sidetone Mux", "Stereo", "Left Capture Select"पूर्ण,
-	अणु"ALC Sidetone Mux", "Stereo", "Right Capture Select"पूर्ण,
-	अणु"ALC Sidetone Mux", "Left", "Left Capture Select"पूर्ण,
-	अणु"ALC Sidetone Mux", "Right", "Right Capture Select"पूर्ण,
+	{"ALC Sidetone Mux", "Stereo", "Left Capture Select"},
+	{"ALC Sidetone Mux", "Stereo", "Right Capture Select"},
+	{"ALC Sidetone Mux", "Left", "Left Capture Select"},
+	{"ALC Sidetone Mux", "Right", "Right Capture Select"},
 
 	/* ADC's */
-	अणु"Left ADC", शून्य, "Left Capture Select"पूर्ण,
-	अणु"Right ADC", शून्य, "Right Capture Select"पूर्ण,
+	{"Left ADC", NULL, "Left Capture Select"},
+	{"Right ADC", NULL, "Right Capture Select"},
 
-	/* outमाला_दो */
-	अणु"MONOOUT", शून्य, "Phone Mixer"पूर्ण,
-	अणु"HPOUTL", शून्य, "Headphone PGA"पूर्ण,
-	अणु"Headphone PGA", शून्य, "Left HP Mixer"पूर्ण,
-	अणु"HPOUTR", शून्य, "Headphone PGA"पूर्ण,
-	अणु"Headphone PGA", शून्य, "Right HP Mixer"पूर्ण,
+	/* outputs */
+	{"MONOOUT", NULL, "Phone Mixer"},
+	{"HPOUTL", NULL, "Headphone PGA"},
+	{"Headphone PGA", NULL, "Left HP Mixer"},
+	{"HPOUTR", NULL, "Headphone PGA"},
+	{"Headphone PGA", NULL, "Right HP Mixer"},
 
 	/* mono mixer */
-	अणु"Mono Mixer", शून्य, "Left HP Mixer"पूर्ण,
-	अणु"Mono Mixer", शून्य, "Right HP Mixer"पूर्ण,
+	{"Mono Mixer", NULL, "Left HP Mixer"},
+	{"Mono Mixer", NULL, "Right HP Mixer"},
 
 	/* Out3 Mux */
-	अणु"Out3 Mux", "Left", "Left HP Mixer"पूर्ण,
-	अणु"Out3 Mux", "Mono", "Phone Mixer"पूर्ण,
-	अणु"Out3 Mux", "Left + Right", "Mono Mixer"पूर्ण,
-	अणु"Out 3 PGA", शून्य, "Out3 Mux"पूर्ण,
-	अणु"OUT3", शून्य, "Out 3 PGA"पूर्ण,
+	{"Out3 Mux", "Left", "Left HP Mixer"},
+	{"Out3 Mux", "Mono", "Phone Mixer"},
+	{"Out3 Mux", "Left + Right", "Mono Mixer"},
+	{"Out 3 PGA", NULL, "Out3 Mux"},
+	{"OUT3", NULL, "Out 3 PGA"},
 
 	/* speaker Mux */
-	अणु"Speaker Mux", "Speaker Mix", "Speaker Mixer"पूर्ण,
-	अणु"Speaker Mux", "Headphone Mix", "Mono Mixer"पूर्ण,
-	अणु"Speaker PGA", शून्य, "Speaker Mux"पूर्ण,
-	अणु"LOUT2", शून्य, "Speaker PGA"पूर्ण,
-	अणु"ROUT2", शून्य, "Speaker PGA"पूर्ण,
-पूर्ण;
+	{"Speaker Mux", "Speaker Mix", "Speaker Mixer"},
+	{"Speaker Mux", "Headphone Mix", "Mono Mixer"},
+	{"Speaker PGA", NULL, "Speaker Mux"},
+	{"LOUT2", NULL, "Speaker PGA"},
+	{"ROUT2", NULL, "Speaker PGA"},
+};
 
-अटल पूर्णांक ac97_prepare(काष्ठा snd_pcm_substream *substream,
-			काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा snd_soc_component *component = dai->component;
-	पूर्णांक reg;
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+static int ac97_prepare(struct snd_pcm_substream *substream,
+			struct snd_soc_dai *dai)
+{
+	struct snd_soc_component *component = dai->component;
+	int reg;
+	struct snd_pcm_runtime *runtime = substream->runtime;
 
 	snd_soc_component_update_bits(component, AC97_EXTENDED_STATUS, 0x1, 0x1);
 
-	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
 		reg = AC97_PCM_FRONT_DAC_RATE;
-	अन्यथा
+	else
 		reg = AC97_PCM_LR_ADC_RATE;
 
-	वापस snd_soc_component_ग_लिखो(component, reg, runसमय->rate);
-पूर्ण
+	return snd_soc_component_write(component, reg, runtime->rate);
+}
 
-अटल पूर्णांक ac97_aux_prepare(काष्ठा snd_pcm_substream *substream,
-			    काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा snd_soc_component *component = dai->component;
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+static int ac97_aux_prepare(struct snd_pcm_substream *substream,
+			    struct snd_soc_dai *dai)
+{
+	struct snd_soc_component *component = dai->component;
+	struct snd_pcm_runtime *runtime = substream->runtime;
 
 	snd_soc_component_update_bits(component, AC97_EXTENDED_STATUS, 0x1, 0x1);
 	snd_soc_component_update_bits(component, AC97_PCI_SID, 0x8000, 0x8000);
 
-	अगर (substream->stream != SNDRV_PCM_STREAM_PLAYBACK)
-		वापस -ENODEV;
+	if (substream->stream != SNDRV_PCM_STREAM_PLAYBACK)
+		return -ENODEV;
 
-	वापस snd_soc_component_ग_लिखो(component, AC97_PCM_SURR_DAC_RATE, runसमय->rate);
-पूर्ण
+	return snd_soc_component_write(component, AC97_PCM_SURR_DAC_RATE, runtime->rate);
+}
 
-#घोषणा WM9712_AC97_RATES (SNDRV_PCM_RATE_8000 | SNDRV_PCM_RATE_11025 |\
+#define WM9712_AC97_RATES (SNDRV_PCM_RATE_8000 | SNDRV_PCM_RATE_11025 |\
 		SNDRV_PCM_RATE_22050 | SNDRV_PCM_RATE_44100 |\
 		SNDRV_PCM_RATE_48000)
 
-अटल स्थिर काष्ठा snd_soc_dai_ops wm9712_dai_ops_hअगरi = अणु
+static const struct snd_soc_dai_ops wm9712_dai_ops_hifi = {
 	.prepare	= ac97_prepare,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_soc_dai_ops wm9712_dai_ops_aux = अणु
+static const struct snd_soc_dai_ops wm9712_dai_ops_aux = {
 	.prepare	= ac97_aux_prepare,
-पूर्ण;
+};
 
-अटल काष्ठा snd_soc_dai_driver wm9712_dai[] = अणु
-अणु
+static struct snd_soc_dai_driver wm9712_dai[] = {
+{
 	.name = "wm9712-hifi",
-	.playback = अणु
+	.playback = {
 		.stream_name = "HiFi Playback",
 		.channels_min = 1,
 		.channels_max = 2,
 		.rates = WM9712_AC97_RATES,
-		.क्रमmats = SND_SOC_STD_AC97_FMTS,पूर्ण,
-	.capture = अणु
+		.formats = SND_SOC_STD_AC97_FMTS,},
+	.capture = {
 		.stream_name = "HiFi Capture",
 		.channels_min = 1,
 		.channels_max = 2,
 		.rates = WM9712_AC97_RATES,
-		.क्रमmats = SND_SOC_STD_AC97_FMTS,पूर्ण,
-	.ops = &wm9712_dai_ops_hअगरi,
-पूर्ण,
-अणु
+		.formats = SND_SOC_STD_AC97_FMTS,},
+	.ops = &wm9712_dai_ops_hifi,
+},
+{
 	.name = "wm9712-aux",
-	.playback = अणु
+	.playback = {
 		.stream_name = "Aux Playback",
 		.channels_min = 1,
 		.channels_max = 1,
 		.rates = WM9712_AC97_RATES,
-		.क्रमmats = SND_SOC_STD_AC97_FMTS,पूर्ण,
+		.formats = SND_SOC_STD_AC97_FMTS,},
 	.ops = &wm9712_dai_ops_aux,
-पूर्ण
-पूर्ण;
+}
+};
 
-अटल पूर्णांक wm9712_set_bias_level(काष्ठा snd_soc_component *component,
-				 क्रमागत snd_soc_bias_level level)
-अणु
-	चयन (level) अणु
-	हाल SND_SOC_BIAS_ON:
-	हाल SND_SOC_BIAS_PREPARE:
-		अवरोध;
-	हाल SND_SOC_BIAS_STANDBY:
-		snd_soc_component_ग_लिखो(component, AC97_POWERDOWN, 0x0000);
-		अवरोध;
-	हाल SND_SOC_BIAS_OFF:
+static int wm9712_set_bias_level(struct snd_soc_component *component,
+				 enum snd_soc_bias_level level)
+{
+	switch (level) {
+	case SND_SOC_BIAS_ON:
+	case SND_SOC_BIAS_PREPARE:
+		break;
+	case SND_SOC_BIAS_STANDBY:
+		snd_soc_component_write(component, AC97_POWERDOWN, 0x0000);
+		break;
+	case SND_SOC_BIAS_OFF:
 		/* disable everything including AC link */
-		snd_soc_component_ग_लिखो(component, AC97_EXTENDED_MSTATUS, 0xffff);
-		snd_soc_component_ग_लिखो(component, AC97_POWERDOWN, 0xffff);
-		अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		snd_soc_component_write(component, AC97_EXTENDED_MSTATUS, 0xffff);
+		snd_soc_component_write(component, AC97_POWERDOWN, 0xffff);
+		break;
+	}
+	return 0;
+}
 
-अटल पूर्णांक wm9712_soc_resume(काष्ठा snd_soc_component *component)
-अणु
-	काष्ठा wm9712_priv *wm9712 = snd_soc_component_get_drvdata(component);
-	पूर्णांक ret;
+static int wm9712_soc_resume(struct snd_soc_component *component)
+{
+	struct wm9712_priv *wm9712 = snd_soc_component_get_drvdata(component);
+	int ret;
 
 	ret = snd_ac97_reset(wm9712->ac97, true, WM9712_VENDOR_ID,
 		WM9712_VENDOR_ID_MASK);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	snd_soc_component_क्रमce_bias_level(component, SND_SOC_BIAS_STANDBY);
+	snd_soc_component_force_bias_level(component, SND_SOC_BIAS_STANDBY);
 
-	अगर (ret == 0)
+	if (ret == 0)
 		snd_soc_component_cache_sync(component);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक wm9712_soc_probe(काष्ठा snd_soc_component *component)
-अणु
-	काष्ठा wm9712_priv *wm9712 = snd_soc_component_get_drvdata(component);
-	काष्ठा regmap *regmap;
+static int wm9712_soc_probe(struct snd_soc_component *component)
+{
+	struct wm9712_priv *wm9712 = snd_soc_component_get_drvdata(component);
+	struct regmap *regmap;
 
-	अगर (wm9712->mfd_pdata) अणु
+	if (wm9712->mfd_pdata) {
 		wm9712->ac97 = wm9712->mfd_pdata->ac97;
 		regmap = wm9712->mfd_pdata->regmap;
-	पूर्ण अन्यथा अगर (IS_ENABLED(CONFIG_SND_SOC_AC97_BUS)) अणु
-		पूर्णांक ret;
+	} else if (IS_ENABLED(CONFIG_SND_SOC_AC97_BUS)) {
+		int ret;
 
 		wm9712->ac97 = snd_soc_new_ac97_component(component, WM9712_VENDOR_ID,
 						      WM9712_VENDOR_ID_MASK);
-		अगर (IS_ERR(wm9712->ac97)) अणु
+		if (IS_ERR(wm9712->ac97)) {
 			ret = PTR_ERR(wm9712->ac97);
 			dev_err(component->dev,
 				"Failed to register AC97 codec: %d\n", ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
 		regmap = regmap_init_ac97(wm9712->ac97, &wm9712_regmap_config);
-		अगर (IS_ERR(regmap)) अणु
-			snd_soc_मुक्त_ac97_component(wm9712->ac97);
-			वापस PTR_ERR(regmap);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		वापस -ENXIO;
-	पूर्ण
+		if (IS_ERR(regmap)) {
+			snd_soc_free_ac97_component(wm9712->ac97);
+			return PTR_ERR(regmap);
+		}
+	} else {
+		return -ENXIO;
+	}
 
 	snd_soc_component_init_regmap(component, regmap);
 
 	/* set alc mux to none */
 	snd_soc_component_update_bits(component, AC97_VIDEO, 0x3000, 0x3000);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम wm9712_soc_हटाओ(काष्ठा snd_soc_component *component)
-अणु
-	काष्ठा wm9712_priv *wm9712 = snd_soc_component_get_drvdata(component);
+static void wm9712_soc_remove(struct snd_soc_component *component)
+{
+	struct wm9712_priv *wm9712 = snd_soc_component_get_drvdata(component);
 
-	अगर (IS_ENABLED(CONFIG_SND_SOC_AC97_BUS) && !wm9712->mfd_pdata) अणु
-		snd_soc_component_निकास_regmap(component);
-		snd_soc_मुक्त_ac97_component(wm9712->ac97);
-	पूर्ण
-पूर्ण
+	if (IS_ENABLED(CONFIG_SND_SOC_AC97_BUS) && !wm9712->mfd_pdata) {
+		snd_soc_component_exit_regmap(component);
+		snd_soc_free_ac97_component(wm9712->ac97);
+	}
+}
 
-अटल स्थिर काष्ठा snd_soc_component_driver soc_component_dev_wm9712 = अणु
+static const struct snd_soc_component_driver soc_component_dev_wm9712 = {
 	.probe			= wm9712_soc_probe,
-	.हटाओ			= wm9712_soc_हटाओ,
+	.remove			= wm9712_soc_remove,
 	.resume			= wm9712_soc_resume,
 	.set_bias_level		= wm9712_set_bias_level,
 	.controls		= wm9712_snd_ac97_controls,
 	.num_controls		= ARRAY_SIZE(wm9712_snd_ac97_controls),
-	.dapm_widमाला_लो		= wm9712_dapm_widमाला_लो,
-	.num_dapm_widमाला_लो	= ARRAY_SIZE(wm9712_dapm_widमाला_लो),
+	.dapm_widgets		= wm9712_dapm_widgets,
+	.num_dapm_widgets	= ARRAY_SIZE(wm9712_dapm_widgets),
 	.dapm_routes		= wm9712_audio_map,
 	.num_dapm_routes	= ARRAY_SIZE(wm9712_audio_map),
 	.suspend_bias_off	= 1,
 	.idle_bias_on		= 1,
-	.use_pmकरोwn_समय	= 1,
+	.use_pmdown_time	= 1,
 	.endianness		= 1,
 	.non_legacy_dai_naming	= 1,
-पूर्ण;
+};
 
-अटल पूर्णांक wm9712_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा wm9712_priv *wm9712;
+static int wm9712_probe(struct platform_device *pdev)
+{
+	struct wm9712_priv *wm9712;
 
-	wm9712 = devm_kzalloc(&pdev->dev, माप(*wm9712), GFP_KERNEL);
-	अगर (wm9712 == शून्य)
-		वापस -ENOMEM;
+	wm9712 = devm_kzalloc(&pdev->dev, sizeof(*wm9712), GFP_KERNEL);
+	if (wm9712 == NULL)
+		return -ENOMEM;
 
 	mutex_init(&wm9712->lock);
 
 	wm9712->mfd_pdata = dev_get_platdata(&pdev->dev);
-	platक्रमm_set_drvdata(pdev, wm9712);
+	platform_set_drvdata(pdev, wm9712);
 
-	वापस devm_snd_soc_रेजिस्टर_component(&pdev->dev,
+	return devm_snd_soc_register_component(&pdev->dev,
 			&soc_component_dev_wm9712, wm9712_dai, ARRAY_SIZE(wm9712_dai));
-पूर्ण
+}
 
-अटल काष्ठा platक्रमm_driver wm9712_component_driver = अणु
-	.driver = अणु
+static struct platform_driver wm9712_component_driver = {
+	.driver = {
 		.name = "wm9712-codec",
-	पूर्ण,
+	},
 
 	.probe = wm9712_probe,
-पूर्ण;
+};
 
-module_platक्रमm_driver(wm9712_component_driver);
+module_platform_driver(wm9712_component_driver);
 
 MODULE_DESCRIPTION("ASoC WM9711/WM9712 driver");
 MODULE_AUTHOR("Liam Girdwood");

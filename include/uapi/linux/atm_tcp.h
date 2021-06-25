@@ -1,46 +1,45 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-/* aपंचांग_tcp.h - Driver-specअगरic declarations of the ATMTCP driver (क्रम use by
-	       driver-specअगरic utilities) */
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+/* atm_tcp.h - Driver-specific declarations of the ATMTCP driver (for use by
+	       driver-specific utilities) */
 
 /* Written 1997-2000 by Werner Almesberger, EPFL LRC/ICA */
 
 
-#अगर_अघोषित _UAPILINUX_ATM_TCP_H
-#घोषणा _UAPILINUX_ATM_TCP_H
+#ifndef _UAPILINUX_ATM_TCP_H
+#define _UAPILINUX_ATM_TCP_H
 
-#समावेश <linux/aपंचांगapi.h>
-#समावेश <linux/aपंचांग.h>
-#समावेश <linux/aपंचांगioc.h>
-#समावेश <linux/types.h>
+#include <linux/atmapi.h>
+#include <linux/atm.h>
+#include <linux/atmioc.h>
+#include <linux/types.h>
 
 
 /*
- * All values in काष्ठा aपंचांगtcp_hdr are in network byte order
+ * All values in struct atmtcp_hdr are in network byte order
  */
 
-काष्ठा aपंचांगtcp_hdr अणु
+struct atmtcp_hdr {
 	__u16	vpi;
 	__u16	vci;
 	__u32	length;		/* ... of data part */
-पूर्ण;
+};
 
 /*
- * All values in काष्ठा aपंचांगtcp_command are in host byte order
+ * All values in struct atmtcp_command are in host byte order
  */
 
-#घोषणा ATMTCP_HDR_MAGIC	(~0)	/* this length indicates a command */
-#घोषणा ATMTCP_CTRL_OPEN	1	/* request/reply */
-#घोषणा ATMTCP_CTRL_CLOSE	2	/* request/reply */
+#define ATMTCP_HDR_MAGIC	(~0)	/* this length indicates a command */
+#define ATMTCP_CTRL_OPEN	1	/* request/reply */
+#define ATMTCP_CTRL_CLOSE	2	/* request/reply */
 
-काष्ठा aपंचांगtcp_control अणु
-	काष्ठा aपंचांगtcp_hdr hdr;	/* must be first */
-	पूर्णांक type;		/* message type; both directions */
-	aपंचांग_kptr_t vcc;		/* both directions */
-	काष्ठा sockaddr_aपंचांगpvc addr; /* suggested value from kernel */
-	काष्ठा aपंचांग_qos	qos;	/* both directions */
-	पूर्णांक result;		/* to kernel only */
-पूर्ण __ATM_API_ALIGN;
+struct atmtcp_control {
+	struct atmtcp_hdr hdr;	/* must be first */
+	int type;		/* message type; both directions */
+	atm_kptr_t vcc;		/* both directions */
+	struct sockaddr_atmpvc addr; /* suggested value from kernel */
+	struct atm_qos	qos;	/* both directions */
+	int result;		/* to kernel only */
+} __ATM_API_ALIGN;
 
 /*
  * Field usage:
@@ -52,12 +51,12 @@
  * CLOSE	D->K	-	-	-	-	Y	Y
  */
 
-#घोषणा SIOCSIFATMTCP	_IO('a',ATMIOC_ITF)	/* set ATMTCP mode */
-#घोषणा ATMTCP_CREATE	_IO('a',ATMIOC_ITF+14)	/* create persistent ATMTCP
-						   पूर्णांकerface */
-#घोषणा ATMTCP_REMOVE	_IO('a',ATMIOC_ITF+15)	/* destroy persistent ATMTCP
-						   पूर्णांकerface */
+#define SIOCSIFATMTCP	_IO('a',ATMIOC_ITF)	/* set ATMTCP mode */
+#define ATMTCP_CREATE	_IO('a',ATMIOC_ITF+14)	/* create persistent ATMTCP
+						   interface */
+#define ATMTCP_REMOVE	_IO('a',ATMIOC_ITF+15)	/* destroy persistent ATMTCP
+						   interface */
 
 
 
-#पूर्ण_अगर /* _UAPILINUX_ATM_TCP_H */
+#endif /* _UAPILINUX_ATM_TCP_H */

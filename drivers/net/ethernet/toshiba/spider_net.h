@@ -1,7 +1,6 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * Network device driver क्रम Cell Processor-Based Blade and Celleb platक्रमm
+ * Network device driver for Cell Processor-Based Blade and Celleb platform
  *
  * (C) Copyright IBM Corp. 2005
  * (C) Copyright 2006 TOSHIBA CORPORATION
@@ -10,228 +9,228 @@
  *           Jens Osterkamp <Jens.Osterkamp@de.ibm.com>
  */
 
-#अगर_अघोषित _SPIDER_NET_H
-#घोषणा _SPIDER_NET_H
+#ifndef _SPIDER_NET_H
+#define _SPIDER_NET_H
 
-#घोषणा VERSION "2.0 B"
+#define VERSION "2.0 B"
 
-#समावेश <linux/sungem_phy.h>
+#include <linux/sungem_phy.h>
 
-पूर्णांक spider_net_stop(काष्ठा net_device *netdev);
-पूर्णांक spider_net_खोलो(काष्ठा net_device *netdev);
+int spider_net_stop(struct net_device *netdev);
+int spider_net_open(struct net_device *netdev);
 
-बाह्य स्थिर काष्ठा ethtool_ops spider_net_ethtool_ops;
+extern const struct ethtool_ops spider_net_ethtool_ops;
 
-बाह्य अक्षर spider_net_driver_name[];
+extern char spider_net_driver_name[];
 
-#घोषणा SPIDER_NET_MAX_FRAME			2312
-#घोषणा SPIDER_NET_MAX_MTU			2294
-#घोषणा SPIDER_NET_MIN_MTU			64
+#define SPIDER_NET_MAX_FRAME			2312
+#define SPIDER_NET_MAX_MTU			2294
+#define SPIDER_NET_MIN_MTU			64
 
-#घोषणा SPIDER_NET_RXBUF_ALIGN			128
+#define SPIDER_NET_RXBUF_ALIGN			128
 
-#घोषणा SPIDER_NET_RX_DESCRIPTORS_DEFAULT	256
-#घोषणा SPIDER_NET_RX_DESCRIPTORS_MIN		16
-#घोषणा SPIDER_NET_RX_DESCRIPTORS_MAX		512
+#define SPIDER_NET_RX_DESCRIPTORS_DEFAULT	256
+#define SPIDER_NET_RX_DESCRIPTORS_MIN		16
+#define SPIDER_NET_RX_DESCRIPTORS_MAX		512
 
-#घोषणा SPIDER_NET_TX_DESCRIPTORS_DEFAULT	256
-#घोषणा SPIDER_NET_TX_DESCRIPTORS_MIN		16
-#घोषणा SPIDER_NET_TX_DESCRIPTORS_MAX		512
+#define SPIDER_NET_TX_DESCRIPTORS_DEFAULT	256
+#define SPIDER_NET_TX_DESCRIPTORS_MIN		16
+#define SPIDER_NET_TX_DESCRIPTORS_MAX		512
 
-#घोषणा SPIDER_NET_TX_TIMER			(HZ/5)
-#घोषणा SPIDER_NET_ANEG_TIMER			(HZ)
-#घोषणा SPIDER_NET_ANEG_TIMEOUT			5
+#define SPIDER_NET_TX_TIMER			(HZ/5)
+#define SPIDER_NET_ANEG_TIMER			(HZ)
+#define SPIDER_NET_ANEG_TIMEOUT			5
 
-#घोषणा SPIDER_NET_RX_CSUM_DEFAULT		1
+#define SPIDER_NET_RX_CSUM_DEFAULT		1
 
-#घोषणा SPIDER_NET_WATCHDOG_TIMEOUT		50*HZ
-#घोषणा SPIDER_NET_NAPI_WEIGHT			64
+#define SPIDER_NET_WATCHDOG_TIMEOUT		50*HZ
+#define SPIDER_NET_NAPI_WEIGHT			64
 
-#घोषणा SPIDER_NET_FIRMWARE_SEQS	6
-#घोषणा SPIDER_NET_FIRMWARE_SEQWORDS	1024
-#घोषणा SPIDER_NET_FIRMWARE_LEN		(SPIDER_NET_FIRMWARE_SEQS * \
+#define SPIDER_NET_FIRMWARE_SEQS	6
+#define SPIDER_NET_FIRMWARE_SEQWORDS	1024
+#define SPIDER_NET_FIRMWARE_LEN		(SPIDER_NET_FIRMWARE_SEQS * \
 					 SPIDER_NET_FIRMWARE_SEQWORDS * \
-					 माप(u32))
-#घोषणा SPIDER_NET_FIRMWARE_NAME	"spider_fw.bin"
+					 sizeof(u32))
+#define SPIDER_NET_FIRMWARE_NAME	"spider_fw.bin"
 
-/** spider_net SMMIO रेजिस्टरs */
-#घोषणा SPIDER_NET_GHIINT0STS		0x00000000
-#घोषणा SPIDER_NET_GHIINT1STS		0x00000004
-#घोषणा SPIDER_NET_GHIINT2STS		0x00000008
-#घोषणा SPIDER_NET_GHIINT0MSK		0x00000010
-#घोषणा SPIDER_NET_GHIINT1MSK		0x00000014
-#घोषणा SPIDER_NET_GHIINT2MSK		0x00000018
+/** spider_net SMMIO registers */
+#define SPIDER_NET_GHIINT0STS		0x00000000
+#define SPIDER_NET_GHIINT1STS		0x00000004
+#define SPIDER_NET_GHIINT2STS		0x00000008
+#define SPIDER_NET_GHIINT0MSK		0x00000010
+#define SPIDER_NET_GHIINT1MSK		0x00000014
+#define SPIDER_NET_GHIINT2MSK		0x00000018
 
-#घोषणा SPIDER_NET_GRESUMINTNUM		0x00000020
-#घोषणा SPIDER_NET_GREINTNUM		0x00000024
+#define SPIDER_NET_GRESUMINTNUM		0x00000020
+#define SPIDER_NET_GREINTNUM		0x00000024
 
-#घोषणा SPIDER_NET_GFFRMNUM		0x00000028
-#घोषणा SPIDER_NET_GFAFRMNUM		0x0000002c
-#घोषणा SPIDER_NET_GFBFRMNUM		0x00000030
-#घोषणा SPIDER_NET_GFCFRMNUM		0x00000034
-#घोषणा SPIDER_NET_GFDFRMNUM		0x00000038
+#define SPIDER_NET_GFFRMNUM		0x00000028
+#define SPIDER_NET_GFAFRMNUM		0x0000002c
+#define SPIDER_NET_GFBFRMNUM		0x00000030
+#define SPIDER_NET_GFCFRMNUM		0x00000034
+#define SPIDER_NET_GFDFRMNUM		0x00000038
 
-/* clear them (करोn't use it) */
-#घोषणा SPIDER_NET_GFREECNNUM		0x0000003c
-#घोषणा SPIDER_NET_GONETIMENUM		0x00000040
+/* clear them (don't use it) */
+#define SPIDER_NET_GFREECNNUM		0x0000003c
+#define SPIDER_NET_GONETIMENUM		0x00000040
 
-#घोषणा SPIDER_NET_GTOUTFRMNUM		0x00000044
+#define SPIDER_NET_GTOUTFRMNUM		0x00000044
 
-#घोषणा SPIDER_NET_GTXMDSET		0x00000050
-#घोषणा SPIDER_NET_GPCCTRL		0x00000054
-#घोषणा SPIDER_NET_GRXMDSET		0x00000058
-#घोषणा SPIDER_NET_GIPSECINIT		0x0000005c
-#घोषणा SPIDER_NET_GFTRESTRT		0x00000060
-#घोषणा SPIDER_NET_GRXDMAEN		0x00000064
-#घोषणा SPIDER_NET_GMRWOLCTRL		0x00000068
-#घोषणा SPIDER_NET_GPCWOPCMD		0x0000006c
-#घोषणा SPIDER_NET_GPCROPCMD		0x00000070
-#घोषणा SPIDER_NET_GTTFRMCNT		0x00000078
-#घोषणा SPIDER_NET_GTESTMD		0x0000007c
+#define SPIDER_NET_GTXMDSET		0x00000050
+#define SPIDER_NET_GPCCTRL		0x00000054
+#define SPIDER_NET_GRXMDSET		0x00000058
+#define SPIDER_NET_GIPSECINIT		0x0000005c
+#define SPIDER_NET_GFTRESTRT		0x00000060
+#define SPIDER_NET_GRXDMAEN		0x00000064
+#define SPIDER_NET_GMRWOLCTRL		0x00000068
+#define SPIDER_NET_GPCWOPCMD		0x0000006c
+#define SPIDER_NET_GPCROPCMD		0x00000070
+#define SPIDER_NET_GTTFRMCNT		0x00000078
+#define SPIDER_NET_GTESTMD		0x0000007c
 
-#घोषणा SPIDER_NET_GSINIT		0x00000080
-#घोषणा SPIDER_NET_GSnPRGADR		0x00000084
-#घोषणा SPIDER_NET_GSnPRGDAT		0x00000088
+#define SPIDER_NET_GSINIT		0x00000080
+#define SPIDER_NET_GSnPRGADR		0x00000084
+#define SPIDER_NET_GSnPRGDAT		0x00000088
 
-#घोषणा SPIDER_NET_GMACOPEMD		0x00000100
-#घोषणा SPIDER_NET_GMACLENLMT		0x00000108
-#घोषणा SPIDER_NET_GMACST		0x00000110
-#घोषणा SPIDER_NET_GMACINTEN		0x00000118
-#घोषणा SPIDER_NET_GMACPHYCTRL		0x00000120
+#define SPIDER_NET_GMACOPEMD		0x00000100
+#define SPIDER_NET_GMACLENLMT		0x00000108
+#define SPIDER_NET_GMACST		0x00000110
+#define SPIDER_NET_GMACINTEN		0x00000118
+#define SPIDER_NET_GMACPHYCTRL		0x00000120
 
-#घोषणा SPIDER_NET_GMACAPAUSE		0x00000154
-#घोषणा SPIDER_NET_GMACTXPAUSE		0x00000164
+#define SPIDER_NET_GMACAPAUSE		0x00000154
+#define SPIDER_NET_GMACTXPAUSE		0x00000164
 
-#घोषणा SPIDER_NET_GMACMODE		0x000001b0
-#घोषणा SPIDER_NET_GMACBSTLMT		0x000001b4
+#define SPIDER_NET_GMACMODE		0x000001b0
+#define SPIDER_NET_GMACBSTLMT		0x000001b4
 
-#घोषणा SPIDER_NET_GMACUNIMACU		0x000001c0
-#घोषणा SPIDER_NET_GMACUNIMACL		0x000001c8
+#define SPIDER_NET_GMACUNIMACU		0x000001c0
+#define SPIDER_NET_GMACUNIMACL		0x000001c8
 
-#घोषणा SPIDER_NET_GMRMHFILnR		0x00000400
-#घोषणा SPIDER_NET_MULTICAST_HASHES	256
+#define SPIDER_NET_GMRMHFILnR		0x00000400
+#define SPIDER_NET_MULTICAST_HASHES	256
 
-#घोषणा SPIDER_NET_GMRUAFILnR		0x00000500
-#घोषणा SPIDER_NET_GMRUA0FIL15R		0x00000578
+#define SPIDER_NET_GMRUAFILnR		0x00000500
+#define SPIDER_NET_GMRUA0FIL15R		0x00000578
 
-#घोषणा SPIDER_NET_GTTQMSK		0x00000934
+#define SPIDER_NET_GTTQMSK		0x00000934
 
-/* RX DMA controller रेजिस्टरs, all 0x00000a.. are क्रम DMA controller A,
- * 0x00000b.. क्रम DMA controller B, etc. */
-#घोषणा SPIDER_NET_GDADCHA		0x00000a00
-#घोषणा SPIDER_NET_GDADMACCNTR		0x00000a04
-#घोषणा SPIDER_NET_GDACTDPA		0x00000a08
-#घोषणा SPIDER_NET_GDACTDCNT		0x00000a0c
-#घोषणा SPIDER_NET_GDACDBADDR		0x00000a20
-#घोषणा SPIDER_NET_GDACDBSIZE		0x00000a24
-#घोषणा SPIDER_NET_GDACNEXTDA		0x00000a28
-#घोषणा SPIDER_NET_GDACCOMST		0x00000a2c
-#घोषणा SPIDER_NET_GDAWBCOMST		0x00000a30
-#घोषणा SPIDER_NET_GDAWBRSIZE		0x00000a34
-#घोषणा SPIDER_NET_GDAWBVSIZE		0x00000a38
-#घोषणा SPIDER_NET_GDAWBTRST		0x00000a3c
-#घोषणा SPIDER_NET_GDAWBTRERR		0x00000a40
+/* RX DMA controller registers, all 0x00000a.. are for DMA controller A,
+ * 0x00000b.. for DMA controller B, etc. */
+#define SPIDER_NET_GDADCHA		0x00000a00
+#define SPIDER_NET_GDADMACCNTR		0x00000a04
+#define SPIDER_NET_GDACTDPA		0x00000a08
+#define SPIDER_NET_GDACTDCNT		0x00000a0c
+#define SPIDER_NET_GDACDBADDR		0x00000a20
+#define SPIDER_NET_GDACDBSIZE		0x00000a24
+#define SPIDER_NET_GDACNEXTDA		0x00000a28
+#define SPIDER_NET_GDACCOMST		0x00000a2c
+#define SPIDER_NET_GDAWBCOMST		0x00000a30
+#define SPIDER_NET_GDAWBRSIZE		0x00000a34
+#define SPIDER_NET_GDAWBVSIZE		0x00000a38
+#define SPIDER_NET_GDAWBTRST		0x00000a3c
+#define SPIDER_NET_GDAWBTRERR		0x00000a40
 
-/* TX DMA controller रेजिस्टरs */
-#घोषणा SPIDER_NET_GDTDCHA		0x00000e00
-#घोषणा SPIDER_NET_GDTDMACCNTR		0x00000e04
-#घोषणा SPIDER_NET_GDTCDPA		0x00000e08
-#घोषणा SPIDER_NET_GDTDMASEL		0x00000e14
+/* TX DMA controller registers */
+#define SPIDER_NET_GDTDCHA		0x00000e00
+#define SPIDER_NET_GDTDMACCNTR		0x00000e04
+#define SPIDER_NET_GDTCDPA		0x00000e08
+#define SPIDER_NET_GDTDMASEL		0x00000e14
 
-#घोषणा SPIDER_NET_ECMODE		0x00000f00
-/* घड़ी and reset control रेजिस्टर */
-#घोषणा SPIDER_NET_CKRCTRL		0x00000ff0
+#define SPIDER_NET_ECMODE		0x00000f00
+/* clock and reset control register */
+#define SPIDER_NET_CKRCTRL		0x00000ff0
 
-/** SCONFIG रेजिस्टरs */
-#घोषणा SPIDER_NET_SCONFIG_IOACTE	0x00002810
+/** SCONFIG registers */
+#define SPIDER_NET_SCONFIG_IOACTE	0x00002810
 
-/** पूर्णांकerrupt mask रेजिस्टरs */
-#घोषणा SPIDER_NET_INT0_MASK_VALUE	0x3f7fe2c7
-#घोषणा SPIDER_NET_INT1_MASK_VALUE	0x0000fff2
-#घोषणा SPIDER_NET_INT2_MASK_VALUE	0x000003f1
+/** interrupt mask registers */
+#define SPIDER_NET_INT0_MASK_VALUE	0x3f7fe2c7
+#define SPIDER_NET_INT1_MASK_VALUE	0x0000fff2
+#define SPIDER_NET_INT2_MASK_VALUE	0x000003f1
 
-/* we rely on flagged descriptor पूर्णांकerrupts */
-#घोषणा SPIDER_NET_FRAMENUM_VALUE	0x00000000
+/* we rely on flagged descriptor interrupts */
+#define SPIDER_NET_FRAMENUM_VALUE	0x00000000
 /* set this first, then the FRAMENUM_VALUE */
-#घोषणा SPIDER_NET_GFXFRAMES_VALUE	0x00000000
+#define SPIDER_NET_GFXFRAMES_VALUE	0x00000000
 
-#घोषणा SPIDER_NET_STOP_SEQ_VALUE	0x00000000
-#घोषणा SPIDER_NET_RUN_SEQ_VALUE	0x0000007e
+#define SPIDER_NET_STOP_SEQ_VALUE	0x00000000
+#define SPIDER_NET_RUN_SEQ_VALUE	0x0000007e
 
-#घोषणा SPIDER_NET_PHY_CTRL_VALUE	0x00040040
-/* #घोषणा SPIDER_NET_PHY_CTRL_VALUE	0x01070080*/
-#घोषणा SPIDER_NET_RXMODE_VALUE		0x00000011
-/* स्वतः retransmission in हाल of MAC पातs */
-#घोषणा SPIDER_NET_TXMODE_VALUE		0x00010000
-#घोषणा SPIDER_NET_RESTART_VALUE	0x00000000
-#घोषणा SPIDER_NET_WOL_VALUE		0x00001111
-#अगर 0
-#घोषणा SPIDER_NET_WOL_VALUE		0x00000000
-#पूर्ण_अगर
-#घोषणा SPIDER_NET_IPSECINIT_VALUE	0x6f716f71
+#define SPIDER_NET_PHY_CTRL_VALUE	0x00040040
+/* #define SPIDER_NET_PHY_CTRL_VALUE	0x01070080*/
+#define SPIDER_NET_RXMODE_VALUE		0x00000011
+/* auto retransmission in case of MAC aborts */
+#define SPIDER_NET_TXMODE_VALUE		0x00010000
+#define SPIDER_NET_RESTART_VALUE	0x00000000
+#define SPIDER_NET_WOL_VALUE		0x00001111
+#if 0
+#define SPIDER_NET_WOL_VALUE		0x00000000
+#endif
+#define SPIDER_NET_IPSECINIT_VALUE	0x6f716f71
 
-/* छोड़ो frames: स्वतःmatic, no upper retransmission count */
-/* outside loopback mode: ETOMOD संकेत करोnt matter, not connected */
-/* ETOMOD संकेत is brought to PHY reset. bit 2 must be 1 in Celleb */
-#घोषणा SPIDER_NET_OPMODE_VALUE		0x00000067
-/*#घोषणा SPIDER_NET_OPMODE_VALUE		0x001b0062*/
-#घोषणा SPIDER_NET_LENLMT_VALUE		0x00000908
+/* pause frames: automatic, no upper retransmission count */
+/* outside loopback mode: ETOMOD signal dont matter, not connected */
+/* ETOMOD signal is brought to PHY reset. bit 2 must be 1 in Celleb */
+#define SPIDER_NET_OPMODE_VALUE		0x00000067
+/*#define SPIDER_NET_OPMODE_VALUE		0x001b0062*/
+#define SPIDER_NET_LENLMT_VALUE		0x00000908
 
-#घोषणा SPIDER_NET_MACAPAUSE_VALUE	0x00000800 /* about 1 ms */
-#घोषणा SPIDER_NET_TXPAUSE_VALUE	0x00000000
+#define SPIDER_NET_MACAPAUSE_VALUE	0x00000800 /* about 1 ms */
+#define SPIDER_NET_TXPAUSE_VALUE	0x00000000
 
-#घोषणा SPIDER_NET_MACMODE_VALUE	0x00000001
-#घोषणा SPIDER_NET_BURSTLMT_VALUE	0x00000200 /* about 16 us */
+#define SPIDER_NET_MACMODE_VALUE	0x00000001
+#define SPIDER_NET_BURSTLMT_VALUE	0x00000200 /* about 16 us */
 
-/* DMAC control रेजिस्टर GDMACCNTR
+/* DMAC control register GDMACCNTR
  *
  * 1(0)				enable r/tx dma
  *  0000000				fixed to 0
  *
  *         000000			fixed to 0
- *               0(1)			en/disable descr ग_लिखोback on क्रमce end
- *                0(1)			क्रमce end
+ *               0(1)			en/disable descr writeback on force end
+ *                0(1)			force end
  *
  *                 000000		fixed to 0
  *                       00		burst alignment: 128 bytes
  *                       11		burst alignment: 1024 bytes
  *
  *                         00000	fixed to 0
- *                              0	descr ग_लिखोback size 32 bytes
- *                               0(1)	descr chain end पूर्णांकerrupt enable
- *                                0(1)	descr status ग_लिखोback enable */
+ *                              0	descr writeback size 32 bytes
+ *                               0(1)	descr chain end interrupt enable
+ *                                0(1)	descr status writeback enable */
 
 /* to set RX_DMA_EN */
-#घोषणा SPIDER_NET_DMA_RX_VALUE		0x80000000
-#घोषणा SPIDER_NET_DMA_RX_FEND_VALUE	0x00030003
+#define SPIDER_NET_DMA_RX_VALUE		0x80000000
+#define SPIDER_NET_DMA_RX_FEND_VALUE	0x00030003
 /* to set TX_DMA_EN */
-#घोषणा SPIDER_NET_TX_DMA_EN           0x80000000
-#घोषणा SPIDER_NET_GDTBSTA             0x00000300
-#घोषणा SPIDER_NET_GDTDCEIDIS          0x00000002
-#घोषणा SPIDER_NET_DMA_TX_VALUE        SPIDER_NET_TX_DMA_EN | \
+#define SPIDER_NET_TX_DMA_EN           0x80000000
+#define SPIDER_NET_GDTBSTA             0x00000300
+#define SPIDER_NET_GDTDCEIDIS          0x00000002
+#define SPIDER_NET_DMA_TX_VALUE        SPIDER_NET_TX_DMA_EN | \
                                        SPIDER_NET_GDTDCEIDIS | \
                                        SPIDER_NET_GDTBSTA
 
-#घोषणा SPIDER_NET_DMA_TX_FEND_VALUE	0x00030003
+#define SPIDER_NET_DMA_TX_FEND_VALUE	0x00030003
 
 /* SPIDER_NET_UA_DESCR_VALUE is OR'ed with the unicast address */
-#घोषणा SPIDER_NET_UA_DESCR_VALUE	0x00080000
-#घोषणा SPIDER_NET_PROMISC_VALUE	0x00080000
-#घोषणा SPIDER_NET_NONPROMISC_VALUE	0x00000000
+#define SPIDER_NET_UA_DESCR_VALUE	0x00080000
+#define SPIDER_NET_PROMISC_VALUE	0x00080000
+#define SPIDER_NET_NONPROMISC_VALUE	0x00000000
 
-#घोषणा SPIDER_NET_DMASEL_VALUE		0x00000001
+#define SPIDER_NET_DMASEL_VALUE		0x00000001
 
-#घोषणा SPIDER_NET_ECMODE_VALUE		0x00000000
+#define SPIDER_NET_ECMODE_VALUE		0x00000000
 
-#घोषणा SPIDER_NET_CKRCTRL_RUN_VALUE	0x1fff010f
-#घोषणा SPIDER_NET_CKRCTRL_STOP_VALUE	0x0000010f
+#define SPIDER_NET_CKRCTRL_RUN_VALUE	0x1fff010f
+#define SPIDER_NET_CKRCTRL_STOP_VALUE	0x0000010f
 
-#घोषणा SPIDER_NET_SBIMSTATE_VALUE	0x00000000
-#घोषणा SPIDER_NET_SBTMSTATE_VALUE	0x00000000
+#define SPIDER_NET_SBIMSTATE_VALUE	0x00000000
+#define SPIDER_NET_SBTMSTATE_VALUE	0x00000000
 
 /* SPIDER_NET_GHIINT0STS bits, in reverse order so that they can be used
  * with 1 << SPIDER_NET_... */
-क्रमागत spider_net_पूर्णांक0_status अणु
+enum spider_net_int0_status {
 	SPIDER_NET_GPHYINT = 0,
 	SPIDER_NET_GMAC2INT,
 	SPIDER_NET_GMAC1INT,
@@ -264,9 +263,9 @@
 	SPIDER_NET_GRFNMINT,
 	SPIDER_NET_G1TMCNTINT,
 	SPIDER_NET_GFREECNTINT
-पूर्ण;
+};
 /* GHIINT1STS bits */
-क्रमागत spider_net_पूर्णांक1_status अणु
+enum spider_net_int1_status {
 	SPIDER_NET_GTMFLLINT = 0,
 	SPIDER_NET_GRMFLLINT,
 	SPIDER_NET_GTMSHTINT,
@@ -294,9 +293,9 @@
 	SPIDER_NET_GDCPTERINT,
 	SPIDER_NET_GDBPTERINT,
 	SPIDER_NET_GDAPTERINT
-पूर्ण;
+};
 /* GHIINT2STS bits */
-क्रमागत spider_net_पूर्णांक2_status अणु
+enum spider_net_int2_status {
 	SPIDER_NET_GPROPERINT = 0,
 	SPIDER_NET_GMCTCRSNGINT,
 	SPIDER_NET_GMCTLCOLINT,
@@ -318,52 +317,52 @@
 	SPIDER_NET_GRISPINGINT,
 	SPIDER_NET_GRISADNGINT,
 	SPIDER_NET_GRISPDNGINT
-पूर्ण;
+};
 
-#घोषणा SPIDER_NET_TXINT	(1 << SPIDER_NET_GDTFDCINT)
+#define SPIDER_NET_TXINT	(1 << SPIDER_NET_GDTFDCINT)
 
-/* We rely on flagged descriptor पूर्णांकerrupts */
-#घोषणा SPIDER_NET_RXINT	( (1 << SPIDER_NET_GDAFDCINT) )
+/* We rely on flagged descriptor interrupts */
+#define SPIDER_NET_RXINT	( (1 << SPIDER_NET_GDAFDCINT) )
 
-#घोषणा SPIDER_NET_LINKINT	( 1 << SPIDER_NET_GMAC2INT )
+#define SPIDER_NET_LINKINT	( 1 << SPIDER_NET_GMAC2INT )
 
-#घोषणा SPIDER_NET_ERRINT	( 0xffffffff & \
+#define SPIDER_NET_ERRINT	( 0xffffffff & \
 				  (~SPIDER_NET_TXINT) & \
 				  (~SPIDER_NET_RXINT) & \
 				  (~SPIDER_NET_LINKINT) )
 
-#घोषणा SPIDER_NET_GPREXEC			0x80000000
-#घोषणा SPIDER_NET_GPRDAT_MASK			0x0000ffff
+#define SPIDER_NET_GPREXEC			0x80000000
+#define SPIDER_NET_GPRDAT_MASK			0x0000ffff
 
-#घोषणा SPIDER_NET_DMAC_NOINTR_COMPLETE		0x00800000
-#घोषणा SPIDER_NET_DMAC_TXFRMTL		0x00040000
-#घोषणा SPIDER_NET_DMAC_TCP			0x00020000
-#घोषणा SPIDER_NET_DMAC_UDP			0x00030000
-#घोषणा SPIDER_NET_TXDCEST			0x08000000
+#define SPIDER_NET_DMAC_NOINTR_COMPLETE		0x00800000
+#define SPIDER_NET_DMAC_TXFRMTL		0x00040000
+#define SPIDER_NET_DMAC_TCP			0x00020000
+#define SPIDER_NET_DMAC_UDP			0x00030000
+#define SPIDER_NET_TXDCEST			0x08000000
 
-#घोषणा SPIDER_NET_DESCR_RXFDIS        0x00000001
-#घोषणा SPIDER_NET_DESCR_RXDCEIS       0x00000002
-#घोषणा SPIDER_NET_DESCR_RXDEN0IS      0x00000004
-#घोषणा SPIDER_NET_DESCR_RXINVDIS      0x00000008
-#घोषणा SPIDER_NET_DESCR_RXRERRIS      0x00000010
-#घोषणा SPIDER_NET_DESCR_RXFDCIMS      0x00000100
-#घोषणा SPIDER_NET_DESCR_RXDCEIMS      0x00000200
-#घोषणा SPIDER_NET_DESCR_RXDEN0IMS     0x00000400
-#घोषणा SPIDER_NET_DESCR_RXINVDIMS     0x00000800
-#घोषणा SPIDER_NET_DESCR_RXRERRMIS     0x00001000
-#घोषणा SPIDER_NET_DESCR_UNUSED        0x077fe0e0
+#define SPIDER_NET_DESCR_RXFDIS        0x00000001
+#define SPIDER_NET_DESCR_RXDCEIS       0x00000002
+#define SPIDER_NET_DESCR_RXDEN0IS      0x00000004
+#define SPIDER_NET_DESCR_RXINVDIS      0x00000008
+#define SPIDER_NET_DESCR_RXRERRIS      0x00000010
+#define SPIDER_NET_DESCR_RXFDCIMS      0x00000100
+#define SPIDER_NET_DESCR_RXDCEIMS      0x00000200
+#define SPIDER_NET_DESCR_RXDEN0IMS     0x00000400
+#define SPIDER_NET_DESCR_RXINVDIMS     0x00000800
+#define SPIDER_NET_DESCR_RXRERRMIS     0x00001000
+#define SPIDER_NET_DESCR_UNUSED        0x077fe0e0
 
-#घोषणा SPIDER_NET_DESCR_IND_PROC_MASK		0xF0000000
-#घोषणा SPIDER_NET_DESCR_COMPLETE		0x00000000 /* used in rx and tx */
-#घोषणा SPIDER_NET_DESCR_RESPONSE_ERROR		0x10000000 /* used in rx and tx */
-#घोषणा SPIDER_NET_DESCR_PROTECTION_ERROR	0x20000000 /* used in rx and tx */
-#घोषणा SPIDER_NET_DESCR_FRAME_END		0x40000000 /* used in rx */
-#घोषणा SPIDER_NET_DESCR_FORCE_END		0x50000000 /* used in rx and tx */
-#घोषणा SPIDER_NET_DESCR_CARDOWNED		0xA0000000 /* used in rx and tx */
-#घोषणा SPIDER_NET_DESCR_NOT_IN_USE		0xF0000000
-#घोषणा SPIDER_NET_DESCR_TXDESFLG		0x00800000
+#define SPIDER_NET_DESCR_IND_PROC_MASK		0xF0000000
+#define SPIDER_NET_DESCR_COMPLETE		0x00000000 /* used in rx and tx */
+#define SPIDER_NET_DESCR_RESPONSE_ERROR		0x10000000 /* used in rx and tx */
+#define SPIDER_NET_DESCR_PROTECTION_ERROR	0x20000000 /* used in rx and tx */
+#define SPIDER_NET_DESCR_FRAME_END		0x40000000 /* used in rx */
+#define SPIDER_NET_DESCR_FORCE_END		0x50000000 /* used in rx and tx */
+#define SPIDER_NET_DESCR_CARDOWNED		0xA0000000 /* used in rx and tx */
+#define SPIDER_NET_DESCR_NOT_IN_USE		0xF0000000
+#define SPIDER_NET_DESCR_TXDESFLG		0x00800000
 
-#घोषणा SPIDER_NET_DESCR_BAD_STATUS   (SPIDER_NET_DESCR_RXDEN0IS | \
+#define SPIDER_NET_DESCR_BAD_STATUS   (SPIDER_NET_DESCR_RXDEN0IS | \
                                        SPIDER_NET_DESCR_RXRERRIS | \
                                        SPIDER_NET_DESCR_RXDEN0IMS | \
                                        SPIDER_NET_DESCR_RXINVDIMS | \
@@ -371,53 +370,53 @@
                                        SPIDER_NET_DESCR_UNUSED)
 
 /* Descriptor, as defined by the hardware */
-काष्ठा spider_net_hw_descr अणु
+struct spider_net_hw_descr {
 	u32 buf_addr;
 	u32 buf_size;
 	u32 next_descr_addr;
 	u32 dmac_cmd_status;
 	u32 result_size;
-	u32 valid_size;	/* all zeroes क्रम tx */
+	u32 valid_size;	/* all zeroes for tx */
 	u32 data_status;
-	u32 data_error;	/* all zeroes क्रम tx */
-पूर्ण __attribute__((aligned(32)));
+	u32 data_error;	/* all zeroes for tx */
+} __attribute__((aligned(32)));
 
-काष्ठा spider_net_descr अणु
-	काष्ठा spider_net_hw_descr *hwdescr;
-	काष्ठा sk_buff *skb;
+struct spider_net_descr {
+	struct spider_net_hw_descr *hwdescr;
+	struct sk_buff *skb;
 	u32 bus_addr;
-	काष्ठा spider_net_descr *next;
-	काष्ठा spider_net_descr *prev;
-पूर्ण;
+	struct spider_net_descr *next;
+	struct spider_net_descr *prev;
+};
 
-काष्ठा spider_net_descr_chain अणु
+struct spider_net_descr_chain {
 	spinlock_t lock;
-	काष्ठा spider_net_descr *head;
-	काष्ठा spider_net_descr *tail;
-	काष्ठा spider_net_descr *ring;
-	पूर्णांक num_desc;
-	काष्ठा spider_net_hw_descr *hwring;
+	struct spider_net_descr *head;
+	struct spider_net_descr *tail;
+	struct spider_net_descr *ring;
+	int num_desc;
+	struct spider_net_hw_descr *hwring;
 	dma_addr_t dma_addr;
-पूर्ण;
+};
 
 /* descriptor data_status bits */
-#घोषणा SPIDER_NET_RX_IPCHK		29
-#घोषणा SPIDER_NET_RX_TCPCHK		28
-#घोषणा SPIDER_NET_VLAN_PACKET		21
-#घोषणा SPIDER_NET_DATA_STATUS_CKSUM_MASK ( (1 << SPIDER_NET_RX_IPCHK) | \
+#define SPIDER_NET_RX_IPCHK		29
+#define SPIDER_NET_RX_TCPCHK		28
+#define SPIDER_NET_VLAN_PACKET		21
+#define SPIDER_NET_DATA_STATUS_CKSUM_MASK ( (1 << SPIDER_NET_RX_IPCHK) | \
 					  (1 << SPIDER_NET_RX_TCPCHK) )
 
 /* descriptor data_error bits */
-#घोषणा SPIDER_NET_RX_IPCHKERR		27
-#घोषणा SPIDER_NET_RX_RXTCPCHKERR	28
+#define SPIDER_NET_RX_IPCHKERR		27
+#define SPIDER_NET_RX_RXTCPCHKERR	28
 
-#घोषणा SPIDER_NET_DATA_ERR_CKSUM_MASK	(1 << SPIDER_NET_RX_IPCHKERR)
+#define SPIDER_NET_DATA_ERR_CKSUM_MASK	(1 << SPIDER_NET_RX_IPCHKERR)
 
-/* the हालs we करोn't pass the packet to the stack.
- * 701b8000 would be correct, but every packets माला_लो that flag */
-#घोषणा SPIDER_NET_DESTROY_RX_FLAGS	0x700b8000
+/* the cases we don't pass the packet to the stack.
+ * 701b8000 would be correct, but every packets gets that flag */
+#define SPIDER_NET_DESTROY_RX_FLAGS	0x700b8000
 
-#घोषणा SPIDER_NET_DEFAULT_MSG		( NETIF_MSG_DRV | \
+#define SPIDER_NET_DEFAULT_MSG		( NETIF_MSG_DRV | \
 					  NETIF_MSG_PROBE | \
 					  NETIF_MSG_LINK | \
 					  NETIF_MSG_TIMER | \
@@ -433,45 +432,45 @@
 					  NETIF_MSG_HW | \
 					  NETIF_MSG_WOL )
 
-काष्ठा spider_net_extra_stats अणु
-	अचिन्हित दीर्घ rx_desc_error;
-	अचिन्हित दीर्घ tx_समयouts;
-	अचिन्हित दीर्घ alloc_rx_skb_error;
-	अचिन्हित दीर्घ rx_iommu_map_error;
-	अचिन्हित दीर्घ tx_iommu_map_error;
-	अचिन्हित दीर्घ rx_desc_unk_state;
-पूर्ण;
+struct spider_net_extra_stats {
+	unsigned long rx_desc_error;
+	unsigned long tx_timeouts;
+	unsigned long alloc_rx_skb_error;
+	unsigned long rx_iommu_map_error;
+	unsigned long tx_iommu_map_error;
+	unsigned long rx_desc_unk_state;
+};
 
-काष्ठा spider_net_card अणु
-	काष्ठा net_device *netdev;
-	काष्ठा pci_dev *pdev;
-	काष्ठा mii_phy phy;
+struct spider_net_card {
+	struct net_device *netdev;
+	struct pci_dev *pdev;
+	struct mii_phy phy;
 
-	काष्ठा napi_काष्ठा napi;
+	struct napi_struct napi;
 
-	पूर्णांक medium;
+	int medium;
 
-	व्योम __iomem *regs;
+	void __iomem *regs;
 
-	काष्ठा spider_net_descr_chain tx_chain;
-	काष्ठा spider_net_descr_chain rx_chain;
-	काष्ठा spider_net_descr *low_watermark;
+	struct spider_net_descr_chain tx_chain;
+	struct spider_net_descr_chain rx_chain;
+	struct spider_net_descr *low_watermark;
 
-	पूर्णांक aneg_count;
-	काष्ठा समयr_list aneg_समयr;
-	काष्ठा समयr_list tx_समयr;
-	काष्ठा work_काष्ठा tx_समयout_task;
-	atomic_t tx_समयout_task_counter;
-	रुको_queue_head_t रुकोq;
-	पूर्णांक num_rx_पूर्णांकs;
-	पूर्णांक ignore_rx_ramfull;
+	int aneg_count;
+	struct timer_list aneg_timer;
+	struct timer_list tx_timer;
+	struct work_struct tx_timeout_task;
+	atomic_t tx_timeout_task_counter;
+	wait_queue_head_t waitq;
+	int num_rx_ints;
+	int ignore_rx_ramfull;
 
-	/* क्रम ethtool */
-	पूर्णांक msg_enable;
-	काष्ठा spider_net_extra_stats spider_stats;
+	/* for ethtool */
+	int msg_enable;
+	struct spider_net_extra_stats spider_stats;
 
-	/* Must be last item in काष्ठा */
-	काष्ठा spider_net_descr darray[];
-पूर्ण;
+	/* Must be last item in struct */
+	struct spider_net_descr darray[];
+};
 
-#पूर्ण_अगर
+#endif

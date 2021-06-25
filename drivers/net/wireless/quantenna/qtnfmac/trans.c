@@ -1,214 +1,213 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /* Copyright (c) 2015-2016 Quantenna Communications. All rights reserved. */
 
-#समावेश <linux/types.h>
-#समावेश <linux/export.h>
-#समावेश <linux/slab.h>
+#include <linux/types.h>
+#include <linux/export.h>
+#include <linux/slab.h>
 
-#समावेश "core.h"
-#समावेश "commands.h"
-#समावेश "event.h"
-#समावेश "bus.h"
+#include "core.h"
+#include "commands.h"
+#include "event.h"
+#include "bus.h"
 
-#घोषणा QTNF_DEF_SYNC_CMD_TIMEOUT	(5 * HZ)
+#define QTNF_DEF_SYNC_CMD_TIMEOUT	(5 * HZ)
 
-पूर्णांक qtnf_trans_send_cmd_with_resp(काष्ठा qtnf_bus *bus, काष्ठा sk_buff *cmd_skb,
-				  काष्ठा sk_buff **response_skb)
-अणु
-	काष्ठा qtnf_cmd_ctl_node *ctl_node = &bus->trans.curr_cmd;
-	काष्ठा qlink_cmd *cmd = (व्योम *)cmd_skb->data;
-	पूर्णांक ret = 0;
-	दीर्घ status;
+int qtnf_trans_send_cmd_with_resp(struct qtnf_bus *bus, struct sk_buff *cmd_skb,
+				  struct sk_buff **response_skb)
+{
+	struct qtnf_cmd_ctl_node *ctl_node = &bus->trans.curr_cmd;
+	struct qlink_cmd *cmd = (void *)cmd_skb->data;
+	int ret = 0;
+	long status;
 	bool resp_not_handled = true;
-	काष्ठा sk_buff *resp_skb = शून्य;
+	struct sk_buff *resp_skb = NULL;
 
-	अगर (unlikely(!response_skb)) अणु
-		dev_kमुक्त_skb(cmd_skb);
-		वापस -EFAULT;
-	पूर्ण
+	if (unlikely(!response_skb)) {
+		dev_kfree_skb(cmd_skb);
+		return -EFAULT;
+	}
 
 	spin_lock(&ctl_node->resp_lock);
 	ctl_node->seq_num++;
 	cmd->seq_num = cpu_to_le16(ctl_node->seq_num);
 	WARN(ctl_node->resp_skb, "qtnfmac: response skb not empty\n");
-	ctl_node->रुकोing_क्रम_resp = true;
+	ctl_node->waiting_for_resp = true;
 	spin_unlock(&ctl_node->resp_lock);
 
 	ret = qtnf_bus_control_tx(bus, cmd_skb);
-	dev_kमुक्त_skb(cmd_skb);
+	dev_kfree_skb(cmd_skb);
 
-	अगर (unlikely(ret))
-		जाओ out;
+	if (unlikely(ret))
+		goto out;
 
-	status = रुको_क्रम_completion_पूर्णांकerruptible_समयout(
+	status = wait_for_completion_interruptible_timeout(
 						&ctl_node->cmd_resp_completion,
 						QTNF_DEF_SYNC_CMD_TIMEOUT);
 
 	spin_lock(&ctl_node->resp_lock);
-	resp_not_handled = ctl_node->रुकोing_क्रम_resp;
+	resp_not_handled = ctl_node->waiting_for_resp;
 	resp_skb = ctl_node->resp_skb;
-	ctl_node->resp_skb = शून्य;
-	ctl_node->रुकोing_क्रम_resp = false;
+	ctl_node->resp_skb = NULL;
+	ctl_node->waiting_for_resp = false;
 	spin_unlock(&ctl_node->resp_lock);
 
-	अगर (unlikely(status <= 0)) अणु
-		अगर (status == 0) अणु
+	if (unlikely(status <= 0)) {
+		if (status == 0) {
 			ret = -ETIMEDOUT;
 			pr_err("response timeout\n");
-		पूर्ण अन्यथा अणु
+		} else {
 			ret = -EINTR;
 			pr_debug("interrupted\n");
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (unlikely(!resp_skb || resp_not_handled)) अणु
-		अगर (!ret)
+	if (unlikely(!resp_skb || resp_not_handled)) {
+		if (!ret)
 			ret = -EFAULT;
 
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = 0;
 	*response_skb = resp_skb;
 
 out:
-	अगर (unlikely(resp_skb && resp_not_handled))
-		dev_kमुक्त_skb(resp_skb);
+	if (unlikely(resp_skb && resp_not_handled))
+		dev_kfree_skb(resp_skb);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम qtnf_trans_संकेत_cmdresp(काष्ठा qtnf_bus *bus, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा qtnf_cmd_ctl_node *ctl_node = &bus->trans.curr_cmd;
-	स्थिर काष्ठा qlink_resp *resp = (स्थिर काष्ठा qlink_resp *)skb->data;
-	स्थिर u16 recvd_seq_num = le16_to_cpu(resp->seq_num);
+static void qtnf_trans_signal_cmdresp(struct qtnf_bus *bus, struct sk_buff *skb)
+{
+	struct qtnf_cmd_ctl_node *ctl_node = &bus->trans.curr_cmd;
+	const struct qlink_resp *resp = (const struct qlink_resp *)skb->data;
+	const u16 recvd_seq_num = le16_to_cpu(resp->seq_num);
 
 	spin_lock(&ctl_node->resp_lock);
 
-	अगर (unlikely(!ctl_node->रुकोing_क्रम_resp)) अणु
+	if (unlikely(!ctl_node->waiting_for_resp)) {
 		pr_err("unexpected response\n");
-		जाओ out_err;
-	पूर्ण
+		goto out_err;
+	}
 
-	अगर (unlikely(recvd_seq_num != ctl_node->seq_num)) अणु
+	if (unlikely(recvd_seq_num != ctl_node->seq_num)) {
 		pr_err("seq num mismatch\n");
-		जाओ out_err;
-	पूर्ण
+		goto out_err;
+	}
 
 	ctl_node->resp_skb = skb;
-	ctl_node->रुकोing_क्रम_resp = false;
+	ctl_node->waiting_for_resp = false;
 
 	spin_unlock(&ctl_node->resp_lock);
 
 	complete(&ctl_node->cmd_resp_completion);
-	वापस;
+	return;
 
 out_err:
 	spin_unlock(&ctl_node->resp_lock);
-	dev_kमुक्त_skb(skb);
-पूर्ण
+	dev_kfree_skb(skb);
+}
 
-अटल पूर्णांक qtnf_trans_event_enqueue(काष्ठा qtnf_bus *bus, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा qtnf_qlink_transport *trans = &bus->trans;
+static int qtnf_trans_event_enqueue(struct qtnf_bus *bus, struct sk_buff *skb)
+{
+	struct qtnf_qlink_transport *trans = &bus->trans;
 
-	अगर (likely(skb_queue_len(&trans->event_queue) <
-		   trans->event_queue_max_len)) अणु
+	if (likely(skb_queue_len(&trans->event_queue) <
+		   trans->event_queue_max_len)) {
 		skb_queue_tail(&trans->event_queue, skb);
 		queue_work(bus->workqueue, &bus->event_work);
-	पूर्ण अन्यथा अणु
+	} else {
 		pr_warn("event dropped due to queue overflow\n");
-		dev_kमुक्त_skb(skb);
-		वापस -1;
-	पूर्ण
+		dev_kfree_skb(skb);
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम qtnf_trans_init(काष्ठा qtnf_bus *bus)
-अणु
-	काष्ठा qtnf_qlink_transport *trans = &bus->trans;
+void qtnf_trans_init(struct qtnf_bus *bus)
+{
+	struct qtnf_qlink_transport *trans = &bus->trans;
 
 	init_completion(&trans->curr_cmd.cmd_resp_completion);
 	spin_lock_init(&trans->curr_cmd.resp_lock);
 
 	spin_lock(&trans->curr_cmd.resp_lock);
 	trans->curr_cmd.seq_num = 0;
-	trans->curr_cmd.रुकोing_क्रम_resp = false;
-	trans->curr_cmd.resp_skb = शून्य;
+	trans->curr_cmd.waiting_for_resp = false;
+	trans->curr_cmd.resp_skb = NULL;
 	spin_unlock(&trans->curr_cmd.resp_lock);
 
 	/* Init event handling related fields */
 	skb_queue_head_init(&trans->event_queue);
 	trans->event_queue_max_len = QTNF_MAX_EVENT_QUEUE_LEN;
-पूर्ण
+}
 
-अटल व्योम qtnf_trans_मुक्त_events(काष्ठा qtnf_bus *bus)
-अणु
-	काष्ठा sk_buff_head *event_queue = &bus->trans.event_queue;
-	काष्ठा sk_buff *current_event_skb = skb_dequeue(event_queue);
+static void qtnf_trans_free_events(struct qtnf_bus *bus)
+{
+	struct sk_buff_head *event_queue = &bus->trans.event_queue;
+	struct sk_buff *current_event_skb = skb_dequeue(event_queue);
 
-	जबतक (current_event_skb) अणु
-		dev_kमुक्त_skb_any(current_event_skb);
+	while (current_event_skb) {
+		dev_kfree_skb_any(current_event_skb);
 		current_event_skb = skb_dequeue(event_queue);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम qtnf_trans_मुक्त(काष्ठा qtnf_bus *bus)
-अणु
-	अगर (!bus) अणु
+void qtnf_trans_free(struct qtnf_bus *bus)
+{
+	if (!bus) {
 		pr_err("invalid bus pointer\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	qtnf_trans_मुक्त_events(bus);
-पूर्ण
+	qtnf_trans_free_events(bus);
+}
 
-पूर्णांक qtnf_trans_handle_rx_ctl_packet(काष्ठा qtnf_bus *bus, काष्ठा sk_buff *skb)
-अणु
-	स्थिर काष्ठा qlink_msg_header *header = (व्योम *)skb->data;
-	पूर्णांक ret = -1;
+int qtnf_trans_handle_rx_ctl_packet(struct qtnf_bus *bus, struct sk_buff *skb)
+{
+	const struct qlink_msg_header *header = (void *)skb->data;
+	int ret = -1;
 
-	अगर (unlikely(skb->len < माप(*header))) अणु
+	if (unlikely(skb->len < sizeof(*header))) {
 		pr_warn("packet is too small: %u\n", skb->len);
-		dev_kमुक्त_skb(skb);
-		वापस -EINVAL;
-	पूर्ण
+		dev_kfree_skb(skb);
+		return -EINVAL;
+	}
 
-	अगर (unlikely(skb->len != le16_to_cpu(header->len))) अणु
+	if (unlikely(skb->len != le16_to_cpu(header->len))) {
 		pr_warn("cmd reply length mismatch: %u != %u\n",
 			skb->len, le16_to_cpu(header->len));
-		dev_kमुक्त_skb(skb);
-		वापस -EFAULT;
-	पूर्ण
+		dev_kfree_skb(skb);
+		return -EFAULT;
+	}
 
-	चयन (le16_to_cpu(header->type)) अणु
-	हाल QLINK_MSG_TYPE_CMDRSP:
-		अगर (unlikely(skb->len < माप(काष्ठा qlink_cmd))) अणु
+	switch (le16_to_cpu(header->type)) {
+	case QLINK_MSG_TYPE_CMDRSP:
+		if (unlikely(skb->len < sizeof(struct qlink_cmd))) {
 			pr_warn("cmd reply too short: %u\n", skb->len);
-			dev_kमुक्त_skb(skb);
-			अवरोध;
-		पूर्ण
+			dev_kfree_skb(skb);
+			break;
+		}
 
-		qtnf_trans_संकेत_cmdresp(bus, skb);
-		अवरोध;
-	हाल QLINK_MSG_TYPE_EVENT:
-		अगर (unlikely(skb->len < माप(काष्ठा qlink_event))) अणु
+		qtnf_trans_signal_cmdresp(bus, skb);
+		break;
+	case QLINK_MSG_TYPE_EVENT:
+		if (unlikely(skb->len < sizeof(struct qlink_event))) {
 			pr_warn("event too short: %u\n", skb->len);
-			dev_kमुक्त_skb(skb);
-			अवरोध;
-		पूर्ण
+			dev_kfree_skb(skb);
+			break;
+		}
 
 		ret = qtnf_trans_event_enqueue(bus, skb);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		pr_warn("unknown packet type: %x\n", le16_to_cpu(header->type));
-		dev_kमुक्त_skb(skb);
-		अवरोध;
-	पूर्ण
+		dev_kfree_skb(skb);
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(qtnf_trans_handle_rx_ctl_packet);

@@ -1,94 +1,93 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
- * OF helpers क्रम the GPIO API
+ * OF helpers for the GPIO API
  *
  * Copyright (c) 2007-2008  MontaVista Software, Inc.
  *
  * Author: Anton Vorontsov <avorontsov@ru.mvista.com>
  */
 
-#अगर_अघोषित __LINUX_OF_GPIO_H
-#घोषणा __LINUX_OF_GPIO_H
+#ifndef __LINUX_OF_GPIO_H
+#define __LINUX_OF_GPIO_H
 
-#समावेश <linux/compiler.h>
-#समावेश <linux/gpio/driver.h>
-#समावेश <linux/gpपन.स>		/* FIXME: Shouldn't be here */
-#समावेश <linux/of.h>
+#include <linux/compiler.h>
+#include <linux/gpio/driver.h>
+#include <linux/gpio.h>		/* FIXME: Shouldn't be here */
+#include <linux/of.h>
 
-काष्ठा device_node;
+struct device_node;
 
 /*
- * This is Linux-specअगरic flags. By शेष controllers' and Linux' mapping
- * match, but GPIO controllers are मुक्त to translate their own flags to
- * Linux-specअगरic in their .xlate callback. Though, 1:1 mapping is recommended.
+ * This is Linux-specific flags. By default controllers' and Linux' mapping
+ * match, but GPIO controllers are free to translate their own flags to
+ * Linux-specific in their .xlate callback. Though, 1:1 mapping is recommended.
  */
-क्रमागत of_gpio_flags अणु
+enum of_gpio_flags {
 	OF_GPIO_ACTIVE_LOW = 0x1,
 	OF_GPIO_SINGLE_ENDED = 0x2,
 	OF_GPIO_OPEN_DRAIN = 0x4,
 	OF_GPIO_TRANSITORY = 0x8,
 	OF_GPIO_PULL_UP = 0x10,
 	OF_GPIO_PULL_DOWN = 0x20,
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_OF_GPIO
+#ifdef CONFIG_OF_GPIO
 
-#समावेश <linux/kernel.h>
+#include <linux/kernel.h>
 
 /*
- * OF GPIO chip क्रम memory mapped banks
+ * OF GPIO chip for memory mapped banks
  */
-काष्ठा of_mm_gpio_chip अणु
-	काष्ठा gpio_chip gc;
-	व्योम (*save_regs)(काष्ठा of_mm_gpio_chip *mm_gc);
-	व्योम __iomem *regs;
-पूर्ण;
+struct of_mm_gpio_chip {
+	struct gpio_chip gc;
+	void (*save_regs)(struct of_mm_gpio_chip *mm_gc);
+	void __iomem *regs;
+};
 
-अटल अंतरभूत काष्ठा of_mm_gpio_chip *to_of_mm_gpio_chip(काष्ठा gpio_chip *gc)
-अणु
-	वापस container_of(gc, काष्ठा of_mm_gpio_chip, gc);
-पूर्ण
+static inline struct of_mm_gpio_chip *to_of_mm_gpio_chip(struct gpio_chip *gc)
+{
+	return container_of(gc, struct of_mm_gpio_chip, gc);
+}
 
-बाह्य पूर्णांक of_get_named_gpio_flags(काष्ठा device_node *np,
-		स्थिर अक्षर *list_name, पूर्णांक index, क्रमागत of_gpio_flags *flags);
+extern int of_get_named_gpio_flags(struct device_node *np,
+		const char *list_name, int index, enum of_gpio_flags *flags);
 
-बाह्य पूर्णांक of_mm_gpiochip_add_data(काष्ठा device_node *np,
-				   काष्ठा of_mm_gpio_chip *mm_gc,
-				   व्योम *data);
-अटल अंतरभूत पूर्णांक of_mm_gpiochip_add(काष्ठा device_node *np,
-				     काष्ठा of_mm_gpio_chip *mm_gc)
-अणु
-	वापस of_mm_gpiochip_add_data(np, mm_gc, शून्य);
-पूर्ण
-बाह्य व्योम of_mm_gpiochip_हटाओ(काष्ठा of_mm_gpio_chip *mm_gc);
+extern int of_mm_gpiochip_add_data(struct device_node *np,
+				   struct of_mm_gpio_chip *mm_gc,
+				   void *data);
+static inline int of_mm_gpiochip_add(struct device_node *np,
+				     struct of_mm_gpio_chip *mm_gc)
+{
+	return of_mm_gpiochip_add_data(np, mm_gc, NULL);
+}
+extern void of_mm_gpiochip_remove(struct of_mm_gpio_chip *mm_gc);
 
-#अन्यथा /* CONFIG_OF_GPIO */
+#else /* CONFIG_OF_GPIO */
 
-#समावेश <linux/त्रुटिसं.स>
+#include <linux/errno.h>
 
 /* Drivers may not strictly depend on the GPIO support, so let them link. */
-अटल अंतरभूत पूर्णांक of_get_named_gpio_flags(काष्ठा device_node *np,
-		स्थिर अक्षर *list_name, पूर्णांक index, क्रमागत of_gpio_flags *flags)
-अणु
-	अगर (flags)
+static inline int of_get_named_gpio_flags(struct device_node *np,
+		const char *list_name, int index, enum of_gpio_flags *flags)
+{
+	if (flags)
 		*flags = 0;
 
-	वापस -ENOSYS;
-पूर्ण
+	return -ENOSYS;
+}
 
-#पूर्ण_अगर /* CONFIG_OF_GPIO */
+#endif /* CONFIG_OF_GPIO */
 
 /**
- * of_gpio_named_count() - Count GPIOs क्रम a device
- * @np:		device node to count GPIOs क्रम
- * @propname:	property name containing gpio specअगरier(s)
+ * of_gpio_named_count() - Count GPIOs for a device
+ * @np:		device node to count GPIOs for
+ * @propname:	property name containing gpio specifier(s)
  *
- * The function वापसs the count of GPIOs specअगरied क्रम a node.
- * Note that the empty GPIO specअगरiers count too. Returns either
+ * The function returns the count of GPIOs specified for a node.
+ * Note that the empty GPIO specifiers count too. Returns either
  *   Number of gpios defined in property,
- *   -EINVAL क्रम an incorrectly क्रमmed gpios property, or
- *   -ENOENT क्रम a missing gpios property
+ *   -EINVAL for an incorrectly formed gpios property, or
+ *   -ENOENT for a missing gpios property
  *
  * Example:
  * gpios = <0
@@ -96,57 +95,57 @@
  *          0
  *          &gpio2 3 4>;
  *
- * The above example defines four GPIOs, two of which are not specअगरied.
- * This function will वापस '4'
+ * The above example defines four GPIOs, two of which are not specified.
+ * This function will return '4'
  */
-अटल अंतरभूत पूर्णांक of_gpio_named_count(काष्ठा device_node *np, स्थिर अक्षर* propname)
-अणु
-	वापस of_count_phandle_with_args(np, propname, "#gpio-cells");
-पूर्ण
+static inline int of_gpio_named_count(struct device_node *np, const char* propname)
+{
+	return of_count_phandle_with_args(np, propname, "#gpio-cells");
+}
 
 /**
- * of_gpio_count() - Count GPIOs क्रम a device
- * @np:		device node to count GPIOs क्रम
+ * of_gpio_count() - Count GPIOs for a device
+ * @np:		device node to count GPIOs for
  *
  * Same as of_gpio_named_count, but hard coded to use the 'gpios' property
  */
-अटल अंतरभूत पूर्णांक of_gpio_count(काष्ठा device_node *np)
-अणु
-	वापस of_gpio_named_count(np, "gpios");
-पूर्ण
+static inline int of_gpio_count(struct device_node *np)
+{
+	return of_gpio_named_count(np, "gpios");
+}
 
-अटल अंतरभूत पूर्णांक of_get_gpio_flags(काष्ठा device_node *np, पूर्णांक index,
-		      क्रमागत of_gpio_flags *flags)
-अणु
-	वापस of_get_named_gpio_flags(np, "gpios", index, flags);
-पूर्ण
+static inline int of_get_gpio_flags(struct device_node *np, int index,
+		      enum of_gpio_flags *flags)
+{
+	return of_get_named_gpio_flags(np, "gpios", index, flags);
+}
 
 /**
  * of_get_named_gpio() - Get a GPIO number to use with GPIO API
  * @np:		device node to get GPIO from
- * @propname:	Name of property containing gpio specअगरier(s)
+ * @propname:	Name of property containing gpio specifier(s)
  * @index:	index of the GPIO
  *
- * Returns GPIO number to use with Linux generic GPIO API, or one of the त्रुटि_सं
+ * Returns GPIO number to use with Linux generic GPIO API, or one of the errno
  * value on the error condition.
  */
-अटल अंतरभूत पूर्णांक of_get_named_gpio(काष्ठा device_node *np,
-                                   स्थिर अक्षर *propname, पूर्णांक index)
-अणु
-	वापस of_get_named_gpio_flags(np, propname, index, शून्य);
-पूर्ण
+static inline int of_get_named_gpio(struct device_node *np,
+                                   const char *propname, int index)
+{
+	return of_get_named_gpio_flags(np, propname, index, NULL);
+}
 
 /**
  * of_get_gpio() - Get a GPIO number to use with GPIO API
  * @np:		device node to get GPIO from
  * @index:	index of the GPIO
  *
- * Returns GPIO number to use with Linux generic GPIO API, or one of the त्रुटि_सं
+ * Returns GPIO number to use with Linux generic GPIO API, or one of the errno
  * value on the error condition.
  */
-अटल अंतरभूत पूर्णांक of_get_gpio(काष्ठा device_node *np, पूर्णांक index)
-अणु
-	वापस of_get_gpio_flags(np, index, शून्य);
-पूर्ण
+static inline int of_get_gpio(struct device_node *np, int index)
+{
+	return of_get_gpio_flags(np, index, NULL);
+}
 
-#पूर्ण_अगर /* __LINUX_OF_GPIO_H */
+#endif /* __LINUX_OF_GPIO_H */

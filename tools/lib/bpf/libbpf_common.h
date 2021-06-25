@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: (LGPL-2.1 OR BSD-2-Clause) */
+/* SPDX-License-Identifier: (LGPL-2.1 OR BSD-2-Clause) */
 
 /*
  * Common user-facing libbpf helpers.
@@ -7,37 +6,37 @@
  * Copyright (c) 2019 Facebook
  */
 
-#अगर_अघोषित __LIBBPF_LIBBPF_COMMON_H
-#घोषणा __LIBBPF_LIBBPF_COMMON_H
+#ifndef __LIBBPF_LIBBPF_COMMON_H
+#define __LIBBPF_LIBBPF_COMMON_H
 
-#समावेश <माला.स>
+#include <string.h>
 
-#अगर_अघोषित LIBBPF_API
-#घोषणा LIBBPF_API __attribute__((visibility("default")))
-#पूर्ण_अगर
+#ifndef LIBBPF_API
+#define LIBBPF_API __attribute__((visibility("default")))
+#endif
 
-#घोषणा LIBBPF_DEPRECATED(msg) __attribute__((deprecated(msg)))
+#define LIBBPF_DEPRECATED(msg) __attribute__((deprecated(msg)))
 
-/* Helper macro to declare and initialize libbpf options काष्ठा
+/* Helper macro to declare and initialize libbpf options struct
  *
- * This dance with uninitialized declaration, followed by स_रखो to zero,
- * followed by assignment using compound literal syntax is करोne to preserve
- * ability to use a nice काष्ठा field initialization syntax and **hopefully**
+ * This dance with uninitialized declaration, followed by memset to zero,
+ * followed by assignment using compound literal syntax is done to preserve
+ * ability to use a nice struct field initialization syntax and **hopefully**
  * have all the padding bytes initialized to zero. It's not guaranteed though,
  * when copying literal, that compiler won't copy garbage in literal's padding
  * bytes, but that's the best way I've found and it seems to work in practice.
  *
- * Macro declares opts काष्ठा of given type and name, zero-initializes,
- * including any extra padding, it with स_रखो() and then assigns initial
- * values provided by users in काष्ठा initializer-syntax as varargs.
+ * Macro declares opts struct of given type and name, zero-initializes,
+ * including any extra padding, it with memset() and then assigns initial
+ * values provided by users in struct initializer-syntax as varargs.
  */
-#घोषणा DECLARE_LIBBPF_OPTS(TYPE, NAME, ...)				    \
-	काष्ठा TYPE NAME = (अणु 						    \
-		स_रखो(&NAME, 0, माप(काष्ठा TYPE));			    \
-		(काष्ठा TYPE) अणु						    \
-			.sz = माप(काष्ठा TYPE),			    \
+#define DECLARE_LIBBPF_OPTS(TYPE, NAME, ...)				    \
+	struct TYPE NAME = ({ 						    \
+		memset(&NAME, 0, sizeof(struct TYPE));			    \
+		(struct TYPE) {						    \
+			.sz = sizeof(struct TYPE),			    \
 			__VA_ARGS__					    \
-		पूर्ण;							    \
-	पूर्ण)
+		};							    \
+	})
 
-#पूर्ण_अगर /* __LIBBPF_LIBBPF_COMMON_H */
+#endif /* __LIBBPF_LIBBPF_COMMON_H */

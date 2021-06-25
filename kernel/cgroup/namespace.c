@@ -1,75 +1,74 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश "cgroup-internal.h"
+// SPDX-License-Identifier: GPL-2.0
+#include "cgroup-internal.h"
 
-#समावेश <linux/sched/task.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/nsproxy.h>
-#समावेश <linux/proc_ns.h>
+#include <linux/sched/task.h>
+#include <linux/slab.h>
+#include <linux/nsproxy.h>
+#include <linux/proc_ns.h>
 
 
 /* cgroup namespaces */
 
-अटल काष्ठा ucounts *inc_cgroup_namespaces(काष्ठा user_namespace *ns)
-अणु
-	वापस inc_ucount(ns, current_euid(), UCOUNT_CGROUP_NAMESPACES);
-पूर्ण
+static struct ucounts *inc_cgroup_namespaces(struct user_namespace *ns)
+{
+	return inc_ucount(ns, current_euid(), UCOUNT_CGROUP_NAMESPACES);
+}
 
-अटल व्योम dec_cgroup_namespaces(काष्ठा ucounts *ucounts)
-अणु
+static void dec_cgroup_namespaces(struct ucounts *ucounts)
+{
 	dec_ucount(ucounts, UCOUNT_CGROUP_NAMESPACES);
-पूर्ण
+}
 
-अटल काष्ठा cgroup_namespace *alloc_cgroup_ns(व्योम)
-अणु
-	काष्ठा cgroup_namespace *new_ns;
-	पूर्णांक ret;
+static struct cgroup_namespace *alloc_cgroup_ns(void)
+{
+	struct cgroup_namespace *new_ns;
+	int ret;
 
-	new_ns = kzalloc(माप(काष्ठा cgroup_namespace), GFP_KERNEL);
-	अगर (!new_ns)
-		वापस ERR_PTR(-ENOMEM);
+	new_ns = kzalloc(sizeof(struct cgroup_namespace), GFP_KERNEL);
+	if (!new_ns)
+		return ERR_PTR(-ENOMEM);
 	ret = ns_alloc_inum(&new_ns->ns);
-	अगर (ret) अणु
-		kमुक्त(new_ns);
-		वापस ERR_PTR(ret);
-	पूर्ण
+	if (ret) {
+		kfree(new_ns);
+		return ERR_PTR(ret);
+	}
 	refcount_set(&new_ns->ns.count, 1);
 	new_ns->ns.ops = &cgroupns_operations;
-	वापस new_ns;
-पूर्ण
+	return new_ns;
+}
 
-व्योम मुक्त_cgroup_ns(काष्ठा cgroup_namespace *ns)
-अणु
+void free_cgroup_ns(struct cgroup_namespace *ns)
+{
 	put_css_set(ns->root_cset);
 	dec_cgroup_namespaces(ns->ucounts);
 	put_user_ns(ns->user_ns);
-	ns_मुक्त_inum(&ns->ns);
-	kमुक्त(ns);
-पूर्ण
-EXPORT_SYMBOL(मुक्त_cgroup_ns);
+	ns_free_inum(&ns->ns);
+	kfree(ns);
+}
+EXPORT_SYMBOL(free_cgroup_ns);
 
-काष्ठा cgroup_namespace *copy_cgroup_ns(अचिन्हित दीर्घ flags,
-					काष्ठा user_namespace *user_ns,
-					काष्ठा cgroup_namespace *old_ns)
-अणु
-	काष्ठा cgroup_namespace *new_ns;
-	काष्ठा ucounts *ucounts;
-	काष्ठा css_set *cset;
+struct cgroup_namespace *copy_cgroup_ns(unsigned long flags,
+					struct user_namespace *user_ns,
+					struct cgroup_namespace *old_ns)
+{
+	struct cgroup_namespace *new_ns;
+	struct ucounts *ucounts;
+	struct css_set *cset;
 
 	BUG_ON(!old_ns);
 
-	अगर (!(flags & CLONE_NEWCGROUP)) अणु
+	if (!(flags & CLONE_NEWCGROUP)) {
 		get_cgroup_ns(old_ns);
-		वापस old_ns;
-	पूर्ण
+		return old_ns;
+	}
 
 	/* Allow only sysadmin to create cgroup namespace. */
-	अगर (!ns_capable(user_ns, CAP_SYS_ADMIN))
-		वापस ERR_PTR(-EPERM);
+	if (!ns_capable(user_ns, CAP_SYS_ADMIN))
+		return ERR_PTR(-EPERM);
 
 	ucounts = inc_cgroup_namespaces(user_ns);
-	अगर (!ucounts)
-		वापस ERR_PTR(-ENOSPC);
+	if (!ucounts)
+		return ERR_PTR(-ENOSPC);
 
 	/* It is not safe to take cgroup_mutex here */
 	spin_lock_irq(&css_set_lock);
@@ -78,81 +77,81 @@ EXPORT_SYMBOL(मुक्त_cgroup_ns);
 	spin_unlock_irq(&css_set_lock);
 
 	new_ns = alloc_cgroup_ns();
-	अगर (IS_ERR(new_ns)) अणु
+	if (IS_ERR(new_ns)) {
 		put_css_set(cset);
 		dec_cgroup_namespaces(ucounts);
-		वापस new_ns;
-	पूर्ण
+		return new_ns;
+	}
 
 	new_ns->user_ns = get_user_ns(user_ns);
 	new_ns->ucounts = ucounts;
 	new_ns->root_cset = cset;
 
-	वापस new_ns;
-पूर्ण
+	return new_ns;
+}
 
-अटल अंतरभूत काष्ठा cgroup_namespace *to_cg_ns(काष्ठा ns_common *ns)
-अणु
-	वापस container_of(ns, काष्ठा cgroup_namespace, ns);
-पूर्ण
+static inline struct cgroup_namespace *to_cg_ns(struct ns_common *ns)
+{
+	return container_of(ns, struct cgroup_namespace, ns);
+}
 
-अटल पूर्णांक cgroupns_install(काष्ठा nsset *nsset, काष्ठा ns_common *ns)
-अणु
-	काष्ठा nsproxy *nsproxy = nsset->nsproxy;
-	काष्ठा cgroup_namespace *cgroup_ns = to_cg_ns(ns);
+static int cgroupns_install(struct nsset *nsset, struct ns_common *ns)
+{
+	struct nsproxy *nsproxy = nsset->nsproxy;
+	struct cgroup_namespace *cgroup_ns = to_cg_ns(ns);
 
-	अगर (!ns_capable(nsset->cred->user_ns, CAP_SYS_ADMIN) ||
+	if (!ns_capable(nsset->cred->user_ns, CAP_SYS_ADMIN) ||
 	    !ns_capable(cgroup_ns->user_ns, CAP_SYS_ADMIN))
-		वापस -EPERM;
+		return -EPERM;
 
-	/* Don't need to करो anything अगर we are attaching to our own cgroupns. */
-	अगर (cgroup_ns == nsproxy->cgroup_ns)
-		वापस 0;
+	/* Don't need to do anything if we are attaching to our own cgroupns. */
+	if (cgroup_ns == nsproxy->cgroup_ns)
+		return 0;
 
 	get_cgroup_ns(cgroup_ns);
 	put_cgroup_ns(nsproxy->cgroup_ns);
 	nsproxy->cgroup_ns = cgroup_ns;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा ns_common *cgroupns_get(काष्ठा task_काष्ठा *task)
-अणु
-	काष्ठा cgroup_namespace *ns = शून्य;
-	काष्ठा nsproxy *nsproxy;
+static struct ns_common *cgroupns_get(struct task_struct *task)
+{
+	struct cgroup_namespace *ns = NULL;
+	struct nsproxy *nsproxy;
 
 	task_lock(task);
 	nsproxy = task->nsproxy;
-	अगर (nsproxy) अणु
+	if (nsproxy) {
 		ns = nsproxy->cgroup_ns;
 		get_cgroup_ns(ns);
-	पूर्ण
+	}
 	task_unlock(task);
 
-	वापस ns ? &ns->ns : शून्य;
-पूर्ण
+	return ns ? &ns->ns : NULL;
+}
 
-अटल व्योम cgroupns_put(काष्ठा ns_common *ns)
-अणु
+static void cgroupns_put(struct ns_common *ns)
+{
 	put_cgroup_ns(to_cg_ns(ns));
-पूर्ण
+}
 
-अटल काष्ठा user_namespace *cgroupns_owner(काष्ठा ns_common *ns)
-अणु
-	वापस to_cg_ns(ns)->user_ns;
-पूर्ण
+static struct user_namespace *cgroupns_owner(struct ns_common *ns)
+{
+	return to_cg_ns(ns)->user_ns;
+}
 
-स्थिर काष्ठा proc_ns_operations cgroupns_operations = अणु
+const struct proc_ns_operations cgroupns_operations = {
 	.name		= "cgroup",
 	.type		= CLONE_NEWCGROUP,
 	.get		= cgroupns_get,
 	.put		= cgroupns_put,
 	.install	= cgroupns_install,
 	.owner		= cgroupns_owner,
-पूर्ण;
+};
 
-अटल __init पूर्णांक cgroup_namespaces_init(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+static __init int cgroup_namespaces_init(void)
+{
+	return 0;
+}
 subsys_initcall(cgroup_namespaces_init);

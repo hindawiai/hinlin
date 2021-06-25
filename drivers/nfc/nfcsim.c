@@ -1,109 +1,108 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * NFC hardware simulation driver
  * Copyright (c) 2013, Intel Corporation.
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/nfc.h>
-#समावेश <net/nfc/nfc.h>
-#समावेश <net/nfc/digital.h>
+#include <linux/device.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/ctype.h>
+#include <linux/debugfs.h>
+#include <linux/nfc.h>
+#include <net/nfc/nfc.h>
+#include <net/nfc/digital.h>
 
-#घोषणा NFCSIM_ERR(d, fmt, args...) nfc_err(&d->nfc_digital_dev->nfc_dev->dev, \
+#define NFCSIM_ERR(d, fmt, args...) nfc_err(&d->nfc_digital_dev->nfc_dev->dev, \
 					    "%s: " fmt, __func__, ## args)
 
-#घोषणा NFCSIM_DBG(d, fmt, args...) dev_dbg(&d->nfc_digital_dev->nfc_dev->dev, \
+#define NFCSIM_DBG(d, fmt, args...) dev_dbg(&d->nfc_digital_dev->nfc_dev->dev, \
 					    "%s: " fmt, __func__, ## args)
 
-#घोषणा NFCSIM_VERSION "0.2"
+#define NFCSIM_VERSION "0.2"
 
-#घोषणा NFCSIM_MODE_NONE	0
-#घोषणा NFCSIM_MODE_INITIATOR	1
-#घोषणा NFCSIM_MODE_TARGET	2
+#define NFCSIM_MODE_NONE	0
+#define NFCSIM_MODE_INITIATOR	1
+#define NFCSIM_MODE_TARGET	2
 
-#घोषणा NFCSIM_CAPABILITIES (NFC_DIGITAL_DRV_CAPS_IN_CRC   | \
+#define NFCSIM_CAPABILITIES (NFC_DIGITAL_DRV_CAPS_IN_CRC   | \
 			     NFC_DIGITAL_DRV_CAPS_TG_CRC)
 
-काष्ठा nfcsim अणु
-	काष्ठा nfc_digital_dev *nfc_digital_dev;
+struct nfcsim {
+	struct nfc_digital_dev *nfc_digital_dev;
 
-	काष्ठा work_काष्ठा recv_work;
-	काष्ठा delayed_work send_work;
+	struct work_struct recv_work;
+	struct delayed_work send_work;
 
-	काष्ठा nfcsim_link *link_in;
-	काष्ठा nfcsim_link *link_out;
+	struct nfcsim_link *link_in;
+	struct nfcsim_link *link_out;
 
 	bool up;
 	u8 mode;
 	u8 rf_tech;
 
-	u16 recv_समयout;
+	u16 recv_timeout;
 
 	nfc_digital_cmd_complete_t cb;
-	व्योम *arg;
+	void *arg;
 
 	u8 dropframe;
-पूर्ण;
+};
 
-काष्ठा nfcsim_link अणु
-	काष्ठा mutex lock;
+struct nfcsim_link {
+	struct mutex lock;
 
 	u8 rf_tech;
 	u8 mode;
 
-	u8 shutकरोwn;
+	u8 shutdown;
 
-	काष्ठा sk_buff *skb;
-	रुको_queue_head_t recv_रुको;
+	struct sk_buff *skb;
+	wait_queue_head_t recv_wait;
 	u8 cond;
-पूर्ण;
+};
 
-अटल काष्ठा nfcsim_link *nfcsim_link_new(व्योम)
-अणु
-	काष्ठा nfcsim_link *link;
+static struct nfcsim_link *nfcsim_link_new(void)
+{
+	struct nfcsim_link *link;
 
-	link = kzalloc(माप(काष्ठा nfcsim_link), GFP_KERNEL);
-	अगर (!link)
-		वापस शून्य;
+	link = kzalloc(sizeof(struct nfcsim_link), GFP_KERNEL);
+	if (!link)
+		return NULL;
 
 	mutex_init(&link->lock);
-	init_रुकोqueue_head(&link->recv_रुको);
+	init_waitqueue_head(&link->recv_wait);
 
-	वापस link;
-पूर्ण
+	return link;
+}
 
-अटल व्योम nfcsim_link_मुक्त(काष्ठा nfcsim_link *link)
-अणु
-	dev_kमुक्त_skb(link->skb);
-	kमुक्त(link);
-पूर्ण
+static void nfcsim_link_free(struct nfcsim_link *link)
+{
+	dev_kfree_skb(link->skb);
+	kfree(link);
+}
 
-अटल व्योम nfcsim_link_recv_wake(काष्ठा nfcsim_link *link)
-अणु
+static void nfcsim_link_recv_wake(struct nfcsim_link *link)
+{
 	link->cond = 1;
-	wake_up_पूर्णांकerruptible(&link->recv_रुको);
-पूर्ण
+	wake_up_interruptible(&link->recv_wait);
+}
 
-अटल व्योम nfcsim_link_set_skb(काष्ठा nfcsim_link *link, काष्ठा sk_buff *skb,
+static void nfcsim_link_set_skb(struct nfcsim_link *link, struct sk_buff *skb,
 				u8 rf_tech, u8 mode)
-अणु
+{
 	mutex_lock(&link->lock);
 
-	dev_kमुक्त_skb(link->skb);
+	dev_kfree_skb(link->skb);
 	link->skb = skb;
 	link->rf_tech = rf_tech;
 	link->mode = mode;
 
 	mutex_unlock(&link->lock);
-पूर्ण
+}
 
-अटल व्योम nfcsim_link_recv_cancel(काष्ठा nfcsim_link *link)
-अणु
+static void nfcsim_link_recv_cancel(struct nfcsim_link *link)
+{
 	mutex_lock(&link->lock);
 
 	link->mode = NFCSIM_MODE_NONE;
@@ -111,217 +110,217 @@
 	mutex_unlock(&link->lock);
 
 	nfcsim_link_recv_wake(link);
-पूर्ण
+}
 
-अटल व्योम nfcsim_link_shutकरोwn(काष्ठा nfcsim_link *link)
-अणु
+static void nfcsim_link_shutdown(struct nfcsim_link *link)
+{
 	mutex_lock(&link->lock);
 
-	link->shutकरोwn = 1;
+	link->shutdown = 1;
 	link->mode = NFCSIM_MODE_NONE;
 
 	mutex_unlock(&link->lock);
 
 	nfcsim_link_recv_wake(link);
-पूर्ण
+}
 
-अटल काष्ठा sk_buff *nfcsim_link_recv_skb(काष्ठा nfcsim_link *link,
-					    पूर्णांक समयout, u8 rf_tech, u8 mode)
-अणु
-	पूर्णांक rc;
-	काष्ठा sk_buff *skb;
+static struct sk_buff *nfcsim_link_recv_skb(struct nfcsim_link *link,
+					    int timeout, u8 rf_tech, u8 mode)
+{
+	int rc;
+	struct sk_buff *skb;
 
-	rc = रुको_event_पूर्णांकerruptible_समयout(link->recv_रुको,
+	rc = wait_event_interruptible_timeout(link->recv_wait,
 					      link->cond,
-					      msecs_to_jअगरfies(समयout));
+					      msecs_to_jiffies(timeout));
 
 	mutex_lock(&link->lock);
 
 	skb = link->skb;
-	link->skb = शून्य;
+	link->skb = NULL;
 
-	अगर (!rc) अणु
+	if (!rc) {
 		rc = -ETIMEDOUT;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	अगर (!skb || link->rf_tech != rf_tech || link->mode == mode) अणु
+	if (!skb || link->rf_tech != rf_tech || link->mode == mode) {
 		rc = -EINVAL;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	अगर (link->shutकरोwn) अणु
+	if (link->shutdown) {
 		rc = -ENODEV;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-करोne:
+done:
 	mutex_unlock(&link->lock);
 
-	अगर (rc < 0) अणु
-		dev_kमुक्त_skb(skb);
+	if (rc < 0) {
+		dev_kfree_skb(skb);
 		skb = ERR_PTR(rc);
-	पूर्ण
+	}
 
 	link->cond = 0;
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-अटल व्योम nfcsim_send_wq(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा nfcsim *dev = container_of(work, काष्ठा nfcsim, send_work.work);
+static void nfcsim_send_wq(struct work_struct *work)
+{
+	struct nfcsim *dev = container_of(work, struct nfcsim, send_work.work);
 
 	/*
 	 * To effectively send data, the device just wake up its link_out which
-	 * is the link_in of the peer device. The exchanged skb has alपढ़ोy been
+	 * is the link_in of the peer device. The exchanged skb has already been
 	 * stored in the dev->link_out through nfcsim_link_set_skb().
 	 */
 	nfcsim_link_recv_wake(dev->link_out);
-पूर्ण
+}
 
-अटल व्योम nfcsim_recv_wq(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा nfcsim *dev = container_of(work, काष्ठा nfcsim, recv_work);
-	काष्ठा sk_buff *skb;
+static void nfcsim_recv_wq(struct work_struct *work)
+{
+	struct nfcsim *dev = container_of(work, struct nfcsim, recv_work);
+	struct sk_buff *skb;
 
-	skb = nfcsim_link_recv_skb(dev->link_in, dev->recv_समयout,
+	skb = nfcsim_link_recv_skb(dev->link_in, dev->recv_timeout,
 				   dev->rf_tech, dev->mode);
 
-	अगर (!dev->up) अणु
+	if (!dev->up) {
 		NFCSIM_ERR(dev, "Device is down\n");
 
-		अगर (!IS_ERR(skb))
-			dev_kमुक्त_skb(skb);
+		if (!IS_ERR(skb))
+			dev_kfree_skb(skb);
 
 		skb = ERR_PTR(-ENODEV);
-	पूर्ण
+	}
 
 	dev->cb(dev->nfc_digital_dev, dev->arg, skb);
-पूर्ण
+}
 
-अटल पूर्णांक nfcsim_send(काष्ठा nfc_digital_dev *ddev, काष्ठा sk_buff *skb,
-		       u16 समयout, nfc_digital_cmd_complete_t cb, व्योम *arg)
-अणु
-	काष्ठा nfcsim *dev = nfc_digital_get_drvdata(ddev);
+static int nfcsim_send(struct nfc_digital_dev *ddev, struct sk_buff *skb,
+		       u16 timeout, nfc_digital_cmd_complete_t cb, void *arg)
+{
+	struct nfcsim *dev = nfc_digital_get_drvdata(ddev);
 	u8 delay;
 
-	अगर (!dev->up) अणु
+	if (!dev->up) {
 		NFCSIM_ERR(dev, "Device is down\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	dev->recv_समयout = समयout;
+	dev->recv_timeout = timeout;
 	dev->cb = cb;
 	dev->arg = arg;
 
 	schedule_work(&dev->recv_work);
 
-	अगर (dev->dropframe) अणु
+	if (dev->dropframe) {
 		NFCSIM_DBG(dev, "dropping frame (out of %d)\n", dev->dropframe);
-		dev_kमुक्त_skb(skb);
+		dev_kfree_skb(skb);
 		dev->dropframe--;
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (skb) अणु
+	if (skb) {
 		nfcsim_link_set_skb(dev->link_out, skb, dev->rf_tech,
 				    dev->mode);
 
-		/* Add अक्रमom delay (between 3 and 10 ms) beक्रमe sending data */
-		get_अक्रमom_bytes(&delay, 1);
+		/* Add random delay (between 3 and 10 ms) before sending data */
+		get_random_bytes(&delay, 1);
 		delay = 3 + (delay & 0x07);
 
-		schedule_delayed_work(&dev->send_work, msecs_to_jअगरfies(delay));
-	पूर्ण
+		schedule_delayed_work(&dev->send_work, msecs_to_jiffies(delay));
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम nfcsim_पात_cmd(काष्ठा nfc_digital_dev *ddev)
-अणु
-	काष्ठा nfcsim *dev = nfc_digital_get_drvdata(ddev);
+static void nfcsim_abort_cmd(struct nfc_digital_dev *ddev)
+{
+	struct nfcsim *dev = nfc_digital_get_drvdata(ddev);
 
 	nfcsim_link_recv_cancel(dev->link_in);
-पूर्ण
+}
 
-अटल पूर्णांक nfcsim_चयन_rf(काष्ठा nfc_digital_dev *ddev, bool on)
-अणु
-	काष्ठा nfcsim *dev = nfc_digital_get_drvdata(ddev);
+static int nfcsim_switch_rf(struct nfc_digital_dev *ddev, bool on)
+{
+	struct nfcsim *dev = nfc_digital_get_drvdata(ddev);
 
 	dev->up = on;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nfcsim_in_configure_hw(काष्ठा nfc_digital_dev *ddev,
-					  पूर्णांक type, पूर्णांक param)
-अणु
-	काष्ठा nfcsim *dev = nfc_digital_get_drvdata(ddev);
+static int nfcsim_in_configure_hw(struct nfc_digital_dev *ddev,
+					  int type, int param)
+{
+	struct nfcsim *dev = nfc_digital_get_drvdata(ddev);
 
-	चयन (type) अणु
-	हाल NFC_DIGITAL_CONFIG_RF_TECH:
+	switch (type) {
+	case NFC_DIGITAL_CONFIG_RF_TECH:
 		dev->up = true;
 		dev->mode = NFCSIM_MODE_INITIATOR;
 		dev->rf_tech = param;
-		अवरोध;
+		break;
 
-	हाल NFC_DIGITAL_CONFIG_FRAMING:
-		अवरोध;
+	case NFC_DIGITAL_CONFIG_FRAMING:
+		break;
 
-	शेष:
+	default:
 		NFCSIM_ERR(dev, "Invalid configuration type: %d\n", type);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nfcsim_in_send_cmd(काष्ठा nfc_digital_dev *ddev,
-			       काष्ठा sk_buff *skb, u16 समयout,
-			       nfc_digital_cmd_complete_t cb, व्योम *arg)
-अणु
-	वापस nfcsim_send(ddev, skb, समयout, cb, arg);
-पूर्ण
+static int nfcsim_in_send_cmd(struct nfc_digital_dev *ddev,
+			       struct sk_buff *skb, u16 timeout,
+			       nfc_digital_cmd_complete_t cb, void *arg)
+{
+	return nfcsim_send(ddev, skb, timeout, cb, arg);
+}
 
-अटल पूर्णांक nfcsim_tg_configure_hw(काष्ठा nfc_digital_dev *ddev,
-					  पूर्णांक type, पूर्णांक param)
-अणु
-	काष्ठा nfcsim *dev = nfc_digital_get_drvdata(ddev);
+static int nfcsim_tg_configure_hw(struct nfc_digital_dev *ddev,
+					  int type, int param)
+{
+	struct nfcsim *dev = nfc_digital_get_drvdata(ddev);
 
-	चयन (type) अणु
-	हाल NFC_DIGITAL_CONFIG_RF_TECH:
+	switch (type) {
+	case NFC_DIGITAL_CONFIG_RF_TECH:
 		dev->up = true;
 		dev->mode = NFCSIM_MODE_TARGET;
 		dev->rf_tech = param;
-		अवरोध;
+		break;
 
-	हाल NFC_DIGITAL_CONFIG_FRAMING:
-		अवरोध;
+	case NFC_DIGITAL_CONFIG_FRAMING:
+		break;
 
-	शेष:
+	default:
 		NFCSIM_ERR(dev, "Invalid configuration type: %d\n", type);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nfcsim_tg_send_cmd(काष्ठा nfc_digital_dev *ddev,
-			       काष्ठा sk_buff *skb, u16 समयout,
-			       nfc_digital_cmd_complete_t cb, व्योम *arg)
-अणु
-	वापस nfcsim_send(ddev, skb, समयout, cb, arg);
-पूर्ण
+static int nfcsim_tg_send_cmd(struct nfc_digital_dev *ddev,
+			       struct sk_buff *skb, u16 timeout,
+			       nfc_digital_cmd_complete_t cb, void *arg)
+{
+	return nfcsim_send(ddev, skb, timeout, cb, arg);
+}
 
-अटल पूर्णांक nfcsim_tg_listen(काष्ठा nfc_digital_dev *ddev, u16 समयout,
-			    nfc_digital_cmd_complete_t cb, व्योम *arg)
-अणु
-	वापस nfcsim_send(ddev, शून्य, समयout, cb, arg);
-पूर्ण
+static int nfcsim_tg_listen(struct nfc_digital_dev *ddev, u16 timeout,
+			    nfc_digital_cmd_complete_t cb, void *arg)
+{
+	return nfcsim_send(ddev, NULL, timeout, cb, arg);
+}
 
-अटल काष्ठा nfc_digital_ops nfcsim_digital_ops = अणु
+static struct nfc_digital_ops nfcsim_digital_ops = {
 	.in_configure_hw = nfcsim_in_configure_hw,
 	.in_send_cmd = nfcsim_in_send_cmd,
 
@@ -329,64 +328,64 @@
 	.tg_configure_hw = nfcsim_tg_configure_hw,
 	.tg_send_cmd = nfcsim_tg_send_cmd,
 
-	.पात_cmd = nfcsim_पात_cmd,
-	.चयन_rf = nfcsim_चयन_rf,
-पूर्ण;
+	.abort_cmd = nfcsim_abort_cmd,
+	.switch_rf = nfcsim_switch_rf,
+};
 
-अटल काष्ठा dentry *nfcsim_debugfs_root;
+static struct dentry *nfcsim_debugfs_root;
 
-अटल व्योम nfcsim_debugfs_init(व्योम)
-अणु
-	nfcsim_debugfs_root = debugfs_create_dir("nfcsim", शून्य);
+static void nfcsim_debugfs_init(void)
+{
+	nfcsim_debugfs_root = debugfs_create_dir("nfcsim", NULL);
 
-	अगर (!nfcsim_debugfs_root)
+	if (!nfcsim_debugfs_root)
 		pr_err("Could not create debugfs entry\n");
 
-पूर्ण
+}
 
-अटल व्योम nfcsim_debugfs_हटाओ(व्योम)
-अणु
-	debugfs_हटाओ_recursive(nfcsim_debugfs_root);
-पूर्ण
+static void nfcsim_debugfs_remove(void)
+{
+	debugfs_remove_recursive(nfcsim_debugfs_root);
+}
 
-अटल व्योम nfcsim_debugfs_init_dev(काष्ठा nfcsim *dev)
-अणु
-	काष्ठा dentry *dev_dir;
-	अक्षर devname[5]; /* nfcX\0 */
+static void nfcsim_debugfs_init_dev(struct nfcsim *dev)
+{
+	struct dentry *dev_dir;
+	char devname[5]; /* nfcX\0 */
 	u32 idx;
-	पूर्णांक n;
+	int n;
 
-	अगर (!nfcsim_debugfs_root) अणु
+	if (!nfcsim_debugfs_root) {
 		NFCSIM_ERR(dev, "nfcsim debugfs not initialized\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	idx = dev->nfc_digital_dev->nfc_dev->idx;
-	n = snम_लिखो(devname, माप(devname), "nfc%d", idx);
-	अगर (n >= माप(devname)) अणु
+	n = snprintf(devname, sizeof(devname), "nfc%d", idx);
+	if (n >= sizeof(devname)) {
 		NFCSIM_ERR(dev, "Could not compute dev name for dev %d\n", idx);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	dev_dir = debugfs_create_dir(devname, nfcsim_debugfs_root);
-	अगर (!dev_dir) अणु
+	if (!dev_dir) {
 		NFCSIM_ERR(dev, "Could not create debugfs entries for nfc%d\n",
 			   idx);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	debugfs_create_u8("dropframe", 0664, dev_dir, &dev->dropframe);
-पूर्ण
+}
 
-अटल काष्ठा nfcsim *nfcsim_device_new(काष्ठा nfcsim_link *link_in,
-					काष्ठा nfcsim_link *link_out)
-अणु
-	काष्ठा nfcsim *dev;
-	पूर्णांक rc;
+static struct nfcsim *nfcsim_device_new(struct nfcsim_link *link_in,
+					struct nfcsim_link *link_out)
+{
+	struct nfcsim *dev;
+	int rc;
 
-	dev = kzalloc(माप(काष्ठा nfcsim), GFP_KERNEL);
-	अगर (!dev)
-		वापस ERR_PTR(-ENOMEM);
+	dev = kzalloc(sizeof(struct nfcsim), GFP_KERNEL);
+	if (!dev)
+		return ERR_PTR(-ENOMEM);
 
 	INIT_DELAYED_WORK(&dev->send_work, nfcsim_send_wq);
 	INIT_WORK(&dev->recv_work, nfcsim_recv_wq);
@@ -396,110 +395,110 @@
 						    NFC_PROTO_NFC_DEP_MASK,
 						    NFCSIM_CAPABILITIES,
 						    0, 0);
-	अगर (!dev->nfc_digital_dev) अणु
-		kमुक्त(dev);
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+	if (!dev->nfc_digital_dev) {
+		kfree(dev);
+		return ERR_PTR(-ENOMEM);
+	}
 
 	nfc_digital_set_drvdata(dev->nfc_digital_dev, dev);
 
 	dev->link_in = link_in;
 	dev->link_out = link_out;
 
-	rc = nfc_digital_रेजिस्टर_device(dev->nfc_digital_dev);
-	अगर (rc) अणु
+	rc = nfc_digital_register_device(dev->nfc_digital_dev);
+	if (rc) {
 		pr_err("Could not register digital device (%d)\n", rc);
-		nfc_digital_मुक्त_device(dev->nfc_digital_dev);
-		kमुक्त(dev);
+		nfc_digital_free_device(dev->nfc_digital_dev);
+		kfree(dev);
 
-		वापस ERR_PTR(rc);
-	पूर्ण
+		return ERR_PTR(rc);
+	}
 
 	nfcsim_debugfs_init_dev(dev);
 
-	वापस dev;
-पूर्ण
+	return dev;
+}
 
-अटल व्योम nfcsim_device_मुक्त(काष्ठा nfcsim *dev)
-अणु
-	nfc_digital_unरेजिस्टर_device(dev->nfc_digital_dev);
+static void nfcsim_device_free(struct nfcsim *dev)
+{
+	nfc_digital_unregister_device(dev->nfc_digital_dev);
 
 	dev->up = false;
 
-	nfcsim_link_shutकरोwn(dev->link_in);
+	nfcsim_link_shutdown(dev->link_in);
 
 	cancel_delayed_work_sync(&dev->send_work);
 	cancel_work_sync(&dev->recv_work);
 
-	nfc_digital_मुक्त_device(dev->nfc_digital_dev);
+	nfc_digital_free_device(dev->nfc_digital_dev);
 
-	kमुक्त(dev);
-पूर्ण
+	kfree(dev);
+}
 
-अटल काष्ठा nfcsim *dev0;
-अटल काष्ठा nfcsim *dev1;
+static struct nfcsim *dev0;
+static struct nfcsim *dev1;
 
-अटल पूर्णांक __init nfcsim_init(व्योम)
-अणु
-	काष्ठा nfcsim_link *link0, *link1;
-	पूर्णांक rc;
+static int __init nfcsim_init(void)
+{
+	struct nfcsim_link *link0, *link1;
+	int rc;
 
 	link0 = nfcsim_link_new();
 	link1 = nfcsim_link_new();
-	अगर (!link0 || !link1) अणु
+	if (!link0 || !link1) {
 		rc = -ENOMEM;
-		जाओ निकास_err;
-	पूर्ण
+		goto exit_err;
+	}
 
 	nfcsim_debugfs_init();
 
 	dev0 = nfcsim_device_new(link0, link1);
-	अगर (IS_ERR(dev0)) अणु
+	if (IS_ERR(dev0)) {
 		rc = PTR_ERR(dev0);
-		जाओ निकास_err;
-	पूर्ण
+		goto exit_err;
+	}
 
 	dev1 = nfcsim_device_new(link1, link0);
-	अगर (IS_ERR(dev1)) अणु
-		nfcsim_device_मुक्त(dev0);
+	if (IS_ERR(dev1)) {
+		nfcsim_device_free(dev0);
 
 		rc = PTR_ERR(dev1);
-		जाओ निकास_err;
-	पूर्ण
+		goto exit_err;
+	}
 
 	pr_info("nfcsim " NFCSIM_VERSION " initialized\n");
 
-	वापस 0;
+	return 0;
 
-निकास_err:
+exit_err:
 	pr_err("Failed to initialize nfcsim driver (%d)\n", rc);
 
-	अगर (link0)
-		nfcsim_link_मुक्त(link0);
-	अगर (link1)
-		nfcsim_link_मुक्त(link1);
+	if (link0)
+		nfcsim_link_free(link0);
+	if (link1)
+		nfcsim_link_free(link1);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम __निकास nfcsim_निकास(व्योम)
-अणु
-	काष्ठा nfcsim_link *link0, *link1;
+static void __exit nfcsim_exit(void)
+{
+	struct nfcsim_link *link0, *link1;
 
 	link0 = dev0->link_in;
 	link1 = dev0->link_out;
 
-	nfcsim_device_मुक्त(dev0);
-	nfcsim_device_मुक्त(dev1);
+	nfcsim_device_free(dev0);
+	nfcsim_device_free(dev1);
 
-	nfcsim_link_मुक्त(link0);
-	nfcsim_link_मुक्त(link1);
+	nfcsim_link_free(link0);
+	nfcsim_link_free(link1);
 
-	nfcsim_debugfs_हटाओ();
-पूर्ण
+	nfcsim_debugfs_remove();
+}
 
 module_init(nfcsim_init);
-module_निकास(nfcsim_निकास);
+module_exit(nfcsim_exit);
 
 MODULE_DESCRIPTION("NFCSim driver ver " NFCSIM_VERSION);
 MODULE_VERSION(NFCSIM_VERSION);

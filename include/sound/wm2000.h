@@ -1,21 +1,20 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * linux/sound/wm2000.h -- Platक्रमm data क्रम WM2000
+ * linux/sound/wm2000.h -- Platform data for WM2000
  *
  * Copyright 2010 Wolfson Microelectronics. PLC.
  */
 
-#अगर_अघोषित __LINUX_SND_WM2000_H
-#घोषणा __LINUX_SND_WM2000_H
+#ifndef __LINUX_SND_WM2000_H
+#define __LINUX_SND_WM2000_H
 
-काष्ठा wm2000_platक्रमm_data अणु
-	/** Filename क्रम प्रणाली-specअगरic image to करोwnload to device. */
-	स्थिर अक्षर *करोwnload_file;
+struct wm2000_platform_data {
+	/** Filename for system-specific image to download to device. */
+	const char *download_file;
 
-	/** Disable speech clarity enhancement, क्रम use when an
-	 * बाह्यal algorithm is used. */
-	अचिन्हित पूर्णांक speech_enh_disable:1;
-पूर्ण;
+	/** Disable speech clarity enhancement, for use when an
+	 * external algorithm is used. */
+	unsigned int speech_enh_disable:1;
+};
 
-#पूर्ण_अगर
+#endif

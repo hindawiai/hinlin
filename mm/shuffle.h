@@ -1,54 +1,53 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 // Copyright(c) 2018 Intel Corporation. All rights reserved.
-#अगर_अघोषित _MM_SHUFFLE_H
-#घोषणा _MM_SHUFFLE_H
-#समावेश <linux/jump_label.h>
+#ifndef _MM_SHUFFLE_H
+#define _MM_SHUFFLE_H
+#include <linux/jump_label.h>
 
-#घोषणा SHUFFLE_ORDER (MAX_ORDER-1)
+#define SHUFFLE_ORDER (MAX_ORDER-1)
 
-#अगर_घोषित CONFIG_SHUFFLE_PAGE_ALLOCATOR
+#ifdef CONFIG_SHUFFLE_PAGE_ALLOCATOR
 DECLARE_STATIC_KEY_FALSE(page_alloc_shuffle_key);
-बाह्य व्योम __shuffle_मुक्त_memory(pg_data_t *pgdat);
-बाह्य bool shuffle_pick_tail(व्योम);
-अटल अंतरभूत व्योम __meminit shuffle_मुक्त_memory(pg_data_t *pgdat)
-अणु
-	अगर (!अटल_branch_unlikely(&page_alloc_shuffle_key))
-		वापस;
-	__shuffle_मुक्त_memory(pgdat);
-पूर्ण
+extern void __shuffle_free_memory(pg_data_t *pgdat);
+extern bool shuffle_pick_tail(void);
+static inline void __meminit shuffle_free_memory(pg_data_t *pgdat)
+{
+	if (!static_branch_unlikely(&page_alloc_shuffle_key))
+		return;
+	__shuffle_free_memory(pgdat);
+}
 
-बाह्य व्योम __shuffle_zone(काष्ठा zone *z);
-अटल अंतरभूत व्योम __meminit shuffle_zone(काष्ठा zone *z)
-अणु
-	अगर (!अटल_branch_unlikely(&page_alloc_shuffle_key))
-		वापस;
+extern void __shuffle_zone(struct zone *z);
+static inline void __meminit shuffle_zone(struct zone *z)
+{
+	if (!static_branch_unlikely(&page_alloc_shuffle_key))
+		return;
 	__shuffle_zone(z);
-पूर्ण
+}
 
-अटल अंतरभूत bool is_shuffle_order(पूर्णांक order)
-अणु
-	अगर (!अटल_branch_unlikely(&page_alloc_shuffle_key))
-		वापस false;
-	वापस order >= SHUFFLE_ORDER;
-पूर्ण
-#अन्यथा
-अटल अंतरभूत bool shuffle_pick_tail(व्योम)
-अणु
-	वापस false;
-पूर्ण
+static inline bool is_shuffle_order(int order)
+{
+	if (!static_branch_unlikely(&page_alloc_shuffle_key))
+		return false;
+	return order >= SHUFFLE_ORDER;
+}
+#else
+static inline bool shuffle_pick_tail(void)
+{
+	return false;
+}
 
-अटल अंतरभूत व्योम shuffle_मुक्त_memory(pg_data_t *pgdat)
-अणु
-पूर्ण
+static inline void shuffle_free_memory(pg_data_t *pgdat)
+{
+}
 
-अटल अंतरभूत व्योम shuffle_zone(काष्ठा zone *z)
-अणु
-पूर्ण
+static inline void shuffle_zone(struct zone *z)
+{
+}
 
-अटल अंतरभूत bool is_shuffle_order(पूर्णांक order)
-अणु
-	वापस false;
-पूर्ण
-#पूर्ण_अगर
-#पूर्ण_अगर /* _MM_SHUFFLE_H */
+static inline bool is_shuffle_order(int order)
+{
+	return false;
+}
+#endif
+#endif /* _MM_SHUFFLE_H */

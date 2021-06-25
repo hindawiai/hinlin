@@ -1,2 +1,1 @@
-<शैली गुरु>
-#समावेश <यंत्र-generic/irq_regs.h>
+#include <asm-generic/irq_regs.h>

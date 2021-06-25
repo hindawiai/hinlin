@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Hisilicon घड़ी driver
+ * Hisilicon clock driver
  *
  * Copyright (c) 2013-2017 Hisilicon Limited.
  * Copyright (c) 2017 Linaro Limited.
@@ -11,77 +10,77 @@
  *	    Leo Yan <leo.yan@linaro.org>
  */
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/device.h>
-#समावेश <linux/err.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/mailbox_client.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <dt-bindings/घड़ी/hi3660-घड़ी.h>
+#include <linux/clk-provider.h>
+#include <linux/device.h>
+#include <linux/err.h>
+#include <linux/init.h>
+#include <linux/io.h>
+#include <linux/mailbox_client.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <dt-bindings/clock/hi3660-clock.h>
 
-#घोषणा HI3660_STUB_CLOCK_DATA		(0x70)
-#घोषणा MHZ				(1000 * 1000)
+#define HI3660_STUB_CLOCK_DATA		(0x70)
+#define MHZ				(1000 * 1000)
 
-#घोषणा DEFINE_CLK_STUB(_id, _cmd, _name)			\
-	अणु							\
+#define DEFINE_CLK_STUB(_id, _cmd, _name)			\
+	{							\
 		.id = (_id),					\
 		.cmd = (_cmd),					\
-		.hw.init = &(काष्ठा clk_init_data) अणु		\
+		.hw.init = &(struct clk_init_data) {		\
 			.name = #_name,				\
 			.ops = &hi3660_stub_clk_ops,		\
 			.num_parents = 0,			\
 			.flags = CLK_GET_RATE_NOCACHE,		\
-		पूर्ण,						\
-	पूर्ण,
+		},						\
+	},
 
-#घोषणा to_stub_clk(_hw) container_of(_hw, काष्ठा hi3660_stub_clk, hw)
+#define to_stub_clk(_hw) container_of(_hw, struct hi3660_stub_clk, hw)
 
-काष्ठा hi3660_stub_clk_chan अणु
-	काष्ठा mbox_client cl;
-	काष्ठा mbox_chan *mbox;
-पूर्ण;
+struct hi3660_stub_clk_chan {
+	struct mbox_client cl;
+	struct mbox_chan *mbox;
+};
 
-काष्ठा hi3660_stub_clk अणु
-	अचिन्हित पूर्णांक id;
-	काष्ठा clk_hw hw;
-	अचिन्हित पूर्णांक cmd;
-	अचिन्हित पूर्णांक msg[8];
-	अचिन्हित पूर्णांक rate;
-पूर्ण;
+struct hi3660_stub_clk {
+	unsigned int id;
+	struct clk_hw hw;
+	unsigned int cmd;
+	unsigned int msg[8];
+	unsigned int rate;
+};
 
-अटल व्योम __iomem *freq_reg;
-अटल काष्ठा hi3660_stub_clk_chan stub_clk_chan;
+static void __iomem *freq_reg;
+static struct hi3660_stub_clk_chan stub_clk_chan;
 
-अटल अचिन्हित दीर्घ hi3660_stub_clk_recalc_rate(काष्ठा clk_hw *hw,
-						 अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा hi3660_stub_clk *stub_clk = to_stub_clk(hw);
+static unsigned long hi3660_stub_clk_recalc_rate(struct clk_hw *hw,
+						 unsigned long parent_rate)
+{
+	struct hi3660_stub_clk *stub_clk = to_stub_clk(hw);
 
 	/*
-	 * LPM3 ग_लिखोs back the CPU frequency in shared SRAM so पढ़ो
+	 * LPM3 writes back the CPU frequency in shared SRAM so read
 	 * back the frequency.
 	 */
-	stub_clk->rate = पढ़ोl(freq_reg + (stub_clk->id << 2)) * MHZ;
-	वापस stub_clk->rate;
-पूर्ण
+	stub_clk->rate = readl(freq_reg + (stub_clk->id << 2)) * MHZ;
+	return stub_clk->rate;
+}
 
-अटल दीर्घ hi3660_stub_clk_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				       अचिन्हित दीर्घ *prate)
-अणु
+static long hi3660_stub_clk_round_rate(struct clk_hw *hw, unsigned long rate,
+				       unsigned long *prate)
+{
 	/*
-	 * LPM3 handles rate rounding so just वापस whatever
+	 * LPM3 handles rate rounding so just return whatever
 	 * rate is requested.
 	 */
-	वापस rate;
-पूर्ण
+	return rate;
+}
 
-अटल पूर्णांक hi3660_stub_clk_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				    अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा hi3660_stub_clk *stub_clk = to_stub_clk(hw);
+static int hi3660_stub_clk_set_rate(struct clk_hw *hw, unsigned long rate,
+				    unsigned long parent_rate)
+{
+	struct hi3660_stub_clk *stub_clk = to_stub_clk(hw);
 
 	stub_clk->msg[0] = stub_clk->cmd;
 	stub_clk->msg[1] = rate / MHZ;
@@ -90,90 +89,90 @@
 		stub_clk->msg[0], stub_clk->msg[1]);
 
 	mbox_send_message(stub_clk_chan.mbox, stub_clk->msg);
-	mbox_client_txकरोne(stub_clk_chan.mbox, 0);
+	mbox_client_txdone(stub_clk_chan.mbox, 0);
 
 	stub_clk->rate = rate;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा clk_ops hi3660_stub_clk_ops = अणु
+static const struct clk_ops hi3660_stub_clk_ops = {
 	.recalc_rate    = hi3660_stub_clk_recalc_rate,
 	.round_rate     = hi3660_stub_clk_round_rate,
 	.set_rate       = hi3660_stub_clk_set_rate,
-पूर्ण;
+};
 
-अटल काष्ठा hi3660_stub_clk hi3660_stub_clks[HI3660_CLK_STUB_NUM] = अणु
+static struct hi3660_stub_clk hi3660_stub_clks[HI3660_CLK_STUB_NUM] = {
 	DEFINE_CLK_STUB(HI3660_CLK_STUB_CLUSTER0, 0x0001030A, "cpu-cluster.0")
 	DEFINE_CLK_STUB(HI3660_CLK_STUB_CLUSTER1, 0x0002030A, "cpu-cluster.1")
 	DEFINE_CLK_STUB(HI3660_CLK_STUB_GPU, 0x0003030A, "clk-g3d")
 	DEFINE_CLK_STUB(HI3660_CLK_STUB_DDR, 0x00040309, "clk-ddrc")
-पूर्ण;
+};
 
-अटल काष्ठा clk_hw *hi3660_stub_clk_hw_get(काष्ठा of_phandle_args *clkspec,
-					     व्योम *data)
-अणु
-	अचिन्हित पूर्णांक idx = clkspec->args[0];
+static struct clk_hw *hi3660_stub_clk_hw_get(struct of_phandle_args *clkspec,
+					     void *data)
+{
+	unsigned int idx = clkspec->args[0];
 
-	अगर (idx >= HI3660_CLK_STUB_NUM) अणु
+	if (idx >= HI3660_CLK_STUB_NUM) {
 		pr_err("%s: invalid index %u\n", __func__, idx);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	वापस &hi3660_stub_clks[idx].hw;
-पूर्ण
+	return &hi3660_stub_clks[idx].hw;
+}
 
-अटल पूर्णांक hi3660_stub_clk_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा resource *res;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक ret;
+static int hi3660_stub_clk_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct resource *res;
+	unsigned int i;
+	int ret;
 
 	/* Use mailbox client without blocking */
 	stub_clk_chan.cl.dev = dev;
-	stub_clk_chan.cl.tx_करोne = शून्य;
+	stub_clk_chan.cl.tx_done = NULL;
 	stub_clk_chan.cl.tx_block = false;
-	stub_clk_chan.cl.knows_txकरोne = false;
+	stub_clk_chan.cl.knows_txdone = false;
 
 	/* Allocate mailbox channel */
 	stub_clk_chan.mbox = mbox_request_channel(&stub_clk_chan.cl, 0);
-	अगर (IS_ERR(stub_clk_chan.mbox))
-		वापस PTR_ERR(stub_clk_chan.mbox);
+	if (IS_ERR(stub_clk_chan.mbox))
+		return PTR_ERR(stub_clk_chan.mbox);
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (!res)
-		वापस -EINVAL;
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (!res)
+		return -EINVAL;
 	freq_reg = devm_ioremap(dev, res->start, resource_size(res));
-	अगर (!freq_reg)
-		वापस -ENOMEM;
+	if (!freq_reg)
+		return -ENOMEM;
 
 	freq_reg += HI3660_STUB_CLOCK_DATA;
 
-	क्रम (i = 0; i < HI3660_CLK_STUB_NUM; i++) अणु
-		ret = devm_clk_hw_रेजिस्टर(&pdev->dev, &hi3660_stub_clks[i].hw);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+	for (i = 0; i < HI3660_CLK_STUB_NUM; i++) {
+		ret = devm_clk_hw_register(&pdev->dev, &hi3660_stub_clks[i].hw);
+		if (ret)
+			return ret;
+	}
 
-	वापस devm_of_clk_add_hw_provider(&pdev->dev, hi3660_stub_clk_hw_get,
+	return devm_of_clk_add_hw_provider(&pdev->dev, hi3660_stub_clk_hw_get,
 					   hi3660_stub_clks);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा of_device_id hi3660_stub_clk_of_match[] = अणु
-	अणु .compatible = "hisilicon,hi3660-stub-clk", पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id hi3660_stub_clk_of_match[] = {
+	{ .compatible = "hisilicon,hi3660-stub-clk", },
+	{}
+};
 
-अटल काष्ठा platक्रमm_driver hi3660_stub_clk_driver = अणु
+static struct platform_driver hi3660_stub_clk_driver = {
 	.probe	= hi3660_stub_clk_probe,
-	.driver = अणु
+	.driver = {
 		.name = "hi3660-stub-clk",
 		.of_match_table = hi3660_stub_clk_of_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init hi3660_stub_clk_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&hi3660_stub_clk_driver);
-पूर्ण
+static int __init hi3660_stub_clk_init(void)
+{
+	return platform_driver_register(&hi3660_stub_clk_driver);
+}
 subsys_initcall(hi3660_stub_clk_init);

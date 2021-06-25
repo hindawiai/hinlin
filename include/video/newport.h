@@ -1,171 +1,170 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /* $Id: newport.h,v 1.5 1999/08/04 06:01:51 ulfc Exp $
  *
- * newport.h: Defines and रेजिस्टर layout क्रम NEWPORT graphics
+ * newport.h: Defines and register layout for NEWPORT graphics
  *            hardware.
  *
  * Copyright (C) 1996 David S. Miller (davem@davemloft.net)
  * 
- * Ulf Carlsson - Compatibility with the IRIX काष्ठाures added
+ * Ulf Carlsson - Compatibility with the IRIX structures added
  */
 
-#अगर_अघोषित _SGI_NEWPORT_H
-#घोषणा _SGI_NEWPORT_H
+#ifndef _SGI_NEWPORT_H
+#define _SGI_NEWPORT_H
 
 
-प्रकार अस्थिर अचिन्हित पूर्णांक npireg_t;
+typedef volatile unsigned int npireg_t;
 
-जोड़ npभग्न अणु
-	अस्थिर भग्न flt;
+union npfloat {
+	volatile float flt;
 	npireg_t       word;
-पूर्ण;
+};
 
-प्रकार जोड़ npभग्न npfreg_t;
+typedef union npfloat npfreg_t;
 
-जोड़ np_dcb अणु
+union np_dcb {
 	npireg_t byword;
-	काष्ठा अणु अस्थिर अचिन्हित लघु s0, s1; पूर्ण byलघु;
-	काष्ठा अणु अस्थिर अचिन्हित अक्षर b0, b1, b2, b3; पूर्ण bybytes;
-पूर्ण;
+	struct { volatile unsigned short s0, s1; } byshort;
+	struct { volatile unsigned char b0, b1, b2, b3; } bybytes;
+};
 
-काष्ठा newport_rexregs अणु
+struct newport_rexregs {
 	npireg_t drawmode1;      /* GL extra mode bits */
 	
-#घोषणा DM1_PLANES         0x00000007
-#घोषणा    DM1_NOPLANES    0x00000000
-#घोषणा    DM1_RGBPLANES   0x00000001
-#घोषणा    DM1_RGBAPLANES  0x00000002
-#घोषणा    DM1_OLAYPLANES  0x00000004
-#घोषणा    DM1_PUPPLANES   0x00000005
-#घोषणा    DM1_CIDPLANES   0x00000006
+#define DM1_PLANES         0x00000007
+#define    DM1_NOPLANES    0x00000000
+#define    DM1_RGBPLANES   0x00000001
+#define    DM1_RGBAPLANES  0x00000002
+#define    DM1_OLAYPLANES  0x00000004
+#define    DM1_PUPPLANES   0x00000005
+#define    DM1_CIDPLANES   0x00000006
 	
-#घोषणा NPORT_DMODE1_DDMASK      0x00000018
-#घोषणा NPORT_DMODE1_DD4         0x00000000
-#घोषणा NPORT_DMODE1_DD8         0x00000008
-#घोषणा NPORT_DMODE1_DD12        0x00000010
-#घोषणा NPORT_DMODE1_DD24        0x00000018
-#घोषणा NPORT_DMODE1_DSRC        0x00000020
-#घोषणा NPORT_DMODE1_YFLIP       0x00000040
-#घोषणा NPORT_DMODE1_RWPCKD      0x00000080
-#घोषणा NPORT_DMODE1_HDMASK      0x00000300
-#घोषणा NPORT_DMODE1_HD4         0x00000000
-#घोषणा NPORT_DMODE1_HD8         0x00000100
-#घोषणा NPORT_DMODE1_HD12        0x00000200
-#घोषणा NPORT_DMODE1_HD32        0x00000300
-#घोषणा NPORT_DMODE1_RWDBL       0x00000400
-#घोषणा NPORT_DMODE1_ESWAP       0x00000800 /* Endian swap */
-#घोषणा NPORT_DMODE1_CCMASK      0x00007000
-#घोषणा NPORT_DMODE1_CCLT        0x00001000
-#घोषणा NPORT_DMODE1_CCEQ        0x00002000
-#घोषणा NPORT_DMODE1_CCGT        0x00004000
-#घोषणा NPORT_DMODE1_RGBMD       0x00008000
-#घोषणा NPORT_DMODE1_DENAB       0x00010000 /* Dither enable */
-#घोषणा NPORT_DMODE1_FCLR        0x00020000 /* Fast clear */
-#घोषणा NPORT_DMODE1_BENAB       0x00040000 /* Blend enable */
-#घोषणा NPORT_DMODE1_SFMASK      0x00380000
-#घोषणा NPORT_DMODE1_SF0         0x00000000
-#घोषणा NPORT_DMODE1_SF1         0x00080000
-#घोषणा NPORT_DMODE1_SFDC        0x00100000
-#घोषणा NPORT_DMODE1_SFMDC       0x00180000
-#घोषणा NPORT_DMODE1_SFSA        0x00200000
-#घोषणा NPORT_DMODE1_SFMSA       0x00280000
-#घोषणा NPORT_DMODE1_DFMASK      0x01c00000
-#घोषणा NPORT_DMODE1_DF0         0x00000000
-#घोषणा NPORT_DMODE1_DF1         0x00400000
-#घोषणा NPORT_DMODE1_DFSC        0x00800000
-#घोषणा NPORT_DMODE1_DFMSC       0x00c00000
-#घोषणा NPORT_DMODE1_DFSA        0x01000000
-#घोषणा NPORT_DMODE1_DFMSA       0x01400000
-#घोषणा NPORT_DMODE1_BBENAB      0x02000000 /* Back blend enable */
-#घोषणा NPORT_DMODE1_PFENAB      0x04000000 /* Pre-fetch enable */
-#घोषणा NPORT_DMODE1_ABLEND      0x08000000 /* Alpha blend */
-#घोषणा NPORT_DMODE1_LOMASK      0xf0000000
-#घोषणा NPORT_DMODE1_LOZERO      0x00000000
-#घोषणा NPORT_DMODE1_LOAND       0x10000000
-#घोषणा NPORT_DMODE1_LOANDR      0x20000000
-#घोषणा NPORT_DMODE1_LOSRC       0x30000000
-#घोषणा NPORT_DMODE1_LOANDI      0x40000000
-#घोषणा NPORT_DMODE1_LODST       0x50000000
-#घोषणा NPORT_DMODE1_LOXOR       0x60000000
-#घोषणा NPORT_DMODE1_LOOR        0x70000000
-#घोषणा NPORT_DMODE1_LONOR       0x80000000
-#घोषणा NPORT_DMODE1_LOXNOR      0x90000000
-#घोषणा NPORT_DMODE1_LONDST      0xa0000000
-#घोषणा NPORT_DMODE1_LOORR       0xb0000000
-#घोषणा NPORT_DMODE1_LONSRC      0xc0000000
-#घोषणा NPORT_DMODE1_LOORI       0xd0000000
-#घोषणा NPORT_DMODE1_LOन_अंकD      0xe0000000
-#घोषणा NPORT_DMODE1_LOONE       0xf0000000
+#define NPORT_DMODE1_DDMASK      0x00000018
+#define NPORT_DMODE1_DD4         0x00000000
+#define NPORT_DMODE1_DD8         0x00000008
+#define NPORT_DMODE1_DD12        0x00000010
+#define NPORT_DMODE1_DD24        0x00000018
+#define NPORT_DMODE1_DSRC        0x00000020
+#define NPORT_DMODE1_YFLIP       0x00000040
+#define NPORT_DMODE1_RWPCKD      0x00000080
+#define NPORT_DMODE1_HDMASK      0x00000300
+#define NPORT_DMODE1_HD4         0x00000000
+#define NPORT_DMODE1_HD8         0x00000100
+#define NPORT_DMODE1_HD12        0x00000200
+#define NPORT_DMODE1_HD32        0x00000300
+#define NPORT_DMODE1_RWDBL       0x00000400
+#define NPORT_DMODE1_ESWAP       0x00000800 /* Endian swap */
+#define NPORT_DMODE1_CCMASK      0x00007000
+#define NPORT_DMODE1_CCLT        0x00001000
+#define NPORT_DMODE1_CCEQ        0x00002000
+#define NPORT_DMODE1_CCGT        0x00004000
+#define NPORT_DMODE1_RGBMD       0x00008000
+#define NPORT_DMODE1_DENAB       0x00010000 /* Dither enable */
+#define NPORT_DMODE1_FCLR        0x00020000 /* Fast clear */
+#define NPORT_DMODE1_BENAB       0x00040000 /* Blend enable */
+#define NPORT_DMODE1_SFMASK      0x00380000
+#define NPORT_DMODE1_SF0         0x00000000
+#define NPORT_DMODE1_SF1         0x00080000
+#define NPORT_DMODE1_SFDC        0x00100000
+#define NPORT_DMODE1_SFMDC       0x00180000
+#define NPORT_DMODE1_SFSA        0x00200000
+#define NPORT_DMODE1_SFMSA       0x00280000
+#define NPORT_DMODE1_DFMASK      0x01c00000
+#define NPORT_DMODE1_DF0         0x00000000
+#define NPORT_DMODE1_DF1         0x00400000
+#define NPORT_DMODE1_DFSC        0x00800000
+#define NPORT_DMODE1_DFMSC       0x00c00000
+#define NPORT_DMODE1_DFSA        0x01000000
+#define NPORT_DMODE1_DFMSA       0x01400000
+#define NPORT_DMODE1_BBENAB      0x02000000 /* Back blend enable */
+#define NPORT_DMODE1_PFENAB      0x04000000 /* Pre-fetch enable */
+#define NPORT_DMODE1_ABLEND      0x08000000 /* Alpha blend */
+#define NPORT_DMODE1_LOMASK      0xf0000000
+#define NPORT_DMODE1_LOZERO      0x00000000
+#define NPORT_DMODE1_LOAND       0x10000000
+#define NPORT_DMODE1_LOANDR      0x20000000
+#define NPORT_DMODE1_LOSRC       0x30000000
+#define NPORT_DMODE1_LOANDI      0x40000000
+#define NPORT_DMODE1_LODST       0x50000000
+#define NPORT_DMODE1_LOXOR       0x60000000
+#define NPORT_DMODE1_LOOR        0x70000000
+#define NPORT_DMODE1_LONOR       0x80000000
+#define NPORT_DMODE1_LOXNOR      0x90000000
+#define NPORT_DMODE1_LONDST      0xa0000000
+#define NPORT_DMODE1_LOORR       0xb0000000
+#define NPORT_DMODE1_LONSRC      0xc0000000
+#define NPORT_DMODE1_LOORI       0xd0000000
+#define NPORT_DMODE1_LONAND      0xe0000000
+#define NPORT_DMODE1_LOONE       0xf0000000
 
-	npireg_t drawmode0;      /* REX command रेजिस्टर */
+	npireg_t drawmode0;      /* REX command register */
 
-	/* These bits define the graphics opcode being perक्रमmed. */
-#घोषणा NPORT_DMODE0_OPMASK   0x00000003 /* Opcode mask */
-#घोषणा NPORT_DMODE0_NOP      0x00000000 /* No operation */
-#घोषणा NPORT_DMODE0_RD       0x00000001 /* Read operation */
-#घोषणा NPORT_DMODE0_DRAW     0x00000002 /* Draw operation */
-#घोषणा NPORT_DMODE0_S2S      0x00000003 /* Screen to screen operation */
+	/* These bits define the graphics opcode being performed. */
+#define NPORT_DMODE0_OPMASK   0x00000003 /* Opcode mask */
+#define NPORT_DMODE0_NOP      0x00000000 /* No operation */
+#define NPORT_DMODE0_RD       0x00000001 /* Read operation */
+#define NPORT_DMODE0_DRAW     0x00000002 /* Draw operation */
+#define NPORT_DMODE0_S2S      0x00000003 /* Screen to screen operation */
 
 	/* The following decide what addressing mode(s) are to be used */
-#घोषणा NPORT_DMODE0_AMMASK   0x0000001c /* Address mode mask */
-#घोषणा NPORT_DMODE0_SPAN     0x00000000 /* Spanning address mode */
-#घोषणा NPORT_DMODE0_BLOCK    0x00000004 /* Block address mode */
-#घोषणा NPORT_DMODE0_ILINE    0x00000008 /* Iline address mode */
-#घोषणा NPORT_DMODE0_FLINE    0x0000000c /* Fline address mode */
-#घोषणा NPORT_DMODE0_ALINE    0x00000010 /* Aline address mode */
-#घोषणा NPORT_DMODE0_TLINE    0x00000014 /* Tline address mode */
-#घोषणा NPORT_DMODE0_BLINE    0x00000018 /* Bline address mode */
+#define NPORT_DMODE0_AMMASK   0x0000001c /* Address mode mask */
+#define NPORT_DMODE0_SPAN     0x00000000 /* Spanning address mode */
+#define NPORT_DMODE0_BLOCK    0x00000004 /* Block address mode */
+#define NPORT_DMODE0_ILINE    0x00000008 /* Iline address mode */
+#define NPORT_DMODE0_FLINE    0x0000000c /* Fline address mode */
+#define NPORT_DMODE0_ALINE    0x00000010 /* Aline address mode */
+#define NPORT_DMODE0_TLINE    0x00000014 /* Tline address mode */
+#define NPORT_DMODE0_BLINE    0x00000018 /* Bline address mode */
 
 	/* And now some misc. operation control bits. */
-#घोषणा NPORT_DMODE0_DOSETUP  0x00000020
-#घोषणा NPORT_DMODE0_CHOST    0x00000040
-#घोषणा NPORT_DMODE0_AHOST    0x00000080
-#घोषणा NPORT_DMODE0_STOPX    0x00000100
-#घोषणा NPORT_DMODE0_STOPY    0x00000200
-#घोषणा NPORT_DMODE0_SK1ST    0x00000400
-#घोषणा NPORT_DMODE0_SKLST    0x00000800
-#घोषणा NPORT_DMODE0_ZPENAB   0x00001000
-#घोषणा NPORT_DMODE0_LISPENAB 0x00002000
-#घोषणा NPORT_DMODE0_LISLST   0x00004000
-#घोषणा NPORT_DMODE0_L32      0x00008000
-#घोषणा NPORT_DMODE0_ZOPQ     0x00010000
-#घोषणा NPORT_DMODE0_LISOPQ   0x00020000
-#घोषणा NPORT_DMODE0_SHADE    0x00040000
-#घोषणा NPORT_DMODE0_LRONLY   0x00080000
-#घोषणा NPORT_DMODE0_XYOFF    0x00100000
-#घोषणा NPORT_DMODE0_CLAMP    0x00200000
-#घोषणा NPORT_DMODE0_ENDPF    0x00400000
-#घोषणा NPORT_DMODE0_YSTR     0x00800000
+#define NPORT_DMODE0_DOSETUP  0x00000020
+#define NPORT_DMODE0_CHOST    0x00000040
+#define NPORT_DMODE0_AHOST    0x00000080
+#define NPORT_DMODE0_STOPX    0x00000100
+#define NPORT_DMODE0_STOPY    0x00000200
+#define NPORT_DMODE0_SK1ST    0x00000400
+#define NPORT_DMODE0_SKLST    0x00000800
+#define NPORT_DMODE0_ZPENAB   0x00001000
+#define NPORT_DMODE0_LISPENAB 0x00002000
+#define NPORT_DMODE0_LISLST   0x00004000
+#define NPORT_DMODE0_L32      0x00008000
+#define NPORT_DMODE0_ZOPQ     0x00010000
+#define NPORT_DMODE0_LISOPQ   0x00020000
+#define NPORT_DMODE0_SHADE    0x00040000
+#define NPORT_DMODE0_LRONLY   0x00080000
+#define NPORT_DMODE0_XYOFF    0x00100000
+#define NPORT_DMODE0_CLAMP    0x00200000
+#define NPORT_DMODE0_ENDPF    0x00400000
+#define NPORT_DMODE0_YSTR     0x00800000
 
-	npireg_t lsmode;      /* Mode क्रम line stipple ops */
-	npireg_t lspattern;   /* Pattern क्रम line stipple ops */
+	npireg_t lsmode;      /* Mode for line stipple ops */
+	npireg_t lspattern;   /* Pattern for line stipple ops */
 	npireg_t lspatsave;   /* Backup save pattern */
 	npireg_t zpattern;    /* Pixel zpattern */
 	npireg_t colorback;   /* Background color */
-	npireg_t colorvram;   /* Clear color क्रम fast vram */
-	npireg_t alpharef;    /* Reference value क्रम afunctions */
-	अचिन्हित पूर्णांक pad0;
-	npireg_t smask0x;     /* Winकरोw GL relative screen mask 0 */
-	npireg_t smask0y;     /* Winकरोw GL relative screen mask 0 */
+	npireg_t colorvram;   /* Clear color for fast vram */
+	npireg_t alpharef;    /* Reference value for afunctions */
+	unsigned int pad0;
+	npireg_t smask0x;     /* Window GL relative screen mask 0 */
+	npireg_t smask0y;     /* Window GL relative screen mask 0 */
 	npireg_t _setup;
 	npireg_t _stepz;
 	npireg_t _lsrestore;
 	npireg_t _lssave;
 
-	अचिन्हित पूर्णांक _pad1[0x30];
+	unsigned int _pad1[0x30];
 
-	/* Iterators, full state क्रम context चयन */
-	npfreg_t _xstart;	/* X-start poपूर्णांक (current) */
-	npfreg_t _ystart;	/* Y-start poपूर्णांक (current) */
-	npfreg_t _xend;		/* x-end poपूर्णांक */
-	npfreg_t _yend;		/* y-end poपूर्णांक */
-	npireg_t xsave;		/* copy of xstart पूर्णांकeger value क्रम BLOCk addressing MODE */
-	npireg_t xymove;	/* x.y offset from xstart, ystart क्रम relative operations */
+	/* Iterators, full state for context switch */
+	npfreg_t _xstart;	/* X-start point (current) */
+	npfreg_t _ystart;	/* Y-start point (current) */
+	npfreg_t _xend;		/* x-end point */
+	npfreg_t _yend;		/* y-end point */
+	npireg_t xsave;		/* copy of xstart integer value for BLOCk addressing MODE */
+	npireg_t xymove;	/* x.y offset from xstart, ystart for relative operations */
 	npfreg_t bresd;
 	npfreg_t bress1;
 	npireg_t bresoctinc1;
-	अस्थिर पूर्णांक bresrndinc2;
+	volatile int bresrndinc2;
 	npireg_t brese1;
 	npireg_t bress2;
 	npireg_t aweight0;
@@ -180,7 +179,7 @@
 	npireg_t xyendi;
 	npireg_t xstartendi;
 
-	अचिन्हित पूर्णांक _unused2[0x29];
+	unsigned int _unused2[0x29];
 
 	npfreg_t colorred;
 	npfreg_t coloralpha;
@@ -197,41 +196,41 @@
 	npireg_t hostrw0;
 	npireg_t hostrw1;
 	npireg_t dcbmode;
-#घोषणा NPORT_DMODE_WMASK   0x00000003
-#घोषणा NPORT_DMODE_W4      0x00000000
-#घोषणा NPORT_DMODE_W1      0x00000001
-#घोषणा NPORT_DMODE_W2      0x00000002
-#घोषणा NPORT_DMODE_W3      0x00000003
-#घोषणा NPORT_DMODE_EDPACK  0x00000004
-#घोषणा NPORT_DMODE_ECINC   0x00000008
-#घोषणा NPORT_DMODE_CMASK   0x00000070
-#घोषणा NPORT_DMODE_AMASK   0x00000780
-#घोषणा NPORT_DMODE_AVC2    0x00000000
-#घोषणा NPORT_DMODE_ACMALL  0x00000080
-#घोषणा NPORT_DMODE_ACM0    0x00000100
-#घोषणा NPORT_DMODE_ACM1    0x00000180
-#घोषणा NPORT_DMODE_AXMALL  0x00000200
-#घोषणा NPORT_DMODE_AXM0    0x00000280
-#घोषणा NPORT_DMODE_AXM1    0x00000300
-#घोषणा NPORT_DMODE_ABT     0x00000380
-#घोषणा NPORT_DMODE_AVCC1   0x00000400
-#घोषणा NPORT_DMODE_AVAB1   0x00000480
-#घोषणा NPORT_DMODE_ALG3V0  0x00000500
-#घोषणा NPORT_DMODE_A1562   0x00000580
-#घोषणा NPORT_DMODE_ESACK   0x00000800
-#घोषणा NPORT_DMODE_EASACK  0x00001000
-#घोषणा NPORT_DMODE_CWMASK  0x0003e000
-#घोषणा NPORT_DMODE_CHMASK  0x007c0000
-#घोषणा NPORT_DMODE_CSMASK  0x0f800000
-#घोषणा NPORT_DMODE_SENDIAN 0x10000000
+#define NPORT_DMODE_WMASK   0x00000003
+#define NPORT_DMODE_W4      0x00000000
+#define NPORT_DMODE_W1      0x00000001
+#define NPORT_DMODE_W2      0x00000002
+#define NPORT_DMODE_W3      0x00000003
+#define NPORT_DMODE_EDPACK  0x00000004
+#define NPORT_DMODE_ECINC   0x00000008
+#define NPORT_DMODE_CMASK   0x00000070
+#define NPORT_DMODE_AMASK   0x00000780
+#define NPORT_DMODE_AVC2    0x00000000
+#define NPORT_DMODE_ACMALL  0x00000080
+#define NPORT_DMODE_ACM0    0x00000100
+#define NPORT_DMODE_ACM1    0x00000180
+#define NPORT_DMODE_AXMALL  0x00000200
+#define NPORT_DMODE_AXM0    0x00000280
+#define NPORT_DMODE_AXM1    0x00000300
+#define NPORT_DMODE_ABT     0x00000380
+#define NPORT_DMODE_AVCC1   0x00000400
+#define NPORT_DMODE_AVAB1   0x00000480
+#define NPORT_DMODE_ALG3V0  0x00000500
+#define NPORT_DMODE_A1562   0x00000580
+#define NPORT_DMODE_ESACK   0x00000800
+#define NPORT_DMODE_EASACK  0x00001000
+#define NPORT_DMODE_CWMASK  0x0003e000
+#define NPORT_DMODE_CHMASK  0x007c0000
+#define NPORT_DMODE_CSMASK  0x0f800000
+#define NPORT_DMODE_SENDIAN 0x10000000
 
-	अचिन्हित पूर्णांक _unused3;
+	unsigned int _unused3;
 
-	जोड़ np_dcb dcbdata0;
+	union np_dcb dcbdata0;
 	npireg_t dcbdata1;
-पूर्ण;
+};
 
-काष्ठा newport_cregs अणु
+struct newport_cregs {
 	npireg_t smask1x;
 	npireg_t smask1y;
 	npireg_t smask2x;
@@ -243,279 +242,279 @@
 	npireg_t topscan;
 	npireg_t xywin;
 	npireg_t clipmode;
-#घोषणा NPORT_CMODE_SM0   0x00000001
-#घोषणा NPORT_CMODE_SM1   0x00000002
-#घोषणा NPORT_CMODE_SM2   0x00000004
-#घोषणा NPORT_CMODE_SM3   0x00000008
-#घोषणा NPORT_CMODE_SM4   0x00000010
-#घोषणा NPORT_CMODE_CMSK  0x00001e00
+#define NPORT_CMODE_SM0   0x00000001
+#define NPORT_CMODE_SM1   0x00000002
+#define NPORT_CMODE_SM2   0x00000004
+#define NPORT_CMODE_SM3   0x00000008
+#define NPORT_CMODE_SM4   0x00000010
+#define NPORT_CMODE_CMSK  0x00001e00
 
-	अचिन्हित पूर्णांक _unused0;
-	अचिन्हित पूर्णांक config;
-#घोषणा NPORT_CFG_G32MD   0x00000001
-#घोषणा NPORT_CFG_BWIDTH  0x00000002
-#घोषणा NPORT_CFG_ERCVR   0x00000004
-#घोषणा NPORT_CFG_BDMSK   0x00000078
-#घोषणा NPORT_CFG_BFAINT  0x00000080
-#घोषणा NPORT_CFG_GDMSK   0x00001f80
-#घोषणा NPORT_CFG_GD0     0x00000100
-#घोषणा NPORT_CFG_GD1     0x00000200
-#घोषणा NPORT_CFG_GD2     0x00000400
-#घोषणा NPORT_CFG_GD3     0x00000800
-#घोषणा NPORT_CFG_GD4     0x00001000
-#घोषणा NPORT_CFG_GFAINT  0x00002000
-#घोषणा NPORT_CFG_TOMSK   0x0001c000
-#घोषणा NPORT_CFG_VRMSK   0x000e0000
-#घोषणा NPORT_CFG_FBTYP   0x00100000
+	unsigned int _unused0;
+	unsigned int config;
+#define NPORT_CFG_G32MD   0x00000001
+#define NPORT_CFG_BWIDTH  0x00000002
+#define NPORT_CFG_ERCVR   0x00000004
+#define NPORT_CFG_BDMSK   0x00000078
+#define NPORT_CFG_BFAINT  0x00000080
+#define NPORT_CFG_GDMSK   0x00001f80
+#define NPORT_CFG_GD0     0x00000100
+#define NPORT_CFG_GD1     0x00000200
+#define NPORT_CFG_GD2     0x00000400
+#define NPORT_CFG_GD3     0x00000800
+#define NPORT_CFG_GD4     0x00001000
+#define NPORT_CFG_GFAINT  0x00002000
+#define NPORT_CFG_TOMSK   0x0001c000
+#define NPORT_CFG_VRMSK   0x000e0000
+#define NPORT_CFG_FBTYP   0x00100000
 
 	npireg_t _unused1;
 	npireg_t status;
-#घोषणा NPORT_STAT_VERS   0x00000007
-#घोषणा NPORT_STAT_GBUSY  0x00000008
-#घोषणा NPORT_STAT_BBUSY  0x00000010
-#घोषणा NPORT_STAT_VRINT  0x00000020
-#घोषणा NPORT_STAT_VIDINT 0x00000040
-#घोषणा NPORT_STAT_GLMSK  0x00001f80
-#घोषणा NPORT_STAT_BLMSK  0x0007e000
-#घोषणा NPORT_STAT_BFIRQ  0x00080000
-#घोषणा NPORT_STAT_GFIRQ  0x00100000
+#define NPORT_STAT_VERS   0x00000007
+#define NPORT_STAT_GBUSY  0x00000008
+#define NPORT_STAT_BBUSY  0x00000010
+#define NPORT_STAT_VRINT  0x00000020
+#define NPORT_STAT_VIDINT 0x00000040
+#define NPORT_STAT_GLMSK  0x00001f80
+#define NPORT_STAT_BLMSK  0x0007e000
+#define NPORT_STAT_BFIRQ  0x00080000
+#define NPORT_STAT_GFIRQ  0x00100000
 
 	npireg_t ustatus;
 	npireg_t dcbreset;
-पूर्ण;
+};
 
-काष्ठा newport_regs अणु
-	काष्ठा newport_rexregs set;
-	अचिन्हित पूर्णांक _unused0[0x16e];
-	काष्ठा newport_rexregs go;
-	अचिन्हित पूर्णांक _unused1[0x22e];
-	काष्ठा newport_cregs cset;
-	अचिन्हित पूर्णांक _unused2[0x1ef];
-	काष्ठा newport_cregs cgo;
-पूर्ण;
+struct newport_regs {
+	struct newport_rexregs set;
+	unsigned int _unused0[0x16e];
+	struct newport_rexregs go;
+	unsigned int _unused1[0x22e];
+	struct newport_cregs cset;
+	unsigned int _unused2[0x1ef];
+	struct newport_cregs cgo;
+};
 
-प्रकार काष्ठा अणु
-	अचिन्हित पूर्णांक drawmode1;
-	अचिन्हित पूर्णांक drawmode0;
-	अचिन्हित पूर्णांक lsmode;   
-	अचिन्हित पूर्णांक lspattern;
-	अचिन्हित पूर्णांक lspatsave;
-	अचिन्हित पूर्णांक zpattern; 
-	अचिन्हित पूर्णांक colorback;
-	अचिन्हित पूर्णांक colorvram;
-	अचिन्हित पूर्णांक alpharef; 
-	अचिन्हित पूर्णांक smask0x;  
-	अचिन्हित पूर्णांक smask0y;  
-	अचिन्हित पूर्णांक _xstart;  
-	अचिन्हित पूर्णांक _ystart;  
-	अचिन्हित पूर्णांक _xend;    
-	अचिन्हित पूर्णांक _yend;    
-	अचिन्हित पूर्णांक xsave;    
-	अचिन्हित पूर्णांक xymove;   
-	अचिन्हित पूर्णांक bresd;    
-	अचिन्हित पूर्णांक bress1;   
-	अचिन्हित पूर्णांक bresoctinc1;
-	अचिन्हित पूर्णांक bresrndinc2;
-	अचिन्हित पूर्णांक brese1;     
-	अचिन्हित पूर्णांक bress2;     
+typedef struct {
+	unsigned int drawmode1;
+	unsigned int drawmode0;
+	unsigned int lsmode;   
+	unsigned int lspattern;
+	unsigned int lspatsave;
+	unsigned int zpattern; 
+	unsigned int colorback;
+	unsigned int colorvram;
+	unsigned int alpharef; 
+	unsigned int smask0x;  
+	unsigned int smask0y;  
+	unsigned int _xstart;  
+	unsigned int _ystart;  
+	unsigned int _xend;    
+	unsigned int _yend;    
+	unsigned int xsave;    
+	unsigned int xymove;   
+	unsigned int bresd;    
+	unsigned int bress1;   
+	unsigned int bresoctinc1;
+	unsigned int bresrndinc2;
+	unsigned int brese1;     
+	unsigned int bress2;     
 	
-	अचिन्हित पूर्णांक aweight0;    
-	अचिन्हित पूर्णांक aweight1;    
-	अचिन्हित पूर्णांक colorred;    
-	अचिन्हित पूर्णांक coloralpha;  
-	अचिन्हित पूर्णांक colorgrn;    
-	अचिन्हित पूर्णांक colorblue;   
-	अचिन्हित पूर्णांक slopered;    
-	अचिन्हित पूर्णांक slopealpha;  
-	अचिन्हित पूर्णांक slopegrn;    
-	अचिन्हित पूर्णांक slopeblue;   
-	अचिन्हित पूर्णांक wrmask;      
-	अचिन्हित पूर्णांक hostrw0;     
-	अचिन्हित पूर्णांक hostrw1;     
+	unsigned int aweight0;    
+	unsigned int aweight1;    
+	unsigned int colorred;    
+	unsigned int coloralpha;  
+	unsigned int colorgrn;    
+	unsigned int colorblue;   
+	unsigned int slopered;    
+	unsigned int slopealpha;  
+	unsigned int slopegrn;    
+	unsigned int slopeblue;   
+	unsigned int wrmask;      
+	unsigned int hostrw0;     
+	unsigned int hostrw1;     
 	
         /* configregs */
 	
-	अचिन्हित पूर्णांक smask1x;    
-	अचिन्हित पूर्णांक smask1y;    
-	अचिन्हित पूर्णांक smask2x;    
-	अचिन्हित पूर्णांक smask2y;    
-	अचिन्हित पूर्णांक smask3x;    
-	अचिन्हित पूर्णांक smask3y;    
-	अचिन्हित पूर्णांक smask4x;    
-	अचिन्हित पूर्णांक smask4y;    
-	अचिन्हित पूर्णांक topscan;    
-	अचिन्हित पूर्णांक xywin;      
-	अचिन्हित पूर्णांक clipmode;   
-	अचिन्हित पूर्णांक config;     
+	unsigned int smask1x;    
+	unsigned int smask1y;    
+	unsigned int smask2x;    
+	unsigned int smask2y;    
+	unsigned int smask3x;    
+	unsigned int smask3y;    
+	unsigned int smask4x;    
+	unsigned int smask4y;    
+	unsigned int topscan;    
+	unsigned int xywin;      
+	unsigned int clipmode;   
+	unsigned int config;     
 	
-        /* dcb रेजिस्टरs */
-	अचिन्हित पूर्णांक dcbmode;   
-	अचिन्हित पूर्णांक dcbdata0;  
-	अचिन्हित पूर्णांक dcbdata1;
-पूर्ण newport_ctx;
+        /* dcb registers */
+	unsigned int dcbmode;   
+	unsigned int dcbdata0;  
+	unsigned int dcbdata1;
+} newport_ctx;
 
-/* Reading/writing VC2 रेजिस्टरs. */
-#घोषणा VC2_REGADDR_INDEX      0x00000000
-#घोषणा VC2_REGADDR_IREG       0x00000010
-#घोषणा VC2_REGADDR_RAM        0x00000030
-#घोषणा VC2_PROTOCOL           (NPORT_DMODE_EASACK | 0x00800000 | 0x00040000)
+/* Reading/writing VC2 registers. */
+#define VC2_REGADDR_INDEX      0x00000000
+#define VC2_REGADDR_IREG       0x00000010
+#define VC2_REGADDR_RAM        0x00000030
+#define VC2_PROTOCOL           (NPORT_DMODE_EASACK | 0x00800000 | 0x00040000)
 
-#घोषणा VC2_VLINET_ADDR        0x000
-#घोषणा VC2_VFRAMET_ADDR       0x400
-#घोषणा VC2_CGLYPH_ADDR        0x500
+#define VC2_VLINET_ADDR        0x000
+#define VC2_VFRAMET_ADDR       0x400
+#define VC2_CGLYPH_ADDR        0x500
 
-/* Now the Indexed रेजिस्टरs of the VC2. */
-#घोषणा VC2_IREG_VENTRY        0x00
-#घोषणा VC2_IREG_CENTRY        0x01
-#घोषणा VC2_IREG_CURSX         0x02
-#घोषणा VC2_IREG_CURSY         0x03
-#घोषणा VC2_IREG_CCURSX        0x04
-#घोषणा VC2_IREG_DENTRY        0x05
-#घोषणा VC2_IREG_SLEN          0x06
-#घोषणा VC2_IREG_RADDR         0x07
-#घोषणा VC2_IREG_VFPTR         0x08
-#घोषणा VC2_IREG_VLSPTR        0x09
-#घोषणा VC2_IREG_VLIR          0x0a
-#घोषणा VC2_IREG_VLCTR         0x0b
-#घोषणा VC2_IREG_CTPTR         0x0c
-#घोषणा VC2_IREG_WCURSY        0x0d
-#घोषणा VC2_IREG_DFPTR         0x0e
-#घोषणा VC2_IREG_DLTPTR        0x0f
-#घोषणा VC2_IREG_CONTROL       0x10
-#घोषणा VC2_IREG_CONFIG        0x20
+/* Now the Indexed registers of the VC2. */
+#define VC2_IREG_VENTRY        0x00
+#define VC2_IREG_CENTRY        0x01
+#define VC2_IREG_CURSX         0x02
+#define VC2_IREG_CURSY         0x03
+#define VC2_IREG_CCURSX        0x04
+#define VC2_IREG_DENTRY        0x05
+#define VC2_IREG_SLEN          0x06
+#define VC2_IREG_RADDR         0x07
+#define VC2_IREG_VFPTR         0x08
+#define VC2_IREG_VLSPTR        0x09
+#define VC2_IREG_VLIR          0x0a
+#define VC2_IREG_VLCTR         0x0b
+#define VC2_IREG_CTPTR         0x0c
+#define VC2_IREG_WCURSY        0x0d
+#define VC2_IREG_DFPTR         0x0e
+#define VC2_IREG_DLTPTR        0x0f
+#define VC2_IREG_CONTROL       0x10
+#define VC2_IREG_CONFIG        0x20
 
-अटल अंतरभूत व्योम newport_vc2_set(काष्ठा newport_regs *regs,
-				   अचिन्हित अक्षर vc2ireg,
-				   अचिन्हित लघु val)
-अणु
+static inline void newport_vc2_set(struct newport_regs *regs,
+				   unsigned char vc2ireg,
+				   unsigned short val)
+{
 	regs->set.dcbmode = (NPORT_DMODE_AVC2 | VC2_REGADDR_INDEX | NPORT_DMODE_W3 |
 			   NPORT_DMODE_ECINC | VC2_PROTOCOL);
 	regs->set.dcbdata0.byword = (vc2ireg << 24) | (val << 8);
-पूर्ण
+}
 
-अटल अंतरभूत अचिन्हित लघु newport_vc2_get(काष्ठा newport_regs *regs,
-					     अचिन्हित अक्षर vc2ireg)
-अणु
+static inline unsigned short newport_vc2_get(struct newport_regs *regs,
+					     unsigned char vc2ireg)
+{
 	regs->set.dcbmode = (NPORT_DMODE_AVC2 | VC2_REGADDR_INDEX | NPORT_DMODE_W1 |
 			   NPORT_DMODE_ECINC | VC2_PROTOCOL);
 	regs->set.dcbdata0.bybytes.b3 = vc2ireg;
 	regs->set.dcbmode = (NPORT_DMODE_AVC2 | VC2_REGADDR_IREG | NPORT_DMODE_W2 |
 			   NPORT_DMODE_ECINC | VC2_PROTOCOL);
-	वापस regs->set.dcbdata0.byलघु.s1;
-पूर्ण
+	return regs->set.dcbdata0.byshort.s1;
+}
 
-/* VC2 Control रेजिस्टर bits */
-#घोषणा VC2_CTRL_EVIRQ     0x0001
-#घोषणा VC2_CTRL_EDISP     0x0002
-#घोषणा VC2_CTRL_EVIDEO    0x0004
-#घोषणा VC2_CTRL_EDIDS     0x0008
-#घोषणा VC2_CTRL_ECURS     0x0010
-#घोषणा VC2_CTRL_EGSYNC    0x0020
-#घोषणा VC2_CTRL_EILACE    0x0040
-#घोषणा VC2_CTRL_ECDISP    0x0080
-#घोषणा VC2_CTRL_ECCURS    0x0100
-#घोषणा VC2_CTRL_ECG64     0x0200
-#घोषणा VC2_CTRL_GLSEL     0x0400
+/* VC2 Control register bits */
+#define VC2_CTRL_EVIRQ     0x0001
+#define VC2_CTRL_EDISP     0x0002
+#define VC2_CTRL_EVIDEO    0x0004
+#define VC2_CTRL_EDIDS     0x0008
+#define VC2_CTRL_ECURS     0x0010
+#define VC2_CTRL_EGSYNC    0x0020
+#define VC2_CTRL_EILACE    0x0040
+#define VC2_CTRL_ECDISP    0x0080
+#define VC2_CTRL_ECCURS    0x0100
+#define VC2_CTRL_ECG64     0x0200
+#define VC2_CTRL_GLSEL     0x0400
 
 /* Controlling the color map on NEWPORT. */
-#घोषणा NCMAP_REGADDR_AREG   0x00000000
-#घोषणा NCMAP_REGADDR_ALO    0x00000000
-#घोषणा NCMAP_REGADDR_AHI    0x00000010
-#घोषणा NCMAP_REGADDR_PBUF   0x00000020
-#घोषणा NCMAP_REGADDR_CREG   0x00000030
-#घोषणा NCMAP_REGADDR_SREG   0x00000040
-#घोषणा NCMAP_REGADDR_RREG   0x00000060
-#घोषणा NCMAP_PROTOCOL       (0x00008000 | 0x00040000 | 0x00800000)
+#define NCMAP_REGADDR_AREG   0x00000000
+#define NCMAP_REGADDR_ALO    0x00000000
+#define NCMAP_REGADDR_AHI    0x00000010
+#define NCMAP_REGADDR_PBUF   0x00000020
+#define NCMAP_REGADDR_CREG   0x00000030
+#define NCMAP_REGADDR_SREG   0x00000040
+#define NCMAP_REGADDR_RREG   0x00000060
+#define NCMAP_PROTOCOL       (0x00008000 | 0x00040000 | 0x00800000)
 
-अटल __अंतरभूत__ व्योम newport_cmap_setaddr(काष्ठा newport_regs *regs,
-					अचिन्हित लघु addr)
-अणु
+static __inline__ void newport_cmap_setaddr(struct newport_regs *regs,
+					unsigned short addr)
+{
 	regs->set.dcbmode = (NPORT_DMODE_ACMALL | NCMAP_PROTOCOL |
 			   NPORT_DMODE_SENDIAN | NPORT_DMODE_ECINC |
 			   NCMAP_REGADDR_AREG | NPORT_DMODE_W2);
-	regs->set.dcbdata0.byलघु.s1 = addr;
+	regs->set.dcbdata0.byshort.s1 = addr;
 	regs->set.dcbmode = (NPORT_DMODE_ACMALL | NCMAP_PROTOCOL |
 			   NCMAP_REGADDR_PBUF | NPORT_DMODE_W3);
-पूर्ण
+}
 
-अटल __अंतरभूत__ व्योम newport_cmap_setrgb(काष्ठा newport_regs *regs,
-				       अचिन्हित अक्षर red,
-				       अचिन्हित अक्षर green,
-				       अचिन्हित अक्षर blue)
-अणु
+static __inline__ void newport_cmap_setrgb(struct newport_regs *regs,
+				       unsigned char red,
+				       unsigned char green,
+				       unsigned char blue)
+{
 	regs->set.dcbdata0.byword =
 		(red << 24) |
 		(green << 16) |
 		(blue << 8);
-पूर्ण
+}
 
 /* Miscellaneous NEWPORT routines. */
-#घोषणा BUSY_TIMEOUT 100000
-अटल __अंतरभूत__ पूर्णांक newport_रुको(काष्ठा newport_regs *regs)
-अणु
-	पूर्णांक t = BUSY_TIMEOUT;
+#define BUSY_TIMEOUT 100000
+static __inline__ int newport_wait(struct newport_regs *regs)
+{
+	int t = BUSY_TIMEOUT;
 
-	जबतक (--t)
-		अगर (!(regs->cset.status & NPORT_STAT_GBUSY))
-			अवरोध;
-	वापस !t;
-पूर्ण
+	while (--t)
+		if (!(regs->cset.status & NPORT_STAT_GBUSY))
+			break;
+	return !t;
+}
 
-अटल __अंतरभूत__ पूर्णांक newport_bfरुको(काष्ठा newport_regs *regs)
-अणु
-	पूर्णांक t = BUSY_TIMEOUT;
+static __inline__ int newport_bfwait(struct newport_regs *regs)
+{
+	int t = BUSY_TIMEOUT;
 
-	जबतक (--t)
-		अगर(!(regs->cset.status & NPORT_STAT_BBUSY))
-			अवरोध;
-	वापस !t;
-पूर्ण
+	while (--t)
+		if(!(regs->cset.status & NPORT_STAT_BBUSY))
+			break;
+	return !t;
+}
 
 /*
- * DCBMODE रेजिस्टर defines:
+ * DCBMODE register defines:
  */
 
-/* Width of the data being transferred क्रम each DCBDATA[01] word */
-#घोषणा DCB_DATAWIDTH_4 0x0
-#घोषणा DCB_DATAWIDTH_1 0x1
-#घोषणा DCB_DATAWIDTH_2 0x2
-#घोषणा DCB_DATAWIDTH_3 0x3
+/* Width of the data being transferred for each DCBDATA[01] word */
+#define DCB_DATAWIDTH_4 0x0
+#define DCB_DATAWIDTH_1 0x1
+#define DCB_DATAWIDTH_2 0x2
+#define DCB_DATAWIDTH_3 0x3
 
 /* If set, all of DCBDATA will be moved, otherwise only DATAWIDTH bytes */
-#घोषणा DCB_ENDATAPACK   (1 << 2)
+#define DCB_ENDATAPACK   (1 << 2)
 
-/* Enables DCBCRS स्वतः increment after each DCB transfer */
-#घोषणा DCB_ENCRSINC     (1 << 3)
+/* Enables DCBCRS auto increment after each DCB transfer */
+#define DCB_ENCRSINC     (1 << 3)
 
-/* shअगरt क्रम accessing the control रेजिस्टर select address (DBCCRS, 3 bits) */
-#घोषणा DCB_CRS_SHIFT    4
+/* shift for accessing the control register select address (DBCCRS, 3 bits) */
+#define DCB_CRS_SHIFT    4
 
 /* DCBADDR (4 bits): display bus slave address */
-#घोषणा DCB_ADDR_SHIFT   7
-#घोषणा DCB_VC2          (0 <<  DCB_ADDR_SHIFT)
-#घोषणा DCB_CMAP_ALL     (1 <<  DCB_ADDR_SHIFT)
-#घोषणा DCB_CMAP0        (2 <<  DCB_ADDR_SHIFT)
-#घोषणा DCB_CMAP1        (3 <<  DCB_ADDR_SHIFT)
-#घोषणा DCB_XMAP_ALL     (4 <<  DCB_ADDR_SHIFT)
-#घोषणा DCB_XMAP0        (5 <<  DCB_ADDR_SHIFT)
-#घोषणा DCB_XMAP1        (6 <<  DCB_ADDR_SHIFT)
-#घोषणा DCB_BT445        (7 <<  DCB_ADDR_SHIFT)
-#घोषणा DCB_VCC1         (8 <<  DCB_ADDR_SHIFT)
-#घोषणा DCB_VAB1         (9 <<  DCB_ADDR_SHIFT)
-#घोषणा DCB_LG3_BDVERS0  (10 << DCB_ADDR_SHIFT)
-#घोषणा DCB_LG3_ICS1562  (11 << DCB_ADDR_SHIFT)
-#घोषणा DCB_RESERVED     (15 << DCB_ADDR_SHIFT)
+#define DCB_ADDR_SHIFT   7
+#define DCB_VC2          (0 <<  DCB_ADDR_SHIFT)
+#define DCB_CMAP_ALL     (1 <<  DCB_ADDR_SHIFT)
+#define DCB_CMAP0        (2 <<  DCB_ADDR_SHIFT)
+#define DCB_CMAP1        (3 <<  DCB_ADDR_SHIFT)
+#define DCB_XMAP_ALL     (4 <<  DCB_ADDR_SHIFT)
+#define DCB_XMAP0        (5 <<  DCB_ADDR_SHIFT)
+#define DCB_XMAP1        (6 <<  DCB_ADDR_SHIFT)
+#define DCB_BT445        (7 <<  DCB_ADDR_SHIFT)
+#define DCB_VCC1         (8 <<  DCB_ADDR_SHIFT)
+#define DCB_VAB1         (9 <<  DCB_ADDR_SHIFT)
+#define DCB_LG3_BDVERS0  (10 << DCB_ADDR_SHIFT)
+#define DCB_LG3_ICS1562  (11 << DCB_ADDR_SHIFT)
+#define DCB_RESERVED     (15 << DCB_ADDR_SHIFT)
 
 /* DCB protocol ack types */
-#घोषणा DCB_ENSYNCACK    (1 << 11)
-#घोषणा DCB_ENASYNCACK   (1 << 12)
+#define DCB_ENSYNCACK    (1 << 11)
+#define DCB_ENASYNCACK   (1 << 12)
 
-#घोषणा DCB_CSWIDTH_SHIFT 13
-#घोषणा DCB_CSHOLD_SHIFT  18
-#घोषणा DCB_CSSETUP_SHIFT 23
+#define DCB_CSWIDTH_SHIFT 13
+#define DCB_CSHOLD_SHIFT  18
+#define DCB_CSSETUP_SHIFT 23
 
-/* XMAP9 specअगरic defines */
-/*   XMAP9 -- रेजिस्टरs as seen on the DCBMODE रेजिस्टर*/
+/* XMAP9 specific defines */
+/*   XMAP9 -- registers as seen on the DCBMODE register*/
 #   define XM9_CRS_CONFIG            (0 << DCB_CRS_SHIFT)
 #       define XM9_PUPMODE           (1 << 0)
 #       define XM9_ODD_PIXEL         (1 << 1)
@@ -538,48 +537,48 @@
 #   define XM9_CRS_MODE_REG_INDEX    (7 << DCB_CRS_SHIFT)
 
 
-#घोषणा DCB_CYCLES(setup,hold,width)                \
+#define DCB_CYCLES(setup,hold,width)                \
                   ((hold << DCB_CSHOLD_SHIFT)  |    \
 		   (setup << DCB_CSSETUP_SHIFT)|    \
 		   (width << DCB_CSWIDTH_SHIFT))
 
-#घोषणा W_DCB_XMAP9_PROTOCOL       DCB_CYCLES (2, 1, 0)
-#घोषणा WSLOW_DCB_XMAP9_PROTOCOL   DCB_CYCLES (5, 5, 0)
-#घोषणा WAYSLOW_DCB_XMAP9_PROTOCOL DCB_CYCLES (12, 12, 0)
-#घोषणा R_DCB_XMAP9_PROTOCOL       DCB_CYCLES (2, 1, 3)
+#define W_DCB_XMAP9_PROTOCOL       DCB_CYCLES (2, 1, 0)
+#define WSLOW_DCB_XMAP9_PROTOCOL   DCB_CYCLES (5, 5, 0)
+#define WAYSLOW_DCB_XMAP9_PROTOCOL DCB_CYCLES (12, 12, 0)
+#define R_DCB_XMAP9_PROTOCOL       DCB_CYCLES (2, 1, 3)
 
-अटल __अंतरभूत__ व्योम
-xmap9FIFOWait (काष्ठा newport_regs *rex)
-अणु
+static __inline__ void
+xmap9FIFOWait (struct newport_regs *rex)
+{
         rex->set.dcbmode = DCB_XMAP0 | XM9_CRS_FIFO_AVAIL |
 		DCB_DATAWIDTH_1 | R_DCB_XMAP9_PROTOCOL;
-        newport_bfरुको (rex);
+        newport_bfwait (rex);
 	
-        जबतक ((rex->set.dcbdata0.bybytes.b3 & 3) != XM9_FIFO_EMPTY)
+        while ((rex->set.dcbdata0.bybytes.b3 & 3) != XM9_FIFO_EMPTY)
 		;
-पूर्ण
+}
 
-अटल __अंतरभूत__ व्योम
-xmap9SetModeReg (काष्ठा newport_regs *rex, अचिन्हित पूर्णांक modereg, अचिन्हित पूर्णांक data24, पूर्णांक cfreq)
-अणु
-        अगर (cfreq > 119)
+static __inline__ void
+xmap9SetModeReg (struct newport_regs *rex, unsigned int modereg, unsigned int data24, int cfreq)
+{
+        if (cfreq > 119)
             rex->set.dcbmode = DCB_XMAP_ALL | XM9_CRS_MODE_REG_DATA |
                         DCB_DATAWIDTH_4 | W_DCB_XMAP9_PROTOCOL;
-        अन्यथा अगर (cfreq > 59)
+        else if (cfreq > 59)
             rex->set.dcbmode = DCB_XMAP_ALL | XM9_CRS_MODE_REG_DATA |
 		    DCB_DATAWIDTH_4 | WSLOW_DCB_XMAP9_PROTOCOL;    
-        अन्यथा
+        else
             rex->set.dcbmode = DCB_XMAP_ALL | XM9_CRS_MODE_REG_DATA |
                         DCB_DATAWIDTH_4 | WAYSLOW_DCB_XMAP9_PROTOCOL; 
         rex->set.dcbdata0.byword = ((modereg) << 24) | (data24 & 0xffffff);
-पूर्ण
+}
 
-#घोषणा BT445_PROTOCOL		DCB_CYCLES(1,1,3)
+#define BT445_PROTOCOL		DCB_CYCLES(1,1,3)
 
-#घोषणा BT445_CSR_ADDR_REG	(0 << DCB_CRS_SHIFT)
-#घोषणा BT445_CSR_REVISION	(2 << DCB_CRS_SHIFT)
+#define BT445_CSR_ADDR_REG	(0 << DCB_CRS_SHIFT)
+#define BT445_CSR_REVISION	(2 << DCB_CRS_SHIFT)
 
-#घोषणा BT445_REVISION_REG	0x01
+#define BT445_REVISION_REG	0x01
 
-#पूर्ण_अगर /* !(_SGI_NEWPORT_H) */
+#endif /* !(_SGI_NEWPORT_H) */
 

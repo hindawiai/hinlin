@@ -1,117 +1,116 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2018 The Linux Foundation. All rights reserved. */
 
-#समावेश <linux/dma-mapping.h>
+#include <linux/dma-mapping.h>
 
-#समावेश "msm_drv.h"
-#समावेश "msm_mmu.h"
-#समावेश "adreno/adreno_gpu.h"
-#समावेश "adreno/a2xx.xml.h"
+#include "msm_drv.h"
+#include "msm_mmu.h"
+#include "adreno/adreno_gpu.h"
+#include "adreno/a2xx.xml.h"
 
-काष्ठा msm_gpummu अणु
-	काष्ठा msm_mmu base;
-	काष्ठा msm_gpu *gpu;
+struct msm_gpummu {
+	struct msm_mmu base;
+	struct msm_gpu *gpu;
 	dma_addr_t pt_base;
-	uपूर्णांक32_t *table;
-पूर्ण;
-#घोषणा to_msm_gpummu(x) container_of(x, काष्ठा msm_gpummu, base)
+	uint32_t *table;
+};
+#define to_msm_gpummu(x) container_of(x, struct msm_gpummu, base)
 
-#घोषणा GPUMMU_VA_START SZ_16M
-#घोषणा GPUMMU_VA_RANGE (0xfff * SZ_64K)
-#घोषणा GPUMMU_PAGE_SIZE SZ_4K
-#घोषणा TABLE_SIZE (माप(uपूर्णांक32_t) * GPUMMU_VA_RANGE / GPUMMU_PAGE_SIZE)
+#define GPUMMU_VA_START SZ_16M
+#define GPUMMU_VA_RANGE (0xfff * SZ_64K)
+#define GPUMMU_PAGE_SIZE SZ_4K
+#define TABLE_SIZE (sizeof(uint32_t) * GPUMMU_VA_RANGE / GPUMMU_PAGE_SIZE)
 
-अटल व्योम msm_gpummu_detach(काष्ठा msm_mmu *mmu)
-अणु
-पूर्ण
+static void msm_gpummu_detach(struct msm_mmu *mmu)
+{
+}
 
-अटल पूर्णांक msm_gpummu_map(काष्ठा msm_mmu *mmu, uपूर्णांक64_t iova,
-		काष्ठा sg_table *sgt, माप_प्रकार len, पूर्णांक prot)
-अणु
-	काष्ठा msm_gpummu *gpummu = to_msm_gpummu(mmu);
-	अचिन्हित idx = (iova - GPUMMU_VA_START) / GPUMMU_PAGE_SIZE;
-	काष्ठा sg_dma_page_iter dma_iter;
-	अचिन्हित prot_bits = 0;
+static int msm_gpummu_map(struct msm_mmu *mmu, uint64_t iova,
+		struct sg_table *sgt, size_t len, int prot)
+{
+	struct msm_gpummu *gpummu = to_msm_gpummu(mmu);
+	unsigned idx = (iova - GPUMMU_VA_START) / GPUMMU_PAGE_SIZE;
+	struct sg_dma_page_iter dma_iter;
+	unsigned prot_bits = 0;
 
-	अगर (prot & IOMMU_WRITE)
+	if (prot & IOMMU_WRITE)
 		prot_bits |= 1;
-	अगर (prot & IOMMU_READ)
+	if (prot & IOMMU_READ)
 		prot_bits |= 2;
 
-	क्रम_each_sgtable_dma_page(sgt, &dma_iter, 0) अणु
+	for_each_sgtable_dma_page(sgt, &dma_iter, 0) {
 		dma_addr_t addr = sg_page_iter_dma_address(&dma_iter);
-		पूर्णांक i;
+		int i;
 
-		क्रम (i = 0; i < PAGE_SIZE; i += GPUMMU_PAGE_SIZE)
+		for (i = 0; i < PAGE_SIZE; i += GPUMMU_PAGE_SIZE)
 			gpummu->table[idx++] = (addr + i) | prot_bits;
-	पूर्ण
+	}
 
-	/* we can improve by deferring flush क्रम multiple map() */
-	gpu_ग_लिखो(gpummu->gpu, REG_A2XX_MH_MMU_INVALIDATE,
+	/* we can improve by deferring flush for multiple map() */
+	gpu_write(gpummu->gpu, REG_A2XX_MH_MMU_INVALIDATE,
 		A2XX_MH_MMU_INVALIDATE_INVALIDATE_ALL |
 		A2XX_MH_MMU_INVALIDATE_INVALIDATE_TC);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक msm_gpummu_unmap(काष्ठा msm_mmu *mmu, uपूर्णांक64_t iova, माप_प्रकार len)
-अणु
-	काष्ठा msm_gpummu *gpummu = to_msm_gpummu(mmu);
-	अचिन्हित idx = (iova - GPUMMU_VA_START) / GPUMMU_PAGE_SIZE;
-	अचिन्हित i;
+static int msm_gpummu_unmap(struct msm_mmu *mmu, uint64_t iova, size_t len)
+{
+	struct msm_gpummu *gpummu = to_msm_gpummu(mmu);
+	unsigned idx = (iova - GPUMMU_VA_START) / GPUMMU_PAGE_SIZE;
+	unsigned i;
 
-	क्रम (i = 0; i < len / GPUMMU_PAGE_SIZE; i++, idx++)
+	for (i = 0; i < len / GPUMMU_PAGE_SIZE; i++, idx++)
                 gpummu->table[idx] = 0;
 
-	gpu_ग_लिखो(gpummu->gpu, REG_A2XX_MH_MMU_INVALIDATE,
+	gpu_write(gpummu->gpu, REG_A2XX_MH_MMU_INVALIDATE,
 		A2XX_MH_MMU_INVALIDATE_INVALIDATE_ALL |
 		A2XX_MH_MMU_INVALIDATE_INVALIDATE_TC);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम msm_gpummu_destroy(काष्ठा msm_mmu *mmu)
-अणु
-	काष्ठा msm_gpummu *gpummu = to_msm_gpummu(mmu);
+static void msm_gpummu_destroy(struct msm_mmu *mmu)
+{
+	struct msm_gpummu *gpummu = to_msm_gpummu(mmu);
 
-	dma_मुक्त_attrs(mmu->dev, TABLE_SIZE, gpummu->table, gpummu->pt_base,
+	dma_free_attrs(mmu->dev, TABLE_SIZE, gpummu->table, gpummu->pt_base,
 		DMA_ATTR_FORCE_CONTIGUOUS);
 
-	kमुक्त(gpummu);
-पूर्ण
+	kfree(gpummu);
+}
 
-अटल स्थिर काष्ठा msm_mmu_funcs funcs = अणु
+static const struct msm_mmu_funcs funcs = {
 		.detach = msm_gpummu_detach,
 		.map = msm_gpummu_map,
 		.unmap = msm_gpummu_unmap,
 		.destroy = msm_gpummu_destroy,
-पूर्ण;
+};
 
-काष्ठा msm_mmu *msm_gpummu_new(काष्ठा device *dev, काष्ठा msm_gpu *gpu)
-अणु
-	काष्ठा msm_gpummu *gpummu;
+struct msm_mmu *msm_gpummu_new(struct device *dev, struct msm_gpu *gpu)
+{
+	struct msm_gpummu *gpummu;
 
-	gpummu = kzalloc(माप(*gpummu), GFP_KERNEL);
-	अगर (!gpummu)
-		वापस ERR_PTR(-ENOMEM);
+	gpummu = kzalloc(sizeof(*gpummu), GFP_KERNEL);
+	if (!gpummu)
+		return ERR_PTR(-ENOMEM);
 
 	gpummu->table = dma_alloc_attrs(dev, TABLE_SIZE + 32, &gpummu->pt_base,
 		GFP_KERNEL | __GFP_ZERO, DMA_ATTR_FORCE_CONTIGUOUS);
-	अगर (!gpummu->table) अणु
-		kमुक्त(gpummu);
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+	if (!gpummu->table) {
+		kfree(gpummu);
+		return ERR_PTR(-ENOMEM);
+	}
 
 	gpummu->gpu = gpu;
 	msm_mmu_init(&gpummu->base, dev, &funcs, MSM_MMU_GPUMMU);
 
-	वापस &gpummu->base;
-पूर्ण
+	return &gpummu->base;
+}
 
-व्योम msm_gpummu_params(काष्ठा msm_mmu *mmu, dma_addr_t *pt_base,
+void msm_gpummu_params(struct msm_mmu *mmu, dma_addr_t *pt_base,
 		dma_addr_t *tran_error)
-अणु
+{
 	dma_addr_t base = to_msm_gpummu(mmu)->pt_base;
 
 	*pt_base = base;
 	*tran_error = base + TABLE_SIZE; /* 32-byte aligned */
-पूर्ण
+}

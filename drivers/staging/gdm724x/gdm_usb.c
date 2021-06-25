@@ -1,70 +1,69 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2012 GCT Semiconductor, Inc. All rights reserved. */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/usb/cdc.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/अगर_ether.h>
-#समावेश <linux/pm_runसमय.स>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/usb.h>
+#include <linux/sched.h>
+#include <linux/kthread.h>
+#include <linux/usb/cdc.h>
+#include <linux/wait.h>
+#include <linux/if_ether.h>
+#include <linux/pm_runtime.h>
 
-#समावेश "gdm_usb.h"
-#समावेश "gdm_lte.h"
-#समावेश "hci.h"
-#समावेश "hci_packet.h"
-#समावेश "gdm_endian.h"
+#include "gdm_usb.h"
+#include "gdm_lte.h"
+#include "hci.h"
+#include "hci_packet.h"
+#include "gdm_endian.h"
 
-#घोषणा USB_DEVICE_CDC_DATA(vid, pid) \
+#define USB_DEVICE_CDC_DATA(vid, pid) \
 	.match_flags = USB_DEVICE_ID_MATCH_DEVICE | \
 		USB_DEVICE_ID_MATCH_INT_CLASS | \
 		USB_DEVICE_ID_MATCH_INT_SUBCLASS,\
-	.idVenकरोr = vid,\
+	.idVendor = vid,\
 	.idProduct = pid,\
 	.bInterfaceClass = USB_CLASS_COMM,\
 	.bInterfaceSubClass = USB_CDC_SUBCLASS_ETHERNET
 
-#घोषणा USB_DEVICE_MASS_DATA(vid, pid) \
+#define USB_DEVICE_MASS_DATA(vid, pid) \
 	.match_flags = USB_DEVICE_ID_MATCH_DEVICE | \
 		USB_DEVICE_ID_MATCH_INT_INFO,\
-	.idVenकरोr = vid,\
+	.idVendor = vid,\
 	.idProduct = pid,\
 	.bInterfaceSubClass = USB_SC_SCSI, \
 	.bInterfaceClass = USB_CLASS_MASS_STORAGE,\
 	.bInterfaceProtocol = USB_PR_BULK
 
-अटल स्थिर काष्ठा usb_device_id id_table[] = अणु
-	अणु USB_DEVICE_CDC_DATA(VID_GCT, PID_GDM7240) पूर्ण, /* GCT GDM7240 */
-	अणु USB_DEVICE_CDC_DATA(VID_GCT, PID_GDM7243) पूर्ण, /* GCT GDM7243 */
-	अणु पूर्ण
-पूर्ण;
+static const struct usb_device_id id_table[] = {
+	{ USB_DEVICE_CDC_DATA(VID_GCT, PID_GDM7240) }, /* GCT GDM7240 */
+	{ USB_DEVICE_CDC_DATA(VID_GCT, PID_GDM7243) }, /* GCT GDM7243 */
+	{ }
+};
 
 MODULE_DEVICE_TABLE(usb, id_table);
 
-अटल व्योम करो_tx(काष्ठा work_काष्ठा *work);
-अटल व्योम करो_rx(काष्ठा work_काष्ठा *work);
+static void do_tx(struct work_struct *work);
+static void do_rx(struct work_struct *work);
 
-अटल पूर्णांक gdm_usb_recv(व्योम *priv_dev,
-			पूर्णांक (*cb)(व्योम *cb_data,
-				  व्योम *data, पूर्णांक len, पूर्णांक context),
-			व्योम *cb_data,
-			पूर्णांक context);
+static int gdm_usb_recv(void *priv_dev,
+			int (*cb)(void *cb_data,
+				  void *data, int len, int context),
+			void *cb_data,
+			int context);
 
-अटल पूर्णांक request_mac_address(काष्ठा lte_udev *udev)
-अणु
-	काष्ठा hci_packet *hci;
-	काष्ठा usb_device *usbdev = udev->usbdev;
-	पूर्णांक actual;
-	पूर्णांक ret = -1;
+static int request_mac_address(struct lte_udev *udev)
+{
+	struct hci_packet *hci;
+	struct usb_device *usbdev = udev->usbdev;
+	int actual;
+	int ret = -1;
 
-	hci = kदो_स्मृति(काष्ठा_size(hci, data, 1), GFP_KERNEL);
-	अगर (!hci)
-		वापस -ENOMEM;
+	hci = kmalloc(struct_size(hci, data, 1), GFP_KERNEL);
+	if (!hci)
+		return -ENOMEM;
 
 	hci->cmd_evt = gdm_cpu_to_dev16(udev->gdm_ed, LTE_GET_INFORMATION);
 	hci->len = gdm_cpu_to_dev16(udev->gdm_ed, 1);
@@ -74,238 +73,238 @@ MODULE_DEVICE_TABLE(usb, id_table);
 			   &actual, 1000);
 
 	udev->request_mac_addr = 1;
-	kमुक्त(hci);
+	kfree(hci);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा usb_tx *alloc_tx_काष्ठा(पूर्णांक len)
-अणु
-	काष्ठा usb_tx *t = शून्य;
-	पूर्णांक ret = 0;
+static struct usb_tx *alloc_tx_struct(int len)
+{
+	struct usb_tx *t = NULL;
+	int ret = 0;
 
-	t = kzalloc(माप(*t), GFP_ATOMIC);
-	अगर (!t) अणु
+	t = kzalloc(sizeof(*t), GFP_ATOMIC);
+	if (!t) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	t->urb = usb_alloc_urb(0, GFP_ATOMIC);
-	अगर (!(len % 512))
+	if (!(len % 512))
 		len++;
 
-	t->buf = kदो_स्मृति(len, GFP_ATOMIC);
-	अगर (!t->urb || !t->buf) अणु
+	t->buf = kmalloc(len, GFP_ATOMIC);
+	if (!t->urb || !t->buf) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 out:
-	अगर (ret < 0) अणु
-		अगर (t) अणु
-			usb_मुक्त_urb(t->urb);
-			kमुक्त(t->buf);
-			kमुक्त(t);
-		पूर्ण
-		वापस शून्य;
-	पूर्ण
+	if (ret < 0) {
+		if (t) {
+			usb_free_urb(t->urb);
+			kfree(t->buf);
+			kfree(t);
+		}
+		return NULL;
+	}
 
-	वापस t;
-पूर्ण
+	return t;
+}
 
-अटल काष्ठा usb_tx_sdu *alloc_tx_sdu_काष्ठा(व्योम)
-अणु
-	काष्ठा usb_tx_sdu *t_sdu;
+static struct usb_tx_sdu *alloc_tx_sdu_struct(void)
+{
+	struct usb_tx_sdu *t_sdu;
 
-	t_sdu = kzalloc(माप(*t_sdu), GFP_KERNEL);
-	अगर (!t_sdu)
-		वापस शून्य;
+	t_sdu = kzalloc(sizeof(*t_sdu), GFP_KERNEL);
+	if (!t_sdu)
+		return NULL;
 
-	t_sdu->buf = kदो_स्मृति(SDU_BUF_SIZE, GFP_KERNEL);
-	अगर (!t_sdu->buf) अणु
-		kमुक्त(t_sdu);
-		वापस शून्य;
-	पूर्ण
+	t_sdu->buf = kmalloc(SDU_BUF_SIZE, GFP_KERNEL);
+	if (!t_sdu->buf) {
+		kfree(t_sdu);
+		return NULL;
+	}
 
-	वापस t_sdu;
-पूर्ण
+	return t_sdu;
+}
 
-अटल व्योम मुक्त_tx_काष्ठा(काष्ठा usb_tx *t)
-अणु
-	अगर (t) अणु
-		usb_मुक्त_urb(t->urb);
-		kमुक्त(t->buf);
-		kमुक्त(t);
-	पूर्ण
-पूर्ण
+static void free_tx_struct(struct usb_tx *t)
+{
+	if (t) {
+		usb_free_urb(t->urb);
+		kfree(t->buf);
+		kfree(t);
+	}
+}
 
-अटल व्योम मुक्त_tx_sdu_काष्ठा(काष्ठा usb_tx_sdu *t_sdu)
-अणु
-	अगर (t_sdu) अणु
-		kमुक्त(t_sdu->buf);
-		kमुक्त(t_sdu);
-	पूर्ण
-पूर्ण
+static void free_tx_sdu_struct(struct usb_tx_sdu *t_sdu)
+{
+	if (t_sdu) {
+		kfree(t_sdu->buf);
+		kfree(t_sdu);
+	}
+}
 
-अटल काष्ठा usb_tx_sdu *get_tx_sdu_काष्ठा(काष्ठा tx_cxt *tx, पूर्णांक *no_spc)
-अणु
-	काष्ठा usb_tx_sdu *t_sdu;
+static struct usb_tx_sdu *get_tx_sdu_struct(struct tx_cxt *tx, int *no_spc)
+{
+	struct usb_tx_sdu *t_sdu;
 
-	अगर (list_empty(&tx->मुक्त_list))
-		वापस शून्य;
+	if (list_empty(&tx->free_list))
+		return NULL;
 
-	t_sdu = list_entry(tx->मुक्त_list.next, काष्ठा usb_tx_sdu, list);
+	t_sdu = list_entry(tx->free_list.next, struct usb_tx_sdu, list);
 	list_del(&t_sdu->list);
 
 	tx->avail_count--;
 
-	*no_spc = list_empty(&tx->मुक्त_list) ? 1 : 0;
+	*no_spc = list_empty(&tx->free_list) ? 1 : 0;
 
-	वापस t_sdu;
-पूर्ण
+	return t_sdu;
+}
 
-अटल व्योम put_tx_काष्ठा(काष्ठा tx_cxt *tx, काष्ठा usb_tx_sdu *t_sdu)
-अणु
-	list_add_tail(&t_sdu->list, &tx->मुक्त_list);
+static void put_tx_struct(struct tx_cxt *tx, struct usb_tx_sdu *t_sdu)
+{
+	list_add_tail(&t_sdu->list, &tx->free_list);
 	tx->avail_count++;
-पूर्ण
+}
 
-अटल काष्ठा usb_rx *alloc_rx_काष्ठा(व्योम)
-अणु
-	काष्ठा usb_rx *r = शून्य;
-	पूर्णांक ret = 0;
+static struct usb_rx *alloc_rx_struct(void)
+{
+	struct usb_rx *r = NULL;
+	int ret = 0;
 
-	r = kदो_स्मृति(माप(*r), GFP_KERNEL);
-	अगर (!r) अणु
+	r = kmalloc(sizeof(*r), GFP_KERNEL);
+	if (!r) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	r->urb = usb_alloc_urb(0, GFP_KERNEL);
-	r->buf = kदो_स्मृति(RX_BUF_SIZE, GFP_KERNEL);
-	अगर (!r->urb || !r->buf) अणु
+	r->buf = kmalloc(RX_BUF_SIZE, GFP_KERNEL);
+	if (!r->urb || !r->buf) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 out:
 
-	अगर (ret < 0) अणु
-		अगर (r) अणु
-			usb_मुक्त_urb(r->urb);
-			kमुक्त(r->buf);
-			kमुक्त(r);
-		पूर्ण
-		वापस शून्य;
-	पूर्ण
+	if (ret < 0) {
+		if (r) {
+			usb_free_urb(r->urb);
+			kfree(r->buf);
+			kfree(r);
+		}
+		return NULL;
+	}
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल व्योम मुक्त_rx_काष्ठा(काष्ठा usb_rx *r)
-अणु
-	अगर (r) अणु
-		usb_मुक्त_urb(r->urb);
-		kमुक्त(r->buf);
-		kमुक्त(r);
-	पूर्ण
-पूर्ण
+static void free_rx_struct(struct usb_rx *r)
+{
+	if (r) {
+		usb_free_urb(r->urb);
+		kfree(r->buf);
+		kfree(r);
+	}
+}
 
-अटल काष्ठा usb_rx *get_rx_काष्ठा(काष्ठा rx_cxt *rx, पूर्णांक *no_spc)
-अणु
-	काष्ठा usb_rx *r;
-	अचिन्हित दीर्घ flags;
+static struct usb_rx *get_rx_struct(struct rx_cxt *rx, int *no_spc)
+{
+	struct usb_rx *r;
+	unsigned long flags;
 
 	spin_lock_irqsave(&rx->rx_lock, flags);
 
-	अगर (list_empty(&rx->मुक्त_list)) अणु
+	if (list_empty(&rx->free_list)) {
 		spin_unlock_irqrestore(&rx->rx_lock, flags);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	r = list_entry(rx->मुक्त_list.next, काष्ठा usb_rx, मुक्त_list);
-	list_del(&r->मुक्त_list);
+	r = list_entry(rx->free_list.next, struct usb_rx, free_list);
+	list_del(&r->free_list);
 
 	rx->avail_count--;
 
-	*no_spc = list_empty(&rx->मुक्त_list) ? 1 : 0;
+	*no_spc = list_empty(&rx->free_list) ? 1 : 0;
 
 	spin_unlock_irqrestore(&rx->rx_lock, flags);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल व्योम put_rx_काष्ठा(काष्ठा rx_cxt *rx, काष्ठा usb_rx *r)
-अणु
-	अचिन्हित दीर्घ flags;
+static void put_rx_struct(struct rx_cxt *rx, struct usb_rx *r)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&rx->rx_lock, flags);
 
-	list_add_tail(&r->मुक्त_list, &rx->मुक्त_list);
+	list_add_tail(&r->free_list, &rx->free_list);
 	rx->avail_count++;
 
 	spin_unlock_irqrestore(&rx->rx_lock, flags);
-पूर्ण
+}
 
-अटल व्योम release_usb(काष्ठा lte_udev *udev)
-अणु
-	काष्ठा rx_cxt	*rx = &udev->rx;
-	काष्ठा tx_cxt	*tx = &udev->tx;
-	काष्ठा usb_tx	*t, *t_next;
-	काष्ठा usb_rx	*r, *r_next;
-	काष्ठा usb_tx_sdu	*t_sdu, *t_sdu_next;
-	अचिन्हित दीर्घ flags;
+static void release_usb(struct lte_udev *udev)
+{
+	struct rx_cxt	*rx = &udev->rx;
+	struct tx_cxt	*tx = &udev->tx;
+	struct usb_tx	*t, *t_next;
+	struct usb_rx	*r, *r_next;
+	struct usb_tx_sdu	*t_sdu, *t_sdu_next;
+	unsigned long flags;
 
 	spin_lock_irqsave(&tx->lock, flags);
-	list_क्रम_each_entry_safe(t_sdu, t_sdu_next, &tx->sdu_list, list) अणु
+	list_for_each_entry_safe(t_sdu, t_sdu_next, &tx->sdu_list, list) {
 		list_del(&t_sdu->list);
-		मुक्त_tx_sdu_काष्ठा(t_sdu);
-	पूर्ण
+		free_tx_sdu_struct(t_sdu);
+	}
 
-	list_क्रम_each_entry_safe(t, t_next, &tx->hci_list, list) अणु
+	list_for_each_entry_safe(t, t_next, &tx->hci_list, list) {
 		list_del(&t->list);
-		मुक्त_tx_काष्ठा(t);
-	पूर्ण
+		free_tx_struct(t);
+	}
 
-	list_क्रम_each_entry_safe(t_sdu, t_sdu_next, &tx->मुक्त_list, list) अणु
+	list_for_each_entry_safe(t_sdu, t_sdu_next, &tx->free_list, list) {
 		list_del(&t_sdu->list);
-		मुक्त_tx_sdu_काष्ठा(t_sdu);
-	पूर्ण
+		free_tx_sdu_struct(t_sdu);
+	}
 	spin_unlock_irqrestore(&tx->lock, flags);
 
 	spin_lock_irqsave(&rx->submit_lock, flags);
-	list_क्रम_each_entry_safe(r, r_next, &rx->rx_submit_list,
-				 rx_submit_list) अणु
+	list_for_each_entry_safe(r, r_next, &rx->rx_submit_list,
+				 rx_submit_list) {
 		spin_unlock_irqrestore(&rx->submit_lock, flags);
-		usb_समाप्त_urb(r->urb);
+		usb_kill_urb(r->urb);
 		spin_lock_irqsave(&rx->submit_lock, flags);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&rx->submit_lock, flags);
 
 	spin_lock_irqsave(&rx->rx_lock, flags);
-	list_क्रम_each_entry_safe(r, r_next, &rx->मुक्त_list, मुक्त_list) अणु
-		list_del(&r->मुक्त_list);
-		मुक्त_rx_काष्ठा(r);
-	पूर्ण
+	list_for_each_entry_safe(r, r_next, &rx->free_list, free_list) {
+		list_del(&r->free_list);
+		free_rx_struct(r);
+	}
 	spin_unlock_irqrestore(&rx->rx_lock, flags);
 
 	spin_lock_irqsave(&rx->to_host_lock, flags);
-	list_क्रम_each_entry_safe(r, r_next, &rx->to_host_list, to_host_list) अणु
-		अगर (r->index == (व्योम *)udev) अणु
+	list_for_each_entry_safe(r, r_next, &rx->to_host_list, to_host_list) {
+		if (r->index == (void *)udev) {
 			list_del(&r->to_host_list);
-			मुक्त_rx_काष्ठा(r);
-		पूर्ण
-	पूर्ण
+			free_rx_struct(r);
+		}
+	}
 	spin_unlock_irqrestore(&rx->to_host_lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक init_usb(काष्ठा lte_udev *udev)
-अणु
-	पूर्णांक ret = 0;
-	पूर्णांक i;
-	काष्ठा tx_cxt *tx = &udev->tx;
-	काष्ठा rx_cxt *rx = &udev->rx;
-	काष्ठा usb_tx_sdu *t_sdu = शून्य;
-	काष्ठा usb_rx *r = शून्य;
+static int init_usb(struct lte_udev *udev)
+{
+	int ret = 0;
+	int i;
+	struct tx_cxt *tx = &udev->tx;
+	struct rx_cxt *rx = &udev->rx;
+	struct usb_tx_sdu *t_sdu = NULL;
+	struct usb_rx *r = NULL;
 
 	udev->send_complete = 1;
 	udev->tx_stop = 0;
@@ -314,9 +313,9 @@ out:
 
 	INIT_LIST_HEAD(&tx->sdu_list);
 	INIT_LIST_HEAD(&tx->hci_list);
-	INIT_LIST_HEAD(&tx->मुक्त_list);
+	INIT_LIST_HEAD(&tx->free_list);
 	INIT_LIST_HEAD(&rx->rx_submit_list);
-	INIT_LIST_HEAD(&rx->मुक्त_list);
+	INIT_LIST_HEAD(&rx->free_list);
 	INIT_LIST_HEAD(&rx->to_host_list);
 	spin_lock_init(&tx->lock);
 	spin_lock_init(&rx->rx_lock);
@@ -326,190 +325,190 @@ out:
 	tx->avail_count = 0;
 	rx->avail_count = 0;
 
-	udev->rx_cb = शून्य;
+	udev->rx_cb = NULL;
 
-	क्रम (i = 0; i < MAX_NUM_SDU_BUF; i++) अणु
-		t_sdu = alloc_tx_sdu_काष्ठा();
-		अगर (!t_sdu) अणु
+	for (i = 0; i < MAX_NUM_SDU_BUF; i++) {
+		t_sdu = alloc_tx_sdu_struct();
+		if (!t_sdu) {
 			ret = -ENOMEM;
-			जाओ fail;
-		पूर्ण
+			goto fail;
+		}
 
-		list_add(&t_sdu->list, &tx->मुक्त_list);
+		list_add(&t_sdu->list, &tx->free_list);
 		tx->avail_count++;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < MAX_RX_SUBMIT_COUNT * 2; i++) अणु
-		r = alloc_rx_काष्ठा();
-		अगर (!r) अणु
+	for (i = 0; i < MAX_RX_SUBMIT_COUNT * 2; i++) {
+		r = alloc_rx_struct();
+		if (!r) {
 			ret = -ENOMEM;
-			जाओ fail;
-		पूर्ण
+			goto fail;
+		}
 
-		list_add(&r->मुक्त_list, &rx->मुक्त_list);
+		list_add(&r->free_list, &rx->free_list);
 		rx->avail_count++;
-	पूर्ण
-	INIT_DELAYED_WORK(&udev->work_tx, करो_tx);
-	INIT_DELAYED_WORK(&udev->work_rx, करो_rx);
-	वापस 0;
+	}
+	INIT_DELAYED_WORK(&udev->work_tx, do_tx);
+	INIT_DELAYED_WORK(&udev->work_rx, do_rx);
+	return 0;
 fail:
 	release_usb(udev);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक set_mac_address(u8 *data, व्योम *arg)
-अणु
-	काष्ठा phy_dev *phy_dev = arg;
-	काष्ठा lte_udev *udev = phy_dev->priv_dev;
-	काष्ठा tlv *tlv = (काष्ठा tlv *)data;
-	u8 mac_address[ETH_ALEN] = अणु0, पूर्ण;
+static int set_mac_address(u8 *data, void *arg)
+{
+	struct phy_dev *phy_dev = arg;
+	struct lte_udev *udev = phy_dev->priv_dev;
+	struct tlv *tlv = (struct tlv *)data;
+	u8 mac_address[ETH_ALEN] = {0, };
 
-	अगर (tlv->type == MAC_ADDRESS && udev->request_mac_addr) अणु
-		स_नकल(mac_address, tlv->data, tlv->len);
+	if (tlv->type == MAC_ADDRESS && udev->request_mac_addr) {
+		memcpy(mac_address, tlv->data, tlv->len);
 
-		अगर (रेजिस्टर_lte_device(phy_dev,
-					&udev->पूर्णांकf->dev, mac_address) < 0)
+		if (register_lte_device(phy_dev,
+					&udev->intf->dev, mac_address) < 0)
 			pr_err("register lte device failed\n");
 
 		udev->request_mac_addr = 0;
 
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम करो_rx(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा lte_udev *udev =
-		container_of(work, काष्ठा lte_udev, work_rx.work);
-	काष्ठा rx_cxt *rx = &udev->rx;
-	काष्ठा usb_rx *r;
-	काष्ठा hci_packet *hci;
-	काष्ठा phy_dev *phy_dev;
+static void do_rx(struct work_struct *work)
+{
+	struct lte_udev *udev =
+		container_of(work, struct lte_udev, work_rx.work);
+	struct rx_cxt *rx = &udev->rx;
+	struct usb_rx *r;
+	struct hci_packet *hci;
+	struct phy_dev *phy_dev;
 	u16 cmd_evt;
-	पूर्णांक ret;
-	अचिन्हित दीर्घ flags;
+	int ret;
+	unsigned long flags;
 
-	जबतक (1) अणु
+	while (1) {
 		spin_lock_irqsave(&rx->to_host_lock, flags);
-		अगर (list_empty(&rx->to_host_list)) अणु
+		if (list_empty(&rx->to_host_list)) {
 			spin_unlock_irqrestore(&rx->to_host_lock, flags);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		r = list_entry(rx->to_host_list.next,
-			       काष्ठा usb_rx, to_host_list);
+			       struct usb_rx, to_host_list);
 		list_del(&r->to_host_list);
 		spin_unlock_irqrestore(&rx->to_host_lock, flags);
 
 		phy_dev = r->cb_data;
 		udev = phy_dev->priv_dev;
-		hci = (काष्ठा hci_packet *)r->buf;
+		hci = (struct hci_packet *)r->buf;
 		cmd_evt = gdm_dev16_to_cpu(udev->gdm_ed, hci->cmd_evt);
 
-		चयन (cmd_evt) अणु
-		हाल LTE_GET_INFORMATION_RESULT:
-			अगर (set_mac_address(hci->data, r->cb_data) == 0) अणु
+		switch (cmd_evt) {
+		case LTE_GET_INFORMATION_RESULT:
+			if (set_mac_address(hci->data, r->cb_data) == 0) {
 				r->callback(r->cb_data,
 					    r->buf,
 					    r->urb->actual_length,
 					    KERNEL_THREAD);
-			पूर्ण
-			अवरोध;
+			}
+			break;
 
-		शेष:
-			अगर (r->callback) अणु
+		default:
+			if (r->callback) {
 				ret = r->callback(r->cb_data,
 						  r->buf,
 						  r->urb->actual_length,
 						  KERNEL_THREAD);
 
-				अगर (ret == -EAGAIN)
+				if (ret == -EAGAIN)
 					pr_err("failed to send received data\n");
-			पूर्ण
-			अवरोध;
-		पूर्ण
+			}
+			break;
+		}
 
-		put_rx_काष्ठा(rx, r);
+		put_rx_struct(rx, r);
 
 		gdm_usb_recv(udev,
 			     r->callback,
 			     r->cb_data,
 			     USB_COMPLETE);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम हटाओ_rx_submit_list(काष्ठा usb_rx *r, काष्ठा rx_cxt *rx)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा usb_rx	*r_हटाओ, *r_हटाओ_next;
+static void remove_rx_submit_list(struct usb_rx *r, struct rx_cxt *rx)
+{
+	unsigned long flags;
+	struct usb_rx	*r_remove, *r_remove_next;
 
 	spin_lock_irqsave(&rx->submit_lock, flags);
-	list_क्रम_each_entry_safe(r_हटाओ, r_हटाओ_next,
-				 &rx->rx_submit_list, rx_submit_list) अणु
-		अगर (r == r_हटाओ) अणु
+	list_for_each_entry_safe(r_remove, r_remove_next,
+				 &rx->rx_submit_list, rx_submit_list) {
+		if (r == r_remove) {
 			list_del(&r->rx_submit_list);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	spin_unlock_irqrestore(&rx->submit_lock, flags);
-पूर्ण
+}
 
-अटल व्योम gdm_usb_rcv_complete(काष्ठा urb *urb)
-अणु
-	काष्ठा usb_rx *r = urb->context;
-	काष्ठा rx_cxt *rx = r->rx;
-	अचिन्हित दीर्घ flags;
-	काष्ठा lte_udev *udev = container_of(r->rx, काष्ठा lte_udev, rx);
-	काष्ठा usb_device *usbdev = udev->usbdev;
+static void gdm_usb_rcv_complete(struct urb *urb)
+{
+	struct usb_rx *r = urb->context;
+	struct rx_cxt *rx = r->rx;
+	unsigned long flags;
+	struct lte_udev *udev = container_of(r->rx, struct lte_udev, rx);
+	struct usb_device *usbdev = udev->usbdev;
 
-	हटाओ_rx_submit_list(r, rx);
+	remove_rx_submit_list(r, rx);
 
-	अगर (!urb->status && r->callback) अणु
+	if (!urb->status && r->callback) {
 		spin_lock_irqsave(&rx->to_host_lock, flags);
 		list_add_tail(&r->to_host_list, &rx->to_host_list);
 		schedule_work(&udev->work_rx.work);
 		spin_unlock_irqrestore(&rx->to_host_lock, flags);
-	पूर्ण अन्यथा अणु
-		अगर (urb->status && udev->usb_state == PM_NORMAL)
+	} else {
+		if (urb->status && udev->usb_state == PM_NORMAL)
 			dev_err(&urb->dev->dev, "%s: urb status error %d\n",
 				__func__, urb->status);
 
-		put_rx_काष्ठा(rx, r);
-	पूर्ण
+		put_rx_struct(rx, r);
+	}
 
 	usb_mark_last_busy(usbdev);
-पूर्ण
+}
 
-अटल पूर्णांक gdm_usb_recv(व्योम *priv_dev,
-			पूर्णांक (*cb)(व्योम *cb_data,
-				  व्योम *data, पूर्णांक len, पूर्णांक context),
-			व्योम *cb_data,
-			पूर्णांक context)
-अणु
-	काष्ठा lte_udev *udev = priv_dev;
-	काष्ठा usb_device *usbdev = udev->usbdev;
-	काष्ठा rx_cxt *rx = &udev->rx;
-	काष्ठा usb_rx *r;
-	पूर्णांक no_spc;
-	पूर्णांक ret;
-	अचिन्हित दीर्घ flags;
+static int gdm_usb_recv(void *priv_dev,
+			int (*cb)(void *cb_data,
+				  void *data, int len, int context),
+			void *cb_data,
+			int context)
+{
+	struct lte_udev *udev = priv_dev;
+	struct usb_device *usbdev = udev->usbdev;
+	struct rx_cxt *rx = &udev->rx;
+	struct usb_rx *r;
+	int no_spc;
+	int ret;
+	unsigned long flags;
 
-	अगर (!udev->usbdev) अणु
+	if (!udev->usbdev) {
 		pr_err("invalid device\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	r = get_rx_काष्ठा(rx, &no_spc);
-	अगर (!r) अणु
+	r = get_rx_struct(rx, &no_spc);
+	if (!r) {
 		pr_err("Out of Memory\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	udev->rx_cb = cb;
 	r->callback = cb;
 	r->cb_data = cb_data;
-	r->index = (व्योम *)udev;
+	r->index = (void *)udev;
 	r->rx = rx;
 
 	usb_fill_bulk_urb(r->urb,
@@ -524,51 +523,51 @@ fail:
 	list_add_tail(&r->rx_submit_list, &rx->rx_submit_list);
 	spin_unlock_irqrestore(&rx->submit_lock, flags);
 
-	अगर (context == KERNEL_THREAD)
+	if (context == KERNEL_THREAD)
 		ret = usb_submit_urb(r->urb, GFP_KERNEL);
-	अन्यथा
+	else
 		ret = usb_submit_urb(r->urb, GFP_ATOMIC);
 
-	अगर (ret) अणु
+	if (ret) {
 		spin_lock_irqsave(&rx->submit_lock, flags);
 		list_del(&r->rx_submit_list);
 		spin_unlock_irqrestore(&rx->submit_lock, flags);
 
 		pr_err("usb_submit_urb failed (%p)\n", r);
-		put_rx_काष्ठा(rx, r);
-	पूर्ण
+		put_rx_struct(rx, r);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम gdm_usb_send_complete(काष्ठा urb *urb)
-अणु
-	काष्ठा usb_tx *t = urb->context;
-	काष्ठा tx_cxt *tx = t->tx;
-	काष्ठा lte_udev *udev = container_of(tx, काष्ठा lte_udev, tx);
-	अचिन्हित दीर्घ flags;
+static void gdm_usb_send_complete(struct urb *urb)
+{
+	struct usb_tx *t = urb->context;
+	struct tx_cxt *tx = t->tx;
+	struct lte_udev *udev = container_of(tx, struct lte_udev, tx);
+	unsigned long flags;
 
-	अगर (urb->status == -ECONNRESET) अणु
+	if (urb->status == -ECONNRESET) {
 		dev_info(&urb->dev->dev, "CONNRESET\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (t->callback)
+	if (t->callback)
 		t->callback(t->cb_data);
 
-	मुक्त_tx_काष्ठा(t);
+	free_tx_struct(t);
 
 	spin_lock_irqsave(&tx->lock, flags);
 	udev->send_complete = 1;
 	schedule_work(&udev->work_tx.work);
 	spin_unlock_irqrestore(&tx->lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक send_tx_packet(काष्ठा usb_device *usbdev, काष्ठा usb_tx *t, u32 len)
-अणु
-	पूर्णांक ret = 0;
+static int send_tx_packet(struct usb_device *usbdev, struct usb_tx *t, u32 len)
+{
+	int ret = 0;
 
-	अगर (!(len % 512))
+	if (!(len % 512))
 		len++;
 
 	usb_fill_bulk_urb(t->urb,
@@ -581,164 +580,164 @@ fail:
 
 	ret = usb_submit_urb(t->urb, GFP_ATOMIC);
 
-	अगर (ret)
+	if (ret)
 		dev_err(&usbdev->dev, "usb_submit_urb failed: %d\n",
 			ret);
 
 	usb_mark_last_busy(usbdev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल u32 packet_aggregation(काष्ठा lte_udev *udev, u8 *send_buf)
-अणु
-	काष्ठा tx_cxt *tx = &udev->tx;
-	काष्ठा usb_tx_sdu *t_sdu = शून्य;
-	काष्ठा multi_sdu *multi_sdu = (काष्ठा multi_sdu *)send_buf;
+static u32 packet_aggregation(struct lte_udev *udev, u8 *send_buf)
+{
+	struct tx_cxt *tx = &udev->tx;
+	struct usb_tx_sdu *t_sdu = NULL;
+	struct multi_sdu *multi_sdu = (struct multi_sdu *)send_buf;
 	u16 send_len = 0;
 	u16 num_packet = 0;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	multi_sdu->cmd_evt = gdm_cpu_to_dev16(udev->gdm_ed, LTE_TX_MULTI_SDU);
 
-	जबतक (num_packet < MAX_PACKET_IN_MULTI_SDU) अणु
+	while (num_packet < MAX_PACKET_IN_MULTI_SDU) {
 		spin_lock_irqsave(&tx->lock, flags);
-		अगर (list_empty(&tx->sdu_list)) अणु
+		if (list_empty(&tx->sdu_list)) {
 			spin_unlock_irqrestore(&tx->lock, flags);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		t_sdu = list_entry(tx->sdu_list.next, काष्ठा usb_tx_sdu, list);
-		अगर (send_len + t_sdu->len > MAX_SDU_SIZE) अणु
+		t_sdu = list_entry(tx->sdu_list.next, struct usb_tx_sdu, list);
+		if (send_len + t_sdu->len > MAX_SDU_SIZE) {
 			spin_unlock_irqrestore(&tx->lock, flags);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		list_del(&t_sdu->list);
 		spin_unlock_irqrestore(&tx->lock, flags);
 
-		स_नकल(multi_sdu->data + send_len, t_sdu->buf, t_sdu->len);
+		memcpy(multi_sdu->data + send_len, t_sdu->buf, t_sdu->len);
 
 		send_len += (t_sdu->len + 3) & 0xfffc;
 		num_packet++;
 
-		अगर (tx->avail_count > 10)
+		if (tx->avail_count > 10)
 			t_sdu->callback(t_sdu->cb_data);
 
 		spin_lock_irqsave(&tx->lock, flags);
-		put_tx_काष्ठा(tx, t_sdu);
+		put_tx_struct(tx, t_sdu);
 		spin_unlock_irqrestore(&tx->lock, flags);
-	पूर्ण
+	}
 
 	multi_sdu->len = gdm_cpu_to_dev16(udev->gdm_ed, send_len);
 	multi_sdu->num_packet = gdm_cpu_to_dev16(udev->gdm_ed, num_packet);
 
-	वापस send_len + दुरत्व(काष्ठा multi_sdu, data);
-पूर्ण
+	return send_len + offsetof(struct multi_sdu, data);
+}
 
-अटल व्योम करो_tx(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा lte_udev *udev =
-		container_of(work, काष्ठा lte_udev, work_tx.work);
-	काष्ठा usb_device *usbdev = udev->usbdev;
-	काष्ठा tx_cxt *tx = &udev->tx;
-	काष्ठा usb_tx *t = शून्य;
-	पूर्णांक is_send = 0;
+static void do_tx(struct work_struct *work)
+{
+	struct lte_udev *udev =
+		container_of(work, struct lte_udev, work_tx.work);
+	struct usb_device *usbdev = udev->usbdev;
+	struct tx_cxt *tx = &udev->tx;
+	struct usb_tx *t = NULL;
+	int is_send = 0;
 	u32 len = 0;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
-	अगर (!usb_स्वतःpm_get_पूर्णांकerface(udev->पूर्णांकf))
-		usb_स्वतःpm_put_पूर्णांकerface(udev->पूर्णांकf);
+	if (!usb_autopm_get_interface(udev->intf))
+		usb_autopm_put_interface(udev->intf);
 
-	अगर (udev->usb_state == PM_SUSPEND)
-		वापस;
+	if (udev->usb_state == PM_SUSPEND)
+		return;
 
 	spin_lock_irqsave(&tx->lock, flags);
-	अगर (!udev->send_complete) अणु
+	if (!udev->send_complete) {
 		spin_unlock_irqrestore(&tx->lock, flags);
-		वापस;
-	पूर्ण
+		return;
+	}
 	udev->send_complete = 0;
 
-	अगर (!list_empty(&tx->hci_list)) अणु
-		t = list_entry(tx->hci_list.next, काष्ठा usb_tx, list);
+	if (!list_empty(&tx->hci_list)) {
+		t = list_entry(tx->hci_list.next, struct usb_tx, list);
 		list_del(&t->list);
 		len = t->len;
 		t->is_sdu = 0;
 		is_send = 1;
-	पूर्ण अन्यथा अगर (!list_empty(&tx->sdu_list)) अणु
-		अगर (udev->tx_stop) अणु
+	} else if (!list_empty(&tx->sdu_list)) {
+		if (udev->tx_stop) {
 			udev->send_complete = 1;
 			spin_unlock_irqrestore(&tx->lock, flags);
-			वापस;
-		पूर्ण
+			return;
+		}
 
-		t = alloc_tx_काष्ठा(TX_BUF_SIZE);
-		अगर (!t) अणु
+		t = alloc_tx_struct(TX_BUF_SIZE);
+		if (!t) {
 			spin_unlock_irqrestore(&tx->lock, flags);
-			वापस;
-		पूर्ण
-		t->callback = शून्य;
+			return;
+		}
+		t->callback = NULL;
 		t->tx = tx;
 		t->is_sdu = 1;
 		is_send = 1;
-	पूर्ण
+	}
 
-	अगर (!is_send) अणु
+	if (!is_send) {
 		udev->send_complete = 1;
 		spin_unlock_irqrestore(&tx->lock, flags);
-		वापस;
-	पूर्ण
+		return;
+	}
 	spin_unlock_irqrestore(&tx->lock, flags);
 
-	अगर (t->is_sdu)
+	if (t->is_sdu)
 		len = packet_aggregation(udev, t->buf);
 
-	अगर (send_tx_packet(usbdev, t, len)) अणु
+	if (send_tx_packet(usbdev, t, len)) {
 		pr_err("send_tx_packet failed\n");
-		t->callback = शून्य;
+		t->callback = NULL;
 		gdm_usb_send_complete(t->urb);
-	पूर्ण
-पूर्ण
+	}
+}
 
-#घोषणा SDU_PARAM_LEN 12
-अटल पूर्णांक gdm_usb_sdu_send(व्योम *priv_dev, व्योम *data, पूर्णांक len,
-			    अचिन्हित पूर्णांक dft_eps_ID, अचिन्हित पूर्णांक eps_ID,
-			    व्योम (*cb)(व्योम *data), व्योम *cb_data,
-			    पूर्णांक dev_idx, पूर्णांक nic_type)
-अणु
-	काष्ठा lte_udev *udev = priv_dev;
-	काष्ठा tx_cxt *tx = &udev->tx;
-	काष्ठा usb_tx_sdu *t_sdu;
-	काष्ठा sdu *sdu = शून्य;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक no_spc = 0;
+#define SDU_PARAM_LEN 12
+static int gdm_usb_sdu_send(void *priv_dev, void *data, int len,
+			    unsigned int dft_eps_ID, unsigned int eps_ID,
+			    void (*cb)(void *data), void *cb_data,
+			    int dev_idx, int nic_type)
+{
+	struct lte_udev *udev = priv_dev;
+	struct tx_cxt *tx = &udev->tx;
+	struct usb_tx_sdu *t_sdu;
+	struct sdu *sdu = NULL;
+	unsigned long flags;
+	int no_spc = 0;
 	u16 send_len;
 
-	अगर (!udev->usbdev) अणु
+	if (!udev->usbdev) {
 		pr_err("sdu send - invalid device\n");
-		वापस TX_NO_DEV;
-	पूर्ण
+		return TX_NO_DEV;
+	}
 
 	spin_lock_irqsave(&tx->lock, flags);
-	t_sdu = get_tx_sdu_काष्ठा(tx, &no_spc);
+	t_sdu = get_tx_sdu_struct(tx, &no_spc);
 	spin_unlock_irqrestore(&tx->lock, flags);
 
-	अगर (!t_sdu) अणु
+	if (!t_sdu) {
 		pr_err("sdu send - free list empty\n");
-		वापस TX_NO_SPC;
-	पूर्ण
+		return TX_NO_SPC;
+	}
 
-	sdu = (काष्ठा sdu *)t_sdu->buf;
+	sdu = (struct sdu *)t_sdu->buf;
 	sdu->cmd_evt = gdm_cpu_to_dev16(udev->gdm_ed, LTE_TX_SDU);
-	अगर (nic_type == NIC_TYPE_ARP) अणु
+	if (nic_type == NIC_TYPE_ARP) {
 		send_len = len + SDU_PARAM_LEN;
-		स_नकल(sdu->data, data, len);
-	पूर्ण अन्यथा अणु
+		memcpy(sdu->data, data, len);
+	} else {
 		send_len = len - ETH_HLEN;
 		send_len += SDU_PARAM_LEN;
-		स_नकल(sdu->data, data + ETH_HLEN, len - ETH_HLEN);
-	पूर्ण
+		memcpy(sdu->data, data + ETH_HLEN, len - ETH_HLEN);
+	}
 
 	sdu->len = gdm_cpu_to_dev16(udev->gdm_ed, send_len);
 	sdu->dft_eps_ID = gdm_cpu_to_dev32(udev->gdm_ed, dft_eps_ID);
@@ -754,32 +753,32 @@ fail:
 	schedule_work(&udev->work_tx.work);
 	spin_unlock_irqrestore(&tx->lock, flags);
 
-	अगर (no_spc)
-		वापस TX_NO_BUFFER;
+	if (no_spc)
+		return TX_NO_BUFFER;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक gdm_usb_hci_send(व्योम *priv_dev, व्योम *data, पूर्णांक len,
-			    व्योम (*cb)(व्योम *data), व्योम *cb_data)
-अणु
-	काष्ठा lte_udev *udev = priv_dev;
-	काष्ठा tx_cxt *tx = &udev->tx;
-	काष्ठा usb_tx *t;
-	अचिन्हित दीर्घ flags;
+static int gdm_usb_hci_send(void *priv_dev, void *data, int len,
+			    void (*cb)(void *data), void *cb_data)
+{
+	struct lte_udev *udev = priv_dev;
+	struct tx_cxt *tx = &udev->tx;
+	struct usb_tx *t;
+	unsigned long flags;
 
-	अगर (!udev->usbdev) अणु
+	if (!udev->usbdev) {
 		pr_err("hci send - invalid device\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	t = alloc_tx_काष्ठा(len);
-	अगर (!t) अणु
+	t = alloc_tx_struct(len);
+	if (!t) {
 		pr_err("hci_send - out of memory\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	स_नकल(t->buf, data, len);
+	memcpy(t->buf, data, len);
 	t->callback = cb;
 	t->cb_data = cb_data;
 	t->len = len;
@@ -791,48 +790,48 @@ fail:
 	schedule_work(&udev->work_tx.work);
 	spin_unlock_irqrestore(&tx->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u8 gdm_usb_get_endian(व्योम *priv_dev)
-अणु
-	काष्ठा lte_udev *udev = priv_dev;
+static u8 gdm_usb_get_endian(void *priv_dev)
+{
+	struct lte_udev *udev = priv_dev;
 
-	वापस udev->gdm_ed;
-पूर्ण
+	return udev->gdm_ed;
+}
 
-अटल पूर्णांक gdm_usb_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकf,
-			 स्थिर काष्ठा usb_device_id *id)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा phy_dev *phy_dev = शून्य;
-	काष्ठा lte_udev *udev = शून्य;
-	u16 idVenकरोr, idProduct;
-	पूर्णांक bInterfaceNumber;
-	काष्ठा usb_device *usbdev = पूर्णांकerface_to_usbdev(पूर्णांकf);
+static int gdm_usb_probe(struct usb_interface *intf,
+			 const struct usb_device_id *id)
+{
+	int ret = 0;
+	struct phy_dev *phy_dev = NULL;
+	struct lte_udev *udev = NULL;
+	u16 idVendor, idProduct;
+	int bInterfaceNumber;
+	struct usb_device *usbdev = interface_to_usbdev(intf);
 
-	bInterfaceNumber = पूर्णांकf->cur_altsetting->desc.bInterfaceNumber;
-	idVenकरोr = __le16_to_cpu(usbdev->descriptor.idVenकरोr);
+	bInterfaceNumber = intf->cur_altsetting->desc.bInterfaceNumber;
+	idVendor = __le16_to_cpu(usbdev->descriptor.idVendor);
 	idProduct = __le16_to_cpu(usbdev->descriptor.idProduct);
 
-	pr_info("net vid = 0x%04x pid = 0x%04x\n", idVenकरोr, idProduct);
+	pr_info("net vid = 0x%04x pid = 0x%04x\n", idVendor, idProduct);
 
-	अगर (bInterfaceNumber > NETWORK_INTERFACE) अणु
+	if (bInterfaceNumber > NETWORK_INTERFACE) {
 		pr_info("not a network device\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	phy_dev = kzalloc(माप(*phy_dev), GFP_KERNEL);
-	अगर (!phy_dev)
-		वापस -ENOMEM;
+	phy_dev = kzalloc(sizeof(*phy_dev), GFP_KERNEL);
+	if (!phy_dev)
+		return -ENOMEM;
 
-	udev = kzalloc(माप(*udev), GFP_KERNEL);
-	अगर (!udev) अणु
+	udev = kzalloc(sizeof(*udev), GFP_KERNEL);
+	if (!udev) {
 		ret = -ENOMEM;
-		जाओ err_udev;
-	पूर्ण
+		goto err_udev;
+	}
 
-	phy_dev->priv_dev = (व्योम *)udev;
+	phy_dev->priv_dev = (void *)udev;
 	phy_dev->send_hci_func = gdm_usb_hci_send;
 	phy_dev->send_sdu_func = gdm_usb_sdu_send;
 	phy_dev->rcv_func = gdm_usb_recv;
@@ -840,173 +839,173 @@ fail:
 
 	udev->usbdev = usbdev;
 	ret = init_usb(udev);
-	अगर (ret < 0) अणु
-		dev_err(पूर्णांकf->usb_dev, "init_usb func failed\n");
-		जाओ err_init_usb;
-	पूर्ण
-	udev->पूर्णांकf = पूर्णांकf;
+	if (ret < 0) {
+		dev_err(intf->usb_dev, "init_usb func failed\n");
+		goto err_init_usb;
+	}
+	udev->intf = intf;
 
-	पूर्णांकf->needs_remote_wakeup = 1;
-	usb_enable_स्वतःsuspend(usbdev);
-	pm_runसमय_set_स्वतःsuspend_delay(&usbdev->dev, AUTO_SUSPEND_TIMER);
+	intf->needs_remote_wakeup = 1;
+	usb_enable_autosuspend(usbdev);
+	pm_runtime_set_autosuspend_delay(&usbdev->dev, AUTO_SUSPEND_TIMER);
 
 	/* List up hosts with big endians, otherwise,
-	 * शेषs to little endian
+	 * defaults to little endian
 	 */
-	अगर (idProduct == PID_GDM7243)
+	if (idProduct == PID_GDM7243)
 		udev->gdm_ed = ENDIANNESS_BIG;
-	अन्यथा
+	else
 		udev->gdm_ed = ENDIANNESS_LITTLE;
 
 	ret = request_mac_address(udev);
-	अगर (ret < 0) अणु
-		dev_err(पूर्णांकf->usb_dev, "request Mac address failed\n");
-		जाओ err_mac_address;
-	पूर्ण
+	if (ret < 0) {
+		dev_err(intf->usb_dev, "request Mac address failed\n");
+		goto err_mac_address;
+	}
 
 	start_rx_proc(phy_dev);
 	usb_get_dev(usbdev);
-	usb_set_पूर्णांकfdata(पूर्णांकf, phy_dev);
+	usb_set_intfdata(intf, phy_dev);
 
-	वापस 0;
+	return 0;
 
 err_mac_address:
 	release_usb(udev);
 err_init_usb:
-	kमुक्त(udev);
+	kfree(udev);
 err_udev:
-	kमुक्त(phy_dev);
+	kfree(phy_dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम gdm_usb_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
-अणु
-	काष्ठा phy_dev *phy_dev;
-	काष्ठा lte_udev *udev;
-	काष्ठा usb_device *usbdev;
+static void gdm_usb_disconnect(struct usb_interface *intf)
+{
+	struct phy_dev *phy_dev;
+	struct lte_udev *udev;
+	struct usb_device *usbdev;
 
-	usbdev = पूर्णांकerface_to_usbdev(पूर्णांकf);
-	phy_dev = usb_get_पूर्णांकfdata(पूर्णांकf);
+	usbdev = interface_to_usbdev(intf);
+	phy_dev = usb_get_intfdata(intf);
 
 	udev = phy_dev->priv_dev;
-	unरेजिस्टर_lte_device(phy_dev);
+	unregister_lte_device(phy_dev);
 
 	release_usb(udev);
 
-	kमुक्त(udev);
-	udev = शून्य;
+	kfree(udev);
+	udev = NULL;
 
-	kमुक्त(phy_dev);
-	phy_dev = शून्य;
+	kfree(phy_dev);
+	phy_dev = NULL;
 
 	usb_put_dev(usbdev);
-पूर्ण
+}
 
-अटल पूर्णांक gdm_usb_suspend(काष्ठा usb_पूर्णांकerface *पूर्णांकf, pm_message_t pm_msg)
-अणु
-	काष्ठा phy_dev *phy_dev;
-	काष्ठा lte_udev *udev;
-	काष्ठा rx_cxt *rx;
-	काष्ठा usb_rx *r;
-	काष्ठा usb_rx *r_next;
-	अचिन्हित दीर्घ flags;
+static int gdm_usb_suspend(struct usb_interface *intf, pm_message_t pm_msg)
+{
+	struct phy_dev *phy_dev;
+	struct lte_udev *udev;
+	struct rx_cxt *rx;
+	struct usb_rx *r;
+	struct usb_rx *r_next;
+	unsigned long flags;
 
-	phy_dev = usb_get_पूर्णांकfdata(पूर्णांकf);
+	phy_dev = usb_get_intfdata(intf);
 	udev = phy_dev->priv_dev;
 	rx = &udev->rx;
-	अगर (udev->usb_state != PM_NORMAL) अणु
-		dev_err(पूर्णांकf->usb_dev, "usb suspend - invalid state\n");
-		वापस -1;
-	पूर्ण
+	if (udev->usb_state != PM_NORMAL) {
+		dev_err(intf->usb_dev, "usb suspend - invalid state\n");
+		return -1;
+	}
 
 	udev->usb_state = PM_SUSPEND;
 
 	spin_lock_irqsave(&rx->submit_lock, flags);
-	list_क्रम_each_entry_safe(r, r_next, &rx->rx_submit_list,
-				 rx_submit_list) अणु
+	list_for_each_entry_safe(r, r_next, &rx->rx_submit_list,
+				 rx_submit_list) {
 		spin_unlock_irqrestore(&rx->submit_lock, flags);
-		usb_समाप्त_urb(r->urb);
+		usb_kill_urb(r->urb);
 		spin_lock_irqsave(&rx->submit_lock, flags);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&rx->submit_lock, flags);
 
 	cancel_work_sync(&udev->work_tx.work);
 	cancel_work_sync(&udev->work_rx.work);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक gdm_usb_resume(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
-अणु
-	काष्ठा phy_dev *phy_dev;
-	काष्ठा lte_udev *udev;
-	काष्ठा tx_cxt *tx;
-	काष्ठा rx_cxt *rx;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक issue_count;
-	पूर्णांक i;
+static int gdm_usb_resume(struct usb_interface *intf)
+{
+	struct phy_dev *phy_dev;
+	struct lte_udev *udev;
+	struct tx_cxt *tx;
+	struct rx_cxt *rx;
+	unsigned long flags;
+	int issue_count;
+	int i;
 
-	phy_dev = usb_get_पूर्णांकfdata(पूर्णांकf);
+	phy_dev = usb_get_intfdata(intf);
 	udev = phy_dev->priv_dev;
 	rx = &udev->rx;
 
-	अगर (udev->usb_state != PM_SUSPEND) अणु
-		dev_err(पूर्णांकf->usb_dev, "usb resume - invalid state\n");
-		वापस -1;
-	पूर्ण
+	if (udev->usb_state != PM_SUSPEND) {
+		dev_err(intf->usb_dev, "usb resume - invalid state\n");
+		return -1;
+	}
 	udev->usb_state = PM_NORMAL;
 
 	spin_lock_irqsave(&rx->rx_lock, flags);
 	issue_count = rx->avail_count - MAX_RX_SUBMIT_COUNT;
 	spin_unlock_irqrestore(&rx->rx_lock, flags);
 
-	अगर (issue_count >= 0) अणु
-		क्रम (i = 0; i < issue_count; i++)
+	if (issue_count >= 0) {
+		for (i = 0; i < issue_count; i++)
 			gdm_usb_recv(phy_dev->priv_dev,
 				     udev->rx_cb,
 				     phy_dev,
 				     USB_COMPLETE);
-	पूर्ण
+	}
 
 	tx = &udev->tx;
 	spin_lock_irqsave(&tx->lock, flags);
 	schedule_work(&udev->work_tx.work);
 	spin_unlock_irqrestore(&tx->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा usb_driver gdm_usb_lte_driver = अणु
+static struct usb_driver gdm_usb_lte_driver = {
 	.name = "gdm_lte",
 	.probe = gdm_usb_probe,
 	.disconnect = gdm_usb_disconnect,
 	.id_table = id_table,
-	.supports_स्वतःsuspend = 1,
+	.supports_autosuspend = 1,
 	.suspend = gdm_usb_suspend,
 	.resume = gdm_usb_resume,
 	.reset_resume = gdm_usb_resume,
-पूर्ण;
+};
 
-अटल पूर्णांक __init gdm_usb_lte_init(व्योम)
-अणु
-	अगर (gdm_lte_event_init() < 0) अणु
+static int __init gdm_usb_lte_init(void)
+{
+	if (gdm_lte_event_init() < 0) {
 		pr_err("error creating event\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	वापस usb_रेजिस्टर(&gdm_usb_lte_driver);
-पूर्ण
+	return usb_register(&gdm_usb_lte_driver);
+}
 
-अटल व्योम __निकास gdm_usb_lte_निकास(व्योम)
-अणु
-	gdm_lte_event_निकास();
+static void __exit gdm_usb_lte_exit(void)
+{
+	gdm_lte_event_exit();
 
-	usb_deरेजिस्टर(&gdm_usb_lte_driver);
-पूर्ण
+	usb_deregister(&gdm_usb_lte_driver);
+}
 
 module_init(gdm_usb_lte_init);
-module_निकास(gdm_usb_lte_निकास);
+module_exit(gdm_usb_lte_exit);
 
 MODULE_VERSION(DRIVER_VERSION);
 MODULE_DESCRIPTION("GCT LTE USB Device Driver");

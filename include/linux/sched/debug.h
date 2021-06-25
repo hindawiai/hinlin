@@ -1,55 +1,54 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_SCHED_DEBUG_H
-#घोषणा _LINUX_SCHED_DEBUG_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_SCHED_DEBUG_H
+#define _LINUX_SCHED_DEBUG_H
 
 /*
- * Various scheduler/task debugging पूर्णांकerfaces:
+ * Various scheduler/task debugging interfaces:
  */
 
-काष्ठा task_काष्ठा;
-काष्ठा pid_namespace;
+struct task_struct;
+struct pid_namespace;
 
-बाह्य व्योम dump_cpu_task(पूर्णांक cpu);
+extern void dump_cpu_task(int cpu);
 
 /*
- * Only dump TASK_* tasks. (0 क्रम all tasks)
+ * Only dump TASK_* tasks. (0 for all tasks)
  */
-बाह्य व्योम show_state_filter(अचिन्हित दीर्घ state_filter);
+extern void show_state_filter(unsigned long state_filter);
 
-अटल अंतरभूत व्योम show_state(व्योम)
-अणु
+static inline void show_state(void)
+{
 	show_state_filter(0);
-पूर्ण
+}
 
-काष्ठा pt_regs;
+struct pt_regs;
 
-बाह्य व्योम show_regs(काष्ठा pt_regs *);
+extern void show_regs(struct pt_regs *);
 
 /*
- * TASK is a poपूर्णांकer to the task whose backtrace we want to see (or शून्य क्रम current
- * task), SP is the stack poपूर्णांकer of the first frame that should be shown in the back
- * trace (or शून्य अगर the entire call-chain of the task should be shown).
+ * TASK is a pointer to the task whose backtrace we want to see (or NULL for current
+ * task), SP is the stack pointer of the first frame that should be shown in the back
+ * trace (or NULL if the entire call-chain of the task should be shown).
  */
-बाह्य व्योम show_stack(काष्ठा task_काष्ठा *task, अचिन्हित दीर्घ *sp,
-		       स्थिर अक्षर *loglvl);
+extern void show_stack(struct task_struct *task, unsigned long *sp,
+		       const char *loglvl);
 
-बाह्य व्योम sched_show_task(काष्ठा task_काष्ठा *p);
+extern void sched_show_task(struct task_struct *p);
 
-#अगर_घोषित CONFIG_SCHED_DEBUG
-काष्ठा seq_file;
-बाह्य व्योम proc_sched_show_task(काष्ठा task_काष्ठा *p,
-				 काष्ठा pid_namespace *ns, काष्ठा seq_file *m);
-बाह्य व्योम proc_sched_set_task(काष्ठा task_काष्ठा *p);
-#पूर्ण_अगर
+#ifdef CONFIG_SCHED_DEBUG
+struct seq_file;
+extern void proc_sched_show_task(struct task_struct *p,
+				 struct pid_namespace *ns, struct seq_file *m);
+extern void proc_sched_set_task(struct task_struct *p);
+#endif
 
 /* Attach to any functions which should be ignored in wchan output. */
-#घोषणा __sched		__section(".sched.text")
+#define __sched		__section(".sched.text")
 
 /* Linker adds these: start and end of __sched functions */
-बाह्य अक्षर __sched_text_start[], __sched_text_end[];
+extern char __sched_text_start[], __sched_text_end[];
 
 /* Is this address in the __sched functions? */
-बाह्य पूर्णांक in_sched_functions(अचिन्हित दीर्घ addr);
+extern int in_sched_functions(unsigned long addr);
 
-#पूर्ण_अगर /* _LINUX_SCHED_DEBUG_H */
+#endif /* _LINUX_SCHED_DEBUG_H */

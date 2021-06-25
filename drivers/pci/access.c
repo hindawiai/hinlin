@@ -1,65 +1,64 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/pci.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/रुको.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/pci.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/ioport.h>
+#include <linux/wait.h>
 
-#समावेश "pci.h"
+#include "pci.h"
 
 /*
- * This पूर्णांकerrupt-safe spinlock protects all accesses to PCI
+ * This interrupt-safe spinlock protects all accesses to PCI
  * configuration space.
  */
 
 DEFINE_RAW_SPINLOCK(pci_lock);
 
 /*
- * Wrappers क्रम all PCI configuration access functions.  They just check
- * alignment, करो locking and call the low-level functions poपूर्णांकed to
+ * Wrappers for all PCI configuration access functions.  They just check
+ * alignment, do locking and call the low-level functions pointed to
  * by pci_dev->ops.
  */
 
-#घोषणा PCI_byte_BAD 0
-#घोषणा PCI_word_BAD (pos & 1)
-#घोषणा PCI_dword_BAD (pos & 3)
+#define PCI_byte_BAD 0
+#define PCI_word_BAD (pos & 1)
+#define PCI_dword_BAD (pos & 3)
 
-#अगर_घोषित CONFIG_PCI_LOCKLESS_CONFIG
-# define pci_lock_config(f)	करो अणु (व्योम)(f); पूर्ण जबतक (0)
-# define pci_unlock_config(f)	करो अणु (व्योम)(f); पूर्ण जबतक (0)
-#अन्यथा
+#ifdef CONFIG_PCI_LOCKLESS_CONFIG
+# define pci_lock_config(f)	do { (void)(f); } while (0)
+# define pci_unlock_config(f)	do { (void)(f); } while (0)
+#else
 # define pci_lock_config(f)	raw_spin_lock_irqsave(&pci_lock, f)
 # define pci_unlock_config(f)	raw_spin_unlock_irqrestore(&pci_lock, f)
-#पूर्ण_अगर
+#endif
 
-#घोषणा PCI_OP_READ(size, type, len) \
-पूर्णांक noअंतरभूत pci_bus_पढ़ो_config_##size \
-	(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn, पूर्णांक pos, type *value)	\
-अणु									\
-	पूर्णांक res;							\
-	अचिन्हित दीर्घ flags;						\
+#define PCI_OP_READ(size, type, len) \
+int noinline pci_bus_read_config_##size \
+	(struct pci_bus *bus, unsigned int devfn, int pos, type *value)	\
+{									\
+	int res;							\
+	unsigned long flags;						\
 	u32 data = 0;							\
-	अगर (PCI_##size##_BAD) वापस PCIBIOS_BAD_REGISTER_NUMBER;	\
+	if (PCI_##size##_BAD) return PCIBIOS_BAD_REGISTER_NUMBER;	\
 	pci_lock_config(flags);						\
-	res = bus->ops->पढ़ो(bus, devfn, pos, len, &data);		\
+	res = bus->ops->read(bus, devfn, pos, len, &data);		\
 	*value = (type)data;						\
 	pci_unlock_config(flags);					\
-	वापस res;							\
-पूर्ण
+	return res;							\
+}
 
-#घोषणा PCI_OP_WRITE(size, type, len) \
-पूर्णांक noअंतरभूत pci_bus_ग_लिखो_config_##size \
-	(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn, पूर्णांक pos, type value)	\
-अणु									\
-	पूर्णांक res;							\
-	अचिन्हित दीर्घ flags;						\
-	अगर (PCI_##size##_BAD) वापस PCIBIOS_BAD_REGISTER_NUMBER;	\
+#define PCI_OP_WRITE(size, type, len) \
+int noinline pci_bus_write_config_##size \
+	(struct pci_bus *bus, unsigned int devfn, int pos, type value)	\
+{									\
+	int res;							\
+	unsigned long flags;						\
+	if (PCI_##size##_BAD) return PCIBIOS_BAD_REGISTER_NUMBER;	\
 	pci_lock_config(flags);						\
-	res = bus->ops->ग_लिखो(bus, devfn, pos, len, value);		\
+	res = bus->ops->write(bus, devfn, pos, len, value);		\
 	pci_unlock_config(flags);					\
-	वापस res;							\
-पूर्ण
+	return res;							\
+}
 
 PCI_OP_READ(byte, u8, 1)
 PCI_OP_READ(word, u16, 2)
@@ -68,189 +67,189 @@ PCI_OP_WRITE(byte, u8, 1)
 PCI_OP_WRITE(word, u16, 2)
 PCI_OP_WRITE(dword, u32, 4)
 
-EXPORT_SYMBOL(pci_bus_पढ़ो_config_byte);
-EXPORT_SYMBOL(pci_bus_पढ़ो_config_word);
-EXPORT_SYMBOL(pci_bus_पढ़ो_config_dword);
-EXPORT_SYMBOL(pci_bus_ग_लिखो_config_byte);
-EXPORT_SYMBOL(pci_bus_ग_लिखो_config_word);
-EXPORT_SYMBOL(pci_bus_ग_लिखो_config_dword);
+EXPORT_SYMBOL(pci_bus_read_config_byte);
+EXPORT_SYMBOL(pci_bus_read_config_word);
+EXPORT_SYMBOL(pci_bus_read_config_dword);
+EXPORT_SYMBOL(pci_bus_write_config_byte);
+EXPORT_SYMBOL(pci_bus_write_config_word);
+EXPORT_SYMBOL(pci_bus_write_config_dword);
 
-पूर्णांक pci_generic_config_पढ़ो(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn,
-			    पूर्णांक where, पूर्णांक size, u32 *val)
-अणु
-	व्योम __iomem *addr;
+int pci_generic_config_read(struct pci_bus *bus, unsigned int devfn,
+			    int where, int size, u32 *val)
+{
+	void __iomem *addr;
 
 	addr = bus->ops->map_bus(bus, devfn, where);
-	अगर (!addr) अणु
+	if (!addr) {
 		*val = ~0;
-		वापस PCIBIOS_DEVICE_NOT_FOUND;
-	पूर्ण
+		return PCIBIOS_DEVICE_NOT_FOUND;
+	}
 
-	अगर (size == 1)
-		*val = पढ़ोb(addr);
-	अन्यथा अगर (size == 2)
-		*val = पढ़ोw(addr);
-	अन्यथा
-		*val = पढ़ोl(addr);
+	if (size == 1)
+		*val = readb(addr);
+	else if (size == 2)
+		*val = readw(addr);
+	else
+		*val = readl(addr);
 
-	वापस PCIBIOS_SUCCESSFUL;
-पूर्ण
-EXPORT_SYMBOL_GPL(pci_generic_config_पढ़ो);
+	return PCIBIOS_SUCCESSFUL;
+}
+EXPORT_SYMBOL_GPL(pci_generic_config_read);
 
-पूर्णांक pci_generic_config_ग_लिखो(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn,
-			     पूर्णांक where, पूर्णांक size, u32 val)
-अणु
-	व्योम __iomem *addr;
+int pci_generic_config_write(struct pci_bus *bus, unsigned int devfn,
+			     int where, int size, u32 val)
+{
+	void __iomem *addr;
 
 	addr = bus->ops->map_bus(bus, devfn, where);
-	अगर (!addr)
-		वापस PCIBIOS_DEVICE_NOT_FOUND;
+	if (!addr)
+		return PCIBIOS_DEVICE_NOT_FOUND;
 
-	अगर (size == 1)
-		ग_लिखोb(val, addr);
-	अन्यथा अगर (size == 2)
-		ग_लिखोw(val, addr);
-	अन्यथा
-		ग_लिखोl(val, addr);
+	if (size == 1)
+		writeb(val, addr);
+	else if (size == 2)
+		writew(val, addr);
+	else
+		writel(val, addr);
 
-	वापस PCIBIOS_SUCCESSFUL;
-पूर्ण
-EXPORT_SYMBOL_GPL(pci_generic_config_ग_लिखो);
+	return PCIBIOS_SUCCESSFUL;
+}
+EXPORT_SYMBOL_GPL(pci_generic_config_write);
 
-पूर्णांक pci_generic_config_पढ़ो32(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn,
-			      पूर्णांक where, पूर्णांक size, u32 *val)
-अणु
-	व्योम __iomem *addr;
+int pci_generic_config_read32(struct pci_bus *bus, unsigned int devfn,
+			      int where, int size, u32 *val)
+{
+	void __iomem *addr;
 
 	addr = bus->ops->map_bus(bus, devfn, where & ~0x3);
-	अगर (!addr) अणु
+	if (!addr) {
 		*val = ~0;
-		वापस PCIBIOS_DEVICE_NOT_FOUND;
-	पूर्ण
+		return PCIBIOS_DEVICE_NOT_FOUND;
+	}
 
-	*val = पढ़ोl(addr);
+	*val = readl(addr);
 
-	अगर (size <= 2)
+	if (size <= 2)
 		*val = (*val >> (8 * (where & 3))) & ((1 << (size * 8)) - 1);
 
-	वापस PCIBIOS_SUCCESSFUL;
-पूर्ण
-EXPORT_SYMBOL_GPL(pci_generic_config_पढ़ो32);
+	return PCIBIOS_SUCCESSFUL;
+}
+EXPORT_SYMBOL_GPL(pci_generic_config_read32);
 
-पूर्णांक pci_generic_config_ग_लिखो32(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn,
-			       पूर्णांक where, पूर्णांक size, u32 val)
-अणु
-	व्योम __iomem *addr;
-	u32 mask, पंचांगp;
+int pci_generic_config_write32(struct pci_bus *bus, unsigned int devfn,
+			       int where, int size, u32 val)
+{
+	void __iomem *addr;
+	u32 mask, tmp;
 
 	addr = bus->ops->map_bus(bus, devfn, where & ~0x3);
-	अगर (!addr)
-		वापस PCIBIOS_DEVICE_NOT_FOUND;
+	if (!addr)
+		return PCIBIOS_DEVICE_NOT_FOUND;
 
-	अगर (size == 4) अणु
-		ग_लिखोl(val, addr);
-		वापस PCIBIOS_SUCCESSFUL;
-	पूर्ण
+	if (size == 4) {
+		writel(val, addr);
+		return PCIBIOS_SUCCESSFUL;
+	}
 
 	/*
-	 * In general, hardware that supports only 32-bit ग_लिखोs on PCI is
-	 * not spec-compliant.  For example, software may perक्रमm a 16-bit
-	 * ग_लिखो.  If the hardware only supports 32-bit accesses, we must
-	 * करो a 32-bit पढ़ो, merge in the 16 bits we पूर्णांकend to ग_लिखो,
-	 * followed by a 32-bit ग_लिखो.  If the 16 bits we *करोn't* पूर्णांकend to
-	 * ग_लिखो happen to have any RW1C (ग_लिखो-one-to-clear) bits set, we
+	 * In general, hardware that supports only 32-bit writes on PCI is
+	 * not spec-compliant.  For example, software may perform a 16-bit
+	 * write.  If the hardware only supports 32-bit accesses, we must
+	 * do a 32-bit read, merge in the 16 bits we intend to write,
+	 * followed by a 32-bit write.  If the 16 bits we *don't* intend to
+	 * write happen to have any RW1C (write-one-to-clear) bits set, we
 	 * just inadvertently cleared something we shouldn't have.
 	 */
 	dev_warn_ratelimited(&bus->dev, "%d-byte config write to %04x:%02x:%02x.%d offset %#x may corrupt adjacent RW1C bits\n",
-			     size, pci_करोमुख्य_nr(bus), bus->number,
+			     size, pci_domain_nr(bus), bus->number,
 			     PCI_SLOT(devfn), PCI_FUNC(devfn), where);
 
 	mask = ~(((1 << (size * 8)) - 1) << ((where & 0x3) * 8));
-	पंचांगp = पढ़ोl(addr) & mask;
-	पंचांगp |= val << ((where & 0x3) * 8);
-	ग_लिखोl(पंचांगp, addr);
+	tmp = readl(addr) & mask;
+	tmp |= val << ((where & 0x3) * 8);
+	writel(tmp, addr);
 
-	वापस PCIBIOS_SUCCESSFUL;
-पूर्ण
-EXPORT_SYMBOL_GPL(pci_generic_config_ग_लिखो32);
+	return PCIBIOS_SUCCESSFUL;
+}
+EXPORT_SYMBOL_GPL(pci_generic_config_write32);
 
 /**
  * pci_bus_set_ops - Set raw operations of pci bus
- * @bus:	pci bus काष्ठा
+ * @bus:	pci bus struct
  * @ops:	new raw operations
  *
  * Return previous raw operations
  */
-काष्ठा pci_ops *pci_bus_set_ops(काष्ठा pci_bus *bus, काष्ठा pci_ops *ops)
-अणु
-	काष्ठा pci_ops *old_ops;
-	अचिन्हित दीर्घ flags;
+struct pci_ops *pci_bus_set_ops(struct pci_bus *bus, struct pci_ops *ops)
+{
+	struct pci_ops *old_ops;
+	unsigned long flags;
 
 	raw_spin_lock_irqsave(&pci_lock, flags);
 	old_ops = bus->ops;
 	bus->ops = ops;
 	raw_spin_unlock_irqrestore(&pci_lock, flags);
-	वापस old_ops;
-पूर्ण
+	return old_ops;
+}
 EXPORT_SYMBOL(pci_bus_set_ops);
 
 /*
  * The following routines are to prevent the user from accessing PCI config
- * space when it's unsafe to करो so.  Some devices require this during BIST and
+ * space when it's unsafe to do so.  Some devices require this during BIST and
  * we're required to prevent it during D-state transitions.
  *
- * We have a bit per device to indicate it's blocked and a global रुको queue
- * क्रम callers to sleep on until devices are unblocked.
+ * We have a bit per device to indicate it's blocked and a global wait queue
+ * for callers to sleep on until devices are unblocked.
  */
-अटल DECLARE_WAIT_QUEUE_HEAD(pci_cfg_रुको);
+static DECLARE_WAIT_QUEUE_HEAD(pci_cfg_wait);
 
-अटल noअंतरभूत व्योम pci_रुको_cfg(काष्ठा pci_dev *dev)
+static noinline void pci_wait_cfg(struct pci_dev *dev)
 	__must_hold(&pci_lock)
-अणु
-	करो अणु
+{
+	do {
 		raw_spin_unlock_irq(&pci_lock);
-		रुको_event(pci_cfg_रुको, !dev->block_cfg_access);
+		wait_event(pci_cfg_wait, !dev->block_cfg_access);
 		raw_spin_lock_irq(&pci_lock);
-	पूर्ण जबतक (dev->block_cfg_access);
-पूर्ण
+	} while (dev->block_cfg_access);
+}
 
 /* Returns 0 on success, negative values indicate error. */
-#घोषणा PCI_USER_READ_CONFIG(size, type)					\
-पूर्णांक pci_user_पढ़ो_config_##size						\
-	(काष्ठा pci_dev *dev, पूर्णांक pos, type *val)			\
-अणु									\
-	पूर्णांक ret = PCIBIOS_SUCCESSFUL;					\
+#define PCI_USER_READ_CONFIG(size, type)					\
+int pci_user_read_config_##size						\
+	(struct pci_dev *dev, int pos, type *val)			\
+{									\
+	int ret = PCIBIOS_SUCCESSFUL;					\
 	u32 data = -1;							\
-	अगर (PCI_##size##_BAD)						\
-		वापस -EINVAL;						\
+	if (PCI_##size##_BAD)						\
+		return -EINVAL;						\
 	raw_spin_lock_irq(&pci_lock);				\
-	अगर (unlikely(dev->block_cfg_access))				\
-		pci_रुको_cfg(dev);					\
-	ret = dev->bus->ops->पढ़ो(dev->bus, dev->devfn,			\
-					pos, माप(type), &data);	\
+	if (unlikely(dev->block_cfg_access))				\
+		pci_wait_cfg(dev);					\
+	ret = dev->bus->ops->read(dev->bus, dev->devfn,			\
+					pos, sizeof(type), &data);	\
 	raw_spin_unlock_irq(&pci_lock);				\
 	*val = (type)data;						\
-	वापस pcibios_err_to_त्रुटि_सं(ret);				\
-पूर्ण									\
-EXPORT_SYMBOL_GPL(pci_user_पढ़ो_config_##size);
+	return pcibios_err_to_errno(ret);				\
+}									\
+EXPORT_SYMBOL_GPL(pci_user_read_config_##size);
 
 /* Returns 0 on success, negative values indicate error. */
-#घोषणा PCI_USER_WRITE_CONFIG(size, type)				\
-पूर्णांक pci_user_ग_लिखो_config_##size					\
-	(काष्ठा pci_dev *dev, पूर्णांक pos, type val)			\
-अणु									\
-	पूर्णांक ret = PCIBIOS_SUCCESSFUL;					\
-	अगर (PCI_##size##_BAD)						\
-		वापस -EINVAL;						\
+#define PCI_USER_WRITE_CONFIG(size, type)				\
+int pci_user_write_config_##size					\
+	(struct pci_dev *dev, int pos, type val)			\
+{									\
+	int ret = PCIBIOS_SUCCESSFUL;					\
+	if (PCI_##size##_BAD)						\
+		return -EINVAL;						\
 	raw_spin_lock_irq(&pci_lock);				\
-	अगर (unlikely(dev->block_cfg_access))				\
-		pci_रुको_cfg(dev);					\
-	ret = dev->bus->ops->ग_लिखो(dev->bus, dev->devfn,		\
-					pos, माप(type), val);	\
+	if (unlikely(dev->block_cfg_access))				\
+		pci_wait_cfg(dev);					\
+	ret = dev->bus->ops->write(dev->bus, dev->devfn,		\
+					pos, sizeof(type), val);	\
 	raw_spin_unlock_irq(&pci_lock);				\
-	वापस pcibios_err_to_त्रुटि_सं(ret);				\
-पूर्ण									\
-EXPORT_SYMBOL_GPL(pci_user_ग_लिखो_config_##size);
+	return pcibios_err_to_errno(ret);				\
+}									\
+EXPORT_SYMBOL_GPL(pci_user_write_config_##size);
 
 PCI_USER_READ_CONFIG(byte, u8)
 PCI_USER_READ_CONFIG(word, u16)
@@ -260,319 +259,319 @@ PCI_USER_WRITE_CONFIG(word, u16)
 PCI_USER_WRITE_CONFIG(dword, u32)
 
 /**
- * pci_cfg_access_lock - Lock PCI config पढ़ोs/ग_लिखोs
- * @dev:	pci device काष्ठा
+ * pci_cfg_access_lock - Lock PCI config reads/writes
+ * @dev:	pci device struct
  *
- * When access is locked, any userspace पढ़ोs or ग_लिखोs to config
+ * When access is locked, any userspace reads or writes to config
  * space and concurrent lock requests will sleep until access is
  * allowed via pci_cfg_access_unlock() again.
  */
-व्योम pci_cfg_access_lock(काष्ठा pci_dev *dev)
-अणु
+void pci_cfg_access_lock(struct pci_dev *dev)
+{
 	might_sleep();
 
 	raw_spin_lock_irq(&pci_lock);
-	अगर (dev->block_cfg_access)
-		pci_रुको_cfg(dev);
+	if (dev->block_cfg_access)
+		pci_wait_cfg(dev);
 	dev->block_cfg_access = 1;
 	raw_spin_unlock_irq(&pci_lock);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(pci_cfg_access_lock);
 
 /**
- * pci_cfg_access_trylock - try to lock PCI config पढ़ोs/ग_लिखोs
- * @dev:	pci device काष्ठा
+ * pci_cfg_access_trylock - try to lock PCI config reads/writes
+ * @dev:	pci device struct
  *
- * Same as pci_cfg_access_lock, but will वापस 0 अगर access is
- * alपढ़ोy locked, 1 otherwise. This function can be used from
+ * Same as pci_cfg_access_lock, but will return 0 if access is
+ * already locked, 1 otherwise. This function can be used from
  * atomic contexts.
  */
-bool pci_cfg_access_trylock(काष्ठा pci_dev *dev)
-अणु
-	अचिन्हित दीर्घ flags;
+bool pci_cfg_access_trylock(struct pci_dev *dev)
+{
+	unsigned long flags;
 	bool locked = true;
 
 	raw_spin_lock_irqsave(&pci_lock, flags);
-	अगर (dev->block_cfg_access)
+	if (dev->block_cfg_access)
 		locked = false;
-	अन्यथा
+	else
 		dev->block_cfg_access = 1;
 	raw_spin_unlock_irqrestore(&pci_lock, flags);
 
-	वापस locked;
-पूर्ण
+	return locked;
+}
 EXPORT_SYMBOL_GPL(pci_cfg_access_trylock);
 
 /**
- * pci_cfg_access_unlock - Unlock PCI config पढ़ोs/ग_लिखोs
- * @dev:	pci device काष्ठा
+ * pci_cfg_access_unlock - Unlock PCI config reads/writes
+ * @dev:	pci device struct
  *
  * This function allows PCI config accesses to resume.
  */
-व्योम pci_cfg_access_unlock(काष्ठा pci_dev *dev)
-अणु
-	अचिन्हित दीर्घ flags;
+void pci_cfg_access_unlock(struct pci_dev *dev)
+{
+	unsigned long flags;
 
 	raw_spin_lock_irqsave(&pci_lock, flags);
 
 	/*
-	 * This indicates a problem in the caller, but we करोn't need
-	 * to समाप्त them, unlike a द्विगुन-block above.
+	 * This indicates a problem in the caller, but we don't need
+	 * to kill them, unlike a double-block above.
 	 */
 	WARN_ON(!dev->block_cfg_access);
 
 	dev->block_cfg_access = 0;
 	raw_spin_unlock_irqrestore(&pci_lock, flags);
 
-	wake_up_all(&pci_cfg_रुको);
-पूर्ण
+	wake_up_all(&pci_cfg_wait);
+}
 EXPORT_SYMBOL_GPL(pci_cfg_access_unlock);
 
-अटल अंतरभूत पूर्णांक pcie_cap_version(स्थिर काष्ठा pci_dev *dev)
-अणु
-	वापस pcie_caps_reg(dev) & PCI_EXP_FLAGS_VERS;
-पूर्ण
+static inline int pcie_cap_version(const struct pci_dev *dev)
+{
+	return pcie_caps_reg(dev) & PCI_EXP_FLAGS_VERS;
+}
 
-bool pcie_cap_has_lnkctl(स्थिर काष्ठा pci_dev *dev)
-अणु
-	पूर्णांक type = pci_pcie_type(dev);
+bool pcie_cap_has_lnkctl(const struct pci_dev *dev)
+{
+	int type = pci_pcie_type(dev);
 
-	वापस type == PCI_EXP_TYPE_ENDPOINT ||
+	return type == PCI_EXP_TYPE_ENDPOINT ||
 	       type == PCI_EXP_TYPE_LEG_END ||
 	       type == PCI_EXP_TYPE_ROOT_PORT ||
 	       type == PCI_EXP_TYPE_UPSTREAM ||
 	       type == PCI_EXP_TYPE_DOWNSTREAM ||
 	       type == PCI_EXP_TYPE_PCI_BRIDGE ||
 	       type == PCI_EXP_TYPE_PCIE_BRIDGE;
-पूर्ण
+}
 
-अटल अंतरभूत bool pcie_cap_has_sltctl(स्थिर काष्ठा pci_dev *dev)
-अणु
-	वापस pcie_करोwnstream_port(dev) &&
+static inline bool pcie_cap_has_sltctl(const struct pci_dev *dev)
+{
+	return pcie_downstream_port(dev) &&
 	       pcie_caps_reg(dev) & PCI_EXP_FLAGS_SLOT;
-पूर्ण
+}
 
-bool pcie_cap_has_rtctl(स्थिर काष्ठा pci_dev *dev)
-अणु
-	पूर्णांक type = pci_pcie_type(dev);
+bool pcie_cap_has_rtctl(const struct pci_dev *dev)
+{
+	int type = pci_pcie_type(dev);
 
-	वापस type == PCI_EXP_TYPE_ROOT_PORT ||
+	return type == PCI_EXP_TYPE_ROOT_PORT ||
 	       type == PCI_EXP_TYPE_RC_EC;
-पूर्ण
+}
 
-अटल bool pcie_capability_reg_implemented(काष्ठा pci_dev *dev, पूर्णांक pos)
-अणु
-	अगर (!pci_is_pcie(dev))
-		वापस false;
+static bool pcie_capability_reg_implemented(struct pci_dev *dev, int pos)
+{
+	if (!pci_is_pcie(dev))
+		return false;
 
-	चयन (pos) अणु
-	हाल PCI_EXP_FLAGS:
-		वापस true;
-	हाल PCI_EXP_DEVCAP:
-	हाल PCI_EXP_DEVCTL:
-	हाल PCI_EXP_DEVSTA:
-		वापस true;
-	हाल PCI_EXP_LNKCAP:
-	हाल PCI_EXP_LNKCTL:
-	हाल PCI_EXP_LNKSTA:
-		वापस pcie_cap_has_lnkctl(dev);
-	हाल PCI_EXP_SLTCAP:
-	हाल PCI_EXP_SLTCTL:
-	हाल PCI_EXP_SLTSTA:
-		वापस pcie_cap_has_sltctl(dev);
-	हाल PCI_EXP_RTCTL:
-	हाल PCI_EXP_RTCAP:
-	हाल PCI_EXP_RTSTA:
-		वापस pcie_cap_has_rtctl(dev);
-	हाल PCI_EXP_DEVCAP2:
-	हाल PCI_EXP_DEVCTL2:
-	हाल PCI_EXP_LNKCAP2:
-	हाल PCI_EXP_LNKCTL2:
-	हाल PCI_EXP_LNKSTA2:
-		वापस pcie_cap_version(dev) > 1;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+	switch (pos) {
+	case PCI_EXP_FLAGS:
+		return true;
+	case PCI_EXP_DEVCAP:
+	case PCI_EXP_DEVCTL:
+	case PCI_EXP_DEVSTA:
+		return true;
+	case PCI_EXP_LNKCAP:
+	case PCI_EXP_LNKCTL:
+	case PCI_EXP_LNKSTA:
+		return pcie_cap_has_lnkctl(dev);
+	case PCI_EXP_SLTCAP:
+	case PCI_EXP_SLTCTL:
+	case PCI_EXP_SLTSTA:
+		return pcie_cap_has_sltctl(dev);
+	case PCI_EXP_RTCTL:
+	case PCI_EXP_RTCAP:
+	case PCI_EXP_RTSTA:
+		return pcie_cap_has_rtctl(dev);
+	case PCI_EXP_DEVCAP2:
+	case PCI_EXP_DEVCTL2:
+	case PCI_EXP_LNKCAP2:
+	case PCI_EXP_LNKCTL2:
+	case PCI_EXP_LNKSTA2:
+		return pcie_cap_version(dev) > 1;
+	default:
+		return false;
+	}
+}
 
 /*
- * Note that these accessor functions are only क्रम the "PCI Express
- * Capability" (see PCIe spec r3.0, sec 7.8).  They करो not apply to the
+ * Note that these accessor functions are only for the "PCI Express
+ * Capability" (see PCIe spec r3.0, sec 7.8).  They do not apply to the
  * other "PCI Express Extended Capabilities" (AER, VC, ACS, MFVC, etc.)
  */
-पूर्णांक pcie_capability_पढ़ो_word(काष्ठा pci_dev *dev, पूर्णांक pos, u16 *val)
-अणु
-	पूर्णांक ret;
+int pcie_capability_read_word(struct pci_dev *dev, int pos, u16 *val)
+{
+	int ret;
 
 	*val = 0;
-	अगर (pos & 1)
-		वापस PCIBIOS_BAD_REGISTER_NUMBER;
+	if (pos & 1)
+		return PCIBIOS_BAD_REGISTER_NUMBER;
 
-	अगर (pcie_capability_reg_implemented(dev, pos)) अणु
-		ret = pci_पढ़ो_config_word(dev, pci_pcie_cap(dev) + pos, val);
+	if (pcie_capability_reg_implemented(dev, pos)) {
+		ret = pci_read_config_word(dev, pci_pcie_cap(dev) + pos, val);
 		/*
-		 * Reset *val to 0 अगर pci_पढ़ो_config_word() fails, it may
-		 * have been written as 0xFFFF अगर hardware error happens
-		 * during pci_पढ़ो_config_word().
+		 * Reset *val to 0 if pci_read_config_word() fails, it may
+		 * have been written as 0xFFFF if hardware error happens
+		 * during pci_read_config_word().
 		 */
-		अगर (ret)
+		if (ret)
 			*val = 0;
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/*
-	 * For Functions that करो not implement the Slot Capabilities,
-	 * Slot Status, and Slot Control रेजिस्टरs, these spaces must
+	 * For Functions that do not implement the Slot Capabilities,
+	 * Slot Status, and Slot Control registers, these spaces must
 	 * be hardwired to 0b, with the exception of the Presence Detect
-	 * State bit in the Slot Status रेजिस्टर of Downstream Ports,
+	 * State bit in the Slot Status register of Downstream Ports,
 	 * which must be hardwired to 1b.  (PCIe Base Spec 3.0, sec 7.8)
 	 */
-	अगर (pci_is_pcie(dev) && pcie_करोwnstream_port(dev) &&
+	if (pci_is_pcie(dev) && pcie_downstream_port(dev) &&
 	    pos == PCI_EXP_SLTSTA)
 		*val = PCI_EXP_SLTSTA_PDS;
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(pcie_capability_पढ़ो_word);
+	return 0;
+}
+EXPORT_SYMBOL(pcie_capability_read_word);
 
-पूर्णांक pcie_capability_पढ़ो_dword(काष्ठा pci_dev *dev, पूर्णांक pos, u32 *val)
-अणु
-	पूर्णांक ret;
+int pcie_capability_read_dword(struct pci_dev *dev, int pos, u32 *val)
+{
+	int ret;
 
 	*val = 0;
-	अगर (pos & 3)
-		वापस PCIBIOS_BAD_REGISTER_NUMBER;
+	if (pos & 3)
+		return PCIBIOS_BAD_REGISTER_NUMBER;
 
-	अगर (pcie_capability_reg_implemented(dev, pos)) अणु
-		ret = pci_पढ़ो_config_dword(dev, pci_pcie_cap(dev) + pos, val);
+	if (pcie_capability_reg_implemented(dev, pos)) {
+		ret = pci_read_config_dword(dev, pci_pcie_cap(dev) + pos, val);
 		/*
-		 * Reset *val to 0 अगर pci_पढ़ो_config_dword() fails, it may
-		 * have been written as 0xFFFFFFFF अगर hardware error happens
-		 * during pci_पढ़ो_config_dword().
+		 * Reset *val to 0 if pci_read_config_dword() fails, it may
+		 * have been written as 0xFFFFFFFF if hardware error happens
+		 * during pci_read_config_dword().
 		 */
-		अगर (ret)
+		if (ret)
 			*val = 0;
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (pci_is_pcie(dev) && pcie_करोwnstream_port(dev) &&
+	if (pci_is_pcie(dev) && pcie_downstream_port(dev) &&
 	    pos == PCI_EXP_SLTSTA)
 		*val = PCI_EXP_SLTSTA_PDS;
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(pcie_capability_पढ़ो_dword);
+	return 0;
+}
+EXPORT_SYMBOL(pcie_capability_read_dword);
 
-पूर्णांक pcie_capability_ग_लिखो_word(काष्ठा pci_dev *dev, पूर्णांक pos, u16 val)
-अणु
-	अगर (pos & 1)
-		वापस PCIBIOS_BAD_REGISTER_NUMBER;
+int pcie_capability_write_word(struct pci_dev *dev, int pos, u16 val)
+{
+	if (pos & 1)
+		return PCIBIOS_BAD_REGISTER_NUMBER;
 
-	अगर (!pcie_capability_reg_implemented(dev, pos))
-		वापस 0;
+	if (!pcie_capability_reg_implemented(dev, pos))
+		return 0;
 
-	वापस pci_ग_लिखो_config_word(dev, pci_pcie_cap(dev) + pos, val);
-पूर्ण
-EXPORT_SYMBOL(pcie_capability_ग_लिखो_word);
+	return pci_write_config_word(dev, pci_pcie_cap(dev) + pos, val);
+}
+EXPORT_SYMBOL(pcie_capability_write_word);
 
-पूर्णांक pcie_capability_ग_लिखो_dword(काष्ठा pci_dev *dev, पूर्णांक pos, u32 val)
-अणु
-	अगर (pos & 3)
-		वापस PCIBIOS_BAD_REGISTER_NUMBER;
+int pcie_capability_write_dword(struct pci_dev *dev, int pos, u32 val)
+{
+	if (pos & 3)
+		return PCIBIOS_BAD_REGISTER_NUMBER;
 
-	अगर (!pcie_capability_reg_implemented(dev, pos))
-		वापस 0;
+	if (!pcie_capability_reg_implemented(dev, pos))
+		return 0;
 
-	वापस pci_ग_लिखो_config_dword(dev, pci_pcie_cap(dev) + pos, val);
-पूर्ण
-EXPORT_SYMBOL(pcie_capability_ग_लिखो_dword);
+	return pci_write_config_dword(dev, pci_pcie_cap(dev) + pos, val);
+}
+EXPORT_SYMBOL(pcie_capability_write_dword);
 
-पूर्णांक pcie_capability_clear_and_set_word(काष्ठा pci_dev *dev, पूर्णांक pos,
+int pcie_capability_clear_and_set_word(struct pci_dev *dev, int pos,
 				       u16 clear, u16 set)
-अणु
-	पूर्णांक ret;
+{
+	int ret;
 	u16 val;
 
-	ret = pcie_capability_पढ़ो_word(dev, pos, &val);
-	अगर (!ret) अणु
+	ret = pcie_capability_read_word(dev, pos, &val);
+	if (!ret) {
 		val &= ~clear;
 		val |= set;
-		ret = pcie_capability_ग_लिखो_word(dev, pos, val);
-	पूर्ण
+		ret = pcie_capability_write_word(dev, pos, val);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(pcie_capability_clear_and_set_word);
 
-पूर्णांक pcie_capability_clear_and_set_dword(काष्ठा pci_dev *dev, पूर्णांक pos,
+int pcie_capability_clear_and_set_dword(struct pci_dev *dev, int pos,
 					u32 clear, u32 set)
-अणु
-	पूर्णांक ret;
+{
+	int ret;
 	u32 val;
 
-	ret = pcie_capability_पढ़ो_dword(dev, pos, &val);
-	अगर (!ret) अणु
+	ret = pcie_capability_read_dword(dev, pos, &val);
+	if (!ret) {
 		val &= ~clear;
 		val |= set;
-		ret = pcie_capability_ग_लिखो_dword(dev, pos, val);
-	पूर्ण
+		ret = pcie_capability_write_dword(dev, pos, val);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(pcie_capability_clear_and_set_dword);
 
-पूर्णांक pci_पढ़ो_config_byte(स्थिर काष्ठा pci_dev *dev, पूर्णांक where, u8 *val)
-अणु
-	अगर (pci_dev_is_disconnected(dev)) अणु
+int pci_read_config_byte(const struct pci_dev *dev, int where, u8 *val)
+{
+	if (pci_dev_is_disconnected(dev)) {
 		*val = ~0;
-		वापस PCIBIOS_DEVICE_NOT_FOUND;
-	पूर्ण
-	वापस pci_bus_पढ़ो_config_byte(dev->bus, dev->devfn, where, val);
-पूर्ण
-EXPORT_SYMBOL(pci_पढ़ो_config_byte);
+		return PCIBIOS_DEVICE_NOT_FOUND;
+	}
+	return pci_bus_read_config_byte(dev->bus, dev->devfn, where, val);
+}
+EXPORT_SYMBOL(pci_read_config_byte);
 
-पूर्णांक pci_पढ़ो_config_word(स्थिर काष्ठा pci_dev *dev, पूर्णांक where, u16 *val)
-अणु
-	अगर (pci_dev_is_disconnected(dev)) अणु
+int pci_read_config_word(const struct pci_dev *dev, int where, u16 *val)
+{
+	if (pci_dev_is_disconnected(dev)) {
 		*val = ~0;
-		वापस PCIBIOS_DEVICE_NOT_FOUND;
-	पूर्ण
-	वापस pci_bus_पढ़ो_config_word(dev->bus, dev->devfn, where, val);
-पूर्ण
-EXPORT_SYMBOL(pci_पढ़ो_config_word);
+		return PCIBIOS_DEVICE_NOT_FOUND;
+	}
+	return pci_bus_read_config_word(dev->bus, dev->devfn, where, val);
+}
+EXPORT_SYMBOL(pci_read_config_word);
 
-पूर्णांक pci_पढ़ो_config_dword(स्थिर काष्ठा pci_dev *dev, पूर्णांक where,
+int pci_read_config_dword(const struct pci_dev *dev, int where,
 					u32 *val)
-अणु
-	अगर (pci_dev_is_disconnected(dev)) अणु
+{
+	if (pci_dev_is_disconnected(dev)) {
 		*val = ~0;
-		वापस PCIBIOS_DEVICE_NOT_FOUND;
-	पूर्ण
-	वापस pci_bus_पढ़ो_config_dword(dev->bus, dev->devfn, where, val);
-पूर्ण
-EXPORT_SYMBOL(pci_पढ़ो_config_dword);
+		return PCIBIOS_DEVICE_NOT_FOUND;
+	}
+	return pci_bus_read_config_dword(dev->bus, dev->devfn, where, val);
+}
+EXPORT_SYMBOL(pci_read_config_dword);
 
-पूर्णांक pci_ग_लिखो_config_byte(स्थिर काष्ठा pci_dev *dev, पूर्णांक where, u8 val)
-अणु
-	अगर (pci_dev_is_disconnected(dev))
-		वापस PCIBIOS_DEVICE_NOT_FOUND;
-	वापस pci_bus_ग_लिखो_config_byte(dev->bus, dev->devfn, where, val);
-पूर्ण
-EXPORT_SYMBOL(pci_ग_लिखो_config_byte);
+int pci_write_config_byte(const struct pci_dev *dev, int where, u8 val)
+{
+	if (pci_dev_is_disconnected(dev))
+		return PCIBIOS_DEVICE_NOT_FOUND;
+	return pci_bus_write_config_byte(dev->bus, dev->devfn, where, val);
+}
+EXPORT_SYMBOL(pci_write_config_byte);
 
-पूर्णांक pci_ग_लिखो_config_word(स्थिर काष्ठा pci_dev *dev, पूर्णांक where, u16 val)
-अणु
-	अगर (pci_dev_is_disconnected(dev))
-		वापस PCIBIOS_DEVICE_NOT_FOUND;
-	वापस pci_bus_ग_लिखो_config_word(dev->bus, dev->devfn, where, val);
-पूर्ण
-EXPORT_SYMBOL(pci_ग_लिखो_config_word);
+int pci_write_config_word(const struct pci_dev *dev, int where, u16 val)
+{
+	if (pci_dev_is_disconnected(dev))
+		return PCIBIOS_DEVICE_NOT_FOUND;
+	return pci_bus_write_config_word(dev->bus, dev->devfn, where, val);
+}
+EXPORT_SYMBOL(pci_write_config_word);
 
-पूर्णांक pci_ग_लिखो_config_dword(स्थिर काष्ठा pci_dev *dev, पूर्णांक where,
+int pci_write_config_dword(const struct pci_dev *dev, int where,
 					 u32 val)
-अणु
-	अगर (pci_dev_is_disconnected(dev))
-		वापस PCIBIOS_DEVICE_NOT_FOUND;
-	वापस pci_bus_ग_लिखो_config_dword(dev->bus, dev->devfn, where, val);
-पूर्ण
-EXPORT_SYMBOL(pci_ग_लिखो_config_dword);
+{
+	if (pci_dev_is_disconnected(dev))
+		return PCIBIOS_DEVICE_NOT_FOUND;
+	return pci_bus_write_config_dword(dev->bus, dev->devfn, where, val);
+}
+EXPORT_SYMBOL(pci_write_config_dword);

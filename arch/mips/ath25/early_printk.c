@@ -1,46 +1,45 @@
-<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
- * Copyright (C) 2010 Gabor Juhos <juhosg@खोलोwrt.org>
+ * Copyright (C) 2010 Gabor Juhos <juhosg@openwrt.org>
  */
 
-#समावेश <linux/mm.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/serial_reg.h>
-#समावेश <यंत्र/setup.h>
+#include <linux/mm.h>
+#include <linux/io.h>
+#include <linux/serial_reg.h>
+#include <asm/setup.h>
 
-#समावेश "devices.h"
-#समावेश "ar2315_regs.h"
-#समावेश "ar5312_regs.h"
+#include "devices.h"
+#include "ar2315_regs.h"
+#include "ar5312_regs.h"
 
-अटल अंतरभूत व्योम prom_uart_wr(व्योम __iomem *base, अचिन्हित reg,
-				अचिन्हित अक्षर ch)
-अणु
-	__raw_ग_लिखोl(ch, base + 4 * reg);
-पूर्ण
+static inline void prom_uart_wr(void __iomem *base, unsigned reg,
+				unsigned char ch)
+{
+	__raw_writel(ch, base + 4 * reg);
+}
 
-अटल अंतरभूत अचिन्हित अक्षर prom_uart_rr(व्योम __iomem *base, अचिन्हित reg)
-अणु
-	वापस __raw_पढ़ोl(base + 4 * reg);
-पूर्ण
+static inline unsigned char prom_uart_rr(void __iomem *base, unsigned reg)
+{
+	return __raw_readl(base + 4 * reg);
+}
 
-व्योम prom_अक्षर_दो(अक्षर ch)
-अणु
-	अटल व्योम __iomem *base;
+void prom_putchar(char ch)
+{
+	static void __iomem *base;
 
-	अगर (unlikely(base == शून्य)) अणु
-		अगर (is_ar2315())
-			base = (व्योम __iomem *)(KSEG1ADDR(AR2315_UART0_BASE));
-		अन्यथा
-			base = (व्योम __iomem *)(KSEG1ADDR(AR5312_UART0_BASE));
-	पूर्ण
+	if (unlikely(base == NULL)) {
+		if (is_ar2315())
+			base = (void __iomem *)(KSEG1ADDR(AR2315_UART0_BASE));
+		else
+			base = (void __iomem *)(KSEG1ADDR(AR5312_UART0_BASE));
+	}
 
-	जबतक ((prom_uart_rr(base, UART_LSR) & UART_LSR_THRE) == 0)
+	while ((prom_uart_rr(base, UART_LSR) & UART_LSR_THRE) == 0)
 		;
-	prom_uart_wr(base, UART_TX, (अचिन्हित अक्षर)ch);
-	जबतक ((prom_uart_rr(base, UART_LSR) & UART_LSR_THRE) == 0)
+	prom_uart_wr(base, UART_TX, (unsigned char)ch);
+	while ((prom_uart_rr(base, UART_LSR) & UART_LSR_THRE) == 0)
 		;
-पूर्ण
+}

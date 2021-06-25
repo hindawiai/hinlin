@@ -1,43 +1,42 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * include/media/ccs/ccs-reg-access.h
  *
- * Generic driver क्रम MIPI CCS/SMIA/SMIA++ compliant camera sensors
+ * Generic driver for MIPI CCS/SMIA/SMIA++ compliant camera sensors
  *
  * Copyright (C) 2020 Intel Corporation
  * Copyright (C) 2011--2012 Nokia Corporation
- * Contact: Sakari Ailus <sakari.ailus@linux.पूर्णांकel.com>
+ * Contact: Sakari Ailus <sakari.ailus@linux.intel.com>
  */
 
-#अगर_अघोषित SMIAPP_REGS_H
-#घोषणा SMIAPP_REGS_H
+#ifndef SMIAPP_REGS_H
+#define SMIAPP_REGS_H
 
-#समावेश <linux/i2c.h>
-#समावेश <linux/types.h>
+#include <linux/i2c.h>
+#include <linux/types.h>
 
-#समावेश "ccs-regs.h"
+#include "ccs-regs.h"
 
-#घोषणा CCS_REG_ADDR(reg)		((u16)reg)
+#define CCS_REG_ADDR(reg)		((u16)reg)
 
-काष्ठा ccs_sensor;
+struct ccs_sensor;
 
-पूर्णांक ccs_पढ़ो_addr_no_quirk(काष्ठा ccs_sensor *sensor, u32 reg, u32 *val);
-पूर्णांक ccs_पढ़ो_addr(काष्ठा ccs_sensor *sensor, u32 reg, u32 *val);
-पूर्णांक ccs_पढ़ो_addr_8only(काष्ठा ccs_sensor *sensor, u32 reg, u32 *val);
-पूर्णांक ccs_पढ़ो_addr_noconv(काष्ठा ccs_sensor *sensor, u32 reg, u32 *val);
-पूर्णांक ccs_ग_लिखो_addr_no_quirk(काष्ठा ccs_sensor *sensor, u32 reg, u32 val);
-पूर्णांक ccs_ग_लिखो_addr(काष्ठा ccs_sensor *sensor, u32 reg, u32 val);
-पूर्णांक ccs_ग_लिखो_data_regs(काष्ठा ccs_sensor *sensor, काष्ठा ccs_reg *regs,
-			माप_प्रकार num_regs);
+int ccs_read_addr_no_quirk(struct ccs_sensor *sensor, u32 reg, u32 *val);
+int ccs_read_addr(struct ccs_sensor *sensor, u32 reg, u32 *val);
+int ccs_read_addr_8only(struct ccs_sensor *sensor, u32 reg, u32 *val);
+int ccs_read_addr_noconv(struct ccs_sensor *sensor, u32 reg, u32 *val);
+int ccs_write_addr_no_quirk(struct ccs_sensor *sensor, u32 reg, u32 val);
+int ccs_write_addr(struct ccs_sensor *sensor, u32 reg, u32 val);
+int ccs_write_data_regs(struct ccs_sensor *sensor, struct ccs_reg *regs,
+			size_t num_regs);
 
-अचिन्हित पूर्णांक ccs_reg_width(u32 reg);
-u32 ccs_reg_conv(काष्ठा ccs_sensor *sensor, u32 reg, u32 val);
+unsigned int ccs_reg_width(u32 reg);
+u32 ccs_reg_conv(struct ccs_sensor *sensor, u32 reg, u32 val);
 
-#घोषणा ccs_पढ़ो(sensor, reg_name, val) \
-	ccs_पढ़ो_addr(sensor, CCS_R_##reg_name, val)
+#define ccs_read(sensor, reg_name, val) \
+	ccs_read_addr(sensor, CCS_R_##reg_name, val)
 
-#घोषणा ccs_ग_लिखो(sensor, reg_name, val) \
-	ccs_ग_लिखो_addr(sensor, CCS_R_##reg_name, val)
+#define ccs_write(sensor, reg_name, val) \
+	ccs_write_addr(sensor, CCS_R_##reg_name, val)
 
-#पूर्ण_अगर
+#endif

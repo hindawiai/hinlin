@@ -1,24 +1,23 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  *  Copyright (C) 2014, Samsung Electronics Co. Ltd. All Rights Reserved.
  */
-#अगर_अघोषित _SSP_SENSORS_H_
-#घोषणा _SSP_SENSORS_H_
+#ifndef _SSP_SENSORS_H_
+#define _SSP_SENSORS_H_
 
-#समावेश <linux/iio/iपन.स>
+#include <linux/iio/iio.h>
 
-#घोषणा SSP_TIME_SIZE				4
-#घोषणा SSP_ACCELEROMETER_SIZE			6
-#घोषणा SSP_GYROSCOPE_SIZE			6
-#घोषणा SSP_BIO_HRM_RAW_SIZE			8
-#घोषणा SSP_BIO_HRM_RAW_FAC_SIZE		36
-#घोषणा SSP_BIO_HRM_LIB_SIZE			8
+#define SSP_TIME_SIZE				4
+#define SSP_ACCELEROMETER_SIZE			6
+#define SSP_GYROSCOPE_SIZE			6
+#define SSP_BIO_HRM_RAW_SIZE			8
+#define SSP_BIO_HRM_RAW_FAC_SIZE		36
+#define SSP_BIO_HRM_LIB_SIZE			8
 
 /**
- * क्रमागत ssp_sensor_type - SSP sensor type
+ * enum ssp_sensor_type - SSP sensor type
  */
-क्रमागत ssp_sensor_type अणु
+enum ssp_sensor_type {
 	SSP_ACCELEROMETER_SENSOR = 0,
 	SSP_GYROSCOPE_SENSOR,
 	SSP_GEOMAGNETIC_UNCALIB_SENSOR,
@@ -41,33 +40,33 @@
 	SSP_BIO_HRM_RAW_FAC,
 	SSP_BIO_HRM_LIB,
 	SSP_SENSOR_MAX,
-पूर्ण;
+};
 
-काष्ठा ssp_data;
+struct ssp_data;
 
 /**
- * काष्ठा ssp_sensor_data - Sensor object
+ * struct ssp_sensor_data - Sensor object
  * @process_data:	Callback to feed sensor data.
  * @type:		Used sensor type.
  * @buffer:		Received data buffer.
  */
-काष्ठा ssp_sensor_data अणु
-	पूर्णांक (*process_data)(काष्ठा iio_dev *indio_dev, व्योम *buf,
-			    पूर्णांक64_t बारtamp);
-	क्रमागत ssp_sensor_type type;
+struct ssp_sensor_data {
+	int (*process_data)(struct iio_dev *indio_dev, void *buf,
+			    int64_t timestamp);
+	enum ssp_sensor_type type;
 	u8 *buffer;
-पूर्ण;
+};
 
-व्योम ssp_रेजिस्टर_consumer(काष्ठा iio_dev *indio_dev,
-			   क्रमागत ssp_sensor_type type);
+void ssp_register_consumer(struct iio_dev *indio_dev,
+			   enum ssp_sensor_type type);
 
-पूर्णांक ssp_enable_sensor(काष्ठा ssp_data *data, क्रमागत ssp_sensor_type type,
+int ssp_enable_sensor(struct ssp_data *data, enum ssp_sensor_type type,
 		      u32 delay);
 
-पूर्णांक ssp_disable_sensor(काष्ठा ssp_data *data, क्रमागत ssp_sensor_type type);
+int ssp_disable_sensor(struct ssp_data *data, enum ssp_sensor_type type);
 
-u32 ssp_get_sensor_delay(काष्ठा ssp_data *data, क्रमागत ssp_sensor_type);
+u32 ssp_get_sensor_delay(struct ssp_data *data, enum ssp_sensor_type);
 
-पूर्णांक ssp_change_delay(काष्ठा ssp_data *data, क्रमागत ssp_sensor_type type,
+int ssp_change_delay(struct ssp_data *data, enum ssp_sensor_type type,
 		     u32 delay);
-#पूर्ण_अगर /* _SSP_SENSORS_H_ */
+#endif /* _SSP_SENSORS_H_ */

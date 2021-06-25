@@ -1,174 +1,173 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *	Bridge netlink control पूर्णांकerface
+ *	Bridge netlink control interface
  *
  *	Authors:
  *	Stephen Hemminger		<shemminger@osdl.org>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <net/rtnetlink.h>
-#समावेश <net/net_namespace.h>
-#समावेश <net/sock.h>
-#समावेश <uapi/linux/अगर_bridge.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/etherdevice.h>
+#include <net/rtnetlink.h>
+#include <net/net_namespace.h>
+#include <net/sock.h>
+#include <uapi/linux/if_bridge.h>
 
-#समावेश "br_private.h"
-#समावेश "br_private_stp.h"
-#समावेश "br_private_cfm.h"
-#समावेश "br_private_tunnel.h"
-#समावेश "br_private_mcast_eht.h"
+#include "br_private.h"
+#include "br_private_stp.h"
+#include "br_private_cfm.h"
+#include "br_private_tunnel.h"
+#include "br_private_mcast_eht.h"
 
-अटल पूर्णांक __get_num_vlan_infos(काष्ठा net_bridge_vlan_group *vg,
+static int __get_num_vlan_infos(struct net_bridge_vlan_group *vg,
 				u32 filter_mask)
-अणु
-	काष्ठा net_bridge_vlan *v;
+{
+	struct net_bridge_vlan *v;
 	u16 vid_range_start = 0, vid_range_end = 0, vid_range_flags = 0;
 	u16 flags, pvid;
-	पूर्णांक num_vlans = 0;
+	int num_vlans = 0;
 
-	अगर (!(filter_mask & RTEXT_FILTER_BRVLAN_COMPRESSED))
-		वापस 0;
+	if (!(filter_mask & RTEXT_FILTER_BRVLAN_COMPRESSED))
+		return 0;
 
 	pvid = br_get_pvid(vg);
 	/* Count number of vlan infos */
-	list_क्रम_each_entry_rcu(v, &vg->vlan_list, vlist) अणु
+	list_for_each_entry_rcu(v, &vg->vlan_list, vlist) {
 		flags = 0;
 		/* only a context, bridge vlan not activated */
-		अगर (!br_vlan_should_use(v))
-			जारी;
-		अगर (v->vid == pvid)
+		if (!br_vlan_should_use(v))
+			continue;
+		if (v->vid == pvid)
 			flags |= BRIDGE_VLAN_INFO_PVID;
 
-		अगर (v->flags & BRIDGE_VLAN_INFO_UNTAGGED)
+		if (v->flags & BRIDGE_VLAN_INFO_UNTAGGED)
 			flags |= BRIDGE_VLAN_INFO_UNTAGGED;
 
-		अगर (vid_range_start == 0) अणु
-			जाओ initvars;
-		पूर्ण अन्यथा अगर ((v->vid - vid_range_end) == 1 &&
-			flags == vid_range_flags) अणु
+		if (vid_range_start == 0) {
+			goto initvars;
+		} else if ((v->vid - vid_range_end) == 1 &&
+			flags == vid_range_flags) {
 			vid_range_end = v->vid;
-			जारी;
-		पूर्ण अन्यथा अणु
-			अगर ((vid_range_end - vid_range_start) > 0)
+			continue;
+		} else {
+			if ((vid_range_end - vid_range_start) > 0)
 				num_vlans += 2;
-			अन्यथा
+			else
 				num_vlans += 1;
-		पूर्ण
+		}
 initvars:
 		vid_range_start = v->vid;
 		vid_range_end = v->vid;
 		vid_range_flags = flags;
-	पूर्ण
+	}
 
-	अगर (vid_range_start != 0) अणु
-		अगर ((vid_range_end - vid_range_start) > 0)
+	if (vid_range_start != 0) {
+		if ((vid_range_end - vid_range_start) > 0)
 			num_vlans += 2;
-		अन्यथा
+		else
 			num_vlans += 1;
-	पूर्ण
+	}
 
-	वापस num_vlans;
-पूर्ण
+	return num_vlans;
+}
 
-अटल पूर्णांक br_get_num_vlan_infos(काष्ठा net_bridge_vlan_group *vg,
+static int br_get_num_vlan_infos(struct net_bridge_vlan_group *vg,
 				 u32 filter_mask)
-अणु
-	पूर्णांक num_vlans;
+{
+	int num_vlans;
 
-	अगर (!vg)
-		वापस 0;
+	if (!vg)
+		return 0;
 
-	अगर (filter_mask & RTEXT_FILTER_BRVLAN)
-		वापस vg->num_vlans;
+	if (filter_mask & RTEXT_FILTER_BRVLAN)
+		return vg->num_vlans;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	num_vlans = __get_num_vlan_infos(vg, filter_mask);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस num_vlans;
-पूर्ण
+	return num_vlans;
+}
 
-अटल माप_प्रकार br_get_link_af_size_filtered(स्थिर काष्ठा net_device *dev,
+static size_t br_get_link_af_size_filtered(const struct net_device *dev,
 					   u32 filter_mask)
-अणु
-	काष्ठा net_bridge_vlan_group *vg = शून्य;
-	काष्ठा net_bridge_port *p = शून्य;
-	काष्ठा net_bridge *br = शून्य;
+{
+	struct net_bridge_vlan_group *vg = NULL;
+	struct net_bridge_port *p = NULL;
+	struct net_bridge *br = NULL;
 	u32 num_cfm_peer_mep_infos;
 	u32 num_cfm_mep_infos;
-	माप_प्रकार vinfo_sz = 0;
-	पूर्णांक num_vlan_infos;
+	size_t vinfo_sz = 0;
+	int num_vlan_infos;
 
-	rcu_पढ़ो_lock();
-	अगर (netअगर_is_bridge_port(dev)) अणु
+	rcu_read_lock();
+	if (netif_is_bridge_port(dev)) {
 		p = br_port_get_check_rcu(dev);
-		अगर (p)
+		if (p)
 			vg = nbp_vlan_group_rcu(p);
-	पूर्ण अन्यथा अगर (dev->priv_flags & IFF_EBRIDGE) अणु
+	} else if (dev->priv_flags & IFF_EBRIDGE) {
 		br = netdev_priv(dev);
 		vg = br_vlan_group_rcu(br);
-	पूर्ण
+	}
 	num_vlan_infos = br_get_num_vlan_infos(vg, filter_mask);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	अगर (p && (p->flags & BR_VLAN_TUNNEL))
+	if (p && (p->flags & BR_VLAN_TUNNEL))
 		vinfo_sz += br_get_vlan_tunnel_info_size(vg);
 
-	/* Each VLAN is वापसed in bridge_vlan_info aदीर्घ with flags */
-	vinfo_sz += num_vlan_infos * nla_total_size(माप(काष्ठा bridge_vlan_info));
+	/* Each VLAN is returned in bridge_vlan_info along with flags */
+	vinfo_sz += num_vlan_infos * nla_total_size(sizeof(struct bridge_vlan_info));
 
-	अगर (!(filter_mask & RTEXT_FILTER_CFM_STATUS))
-		वापस vinfo_sz;
+	if (!(filter_mask & RTEXT_FILTER_CFM_STATUS))
+		return vinfo_sz;
 
-	अगर (!br)
-		वापस vinfo_sz;
+	if (!br)
+		return vinfo_sz;
 
 	/* CFM status info must be added */
 	br_cfm_mep_count(br, &num_cfm_mep_infos);
 	br_cfm_peer_mep_count(br, &num_cfm_peer_mep_infos);
 
 	vinfo_sz += nla_total_size(0);	/* IFLA_BRIDGE_CFM */
-	/* For each status काष्ठा the MEP instance (u32) is added */
+	/* For each status struct the MEP instance (u32) is added */
 	/* MEP instance (u32) + br_cfm_mep_status */
 	vinfo_sz += num_cfm_mep_infos *
 		     /*IFLA_BRIDGE_CFM_MEP_STATUS_INSTANCE */
-		    (nla_total_size(माप(u32))
+		    (nla_total_size(sizeof(u32))
 		     /* IFLA_BRIDGE_CFM_MEP_STATUS_OPCODE_UNEXP_SEEN */
-		     + nla_total_size(माप(u32))
+		     + nla_total_size(sizeof(u32))
 		     /* IFLA_BRIDGE_CFM_MEP_STATUS_VERSION_UNEXP_SEEN */
-		     + nla_total_size(माप(u32))
+		     + nla_total_size(sizeof(u32))
 		     /* IFLA_BRIDGE_CFM_MEP_STATUS_RX_LEVEL_LOW_SEEN */
-		     + nla_total_size(माप(u32)));
+		     + nla_total_size(sizeof(u32)));
 	/* MEP instance (u32) + br_cfm_cc_peer_status */
 	vinfo_sz += num_cfm_peer_mep_infos *
 		     /* IFLA_BRIDGE_CFM_CC_PEER_STATUS_INSTANCE */
-		    (nla_total_size(माप(u32))
+		    (nla_total_size(sizeof(u32))
 		     /* IFLA_BRIDGE_CFM_CC_PEER_STATUS_PEER_MEPID */
-		     + nla_total_size(माप(u32))
+		     + nla_total_size(sizeof(u32))
 		     /* IFLA_BRIDGE_CFM_CC_PEER_STATUS_CCM_DEFECT */
-		     + nla_total_size(माप(u32))
+		     + nla_total_size(sizeof(u32))
 		     /* IFLA_BRIDGE_CFM_CC_PEER_STATUS_RDI */
-		     + nla_total_size(माप(u32))
+		     + nla_total_size(sizeof(u32))
 		     /* IFLA_BRIDGE_CFM_CC_PEER_STATUS_PORT_TLV_VALUE */
-		     + nla_total_size(माप(u8))
+		     + nla_total_size(sizeof(u8))
 		     /* IFLA_BRIDGE_CFM_CC_PEER_STATUS_IF_TLV_VALUE */
-		     + nla_total_size(माप(u8))
+		     + nla_total_size(sizeof(u8))
 		     /* IFLA_BRIDGE_CFM_CC_PEER_STATUS_SEEN */
-		     + nla_total_size(माप(u32))
+		     + nla_total_size(sizeof(u32))
 		     /* IFLA_BRIDGE_CFM_CC_PEER_STATUS_TLV_SEEN */
-		     + nla_total_size(माप(u32))
+		     + nla_total_size(sizeof(u32))
 		     /* IFLA_BRIDGE_CFM_CC_PEER_STATUS_SEQ_UNEXP_SEEN */
-		     + nla_total_size(माप(u32)));
+		     + nla_total_size(sizeof(u32)));
 
-	वापस vinfo_sz;
-पूर्ण
+	return vinfo_sz;
+}
 
-अटल अंतरभूत माप_प्रकार br_port_info_size(व्योम)
-अणु
-	वापस nla_total_size(1)	/* IFLA_BRPORT_STATE  */
+static inline size_t br_port_info_size(void)
+{
+	return nla_total_size(1)	/* IFLA_BRPORT_STATE  */
 		+ nla_total_size(2)	/* IFLA_BRPORT_PRIORITY */
 		+ nla_total_size(4)	/* IFLA_BRPORT_COST */
 		+ nla_total_size(1)	/* IFLA_BRPORT_MODE */
@@ -185,31 +184,31 @@ initvars:
 		+ nla_total_size(1)	/* IFLA_BRPORT_VLAN_TUNNEL */
 		+ nla_total_size(1)	/* IFLA_BRPORT_NEIGH_SUPPRESS */
 		+ nla_total_size(1)	/* IFLA_BRPORT_ISOLATED */
-		+ nla_total_size(माप(काष्ठा अगरla_bridge_id))	/* IFLA_BRPORT_ROOT_ID */
-		+ nla_total_size(माप(काष्ठा अगरla_bridge_id))	/* IFLA_BRPORT_BRIDGE_ID */
-		+ nla_total_size(माप(u16))	/* IFLA_BRPORT_DESIGNATED_PORT */
-		+ nla_total_size(माप(u16))	/* IFLA_BRPORT_DESIGNATED_COST */
-		+ nla_total_size(माप(u16))	/* IFLA_BRPORT_ID */
-		+ nla_total_size(माप(u16))	/* IFLA_BRPORT_NO */
-		+ nla_total_size(माप(u8))	/* IFLA_BRPORT_TOPOLOGY_CHANGE_ACK */
-		+ nla_total_size(माप(u8))	/* IFLA_BRPORT_CONFIG_PENDING */
-		+ nla_total_size_64bit(माप(u64)) /* IFLA_BRPORT_MESSAGE_AGE_TIMER */
-		+ nla_total_size_64bit(माप(u64)) /* IFLA_BRPORT_FORWARD_DELAY_TIMER */
-		+ nla_total_size_64bit(माप(u64)) /* IFLA_BRPORT_HOLD_TIMER */
-#अगर_घोषित CONFIG_BRIDGE_IGMP_SNOOPING
-		+ nla_total_size(माप(u8))	/* IFLA_BRPORT_MULTICAST_ROUTER */
-#पूर्ण_अगर
-		+ nla_total_size(माप(u16))	/* IFLA_BRPORT_GROUP_FWD_MASK */
-		+ nla_total_size(माप(u8))	/* IFLA_BRPORT_MRP_RING_OPEN */
-		+ nla_total_size(माप(u8))	/* IFLA_BRPORT_MRP_IN_OPEN */
-		+ nla_total_size(माप(u32))	/* IFLA_BRPORT_MCAST_EHT_HOSTS_LIMIT */
-		+ nla_total_size(माप(u32))	/* IFLA_BRPORT_MCAST_EHT_HOSTS_CNT */
+		+ nla_total_size(sizeof(struct ifla_bridge_id))	/* IFLA_BRPORT_ROOT_ID */
+		+ nla_total_size(sizeof(struct ifla_bridge_id))	/* IFLA_BRPORT_BRIDGE_ID */
+		+ nla_total_size(sizeof(u16))	/* IFLA_BRPORT_DESIGNATED_PORT */
+		+ nla_total_size(sizeof(u16))	/* IFLA_BRPORT_DESIGNATED_COST */
+		+ nla_total_size(sizeof(u16))	/* IFLA_BRPORT_ID */
+		+ nla_total_size(sizeof(u16))	/* IFLA_BRPORT_NO */
+		+ nla_total_size(sizeof(u8))	/* IFLA_BRPORT_TOPOLOGY_CHANGE_ACK */
+		+ nla_total_size(sizeof(u8))	/* IFLA_BRPORT_CONFIG_PENDING */
+		+ nla_total_size_64bit(sizeof(u64)) /* IFLA_BRPORT_MESSAGE_AGE_TIMER */
+		+ nla_total_size_64bit(sizeof(u64)) /* IFLA_BRPORT_FORWARD_DELAY_TIMER */
+		+ nla_total_size_64bit(sizeof(u64)) /* IFLA_BRPORT_HOLD_TIMER */
+#ifdef CONFIG_BRIDGE_IGMP_SNOOPING
+		+ nla_total_size(sizeof(u8))	/* IFLA_BRPORT_MULTICAST_ROUTER */
+#endif
+		+ nla_total_size(sizeof(u16))	/* IFLA_BRPORT_GROUP_FWD_MASK */
+		+ nla_total_size(sizeof(u8))	/* IFLA_BRPORT_MRP_RING_OPEN */
+		+ nla_total_size(sizeof(u8))	/* IFLA_BRPORT_MRP_IN_OPEN */
+		+ nla_total_size(sizeof(u32))	/* IFLA_BRPORT_MCAST_EHT_HOSTS_LIMIT */
+		+ nla_total_size(sizeof(u32))	/* IFLA_BRPORT_MCAST_EHT_HOSTS_CNT */
 		+ 0;
-पूर्ण
+}
 
-अटल अंतरभूत माप_प्रकार br_nlmsg_size(काष्ठा net_device *dev, u32 filter_mask)
-अणु
-	वापस NLMSG_ALIGN(माप(काष्ठा अगरinfomsg))
+static inline size_t br_nlmsg_size(struct net_device *dev, u32 filter_mask)
+{
+	return NLMSG_ALIGN(sizeof(struct ifinfomsg))
 		+ nla_total_size(IFNAMSIZ) /* IFLA_IFNAME */
 		+ nla_total_size(MAX_ADDR_LEN) /* IFLA_ADDRESS */
 		+ nla_total_size(4) /* IFLA_MASTER */
@@ -220,16 +219,16 @@ initvars:
 		+ nla_total_size(br_get_link_af_size_filtered(dev,
 				 filter_mask)) /* IFLA_AF_SPEC */
 		+ nla_total_size(4); /* IFLA_BRPORT_BACKUP_PORT */
-पूर्ण
+}
 
-अटल पूर्णांक br_port_fill_attrs(काष्ठा sk_buff *skb,
-			      स्थिर काष्ठा net_bridge_port *p)
-अणु
+static int br_port_fill_attrs(struct sk_buff *skb,
+			      const struct net_bridge_port *p)
+{
 	u8 mode = !!(p->flags & BR_HAIRPIN_MODE);
-	काष्ठा net_bridge_port *backup_p;
-	u64 समयrval;
+	struct net_bridge_port *backup_p;
+	u64 timerval;
 
-	अगर (nla_put_u8(skb, IFLA_BRPORT_STATE, p->state) ||
+	if (nla_put_u8(skb, IFLA_BRPORT_STATE, p->state) ||
 	    nla_put_u16(skb, IFLA_BRPORT_PRIORITY, p->priority) ||
 	    nla_put_u32(skb, IFLA_BRPORT_COST, p->path_cost) ||
 	    nla_put_u8(skb, IFLA_BRPORT_MODE, mode) ||
@@ -250,9 +249,9 @@ initvars:
 	    nla_put_u8(skb, IFLA_BRPORT_PROXYARP, !!(p->flags & BR_PROXYARP)) ||
 	    nla_put_u8(skb, IFLA_BRPORT_PROXYARP_WIFI,
 		       !!(p->flags & BR_PROXYARP_WIFI)) ||
-	    nla_put(skb, IFLA_BRPORT_ROOT_ID, माप(काष्ठा अगरla_bridge_id),
+	    nla_put(skb, IFLA_BRPORT_ROOT_ID, sizeof(struct ifla_bridge_id),
 		    &p->designated_root) ||
-	    nla_put(skb, IFLA_BRPORT_BRIDGE_ID, माप(काष्ठा अगरla_bridge_id),
+	    nla_put(skb, IFLA_BRPORT_BRIDGE_ID, sizeof(struct ifla_bridge_id),
 		    &p->designated_bridge) ||
 	    nla_put_u16(skb, IFLA_BRPORT_DESIGNATED_PORT, p->designated_port) ||
 	    nla_put_u16(skb, IFLA_BRPORT_DESIGNATED_COST, p->designated_cost) ||
@@ -271,609 +270,609 @@ initvars:
 	    nla_put_u8(skb, IFLA_BRPORT_MRP_IN_OPEN,
 		       !!(p->flags & BR_MRP_LOST_IN_CONT)) ||
 	    nla_put_u8(skb, IFLA_BRPORT_ISOLATED, !!(p->flags & BR_ISOLATED)))
-		वापस -EMSGSIZE;
+		return -EMSGSIZE;
 
-	समयrval = br_समयr_value(&p->message_age_समयr);
-	अगर (nla_put_u64_64bit(skb, IFLA_BRPORT_MESSAGE_AGE_TIMER, समयrval,
+	timerval = br_timer_value(&p->message_age_timer);
+	if (nla_put_u64_64bit(skb, IFLA_BRPORT_MESSAGE_AGE_TIMER, timerval,
 			      IFLA_BRPORT_PAD))
-		वापस -EMSGSIZE;
-	समयrval = br_समयr_value(&p->क्रमward_delay_समयr);
-	अगर (nla_put_u64_64bit(skb, IFLA_BRPORT_FORWARD_DELAY_TIMER, समयrval,
+		return -EMSGSIZE;
+	timerval = br_timer_value(&p->forward_delay_timer);
+	if (nla_put_u64_64bit(skb, IFLA_BRPORT_FORWARD_DELAY_TIMER, timerval,
 			      IFLA_BRPORT_PAD))
-		वापस -EMSGSIZE;
-	समयrval = br_समयr_value(&p->hold_समयr);
-	अगर (nla_put_u64_64bit(skb, IFLA_BRPORT_HOLD_TIMER, समयrval,
+		return -EMSGSIZE;
+	timerval = br_timer_value(&p->hold_timer);
+	if (nla_put_u64_64bit(skb, IFLA_BRPORT_HOLD_TIMER, timerval,
 			      IFLA_BRPORT_PAD))
-		वापस -EMSGSIZE;
+		return -EMSGSIZE;
 
-#अगर_घोषित CONFIG_BRIDGE_IGMP_SNOOPING
-	अगर (nla_put_u8(skb, IFLA_BRPORT_MULTICAST_ROUTER,
+#ifdef CONFIG_BRIDGE_IGMP_SNOOPING
+	if (nla_put_u8(skb, IFLA_BRPORT_MULTICAST_ROUTER,
 		       p->multicast_router) ||
 	    nla_put_u32(skb, IFLA_BRPORT_MCAST_EHT_HOSTS_LIMIT,
 			p->multicast_eht_hosts_limit) ||
 	    nla_put_u32(skb, IFLA_BRPORT_MCAST_EHT_HOSTS_CNT,
 			p->multicast_eht_hosts_cnt))
-		वापस -EMSGSIZE;
-#पूर्ण_अगर
+		return -EMSGSIZE;
+#endif
 
 	/* we might be called only with br->lock */
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	backup_p = rcu_dereference(p->backup_port);
-	अगर (backup_p)
+	if (backup_p)
 		nla_put_u32(skb, IFLA_BRPORT_BACKUP_PORT,
-			    backup_p->dev->अगरindex);
-	rcu_पढ़ो_unlock();
+			    backup_p->dev->ifindex);
+	rcu_read_unlock();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक br_fill_अगरvlaninfo_range(काष्ठा sk_buff *skb, u16 vid_start,
+static int br_fill_ifvlaninfo_range(struct sk_buff *skb, u16 vid_start,
 				    u16 vid_end, u16 flags)
-अणु
-	काष्ठा  bridge_vlan_info vinfo;
+{
+	struct  bridge_vlan_info vinfo;
 
-	अगर ((vid_end - vid_start) > 0) अणु
+	if ((vid_end - vid_start) > 0) {
 		/* add range to skb */
 		vinfo.vid = vid_start;
 		vinfo.flags = flags | BRIDGE_VLAN_INFO_RANGE_BEGIN;
-		अगर (nla_put(skb, IFLA_BRIDGE_VLAN_INFO,
-			    माप(vinfo), &vinfo))
-			जाओ nla_put_failure;
+		if (nla_put(skb, IFLA_BRIDGE_VLAN_INFO,
+			    sizeof(vinfo), &vinfo))
+			goto nla_put_failure;
 
 		vinfo.vid = vid_end;
 		vinfo.flags = flags | BRIDGE_VLAN_INFO_RANGE_END;
-		अगर (nla_put(skb, IFLA_BRIDGE_VLAN_INFO,
-			    माप(vinfo), &vinfo))
-			जाओ nla_put_failure;
-	पूर्ण अन्यथा अणु
+		if (nla_put(skb, IFLA_BRIDGE_VLAN_INFO,
+			    sizeof(vinfo), &vinfo))
+			goto nla_put_failure;
+	} else {
 		vinfo.vid = vid_start;
 		vinfo.flags = flags;
-		अगर (nla_put(skb, IFLA_BRIDGE_VLAN_INFO,
-			    माप(vinfo), &vinfo))
-			जाओ nla_put_failure;
-	पूर्ण
+		if (nla_put(skb, IFLA_BRIDGE_VLAN_INFO,
+			    sizeof(vinfo), &vinfo))
+			goto nla_put_failure;
+	}
 
-	वापस 0;
+	return 0;
 
 nla_put_failure:
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-अटल पूर्णांक br_fill_अगरvlaninfo_compressed(काष्ठा sk_buff *skb,
-					 काष्ठा net_bridge_vlan_group *vg)
-अणु
-	काष्ठा net_bridge_vlan *v;
+static int br_fill_ifvlaninfo_compressed(struct sk_buff *skb,
+					 struct net_bridge_vlan_group *vg)
+{
+	struct net_bridge_vlan *v;
 	u16 vid_range_start = 0, vid_range_end = 0, vid_range_flags = 0;
 	u16 flags, pvid;
-	पूर्णांक err = 0;
+	int err = 0;
 
-	/* Pack IFLA_BRIDGE_VLAN_INFO's क्रम every vlan
+	/* Pack IFLA_BRIDGE_VLAN_INFO's for every vlan
 	 * and mark vlan info with begin and end flags
-	 * अगर vlaninfo represents a range
+	 * if vlaninfo represents a range
 	 */
 	pvid = br_get_pvid(vg);
-	list_क्रम_each_entry_rcu(v, &vg->vlan_list, vlist) अणु
+	list_for_each_entry_rcu(v, &vg->vlan_list, vlist) {
 		flags = 0;
-		अगर (!br_vlan_should_use(v))
-			जारी;
-		अगर (v->vid == pvid)
+		if (!br_vlan_should_use(v))
+			continue;
+		if (v->vid == pvid)
 			flags |= BRIDGE_VLAN_INFO_PVID;
 
-		अगर (v->flags & BRIDGE_VLAN_INFO_UNTAGGED)
+		if (v->flags & BRIDGE_VLAN_INFO_UNTAGGED)
 			flags |= BRIDGE_VLAN_INFO_UNTAGGED;
 
-		अगर (vid_range_start == 0) अणु
-			जाओ initvars;
-		पूर्ण अन्यथा अगर ((v->vid - vid_range_end) == 1 &&
-			flags == vid_range_flags) अणु
+		if (vid_range_start == 0) {
+			goto initvars;
+		} else if ((v->vid - vid_range_end) == 1 &&
+			flags == vid_range_flags) {
 			vid_range_end = v->vid;
-			जारी;
-		पूर्ण अन्यथा अणु
-			err = br_fill_अगरvlaninfo_range(skb, vid_range_start,
+			continue;
+		} else {
+			err = br_fill_ifvlaninfo_range(skb, vid_range_start,
 						       vid_range_end,
 						       vid_range_flags);
-			अगर (err)
-				वापस err;
-		पूर्ण
+			if (err)
+				return err;
+		}
 
 initvars:
 		vid_range_start = v->vid;
 		vid_range_end = v->vid;
 		vid_range_flags = flags;
-	पूर्ण
+	}
 
-	अगर (vid_range_start != 0) अणु
+	if (vid_range_start != 0) {
 		/* Call it once more to send any left over vlans */
-		err = br_fill_अगरvlaninfo_range(skb, vid_range_start,
+		err = br_fill_ifvlaninfo_range(skb, vid_range_start,
 					       vid_range_end,
 					       vid_range_flags);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक br_fill_अगरvlaninfo(काष्ठा sk_buff *skb,
-			      काष्ठा net_bridge_vlan_group *vg)
-अणु
-	काष्ठा bridge_vlan_info vinfo;
-	काष्ठा net_bridge_vlan *v;
+static int br_fill_ifvlaninfo(struct sk_buff *skb,
+			      struct net_bridge_vlan_group *vg)
+{
+	struct bridge_vlan_info vinfo;
+	struct net_bridge_vlan *v;
 	u16 pvid;
 
 	pvid = br_get_pvid(vg);
-	list_क्रम_each_entry_rcu(v, &vg->vlan_list, vlist) अणु
-		अगर (!br_vlan_should_use(v))
-			जारी;
+	list_for_each_entry_rcu(v, &vg->vlan_list, vlist) {
+		if (!br_vlan_should_use(v))
+			continue;
 
 		vinfo.vid = v->vid;
 		vinfo.flags = 0;
-		अगर (v->vid == pvid)
+		if (v->vid == pvid)
 			vinfo.flags |= BRIDGE_VLAN_INFO_PVID;
 
-		अगर (v->flags & BRIDGE_VLAN_INFO_UNTAGGED)
+		if (v->flags & BRIDGE_VLAN_INFO_UNTAGGED)
 			vinfo.flags |= BRIDGE_VLAN_INFO_UNTAGGED;
 
-		अगर (nla_put(skb, IFLA_BRIDGE_VLAN_INFO,
-			    माप(vinfo), &vinfo))
-			जाओ nla_put_failure;
-	पूर्ण
+		if (nla_put(skb, IFLA_BRIDGE_VLAN_INFO,
+			    sizeof(vinfo), &vinfo))
+			goto nla_put_failure;
+	}
 
-	वापस 0;
+	return 0;
 
 nla_put_failure:
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
 /*
- * Create one netlink message क्रम one पूर्णांकerface
+ * Create one netlink message for one interface
  * Contains port and master info as well as carrier and bridge state.
  */
-अटल पूर्णांक br_fill_अगरinfo(काष्ठा sk_buff *skb,
-			  स्थिर काष्ठा net_bridge_port *port,
-			  u32 pid, u32 seq, पूर्णांक event, अचिन्हित पूर्णांक flags,
-			  u32 filter_mask, स्थिर काष्ठा net_device *dev,
+static int br_fill_ifinfo(struct sk_buff *skb,
+			  const struct net_bridge_port *port,
+			  u32 pid, u32 seq, int event, unsigned int flags,
+			  u32 filter_mask, const struct net_device *dev,
 			  bool getlink)
-अणु
-	u8 operstate = netअगर_running(dev) ? dev->operstate : IF_OPER_DOWN;
-	काष्ठा nlattr *af = शून्य;
-	काष्ठा net_bridge *br;
-	काष्ठा अगरinfomsg *hdr;
-	काष्ठा nlmsghdr *nlh;
+{
+	u8 operstate = netif_running(dev) ? dev->operstate : IF_OPER_DOWN;
+	struct nlattr *af = NULL;
+	struct net_bridge *br;
+	struct ifinfomsg *hdr;
+	struct nlmsghdr *nlh;
 
-	अगर (port)
+	if (port)
 		br = port->br;
-	अन्यथा
+	else
 		br = netdev_priv(dev);
 
 	br_debug(br, "br_fill_info event %d port %s master %s\n",
 		     event, dev->name, br->dev->name);
 
-	nlh = nlmsg_put(skb, pid, seq, event, माप(*hdr), flags);
-	अगर (nlh == शून्य)
-		वापस -EMSGSIZE;
+	nlh = nlmsg_put(skb, pid, seq, event, sizeof(*hdr), flags);
+	if (nlh == NULL)
+		return -EMSGSIZE;
 
 	hdr = nlmsg_data(nlh);
-	hdr->अगरi_family = AF_BRIDGE;
-	hdr->__अगरi_pad = 0;
-	hdr->अगरi_type = dev->type;
-	hdr->अगरi_index = dev->अगरindex;
-	hdr->अगरi_flags = dev_get_flags(dev);
-	hdr->अगरi_change = 0;
+	hdr->ifi_family = AF_BRIDGE;
+	hdr->__ifi_pad = 0;
+	hdr->ifi_type = dev->type;
+	hdr->ifi_index = dev->ifindex;
+	hdr->ifi_flags = dev_get_flags(dev);
+	hdr->ifi_change = 0;
 
-	अगर (nla_put_string(skb, IFLA_IFNAME, dev->name) ||
-	    nla_put_u32(skb, IFLA_MASTER, br->dev->अगरindex) ||
+	if (nla_put_string(skb, IFLA_IFNAME, dev->name) ||
+	    nla_put_u32(skb, IFLA_MASTER, br->dev->ifindex) ||
 	    nla_put_u32(skb, IFLA_MTU, dev->mtu) ||
 	    nla_put_u8(skb, IFLA_OPERSTATE, operstate) ||
 	    (dev->addr_len &&
 	     nla_put(skb, IFLA_ADDRESS, dev->addr_len, dev->dev_addr)) ||
-	    (dev->अगरindex != dev_get_अगरlink(dev) &&
-	     nla_put_u32(skb, IFLA_LINK, dev_get_अगरlink(dev))))
-		जाओ nla_put_failure;
+	    (dev->ifindex != dev_get_iflink(dev) &&
+	     nla_put_u32(skb, IFLA_LINK, dev_get_iflink(dev))))
+		goto nla_put_failure;
 
-	अगर (event == RTM_NEWLINK && port) अणु
-		काष्ठा nlattr *nest;
+	if (event == RTM_NEWLINK && port) {
+		struct nlattr *nest;
 
 		nest = nla_nest_start(skb, IFLA_PROTINFO);
-		अगर (nest == शून्य || br_port_fill_attrs(skb, port) < 0)
-			जाओ nla_put_failure;
+		if (nest == NULL || br_port_fill_attrs(skb, port) < 0)
+			goto nla_put_failure;
 		nla_nest_end(skb, nest);
-	पूर्ण
+	}
 
-	अगर (filter_mask & (RTEXT_FILTER_BRVLAN |
+	if (filter_mask & (RTEXT_FILTER_BRVLAN |
 			   RTEXT_FILTER_BRVLAN_COMPRESSED |
 			   RTEXT_FILTER_MRP |
 			   RTEXT_FILTER_CFM_CONFIG |
-			   RTEXT_FILTER_CFM_STATUS)) अणु
+			   RTEXT_FILTER_CFM_STATUS)) {
 		af = nla_nest_start_noflag(skb, IFLA_AF_SPEC);
-		अगर (!af)
-			जाओ nla_put_failure;
-	पूर्ण
+		if (!af)
+			goto nla_put_failure;
+	}
 
-	/* Check अगर  the VID inक्रमmation is requested */
-	अगर ((filter_mask & RTEXT_FILTER_BRVLAN) ||
-	    (filter_mask & RTEXT_FILTER_BRVLAN_COMPRESSED)) अणु
-		काष्ठा net_bridge_vlan_group *vg;
-		पूर्णांक err;
+	/* Check if  the VID information is requested */
+	if ((filter_mask & RTEXT_FILTER_BRVLAN) ||
+	    (filter_mask & RTEXT_FILTER_BRVLAN_COMPRESSED)) {
+		struct net_bridge_vlan_group *vg;
+		int err;
 
 		/* RCU needed because of the VLAN locking rules (rcu || rtnl) */
-		rcu_पढ़ो_lock();
-		अगर (port)
+		rcu_read_lock();
+		if (port)
 			vg = nbp_vlan_group_rcu(port);
-		अन्यथा
+		else
 			vg = br_vlan_group_rcu(br);
 
-		अगर (!vg || !vg->num_vlans) अणु
-			rcu_पढ़ो_unlock();
-			जाओ करोne;
-		पूर्ण
-		अगर (filter_mask & RTEXT_FILTER_BRVLAN_COMPRESSED)
-			err = br_fill_अगरvlaninfo_compressed(skb, vg);
-		अन्यथा
-			err = br_fill_अगरvlaninfo(skb, vg);
+		if (!vg || !vg->num_vlans) {
+			rcu_read_unlock();
+			goto done;
+		}
+		if (filter_mask & RTEXT_FILTER_BRVLAN_COMPRESSED)
+			err = br_fill_ifvlaninfo_compressed(skb, vg);
+		else
+			err = br_fill_ifvlaninfo(skb, vg);
 
-		अगर (port && (port->flags & BR_VLAN_TUNNEL))
+		if (port && (port->flags & BR_VLAN_TUNNEL))
 			err = br_fill_vlan_tunnel_info(skb, vg);
-		rcu_पढ़ो_unlock();
-		अगर (err)
-			जाओ nla_put_failure;
-	पूर्ण
+		rcu_read_unlock();
+		if (err)
+			goto nla_put_failure;
+	}
 
-	अगर (filter_mask & RTEXT_FILTER_MRP) अणु
-		पूर्णांक err;
+	if (filter_mask & RTEXT_FILTER_MRP) {
+		int err;
 
-		अगर (!br_mrp_enabled(br) || port)
-			जाओ करोne;
+		if (!br_mrp_enabled(br) || port)
+			goto done;
 
-		rcu_पढ़ो_lock();
+		rcu_read_lock();
 		err = br_mrp_fill_info(skb, br);
-		rcu_पढ़ो_unlock();
+		rcu_read_unlock();
 
-		अगर (err)
-			जाओ nla_put_failure;
-	पूर्ण
+		if (err)
+			goto nla_put_failure;
+	}
 
-	अगर (filter_mask & (RTEXT_FILTER_CFM_CONFIG | RTEXT_FILTER_CFM_STATUS)) अणु
-		काष्ठा nlattr *cfm_nest = शून्य;
-		पूर्णांक err;
+	if (filter_mask & (RTEXT_FILTER_CFM_CONFIG | RTEXT_FILTER_CFM_STATUS)) {
+		struct nlattr *cfm_nest = NULL;
+		int err;
 
-		अगर (!br_cfm_created(br) || port)
-			जाओ करोne;
+		if (!br_cfm_created(br) || port)
+			goto done;
 
 		cfm_nest = nla_nest_start(skb, IFLA_BRIDGE_CFM);
-		अगर (!cfm_nest)
-			जाओ nla_put_failure;
+		if (!cfm_nest)
+			goto nla_put_failure;
 
-		अगर (filter_mask & RTEXT_FILTER_CFM_CONFIG) अणु
-			rcu_पढ़ो_lock();
+		if (filter_mask & RTEXT_FILTER_CFM_CONFIG) {
+			rcu_read_lock();
 			err = br_cfm_config_fill_info(skb, br);
-			rcu_पढ़ो_unlock();
-			अगर (err)
-				जाओ nla_put_failure;
-		पूर्ण
+			rcu_read_unlock();
+			if (err)
+				goto nla_put_failure;
+		}
 
-		अगर (filter_mask & RTEXT_FILTER_CFM_STATUS) अणु
-			rcu_पढ़ो_lock();
+		if (filter_mask & RTEXT_FILTER_CFM_STATUS) {
+			rcu_read_lock();
 			err = br_cfm_status_fill_info(skb, br, getlink);
-			rcu_पढ़ो_unlock();
-			अगर (err)
-				जाओ nla_put_failure;
-		पूर्ण
+			rcu_read_unlock();
+			if (err)
+				goto nla_put_failure;
+		}
 
 		nla_nest_end(skb, cfm_nest);
-	पूर्ण
+	}
 
-करोne:
-	अगर (af)
+done:
+	if (af)
 		nla_nest_end(skb, af);
 	nlmsg_end(skb, nlh);
-	वापस 0;
+	return 0;
 
 nla_put_failure:
 	nlmsg_cancel(skb, nlh);
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-व्योम br_info_notअगरy(पूर्णांक event, स्थिर काष्ठा net_bridge *br,
-		    स्थिर काष्ठा net_bridge_port *port, u32 filter)
-अणु
-	काष्ठा net_device *dev;
-	काष्ठा sk_buff *skb;
-	पूर्णांक err = -ENOBUFS;
-	काष्ठा net *net;
+void br_info_notify(int event, const struct net_bridge *br,
+		    const struct net_bridge_port *port, u32 filter)
+{
+	struct net_device *dev;
+	struct sk_buff *skb;
+	int err = -ENOBUFS;
+	struct net *net;
 	u16 port_no = 0;
 
-	अगर (WARN_ON(!port && !br))
-		वापस;
+	if (WARN_ON(!port && !br))
+		return;
 
-	अगर (port) अणु
+	if (port) {
 		dev = port->dev;
 		br = port->br;
 		port_no = port->port_no;
-	पूर्ण अन्यथा अणु
+	} else {
 		dev = br->dev;
-	पूर्ण
+	}
 
 	net = dev_net(dev);
 	br_debug(br, "port %u(%s) event %d\n", port_no, dev->name, event);
 
 	skb = nlmsg_new(br_nlmsg_size(dev, filter), GFP_ATOMIC);
-	अगर (skb == शून्य)
-		जाओ errout;
+	if (skb == NULL)
+		goto errout;
 
-	err = br_fill_अगरinfo(skb, port, 0, 0, event, 0, filter, dev, false);
-	अगर (err < 0) अणु
+	err = br_fill_ifinfo(skb, port, 0, 0, event, 0, filter, dev, false);
+	if (err < 0) {
 		/* -EMSGSIZE implies BUG in br_nlmsg_size() */
 		WARN_ON(err == -EMSGSIZE);
-		kमुक्त_skb(skb);
-		जाओ errout;
-	पूर्ण
-	rtnl_notअगरy(skb, net, 0, RTNLGRP_LINK, शून्य, GFP_ATOMIC);
-	वापस;
+		kfree_skb(skb);
+		goto errout;
+	}
+	rtnl_notify(skb, net, 0, RTNLGRP_LINK, NULL, GFP_ATOMIC);
+	return;
 errout:
 	rtnl_set_sk_err(net, RTNLGRP_LINK, err);
-पूर्ण
+}
 
-/* Notअगरy listeners of a change in bridge or port inक्रमmation */
-व्योम br_अगरinfo_notअगरy(पूर्णांक event, स्थिर काष्ठा net_bridge *br,
-		      स्थिर काष्ठा net_bridge_port *port)
-अणु
+/* Notify listeners of a change in bridge or port information */
+void br_ifinfo_notify(int event, const struct net_bridge *br,
+		      const struct net_bridge_port *port)
+{
 	u32 filter = RTEXT_FILTER_BRVLAN_COMPRESSED;
 
-	वापस br_info_notअगरy(event, br, port, filter);
-पूर्ण
+	return br_info_notify(event, br, port, filter);
+}
 
 /*
- * Dump inक्रमmation about all ports, in response to GETLINK
+ * Dump information about all ports, in response to GETLINK
  */
-पूर्णांक br_getlink(काष्ठा sk_buff *skb, u32 pid, u32 seq,
-	       काष्ठा net_device *dev, u32 filter_mask, पूर्णांक nlflags)
-अणु
-	काष्ठा net_bridge_port *port = br_port_get_rtnl(dev);
+int br_getlink(struct sk_buff *skb, u32 pid, u32 seq,
+	       struct net_device *dev, u32 filter_mask, int nlflags)
+{
+	struct net_bridge_port *port = br_port_get_rtnl(dev);
 
-	अगर (!port && !(filter_mask & RTEXT_FILTER_BRVLAN) &&
+	if (!port && !(filter_mask & RTEXT_FILTER_BRVLAN) &&
 	    !(filter_mask & RTEXT_FILTER_BRVLAN_COMPRESSED) &&
 	    !(filter_mask & RTEXT_FILTER_MRP) &&
 	    !(filter_mask & RTEXT_FILTER_CFM_CONFIG) &&
 	    !(filter_mask & RTEXT_FILTER_CFM_STATUS))
-		वापस 0;
+		return 0;
 
-	वापस br_fill_अगरinfo(skb, port, pid, seq, RTM_NEWLINK, nlflags,
+	return br_fill_ifinfo(skb, port, pid, seq, RTM_NEWLINK, nlflags,
 			      filter_mask, dev, true);
-पूर्ण
+}
 
-अटल पूर्णांक br_vlan_info(काष्ठा net_bridge *br, काष्ठा net_bridge_port *p,
-			पूर्णांक cmd, काष्ठा bridge_vlan_info *vinfo, bool *changed,
-			काष्ठा netlink_ext_ack *extack)
-अणु
+static int br_vlan_info(struct net_bridge *br, struct net_bridge_port *p,
+			int cmd, struct bridge_vlan_info *vinfo, bool *changed,
+			struct netlink_ext_ack *extack)
+{
 	bool curr_change;
-	पूर्णांक err = 0;
+	int err = 0;
 
-	चयन (cmd) अणु
-	हाल RTM_SETLINK:
-		अगर (p) अणु
-			/* अगर the MASTER flag is set this will act on the global
+	switch (cmd) {
+	case RTM_SETLINK:
+		if (p) {
+			/* if the MASTER flag is set this will act on the global
 			 * per-VLAN entry as well
 			 */
 			err = nbp_vlan_add(p, vinfo->vid, vinfo->flags,
 					   &curr_change, extack);
-		पूर्ण अन्यथा अणु
+		} else {
 			vinfo->flags |= BRIDGE_VLAN_INFO_BRENTRY;
 			err = br_vlan_add(br, vinfo->vid, vinfo->flags,
 					  &curr_change, extack);
-		पूर्ण
-		अगर (curr_change)
+		}
+		if (curr_change)
 			*changed = true;
-		अवरोध;
+		break;
 
-	हाल RTM_DELLINK:
-		अगर (p) अणु
-			अगर (!nbp_vlan_delete(p, vinfo->vid))
+	case RTM_DELLINK:
+		if (p) {
+			if (!nbp_vlan_delete(p, vinfo->vid))
 				*changed = true;
 
-			अगर ((vinfo->flags & BRIDGE_VLAN_INFO_MASTER) &&
+			if ((vinfo->flags & BRIDGE_VLAN_INFO_MASTER) &&
 			    !br_vlan_delete(p->br, vinfo->vid))
 				*changed = true;
-		पूर्ण अन्यथा अगर (!br_vlan_delete(br, vinfo->vid)) अणु
+		} else if (!br_vlan_delete(br, vinfo->vid)) {
 			*changed = true;
-		पूर्ण
-		अवरोध;
-	पूर्ण
+		}
+		break;
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक br_process_vlan_info(काष्ठा net_bridge *br,
-			 काष्ठा net_bridge_port *p, पूर्णांक cmd,
-			 काष्ठा bridge_vlan_info *vinfo_curr,
-			 काष्ठा bridge_vlan_info **vinfo_last,
+int br_process_vlan_info(struct net_bridge *br,
+			 struct net_bridge_port *p, int cmd,
+			 struct bridge_vlan_info *vinfo_curr,
+			 struct bridge_vlan_info **vinfo_last,
 			 bool *changed,
-			 काष्ठा netlink_ext_ack *extack)
-अणु
-	पूर्णांक err, rपंचांग_cmd;
+			 struct netlink_ext_ack *extack)
+{
+	int err, rtm_cmd;
 
-	अगर (!br_vlan_valid_id(vinfo_curr->vid, extack))
-		वापस -EINVAL;
+	if (!br_vlan_valid_id(vinfo_curr->vid, extack))
+		return -EINVAL;
 
-	/* needed क्रम vlan-only NEWVLAN/DELVLAN notअगरications */
-	rपंचांग_cmd = br_afspec_cmd_to_rपंचांग(cmd);
+	/* needed for vlan-only NEWVLAN/DELVLAN notifications */
+	rtm_cmd = br_afspec_cmd_to_rtm(cmd);
 
-	अगर (vinfo_curr->flags & BRIDGE_VLAN_INFO_RANGE_BEGIN) अणु
-		अगर (!br_vlan_valid_range(vinfo_curr, *vinfo_last, extack))
-			वापस -EINVAL;
+	if (vinfo_curr->flags & BRIDGE_VLAN_INFO_RANGE_BEGIN) {
+		if (!br_vlan_valid_range(vinfo_curr, *vinfo_last, extack))
+			return -EINVAL;
 		*vinfo_last = vinfo_curr;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (*vinfo_last) अणु
-		काष्ठा bridge_vlan_info पंचांगp_vinfo;
-		पूर्णांक v, v_change_start = 0;
+	if (*vinfo_last) {
+		struct bridge_vlan_info tmp_vinfo;
+		int v, v_change_start = 0;
 
-		अगर (!br_vlan_valid_range(vinfo_curr, *vinfo_last, extack))
-			वापस -EINVAL;
+		if (!br_vlan_valid_range(vinfo_curr, *vinfo_last, extack))
+			return -EINVAL;
 
-		स_नकल(&पंचांगp_vinfo, *vinfo_last,
-		       माप(काष्ठा bridge_vlan_info));
-		क्रम (v = (*vinfo_last)->vid; v <= vinfo_curr->vid; v++) अणु
+		memcpy(&tmp_vinfo, *vinfo_last,
+		       sizeof(struct bridge_vlan_info));
+		for (v = (*vinfo_last)->vid; v <= vinfo_curr->vid; v++) {
 			bool curr_change = false;
 
-			पंचांगp_vinfo.vid = v;
-			err = br_vlan_info(br, p, cmd, &पंचांगp_vinfo, &curr_change,
+			tmp_vinfo.vid = v;
+			err = br_vlan_info(br, p, cmd, &tmp_vinfo, &curr_change,
 					   extack);
-			अगर (err)
-				अवरोध;
-			अगर (curr_change) अणु
+			if (err)
+				break;
+			if (curr_change) {
 				*changed = curr_change;
-				अगर (!v_change_start)
+				if (!v_change_start)
 					v_change_start = v;
-			पूर्ण अन्यथा अणु
-				/* nothing to notअगरy yet */
-				अगर (!v_change_start)
-					जारी;
-				br_vlan_notअगरy(br, p, v_change_start,
-					       v - 1, rपंचांग_cmd);
+			} else {
+				/* nothing to notify yet */
+				if (!v_change_start)
+					continue;
+				br_vlan_notify(br, p, v_change_start,
+					       v - 1, rtm_cmd);
 				v_change_start = 0;
-			पूर्ण
+			}
 			cond_resched();
-		पूर्ण
-		/* v_change_start is set only अगर the last/whole range changed */
-		अगर (v_change_start)
-			br_vlan_notअगरy(br, p, v_change_start,
-				       v - 1, rपंचांग_cmd);
+		}
+		/* v_change_start is set only if the last/whole range changed */
+		if (v_change_start)
+			br_vlan_notify(br, p, v_change_start,
+				       v - 1, rtm_cmd);
 
-		*vinfo_last = शून्य;
+		*vinfo_last = NULL;
 
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	err = br_vlan_info(br, p, cmd, vinfo_curr, changed, extack);
-	अगर (*changed)
-		br_vlan_notअगरy(br, p, vinfo_curr->vid, 0, rपंचांग_cmd);
+	if (*changed)
+		br_vlan_notify(br, p, vinfo_curr->vid, 0, rtm_cmd);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक br_afspec(काष्ठा net_bridge *br,
-		     काष्ठा net_bridge_port *p,
-		     काष्ठा nlattr *af_spec,
-		     पूर्णांक cmd, bool *changed,
-		     काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा bridge_vlan_info *vinfo_curr = शून्य;
-	काष्ठा bridge_vlan_info *vinfo_last = शून्य;
-	काष्ठा nlattr *attr;
-	काष्ठा vtunnel_info tinfo_last = अणुपूर्ण;
-	काष्ठा vtunnel_info tinfo_curr = अणुपूर्ण;
-	पूर्णांक err = 0, rem;
+static int br_afspec(struct net_bridge *br,
+		     struct net_bridge_port *p,
+		     struct nlattr *af_spec,
+		     int cmd, bool *changed,
+		     struct netlink_ext_ack *extack)
+{
+	struct bridge_vlan_info *vinfo_curr = NULL;
+	struct bridge_vlan_info *vinfo_last = NULL;
+	struct nlattr *attr;
+	struct vtunnel_info tinfo_last = {};
+	struct vtunnel_info tinfo_curr = {};
+	int err = 0, rem;
 
-	nla_क्रम_each_nested(attr, af_spec, rem) अणु
+	nla_for_each_nested(attr, af_spec, rem) {
 		err = 0;
-		चयन (nla_type(attr)) अणु
-		हाल IFLA_BRIDGE_VLAN_TUNNEL_INFO:
-			अगर (!p || !(p->flags & BR_VLAN_TUNNEL))
-				वापस -EINVAL;
+		switch (nla_type(attr)) {
+		case IFLA_BRIDGE_VLAN_TUNNEL_INFO:
+			if (!p || !(p->flags & BR_VLAN_TUNNEL))
+				return -EINVAL;
 			err = br_parse_vlan_tunnel_info(attr, &tinfo_curr);
-			अगर (err)
-				वापस err;
+			if (err)
+				return err;
 			err = br_process_vlan_tunnel_info(br, p, cmd,
 							  &tinfo_curr,
 							  &tinfo_last,
 							  changed);
-			अगर (err)
-				वापस err;
-			अवरोध;
-		हाल IFLA_BRIDGE_VLAN_INFO:
-			अगर (nla_len(attr) != माप(काष्ठा bridge_vlan_info))
-				वापस -EINVAL;
+			if (err)
+				return err;
+			break;
+		case IFLA_BRIDGE_VLAN_INFO:
+			if (nla_len(attr) != sizeof(struct bridge_vlan_info))
+				return -EINVAL;
 			vinfo_curr = nla_data(attr);
 			err = br_process_vlan_info(br, p, cmd, vinfo_curr,
 						   &vinfo_last, changed,
 						   extack);
-			अगर (err)
-				वापस err;
-			अवरोध;
-		हाल IFLA_BRIDGE_MRP:
+			if (err)
+				return err;
+			break;
+		case IFLA_BRIDGE_MRP:
 			err = br_mrp_parse(br, p, attr, cmd, extack);
-			अगर (err)
-				वापस err;
-			अवरोध;
-		हाल IFLA_BRIDGE_CFM:
+			if (err)
+				return err;
+			break;
+		case IFLA_BRIDGE_CFM:
 			err = br_cfm_parse(br, p, attr, cmd, extack);
-			अगर (err)
-				वापस err;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			if (err)
+				return err;
+			break;
+		}
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल स्थिर काष्ठा nla_policy br_port_policy[IFLA_BRPORT_MAX + 1] = अणु
-	[IFLA_BRPORT_STATE]	= अणु .type = NLA_U8 पूर्ण,
-	[IFLA_BRPORT_COST]	= अणु .type = NLA_U32 पूर्ण,
-	[IFLA_BRPORT_PRIORITY]	= अणु .type = NLA_U16 पूर्ण,
-	[IFLA_BRPORT_MODE]	= अणु .type = NLA_U8 पूर्ण,
-	[IFLA_BRPORT_GUARD]	= अणु .type = NLA_U8 पूर्ण,
-	[IFLA_BRPORT_PROTECT]	= अणु .type = NLA_U8 पूर्ण,
-	[IFLA_BRPORT_FAST_LEAVE]= अणु .type = NLA_U8 पूर्ण,
-	[IFLA_BRPORT_LEARNING]	= अणु .type = NLA_U8 पूर्ण,
-	[IFLA_BRPORT_UNICAST_FLOOD] = अणु .type = NLA_U8 पूर्ण,
-	[IFLA_BRPORT_PROXYARP]	= अणु .type = NLA_U8 पूर्ण,
-	[IFLA_BRPORT_PROXYARP_WIFI] = अणु .type = NLA_U8 पूर्ण,
-	[IFLA_BRPORT_MULTICAST_ROUTER] = अणु .type = NLA_U8 पूर्ण,
-	[IFLA_BRPORT_MCAST_TO_UCAST] = अणु .type = NLA_U8 पूर्ण,
-	[IFLA_BRPORT_MCAST_FLOOD] = अणु .type = NLA_U8 पूर्ण,
-	[IFLA_BRPORT_BCAST_FLOOD] = अणु .type = NLA_U8 पूर्ण,
-	[IFLA_BRPORT_VLAN_TUNNEL] = अणु .type = NLA_U8 पूर्ण,
-	[IFLA_BRPORT_GROUP_FWD_MASK] = अणु .type = NLA_U16 पूर्ण,
-	[IFLA_BRPORT_NEIGH_SUPPRESS] = अणु .type = NLA_U8 पूर्ण,
-	[IFLA_BRPORT_ISOLATED]	= अणु .type = NLA_U8 पूर्ण,
-	[IFLA_BRPORT_BACKUP_PORT] = अणु .type = NLA_U32 पूर्ण,
-	[IFLA_BRPORT_MCAST_EHT_HOSTS_LIMIT] = अणु .type = NLA_U32 पूर्ण,
-पूर्ण;
+static const struct nla_policy br_port_policy[IFLA_BRPORT_MAX + 1] = {
+	[IFLA_BRPORT_STATE]	= { .type = NLA_U8 },
+	[IFLA_BRPORT_COST]	= { .type = NLA_U32 },
+	[IFLA_BRPORT_PRIORITY]	= { .type = NLA_U16 },
+	[IFLA_BRPORT_MODE]	= { .type = NLA_U8 },
+	[IFLA_BRPORT_GUARD]	= { .type = NLA_U8 },
+	[IFLA_BRPORT_PROTECT]	= { .type = NLA_U8 },
+	[IFLA_BRPORT_FAST_LEAVE]= { .type = NLA_U8 },
+	[IFLA_BRPORT_LEARNING]	= { .type = NLA_U8 },
+	[IFLA_BRPORT_UNICAST_FLOOD] = { .type = NLA_U8 },
+	[IFLA_BRPORT_PROXYARP]	= { .type = NLA_U8 },
+	[IFLA_BRPORT_PROXYARP_WIFI] = { .type = NLA_U8 },
+	[IFLA_BRPORT_MULTICAST_ROUTER] = { .type = NLA_U8 },
+	[IFLA_BRPORT_MCAST_TO_UCAST] = { .type = NLA_U8 },
+	[IFLA_BRPORT_MCAST_FLOOD] = { .type = NLA_U8 },
+	[IFLA_BRPORT_BCAST_FLOOD] = { .type = NLA_U8 },
+	[IFLA_BRPORT_VLAN_TUNNEL] = { .type = NLA_U8 },
+	[IFLA_BRPORT_GROUP_FWD_MASK] = { .type = NLA_U16 },
+	[IFLA_BRPORT_NEIGH_SUPPRESS] = { .type = NLA_U8 },
+	[IFLA_BRPORT_ISOLATED]	= { .type = NLA_U8 },
+	[IFLA_BRPORT_BACKUP_PORT] = { .type = NLA_U32 },
+	[IFLA_BRPORT_MCAST_EHT_HOSTS_LIMIT] = { .type = NLA_U32 },
+};
 
-/* Change the state of the port and notअगरy spanning tree */
-अटल पूर्णांक br_set_port_state(काष्ठा net_bridge_port *p, u8 state)
-अणु
-	अगर (state > BR_STATE_BLOCKING)
-		वापस -EINVAL;
+/* Change the state of the port and notify spanning tree */
+static int br_set_port_state(struct net_bridge_port *p, u8 state)
+{
+	if (state > BR_STATE_BLOCKING)
+		return -EINVAL;
 
-	/* अगर kernel STP is running, करोn't allow changes */
-	अगर (p->br->stp_enabled == BR_KERNEL_STP)
-		वापस -EBUSY;
+	/* if kernel STP is running, don't allow changes */
+	if (p->br->stp_enabled == BR_KERNEL_STP)
+		return -EBUSY;
 
-	/* अगर device is not up, change is not allowed
-	 * अगर link is not present, only allowable state is disabled
+	/* if device is not up, change is not allowed
+	 * if link is not present, only allowable state is disabled
 	 */
-	अगर (!netअगर_running(p->dev) ||
-	    (!netअगर_oper_up(p->dev) && state != BR_STATE_DISABLED))
-		वापस -ENETDOWN;
+	if (!netif_running(p->dev) ||
+	    (!netif_oper_up(p->dev) && state != BR_STATE_DISABLED))
+		return -ENETDOWN;
 
 	br_set_state(p, state);
 	br_port_state_selection(p->br);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Set/clear or port flags based on attribute */
-अटल व्योम br_set_port_flag(काष्ठा net_bridge_port *p, काष्ठा nlattr *tb[],
-			     पूर्णांक attrtype, अचिन्हित दीर्घ mask)
-अणु
-	अगर (!tb[attrtype])
-		वापस;
+static void br_set_port_flag(struct net_bridge_port *p, struct nlattr *tb[],
+			     int attrtype, unsigned long mask)
+{
+	if (!tb[attrtype])
+		return;
 
-	अगर (nla_get_u8(tb[attrtype]))
+	if (nla_get_u8(tb[attrtype]))
 		p->flags |= mask;
-	अन्यथा
+	else
 		p->flags &= ~mask;
-पूर्ण
+}
 
 /* Process bridge protocol info on port */
-अटल पूर्णांक br_setport(काष्ठा net_bridge_port *p, काष्ठा nlattr *tb[],
-		      काष्ठा netlink_ext_ack *extack)
-अणु
-	अचिन्हित दीर्घ old_flags, changed_mask;
+static int br_setport(struct net_bridge_port *p, struct nlattr *tb[],
+		      struct netlink_ext_ack *extack)
+{
+	unsigned long old_flags, changed_mask;
 	bool br_vlan_tunnel_old;
-	पूर्णांक err;
+	int err;
 
 	old_flags = p->flags;
 	br_vlan_tunnel_old = (old_flags & BR_VLAN_TUNNEL) ? true : false;
@@ -897,656 +896,656 @@ errout:
 
 	changed_mask = old_flags ^ p->flags;
 
-	err = br_चयनdev_set_port_flag(p, p->flags, changed_mask, extack);
-	अगर (err) अणु
+	err = br_switchdev_set_port_flag(p, p->flags, changed_mask, extack);
+	if (err) {
 		p->flags = old_flags;
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	अगर (br_vlan_tunnel_old && !(p->flags & BR_VLAN_TUNNEL))
+	if (br_vlan_tunnel_old && !(p->flags & BR_VLAN_TUNNEL))
 		nbp_vlan_tunnel_info_flush(p);
 
 	br_port_flags_change(p, changed_mask);
 
-	अगर (tb[IFLA_BRPORT_COST]) अणु
+	if (tb[IFLA_BRPORT_COST]) {
 		err = br_stp_set_path_cost(p, nla_get_u32(tb[IFLA_BRPORT_COST]));
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	अगर (tb[IFLA_BRPORT_PRIORITY]) अणु
+	if (tb[IFLA_BRPORT_PRIORITY]) {
 		err = br_stp_set_port_priority(p, nla_get_u16(tb[IFLA_BRPORT_PRIORITY]));
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	अगर (tb[IFLA_BRPORT_STATE]) अणु
+	if (tb[IFLA_BRPORT_STATE]) {
 		err = br_set_port_state(p, nla_get_u8(tb[IFLA_BRPORT_STATE]));
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	अगर (tb[IFLA_BRPORT_FLUSH])
+	if (tb[IFLA_BRPORT_FLUSH])
 		br_fdb_delete_by_port(p->br, p, 0, 0);
 
-#अगर_घोषित CONFIG_BRIDGE_IGMP_SNOOPING
-	अगर (tb[IFLA_BRPORT_MULTICAST_ROUTER]) अणु
+#ifdef CONFIG_BRIDGE_IGMP_SNOOPING
+	if (tb[IFLA_BRPORT_MULTICAST_ROUTER]) {
 		u8 mcast_router = nla_get_u8(tb[IFLA_BRPORT_MULTICAST_ROUTER]);
 
 		err = br_multicast_set_port_router(p, mcast_router);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	अगर (tb[IFLA_BRPORT_MCAST_EHT_HOSTS_LIMIT]) अणु
+	if (tb[IFLA_BRPORT_MCAST_EHT_HOSTS_LIMIT]) {
 		u32 hlimit;
 
 		hlimit = nla_get_u32(tb[IFLA_BRPORT_MCAST_EHT_HOSTS_LIMIT]);
 		err = br_multicast_eht_set_hosts_limit(p, hlimit);
-		अगर (err)
-			वापस err;
-	पूर्ण
-#पूर्ण_अगर
+		if (err)
+			return err;
+	}
+#endif
 
-	अगर (tb[IFLA_BRPORT_GROUP_FWD_MASK]) अणु
+	if (tb[IFLA_BRPORT_GROUP_FWD_MASK]) {
 		u16 fwd_mask = nla_get_u16(tb[IFLA_BRPORT_GROUP_FWD_MASK]);
 
-		अगर (fwd_mask & BR_GROUPFWD_MACPAUSE)
-			वापस -EINVAL;
+		if (fwd_mask & BR_GROUPFWD_MACPAUSE)
+			return -EINVAL;
 		p->group_fwd_mask = fwd_mask;
-	पूर्ण
+	}
 
-	अगर (tb[IFLA_BRPORT_BACKUP_PORT]) अणु
-		काष्ठा net_device *backup_dev = शून्य;
-		u32 backup_अगरindex;
+	if (tb[IFLA_BRPORT_BACKUP_PORT]) {
+		struct net_device *backup_dev = NULL;
+		u32 backup_ifindex;
 
-		backup_अगरindex = nla_get_u32(tb[IFLA_BRPORT_BACKUP_PORT]);
-		अगर (backup_अगरindex) अणु
+		backup_ifindex = nla_get_u32(tb[IFLA_BRPORT_BACKUP_PORT]);
+		if (backup_ifindex) {
 			backup_dev = __dev_get_by_index(dev_net(p->dev),
-							backup_अगरindex);
-			अगर (!backup_dev)
-				वापस -ENOENT;
-		पूर्ण
+							backup_ifindex);
+			if (!backup_dev)
+				return -ENOENT;
+		}
 
 		err = nbp_backup_change(p, backup_dev);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Change state and parameters on port. */
-पूर्णांक br_setlink(काष्ठा net_device *dev, काष्ठा nlmsghdr *nlh, u16 flags,
-	       काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा net_bridge *br = (काष्ठा net_bridge *)netdev_priv(dev);
-	काष्ठा nlattr *tb[IFLA_BRPORT_MAX + 1];
-	काष्ठा net_bridge_port *p;
-	काष्ठा nlattr *protinfo;
-	काष्ठा nlattr *afspec;
+int br_setlink(struct net_device *dev, struct nlmsghdr *nlh, u16 flags,
+	       struct netlink_ext_ack *extack)
+{
+	struct net_bridge *br = (struct net_bridge *)netdev_priv(dev);
+	struct nlattr *tb[IFLA_BRPORT_MAX + 1];
+	struct net_bridge_port *p;
+	struct nlattr *protinfo;
+	struct nlattr *afspec;
 	bool changed = false;
-	पूर्णांक err = 0;
+	int err = 0;
 
-	protinfo = nlmsg_find_attr(nlh, माप(काष्ठा अगरinfomsg), IFLA_PROTINFO);
-	afspec = nlmsg_find_attr(nlh, माप(काष्ठा अगरinfomsg), IFLA_AF_SPEC);
-	अगर (!protinfo && !afspec)
-		वापस 0;
+	protinfo = nlmsg_find_attr(nlh, sizeof(struct ifinfomsg), IFLA_PROTINFO);
+	afspec = nlmsg_find_attr(nlh, sizeof(struct ifinfomsg), IFLA_AF_SPEC);
+	if (!protinfo && !afspec)
+		return 0;
 
 	p = br_port_get_rtnl(dev);
-	/* We want to accept dev as bridge itself अगर the AF_SPEC
-	 * is set to see अगर someone is setting vlan info on the bridge
+	/* We want to accept dev as bridge itself if the AF_SPEC
+	 * is set to see if someone is setting vlan info on the bridge
 	 */
-	अगर (!p && !afspec)
-		वापस -EINVAL;
+	if (!p && !afspec)
+		return -EINVAL;
 
-	अगर (p && protinfo) अणु
-		अगर (protinfo->nla_type & NLA_F_NESTED) अणु
+	if (p && protinfo) {
+		if (protinfo->nla_type & NLA_F_NESTED) {
 			err = nla_parse_nested_deprecated(tb, IFLA_BRPORT_MAX,
 							  protinfo,
 							  br_port_policy,
-							  शून्य);
-			अगर (err)
-				वापस err;
+							  NULL);
+			if (err)
+				return err;
 
 			spin_lock_bh(&p->br->lock);
 			err = br_setport(p, tb, extack);
 			spin_unlock_bh(&p->br->lock);
-		पूर्ण अन्यथा अणु
+		} else {
 			/* Binary compatibility with old RSTP */
-			अगर (nla_len(protinfo) < माप(u8))
-				वापस -EINVAL;
+			if (nla_len(protinfo) < sizeof(u8))
+				return -EINVAL;
 
 			spin_lock_bh(&p->br->lock);
 			err = br_set_port_state(p, nla_get_u8(protinfo));
 			spin_unlock_bh(&p->br->lock);
-		पूर्ण
-		अगर (err)
-			जाओ out;
+		}
+		if (err)
+			goto out;
 		changed = true;
-	पूर्ण
+	}
 
-	अगर (afspec)
+	if (afspec)
 		err = br_afspec(br, p, afspec, RTM_SETLINK, &changed, extack);
 
-	अगर (changed)
-		br_अगरinfo_notअगरy(RTM_NEWLINK, br, p);
+	if (changed)
+		br_ifinfo_notify(RTM_NEWLINK, br, p);
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-/* Delete port inक्रमmation */
-पूर्णांक br_dellink(काष्ठा net_device *dev, काष्ठा nlmsghdr *nlh, u16 flags)
-अणु
-	काष्ठा net_bridge *br = (काष्ठा net_bridge *)netdev_priv(dev);
-	काष्ठा net_bridge_port *p;
-	काष्ठा nlattr *afspec;
+/* Delete port information */
+int br_dellink(struct net_device *dev, struct nlmsghdr *nlh, u16 flags)
+{
+	struct net_bridge *br = (struct net_bridge *)netdev_priv(dev);
+	struct net_bridge_port *p;
+	struct nlattr *afspec;
 	bool changed = false;
-	पूर्णांक err = 0;
+	int err = 0;
 
-	afspec = nlmsg_find_attr(nlh, माप(काष्ठा अगरinfomsg), IFLA_AF_SPEC);
-	अगर (!afspec)
-		वापस 0;
+	afspec = nlmsg_find_attr(nlh, sizeof(struct ifinfomsg), IFLA_AF_SPEC);
+	if (!afspec)
+		return 0;
 
 	p = br_port_get_rtnl(dev);
 	/* We want to accept dev as bridge itself as well */
-	अगर (!p && !(dev->priv_flags & IFF_EBRIDGE))
-		वापस -EINVAL;
+	if (!p && !(dev->priv_flags & IFF_EBRIDGE))
+		return -EINVAL;
 
-	err = br_afspec(br, p, afspec, RTM_DELLINK, &changed, शून्य);
-	अगर (changed)
+	err = br_afspec(br, p, afspec, RTM_DELLINK, &changed, NULL);
+	if (changed)
 		/* Send RTM_NEWLINK because userspace
-		 * expects RTM_NEWLINK क्रम vlan dels
+		 * expects RTM_NEWLINK for vlan dels
 		 */
-		br_अगरinfo_notअगरy(RTM_NEWLINK, br, p);
+		br_ifinfo_notify(RTM_NEWLINK, br, p);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक br_validate(काष्ठा nlattr *tb[], काष्ठा nlattr *data[],
-		       काष्ठा netlink_ext_ack *extack)
-अणु
-	अगर (tb[IFLA_ADDRESS]) अणु
-		अगर (nla_len(tb[IFLA_ADDRESS]) != ETH_ALEN)
-			वापस -EINVAL;
-		अगर (!is_valid_ether_addr(nla_data(tb[IFLA_ADDRESS])))
-			वापस -EADDRNOTAVAIL;
-	पूर्ण
+static int br_validate(struct nlattr *tb[], struct nlattr *data[],
+		       struct netlink_ext_ack *extack)
+{
+	if (tb[IFLA_ADDRESS]) {
+		if (nla_len(tb[IFLA_ADDRESS]) != ETH_ALEN)
+			return -EINVAL;
+		if (!is_valid_ether_addr(nla_data(tb[IFLA_ADDRESS])))
+			return -EADDRNOTAVAIL;
+	}
 
-	अगर (!data)
-		वापस 0;
+	if (!data)
+		return 0;
 
-#अगर_घोषित CONFIG_BRIDGE_VLAN_FILTERING
-	अगर (data[IFLA_BR_VLAN_PROTOCOL] &&
+#ifdef CONFIG_BRIDGE_VLAN_FILTERING
+	if (data[IFLA_BR_VLAN_PROTOCOL] &&
 	    !eth_type_vlan(nla_get_be16(data[IFLA_BR_VLAN_PROTOCOL])))
-		वापस -EPROTONOSUPPORT;
+		return -EPROTONOSUPPORT;
 
-	अगर (data[IFLA_BR_VLAN_DEFAULT_PVID]) अणु
+	if (data[IFLA_BR_VLAN_DEFAULT_PVID]) {
 		__u16 defpvid = nla_get_u16(data[IFLA_BR_VLAN_DEFAULT_PVID]);
 
-		अगर (defpvid >= VLAN_VID_MASK)
-			वापस -EINVAL;
-	पूर्ण
-#पूर्ण_अगर
+		if (defpvid >= VLAN_VID_MASK)
+			return -EINVAL;
+	}
+#endif
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक br_port_slave_changelink(काष्ठा net_device *brdev,
-				    काष्ठा net_device *dev,
-				    काष्ठा nlattr *tb[],
-				    काष्ठा nlattr *data[],
-				    काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा net_bridge *br = netdev_priv(brdev);
-	पूर्णांक ret;
+static int br_port_slave_changelink(struct net_device *brdev,
+				    struct net_device *dev,
+				    struct nlattr *tb[],
+				    struct nlattr *data[],
+				    struct netlink_ext_ack *extack)
+{
+	struct net_bridge *br = netdev_priv(brdev);
+	int ret;
 
-	अगर (!data)
-		वापस 0;
+	if (!data)
+		return 0;
 
 	spin_lock_bh(&br->lock);
 	ret = br_setport(br_port_get_rtnl(dev), data, extack);
 	spin_unlock_bh(&br->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक br_port_fill_slave_info(काष्ठा sk_buff *skb,
-				   स्थिर काष्ठा net_device *brdev,
-				   स्थिर काष्ठा net_device *dev)
-अणु
-	वापस br_port_fill_attrs(skb, br_port_get_rtnl(dev));
-पूर्ण
+static int br_port_fill_slave_info(struct sk_buff *skb,
+				   const struct net_device *brdev,
+				   const struct net_device *dev)
+{
+	return br_port_fill_attrs(skb, br_port_get_rtnl(dev));
+}
 
-अटल माप_प्रकार br_port_get_slave_size(स्थिर काष्ठा net_device *brdev,
-				     स्थिर काष्ठा net_device *dev)
-अणु
-	वापस br_port_info_size();
-पूर्ण
+static size_t br_port_get_slave_size(const struct net_device *brdev,
+				     const struct net_device *dev)
+{
+	return br_port_info_size();
+}
 
-अटल स्थिर काष्ठा nla_policy br_policy[IFLA_BR_MAX + 1] = अणु
-	[IFLA_BR_FORWARD_DELAY]	= अणु .type = NLA_U32 पूर्ण,
-	[IFLA_BR_HELLO_TIME]	= अणु .type = NLA_U32 पूर्ण,
-	[IFLA_BR_MAX_AGE]	= अणु .type = NLA_U32 पूर्ण,
-	[IFLA_BR_AGEING_TIME] = अणु .type = NLA_U32 पूर्ण,
-	[IFLA_BR_STP_STATE] = अणु .type = NLA_U32 पूर्ण,
-	[IFLA_BR_PRIORITY] = अणु .type = NLA_U16 पूर्ण,
-	[IFLA_BR_VLAN_FILTERING] = अणु .type = NLA_U8 पूर्ण,
-	[IFLA_BR_VLAN_PROTOCOL] = अणु .type = NLA_U16 पूर्ण,
-	[IFLA_BR_GROUP_FWD_MASK] = अणु .type = NLA_U16 पूर्ण,
-	[IFLA_BR_GROUP_ADDR] = अणु .type = NLA_BINARY,
-				 .len  = ETH_ALEN पूर्ण,
-	[IFLA_BR_MCAST_ROUTER] = अणु .type = NLA_U8 पूर्ण,
-	[IFLA_BR_MCAST_SNOOPING] = अणु .type = NLA_U8 पूर्ण,
-	[IFLA_BR_MCAST_QUERY_USE_IFADDR] = अणु .type = NLA_U8 पूर्ण,
-	[IFLA_BR_MCAST_QUERIER] = अणु .type = NLA_U8 पूर्ण,
-	[IFLA_BR_MCAST_HASH_ELASTICITY] = अणु .type = NLA_U32 पूर्ण,
-	[IFLA_BR_MCAST_HASH_MAX] = अणु .type = NLA_U32 पूर्ण,
-	[IFLA_BR_MCAST_LAST_MEMBER_CNT] = अणु .type = NLA_U32 पूर्ण,
-	[IFLA_BR_MCAST_STARTUP_QUERY_CNT] = अणु .type = NLA_U32 पूर्ण,
-	[IFLA_BR_MCAST_LAST_MEMBER_INTVL] = अणु .type = NLA_U64 पूर्ण,
-	[IFLA_BR_MCAST_MEMBERSHIP_INTVL] = अणु .type = NLA_U64 पूर्ण,
-	[IFLA_BR_MCAST_QUERIER_INTVL] = अणु .type = NLA_U64 पूर्ण,
-	[IFLA_BR_MCAST_QUERY_INTVL] = अणु .type = NLA_U64 पूर्ण,
-	[IFLA_BR_MCAST_QUERY_RESPONSE_INTVL] = अणु .type = NLA_U64 पूर्ण,
-	[IFLA_BR_MCAST_STARTUP_QUERY_INTVL] = अणु .type = NLA_U64 पूर्ण,
-	[IFLA_BR_NF_CALL_IPTABLES] = अणु .type = NLA_U8 पूर्ण,
-	[IFLA_BR_NF_CALL_IP6TABLES] = अणु .type = NLA_U8 पूर्ण,
-	[IFLA_BR_NF_CALL_ARPTABLES] = अणु .type = NLA_U8 पूर्ण,
-	[IFLA_BR_VLAN_DEFAULT_PVID] = अणु .type = NLA_U16 पूर्ण,
-	[IFLA_BR_VLAN_STATS_ENABLED] = अणु .type = NLA_U8 पूर्ण,
-	[IFLA_BR_MCAST_STATS_ENABLED] = अणु .type = NLA_U8 पूर्ण,
-	[IFLA_BR_MCAST_IGMP_VERSION] = अणु .type = NLA_U8 पूर्ण,
-	[IFLA_BR_MCAST_MLD_VERSION] = अणु .type = NLA_U8 पूर्ण,
-	[IFLA_BR_VLAN_STATS_PER_PORT] = अणु .type = NLA_U8 पूर्ण,
+static const struct nla_policy br_policy[IFLA_BR_MAX + 1] = {
+	[IFLA_BR_FORWARD_DELAY]	= { .type = NLA_U32 },
+	[IFLA_BR_HELLO_TIME]	= { .type = NLA_U32 },
+	[IFLA_BR_MAX_AGE]	= { .type = NLA_U32 },
+	[IFLA_BR_AGEING_TIME] = { .type = NLA_U32 },
+	[IFLA_BR_STP_STATE] = { .type = NLA_U32 },
+	[IFLA_BR_PRIORITY] = { .type = NLA_U16 },
+	[IFLA_BR_VLAN_FILTERING] = { .type = NLA_U8 },
+	[IFLA_BR_VLAN_PROTOCOL] = { .type = NLA_U16 },
+	[IFLA_BR_GROUP_FWD_MASK] = { .type = NLA_U16 },
+	[IFLA_BR_GROUP_ADDR] = { .type = NLA_BINARY,
+				 .len  = ETH_ALEN },
+	[IFLA_BR_MCAST_ROUTER] = { .type = NLA_U8 },
+	[IFLA_BR_MCAST_SNOOPING] = { .type = NLA_U8 },
+	[IFLA_BR_MCAST_QUERY_USE_IFADDR] = { .type = NLA_U8 },
+	[IFLA_BR_MCAST_QUERIER] = { .type = NLA_U8 },
+	[IFLA_BR_MCAST_HASH_ELASTICITY] = { .type = NLA_U32 },
+	[IFLA_BR_MCAST_HASH_MAX] = { .type = NLA_U32 },
+	[IFLA_BR_MCAST_LAST_MEMBER_CNT] = { .type = NLA_U32 },
+	[IFLA_BR_MCAST_STARTUP_QUERY_CNT] = { .type = NLA_U32 },
+	[IFLA_BR_MCAST_LAST_MEMBER_INTVL] = { .type = NLA_U64 },
+	[IFLA_BR_MCAST_MEMBERSHIP_INTVL] = { .type = NLA_U64 },
+	[IFLA_BR_MCAST_QUERIER_INTVL] = { .type = NLA_U64 },
+	[IFLA_BR_MCAST_QUERY_INTVL] = { .type = NLA_U64 },
+	[IFLA_BR_MCAST_QUERY_RESPONSE_INTVL] = { .type = NLA_U64 },
+	[IFLA_BR_MCAST_STARTUP_QUERY_INTVL] = { .type = NLA_U64 },
+	[IFLA_BR_NF_CALL_IPTABLES] = { .type = NLA_U8 },
+	[IFLA_BR_NF_CALL_IP6TABLES] = { .type = NLA_U8 },
+	[IFLA_BR_NF_CALL_ARPTABLES] = { .type = NLA_U8 },
+	[IFLA_BR_VLAN_DEFAULT_PVID] = { .type = NLA_U16 },
+	[IFLA_BR_VLAN_STATS_ENABLED] = { .type = NLA_U8 },
+	[IFLA_BR_MCAST_STATS_ENABLED] = { .type = NLA_U8 },
+	[IFLA_BR_MCAST_IGMP_VERSION] = { .type = NLA_U8 },
+	[IFLA_BR_MCAST_MLD_VERSION] = { .type = NLA_U8 },
+	[IFLA_BR_VLAN_STATS_PER_PORT] = { .type = NLA_U8 },
 	[IFLA_BR_MULTI_BOOLOPT] =
-		NLA_POLICY_EXACT_LEN(माप(काष्ठा br_boolopt_multi)),
-पूर्ण;
+		NLA_POLICY_EXACT_LEN(sizeof(struct br_boolopt_multi)),
+};
 
-अटल पूर्णांक br_changelink(काष्ठा net_device *brdev, काष्ठा nlattr *tb[],
-			 काष्ठा nlattr *data[],
-			 काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा net_bridge *br = netdev_priv(brdev);
-	पूर्णांक err;
+static int br_changelink(struct net_device *brdev, struct nlattr *tb[],
+			 struct nlattr *data[],
+			 struct netlink_ext_ack *extack)
+{
+	struct net_bridge *br = netdev_priv(brdev);
+	int err;
 
-	अगर (!data)
-		वापस 0;
+	if (!data)
+		return 0;
 
-	अगर (data[IFLA_BR_FORWARD_DELAY]) अणु
-		err = br_set_क्रमward_delay(br, nla_get_u32(data[IFLA_BR_FORWARD_DELAY]));
-		अगर (err)
-			वापस err;
-	पूर्ण
+	if (data[IFLA_BR_FORWARD_DELAY]) {
+		err = br_set_forward_delay(br, nla_get_u32(data[IFLA_BR_FORWARD_DELAY]));
+		if (err)
+			return err;
+	}
 
-	अगर (data[IFLA_BR_HELLO_TIME]) अणु
-		err = br_set_hello_समय(br, nla_get_u32(data[IFLA_BR_HELLO_TIME]));
-		अगर (err)
-			वापस err;
-	पूर्ण
+	if (data[IFLA_BR_HELLO_TIME]) {
+		err = br_set_hello_time(br, nla_get_u32(data[IFLA_BR_HELLO_TIME]));
+		if (err)
+			return err;
+	}
 
-	अगर (data[IFLA_BR_MAX_AGE]) अणु
+	if (data[IFLA_BR_MAX_AGE]) {
 		err = br_set_max_age(br, nla_get_u32(data[IFLA_BR_MAX_AGE]));
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	अगर (data[IFLA_BR_AGEING_TIME]) अणु
-		err = br_set_ageing_समय(br, nla_get_u32(data[IFLA_BR_AGEING_TIME]));
-		अगर (err)
-			वापस err;
-	पूर्ण
+	if (data[IFLA_BR_AGEING_TIME]) {
+		err = br_set_ageing_time(br, nla_get_u32(data[IFLA_BR_AGEING_TIME]));
+		if (err)
+			return err;
+	}
 
-	अगर (data[IFLA_BR_STP_STATE]) अणु
+	if (data[IFLA_BR_STP_STATE]) {
 		u32 stp_enabled = nla_get_u32(data[IFLA_BR_STP_STATE]);
 
 		err = br_stp_set_enabled(br, stp_enabled, extack);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	अगर (data[IFLA_BR_PRIORITY]) अणु
+	if (data[IFLA_BR_PRIORITY]) {
 		u32 priority = nla_get_u16(data[IFLA_BR_PRIORITY]);
 
 		br_stp_set_bridge_priority(br, priority);
-	पूर्ण
+	}
 
-	अगर (data[IFLA_BR_VLAN_FILTERING]) अणु
+	if (data[IFLA_BR_VLAN_FILTERING]) {
 		u8 vlan_filter = nla_get_u8(data[IFLA_BR_VLAN_FILTERING]);
 
 		err = br_vlan_filter_toggle(br, vlan_filter, extack);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-#अगर_घोषित CONFIG_BRIDGE_VLAN_FILTERING
-	अगर (data[IFLA_BR_VLAN_PROTOCOL]) अणु
+#ifdef CONFIG_BRIDGE_VLAN_FILTERING
+	if (data[IFLA_BR_VLAN_PROTOCOL]) {
 		__be16 vlan_proto = nla_get_be16(data[IFLA_BR_VLAN_PROTOCOL]);
 
 		err = __br_vlan_set_proto(br, vlan_proto, extack);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	अगर (data[IFLA_BR_VLAN_DEFAULT_PVID]) अणु
+	if (data[IFLA_BR_VLAN_DEFAULT_PVID]) {
 		__u16 defpvid = nla_get_u16(data[IFLA_BR_VLAN_DEFAULT_PVID]);
 
-		err = __br_vlan_set_शेष_pvid(br, defpvid, extack);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		err = __br_vlan_set_default_pvid(br, defpvid, extack);
+		if (err)
+			return err;
+	}
 
-	अगर (data[IFLA_BR_VLAN_STATS_ENABLED]) अणु
+	if (data[IFLA_BR_VLAN_STATS_ENABLED]) {
 		__u8 vlan_stats = nla_get_u8(data[IFLA_BR_VLAN_STATS_ENABLED]);
 
 		err = br_vlan_set_stats(br, vlan_stats);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	अगर (data[IFLA_BR_VLAN_STATS_PER_PORT]) अणु
+	if (data[IFLA_BR_VLAN_STATS_PER_PORT]) {
 		__u8 per_port = nla_get_u8(data[IFLA_BR_VLAN_STATS_PER_PORT]);
 
 		err = br_vlan_set_stats_per_port(br, per_port);
-		अगर (err)
-			वापस err;
-	पूर्ण
-#पूर्ण_अगर
+		if (err)
+			return err;
+	}
+#endif
 
-	अगर (data[IFLA_BR_GROUP_FWD_MASK]) अणु
+	if (data[IFLA_BR_GROUP_FWD_MASK]) {
 		u16 fwd_mask = nla_get_u16(data[IFLA_BR_GROUP_FWD_MASK]);
 
-		अगर (fwd_mask & BR_GROUPFWD_RESTRICTED)
-			वापस -EINVAL;
+		if (fwd_mask & BR_GROUPFWD_RESTRICTED)
+			return -EINVAL;
 		br->group_fwd_mask = fwd_mask;
-	पूर्ण
+	}
 
-	अगर (data[IFLA_BR_GROUP_ADDR]) अणु
+	if (data[IFLA_BR_GROUP_ADDR]) {
 		u8 new_addr[ETH_ALEN];
 
-		अगर (nla_len(data[IFLA_BR_GROUP_ADDR]) != ETH_ALEN)
-			वापस -EINVAL;
-		स_नकल(new_addr, nla_data(data[IFLA_BR_GROUP_ADDR]), ETH_ALEN);
-		अगर (!is_link_local_ether_addr(new_addr))
-			वापस -EINVAL;
-		अगर (new_addr[5] == 1 ||		/* 802.3x Pause address */
+		if (nla_len(data[IFLA_BR_GROUP_ADDR]) != ETH_ALEN)
+			return -EINVAL;
+		memcpy(new_addr, nla_data(data[IFLA_BR_GROUP_ADDR]), ETH_ALEN);
+		if (!is_link_local_ether_addr(new_addr))
+			return -EINVAL;
+		if (new_addr[5] == 1 ||		/* 802.3x Pause address */
 		    new_addr[5] == 2 ||		/* 802.3ad Slow protocols */
 		    new_addr[5] == 3)		/* 802.1X PAE address */
-			वापस -EINVAL;
+			return -EINVAL;
 		spin_lock_bh(&br->lock);
-		स_नकल(br->group_addr, new_addr, माप(br->group_addr));
+		memcpy(br->group_addr, new_addr, sizeof(br->group_addr));
 		spin_unlock_bh(&br->lock);
 		br_opt_toggle(br, BROPT_GROUP_ADDR_SET, true);
 		br_recalculate_fwd_mask(br);
-	पूर्ण
+	}
 
-	अगर (data[IFLA_BR_FDB_FLUSH])
+	if (data[IFLA_BR_FDB_FLUSH])
 		br_fdb_flush(br);
 
-#अगर_घोषित CONFIG_BRIDGE_IGMP_SNOOPING
-	अगर (data[IFLA_BR_MCAST_ROUTER]) अणु
+#ifdef CONFIG_BRIDGE_IGMP_SNOOPING
+	if (data[IFLA_BR_MCAST_ROUTER]) {
 		u8 multicast_router = nla_get_u8(data[IFLA_BR_MCAST_ROUTER]);
 
 		err = br_multicast_set_router(br, multicast_router);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	अगर (data[IFLA_BR_MCAST_SNOOPING]) अणु
+	if (data[IFLA_BR_MCAST_SNOOPING]) {
 		u8 mcast_snooping = nla_get_u8(data[IFLA_BR_MCAST_SNOOPING]);
 
 		err = br_multicast_toggle(br, mcast_snooping, extack);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	अगर (data[IFLA_BR_MCAST_QUERY_USE_IFADDR]) अणु
+	if (data[IFLA_BR_MCAST_QUERY_USE_IFADDR]) {
 		u8 val;
 
 		val = nla_get_u8(data[IFLA_BR_MCAST_QUERY_USE_IFADDR]);
 		br_opt_toggle(br, BROPT_MULTICAST_QUERY_USE_IFADDR, !!val);
-	पूर्ण
+	}
 
-	अगर (data[IFLA_BR_MCAST_QUERIER]) अणु
+	if (data[IFLA_BR_MCAST_QUERIER]) {
 		u8 mcast_querier = nla_get_u8(data[IFLA_BR_MCAST_QUERIER]);
 
 		err = br_multicast_set_querier(br, mcast_querier);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	अगर (data[IFLA_BR_MCAST_HASH_ELASTICITY])
+	if (data[IFLA_BR_MCAST_HASH_ELASTICITY])
 		br_warn(br, "the hash_elasticity option has been deprecated and is always %u\n",
 			RHT_ELASTICITY);
 
-	अगर (data[IFLA_BR_MCAST_HASH_MAX])
+	if (data[IFLA_BR_MCAST_HASH_MAX])
 		br->hash_max = nla_get_u32(data[IFLA_BR_MCAST_HASH_MAX]);
 
-	अगर (data[IFLA_BR_MCAST_LAST_MEMBER_CNT]) अणु
+	if (data[IFLA_BR_MCAST_LAST_MEMBER_CNT]) {
 		u32 val = nla_get_u32(data[IFLA_BR_MCAST_LAST_MEMBER_CNT]);
 
 		br->multicast_last_member_count = val;
-	पूर्ण
+	}
 
-	अगर (data[IFLA_BR_MCAST_STARTUP_QUERY_CNT]) अणु
+	if (data[IFLA_BR_MCAST_STARTUP_QUERY_CNT]) {
 		u32 val = nla_get_u32(data[IFLA_BR_MCAST_STARTUP_QUERY_CNT]);
 
 		br->multicast_startup_query_count = val;
-	पूर्ण
+	}
 
-	अगर (data[IFLA_BR_MCAST_LAST_MEMBER_INTVL]) अणु
+	if (data[IFLA_BR_MCAST_LAST_MEMBER_INTVL]) {
 		u64 val = nla_get_u64(data[IFLA_BR_MCAST_LAST_MEMBER_INTVL]);
 
-		br->multicast_last_member_पूर्णांकerval = घड़ी_प्रकार_to_jअगरfies(val);
-	पूर्ण
+		br->multicast_last_member_interval = clock_t_to_jiffies(val);
+	}
 
-	अगर (data[IFLA_BR_MCAST_MEMBERSHIP_INTVL]) अणु
+	if (data[IFLA_BR_MCAST_MEMBERSHIP_INTVL]) {
 		u64 val = nla_get_u64(data[IFLA_BR_MCAST_MEMBERSHIP_INTVL]);
 
-		br->multicast_membership_पूर्णांकerval = घड़ी_प्रकार_to_jअगरfies(val);
-	पूर्ण
+		br->multicast_membership_interval = clock_t_to_jiffies(val);
+	}
 
-	अगर (data[IFLA_BR_MCAST_QUERIER_INTVL]) अणु
+	if (data[IFLA_BR_MCAST_QUERIER_INTVL]) {
 		u64 val = nla_get_u64(data[IFLA_BR_MCAST_QUERIER_INTVL]);
 
-		br->multicast_querier_पूर्णांकerval = घड़ी_प्रकार_to_jअगरfies(val);
-	पूर्ण
+		br->multicast_querier_interval = clock_t_to_jiffies(val);
+	}
 
-	अगर (data[IFLA_BR_MCAST_QUERY_INTVL]) अणु
+	if (data[IFLA_BR_MCAST_QUERY_INTVL]) {
 		u64 val = nla_get_u64(data[IFLA_BR_MCAST_QUERY_INTVL]);
 
-		br->multicast_query_पूर्णांकerval = घड़ी_प्रकार_to_jअगरfies(val);
-	पूर्ण
+		br->multicast_query_interval = clock_t_to_jiffies(val);
+	}
 
-	अगर (data[IFLA_BR_MCAST_QUERY_RESPONSE_INTVL]) अणु
+	if (data[IFLA_BR_MCAST_QUERY_RESPONSE_INTVL]) {
 		u64 val = nla_get_u64(data[IFLA_BR_MCAST_QUERY_RESPONSE_INTVL]);
 
-		br->multicast_query_response_पूर्णांकerval = घड़ी_प्रकार_to_jअगरfies(val);
-	पूर्ण
+		br->multicast_query_response_interval = clock_t_to_jiffies(val);
+	}
 
-	अगर (data[IFLA_BR_MCAST_STARTUP_QUERY_INTVL]) अणु
+	if (data[IFLA_BR_MCAST_STARTUP_QUERY_INTVL]) {
 		u64 val = nla_get_u64(data[IFLA_BR_MCAST_STARTUP_QUERY_INTVL]);
 
-		br->multicast_startup_query_पूर्णांकerval = घड़ी_प्रकार_to_jअगरfies(val);
-	पूर्ण
+		br->multicast_startup_query_interval = clock_t_to_jiffies(val);
+	}
 
-	अगर (data[IFLA_BR_MCAST_STATS_ENABLED]) अणु
+	if (data[IFLA_BR_MCAST_STATS_ENABLED]) {
 		__u8 mcast_stats;
 
 		mcast_stats = nla_get_u8(data[IFLA_BR_MCAST_STATS_ENABLED]);
 		br_opt_toggle(br, BROPT_MULTICAST_STATS_ENABLED, !!mcast_stats);
-	पूर्ण
+	}
 
-	अगर (data[IFLA_BR_MCAST_IGMP_VERSION]) अणु
+	if (data[IFLA_BR_MCAST_IGMP_VERSION]) {
 		__u8 igmp_version;
 
 		igmp_version = nla_get_u8(data[IFLA_BR_MCAST_IGMP_VERSION]);
 		err = br_multicast_set_igmp_version(br, igmp_version);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-#अगर IS_ENABLED(CONFIG_IPV6)
-	अगर (data[IFLA_BR_MCAST_MLD_VERSION]) अणु
+#if IS_ENABLED(CONFIG_IPV6)
+	if (data[IFLA_BR_MCAST_MLD_VERSION]) {
 		__u8 mld_version;
 
 		mld_version = nla_get_u8(data[IFLA_BR_MCAST_MLD_VERSION]);
 		err = br_multicast_set_mld_version(br, mld_version);
-		अगर (err)
-			वापस err;
-	पूर्ण
-#पूर्ण_अगर
-#पूर्ण_अगर
-#अगर IS_ENABLED(CONFIG_BRIDGE_NETFILTER)
-	अगर (data[IFLA_BR_NF_CALL_IPTABLES]) अणु
+		if (err)
+			return err;
+	}
+#endif
+#endif
+#if IS_ENABLED(CONFIG_BRIDGE_NETFILTER)
+	if (data[IFLA_BR_NF_CALL_IPTABLES]) {
 		u8 val = nla_get_u8(data[IFLA_BR_NF_CALL_IPTABLES]);
 
 		br_opt_toggle(br, BROPT_NF_CALL_IPTABLES, !!val);
-	पूर्ण
+	}
 
-	अगर (data[IFLA_BR_NF_CALL_IP6TABLES]) अणु
+	if (data[IFLA_BR_NF_CALL_IP6TABLES]) {
 		u8 val = nla_get_u8(data[IFLA_BR_NF_CALL_IP6TABLES]);
 
 		br_opt_toggle(br, BROPT_NF_CALL_IP6TABLES, !!val);
-	पूर्ण
+	}
 
-	अगर (data[IFLA_BR_NF_CALL_ARPTABLES]) अणु
+	if (data[IFLA_BR_NF_CALL_ARPTABLES]) {
 		u8 val = nla_get_u8(data[IFLA_BR_NF_CALL_ARPTABLES]);
 
 		br_opt_toggle(br, BROPT_NF_CALL_ARPTABLES, !!val);
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
-	अगर (data[IFLA_BR_MULTI_BOOLOPT]) अणु
-		काष्ठा br_boolopt_multi *bm;
+	if (data[IFLA_BR_MULTI_BOOLOPT]) {
+		struct br_boolopt_multi *bm;
 
 		bm = nla_data(data[IFLA_BR_MULTI_BOOLOPT]);
 		err = br_boolopt_multi_toggle(br, bm, extack);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक br_dev_newlink(काष्ठा net *src_net, काष्ठा net_device *dev,
-			  काष्ठा nlattr *tb[], काष्ठा nlattr *data[],
-			  काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा net_bridge *br = netdev_priv(dev);
-	पूर्णांक err;
+static int br_dev_newlink(struct net *src_net, struct net_device *dev,
+			  struct nlattr *tb[], struct nlattr *data[],
+			  struct netlink_ext_ack *extack)
+{
+	struct net_bridge *br = netdev_priv(dev);
+	int err;
 
-	err = रेजिस्टर_netdevice(dev);
-	अगर (err)
-		वापस err;
+	err = register_netdevice(dev);
+	if (err)
+		return err;
 
-	अगर (tb[IFLA_ADDRESS]) अणु
+	if (tb[IFLA_ADDRESS]) {
 		spin_lock_bh(&br->lock);
 		br_stp_change_bridge_id(br, nla_data(tb[IFLA_ADDRESS]));
 		spin_unlock_bh(&br->lock);
-	पूर्ण
+	}
 
 	err = br_changelink(dev, tb, data, extack);
-	अगर (err)
-		br_dev_delete(dev, शून्य);
+	if (err)
+		br_dev_delete(dev, NULL);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल माप_प्रकार br_get_size(स्थिर काष्ठा net_device *brdev)
-अणु
-	वापस nla_total_size(माप(u32)) +	/* IFLA_BR_FORWARD_DELAY  */
-	       nla_total_size(माप(u32)) +	/* IFLA_BR_HELLO_TIME */
-	       nla_total_size(माप(u32)) +	/* IFLA_BR_MAX_AGE */
-	       nla_total_size(माप(u32)) +    /* IFLA_BR_AGEING_TIME */
-	       nla_total_size(माप(u32)) +    /* IFLA_BR_STP_STATE */
-	       nla_total_size(माप(u16)) +    /* IFLA_BR_PRIORITY */
-	       nla_total_size(माप(u8)) +     /* IFLA_BR_VLAN_FILTERING */
-#अगर_घोषित CONFIG_BRIDGE_VLAN_FILTERING
-	       nla_total_size(माप(__be16)) +	/* IFLA_BR_VLAN_PROTOCOL */
-	       nla_total_size(माप(u16)) +    /* IFLA_BR_VLAN_DEFAULT_PVID */
-	       nla_total_size(माप(u8)) +     /* IFLA_BR_VLAN_STATS_ENABLED */
-	       nla_total_size(माप(u8)) +	/* IFLA_BR_VLAN_STATS_PER_PORT */
-#पूर्ण_अगर
-	       nla_total_size(माप(u16)) +    /* IFLA_BR_GROUP_FWD_MASK */
-	       nla_total_size(माप(काष्ठा अगरla_bridge_id)) +   /* IFLA_BR_ROOT_ID */
-	       nla_total_size(माप(काष्ठा अगरla_bridge_id)) +   /* IFLA_BR_BRIDGE_ID */
-	       nla_total_size(माप(u16)) +    /* IFLA_BR_ROOT_PORT */
-	       nla_total_size(माप(u32)) +    /* IFLA_BR_ROOT_PATH_COST */
-	       nla_total_size(माप(u8)) +     /* IFLA_BR_TOPOLOGY_CHANGE */
-	       nla_total_size(माप(u8)) +     /* IFLA_BR_TOPOLOGY_CHANGE_DETECTED */
-	       nla_total_size_64bit(माप(u64)) + /* IFLA_BR_HELLO_TIMER */
-	       nla_total_size_64bit(माप(u64)) + /* IFLA_BR_TCN_TIMER */
-	       nla_total_size_64bit(माप(u64)) + /* IFLA_BR_TOPOLOGY_CHANGE_TIMER */
-	       nla_total_size_64bit(माप(u64)) + /* IFLA_BR_GC_TIMER */
+static size_t br_get_size(const struct net_device *brdev)
+{
+	return nla_total_size(sizeof(u32)) +	/* IFLA_BR_FORWARD_DELAY  */
+	       nla_total_size(sizeof(u32)) +	/* IFLA_BR_HELLO_TIME */
+	       nla_total_size(sizeof(u32)) +	/* IFLA_BR_MAX_AGE */
+	       nla_total_size(sizeof(u32)) +    /* IFLA_BR_AGEING_TIME */
+	       nla_total_size(sizeof(u32)) +    /* IFLA_BR_STP_STATE */
+	       nla_total_size(sizeof(u16)) +    /* IFLA_BR_PRIORITY */
+	       nla_total_size(sizeof(u8)) +     /* IFLA_BR_VLAN_FILTERING */
+#ifdef CONFIG_BRIDGE_VLAN_FILTERING
+	       nla_total_size(sizeof(__be16)) +	/* IFLA_BR_VLAN_PROTOCOL */
+	       nla_total_size(sizeof(u16)) +    /* IFLA_BR_VLAN_DEFAULT_PVID */
+	       nla_total_size(sizeof(u8)) +     /* IFLA_BR_VLAN_STATS_ENABLED */
+	       nla_total_size(sizeof(u8)) +	/* IFLA_BR_VLAN_STATS_PER_PORT */
+#endif
+	       nla_total_size(sizeof(u16)) +    /* IFLA_BR_GROUP_FWD_MASK */
+	       nla_total_size(sizeof(struct ifla_bridge_id)) +   /* IFLA_BR_ROOT_ID */
+	       nla_total_size(sizeof(struct ifla_bridge_id)) +   /* IFLA_BR_BRIDGE_ID */
+	       nla_total_size(sizeof(u16)) +    /* IFLA_BR_ROOT_PORT */
+	       nla_total_size(sizeof(u32)) +    /* IFLA_BR_ROOT_PATH_COST */
+	       nla_total_size(sizeof(u8)) +     /* IFLA_BR_TOPOLOGY_CHANGE */
+	       nla_total_size(sizeof(u8)) +     /* IFLA_BR_TOPOLOGY_CHANGE_DETECTED */
+	       nla_total_size_64bit(sizeof(u64)) + /* IFLA_BR_HELLO_TIMER */
+	       nla_total_size_64bit(sizeof(u64)) + /* IFLA_BR_TCN_TIMER */
+	       nla_total_size_64bit(sizeof(u64)) + /* IFLA_BR_TOPOLOGY_CHANGE_TIMER */
+	       nla_total_size_64bit(sizeof(u64)) + /* IFLA_BR_GC_TIMER */
 	       nla_total_size(ETH_ALEN) +       /* IFLA_BR_GROUP_ADDR */
-#अगर_घोषित CONFIG_BRIDGE_IGMP_SNOOPING
-	       nla_total_size(माप(u8)) +     /* IFLA_BR_MCAST_ROUTER */
-	       nla_total_size(माप(u8)) +     /* IFLA_BR_MCAST_SNOOPING */
-	       nla_total_size(माप(u8)) +     /* IFLA_BR_MCAST_QUERY_USE_IFADDR */
-	       nla_total_size(माप(u8)) +     /* IFLA_BR_MCAST_QUERIER */
-	       nla_total_size(माप(u8)) +     /* IFLA_BR_MCAST_STATS_ENABLED */
-	       nla_total_size(माप(u32)) +    /* IFLA_BR_MCAST_HASH_ELASTICITY */
-	       nla_total_size(माप(u32)) +    /* IFLA_BR_MCAST_HASH_MAX */
-	       nla_total_size(माप(u32)) +    /* IFLA_BR_MCAST_LAST_MEMBER_CNT */
-	       nla_total_size(माप(u32)) +    /* IFLA_BR_MCAST_STARTUP_QUERY_CNT */
-	       nla_total_size_64bit(माप(u64)) + /* IFLA_BR_MCAST_LAST_MEMBER_INTVL */
-	       nla_total_size_64bit(माप(u64)) + /* IFLA_BR_MCAST_MEMBERSHIP_INTVL */
-	       nla_total_size_64bit(माप(u64)) + /* IFLA_BR_MCAST_QUERIER_INTVL */
-	       nla_total_size_64bit(माप(u64)) + /* IFLA_BR_MCAST_QUERY_INTVL */
-	       nla_total_size_64bit(माप(u64)) + /* IFLA_BR_MCAST_QUERY_RESPONSE_INTVL */
-	       nla_total_size_64bit(माप(u64)) + /* IFLA_BR_MCAST_STARTUP_QUERY_INTVL */
-	       nla_total_size(माप(u8)) +	/* IFLA_BR_MCAST_IGMP_VERSION */
-	       nla_total_size(माप(u8)) +	/* IFLA_BR_MCAST_MLD_VERSION */
-#पूर्ण_अगर
-#अगर IS_ENABLED(CONFIG_BRIDGE_NETFILTER)
-	       nla_total_size(माप(u8)) +     /* IFLA_BR_NF_CALL_IPTABLES */
-	       nla_total_size(माप(u8)) +     /* IFLA_BR_NF_CALL_IP6TABLES */
-	       nla_total_size(माप(u8)) +     /* IFLA_BR_NF_CALL_ARPTABLES */
-#पूर्ण_अगर
-	       nla_total_size(माप(काष्ठा br_boolopt_multi)) + /* IFLA_BR_MULTI_BOOLOPT */
+#ifdef CONFIG_BRIDGE_IGMP_SNOOPING
+	       nla_total_size(sizeof(u8)) +     /* IFLA_BR_MCAST_ROUTER */
+	       nla_total_size(sizeof(u8)) +     /* IFLA_BR_MCAST_SNOOPING */
+	       nla_total_size(sizeof(u8)) +     /* IFLA_BR_MCAST_QUERY_USE_IFADDR */
+	       nla_total_size(sizeof(u8)) +     /* IFLA_BR_MCAST_QUERIER */
+	       nla_total_size(sizeof(u8)) +     /* IFLA_BR_MCAST_STATS_ENABLED */
+	       nla_total_size(sizeof(u32)) +    /* IFLA_BR_MCAST_HASH_ELASTICITY */
+	       nla_total_size(sizeof(u32)) +    /* IFLA_BR_MCAST_HASH_MAX */
+	       nla_total_size(sizeof(u32)) +    /* IFLA_BR_MCAST_LAST_MEMBER_CNT */
+	       nla_total_size(sizeof(u32)) +    /* IFLA_BR_MCAST_STARTUP_QUERY_CNT */
+	       nla_total_size_64bit(sizeof(u64)) + /* IFLA_BR_MCAST_LAST_MEMBER_INTVL */
+	       nla_total_size_64bit(sizeof(u64)) + /* IFLA_BR_MCAST_MEMBERSHIP_INTVL */
+	       nla_total_size_64bit(sizeof(u64)) + /* IFLA_BR_MCAST_QUERIER_INTVL */
+	       nla_total_size_64bit(sizeof(u64)) + /* IFLA_BR_MCAST_QUERY_INTVL */
+	       nla_total_size_64bit(sizeof(u64)) + /* IFLA_BR_MCAST_QUERY_RESPONSE_INTVL */
+	       nla_total_size_64bit(sizeof(u64)) + /* IFLA_BR_MCAST_STARTUP_QUERY_INTVL */
+	       nla_total_size(sizeof(u8)) +	/* IFLA_BR_MCAST_IGMP_VERSION */
+	       nla_total_size(sizeof(u8)) +	/* IFLA_BR_MCAST_MLD_VERSION */
+#endif
+#if IS_ENABLED(CONFIG_BRIDGE_NETFILTER)
+	       nla_total_size(sizeof(u8)) +     /* IFLA_BR_NF_CALL_IPTABLES */
+	       nla_total_size(sizeof(u8)) +     /* IFLA_BR_NF_CALL_IP6TABLES */
+	       nla_total_size(sizeof(u8)) +     /* IFLA_BR_NF_CALL_ARPTABLES */
+#endif
+	       nla_total_size(sizeof(struct br_boolopt_multi)) + /* IFLA_BR_MULTI_BOOLOPT */
 	       0;
-पूर्ण
+}
 
-अटल पूर्णांक br_fill_info(काष्ठा sk_buff *skb, स्थिर काष्ठा net_device *brdev)
-अणु
-	काष्ठा net_bridge *br = netdev_priv(brdev);
-	u32 क्रमward_delay = jअगरfies_to_घड़ी_प्रकार(br->क्रमward_delay);
-	u32 hello_समय = jअगरfies_to_घड़ी_प्रकार(br->hello_समय);
-	u32 age_समय = jअगरfies_to_घड़ी_प्रकार(br->max_age);
-	u32 ageing_समय = jअगरfies_to_घड़ी_प्रकार(br->ageing_समय);
+static int br_fill_info(struct sk_buff *skb, const struct net_device *brdev)
+{
+	struct net_bridge *br = netdev_priv(brdev);
+	u32 forward_delay = jiffies_to_clock_t(br->forward_delay);
+	u32 hello_time = jiffies_to_clock_t(br->hello_time);
+	u32 age_time = jiffies_to_clock_t(br->max_age);
+	u32 ageing_time = jiffies_to_clock_t(br->ageing_time);
 	u32 stp_enabled = br->stp_enabled;
 	u16 priority = (br->bridge_id.prio[0] << 8) | br->bridge_id.prio[1];
 	u8 vlan_enabled = br_vlan_enabled(br->dev);
-	काष्ठा br_boolopt_multi bm;
-	u64 घड़ीval;
+	struct br_boolopt_multi bm;
+	u64 clockval;
 
-	घड़ीval = br_समयr_value(&br->hello_समयr);
-	अगर (nla_put_u64_64bit(skb, IFLA_BR_HELLO_TIMER, घड़ीval, IFLA_BR_PAD))
-		वापस -EMSGSIZE;
-	घड़ीval = br_समयr_value(&br->tcn_समयr);
-	अगर (nla_put_u64_64bit(skb, IFLA_BR_TCN_TIMER, घड़ीval, IFLA_BR_PAD))
-		वापस -EMSGSIZE;
-	घड़ीval = br_समयr_value(&br->topology_change_समयr);
-	अगर (nla_put_u64_64bit(skb, IFLA_BR_TOPOLOGY_CHANGE_TIMER, घड़ीval,
+	clockval = br_timer_value(&br->hello_timer);
+	if (nla_put_u64_64bit(skb, IFLA_BR_HELLO_TIMER, clockval, IFLA_BR_PAD))
+		return -EMSGSIZE;
+	clockval = br_timer_value(&br->tcn_timer);
+	if (nla_put_u64_64bit(skb, IFLA_BR_TCN_TIMER, clockval, IFLA_BR_PAD))
+		return -EMSGSIZE;
+	clockval = br_timer_value(&br->topology_change_timer);
+	if (nla_put_u64_64bit(skb, IFLA_BR_TOPOLOGY_CHANGE_TIMER, clockval,
 			      IFLA_BR_PAD))
-		वापस -EMSGSIZE;
-	घड़ीval = br_समयr_value(&br->gc_work.समयr);
-	अगर (nla_put_u64_64bit(skb, IFLA_BR_GC_TIMER, घड़ीval, IFLA_BR_PAD))
-		वापस -EMSGSIZE;
+		return -EMSGSIZE;
+	clockval = br_timer_value(&br->gc_work.timer);
+	if (nla_put_u64_64bit(skb, IFLA_BR_GC_TIMER, clockval, IFLA_BR_PAD))
+		return -EMSGSIZE;
 
 	br_boolopt_multi_get(br, &bm);
-	अगर (nla_put_u32(skb, IFLA_BR_FORWARD_DELAY, क्रमward_delay) ||
-	    nla_put_u32(skb, IFLA_BR_HELLO_TIME, hello_समय) ||
-	    nla_put_u32(skb, IFLA_BR_MAX_AGE, age_समय) ||
-	    nla_put_u32(skb, IFLA_BR_AGEING_TIME, ageing_समय) ||
+	if (nla_put_u32(skb, IFLA_BR_FORWARD_DELAY, forward_delay) ||
+	    nla_put_u32(skb, IFLA_BR_HELLO_TIME, hello_time) ||
+	    nla_put_u32(skb, IFLA_BR_MAX_AGE, age_time) ||
+	    nla_put_u32(skb, IFLA_BR_AGEING_TIME, ageing_time) ||
 	    nla_put_u32(skb, IFLA_BR_STP_STATE, stp_enabled) ||
 	    nla_put_u16(skb, IFLA_BR_PRIORITY, priority) ||
 	    nla_put_u8(skb, IFLA_BR_VLAN_FILTERING, vlan_enabled) ||
 	    nla_put_u16(skb, IFLA_BR_GROUP_FWD_MASK, br->group_fwd_mask) ||
-	    nla_put(skb, IFLA_BR_BRIDGE_ID, माप(काष्ठा अगरla_bridge_id),
+	    nla_put(skb, IFLA_BR_BRIDGE_ID, sizeof(struct ifla_bridge_id),
 		    &br->bridge_id) ||
-	    nla_put(skb, IFLA_BR_ROOT_ID, माप(काष्ठा अगरla_bridge_id),
+	    nla_put(skb, IFLA_BR_ROOT_ID, sizeof(struct ifla_bridge_id),
 		    &br->designated_root) ||
 	    nla_put_u16(skb, IFLA_BR_ROOT_PORT, br->root_port) ||
 	    nla_put_u32(skb, IFLA_BR_ROOT_PATH_COST, br->root_path_cost) ||
@@ -1554,20 +1553,20 @@ out:
 	    nla_put_u8(skb, IFLA_BR_TOPOLOGY_CHANGE_DETECTED,
 		       br->topology_change_detected) ||
 	    nla_put(skb, IFLA_BR_GROUP_ADDR, ETH_ALEN, br->group_addr) ||
-	    nla_put(skb, IFLA_BR_MULTI_BOOLOPT, माप(bm), &bm))
-		वापस -EMSGSIZE;
+	    nla_put(skb, IFLA_BR_MULTI_BOOLOPT, sizeof(bm), &bm))
+		return -EMSGSIZE;
 
-#अगर_घोषित CONFIG_BRIDGE_VLAN_FILTERING
-	अगर (nla_put_be16(skb, IFLA_BR_VLAN_PROTOCOL, br->vlan_proto) ||
-	    nla_put_u16(skb, IFLA_BR_VLAN_DEFAULT_PVID, br->शेष_pvid) ||
+#ifdef CONFIG_BRIDGE_VLAN_FILTERING
+	if (nla_put_be16(skb, IFLA_BR_VLAN_PROTOCOL, br->vlan_proto) ||
+	    nla_put_u16(skb, IFLA_BR_VLAN_DEFAULT_PVID, br->default_pvid) ||
 	    nla_put_u8(skb, IFLA_BR_VLAN_STATS_ENABLED,
 		       br_opt_get(br, BROPT_VLAN_STATS_ENABLED)) ||
 	    nla_put_u8(skb, IFLA_BR_VLAN_STATS_PER_PORT,
 		       br_opt_get(br, BROPT_VLAN_STATS_PER_PORT)))
-		वापस -EMSGSIZE;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_BRIDGE_IGMP_SNOOPING
-	अगर (nla_put_u8(skb, IFLA_BR_MCAST_ROUTER, br->multicast_router) ||
+		return -EMSGSIZE;
+#endif
+#ifdef CONFIG_BRIDGE_IGMP_SNOOPING
+	if (nla_put_u8(skb, IFLA_BR_MCAST_ROUTER, br->multicast_router) ||
 	    nla_put_u8(skb, IFLA_BR_MCAST_SNOOPING,
 		       br_opt_get(br, BROPT_MULTICAST_ENABLED)) ||
 	    nla_put_u8(skb, IFLA_BR_MCAST_QUERY_USE_IFADDR,
@@ -1584,131 +1583,131 @@ out:
 			br->multicast_startup_query_count) ||
 	    nla_put_u8(skb, IFLA_BR_MCAST_IGMP_VERSION,
 		       br->multicast_igmp_version))
-		वापस -EMSGSIZE;
-#अगर IS_ENABLED(CONFIG_IPV6)
-	अगर (nla_put_u8(skb, IFLA_BR_MCAST_MLD_VERSION,
+		return -EMSGSIZE;
+#if IS_ENABLED(CONFIG_IPV6)
+	if (nla_put_u8(skb, IFLA_BR_MCAST_MLD_VERSION,
 		       br->multicast_mld_version))
-		वापस -EMSGSIZE;
-#पूर्ण_अगर
-	घड़ीval = jअगरfies_to_घड़ी_प्रकार(br->multicast_last_member_पूर्णांकerval);
-	अगर (nla_put_u64_64bit(skb, IFLA_BR_MCAST_LAST_MEMBER_INTVL, घड़ीval,
+		return -EMSGSIZE;
+#endif
+	clockval = jiffies_to_clock_t(br->multicast_last_member_interval);
+	if (nla_put_u64_64bit(skb, IFLA_BR_MCAST_LAST_MEMBER_INTVL, clockval,
 			      IFLA_BR_PAD))
-		वापस -EMSGSIZE;
-	घड़ीval = jअगरfies_to_घड़ी_प्रकार(br->multicast_membership_पूर्णांकerval);
-	अगर (nla_put_u64_64bit(skb, IFLA_BR_MCAST_MEMBERSHIP_INTVL, घड़ीval,
+		return -EMSGSIZE;
+	clockval = jiffies_to_clock_t(br->multicast_membership_interval);
+	if (nla_put_u64_64bit(skb, IFLA_BR_MCAST_MEMBERSHIP_INTVL, clockval,
 			      IFLA_BR_PAD))
-		वापस -EMSGSIZE;
-	घड़ीval = jअगरfies_to_घड़ी_प्रकार(br->multicast_querier_पूर्णांकerval);
-	अगर (nla_put_u64_64bit(skb, IFLA_BR_MCAST_QUERIER_INTVL, घड़ीval,
+		return -EMSGSIZE;
+	clockval = jiffies_to_clock_t(br->multicast_querier_interval);
+	if (nla_put_u64_64bit(skb, IFLA_BR_MCAST_QUERIER_INTVL, clockval,
 			      IFLA_BR_PAD))
-		वापस -EMSGSIZE;
-	घड़ीval = jअगरfies_to_घड़ी_प्रकार(br->multicast_query_पूर्णांकerval);
-	अगर (nla_put_u64_64bit(skb, IFLA_BR_MCAST_QUERY_INTVL, घड़ीval,
+		return -EMSGSIZE;
+	clockval = jiffies_to_clock_t(br->multicast_query_interval);
+	if (nla_put_u64_64bit(skb, IFLA_BR_MCAST_QUERY_INTVL, clockval,
 			      IFLA_BR_PAD))
-		वापस -EMSGSIZE;
-	घड़ीval = jअगरfies_to_घड़ी_प्रकार(br->multicast_query_response_पूर्णांकerval);
-	अगर (nla_put_u64_64bit(skb, IFLA_BR_MCAST_QUERY_RESPONSE_INTVL, घड़ीval,
+		return -EMSGSIZE;
+	clockval = jiffies_to_clock_t(br->multicast_query_response_interval);
+	if (nla_put_u64_64bit(skb, IFLA_BR_MCAST_QUERY_RESPONSE_INTVL, clockval,
 			      IFLA_BR_PAD))
-		वापस -EMSGSIZE;
-	घड़ीval = jअगरfies_to_घड़ी_प्रकार(br->multicast_startup_query_पूर्णांकerval);
-	अगर (nla_put_u64_64bit(skb, IFLA_BR_MCAST_STARTUP_QUERY_INTVL, घड़ीval,
+		return -EMSGSIZE;
+	clockval = jiffies_to_clock_t(br->multicast_startup_query_interval);
+	if (nla_put_u64_64bit(skb, IFLA_BR_MCAST_STARTUP_QUERY_INTVL, clockval,
 			      IFLA_BR_PAD))
-		वापस -EMSGSIZE;
-#पूर्ण_अगर
-#अगर IS_ENABLED(CONFIG_BRIDGE_NETFILTER)
-	अगर (nla_put_u8(skb, IFLA_BR_NF_CALL_IPTABLES,
+		return -EMSGSIZE;
+#endif
+#if IS_ENABLED(CONFIG_BRIDGE_NETFILTER)
+	if (nla_put_u8(skb, IFLA_BR_NF_CALL_IPTABLES,
 		       br_opt_get(br, BROPT_NF_CALL_IPTABLES) ? 1 : 0) ||
 	    nla_put_u8(skb, IFLA_BR_NF_CALL_IP6TABLES,
 		       br_opt_get(br, BROPT_NF_CALL_IP6TABLES) ? 1 : 0) ||
 	    nla_put_u8(skb, IFLA_BR_NF_CALL_ARPTABLES,
 		       br_opt_get(br, BROPT_NF_CALL_ARPTABLES) ? 1 : 0))
-		वापस -EMSGSIZE;
-#पूर्ण_अगर
+		return -EMSGSIZE;
+#endif
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल माप_प्रकार br_get_linkxstats_size(स्थिर काष्ठा net_device *dev, पूर्णांक attr)
-अणु
-	काष्ठा net_bridge_port *p = शून्य;
-	काष्ठा net_bridge_vlan_group *vg;
-	काष्ठा net_bridge_vlan *v;
-	काष्ठा net_bridge *br;
-	पूर्णांक numvls = 0;
+static size_t br_get_linkxstats_size(const struct net_device *dev, int attr)
+{
+	struct net_bridge_port *p = NULL;
+	struct net_bridge_vlan_group *vg;
+	struct net_bridge_vlan *v;
+	struct net_bridge *br;
+	int numvls = 0;
 
-	चयन (attr) अणु
-	हाल IFLA_STATS_LINK_XSTATS:
+	switch (attr) {
+	case IFLA_STATS_LINK_XSTATS:
 		br = netdev_priv(dev);
 		vg = br_vlan_group(br);
-		अवरोध;
-	हाल IFLA_STATS_LINK_XSTATS_SLAVE:
+		break;
+	case IFLA_STATS_LINK_XSTATS_SLAVE:
 		p = br_port_get_rtnl(dev);
-		अगर (!p)
-			वापस 0;
+		if (!p)
+			return 0;
 		br = p->br;
 		vg = nbp_vlan_group(p);
-		अवरोध;
-	शेष:
-		वापस 0;
-	पूर्ण
+		break;
+	default:
+		return 0;
+	}
 
-	अगर (vg) अणु
+	if (vg) {
 		/* we need to count all, even placeholder entries */
-		list_क्रम_each_entry(v, &vg->vlan_list, vlist)
+		list_for_each_entry(v, &vg->vlan_list, vlist)
 			numvls++;
-	पूर्ण
+	}
 
-	वापस numvls * nla_total_size(माप(काष्ठा bridge_vlan_xstats)) +
-	       nla_total_size(माप(काष्ठा br_mcast_stats)) +
+	return numvls * nla_total_size(sizeof(struct bridge_vlan_xstats)) +
+	       nla_total_size(sizeof(struct br_mcast_stats)) +
 	       nla_total_size(0);
-पूर्ण
+}
 
-अटल पूर्णांक br_fill_linkxstats(काष्ठा sk_buff *skb,
-			      स्थिर काष्ठा net_device *dev,
-			      पूर्णांक *prividx, पूर्णांक attr)
-अणु
-	काष्ठा nlattr *nla __maybe_unused;
-	काष्ठा net_bridge_port *p = शून्य;
-	काष्ठा net_bridge_vlan_group *vg;
-	काष्ठा net_bridge_vlan *v;
-	काष्ठा net_bridge *br;
-	काष्ठा nlattr *nest;
-	पूर्णांक vl_idx = 0;
+static int br_fill_linkxstats(struct sk_buff *skb,
+			      const struct net_device *dev,
+			      int *prividx, int attr)
+{
+	struct nlattr *nla __maybe_unused;
+	struct net_bridge_port *p = NULL;
+	struct net_bridge_vlan_group *vg;
+	struct net_bridge_vlan *v;
+	struct net_bridge *br;
+	struct nlattr *nest;
+	int vl_idx = 0;
 
-	चयन (attr) अणु
-	हाल IFLA_STATS_LINK_XSTATS:
+	switch (attr) {
+	case IFLA_STATS_LINK_XSTATS:
 		br = netdev_priv(dev);
 		vg = br_vlan_group(br);
-		अवरोध;
-	हाल IFLA_STATS_LINK_XSTATS_SLAVE:
+		break;
+	case IFLA_STATS_LINK_XSTATS_SLAVE:
 		p = br_port_get_rtnl(dev);
-		अगर (!p)
-			वापस 0;
+		if (!p)
+			return 0;
 		br = p->br;
 		vg = nbp_vlan_group(p);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	nest = nla_nest_start_noflag(skb, LINK_XSTATS_TYPE_BRIDGE);
-	अगर (!nest)
-		वापस -EMSGSIZE;
+	if (!nest)
+		return -EMSGSIZE;
 
-	अगर (vg) अणु
+	if (vg) {
 		u16 pvid;
 
 		pvid = br_get_pvid(vg);
-		list_क्रम_each_entry(v, &vg->vlan_list, vlist) अणु
-			काष्ठा bridge_vlan_xstats vxi;
-			काष्ठा pcpu_sw_netstats stats;
+		list_for_each_entry(v, &vg->vlan_list, vlist) {
+			struct bridge_vlan_xstats vxi;
+			struct pcpu_sw_netstats stats;
 
-			अगर (++vl_idx < *prividx)
-				जारी;
-			स_रखो(&vxi, 0, माप(vxi));
+			if (++vl_idx < *prividx)
+				continue;
+			memset(&vxi, 0, sizeof(vxi));
 			vxi.vid = v->vid;
 			vxi.flags = v->flags;
-			अगर (v->vid == pvid)
+			if (v->vid == pvid)
 				vxi.flags |= BRIDGE_VLAN_INFO_PVID;
 			br_vlan_get_stats(v, &stats);
 			vxi.rx_bytes = stats.rx_bytes;
@@ -1716,54 +1715,54 @@ out:
 			vxi.tx_bytes = stats.tx_bytes;
 			vxi.tx_packets = stats.tx_packets;
 
-			अगर (nla_put(skb, BRIDGE_XSTATS_VLAN, माप(vxi), &vxi))
-				जाओ nla_put_failure;
-		पूर्ण
-	पूर्ण
+			if (nla_put(skb, BRIDGE_XSTATS_VLAN, sizeof(vxi), &vxi))
+				goto nla_put_failure;
+		}
+	}
 
-#अगर_घोषित CONFIG_BRIDGE_IGMP_SNOOPING
-	अगर (++vl_idx >= *prividx) अणु
+#ifdef CONFIG_BRIDGE_IGMP_SNOOPING
+	if (++vl_idx >= *prividx) {
 		nla = nla_reserve_64bit(skb, BRIDGE_XSTATS_MCAST,
-					माप(काष्ठा br_mcast_stats),
+					sizeof(struct br_mcast_stats),
 					BRIDGE_XSTATS_PAD);
-		अगर (!nla)
-			जाओ nla_put_failure;
+		if (!nla)
+			goto nla_put_failure;
 		br_multicast_get_stats(br, p, nla_data(nla));
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
-	अगर (p) अणु
+	if (p) {
 		nla = nla_reserve_64bit(skb, BRIDGE_XSTATS_STP,
-					माप(p->stp_xstats),
+					sizeof(p->stp_xstats),
 					BRIDGE_XSTATS_PAD);
-		अगर (!nla)
-			जाओ nla_put_failure;
+		if (!nla)
+			goto nla_put_failure;
 
 		spin_lock_bh(&br->lock);
-		स_नकल(nla_data(nla), &p->stp_xstats, माप(p->stp_xstats));
+		memcpy(nla_data(nla), &p->stp_xstats, sizeof(p->stp_xstats));
 		spin_unlock_bh(&br->lock);
-	पूर्ण
+	}
 
 	nla_nest_end(skb, nest);
 	*prividx = 0;
 
-	वापस 0;
+	return 0;
 
 nla_put_failure:
 	nla_nest_end(skb, nest);
 	*prividx = vl_idx;
 
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-अटल काष्ठा rtnl_af_ops br_af_ops __पढ़ो_mostly = अणु
+static struct rtnl_af_ops br_af_ops __read_mostly = {
 	.family			= AF_BRIDGE,
 	.get_link_af_size	= br_get_link_af_size_filtered,
-पूर्ण;
+};
 
-काष्ठा rtnl_link_ops br_link_ops __पढ़ो_mostly = अणु
+struct rtnl_link_ops br_link_ops __read_mostly = {
 	.kind			= "bridge",
-	.priv_size		= माप(काष्ठा net_bridge),
+	.priv_size		= sizeof(struct net_bridge),
 	.setup			= br_dev_setup,
 	.maxtype		= IFLA_BR_MAX,
 	.policy			= br_policy,
@@ -1781,32 +1780,32 @@ nla_put_failure:
 	.slave_changelink	= br_port_slave_changelink,
 	.get_slave_size		= br_port_get_slave_size,
 	.fill_slave_info	= br_port_fill_slave_info,
-पूर्ण;
+};
 
-पूर्णांक __init br_netlink_init(व्योम)
-अणु
-	पूर्णांक err;
+int __init br_netlink_init(void)
+{
+	int err;
 
 	br_mdb_init();
 	br_vlan_rtnl_init();
-	rtnl_af_रेजिस्टर(&br_af_ops);
+	rtnl_af_register(&br_af_ops);
 
-	err = rtnl_link_रेजिस्टर(&br_link_ops);
-	अगर (err)
-		जाओ out_af;
+	err = rtnl_link_register(&br_link_ops);
+	if (err)
+		goto out_af;
 
-	वापस 0;
+	return 0;
 
 out_af:
-	rtnl_af_unरेजिस्टर(&br_af_ops);
+	rtnl_af_unregister(&br_af_ops);
 	br_mdb_uninit();
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम br_netlink_fini(व्योम)
-अणु
+void br_netlink_fini(void)
+{
 	br_mdb_uninit();
 	br_vlan_rtnl_uninit();
-	rtnl_af_unरेजिस्टर(&br_af_ops);
-	rtnl_link_unरेजिस्टर(&br_link_ops);
-पूर्ण
+	rtnl_af_unregister(&br_af_ops);
+	rtnl_link_unregister(&br_link_ops);
+}

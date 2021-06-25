@@ -1,29 +1,28 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: LGPL-2.1
+// SPDX-License-Identifier: LGPL-2.1
 /*
  * trace/beauty/socket.c
  *
- *  Copyright (C) 2018, Red Hat Inc, Arnalकरो Carvalho de Melo <acme@redhat.com>
+ *  Copyright (C) 2018, Red Hat Inc, Arnaldo Carvalho de Melo <acme@redhat.com>
  */
 
-#समावेश "trace/beauty/beauty.h"
-#समावेश <sys/types.h>
-#समावेश <sys/socket.h>
+#include "trace/beauty/beauty.h"
+#include <sys/types.h>
+#include <sys/socket.h>
 
-अटल माप_प्रकार socket__scnम_लिखो_ipproto(पूर्णांक protocol, अक्षर *bf, माप_प्रकार size, bool show_prefix)
-अणु
-#समावेश "trace/beauty/generated/socket_ipproto_array.c"
-	अटल DEFINE_STRARRAY(socket_ipproto, "IPPROTO_");
+static size_t socket__scnprintf_ipproto(int protocol, char *bf, size_t size, bool show_prefix)
+{
+#include "trace/beauty/generated/socket_ipproto_array.c"
+	static DEFINE_STRARRAY(socket_ipproto, "IPPROTO_");
 
-	वापस strarray__scnम_लिखो(&strarray__socket_ipproto, bf, size, "%d", show_prefix, protocol);
-पूर्ण
+	return strarray__scnprintf(&strarray__socket_ipproto, bf, size, "%d", show_prefix, protocol);
+}
 
-माप_प्रकार syscall_arg__scnम_लिखो_socket_protocol(अक्षर *bf, माप_प्रकार size, काष्ठा syscall_arg *arg)
-अणु
-	पूर्णांक करोमुख्य = syscall_arg__val(arg, 0);
+size_t syscall_arg__scnprintf_socket_protocol(char *bf, size_t size, struct syscall_arg *arg)
+{
+	int domain = syscall_arg__val(arg, 0);
 
-	अगर (करोमुख्य == AF_INET || करोमुख्य == AF_INET6)
-		वापस socket__scnम_लिखो_ipproto(arg->val, bf, size, arg->show_string_prefix);
+	if (domain == AF_INET || domain == AF_INET6)
+		return socket__scnprintf_ipproto(arg->val, bf, size, arg->show_string_prefix);
 
-	वापस syscall_arg__scnम_लिखो_पूर्णांक(bf, size, arg);
-पूर्ण
+	return syscall_arg__scnprintf_int(bf, size, arg);
+}

@@ -1,96 +1,95 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-3-Clause)
+// SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause)
 /* QLogic qed NIC Driver
  * Copyright (c) 2015-2017  QLogic Corporation
  * Copyright (c) 2019-2020 Marvell International Ltd.
  */
 
-#समावेश <linux/मानकघोष.स>
-#समावेश <linux/pci.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/delay.h>
-#समावेश <यंत्र/byteorder.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/module.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/ethtool.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/crash_dump.h>
-#समावेश <linux/crc32.h>
-#समावेश <linux/qed/qed_अगर.h>
-#समावेश <linux/qed/qed_ll2_अगर.h>
-#समावेश <net/devlink.h>
-#समावेश <linux/aer.h>
-#समावेश <linux/phylink.h>
+#include <linux/stddef.h>
+#include <linux/pci.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/delay.h>
+#include <asm/byteorder.h>
+#include <linux/dma-mapping.h>
+#include <linux/string.h>
+#include <linux/module.h>
+#include <linux/interrupt.h>
+#include <linux/workqueue.h>
+#include <linux/ethtool.h>
+#include <linux/etherdevice.h>
+#include <linux/vmalloc.h>
+#include <linux/crash_dump.h>
+#include <linux/crc32.h>
+#include <linux/qed/qed_if.h>
+#include <linux/qed/qed_ll2_if.h>
+#include <net/devlink.h>
+#include <linux/aer.h>
+#include <linux/phylink.h>
 
-#समावेश "qed.h"
-#समावेश "qed_sriov.h"
-#समावेश "qed_sp.h"
-#समावेश "qed_dev_api.h"
-#समावेश "qed_ll2.h"
-#समावेश "qed_fcoe.h"
-#समावेश "qed_iscsi.h"
+#include "qed.h"
+#include "qed_sriov.h"
+#include "qed_sp.h"
+#include "qed_dev_api.h"
+#include "qed_ll2.h"
+#include "qed_fcoe.h"
+#include "qed_iscsi.h"
 
-#समावेश "qed_mcp.h"
-#समावेश "qed_reg_addr.h"
-#समावेश "qed_hw.h"
-#समावेश "qed_selftest.h"
-#समावेश "qed_debug.h"
-#समावेश "qed_devlink.h"
+#include "qed_mcp.h"
+#include "qed_reg_addr.h"
+#include "qed_hw.h"
+#include "qed_selftest.h"
+#include "qed_debug.h"
+#include "qed_devlink.h"
 
-#घोषणा QED_ROCE_QPS			(8192)
-#घोषणा QED_ROCE_DPIS			(8)
-#घोषणा QED_RDMA_SRQS                   QED_ROCE_QPS
-#घोषणा QED_NVM_CFG_GET_FLAGS		0xA
-#घोषणा QED_NVM_CFG_GET_PF_FLAGS	0x1A
-#घोषणा QED_NVM_CFG_MAX_ATTRS		50
+#define QED_ROCE_QPS			(8192)
+#define QED_ROCE_DPIS			(8)
+#define QED_RDMA_SRQS                   QED_ROCE_QPS
+#define QED_NVM_CFG_GET_FLAGS		0xA
+#define QED_NVM_CFG_GET_PF_FLAGS	0x1A
+#define QED_NVM_CFG_MAX_ATTRS		50
 
-अटल अक्षर version[] =
+static char version[] =
 	"QLogic FastLinQ 4xxxx Core Module qed " DRV_MODULE_VERSION "\n";
 
 MODULE_DESCRIPTION("QLogic FastLinQ 4xxxx Core Module");
 MODULE_LICENSE("GPL");
 MODULE_VERSION(DRV_MODULE_VERSION);
 
-#घोषणा FW_खाता_VERSION				\
-	__stringअगरy(FW_MAJOR_VERSION) "."	\
-	__stringअगरy(FW_MINOR_VERSION) "."	\
-	__stringअगरy(FW_REVISION_VERSION) "."	\
-	__stringअगरy(FW_ENGINEERING_VERSION)
+#define FW_FILE_VERSION				\
+	__stringify(FW_MAJOR_VERSION) "."	\
+	__stringify(FW_MINOR_VERSION) "."	\
+	__stringify(FW_REVISION_VERSION) "."	\
+	__stringify(FW_ENGINEERING_VERSION)
 
-#घोषणा QED_FW_खाता_NAME	\
-	"qed/qed_init_values_zipped-" FW_खाता_VERSION ".bin"
+#define QED_FW_FILE_NAME	\
+	"qed/qed_init_values_zipped-" FW_FILE_VERSION ".bin"
 
-MODULE_FIRMWARE(QED_FW_खाता_NAME);
+MODULE_FIRMWARE(QED_FW_FILE_NAME);
 
 /* MFW speed capabilities maps */
 
-काष्ठा qed_mfw_speed_map अणु
+struct qed_mfw_speed_map {
 	u32		mfw_val;
 	__ETHTOOL_DECLARE_LINK_MODE_MASK(caps);
 
-	स्थिर u32	*cap_arr;
+	const u32	*cap_arr;
 	u32		arr_size;
-पूर्ण;
+};
 
-#घोषणा QED_MFW_SPEED_MAP(type, arr)		\
-अणु						\
+#define QED_MFW_SPEED_MAP(type, arr)		\
+{						\
 	.mfw_val	= (type),		\
 	.cap_arr	= (arr),		\
 	.arr_size	= ARRAY_SIZE(arr),	\
-पूर्ण
+}
 
-अटल स्थिर u32 qed_mfw_ext_1g[] __initस्थिर = अणु
+static const u32 qed_mfw_ext_1g[] __initconst = {
 	ETHTOOL_LINK_MODE_1000baseT_Full_BIT,
 	ETHTOOL_LINK_MODE_1000baseKX_Full_BIT,
 	ETHTOOL_LINK_MODE_1000baseX_Full_BIT,
-पूर्ण;
+};
 
-अटल स्थिर u32 qed_mfw_ext_10g[] __initस्थिर = अणु
+static const u32 qed_mfw_ext_10g[] __initconst = {
 	ETHTOOL_LINK_MODE_10000baseT_Full_BIT,
 	ETHTOOL_LINK_MODE_10000baseKR_Full_BIT,
 	ETHTOOL_LINK_MODE_10000baseKX4_Full_BIT,
@@ -99,55 +98,55 @@ MODULE_FIRMWARE(QED_FW_खाता_NAME);
 	ETHTOOL_LINK_MODE_10000baseSR_Full_BIT,
 	ETHTOOL_LINK_MODE_10000baseLR_Full_BIT,
 	ETHTOOL_LINK_MODE_10000baseLRM_Full_BIT,
-पूर्ण;
+};
 
-अटल स्थिर u32 qed_mfw_ext_20g[] __initस्थिर = अणु
+static const u32 qed_mfw_ext_20g[] __initconst = {
 	ETHTOOL_LINK_MODE_20000baseKR2_Full_BIT,
-पूर्ण;
+};
 
-अटल स्थिर u32 qed_mfw_ext_25g[] __initस्थिर = अणु
+static const u32 qed_mfw_ext_25g[] __initconst = {
 	ETHTOOL_LINK_MODE_25000baseKR_Full_BIT,
 	ETHTOOL_LINK_MODE_25000baseCR_Full_BIT,
 	ETHTOOL_LINK_MODE_25000baseSR_Full_BIT,
-पूर्ण;
+};
 
-अटल स्थिर u32 qed_mfw_ext_40g[] __initस्थिर = अणु
+static const u32 qed_mfw_ext_40g[] __initconst = {
 	ETHTOOL_LINK_MODE_40000baseLR4_Full_BIT,
 	ETHTOOL_LINK_MODE_40000baseKR4_Full_BIT,
 	ETHTOOL_LINK_MODE_40000baseCR4_Full_BIT,
 	ETHTOOL_LINK_MODE_40000baseSR4_Full_BIT,
-पूर्ण;
+};
 
-अटल स्थिर u32 qed_mfw_ext_50g_base_r[] __initस्थिर = अणु
+static const u32 qed_mfw_ext_50g_base_r[] __initconst = {
 	ETHTOOL_LINK_MODE_50000baseKR_Full_BIT,
 	ETHTOOL_LINK_MODE_50000baseCR_Full_BIT,
 	ETHTOOL_LINK_MODE_50000baseSR_Full_BIT,
 	ETHTOOL_LINK_MODE_50000baseLR_ER_FR_Full_BIT,
 	ETHTOOL_LINK_MODE_50000baseDR_Full_BIT,
-पूर्ण;
+};
 
-अटल स्थिर u32 qed_mfw_ext_50g_base_r2[] __initस्थिर = अणु
+static const u32 qed_mfw_ext_50g_base_r2[] __initconst = {
 	ETHTOOL_LINK_MODE_50000baseKR2_Full_BIT,
 	ETHTOOL_LINK_MODE_50000baseCR2_Full_BIT,
 	ETHTOOL_LINK_MODE_50000baseSR2_Full_BIT,
-पूर्ण;
+};
 
-अटल स्थिर u32 qed_mfw_ext_100g_base_r2[] __initस्थिर = अणु
+static const u32 qed_mfw_ext_100g_base_r2[] __initconst = {
 	ETHTOOL_LINK_MODE_100000baseKR2_Full_BIT,
 	ETHTOOL_LINK_MODE_100000baseSR2_Full_BIT,
 	ETHTOOL_LINK_MODE_100000baseCR2_Full_BIT,
 	ETHTOOL_LINK_MODE_100000baseDR2_Full_BIT,
 	ETHTOOL_LINK_MODE_100000baseLR2_ER2_FR2_Full_BIT,
-पूर्ण;
+};
 
-अटल स्थिर u32 qed_mfw_ext_100g_base_r4[] __initस्थिर = अणु
+static const u32 qed_mfw_ext_100g_base_r4[] __initconst = {
 	ETHTOOL_LINK_MODE_100000baseKR4_Full_BIT,
 	ETHTOOL_LINK_MODE_100000baseSR4_Full_BIT,
 	ETHTOOL_LINK_MODE_100000baseCR4_Full_BIT,
 	ETHTOOL_LINK_MODE_100000baseLR4_ER4_Full_BIT,
-पूर्ण;
+};
 
-अटल काष्ठा qed_mfw_speed_map qed_mfw_ext_maps[] __ro_after_init = अणु
+static struct qed_mfw_speed_map qed_mfw_ext_maps[] __ro_after_init = {
 	QED_MFW_SPEED_MAP(ETH_EXT_ADV_SPEED_1G, qed_mfw_ext_1g),
 	QED_MFW_SPEED_MAP(ETH_EXT_ADV_SPEED_10G, qed_mfw_ext_10g),
 	QED_MFW_SPEED_MAP(ETH_EXT_ADV_SPEED_20G, qed_mfw_ext_20g),
@@ -161,15 +160,15 @@ MODULE_FIRMWARE(QED_FW_खाता_NAME);
 			  qed_mfw_ext_100g_base_r2),
 	QED_MFW_SPEED_MAP(ETH_EXT_ADV_SPEED_100G_BASE_R4,
 			  qed_mfw_ext_100g_base_r4),
-पूर्ण;
+};
 
-अटल स्थिर u32 qed_mfw_legacy_1g[] __initस्थिर = अणु
+static const u32 qed_mfw_legacy_1g[] __initconst = {
 	ETHTOOL_LINK_MODE_1000baseT_Full_BIT,
 	ETHTOOL_LINK_MODE_1000baseKX_Full_BIT,
 	ETHTOOL_LINK_MODE_1000baseX_Full_BIT,
-पूर्ण;
+};
 
-अटल स्थिर u32 qed_mfw_legacy_10g[] __initस्थिर = अणु
+static const u32 qed_mfw_legacy_10g[] __initconst = {
 	ETHTOOL_LINK_MODE_10000baseT_Full_BIT,
 	ETHTOOL_LINK_MODE_10000baseKR_Full_BIT,
 	ETHTOOL_LINK_MODE_10000baseKX4_Full_BIT,
@@ -178,39 +177,39 @@ MODULE_FIRMWARE(QED_FW_खाता_NAME);
 	ETHTOOL_LINK_MODE_10000baseSR_Full_BIT,
 	ETHTOOL_LINK_MODE_10000baseLR_Full_BIT,
 	ETHTOOL_LINK_MODE_10000baseLRM_Full_BIT,
-पूर्ण;
+};
 
-अटल स्थिर u32 qed_mfw_legacy_20g[] __initस्थिर = अणु
+static const u32 qed_mfw_legacy_20g[] __initconst = {
 	ETHTOOL_LINK_MODE_20000baseKR2_Full_BIT,
-पूर्ण;
+};
 
-अटल स्थिर u32 qed_mfw_legacy_25g[] __initस्थिर = अणु
+static const u32 qed_mfw_legacy_25g[] __initconst = {
 	ETHTOOL_LINK_MODE_25000baseKR_Full_BIT,
 	ETHTOOL_LINK_MODE_25000baseCR_Full_BIT,
 	ETHTOOL_LINK_MODE_25000baseSR_Full_BIT,
-पूर्ण;
+};
 
-अटल स्थिर u32 qed_mfw_legacy_40g[] __initस्थिर = अणु
+static const u32 qed_mfw_legacy_40g[] __initconst = {
 	ETHTOOL_LINK_MODE_40000baseLR4_Full_BIT,
 	ETHTOOL_LINK_MODE_40000baseKR4_Full_BIT,
 	ETHTOOL_LINK_MODE_40000baseCR4_Full_BIT,
 	ETHTOOL_LINK_MODE_40000baseSR4_Full_BIT,
-पूर्ण;
+};
 
-अटल स्थिर u32 qed_mfw_legacy_50g[] __initस्थिर = अणु
+static const u32 qed_mfw_legacy_50g[] __initconst = {
 	ETHTOOL_LINK_MODE_50000baseKR2_Full_BIT,
 	ETHTOOL_LINK_MODE_50000baseCR2_Full_BIT,
 	ETHTOOL_LINK_MODE_50000baseSR2_Full_BIT,
-पूर्ण;
+};
 
-अटल स्थिर u32 qed_mfw_legacy_bb_100g[] __initस्थिर = अणु
+static const u32 qed_mfw_legacy_bb_100g[] __initconst = {
 	ETHTOOL_LINK_MODE_100000baseKR4_Full_BIT,
 	ETHTOOL_LINK_MODE_100000baseSR4_Full_BIT,
 	ETHTOOL_LINK_MODE_100000baseCR4_Full_BIT,
 	ETHTOOL_LINK_MODE_100000baseLR4_ER4_Full_BIT,
-पूर्ण;
+};
 
-अटल काष्ठा qed_mfw_speed_map qed_mfw_legacy_maps[] __ro_after_init = अणु
+static struct qed_mfw_speed_map qed_mfw_legacy_maps[] __ro_after_init = {
 	QED_MFW_SPEED_MAP(NVM_CFG1_PORT_DRV_SPEED_CAPABILITY_MASK_1G,
 			  qed_mfw_legacy_1g),
 	QED_MFW_SPEED_MAP(NVM_CFG1_PORT_DRV_SPEED_CAPABILITY_MASK_10G,
@@ -225,208 +224,208 @@ MODULE_FIRMWARE(QED_FW_खाता_NAME);
 			  qed_mfw_legacy_50g),
 	QED_MFW_SPEED_MAP(NVM_CFG1_PORT_DRV_SPEED_CAPABILITY_MASK_BB_100G,
 			  qed_mfw_legacy_bb_100g),
-पूर्ण;
+};
 
-अटल व्योम __init qed_mfw_speed_map_populate(काष्ठा qed_mfw_speed_map *map)
-अणु
+static void __init qed_mfw_speed_map_populate(struct qed_mfw_speed_map *map)
+{
 	linkmode_set_bit_array(map->cap_arr, map->arr_size, map->caps);
 
-	map->cap_arr = शून्य;
+	map->cap_arr = NULL;
 	map->arr_size = 0;
-पूर्ण
+}
 
-अटल व्योम __init qed_mfw_speed_maps_init(व्योम)
-अणु
+static void __init qed_mfw_speed_maps_init(void)
+{
 	u32 i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(qed_mfw_ext_maps); i++)
+	for (i = 0; i < ARRAY_SIZE(qed_mfw_ext_maps); i++)
 		qed_mfw_speed_map_populate(qed_mfw_ext_maps + i);
 
-	क्रम (i = 0; i < ARRAY_SIZE(qed_mfw_legacy_maps); i++)
+	for (i = 0; i < ARRAY_SIZE(qed_mfw_legacy_maps); i++)
 		qed_mfw_speed_map_populate(qed_mfw_legacy_maps + i);
-पूर्ण
+}
 
-अटल पूर्णांक __init qed_init(व्योम)
-अणु
+static int __init qed_init(void)
+{
 	pr_info("%s", version);
 
 	qed_mfw_speed_maps_init();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 module_init(qed_init);
 
-अटल व्योम __निकास qed_निकास(व्योम)
-अणु
+static void __exit qed_exit(void)
+{
 	/* To prevent marking this module as "permanent" */
-पूर्ण
-module_निकास(qed_निकास);
+}
+module_exit(qed_exit);
 
-/* Check अगर the DMA controller on the machine can properly handle the DMA
+/* Check if the DMA controller on the machine can properly handle the DMA
  * addressing required by the device.
 */
-अटल पूर्णांक qed_set_coherency_mask(काष्ठा qed_dev *cdev)
-अणु
-	काष्ठा device *dev = &cdev->pdev->dev;
+static int qed_set_coherency_mask(struct qed_dev *cdev)
+{
+	struct device *dev = &cdev->pdev->dev;
 
-	अगर (dma_set_mask(dev, DMA_BIT_MASK(64)) == 0) अणु
-		अगर (dma_set_coherent_mask(dev, DMA_BIT_MASK(64)) != 0) अणु
+	if (dma_set_mask(dev, DMA_BIT_MASK(64)) == 0) {
+		if (dma_set_coherent_mask(dev, DMA_BIT_MASK(64)) != 0) {
 			DP_NOTICE(cdev,
 				  "Can't request 64-bit consistent allocations\n");
-			वापस -EIO;
-		पूर्ण
-	पूर्ण अन्यथा अगर (dma_set_mask(dev, DMA_BIT_MASK(32)) != 0) अणु
+			return -EIO;
+		}
+	} else if (dma_set_mask(dev, DMA_BIT_MASK(32)) != 0) {
 		DP_NOTICE(cdev, "Can't request 64b/32b DMA addresses\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम qed_मुक्त_pci(काष्ठा qed_dev *cdev)
-अणु
-	काष्ठा pci_dev *pdev = cdev->pdev;
+static void qed_free_pci(struct qed_dev *cdev)
+{
+	struct pci_dev *pdev = cdev->pdev;
 
 	pci_disable_pcie_error_reporting(pdev);
 
-	अगर (cdev->करोorbells && cdev->db_size)
-		iounmap(cdev->करोorbells);
-	अगर (cdev->regview)
+	if (cdev->doorbells && cdev->db_size)
+		iounmap(cdev->doorbells);
+	if (cdev->regview)
 		iounmap(cdev->regview);
-	अगर (atomic_पढ़ो(&pdev->enable_cnt) == 1)
+	if (atomic_read(&pdev->enable_cnt) == 1)
 		pci_release_regions(pdev);
 
 	pci_disable_device(pdev);
-पूर्ण
+}
 
-#घोषणा PCI_REVISION_ID_ERROR_VAL	0xff
+#define PCI_REVISION_ID_ERROR_VAL	0xff
 
-/* Perक्रमms PCI initializations as well as initializing PCI-related parameters
- * in the device काष्ठाrue. Returns 0 in हाल of success.
+/* Performs PCI initializations as well as initializing PCI-related parameters
+ * in the device structrue. Returns 0 in case of success.
  */
-अटल पूर्णांक qed_init_pci(काष्ठा qed_dev *cdev, काष्ठा pci_dev *pdev)
-अणु
+static int qed_init_pci(struct qed_dev *cdev, struct pci_dev *pdev)
+{
 	u8 rev_id;
-	पूर्णांक rc;
+	int rc;
 
 	cdev->pdev = pdev;
 
 	rc = pci_enable_device(pdev);
-	अगर (rc) अणु
+	if (rc) {
 		DP_NOTICE(cdev, "Cannot enable PCI device\n");
-		जाओ err0;
-	पूर्ण
+		goto err0;
+	}
 
-	अगर (!(pci_resource_flags(pdev, 0) & IORESOURCE_MEM)) अणु
+	if (!(pci_resource_flags(pdev, 0) & IORESOURCE_MEM)) {
 		DP_NOTICE(cdev, "No memory region found in bar #0\n");
 		rc = -EIO;
-		जाओ err1;
-	पूर्ण
+		goto err1;
+	}
 
-	अगर (IS_PF(cdev) && !(pci_resource_flags(pdev, 2) & IORESOURCE_MEM)) अणु
+	if (IS_PF(cdev) && !(pci_resource_flags(pdev, 2) & IORESOURCE_MEM)) {
 		DP_NOTICE(cdev, "No memory region found in bar #2\n");
 		rc = -EIO;
-		जाओ err1;
-	पूर्ण
+		goto err1;
+	}
 
-	अगर (atomic_पढ़ो(&pdev->enable_cnt) == 1) अणु
+	if (atomic_read(&pdev->enable_cnt) == 1) {
 		rc = pci_request_regions(pdev, "qed");
-		अगर (rc) अणु
+		if (rc) {
 			DP_NOTICE(cdev,
 				  "Failed to request PCI memory resources\n");
-			जाओ err1;
-		पूर्ण
+			goto err1;
+		}
 		pci_set_master(pdev);
 		pci_save_state(pdev);
-	पूर्ण
+	}
 
-	pci_पढ़ो_config_byte(pdev, PCI_REVISION_ID, &rev_id);
-	अगर (rev_id == PCI_REVISION_ID_ERROR_VAL) अणु
+	pci_read_config_byte(pdev, PCI_REVISION_ID, &rev_id);
+	if (rev_id == PCI_REVISION_ID_ERROR_VAL) {
 		DP_NOTICE(cdev,
 			  "Detected PCI device error [rev_id 0x%x]. Probably due to prior indication. Aborting.\n",
 			  rev_id);
 		rc = -ENODEV;
-		जाओ err2;
-	पूर्ण
-	अगर (!pci_is_pcie(pdev)) अणु
+		goto err2;
+	}
+	if (!pci_is_pcie(pdev)) {
 		DP_NOTICE(cdev, "The bus is not PCI Express\n");
 		rc = -EIO;
-		जाओ err2;
-	पूर्ण
+		goto err2;
+	}
 
 	cdev->pci_params.pm_cap = pci_find_capability(pdev, PCI_CAP_ID_PM);
-	अगर (IS_PF(cdev) && !cdev->pci_params.pm_cap)
+	if (IS_PF(cdev) && !cdev->pci_params.pm_cap)
 		DP_NOTICE(cdev, "Cannot find power management capability\n");
 
 	rc = qed_set_coherency_mask(cdev);
-	अगर (rc)
-		जाओ err2;
+	if (rc)
+		goto err2;
 
 	cdev->pci_params.mem_start = pci_resource_start(pdev, 0);
 	cdev->pci_params.mem_end = pci_resource_end(pdev, 0);
 	cdev->pci_params.irq = pdev->irq;
 
 	cdev->regview = pci_ioremap_bar(pdev, 0);
-	अगर (!cdev->regview) अणु
+	if (!cdev->regview) {
 		DP_NOTICE(cdev, "Cannot map register space, aborting\n");
 		rc = -ENOMEM;
-		जाओ err2;
-	पूर्ण
+		goto err2;
+	}
 
 	cdev->db_phys_addr = pci_resource_start(cdev->pdev, 2);
 	cdev->db_size = pci_resource_len(cdev->pdev, 2);
-	अगर (!cdev->db_size) अणु
-		अगर (IS_PF(cdev)) अणु
+	if (!cdev->db_size) {
+		if (IS_PF(cdev)) {
 			DP_NOTICE(cdev, "No Doorbell bar available\n");
-			वापस -EINVAL;
-		पूर्ण अन्यथा अणु
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		} else {
+			return 0;
+		}
+	}
 
-	cdev->करोorbells = ioremap_wc(cdev->db_phys_addr, cdev->db_size);
+	cdev->doorbells = ioremap_wc(cdev->db_phys_addr, cdev->db_size);
 
-	अगर (!cdev->करोorbells) अणु
+	if (!cdev->doorbells) {
 		DP_NOTICE(cdev, "Cannot map doorbell space\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	/* AER (Advanced Error reporting) configuration */
 	rc = pci_enable_pcie_error_reporting(pdev);
-	अगर (rc)
+	if (rc)
 		DP_VERBOSE(cdev, NETIF_MSG_DRV,
 			   "Failed to configure PCIe AER [%d]\n", rc);
 
-	वापस 0;
+	return 0;
 
 err2:
 	pci_release_regions(pdev);
 err1:
 	pci_disable_device(pdev);
 err0:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-पूर्णांक qed_fill_dev_info(काष्ठा qed_dev *cdev,
-		      काष्ठा qed_dev_info *dev_info)
-अणु
-	काष्ठा qed_hwfn *p_hwfn = QED_LEADING_HWFN(cdev);
-	काष्ठा qed_hw_info *hw_info = &p_hwfn->hw_info;
-	काष्ठा qed_tunnel_info *tun = &cdev->tunnel;
-	काष्ठा qed_ptt  *ptt;
+int qed_fill_dev_info(struct qed_dev *cdev,
+		      struct qed_dev_info *dev_info)
+{
+	struct qed_hwfn *p_hwfn = QED_LEADING_HWFN(cdev);
+	struct qed_hw_info *hw_info = &p_hwfn->hw_info;
+	struct qed_tunnel_info *tun = &cdev->tunnel;
+	struct qed_ptt  *ptt;
 
-	स_रखो(dev_info, 0, माप(काष्ठा qed_dev_info));
+	memset(dev_info, 0, sizeof(struct qed_dev_info));
 
-	अगर (tun->vxlan.tun_cls == QED_TUNN_CLSS_MAC_VLAN &&
+	if (tun->vxlan.tun_cls == QED_TUNN_CLSS_MAC_VLAN &&
 	    tun->vxlan.b_mode_enabled)
 		dev_info->vxlan_enable = true;
 
-	अगर (tun->l2_gre.b_mode_enabled && tun->ip_gre.b_mode_enabled &&
+	if (tun->l2_gre.b_mode_enabled && tun->ip_gre.b_mode_enabled &&
 	    tun->l2_gre.tun_cls == QED_TUNN_CLSS_MAC_VLAN &&
 	    tun->ip_gre.tun_cls == QED_TUNN_CLSS_MAC_VLAN)
 		dev_info->gre_enable = true;
 
-	अगर (tun->l2_geneve.b_mode_enabled && tun->ip_geneve.b_mode_enabled &&
+	if (tun->l2_geneve.b_mode_enabled && tun->ip_geneve.b_mode_enabled &&
 	    tun->l2_geneve.tun_cls == QED_TUNN_CLSS_MAC_VLAN &&
 	    tun->ip_geneve.tun_cls == QED_TUNN_CLSS_MAC_VLAN)
 		dev_info->geneve_enable = true;
@@ -439,34 +438,34 @@ err0:
 	dev_info->dev_type = cdev->type;
 	ether_addr_copy(dev_info->hw_mac, hw_info->hw_mac_addr);
 
-	अगर (IS_PF(cdev)) अणु
+	if (IS_PF(cdev)) {
 		dev_info->fw_major = FW_MAJOR_VERSION;
 		dev_info->fw_minor = FW_MINOR_VERSION;
 		dev_info->fw_rev = FW_REVISION_VERSION;
 		dev_info->fw_eng = FW_ENGINEERING_VERSION;
-		dev_info->b_पूर्णांकer_pf_चयन = test_bit(QED_MF_INTER_PF_SWITCH,
+		dev_info->b_inter_pf_switch = test_bit(QED_MF_INTER_PF_SWITCH,
 						       &cdev->mf_bits);
-		अगर (!test_bit(QED_MF_DISABLE_ARFS, &cdev->mf_bits))
+		if (!test_bit(QED_MF_DISABLE_ARFS, &cdev->mf_bits))
 			dev_info->b_arfs_capable = true;
-		dev_info->tx_चयनing = true;
+		dev_info->tx_switching = true;
 
-		अगर (hw_info->b_wol_support == QED_WOL_SUPPORT_PME)
+		if (hw_info->b_wol_support == QED_WOL_SUPPORT_PME)
 			dev_info->wol_support = true;
 
 		dev_info->smart_an = qed_mcp_is_smart_an_supported(p_hwfn);
 
-		dev_info->असल_pf_id = QED_LEADING_HWFN(cdev)->असल_pf_id;
-	पूर्ण अन्यथा अणु
+		dev_info->abs_pf_id = QED_LEADING_HWFN(cdev)->abs_pf_id;
+	} else {
 		qed_vf_get_fw_version(&cdev->hwfns[0], &dev_info->fw_major,
 				      &dev_info->fw_minor, &dev_info->fw_rev,
 				      &dev_info->fw_eng);
-	पूर्ण
+	}
 
-	अगर (IS_PF(cdev)) अणु
+	if (IS_PF(cdev)) {
 		ptt = qed_ptt_acquire(QED_LEADING_HWFN(cdev));
-		अगर (ptt) अणु
+		if (ptt) {
 			qed_mcp_get_mfw_ver(QED_LEADING_HWFN(cdev), ptt,
-					    &dev_info->mfw_rev, शून्य);
+					    &dev_info->mfw_rev, NULL);
 
 			qed_mcp_get_mbi_ver(QED_LEADING_HWFN(cdev), ptt,
 					    &dev_info->mbi_version);
@@ -475,61 +474,61 @@ err0:
 					       &dev_info->flash_size);
 
 			qed_ptt_release(QED_LEADING_HWFN(cdev), ptt);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		qed_mcp_get_mfw_ver(QED_LEADING_HWFN(cdev), शून्य,
-				    &dev_info->mfw_rev, शून्य);
-	पूर्ण
+		}
+	} else {
+		qed_mcp_get_mfw_ver(QED_LEADING_HWFN(cdev), NULL,
+				    &dev_info->mfw_rev, NULL);
+	}
 
 	dev_info->mtu = hw_info->mtu;
 	cdev->common_dev_info = *dev_info;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम qed_मुक्त_cdev(काष्ठा qed_dev *cdev)
-अणु
-	kमुक्त((व्योम *)cdev);
-पूर्ण
+static void qed_free_cdev(struct qed_dev *cdev)
+{
+	kfree((void *)cdev);
+}
 
-अटल काष्ठा qed_dev *qed_alloc_cdev(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा qed_dev *cdev;
+static struct qed_dev *qed_alloc_cdev(struct pci_dev *pdev)
+{
+	struct qed_dev *cdev;
 
-	cdev = kzalloc(माप(*cdev), GFP_KERNEL);
-	अगर (!cdev)
-		वापस cdev;
+	cdev = kzalloc(sizeof(*cdev), GFP_KERNEL);
+	if (!cdev)
+		return cdev;
 
-	qed_init_काष्ठा(cdev);
+	qed_init_struct(cdev);
 
-	वापस cdev;
-पूर्ण
+	return cdev;
+}
 
-/* Sets the requested घातer state */
-अटल पूर्णांक qed_set_घातer_state(काष्ठा qed_dev *cdev, pci_घातer_t state)
-अणु
-	अगर (!cdev)
-		वापस -ENODEV;
+/* Sets the requested power state */
+static int qed_set_power_state(struct qed_dev *cdev, pci_power_t state)
+{
+	if (!cdev)
+		return -ENODEV;
 
 	DP_VERBOSE(cdev, NETIF_MSG_DRV, "Omitting Power state change\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* probing */
-अटल काष्ठा qed_dev *qed_probe(काष्ठा pci_dev *pdev,
-				 काष्ठा qed_probe_params *params)
-अणु
-	काष्ठा qed_dev *cdev;
-	पूर्णांक rc;
+static struct qed_dev *qed_probe(struct pci_dev *pdev,
+				 struct qed_probe_params *params)
+{
+	struct qed_dev *cdev;
+	int rc;
 
 	cdev = qed_alloc_cdev(pdev);
-	अगर (!cdev)
-		जाओ err0;
+	if (!cdev)
+		goto err0;
 
 	cdev->drv_type = DRV_ID_DRV_TYPE_LINUX;
 	cdev->protocol = params->protocol;
 
-	अगर (params->is_vf)
+	if (params->is_vf)
 		cdev->b_is_vf = true;
 
 	qed_init_dp(cdev, params->dp_module, params->dp_level);
@@ -537,516 +536,516 @@ err0:
 	cdev->recov_in_prog = params->recov_in_prog;
 
 	rc = qed_init_pci(cdev, pdev);
-	अगर (rc) अणु
+	if (rc) {
 		DP_ERR(cdev, "init pci failed\n");
-		जाओ err1;
-	पूर्ण
+		goto err1;
+	}
 	DP_INFO(cdev, "PCI init completed successfully\n");
 
 	rc = qed_hw_prepare(cdev, QED_PCI_DEFAULT);
-	अगर (rc) अणु
+	if (rc) {
 		DP_ERR(cdev, "hw prepare failed\n");
-		जाओ err2;
-	पूर्ण
+		goto err2;
+	}
 
 	DP_INFO(cdev, "qed_probe completed successfully\n");
 
-	वापस cdev;
+	return cdev;
 
 err2:
-	qed_मुक्त_pci(cdev);
+	qed_free_pci(cdev);
 err1:
-	qed_मुक्त_cdev(cdev);
+	qed_free_cdev(cdev);
 err0:
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम qed_हटाओ(काष्ठा qed_dev *cdev)
-अणु
-	अगर (!cdev)
-		वापस;
+static void qed_remove(struct qed_dev *cdev)
+{
+	if (!cdev)
+		return;
 
-	qed_hw_हटाओ(cdev);
+	qed_hw_remove(cdev);
 
-	qed_मुक्त_pci(cdev);
+	qed_free_pci(cdev);
 
-	qed_set_घातer_state(cdev, PCI_D3hot);
+	qed_set_power_state(cdev, PCI_D3hot);
 
-	qed_मुक्त_cdev(cdev);
-पूर्ण
+	qed_free_cdev(cdev);
+}
 
-अटल व्योम qed_disable_msix(काष्ठा qed_dev *cdev)
-अणु
-	अगर (cdev->पूर्णांक_params.out.पूर्णांक_mode == QED_INT_MODE_MSIX) अणु
+static void qed_disable_msix(struct qed_dev *cdev)
+{
+	if (cdev->int_params.out.int_mode == QED_INT_MODE_MSIX) {
 		pci_disable_msix(cdev->pdev);
-		kमुक्त(cdev->पूर्णांक_params.msix_table);
-	पूर्ण अन्यथा अगर (cdev->पूर्णांक_params.out.पूर्णांक_mode == QED_INT_MODE_MSI) अणु
+		kfree(cdev->int_params.msix_table);
+	} else if (cdev->int_params.out.int_mode == QED_INT_MODE_MSI) {
 		pci_disable_msi(cdev->pdev);
-	पूर्ण
+	}
 
-	स_रखो(&cdev->पूर्णांक_params.out, 0, माप(काष्ठा qed_पूर्णांक_param));
-पूर्ण
+	memset(&cdev->int_params.out, 0, sizeof(struct qed_int_param));
+}
 
-अटल पूर्णांक qed_enable_msix(काष्ठा qed_dev *cdev,
-			   काष्ठा qed_पूर्णांक_params *पूर्णांक_params)
-अणु
-	पूर्णांक i, rc, cnt;
+static int qed_enable_msix(struct qed_dev *cdev,
+			   struct qed_int_params *int_params)
+{
+	int i, rc, cnt;
 
-	cnt = पूर्णांक_params->in.num_vectors;
+	cnt = int_params->in.num_vectors;
 
-	क्रम (i = 0; i < cnt; i++)
-		पूर्णांक_params->msix_table[i].entry = i;
+	for (i = 0; i < cnt; i++)
+		int_params->msix_table[i].entry = i;
 
-	rc = pci_enable_msix_range(cdev->pdev, पूर्णांक_params->msix_table,
-				   पूर्णांक_params->in.min_msix_cnt, cnt);
-	अगर (rc < cnt && rc >= पूर्णांक_params->in.min_msix_cnt &&
-	    (rc % cdev->num_hwfns)) अणु
+	rc = pci_enable_msix_range(cdev->pdev, int_params->msix_table,
+				   int_params->in.min_msix_cnt, cnt);
+	if (rc < cnt && rc >= int_params->in.min_msix_cnt &&
+	    (rc % cdev->num_hwfns)) {
 		pci_disable_msix(cdev->pdev);
 
-		/* If fastpath is initialized, we need at least one पूर्णांकerrupt
-		 * per hwfn [and the slow path पूर्णांकerrupts]. New requested number
+		/* If fastpath is initialized, we need at least one interrupt
+		 * per hwfn [and the slow path interrupts]. New requested number
 		 * should be a multiple of the number of hwfns.
 		 */
 		cnt = (rc / cdev->num_hwfns) * cdev->num_hwfns;
 		DP_NOTICE(cdev,
 			  "Trying to enable MSI-X with less vectors (%d out of %d)\n",
-			  cnt, पूर्णांक_params->in.num_vectors);
-		rc = pci_enable_msix_exact(cdev->pdev, पूर्णांक_params->msix_table,
+			  cnt, int_params->in.num_vectors);
+		rc = pci_enable_msix_exact(cdev->pdev, int_params->msix_table,
 					   cnt);
-		अगर (!rc)
+		if (!rc)
 			rc = cnt;
-	पूर्ण
+	}
 
-	अगर (rc > 0) अणु
+	if (rc > 0) {
 		/* MSI-x configuration was achieved */
-		पूर्णांक_params->out.पूर्णांक_mode = QED_INT_MODE_MSIX;
-		पूर्णांक_params->out.num_vectors = rc;
+		int_params->out.int_mode = QED_INT_MODE_MSIX;
+		int_params->out.num_vectors = rc;
 		rc = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		DP_NOTICE(cdev,
 			  "Failed to enable MSI-X [Requested %d vectors][rc %d]\n",
 			  cnt, rc);
-	पूर्ण
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-/* This function outमाला_दो the पूर्णांक mode and the number of enabled msix vector */
-अटल पूर्णांक qed_set_पूर्णांक_mode(काष्ठा qed_dev *cdev, bool क्रमce_mode)
-अणु
-	काष्ठा qed_पूर्णांक_params *पूर्णांक_params = &cdev->पूर्णांक_params;
-	काष्ठा msix_entry *tbl;
-	पूर्णांक rc = 0, cnt;
+/* This function outputs the int mode and the number of enabled msix vector */
+static int qed_set_int_mode(struct qed_dev *cdev, bool force_mode)
+{
+	struct qed_int_params *int_params = &cdev->int_params;
+	struct msix_entry *tbl;
+	int rc = 0, cnt;
 
-	चयन (पूर्णांक_params->in.पूर्णांक_mode) अणु
-	हाल QED_INT_MODE_MSIX:
+	switch (int_params->in.int_mode) {
+	case QED_INT_MODE_MSIX:
 		/* Allocate MSIX table */
-		cnt = पूर्णांक_params->in.num_vectors;
-		पूर्णांक_params->msix_table = kसुस्मृति(cnt, माप(*tbl), GFP_KERNEL);
-		अगर (!पूर्णांक_params->msix_table) अणु
+		cnt = int_params->in.num_vectors;
+		int_params->msix_table = kcalloc(cnt, sizeof(*tbl), GFP_KERNEL);
+		if (!int_params->msix_table) {
 			rc = -ENOMEM;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		/* Enable MSIX */
-		rc = qed_enable_msix(cdev, पूर्णांक_params);
-		अगर (!rc)
-			जाओ out;
+		rc = qed_enable_msix(cdev, int_params);
+		if (!rc)
+			goto out;
 
 		DP_NOTICE(cdev, "Failed to enable MSI-X\n");
-		kमुक्त(पूर्णांक_params->msix_table);
-		अगर (क्रमce_mode)
-			जाओ out;
+		kfree(int_params->msix_table);
+		if (force_mode)
+			goto out;
 		fallthrough;
 
-	हाल QED_INT_MODE_MSI:
-		अगर (cdev->num_hwfns == 1) अणु
+	case QED_INT_MODE_MSI:
+		if (cdev->num_hwfns == 1) {
 			rc = pci_enable_msi(cdev->pdev);
-			अगर (!rc) अणु
-				पूर्णांक_params->out.पूर्णांक_mode = QED_INT_MODE_MSI;
-				जाओ out;
-			पूर्ण
+			if (!rc) {
+				int_params->out.int_mode = QED_INT_MODE_MSI;
+				goto out;
+			}
 
 			DP_NOTICE(cdev, "Failed to enable MSI\n");
-			अगर (क्रमce_mode)
-				जाओ out;
-		पूर्ण
+			if (force_mode)
+				goto out;
+		}
 		fallthrough;
 
-	हाल QED_INT_MODE_INTA:
-			पूर्णांक_params->out.पूर्णांक_mode = QED_INT_MODE_INTA;
+	case QED_INT_MODE_INTA:
+			int_params->out.int_mode = QED_INT_MODE_INTA;
 			rc = 0;
-			जाओ out;
-	शेष:
+			goto out;
+	default:
 		DP_NOTICE(cdev, "Unknown int_mode value %d\n",
-			  पूर्णांक_params->in.पूर्णांक_mode);
+			  int_params->in.int_mode);
 		rc = -EINVAL;
-	पूर्ण
+	}
 
 out:
-	अगर (!rc)
+	if (!rc)
 		DP_INFO(cdev, "Using %s interrupts\n",
-			पूर्णांक_params->out.पूर्णांक_mode == QED_INT_MODE_INTA ?
-			"INTa" : पूर्णांक_params->out.पूर्णांक_mode == QED_INT_MODE_MSI ?
+			int_params->out.int_mode == QED_INT_MODE_INTA ?
+			"INTa" : int_params->out.int_mode == QED_INT_MODE_MSI ?
 			"MSI" : "MSIX");
-	cdev->पूर्णांक_coalescing_mode = QED_COAL_MODE_ENABLE;
+	cdev->int_coalescing_mode = QED_COAL_MODE_ENABLE;
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम qed_simd_handler_config(काष्ठा qed_dev *cdev, व्योम *token,
-				    पूर्णांक index, व्योम(*handler)(व्योम *))
-अणु
-	काष्ठा qed_hwfn *hwfn = &cdev->hwfns[index % cdev->num_hwfns];
-	पूर्णांक relative_idx = index / cdev->num_hwfns;
+static void qed_simd_handler_config(struct qed_dev *cdev, void *token,
+				    int index, void(*handler)(void *))
+{
+	struct qed_hwfn *hwfn = &cdev->hwfns[index % cdev->num_hwfns];
+	int relative_idx = index / cdev->num_hwfns;
 
 	hwfn->simd_proto_handler[relative_idx].func = handler;
 	hwfn->simd_proto_handler[relative_idx].token = token;
-पूर्ण
+}
 
-अटल व्योम qed_simd_handler_clean(काष्ठा qed_dev *cdev, पूर्णांक index)
-अणु
-	काष्ठा qed_hwfn *hwfn = &cdev->hwfns[index % cdev->num_hwfns];
-	पूर्णांक relative_idx = index / cdev->num_hwfns;
+static void qed_simd_handler_clean(struct qed_dev *cdev, int index)
+{
+	struct qed_hwfn *hwfn = &cdev->hwfns[index % cdev->num_hwfns];
+	int relative_idx = index / cdev->num_hwfns;
 
-	स_रखो(&hwfn->simd_proto_handler[relative_idx], 0,
-	       माप(काष्ठा qed_simd_fp_handler));
-पूर्ण
+	memset(&hwfn->simd_proto_handler[relative_idx], 0,
+	       sizeof(struct qed_simd_fp_handler));
+}
 
-अटल irqवापस_t qed_msix_sp_पूर्णांक(पूर्णांक irq, व्योम *tasklet)
-अणु
-	tasklet_schedule((काष्ठा tasklet_काष्ठा *)tasklet);
-	वापस IRQ_HANDLED;
-पूर्ण
+static irqreturn_t qed_msix_sp_int(int irq, void *tasklet)
+{
+	tasklet_schedule((struct tasklet_struct *)tasklet);
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t qed_single_पूर्णांक(पूर्णांक irq, व्योम *dev_instance)
-अणु
-	काष्ठा qed_dev *cdev = (काष्ठा qed_dev *)dev_instance;
-	काष्ठा qed_hwfn *hwfn;
-	irqवापस_t rc = IRQ_NONE;
+static irqreturn_t qed_single_int(int irq, void *dev_instance)
+{
+	struct qed_dev *cdev = (struct qed_dev *)dev_instance;
+	struct qed_hwfn *hwfn;
+	irqreturn_t rc = IRQ_NONE;
 	u64 status;
-	पूर्णांक i, j;
+	int i, j;
 
-	क्रम (i = 0; i < cdev->num_hwfns; i++) अणु
-		status = qed_पूर्णांक_igu_पढ़ो_sisr_reg(&cdev->hwfns[i]);
+	for (i = 0; i < cdev->num_hwfns; i++) {
+		status = qed_int_igu_read_sisr_reg(&cdev->hwfns[i]);
 
-		अगर (!status)
-			जारी;
+		if (!status)
+			continue;
 
 		hwfn = &cdev->hwfns[i];
 
-		/* Slowpath पूर्णांकerrupt */
-		अगर (unlikely(status & 0x1)) अणु
+		/* Slowpath interrupt */
+		if (unlikely(status & 0x1)) {
 			tasklet_schedule(&hwfn->sp_dpc);
 			status &= ~0x1;
 			rc = IRQ_HANDLED;
-		पूर्ण
+		}
 
-		/* Fastpath पूर्णांकerrupts */
-		क्रम (j = 0; j < 64; j++) अणु
-			अगर ((0x2ULL << j) & status) अणु
-				काष्ठा qed_simd_fp_handler *p_handler =
+		/* Fastpath interrupts */
+		for (j = 0; j < 64; j++) {
+			if ((0x2ULL << j) & status) {
+				struct qed_simd_fp_handler *p_handler =
 					&hwfn->simd_proto_handler[j];
 
-				अगर (p_handler->func)
+				if (p_handler->func)
 					p_handler->func(p_handler->token);
-				अन्यथा
+				else
 					DP_NOTICE(hwfn,
 						  "Not calling fastpath handler as it is NULL [handler #%d, status 0x%llx]\n",
 						  j, status);
 
 				status &= ~(0x2ULL << j);
 				rc = IRQ_HANDLED;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अगर (unlikely(status))
+		if (unlikely(status))
 			DP_VERBOSE(hwfn, NETIF_MSG_INTR,
 				   "got an unknown interrupt status 0x%llx\n",
 				   status);
-	पूर्ण
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-पूर्णांक qed_slowpath_irq_req(काष्ठा qed_hwfn *hwfn)
-अणु
-	काष्ठा qed_dev *cdev = hwfn->cdev;
-	u32 पूर्णांक_mode;
-	पूर्णांक rc = 0;
+int qed_slowpath_irq_req(struct qed_hwfn *hwfn)
+{
+	struct qed_dev *cdev = hwfn->cdev;
+	u32 int_mode;
+	int rc = 0;
 	u8 id;
 
-	पूर्णांक_mode = cdev->पूर्णांक_params.out.पूर्णांक_mode;
-	अगर (पूर्णांक_mode == QED_INT_MODE_MSIX) अणु
+	int_mode = cdev->int_params.out.int_mode;
+	if (int_mode == QED_INT_MODE_MSIX) {
 		id = hwfn->my_id;
-		snम_लिखो(hwfn->name, NAME_SIZE, "sp-%d-%02x:%02x.%02x",
+		snprintf(hwfn->name, NAME_SIZE, "sp-%d-%02x:%02x.%02x",
 			 id, cdev->pdev->bus->number,
-			 PCI_SLOT(cdev->pdev->devfn), hwfn->असल_pf_id);
-		rc = request_irq(cdev->पूर्णांक_params.msix_table[id].vector,
-				 qed_msix_sp_पूर्णांक, 0, hwfn->name, &hwfn->sp_dpc);
-	पूर्ण अन्यथा अणु
-		अचिन्हित दीर्घ flags = 0;
+			 PCI_SLOT(cdev->pdev->devfn), hwfn->abs_pf_id);
+		rc = request_irq(cdev->int_params.msix_table[id].vector,
+				 qed_msix_sp_int, 0, hwfn->name, &hwfn->sp_dpc);
+	} else {
+		unsigned long flags = 0;
 
-		snम_लिखो(cdev->name, NAME_SIZE, "%02x:%02x.%02x",
+		snprintf(cdev->name, NAME_SIZE, "%02x:%02x.%02x",
 			 cdev->pdev->bus->number, PCI_SLOT(cdev->pdev->devfn),
 			 PCI_FUNC(cdev->pdev->devfn));
 
-		अगर (cdev->पूर्णांक_params.out.पूर्णांक_mode == QED_INT_MODE_INTA)
+		if (cdev->int_params.out.int_mode == QED_INT_MODE_INTA)
 			flags |= IRQF_SHARED;
 
-		rc = request_irq(cdev->pdev->irq, qed_single_पूर्णांक,
+		rc = request_irq(cdev->pdev->irq, qed_single_int,
 				 flags, cdev->name, cdev);
-	पूर्ण
+	}
 
-	अगर (rc)
+	if (rc)
 		DP_NOTICE(cdev, "request_irq failed, rc = %d\n", rc);
-	अन्यथा
+	else
 		DP_VERBOSE(hwfn, (NETIF_MSG_INTR | QED_MSG_SP),
 			   "Requested slowpath %s\n",
-			   (पूर्णांक_mode == QED_INT_MODE_MSIX) ? "MSI-X" : "IRQ");
+			   (int_mode == QED_INT_MODE_MSIX) ? "MSI-X" : "IRQ");
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम qed_slowpath_tasklet_flush(काष्ठा qed_hwfn *p_hwfn)
-अणु
+static void qed_slowpath_tasklet_flush(struct qed_hwfn *p_hwfn)
+{
 	/* Calling the disable function will make sure that any
 	 * currently-running function is completed. The following call to the
 	 * enable function makes this sequence a flush-like operation.
 	 */
-	अगर (p_hwfn->b_sp_dpc_enabled) अणु
+	if (p_hwfn->b_sp_dpc_enabled) {
 		tasklet_disable(&p_hwfn->sp_dpc);
 		tasklet_enable(&p_hwfn->sp_dpc);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम qed_slowpath_irq_sync(काष्ठा qed_hwfn *p_hwfn)
-अणु
-	काष्ठा qed_dev *cdev = p_hwfn->cdev;
+void qed_slowpath_irq_sync(struct qed_hwfn *p_hwfn)
+{
+	struct qed_dev *cdev = p_hwfn->cdev;
 	u8 id = p_hwfn->my_id;
-	u32 पूर्णांक_mode;
+	u32 int_mode;
 
-	पूर्णांक_mode = cdev->पूर्णांक_params.out.पूर्णांक_mode;
-	अगर (पूर्णांक_mode == QED_INT_MODE_MSIX)
-		synchronize_irq(cdev->पूर्णांक_params.msix_table[id].vector);
-	अन्यथा
+	int_mode = cdev->int_params.out.int_mode;
+	if (int_mode == QED_INT_MODE_MSIX)
+		synchronize_irq(cdev->int_params.msix_table[id].vector);
+	else
 		synchronize_irq(cdev->pdev->irq);
 
 	qed_slowpath_tasklet_flush(p_hwfn);
-पूर्ण
+}
 
-अटल व्योम qed_slowpath_irq_मुक्त(काष्ठा qed_dev *cdev)
-अणु
-	पूर्णांक i;
+static void qed_slowpath_irq_free(struct qed_dev *cdev)
+{
+	int i;
 
-	अगर (cdev->पूर्णांक_params.out.पूर्णांक_mode == QED_INT_MODE_MSIX) अणु
-		क्रम_each_hwfn(cdev, i) अणु
-			अगर (!cdev->hwfns[i].b_पूर्णांक_requested)
-				अवरोध;
-			synchronize_irq(cdev->पूर्णांक_params.msix_table[i].vector);
-			मुक्त_irq(cdev->पूर्णांक_params.msix_table[i].vector,
+	if (cdev->int_params.out.int_mode == QED_INT_MODE_MSIX) {
+		for_each_hwfn(cdev, i) {
+			if (!cdev->hwfns[i].b_int_requested)
+				break;
+			synchronize_irq(cdev->int_params.msix_table[i].vector);
+			free_irq(cdev->int_params.msix_table[i].vector,
 				 &cdev->hwfns[i].sp_dpc);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (QED_LEADING_HWFN(cdev)->b_पूर्णांक_requested)
-			मुक्त_irq(cdev->pdev->irq, cdev);
-	पूर्ण
-	qed_पूर्णांक_disable_post_isr_release(cdev);
-पूर्ण
+		}
+	} else {
+		if (QED_LEADING_HWFN(cdev)->b_int_requested)
+			free_irq(cdev->pdev->irq, cdev);
+	}
+	qed_int_disable_post_isr_release(cdev);
+}
 
-अटल पूर्णांक qed_nic_stop(काष्ठा qed_dev *cdev)
-अणु
-	पूर्णांक i, rc;
+static int qed_nic_stop(struct qed_dev *cdev)
+{
+	int i, rc;
 
 	rc = qed_hw_stop(cdev);
 
-	क्रम (i = 0; i < cdev->num_hwfns; i++) अणु
-		काष्ठा qed_hwfn *p_hwfn = &cdev->hwfns[i];
+	for (i = 0; i < cdev->num_hwfns; i++) {
+		struct qed_hwfn *p_hwfn = &cdev->hwfns[i];
 
-		अगर (p_hwfn->b_sp_dpc_enabled) अणु
+		if (p_hwfn->b_sp_dpc_enabled) {
 			tasklet_disable(&p_hwfn->sp_dpc);
 			p_hwfn->b_sp_dpc_enabled = false;
 			DP_VERBOSE(cdev, NETIF_MSG_IFDOWN,
 				   "Disabled sp tasklet [hwfn %d] at %p\n",
 				   i, &p_hwfn->sp_dpc);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	qed_dbg_pf_निकास(cdev);
+	qed_dbg_pf_exit(cdev);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक qed_nic_setup(काष्ठा qed_dev *cdev)
-अणु
-	पूर्णांक rc, i;
+static int qed_nic_setup(struct qed_dev *cdev)
+{
+	int rc, i;
 
-	/* Determine अगर पूर्णांकerface is going to require LL2 */
-	अगर (QED_LEADING_HWFN(cdev)->hw_info.personality != QED_PCI_ETH) अणु
-		क्रम (i = 0; i < cdev->num_hwfns; i++) अणु
-			काष्ठा qed_hwfn *p_hwfn = &cdev->hwfns[i];
+	/* Determine if interface is going to require LL2 */
+	if (QED_LEADING_HWFN(cdev)->hw_info.personality != QED_PCI_ETH) {
+		for (i = 0; i < cdev->num_hwfns; i++) {
+			struct qed_hwfn *p_hwfn = &cdev->hwfns[i];
 
 			p_hwfn->using_ll2 = true;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	rc = qed_resc_alloc(cdev);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	DP_INFO(cdev, "Allocated qed resources\n");
 
 	qed_resc_setup(cdev);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक qed_set_पूर्णांक_fp(काष्ठा qed_dev *cdev, u16 cnt)
-अणु
-	पूर्णांक limit = 0;
+static int qed_set_int_fp(struct qed_dev *cdev, u16 cnt)
+{
+	int limit = 0;
 
-	/* Mark the fastpath as मुक्त/used */
-	cdev->पूर्णांक_params.fp_initialized = cnt ? true : false;
+	/* Mark the fastpath as free/used */
+	cdev->int_params.fp_initialized = cnt ? true : false;
 
-	अगर (cdev->पूर्णांक_params.out.पूर्णांक_mode != QED_INT_MODE_MSIX)
+	if (cdev->int_params.out.int_mode != QED_INT_MODE_MSIX)
 		limit = cdev->num_hwfns * 63;
-	अन्यथा अगर (cdev->पूर्णांक_params.fp_msix_cnt)
-		limit = cdev->पूर्णांक_params.fp_msix_cnt;
+	else if (cdev->int_params.fp_msix_cnt)
+		limit = cdev->int_params.fp_msix_cnt;
 
-	अगर (!limit)
-		वापस -ENOMEM;
+	if (!limit)
+		return -ENOMEM;
 
-	वापस min_t(पूर्णांक, cnt, limit);
-पूर्ण
+	return min_t(int, cnt, limit);
+}
 
-अटल पूर्णांक qed_get_पूर्णांक_fp(काष्ठा qed_dev *cdev, काष्ठा qed_पूर्णांक_info *info)
-अणु
-	स_रखो(info, 0, माप(काष्ठा qed_पूर्णांक_info));
+static int qed_get_int_fp(struct qed_dev *cdev, struct qed_int_info *info)
+{
+	memset(info, 0, sizeof(struct qed_int_info));
 
-	अगर (!cdev->पूर्णांक_params.fp_initialized) अणु
+	if (!cdev->int_params.fp_initialized) {
 		DP_INFO(cdev,
 			"Protocol driver requested interrupt information, but its support is not yet configured\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* Need to expose only MSI-X inक्रमmation; Single IRQ is handled solely
+	/* Need to expose only MSI-X information; Single IRQ is handled solely
 	 * by qed.
 	 */
-	अगर (cdev->पूर्णांक_params.out.पूर्णांक_mode == QED_INT_MODE_MSIX) अणु
-		पूर्णांक msix_base = cdev->पूर्णांक_params.fp_msix_base;
+	if (cdev->int_params.out.int_mode == QED_INT_MODE_MSIX) {
+		int msix_base = cdev->int_params.fp_msix_base;
 
-		info->msix_cnt = cdev->पूर्णांक_params.fp_msix_cnt;
-		info->msix = &cdev->पूर्णांक_params.msix_table[msix_base];
-	पूर्ण
+		info->msix_cnt = cdev->int_params.fp_msix_cnt;
+		info->msix = &cdev->int_params.msix_table[msix_base];
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक qed_slowpath_setup_पूर्णांक(काष्ठा qed_dev *cdev,
-				  क्रमागत qed_पूर्णांक_mode पूर्णांक_mode)
-अणु
-	काष्ठा qed_sb_cnt_info sb_cnt_info;
-	पूर्णांक num_l2_queues = 0;
-	पूर्णांक rc;
-	पूर्णांक i;
+static int qed_slowpath_setup_int(struct qed_dev *cdev,
+				  enum qed_int_mode int_mode)
+{
+	struct qed_sb_cnt_info sb_cnt_info;
+	int num_l2_queues = 0;
+	int rc;
+	int i;
 
-	अगर ((पूर्णांक_mode == QED_INT_MODE_MSI) && (cdev->num_hwfns > 1)) अणु
+	if ((int_mode == QED_INT_MODE_MSI) && (cdev->num_hwfns > 1)) {
 		DP_NOTICE(cdev, "MSI mode is not supported for CMT devices\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	स_रखो(&cdev->पूर्णांक_params, 0, माप(काष्ठा qed_पूर्णांक_params));
-	cdev->पूर्णांक_params.in.पूर्णांक_mode = पूर्णांक_mode;
-	क्रम_each_hwfn(cdev, i) अणु
-		स_रखो(&sb_cnt_info, 0, माप(sb_cnt_info));
-		qed_पूर्णांक_get_num_sbs(&cdev->hwfns[i], &sb_cnt_info);
-		cdev->पूर्णांक_params.in.num_vectors += sb_cnt_info.cnt;
-		cdev->पूर्णांक_params.in.num_vectors++; /* slowpath */
-	पूर्ण
+	memset(&cdev->int_params, 0, sizeof(struct qed_int_params));
+	cdev->int_params.in.int_mode = int_mode;
+	for_each_hwfn(cdev, i) {
+		memset(&sb_cnt_info, 0, sizeof(sb_cnt_info));
+		qed_int_get_num_sbs(&cdev->hwfns[i], &sb_cnt_info);
+		cdev->int_params.in.num_vectors += sb_cnt_info.cnt;
+		cdev->int_params.in.num_vectors++; /* slowpath */
+	}
 
 	/* We want a minimum of one slowpath and one fastpath vector per hwfn */
-	cdev->पूर्णांक_params.in.min_msix_cnt = cdev->num_hwfns * 2;
+	cdev->int_params.in.min_msix_cnt = cdev->num_hwfns * 2;
 
-	अगर (is_kdump_kernel()) अणु
+	if (is_kdump_kernel()) {
 		DP_INFO(cdev,
 			"Kdump kernel: Limit the max number of requested MSI-X vectors to %hd\n",
-			cdev->पूर्णांक_params.in.min_msix_cnt);
-		cdev->पूर्णांक_params.in.num_vectors =
-			cdev->पूर्णांक_params.in.min_msix_cnt;
-	पूर्ण
+			cdev->int_params.in.min_msix_cnt);
+		cdev->int_params.in.num_vectors =
+			cdev->int_params.in.min_msix_cnt;
+	}
 
-	rc = qed_set_पूर्णांक_mode(cdev, false);
-	अगर (rc)  अणु
+	rc = qed_set_int_mode(cdev, false);
+	if (rc)  {
 		DP_ERR(cdev, "qed_slowpath_setup_int ERR\n");
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
-	cdev->पूर्णांक_params.fp_msix_base = cdev->num_hwfns;
-	cdev->पूर्णांक_params.fp_msix_cnt = cdev->पूर्णांक_params.out.num_vectors -
+	cdev->int_params.fp_msix_base = cdev->num_hwfns;
+	cdev->int_params.fp_msix_cnt = cdev->int_params.out.num_vectors -
 				       cdev->num_hwfns;
 
-	अगर (!IS_ENABLED(CONFIG_QED_RDMA) ||
+	if (!IS_ENABLED(CONFIG_QED_RDMA) ||
 	    !QED_IS_RDMA_PERSONALITY(QED_LEADING_HWFN(cdev)))
-		वापस 0;
+		return 0;
 
-	क्रम_each_hwfn(cdev, i)
+	for_each_hwfn(cdev, i)
 		num_l2_queues += FEAT_NUM(&cdev->hwfns[i], QED_PF_L2_QUE);
 
 	DP_VERBOSE(cdev, QED_MSG_RDMA,
 		   "cdev->int_params.fp_msix_cnt=%d num_l2_queues=%d\n",
-		   cdev->पूर्णांक_params.fp_msix_cnt, num_l2_queues);
+		   cdev->int_params.fp_msix_cnt, num_l2_queues);
 
-	अगर (cdev->पूर्णांक_params.fp_msix_cnt > num_l2_queues) अणु
-		cdev->पूर्णांक_params.rdma_msix_cnt =
-			(cdev->पूर्णांक_params.fp_msix_cnt - num_l2_queues)
+	if (cdev->int_params.fp_msix_cnt > num_l2_queues) {
+		cdev->int_params.rdma_msix_cnt =
+			(cdev->int_params.fp_msix_cnt - num_l2_queues)
 			/ cdev->num_hwfns;
-		cdev->पूर्णांक_params.rdma_msix_base =
-			cdev->पूर्णांक_params.fp_msix_base + num_l2_queues;
-		cdev->पूर्णांक_params.fp_msix_cnt = num_l2_queues;
-	पूर्ण अन्यथा अणु
-		cdev->पूर्णांक_params.rdma_msix_cnt = 0;
-	पूर्ण
+		cdev->int_params.rdma_msix_base =
+			cdev->int_params.fp_msix_base + num_l2_queues;
+		cdev->int_params.fp_msix_cnt = num_l2_queues;
+	} else {
+		cdev->int_params.rdma_msix_cnt = 0;
+	}
 
 	DP_VERBOSE(cdev, QED_MSG_RDMA, "roce_msix_cnt=%d roce_msix_base=%d\n",
-		   cdev->पूर्णांक_params.rdma_msix_cnt,
-		   cdev->पूर्णांक_params.rdma_msix_base);
+		   cdev->int_params.rdma_msix_cnt,
+		   cdev->int_params.rdma_msix_base);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक qed_slowpath_vf_setup_पूर्णांक(काष्ठा qed_dev *cdev)
-अणु
-	पूर्णांक rc;
+static int qed_slowpath_vf_setup_int(struct qed_dev *cdev)
+{
+	int rc;
 
-	स_रखो(&cdev->पूर्णांक_params, 0, माप(काष्ठा qed_पूर्णांक_params));
-	cdev->पूर्णांक_params.in.पूर्णांक_mode = QED_INT_MODE_MSIX;
+	memset(&cdev->int_params, 0, sizeof(struct qed_int_params));
+	cdev->int_params.in.int_mode = QED_INT_MODE_MSIX;
 
 	qed_vf_get_num_rxqs(QED_LEADING_HWFN(cdev),
-			    &cdev->पूर्णांक_params.in.num_vectors);
-	अगर (cdev->num_hwfns > 1) अणु
+			    &cdev->int_params.in.num_vectors);
+	if (cdev->num_hwfns > 1) {
 		u8 vectors = 0;
 
 		qed_vf_get_num_rxqs(&cdev->hwfns[1], &vectors);
-		cdev->पूर्णांक_params.in.num_vectors += vectors;
-	पूर्ण
+		cdev->int_params.in.num_vectors += vectors;
+	}
 
 	/* We want a minimum of one fastpath vector per vf hwfn */
-	cdev->पूर्णांक_params.in.min_msix_cnt = cdev->num_hwfns;
+	cdev->int_params.in.min_msix_cnt = cdev->num_hwfns;
 
-	rc = qed_set_पूर्णांक_mode(cdev, true);
-	अगर (rc)
-		वापस rc;
+	rc = qed_set_int_mode(cdev, true);
+	if (rc)
+		return rc;
 
-	cdev->पूर्णांक_params.fp_msix_base = 0;
-	cdev->पूर्णांक_params.fp_msix_cnt = cdev->पूर्णांक_params.out.num_vectors;
+	cdev->int_params.fp_msix_base = 0;
+	cdev->int_params.fp_msix_cnt = cdev->int_params.out.num_vectors;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-u32 qed_unzip_data(काष्ठा qed_hwfn *p_hwfn, u32 input_len,
+u32 qed_unzip_data(struct qed_hwfn *p_hwfn, u32 input_len,
 		   u8 *input_buf, u32 max_size, u8 *unzip_buf)
-अणु
-	पूर्णांक rc;
+{
+	int rc;
 
 	p_hwfn->stream->next_in = input_buf;
 	p_hwfn->stream->avail_in = input_len;
@@ -1055,274 +1054,274 @@ u32 qed_unzip_data(काष्ठा qed_hwfn *p_hwfn, u32 input_len,
 
 	rc = zlib_inflateInit2(p_hwfn->stream, MAX_WBITS);
 
-	अगर (rc != Z_OK) अणु
+	if (rc != Z_OK) {
 		DP_VERBOSE(p_hwfn, NETIF_MSG_DRV, "zlib init failed, rc = %d\n",
 			   rc);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	rc = zlib_inflate(p_hwfn->stream, Z_FINISH);
 	zlib_inflateEnd(p_hwfn->stream);
 
-	अगर (rc != Z_OK && rc != Z_STREAM_END) अणु
+	if (rc != Z_OK && rc != Z_STREAM_END) {
 		DP_VERBOSE(p_hwfn, NETIF_MSG_DRV, "FW unzip error: %s, rc=%d\n",
 			   p_hwfn->stream->msg, rc);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस p_hwfn->stream->total_out / 4;
-पूर्ण
+	return p_hwfn->stream->total_out / 4;
+}
 
-अटल पूर्णांक qed_alloc_stream_mem(काष्ठा qed_dev *cdev)
-अणु
-	पूर्णांक i;
-	व्योम *workspace;
+static int qed_alloc_stream_mem(struct qed_dev *cdev)
+{
+	int i;
+	void *workspace;
 
-	क्रम_each_hwfn(cdev, i) अणु
-		काष्ठा qed_hwfn *p_hwfn = &cdev->hwfns[i];
+	for_each_hwfn(cdev, i) {
+		struct qed_hwfn *p_hwfn = &cdev->hwfns[i];
 
-		p_hwfn->stream = kzalloc(माप(*p_hwfn->stream), GFP_KERNEL);
-		अगर (!p_hwfn->stream)
-			वापस -ENOMEM;
+		p_hwfn->stream = kzalloc(sizeof(*p_hwfn->stream), GFP_KERNEL);
+		if (!p_hwfn->stream)
+			return -ENOMEM;
 
 		workspace = vzalloc(zlib_inflate_workspacesize());
-		अगर (!workspace)
-			वापस -ENOMEM;
+		if (!workspace)
+			return -ENOMEM;
 		p_hwfn->stream->workspace = workspace;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम qed_मुक्त_stream_mem(काष्ठा qed_dev *cdev)
-अणु
-	पूर्णांक i;
+static void qed_free_stream_mem(struct qed_dev *cdev)
+{
+	int i;
 
-	क्रम_each_hwfn(cdev, i) अणु
-		काष्ठा qed_hwfn *p_hwfn = &cdev->hwfns[i];
+	for_each_hwfn(cdev, i) {
+		struct qed_hwfn *p_hwfn = &cdev->hwfns[i];
 
-		अगर (!p_hwfn->stream)
-			वापस;
+		if (!p_hwfn->stream)
+			return;
 
-		vमुक्त(p_hwfn->stream->workspace);
-		kमुक्त(p_hwfn->stream);
-	पूर्ण
-पूर्ण
+		vfree(p_hwfn->stream->workspace);
+		kfree(p_hwfn->stream);
+	}
+}
 
-अटल व्योम qed_update_pf_params(काष्ठा qed_dev *cdev,
-				 काष्ठा qed_pf_params *params)
-अणु
-	पूर्णांक i;
+static void qed_update_pf_params(struct qed_dev *cdev,
+				 struct qed_pf_params *params)
+{
+	int i;
 
-	अगर (IS_ENABLED(CONFIG_QED_RDMA)) अणु
+	if (IS_ENABLED(CONFIG_QED_RDMA)) {
 		params->rdma_pf_params.num_qps = QED_ROCE_QPS;
 		params->rdma_pf_params.min_dpis = QED_ROCE_DPIS;
 		params->rdma_pf_params.num_srqs = QED_RDMA_SRQS;
-		/* भागide by 3 the MRs to aव्योम MF ILT overflow */
+		/* divide by 3 the MRs to avoid MF ILT overflow */
 		params->rdma_pf_params.gl_pi = QED_ROCE_PROTOCOL_INDEX;
-	पूर्ण
+	}
 
-	अगर (cdev->num_hwfns > 1 || IS_VF(cdev))
+	if (cdev->num_hwfns > 1 || IS_VF(cdev))
 		params->eth_pf_params.num_arfs_filters = 0;
 
-	/* In हाल we might support RDMA, करोn't allow qede to be greedy
-	 * with the L2 contexts. Allow क्रम 64 queues [rx, tx cos, xdp]
+	/* In case we might support RDMA, don't allow qede to be greedy
+	 * with the L2 contexts. Allow for 64 queues [rx, tx cos, xdp]
 	 * per hwfn.
 	 */
-	अगर (QED_IS_RDMA_PERSONALITY(QED_LEADING_HWFN(cdev))) अणु
+	if (QED_IS_RDMA_PERSONALITY(QED_LEADING_HWFN(cdev))) {
 		u16 *num_cons;
 
 		num_cons = &params->eth_pf_params.num_cons;
 		*num_cons = min_t(u16, *num_cons, QED_MAX_L2_CONS);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < cdev->num_hwfns; i++) अणु
-		काष्ठा qed_hwfn *p_hwfn = &cdev->hwfns[i];
+	for (i = 0; i < cdev->num_hwfns; i++) {
+		struct qed_hwfn *p_hwfn = &cdev->hwfns[i];
 
 		p_hwfn->pf_params = *params;
-	पूर्ण
-पूर्ण
+	}
+}
 
-#घोषणा QED_PERIODIC_DB_REC_COUNT		10
-#घोषणा QED_PERIODIC_DB_REC_INTERVAL_MS		100
-#घोषणा QED_PERIODIC_DB_REC_INTERVAL \
-	msecs_to_jअगरfies(QED_PERIODIC_DB_REC_INTERVAL_MS)
+#define QED_PERIODIC_DB_REC_COUNT		10
+#define QED_PERIODIC_DB_REC_INTERVAL_MS		100
+#define QED_PERIODIC_DB_REC_INTERVAL \
+	msecs_to_jiffies(QED_PERIODIC_DB_REC_INTERVAL_MS)
 
-अटल पूर्णांक qed_slowpath_delayed_work(काष्ठा qed_hwfn *hwfn,
-				     क्रमागत qed_slowpath_wq_flag wq_flag,
-				     अचिन्हित दीर्घ delay)
-अणु
-	अगर (!hwfn->slowpath_wq_active)
-		वापस -EINVAL;
+static int qed_slowpath_delayed_work(struct qed_hwfn *hwfn,
+				     enum qed_slowpath_wq_flag wq_flag,
+				     unsigned long delay)
+{
+	if (!hwfn->slowpath_wq_active)
+		return -EINVAL;
 
-	/* Memory barrier क्रम setting atomic bit */
-	smp_mb__beक्रमe_atomic();
+	/* Memory barrier for setting atomic bit */
+	smp_mb__before_atomic();
 	set_bit(wq_flag, &hwfn->slowpath_task_flags);
 	smp_mb__after_atomic();
 	queue_delayed_work(hwfn->slowpath_wq, &hwfn->slowpath_task, delay);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम qed_periodic_db_rec_start(काष्ठा qed_hwfn *p_hwfn)
-अणु
+void qed_periodic_db_rec_start(struct qed_hwfn *p_hwfn)
+{
 	/* Reset periodic Doorbell Recovery counter */
 	p_hwfn->periodic_db_rec_count = QED_PERIODIC_DB_REC_COUNT;
 
-	/* Don't schedule periodic Doorbell Recovery अगर alपढ़ोy scheduled */
-	अगर (test_bit(QED_SLOWPATH_PERIODIC_DB_REC,
+	/* Don't schedule periodic Doorbell Recovery if already scheduled */
+	if (test_bit(QED_SLOWPATH_PERIODIC_DB_REC,
 		     &p_hwfn->slowpath_task_flags))
-		वापस;
+		return;
 
 	qed_slowpath_delayed_work(p_hwfn, QED_SLOWPATH_PERIODIC_DB_REC,
 				  QED_PERIODIC_DB_REC_INTERVAL);
-पूर्ण
+}
 
-अटल व्योम qed_slowpath_wq_stop(काष्ठा qed_dev *cdev)
-अणु
-	पूर्णांक i;
+static void qed_slowpath_wq_stop(struct qed_dev *cdev)
+{
+	int i;
 
-	अगर (IS_VF(cdev))
-		वापस;
+	if (IS_VF(cdev))
+		return;
 
-	क्रम_each_hwfn(cdev, i) अणु
-		अगर (!cdev->hwfns[i].slowpath_wq)
-			जारी;
+	for_each_hwfn(cdev, i) {
+		if (!cdev->hwfns[i].slowpath_wq)
+			continue;
 
 		/* Stop queuing new delayed works */
 		cdev->hwfns[i].slowpath_wq_active = false;
 
 		cancel_delayed_work(&cdev->hwfns[i].slowpath_task);
 		destroy_workqueue(cdev->hwfns[i].slowpath_wq);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम qed_slowpath_task(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा qed_hwfn *hwfn = container_of(work, काष्ठा qed_hwfn,
+static void qed_slowpath_task(struct work_struct *work)
+{
+	struct qed_hwfn *hwfn = container_of(work, struct qed_hwfn,
 					     slowpath_task.work);
-	काष्ठा qed_ptt *ptt = qed_ptt_acquire(hwfn);
+	struct qed_ptt *ptt = qed_ptt_acquire(hwfn);
 
-	अगर (!ptt) अणु
-		अगर (hwfn->slowpath_wq_active)
+	if (!ptt) {
+		if (hwfn->slowpath_wq_active)
 			queue_delayed_work(hwfn->slowpath_wq,
 					   &hwfn->slowpath_task, 0);
 
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (test_and_clear_bit(QED_SLOWPATH_MFW_TLV_REQ,
+	if (test_and_clear_bit(QED_SLOWPATH_MFW_TLV_REQ,
 			       &hwfn->slowpath_task_flags))
 		qed_mfw_process_tlv_req(hwfn, ptt);
 
-	अगर (test_and_clear_bit(QED_SLOWPATH_PERIODIC_DB_REC,
-			       &hwfn->slowpath_task_flags)) अणु
+	if (test_and_clear_bit(QED_SLOWPATH_PERIODIC_DB_REC,
+			       &hwfn->slowpath_task_flags)) {
 		qed_db_rec_handler(hwfn, ptt);
-		अगर (hwfn->periodic_db_rec_count--)
+		if (hwfn->periodic_db_rec_count--)
 			qed_slowpath_delayed_work(hwfn,
 						  QED_SLOWPATH_PERIODIC_DB_REC,
 						  QED_PERIODIC_DB_REC_INTERVAL);
-	पूर्ण
+	}
 
 	qed_ptt_release(hwfn, ptt);
-पूर्ण
+}
 
-अटल पूर्णांक qed_slowpath_wq_start(काष्ठा qed_dev *cdev)
-अणु
-	काष्ठा qed_hwfn *hwfn;
-	अक्षर name[NAME_SIZE];
-	पूर्णांक i;
+static int qed_slowpath_wq_start(struct qed_dev *cdev)
+{
+	struct qed_hwfn *hwfn;
+	char name[NAME_SIZE];
+	int i;
 
-	अगर (IS_VF(cdev))
-		वापस 0;
+	if (IS_VF(cdev))
+		return 0;
 
-	क्रम_each_hwfn(cdev, i) अणु
+	for_each_hwfn(cdev, i) {
 		hwfn = &cdev->hwfns[i];
 
-		snम_लिखो(name, NAME_SIZE, "slowpath-%02x:%02x.%02x",
+		snprintf(name, NAME_SIZE, "slowpath-%02x:%02x.%02x",
 			 cdev->pdev->bus->number,
-			 PCI_SLOT(cdev->pdev->devfn), hwfn->असल_pf_id);
+			 PCI_SLOT(cdev->pdev->devfn), hwfn->abs_pf_id);
 
 		hwfn->slowpath_wq = alloc_workqueue(name, 0, 0);
-		अगर (!hwfn->slowpath_wq) अणु
+		if (!hwfn->slowpath_wq) {
 			DP_NOTICE(hwfn, "Cannot create slowpath workqueue\n");
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 
 		INIT_DELAYED_WORK(&hwfn->slowpath_task, qed_slowpath_task);
 		hwfn->slowpath_wq_active = true;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक qed_slowpath_start(काष्ठा qed_dev *cdev,
-			      काष्ठा qed_slowpath_params *params)
-अणु
-	काष्ठा qed_drv_load_params drv_load_params;
-	काष्ठा qed_hw_init_params hw_init_params;
-	काष्ठा qed_mcp_drv_version drv_version;
-	काष्ठा qed_tunnel_info tunn_info;
-	स्थिर u8 *data = शून्य;
-	काष्ठा qed_hwfn *hwfn;
-	काष्ठा qed_ptt *p_ptt;
-	पूर्णांक rc = -EINVAL;
+static int qed_slowpath_start(struct qed_dev *cdev,
+			      struct qed_slowpath_params *params)
+{
+	struct qed_drv_load_params drv_load_params;
+	struct qed_hw_init_params hw_init_params;
+	struct qed_mcp_drv_version drv_version;
+	struct qed_tunnel_info tunn_info;
+	const u8 *data = NULL;
+	struct qed_hwfn *hwfn;
+	struct qed_ptt *p_ptt;
+	int rc = -EINVAL;
 
-	अगर (qed_iov_wq_start(cdev))
-		जाओ err;
+	if (qed_iov_wq_start(cdev))
+		goto err;
 
-	अगर (qed_slowpath_wq_start(cdev))
-		जाओ err;
+	if (qed_slowpath_wq_start(cdev))
+		goto err;
 
-	अगर (IS_PF(cdev)) अणु
-		rc = request_firmware(&cdev->firmware, QED_FW_खाता_NAME,
+	if (IS_PF(cdev)) {
+		rc = request_firmware(&cdev->firmware, QED_FW_FILE_NAME,
 				      &cdev->pdev->dev);
-		अगर (rc) अणु
+		if (rc) {
 			DP_NOTICE(cdev,
 				  "Failed to find fw file - /lib/firmware/%s\n",
-				  QED_FW_खाता_NAME);
-			जाओ err;
-		पूर्ण
+				  QED_FW_FILE_NAME);
+			goto err;
+		}
 
-		अगर (cdev->num_hwfns == 1) अणु
+		if (cdev->num_hwfns == 1) {
 			p_ptt = qed_ptt_acquire(QED_LEADING_HWFN(cdev));
-			अगर (p_ptt) अणु
+			if (p_ptt) {
 				QED_LEADING_HWFN(cdev)->p_arfs_ptt = p_ptt;
-			पूर्ण अन्यथा अणु
+			} else {
 				DP_NOTICE(cdev,
 					  "Failed to acquire PTT for aRFS\n");
-				जाओ err;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				goto err;
+			}
+		}
+	}
 
 	cdev->rx_coalesce_usecs = QED_DEFAULT_RX_USECS;
 	rc = qed_nic_setup(cdev);
-	अगर (rc)
-		जाओ err;
+	if (rc)
+		goto err;
 
-	अगर (IS_PF(cdev))
-		rc = qed_slowpath_setup_पूर्णांक(cdev, params->पूर्णांक_mode);
-	अन्यथा
-		rc = qed_slowpath_vf_setup_पूर्णांक(cdev);
-	अगर (rc)
-		जाओ err1;
+	if (IS_PF(cdev))
+		rc = qed_slowpath_setup_int(cdev, params->int_mode);
+	else
+		rc = qed_slowpath_vf_setup_int(cdev);
+	if (rc)
+		goto err1;
 
-	अगर (IS_PF(cdev)) अणु
-		/* Allocate stream क्रम unzipping */
+	if (IS_PF(cdev)) {
+		/* Allocate stream for unzipping */
 		rc = qed_alloc_stream_mem(cdev);
-		अगर (rc)
-			जाओ err2;
+		if (rc)
+			goto err2;
 
-		/* First Dword used to dअगरferentiate between various sources */
-		data = cdev->firmware->data + माप(u32);
+		/* First Dword used to differentiate between various sources */
+		data = cdev->firmware->data + sizeof(u32);
 
 		qed_dbg_pf_init(cdev);
-	पूर्ण
+	}
 
 	/* Start the slowpath */
-	स_रखो(&hw_init_params, 0, माप(hw_init_params));
-	स_रखो(&tunn_info, 0, माप(tunn_info));
+	memset(&hw_init_params, 0, sizeof(hw_init_params));
+	memset(&tunn_info, 0, sizeof(tunn_info));
 	tunn_info.vxlan.b_mode_enabled = true;
 	tunn_info.l2_gre.b_mode_enabled = true;
 	tunn_info.ip_gre.b_mode_enabled = true;
@@ -1335,39 +1334,39 @@ u32 qed_unzip_data(काष्ठा qed_hwfn *p_hwfn, u32 input_len,
 	tunn_info.ip_geneve.tun_cls = QED_TUNN_CLSS_MAC_VLAN;
 	hw_init_params.p_tunn = &tunn_info;
 	hw_init_params.b_hw_start = true;
-	hw_init_params.पूर्णांक_mode = cdev->पूर्णांक_params.out.पूर्णांक_mode;
-	hw_init_params.allow_npar_tx_चयन = true;
+	hw_init_params.int_mode = cdev->int_params.out.int_mode;
+	hw_init_params.allow_npar_tx_switch = true;
 	hw_init_params.bin_fw_data = data;
 
-	स_रखो(&drv_load_params, 0, माप(drv_load_params));
+	memset(&drv_load_params, 0, sizeof(drv_load_params));
 	drv_load_params.is_crash_kernel = is_kdump_kernel();
-	drv_load_params.mfw_समयout_val = QED_LOAD_REQ_LOCK_TO_DEFAULT;
-	drv_load_params.aव्योम_eng_reset = false;
-	drv_load_params.override_क्रमce_load = QED_OVERRIDE_FORCE_LOAD_NONE;
+	drv_load_params.mfw_timeout_val = QED_LOAD_REQ_LOCK_TO_DEFAULT;
+	drv_load_params.avoid_eng_reset = false;
+	drv_load_params.override_force_load = QED_OVERRIDE_FORCE_LOAD_NONE;
 	hw_init_params.p_drv_load_params = &drv_load_params;
 
 	rc = qed_hw_init(cdev, &hw_init_params);
-	अगर (rc)
-		जाओ err2;
+	if (rc)
+		goto err2;
 
 	DP_INFO(cdev,
 		"HW initialization and function start completed successfully\n");
 
-	अगर (IS_PF(cdev)) अणु
+	if (IS_PF(cdev)) {
 		cdev->tunn_feature_mask = (BIT(QED_MODE_VXLAN_TUNN) |
 					   BIT(QED_MODE_L2GENEVE_TUNN) |
 					   BIT(QED_MODE_IPGENEVE_TUNN) |
 					   BIT(QED_MODE_L2GRE_TUNN) |
 					   BIT(QED_MODE_IPGRE_TUNN));
-	पूर्ण
+	}
 
-	/* Allocate LL2 पूर्णांकerface अगर needed */
-	अगर (QED_LEADING_HWFN(cdev)->using_ll2) अणु
-		rc = qed_ll2_alloc_अगर(cdev);
-		अगर (rc)
-			जाओ err3;
-	पूर्ण
-	अगर (IS_PF(cdev)) अणु
+	/* Allocate LL2 interface if needed */
+	if (QED_LEADING_HWFN(cdev)->using_ll2) {
+		rc = qed_ll2_alloc_if(cdev);
+		if (rc)
+			goto err3;
+	}
+	if (IS_PF(cdev)) {
 		hwfn = QED_LEADING_HWFN(cdev);
 		drv_version.version = (params->drv_major << 24) |
 				      (params->drv_minor << 16) |
@@ -1375,35 +1374,35 @@ u32 qed_unzip_data(काष्ठा qed_hwfn *p_hwfn, u32 input_len,
 				      (params->drv_eng);
 		strlcpy(drv_version.name, params->name,
 			MCP_DRV_VER_STR_SIZE - 4);
-		rc = qed_mcp_send_drv_version(hwfn, hwfn->p_मुख्य_ptt,
+		rc = qed_mcp_send_drv_version(hwfn, hwfn->p_main_ptt,
 					      &drv_version);
-		अगर (rc) अणु
+		if (rc) {
 			DP_NOTICE(cdev, "Failed sending drv version command\n");
-			जाओ err4;
-		पूर्ण
-	पूर्ण
+			goto err4;
+		}
+	}
 
 	qed_reset_vport_stats(cdev);
 
-	वापस 0;
+	return 0;
 
 err4:
-	qed_ll2_dealloc_अगर(cdev);
+	qed_ll2_dealloc_if(cdev);
 err3:
 	qed_hw_stop(cdev);
 err2:
-	qed_hw_समयrs_stop_all(cdev);
-	अगर (IS_PF(cdev))
-		qed_slowpath_irq_मुक्त(cdev);
-	qed_मुक्त_stream_mem(cdev);
+	qed_hw_timers_stop_all(cdev);
+	if (IS_PF(cdev))
+		qed_slowpath_irq_free(cdev);
+	qed_free_stream_mem(cdev);
 	qed_disable_msix(cdev);
 err1:
-	qed_resc_मुक्त(cdev);
+	qed_resc_free(cdev);
 err:
-	अगर (IS_PF(cdev))
+	if (IS_PF(cdev))
 		release_firmware(cdev->firmware);
 
-	अगर (IS_PF(cdev) && (cdev->num_hwfns == 1) &&
+	if (IS_PF(cdev) && (cdev->num_hwfns == 1) &&
 	    QED_LEADING_HWFN(cdev)->p_arfs_ptt)
 		qed_ptt_release(QED_LEADING_HWFN(cdev),
 				QED_LEADING_HWFN(cdev)->p_arfs_ptt);
@@ -1412,936 +1411,936 @@ err:
 
 	qed_slowpath_wq_stop(cdev);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक qed_slowpath_stop(काष्ठा qed_dev *cdev)
-अणु
-	अगर (!cdev)
-		वापस -ENODEV;
+static int qed_slowpath_stop(struct qed_dev *cdev)
+{
+	if (!cdev)
+		return -ENODEV;
 
 	qed_slowpath_wq_stop(cdev);
 
-	qed_ll2_dealloc_अगर(cdev);
+	qed_ll2_dealloc_if(cdev);
 
-	अगर (IS_PF(cdev)) अणु
-		अगर (cdev->num_hwfns == 1)
+	if (IS_PF(cdev)) {
+		if (cdev->num_hwfns == 1)
 			qed_ptt_release(QED_LEADING_HWFN(cdev),
 					QED_LEADING_HWFN(cdev)->p_arfs_ptt);
-		qed_मुक्त_stream_mem(cdev);
-		अगर (IS_QED_ETH_IF(cdev))
+		qed_free_stream_mem(cdev);
+		if (IS_QED_ETH_IF(cdev))
 			qed_sriov_disable(cdev, true);
-	पूर्ण
+	}
 
 	qed_nic_stop(cdev);
 
-	अगर (IS_PF(cdev))
-		qed_slowpath_irq_मुक्त(cdev);
+	if (IS_PF(cdev))
+		qed_slowpath_irq_free(cdev);
 
 	qed_disable_msix(cdev);
 
-	qed_resc_मुक्त(cdev);
+	qed_resc_free(cdev);
 
 	qed_iov_wq_stop(cdev, true);
 
-	अगर (IS_PF(cdev))
+	if (IS_PF(cdev))
 		release_firmware(cdev->firmware);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम qed_set_name(काष्ठा qed_dev *cdev, अक्षर name[NAME_SIZE])
-अणु
-	पूर्णांक i;
+static void qed_set_name(struct qed_dev *cdev, char name[NAME_SIZE])
+{
+	int i;
 
-	स_नकल(cdev->name, name, NAME_SIZE);
-	क्रम_each_hwfn(cdev, i)
-		snम_लिखो(cdev->hwfns[i].name, NAME_SIZE, "%s-%d", name, i);
-पूर्ण
+	memcpy(cdev->name, name, NAME_SIZE);
+	for_each_hwfn(cdev, i)
+		snprintf(cdev->hwfns[i].name, NAME_SIZE, "%s-%d", name, i);
+}
 
-अटल u32 qed_sb_init(काष्ठा qed_dev *cdev,
-		       काष्ठा qed_sb_info *sb_info,
-		       व्योम *sb_virt_addr,
+static u32 qed_sb_init(struct qed_dev *cdev,
+		       struct qed_sb_info *sb_info,
+		       void *sb_virt_addr,
 		       dma_addr_t sb_phy_addr, u16 sb_id,
-		       क्रमागत qed_sb_type type)
-अणु
-	काष्ठा qed_hwfn *p_hwfn;
-	काष्ठा qed_ptt *p_ptt;
+		       enum qed_sb_type type)
+{
+	struct qed_hwfn *p_hwfn;
+	struct qed_ptt *p_ptt;
 	u16 rel_sb_id;
 	u32 rc;
 
-	/* RoCE/Storage use a single engine in CMT mode जबतक L2 uses both */
-	अगर (type == QED_SB_TYPE_L2_QUEUE) अणु
+	/* RoCE/Storage use a single engine in CMT mode while L2 uses both */
+	if (type == QED_SB_TYPE_L2_QUEUE) {
 		p_hwfn = &cdev->hwfns[sb_id % cdev->num_hwfns];
 		rel_sb_id = sb_id / cdev->num_hwfns;
-	पूर्ण अन्यथा अणु
+	} else {
 		p_hwfn = QED_AFFIN_HWFN(cdev);
 		rel_sb_id = sb_id;
-	पूर्ण
+	}
 
 	DP_VERBOSE(cdev, NETIF_MSG_INTR,
 		   "hwfn [%d] <--[init]-- SB %04x [0x%04x upper]\n",
 		   IS_LEAD_HWFN(p_hwfn) ? 0 : 1, rel_sb_id, sb_id);
 
-	अगर (IS_PF(p_hwfn->cdev)) अणु
+	if (IS_PF(p_hwfn->cdev)) {
 		p_ptt = qed_ptt_acquire(p_hwfn);
-		अगर (!p_ptt)
-			वापस -EBUSY;
+		if (!p_ptt)
+			return -EBUSY;
 
-		rc = qed_पूर्णांक_sb_init(p_hwfn, p_ptt, sb_info, sb_virt_addr,
+		rc = qed_int_sb_init(p_hwfn, p_ptt, sb_info, sb_virt_addr,
 				     sb_phy_addr, rel_sb_id);
 		qed_ptt_release(p_hwfn, p_ptt);
-	पूर्ण अन्यथा अणु
-		rc = qed_पूर्णांक_sb_init(p_hwfn, शून्य, sb_info, sb_virt_addr,
+	} else {
+		rc = qed_int_sb_init(p_hwfn, NULL, sb_info, sb_virt_addr,
 				     sb_phy_addr, rel_sb_id);
-	पूर्ण
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल u32 qed_sb_release(काष्ठा qed_dev *cdev,
-			  काष्ठा qed_sb_info *sb_info,
+static u32 qed_sb_release(struct qed_dev *cdev,
+			  struct qed_sb_info *sb_info,
 			  u16 sb_id,
-			  क्रमागत qed_sb_type type)
-अणु
-	काष्ठा qed_hwfn *p_hwfn;
+			  enum qed_sb_type type)
+{
+	struct qed_hwfn *p_hwfn;
 	u16 rel_sb_id;
 	u32 rc;
 
-	/* RoCE/Storage use a single engine in CMT mode जबतक L2 uses both */
-	अगर (type == QED_SB_TYPE_L2_QUEUE) अणु
+	/* RoCE/Storage use a single engine in CMT mode while L2 uses both */
+	if (type == QED_SB_TYPE_L2_QUEUE) {
 		p_hwfn = &cdev->hwfns[sb_id % cdev->num_hwfns];
 		rel_sb_id = sb_id / cdev->num_hwfns;
-	पूर्ण अन्यथा अणु
+	} else {
 		p_hwfn = QED_AFFIN_HWFN(cdev);
 		rel_sb_id = sb_id;
-	पूर्ण
+	}
 
 	DP_VERBOSE(cdev, NETIF_MSG_INTR,
 		   "hwfn [%d] <--[init]-- SB %04x [0x%04x upper]\n",
 		   IS_LEAD_HWFN(p_hwfn) ? 0 : 1, rel_sb_id, sb_id);
 
-	rc = qed_पूर्णांक_sb_release(p_hwfn, sb_info, rel_sb_id);
+	rc = qed_int_sb_release(p_hwfn, sb_info, rel_sb_id);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल bool qed_can_link_change(काष्ठा qed_dev *cdev)
-अणु
-	वापस true;
-पूर्ण
+static bool qed_can_link_change(struct qed_dev *cdev)
+{
+	return true;
+}
 
-अटल व्योम qed_set_ext_speed_params(काष्ठा qed_mcp_link_params *link_params,
-				     स्थिर काष्ठा qed_link_params *params)
-अणु
-	काष्ठा qed_mcp_link_speed_params *ext_speed = &link_params->ext_speed;
-	स्थिर काष्ठा qed_mfw_speed_map *map;
+static void qed_set_ext_speed_params(struct qed_mcp_link_params *link_params,
+				     const struct qed_link_params *params)
+{
+	struct qed_mcp_link_speed_params *ext_speed = &link_params->ext_speed;
+	const struct qed_mfw_speed_map *map;
 	u32 i;
 
-	अगर (params->override_flags & QED_LINK_OVERRIDE_SPEED_AUTONEG)
-		ext_speed->स्वतःneg = !!params->स्वतःneg;
+	if (params->override_flags & QED_LINK_OVERRIDE_SPEED_AUTONEG)
+		ext_speed->autoneg = !!params->autoneg;
 
-	अगर (params->override_flags & QED_LINK_OVERRIDE_SPEED_ADV_SPEEDS) अणु
+	if (params->override_flags & QED_LINK_OVERRIDE_SPEED_ADV_SPEEDS) {
 		ext_speed->advertised_speeds = 0;
 
-		क्रम (i = 0; i < ARRAY_SIZE(qed_mfw_ext_maps); i++) अणु
+		for (i = 0; i < ARRAY_SIZE(qed_mfw_ext_maps); i++) {
 			map = qed_mfw_ext_maps + i;
 
-			अगर (linkmode_पूर्णांकersects(params->adv_speeds, map->caps))
+			if (linkmode_intersects(params->adv_speeds, map->caps))
 				ext_speed->advertised_speeds |= map->mfw_val;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (params->override_flags & QED_LINK_OVERRIDE_SPEED_FORCED_SPEED) अणु
-		चयन (params->क्रमced_speed) अणु
-		हाल SPEED_1000:
-			ext_speed->क्रमced_speed = QED_EXT_SPEED_1G;
-			अवरोध;
-		हाल SPEED_10000:
-			ext_speed->क्रमced_speed = QED_EXT_SPEED_10G;
-			अवरोध;
-		हाल SPEED_20000:
-			ext_speed->क्रमced_speed = QED_EXT_SPEED_20G;
-			अवरोध;
-		हाल SPEED_25000:
-			ext_speed->क्रमced_speed = QED_EXT_SPEED_25G;
-			अवरोध;
-		हाल SPEED_40000:
-			ext_speed->क्रमced_speed = QED_EXT_SPEED_40G;
-			अवरोध;
-		हाल SPEED_50000:
-			ext_speed->क्रमced_speed = QED_EXT_SPEED_50G_R |
+	if (params->override_flags & QED_LINK_OVERRIDE_SPEED_FORCED_SPEED) {
+		switch (params->forced_speed) {
+		case SPEED_1000:
+			ext_speed->forced_speed = QED_EXT_SPEED_1G;
+			break;
+		case SPEED_10000:
+			ext_speed->forced_speed = QED_EXT_SPEED_10G;
+			break;
+		case SPEED_20000:
+			ext_speed->forced_speed = QED_EXT_SPEED_20G;
+			break;
+		case SPEED_25000:
+			ext_speed->forced_speed = QED_EXT_SPEED_25G;
+			break;
+		case SPEED_40000:
+			ext_speed->forced_speed = QED_EXT_SPEED_40G;
+			break;
+		case SPEED_50000:
+			ext_speed->forced_speed = QED_EXT_SPEED_50G_R |
 						  QED_EXT_SPEED_50G_R2;
-			अवरोध;
-		हाल SPEED_100000:
-			ext_speed->क्रमced_speed = QED_EXT_SPEED_100G_R2 |
+			break;
+		case SPEED_100000:
+			ext_speed->forced_speed = QED_EXT_SPEED_100G_R2 |
 						  QED_EXT_SPEED_100G_R4 |
 						  QED_EXT_SPEED_100G_P4;
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		default:
+			break;
+		}
+	}
 
-	अगर (!(params->override_flags & QED_LINK_OVERRIDE_FEC_CONFIG))
-		वापस;
+	if (!(params->override_flags & QED_LINK_OVERRIDE_FEC_CONFIG))
+		return;
 
-	चयन (params->क्रमced_speed) अणु
-	हाल SPEED_25000:
-		चयन (params->fec) अणु
-		हाल FEC_FORCE_MODE_NONE:
+	switch (params->forced_speed) {
+	case SPEED_25000:
+		switch (params->fec) {
+		case FEC_FORCE_MODE_NONE:
 			link_params->ext_fec_mode = ETH_EXT_FEC_25G_NONE;
-			अवरोध;
-		हाल FEC_FORCE_MODE_FIRECODE:
+			break;
+		case FEC_FORCE_MODE_FIRECODE:
 			link_params->ext_fec_mode = ETH_EXT_FEC_25G_BASE_R;
-			अवरोध;
-		हाल FEC_FORCE_MODE_RS:
+			break;
+		case FEC_FORCE_MODE_RS:
 			link_params->ext_fec_mode = ETH_EXT_FEC_25G_RS528;
-			अवरोध;
-		हाल FEC_FORCE_MODE_AUTO:
+			break;
+		case FEC_FORCE_MODE_AUTO:
 			link_params->ext_fec_mode = ETH_EXT_FEC_25G_RS528 |
 						    ETH_EXT_FEC_25G_BASE_R |
 						    ETH_EXT_FEC_25G_NONE;
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
+			break;
+		default:
+			break;
+		}
 
-		अवरोध;
-	हाल SPEED_40000:
-		चयन (params->fec) अणु
-		हाल FEC_FORCE_MODE_NONE:
+		break;
+	case SPEED_40000:
+		switch (params->fec) {
+		case FEC_FORCE_MODE_NONE:
 			link_params->ext_fec_mode = ETH_EXT_FEC_40G_NONE;
-			अवरोध;
-		हाल FEC_FORCE_MODE_FIRECODE:
+			break;
+		case FEC_FORCE_MODE_FIRECODE:
 			link_params->ext_fec_mode = ETH_EXT_FEC_40G_BASE_R;
-			अवरोध;
-		हाल FEC_FORCE_MODE_AUTO:
+			break;
+		case FEC_FORCE_MODE_AUTO:
 			link_params->ext_fec_mode = ETH_EXT_FEC_40G_BASE_R |
 						    ETH_EXT_FEC_40G_NONE;
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
+			break;
+		default:
+			break;
+		}
 
-		अवरोध;
-	हाल SPEED_50000:
-		चयन (params->fec) अणु
-		हाल FEC_FORCE_MODE_NONE:
+		break;
+	case SPEED_50000:
+		switch (params->fec) {
+		case FEC_FORCE_MODE_NONE:
 			link_params->ext_fec_mode = ETH_EXT_FEC_50G_NONE;
-			अवरोध;
-		हाल FEC_FORCE_MODE_FIRECODE:
+			break;
+		case FEC_FORCE_MODE_FIRECODE:
 			link_params->ext_fec_mode = ETH_EXT_FEC_50G_BASE_R;
-			अवरोध;
-		हाल FEC_FORCE_MODE_RS:
+			break;
+		case FEC_FORCE_MODE_RS:
 			link_params->ext_fec_mode = ETH_EXT_FEC_50G_RS528;
-			अवरोध;
-		हाल FEC_FORCE_MODE_AUTO:
+			break;
+		case FEC_FORCE_MODE_AUTO:
 			link_params->ext_fec_mode = ETH_EXT_FEC_50G_RS528 |
 						    ETH_EXT_FEC_50G_BASE_R |
 						    ETH_EXT_FEC_50G_NONE;
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
+			break;
+		default:
+			break;
+		}
 
-		अवरोध;
-	हाल SPEED_100000:
-		चयन (params->fec) अणु
-		हाल FEC_FORCE_MODE_NONE:
+		break;
+	case SPEED_100000:
+		switch (params->fec) {
+		case FEC_FORCE_MODE_NONE:
 			link_params->ext_fec_mode = ETH_EXT_FEC_100G_NONE;
-			अवरोध;
-		हाल FEC_FORCE_MODE_FIRECODE:
+			break;
+		case FEC_FORCE_MODE_FIRECODE:
 			link_params->ext_fec_mode = ETH_EXT_FEC_100G_BASE_R;
-			अवरोध;
-		हाल FEC_FORCE_MODE_RS:
+			break;
+		case FEC_FORCE_MODE_RS:
 			link_params->ext_fec_mode = ETH_EXT_FEC_100G_RS528;
-			अवरोध;
-		हाल FEC_FORCE_MODE_AUTO:
+			break;
+		case FEC_FORCE_MODE_AUTO:
 			link_params->ext_fec_mode = ETH_EXT_FEC_100G_RS528 |
 						    ETH_EXT_FEC_100G_BASE_R |
 						    ETH_EXT_FEC_100G_NONE;
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
+			break;
+		default:
+			break;
+		}
 
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 
-अटल पूर्णांक qed_set_link(काष्ठा qed_dev *cdev, काष्ठा qed_link_params *params)
-अणु
-	काष्ठा qed_mcp_link_params *link_params;
-	काष्ठा qed_mcp_link_speed_params *speed;
-	स्थिर काष्ठा qed_mfw_speed_map *map;
-	काष्ठा qed_hwfn *hwfn;
-	काष्ठा qed_ptt *ptt;
-	पूर्णांक rc;
+static int qed_set_link(struct qed_dev *cdev, struct qed_link_params *params)
+{
+	struct qed_mcp_link_params *link_params;
+	struct qed_mcp_link_speed_params *speed;
+	const struct qed_mfw_speed_map *map;
+	struct qed_hwfn *hwfn;
+	struct qed_ptt *ptt;
+	int rc;
 	u32 i;
 
-	अगर (!cdev)
-		वापस -ENODEV;
+	if (!cdev)
+		return -ENODEV;
 
 	/* The link should be set only once per PF */
 	hwfn = &cdev->hwfns[0];
 
-	/* When VF wants to set link, क्रमce it to पढ़ो the bulletin instead.
-	 * This mimics the PF behavior, where a noitअगरication [both immediate
+	/* When VF wants to set link, force it to read the bulletin instead.
+	 * This mimics the PF behavior, where a noitification [both immediate
 	 * and possible later] would be generated when changing properties.
 	 */
-	अगर (IS_VF(cdev)) अणु
+	if (IS_VF(cdev)) {
 		qed_schedule_iov(hwfn, QED_IOV_WQ_VF_FORCE_LINK_QUERY_FLAG);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	ptt = qed_ptt_acquire(hwfn);
-	अगर (!ptt)
-		वापस -EBUSY;
+	if (!ptt)
+		return -EBUSY;
 
 	link_params = qed_mcp_get_link_params(hwfn);
-	अगर (!link_params)
-		वापस -ENODATA;
+	if (!link_params)
+		return -ENODATA;
 
 	speed = &link_params->speed;
 
-	अगर (params->override_flags & QED_LINK_OVERRIDE_SPEED_AUTONEG)
-		speed->स्वतःneg = !!params->स्वतःneg;
+	if (params->override_flags & QED_LINK_OVERRIDE_SPEED_AUTONEG)
+		speed->autoneg = !!params->autoneg;
 
-	अगर (params->override_flags & QED_LINK_OVERRIDE_SPEED_ADV_SPEEDS) अणु
+	if (params->override_flags & QED_LINK_OVERRIDE_SPEED_ADV_SPEEDS) {
 		speed->advertised_speeds = 0;
 
-		क्रम (i = 0; i < ARRAY_SIZE(qed_mfw_legacy_maps); i++) अणु
+		for (i = 0; i < ARRAY_SIZE(qed_mfw_legacy_maps); i++) {
 			map = qed_mfw_legacy_maps + i;
 
-			अगर (linkmode_पूर्णांकersects(params->adv_speeds, map->caps))
+			if (linkmode_intersects(params->adv_speeds, map->caps))
 				speed->advertised_speeds |= map->mfw_val;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (params->override_flags & QED_LINK_OVERRIDE_SPEED_FORCED_SPEED)
-		speed->क्रमced_speed = params->क्रमced_speed;
+	if (params->override_flags & QED_LINK_OVERRIDE_SPEED_FORCED_SPEED)
+		speed->forced_speed = params->forced_speed;
 
-	अगर (qed_mcp_is_ext_speed_supported(hwfn))
+	if (qed_mcp_is_ext_speed_supported(hwfn))
 		qed_set_ext_speed_params(link_params, params);
 
-	अगर (params->override_flags & QED_LINK_OVERRIDE_PAUSE_CONFIG) अणु
-		अगर (params->छोड़ो_config & QED_LINK_PAUSE_AUTONEG_ENABLE)
-			link_params->छोड़ो.स्वतःneg = true;
-		अन्यथा
-			link_params->छोड़ो.स्वतःneg = false;
-		अगर (params->छोड़ो_config & QED_LINK_PAUSE_RX_ENABLE)
-			link_params->छोड़ो.क्रमced_rx = true;
-		अन्यथा
-			link_params->छोड़ो.क्रमced_rx = false;
-		अगर (params->छोड़ो_config & QED_LINK_PAUSE_TX_ENABLE)
-			link_params->छोड़ो.क्रमced_tx = true;
-		अन्यथा
-			link_params->छोड़ो.क्रमced_tx = false;
-	पूर्ण
+	if (params->override_flags & QED_LINK_OVERRIDE_PAUSE_CONFIG) {
+		if (params->pause_config & QED_LINK_PAUSE_AUTONEG_ENABLE)
+			link_params->pause.autoneg = true;
+		else
+			link_params->pause.autoneg = false;
+		if (params->pause_config & QED_LINK_PAUSE_RX_ENABLE)
+			link_params->pause.forced_rx = true;
+		else
+			link_params->pause.forced_rx = false;
+		if (params->pause_config & QED_LINK_PAUSE_TX_ENABLE)
+			link_params->pause.forced_tx = true;
+		else
+			link_params->pause.forced_tx = false;
+	}
 
-	अगर (params->override_flags & QED_LINK_OVERRIDE_LOOPBACK_MODE) अणु
-		चयन (params->loopback_mode) अणु
-		हाल QED_LINK_LOOPBACK_INT_PHY:
+	if (params->override_flags & QED_LINK_OVERRIDE_LOOPBACK_MODE) {
+		switch (params->loopback_mode) {
+		case QED_LINK_LOOPBACK_INT_PHY:
 			link_params->loopback_mode = ETH_LOOPBACK_INT_PHY;
-			अवरोध;
-		हाल QED_LINK_LOOPBACK_EXT_PHY:
+			break;
+		case QED_LINK_LOOPBACK_EXT_PHY:
 			link_params->loopback_mode = ETH_LOOPBACK_EXT_PHY;
-			अवरोध;
-		हाल QED_LINK_LOOPBACK_EXT:
+			break;
+		case QED_LINK_LOOPBACK_EXT:
 			link_params->loopback_mode = ETH_LOOPBACK_EXT;
-			अवरोध;
-		हाल QED_LINK_LOOPBACK_MAC:
+			break;
+		case QED_LINK_LOOPBACK_MAC:
 			link_params->loopback_mode = ETH_LOOPBACK_MAC;
-			अवरोध;
-		हाल QED_LINK_LOOPBACK_CNIG_AH_ONLY_0123:
+			break;
+		case QED_LINK_LOOPBACK_CNIG_AH_ONLY_0123:
 			link_params->loopback_mode =
 				ETH_LOOPBACK_CNIG_AH_ONLY_0123;
-			अवरोध;
-		हाल QED_LINK_LOOPBACK_CNIG_AH_ONLY_2301:
+			break;
+		case QED_LINK_LOOPBACK_CNIG_AH_ONLY_2301:
 			link_params->loopback_mode =
 				ETH_LOOPBACK_CNIG_AH_ONLY_2301;
-			अवरोध;
-		हाल QED_LINK_LOOPBACK_PCS_AH_ONLY:
+			break;
+		case QED_LINK_LOOPBACK_PCS_AH_ONLY:
 			link_params->loopback_mode = ETH_LOOPBACK_PCS_AH_ONLY;
-			अवरोध;
-		हाल QED_LINK_LOOPBACK_REVERSE_MAC_AH_ONLY:
+			break;
+		case QED_LINK_LOOPBACK_REVERSE_MAC_AH_ONLY:
 			link_params->loopback_mode =
 				ETH_LOOPBACK_REVERSE_MAC_AH_ONLY;
-			अवरोध;
-		हाल QED_LINK_LOOPBACK_INT_PHY_FEA_AH_ONLY:
+			break;
+		case QED_LINK_LOOPBACK_INT_PHY_FEA_AH_ONLY:
 			link_params->loopback_mode =
 				ETH_LOOPBACK_INT_PHY_FEA_AH_ONLY;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			link_params->loopback_mode = ETH_LOOPBACK_NONE;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (params->override_flags & QED_LINK_OVERRIDE_EEE_CONFIG)
-		स_नकल(&link_params->eee, &params->eee,
-		       माप(link_params->eee));
+	if (params->override_flags & QED_LINK_OVERRIDE_EEE_CONFIG)
+		memcpy(&link_params->eee, &params->eee,
+		       sizeof(link_params->eee));
 
-	अगर (params->override_flags & QED_LINK_OVERRIDE_FEC_CONFIG)
+	if (params->override_flags & QED_LINK_OVERRIDE_FEC_CONFIG)
 		link_params->fec = params->fec;
 
 	rc = qed_mcp_set_link(hwfn, ptt, params->link_up);
 
 	qed_ptt_release(hwfn, ptt);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक qed_get_port_type(u32 media_type)
-अणु
-	पूर्णांक port_type;
+static int qed_get_port_type(u32 media_type)
+{
+	int port_type;
 
-	चयन (media_type) अणु
-	हाल MEDIA_SFPP_10G_FIBER:
-	हाल MEDIA_SFP_1G_FIBER:
-	हाल MEDIA_XFP_FIBER:
-	हाल MEDIA_MODULE_FIBER:
+	switch (media_type) {
+	case MEDIA_SFPP_10G_FIBER:
+	case MEDIA_SFP_1G_FIBER:
+	case MEDIA_XFP_FIBER:
+	case MEDIA_MODULE_FIBER:
 		port_type = PORT_FIBRE;
-		अवरोध;
-	हाल MEDIA_DA_TWINAX:
+		break;
+	case MEDIA_DA_TWINAX:
 		port_type = PORT_DA;
-		अवरोध;
-	हाल MEDIA_BASE_T:
+		break;
+	case MEDIA_BASE_T:
 		port_type = PORT_TP;
-		अवरोध;
-	हाल MEDIA_KR:
-	हाल MEDIA_NOT_PRESENT:
+		break;
+	case MEDIA_KR:
+	case MEDIA_NOT_PRESENT:
 		port_type = PORT_NONE;
-		अवरोध;
-	हाल MEDIA_UNSPECIFIED:
-	शेष:
+		break;
+	case MEDIA_UNSPECIFIED:
+	default:
 		port_type = PORT_OTHER;
-		अवरोध;
-	पूर्ण
-	वापस port_type;
-पूर्ण
+		break;
+	}
+	return port_type;
+}
 
-अटल पूर्णांक qed_get_link_data(काष्ठा qed_hwfn *hwfn,
-			     काष्ठा qed_mcp_link_params *params,
-			     काष्ठा qed_mcp_link_state *link,
-			     काष्ठा qed_mcp_link_capabilities *link_caps)
-अणु
-	व्योम *p;
+static int qed_get_link_data(struct qed_hwfn *hwfn,
+			     struct qed_mcp_link_params *params,
+			     struct qed_mcp_link_state *link,
+			     struct qed_mcp_link_capabilities *link_caps)
+{
+	void *p;
 
-	अगर (!IS_PF(hwfn->cdev)) अणु
+	if (!IS_PF(hwfn->cdev)) {
 		qed_vf_get_link_params(hwfn, params);
 		qed_vf_get_link_state(hwfn, link);
 		qed_vf_get_link_caps(hwfn, link_caps);
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	p = qed_mcp_get_link_params(hwfn);
-	अगर (!p)
-		वापस -ENXIO;
-	स_नकल(params, p, माप(*params));
+	if (!p)
+		return -ENXIO;
+	memcpy(params, p, sizeof(*params));
 
 	p = qed_mcp_get_link_state(hwfn);
-	अगर (!p)
-		वापस -ENXIO;
-	स_नकल(link, p, माप(*link));
+	if (!p)
+		return -ENXIO;
+	memcpy(link, p, sizeof(*link));
 
 	p = qed_mcp_get_link_capabilities(hwfn);
-	अगर (!p)
-		वापस -ENXIO;
-	स_नकल(link_caps, p, माप(*link_caps));
+	if (!p)
+		return -ENXIO;
+	memcpy(link_caps, p, sizeof(*link_caps));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम qed_fill_link_capability(काष्ठा qed_hwfn *hwfn,
-				     काष्ठा qed_ptt *ptt, u32 capability,
-				     अचिन्हित दीर्घ *अगर_caps)
-अणु
+static void qed_fill_link_capability(struct qed_hwfn *hwfn,
+				     struct qed_ptt *ptt, u32 capability,
+				     unsigned long *if_caps)
+{
 	u32 media_type, tcvr_state, tcvr_type;
 	u32 speed_mask, board_cfg;
 
-	अगर (qed_mcp_get_media_type(hwfn, ptt, &media_type))
+	if (qed_mcp_get_media_type(hwfn, ptt, &media_type))
 		media_type = MEDIA_UNSPECIFIED;
 
-	अगर (qed_mcp_get_transceiver_data(hwfn, ptt, &tcvr_state, &tcvr_type))
+	if (qed_mcp_get_transceiver_data(hwfn, ptt, &tcvr_state, &tcvr_type))
 		tcvr_type = ETH_TRANSCEIVER_STATE_UNPLUGGED;
 
-	अगर (qed_mcp_trans_speed_mask(hwfn, ptt, &speed_mask))
+	if (qed_mcp_trans_speed_mask(hwfn, ptt, &speed_mask))
 		speed_mask = 0xFFFFFFFF;
 
-	अगर (qed_mcp_get_board_config(hwfn, ptt, &board_cfg))
+	if (qed_mcp_get_board_config(hwfn, ptt, &board_cfg))
 		board_cfg = NVM_CFG1_PORT_PORT_TYPE_UNDEFINED;
 
 	DP_VERBOSE(hwfn->cdev, NETIF_MSG_DRV,
 		   "Media_type = 0x%x tcvr_state = 0x%x tcvr_type = 0x%x speed_mask = 0x%x board_cfg = 0x%x\n",
 		   media_type, tcvr_state, tcvr_type, speed_mask, board_cfg);
 
-	चयन (media_type) अणु
-	हाल MEDIA_DA_TWINAX:
-		phylink_set(अगर_caps, FIBRE);
+	switch (media_type) {
+	case MEDIA_DA_TWINAX:
+		phylink_set(if_caps, FIBRE);
 
-		अगर (capability & NVM_CFG1_PORT_DRV_SPEED_CAPABILITY_MASK_20G)
-			phylink_set(अगर_caps, 20000baseKR2_Full);
+		if (capability & NVM_CFG1_PORT_DRV_SPEED_CAPABILITY_MASK_20G)
+			phylink_set(if_caps, 20000baseKR2_Full);
 
 		/* For DAC media multiple speed capabilities are supported */
 		capability |= speed_mask;
 
-		अगर (capability & NVM_CFG1_PORT_DRV_SPEED_CAPABILITY_MASK_1G)
-			phylink_set(अगर_caps, 1000baseKX_Full);
-		अगर (capability & NVM_CFG1_PORT_DRV_SPEED_CAPABILITY_MASK_10G)
-			phylink_set(अगर_caps, 10000baseCR_Full);
+		if (capability & NVM_CFG1_PORT_DRV_SPEED_CAPABILITY_MASK_1G)
+			phylink_set(if_caps, 1000baseKX_Full);
+		if (capability & NVM_CFG1_PORT_DRV_SPEED_CAPABILITY_MASK_10G)
+			phylink_set(if_caps, 10000baseCR_Full);
 
-		अगर (capability & NVM_CFG1_PORT_DRV_SPEED_CAPABILITY_MASK_40G)
-			चयन (tcvr_type) अणु
-			हाल ETH_TRANSCEIVER_TYPE_40G_CR4:
-			हाल ETH_TRANSCEIVER_TYPE_MULTI_RATE_10G_40G_CR:
-			हाल ETH_TRANSCEIVER_TYPE_MULTI_RATE_40G_100G_CR:
-				phylink_set(अगर_caps, 40000baseCR4_Full);
-				अवरोध;
-			शेष:
-				अवरोध;
-			पूर्ण
+		if (capability & NVM_CFG1_PORT_DRV_SPEED_CAPABILITY_MASK_40G)
+			switch (tcvr_type) {
+			case ETH_TRANSCEIVER_TYPE_40G_CR4:
+			case ETH_TRANSCEIVER_TYPE_MULTI_RATE_10G_40G_CR:
+			case ETH_TRANSCEIVER_TYPE_MULTI_RATE_40G_100G_CR:
+				phylink_set(if_caps, 40000baseCR4_Full);
+				break;
+			default:
+				break;
+			}
 
-		अगर (capability & NVM_CFG1_PORT_DRV_SPEED_CAPABILITY_MASK_25G)
-			phylink_set(अगर_caps, 25000baseCR_Full);
-		अगर (capability & NVM_CFG1_PORT_DRV_SPEED_CAPABILITY_MASK_50G)
-			phylink_set(अगर_caps, 50000baseCR2_Full);
+		if (capability & NVM_CFG1_PORT_DRV_SPEED_CAPABILITY_MASK_25G)
+			phylink_set(if_caps, 25000baseCR_Full);
+		if (capability & NVM_CFG1_PORT_DRV_SPEED_CAPABILITY_MASK_50G)
+			phylink_set(if_caps, 50000baseCR2_Full);
 
-		अगर (capability &
+		if (capability &
 		    NVM_CFG1_PORT_DRV_SPEED_CAPABILITY_MASK_BB_100G)
-			चयन (tcvr_type) अणु
-			हाल ETH_TRANSCEIVER_TYPE_100G_CR4:
-			हाल ETH_TRANSCEIVER_TYPE_MULTI_RATE_40G_100G_CR:
-				phylink_set(अगर_caps, 100000baseCR4_Full);
-				अवरोध;
-			शेष:
-				अवरोध;
-			पूर्ण
+			switch (tcvr_type) {
+			case ETH_TRANSCEIVER_TYPE_100G_CR4:
+			case ETH_TRANSCEIVER_TYPE_MULTI_RATE_40G_100G_CR:
+				phylink_set(if_caps, 100000baseCR4_Full);
+				break;
+			default:
+				break;
+			}
 
-		अवरोध;
-	हाल MEDIA_BASE_T:
-		phylink_set(अगर_caps, TP);
+		break;
+	case MEDIA_BASE_T:
+		phylink_set(if_caps, TP);
 
-		अगर (board_cfg & NVM_CFG1_PORT_PORT_TYPE_EXT_PHY) अणु
-			अगर (capability &
+		if (board_cfg & NVM_CFG1_PORT_PORT_TYPE_EXT_PHY) {
+			if (capability &
 			    NVM_CFG1_PORT_DRV_SPEED_CAPABILITY_MASK_1G)
-				phylink_set(अगर_caps, 1000baseT_Full);
-			अगर (capability &
+				phylink_set(if_caps, 1000baseT_Full);
+			if (capability &
 			    NVM_CFG1_PORT_DRV_SPEED_CAPABILITY_MASK_10G)
-				phylink_set(अगर_caps, 10000baseT_Full);
-		पूर्ण
+				phylink_set(if_caps, 10000baseT_Full);
+		}
 
-		अगर (board_cfg & NVM_CFG1_PORT_PORT_TYPE_MODULE) अणु
-			phylink_set(अगर_caps, FIBRE);
+		if (board_cfg & NVM_CFG1_PORT_PORT_TYPE_MODULE) {
+			phylink_set(if_caps, FIBRE);
 
-			चयन (tcvr_type) अणु
-			हाल ETH_TRANSCEIVER_TYPE_1000BASET:
-				phylink_set(अगर_caps, 1000baseT_Full);
-				अवरोध;
-			हाल ETH_TRANSCEIVER_TYPE_10G_BASET:
-				phylink_set(अगर_caps, 10000baseT_Full);
-				अवरोध;
-			शेष:
-				अवरोध;
-			पूर्ण
-		पूर्ण
+			switch (tcvr_type) {
+			case ETH_TRANSCEIVER_TYPE_1000BASET:
+				phylink_set(if_caps, 1000baseT_Full);
+				break;
+			case ETH_TRANSCEIVER_TYPE_10G_BASET:
+				phylink_set(if_caps, 10000baseT_Full);
+				break;
+			default:
+				break;
+			}
+		}
 
-		अवरोध;
-	हाल MEDIA_SFP_1G_FIBER:
-	हाल MEDIA_SFPP_10G_FIBER:
-	हाल MEDIA_XFP_FIBER:
-	हाल MEDIA_MODULE_FIBER:
-		phylink_set(अगर_caps, FIBRE);
+		break;
+	case MEDIA_SFP_1G_FIBER:
+	case MEDIA_SFPP_10G_FIBER:
+	case MEDIA_XFP_FIBER:
+	case MEDIA_MODULE_FIBER:
+		phylink_set(if_caps, FIBRE);
 		capability |= speed_mask;
 
-		अगर (capability & NVM_CFG1_PORT_DRV_SPEED_CAPABILITY_MASK_1G)
-			चयन (tcvr_type) अणु
-			हाल ETH_TRANSCEIVER_TYPE_1G_LX:
-			हाल ETH_TRANSCEIVER_TYPE_1G_SX:
-			हाल ETH_TRANSCEIVER_TYPE_MULTI_RATE_1G_10G_SR:
-			हाल ETH_TRANSCEIVER_TYPE_MULTI_RATE_1G_10G_LR:
-				phylink_set(अगर_caps, 1000baseKX_Full);
-				अवरोध;
-			शेष:
-				अवरोध;
-			पूर्ण
+		if (capability & NVM_CFG1_PORT_DRV_SPEED_CAPABILITY_MASK_1G)
+			switch (tcvr_type) {
+			case ETH_TRANSCEIVER_TYPE_1G_LX:
+			case ETH_TRANSCEIVER_TYPE_1G_SX:
+			case ETH_TRANSCEIVER_TYPE_MULTI_RATE_1G_10G_SR:
+			case ETH_TRANSCEIVER_TYPE_MULTI_RATE_1G_10G_LR:
+				phylink_set(if_caps, 1000baseKX_Full);
+				break;
+			default:
+				break;
+			}
 
-		अगर (capability & NVM_CFG1_PORT_DRV_SPEED_CAPABILITY_MASK_10G)
-			चयन (tcvr_type) अणु
-			हाल ETH_TRANSCEIVER_TYPE_10G_SR:
-			हाल ETH_TRANSCEIVER_TYPE_MULTI_RATE_10G_40G_SR:
-			हाल ETH_TRANSCEIVER_TYPE_MULTI_RATE_10G_25G_SR:
-			हाल ETH_TRANSCEIVER_TYPE_MULTI_RATE_1G_10G_SR:
-				phylink_set(अगर_caps, 10000baseSR_Full);
-				अवरोध;
-			हाल ETH_TRANSCEIVER_TYPE_10G_LR:
-			हाल ETH_TRANSCEIVER_TYPE_MULTI_RATE_10G_40G_LR:
-			हाल ETH_TRANSCEIVER_TYPE_MULTI_RATE_10G_25G_LR:
-			हाल ETH_TRANSCEIVER_TYPE_MULTI_RATE_1G_10G_LR:
-				phylink_set(अगर_caps, 10000baseLR_Full);
-				अवरोध;
-			हाल ETH_TRANSCEIVER_TYPE_10G_LRM:
-				phylink_set(अगर_caps, 10000baseLRM_Full);
-				अवरोध;
-			हाल ETH_TRANSCEIVER_TYPE_10G_ER:
-				phylink_set(अगर_caps, 10000baseR_FEC);
-				अवरोध;
-			शेष:
-				अवरोध;
-			पूर्ण
+		if (capability & NVM_CFG1_PORT_DRV_SPEED_CAPABILITY_MASK_10G)
+			switch (tcvr_type) {
+			case ETH_TRANSCEIVER_TYPE_10G_SR:
+			case ETH_TRANSCEIVER_TYPE_MULTI_RATE_10G_40G_SR:
+			case ETH_TRANSCEIVER_TYPE_MULTI_RATE_10G_25G_SR:
+			case ETH_TRANSCEIVER_TYPE_MULTI_RATE_1G_10G_SR:
+				phylink_set(if_caps, 10000baseSR_Full);
+				break;
+			case ETH_TRANSCEIVER_TYPE_10G_LR:
+			case ETH_TRANSCEIVER_TYPE_MULTI_RATE_10G_40G_LR:
+			case ETH_TRANSCEIVER_TYPE_MULTI_RATE_10G_25G_LR:
+			case ETH_TRANSCEIVER_TYPE_MULTI_RATE_1G_10G_LR:
+				phylink_set(if_caps, 10000baseLR_Full);
+				break;
+			case ETH_TRANSCEIVER_TYPE_10G_LRM:
+				phylink_set(if_caps, 10000baseLRM_Full);
+				break;
+			case ETH_TRANSCEIVER_TYPE_10G_ER:
+				phylink_set(if_caps, 10000baseR_FEC);
+				break;
+			default:
+				break;
+			}
 
-		अगर (capability & NVM_CFG1_PORT_DRV_SPEED_CAPABILITY_MASK_20G)
-			phylink_set(अगर_caps, 20000baseKR2_Full);
+		if (capability & NVM_CFG1_PORT_DRV_SPEED_CAPABILITY_MASK_20G)
+			phylink_set(if_caps, 20000baseKR2_Full);
 
-		अगर (capability & NVM_CFG1_PORT_DRV_SPEED_CAPABILITY_MASK_25G)
-			चयन (tcvr_type) अणु
-			हाल ETH_TRANSCEIVER_TYPE_25G_SR:
-			हाल ETH_TRANSCEIVER_TYPE_MULTI_RATE_10G_25G_SR:
-				phylink_set(अगर_caps, 25000baseSR_Full);
-				अवरोध;
-			शेष:
-				अवरोध;
-			पूर्ण
+		if (capability & NVM_CFG1_PORT_DRV_SPEED_CAPABILITY_MASK_25G)
+			switch (tcvr_type) {
+			case ETH_TRANSCEIVER_TYPE_25G_SR:
+			case ETH_TRANSCEIVER_TYPE_MULTI_RATE_10G_25G_SR:
+				phylink_set(if_caps, 25000baseSR_Full);
+				break;
+			default:
+				break;
+			}
 
-		अगर (capability & NVM_CFG1_PORT_DRV_SPEED_CAPABILITY_MASK_40G)
-			चयन (tcvr_type) अणु
-			हाल ETH_TRANSCEIVER_TYPE_40G_LR4:
-			हाल ETH_TRANSCEIVER_TYPE_MULTI_RATE_10G_40G_LR:
-			हाल ETH_TRANSCEIVER_TYPE_MULTI_RATE_40G_100G_LR:
-				phylink_set(अगर_caps, 40000baseLR4_Full);
-				अवरोध;
-			हाल ETH_TRANSCEIVER_TYPE_40G_SR4:
-			हाल ETH_TRANSCEIVER_TYPE_MULTI_RATE_40G_100G_SR:
-			हाल ETH_TRANSCEIVER_TYPE_MULTI_RATE_10G_40G_SR:
-				phylink_set(अगर_caps, 40000baseSR4_Full);
-				अवरोध;
-			शेष:
-				अवरोध;
-			पूर्ण
+		if (capability & NVM_CFG1_PORT_DRV_SPEED_CAPABILITY_MASK_40G)
+			switch (tcvr_type) {
+			case ETH_TRANSCEIVER_TYPE_40G_LR4:
+			case ETH_TRANSCEIVER_TYPE_MULTI_RATE_10G_40G_LR:
+			case ETH_TRANSCEIVER_TYPE_MULTI_RATE_40G_100G_LR:
+				phylink_set(if_caps, 40000baseLR4_Full);
+				break;
+			case ETH_TRANSCEIVER_TYPE_40G_SR4:
+			case ETH_TRANSCEIVER_TYPE_MULTI_RATE_40G_100G_SR:
+			case ETH_TRANSCEIVER_TYPE_MULTI_RATE_10G_40G_SR:
+				phylink_set(if_caps, 40000baseSR4_Full);
+				break;
+			default:
+				break;
+			}
 
-		अगर (capability & NVM_CFG1_PORT_DRV_SPEED_CAPABILITY_MASK_50G)
-			phylink_set(अगर_caps, 50000baseKR2_Full);
+		if (capability & NVM_CFG1_PORT_DRV_SPEED_CAPABILITY_MASK_50G)
+			phylink_set(if_caps, 50000baseKR2_Full);
 
-		अगर (capability &
+		if (capability &
 		    NVM_CFG1_PORT_DRV_SPEED_CAPABILITY_MASK_BB_100G)
-			चयन (tcvr_type) अणु
-			हाल ETH_TRANSCEIVER_TYPE_100G_SR4:
-			हाल ETH_TRANSCEIVER_TYPE_MULTI_RATE_40G_100G_SR:
-				phylink_set(अगर_caps, 100000baseSR4_Full);
-				अवरोध;
-			हाल ETH_TRANSCEIVER_TYPE_MULTI_RATE_40G_100G_LR:
-				phylink_set(अगर_caps, 100000baseLR4_ER4_Full);
-				अवरोध;
-			शेष:
-				अवरोध;
-			पूर्ण
+			switch (tcvr_type) {
+			case ETH_TRANSCEIVER_TYPE_100G_SR4:
+			case ETH_TRANSCEIVER_TYPE_MULTI_RATE_40G_100G_SR:
+				phylink_set(if_caps, 100000baseSR4_Full);
+				break;
+			case ETH_TRANSCEIVER_TYPE_MULTI_RATE_40G_100G_LR:
+				phylink_set(if_caps, 100000baseLR4_ER4_Full);
+				break;
+			default:
+				break;
+			}
 
-		अवरोध;
-	हाल MEDIA_KR:
-		phylink_set(अगर_caps, Backplane);
+		break;
+	case MEDIA_KR:
+		phylink_set(if_caps, Backplane);
 
-		अगर (capability & NVM_CFG1_PORT_DRV_SPEED_CAPABILITY_MASK_20G)
-			phylink_set(अगर_caps, 20000baseKR2_Full);
-		अगर (capability & NVM_CFG1_PORT_DRV_SPEED_CAPABILITY_MASK_1G)
-			phylink_set(अगर_caps, 1000baseKX_Full);
-		अगर (capability & NVM_CFG1_PORT_DRV_SPEED_CAPABILITY_MASK_10G)
-			phylink_set(अगर_caps, 10000baseKR_Full);
-		अगर (capability & NVM_CFG1_PORT_DRV_SPEED_CAPABILITY_MASK_25G)
-			phylink_set(अगर_caps, 25000baseKR_Full);
-		अगर (capability & NVM_CFG1_PORT_DRV_SPEED_CAPABILITY_MASK_40G)
-			phylink_set(अगर_caps, 40000baseKR4_Full);
-		अगर (capability & NVM_CFG1_PORT_DRV_SPEED_CAPABILITY_MASK_50G)
-			phylink_set(अगर_caps, 50000baseKR2_Full);
-		अगर (capability &
+		if (capability & NVM_CFG1_PORT_DRV_SPEED_CAPABILITY_MASK_20G)
+			phylink_set(if_caps, 20000baseKR2_Full);
+		if (capability & NVM_CFG1_PORT_DRV_SPEED_CAPABILITY_MASK_1G)
+			phylink_set(if_caps, 1000baseKX_Full);
+		if (capability & NVM_CFG1_PORT_DRV_SPEED_CAPABILITY_MASK_10G)
+			phylink_set(if_caps, 10000baseKR_Full);
+		if (capability & NVM_CFG1_PORT_DRV_SPEED_CAPABILITY_MASK_25G)
+			phylink_set(if_caps, 25000baseKR_Full);
+		if (capability & NVM_CFG1_PORT_DRV_SPEED_CAPABILITY_MASK_40G)
+			phylink_set(if_caps, 40000baseKR4_Full);
+		if (capability & NVM_CFG1_PORT_DRV_SPEED_CAPABILITY_MASK_50G)
+			phylink_set(if_caps, 50000baseKR2_Full);
+		if (capability &
 		    NVM_CFG1_PORT_DRV_SPEED_CAPABILITY_MASK_BB_100G)
-			phylink_set(अगर_caps, 100000baseKR4_Full);
+			phylink_set(if_caps, 100000baseKR4_Full);
 
-		अवरोध;
-	हाल MEDIA_UNSPECIFIED:
-	हाल MEDIA_NOT_PRESENT:
-	शेष:
+		break;
+	case MEDIA_UNSPECIFIED:
+	case MEDIA_NOT_PRESENT:
+	default:
 		DP_VERBOSE(hwfn->cdev, QED_MSG_DEBUG,
 			   "Unknown media and transceiver type;\n");
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम qed_lp_caps_to_speed_mask(u32 caps, u32 *speed_mask)
-अणु
+static void qed_lp_caps_to_speed_mask(u32 caps, u32 *speed_mask)
+{
 	*speed_mask = 0;
 
-	अगर (caps &
+	if (caps &
 	    (QED_LINK_PARTNER_SPEED_1G_FD | QED_LINK_PARTNER_SPEED_1G_HD))
 		*speed_mask |= NVM_CFG1_PORT_DRV_SPEED_CAPABILITY_MASK_1G;
-	अगर (caps & QED_LINK_PARTNER_SPEED_10G)
+	if (caps & QED_LINK_PARTNER_SPEED_10G)
 		*speed_mask |= NVM_CFG1_PORT_DRV_SPEED_CAPABILITY_MASK_10G;
-	अगर (caps & QED_LINK_PARTNER_SPEED_20G)
+	if (caps & QED_LINK_PARTNER_SPEED_20G)
 		*speed_mask |= NVM_CFG1_PORT_DRV_SPEED_CAPABILITY_MASK_20G;
-	अगर (caps & QED_LINK_PARTNER_SPEED_25G)
+	if (caps & QED_LINK_PARTNER_SPEED_25G)
 		*speed_mask |= NVM_CFG1_PORT_DRV_SPEED_CAPABILITY_MASK_25G;
-	अगर (caps & QED_LINK_PARTNER_SPEED_40G)
+	if (caps & QED_LINK_PARTNER_SPEED_40G)
 		*speed_mask |= NVM_CFG1_PORT_DRV_SPEED_CAPABILITY_MASK_40G;
-	अगर (caps & QED_LINK_PARTNER_SPEED_50G)
+	if (caps & QED_LINK_PARTNER_SPEED_50G)
 		*speed_mask |= NVM_CFG1_PORT_DRV_SPEED_CAPABILITY_MASK_50G;
-	अगर (caps & QED_LINK_PARTNER_SPEED_100G)
+	if (caps & QED_LINK_PARTNER_SPEED_100G)
 		*speed_mask |= NVM_CFG1_PORT_DRV_SPEED_CAPABILITY_MASK_BB_100G;
-पूर्ण
+}
 
-अटल व्योम qed_fill_link(काष्ठा qed_hwfn *hwfn,
-			  काष्ठा qed_ptt *ptt,
-			  काष्ठा qed_link_output *अगर_link)
-अणु
-	काष्ठा qed_mcp_link_capabilities link_caps;
-	काष्ठा qed_mcp_link_params params;
-	काष्ठा qed_mcp_link_state link;
+static void qed_fill_link(struct qed_hwfn *hwfn,
+			  struct qed_ptt *ptt,
+			  struct qed_link_output *if_link)
+{
+	struct qed_mcp_link_capabilities link_caps;
+	struct qed_mcp_link_params params;
+	struct qed_mcp_link_state link;
 	u32 media_type, speed_mask;
 
-	स_रखो(अगर_link, 0, माप(*अगर_link));
+	memset(if_link, 0, sizeof(*if_link));
 
-	/* Prepare source inमाला_दो */
-	अगर (qed_get_link_data(hwfn, &params, &link, &link_caps)) अणु
+	/* Prepare source inputs */
+	if (qed_get_link_data(hwfn, &params, &link, &link_caps)) {
 		dev_warn(&hwfn->cdev->pdev->dev, "no link data available\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* Set the link parameters to pass to protocol driver */
-	अगर (link.link_up)
-		अगर_link->link_up = true;
+	if (link.link_up)
+		if_link->link_up = true;
 
-	अगर (IS_PF(hwfn->cdev) && qed_mcp_is_ext_speed_supported(hwfn)) अणु
-		अगर (link_caps.शेष_ext_स्वतःneg)
-			phylink_set(अगर_link->supported_caps, Autoneg);
+	if (IS_PF(hwfn->cdev) && qed_mcp_is_ext_speed_supported(hwfn)) {
+		if (link_caps.default_ext_autoneg)
+			phylink_set(if_link->supported_caps, Autoneg);
 
-		linkmode_copy(अगर_link->advertised_caps, अगर_link->supported_caps);
+		linkmode_copy(if_link->advertised_caps, if_link->supported_caps);
 
-		अगर (params.ext_speed.स्वतःneg)
-			phylink_set(अगर_link->advertised_caps, Autoneg);
-		अन्यथा
-			phylink_clear(अगर_link->advertised_caps, Autoneg);
+		if (params.ext_speed.autoneg)
+			phylink_set(if_link->advertised_caps, Autoneg);
+		else
+			phylink_clear(if_link->advertised_caps, Autoneg);
 
 		qed_fill_link_capability(hwfn, ptt,
 					 params.ext_speed.advertised_speeds,
-					 अगर_link->advertised_caps);
-	पूर्ण अन्यथा अणु
-		अगर (link_caps.शेष_speed_स्वतःneg)
-			phylink_set(अगर_link->supported_caps, Autoneg);
+					 if_link->advertised_caps);
+	} else {
+		if (link_caps.default_speed_autoneg)
+			phylink_set(if_link->supported_caps, Autoneg);
 
-		linkmode_copy(अगर_link->advertised_caps, अगर_link->supported_caps);
+		linkmode_copy(if_link->advertised_caps, if_link->supported_caps);
 
-		अगर (params.speed.स्वतःneg)
-			phylink_set(अगर_link->advertised_caps, Autoneg);
-		अन्यथा
-			phylink_clear(अगर_link->advertised_caps, Autoneg);
-	पूर्ण
+		if (params.speed.autoneg)
+			phylink_set(if_link->advertised_caps, Autoneg);
+		else
+			phylink_clear(if_link->advertised_caps, Autoneg);
+	}
 
-	अगर (params.छोड़ो.स्वतःneg ||
-	    (params.छोड़ो.क्रमced_rx && params.छोड़ो.क्रमced_tx))
-		phylink_set(अगर_link->supported_caps, Asym_Pause);
-	अगर (params.छोड़ो.स्वतःneg || params.छोड़ो.क्रमced_rx ||
-	    params.छोड़ो.क्रमced_tx)
-		phylink_set(अगर_link->supported_caps, Pause);
+	if (params.pause.autoneg ||
+	    (params.pause.forced_rx && params.pause.forced_tx))
+		phylink_set(if_link->supported_caps, Asym_Pause);
+	if (params.pause.autoneg || params.pause.forced_rx ||
+	    params.pause.forced_tx)
+		phylink_set(if_link->supported_caps, Pause);
 
-	अगर_link->sup_fec = link_caps.fec_शेष;
-	अगर_link->active_fec = params.fec;
+	if_link->sup_fec = link_caps.fec_default;
+	if_link->active_fec = params.fec;
 
 	/* Fill link advertised capability */
 	qed_fill_link_capability(hwfn, ptt, params.speed.advertised_speeds,
-				 अगर_link->advertised_caps);
+				 if_link->advertised_caps);
 
 	/* Fill link supported capability */
 	qed_fill_link_capability(hwfn, ptt, link_caps.speed_capabilities,
-				 अगर_link->supported_caps);
+				 if_link->supported_caps);
 
 	/* Fill partner advertised capability */
 	qed_lp_caps_to_speed_mask(link.partner_adv_speed, &speed_mask);
-	qed_fill_link_capability(hwfn, ptt, speed_mask, अगर_link->lp_caps);
+	qed_fill_link_capability(hwfn, ptt, speed_mask, if_link->lp_caps);
 
-	अगर (link.link_up)
-		अगर_link->speed = link.speed;
+	if (link.link_up)
+		if_link->speed = link.speed;
 
 	/* TODO - fill duplex properly */
-	अगर_link->duplex = DUPLEX_FULL;
+	if_link->duplex = DUPLEX_FULL;
 	qed_mcp_get_media_type(hwfn, ptt, &media_type);
-	अगर_link->port = qed_get_port_type(media_type);
+	if_link->port = qed_get_port_type(media_type);
 
-	अगर_link->स्वतःneg = params.speed.स्वतःneg;
+	if_link->autoneg = params.speed.autoneg;
 
-	अगर (params.छोड़ो.स्वतःneg)
-		अगर_link->छोड़ो_config |= QED_LINK_PAUSE_AUTONEG_ENABLE;
-	अगर (params.छोड़ो.क्रमced_rx)
-		अगर_link->छोड़ो_config |= QED_LINK_PAUSE_RX_ENABLE;
-	अगर (params.छोड़ो.क्रमced_tx)
-		अगर_link->छोड़ो_config |= QED_LINK_PAUSE_TX_ENABLE;
+	if (params.pause.autoneg)
+		if_link->pause_config |= QED_LINK_PAUSE_AUTONEG_ENABLE;
+	if (params.pause.forced_rx)
+		if_link->pause_config |= QED_LINK_PAUSE_RX_ENABLE;
+	if (params.pause.forced_tx)
+		if_link->pause_config |= QED_LINK_PAUSE_TX_ENABLE;
 
-	अगर (link.an_complete)
-		phylink_set(अगर_link->lp_caps, Autoneg);
-	अगर (link.partner_adv_छोड़ो)
-		phylink_set(अगर_link->lp_caps, Pause);
-	अगर (link.partner_adv_छोड़ो == QED_LINK_PARTNER_ASYMMETRIC_PAUSE ||
-	    link.partner_adv_छोड़ो == QED_LINK_PARTNER_BOTH_PAUSE)
-		phylink_set(अगर_link->lp_caps, Asym_Pause);
+	if (link.an_complete)
+		phylink_set(if_link->lp_caps, Autoneg);
+	if (link.partner_adv_pause)
+		phylink_set(if_link->lp_caps, Pause);
+	if (link.partner_adv_pause == QED_LINK_PARTNER_ASYMMETRIC_PAUSE ||
+	    link.partner_adv_pause == QED_LINK_PARTNER_BOTH_PAUSE)
+		phylink_set(if_link->lp_caps, Asym_Pause);
 
-	अगर (link_caps.शेष_eee == QED_MCP_EEE_UNSUPPORTED) अणु
-		अगर_link->eee_supported = false;
-	पूर्ण अन्यथा अणु
-		अगर_link->eee_supported = true;
-		अगर_link->eee_active = link.eee_active;
-		अगर_link->sup_caps = link_caps.eee_speed_caps;
+	if (link_caps.default_eee == QED_MCP_EEE_UNSUPPORTED) {
+		if_link->eee_supported = false;
+	} else {
+		if_link->eee_supported = true;
+		if_link->eee_active = link.eee_active;
+		if_link->sup_caps = link_caps.eee_speed_caps;
 		/* MFW clears adv_caps on eee disable; use configured value */
-		अगर_link->eee.adv_caps = link.eee_adv_caps ? link.eee_adv_caps :
+		if_link->eee.adv_caps = link.eee_adv_caps ? link.eee_adv_caps :
 					params.eee.adv_caps;
-		अगर_link->eee.lp_adv_caps = link.eee_lp_adv_caps;
-		अगर_link->eee.enable = params.eee.enable;
-		अगर_link->eee.tx_lpi_enable = params.eee.tx_lpi_enable;
-		अगर_link->eee.tx_lpi_समयr = params.eee.tx_lpi_समयr;
-	पूर्ण
-पूर्ण
+		if_link->eee.lp_adv_caps = link.eee_lp_adv_caps;
+		if_link->eee.enable = params.eee.enable;
+		if_link->eee.tx_lpi_enable = params.eee.tx_lpi_enable;
+		if_link->eee.tx_lpi_timer = params.eee.tx_lpi_timer;
+	}
+}
 
-अटल व्योम qed_get_current_link(काष्ठा qed_dev *cdev,
-				 काष्ठा qed_link_output *अगर_link)
-अणु
-	काष्ठा qed_hwfn *hwfn;
-	काष्ठा qed_ptt *ptt;
-	पूर्णांक i;
+static void qed_get_current_link(struct qed_dev *cdev,
+				 struct qed_link_output *if_link)
+{
+	struct qed_hwfn *hwfn;
+	struct qed_ptt *ptt;
+	int i;
 
 	hwfn = &cdev->hwfns[0];
-	अगर (IS_PF(cdev)) अणु
+	if (IS_PF(cdev)) {
 		ptt = qed_ptt_acquire(hwfn);
-		अगर (ptt) अणु
-			qed_fill_link(hwfn, ptt, अगर_link);
+		if (ptt) {
+			qed_fill_link(hwfn, ptt, if_link);
 			qed_ptt_release(hwfn, ptt);
-		पूर्ण अन्यथा अणु
+		} else {
 			DP_NOTICE(hwfn, "Failed to fill link; No PTT\n");
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		qed_fill_link(hwfn, शून्य, अगर_link);
-	पूर्ण
+		}
+	} else {
+		qed_fill_link(hwfn, NULL, if_link);
+	}
 
-	क्रम_each_hwfn(cdev, i)
-		qed_inक्रमm_vf_link_state(&cdev->hwfns[i]);
-पूर्ण
+	for_each_hwfn(cdev, i)
+		qed_inform_vf_link_state(&cdev->hwfns[i]);
+}
 
-व्योम qed_link_update(काष्ठा qed_hwfn *hwfn, काष्ठा qed_ptt *ptt)
-अणु
-	व्योम *cookie = hwfn->cdev->ops_cookie;
-	काष्ठा qed_common_cb_ops *op = hwfn->cdev->protocol_ops.common;
-	काष्ठा qed_link_output अगर_link;
+void qed_link_update(struct qed_hwfn *hwfn, struct qed_ptt *ptt)
+{
+	void *cookie = hwfn->cdev->ops_cookie;
+	struct qed_common_cb_ops *op = hwfn->cdev->protocol_ops.common;
+	struct qed_link_output if_link;
 
-	qed_fill_link(hwfn, ptt, &अगर_link);
-	qed_inक्रमm_vf_link_state(hwfn);
+	qed_fill_link(hwfn, ptt, &if_link);
+	qed_inform_vf_link_state(hwfn);
 
-	अगर (IS_LEAD_HWFN(hwfn) && cookie)
-		op->link_update(cookie, &अगर_link);
-पूर्ण
+	if (IS_LEAD_HWFN(hwfn) && cookie)
+		op->link_update(cookie, &if_link);
+}
 
-व्योम qed_bw_update(काष्ठा qed_hwfn *hwfn, काष्ठा qed_ptt *ptt)
-अणु
-	व्योम *cookie = hwfn->cdev->ops_cookie;
-	काष्ठा qed_common_cb_ops *op = hwfn->cdev->protocol_ops.common;
+void qed_bw_update(struct qed_hwfn *hwfn, struct qed_ptt *ptt)
+{
+	void *cookie = hwfn->cdev->ops_cookie;
+	struct qed_common_cb_ops *op = hwfn->cdev->protocol_ops.common;
 
-	अगर (IS_LEAD_HWFN(hwfn) && cookie && op && op->bw_update)
+	if (IS_LEAD_HWFN(hwfn) && cookie && op && op->bw_update)
 		op->bw_update(cookie);
-पूर्ण
+}
 
-अटल पूर्णांक qed_drain(काष्ठा qed_dev *cdev)
-अणु
-	काष्ठा qed_hwfn *hwfn;
-	काष्ठा qed_ptt *ptt;
-	पूर्णांक i, rc;
+static int qed_drain(struct qed_dev *cdev)
+{
+	struct qed_hwfn *hwfn;
+	struct qed_ptt *ptt;
+	int i, rc;
 
-	अगर (IS_VF(cdev))
-		वापस 0;
+	if (IS_VF(cdev))
+		return 0;
 
-	क्रम_each_hwfn(cdev, i) अणु
+	for_each_hwfn(cdev, i) {
 		hwfn = &cdev->hwfns[i];
 		ptt = qed_ptt_acquire(hwfn);
-		अगर (!ptt) अणु
+		if (!ptt) {
 			DP_NOTICE(hwfn, "Failed to drain NIG; No PTT\n");
-			वापस -EBUSY;
-		पूर्ण
+			return -EBUSY;
+		}
 		rc = qed_mcp_drain(hwfn, ptt);
 		qed_ptt_release(hwfn, ptt);
-		अगर (rc)
-			वापस rc;
-	पूर्ण
+		if (rc)
+			return rc;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u32 qed_nvm_flash_image_access_crc(काष्ठा qed_dev *cdev,
-					  काष्ठा qed_nvm_image_att *nvm_image,
+static u32 qed_nvm_flash_image_access_crc(struct qed_dev *cdev,
+					  struct qed_nvm_image_att *nvm_image,
 					  u32 *crc)
-अणु
-	u8 *buf = शून्य;
-	पूर्णांक rc;
+{
+	u8 *buf = NULL;
+	int rc;
 
-	/* Allocate a buffer क्रम holding the nvram image */
+	/* Allocate a buffer for holding the nvram image */
 	buf = kzalloc(nvm_image->length, GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	if (!buf)
+		return -ENOMEM;
 
-	/* Read image पूर्णांकo buffer */
-	rc = qed_mcp_nvm_पढ़ो(cdev, nvm_image->start_addr,
+	/* Read image into buffer */
+	rc = qed_mcp_nvm_read(cdev, nvm_image->start_addr,
 			      buf, nvm_image->length);
-	अगर (rc) अणु
+	if (rc) {
 		DP_ERR(cdev, "Failed reading image from nvm\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Convert the buffer पूर्णांकo big-endian क्रमmat (excluding the
+	/* Convert the buffer into big-endian format (excluding the
 	 * closing 4 bytes of CRC).
 	 */
-	cpu_to_be32_array((__क्रमce __be32 *)buf, (स्थिर u32 *)buf,
+	cpu_to_be32_array((__force __be32 *)buf, (const u32 *)buf,
 			  DIV_ROUND_UP(nvm_image->length - 4, 4));
 
-	/* Calc CRC क्रम the "actual" image buffer, i.e. not including
+	/* Calc CRC for the "actual" image buffer, i.e. not including
 	 * the last 4 CRC bytes.
 	 */
 	*crc = ~crc32(~0U, buf, nvm_image->length - 4);
-	*crc = (__क्रमce u32)cpu_to_be32p(crc);
+	*crc = (__force u32)cpu_to_be32p(crc);
 
 out:
-	kमुक्त(buf);
+	kfree(buf);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-/* Binary file क्रमmat -
+/* Binary file format -
  *     /----------------------------------------------------------------------\
  * 0B  |                       0x4 [command index]                            |
- * 4B  | image_type     | Options        |  Number of रेजिस्टर settings       |
+ * 4B  | image_type     | Options        |  Number of register settings       |
  * 8B  |                       Value                                          |
  * 12B |                       Mask                                           |
  * 16B |                       Offset                                         |
  *     \----------------------------------------------------------------------/
- * There can be several Value-Mask-Offset sets as specअगरied by 'Number of...'.
- * Options - 0'b - Calculate & Update CRC क्रम image
+ * There can be several Value-Mask-Offset sets as specified by 'Number of...'.
+ * Options - 0'b - Calculate & Update CRC for image
  */
-अटल पूर्णांक qed_nvm_flash_image_access(काष्ठा qed_dev *cdev, स्थिर u8 **data,
+static int qed_nvm_flash_image_access(struct qed_dev *cdev, const u8 **data,
 				      bool *check_resp)
-अणु
-	काष्ठा qed_nvm_image_att nvm_image;
-	काष्ठा qed_hwfn *p_hwfn;
+{
+	struct qed_nvm_image_att nvm_image;
+	struct qed_hwfn *p_hwfn;
 	bool is_crc = false;
 	u32 image_type;
-	पूर्णांक rc = 0, i;
+	int rc = 0, i;
 	u16 len;
 
 	*data += 4;
 	image_type = **data;
 	p_hwfn = QED_LEADING_HWFN(cdev);
-	क्रम (i = 0; i < p_hwfn->nvm_info.num_images; i++)
-		अगर (image_type == p_hwfn->nvm_info.image_att[i].image_type)
-			अवरोध;
-	अगर (i == p_hwfn->nvm_info.num_images) अणु
+	for (i = 0; i < p_hwfn->nvm_info.num_images; i++)
+		if (image_type == p_hwfn->nvm_info.image_att[i].image_type)
+			break;
+	if (i == p_hwfn->nvm_info.num_images) {
 		DP_ERR(cdev, "Failed to find nvram image of type %08x\n",
 		       image_type);
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
 	nvm_image.start_addr = p_hwfn->nvm_info.image_att[i].nvm_start_addr;
 	nvm_image.length = p_hwfn->nvm_info.image_att[i].len;
@@ -2355,26 +2354,26 @@ out:
 	(*data)++;
 	len = *((u16 *)*data);
 	*data += 2;
-	अगर (is_crc) अणु
+	if (is_crc) {
 		u32 crc = 0;
 
 		rc = qed_nvm_flash_image_access_crc(cdev, &nvm_image, &crc);
-		अगर (rc) अणु
+		if (rc) {
 			DP_ERR(cdev, "Failed calculating CRC, rc = %d\n", rc);
-			जाओ निकास;
-		पूर्ण
+			goto exit;
+		}
 
-		rc = qed_mcp_nvm_ग_लिखो(cdev, QED_NVM_WRITE_NVRAM,
+		rc = qed_mcp_nvm_write(cdev, QED_NVM_WRITE_NVRAM,
 				       (nvm_image.start_addr +
 					nvm_image.length - 4), (u8 *)&crc, 4);
-		अगर (rc)
+		if (rc)
 			DP_ERR(cdev, "Failed writing to %08x, rc = %d\n",
 			       nvm_image.start_addr + nvm_image.length - 4, rc);
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	/* Iterate over the values क्रम setting */
-	जबतक (len) अणु
+	/* Iterate over the values for setting */
+	while (len) {
 		u32 offset, mask, value, cur_value;
 		u8 buf[4];
 
@@ -2385,13 +2384,13 @@ out:
 		offset = *((u32 *)*data);
 		*data += 4;
 
-		rc = qed_mcp_nvm_पढ़ो(cdev, nvm_image.start_addr + offset, buf,
+		rc = qed_mcp_nvm_read(cdev, nvm_image.start_addr + offset, buf,
 				      4);
-		अगर (rc) अणु
+		if (rc) {
 			DP_ERR(cdev, "Failed reading from %08x\n",
 			       nvm_image.start_addr + offset);
-			जाओ निकास;
-		पूर्ण
+			goto exit;
+		}
 
 		cur_value = le32_to_cpu(*((__le32 *)buf));
 		DP_VERBOSE(cdev, NETIF_MSG_DRV,
@@ -2399,22 +2398,22 @@ out:
 			   nvm_image.start_addr + offset, cur_value,
 			   (cur_value & ~mask) | (value & mask), value, mask);
 		value = (value & mask) | (cur_value & ~mask);
-		rc = qed_mcp_nvm_ग_लिखो(cdev, QED_NVM_WRITE_NVRAM,
+		rc = qed_mcp_nvm_write(cdev, QED_NVM_WRITE_NVRAM,
 				       nvm_image.start_addr + offset,
 				       (u8 *)&value, 4);
-		अगर (rc) अणु
+		if (rc) {
 			DP_ERR(cdev, "Failed writing to %08x\n",
 			       nvm_image.start_addr + offset);
-			जाओ निकास;
-		पूर्ण
+			goto exit;
+		}
 
 		len--;
-	पूर्ण
-निकास:
-	वापस rc;
-पूर्ण
+	}
+exit:
+	return rc;
+}
 
-/* Binary file क्रमmat -
+/* Binary file format -
  *     /----------------------------------------------------------------------\
  * 0B  |                       0x3 [command index]                            |
  * 4B  | b'0: check_response?   | b'1-31  reserved                            |
@@ -2423,11 +2422,11 @@ out:
  *     \----------------------------------------------------------------------/
  *     Start a new file of the provided type
  */
-अटल पूर्णांक qed_nvm_flash_image_file_start(काष्ठा qed_dev *cdev,
-					  स्थिर u8 **data, bool *check_resp)
-अणु
+static int qed_nvm_flash_image_file_start(struct qed_dev *cdev,
+					  const u8 **data, bool *check_resp)
+{
 	u32 file_type, file_size = 0;
-	पूर्णांक rc;
+	int rc;
 
 	*data += 4;
 	*check_resp = !!(**data & BIT(0));
@@ -2436,19 +2435,19 @@ out:
 
 	DP_VERBOSE(cdev, NETIF_MSG_DRV,
 		   "About to start a new file of type %02x\n", file_type);
-	अगर (file_type == DRV_MB_PARAM_NVM_PUT_खाता_BEGIN_MBI) अणु
+	if (file_type == DRV_MB_PARAM_NVM_PUT_FILE_BEGIN_MBI) {
 		*data += 4;
 		file_size = *((u32 *)(*data));
-	पूर्ण
+	}
 
-	rc = qed_mcp_nvm_ग_लिखो(cdev, QED_PUT_खाता_BEGIN, file_type,
+	rc = qed_mcp_nvm_write(cdev, QED_PUT_FILE_BEGIN, file_type,
 			       (u8 *)(&file_size), 4);
 	*data += 4;
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-/* Binary file क्रमmat -
+/* Binary file format -
  *     /----------------------------------------------------------------------\
  * 0B  |                       0x2 [command index]                            |
  * 4B  |                       Length in bytes                                |
@@ -2459,11 +2458,11 @@ out:
  *     Write data as part of a file that was previously started. Data should be
  *     of length equal to that provided in the message
  */
-अटल पूर्णांक qed_nvm_flash_image_file_data(काष्ठा qed_dev *cdev,
-					 स्थिर u8 **data, bool *check_resp)
-अणु
+static int qed_nvm_flash_image_file_data(struct qed_dev *cdev,
+					 const u8 **data, bool *check_resp)
+{
 	u32 offset, len;
-	पूर्णांक rc;
+	int rc;
 
 	*data += 4;
 	len = *((u32 *)(*data));
@@ -2477,62 +2476,62 @@ out:
 		   "About to write File-data: %08x bytes to offset %08x\n",
 		   len, offset);
 
-	rc = qed_mcp_nvm_ग_लिखो(cdev, QED_PUT_खाता_DATA, offset,
-			       (अक्षर *)(*data), len);
+	rc = qed_mcp_nvm_write(cdev, QED_PUT_FILE_DATA, offset,
+			       (char *)(*data), len);
 	*data += len;
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-/* Binary file क्रमmat [General header] -
+/* Binary file format [General header] -
  *     /----------------------------------------------------------------------\
  * 0B  |                       QED_NVM_SIGNATURE                              |
  * 4B  |                       Length in bytes                                |
  * 8B  | Highest command in this batchfile |          Reserved                |
  *     \----------------------------------------------------------------------/
  */
-अटल पूर्णांक qed_nvm_flash_image_validate(काष्ठा qed_dev *cdev,
-					स्थिर काष्ठा firmware *image,
-					स्थिर u8 **data)
-अणु
+static int qed_nvm_flash_image_validate(struct qed_dev *cdev,
+					const struct firmware *image,
+					const u8 **data)
+{
 	u32 signature, len;
 
 	/* Check minimum size */
-	अगर (image->size < 12) अणु
+	if (image->size < 12) {
 		DP_ERR(cdev, "Image is too short [%08x]\n", (u32)image->size);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* Check signature */
 	signature = *((u32 *)(*data));
-	अगर (signature != QED_NVM_SIGNATURE) अणु
+	if (signature != QED_NVM_SIGNATURE) {
 		DP_ERR(cdev, "Wrong signature '%08x'\n", signature);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	*data += 4;
-	/* Validate पूर्णांकernal size equals the image-size */
+	/* Validate internal size equals the image-size */
 	len = *((u32 *)(*data));
-	अगर (len != image->size) अणु
+	if (len != image->size) {
 		DP_ERR(cdev, "Size mismatch: internal = %08x image = %08x\n",
 		       len, (u32)image->size);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	*data += 4;
-	/* Make sure driver familiar with all commands necessary क्रम this */
-	अगर (*((u16 *)(*data)) >= QED_NVM_FLASH_CMD_NVM_MAX) अणु
+	/* Make sure driver familiar with all commands necessary for this */
+	if (*((u16 *)(*data)) >= QED_NVM_FLASH_CMD_NVM_MAX) {
 		DP_ERR(cdev, "File contains unsupported commands [Need %04x]\n",
 		       *((u16 *)(*data)));
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	*data += 4;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Binary file क्रमmat -
+/* Binary file format -
  *     /----------------------------------------------------------------------\
  * 0B  |                       0x5 [command index]                            |
  * 4B  | Number of config attributes     |          Reserved                  |
@@ -2540,25 +2539,25 @@ out:
  * 4B  | Value                                                                |
  *     |                                                                      |
  *     \----------------------------------------------------------------------/
- * There can be several cfg_id-entity_id-Length-Value sets as specअगरied by
+ * There can be several cfg_id-entity_id-Length-Value sets as specified by
  * 'Number of config attributes'.
  *
  * The API parses config attributes from the user provided buffer and flashes
  * them to the respective NVM path using Management FW inerface.
  */
-अटल पूर्णांक qed_nvm_flash_cfg_ग_लिखो(काष्ठा qed_dev *cdev, स्थिर u8 **data)
-अणु
-	काष्ठा qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
+static int qed_nvm_flash_cfg_write(struct qed_dev *cdev, const u8 **data)
+{
+	struct qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
 	u8 entity_id, len, buf[32];
 	bool need_nvm_init = true;
-	काष्ठा qed_ptt *ptt;
+	struct qed_ptt *ptt;
 	u16 cfg_id, count;
-	पूर्णांक rc = 0, i;
+	int rc = 0, i;
 	u32 flags;
 
 	ptt = qed_ptt_acquire(hwfn);
-	अगर (!ptt)
-		वापस -EAGAIN;
+	if (!ptt)
+		return -EAGAIN;
 
 	/* NVM CFG ID attribute header */
 	*data += 4;
@@ -2567,33 +2566,33 @@ out:
 
 	DP_VERBOSE(cdev, NETIF_MSG_DRV,
 		   "Read config ids: num_attrs = %0d\n", count);
-	/* NVM CFG ID attributes. Start loop index from 1 to aव्योम additional
+	/* NVM CFG ID attributes. Start loop index from 1 to avoid additional
 	 * arithmetic operations in the implementation.
 	 */
-	क्रम (i = 1; i <= count; i++) अणु
+	for (i = 1; i <= count; i++) {
 		cfg_id = *((u16 *)*data);
 		*data += 2;
 		entity_id = **data;
 		(*data)++;
 		len = **data;
 		(*data)++;
-		स_नकल(buf, *data, len);
+		memcpy(buf, *data, len);
 		*data += len;
 
 		flags = 0;
-		अगर (need_nvm_init) अणु
+		if (need_nvm_init) {
 			flags |= QED_NVM_CFG_OPTION_INIT;
 			need_nvm_init = false;
-		पूर्ण
+		}
 
-		/* Commit to flash and मुक्त the resources */
-		अगर (!(i % QED_NVM_CFG_MAX_ATTRS) || i == count) अणु
+		/* Commit to flash and free the resources */
+		if (!(i % QED_NVM_CFG_MAX_ATTRS) || i == count) {
 			flags |= QED_NVM_CFG_OPTION_COMMIT |
 				 QED_NVM_CFG_OPTION_FREE;
 			need_nvm_init = true;
-		पूर्ण
+		}
 
-		अगर (entity_id)
+		if (entity_id)
 			flags |= QED_NVM_CFG_OPTION_ENTITY_SEL;
 
 		DP_VERBOSE(cdev, NETIF_MSG_DRV,
@@ -2601,78 +2600,78 @@ out:
 			   entity_id, len);
 		rc = qed_mcp_nvm_set_cfg(hwfn, ptt, cfg_id, entity_id, flags,
 					 buf, len);
-		अगर (rc) अणु
+		if (rc) {
 			DP_ERR(cdev, "Error %d configuring %d\n", rc, cfg_id);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	qed_ptt_release(hwfn, ptt);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-#घोषणा QED_MAX_NVM_BUF_LEN	32
-अटल पूर्णांक qed_nvm_flash_cfg_len(काष्ठा qed_dev *cdev, u32 cmd)
-अणु
-	काष्ठा qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
+#define QED_MAX_NVM_BUF_LEN	32
+static int qed_nvm_flash_cfg_len(struct qed_dev *cdev, u32 cmd)
+{
+	struct qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
 	u8 buf[QED_MAX_NVM_BUF_LEN];
-	काष्ठा qed_ptt *ptt;
+	struct qed_ptt *ptt;
 	u32 len;
-	पूर्णांक rc;
+	int rc;
 
 	ptt = qed_ptt_acquire(hwfn);
-	अगर (!ptt)
-		वापस QED_MAX_NVM_BUF_LEN;
+	if (!ptt)
+		return QED_MAX_NVM_BUF_LEN;
 
 	rc = qed_mcp_nvm_get_cfg(hwfn, ptt, cmd, 0, QED_NVM_CFG_GET_FLAGS, buf,
 				 &len);
-	अगर (rc || !len) अणु
+	if (rc || !len) {
 		DP_ERR(cdev, "Error %d reading %d\n", rc, cmd);
 		len = QED_MAX_NVM_BUF_LEN;
-	पूर्ण
+	}
 
 	qed_ptt_release(hwfn, ptt);
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल पूर्णांक qed_nvm_flash_cfg_पढ़ो(काष्ठा qed_dev *cdev, u8 **data,
+static int qed_nvm_flash_cfg_read(struct qed_dev *cdev, u8 **data,
 				  u32 cmd, u32 entity_id)
-अणु
-	काष्ठा qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
-	काष्ठा qed_ptt *ptt;
+{
+	struct qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
+	struct qed_ptt *ptt;
 	u32 flags, len;
-	पूर्णांक rc = 0;
+	int rc = 0;
 
 	ptt = qed_ptt_acquire(hwfn);
-	अगर (!ptt)
-		वापस -EAGAIN;
+	if (!ptt)
+		return -EAGAIN;
 
 	DP_VERBOSE(cdev, NETIF_MSG_DRV,
 		   "Read config cmd = %d entity id %d\n", cmd, entity_id);
 	flags = entity_id ? QED_NVM_CFG_GET_PF_FLAGS : QED_NVM_CFG_GET_FLAGS;
 	rc = qed_mcp_nvm_get_cfg(hwfn, ptt, cmd, entity_id, flags, *data, &len);
-	अगर (rc)
+	if (rc)
 		DP_ERR(cdev, "Error %d reading %d\n", rc, cmd);
 
 	qed_ptt_release(hwfn, ptt);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक qed_nvm_flash(काष्ठा qed_dev *cdev, स्थिर अक्षर *name)
-अणु
-	स्थिर काष्ठा firmware *image;
-	स्थिर u8 *data, *data_end;
+static int qed_nvm_flash(struct qed_dev *cdev, const char *name)
+{
+	const struct firmware *image;
+	const u8 *data, *data_end;
 	u32 cmd_type;
-	पूर्णांक rc;
+	int rc;
 
 	rc = request_firmware(&image, name, &cdev->pdev->dev);
-	अगर (rc) अणु
+	if (rc) {
 		DP_ERR(cdev, "Failed to find '%s'\n", name);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
 	DP_VERBOSE(cdev, NETIF_MSG_DRV,
 		   "Flashing '%s' - firmware's data at %p, size is %08x\n",
@@ -2681,90 +2680,90 @@ out:
 	data_end = data + image->size;
 
 	rc = qed_nvm_flash_image_validate(cdev, image, &data);
-	अगर (rc)
-		जाओ निकास;
+	if (rc)
+		goto exit;
 
-	जबतक (data < data_end) अणु
+	while (data < data_end) {
 		bool check_resp = false;
 
 		/* Parse the actual command */
 		cmd_type = *((u32 *)data);
-		चयन (cmd_type) अणु
-		हाल QED_NVM_FLASH_CMD_खाता_DATA:
+		switch (cmd_type) {
+		case QED_NVM_FLASH_CMD_FILE_DATA:
 			rc = qed_nvm_flash_image_file_data(cdev, &data,
 							   &check_resp);
-			अवरोध;
-		हाल QED_NVM_FLASH_CMD_खाता_START:
+			break;
+		case QED_NVM_FLASH_CMD_FILE_START:
 			rc = qed_nvm_flash_image_file_start(cdev, &data,
 							    &check_resp);
-			अवरोध;
-		हाल QED_NVM_FLASH_CMD_NVM_CHANGE:
+			break;
+		case QED_NVM_FLASH_CMD_NVM_CHANGE:
 			rc = qed_nvm_flash_image_access(cdev, &data,
 							&check_resp);
-			अवरोध;
-		हाल QED_NVM_FLASH_CMD_NVM_CFG_ID:
-			rc = qed_nvm_flash_cfg_ग_लिखो(cdev, &data);
-			अवरोध;
-		शेष:
+			break;
+		case QED_NVM_FLASH_CMD_NVM_CFG_ID:
+			rc = qed_nvm_flash_cfg_write(cdev, &data);
+			break;
+		default:
 			DP_ERR(cdev, "Unknown command %08x\n", cmd_type);
 			rc = -EINVAL;
-			जाओ निकास;
-		पूर्ण
+			goto exit;
+		}
 
-		अगर (rc) अणु
+		if (rc) {
 			DP_ERR(cdev, "Command %08x failed\n", cmd_type);
-			जाओ निकास;
-		पूर्ण
+			goto exit;
+		}
 
-		/* Check response अगर needed */
-		अगर (check_resp) अणु
+		/* Check response if needed */
+		if (check_resp) {
 			u32 mcp_response = 0;
 
-			अगर (qed_mcp_nvm_resp(cdev, (u8 *)&mcp_response)) अणु
+			if (qed_mcp_nvm_resp(cdev, (u8 *)&mcp_response)) {
 				DP_ERR(cdev, "Failed getting MCP response\n");
 				rc = -EINVAL;
-				जाओ निकास;
-			पूर्ण
+				goto exit;
+			}
 
-			चयन (mcp_response & FW_MSG_CODE_MASK) अणु
-			हाल FW_MSG_CODE_OK:
-			हाल FW_MSG_CODE_NVM_OK:
-			हाल FW_MSG_CODE_NVM_PUT_खाता_FINISH_OK:
-			हाल FW_MSG_CODE_PHY_OK:
-				अवरोध;
-			शेष:
+			switch (mcp_response & FW_MSG_CODE_MASK) {
+			case FW_MSG_CODE_OK:
+			case FW_MSG_CODE_NVM_OK:
+			case FW_MSG_CODE_NVM_PUT_FILE_FINISH_OK:
+			case FW_MSG_CODE_PHY_OK:
+				break;
+			default:
 				DP_ERR(cdev, "MFW returns error: %08x\n",
 				       mcp_response);
 				rc = -EINVAL;
-				जाओ निकास;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				goto exit;
+			}
+		}
+	}
 
-निकास:
+exit:
 	release_firmware(image);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक qed_nvm_get_image(काष्ठा qed_dev *cdev, क्रमागत qed_nvm_images type,
+static int qed_nvm_get_image(struct qed_dev *cdev, enum qed_nvm_images type,
 			     u8 *buf, u16 len)
-अणु
-	काष्ठा qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
+{
+	struct qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
 
-	वापस qed_mcp_get_nvm_image(hwfn, type, buf, len);
-पूर्ण
+	return qed_mcp_get_nvm_image(hwfn, type, buf, len);
+}
 
-व्योम qed_schedule_recovery_handler(काष्ठा qed_hwfn *p_hwfn)
-अणु
-	काष्ठा qed_common_cb_ops *ops = p_hwfn->cdev->protocol_ops.common;
-	व्योम *cookie = p_hwfn->cdev->ops_cookie;
+void qed_schedule_recovery_handler(struct qed_hwfn *p_hwfn)
+{
+	struct qed_common_cb_ops *ops = p_hwfn->cdev->protocol_ops.common;
+	void *cookie = p_hwfn->cdev->ops_cookie;
 
-	अगर (ops && ops->schedule_recovery_handler)
+	if (ops && ops->schedule_recovery_handler)
 		ops->schedule_recovery_handler(cookie);
-पूर्ण
+}
 
-अटल स्थिर अक्षर * स्थिर qed_hw_err_type_descr[] = अणु
+static const char * const qed_hw_err_type_descr[] = {
 	[QED_HW_ERR_FAN_FAIL]		= "Fan Failure",
 	[QED_HW_ERR_MFW_RESP_FAIL]	= "MFW Response Failure",
 	[QED_HW_ERR_HW_ATTN]		= "HW Attention",
@@ -2772,107 +2771,107 @@ out:
 	[QED_HW_ERR_RAMROD_FAIL]	= "Ramrod Failure",
 	[QED_HW_ERR_FW_ASSERT]		= "FW Assertion",
 	[QED_HW_ERR_LAST]		= "Unknown",
-पूर्ण;
+};
 
-व्योम qed_hw_error_occurred(काष्ठा qed_hwfn *p_hwfn,
-			   क्रमागत qed_hw_err_type err_type)
-अणु
-	काष्ठा qed_common_cb_ops *ops = p_hwfn->cdev->protocol_ops.common;
-	व्योम *cookie = p_hwfn->cdev->ops_cookie;
-	स्थिर अक्षर *err_str;
+void qed_hw_error_occurred(struct qed_hwfn *p_hwfn,
+			   enum qed_hw_err_type err_type)
+{
+	struct qed_common_cb_ops *ops = p_hwfn->cdev->protocol_ops.common;
+	void *cookie = p_hwfn->cdev->ops_cookie;
+	const char *err_str;
 
-	अगर (err_type > QED_HW_ERR_LAST)
+	if (err_type > QED_HW_ERR_LAST)
 		err_type = QED_HW_ERR_LAST;
 	err_str = qed_hw_err_type_descr[err_type];
 
 	DP_NOTICE(p_hwfn, "HW error occurred [%s]\n", err_str);
 
 	/* Call the HW error handler of the protocol driver.
-	 * If it is not available - perक्रमm a minimal handling of preventing
-	 * HW attentions from being reनिश्चितed.
+	 * If it is not available - perform a minimal handling of preventing
+	 * HW attentions from being reasserted.
 	 */
-	अगर (ops && ops->schedule_hw_err_handler)
+	if (ops && ops->schedule_hw_err_handler)
 		ops->schedule_hw_err_handler(cookie, err_type);
-	अन्यथा
-		qed_पूर्णांक_attn_clr_enable(p_hwfn->cdev, true);
-पूर्ण
+	else
+		qed_int_attn_clr_enable(p_hwfn->cdev, true);
+}
 
-अटल पूर्णांक qed_set_coalesce(काष्ठा qed_dev *cdev, u16 rx_coal, u16 tx_coal,
-			    व्योम *handle)
-अणु
-		वापस qed_set_queue_coalesce(rx_coal, tx_coal, handle);
-पूर्ण
+static int qed_set_coalesce(struct qed_dev *cdev, u16 rx_coal, u16 tx_coal,
+			    void *handle)
+{
+		return qed_set_queue_coalesce(rx_coal, tx_coal, handle);
+}
 
-अटल पूर्णांक qed_set_led(काष्ठा qed_dev *cdev, क्रमागत qed_led_mode mode)
-अणु
-	काष्ठा qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
-	काष्ठा qed_ptt *ptt;
-	पूर्णांक status = 0;
+static int qed_set_led(struct qed_dev *cdev, enum qed_led_mode mode)
+{
+	struct qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
+	struct qed_ptt *ptt;
+	int status = 0;
 
 	ptt = qed_ptt_acquire(hwfn);
-	अगर (!ptt)
-		वापस -EAGAIN;
+	if (!ptt)
+		return -EAGAIN;
 
 	status = qed_mcp_set_led(hwfn, ptt, mode);
 
 	qed_ptt_release(hwfn, ptt);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-पूर्णांक qed_recovery_process(काष्ठा qed_dev *cdev)
-अणु
-	काष्ठा qed_hwfn *p_hwfn = QED_LEADING_HWFN(cdev);
-	काष्ठा qed_ptt *p_ptt;
-	पूर्णांक rc = 0;
+int qed_recovery_process(struct qed_dev *cdev)
+{
+	struct qed_hwfn *p_hwfn = QED_LEADING_HWFN(cdev);
+	struct qed_ptt *p_ptt;
+	int rc = 0;
 
 	p_ptt = qed_ptt_acquire(p_hwfn);
-	अगर (!p_ptt)
-		वापस -EAGAIN;
+	if (!p_ptt)
+		return -EAGAIN;
 
 	rc = qed_start_recovery_process(p_hwfn, p_ptt);
 
 	qed_ptt_release(p_hwfn, p_ptt);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक qed_update_wol(काष्ठा qed_dev *cdev, bool enabled)
-अणु
-	काष्ठा qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
-	काष्ठा qed_ptt *ptt;
-	पूर्णांक rc = 0;
+static int qed_update_wol(struct qed_dev *cdev, bool enabled)
+{
+	struct qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
+	struct qed_ptt *ptt;
+	int rc = 0;
 
-	अगर (IS_VF(cdev))
-		वापस 0;
+	if (IS_VF(cdev))
+		return 0;
 
 	ptt = qed_ptt_acquire(hwfn);
-	अगर (!ptt)
-		वापस -EAGAIN;
+	if (!ptt)
+		return -EAGAIN;
 
 	rc = qed_mcp_ov_update_wol(hwfn, ptt, enabled ? QED_OV_WOL_ENABLED
 				   : QED_OV_WOL_DISABLED);
-	अगर (rc)
-		जाओ out;
+	if (rc)
+		goto out;
 	rc = qed_mcp_ov_update_current_config(hwfn, ptt, QED_OV_CLIENT_DRV);
 
 out:
 	qed_ptt_release(hwfn, ptt);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक qed_update_drv_state(काष्ठा qed_dev *cdev, bool active)
-अणु
-	काष्ठा qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
-	काष्ठा qed_ptt *ptt;
-	पूर्णांक status = 0;
+static int qed_update_drv_state(struct qed_dev *cdev, bool active)
+{
+	struct qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
+	struct qed_ptt *ptt;
+	int status = 0;
 
-	अगर (IS_VF(cdev))
-		वापस 0;
+	if (IS_VF(cdev))
+		return 0;
 
 	ptt = qed_ptt_acquire(hwfn);
-	अगर (!ptt)
-		वापस -EAGAIN;
+	if (!ptt)
+		return -EAGAIN;
 
 	status = qed_mcp_ov_update_driver_state(hwfn, ptt, active ?
 						QED_OV_DRIVER_STATE_ACTIVE :
@@ -2880,123 +2879,123 @@ out:
 
 	qed_ptt_release(hwfn, ptt);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक qed_update_mac(काष्ठा qed_dev *cdev, u8 *mac)
-अणु
-	काष्ठा qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
-	काष्ठा qed_ptt *ptt;
-	पूर्णांक status = 0;
+static int qed_update_mac(struct qed_dev *cdev, u8 *mac)
+{
+	struct qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
+	struct qed_ptt *ptt;
+	int status = 0;
 
-	अगर (IS_VF(cdev))
-		वापस 0;
+	if (IS_VF(cdev))
+		return 0;
 
 	ptt = qed_ptt_acquire(hwfn);
-	अगर (!ptt)
-		वापस -EAGAIN;
+	if (!ptt)
+		return -EAGAIN;
 
 	status = qed_mcp_ov_update_mac(hwfn, ptt, mac);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 
 	status = qed_mcp_ov_update_current_config(hwfn, ptt, QED_OV_CLIENT_DRV);
 
 out:
 	qed_ptt_release(hwfn, ptt);
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक qed_update_mtu(काष्ठा qed_dev *cdev, u16 mtu)
-अणु
-	काष्ठा qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
-	काष्ठा qed_ptt *ptt;
-	पूर्णांक status = 0;
+static int qed_update_mtu(struct qed_dev *cdev, u16 mtu)
+{
+	struct qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
+	struct qed_ptt *ptt;
+	int status = 0;
 
-	अगर (IS_VF(cdev))
-		वापस 0;
+	if (IS_VF(cdev))
+		return 0;
 
 	ptt = qed_ptt_acquire(hwfn);
-	अगर (!ptt)
-		वापस -EAGAIN;
+	if (!ptt)
+		return -EAGAIN;
 
 	status = qed_mcp_ov_update_mtu(hwfn, ptt, mtu);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 
 	status = qed_mcp_ov_update_current_config(hwfn, ptt, QED_OV_CLIENT_DRV);
 
 out:
 	qed_ptt_release(hwfn, ptt);
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक qed_पढ़ो_module_eeprom(काष्ठा qed_dev *cdev, अक्षर *buf,
+static int qed_read_module_eeprom(struct qed_dev *cdev, char *buf,
 				  u8 dev_addr, u32 offset, u32 len)
-अणु
-	काष्ठा qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
-	काष्ठा qed_ptt *ptt;
-	पूर्णांक rc = 0;
+{
+	struct qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
+	struct qed_ptt *ptt;
+	int rc = 0;
 
-	अगर (IS_VF(cdev))
-		वापस 0;
+	if (IS_VF(cdev))
+		return 0;
 
 	ptt = qed_ptt_acquire(hwfn);
-	अगर (!ptt)
-		वापस -EAGAIN;
+	if (!ptt)
+		return -EAGAIN;
 
-	rc = qed_mcp_phy_sfp_पढ़ो(hwfn, ptt, MFW_PORT(hwfn), dev_addr,
+	rc = qed_mcp_phy_sfp_read(hwfn, ptt, MFW_PORT(hwfn), dev_addr,
 				  offset, len, buf);
 
 	qed_ptt_release(hwfn, ptt);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक qed_set_grc_config(काष्ठा qed_dev *cdev, u32 cfg_id, u32 val)
-अणु
-	काष्ठा qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
-	काष्ठा qed_ptt *ptt;
-	पूर्णांक rc = 0;
+static int qed_set_grc_config(struct qed_dev *cdev, u32 cfg_id, u32 val)
+{
+	struct qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
+	struct qed_ptt *ptt;
+	int rc = 0;
 
-	अगर (IS_VF(cdev))
-		वापस 0;
+	if (IS_VF(cdev))
+		return 0;
 
 	ptt = qed_ptt_acquire(hwfn);
-	अगर (!ptt)
-		वापस -EAGAIN;
+	if (!ptt)
+		return -EAGAIN;
 
 	rc = qed_dbg_grc_config(hwfn, cfg_id, val);
 
 	qed_ptt_release(hwfn, ptt);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल u8 qed_get_affin_hwfn_idx(काष्ठा qed_dev *cdev)
-अणु
-	वापस QED_AFFIN_HWFN_IDX(cdev);
-पूर्ण
+static u8 qed_get_affin_hwfn_idx(struct qed_dev *cdev)
+{
+	return QED_AFFIN_HWFN_IDX(cdev);
+}
 
-अटल काष्ठा qed_selftest_ops qed_selftest_ops_pass = अणु
+static struct qed_selftest_ops qed_selftest_ops_pass = {
 	.selftest_memory = &qed_selftest_memory,
-	.selftest_पूर्णांकerrupt = &qed_selftest_पूर्णांकerrupt,
-	.selftest_रेजिस्टर = &qed_selftest_रेजिस्टर,
-	.selftest_घड़ी = &qed_selftest_घड़ी,
+	.selftest_interrupt = &qed_selftest_interrupt,
+	.selftest_register = &qed_selftest_register,
+	.selftest_clock = &qed_selftest_clock,
 	.selftest_nvram = &qed_selftest_nvram,
-पूर्ण;
+};
 
-स्थिर काष्ठा qed_common_ops qed_common_ops_pass = अणु
+const struct qed_common_ops qed_common_ops_pass = {
 	.selftest = &qed_selftest_ops_pass,
 	.probe = &qed_probe,
-	.हटाओ = &qed_हटाओ,
-	.set_घातer_state = &qed_set_घातer_state,
+	.remove = &qed_remove,
+	.set_power_state = &qed_set_power_state,
 	.set_name = &qed_set_name,
 	.update_pf_params = &qed_update_pf_params,
 	.slowpath_start = &qed_slowpath_start,
 	.slowpath_stop = &qed_slowpath_stop,
-	.set_fp_पूर्णांक = &qed_set_पूर्णांक_fp,
-	.get_fp_पूर्णांक = &qed_get_पूर्णांक_fp,
+	.set_fp_int = &qed_set_int_fp,
+	.get_fp_int = &qed_get_int_fp,
 	.sb_init = &qed_sb_init,
 	.sb_release = &qed_sb_release,
 	.simd_handler_config = &qed_simd_handler_config,
@@ -3008,100 +3007,100 @@ out:
 	.get_link = &qed_get_current_link,
 	.drain = &qed_drain,
 	.update_msglvl = &qed_init_dp,
-	.devlink_रेजिस्टर = qed_devlink_रेजिस्टर,
-	.devlink_unरेजिस्टर = qed_devlink_unरेजिस्टर,
+	.devlink_register = qed_devlink_register,
+	.devlink_unregister = qed_devlink_unregister,
 	.report_fatal_error = qed_report_fatal_error,
 	.dbg_all_data = &qed_dbg_all_data,
 	.dbg_all_data_size = &qed_dbg_all_data_size,
 	.chain_alloc = &qed_chain_alloc,
-	.chain_मुक्त = &qed_chain_मुक्त,
+	.chain_free = &qed_chain_free,
 	.nvm_flash = &qed_nvm_flash,
 	.nvm_get_image = &qed_nvm_get_image,
 	.set_coalesce = &qed_set_coalesce,
 	.set_led = &qed_set_led,
 	.recovery_process = &qed_recovery_process,
 	.recovery_prolog = &qed_recovery_prolog,
-	.attn_clr_enable = &qed_पूर्णांक_attn_clr_enable,
+	.attn_clr_enable = &qed_int_attn_clr_enable,
 	.update_drv_state = &qed_update_drv_state,
 	.update_mac = &qed_update_mac,
 	.update_mtu = &qed_update_mtu,
 	.update_wol = &qed_update_wol,
 	.db_recovery_add = &qed_db_recovery_add,
 	.db_recovery_del = &qed_db_recovery_del,
-	.पढ़ो_module_eeprom = &qed_पढ़ो_module_eeprom,
+	.read_module_eeprom = &qed_read_module_eeprom,
 	.get_affin_hwfn_idx = &qed_get_affin_hwfn_idx,
-	.पढ़ो_nvm_cfg = &qed_nvm_flash_cfg_पढ़ो,
-	.पढ़ो_nvm_cfg_len = &qed_nvm_flash_cfg_len,
+	.read_nvm_cfg = &qed_nvm_flash_cfg_read,
+	.read_nvm_cfg_len = &qed_nvm_flash_cfg_len,
 	.set_grc_config = &qed_set_grc_config,
-पूर्ण;
+};
 
-व्योम qed_get_protocol_stats(काष्ठा qed_dev *cdev,
-			    क्रमागत qed_mcp_protocol_type type,
-			    जोड़ qed_mcp_protocol_stats *stats)
-अणु
-	काष्ठा qed_eth_stats eth_stats;
+void qed_get_protocol_stats(struct qed_dev *cdev,
+			    enum qed_mcp_protocol_type type,
+			    union qed_mcp_protocol_stats *stats)
+{
+	struct qed_eth_stats eth_stats;
 
-	स_रखो(stats, 0, माप(*stats));
+	memset(stats, 0, sizeof(*stats));
 
-	चयन (type) अणु
-	हाल QED_MCP_LAN_STATS:
+	switch (type) {
+	case QED_MCP_LAN_STATS:
 		qed_get_vport_stats(cdev, &eth_stats);
 		stats->lan_stats.ucast_rx_pkts =
 					eth_stats.common.rx_ucast_pkts;
 		stats->lan_stats.ucast_tx_pkts =
 					eth_stats.common.tx_ucast_pkts;
 		stats->lan_stats.fcs_err = -1;
-		अवरोध;
-	हाल QED_MCP_FCOE_STATS:
+		break;
+	case QED_MCP_FCOE_STATS:
 		qed_get_protocol_stats_fcoe(cdev, &stats->fcoe_stats);
-		अवरोध;
-	हाल QED_MCP_ISCSI_STATS:
+		break;
+	case QED_MCP_ISCSI_STATS:
 		qed_get_protocol_stats_iscsi(cdev, &stats->iscsi_stats);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		DP_VERBOSE(cdev, QED_MSG_SP,
 			   "Invalid protocol type = %d\n", type);
-		वापस;
-	पूर्ण
-पूर्ण
+		return;
+	}
+}
 
-पूर्णांक qed_mfw_tlv_req(काष्ठा qed_hwfn *hwfn)
-अणु
+int qed_mfw_tlv_req(struct qed_hwfn *hwfn)
+{
 	DP_VERBOSE(hwfn->cdev, NETIF_MSG_DRV,
 		   "Scheduling slowpath task [Flag: %d]\n",
 		   QED_SLOWPATH_MFW_TLV_REQ);
-	smp_mb__beक्रमe_atomic();
+	smp_mb__before_atomic();
 	set_bit(QED_SLOWPATH_MFW_TLV_REQ, &hwfn->slowpath_task_flags);
 	smp_mb__after_atomic();
 	queue_delayed_work(hwfn->slowpath_wq, &hwfn->slowpath_task, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-qed_fill_generic_tlv_data(काष्ठा qed_dev *cdev, काष्ठा qed_mfw_tlv_generic *tlv)
-अणु
-	काष्ठा qed_common_cb_ops *op = cdev->protocol_ops.common;
-	काष्ठा qed_eth_stats_common *p_common;
-	काष्ठा qed_generic_tlvs gen_tlvs;
-	काष्ठा qed_eth_stats stats;
-	पूर्णांक i;
+static void
+qed_fill_generic_tlv_data(struct qed_dev *cdev, struct qed_mfw_tlv_generic *tlv)
+{
+	struct qed_common_cb_ops *op = cdev->protocol_ops.common;
+	struct qed_eth_stats_common *p_common;
+	struct qed_generic_tlvs gen_tlvs;
+	struct qed_eth_stats stats;
+	int i;
 
-	स_रखो(&gen_tlvs, 0, माप(gen_tlvs));
+	memset(&gen_tlvs, 0, sizeof(gen_tlvs));
 	op->get_generic_tlv_data(cdev->ops_cookie, &gen_tlvs);
 
-	अगर (gen_tlvs.feat_flags & QED_TLV_IP_CSUM)
+	if (gen_tlvs.feat_flags & QED_TLV_IP_CSUM)
 		tlv->flags.ipv4_csum_offload = true;
-	अगर (gen_tlvs.feat_flags & QED_TLV_LSO)
+	if (gen_tlvs.feat_flags & QED_TLV_LSO)
 		tlv->flags.lso_supported = true;
 	tlv->flags.b_set = true;
 
-	क्रम (i = 0; i < QED_TLV_MAC_COUNT; i++) अणु
-		अगर (is_valid_ether_addr(gen_tlvs.mac[i])) अणु
+	for (i = 0; i < QED_TLV_MAC_COUNT; i++) {
+		if (is_valid_ether_addr(gen_tlvs.mac[i])) {
 			ether_addr_copy(tlv->mac[i], gen_tlvs.mac[i]);
 			tlv->mac_set[i] = true;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	qed_get_vport_stats(cdev, &stats);
 	p_common = &stats.common;
@@ -3117,36 +3116,36 @@ qed_fill_generic_tlv_data(काष्ठा qed_dev *cdev, काष्ठा q
 	tlv->tx_bytes = p_common->tx_ucast_bytes + p_common->tx_mcast_bytes +
 			p_common->tx_bcast_bytes;
 	tlv->rx_bytes_set = true;
-पूर्ण
+}
 
-पूर्णांक qed_mfw_fill_tlv_data(काष्ठा qed_hwfn *hwfn, क्रमागत qed_mfw_tlv_type type,
-			  जोड़ qed_mfw_tlv_data *tlv_buf)
-अणु
-	काष्ठा qed_dev *cdev = hwfn->cdev;
-	काष्ठा qed_common_cb_ops *ops;
+int qed_mfw_fill_tlv_data(struct qed_hwfn *hwfn, enum qed_mfw_tlv_type type,
+			  union qed_mfw_tlv_data *tlv_buf)
+{
+	struct qed_dev *cdev = hwfn->cdev;
+	struct qed_common_cb_ops *ops;
 
 	ops = cdev->protocol_ops.common;
-	अगर (!ops || !ops->get_protocol_tlv_data || !ops->get_generic_tlv_data) अणु
+	if (!ops || !ops->get_protocol_tlv_data || !ops->get_generic_tlv_data) {
 		DP_NOTICE(hwfn, "Can't collect TLV management info\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	चयन (type) अणु
-	हाल QED_MFW_TLV_GENERIC:
+	switch (type) {
+	case QED_MFW_TLV_GENERIC:
 		qed_fill_generic_tlv_data(hwfn->cdev, &tlv_buf->generic);
-		अवरोध;
-	हाल QED_MFW_TLV_ETH:
+		break;
+	case QED_MFW_TLV_ETH:
 		ops->get_protocol_tlv_data(cdev->ops_cookie, &tlv_buf->eth);
-		अवरोध;
-	हाल QED_MFW_TLV_FCOE:
+		break;
+	case QED_MFW_TLV_FCOE:
 		ops->get_protocol_tlv_data(cdev->ops_cookie, &tlv_buf->fcoe);
-		अवरोध;
-	हाल QED_MFW_TLV_ISCSI:
+		break;
+	case QED_MFW_TLV_ISCSI:
 		ops->get_protocol_tlv_data(cdev->ops_cookie, &tlv_buf->iscsi);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

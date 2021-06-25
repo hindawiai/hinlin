@@ -1,15 +1,14 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _NET_P8022_H
-#घोषणा _NET_P8022_H
-काष्ठा datalink_proto *
-रेजिस्टर_8022_client(अचिन्हित अक्षर type,
-		     पूर्णांक (*func)(काष्ठा sk_buff *skb,
-				 काष्ठा net_device *dev,
-				 काष्ठा packet_type *pt,
-				 काष्ठा net_device *orig_dev));
-व्योम unरेजिस्टर_8022_client(काष्ठा datalink_proto *proto);
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _NET_P8022_H
+#define _NET_P8022_H
+struct datalink_proto *
+register_8022_client(unsigned char type,
+		     int (*func)(struct sk_buff *skb,
+				 struct net_device *dev,
+				 struct packet_type *pt,
+				 struct net_device *orig_dev));
+void unregister_8022_client(struct datalink_proto *proto);
 
-काष्ठा datalink_proto *make_8023_client(व्योम);
-व्योम destroy_8023_client(काष्ठा datalink_proto *dl);
-#पूर्ण_अगर
+struct datalink_proto *make_8023_client(void);
+void destroy_8023_client(struct datalink_proto *dl);
+#endif

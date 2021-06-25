@@ -1,111 +1,110 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/nsproxy.h>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/namei.h>
-#समावेश <linux/file.h>
-#समावेश <linux/utsname.h>
-#समावेश <net/net_namespace.h>
-#समावेश <linux/ipc_namespace.h>
-#समावेश <linux/pid_namespace.h>
-#समावेश <linux/user_namespace.h>
-#समावेश "internal.h"
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/proc_fs.h>
+#include <linux/nsproxy.h>
+#include <linux/ptrace.h>
+#include <linux/namei.h>
+#include <linux/file.h>
+#include <linux/utsname.h>
+#include <net/net_namespace.h>
+#include <linux/ipc_namespace.h>
+#include <linux/pid_namespace.h>
+#include <linux/user_namespace.h>
+#include "internal.h"
 
 
-अटल स्थिर काष्ठा proc_ns_operations *ns_entries[] = अणु
-#अगर_घोषित CONFIG_NET_NS
+static const struct proc_ns_operations *ns_entries[] = {
+#ifdef CONFIG_NET_NS
 	&netns_operations,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_UTS_NS
+#endif
+#ifdef CONFIG_UTS_NS
 	&utsns_operations,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_IPC_NS
+#endif
+#ifdef CONFIG_IPC_NS
 	&ipcns_operations,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PID_NS
+#endif
+#ifdef CONFIG_PID_NS
 	&pidns_operations,
-	&pidns_क्रम_children_operations,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_USER_NS
+	&pidns_for_children_operations,
+#endif
+#ifdef CONFIG_USER_NS
 	&userns_operations,
-#पूर्ण_अगर
+#endif
 	&mntns_operations,
-#अगर_घोषित CONFIG_CGROUPS
+#ifdef CONFIG_CGROUPS
 	&cgroupns_operations,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_TIME_NS
-	&समयns_operations,
-	&समयns_क्रम_children_operations,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+#ifdef CONFIG_TIME_NS
+	&timens_operations,
+	&timens_for_children_operations,
+#endif
+};
 
-अटल स्थिर अक्षर *proc_ns_get_link(काष्ठा dentry *dentry,
-				    काष्ठा inode *inode,
-				    काष्ठा delayed_call *करोne)
-अणु
-	स्थिर काष्ठा proc_ns_operations *ns_ops = PROC_I(inode)->ns_ops;
-	काष्ठा task_काष्ठा *task;
-	काष्ठा path ns_path;
-	पूर्णांक error = -EACCES;
+static const char *proc_ns_get_link(struct dentry *dentry,
+				    struct inode *inode,
+				    struct delayed_call *done)
+{
+	const struct proc_ns_operations *ns_ops = PROC_I(inode)->ns_ops;
+	struct task_struct *task;
+	struct path ns_path;
+	int error = -EACCES;
 
-	अगर (!dentry)
-		वापस ERR_PTR(-ECHILD);
+	if (!dentry)
+		return ERR_PTR(-ECHILD);
 
 	task = get_proc_task(inode);
-	अगर (!task)
-		वापस ERR_PTR(-EACCES);
+	if (!task)
+		return ERR_PTR(-EACCES);
 
-	अगर (!ptrace_may_access(task, PTRACE_MODE_READ_FSCREDS))
-		जाओ out;
+	if (!ptrace_may_access(task, PTRACE_MODE_READ_FSCREDS))
+		goto out;
 
 	error = ns_get_path(&ns_path, task, ns_ops);
-	अगर (error)
-		जाओ out;
+	if (error)
+		goto out;
 
 	error = nd_jump_link(&ns_path);
 out:
-	put_task_काष्ठा(task);
-	वापस ERR_PTR(error);
-पूर्ण
+	put_task_struct(task);
+	return ERR_PTR(error);
+}
 
-अटल पूर्णांक proc_ns_पढ़ोlink(काष्ठा dentry *dentry, अक्षर __user *buffer, पूर्णांक buflen)
-अणु
-	काष्ठा inode *inode = d_inode(dentry);
-	स्थिर काष्ठा proc_ns_operations *ns_ops = PROC_I(inode)->ns_ops;
-	काष्ठा task_काष्ठा *task;
-	अक्षर name[50];
-	पूर्णांक res = -EACCES;
+static int proc_ns_readlink(struct dentry *dentry, char __user *buffer, int buflen)
+{
+	struct inode *inode = d_inode(dentry);
+	const struct proc_ns_operations *ns_ops = PROC_I(inode)->ns_ops;
+	struct task_struct *task;
+	char name[50];
+	int res = -EACCES;
 
 	task = get_proc_task(inode);
-	अगर (!task)
-		वापस res;
+	if (!task)
+		return res;
 
-	अगर (ptrace_may_access(task, PTRACE_MODE_READ_FSCREDS)) अणु
-		res = ns_get_name(name, माप(name), task, ns_ops);
-		अगर (res >= 0)
-			res = पढ़ोlink_copy(buffer, buflen, name);
-	पूर्ण
-	put_task_काष्ठा(task);
-	वापस res;
-पूर्ण
+	if (ptrace_may_access(task, PTRACE_MODE_READ_FSCREDS)) {
+		res = ns_get_name(name, sizeof(name), task, ns_ops);
+		if (res >= 0)
+			res = readlink_copy(buffer, buflen, name);
+	}
+	put_task_struct(task);
+	return res;
+}
 
-अटल स्थिर काष्ठा inode_operations proc_ns_link_inode_operations = अणु
-	.पढ़ोlink	= proc_ns_पढ़ोlink,
+static const struct inode_operations proc_ns_link_inode_operations = {
+	.readlink	= proc_ns_readlink,
 	.get_link	= proc_ns_get_link,
 	.setattr	= proc_setattr,
-पूर्ण;
+};
 
-अटल काष्ठा dentry *proc_ns_instantiate(काष्ठा dentry *dentry,
-	काष्ठा task_काष्ठा *task, स्थिर व्योम *ptr)
-अणु
-	स्थिर काष्ठा proc_ns_operations *ns_ops = ptr;
-	काष्ठा inode *inode;
-	काष्ठा proc_inode *ei;
+static struct dentry *proc_ns_instantiate(struct dentry *dentry,
+	struct task_struct *task, const void *ptr)
+{
+	const struct proc_ns_operations *ns_ops = ptr;
+	struct inode *inode;
+	struct proc_inode *ei;
 
 	inode = proc_pid_make_inode(dentry->d_sb, task, S_IFLNK | S_IRWXUGO);
-	अगर (!inode)
-		वापस ERR_PTR(-ENOENT);
+	if (!inode)
+		return ERR_PTR(-ENOENT);
 
 	ei = PROC_I(inode);
 	inode->i_op = &proc_ns_link_inode_operations;
@@ -113,72 +112,72 @@ out:
 	pid_update_inode(task, inode);
 
 	d_set_d_op(dentry, &pid_dentry_operations);
-	वापस d_splice_alias(inode, dentry);
-पूर्ण
+	return d_splice_alias(inode, dentry);
+}
 
-अटल पूर्णांक proc_ns_dir_सूची_पढ़ो(काष्ठा file *file, काष्ठा dir_context *ctx)
-अणु
-	काष्ठा task_काष्ठा *task = get_proc_task(file_inode(file));
-	स्थिर काष्ठा proc_ns_operations **entry, **last;
+static int proc_ns_dir_readdir(struct file *file, struct dir_context *ctx)
+{
+	struct task_struct *task = get_proc_task(file_inode(file));
+	const struct proc_ns_operations **entry, **last;
 
-	अगर (!task)
-		वापस -ENOENT;
+	if (!task)
+		return -ENOENT;
 
-	अगर (!dir_emit_करोts(file, ctx))
-		जाओ out;
-	अगर (ctx->pos >= 2 + ARRAY_SIZE(ns_entries))
-		जाओ out;
+	if (!dir_emit_dots(file, ctx))
+		goto out;
+	if (ctx->pos >= 2 + ARRAY_SIZE(ns_entries))
+		goto out;
 	entry = ns_entries + (ctx->pos - 2);
 	last = &ns_entries[ARRAY_SIZE(ns_entries) - 1];
-	जबतक (entry <= last) अणु
-		स्थिर काष्ठा proc_ns_operations *ops = *entry;
-		अगर (!proc_fill_cache(file, ctx, ops->name, म_माप(ops->name),
+	while (entry <= last) {
+		const struct proc_ns_operations *ops = *entry;
+		if (!proc_fill_cache(file, ctx, ops->name, strlen(ops->name),
 				     proc_ns_instantiate, task, ops))
-			अवरोध;
+			break;
 		ctx->pos++;
 		entry++;
-	पूर्ण
+	}
 out:
-	put_task_काष्ठा(task);
-	वापस 0;
-पूर्ण
+	put_task_struct(task);
+	return 0;
+}
 
-स्थिर काष्ठा file_operations proc_ns_dir_operations = अणु
-	.पढ़ो		= generic_पढ़ो_dir,
-	.iterate_shared	= proc_ns_dir_सूची_पढ़ो,
+const struct file_operations proc_ns_dir_operations = {
+	.read		= generic_read_dir,
+	.iterate_shared	= proc_ns_dir_readdir,
 	.llseek		= generic_file_llseek,
-पूर्ण;
+};
 
-अटल काष्ठा dentry *proc_ns_dir_lookup(काष्ठा inode *dir,
-				काष्ठा dentry *dentry, अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा task_काष्ठा *task = get_proc_task(dir);
-	स्थिर काष्ठा proc_ns_operations **entry, **last;
-	अचिन्हित पूर्णांक len = dentry->d_name.len;
-	काष्ठा dentry *res = ERR_PTR(-ENOENT);
+static struct dentry *proc_ns_dir_lookup(struct inode *dir,
+				struct dentry *dentry, unsigned int flags)
+{
+	struct task_struct *task = get_proc_task(dir);
+	const struct proc_ns_operations **entry, **last;
+	unsigned int len = dentry->d_name.len;
+	struct dentry *res = ERR_PTR(-ENOENT);
 
-	अगर (!task)
-		जाओ out_no_task;
+	if (!task)
+		goto out_no_task;
 
 	last = &ns_entries[ARRAY_SIZE(ns_entries)];
-	क्रम (entry = ns_entries; entry < last; entry++) अणु
-		अगर (म_माप((*entry)->name) != len)
-			जारी;
-		अगर (!स_भेद(dentry->d_name.name, (*entry)->name, len))
-			अवरोध;
-	पूर्ण
-	अगर (entry == last)
-		जाओ out;
+	for (entry = ns_entries; entry < last; entry++) {
+		if (strlen((*entry)->name) != len)
+			continue;
+		if (!memcmp(dentry->d_name.name, (*entry)->name, len))
+			break;
+	}
+	if (entry == last)
+		goto out;
 
 	res = proc_ns_instantiate(dentry, task, *entry);
 out:
-	put_task_काष्ठा(task);
+	put_task_struct(task);
 out_no_task:
-	वापस res;
-पूर्ण
+	return res;
+}
 
-स्थिर काष्ठा inode_operations proc_ns_dir_inode_operations = अणु
+const struct inode_operations proc_ns_dir_inode_operations = {
 	.lookup		= proc_ns_dir_lookup,
 	.getattr	= pid_getattr,
 	.setattr	= proc_setattr,
-पूर्ण;
+};

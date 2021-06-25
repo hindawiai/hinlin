@@ -1,15 +1,14 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  *  linux/include/linux/ufs_fs.h
  *
  * Copyright (C) 1996
  * Adrian Rodriguez (adrian@franklins-tower.rutgers.edu)
- * Laboratory क्रम Computer Science Research Computing Facility
+ * Laboratory for Computer Science Research Computing Facility
  * Rutgers, The State University of New Jersey
  *
  * Clean swab support by Fare <fare@tunes.org>
- * just hope no one is using NNUUXXI on __?64 काष्ठाure elements
+ * just hope no one is using NNUUXXI on __?64 structure elements
  * 64-bit clean thanks to Maciej W. Rozycki <macro@ds2.pg.gda.pl>
  *
  * 4.4BSD (FreeBSD) support added on February 1st 1998 by
@@ -21,7 +20,7 @@
  *
  * Write support by Daniel Pirkl <daniel.pirkl@email.cz>
  *
- * HP/UX hfs fileप्रणाली support added by
+ * HP/UX hfs filesystem support added by
  * Martin K. Petersen <mkp@mkp.net>, August 1999
  *
  * UFS2 (of FreeBSD 5.x) support added by
@@ -29,46 +28,46 @@
  *
  */
 
-#अगर_अघोषित __LINUX_UFS_FS_H
-#घोषणा __LINUX_UFS_FS_H
+#ifndef __LINUX_UFS_FS_H
+#define __LINUX_UFS_FS_H
 
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/स्थिति.स>
-#समावेश <linux/fs.h>
-#समावेश <linux/workqueue.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/stat.h>
+#include <linux/fs.h>
+#include <linux/workqueue.h>
 
-#समावेश <यंत्र/भाग64.h>
-प्रकार __u64 __bitwise __fs64;
-प्रकार __u32 __bitwise __fs32;
-प्रकार __u16 __bitwise __fs16;
+#include <asm/div64.h>
+typedef __u64 __bitwise __fs64;
+typedef __u32 __bitwise __fs32;
+typedef __u16 __bitwise __fs16;
 
-#घोषणा UFS_BBLOCK 0
-#घोषणा UFS_BBSIZE 8192
-#घोषणा UFS_SBLOCK 8192
-#घोषणा UFS_SBSIZE 8192
+#define UFS_BBLOCK 0
+#define UFS_BBSIZE 8192
+#define UFS_SBLOCK 8192
+#define UFS_SBSIZE 8192
 
-#घोषणा UFS_SECTOR_SIZE 512
-#घोषणा UFS_SECTOR_BITS 9
-#घोषणा UFS_MAGIC  0x00011954
-#घोषणा UFS_MAGIC_BW 0x0f242697
-#घोषणा UFS2_MAGIC 0x19540119
-#घोषणा UFS_CIGAM  0x54190100 /* byteswapped MAGIC */
+#define UFS_SECTOR_SIZE 512
+#define UFS_SECTOR_BITS 9
+#define UFS_MAGIC  0x00011954
+#define UFS_MAGIC_BW 0x0f242697
+#define UFS2_MAGIC 0x19540119
+#define UFS_CIGAM  0x54190100 /* byteswapped MAGIC */
 
 /* Copied from FreeBSD */
 /*
- * Each disk drive contains some number of fileप्रणालीs.
- * A fileप्रणाली consists of a number of cylinder groups.
+ * Each disk drive contains some number of filesystems.
+ * A filesystem consists of a number of cylinder groups.
  * Each cylinder group has inodes and data.
  *
- * A fileप्रणाली is described by its super-block, which in turn
+ * A filesystem is described by its super-block, which in turn
  * describes the cylinder groups.  The super-block is critical
  * data and is replicated in each cylinder group to protect against
- * catastrophic loss.  This is करोne at `newfs' समय and the critical
- * super-block data करोes not change, so the copies need not be
+ * catastrophic loss.  This is done at `newfs' time and the critical
+ * super-block data does not change, so the copies need not be
  * referenced further unless disaster strikes.
  *
- * For fileप्रणाली fs, the offsets of the various blocks of पूर्णांकerest
+ * For filesystem fs, the offsets of the various blocks of interest
  * are given in the super block as:
  *      [fs->fs_sblkno]         Super-block
  *      [fs->fs_cblkno]         Cylinder group block
@@ -80,164 +79,164 @@
  * Depending on the architecture and the media, the superblock may
  * reside in any one of four places. For tiny media where every block
  * counts, it is placed at the very front of the partition. Historically,
- * UFS1 placed it 8K from the front to leave room क्रम the disk label and
+ * UFS1 placed it 8K from the front to leave room for the disk label and
  * a small bootstrap. For UFS2 it got moved to 64K from the front to leave
- * room क्रम the disk label and a bigger bootstrap, and क्रम really piggy
- * प्रणालीs we check at 256K from the front अगर the first three fail. In
- * all हालs the size of the superblock will be SBLOCKSIZE. All values are
- * given in byte-offset क्रमm, so they करो not imply a sector size. The
- * SBLOCKSEARCH specअगरies the order in which the locations should be searched.
+ * room for the disk label and a bigger bootstrap, and for really piggy
+ * systems we check at 256K from the front if the first three fail. In
+ * all cases the size of the superblock will be SBLOCKSIZE. All values are
+ * given in byte-offset form, so they do not imply a sector size. The
+ * SBLOCKSEARCH specifies the order in which the locations should be searched.
  */
-#घोषणा SBLOCK_FLOPPY        0
-#घोषणा SBLOCK_UFS1       8192
-#घोषणा SBLOCK_UFS2      65536
-#घोषणा SBLOCK_PIGGY    262144
-#घोषणा SBLOCKSIZE        8192
-#घोषणा SBLOCKSEARCH \
-        अणु SBLOCK_UFS2, SBLOCK_UFS1, SBLOCK_FLOPPY, SBLOCK_PIGGY, -1 पूर्ण
+#define SBLOCK_FLOPPY        0
+#define SBLOCK_UFS1       8192
+#define SBLOCK_UFS2      65536
+#define SBLOCK_PIGGY    262144
+#define SBLOCKSIZE        8192
+#define SBLOCKSEARCH \
+        { SBLOCK_UFS2, SBLOCK_UFS1, SBLOCK_FLOPPY, SBLOCK_PIGGY, -1 }
 
 
-/* HP specअगरic MAGIC values */
+/* HP specific MAGIC values */
 
-#घोषणा UFS_MAGIC_LFN   0x00095014 /* fs supports filenames > 14 अक्षरs */
-#घोषणा UFS_CIGAM_LFN   0x14500900 /* srahc 41 < semanelअगर stroppus sf */
+#define UFS_MAGIC_LFN   0x00095014 /* fs supports filenames > 14 chars */
+#define UFS_CIGAM_LFN   0x14500900 /* srahc 41 < semanelif stroppus sf */
 
-#घोषणा UFS_MAGIC_SEC   0x00612195 /* B1 security fs */
-#घोषणा UFS_CIGAM_SEC   0x95216100
+#define UFS_MAGIC_SEC   0x00612195 /* B1 security fs */
+#define UFS_CIGAM_SEC   0x95216100
 
-#घोषणा UFS_MAGIC_FEA   0x00195612 /* fs_featurebits supported */
-#घोषणा UFS_CIGAM_FEA   0x12561900
+#define UFS_MAGIC_FEA   0x00195612 /* fs_featurebits supported */
+#define UFS_CIGAM_FEA   0x12561900
 
-#घोषणा UFS_MAGIC_4GB   0x05231994 /* fs > 4 GB && fs_featurebits */
-#घोषणा UFS_CIGAM_4GB   0x94192305
+#define UFS_MAGIC_4GB   0x05231994 /* fs > 4 GB && fs_featurebits */
+#define UFS_CIGAM_4GB   0x94192305
 
 /* Seems somebody at HP goofed here. B1 and lfs are both 0x2 !?! */
-#घोषणा UFS_FSF_LFN     0x00000001 /* दीर्घ file names */
-#घोषणा UFS_FSF_B1      0x00000002 /* B1 security */
-#घोषणा UFS_FSF_LFS     0x00000002 /* large files */
-#घोषणा UFS_FSF_LUID    0x00000004 /* large UIDs */
+#define UFS_FSF_LFN     0x00000001 /* long file names */
+#define UFS_FSF_B1      0x00000002 /* B1 security */
+#define UFS_FSF_LFS     0x00000002 /* large files */
+#define UFS_FSF_LUID    0x00000004 /* large UIDs */
 
 /* End of HP stuff */
 
 
-#घोषणा UFS_BSIZE	8192
-#घोषणा UFS_MINBSIZE	4096
-#घोषणा UFS_FSIZE	1024
-#घोषणा UFS_MAXFRAG	(UFS_BSIZE / UFS_FSIZE)
+#define UFS_BSIZE	8192
+#define UFS_MINBSIZE	4096
+#define UFS_FSIZE	1024
+#define UFS_MAXFRAG	(UFS_BSIZE / UFS_FSIZE)
 
-#घोषणा UFS_NDADDR 12
-#घोषणा UFS_NINसूची 3
+#define UFS_NDADDR 12
+#define UFS_NINDIR 3
 
-#घोषणा UFS_IND_BLOCK	(UFS_NDADDR + 0)
-#घोषणा UFS_DIND_BLOCK	(UFS_NDADDR + 1)
-#घोषणा UFS_TIND_BLOCK	(UFS_NDADDR + 2)
+#define UFS_IND_BLOCK	(UFS_NDADDR + 0)
+#define UFS_DIND_BLOCK	(UFS_NDADDR + 1)
+#define UFS_TIND_BLOCK	(UFS_NDADDR + 2)
 
-#घोषणा UFS_Nसूची_FRAGMENT (UFS_NDADDR << uspi->s_fpbshअगरt)
-#घोषणा UFS_IND_FRAGMENT (UFS_IND_BLOCK << uspi->s_fpbshअगरt)
-#घोषणा UFS_DIND_FRAGMENT (UFS_DIND_BLOCK << uspi->s_fpbshअगरt)
-#घोषणा UFS_TIND_FRAGMENT (UFS_TIND_BLOCK << uspi->s_fpbshअगरt)
+#define UFS_NDIR_FRAGMENT (UFS_NDADDR << uspi->s_fpbshift)
+#define UFS_IND_FRAGMENT (UFS_IND_BLOCK << uspi->s_fpbshift)
+#define UFS_DIND_FRAGMENT (UFS_DIND_BLOCK << uspi->s_fpbshift)
+#define UFS_TIND_FRAGMENT (UFS_TIND_BLOCK << uspi->s_fpbshift)
 
-#घोषणा UFS_ROOTINO 2
-#घोषणा UFS_FIRST_INO (UFS_ROOTINO + 1)
+#define UFS_ROOTINO 2
+#define UFS_FIRST_INO (UFS_ROOTINO + 1)
 
-#घोषणा UFS_USEEFT  ((__u16)65535)
+#define UFS_USEEFT  ((__u16)65535)
 
 /* fs_clean values */
-#घोषणा UFS_FSOK      0x7c269d38
-#घोषणा UFS_FSACTIVE  ((__s8)0x00)
-#घोषणा UFS_FSCLEAN   ((__s8)0x01)
-#घोषणा UFS_FSSTABLE  ((__s8)0x02)
-#घोषणा UFS_FSOSF1    ((__s8)0x03)	/* is this correct क्रम DEC OSF/1? */
-#घोषणा UFS_FSBAD     ((__s8)0xff)
+#define UFS_FSOK      0x7c269d38
+#define UFS_FSACTIVE  ((__s8)0x00)
+#define UFS_FSCLEAN   ((__s8)0x01)
+#define UFS_FSSTABLE  ((__s8)0x02)
+#define UFS_FSOSF1    ((__s8)0x03)	/* is this correct for DEC OSF/1? */
+#define UFS_FSBAD     ((__s8)0xff)
 
-/* Solaris-specअगरic fs_clean values */
-#घोषणा UFS_FSSUSPEND ((__s8)0xfe)	/* temporarily suspended */
-#घोषणा UFS_FSLOG     ((__s8)0xfd)	/* logging fs */
-#घोषणा UFS_FSFIX     ((__s8)0xfc)	/* being repaired जबतक mounted */
+/* Solaris-specific fs_clean values */
+#define UFS_FSSUSPEND ((__s8)0xfe)	/* temporarily suspended */
+#define UFS_FSLOG     ((__s8)0xfd)	/* logging fs */
+#define UFS_FSFIX     ((__s8)0xfc)	/* being repaired while mounted */
 
-/* From here to next blank line, s_flags क्रम ufs_sb_info */
+/* From here to next blank line, s_flags for ufs_sb_info */
 /* directory entry encoding */
-#घोषणा UFS_DE_MASK		0x00000010	/* mask क्रम the following */
-#घोषणा UFS_DE_OLD		0x00000000
-#घोषणा UFS_DE_44BSD		0x00000010
+#define UFS_DE_MASK		0x00000010	/* mask for the following */
+#define UFS_DE_OLD		0x00000000
+#define UFS_DE_44BSD		0x00000010
 /* uid encoding */
-#घोषणा UFS_UID_MASK		0x00000060	/* mask क्रम the following */
-#घोषणा UFS_UID_OLD		0x00000000
-#घोषणा UFS_UID_44BSD		0x00000020
-#घोषणा UFS_UID_EFT		0x00000040
+#define UFS_UID_MASK		0x00000060	/* mask for the following */
+#define UFS_UID_OLD		0x00000000
+#define UFS_UID_44BSD		0x00000020
+#define UFS_UID_EFT		0x00000040
 /* superblock state encoding */
-#घोषणा UFS_ST_MASK		0x00000700	/* mask क्रम the following */
-#घोषणा UFS_ST_OLD		0x00000000
-#घोषणा UFS_ST_44BSD		0x00000100
-#घोषणा UFS_ST_SUN		0x00000200 /* Solaris */
-#घोषणा UFS_ST_SUNOS		0x00000300
-#घोषणा UFS_ST_SUNx86		0x00000400 /* Solaris x86 */
+#define UFS_ST_MASK		0x00000700	/* mask for the following */
+#define UFS_ST_OLD		0x00000000
+#define UFS_ST_44BSD		0x00000100
+#define UFS_ST_SUN		0x00000200 /* Solaris */
+#define UFS_ST_SUNOS		0x00000300
+#define UFS_ST_SUNx86		0x00000400 /* Solaris x86 */
 /*cylinder group encoding */
-#घोषणा UFS_CG_MASK		0x00003000	/* mask क्रम the following */
-#घोषणा UFS_CG_OLD		0x00000000
-#घोषणा UFS_CG_44BSD		0x00002000
-#घोषणा UFS_CG_SUN		0x00001000
-/* fileप्रणाली type encoding */
-#घोषणा UFS_TYPE_MASK		0x00010000	/* mask क्रम the following */
-#घोषणा UFS_TYPE_UFS1		0x00000000
-#घोषणा UFS_TYPE_UFS2		0x00010000
+#define UFS_CG_MASK		0x00003000	/* mask for the following */
+#define UFS_CG_OLD		0x00000000
+#define UFS_CG_44BSD		0x00002000
+#define UFS_CG_SUN		0x00001000
+/* filesystem type encoding */
+#define UFS_TYPE_MASK		0x00010000	/* mask for the following */
+#define UFS_TYPE_UFS1		0x00000000
+#define UFS_TYPE_UFS2		0x00010000
 
 
 /* fs_inodefmt options */
-#घोषणा UFS_42INODEFMT	-1
-#घोषणा UFS_44INODEFMT	2
+#define UFS_42INODEFMT	-1
+#define UFS_44INODEFMT	2
 
 /*
- * MINFREE gives the minimum acceptable percentage of file प्रणाली
- * blocks which may be मुक्त. If the मुक्तlist drops below this level
- * only the superuser may जारी to allocate blocks. This may
- * be set to 0 अगर no reserve of मुक्त blocks is deemed necessary,
- * however throughput drops by fअगरty percent अगर the file प्रणाली
- * is run at between 95% and 100% full; thus the minimum शेष
- * value of fs_minमुक्त is 5%. However, to get good clustering
- * perक्रमmance, 10% is a better choice. hence we use 10% as our
- * शेष value. With 10% मुक्त space, fragmentation is not a
- * problem, so we choose to optimize क्रम समय.
+ * MINFREE gives the minimum acceptable percentage of file system
+ * blocks which may be free. If the freelist drops below this level
+ * only the superuser may continue to allocate blocks. This may
+ * be set to 0 if no reserve of free blocks is deemed necessary,
+ * however throughput drops by fifty percent if the file system
+ * is run at between 95% and 100% full; thus the minimum default
+ * value of fs_minfree is 5%. However, to get good clustering
+ * performance, 10% is a better choice. hence we use 10% as our
+ * default value. With 10% free space, fragmentation is not a
+ * problem, so we choose to optimize for time.
  */
-#घोषणा UFS_MINFREE         5
-#घोषणा UFS_DEFAULTOPT      UFS_OPTTIME
+#define UFS_MINFREE         5
+#define UFS_DEFAULTOPT      UFS_OPTTIME
 
 /*
- * Turn file प्रणाली block numbers पूर्णांकo disk block addresses.
- * This maps file प्रणाली blocks to device size blocks.
+ * Turn file system block numbers into disk block addresses.
+ * This maps file system blocks to device size blocks.
  */
-#घोषणा ufs_fsbtodb(uspi, b)	((b) << (uspi)->s_fsbtodb)
-#घोषणा	ufs_dbtofsb(uspi, b)	((b) >> (uspi)->s_fsbtodb)
+#define ufs_fsbtodb(uspi, b)	((b) << (uspi)->s_fsbtodb)
+#define	ufs_dbtofsb(uspi, b)	((b) >> (uspi)->s_fsbtodb)
 
 /*
  * Cylinder group macros to locate things in cylinder groups.
- * They calc file प्रणाली addresses of cylinder group data काष्ठाures.
+ * They calc file system addresses of cylinder group data structures.
  */
-#घोषणा	ufs_cgbase(c)	(uspi->s_fpg * (c))
-#घोषणा ufs_cgstart(c)	((uspi)->fs_magic == UFS2_MAGIC ?  ufs_cgbase(c) : \
+#define	ufs_cgbase(c)	(uspi->s_fpg * (c))
+#define ufs_cgstart(c)	((uspi)->fs_magic == UFS2_MAGIC ?  ufs_cgbase(c) : \
 	(ufs_cgbase(c)  + uspi->s_cgoffset * ((c) & ~uspi->s_cgmask)))
-#घोषणा	ufs_cgsblock(c)	(ufs_cgstart(c) + uspi->s_sblkno)	/* super blk */
-#घोषणा	ufs_cgcmin(c)	(ufs_cgstart(c) + uspi->s_cblkno)	/* cg block */
-#घोषणा	ufs_cgimin(c)	(ufs_cgstart(c) + uspi->s_iblkno)	/* inode blk */
-#घोषणा	ufs_cgdmin(c)	(ufs_cgstart(c) + uspi->s_dblkno)	/* 1st data */
+#define	ufs_cgsblock(c)	(ufs_cgstart(c) + uspi->s_sblkno)	/* super blk */
+#define	ufs_cgcmin(c)	(ufs_cgstart(c) + uspi->s_cblkno)	/* cg block */
+#define	ufs_cgimin(c)	(ufs_cgstart(c) + uspi->s_iblkno)	/* inode blk */
+#define	ufs_cgdmin(c)	(ufs_cgstart(c) + uspi->s_dblkno)	/* 1st data */
 
 /*
- * Macros क्रम handling inode numbers:
- *     inode number to file प्रणाली block offset.
+ * Macros for handling inode numbers:
+ *     inode number to file system block offset.
  *     inode number to cylinder group number.
- *     inode number to file प्रणाली block address.
+ *     inode number to file system block address.
  */
-#घोषणा	ufs_inotocg(x)		((x) / uspi->s_ipg)
-#घोषणा	ufs_inotocgoff(x)	((x) % uspi->s_ipg)
-#घोषणा	ufs_inotofsba(x)	(((u64)ufs_cgimin(ufs_inotocg(x))) + ufs_inotocgoff(x) / uspi->s_inopf)
-#घोषणा	ufs_inotofsbo(x)	((x) % uspi->s_inopf)
+#define	ufs_inotocg(x)		((x) / uspi->s_ipg)
+#define	ufs_inotocgoff(x)	((x) % uspi->s_ipg)
+#define	ufs_inotofsba(x)	(((u64)ufs_cgimin(ufs_inotocg(x))) + ufs_inotocgoff(x) / uspi->s_inopf)
+#define	ufs_inotofsbo(x)	((x) % uspi->s_inopf)
 
 /*
  * Compute the cylinder and rotational position of a cyl block addr.
  */
-#घोषणा ufs_cbtocylno(bno) \
+#define ufs_cbtocylno(bno) \
 	((bno) * uspi->s_nspf / uspi->s_spc)
-#घोषणा ufs_cbtorpos(bno)				      \
+#define ufs_cbtorpos(bno)				      \
 	((UFS_SB(sb)->s_flags & UFS_CG_SUN) ?		      \
 	 (((((bno) * uspi->s_nspf % uspi->s_spc) %	      \
 	    uspi->s_nsect) *				      \
@@ -245,113 +244,113 @@
 	 :						      \
 	((((bno) * uspi->s_nspf % uspi->s_spc / uspi->s_nsect \
 	* uspi->s_trackskew + (bno) * uspi->s_nspf % uspi->s_spc \
-	% uspi->s_nsect * uspi->s_पूर्णांकerleave) % uspi->s_nsect \
+	% uspi->s_nsect * uspi->s_interleave) % uspi->s_nsect \
 	  * uspi->s_nrpos) / uspi->s_npsect))
 
 /*
  * The following macros optimize certain frequently calculated
- * quantities by using shअगरts and masks in place of भागisions
+ * quantities by using shifts and masks in place of divisions
  * modulos and multiplications.
  */
-#घोषणा ufs_blkoff(loc)		((loc) & uspi->s_qbmask)
-#घोषणा ufs_fragoff(loc)	((loc) & uspi->s_qfmask)
-#घोषणा ufs_lblktosize(blk)	((blk) << uspi->s_bshअगरt)
-#घोषणा ufs_lblkno(loc)		((loc) >> uspi->s_bshअगरt)
-#घोषणा ufs_numfrags(loc)	((loc) >> uspi->s_fshअगरt)
-#घोषणा ufs_blkroundup(size)	(((size) + uspi->s_qbmask) & uspi->s_bmask)
-#घोषणा ufs_fragroundup(size)	(((size) + uspi->s_qfmask) & uspi->s_fmask)
-#घोषणा ufs_fragstoblks(frags)	((frags) >> uspi->s_fpbshअगरt)
-#घोषणा ufs_blkstofrags(blks)	((blks) << uspi->s_fpbshअगरt)
-#घोषणा ufs_fragnum(fsb)	((fsb) & uspi->s_fpbmask)
-#घोषणा ufs_blknum(fsb)		((fsb) & ~uspi->s_fpbmask)
+#define ufs_blkoff(loc)		((loc) & uspi->s_qbmask)
+#define ufs_fragoff(loc)	((loc) & uspi->s_qfmask)
+#define ufs_lblktosize(blk)	((blk) << uspi->s_bshift)
+#define ufs_lblkno(loc)		((loc) >> uspi->s_bshift)
+#define ufs_numfrags(loc)	((loc) >> uspi->s_fshift)
+#define ufs_blkroundup(size)	(((size) + uspi->s_qbmask) & uspi->s_bmask)
+#define ufs_fragroundup(size)	(((size) + uspi->s_qfmask) & uspi->s_fmask)
+#define ufs_fragstoblks(frags)	((frags) >> uspi->s_fpbshift)
+#define ufs_blkstofrags(blks)	((blks) << uspi->s_fpbshift)
+#define ufs_fragnum(fsb)	((fsb) & uspi->s_fpbmask)
+#define ufs_blknum(fsb)		((fsb) & ~uspi->s_fpbmask)
 
-#घोषणा	UFS_MAXNAMLEN 255
-#घोषणा UFS_MAXMNTLEN 512
-#घोषणा UFS2_MAXMNTLEN 468
-#घोषणा UFS2_MAXVOLLEN 32
-#घोषणा UFS_MAXCSBUFS 31
-#घोषणा UFS_LINK_MAX 32000
+#define	UFS_MAXNAMLEN 255
+#define UFS_MAXMNTLEN 512
+#define UFS2_MAXMNTLEN 468
+#define UFS2_MAXVOLLEN 32
+#define UFS_MAXCSBUFS 31
+#define UFS_LINK_MAX 32000
 /*
-#घोषणा	UFS2_NOCSPTRS	((128 / माप(व्योम *)) - 4)
+#define	UFS2_NOCSPTRS	((128 / sizeof(void *)) - 4)
 */
-#घोषणा	UFS2_NOCSPTRS	28
+#define	UFS2_NOCSPTRS	28
 
 /*
- * UFS_सूची_PAD defines the directory entries boundaries
+ * UFS_DIR_PAD defines the directory entries boundaries
  * (must be a multiple of 4)
  */
-#घोषणा UFS_सूची_PAD			4
-#घोषणा UFS_सूची_ROUND			(UFS_सूची_PAD - 1)
-#घोषणा UFS_सूची_REC_LEN(name_len)	(((name_len) + 1 + 8 + UFS_सूची_ROUND) & ~UFS_सूची_ROUND)
+#define UFS_DIR_PAD			4
+#define UFS_DIR_ROUND			(UFS_DIR_PAD - 1)
+#define UFS_DIR_REC_LEN(name_len)	(((name_len) + 1 + 8 + UFS_DIR_ROUND) & ~UFS_DIR_ROUND)
 
-काष्ठा ufs_समयval अणु
+struct ufs_timeval {
 	__fs32	tv_sec;
 	__fs32	tv_usec;
-पूर्ण;
+};
 
-काष्ठा ufs_dir_entry अणु
+struct ufs_dir_entry {
 	__fs32  d_ino;			/* inode number of this entry */
 	__fs16  d_reclen;		/* length of this entry */
-	जोड़ अणु
+	union {
 		__fs16	d_namlen;		/* actual length of d_name */
-		काष्ठा अणु
+		struct {
 			__u8	d_type;		/* file type */
 			__u8	d_namlen;	/* length of string in d_name */
-		पूर्ण d_44;
-	पूर्ण d_u;
+		} d_44;
+	} d_u;
 	__u8	d_name[UFS_MAXNAMLEN + 1];	/* file name */
-पूर्ण;
+};
 
-काष्ठा ufs_csum अणु
+struct ufs_csum {
 	__fs32	cs_ndir;	/* number of directories */
-	__fs32	cs_nbमुक्त;	/* number of मुक्त blocks */
-	__fs32	cs_nअगरree;	/* number of मुक्त inodes */
-	__fs32	cs_nfमुक्त;	/* number of मुक्त frags */
-पूर्ण;
-काष्ठा ufs2_csum_total अणु
+	__fs32	cs_nbfree;	/* number of free blocks */
+	__fs32	cs_nifree;	/* number of free inodes */
+	__fs32	cs_nffree;	/* number of free frags */
+};
+struct ufs2_csum_total {
 	__fs64	cs_ndir;	/* number of directories */
-	__fs64	cs_nbमुक्त;	/* number of मुक्त blocks */
-	__fs64	cs_nअगरree;	/* number of मुक्त inodes */
-	__fs64	cs_nfमुक्त;	/* number of मुक्त frags */
-	__fs64   cs_numclusters;	/* number of मुक्त clusters */
+	__fs64	cs_nbfree;	/* number of free blocks */
+	__fs64	cs_nifree;	/* number of free inodes */
+	__fs64	cs_nffree;	/* number of free frags */
+	__fs64   cs_numclusters;	/* number of free clusters */
 	__fs64   cs_spare[3];	/* future expansion */
-पूर्ण;
+};
 
-काष्ठा ufs_csum_core अणु
+struct ufs_csum_core {
 	__u64	cs_ndir;	/* number of directories */
-	__u64	cs_nbमुक्त;	/* number of मुक्त blocks */
-	__u64	cs_nअगरree;	/* number of मुक्त inodes */
-	__u64	cs_nfमुक्त;	/* number of मुक्त frags */
-	__u64   cs_numclusters;	/* number of मुक्त clusters */
-पूर्ण;
+	__u64	cs_nbfree;	/* number of free blocks */
+	__u64	cs_nifree;	/* number of free inodes */
+	__u64	cs_nffree;	/* number of free frags */
+	__u64   cs_numclusters;	/* number of free clusters */
+};
 
 /*
- * File प्रणाली flags
+ * File system flags
  */
-#घोषणा UFS_UNCLEAN      0x01    /* file प्रणाली not clean at mount (unused) */
-#घोषणा UFS_DOSOFTDEP    0x02    /* file प्रणाली using soft dependencies */
-#घोषणा UFS_NEEDSFSCK    0x04    /* needs sync fsck (FreeBSD compat, unused) */
-#घोषणा UFS_INDEXसूचीS    0x08    /* kernel supports indexed directories */
-#घोषणा UFS_ACLS         0x10    /* file प्रणाली has ACLs enabled */
-#घोषणा UFS_MULTILABEL   0x20    /* file प्रणाली is MAC multi-label */
-#घोषणा UFS_FLAGS_UPDATED 0x80   /* flags have been moved to new location */
+#define UFS_UNCLEAN      0x01    /* file system not clean at mount (unused) */
+#define UFS_DOSOFTDEP    0x02    /* file system using soft dependencies */
+#define UFS_NEEDSFSCK    0x04    /* needs sync fsck (FreeBSD compat, unused) */
+#define UFS_INDEXDIRS    0x08    /* kernel supports indexed directories */
+#define UFS_ACLS         0x10    /* file system has ACLs enabled */
+#define UFS_MULTILABEL   0x20    /* file system is MAC multi-label */
+#define UFS_FLAGS_UPDATED 0x80   /* flags have been moved to new location */
 
-#अगर 0
+#if 0
 /*
  * This is the actual superblock, as it is laid out on the disk.
- * Do NOT use this काष्ठाure, because of माप(ufs_super_block) > 512 and
+ * Do NOT use this structure, because of sizeof(ufs_super_block) > 512 and
  * it may occupy several blocks, use
- * काष्ठा ufs_super_block_(first,second,third) instead.
+ * struct ufs_super_block_(first,second,third) instead.
  */
-काष्ठा ufs_super_block अणु
-	जोड़ अणु
-		काष्ठा अणु
+struct ufs_super_block {
+	union {
+		struct {
 			__fs32	fs_link;	/* UNUSED */
-		पूर्ण fs_42;
-		काष्ठा अणु
-			__fs32	fs_state;	/* file प्रणाली state flag */
-		पूर्ण fs_sun;
-	पूर्ण fs_u0;
+		} fs_42;
+		struct {
+			__fs32	fs_state;	/* file system state flag */
+		} fs_sun;
+	} fs_u0;
 	__fs32	fs_rlink;	/* UNUSED */
 	__fs32	fs_sblkno;	/* addr of super-block in filesys */
 	__fs32	fs_cblkno;	/* offset of cyl-block in filesys */
@@ -359,7 +358,7 @@
 	__fs32	fs_dblkno;	/* offset of first data after cg */
 	__fs32	fs_cgoffset;	/* cylinder group offset in cylinder */
 	__fs32	fs_cgmask;	/* used to calc mod fs_ntrak */
-	__fs32	fs_समय;	/* last समय written -- समय_प्रकार */
+	__fs32	fs_time;	/* last time written -- time_t */
 	__fs32	fs_size;	/* number of blocks in fs */
 	__fs32	fs_dsize;	/* number of data blocks in fs */
 	__fs32	fs_ncg;		/* number of cylinder groups */
@@ -367,44 +366,44 @@
 	__fs32	fs_fsize;	/* size of frag blocks in fs */
 	__fs32	fs_frag;	/* number of frags in a block in fs */
 /* these are configuration parameters */
-	__fs32	fs_minमुक्त;	/* minimum percentage of मुक्त blocks */
-	__fs32	fs_rotdelay;	/* num of ms क्रम optimal next block */
+	__fs32	fs_minfree;	/* minimum percentage of free blocks */
+	__fs32	fs_rotdelay;	/* num of ms for optimal next block */
 	__fs32	fs_rps;		/* disk revolutions per second */
 /* these fields can be computed from the others */
 	__fs32	fs_bmask;	/* ``blkoff'' calc of blk offsets */
 	__fs32	fs_fmask;	/* ``fragoff'' calc of frag offsets */
-	__fs32	fs_bshअगरt;	/* ``lblkno'' calc of logical blkno */
-	__fs32	fs_fshअगरt;	/* ``numfrags'' calc number of frags */
+	__fs32	fs_bshift;	/* ``lblkno'' calc of logical blkno */
+	__fs32	fs_fshift;	/* ``numfrags'' calc number of frags */
 /* these are configuration parameters */
 	__fs32	fs_maxcontig;	/* max number of contiguous blks */
 	__fs32	fs_maxbpg;	/* max number of blks per cyl group */
 /* these fields can be computed from the others */
-	__fs32	fs_fragshअगरt;	/* block to frag shअगरt */
-	__fs32	fs_fsbtodb;	/* fsbtodb and dbtofsb shअगरt स्थिरant */
+	__fs32	fs_fragshift;	/* block to frag shift */
+	__fs32	fs_fsbtodb;	/* fsbtodb and dbtofsb shift constant */
 	__fs32	fs_sbsize;	/* actual size of super block */
 	__fs32	fs_csmask;	/* csum block offset */
-	__fs32	fs_csshअगरt;	/* csum block number */
-	__fs32	fs_nindir;	/* value of NINसूची */
+	__fs32	fs_csshift;	/* csum block number */
+	__fs32	fs_nindir;	/* value of NINDIR */
 	__fs32	fs_inopb;	/* value of INOPB */
 	__fs32	fs_nspf;	/* value of NSPF */
 /* yet another configuration parameter */
 	__fs32	fs_optim;	/* optimization preference, see below */
 /* these fields are derived from the hardware */
-	जोड़ अणु
-		काष्ठा अणु
+	union {
+		struct {
 			__fs32	fs_npsect;	/* # sectors/track including spares */
-		पूर्ण fs_sun;
-		काष्ठा अणु
-			__fs32	fs_state;	/* file प्रणाली state समय stamp */
-		पूर्ण fs_sunx86;
-	पूर्ण fs_u1;
-	__fs32	fs_पूर्णांकerleave;	/* hardware sector पूर्णांकerleave */
+		} fs_sun;
+		struct {
+			__fs32	fs_state;	/* file system state time stamp */
+		} fs_sunx86;
+	} fs_u1;
+	__fs32	fs_interleave;	/* hardware sector interleave */
 	__fs32	fs_trackskew;	/* sector 0 skew, per track */
-/* a unique id क्रम this fileप्रणाली (currently unused and unमुख्यtained) */
-/* In 4.3 Tahoe this space is used by fs_headचयन and fs_trkseek */
+/* a unique id for this filesystem (currently unused and unmaintained) */
+/* In 4.3 Tahoe this space is used by fs_headswitch and fs_trkseek */
 /* Neither of those fields is used in the Tahoe code right now but */
-/* there could be problems अगर they are.                            */
-	__fs32	fs_id[2];	/* file प्रणाली id */
+/* there could be problems if they are.                            */
+	__fs32	fs_id[2];	/* file system id */
 /* sizes determined by number of cylinder groups and their sizes */
 	__fs32	fs_csaddr;	/* blk addr of cyl grp summary area */
 	__fs32	fs_cssize;	/* size of cyl grp summary area */
@@ -414,242 +413,242 @@
 	__fs32	fs_nsect;	/* sectors per track */
 	__fs32	fs_spc;		/* sectors per cylinder */
 /* this comes from the disk driver partitioning */
-	__fs32	fs_ncyl;	/* cylinders in file प्रणाली */
+	__fs32	fs_ncyl;	/* cylinders in file system */
 /* these fields can be computed from the others */
 	__fs32	fs_cpg;		/* cylinders per group */
 	__fs32	fs_ipg;		/* inodes per cylinder group */
 	__fs32	fs_fpg;		/* blocks per group * fs_frag */
 /* this data must be re-computed after crashes */
-	काष्ठा ufs_csum fs_cstotal;	/* cylinder summary inक्रमmation */
-/* these fields are cleared at mount समय */
-	__s8	fs_भ_शेष;	/* super block modअगरied flag */
-	__s8	fs_clean;	/* file प्रणाली is clean flag */
-	__s8	fs_ronly;	/* mounted पढ़ो-only flag */
+	struct ufs_csum fs_cstotal;	/* cylinder summary information */
+/* these fields are cleared at mount time */
+	__s8	fs_fmod;	/* super block modified flag */
+	__s8	fs_clean;	/* file system is clean flag */
+	__s8	fs_ronly;	/* mounted read-only flag */
 	__s8	fs_flags;
-	जोड़ अणु
-		काष्ठा अणु
+	union {
+		struct {
 			__s8	fs_fsmnt[UFS_MAXMNTLEN];/* name mounted on */
 			__fs32	fs_cgrotor;	/* last cg searched */
 			__fs32	fs_csp[UFS_MAXCSBUFS];/*list of fs_cs info buffers */
 			__fs32	fs_maxcluster;
 			__fs32	fs_cpc;		/* cyl per cycle in postbl */
 			__fs16	fs_opostbl[16][8]; /* old rotation block list head */
-		पूर्ण fs_u1;
-		काष्ठा अणु
+		} fs_u1;
+		struct {
 			__s8  fs_fsmnt[UFS2_MAXMNTLEN];	/* name mounted on */
 			__u8   fs_volname[UFS2_MAXVOLLEN]; /* volume name */
-			__fs64  fs_swuid;		/* प्रणाली-wide uid */
+			__fs64  fs_swuid;		/* system-wide uid */
 			__fs32  fs_pad;	/* due to alignment of fs_swuid */
 			__fs32   fs_cgrotor;     /* last cg searched */
 			__fs32   fs_ocsp[UFS2_NOCSPTRS]; /*list of fs_cs info buffers */
 			__fs32   fs_contigdirs;/*# of contiguously allocated dirs */
-			__fs32   fs_csp;	/* cg summary info buffer क्रम fs_cs */
+			__fs32   fs_csp;	/* cg summary info buffer for fs_cs */
 			__fs32   fs_maxcluster;
 			__fs32   fs_active;/* used by snapshots to track fs */
 			__fs32   fs_old_cpc;	/* cyl per cycle in postbl */
 			__fs32   fs_maxbsize;/*maximum blocking factor permitted */
 			__fs64   fs_sparecon64[17];/*old rotation block list head */
 			__fs64   fs_sblockloc; /* byte offset of standard superblock */
-			काष्ठा  ufs2_csum_total fs_cstotal;/*cylinder summary inक्रमmation*/
-			काष्ठा  ufs_समयval    fs_समय;		/* last समय written */
+			struct  ufs2_csum_total fs_cstotal;/*cylinder summary information*/
+			struct  ufs_timeval    fs_time;		/* last time written */
 			__fs64    fs_size;		/* number of blocks in fs */
 			__fs64    fs_dsize;	/* number of data blocks in fs */
 			__fs64   fs_csaddr;	/* blk addr of cyl grp summary area */
-			__fs64    fs_pendingblocks;/* blocks in process of being मुक्तd */
-			__fs32    fs_pendinginodes;/*inodes in process of being मुक्तd */
-		पूर्ण fs_u2;
-	पूर्ण  fs_u11;
-	जोड़ अणु
-		काष्ठा अणु
-			__fs32	fs_sparecon[53];/* reserved क्रम future स्थिरants */
+			__fs64    fs_pendingblocks;/* blocks in process of being freed */
+			__fs32    fs_pendinginodes;/*inodes in process of being freed */
+		} fs_u2;
+	}  fs_u11;
+	union {
+		struct {
+			__fs32	fs_sparecon[53];/* reserved for future constants */
 			__fs32	fs_reclaim;
 			__fs32	fs_sparecon2[1];
-			__fs32	fs_state;	/* file प्रणाली state समय stamp */
+			__fs32	fs_state;	/* file system state time stamp */
 			__fs32	fs_qbmask[2];	/* ~usb_bmask */
 			__fs32	fs_qfmask[2];	/* ~usb_fmask */
-		पूर्ण fs_sun;
-		काष्ठा अणु
-			__fs32	fs_sparecon[53];/* reserved क्रम future स्थिरants */
+		} fs_sun;
+		struct {
+			__fs32	fs_sparecon[53];/* reserved for future constants */
 			__fs32	fs_reclaim;
 			__fs32	fs_sparecon2[1];
 			__fs32	fs_npsect;	/* # sectors/track including spares */
 			__fs32	fs_qbmask[2];	/* ~usb_bmask */
 			__fs32	fs_qfmask[2];	/* ~usb_fmask */
-		पूर्ण fs_sunx86;
-		काष्ठा अणु
-			__fs32	fs_sparecon[50];/* reserved क्रम future स्थिरants */
+		} fs_sunx86;
+		struct {
+			__fs32	fs_sparecon[50];/* reserved for future constants */
 			__fs32	fs_contigsumsize;/* size of cluster summary array */
-			__fs32	fs_maxsymlinklen;/* max length of an पूर्णांकernal symlink */
-			__fs32	fs_inodefmt;	/* क्रमmat of on-disk inodes */
+			__fs32	fs_maxsymlinklen;/* max length of an internal symlink */
+			__fs32	fs_inodefmt;	/* format of on-disk inodes */
 			__fs32	fs_maxfilesize[2];	/* max representable file size */
 			__fs32	fs_qbmask[2];	/* ~usb_bmask */
 			__fs32	fs_qfmask[2];	/* ~usb_fmask */
-			__fs32	fs_state;	/* file प्रणाली state समय stamp */
-		पूर्ण fs_44;
-	पूर्ण fs_u2;
-	__fs32	fs_postblक्रमmat;	/* क्रमmat of positional layout tables */
+			__fs32	fs_state;	/* file system state time stamp */
+		} fs_44;
+	} fs_u2;
+	__fs32	fs_postblformat;	/* format of positional layout tables */
 	__fs32	fs_nrpos;		/* number of rotational positions */
 	__fs32	fs_postbloff;		/* (__s16) rotation block list head */
-	__fs32	fs_rotbloff;		/* (__u8) blocks क्रम each rotation */
+	__fs32	fs_rotbloff;		/* (__u8) blocks for each rotation */
 	__fs32	fs_magic;		/* magic number */
-	__u8	fs_space[1];		/* list of blocks क्रम each rotation */
-पूर्ण;
-#पूर्ण_अगर/*काष्ठा ufs_super_block*/
+	__u8	fs_space[1];		/* list of blocks for each rotation */
+};
+#endif/*struct ufs_super_block*/
 
 /*
- * Preference क्रम optimization.
+ * Preference for optimization.
  */
-#घोषणा UFS_OPTTIME	0	/* minimize allocation समय */
-#घोषणा UFS_OPTSPACE	1	/* minimize disk fragmentation */
+#define UFS_OPTTIME	0	/* minimize allocation time */
+#define UFS_OPTSPACE	1	/* minimize disk fragmentation */
 
 /*
- * Rotational layout table क्रमmat types
+ * Rotational layout table format types
  */
-#घोषणा UFS_42POSTBLFMT		-1	/* 4.2BSD rotational table क्रमmat */
-#घोषणा UFS_DYNAMICPOSTBLFMT	1	/* dynamic rotational table क्रमmat */
+#define UFS_42POSTBLFMT		-1	/* 4.2BSD rotational table format */
+#define UFS_DYNAMICPOSTBLFMT	1	/* dynamic rotational table format */
 
 /*
  * Convert cylinder group to base address of its global summary info.
  */
-#घोषणा fs_cs(indx) s_csp[(indx)]
+#define fs_cs(indx) s_csp[(indx)]
 
 /*
- * Cylinder group block क्रम a file प्रणाली.
+ * Cylinder group block for a file system.
  *
- * Writable fields in the cylinder group are रक्षित by the associated
+ * Writable fields in the cylinder group are protected by the associated
  * super block lock fs->fs_lock.
  */
-#घोषणा	CG_MAGIC	0x090255
-#घोषणा ufs_cg_chkmagic(sb, ucg) \
+#define	CG_MAGIC	0x090255
+#define ufs_cg_chkmagic(sb, ucg) \
 	(fs32_to_cpu((sb), (ucg)->cg_magic) == CG_MAGIC)
 /*
- * Macros क्रम access to old cylinder group array काष्ठाures
+ * Macros for access to old cylinder group array structures
  */
-#घोषणा ufs_ocg_blktot(sb, ucg)      fs32_to_cpu((sb), ((काष्ठा ufs_old_cylinder_group *)(ucg))->cg_btot)
-#घोषणा ufs_ocg_blks(sb, ucg, cylno) fs32_to_cpu((sb), ((काष्ठा ufs_old_cylinder_group *)(ucg))->cg_b[cylno])
-#घोषणा ufs_ocg_inosused(sb, ucg)    fs32_to_cpu((sb), ((काष्ठा ufs_old_cylinder_group *)(ucg))->cg_iused)
-#घोषणा ufs_ocg_blksमुक्त(sb, ucg)    fs32_to_cpu((sb), ((काष्ठा ufs_old_cylinder_group *)(ucg))->cg_मुक्त)
-#घोषणा ufs_ocg_chkmagic(sb, ucg) \
-	(fs32_to_cpu((sb), ((काष्ठा ufs_old_cylinder_group *)(ucg))->cg_magic) == CG_MAGIC)
+#define ufs_ocg_blktot(sb, ucg)      fs32_to_cpu((sb), ((struct ufs_old_cylinder_group *)(ucg))->cg_btot)
+#define ufs_ocg_blks(sb, ucg, cylno) fs32_to_cpu((sb), ((struct ufs_old_cylinder_group *)(ucg))->cg_b[cylno])
+#define ufs_ocg_inosused(sb, ucg)    fs32_to_cpu((sb), ((struct ufs_old_cylinder_group *)(ucg))->cg_iused)
+#define ufs_ocg_blksfree(sb, ucg)    fs32_to_cpu((sb), ((struct ufs_old_cylinder_group *)(ucg))->cg_free)
+#define ufs_ocg_chkmagic(sb, ucg) \
+	(fs32_to_cpu((sb), ((struct ufs_old_cylinder_group *)(ucg))->cg_magic) == CG_MAGIC)
 
 /*
- * size of this काष्ठाure is 172 B
+ * size of this structure is 172 B
  */
-काष्ठा	ufs_cylinder_group अणु
+struct	ufs_cylinder_group {
 	__fs32	cg_link;		/* linked list of cyl groups */
 	__fs32	cg_magic;		/* magic number */
-	__fs32	cg_समय;		/* समय last written */
+	__fs32	cg_time;		/* time last written */
 	__fs32	cg_cgx;			/* we are the cgx'th cylinder group */
 	__fs16	cg_ncyl;		/* number of cyl's this cg */
 	__fs16	cg_niblk;		/* number of inode blocks this cg */
 	__fs32	cg_ndblk;		/* number of data blocks this cg */
-	काष्ठा	ufs_csum cg_cs;		/* cylinder summary inक्रमmation */
+	struct	ufs_csum cg_cs;		/* cylinder summary information */
 	__fs32	cg_rotor;		/* position of last used block */
 	__fs32	cg_frotor;		/* position of last used frag */
 	__fs32	cg_irotor;		/* position of last used inode */
 	__fs32	cg_frsum[UFS_MAXFRAG];	/* counts of available frags */
 	__fs32	cg_btotoff;		/* (__u32) block totals per cylinder */
-	__fs32	cg_boff;		/* (लघु) मुक्त block positions */
-	__fs32	cg_iuseकरोff;		/* (अक्षर) used inode map */
-	__fs32	cg_मुक्तoff;		/* (u_अक्षर) मुक्त block map */
-	__fs32	cg_nextमुक्तoff;		/* (u_अक्षर) next available space */
-	जोड़ अणु
-		काष्ठा अणु
-			__fs32	cg_clustersumoff;	/* (u_पूर्णांक32) counts of avail clusters */
-			__fs32	cg_clusteroff;		/* (u_पूर्णांक8) मुक्त cluster map */
+	__fs32	cg_boff;		/* (short) free block positions */
+	__fs32	cg_iusedoff;		/* (char) used inode map */
+	__fs32	cg_freeoff;		/* (u_char) free block map */
+	__fs32	cg_nextfreeoff;		/* (u_char) next available space */
+	union {
+		struct {
+			__fs32	cg_clustersumoff;	/* (u_int32) counts of avail clusters */
+			__fs32	cg_clusteroff;		/* (u_int8) free cluster map */
 			__fs32	cg_nclusterblks;	/* number of clusters this cg */
-			__fs32	cg_sparecon[13];	/* reserved क्रम future use */
-		पूर्ण cg_44;
-		काष्ठा अणु
-			__fs32	cg_clustersumoff;/* (u_पूर्णांक32) counts of avail clusters */
-			__fs32	cg_clusteroff;	/* (u_पूर्णांक8) मुक्त cluster map */
+			__fs32	cg_sparecon[13];	/* reserved for future use */
+		} cg_44;
+		struct {
+			__fs32	cg_clustersumoff;/* (u_int32) counts of avail clusters */
+			__fs32	cg_clusteroff;	/* (u_int8) free cluster map */
 			__fs32	cg_nclusterblks;/* number of clusters this cg */
 			__fs32   cg_niblk; /* number of inode blocks this cg */
 			__fs32   cg_initediblk;	/* last initialized inode */
-			__fs32   cg_sparecon32[3];/* reserved क्रम future use */
-			__fs64   cg_समय;	/* समय last written */
-			__fs64	cg_sparecon[3];	/* reserved क्रम future use */
-		पूर्ण cg_u2;
-		__fs32	cg_sparecon[16];	/* reserved क्रम future use */
-	पूर्ण cg_u;
-	__u8	cg_space[1];		/* space क्रम cylinder group maps */
-/* actually दीर्घer */
-पूर्ण;
+			__fs32   cg_sparecon32[3];/* reserved for future use */
+			__fs64   cg_time;	/* time last written */
+			__fs64	cg_sparecon[3];	/* reserved for future use */
+		} cg_u2;
+		__fs32	cg_sparecon[16];	/* reserved for future use */
+	} cg_u;
+	__u8	cg_space[1];		/* space for cylinder group maps */
+/* actually longer */
+};
 
 /* Historic Cylinder group info */
-काष्ठा ufs_old_cylinder_group अणु
+struct ufs_old_cylinder_group {
 	__fs32	cg_link;		/* linked list of cyl groups */
-	__fs32	cg_rlink;		/* क्रम incore cyl groups     */
-	__fs32	cg_समय;		/* समय last written */
+	__fs32	cg_rlink;		/* for incore cyl groups     */
+	__fs32	cg_time;		/* time last written */
 	__fs32	cg_cgx;			/* we are the cgx'th cylinder group */
 	__fs16	cg_ncyl;		/* number of cyl's this cg */
 	__fs16	cg_niblk;		/* number of inode blocks this cg */
 	__fs32	cg_ndblk;		/* number of data blocks this cg */
-	काष्ठा	ufs_csum cg_cs;		/* cylinder summary inक्रमmation */
+	struct	ufs_csum cg_cs;		/* cylinder summary information */
 	__fs32	cg_rotor;		/* position of last used block */
 	__fs32	cg_frotor;		/* position of last used frag */
 	__fs32	cg_irotor;		/* position of last used inode */
 	__fs32	cg_frsum[8];		/* counts of available frags */
 	__fs32	cg_btot[32];		/* block totals per cylinder */
-	__fs16	cg_b[32][8];		/* positions of मुक्त blocks */
+	__fs16	cg_b[32][8];		/* positions of free blocks */
 	__u8	cg_iused[256];		/* used inode map */
 	__fs32	cg_magic;		/* magic number */
-	__u8	cg_मुक्त[1];		/* मुक्त block map */
-/* actually दीर्घer */
-पूर्ण;
+	__u8	cg_free[1];		/* free block map */
+/* actually longer */
+};
 
 /*
- * काष्ठाure of an on-disk inode
+ * structure of an on-disk inode
  */
-काष्ठा ufs_inode अणु
+struct ufs_inode {
 	__fs16	ui_mode;		/*  0x0 */
 	__fs16	ui_nlink;		/*  0x2 */
-	जोड़ अणु
-		काष्ठा अणु
+	union {
+		struct {
 			__fs16	ui_suid;	/*  0x4 */
 			__fs16	ui_sgid;	/*  0x6 */
-		पूर्ण oldids;
+		} oldids;
 		__fs32	ui_inumber;		/*  0x4 lsf: inode number */
 		__fs32	ui_author;		/*  0x4 GNU HURD: author */
-	पूर्ण ui_u1;
+	} ui_u1;
 	__fs64	ui_size;		/*  0x8 */
-	काष्ठा ufs_समयval ui_aसमय;	/* 0x10 access */
-	काष्ठा ufs_समयval ui_mसमय;	/* 0x18 modअगरication */
-	काष्ठा ufs_समयval ui_स_समय;	/* 0x20 creation */
-	जोड़ अणु
-		काष्ठा अणु
+	struct ufs_timeval ui_atime;	/* 0x10 access */
+	struct ufs_timeval ui_mtime;	/* 0x18 modification */
+	struct ufs_timeval ui_ctime;	/* 0x20 creation */
+	union {
+		struct {
 			__fs32	ui_db[UFS_NDADDR];/* 0x28 data blocks */
-			__fs32	ui_ib[UFS_NINसूची];/* 0x58 indirect blocks */
-		पूर्ण ui_addr;
-		__u8	ui_symlink[4*(UFS_NDADDR+UFS_NINसूची)];/* 0x28 fast symlink */
-	पूर्ण ui_u2;
+			__fs32	ui_ib[UFS_NINDIR];/* 0x58 indirect blocks */
+		} ui_addr;
+		__u8	ui_symlink[4*(UFS_NDADDR+UFS_NINDIR)];/* 0x28 fast symlink */
+	} ui_u2;
 	__fs32	ui_flags;		/* 0x64 immutable, append-only... */
 	__fs32	ui_blocks;		/* 0x68 blocks in use */
-	__fs32	ui_gen;			/* 0x6c like ext2 i_version, क्रम NFS support */
-	जोड़ अणु
-		काष्ठा अणु
-			__fs32	ui_shaकरोw;	/* 0x70 shaकरोw inode with security data */
-			__fs32	ui_uid;		/* 0x74 दीर्घ EFT version of uid */
-			__fs32	ui_gid;		/* 0x78 दीर्घ EFT version of gid */
+	__fs32	ui_gen;			/* 0x6c like ext2 i_version, for NFS support */
+	union {
+		struct {
+			__fs32	ui_shadow;	/* 0x70 shadow inode with security data */
+			__fs32	ui_uid;		/* 0x74 long EFT version of uid */
+			__fs32	ui_gid;		/* 0x78 long EFT version of gid */
 			__fs32	ui_oeftflag;	/* 0x7c reserved */
-		पूर्ण ui_sun;
-		काष्ठा अणु
+		} ui_sun;
+		struct {
 			__fs32	ui_uid;		/* 0x70 File owner */
 			__fs32	ui_gid;		/* 0x74 File group */
 			__fs32	ui_spare[2];	/* 0x78 reserved */
-		पूर्ण ui_44;
-		काष्ठा अणु
+		} ui_44;
+		struct {
 			__fs32	ui_uid;		/* 0x70 */
 			__fs32	ui_gid;		/* 0x74 */
 			__fs16	ui_modeh;	/* 0x78 mode high bits */
 			__fs16	ui_spare;	/* 0x7A unused */
-			__fs32	ui_trans;	/* 0x7c fileप्रणाली translator */
-		पूर्ण ui_hurd;
-	पूर्ण ui_u3;
-पूर्ण;
+			__fs32	ui_trans;	/* 0x7c filesystem translator */
+		} ui_hurd;
+	} ui_u3;
+};
 
-#घोषणा UFS_NXADDR  2            /* External addresses in inode. */
-काष्ठा ufs2_inode अणु
+#define UFS_NXADDR  2            /* External addresses in inode. */
+struct ufs2_inode {
 	__fs16     ui_mode;        /*   0: IFMT, permissions; see below. */
 	__fs16     ui_nlink;       /*   2: File link count. */
 	__fs32     ui_uid;         /*   4: File owner. */
@@ -657,57 +656,57 @@
 	__fs32     ui_blksize;     /*  12: Inode blocksize. */
 	__fs64     ui_size;        /*  16: File byte count. */
 	__fs64     ui_blocks;      /*  24: Bytes actually held. */
-	__fs64   ui_aसमय;       /*  32: Last access समय. */
-	__fs64   ui_mसमय;       /*  40: Last modअगरied समय. */
-	__fs64   ui_स_समय;       /*  48: Last inode change समय. */
-	__fs64   ui_birthसमय;   /*  56: Inode creation समय. */
-	__fs32     ui_mसमयnsec;   /*  64: Last modअगरied समय. */
-	__fs32     ui_aसमयnsec;   /*  68: Last access समय. */
-	__fs32     ui_स_समयnsec;   /*  72: Last inode change समय. */
-	__fs32     ui_birthnsec;   /*  76: Inode creation समय. */
+	__fs64   ui_atime;       /*  32: Last access time. */
+	__fs64   ui_mtime;       /*  40: Last modified time. */
+	__fs64   ui_ctime;       /*  48: Last inode change time. */
+	__fs64   ui_birthtime;   /*  56: Inode creation time. */
+	__fs32     ui_mtimensec;   /*  64: Last modified time. */
+	__fs32     ui_atimensec;   /*  68: Last access time. */
+	__fs32     ui_ctimensec;   /*  72: Last inode change time. */
+	__fs32     ui_birthnsec;   /*  76: Inode creation time. */
 	__fs32     ui_gen;         /*  80: Generation number. */
 	__fs32     ui_kernflags;   /*  84: Kernel flags. */
 	__fs32     ui_flags;       /*  88: Status flags (chflags). */
 	__fs32     ui_extsize;     /*  92: External attributes block. */
 	__fs64     ui_extb[UFS_NXADDR];/*  96: External attributes block. */
-	जोड़ अणु
-		काष्ठा अणु
+	union {
+		struct {
 			__fs64     ui_db[UFS_NDADDR]; /* 112: Direct disk blocks. */
-			__fs64     ui_ib[UFS_NINसूची];/* 208: Indirect disk blocks.*/
-		पूर्ण ui_addr;
-	__u8	ui_symlink[2*4*(UFS_NDADDR+UFS_NINसूची)];/* 0x28 fast symlink */
-	पूर्ण ui_u2;
+			__fs64     ui_ib[UFS_NINDIR];/* 208: Indirect disk blocks.*/
+		} ui_addr;
+	__u8	ui_symlink[2*4*(UFS_NDADDR+UFS_NINDIR)];/* 0x28 fast symlink */
+	} ui_u2;
 	__fs64     ui_spare[3];    /* 232: Reserved; currently unused */
-पूर्ण;
+};
 
 
-/* FreeBSD has these in sys/स्थिति.स */
+/* FreeBSD has these in sys/stat.h */
 /* ui_flags that can be set by a file owner */
-#घोषणा UFS_UF_SETTABLE   0x0000ffff
-#घोषणा UFS_UF_NODUMP     0x00000001  /* करो not dump */
-#घोषणा UFS_UF_IMMUTABLE  0x00000002  /* immutable (can't "change") */
-#घोषणा UFS_UF_APPEND     0x00000004  /* append-only */
-#घोषणा UFS_UF_OPAQUE     0x00000008  /* directory is opaque (जोड़fs) */
-#घोषणा UFS_UF_NOUNLINK   0x00000010  /* can't be हटाओd or नामd */
+#define UFS_UF_SETTABLE   0x0000ffff
+#define UFS_UF_NODUMP     0x00000001  /* do not dump */
+#define UFS_UF_IMMUTABLE  0x00000002  /* immutable (can't "change") */
+#define UFS_UF_APPEND     0x00000004  /* append-only */
+#define UFS_UF_OPAQUE     0x00000008  /* directory is opaque (unionfs) */
+#define UFS_UF_NOUNLINK   0x00000010  /* can't be removed or renamed */
 /* ui_flags that only root can set */
-#घोषणा UFS_SF_SETTABLE   0xffff0000
-#घोषणा UFS_SF_ARCHIVED   0x00010000  /* archived */
-#घोषणा UFS_SF_IMMUTABLE  0x00020000  /* immutable (can't "change") */
-#घोषणा UFS_SF_APPEND     0x00040000  /* append-only */
-#घोषणा UFS_SF_NOUNLINK   0x00100000  /* can't be हटाओd or नामd */
+#define UFS_SF_SETTABLE   0xffff0000
+#define UFS_SF_ARCHIVED   0x00010000  /* archived */
+#define UFS_SF_IMMUTABLE  0x00020000  /* immutable (can't "change") */
+#define UFS_SF_APPEND     0x00040000  /* append-only */
+#define UFS_SF_NOUNLINK   0x00100000  /* can't be removed or renamed */
 
 /*
- * This काष्ठाure is used क्रम पढ़ोing disk काष्ठाures larger
+ * This structure is used for reading disk structures larger
  * than the size of fragment.
  */
-काष्ठा ufs_buffer_head अणु
+struct ufs_buffer_head {
 	__u64 fragment;			/* first fragment */
 	__u64 count;				/* number of fragments */
-	काष्ठा buffer_head * bh[UFS_MAXFRAG];	/* buffers */
-पूर्ण;
+	struct buffer_head * bh[UFS_MAXFRAG];	/* buffers */
+};
 
-काष्ठा ufs_cg_निजी_info अणु
-	काष्ठा ufs_buffer_head c_ubh;
+struct ufs_cg_private_info {
+	struct ufs_buffer_head c_ubh;
 	__u32	c_cgx;		/* number of cylidner group */
 	__u16	c_ncyl;		/* number of cyl's this cg */
 	__u16	c_niblk;	/* number of inode blocks this cg */
@@ -716,19 +715,19 @@
 	__u32	c_frotor;	/* position of last used frag */
 	__u32	c_irotor;	/* position of last used inode */
 	__u32	c_btotoff;	/* (__u32) block totals per cylinder */
-	__u32	c_boff;		/* (लघु) मुक्त block positions */
-	__u32	c_iuseकरोff;	/* (अक्षर) used inode map */
-	__u32	c_मुक्तoff;	/* (u_अक्षर) मुक्त block map */
-	__u32	c_nextमुक्तoff;	/* (u_अक्षर) next available space */
-	__u32	c_clustersumoff;/* (u_पूर्णांक32) counts of avail clusters */
-	__u32	c_clusteroff;	/* (u_पूर्णांक8) मुक्त cluster map */
+	__u32	c_boff;		/* (short) free block positions */
+	__u32	c_iusedoff;	/* (char) used inode map */
+	__u32	c_freeoff;	/* (u_char) free block map */
+	__u32	c_nextfreeoff;	/* (u_char) next available space */
+	__u32	c_clustersumoff;/* (u_int32) counts of avail clusters */
+	__u32	c_clusteroff;	/* (u_int8) free cluster map */
 	__u32	c_nclusterblks;	/* number of clusters this cg */
-पूर्ण;
+};
 
 
-काष्ठा ufs_sb_निजी_info अणु
-	काष्ठा ufs_buffer_head s_ubh; /* buffer containing super block */
-	काष्ठा ufs_csum_core cs_total;
+struct ufs_sb_private_info {
+	struct ufs_buffer_head s_ubh; /* buffer containing super block */
+	struct ufs_csum_core cs_total;
 	__u32	s_sblkno;	/* offset of super-blocks in filesys */
 	__u32	s_cblkno;	/* offset of cg-block in filesys */
 	__u32	s_iblkno;	/* offset of inode-blocks in filesys */
@@ -741,21 +740,21 @@
 	__u32	s_bsize;	/* size of basic blocks */
 	__u32	s_fsize;	/* size of fragments */
 	__u32	s_fpb;		/* fragments per block */
-	__u32	s_minमुक्त;	/* minimum percentage of मुक्त blocks */
+	__u32	s_minfree;	/* minimum percentage of free blocks */
 	__u32	s_bmask;	/* `blkoff'' calc of blk offsets */
 	__u32	s_fmask;	/* s_fsize mask */
-	__u32	s_bshअगरt;	/* `lblkno'' calc of logical blkno */
-	__u32   s_fshअगरt;	/* s_fsize shअगरt */
-	__u32	s_fpbshअगरt;	/* fragments per block shअगरt */
-	__u32	s_fsbtodb;	/* fsbtodb and dbtofsb shअगरt स्थिरant */
+	__u32	s_bshift;	/* `lblkno'' calc of logical blkno */
+	__u32   s_fshift;	/* s_fsize shift */
+	__u32	s_fpbshift;	/* fragments per block shift */
+	__u32	s_fsbtodb;	/* fsbtodb and dbtofsb shift constant */
 	__u32	s_sbsize;	/* actual size of super block */
 	__u32   s_csmask;	/* csum block offset */
-	__u32	s_csshअगरt;	/* csum block number */
-	__u32	s_nindir;	/* value of NINसूची */
+	__u32	s_csshift;	/* csum block number */
+	__u32	s_nindir;	/* value of NINDIR */
 	__u32	s_inopb;	/* value of INOPB */
 	__u32	s_nspf;		/* value of NSPF */
 	__u32	s_npsect;	/* # sectors/track including spares */
-	__u32	s_पूर्णांकerleave;	/* hardware sector पूर्णांकerleave */
+	__u32	s_interleave;	/* hardware sector interleave */
 	__u32	s_trackskew;	/* sector 0 skew, per track */
 	__u64	s_csaddr;	/* blk addr of cyl grp summary area */
 	__u32	s_cssize;	/* size of cyl grp summary area */
@@ -769,50 +768,50 @@
 	__s32	s_contigsumsize;/* size of cluster summary array, 44bsd */
 	__s64	s_qbmask;	/* ~usb_bmask */
 	__s64	s_qfmask;	/* ~usb_fmask */
-	__s32	s_postblक्रमmat;	/* क्रमmat of positional layout tables */
+	__s32	s_postblformat;	/* format of positional layout tables */
 	__s32	s_nrpos;	/* number of rotational positions */
         __s32	s_postbloff;	/* (__s16) rotation block list head */
-	__s32	s_rotbloff;	/* (__u8) blocks क्रम each rotation */
+	__s32	s_rotbloff;	/* (__u8) blocks for each rotation */
 
 	__u32	s_fpbmask;	/* fragments per block mask */
 	__u32	s_apb;		/* address per block */
 	__u32	s_2apb;		/* address per block^2 */
 	__u32	s_3apb;		/* address per block^3 */
 	__u32	s_apbmask;	/* address per block mask */
-	__u32	s_apbshअगरt;	/* address per block shअगरt */
-	__u32	s_2apbshअगरt;	/* address per block shअगरt * 2 */
-	__u32	s_3apbshअगरt;	/* address per block shअगरt * 3 */
-	__u32	s_nspfshअगरt;	/* number of sector per fragment shअगरt */
+	__u32	s_apbshift;	/* address per block shift */
+	__u32	s_2apbshift;	/* address per block shift * 2 */
+	__u32	s_3apbshift;	/* address per block shift * 3 */
+	__u32	s_nspfshift;	/* number of sector per fragment shift */
 	__u32	s_nspb;		/* number of sector per block */
 	__u32	s_inopf;	/* inodes per fragment */
 	__u32	s_sbbase;	/* offset of NeXTstep superblock */
 	__u32	s_bpf;		/* bits per fragment */
-	__u32	s_bpfshअगरt;	/* bits per fragment shअगरt*/
+	__u32	s_bpfshift;	/* bits per fragment shift*/
 	__u32	s_bpfmask;	/* bits per fragment mask */
 
 	__u32	s_maxsymlinklen;/* upper limit on fast symlinks' size */
-	__s32	fs_magic;       /* fileप्रणाली magic */
-	अचिन्हित पूर्णांक s_dirblksize;
+	__s32	fs_magic;       /* filesystem magic */
+	unsigned int s_dirblksize;
 	__u64   s_root_blocks;
-	__u64	s_समय_प्रकारo_space;
-	__u64	s_space_to_समय;
-पूर्ण;
+	__u64	s_time_to_space;
+	__u64	s_space_to_time;
+};
 
 /*
- * Sizes of this काष्ठाures are:
+ * Sizes of this structures are:
  *	ufs_super_block_first	512
  *	ufs_super_block_second	512
  *	ufs_super_block_third	356
  */
-काष्ठा ufs_super_block_first अणु
-	जोड़ अणु
-		काष्ठा अणु
+struct ufs_super_block_first {
+	union {
+		struct {
 			__fs32	fs_link;	/* UNUSED */
-		पूर्ण fs_42;
-		काष्ठा अणु
-			__fs32	fs_state;	/* file प्रणाली state flag */
-		पूर्ण fs_sun;
-	पूर्ण fs_u0;
+		} fs_42;
+		struct {
+			__fs32	fs_state;	/* file system state flag */
+		} fs_sun;
+	} fs_u0;
 	__fs32	fs_rlink;
 	__fs32	fs_sblkno;
 	__fs32	fs_cblkno;
@@ -820,40 +819,40 @@
 	__fs32	fs_dblkno;
 	__fs32	fs_cgoffset;
 	__fs32	fs_cgmask;
-	__fs32	fs_समय;
+	__fs32	fs_time;
 	__fs32	fs_size;
 	__fs32	fs_dsize;
 	__fs32	fs_ncg;
 	__fs32	fs_bsize;
 	__fs32	fs_fsize;
 	__fs32	fs_frag;
-	__fs32	fs_minमुक्त;
+	__fs32	fs_minfree;
 	__fs32	fs_rotdelay;
 	__fs32	fs_rps;
 	__fs32	fs_bmask;
 	__fs32	fs_fmask;
-	__fs32	fs_bshअगरt;
-	__fs32	fs_fshअगरt;
+	__fs32	fs_bshift;
+	__fs32	fs_fshift;
 	__fs32	fs_maxcontig;
 	__fs32	fs_maxbpg;
-	__fs32	fs_fragshअगरt;
+	__fs32	fs_fragshift;
 	__fs32	fs_fsbtodb;
 	__fs32	fs_sbsize;
 	__fs32	fs_csmask;
-	__fs32	fs_csshअगरt;
+	__fs32	fs_csshift;
 	__fs32	fs_nindir;
 	__fs32	fs_inopb;
 	__fs32	fs_nspf;
 	__fs32	fs_optim;
-	जोड़ अणु
-		काष्ठा अणु
+	union {
+		struct {
 			__fs32	fs_npsect;
-		पूर्ण fs_sun;
-		काष्ठा अणु
+		} fs_sun;
+		struct {
 			__fs32	fs_state;
-		पूर्ण fs_sunx86;
-	पूर्ण fs_u1;
-	__fs32	fs_पूर्णांकerleave;
+		} fs_sunx86;
+	} fs_u1;
+	__fs32	fs_interleave;
 	__fs32	fs_trackskew;
 	__fs32	fs_id[2];
 	__fs32	fs_csaddr;
@@ -866,26 +865,26 @@
 	__fs32	fs_cpg;
 	__fs32	fs_ipg;
 	__fs32	fs_fpg;
-	काष्ठा ufs_csum fs_cstotal;
-	__s8	fs_भ_शेष;
+	struct ufs_csum fs_cstotal;
+	__s8	fs_fmod;
 	__s8	fs_clean;
 	__s8	fs_ronly;
 	__s8	fs_flags;
 	__s8	fs_fsmnt[UFS_MAXMNTLEN - 212];
 
-पूर्ण;
+};
 
-काष्ठा ufs_super_block_second अणु
-	जोड़ अणु
-		काष्ठा अणु
+struct ufs_super_block_second {
+	union {
+		struct {
 			__s8	fs_fsmnt[212];
 			__fs32	fs_cgrotor;
 			__fs32	fs_csp[UFS_MAXCSBUFS];
 			__fs32	fs_maxcluster;
 			__fs32	fs_cpc;
 			__fs16	fs_opostbl[82];
-		पूर्ण fs_u1;
-		काष्ठा अणु
+		} fs_u1;
+		struct {
 			__s8  fs_fsmnt[UFS2_MAXMNTLEN - UFS_MAXMNTLEN + 212];
 			__u8   fs_volname[UFS2_MAXVOLLEN];
 			__fs64  fs_swuid;
@@ -901,63 +900,63 @@
 			__fs64   fs_sparecon64[17];
 			__fs64   fs_sblockloc;
 			__fs64	cs_ndir;
-			__fs64	cs_nbमुक्त;
-		पूर्ण fs_u2;
-	पूर्ण fs_un;
-पूर्ण;
+			__fs64	cs_nbfree;
+		} fs_u2;
+	} fs_un;
+};
 
-काष्ठा ufs_super_block_third अणु
-	जोड़ अणु
-		काष्ठा अणु
+struct ufs_super_block_third {
+	union {
+		struct {
 			__fs16	fs_opostbl[46];
-		पूर्ण fs_u1;
-		काष्ठा अणु
-			__fs64	cs_nअगरree;	/* number of मुक्त inodes */
-			__fs64	cs_nfमुक्त;	/* number of मुक्त frags */
-			__fs64   cs_numclusters;	/* number of मुक्त clusters */
+		} fs_u1;
+		struct {
+			__fs64	cs_nifree;	/* number of free inodes */
+			__fs64	cs_nffree;	/* number of free frags */
+			__fs64   cs_numclusters;	/* number of free clusters */
 			__fs64   cs_spare[3];	/* future expansion */
-			काष्ठा  ufs_समयval    fs_समय;		/* last समय written */
+			struct  ufs_timeval    fs_time;		/* last time written */
 			__fs64    fs_size;		/* number of blocks in fs */
 			__fs64    fs_dsize;	/* number of data blocks in fs */
 			__fs64   fs_csaddr;	/* blk addr of cyl grp summary area */
-			__fs64    fs_pendingblocks;/* blocks in process of being मुक्तd */
-			__fs32    fs_pendinginodes;/*inodes in process of being मुक्तd */
-		पूर्ण __attribute__ ((packed)) fs_u2;
-	पूर्ण fs_un1;
-	जोड़ अणु
-		काष्ठा अणु
-			__fs32	fs_sparecon[53];/* reserved क्रम future स्थिरants */
+			__fs64    fs_pendingblocks;/* blocks in process of being freed */
+			__fs32    fs_pendinginodes;/*inodes in process of being freed */
+		} __attribute__ ((packed)) fs_u2;
+	} fs_un1;
+	union {
+		struct {
+			__fs32	fs_sparecon[53];/* reserved for future constants */
 			__fs32	fs_reclaim;
 			__fs32	fs_sparecon2[1];
-			__fs32	fs_state;	/* file प्रणाली state समय stamp */
+			__fs32	fs_state;	/* file system state time stamp */
 			__fs32	fs_qbmask[2];	/* ~usb_bmask */
 			__fs32	fs_qfmask[2];	/* ~usb_fmask */
-		पूर्ण fs_sun;
-		काष्ठा अणु
-			__fs32	fs_sparecon[53];/* reserved क्रम future स्थिरants */
+		} fs_sun;
+		struct {
+			__fs32	fs_sparecon[53];/* reserved for future constants */
 			__fs32	fs_reclaim;
 			__fs32	fs_sparecon2[1];
 			__fs32	fs_npsect;	/* # sectors/track including spares */
 			__fs32	fs_qbmask[2];	/* ~usb_bmask */
 			__fs32	fs_qfmask[2];	/* ~usb_fmask */
-		पूर्ण fs_sunx86;
-		काष्ठा अणु
-			__fs32	fs_sparecon[50];/* reserved क्रम future स्थिरants */
+		} fs_sunx86;
+		struct {
+			__fs32	fs_sparecon[50];/* reserved for future constants */
 			__fs32	fs_contigsumsize;/* size of cluster summary array */
-			__fs32	fs_maxsymlinklen;/* max length of an पूर्णांकernal symlink */
-			__fs32	fs_inodefmt;	/* क्रमmat of on-disk inodes */
+			__fs32	fs_maxsymlinklen;/* max length of an internal symlink */
+			__fs32	fs_inodefmt;	/* format of on-disk inodes */
 			__fs32	fs_maxfilesize[2];	/* max representable file size */
 			__fs32	fs_qbmask[2];	/* ~usb_bmask */
 			__fs32	fs_qfmask[2];	/* ~usb_fmask */
-			__fs32	fs_state;	/* file प्रणाली state समय stamp */
-		पूर्ण fs_44;
-	पूर्ण fs_un2;
-	__fs32	fs_postblक्रमmat;
+			__fs32	fs_state;	/* file system state time stamp */
+		} fs_44;
+	} fs_un2;
+	__fs32	fs_postblformat;
 	__fs32	fs_nrpos;
 	__fs32	fs_postbloff;
 	__fs32	fs_rotbloff;
 	__fs32	fs_magic;
 	__u8	fs_space[1];
-पूर्ण;
+};
 
-#पूर्ण_अगर /* __LINUX_UFS_FS_H */
+#endif /* __LINUX_UFS_FS_H */

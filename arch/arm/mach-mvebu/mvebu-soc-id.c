@@ -1,109 +1,108 @@
-<शैली गुरु>
 /*
- * ID and revision inक्रमmation क्रम mvebu SoCs
+ * ID and revision information for mvebu SoCs
  *
  * Copyright (C) 2014 Marvell
  *
- * Gregory CLEMENT <gregory.clement@मुक्त-electrons.com>
+ * Gregory CLEMENT <gregory.clement@free-electrons.com>
  *
  * This file is licensed under the terms of the GNU General Public
  * License version 2.  This program is licensed "as is" without any
  * warranty of any kind, whether express or implied.
  *
- * All the mvebu SoCs have inक्रमmation related to their variant and
- * revision that can be पढ़ो from the PCI control रेजिस्टर. This is
- * करोne beक्रमe the PCI initialization to aव्योम any conflict. Once the
- * ID and revision are retrieved, the mapping is मुक्तd.
+ * All the mvebu SoCs have information related to their variant and
+ * revision that can be read from the PCI control register. This is
+ * done before the PCI initialization to avoid any conflict. Once the
+ * ID and revision are retrieved, the mapping is freed.
  */
 
-#घोषणा pr_fmt(fmt) "mvebu-soc-id: " fmt
+#define pr_fmt(fmt) "mvebu-soc-id: " fmt
 
-#समावेश <linux/clk.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/sys_soc.h>
-#समावेश "common.h"
-#समावेश "mvebu-soc-id.h"
+#include <linux/clk.h>
+#include <linux/init.h>
+#include <linux/io.h>
+#include <linux/kernel.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/slab.h>
+#include <linux/sys_soc.h>
+#include "common.h"
+#include "mvebu-soc-id.h"
 
-#घोषणा PCIE_DEV_ID_OFF		0x0
-#घोषणा PCIE_DEV_REV_OFF	0x8
+#define PCIE_DEV_ID_OFF		0x0
+#define PCIE_DEV_REV_OFF	0x8
 
-#घोषणा SOC_ID_MASK	    0xFFFF0000
-#घोषणा SOC_REV_MASK	    0xFF
+#define SOC_ID_MASK	    0xFFFF0000
+#define SOC_REV_MASK	    0xFF
 
-अटल u32 soc_dev_id;
-अटल u32 soc_rev;
-अटल bool is_id_valid;
+static u32 soc_dev_id;
+static u32 soc_rev;
+static bool is_id_valid;
 
-अटल स्थिर काष्ठा of_device_id mvebu_pcie_of_match_table[] = अणु
-	अणु .compatible = "marvell,armada-xp-pcie", पूर्ण,
-	अणु .compatible = "marvell,armada-370-pcie", पूर्ण,
-	अणु .compatible = "marvell,kirkwood-pcie" पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id mvebu_pcie_of_match_table[] = {
+	{ .compatible = "marvell,armada-xp-pcie", },
+	{ .compatible = "marvell,armada-370-pcie", },
+	{ .compatible = "marvell,kirkwood-pcie" },
+	{},
+};
 
-पूर्णांक mvebu_get_soc_id(u32 *dev, u32 *rev)
-अणु
-	अगर (is_id_valid) अणु
+int mvebu_get_soc_id(u32 *dev, u32 *rev)
+{
+	if (is_id_valid) {
 		*dev = soc_dev_id;
 		*rev = soc_rev;
-		वापस 0;
-	पूर्ण अन्यथा
-		वापस -ENODEV;
-पूर्ण
+		return 0;
+	} else
+		return -ENODEV;
+}
 
-अटल पूर्णांक __init get_soc_id_by_pci(व्योम)
-अणु
-	काष्ठा device_node *np;
-	पूर्णांक ret = 0;
-	व्योम __iomem *pci_base;
-	काष्ठा clk *clk;
-	काष्ठा device_node *child;
+static int __init get_soc_id_by_pci(void)
+{
+	struct device_node *np;
+	int ret = 0;
+	void __iomem *pci_base;
+	struct clk *clk;
+	struct device_node *child;
 
-	np = of_find_matching_node(शून्य, mvebu_pcie_of_match_table);
-	अगर (!np)
-		वापस ret;
+	np = of_find_matching_node(NULL, mvebu_pcie_of_match_table);
+	if (!np)
+		return ret;
 
 	/*
 	 * ID and revision are available from any port, so we
 	 * just pick the first one
 	 */
-	child = of_get_next_child(np, शून्य);
-	अगर (child == शून्य) अणु
+	child = of_get_next_child(np, NULL);
+	if (child == NULL) {
 		pr_err("cannot get pci node\n");
 		ret = -ENOMEM;
-		जाओ clk_err;
-	पूर्ण
+		goto clk_err;
+	}
 
-	clk = of_clk_get_by_name(child, शून्य);
-	अगर (IS_ERR(clk)) अणु
+	clk = of_clk_get_by_name(child, NULL);
+	if (IS_ERR(clk)) {
 		pr_err("cannot get clock\n");
 		ret = -ENOMEM;
-		जाओ clk_err;
-	पूर्ण
+		goto clk_err;
+	}
 
 	ret = clk_prepare_enable(clk);
-	अगर (ret) अणु
+	if (ret) {
 		pr_err("cannot enable clock\n");
-		जाओ clk_err;
-	पूर्ण
+		goto clk_err;
+	}
 
 	pci_base = of_iomap(child, 0);
-	अगर (pci_base == शून्य) अणु
+	if (pci_base == NULL) {
 		pr_err("cannot map registers\n");
 		ret = -ENOMEM;
-		जाओ res_ioremap;
-	पूर्ण
+		goto res_ioremap;
+	}
 
 	/* SoC ID */
-	soc_dev_id = पढ़ोl(pci_base + PCIE_DEV_ID_OFF) >> 16;
+	soc_dev_id = readl(pci_base + PCIE_DEV_ID_OFF) >> 16;
 
 	/* SoC revision */
-	soc_rev = पढ़ोl(pci_base + PCIE_DEV_REV_OFF) & SOC_REV_MASK;
+	soc_rev = readl(pci_base + PCIE_DEV_REV_OFF) & SOC_REV_MASK;
 
 	is_id_valid = true;
 
@@ -114,66 +113,66 @@
 res_ioremap:
 	/*
 	 * If the PCIe unit is actually enabled and we have PCI
-	 * support in the kernel, we पूर्णांकentionally करो not release the
-	 * reference to the घड़ी. We want to keep it running since
-	 * the bootloader करोes some PCIe link configuration that the
-	 * kernel is क्रम now unable to करो, and gating the घड़ी would
+	 * support in the kernel, we intentionally do not release the
+	 * reference to the clock. We want to keep it running since
+	 * the bootloader does some PCIe link configuration that the
+	 * kernel is for now unable to do, and gating the clock would
 	 * make us loose this precious configuration.
 	 */
-	अगर (!of_device_is_available(child) || !IS_ENABLED(CONFIG_PCI_MVEBU)) अणु
+	if (!of_device_is_available(child) || !IS_ENABLED(CONFIG_PCI_MVEBU)) {
 		clk_disable_unprepare(clk);
 		clk_put(clk);
-	पूर्ण
+	}
 
 clk_err:
 	of_node_put(child);
 	of_node_put(np);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक __init mvebu_soc_id_init(व्योम)
-अणु
+static int __init mvebu_soc_id_init(void)
+{
 
 	/*
-	 * First try to get the ID and the revision by the प्रणाली
-	 * रेजिस्टर and use PCI रेजिस्टरs only अगर it is not possible
+	 * First try to get the ID and the revision by the system
+	 * register and use PCI registers only if it is not possible
 	 */
-	अगर (!mvebu_प्रणाली_controller_get_soc_id(&soc_dev_id, &soc_rev)) अणु
+	if (!mvebu_system_controller_get_soc_id(&soc_dev_id, &soc_rev)) {
 		is_id_valid = true;
 		pr_info("MVEBU SoC ID=0x%X, Rev=0x%X\n", soc_dev_id, soc_rev);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस get_soc_id_by_pci();
-पूर्ण
+	return get_soc_id_by_pci();
+}
 early_initcall(mvebu_soc_id_init);
 
-अटल पूर्णांक __init mvebu_soc_device(व्योम)
-अणु
-	काष्ठा soc_device_attribute *soc_dev_attr;
-	काष्ठा soc_device *soc_dev;
+static int __init mvebu_soc_device(void)
+{
+	struct soc_device_attribute *soc_dev_attr;
+	struct soc_device *soc_dev;
 
-	/* Also protects against running on non-mvebu प्रणालीs */
-	अगर (!is_id_valid)
-		वापस 0;
+	/* Also protects against running on non-mvebu systems */
+	if (!is_id_valid)
+		return 0;
 
-	soc_dev_attr = kzalloc(माप(*soc_dev_attr), GFP_KERNEL);
-	अगर (!soc_dev_attr)
-		वापस -ENOMEM;
+	soc_dev_attr = kzalloc(sizeof(*soc_dev_attr), GFP_KERNEL);
+	if (!soc_dev_attr)
+		return -ENOMEM;
 
-	soc_dev_attr->family = kaप्र_लिखो(GFP_KERNEL, "Marvell");
-	soc_dev_attr->revision = kaप्र_लिखो(GFP_KERNEL, "%X", soc_rev);
-	soc_dev_attr->soc_id = kaप्र_लिखो(GFP_KERNEL, "%X", soc_dev_id);
+	soc_dev_attr->family = kasprintf(GFP_KERNEL, "Marvell");
+	soc_dev_attr->revision = kasprintf(GFP_KERNEL, "%X", soc_rev);
+	soc_dev_attr->soc_id = kasprintf(GFP_KERNEL, "%X", soc_dev_id);
 
-	soc_dev = soc_device_रेजिस्टर(soc_dev_attr);
-	अगर (IS_ERR(soc_dev)) अणु
-		kमुक्त(soc_dev_attr->family);
-		kमुक्त(soc_dev_attr->revision);
-		kमुक्त(soc_dev_attr->soc_id);
-		kमुक्त(soc_dev_attr);
-	पूर्ण
+	soc_dev = soc_device_register(soc_dev_attr);
+	if (IS_ERR(soc_dev)) {
+		kfree(soc_dev_attr->family);
+		kfree(soc_dev_attr->revision);
+		kfree(soc_dev_attr->soc_id);
+		kfree(soc_dev_attr);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 postcore_initcall(mvebu_soc_device);

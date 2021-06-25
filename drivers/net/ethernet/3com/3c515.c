@@ -1,11 +1,10 @@
-<शैली गुरु>
 /*
 	Written 1997-1998 by Donald Becker.
 
 	This software may be used and distributed according to the terms
 	of the GNU General Public License, incorporated herein by reference.
 
-	This driver is क्रम the 3Com ISA EtherLink XL "Corkscrew" 3c515 ethercard.
+	This driver is for the 3Com ISA EtherLink XL "Corkscrew" 3c515 ethercard.
 
 	The author may be reached as becker@scyld.com, or C/O
 	Scyld Computing Corporation
@@ -13,145 +12,145 @@
 	Annapolis MD 21403
 
 
-	2000/2/2- Added support क्रम kernel-level ISAPnP
+	2000/2/2- Added support for kernel-level ISAPnP
 		by Stephen Frost <sfrost@snowman.net> and Alessandro Zummo
-	Cleaned up क्रम 2.3.x/softnet by Jeff Garzik and Alan Cox.
+	Cleaned up for 2.3.x/softnet by Jeff Garzik and Alan Cox.
 
 	2001/11/17 - Added ethtool support (jgarzik)
 
-	2002/10/28 - Locking updates क्रम 2.5 (alan@lxorguk.ukuu.org.uk)
+	2002/10/28 - Locking updates for 2.5 (alan@lxorguk.ukuu.org.uk)
 
 */
 
-#घोषणा DRV_NAME		"3c515"
+#define DRV_NAME		"3c515"
 
-#घोषणा CORKSCREW 1
+#define CORKSCREW 1
 
 /* "Knobs" that adjust features and parameters. */
-/* Set the copy अवरोधpoपूर्णांक क्रम the copy-only-tiny-frames scheme.
+/* Set the copy breakpoint for the copy-only-tiny-frames scheme.
    Setting to > 1512 effectively disables this feature. */
-अटल पूर्णांक rx_copyअवरोध = 200;
+static int rx_copybreak = 200;
 
 /* Allow setting MTU to a larger size, bypassing the normal ethernet setup. */
-अटल स्थिर पूर्णांक mtu = 1500;
+static const int mtu = 1500;
 
-/* Maximum events (Rx packets, etc.) to handle at each पूर्णांकerrupt. */
-अटल पूर्णांक max_पूर्णांकerrupt_work = 20;
+/* Maximum events (Rx packets, etc.) to handle at each interrupt. */
+static int max_interrupt_work = 20;
 
-/* Enable the स्वतःmatic media selection code -- usually set. */
-#घोषणा AUTOMEDIA 1
+/* Enable the automatic media selection code -- usually set. */
+#define AUTOMEDIA 1
 
 /* Allow the use of fragment bus master transfers instead of only
-   programmed-I/O क्रम Vortex cards.  Full-bus-master transfers are always
-   enabled by शेष on Boomerang cards.  If VORTEX_BUS_MASTER is defined,
+   programmed-I/O for Vortex cards.  Full-bus-master transfers are always
+   enabled by default on Boomerang cards.  If VORTEX_BUS_MASTER is defined,
    the feature may be turned on using 'options'. */
-#घोषणा VORTEX_BUS_MASTER
+#define VORTEX_BUS_MASTER
 
 /* A few values that may be tweaked. */
-/* Keep the ring sizes a घातer of two क्रम efficiency. */
-#घोषणा TX_RING_SIZE	16
-#घोषणा RX_RING_SIZE	16
-#घोषणा PKT_BUF_SZ		1536	/* Size of each temporary Rx buffer. */
+/* Keep the ring sizes a power of two for efficiency. */
+#define TX_RING_SIZE	16
+#define RX_RING_SIZE	16
+#define PKT_BUF_SZ		1536	/* Size of each temporary Rx buffer. */
 
-#समावेश <linux/module.h>
-#समावेश <linux/isapnp.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/in.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/ethtool.h>
-#समावेश <linux/bitops.h>
+#include <linux/module.h>
+#include <linux/isapnp.h>
+#include <linux/kernel.h>
+#include <linux/netdevice.h>
+#include <linux/string.h>
+#include <linux/errno.h>
+#include <linux/in.h>
+#include <linux/ioport.h>
+#include <linux/skbuff.h>
+#include <linux/etherdevice.h>
+#include <linux/interrupt.h>
+#include <linux/timer.h>
+#include <linux/ethtool.h>
+#include <linux/bitops.h>
 
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/dma.h>
+#include <linux/uaccess.h>
+#include <asm/io.h>
+#include <asm/dma.h>
 
-#घोषणा NEW_MULTICAST
-#समावेश <linux/delay.h>
+#define NEW_MULTICAST
+#include <linux/delay.h>
 
-#घोषणा MAX_UNITS 8
+#define MAX_UNITS 8
 
 MODULE_AUTHOR("Donald Becker <becker@scyld.com>");
 MODULE_DESCRIPTION("3Com 3c515 Corkscrew driver");
 MODULE_LICENSE("GPL");
 
-/* "Knobs" क्रम adjusting पूर्णांकernal parameters. */
+/* "Knobs" for adjusting internal parameters. */
 /* Put out somewhat more debugging messages. (0 - no msg, 1 minimal msgs). */
-#घोषणा DRIVER_DEBUG 1
-/* Some values here only क्रम perक्रमmance evaluation and path-coverage
+#define DRIVER_DEBUG 1
+/* Some values here only for performance evaluation and path-coverage
    debugging. */
-अटल पूर्णांक rx_nocopy, rx_copy, queued_packet;
+static int rx_nocopy, rx_copy, queued_packet;
 
-/* Number of बार to check to see अगर the Tx FIFO has space, used in some
-   limited हालs. */
-#घोषणा WAIT_TX_AVAIL 200
+/* Number of times to check to see if the Tx FIFO has space, used in some
+   limited cases. */
+#define WAIT_TX_AVAIL 200
 
 /* Operational parameter that usually are not changed. */
-#घोषणा TX_TIMEOUT  ((4*HZ)/10)	/* Time in jअगरfies beक्रमe concluding Tx hung */
+#define TX_TIMEOUT  ((4*HZ)/10)	/* Time in jiffies before concluding Tx hung */
 
 /* The size here is somewhat misleading: the Corkscrew also uses the ISA
-   aliased रेजिस्टरs at <base>+0x400.
+   aliased registers at <base>+0x400.
    */
-#घोषणा CORKSCREW_TOTAL_SIZE 0x20
+#define CORKSCREW_TOTAL_SIZE 0x20
 
-#अगर_घोषित DRIVER_DEBUG
-अटल पूर्णांक corkscrew_debug = DRIVER_DEBUG;
-#अन्यथा
-अटल पूर्णांक corkscrew_debug = 1;
-#पूर्ण_अगर
+#ifdef DRIVER_DEBUG
+static int corkscrew_debug = DRIVER_DEBUG;
+#else
+static int corkscrew_debug = 1;
+#endif
 
-#घोषणा CORKSCREW_ID 10
+#define CORKSCREW_ID 10
 
 /*
 				Theory of Operation
 
 I. Board Compatibility
 
-This device driver is deचिन्हित क्रम the 3Com 3c515 ISA Fast EtherLink XL,
-3Com's ISA bus adapter क्रम Fast Ethernet.  Due to the unique I/O port layout,
-it's not practical to पूर्णांकegrate this driver with the other EtherLink drivers.
+This device driver is designed for the 3Com 3c515 ISA Fast EtherLink XL,
+3Com's ISA bus adapter for Fast Ethernet.  Due to the unique I/O port layout,
+it's not practical to integrate this driver with the other EtherLink drivers.
 
-II. Board-specअगरic settings
+II. Board-specific settings
 
-The Corkscrew has an EEPROM क्रम configuration, but no special settings are
-needed क्रम Linux.
+The Corkscrew has an EEPROM for configuration, but no special settings are
+needed for Linux.
 
 III. Driver operation
 
-The 3c515 series use an पूर्णांकerface that's very similar to the 3c900 "Boomerang"
-PCI cards, with the bus master पूर्णांकerface extensively modअगरied to work with
+The 3c515 series use an interface that's very similar to the 3c900 "Boomerang"
+PCI cards, with the bus master interface extensively modified to work with
 the ISA bus.
 
 The card is capable of full-bus-master transfers with separate
 lists of transmit and receive descriptors, similar to the AMD LANCE/PCnet,
-DEC Tulip and Intel Speeकरो3.
+DEC Tulip and Intel Speedo3.
 
-This driver uses a "RX_COPYBREAK" scheme rather than a fixed पूर्णांकermediate
+This driver uses a "RX_COPYBREAK" scheme rather than a fixed intermediate
 receive buffer.  This scheme allocates full-sized skbuffs as receive
-buffers.  The value RX_COPYBREAK is used as the copying अवरोधpoपूर्णांक: it is
+buffers.  The value RX_COPYBREAK is used as the copying breakpoint: it is
 chosen to trade-off the memory wasted by passing the full-sized skbuff to
-the queue layer क्रम all frames vs. the copying cost of copying a frame to a
+the queue layer for all frames vs. the copying cost of copying a frame to a
 correctly-sized skbuff.
 
 
 IIIC. Synchronization
-The driver runs as two independent, single-thपढ़ोed flows of control.  One
-is the send-packet routine, which enक्रमces single-thपढ़ोed use by the netअगर
-layer.  The other thपढ़ो is the पूर्णांकerrupt handler, which is single
-thपढ़ोed by the hardware and other software.
+The driver runs as two independent, single-threaded flows of control.  One
+is the send-packet routine, which enforces single-threaded use by the netif
+layer.  The other thread is the interrupt handler, which is single
+threaded by the hardware and other software.
 
 IV. Notes
 
-Thanks to Terry Murphy of 3Com क्रम providing करोcumentation and a development
+Thanks to Terry Murphy of 3Com for providing documentation and a development
 board.
 
-The names "Vortex", "Boomerang" and "Corkscrew" are the पूर्णांकernal 3Com
+The names "Vortex", "Boomerang" and "Corkscrew" are the internal 3Com
 project names.  I use these names to eliminate confusion -- 3Com product
 numbers and names are very similar and often confused.
 
@@ -164,21 +163,21 @@ of 1.5K, but the changes to support 4.5K are minimal.
    These are not used by other compilation units and thus are not
    exported in a ".h" file.
 
-   First the winकरोws.  There are eight रेजिस्टर winकरोws, with the command
-   and status रेजिस्टरs available in each.
+   First the windows.  There are eight register windows, with the command
+   and status registers available in each.
    */
-#घोषणा EL3WINDOW(win_num) outw(SelectWinकरोw + (win_num), ioaddr + EL3_CMD)
-#घोषणा EL3_CMD 0x0e
-#घोषणा EL3_STATUS 0x0e
+#define EL3WINDOW(win_num) outw(SelectWindow + (win_num), ioaddr + EL3_CMD)
+#define EL3_CMD 0x0e
+#define EL3_STATUS 0x0e
 
 /* The top five bits written to EL3_CMD are a command, the lower
-   11 bits are the parameter, अगर applicable.
-   Note that 11 parameters bits was fine क्रम ethernet, but the new chips
+   11 bits are the parameter, if applicable.
+   Note that 11 parameters bits was fine for ethernet, but the new chips
    can handle FDDI length frames (~4500 octets) and now parameters count
    32-bit 'Dwords' rather than octets. */
 
-क्रमागत corkscrew_cmd अणु
-	TotalReset = 0 << 11, SelectWinकरोw = 1 << 11, StartCoax = 2 << 11,
+enum corkscrew_cmd {
+	TotalReset = 0 << 11, SelectWindow = 1 << 11, StartCoax = 2 << 11,
 	RxDisable = 3 << 11, RxEnable = 4 << 11, RxReset = 5 << 11,
 	UpStall = 6 << 11, UpUnstall = (6 << 11) + 1, DownStall = (6 << 11) + 2,
 	DownUnstall = (6 << 11) + 3, RxDiscard = 8 << 11, TxEnable = 9 << 11,
@@ -188,398 +187,398 @@ of 1.5K, but the changes to support 4.5K are minimal.
 	SetTxThreshold = 18 << 11, SetTxStart = 19 << 11, StartDMAUp = 20 << 11,
 	StartDMADown = (20 << 11) + 1, StatsEnable = 21 << 11,
 	StatsDisable = 22 << 11, StopCoax = 23 << 11,
-पूर्ण;
+};
 
 /* The SetRxFilter command accepts the following classes: */
-क्रमागत RxFilter अणु
+enum RxFilter {
 	RxStation = 1, RxMulticast = 2, RxBroadcast = 4, RxProm = 8
-पूर्ण;
+};
 
-/* Bits in the general status रेजिस्टर. */
-क्रमागत corkscrew_status अणु
+/* Bits in the general status register. */
+enum corkscrew_status {
 	IntLatch = 0x0001, AdapterFailure = 0x0002, TxComplete = 0x0004,
 	TxAvailable = 0x0008, RxComplete = 0x0010, RxEarly = 0x0020,
 	IntReq = 0x0040, StatsFull = 0x0080,
 	DMADone = 1 << 8, DownComplete = 1 << 9, UpComplete = 1 << 10,
 	DMAInProgress = 1 << 11,	/* DMA controller is still busy. */
 	CmdInProgress = 1 << 12,	/* EL3_CMD is still busy. */
-पूर्ण;
+};
 
-/* Register winकरोw 1 offsets, the winकरोw used in normal operation.
-   On the Corkscrew this winकरोw is always mapped at offsets 0x10-0x1f. */
-क्रमागत Winकरोw1 अणु
+/* Register window 1 offsets, the window used in normal operation.
+   On the Corkscrew this window is always mapped at offsets 0x10-0x1f. */
+enum Window1 {
 	TX_FIFO = 0x10, RX_FIFO = 0x10, RxErrors = 0x14,
 	RxStatus = 0x18, Timer = 0x1A, TxStatus = 0x1B,
-	TxFree = 0x1C,		/* Reमुख्यing मुक्त bytes in Tx buffer. */
-पूर्ण;
-क्रमागत Winकरोw0 अणु
+	TxFree = 0x1C,		/* Remaining free bytes in Tx buffer. */
+};
+enum Window0 {
 	Wn0IRQ = 0x08,
-#अगर defined(CORKSCREW)
-	Wn0EepromCmd = 0x200A,	/* Corkscrew EEPROM command रेजिस्टर. */
-	Wn0EepromData = 0x200C,	/* Corkscrew EEPROM results रेजिस्टर. */
-#अन्यथा
-	Wn0EepromCmd = 10,	/* Winकरोw 0: EEPROM command रेजिस्टर. */
-	Wn0EepromData = 12,	/* Winकरोw 0: EEPROM results रेजिस्टर. */
-#पूर्ण_अगर
-पूर्ण;
-क्रमागत Win0_EEPROM_bits अणु
+#if defined(CORKSCREW)
+	Wn0EepromCmd = 0x200A,	/* Corkscrew EEPROM command register. */
+	Wn0EepromData = 0x200C,	/* Corkscrew EEPROM results register. */
+#else
+	Wn0EepromCmd = 10,	/* Window 0: EEPROM command register. */
+	Wn0EepromData = 12,	/* Window 0: EEPROM results register. */
+#endif
+};
+enum Win0_EEPROM_bits {
 	EEPROM_Read = 0x80, EEPROM_WRITE = 0x40, EEPROM_ERASE = 0xC0,
-	EEPROM_EWENB = 0x30,	/* Enable erasing/writing क्रम 10 msec. */
-	EEPROM_EWDIS = 0x00,	/* Disable EWENB beक्रमe 10 msec समयout. */
-पूर्ण;
+	EEPROM_EWENB = 0x30,	/* Enable erasing/writing for 10 msec. */
+	EEPROM_EWDIS = 0x00,	/* Disable EWENB before 10 msec timeout. */
+};
 
 /* EEPROM locations. */
-क्रमागत eeprom_offset अणु
+enum eeprom_offset {
 	PhysAddr01 = 0, PhysAddr23 = 1, PhysAddr45 = 2, ModelID = 3,
 	EtherLink3ID = 7,
-पूर्ण;
+};
 
-क्रमागत Winकरोw3 अणु			/* Winकरोw 3: MAC/config bits. */
+enum Window3 {			/* Window 3: MAC/config bits. */
 	Wn3_Config = 0, Wn3_MAC_Ctrl = 6, Wn3_Options = 8,
-पूर्ण;
-क्रमागत wn3_config अणु
+};
+enum wn3_config {
 	Ram_size = 7,
 	Ram_width = 8,
 	Ram_speed = 0x30,
 	Rom_size = 0xc0,
-	Ram_split_shअगरt = 16,
-	Ram_split = 3 << Ram_split_shअगरt,
-	Xcvr_shअगरt = 20,
-	Xcvr = 7 << Xcvr_shअगरt,
+	Ram_split_shift = 16,
+	Ram_split = 3 << Ram_split_shift,
+	Xcvr_shift = 20,
+	Xcvr = 7 << Xcvr_shift,
 	Autoselect = 0x1000000,
-पूर्ण;
+};
 
-क्रमागत Winकरोw4 अणु
-	Wn4_NetDiag = 6, Wn4_Media = 10,	/* Winकरोw 4: Xcvr/media bits. */
-पूर्ण;
-क्रमागत Win4_Media_bits अणु
-	Media_SQE = 0x0008,	/* Enable SQE error counting क्रम AUI. */
-	Media_10TP = 0x00C0,	/* Enable link beat and jabber क्रम 10baseT. */
-	Media_Lnk = 0x0080,	/* Enable just link beat क्रम 100TX/100FX. */
+enum Window4 {
+	Wn4_NetDiag = 6, Wn4_Media = 10,	/* Window 4: Xcvr/media bits. */
+};
+enum Win4_Media_bits {
+	Media_SQE = 0x0008,	/* Enable SQE error counting for AUI. */
+	Media_10TP = 0x00C0,	/* Enable link beat and jabber for 10baseT. */
+	Media_Lnk = 0x0080,	/* Enable just link beat for 100TX/100FX. */
 	Media_LnkBeat = 0x0800,
-पूर्ण;
-क्रमागत Winकरोw7 अणु			/* Winकरोw 7: Bus Master control. */
+};
+enum Window7 {			/* Window 7: Bus Master control. */
 	Wn7_MasterAddr = 0, Wn7_MasterLen = 6, Wn7_MasterStatus = 12,
-पूर्ण;
+};
 
-/* Boomerang-style bus master control रेजिस्टरs.  Note ISA aliases! */
-क्रमागत MasterCtrl अणु
+/* Boomerang-style bus master control registers.  Note ISA aliases! */
+enum MasterCtrl {
 	PktStatus = 0x400, DownListPtr = 0x404, FragAddr = 0x408, FragLen =
 	    0x40c,
 	TxFreeThreshold = 0x40f, UpPktStatus = 0x410, UpListPtr = 0x418,
-पूर्ण;
+};
 
 /* The Rx and Tx descriptor lists.
    Caution Alpha hackers: these types are 32 bits!  Note also the 8 byte
-   alignment contraपूर्णांक on tx_ring[] and rx_ring[]. */
-काष्ठा boom_rx_desc अणु
+   alignment contraint on tx_ring[] and rx_ring[]. */
+struct boom_rx_desc {
 	u32 next;
 	s32 status;
 	u32 addr;
 	s32 length;
-पूर्ण;
+};
 
-/* Values क्रम the Rx status entry. */
-क्रमागत rx_desc_status अणु
+/* Values for the Rx status entry. */
+enum rx_desc_status {
 	RxDComplete = 0x00008000, RxDError = 0x4000,
-	/* See boomerang_rx() क्रम actual error bits */
-पूर्ण;
+	/* See boomerang_rx() for actual error bits */
+};
 
-काष्ठा boom_tx_desc अणु
+struct boom_tx_desc {
 	u32 next;
 	s32 status;
 	u32 addr;
 	s32 length;
-पूर्ण;
+};
 
-काष्ठा corkscrew_निजी अणु
-	स्थिर अक्षर *product_name;
-	काष्ठा list_head list;
-	काष्ठा net_device *our_dev;
+struct corkscrew_private {
+	const char *product_name;
+	struct list_head list;
+	struct net_device *our_dev;
 	/* The Rx and Tx rings are here to keep them quad-word-aligned. */
-	काष्ठा boom_rx_desc rx_ring[RX_RING_SIZE];
-	काष्ठा boom_tx_desc tx_ring[TX_RING_SIZE];
+	struct boom_rx_desc rx_ring[RX_RING_SIZE];
+	struct boom_tx_desc tx_ring[TX_RING_SIZE];
 	/* The addresses of transmit- and receive-in-place skbuffs. */
-	काष्ठा sk_buff *rx_skbuff[RX_RING_SIZE];
-	काष्ठा sk_buff *tx_skbuff[TX_RING_SIZE];
-	अचिन्हित पूर्णांक cur_rx, cur_tx;	/* The next मुक्त ring entry */
-	अचिन्हित पूर्णांक dirty_rx, dirty_tx;/* The ring entries to be मुक्त()ed. */
-	काष्ठा sk_buff *tx_skb;	/* Packet being eaten by bus master ctrl.  */
-	काष्ठा समयr_list समयr;	/* Media selection समयr. */
-	पूर्णांक capabilities	;	/* Adapter capabilities word. */
-	पूर्णांक options;			/* User-settable misc. driver options. */
-	पूर्णांक last_rx_packets;		/* For media स्वतःselection. */
-	अचिन्हित पूर्णांक available_media:8,	/* From Wn3_Options */
+	struct sk_buff *rx_skbuff[RX_RING_SIZE];
+	struct sk_buff *tx_skbuff[TX_RING_SIZE];
+	unsigned int cur_rx, cur_tx;	/* The next free ring entry */
+	unsigned int dirty_rx, dirty_tx;/* The ring entries to be free()ed. */
+	struct sk_buff *tx_skb;	/* Packet being eaten by bus master ctrl.  */
+	struct timer_list timer;	/* Media selection timer. */
+	int capabilities	;	/* Adapter capabilities word. */
+	int options;			/* User-settable misc. driver options. */
+	int last_rx_packets;		/* For media autoselection. */
+	unsigned int available_media:8,	/* From Wn3_Options */
 		media_override:3,	/* Passed-in media type. */
-		शेष_media:3,	/* Read from the EEPROM. */
-		full_duplex:1, स्वतःselect:1, bus_master:1,	/* Vortex can only करो a fragment bus-m. */
+		default_media:3,	/* Read from the EEPROM. */
+		full_duplex:1, autoselect:1, bus_master:1,	/* Vortex can only do a fragment bus-m. */
 		full_bus_master_tx:1, full_bus_master_rx:1,	/* Boomerang  */
 		tx_full:1;
 	spinlock_t lock;
-	काष्ठा device *dev;
-पूर्ण;
+	struct device *dev;
+};
 
-/* The action to take with a media selection समयr tick.
-   Note that we deviate from the 3Com order by checking 10base2 beक्रमe AUI.
+/* The action to take with a media selection timer tick.
+   Note that we deviate from the 3Com order by checking 10base2 before AUI.
  */
-क्रमागत xcvr_types अणु
+enum xcvr_types {
 	XCVR_10baseT = 0, XCVR_AUI, XCVR_10baseTOnly, XCVR_10base2, XCVR_100baseTx,
 	XCVR_100baseFx, XCVR_MII = 6, XCVR_Default = 8,
-पूर्ण;
+};
 
-अटल काष्ठा media_table अणु
-	अक्षर *name;
-	अचिन्हित पूर्णांक media_bits:16,	/* Bits to set in Wn4_Media रेजिस्टर. */
+static struct media_table {
+	char *name;
+	unsigned int media_bits:16,	/* Bits to set in Wn4_Media register. */
 		mask:8,			/* The transceiver-present bit in Wn3_Config. */
 		next:8;			/* The media type to try next. */
-	लघु रुको;			/* Time beक्रमe we check media status. */
-पूर्ण media_tbl[] = अणु
-	अणु "10baseT", Media_10TP, 0x08, XCVR_10base2, (14 * HZ) / 10 पूर्ण,
-	अणु "10Mbs AUI", Media_SQE, 0x20, XCVR_Default, (1 * HZ) / 10पूर्ण,
-	अणु "undefined", 0, 0x80, XCVR_10baseT, 10000पूर्ण,
-	अणु "10base2", 0, 0x10, XCVR_AUI, (1 * HZ) / 10पूर्ण,
-	अणु "100baseTX", Media_Lnk, 0x02, XCVR_100baseFx, (14 * HZ) / 10पूर्ण,
-	अणु "100baseFX", Media_Lnk, 0x04, XCVR_MII, (14 * HZ) / 10पूर्ण,
-	अणु "MII", 0, 0x40, XCVR_10baseT, 3 * HZपूर्ण,
-	अणु "undefined", 0, 0x01, XCVR_10baseT, 10000पूर्ण,
-	अणु "Default", 0, 0xFF, XCVR_10baseT, 10000पूर्ण,
-पूर्ण;
+	short wait;			/* Time before we check media status. */
+} media_tbl[] = {
+	{ "10baseT", Media_10TP, 0x08, XCVR_10base2, (14 * HZ) / 10 },
+	{ "10Mbs AUI", Media_SQE, 0x20, XCVR_Default, (1 * HZ) / 10},
+	{ "undefined", 0, 0x80, XCVR_10baseT, 10000},
+	{ "10base2", 0, 0x10, XCVR_AUI, (1 * HZ) / 10},
+	{ "100baseTX", Media_Lnk, 0x02, XCVR_100baseFx, (14 * HZ) / 10},
+	{ "100baseFX", Media_Lnk, 0x04, XCVR_MII, (14 * HZ) / 10},
+	{ "MII", 0, 0x40, XCVR_10baseT, 3 * HZ},
+	{ "undefined", 0, 0x01, XCVR_10baseT, 10000},
+	{ "Default", 0, 0xFF, XCVR_10baseT, 10000},
+};
 
-#अगर_घोषित __ISAPNP__
-अटल काष्ठा isapnp_device_id corkscrew_isapnp_adapters[] = अणु
-	अणु	ISAPNP_ANY_ID, ISAPNP_ANY_ID,
+#ifdef __ISAPNP__
+static struct isapnp_device_id corkscrew_isapnp_adapters[] = {
+	{	ISAPNP_ANY_ID, ISAPNP_ANY_ID,
 		ISAPNP_VENDOR('T', 'C', 'M'), ISAPNP_FUNCTION(0x5051),
-		(दीर्घ) "3Com Fast EtherLink ISA" पूर्ण,
-	अणु पूर्ण	/* terminate list */
-पूर्ण;
+		(long) "3Com Fast EtherLink ISA" },
+	{ }	/* terminate list */
+};
 
 MODULE_DEVICE_TABLE(isapnp, corkscrew_isapnp_adapters);
 
-अटल पूर्णांक nopnp;
-#पूर्ण_अगर /* __ISAPNP__ */
+static int nopnp;
+#endif /* __ISAPNP__ */
 
-अटल काष्ठा net_device *corkscrew_scan(पूर्णांक unit);
-अटल पूर्णांक corkscrew_setup(काष्ठा net_device *dev, पूर्णांक ioaddr,
-			    काष्ठा pnp_dev *idev, पूर्णांक card_number);
-अटल पूर्णांक corkscrew_खोलो(काष्ठा net_device *dev);
-अटल व्योम corkscrew_समयr(काष्ठा समयr_list *t);
-अटल netdev_tx_t corkscrew_start_xmit(काष्ठा sk_buff *skb,
-					काष्ठा net_device *dev);
-अटल पूर्णांक corkscrew_rx(काष्ठा net_device *dev);
-अटल व्योम corkscrew_समयout(काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue);
-अटल पूर्णांक boomerang_rx(काष्ठा net_device *dev);
-अटल irqवापस_t corkscrew_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id);
-अटल पूर्णांक corkscrew_बंद(काष्ठा net_device *dev);
-अटल व्योम update_stats(पूर्णांक addr, काष्ठा net_device *dev);
-अटल काष्ठा net_device_stats *corkscrew_get_stats(काष्ठा net_device *dev);
-अटल व्योम set_rx_mode(काष्ठा net_device *dev);
-अटल स्थिर काष्ठा ethtool_ops netdev_ethtool_ops;
+static struct net_device *corkscrew_scan(int unit);
+static int corkscrew_setup(struct net_device *dev, int ioaddr,
+			    struct pnp_dev *idev, int card_number);
+static int corkscrew_open(struct net_device *dev);
+static void corkscrew_timer(struct timer_list *t);
+static netdev_tx_t corkscrew_start_xmit(struct sk_buff *skb,
+					struct net_device *dev);
+static int corkscrew_rx(struct net_device *dev);
+static void corkscrew_timeout(struct net_device *dev, unsigned int txqueue);
+static int boomerang_rx(struct net_device *dev);
+static irqreturn_t corkscrew_interrupt(int irq, void *dev_id);
+static int corkscrew_close(struct net_device *dev);
+static void update_stats(int addr, struct net_device *dev);
+static struct net_device_stats *corkscrew_get_stats(struct net_device *dev);
+static void set_rx_mode(struct net_device *dev);
+static const struct ethtool_ops netdev_ethtool_ops;
 
 
 /*
-   Unक्रमtunately maximizing the shared code between the पूर्णांकegrated and
+   Unfortunately maximizing the shared code between the integrated and
    module version of the driver results in a complicated set of initialization
    procedures.
    init_module() -- modules /  tc59x_init()  -- built-in
-		The wrappers क्रम corkscrew_scan()
-   corkscrew_scan()  		 The common routine that scans क्रम PCI and EISA cards
-   corkscrew_found_device() Allocate a device काष्ठाure when we find a card.
-					Dअगरferent versions exist क्रम modules and built-in.
-   corkscrew_probe1()		Fill in the device काष्ठाure -- this is separated
+		The wrappers for corkscrew_scan()
+   corkscrew_scan()  		 The common routine that scans for PCI and EISA cards
+   corkscrew_found_device() Allocate a device structure when we find a card.
+					Different versions exist for modules and built-in.
+   corkscrew_probe1()		Fill in the device structure -- this is separated
 					so that the modules code can put it in dev->init.
 */
 /* This driver uses 'options' to pass the media type, full-duplex flag, etc. */
 /* Note: this is the only limit on the number of cards supported!! */
-अटल पूर्णांक options[MAX_UNITS] = अणु -1, -1, -1, -1, -1, -1, -1, -1, पूर्ण;
+static int options[MAX_UNITS] = { -1, -1, -1, -1, -1, -1, -1, -1, };
 
-#अगर_घोषित MODULE
-अटल पूर्णांक debug = -1;
+#ifdef MODULE
+static int debug = -1;
 
-module_param(debug, पूर्णांक, 0);
-module_param_array(options, पूर्णांक, शून्य, 0);
-module_param(rx_copyअवरोध, पूर्णांक, 0);
-module_param(max_पूर्णांकerrupt_work, पूर्णांक, 0);
+module_param(debug, int, 0);
+module_param_array(options, int, NULL, 0);
+module_param(rx_copybreak, int, 0);
+module_param(max_interrupt_work, int, 0);
 MODULE_PARM_DESC(debug, "3c515 debug level (0-6)");
 MODULE_PARM_DESC(options, "3c515: Bits 0-2: media type, bit 3: full duplex, bit 4: bus mastering");
-MODULE_PARM_DESC(rx_copyअवरोध, "3c515 copy breakpoint for copy-only-tiny-frames");
-MODULE_PARM_DESC(max_पूर्णांकerrupt_work, "3c515 maximum events handled per interrupt");
+MODULE_PARM_DESC(rx_copybreak, "3c515 copy breakpoint for copy-only-tiny-frames");
+MODULE_PARM_DESC(max_interrupt_work, "3c515 maximum events handled per interrupt");
 
-/* A list of all installed Vortex devices, क्रम removing the driver module. */
-/* we will need locking (and refcounting) अगर we ever use it क्रम more */
-अटल LIST_HEAD(root_corkscrew_dev);
+/* A list of all installed Vortex devices, for removing the driver module. */
+/* we will need locking (and refcounting) if we ever use it for more */
+static LIST_HEAD(root_corkscrew_dev);
 
-पूर्णांक init_module(व्योम)
-अणु
-	पूर्णांक found = 0;
-	अगर (debug >= 0)
+int init_module(void)
+{
+	int found = 0;
+	if (debug >= 0)
 		corkscrew_debug = debug;
-	जबतक (corkscrew_scan(-1))
+	while (corkscrew_scan(-1))
 		found++;
-	वापस found ? 0 : -ENODEV;
-पूर्ण
+	return found ? 0 : -ENODEV;
+}
 
-#अन्यथा
-काष्ठा net_device *tc515_probe(पूर्णांक unit)
-अणु
-	काष्ठा net_device *dev = corkscrew_scan(unit);
+#else
+struct net_device *tc515_probe(int unit)
+{
+	struct net_device *dev = corkscrew_scan(unit);
 
-	अगर (!dev)
-		वापस ERR_PTR(-ENODEV);
+	if (!dev)
+		return ERR_PTR(-ENODEV);
 
-	वापस dev;
-पूर्ण
-#पूर्ण_अगर				/* not MODULE */
+	return dev;
+}
+#endif				/* not MODULE */
 
-अटल पूर्णांक check_device(अचिन्हित ioaddr)
-अणु
-	पूर्णांक समयr;
+static int check_device(unsigned ioaddr)
+{
+	int timer;
 
-	अगर (!request_region(ioaddr, CORKSCREW_TOTAL_SIZE, "3c515"))
-		वापस 0;
-	/* Check the resource configuration क्रम a matching ioaddr. */
-	अगर ((inw(ioaddr + 0x2002) & 0x1f0) != (ioaddr & 0x1f0)) अणु
+	if (!request_region(ioaddr, CORKSCREW_TOTAL_SIZE, "3c515"))
+		return 0;
+	/* Check the resource configuration for a matching ioaddr. */
+	if ((inw(ioaddr + 0x2002) & 0x1f0) != (ioaddr & 0x1f0)) {
 		release_region(ioaddr, CORKSCREW_TOTAL_SIZE);
-		वापस 0;
-	पूर्ण
-	/* Verअगरy by पढ़ोing the device ID from the EEPROM. */
+		return 0;
+	}
+	/* Verify by reading the device ID from the EEPROM. */
 	outw(EEPROM_Read + 7, ioaddr + Wn0EepromCmd);
-	/* Pause क्रम at least 162 us. क्रम the पढ़ो to take place. */
-	क्रम (समयr = 4; समयr >= 0; समयr--) अणु
+	/* Pause for at least 162 us. for the read to take place. */
+	for (timer = 4; timer >= 0; timer--) {
 		udelay(162);
-		अगर ((inw(ioaddr + Wn0EepromCmd) & 0x0200) == 0)
-			अवरोध;
-	पूर्ण
-	अगर (inw(ioaddr + Wn0EepromData) != 0x6d50) अणु
+		if ((inw(ioaddr + Wn0EepromCmd) & 0x0200) == 0)
+			break;
+	}
+	if (inw(ioaddr + Wn0EepromData) != 0x6d50) {
 		release_region(ioaddr, CORKSCREW_TOTAL_SIZE);
-		वापस 0;
-	पूर्ण
-	वापस 1;
-पूर्ण
+		return 0;
+	}
+	return 1;
+}
 
-अटल व्योम cleanup_card(काष्ठा net_device *dev)
-अणु
-	काष्ठा corkscrew_निजी *vp = netdev_priv(dev);
+static void cleanup_card(struct net_device *dev)
+{
+	struct corkscrew_private *vp = netdev_priv(dev);
 	list_del_init(&vp->list);
-	अगर (dev->dma)
-		मुक्त_dma(dev->dma);
+	if (dev->dma)
+		free_dma(dev->dma);
 	outw(TotalReset, dev->base_addr + EL3_CMD);
 	release_region(dev->base_addr, CORKSCREW_TOTAL_SIZE);
-	अगर (vp->dev)
+	if (vp->dev)
 		pnp_device_detach(to_pnp_dev(vp->dev));
-पूर्ण
+}
 
-अटल काष्ठा net_device *corkscrew_scan(पूर्णांक unit)
-अणु
-	काष्ठा net_device *dev;
-	अटल पूर्णांक cards_found = 0;
-	अटल पूर्णांक ioaddr;
-	पूर्णांक err;
-#अगर_घोषित __ISAPNP__
-	लघु i;
-	अटल पूर्णांक pnp_cards;
-#पूर्ण_अगर
+static struct net_device *corkscrew_scan(int unit)
+{
+	struct net_device *dev;
+	static int cards_found = 0;
+	static int ioaddr;
+	int err;
+#ifdef __ISAPNP__
+	short i;
+	static int pnp_cards;
+#endif
 
-	dev = alloc_etherdev(माप(काष्ठा corkscrew_निजी));
-	अगर (!dev)
-		वापस ERR_PTR(-ENOMEM);
+	dev = alloc_etherdev(sizeof(struct corkscrew_private));
+	if (!dev)
+		return ERR_PTR(-ENOMEM);
 
-	अगर (unit >= 0) अणु
-		प्र_लिखो(dev->name, "eth%d", unit);
+	if (unit >= 0) {
+		sprintf(dev->name, "eth%d", unit);
 		netdev_boot_setup_check(dev);
-	पूर्ण
+	}
 
-#अगर_घोषित __ISAPNP__
-	अगर(nopnp == 1)
-		जाओ no_pnp;
-	क्रम(i=0; corkscrew_isapnp_adapters[i].venकरोr != 0; i++) अणु
-		काष्ठा pnp_dev *idev = शून्य;
-		पूर्णांक irq;
-		जबतक((idev = pnp_find_dev(शून्य,
-					   corkscrew_isapnp_adapters[i].venकरोr,
+#ifdef __ISAPNP__
+	if(nopnp == 1)
+		goto no_pnp;
+	for(i=0; corkscrew_isapnp_adapters[i].vendor != 0; i++) {
+		struct pnp_dev *idev = NULL;
+		int irq;
+		while((idev = pnp_find_dev(NULL,
+					   corkscrew_isapnp_adapters[i].vendor,
 					   corkscrew_isapnp_adapters[i].function,
-					   idev))) अणु
+					   idev))) {
 
-			अगर (pnp_device_attach(idev) < 0)
-				जारी;
-			अगर (pnp_activate_dev(idev) < 0) अणु
+			if (pnp_device_attach(idev) < 0)
+				continue;
+			if (pnp_activate_dev(idev) < 0) {
 				pr_warn("pnp activate failed (out of resources?)\n");
 				pnp_device_detach(idev);
-				जारी;
-			पूर्ण
-			अगर (!pnp_port_valid(idev, 0) || !pnp_irq_valid(idev, 0)) अणु
+				continue;
+			}
+			if (!pnp_port_valid(idev, 0) || !pnp_irq_valid(idev, 0)) {
 				pnp_device_detach(idev);
-				जारी;
-			पूर्ण
+				continue;
+			}
 			ioaddr = pnp_port_start(idev, 0);
 			irq = pnp_irq(idev, 0);
-			अगर (!check_device(ioaddr)) अणु
+			if (!check_device(ioaddr)) {
 				pnp_device_detach(idev);
-				जारी;
-			पूर्ण
-			अगर(corkscrew_debug)
+				continue;
+			}
+			if(corkscrew_debug)
 				pr_debug("ISAPNP reports %s at i/o 0x%x, irq %d\n",
-					(अक्षर*) corkscrew_isapnp_adapters[i].driver_data, ioaddr, irq);
+					(char*) corkscrew_isapnp_adapters[i].driver_data, ioaddr, irq);
 			pr_info("3c515 Resource configuration register %#4.4x, DCR %4.4x.\n",
 		     		inl(ioaddr + 0x2002), inw(ioaddr + 0x2000));
 			/* irq = inw(ioaddr + 0x2002) & 15; */ /* Use the irq from isapnp */
 			SET_NETDEV_DEV(dev, &idev->dev);
 			pnp_cards++;
 			err = corkscrew_setup(dev, ioaddr, idev, cards_found++);
-			अगर (!err)
-				वापस dev;
+			if (!err)
+				return dev;
 			cleanup_card(dev);
-		पूर्ण
-	पूर्ण
+		}
+	}
 no_pnp:
-#पूर्ण_अगर /* __ISAPNP__ */
+#endif /* __ISAPNP__ */
 
 	/* Check all locations on the ISA bus -- evil! */
-	क्रम (ioaddr = 0x100; ioaddr < 0x400; ioaddr += 0x20) अणु
-		अगर (!check_device(ioaddr))
-			जारी;
+	for (ioaddr = 0x100; ioaddr < 0x400; ioaddr += 0x20) {
+		if (!check_device(ioaddr))
+			continue;
 
 		pr_info("3c515 Resource configuration register %#4.4x, DCR %4.4x.\n",
 		     inl(ioaddr + 0x2002), inw(ioaddr + 0x2000));
-		err = corkscrew_setup(dev, ioaddr, शून्य, cards_found++);
-		अगर (!err)
-			वापस dev;
+		err = corkscrew_setup(dev, ioaddr, NULL, cards_found++);
+		if (!err)
+			return dev;
 		cleanup_card(dev);
-	पूर्ण
-	मुक्त_netdev(dev);
-	वापस शून्य;
-पूर्ण
+	}
+	free_netdev(dev);
+	return NULL;
+}
 
 
-अटल स्थिर काष्ठा net_device_ops netdev_ops = अणु
-	.nकरो_खोलो		= corkscrew_खोलो,
-	.nकरो_stop		= corkscrew_बंद,
-	.nकरो_start_xmit		= corkscrew_start_xmit,
-	.nकरो_tx_समयout		= corkscrew_समयout,
-	.nकरो_get_stats		= corkscrew_get_stats,
-	.nकरो_set_rx_mode	= set_rx_mode,
-	.nकरो_set_mac_address 	= eth_mac_addr,
-	.nकरो_validate_addr	= eth_validate_addr,
-पूर्ण;
+static const struct net_device_ops netdev_ops = {
+	.ndo_open		= corkscrew_open,
+	.ndo_stop		= corkscrew_close,
+	.ndo_start_xmit		= corkscrew_start_xmit,
+	.ndo_tx_timeout		= corkscrew_timeout,
+	.ndo_get_stats		= corkscrew_get_stats,
+	.ndo_set_rx_mode	= set_rx_mode,
+	.ndo_set_mac_address 	= eth_mac_addr,
+	.ndo_validate_addr	= eth_validate_addr,
+};
 
 
-अटल पूर्णांक corkscrew_setup(काष्ठा net_device *dev, पूर्णांक ioaddr,
-			    काष्ठा pnp_dev *idev, पूर्णांक card_number)
-अणु
-	काष्ठा corkscrew_निजी *vp = netdev_priv(dev);
-	अचिन्हित पूर्णांक eeprom[0x40], checksum = 0;	/* EEPROM contents */
-	पूर्णांक i;
-	पूर्णांक irq;
+static int corkscrew_setup(struct net_device *dev, int ioaddr,
+			    struct pnp_dev *idev, int card_number)
+{
+	struct corkscrew_private *vp = netdev_priv(dev);
+	unsigned int eeprom[0x40], checksum = 0;	/* EEPROM contents */
+	int i;
+	int irq;
 
-#अगर_घोषित __ISAPNP__
-	अगर (idev) अणु
+#ifdef __ISAPNP__
+	if (idev) {
 		irq = pnp_irq(idev, 0);
 		vp->dev = &idev->dev;
-	पूर्ण अन्यथा अणु
+	} else {
 		irq = inw(ioaddr + 0x2002) & 15;
-	पूर्ण
-#अन्यथा
+	}
+#else
 	irq = inw(ioaddr + 0x2002) & 15;
-#पूर्ण_अगर
+#endif
 
 	dev->base_addr = ioaddr;
 	dev->irq = irq;
@@ -588,94 +587,94 @@ no_pnp:
 	vp->options = dev->mem_start;
 	vp->our_dev = dev;
 
-	अगर (!vp->options) अणु
-		 अगर (card_number >= MAX_UNITS)
+	if (!vp->options) {
+		 if (card_number >= MAX_UNITS)
 			vp->options = -1;
-		अन्यथा
+		else
 			vp->options = options[card_number];
-	पूर्ण
+	}
 
-	अगर (vp->options >= 0) अणु
+	if (vp->options >= 0) {
 		vp->media_override = vp->options & 7;
-		अगर (vp->media_override == 2)
+		if (vp->media_override == 2)
 			vp->media_override = 0;
 		vp->full_duplex = (vp->options & 8) ? 1 : 0;
 		vp->bus_master = (vp->options & 16) ? 1 : 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		vp->media_override = 7;
 		vp->full_duplex = 0;
 		vp->bus_master = 0;
-	पूर्ण
-#अगर_घोषित MODULE
+	}
+#ifdef MODULE
 	list_add(&vp->list, &root_corkscrew_dev);
-#पूर्ण_अगर
+#endif
 
 	pr_info("%s: 3Com %s at %#3x,", dev->name, vp->product_name, ioaddr);
 
 	spin_lock_init(&vp->lock);
 
-	समयr_setup(&vp->समयr, corkscrew_समयr, 0);
+	timer_setup(&vp->timer, corkscrew_timer, 0);
 
 	/* Read the station address from the EEPROM. */
 	EL3WINDOW(0);
-	क्रम (i = 0; i < 0x18; i++) अणु
+	for (i = 0; i < 0x18; i++) {
 		__be16 *phys_addr = (__be16 *) dev->dev_addr;
-		पूर्णांक समयr;
+		int timer;
 		outw(EEPROM_Read + i, ioaddr + Wn0EepromCmd);
-		/* Pause क्रम at least 162 us. क्रम the पढ़ो to take place. */
-		क्रम (समयr = 4; समयr >= 0; समयr--) अणु
+		/* Pause for at least 162 us. for the read to take place. */
+		for (timer = 4; timer >= 0; timer--) {
 			udelay(162);
-			अगर ((inw(ioaddr + Wn0EepromCmd) & 0x0200) == 0)
-				अवरोध;
-		पूर्ण
+			if ((inw(ioaddr + Wn0EepromCmd) & 0x0200) == 0)
+				break;
+		}
 		eeprom[i] = inw(ioaddr + Wn0EepromData);
 		checksum ^= eeprom[i];
-		अगर (i < 3)
+		if (i < 3)
 			phys_addr[i] = htons(eeprom[i]);
-	पूर्ण
+	}
 	checksum = (checksum ^ (checksum >> 8)) & 0xff;
-	अगर (checksum != 0x00)
+	if (checksum != 0x00)
 		pr_cont(" ***INVALID CHECKSUM %4.4x*** ", checksum);
 	pr_cont(" %pM", dev->dev_addr);
-	अगर (eeprom[16] == 0x11c7) अणु	/* Corkscrew */
-		अगर (request_dma(dev->dma, "3c515")) अणु
+	if (eeprom[16] == 0x11c7) {	/* Corkscrew */
+		if (request_dma(dev->dma, "3c515")) {
 			pr_cont(", DMA %d allocation failed", dev->dma);
 			dev->dma = 0;
-		पूर्ण अन्यथा
+		} else
 			pr_cont(", DMA %d", dev->dma);
-	पूर्ण
+	}
 	pr_cont(", IRQ %d\n", dev->irq);
 	/* Tell them about an invalid IRQ. */
-	अगर (corkscrew_debug && (dev->irq <= 0 || dev->irq > 15))
+	if (corkscrew_debug && (dev->irq <= 0 || dev->irq > 15))
 		pr_warn(" *** Warning: this IRQ is unlikely to work! ***\n");
 
-	अणु
-		अटल स्थिर अक्षर * स्थिर ram_split[] = अणु
+	{
+		static const char * const ram_split[] = {
 			"5:3", "3:1", "1:1", "3:5"
-		पूर्ण;
+		};
 		__u32 config;
 		EL3WINDOW(3);
 		vp->available_media = inw(ioaddr + Wn3_Options);
 		config = inl(ioaddr + Wn3_Config);
-		अगर (corkscrew_debug > 1)
+		if (corkscrew_debug > 1)
 			pr_info("  Internal config register is %4.4x, transceivers %#x.\n",
 				config, inw(ioaddr + Wn3_Options));
 		pr_info("  %dK %s-wide RAM %s Rx:Tx split, %s%s interface.\n",
 			8 << config & Ram_size,
 			config & Ram_width ? "word" : "byte",
-			ram_split[(config & Ram_split) >> Ram_split_shअगरt],
+			ram_split[(config & Ram_split) >> Ram_split_shift],
 			config & Autoselect ? "autoselect/" : "",
-			media_tbl[(config & Xcvr) >> Xcvr_shअगरt].name);
-		vp->शेष_media = (config & Xcvr) >> Xcvr_shअगरt;
-		vp->स्वतःselect = config & Autoselect ? 1 : 0;
-		dev->अगर_port = vp->शेष_media;
-	पूर्ण
-	अगर (vp->media_override != 7) अणु
+			media_tbl[(config & Xcvr) >> Xcvr_shift].name);
+		vp->default_media = (config & Xcvr) >> Xcvr_shift;
+		vp->autoselect = config & Autoselect ? 1 : 0;
+		dev->if_port = vp->default_media;
+	}
+	if (vp->media_override != 7) {
 		pr_info("  Media override to transceiver type %d (%s).\n",
 		       vp->media_override,
 		       media_tbl[vp->media_override].name);
-		dev->अगर_port = vp->media_override;
-	पूर्ण
+		dev->if_port = vp->media_override;
+	}
 
 	vp->capabilities = eeprom[16];
 	vp->full_bus_master_tx = (vp->capabilities & 0x20) ? 1 : 0;
@@ -683,111 +682,111 @@ no_pnp:
 	/* vp->full_bus_master_rx = 0; */
 	vp->full_bus_master_rx = (vp->capabilities & 0x20) ? 1 : 0;
 
-	/* The 3c51x-specअगरic entries in the device काष्ठाure. */
+	/* The 3c51x-specific entries in the device structure. */
 	dev->netdev_ops = &netdev_ops;
-	dev->watchकरोg_समयo = (400 * HZ) / 1000;
+	dev->watchdog_timeo = (400 * HZ) / 1000;
 	dev->ethtool_ops = &netdev_ethtool_ops;
 
-	वापस रेजिस्टर_netdev(dev);
-पूर्ण
+	return register_netdev(dev);
+}
 
 
-अटल पूर्णांक corkscrew_खोलो(काष्ठा net_device *dev)
-अणु
-	पूर्णांक ioaddr = dev->base_addr;
-	काष्ठा corkscrew_निजी *vp = netdev_priv(dev);
-	bool armसमयr = false;
+static int corkscrew_open(struct net_device *dev)
+{
+	int ioaddr = dev->base_addr;
+	struct corkscrew_private *vp = netdev_priv(dev);
+	bool armtimer = false;
 	__u32 config;
-	पूर्णांक i;
+	int i;
 
-	/* Beक्रमe initializing select the active media port. */
+	/* Before initializing select the active media port. */
 	EL3WINDOW(3);
-	अगर (vp->full_duplex)
+	if (vp->full_duplex)
 		outb(0x20, ioaddr + Wn3_MAC_Ctrl);	/* Set the full-duplex bit. */
 	config = inl(ioaddr + Wn3_Config);
 
-	अगर (vp->media_override != 7) अणु
-		अगर (corkscrew_debug > 1)
+	if (vp->media_override != 7) {
+		if (corkscrew_debug > 1)
 			pr_info("%s: Media override to transceiver %d (%s).\n",
 				dev->name, vp->media_override,
 				media_tbl[vp->media_override].name);
-		dev->अगर_port = vp->media_override;
-	पूर्ण अन्यथा अगर (vp->स्वतःselect) अणु
+		dev->if_port = vp->media_override;
+	} else if (vp->autoselect) {
 		/* Find first available media type, starting with 100baseTx. */
-		dev->अगर_port = 4;
-		जबतक (!(vp->available_media & media_tbl[dev->अगर_port].mask))
-			dev->अगर_port = media_tbl[dev->अगर_port].next;
+		dev->if_port = 4;
+		while (!(vp->available_media & media_tbl[dev->if_port].mask))
+			dev->if_port = media_tbl[dev->if_port].next;
 
-		अगर (corkscrew_debug > 1)
+		if (corkscrew_debug > 1)
 			pr_debug("%s: Initial media type %s.\n",
-			       dev->name, media_tbl[dev->अगर_port].name);
-		armसमयr = true;
-	पूर्ण अन्यथा
-		dev->अगर_port = vp->शेष_media;
+			       dev->name, media_tbl[dev->if_port].name);
+		armtimer = true;
+	} else
+		dev->if_port = vp->default_media;
 
-	config = (config & ~Xcvr) | (dev->अगर_port << Xcvr_shअगरt);
+	config = (config & ~Xcvr) | (dev->if_port << Xcvr_shift);
 	outl(config, ioaddr + Wn3_Config);
 
-	अगर (corkscrew_debug > 1) अणु
+	if (corkscrew_debug > 1) {
 		pr_debug("%s: corkscrew_open() InternalConfig %8.8x.\n",
 		       dev->name, config);
-	पूर्ण
+	}
 
 	outw(TxReset, ioaddr + EL3_CMD);
-	क्रम (i = 20; i >= 0; i--)
-		अगर (!(inw(ioaddr + EL3_STATUS) & CmdInProgress))
-			अवरोध;
+	for (i = 20; i >= 0; i--)
+		if (!(inw(ioaddr + EL3_STATUS) & CmdInProgress))
+			break;
 
 	outw(RxReset, ioaddr + EL3_CMD);
-	/* Wait a few ticks क्रम the RxReset command to complete. */
-	क्रम (i = 20; i >= 0; i--)
-		अगर (!(inw(ioaddr + EL3_STATUS) & CmdInProgress))
-			अवरोध;
+	/* Wait a few ticks for the RxReset command to complete. */
+	for (i = 20; i >= 0; i--)
+		if (!(inw(ioaddr + EL3_STATUS) & CmdInProgress))
+			break;
 
 	outw(SetStatusEnb | 0x00, ioaddr + EL3_CMD);
 
 	/* Use the now-standard shared IRQ implementation. */
-	अगर (vp->capabilities == 0x11c7) अणु
+	if (vp->capabilities == 0x11c7) {
 		/* Corkscrew: Cannot share ISA resources. */
-		अगर (dev->irq == 0 ||
+		if (dev->irq == 0 ||
 		    dev->dma == 0 ||
-		    request_irq(dev->irq, corkscrew_पूर्णांकerrupt, 0,
+		    request_irq(dev->irq, corkscrew_interrupt, 0,
 				vp->product_name, dev))
-			वापस -EAGAIN;
+			return -EAGAIN;
 		enable_dma(dev->dma);
 		set_dma_mode(dev->dma, DMA_MODE_CASCADE);
-	पूर्ण अन्यथा अगर (request_irq(dev->irq, corkscrew_पूर्णांकerrupt, IRQF_SHARED,
-			       vp->product_name, dev)) अणु
-		वापस -EAGAIN;
-	पूर्ण
+	} else if (request_irq(dev->irq, corkscrew_interrupt, IRQF_SHARED,
+			       vp->product_name, dev)) {
+		return -EAGAIN;
+	}
 
-	अगर (armसमयr)
-		mod_समयr(&vp->समयr, jअगरfies + media_tbl[dev->अगर_port].रुको);
+	if (armtimer)
+		mod_timer(&vp->timer, jiffies + media_tbl[dev->if_port].wait);
 
-	अगर (corkscrew_debug > 1) अणु
+	if (corkscrew_debug > 1) {
 		EL3WINDOW(4);
 		pr_debug("%s: corkscrew_open() irq %d media status %4.4x.\n",
 		       dev->name, dev->irq, inw(ioaddr + Wn4_Media));
-	पूर्ण
+	}
 
-	/* Set the station address and mask in winकरोw 2 each समय खोलोed. */
+	/* Set the station address and mask in window 2 each time opened. */
 	EL3WINDOW(2);
-	क्रम (i = 0; i < 6; i++)
+	for (i = 0; i < 6; i++)
 		outb(dev->dev_addr[i], ioaddr + i);
-	क्रम (; i < 12; i += 2)
+	for (; i < 12; i += 2)
 		outw(0, ioaddr + i);
 
-	अगर (dev->अगर_port == 3)
-		/* Start the thinnet transceiver. We should really रुको 50ms... */
+	if (dev->if_port == 3)
+		/* Start the thinnet transceiver. We should really wait 50ms... */
 		outw(StartCoax, ioaddr + EL3_CMD);
 	EL3WINDOW(4);
 	outw((inw(ioaddr + Wn4_Media) & ~(Media_10TP | Media_SQE)) |
-	     media_tbl[dev->अगर_port].media_bits, ioaddr + Wn4_Media);
+	     media_tbl[dev->if_port].media_bits, ioaddr + Wn4_Media);
 
-	/* Switch to the stats winकरोw, and clear all stats by पढ़ोing. */
+	/* Switch to the stats window, and clear all stats by reading. */
 	outw(StatsDisable, ioaddr + EL3_CMD);
 	EL3WINDOW(6);
-	क्रम (i = 0; i < 10; i++)
+	for (i = 0; i < 10; i++)
 		inb(ioaddr + i);
 	inw(ioaddr + 10);
 	inw(ioaddr + 12);
@@ -797,47 +796,47 @@ no_pnp:
 	/* ..and on the Boomerang we enable the extra statistics bits. */
 	outw(0x0040, ioaddr + Wn4_NetDiag);
 
-	/* Switch to रेजिस्टर set 7 क्रम normal use. */
+	/* Switch to register set 7 for normal use. */
 	EL3WINDOW(7);
 
-	अगर (vp->full_bus_master_rx) अणु	/* Boomerang bus master. */
+	if (vp->full_bus_master_rx) {	/* Boomerang bus master. */
 		vp->cur_rx = vp->dirty_rx = 0;
-		अगर (corkscrew_debug > 2)
+		if (corkscrew_debug > 2)
 			pr_debug("%s:  Filling in the Rx ring.\n", dev->name);
-		क्रम (i = 0; i < RX_RING_SIZE; i++) अणु
-			काष्ठा sk_buff *skb;
-			अगर (i < (RX_RING_SIZE - 1))
+		for (i = 0; i < RX_RING_SIZE; i++) {
+			struct sk_buff *skb;
+			if (i < (RX_RING_SIZE - 1))
 				vp->rx_ring[i].next =
 				    isa_virt_to_bus(&vp->rx_ring[i + 1]);
-			अन्यथा
+			else
 				vp->rx_ring[i].next = 0;
 			vp->rx_ring[i].status = 0;	/* Clear complete bit. */
 			vp->rx_ring[i].length = PKT_BUF_SZ | 0x80000000;
 			skb = netdev_alloc_skb(dev, PKT_BUF_SZ);
 			vp->rx_skbuff[i] = skb;
-			अगर (skb == शून्य)
-				अवरोध;	/* Bad news!  */
+			if (skb == NULL)
+				break;	/* Bad news!  */
 			skb_reserve(skb, 2);	/* Align IP on 16 byte boundaries */
 			vp->rx_ring[i].addr = isa_virt_to_bus(skb->data);
-		पूर्ण
-		अगर (i != 0)
+		}
+		if (i != 0)
 			vp->rx_ring[i - 1].next =
 				isa_virt_to_bus(&vp->rx_ring[0]);	/* Wrap the ring. */
 		outl(isa_virt_to_bus(&vp->rx_ring[0]), ioaddr + UpListPtr);
-	पूर्ण
-	अगर (vp->full_bus_master_tx) अणु	/* Boomerang bus master Tx. */
+	}
+	if (vp->full_bus_master_tx) {	/* Boomerang bus master Tx. */
 		vp->cur_tx = vp->dirty_tx = 0;
-		outb(PKT_BUF_SZ >> 8, ioaddr + TxFreeThreshold);	/* Room क्रम a packet. */
+		outb(PKT_BUF_SZ >> 8, ioaddr + TxFreeThreshold);	/* Room for a packet. */
 		/* Clear the Tx ring. */
-		क्रम (i = 0; i < TX_RING_SIZE; i++)
-			vp->tx_skbuff[i] = शून्य;
+		for (i = 0; i < TX_RING_SIZE; i++)
+			vp->tx_skbuff[i] = NULL;
 		outl(0, ioaddr + DownListPtr);
-	पूर्ण
-	/* Set receiver mode: presumably accept b-हाल and phys addr only. */
+	}
+	/* Set receiver mode: presumably accept b-case and phys addr only. */
 	set_rx_mode(dev);
 	outw(StatsEnable, ioaddr + EL3_CMD);	/* Turn on statistics. */
 
-	netअगर_start_queue(dev);
+	netif_start_queue(dev);
 
 	outw(RxEnable, ioaddr + EL3_CMD);	/* Enable the receiver. */
 	outw(TxEnable, ioaddr + EL3_CMD);	/* Enable transmitter. */
@@ -853,162 +852,162 @@ no_pnp:
 	     | (vp->bus_master ? DMADone : 0) | UpComplete | DownComplete,
 	     ioaddr + EL3_CMD);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम corkscrew_समयr(काष्ठा समयr_list *t)
-अणु
-#अगर_घोषित AUTOMEDIA
-	काष्ठा corkscrew_निजी *vp = from_समयr(vp, t, समयr);
-	काष्ठा net_device *dev = vp->our_dev;
-	पूर्णांक ioaddr = dev->base_addr;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ok = 0;
+static void corkscrew_timer(struct timer_list *t)
+{
+#ifdef AUTOMEDIA
+	struct corkscrew_private *vp = from_timer(vp, t, timer);
+	struct net_device *dev = vp->our_dev;
+	int ioaddr = dev->base_addr;
+	unsigned long flags;
+	int ok = 0;
 
-	अगर (corkscrew_debug > 1)
+	if (corkscrew_debug > 1)
 		pr_debug("%s: Media selection timer tick happened, %s.\n",
-		       dev->name, media_tbl[dev->अगर_port].name);
+		       dev->name, media_tbl[dev->if_port].name);
 
 	spin_lock_irqsave(&vp->lock, flags);
 
-	अणु
-		पूर्णांक old_winकरोw = inw(ioaddr + EL3_CMD) >> 13;
-		पूर्णांक media_status;
+	{
+		int old_window = inw(ioaddr + EL3_CMD) >> 13;
+		int media_status;
 		EL3WINDOW(4);
 		media_status = inw(ioaddr + Wn4_Media);
-		चयन (dev->अगर_port) अणु
-		हाल 0:
-		हाल 4:
-		हाल 5:	/* 10baseT, 100baseTX, 100baseFX  */
-			अगर (media_status & Media_LnkBeat) अणु
+		switch (dev->if_port) {
+		case 0:
+		case 4:
+		case 5:	/* 10baseT, 100baseTX, 100baseFX  */
+			if (media_status & Media_LnkBeat) {
 				ok = 1;
-				अगर (corkscrew_debug > 1)
+				if (corkscrew_debug > 1)
 					pr_debug("%s: Media %s has link beat, %x.\n",
 						dev->name,
-						media_tbl[dev->अगर_port].name,
+						media_tbl[dev->if_port].name,
 						media_status);
-			पूर्ण अन्यथा अगर (corkscrew_debug > 1)
+			} else if (corkscrew_debug > 1)
 				pr_debug("%s: Media %s is has no link beat, %x.\n",
 					dev->name,
-					media_tbl[dev->अगर_port].name,
+					media_tbl[dev->if_port].name,
 					media_status);
 
-			अवरोध;
-		शेष:	/* Other media types handled by Tx समयouts. */
-			अगर (corkscrew_debug > 1)
+			break;
+		default:	/* Other media types handled by Tx timeouts. */
+			if (corkscrew_debug > 1)
 				pr_debug("%s: Media %s is has no indication, %x.\n",
 					dev->name,
-					media_tbl[dev->अगर_port].name,
+					media_tbl[dev->if_port].name,
 					media_status);
 			ok = 1;
-		पूर्ण
-		अगर (!ok) अणु
+		}
+		if (!ok) {
 			__u32 config;
 
-			करो अणु
-				dev->अगर_port =
-				    media_tbl[dev->अगर_port].next;
-			पूर्ण
-			जबतक (!(vp->available_media & media_tbl[dev->अगर_port].mask));
+			do {
+				dev->if_port =
+				    media_tbl[dev->if_port].next;
+			}
+			while (!(vp->available_media & media_tbl[dev->if_port].mask));
 
-			अगर (dev->अगर_port == 8) अणु	/* Go back to शेष. */
-				dev->अगर_port = vp->शेष_media;
-				अगर (corkscrew_debug > 1)
+			if (dev->if_port == 8) {	/* Go back to default. */
+				dev->if_port = vp->default_media;
+				if (corkscrew_debug > 1)
 					pr_debug("%s: Media selection failing, using default %s port.\n",
 						dev->name,
-						media_tbl[dev->अगर_port].name);
-			पूर्ण अन्यथा अणु
-				अगर (corkscrew_debug > 1)
+						media_tbl[dev->if_port].name);
+			} else {
+				if (corkscrew_debug > 1)
 					pr_debug("%s: Media selection failed, now trying %s port.\n",
 						dev->name,
-						media_tbl[dev->अगर_port].name);
-				vp->समयr.expires = jअगरfies + media_tbl[dev->अगर_port].रुको;
-				add_समयr(&vp->समयr);
-			पूर्ण
+						media_tbl[dev->if_port].name);
+				vp->timer.expires = jiffies + media_tbl[dev->if_port].wait;
+				add_timer(&vp->timer);
+			}
 			outw((media_status & ~(Media_10TP | Media_SQE)) |
-			     media_tbl[dev->अगर_port].media_bits,
+			     media_tbl[dev->if_port].media_bits,
 			     ioaddr + Wn4_Media);
 
 			EL3WINDOW(3);
 			config = inl(ioaddr + Wn3_Config);
-			config = (config & ~Xcvr) | (dev->अगर_port << Xcvr_shअगरt);
+			config = (config & ~Xcvr) | (dev->if_port << Xcvr_shift);
 			outl(config, ioaddr + Wn3_Config);
 
-			outw(dev->अगर_port == 3 ? StartCoax : StopCoax,
+			outw(dev->if_port == 3 ? StartCoax : StopCoax,
 			     ioaddr + EL3_CMD);
-		पूर्ण
-		EL3WINDOW(old_winकरोw);
-	पूर्ण
+		}
+		EL3WINDOW(old_window);
+	}
 
 	spin_unlock_irqrestore(&vp->lock, flags);
-	अगर (corkscrew_debug > 1)
+	if (corkscrew_debug > 1)
 		pr_debug("%s: Media selection timer finished, %s.\n",
-		       dev->name, media_tbl[dev->अगर_port].name);
+		       dev->name, media_tbl[dev->if_port].name);
 
-#पूर्ण_अगर				/* AUTOMEDIA */
-पूर्ण
+#endif				/* AUTOMEDIA */
+}
 
-अटल व्योम corkscrew_समयout(काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue)
-अणु
-	पूर्णांक i;
-	काष्ठा corkscrew_निजी *vp = netdev_priv(dev);
-	पूर्णांक ioaddr = dev->base_addr;
+static void corkscrew_timeout(struct net_device *dev, unsigned int txqueue)
+{
+	int i;
+	struct corkscrew_private *vp = netdev_priv(dev);
+	int ioaddr = dev->base_addr;
 
 	pr_warn("%s: transmit timed out, tx_status %2.2x status %4.4x\n",
 		dev->name, inb(ioaddr + TxStatus),
 		inw(ioaddr + EL3_STATUS));
-	/* Slight code bloat to be user मित्रly. */
-	अगर ((inb(ioaddr + TxStatus) & 0x88) == 0x88)
+	/* Slight code bloat to be user friendly. */
+	if ((inb(ioaddr + TxStatus) & 0x88) == 0x88)
 		pr_warn("%s: Transmitter encountered 16 collisions -- network cable problem?\n",
 			dev->name);
-#अगर_अघोषित final_version
+#ifndef final_version
 	pr_debug("  Flags; bus-master %d, full %d; dirty %d current %d.\n",
 	       vp->full_bus_master_tx, vp->tx_full, vp->dirty_tx,
 	       vp->cur_tx);
 	pr_debug("  Down list %8.8x vs. %p.\n", inl(ioaddr + DownListPtr),
 	       &vp->tx_ring[0]);
-	क्रम (i = 0; i < TX_RING_SIZE; i++) अणु
+	for (i = 0; i < TX_RING_SIZE; i++) {
 		pr_debug("  %d: %p  length %8.8x status %8.8x\n", i,
 		       &vp->tx_ring[i],
 		       vp->tx_ring[i].length, vp->tx_ring[i].status);
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 	/* Issue TX_RESET and TX_START commands. */
 	outw(TxReset, ioaddr + EL3_CMD);
-	क्रम (i = 20; i >= 0; i--)
-		अगर (!(inw(ioaddr + EL3_STATUS) & CmdInProgress))
-			अवरोध;
+	for (i = 20; i >= 0; i--)
+		if (!(inw(ioaddr + EL3_STATUS) & CmdInProgress))
+			break;
 	outw(TxEnable, ioaddr + EL3_CMD);
-	netअगर_trans_update(dev); /* prevent tx समयout */
+	netif_trans_update(dev); /* prevent tx timeout */
 	dev->stats.tx_errors++;
 	dev->stats.tx_dropped++;
-	netअगर_wake_queue(dev);
-पूर्ण
+	netif_wake_queue(dev);
+}
 
-अटल netdev_tx_t corkscrew_start_xmit(काष्ठा sk_buff *skb,
-					काष्ठा net_device *dev)
-अणु
-	काष्ठा corkscrew_निजी *vp = netdev_priv(dev);
-	पूर्णांक ioaddr = dev->base_addr;
+static netdev_tx_t corkscrew_start_xmit(struct sk_buff *skb,
+					struct net_device *dev)
+{
+	struct corkscrew_private *vp = netdev_priv(dev);
+	int ioaddr = dev->base_addr;
 
-	/* Block a समयr-based transmit from overlapping. */
+	/* Block a timer-based transmit from overlapping. */
 
-	netअगर_stop_queue(dev);
+	netif_stop_queue(dev);
 
-	अगर (vp->full_bus_master_tx) अणु	/* BOOMERANG bus-master */
+	if (vp->full_bus_master_tx) {	/* BOOMERANG bus-master */
 		/* Calculate the next Tx descriptor entry. */
-		पूर्णांक entry = vp->cur_tx % TX_RING_SIZE;
-		काष्ठा boom_tx_desc *prev_entry;
-		अचिन्हित दीर्घ flags;
-		पूर्णांक i;
+		int entry = vp->cur_tx % TX_RING_SIZE;
+		struct boom_tx_desc *prev_entry;
+		unsigned long flags;
+		int i;
 
-		अगर (vp->tx_full)	/* No room to transmit with */
-			वापस NETDEV_TX_BUSY;
-		अगर (vp->cur_tx != 0)
+		if (vp->tx_full)	/* No room to transmit with */
+			return NETDEV_TX_BUSY;
+		if (vp->cur_tx != 0)
 			prev_entry = &vp->tx_ring[(vp->cur_tx - 1) % TX_RING_SIZE];
-		अन्यथा
-			prev_entry = शून्य;
-		अगर (corkscrew_debug > 3)
+		else
+			prev_entry = NULL;
+		if (corkscrew_debug > 3)
 			pr_debug("%s: Trying to send a packet, Tx index %d.\n",
 				dev->name, vp->cur_tx);
 		/* vp->tx_full = 1; */
@@ -1020,104 +1019,104 @@ no_pnp:
 
 		spin_lock_irqsave(&vp->lock, flags);
 		outw(DownStall, ioaddr + EL3_CMD);
-		/* Wait क्रम the stall to complete. */
-		क्रम (i = 20; i >= 0; i--)
-			अगर ((inw(ioaddr + EL3_STATUS) & CmdInProgress) == 0)
-				अवरोध;
-		अगर (prev_entry)
+		/* Wait for the stall to complete. */
+		for (i = 20; i >= 0; i--)
+			if ((inw(ioaddr + EL3_STATUS) & CmdInProgress) == 0)
+				break;
+		if (prev_entry)
 			prev_entry->next = isa_virt_to_bus(&vp->tx_ring[entry]);
-		अगर (inl(ioaddr + DownListPtr) == 0) अणु
+		if (inl(ioaddr + DownListPtr) == 0) {
 			outl(isa_virt_to_bus(&vp->tx_ring[entry]),
 			     ioaddr + DownListPtr);
 			queued_packet++;
-		पूर्ण
+		}
 		outw(DownUnstall, ioaddr + EL3_CMD);
 		spin_unlock_irqrestore(&vp->lock, flags);
 
 		vp->cur_tx++;
-		अगर (vp->cur_tx - vp->dirty_tx > TX_RING_SIZE - 1)
+		if (vp->cur_tx - vp->dirty_tx > TX_RING_SIZE - 1)
 			vp->tx_full = 1;
-		अन्यथा अणु		/* Clear previous पूर्णांकerrupt enable. */
-			अगर (prev_entry)
+		else {		/* Clear previous interrupt enable. */
+			if (prev_entry)
 				prev_entry->status &= ~0x80000000;
-			netअगर_wake_queue(dev);
-		पूर्ण
-		वापस NETDEV_TX_OK;
-	पूर्ण
-	/* Put out the द्विगुनword header... */
+			netif_wake_queue(dev);
+		}
+		return NETDEV_TX_OK;
+	}
+	/* Put out the doubleword header... */
 	outl(skb->len, ioaddr + TX_FIFO);
 	dev->stats.tx_bytes += skb->len;
-#अगर_घोषित VORTEX_BUS_MASTER
-	अगर (vp->bus_master) अणु
+#ifdef VORTEX_BUS_MASTER
+	if (vp->bus_master) {
 		/* Set the bus-master controller to transfer the packet. */
-		outl((पूर्णांक) (skb->data), ioaddr + Wn7_MasterAddr);
+		outl((int) (skb->data), ioaddr + Wn7_MasterAddr);
 		outw((skb->len + 3) & ~3, ioaddr + Wn7_MasterLen);
 		vp->tx_skb = skb;
 		outw(StartDMADown, ioaddr + EL3_CMD);
-		/* queue will be woken at the DMADone पूर्णांकerrupt. */
-	पूर्ण अन्यथा अणु
-		/* ... and the packet rounded to a द्विगुनword. */
+		/* queue will be woken at the DMADone interrupt. */
+	} else {
+		/* ... and the packet rounded to a doubleword. */
 		outsl(ioaddr + TX_FIFO, skb->data, (skb->len + 3) >> 2);
-		dev_kमुक्त_skb(skb);
-		अगर (inw(ioaddr + TxFree) > 1536) अणु
-			netअगर_wake_queue(dev);
-		पूर्ण अन्यथा
-			/* Interrupt us when the FIFO has room क्रम max-sized packet. */
+		dev_kfree_skb(skb);
+		if (inw(ioaddr + TxFree) > 1536) {
+			netif_wake_queue(dev);
+		} else
+			/* Interrupt us when the FIFO has room for max-sized packet. */
 			outw(SetTxThreshold + (1536 >> 2),
 			     ioaddr + EL3_CMD);
-	पूर्ण
-#अन्यथा
-	/* ... and the packet rounded to a द्विगुनword. */
+	}
+#else
+	/* ... and the packet rounded to a doubleword. */
 	outsl(ioaddr + TX_FIFO, skb->data, (skb->len + 3) >> 2);
-	dev_kमुक्त_skb(skb);
-	अगर (inw(ioaddr + TxFree) > 1536) अणु
-		netअगर_wake_queue(dev);
-	पूर्ण अन्यथा
-		/* Interrupt us when the FIFO has room क्रम max-sized packet. */
+	dev_kfree_skb(skb);
+	if (inw(ioaddr + TxFree) > 1536) {
+		netif_wake_queue(dev);
+	} else
+		/* Interrupt us when the FIFO has room for max-sized packet. */
 		outw(SetTxThreshold + (1536 >> 2), ioaddr + EL3_CMD);
-#पूर्ण_अगर				/* bus master */
+#endif				/* bus master */
 
 
 	/* Clear the Tx status stack. */
-	अणु
-		लघु tx_status;
-		पूर्णांक i = 4;
+	{
+		short tx_status;
+		int i = 4;
 
-		जबतक (--i > 0 && (tx_status = inb(ioaddr + TxStatus)) > 0) अणु
-			अगर (tx_status & 0x3C) अणु	/* A Tx-disabling error occurred.  */
-				अगर (corkscrew_debug > 2)
+		while (--i > 0 && (tx_status = inb(ioaddr + TxStatus)) > 0) {
+			if (tx_status & 0x3C) {	/* A Tx-disabling error occurred.  */
+				if (corkscrew_debug > 2)
 					pr_debug("%s: Tx error, status %2.2x.\n",
 						dev->name, tx_status);
-				अगर (tx_status & 0x04)
-					dev->stats.tx_fअगरo_errors++;
-				अगर (tx_status & 0x38)
-					dev->stats.tx_पातed_errors++;
-				अगर (tx_status & 0x30) अणु
-					पूर्णांक j;
+				if (tx_status & 0x04)
+					dev->stats.tx_fifo_errors++;
+				if (tx_status & 0x38)
+					dev->stats.tx_aborted_errors++;
+				if (tx_status & 0x30) {
+					int j;
 					outw(TxReset, ioaddr + EL3_CMD);
-					क्रम (j = 20; j >= 0; j--)
-						अगर (!(inw(ioaddr + EL3_STATUS) & CmdInProgress))
-							अवरोध;
-				पूर्ण
+					for (j = 20; j >= 0; j--)
+						if (!(inw(ioaddr + EL3_STATUS) & CmdInProgress))
+							break;
+				}
 				outw(TxEnable, ioaddr + EL3_CMD);
-			पूर्ण
+			}
 			outb(0x00, ioaddr + TxStatus);	/* Pop the status stack. */
-		पूर्ण
-	पूर्ण
-	वापस NETDEV_TX_OK;
-पूर्ण
+		}
+	}
+	return NETDEV_TX_OK;
+}
 
-/* The पूर्णांकerrupt handler करोes all of the Rx thपढ़ो work and cleans up
-   after the Tx thपढ़ो. */
+/* The interrupt handler does all of the Rx thread work and cleans up
+   after the Tx thread. */
 
-अटल irqवापस_t corkscrew_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
+static irqreturn_t corkscrew_interrupt(int irq, void *dev_id)
+{
 	/* Use the now-standard shared IRQ implementation. */
-	काष्ठा net_device *dev = dev_id;
-	काष्ठा corkscrew_निजी *lp = netdev_priv(dev);
-	पूर्णांक ioaddr, status;
-	पूर्णांक latency;
-	पूर्णांक i = max_पूर्णांकerrupt_work;
+	struct net_device *dev = dev_id;
+	struct corkscrew_private *lp = netdev_priv(dev);
+	int ioaddr, status;
+	int latency;
+	int i = max_interrupt_work;
 
 	ioaddr = dev->base_addr;
 	latency = inb(ioaddr + Timer);
@@ -1126,100 +1125,100 @@ no_pnp:
 
 	status = inw(ioaddr + EL3_STATUS);
 
-	अगर (corkscrew_debug > 4)
+	if (corkscrew_debug > 4)
 		pr_debug("%s: interrupt, status %4.4x, timer %d.\n",
 			dev->name, status, latency);
-	अगर ((status & 0xE000) != 0xE000) अणु
-		अटल पूर्णांक करोnedidthis;
-		/* Some पूर्णांकerrupt controllers store a bogus पूर्णांकerrupt from boot-समय.
-		   Ignore a single early पूर्णांकerrupt, but करोn't hang the machine क्रम
-		   other पूर्णांकerrupt problems. */
-		अगर (करोnedidthis++ > 100) अणु
+	if ((status & 0xE000) != 0xE000) {
+		static int donedidthis;
+		/* Some interrupt controllers store a bogus interrupt from boot-time.
+		   Ignore a single early interrupt, but don't hang the machine for
+		   other interrupt problems. */
+		if (donedidthis++ > 100) {
 			pr_err("%s: Bogus interrupt, bailing. Status %4.4x, start=%d.\n",
-				   dev->name, status, netअगर_running(dev));
-			मुक्त_irq(dev->irq, dev);
+				   dev->name, status, netif_running(dev));
+			free_irq(dev->irq, dev);
 			dev->irq = -1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	करो अणु
-		अगर (corkscrew_debug > 5)
+	do {
+		if (corkscrew_debug > 5)
 			pr_debug("%s: In interrupt loop, status %4.4x.\n",
 			       dev->name, status);
-		अगर (status & RxComplete)
+		if (status & RxComplete)
 			corkscrew_rx(dev);
 
-		अगर (status & TxAvailable) अणु
-			अगर (corkscrew_debug > 5)
+		if (status & TxAvailable) {
+			if (corkscrew_debug > 5)
 				pr_debug("	TX room bit was handled.\n");
-			/* There's room in the FIFO क्रम a full-sized packet. */
+			/* There's room in the FIFO for a full-sized packet. */
 			outw(AckIntr | TxAvailable, ioaddr + EL3_CMD);
-			netअगर_wake_queue(dev);
-		पूर्ण
-		अगर (status & DownComplete) अणु
-			अचिन्हित पूर्णांक dirty_tx = lp->dirty_tx;
+			netif_wake_queue(dev);
+		}
+		if (status & DownComplete) {
+			unsigned int dirty_tx = lp->dirty_tx;
 
-			जबतक (lp->cur_tx - dirty_tx > 0) अणु
-				पूर्णांक entry = dirty_tx % TX_RING_SIZE;
-				अगर (inl(ioaddr + DownListPtr) == isa_virt_to_bus(&lp->tx_ring[entry]))
-					अवरोध;	/* It still hasn't been processed. */
-				अगर (lp->tx_skbuff[entry]) अणु
+			while (lp->cur_tx - dirty_tx > 0) {
+				int entry = dirty_tx % TX_RING_SIZE;
+				if (inl(ioaddr + DownListPtr) == isa_virt_to_bus(&lp->tx_ring[entry]))
+					break;	/* It still hasn't been processed. */
+				if (lp->tx_skbuff[entry]) {
 					dev_consume_skb_irq(lp->tx_skbuff[entry]);
-					lp->tx_skbuff[entry] = शून्य;
-				पूर्ण
+					lp->tx_skbuff[entry] = NULL;
+				}
 				dirty_tx++;
-			पूर्ण
+			}
 			lp->dirty_tx = dirty_tx;
 			outw(AckIntr | DownComplete, ioaddr + EL3_CMD);
-			अगर (lp->tx_full && (lp->cur_tx - dirty_tx <= TX_RING_SIZE - 1)) अणु
+			if (lp->tx_full && (lp->cur_tx - dirty_tx <= TX_RING_SIZE - 1)) {
 				lp->tx_full = 0;
-				netअगर_wake_queue(dev);
-			पूर्ण
-		पूर्ण
-#अगर_घोषित VORTEX_BUS_MASTER
-		अगर (status & DMADone) अणु
+				netif_wake_queue(dev);
+			}
+		}
+#ifdef VORTEX_BUS_MASTER
+		if (status & DMADone) {
 			outw(0x1000, ioaddr + Wn7_MasterStatus);	/* Ack the event. */
 			dev_consume_skb_irq(lp->tx_skb);	/* Release the transferred buffer */
-			netअगर_wake_queue(dev);
-		पूर्ण
-#पूर्ण_अगर
-		अगर (status & UpComplete) अणु
+			netif_wake_queue(dev);
+		}
+#endif
+		if (status & UpComplete) {
 			boomerang_rx(dev);
 			outw(AckIntr | UpComplete, ioaddr + EL3_CMD);
-		पूर्ण
-		अगर (status & (AdapterFailure | RxEarly | StatsFull)) अणु
-			/* Handle all uncommon पूर्णांकerrupts at once. */
-			अगर (status & RxEarly) अणु	/* Rx early is unused. */
+		}
+		if (status & (AdapterFailure | RxEarly | StatsFull)) {
+			/* Handle all uncommon interrupts at once. */
+			if (status & RxEarly) {	/* Rx early is unused. */
 				corkscrew_rx(dev);
 				outw(AckIntr | RxEarly, ioaddr + EL3_CMD);
-			पूर्ण
-			अगर (status & StatsFull) अणु	/* Empty statistics. */
-				अटल पूर्णांक DoneDidThat;
-				अगर (corkscrew_debug > 4)
+			}
+			if (status & StatsFull) {	/* Empty statistics. */
+				static int DoneDidThat;
+				if (corkscrew_debug > 4)
 					pr_debug("%s: Updating stats.\n", dev->name);
 				update_stats(ioaddr, dev);
-				/* DEBUG HACK: Disable statistics as an पूर्णांकerrupt source. */
+				/* DEBUG HACK: Disable statistics as an interrupt source. */
 				/* This occurs when we have the wrong media type! */
-				अगर (DoneDidThat == 0 && inw(ioaddr + EL3_STATUS) & StatsFull) अणु
-					पूर्णांक win, reg;
+				if (DoneDidThat == 0 && inw(ioaddr + EL3_STATUS) & StatsFull) {
+					int win, reg;
 					pr_notice("%s: Updating stats failed, disabling stats as an interrupt source.\n",
 						dev->name);
-					क्रम (win = 0; win < 8; win++) अणु
+					for (win = 0; win < 8; win++) {
 						EL3WINDOW(win);
 						pr_notice("Vortex window %d:", win);
-						क्रम (reg = 0; reg < 16; reg++)
+						for (reg = 0; reg < 16; reg++)
 							pr_cont(" %2.2x", inb(ioaddr + reg));
 						pr_cont("\n");
-					पूर्ण
+					}
 					EL3WINDOW(7);
 					outw(SetIntrEnb | TxAvailable |
 					     RxComplete | AdapterFailure |
 					     UpComplete | DownComplete |
 					     TxComplete, ioaddr + EL3_CMD);
 					DoneDidThat++;
-				पूर्ण
-			पूर्ण
-			अगर (status & AdapterFailure) अणु
+				}
+			}
+			if (status & AdapterFailure) {
 				/* Adapter failure requires Rx reset and reinit. */
 				outw(RxReset, ioaddr + EL3_CMD);
 				/* Set the Rx filter to the current state. */
@@ -1227,194 +1226,194 @@ no_pnp:
 				outw(RxEnable, ioaddr + EL3_CMD);	/* Re-enable the receiver. */
 				outw(AckIntr | AdapterFailure,
 				     ioaddr + EL3_CMD);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अगर (--i < 0) अणु
+		if (--i < 0) {
 			pr_err("%s: Too much work in interrupt, status %4.4x. Disabling functions (%4.4x).\n",
 				dev->name, status, SetStatusEnb | ((~status) & 0x7FE));
-			/* Disable all pending पूर्णांकerrupts. */
+			/* Disable all pending interrupts. */
 			outw(SetStatusEnb | ((~status) & 0x7FE), ioaddr + EL3_CMD);
 			outw(AckIntr | 0x7FF, ioaddr + EL3_CMD);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		/* Acknowledge the IRQ. */
 		outw(AckIntr | IntReq | IntLatch, ioaddr + EL3_CMD);
 
-	पूर्ण जबतक ((status = inw(ioaddr + EL3_STATUS)) & (IntLatch | RxComplete));
+	} while ((status = inw(ioaddr + EL3_STATUS)) & (IntLatch | RxComplete));
 
 	spin_unlock(&lp->lock);
 
-	अगर (corkscrew_debug > 4)
+	if (corkscrew_debug > 4)
 		pr_debug("%s: exiting interrupt, status %4.4x.\n", dev->name, status);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक corkscrew_rx(काष्ठा net_device *dev)
-अणु
-	पूर्णांक ioaddr = dev->base_addr;
-	पूर्णांक i;
-	लघु rx_status;
+static int corkscrew_rx(struct net_device *dev)
+{
+	int ioaddr = dev->base_addr;
+	int i;
+	short rx_status;
 
-	अगर (corkscrew_debug > 5)
+	if (corkscrew_debug > 5)
 		pr_debug("   In rx_packet(), status %4.4x, rx_status %4.4x.\n",
 		     inw(ioaddr + EL3_STATUS), inw(ioaddr + RxStatus));
-	जबतक ((rx_status = inw(ioaddr + RxStatus)) > 0) अणु
-		अगर (rx_status & 0x4000) अणु	/* Error, update stats. */
-			अचिन्हित अक्षर rx_error = inb(ioaddr + RxErrors);
-			अगर (corkscrew_debug > 2)
+	while ((rx_status = inw(ioaddr + RxStatus)) > 0) {
+		if (rx_status & 0x4000) {	/* Error, update stats. */
+			unsigned char rx_error = inb(ioaddr + RxErrors);
+			if (corkscrew_debug > 2)
 				pr_debug(" Rx error: status %2.2x.\n",
 				       rx_error);
 			dev->stats.rx_errors++;
-			अगर (rx_error & 0x01)
+			if (rx_error & 0x01)
 				dev->stats.rx_over_errors++;
-			अगर (rx_error & 0x02)
+			if (rx_error & 0x02)
 				dev->stats.rx_length_errors++;
-			अगर (rx_error & 0x04)
+			if (rx_error & 0x04)
 				dev->stats.rx_frame_errors++;
-			अगर (rx_error & 0x08)
+			if (rx_error & 0x08)
 				dev->stats.rx_crc_errors++;
-			अगर (rx_error & 0x10)
+			if (rx_error & 0x10)
 				dev->stats.rx_length_errors++;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* The packet length: up to 4.5K!. */
-			लघु pkt_len = rx_status & 0x1fff;
-			काष्ठा sk_buff *skb;
+			short pkt_len = rx_status & 0x1fff;
+			struct sk_buff *skb;
 
 			skb = netdev_alloc_skb(dev, pkt_len + 5 + 2);
-			अगर (corkscrew_debug > 4)
+			if (corkscrew_debug > 4)
 				pr_debug("Receiving packet size %d status %4.4x.\n",
 				     pkt_len, rx_status);
-			अगर (skb != शून्य) अणु
+			if (skb != NULL) {
 				skb_reserve(skb, 2);	/* Align IP on 16 byte boundaries */
-				/* 'skb_put()' poपूर्णांकs to the start of sk_buff data area. */
+				/* 'skb_put()' points to the start of sk_buff data area. */
 				insl(ioaddr + RX_FIFO,
 				     skb_put(skb, pkt_len),
 				     (pkt_len + 3) >> 2);
 				outw(RxDiscard, ioaddr + EL3_CMD);	/* Pop top Rx packet. */
 				skb->protocol = eth_type_trans(skb, dev);
-				netअगर_rx(skb);
+				netif_rx(skb);
 				dev->stats.rx_packets++;
 				dev->stats.rx_bytes += pkt_len;
-				/* Wait a limited समय to go to next packet. */
-				क्रम (i = 200; i >= 0; i--)
-					अगर (! (inw(ioaddr + EL3_STATUS) & CmdInProgress))
-						अवरोध;
-				जारी;
-			पूर्ण अन्यथा अगर (corkscrew_debug)
+				/* Wait a limited time to go to next packet. */
+				for (i = 200; i >= 0; i--)
+					if (! (inw(ioaddr + EL3_STATUS) & CmdInProgress))
+						break;
+				continue;
+			} else if (corkscrew_debug)
 				pr_debug("%s: Couldn't allocate a sk_buff of size %d.\n", dev->name, pkt_len);
-		पूर्ण
+		}
 		outw(RxDiscard, ioaddr + EL3_CMD);
 		dev->stats.rx_dropped++;
-		/* Wait a limited समय to skip this packet. */
-		क्रम (i = 200; i >= 0; i--)
-			अगर (!(inw(ioaddr + EL3_STATUS) & CmdInProgress))
-				अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		/* Wait a limited time to skip this packet. */
+		for (i = 200; i >= 0; i--)
+			if (!(inw(ioaddr + EL3_STATUS) & CmdInProgress))
+				break;
+	}
+	return 0;
+}
 
-अटल पूर्णांक boomerang_rx(काष्ठा net_device *dev)
-अणु
-	काष्ठा corkscrew_निजी *vp = netdev_priv(dev);
-	पूर्णांक entry = vp->cur_rx % RX_RING_SIZE;
-	पूर्णांक ioaddr = dev->base_addr;
-	पूर्णांक rx_status;
+static int boomerang_rx(struct net_device *dev)
+{
+	struct corkscrew_private *vp = netdev_priv(dev);
+	int entry = vp->cur_rx % RX_RING_SIZE;
+	int ioaddr = dev->base_addr;
+	int rx_status;
 
-	अगर (corkscrew_debug > 5)
+	if (corkscrew_debug > 5)
 		pr_debug("   In boomerang_rx(), status %4.4x, rx_status %4.4x.\n",
 			inw(ioaddr + EL3_STATUS), inw(ioaddr + RxStatus));
-	जबतक ((rx_status = vp->rx_ring[entry].status) & RxDComplete) अणु
-		अगर (rx_status & RxDError) अणु	/* Error, update stats. */
-			अचिन्हित अक्षर rx_error = rx_status >> 16;
-			अगर (corkscrew_debug > 2)
+	while ((rx_status = vp->rx_ring[entry].status) & RxDComplete) {
+		if (rx_status & RxDError) {	/* Error, update stats. */
+			unsigned char rx_error = rx_status >> 16;
+			if (corkscrew_debug > 2)
 				pr_debug(" Rx error: status %2.2x.\n",
 				       rx_error);
 			dev->stats.rx_errors++;
-			अगर (rx_error & 0x01)
+			if (rx_error & 0x01)
 				dev->stats.rx_over_errors++;
-			अगर (rx_error & 0x02)
+			if (rx_error & 0x02)
 				dev->stats.rx_length_errors++;
-			अगर (rx_error & 0x04)
+			if (rx_error & 0x04)
 				dev->stats.rx_frame_errors++;
-			अगर (rx_error & 0x08)
+			if (rx_error & 0x08)
 				dev->stats.rx_crc_errors++;
-			अगर (rx_error & 0x10)
+			if (rx_error & 0x10)
 				dev->stats.rx_length_errors++;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* The packet length: up to 4.5K!. */
-			लघु pkt_len = rx_status & 0x1fff;
-			काष्ठा sk_buff *skb;
+			short pkt_len = rx_status & 0x1fff;
+			struct sk_buff *skb;
 
 			dev->stats.rx_bytes += pkt_len;
-			अगर (corkscrew_debug > 4)
+			if (corkscrew_debug > 4)
 				pr_debug("Receiving packet size %d status %4.4x.\n",
 				     pkt_len, rx_status);
 
-			/* Check अगर the packet is दीर्घ enough to just accept without
+			/* Check if the packet is long enough to just accept without
 			   copying to a properly sized skbuff. */
-			अगर (pkt_len < rx_copyअवरोध &&
-			    (skb = netdev_alloc_skb(dev, pkt_len + 4)) != शून्य) अणु
+			if (pkt_len < rx_copybreak &&
+			    (skb = netdev_alloc_skb(dev, pkt_len + 4)) != NULL) {
 				skb_reserve(skb, 2);	/* Align IP on 16 byte boundaries */
-				/* 'skb_put()' poपूर्णांकs to the start of sk_buff data area. */
+				/* 'skb_put()' points to the start of sk_buff data area. */
 				skb_put_data(skb,
 					     isa_bus_to_virt(vp->rx_ring[entry].addr),
 					     pkt_len);
 				rx_copy++;
-			पूर्ण अन्यथा अणु
-				व्योम *temp;
-				/* Pass up the skbuff alपढ़ोy on the Rx ring. */
+			} else {
+				void *temp;
+				/* Pass up the skbuff already on the Rx ring. */
 				skb = vp->rx_skbuff[entry];
-				vp->rx_skbuff[entry] = शून्य;
+				vp->rx_skbuff[entry] = NULL;
 				temp = skb_put(skb, pkt_len);
-				/* Remove this checking code क्रम final release. */
-				अगर (isa_bus_to_virt(vp->rx_ring[entry].addr) != temp)
+				/* Remove this checking code for final release. */
+				if (isa_bus_to_virt(vp->rx_ring[entry].addr) != temp)
 					pr_warn("%s: Warning -- the skbuff addresses do not match in boomerang_rx: %p vs. %p / %p\n",
 						dev->name,
 						isa_bus_to_virt(vp->rx_ring[entry].addr),
 						skb->head, temp);
 				rx_nocopy++;
-			पूर्ण
+			}
 			skb->protocol = eth_type_trans(skb, dev);
-			netअगर_rx(skb);
+			netif_rx(skb);
 			dev->stats.rx_packets++;
-		पूर्ण
+		}
 		entry = (++vp->cur_rx) % RX_RING_SIZE;
-	पूर्ण
+	}
 	/* Refill the Rx ring buffers. */
-	क्रम (; vp->cur_rx - vp->dirty_rx > 0; vp->dirty_rx++) अणु
-		काष्ठा sk_buff *skb;
+	for (; vp->cur_rx - vp->dirty_rx > 0; vp->dirty_rx++) {
+		struct sk_buff *skb;
 		entry = vp->dirty_rx % RX_RING_SIZE;
-		अगर (vp->rx_skbuff[entry] == शून्य) अणु
+		if (vp->rx_skbuff[entry] == NULL) {
 			skb = netdev_alloc_skb(dev, PKT_BUF_SZ);
-			अगर (skb == शून्य)
-				अवरोध;	/* Bad news!  */
+			if (skb == NULL)
+				break;	/* Bad news!  */
 			skb_reserve(skb, 2);	/* Align IP on 16 byte boundaries */
 			vp->rx_ring[entry].addr = isa_virt_to_bus(skb->data);
 			vp->rx_skbuff[entry] = skb;
-		पूर्ण
+		}
 		vp->rx_ring[entry].status = 0;	/* Clear complete bit. */
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक corkscrew_बंद(काष्ठा net_device *dev)
-अणु
-	काष्ठा corkscrew_निजी *vp = netdev_priv(dev);
-	पूर्णांक ioaddr = dev->base_addr;
-	पूर्णांक i;
+static int corkscrew_close(struct net_device *dev)
+{
+	struct corkscrew_private *vp = netdev_priv(dev);
+	int ioaddr = dev->base_addr;
+	int i;
 
-	netअगर_stop_queue(dev);
+	netif_stop_queue(dev);
 
-	अगर (corkscrew_debug > 1) अणु
+	if (corkscrew_debug > 1) {
 		pr_debug("%s: corkscrew_close() status %4.4x, Tx status %2.2x.\n",
 		     dev->name, inw(ioaddr + EL3_STATUS),
 		     inb(ioaddr + TxStatus));
 		pr_debug("%s: corkscrew close stats: rx_nocopy %d rx_copy %d tx_queued %d.\n",
 			dev->name, rx_nocopy, rx_copy, queued_packet);
-	पूर्ण
+	}
 
-	del_समयr_sync(&vp->समयr);
+	del_timer_sync(&vp->timer);
 
 	/* Turn off statistics ASAP.  We update lp->stats below. */
 	outw(StatsDisable, ioaddr + EL3_CMD);
@@ -1423,73 +1422,73 @@ no_pnp:
 	outw(RxDisable, ioaddr + EL3_CMD);
 	outw(TxDisable, ioaddr + EL3_CMD);
 
-	अगर (dev->अगर_port == XCVR_10base2)
-		/* Turn off thinnet घातer.  Green! */
+	if (dev->if_port == XCVR_10base2)
+		/* Turn off thinnet power.  Green! */
 		outw(StopCoax, ioaddr + EL3_CMD);
 
-	मुक्त_irq(dev->irq, dev);
+	free_irq(dev->irq, dev);
 
 	outw(SetIntrEnb | 0x0000, ioaddr + EL3_CMD);
 
 	update_stats(ioaddr, dev);
-	अगर (vp->full_bus_master_rx) अणु	/* Free Boomerang bus master Rx buffers. */
+	if (vp->full_bus_master_rx) {	/* Free Boomerang bus master Rx buffers. */
 		outl(0, ioaddr + UpListPtr);
-		क्रम (i = 0; i < RX_RING_SIZE; i++)
-			अगर (vp->rx_skbuff[i]) अणु
-				dev_kमुक्त_skb(vp->rx_skbuff[i]);
-				vp->rx_skbuff[i] = शून्य;
-			पूर्ण
-	पूर्ण
-	अगर (vp->full_bus_master_tx) अणु	/* Free Boomerang bus master Tx buffers. */
+		for (i = 0; i < RX_RING_SIZE; i++)
+			if (vp->rx_skbuff[i]) {
+				dev_kfree_skb(vp->rx_skbuff[i]);
+				vp->rx_skbuff[i] = NULL;
+			}
+	}
+	if (vp->full_bus_master_tx) {	/* Free Boomerang bus master Tx buffers. */
 		outl(0, ioaddr + DownListPtr);
-		क्रम (i = 0; i < TX_RING_SIZE; i++)
-			अगर (vp->tx_skbuff[i]) अणु
-				dev_kमुक्त_skb(vp->tx_skbuff[i]);
-				vp->tx_skbuff[i] = शून्य;
-			पूर्ण
-	पूर्ण
+		for (i = 0; i < TX_RING_SIZE; i++)
+			if (vp->tx_skbuff[i]) {
+				dev_kfree_skb(vp->tx_skbuff[i]);
+				vp->tx_skbuff[i] = NULL;
+			}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा net_device_stats *corkscrew_get_stats(काष्ठा net_device *dev)
-अणु
-	काष्ठा corkscrew_निजी *vp = netdev_priv(dev);
-	अचिन्हित दीर्घ flags;
+static struct net_device_stats *corkscrew_get_stats(struct net_device *dev)
+{
+	struct corkscrew_private *vp = netdev_priv(dev);
+	unsigned long flags;
 
-	अगर (netअगर_running(dev)) अणु
+	if (netif_running(dev)) {
 		spin_lock_irqsave(&vp->lock, flags);
 		update_stats(dev->base_addr, dev);
 		spin_unlock_irqrestore(&vp->lock, flags);
-	पूर्ण
-	वापस &dev->stats;
-पूर्ण
+	}
+	return &dev->stats;
+}
 
 /*  Update statistics.
-	Unlike with the EL3 we need not worry about पूर्णांकerrupts changing
-	the winकरोw setting from underneath us, but we must still guard
-	against a race condition with a StatsUpdate पूर्णांकerrupt updating the
-	table.  This is करोne by checking that the ASM (!) code generated uses
+	Unlike with the EL3 we need not worry about interrupts changing
+	the window setting from underneath us, but we must still guard
+	against a race condition with a StatsUpdate interrupt updating the
+	table.  This is done by checking that the ASM (!) code generated uses
 	atomic updates with '+='.
 	*/
-अटल व्योम update_stats(पूर्णांक ioaddr, काष्ठा net_device *dev)
-अणु
-	/* Unlike the 3c5x9 we need not turn off stats updates जबतक पढ़ोing. */
-	/* Switch to the stats winकरोw, and पढ़ो everything. */
+static void update_stats(int ioaddr, struct net_device *dev)
+{
+	/* Unlike the 3c5x9 we need not turn off stats updates while reading. */
+	/* Switch to the stats window, and read everything. */
 	EL3WINDOW(6);
 	dev->stats.tx_carrier_errors += inb(ioaddr + 0);
 	dev->stats.tx_heartbeat_errors += inb(ioaddr + 1);
 	/* Multiple collisions. */ inb(ioaddr + 2);
 	dev->stats.collisions += inb(ioaddr + 3);
-	dev->stats.tx_winकरोw_errors += inb(ioaddr + 4);
-	dev->stats.rx_fअगरo_errors += inb(ioaddr + 5);
+	dev->stats.tx_window_errors += inb(ioaddr + 4);
+	dev->stats.rx_fifo_errors += inb(ioaddr + 5);
 	dev->stats.tx_packets += inb(ioaddr + 6);
 	dev->stats.tx_packets += (inb(ioaddr + 9) & 0x30) << 4;
 						/* Rx packets   */ inb(ioaddr + 7);
-						/* Must पढ़ो to clear */
+						/* Must read to clear */
 	/* Tx deferrals */ inb(ioaddr + 8);
-	/* Don't bother with रेजिस्टर 9, an extension of रेजिस्टरs 6&7.
-	   If we करो use the 6&7 values the atomic update assumption above
+	/* Don't bother with register 9, an extension of registers 6&7.
+	   If we do use the 6&7 values the atomic update assumption above
 	   is invalid. */
 	inw(ioaddr + 10);	/* Total Rx and Tx octets. */
 	inw(ioaddr + 12);
@@ -1497,70 +1496,70 @@ no_pnp:
 	EL3WINDOW(4);
 	inb(ioaddr + 12);
 
-	/* We change back to winकरोw 7 (not 1) with the Vortex. */
+	/* We change back to window 7 (not 1) with the Vortex. */
 	EL3WINDOW(7);
-पूर्ण
+}
 
 /* This new version of set_rx_mode() supports v1.4 kernels.
-   The Vortex chip has no करोcumented multicast filter, so the only
+   The Vortex chip has no documented multicast filter, so the only
    multicast setting is to receive all multicast frames.  At least
    the chip has a very clean way to set the mode, unlike many others. */
-अटल व्योम set_rx_mode(काष्ठा net_device *dev)
-अणु
-	पूर्णांक ioaddr = dev->base_addr;
-	अचिन्हित लघु new_mode;
+static void set_rx_mode(struct net_device *dev)
+{
+	int ioaddr = dev->base_addr;
+	unsigned short new_mode;
 
-	अगर (dev->flags & IFF_PROMISC) अणु
-		अगर (corkscrew_debug > 3)
+	if (dev->flags & IFF_PROMISC) {
+		if (corkscrew_debug > 3)
 			pr_debug("%s: Setting promiscuous mode.\n",
 			       dev->name);
 		new_mode = SetRxFilter | RxStation | RxMulticast | RxBroadcast | RxProm;
-	पूर्ण अन्यथा अगर (!netdev_mc_empty(dev) || dev->flags & IFF_ALLMULTI) अणु
+	} else if (!netdev_mc_empty(dev) || dev->flags & IFF_ALLMULTI) {
 		new_mode = SetRxFilter | RxStation | RxMulticast | RxBroadcast;
-	पूर्ण अन्यथा
+	} else
 		new_mode = SetRxFilter | RxStation | RxBroadcast;
 
 	outw(new_mode, ioaddr + EL3_CMD);
-पूर्ण
+}
 
-अटल व्योम netdev_get_drvinfo(काष्ठा net_device *dev,
-			       काष्ठा ethtool_drvinfo *info)
-अणु
-	strlcpy(info->driver, DRV_NAME, माप(info->driver));
-	snम_लिखो(info->bus_info, माप(info->bus_info), "ISA 0x%lx",
+static void netdev_get_drvinfo(struct net_device *dev,
+			       struct ethtool_drvinfo *info)
+{
+	strlcpy(info->driver, DRV_NAME, sizeof(info->driver));
+	snprintf(info->bus_info, sizeof(info->bus_info), "ISA 0x%lx",
 		 dev->base_addr);
-पूर्ण
+}
 
-अटल u32 netdev_get_msglevel(काष्ठा net_device *dev)
-अणु
-	वापस corkscrew_debug;
-पूर्ण
+static u32 netdev_get_msglevel(struct net_device *dev)
+{
+	return corkscrew_debug;
+}
 
-अटल व्योम netdev_set_msglevel(काष्ठा net_device *dev, u32 level)
-अणु
+static void netdev_set_msglevel(struct net_device *dev, u32 level)
+{
 	corkscrew_debug = level;
-पूर्ण
+}
 
-अटल स्थिर काष्ठा ethtool_ops netdev_ethtool_ops = अणु
+static const struct ethtool_ops netdev_ethtool_ops = {
 	.get_drvinfo		= netdev_get_drvinfo,
 	.get_msglevel		= netdev_get_msglevel,
 	.set_msglevel		= netdev_set_msglevel,
-पूर्ण;
+};
 
 
-#अगर_घोषित MODULE
-व्योम cleanup_module(व्योम)
-अणु
-	जबतक (!list_empty(&root_corkscrew_dev)) अणु
-		काष्ठा net_device *dev;
-		काष्ठा corkscrew_निजी *vp;
+#ifdef MODULE
+void cleanup_module(void)
+{
+	while (!list_empty(&root_corkscrew_dev)) {
+		struct net_device *dev;
+		struct corkscrew_private *vp;
 
 		vp = list_entry(root_corkscrew_dev.next,
-				काष्ठा corkscrew_निजी, list);
+				struct corkscrew_private, list);
 		dev = vp->our_dev;
-		unरेजिस्टर_netdev(dev);
+		unregister_netdev(dev);
 		cleanup_card(dev);
-		मुक्त_netdev(dev);
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर				/* MODULE */
+		free_netdev(dev);
+	}
+}
+#endif				/* MODULE */

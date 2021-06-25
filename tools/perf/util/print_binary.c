@@ -1,59 +1,58 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश "print_binary.h"
-#समावेश <linux/log2.h>
-#समावेश <linux/प्रकार.स>
+// SPDX-License-Identifier: GPL-2.0
+#include "print_binary.h"
+#include <linux/log2.h>
+#include <linux/ctype.h>
 
-पूर्णांक binary__ख_लिखो(अचिन्हित अक्षर *data, माप_प्रकार len,
-		    माप_प्रकार bytes_per_line, binary__ख_लिखो_t prपूर्णांकer,
-		    व्योम *extra, खाता *fp)
-अणु
-	माप_प्रकार i, j, mask;
-	पूर्णांक prपूर्णांकed = 0;
+int binary__fprintf(unsigned char *data, size_t len,
+		    size_t bytes_per_line, binary__fprintf_t printer,
+		    void *extra, FILE *fp)
+{
+	size_t i, j, mask;
+	int printed = 0;
 
-	अगर (!prपूर्णांकer)
-		वापस 0;
+	if (!printer)
+		return 0;
 
-	bytes_per_line = roundup_घात_of_two(bytes_per_line);
+	bytes_per_line = roundup_pow_of_two(bytes_per_line);
 	mask = bytes_per_line - 1;
 
-	prपूर्णांकed += prपूर्णांकer(BINARY_PRINT_DATA_BEGIN, 0, extra, fp);
-	क्रम (i = 0; i < len; i++) अणु
-		अगर ((i & mask) == 0) अणु
-			prपूर्णांकed += prपूर्णांकer(BINARY_PRINT_LINE_BEGIN, -1, extra, fp);
-			prपूर्णांकed += prपूर्णांकer(BINARY_PRINT_ADDR, i, extra, fp);
-		पूर्ण
+	printed += printer(BINARY_PRINT_DATA_BEGIN, 0, extra, fp);
+	for (i = 0; i < len; i++) {
+		if ((i & mask) == 0) {
+			printed += printer(BINARY_PRINT_LINE_BEGIN, -1, extra, fp);
+			printed += printer(BINARY_PRINT_ADDR, i, extra, fp);
+		}
 
-		prपूर्णांकed += prपूर्णांकer(BINARY_PRINT_NUM_DATA, data[i], extra, fp);
+		printed += printer(BINARY_PRINT_NUM_DATA, data[i], extra, fp);
 
-		अगर (((i & mask) == mask) || i == len - 1) अणु
-			क्रम (j = 0; j < mask-(i & mask); j++)
-				prपूर्णांकed += prपूर्णांकer(BINARY_PRINT_NUM_PAD, -1, extra, fp);
+		if (((i & mask) == mask) || i == len - 1) {
+			for (j = 0; j < mask-(i & mask); j++)
+				printed += printer(BINARY_PRINT_NUM_PAD, -1, extra, fp);
 
-			prपूर्णांकer(BINARY_PRINT_SEP, i, extra, fp);
-			क्रम (j = i & ~mask; j <= i; j++)
-				prपूर्णांकed += prपूर्णांकer(BINARY_PRINT_CHAR_DATA, data[j], extra, fp);
-			क्रम (j = 0; j < mask-(i & mask); j++)
-				prपूर्णांकed += prपूर्णांकer(BINARY_PRINT_CHAR_PAD, i, extra, fp);
-			prपूर्णांकed += prपूर्णांकer(BINARY_PRINT_LINE_END, -1, extra, fp);
-		पूर्ण
-	पूर्ण
-	prपूर्णांकed += prपूर्णांकer(BINARY_PRINT_DATA_END, -1, extra, fp);
-	वापस prपूर्णांकed;
-पूर्ण
+			printer(BINARY_PRINT_SEP, i, extra, fp);
+			for (j = i & ~mask; j <= i; j++)
+				printed += printer(BINARY_PRINT_CHAR_DATA, data[j], extra, fp);
+			for (j = 0; j < mask-(i & mask); j++)
+				printed += printer(BINARY_PRINT_CHAR_PAD, i, extra, fp);
+			printed += printer(BINARY_PRINT_LINE_END, -1, extra, fp);
+		}
+	}
+	printed += printer(BINARY_PRINT_DATA_END, -1, extra, fp);
+	return printed;
+}
 
-पूर्णांक is_prपूर्णांकable_array(अक्षर *p, अचिन्हित पूर्णांक len)
-अणु
-	अचिन्हित पूर्णांक i;
+int is_printable_array(char *p, unsigned int len)
+{
+	unsigned int i;
 
-	अगर (!p || !len || p[len - 1] != 0)
-		वापस 0;
+	if (!p || !len || p[len - 1] != 0)
+		return 0;
 
 	len--;
 
-	क्रम (i = 0; i < len && p[i]; i++) अणु
-		अगर (!है_छाप(p[i]) && !है_खाली(p[i]))
-			वापस 0;
-	पूर्ण
-	वापस 1;
-पूर्ण
+	for (i = 0; i < len && p[i]; i++) {
+		if (!isprint(p[i]) && !isspace(p[i]))
+			return 0;
+	}
+	return 1;
+}

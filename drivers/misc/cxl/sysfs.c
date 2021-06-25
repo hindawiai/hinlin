@@ -1,417 +1,416 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright 2014 IBM Corp.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/device.h>
-#समावेश <linux/sysfs.h>
-#समावेश <linux/pci_regs.h>
+#include <linux/kernel.h>
+#include <linux/device.h>
+#include <linux/sysfs.h>
+#include <linux/pci_regs.h>
 
-#समावेश "cxl.h"
+#include "cxl.h"
 
-#घोषणा to_afu_अक्षरdev_m(d) dev_get_drvdata(d)
+#define to_afu_chardev_m(d) dev_get_drvdata(d)
 
 /*********  Adapter attributes  **********************************************/
 
-अटल sमाप_प्रकार caia_version_show(काष्ठा device *device,
-				 काष्ठा device_attribute *attr,
-				 अक्षर *buf)
-अणु
-	काष्ठा cxl *adapter = to_cxl_adapter(device);
+static ssize_t caia_version_show(struct device *device,
+				 struct device_attribute *attr,
+				 char *buf)
+{
+	struct cxl *adapter = to_cxl_adapter(device);
 
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%i.%i\n", adapter->caia_major,
+	return scnprintf(buf, PAGE_SIZE, "%i.%i\n", adapter->caia_major,
 			 adapter->caia_minor);
-पूर्ण
+}
 
-अटल sमाप_प्रकार psl_revision_show(काष्ठा device *device,
-				 काष्ठा device_attribute *attr,
-				 अक्षर *buf)
-अणु
-	काष्ठा cxl *adapter = to_cxl_adapter(device);
+static ssize_t psl_revision_show(struct device *device,
+				 struct device_attribute *attr,
+				 char *buf)
+{
+	struct cxl *adapter = to_cxl_adapter(device);
 
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%i\n", adapter->psl_rev);
-पूर्ण
+	return scnprintf(buf, PAGE_SIZE, "%i\n", adapter->psl_rev);
+}
 
-अटल sमाप_प्रकार base_image_show(काष्ठा device *device,
-			       काष्ठा device_attribute *attr,
-			       अक्षर *buf)
-अणु
-	काष्ठा cxl *adapter = to_cxl_adapter(device);
+static ssize_t base_image_show(struct device *device,
+			       struct device_attribute *attr,
+			       char *buf)
+{
+	struct cxl *adapter = to_cxl_adapter(device);
 
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%i\n", adapter->base_image);
-पूर्ण
+	return scnprintf(buf, PAGE_SIZE, "%i\n", adapter->base_image);
+}
 
-अटल sमाप_प्रकार image_loaded_show(काष्ठा device *device,
-				 काष्ठा device_attribute *attr,
-				 अक्षर *buf)
-अणु
-	काष्ठा cxl *adapter = to_cxl_adapter(device);
+static ssize_t image_loaded_show(struct device *device,
+				 struct device_attribute *attr,
+				 char *buf)
+{
+	struct cxl *adapter = to_cxl_adapter(device);
 
-	अगर (adapter->user_image_loaded)
-		वापस scnम_लिखो(buf, PAGE_SIZE, "user\n");
-	वापस scnम_लिखो(buf, PAGE_SIZE, "factory\n");
-पूर्ण
+	if (adapter->user_image_loaded)
+		return scnprintf(buf, PAGE_SIZE, "user\n");
+	return scnprintf(buf, PAGE_SIZE, "factory\n");
+}
 
-अटल sमाप_प्रकार psl_समयbase_synced_show(काष्ठा device *device,
-					काष्ठा device_attribute *attr,
-					अक्षर *buf)
-अणु
-	काष्ठा cxl *adapter = to_cxl_adapter(device);
+static ssize_t psl_timebase_synced_show(struct device *device,
+					struct device_attribute *attr,
+					char *buf)
+{
+	struct cxl *adapter = to_cxl_adapter(device);
 	u64 psl_tb, delta;
 
 	/* Recompute the status only in native mode */
-	अगर (cpu_has_feature(CPU_FTR_HVMODE)) अणु
-		psl_tb = adapter->native->sl_ops->समयbase_पढ़ो(adapter);
-		delta = असल(mftb() - psl_tb);
+	if (cpu_has_feature(CPU_FTR_HVMODE)) {
+		psl_tb = adapter->native->sl_ops->timebase_read(adapter);
+		delta = abs(mftb() - psl_tb);
 
-		/* CORE TB and PSL TB dअगरference <= 16usecs ? */
-		adapter->psl_समयbase_synced = (tb_to_ns(delta) < 16000) ? true : false;
+		/* CORE TB and PSL TB difference <= 16usecs ? */
+		adapter->psl_timebase_synced = (tb_to_ns(delta) < 16000) ? true : false;
 		pr_devel("PSL timebase %s - delta: 0x%016llx\n",
 			 (tb_to_ns(delta) < 16000) ? "synchronized" :
 			 "not synchronized", tb_to_ns(delta));
-	पूर्ण
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%i\n", adapter->psl_समयbase_synced);
-पूर्ण
+	}
+	return scnprintf(buf, PAGE_SIZE, "%i\n", adapter->psl_timebase_synced);
+}
 
-अटल sमाप_प्रकार tunneled_ops_supported_show(काष्ठा device *device,
-					काष्ठा device_attribute *attr,
-					अक्षर *buf)
-अणु
-	काष्ठा cxl *adapter = to_cxl_adapter(device);
+static ssize_t tunneled_ops_supported_show(struct device *device,
+					struct device_attribute *attr,
+					char *buf)
+{
+	struct cxl *adapter = to_cxl_adapter(device);
 
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%i\n", adapter->tunneled_ops_supported);
-पूर्ण
+	return scnprintf(buf, PAGE_SIZE, "%i\n", adapter->tunneled_ops_supported);
+}
 
-अटल sमाप_प्रकार reset_adapter_store(काष्ठा device *device,
-				   काष्ठा device_attribute *attr,
-				   स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा cxl *adapter = to_cxl_adapter(device);
-	पूर्णांक rc;
-	पूर्णांक val;
+static ssize_t reset_adapter_store(struct device *device,
+				   struct device_attribute *attr,
+				   const char *buf, size_t count)
+{
+	struct cxl *adapter = to_cxl_adapter(device);
+	int rc;
+	int val;
 
-	rc = माला_पूछो(buf, "%i", &val);
-	अगर ((rc != 1) || (val != 1 && val != -1))
-		वापस -EINVAL;
+	rc = sscanf(buf, "%i", &val);
+	if ((rc != 1) || (val != 1 && val != -1))
+		return -EINVAL;
 
 	/*
-	 * See अगर we can lock the context mapping that's only allowed
+	 * See if we can lock the context mapping that's only allowed
 	 * when there are no contexts attached to the adapter. Once
 	 * taken this will also prevent any context from getting activated.
 	 */
-	अगर (val == 1) अणु
+	if (val == 1) {
 		rc =  cxl_adapter_context_lock(adapter);
-		अगर (rc)
-			जाओ out;
+		if (rc)
+			goto out;
 
 		rc = cxl_ops->adapter_reset(adapter);
-		/* In हाल reset failed release context lock */
-		अगर (rc)
+		/* In case reset failed release context lock */
+		if (rc)
 			cxl_adapter_context_unlock(adapter);
 
-	पूर्ण अन्यथा अगर (val == -1) अणु
-		/* Perक्रमm a क्रमced adapter reset */
+	} else if (val == -1) {
+		/* Perform a forced adapter reset */
 		rc = cxl_ops->adapter_reset(adapter);
-	पूर्ण
+	}
 
 out:
-	वापस rc ? rc : count;
-पूर्ण
+	return rc ? rc : count;
+}
 
-अटल sमाप_प्रकार load_image_on_perst_show(काष्ठा device *device,
-				 काष्ठा device_attribute *attr,
-				 अक्षर *buf)
-अणु
-	काष्ठा cxl *adapter = to_cxl_adapter(device);
+static ssize_t load_image_on_perst_show(struct device *device,
+				 struct device_attribute *attr,
+				 char *buf)
+{
+	struct cxl *adapter = to_cxl_adapter(device);
 
-	अगर (!adapter->perst_loads_image)
-		वापस scnम_लिखो(buf, PAGE_SIZE, "none\n");
+	if (!adapter->perst_loads_image)
+		return scnprintf(buf, PAGE_SIZE, "none\n");
 
-	अगर (adapter->perst_select_user)
-		वापस scnम_लिखो(buf, PAGE_SIZE, "user\n");
-	वापस scnम_लिखो(buf, PAGE_SIZE, "factory\n");
-पूर्ण
+	if (adapter->perst_select_user)
+		return scnprintf(buf, PAGE_SIZE, "user\n");
+	return scnprintf(buf, PAGE_SIZE, "factory\n");
+}
 
-अटल sमाप_प्रकार load_image_on_perst_store(काष्ठा device *device,
-				 काष्ठा device_attribute *attr,
-				 स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा cxl *adapter = to_cxl_adapter(device);
-	पूर्णांक rc;
+static ssize_t load_image_on_perst_store(struct device *device,
+				 struct device_attribute *attr,
+				 const char *buf, size_t count)
+{
+	struct cxl *adapter = to_cxl_adapter(device);
+	int rc;
 
-	अगर (!म_भेदन(buf, "none", 4))
+	if (!strncmp(buf, "none", 4))
 		adapter->perst_loads_image = false;
-	अन्यथा अगर (!म_भेदन(buf, "user", 4)) अणु
+	else if (!strncmp(buf, "user", 4)) {
 		adapter->perst_select_user = true;
 		adapter->perst_loads_image = true;
-	पूर्ण अन्यथा अगर (!म_भेदन(buf, "factory", 7)) अणु
+	} else if (!strncmp(buf, "factory", 7)) {
 		adapter->perst_select_user = false;
 		adapter->perst_loads_image = true;
-	पूर्ण अन्यथा
-		वापस -EINVAL;
+	} else
+		return -EINVAL;
 
-	अगर ((rc = cxl_update_image_control(adapter)))
-		वापस rc;
+	if ((rc = cxl_update_image_control(adapter)))
+		return rc;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार perst_reloads_same_image_show(काष्ठा device *device,
-				 काष्ठा device_attribute *attr,
-				 अक्षर *buf)
-अणु
-	काष्ठा cxl *adapter = to_cxl_adapter(device);
+static ssize_t perst_reloads_same_image_show(struct device *device,
+				 struct device_attribute *attr,
+				 char *buf)
+{
+	struct cxl *adapter = to_cxl_adapter(device);
 
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%i\n", adapter->perst_same_image);
-पूर्ण
+	return scnprintf(buf, PAGE_SIZE, "%i\n", adapter->perst_same_image);
+}
 
-अटल sमाप_प्रकार perst_reloads_same_image_store(काष्ठा device *device,
-				 काष्ठा device_attribute *attr,
-				 स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा cxl *adapter = to_cxl_adapter(device);
-	पूर्णांक rc;
-	पूर्णांक val;
+static ssize_t perst_reloads_same_image_store(struct device *device,
+				 struct device_attribute *attr,
+				 const char *buf, size_t count)
+{
+	struct cxl *adapter = to_cxl_adapter(device);
+	int rc;
+	int val;
 
-	rc = माला_पूछो(buf, "%i", &val);
-	अगर ((rc != 1) || !(val == 1 || val == 0))
-		वापस -EINVAL;
+	rc = sscanf(buf, "%i", &val);
+	if ((rc != 1) || !(val == 1 || val == 0))
+		return -EINVAL;
 
 	adapter->perst_same_image = (val == 1);
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल काष्ठा device_attribute adapter_attrs[] = अणु
+static struct device_attribute adapter_attrs[] = {
 	__ATTR_RO(caia_version),
 	__ATTR_RO(psl_revision),
 	__ATTR_RO(base_image),
 	__ATTR_RO(image_loaded),
-	__ATTR_RO(psl_समयbase_synced),
+	__ATTR_RO(psl_timebase_synced),
 	__ATTR_RO(tunneled_ops_supported),
 	__ATTR_RW(load_image_on_perst),
 	__ATTR_RW(perst_reloads_same_image),
-	__ATTR(reset, S_IWUSR, शून्य, reset_adapter_store),
-पूर्ण;
+	__ATTR(reset, S_IWUSR, NULL, reset_adapter_store),
+};
 
 
-/*********  AFU master specअगरic attributes  **********************************/
+/*********  AFU master specific attributes  **********************************/
 
-अटल sमाप_प्रकार mmio_size_show_master(काष्ठा device *device,
-				     काष्ठा device_attribute *attr,
-				     अक्षर *buf)
-अणु
-	काष्ठा cxl_afu *afu = to_afu_अक्षरdev_m(device);
+static ssize_t mmio_size_show_master(struct device *device,
+				     struct device_attribute *attr,
+				     char *buf)
+{
+	struct cxl_afu *afu = to_afu_chardev_m(device);
 
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%llu\n", afu->adapter->ps_size);
-पूर्ण
+	return scnprintf(buf, PAGE_SIZE, "%llu\n", afu->adapter->ps_size);
+}
 
-अटल sमाप_प्रकार pp_mmio_off_show(काष्ठा device *device,
-				काष्ठा device_attribute *attr,
-				अक्षर *buf)
-अणु
-	काष्ठा cxl_afu *afu = to_afu_अक्षरdev_m(device);
+static ssize_t pp_mmio_off_show(struct device *device,
+				struct device_attribute *attr,
+				char *buf)
+{
+	struct cxl_afu *afu = to_afu_chardev_m(device);
 
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%llu\n", afu->native->pp_offset);
-पूर्ण
+	return scnprintf(buf, PAGE_SIZE, "%llu\n", afu->native->pp_offset);
+}
 
-अटल sमाप_प्रकार pp_mmio_len_show(काष्ठा device *device,
-				काष्ठा device_attribute *attr,
-				अक्षर *buf)
-अणु
-	काष्ठा cxl_afu *afu = to_afu_अक्षरdev_m(device);
+static ssize_t pp_mmio_len_show(struct device *device,
+				struct device_attribute *attr,
+				char *buf)
+{
+	struct cxl_afu *afu = to_afu_chardev_m(device);
 
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%llu\n", afu->pp_size);
-पूर्ण
+	return scnprintf(buf, PAGE_SIZE, "%llu\n", afu->pp_size);
+}
 
-अटल काष्ठा device_attribute afu_master_attrs[] = अणु
-	__ATTR(mmio_size, S_IRUGO, mmio_size_show_master, शून्य),
+static struct device_attribute afu_master_attrs[] = {
+	__ATTR(mmio_size, S_IRUGO, mmio_size_show_master, NULL),
 	__ATTR_RO(pp_mmio_off),
 	__ATTR_RO(pp_mmio_len),
-पूर्ण;
+};
 
 
 /*********  AFU attributes  **************************************************/
 
-अटल sमाप_प्रकार mmio_size_show(काष्ठा device *device,
-			      काष्ठा device_attribute *attr,
-			      अक्षर *buf)
-अणु
-	काष्ठा cxl_afu *afu = to_cxl_afu(device);
+static ssize_t mmio_size_show(struct device *device,
+			      struct device_attribute *attr,
+			      char *buf)
+{
+	struct cxl_afu *afu = to_cxl_afu(device);
 
-	अगर (afu->pp_size)
-		वापस scnम_लिखो(buf, PAGE_SIZE, "%llu\n", afu->pp_size);
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%llu\n", afu->adapter->ps_size);
-पूर्ण
+	if (afu->pp_size)
+		return scnprintf(buf, PAGE_SIZE, "%llu\n", afu->pp_size);
+	return scnprintf(buf, PAGE_SIZE, "%llu\n", afu->adapter->ps_size);
+}
 
-अटल sमाप_प्रकार reset_store_afu(काष्ठा device *device,
-			       काष्ठा device_attribute *attr,
-			       स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा cxl_afu *afu = to_cxl_afu(device);
-	पूर्णांक rc;
+static ssize_t reset_store_afu(struct device *device,
+			       struct device_attribute *attr,
+			       const char *buf, size_t count)
+{
+	struct cxl_afu *afu = to_cxl_afu(device);
+	int rc;
 
-	/* Not safe to reset अगर it is currently in use */
+	/* Not safe to reset if it is currently in use */
 	mutex_lock(&afu->contexts_lock);
-	अगर (!idr_is_empty(&afu->contexts_idr)) अणु
+	if (!idr_is_empty(&afu->contexts_idr)) {
 		rc = -EBUSY;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	अगर ((rc = cxl_ops->afu_reset(afu)))
-		जाओ err;
+	if ((rc = cxl_ops->afu_reset(afu)))
+		goto err;
 
 	rc = count;
 err:
 	mutex_unlock(&afu->contexts_lock);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल sमाप_प्रकार irqs_min_show(काष्ठा device *device,
-			     काष्ठा device_attribute *attr,
-			     अक्षर *buf)
-अणु
-	काष्ठा cxl_afu *afu = to_cxl_afu(device);
+static ssize_t irqs_min_show(struct device *device,
+			     struct device_attribute *attr,
+			     char *buf)
+{
+	struct cxl_afu *afu = to_cxl_afu(device);
 
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%i\n", afu->pp_irqs);
-पूर्ण
+	return scnprintf(buf, PAGE_SIZE, "%i\n", afu->pp_irqs);
+}
 
-अटल sमाप_प्रकार irqs_max_show(काष्ठा device *device,
-				  काष्ठा device_attribute *attr,
-				  अक्षर *buf)
-अणु
-	काष्ठा cxl_afu *afu = to_cxl_afu(device);
+static ssize_t irqs_max_show(struct device *device,
+				  struct device_attribute *attr,
+				  char *buf)
+{
+	struct cxl_afu *afu = to_cxl_afu(device);
 
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%i\n", afu->irqs_max);
-पूर्ण
+	return scnprintf(buf, PAGE_SIZE, "%i\n", afu->irqs_max);
+}
 
-अटल sमाप_प्रकार irqs_max_store(काष्ठा device *device,
-				  काष्ठा device_attribute *attr,
-				  स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा cxl_afu *afu = to_cxl_afu(device);
-	sमाप_प्रकार ret;
-	पूर्णांक irqs_max;
+static ssize_t irqs_max_store(struct device *device,
+				  struct device_attribute *attr,
+				  const char *buf, size_t count)
+{
+	struct cxl_afu *afu = to_cxl_afu(device);
+	ssize_t ret;
+	int irqs_max;
 
-	ret = माला_पूछो(buf, "%i", &irqs_max);
-	अगर (ret != 1)
-		वापस -EINVAL;
+	ret = sscanf(buf, "%i", &irqs_max);
+	if (ret != 1)
+		return -EINVAL;
 
-	अगर (irqs_max < afu->pp_irqs)
-		वापस -EINVAL;
+	if (irqs_max < afu->pp_irqs)
+		return -EINVAL;
 
-	अगर (cpu_has_feature(CPU_FTR_HVMODE)) अणु
-		अगर (irqs_max > afu->adapter->user_irqs)
-			वापस -EINVAL;
-	पूर्ण अन्यथा अणु
+	if (cpu_has_feature(CPU_FTR_HVMODE)) {
+		if (irqs_max > afu->adapter->user_irqs)
+			return -EINVAL;
+	} else {
 		/* pHyp sets a per-AFU limit */
-		अगर (irqs_max > afu->guest->max_पूर्णांकs)
-			वापस -EINVAL;
-	पूर्ण
+		if (irqs_max > afu->guest->max_ints)
+			return -EINVAL;
+	}
 
 	afu->irqs_max = irqs_max;
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार modes_supported_show(काष्ठा device *device,
-				    काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा cxl_afu *afu = to_cxl_afu(device);
-	अक्षर *p = buf, *end = buf + PAGE_SIZE;
+static ssize_t modes_supported_show(struct device *device,
+				    struct device_attribute *attr, char *buf)
+{
+	struct cxl_afu *afu = to_cxl_afu(device);
+	char *p = buf, *end = buf + PAGE_SIZE;
 
-	अगर (afu->modes_supported & CXL_MODE_DEDICATED)
-		p += scnम_लिखो(p, end - p, "dedicated_process\n");
-	अगर (afu->modes_supported & CXL_MODE_सूचीECTED)
-		p += scnम_लिखो(p, end - p, "afu_directed\n");
-	वापस (p - buf);
-पूर्ण
+	if (afu->modes_supported & CXL_MODE_DEDICATED)
+		p += scnprintf(p, end - p, "dedicated_process\n");
+	if (afu->modes_supported & CXL_MODE_DIRECTED)
+		p += scnprintf(p, end - p, "afu_directed\n");
+	return (p - buf);
+}
 
-अटल sमाप_प्रकार prefault_mode_show(काष्ठा device *device,
-				  काष्ठा device_attribute *attr,
-				  अक्षर *buf)
-अणु
-	काष्ठा cxl_afu *afu = to_cxl_afu(device);
+static ssize_t prefault_mode_show(struct device *device,
+				  struct device_attribute *attr,
+				  char *buf)
+{
+	struct cxl_afu *afu = to_cxl_afu(device);
 
-	चयन (afu->prefault_mode) अणु
-	हाल CXL_PREFAULT_WED:
-		वापस scnम_लिखो(buf, PAGE_SIZE, "work_element_descriptor\n");
-	हाल CXL_PREFAULT_ALL:
-		वापस scnम_लिखो(buf, PAGE_SIZE, "all\n");
-	शेष:
-		वापस scnम_लिखो(buf, PAGE_SIZE, "none\n");
-	पूर्ण
-पूर्ण
+	switch (afu->prefault_mode) {
+	case CXL_PREFAULT_WED:
+		return scnprintf(buf, PAGE_SIZE, "work_element_descriptor\n");
+	case CXL_PREFAULT_ALL:
+		return scnprintf(buf, PAGE_SIZE, "all\n");
+	default:
+		return scnprintf(buf, PAGE_SIZE, "none\n");
+	}
+}
 
-अटल sमाप_प्रकार prefault_mode_store(काष्ठा device *device,
-			  काष्ठा device_attribute *attr,
-			  स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा cxl_afu *afu = to_cxl_afu(device);
-	क्रमागत prefault_modes mode = -1;
+static ssize_t prefault_mode_store(struct device *device,
+			  struct device_attribute *attr,
+			  const char *buf, size_t count)
+{
+	struct cxl_afu *afu = to_cxl_afu(device);
+	enum prefault_modes mode = -1;
 
-	अगर (!म_भेदन(buf, "none", 4))
+	if (!strncmp(buf, "none", 4))
 		mode = CXL_PREFAULT_NONE;
-	अन्यथा अणु
-		अगर (!radix_enabled()) अणु
+	else {
+		if (!radix_enabled()) {
 
 			/* only allowed when not in radix mode */
-			अगर (!म_भेदन(buf, "work_element_descriptor", 23))
+			if (!strncmp(buf, "work_element_descriptor", 23))
 				mode = CXL_PREFAULT_WED;
-			अगर (!म_भेदन(buf, "all", 3))
+			if (!strncmp(buf, "all", 3))
 				mode = CXL_PREFAULT_ALL;
-		पूर्ण अन्यथा अणु
+		} else {
 			dev_err(device, "Cannot prefault with radix enabled\n");
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (mode == -1)
-		वापस -EINVAL;
+	if (mode == -1)
+		return -EINVAL;
 
 	afu->prefault_mode = mode;
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार mode_show(काष्ठा device *device,
-			 काष्ठा device_attribute *attr,
-			 अक्षर *buf)
-अणु
-	काष्ठा cxl_afu *afu = to_cxl_afu(device);
+static ssize_t mode_show(struct device *device,
+			 struct device_attribute *attr,
+			 char *buf)
+{
+	struct cxl_afu *afu = to_cxl_afu(device);
 
-	अगर (afu->current_mode == CXL_MODE_DEDICATED)
-		वापस scnम_लिखो(buf, PAGE_SIZE, "dedicated_process\n");
-	अगर (afu->current_mode == CXL_MODE_सूचीECTED)
-		वापस scnम_लिखो(buf, PAGE_SIZE, "afu_directed\n");
-	वापस scnम_लिखो(buf, PAGE_SIZE, "none\n");
-पूर्ण
+	if (afu->current_mode == CXL_MODE_DEDICATED)
+		return scnprintf(buf, PAGE_SIZE, "dedicated_process\n");
+	if (afu->current_mode == CXL_MODE_DIRECTED)
+		return scnprintf(buf, PAGE_SIZE, "afu_directed\n");
+	return scnprintf(buf, PAGE_SIZE, "none\n");
+}
 
-अटल sमाप_प्रकार mode_store(काष्ठा device *device, काष्ठा device_attribute *attr,
-			  स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा cxl_afu *afu = to_cxl_afu(device);
-	पूर्णांक old_mode, mode = -1;
-	पूर्णांक rc = -EBUSY;
+static ssize_t mode_store(struct device *device, struct device_attribute *attr,
+			  const char *buf, size_t count)
+{
+	struct cxl_afu *afu = to_cxl_afu(device);
+	int old_mode, mode = -1;
+	int rc = -EBUSY;
 
-	/* can't change this अगर we have a user */
+	/* can't change this if we have a user */
 	mutex_lock(&afu->contexts_lock);
-	अगर (!idr_is_empty(&afu->contexts_idr))
-		जाओ err;
+	if (!idr_is_empty(&afu->contexts_idr))
+		goto err;
 
-	अगर (!म_भेदन(buf, "dedicated_process", 17))
+	if (!strncmp(buf, "dedicated_process", 17))
 		mode = CXL_MODE_DEDICATED;
-	अगर (!म_भेदन(buf, "afu_directed", 12))
-		mode = CXL_MODE_सूचीECTED;
-	अगर (!म_भेदन(buf, "none", 4))
+	if (!strncmp(buf, "afu_directed", 12))
+		mode = CXL_MODE_DIRECTED;
+	if (!strncmp(buf, "none", 4))
 		mode = 0;
 
-	अगर (mode == -1) अणु
+	if (mode == -1) {
 		rc = -EINVAL;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	/*
-	 * afu_deactivate_mode needs to be करोne outside the lock, prevent
-	 * other contexts coming in beक्रमe we are पढ़ोy:
+	 * afu_deactivate_mode needs to be done outside the lock, prevent
+	 * other contexts coming in before we are ready:
 	 */
 	old_mode = afu->current_mode;
 	afu->current_mode = 0;
@@ -419,41 +418,41 @@ err:
 
 	mutex_unlock(&afu->contexts_lock);
 
-	अगर ((rc = cxl_ops->afu_deactivate_mode(afu, old_mode)))
-		वापस rc;
-	अगर ((rc = cxl_ops->afu_activate_mode(afu, mode)))
-		वापस rc;
+	if ((rc = cxl_ops->afu_deactivate_mode(afu, old_mode)))
+		return rc;
+	if ((rc = cxl_ops->afu_activate_mode(afu, mode)))
+		return rc;
 
-	वापस count;
+	return count;
 err:
 	mutex_unlock(&afu->contexts_lock);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल sमाप_प्रकार api_version_show(काष्ठा device *device,
-				काष्ठा device_attribute *attr,
-				अक्षर *buf)
-अणु
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%i\n", CXL_API_VERSION);
-पूर्ण
+static ssize_t api_version_show(struct device *device,
+				struct device_attribute *attr,
+				char *buf)
+{
+	return scnprintf(buf, PAGE_SIZE, "%i\n", CXL_API_VERSION);
+}
 
-अटल sमाप_प्रकार api_version_compatible_show(काष्ठा device *device,
-					   काष्ठा device_attribute *attr,
-					   अक्षर *buf)
-अणु
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%i\n", CXL_API_VERSION_COMPATIBLE);
-पूर्ण
+static ssize_t api_version_compatible_show(struct device *device,
+					   struct device_attribute *attr,
+					   char *buf)
+{
+	return scnprintf(buf, PAGE_SIZE, "%i\n", CXL_API_VERSION_COMPATIBLE);
+}
 
-अटल sमाप_प्रकार afu_eb_पढ़ो(काष्ठा file *filp, काष्ठा kobject *kobj,
-			       काष्ठा bin_attribute *bin_attr, अक्षर *buf,
-			       loff_t off, माप_प्रकार count)
-अणु
-	काष्ठा cxl_afu *afu = to_cxl_afu(kobj_to_dev(kobj));
+static ssize_t afu_eb_read(struct file *filp, struct kobject *kobj,
+			       struct bin_attribute *bin_attr, char *buf,
+			       loff_t off, size_t count)
+{
+	struct cxl_afu *afu = to_cxl_afu(kobj_to_dev(kobj));
 
-	वापस cxl_ops->afu_पढ़ो_err_buffer(afu, buf, off, count);
-पूर्ण
+	return cxl_ops->afu_read_err_buffer(afu, buf, off, count);
+}
 
-अटल काष्ठा device_attribute afu_attrs[] = अणु
+static struct device_attribute afu_attrs[] = {
 	__ATTR_RO(mmio_size),
 	__ATTR_RO(irqs_min),
 	__ATTR_RW(irqs_max),
@@ -462,310 +461,310 @@ err:
 	__ATTR_RW(prefault_mode),
 	__ATTR_RO(api_version),
 	__ATTR_RO(api_version_compatible),
-	__ATTR(reset, S_IWUSR, शून्य, reset_store_afu),
-पूर्ण;
+	__ATTR(reset, S_IWUSR, NULL, reset_store_afu),
+};
 
-पूर्णांक cxl_sysfs_adapter_add(काष्ठा cxl *adapter)
-अणु
-	काष्ठा device_attribute *dev_attr;
-	पूर्णांक i, rc;
+int cxl_sysfs_adapter_add(struct cxl *adapter)
+{
+	struct device_attribute *dev_attr;
+	int i, rc;
 
-	क्रम (i = 0; i < ARRAY_SIZE(adapter_attrs); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(adapter_attrs); i++) {
 		dev_attr = &adapter_attrs[i];
-		अगर (cxl_ops->support_attributes(dev_attr->attr.name,
-						CXL_ADAPTER_ATTRS)) अणु
-			अगर ((rc = device_create_file(&adapter->dev, dev_attr)))
-				जाओ err;
-		पूर्ण
-	पूर्ण
-	वापस 0;
+		if (cxl_ops->support_attributes(dev_attr->attr.name,
+						CXL_ADAPTER_ATTRS)) {
+			if ((rc = device_create_file(&adapter->dev, dev_attr)))
+				goto err;
+		}
+	}
+	return 0;
 err:
-	क्रम (i--; i >= 0; i--) अणु
+	for (i--; i >= 0; i--) {
 		dev_attr = &adapter_attrs[i];
-		अगर (cxl_ops->support_attributes(dev_attr->attr.name,
+		if (cxl_ops->support_attributes(dev_attr->attr.name,
 						CXL_ADAPTER_ATTRS))
-			device_हटाओ_file(&adapter->dev, dev_attr);
-	पूर्ण
-	वापस rc;
-पूर्ण
+			device_remove_file(&adapter->dev, dev_attr);
+	}
+	return rc;
+}
 
-व्योम cxl_sysfs_adapter_हटाओ(काष्ठा cxl *adapter)
-अणु
-	काष्ठा device_attribute *dev_attr;
-	पूर्णांक i;
+void cxl_sysfs_adapter_remove(struct cxl *adapter)
+{
+	struct device_attribute *dev_attr;
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(adapter_attrs); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(adapter_attrs); i++) {
 		dev_attr = &adapter_attrs[i];
-		अगर (cxl_ops->support_attributes(dev_attr->attr.name,
+		if (cxl_ops->support_attributes(dev_attr->attr.name,
 						CXL_ADAPTER_ATTRS))
-			device_हटाओ_file(&adapter->dev, dev_attr);
-	पूर्ण
-पूर्ण
+			device_remove_file(&adapter->dev, dev_attr);
+	}
+}
 
-काष्ठा afu_config_record अणु
-	काष्ठा kobject kobj;
-	काष्ठा bin_attribute config_attr;
-	काष्ठा list_head list;
-	पूर्णांक cr;
+struct afu_config_record {
+	struct kobject kobj;
+	struct bin_attribute config_attr;
+	struct list_head list;
+	int cr;
 	u16 device;
-	u16 venकरोr;
+	u16 vendor;
 	u32 class;
-पूर्ण;
+};
 
-#घोषणा to_cr(obj) container_of(obj, काष्ठा afu_config_record, kobj)
+#define to_cr(obj) container_of(obj, struct afu_config_record, kobj)
 
-अटल sमाप_प्रकार venकरोr_show(काष्ठा kobject *kobj,
-			   काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा afu_config_record *cr = to_cr(kobj);
+static ssize_t vendor_show(struct kobject *kobj,
+			   struct kobj_attribute *attr, char *buf)
+{
+	struct afu_config_record *cr = to_cr(kobj);
 
-	वापस scnम_लिखो(buf, PAGE_SIZE, "0x%.4x\n", cr->venकरोr);
-पूर्ण
+	return scnprintf(buf, PAGE_SIZE, "0x%.4x\n", cr->vendor);
+}
 
-अटल sमाप_प्रकार device_show(काष्ठा kobject *kobj,
-			   काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा afu_config_record *cr = to_cr(kobj);
+static ssize_t device_show(struct kobject *kobj,
+			   struct kobj_attribute *attr, char *buf)
+{
+	struct afu_config_record *cr = to_cr(kobj);
 
-	वापस scnम_लिखो(buf, PAGE_SIZE, "0x%.4x\n", cr->device);
-पूर्ण
+	return scnprintf(buf, PAGE_SIZE, "0x%.4x\n", cr->device);
+}
 
-अटल sमाप_प्रकार class_show(काष्ठा kobject *kobj,
-			  काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा afu_config_record *cr = to_cr(kobj);
+static ssize_t class_show(struct kobject *kobj,
+			  struct kobj_attribute *attr, char *buf)
+{
+	struct afu_config_record *cr = to_cr(kobj);
 
-	वापस scnम_लिखो(buf, PAGE_SIZE, "0x%.6x\n", cr->class);
-पूर्ण
+	return scnprintf(buf, PAGE_SIZE, "0x%.6x\n", cr->class);
+}
 
-अटल sमाप_प्रकार afu_पढ़ो_config(काष्ठा file *filp, काष्ठा kobject *kobj,
-			       काष्ठा bin_attribute *bin_attr, अक्षर *buf,
-			       loff_t off, माप_प्रकार count)
-अणु
-	काष्ठा afu_config_record *cr = to_cr(kobj);
-	काष्ठा cxl_afu *afu = to_cxl_afu(kobj_to_dev(kobj->parent));
+static ssize_t afu_read_config(struct file *filp, struct kobject *kobj,
+			       struct bin_attribute *bin_attr, char *buf,
+			       loff_t off, size_t count)
+{
+	struct afu_config_record *cr = to_cr(kobj);
+	struct cxl_afu *afu = to_cxl_afu(kobj_to_dev(kobj->parent));
 
 	u64 i, j, val, rc;
 
-	क्रम (i = 0; i < count;) अणु
-		rc = cxl_ops->afu_cr_पढ़ो64(afu, cr->cr, off & ~0x7, &val);
-		अगर (rc)
+	for (i = 0; i < count;) {
+		rc = cxl_ops->afu_cr_read64(afu, cr->cr, off & ~0x7, &val);
+		if (rc)
 			val = ~0ULL;
-		क्रम (j = off & 0x7; j < 8 && i < count; i++, j++, off++)
+		for (j = off & 0x7; j < 8 && i < count; i++, j++, off++)
 			buf[i] = (val >> (j * 8)) & 0xff;
-	पूर्ण
+	}
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल काष्ठा kobj_attribute venकरोr_attribute =
-	__ATTR_RO(venकरोr);
-अटल काष्ठा kobj_attribute device_attribute =
+static struct kobj_attribute vendor_attribute =
+	__ATTR_RO(vendor);
+static struct kobj_attribute device_attribute =
 	__ATTR_RO(device);
-अटल काष्ठा kobj_attribute class_attribute =
+static struct kobj_attribute class_attribute =
 	__ATTR_RO(class);
 
-अटल काष्ठा attribute *afu_cr_attrs[] = अणु
-	&venकरोr_attribute.attr,
+static struct attribute *afu_cr_attrs[] = {
+	&vendor_attribute.attr,
 	&device_attribute.attr,
 	&class_attribute.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल व्योम release_afu_config_record(काष्ठा kobject *kobj)
-अणु
-	काष्ठा afu_config_record *cr = to_cr(kobj);
+static void release_afu_config_record(struct kobject *kobj)
+{
+	struct afu_config_record *cr = to_cr(kobj);
 
-	kमुक्त(cr);
-पूर्ण
+	kfree(cr);
+}
 
-अटल काष्ठा kobj_type afu_config_record_type = अणु
+static struct kobj_type afu_config_record_type = {
 	.sysfs_ops = &kobj_sysfs_ops,
 	.release = release_afu_config_record,
-	.शेष_attrs = afu_cr_attrs,
-पूर्ण;
+	.default_attrs = afu_cr_attrs,
+};
 
-अटल काष्ठा afu_config_record *cxl_sysfs_afu_new_cr(काष्ठा cxl_afu *afu, पूर्णांक cr_idx)
-अणु
-	काष्ठा afu_config_record *cr;
-	पूर्णांक rc;
+static struct afu_config_record *cxl_sysfs_afu_new_cr(struct cxl_afu *afu, int cr_idx)
+{
+	struct afu_config_record *cr;
+	int rc;
 
-	cr = kzalloc(माप(काष्ठा afu_config_record), GFP_KERNEL);
-	अगर (!cr)
-		वापस ERR_PTR(-ENOMEM);
+	cr = kzalloc(sizeof(struct afu_config_record), GFP_KERNEL);
+	if (!cr)
+		return ERR_PTR(-ENOMEM);
 
 	cr->cr = cr_idx;
 
-	rc = cxl_ops->afu_cr_पढ़ो16(afu, cr_idx, PCI_DEVICE_ID, &cr->device);
-	अगर (rc)
-		जाओ err;
-	rc = cxl_ops->afu_cr_पढ़ो16(afu, cr_idx, PCI_VENDOR_ID, &cr->venकरोr);
-	अगर (rc)
-		जाओ err;
-	rc = cxl_ops->afu_cr_पढ़ो32(afu, cr_idx, PCI_CLASS_REVISION, &cr->class);
-	अगर (rc)
-		जाओ err;
+	rc = cxl_ops->afu_cr_read16(afu, cr_idx, PCI_DEVICE_ID, &cr->device);
+	if (rc)
+		goto err;
+	rc = cxl_ops->afu_cr_read16(afu, cr_idx, PCI_VENDOR_ID, &cr->vendor);
+	if (rc)
+		goto err;
+	rc = cxl_ops->afu_cr_read32(afu, cr_idx, PCI_CLASS_REVISION, &cr->class);
+	if (rc)
+		goto err;
 	cr->class >>= 8;
 
 	/*
-	 * Export raw AFU PCIe like config record. For now this is पढ़ो only by
-	 * root - we can expand that later to be पढ़ोable by non-root and maybe
-	 * even writable provided we have a good use-हाल. Once we support
-	 * exposing AFUs through a भव PHB they will get that क्रम मुक्त from
+	 * Export raw AFU PCIe like config record. For now this is read only by
+	 * root - we can expand that later to be readable by non-root and maybe
+	 * even writable provided we have a good use-case. Once we support
+	 * exposing AFUs through a virtual PHB they will get that for free from
 	 * Linux' PCI infrastructure, but until then it's not clear that we
-	 * need it क्रम anything since the मुख्य use हाल is just identअगरying
-	 * AFUs, which can be करोne via the venकरोr, device and class attributes.
+	 * need it for anything since the main use case is just identifying
+	 * AFUs, which can be done via the vendor, device and class attributes.
 	 */
 	sysfs_bin_attr_init(&cr->config_attr);
 	cr->config_attr.attr.name = "config";
 	cr->config_attr.attr.mode = S_IRUSR;
 	cr->config_attr.size = afu->crs_len;
-	cr->config_attr.पढ़ो = afu_पढ़ो_config;
+	cr->config_attr.read = afu_read_config;
 
 	rc = kobject_init_and_add(&cr->kobj, &afu_config_record_type,
 				  &afu->dev.kobj, "cr%i", cr->cr);
-	अगर (rc)
-		जाओ err1;
+	if (rc)
+		goto err1;
 
 	rc = sysfs_create_bin_file(&cr->kobj, &cr->config_attr);
-	अगर (rc)
-		जाओ err1;
+	if (rc)
+		goto err1;
 
 	rc = kobject_uevent(&cr->kobj, KOBJ_ADD);
-	अगर (rc)
-		जाओ err2;
+	if (rc)
+		goto err2;
 
-	वापस cr;
+	return cr;
 err2:
-	sysfs_हटाओ_bin_file(&cr->kobj, &cr->config_attr);
+	sysfs_remove_bin_file(&cr->kobj, &cr->config_attr);
 err1:
 	kobject_put(&cr->kobj);
-	वापस ERR_PTR(rc);
+	return ERR_PTR(rc);
 err:
-	kमुक्त(cr);
-	वापस ERR_PTR(rc);
-पूर्ण
+	kfree(cr);
+	return ERR_PTR(rc);
+}
 
-व्योम cxl_sysfs_afu_हटाओ(काष्ठा cxl_afu *afu)
-अणु
-	काष्ठा device_attribute *dev_attr;
-	काष्ठा afu_config_record *cr, *पंचांगp;
-	पूर्णांक i;
+void cxl_sysfs_afu_remove(struct cxl_afu *afu)
+{
+	struct device_attribute *dev_attr;
+	struct afu_config_record *cr, *tmp;
+	int i;
 
-	/* हटाओ the err buffer bin attribute */
-	अगर (afu->eb_len)
-		device_हटाओ_bin_file(&afu->dev, &afu->attr_eb);
+	/* remove the err buffer bin attribute */
+	if (afu->eb_len)
+		device_remove_bin_file(&afu->dev, &afu->attr_eb);
 
-	क्रम (i = 0; i < ARRAY_SIZE(afu_attrs); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(afu_attrs); i++) {
 		dev_attr = &afu_attrs[i];
-		अगर (cxl_ops->support_attributes(dev_attr->attr.name,
+		if (cxl_ops->support_attributes(dev_attr->attr.name,
 						CXL_AFU_ATTRS))
-			device_हटाओ_file(&afu->dev, &afu_attrs[i]);
-	पूर्ण
+			device_remove_file(&afu->dev, &afu_attrs[i]);
+	}
 
-	list_क्रम_each_entry_safe(cr, पंचांगp, &afu->crs, list) अणु
-		sysfs_हटाओ_bin_file(&cr->kobj, &cr->config_attr);
+	list_for_each_entry_safe(cr, tmp, &afu->crs, list) {
+		sysfs_remove_bin_file(&cr->kobj, &cr->config_attr);
 		kobject_put(&cr->kobj);
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक cxl_sysfs_afu_add(काष्ठा cxl_afu *afu)
-अणु
-	काष्ठा device_attribute *dev_attr;
-	काष्ठा afu_config_record *cr;
-	पूर्णांक i, rc;
+int cxl_sysfs_afu_add(struct cxl_afu *afu)
+{
+	struct device_attribute *dev_attr;
+	struct afu_config_record *cr;
+	int i, rc;
 
 	INIT_LIST_HEAD(&afu->crs);
 
-	क्रम (i = 0; i < ARRAY_SIZE(afu_attrs); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(afu_attrs); i++) {
 		dev_attr = &afu_attrs[i];
-		अगर (cxl_ops->support_attributes(dev_attr->attr.name,
-						CXL_AFU_ATTRS)) अणु
-			अगर ((rc = device_create_file(&afu->dev, &afu_attrs[i])))
-				जाओ err;
-		पूर्ण
-	पूर्ण
+		if (cxl_ops->support_attributes(dev_attr->attr.name,
+						CXL_AFU_ATTRS)) {
+			if ((rc = device_create_file(&afu->dev, &afu_attrs[i])))
+				goto err;
+		}
+	}
 
-	/* conditionally create the add the binary file क्रम error info buffer */
-	अगर (afu->eb_len) अणु
+	/* conditionally create the add the binary file for error info buffer */
+	if (afu->eb_len) {
 		sysfs_attr_init(&afu->attr_eb.attr);
 
 		afu->attr_eb.attr.name = "afu_err_buff";
 		afu->attr_eb.attr.mode = S_IRUGO;
 		afu->attr_eb.size = afu->eb_len;
-		afu->attr_eb.पढ़ो = afu_eb_पढ़ो;
+		afu->attr_eb.read = afu_eb_read;
 
 		rc = device_create_bin_file(&afu->dev, &afu->attr_eb);
-		अगर (rc) अणु
+		if (rc) {
 			dev_err(&afu->dev,
 				"Unable to create eb attr for the afu. Err(%d)\n",
 				rc);
-			जाओ err;
-		पूर्ण
-	पूर्ण
+			goto err;
+		}
+	}
 
-	क्रम (i = 0; i < afu->crs_num; i++) अणु
+	for (i = 0; i < afu->crs_num; i++) {
 		cr = cxl_sysfs_afu_new_cr(afu, i);
-		अगर (IS_ERR(cr)) अणु
+		if (IS_ERR(cr)) {
 			rc = PTR_ERR(cr);
-			जाओ err1;
-		पूर्ण
+			goto err1;
+		}
 		list_add(&cr->list, &afu->crs);
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 err1:
-	cxl_sysfs_afu_हटाओ(afu);
-	वापस rc;
+	cxl_sysfs_afu_remove(afu);
+	return rc;
 err:
 	/* reset the eb_len as we havent created the bin attr */
 	afu->eb_len = 0;
 
-	क्रम (i--; i >= 0; i--) अणु
+	for (i--; i >= 0; i--) {
 		dev_attr = &afu_attrs[i];
-		अगर (cxl_ops->support_attributes(dev_attr->attr.name,
+		if (cxl_ops->support_attributes(dev_attr->attr.name,
 						CXL_AFU_ATTRS))
-		device_हटाओ_file(&afu->dev, &afu_attrs[i]);
-	पूर्ण
-	वापस rc;
-पूर्ण
+		device_remove_file(&afu->dev, &afu_attrs[i]);
+	}
+	return rc;
+}
 
-पूर्णांक cxl_sysfs_afu_m_add(काष्ठा cxl_afu *afu)
-अणु
-	काष्ठा device_attribute *dev_attr;
-	पूर्णांक i, rc;
+int cxl_sysfs_afu_m_add(struct cxl_afu *afu)
+{
+	struct device_attribute *dev_attr;
+	int i, rc;
 
-	क्रम (i = 0; i < ARRAY_SIZE(afu_master_attrs); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(afu_master_attrs); i++) {
 		dev_attr = &afu_master_attrs[i];
-		अगर (cxl_ops->support_attributes(dev_attr->attr.name,
-						CXL_AFU_MASTER_ATTRS)) अणु
-			अगर ((rc = device_create_file(afu->अक्षरdev_m, &afu_master_attrs[i])))
-				जाओ err;
-		पूर्ण
-	पूर्ण
+		if (cxl_ops->support_attributes(dev_attr->attr.name,
+						CXL_AFU_MASTER_ATTRS)) {
+			if ((rc = device_create_file(afu->chardev_m, &afu_master_attrs[i])))
+				goto err;
+		}
+	}
 
-	वापस 0;
+	return 0;
 
 err:
-	क्रम (i--; i >= 0; i--) अणु
+	for (i--; i >= 0; i--) {
 		dev_attr = &afu_master_attrs[i];
-		अगर (cxl_ops->support_attributes(dev_attr->attr.name,
+		if (cxl_ops->support_attributes(dev_attr->attr.name,
 						CXL_AFU_MASTER_ATTRS))
-			device_हटाओ_file(afu->अक्षरdev_m, &afu_master_attrs[i]);
-	पूर्ण
-	वापस rc;
-पूर्ण
+			device_remove_file(afu->chardev_m, &afu_master_attrs[i]);
+	}
+	return rc;
+}
 
-व्योम cxl_sysfs_afu_m_हटाओ(काष्ठा cxl_afu *afu)
-अणु
-	काष्ठा device_attribute *dev_attr;
-	पूर्णांक i;
+void cxl_sysfs_afu_m_remove(struct cxl_afu *afu)
+{
+	struct device_attribute *dev_attr;
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(afu_master_attrs); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(afu_master_attrs); i++) {
 		dev_attr = &afu_master_attrs[i];
-		अगर (cxl_ops->support_attributes(dev_attr->attr.name,
+		if (cxl_ops->support_attributes(dev_attr->attr.name,
 						CXL_AFU_MASTER_ATTRS))
-			device_हटाओ_file(afu->अक्षरdev_m, &afu_master_attrs[i]);
-	पूर्ण
-पूर्ण
+			device_remove_file(afu->chardev_m, &afu_master_attrs[i]);
+	}
+}

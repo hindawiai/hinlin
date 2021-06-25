@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Altera University Program PS2 controller driver
  *
@@ -9,155 +8,155 @@
  * Copyright (C) 2002 Russell King
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/input.h>
-#समावेश <linux/serपन.स>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/of.h>
+#include <linux/module.h>
+#include <linux/input.h>
+#include <linux/serio.h>
+#include <linux/interrupt.h>
+#include <linux/platform_device.h>
+#include <linux/io.h>
+#include <linux/slab.h>
+#include <linux/of.h>
 
-#घोषणा DRV_NAME "altera_ps2"
+#define DRV_NAME "altera_ps2"
 
-काष्ठा ps2अगर अणु
-	काष्ठा serio *io;
-	व्योम __iomem *base;
-पूर्ण;
+struct ps2if {
+	struct serio *io;
+	void __iomem *base;
+};
 
 /*
- * Read all bytes रुकोing in the PS2 port.  There should be
- * at the most one, but we loop क्रम safety.
+ * Read all bytes waiting in the PS2 port.  There should be
+ * at the most one, but we loop for safety.
  */
-अटल irqवापस_t altera_ps2_rxपूर्णांक(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा ps2अगर *ps2अगर = dev_id;
-	अचिन्हित पूर्णांक status;
-	irqवापस_t handled = IRQ_NONE;
+static irqreturn_t altera_ps2_rxint(int irq, void *dev_id)
+{
+	struct ps2if *ps2if = dev_id;
+	unsigned int status;
+	irqreturn_t handled = IRQ_NONE;
 
-	जबतक ((status = पढ़ोl(ps2अगर->base)) & 0xffff0000) अणु
-		serio_पूर्णांकerrupt(ps2अगर->io, status & 0xff, 0);
+	while ((status = readl(ps2if->base)) & 0xffff0000) {
+		serio_interrupt(ps2if->io, status & 0xff, 0);
 		handled = IRQ_HANDLED;
-	पूर्ण
+	}
 
-	वापस handled;
-पूर्ण
+	return handled;
+}
 
 /*
  * Write a byte to the PS2 port.
  */
-अटल पूर्णांक altera_ps2_ग_लिखो(काष्ठा serio *io, अचिन्हित अक्षर val)
-अणु
-	काष्ठा ps2अगर *ps2अगर = io->port_data;
+static int altera_ps2_write(struct serio *io, unsigned char val)
+{
+	struct ps2if *ps2if = io->port_data;
 
-	ग_लिखोl(val, ps2अगर->base);
-	वापस 0;
-पूर्ण
+	writel(val, ps2if->base);
+	return 0;
+}
 
-अटल पूर्णांक altera_ps2_खोलो(काष्ठा serio *io)
-अणु
-	काष्ठा ps2अगर *ps2अगर = io->port_data;
+static int altera_ps2_open(struct serio *io)
+{
+	struct ps2if *ps2if = io->port_data;
 
-	/* clear fअगरo */
-	जबतक (पढ़ोl(ps2अगर->base) & 0xffff0000)
+	/* clear fifo */
+	while (readl(ps2if->base) & 0xffff0000)
 		/* empty */;
 
-	ग_लिखोl(1, ps2अगर->base + 4); /* enable rx irq */
-	वापस 0;
-पूर्ण
+	writel(1, ps2if->base + 4); /* enable rx irq */
+	return 0;
+}
 
-अटल व्योम altera_ps2_बंद(काष्ठा serio *io)
-अणु
-	काष्ठा ps2अगर *ps2अगर = io->port_data;
+static void altera_ps2_close(struct serio *io)
+{
+	struct ps2if *ps2if = io->port_data;
 
-	ग_लिखोl(0, ps2अगर->base + 4); /* disable rx irq */
-पूर्ण
+	writel(0, ps2if->base + 4); /* disable rx irq */
+}
 
 /*
  * Add one device to this driver.
  */
-अटल पूर्णांक altera_ps2_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा ps2अगर *ps2अगर;
-	काष्ठा resource *res;
-	काष्ठा serio *serio;
-	पूर्णांक error, irq;
+static int altera_ps2_probe(struct platform_device *pdev)
+{
+	struct ps2if *ps2if;
+	struct resource *res;
+	struct serio *serio;
+	int error, irq;
 
-	ps2अगर = devm_kzalloc(&pdev->dev, माप(काष्ठा ps2अगर), GFP_KERNEL);
-	अगर (!ps2अगर)
-		वापस -ENOMEM;
+	ps2if = devm_kzalloc(&pdev->dev, sizeof(struct ps2if), GFP_KERNEL);
+	if (!ps2if)
+		return -ENOMEM;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	ps2अगर->base = devm_ioremap_resource(&pdev->dev, res);
-	अगर (IS_ERR(ps2अगर->base))
-		वापस PTR_ERR(ps2अगर->base);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	ps2if->base = devm_ioremap_resource(&pdev->dev, res);
+	if (IS_ERR(ps2if->base))
+		return PTR_ERR(ps2if->base);
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq < 0)
-		वापस -ENXIO;
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0)
+		return -ENXIO;
 
-	error = devm_request_irq(&pdev->dev, irq, altera_ps2_rxपूर्णांक, 0,
-				 pdev->name, ps2अगर);
-	अगर (error) अणु
+	error = devm_request_irq(&pdev->dev, irq, altera_ps2_rxint, 0,
+				 pdev->name, ps2if);
+	if (error) {
 		dev_err(&pdev->dev, "could not request IRQ %d\n", irq);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	serio = kzalloc(माप(काष्ठा serio), GFP_KERNEL);
-	अगर (!serio)
-		वापस -ENOMEM;
+	serio = kzalloc(sizeof(struct serio), GFP_KERNEL);
+	if (!serio)
+		return -ENOMEM;
 
 	serio->id.type		= SERIO_8042;
-	serio->ग_लिखो		= altera_ps2_ग_लिखो;
-	serio->खोलो		= altera_ps2_खोलो;
-	serio->बंद		= altera_ps2_बंद;
-	strlcpy(serio->name, dev_name(&pdev->dev), माप(serio->name));
-	strlcpy(serio->phys, dev_name(&pdev->dev), माप(serio->phys));
-	serio->port_data	= ps2अगर;
+	serio->write		= altera_ps2_write;
+	serio->open		= altera_ps2_open;
+	serio->close		= altera_ps2_close;
+	strlcpy(serio->name, dev_name(&pdev->dev), sizeof(serio->name));
+	strlcpy(serio->phys, dev_name(&pdev->dev), sizeof(serio->phys));
+	serio->port_data	= ps2if;
 	serio->dev.parent	= &pdev->dev;
-	ps2अगर->io		= serio;
+	ps2if->io		= serio;
 
-	dev_info(&pdev->dev, "base %p, irq %d\n", ps2अगर->base, irq);
+	dev_info(&pdev->dev, "base %p, irq %d\n", ps2if->base, irq);
 
-	serio_रेजिस्टर_port(ps2अगर->io);
-	platक्रमm_set_drvdata(pdev, ps2अगर);
+	serio_register_port(ps2if->io);
+	platform_set_drvdata(pdev, ps2if);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Remove one device from this driver.
  */
-अटल पूर्णांक altera_ps2_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा ps2अगर *ps2अगर = platक्रमm_get_drvdata(pdev);
+static int altera_ps2_remove(struct platform_device *pdev)
+{
+	struct ps2if *ps2if = platform_get_drvdata(pdev);
 
-	serio_unरेजिस्टर_port(ps2अगर->io);
+	serio_unregister_port(ps2if->io);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा of_device_id altera_ps2_match[] = अणु
-	अणु .compatible = "ALTR,ps2-1.0", पूर्ण,
-	अणु .compatible = "altr,ps2-1.0", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+#ifdef CONFIG_OF
+static const struct of_device_id altera_ps2_match[] = {
+	{ .compatible = "ALTR,ps2-1.0", },
+	{ .compatible = "altr,ps2-1.0", },
+	{},
+};
 MODULE_DEVICE_TABLE(of, altera_ps2_match);
-#पूर्ण_अगर /* CONFIG_OF */
+#endif /* CONFIG_OF */
 
 /*
- * Our device driver काष्ठाure
+ * Our device driver structure
  */
-अटल काष्ठा platक्रमm_driver altera_ps2_driver = अणु
+static struct platform_driver altera_ps2_driver = {
 	.probe		= altera_ps2_probe,
-	.हटाओ		= altera_ps2_हटाओ,
-	.driver	= अणु
+	.remove		= altera_ps2_remove,
+	.driver	= {
 		.name	= DRV_NAME,
 		.of_match_table = of_match_ptr(altera_ps2_match),
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(altera_ps2_driver);
+	},
+};
+module_platform_driver(altera_ps2_driver);
 
 MODULE_DESCRIPTION("Altera University Program PS2 controller driver");
 MODULE_AUTHOR("Thomas Chou <thomas@wytron.com.tw>");

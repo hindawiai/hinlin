@@ -1,368 +1,367 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * refcounttree.c
  *
  * Copyright (C) 2009 Oracle.  All rights reserved.
  */
 
-#समावेश <linux/sort.h>
-#समावेश <cluster/masklog.h>
-#समावेश "ocfs2.h"
-#समावेश "inode.h"
-#समावेश "alloc.h"
-#समावेश "suballoc.h"
-#समावेश "journal.h"
-#समावेश "uptodate.h"
-#समावेश "super.h"
-#समावेश "buffer_head_io.h"
-#समावेश "blockcheck.h"
-#समावेश "refcounttree.h"
-#समावेश "sysfile.h"
-#समावेश "dlmglue.h"
-#समावेश "extent_map.h"
-#समावेश "aops.h"
-#समावेश "xattr.h"
-#समावेश "namei.h"
-#समावेश "ocfs2_trace.h"
-#समावेश "file.h"
+#include <linux/sort.h>
+#include <cluster/masklog.h>
+#include "ocfs2.h"
+#include "inode.h"
+#include "alloc.h"
+#include "suballoc.h"
+#include "journal.h"
+#include "uptodate.h"
+#include "super.h"
+#include "buffer_head_io.h"
+#include "blockcheck.h"
+#include "refcounttree.h"
+#include "sysfile.h"
+#include "dlmglue.h"
+#include "extent_map.h"
+#include "aops.h"
+#include "xattr.h"
+#include "namei.h"
+#include "ocfs2_trace.h"
+#include "file.h"
 
-#समावेश <linux/bपन.स>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/ग_लिखोback.h>
-#समावेश <linux/pagevec.h>
-#समावेश <linux/swap.h>
-#समावेश <linux/security.h>
-#समावेश <linux/fsnotअगरy.h>
-#समावेश <linux/quotaops.h>
-#समावेश <linux/namei.h>
-#समावेश <linux/mount.h>
-#समावेश <linux/posix_acl.h>
+#include <linux/bio.h>
+#include <linux/blkdev.h>
+#include <linux/slab.h>
+#include <linux/writeback.h>
+#include <linux/pagevec.h>
+#include <linux/swap.h>
+#include <linux/security.h>
+#include <linux/fsnotify.h>
+#include <linux/quotaops.h>
+#include <linux/namei.h>
+#include <linux/mount.h>
+#include <linux/posix_acl.h>
 
-काष्ठा ocfs2_cow_context अणु
-	काष्ठा inode *inode;
+struct ocfs2_cow_context {
+	struct inode *inode;
 	u32 cow_start;
 	u32 cow_len;
-	काष्ठा ocfs2_extent_tree data_et;
-	काष्ठा ocfs2_refcount_tree *ref_tree;
-	काष्ठा buffer_head *ref_root_bh;
-	काष्ठा ocfs2_alloc_context *meta_ac;
-	काष्ठा ocfs2_alloc_context *data_ac;
-	काष्ठा ocfs2_cached_dealloc_ctxt dealloc;
-	व्योम *cow_object;
-	काष्ठा ocfs2_post_refcount *post_refcount;
-	पूर्णांक extra_credits;
-	पूर्णांक (*get_clusters)(काष्ठा ocfs2_cow_context *context,
+	struct ocfs2_extent_tree data_et;
+	struct ocfs2_refcount_tree *ref_tree;
+	struct buffer_head *ref_root_bh;
+	struct ocfs2_alloc_context *meta_ac;
+	struct ocfs2_alloc_context *data_ac;
+	struct ocfs2_cached_dealloc_ctxt dealloc;
+	void *cow_object;
+	struct ocfs2_post_refcount *post_refcount;
+	int extra_credits;
+	int (*get_clusters)(struct ocfs2_cow_context *context,
 			    u32 v_cluster, u32 *p_cluster,
 			    u32 *num_clusters,
-			    अचिन्हित पूर्णांक *extent_flags);
-	पूर्णांक (*cow_duplicate_clusters)(handle_t *handle,
-				      काष्ठा inode *inode,
+			    unsigned int *extent_flags);
+	int (*cow_duplicate_clusters)(handle_t *handle,
+				      struct inode *inode,
 				      u32 cpos, u32 old_cluster,
 				      u32 new_cluster, u32 new_len);
-पूर्ण;
+};
 
-अटल अंतरभूत काष्ठा ocfs2_refcount_tree *
-cache_info_to_refcount(काष्ठा ocfs2_caching_info *ci)
-अणु
-	वापस container_of(ci, काष्ठा ocfs2_refcount_tree, rf_ci);
-पूर्ण
+static inline struct ocfs2_refcount_tree *
+cache_info_to_refcount(struct ocfs2_caching_info *ci)
+{
+	return container_of(ci, struct ocfs2_refcount_tree, rf_ci);
+}
 
-अटल पूर्णांक ocfs2_validate_refcount_block(काष्ठा super_block *sb,
-					 काष्ठा buffer_head *bh)
-अणु
-	पूर्णांक rc;
-	काष्ठा ocfs2_refcount_block *rb =
-		(काष्ठा ocfs2_refcount_block *)bh->b_data;
+static int ocfs2_validate_refcount_block(struct super_block *sb,
+					 struct buffer_head *bh)
+{
+	int rc;
+	struct ocfs2_refcount_block *rb =
+		(struct ocfs2_refcount_block *)bh->b_data;
 
-	trace_ocfs2_validate_refcount_block((अचिन्हित दीर्घ दीर्घ)bh->b_blocknr);
+	trace_ocfs2_validate_refcount_block((unsigned long long)bh->b_blocknr);
 
 	BUG_ON(!buffer_uptodate(bh));
 
 	/*
-	 * If the ecc fails, we वापस the error but otherwise
-	 * leave the fileप्रणाली running.  We know any error is
+	 * If the ecc fails, we return the error but otherwise
+	 * leave the filesystem running.  We know any error is
 	 * local to this block.
 	 */
 	rc = ocfs2_validate_meta_ecc(sb, bh->b_data, &rb->rf_check);
-	अगर (rc) अणु
+	if (rc) {
 		mlog(ML_ERROR, "Checksum failed for refcount block %llu\n",
-		     (अचिन्हित दीर्घ दीर्घ)bh->b_blocknr);
-		वापस rc;
-	पूर्ण
+		     (unsigned long long)bh->b_blocknr);
+		return rc;
+	}
 
 
-	अगर (!OCFS2_IS_VALID_REFCOUNT_BLOCK(rb)) अणु
+	if (!OCFS2_IS_VALID_REFCOUNT_BLOCK(rb)) {
 		rc = ocfs2_error(sb,
 				 "Refcount block #%llu has bad signature %.*s\n",
-				 (अचिन्हित दीर्घ दीर्घ)bh->b_blocknr, 7,
+				 (unsigned long long)bh->b_blocknr, 7,
 				 rb->rf_signature);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (le64_to_cpu(rb->rf_blkno) != bh->b_blocknr) अणु
+	if (le64_to_cpu(rb->rf_blkno) != bh->b_blocknr) {
 		rc = ocfs2_error(sb,
 				 "Refcount block #%llu has an invalid rf_blkno of %llu\n",
-				 (अचिन्हित दीर्घ दीर्घ)bh->b_blocknr,
-				 (अचिन्हित दीर्घ दीर्घ)le64_to_cpu(rb->rf_blkno));
-		जाओ out;
-	पूर्ण
+				 (unsigned long long)bh->b_blocknr,
+				 (unsigned long long)le64_to_cpu(rb->rf_blkno));
+		goto out;
+	}
 
-	अगर (le32_to_cpu(rb->rf_fs_generation) != OCFS2_SB(sb)->fs_generation) अणु
+	if (le32_to_cpu(rb->rf_fs_generation) != OCFS2_SB(sb)->fs_generation) {
 		rc = ocfs2_error(sb,
 				 "Refcount block #%llu has an invalid rf_fs_generation of #%u\n",
-				 (अचिन्हित दीर्घ दीर्घ)bh->b_blocknr,
+				 (unsigned long long)bh->b_blocknr,
 				 le32_to_cpu(rb->rf_fs_generation));
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक ocfs2_पढ़ो_refcount_block(काष्ठा ocfs2_caching_info *ci,
+static int ocfs2_read_refcount_block(struct ocfs2_caching_info *ci,
 				     u64 rb_blkno,
-				     काष्ठा buffer_head **bh)
-अणु
-	पूर्णांक rc;
-	काष्ठा buffer_head *पंचांगp = *bh;
+				     struct buffer_head **bh)
+{
+	int rc;
+	struct buffer_head *tmp = *bh;
 
-	rc = ocfs2_पढ़ो_block(ci, rb_blkno, &पंचांगp,
+	rc = ocfs2_read_block(ci, rb_blkno, &tmp,
 			      ocfs2_validate_refcount_block);
 
-	/* If ocfs2_पढ़ो_block() got us a new bh, pass it up. */
-	अगर (!rc && !*bh)
-		*bh = पंचांगp;
+	/* If ocfs2_read_block() got us a new bh, pass it up. */
+	if (!rc && !*bh)
+		*bh = tmp;
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल u64 ocfs2_refcount_cache_owner(काष्ठा ocfs2_caching_info *ci)
-अणु
-	काष्ठा ocfs2_refcount_tree *rf = cache_info_to_refcount(ci);
+static u64 ocfs2_refcount_cache_owner(struct ocfs2_caching_info *ci)
+{
+	struct ocfs2_refcount_tree *rf = cache_info_to_refcount(ci);
 
-	वापस rf->rf_blkno;
-पूर्ण
+	return rf->rf_blkno;
+}
 
-अटल काष्ठा super_block *
-ocfs2_refcount_cache_get_super(काष्ठा ocfs2_caching_info *ci)
-अणु
-	काष्ठा ocfs2_refcount_tree *rf = cache_info_to_refcount(ci);
+static struct super_block *
+ocfs2_refcount_cache_get_super(struct ocfs2_caching_info *ci)
+{
+	struct ocfs2_refcount_tree *rf = cache_info_to_refcount(ci);
 
-	वापस rf->rf_sb;
-पूर्ण
+	return rf->rf_sb;
+}
 
-अटल व्योम ocfs2_refcount_cache_lock(काष्ठा ocfs2_caching_info *ci)
+static void ocfs2_refcount_cache_lock(struct ocfs2_caching_info *ci)
 __acquires(&rf->rf_lock)
-अणु
-	काष्ठा ocfs2_refcount_tree *rf = cache_info_to_refcount(ci);
+{
+	struct ocfs2_refcount_tree *rf = cache_info_to_refcount(ci);
 
 	spin_lock(&rf->rf_lock);
-पूर्ण
+}
 
-अटल व्योम ocfs2_refcount_cache_unlock(काष्ठा ocfs2_caching_info *ci)
+static void ocfs2_refcount_cache_unlock(struct ocfs2_caching_info *ci)
 __releases(&rf->rf_lock)
-अणु
-	काष्ठा ocfs2_refcount_tree *rf = cache_info_to_refcount(ci);
+{
+	struct ocfs2_refcount_tree *rf = cache_info_to_refcount(ci);
 
 	spin_unlock(&rf->rf_lock);
-पूर्ण
+}
 
-अटल व्योम ocfs2_refcount_cache_io_lock(काष्ठा ocfs2_caching_info *ci)
-अणु
-	काष्ठा ocfs2_refcount_tree *rf = cache_info_to_refcount(ci);
+static void ocfs2_refcount_cache_io_lock(struct ocfs2_caching_info *ci)
+{
+	struct ocfs2_refcount_tree *rf = cache_info_to_refcount(ci);
 
 	mutex_lock(&rf->rf_io_mutex);
-पूर्ण
+}
 
-अटल व्योम ocfs2_refcount_cache_io_unlock(काष्ठा ocfs2_caching_info *ci)
-अणु
-	काष्ठा ocfs2_refcount_tree *rf = cache_info_to_refcount(ci);
+static void ocfs2_refcount_cache_io_unlock(struct ocfs2_caching_info *ci)
+{
+	struct ocfs2_refcount_tree *rf = cache_info_to_refcount(ci);
 
 	mutex_unlock(&rf->rf_io_mutex);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा ocfs2_caching_operations ocfs2_refcount_caching_ops = अणु
+static const struct ocfs2_caching_operations ocfs2_refcount_caching_ops = {
 	.co_owner		= ocfs2_refcount_cache_owner,
 	.co_get_super		= ocfs2_refcount_cache_get_super,
 	.co_cache_lock		= ocfs2_refcount_cache_lock,
 	.co_cache_unlock	= ocfs2_refcount_cache_unlock,
 	.co_io_lock		= ocfs2_refcount_cache_io_lock,
 	.co_io_unlock		= ocfs2_refcount_cache_io_unlock,
-पूर्ण;
+};
 
-अटल काष्ठा ocfs2_refcount_tree *
-ocfs2_find_refcount_tree(काष्ठा ocfs2_super *osb, u64 blkno)
-अणु
-	काष्ठा rb_node *n = osb->osb_rf_lock_tree.rb_node;
-	काष्ठा ocfs2_refcount_tree *tree = शून्य;
+static struct ocfs2_refcount_tree *
+ocfs2_find_refcount_tree(struct ocfs2_super *osb, u64 blkno)
+{
+	struct rb_node *n = osb->osb_rf_lock_tree.rb_node;
+	struct ocfs2_refcount_tree *tree = NULL;
 
-	जबतक (n) अणु
-		tree = rb_entry(n, काष्ठा ocfs2_refcount_tree, rf_node);
+	while (n) {
+		tree = rb_entry(n, struct ocfs2_refcount_tree, rf_node);
 
-		अगर (blkno < tree->rf_blkno)
+		if (blkno < tree->rf_blkno)
 			n = n->rb_left;
-		अन्यथा अगर (blkno > tree->rf_blkno)
+		else if (blkno > tree->rf_blkno)
 			n = n->rb_right;
-		अन्यथा
-			वापस tree;
-	पूर्ण
+		else
+			return tree;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-/* osb_lock is alपढ़ोy locked. */
-अटल व्योम ocfs2_insert_refcount_tree(काष्ठा ocfs2_super *osb,
-				       काष्ठा ocfs2_refcount_tree *new)
-अणु
+/* osb_lock is already locked. */
+static void ocfs2_insert_refcount_tree(struct ocfs2_super *osb,
+				       struct ocfs2_refcount_tree *new)
+{
 	u64 rf_blkno = new->rf_blkno;
-	काष्ठा rb_node *parent = शून्य;
-	काष्ठा rb_node **p = &osb->osb_rf_lock_tree.rb_node;
-	काष्ठा ocfs2_refcount_tree *पंचांगp;
+	struct rb_node *parent = NULL;
+	struct rb_node **p = &osb->osb_rf_lock_tree.rb_node;
+	struct ocfs2_refcount_tree *tmp;
 
-	जबतक (*p) अणु
+	while (*p) {
 		parent = *p;
 
-		पंचांगp = rb_entry(parent, काष्ठा ocfs2_refcount_tree,
+		tmp = rb_entry(parent, struct ocfs2_refcount_tree,
 			       rf_node);
 
-		अगर (rf_blkno < पंचांगp->rf_blkno)
+		if (rf_blkno < tmp->rf_blkno)
 			p = &(*p)->rb_left;
-		अन्यथा अगर (rf_blkno > पंचांगp->rf_blkno)
+		else if (rf_blkno > tmp->rf_blkno)
 			p = &(*p)->rb_right;
-		अन्यथा अणु
+		else {
 			/* This should never happen! */
 			mlog(ML_ERROR, "Duplicate refcount block %llu found!\n",
-			     (अचिन्हित दीर्घ दीर्घ)rf_blkno);
+			     (unsigned long long)rf_blkno);
 			BUG();
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	rb_link_node(&new->rf_node, parent, p);
 	rb_insert_color(&new->rf_node, &osb->osb_rf_lock_tree);
-पूर्ण
+}
 
-अटल व्योम ocfs2_मुक्त_refcount_tree(काष्ठा ocfs2_refcount_tree *tree)
-अणु
-	ocfs2_metadata_cache_निकास(&tree->rf_ci);
+static void ocfs2_free_refcount_tree(struct ocfs2_refcount_tree *tree)
+{
+	ocfs2_metadata_cache_exit(&tree->rf_ci);
 	ocfs2_simple_drop_lockres(OCFS2_SB(tree->rf_sb), &tree->rf_lockres);
-	ocfs2_lock_res_मुक्त(&tree->rf_lockres);
-	kमुक्त(tree);
-पूर्ण
+	ocfs2_lock_res_free(&tree->rf_lockres);
+	kfree(tree);
+}
 
-अटल अंतरभूत व्योम
-ocfs2_erase_refcount_tree_from_list_no_lock(काष्ठा ocfs2_super *osb,
-					काष्ठा ocfs2_refcount_tree *tree)
-अणु
+static inline void
+ocfs2_erase_refcount_tree_from_list_no_lock(struct ocfs2_super *osb,
+					struct ocfs2_refcount_tree *tree)
+{
 	rb_erase(&tree->rf_node, &osb->osb_rf_lock_tree);
-	अगर (osb->osb_ref_tree_lru && osb->osb_ref_tree_lru == tree)
-		osb->osb_ref_tree_lru = शून्य;
-पूर्ण
+	if (osb->osb_ref_tree_lru && osb->osb_ref_tree_lru == tree)
+		osb->osb_ref_tree_lru = NULL;
+}
 
-अटल व्योम ocfs2_erase_refcount_tree_from_list(काष्ठा ocfs2_super *osb,
-					काष्ठा ocfs2_refcount_tree *tree)
-अणु
+static void ocfs2_erase_refcount_tree_from_list(struct ocfs2_super *osb,
+					struct ocfs2_refcount_tree *tree)
+{
 	spin_lock(&osb->osb_lock);
 	ocfs2_erase_refcount_tree_from_list_no_lock(osb, tree);
 	spin_unlock(&osb->osb_lock);
-पूर्ण
+}
 
-अटल व्योम ocfs2_kref_हटाओ_refcount_tree(काष्ठा kref *kref)
-अणु
-	काष्ठा ocfs2_refcount_tree *tree =
-		container_of(kref, काष्ठा ocfs2_refcount_tree, rf_अ_लोnt);
+static void ocfs2_kref_remove_refcount_tree(struct kref *kref)
+{
+	struct ocfs2_refcount_tree *tree =
+		container_of(kref, struct ocfs2_refcount_tree, rf_getcnt);
 
-	ocfs2_मुक्त_refcount_tree(tree);
-पूर्ण
+	ocfs2_free_refcount_tree(tree);
+}
 
-अटल अंतरभूत व्योम
-ocfs2_refcount_tree_get(काष्ठा ocfs2_refcount_tree *tree)
-अणु
-	kref_get(&tree->rf_अ_लोnt);
-पूर्ण
+static inline void
+ocfs2_refcount_tree_get(struct ocfs2_refcount_tree *tree)
+{
+	kref_get(&tree->rf_getcnt);
+}
 
-अटल अंतरभूत व्योम
-ocfs2_refcount_tree_put(काष्ठा ocfs2_refcount_tree *tree)
-अणु
-	kref_put(&tree->rf_अ_लोnt, ocfs2_kref_हटाओ_refcount_tree);
-पूर्ण
+static inline void
+ocfs2_refcount_tree_put(struct ocfs2_refcount_tree *tree)
+{
+	kref_put(&tree->rf_getcnt, ocfs2_kref_remove_refcount_tree);
+}
 
-अटल अंतरभूत व्योम ocfs2_init_refcount_tree_ci(काष्ठा ocfs2_refcount_tree *new,
-					       काष्ठा super_block *sb)
-अणु
+static inline void ocfs2_init_refcount_tree_ci(struct ocfs2_refcount_tree *new,
+					       struct super_block *sb)
+{
 	ocfs2_metadata_cache_init(&new->rf_ci, &ocfs2_refcount_caching_ops);
 	mutex_init(&new->rf_io_mutex);
 	new->rf_sb = sb;
 	spin_lock_init(&new->rf_lock);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम ocfs2_init_refcount_tree_lock(काष्ठा ocfs2_super *osb,
-					काष्ठा ocfs2_refcount_tree *new,
+static inline void ocfs2_init_refcount_tree_lock(struct ocfs2_super *osb,
+					struct ocfs2_refcount_tree *new,
 					u64 rf_blkno, u32 generation)
-अणु
+{
 	init_rwsem(&new->rf_sem);
 	ocfs2_refcount_lock_res_init(&new->rf_lockres, osb,
 				     rf_blkno, generation);
-पूर्ण
+}
 
-अटल काष्ठा ocfs2_refcount_tree*
-ocfs2_allocate_refcount_tree(काष्ठा ocfs2_super *osb, u64 rf_blkno)
-अणु
-	काष्ठा ocfs2_refcount_tree *new;
+static struct ocfs2_refcount_tree*
+ocfs2_allocate_refcount_tree(struct ocfs2_super *osb, u64 rf_blkno)
+{
+	struct ocfs2_refcount_tree *new;
 
-	new = kzalloc(माप(काष्ठा ocfs2_refcount_tree), GFP_NOFS);
-	अगर (!new)
-		वापस शून्य;
+	new = kzalloc(sizeof(struct ocfs2_refcount_tree), GFP_NOFS);
+	if (!new)
+		return NULL;
 
 	new->rf_blkno = rf_blkno;
-	kref_init(&new->rf_अ_लोnt);
+	kref_init(&new->rf_getcnt);
 	ocfs2_init_refcount_tree_ci(new, osb->sb);
 
-	वापस new;
-पूर्ण
+	return new;
+}
 
-अटल पूर्णांक ocfs2_get_refcount_tree(काष्ठा ocfs2_super *osb, u64 rf_blkno,
-				   काष्ठा ocfs2_refcount_tree **ret_tree)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा ocfs2_refcount_tree *tree, *new = शून्य;
-	काष्ठा buffer_head *ref_root_bh = शून्य;
-	काष्ठा ocfs2_refcount_block *ref_rb;
+static int ocfs2_get_refcount_tree(struct ocfs2_super *osb, u64 rf_blkno,
+				   struct ocfs2_refcount_tree **ret_tree)
+{
+	int ret = 0;
+	struct ocfs2_refcount_tree *tree, *new = NULL;
+	struct buffer_head *ref_root_bh = NULL;
+	struct ocfs2_refcount_block *ref_rb;
 
 	spin_lock(&osb->osb_lock);
-	अगर (osb->osb_ref_tree_lru &&
+	if (osb->osb_ref_tree_lru &&
 	    osb->osb_ref_tree_lru->rf_blkno == rf_blkno)
 		tree = osb->osb_ref_tree_lru;
-	अन्यथा
+	else
 		tree = ocfs2_find_refcount_tree(osb, rf_blkno);
-	अगर (tree)
-		जाओ out;
+	if (tree)
+		goto out;
 
 	spin_unlock(&osb->osb_lock);
 
 	new = ocfs2_allocate_refcount_tree(osb, rf_blkno);
-	अगर (!new) अणु
+	if (!new) {
 		ret = -ENOMEM;
-		mlog_त्रुटि_सं(ret);
-		वापस ret;
-	पूर्ण
+		mlog_errno(ret);
+		return ret;
+	}
 	/*
 	 * We need the generation to create the refcount tree lock and since
-	 * it isn't changed during the tree modअगरication, we are safe here to
-	 * पढ़ो without protection.
+	 * it isn't changed during the tree modification, we are safe here to
+	 * read without protection.
 	 * We also have to purge the cache after we create the lock since the
 	 * refcount block may have the stale data. It can only be trusted when
 	 * we hold the refcount lock.
 	 */
-	ret = ocfs2_पढ़ो_refcount_block(&new->rf_ci, rf_blkno, &ref_root_bh);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		ocfs2_metadata_cache_निकास(&new->rf_ci);
-		kमुक्त(new);
-		वापस ret;
-	पूर्ण
+	ret = ocfs2_read_refcount_block(&new->rf_ci, rf_blkno, &ref_root_bh);
+	if (ret) {
+		mlog_errno(ret);
+		ocfs2_metadata_cache_exit(&new->rf_ci);
+		kfree(new);
+		return ret;
+	}
 
-	ref_rb = (काष्ठा ocfs2_refcount_block *)ref_root_bh->b_data;
+	ref_rb = (struct ocfs2_refcount_block *)ref_root_bh->b_data;
 	new->rf_generation = le32_to_cpu(ref_rb->rf_generation);
 	ocfs2_init_refcount_tree_lock(osb, new, rf_blkno,
 				      new->rf_generation);
@@ -370,13 +369,13 @@ ocfs2_allocate_refcount_tree(काष्ठा ocfs2_super *osb, u64 rf_blkno)
 
 	spin_lock(&osb->osb_lock);
 	tree = ocfs2_find_refcount_tree(osb, rf_blkno);
-	अगर (tree)
-		जाओ out;
+	if (tree)
+		goto out;
 
 	ocfs2_insert_refcount_tree(osb, new);
 
 	tree = new;
-	new = शून्य;
+	new = NULL;
 
 out:
 	*ret_tree = tree;
@@ -385,180 +384,180 @@ out:
 
 	spin_unlock(&osb->osb_lock);
 
-	अगर (new)
-		ocfs2_मुक्त_refcount_tree(new);
+	if (new)
+		ocfs2_free_refcount_tree(new);
 
-	brअन्यथा(ref_root_bh);
-	वापस ret;
-पूर्ण
+	brelse(ref_root_bh);
+	return ret;
+}
 
-अटल पूर्णांक ocfs2_get_refcount_block(काष्ठा inode *inode, u64 *ref_blkno)
-अणु
-	पूर्णांक ret;
-	काष्ठा buffer_head *di_bh = शून्य;
-	काष्ठा ocfs2_dinode *di;
+static int ocfs2_get_refcount_block(struct inode *inode, u64 *ref_blkno)
+{
+	int ret;
+	struct buffer_head *di_bh = NULL;
+	struct ocfs2_dinode *di;
 
-	ret = ocfs2_पढ़ो_inode_block(inode, &di_bh);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+	ret = ocfs2_read_inode_block(inode, &di_bh);
+	if (ret) {
+		mlog_errno(ret);
+		goto out;
+	}
 
 	BUG_ON(!ocfs2_is_refcount_inode(inode));
 
-	di = (काष्ठा ocfs2_dinode *)di_bh->b_data;
+	di = (struct ocfs2_dinode *)di_bh->b_data;
 	*ref_blkno = le64_to_cpu(di->i_refcount_loc);
-	brअन्यथा(di_bh);
+	brelse(di_bh);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक __ocfs2_lock_refcount_tree(काष्ठा ocfs2_super *osb,
-				      काष्ठा ocfs2_refcount_tree *tree, पूर्णांक rw)
-अणु
-	पूर्णांक ret;
+static int __ocfs2_lock_refcount_tree(struct ocfs2_super *osb,
+				      struct ocfs2_refcount_tree *tree, int rw)
+{
+	int ret;
 
 	ret = ocfs2_refcount_lock(tree, rw);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto out;
+	}
 
-	अगर (rw)
-		करोwn_ग_लिखो(&tree->rf_sem);
-	अन्यथा
-		करोwn_पढ़ो(&tree->rf_sem);
+	if (rw)
+		down_write(&tree->rf_sem);
+	else
+		down_read(&tree->rf_sem);
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Lock the refcount tree poपूर्णांकed by ref_blkno and वापस the tree.
- * In most हाल, we lock the tree and पढ़ो the refcount block.
- * So पढ़ो it here अगर the caller really needs it.
+ * Lock the refcount tree pointed by ref_blkno and return the tree.
+ * In most case, we lock the tree and read the refcount block.
+ * So read it here if the caller really needs it.
  *
- * If the tree has been re-created by other node, it will मुक्त the
+ * If the tree has been re-created by other node, it will free the
  * old one and re-create it.
  */
-पूर्णांक ocfs2_lock_refcount_tree(काष्ठा ocfs2_super *osb,
-			     u64 ref_blkno, पूर्णांक rw,
-			     काष्ठा ocfs2_refcount_tree **ret_tree,
-			     काष्ठा buffer_head **ref_bh)
-अणु
-	पूर्णांक ret, delete_tree = 0;
-	काष्ठा ocfs2_refcount_tree *tree = शून्य;
-	काष्ठा buffer_head *ref_root_bh = शून्य;
-	काष्ठा ocfs2_refcount_block *rb;
+int ocfs2_lock_refcount_tree(struct ocfs2_super *osb,
+			     u64 ref_blkno, int rw,
+			     struct ocfs2_refcount_tree **ret_tree,
+			     struct buffer_head **ref_bh)
+{
+	int ret, delete_tree = 0;
+	struct ocfs2_refcount_tree *tree = NULL;
+	struct buffer_head *ref_root_bh = NULL;
+	struct ocfs2_refcount_block *rb;
 
 again:
 	ret = ocfs2_get_refcount_tree(osb, ref_blkno, &tree);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		वापस ret;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		return ret;
+	}
 
 	ocfs2_refcount_tree_get(tree);
 
 	ret = __ocfs2_lock_refcount_tree(osb, tree, rw);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
+	if (ret) {
+		mlog_errno(ret);
 		ocfs2_refcount_tree_put(tree);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	ret = ocfs2_पढ़ो_refcount_block(&tree->rf_ci, tree->rf_blkno,
+	ret = ocfs2_read_refcount_block(&tree->rf_ci, tree->rf_blkno,
 					&ref_root_bh);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
+	if (ret) {
+		mlog_errno(ret);
 		ocfs2_unlock_refcount_tree(osb, tree, rw);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	rb = (काष्ठा ocfs2_refcount_block *)ref_root_bh->b_data;
+	rb = (struct ocfs2_refcount_block *)ref_root_bh->b_data;
 	/*
-	 * If the refcount block has been मुक्तd and re-created, we may need
+	 * If the refcount block has been freed and re-created, we may need
 	 * to recreate the refcount tree also.
 	 *
-	 * Here we just हटाओ the tree from the rb-tree, and the last
+	 * Here we just remove the tree from the rb-tree, and the last
 	 * kref holder will unlock and delete this refcount_tree.
-	 * Then we जाओ "again" and ocfs2_get_refcount_tree will create
-	 * the new refcount tree क्रम us.
+	 * Then we goto "again" and ocfs2_get_refcount_tree will create
+	 * the new refcount tree for us.
 	 */
-	अगर (tree->rf_generation != le32_to_cpu(rb->rf_generation)) अणु
-		अगर (!tree->rf_हटाओd) अणु
+	if (tree->rf_generation != le32_to_cpu(rb->rf_generation)) {
+		if (!tree->rf_removed) {
 			ocfs2_erase_refcount_tree_from_list(osb, tree);
-			tree->rf_हटाओd = 1;
+			tree->rf_removed = 1;
 			delete_tree = 1;
-		पूर्ण
+		}
 
 		ocfs2_unlock_refcount_tree(osb, tree, rw);
 		/*
 		 * We get an extra reference when we create the refcount
 		 * tree, so another put will destroy it.
 		 */
-		अगर (delete_tree)
+		if (delete_tree)
 			ocfs2_refcount_tree_put(tree);
-		brअन्यथा(ref_root_bh);
-		ref_root_bh = शून्य;
-		जाओ again;
-	पूर्ण
+		brelse(ref_root_bh);
+		ref_root_bh = NULL;
+		goto again;
+	}
 
 	*ret_tree = tree;
-	अगर (ref_bh) अणु
+	if (ref_bh) {
 		*ref_bh = ref_root_bh;
-		ref_root_bh = शून्य;
-	पूर्ण
+		ref_root_bh = NULL;
+	}
 out:
-	brअन्यथा(ref_root_bh);
-	वापस ret;
-पूर्ण
+	brelse(ref_root_bh);
+	return ret;
+}
 
-व्योम ocfs2_unlock_refcount_tree(काष्ठा ocfs2_super *osb,
-				काष्ठा ocfs2_refcount_tree *tree, पूर्णांक rw)
-अणु
-	अगर (rw)
-		up_ग_लिखो(&tree->rf_sem);
-	अन्यथा
-		up_पढ़ो(&tree->rf_sem);
+void ocfs2_unlock_refcount_tree(struct ocfs2_super *osb,
+				struct ocfs2_refcount_tree *tree, int rw)
+{
+	if (rw)
+		up_write(&tree->rf_sem);
+	else
+		up_read(&tree->rf_sem);
 
 	ocfs2_refcount_unlock(tree, rw);
 	ocfs2_refcount_tree_put(tree);
-पूर्ण
+}
 
-व्योम ocfs2_purge_refcount_trees(काष्ठा ocfs2_super *osb)
-अणु
-	काष्ठा rb_node *node;
-	काष्ठा ocfs2_refcount_tree *tree;
-	काष्ठा rb_root *root = &osb->osb_rf_lock_tree;
+void ocfs2_purge_refcount_trees(struct ocfs2_super *osb)
+{
+	struct rb_node *node;
+	struct ocfs2_refcount_tree *tree;
+	struct rb_root *root = &osb->osb_rf_lock_tree;
 
-	जबतक ((node = rb_last(root)) != शून्य) अणु
-		tree = rb_entry(node, काष्ठा ocfs2_refcount_tree, rf_node);
+	while ((node = rb_last(root)) != NULL) {
+		tree = rb_entry(node, struct ocfs2_refcount_tree, rf_node);
 
 		trace_ocfs2_purge_refcount_trees(
-				(अचिन्हित दीर्घ दीर्घ) tree->rf_blkno);
+				(unsigned long long) tree->rf_blkno);
 
 		rb_erase(&tree->rf_node, root);
-		ocfs2_मुक्त_refcount_tree(tree);
-	पूर्ण
-पूर्ण
+		ocfs2_free_refcount_tree(tree);
+	}
+}
 
 /*
- * Create a refcount tree क्रम an inode.
- * We take क्रम granted that the inode is alपढ़ोy locked.
+ * Create a refcount tree for an inode.
+ * We take for granted that the inode is already locked.
  */
-अटल पूर्णांक ocfs2_create_refcount_tree(काष्ठा inode *inode,
-				      काष्ठा buffer_head *di_bh)
-अणु
-	पूर्णांक ret;
-	handle_t *handle = शून्य;
-	काष्ठा ocfs2_alloc_context *meta_ac = शून्य;
-	काष्ठा ocfs2_dinode *di = (काष्ठा ocfs2_dinode *)di_bh->b_data;
-	काष्ठा ocfs2_inode_info *oi = OCFS2_I(inode);
-	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
-	काष्ठा buffer_head *new_bh = शून्य;
-	काष्ठा ocfs2_refcount_block *rb;
-	काष्ठा ocfs2_refcount_tree *new_tree = शून्य, *tree = शून्य;
+static int ocfs2_create_refcount_tree(struct inode *inode,
+				      struct buffer_head *di_bh)
+{
+	int ret;
+	handle_t *handle = NULL;
+	struct ocfs2_alloc_context *meta_ac = NULL;
+	struct ocfs2_dinode *di = (struct ocfs2_dinode *)di_bh->b_data;
+	struct ocfs2_inode_info *oi = OCFS2_I(inode);
+	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+	struct buffer_head *new_bh = NULL;
+	struct ocfs2_refcount_block *rb;
+	struct ocfs2_refcount_tree *new_tree = NULL, *tree = NULL;
 	u16 suballoc_bit_start;
 	u32 num_got;
 	u64 suballoc_loc, first_blkno;
@@ -566,62 +565,62 @@ out:
 	BUG_ON(ocfs2_is_refcount_inode(inode));
 
 	trace_ocfs2_create_refcount_tree(
-		(अचिन्हित दीर्घ दीर्घ)oi->ip_blkno);
+		(unsigned long long)oi->ip_blkno);
 
 	ret = ocfs2_reserve_new_metadata_blocks(osb, 1, &meta_ac);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto out;
+	}
 
 	handle = ocfs2_start_trans(osb, OCFS2_REFCOUNT_TREE_CREATE_CREDITS);
-	अगर (IS_ERR(handle)) अणु
+	if (IS_ERR(handle)) {
 		ret = PTR_ERR(handle);
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+		mlog_errno(ret);
+		goto out;
+	}
 
 	ret = ocfs2_journal_access_di(handle, INODE_CACHE(inode), di_bh,
 				      OCFS2_JOURNAL_ACCESS_WRITE);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out_commit;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto out_commit;
+	}
 
 	ret = ocfs2_claim_metadata(handle, meta_ac, 1, &suballoc_loc,
 				   &suballoc_bit_start, &num_got,
 				   &first_blkno);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out_commit;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto out_commit;
+	}
 
 	new_tree = ocfs2_allocate_refcount_tree(osb, first_blkno);
-	अगर (!new_tree) अणु
+	if (!new_tree) {
 		ret = -ENOMEM;
-		mlog_त्रुटि_सं(ret);
-		जाओ out_commit;
-	पूर्ण
+		mlog_errno(ret);
+		goto out_commit;
+	}
 
 	new_bh = sb_getblk(inode->i_sb, first_blkno);
-	अगर (!new_bh) अणु
+	if (!new_bh) {
 		ret = -ENOMEM;
-		mlog_त्रुटि_सं(ret);
-		जाओ out_commit;
-	पूर्ण
+		mlog_errno(ret);
+		goto out_commit;
+	}
 	ocfs2_set_new_buffer_uptodate(&new_tree->rf_ci, new_bh);
 
 	ret = ocfs2_journal_access_rb(handle, &new_tree->rf_ci, new_bh,
 				      OCFS2_JOURNAL_ACCESS_CREATE);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out_commit;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto out_commit;
+	}
 
 	/* Initialize ocfs2_refcount_block. */
-	rb = (काष्ठा ocfs2_refcount_block *)new_bh->b_data;
-	स_रखो(rb, 0, inode->i_sb->s_blocksize);
-	म_नकल((व्योम *)rb, OCFS2_REFCOUNT_BLOCK_SIGNATURE);
+	rb = (struct ocfs2_refcount_block *)new_bh->b_data;
+	memset(rb, 0, inode->i_sb->s_blocksize);
+	strcpy((void *)rb, OCFS2_REFCOUNT_BLOCK_SIGNATURE);
 	rb->rf_suballoc_slot = cpu_to_le16(meta_ac->ac_alloc_slot);
 	rb->rf_suballoc_loc = cpu_to_le64(suballoc_loc);
 	rb->rf_suballoc_bit = cpu_to_le16(suballoc_bit_start);
@@ -642,7 +641,7 @@ out:
 	di->i_refcount_loc = cpu_to_le64(first_blkno);
 	spin_unlock(&oi->ip_lock);
 
-	trace_ocfs2_create_refcount_tree_blkno((अचिन्हित दीर्घ दीर्घ)first_blkno);
+	trace_ocfs2_create_refcount_tree_blkno((unsigned long long)first_blkno);
 
 	ocfs2_journal_dirty(handle, di_bh);
 
@@ -660,78 +659,78 @@ out:
 	/*
 	 * We've just created a new refcount tree in this block.  If
 	 * we found a refcount tree on the ocfs2_super, it must be
-	 * one we just deleted.  We मुक्त the old tree beक्रमe
+	 * one we just deleted.  We free the old tree before
 	 * inserting the new tree.
 	 */
 	BUG_ON(tree && tree->rf_generation == new_tree->rf_generation);
-	अगर (tree)
+	if (tree)
 		ocfs2_erase_refcount_tree_from_list_no_lock(osb, tree);
 	ocfs2_insert_refcount_tree(osb, new_tree);
 	spin_unlock(&osb->osb_lock);
-	new_tree = शून्य;
-	अगर (tree)
+	new_tree = NULL;
+	if (tree)
 		ocfs2_refcount_tree_put(tree);
 
 out_commit:
 	ocfs2_commit_trans(osb, handle);
 
 out:
-	अगर (new_tree) अणु
-		ocfs2_metadata_cache_निकास(&new_tree->rf_ci);
-		kमुक्त(new_tree);
-	पूर्ण
+	if (new_tree) {
+		ocfs2_metadata_cache_exit(&new_tree->rf_ci);
+		kfree(new_tree);
+	}
 
-	brअन्यथा(new_bh);
-	अगर (meta_ac)
-		ocfs2_मुक्त_alloc_context(meta_ac);
+	brelse(new_bh);
+	if (meta_ac)
+		ocfs2_free_alloc_context(meta_ac);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ocfs2_set_refcount_tree(काष्ठा inode *inode,
-				   काष्ठा buffer_head *di_bh,
+static int ocfs2_set_refcount_tree(struct inode *inode,
+				   struct buffer_head *di_bh,
 				   u64 refcount_loc)
-अणु
-	पूर्णांक ret;
-	handle_t *handle = शून्य;
-	काष्ठा ocfs2_dinode *di = (काष्ठा ocfs2_dinode *)di_bh->b_data;
-	काष्ठा ocfs2_inode_info *oi = OCFS2_I(inode);
-	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
-	काष्ठा buffer_head *ref_root_bh = शून्य;
-	काष्ठा ocfs2_refcount_block *rb;
-	काष्ठा ocfs2_refcount_tree *ref_tree;
+{
+	int ret;
+	handle_t *handle = NULL;
+	struct ocfs2_dinode *di = (struct ocfs2_dinode *)di_bh->b_data;
+	struct ocfs2_inode_info *oi = OCFS2_I(inode);
+	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+	struct buffer_head *ref_root_bh = NULL;
+	struct ocfs2_refcount_block *rb;
+	struct ocfs2_refcount_tree *ref_tree;
 
 	BUG_ON(ocfs2_is_refcount_inode(inode));
 
 	ret = ocfs2_lock_refcount_tree(osb, refcount_loc, 1,
 				       &ref_tree, &ref_root_bh);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		वापस ret;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		return ret;
+	}
 
 	handle = ocfs2_start_trans(osb, OCFS2_REFCOUNT_TREE_SET_CREDITS);
-	अगर (IS_ERR(handle)) अणु
+	if (IS_ERR(handle)) {
 		ret = PTR_ERR(handle);
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+		mlog_errno(ret);
+		goto out;
+	}
 
 	ret = ocfs2_journal_access_di(handle, INODE_CACHE(inode), di_bh,
 				      OCFS2_JOURNAL_ACCESS_WRITE);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out_commit;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto out_commit;
+	}
 
 	ret = ocfs2_journal_access_rb(handle, &ref_tree->rf_ci, ref_root_bh,
 				      OCFS2_JOURNAL_ACCESS_WRITE);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out_commit;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto out_commit;
+	}
 
-	rb = (काष्ठा ocfs2_refcount_block *)ref_root_bh->b_data;
+	rb = (struct ocfs2_refcount_block *)ref_root_bh->b_data;
 	le32_add_cpu(&rb->rf_count, 1);
 
 	ocfs2_journal_dirty(handle, ref_root_bh);
@@ -747,90 +746,90 @@ out_commit:
 	ocfs2_commit_trans(osb, handle);
 out:
 	ocfs2_unlock_refcount_tree(osb, ref_tree, 1);
-	brअन्यथा(ref_root_bh);
+	brelse(ref_root_bh);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक ocfs2_हटाओ_refcount_tree(काष्ठा inode *inode, काष्ठा buffer_head *di_bh)
-अणु
-	पूर्णांक ret, delete_tree = 0;
-	handle_t *handle = शून्य;
-	काष्ठा ocfs2_dinode *di = (काष्ठा ocfs2_dinode *)di_bh->b_data;
-	काष्ठा ocfs2_inode_info *oi = OCFS2_I(inode);
-	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
-	काष्ठा ocfs2_refcount_block *rb;
-	काष्ठा inode *alloc_inode = शून्य;
-	काष्ठा buffer_head *alloc_bh = शून्य;
-	काष्ठा buffer_head *blk_bh = शून्य;
-	काष्ठा ocfs2_refcount_tree *ref_tree;
-	पूर्णांक credits = OCFS2_REFCOUNT_TREE_REMOVE_CREDITS;
+int ocfs2_remove_refcount_tree(struct inode *inode, struct buffer_head *di_bh)
+{
+	int ret, delete_tree = 0;
+	handle_t *handle = NULL;
+	struct ocfs2_dinode *di = (struct ocfs2_dinode *)di_bh->b_data;
+	struct ocfs2_inode_info *oi = OCFS2_I(inode);
+	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+	struct ocfs2_refcount_block *rb;
+	struct inode *alloc_inode = NULL;
+	struct buffer_head *alloc_bh = NULL;
+	struct buffer_head *blk_bh = NULL;
+	struct ocfs2_refcount_tree *ref_tree;
+	int credits = OCFS2_REFCOUNT_TREE_REMOVE_CREDITS;
 	u64 blk = 0, bg_blkno = 0, ref_blkno = le64_to_cpu(di->i_refcount_loc);
 	u16 bit = 0;
 
-	अगर (!ocfs2_is_refcount_inode(inode))
-		वापस 0;
+	if (!ocfs2_is_refcount_inode(inode))
+		return 0;
 
 	BUG_ON(!ref_blkno);
 	ret = ocfs2_lock_refcount_tree(osb, ref_blkno, 1, &ref_tree, &blk_bh);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		वापस ret;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		return ret;
+	}
 
-	rb = (काष्ठा ocfs2_refcount_block *)blk_bh->b_data;
+	rb = (struct ocfs2_refcount_block *)blk_bh->b_data;
 
 	/*
-	 * If we are the last user, we need to मुक्त the block.
+	 * If we are the last user, we need to free the block.
 	 * So lock the allocator ahead.
 	 */
-	अगर (le32_to_cpu(rb->rf_count) == 1) अणु
+	if (le32_to_cpu(rb->rf_count) == 1) {
 		blk = le64_to_cpu(rb->rf_blkno);
 		bit = le16_to_cpu(rb->rf_suballoc_bit);
-		अगर (rb->rf_suballoc_loc)
+		if (rb->rf_suballoc_loc)
 			bg_blkno = le64_to_cpu(rb->rf_suballoc_loc);
-		अन्यथा
+		else
 			bg_blkno = ocfs2_which_suballoc_group(blk, bit);
 
-		alloc_inode = ocfs2_get_प्रणाली_file_inode(osb,
+		alloc_inode = ocfs2_get_system_file_inode(osb,
 					EXTENT_ALLOC_SYSTEM_INODE,
 					le16_to_cpu(rb->rf_suballoc_slot));
-		अगर (!alloc_inode) अणु
+		if (!alloc_inode) {
 			ret = -ENOMEM;
-			mlog_त्रुटि_सं(ret);
-			जाओ out;
-		पूर्ण
+			mlog_errno(ret);
+			goto out;
+		}
 		inode_lock(alloc_inode);
 
 		ret = ocfs2_inode_lock(alloc_inode, &alloc_bh, 1);
-		अगर (ret) अणु
-			mlog_त्रुटि_सं(ret);
-			जाओ out_mutex;
-		पूर्ण
+		if (ret) {
+			mlog_errno(ret);
+			goto out_mutex;
+		}
 
 		credits += OCFS2_SUBALLOC_FREE;
-	पूर्ण
+	}
 
 	handle = ocfs2_start_trans(osb, credits);
-	अगर (IS_ERR(handle)) अणु
+	if (IS_ERR(handle)) {
 		ret = PTR_ERR(handle);
-		mlog_त्रुटि_सं(ret);
-		जाओ out_unlock;
-	पूर्ण
+		mlog_errno(ret);
+		goto out_unlock;
+	}
 
 	ret = ocfs2_journal_access_di(handle, INODE_CACHE(inode), di_bh,
 				      OCFS2_JOURNAL_ACCESS_WRITE);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out_commit;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto out_commit;
+	}
 
 	ret = ocfs2_journal_access_rb(handle, &ref_tree->rf_ci, blk_bh,
 				      OCFS2_JOURNAL_ACCESS_WRITE);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out_commit;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto out_commit;
+	}
 
 	spin_lock(&oi->ip_lock);
 	oi->ip_dyn_features &= ~OCFS2_HAS_REFCOUNT_FL;
@@ -842,149 +841,149 @@ out:
 	le32_add_cpu(&rb->rf_count , -1);
 	ocfs2_journal_dirty(handle, blk_bh);
 
-	अगर (!rb->rf_count) अणु
+	if (!rb->rf_count) {
 		delete_tree = 1;
 		ocfs2_erase_refcount_tree_from_list(osb, ref_tree);
-		ret = ocfs2_मुक्त_suballoc_bits(handle, alloc_inode,
+		ret = ocfs2_free_suballoc_bits(handle, alloc_inode,
 					       alloc_bh, bit, bg_blkno, 1);
-		अगर (ret)
-			mlog_त्रुटि_सं(ret);
-	पूर्ण
+		if (ret)
+			mlog_errno(ret);
+	}
 
 out_commit:
 	ocfs2_commit_trans(osb, handle);
 out_unlock:
-	अगर (alloc_inode) अणु
+	if (alloc_inode) {
 		ocfs2_inode_unlock(alloc_inode, 1);
-		brअन्यथा(alloc_bh);
-	पूर्ण
+		brelse(alloc_bh);
+	}
 out_mutex:
-	अगर (alloc_inode) अणु
+	if (alloc_inode) {
 		inode_unlock(alloc_inode);
 		iput(alloc_inode);
-	पूर्ण
+	}
 out:
 	ocfs2_unlock_refcount_tree(osb, ref_tree, 1);
-	अगर (delete_tree)
+	if (delete_tree)
 		ocfs2_refcount_tree_put(ref_tree);
-	brअन्यथा(blk_bh);
+	brelse(blk_bh);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम ocfs2_find_refcount_rec_in_rl(काष्ठा ocfs2_caching_info *ci,
-					  काष्ठा buffer_head *ref_leaf_bh,
-					  u64 cpos, अचिन्हित पूर्णांक len,
-					  काष्ठा ocfs2_refcount_rec *ret_rec,
-					  पूर्णांक *index)
-अणु
-	पूर्णांक i = 0;
-	काष्ठा ocfs2_refcount_block *rb =
-		(काष्ठा ocfs2_refcount_block *)ref_leaf_bh->b_data;
-	काष्ठा ocfs2_refcount_rec *rec = शून्य;
+static void ocfs2_find_refcount_rec_in_rl(struct ocfs2_caching_info *ci,
+					  struct buffer_head *ref_leaf_bh,
+					  u64 cpos, unsigned int len,
+					  struct ocfs2_refcount_rec *ret_rec,
+					  int *index)
+{
+	int i = 0;
+	struct ocfs2_refcount_block *rb =
+		(struct ocfs2_refcount_block *)ref_leaf_bh->b_data;
+	struct ocfs2_refcount_rec *rec = NULL;
 
-	क्रम (; i < le16_to_cpu(rb->rf_records.rl_used); i++) अणु
+	for (; i < le16_to_cpu(rb->rf_records.rl_used); i++) {
 		rec = &rb->rf_records.rl_recs[i];
 
-		अगर (le64_to_cpu(rec->r_cpos) +
+		if (le64_to_cpu(rec->r_cpos) +
 		    le32_to_cpu(rec->r_clusters) <= cpos)
-			जारी;
-		अन्यथा अगर (le64_to_cpu(rec->r_cpos) > cpos)
-			अवरोध;
+			continue;
+		else if (le64_to_cpu(rec->r_cpos) > cpos)
+			break;
 
-		/* ok, cpos fail in this rec. Just वापस. */
-		अगर (ret_rec)
+		/* ok, cpos fail in this rec. Just return. */
+		if (ret_rec)
 			*ret_rec = *rec;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (ret_rec) अणु
+	if (ret_rec) {
 		/* We meet with a hole here, so fake the rec. */
 		ret_rec->r_cpos = cpu_to_le64(cpos);
 		ret_rec->r_refcount = 0;
-		अगर (i < le16_to_cpu(rb->rf_records.rl_used) &&
+		if (i < le16_to_cpu(rb->rf_records.rl_used) &&
 		    le64_to_cpu(rec->r_cpos) < cpos + len)
 			ret_rec->r_clusters =
 				cpu_to_le32(le64_to_cpu(rec->r_cpos) - cpos);
-		अन्यथा
+		else
 			ret_rec->r_clusters = cpu_to_le32(len);
-	पूर्ण
+	}
 
 out:
 	*index = i;
-पूर्ण
+}
 
 /*
- * Try to हटाओ refcount tree. The mechanism is:
- * 1) Check whether i_clusters == 0, अगर no, निकास.
- * 2) check whether we have i_xattr_loc in dinode. अगर yes, निकास.
- * 3) Check whether we have अंतरभूत xattr stored outside, अगर yes, निकास.
+ * Try to remove refcount tree. The mechanism is:
+ * 1) Check whether i_clusters == 0, if no, exit.
+ * 2) check whether we have i_xattr_loc in dinode. if yes, exit.
+ * 3) Check whether we have inline xattr stored outside, if yes, exit.
  * 4) Remove the tree.
  */
-पूर्णांक ocfs2_try_हटाओ_refcount_tree(काष्ठा inode *inode,
-				   काष्ठा buffer_head *di_bh)
-अणु
-	पूर्णांक ret;
-	काष्ठा ocfs2_inode_info *oi = OCFS2_I(inode);
-	काष्ठा ocfs2_dinode *di = (काष्ठा ocfs2_dinode *)di_bh->b_data;
+int ocfs2_try_remove_refcount_tree(struct inode *inode,
+				   struct buffer_head *di_bh)
+{
+	int ret;
+	struct ocfs2_inode_info *oi = OCFS2_I(inode);
+	struct ocfs2_dinode *di = (struct ocfs2_dinode *)di_bh->b_data;
 
-	करोwn_ग_लिखो(&oi->ip_xattr_sem);
-	करोwn_ग_लिखो(&oi->ip_alloc_sem);
+	down_write(&oi->ip_xattr_sem);
+	down_write(&oi->ip_alloc_sem);
 
-	अगर (oi->ip_clusters)
-		जाओ out;
+	if (oi->ip_clusters)
+		goto out;
 
-	अगर ((oi->ip_dyn_features & OCFS2_HAS_XATTR_FL) && di->i_xattr_loc)
-		जाओ out;
+	if ((oi->ip_dyn_features & OCFS2_HAS_XATTR_FL) && di->i_xattr_loc)
+		goto out;
 
-	अगर (oi->ip_dyn_features & OCFS2_INLINE_XATTR_FL &&
-	    ocfs2_has_अंतरभूत_xattr_value_outside(inode, di))
-		जाओ out;
+	if (oi->ip_dyn_features & OCFS2_INLINE_XATTR_FL &&
+	    ocfs2_has_inline_xattr_value_outside(inode, di))
+		goto out;
 
-	ret = ocfs2_हटाओ_refcount_tree(inode, di_bh);
-	अगर (ret)
-		mlog_त्रुटि_सं(ret);
+	ret = ocfs2_remove_refcount_tree(inode, di_bh);
+	if (ret)
+		mlog_errno(ret);
 out:
-	up_ग_लिखो(&oi->ip_alloc_sem);
-	up_ग_लिखो(&oi->ip_xattr_sem);
-	वापस 0;
-पूर्ण
+	up_write(&oi->ip_alloc_sem);
+	up_write(&oi->ip_xattr_sem);
+	return 0;
+}
 
 /*
- * Find the end range क्रम a leaf refcount block indicated by
+ * Find the end range for a leaf refcount block indicated by
  * el->l_recs[index].e_blkno.
  */
-अटल पूर्णांक ocfs2_get_refcount_cpos_end(काष्ठा ocfs2_caching_info *ci,
-				       काष्ठा buffer_head *ref_root_bh,
-				       काष्ठा ocfs2_extent_block *eb,
-				       काष्ठा ocfs2_extent_list *el,
-				       पूर्णांक index,  u32 *cpos_end)
-अणु
-	पूर्णांक ret, i, subtree_root;
+static int ocfs2_get_refcount_cpos_end(struct ocfs2_caching_info *ci,
+				       struct buffer_head *ref_root_bh,
+				       struct ocfs2_extent_block *eb,
+				       struct ocfs2_extent_list *el,
+				       int index,  u32 *cpos_end)
+{
+	int ret, i, subtree_root;
 	u32 cpos;
 	u64 blkno;
-	काष्ठा super_block *sb = ocfs2_metadata_cache_get_super(ci);
-	काष्ठा ocfs2_path *left_path = शून्य, *right_path = शून्य;
-	काष्ठा ocfs2_extent_tree et;
-	काष्ठा ocfs2_extent_list *पंचांगp_el;
+	struct super_block *sb = ocfs2_metadata_cache_get_super(ci);
+	struct ocfs2_path *left_path = NULL, *right_path = NULL;
+	struct ocfs2_extent_tree et;
+	struct ocfs2_extent_list *tmp_el;
 
-	अगर (index < le16_to_cpu(el->l_next_मुक्त_rec) - 1) अणु
+	if (index < le16_to_cpu(el->l_next_free_rec) - 1) {
 		/*
 		 * We have a extent rec after index, so just use the e_cpos
 		 * of the next extent rec.
 		 */
 		*cpos_end = le32_to_cpu(el->l_recs[index+1].e_cpos);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (!eb || !eb->h_next_leaf_blk) अणु
+	if (!eb || !eb->h_next_leaf_blk) {
 		/*
 		 * We are the last extent rec, so any high cpos should
 		 * be stored in this leaf refcount block.
 		 */
-		*cpos_end = अच_पूर्णांक_उच्च;
-		वापस 0;
-	पूर्ण
+		*cpos_end = UINT_MAX;
+		return 0;
+	}
 
 	/*
 	 * If the extent block isn't the last one, we have to find
@@ -995,337 +994,337 @@ out:
 	ocfs2_init_refcount_extent_tree(&et, ci, ref_root_bh);
 
 	left_path = ocfs2_new_path_from_et(&et);
-	अगर (!left_path) अणु
+	if (!left_path) {
 		ret = -ENOMEM;
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+		mlog_errno(ret);
+		goto out;
+	}
 
 	cpos = le32_to_cpu(eb->h_list.l_recs[index].e_cpos);
 	ret = ocfs2_find_path(ci, left_path, cpos);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto out;
+	}
 
 	right_path = ocfs2_new_path_from_path(left_path);
-	अगर (!right_path) अणु
+	if (!right_path) {
 		ret = -ENOMEM;
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+		mlog_errno(ret);
+		goto out;
+	}
 
-	ret = ocfs2_find_cpos_क्रम_right_leaf(sb, left_path, &cpos);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+	ret = ocfs2_find_cpos_for_right_leaf(sb, left_path, &cpos);
+	if (ret) {
+		mlog_errno(ret);
+		goto out;
+	}
 
 	ret = ocfs2_find_path(ci, right_path, cpos);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto out;
+	}
 
 	subtree_root = ocfs2_find_subtree_root(&et, left_path,
 					       right_path);
 
-	पंचांगp_el = left_path->p_node[subtree_root].el;
+	tmp_el = left_path->p_node[subtree_root].el;
 	blkno = left_path->p_node[subtree_root+1].bh->b_blocknr;
-	क्रम (i = 0; i < le16_to_cpu(पंचांगp_el->l_next_मुक्त_rec); i++) अणु
-		अगर (le64_to_cpu(पंचांगp_el->l_recs[i].e_blkno) == blkno) अणु
-			*cpos_end = le32_to_cpu(पंचांगp_el->l_recs[i+1].e_cpos);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+	for (i = 0; i < le16_to_cpu(tmp_el->l_next_free_rec); i++) {
+		if (le64_to_cpu(tmp_el->l_recs[i].e_blkno) == blkno) {
+			*cpos_end = le32_to_cpu(tmp_el->l_recs[i+1].e_cpos);
+			break;
+		}
+	}
 
-	BUG_ON(i == le16_to_cpu(पंचांगp_el->l_next_मुक्त_rec));
+	BUG_ON(i == le16_to_cpu(tmp_el->l_next_free_rec));
 
 out:
-	ocfs2_मुक्त_path(left_path);
-	ocfs2_मुक्त_path(right_path);
-	वापस ret;
-पूर्ण
+	ocfs2_free_path(left_path);
+	ocfs2_free_path(right_path);
+	return ret;
+}
 
 /*
  * Given a cpos and len, try to find the refcount record which contains cpos.
- * 1. If cpos can be found in one refcount record, वापस the record.
- * 2. If cpos can't be found, वापस a fake record which start from cpos
+ * 1. If cpos can be found in one refcount record, return the record.
+ * 2. If cpos can't be found, return a fake record which start from cpos
  *    and end at a small value between cpos+len and start of the next record.
  *    This fake record has r_refcount = 0.
  */
-अटल पूर्णांक ocfs2_get_refcount_rec(काष्ठा ocfs2_caching_info *ci,
-				  काष्ठा buffer_head *ref_root_bh,
-				  u64 cpos, अचिन्हित पूर्णांक len,
-				  काष्ठा ocfs2_refcount_rec *ret_rec,
-				  पूर्णांक *index,
-				  काष्ठा buffer_head **ret_bh)
-अणु
-	पूर्णांक ret = 0, i, found;
+static int ocfs2_get_refcount_rec(struct ocfs2_caching_info *ci,
+				  struct buffer_head *ref_root_bh,
+				  u64 cpos, unsigned int len,
+				  struct ocfs2_refcount_rec *ret_rec,
+				  int *index,
+				  struct buffer_head **ret_bh)
+{
+	int ret = 0, i, found;
 	u32 low_cpos, cpos_end;
-	काष्ठा ocfs2_extent_list *el;
-	काष्ठा ocfs2_extent_rec *rec = शून्य;
-	काष्ठा ocfs2_extent_block *eb = शून्य;
-	काष्ठा buffer_head *eb_bh = शून्य, *ref_leaf_bh = शून्य;
-	काष्ठा super_block *sb = ocfs2_metadata_cache_get_super(ci);
-	काष्ठा ocfs2_refcount_block *rb =
-			(काष्ठा ocfs2_refcount_block *)ref_root_bh->b_data;
+	struct ocfs2_extent_list *el;
+	struct ocfs2_extent_rec *rec = NULL;
+	struct ocfs2_extent_block *eb = NULL;
+	struct buffer_head *eb_bh = NULL, *ref_leaf_bh = NULL;
+	struct super_block *sb = ocfs2_metadata_cache_get_super(ci);
+	struct ocfs2_refcount_block *rb =
+			(struct ocfs2_refcount_block *)ref_root_bh->b_data;
 
-	अगर (!(le32_to_cpu(rb->rf_flags) & OCFS2_REFCOUNT_TREE_FL)) अणु
+	if (!(le32_to_cpu(rb->rf_flags) & OCFS2_REFCOUNT_TREE_FL)) {
 		ocfs2_find_refcount_rec_in_rl(ci, ref_root_bh, cpos, len,
 					      ret_rec, index);
 		*ret_bh = ref_root_bh;
 		get_bh(ref_root_bh);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	el = &rb->rf_list;
 	low_cpos = cpos & OCFS2_32BIT_POS_MASK;
 
-	अगर (el->l_tree_depth) अणु
+	if (el->l_tree_depth) {
 		ret = ocfs2_find_leaf(ci, el, low_cpos, &eb_bh);
-		अगर (ret) अणु
-			mlog_त्रुटि_सं(ret);
-			जाओ out;
-		पूर्ण
+		if (ret) {
+			mlog_errno(ret);
+			goto out;
+		}
 
-		eb = (काष्ठा ocfs2_extent_block *) eb_bh->b_data;
+		eb = (struct ocfs2_extent_block *) eb_bh->b_data;
 		el = &eb->h_list;
 
-		अगर (el->l_tree_depth) अणु
+		if (el->l_tree_depth) {
 			ret = ocfs2_error(sb,
 					  "refcount tree %llu has non zero tree depth in leaf btree tree block %llu\n",
-					  (अचिन्हित दीर्घ दीर्घ)ocfs2_metadata_cache_owner(ci),
-					  (अचिन्हित दीर्घ दीर्घ)eb_bh->b_blocknr);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+					  (unsigned long long)ocfs2_metadata_cache_owner(ci),
+					  (unsigned long long)eb_bh->b_blocknr);
+			goto out;
+		}
+	}
 
 	found = 0;
-	क्रम (i = le16_to_cpu(el->l_next_मुक्त_rec) - 1; i >= 0; i--) अणु
+	for (i = le16_to_cpu(el->l_next_free_rec) - 1; i >= 0; i--) {
 		rec = &el->l_recs[i];
 
-		अगर (le32_to_cpu(rec->e_cpos) <= low_cpos) अणु
+		if (le32_to_cpu(rec->e_cpos) <= low_cpos) {
 			found = 1;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (found) अणु
+	if (found) {
 		ret = ocfs2_get_refcount_cpos_end(ci, ref_root_bh,
 						  eb, el, i, &cpos_end);
-		अगर (ret) अणु
-			mlog_त्रुटि_सं(ret);
-			जाओ out;
-		पूर्ण
+		if (ret) {
+			mlog_errno(ret);
+			goto out;
+		}
 
-		अगर (cpos_end < low_cpos + len)
+		if (cpos_end < low_cpos + len)
 			len = cpos_end - low_cpos;
-	पूर्ण
+	}
 
-	ret = ocfs2_पढ़ो_refcount_block(ci, le64_to_cpu(rec->e_blkno),
+	ret = ocfs2_read_refcount_block(ci, le64_to_cpu(rec->e_blkno),
 					&ref_leaf_bh);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto out;
+	}
 
 	ocfs2_find_refcount_rec_in_rl(ci, ref_leaf_bh, cpos, len,
 				      ret_rec, index);
 	*ret_bh = ref_leaf_bh;
 out:
-	brअन्यथा(eb_bh);
-	वापस ret;
-पूर्ण
+	brelse(eb_bh);
+	return ret;
+}
 
-क्रमागत ocfs2_ref_rec_contig अणु
+enum ocfs2_ref_rec_contig {
 	REF_CONTIG_NONE = 0,
 	REF_CONTIG_LEFT,
 	REF_CONTIG_RIGHT,
 	REF_CONTIG_LEFTRIGHT,
-पूर्ण;
+};
 
-अटल क्रमागत ocfs2_ref_rec_contig
-	ocfs2_refcount_rec_adjacent(काष्ठा ocfs2_refcount_block *rb,
-				    पूर्णांक index)
-अणु
-	अगर ((rb->rf_records.rl_recs[index].r_refcount ==
+static enum ocfs2_ref_rec_contig
+	ocfs2_refcount_rec_adjacent(struct ocfs2_refcount_block *rb,
+				    int index)
+{
+	if ((rb->rf_records.rl_recs[index].r_refcount ==
 	    rb->rf_records.rl_recs[index + 1].r_refcount) &&
 	    (le64_to_cpu(rb->rf_records.rl_recs[index].r_cpos) +
 	    le32_to_cpu(rb->rf_records.rl_recs[index].r_clusters) ==
 	    le64_to_cpu(rb->rf_records.rl_recs[index + 1].r_cpos)))
-		वापस REF_CONTIG_RIGHT;
+		return REF_CONTIG_RIGHT;
 
-	वापस REF_CONTIG_NONE;
-पूर्ण
+	return REF_CONTIG_NONE;
+}
 
-अटल क्रमागत ocfs2_ref_rec_contig
-	ocfs2_refcount_rec_contig(काष्ठा ocfs2_refcount_block *rb,
-				  पूर्णांक index)
-अणु
-	क्रमागत ocfs2_ref_rec_contig ret = REF_CONTIG_NONE;
+static enum ocfs2_ref_rec_contig
+	ocfs2_refcount_rec_contig(struct ocfs2_refcount_block *rb,
+				  int index)
+{
+	enum ocfs2_ref_rec_contig ret = REF_CONTIG_NONE;
 
-	अगर (index < le16_to_cpu(rb->rf_records.rl_used) - 1)
+	if (index < le16_to_cpu(rb->rf_records.rl_used) - 1)
 		ret = ocfs2_refcount_rec_adjacent(rb, index);
 
-	अगर (index > 0) अणु
-		क्रमागत ocfs2_ref_rec_contig पंचांगp;
+	if (index > 0) {
+		enum ocfs2_ref_rec_contig tmp;
 
-		पंचांगp = ocfs2_refcount_rec_adjacent(rb, index - 1);
+		tmp = ocfs2_refcount_rec_adjacent(rb, index - 1);
 
-		अगर (पंचांगp == REF_CONTIG_RIGHT) अणु
-			अगर (ret == REF_CONTIG_RIGHT)
+		if (tmp == REF_CONTIG_RIGHT) {
+			if (ret == REF_CONTIG_RIGHT)
 				ret = REF_CONTIG_LEFTRIGHT;
-			अन्यथा
+			else
 				ret = REF_CONTIG_LEFT;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम ocfs2_rotate_refcount_rec_left(काष्ठा ocfs2_refcount_block *rb,
-					   पूर्णांक index)
-अणु
+static void ocfs2_rotate_refcount_rec_left(struct ocfs2_refcount_block *rb,
+					   int index)
+{
 	BUG_ON(rb->rf_records.rl_recs[index].r_refcount !=
 	       rb->rf_records.rl_recs[index+1].r_refcount);
 
 	le32_add_cpu(&rb->rf_records.rl_recs[index].r_clusters,
 		     le32_to_cpu(rb->rf_records.rl_recs[index+1].r_clusters));
 
-	अगर (index < le16_to_cpu(rb->rf_records.rl_used) - 2)
-		स_हटाओ(&rb->rf_records.rl_recs[index + 1],
+	if (index < le16_to_cpu(rb->rf_records.rl_used) - 2)
+		memmove(&rb->rf_records.rl_recs[index + 1],
 			&rb->rf_records.rl_recs[index + 2],
-			माप(काष्ठा ocfs2_refcount_rec) *
+			sizeof(struct ocfs2_refcount_rec) *
 			(le16_to_cpu(rb->rf_records.rl_used) - index - 2));
 
-	स_रखो(&rb->rf_records.rl_recs[le16_to_cpu(rb->rf_records.rl_used) - 1],
-	       0, माप(काष्ठा ocfs2_refcount_rec));
+	memset(&rb->rf_records.rl_recs[le16_to_cpu(rb->rf_records.rl_used) - 1],
+	       0, sizeof(struct ocfs2_refcount_rec));
 	le16_add_cpu(&rb->rf_records.rl_used, -1);
-पूर्ण
+}
 
 /*
- * Merge the refcount rec अगर we are contiguous with the adjacent recs.
+ * Merge the refcount rec if we are contiguous with the adjacent recs.
  */
-अटल व्योम ocfs2_refcount_rec_merge(काष्ठा ocfs2_refcount_block *rb,
-				     पूर्णांक index)
-अणु
-	क्रमागत ocfs2_ref_rec_contig contig =
+static void ocfs2_refcount_rec_merge(struct ocfs2_refcount_block *rb,
+				     int index)
+{
+	enum ocfs2_ref_rec_contig contig =
 				ocfs2_refcount_rec_contig(rb, index);
 
-	अगर (contig == REF_CONTIG_NONE)
-		वापस;
+	if (contig == REF_CONTIG_NONE)
+		return;
 
-	अगर (contig == REF_CONTIG_LEFT || contig == REF_CONTIG_LEFTRIGHT) अणु
+	if (contig == REF_CONTIG_LEFT || contig == REF_CONTIG_LEFTRIGHT) {
 		BUG_ON(index == 0);
 		index--;
-	पूर्ण
+	}
 
 	ocfs2_rotate_refcount_rec_left(rb, index);
 
-	अगर (contig == REF_CONTIG_LEFTRIGHT)
+	if (contig == REF_CONTIG_LEFTRIGHT)
 		ocfs2_rotate_refcount_rec_left(rb, index);
-पूर्ण
+}
 
 /*
  * Change the refcount indexed by "index" in ref_bh.
- * If refcount reaches 0, हटाओ it.
+ * If refcount reaches 0, remove it.
  */
-अटल पूर्णांक ocfs2_change_refcount_rec(handle_t *handle,
-				     काष्ठा ocfs2_caching_info *ci,
-				     काष्ठा buffer_head *ref_leaf_bh,
-				     पूर्णांक index, पूर्णांक merge, पूर्णांक change)
-अणु
-	पूर्णांक ret;
-	काष्ठा ocfs2_refcount_block *rb =
-			(काष्ठा ocfs2_refcount_block *)ref_leaf_bh->b_data;
-	काष्ठा ocfs2_refcount_list *rl = &rb->rf_records;
-	काष्ठा ocfs2_refcount_rec *rec = &rl->rl_recs[index];
+static int ocfs2_change_refcount_rec(handle_t *handle,
+				     struct ocfs2_caching_info *ci,
+				     struct buffer_head *ref_leaf_bh,
+				     int index, int merge, int change)
+{
+	int ret;
+	struct ocfs2_refcount_block *rb =
+			(struct ocfs2_refcount_block *)ref_leaf_bh->b_data;
+	struct ocfs2_refcount_list *rl = &rb->rf_records;
+	struct ocfs2_refcount_rec *rec = &rl->rl_recs[index];
 
 	ret = ocfs2_journal_access_rb(handle, ci, ref_leaf_bh,
 				      OCFS2_JOURNAL_ACCESS_WRITE);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto out;
+	}
 
 	trace_ocfs2_change_refcount_rec(
-		(अचिन्हित दीर्घ दीर्घ)ocfs2_metadata_cache_owner(ci),
+		(unsigned long long)ocfs2_metadata_cache_owner(ci),
 		index, le32_to_cpu(rec->r_refcount), change);
 	le32_add_cpu(&rec->r_refcount, change);
 
-	अगर (!rec->r_refcount) अणु
-		अगर (index != le16_to_cpu(rl->rl_used) - 1) अणु
-			स_हटाओ(rec, rec + 1,
+	if (!rec->r_refcount) {
+		if (index != le16_to_cpu(rl->rl_used) - 1) {
+			memmove(rec, rec + 1,
 				(le16_to_cpu(rl->rl_used) - index - 1) *
-				माप(काष्ठा ocfs2_refcount_rec));
-			स_रखो(&rl->rl_recs[le16_to_cpu(rl->rl_used) - 1],
-			       0, माप(काष्ठा ocfs2_refcount_rec));
-		पूर्ण
+				sizeof(struct ocfs2_refcount_rec));
+			memset(&rl->rl_recs[le16_to_cpu(rl->rl_used) - 1],
+			       0, sizeof(struct ocfs2_refcount_rec));
+		}
 
 		le16_add_cpu(&rl->rl_used, -1);
-	पूर्ण अन्यथा अगर (merge)
+	} else if (merge)
 		ocfs2_refcount_rec_merge(rb, index);
 
 	ocfs2_journal_dirty(handle, ref_leaf_bh);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ocfs2_expand_अंतरभूत_ref_root(handle_t *handle,
-					काष्ठा ocfs2_caching_info *ci,
-					काष्ठा buffer_head *ref_root_bh,
-					काष्ठा buffer_head **ref_leaf_bh,
-					काष्ठा ocfs2_alloc_context *meta_ac)
-अणु
-	पूर्णांक ret;
+static int ocfs2_expand_inline_ref_root(handle_t *handle,
+					struct ocfs2_caching_info *ci,
+					struct buffer_head *ref_root_bh,
+					struct buffer_head **ref_leaf_bh,
+					struct ocfs2_alloc_context *meta_ac)
+{
+	int ret;
 	u16 suballoc_bit_start;
 	u32 num_got;
 	u64 suballoc_loc, blkno;
-	काष्ठा super_block *sb = ocfs2_metadata_cache_get_super(ci);
-	काष्ठा buffer_head *new_bh = शून्य;
-	काष्ठा ocfs2_refcount_block *new_rb;
-	काष्ठा ocfs2_refcount_block *root_rb =
-			(काष्ठा ocfs2_refcount_block *)ref_root_bh->b_data;
+	struct super_block *sb = ocfs2_metadata_cache_get_super(ci);
+	struct buffer_head *new_bh = NULL;
+	struct ocfs2_refcount_block *new_rb;
+	struct ocfs2_refcount_block *root_rb =
+			(struct ocfs2_refcount_block *)ref_root_bh->b_data;
 
 	ret = ocfs2_journal_access_rb(handle, ci, ref_root_bh,
 				      OCFS2_JOURNAL_ACCESS_WRITE);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto out;
+	}
 
 	ret = ocfs2_claim_metadata(handle, meta_ac, 1, &suballoc_loc,
 				   &suballoc_bit_start, &num_got,
 				   &blkno);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto out;
+	}
 
 	new_bh = sb_getblk(sb, blkno);
-	अगर (new_bh == शून्य) अणु
+	if (new_bh == NULL) {
 		ret = -ENOMEM;
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+		mlog_errno(ret);
+		goto out;
+	}
 	ocfs2_set_new_buffer_uptodate(ci, new_bh);
 
 	ret = ocfs2_journal_access_rb(handle, ci, new_bh,
 				      OCFS2_JOURNAL_ACCESS_CREATE);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto out;
+	}
 
 	/*
 	 * Initialize ocfs2_refcount_block.
-	 * It should contain the same inक्रमmation as the old root.
-	 * so just स_नकल it and change the corresponding field.
+	 * It should contain the same information as the old root.
+	 * so just memcpy it and change the corresponding field.
 	 */
-	स_नकल(new_bh->b_data, ref_root_bh->b_data, sb->s_blocksize);
+	memcpy(new_bh->b_data, ref_root_bh->b_data, sb->s_blocksize);
 
-	new_rb = (काष्ठा ocfs2_refcount_block *)new_bh->b_data;
+	new_rb = (struct ocfs2_refcount_block *)new_bh->b_data;
 	new_rb->rf_suballoc_slot = cpu_to_le16(meta_ac->ac_alloc_slot);
 	new_rb->rf_suballoc_loc = cpu_to_le64(suballoc_loc);
 	new_rb->rf_suballoc_bit = cpu_to_le16(suballoc_bit_start);
@@ -1336,136 +1335,136 @@ out:
 	ocfs2_journal_dirty(handle, new_bh);
 
 	/* Now change the root. */
-	स_रखो(&root_rb->rf_list, 0, sb->s_blocksize -
-	       दुरत्व(काष्ठा ocfs2_refcount_block, rf_list));
+	memset(&root_rb->rf_list, 0, sb->s_blocksize -
+	       offsetof(struct ocfs2_refcount_block, rf_list));
 	root_rb->rf_list.l_count = cpu_to_le16(ocfs2_extent_recs_per_rb(sb));
 	root_rb->rf_clusters = cpu_to_le32(1);
-	root_rb->rf_list.l_next_मुक्त_rec = cpu_to_le16(1);
+	root_rb->rf_list.l_next_free_rec = cpu_to_le16(1);
 	root_rb->rf_list.l_recs[0].e_blkno = cpu_to_le64(blkno);
 	root_rb->rf_list.l_recs[0].e_leaf_clusters = cpu_to_le16(1);
 	root_rb->rf_flags = cpu_to_le32(OCFS2_REFCOUNT_TREE_FL);
 
 	ocfs2_journal_dirty(handle, ref_root_bh);
 
-	trace_ocfs2_expand_अंतरभूत_ref_root((अचिन्हित दीर्घ दीर्घ)blkno,
+	trace_ocfs2_expand_inline_ref_root((unsigned long long)blkno,
 		le16_to_cpu(new_rb->rf_records.rl_used));
 
 	*ref_leaf_bh = new_bh;
-	new_bh = शून्य;
+	new_bh = NULL;
 out:
-	brअन्यथा(new_bh);
-	वापस ret;
-पूर्ण
+	brelse(new_bh);
+	return ret;
+}
 
-अटल पूर्णांक ocfs2_refcount_rec_no_पूर्णांकersect(काष्ठा ocfs2_refcount_rec *prev,
-					   काष्ठा ocfs2_refcount_rec *next)
-अणु
-	अगर (ocfs2_get_ref_rec_low_cpos(prev) + le32_to_cpu(prev->r_clusters) <=
+static int ocfs2_refcount_rec_no_intersect(struct ocfs2_refcount_rec *prev,
+					   struct ocfs2_refcount_rec *next)
+{
+	if (ocfs2_get_ref_rec_low_cpos(prev) + le32_to_cpu(prev->r_clusters) <=
 		ocfs2_get_ref_rec_low_cpos(next))
-		वापस 1;
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cmp_refcount_rec_by_low_cpos(स्थिर व्योम *a, स्थिर व्योम *b)
-अणु
-	स्थिर काष्ठा ocfs2_refcount_rec *l = a, *r = b;
+static int cmp_refcount_rec_by_low_cpos(const void *a, const void *b)
+{
+	const struct ocfs2_refcount_rec *l = a, *r = b;
 	u32 l_cpos = ocfs2_get_ref_rec_low_cpos(l);
 	u32 r_cpos = ocfs2_get_ref_rec_low_cpos(r);
 
-	अगर (l_cpos > r_cpos)
-		वापस 1;
-	अगर (l_cpos < r_cpos)
-		वापस -1;
-	वापस 0;
-पूर्ण
+	if (l_cpos > r_cpos)
+		return 1;
+	if (l_cpos < r_cpos)
+		return -1;
+	return 0;
+}
 
-अटल पूर्णांक cmp_refcount_rec_by_cpos(स्थिर व्योम *a, स्थिर व्योम *b)
-अणु
-	स्थिर काष्ठा ocfs2_refcount_rec *l = a, *r = b;
+static int cmp_refcount_rec_by_cpos(const void *a, const void *b)
+{
+	const struct ocfs2_refcount_rec *l = a, *r = b;
 	u64 l_cpos = le64_to_cpu(l->r_cpos);
 	u64 r_cpos = le64_to_cpu(r->r_cpos);
 
-	अगर (l_cpos > r_cpos)
-		वापस 1;
-	अगर (l_cpos < r_cpos)
-		वापस -1;
-	वापस 0;
-पूर्ण
+	if (l_cpos > r_cpos)
+		return 1;
+	if (l_cpos < r_cpos)
+		return -1;
+	return 0;
+}
 
-अटल व्योम swap_refcount_rec(व्योम *a, व्योम *b, पूर्णांक size)
-अणु
-	काष्ठा ocfs2_refcount_rec *l = a, *r = b;
+static void swap_refcount_rec(void *a, void *b, int size)
+{
+	struct ocfs2_refcount_rec *l = a, *r = b;
 
 	swap(*l, *r);
-पूर्ण
+}
 
 /*
  * The refcount cpos are ordered by their 64bit cpos,
  * But we will use the low 32 bit to be the e_cpos in the b-tree.
- * So we need to make sure that this pos isn't पूर्णांकersected with others.
+ * So we need to make sure that this pos isn't intersected with others.
  *
- * Note: The refcount block is alपढ़ोy sorted by their low 32 bit cpos,
- *       So just try the middle pos first, and we will निकास when we find
+ * Note: The refcount block is already sorted by their low 32 bit cpos,
+ *       So just try the middle pos first, and we will exit when we find
  *       the good position.
  */
-अटल पूर्णांक ocfs2_find_refcount_split_pos(काष्ठा ocfs2_refcount_list *rl,
-					 u32 *split_pos, पूर्णांक *split_index)
-अणु
-	पूर्णांक num_used = le16_to_cpu(rl->rl_used);
-	पूर्णांक delta, middle = num_used / 2;
+static int ocfs2_find_refcount_split_pos(struct ocfs2_refcount_list *rl,
+					 u32 *split_pos, int *split_index)
+{
+	int num_used = le16_to_cpu(rl->rl_used);
+	int delta, middle = num_used / 2;
 
-	क्रम (delta = 0; delta < middle; delta++) अणु
+	for (delta = 0; delta < middle; delta++) {
 		/* Let's check delta earlier than middle */
-		अगर (ocfs2_refcount_rec_no_पूर्णांकersect(
+		if (ocfs2_refcount_rec_no_intersect(
 					&rl->rl_recs[middle - delta - 1],
-					&rl->rl_recs[middle - delta])) अणु
+					&rl->rl_recs[middle - delta])) {
 			*split_index = middle - delta;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		/* For even counts, करोn't walk off the end */
-		अगर ((middle + delta + 1) == num_used)
-			जारी;
+		/* For even counts, don't walk off the end */
+		if ((middle + delta + 1) == num_used)
+			continue;
 
 		/* Now try delta past middle */
-		अगर (ocfs2_refcount_rec_no_पूर्णांकersect(
+		if (ocfs2_refcount_rec_no_intersect(
 					&rl->rl_recs[middle + delta],
-					&rl->rl_recs[middle + delta + 1])) अणु
+					&rl->rl_recs[middle + delta + 1])) {
 			*split_index = middle + delta + 1;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (delta >= middle)
-		वापस -ENOSPC;
+	if (delta >= middle)
+		return -ENOSPC;
 
 	*split_pos = ocfs2_get_ref_rec_low_cpos(&rl->rl_recs[*split_index]);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ocfs2_भागide_leaf_refcount_block(काष्ठा buffer_head *ref_leaf_bh,
-					    काष्ठा buffer_head *new_bh,
+static int ocfs2_divide_leaf_refcount_block(struct buffer_head *ref_leaf_bh,
+					    struct buffer_head *new_bh,
 					    u32 *split_cpos)
-अणु
-	पूर्णांक split_index = 0, num_moved, ret;
+{
+	int split_index = 0, num_moved, ret;
 	u32 cpos = 0;
-	काष्ठा ocfs2_refcount_block *rb =
-			(काष्ठा ocfs2_refcount_block *)ref_leaf_bh->b_data;
-	काष्ठा ocfs2_refcount_list *rl = &rb->rf_records;
-	काष्ठा ocfs2_refcount_block *new_rb =
-			(काष्ठा ocfs2_refcount_block *)new_bh->b_data;
-	काष्ठा ocfs2_refcount_list *new_rl = &new_rb->rf_records;
+	struct ocfs2_refcount_block *rb =
+			(struct ocfs2_refcount_block *)ref_leaf_bh->b_data;
+	struct ocfs2_refcount_list *rl = &rb->rf_records;
+	struct ocfs2_refcount_block *new_rb =
+			(struct ocfs2_refcount_block *)new_bh->b_data;
+	struct ocfs2_refcount_list *new_rl = &new_rb->rf_records;
 
-	trace_ocfs2_भागide_leaf_refcount_block(
-		(अचिन्हित दीर्घ दीर्घ)ref_leaf_bh->b_blocknr,
+	trace_ocfs2_divide_leaf_refcount_block(
+		(unsigned long long)ref_leaf_bh->b_blocknr,
 		le16_to_cpu(rl->rl_count), le16_to_cpu(rl->rl_used));
 
 	/*
 	 * XXX: Improvement later.
 	 * If we know all the high 32 bit cpos is the same, no need to sort.
 	 *
-	 * In order to make the whole process safe, we करो:
+	 * In order to make the whole process safe, we do:
 	 * 1. sort the entries by their low 32 bit cpos first so that we can
 	 *    find the split cpos easily.
 	 * 2. call ocfs2_insert_extent to insert the new refcount block.
@@ -1474,102 +1473,102 @@ out:
 	 * 5. dirty the new_rb and rb.
 	 */
 	sort(&rl->rl_recs, le16_to_cpu(rl->rl_used),
-	     माप(काष्ठा ocfs2_refcount_rec),
+	     sizeof(struct ocfs2_refcount_rec),
 	     cmp_refcount_rec_by_low_cpos, swap_refcount_rec);
 
 	ret = ocfs2_find_refcount_split_pos(rl, &cpos, &split_index);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		वापस ret;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		return ret;
+	}
 
 	new_rb->rf_cpos = cpu_to_le32(cpos);
 
 	/* move refcount records starting from split_index to the new block. */
 	num_moved = le16_to_cpu(rl->rl_used) - split_index;
-	स_नकल(new_rl->rl_recs, &rl->rl_recs[split_index],
-	       num_moved * माप(काष्ठा ocfs2_refcount_rec));
+	memcpy(new_rl->rl_recs, &rl->rl_recs[split_index],
+	       num_moved * sizeof(struct ocfs2_refcount_rec));
 
-	/*ok, हटाओ the entries we just moved over to the other block. */
-	स_रखो(&rl->rl_recs[split_index], 0,
-	       num_moved * माप(काष्ठा ocfs2_refcount_rec));
+	/*ok, remove the entries we just moved over to the other block. */
+	memset(&rl->rl_recs[split_index], 0,
+	       num_moved * sizeof(struct ocfs2_refcount_rec));
 
 	/* change old and new rl_used accordingly. */
 	le16_add_cpu(&rl->rl_used, -num_moved);
 	new_rl->rl_used = cpu_to_le16(num_moved);
 
 	sort(&rl->rl_recs, le16_to_cpu(rl->rl_used),
-	     माप(काष्ठा ocfs2_refcount_rec),
+	     sizeof(struct ocfs2_refcount_rec),
 	     cmp_refcount_rec_by_cpos, swap_refcount_rec);
 
 	sort(&new_rl->rl_recs, le16_to_cpu(new_rl->rl_used),
-	     माप(काष्ठा ocfs2_refcount_rec),
+	     sizeof(struct ocfs2_refcount_rec),
 	     cmp_refcount_rec_by_cpos, swap_refcount_rec);
 
 	*split_cpos = cpos;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ocfs2_new_leaf_refcount_block(handle_t *handle,
-					 काष्ठा ocfs2_caching_info *ci,
-					 काष्ठा buffer_head *ref_root_bh,
-					 काष्ठा buffer_head *ref_leaf_bh,
-					 काष्ठा ocfs2_alloc_context *meta_ac)
-अणु
-	पूर्णांक ret;
+static int ocfs2_new_leaf_refcount_block(handle_t *handle,
+					 struct ocfs2_caching_info *ci,
+					 struct buffer_head *ref_root_bh,
+					 struct buffer_head *ref_leaf_bh,
+					 struct ocfs2_alloc_context *meta_ac)
+{
+	int ret;
 	u16 suballoc_bit_start;
 	u32 num_got, new_cpos;
 	u64 suballoc_loc, blkno;
-	काष्ठा super_block *sb = ocfs2_metadata_cache_get_super(ci);
-	काष्ठा ocfs2_refcount_block *root_rb =
-			(काष्ठा ocfs2_refcount_block *)ref_root_bh->b_data;
-	काष्ठा buffer_head *new_bh = शून्य;
-	काष्ठा ocfs2_refcount_block *new_rb;
-	काष्ठा ocfs2_extent_tree ref_et;
+	struct super_block *sb = ocfs2_metadata_cache_get_super(ci);
+	struct ocfs2_refcount_block *root_rb =
+			(struct ocfs2_refcount_block *)ref_root_bh->b_data;
+	struct buffer_head *new_bh = NULL;
+	struct ocfs2_refcount_block *new_rb;
+	struct ocfs2_extent_tree ref_et;
 
 	BUG_ON(!(le32_to_cpu(root_rb->rf_flags) & OCFS2_REFCOUNT_TREE_FL));
 
 	ret = ocfs2_journal_access_rb(handle, ci, ref_root_bh,
 				      OCFS2_JOURNAL_ACCESS_WRITE);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto out;
+	}
 
 	ret = ocfs2_journal_access_rb(handle, ci, ref_leaf_bh,
 				      OCFS2_JOURNAL_ACCESS_WRITE);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto out;
+	}
 
 	ret = ocfs2_claim_metadata(handle, meta_ac, 1, &suballoc_loc,
 				   &suballoc_bit_start, &num_got,
 				   &blkno);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto out;
+	}
 
 	new_bh = sb_getblk(sb, blkno);
-	अगर (new_bh == शून्य) अणु
+	if (new_bh == NULL) {
 		ret = -ENOMEM;
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+		mlog_errno(ret);
+		goto out;
+	}
 	ocfs2_set_new_buffer_uptodate(ci, new_bh);
 
 	ret = ocfs2_journal_access_rb(handle, ci, new_bh,
 				      OCFS2_JOURNAL_ACCESS_CREATE);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto out;
+	}
 
 	/* Initialize ocfs2_refcount_block. */
-	new_rb = (काष्ठा ocfs2_refcount_block *)new_bh->b_data;
-	स_रखो(new_rb, 0, sb->s_blocksize);
-	म_नकल((व्योम *)new_rb, OCFS2_REFCOUNT_BLOCK_SIGNATURE);
+	new_rb = (struct ocfs2_refcount_block *)new_bh->b_data;
+	memset(new_rb, 0, sb->s_blocksize);
+	strcpy((void *)new_rb, OCFS2_REFCOUNT_BLOCK_SIGNATURE);
 	new_rb->rf_suballoc_slot = cpu_to_le16(meta_ac->ac_alloc_slot);
 	new_rb->rf_suballoc_loc = cpu_to_le64(suballoc_loc);
 	new_rb->rf_suballoc_bit = cpu_to_le16(suballoc_bit_start);
@@ -1581,11 +1580,11 @@ out:
 				cpu_to_le16(ocfs2_refcount_recs_per_rb(sb));
 	new_rb->rf_generation = root_rb->rf_generation;
 
-	ret = ocfs2_भागide_leaf_refcount_block(ref_leaf_bh, new_bh, &new_cpos);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+	ret = ocfs2_divide_leaf_refcount_block(ref_leaf_bh, new_bh, &new_cpos);
+	if (ret) {
+		mlog_errno(ret);
+		goto out;
+	}
 
 	ocfs2_journal_dirty(handle, ref_leaf_bh);
 	ocfs2_journal_dirty(handle, new_bh);
@@ -1593,54 +1592,54 @@ out:
 	ocfs2_init_refcount_extent_tree(&ref_et, ci, ref_root_bh);
 
 	trace_ocfs2_new_leaf_refcount_block(
-			(अचिन्हित दीर्घ दीर्घ)new_bh->b_blocknr, new_cpos);
+			(unsigned long long)new_bh->b_blocknr, new_cpos);
 
-	/* Insert the new leaf block with the specअगरic offset cpos. */
+	/* Insert the new leaf block with the specific offset cpos. */
 	ret = ocfs2_insert_extent(handle, &ref_et, new_cpos, new_bh->b_blocknr,
 				  1, 0, meta_ac);
-	अगर (ret)
-		mlog_त्रुटि_सं(ret);
+	if (ret)
+		mlog_errno(ret);
 
 out:
-	brअन्यथा(new_bh);
-	वापस ret;
-पूर्ण
+	brelse(new_bh);
+	return ret;
+}
 
-अटल पूर्णांक ocfs2_expand_refcount_tree(handle_t *handle,
-				      काष्ठा ocfs2_caching_info *ci,
-				      काष्ठा buffer_head *ref_root_bh,
-				      काष्ठा buffer_head *ref_leaf_bh,
-				      काष्ठा ocfs2_alloc_context *meta_ac)
-अणु
-	पूर्णांक ret;
-	काष्ठा buffer_head *expand_bh = शून्य;
+static int ocfs2_expand_refcount_tree(handle_t *handle,
+				      struct ocfs2_caching_info *ci,
+				      struct buffer_head *ref_root_bh,
+				      struct buffer_head *ref_leaf_bh,
+				      struct ocfs2_alloc_context *meta_ac)
+{
+	int ret;
+	struct buffer_head *expand_bh = NULL;
 
-	अगर (ref_root_bh == ref_leaf_bh) अणु
+	if (ref_root_bh == ref_leaf_bh) {
 		/*
 		 * the old root bh hasn't been expanded to a b-tree,
 		 * so expand it first.
 		 */
-		ret = ocfs2_expand_अंतरभूत_ref_root(handle, ci, ref_root_bh,
+		ret = ocfs2_expand_inline_ref_root(handle, ci, ref_root_bh,
 						   &expand_bh, meta_ac);
-		अगर (ret) अणु
-			mlog_त्रुटि_सं(ret);
-			जाओ out;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		if (ret) {
+			mlog_errno(ret);
+			goto out;
+		}
+	} else {
 		expand_bh = ref_leaf_bh;
 		get_bh(expand_bh);
-	पूर्ण
+	}
 
 
-	/* Now add a new refcount block पूर्णांकo the tree.*/
+	/* Now add a new refcount block into the tree.*/
 	ret = ocfs2_new_leaf_refcount_block(handle, ci, ref_root_bh,
 					    expand_bh, meta_ac);
-	अगर (ret)
-		mlog_त्रुटि_सं(ret);
+	if (ret)
+		mlog_errno(ret);
 out:
-	brअन्यथा(expand_bh);
-	वापस ret;
-पूर्ण
+	brelse(expand_bh);
+	return ret;
+}
 
 /*
  * Adjust the extent rec in b-tree representing ref_leaf_bh.
@@ -1648,76 +1647,76 @@ out:
  * Only called when we have inserted a new refcount rec at index 0
  * which means ocfs2_extent_rec.e_cpos may need some change.
  */
-अटल पूर्णांक ocfs2_adjust_refcount_rec(handle_t *handle,
-				     काष्ठा ocfs2_caching_info *ci,
-				     काष्ठा buffer_head *ref_root_bh,
-				     काष्ठा buffer_head *ref_leaf_bh,
-				     काष्ठा ocfs2_refcount_rec *rec)
-अणु
-	पूर्णांक ret = 0, i;
+static int ocfs2_adjust_refcount_rec(handle_t *handle,
+				     struct ocfs2_caching_info *ci,
+				     struct buffer_head *ref_root_bh,
+				     struct buffer_head *ref_leaf_bh,
+				     struct ocfs2_refcount_rec *rec)
+{
+	int ret = 0, i;
 	u32 new_cpos, old_cpos;
-	काष्ठा ocfs2_path *path = शून्य;
-	काष्ठा ocfs2_extent_tree et;
-	काष्ठा ocfs2_refcount_block *rb =
-		(काष्ठा ocfs2_refcount_block *)ref_root_bh->b_data;
-	काष्ठा ocfs2_extent_list *el;
+	struct ocfs2_path *path = NULL;
+	struct ocfs2_extent_tree et;
+	struct ocfs2_refcount_block *rb =
+		(struct ocfs2_refcount_block *)ref_root_bh->b_data;
+	struct ocfs2_extent_list *el;
 
-	अगर (!(le32_to_cpu(rb->rf_flags) & OCFS2_REFCOUNT_TREE_FL))
-		जाओ out;
+	if (!(le32_to_cpu(rb->rf_flags) & OCFS2_REFCOUNT_TREE_FL))
+		goto out;
 
-	rb = (काष्ठा ocfs2_refcount_block *)ref_leaf_bh->b_data;
+	rb = (struct ocfs2_refcount_block *)ref_leaf_bh->b_data;
 	old_cpos = le32_to_cpu(rb->rf_cpos);
 	new_cpos = le64_to_cpu(rec->r_cpos) & OCFS2_32BIT_POS_MASK;
-	अगर (old_cpos <= new_cpos)
-		जाओ out;
+	if (old_cpos <= new_cpos)
+		goto out;
 
 	ocfs2_init_refcount_extent_tree(&et, ci, ref_root_bh);
 
 	path = ocfs2_new_path_from_et(&et);
-	अगर (!path) अणु
+	if (!path) {
 		ret = -ENOMEM;
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+		mlog_errno(ret);
+		goto out;
+	}
 
 	ret = ocfs2_find_path(ci, path, old_cpos);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto out;
+	}
 
 	/*
-	 * 2 more credits, one क्रम the leaf refcount block, one क्रम
+	 * 2 more credits, one for the leaf refcount block, one for
 	 * the extent block contains the extent rec.
 	 */
 	ret = ocfs2_extend_trans(handle, 2);
-	अगर (ret < 0) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+	if (ret < 0) {
+		mlog_errno(ret);
+		goto out;
+	}
 
 	ret = ocfs2_journal_access_rb(handle, ci, ref_leaf_bh,
 				      OCFS2_JOURNAL_ACCESS_WRITE);
-	अगर (ret < 0) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+	if (ret < 0) {
+		mlog_errno(ret);
+		goto out;
+	}
 
 	ret = ocfs2_journal_access_eb(handle, ci, path_leaf_bh(path),
 				      OCFS2_JOURNAL_ACCESS_WRITE);
-	अगर (ret < 0) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+	if (ret < 0) {
+		mlog_errno(ret);
+		goto out;
+	}
 
 	/* change the leaf extent block first. */
 	el = path_leaf_el(path);
 
-	क्रम (i = 0; i < le16_to_cpu(el->l_next_मुक्त_rec); i++)
-		अगर (le32_to_cpu(el->l_recs[i].e_cpos) == old_cpos)
-			अवरोध;
+	for (i = 0; i < le16_to_cpu(el->l_next_free_rec); i++)
+		if (le32_to_cpu(el->l_recs[i].e_cpos) == old_cpos)
+			break;
 
-	BUG_ON(i == le16_to_cpu(el->l_next_मुक्त_rec));
+	BUG_ON(i == le16_to_cpu(el->l_next_free_rec));
 
 	el->l_recs[i].e_cpos = cpu_to_le32(new_cpos);
 
@@ -1728,115 +1727,115 @@ out:
 	ocfs2_journal_dirty(handle, ref_leaf_bh);
 
 out:
-	ocfs2_मुक्त_path(path);
-	वापस ret;
-पूर्ण
+	ocfs2_free_path(path);
+	return ret;
+}
 
-अटल पूर्णांक ocfs2_insert_refcount_rec(handle_t *handle,
-				     काष्ठा ocfs2_caching_info *ci,
-				     काष्ठा buffer_head *ref_root_bh,
-				     काष्ठा buffer_head *ref_leaf_bh,
-				     काष्ठा ocfs2_refcount_rec *rec,
-				     पूर्णांक index, पूर्णांक merge,
-				     काष्ठा ocfs2_alloc_context *meta_ac)
-अणु
-	पूर्णांक ret;
-	काष्ठा ocfs2_refcount_block *rb =
-			(काष्ठा ocfs2_refcount_block *)ref_leaf_bh->b_data;
-	काष्ठा ocfs2_refcount_list *rf_list = &rb->rf_records;
-	काष्ठा buffer_head *new_bh = शून्य;
+static int ocfs2_insert_refcount_rec(handle_t *handle,
+				     struct ocfs2_caching_info *ci,
+				     struct buffer_head *ref_root_bh,
+				     struct buffer_head *ref_leaf_bh,
+				     struct ocfs2_refcount_rec *rec,
+				     int index, int merge,
+				     struct ocfs2_alloc_context *meta_ac)
+{
+	int ret;
+	struct ocfs2_refcount_block *rb =
+			(struct ocfs2_refcount_block *)ref_leaf_bh->b_data;
+	struct ocfs2_refcount_list *rf_list = &rb->rf_records;
+	struct buffer_head *new_bh = NULL;
 
 	BUG_ON(le32_to_cpu(rb->rf_flags) & OCFS2_REFCOUNT_TREE_FL);
 
-	अगर (rf_list->rl_used == rf_list->rl_count) अणु
+	if (rf_list->rl_used == rf_list->rl_count) {
 		u64 cpos = le64_to_cpu(rec->r_cpos);
 		u32 len = le32_to_cpu(rec->r_clusters);
 
 		ret = ocfs2_expand_refcount_tree(handle, ci, ref_root_bh,
 						 ref_leaf_bh, meta_ac);
-		अगर (ret) अणु
-			mlog_त्रुटि_सं(ret);
-			जाओ out;
-		पूर्ण
+		if (ret) {
+			mlog_errno(ret);
+			goto out;
+		}
 
 		ret = ocfs2_get_refcount_rec(ci, ref_root_bh,
-					     cpos, len, शून्य, &index,
+					     cpos, len, NULL, &index,
 					     &new_bh);
-		अगर (ret) अणु
-			mlog_त्रुटि_सं(ret);
-			जाओ out;
-		पूर्ण
+		if (ret) {
+			mlog_errno(ret);
+			goto out;
+		}
 
 		ref_leaf_bh = new_bh;
-		rb = (काष्ठा ocfs2_refcount_block *)ref_leaf_bh->b_data;
+		rb = (struct ocfs2_refcount_block *)ref_leaf_bh->b_data;
 		rf_list = &rb->rf_records;
-	पूर्ण
+	}
 
 	ret = ocfs2_journal_access_rb(handle, ci, ref_leaf_bh,
 				      OCFS2_JOURNAL_ACCESS_WRITE);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto out;
+	}
 
-	अगर (index < le16_to_cpu(rf_list->rl_used))
-		स_हटाओ(&rf_list->rl_recs[index + 1],
+	if (index < le16_to_cpu(rf_list->rl_used))
+		memmove(&rf_list->rl_recs[index + 1],
 			&rf_list->rl_recs[index],
 			(le16_to_cpu(rf_list->rl_used) - index) *
-			 माप(काष्ठा ocfs2_refcount_rec));
+			 sizeof(struct ocfs2_refcount_rec));
 
 	trace_ocfs2_insert_refcount_rec(
-		(अचिन्हित दीर्घ दीर्घ)ref_leaf_bh->b_blocknr, index,
-		(अचिन्हित दीर्घ दीर्घ)le64_to_cpu(rec->r_cpos),
+		(unsigned long long)ref_leaf_bh->b_blocknr, index,
+		(unsigned long long)le64_to_cpu(rec->r_cpos),
 		le32_to_cpu(rec->r_clusters), le32_to_cpu(rec->r_refcount));
 
 	rf_list->rl_recs[index] = *rec;
 
 	le16_add_cpu(&rf_list->rl_used, 1);
 
-	अगर (merge)
+	if (merge)
 		ocfs2_refcount_rec_merge(rb, index);
 
 	ocfs2_journal_dirty(handle, ref_leaf_bh);
 
-	अगर (index == 0) अणु
+	if (index == 0) {
 		ret = ocfs2_adjust_refcount_rec(handle, ci,
 						ref_root_bh,
 						ref_leaf_bh, rec);
-		अगर (ret)
-			mlog_त्रुटि_सं(ret);
-	पूर्ण
+		if (ret)
+			mlog_errno(ret);
+	}
 out:
-	brअन्यथा(new_bh);
-	वापस ret;
-पूर्ण
+	brelse(new_bh);
+	return ret;
+}
 
 /*
  * Split the refcount_rec indexed by "index" in ref_leaf_bh.
  * This is much simple than our b-tree code.
  * split_rec is the new refcount rec we want to insert.
- * If split_rec->r_refcount > 0, we are changing the refcount(in हाल we
+ * If split_rec->r_refcount > 0, we are changing the refcount(in case we
  * increase refcount or decrease a refcount to non-zero).
  * If split_rec->r_refcount == 0, we are punching a hole in current refcount
- * rec( in हाल we decrease a refcount to zero).
+ * rec( in case we decrease a refcount to zero).
  */
-अटल पूर्णांक ocfs2_split_refcount_rec(handle_t *handle,
-				    काष्ठा ocfs2_caching_info *ci,
-				    काष्ठा buffer_head *ref_root_bh,
-				    काष्ठा buffer_head *ref_leaf_bh,
-				    काष्ठा ocfs2_refcount_rec *split_rec,
-				    पूर्णांक index, पूर्णांक merge,
-				    काष्ठा ocfs2_alloc_context *meta_ac,
-				    काष्ठा ocfs2_cached_dealloc_ctxt *dealloc)
-अणु
-	पूर्णांक ret, recs_need;
+static int ocfs2_split_refcount_rec(handle_t *handle,
+				    struct ocfs2_caching_info *ci,
+				    struct buffer_head *ref_root_bh,
+				    struct buffer_head *ref_leaf_bh,
+				    struct ocfs2_refcount_rec *split_rec,
+				    int index, int merge,
+				    struct ocfs2_alloc_context *meta_ac,
+				    struct ocfs2_cached_dealloc_ctxt *dealloc)
+{
+	int ret, recs_need;
 	u32 len;
-	काष्ठा ocfs2_refcount_block *rb =
-			(काष्ठा ocfs2_refcount_block *)ref_leaf_bh->b_data;
-	काष्ठा ocfs2_refcount_list *rf_list = &rb->rf_records;
-	काष्ठा ocfs2_refcount_rec *orig_rec = &rf_list->rl_recs[index];
-	काष्ठा ocfs2_refcount_rec *tail_rec = शून्य;
-	काष्ठा buffer_head *new_bh = शून्य;
+	struct ocfs2_refcount_block *rb =
+			(struct ocfs2_refcount_block *)ref_leaf_bh->b_data;
+	struct ocfs2_refcount_list *rf_list = &rb->rf_records;
+	struct ocfs2_refcount_rec *orig_rec = &rf_list->rl_recs[index];
+	struct ocfs2_refcount_rec *tail_rec = NULL;
+	struct buffer_head *new_bh = NULL;
 
 	BUG_ON(le32_to_cpu(rb->rf_flags) & OCFS2_REFCOUNT_TREE_FL);
 
@@ -1852,74 +1851,74 @@ out:
 	 * no more recs are needed, just split is OK.
 	 * Otherwise we at least need one new recs.
 	 */
-	अगर (!split_rec->r_refcount &&
+	if (!split_rec->r_refcount &&
 	    (split_rec->r_cpos == orig_rec->r_cpos ||
 	     le64_to_cpu(split_rec->r_cpos) +
 	     le32_to_cpu(split_rec->r_clusters) ==
 	     le64_to_cpu(orig_rec->r_cpos) + le32_to_cpu(orig_rec->r_clusters)))
 		recs_need = 0;
-	अन्यथा
+	else
 		recs_need = 1;
 
 	/*
-	 * We need one more rec अगर we split in the middle and the new rec have
+	 * We need one more rec if we split in the middle and the new rec have
 	 * some refcount in it.
 	 */
-	अगर (split_rec->r_refcount &&
+	if (split_rec->r_refcount &&
 	    (split_rec->r_cpos != orig_rec->r_cpos &&
 	     le64_to_cpu(split_rec->r_cpos) +
 	     le32_to_cpu(split_rec->r_clusters) !=
 	     le64_to_cpu(orig_rec->r_cpos) + le32_to_cpu(orig_rec->r_clusters)))
 		recs_need++;
 
-	/* If the leaf block करोn't have enough record, expand it. */
-	अगर (le16_to_cpu(rf_list->rl_used) + recs_need >
-					 le16_to_cpu(rf_list->rl_count)) अणु
-		काष्ठा ocfs2_refcount_rec पंचांगp_rec;
+	/* If the leaf block don't have enough record, expand it. */
+	if (le16_to_cpu(rf_list->rl_used) + recs_need >
+					 le16_to_cpu(rf_list->rl_count)) {
+		struct ocfs2_refcount_rec tmp_rec;
 		u64 cpos = le64_to_cpu(orig_rec->r_cpos);
 		len = le32_to_cpu(orig_rec->r_clusters);
 		ret = ocfs2_expand_refcount_tree(handle, ci, ref_root_bh,
 						 ref_leaf_bh, meta_ac);
-		अगर (ret) अणु
-			mlog_त्रुटि_सं(ret);
-			जाओ out;
-		पूर्ण
+		if (ret) {
+			mlog_errno(ret);
+			goto out;
+		}
 
 		/*
 		 * We have to re-get it since now cpos may be moved to
 		 * another leaf block.
 		 */
 		ret = ocfs2_get_refcount_rec(ci, ref_root_bh,
-					     cpos, len, &पंचांगp_rec, &index,
+					     cpos, len, &tmp_rec, &index,
 					     &new_bh);
-		अगर (ret) अणु
-			mlog_त्रुटि_सं(ret);
-			जाओ out;
-		पूर्ण
+		if (ret) {
+			mlog_errno(ret);
+			goto out;
+		}
 
 		ref_leaf_bh = new_bh;
-		rb = (काष्ठा ocfs2_refcount_block *)ref_leaf_bh->b_data;
+		rb = (struct ocfs2_refcount_block *)ref_leaf_bh->b_data;
 		rf_list = &rb->rf_records;
 		orig_rec = &rf_list->rl_recs[index];
-	पूर्ण
+	}
 
 	ret = ocfs2_journal_access_rb(handle, ci, ref_leaf_bh,
 				      OCFS2_JOURNAL_ACCESS_WRITE);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto out;
+	}
 
 	/*
 	 * We have calculated out how many new records we need and store
 	 * in recs_need, so spare enough space first by moving the records
 	 * after "index" to the end.
 	 */
-	अगर (index != le16_to_cpu(rf_list->rl_used) - 1)
-		स_हटाओ(&rf_list->rl_recs[index + 1 + recs_need],
+	if (index != le16_to_cpu(rf_list->rl_used) - 1)
+		memmove(&rf_list->rl_recs[index + 1 + recs_need],
 			&rf_list->rl_recs[index + 1],
 			(le16_to_cpu(rf_list->rl_used) - index - 1) *
-			 माप(काष्ठा ocfs2_refcount_rec));
+			 sizeof(struct ocfs2_refcount_rec));
 
 	len = (le64_to_cpu(orig_rec->r_cpos) +
 	      le32_to_cpu(orig_rec->r_clusters)) -
@@ -1930,14 +1929,14 @@ out:
 	 * If we have "len", the we will split in the tail and move it
 	 * to the end of the space we have just spared.
 	 */
-	अगर (len) अणु
+	if (len) {
 		tail_rec = &rf_list->rl_recs[index + recs_need];
 
-		स_नकल(tail_rec, orig_rec, माप(काष्ठा ocfs2_refcount_rec));
+		memcpy(tail_rec, orig_rec, sizeof(struct ocfs2_refcount_rec));
 		le64_add_cpu(&tail_rec->r_cpos,
 			     le32_to_cpu(tail_rec->r_clusters) - len);
 		tail_rec->r_clusters = cpu_to_le32(len);
-	पूर्ण
+	}
 
 	/*
 	 * If the split pos isn't the same as the original one, we need to
@@ -1945,101 +1944,101 @@ out:
 	 *
 	 * Note: We have the chance that split_rec.r_refcount = 0,
 	 * recs_need = 0 and len > 0, which means we just cut the head from
-	 * the orig_rec and in that हाल we have करोne some modअगरication in
-	 * orig_rec above, so the check क्रम r_cpos is faked.
+	 * the orig_rec and in that case we have done some modification in
+	 * orig_rec above, so the check for r_cpos is faked.
 	 */
-	अगर (split_rec->r_cpos != orig_rec->r_cpos && tail_rec != orig_rec) अणु
+	if (split_rec->r_cpos != orig_rec->r_cpos && tail_rec != orig_rec) {
 		len = le64_to_cpu(split_rec->r_cpos) -
 		      le64_to_cpu(orig_rec->r_cpos);
 		orig_rec->r_clusters = cpu_to_le32(len);
 		index++;
-	पूर्ण
+	}
 
 	le16_add_cpu(&rf_list->rl_used, recs_need);
 
-	अगर (split_rec->r_refcount) अणु
+	if (split_rec->r_refcount) {
 		rf_list->rl_recs[index] = *split_rec;
 		trace_ocfs2_split_refcount_rec_insert(
-			(अचिन्हित दीर्घ दीर्घ)ref_leaf_bh->b_blocknr, index,
-			(अचिन्हित दीर्घ दीर्घ)le64_to_cpu(split_rec->r_cpos),
+			(unsigned long long)ref_leaf_bh->b_blocknr, index,
+			(unsigned long long)le64_to_cpu(split_rec->r_cpos),
 			le32_to_cpu(split_rec->r_clusters),
 			le32_to_cpu(split_rec->r_refcount));
 
-		अगर (merge)
+		if (merge)
 			ocfs2_refcount_rec_merge(rb, index);
-	पूर्ण
+	}
 
 	ocfs2_journal_dirty(handle, ref_leaf_bh);
 
 out:
-	brअन्यथा(new_bh);
-	वापस ret;
-पूर्ण
+	brelse(new_bh);
+	return ret;
+}
 
-अटल पूर्णांक __ocfs2_increase_refcount(handle_t *handle,
-				     काष्ठा ocfs2_caching_info *ci,
-				     काष्ठा buffer_head *ref_root_bh,
-				     u64 cpos, u32 len, पूर्णांक merge,
-				     काष्ठा ocfs2_alloc_context *meta_ac,
-				     काष्ठा ocfs2_cached_dealloc_ctxt *dealloc)
-अणु
-	पूर्णांक ret = 0, index;
-	काष्ठा buffer_head *ref_leaf_bh = शून्य;
-	काष्ठा ocfs2_refcount_rec rec;
-	अचिन्हित पूर्णांक set_len = 0;
+static int __ocfs2_increase_refcount(handle_t *handle,
+				     struct ocfs2_caching_info *ci,
+				     struct buffer_head *ref_root_bh,
+				     u64 cpos, u32 len, int merge,
+				     struct ocfs2_alloc_context *meta_ac,
+				     struct ocfs2_cached_dealloc_ctxt *dealloc)
+{
+	int ret = 0, index;
+	struct buffer_head *ref_leaf_bh = NULL;
+	struct ocfs2_refcount_rec rec;
+	unsigned int set_len = 0;
 
 	trace_ocfs2_increase_refcount_begin(
-	     (अचिन्हित दीर्घ दीर्घ)ocfs2_metadata_cache_owner(ci),
-	     (अचिन्हित दीर्घ दीर्घ)cpos, len);
+	     (unsigned long long)ocfs2_metadata_cache_owner(ci),
+	     (unsigned long long)cpos, len);
 
-	जबतक (len) अणु
+	while (len) {
 		ret = ocfs2_get_refcount_rec(ci, ref_root_bh,
 					     cpos, len, &rec, &index,
 					     &ref_leaf_bh);
-		अगर (ret) अणु
-			mlog_त्रुटि_सं(ret);
-			जाओ out;
-		पूर्ण
+		if (ret) {
+			mlog_errno(ret);
+			goto out;
+		}
 
 		set_len = le32_to_cpu(rec.r_clusters);
 
 		/*
 		 * Here we may meet with 3 situations:
 		 *
-		 * 1. If we find an alपढ़ोy existing record, and the length
+		 * 1. If we find an already existing record, and the length
 		 *    is the same, cool, we just need to increase the r_refcount
 		 *    and it is OK.
 		 * 2. If we find a hole, just insert it with r_refcount = 1.
 		 * 3. If we are in the middle of one extent record, split
 		 *    it.
 		 */
-		अगर (rec.r_refcount && le64_to_cpu(rec.r_cpos) == cpos &&
-		    set_len <= len) अणु
+		if (rec.r_refcount && le64_to_cpu(rec.r_cpos) == cpos &&
+		    set_len <= len) {
 			trace_ocfs2_increase_refcount_change(
-				(अचिन्हित दीर्घ दीर्घ)cpos, set_len,
+				(unsigned long long)cpos, set_len,
 				le32_to_cpu(rec.r_refcount));
 			ret = ocfs2_change_refcount_rec(handle, ci,
 							ref_leaf_bh, index,
 							merge, 1);
-			अगर (ret) अणु
-				mlog_त्रुटि_सं(ret);
-				जाओ out;
-			पूर्ण
-		पूर्ण अन्यथा अगर (!rec.r_refcount) अणु
+			if (ret) {
+				mlog_errno(ret);
+				goto out;
+			}
+		} else if (!rec.r_refcount) {
 			rec.r_refcount = cpu_to_le32(1);
 
 			trace_ocfs2_increase_refcount_insert(
-			     (अचिन्हित दीर्घ दीर्घ)le64_to_cpu(rec.r_cpos),
+			     (unsigned long long)le64_to_cpu(rec.r_cpos),
 			     set_len);
 			ret = ocfs2_insert_refcount_rec(handle, ci, ref_root_bh,
 							ref_leaf_bh,
 							&rec, index,
 							merge, meta_ac);
-			अगर (ret) अणु
-				mlog_त्रुटि_सं(ret);
-				जाओ out;
-			पूर्ण
-		पूर्ण अन्यथा  अणु
+			if (ret) {
+				mlog_errno(ret);
+				goto out;
+			}
+		} else  {
 			set_len = min((u64)(cpos + len),
 				      le64_to_cpu(rec.r_cpos) + set_len) - cpos;
 			rec.r_cpos = cpu_to_le64(cpos);
@@ -2047,61 +2046,61 @@ out:
 			le32_add_cpu(&rec.r_refcount, 1);
 
 			trace_ocfs2_increase_refcount_split(
-			     (अचिन्हित दीर्घ दीर्घ)le64_to_cpu(rec.r_cpos),
+			     (unsigned long long)le64_to_cpu(rec.r_cpos),
 			     set_len, le32_to_cpu(rec.r_refcount));
 			ret = ocfs2_split_refcount_rec(handle, ci,
 						       ref_root_bh, ref_leaf_bh,
 						       &rec, index, merge,
 						       meta_ac, dealloc);
-			अगर (ret) अणु
-				mlog_त्रुटि_सं(ret);
-				जाओ out;
-			पूर्ण
-		पूर्ण
+			if (ret) {
+				mlog_errno(ret);
+				goto out;
+			}
+		}
 
 		cpos += set_len;
 		len -= set_len;
-		brअन्यथा(ref_leaf_bh);
-		ref_leaf_bh = शून्य;
-	पूर्ण
+		brelse(ref_leaf_bh);
+		ref_leaf_bh = NULL;
+	}
 
 out:
-	brअन्यथा(ref_leaf_bh);
-	वापस ret;
-पूर्ण
+	brelse(ref_leaf_bh);
+	return ret;
+}
 
-अटल पूर्णांक ocfs2_हटाओ_refcount_extent(handle_t *handle,
-				काष्ठा ocfs2_caching_info *ci,
-				काष्ठा buffer_head *ref_root_bh,
-				काष्ठा buffer_head *ref_leaf_bh,
-				काष्ठा ocfs2_alloc_context *meta_ac,
-				काष्ठा ocfs2_cached_dealloc_ctxt *dealloc)
-अणु
-	पूर्णांक ret;
-	काष्ठा super_block *sb = ocfs2_metadata_cache_get_super(ci);
-	काष्ठा ocfs2_refcount_block *rb =
-			(काष्ठा ocfs2_refcount_block *)ref_leaf_bh->b_data;
-	काष्ठा ocfs2_extent_tree et;
+static int ocfs2_remove_refcount_extent(handle_t *handle,
+				struct ocfs2_caching_info *ci,
+				struct buffer_head *ref_root_bh,
+				struct buffer_head *ref_leaf_bh,
+				struct ocfs2_alloc_context *meta_ac,
+				struct ocfs2_cached_dealloc_ctxt *dealloc)
+{
+	int ret;
+	struct super_block *sb = ocfs2_metadata_cache_get_super(ci);
+	struct ocfs2_refcount_block *rb =
+			(struct ocfs2_refcount_block *)ref_leaf_bh->b_data;
+	struct ocfs2_extent_tree et;
 
 	BUG_ON(rb->rf_records.rl_used);
 
-	trace_ocfs2_हटाओ_refcount_extent(
-		(अचिन्हित दीर्घ दीर्घ)ocfs2_metadata_cache_owner(ci),
-		(अचिन्हित दीर्घ दीर्घ)ref_leaf_bh->b_blocknr,
+	trace_ocfs2_remove_refcount_extent(
+		(unsigned long long)ocfs2_metadata_cache_owner(ci),
+		(unsigned long long)ref_leaf_bh->b_blocknr,
 		le32_to_cpu(rb->rf_cpos));
 
 	ocfs2_init_refcount_extent_tree(&et, ci, ref_root_bh);
-	ret = ocfs2_हटाओ_extent(handle, &et, le32_to_cpu(rb->rf_cpos),
+	ret = ocfs2_remove_extent(handle, &et, le32_to_cpu(rb->rf_cpos),
 				  1, meta_ac, dealloc);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto out;
+	}
 
-	ocfs2_हटाओ_from_cache(ci, ref_leaf_bh);
+	ocfs2_remove_from_cache(ci, ref_leaf_bh);
 
 	/*
-	 * add the मुक्तd block to the dealloc so that it will be मुक्तd
+	 * add the freed block to the dealloc so that it will be freed
 	 * when we run dealloc.
 	 */
 	ret = ocfs2_cache_block_dealloc(dealloc, EXTENT_ALLOC_SYSTEM_INODE,
@@ -2109,86 +2108,86 @@ out:
 					le64_to_cpu(rb->rf_suballoc_loc),
 					le64_to_cpu(rb->rf_blkno),
 					le16_to_cpu(rb->rf_suballoc_bit));
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto out;
+	}
 
 	ret = ocfs2_journal_access_rb(handle, ci, ref_root_bh,
 				      OCFS2_JOURNAL_ACCESS_WRITE);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto out;
+	}
 
-	rb = (काष्ठा ocfs2_refcount_block *)ref_root_bh->b_data;
+	rb = (struct ocfs2_refcount_block *)ref_root_bh->b_data;
 
 	le32_add_cpu(&rb->rf_clusters, -1);
 
 	/*
-	 * check whether we need to restore the root refcount block अगर
+	 * check whether we need to restore the root refcount block if
 	 * there is no leaf extent block at atll.
 	 */
-	अगर (!rb->rf_list.l_next_मुक्त_rec) अणु
+	if (!rb->rf_list.l_next_free_rec) {
 		BUG_ON(rb->rf_clusters);
 
 		trace_ocfs2_restore_refcount_block(
-		     (अचिन्हित दीर्घ दीर्घ)ref_root_bh->b_blocknr);
+		     (unsigned long long)ref_root_bh->b_blocknr);
 
 		rb->rf_flags = 0;
 		rb->rf_parent = 0;
 		rb->rf_cpos = 0;
-		स_रखो(&rb->rf_records, 0, sb->s_blocksize -
-		       दुरत्व(काष्ठा ocfs2_refcount_block, rf_records));
+		memset(&rb->rf_records, 0, sb->s_blocksize -
+		       offsetof(struct ocfs2_refcount_block, rf_records));
 		rb->rf_records.rl_count =
 				cpu_to_le16(ocfs2_refcount_recs_per_rb(sb));
-	पूर्ण
+	}
 
 	ocfs2_journal_dirty(handle, ref_root_bh);
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक ocfs2_increase_refcount(handle_t *handle,
-			    काष्ठा ocfs2_caching_info *ci,
-			    काष्ठा buffer_head *ref_root_bh,
+int ocfs2_increase_refcount(handle_t *handle,
+			    struct ocfs2_caching_info *ci,
+			    struct buffer_head *ref_root_bh,
 			    u64 cpos, u32 len,
-			    काष्ठा ocfs2_alloc_context *meta_ac,
-			    काष्ठा ocfs2_cached_dealloc_ctxt *dealloc)
-अणु
-	वापस __ocfs2_increase_refcount(handle, ci, ref_root_bh,
+			    struct ocfs2_alloc_context *meta_ac,
+			    struct ocfs2_cached_dealloc_ctxt *dealloc)
+{
+	return __ocfs2_increase_refcount(handle, ci, ref_root_bh,
 					 cpos, len, 1,
 					 meta_ac, dealloc);
-पूर्ण
+}
 
-अटल पूर्णांक ocfs2_decrease_refcount_rec(handle_t *handle,
-				काष्ठा ocfs2_caching_info *ci,
-				काष्ठा buffer_head *ref_root_bh,
-				काष्ठा buffer_head *ref_leaf_bh,
-				पूर्णांक index, u64 cpos, अचिन्हित पूर्णांक len,
-				काष्ठा ocfs2_alloc_context *meta_ac,
-				काष्ठा ocfs2_cached_dealloc_ctxt *dealloc)
-अणु
-	पूर्णांक ret;
-	काष्ठा ocfs2_refcount_block *rb =
-			(काष्ठा ocfs2_refcount_block *)ref_leaf_bh->b_data;
-	काष्ठा ocfs2_refcount_rec *rec = &rb->rf_records.rl_recs[index];
+static int ocfs2_decrease_refcount_rec(handle_t *handle,
+				struct ocfs2_caching_info *ci,
+				struct buffer_head *ref_root_bh,
+				struct buffer_head *ref_leaf_bh,
+				int index, u64 cpos, unsigned int len,
+				struct ocfs2_alloc_context *meta_ac,
+				struct ocfs2_cached_dealloc_ctxt *dealloc)
+{
+	int ret;
+	struct ocfs2_refcount_block *rb =
+			(struct ocfs2_refcount_block *)ref_leaf_bh->b_data;
+	struct ocfs2_refcount_rec *rec = &rb->rf_records.rl_recs[index];
 
 	BUG_ON(cpos < le64_to_cpu(rec->r_cpos));
 	BUG_ON(cpos + len >
 	       le64_to_cpu(rec->r_cpos) + le32_to_cpu(rec->r_clusters));
 
 	trace_ocfs2_decrease_refcount_rec(
-		(अचिन्हित दीर्घ दीर्घ)ocfs2_metadata_cache_owner(ci),
-		(अचिन्हित दीर्घ दीर्घ)cpos, len);
+		(unsigned long long)ocfs2_metadata_cache_owner(ci),
+		(unsigned long long)cpos, len);
 
-	अगर (cpos == le64_to_cpu(rec->r_cpos) &&
+	if (cpos == le64_to_cpu(rec->r_cpos) &&
 	    len == le32_to_cpu(rec->r_clusters))
 		ret = ocfs2_change_refcount_rec(handle, ci,
 						ref_leaf_bh, index, 1, -1);
-	अन्यथा अणु
-		काष्ठा ocfs2_refcount_rec split = *rec;
+	else {
+		struct ocfs2_refcount_rec split = *rec;
 		split.r_cpos = cpu_to_le64(cpos);
 		split.r_clusters = cpu_to_le32(len);
 
@@ -2198,56 +2197,56 @@ out:
 					       ref_root_bh, ref_leaf_bh,
 					       &split, index, 1,
 					       meta_ac, dealloc);
-	पूर्ण
+	}
 
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto out;
+	}
 
-	/* Remove the leaf refcount block अगर it contains no refcount record. */
-	अगर (!rb->rf_records.rl_used && ref_leaf_bh != ref_root_bh) अणु
-		ret = ocfs2_हटाओ_refcount_extent(handle, ci, ref_root_bh,
+	/* Remove the leaf refcount block if it contains no refcount record. */
+	if (!rb->rf_records.rl_used && ref_leaf_bh != ref_root_bh) {
+		ret = ocfs2_remove_refcount_extent(handle, ci, ref_root_bh,
 						   ref_leaf_bh, meta_ac,
 						   dealloc);
-		अगर (ret)
-			mlog_त्रुटि_सं(ret);
-	पूर्ण
+		if (ret)
+			mlog_errno(ret);
+	}
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक __ocfs2_decrease_refcount(handle_t *handle,
-				     काष्ठा ocfs2_caching_info *ci,
-				     काष्ठा buffer_head *ref_root_bh,
+static int __ocfs2_decrease_refcount(handle_t *handle,
+				     struct ocfs2_caching_info *ci,
+				     struct buffer_head *ref_root_bh,
 				     u64 cpos, u32 len,
-				     काष्ठा ocfs2_alloc_context *meta_ac,
-				     काष्ठा ocfs2_cached_dealloc_ctxt *dealloc,
-				     पूर्णांक delete)
-अणु
-	पूर्णांक ret = 0, index = 0;
-	काष्ठा ocfs2_refcount_rec rec;
-	अचिन्हित पूर्णांक r_count = 0, r_len;
-	काष्ठा super_block *sb = ocfs2_metadata_cache_get_super(ci);
-	काष्ठा buffer_head *ref_leaf_bh = शून्य;
+				     struct ocfs2_alloc_context *meta_ac,
+				     struct ocfs2_cached_dealloc_ctxt *dealloc,
+				     int delete)
+{
+	int ret = 0, index = 0;
+	struct ocfs2_refcount_rec rec;
+	unsigned int r_count = 0, r_len;
+	struct super_block *sb = ocfs2_metadata_cache_get_super(ci);
+	struct buffer_head *ref_leaf_bh = NULL;
 
 	trace_ocfs2_decrease_refcount(
-		(अचिन्हित दीर्घ दीर्घ)ocfs2_metadata_cache_owner(ci),
-		(अचिन्हित दीर्घ दीर्घ)cpos, len, delete);
+		(unsigned long long)ocfs2_metadata_cache_owner(ci),
+		(unsigned long long)cpos, len, delete);
 
-	जबतक (len) अणु
+	while (len) {
 		ret = ocfs2_get_refcount_rec(ci, ref_root_bh,
 					     cpos, len, &rec, &index,
 					     &ref_leaf_bh);
-		अगर (ret) अणु
-			mlog_त्रुटि_सं(ret);
-			जाओ out;
-		पूर्ण
+		if (ret) {
+			mlog_errno(ret);
+			goto out;
+		}
 
 		r_count = le32_to_cpu(rec.r_refcount);
 		BUG_ON(r_count == 0);
-		अगर (!delete)
+		if (!delete)
 			BUG_ON(r_count > 1);
 
 		r_len = min((u64)(cpos + len), le64_to_cpu(rec.r_cpos) +
@@ -2257,164 +2256,164 @@ out:
 						  ref_leaf_bh, index,
 						  cpos, r_len,
 						  meta_ac, dealloc);
-		अगर (ret) अणु
-			mlog_त्रुटि_सं(ret);
-			जाओ out;
-		पूर्ण
+		if (ret) {
+			mlog_errno(ret);
+			goto out;
+		}
 
-		अगर (le32_to_cpu(rec.r_refcount) == 1 && delete) अणु
+		if (le32_to_cpu(rec.r_refcount) == 1 && delete) {
 			ret = ocfs2_cache_cluster_dealloc(dealloc,
 					  ocfs2_clusters_to_blocks(sb, cpos),
 							  r_len);
-			अगर (ret) अणु
-				mlog_त्रुटि_सं(ret);
-				जाओ out;
-			पूर्ण
-		पूर्ण
+			if (ret) {
+				mlog_errno(ret);
+				goto out;
+			}
+		}
 
 		cpos += r_len;
 		len -= r_len;
-		brअन्यथा(ref_leaf_bh);
-		ref_leaf_bh = शून्य;
-	पूर्ण
+		brelse(ref_leaf_bh);
+		ref_leaf_bh = NULL;
+	}
 
 out:
-	brअन्यथा(ref_leaf_bh);
-	वापस ret;
-पूर्ण
+	brelse(ref_leaf_bh);
+	return ret;
+}
 
 /* Caller must hold refcount tree lock. */
-पूर्णांक ocfs2_decrease_refcount(काष्ठा inode *inode,
+int ocfs2_decrease_refcount(struct inode *inode,
 			    handle_t *handle, u32 cpos, u32 len,
-			    काष्ठा ocfs2_alloc_context *meta_ac,
-			    काष्ठा ocfs2_cached_dealloc_ctxt *dealloc,
-			    पूर्णांक delete)
-अणु
-	पूर्णांक ret;
+			    struct ocfs2_alloc_context *meta_ac,
+			    struct ocfs2_cached_dealloc_ctxt *dealloc,
+			    int delete)
+{
+	int ret;
 	u64 ref_blkno;
-	काष्ठा buffer_head *ref_root_bh = शून्य;
-	काष्ठा ocfs2_refcount_tree *tree;
+	struct buffer_head *ref_root_bh = NULL;
+	struct ocfs2_refcount_tree *tree;
 
 	BUG_ON(!ocfs2_is_refcount_inode(inode));
 
 	ret = ocfs2_get_refcount_block(inode, &ref_blkno);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto out;
+	}
 
 	ret = ocfs2_get_refcount_tree(OCFS2_SB(inode->i_sb), ref_blkno, &tree);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto out;
+	}
 
-	ret = ocfs2_पढ़ो_refcount_block(&tree->rf_ci, tree->rf_blkno,
+	ret = ocfs2_read_refcount_block(&tree->rf_ci, tree->rf_blkno,
 					&ref_root_bh);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto out;
+	}
 
 	ret = __ocfs2_decrease_refcount(handle, &tree->rf_ci, ref_root_bh,
 					cpos, len, meta_ac, dealloc, delete);
-	अगर (ret)
-		mlog_त्रुटि_सं(ret);
+	if (ret)
+		mlog_errno(ret);
 out:
-	brअन्यथा(ref_root_bh);
-	वापस ret;
-पूर्ण
+	brelse(ref_root_bh);
+	return ret;
+}
 
 /*
- * Mark the alपढ़ोy-existing extent at cpos as refcounted क्रम len clusters.
+ * Mark the already-existing extent at cpos as refcounted for len clusters.
  * This adds the refcount extent flag.
  *
  * If the existing extent is larger than the request, initiate a
  * split. An attempt will be made at merging with adjacent extents.
  *
- * The caller is responsible क्रम passing करोwn meta_ac अगर we'll need it.
+ * The caller is responsible for passing down meta_ac if we'll need it.
  */
-अटल पूर्णांक ocfs2_mark_extent_refcounted(काष्ठा inode *inode,
-				काष्ठा ocfs2_extent_tree *et,
+static int ocfs2_mark_extent_refcounted(struct inode *inode,
+				struct ocfs2_extent_tree *et,
 				handle_t *handle, u32 cpos,
 				u32 len, u32 phys,
-				काष्ठा ocfs2_alloc_context *meta_ac,
-				काष्ठा ocfs2_cached_dealloc_ctxt *dealloc)
-अणु
-	पूर्णांक ret;
+				struct ocfs2_alloc_context *meta_ac,
+				struct ocfs2_cached_dealloc_ctxt *dealloc)
+{
+	int ret;
 
 	trace_ocfs2_mark_extent_refcounted(OCFS2_I(inode)->ip_blkno,
 					   cpos, len, phys);
 
-	अगर (!ocfs2_refcount_tree(OCFS2_SB(inode->i_sb))) अणु
+	if (!ocfs2_refcount_tree(OCFS2_SB(inode->i_sb))) {
 		ret = ocfs2_error(inode->i_sb, "Inode %lu want to use refcount tree, but the feature bit is not set in the super block\n",
 				  inode->i_ino);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = ocfs2_change_extent_flag(handle, et, cpos,
 				       len, phys, meta_ac, dealloc,
 				       OCFS2_EXT_REFCOUNTED, 0);
-	अगर (ret)
-		mlog_त्रुटि_सं(ret);
+	if (ret)
+		mlog_errno(ret);
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Given some contiguous physical clusters, calculate what we need
- * क्रम modअगरying their refcount.
+ * for modifying their refcount.
  */
-अटल पूर्णांक ocfs2_calc_refcount_meta_credits(काष्ठा super_block *sb,
-					    काष्ठा ocfs2_caching_info *ci,
-					    काष्ठा buffer_head *ref_root_bh,
+static int ocfs2_calc_refcount_meta_credits(struct super_block *sb,
+					    struct ocfs2_caching_info *ci,
+					    struct buffer_head *ref_root_bh,
 					    u64 start_cpos,
 					    u32 clusters,
-					    पूर्णांक *meta_add,
-					    पूर्णांक *credits)
-अणु
-	पूर्णांक ret = 0, index, ref_blocks = 0, recs_add = 0;
+					    int *meta_add,
+					    int *credits)
+{
+	int ret = 0, index, ref_blocks = 0, recs_add = 0;
 	u64 cpos = start_cpos;
-	काष्ठा ocfs2_refcount_block *rb;
-	काष्ठा ocfs2_refcount_rec rec;
-	काष्ठा buffer_head *ref_leaf_bh = शून्य, *prev_bh = शून्य;
+	struct ocfs2_refcount_block *rb;
+	struct ocfs2_refcount_rec rec;
+	struct buffer_head *ref_leaf_bh = NULL, *prev_bh = NULL;
 	u32 len;
 
-	जबतक (clusters) अणु
+	while (clusters) {
 		ret = ocfs2_get_refcount_rec(ci, ref_root_bh,
 					     cpos, clusters, &rec,
 					     &index, &ref_leaf_bh);
-		अगर (ret) अणु
-			mlog_त्रुटि_सं(ret);
-			जाओ out;
-		पूर्ण
+		if (ret) {
+			mlog_errno(ret);
+			goto out;
+		}
 
-		अगर (ref_leaf_bh != prev_bh) अणु
+		if (ref_leaf_bh != prev_bh) {
 			/*
 			 * Now we encounter a new leaf block, so calculate
 			 * whether we need to extend the old leaf.
 			 */
-			अगर (prev_bh) अणु
-				rb = (काष्ठा ocfs2_refcount_block *)
+			if (prev_bh) {
+				rb = (struct ocfs2_refcount_block *)
 							prev_bh->b_data;
 
-				अगर (le16_to_cpu(rb->rf_records.rl_used) +
+				if (le16_to_cpu(rb->rf_records.rl_used) +
 				    recs_add >
 				    le16_to_cpu(rb->rf_records.rl_count))
 					ref_blocks++;
-			पूर्ण
+			}
 
 			recs_add = 0;
 			*credits += 1;
-			brअन्यथा(prev_bh);
+			brelse(prev_bh);
 			prev_bh = ref_leaf_bh;
 			get_bh(prev_bh);
-		पूर्ण
+		}
 
 		trace_ocfs2_calc_refcount_meta_credits_iterate(
-				recs_add, (अचिन्हित दीर्घ दीर्घ)cpos, clusters,
-				(अचिन्हित दीर्घ दीर्घ)le64_to_cpu(rec.r_cpos),
+				recs_add, (unsigned long long)cpos, clusters,
+				(unsigned long long)le64_to_cpu(rec.r_cpos),
 				le32_to_cpu(rec.r_clusters),
 				le32_to_cpu(rec.r_refcount), index);
 
@@ -2426,84 +2425,84 @@ out:
 		 * we need a new refcount block or not.
 		 *
 		 * If we will insert a new one, this is easy and only happens
-		 * during adding refcounted flag to the extent, so we करोn't
+		 * during adding refcounted flag to the extent, so we don't
 		 * have a chance of spliting. We just need one record.
 		 *
-		 * If the refcount rec alपढ़ोy exists, that would be a little
+		 * If the refcount rec already exists, that would be a little
 		 * complicated. we may have to:
-		 * 1) split at the beginning अगर the start pos isn't aligned.
-		 *    we need 1 more record in this हाल.
-		 * 2) split पूर्णांक the end अगर the end pos isn't aligned.
-		 *    we need 1 more record in this हाल.
-		 * 3) split in the middle because of file प्रणाली fragmentation.
-		 *    we need 2 more records in this हाल(we can't detect this
-		 *    beक्रमehand, so always think of the worst हाल).
+		 * 1) split at the beginning if the start pos isn't aligned.
+		 *    we need 1 more record in this case.
+		 * 2) split int the end if the end pos isn't aligned.
+		 *    we need 1 more record in this case.
+		 * 3) split in the middle because of file system fragmentation.
+		 *    we need 2 more records in this case(we can't detect this
+		 *    beforehand, so always think of the worst case).
 		 */
-		अगर (rec.r_refcount) अणु
+		if (rec.r_refcount) {
 			recs_add += 2;
 			/* Check whether we need a split at the beginning. */
-			अगर (cpos == start_cpos &&
+			if (cpos == start_cpos &&
 			    cpos != le64_to_cpu(rec.r_cpos))
 				recs_add++;
 
 			/* Check whether we need a split in the end. */
-			अगर (cpos + clusters < le64_to_cpu(rec.r_cpos) +
+			if (cpos + clusters < le64_to_cpu(rec.r_cpos) +
 			    le32_to_cpu(rec.r_clusters))
 				recs_add++;
-		पूर्ण अन्यथा
+		} else
 			recs_add++;
 
-		brअन्यथा(ref_leaf_bh);
-		ref_leaf_bh = शून्य;
+		brelse(ref_leaf_bh);
+		ref_leaf_bh = NULL;
 		clusters -= len;
 		cpos += len;
-	पूर्ण
+	}
 
-	अगर (prev_bh) अणु
-		rb = (काष्ठा ocfs2_refcount_block *)prev_bh->b_data;
+	if (prev_bh) {
+		rb = (struct ocfs2_refcount_block *)prev_bh->b_data;
 
-		अगर (le16_to_cpu(rb->rf_records.rl_used) + recs_add >
+		if (le16_to_cpu(rb->rf_records.rl_used) + recs_add >
 		    le16_to_cpu(rb->rf_records.rl_count))
 			ref_blocks++;
 
 		*credits += 1;
-	पूर्ण
+	}
 
-	अगर (!ref_blocks)
-		जाओ out;
+	if (!ref_blocks)
+		goto out;
 
 	*meta_add += ref_blocks;
 	*credits += ref_blocks;
 
 	/*
-	 * So we may need ref_blocks to insert पूर्णांकo the tree.
+	 * So we may need ref_blocks to insert into the tree.
 	 * That also means we need to change the b-tree and add that number
 	 * of records since we never merge them.
-	 * We need one more block क्रम expansion since the new created leaf
+	 * We need one more block for expansion since the new created leaf
 	 * block is also full and needs split.
 	 */
-	rb = (काष्ठा ocfs2_refcount_block *)ref_root_bh->b_data;
-	अगर (le32_to_cpu(rb->rf_flags) & OCFS2_REFCOUNT_TREE_FL) अणु
-		काष्ठा ocfs2_extent_tree et;
+	rb = (struct ocfs2_refcount_block *)ref_root_bh->b_data;
+	if (le32_to_cpu(rb->rf_flags) & OCFS2_REFCOUNT_TREE_FL) {
+		struct ocfs2_extent_tree et;
 
 		ocfs2_init_refcount_extent_tree(&et, ci, ref_root_bh);
 		*meta_add += ocfs2_extend_meta_needed(et.et_root_el);
 		*credits += ocfs2_calc_extend_credits(sb,
 						      et.et_root_el);
-	पूर्ण अन्यथा अणु
+	} else {
 		*credits += OCFS2_EXPAND_REFCOUNT_TREE_CREDITS;
 		*meta_add += 1;
-	पूर्ण
+	}
 
 out:
 
 	trace_ocfs2_calc_refcount_meta_credits(
-		(अचिन्हित दीर्घ दीर्घ)start_cpos, clusters,
+		(unsigned long long)start_cpos, clusters,
 		*meta_add, *credits);
-	brअन्यथा(ref_leaf_bh);
-	brअन्यथा(prev_bh);
-	वापस ret;
-पूर्ण
+	brelse(ref_leaf_bh);
+	brelse(prev_bh);
+	return ret;
+}
 
 /*
  * For refcount tree, we will decrease some contiguous clusters
@@ -2517,219 +2516,219 @@ out:
  *
  * Caller must hold refcount tree lock.
  */
-पूर्णांक ocfs2_prepare_refcount_change_क्रम_del(काष्ठा inode *inode,
+int ocfs2_prepare_refcount_change_for_del(struct inode *inode,
 					  u64 refcount_loc,
 					  u64 phys_blkno,
 					  u32 clusters,
-					  पूर्णांक *credits,
-					  पूर्णांक *ref_blocks)
-अणु
-	पूर्णांक ret;
-	काष्ठा buffer_head *ref_root_bh = शून्य;
-	काष्ठा ocfs2_refcount_tree *tree;
+					  int *credits,
+					  int *ref_blocks)
+{
+	int ret;
+	struct buffer_head *ref_root_bh = NULL;
+	struct ocfs2_refcount_tree *tree;
 	u64 start_cpos = ocfs2_blocks_to_clusters(inode->i_sb, phys_blkno);
 
-	अगर (!ocfs2_refcount_tree(OCFS2_SB(inode->i_sb))) अणु
+	if (!ocfs2_refcount_tree(OCFS2_SB(inode->i_sb))) {
 		ret = ocfs2_error(inode->i_sb, "Inode %lu want to use refcount tree, but the feature bit is not set in the super block\n",
 				  inode->i_ino);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	BUG_ON(!ocfs2_is_refcount_inode(inode));
 
 	ret = ocfs2_get_refcount_tree(OCFS2_SB(inode->i_sb),
 				      refcount_loc, &tree);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto out;
+	}
 
-	ret = ocfs2_पढ़ो_refcount_block(&tree->rf_ci, refcount_loc,
+	ret = ocfs2_read_refcount_block(&tree->rf_ci, refcount_loc,
 					&ref_root_bh);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto out;
+	}
 
 	ret = ocfs2_calc_refcount_meta_credits(inode->i_sb,
 					       &tree->rf_ci,
 					       ref_root_bh,
 					       start_cpos, clusters,
 					       ref_blocks, credits);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto out;
+	}
 
-	trace_ocfs2_prepare_refcount_change_क्रम_del(*ref_blocks, *credits);
+	trace_ocfs2_prepare_refcount_change_for_del(*ref_blocks, *credits);
 
 out:
-	brअन्यथा(ref_root_bh);
-	वापस ret;
-पूर्ण
+	brelse(ref_root_bh);
+	return ret;
+}
 
-#घोषणा	MAX_CONTIG_BYTES	1048576
+#define	MAX_CONTIG_BYTES	1048576
 
-अटल अंतरभूत अचिन्हित पूर्णांक ocfs2_cow_contig_clusters(काष्ठा super_block *sb)
-अणु
-	वापस ocfs2_clusters_क्रम_bytes(sb, MAX_CONTIG_BYTES);
-पूर्ण
+static inline unsigned int ocfs2_cow_contig_clusters(struct super_block *sb)
+{
+	return ocfs2_clusters_for_bytes(sb, MAX_CONTIG_BYTES);
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक ocfs2_cow_contig_mask(काष्ठा super_block *sb)
-अणु
-	वापस ~(ocfs2_cow_contig_clusters(sb) - 1);
-पूर्ण
+static inline unsigned int ocfs2_cow_contig_mask(struct super_block *sb)
+{
+	return ~(ocfs2_cow_contig_clusters(sb) - 1);
+}
 
 /*
  * Given an extent that starts at 'start' and an I/O that starts at 'cpos',
- * find an offset (start + (n * contig_clusters)) that is बंदst to cpos
- * जबतक still being less than or equal to it.
+ * find an offset (start + (n * contig_clusters)) that is closest to cpos
+ * while still being less than or equal to it.
  *
- * The goal is to अवरोध the extent at a multiple of contig_clusters.
+ * The goal is to break the extent at a multiple of contig_clusters.
  */
-अटल अंतरभूत अचिन्हित पूर्णांक ocfs2_cow_align_start(काष्ठा super_block *sb,
-						 अचिन्हित पूर्णांक start,
-						 अचिन्हित पूर्णांक cpos)
-अणु
+static inline unsigned int ocfs2_cow_align_start(struct super_block *sb,
+						 unsigned int start,
+						 unsigned int cpos)
+{
 	BUG_ON(start > cpos);
 
-	वापस start + ((cpos - start) & ocfs2_cow_contig_mask(sb));
-पूर्ण
+	return start + ((cpos - start) & ocfs2_cow_contig_mask(sb));
+}
 
 /*
  * Given a cluster count of len, pad it out so that it is a multiple
  * of contig_clusters.
  */
-अटल अंतरभूत अचिन्हित पूर्णांक ocfs2_cow_align_length(काष्ठा super_block *sb,
-						  अचिन्हित पूर्णांक len)
-अणु
-	अचिन्हित पूर्णांक padded =
+static inline unsigned int ocfs2_cow_align_length(struct super_block *sb,
+						  unsigned int len)
+{
+	unsigned int padded =
 		(len + (ocfs2_cow_contig_clusters(sb) - 1)) &
 		ocfs2_cow_contig_mask(sb);
 
 	/* Did we wrap? */
-	अगर (padded < len)
-		padded = अच_पूर्णांक_उच्च;
+	if (padded < len)
+		padded = UINT_MAX;
 
-	वापस padded;
-पूर्ण
+	return padded;
+}
 
 /*
- * Calculate out the start and number of भव clusters we need to to CoW.
+ * Calculate out the start and number of virtual clusters we need to to CoW.
  *
- * cpos is vitual start cluster position we want to करो CoW in a
- * file and ग_लिखो_len is the cluster length.
- * max_cpos is the place where we want to stop CoW पूर्णांकentionally.
+ * cpos is vitual start cluster position we want to do CoW in a
+ * file and write_len is the cluster length.
+ * max_cpos is the place where we want to stop CoW intentionally.
  *
  * Normal we will start CoW from the beginning of extent record cotaining cpos.
- * We try to अवरोध up extents on boundaries of MAX_CONTIG_BYTES so that we
+ * We try to break up extents on boundaries of MAX_CONTIG_BYTES so that we
  * get good I/O from the resulting extent tree.
  */
-अटल पूर्णांक ocfs2_refcount_cal_cow_clusters(काष्ठा inode *inode,
-					   काष्ठा ocfs2_extent_list *el,
+static int ocfs2_refcount_cal_cow_clusters(struct inode *inode,
+					   struct ocfs2_extent_list *el,
 					   u32 cpos,
-					   u32 ग_लिखो_len,
+					   u32 write_len,
 					   u32 max_cpos,
 					   u32 *cow_start,
 					   u32 *cow_len)
-अणु
-	पूर्णांक ret = 0;
-	पूर्णांक tree_height = le16_to_cpu(el->l_tree_depth), i;
-	काष्ठा buffer_head *eb_bh = शून्य;
-	काष्ठा ocfs2_extent_block *eb = शून्य;
-	काष्ठा ocfs2_extent_rec *rec;
-	अचिन्हित पूर्णांक want_clusters, rec_end = 0;
-	पूर्णांक contig_clusters = ocfs2_cow_contig_clusters(inode->i_sb);
-	पूर्णांक leaf_clusters;
+{
+	int ret = 0;
+	int tree_height = le16_to_cpu(el->l_tree_depth), i;
+	struct buffer_head *eb_bh = NULL;
+	struct ocfs2_extent_block *eb = NULL;
+	struct ocfs2_extent_rec *rec;
+	unsigned int want_clusters, rec_end = 0;
+	int contig_clusters = ocfs2_cow_contig_clusters(inode->i_sb);
+	int leaf_clusters;
 
-	BUG_ON(cpos + ग_लिखो_len > max_cpos);
+	BUG_ON(cpos + write_len > max_cpos);
 
-	अगर (tree_height > 0) अणु
+	if (tree_height > 0) {
 		ret = ocfs2_find_leaf(INODE_CACHE(inode), el, cpos, &eb_bh);
-		अगर (ret) अणु
-			mlog_त्रुटि_सं(ret);
-			जाओ out;
-		पूर्ण
+		if (ret) {
+			mlog_errno(ret);
+			goto out;
+		}
 
-		eb = (काष्ठा ocfs2_extent_block *) eb_bh->b_data;
+		eb = (struct ocfs2_extent_block *) eb_bh->b_data;
 		el = &eb->h_list;
 
-		अगर (el->l_tree_depth) अणु
+		if (el->l_tree_depth) {
 			ret = ocfs2_error(inode->i_sb,
 					  "Inode %lu has non zero tree depth in leaf block %llu\n",
 					  inode->i_ino,
-					  (अचिन्हित दीर्घ दीर्घ)eb_bh->b_blocknr);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+					  (unsigned long long)eb_bh->b_blocknr);
+			goto out;
+		}
+	}
 
 	*cow_len = 0;
-	क्रम (i = 0; i < le16_to_cpu(el->l_next_मुक्त_rec); i++) अणु
+	for (i = 0; i < le16_to_cpu(el->l_next_free_rec); i++) {
 		rec = &el->l_recs[i];
 
-		अगर (ocfs2_is_empty_extent(rec)) अणु
+		if (ocfs2_is_empty_extent(rec)) {
 			mlog_bug_on_msg(i != 0, "Inode %lu has empty record in "
 					"index %d\n", inode->i_ino, i);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (le32_to_cpu(rec->e_cpos) +
+		if (le32_to_cpu(rec->e_cpos) +
 		    le16_to_cpu(rec->e_leaf_clusters) <= cpos)
-			जारी;
+			continue;
 
-		अगर (*cow_len == 0) अणु
+		if (*cow_len == 0) {
 			/*
 			 * We should find a refcounted record in the
 			 * first pass.
 			 */
 			BUG_ON(!(rec->e_flags & OCFS2_EXT_REFCOUNTED));
 			*cow_start = le32_to_cpu(rec->e_cpos);
-		पूर्ण
+		}
 
 		/*
 		 * If we encounter a hole, a non-refcounted record or
 		 * pass the max_cpos, stop the search.
 		 */
-		अगर ((!(rec->e_flags & OCFS2_EXT_REFCOUNTED)) ||
+		if ((!(rec->e_flags & OCFS2_EXT_REFCOUNTED)) ||
 		    (*cow_len && rec_end != le32_to_cpu(rec->e_cpos)) ||
 		    (max_cpos <= le32_to_cpu(rec->e_cpos)))
-			अवरोध;
+			break;
 
 		leaf_clusters = le16_to_cpu(rec->e_leaf_clusters);
 		rec_end = le32_to_cpu(rec->e_cpos) + leaf_clusters;
-		अगर (rec_end > max_cpos) अणु
+		if (rec_end > max_cpos) {
 			rec_end = max_cpos;
 			leaf_clusters = rec_end - le32_to_cpu(rec->e_cpos);
-		पूर्ण
+		}
 
 		/*
-		 * How many clusters करो we actually need from
+		 * How many clusters do we actually need from
 		 * this extent?  First we see how many we actually
-		 * need to complete the ग_लिखो.  If that's smaller
-		 * than contig_clusters, we try क्रम contig_clusters.
+		 * need to complete the write.  If that's smaller
+		 * than contig_clusters, we try for contig_clusters.
 		 */
-		अगर (!*cow_len)
-			want_clusters = ग_लिखो_len;
-		अन्यथा
-			want_clusters = (cpos + ग_लिखो_len) -
+		if (!*cow_len)
+			want_clusters = write_len;
+		else
+			want_clusters = (cpos + write_len) -
 				(*cow_start + *cow_len);
-		अगर (want_clusters < contig_clusters)
+		if (want_clusters < contig_clusters)
 			want_clusters = contig_clusters;
 
 		/*
-		 * If the ग_लिखो करोes not cover the whole extent, we
+		 * If the write does not cover the whole extent, we
 		 * need to calculate how we're going to split the extent.
-		 * We try to करो it on contig_clusters boundaries.
+		 * We try to do it on contig_clusters boundaries.
 		 *
 		 * Any extent smaller than contig_clusters will be
 		 * CoWed in its entirety.
 		 */
-		अगर (leaf_clusters <= contig_clusters)
+		if (leaf_clusters <= contig_clusters)
 			*cow_len += leaf_clusters;
-		अन्यथा अगर (*cow_len || (*cow_start == cpos)) अणु
+		else if (*cow_len || (*cow_start == cpos)) {
 			/*
 			 * This extent needs to be CoW'd from its
-			 * beginning, so all we have to करो is compute
+			 * beginning, so all we have to do is compute
 			 * how many clusters to grab.  We align
 			 * want_clusters to the edge of contig_clusters
 			 * to get better I/O.
@@ -2737,31 +2736,31 @@ out:
 			want_clusters = ocfs2_cow_align_length(inode->i_sb,
 							       want_clusters);
 
-			अगर (leaf_clusters < want_clusters)
+			if (leaf_clusters < want_clusters)
 				*cow_len += leaf_clusters;
-			अन्यथा
+			else
 				*cow_len += want_clusters;
-		पूर्ण अन्यथा अगर ((*cow_start + contig_clusters) >=
-			   (cpos + ग_लिखो_len)) अणु
+		} else if ((*cow_start + contig_clusters) >=
+			   (cpos + write_len)) {
 			/*
 			 * Breaking off contig_clusters at the front
-			 * of the extent will cover our ग_लिखो.  That's
+			 * of the extent will cover our write.  That's
 			 * easy.
 			 */
 			*cow_len = contig_clusters;
-		पूर्ण अन्यथा अगर ((rec_end - cpos) <= contig_clusters) अणु
+		} else if ((rec_end - cpos) <= contig_clusters) {
 			/*
 			 * Breaking off contig_clusters at the tail of
 			 * this extent will cover cpos.
 			 */
 			*cow_start = rec_end - contig_clusters;
 			*cow_len = contig_clusters;
-		पूर्ण अन्यथा अगर ((rec_end - cpos) <= want_clusters) अणु
+		} else if ((rec_end - cpos) <= want_clusters) {
 			/*
-			 * While we can't fit the entire ग_लिखो in this
-			 * extent, we know that the ग_लिखो goes from cpos
+			 * While we can't fit the entire write in this
+			 * extent, we know that the write goes from cpos
 			 * to the end of the extent.  Break that off.
-			 * We try to अवरोध it at some multiple of
+			 * We try to break it at some multiple of
 			 * contig_clusters from the front of the extent.
 			 * Failing that (ie, cpos is within
 			 * contig_clusters of the front), we'll CoW the
@@ -2770,89 +2769,89 @@ out:
 			*cow_start = ocfs2_cow_align_start(inode->i_sb,
 							   *cow_start, cpos);
 			*cow_len = rec_end - *cow_start;
-		पूर्ण अन्यथा अणु
+		} else {
 			/*
-			 * Ok, the entire ग_लिखो lives in the middle of
+			 * Ok, the entire write lives in the middle of
 			 * this extent.  Let's try to slice the extent up
 			 * nicely.  Optimally, our CoW region starts at
 			 * m*contig_clusters from the beginning of the
-			 * extent and goes क्रम n*contig_clusters,
-			 * covering the entire ग_लिखो.
+			 * extent and goes for n*contig_clusters,
+			 * covering the entire write.
 			 */
 			*cow_start = ocfs2_cow_align_start(inode->i_sb,
 							   *cow_start, cpos);
 
-			want_clusters = (cpos + ग_लिखो_len) - *cow_start;
+			want_clusters = (cpos + write_len) - *cow_start;
 			want_clusters = ocfs2_cow_align_length(inode->i_sb,
 							       want_clusters);
-			अगर (*cow_start + want_clusters <= rec_end)
+			if (*cow_start + want_clusters <= rec_end)
 				*cow_len = want_clusters;
-			अन्यथा
+			else
 				*cow_len = rec_end - *cow_start;
-		पूर्ण
+		}
 
-		/* Have we covered our entire ग_लिखो yet? */
-		अगर ((*cow_start + *cow_len) >= (cpos + ग_लिखो_len))
-			अवरोध;
+		/* Have we covered our entire write yet? */
+		if ((*cow_start + *cow_len) >= (cpos + write_len))
+			break;
 
 		/*
-		 * If we reach the end of the extent block and करोn't get enough
-		 * clusters, जारी with the next extent block अगर possible.
+		 * If we reach the end of the extent block and don't get enough
+		 * clusters, continue with the next extent block if possible.
 		 */
-		अगर (i + 1 == le16_to_cpu(el->l_next_मुक्त_rec) &&
-		    eb && eb->h_next_leaf_blk) अणु
-			brअन्यथा(eb_bh);
-			eb_bh = शून्य;
+		if (i + 1 == le16_to_cpu(el->l_next_free_rec) &&
+		    eb && eb->h_next_leaf_blk) {
+			brelse(eb_bh);
+			eb_bh = NULL;
 
-			ret = ocfs2_पढ़ो_extent_block(INODE_CACHE(inode),
+			ret = ocfs2_read_extent_block(INODE_CACHE(inode),
 					       le64_to_cpu(eb->h_next_leaf_blk),
 					       &eb_bh);
-			अगर (ret) अणु
-				mlog_त्रुटि_सं(ret);
-				जाओ out;
-			पूर्ण
+			if (ret) {
+				mlog_errno(ret);
+				goto out;
+			}
 
-			eb = (काष्ठा ocfs2_extent_block *) eb_bh->b_data;
+			eb = (struct ocfs2_extent_block *) eb_bh->b_data;
 			el = &eb->h_list;
 			i = -1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 out:
-	brअन्यथा(eb_bh);
-	वापस ret;
-पूर्ण
+	brelse(eb_bh);
+	return ret;
+}
 
 /*
  * Prepare meta_ac, data_ac and calculate credits when we want to add some
- * num_clusters in data_tree "et" and change the refcount क्रम the old
- * clusters(starting क्रमm p_cluster) in the refcount tree.
+ * num_clusters in data_tree "et" and change the refcount for the old
+ * clusters(starting form p_cluster) in the refcount tree.
  *
  * Note:
  * 1. since we may split the old tree, so we at most will need num_clusters + 2
  *    more new leaf records.
- * 2. In some हाल, we may not need to reserve new clusters(e.g, reflink), so
- *    just give data_ac = शून्य.
+ * 2. In some case, we may not need to reserve new clusters(e.g, reflink), so
+ *    just give data_ac = NULL.
  */
-अटल पूर्णांक ocfs2_lock_refcount_allocators(काष्ठा super_block *sb,
+static int ocfs2_lock_refcount_allocators(struct super_block *sb,
 					u32 p_cluster, u32 num_clusters,
-					काष्ठा ocfs2_extent_tree *et,
-					काष्ठा ocfs2_caching_info *ref_ci,
-					काष्ठा buffer_head *ref_root_bh,
-					काष्ठा ocfs2_alloc_context **meta_ac,
-					काष्ठा ocfs2_alloc_context **data_ac,
-					पूर्णांक *credits)
-अणु
-	पूर्णांक ret = 0, meta_add = 0;
-	पूर्णांक num_मुक्त_extents = ocfs2_num_मुक्त_extents(et);
+					struct ocfs2_extent_tree *et,
+					struct ocfs2_caching_info *ref_ci,
+					struct buffer_head *ref_root_bh,
+					struct ocfs2_alloc_context **meta_ac,
+					struct ocfs2_alloc_context **data_ac,
+					int *credits)
+{
+	int ret = 0, meta_add = 0;
+	int num_free_extents = ocfs2_num_free_extents(et);
 
-	अगर (num_मुक्त_extents < 0) अणु
-		ret = num_मुक्त_extents;
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+	if (num_free_extents < 0) {
+		ret = num_free_extents;
+		mlog_errno(ret);
+		goto out;
+	}
 
-	अगर (num_मुक्त_extents < num_clusters + 2)
+	if (num_free_extents < num_clusters + 2)
 		meta_add =
 			ocfs2_extend_meta_needed(et->et_root_el);
 
@@ -2861,59 +2860,59 @@ out:
 	ret = ocfs2_calc_refcount_meta_credits(sb, ref_ci, ref_root_bh,
 					       p_cluster, num_clusters,
 					       &meta_add, credits);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto out;
+	}
 
 	trace_ocfs2_lock_refcount_allocators(meta_add, *credits);
 	ret = ocfs2_reserve_new_metadata_blocks(OCFS2_SB(sb), meta_add,
 						meta_ac);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto out;
+	}
 
-	अगर (data_ac) अणु
+	if (data_ac) {
 		ret = ocfs2_reserve_clusters(OCFS2_SB(sb), num_clusters,
 					     data_ac);
-		अगर (ret)
-			mlog_त्रुटि_सं(ret);
-	पूर्ण
+		if (ret)
+			mlog_errno(ret);
+	}
 
 out:
-	अगर (ret) अणु
-		अगर (*meta_ac) अणु
-			ocfs2_मुक्त_alloc_context(*meta_ac);
-			*meta_ac = शून्य;
-		पूर्ण
-	पूर्ण
+	if (ret) {
+		if (*meta_ac) {
+			ocfs2_free_alloc_context(*meta_ac);
+			*meta_ac = NULL;
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ocfs2_clear_cow_buffer(handle_t *handle, काष्ठा buffer_head *bh)
-अणु
+static int ocfs2_clear_cow_buffer(handle_t *handle, struct buffer_head *bh)
+{
 	BUG_ON(buffer_dirty(bh));
 
 	clear_buffer_mapped(bh);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक ocfs2_duplicate_clusters_by_page(handle_t *handle,
-				     काष्ठा inode *inode,
+int ocfs2_duplicate_clusters_by_page(handle_t *handle,
+				     struct inode *inode,
 				     u32 cpos, u32 old_cluster,
 				     u32 new_cluster, u32 new_len)
-अणु
-	पूर्णांक ret = 0, partial;
-	काष्ठा super_block *sb = inode->i_sb;
+{
+	int ret = 0, partial;
+	struct super_block *sb = inode->i_sb;
 	u64 new_block = ocfs2_clusters_to_blocks(sb, new_cluster);
-	काष्ठा page *page;
+	struct page *page;
 	pgoff_t page_index;
-	अचिन्हित पूर्णांक from, to;
+	unsigned int from, to;
 	loff_t offset, end, map_end;
-	काष्ठा address_space *mapping = inode->i_mapping;
+	struct address_space *mapping = inode->i_mapping;
 
 	trace_ocfs2_duplicate_clusters_by_page(cpos, old_cluster,
 					       new_cluster, new_len);
@@ -2924,61 +2923,61 @@ out:
 	 * We only duplicate pages until we reach the page contains i_size - 1.
 	 * So trim 'end' to i_size.
 	 */
-	अगर (end > i_size_पढ़ो(inode))
-		end = i_size_पढ़ो(inode);
+	if (end > i_size_read(inode))
+		end = i_size_read(inode);
 
-	जबतक (offset < end) अणु
+	while (offset < end) {
 		page_index = offset >> PAGE_SHIFT;
 		map_end = ((loff_t)page_index + 1) << PAGE_SHIFT;
-		अगर (map_end > end)
+		if (map_end > end)
 			map_end = end;
 
 		/* from, to is the offset within the page. */
 		from = offset & (PAGE_SIZE - 1);
 		to = PAGE_SIZE;
-		अगर (map_end & (PAGE_SIZE - 1))
+		if (map_end & (PAGE_SIZE - 1))
 			to = map_end & (PAGE_SIZE - 1);
 
 retry:
 		page = find_or_create_page(mapping, page_index, GFP_NOFS);
-		अगर (!page) अणु
+		if (!page) {
 			ret = -ENOMEM;
-			mlog_त्रुटि_सं(ret);
-			अवरोध;
-		पूर्ण
+			mlog_errno(ret);
+			break;
+		}
 
 		/*
-		 * In हाल PAGE_SIZE <= CLUSTER_SIZE, we करो not expect a dirty
-		 * page, so ग_लिखो it back.
+		 * In case PAGE_SIZE <= CLUSTER_SIZE, we do not expect a dirty
+		 * page, so write it back.
 		 */
-		अगर (PAGE_SIZE <= OCFS2_SB(sb)->s_clustersize) अणु
-			अगर (PageDirty(page)) अणु
+		if (PAGE_SIZE <= OCFS2_SB(sb)->s_clustersize) {
+			if (PageDirty(page)) {
 				/*
-				 * ग_लिखो_on_page will unlock the page on वापस
+				 * write_on_page will unlock the page on return
 				 */
-				ret = ग_लिखो_one_page(page);
-				जाओ retry;
-			पूर्ण
-		पूर्ण
+				ret = write_one_page(page);
+				goto retry;
+			}
+		}
 
-		अगर (!PageUptodate(page)) अणु
-			ret = block_पढ़ो_full_page(page, ocfs2_get_block);
-			अगर (ret) अणु
-				mlog_त्रुटि_सं(ret);
-				जाओ unlock;
-			पूर्ण
+		if (!PageUptodate(page)) {
+			ret = block_read_full_page(page, ocfs2_get_block);
+			if (ret) {
+				mlog_errno(ret);
+				goto unlock;
+			}
 			lock_page(page);
-		पूर्ण
+		}
 
-		अगर (page_has_buffers(page)) अणु
+		if (page_has_buffers(page)) {
 			ret = walk_page_buffers(handle, page_buffers(page),
 						from, to, &partial,
 						ocfs2_clear_cow_buffer);
-			अगर (ret) अणु
-				mlog_त्रुटि_सं(ret);
-				जाओ unlock;
-			पूर्ण
-		पूर्ण
+			if (ret) {
+				mlog_errno(ret);
+				goto unlock;
+			}
+		}
 
 		ocfs2_map_and_dirty_page(inode,
 					 handle, from, to,
@@ -2987,88 +2986,88 @@ retry:
 unlock:
 		unlock_page(page);
 		put_page(page);
-		page = शून्य;
+		page = NULL;
 		offset = map_end;
-		अगर (ret)
-			अवरोध;
-	पूर्ण
+		if (ret)
+			break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक ocfs2_duplicate_clusters_by_jbd(handle_t *handle,
-				    काष्ठा inode *inode,
+int ocfs2_duplicate_clusters_by_jbd(handle_t *handle,
+				    struct inode *inode,
 				    u32 cpos, u32 old_cluster,
 				    u32 new_cluster, u32 new_len)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा super_block *sb = inode->i_sb;
-	काष्ठा ocfs2_caching_info *ci = INODE_CACHE(inode);
-	पूर्णांक i, blocks = ocfs2_clusters_to_blocks(sb, new_len);
+{
+	int ret = 0;
+	struct super_block *sb = inode->i_sb;
+	struct ocfs2_caching_info *ci = INODE_CACHE(inode);
+	int i, blocks = ocfs2_clusters_to_blocks(sb, new_len);
 	u64 old_block = ocfs2_clusters_to_blocks(sb, old_cluster);
 	u64 new_block = ocfs2_clusters_to_blocks(sb, new_cluster);
-	काष्ठा ocfs2_super *osb = OCFS2_SB(sb);
-	काष्ठा buffer_head *old_bh = शून्य;
-	काष्ठा buffer_head *new_bh = शून्य;
+	struct ocfs2_super *osb = OCFS2_SB(sb);
+	struct buffer_head *old_bh = NULL;
+	struct buffer_head *new_bh = NULL;
 
 	trace_ocfs2_duplicate_clusters_by_page(cpos, old_cluster,
 					       new_cluster, new_len);
 
-	क्रम (i = 0; i < blocks; i++, old_block++, new_block++) अणु
+	for (i = 0; i < blocks; i++, old_block++, new_block++) {
 		new_bh = sb_getblk(osb->sb, new_block);
-		अगर (new_bh == शून्य) अणु
+		if (new_bh == NULL) {
 			ret = -ENOMEM;
-			mlog_त्रुटि_सं(ret);
-			अवरोध;
-		पूर्ण
+			mlog_errno(ret);
+			break;
+		}
 
 		ocfs2_set_new_buffer_uptodate(ci, new_bh);
 
-		ret = ocfs2_पढ़ो_block(ci, old_block, &old_bh, शून्य);
-		अगर (ret) अणु
-			mlog_त्रुटि_सं(ret);
-			अवरोध;
-		पूर्ण
+		ret = ocfs2_read_block(ci, old_block, &old_bh, NULL);
+		if (ret) {
+			mlog_errno(ret);
+			break;
+		}
 
 		ret = ocfs2_journal_access(handle, ci, new_bh,
 					   OCFS2_JOURNAL_ACCESS_CREATE);
-		अगर (ret) अणु
-			mlog_त्रुटि_सं(ret);
-			अवरोध;
-		पूर्ण
+		if (ret) {
+			mlog_errno(ret);
+			break;
+		}
 
-		स_नकल(new_bh->b_data, old_bh->b_data, sb->s_blocksize);
+		memcpy(new_bh->b_data, old_bh->b_data, sb->s_blocksize);
 		ocfs2_journal_dirty(handle, new_bh);
 
-		brअन्यथा(new_bh);
-		brअन्यथा(old_bh);
-		new_bh = शून्य;
-		old_bh = शून्य;
-	पूर्ण
+		brelse(new_bh);
+		brelse(old_bh);
+		new_bh = NULL;
+		old_bh = NULL;
+	}
 
-	brअन्यथा(new_bh);
-	brअन्यथा(old_bh);
-	वापस ret;
-पूर्ण
+	brelse(new_bh);
+	brelse(old_bh);
+	return ret;
+}
 
-अटल पूर्णांक ocfs2_clear_ext_refcount(handle_t *handle,
-				    काष्ठा ocfs2_extent_tree *et,
+static int ocfs2_clear_ext_refcount(handle_t *handle,
+				    struct ocfs2_extent_tree *et,
 				    u32 cpos, u32 p_cluster, u32 len,
-				    अचिन्हित पूर्णांक ext_flags,
-				    काष्ठा ocfs2_alloc_context *meta_ac,
-				    काष्ठा ocfs2_cached_dealloc_ctxt *dealloc)
-अणु
-	पूर्णांक ret, index;
-	काष्ठा ocfs2_extent_rec replace_rec;
-	काष्ठा ocfs2_path *path = शून्य;
-	काष्ठा ocfs2_extent_list *el;
-	काष्ठा super_block *sb = ocfs2_metadata_cache_get_super(et->et_ci);
+				    unsigned int ext_flags,
+				    struct ocfs2_alloc_context *meta_ac,
+				    struct ocfs2_cached_dealloc_ctxt *dealloc)
+{
+	int ret, index;
+	struct ocfs2_extent_rec replace_rec;
+	struct ocfs2_path *path = NULL;
+	struct ocfs2_extent_list *el;
+	struct super_block *sb = ocfs2_metadata_cache_get_super(et->et_ci);
 	u64 ino = ocfs2_metadata_cache_owner(et->et_ci);
 
-	trace_ocfs2_clear_ext_refcount((अचिन्हित दीर्घ दीर्घ)ino,
+	trace_ocfs2_clear_ext_refcount((unsigned long long)ino,
 				       cpos, len, p_cluster, ext_flags);
 
-	स_रखो(&replace_rec, 0, माप(replace_rec));
+	memset(&replace_rec, 0, sizeof(replace_rec));
 	replace_rec.e_cpos = cpu_to_le32(cpos);
 	replace_rec.e_leaf_clusters = cpu_to_le16(len);
 	replace_rec.e_blkno = cpu_to_le64(ocfs2_clusters_to_blocks(sb,
@@ -3077,142 +3076,142 @@ unlock:
 	replace_rec.e_flags &= ~OCFS2_EXT_REFCOUNTED;
 
 	path = ocfs2_new_path_from_et(et);
-	अगर (!path) अणु
+	if (!path) {
 		ret = -ENOMEM;
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+		mlog_errno(ret);
+		goto out;
+	}
 
 	ret = ocfs2_find_path(et->et_ci, path, cpos);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto out;
+	}
 
 	el = path_leaf_el(path);
 
 	index = ocfs2_search_extent_list(el, cpos);
-	अगर (index == -1) अणु
+	if (index == -1) {
 		ret = ocfs2_error(sb,
 				  "Inode %llu has an extent at cpos %u which can no longer be found\n",
-				  (अचिन्हित दीर्घ दीर्घ)ino, cpos);
-		जाओ out;
-	पूर्ण
+				  (unsigned long long)ino, cpos);
+		goto out;
+	}
 
 	ret = ocfs2_split_extent(handle, et, path, index,
 				 &replace_rec, meta_ac, dealloc);
-	अगर (ret)
-		mlog_त्रुटि_सं(ret);
+	if (ret)
+		mlog_errno(ret);
 
 out:
-	ocfs2_मुक्त_path(path);
-	वापस ret;
-पूर्ण
+	ocfs2_free_path(path);
+	return ret;
+}
 
-अटल पूर्णांक ocfs2_replace_clusters(handle_t *handle,
-				  काष्ठा ocfs2_cow_context *context,
+static int ocfs2_replace_clusters(handle_t *handle,
+				  struct ocfs2_cow_context *context,
 				  u32 cpos, u32 old,
 				  u32 new, u32 len,
-				  अचिन्हित पूर्णांक ext_flags)
-अणु
-	पूर्णांक ret;
-	काष्ठा ocfs2_caching_info *ci = context->data_et.et_ci;
+				  unsigned int ext_flags)
+{
+	int ret;
+	struct ocfs2_caching_info *ci = context->data_et.et_ci;
 	u64 ino = ocfs2_metadata_cache_owner(ci);
 
-	trace_ocfs2_replace_clusters((अचिन्हित दीर्घ दीर्घ)ino,
+	trace_ocfs2_replace_clusters((unsigned long long)ino,
 				     cpos, old, new, len, ext_flags);
 
 	/*If the old clusters is unwritten, no need to duplicate. */
-	अगर (!(ext_flags & OCFS2_EXT_UNWRITTEN)) अणु
+	if (!(ext_flags & OCFS2_EXT_UNWRITTEN)) {
 		ret = context->cow_duplicate_clusters(handle, context->inode,
 						      cpos, old, new, len);
-		अगर (ret) अणु
-			mlog_त्रुटि_सं(ret);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+		if (ret) {
+			mlog_errno(ret);
+			goto out;
+		}
+	}
 
 	ret = ocfs2_clear_ext_refcount(handle, &context->data_et,
 				       cpos, new, len, ext_flags,
 				       context->meta_ac, &context->dealloc);
-	अगर (ret)
-		mlog_त्रुटि_सं(ret);
+	if (ret)
+		mlog_errno(ret);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक ocfs2_cow_sync_ग_लिखोback(काष्ठा super_block *sb,
-			     काष्ठा inode *inode,
+int ocfs2_cow_sync_writeback(struct super_block *sb,
+			     struct inode *inode,
 			     u32 cpos, u32 num_clusters)
-अणु
-	पूर्णांक ret = 0;
+{
+	int ret = 0;
 	loff_t offset, end, map_end;
 	pgoff_t page_index;
-	काष्ठा page *page;
+	struct page *page;
 
-	अगर (ocfs2_should_order_data(inode))
-		वापस 0;
+	if (ocfs2_should_order_data(inode))
+		return 0;
 
 	offset = ((loff_t)cpos) << OCFS2_SB(sb)->s_clustersize_bits;
 	end = offset + (num_clusters << OCFS2_SB(sb)->s_clustersize_bits);
 
-	ret = filemap_fdataग_लिखो_range(inode->i_mapping,
+	ret = filemap_fdatawrite_range(inode->i_mapping,
 				       offset, end - 1);
-	अगर (ret < 0) अणु
-		mlog_त्रुटि_सं(ret);
-		वापस ret;
-	पूर्ण
+	if (ret < 0) {
+		mlog_errno(ret);
+		return ret;
+	}
 
-	जबतक (offset < end) अणु
+	while (offset < end) {
 		page_index = offset >> PAGE_SHIFT;
 		map_end = ((loff_t)page_index + 1) << PAGE_SHIFT;
-		अगर (map_end > end)
+		if (map_end > end)
 			map_end = end;
 
 		page = find_or_create_page(inode->i_mapping,
 					   page_index, GFP_NOFS);
 		BUG_ON(!page);
 
-		रुको_on_page_ग_लिखोback(page);
-		अगर (PageError(page)) अणु
+		wait_on_page_writeback(page);
+		if (PageError(page)) {
 			ret = -EIO;
-			mlog_त्रुटि_सं(ret);
-		पूर्ण अन्यथा
+			mlog_errno(ret);
+		} else
 			mark_page_accessed(page);
 
 		unlock_page(page);
 		put_page(page);
-		page = शून्य;
+		page = NULL;
 		offset = map_end;
-		अगर (ret)
-			अवरोध;
-	पूर्ण
+		if (ret)
+			break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ocfs2_di_get_clusters(काष्ठा ocfs2_cow_context *context,
+static int ocfs2_di_get_clusters(struct ocfs2_cow_context *context,
 				 u32 v_cluster, u32 *p_cluster,
 				 u32 *num_clusters,
-				 अचिन्हित पूर्णांक *extent_flags)
-अणु
-	वापस ocfs2_get_clusters(context->inode, v_cluster, p_cluster,
+				 unsigned int *extent_flags)
+{
+	return ocfs2_get_clusters(context->inode, v_cluster, p_cluster,
 				  num_clusters, extent_flags);
-पूर्ण
+}
 
-अटल पूर्णांक ocfs2_make_clusters_writable(काष्ठा super_block *sb,
-					काष्ठा ocfs2_cow_context *context,
+static int ocfs2_make_clusters_writable(struct super_block *sb,
+					struct ocfs2_cow_context *context,
 					u32 cpos, u32 p_cluster,
-					u32 num_clusters, अचिन्हित पूर्णांक e_flags)
-अणु
-	पूर्णांक ret, delete, index, credits =  0;
+					u32 num_clusters, unsigned int e_flags)
+{
+	int ret, delete, index, credits =  0;
 	u32 new_bit, new_len, orig_num_clusters;
-	अचिन्हित पूर्णांक set_len;
-	काष्ठा ocfs2_super *osb = OCFS2_SB(sb);
+	unsigned int set_len;
+	struct ocfs2_super *osb = OCFS2_SB(sb);
 	handle_t *handle;
-	काष्ठा buffer_head *ref_leaf_bh = शून्य;
-	काष्ठा ocfs2_caching_info *ref_ci = &context->ref_tree->rf_ci;
-	काष्ठा ocfs2_refcount_rec rec;
+	struct buffer_head *ref_leaf_bh = NULL;
+	struct ocfs2_caching_info *ref_ci = &context->ref_tree->rf_ci;
+	struct ocfs2_refcount_rec rec;
 
 	trace_ocfs2_make_clusters_writable(cpos, p_cluster,
 					   num_clusters, e_flags);
@@ -3223,32 +3222,32 @@ out:
 					     context->ref_root_bh,
 					     &context->meta_ac,
 					     &context->data_ac, &credits);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		वापस ret;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		return ret;
+	}
 
-	अगर (context->post_refcount)
+	if (context->post_refcount)
 		credits += context->post_refcount->credits;
 
 	credits += context->extra_credits;
 	handle = ocfs2_start_trans(osb, credits);
-	अगर (IS_ERR(handle)) अणु
+	if (IS_ERR(handle)) {
 		ret = PTR_ERR(handle);
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+		mlog_errno(ret);
+		goto out;
+	}
 
 	orig_num_clusters = num_clusters;
 
-	जबतक (num_clusters) अणु
+	while (num_clusters) {
 		ret = ocfs2_get_refcount_rec(ref_ci, context->ref_root_bh,
 					     p_cluster, num_clusters,
 					     &rec, &index, &ref_leaf_bh);
-		अगर (ret) अणु
-			mlog_त्रुटि_सं(ret);
-			जाओ out_commit;
-		पूर्ण
+		if (ret) {
+			mlog_errno(ret);
+			goto out_commit;
+		}
 
 		BUG_ON(!rec.r_refcount);
 		set_len = min((u64)p_cluster + num_clusters,
@@ -3256,13 +3255,13 @@ out:
 			      le32_to_cpu(rec.r_clusters)) - p_cluster;
 
 		/*
-		 * There are many dअगरferent situation here.
-		 * 1. If refcount == 1, हटाओ the flag and करोn't COW.
+		 * There are many different situation here.
+		 * 1. If refcount == 1, remove the flag and don't COW.
 		 * 2. If refcount > 1, allocate clusters.
-		 *    Here we may not allocate r_len once at a समय, so जारी
+		 *    Here we may not allocate r_len once at a time, so continue
 		 *    until we reach num_clusters.
 		 */
-		अगर (le32_to_cpu(rec.r_refcount) == 1) अणु
+		if (le32_to_cpu(rec.r_refcount) == 1) {
 			delete = 0;
 			ret = ocfs2_clear_ext_refcount(handle,
 						       &context->data_et,
@@ -3270,182 +3269,182 @@ out:
 						       set_len, e_flags,
 						       context->meta_ac,
 						       &context->dealloc);
-			अगर (ret) अणु
-				mlog_त्रुटि_सं(ret);
-				जाओ out_commit;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			if (ret) {
+				mlog_errno(ret);
+				goto out_commit;
+			}
+		} else {
 			delete = 1;
 
 			ret = __ocfs2_claim_clusters(handle,
 						     context->data_ac,
 						     1, set_len,
 						     &new_bit, &new_len);
-			अगर (ret) अणु
-				mlog_त्रुटि_सं(ret);
-				जाओ out_commit;
-			पूर्ण
+			if (ret) {
+				mlog_errno(ret);
+				goto out_commit;
+			}
 
 			ret = ocfs2_replace_clusters(handle, context,
 						     cpos, p_cluster, new_bit,
 						     new_len, e_flags);
-			अगर (ret) अणु
-				mlog_त्रुटि_सं(ret);
-				जाओ out_commit;
-			पूर्ण
+			if (ret) {
+				mlog_errno(ret);
+				goto out_commit;
+			}
 			set_len = new_len;
-		पूर्ण
+		}
 
 		ret = __ocfs2_decrease_refcount(handle, ref_ci,
 						context->ref_root_bh,
 						p_cluster, set_len,
 						context->meta_ac,
 						&context->dealloc, delete);
-		अगर (ret) अणु
-			mlog_त्रुटि_सं(ret);
-			जाओ out_commit;
-		पूर्ण
+		if (ret) {
+			mlog_errno(ret);
+			goto out_commit;
+		}
 
 		cpos += set_len;
 		p_cluster += set_len;
 		num_clusters -= set_len;
-		brअन्यथा(ref_leaf_bh);
-		ref_leaf_bh = शून्य;
-	पूर्ण
+		brelse(ref_leaf_bh);
+		ref_leaf_bh = NULL;
+	}
 
 	/* handle any post_cow action. */
-	अगर (context->post_refcount && context->post_refcount->func) अणु
+	if (context->post_refcount && context->post_refcount->func) {
 		ret = context->post_refcount->func(context->inode, handle,
 						context->post_refcount->para);
-		अगर (ret) अणु
-			mlog_त्रुटि_सं(ret);
-			जाओ out_commit;
-		पूर्ण
-	पूर्ण
+		if (ret) {
+			mlog_errno(ret);
+			goto out_commit;
+		}
+	}
 
 	/*
-	 * Here we should ग_लिखो the new page out first अगर we are
-	 * in ग_लिखो-back mode.
+	 * Here we should write the new page out first if we are
+	 * in write-back mode.
 	 */
-	अगर (context->get_clusters == ocfs2_di_get_clusters) अणु
-		ret = ocfs2_cow_sync_ग_लिखोback(sb, context->inode, cpos,
+	if (context->get_clusters == ocfs2_di_get_clusters) {
+		ret = ocfs2_cow_sync_writeback(sb, context->inode, cpos,
 					       orig_num_clusters);
-		अगर (ret)
-			mlog_त्रुटि_सं(ret);
-	पूर्ण
+		if (ret)
+			mlog_errno(ret);
+	}
 
 out_commit:
 	ocfs2_commit_trans(osb, handle);
 
 out:
-	अगर (context->data_ac) अणु
-		ocfs2_मुक्त_alloc_context(context->data_ac);
-		context->data_ac = शून्य;
-	पूर्ण
-	अगर (context->meta_ac) अणु
-		ocfs2_मुक्त_alloc_context(context->meta_ac);
-		context->meta_ac = शून्य;
-	पूर्ण
-	brअन्यथा(ref_leaf_bh);
+	if (context->data_ac) {
+		ocfs2_free_alloc_context(context->data_ac);
+		context->data_ac = NULL;
+	}
+	if (context->meta_ac) {
+		ocfs2_free_alloc_context(context->meta_ac);
+		context->meta_ac = NULL;
+	}
+	brelse(ref_leaf_bh);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ocfs2_replace_cow(काष्ठा ocfs2_cow_context *context)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा inode *inode = context->inode;
+static int ocfs2_replace_cow(struct ocfs2_cow_context *context)
+{
+	int ret = 0;
+	struct inode *inode = context->inode;
 	u32 cow_start = context->cow_start, cow_len = context->cow_len;
 	u32 p_cluster, num_clusters;
-	अचिन्हित पूर्णांक ext_flags;
-	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+	unsigned int ext_flags;
+	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
 
-	अगर (!ocfs2_refcount_tree(osb)) अणु
-		वापस ocfs2_error(inode->i_sb, "Inode %lu want to use refcount tree, but the feature bit is not set in the super block\n",
+	if (!ocfs2_refcount_tree(osb)) {
+		return ocfs2_error(inode->i_sb, "Inode %lu want to use refcount tree, but the feature bit is not set in the super block\n",
 				   inode->i_ino);
-	पूर्ण
+	}
 
 	ocfs2_init_dealloc_ctxt(&context->dealloc);
 
-	जबतक (cow_len) अणु
+	while (cow_len) {
 		ret = context->get_clusters(context, cow_start, &p_cluster,
 					    &num_clusters, &ext_flags);
-		अगर (ret) अणु
-			mlog_त्रुटि_सं(ret);
-			अवरोध;
-		पूर्ण
+		if (ret) {
+			mlog_errno(ret);
+			break;
+		}
 
 		BUG_ON(!(ext_flags & OCFS2_EXT_REFCOUNTED));
 
-		अगर (cow_len < num_clusters)
+		if (cow_len < num_clusters)
 			num_clusters = cow_len;
 
 		ret = ocfs2_make_clusters_writable(inode->i_sb, context,
 						   cow_start, p_cluster,
 						   num_clusters, ext_flags);
-		अगर (ret) अणु
-			mlog_त्रुटि_सं(ret);
-			अवरोध;
-		पूर्ण
+		if (ret) {
+			mlog_errno(ret);
+			break;
+		}
 
 		cow_len -= num_clusters;
 		cow_start += num_clusters;
-	पूर्ण
+	}
 
-	अगर (ocfs2_dealloc_has_cluster(&context->dealloc)) अणु
+	if (ocfs2_dealloc_has_cluster(&context->dealloc)) {
 		ocfs2_schedule_truncate_log_flush(osb, 1);
 		ocfs2_run_deallocs(osb, &context->dealloc);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Starting at cpos, try to CoW ग_लिखो_len clusters.  Don't CoW
- * past max_cpos.  This will stop when it runs पूर्णांकo a hole or an
+ * Starting at cpos, try to CoW write_len clusters.  Don't CoW
+ * past max_cpos.  This will stop when it runs into a hole or an
  * unrefcounted extent.
  */
-अटल पूर्णांक ocfs2_refcount_cow_hunk(काष्ठा inode *inode,
-				   काष्ठा buffer_head *di_bh,
-				   u32 cpos, u32 ग_लिखो_len, u32 max_cpos)
-अणु
-	पूर्णांक ret;
+static int ocfs2_refcount_cow_hunk(struct inode *inode,
+				   struct buffer_head *di_bh,
+				   u32 cpos, u32 write_len, u32 max_cpos)
+{
+	int ret;
 	u32 cow_start = 0, cow_len = 0;
-	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
-	काष्ठा ocfs2_dinode *di = (काष्ठा ocfs2_dinode *)di_bh->b_data;
-	काष्ठा buffer_head *ref_root_bh = शून्य;
-	काष्ठा ocfs2_refcount_tree *ref_tree;
-	काष्ठा ocfs2_cow_context *context = शून्य;
+	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+	struct ocfs2_dinode *di = (struct ocfs2_dinode *)di_bh->b_data;
+	struct buffer_head *ref_root_bh = NULL;
+	struct ocfs2_refcount_tree *ref_tree;
+	struct ocfs2_cow_context *context = NULL;
 
 	BUG_ON(!ocfs2_is_refcount_inode(inode));
 
 	ret = ocfs2_refcount_cal_cow_clusters(inode, &di->id2.i_list,
-					      cpos, ग_लिखो_len, max_cpos,
+					      cpos, write_len, max_cpos,
 					      &cow_start, &cow_len);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto out;
+	}
 
 	trace_ocfs2_refcount_cow_hunk(OCFS2_I(inode)->ip_blkno,
-				      cpos, ग_लिखो_len, max_cpos,
+				      cpos, write_len, max_cpos,
 				      cow_start, cow_len);
 
 	BUG_ON(cow_len == 0);
 
-	context = kzalloc(माप(काष्ठा ocfs2_cow_context), GFP_NOFS);
-	अगर (!context) अणु
+	context = kzalloc(sizeof(struct ocfs2_cow_context), GFP_NOFS);
+	if (!context) {
 		ret = -ENOMEM;
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+		mlog_errno(ret);
+		goto out;
+	}
 
 	ret = ocfs2_lock_refcount_tree(osb, le64_to_cpu(di->i_refcount_loc),
 				       1, &ref_tree, &ref_root_bh);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto out;
+	}
 
 	context->inode = inode;
 	context->cow_start = cow_start;
@@ -3459,8 +3458,8 @@ out:
 				      INODE_CACHE(inode), di_bh);
 
 	ret = ocfs2_replace_cow(context);
-	अगर (ret)
-		mlog_त्रुटि_सं(ret);
+	if (ret)
+		mlog_errno(ret);
 
 	/*
 	 * truncate the extent map here since no matter whether we meet with
@@ -3470,184 +3469,184 @@ out:
 	ocfs2_extent_map_trunc(inode, cow_start);
 
 	ocfs2_unlock_refcount_tree(osb, ref_tree, 1);
-	brअन्यथा(ref_root_bh);
+	brelse(ref_root_bh);
 out:
-	kमुक्त(context);
-	वापस ret;
-पूर्ण
+	kfree(context);
+	return ret;
+}
 
 /*
- * CoW any and all clusters between cpos and cpos+ग_लिखो_len.
- * Don't CoW past max_cpos.  If this वापसs successfully, all
- * clusters between cpos and cpos+ग_लिखो_len are safe to modअगरy.
+ * CoW any and all clusters between cpos and cpos+write_len.
+ * Don't CoW past max_cpos.  If this returns successfully, all
+ * clusters between cpos and cpos+write_len are safe to modify.
  */
-पूर्णांक ocfs2_refcount_cow(काष्ठा inode *inode,
-		       काष्ठा buffer_head *di_bh,
-		       u32 cpos, u32 ग_लिखो_len, u32 max_cpos)
-अणु
-	पूर्णांक ret = 0;
+int ocfs2_refcount_cow(struct inode *inode,
+		       struct buffer_head *di_bh,
+		       u32 cpos, u32 write_len, u32 max_cpos)
+{
+	int ret = 0;
 	u32 p_cluster, num_clusters;
-	अचिन्हित पूर्णांक ext_flags;
+	unsigned int ext_flags;
 
-	जबतक (ग_लिखो_len) अणु
+	while (write_len) {
 		ret = ocfs2_get_clusters(inode, cpos, &p_cluster,
 					 &num_clusters, &ext_flags);
-		अगर (ret) अणु
-			mlog_त्रुटि_सं(ret);
-			अवरोध;
-		पूर्ण
+		if (ret) {
+			mlog_errno(ret);
+			break;
+		}
 
-		अगर (ग_लिखो_len < num_clusters)
-			num_clusters = ग_लिखो_len;
+		if (write_len < num_clusters)
+			num_clusters = write_len;
 
-		अगर (ext_flags & OCFS2_EXT_REFCOUNTED) अणु
+		if (ext_flags & OCFS2_EXT_REFCOUNTED) {
 			ret = ocfs2_refcount_cow_hunk(inode, di_bh, cpos,
 						      num_clusters, max_cpos);
-			अगर (ret) अणु
-				mlog_त्रुटि_सं(ret);
-				अवरोध;
-			पूर्ण
-		पूर्ण
+			if (ret) {
+				mlog_errno(ret);
+				break;
+			}
+		}
 
-		ग_लिखो_len -= num_clusters;
+		write_len -= num_clusters;
 		cpos += num_clusters;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ocfs2_xattr_value_get_clusters(काष्ठा ocfs2_cow_context *context,
+static int ocfs2_xattr_value_get_clusters(struct ocfs2_cow_context *context,
 					  u32 v_cluster, u32 *p_cluster,
 					  u32 *num_clusters,
-					  अचिन्हित पूर्णांक *extent_flags)
-अणु
-	काष्ठा inode *inode = context->inode;
-	काष्ठा ocfs2_xattr_value_root *xv = context->cow_object;
+					  unsigned int *extent_flags)
+{
+	struct inode *inode = context->inode;
+	struct ocfs2_xattr_value_root *xv = context->cow_object;
 
-	वापस ocfs2_xattr_get_clusters(inode, v_cluster, p_cluster,
+	return ocfs2_xattr_get_clusters(inode, v_cluster, p_cluster,
 					num_clusters, &xv->xr_list,
 					extent_flags);
-पूर्ण
+}
 
 /*
- * Given a xattr value root, calculate the most meta/credits we need क्रम
- * refcount tree change अगर we truncate it to 0.
+ * Given a xattr value root, calculate the most meta/credits we need for
+ * refcount tree change if we truncate it to 0.
  */
-पूर्णांक ocfs2_refcounted_xattr_delete_need(काष्ठा inode *inode,
-				       काष्ठा ocfs2_caching_info *ref_ci,
-				       काष्ठा buffer_head *ref_root_bh,
-				       काष्ठा ocfs2_xattr_value_root *xv,
-				       पूर्णांक *meta_add, पूर्णांक *credits)
-अणु
-	पूर्णांक ret = 0, index, ref_blocks = 0;
+int ocfs2_refcounted_xattr_delete_need(struct inode *inode,
+				       struct ocfs2_caching_info *ref_ci,
+				       struct buffer_head *ref_root_bh,
+				       struct ocfs2_xattr_value_root *xv,
+				       int *meta_add, int *credits)
+{
+	int ret = 0, index, ref_blocks = 0;
 	u32 p_cluster, num_clusters;
 	u32 cpos = 0, clusters = le32_to_cpu(xv->xr_clusters);
-	काष्ठा ocfs2_refcount_block *rb;
-	काष्ठा ocfs2_refcount_rec rec;
-	काष्ठा buffer_head *ref_leaf_bh = शून्य;
+	struct ocfs2_refcount_block *rb;
+	struct ocfs2_refcount_rec rec;
+	struct buffer_head *ref_leaf_bh = NULL;
 
-	जबतक (cpos < clusters) अणु
+	while (cpos < clusters) {
 		ret = ocfs2_xattr_get_clusters(inode, cpos, &p_cluster,
 					       &num_clusters, &xv->xr_list,
-					       शून्य);
-		अगर (ret) अणु
-			mlog_त्रुटि_सं(ret);
-			जाओ out;
-		पूर्ण
+					       NULL);
+		if (ret) {
+			mlog_errno(ret);
+			goto out;
+		}
 
 		cpos += num_clusters;
 
-		जबतक (num_clusters) अणु
+		while (num_clusters) {
 			ret = ocfs2_get_refcount_rec(ref_ci, ref_root_bh,
 						     p_cluster, num_clusters,
 						     &rec, &index,
 						     &ref_leaf_bh);
-			अगर (ret) अणु
-				mlog_त्रुटि_सं(ret);
-				जाओ out;
-			पूर्ण
+			if (ret) {
+				mlog_errno(ret);
+				goto out;
+			}
 
 			BUG_ON(!rec.r_refcount);
 
-			rb = (काष्ठा ocfs2_refcount_block *)ref_leaf_bh->b_data;
+			rb = (struct ocfs2_refcount_block *)ref_leaf_bh->b_data;
 
 			/*
-			 * We really करोn't know whether the other clusters is in
+			 * We really don't know whether the other clusters is in
 			 * this refcount block or not, so just take the worst
-			 * हाल that all the clusters are in this block and each
+			 * case that all the clusters are in this block and each
 			 * one will split a refcount rec, so totally we need
 			 * clusters * 2 new refcount rec.
 			 */
-			अगर (le16_to_cpu(rb->rf_records.rl_used) + clusters * 2 >
+			if (le16_to_cpu(rb->rf_records.rl_used) + clusters * 2 >
 			    le16_to_cpu(rb->rf_records.rl_count))
 				ref_blocks++;
 
 			*credits += 1;
-			brअन्यथा(ref_leaf_bh);
-			ref_leaf_bh = शून्य;
+			brelse(ref_leaf_bh);
+			ref_leaf_bh = NULL;
 
-			अगर (num_clusters <= le32_to_cpu(rec.r_clusters))
-				अवरोध;
-			अन्यथा
+			if (num_clusters <= le32_to_cpu(rec.r_clusters))
+				break;
+			else
 				num_clusters -= le32_to_cpu(rec.r_clusters);
 			p_cluster += num_clusters;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	*meta_add += ref_blocks;
-	अगर (!ref_blocks)
-		जाओ out;
+	if (!ref_blocks)
+		goto out;
 
-	rb = (काष्ठा ocfs2_refcount_block *)ref_root_bh->b_data;
-	अगर (le32_to_cpu(rb->rf_flags) & OCFS2_REFCOUNT_TREE_FL)
+	rb = (struct ocfs2_refcount_block *)ref_root_bh->b_data;
+	if (le32_to_cpu(rb->rf_flags) & OCFS2_REFCOUNT_TREE_FL)
 		*credits += OCFS2_EXPAND_REFCOUNT_TREE_CREDITS;
-	अन्यथा अणु
-		काष्ठा ocfs2_extent_tree et;
+	else {
+		struct ocfs2_extent_tree et;
 
 		ocfs2_init_refcount_extent_tree(&et, ref_ci, ref_root_bh);
 		*credits += ocfs2_calc_extend_credits(inode->i_sb,
 						      et.et_root_el);
-	पूर्ण
+	}
 
 out:
-	brअन्यथा(ref_leaf_bh);
-	वापस ret;
-पूर्ण
+	brelse(ref_leaf_bh);
+	return ret;
+}
 
 /*
- * Do CoW क्रम xattr.
+ * Do CoW for xattr.
  */
-पूर्णांक ocfs2_refcount_cow_xattr(काष्ठा inode *inode,
-			     काष्ठा ocfs2_dinode *di,
-			     काष्ठा ocfs2_xattr_value_buf *vb,
-			     काष्ठा ocfs2_refcount_tree *ref_tree,
-			     काष्ठा buffer_head *ref_root_bh,
-			     u32 cpos, u32 ग_लिखो_len,
-			     काष्ठा ocfs2_post_refcount *post)
-अणु
-	पूर्णांक ret;
-	काष्ठा ocfs2_xattr_value_root *xv = vb->vb_xv;
-	काष्ठा ocfs2_cow_context *context = शून्य;
+int ocfs2_refcount_cow_xattr(struct inode *inode,
+			     struct ocfs2_dinode *di,
+			     struct ocfs2_xattr_value_buf *vb,
+			     struct ocfs2_refcount_tree *ref_tree,
+			     struct buffer_head *ref_root_bh,
+			     u32 cpos, u32 write_len,
+			     struct ocfs2_post_refcount *post)
+{
+	int ret;
+	struct ocfs2_xattr_value_root *xv = vb->vb_xv;
+	struct ocfs2_cow_context *context = NULL;
 	u32 cow_start, cow_len;
 
 	BUG_ON(!ocfs2_is_refcount_inode(inode));
 
 	ret = ocfs2_refcount_cal_cow_clusters(inode, &xv->xr_list,
-					      cpos, ग_लिखो_len, अच_पूर्णांक_उच्च,
+					      cpos, write_len, UINT_MAX,
 					      &cow_start, &cow_len);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto out;
+	}
 
 	BUG_ON(cow_len == 0);
 
-	context = kzalloc(माप(काष्ठा ocfs2_cow_context), GFP_NOFS);
-	अगर (!context) अणु
+	context = kzalloc(sizeof(struct ocfs2_cow_context), GFP_NOFS);
+	if (!context) {
 		ret = -ENOMEM;
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+		mlog_errno(ret);
+		goto out;
+	}
 
 	context->inode = inode;
 	context->cow_start = cow_start;
@@ -3657,7 +3656,7 @@ out:
 	context->cow_object = xv;
 
 	context->cow_duplicate_clusters = ocfs2_duplicate_clusters_by_jbd;
-	/* We need the extra credits क्रम duplicate_clusters by jbd. */
+	/* We need the extra credits for duplicate_clusters by jbd. */
 	context->extra_credits =
 		ocfs2_clusters_to_blocks(inode->i_sb, 1) * cow_len;
 	context->get_clusters = ocfs2_xattr_value_get_clusters;
@@ -3667,31 +3666,31 @@ out:
 					   INODE_CACHE(inode), vb);
 
 	ret = ocfs2_replace_cow(context);
-	अगर (ret)
-		mlog_त्रुटि_सं(ret);
+	if (ret)
+		mlog_errno(ret);
 
 out:
-	kमुक्त(context);
-	वापस ret;
-पूर्ण
+	kfree(context);
+	return ret;
+}
 
 /*
- * Insert a new extent पूर्णांकo refcount tree and mark a extent rec
+ * Insert a new extent into refcount tree and mark a extent rec
  * as refcounted in the dinode tree.
  */
-पूर्णांक ocfs2_add_refcount_flag(काष्ठा inode *inode,
-			    काष्ठा ocfs2_extent_tree *data_et,
-			    काष्ठा ocfs2_caching_info *ref_ci,
-			    काष्ठा buffer_head *ref_root_bh,
+int ocfs2_add_refcount_flag(struct inode *inode,
+			    struct ocfs2_extent_tree *data_et,
+			    struct ocfs2_caching_info *ref_ci,
+			    struct buffer_head *ref_root_bh,
 			    u32 cpos, u32 p_cluster, u32 num_clusters,
-			    काष्ठा ocfs2_cached_dealloc_ctxt *dealloc,
-			    काष्ठा ocfs2_post_refcount *post)
-अणु
-	पूर्णांक ret;
+			    struct ocfs2_cached_dealloc_ctxt *dealloc,
+			    struct ocfs2_post_refcount *post)
+{
+	int ret;
 	handle_t *handle;
-	पूर्णांक credits = 1, ref_blocks = 0;
-	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
-	काष्ठा ocfs2_alloc_context *meta_ac = शून्य;
+	int credits = 1, ref_blocks = 0;
+	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+	struct ocfs2_alloc_context *meta_ac = NULL;
 
 	/* We need to be able to handle at least an extent tree split. */
 	ref_blocks = ocfs2_extend_meta_needed(data_et->et_root_el);
@@ -3700,188 +3699,188 @@ out:
 					       ref_ci, ref_root_bh,
 					       p_cluster, num_clusters,
 					       &ref_blocks, &credits);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto out;
+	}
 
 	trace_ocfs2_add_refcount_flag(ref_blocks, credits);
 
-	अगर (ref_blocks) अणु
+	if (ref_blocks) {
 		ret = ocfs2_reserve_new_metadata_blocks(osb,
 							ref_blocks, &meta_ac);
-		अगर (ret) अणु
-			mlog_त्रुटि_सं(ret);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+		if (ret) {
+			mlog_errno(ret);
+			goto out;
+		}
+	}
 
-	अगर (post)
+	if (post)
 		credits += post->credits;
 
 	handle = ocfs2_start_trans(osb, credits);
-	अगर (IS_ERR(handle)) अणु
+	if (IS_ERR(handle)) {
 		ret = PTR_ERR(handle);
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+		mlog_errno(ret);
+		goto out;
+	}
 
 	ret = ocfs2_mark_extent_refcounted(inode, data_et, handle,
 					   cpos, num_clusters, p_cluster,
 					   meta_ac, dealloc);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out_commit;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto out_commit;
+	}
 
 	ret = __ocfs2_increase_refcount(handle, ref_ci, ref_root_bh,
 					p_cluster, num_clusters, 0,
 					meta_ac, dealloc);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out_commit;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto out_commit;
+	}
 
-	अगर (post && post->func) अणु
+	if (post && post->func) {
 		ret = post->func(inode, handle, post->para);
-		अगर (ret)
-			mlog_त्रुटि_सं(ret);
-	पूर्ण
+		if (ret)
+			mlog_errno(ret);
+	}
 
 out_commit:
 	ocfs2_commit_trans(osb, handle);
 out:
-	अगर (meta_ac)
-		ocfs2_मुक्त_alloc_context(meta_ac);
-	वापस ret;
-पूर्ण
+	if (meta_ac)
+		ocfs2_free_alloc_context(meta_ac);
+	return ret;
+}
 
-अटल पूर्णांक ocfs2_change_स_समय(काष्ठा inode *inode,
-			      काष्ठा buffer_head *di_bh)
-अणु
-	पूर्णांक ret;
+static int ocfs2_change_ctime(struct inode *inode,
+			      struct buffer_head *di_bh)
+{
+	int ret;
 	handle_t *handle;
-	काष्ठा ocfs2_dinode *di = (काष्ठा ocfs2_dinode *)di_bh->b_data;
+	struct ocfs2_dinode *di = (struct ocfs2_dinode *)di_bh->b_data;
 
 	handle = ocfs2_start_trans(OCFS2_SB(inode->i_sb),
 				   OCFS2_INODE_UPDATE_CREDITS);
-	अगर (IS_ERR(handle)) अणु
+	if (IS_ERR(handle)) {
 		ret = PTR_ERR(handle);
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+		mlog_errno(ret);
+		goto out;
+	}
 
 	ret = ocfs2_journal_access_di(handle, INODE_CACHE(inode), di_bh,
 				      OCFS2_JOURNAL_ACCESS_WRITE);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out_commit;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto out_commit;
+	}
 
-	inode->i_स_समय = current_समय(inode);
-	di->i_स_समय = cpu_to_le64(inode->i_स_समय.tv_sec);
-	di->i_स_समय_nsec = cpu_to_le32(inode->i_स_समय.tv_nsec);
+	inode->i_ctime = current_time(inode);
+	di->i_ctime = cpu_to_le64(inode->i_ctime.tv_sec);
+	di->i_ctime_nsec = cpu_to_le32(inode->i_ctime.tv_nsec);
 
 	ocfs2_journal_dirty(handle, di_bh);
 
 out_commit:
 	ocfs2_commit_trans(OCFS2_SB(inode->i_sb), handle);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ocfs2_attach_refcount_tree(काष्ठा inode *inode,
-				      काष्ठा buffer_head *di_bh)
-अणु
-	पूर्णांक ret, data_changed = 0;
-	काष्ठा buffer_head *ref_root_bh = शून्य;
-	काष्ठा ocfs2_inode_info *oi = OCFS2_I(inode);
-	काष्ठा ocfs2_dinode *di = (काष्ठा ocfs2_dinode *)di_bh->b_data;
-	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
-	काष्ठा ocfs2_refcount_tree *ref_tree;
-	अचिन्हित पूर्णांक ext_flags;
+static int ocfs2_attach_refcount_tree(struct inode *inode,
+				      struct buffer_head *di_bh)
+{
+	int ret, data_changed = 0;
+	struct buffer_head *ref_root_bh = NULL;
+	struct ocfs2_inode_info *oi = OCFS2_I(inode);
+	struct ocfs2_dinode *di = (struct ocfs2_dinode *)di_bh->b_data;
+	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+	struct ocfs2_refcount_tree *ref_tree;
+	unsigned int ext_flags;
 	loff_t size;
 	u32 cpos, num_clusters, clusters, p_cluster;
-	काष्ठा ocfs2_cached_dealloc_ctxt dealloc;
-	काष्ठा ocfs2_extent_tree di_et;
+	struct ocfs2_cached_dealloc_ctxt dealloc;
+	struct ocfs2_extent_tree di_et;
 
 	ocfs2_init_dealloc_ctxt(&dealloc);
 
-	अगर (!ocfs2_is_refcount_inode(inode)) अणु
+	if (!ocfs2_is_refcount_inode(inode)) {
 		ret = ocfs2_create_refcount_tree(inode, di_bh);
-		अगर (ret) अणु
-			mlog_त्रुटि_सं(ret);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+		if (ret) {
+			mlog_errno(ret);
+			goto out;
+		}
+	}
 
 	BUG_ON(!di->i_refcount_loc);
 	ret = ocfs2_lock_refcount_tree(osb,
 				       le64_to_cpu(di->i_refcount_loc), 1,
 				       &ref_tree, &ref_root_bh);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto out;
+	}
 
-	अगर (oi->ip_dyn_features & OCFS2_INLINE_DATA_FL)
-		जाओ attach_xattr;
+	if (oi->ip_dyn_features & OCFS2_INLINE_DATA_FL)
+		goto attach_xattr;
 
 	ocfs2_init_dinode_extent_tree(&di_et, INODE_CACHE(inode), di_bh);
 
-	size = i_size_पढ़ो(inode);
-	clusters = ocfs2_clusters_क्रम_bytes(inode->i_sb, size);
+	size = i_size_read(inode);
+	clusters = ocfs2_clusters_for_bytes(inode->i_sb, size);
 
 	cpos = 0;
-	जबतक (cpos < clusters) अणु
+	while (cpos < clusters) {
 		ret = ocfs2_get_clusters(inode, cpos, &p_cluster,
 					 &num_clusters, &ext_flags);
-		अगर (ret) अणु
-			mlog_त्रुटि_सं(ret);
-			जाओ unlock;
-		पूर्ण
-		अगर (p_cluster && !(ext_flags & OCFS2_EXT_REFCOUNTED)) अणु
+		if (ret) {
+			mlog_errno(ret);
+			goto unlock;
+		}
+		if (p_cluster && !(ext_flags & OCFS2_EXT_REFCOUNTED)) {
 			ret = ocfs2_add_refcount_flag(inode, &di_et,
 						      &ref_tree->rf_ci,
 						      ref_root_bh, cpos,
 						      p_cluster, num_clusters,
-						      &dealloc, शून्य);
-			अगर (ret) अणु
-				mlog_त्रुटि_सं(ret);
-				जाओ unlock;
-			पूर्ण
+						      &dealloc, NULL);
+			if (ret) {
+				mlog_errno(ret);
+				goto unlock;
+			}
 
 			data_changed = 1;
-		पूर्ण
+		}
 		cpos += num_clusters;
-	पूर्ण
+	}
 
 attach_xattr:
-	अगर (oi->ip_dyn_features & OCFS2_HAS_XATTR_FL) अणु
+	if (oi->ip_dyn_features & OCFS2_HAS_XATTR_FL) {
 		ret = ocfs2_xattr_attach_refcount_tree(inode, di_bh,
 						       &ref_tree->rf_ci,
 						       ref_root_bh,
 						       &dealloc);
-		अगर (ret) अणु
-			mlog_त्रुटि_सं(ret);
-			जाओ unlock;
-		पूर्ण
-	पूर्ण
+		if (ret) {
+			mlog_errno(ret);
+			goto unlock;
+		}
+	}
 
-	अगर (data_changed) अणु
-		ret = ocfs2_change_स_समय(inode, di_bh);
-		अगर (ret)
-			mlog_त्रुटि_सं(ret);
-	पूर्ण
+	if (data_changed) {
+		ret = ocfs2_change_ctime(inode, di_bh);
+		if (ret)
+			mlog_errno(ret);
+	}
 
 unlock:
 	ocfs2_unlock_refcount_tree(osb, ref_tree, 1);
-	brअन्यथा(ref_root_bh);
+	brelse(ref_root_bh);
 
-	अगर (!ret && ocfs2_dealloc_has_cluster(&dealloc)) अणु
+	if (!ret && ocfs2_dealloc_has_cluster(&dealloc)) {
 		ocfs2_schedule_truncate_log_flush(osb, 1);
 		ocfs2_run_deallocs(osb, &dealloc);
-	पूर्ण
+	}
 out:
 	/*
 	 * Empty the extent map so that we may get the right extent
@@ -3889,98 +3888,98 @@ out:
 	 */
 	ocfs2_extent_map_trunc(inode, 0);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ocfs2_add_refcounted_extent(काष्ठा inode *inode,
-				   काष्ठा ocfs2_extent_tree *et,
-				   काष्ठा ocfs2_caching_info *ref_ci,
-				   काष्ठा buffer_head *ref_root_bh,
+static int ocfs2_add_refcounted_extent(struct inode *inode,
+				   struct ocfs2_extent_tree *et,
+				   struct ocfs2_caching_info *ref_ci,
+				   struct buffer_head *ref_root_bh,
 				   u32 cpos, u32 p_cluster, u32 num_clusters,
-				   अचिन्हित पूर्णांक ext_flags,
-				   काष्ठा ocfs2_cached_dealloc_ctxt *dealloc)
-अणु
-	पूर्णांक ret;
+				   unsigned int ext_flags,
+				   struct ocfs2_cached_dealloc_ctxt *dealloc)
+{
+	int ret;
 	handle_t *handle;
-	पूर्णांक credits = 0;
-	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
-	काष्ठा ocfs2_alloc_context *meta_ac = शून्य;
+	int credits = 0;
+	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+	struct ocfs2_alloc_context *meta_ac = NULL;
 
 	ret = ocfs2_lock_refcount_allocators(inode->i_sb,
 					     p_cluster, num_clusters,
 					     et, ref_ci,
 					     ref_root_bh, &meta_ac,
-					     शून्य, &credits);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+					     NULL, &credits);
+	if (ret) {
+		mlog_errno(ret);
+		goto out;
+	}
 
 	handle = ocfs2_start_trans(osb, credits);
-	अगर (IS_ERR(handle)) अणु
+	if (IS_ERR(handle)) {
 		ret = PTR_ERR(handle);
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+		mlog_errno(ret);
+		goto out;
+	}
 
 	ret = ocfs2_insert_extent(handle, et, cpos,
 			ocfs2_clusters_to_blocks(inode->i_sb, p_cluster),
 			num_clusters, ext_flags, meta_ac);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out_commit;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto out_commit;
+	}
 
 	ret = ocfs2_increase_refcount(handle, ref_ci, ref_root_bh,
 				      p_cluster, num_clusters,
 				      meta_ac, dealloc);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out_commit;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto out_commit;
+	}
 
 	ret = dquot_alloc_space_nodirty(inode,
 		ocfs2_clusters_to_bytes(osb->sb, num_clusters));
-	अगर (ret)
-		mlog_त्रुटि_सं(ret);
+	if (ret)
+		mlog_errno(ret);
 
 out_commit:
 	ocfs2_commit_trans(osb, handle);
 out:
-	अगर (meta_ac)
-		ocfs2_मुक्त_alloc_context(meta_ac);
-	वापस ret;
-पूर्ण
+	if (meta_ac)
+		ocfs2_free_alloc_context(meta_ac);
+	return ret;
+}
 
-अटल पूर्णांक ocfs2_duplicate_अंतरभूत_data(काष्ठा inode *s_inode,
-				       काष्ठा buffer_head *s_bh,
-				       काष्ठा inode *t_inode,
-				       काष्ठा buffer_head *t_bh)
-अणु
-	पूर्णांक ret;
+static int ocfs2_duplicate_inline_data(struct inode *s_inode,
+				       struct buffer_head *s_bh,
+				       struct inode *t_inode,
+				       struct buffer_head *t_bh)
+{
+	int ret;
 	handle_t *handle;
-	काष्ठा ocfs2_super *osb = OCFS2_SB(s_inode->i_sb);
-	काष्ठा ocfs2_dinode *s_di = (काष्ठा ocfs2_dinode *)s_bh->b_data;
-	काष्ठा ocfs2_dinode *t_di = (काष्ठा ocfs2_dinode *)t_bh->b_data;
+	struct ocfs2_super *osb = OCFS2_SB(s_inode->i_sb);
+	struct ocfs2_dinode *s_di = (struct ocfs2_dinode *)s_bh->b_data;
+	struct ocfs2_dinode *t_di = (struct ocfs2_dinode *)t_bh->b_data;
 
 	BUG_ON(!(OCFS2_I(s_inode)->ip_dyn_features & OCFS2_INLINE_DATA_FL));
 
 	handle = ocfs2_start_trans(osb, OCFS2_INODE_UPDATE_CREDITS);
-	अगर (IS_ERR(handle)) अणु
+	if (IS_ERR(handle)) {
 		ret = PTR_ERR(handle);
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+		mlog_errno(ret);
+		goto out;
+	}
 
 	ret = ocfs2_journal_access_di(handle, INODE_CACHE(t_inode), t_bh,
 				      OCFS2_JOURNAL_ACCESS_WRITE);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out_commit;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto out_commit;
+	}
 
 	t_di->id2.i_data.id_count = s_di->id2.i_data.id_count;
-	स_नकल(t_di->id2.i_data.id_data, s_di->id2.i_data.id_data,
+	memcpy(t_di->id2.i_data.id_data, s_di->id2.i_data.id_data,
 	       le16_to_cpu(s_di->id2.i_data.id_count));
 	spin_lock(&OCFS2_I(t_inode)->ip_lock);
 	OCFS2_I(t_inode)->ip_dyn_features |= OCFS2_INLINE_DATA_FL;
@@ -3992,103 +3991,103 @@ out:
 out_commit:
 	ocfs2_commit_trans(osb, handle);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ocfs2_duplicate_extent_list(काष्ठा inode *s_inode,
-				काष्ठा inode *t_inode,
-				काष्ठा buffer_head *t_bh,
-				काष्ठा ocfs2_caching_info *ref_ci,
-				काष्ठा buffer_head *ref_root_bh,
-				काष्ठा ocfs2_cached_dealloc_ctxt *dealloc)
-अणु
-	पूर्णांक ret = 0;
+static int ocfs2_duplicate_extent_list(struct inode *s_inode,
+				struct inode *t_inode,
+				struct buffer_head *t_bh,
+				struct ocfs2_caching_info *ref_ci,
+				struct buffer_head *ref_root_bh,
+				struct ocfs2_cached_dealloc_ctxt *dealloc)
+{
+	int ret = 0;
 	u32 p_cluster, num_clusters, clusters, cpos;
 	loff_t size;
-	अचिन्हित पूर्णांक ext_flags;
-	काष्ठा ocfs2_extent_tree et;
+	unsigned int ext_flags;
+	struct ocfs2_extent_tree et;
 
 	ocfs2_init_dinode_extent_tree(&et, INODE_CACHE(t_inode), t_bh);
 
-	size = i_size_पढ़ो(s_inode);
-	clusters = ocfs2_clusters_क्रम_bytes(s_inode->i_sb, size);
+	size = i_size_read(s_inode);
+	clusters = ocfs2_clusters_for_bytes(s_inode->i_sb, size);
 
 	cpos = 0;
-	जबतक (cpos < clusters) अणु
+	while (cpos < clusters) {
 		ret = ocfs2_get_clusters(s_inode, cpos, &p_cluster,
 					 &num_clusters, &ext_flags);
-		अगर (ret) अणु
-			mlog_त्रुटि_सं(ret);
-			जाओ out;
-		पूर्ण
-		अगर (p_cluster) अणु
+		if (ret) {
+			mlog_errno(ret);
+			goto out;
+		}
+		if (p_cluster) {
 			ret = ocfs2_add_refcounted_extent(t_inode, &et,
 							  ref_ci, ref_root_bh,
 							  cpos, p_cluster,
 							  num_clusters,
 							  ext_flags,
 							  dealloc);
-			अगर (ret) अणु
-				mlog_त्रुटि_सं(ret);
-				जाओ out;
-			पूर्ण
-		पूर्ण
+			if (ret) {
+				mlog_errno(ret);
+				goto out;
+			}
+		}
 
 		cpos += num_clusters;
-	पूर्ण
+	}
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * change the new file's attributes to the src.
  *
  * reflink creates a snapshot of a file, that means the attributes
- * must be identical except क्रम three exceptions - nlink, ino, and स_समय.
+ * must be identical except for three exceptions - nlink, ino, and ctime.
  */
-अटल पूर्णांक ocfs2_complete_reflink(काष्ठा inode *s_inode,
-				  काष्ठा buffer_head *s_bh,
-				  काष्ठा inode *t_inode,
-				  काष्ठा buffer_head *t_bh,
+static int ocfs2_complete_reflink(struct inode *s_inode,
+				  struct buffer_head *s_bh,
+				  struct inode *t_inode,
+				  struct buffer_head *t_bh,
 				  bool preserve)
-अणु
-	पूर्णांक ret;
+{
+	int ret;
 	handle_t *handle;
-	काष्ठा ocfs2_dinode *s_di = (काष्ठा ocfs2_dinode *)s_bh->b_data;
-	काष्ठा ocfs2_dinode *di = (काष्ठा ocfs2_dinode *)t_bh->b_data;
-	loff_t size = i_size_पढ़ो(s_inode);
+	struct ocfs2_dinode *s_di = (struct ocfs2_dinode *)s_bh->b_data;
+	struct ocfs2_dinode *di = (struct ocfs2_dinode *)t_bh->b_data;
+	loff_t size = i_size_read(s_inode);
 
 	handle = ocfs2_start_trans(OCFS2_SB(t_inode->i_sb),
 				   OCFS2_INODE_UPDATE_CREDITS);
-	अगर (IS_ERR(handle)) अणु
+	if (IS_ERR(handle)) {
 		ret = PTR_ERR(handle);
-		mlog_त्रुटि_सं(ret);
-		वापस ret;
-	पूर्ण
+		mlog_errno(ret);
+		return ret;
+	}
 
 	ret = ocfs2_journal_access_di(handle, INODE_CACHE(t_inode), t_bh,
 				      OCFS2_JOURNAL_ACCESS_WRITE);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out_commit;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto out_commit;
+	}
 
 	spin_lock(&OCFS2_I(t_inode)->ip_lock);
 	OCFS2_I(t_inode)->ip_clusters = OCFS2_I(s_inode)->ip_clusters;
 	OCFS2_I(t_inode)->ip_attr = OCFS2_I(s_inode)->ip_attr;
 	OCFS2_I(t_inode)->ip_dyn_features = OCFS2_I(s_inode)->ip_dyn_features;
 	spin_unlock(&OCFS2_I(t_inode)->ip_lock);
-	i_size_ग_लिखो(t_inode, size);
+	i_size_write(t_inode, size);
 	t_inode->i_blocks = s_inode->i_blocks;
 
-	di->i_xattr_अंतरभूत_size = s_di->i_xattr_अंतरभूत_size;
+	di->i_xattr_inline_size = s_di->i_xattr_inline_size;
 	di->i_clusters = s_di->i_clusters;
 	di->i_size = s_di->i_size;
 	di->i_dyn_features = s_di->i_dyn_features;
 	di->i_attr = s_di->i_attr;
 
-	अगर (preserve) अणु
+	if (preserve) {
 		t_inode->i_uid = s_inode->i_uid;
 		t_inode->i_gid = s_inode->i_gid;
 		t_inode->i_mode = s_inode->i_mode;
@@ -4097,240 +4096,240 @@ out:
 		di->i_mode = s_di->i_mode;
 
 		/*
-		 * update समय.
-		 * we want mसमय to appear identical to the source and
-		 * update स_समय.
+		 * update time.
+		 * we want mtime to appear identical to the source and
+		 * update ctime.
 		 */
-		t_inode->i_स_समय = current_समय(t_inode);
+		t_inode->i_ctime = current_time(t_inode);
 
-		di->i_स_समय = cpu_to_le64(t_inode->i_स_समय.tv_sec);
-		di->i_स_समय_nsec = cpu_to_le32(t_inode->i_स_समय.tv_nsec);
+		di->i_ctime = cpu_to_le64(t_inode->i_ctime.tv_sec);
+		di->i_ctime_nsec = cpu_to_le32(t_inode->i_ctime.tv_nsec);
 
-		t_inode->i_mसमय = s_inode->i_mसमय;
-		di->i_mसमय = s_di->i_mसमय;
-		di->i_mसमय_nsec = s_di->i_mसमय_nsec;
-	पूर्ण
+		t_inode->i_mtime = s_inode->i_mtime;
+		di->i_mtime = s_di->i_mtime;
+		di->i_mtime_nsec = s_di->i_mtime_nsec;
+	}
 
 	ocfs2_journal_dirty(handle, t_bh);
 
 out_commit:
 	ocfs2_commit_trans(OCFS2_SB(t_inode->i_sb), handle);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ocfs2_create_reflink_node(काष्ठा inode *s_inode,
-				     काष्ठा buffer_head *s_bh,
-				     काष्ठा inode *t_inode,
-				     काष्ठा buffer_head *t_bh,
+static int ocfs2_create_reflink_node(struct inode *s_inode,
+				     struct buffer_head *s_bh,
+				     struct inode *t_inode,
+				     struct buffer_head *t_bh,
 				     bool preserve)
-अणु
-	पूर्णांक ret;
-	काष्ठा buffer_head *ref_root_bh = शून्य;
-	काष्ठा ocfs2_cached_dealloc_ctxt dealloc;
-	काष्ठा ocfs2_super *osb = OCFS2_SB(s_inode->i_sb);
-	काष्ठा ocfs2_dinode *di = (काष्ठा ocfs2_dinode *)s_bh->b_data;
-	काष्ठा ocfs2_refcount_tree *ref_tree;
+{
+	int ret;
+	struct buffer_head *ref_root_bh = NULL;
+	struct ocfs2_cached_dealloc_ctxt dealloc;
+	struct ocfs2_super *osb = OCFS2_SB(s_inode->i_sb);
+	struct ocfs2_dinode *di = (struct ocfs2_dinode *)s_bh->b_data;
+	struct ocfs2_refcount_tree *ref_tree;
 
 	ocfs2_init_dealloc_ctxt(&dealloc);
 
 	ret = ocfs2_set_refcount_tree(t_inode, t_bh,
 				      le64_to_cpu(di->i_refcount_loc));
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto out;
+	}
 
-	अगर (OCFS2_I(s_inode)->ip_dyn_features & OCFS2_INLINE_DATA_FL) अणु
-		ret = ocfs2_duplicate_अंतरभूत_data(s_inode, s_bh,
+	if (OCFS2_I(s_inode)->ip_dyn_features & OCFS2_INLINE_DATA_FL) {
+		ret = ocfs2_duplicate_inline_data(s_inode, s_bh,
 						  t_inode, t_bh);
-		अगर (ret)
-			mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+		if (ret)
+			mlog_errno(ret);
+		goto out;
+	}
 
 	ret = ocfs2_lock_refcount_tree(osb, le64_to_cpu(di->i_refcount_loc),
 				       1, &ref_tree, &ref_root_bh);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto out;
+	}
 
 	ret = ocfs2_duplicate_extent_list(s_inode, t_inode, t_bh,
 					  &ref_tree->rf_ci, ref_root_bh,
 					  &dealloc);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out_unlock_refcount;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto out_unlock_refcount;
+	}
 
 out_unlock_refcount:
 	ocfs2_unlock_refcount_tree(osb, ref_tree, 1);
-	brअन्यथा(ref_root_bh);
+	brelse(ref_root_bh);
 out:
-	अगर (ocfs2_dealloc_has_cluster(&dealloc)) अणु
+	if (ocfs2_dealloc_has_cluster(&dealloc)) {
 		ocfs2_schedule_truncate_log_flush(osb, 1);
 		ocfs2_run_deallocs(osb, &dealloc);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक __ocfs2_reflink(काष्ठा dentry *old_dentry,
-			   काष्ठा buffer_head *old_bh,
-			   काष्ठा inode *new_inode,
+static int __ocfs2_reflink(struct dentry *old_dentry,
+			   struct buffer_head *old_bh,
+			   struct inode *new_inode,
 			   bool preserve)
-अणु
-	पूर्णांक ret;
-	काष्ठा inode *inode = d_inode(old_dentry);
-	काष्ठा buffer_head *new_bh = शून्य;
+{
+	int ret;
+	struct inode *inode = d_inode(old_dentry);
+	struct buffer_head *new_bh = NULL;
 
-	अगर (OCFS2_I(inode)->ip_flags & OCFS2_INODE_SYSTEM_खाता) अणु
+	if (OCFS2_I(inode)->ip_flags & OCFS2_INODE_SYSTEM_FILE) {
 		ret = -EINVAL;
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+		mlog_errno(ret);
+		goto out;
+	}
 
-	ret = filemap_fdataग_लिखो(inode->i_mapping);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+	ret = filemap_fdatawrite(inode->i_mapping);
+	if (ret) {
+		mlog_errno(ret);
+		goto out;
+	}
 
 	ret = ocfs2_attach_refcount_tree(inode, old_bh);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto out;
+	}
 
 	inode_lock_nested(new_inode, I_MUTEX_CHILD);
 	ret = ocfs2_inode_lock_nested(new_inode, &new_bh, 1,
 				      OI_LS_REFLINK_TARGET);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out_unlock;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto out_unlock;
+	}
 
 	ret = ocfs2_create_reflink_node(inode, old_bh,
 					new_inode, new_bh, preserve);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ inode_unlock;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto inode_unlock;
+	}
 
-	अगर (OCFS2_I(inode)->ip_dyn_features & OCFS2_HAS_XATTR_FL) अणु
+	if (OCFS2_I(inode)->ip_dyn_features & OCFS2_HAS_XATTR_FL) {
 		ret = ocfs2_reflink_xattrs(inode, old_bh,
 					   new_inode, new_bh,
 					   preserve);
-		अगर (ret) अणु
-			mlog_त्रुटि_सं(ret);
-			जाओ inode_unlock;
-		पूर्ण
-	पूर्ण
+		if (ret) {
+			mlog_errno(ret);
+			goto inode_unlock;
+		}
+	}
 
 	ret = ocfs2_complete_reflink(inode, old_bh,
 				     new_inode, new_bh, preserve);
-	अगर (ret)
-		mlog_त्रुटि_सं(ret);
+	if (ret)
+		mlog_errno(ret);
 
 inode_unlock:
 	ocfs2_inode_unlock(new_inode, 1);
-	brअन्यथा(new_bh);
+	brelse(new_bh);
 out_unlock:
 	inode_unlock(new_inode);
 out:
-	अगर (!ret) अणु
-		ret = filemap_fdataरुको(inode->i_mapping);
-		अगर (ret)
-			mlog_त्रुटि_सं(ret);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	if (!ret) {
+		ret = filemap_fdatawait(inode->i_mapping);
+		if (ret)
+			mlog_errno(ret);
+	}
+	return ret;
+}
 
-अटल पूर्णांक ocfs2_reflink(काष्ठा dentry *old_dentry, काष्ठा inode *dir,
-			 काष्ठा dentry *new_dentry, bool preserve)
-अणु
-	पूर्णांक error, had_lock;
-	काष्ठा inode *inode = d_inode(old_dentry);
-	काष्ठा buffer_head *old_bh = शून्य;
-	काष्ठा inode *new_orphan_inode = शून्य;
-	काष्ठा ocfs2_lock_holder oh;
+static int ocfs2_reflink(struct dentry *old_dentry, struct inode *dir,
+			 struct dentry *new_dentry, bool preserve)
+{
+	int error, had_lock;
+	struct inode *inode = d_inode(old_dentry);
+	struct buffer_head *old_bh = NULL;
+	struct inode *new_orphan_inode = NULL;
+	struct ocfs2_lock_holder oh;
 
-	अगर (!ocfs2_refcount_tree(OCFS2_SB(inode->i_sb)))
-		वापस -EOPNOTSUPP;
+	if (!ocfs2_refcount_tree(OCFS2_SB(inode->i_sb)))
+		return -EOPNOTSUPP;
 
 
 	error = ocfs2_create_inode_in_orphan(dir, inode->i_mode,
 					     &new_orphan_inode);
-	अगर (error) अणु
-		mlog_त्रुटि_सं(error);
-		जाओ out;
-	पूर्ण
+	if (error) {
+		mlog_errno(error);
+		goto out;
+	}
 
 	error = ocfs2_rw_lock(inode, 1);
-	अगर (error) अणु
-		mlog_त्रुटि_सं(error);
-		जाओ out;
-	पूर्ण
+	if (error) {
+		mlog_errno(error);
+		goto out;
+	}
 
 	error = ocfs2_inode_lock(inode, &old_bh, 1);
-	अगर (error) अणु
-		mlog_त्रुटि_सं(error);
+	if (error) {
+		mlog_errno(error);
 		ocfs2_rw_unlock(inode, 1);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	करोwn_ग_लिखो(&OCFS2_I(inode)->ip_xattr_sem);
-	करोwn_ग_लिखो(&OCFS2_I(inode)->ip_alloc_sem);
+	down_write(&OCFS2_I(inode)->ip_xattr_sem);
+	down_write(&OCFS2_I(inode)->ip_alloc_sem);
 	error = __ocfs2_reflink(old_dentry, old_bh,
 				new_orphan_inode, preserve);
-	up_ग_लिखो(&OCFS2_I(inode)->ip_alloc_sem);
-	up_ग_लिखो(&OCFS2_I(inode)->ip_xattr_sem);
+	up_write(&OCFS2_I(inode)->ip_alloc_sem);
+	up_write(&OCFS2_I(inode)->ip_xattr_sem);
 
 	ocfs2_inode_unlock(inode, 1);
 	ocfs2_rw_unlock(inode, 1);
-	brअन्यथा(old_bh);
+	brelse(old_bh);
 
-	अगर (error) अणु
-		mlog_त्रुटि_सं(error);
-		जाओ out;
-	पूर्ण
+	if (error) {
+		mlog_errno(error);
+		goto out;
+	}
 
-	had_lock = ocfs2_inode_lock_tracker(new_orphan_inode, शून्य, 1,
+	had_lock = ocfs2_inode_lock_tracker(new_orphan_inode, NULL, 1,
 					    &oh);
-	अगर (had_lock < 0) अणु
+	if (had_lock < 0) {
 		error = had_lock;
-		mlog_त्रुटि_सं(error);
-		जाओ out;
-	पूर्ण
+		mlog_errno(error);
+		goto out;
+	}
 
 	/* If the security isn't preserved, we need to re-initialize them. */
-	अगर (!preserve) अणु
+	if (!preserve) {
 		error = ocfs2_init_security_and_acl(dir, new_orphan_inode,
 						    &new_dentry->d_name);
-		अगर (error)
-			mlog_त्रुटि_सं(error);
-	पूर्ण
-	अगर (!error) अणु
+		if (error)
+			mlog_errno(error);
+	}
+	if (!error) {
 		error = ocfs2_mv_orphaned_inode_to_new(dir, new_orphan_inode,
 						       new_dentry);
-		अगर (error)
-			mlog_त्रुटि_सं(error);
-	पूर्ण
+		if (error)
+			mlog_errno(error);
+	}
 	ocfs2_inode_unlock_tracker(new_orphan_inode, 1, &oh, had_lock);
 
 out:
-	अगर (new_orphan_inode) अणु
+	if (new_orphan_inode) {
 		/*
-		 * We need to खोलो_unlock the inode no matter whether we
+		 * We need to open_unlock the inode no matter whether we
 		 * succeed or not, so that other nodes can delete it later.
 		 */
-		ocfs2_खोलो_unlock(new_orphan_inode);
-		अगर (error)
+		ocfs2_open_unlock(new_orphan_inode);
+		if (error)
 			iput(new_orphan_inode);
-	पूर्ण
+	}
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /*
  * Below here are the bits used by OCFS2_IOC_REFLINK() to fake
@@ -4339,14 +4338,14 @@ out:
  */
 
 /* copied from may_create in VFS. */
-अटल अंतरभूत पूर्णांक ocfs2_may_create(काष्ठा inode *dir, काष्ठा dentry *child)
-अणु
-	अगर (d_really_is_positive(child))
-		वापस -EEXIST;
-	अगर (IS_DEADसूची(dir))
-		वापस -ENOENT;
-	वापस inode_permission(&init_user_ns, dir, MAY_WRITE | MAY_EXEC);
-पूर्ण
+static inline int ocfs2_may_create(struct inode *dir, struct dentry *child)
+{
+	if (d_really_is_positive(child))
+		return -EEXIST;
+	if (IS_DEADDIR(dir))
+		return -ENOENT;
+	return inode_permission(&init_user_ns, dir, MAY_WRITE | MAY_EXEC);
+}
 
 /**
  * ocfs2_vfs_reflink - Create a reference-counted link
@@ -4354,229 +4353,229 @@ out:
  * @old_dentry:        source dentry + inode
  * @dir:       directory to create the target
  * @new_dentry:        target dentry
- * @preserve:  अगर true, preserve all file attributes
+ * @preserve:  if true, preserve all file attributes
  */
-अटल पूर्णांक ocfs2_vfs_reflink(काष्ठा dentry *old_dentry, काष्ठा inode *dir,
-			     काष्ठा dentry *new_dentry, bool preserve)
-अणु
-	काष्ठा inode *inode = d_inode(old_dentry);
-	पूर्णांक error;
+static int ocfs2_vfs_reflink(struct dentry *old_dentry, struct inode *dir,
+			     struct dentry *new_dentry, bool preserve)
+{
+	struct inode *inode = d_inode(old_dentry);
+	int error;
 
-	अगर (!inode)
-		वापस -ENOENT;
+	if (!inode)
+		return -ENOENT;
 
 	error = ocfs2_may_create(dir, new_dentry);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	अगर (dir->i_sb != inode->i_sb)
-		वापस -EXDEV;
+	if (dir->i_sb != inode->i_sb)
+		return -EXDEV;
 
 	/*
 	 * A reflink to an append-only or immutable file cannot be created.
 	 */
-	अगर (IS_APPEND(inode) || IS_IMMUTABLE(inode))
-		वापस -EPERM;
+	if (IS_APPEND(inode) || IS_IMMUTABLE(inode))
+		return -EPERM;
 
 	/* Only regular files can be reflinked. */
-	अगर (!S_ISREG(inode->i_mode))
-		वापस -EPERM;
+	if (!S_ISREG(inode->i_mode))
+		return -EPERM;
 
 	/*
 	 * If the caller wants to preserve ownership, they require the
-	 * rights to करो so.
+	 * rights to do so.
 	 */
-	अगर (preserve) अणु
-		अगर (!uid_eq(current_fsuid(), inode->i_uid) && !capable(CAP_CHOWN))
-			वापस -EPERM;
-		अगर (!in_group_p(inode->i_gid) && !capable(CAP_CHOWN))
-			वापस -EPERM;
-	पूर्ण
+	if (preserve) {
+		if (!uid_eq(current_fsuid(), inode->i_uid) && !capable(CAP_CHOWN))
+			return -EPERM;
+		if (!in_group_p(inode->i_gid) && !capable(CAP_CHOWN))
+			return -EPERM;
+	}
 
 	/*
-	 * If the caller is modअगरying any aspect of the attributes, they
-	 * are not creating a snapshot.  They need पढ़ो permission on the
+	 * If the caller is modifying any aspect of the attributes, they
+	 * are not creating a snapshot.  They need read permission on the
 	 * file.
 	 */
-	अगर (!preserve) अणु
+	if (!preserve) {
 		error = inode_permission(&init_user_ns, inode, MAY_READ);
-		अगर (error)
-			वापस error;
-	पूर्ण
+		if (error)
+			return error;
+	}
 
 	inode_lock(inode);
 	error = dquot_initialize(dir);
-	अगर (!error)
+	if (!error)
 		error = ocfs2_reflink(old_dentry, dir, new_dentry, preserve);
 	inode_unlock(inode);
-	अगर (!error)
-		fsnotअगरy_create(dir, new_dentry);
-	वापस error;
-पूर्ण
+	if (!error)
+		fsnotify_create(dir, new_dentry);
+	return error;
+}
 /*
  * Most codes are copied from sys_linkat.
  */
-पूर्णांक ocfs2_reflink_ioctl(काष्ठा inode *inode,
-			स्थिर अक्षर __user *oldname,
-			स्थिर अक्षर __user *newname,
+int ocfs2_reflink_ioctl(struct inode *inode,
+			const char __user *oldname,
+			const char __user *newname,
 			bool preserve)
-अणु
-	काष्ठा dentry *new_dentry;
-	काष्ठा path old_path, new_path;
-	पूर्णांक error;
+{
+	struct dentry *new_dentry;
+	struct path old_path, new_path;
+	int error;
 
-	अगर (!ocfs2_refcount_tree(OCFS2_SB(inode->i_sb)))
-		वापस -EOPNOTSUPP;
+	if (!ocfs2_refcount_tree(OCFS2_SB(inode->i_sb)))
+		return -EOPNOTSUPP;
 
 	error = user_path_at(AT_FDCWD, oldname, 0, &old_path);
-	अगर (error) अणु
-		mlog_त्रुटि_सं(error);
-		वापस error;
-	पूर्ण
+	if (error) {
+		mlog_errno(error);
+		return error;
+	}
 
 	new_dentry = user_path_create(AT_FDCWD, newname, &new_path, 0);
 	error = PTR_ERR(new_dentry);
-	अगर (IS_ERR(new_dentry)) अणु
-		mlog_त्रुटि_सं(error);
-		जाओ out;
-	पूर्ण
+	if (IS_ERR(new_dentry)) {
+		mlog_errno(error);
+		goto out;
+	}
 
 	error = -EXDEV;
-	अगर (old_path.mnt != new_path.mnt) अणु
-		mlog_त्रुटि_सं(error);
-		जाओ out_dput;
-	पूर्ण
+	if (old_path.mnt != new_path.mnt) {
+		mlog_errno(error);
+		goto out_dput;
+	}
 
 	error = ocfs2_vfs_reflink(old_path.dentry,
 				  d_inode(new_path.dentry),
 				  new_dentry, preserve);
 out_dput:
-	करोne_path_create(&new_path, new_dentry);
+	done_path_create(&new_path, new_dentry);
 out:
 	path_put(&old_path);
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-/* Update destination inode size, अगर necessary. */
-पूर्णांक ocfs2_reflink_update_dest(काष्ठा inode *dest,
-			      काष्ठा buffer_head *d_bh,
+/* Update destination inode size, if necessary. */
+int ocfs2_reflink_update_dest(struct inode *dest,
+			      struct buffer_head *d_bh,
 			      loff_t newlen)
-अणु
+{
 	handle_t *handle;
-	पूर्णांक ret;
+	int ret;
 
 	dest->i_blocks = ocfs2_inode_sector_count(dest);
 
-	अगर (newlen <= i_size_पढ़ो(dest))
-		वापस 0;
+	if (newlen <= i_size_read(dest))
+		return 0;
 
 	handle = ocfs2_start_trans(OCFS2_SB(dest->i_sb),
 				   OCFS2_INODE_UPDATE_CREDITS);
-	अगर (IS_ERR(handle)) अणु
+	if (IS_ERR(handle)) {
 		ret = PTR_ERR(handle);
-		mlog_त्रुटि_सं(ret);
-		वापस ret;
-	पूर्ण
+		mlog_errno(ret);
+		return ret;
+	}
 
-	/* Extend i_size अगर needed. */
+	/* Extend i_size if needed. */
 	spin_lock(&OCFS2_I(dest)->ip_lock);
-	अगर (newlen > i_size_पढ़ो(dest))
-		i_size_ग_लिखो(dest, newlen);
+	if (newlen > i_size_read(dest))
+		i_size_write(dest, newlen);
 	spin_unlock(&OCFS2_I(dest)->ip_lock);
-	dest->i_स_समय = dest->i_mसमय = current_समय(dest);
+	dest->i_ctime = dest->i_mtime = current_time(dest);
 
 	ret = ocfs2_mark_inode_dirty(handle, dest, d_bh);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out_commit;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto out_commit;
+	}
 
 out_commit:
 	ocfs2_commit_trans(OCFS2_SB(dest->i_sb), handle);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* Remap the range pos_in:len in s_inode to pos_out:len in t_inode. */
-अटल loff_t ocfs2_reflink_remap_extent(काष्ठा inode *s_inode,
-					 काष्ठा buffer_head *s_bh,
+static loff_t ocfs2_reflink_remap_extent(struct inode *s_inode,
+					 struct buffer_head *s_bh,
 					 loff_t pos_in,
-					 काष्ठा inode *t_inode,
-					 काष्ठा buffer_head *t_bh,
+					 struct inode *t_inode,
+					 struct buffer_head *t_bh,
 					 loff_t pos_out,
 					 loff_t len,
-					 काष्ठा ocfs2_cached_dealloc_ctxt *dealloc)
-अणु
-	काष्ठा ocfs2_extent_tree s_et;
-	काष्ठा ocfs2_extent_tree t_et;
-	काष्ठा ocfs2_dinode *dis;
-	काष्ठा buffer_head *ref_root_bh = शून्य;
-	काष्ठा ocfs2_refcount_tree *ref_tree;
-	काष्ठा ocfs2_super *osb;
+					 struct ocfs2_cached_dealloc_ctxt *dealloc)
+{
+	struct ocfs2_extent_tree s_et;
+	struct ocfs2_extent_tree t_et;
+	struct ocfs2_dinode *dis;
+	struct buffer_head *ref_root_bh = NULL;
+	struct ocfs2_refcount_tree *ref_tree;
+	struct ocfs2_super *osb;
 	loff_t remapped_bytes = 0;
 	loff_t pstart, plen;
 	u32 p_cluster, num_clusters, slast, spos, tpos, remapped_clus = 0;
-	अचिन्हित पूर्णांक ext_flags;
-	पूर्णांक ret = 0;
+	unsigned int ext_flags;
+	int ret = 0;
 
 	osb = OCFS2_SB(s_inode->i_sb);
-	dis = (काष्ठा ocfs2_dinode *)s_bh->b_data;
+	dis = (struct ocfs2_dinode *)s_bh->b_data;
 	ocfs2_init_dinode_extent_tree(&s_et, INODE_CACHE(s_inode), s_bh);
 	ocfs2_init_dinode_extent_tree(&t_et, INODE_CACHE(t_inode), t_bh);
 
 	spos = ocfs2_bytes_to_clusters(s_inode->i_sb, pos_in);
 	tpos = ocfs2_bytes_to_clusters(t_inode->i_sb, pos_out);
-	slast = ocfs2_clusters_क्रम_bytes(s_inode->i_sb, pos_in + len);
+	slast = ocfs2_clusters_for_bytes(s_inode->i_sb, pos_in + len);
 
-	जबतक (spos < slast) अणु
-		अगर (fatal_संकेत_pending(current)) अणु
+	while (spos < slast) {
+		if (fatal_signal_pending(current)) {
 			ret = -EINTR;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		/* Look up the extent. */
 		ret = ocfs2_get_clusters(s_inode, spos, &p_cluster,
 					 &num_clusters, &ext_flags);
-		अगर (ret) अणु
-			mlog_त्रुटि_सं(ret);
-			जाओ out;
-		पूर्ण
+		if (ret) {
+			mlog_errno(ret);
+			goto out;
+		}
 
 		num_clusters = min_t(u32, num_clusters, slast - spos);
 
 		/* Punch out the dest range. */
 		pstart = ocfs2_clusters_to_bytes(t_inode->i_sb, tpos);
 		plen = ocfs2_clusters_to_bytes(t_inode->i_sb, num_clusters);
-		ret = ocfs2_हटाओ_inode_range(t_inode, t_bh, pstart, plen);
-		अगर (ret) अणु
-			mlog_त्रुटि_सं(ret);
-			जाओ out;
-		पूर्ण
+		ret = ocfs2_remove_inode_range(t_inode, t_bh, pstart, plen);
+		if (ret) {
+			mlog_errno(ret);
+			goto out;
+		}
 
-		अगर (p_cluster == 0)
-			जाओ next_loop;
+		if (p_cluster == 0)
+			goto next_loop;
 
 		/* Lock the refcount btree... */
 		ret = ocfs2_lock_refcount_tree(osb,
 					       le64_to_cpu(dis->i_refcount_loc),
 					       1, &ref_tree, &ref_root_bh);
-		अगर (ret) अणु
-			mlog_त्रुटि_सं(ret);
-			जाओ out;
-		पूर्ण
+		if (ret) {
+			mlog_errno(ret);
+			goto out;
+		}
 
 		/* Mark s_inode's extent as refcounted. */
-		अगर (!(ext_flags & OCFS2_EXT_REFCOUNTED)) अणु
+		if (!(ext_flags & OCFS2_EXT_REFCOUNTED)) {
 			ret = ocfs2_add_refcount_flag(s_inode, &s_et,
 						      &ref_tree->rf_ci,
 						      ref_root_bh, spos,
 						      p_cluster, num_clusters,
-						      dealloc, शून्य);
-			अगर (ret) अणु
-				mlog_त्रुटि_सं(ret);
-				जाओ out_unlock_refcount;
-			पूर्ण
-		पूर्ण
+						      dealloc, NULL);
+			if (ret) {
+				mlog_errno(ret);
+				goto out_unlock_refcount;
+			}
+		}
 
 		/* Map in the new extent. */
 		ext_flags |= OCFS2_EXT_REFCOUNTED;
@@ -4587,236 +4586,236 @@ out_commit:
 						  num_clusters,
 						  ext_flags,
 						  dealloc);
-		अगर (ret) अणु
-			mlog_त्रुटि_सं(ret);
-			जाओ out_unlock_refcount;
-		पूर्ण
+		if (ret) {
+			mlog_errno(ret);
+			goto out_unlock_refcount;
+		}
 
 		ocfs2_unlock_refcount_tree(osb, ref_tree, 1);
-		brअन्यथा(ref_root_bh);
+		brelse(ref_root_bh);
 next_loop:
 		spos += num_clusters;
 		tpos += num_clusters;
 		remapped_clus += num_clusters;
-	पूर्ण
+	}
 
-	जाओ out;
+	goto out;
 out_unlock_refcount:
 	ocfs2_unlock_refcount_tree(osb, ref_tree, 1);
-	brअन्यथा(ref_root_bh);
+	brelse(ref_root_bh);
 out:
 	remapped_bytes = ocfs2_clusters_to_bytes(t_inode->i_sb, remapped_clus);
 	remapped_bytes = min_t(loff_t, len, remapped_bytes);
 
-	वापस remapped_bytes > 0 ? remapped_bytes : ret;
-पूर्ण
+	return remapped_bytes > 0 ? remapped_bytes : ret;
+}
 
 /* Set up refcount tree and remap s_inode to t_inode. */
-loff_t ocfs2_reflink_remap_blocks(काष्ठा inode *s_inode,
-				  काष्ठा buffer_head *s_bh,
+loff_t ocfs2_reflink_remap_blocks(struct inode *s_inode,
+				  struct buffer_head *s_bh,
 				  loff_t pos_in,
-				  काष्ठा inode *t_inode,
-				  काष्ठा buffer_head *t_bh,
+				  struct inode *t_inode,
+				  struct buffer_head *t_bh,
 				  loff_t pos_out,
 				  loff_t len)
-अणु
-	काष्ठा ocfs2_cached_dealloc_ctxt dealloc;
-	काष्ठा ocfs2_super *osb;
-	काष्ठा ocfs2_dinode *dis;
-	काष्ठा ocfs2_dinode *dit;
+{
+	struct ocfs2_cached_dealloc_ctxt dealloc;
+	struct ocfs2_super *osb;
+	struct ocfs2_dinode *dis;
+	struct ocfs2_dinode *dit;
 	loff_t ret;
 
 	osb = OCFS2_SB(s_inode->i_sb);
-	dis = (काष्ठा ocfs2_dinode *)s_bh->b_data;
-	dit = (काष्ठा ocfs2_dinode *)t_bh->b_data;
+	dis = (struct ocfs2_dinode *)s_bh->b_data;
+	dit = (struct ocfs2_dinode *)t_bh->b_data;
 	ocfs2_init_dealloc_ctxt(&dealloc);
 
 	/*
-	 * If we're reflinking the entire file and the source is अंतरभूत
+	 * If we're reflinking the entire file and the source is inline
 	 * data, just copy the contents.
 	 */
-	अगर (pos_in == pos_out && pos_in == 0 && len == i_size_पढ़ो(s_inode) &&
-	    i_size_पढ़ो(t_inode) <= len &&
-	    (OCFS2_I(s_inode)->ip_dyn_features & OCFS2_INLINE_DATA_FL)) अणु
-		ret = ocfs2_duplicate_अंतरभूत_data(s_inode, s_bh, t_inode, t_bh);
-		अगर (ret)
-			mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+	if (pos_in == pos_out && pos_in == 0 && len == i_size_read(s_inode) &&
+	    i_size_read(t_inode) <= len &&
+	    (OCFS2_I(s_inode)->ip_dyn_features & OCFS2_INLINE_DATA_FL)) {
+		ret = ocfs2_duplicate_inline_data(s_inode, s_bh, t_inode, t_bh);
+		if (ret)
+			mlog_errno(ret);
+		goto out;
+	}
 
 	/*
-	 * If both inodes beदीर्घ to two dअगरferent refcount groups then
-	 * क्रमget it because we करोn't know how (or want) to go merging
+	 * If both inodes belong to two different refcount groups then
+	 * forget it because we don't know how (or want) to go merging
 	 * refcount trees.
 	 */
 	ret = -EOPNOTSUPP;
-	अगर (ocfs2_is_refcount_inode(s_inode) &&
+	if (ocfs2_is_refcount_inode(s_inode) &&
 	    ocfs2_is_refcount_inode(t_inode) &&
 	    le64_to_cpu(dis->i_refcount_loc) !=
 	    le64_to_cpu(dit->i_refcount_loc))
-		जाओ out;
+		goto out;
 
 	/* Neither inode has a refcount tree.  Add one to s_inode. */
-	अगर (!ocfs2_is_refcount_inode(s_inode) &&
-	    !ocfs2_is_refcount_inode(t_inode)) अणु
+	if (!ocfs2_is_refcount_inode(s_inode) &&
+	    !ocfs2_is_refcount_inode(t_inode)) {
 		ret = ocfs2_create_refcount_tree(s_inode, s_bh);
-		अगर (ret) अणु
-			mlog_त्रुटि_सं(ret);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+		if (ret) {
+			mlog_errno(ret);
+			goto out;
+		}
+	}
 
 	/* Ensure that both inodes end up with the same refcount tree. */
-	अगर (!ocfs2_is_refcount_inode(s_inode)) अणु
+	if (!ocfs2_is_refcount_inode(s_inode)) {
 		ret = ocfs2_set_refcount_tree(s_inode, s_bh,
 					      le64_to_cpu(dit->i_refcount_loc));
-		अगर (ret) अणु
-			mlog_त्रुटि_सं(ret);
-			जाओ out;
-		पूर्ण
-	पूर्ण
-	अगर (!ocfs2_is_refcount_inode(t_inode)) अणु
+		if (ret) {
+			mlog_errno(ret);
+			goto out;
+		}
+	}
+	if (!ocfs2_is_refcount_inode(t_inode)) {
 		ret = ocfs2_set_refcount_tree(t_inode, t_bh,
 					      le64_to_cpu(dis->i_refcount_loc));
-		अगर (ret) अणु
-			mlog_त्रुटि_सं(ret);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+		if (ret) {
+			mlog_errno(ret);
+			goto out;
+		}
+	}
 
-	/* Turn off अंतरभूत data in the dest file. */
-	अगर (OCFS2_I(t_inode)->ip_dyn_features & OCFS2_INLINE_DATA_FL) अणु
-		ret = ocfs2_convert_अंतरभूत_data_to_extents(t_inode, t_bh);
-		अगर (ret) अणु
-			mlog_त्रुटि_सं(ret);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+	/* Turn off inline data in the dest file. */
+	if (OCFS2_I(t_inode)->ip_dyn_features & OCFS2_INLINE_DATA_FL) {
+		ret = ocfs2_convert_inline_data_to_extents(t_inode, t_bh);
+		if (ret) {
+			mlog_errno(ret);
+			goto out;
+		}
+	}
 
 	/* Actually remap extents now. */
 	ret = ocfs2_reflink_remap_extent(s_inode, s_bh, pos_in, t_inode, t_bh,
 					 pos_out, len, &dealloc);
-	अगर (ret < 0) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+	if (ret < 0) {
+		mlog_errno(ret);
+		goto out;
+	}
 
 out:
-	अगर (ocfs2_dealloc_has_cluster(&dealloc)) अणु
+	if (ocfs2_dealloc_has_cluster(&dealloc)) {
 		ocfs2_schedule_truncate_log_flush(osb, 1);
 		ocfs2_run_deallocs(osb, &dealloc);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* Lock an inode and grab a bh poपूर्णांकing to the inode. */
-पूर्णांक ocfs2_reflink_inodes_lock(काष्ठा inode *s_inode,
-			      काष्ठा buffer_head **bh_s,
-			      काष्ठा inode *t_inode,
-			      काष्ठा buffer_head **bh_t)
-अणु
-	काष्ठा inode *inode1 = s_inode;
-	काष्ठा inode *inode2 = t_inode;
-	काष्ठा ocfs2_inode_info *oi1;
-	काष्ठा ocfs2_inode_info *oi2;
-	काष्ठा buffer_head *bh1 = शून्य;
-	काष्ठा buffer_head *bh2 = शून्य;
+/* Lock an inode and grab a bh pointing to the inode. */
+int ocfs2_reflink_inodes_lock(struct inode *s_inode,
+			      struct buffer_head **bh_s,
+			      struct inode *t_inode,
+			      struct buffer_head **bh_t)
+{
+	struct inode *inode1 = s_inode;
+	struct inode *inode2 = t_inode;
+	struct ocfs2_inode_info *oi1;
+	struct ocfs2_inode_info *oi2;
+	struct buffer_head *bh1 = NULL;
+	struct buffer_head *bh2 = NULL;
 	bool same_inode = (s_inode == t_inode);
 	bool need_swap = (inode1->i_ino > inode2->i_ino);
-	पूर्णांक status;
+	int status;
 
 	/* First grab the VFS and rw locks. */
 	lock_two_nondirectories(s_inode, t_inode);
-	अगर (need_swap)
+	if (need_swap)
 		swap(inode1, inode2);
 
 	status = ocfs2_rw_lock(inode1, 1);
-	अगर (status) अणु
-		mlog_त्रुटि_सं(status);
-		जाओ out_i1;
-	पूर्ण
-	अगर (!same_inode) अणु
+	if (status) {
+		mlog_errno(status);
+		goto out_i1;
+	}
+	if (!same_inode) {
 		status = ocfs2_rw_lock(inode2, 1);
-		अगर (status) अणु
-			mlog_त्रुटि_सं(status);
-			जाओ out_i2;
-		पूर्ण
-	पूर्ण
+		if (status) {
+			mlog_errno(status);
+			goto out_i2;
+		}
+	}
 
-	/* Now go क्रम the cluster locks */
+	/* Now go for the cluster locks */
 	oi1 = OCFS2_I(inode1);
 	oi2 = OCFS2_I(inode2);
 
-	trace_ocfs2_द्विगुन_lock((अचिन्हित दीर्घ दीर्घ)oi1->ip_blkno,
-				(अचिन्हित दीर्घ दीर्घ)oi2->ip_blkno);
+	trace_ocfs2_double_lock((unsigned long long)oi1->ip_blkno,
+				(unsigned long long)oi2->ip_blkno);
 
 	/* We always want to lock the one with the lower lockid first. */
-	अगर (oi1->ip_blkno > oi2->ip_blkno)
-		mlog_त्रुटि_सं(-ENOLCK);
+	if (oi1->ip_blkno > oi2->ip_blkno)
+		mlog_errno(-ENOLCK);
 
 	/* lock id1 */
 	status = ocfs2_inode_lock_nested(inode1, &bh1, 1,
 					 OI_LS_REFLINK_TARGET);
-	अगर (status < 0) अणु
-		अगर (status != -ENOENT)
-			mlog_त्रुटि_सं(status);
-		जाओ out_rw2;
-	पूर्ण
+	if (status < 0) {
+		if (status != -ENOENT)
+			mlog_errno(status);
+		goto out_rw2;
+	}
 
 	/* lock id2 */
-	अगर (!same_inode) अणु
+	if (!same_inode) {
 		status = ocfs2_inode_lock_nested(inode2, &bh2, 1,
 						 OI_LS_REFLINK_TARGET);
-		अगर (status < 0) अणु
-			अगर (status != -ENOENT)
-				mlog_त्रुटि_सं(status);
-			जाओ out_cl1;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		if (status < 0) {
+			if (status != -ENOENT)
+				mlog_errno(status);
+			goto out_cl1;
+		}
+	} else {
 		bh2 = bh1;
-	पूर्ण
+	}
 
 	/*
 	 * If we swapped inode order above, we have to swap the buffer heads
-	 * beक्रमe passing them back to the caller.
+	 * before passing them back to the caller.
 	 */
-	अगर (need_swap)
+	if (need_swap)
 		swap(bh1, bh2);
 	*bh_s = bh1;
 	*bh_t = bh2;
 
-	trace_ocfs2_द्विगुन_lock_end(
-			(अचिन्हित दीर्घ दीर्घ)oi1->ip_blkno,
-			(अचिन्हित दीर्घ दीर्घ)oi2->ip_blkno);
+	trace_ocfs2_double_lock_end(
+			(unsigned long long)oi1->ip_blkno,
+			(unsigned long long)oi2->ip_blkno);
 
-	वापस 0;
+	return 0;
 
 out_cl1:
 	ocfs2_inode_unlock(inode1, 1);
-	brअन्यथा(bh1);
+	brelse(bh1);
 out_rw2:
 	ocfs2_rw_unlock(inode2, 1);
 out_i2:
 	ocfs2_rw_unlock(inode1, 1);
 out_i1:
 	unlock_two_nondirectories(s_inode, t_inode);
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /* Unlock both inodes and release buffers. */
-व्योम ocfs2_reflink_inodes_unlock(काष्ठा inode *s_inode,
-				 काष्ठा buffer_head *s_bh,
-				 काष्ठा inode *t_inode,
-				 काष्ठा buffer_head *t_bh)
-अणु
+void ocfs2_reflink_inodes_unlock(struct inode *s_inode,
+				 struct buffer_head *s_bh,
+				 struct inode *t_inode,
+				 struct buffer_head *t_bh)
+{
 	ocfs2_inode_unlock(s_inode, 1);
 	ocfs2_rw_unlock(s_inode, 1);
-	brअन्यथा(s_bh);
-	अगर (s_inode != t_inode) अणु
+	brelse(s_bh);
+	if (s_inode != t_inode) {
 		ocfs2_inode_unlock(t_inode, 1);
 		ocfs2_rw_unlock(t_inode, 1);
-		brअन्यथा(t_bh);
-	पूर्ण
+		brelse(t_bh);
+	}
 	unlock_two_nondirectories(s_inode, t_inode);
-पूर्ण
+}

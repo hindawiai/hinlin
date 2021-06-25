@@ -1,389 +1,388 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Real Time Clock (RTC) Driver क्रम i.MX53
+ * Real Time Clock (RTC) Driver for i.MX53
  * Copyright (c) 2004-2011 Freescale Semiconductor, Inc.
  * Copyright (c) 2017 Beckhoff Automation GmbH & Co. KG
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/mod_devicetable.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_wakeirq.h>
-#समावेश <linux/rtc.h>
+#include <linux/clk.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/mod_devicetable.h>
+#include <linux/platform_device.h>
+#include <linux/pm_wakeirq.h>
+#include <linux/rtc.h>
 
-#घोषणा SRTC_LPPDR_INIT       0x41736166	/* init क्रम glitch detect */
+#define SRTC_LPPDR_INIT       0x41736166	/* init for glitch detect */
 
-#घोषणा SRTC_LPCR_EN_LP       BIT(3)	/* lp enable */
-#घोषणा SRTC_LPCR_WAE         BIT(4)	/* lp wakeup alarm enable */
-#घोषणा SRTC_LPCR_ALP         BIT(7)	/* lp alarm flag */
-#घोषणा SRTC_LPCR_NSA         BIT(11)	/* lp non secure access */
-#घोषणा SRTC_LPCR_NVE         BIT(14)	/* lp non valid state निकास bit */
-#घोषणा SRTC_LPCR_IE          BIT(15)	/* lp init state निकास bit */
+#define SRTC_LPCR_EN_LP       BIT(3)	/* lp enable */
+#define SRTC_LPCR_WAE         BIT(4)	/* lp wakeup alarm enable */
+#define SRTC_LPCR_ALP         BIT(7)	/* lp alarm flag */
+#define SRTC_LPCR_NSA         BIT(11)	/* lp non secure access */
+#define SRTC_LPCR_NVE         BIT(14)	/* lp non valid state exit bit */
+#define SRTC_LPCR_IE          BIT(15)	/* lp init state exit bit */
 
-#घोषणा SRTC_LPSR_ALP         BIT(3)	/* lp alarm flag */
-#घोषणा SRTC_LPSR_NVES        BIT(14)	/* lp non-valid state निकास status */
-#घोषणा SRTC_LPSR_IES         BIT(15)	/* lp init state निकास status */
+#define SRTC_LPSR_ALP         BIT(3)	/* lp alarm flag */
+#define SRTC_LPSR_NVES        BIT(14)	/* lp non-valid state exit status */
+#define SRTC_LPSR_IES         BIT(15)	/* lp init state exit status */
 
-#घोषणा SRTC_LPSCMR	0x00	/* LP Secure Counter MSB Reg */
-#घोषणा SRTC_LPSCLR	0x04	/* LP Secure Counter LSB Reg */
-#घोषणा SRTC_LPSAR	0x08	/* LP Secure Alarm Reg */
-#घोषणा SRTC_LPCR	0x10	/* LP Control Reg */
-#घोषणा SRTC_LPSR	0x14	/* LP Status Reg */
-#घोषणा SRTC_LPPDR	0x18	/* LP Power Supply Glitch Detector Reg */
+#define SRTC_LPSCMR	0x00	/* LP Secure Counter MSB Reg */
+#define SRTC_LPSCLR	0x04	/* LP Secure Counter LSB Reg */
+#define SRTC_LPSAR	0x08	/* LP Secure Alarm Reg */
+#define SRTC_LPCR	0x10	/* LP Control Reg */
+#define SRTC_LPSR	0x14	/* LP Status Reg */
+#define SRTC_LPPDR	0x18	/* LP Power Supply Glitch Detector Reg */
 
-/* max. number of retries to पढ़ो रेजिस्टरs, 120 was max during test */
-#घोषणा REG_READ_TIMEOUT 2000
+/* max. number of retries to read registers, 120 was max during test */
+#define REG_READ_TIMEOUT 2000
 
-काष्ठा mxc_rtc_data अणु
-	काष्ठा rtc_device *rtc;
-	व्योम __iomem *ioaddr;
-	काष्ठा clk *clk;
-	spinlock_t lock; /* protects रेजिस्टर access */
-	पूर्णांक irq;
-पूर्ण;
+struct mxc_rtc_data {
+	struct rtc_device *rtc;
+	void __iomem *ioaddr;
+	struct clk *clk;
+	spinlock_t lock; /* protects register access */
+	int irq;
+};
 
 /*
- * This function करोes ग_लिखो synchronization क्रम ग_लिखोs to the lp srtc block.
- * To take care of the asynchronous CKIL घड़ी, all ग_लिखोs from the IP करोमुख्य
- * will be synchronized to the CKIL करोमुख्य.
+ * This function does write synchronization for writes to the lp srtc block.
+ * To take care of the asynchronous CKIL clock, all writes from the IP domain
+ * will be synchronized to the CKIL domain.
  * The caller should hold the pdata->lock
  */
-अटल व्योम mxc_rtc_sync_lp_locked(काष्ठा device *dev, व्योम __iomem *ioaddr)
-अणु
-	अचिन्हित पूर्णांक i;
+static void mxc_rtc_sync_lp_locked(struct device *dev, void __iomem *ioaddr)
+{
+	unsigned int i;
 
-	/* Wait क्रम 3 CKIL cycles */
-	क्रम (i = 0; i < 3; i++) अणु
-		स्थिर u32 count = पढ़ोl(ioaddr + SRTC_LPSCLR);
-		अचिन्हित पूर्णांक समयout = REG_READ_TIMEOUT;
+	/* Wait for 3 CKIL cycles */
+	for (i = 0; i < 3; i++) {
+		const u32 count = readl(ioaddr + SRTC_LPSCLR);
+		unsigned int timeout = REG_READ_TIMEOUT;
 
-		जबतक ((पढ़ोl(ioaddr + SRTC_LPSCLR)) == count) अणु
-			अगर (!--समयout) अणु
+		while ((readl(ioaddr + SRTC_LPSCLR)) == count) {
+			if (!--timeout) {
 				dev_err_once(dev, "SRTC_LPSCLR stuck! Check your hw.\n");
-				वापस;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+				return;
+			}
+		}
+	}
+}
 
-/* This function is the RTC पूर्णांकerrupt service routine. */
-अटल irqवापस_t mxc_rtc_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा device *dev = dev_id;
-	काष्ठा mxc_rtc_data *pdata = dev_get_drvdata(dev);
-	व्योम __iomem *ioaddr = pdata->ioaddr;
+/* This function is the RTC interrupt service routine. */
+static irqreturn_t mxc_rtc_interrupt(int irq, void *dev_id)
+{
+	struct device *dev = dev_id;
+	struct mxc_rtc_data *pdata = dev_get_drvdata(dev);
+	void __iomem *ioaddr = pdata->ioaddr;
 	u32 lp_status;
 	u32 lp_cr;
 
 	spin_lock(&pdata->lock);
-	अगर (clk_enable(pdata->clk)) अणु
+	if (clk_enable(pdata->clk)) {
 		spin_unlock(&pdata->lock);
-		वापस IRQ_NONE;
-	पूर्ण
+		return IRQ_NONE;
+	}
 
-	lp_status = पढ़ोl(ioaddr + SRTC_LPSR);
-	lp_cr = पढ़ोl(ioaddr + SRTC_LPCR);
+	lp_status = readl(ioaddr + SRTC_LPSR);
+	lp_cr = readl(ioaddr + SRTC_LPCR);
 
 	/* update irq data & counter */
-	अगर (lp_status & SRTC_LPSR_ALP) अणु
-		अगर (lp_cr & SRTC_LPCR_ALP)
+	if (lp_status & SRTC_LPSR_ALP) {
+		if (lp_cr & SRTC_LPCR_ALP)
 			rtc_update_irq(pdata->rtc, 1, RTC_AF | RTC_IRQF);
 
-		/* disable further lp alarm पूर्णांकerrupts */
+		/* disable further lp alarm interrupts */
 		lp_cr &= ~(SRTC_LPCR_ALP | SRTC_LPCR_WAE);
-	पूर्ण
+	}
 
-	/* Update पूर्णांकerrupt enables */
-	ग_लिखोl(lp_cr, ioaddr + SRTC_LPCR);
+	/* Update interrupt enables */
+	writel(lp_cr, ioaddr + SRTC_LPCR);
 
-	/* clear पूर्णांकerrupt status */
-	ग_लिखोl(lp_status, ioaddr + SRTC_LPSR);
+	/* clear interrupt status */
+	writel(lp_status, ioaddr + SRTC_LPSR);
 
 	mxc_rtc_sync_lp_locked(dev, ioaddr);
 	clk_disable(pdata->clk);
 	spin_unlock(&pdata->lock);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /*
  * Enable clk and aquire spinlock
- * @वापस  0 अगर successful; non-zero otherwise.
+ * @return  0 if successful; non-zero otherwise.
  */
-अटल पूर्णांक mxc_rtc_lock(काष्ठा mxc_rtc_data *स्थिर pdata)
-अणु
-	पूर्णांक ret;
+static int mxc_rtc_lock(struct mxc_rtc_data *const pdata)
+{
+	int ret;
 
 	spin_lock_irq(&pdata->lock);
 	ret = clk_enable(pdata->clk);
-	अगर (ret) अणु
+	if (ret) {
 		spin_unlock_irq(&pdata->lock);
-		वापस ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return ret;
+	}
+	return 0;
+}
 
-अटल पूर्णांक mxc_rtc_unlock(काष्ठा mxc_rtc_data *स्थिर pdata)
-अणु
+static int mxc_rtc_unlock(struct mxc_rtc_data *const pdata)
+{
 	clk_disable(pdata->clk);
 	spin_unlock_irq(&pdata->lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * This function पढ़ोs the current RTC समय पूर्णांकo पंचांग in Gregorian date.
+ * This function reads the current RTC time into tm in Gregorian date.
  *
- * @param  पंचांग           contains the RTC समय value upon वापस
+ * @param  tm           contains the RTC time value upon return
  *
- * @वापस  0 अगर successful; non-zero otherwise.
+ * @return  0 if successful; non-zero otherwise.
  */
-अटल पूर्णांक mxc_rtc_पढ़ो_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
-अणु
-	काष्ठा mxc_rtc_data *pdata = dev_get_drvdata(dev);
-	स्थिर पूर्णांक clk_failed = clk_enable(pdata->clk);
+static int mxc_rtc_read_time(struct device *dev, struct rtc_time *tm)
+{
+	struct mxc_rtc_data *pdata = dev_get_drvdata(dev);
+	const int clk_failed = clk_enable(pdata->clk);
 
-	अगर (!clk_failed) अणु
-		स्थिर समय64_t now = पढ़ोl(pdata->ioaddr + SRTC_LPSCMR);
+	if (!clk_failed) {
+		const time64_t now = readl(pdata->ioaddr + SRTC_LPSCMR);
 
-		rtc_समय64_to_पंचांग(now, पंचांग);
+		rtc_time64_to_tm(now, tm);
 		clk_disable(pdata->clk);
-		वापस 0;
-	पूर्ण
-	वापस clk_failed;
-पूर्ण
+		return 0;
+	}
+	return clk_failed;
+}
 
 /*
- * This function sets the पूर्णांकernal RTC समय based on पंचांग in Gregorian date.
+ * This function sets the internal RTC time based on tm in Gregorian date.
  *
- * @param  पंचांग           the समय value to be set in the RTC
+ * @param  tm           the time value to be set in the RTC
  *
- * @वापस  0 अगर successful; non-zero otherwise.
+ * @return  0 if successful; non-zero otherwise.
  */
-अटल पूर्णांक mxc_rtc_set_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
-अणु
-	काष्ठा mxc_rtc_data *pdata = dev_get_drvdata(dev);
-	समय64_t समय = rtc_पंचांग_to_समय64(पंचांग);
-	पूर्णांक ret;
+static int mxc_rtc_set_time(struct device *dev, struct rtc_time *tm)
+{
+	struct mxc_rtc_data *pdata = dev_get_drvdata(dev);
+	time64_t time = rtc_tm_to_time64(tm);
+	int ret;
 
 	ret = mxc_rtc_lock(pdata);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ग_लिखोl(समय, pdata->ioaddr + SRTC_LPSCMR);
+	writel(time, pdata->ioaddr + SRTC_LPSCMR);
 	mxc_rtc_sync_lp_locked(dev, pdata->ioaddr);
-	वापस mxc_rtc_unlock(pdata);
-पूर्ण
+	return mxc_rtc_unlock(pdata);
+}
 
 /*
- * This function पढ़ोs the current alarm value पूर्णांकo the passed in \म alrm
- * argument. It updates the \म alrm's pending field value based on the whether
- * an alarm पूर्णांकerrupt occurs or not.
+ * This function reads the current alarm value into the passed in \b alrm
+ * argument. It updates the \b alrm's pending field value based on the whether
+ * an alarm interrupt occurs or not.
  *
- * @param  alrm         contains the RTC alarm value upon वापस
+ * @param  alrm         contains the RTC alarm value upon return
  *
- * @वापस  0 अगर successful; non-zero otherwise.
+ * @return  0 if successful; non-zero otherwise.
  */
-अटल पूर्णांक mxc_rtc_पढ़ो_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alrm)
-अणु
-	काष्ठा mxc_rtc_data *pdata = dev_get_drvdata(dev);
-	व्योम __iomem *ioaddr = pdata->ioaddr;
-	पूर्णांक ret;
+static int mxc_rtc_read_alarm(struct device *dev, struct rtc_wkalrm *alrm)
+{
+	struct mxc_rtc_data *pdata = dev_get_drvdata(dev);
+	void __iomem *ioaddr = pdata->ioaddr;
+	int ret;
 
 	ret = mxc_rtc_lock(pdata);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	rtc_समय64_to_पंचांग(पढ़ोl(ioaddr + SRTC_LPSAR), &alrm->समय);
-	alrm->pending = !!(पढ़ोl(ioaddr + SRTC_LPSR) & SRTC_LPSR_ALP);
-	वापस mxc_rtc_unlock(pdata);
-पूर्ण
+	rtc_time64_to_tm(readl(ioaddr + SRTC_LPSAR), &alrm->time);
+	alrm->pending = !!(readl(ioaddr + SRTC_LPSR) & SRTC_LPSR_ALP);
+	return mxc_rtc_unlock(pdata);
+}
 
 /*
- * Enable/Disable alarm पूर्णांकerrupt
+ * Enable/Disable alarm interrupt
  * The caller should hold the pdata->lock
  */
-अटल व्योम mxc_rtc_alarm_irq_enable_locked(काष्ठा mxc_rtc_data *pdata,
-					    अचिन्हित पूर्णांक enable)
-अणु
-	u32 lp_cr = पढ़ोl(pdata->ioaddr + SRTC_LPCR);
+static void mxc_rtc_alarm_irq_enable_locked(struct mxc_rtc_data *pdata,
+					    unsigned int enable)
+{
+	u32 lp_cr = readl(pdata->ioaddr + SRTC_LPCR);
 
-	अगर (enable)
+	if (enable)
 		lp_cr |= (SRTC_LPCR_ALP | SRTC_LPCR_WAE);
-	अन्यथा
+	else
 		lp_cr &= ~(SRTC_LPCR_ALP | SRTC_LPCR_WAE);
 
-	ग_लिखोl(lp_cr, pdata->ioaddr + SRTC_LPCR);
-पूर्ण
+	writel(lp_cr, pdata->ioaddr + SRTC_LPCR);
+}
 
-अटल पूर्णांक mxc_rtc_alarm_irq_enable(काष्ठा device *dev, अचिन्हित पूर्णांक enable)
-अणु
-	काष्ठा mxc_rtc_data *pdata = dev_get_drvdata(dev);
-	पूर्णांक ret = mxc_rtc_lock(pdata);
+static int mxc_rtc_alarm_irq_enable(struct device *dev, unsigned int enable)
+{
+	struct mxc_rtc_data *pdata = dev_get_drvdata(dev);
+	int ret = mxc_rtc_lock(pdata);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	mxc_rtc_alarm_irq_enable_locked(pdata, enable);
-	वापस mxc_rtc_unlock(pdata);
-पूर्ण
+	return mxc_rtc_unlock(pdata);
+}
 
 /*
  * This function sets the RTC alarm based on passed in alrm.
  *
  * @param  alrm         the alarm value to be set in the RTC
  *
- * @वापस  0 अगर successful; non-zero otherwise.
+ * @return  0 if successful; non-zero otherwise.
  */
-अटल पूर्णांक mxc_rtc_set_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alrm)
-अणु
-	स्थिर समय64_t समय = rtc_पंचांग_to_समय64(&alrm->समय);
-	काष्ठा mxc_rtc_data *pdata = dev_get_drvdata(dev);
-	पूर्णांक ret = mxc_rtc_lock(pdata);
+static int mxc_rtc_set_alarm(struct device *dev, struct rtc_wkalrm *alrm)
+{
+	const time64_t time = rtc_tm_to_time64(&alrm->time);
+	struct mxc_rtc_data *pdata = dev_get_drvdata(dev);
+	int ret = mxc_rtc_lock(pdata);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ग_लिखोl((u32)समय, pdata->ioaddr + SRTC_LPSAR);
+	writel((u32)time, pdata->ioaddr + SRTC_LPSAR);
 
-	/* clear alarm पूर्णांकerrupt status bit */
-	ग_लिखोl(SRTC_LPSR_ALP, pdata->ioaddr + SRTC_LPSR);
+	/* clear alarm interrupt status bit */
+	writel(SRTC_LPSR_ALP, pdata->ioaddr + SRTC_LPSR);
 	mxc_rtc_sync_lp_locked(dev, pdata->ioaddr);
 
 	mxc_rtc_alarm_irq_enable_locked(pdata, alrm->enabled);
 	mxc_rtc_sync_lp_locked(dev, pdata->ioaddr);
 	mxc_rtc_unlock(pdata);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा rtc_class_ops mxc_rtc_ops = अणु
-	.पढ़ो_समय = mxc_rtc_पढ़ो_समय,
-	.set_समय = mxc_rtc_set_समय,
-	.पढ़ो_alarm = mxc_rtc_पढ़ो_alarm,
+static const struct rtc_class_ops mxc_rtc_ops = {
+	.read_time = mxc_rtc_read_time,
+	.set_time = mxc_rtc_set_time,
+	.read_alarm = mxc_rtc_read_alarm,
 	.set_alarm = mxc_rtc_set_alarm,
 	.alarm_irq_enable = mxc_rtc_alarm_irq_enable,
-पूर्ण;
+};
 
-अटल पूर्णांक mxc_rtc_रुको_क्रम_flag(व्योम __iomem *ioaddr, पूर्णांक flag)
-अणु
-	अचिन्हित पूर्णांक समयout = REG_READ_TIMEOUT;
+static int mxc_rtc_wait_for_flag(void __iomem *ioaddr, int flag)
+{
+	unsigned int timeout = REG_READ_TIMEOUT;
 
-	जबतक (!(पढ़ोl(ioaddr) & flag)) अणु
-		अगर (!--समयout)
-			वापस -EBUSY;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	while (!(readl(ioaddr) & flag)) {
+		if (!--timeout)
+			return -EBUSY;
+	}
+	return 0;
+}
 
-अटल पूर्णांक mxc_rtc_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा mxc_rtc_data *pdata;
-	व्योम __iomem *ioaddr;
-	पूर्णांक ret = 0;
+static int mxc_rtc_probe(struct platform_device *pdev)
+{
+	struct mxc_rtc_data *pdata;
+	void __iomem *ioaddr;
+	int ret = 0;
 
-	pdata = devm_kzalloc(&pdev->dev, माप(*pdata), GFP_KERNEL);
-	अगर (!pdata)
-		वापस -ENOMEM;
+	pdata = devm_kzalloc(&pdev->dev, sizeof(*pdata), GFP_KERNEL);
+	if (!pdata)
+		return -ENOMEM;
 
-	pdata->ioaddr = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(pdata->ioaddr))
-		वापस PTR_ERR(pdata->ioaddr);
+	pdata->ioaddr = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(pdata->ioaddr))
+		return PTR_ERR(pdata->ioaddr);
 
 	ioaddr = pdata->ioaddr;
 
-	pdata->clk = devm_clk_get(&pdev->dev, शून्य);
-	अगर (IS_ERR(pdata->clk)) अणु
+	pdata->clk = devm_clk_get(&pdev->dev, NULL);
+	if (IS_ERR(pdata->clk)) {
 		dev_err(&pdev->dev, "unable to get rtc clock!\n");
-		वापस PTR_ERR(pdata->clk);
-	पूर्ण
+		return PTR_ERR(pdata->clk);
+	}
 
 	spin_lock_init(&pdata->lock);
-	pdata->irq = platक्रमm_get_irq(pdev, 0);
-	अगर (pdata->irq < 0)
-		वापस pdata->irq;
+	pdata->irq = platform_get_irq(pdev, 0);
+	if (pdata->irq < 0)
+		return pdata->irq;
 
 	device_init_wakeup(&pdev->dev, 1);
 	ret = dev_pm_set_wake_irq(&pdev->dev, pdata->irq);
-	अगर (ret)
+	if (ret)
 		dev_err(&pdev->dev, "failed to enable irq wake\n");
 
 	ret = clk_prepare_enable(pdata->clk);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	/* initialize glitch detect */
-	ग_लिखोl(SRTC_LPPDR_INIT, ioaddr + SRTC_LPPDR);
+	writel(SRTC_LPPDR_INIT, ioaddr + SRTC_LPPDR);
 
-	/* clear lp पूर्णांकerrupt status */
-	ग_लिखोl(0xFFFFFFFF, ioaddr + SRTC_LPSR);
+	/* clear lp interrupt status */
+	writel(0xFFFFFFFF, ioaddr + SRTC_LPSR);
 
 	/* move out of init state */
-	ग_लिखोl((SRTC_LPCR_IE | SRTC_LPCR_NSA), ioaddr + SRTC_LPCR);
-	ret = mxc_rtc_रुको_क्रम_flag(ioaddr + SRTC_LPSR, SRTC_LPSR_IES);
-	अगर (ret) अणु
+	writel((SRTC_LPCR_IE | SRTC_LPCR_NSA), ioaddr + SRTC_LPCR);
+	ret = mxc_rtc_wait_for_flag(ioaddr + SRTC_LPSR, SRTC_LPSR_IES);
+	if (ret) {
 		dev_err(&pdev->dev, "Timeout waiting for SRTC_LPSR_IES\n");
 		clk_disable_unprepare(pdata->clk);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* move out of non-valid state */
-	ग_लिखोl((SRTC_LPCR_IE | SRTC_LPCR_NVE | SRTC_LPCR_NSA |
+	writel((SRTC_LPCR_IE | SRTC_LPCR_NVE | SRTC_LPCR_NSA |
 		SRTC_LPCR_EN_LP), ioaddr + SRTC_LPCR);
-	ret = mxc_rtc_रुको_क्रम_flag(ioaddr + SRTC_LPSR, SRTC_LPSR_NVES);
-	अगर (ret) अणु
+	ret = mxc_rtc_wait_for_flag(ioaddr + SRTC_LPSR, SRTC_LPSR_NVES);
+	if (ret) {
 		dev_err(&pdev->dev, "Timeout waiting for SRTC_LPSR_NVES\n");
 		clk_disable_unprepare(pdata->clk);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	pdata->rtc = devm_rtc_allocate_device(&pdev->dev);
-	अगर (IS_ERR(pdata->rtc))
-		वापस PTR_ERR(pdata->rtc);
+	if (IS_ERR(pdata->rtc))
+		return PTR_ERR(pdata->rtc);
 
 	pdata->rtc->ops = &mxc_rtc_ops;
 	pdata->rtc->range_max = U32_MAX;
 
 	clk_disable(pdata->clk);
-	platक्रमm_set_drvdata(pdev, pdata);
+	platform_set_drvdata(pdev, pdata);
 	ret =
-	    devm_request_irq(&pdev->dev, pdata->irq, mxc_rtc_पूर्णांकerrupt, 0,
+	    devm_request_irq(&pdev->dev, pdata->irq, mxc_rtc_interrupt, 0,
 			     pdev->name, &pdev->dev);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&pdev->dev, "interrupt not available.\n");
 		clk_unprepare(pdata->clk);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = devm_rtc_रेजिस्टर_device(pdata->rtc);
-	अगर (ret < 0)
+	ret = devm_rtc_register_device(pdata->rtc);
+	if (ret < 0)
 		clk_unprepare(pdata->clk);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक mxc_rtc_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा mxc_rtc_data *pdata = platक्रमm_get_drvdata(pdev);
+static int mxc_rtc_remove(struct platform_device *pdev)
+{
+	struct mxc_rtc_data *pdata = platform_get_drvdata(pdev);
 
 	clk_disable_unprepare(pdata->clk);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id mxc_ids[] = अणु
-	अणु .compatible = "fsl,imx53-rtc", पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id mxc_ids[] = {
+	{ .compatible = "fsl,imx53-rtc", },
+	{}
+};
 
-अटल काष्ठा platक्रमm_driver mxc_rtc_driver = अणु
-	.driver = अणु
+static struct platform_driver mxc_rtc_driver = {
+	.driver = {
 		.name = "mxc_rtc_v2",
 		.of_match_table = mxc_ids,
-	पूर्ण,
+	},
 	.probe = mxc_rtc_probe,
-	.हटाओ = mxc_rtc_हटाओ,
-पूर्ण;
+	.remove = mxc_rtc_remove,
+};
 
-module_platक्रमm_driver(mxc_rtc_driver);
+module_platform_driver(mxc_rtc_driver);
 
 MODULE_AUTHOR("Freescale Semiconductor, Inc.");
 MODULE_DESCRIPTION("Real Time Clock (RTC) Driver for i.MX53");

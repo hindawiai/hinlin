@@ -1,165 +1,164 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Super block/fileप्रणाली wide operations
+ * Super block/filesystem wide operations
  *
  * Copyright (C) 1996 Peter J. Braam <braam@maths.ox.ac.uk> and 
  * Michael Callahan <callahan@maths.ox.ac.uk> 
  * 
- * Rewritten क्रम Linux 2.1.  Peter Braam <braam@cs.cmu.edu>
+ * Rewritten for Linux 2.1.  Peter Braam <braam@cs.cmu.edu>
  * Copyright (C) Carnegie Mellon University
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/स्थिति.स>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/unistd.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/file.h>
-#समावेश <linux/vfs.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/pid_namespace.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/vदो_स्मृति.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/mm.h>
+#include <linux/string.h>
+#include <linux/stat.h>
+#include <linux/errno.h>
+#include <linux/unistd.h>
+#include <linux/mutex.h>
+#include <linux/spinlock.h>
+#include <linux/file.h>
+#include <linux/vfs.h>
+#include <linux/slab.h>
+#include <linux/pid_namespace.h>
+#include <linux/uaccess.h>
+#include <linux/fs.h>
+#include <linux/vmalloc.h>
 
-#समावेश <linux/coda.h>
-#समावेश "coda_psdev.h"
-#समावेश "coda_linux.h"
-#समावेश "coda_cache.h"
+#include <linux/coda.h>
+#include "coda_psdev.h"
+#include "coda_linux.h"
+#include "coda_cache.h"
 
-#समावेश "coda_int.h"
+#include "coda_int.h"
 
 /* VFS super_block ops */
-अटल व्योम coda_evict_inode(काष्ठा inode *);
-अटल व्योम coda_put_super(काष्ठा super_block *);
-अटल पूर्णांक coda_statfs(काष्ठा dentry *dentry, काष्ठा kstatfs *buf);
+static void coda_evict_inode(struct inode *);
+static void coda_put_super(struct super_block *);
+static int coda_statfs(struct dentry *dentry, struct kstatfs *buf);
 
-अटल काष्ठा kmem_cache * coda_inode_cachep;
+static struct kmem_cache * coda_inode_cachep;
 
-अटल काष्ठा inode *coda_alloc_inode(काष्ठा super_block *sb)
-अणु
-	काष्ठा coda_inode_info *ei;
+static struct inode *coda_alloc_inode(struct super_block *sb)
+{
+	struct coda_inode_info *ei;
 	ei = kmem_cache_alloc(coda_inode_cachep, GFP_KERNEL);
-	अगर (!ei)
-		वापस शून्य;
-	स_रखो(&ei->c_fid, 0, माप(काष्ठा CodaFid));
+	if (!ei)
+		return NULL;
+	memset(&ei->c_fid, 0, sizeof(struct CodaFid));
 	ei->c_flags = 0;
 	ei->c_uid = GLOBAL_ROOT_UID;
 	ei->c_cached_perm = 0;
 	spin_lock_init(&ei->c_lock);
-	वापस &ei->vfs_inode;
-पूर्ण
+	return &ei->vfs_inode;
+}
 
-अटल व्योम coda_मुक्त_inode(काष्ठा inode *inode)
-अणु
-	kmem_cache_मुक्त(coda_inode_cachep, ITOC(inode));
-पूर्ण
+static void coda_free_inode(struct inode *inode)
+{
+	kmem_cache_free(coda_inode_cachep, ITOC(inode));
+}
 
-अटल व्योम init_once(व्योम *foo)
-अणु
-	काष्ठा coda_inode_info *ei = (काष्ठा coda_inode_info *) foo;
+static void init_once(void *foo)
+{
+	struct coda_inode_info *ei = (struct coda_inode_info *) foo;
 
 	inode_init_once(&ei->vfs_inode);
-पूर्ण
+}
 
-पूर्णांक __init coda_init_inodecache(व्योम)
-अणु
+int __init coda_init_inodecache(void)
+{
 	coda_inode_cachep = kmem_cache_create("coda_inode_cache",
-				माप(काष्ठा coda_inode_info), 0,
+				sizeof(struct coda_inode_info), 0,
 				SLAB_RECLAIM_ACCOUNT|SLAB_MEM_SPREAD|
 				SLAB_ACCOUNT, init_once);
-	अगर (coda_inode_cachep == शून्य)
-		वापस -ENOMEM;
-	वापस 0;
-पूर्ण
+	if (coda_inode_cachep == NULL)
+		return -ENOMEM;
+	return 0;
+}
 
-व्योम coda_destroy_inodecache(व्योम)
-अणु
+void coda_destroy_inodecache(void)
+{
 	/*
-	 * Make sure all delayed rcu मुक्त inodes are flushed beक्रमe we
+	 * Make sure all delayed rcu free inodes are flushed before we
 	 * destroy cache.
 	 */
 	rcu_barrier();
 	kmem_cache_destroy(coda_inode_cachep);
-पूर्ण
+}
 
-अटल पूर्णांक coda_remount(काष्ठा super_block *sb, पूर्णांक *flags, अक्षर *data)
-अणु
-	sync_fileप्रणाली(sb);
+static int coda_remount(struct super_block *sb, int *flags, char *data)
+{
+	sync_filesystem(sb);
 	*flags |= SB_NOATIME;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* exported operations */
-अटल स्थिर काष्ठा super_operations coda_super_operations =
-अणु
+static const struct super_operations coda_super_operations =
+{
 	.alloc_inode	= coda_alloc_inode,
-	.मुक्त_inode	= coda_मुक्त_inode,
+	.free_inode	= coda_free_inode,
 	.evict_inode	= coda_evict_inode,
 	.put_super	= coda_put_super,
 	.statfs		= coda_statfs,
 	.remount_fs	= coda_remount,
-पूर्ण;
+};
 
-अटल पूर्णांक get_device_index(काष्ठा coda_mount_data *data)
-अणु
-	काष्ठा fd f;
-	काष्ठा inode *inode;
-	पूर्णांक idx;
+static int get_device_index(struct coda_mount_data *data)
+{
+	struct fd f;
+	struct inode *inode;
+	int idx;
 
-	अगर (data == शून्य) अणु
+	if (data == NULL) {
 		pr_warn("%s: Bad mount data\n", __func__);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	अगर (data->version != CODA_MOUNT_VERSION) अणु
+	if (data->version != CODA_MOUNT_VERSION) {
 		pr_warn("%s: Bad mount version\n", __func__);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	f = fdget(data->fd);
-	अगर (!f.file)
-		जाओ Ebadf;
+	if (!f.file)
+		goto Ebadf;
 	inode = file_inode(f.file);
-	अगर (!S_ISCHR(inode->i_mode) || imajor(inode) != CODA_PSDEV_MAJOR) अणु
+	if (!S_ISCHR(inode->i_mode) || imajor(inode) != CODA_PSDEV_MAJOR) {
 		fdput(f);
-		जाओ Ebadf;
-	पूर्ण
+		goto Ebadf;
+	}
 
 	idx = iminor(inode);
 	fdput(f);
 
-	अगर (idx < 0 || idx >= MAX_CODADEVS) अणु
+	if (idx < 0 || idx >= MAX_CODADEVS) {
 		pr_warn("%s: Bad minor number\n", __func__);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	वापस idx;
+	return idx;
 Ebadf:
 	pr_warn("%s: Bad file\n", __func__);
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल पूर्णांक coda_fill_super(काष्ठा super_block *sb, व्योम *data, पूर्णांक silent)
-अणु
-	काष्ठा inode *root = शून्य;
-	काष्ठा venus_comm *vc;
-	काष्ठा CodaFid fid;
-	पूर्णांक error;
-	पूर्णांक idx;
+static int coda_fill_super(struct super_block *sb, void *data, int silent)
+{
+	struct inode *root = NULL;
+	struct venus_comm *vc;
+	struct CodaFid fid;
+	int error;
+	int idx;
 
-	अगर (task_active_pid_ns(current) != &init_pid_ns)
-		वापस -EINVAL;
+	if (task_active_pid_ns(current) != &init_pid_ns)
+		return -EINVAL;
 
-	idx = get_device_index((काष्ठा coda_mount_data *) data);
+	idx = get_device_index((struct coda_mount_data *) data);
 
-	/* Ignore errors in data, क्रम backward compatibility */
-	अगर(idx == -1)
+	/* Ignore errors in data, for backward compatibility */
+	if(idx == -1)
 		idx = 0;
 	
 	pr_info("%s: device index: %i\n", __func__,  idx);
@@ -167,166 +166,166 @@ Ebadf:
 	vc = &coda_comms[idx];
 	mutex_lock(&vc->vc_mutex);
 
-	अगर (!vc->vc_inuse) अणु
+	if (!vc->vc_inuse) {
 		pr_warn("%s: No pseudo device\n", __func__);
 		error = -EINVAL;
-		जाओ unlock_out;
-	पूर्ण
+		goto unlock_out;
+	}
 
-	अगर (vc->vc_sb) अणु
+	if (vc->vc_sb) {
 		pr_warn("%s: Device already mounted\n", __func__);
 		error = -EBUSY;
-		जाओ unlock_out;
-	पूर्ण
+		goto unlock_out;
+	}
 
 	vc->vc_sb = sb;
 	mutex_unlock(&vc->vc_mutex);
 
 	sb->s_fs_info = vc;
 	sb->s_flags |= SB_NOATIME;
-	sb->s_blocksize = 4096;	/* XXXXX  what करो we put here?? */
+	sb->s_blocksize = 4096;	/* XXXXX  what do we put here?? */
 	sb->s_blocksize_bits = 12;
 	sb->s_magic = CODA_SUPER_MAGIC;
 	sb->s_op = &coda_super_operations;
 	sb->s_d_op = &coda_dentry_operations;
-	sb->s_समय_gran = 1;
-	sb->s_समय_min = S64_MIN;
-	sb->s_समय_max = S64_MAX;
+	sb->s_time_gran = 1;
+	sb->s_time_min = S64_MIN;
+	sb->s_time_max = S64_MAX;
 
 	error = super_setup_bdi(sb);
-	अगर (error)
-		जाओ error;
+	if (error)
+		goto error;
 
 	/* get root fid from Venus: this needs the root inode */
 	error = venus_rootfid(sb, &fid);
-	अगर ( error ) अणु
+	if ( error ) {
 		pr_warn("%s: coda_get_rootfid failed with %d\n",
 			__func__, error);
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 	pr_info("%s: rootfid is %s\n", __func__, coda_f2s(&fid));
 	
 	/* make root inode */
         root = coda_cnode_make(&fid, sb);
-        अगर (IS_ERR(root)) अणु
+        if (IS_ERR(root)) {
 		error = PTR_ERR(root);
 		pr_warn("Failure of coda_cnode_make for root: error %d\n",
 			error);
-		जाओ error;
-	पूर्ण 
+		goto error;
+	} 
 
 	pr_info("%s: rootinode is %ld dev %s\n",
 		__func__, root->i_ino, root->i_sb->s_id);
 	sb->s_root = d_make_root(root);
-	अगर (!sb->s_root) अणु
+	if (!sb->s_root) {
 		error = -EINVAL;
-		जाओ error;
-	पूर्ण
-	वापस 0;
+		goto error;
+	}
+	return 0;
 
 error:
 	mutex_lock(&vc->vc_mutex);
-	vc->vc_sb = शून्य;
-	sb->s_fs_info = शून्य;
+	vc->vc_sb = NULL;
+	sb->s_fs_info = NULL;
 unlock_out:
 	mutex_unlock(&vc->vc_mutex);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल व्योम coda_put_super(काष्ठा super_block *sb)
-अणु
-	काष्ठा venus_comm *vcp = coda_vcp(sb);
+static void coda_put_super(struct super_block *sb)
+{
+	struct venus_comm *vcp = coda_vcp(sb);
 	mutex_lock(&vcp->vc_mutex);
-	vcp->vc_sb = शून्य;
-	sb->s_fs_info = शून्य;
+	vcp->vc_sb = NULL;
+	sb->s_fs_info = NULL;
 	mutex_unlock(&vcp->vc_mutex);
 	mutex_destroy(&vcp->vc_mutex);
 
 	pr_info("Bye bye.\n");
-पूर्ण
+}
 
-अटल व्योम coda_evict_inode(काष्ठा inode *inode)
-अणु
+static void coda_evict_inode(struct inode *inode)
+{
 	truncate_inode_pages_final(&inode->i_data);
 	clear_inode(inode);
 	coda_cache_clear_inode(inode);
-पूर्ण
+}
 
-पूर्णांक coda_getattr(काष्ठा user_namespace *mnt_userns, स्थिर काष्ठा path *path,
-		 काष्ठा kstat *stat, u32 request_mask, अचिन्हित पूर्णांक flags)
-अणु
-	पूर्णांक err = coda_revalidate_inode(d_inode(path->dentry));
-	अगर (!err)
+int coda_getattr(struct user_namespace *mnt_userns, const struct path *path,
+		 struct kstat *stat, u32 request_mask, unsigned int flags)
+{
+	int err = coda_revalidate_inode(d_inode(path->dentry));
+	if (!err)
 		generic_fillattr(&init_user_ns, d_inode(path->dentry), stat);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक coda_setattr(काष्ठा user_namespace *mnt_userns, काष्ठा dentry *de,
-		 काष्ठा iattr *iattr)
-अणु
-	काष्ठा inode *inode = d_inode(de);
-	काष्ठा coda_vattr vattr;
-	पूर्णांक error;
+int coda_setattr(struct user_namespace *mnt_userns, struct dentry *de,
+		 struct iattr *iattr)
+{
+	struct inode *inode = d_inode(de);
+	struct coda_vattr vattr;
+	int error;
 
-	स_रखो(&vattr, 0, माप(vattr)); 
+	memset(&vattr, 0, sizeof(vattr)); 
 
-	inode->i_स_समय = current_समय(inode);
+	inode->i_ctime = current_time(inode);
 	coda_iattr_to_vattr(iattr, &vattr);
 	vattr.va_type = C_VNON; /* cannot set type */
 
-	/* Venus is responsible क्रम truncating the container-file!!! */
+	/* Venus is responsible for truncating the container-file!!! */
 	error = venus_setattr(inode->i_sb, coda_i2f(inode), &vattr);
 
-	अगर (!error) अणु
+	if (!error) {
 	        coda_vattr_to_iattr(inode, &vattr); 
 		coda_cache_clear_inode(inode);
-	पूर्ण
-	वापस error;
-पूर्ण
+	}
+	return error;
+}
 
-स्थिर काष्ठा inode_operations coda_file_inode_operations = अणु
+const struct inode_operations coda_file_inode_operations = {
 	.permission	= coda_permission,
 	.getattr	= coda_getattr,
 	.setattr	= coda_setattr,
-पूर्ण;
+};
 
-अटल पूर्णांक coda_statfs(काष्ठा dentry *dentry, काष्ठा kstatfs *buf)
-अणु
-	पूर्णांक error;
+static int coda_statfs(struct dentry *dentry, struct kstatfs *buf)
+{
+	int error;
 	
 	error = venus_statfs(dentry, buf);
 
-	अगर (error) अणु
-		/* fake something like AFS करोes */
+	if (error) {
+		/* fake something like AFS does */
 		buf->f_blocks = 9000000;
-		buf->f_bमुक्त  = 9000000;
+		buf->f_bfree  = 9000000;
 		buf->f_bavail = 9000000;
 		buf->f_files  = 9000000;
-		buf->f_fमुक्त  = 9000000;
-	पूर्ण
+		buf->f_ffree  = 9000000;
+	}
 
 	/* and fill in the rest */
 	buf->f_type = CODA_SUPER_MAGIC;
 	buf->f_bsize = 4096;
 	buf->f_namelen = CODA_MAXNAMLEN;
 
-	वापस 0; 
-पूर्ण
+	return 0; 
+}
 
-/* init_coda: used by fileप्रणालीs.c to रेजिस्टर coda */
+/* init_coda: used by filesystems.c to register coda */
 
-अटल काष्ठा dentry *coda_mount(काष्ठा file_प्रणाली_type *fs_type,
-	पूर्णांक flags, स्थिर अक्षर *dev_name, व्योम *data)
-अणु
-	वापस mount_nodev(fs_type, flags, data, coda_fill_super);
-पूर्ण
+static struct dentry *coda_mount(struct file_system_type *fs_type,
+	int flags, const char *dev_name, void *data)
+{
+	return mount_nodev(fs_type, flags, data, coda_fill_super);
+}
 
-काष्ठा file_प्रणाली_type coda_fs_type = अणु
+struct file_system_type coda_fs_type = {
 	.owner		= THIS_MODULE,
 	.name		= "coda",
 	.mount		= coda_mount,
-	.समाप्त_sb	= समाप्त_anon_super,
+	.kill_sb	= kill_anon_super,
 	.fs_flags	= FS_BINARY_MOUNTDATA,
-पूर्ण;
+};
 MODULE_ALIAS_FS("coda");
 

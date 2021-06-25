@@ -1,30 +1,29 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) Qu Wenruo 2017.  All rights reserved.
  */
 
-#अगर_अघोषित BTRFS_TREE_CHECKER_H
-#घोषणा BTRFS_TREE_CHECKER_H
+#ifndef BTRFS_TREE_CHECKER_H
+#define BTRFS_TREE_CHECKER_H
 
-#समावेश "ctree.h"
-#समावेश "extent_io.h"
+#include "ctree.h"
+#include "extent_io.h"
 
 /*
  * Comprehensive leaf checker.
- * Will check not only the item poपूर्णांकers, but also every possible member
+ * Will check not only the item pointers, but also every possible member
  * in item data.
  */
-पूर्णांक btrfs_check_leaf_full(काष्ठा extent_buffer *leaf);
+int btrfs_check_leaf_full(struct extent_buffer *leaf);
 
 /*
  * Less strict leaf checker.
- * Will only check item poपूर्णांकers, not पढ़ोing item data.
+ * Will only check item pointers, not reading item data.
  */
-पूर्णांक btrfs_check_leaf_relaxed(काष्ठा extent_buffer *leaf);
-पूर्णांक btrfs_check_node(काष्ठा extent_buffer *node);
+int btrfs_check_leaf_relaxed(struct extent_buffer *leaf);
+int btrfs_check_node(struct extent_buffer *node);
 
-पूर्णांक btrfs_check_chunk_valid(काष्ठा extent_buffer *leaf,
-			    काष्ठा btrfs_chunk *chunk, u64 logical);
+int btrfs_check_chunk_valid(struct extent_buffer *leaf,
+			    struct btrfs_chunk *chunk, u64 logical);
 
-#पूर्ण_अगर
+#endif

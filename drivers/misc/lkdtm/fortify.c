@@ -1,48 +1,47 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2020 Francis Laniel <laniel_francis@privacyrequired.com>
  *
- * Add tests related to क्रमtअगरied functions in this file.
+ * Add tests related to fortified functions in this file.
  */
-#समावेश "lkdtm.h"
-#समावेश <linux/माला.स>
-#समावेश <linux/slab.h>
+#include "lkdtm.h"
+#include <linux/string.h>
+#include <linux/slab.h>
 
 
 /*
- * Calls क्रमtअगरied strscpy to test that it वापसs the same result as vanilla
- * strscpy and generate a panic because there is a ग_लिखो overflow (i.e. src
+ * Calls fortified strscpy to test that it returns the same result as vanilla
+ * strscpy and generate a panic because there is a write overflow (i.e. src
  * length is greater than dst length).
  */
-व्योम lkdपंचांग_FORTIFIED_STRSCPY(व्योम)
-अणु
-	अक्षर *src;
-	अक्षर dst[5];
+void lkdtm_FORTIFIED_STRSCPY(void)
+{
+	char *src;
+	char dst[5];
 
-	काष्ठा अणु
-		जोड़ अणु
-			अक्षर big[10];
-			अक्षर src[5];
-		पूर्ण;
-	पूर्ण weird = अणु .big = "hello!" पूर्ण;
-	अक्षर weird_dst[माप(weird.src) + 1];
+	struct {
+		union {
+			char big[10];
+			char src[5];
+		};
+	} weird = { .big = "hello!" };
+	char weird_dst[sizeof(weird.src) + 1];
 
 	src = kstrdup("foobar", GFP_KERNEL);
 
-	अगर (src == शून्य)
-		वापस;
+	if (src == NULL)
+		return;
 
-	/* Vanilla strscpy वापसs -E2BIG अगर size is 0. */
-	अगर (strscpy(dst, src, 0) != -E2BIG)
+	/* Vanilla strscpy returns -E2BIG if size is 0. */
+	if (strscpy(dst, src, 0) != -E2BIG)
 		pr_warn("FAIL: strscpy() of 0 length did not return -E2BIG\n");
 
-	/* Vanilla strscpy वापसs -E2BIG अगर src is truncated. */
-	अगर (strscpy(dst, src, माप(dst)) != -E2BIG)
+	/* Vanilla strscpy returns -E2BIG if src is truncated. */
+	if (strscpy(dst, src, sizeof(dst)) != -E2BIG)
 		pr_warn("FAIL: strscpy() did not return -E2BIG while src is truncated\n");
 
 	/* After above call, dst must contain "foob" because src was truncated. */
-	अगर (म_भेदन(dst, "foob", माप(dst)) != 0)
+	if (strncmp(dst, "foob", sizeof(dst)) != 0)
 		pr_warn("FAIL: after strscpy() dst does not contain \"foob\" but \"%s\"\n",
 			dst);
 
@@ -50,21 +49,21 @@
 	src[3] = '\0';
 
 	/*
-	 * Vanilla strscpy वापसs number of अक्षरacter copied अगर everything goes
+	 * Vanilla strscpy returns number of character copied if everything goes
 	 * well.
 	 */
-	अगर (strscpy(dst, src, माप(dst)) != 3)
+	if (strscpy(dst, src, sizeof(dst)) != 3)
 		pr_warn("FAIL: strscpy() did not return 3 while src was copied entirely truncated\n");
 
 	/* After above call, dst must contain "foo" because src was copied. */
-	अगर (म_भेदन(dst, "foo", माप(dst)) != 0)
+	if (strncmp(dst, "foo", sizeof(dst)) != 0)
 		pr_warn("FAIL: after strscpy() dst does not contain \"foo\" but \"%s\"\n",
 			dst);
 
-	/* Test when src is embedded inside a जोड़. */
-	strscpy(weird_dst, weird.src, माप(weird_dst));
+	/* Test when src is embedded inside a union. */
+	strscpy(weird_dst, weird.src, sizeof(weird_dst));
 
-	अगर (म_भेद(weird_dst, "hello") != 0)
+	if (strcmp(weird_dst, "hello") != 0)
 		pr_warn("FAIL: after strscpy() weird_dst does not contain \"hello\" but \"%s\"\n",
 			weird_dst);
 
@@ -72,12 +71,12 @@
 	src[3] = 'b';
 
 	/*
-	 * Use म_माप here so size cannot be known at compile समय and there is
-	 * a runसमय ग_लिखो overflow.
+	 * Use strlen here so size cannot be known at compile time and there is
+	 * a runtime write overflow.
 	 */
-	strscpy(dst, src, म_माप(src));
+	strscpy(dst, src, strlen(src));
 
 	pr_warn("FAIL: No overflow in above strscpy()\n");
 
-	kमुक्त(src);
-पूर्ण
+	kfree(src);
+}

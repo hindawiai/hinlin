@@ -1,354 +1,353 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2002 Steve Schmidtke
  */
 
-#समावेश <linux/fs.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/sound.h>
-#समावेश <linux/soundcard.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/uaccess.h>
-#समावेश <init.h>
-#समावेश <os.h>
+#include <linux/fs.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/sound.h>
+#include <linux/soundcard.h>
+#include <linux/mutex.h>
+#include <linux/uaccess.h>
+#include <init.h>
+#include <os.h>
 
-काष्ठा hostaudio_state अणु
-	पूर्णांक fd;
-पूर्ण;
+struct hostaudio_state {
+	int fd;
+};
 
-काष्ठा hosपंचांगixer_state अणु
-	पूर्णांक fd;
-पूर्ण;
+struct hostmixer_state {
+	int fd;
+};
 
-#घोषणा HOSTAUDIO_DEV_DSP "/dev/sound/dsp"
-#घोषणा HOSTAUDIO_DEV_MIXER "/dev/sound/mixer"
+#define HOSTAUDIO_DEV_DSP "/dev/sound/dsp"
+#define HOSTAUDIO_DEV_MIXER "/dev/sound/mixer"
 
 /*
- * Changed either at boot समय or module load समय.  At boot, this is
- * single-thपढ़ोed; at module load, multiple modules would each have
+ * Changed either at boot time or module load time.  At boot, this is
+ * single-threaded; at module load, multiple modules would each have
  * their own copy of these variables.
  */
-अटल अक्षर *dsp = HOSTAUDIO_DEV_DSP;
-अटल अक्षर *mixer = HOSTAUDIO_DEV_MIXER;
+static char *dsp = HOSTAUDIO_DEV_DSP;
+static char *mixer = HOSTAUDIO_DEV_MIXER;
 
-#घोषणा DSP_HELP \
+#define DSP_HELP \
 "    This is used to specify the host dsp device to the hostaudio driver.\n" \
 "    The default is \"" HOSTAUDIO_DEV_DSP "\".\n\n"
 
-#घोषणा MIXER_HELP \
+#define MIXER_HELP \
 "    This is used to specify the host mixer device to the hostaudio driver.\n"\
 "    The default is \"" HOSTAUDIO_DEV_MIXER "\".\n\n"
 
-module_param(dsp, अक्षरp, 0644);
+module_param(dsp, charp, 0644);
 MODULE_PARM_DESC(dsp, DSP_HELP);
-module_param(mixer, अक्षरp, 0644);
+module_param(mixer, charp, 0644);
 MODULE_PARM_DESC(mixer, MIXER_HELP);
 
-#अगर_अघोषित MODULE
-अटल पूर्णांक set_dsp(अक्षर *name, पूर्णांक *add)
-अणु
+#ifndef MODULE
+static int set_dsp(char *name, int *add)
+{
 	dsp = name;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 __uml_setup("dsp=", set_dsp, "dsp=<dsp device>\n" DSP_HELP);
 
-अटल पूर्णांक set_mixer(अक्षर *name, पूर्णांक *add)
-अणु
+static int set_mixer(char *name, int *add)
+{
 	mixer = name;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 __uml_setup("mixer=", set_mixer, "mixer=<mixer device>\n" MIXER_HELP);
-#पूर्ण_अगर
+#endif
 
-अटल DEFINE_MUTEX(hostaudio_mutex);
+static DEFINE_MUTEX(hostaudio_mutex);
 
 /* /dev/dsp file operations */
 
-अटल sमाप_प्रकार hostaudio_पढ़ो(काष्ठा file *file, अक्षर __user *buffer,
-			      माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा hostaudio_state *state = file->निजी_data;
-	व्योम *kbuf;
-	पूर्णांक err;
+static ssize_t hostaudio_read(struct file *file, char __user *buffer,
+			      size_t count, loff_t *ppos)
+{
+	struct hostaudio_state *state = file->private_data;
+	void *kbuf;
+	int err;
 
-#अगर_घोषित DEBUG
-	prपूर्णांकk(KERN_DEBUG "hostaudio: read called, count = %d\n", count);
-#पूर्ण_अगर
+#ifdef DEBUG
+	printk(KERN_DEBUG "hostaudio: read called, count = %d\n", count);
+#endif
 
-	kbuf = kदो_स्मृति(count, GFP_KERNEL);
-	अगर (kbuf == शून्य)
-		वापस -ENOMEM;
+	kbuf = kmalloc(count, GFP_KERNEL);
+	if (kbuf == NULL)
+		return -ENOMEM;
 
-	err = os_पढ़ो_file(state->fd, kbuf, count);
-	अगर (err < 0)
-		जाओ out;
+	err = os_read_file(state->fd, kbuf, count);
+	if (err < 0)
+		goto out;
 
-	अगर (copy_to_user(buffer, kbuf, err))
+	if (copy_to_user(buffer, kbuf, err))
 		err = -EFAULT;
 
 out:
-	kमुक्त(kbuf);
-	वापस err;
-पूर्ण
+	kfree(kbuf);
+	return err;
+}
 
-अटल sमाप_प्रकार hostaudio_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buffer,
-			       माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा hostaudio_state *state = file->निजी_data;
-	व्योम *kbuf;
-	पूर्णांक err;
+static ssize_t hostaudio_write(struct file *file, const char __user *buffer,
+			       size_t count, loff_t *ppos)
+{
+	struct hostaudio_state *state = file->private_data;
+	void *kbuf;
+	int err;
 
-#अगर_घोषित DEBUG
-	prपूर्णांकk(KERN_DEBUG "hostaudio: write called, count = %d\n", count);
-#पूर्ण_अगर
+#ifdef DEBUG
+	printk(KERN_DEBUG "hostaudio: write called, count = %d\n", count);
+#endif
 
 	kbuf = memdup_user(buffer, count);
-	अगर (IS_ERR(kbuf))
-		वापस PTR_ERR(kbuf);
+	if (IS_ERR(kbuf))
+		return PTR_ERR(kbuf);
 
-	err = os_ग_लिखो_file(state->fd, kbuf, count);
-	अगर (err < 0)
-		जाओ out;
+	err = os_write_file(state->fd, kbuf, count);
+	if (err < 0)
+		goto out;
 	*ppos += err;
 
  out:
-	kमुक्त(kbuf);
-	वापस err;
-पूर्ण
+	kfree(kbuf);
+	return err;
+}
 
-अटल __poll_t hostaudio_poll(काष्ठा file *file,
-				काष्ठा poll_table_काष्ठा *रुको)
-अणु
-#अगर_घोषित DEBUG
-	prपूर्णांकk(KERN_DEBUG "hostaudio: poll called (unimplemented)\n");
-#पूर्ण_अगर
+static __poll_t hostaudio_poll(struct file *file,
+				struct poll_table_struct *wait)
+{
+#ifdef DEBUG
+	printk(KERN_DEBUG "hostaudio: poll called (unimplemented)\n");
+#endif
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल दीर्घ hostaudio_ioctl(काष्ठा file *file,
-			   अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा hostaudio_state *state = file->निजी_data;
-	अचिन्हित दीर्घ data = 0;
-	पूर्णांक err;
+static long hostaudio_ioctl(struct file *file,
+			   unsigned int cmd, unsigned long arg)
+{
+	struct hostaudio_state *state = file->private_data;
+	unsigned long data = 0;
+	int err;
 
-#अगर_घोषित DEBUG
-	prपूर्णांकk(KERN_DEBUG "hostaudio: ioctl called, cmd = %u\n", cmd);
-#पूर्ण_अगर
-	चयन(cmd)अणु
-	हाल SNDCTL_DSP_SPEED:
-	हाल SNDCTL_DSP_STEREO:
-	हाल SNDCTL_DSP_GETBLKSIZE:
-	हाल SNDCTL_DSP_CHANNELS:
-	हाल SNDCTL_DSP_SUBDIVIDE:
-	हाल SNDCTL_DSP_SETFRAGMENT:
-		अगर (get_user(data, (पूर्णांक __user *) arg))
-			वापस -EFAULT;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+#ifdef DEBUG
+	printk(KERN_DEBUG "hostaudio: ioctl called, cmd = %u\n", cmd);
+#endif
+	switch(cmd){
+	case SNDCTL_DSP_SPEED:
+	case SNDCTL_DSP_STEREO:
+	case SNDCTL_DSP_GETBLKSIZE:
+	case SNDCTL_DSP_CHANNELS:
+	case SNDCTL_DSP_SUBDIVIDE:
+	case SNDCTL_DSP_SETFRAGMENT:
+		if (get_user(data, (int __user *) arg))
+			return -EFAULT;
+		break;
+	default:
+		break;
+	}
 
-	err = os_ioctl_generic(state->fd, cmd, (अचिन्हित दीर्घ) &data);
+	err = os_ioctl_generic(state->fd, cmd, (unsigned long) &data);
 
-	चयन(cmd)अणु
-	हाल SNDCTL_DSP_SPEED:
-	हाल SNDCTL_DSP_STEREO:
-	हाल SNDCTL_DSP_GETBLKSIZE:
-	हाल SNDCTL_DSP_CHANNELS:
-	हाल SNDCTL_DSP_SUBDIVIDE:
-	हाल SNDCTL_DSP_SETFRAGMENT:
-		अगर (put_user(data, (पूर्णांक __user *) arg))
-			वापस -EFAULT;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+	switch(cmd){
+	case SNDCTL_DSP_SPEED:
+	case SNDCTL_DSP_STEREO:
+	case SNDCTL_DSP_GETBLKSIZE:
+	case SNDCTL_DSP_CHANNELS:
+	case SNDCTL_DSP_SUBDIVIDE:
+	case SNDCTL_DSP_SETFRAGMENT:
+		if (put_user(data, (int __user *) arg))
+			return -EFAULT;
+		break;
+	default:
+		break;
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक hostaudio_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा hostaudio_state *state;
-	पूर्णांक r = 0, w = 0;
-	पूर्णांक ret;
+static int hostaudio_open(struct inode *inode, struct file *file)
+{
+	struct hostaudio_state *state;
+	int r = 0, w = 0;
+	int ret;
 
-#अगर_घोषित DEBUG
+#ifdef DEBUG
 	kernel_param_lock(THIS_MODULE);
-	prपूर्णांकk(KERN_DEBUG "hostaudio: open called (host: %s)\n", dsp);
+	printk(KERN_DEBUG "hostaudio: open called (host: %s)\n", dsp);
 	kernel_param_unlock(THIS_MODULE);
-#पूर्ण_अगर
+#endif
 
-	state = kदो_स्मृति(माप(काष्ठा hostaudio_state), GFP_KERNEL);
-	अगर (state == शून्य)
-		वापस -ENOMEM;
+	state = kmalloc(sizeof(struct hostaudio_state), GFP_KERNEL);
+	if (state == NULL)
+		return -ENOMEM;
 
-	अगर (file->f_mode & FMODE_READ)
+	if (file->f_mode & FMODE_READ)
 		r = 1;
-	अगर (file->f_mode & FMODE_WRITE)
+	if (file->f_mode & FMODE_WRITE)
 		w = 1;
 
 	kernel_param_lock(THIS_MODULE);
 	mutex_lock(&hostaudio_mutex);
-	ret = os_खोलो_file(dsp, of_set_rw(OPENFLAGS(), r, w), 0);
+	ret = os_open_file(dsp, of_set_rw(OPENFLAGS(), r, w), 0);
 	mutex_unlock(&hostaudio_mutex);
 	kernel_param_unlock(THIS_MODULE);
 
-	अगर (ret < 0) अणु
-		kमुक्त(state);
-		वापस ret;
-	पूर्ण
+	if (ret < 0) {
+		kfree(state);
+		return ret;
+	}
 	state->fd = ret;
-	file->निजी_data = state;
-	वापस 0;
-पूर्ण
+	file->private_data = state;
+	return 0;
+}
 
-अटल पूर्णांक hostaudio_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा hostaudio_state *state = file->निजी_data;
+static int hostaudio_release(struct inode *inode, struct file *file)
+{
+	struct hostaudio_state *state = file->private_data;
 
-#अगर_घोषित DEBUG
-	prपूर्णांकk(KERN_DEBUG "hostaudio: release called\n");
-#पूर्ण_अगर
-	os_बंद_file(state->fd);
-	kमुक्त(state);
+#ifdef DEBUG
+	printk(KERN_DEBUG "hostaudio: release called\n");
+#endif
+	os_close_file(state->fd);
+	kfree(state);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* /dev/mixer file operations */
 
-अटल दीर्घ hosपंचांगixer_ioctl_mixdev(काष्ठा file *file,
-				  अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा hosपंचांगixer_state *state = file->निजी_data;
+static long hostmixer_ioctl_mixdev(struct file *file,
+				  unsigned int cmd, unsigned long arg)
+{
+	struct hostmixer_state *state = file->private_data;
 
-#अगर_घोषित DEBUG
-	prपूर्णांकk(KERN_DEBUG "hostmixer: ioctl called\n");
-#पूर्ण_अगर
+#ifdef DEBUG
+	printk(KERN_DEBUG "hostmixer: ioctl called\n");
+#endif
 
-	वापस os_ioctl_generic(state->fd, cmd, arg);
-पूर्ण
+	return os_ioctl_generic(state->fd, cmd, arg);
+}
 
-अटल पूर्णांक hosपंचांगixer_खोलो_mixdev(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा hosपंचांगixer_state *state;
-	पूर्णांक r = 0, w = 0;
-	पूर्णांक ret;
+static int hostmixer_open_mixdev(struct inode *inode, struct file *file)
+{
+	struct hostmixer_state *state;
+	int r = 0, w = 0;
+	int ret;
 
-#अगर_घोषित DEBUG
-	prपूर्णांकk(KERN_DEBUG "hostmixer: open called (host: %s)\n", mixer);
-#पूर्ण_अगर
+#ifdef DEBUG
+	printk(KERN_DEBUG "hostmixer: open called (host: %s)\n", mixer);
+#endif
 
-	state = kदो_स्मृति(माप(काष्ठा hosपंचांगixer_state), GFP_KERNEL);
-	अगर (state == शून्य)
-		वापस -ENOMEM;
+	state = kmalloc(sizeof(struct hostmixer_state), GFP_KERNEL);
+	if (state == NULL)
+		return -ENOMEM;
 
-	अगर (file->f_mode & FMODE_READ)
+	if (file->f_mode & FMODE_READ)
 		r = 1;
-	अगर (file->f_mode & FMODE_WRITE)
+	if (file->f_mode & FMODE_WRITE)
 		w = 1;
 
 	kernel_param_lock(THIS_MODULE);
 	mutex_lock(&hostaudio_mutex);
-	ret = os_खोलो_file(mixer, of_set_rw(OPENFLAGS(), r, w), 0);
+	ret = os_open_file(mixer, of_set_rw(OPENFLAGS(), r, w), 0);
 	mutex_unlock(&hostaudio_mutex);
 	kernel_param_unlock(THIS_MODULE);
 
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		kernel_param_lock(THIS_MODULE);
-		prपूर्णांकk(KERN_ERR "hostaudio_open_mixdev failed to open '%s', "
+		printk(KERN_ERR "hostaudio_open_mixdev failed to open '%s', "
 		       "err = %d\n", dsp, -ret);
 		kernel_param_unlock(THIS_MODULE);
-		kमुक्त(state);
-		वापस ret;
-	पूर्ण
+		kfree(state);
+		return ret;
+	}
 
-	file->निजी_data = state;
-	वापस 0;
-पूर्ण
+	file->private_data = state;
+	return 0;
+}
 
-अटल पूर्णांक hosपंचांगixer_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा hosपंचांगixer_state *state = file->निजी_data;
+static int hostmixer_release(struct inode *inode, struct file *file)
+{
+	struct hostmixer_state *state = file->private_data;
 
-#अगर_घोषित DEBUG
-	prपूर्णांकk(KERN_DEBUG "hostmixer: release called\n");
-#पूर्ण_अगर
+#ifdef DEBUG
+	printk(KERN_DEBUG "hostmixer: release called\n");
+#endif
 
-	os_बंद_file(state->fd);
-	kमुक्त(state);
+	os_close_file(state->fd);
+	kfree(state);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* kernel module operations */
 
-अटल स्थिर काष्ठा file_operations hostaudio_fops = अणु
+static const struct file_operations hostaudio_fops = {
 	.owner          = THIS_MODULE,
 	.llseek         = no_llseek,
-	.पढ़ो           = hostaudio_पढ़ो,
-	.ग_लिखो          = hostaudio_ग_लिखो,
+	.read           = hostaudio_read,
+	.write          = hostaudio_write,
 	.poll           = hostaudio_poll,
 	.unlocked_ioctl	= hostaudio_ioctl,
 	.compat_ioctl	= compat_ptr_ioctl,
-	.mmap           = शून्य,
-	.खोलो           = hostaudio_खोलो,
+	.mmap           = NULL,
+	.open           = hostaudio_open,
 	.release        = hostaudio_release,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा file_operations hosपंचांगixer_fops = अणु
+static const struct file_operations hostmixer_fops = {
 	.owner          = THIS_MODULE,
 	.llseek         = no_llseek,
-	.unlocked_ioctl	= hosपंचांगixer_ioctl_mixdev,
-	.खोलो           = hosपंचांगixer_खोलो_mixdev,
-	.release        = hosपंचांगixer_release,
-पूर्ण;
+	.unlocked_ioctl	= hostmixer_ioctl_mixdev,
+	.open           = hostmixer_open_mixdev,
+	.release        = hostmixer_release,
+};
 
-काष्ठा अणु
-	पूर्णांक dev_audio;
-	पूर्णांक dev_mixer;
-पूर्ण module_data;
+struct {
+	int dev_audio;
+	int dev_mixer;
+} module_data;
 
 MODULE_AUTHOR("Steve Schmidtke");
 MODULE_DESCRIPTION("UML Audio Relay");
 MODULE_LICENSE("GPL");
 
-अटल पूर्णांक __init hostaudio_init_module(व्योम)
-अणु
+static int __init hostaudio_init_module(void)
+{
 	kernel_param_lock(THIS_MODULE);
-	prपूर्णांकk(KERN_INFO "UML Audio Relay (host dsp = %s, host mixer = %s)\n",
+	printk(KERN_INFO "UML Audio Relay (host dsp = %s, host mixer = %s)\n",
 	       dsp, mixer);
 	kernel_param_unlock(THIS_MODULE);
 
-	module_data.dev_audio = रेजिस्टर_sound_dsp(&hostaudio_fops, -1);
-	अगर (module_data.dev_audio < 0) अणु
-		prपूर्णांकk(KERN_ERR "hostaudio: couldn't register DSP device!\n");
-		वापस -ENODEV;
-	पूर्ण
+	module_data.dev_audio = register_sound_dsp(&hostaudio_fops, -1);
+	if (module_data.dev_audio < 0) {
+		printk(KERN_ERR "hostaudio: couldn't register DSP device!\n");
+		return -ENODEV;
+	}
 
-	module_data.dev_mixer = रेजिस्टर_sound_mixer(&hosपंचांगixer_fops, -1);
-	अगर (module_data.dev_mixer < 0) अणु
-		prपूर्णांकk(KERN_ERR "hostmixer: couldn't register mixer "
+	module_data.dev_mixer = register_sound_mixer(&hostmixer_fops, -1);
+	if (module_data.dev_mixer < 0) {
+		printk(KERN_ERR "hostmixer: couldn't register mixer "
 		       "device!\n");
-		unरेजिस्टर_sound_dsp(module_data.dev_audio);
-		वापस -ENODEV;
-	पूर्ण
+		unregister_sound_dsp(module_data.dev_audio);
+		return -ENODEV;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास hostaudio_cleanup_module (व्योम)
-अणु
-	unरेजिस्टर_sound_mixer(module_data.dev_mixer);
-	unरेजिस्टर_sound_dsp(module_data.dev_audio);
-पूर्ण
+static void __exit hostaudio_cleanup_module (void)
+{
+	unregister_sound_mixer(module_data.dev_mixer);
+	unregister_sound_dsp(module_data.dev_audio);
+}
 
 module_init(hostaudio_init_module);
-module_निकास(hostaudio_cleanup_module);
+module_exit(hostaudio_cleanup_module);

@@ -1,197 +1,196 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
 
     bttv - Bt848 frame grabber driver
 
-    bttv's *निजी* header file  --  nobody other than bttv itself
+    bttv's *private* header file  --  nobody other than bttv itself
     should ever include this file.
 
     (c) 2000-2002 Gerd Knorr <kraxel@bytesex.org>
 
 */
 
-#अगर_अघोषित _BTTVP_H_
-#घोषणा _BTTVP_H_
+#ifndef _BTTVP_H_
+#define _BTTVP_H_
 
-#समावेश <linux/types.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/i2c-algo-bit.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/input.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/scatterlist.h>
-#समावेश <linux/device.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <media/v4l2-common.h>
-#समावेश <media/v4l2-ctrls.h>
-#समावेश <media/v4l2-fh.h>
-#समावेश <media/videobuf-dma-sg.h>
-#समावेश <media/tveeprom.h>
-#समावेश <media/rc-core.h>
-#समावेश <media/i2c/ir-kbd-i2c.h>
-#समावेश <media/drv-पूर्णांकf/tea575x.h>
+#include <linux/types.h>
+#include <linux/wait.h>
+#include <linux/i2c.h>
+#include <linux/i2c-algo-bit.h>
+#include <linux/pci.h>
+#include <linux/input.h>
+#include <linux/mutex.h>
+#include <linux/scatterlist.h>
+#include <linux/device.h>
+#include <asm/io.h>
+#include <media/v4l2-common.h>
+#include <media/v4l2-ctrls.h>
+#include <media/v4l2-fh.h>
+#include <media/videobuf-dma-sg.h>
+#include <media/tveeprom.h>
+#include <media/rc-core.h>
+#include <media/i2c/ir-kbd-i2c.h>
+#include <media/drv-intf/tea575x.h>
 
-#समावेश "bt848.h"
-#समावेश "bttv.h"
-#समावेश "btcx-risc.h"
+#include "bt848.h"
+#include "bttv.h"
+#include "btcx-risc.h"
 
-#अगर_घोषित __KERNEL__
+#ifdef __KERNEL__
 
-#घोषणा FORMAT_FLAGS_DITHER       0x01
-#घोषणा FORMAT_FLAGS_PACKED       0x02
-#घोषणा FORMAT_FLAGS_PLANAR       0x04
-#घोषणा FORMAT_FLAGS_RAW          0x08
-#घोषणा FORMAT_FLAGS_CrCb         0x10
+#define FORMAT_FLAGS_DITHER       0x01
+#define FORMAT_FLAGS_PACKED       0x02
+#define FORMAT_FLAGS_PLANAR       0x04
+#define FORMAT_FLAGS_RAW          0x08
+#define FORMAT_FLAGS_CrCb         0x10
 
-#घोषणा RISC_SLOT_O_VBI        4
-#घोषणा RISC_SLOT_O_FIELD      6
-#घोषणा RISC_SLOT_E_VBI       10
-#घोषणा RISC_SLOT_E_FIELD     12
-#घोषणा RISC_SLOT_LOOP        14
+#define RISC_SLOT_O_VBI        4
+#define RISC_SLOT_O_FIELD      6
+#define RISC_SLOT_E_VBI       10
+#define RISC_SLOT_E_FIELD     12
+#define RISC_SLOT_LOOP        14
 
-#घोषणा RESOURCE_OVERLAY       1
-#घोषणा RESOURCE_VIDEO_STREAM  2
-#घोषणा RESOURCE_VBI           4
-#घोषणा RESOURCE_VIDEO_READ    8
+#define RESOURCE_OVERLAY       1
+#define RESOURCE_VIDEO_STREAM  2
+#define RESOURCE_VBI           4
+#define RESOURCE_VIDEO_READ    8
 
-#घोषणा RAW_LINES            640
-#घोषणा RAW_BPL             1024
+#define RAW_LINES            640
+#define RAW_BPL             1024
 
-#घोषणा UNSET (-1U)
+#define UNSET (-1U)
 
-/* Min. value in VDELAY रेजिस्टर. */
-#घोषणा MIN_VDELAY 2
-/* Even to get Cb first, odd क्रम Cr. */
-#घोषणा MAX_HDELAY (0x3FF & -2)
+/* Min. value in VDELAY register. */
+#define MIN_VDELAY 2
+/* Even to get Cb first, odd for Cr. */
+#define MAX_HDELAY (0x3FF & -2)
 /* Limits scaled width, which must be a multiple of 4. */
-#घोषणा MAX_HACTIVE (0x3FF & -4)
+#define MAX_HACTIVE (0x3FF & -4)
 
-#घोषणा BTTV_NORMS    (\
+#define BTTV_NORMS    (\
 		V4L2_STD_PAL    | V4L2_STD_PAL_N | \
 		V4L2_STD_PAL_Nc | V4L2_STD_SECAM | \
 		V4L2_STD_NTSC   | V4L2_STD_PAL_M | \
 		V4L2_STD_PAL_60)
 /* ---------------------------------------------------------- */
 
-काष्ठा bttv_tvnorm अणु
-	पूर्णांक   v4l2_id;
-	अक्षर  *name;
+struct bttv_tvnorm {
+	int   v4l2_id;
+	char  *name;
 	u32   Fsc;
 	u16   swidth, sheight; /* scaled standard width, height */
 	u16   totalwidth;
-	u8    adelay, bdelay, अगरorm;
+	u8    adelay, bdelay, iform;
 	u32   scaledtwidth;
 	u16   hdelayx1, hactivex1;
 	u16   vdelay;
 	u8    vbipack;
 	u16   vtotal;
-	पूर्णांक   sram;
+	int   sram;
 	/* ITU-R frame line number of the first VBI line we can
 	   capture, of the first and second field. The last possible line
 	   is determined by cropcap.bounds. */
 	u16   vbistart[2];
 	/* Horizontally this counts fCLKx1 samples following the leading
 	   edge of the horizontal sync pulse, vertically ITU-R frame line
-	   numbers of the first field बार two (2, 4, 6, ... 524 or 624). */
-	काष्ठा v4l2_cropcap cropcap;
-पूर्ण;
-बाह्य स्थिर काष्ठा bttv_tvnorm bttv_tvnorms[];
+	   numbers of the first field times two (2, 4, 6, ... 524 or 624). */
+	struct v4l2_cropcap cropcap;
+};
+extern const struct bttv_tvnorm bttv_tvnorms[];
 
-काष्ठा bttv_क्रमmat अणु
-	पूर्णांक  fourcc;          /* video4linux 2      */
-	पूर्णांक  btक्रमmat;        /* BT848_COLOR_FMT_*  */
-	पूर्णांक  btswap;          /* BT848_COLOR_CTL_*  */
-	पूर्णांक  depth;           /* bit/pixel          */
-	पूर्णांक  flags;
-	पूर्णांक  hshअगरt,vshअगरt;   /* क्रम planar modes   */
-पूर्ण;
+struct bttv_format {
+	int  fourcc;          /* video4linux 2      */
+	int  btformat;        /* BT848_COLOR_FMT_*  */
+	int  btswap;          /* BT848_COLOR_CTL_*  */
+	int  depth;           /* bit/pixel          */
+	int  flags;
+	int  hshift,vshift;   /* for planar modes   */
+};
 
-काष्ठा bttv_ir अणु
-	काष्ठा rc_dev           *dev;
-	काष्ठा bttv		*btv;
-	काष्ठा समयr_list       समयr;
+struct bttv_ir {
+	struct rc_dev           *dev;
+	struct bttv		*btv;
+	struct timer_list       timer;
 
-	अक्षर                    name[32];
-	अक्षर                    phys[32];
+	char                    name[32];
+	char                    phys[32];
 
-	/* Usual gpio संकेतling */
+	/* Usual gpio signalling */
 	u32                     mask_keycode;
-	u32                     mask_keyकरोwn;
+	u32                     mask_keydown;
 	u32                     mask_keyup;
 	u32                     polling;
 	u32                     last_gpio;
-	पूर्णांक                     shअगरt_by;
-	पूर्णांक                     rc5_remote_gap;
+	int                     shift_by;
+	int                     rc5_remote_gap;
 
 	/* RC5 gpio */
 	bool			rc5_gpio;   /* Is RC5 legacy GPIO enabled? */
 	u32                     last_bit;   /* last raw bit seen */
-	u32                     code;       /* raw code under स्थिरruction */
-	kसमय_प्रकार						base_समय;  /* समय of last seen code */
+	u32                     code;       /* raw code under construction */
+	ktime_t						base_time;  /* time of last seen code */
 	bool                    active;     /* building raw code */
-पूर्ण;
+};
 
 
 /* ---------------------------------------------------------- */
 
-काष्ठा bttv_geometry अणु
+struct bttv_geometry {
 	u8  vtc,crop,comb;
 	u16 width,hscale,hdelay;
 	u16 sheight,vscale,vdelay,vtotal;
-पूर्ण;
+};
 
-काष्ठा bttv_buffer अणु
+struct bttv_buffer {
 	/* common v4l buffer stuff -- must be first */
-	काष्ठा videobuf_buffer     vb;
+	struct videobuf_buffer     vb;
 
-	/* bttv specअगरic */
-	स्थिर काष्ठा bttv_क्रमmat   *fmt;
-	अचिन्हित पूर्णांक               tvnorm;
-	पूर्णांक                        btक्रमmat;
-	पूर्णांक                        btswap;
-	काष्ठा bttv_geometry       geo;
-	काष्ठा btcx_riscmem        top;
-	काष्ठा btcx_riscmem        bottom;
-	काष्ठा v4l2_rect           crop;
-	अचिन्हित पूर्णांक               vbi_skip[2];
-	अचिन्हित पूर्णांक               vbi_count[2];
-पूर्ण;
+	/* bttv specific */
+	const struct bttv_format   *fmt;
+	unsigned int               tvnorm;
+	int                        btformat;
+	int                        btswap;
+	struct bttv_geometry       geo;
+	struct btcx_riscmem        top;
+	struct btcx_riscmem        bottom;
+	struct v4l2_rect           crop;
+	unsigned int               vbi_skip[2];
+	unsigned int               vbi_count[2];
+};
 
-काष्ठा bttv_buffer_set अणु
-	काष्ठा bttv_buffer     *top;       /* top field buffer    */
-	काष्ठा bttv_buffer     *bottom;    /* bottom field buffer */
-	अचिन्हित पूर्णांक           top_irq;
-	अचिन्हित पूर्णांक           frame_irq;
-पूर्ण;
+struct bttv_buffer_set {
+	struct bttv_buffer     *top;       /* top field buffer    */
+	struct bttv_buffer     *bottom;    /* bottom field buffer */
+	unsigned int           top_irq;
+	unsigned int           frame_irq;
+};
 
-काष्ठा bttv_overlay अणु
-	अचिन्हित पूर्णांक           tvnorm;
-	काष्ठा v4l2_rect       w;
-	क्रमागत v4l2_field        field;
-	काष्ठा v4l2_clip       *clips;
-	पूर्णांक                    nclips;
-	पूर्णांक                    setup_ok;
-पूर्ण;
+struct bttv_overlay {
+	unsigned int           tvnorm;
+	struct v4l2_rect       w;
+	enum v4l2_field        field;
+	struct v4l2_clip       *clips;
+	int                    nclips;
+	int                    setup_ok;
+};
 
-काष्ठा bttv_vbi_fmt अणु
-	काष्ठा v4l2_vbi_क्रमmat fmt;
+struct bttv_vbi_fmt {
+	struct v4l2_vbi_format fmt;
 
 	/* fmt.start[] and count[] refer to this video standard. */
-	स्थिर काष्ठा bttv_tvnorm *tvnorm;
+	const struct bttv_tvnorm *tvnorm;
 
 	/* Earliest possible start of video capturing with this
-	   v4l2_vbi_क्रमmat, in काष्ठा bttv_crop.rect units. */
+	   v4l2_vbi_format, in struct bttv_crop.rect units. */
 	__s32                  end;
-पूर्ण;
+};
 
 /* bttv-vbi.c */
-व्योम bttv_vbi_fmt_reset(काष्ठा bttv_vbi_fmt *f, अचिन्हित पूर्णांक norm);
+void bttv_vbi_fmt_reset(struct bttv_vbi_fmt *f, unsigned int norm);
 
-काष्ठा bttv_crop अणु
-	/* A cropping rectangle in काष्ठा bttv_tvnorm.cropcap units. */
-	काष्ठा v4l2_rect       rect;
+struct bttv_crop {
+	/* A cropping rectangle in struct bttv_tvnorm.cropcap units. */
+	struct v4l2_rect       rect;
 
 	/* Scaled image size limits with this crop rect. Divide
 	   max_height, but not min_height, by two when capturing
@@ -201,324 +200,324 @@
 	__s32                  min_scaled_height;
 	__s32                  max_scaled_width;
 	__s32                  max_scaled_height;
-पूर्ण;
+};
 
-काष्ठा bttv_fh अणु
-	/* This must be the first field in this काष्ठा */
-	काष्ठा v4l2_fh		 fh;
+struct bttv_fh {
+	/* This must be the first field in this struct */
+	struct v4l2_fh		 fh;
 
-	काष्ठा bttv              *btv;
-	पूर्णांक resources;
-	क्रमागत v4l2_buf_type       type;
+	struct bttv              *btv;
+	int resources;
+	enum v4l2_buf_type       type;
 
 	/* video capture */
-	काष्ठा videobuf_queue    cap;
-	स्थिर काष्ठा bttv_क्रमmat *fmt;
-	पूर्णांक                      width;
-	पूर्णांक                      height;
+	struct videobuf_queue    cap;
+	const struct bttv_format *fmt;
+	int                      width;
+	int                      height;
 
 	/* video overlay */
-	स्थिर काष्ठा bttv_क्रमmat *ovfmt;
-	काष्ठा bttv_overlay      ov;
+	const struct bttv_format *ovfmt;
+	struct bttv_overlay      ov;
 
 	/* Application called VIDIOC_S_SELECTION. */
-	पूर्णांक                      करो_crop;
+	int                      do_crop;
 
 	/* vbi capture */
-	काष्ठा videobuf_queue    vbi;
-	/* Current VBI capture winकरोw as seen through this fh (cannot
-	   be global क्रम compatibility with earlier drivers). Protected
-	   by काष्ठा bttv.lock and काष्ठा bttv_fh.vbi.lock. */
-	काष्ठा bttv_vbi_fmt      vbi_fmt;
-पूर्ण;
+	struct videobuf_queue    vbi;
+	/* Current VBI capture window as seen through this fh (cannot
+	   be global for compatibility with earlier drivers). Protected
+	   by struct bttv.lock and struct bttv_fh.vbi.lock. */
+	struct bttv_vbi_fmt      vbi_fmt;
+};
 
 /* ---------------------------------------------------------- */
 /* bttv-risc.c                                                */
 
 /* risc code generators - capture */
-पूर्णांक bttv_risc_packed(काष्ठा bttv *btv, काष्ठा btcx_riscmem *risc,
-		     काष्ठा scatterlist *sglist,
-		     अचिन्हित पूर्णांक offset, अचिन्हित पूर्णांक bpl,
-		     अचिन्हित पूर्णांक pitch, अचिन्हित पूर्णांक skip_lines,
-		     अचिन्हित पूर्णांक store_lines);
+int bttv_risc_packed(struct bttv *btv, struct btcx_riscmem *risc,
+		     struct scatterlist *sglist,
+		     unsigned int offset, unsigned int bpl,
+		     unsigned int pitch, unsigned int skip_lines,
+		     unsigned int store_lines);
 
-/* control dma रेजिस्टर + risc मुख्य loop */
-व्योम bttv_set_dma(काष्ठा bttv *btv, पूर्णांक override);
-पूर्णांक bttv_risc_init_मुख्य(काष्ठा bttv *btv);
-पूर्णांक bttv_risc_hook(काष्ठा bttv *btv, पूर्णांक slot, काष्ठा btcx_riscmem *risc,
-		   पूर्णांक irqflags);
+/* control dma register + risc main loop */
+void bttv_set_dma(struct bttv *btv, int override);
+int bttv_risc_init_main(struct bttv *btv);
+int bttv_risc_hook(struct bttv *btv, int slot, struct btcx_riscmem *risc,
+		   int irqflags);
 
 /* capture buffer handling */
-पूर्णांक bttv_buffer_risc(काष्ठा bttv *btv, काष्ठा bttv_buffer *buf);
-पूर्णांक bttv_buffer_activate_video(काष्ठा bttv *btv,
-			       काष्ठा bttv_buffer_set *set);
-पूर्णांक bttv_buffer_activate_vbi(काष्ठा bttv *btv,
-			     काष्ठा bttv_buffer *vbi);
-व्योम bttv_dma_मुक्त(काष्ठा videobuf_queue *q, काष्ठा bttv *btv,
-		   काष्ठा bttv_buffer *buf);
+int bttv_buffer_risc(struct bttv *btv, struct bttv_buffer *buf);
+int bttv_buffer_activate_video(struct bttv *btv,
+			       struct bttv_buffer_set *set);
+int bttv_buffer_activate_vbi(struct bttv *btv,
+			     struct bttv_buffer *vbi);
+void bttv_dma_free(struct videobuf_queue *q, struct bttv *btv,
+		   struct bttv_buffer *buf);
 
 /* overlay handling */
-पूर्णांक bttv_overlay_risc(काष्ठा bttv *btv, काष्ठा bttv_overlay *ov,
-		      स्थिर काष्ठा bttv_क्रमmat *fmt,
-		      काष्ठा bttv_buffer *buf);
+int bttv_overlay_risc(struct bttv *btv, struct bttv_overlay *ov,
+		      const struct bttv_format *fmt,
+		      struct bttv_buffer *buf);
 
 
 /* ---------------------------------------------------------- */
 /* bttv-vbi.c                                                 */
 
-पूर्णांक bttv_try_fmt_vbi_cap(काष्ठा file *file, व्योम *fh, काष्ठा v4l2_क्रमmat *f);
-पूर्णांक bttv_g_fmt_vbi_cap(काष्ठा file *file, व्योम *fh, काष्ठा v4l2_क्रमmat *f);
-पूर्णांक bttv_s_fmt_vbi_cap(काष्ठा file *file, व्योम *fh, काष्ठा v4l2_क्रमmat *f);
+int bttv_try_fmt_vbi_cap(struct file *file, void *fh, struct v4l2_format *f);
+int bttv_g_fmt_vbi_cap(struct file *file, void *fh, struct v4l2_format *f);
+int bttv_s_fmt_vbi_cap(struct file *file, void *fh, struct v4l2_format *f);
 
-बाह्य स्थिर काष्ठा videobuf_queue_ops bttv_vbi_qops;
+extern const struct videobuf_queue_ops bttv_vbi_qops;
 
 /* ---------------------------------------------------------- */
 /* bttv-gpio.c */
 
-बाह्य काष्ठा bus_type bttv_sub_bus_type;
-पूर्णांक bttv_sub_add_device(काष्ठा bttv_core *core, अक्षर *name);
-पूर्णांक bttv_sub_del_devices(काष्ठा bttv_core *core);
+extern struct bus_type bttv_sub_bus_type;
+int bttv_sub_add_device(struct bttv_core *core, char *name);
+int bttv_sub_del_devices(struct bttv_core *core);
 
 /* ---------------------------------------------------------- */
 /* bttv-cards.c                                               */
 
-बाह्य पूर्णांक no_overlay;
+extern int no_overlay;
 
 /* ---------------------------------------------------------- */
 /* bttv-input.c                                               */
 
-बाह्य व्योम init_bttv_i2c_ir(काष्ठा bttv *btv);
+extern void init_bttv_i2c_ir(struct bttv *btv);
 
 /* ---------------------------------------------------------- */
 /* bttv-i2c.c                                                 */
-बाह्य पूर्णांक init_bttv_i2c(काष्ठा bttv *btv);
-बाह्य पूर्णांक fini_bttv_i2c(काष्ठा bttv *btv);
+extern int init_bttv_i2c(struct bttv *btv);
+extern int fini_bttv_i2c(struct bttv *btv);
 
 /* ---------------------------------------------------------- */
 /* bttv-driver.c                                              */
 
 /* insmod options */
-बाह्य अचिन्हित पूर्णांक bttv_verbose;
-बाह्य अचिन्हित पूर्णांक bttv_debug;
-बाह्य अचिन्हित पूर्णांक bttv_gpio;
-बाह्य व्योम bttv_gpio_tracking(काष्ठा bttv *btv, अक्षर *comment);
+extern unsigned int bttv_verbose;
+extern unsigned int bttv_debug;
+extern unsigned int bttv_gpio;
+extern void bttv_gpio_tracking(struct bttv *btv, char *comment);
 
-#घोषणा dprपूर्णांकk(fmt, ...)			\
-करो अणु						\
-	अगर (bttv_debug >= 1)			\
+#define dprintk(fmt, ...)			\
+do {						\
+	if (bttv_debug >= 1)			\
 		pr_debug(fmt, ##__VA_ARGS__);	\
-पूर्ण जबतक (0)
-#घोषणा dprपूर्णांकk_cont(fmt, ...)			\
-करो अणु						\
-	अगर (bttv_debug >= 1)			\
+} while (0)
+#define dprintk_cont(fmt, ...)			\
+do {						\
+	if (bttv_debug >= 1)			\
 		pr_cont(fmt, ##__VA_ARGS__);	\
-पूर्ण जबतक (0)
-#घोषणा d2prपूर्णांकk(fmt, ...)			\
-करो अणु						\
-	अगर (bttv_debug >= 2)			\
-		prपूर्णांकk(fmt, ##__VA_ARGS__);	\
-पूर्ण जबतक (0)
+} while (0)
+#define d2printk(fmt, ...)			\
+do {						\
+	if (bttv_debug >= 2)			\
+		printk(fmt, ##__VA_ARGS__);	\
+} while (0)
 
-#घोषणा BTTV_MAX_FBUF   0x208000
-#घोषणा BTTV_TIMEOUT    msecs_to_jअगरfies(500)    /* 0.5 seconds */
-#घोषणा BTTV_FREE_IDLE  msecs_to_jअगरfies(1000)   /* one second */
+#define BTTV_MAX_FBUF   0x208000
+#define BTTV_TIMEOUT    msecs_to_jiffies(500)    /* 0.5 seconds */
+#define BTTV_FREE_IDLE  msecs_to_jiffies(1000)   /* one second */
 
 
-काष्ठा bttv_pll_info अणु
-	अचिन्हित पूर्णांक pll_अगरreq;    /* PLL input frequency        */
-	अचिन्हित पूर्णांक pll_ofreq;    /* PLL output frequency       */
-	अचिन्हित पूर्णांक pll_crystal;  /* Crystal used क्रम input     */
-	अचिन्हित पूर्णांक pll_current;  /* Currently programmed ofreq */
-पूर्ण;
+struct bttv_pll_info {
+	unsigned int pll_ifreq;    /* PLL input frequency        */
+	unsigned int pll_ofreq;    /* PLL output frequency       */
+	unsigned int pll_crystal;  /* Crystal used for input     */
+	unsigned int pll_current;  /* Currently programmed ofreq */
+};
 
-/* क्रम gpio-connected remote control */
-काष्ठा bttv_input अणु
-	काष्ठा input_dev      *dev;
-	अक्षर                  name[32];
-	अक्षर                  phys[32];
+/* for gpio-connected remote control */
+struct bttv_input {
+	struct input_dev      *dev;
+	char                  name[32];
+	char                  phys[32];
 	u32                   mask_keycode;
-	u32                   mask_keyकरोwn;
-पूर्ण;
+	u32                   mask_keydown;
+};
 
-काष्ठा bttv_suspend_state अणु
+struct bttv_suspend_state {
 	u32  gpio_enable;
 	u32  gpio_data;
-	पूर्णांक  disabled;
-	पूर्णांक  loop_irq;
-	काष्ठा bttv_buffer_set video;
-	काष्ठा bttv_buffer     *vbi;
-पूर्ण;
+	int  disabled;
+	int  loop_irq;
+	struct bttv_buffer_set video;
+	struct bttv_buffer     *vbi;
+};
 
-काष्ठा bttv_tea575x_gpio अणु
+struct bttv_tea575x_gpio {
 	u8 data, clk, wren, most;
-पूर्ण;
+};
 
-काष्ठा bttv अणु
-	काष्ठा bttv_core c;
+struct bttv {
+	struct bttv_core c;
 
 	/* pci device config */
-	अचिन्हित लघु id;
-	अचिन्हित अक्षर revision;
-	अचिन्हित अक्षर __iomem *bt848_mmio;   /* poपूर्णांकer to mmio */
+	unsigned short id;
+	unsigned char revision;
+	unsigned char __iomem *bt848_mmio;   /* pointer to mmio */
 
 	/* card configuration info */
-	अचिन्हित पूर्णांक cardid;   /* pci subप्रणाली id (bt878 based ones) */
-	अचिन्हित पूर्णांक tuner_type;  /* tuner chip type */
-	अचिन्हित पूर्णांक tda9887_conf;
-	अचिन्हित पूर्णांक svhs, dig;
-	अचिन्हित पूर्णांक has_saa6588:1;
-	काष्ठा bttv_pll_info pll;
-	पूर्णांक triton1;
-	पूर्णांक gpioirq;
+	unsigned int cardid;   /* pci subsystem id (bt878 based ones) */
+	unsigned int tuner_type;  /* tuner chip type */
+	unsigned int tda9887_conf;
+	unsigned int svhs, dig;
+	unsigned int has_saa6588:1;
+	struct bttv_pll_info pll;
+	int triton1;
+	int gpioirq;
 
-	पूर्णांक use_i2c_hw;
+	int use_i2c_hw;
 
-	/* old gpio पूर्णांकerface */
-	पूर्णांक shutकरोwn;
+	/* old gpio interface */
+	int shutdown;
 
-	व्योम (*volume_gpio)(काष्ठा bttv *btv, __u16 volume);
-	व्योम (*audio_mode_gpio)(काष्ठा bttv *btv, काष्ठा v4l2_tuner *tuner, पूर्णांक set);
+	void (*volume_gpio)(struct bttv *btv, __u16 volume);
+	void (*audio_mode_gpio)(struct bttv *btv, struct v4l2_tuner *tuner, int set);
 
-	/* new gpio पूर्णांकerface */
+	/* new gpio interface */
 	spinlock_t gpio_lock;
 
 	/* i2c layer */
-	काष्ठा i2c_algo_bit_data   i2c_algo;
-	काष्ठा i2c_client          i2c_client;
-	पूर्णांक                        i2c_state, i2c_rc;
-	पूर्णांक                        i2c_करोne;
-	रुको_queue_head_t          i2c_queue;
-	काष्ठा v4l2_subdev	  *sd_msp34xx;
-	काष्ठा v4l2_subdev	  *sd_tvaudio;
-	काष्ठा v4l2_subdev	  *sd_tda7432;
+	struct i2c_algo_bit_data   i2c_algo;
+	struct i2c_client          i2c_client;
+	int                        i2c_state, i2c_rc;
+	int                        i2c_done;
+	wait_queue_head_t          i2c_queue;
+	struct v4l2_subdev	  *sd_msp34xx;
+	struct v4l2_subdev	  *sd_tvaudio;
+	struct v4l2_subdev	  *sd_tda7432;
 
 	/* video4linux (1) */
-	काष्ठा video_device video_dev;
-	काष्ठा video_device radio_dev;
-	काष्ठा video_device vbi_dev;
+	struct video_device video_dev;
+	struct video_device radio_dev;
+	struct video_device vbi_dev;
 
 	/* controls */
-	काष्ठा v4l2_ctrl_handler   ctrl_handler;
-	काष्ठा v4l2_ctrl_handler   radio_ctrl_handler;
+	struct v4l2_ctrl_handler   ctrl_handler;
+	struct v4l2_ctrl_handler   radio_ctrl_handler;
 
 	/* infrared remote */
-	पूर्णांक has_remote;
-	काष्ठा bttv_ir *remote;
+	int has_remote;
+	struct bttv_ir *remote;
 
 	/* I2C remote data */
-	काष्ठा IR_i2c_init_data    init_data;
+	struct IR_i2c_init_data    init_data;
 
 	/* locking */
 	spinlock_t s_lock;
-	काष्ठा mutex lock;
-	पूर्णांक resources;
+	struct mutex lock;
+	int resources;
 
 	/* video state */
-	अचिन्हित पूर्णांक input;
-	अचिन्हित पूर्णांक audio_input;
-	अचिन्हित पूर्णांक mute;
-	अचिन्हित दीर्घ tv_freq;
-	अचिन्हित पूर्णांक tvnorm;
+	unsigned int input;
+	unsigned int audio_input;
+	unsigned int mute;
+	unsigned long tv_freq;
+	unsigned int tvnorm;
 	v4l2_std_id std;
-	पूर्णांक hue, contrast, bright, saturation;
-	काष्ठा v4l2_framebuffer fbuf;
-	अचिन्हित पूर्णांक field_count;
+	int hue, contrast, bright, saturation;
+	struct v4l2_framebuffer fbuf;
+	unsigned int field_count;
 
 	/* various options */
-	पूर्णांक opt_combfilter;
-	पूर्णांक opt_स्वतःmute;
-	पूर्णांक opt_vcr_hack;
-	पूर्णांक opt_uv_ratio;
+	int opt_combfilter;
+	int opt_automute;
+	int opt_vcr_hack;
+	int opt_uv_ratio;
 
 	/* radio data/state */
-	पूर्णांक has_radio;
-	पूर्णांक has_radio_tuner;
-	पूर्णांक radio_user;
-	पूर्णांक radio_uses_msp_demodulator;
-	अचिन्हित दीर्घ radio_freq;
+	int has_radio;
+	int has_radio_tuner;
+	int radio_user;
+	int radio_uses_msp_demodulator;
+	unsigned long radio_freq;
 
 	/* miro/pinnacle + Aimslab VHX
 	   philips matchbox (tea5757 radio tuner) support */
-	पूर्णांक has_tea575x;
-	काष्ठा bttv_tea575x_gpio tea_gpio;
-	काष्ठा snd_tea575x tea;
+	int has_tea575x;
+	struct bttv_tea575x_gpio tea_gpio;
+	struct snd_tea575x tea;
 
 	/* ISA stuff (Terratec Active Radio Upgrade) */
-	पूर्णांक mbox_ior;
-	पूर्णांक mbox_iow;
-	पूर्णांक mbox_csel;
+	int mbox_ior;
+	int mbox_iow;
+	int mbox_csel;
 
-	/* चयन status क्रम multi-controller cards */
-	अक्षर sw_status[4];
+	/* switch status for multi-controller cards */
+	char sw_status[4];
 
 	/* risc memory management data
-	   - must acquire s_lock beक्रमe changing these
+	   - must acquire s_lock before changing these
 	   - only the irq handler is supported to touch top + bottom + vcurr */
-	काष्ठा btcx_riscmem     मुख्य;
-	काष्ठा bttv_buffer      *screen;    /* overlay             */
-	काष्ठा list_head        capture;    /* video capture queue */
-	काष्ठा list_head        vcapture;   /* vbi capture queue   */
-	काष्ठा bttv_buffer_set  curr;       /* active buffers      */
-	काष्ठा bttv_buffer      *cvbi;      /* active vbi buffer   */
-	पूर्णांक                     loop_irq;
-	पूर्णांक                     new_input;
+	struct btcx_riscmem     main;
+	struct bttv_buffer      *screen;    /* overlay             */
+	struct list_head        capture;    /* video capture queue */
+	struct list_head        vcapture;   /* vbi capture queue   */
+	struct bttv_buffer_set  curr;       /* active buffers      */
+	struct bttv_buffer      *cvbi;      /* active vbi buffer   */
+	int                     loop_irq;
+	int                     new_input;
 
-	अचिन्हित दीर्घ cap_ctl;
-	अचिन्हित दीर्घ dma_on;
-	काष्ठा समयr_list समयout;
-	काष्ठा bttv_suspend_state state;
+	unsigned long cap_ctl;
+	unsigned long dma_on;
+	struct timer_list timeout;
+	struct bttv_suspend_state state;
 
 	/* stats */
-	अचिन्हित पूर्णांक errors;
-	अचिन्हित पूर्णांक framedrop;
-	अचिन्हित पूर्णांक irq_total;
-	अचिन्हित पूर्णांक irq_me;
+	unsigned int errors;
+	unsigned int framedrop;
+	unsigned int irq_total;
+	unsigned int irq_me;
 
-	अचिन्हित पूर्णांक users;
-	काष्ठा bttv_fh init;
+	unsigned int users;
+	struct bttv_fh init;
 
-	/* used to make dvb-bt8xx स्वतःloadable */
-	काष्ठा work_काष्ठा request_module_wk;
+	/* used to make dvb-bt8xx autoloadable */
+	struct work_struct request_module_wk;
 
 	/* Default (0) and current (1) video capturing and overlay
 	   cropping parameters in bttv_tvnorm.cropcap units. Protected
 	   by bttv.lock. */
-	काष्ठा bttv_crop crop[2];
+	struct bttv_crop crop[2];
 
 	/* Earliest possible start of video capturing in
 	   bttv_tvnorm.cropcap line units. Set by check_alloc_btres()
-	   and मुक्त_btres(). Protected by bttv.lock. */
+	   and free_btres(). Protected by bttv.lock. */
 	__s32			vbi_end;
 
 	/* Latest possible end of VBI capturing (= crop[x].rect.top when
 	   VIDEO_RESOURCES are locked). Set by check_alloc_btres()
-	   and मुक्त_btres(). Protected by bttv.lock. */
+	   and free_btres(). Protected by bttv.lock. */
 	__s32			crop_start;
-पूर्ण;
+};
 
-अटल अंतरभूत काष्ठा bttv *to_bttv(काष्ठा v4l2_device *v4l2_dev)
-अणु
-	वापस container_of(v4l2_dev, काष्ठा bttv, c.v4l2_dev);
-पूर्ण
+static inline struct bttv *to_bttv(struct v4l2_device *v4l2_dev)
+{
+	return container_of(v4l2_dev, struct bttv, c.v4l2_dev);
+}
 
 /* our devices */
-#घोषणा BTTV_MAX 32
-बाह्य अचिन्हित पूर्णांक bttv_num;
-बाह्य काष्ठा bttv *bttvs[BTTV_MAX];
+#define BTTV_MAX 32
+extern unsigned int bttv_num;
+extern struct bttv *bttvs[BTTV_MAX];
 
-अटल अंतरभूत अचिन्हित पूर्णांक bttv_muxsel(स्थिर काष्ठा bttv *btv,
-				       अचिन्हित पूर्णांक input)
-अणु
-	वापस (bttv_tvcards[btv->c.type].muxsel >> (input * 2)) & 3;
-पूर्ण
+static inline unsigned int bttv_muxsel(const struct bttv *btv,
+				       unsigned int input)
+{
+	return (bttv_tvcards[btv->c.type].muxsel >> (input * 2)) & 3;
+}
 
-#पूर्ण_अगर
+#endif
 
-#घोषणा btग_लिखो(dat,adr)    ग_लिखोl((dat), btv->bt848_mmio+(adr))
-#घोषणा btपढ़ो(adr)         पढ़ोl(btv->bt848_mmio+(adr))
+#define btwrite(dat,adr)    writel((dat), btv->bt848_mmio+(adr))
+#define btread(adr)         readl(btv->bt848_mmio+(adr))
 
-#घोषणा btand(dat,adr)      btग_लिखो((dat) & btपढ़ो(adr), adr)
-#घोषणा btor(dat,adr)       btग_लिखो((dat) | btपढ़ो(adr), adr)
-#घोषणा btaor(dat,mask,adr) btग_लिखो((dat) | ((mask) & btपढ़ो(adr)), adr)
+#define btand(dat,adr)      btwrite((dat) & btread(adr), adr)
+#define btor(dat,adr)       btwrite((dat) | btread(adr), adr)
+#define btaor(dat,mask,adr) btwrite((dat) | ((mask) & btread(adr)), adr)
 
-#पूर्ण_अगर /* _BTTVP_H_ */
+#endif /* _BTTVP_H_ */

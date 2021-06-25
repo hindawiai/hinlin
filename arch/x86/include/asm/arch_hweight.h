@@ -1,56 +1,55 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_X86_HWEIGHT_H
-#घोषणा _ASM_X86_HWEIGHT_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_X86_HWEIGHT_H
+#define _ASM_X86_HWEIGHT_H
 
-#समावेश <यंत्र/cpufeatures.h>
+#include <asm/cpufeatures.h>
 
-#अगर_घोषित CONFIG_64BIT
-#घोषणा REG_IN "D"
-#घोषणा REG_OUT "a"
-#अन्यथा
-#घोषणा REG_IN "a"
-#घोषणा REG_OUT "a"
-#पूर्ण_अगर
+#ifdef CONFIG_64BIT
+#define REG_IN "D"
+#define REG_OUT "a"
+#else
+#define REG_IN "a"
+#define REG_OUT "a"
+#endif
 
-अटल __always_अंतरभूत अचिन्हित पूर्णांक __arch_hweight32(अचिन्हित पूर्णांक w)
-अणु
-	अचिन्हित पूर्णांक res;
+static __always_inline unsigned int __arch_hweight32(unsigned int w)
+{
+	unsigned int res;
 
-	यंत्र (ALTERNATIVE("call __sw_hweight32", "popcntl %1, %0", X86_FEATURE_POPCNT)
+	asm (ALTERNATIVE("call __sw_hweight32", "popcntl %1, %0", X86_FEATURE_POPCNT)
 			 : "="REG_OUT (res)
 			 : REG_IN (w));
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक __arch_hweight16(अचिन्हित पूर्णांक w)
-अणु
-	वापस __arch_hweight32(w & 0xffff);
-पूर्ण
+static inline unsigned int __arch_hweight16(unsigned int w)
+{
+	return __arch_hweight32(w & 0xffff);
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक __arch_hweight8(अचिन्हित पूर्णांक w)
-अणु
-	वापस __arch_hweight32(w & 0xff);
-पूर्ण
+static inline unsigned int __arch_hweight8(unsigned int w)
+{
+	return __arch_hweight32(w & 0xff);
+}
 
-#अगर_घोषित CONFIG_X86_32
-अटल अंतरभूत अचिन्हित दीर्घ __arch_hweight64(__u64 w)
-अणु
-	वापस  __arch_hweight32((u32)w) +
+#ifdef CONFIG_X86_32
+static inline unsigned long __arch_hweight64(__u64 w)
+{
+	return  __arch_hweight32((u32)w) +
 		__arch_hweight32((u32)(w >> 32));
-पूर्ण
-#अन्यथा
-अटल __always_अंतरभूत अचिन्हित दीर्घ __arch_hweight64(__u64 w)
-अणु
-	अचिन्हित दीर्घ res;
+}
+#else
+static __always_inline unsigned long __arch_hweight64(__u64 w)
+{
+	unsigned long res;
 
-	यंत्र (ALTERNATIVE("call __sw_hweight64", "popcntq %1, %0", X86_FEATURE_POPCNT)
+	asm (ALTERNATIVE("call __sw_hweight64", "popcntq %1, %0", X86_FEATURE_POPCNT)
 			 : "="REG_OUT (res)
 			 : REG_IN (w));
 
-	वापस res;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_X86_32 */
+	return res;
+}
+#endif /* CONFIG_X86_32 */
 
-#पूर्ण_अगर
+#endif

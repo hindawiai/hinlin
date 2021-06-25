@@ -1,198 +1,197 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * PCI ROM access routines
  *
  * (C) Copyright 2004 Jon Smirl <jonsmirl@yahoo.com>
  * (C) Copyright 2004 Silicon Graphics, Inc. Jesse Barnes <jbarnes@sgi.com>
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/export.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/slab.h>
+#include <linux/kernel.h>
+#include <linux/export.h>
+#include <linux/pci.h>
+#include <linux/slab.h>
 
-#समावेश "pci.h"
+#include "pci.h"
 
 /**
- * pci_enable_rom - enable ROM decoding क्रम a PCI device
+ * pci_enable_rom - enable ROM decoding for a PCI device
  * @pdev: PCI device to enable
  *
  * Enable ROM decoding on @dev.  This involves simply turning on the last
  * bit of the PCI ROM BAR.  Note that some cards may share address decoders
  * between the ROM and other resources, so enabling it may disable access
- * to MMIO रेजिस्टरs or other card memory.
+ * to MMIO registers or other card memory.
  */
-पूर्णांक pci_enable_rom(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा resource *res = &pdev->resource[PCI_ROM_RESOURCE];
-	काष्ठा pci_bus_region region;
+int pci_enable_rom(struct pci_dev *pdev)
+{
+	struct resource *res = &pdev->resource[PCI_ROM_RESOURCE];
+	struct pci_bus_region region;
 	u32 rom_addr;
 
-	अगर (!res->flags)
-		वापस -1;
+	if (!res->flags)
+		return -1;
 
-	/* Nothing to enable अगर we're using a shaकरोw copy in RAM */
-	अगर (res->flags & IORESOURCE_ROM_SHADOW)
-		वापस 0;
+	/* Nothing to enable if we're using a shadow copy in RAM */
+	if (res->flags & IORESOURCE_ROM_SHADOW)
+		return 0;
 
 	/*
 	 * Ideally pci_update_resource() would update the ROM BAR address,
 	 * and we would only set the enable bit here.  But apparently some
-	 * devices have buggy ROM BARs that पढ़ो as zero when disabled.
+	 * devices have buggy ROM BARs that read as zero when disabled.
 	 */
 	pcibios_resource_to_bus(pdev->bus, &region, res);
-	pci_पढ़ो_config_dword(pdev, pdev->rom_base_reg, &rom_addr);
+	pci_read_config_dword(pdev, pdev->rom_base_reg, &rom_addr);
 	rom_addr &= ~PCI_ROM_ADDRESS_MASK;
 	rom_addr |= region.start | PCI_ROM_ADDRESS_ENABLE;
-	pci_ग_लिखो_config_dword(pdev, pdev->rom_base_reg, rom_addr);
-	वापस 0;
-पूर्ण
+	pci_write_config_dword(pdev, pdev->rom_base_reg, rom_addr);
+	return 0;
+}
 EXPORT_SYMBOL_GPL(pci_enable_rom);
 
 /**
- * pci_disable_rom - disable ROM decoding क्रम a PCI device
+ * pci_disable_rom - disable ROM decoding for a PCI device
  * @pdev: PCI device to disable
  *
  * Disable ROM decoding on a PCI device by turning off the last bit in the
  * ROM BAR.
  */
-व्योम pci_disable_rom(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा resource *res = &pdev->resource[PCI_ROM_RESOURCE];
+void pci_disable_rom(struct pci_dev *pdev)
+{
+	struct resource *res = &pdev->resource[PCI_ROM_RESOURCE];
 	u32 rom_addr;
 
-	अगर (res->flags & IORESOURCE_ROM_SHADOW)
-		वापस;
+	if (res->flags & IORESOURCE_ROM_SHADOW)
+		return;
 
-	pci_पढ़ो_config_dword(pdev, pdev->rom_base_reg, &rom_addr);
+	pci_read_config_dword(pdev, pdev->rom_base_reg, &rom_addr);
 	rom_addr &= ~PCI_ROM_ADDRESS_ENABLE;
-	pci_ग_लिखो_config_dword(pdev, pdev->rom_base_reg, rom_addr);
-पूर्ण
+	pci_write_config_dword(pdev, pdev->rom_base_reg, rom_addr);
+}
 EXPORT_SYMBOL_GPL(pci_disable_rom);
 
 /**
  * pci_get_rom_size - obtain the actual size of the ROM image
  * @pdev: target PCI device
- * @rom: kernel भव poपूर्णांकer to image of ROM
- * @size: size of PCI winकरोw
- *  वापस: size of actual ROM image
+ * @rom: kernel virtual pointer to image of ROM
+ * @size: size of PCI window
+ *  return: size of actual ROM image
  *
  * Determine the actual length of the ROM image.
- * The PCI winकरोw size could be much larger than the
+ * The PCI window size could be much larger than the
  * actual image size.
  */
-अटल माप_प्रकार pci_get_rom_size(काष्ठा pci_dev *pdev, व्योम __iomem *rom,
-			       माप_प्रकार size)
-अणु
-	व्योम __iomem *image;
-	पूर्णांक last_image;
-	अचिन्हित length;
+static size_t pci_get_rom_size(struct pci_dev *pdev, void __iomem *rom,
+			       size_t size)
+{
+	void __iomem *image;
+	int last_image;
+	unsigned length;
 
 	image = rom;
-	करो अणु
-		व्योम __iomem *pds;
+	do {
+		void __iomem *pds;
 		/* Standard PCI ROMs start out with these bytes 55 AA */
-		अगर (पढ़ोw(image) != 0xAA55) अणु
+		if (readw(image) != 0xAA55) {
 			pci_info(pdev, "Invalid PCI ROM header signature: expecting 0xaa55, got %#06x\n",
-				 पढ़ोw(image));
-			अवरोध;
-		पूर्ण
-		/* get the PCI data काष्ठाure and check its "PCIR" signature */
-		pds = image + पढ़ोw(image + 24);
-		अगर (पढ़ोl(pds) != 0x52494350) अणु
+				 readw(image));
+			break;
+		}
+		/* get the PCI data structure and check its "PCIR" signature */
+		pds = image + readw(image + 24);
+		if (readl(pds) != 0x52494350) {
 			pci_info(pdev, "Invalid PCI ROM data signature: expecting 0x52494350, got %#010x\n",
-				 पढ़ोl(pds));
-			अवरोध;
-		पूर्ण
-		last_image = पढ़ोb(pds + 21) & 0x80;
-		length = पढ़ोw(pds + 16);
+				 readl(pds));
+			break;
+		}
+		last_image = readb(pds + 21) & 0x80;
+		length = readw(pds + 16);
 		image += length * 512;
-		/* Aव्योम iterating through memory outside the resource winकरोw */
-		अगर (image >= rom + size)
-			अवरोध;
-		अगर (!last_image) अणु
-			अगर (पढ़ोw(image) != 0xAA55) अणु
+		/* Avoid iterating through memory outside the resource window */
+		if (image >= rom + size)
+			break;
+		if (!last_image) {
+			if (readw(image) != 0xAA55) {
 				pci_info(pdev, "No more image in the PCI ROM\n");
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण जबतक (length && !last_image);
+				break;
+			}
+		}
+	} while (length && !last_image);
 
-	/* never वापस a size larger than the PCI resource winकरोw */
+	/* never return a size larger than the PCI resource window */
 	/* there are known ROMs that get the size wrong */
-	वापस min((माप_प्रकार)(image - rom), size);
-पूर्ण
+	return min((size_t)(image - rom), size);
+}
 
 /**
  * pci_map_rom - map a PCI ROM to kernel space
- * @pdev: poपूर्णांकer to pci device काष्ठा
- * @size: poपूर्णांकer to receive size of pci winकरोw over ROM
+ * @pdev: pointer to pci device struct
+ * @size: pointer to receive size of pci window over ROM
  *
- * Return: kernel भव poपूर्णांकer to image of ROM
+ * Return: kernel virtual pointer to image of ROM
  *
- * Map a PCI ROM पूर्णांकo kernel space. If ROM is boot video ROM,
- * the shaकरोw BIOS copy will be वापसed instead of the
+ * Map a PCI ROM into kernel space. If ROM is boot video ROM,
+ * the shadow BIOS copy will be returned instead of the
  * actual ROM.
  */
-व्योम __iomem *pci_map_rom(काष्ठा pci_dev *pdev, माप_प्रकार *size)
-अणु
-	काष्ठा resource *res = &pdev->resource[PCI_ROM_RESOURCE];
+void __iomem *pci_map_rom(struct pci_dev *pdev, size_t *size)
+{
+	struct resource *res = &pdev->resource[PCI_ROM_RESOURCE];
 	loff_t start;
-	व्योम __iomem *rom;
+	void __iomem *rom;
 
-	/* assign the ROM an address अगर it करोesn't have one */
-	अगर (res->parent == शून्य && pci_assign_resource(pdev, PCI_ROM_RESOURCE))
-		वापस शून्य;
+	/* assign the ROM an address if it doesn't have one */
+	if (res->parent == NULL && pci_assign_resource(pdev, PCI_ROM_RESOURCE))
+		return NULL;
 
 	start = pci_resource_start(pdev, PCI_ROM_RESOURCE);
 	*size = pci_resource_len(pdev, PCI_ROM_RESOURCE);
-	अगर (*size == 0)
-		वापस शून्य;
+	if (*size == 0)
+		return NULL;
 
 	/* Enable ROM space decodes */
-	अगर (pci_enable_rom(pdev))
-		वापस शून्य;
+	if (pci_enable_rom(pdev))
+		return NULL;
 
 	rom = ioremap(start, *size);
-	अगर (!rom)
-		जाओ err_ioremap;
+	if (!rom)
+		goto err_ioremap;
 
 	/*
-	 * Try to find the true size of the ROM since someबार the PCI winकरोw
+	 * Try to find the true size of the ROM since sometimes the PCI window
 	 * size is much larger than the actual size of the ROM.
-	 * True size is important अगर the ROM is going to be copied.
+	 * True size is important if the ROM is going to be copied.
 	 */
 	*size = pci_get_rom_size(pdev, rom, *size);
-	अगर (!*size)
-		जाओ invalid_rom;
+	if (!*size)
+		goto invalid_rom;
 
-	वापस rom;
+	return rom;
 
 invalid_rom:
 	iounmap(rom);
 err_ioremap:
-	/* restore enable अगर ioremap fails */
-	अगर (!(res->flags & IORESOURCE_ROM_ENABLE))
+	/* restore enable if ioremap fails */
+	if (!(res->flags & IORESOURCE_ROM_ENABLE))
 		pci_disable_rom(pdev);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 EXPORT_SYMBOL(pci_map_rom);
 
 /**
  * pci_unmap_rom - unmap the ROM from kernel space
- * @pdev: poपूर्णांकer to pci device काष्ठा
- * @rom: भव address of the previous mapping
+ * @pdev: pointer to pci device struct
+ * @rom: virtual address of the previous mapping
  *
  * Remove a mapping of a previously mapped ROM
  */
-व्योम pci_unmap_rom(काष्ठा pci_dev *pdev, व्योम __iomem *rom)
-अणु
-	काष्ठा resource *res = &pdev->resource[PCI_ROM_RESOURCE];
+void pci_unmap_rom(struct pci_dev *pdev, void __iomem *rom)
+{
+	struct resource *res = &pdev->resource[PCI_ROM_RESOURCE];
 
 	iounmap(rom);
 
-	/* Disable again beक्रमe continuing */
-	अगर (!(res->flags & IORESOURCE_ROM_ENABLE))
+	/* Disable again before continuing */
+	if (!(res->flags & IORESOURCE_ROM_ENABLE))
 		pci_disable_rom(pdev);
-पूर्ण
+}
 EXPORT_SYMBOL(pci_unmap_rom);

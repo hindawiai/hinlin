@@ -1,232 +1,231 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * Cryptographic API क्रम algorithms (i.e., low-level API).
+ * Cryptographic API for algorithms (i.e., low-level API).
  *
- * Copyright (c) 2006 Herbert Xu <herbert@gonकरोr.apana.org.au>
+ * Copyright (c) 2006 Herbert Xu <herbert@gondor.apana.org.au>
  */
-#अगर_अघोषित _CRYPTO_ALGAPI_H
-#घोषणा _CRYPTO_ALGAPI_H
+#ifndef _CRYPTO_ALGAPI_H
+#define _CRYPTO_ALGAPI_H
 
-#समावेश <linux/crypto.h>
-#समावेश <linux/list.h>
-#समावेश <linux/kernel.h>
+#include <linux/crypto.h>
+#include <linux/list.h>
+#include <linux/kernel.h>
 
 /*
- * Maximum values क्रम blocksize and alignmask, used to allocate
- * अटल buffers that are big enough क्रम any combination of
+ * Maximum values for blocksize and alignmask, used to allocate
+ * static buffers that are big enough for any combination of
  * algs and architectures. Ciphers have a lower maximum size.
  */
-#घोषणा MAX_ALGAPI_BLOCKSIZE		160
-#घोषणा MAX_ALGAPI_ALIGNMASK		63
-#घोषणा MAX_CIPHER_BLOCKSIZE		16
-#घोषणा MAX_CIPHER_ALIGNMASK		15
+#define MAX_ALGAPI_BLOCKSIZE		160
+#define MAX_ALGAPI_ALIGNMASK		63
+#define MAX_CIPHER_BLOCKSIZE		16
+#define MAX_CIPHER_ALIGNMASK		15
 
-काष्ठा crypto_aead;
-काष्ठा crypto_instance;
-काष्ठा module;
-काष्ठा rtattr;
-काष्ठा seq_file;
-काष्ठा sk_buff;
+struct crypto_aead;
+struct crypto_instance;
+struct module;
+struct rtattr;
+struct seq_file;
+struct sk_buff;
 
-काष्ठा crypto_type अणु
-	अचिन्हित पूर्णांक (*ctxsize)(काष्ठा crypto_alg *alg, u32 type, u32 mask);
-	अचिन्हित पूर्णांक (*extsize)(काष्ठा crypto_alg *alg);
-	पूर्णांक (*init)(काष्ठा crypto_tfm *tfm, u32 type, u32 mask);
-	पूर्णांक (*init_tfm)(काष्ठा crypto_tfm *tfm);
-	व्योम (*show)(काष्ठा seq_file *m, काष्ठा crypto_alg *alg);
-	पूर्णांक (*report)(काष्ठा sk_buff *skb, काष्ठा crypto_alg *alg);
-	व्योम (*मुक्त)(काष्ठा crypto_instance *inst);
+struct crypto_type {
+	unsigned int (*ctxsize)(struct crypto_alg *alg, u32 type, u32 mask);
+	unsigned int (*extsize)(struct crypto_alg *alg);
+	int (*init)(struct crypto_tfm *tfm, u32 type, u32 mask);
+	int (*init_tfm)(struct crypto_tfm *tfm);
+	void (*show)(struct seq_file *m, struct crypto_alg *alg);
+	int (*report)(struct sk_buff *skb, struct crypto_alg *alg);
+	void (*free)(struct crypto_instance *inst);
 
-	अचिन्हित पूर्णांक type;
-	अचिन्हित पूर्णांक maskclear;
-	अचिन्हित पूर्णांक maskset;
-	अचिन्हित पूर्णांक tfmsize;
-पूर्ण;
+	unsigned int type;
+	unsigned int maskclear;
+	unsigned int maskset;
+	unsigned int tfmsize;
+};
 
-काष्ठा crypto_instance अणु
-	काष्ठा crypto_alg alg;
+struct crypto_instance {
+	struct crypto_alg alg;
 
-	काष्ठा crypto_ढाँचा *पंचांगpl;
+	struct crypto_template *tmpl;
 
-	जोड़ अणु
+	union {
 		/* Node in list of instances after registration. */
-		काष्ठा hlist_node list;
-		/* List of attached spawns beक्रमe registration. */
-		काष्ठा crypto_spawn *spawns;
-	पूर्ण;
+		struct hlist_node list;
+		/* List of attached spawns before registration. */
+		struct crypto_spawn *spawns;
+	};
 
-	व्योम *__ctx[] CRYPTO_MINALIGN_ATTR;
-पूर्ण;
+	void *__ctx[] CRYPTO_MINALIGN_ATTR;
+};
 
-काष्ठा crypto_ढाँचा अणु
-	काष्ठा list_head list;
-	काष्ठा hlist_head instances;
-	काष्ठा module *module;
+struct crypto_template {
+	struct list_head list;
+	struct hlist_head instances;
+	struct module *module;
 
-	पूर्णांक (*create)(काष्ठा crypto_ढाँचा *पंचांगpl, काष्ठा rtattr **tb);
+	int (*create)(struct crypto_template *tmpl, struct rtattr **tb);
 
-	अक्षर name[CRYPTO_MAX_ALG_NAME];
-पूर्ण;
+	char name[CRYPTO_MAX_ALG_NAME];
+};
 
-काष्ठा crypto_spawn अणु
-	काष्ठा list_head list;
-	काष्ठा crypto_alg *alg;
-	जोड़ अणु
-		/* Back poपूर्णांकer to instance after registration.*/
-		काष्ठा crypto_instance *inst;
-		/* Spawn list poपूर्णांकer prior to registration. */
-		काष्ठा crypto_spawn *next;
-	पूर्ण;
-	स्थिर काष्ठा crypto_type *frontend;
+struct crypto_spawn {
+	struct list_head list;
+	struct crypto_alg *alg;
+	union {
+		/* Back pointer to instance after registration.*/
+		struct crypto_instance *inst;
+		/* Spawn list pointer prior to registration. */
+		struct crypto_spawn *next;
+	};
+	const struct crypto_type *frontend;
 	u32 mask;
 	bool dead;
-	bool रेजिस्टरed;
-पूर्ण;
+	bool registered;
+};
 
-काष्ठा crypto_queue अणु
-	काष्ठा list_head list;
-	काष्ठा list_head *backlog;
+struct crypto_queue {
+	struct list_head list;
+	struct list_head *backlog;
 
-	अचिन्हित पूर्णांक qlen;
-	अचिन्हित पूर्णांक max_qlen;
-पूर्ण;
+	unsigned int qlen;
+	unsigned int max_qlen;
+};
 
-काष्ठा scatter_walk अणु
-	काष्ठा scatterlist *sg;
-	अचिन्हित पूर्णांक offset;
-पूर्ण;
+struct scatter_walk {
+	struct scatterlist *sg;
+	unsigned int offset;
+};
 
-व्योम crypto_mod_put(काष्ठा crypto_alg *alg);
+void crypto_mod_put(struct crypto_alg *alg);
 
-पूर्णांक crypto_रेजिस्टर_ढाँचा(काष्ठा crypto_ढाँचा *पंचांगpl);
-पूर्णांक crypto_रेजिस्टर_ढाँचाs(काष्ठा crypto_ढाँचा *पंचांगpls, पूर्णांक count);
-व्योम crypto_unरेजिस्टर_ढाँचा(काष्ठा crypto_ढाँचा *पंचांगpl);
-व्योम crypto_unरेजिस्टर_ढाँचाs(काष्ठा crypto_ढाँचा *पंचांगpls, पूर्णांक count);
-काष्ठा crypto_ढाँचा *crypto_lookup_ढाँचा(स्थिर अक्षर *name);
+int crypto_register_template(struct crypto_template *tmpl);
+int crypto_register_templates(struct crypto_template *tmpls, int count);
+void crypto_unregister_template(struct crypto_template *tmpl);
+void crypto_unregister_templates(struct crypto_template *tmpls, int count);
+struct crypto_template *crypto_lookup_template(const char *name);
 
-पूर्णांक crypto_रेजिस्टर_instance(काष्ठा crypto_ढाँचा *पंचांगpl,
-			     काष्ठा crypto_instance *inst);
-व्योम crypto_unरेजिस्टर_instance(काष्ठा crypto_instance *inst);
+int crypto_register_instance(struct crypto_template *tmpl,
+			     struct crypto_instance *inst);
+void crypto_unregister_instance(struct crypto_instance *inst);
 
-पूर्णांक crypto_grab_spawn(काष्ठा crypto_spawn *spawn, काष्ठा crypto_instance *inst,
-		      स्थिर अक्षर *name, u32 type, u32 mask);
-व्योम crypto_drop_spawn(काष्ठा crypto_spawn *spawn);
-काष्ठा crypto_tfm *crypto_spawn_tfm(काष्ठा crypto_spawn *spawn, u32 type,
+int crypto_grab_spawn(struct crypto_spawn *spawn, struct crypto_instance *inst,
+		      const char *name, u32 type, u32 mask);
+void crypto_drop_spawn(struct crypto_spawn *spawn);
+struct crypto_tfm *crypto_spawn_tfm(struct crypto_spawn *spawn, u32 type,
 				    u32 mask);
-व्योम *crypto_spawn_tfm2(काष्ठा crypto_spawn *spawn);
+void *crypto_spawn_tfm2(struct crypto_spawn *spawn);
 
-काष्ठा crypto_attr_type *crypto_get_attr_type(काष्ठा rtattr **tb);
-पूर्णांक crypto_check_attr_type(काष्ठा rtattr **tb, u32 type, u32 *mask_ret);
-स्थिर अक्षर *crypto_attr_alg_name(काष्ठा rtattr *rta);
-पूर्णांक crypto_attr_u32(काष्ठा rtattr *rta, u32 *num);
-पूर्णांक crypto_inst_setname(काष्ठा crypto_instance *inst, स्थिर अक्षर *name,
-			काष्ठा crypto_alg *alg);
+struct crypto_attr_type *crypto_get_attr_type(struct rtattr **tb);
+int crypto_check_attr_type(struct rtattr **tb, u32 type, u32 *mask_ret);
+const char *crypto_attr_alg_name(struct rtattr *rta);
+int crypto_attr_u32(struct rtattr *rta, u32 *num);
+int crypto_inst_setname(struct crypto_instance *inst, const char *name,
+			struct crypto_alg *alg);
 
-व्योम crypto_init_queue(काष्ठा crypto_queue *queue, अचिन्हित पूर्णांक max_qlen);
-पूर्णांक crypto_enqueue_request(काष्ठा crypto_queue *queue,
-			   काष्ठा crypto_async_request *request);
-व्योम crypto_enqueue_request_head(काष्ठा crypto_queue *queue,
-				 काष्ठा crypto_async_request *request);
-काष्ठा crypto_async_request *crypto_dequeue_request(काष्ठा crypto_queue *queue);
-अटल अंतरभूत अचिन्हित पूर्णांक crypto_queue_len(काष्ठा crypto_queue *queue)
-अणु
-	वापस queue->qlen;
-पूर्ण
+void crypto_init_queue(struct crypto_queue *queue, unsigned int max_qlen);
+int crypto_enqueue_request(struct crypto_queue *queue,
+			   struct crypto_async_request *request);
+void crypto_enqueue_request_head(struct crypto_queue *queue,
+				 struct crypto_async_request *request);
+struct crypto_async_request *crypto_dequeue_request(struct crypto_queue *queue);
+static inline unsigned int crypto_queue_len(struct crypto_queue *queue)
+{
+	return queue->qlen;
+}
 
-व्योम crypto_inc(u8 *a, अचिन्हित पूर्णांक size);
-व्योम __crypto_xor(u8 *dst, स्थिर u8 *src1, स्थिर u8 *src2, अचिन्हित पूर्णांक size);
+void crypto_inc(u8 *a, unsigned int size);
+void __crypto_xor(u8 *dst, const u8 *src1, const u8 *src2, unsigned int size);
 
-अटल अंतरभूत व्योम crypto_xor(u8 *dst, स्थिर u8 *src, अचिन्हित पूर्णांक size)
-अणु
-	अगर (IS_ENABLED(CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS) &&
-	    __builtin_स्थिरant_p(size) &&
-	    (size % माप(अचिन्हित दीर्घ)) == 0) अणु
-		अचिन्हित दीर्घ *d = (अचिन्हित दीर्घ *)dst;
-		अचिन्हित दीर्घ *s = (अचिन्हित दीर्घ *)src;
+static inline void crypto_xor(u8 *dst, const u8 *src, unsigned int size)
+{
+	if (IS_ENABLED(CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS) &&
+	    __builtin_constant_p(size) &&
+	    (size % sizeof(unsigned long)) == 0) {
+		unsigned long *d = (unsigned long *)dst;
+		unsigned long *s = (unsigned long *)src;
 
-		जबतक (size > 0) अणु
+		while (size > 0) {
 			*d++ ^= *s++;
-			size -= माप(अचिन्हित दीर्घ);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			size -= sizeof(unsigned long);
+		}
+	} else {
 		__crypto_xor(dst, dst, src, size);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम crypto_xor_cpy(u8 *dst, स्थिर u8 *src1, स्थिर u8 *src2,
-				  अचिन्हित पूर्णांक size)
-अणु
-	अगर (IS_ENABLED(CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS) &&
-	    __builtin_स्थिरant_p(size) &&
-	    (size % माप(अचिन्हित दीर्घ)) == 0) अणु
-		अचिन्हित दीर्घ *d = (अचिन्हित दीर्घ *)dst;
-		अचिन्हित दीर्घ *s1 = (अचिन्हित दीर्घ *)src1;
-		अचिन्हित दीर्घ *s2 = (अचिन्हित दीर्घ *)src2;
+static inline void crypto_xor_cpy(u8 *dst, const u8 *src1, const u8 *src2,
+				  unsigned int size)
+{
+	if (IS_ENABLED(CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS) &&
+	    __builtin_constant_p(size) &&
+	    (size % sizeof(unsigned long)) == 0) {
+		unsigned long *d = (unsigned long *)dst;
+		unsigned long *s1 = (unsigned long *)src1;
+		unsigned long *s2 = (unsigned long *)src2;
 
-		जबतक (size > 0) अणु
+		while (size > 0) {
 			*d++ = *s1++ ^ *s2++;
-			size -= माप(अचिन्हित दीर्घ);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			size -= sizeof(unsigned long);
+		}
+	} else {
 		__crypto_xor(dst, src1, src2, size);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम *crypto_tfm_ctx_aligned(काष्ठा crypto_tfm *tfm)
-अणु
-	वापस PTR_ALIGN(crypto_tfm_ctx(tfm),
+static inline void *crypto_tfm_ctx_aligned(struct crypto_tfm *tfm)
+{
+	return PTR_ALIGN(crypto_tfm_ctx(tfm),
 			 crypto_tfm_alg_alignmask(tfm) + 1);
-पूर्ण
+}
 
-अटल अंतरभूत काष्ठा crypto_instance *crypto_tfm_alg_instance(
-	काष्ठा crypto_tfm *tfm)
-अणु
-	वापस container_of(tfm->__crt_alg, काष्ठा crypto_instance, alg);
-पूर्ण
+static inline struct crypto_instance *crypto_tfm_alg_instance(
+	struct crypto_tfm *tfm)
+{
+	return container_of(tfm->__crt_alg, struct crypto_instance, alg);
+}
 
-अटल अंतरभूत व्योम *crypto_instance_ctx(काष्ठा crypto_instance *inst)
-अणु
-	वापस inst->__ctx;
-पूर्ण
+static inline void *crypto_instance_ctx(struct crypto_instance *inst)
+{
+	return inst->__ctx;
+}
 
-अटल अंतरभूत काष्ठा crypto_async_request *crypto_get_backlog(
-	काष्ठा crypto_queue *queue)
-अणु
-	वापस queue->backlog == &queue->list ? शून्य :
-	       container_of(queue->backlog, काष्ठा crypto_async_request, list);
-पूर्ण
+static inline struct crypto_async_request *crypto_get_backlog(
+	struct crypto_queue *queue)
+{
+	return queue->backlog == &queue->list ? NULL :
+	       container_of(queue->backlog, struct crypto_async_request, list);
+}
 
-अटल अंतरभूत u32 crypto_requires_off(काष्ठा crypto_attr_type *algt, u32 off)
-अणु
-	वापस (algt->type ^ off) & algt->mask & off;
-पूर्ण
+static inline u32 crypto_requires_off(struct crypto_attr_type *algt, u32 off)
+{
+	return (algt->type ^ off) & algt->mask & off;
+}
 
 /*
- * When an algorithm uses another algorithm (e.g., अगर it's an instance of a
- * ढाँचा), these are the flags that should always be set on the "outer"
- * algorithm अगर any "inner" algorithm has them set.
+ * When an algorithm uses another algorithm (e.g., if it's an instance of a
+ * template), these are the flags that should always be set on the "outer"
+ * algorithm if any "inner" algorithm has them set.
  */
-#घोषणा CRYPTO_ALG_INHERITED_FLAGS	\
+#define CRYPTO_ALG_INHERITED_FLAGS	\
 	(CRYPTO_ALG_ASYNC | CRYPTO_ALG_NEED_FALLBACK |	\
 	 CRYPTO_ALG_ALLOCATES_MEMORY)
 
 /*
- * Given the type and mask that specअगरy the flags restrictions on a ढाँचा
- * instance being created, वापस the mask that should be passed to
- * crypto_grab_*() (aदीर्घ with type=0) to honor any request the user made to
+ * Given the type and mask that specify the flags restrictions on a template
+ * instance being created, return the mask that should be passed to
+ * crypto_grab_*() (along with type=0) to honor any request the user made to
  * have any of the CRYPTO_ALG_INHERITED_FLAGS clear.
  */
-अटल अंतरभूत u32 crypto_algt_inherited_mask(काष्ठा crypto_attr_type *algt)
-अणु
-	वापस crypto_requires_off(algt, CRYPTO_ALG_INHERITED_FLAGS);
-पूर्ण
+static inline u32 crypto_algt_inherited_mask(struct crypto_attr_type *algt)
+{
+	return crypto_requires_off(algt, CRYPTO_ALG_INHERITED_FLAGS);
+}
 
-noअंतरभूत अचिन्हित दीर्घ __crypto_memneq(स्थिर व्योम *a, स्थिर व्योम *b, माप_प्रकार size);
+noinline unsigned long __crypto_memneq(const void *a, const void *b, size_t size);
 
 /**
  * crypto_memneq - Compare two areas of memory without leaking
- *		   timing inक्रमmation.
+ *		   timing information.
  *
  * @a: One area of memory
  * @b: Another area of memory
@@ -234,19 +233,19 @@ noअंतरभूत अचिन्हित दीर्घ __crypto_memneq
  *
  * Returns 0 when data is equal, 1 otherwise.
  */
-अटल अंतरभूत पूर्णांक crypto_memneq(स्थिर व्योम *a, स्थिर व्योम *b, माप_प्रकार size)
-अणु
-	वापस __crypto_memneq(a, b, size) != 0UL ? 1 : 0;
-पूर्ण
+static inline int crypto_memneq(const void *a, const void *b, size_t size)
+{
+	return __crypto_memneq(a, b, size) != 0UL ? 1 : 0;
+}
 
-पूर्णांक crypto_रेजिस्टर_notअगरier(काष्ठा notअगरier_block *nb);
-पूर्णांक crypto_unरेजिस्टर_notअगरier(काष्ठा notअगरier_block *nb);
+int crypto_register_notifier(struct notifier_block *nb);
+int crypto_unregister_notifier(struct notifier_block *nb);
 
-/* Crypto notअगरication events. */
-क्रमागत अणु
+/* Crypto notification events. */
+enum {
 	CRYPTO_MSG_ALG_REQUEST,
 	CRYPTO_MSG_ALG_REGISTER,
 	CRYPTO_MSG_ALG_LOADED,
-पूर्ण;
+};
 
-#पूर्ण_अगर	/* _CRYPTO_ALGAPI_H */
+#endif	/* _CRYPTO_ALGAPI_H */

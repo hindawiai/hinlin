@@ -1,124 +1,123 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
-#समावेश <linux/ceph/ceph_debug.h>
+#include <linux/ceph/ceph_debug.h>
 
-#समावेश <linux/err.h>
-#समावेश <linux/module.h>
-#समावेश <linux/अक्रमom.h>
-#समावेश <linux/slab.h>
+#include <linux/err.h>
+#include <linux/module.h>
+#include <linux/random.h>
+#include <linux/slab.h>
 
-#समावेश <linux/ceph/decode.h>
-#समावेश <linux/ceph/auth.h>
+#include <linux/ceph/decode.h>
+#include <linux/ceph/auth.h>
 
-#समावेश "auth_none.h"
+#include "auth_none.h"
 
-अटल व्योम reset(काष्ठा ceph_auth_client *ac)
-अणु
-	काष्ठा ceph_auth_none_info *xi = ac->निजी;
+static void reset(struct ceph_auth_client *ac)
+{
+	struct ceph_auth_none_info *xi = ac->private;
 
 	xi->starting = true;
-पूर्ण
+}
 
-अटल व्योम destroy(काष्ठा ceph_auth_client *ac)
-अणु
-	kमुक्त(ac->निजी);
-	ac->निजी = शून्य;
-पूर्ण
+static void destroy(struct ceph_auth_client *ac)
+{
+	kfree(ac->private);
+	ac->private = NULL;
+}
 
-अटल पूर्णांक is_authenticated(काष्ठा ceph_auth_client *ac)
-अणु
-	काष्ठा ceph_auth_none_info *xi = ac->निजी;
+static int is_authenticated(struct ceph_auth_client *ac)
+{
+	struct ceph_auth_none_info *xi = ac->private;
 
-	वापस !xi->starting;
-पूर्ण
+	return !xi->starting;
+}
 
-अटल पूर्णांक should_authenticate(काष्ठा ceph_auth_client *ac)
-अणु
-	काष्ठा ceph_auth_none_info *xi = ac->निजी;
+static int should_authenticate(struct ceph_auth_client *ac)
+{
+	struct ceph_auth_none_info *xi = ac->private;
 
-	वापस xi->starting;
-पूर्ण
+	return xi->starting;
+}
 
-अटल पूर्णांक ceph_auth_none_build_authorizer(काष्ठा ceph_auth_client *ac,
-					   काष्ठा ceph_none_authorizer *au)
-अणु
-	व्योम *p = au->buf;
-	व्योम *स्थिर end = p + माप(au->buf);
-	पूर्णांक ret;
+static int ceph_auth_none_build_authorizer(struct ceph_auth_client *ac,
+					   struct ceph_none_authorizer *au)
+{
+	void *p = au->buf;
+	void *const end = p + sizeof(au->buf);
+	int ret;
 
 	ceph_encode_8_safe(&p, end, 1, e_range);
 	ret = ceph_auth_entity_name_encode(ac->name, &p, end);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	ceph_encode_64_safe(&p, end, ac->global_id, e_range);
-	au->buf_len = p - (व्योम *)au->buf;
-	करोut("%s built authorizer len %d\n", __func__, au->buf_len);
-	वापस 0;
+	au->buf_len = p - (void *)au->buf;
+	dout("%s built authorizer len %d\n", __func__, au->buf_len);
+	return 0;
 
 e_range:
-	वापस -दुस्फल;
-पूर्ण
+	return -ERANGE;
+}
 
-अटल पूर्णांक build_request(काष्ठा ceph_auth_client *ac, व्योम *buf, व्योम *end)
-अणु
-	वापस 0;
-पूर्ण
+static int build_request(struct ceph_auth_client *ac, void *buf, void *end)
+{
+	return 0;
+}
 
 /*
  * the generic auth code decode the global_id, and we carry no actual
  * authenticate state, so nothing happens here.
  */
-अटल पूर्णांक handle_reply(काष्ठा ceph_auth_client *ac, पूर्णांक result,
-			व्योम *buf, व्योम *end, u8 *session_key,
-			पूर्णांक *session_key_len, u8 *con_secret,
-			पूर्णांक *con_secret_len)
-अणु
-	काष्ठा ceph_auth_none_info *xi = ac->निजी;
+static int handle_reply(struct ceph_auth_client *ac, int result,
+			void *buf, void *end, u8 *session_key,
+			int *session_key_len, u8 *con_secret,
+			int *con_secret_len)
+{
+	struct ceph_auth_none_info *xi = ac->private;
 
 	xi->starting = false;
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल व्योम ceph_auth_none_destroy_authorizer(काष्ठा ceph_authorizer *a)
-अणु
-	kमुक्त(a);
-पूर्ण
+static void ceph_auth_none_destroy_authorizer(struct ceph_authorizer *a)
+{
+	kfree(a);
+}
 
 /*
  * build an 'authorizer' with our entity_name and global_id.  it is
- * identical क्रम all services we connect to.
+ * identical for all services we connect to.
  */
-अटल पूर्णांक ceph_auth_none_create_authorizer(
-	काष्ठा ceph_auth_client *ac, पूर्णांक peer_type,
-	काष्ठा ceph_auth_handshake *auth)
-अणु
-	काष्ठा ceph_none_authorizer *au;
-	पूर्णांक ret;
+static int ceph_auth_none_create_authorizer(
+	struct ceph_auth_client *ac, int peer_type,
+	struct ceph_auth_handshake *auth)
+{
+	struct ceph_none_authorizer *au;
+	int ret;
 
-	au = kदो_स्मृति(माप(*au), GFP_NOFS);
-	अगर (!au)
-		वापस -ENOMEM;
+	au = kmalloc(sizeof(*au), GFP_NOFS);
+	if (!au)
+		return -ENOMEM;
 
 	au->base.destroy = ceph_auth_none_destroy_authorizer;
 
 	ret = ceph_auth_none_build_authorizer(ac, au);
-	अगर (ret) अणु
-		kमुक्त(au);
-		वापस ret;
-	पूर्ण
+	if (ret) {
+		kfree(au);
+		return ret;
+	}
 
-	auth->authorizer = (काष्ठा ceph_authorizer *) au;
+	auth->authorizer = (struct ceph_authorizer *) au;
 	auth->authorizer_buf = au->buf;
 	auth->authorizer_buf_len = au->buf_len;
 	auth->authorizer_reply_buf = au->reply_buf;
-	auth->authorizer_reply_buf_len = माप (au->reply_buf);
+	auth->authorizer_reply_buf_len = sizeof (au->reply_buf);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा ceph_auth_client_ops ceph_auth_none_ops = अणु
+static const struct ceph_auth_client_ops ceph_auth_none_ops = {
 	.reset = reset,
 	.destroy = destroy,
 	.is_authenticated = is_authenticated,
@@ -126,21 +125,21 @@ e_range:
 	.build_request = build_request,
 	.handle_reply = handle_reply,
 	.create_authorizer = ceph_auth_none_create_authorizer,
-पूर्ण;
+};
 
-पूर्णांक ceph_auth_none_init(काष्ठा ceph_auth_client *ac)
-अणु
-	काष्ठा ceph_auth_none_info *xi;
+int ceph_auth_none_init(struct ceph_auth_client *ac)
+{
+	struct ceph_auth_none_info *xi;
 
-	करोut("ceph_auth_none_init %p\n", ac);
-	xi = kzalloc(माप(*xi), GFP_NOFS);
-	अगर (!xi)
-		वापस -ENOMEM;
+	dout("ceph_auth_none_init %p\n", ac);
+	xi = kzalloc(sizeof(*xi), GFP_NOFS);
+	if (!xi)
+		return -ENOMEM;
 
 	xi->starting = true;
 
 	ac->protocol = CEPH_AUTH_NONE;
-	ac->निजी = xi;
+	ac->private = xi;
 	ac->ops = &ceph_auth_none_ops;
-	वापस 0;
-पूर्ण
+	return 0;
+}

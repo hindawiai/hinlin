@@ -1,22 +1,21 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2015-2016 Socionext Inc.
  *   Author: Masahiro Yamada <yamada.masahiro@socionext.com>
  */
 
-#अगर_अघोषित __CACHE_UNIPHIER_H
-#घोषणा __CACHE_UNIPHIER_H
+#ifndef __CACHE_UNIPHIER_H
+#define __CACHE_UNIPHIER_H
 
-#समावेश <linux/त्रुटिसं.स>
+#include <linux/errno.h>
 
-#अगर_घोषित CONFIG_CACHE_UNIPHIER
-पूर्णांक uniphier_cache_init(व्योम);
-#अन्यथा
-अटल अंतरभूत पूर्णांक uniphier_cache_init(व्योम)
-अणु
-	वापस -ENODEV;
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_CACHE_UNIPHIER
+int uniphier_cache_init(void);
+#else
+static inline int uniphier_cache_init(void)
+{
+	return -ENODEV;
+}
+#endif
 
-#पूर्ण_अगर /* __CACHE_UNIPHIER_H */
+#endif /* __CACHE_UNIPHIER_H */

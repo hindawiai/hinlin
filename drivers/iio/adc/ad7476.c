@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Analog Devices AD7466/7/8 AD7476/5/7/8 (A) SPI ADC driver
  * TI ADC081S/ADC101S/ADC121S 8/10/12-bit SPI ADC driver
@@ -7,52 +6,52 @@
  * Copyright 2010 Analog Devices Inc.
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/sysfs.h>
-#समावेश <linux/spi/spi.h>
-#समावेश <linux/regulator/consumer.h>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/err.h>
-#समावेश <linux/module.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/delay.h>
+#include <linux/device.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/sysfs.h>
+#include <linux/spi/spi.h>
+#include <linux/regulator/consumer.h>
+#include <linux/gpio/consumer.h>
+#include <linux/err.h>
+#include <linux/module.h>
+#include <linux/bitops.h>
+#include <linux/delay.h>
 
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/iio/sysfs.h>
-#समावेश <linux/iio/buffer.h>
-#समावेश <linux/iio/trigger_consumer.h>
-#समावेश <linux/iio/triggered_buffer.h>
+#include <linux/iio/iio.h>
+#include <linux/iio/sysfs.h>
+#include <linux/iio/buffer.h>
+#include <linux/iio/trigger_consumer.h>
+#include <linux/iio/triggered_buffer.h>
 
-काष्ठा ad7476_state;
+struct ad7476_state;
 
-काष्ठा ad7476_chip_info अणु
-	अचिन्हित पूर्णांक			पूर्णांक_vref_uv;
-	काष्ठा iio_chan_spec		channel[2];
+struct ad7476_chip_info {
+	unsigned int			int_vref_uv;
+	struct iio_chan_spec		channel[2];
 	/* channels used when convst gpio is defined */
-	काष्ठा iio_chan_spec		convst_channel[2];
-	व्योम (*reset)(काष्ठा ad7476_state *);
-पूर्ण;
+	struct iio_chan_spec		convst_channel[2];
+	void (*reset)(struct ad7476_state *);
+};
 
-काष्ठा ad7476_state अणु
-	काष्ठा spi_device		*spi;
-	स्थिर काष्ठा ad7476_chip_info	*chip_info;
-	काष्ठा regulator		*reg;
-	काष्ठा gpio_desc		*convst_gpio;
-	काष्ठा spi_transfer		xfer;
-	काष्ठा spi_message		msg;
+struct ad7476_state {
+	struct spi_device		*spi;
+	const struct ad7476_chip_info	*chip_info;
+	struct regulator		*reg;
+	struct gpio_desc		*convst_gpio;
+	struct spi_transfer		xfer;
+	struct spi_message		msg;
 	/*
-	 * DMA (thus cache coherency मुख्यtenance) requires the
+	 * DMA (thus cache coherency maintenance) requires the
 	 * transfer buffers to live in their own cache lines.
-	 * Make the buffer large enough क्रम one 16 bit sample and one 64 bit
-	 * aligned 64 bit बारtamp.
+	 * Make the buffer large enough for one 16 bit sample and one 64 bit
+	 * aligned 64 bit timestamp.
 	 */
-	अचिन्हित अक्षर data[ALIGN(2, माप(s64)) + माप(s64)]
+	unsigned char data[ALIGN(2, sizeof(s64)) + sizeof(s64)]
 			____cacheline_aligned;
-पूर्ण;
+};
 
-क्रमागत ad7476_supported_device_ids अणु
+enum ad7476_supported_device_ids {
 	ID_AD7091R,
 	ID_AD7276,
 	ID_AD7277,
@@ -69,252 +68,252 @@
 	ID_ADS7867,
 	ID_ADS7868,
 	ID_LTC2314_14,
-पूर्ण;
+};
 
-अटल व्योम ad7091_convst(काष्ठा ad7476_state *st)
-अणु
-	अगर (!st->convst_gpio)
-		वापस;
+static void ad7091_convst(struct ad7476_state *st)
+{
+	if (!st->convst_gpio)
+		return;
 
 	gpiod_set_value(st->convst_gpio, 0);
 	udelay(1); /* CONVST pulse width: 10 ns min */
 	gpiod_set_value(st->convst_gpio, 1);
-	udelay(1); /* Conversion समय: 650 ns max */
-पूर्ण
+	udelay(1); /* Conversion time: 650 ns max */
+}
 
-अटल irqवापस_t ad7476_trigger_handler(पूर्णांक irq, व्योम  *p)
-अणु
-	काष्ठा iio_poll_func *pf = p;
-	काष्ठा iio_dev *indio_dev = pf->indio_dev;
-	काष्ठा ad7476_state *st = iio_priv(indio_dev);
-	पूर्णांक b_sent;
+static irqreturn_t ad7476_trigger_handler(int irq, void  *p)
+{
+	struct iio_poll_func *pf = p;
+	struct iio_dev *indio_dev = pf->indio_dev;
+	struct ad7476_state *st = iio_priv(indio_dev);
+	int b_sent;
 
 	ad7091_convst(st);
 
 	b_sent = spi_sync(st->spi, &st->msg);
-	अगर (b_sent < 0)
-		जाओ करोne;
+	if (b_sent < 0)
+		goto done;
 
-	iio_push_to_buffers_with_बारtamp(indio_dev, st->data,
-		iio_get_समय_ns(indio_dev));
-करोne:
-	iio_trigger_notअगरy_करोne(indio_dev->trig);
+	iio_push_to_buffers_with_timestamp(indio_dev, st->data,
+		iio_get_time_ns(indio_dev));
+done:
+	iio_trigger_notify_done(indio_dev->trig);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम ad7091_reset(काष्ठा ad7476_state *st)
-अणु
+static void ad7091_reset(struct ad7476_state *st)
+{
 	/* Any transfers with 8 scl cycles will reset the device */
-	spi_पढ़ो(st->spi, st->data, 1);
-पूर्ण
+	spi_read(st->spi, st->data, 1);
+}
 
-अटल पूर्णांक ad7476_scan_direct(काष्ठा ad7476_state *st)
-अणु
-	पूर्णांक ret;
+static int ad7476_scan_direct(struct ad7476_state *st)
+{
+	int ret;
 
 	ad7091_convst(st);
 
 	ret = spi_sync(st->spi, &st->msg);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस be16_to_cpup((__be16 *)st->data);
-पूर्ण
+	return be16_to_cpup((__be16 *)st->data);
+}
 
-अटल पूर्णांक ad7476_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
-			   काष्ठा iio_chan_spec स्थिर *chan,
-			   पूर्णांक *val,
-			   पूर्णांक *val2,
-			   दीर्घ m)
-अणु
-	पूर्णांक ret;
-	काष्ठा ad7476_state *st = iio_priv(indio_dev);
-	पूर्णांक scale_uv;
+static int ad7476_read_raw(struct iio_dev *indio_dev,
+			   struct iio_chan_spec const *chan,
+			   int *val,
+			   int *val2,
+			   long m)
+{
+	int ret;
+	struct ad7476_state *st = iio_priv(indio_dev);
+	int scale_uv;
 
-	चयन (m) अणु
-	हाल IIO_CHAN_INFO_RAW:
+	switch (m) {
+	case IIO_CHAN_INFO_RAW:
 		ret = iio_device_claim_direct_mode(indio_dev);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 		ret = ad7476_scan_direct(st);
 		iio_device_release_direct_mode(indio_dev);
 
-		अगर (ret < 0)
-			वापस ret;
-		*val = (ret >> st->chip_info->channel[0].scan_type.shअगरt) &
+		if (ret < 0)
+			return ret;
+		*val = (ret >> st->chip_info->channel[0].scan_type.shift) &
 			GENMASK(st->chip_info->channel[0].scan_type.realbits - 1, 0);
-		वापस IIO_VAL_INT;
-	हाल IIO_CHAN_INFO_SCALE:
-		अगर (!st->chip_info->पूर्णांक_vref_uv) अणु
+		return IIO_VAL_INT;
+	case IIO_CHAN_INFO_SCALE:
+		if (!st->chip_info->int_vref_uv) {
 			scale_uv = regulator_get_voltage(st->reg);
-			अगर (scale_uv < 0)
-				वापस scale_uv;
-		पूर्ण अन्यथा अणु
-			scale_uv = st->chip_info->पूर्णांक_vref_uv;
-		पूर्ण
+			if (scale_uv < 0)
+				return scale_uv;
+		} else {
+			scale_uv = st->chip_info->int_vref_uv;
+		}
 		*val = scale_uv / 1000;
 		*val2 = chan->scan_type.realbits;
-		वापस IIO_VAL_FRACTIONAL_LOG2;
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+		return IIO_VAL_FRACTIONAL_LOG2;
+	}
+	return -EINVAL;
+}
 
-#घोषणा _AD7476_CHAN(bits, _shअगरt, _info_mask_sep)		\
-	अणु							\
+#define _AD7476_CHAN(bits, _shift, _info_mask_sep)		\
+	{							\
 	.type = IIO_VOLTAGE,					\
 	.indexed = 1,						\
 	.info_mask_separate = _info_mask_sep,			\
 	.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_SCALE),	\
-	.scan_type = अणु						\
+	.scan_type = {						\
 		.sign = 'u',					\
 		.realbits = (bits),				\
 		.storagebits = 16,				\
-		.shअगरt = (_shअगरt),				\
+		.shift = (_shift),				\
 		.endianness = IIO_BE,				\
-	पूर्ण,							\
-पूर्ण
+	},							\
+}
 
-#घोषणा ADC081S_CHAN(bits) _AD7476_CHAN((bits), 12 - (bits), \
+#define ADC081S_CHAN(bits) _AD7476_CHAN((bits), 12 - (bits), \
 		BIT(IIO_CHAN_INFO_RAW))
-#घोषणा AD7476_CHAN(bits) _AD7476_CHAN((bits), 13 - (bits), \
+#define AD7476_CHAN(bits) _AD7476_CHAN((bits), 13 - (bits), \
 		BIT(IIO_CHAN_INFO_RAW))
-#घोषणा AD7940_CHAN(bits) _AD7476_CHAN((bits), 15 - (bits), \
+#define AD7940_CHAN(bits) _AD7476_CHAN((bits), 15 - (bits), \
 		BIT(IIO_CHAN_INFO_RAW))
-#घोषणा AD7091R_CHAN(bits) _AD7476_CHAN((bits), 16 - (bits), 0)
-#घोषणा AD7091R_CONVST_CHAN(bits) _AD7476_CHAN((bits), 16 - (bits), \
+#define AD7091R_CHAN(bits) _AD7476_CHAN((bits), 16 - (bits), 0)
+#define AD7091R_CONVST_CHAN(bits) _AD7476_CHAN((bits), 16 - (bits), \
 		BIT(IIO_CHAN_INFO_RAW))
-#घोषणा ADS786X_CHAN(bits) _AD7476_CHAN((bits), 12 - (bits), \
+#define ADS786X_CHAN(bits) _AD7476_CHAN((bits), 12 - (bits), \
 		BIT(IIO_CHAN_INFO_RAW))
 
-अटल स्थिर काष्ठा ad7476_chip_info ad7476_chip_info_tbl[] = अणु
-	[ID_AD7091R] = अणु
+static const struct ad7476_chip_info ad7476_chip_info_tbl[] = {
+	[ID_AD7091R] = {
 		.channel[0] = AD7091R_CHAN(12),
 		.channel[1] = IIO_CHAN_SOFT_TIMESTAMP(1),
 		.convst_channel[0] = AD7091R_CONVST_CHAN(12),
 		.convst_channel[1] = IIO_CHAN_SOFT_TIMESTAMP(1),
 		.reset = ad7091_reset,
-	पूर्ण,
-	[ID_AD7276] = अणु
+	},
+	[ID_AD7276] = {
 		.channel[0] = AD7940_CHAN(12),
 		.channel[1] = IIO_CHAN_SOFT_TIMESTAMP(1),
-	पूर्ण,
-	[ID_AD7277] = अणु
+	},
+	[ID_AD7277] = {
 		.channel[0] = AD7940_CHAN(10),
 		.channel[1] = IIO_CHAN_SOFT_TIMESTAMP(1),
-	पूर्ण,
-	[ID_AD7278] = अणु
+	},
+	[ID_AD7278] = {
 		.channel[0] = AD7940_CHAN(8),
 		.channel[1] = IIO_CHAN_SOFT_TIMESTAMP(1),
-	पूर्ण,
-	[ID_AD7466] = अणु
+	},
+	[ID_AD7466] = {
 		.channel[0] = AD7476_CHAN(12),
 		.channel[1] = IIO_CHAN_SOFT_TIMESTAMP(1),
-	पूर्ण,
-	[ID_AD7467] = अणु
+	},
+	[ID_AD7467] = {
 		.channel[0] = AD7476_CHAN(10),
 		.channel[1] = IIO_CHAN_SOFT_TIMESTAMP(1),
-	पूर्ण,
-	[ID_AD7468] = अणु
+	},
+	[ID_AD7468] = {
 		.channel[0] = AD7476_CHAN(8),
 		.channel[1] = IIO_CHAN_SOFT_TIMESTAMP(1),
-	पूर्ण,
-	[ID_AD7495] = अणु
+	},
+	[ID_AD7495] = {
 		.channel[0] = AD7476_CHAN(12),
 		.channel[1] = IIO_CHAN_SOFT_TIMESTAMP(1),
-		.पूर्णांक_vref_uv = 2500000,
-	पूर्ण,
-	[ID_AD7940] = अणु
+		.int_vref_uv = 2500000,
+	},
+	[ID_AD7940] = {
 		.channel[0] = AD7940_CHAN(14),
 		.channel[1] = IIO_CHAN_SOFT_TIMESTAMP(1),
-	पूर्ण,
-	[ID_ADC081S] = अणु
+	},
+	[ID_ADC081S] = {
 		.channel[0] = ADC081S_CHAN(8),
 		.channel[1] = IIO_CHAN_SOFT_TIMESTAMP(1),
-	पूर्ण,
-	[ID_ADC101S] = अणु
+	},
+	[ID_ADC101S] = {
 		.channel[0] = ADC081S_CHAN(10),
 		.channel[1] = IIO_CHAN_SOFT_TIMESTAMP(1),
-	पूर्ण,
-	[ID_ADC121S] = अणु
+	},
+	[ID_ADC121S] = {
 		.channel[0] = ADC081S_CHAN(12),
 		.channel[1] = IIO_CHAN_SOFT_TIMESTAMP(1),
-	पूर्ण,
-	[ID_ADS7866] = अणु
+	},
+	[ID_ADS7866] = {
 		.channel[0] = ADS786X_CHAN(12),
 		.channel[1] = IIO_CHAN_SOFT_TIMESTAMP(1),
-	पूर्ण,
-	[ID_ADS7867] = अणु
+	},
+	[ID_ADS7867] = {
 		.channel[0] = ADS786X_CHAN(10),
 		.channel[1] = IIO_CHAN_SOFT_TIMESTAMP(1),
-	पूर्ण,
-	[ID_ADS7868] = अणु
+	},
+	[ID_ADS7868] = {
 		.channel[0] = ADS786X_CHAN(8),
 		.channel[1] = IIO_CHAN_SOFT_TIMESTAMP(1),
-	पूर्ण,
-	[ID_LTC2314_14] = अणु
+	},
+	[ID_LTC2314_14] = {
 		.channel[0] = AD7940_CHAN(14),
 		.channel[1] = IIO_CHAN_SOFT_TIMESTAMP(1),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा iio_info ad7476_info = अणु
-	.पढ़ो_raw = &ad7476_पढ़ो_raw,
-पूर्ण;
+static const struct iio_info ad7476_info = {
+	.read_raw = &ad7476_read_raw,
+};
 
-अटल व्योम ad7476_reg_disable(व्योम *data)
-अणु
-	काष्ठा ad7476_state *st = data;
+static void ad7476_reg_disable(void *data)
+{
+	struct ad7476_state *st = data;
 
 	regulator_disable(st->reg);
-पूर्ण
+}
 
-अटल पूर्णांक ad7476_probe(काष्ठा spi_device *spi)
-अणु
-	काष्ठा ad7476_state *st;
-	काष्ठा iio_dev *indio_dev;
-	पूर्णांक ret;
+static int ad7476_probe(struct spi_device *spi)
+{
+	struct ad7476_state *st;
+	struct iio_dev *indio_dev;
+	int ret;
 
-	indio_dev = devm_iio_device_alloc(&spi->dev, माप(*st));
-	अगर (!indio_dev)
-		वापस -ENOMEM;
+	indio_dev = devm_iio_device_alloc(&spi->dev, sizeof(*st));
+	if (!indio_dev)
+		return -ENOMEM;
 
 	st = iio_priv(indio_dev);
 	st->chip_info =
 		&ad7476_chip_info_tbl[spi_get_device_id(spi)->driver_data];
 
 	st->reg = devm_regulator_get(&spi->dev, "vcc");
-	अगर (IS_ERR(st->reg))
-		वापस PTR_ERR(st->reg);
+	if (IS_ERR(st->reg))
+		return PTR_ERR(st->reg);
 
 	ret = regulator_enable(st->reg);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = devm_add_action_or_reset(&spi->dev, ad7476_reg_disable,
 				       st);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	st->convst_gpio = devm_gpiod_get_optional(&spi->dev,
 						  "adi,conversion-start",
 						  GPIOD_OUT_LOW);
-	अगर (IS_ERR(st->convst_gpio))
-		वापस PTR_ERR(st->convst_gpio);
+	if (IS_ERR(st->convst_gpio))
+		return PTR_ERR(st->convst_gpio);
 
 	spi_set_drvdata(spi, indio_dev);
 
 	st->spi = spi;
 
 	indio_dev->name = spi_get_device_id(spi)->name;
-	indio_dev->modes = INDIO_सूचीECT_MODE;
+	indio_dev->modes = INDIO_DIRECT_MODE;
 	indio_dev->channels = st->chip_info->channel;
 	indio_dev->num_channels = 2;
 	indio_dev->info = &ad7476_info;
 
-	अगर (st->convst_gpio)
+	if (st->convst_gpio)
 		indio_dev->channels = st->chip_info->convst_channel;
-	/* Setup शेष message */
+	/* Setup default message */
 
 	st->xfer.rx_buf = &st->data;
 	st->xfer.len = st->chip_info->channel[0].scan_type.storagebits / 8;
@@ -322,57 +321,57 @@
 	spi_message_init(&st->msg);
 	spi_message_add_tail(&st->xfer, &st->msg);
 
-	ret = devm_iio_triggered_buffer_setup(&spi->dev, indio_dev, शून्य,
-					      &ad7476_trigger_handler, शून्य);
-	अगर (ret)
-		वापस ret;
+	ret = devm_iio_triggered_buffer_setup(&spi->dev, indio_dev, NULL,
+					      &ad7476_trigger_handler, NULL);
+	if (ret)
+		return ret;
 
-	अगर (st->chip_info->reset)
+	if (st->chip_info->reset)
 		st->chip_info->reset(st);
 
-	वापस devm_iio_device_रेजिस्टर(&spi->dev, indio_dev);
-पूर्ण
+	return devm_iio_device_register(&spi->dev, indio_dev);
+}
 
-अटल स्थिर काष्ठा spi_device_id ad7476_id[] = अणु
-	अणु"ad7091", ID_AD7091Rपूर्ण,
-	अणु"ad7091r", ID_AD7091Rपूर्ण,
-	अणु"ad7273", ID_AD7277पूर्ण,
-	अणु"ad7274", ID_AD7276पूर्ण,
-	अणु"ad7276", ID_AD7276पूर्ण,
-	अणु"ad7277", ID_AD7277पूर्ण,
-	अणु"ad7278", ID_AD7278पूर्ण,
-	अणु"ad7466", ID_AD7466पूर्ण,
-	अणु"ad7467", ID_AD7467पूर्ण,
-	अणु"ad7468", ID_AD7468पूर्ण,
-	अणु"ad7475", ID_AD7466पूर्ण,
-	अणु"ad7476", ID_AD7466पूर्ण,
-	अणु"ad7476a", ID_AD7466पूर्ण,
-	अणु"ad7477", ID_AD7467पूर्ण,
-	अणु"ad7477a", ID_AD7467पूर्ण,
-	अणु"ad7478", ID_AD7468पूर्ण,
-	अणु"ad7478a", ID_AD7468पूर्ण,
-	अणु"ad7495", ID_AD7495पूर्ण,
-	अणु"ad7910", ID_AD7467पूर्ण,
-	अणु"ad7920", ID_AD7466पूर्ण,
-	अणु"ad7940", ID_AD7940पूर्ण,
-	अणु"adc081s", ID_ADC081Sपूर्ण,
-	अणु"adc101s", ID_ADC101Sपूर्ण,
-	अणु"adc121s", ID_ADC121Sपूर्ण,
-	अणु"ads7866", ID_ADS7866पूर्ण,
-	अणु"ads7867", ID_ADS7867पूर्ण,
-	अणु"ads7868", ID_ADS7868पूर्ण,
-	अणु"ltc2314-14", ID_LTC2314_14पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct spi_device_id ad7476_id[] = {
+	{"ad7091", ID_AD7091R},
+	{"ad7091r", ID_AD7091R},
+	{"ad7273", ID_AD7277},
+	{"ad7274", ID_AD7276},
+	{"ad7276", ID_AD7276},
+	{"ad7277", ID_AD7277},
+	{"ad7278", ID_AD7278},
+	{"ad7466", ID_AD7466},
+	{"ad7467", ID_AD7467},
+	{"ad7468", ID_AD7468},
+	{"ad7475", ID_AD7466},
+	{"ad7476", ID_AD7466},
+	{"ad7476a", ID_AD7466},
+	{"ad7477", ID_AD7467},
+	{"ad7477a", ID_AD7467},
+	{"ad7478", ID_AD7468},
+	{"ad7478a", ID_AD7468},
+	{"ad7495", ID_AD7495},
+	{"ad7910", ID_AD7467},
+	{"ad7920", ID_AD7466},
+	{"ad7940", ID_AD7940},
+	{"adc081s", ID_ADC081S},
+	{"adc101s", ID_ADC101S},
+	{"adc121s", ID_ADC121S},
+	{"ads7866", ID_ADS7866},
+	{"ads7867", ID_ADS7867},
+	{"ads7868", ID_ADS7868},
+	{"ltc2314-14", ID_LTC2314_14},
+	{}
+};
 MODULE_DEVICE_TABLE(spi, ad7476_id);
 
-अटल काष्ठा spi_driver ad7476_driver = अणु
-	.driver = अणु
+static struct spi_driver ad7476_driver = {
+	.driver = {
 		.name	= "ad7476",
-	पूर्ण,
+	},
 	.probe		= ad7476_probe,
 	.id_table	= ad7476_id,
-पूर्ण;
+};
 module_spi_driver(ad7476_driver);
 
 MODULE_AUTHOR("Michael Hennerich <michael.hennerich@analog.com>");

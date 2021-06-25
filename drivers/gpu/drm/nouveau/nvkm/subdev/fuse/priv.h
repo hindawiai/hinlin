@@ -1,14 +1,13 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
-#अगर_अघोषित __NVKM_FUSE_PRIV_H__
-#घोषणा __NVKM_FUSE_PRIV_H__
-#घोषणा nvkm_fuse(p) container_of((p), काष्ठा nvkm_fuse, subdev)
-#समावेश <subdev/fuse.h>
+/* SPDX-License-Identifier: MIT */
+#ifndef __NVKM_FUSE_PRIV_H__
+#define __NVKM_FUSE_PRIV_H__
+#define nvkm_fuse(p) container_of((p), struct nvkm_fuse, subdev)
+#include <subdev/fuse.h>
 
-काष्ठा nvkm_fuse_func अणु
-	u32 (*पढ़ो)(काष्ठा nvkm_fuse *, u32 addr);
-पूर्ण;
+struct nvkm_fuse_func {
+	u32 (*read)(struct nvkm_fuse *, u32 addr);
+};
 
-पूर्णांक nvkm_fuse_new_(स्थिर काष्ठा nvkm_fuse_func *, काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक,
-		   काष्ठा nvkm_fuse **);
-#पूर्ण_अगर
+int nvkm_fuse_new_(const struct nvkm_fuse_func *, struct nvkm_device *, enum nvkm_subdev_type, int,
+		   struct nvkm_fuse **);
+#endif

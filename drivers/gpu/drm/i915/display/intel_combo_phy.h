@@ -1,21 +1,20 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
+/* SPDX-License-Identifier: MIT */
 /*
- * Copyright तऊ 2019 Intel Corporation
+ * Copyright © 2019 Intel Corporation
  */
 
-#अगर_अघोषित __INTEL_COMBO_PHY_H__
-#घोषणा __INTEL_COMBO_PHY_H__
+#ifndef __INTEL_COMBO_PHY_H__
+#define __INTEL_COMBO_PHY_H__
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-काष्ठा drm_i915_निजी;
-क्रमागत phy;
+struct drm_i915_private;
+enum phy;
 
-व्योम पूर्णांकel_combo_phy_init(काष्ठा drm_i915_निजी *dev_priv);
-व्योम पूर्णांकel_combo_phy_uninit(काष्ठा drm_i915_निजी *dev_priv);
-व्योम पूर्णांकel_combo_phy_घातer_up_lanes(काष्ठा drm_i915_निजी *dev_priv,
-				    क्रमागत phy phy, bool is_dsi,
-				    पूर्णांक lane_count, bool lane_reversal);
+void intel_combo_phy_init(struct drm_i915_private *dev_priv);
+void intel_combo_phy_uninit(struct drm_i915_private *dev_priv);
+void intel_combo_phy_power_up_lanes(struct drm_i915_private *dev_priv,
+				    enum phy phy, bool is_dsi,
+				    int lane_count, bool lane_reversal);
 
-#पूर्ण_अगर /* __INTEL_COMBO_PHY_H__ */
+#endif /* __INTEL_COMBO_PHY_H__ */

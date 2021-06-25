@@ -1,233 +1,232 @@
-<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 1995 - 2000 by Ralf Baechle
  */
-#समावेश <linux/context_tracking.h>
-#समावेश <linux/संकेत.स>
-#समावेश <linux/sched.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/माला.स>
-#समावेश <linux/types.h>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/ratelimit.h>
-#समावेश <linux/mman.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/kprobes.h>
-#समावेश <linux/perf_event.h>
-#समावेश <linux/uaccess.h>
+#include <linux/context_tracking.h>
+#include <linux/signal.h>
+#include <linux/sched.h>
+#include <linux/interrupt.h>
+#include <linux/kernel.h>
+#include <linux/errno.h>
+#include <linux/string.h>
+#include <linux/types.h>
+#include <linux/ptrace.h>
+#include <linux/ratelimit.h>
+#include <linux/mman.h>
+#include <linux/mm.h>
+#include <linux/smp.h>
+#include <linux/kprobes.h>
+#include <linux/perf_event.h>
+#include <linux/uaccess.h>
 
-#समावेश <यंत्र/branch.h>
-#समावेश <यंत्र/mmu_context.h>
-#समावेश <यंत्र/ptrace.h>
-#समावेश <यंत्र/highस्मृति.स>		/* For VMALLOC_END */
-#समावेश <linux/kdebug.h>
+#include <asm/branch.h>
+#include <asm/mmu_context.h>
+#include <asm/ptrace.h>
+#include <asm/highmem.h>		/* For VMALLOC_END */
+#include <linux/kdebug.h>
 
-पूर्णांक show_unhandled_संकेतs = 1;
+int show_unhandled_signals = 1;
 
 /*
  * This routine handles page faults.  It determines the address,
  * and the problem, and then passes it off to one of the appropriate
  * routines.
  */
-अटल व्योम __kprobes __करो_page_fault(काष्ठा pt_regs *regs, अचिन्हित दीर्घ ग_लिखो,
-	अचिन्हित दीर्घ address)
-अणु
-	काष्ठा vm_area_काष्ठा * vma = शून्य;
-	काष्ठा task_काष्ठा *tsk = current;
-	काष्ठा mm_काष्ठा *mm = tsk->mm;
-	स्थिर पूर्णांक field = माप(अचिन्हित दीर्घ) * 2;
-	पूर्णांक si_code;
+static void __kprobes __do_page_fault(struct pt_regs *regs, unsigned long write,
+	unsigned long address)
+{
+	struct vm_area_struct * vma = NULL;
+	struct task_struct *tsk = current;
+	struct mm_struct *mm = tsk->mm;
+	const int field = sizeof(unsigned long) * 2;
+	int si_code;
 	vm_fault_t fault;
-	अचिन्हित पूर्णांक flags = FAULT_FLAG_DEFAULT;
+	unsigned int flags = FAULT_FLAG_DEFAULT;
 
-	अटल DEFINE_RATELIMIT_STATE(ratelimit_state, 5 * HZ, 10);
+	static DEFINE_RATELIMIT_STATE(ratelimit_state, 5 * HZ, 10);
 
-#अगर 0
-	prपूर्णांकk("Cpu%d[%s:%d:%0*lx:%ld:%0*lx]\n", raw_smp_processor_id(),
-	       current->comm, current->pid, field, address, ग_लिखो,
+#if 0
+	printk("Cpu%d[%s:%d:%0*lx:%ld:%0*lx]\n", raw_smp_processor_id(),
+	       current->comm, current->pid, field, address, write,
 	       field, regs->cp0_epc);
-#पूर्ण_अगर
+#endif
 
-#अगर_घोषित CONFIG_KPROBES
+#ifdef CONFIG_KPROBES
 	/*
-	 * This is to notअगरy the fault handler of the kprobes.
+	 * This is to notify the fault handler of the kprobes.
 	 */
-	अगर (notअगरy_die(DIE_PAGE_FAULT, "page fault", regs, -1,
-		       current->thपढ़ो.trap_nr, संक_अंश) == NOTIFY_STOP)
-		वापस;
-#पूर्ण_अगर
+	if (notify_die(DIE_PAGE_FAULT, "page fault", regs, -1,
+		       current->thread.trap_nr, SIGSEGV) == NOTIFY_STOP)
+		return;
+#endif
 
 	si_code = SEGV_MAPERR;
 
 	/*
-	 * We fault-in kernel-space भव memory on-demand. The
+	 * We fault-in kernel-space virtual memory on-demand. The
 	 * 'reference' page table is init_mm.pgd.
 	 *
-	 * NOTE! We MUST NOT take any locks क्रम this हाल. We may
-	 * be in an पूर्णांकerrupt or a critical region, and should
-	 * only copy the inक्रमmation from the master page table,
+	 * NOTE! We MUST NOT take any locks for this case. We may
+	 * be in an interrupt or a critical region, and should
+	 * only copy the information from the master page table,
 	 * nothing more.
 	 */
-#अगर_घोषित CONFIG_64BIT
+#ifdef CONFIG_64BIT
 # define VMALLOC_FAULT_TARGET no_context
-#अन्यथा
-# define VMALLOC_FAULT_TARGET vदो_स्मृति_fault
-#पूर्ण_अगर
+#else
+# define VMALLOC_FAULT_TARGET vmalloc_fault
+#endif
 
-	अगर (unlikely(address >= VMALLOC_START && address <= VMALLOC_END))
-		जाओ VMALLOC_FAULT_TARGET;
-#अगर_घोषित MODULE_START
-	अगर (unlikely(address >= MODULE_START && address < MODULE_END))
-		जाओ VMALLOC_FAULT_TARGET;
-#पूर्ण_अगर
+	if (unlikely(address >= VMALLOC_START && address <= VMALLOC_END))
+		goto VMALLOC_FAULT_TARGET;
+#ifdef MODULE_START
+	if (unlikely(address >= MODULE_START && address < MODULE_END))
+		goto VMALLOC_FAULT_TARGET;
+#endif
 
 	/*
-	 * If we're in an पूर्णांकerrupt or have no user
+	 * If we're in an interrupt or have no user
 	 * context, we must not take the fault..
 	 */
-	अगर (faulthandler_disabled() || !mm)
-		जाओ bad_area_nosemaphore;
+	if (faulthandler_disabled() || !mm)
+		goto bad_area_nosemaphore;
 
-	अगर (user_mode(regs))
+	if (user_mode(regs))
 		flags |= FAULT_FLAG_USER;
 
 	perf_sw_event(PERF_COUNT_SW_PAGE_FAULTS, 1, regs, address);
 retry:
-	mmap_पढ़ो_lock(mm);
+	mmap_read_lock(mm);
 	vma = find_vma(mm, address);
-	अगर (!vma)
-		जाओ bad_area;
-	अगर (vma->vm_start <= address)
-		जाओ good_area;
-	अगर (!(vma->vm_flags & VM_GROWSDOWN))
-		जाओ bad_area;
-	अगर (expand_stack(vma, address))
-		जाओ bad_area;
+	if (!vma)
+		goto bad_area;
+	if (vma->vm_start <= address)
+		goto good_area;
+	if (!(vma->vm_flags & VM_GROWSDOWN))
+		goto bad_area;
+	if (expand_stack(vma, address))
+		goto bad_area;
 /*
- * Ok, we have a good vm_area क्रम this memory access, so
+ * Ok, we have a good vm_area for this memory access, so
  * we can handle it..
  */
 good_area:
 	si_code = SEGV_ACCERR;
 
-	अगर (ग_लिखो) अणु
-		अगर (!(vma->vm_flags & VM_WRITE))
-			जाओ bad_area;
+	if (write) {
+		if (!(vma->vm_flags & VM_WRITE))
+			goto bad_area;
 		flags |= FAULT_FLAG_WRITE;
-	पूर्ण अन्यथा अणु
-		अगर (cpu_has_rixi) अणु
-			अगर (address == regs->cp0_epc && !(vma->vm_flags & VM_EXEC)) अणु
-#अगर 0
+	} else {
+		if (cpu_has_rixi) {
+			if (address == regs->cp0_epc && !(vma->vm_flags & VM_EXEC)) {
+#if 0
 				pr_notice("Cpu%d[%s:%d:%0*lx:%ld:%0*lx] XI violation\n",
 					  raw_smp_processor_id(),
 					  current->comm, current->pid,
-					  field, address, ग_लिखो,
+					  field, address, write,
 					  field, regs->cp0_epc);
-#पूर्ण_अगर
-				जाओ bad_area;
-			पूर्ण
-			अगर (!(vma->vm_flags & VM_READ) &&
-			    exception_epc(regs) != address) अणु
-#अगर 0
+#endif
+				goto bad_area;
+			}
+			if (!(vma->vm_flags & VM_READ) &&
+			    exception_epc(regs) != address) {
+#if 0
 				pr_notice("Cpu%d[%s:%d:%0*lx:%ld:%0*lx] RI violation\n",
 					  raw_smp_processor_id(),
 					  current->comm, current->pid,
-					  field, address, ग_लिखो,
+					  field, address, write,
 					  field, regs->cp0_epc);
-#पूर्ण_अगर
-				जाओ bad_area;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (unlikely(!vma_is_accessible(vma)))
-				जाओ bad_area;
-		पूर्ण
-	पूर्ण
+#endif
+				goto bad_area;
+			}
+		} else {
+			if (unlikely(!vma_is_accessible(vma)))
+				goto bad_area;
+		}
+	}
 
 	/*
-	 * If क्रम any reason at all we couldn't handle the fault,
-	 * make sure we निकास gracefully rather than endlessly reकरो
+	 * If for any reason at all we couldn't handle the fault,
+	 * make sure we exit gracefully rather than endlessly redo
 	 * the fault.
 	 */
 	fault = handle_mm_fault(vma, address, flags, regs);
 
-	अगर (fault_संकेत_pending(fault, regs)) अणु
-		अगर (!user_mode(regs))
-			जाओ no_context;
-		वापस;
-	पूर्ण
+	if (fault_signal_pending(fault, regs)) {
+		if (!user_mode(regs))
+			goto no_context;
+		return;
+	}
 
-	अगर (unlikely(fault & VM_FAULT_ERROR)) अणु
-		अगर (fault & VM_FAULT_OOM)
-			जाओ out_of_memory;
-		अन्यथा अगर (fault & VM_FAULT_संक_अंश)
-			जाओ bad_area;
-		अन्यथा अगर (fault & VM_FAULT_SIGBUS)
-			जाओ करो_sigbus;
+	if (unlikely(fault & VM_FAULT_ERROR)) {
+		if (fault & VM_FAULT_OOM)
+			goto out_of_memory;
+		else if (fault & VM_FAULT_SIGSEGV)
+			goto bad_area;
+		else if (fault & VM_FAULT_SIGBUS)
+			goto do_sigbus;
 		BUG();
-	पूर्ण
-	अगर (flags & FAULT_FLAG_ALLOW_RETRY) अणु
-		अगर (fault & VM_FAULT_RETRY) अणु
+	}
+	if (flags & FAULT_FLAG_ALLOW_RETRY) {
+		if (fault & VM_FAULT_RETRY) {
 			flags |= FAULT_FLAG_TRIED;
 
 			/*
-			 * No need to mmap_पढ़ो_unlock(mm) as we would
-			 * have alपढ़ोy released it in __lock_page_or_retry
+			 * No need to mmap_read_unlock(mm) as we would
+			 * have already released it in __lock_page_or_retry
 			 * in mm/filemap.c.
 			 */
 
-			जाओ retry;
-		पूर्ण
-	पूर्ण
+			goto retry;
+		}
+	}
 
-	mmap_पढ़ो_unlock(mm);
-	वापस;
+	mmap_read_unlock(mm);
+	return;
 
 /*
  * Something tried to access memory that isn't in our memory map..
- * Fix it, but check अगर it's kernel or user first..
+ * Fix it, but check if it's kernel or user first..
  */
 bad_area:
-	mmap_पढ़ो_unlock(mm);
+	mmap_read_unlock(mm);
 
 bad_area_nosemaphore:
-	/* User mode accesses just cause a संक_अंश */
-	अगर (user_mode(regs)) अणु
-		tsk->thपढ़ो.cp0_badvaddr = address;
-		tsk->thपढ़ो.error_code = ग_लिखो;
-		अगर (show_unhandled_संकेतs &&
-		    unhandled_संकेत(tsk, संक_अंश) &&
-		    __ratelimit(&ratelimit_state)) अणु
+	/* User mode accesses just cause a SIGSEGV */
+	if (user_mode(regs)) {
+		tsk->thread.cp0_badvaddr = address;
+		tsk->thread.error_code = write;
+		if (show_unhandled_signals &&
+		    unhandled_signal(tsk, SIGSEGV) &&
+		    __ratelimit(&ratelimit_state)) {
 			pr_info("do_page_fault(): sending SIGSEGV to %s for invalid %s %0*lx\n",
 				tsk->comm,
-				ग_लिखो ? "write access to" : "read access from",
+				write ? "write access to" : "read access from",
 				field, address);
 			pr_info("epc = %0*lx in", field,
-				(अचिन्हित दीर्घ) regs->cp0_epc);
-			prपूर्णांक_vma_addr(KERN_CONT " ", regs->cp0_epc);
+				(unsigned long) regs->cp0_epc);
+			print_vma_addr(KERN_CONT " ", regs->cp0_epc);
 			pr_cont("\n");
 			pr_info("ra  = %0*lx in", field,
-				(अचिन्हित दीर्घ) regs->regs[31]);
-			prपूर्णांक_vma_addr(KERN_CONT " ", regs->regs[31]);
+				(unsigned long) regs->regs[31]);
+			print_vma_addr(KERN_CONT " ", regs->regs[31]);
 			pr_cont("\n");
-		पूर्ण
-		current->thपढ़ो.trap_nr = (regs->cp0_cause >> 2) & 0x1f;
-		क्रमce_sig_fault(संक_अंश, si_code, (व्योम __user *)address);
-		वापस;
-	पूर्ण
+		}
+		current->thread.trap_nr = (regs->cp0_cause >> 2) & 0x1f;
+		force_sig_fault(SIGSEGV, si_code, (void __user *)address);
+		return;
+	}
 
 no_context:
 	/* Are we prepared to handle this kernel fault?	 */
-	अगर (fixup_exception(regs)) अणु
-		current->thपढ़ो.cp0_baduaddr = address;
-		वापस;
-	पूर्ण
+	if (fixup_exception(regs)) {
+		current->thread.cp0_baduaddr = address;
+		return;
+	}
 
 	/*
 	 * Oops. The kernel tried to access some bad page. We'll have to
@@ -235,7 +234,7 @@ no_context:
 	 */
 	bust_spinlocks(1);
 
-	prपूर्णांकk(KERN_ALERT "CPU %d Unable to handle kernel paging request at "
+	printk(KERN_ALERT "CPU %d Unable to handle kernel paging request at "
 	       "virtual address %0*lx, epc == %0*lx, ra == %0*lx\n",
 	       raw_smp_processor_id(), field, address, field, regs->cp0_epc,
 	       field,  regs->regs[31]);
@@ -243,51 +242,51 @@ no_context:
 
 out_of_memory:
 	/*
-	 * We ran out of memory, call the OOM समाप्तer, and वापस the userspace
-	 * (which will retry the fault, or समाप्त us अगर we got oom-समाप्तed).
+	 * We ran out of memory, call the OOM killer, and return the userspace
+	 * (which will retry the fault, or kill us if we got oom-killed).
 	 */
-	mmap_पढ़ो_unlock(mm);
-	अगर (!user_mode(regs))
-		जाओ no_context;
+	mmap_read_unlock(mm);
+	if (!user_mode(regs))
+		goto no_context;
 	pagefault_out_of_memory();
-	वापस;
+	return;
 
-करो_sigbus:
-	mmap_पढ़ो_unlock(mm);
+do_sigbus:
+	mmap_read_unlock(mm);
 
 	/* Kernel mode? Handle exceptions or die */
-	अगर (!user_mode(regs))
-		जाओ no_context;
+	if (!user_mode(regs))
+		goto no_context;
 
 	/*
 	 * Send a sigbus, regardless of whether we were in kernel
 	 * or user mode.
 	 */
-#अगर 0
-	prपूर्णांकk("do_page_fault() #3: sending SIGBUS to %s for "
+#if 0
+	printk("do_page_fault() #3: sending SIGBUS to %s for "
 	       "invalid %s\n%0*lx (epc == %0*lx, ra == %0*lx)\n",
 	       tsk->comm,
-	       ग_लिखो ? "write access to" : "read access from",
+	       write ? "write access to" : "read access from",
 	       field, address,
-	       field, (अचिन्हित दीर्घ) regs->cp0_epc,
-	       field, (अचिन्हित दीर्घ) regs->regs[31]);
-#पूर्ण_अगर
-	current->thपढ़ो.trap_nr = (regs->cp0_cause >> 2) & 0x1f;
-	tsk->thपढ़ो.cp0_badvaddr = address;
-	क्रमce_sig_fault(SIGBUS, BUS_ADRERR, (व्योम __user *)address);
+	       field, (unsigned long) regs->cp0_epc,
+	       field, (unsigned long) regs->regs[31]);
+#endif
+	current->thread.trap_nr = (regs->cp0_cause >> 2) & 0x1f;
+	tsk->thread.cp0_badvaddr = address;
+	force_sig_fault(SIGBUS, BUS_ADRERR, (void __user *)address);
 
-	वापस;
-#अगर_अघोषित CONFIG_64BIT
-vदो_स्मृति_fault:
-	अणु
+	return;
+#ifndef CONFIG_64BIT
+vmalloc_fault:
+	{
 		/*
 		 * Synchronize this task's top level page-table
 		 * with the 'reference' page table.
 		 *
 		 * Do _not_ use "tsk" here. We might be inside
-		 * an पूर्णांकerrupt in the middle of a task चयन..
+		 * an interrupt in the middle of a task switch..
 		 */
-		पूर्णांक offset = pgd_index(address);
+		int offset = pgd_index(address);
 		pgd_t *pgd, *pgd_k;
 		p4d_t *p4d, *p4d_k;
 		pud_t *pud, *pud_k;
@@ -297,40 +296,40 @@ vदो_स्मृति_fault:
 		pgd = (pgd_t *) pgd_current[raw_smp_processor_id()] + offset;
 		pgd_k = init_mm.pgd + offset;
 
-		अगर (!pgd_present(*pgd_k))
-			जाओ no_context;
+		if (!pgd_present(*pgd_k))
+			goto no_context;
 		set_pgd(pgd, *pgd_k);
 
 		p4d = p4d_offset(pgd, address);
 		p4d_k = p4d_offset(pgd_k, address);
-		अगर (!p4d_present(*p4d_k))
-			जाओ no_context;
+		if (!p4d_present(*p4d_k))
+			goto no_context;
 
 		pud = pud_offset(p4d, address);
 		pud_k = pud_offset(p4d_k, address);
-		अगर (!pud_present(*pud_k))
-			जाओ no_context;
+		if (!pud_present(*pud_k))
+			goto no_context;
 
 		pmd = pmd_offset(pud, address);
 		pmd_k = pmd_offset(pud_k, address);
-		अगर (!pmd_present(*pmd_k))
-			जाओ no_context;
+		if (!pmd_present(*pmd_k))
+			goto no_context;
 		set_pmd(pmd, *pmd_k);
 
 		pte_k = pte_offset_kernel(pmd_k, address);
-		अगर (!pte_present(*pte_k))
-			जाओ no_context;
-		वापस;
-	पूर्ण
-#पूर्ण_अगर
-पूर्ण
+		if (!pte_present(*pte_k))
+			goto no_context;
+		return;
+	}
+#endif
+}
 
-यंत्रlinkage व्योम __kprobes करो_page_fault(काष्ठा pt_regs *regs,
-	अचिन्हित दीर्घ ग_लिखो, अचिन्हित दीर्घ address)
-अणु
-	क्रमागत ctx_state prev_state;
+asmlinkage void __kprobes do_page_fault(struct pt_regs *regs,
+	unsigned long write, unsigned long address)
+{
+	enum ctx_state prev_state;
 
 	prev_state = exception_enter();
-	__करो_page_fault(regs, ग_लिखो, address);
-	exception_निकास(prev_state);
-पूर्ण
+	__do_page_fault(regs, write, address);
+	exception_exit(prev_state);
+}

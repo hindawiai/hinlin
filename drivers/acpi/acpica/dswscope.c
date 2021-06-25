@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
  * Module Name: dswscope - Scope stack manipulation
@@ -8,11 +7,11 @@
  *
  *****************************************************************************/
 
-#समावेश <acpi/acpi.h>
-#समावेश "accommon.h"
-#समावेश "acdispat.h"
+#include <acpi/acpi.h>
+#include "accommon.h"
+#include "acdispat.h"
 
-#घोषणा _COMPONENT          ACPI_DISPATCHER
+#define _COMPONENT          ACPI_DISPATCHER
 ACPI_MODULE_NAME("dswscope")
 
 /****************************************************************************
@@ -23,17 +22,17 @@ ACPI_MODULE_NAME("dswscope")
  *
  * RETURN:      None
  *
- * DESCRIPTION: Pop (and मुक्त) everything on the scope stack except the
- *              root scope object (which reमुख्यs at the stack top.)
+ * DESCRIPTION: Pop (and free) everything on the scope stack except the
+ *              root scope object (which remains at the stack top.)
  *
  ***************************************************************************/
-व्योम acpi_ds_scope_stack_clear(काष्ठा acpi_walk_state *walk_state)
-अणु
-	जोड़ acpi_generic_state *scope_info;
+void acpi_ds_scope_stack_clear(struct acpi_walk_state *walk_state)
+{
+	union acpi_generic_state *scope_info;
 
 	ACPI_FUNCTION_NAME(ds_scope_stack_clear);
 
-	जबतक (walk_state->scope_info) अणु
+	while (walk_state->scope_info) {
 
 		/* Pop a scope off the stack */
 
@@ -46,8 +45,8 @@ ACPI_MODULE_NAME("dswscope")
 							value)));
 
 		acpi_ut_delete_generic_state(scope_info);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /****************************************************************************
  *
@@ -65,35 +64,35 @@ ACPI_MODULE_NAME("dswscope")
  ***************************************************************************/
 
 acpi_status
-acpi_ds_scope_stack_push(काष्ठा acpi_namespace_node *node,
+acpi_ds_scope_stack_push(struct acpi_namespace_node *node,
 			 acpi_object_type type,
-			 काष्ठा acpi_walk_state *walk_state)
-अणु
-	जोड़ acpi_generic_state *scope_info;
-	जोड़ acpi_generic_state *old_scope_info;
+			 struct acpi_walk_state *walk_state)
+{
+	union acpi_generic_state *scope_info;
+	union acpi_generic_state *old_scope_info;
 
 	ACPI_FUNCTION_TRACE(ds_scope_stack_push);
 
-	अगर (!node) अणु
+	if (!node) {
 
 		/* Invalid scope   */
 
 		ACPI_ERROR((AE_INFO, "Null scope parameter"));
-		वापस_ACPI_STATUS(AE_BAD_PARAMETER);
-	पूर्ण
+		return_ACPI_STATUS(AE_BAD_PARAMETER);
+	}
 
 	/* Make sure object type is valid */
 
-	अगर (!acpi_ut_valid_object_type(type)) अणु
+	if (!acpi_ut_valid_object_type(type)) {
 		ACPI_WARNING((AE_INFO, "Invalid object type: 0x%X", type));
-	पूर्ण
+	}
 
 	/* Allocate a new scope object */
 
 	scope_info = acpi_ut_create_generic_state();
-	अगर (!scope_info) अणु
-		वापस_ACPI_STATUS(AE_NO_MEMORY);
-	पूर्ण
+	if (!scope_info) {
+		return_ACPI_STATUS(AE_NO_MEMORY);
+	}
 
 	/* Init new scope object */
 
@@ -108,16 +107,16 @@ acpi_ds_scope_stack_push(काष्ठा acpi_namespace_node *node,
 			  (u32) walk_state->scope_depth));
 
 	old_scope_info = walk_state->scope_info;
-	अगर (old_scope_info) अणु
+	if (old_scope_info) {
 		ACPI_DEBUG_PRINT_RAW((ACPI_DB_EXEC,
 				      "[%4.4s] (%s)",
 				      acpi_ut_get_node_name(old_scope_info->
 							    scope.node),
 				      acpi_ut_get_type_name(old_scope_info->
 							    common.value)));
-	पूर्ण अन्यथा अणु
+	} else {
 		ACPI_DEBUG_PRINT_RAW((ACPI_DB_EXEC, ACPI_NAMESPACE_ROOT));
-	पूर्ण
+	}
 
 	ACPI_DEBUG_PRINT_RAW((ACPI_DB_EXEC,
 			      ", New scope -> [%4.4s] (%s)\n",
@@ -127,8 +126,8 @@ acpi_ds_scope_stack_push(काष्ठा acpi_namespace_node *node,
 	/* Push new scope object onto stack */
 
 	acpi_ut_push_generic_state(&walk_state->scope_info, scope_info);
-	वापस_ACPI_STATUS(AE_OK);
-पूर्ण
+	return_ACPI_STATUS(AE_OK);
+}
 
 /****************************************************************************
  *
@@ -142,10 +141,10 @@ acpi_ds_scope_stack_push(काष्ठा acpi_namespace_node *node,
  *
  ***************************************************************************/
 
-acpi_status acpi_ds_scope_stack_pop(काष्ठा acpi_walk_state *walk_state)
-अणु
-	जोड़ acpi_generic_state *scope_info;
-	जोड़ acpi_generic_state *new_scope_info;
+acpi_status acpi_ds_scope_stack_pop(struct acpi_walk_state *walk_state)
+{
+	union acpi_generic_state *scope_info;
+	union acpi_generic_state *new_scope_info;
 
 	ACPI_FUNCTION_TRACE(ds_scope_stack_pop);
 
@@ -153,9 +152,9 @@ acpi_status acpi_ds_scope_stack_pop(काष्ठा acpi_walk_state *walk_sta
 	 * Pop scope info object off the stack.
 	 */
 	scope_info = acpi_ut_pop_generic_state(&walk_state->scope_info);
-	अगर (!scope_info) अणु
-		वापस_ACPI_STATUS(AE_STACK_UNDERFLOW);
-	पूर्ण
+	if (!scope_info) {
+		return_ACPI_STATUS(AE_STACK_UNDERFLOW);
+	}
 
 	walk_state->scope_depth--;
 
@@ -166,17 +165,17 @@ acpi_status acpi_ds_scope_stack_pop(काष्ठा acpi_walk_state *walk_sta
 			  acpi_ut_get_type_name(scope_info->common.value)));
 
 	new_scope_info = walk_state->scope_info;
-	अगर (new_scope_info) अणु
+	if (new_scope_info) {
 		ACPI_DEBUG_PRINT_RAW((ACPI_DB_EXEC, "[%4.4s] (%s)\n",
 				      acpi_ut_get_node_name(new_scope_info->
 							    scope.node),
 				      acpi_ut_get_type_name(new_scope_info->
 							    common.value)));
-	पूर्ण अन्यथा अणु
+	} else {
 		ACPI_DEBUG_PRINT_RAW((ACPI_DB_EXEC, "%s\n",
 				      ACPI_NAMESPACE_ROOT));
-	पूर्ण
+	}
 
 	acpi_ut_delete_generic_state(scope_info);
-	वापस_ACPI_STATUS(AE_OK);
-पूर्ण
+	return_ACPI_STATUS(AE_OK);
+}

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Bosch BME680 - Temperature, Pressure, Humidity & Gas Sensor
  *
@@ -9,18 +8,18 @@
  * Datasheet:
  * https://ae-bst.resource.bosch.com/media/_tech/media/datasheets/BST-BME680-DS001-00.pdf
  */
-#समावेश <linux/acpi.h>
-#समावेश <linux/bitfield.h>
-#समावेश <linux/device.h>
-#समावेश <linux/module.h>
-#समावेश <linux/log2.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/iio/sysfs.h>
+#include <linux/acpi.h>
+#include <linux/bitfield.h>
+#include <linux/device.h>
+#include <linux/module.h>
+#include <linux/log2.h>
+#include <linux/regmap.h>
+#include <linux/iio/iio.h>
+#include <linux/iio/sysfs.h>
 
-#समावेश "bme680.h"
+#include "bme680.h"
 
-काष्ठा bme680_calib अणु
+struct bme680_calib {
 	u16 par_t1;
 	s16 par_t2;
 	s8  par_t3;
@@ -47,11 +46,11 @@
 	u8  res_heat_range;
 	s8  res_heat_val;
 	s8  range_sw_err;
-पूर्ण;
+};
 
-काष्ठा bme680_data अणु
-	काष्ठा regmap *regmap;
-	काष्ठा bme680_calib bme680;
+struct bme680_data {
+	struct regmap *regmap;
+	struct bme680_calib bme680;
 	u8 oversampling_temp;
 	u8 oversampling_press;
 	u8 oversampling_humid;
@@ -62,286 +61,286 @@
 	 * and humidity compensation calculations.
 	 */
 	s32 t_fine;
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा regmap_range bme680_अस्थिर_ranges[] = अणु
+static const struct regmap_range bme680_volatile_ranges[] = {
 	regmap_reg_range(BME680_REG_MEAS_STAT_0, BME680_REG_GAS_R_LSB),
 	regmap_reg_range(BME680_REG_STATUS, BME680_REG_STATUS),
 	regmap_reg_range(BME680_T2_LSB_REG, BME680_GH3_REG),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा regmap_access_table bme680_अस्थिर_table = अणु
-	.yes_ranges	= bme680_अस्थिर_ranges,
-	.n_yes_ranges	= ARRAY_SIZE(bme680_अस्थिर_ranges),
-पूर्ण;
+static const struct regmap_access_table bme680_volatile_table = {
+	.yes_ranges	= bme680_volatile_ranges,
+	.n_yes_ranges	= ARRAY_SIZE(bme680_volatile_ranges),
+};
 
-स्थिर काष्ठा regmap_config bme680_regmap_config = अणु
+const struct regmap_config bme680_regmap_config = {
 	.reg_bits = 8,
 	.val_bits = 8,
-	.max_रेजिस्टर = 0xef,
-	.अस्थिर_table = &bme680_अस्थिर_table,
+	.max_register = 0xef,
+	.volatile_table = &bme680_volatile_table,
 	.cache_type = REGCACHE_RBTREE,
-पूर्ण;
+};
 EXPORT_SYMBOL(bme680_regmap_config);
 
-अटल स्थिर काष्ठा iio_chan_spec bme680_channels[] = अणु
-	अणु
+static const struct iio_chan_spec bme680_channels[] = {
+	{
 		.type = IIO_TEMP,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_PROCESSED) |
 				      BIT(IIO_CHAN_INFO_OVERSAMPLING_RATIO),
-	पूर्ण,
-	अणु
+	},
+	{
 		.type = IIO_PRESSURE,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_PROCESSED) |
 				      BIT(IIO_CHAN_INFO_OVERSAMPLING_RATIO),
-	पूर्ण,
-	अणु
+	},
+	{
 		.type = IIO_HUMIDITYRELATIVE,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_PROCESSED) |
 				      BIT(IIO_CHAN_INFO_OVERSAMPLING_RATIO),
-	पूर्ण,
-	अणु
+	},
+	{
 		.type = IIO_RESISTANCE,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_PROCESSED),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक bme680_पढ़ो_calib(काष्ठा bme680_data *data,
-			     काष्ठा bme680_calib *calib)
-अणु
-	काष्ठा device *dev = regmap_get_device(data->regmap);
-	अचिन्हित पूर्णांक पंचांगp, पंचांगp_msb, पंचांगp_lsb;
-	पूर्णांक ret;
+static int bme680_read_calib(struct bme680_data *data,
+			     struct bme680_calib *calib)
+{
+	struct device *dev = regmap_get_device(data->regmap);
+	unsigned int tmp, tmp_msb, tmp_lsb;
+	int ret;
 	__le16 buf;
 
 	/* Temperature related coefficients */
-	ret = regmap_bulk_पढ़ो(data->regmap, BME680_T1_LSB_REG,
-			       &buf, माप(buf));
-	अगर (ret < 0) अणु
+	ret = regmap_bulk_read(data->regmap, BME680_T1_LSB_REG,
+			       &buf, sizeof(buf));
+	if (ret < 0) {
 		dev_err(dev, "failed to read BME680_T1_LSB_REG\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	calib->par_t1 = le16_to_cpu(buf);
 
-	ret = regmap_bulk_पढ़ो(data->regmap, BME680_T2_LSB_REG,
-			       &buf, माप(buf));
-	अगर (ret < 0) अणु
+	ret = regmap_bulk_read(data->regmap, BME680_T2_LSB_REG,
+			       &buf, sizeof(buf));
+	if (ret < 0) {
 		dev_err(dev, "failed to read BME680_T2_LSB_REG\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	calib->par_t2 = le16_to_cpu(buf);
 
-	ret = regmap_पढ़ो(data->regmap, BME680_T3_REG, &पंचांगp);
-	अगर (ret < 0) अणु
+	ret = regmap_read(data->regmap, BME680_T3_REG, &tmp);
+	if (ret < 0) {
 		dev_err(dev, "failed to read BME680_T3_REG\n");
-		वापस ret;
-	पूर्ण
-	calib->par_t3 = पंचांगp;
+		return ret;
+	}
+	calib->par_t3 = tmp;
 
 	/* Pressure related coefficients */
-	ret = regmap_bulk_पढ़ो(data->regmap, BME680_P1_LSB_REG,
-			       &buf, माप(buf));
-	अगर (ret < 0) अणु
+	ret = regmap_bulk_read(data->regmap, BME680_P1_LSB_REG,
+			       &buf, sizeof(buf));
+	if (ret < 0) {
 		dev_err(dev, "failed to read BME680_P1_LSB_REG\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	calib->par_p1 = le16_to_cpu(buf);
 
-	ret = regmap_bulk_पढ़ो(data->regmap, BME680_P2_LSB_REG,
-			       &buf, माप(buf));
-	अगर (ret < 0) अणु
+	ret = regmap_bulk_read(data->regmap, BME680_P2_LSB_REG,
+			       &buf, sizeof(buf));
+	if (ret < 0) {
 		dev_err(dev, "failed to read BME680_P2_LSB_REG\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	calib->par_p2 = le16_to_cpu(buf);
 
-	ret = regmap_पढ़ो(data->regmap, BME680_P3_REG, &पंचांगp);
-	अगर (ret < 0) अणु
+	ret = regmap_read(data->regmap, BME680_P3_REG, &tmp);
+	if (ret < 0) {
 		dev_err(dev, "failed to read BME680_P3_REG\n");
-		वापस ret;
-	पूर्ण
-	calib->par_p3 = पंचांगp;
+		return ret;
+	}
+	calib->par_p3 = tmp;
 
-	ret = regmap_bulk_पढ़ो(data->regmap, BME680_P4_LSB_REG,
-			       &buf, माप(buf));
-	अगर (ret < 0) अणु
+	ret = regmap_bulk_read(data->regmap, BME680_P4_LSB_REG,
+			       &buf, sizeof(buf));
+	if (ret < 0) {
 		dev_err(dev, "failed to read BME680_P4_LSB_REG\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	calib->par_p4 = le16_to_cpu(buf);
 
-	ret = regmap_bulk_पढ़ो(data->regmap, BME680_P5_LSB_REG,
-			       &buf, माप(buf));
-	अगर (ret < 0) अणु
+	ret = regmap_bulk_read(data->regmap, BME680_P5_LSB_REG,
+			       &buf, sizeof(buf));
+	if (ret < 0) {
 		dev_err(dev, "failed to read BME680_P5_LSB_REG\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	calib->par_p5 = le16_to_cpu(buf);
 
-	ret = regmap_पढ़ो(data->regmap, BME680_P6_REG, &पंचांगp);
-	अगर (ret < 0) अणु
+	ret = regmap_read(data->regmap, BME680_P6_REG, &tmp);
+	if (ret < 0) {
 		dev_err(dev, "failed to read BME680_P6_REG\n");
-		वापस ret;
-	पूर्ण
-	calib->par_p6 = पंचांगp;
+		return ret;
+	}
+	calib->par_p6 = tmp;
 
-	ret = regmap_पढ़ो(data->regmap, BME680_P7_REG, &पंचांगp);
-	अगर (ret < 0) अणु
+	ret = regmap_read(data->regmap, BME680_P7_REG, &tmp);
+	if (ret < 0) {
 		dev_err(dev, "failed to read BME680_P7_REG\n");
-		वापस ret;
-	पूर्ण
-	calib->par_p7 = पंचांगp;
+		return ret;
+	}
+	calib->par_p7 = tmp;
 
-	ret = regmap_bulk_पढ़ो(data->regmap, BME680_P8_LSB_REG,
-			       &buf, माप(buf));
-	अगर (ret < 0) अणु
+	ret = regmap_bulk_read(data->regmap, BME680_P8_LSB_REG,
+			       &buf, sizeof(buf));
+	if (ret < 0) {
 		dev_err(dev, "failed to read BME680_P8_LSB_REG\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	calib->par_p8 = le16_to_cpu(buf);
 
-	ret = regmap_bulk_पढ़ो(data->regmap, BME680_P9_LSB_REG,
-			       &buf, माप(buf));
-	अगर (ret < 0) अणु
+	ret = regmap_bulk_read(data->regmap, BME680_P9_LSB_REG,
+			       &buf, sizeof(buf));
+	if (ret < 0) {
 		dev_err(dev, "failed to read BME680_P9_LSB_REG\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	calib->par_p9 = le16_to_cpu(buf);
 
-	ret = regmap_पढ़ो(data->regmap, BME680_P10_REG, &पंचांगp);
-	अगर (ret < 0) अणु
+	ret = regmap_read(data->regmap, BME680_P10_REG, &tmp);
+	if (ret < 0) {
 		dev_err(dev, "failed to read BME680_P10_REG\n");
-		वापस ret;
-	पूर्ण
-	calib->par_p10 = पंचांगp;
+		return ret;
+	}
+	calib->par_p10 = tmp;
 
 	/* Humidity related coefficients */
-	ret = regmap_पढ़ो(data->regmap, BME680_H1_MSB_REG, &पंचांगp_msb);
-	अगर (ret < 0) अणु
+	ret = regmap_read(data->regmap, BME680_H1_MSB_REG, &tmp_msb);
+	if (ret < 0) {
 		dev_err(dev, "failed to read BME680_H1_MSB_REG\n");
-		वापस ret;
-	पूर्ण
-	ret = regmap_पढ़ो(data->regmap, BME680_H1_LSB_REG, &पंचांगp_lsb);
-	अगर (ret < 0) अणु
+		return ret;
+	}
+	ret = regmap_read(data->regmap, BME680_H1_LSB_REG, &tmp_lsb);
+	if (ret < 0) {
 		dev_err(dev, "failed to read BME680_H1_LSB_REG\n");
-		वापस ret;
-	पूर्ण
-	calib->par_h1 = (पंचांगp_msb << BME680_HUM_REG_SHIFT_VAL) |
-			(पंचांगp_lsb & BME680_BIT_H1_DATA_MASK);
+		return ret;
+	}
+	calib->par_h1 = (tmp_msb << BME680_HUM_REG_SHIFT_VAL) |
+			(tmp_lsb & BME680_BIT_H1_DATA_MASK);
 
-	ret = regmap_पढ़ो(data->regmap, BME680_H2_MSB_REG, &पंचांगp_msb);
-	अगर (ret < 0) अणु
+	ret = regmap_read(data->regmap, BME680_H2_MSB_REG, &tmp_msb);
+	if (ret < 0) {
 		dev_err(dev, "failed to read BME680_H2_MSB_REG\n");
-		वापस ret;
-	पूर्ण
-	ret = regmap_पढ़ो(data->regmap, BME680_H2_LSB_REG, &पंचांगp_lsb);
-	अगर (ret < 0) अणु
+		return ret;
+	}
+	ret = regmap_read(data->regmap, BME680_H2_LSB_REG, &tmp_lsb);
+	if (ret < 0) {
 		dev_err(dev, "failed to read BME680_H2_LSB_REG\n");
-		वापस ret;
-	पूर्ण
-	calib->par_h2 = (पंचांगp_msb << BME680_HUM_REG_SHIFT_VAL) |
-			(पंचांगp_lsb >> BME680_HUM_REG_SHIFT_VAL);
+		return ret;
+	}
+	calib->par_h2 = (tmp_msb << BME680_HUM_REG_SHIFT_VAL) |
+			(tmp_lsb >> BME680_HUM_REG_SHIFT_VAL);
 
-	ret = regmap_पढ़ो(data->regmap, BME680_H3_REG, &पंचांगp);
-	अगर (ret < 0) अणु
+	ret = regmap_read(data->regmap, BME680_H3_REG, &tmp);
+	if (ret < 0) {
 		dev_err(dev, "failed to read BME680_H3_REG\n");
-		वापस ret;
-	पूर्ण
-	calib->par_h3 = पंचांगp;
+		return ret;
+	}
+	calib->par_h3 = tmp;
 
-	ret = regmap_पढ़ो(data->regmap, BME680_H4_REG, &पंचांगp);
-	अगर (ret < 0) अणु
+	ret = regmap_read(data->regmap, BME680_H4_REG, &tmp);
+	if (ret < 0) {
 		dev_err(dev, "failed to read BME680_H4_REG\n");
-		वापस ret;
-	पूर्ण
-	calib->par_h4 = पंचांगp;
+		return ret;
+	}
+	calib->par_h4 = tmp;
 
-	ret = regmap_पढ़ो(data->regmap, BME680_H5_REG, &पंचांगp);
-	अगर (ret < 0) अणु
+	ret = regmap_read(data->regmap, BME680_H5_REG, &tmp);
+	if (ret < 0) {
 		dev_err(dev, "failed to read BME680_H5_REG\n");
-		वापस ret;
-	पूर्ण
-	calib->par_h5 = पंचांगp;
+		return ret;
+	}
+	calib->par_h5 = tmp;
 
-	ret = regmap_पढ़ो(data->regmap, BME680_H6_REG, &पंचांगp);
-	अगर (ret < 0) अणु
+	ret = regmap_read(data->regmap, BME680_H6_REG, &tmp);
+	if (ret < 0) {
 		dev_err(dev, "failed to read BME680_H6_REG\n");
-		वापस ret;
-	पूर्ण
-	calib->par_h6 = पंचांगp;
+		return ret;
+	}
+	calib->par_h6 = tmp;
 
-	ret = regmap_पढ़ो(data->regmap, BME680_H7_REG, &पंचांगp);
-	अगर (ret < 0) अणु
+	ret = regmap_read(data->regmap, BME680_H7_REG, &tmp);
+	if (ret < 0) {
 		dev_err(dev, "failed to read BME680_H7_REG\n");
-		वापस ret;
-	पूर्ण
-	calib->par_h7 = पंचांगp;
+		return ret;
+	}
+	calib->par_h7 = tmp;
 
 	/* Gas heater related coefficients */
-	ret = regmap_पढ़ो(data->regmap, BME680_GH1_REG, &पंचांगp);
-	अगर (ret < 0) अणु
+	ret = regmap_read(data->regmap, BME680_GH1_REG, &tmp);
+	if (ret < 0) {
 		dev_err(dev, "failed to read BME680_GH1_REG\n");
-		वापस ret;
-	पूर्ण
-	calib->par_gh1 = पंचांगp;
+		return ret;
+	}
+	calib->par_gh1 = tmp;
 
-	ret = regmap_bulk_पढ़ो(data->regmap, BME680_GH2_LSB_REG,
-			       &buf, माप(buf));
-	अगर (ret < 0) अणु
+	ret = regmap_bulk_read(data->regmap, BME680_GH2_LSB_REG,
+			       &buf, sizeof(buf));
+	if (ret < 0) {
 		dev_err(dev, "failed to read BME680_GH2_LSB_REG\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	calib->par_gh2 = le16_to_cpu(buf);
 
-	ret = regmap_पढ़ो(data->regmap, BME680_GH3_REG, &पंचांगp);
-	अगर (ret < 0) अणु
+	ret = regmap_read(data->regmap, BME680_GH3_REG, &tmp);
+	if (ret < 0) {
 		dev_err(dev, "failed to read BME680_GH3_REG\n");
-		वापस ret;
-	पूर्ण
-	calib->par_gh3 = पंचांगp;
+		return ret;
+	}
+	calib->par_gh3 = tmp;
 
 	/* Other coefficients */
-	ret = regmap_पढ़ो(data->regmap, BME680_REG_RES_HEAT_RANGE, &पंचांगp);
-	अगर (ret < 0) अणु
+	ret = regmap_read(data->regmap, BME680_REG_RES_HEAT_RANGE, &tmp);
+	if (ret < 0) {
 		dev_err(dev, "failed to read resistance heat range\n");
-		वापस ret;
-	पूर्ण
-	calib->res_heat_range = FIELD_GET(BME680_RHRANGE_MASK, पंचांगp);
+		return ret;
+	}
+	calib->res_heat_range = FIELD_GET(BME680_RHRANGE_MASK, tmp);
 
-	ret = regmap_पढ़ो(data->regmap, BME680_REG_RES_HEAT_VAL, &पंचांगp);
-	अगर (ret < 0) अणु
+	ret = regmap_read(data->regmap, BME680_REG_RES_HEAT_VAL, &tmp);
+	if (ret < 0) {
 		dev_err(dev, "failed to read resistance heat value\n");
-		वापस ret;
-	पूर्ण
-	calib->res_heat_val = पंचांगp;
+		return ret;
+	}
+	calib->res_heat_val = tmp;
 
-	ret = regmap_पढ़ो(data->regmap, BME680_REG_RANGE_SW_ERR, &पंचांगp);
-	अगर (ret < 0) अणु
+	ret = regmap_read(data->regmap, BME680_REG_RANGE_SW_ERR, &tmp);
+	if (ret < 0) {
 		dev_err(dev, "failed to read range software error\n");
-		वापस ret;
-	पूर्ण
-	calib->range_sw_err = FIELD_GET(BME680_RSERROR_MASK, पंचांगp);
+		return ret;
+	}
+	calib->range_sw_err = FIELD_GET(BME680_RSERROR_MASK, tmp);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Taken from Bosch BME680 API:
  * https://github.com/BoschSensortec/BME680_driver/blob/63bb5336/bme680.c#L876
  *
- * Returns temperature measurement in DegC, resolutions is 0.01 DegC. Thereक्रमe,
+ * Returns temperature measurement in DegC, resolutions is 0.01 DegC. Therefore,
  * output value of "3233" represents 32.33 DegC.
  */
-अटल s16 bme680_compensate_temp(काष्ठा bme680_data *data,
+static s16 bme680_compensate_temp(struct bme680_data *data,
 				  s32 adc_temp)
-अणु
-	काष्ठा bme680_calib *calib = &data->bme680;
+{
+	struct bme680_calib *calib = &data->bme680;
 	s64 var1, var2, var3;
 	s16 calc_temp;
 
 	/* If the calibration is invalid, attempt to reload it */
-	अगर (!calib->par_t2)
-		bme680_पढ़ो_calib(data, calib);
+	if (!calib->par_t2)
+		bme680_read_calib(data, calib);
 
 	var1 = (adc_temp >> 3) - (calib->par_t1 << 1);
 	var2 = (var1 * calib->par_t2) >> 11;
@@ -350,8 +349,8 @@ EXPORT_SYMBOL(bme680_regmap_config);
 	data->t_fine = var2 + var3;
 	calc_temp = (data->t_fine * 5 + 128) >> 8;
 
-	वापस calc_temp;
-पूर्ण
+	return calc_temp;
+}
 
 /*
  * Taken from Bosch BME680 API:
@@ -360,10 +359,10 @@ EXPORT_SYMBOL(bme680_regmap_config);
  * Returns pressure measurement in Pa. Output value of "97356" represents
  * 97356 Pa = 973.56 hPa.
  */
-अटल u32 bme680_compensate_press(काष्ठा bme680_data *data,
+static u32 bme680_compensate_press(struct bme680_data *data,
 				   u32 adc_press)
-अणु
-	काष्ठा bme680_calib *calib = &data->bme680;
+{
+	struct bme680_calib *calib = &data->bme680;
 	s32 var1, var2, var3, press_comp;
 
 	var1 = (data->t_fine >> 1) - 64000;
@@ -378,9 +377,9 @@ EXPORT_SYMBOL(bme680_regmap_config);
 	press_comp = 1048576 - adc_press;
 	press_comp = ((press_comp - (var2 >> 12)) * 3125);
 
-	अगर (press_comp >= BME680_MAX_OVERFLOW_VAL)
+	if (press_comp >= BME680_MAX_OVERFLOW_VAL)
 		press_comp = ((press_comp / (u32)var1) << 1);
-	अन्यथा
+	else
 		press_comp = ((press_comp << 1) / (u32)var1);
 
 	var1 = (calib->par_p9 * (((press_comp >> 3) *
@@ -391,8 +390,8 @@ EXPORT_SYMBOL(bme680_regmap_config);
 
 	press_comp += (var1 + var2 + var3 + (calib->par_p7 << 7)) >> 4;
 
-	वापस press_comp;
-पूर्ण
+	return press_comp;
+}
 
 /*
  * Taken from Bosch BME680 API:
@@ -401,10 +400,10 @@ EXPORT_SYMBOL(bme680_regmap_config);
  * Returns humidity measurement in percent, resolution is 0.001 percent. Output
  * value of "43215" represents 43.215 %rH.
  */
-अटल u32 bme680_compensate_humid(काष्ठा bme680_data *data,
+static u32 bme680_compensate_humid(struct bme680_data *data,
 				   u16 adc_humid)
-अणु
-	काष्ठा bme680_calib *calib = &data->bme680;
+{
+	struct bme680_calib *calib = &data->bme680;
 	s32 var1, var2, var3, var4, var5, var6, temp_scaled, calc_hum;
 
 	temp_scaled = (data->t_fine * 5 + 128) >> 8;
@@ -423,8 +422,8 @@ EXPORT_SYMBOL(bme680_regmap_config);
 
 	calc_hum = clamp(calc_hum, 0, 100000); /* clamp between 0-100 %rH */
 
-	वापस calc_hum;
-पूर्ण
+	return calc_hum;
+}
 
 /*
  * Taken from Bosch BME680 API:
@@ -432,44 +431,44 @@ EXPORT_SYMBOL(bme680_regmap_config);
  *
  * Returns gas measurement in Ohm. Output value of "82986" represent 82986 ohms.
  */
-अटल u32 bme680_compensate_gas(काष्ठा bme680_data *data, u16 gas_res_adc,
+static u32 bme680_compensate_gas(struct bme680_data *data, u16 gas_res_adc,
 				 u8 gas_range)
-अणु
-	काष्ठा bme680_calib *calib = &data->bme680;
+{
+	struct bme680_calib *calib = &data->bme680;
 	s64 var1;
 	u64 var2;
 	s64 var3;
 	u32 calc_gas_res;
 
-	/* Look up table क्रम the possible gas range values */
-	स्थिर u32 lookupTable[16] = अणु2147483647u, 2147483647u,
+	/* Look up table for the possible gas range values */
+	const u32 lookupTable[16] = {2147483647u, 2147483647u,
 				2147483647u, 2147483647u, 2147483647u,
 				2126008810u, 2147483647u, 2130303777u,
 				2147483647u, 2147483647u, 2143188679u,
 				2136746228u, 2147483647u, 2126008810u,
-				2147483647u, 2147483647uपूर्ण;
+				2147483647u, 2147483647u};
 
 	var1 = ((1340 + (5 * (s64) calib->range_sw_err)) *
 			((s64) lookupTable[gas_range])) >> 16;
 	var2 = ((gas_res_adc << 15) - 16777216) + var1;
 	var3 = ((125000 << (15 - gas_range)) * var1) >> 9;
 	var3 += (var2 >> 1);
-	calc_gas_res = भाग64_s64(var3, (s64) var2);
+	calc_gas_res = div64_s64(var3, (s64) var2);
 
-	वापस calc_gas_res;
-पूर्ण
+	return calc_gas_res;
+}
 
 /*
  * Taken from Bosch BME680 API:
  * https://github.com/BoschSensortec/BME680_driver/blob/63bb5336/bme680.c#L1002
  */
-अटल u8 bme680_calc_heater_res(काष्ठा bme680_data *data, u16 temp)
-अणु
-	काष्ठा bme680_calib *calib = &data->bme680;
+static u8 bme680_calc_heater_res(struct bme680_data *data, u16 temp)
+{
+	struct bme680_calib *calib = &data->bme680;
 	s32 var1, var2, var3, var4, var5, heatr_res_x100;
 	u8 heatr_res;
 
-	अगर (temp > 400) /* Cap temperature */
+	if (temp > 400) /* Cap temperature */
 		temp = 400;
 
 	var1 = (((s32) BME680_AMB_TEMP * calib->par_gh3) / 1000) * 256;
@@ -482,443 +481,443 @@ EXPORT_SYMBOL(bme680_regmap_config);
 	heatr_res_x100 = ((var4 / var5) - 250) * 34;
 	heatr_res = DIV_ROUND_CLOSEST(heatr_res_x100, 100);
 
-	वापस heatr_res;
-पूर्ण
+	return heatr_res;
+}
 
 /*
  * Taken from Bosch BME680 API:
  * https://github.com/BoschSensortec/BME680_driver/blob/63bb5336/bme680.c#L1188
  */
-अटल u8 bme680_calc_heater_dur(u16 dur)
-अणु
+static u8 bme680_calc_heater_dur(u16 dur)
+{
 	u8 durval, factor = 0;
 
-	अगर (dur >= 0xfc0) अणु
+	if (dur >= 0xfc0) {
 		durval = 0xff; /* Max duration */
-	पूर्ण अन्यथा अणु
-		जबतक (dur > 0x3F) अणु
+	} else {
+		while (dur > 0x3F) {
 			dur = dur / 4;
 			factor += 1;
-		पूर्ण
+		}
 		durval = dur + (factor * 64);
-	पूर्ण
+	}
 
-	वापस durval;
-पूर्ण
+	return durval;
+}
 
-अटल पूर्णांक bme680_set_mode(काष्ठा bme680_data *data, bool mode)
-अणु
-	काष्ठा device *dev = regmap_get_device(data->regmap);
-	पूर्णांक ret;
+static int bme680_set_mode(struct bme680_data *data, bool mode)
+{
+	struct device *dev = regmap_get_device(data->regmap);
+	int ret;
 
-	अगर (mode) अणु
-		ret = regmap_ग_लिखो_bits(data->regmap, BME680_REG_CTRL_MEAS,
+	if (mode) {
+		ret = regmap_write_bits(data->regmap, BME680_REG_CTRL_MEAS,
 					BME680_MODE_MASK, BME680_MODE_FORCED);
-		अगर (ret < 0)
+		if (ret < 0)
 			dev_err(dev, "failed to set forced mode\n");
 
-	पूर्ण अन्यथा अणु
-		ret = regmap_ग_लिखो_bits(data->regmap, BME680_REG_CTRL_MEAS,
+	} else {
+		ret = regmap_write_bits(data->regmap, BME680_REG_CTRL_MEAS,
 					BME680_MODE_MASK, BME680_MODE_SLEEP);
-		अगर (ret < 0)
+		if (ret < 0)
 			dev_err(dev, "failed to set sleep mode\n");
 
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल u8 bme680_oversampling_to_reg(u8 val)
-अणु
-	वापस ilog2(val) + 1;
-पूर्ण
+static u8 bme680_oversampling_to_reg(u8 val)
+{
+	return ilog2(val) + 1;
+}
 
-अटल पूर्णांक bme680_chip_config(काष्ठा bme680_data *data)
-अणु
-	काष्ठा device *dev = regmap_get_device(data->regmap);
-	पूर्णांक ret;
+static int bme680_chip_config(struct bme680_data *data)
+{
+	struct device *dev = regmap_get_device(data->regmap);
+	int ret;
 	u8 osrs;
 
 	osrs = FIELD_PREP(
 		BME680_OSRS_HUMIDITY_MASK,
 		bme680_oversampling_to_reg(data->oversampling_humid));
 	/*
-	 * Highly recommended to set oversampling of humidity beक्रमe
+	 * Highly recommended to set oversampling of humidity before
 	 * temperature/pressure oversampling.
 	 */
 	ret = regmap_update_bits(data->regmap, BME680_REG_CTRL_HUMIDITY,
 				 BME680_OSRS_HUMIDITY_MASK, osrs);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "failed to write ctrl_hum register\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* IIR filter settings */
 	ret = regmap_update_bits(data->regmap, BME680_REG_CONFIG,
 				 BME680_FILTER_MASK,
 				 BME680_FILTER_COEFF_VAL);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "failed to write config register\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	osrs = FIELD_PREP(BME680_OSRS_TEMP_MASK,
 			  bme680_oversampling_to_reg(data->oversampling_temp)) |
 	       FIELD_PREP(BME680_OSRS_PRESS_MASK,
 			  bme680_oversampling_to_reg(data->oversampling_press));
-	ret = regmap_ग_लिखो_bits(data->regmap, BME680_REG_CTRL_MEAS,
+	ret = regmap_write_bits(data->regmap, BME680_REG_CTRL_MEAS,
 				BME680_OSRS_TEMP_MASK | BME680_OSRS_PRESS_MASK,
 				osrs);
-	अगर (ret < 0)
+	if (ret < 0)
 		dev_err(dev, "failed to write ctrl_meas register\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक bme680_gas_config(काष्ठा bme680_data *data)
-अणु
-	काष्ठा device *dev = regmap_get_device(data->regmap);
-	पूर्णांक ret;
+static int bme680_gas_config(struct bme680_data *data)
+{
+	struct device *dev = regmap_get_device(data->regmap);
+	int ret;
 	u8 heatr_res, heatr_dur;
 
 	heatr_res = bme680_calc_heater_res(data, data->heater_temp);
 
 	/* set target heater temperature */
-	ret = regmap_ग_लिखो(data->regmap, BME680_REG_RES_HEAT_0, heatr_res);
-	अगर (ret < 0) अणु
+	ret = regmap_write(data->regmap, BME680_REG_RES_HEAT_0, heatr_res);
+	if (ret < 0) {
 		dev_err(dev, "failed to write res_heat_0 register\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	heatr_dur = bme680_calc_heater_dur(data->heater_dur);
 
 	/* set target heating duration */
-	ret = regmap_ग_लिखो(data->regmap, BME680_REG_GAS_WAIT_0, heatr_dur);
-	अगर (ret < 0) अणु
+	ret = regmap_write(data->regmap, BME680_REG_GAS_WAIT_0, heatr_dur);
+	if (ret < 0) {
 		dev_err(dev, "failed to write gas_wait_0 register\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* Enable the gas sensor and select heater profile set-poपूर्णांक 0 */
+	/* Enable the gas sensor and select heater profile set-point 0 */
 	ret = regmap_update_bits(data->regmap, BME680_REG_CTRL_GAS_1,
 				 BME680_RUN_GAS_MASK | BME680_NB_CONV_MASK,
 				 FIELD_PREP(BME680_RUN_GAS_MASK, 1) |
 				 FIELD_PREP(BME680_NB_CONV_MASK, 0));
-	अगर (ret < 0)
+	if (ret < 0)
 		dev_err(dev, "failed to write ctrl_gas_1 register\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक bme680_पढ़ो_temp(काष्ठा bme680_data *data, पूर्णांक *val)
-अणु
-	काष्ठा device *dev = regmap_get_device(data->regmap);
-	पूर्णांक ret;
-	__be32 पंचांगp = 0;
+static int bme680_read_temp(struct bme680_data *data, int *val)
+{
+	struct device *dev = regmap_get_device(data->regmap);
+	int ret;
+	__be32 tmp = 0;
 	s32 adc_temp;
 	s16 comp_temp;
 
-	/* set क्रमced mode to trigger measurement */
+	/* set forced mode to trigger measurement */
 	ret = bme680_set_mode(data, true);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	ret = regmap_bulk_पढ़ो(data->regmap, BME680_REG_TEMP_MSB,
-			       &पंचांगp, 3);
-	अगर (ret < 0) अणु
+	ret = regmap_bulk_read(data->regmap, BME680_REG_TEMP_MSB,
+			       &tmp, 3);
+	if (ret < 0) {
 		dev_err(dev, "failed to read temperature\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	adc_temp = be32_to_cpu(पंचांगp) >> 12;
-	अगर (adc_temp == BME680_MEAS_SKIPPED) अणु
-		/* पढ़ोing was skipped */
+	adc_temp = be32_to_cpu(tmp) >> 12;
+	if (adc_temp == BME680_MEAS_SKIPPED) {
+		/* reading was skipped */
 		dev_err(dev, "reading temperature skipped\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	comp_temp = bme680_compensate_temp(data, adc_temp);
 	/*
-	 * val might be शून्य अगर we're called by the पढ़ो_press/पढ़ो_humid
+	 * val might be NULL if we're called by the read_press/read_humid
 	 * routine which is callled to get t_fine value used in
 	 * compensate_press/compensate_humid to get compensated
-	 * pressure/humidity पढ़ोings.
+	 * pressure/humidity readings.
 	 */
-	अगर (val) अणु
+	if (val) {
 		*val = comp_temp * 10; /* Centidegrees to millidegrees */
-		वापस IIO_VAL_INT;
-	पूर्ण
+		return IIO_VAL_INT;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक bme680_पढ़ो_press(काष्ठा bme680_data *data,
-			     पूर्णांक *val, पूर्णांक *val2)
-अणु
-	काष्ठा device *dev = regmap_get_device(data->regmap);
-	पूर्णांक ret;
-	__be32 पंचांगp = 0;
+static int bme680_read_press(struct bme680_data *data,
+			     int *val, int *val2)
+{
+	struct device *dev = regmap_get_device(data->regmap);
+	int ret;
+	__be32 tmp = 0;
 	s32 adc_press;
 
-	/* Read and compensate temperature to get a पढ़ोing of t_fine */
-	ret = bme680_पढ़ो_temp(data, शून्य);
-	अगर (ret < 0)
-		वापस ret;
+	/* Read and compensate temperature to get a reading of t_fine */
+	ret = bme680_read_temp(data, NULL);
+	if (ret < 0)
+		return ret;
 
-	ret = regmap_bulk_पढ़ो(data->regmap, BME680_REG_PRESS_MSB,
-			       &पंचांगp, 3);
-	अगर (ret < 0) अणु
+	ret = regmap_bulk_read(data->regmap, BME680_REG_PRESS_MSB,
+			       &tmp, 3);
+	if (ret < 0) {
 		dev_err(dev, "failed to read pressure\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	adc_press = be32_to_cpu(पंचांगp) >> 12;
-	अगर (adc_press == BME680_MEAS_SKIPPED) अणु
-		/* पढ़ोing was skipped */
+	adc_press = be32_to_cpu(tmp) >> 12;
+	if (adc_press == BME680_MEAS_SKIPPED) {
+		/* reading was skipped */
 		dev_err(dev, "reading pressure skipped\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	*val = bme680_compensate_press(data, adc_press);
 	*val2 = 100;
-	वापस IIO_VAL_FRACTIONAL;
-पूर्ण
+	return IIO_VAL_FRACTIONAL;
+}
 
-अटल पूर्णांक bme680_पढ़ो_humid(काष्ठा bme680_data *data,
-			     पूर्णांक *val, पूर्णांक *val2)
-अणु
-	काष्ठा device *dev = regmap_get_device(data->regmap);
-	पूर्णांक ret;
-	__be16 पंचांगp = 0;
+static int bme680_read_humid(struct bme680_data *data,
+			     int *val, int *val2)
+{
+	struct device *dev = regmap_get_device(data->regmap);
+	int ret;
+	__be16 tmp = 0;
 	s32 adc_humidity;
 	u32 comp_humidity;
 
-	/* Read and compensate temperature to get a पढ़ोing of t_fine */
-	ret = bme680_पढ़ो_temp(data, शून्य);
-	अगर (ret < 0)
-		वापस ret;
+	/* Read and compensate temperature to get a reading of t_fine */
+	ret = bme680_read_temp(data, NULL);
+	if (ret < 0)
+		return ret;
 
-	ret = regmap_bulk_पढ़ो(data->regmap, BM6880_REG_HUMIDITY_MSB,
-			       &पंचांगp, माप(पंचांगp));
-	अगर (ret < 0) अणु
+	ret = regmap_bulk_read(data->regmap, BM6880_REG_HUMIDITY_MSB,
+			       &tmp, sizeof(tmp));
+	if (ret < 0) {
 		dev_err(dev, "failed to read humidity\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	adc_humidity = be16_to_cpu(पंचांगp);
-	अगर (adc_humidity == BME680_MEAS_SKIPPED) अणु
-		/* पढ़ोing was skipped */
+	adc_humidity = be16_to_cpu(tmp);
+	if (adc_humidity == BME680_MEAS_SKIPPED) {
+		/* reading was skipped */
 		dev_err(dev, "reading humidity skipped\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	comp_humidity = bme680_compensate_humid(data, adc_humidity);
 
 	*val = comp_humidity;
 	*val2 = 1000;
-	वापस IIO_VAL_FRACTIONAL;
-पूर्ण
+	return IIO_VAL_FRACTIONAL;
+}
 
-अटल पूर्णांक bme680_पढ़ो_gas(काष्ठा bme680_data *data,
-			   पूर्णांक *val)
-अणु
-	काष्ठा device *dev = regmap_get_device(data->regmap);
-	पूर्णांक ret;
-	__be16 पंचांगp = 0;
-	अचिन्हित पूर्णांक check;
+static int bme680_read_gas(struct bme680_data *data,
+			   int *val)
+{
+	struct device *dev = regmap_get_device(data->regmap);
+	int ret;
+	__be16 tmp = 0;
+	unsigned int check;
 	u16 adc_gas_res;
 	u8 gas_range;
 
 	/* Set heater settings */
 	ret = bme680_gas_config(data);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "failed to set gas config\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* set क्रमced mode to trigger measurement */
+	/* set forced mode to trigger measurement */
 	ret = bme680_set_mode(data, true);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	ret = regmap_पढ़ो(data->regmap, BME680_REG_MEAS_STAT_0, &check);
-	अगर (check & BME680_GAS_MEAS_BIT) अणु
+	ret = regmap_read(data->regmap, BME680_REG_MEAS_STAT_0, &check);
+	if (check & BME680_GAS_MEAS_BIT) {
 		dev_err(dev, "gas measurement incomplete\n");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	ret = regmap_पढ़ो(data->regmap, BME680_REG_GAS_R_LSB, &check);
-	अगर (ret < 0) अणु
+	ret = regmap_read(data->regmap, BME680_REG_GAS_R_LSB, &check);
+	if (ret < 0) {
 		dev_err(dev, "failed to read gas_r_lsb register\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/*
-	 * occurs अगर either the gas heating duration was insuffient
+	 * occurs if either the gas heating duration was insuffient
 	 * to reach the target heater temperature or the target
-	 * heater temperature was too high क्रम the heater sink to
+	 * heater temperature was too high for the heater sink to
 	 * reach.
 	 */
-	अगर ((check & BME680_GAS_STAB_BIT) == 0) अणु
+	if ((check & BME680_GAS_STAB_BIT) == 0) {
 		dev_err(dev, "heater failed to reach the target temperature\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ret = regmap_bulk_पढ़ो(data->regmap, BME680_REG_GAS_MSB,
-			       &पंचांगp, माप(पंचांगp));
-	अगर (ret < 0) अणु
+	ret = regmap_bulk_read(data->regmap, BME680_REG_GAS_MSB,
+			       &tmp, sizeof(tmp));
+	if (ret < 0) {
 		dev_err(dev, "failed to read gas resistance\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	gas_range = check & BME680_GAS_RANGE_MASK;
-	adc_gas_res = be16_to_cpu(पंचांगp) >> BME680_ADC_GAS_RES_SHIFT;
+	adc_gas_res = be16_to_cpu(tmp) >> BME680_ADC_GAS_RES_SHIFT;
 
 	*val = bme680_compensate_gas(data, adc_gas_res, gas_range);
-	वापस IIO_VAL_INT;
-पूर्ण
+	return IIO_VAL_INT;
+}
 
-अटल पूर्णांक bme680_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
-			   काष्ठा iio_chan_spec स्थिर *chan,
-			   पूर्णांक *val, पूर्णांक *val2, दीर्घ mask)
-अणु
-	काष्ठा bme680_data *data = iio_priv(indio_dev);
+static int bme680_read_raw(struct iio_dev *indio_dev,
+			   struct iio_chan_spec const *chan,
+			   int *val, int *val2, long mask)
+{
+	struct bme680_data *data = iio_priv(indio_dev);
 
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_PROCESSED:
-		चयन (chan->type) अणु
-		हाल IIO_TEMP:
-			वापस bme680_पढ़ो_temp(data, val);
-		हाल IIO_PRESSURE:
-			वापस bme680_पढ़ो_press(data, val, val2);
-		हाल IIO_HUMIDITYRELATIVE:
-			वापस bme680_पढ़ो_humid(data, val, val2);
-		हाल IIO_RESISTANCE:
-			वापस bme680_पढ़ो_gas(data, val);
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-	हाल IIO_CHAN_INFO_OVERSAMPLING_RATIO:
-		चयन (chan->type) अणु
-		हाल IIO_TEMP:
+	switch (mask) {
+	case IIO_CHAN_INFO_PROCESSED:
+		switch (chan->type) {
+		case IIO_TEMP:
+			return bme680_read_temp(data, val);
+		case IIO_PRESSURE:
+			return bme680_read_press(data, val, val2);
+		case IIO_HUMIDITYRELATIVE:
+			return bme680_read_humid(data, val, val2);
+		case IIO_RESISTANCE:
+			return bme680_read_gas(data, val);
+		default:
+			return -EINVAL;
+		}
+	case IIO_CHAN_INFO_OVERSAMPLING_RATIO:
+		switch (chan->type) {
+		case IIO_TEMP:
 			*val = data->oversampling_temp;
-			वापस IIO_VAL_INT;
-		हाल IIO_PRESSURE:
+			return IIO_VAL_INT;
+		case IIO_PRESSURE:
 			*val = data->oversampling_press;
-			वापस IIO_VAL_INT;
-		हाल IIO_HUMIDITYRELATIVE:
+			return IIO_VAL_INT;
+		case IIO_HUMIDITYRELATIVE:
 			*val = data->oversampling_humid;
-			वापस IIO_VAL_INT;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+			return IIO_VAL_INT;
+		default:
+			return -EINVAL;
+		}
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल bool bme680_is_valid_oversampling(पूर्णांक rate)
-अणु
-	वापस (rate > 0 && rate <= 16 && is_घातer_of_2(rate));
-पूर्ण
+static bool bme680_is_valid_oversampling(int rate)
+{
+	return (rate > 0 && rate <= 16 && is_power_of_2(rate));
+}
 
-अटल पूर्णांक bme680_ग_लिखो_raw(काष्ठा iio_dev *indio_dev,
-			    काष्ठा iio_chan_spec स्थिर *chan,
-			    पूर्णांक val, पूर्णांक val2, दीर्घ mask)
-अणु
-	काष्ठा bme680_data *data = iio_priv(indio_dev);
+static int bme680_write_raw(struct iio_dev *indio_dev,
+			    struct iio_chan_spec const *chan,
+			    int val, int val2, long mask)
+{
+	struct bme680_data *data = iio_priv(indio_dev);
 
-	अगर (val2 != 0)
-		वापस -EINVAL;
+	if (val2 != 0)
+		return -EINVAL;
 
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_OVERSAMPLING_RATIO:
-	अणु
-		अगर (!bme680_is_valid_oversampling(val))
-			वापस -EINVAL;
+	switch (mask) {
+	case IIO_CHAN_INFO_OVERSAMPLING_RATIO:
+	{
+		if (!bme680_is_valid_oversampling(val))
+			return -EINVAL;
 
-		चयन (chan->type) अणु
-		हाल IIO_TEMP:
+		switch (chan->type) {
+		case IIO_TEMP:
 			data->oversampling_temp = val;
-			अवरोध;
-		हाल IIO_PRESSURE:
+			break;
+		case IIO_PRESSURE:
 			data->oversampling_press = val;
-			अवरोध;
-		हाल IIO_HUMIDITYRELATIVE:
+			break;
+		case IIO_HUMIDITYRELATIVE:
 			data->oversampling_humid = val;
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
+			break;
+		default:
+			return -EINVAL;
+		}
 
-		वापस bme680_chip_config(data);
-	पूर्ण
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+		return bme680_chip_config(data);
+	}
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल स्थिर अक्षर bme680_oversampling_ratio_show[] = "1 2 4 8 16";
+static const char bme680_oversampling_ratio_show[] = "1 2 4 8 16";
 
-अटल IIO_CONST_ATTR(oversampling_ratio_available,
+static IIO_CONST_ATTR(oversampling_ratio_available,
 		      bme680_oversampling_ratio_show);
 
-अटल काष्ठा attribute *bme680_attributes[] = अणु
-	&iio_स्थिर_attr_oversampling_ratio_available.dev_attr.attr,
-	शून्य,
-पूर्ण;
+static struct attribute *bme680_attributes[] = {
+	&iio_const_attr_oversampling_ratio_available.dev_attr.attr,
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group bme680_attribute_group = अणु
+static const struct attribute_group bme680_attribute_group = {
 	.attrs = bme680_attributes,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा iio_info bme680_info = अणु
-	.पढ़ो_raw = &bme680_पढ़ो_raw,
-	.ग_लिखो_raw = &bme680_ग_लिखो_raw,
+static const struct iio_info bme680_info = {
+	.read_raw = &bme680_read_raw,
+	.write_raw = &bme680_write_raw,
 	.attrs = &bme680_attribute_group,
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *bme680_match_acpi_device(काष्ठा device *dev)
-अणु
-	स्थिर काष्ठा acpi_device_id *id;
+static const char *bme680_match_acpi_device(struct device *dev)
+{
+	const struct acpi_device_id *id;
 
 	id = acpi_match_device(dev->driver->acpi_match_table, dev);
-	अगर (!id)
-		वापस शून्य;
+	if (!id)
+		return NULL;
 
-	वापस dev_name(dev);
-पूर्ण
+	return dev_name(dev);
+}
 
-पूर्णांक bme680_core_probe(काष्ठा device *dev, काष्ठा regmap *regmap,
-		      स्थिर अक्षर *name)
-अणु
-	काष्ठा iio_dev *indio_dev;
-	काष्ठा bme680_data *data;
-	अचिन्हित पूर्णांक val;
-	पूर्णांक ret;
+int bme680_core_probe(struct device *dev, struct regmap *regmap,
+		      const char *name)
+{
+	struct iio_dev *indio_dev;
+	struct bme680_data *data;
+	unsigned int val;
+	int ret;
 
-	ret = regmap_ग_लिखो(regmap, BME680_REG_SOFT_RESET,
+	ret = regmap_write(regmap, BME680_REG_SOFT_RESET,
 			   BME680_CMD_SOFTRESET);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "Failed to reset chip\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = regmap_पढ़ो(regmap, BME680_REG_CHIP_ID, &val);
-	अगर (ret < 0) अणु
+	ret = regmap_read(regmap, BME680_REG_CHIP_ID, &val);
+	if (ret < 0) {
 		dev_err(dev, "Error reading chip ID\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (val != BME680_CHIP_ID_VAL) अणु
+	if (val != BME680_CHIP_ID_VAL) {
 		dev_err(dev, "Wrong chip ID, got %x expected %x\n",
 				val, BME680_CHIP_ID_VAL);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	indio_dev = devm_iio_device_alloc(dev, माप(*data));
-	अगर (!indio_dev)
-		वापस -ENOMEM;
+	indio_dev = devm_iio_device_alloc(dev, sizeof(*data));
+	if (!indio_dev)
+		return -ENOMEM;
 
-	अगर (!name && ACPI_HANDLE(dev))
+	if (!name && ACPI_HANDLE(dev))
 		name = bme680_match_acpi_device(dev);
 
 	data = iio_priv(indio_dev);
@@ -928,9 +927,9 @@ EXPORT_SYMBOL(bme680_regmap_config);
 	indio_dev->channels = bme680_channels;
 	indio_dev->num_channels = ARRAY_SIZE(bme680_channels);
 	indio_dev->info = &bme680_info;
-	indio_dev->modes = INDIO_सूचीECT_MODE;
+	indio_dev->modes = INDIO_DIRECT_MODE;
 
-	/* शेष values क्रम the sensor */
+	/* default values for the sensor */
 	data->oversampling_humid = 2; /* 2X oversampling rate */
 	data->oversampling_press = 4; /* 4X oversampling rate */
 	data->oversampling_temp = 8;  /* 8X oversampling rate */
@@ -938,26 +937,26 @@ EXPORT_SYMBOL(bme680_regmap_config);
 	data->heater_dur = 150;  /* milliseconds */
 
 	ret = bme680_chip_config(data);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "failed to set chip_config data\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = bme680_gas_config(data);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "failed to set gas config data\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = bme680_पढ़ो_calib(data, &data->bme680);
-	अगर (ret < 0) अणु
+	ret = bme680_read_calib(data, &data->bme680);
+	if (ret < 0) {
 		dev_err(dev,
 			"failed to read calibration coefficients at probe\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस devm_iio_device_रेजिस्टर(dev, indio_dev);
-पूर्ण
+	return devm_iio_device_register(dev, indio_dev);
+}
 EXPORT_SYMBOL_GPL(bme680_core_probe);
 
 MODULE_AUTHOR("Himanshu Jha <himanshujha199640@gmail.com>");

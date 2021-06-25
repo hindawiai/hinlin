@@ -1,125 +1,124 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2020 Cloudflare
 /*
- * Tests क्रम sockmap/sockhash holding kTLS sockets.
+ * Tests for sockmap/sockhash holding kTLS sockets.
  */
 
-#समावेश "test_progs.h"
+#include "test_progs.h"
 
-#घोषणा MAX_TEST_NAME 80
-#घोषणा TCP_ULP 31
+#define MAX_TEST_NAME 80
+#define TCP_ULP 31
 
-अटल पूर्णांक tcp_server(पूर्णांक family)
-अणु
-	पूर्णांक err, s;
+static int tcp_server(int family)
+{
+	int err, s;
 
 	s = socket(family, SOCK_STREAM, 0);
-	अगर (CHECK_FAIL(s == -1)) अणु
-		लिखो_त्रुटि("socket");
-		वापस -1;
-	पूर्ण
+	if (CHECK_FAIL(s == -1)) {
+		perror("socket");
+		return -1;
+	}
 
 	err = listen(s, SOMAXCONN);
-	अगर (CHECK_FAIL(err)) अणु
-		लिखो_त्रुटि("listen");
-		वापस -1;
-	पूर्ण
+	if (CHECK_FAIL(err)) {
+		perror("listen");
+		return -1;
+	}
 
-	वापस s;
-पूर्ण
+	return s;
+}
 
-अटल पूर्णांक disconnect(पूर्णांक fd)
-अणु
-	काष्ठा sockaddr unspec = अणु AF_UNSPEC पूर्ण;
+static int disconnect(int fd)
+{
+	struct sockaddr unspec = { AF_UNSPEC };
 
-	वापस connect(fd, &unspec, माप(unspec));
-पूर्ण
+	return connect(fd, &unspec, sizeof(unspec));
+}
 
 /* Disconnect (unhash) a kTLS socket after removing it from sockmap. */
-अटल व्योम test_sockmap_ktls_disconnect_after_delete(पूर्णांक family, पूर्णांक map)
-अणु
-	काष्ठा sockaddr_storage addr = अणु0पूर्ण;
-	socklen_t len = माप(addr);
-	पूर्णांक err, cli, srv, zero = 0;
+static void test_sockmap_ktls_disconnect_after_delete(int family, int map)
+{
+	struct sockaddr_storage addr = {0};
+	socklen_t len = sizeof(addr);
+	int err, cli, srv, zero = 0;
 
 	srv = tcp_server(family);
-	अगर (srv == -1)
-		वापस;
+	if (srv == -1)
+		return;
 
-	err = माला_लोockname(srv, (काष्ठा sockaddr *)&addr, &len);
-	अगर (CHECK_FAIL(err)) अणु
-		लिखो_त्रुटि("getsockopt");
-		जाओ बंद_srv;
-	पूर्ण
+	err = getsockname(srv, (struct sockaddr *)&addr, &len);
+	if (CHECK_FAIL(err)) {
+		perror("getsockopt");
+		goto close_srv;
+	}
 
 	cli = socket(family, SOCK_STREAM, 0);
-	अगर (CHECK_FAIL(cli == -1)) अणु
-		लिखो_त्रुटि("socket");
-		जाओ बंद_srv;
-	पूर्ण
+	if (CHECK_FAIL(cli == -1)) {
+		perror("socket");
+		goto close_srv;
+	}
 
-	err = connect(cli, (काष्ठा sockaddr *)&addr, len);
-	अगर (CHECK_FAIL(err)) अणु
-		लिखो_त्रुटि("connect");
-		जाओ बंद_cli;
-	पूर्ण
+	err = connect(cli, (struct sockaddr *)&addr, len);
+	if (CHECK_FAIL(err)) {
+		perror("connect");
+		goto close_cli;
+	}
 
 	err = bpf_map_update_elem(map, &zero, &cli, 0);
-	अगर (CHECK_FAIL(err)) अणु
-		लिखो_त्रुटि("bpf_map_update_elem");
-		जाओ बंद_cli;
-	पूर्ण
+	if (CHECK_FAIL(err)) {
+		perror("bpf_map_update_elem");
+		goto close_cli;
+	}
 
-	err = setsockopt(cli, IPPROTO_TCP, TCP_ULP, "tls", म_माप("tls"));
-	अगर (CHECK_FAIL(err)) अणु
-		लिखो_त्रुटि("setsockopt(TCP_ULP)");
-		जाओ बंद_cli;
-	पूर्ण
+	err = setsockopt(cli, IPPROTO_TCP, TCP_ULP, "tls", strlen("tls"));
+	if (CHECK_FAIL(err)) {
+		perror("setsockopt(TCP_ULP)");
+		goto close_cli;
+	}
 
 	err = bpf_map_delete_elem(map, &zero);
-	अगर (CHECK_FAIL(err)) अणु
-		लिखो_त्रुटि("bpf_map_delete_elem");
-		जाओ बंद_cli;
-	पूर्ण
+	if (CHECK_FAIL(err)) {
+		perror("bpf_map_delete_elem");
+		goto close_cli;
+	}
 
 	err = disconnect(cli);
-	अगर (CHECK_FAIL(err))
-		लिखो_त्रुटि("disconnect");
+	if (CHECK_FAIL(err))
+		perror("disconnect");
 
-बंद_cli:
-	बंद(cli);
-बंद_srv:
-	बंद(srv);
-पूर्ण
+close_cli:
+	close(cli);
+close_srv:
+	close(srv);
+}
 
-अटल व्योम run_tests(पूर्णांक family, क्रमागत bpf_map_type map_type)
-अणु
-	अक्षर test_name[MAX_TEST_NAME];
-	पूर्णांक map;
+static void run_tests(int family, enum bpf_map_type map_type)
+{
+	char test_name[MAX_TEST_NAME];
+	int map;
 
-	map = bpf_create_map(map_type, माप(पूर्णांक), माप(पूर्णांक), 1, 0);
-	अगर (CHECK_FAIL(map == -1)) अणु
-		लिखो_त्रुटि("bpf_map_create");
-		वापस;
-	पूर्ण
+	map = bpf_create_map(map_type, sizeof(int), sizeof(int), 1, 0);
+	if (CHECK_FAIL(map == -1)) {
+		perror("bpf_map_create");
+		return;
+	}
 
-	snम_लिखो(test_name, MAX_TEST_NAME,
+	snprintf(test_name, MAX_TEST_NAME,
 		 "sockmap_ktls disconnect_after_delete %s %s",
 		 family == AF_INET ? "IPv4" : "IPv6",
 		 map_type == BPF_MAP_TYPE_SOCKMAP ? "SOCKMAP" : "SOCKHASH");
-	अगर (!test__start_subtest(test_name))
-		वापस;
+	if (!test__start_subtest(test_name))
+		return;
 
 	test_sockmap_ktls_disconnect_after_delete(family, map);
 
-	बंद(map);
-पूर्ण
+	close(map);
+}
 
-व्योम test_sockmap_ktls(व्योम)
-अणु
+void test_sockmap_ktls(void)
+{
 	run_tests(AF_INET, BPF_MAP_TYPE_SOCKMAP);
 	run_tests(AF_INET, BPF_MAP_TYPE_SOCKHASH);
 	run_tests(AF_INET6, BPF_MAP_TYPE_SOCKMAP);
 	run_tests(AF_INET6, BPF_MAP_TYPE_SOCKHASH);
-पूर्ण
+}

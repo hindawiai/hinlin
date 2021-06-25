@@ -1,24 +1,23 @@
-<शैली गुरु>
-/* मुख्य.c - (क्रमmerly known as dldwd_cs.c, orinoco_cs.c and orinoco.c)
+/* main.c - (formerly known as dldwd_cs.c, orinoco_cs.c and orinoco.c)
  *
- * A driver क्रम Hermes or Prism 2 chipset based PCMCIA wireless
+ * A driver for Hermes or Prism 2 chipset based PCMCIA wireless
  * adaptors, with Lucent/Agere, Intersil or Symbol firmware.
  *
- * Current मुख्यtainers (as of 29 September 2003) are:
+ * Current maintainers (as of 29 September 2003) are:
  *	Pavel Roskin <proski AT gnu.org>
  * and	David Gibson <hermes AT gibson.dropbear.id.au>
  *
  * (C) Copyright David Gibson, IBM Corporation 2001-2003.
  * Copyright (C) 2000 David Gibson, Linuxcare Australia.
  *	With some help from :
- * Copyright (C) 2001 Jean Tourrilhes, HP Lअसल
+ * Copyright (C) 2001 Jean Tourrilhes, HP Labs
  * Copyright (C) 2001 Benjamin Herrenschmidt
  *
  * Based on dummy_cs.c 1.27 2000/06/12 21:27:25
  *
  * Portions based on wvlan_cs.c 1.0.6, Copyright Andreas Neuhaus <andy
- * AT fasta.fh-करोrपंचांगund.de>
- *      http://www.stud.fh-करोrपंचांगund.de/~andy/wvlan/
+ * AT fasta.fh-dortmund.de>
+ *      http://www.stud.fh-dortmund.de/~andy/wvlan/
  *
  * The contents of this file are subject to the Mozilla Public License
  * Version 1.1 (the "License"); you may not use this file except in
@@ -27,22 +26,22 @@
  *
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See
- * the License क्रम the specअगरic language governing rights and
+ * the License for the specific language governing rights and
  * limitations under the License.
  *
  * The initial developer of the original code is David A. Hinds
- * <dahinds AT users.sourceक्रमge.net>.  Portions created by David
+ * <dahinds AT users.sourceforge.net>.  Portions created by David
  * A. Hinds are Copyright (C) 1999 David A. Hinds.  All Rights
  * Reserved.
  *
  * Alternatively, the contents of this file may be used under the
  * terms of the GNU General Public License version 2 (the "GPL"), in
- * which हाल the provisions of the GPL are applicable instead of the
+ * which case the provisions of the GPL are applicable instead of the
  * above.  If you wish to allow the use of your version of this file
  * only under the terms of the GPL and not to allow others to use your
  * version of this file under the MPL, indicate your decision by
  * deleting the provisions above and replace them with the notice and
- * other provisions required by the GPL.  If you करो not delete the
+ * other provisions required by the GPL.  If you do not delete the
  * provisions above, a recipient may use your version of this file
  * under either the MPL or the GPL.  */
 
@@ -62,50 +61,50 @@
  * The basic principle is that everything is serialized through a
  * single spinlock, priv->lock.  The lock is used in user, bh and irq
  * context, so when taken outside hardirq context it should always be
- * taken with पूर्णांकerrupts disabled.  The lock protects both the
- * hardware and the काष्ठा orinoco_निजी.
+ * taken with interrupts disabled.  The lock protects both the
+ * hardware and the struct orinoco_private.
  *
  * Another flag, priv->hw_unavailable indicates that the hardware is
- * unavailable क्रम an extended period of समय (e.g. suspended, or in
- * the middle of a hard reset).  This flag is रक्षित by the
+ * unavailable for an extended period of time (e.g. suspended, or in
+ * the middle of a hard reset).  This flag is protected by the
  * spinlock.  All code which touches the hardware should check the
- * flag after taking the lock, and अगर it is set, give up on whatever
- * they are करोing and drop the lock again.  The orinoco_lock()
- * function handles this (it unlocks and वापसs -EBUSY अगर
+ * flag after taking the lock, and if it is set, give up on whatever
+ * they are doing and drop the lock again.  The orinoco_lock()
+ * function handles this (it unlocks and returns -EBUSY if
  * hw_unavailable is non-zero).
  */
 
-#घोषणा DRIVER_NAME "orinoco"
+#define DRIVER_NAME "orinoco"
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/init.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/device.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/suspend.h>
-#समावेश <linux/अगर_arp.h>
-#समावेश <linux/wireless.h>
-#समावेश <linux/ieee80211.h>
-#समावेश <net/iw_handler.h>
-#समावेश <net/cfg80211.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/init.h>
+#include <linux/delay.h>
+#include <linux/device.h>
+#include <linux/netdevice.h>
+#include <linux/etherdevice.h>
+#include <linux/suspend.h>
+#include <linux/if_arp.h>
+#include <linux/wireless.h>
+#include <linux/ieee80211.h>
+#include <net/iw_handler.h>
+#include <net/cfg80211.h>
 
-#समावेश "hermes_rid.h"
-#समावेश "hermes_dld.h"
-#समावेश "hw.h"
-#समावेश "scan.h"
-#समावेश "mic.h"
-#समावेश "fw.h"
-#समावेश "wext.h"
-#समावेश "cfg.h"
-#समावेश "main.h"
+#include "hermes_rid.h"
+#include "hermes_dld.h"
+#include "hw.h"
+#include "scan.h"
+#include "mic.h"
+#include "fw.h"
+#include "wext.h"
+#include "cfg.h"
+#include "main.h"
 
-#समावेश "orinoco.h"
+#include "orinoco.h"
 
 /********************************************************************/
-/* Module inक्रमmation                                               */
+/* Module information                                               */
 /********************************************************************/
 
 MODULE_AUTHOR("Pavel Roskin <proski@gnu.org> & "
@@ -115,50 +114,50 @@ MODULE_DESCRIPTION("Driver for Lucent Orinoco, Prism II based "
 MODULE_LICENSE("Dual MPL/GPL");
 
 /* Level of debugging. Used in the macros in orinoco.h */
-#अगर_घोषित ORINOCO_DEBUG
-पूर्णांक orinoco_debug = ORINOCO_DEBUG;
+#ifdef ORINOCO_DEBUG
+int orinoco_debug = ORINOCO_DEBUG;
 EXPORT_SYMBOL(orinoco_debug);
-module_param(orinoco_debug, पूर्णांक, 0644);
+module_param(orinoco_debug, int, 0644);
 MODULE_PARM_DESC(orinoco_debug, "Debug level");
-#पूर्ण_अगर
+#endif
 
-अटल bool suppress_linkstatus; /* = 0 */
+static bool suppress_linkstatus; /* = 0 */
 module_param(suppress_linkstatus, bool, 0644);
 MODULE_PARM_DESC(suppress_linkstatus, "Don't log link status changes");
 
-अटल पूर्णांक ignore_disconnect; /* = 0 */
-module_param(ignore_disconnect, पूर्णांक, 0644);
+static int ignore_disconnect; /* = 0 */
+module_param(ignore_disconnect, int, 0644);
 MODULE_PARM_DESC(ignore_disconnect,
 		 "Don't report lost link to the network layer");
 
-पूर्णांक क्रमce_monitor; /* = 0 */
-module_param(क्रमce_monitor, पूर्णांक, 0644);
-MODULE_PARM_DESC(क्रमce_monitor, "Allow monitor mode for all firmware versions");
+int force_monitor; /* = 0 */
+module_param(force_monitor, int, 0644);
+MODULE_PARM_DESC(force_monitor, "Allow monitor mode for all firmware versions");
 
 /********************************************************************/
-/* Internal स्थिरants                                               */
+/* Internal constants                                               */
 /********************************************************************/
 
-/* 802.2 LLC/SNAP header used क्रम Ethernet encapsulation over 802.11 */
-अटल स्थिर u8 encaps_hdr[] = अणु0xaa, 0xaa, 0x03, 0x00, 0x00, 0x00पूर्ण;
-#घोषणा ENCAPS_OVERHEAD		(माप(encaps_hdr) + 2)
+/* 802.2 LLC/SNAP header used for Ethernet encapsulation over 802.11 */
+static const u8 encaps_hdr[] = {0xaa, 0xaa, 0x03, 0x00, 0x00, 0x00};
+#define ENCAPS_OVERHEAD		(sizeof(encaps_hdr) + 2)
 
-#घोषणा ORINOCO_MIN_MTU		256
-#घोषणा ORINOCO_MAX_MTU		(IEEE80211_MAX_DATA_LEN - ENCAPS_OVERHEAD)
+#define ORINOCO_MIN_MTU		256
+#define ORINOCO_MAX_MTU		(IEEE80211_MAX_DATA_LEN - ENCAPS_OVERHEAD)
 
-#घोषणा MAX_IRQLOOPS_PER_IRQ	10
-#घोषणा MAX_IRQLOOPS_PER_JIFFY	(20000 / HZ)	/* Based on a guestimate of
+#define MAX_IRQLOOPS_PER_IRQ	10
+#define MAX_IRQLOOPS_PER_JIFFY	(20000 / HZ)	/* Based on a guestimate of
 						 * how many events the
 						 * device could
 						 * legitimately generate */
 
-#घोषणा DUMMY_FID		0xFFFF
+#define DUMMY_FID		0xFFFF
 
-/*#घोषणा MAX_MULTICAST(priv)	(priv->firmware_type == FIRMWARE_TYPE_AGERE ? \
+/*#define MAX_MULTICAST(priv)	(priv->firmware_type == FIRMWARE_TYPE_AGERE ? \
   HERMES_MAX_MULTICAST : 0)*/
-#घोषणा MAX_MULTICAST(priv)	(HERMES_MAX_MULTICAST)
+#define MAX_MULTICAST(priv)	(HERMES_MAX_MULTICAST)
 
-#घोषणा ORINOCO_INTEN		(HERMES_EV_RX | HERMES_EV_ALLOC \
+#define ORINOCO_INTEN		(HERMES_EV_RX | HERMES_EV_ALLOC \
 				 | HERMES_EV_TX | HERMES_EV_TXEXC \
 				 | HERMES_EV_WTERR | HERMES_EV_INFO \
 				 | HERMES_EV_INFDROP)
@@ -168,20 +167,20 @@ MODULE_PARM_DESC(क्रमce_monitor, "Allow monitor mode for all firmware ve
 /********************************************************************/
 
 /* Beginning of the Tx descriptor, used in TxExc handling */
-काष्ठा hermes_txexc_data अणु
-	काष्ठा hermes_tx_descriptor desc;
+struct hermes_txexc_data {
+	struct hermes_tx_descriptor desc;
 	__le16 frame_ctl;
 	__le16 duration_id;
 	u8 addr1[ETH_ALEN];
-पूर्ण __packed;
+} __packed;
 
 /* Rx frame header except compatibility 802.3 header */
-काष्ठा hermes_rx_descriptor अणु
+struct hermes_rx_descriptor {
 	/* Control */
 	__le16 status;
-	__le32 समय;
+	__le32 time;
 	u8 silence;
-	u8 संकेत;
+	u8 signal;
 	u8 rate;
 	u8 rxflow;
 	__le32 reserved;
@@ -197,133 +196,133 @@ MODULE_PARM_DESC(क्रमce_monitor, "Allow monitor mode for all firmware ve
 
 	/* Data length */
 	__le16 data_len;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा orinoco_rx_data अणु
-	काष्ठा hermes_rx_descriptor *desc;
-	काष्ठा sk_buff *skb;
-	काष्ठा list_head list;
-पूर्ण;
+struct orinoco_rx_data {
+	struct hermes_rx_descriptor *desc;
+	struct sk_buff *skb;
+	struct list_head list;
+};
 
-काष्ठा orinoco_scan_data अणु
-	व्योम *buf;
-	माप_प्रकार len;
-	पूर्णांक type;
-	काष्ठा list_head list;
-पूर्ण;
+struct orinoco_scan_data {
+	void *buf;
+	size_t len;
+	int type;
+	struct list_head list;
+};
 
 /********************************************************************/
 /* Function prototypes                                              */
 /********************************************************************/
 
-अटल पूर्णांक __orinoco_set_multicast_list(काष्ठा net_device *dev);
-अटल पूर्णांक __orinoco_up(काष्ठा orinoco_निजी *priv);
-अटल पूर्णांक __orinoco_करोwn(काष्ठा orinoco_निजी *priv);
-अटल पूर्णांक __orinoco_commit(काष्ठा orinoco_निजी *priv);
+static int __orinoco_set_multicast_list(struct net_device *dev);
+static int __orinoco_up(struct orinoco_private *priv);
+static int __orinoco_down(struct orinoco_private *priv);
+static int __orinoco_commit(struct orinoco_private *priv);
 
 /********************************************************************/
 /* Internal helper functions                                        */
 /********************************************************************/
 
-व्योम set_port_type(काष्ठा orinoco_निजी *priv)
-अणु
-	चयन (priv->iw_mode) अणु
-	हाल NL80211_IFTYPE_STATION:
+void set_port_type(struct orinoco_private *priv)
+{
+	switch (priv->iw_mode) {
+	case NL80211_IFTYPE_STATION:
 		priv->port_type = 1;
 		priv->createibss = 0;
-		अवरोध;
-	हाल NL80211_IFTYPE_ADHOC:
-		अगर (priv->prefer_port3) अणु
+		break;
+	case NL80211_IFTYPE_ADHOC:
+		if (priv->prefer_port3) {
 			priv->port_type = 3;
 			priv->createibss = 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			priv->port_type = priv->ibss_port;
 			priv->createibss = 1;
-		पूर्ण
-		अवरोध;
-	हाल NL80211_IFTYPE_MONITOR:
+		}
+		break;
+	case NL80211_IFTYPE_MONITOR:
 		priv->port_type = 3;
 		priv->createibss = 0;
-		अवरोध;
-	शेष:
-		prपूर्णांकk(KERN_ERR "%s: Invalid priv->iw_mode in set_port_type()\n",
+		break;
+	default:
+		printk(KERN_ERR "%s: Invalid priv->iw_mode in set_port_type()\n",
 		       priv->ndev->name);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /********************************************************************/
 /* Device methods                                                   */
 /********************************************************************/
 
-पूर्णांक orinoco_खोलो(काष्ठा net_device *dev)
-अणु
-	काष्ठा orinoco_निजी *priv = ndev_priv(dev);
-	अचिन्हित दीर्घ flags;
-	पूर्णांक err;
+int orinoco_open(struct net_device *dev)
+{
+	struct orinoco_private *priv = ndev_priv(dev);
+	unsigned long flags;
+	int err;
 
-	अगर (orinoco_lock(priv, &flags) != 0)
-		वापस -EBUSY;
+	if (orinoco_lock(priv, &flags) != 0)
+		return -EBUSY;
 
 	err = __orinoco_up(priv);
 
-	अगर (!err)
-		priv->खोलो = 1;
+	if (!err)
+		priv->open = 1;
 
 	orinoco_unlock(priv, &flags);
 
-	वापस err;
-पूर्ण
-EXPORT_SYMBOL(orinoco_खोलो);
+	return err;
+}
+EXPORT_SYMBOL(orinoco_open);
 
-पूर्णांक orinoco_stop(काष्ठा net_device *dev)
-अणु
-	काष्ठा orinoco_निजी *priv = ndev_priv(dev);
-	पूर्णांक err = 0;
+int orinoco_stop(struct net_device *dev)
+{
+	struct orinoco_private *priv = ndev_priv(dev);
+	int err = 0;
 
 	/* We mustn't use orinoco_lock() here, because we need to be
-	   able to बंद the पूर्णांकerface even अगर hw_unavailable is set
+	   able to close the interface even if hw_unavailable is set
 	   (e.g. as we're released after a PC Card removal) */
 	orinoco_lock_irq(priv);
 
-	priv->खोलो = 0;
+	priv->open = 0;
 
-	err = __orinoco_करोwn(priv);
+	err = __orinoco_down(priv);
 
 	orinoco_unlock_irq(priv);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_SYMBOL(orinoco_stop);
 
-व्योम orinoco_set_multicast_list(काष्ठा net_device *dev)
-अणु
-	काष्ठा orinoco_निजी *priv = ndev_priv(dev);
-	अचिन्हित दीर्घ flags;
+void orinoco_set_multicast_list(struct net_device *dev)
+{
+	struct orinoco_private *priv = ndev_priv(dev);
+	unsigned long flags;
 
-	अगर (orinoco_lock(priv, &flags) != 0) अणु
-		prपूर्णांकk(KERN_DEBUG "%s: orinoco_set_multicast_list() "
+	if (orinoco_lock(priv, &flags) != 0) {
+		printk(KERN_DEBUG "%s: orinoco_set_multicast_list() "
 		       "called when hw_unavailable\n", dev->name);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	__orinoco_set_multicast_list(dev);
 	orinoco_unlock(priv, &flags);
-पूर्ण
+}
 EXPORT_SYMBOL(orinoco_set_multicast_list);
 
-पूर्णांक orinoco_change_mtu(काष्ठा net_device *dev, पूर्णांक new_mtu)
-अणु
-	काष्ठा orinoco_निजी *priv = ndev_priv(dev);
+int orinoco_change_mtu(struct net_device *dev, int new_mtu)
+{
+	struct orinoco_private *priv = ndev_priv(dev);
 
 	/* MTU + encapsulation + header length */
-	अगर ((new_mtu + ENCAPS_OVERHEAD + माप(काष्ठा ieee80211_hdr)) >
+	if ((new_mtu + ENCAPS_OVERHEAD + sizeof(struct ieee80211_hdr)) >
 	     (priv->nicbuf_size - ETH_HLEN))
-		वापस -EINVAL;
+		return -EINVAL;
 
 	dev->mtu = new_mtu;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(orinoco_change_mtu);
 
 /********************************************************************/
@@ -331,7 +330,7 @@ EXPORT_SYMBOL(orinoco_change_mtu);
 /********************************************************************/
 
 /* Add encapsulation and MIC to the existing SKB.
- * The मुख्य xmit routine will then send the whole lot to the card.
+ * The main xmit routine will then send the whole lot to the card.
  * Need 8 bytes headroom
  * Need 8 bytes tailroom
  *
@@ -352,206 +351,206 @@ EXPORT_SYMBOL(orinoco_change_mtu);
  *                          MIC (8 bytes)
  *                          --------
  *
- * वापसs 0 on success, -ENOMEM on error.
+ * returns 0 on success, -ENOMEM on error.
  */
-पूर्णांक orinoco_process_xmit_skb(काष्ठा sk_buff *skb,
-			     काष्ठा net_device *dev,
-			     काष्ठा orinoco_निजी *priv,
-			     पूर्णांक *tx_control,
+int orinoco_process_xmit_skb(struct sk_buff *skb,
+			     struct net_device *dev,
+			     struct orinoco_private *priv,
+			     int *tx_control,
 			     u8 *mic_buf)
-अणु
-	काष्ठा orinoco_tkip_key *key;
-	काष्ठा ethhdr *eh;
-	पूर्णांक करो_mic;
+{
+	struct orinoco_tkip_key *key;
+	struct ethhdr *eh;
+	int do_mic;
 
-	key = (काष्ठा orinoco_tkip_key *) priv->keys[priv->tx_key].key;
+	key = (struct orinoco_tkip_key *) priv->keys[priv->tx_key].key;
 
-	करो_mic = ((priv->encode_alg == ORINOCO_ALG_TKIP) &&
-		  (key != शून्य));
+	do_mic = ((priv->encode_alg == ORINOCO_ALG_TKIP) &&
+		  (key != NULL));
 
-	अगर (करो_mic)
+	if (do_mic)
 		*tx_control |= (priv->tx_key << HERMES_MIC_KEY_ID_SHIFT) |
 			HERMES_TXCTRL_MIC;
 
-	eh = (काष्ठा ethhdr *)skb->data;
+	eh = (struct ethhdr *)skb->data;
 
 	/* Encapsulate Ethernet-II frames */
-	अगर (ntohs(eh->h_proto) > ETH_DATA_LEN) अणु /* Ethernet-II frame */
-		काष्ठा header_काष्ठा अणु
-			काष्ठा ethhdr eth;	/* 802.3 header */
+	if (ntohs(eh->h_proto) > ETH_DATA_LEN) { /* Ethernet-II frame */
+		struct header_struct {
+			struct ethhdr eth;	/* 802.3 header */
 			u8 encap[6];		/* 802.2 header */
-		पूर्ण __packed hdr;
-		पूर्णांक len = skb->len + माप(encaps_hdr) - (2 * ETH_ALEN);
+		} __packed hdr;
+		int len = skb->len + sizeof(encaps_hdr) - (2 * ETH_ALEN);
 
-		अगर (skb_headroom(skb) < ENCAPS_OVERHEAD) अणु
-			अगर (net_ratelimit())
-				prपूर्णांकk(KERN_ERR
+		if (skb_headroom(skb) < ENCAPS_OVERHEAD) {
+			if (net_ratelimit())
+				printk(KERN_ERR
 				       "%s: Not enough headroom for 802.2 headers %d\n",
 				       dev->name, skb_headroom(skb));
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 
 		/* Fill in new header */
-		स_नकल(&hdr.eth, eh, 2 * ETH_ALEN);
+		memcpy(&hdr.eth, eh, 2 * ETH_ALEN);
 		hdr.eth.h_proto = htons(len);
-		स_नकल(hdr.encap, encaps_hdr, माप(encaps_hdr));
+		memcpy(hdr.encap, encaps_hdr, sizeof(encaps_hdr));
 
-		/* Make room क्रम the new header, and copy it in */
+		/* Make room for the new header, and copy it in */
 		eh = skb_push(skb, ENCAPS_OVERHEAD);
-		स_नकल(eh, &hdr, माप(hdr));
-	पूर्ण
+		memcpy(eh, &hdr, sizeof(hdr));
+	}
 
 	/* Calculate Michael MIC */
-	अगर (करो_mic) अणु
-		माप_प्रकार len = skb->len - ETH_HLEN;
+	if (do_mic) {
+		size_t len = skb->len - ETH_HLEN;
 		u8 *mic = &mic_buf[0];
 
-		/* Have to ग_लिखो to an even address, so copy the spare
+		/* Have to write to an even address, so copy the spare
 		 * byte across */
-		अगर (skb->len % 2) अणु
+		if (skb->len % 2) {
 			*mic = skb->data[skb->len - 1];
 			mic++;
-		पूर्ण
+		}
 
 		orinoco_mic(priv->tx_tfm_mic, key->tx_mic,
 			    eh->h_dest, eh->h_source, 0 /* priority */,
 			    skb->data + ETH_HLEN,
 			    len, mic);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(orinoco_process_xmit_skb);
 
-अटल netdev_tx_t orinoco_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
-अणु
-	काष्ठा orinoco_निजी *priv = ndev_priv(dev);
-	काष्ठा net_device_stats *stats = &dev->stats;
-	काष्ठा hermes *hw = &priv->hw;
-	पूर्णांक err = 0;
+static netdev_tx_t orinoco_xmit(struct sk_buff *skb, struct net_device *dev)
+{
+	struct orinoco_private *priv = ndev_priv(dev);
+	struct net_device_stats *stats = &dev->stats;
+	struct hermes *hw = &priv->hw;
+	int err = 0;
 	u16 txfid = priv->txfid;
-	पूर्णांक tx_control;
-	अचिन्हित दीर्घ flags;
+	int tx_control;
+	unsigned long flags;
 	u8 mic_buf[MICHAEL_MIC_LEN + 1];
 
-	अगर (!netअगर_running(dev)) अणु
-		prपूर्णांकk(KERN_ERR "%s: Tx on stopped device!\n",
+	if (!netif_running(dev)) {
+		printk(KERN_ERR "%s: Tx on stopped device!\n",
 		       dev->name);
-		वापस NETDEV_TX_BUSY;
-	पूर्ण
+		return NETDEV_TX_BUSY;
+	}
 
-	अगर (netअगर_queue_stopped(dev)) अणु
-		prपूर्णांकk(KERN_DEBUG "%s: Tx while transmitter busy!\n",
+	if (netif_queue_stopped(dev)) {
+		printk(KERN_DEBUG "%s: Tx while transmitter busy!\n",
 		       dev->name);
-		वापस NETDEV_TX_BUSY;
-	पूर्ण
+		return NETDEV_TX_BUSY;
+	}
 
-	अगर (orinoco_lock(priv, &flags) != 0) अणु
-		prपूर्णांकk(KERN_ERR "%s: orinoco_xmit() called while hw_unavailable\n",
+	if (orinoco_lock(priv, &flags) != 0) {
+		printk(KERN_ERR "%s: orinoco_xmit() called while hw_unavailable\n",
 		       dev->name);
-		वापस NETDEV_TX_BUSY;
-	पूर्ण
+		return NETDEV_TX_BUSY;
+	}
 
-	अगर (!netअगर_carrier_ok(dev) ||
-	    (priv->iw_mode == NL80211_IFTYPE_MONITOR)) अणु
+	if (!netif_carrier_ok(dev) ||
+	    (priv->iw_mode == NL80211_IFTYPE_MONITOR)) {
 		/* Oops, the firmware hasn't established a connection,
 		   silently drop the packet (this seems to be the
 		   safest approach). */
-		जाओ drop;
-	पूर्ण
+		goto drop;
+	}
 
 	/* Check packet length */
-	अगर (skb->len < ETH_HLEN)
-		जाओ drop;
+	if (skb->len < ETH_HLEN)
+		goto drop;
 
 	tx_control = HERMES_TXCTRL_TX_OK | HERMES_TXCTRL_TX_EX;
 
 	err = orinoco_process_xmit_skb(skb, dev, priv, &tx_control,
 				       &mic_buf[0]);
-	अगर (err)
-		जाओ drop;
+	if (err)
+		goto drop;
 
-	अगर (priv->has_alt_txcntl) अणु
+	if (priv->has_alt_txcntl) {
 		/* WPA enabled firmwares have tx_cntl at the end of
-		 * the 802.11 header.  So ग_लिखो zeroed descriptor and
-		 * 802.11 header at the same समय
+		 * the 802.11 header.  So write zeroed descriptor and
+		 * 802.11 header at the same time
 		 */
-		अक्षर desc[HERMES_802_3_OFFSET];
+		char desc[HERMES_802_3_OFFSET];
 		__le16 *txcntl = (__le16 *) &desc[HERMES_TXCNTL2_OFFSET];
 
-		स_रखो(&desc, 0, माप(desc));
+		memset(&desc, 0, sizeof(desc));
 
 		*txcntl = cpu_to_le16(tx_control);
-		err = hw->ops->bap_pग_लिखो(hw, USER_BAP, &desc, माप(desc),
+		err = hw->ops->bap_pwrite(hw, USER_BAP, &desc, sizeof(desc),
 					  txfid, 0);
-		अगर (err) अणु
-			अगर (net_ratelimit())
-				prपूर्णांकk(KERN_ERR "%s: Error %d writing Tx "
+		if (err) {
+			if (net_ratelimit())
+				printk(KERN_ERR "%s: Error %d writing Tx "
 				       "descriptor to BAP\n", dev->name, err);
-			जाओ busy;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		काष्ठा hermes_tx_descriptor desc;
+			goto busy;
+		}
+	} else {
+		struct hermes_tx_descriptor desc;
 
-		स_रखो(&desc, 0, माप(desc));
+		memset(&desc, 0, sizeof(desc));
 
 		desc.tx_control = cpu_to_le16(tx_control);
-		err = hw->ops->bap_pग_लिखो(hw, USER_BAP, &desc, माप(desc),
+		err = hw->ops->bap_pwrite(hw, USER_BAP, &desc, sizeof(desc),
 					  txfid, 0);
-		अगर (err) अणु
-			अगर (net_ratelimit())
-				prपूर्णांकk(KERN_ERR "%s: Error %d writing Tx "
+		if (err) {
+			if (net_ratelimit())
+				printk(KERN_ERR "%s: Error %d writing Tx "
 				       "descriptor to BAP\n", dev->name, err);
-			जाओ busy;
-		पूर्ण
+			goto busy;
+		}
 
 		/* Clear the 802.11 header and data length fields - some
 		 * firmwares (e.g. Lucent/Agere 8.xx) appear to get confused
-		 * अगर this isn't करोne. */
+		 * if this isn't done. */
 		hermes_clear_words(hw, HERMES_DATA0,
 				   HERMES_802_3_OFFSET - HERMES_802_11_OFFSET);
-	पूर्ण
+	}
 
-	err = hw->ops->bap_pग_लिखो(hw, USER_BAP, skb->data, skb->len,
+	err = hw->ops->bap_pwrite(hw, USER_BAP, skb->data, skb->len,
 				  txfid, HERMES_802_3_OFFSET);
-	अगर (err) अणु
-		prपूर्णांकk(KERN_ERR "%s: Error %d writing packet to BAP\n",
+	if (err) {
+		printk(KERN_ERR "%s: Error %d writing packet to BAP\n",
 		       dev->name, err);
-		जाओ busy;
-	पूर्ण
+		goto busy;
+	}
 
-	अगर (tx_control & HERMES_TXCTRL_MIC) अणु
-		माप_प्रकार offset = HERMES_802_3_OFFSET + skb->len;
-		माप_प्रकार len = MICHAEL_MIC_LEN;
+	if (tx_control & HERMES_TXCTRL_MIC) {
+		size_t offset = HERMES_802_3_OFFSET + skb->len;
+		size_t len = MICHAEL_MIC_LEN;
 
-		अगर (offset % 2) अणु
+		if (offset % 2) {
 			offset--;
 			len++;
-		पूर्ण
-		err = hw->ops->bap_pग_लिखो(hw, USER_BAP, &mic_buf[0], len,
+		}
+		err = hw->ops->bap_pwrite(hw, USER_BAP, &mic_buf[0], len,
 					  txfid, offset);
-		अगर (err) अणु
-			prपूर्णांकk(KERN_ERR "%s: Error %d writing MIC to BAP\n",
+		if (err) {
+			printk(KERN_ERR "%s: Error %d writing MIC to BAP\n",
 			       dev->name, err);
-			जाओ busy;
-		पूर्ण
-	पूर्ण
+			goto busy;
+		}
+	}
 
 	/* Finally, we actually initiate the send */
-	netअगर_stop_queue(dev);
+	netif_stop_queue(dev);
 
-	err = hw->ops->cmd_रुको(hw, HERMES_CMD_TX | HERMES_CMD_RECL,
-				txfid, शून्य);
-	अगर (err) अणु
-		netअगर_start_queue(dev);
-		अगर (net_ratelimit())
-			prपूर्णांकk(KERN_ERR "%s: Error %d transmitting packet\n",
+	err = hw->ops->cmd_wait(hw, HERMES_CMD_TX | HERMES_CMD_RECL,
+				txfid, NULL);
+	if (err) {
+		netif_start_queue(dev);
+		if (net_ratelimit())
+			printk(KERN_ERR "%s: Error %d transmitting packet\n",
 				dev->name, err);
-		जाओ busy;
-	पूर्ण
+		goto busy;
+	}
 
 	stats->tx_bytes += HERMES_802_3_OFFSET + skb->len;
-	जाओ ok;
+	goto ok;
 
  drop:
 	stats->tx_errors++;
@@ -559,76 +558,76 @@ EXPORT_SYMBOL(orinoco_process_xmit_skb);
 
  ok:
 	orinoco_unlock(priv, &flags);
-	dev_kमुक्त_skb(skb);
-	वापस NETDEV_TX_OK;
+	dev_kfree_skb(skb);
+	return NETDEV_TX_OK;
 
  busy:
-	अगर (err == -EIO)
+	if (err == -EIO)
 		schedule_work(&priv->reset_work);
 	orinoco_unlock(priv, &flags);
-	वापस NETDEV_TX_BUSY;
-पूर्ण
+	return NETDEV_TX_BUSY;
+}
 
-अटल व्योम __orinoco_ev_alloc(काष्ठा net_device *dev, काष्ठा hermes *hw)
-अणु
-	काष्ठा orinoco_निजी *priv = ndev_priv(dev);
-	u16 fid = hermes_पढ़ो_regn(hw, ALLOCFID);
+static void __orinoco_ev_alloc(struct net_device *dev, struct hermes *hw)
+{
+	struct orinoco_private *priv = ndev_priv(dev);
+	u16 fid = hermes_read_regn(hw, ALLOCFID);
 
-	अगर (fid != priv->txfid) अणु
-		अगर (fid != DUMMY_FID)
-			prपूर्णांकk(KERN_WARNING "%s: Allocate event on unexpected fid (%04X)\n",
+	if (fid != priv->txfid) {
+		if (fid != DUMMY_FID)
+			printk(KERN_WARNING "%s: Allocate event on unexpected fid (%04X)\n",
 			       dev->name, fid);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	hermes_ग_लिखो_regn(hw, ALLOCFID, DUMMY_FID);
-पूर्ण
+	hermes_write_regn(hw, ALLOCFID, DUMMY_FID);
+}
 
-अटल व्योम __orinoco_ev_tx(काष्ठा net_device *dev, काष्ठा hermes *hw)
-अणु
+static void __orinoco_ev_tx(struct net_device *dev, struct hermes *hw)
+{
 	dev->stats.tx_packets++;
 
-	netअगर_wake_queue(dev);
+	netif_wake_queue(dev);
 
-	hermes_ग_लिखो_regn(hw, TXCOMPLFID, DUMMY_FID);
-पूर्ण
+	hermes_write_regn(hw, TXCOMPLFID, DUMMY_FID);
+}
 
-अटल व्योम __orinoco_ev_txexc(काष्ठा net_device *dev, काष्ठा hermes *hw)
-अणु
-	काष्ठा net_device_stats *stats = &dev->stats;
-	u16 fid = hermes_पढ़ो_regn(hw, TXCOMPLFID);
+static void __orinoco_ev_txexc(struct net_device *dev, struct hermes *hw)
+{
+	struct net_device_stats *stats = &dev->stats;
+	u16 fid = hermes_read_regn(hw, TXCOMPLFID);
 	u16 status;
-	काष्ठा hermes_txexc_data hdr;
-	पूर्णांक err = 0;
+	struct hermes_txexc_data hdr;
+	int err = 0;
 
-	अगर (fid == DUMMY_FID)
-		वापस; /* Nothing's really happened */
+	if (fid == DUMMY_FID)
+		return; /* Nothing's really happened */
 
 	/* Read part of the frame header - we need status and addr1 */
-	err = hw->ops->bap_pपढ़ो(hw, IRQ_BAP, &hdr,
-				 माप(काष्ठा hermes_txexc_data),
+	err = hw->ops->bap_pread(hw, IRQ_BAP, &hdr,
+				 sizeof(struct hermes_txexc_data),
 				 fid, 0);
 
-	hermes_ग_लिखो_regn(hw, TXCOMPLFID, DUMMY_FID);
+	hermes_write_regn(hw, TXCOMPLFID, DUMMY_FID);
 	stats->tx_errors++;
 
-	अगर (err) अणु
-		prपूर्णांकk(KERN_WARNING "%s: Unable to read descriptor on Tx error "
+	if (err) {
+		printk(KERN_WARNING "%s: Unable to read descriptor on Tx error "
 		       "(FID=%04X error %d)\n",
 		       dev->name, fid, err);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	DEBUG(1, "%s: Tx error, err %d (FID=%04X)\n", dev->name,
 	      err, fid);
 
-	/* We produce a TXDROP event only क्रम retry or lअगरeसमय
+	/* We produce a TXDROP event only for retry or lifetime
 	 * exceeded, because that's the only status that really mean
 	 * that this particular node went away.
 	 * Other errors means that *we* screwed up. - Jean II */
 	status = le16_to_cpu(hdr.desc.status);
-	अगर (status & (HERMES_TXSTAT_RETRYERR | HERMES_TXSTAT_AGEDERR)) अणु
-		जोड़ iwreq_data	wrqu;
+	if (status & (HERMES_TXSTAT_RETRYERR | HERMES_TXSTAT_AGEDERR)) {
+		union iwreq_data	wrqu;
 
 		/* Copy 802.11 dest address.
 		 * We use the 802.11 header because the frame may
@@ -636,34 +635,34 @@ EXPORT_SYMBOL(orinoco_process_xmit_skb);
 		 * In Ad-Hoc mode, it will be the node address.
 		 * In managed mode, it will be most likely the AP addr
 		 * User space will figure out how to convert it to
-		 * whatever it needs (IP address or अन्यथा).
+		 * whatever it needs (IP address or else).
 		 * - Jean II */
-		स_नकल(wrqu.addr.sa_data, hdr.addr1, ETH_ALEN);
+		memcpy(wrqu.addr.sa_data, hdr.addr1, ETH_ALEN);
 		wrqu.addr.sa_family = ARPHRD_ETHER;
 
 		/* Send event to user space */
-		wireless_send_event(dev, IWEVTXDROP, &wrqu, शून्य);
-	पूर्ण
+		wireless_send_event(dev, IWEVTXDROP, &wrqu, NULL);
+	}
 
-	netअगर_wake_queue(dev);
-पूर्ण
+	netif_wake_queue(dev);
+}
 
-व्योम orinoco_tx_समयout(काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue)
-अणु
-	काष्ठा orinoco_निजी *priv = ndev_priv(dev);
-	काष्ठा net_device_stats *stats = &dev->stats;
-	काष्ठा hermes *hw = &priv->hw;
+void orinoco_tx_timeout(struct net_device *dev, unsigned int txqueue)
+{
+	struct orinoco_private *priv = ndev_priv(dev);
+	struct net_device_stats *stats = &dev->stats;
+	struct hermes *hw = &priv->hw;
 
-	prपूर्णांकk(KERN_WARNING "%s: Tx timeout! "
+	printk(KERN_WARNING "%s: Tx timeout! "
 	       "ALLOCFID=%04x, TXCOMPLFID=%04x, EVSTAT=%04x\n",
-	       dev->name, hermes_पढ़ो_regn(hw, ALLOCFID),
-	       hermes_पढ़ो_regn(hw, TXCOMPLFID), hermes_पढ़ो_regn(hw, EVSTAT));
+	       dev->name, hermes_read_regn(hw, ALLOCFID),
+	       hermes_read_regn(hw, TXCOMPLFID), hermes_read_regn(hw, EVSTAT));
 
 	stats->tx_errors++;
 
 	schedule_work(&priv->reset_work);
-पूर्ण
-EXPORT_SYMBOL(orinoco_tx_समयout);
+}
+EXPORT_SYMBOL(orinoco_tx_timeout);
 
 /********************************************************************/
 /* Rx path (data frames)                                            */
@@ -671,52 +670,52 @@ EXPORT_SYMBOL(orinoco_tx_समयout);
 
 /* Does the frame have a SNAP header indicating it should be
  * de-encapsulated to Ethernet-II? */
-अटल अंतरभूत पूर्णांक is_ethersnap(व्योम *_hdr)
-अणु
+static inline int is_ethersnap(void *_hdr)
+{
 	u8 *hdr = _hdr;
 
 	/* We de-encapsulate all packets which, a) have SNAP headers
 	 * (i.e. SSAP=DSAP=0xaa and CTRL=0x3 in the 802.2 LLC header
 	 * and where b) the OUI of the SNAP header is 00:00:00 or
-	 * 00:00:f8 - we need both because dअगरferent APs appear to use
-	 * dअगरferent OUIs क्रम some reason */
-	वापस (स_भेद(hdr, &encaps_hdr, 5) == 0)
+	 * 00:00:f8 - we need both because different APs appear to use
+	 * different OUIs for some reason */
+	return (memcmp(hdr, &encaps_hdr, 5) == 0)
 		&& ((hdr[5] == 0x00) || (hdr[5] == 0xf8));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम orinoco_spy_gather(काष्ठा net_device *dev, u_अक्षर *mac,
-				      पूर्णांक level, पूर्णांक noise)
-अणु
-	काष्ठा iw_quality wstats;
+static inline void orinoco_spy_gather(struct net_device *dev, u_char *mac,
+				      int level, int noise)
+{
+	struct iw_quality wstats;
 	wstats.level = level - 0x95;
 	wstats.noise = noise - 0x95;
 	wstats.qual = (level > noise) ? (level - noise) : 0;
 	wstats.updated = IW_QUAL_ALL_UPDATED | IW_QUAL_DBM;
 	/* Update spy records */
 	wireless_spy_update(dev, mac, &wstats);
-पूर्ण
+}
 
-अटल व्योम orinoco_stat_gather(काष्ठा net_device *dev,
-				काष्ठा sk_buff *skb,
-				काष्ठा hermes_rx_descriptor *desc)
-अणु
-	काष्ठा orinoco_निजी *priv = ndev_priv(dev);
+static void orinoco_stat_gather(struct net_device *dev,
+				struct sk_buff *skb,
+				struct hermes_rx_descriptor *desc)
+{
+	struct orinoco_private *priv = ndev_priv(dev);
 
 	/* Using spy support with lots of Rx packets, like in an
-	 * infraकाष्ठाure (AP), will really slow करोwn everything, because
+	 * infrastructure (AP), will really slow down everything, because
 	 * the MAC address must be compared to each entry of the spy list.
-	 * If the user really asks क्रम it (set some address in the
-	 * spy list), we करो it, but he will pay the price.
+	 * If the user really asks for it (set some address in the
+	 * spy list), we do it, but he will pay the price.
 	 * Note that to get here, you need both WIRELESS_SPY
 	 * compiled in AND some addresses in the list !!!
 	 */
-	/* Note : gcc will optimise the whole section away अगर
+	/* Note : gcc will optimise the whole section away if
 	 * WIRELESS_SPY is not defined... - Jean II */
-	अगर (SPY_NUMBER(priv)) अणु
+	if (SPY_NUMBER(priv)) {
 		orinoco_spy_gather(dev, skb_mac_header(skb) + ETH_ALEN,
-				   desc->संकेत, desc->silence);
-	पूर्ण
-पूर्ण
+				   desc->signal, desc->silence);
+	}
+}
 
 /*
  * orinoco_rx_monitor - handle received monitor frames.
@@ -726,87 +725,87 @@ EXPORT_SYMBOL(orinoco_tx_समयout);
  *	rxfid		received FID
  *	desc		rx descriptor of the frame
  *
- * Call context: पूर्णांकerrupt
+ * Call context: interrupt
  */
-अटल व्योम orinoco_rx_monitor(काष्ठा net_device *dev, u16 rxfid,
-			       काष्ठा hermes_rx_descriptor *desc)
-अणु
-	u32 hdrlen = 30;	/* वापस full header by शेष */
+static void orinoco_rx_monitor(struct net_device *dev, u16 rxfid,
+			       struct hermes_rx_descriptor *desc)
+{
+	u32 hdrlen = 30;	/* return full header by default */
 	u32 datalen = 0;
 	u16 fc;
-	पूर्णांक err;
-	पूर्णांक len;
-	काष्ठा sk_buff *skb;
-	काष्ठा orinoco_निजी *priv = ndev_priv(dev);
-	काष्ठा net_device_stats *stats = &dev->stats;
-	काष्ठा hermes *hw = &priv->hw;
+	int err;
+	int len;
+	struct sk_buff *skb;
+	struct orinoco_private *priv = ndev_priv(dev);
+	struct net_device_stats *stats = &dev->stats;
+	struct hermes *hw = &priv->hw;
 
 	len = le16_to_cpu(desc->data_len);
 
 	/* Determine the size of the header and the data */
 	fc = le16_to_cpu(desc->frame_ctl);
-	चयन (fc & IEEE80211_FCTL_FTYPE) अणु
-	हाल IEEE80211_FTYPE_DATA:
-		अगर ((fc & IEEE80211_FCTL_TODS)
+	switch (fc & IEEE80211_FCTL_FTYPE) {
+	case IEEE80211_FTYPE_DATA:
+		if ((fc & IEEE80211_FCTL_TODS)
 		    && (fc & IEEE80211_FCTL_FROMDS))
 			hdrlen = 30;
-		अन्यथा
+		else
 			hdrlen = 24;
 		datalen = len;
-		अवरोध;
-	हाल IEEE80211_FTYPE_MGMT:
+		break;
+	case IEEE80211_FTYPE_MGMT:
 		hdrlen = 24;
 		datalen = len;
-		अवरोध;
-	हाल IEEE80211_FTYPE_CTL:
-		चयन (fc & IEEE80211_FCTL_STYPE) अणु
-		हाल IEEE80211_STYPE_PSPOLL:
-		हाल IEEE80211_STYPE_RTS:
-		हाल IEEE80211_STYPE_CFEND:
-		हाल IEEE80211_STYPE_CFENDACK:
+		break;
+	case IEEE80211_FTYPE_CTL:
+		switch (fc & IEEE80211_FCTL_STYPE) {
+		case IEEE80211_STYPE_PSPOLL:
+		case IEEE80211_STYPE_RTS:
+		case IEEE80211_STYPE_CFEND:
+		case IEEE80211_STYPE_CFENDACK:
 			hdrlen = 16;
-			अवरोध;
-		हाल IEEE80211_STYPE_CTS:
-		हाल IEEE80211_STYPE_ACK:
+			break;
+		case IEEE80211_STYPE_CTS:
+		case IEEE80211_STYPE_ACK:
 			hdrlen = 10;
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	शेष:
+			break;
+		}
+		break;
+	default:
 		/* Unknown frame type */
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	/* sanity check the length */
-	अगर (datalen > IEEE80211_MAX_DATA_LEN + 12) अणु
-		prपूर्णांकk(KERN_DEBUG "%s: oversized monitor frame, "
+	if (datalen > IEEE80211_MAX_DATA_LEN + 12) {
+		printk(KERN_DEBUG "%s: oversized monitor frame, "
 		       "data length = %d\n", dev->name, datalen);
 		stats->rx_length_errors++;
-		जाओ update_stats;
-	पूर्ण
+		goto update_stats;
+	}
 
 	skb = dev_alloc_skb(hdrlen + datalen);
-	अगर (!skb) अणु
-		prपूर्णांकk(KERN_WARNING "%s: Cannot allocate skb for monitor frame\n",
+	if (!skb) {
+		printk(KERN_WARNING "%s: Cannot allocate skb for monitor frame\n",
 		       dev->name);
-		जाओ update_stats;
-	पूर्ण
+		goto update_stats;
+	}
 
 	/* Copy the 802.11 header to the skb */
 	skb_put_data(skb, &(desc->frame_ctl), hdrlen);
 	skb_reset_mac_header(skb);
 
 	/* If any, copy the data from the card to the skb */
-	अगर (datalen > 0) अणु
-		err = hw->ops->bap_pपढ़ो(hw, IRQ_BAP, skb_put(skb, datalen),
+	if (datalen > 0) {
+		err = hw->ops->bap_pread(hw, IRQ_BAP, skb_put(skb, datalen),
 					 ALIGN(datalen, 2), rxfid,
 					 HERMES_802_2_OFFSET);
-		अगर (err) अणु
-			prपूर्णांकk(KERN_ERR "%s: error %d reading monitor frame\n",
+		if (err) {
+			printk(KERN_ERR "%s: error %d reading monitor frame\n",
 			       dev->name, err);
-			जाओ drop;
-		पूर्ण
-	पूर्ण
+			goto drop;
+		}
+	}
 
 	skb->dev = dev;
 	skb->ip_summed = CHECKSUM_NONE;
@@ -816,151 +815,151 @@ EXPORT_SYMBOL(orinoco_tx_समयout);
 	stats->rx_packets++;
 	stats->rx_bytes += skb->len;
 
-	netअगर_rx(skb);
-	वापस;
+	netif_rx(skb);
+	return;
 
  drop:
-	dev_kमुक्त_skb_irq(skb);
+	dev_kfree_skb_irq(skb);
  update_stats:
 	stats->rx_errors++;
 	stats->rx_dropped++;
-पूर्ण
+}
 
-व्योम __orinoco_ev_rx(काष्ठा net_device *dev, काष्ठा hermes *hw)
-अणु
-	काष्ठा orinoco_निजी *priv = ndev_priv(dev);
-	काष्ठा net_device_stats *stats = &dev->stats;
-	काष्ठा iw_statistics *wstats = &priv->wstats;
-	काष्ठा sk_buff *skb = शून्य;
+void __orinoco_ev_rx(struct net_device *dev, struct hermes *hw)
+{
+	struct orinoco_private *priv = ndev_priv(dev);
+	struct net_device_stats *stats = &dev->stats;
+	struct iw_statistics *wstats = &priv->wstats;
+	struct sk_buff *skb = NULL;
 	u16 rxfid, status;
-	पूर्णांक length;
-	काष्ठा hermes_rx_descriptor *desc;
-	काष्ठा orinoco_rx_data *rx_data;
-	पूर्णांक err;
+	int length;
+	struct hermes_rx_descriptor *desc;
+	struct orinoco_rx_data *rx_data;
+	int err;
 
-	desc = kदो_स्मृति(माप(*desc), GFP_ATOMIC);
-	अगर (!desc)
-		जाओ update_stats;
+	desc = kmalloc(sizeof(*desc), GFP_ATOMIC);
+	if (!desc)
+		goto update_stats;
 
-	rxfid = hermes_पढ़ो_regn(hw, RXFID);
+	rxfid = hermes_read_regn(hw, RXFID);
 
-	err = hw->ops->bap_pपढ़ो(hw, IRQ_BAP, desc, माप(*desc),
+	err = hw->ops->bap_pread(hw, IRQ_BAP, desc, sizeof(*desc),
 				 rxfid, 0);
-	अगर (err) अणु
-		prपूर्णांकk(KERN_ERR "%s: error %d reading Rx descriptor. "
+	if (err) {
+		printk(KERN_ERR "%s: error %d reading Rx descriptor. "
 		       "Frame dropped.\n", dev->name, err);
-		जाओ update_stats;
-	पूर्ण
+		goto update_stats;
+	}
 
 	status = le16_to_cpu(desc->status);
 
-	अगर (status & HERMES_RXSTAT_BADCRC) अणु
+	if (status & HERMES_RXSTAT_BADCRC) {
 		DEBUG(1, "%s: Bad CRC on Rx. Frame dropped.\n",
 		      dev->name);
 		stats->rx_crc_errors++;
-		जाओ update_stats;
-	पूर्ण
+		goto update_stats;
+	}
 
 	/* Handle frames in monitor mode */
-	अगर (priv->iw_mode == NL80211_IFTYPE_MONITOR) अणु
+	if (priv->iw_mode == NL80211_IFTYPE_MONITOR) {
 		orinoco_rx_monitor(dev, rxfid, desc);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (status & HERMES_RXSTAT_UNDECRYPTABLE) अणु
+	if (status & HERMES_RXSTAT_UNDECRYPTABLE) {
 		DEBUG(1, "%s: Undecryptable frame on Rx. Frame dropped.\n",
 		      dev->name);
 		wstats->discard.code++;
-		जाओ update_stats;
-	पूर्ण
+		goto update_stats;
+	}
 
 	length = le16_to_cpu(desc->data_len);
 
 	/* Sanity checks */
-	अगर (length < 3) अणु /* No क्रम even an 802.2 LLC header */
+	if (length < 3) { /* No for even an 802.2 LLC header */
 		/* At least on Symbol firmware with PCF we get quite a
 		   lot of these legitimately - Poll frames with no
 		   data. */
-		जाओ out;
-	पूर्ण
-	अगर (length > IEEE80211_MAX_DATA_LEN) अणु
-		prपूर्णांकk(KERN_WARNING "%s: Oversized frame received (%d bytes)\n",
+		goto out;
+	}
+	if (length > IEEE80211_MAX_DATA_LEN) {
+		printk(KERN_WARNING "%s: Oversized frame received (%d bytes)\n",
 		       dev->name, length);
 		stats->rx_length_errors++;
-		जाओ update_stats;
-	पूर्ण
+		goto update_stats;
+	}
 
-	/* Payload size करोes not include Michael MIC. Increase payload
-	 * size to पढ़ो it together with the data. */
-	अगर (status & HERMES_RXSTAT_MIC)
+	/* Payload size does not include Michael MIC. Increase payload
+	 * size to read it together with the data. */
+	if (status & HERMES_RXSTAT_MIC)
 		length += MICHAEL_MIC_LEN;
 
-	/* We need space क्रम the packet data itself, plus an ethernet
+	/* We need space for the packet data itself, plus an ethernet
 	   header, plus 2 bytes so we can align the IP header on a
-	   32bit boundary, plus 1 byte so we can पढ़ो in odd length
+	   32bit boundary, plus 1 byte so we can read in odd length
 	   packets from the card, which has an IO granularity of 16
 	   bits */
 	skb = dev_alloc_skb(length + ETH_HLEN + 2 + 1);
-	अगर (!skb) अणु
-		prपूर्णांकk(KERN_WARNING "%s: Can't allocate skb for Rx\n",
+	if (!skb) {
+		printk(KERN_WARNING "%s: Can't allocate skb for Rx\n",
 		       dev->name);
-		जाओ update_stats;
-	पूर्ण
+		goto update_stats;
+	}
 
-	/* We'll prepend the header, so reserve space क्रम it.  The worst
-	   हाल is no decapsulation, when 802.3 header is prepended and
-	   nothing is हटाओd.  2 is क्रम aligning the IP header.  */
+	/* We'll prepend the header, so reserve space for it.  The worst
+	   case is no decapsulation, when 802.3 header is prepended and
+	   nothing is removed.  2 is for aligning the IP header.  */
 	skb_reserve(skb, ETH_HLEN + 2);
 
-	err = hw->ops->bap_pपढ़ो(hw, IRQ_BAP, skb_put(skb, length),
+	err = hw->ops->bap_pread(hw, IRQ_BAP, skb_put(skb, length),
 				 ALIGN(length, 2), rxfid,
 				 HERMES_802_2_OFFSET);
-	अगर (err) अणु
-		prपूर्णांकk(KERN_ERR "%s: error %d reading frame. "
+	if (err) {
+		printk(KERN_ERR "%s: error %d reading frame. "
 		       "Frame dropped.\n", dev->name, err);
-		जाओ drop;
-	पूर्ण
+		goto drop;
+	}
 
 	/* Add desc and skb to rx queue */
-	rx_data = kzalloc(माप(*rx_data), GFP_ATOMIC);
-	अगर (!rx_data)
-		जाओ drop;
+	rx_data = kzalloc(sizeof(*rx_data), GFP_ATOMIC);
+	if (!rx_data)
+		goto drop;
 
 	rx_data->desc = desc;
 	rx_data->skb = skb;
 	list_add_tail(&rx_data->list, &priv->rx_list);
 	tasklet_schedule(&priv->rx_tasklet);
 
-	वापस;
+	return;
 
 drop:
-	dev_kमुक्त_skb_irq(skb);
+	dev_kfree_skb_irq(skb);
 update_stats:
 	stats->rx_errors++;
 	stats->rx_dropped++;
 out:
-	kमुक्त(desc);
-पूर्ण
+	kfree(desc);
+}
 EXPORT_SYMBOL(__orinoco_ev_rx);
 
-अटल व्योम orinoco_rx(काष्ठा net_device *dev,
-		       काष्ठा hermes_rx_descriptor *desc,
-		       काष्ठा sk_buff *skb)
-अणु
-	काष्ठा orinoco_निजी *priv = ndev_priv(dev);
-	काष्ठा net_device_stats *stats = &dev->stats;
+static void orinoco_rx(struct net_device *dev,
+		       struct hermes_rx_descriptor *desc,
+		       struct sk_buff *skb)
+{
+	struct orinoco_private *priv = ndev_priv(dev);
+	struct net_device_stats *stats = &dev->stats;
 	u16 status, fc;
-	पूर्णांक length;
-	काष्ठा ethhdr *hdr;
+	int length;
+	struct ethhdr *hdr;
 
 	status = le16_to_cpu(desc->status);
 	length = le16_to_cpu(desc->data_len);
 	fc = le16_to_cpu(desc->frame_ctl);
 
 	/* Calculate and check MIC */
-	अगर (status & HERMES_RXSTAT_MIC) अणु
-		काष्ठा orinoco_tkip_key *key;
-		पूर्णांक key_id = ((status & HERMES_RXSTAT_MIC_KEY_ID) >>
+	if (status & HERMES_RXSTAT_MIC) {
+		struct orinoco_tkip_key *key;
+		int key_id = ((status & HERMES_RXSTAT_MIC_KEY_ID) >>
 			      HERMES_MIC_KEY_ID_SHIFT);
 		u8 mic[MICHAEL_MIC_LEN];
 		u8 *rxmic;
@@ -973,352 +972,352 @@ EXPORT_SYMBOL(__orinoco_ev_rx);
 		skb_trim(skb, skb->len - MICHAEL_MIC_LEN);
 		length -= MICHAEL_MIC_LEN;
 
-		key = (काष्ठा orinoco_tkip_key *) priv->keys[key_id].key;
+		key = (struct orinoco_tkip_key *) priv->keys[key_id].key;
 
-		अगर (!key) अणु
-			prपूर्णांकk(KERN_WARNING "%s: Received encrypted frame from "
+		if (!key) {
+			printk(KERN_WARNING "%s: Received encrypted frame from "
 			       "%pM using key %i, but key is not installed\n",
 			       dev->name, src, key_id);
-			जाओ drop;
-		पूर्ण
+			goto drop;
+		}
 
 		orinoco_mic(priv->rx_tfm_mic, key->rx_mic, desc->addr1, src,
 			    0, /* priority or QoS? */
 			    skb->data, skb->len, &mic[0]);
 
-		अगर (स_भेद(mic, rxmic,
-			   MICHAEL_MIC_LEN)) अणु
-			जोड़ iwreq_data wrqu;
-			काष्ठा iw_michaelmicfailure wxmic;
+		if (memcmp(mic, rxmic,
+			   MICHAEL_MIC_LEN)) {
+			union iwreq_data wrqu;
+			struct iw_michaelmicfailure wxmic;
 
-			prपूर्णांकk(KERN_WARNING "%s: "
+			printk(KERN_WARNING "%s: "
 			       "Invalid Michael MIC in data frame from %pM, "
 			       "using key %i\n",
 			       dev->name, src, key_id);
 
 			/* TODO: update stats */
 
-			/* Notअगरy userspace */
-			स_रखो(&wxmic, 0, माप(wxmic));
+			/* Notify userspace */
+			memset(&wxmic, 0, sizeof(wxmic));
 			wxmic.flags = key_id & IW_MICFAILURE_KEY_ID;
 			wxmic.flags |= (desc->addr1[0] & 1) ?
 				IW_MICFAILURE_GROUP : IW_MICFAILURE_PAIRWISE;
 			wxmic.src_addr.sa_family = ARPHRD_ETHER;
-			स_नकल(wxmic.src_addr.sa_data, src, ETH_ALEN);
+			memcpy(wxmic.src_addr.sa_data, src, ETH_ALEN);
 
-			(व्योम) orinoco_hw_get_tkip_iv(priv, key_id,
+			(void) orinoco_hw_get_tkip_iv(priv, key_id,
 						      &wxmic.tsc[0]);
 
-			स_रखो(&wrqu, 0, माप(wrqu));
-			wrqu.data.length = माप(wxmic);
+			memset(&wrqu, 0, sizeof(wrqu));
+			wrqu.data.length = sizeof(wxmic);
 			wireless_send_event(dev, IWEVMICHAELMICFAILURE, &wrqu,
-					    (अक्षर *) &wxmic);
+					    (char *) &wxmic);
 
-			जाओ drop;
-		पूर्ण
-	पूर्ण
+			goto drop;
+		}
+	}
 
 	/* Handle decapsulation
-	 * In most हालs, the firmware tell us about SNAP frames.
+	 * In most cases, the firmware tell us about SNAP frames.
 	 * For some reason, the SNAP frames sent by LinkSys APs
 	 * are not properly recognised by most firmwares.
 	 * So, check ourselves */
-	अगर (length >= ENCAPS_OVERHEAD &&
+	if (length >= ENCAPS_OVERHEAD &&
 	    (((status & HERMES_RXSTAT_MSGTYPE) == HERMES_RXSTAT_1042) ||
 	     ((status & HERMES_RXSTAT_MSGTYPE) == HERMES_RXSTAT_TUNNEL) ||
-	     is_ethersnap(skb->data))) अणु
+	     is_ethersnap(skb->data))) {
 		/* These indicate a SNAP within 802.2 LLC within
 		   802.11 frame which we'll need to de-encapsulate to
 		   the original EthernetII frame. */
 		hdr = skb_push(skb, ETH_HLEN - ENCAPS_OVERHEAD);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* 802.3 frame - prepend 802.3 header as is */
 		hdr = skb_push(skb, ETH_HLEN);
 		hdr->h_proto = htons(length);
-	पूर्ण
-	स_नकल(hdr->h_dest, desc->addr1, ETH_ALEN);
-	अगर (fc & IEEE80211_FCTL_FROMDS)
-		स_नकल(hdr->h_source, desc->addr3, ETH_ALEN);
-	अन्यथा
-		स_नकल(hdr->h_source, desc->addr2, ETH_ALEN);
+	}
+	memcpy(hdr->h_dest, desc->addr1, ETH_ALEN);
+	if (fc & IEEE80211_FCTL_FROMDS)
+		memcpy(hdr->h_source, desc->addr3, ETH_ALEN);
+	else
+		memcpy(hdr->h_source, desc->addr2, ETH_ALEN);
 
 	skb->protocol = eth_type_trans(skb, dev);
 	skb->ip_summed = CHECKSUM_NONE;
-	अगर (fc & IEEE80211_FCTL_TODS)
+	if (fc & IEEE80211_FCTL_TODS)
 		skb->pkt_type = PACKET_OTHERHOST;
 
-	/* Process the wireless stats अगर needed */
+	/* Process the wireless stats if needed */
 	orinoco_stat_gather(dev, skb, desc);
 
 	/* Pass the packet to the networking stack */
-	netअगर_rx(skb);
+	netif_rx(skb);
 	stats->rx_packets++;
 	stats->rx_bytes += length;
 
-	वापस;
+	return;
 
  drop:
-	dev_kमुक्त_skb(skb);
+	dev_kfree_skb(skb);
 	stats->rx_errors++;
 	stats->rx_dropped++;
-पूर्ण
+}
 
-अटल व्योम orinoco_rx_isr_tasklet(काष्ठा tasklet_काष्ठा *t)
-अणु
-	काष्ठा orinoco_निजी *priv = from_tasklet(priv, t, rx_tasklet);
-	काष्ठा net_device *dev = priv->ndev;
-	काष्ठा orinoco_rx_data *rx_data, *temp;
-	काष्ठा hermes_rx_descriptor *desc;
-	काष्ठा sk_buff *skb;
-	अचिन्हित दीर्घ flags;
+static void orinoco_rx_isr_tasklet(struct tasklet_struct *t)
+{
+	struct orinoco_private *priv = from_tasklet(priv, t, rx_tasklet);
+	struct net_device *dev = priv->ndev;
+	struct orinoco_rx_data *rx_data, *temp;
+	struct hermes_rx_descriptor *desc;
+	struct sk_buff *skb;
+	unsigned long flags;
 
 	/* orinoco_rx requires the driver lock, and we also need to
 	 * protect priv->rx_list, so just hold the lock over the
 	 * lot.
 	 *
 	 * If orinoco_lock fails, we've unplugged the card. In this
-	 * हाल just पात. */
-	अगर (orinoco_lock(priv, &flags) != 0)
-		वापस;
+	 * case just abort. */
+	if (orinoco_lock(priv, &flags) != 0)
+		return;
 
 	/* extract desc and skb from queue */
-	list_क्रम_each_entry_safe(rx_data, temp, &priv->rx_list, list) अणु
+	list_for_each_entry_safe(rx_data, temp, &priv->rx_list, list) {
 		desc = rx_data->desc;
 		skb = rx_data->skb;
 		list_del(&rx_data->list);
-		kमुक्त(rx_data);
+		kfree(rx_data);
 
 		orinoco_rx(dev, desc, skb);
 
-		kमुक्त(desc);
-	पूर्ण
+		kfree(desc);
+	}
 
 	orinoco_unlock(priv, &flags);
-पूर्ण
+}
 
 /********************************************************************/
 /* Rx path (info frames)                                            */
 /********************************************************************/
 
-अटल व्योम prपूर्णांक_linkstatus(काष्ठा net_device *dev, u16 status)
-अणु
-	अक्षर *s;
+static void print_linkstatus(struct net_device *dev, u16 status)
+{
+	char *s;
 
-	अगर (suppress_linkstatus)
-		वापस;
+	if (suppress_linkstatus)
+		return;
 
-	चयन (status) अणु
-	हाल HERMES_LINKSTATUS_NOT_CONNECTED:
+	switch (status) {
+	case HERMES_LINKSTATUS_NOT_CONNECTED:
 		s = "Not Connected";
-		अवरोध;
-	हाल HERMES_LINKSTATUS_CONNECTED:
+		break;
+	case HERMES_LINKSTATUS_CONNECTED:
 		s = "Connected";
-		अवरोध;
-	हाल HERMES_LINKSTATUS_DISCONNECTED:
+		break;
+	case HERMES_LINKSTATUS_DISCONNECTED:
 		s = "Disconnected";
-		अवरोध;
-	हाल HERMES_LINKSTATUS_AP_CHANGE:
+		break;
+	case HERMES_LINKSTATUS_AP_CHANGE:
 		s = "AP Changed";
-		अवरोध;
-	हाल HERMES_LINKSTATUS_AP_OUT_OF_RANGE:
+		break;
+	case HERMES_LINKSTATUS_AP_OUT_OF_RANGE:
 		s = "AP Out of Range";
-		अवरोध;
-	हाल HERMES_LINKSTATUS_AP_IN_RANGE:
+		break;
+	case HERMES_LINKSTATUS_AP_IN_RANGE:
 		s = "AP In Range";
-		अवरोध;
-	हाल HERMES_LINKSTATUS_ASSOC_FAILED:
+		break;
+	case HERMES_LINKSTATUS_ASSOC_FAILED:
 		s = "Association Failed";
-		अवरोध;
-	शेष:
+		break;
+	default:
 		s = "UNKNOWN";
-	पूर्ण
+	}
 
-	prपूर्णांकk(KERN_DEBUG "%s: New link status: %s (%04x)\n",
+	printk(KERN_DEBUG "%s: New link status: %s (%04x)\n",
 	       dev->name, s, status);
-पूर्ण
+}
 
-/* Search scan results क्रम requested BSSID, join it अगर found */
-अटल व्योम orinoco_join_ap(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा orinoco_निजी *priv =
-		container_of(work, काष्ठा orinoco_निजी, join_work);
-	काष्ठा net_device *dev = priv->ndev;
-	काष्ठा hermes *hw = &priv->hw;
-	पूर्णांक err;
-	अचिन्हित दीर्घ flags;
-	काष्ठा join_req अणु
+/* Search scan results for requested BSSID, join it if found */
+static void orinoco_join_ap(struct work_struct *work)
+{
+	struct orinoco_private *priv =
+		container_of(work, struct orinoco_private, join_work);
+	struct net_device *dev = priv->ndev;
+	struct hermes *hw = &priv->hw;
+	int err;
+	unsigned long flags;
+	struct join_req {
 		u8 bssid[ETH_ALEN];
 		__le16 channel;
-	पूर्ण __packed req;
-	स्थिर पूर्णांक atom_len = दुरत्व(काष्ठा prism2_scan_apinfo, atim);
-	काष्ठा prism2_scan_apinfo *atom = शून्य;
-	पूर्णांक offset = 4;
-	पूर्णांक found = 0;
+	} __packed req;
+	const int atom_len = offsetof(struct prism2_scan_apinfo, atim);
+	struct prism2_scan_apinfo *atom = NULL;
+	int offset = 4;
+	int found = 0;
 	u8 *buf;
 	u16 len;
 
-	/* Allocate buffer क्रम scan results */
-	buf = kदो_स्मृति(MAX_SCAN_LEN, GFP_KERNEL);
-	अगर (!buf)
-		वापस;
+	/* Allocate buffer for scan results */
+	buf = kmalloc(MAX_SCAN_LEN, GFP_KERNEL);
+	if (!buf)
+		return;
 
-	अगर (orinoco_lock(priv, &flags) != 0)
-		जाओ fail_lock;
+	if (orinoco_lock(priv, &flags) != 0)
+		goto fail_lock;
 
-	/* Sanity checks in हाल user changed something in the meanसमय */
-	अगर (!priv->bssid_fixed)
-		जाओ out;
+	/* Sanity checks in case user changed something in the meantime */
+	if (!priv->bssid_fixed)
+		goto out;
 
-	अगर (म_माप(priv->desired_essid) == 0)
-		जाओ out;
+	if (strlen(priv->desired_essid) == 0)
+		goto out;
 
 	/* Read scan results from the firmware */
-	err = hw->ops->पढ़ो_ltv(hw, USER_BAP,
+	err = hw->ops->read_ltv(hw, USER_BAP,
 				HERMES_RID_SCANRESULTSTABLE,
 				MAX_SCAN_LEN, &len, buf);
-	अगर (err) अणु
-		prपूर्णांकk(KERN_ERR "%s: Cannot read scan results\n",
+	if (err) {
+		printk(KERN_ERR "%s: Cannot read scan results\n",
 		       dev->name);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	len = HERMES_RECLEN_TO_BYTES(len);
 
-	/* Go through the scan results looking क्रम the channel of the AP
+	/* Go through the scan results looking for the channel of the AP
 	 * we were requested to join */
-	क्रम (; offset + atom_len <= len; offset += atom_len) अणु
-		atom = (काष्ठा prism2_scan_apinfo *) (buf + offset);
-		अगर (स_भेद(&atom->bssid, priv->desired_bssid, ETH_ALEN) == 0) अणु
+	for (; offset + atom_len <= len; offset += atom_len) {
+		atom = (struct prism2_scan_apinfo *) (buf + offset);
+		if (memcmp(&atom->bssid, priv->desired_bssid, ETH_ALEN) == 0) {
 			found = 1;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (!found) अणु
+	if (!found) {
 		DEBUG(1, "%s: Requested AP not found in scan results\n",
 		      dev->name);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	स_नकल(req.bssid, priv->desired_bssid, ETH_ALEN);
+	memcpy(req.bssid, priv->desired_bssid, ETH_ALEN);
 	req.channel = atom->channel;	/* both are little-endian */
 	err = HERMES_WRITE_RECORD(hw, USER_BAP, HERMES_RID_CNFJOINREQUEST,
 				  &req);
-	अगर (err)
-		prपूर्णांकk(KERN_ERR "%s: Error issuing join request\n", dev->name);
+	if (err)
+		printk(KERN_ERR "%s: Error issuing join request\n", dev->name);
 
  out:
 	orinoco_unlock(priv, &flags);
 
  fail_lock:
-	kमुक्त(buf);
-पूर्ण
+	kfree(buf);
+}
 
 /* Send new BSSID to userspace */
-अटल व्योम orinoco_send_bssid_wevent(काष्ठा orinoco_निजी *priv)
-अणु
-	काष्ठा net_device *dev = priv->ndev;
-	काष्ठा hermes *hw = &priv->hw;
-	जोड़ iwreq_data wrqu;
-	पूर्णांक err;
+static void orinoco_send_bssid_wevent(struct orinoco_private *priv)
+{
+	struct net_device *dev = priv->ndev;
+	struct hermes *hw = &priv->hw;
+	union iwreq_data wrqu;
+	int err;
 
-	err = hw->ops->पढ़ो_ltv(hw, USER_BAP, HERMES_RID_CURRENTBSSID,
-				ETH_ALEN, शून्य, wrqu.ap_addr.sa_data);
-	अगर (err != 0)
-		वापस;
+	err = hw->ops->read_ltv(hw, USER_BAP, HERMES_RID_CURRENTBSSID,
+				ETH_ALEN, NULL, wrqu.ap_addr.sa_data);
+	if (err != 0)
+		return;
 
 	wrqu.ap_addr.sa_family = ARPHRD_ETHER;
 
 	/* Send event to user space */
-	wireless_send_event(dev, SIOCGIWAP, &wrqu, शून्य);
-पूर्ण
+	wireless_send_event(dev, SIOCGIWAP, &wrqu, NULL);
+}
 
-अटल व्योम orinoco_send_assocreqie_wevent(काष्ठा orinoco_निजी *priv)
-अणु
-	काष्ठा net_device *dev = priv->ndev;
-	काष्ठा hermes *hw = &priv->hw;
-	जोड़ iwreq_data wrqu;
-	पूर्णांक err;
+static void orinoco_send_assocreqie_wevent(struct orinoco_private *priv)
+{
+	struct net_device *dev = priv->ndev;
+	struct hermes *hw = &priv->hw;
+	union iwreq_data wrqu;
+	int err;
 	u8 buf[88];
 	u8 *ie;
 
-	अगर (!priv->has_wpa)
-		वापस;
+	if (!priv->has_wpa)
+		return;
 
-	err = hw->ops->पढ़ो_ltv(hw, USER_BAP, HERMES_RID_CURRENT_ASSOC_REQ_INFO,
-				माप(buf), शून्य, &buf);
-	अगर (err != 0)
-		वापस;
+	err = hw->ops->read_ltv(hw, USER_BAP, HERMES_RID_CURRENT_ASSOC_REQ_INFO,
+				sizeof(buf), NULL, &buf);
+	if (err != 0)
+		return;
 
-	ie = orinoco_get_wpa_ie(buf, माप(buf));
-	अगर (ie) अणु
-		पूर्णांक rem = माप(buf) - (ie - &buf[0]);
+	ie = orinoco_get_wpa_ie(buf, sizeof(buf));
+	if (ie) {
+		int rem = sizeof(buf) - (ie - &buf[0]);
 		wrqu.data.length = ie[1] + 2;
-		अगर (wrqu.data.length > rem)
+		if (wrqu.data.length > rem)
 			wrqu.data.length = rem;
 
-		अगर (wrqu.data.length)
+		if (wrqu.data.length)
 			/* Send event to user space */
 			wireless_send_event(dev, IWEVASSOCREQIE, &wrqu, ie);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम orinoco_send_assocrespie_wevent(काष्ठा orinoco_निजी *priv)
-अणु
-	काष्ठा net_device *dev = priv->ndev;
-	काष्ठा hermes *hw = &priv->hw;
-	जोड़ iwreq_data wrqu;
-	पूर्णांक err;
-	u8 buf[88]; /* TODO: verअगरy max size or IW_GENERIC_IE_MAX */
+static void orinoco_send_assocrespie_wevent(struct orinoco_private *priv)
+{
+	struct net_device *dev = priv->ndev;
+	struct hermes *hw = &priv->hw;
+	union iwreq_data wrqu;
+	int err;
+	u8 buf[88]; /* TODO: verify max size or IW_GENERIC_IE_MAX */
 	u8 *ie;
 
-	अगर (!priv->has_wpa)
-		वापस;
+	if (!priv->has_wpa)
+		return;
 
-	err = hw->ops->पढ़ो_ltv(hw, USER_BAP,
+	err = hw->ops->read_ltv(hw, USER_BAP,
 				HERMES_RID_CURRENT_ASSOC_RESP_INFO,
-				माप(buf), शून्य, &buf);
-	अगर (err != 0)
-		वापस;
+				sizeof(buf), NULL, &buf);
+	if (err != 0)
+		return;
 
-	ie = orinoco_get_wpa_ie(buf, माप(buf));
-	अगर (ie) अणु
-		पूर्णांक rem = माप(buf) - (ie - &buf[0]);
+	ie = orinoco_get_wpa_ie(buf, sizeof(buf));
+	if (ie) {
+		int rem = sizeof(buf) - (ie - &buf[0]);
 		wrqu.data.length = ie[1] + 2;
-		अगर (wrqu.data.length > rem)
+		if (wrqu.data.length > rem)
 			wrqu.data.length = rem;
 
-		अगर (wrqu.data.length)
+		if (wrqu.data.length)
 			/* Send event to user space */
 			wireless_send_event(dev, IWEVASSOCRESPIE, &wrqu, ie);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम orinoco_send_wevents(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा orinoco_निजी *priv =
-		container_of(work, काष्ठा orinoco_निजी, wevent_work);
-	अचिन्हित दीर्घ flags;
+static void orinoco_send_wevents(struct work_struct *work)
+{
+	struct orinoco_private *priv =
+		container_of(work, struct orinoco_private, wevent_work);
+	unsigned long flags;
 
-	अगर (orinoco_lock(priv, &flags) != 0)
-		वापस;
+	if (orinoco_lock(priv, &flags) != 0)
+		return;
 
 	orinoco_send_assocreqie_wevent(priv);
 	orinoco_send_assocrespie_wevent(priv);
 	orinoco_send_bssid_wevent(priv);
 
 	orinoco_unlock(priv, &flags);
-पूर्ण
+}
 
-अटल व्योम qbuf_scan(काष्ठा orinoco_निजी *priv, व्योम *buf,
-		      पूर्णांक len, पूर्णांक type)
-अणु
-	काष्ठा orinoco_scan_data *sd;
-	अचिन्हित दीर्घ flags;
+static void qbuf_scan(struct orinoco_private *priv, void *buf,
+		      int len, int type)
+{
+	struct orinoco_scan_data *sd;
+	unsigned long flags;
 
-	sd = kदो_स्मृति(माप(*sd), GFP_ATOMIC);
-	अगर (!sd)
-		वापस;
+	sd = kmalloc(sizeof(*sd), GFP_ATOMIC);
+	if (!sd)
+		return;
 
 	sd->buf = buf;
 	sd->len = len;
@@ -1329,16 +1328,16 @@ EXPORT_SYMBOL(__orinoco_ev_rx);
 	spin_unlock_irqrestore(&priv->scan_lock, flags);
 
 	schedule_work(&priv->process_scan);
-पूर्ण
+}
 
-अटल व्योम qपात_scan(काष्ठा orinoco_निजी *priv)
-अणु
-	काष्ठा orinoco_scan_data *sd;
-	अचिन्हित दीर्घ flags;
+static void qabort_scan(struct orinoco_private *priv)
+{
+	struct orinoco_scan_data *sd;
+	unsigned long flags;
 
-	sd = kदो_स्मृति(माप(*sd), GFP_ATOMIC);
-	अगर (!sd)
-		वापस;
+	sd = kmalloc(sizeof(*sd), GFP_ATOMIC);
+	if (!sd)
+		return;
 
 	sd->len = -1; /* Abort */
 
@@ -1347,20 +1346,20 @@ EXPORT_SYMBOL(__orinoco_ev_rx);
 	spin_unlock_irqrestore(&priv->scan_lock, flags);
 
 	schedule_work(&priv->process_scan);
-पूर्ण
+}
 
-अटल व्योम orinoco_process_scan_results(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा orinoco_निजी *priv =
-		container_of(work, काष्ठा orinoco_निजी, process_scan);
-	काष्ठा orinoco_scan_data *sd, *temp;
-	अचिन्हित दीर्घ flags;
-	व्योम *buf;
-	पूर्णांक len;
-	पूर्णांक type;
+static void orinoco_process_scan_results(struct work_struct *work)
+{
+	struct orinoco_private *priv =
+		container_of(work, struct orinoco_private, process_scan);
+	struct orinoco_scan_data *sd, *temp;
+	unsigned long flags;
+	void *buf;
+	int len;
+	int type;
 
 	spin_lock_irqsave(&priv->scan_lock, flags);
-	list_क्रम_each_entry_safe(sd, temp, &priv->scan_list, list) अणु
+	list_for_each_entry_safe(sd, temp, &priv->scan_list, list) {
 
 		buf = sd->buf;
 		len = sd->len;
@@ -1368,75 +1367,75 @@ EXPORT_SYMBOL(__orinoco_ev_rx);
 
 		list_del(&sd->list);
 		spin_unlock_irqrestore(&priv->scan_lock, flags);
-		kमुक्त(sd);
+		kfree(sd);
 
-		अगर (len > 0) अणु
-			अगर (type == HERMES_INQ_CHANNELINFO)
+		if (len > 0) {
+			if (type == HERMES_INQ_CHANNELINFO)
 				orinoco_add_extscan_result(priv, buf, len);
-			अन्यथा
+			else
 				orinoco_add_hostscan_results(priv, buf, len);
 
-			kमुक्त(buf);
-		पूर्ण अन्यथा अणु
-			/* Either पात or complete the scan */
-			orinoco_scan_करोne(priv, (len < 0));
-		पूर्ण
+			kfree(buf);
+		} else {
+			/* Either abort or complete the scan */
+			orinoco_scan_done(priv, (len < 0));
+		}
 
 		spin_lock_irqsave(&priv->scan_lock, flags);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&priv->scan_lock, flags);
-पूर्ण
+}
 
-व्योम __orinoco_ev_info(काष्ठा net_device *dev, काष्ठा hermes *hw)
-अणु
-	काष्ठा orinoco_निजी *priv = ndev_priv(dev);
+void __orinoco_ev_info(struct net_device *dev, struct hermes *hw)
+{
+	struct orinoco_private *priv = ndev_priv(dev);
 	u16 infofid;
-	काष्ठा अणु
+	struct {
 		__le16 len;
 		__le16 type;
-	पूर्ण __packed info;
-	पूर्णांक len, type;
-	पूर्णांक err;
+	} __packed info;
+	int len, type;
+	int err;
 
 	/* This is an answer to an INQUIRE command that we did earlier,
-	 * or an inक्रमmation "event" generated by the card
-	 * The controller वापस to us a pseuकरो frame containing
-	 * the inक्रमmation in question - Jean II */
-	infofid = hermes_पढ़ो_regn(hw, INFOFID);
+	 * or an information "event" generated by the card
+	 * The controller return to us a pseudo frame containing
+	 * the information in question - Jean II */
+	infofid = hermes_read_regn(hw, INFOFID);
 
-	/* Read the info frame header - करोn't try too hard */
-	err = hw->ops->bap_pपढ़ो(hw, IRQ_BAP, &info, माप(info),
+	/* Read the info frame header - don't try too hard */
+	err = hw->ops->bap_pread(hw, IRQ_BAP, &info, sizeof(info),
 				 infofid, 0);
-	अगर (err) अणु
-		prपूर्णांकk(KERN_ERR "%s: error %d reading info frame. "
+	if (err) {
+		printk(KERN_ERR "%s: error %d reading info frame. "
 		       "Frame dropped.\n", dev->name, err);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	len = HERMES_RECLEN_TO_BYTES(le16_to_cpu(info.len));
 	type = le16_to_cpu(info.type);
 
-	चयन (type) अणु
-	हाल HERMES_INQ_TALLIES: अणु
-		काष्ठा hermes_tallies_frame tallies;
-		काष्ठा iw_statistics *wstats = &priv->wstats;
+	switch (type) {
+	case HERMES_INQ_TALLIES: {
+		struct hermes_tallies_frame tallies;
+		struct iw_statistics *wstats = &priv->wstats;
 
-		अगर (len > माप(tallies)) अणु
-			prपूर्णांकk(KERN_WARNING "%s: Tallies frame too long (%d bytes)\n",
+		if (len > sizeof(tallies)) {
+			printk(KERN_WARNING "%s: Tallies frame too long (%d bytes)\n",
 			       dev->name, len);
-			len = माप(tallies);
-		पूर्ण
+			len = sizeof(tallies);
+		}
 
-		err = hw->ops->bap_pपढ़ो(hw, IRQ_BAP, &tallies, len,
-					 infofid, माप(info));
-		अगर (err)
-			अवरोध;
+		err = hw->ops->bap_pread(hw, IRQ_BAP, &tallies, len,
+					 infofid, sizeof(info));
+		if (err)
+			break;
 
 		/* Increment our various counters */
 		/* wstats->discard.nwid - no wrong BSSID stuff */
 		wstats->discard.code +=
 			le16_to_cpu(tallies.RxWEPUndecryptable);
-		अगर (len == माप(tallies))
+		if (len == sizeof(tallies))
 			wstats->discard.code +=
 				le16_to_cpu(tallies.RxDiscards_WEPICVError) +
 				le16_to_cpu(tallies.RxDiscards_WEPExcluded);
@@ -1447,647 +1446,647 @@ EXPORT_SYMBOL(__orinoco_ev_rx);
 		wstats->discard.retries +=
 			le16_to_cpu(tallies.TxRetryLimitExceeded);
 		/* wstats->miss.beacon - no match */
-	पूर्ण
-	अवरोध;
-	हाल HERMES_INQ_LINKSTATUS: अणु
-		काष्ठा hermes_linkstatus linkstatus;
+	}
+	break;
+	case HERMES_INQ_LINKSTATUS: {
+		struct hermes_linkstatus linkstatus;
 		u16 newstatus;
-		पूर्णांक connected;
+		int connected;
 
-		अगर (priv->iw_mode == NL80211_IFTYPE_MONITOR)
-			अवरोध;
+		if (priv->iw_mode == NL80211_IFTYPE_MONITOR)
+			break;
 
-		अगर (len != माप(linkstatus)) अणु
-			prपूर्णांकk(KERN_WARNING "%s: Unexpected size for linkstatus frame (%d bytes)\n",
+		if (len != sizeof(linkstatus)) {
+			printk(KERN_WARNING "%s: Unexpected size for linkstatus frame (%d bytes)\n",
 			       dev->name, len);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		err = hw->ops->bap_pपढ़ो(hw, IRQ_BAP, &linkstatus, len,
-					 infofid, माप(info));
-		अगर (err)
-			अवरोध;
+		err = hw->ops->bap_pread(hw, IRQ_BAP, &linkstatus, len,
+					 infofid, sizeof(info));
+		if (err)
+			break;
 		newstatus = le16_to_cpu(linkstatus.linkstatus);
 
-		/* Symbol firmware uses "out of range" to संकेत that
+		/* Symbol firmware uses "out of range" to signal that
 		 * the hostscan frame can be requested.  */
-		अगर (newstatus == HERMES_LINKSTATUS_AP_OUT_OF_RANGE &&
+		if (newstatus == HERMES_LINKSTATUS_AP_OUT_OF_RANGE &&
 		    priv->firmware_type == FIRMWARE_TYPE_SYMBOL &&
-		    priv->has_hostscan && priv->scan_request) अणु
+		    priv->has_hostscan && priv->scan_request) {
 			hermes_inquire(hw, HERMES_INQ_HOSTSCAN_SYMBOL);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		connected = (newstatus == HERMES_LINKSTATUS_CONNECTED)
 			|| (newstatus == HERMES_LINKSTATUS_AP_CHANGE)
 			|| (newstatus == HERMES_LINKSTATUS_AP_IN_RANGE);
 
-		अगर (connected)
-			netअगर_carrier_on(dev);
-		अन्यथा अगर (!ignore_disconnect)
-			netअगर_carrier_off(dev);
+		if (connected)
+			netif_carrier_on(dev);
+		else if (!ignore_disconnect)
+			netif_carrier_off(dev);
 
-		अगर (newstatus != priv->last_linkstatus) अणु
+		if (newstatus != priv->last_linkstatus) {
 			priv->last_linkstatus = newstatus;
-			prपूर्णांक_linkstatus(dev, newstatus);
+			print_linkstatus(dev, newstatus);
 			/* The info frame contains only one word which is the
 			 * status (see hermes.h). The status is pretty boring
 			 * in itself, that's why we export the new BSSID...
 			 * Jean II */
 			schedule_work(&priv->wevent_work);
-		पूर्ण
-	पूर्ण
-	अवरोध;
-	हाल HERMES_INQ_SCAN:
-		अगर (!priv->scan_request && priv->bssid_fixed &&
-		    priv->firmware_type == FIRMWARE_TYPE_INTERSIL) अणु
+		}
+	}
+	break;
+	case HERMES_INQ_SCAN:
+		if (!priv->scan_request && priv->bssid_fixed &&
+		    priv->firmware_type == FIRMWARE_TYPE_INTERSIL) {
 			schedule_work(&priv->join_work);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		fallthrough;
-	हाल HERMES_INQ_HOSTSCAN:
-	हाल HERMES_INQ_HOSTSCAN_SYMBOL: अणु
-		/* Result of a scanning. Contains inक्रमmation about
+	case HERMES_INQ_HOSTSCAN:
+	case HERMES_INQ_HOSTSCAN_SYMBOL: {
+		/* Result of a scanning. Contains information about
 		 * cells in the vicinity - Jean II */
-		अचिन्हित अक्षर *buf;
+		unsigned char *buf;
 
 		/* Sanity check */
-		अगर (len > 4096) अणु
-			prपूर्णांकk(KERN_WARNING "%s: Scan results too large (%d bytes)\n",
+		if (len > 4096) {
+			printk(KERN_WARNING "%s: Scan results too large (%d bytes)\n",
 			       dev->name, len);
-			qपात_scan(priv);
-			अवरोध;
-		पूर्ण
+			qabort_scan(priv);
+			break;
+		}
 
-		/* Allocate buffer क्रम results */
-		buf = kदो_स्मृति(len, GFP_ATOMIC);
-		अगर (buf == शून्य) अणु
-			/* No memory, so can't prपूर्णांकk()... */
-			qपात_scan(priv);
-			अवरोध;
-		पूर्ण
+		/* Allocate buffer for results */
+		buf = kmalloc(len, GFP_ATOMIC);
+		if (buf == NULL) {
+			/* No memory, so can't printk()... */
+			qabort_scan(priv);
+			break;
+		}
 
 		/* Read scan data */
-		err = hw->ops->bap_pपढ़ो(hw, IRQ_BAP, (व्योम *) buf, len,
-					 infofid, माप(info));
-		अगर (err) अणु
-			kमुक्त(buf);
-			qपात_scan(priv);
-			अवरोध;
-		पूर्ण
+		err = hw->ops->bap_pread(hw, IRQ_BAP, (void *) buf, len,
+					 infofid, sizeof(info));
+		if (err) {
+			kfree(buf);
+			qabort_scan(priv);
+			break;
+		}
 
-#अगर_घोषित ORINOCO_DEBUG
-		अणु
-			पूर्णांक	i;
-			prपूर्णांकk(KERN_DEBUG "Scan result [%02X", buf[0]);
-			क्रम (i = 1; i < (len * 2); i++)
-				prपूर्णांकk(":%02X", buf[i]);
-			prपूर्णांकk("]\n");
-		पूर्ण
-#पूर्ण_अगर	/* ORINOCO_DEBUG */
+#ifdef ORINOCO_DEBUG
+		{
+			int	i;
+			printk(KERN_DEBUG "Scan result [%02X", buf[0]);
+			for (i = 1; i < (len * 2); i++)
+				printk(":%02X", buf[i]);
+			printk("]\n");
+		}
+#endif	/* ORINOCO_DEBUG */
 
 		qbuf_scan(priv, buf, len, type);
-	पूर्ण
-	अवरोध;
-	हाल HERMES_INQ_CHANNELINFO:
-	अणु
-		काष्ठा agere_ext_scan_info *bss;
+	}
+	break;
+	case HERMES_INQ_CHANNELINFO:
+	{
+		struct agere_ext_scan_info *bss;
 
-		अगर (!priv->scan_request) अणु
-			prपूर्णांकk(KERN_DEBUG "%s: Got chaninfo without scan, "
+		if (!priv->scan_request) {
+			printk(KERN_DEBUG "%s: Got chaninfo without scan, "
 			       "len=%d\n", dev->name, len);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		/* An empty result indicates that the scan is complete */
-		अगर (len == 0) अणु
-			qbuf_scan(priv, शून्य, len, type);
-			अवरोध;
-		पूर्ण
+		if (len == 0) {
+			qbuf_scan(priv, NULL, len, type);
+			break;
+		}
 
 		/* Sanity check */
-		अन्यथा अगर (len < (दुरत्व(काष्ठा agere_ext_scan_info,
-					   data) + 2)) अणु
-			/* Drop this result now so we करोn't have to
+		else if (len < (offsetof(struct agere_ext_scan_info,
+					   data) + 2)) {
+			/* Drop this result now so we don't have to
 			 * keep checking later */
-			prपूर्णांकk(KERN_WARNING
+			printk(KERN_WARNING
 			       "%s: Ext scan results too short (%d bytes)\n",
 			       dev->name, len);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		bss = kदो_स्मृति(len, GFP_ATOMIC);
-		अगर (bss == शून्य)
-			अवरोध;
+		bss = kmalloc(len, GFP_ATOMIC);
+		if (bss == NULL)
+			break;
 
 		/* Read scan data */
-		err = hw->ops->bap_pपढ़ो(hw, IRQ_BAP, (व्योम *) bss, len,
-					 infofid, माप(info));
-		अगर (err)
-			kमुक्त(bss);
-		अन्यथा
+		err = hw->ops->bap_pread(hw, IRQ_BAP, (void *) bss, len,
+					 infofid, sizeof(info));
+		if (err)
+			kfree(bss);
+		else
 			qbuf_scan(priv, bss, len, type);
 
-		अवरोध;
-	पूर्ण
-	हाल HERMES_INQ_SEC_STAT_AGERE:
-		/* Security status (Agere specअगरic) */
-		/* Ignore this frame क्रम now */
-		अगर (priv->firmware_type == FIRMWARE_TYPE_AGERE)
-			अवरोध;
+		break;
+	}
+	case HERMES_INQ_SEC_STAT_AGERE:
+		/* Security status (Agere specific) */
+		/* Ignore this frame for now */
+		if (priv->firmware_type == FIRMWARE_TYPE_AGERE)
+			break;
 		fallthrough;
-	शेष:
-		prपूर्णांकk(KERN_DEBUG "%s: Unknown information frame received: "
+	default:
+		printk(KERN_DEBUG "%s: Unknown information frame received: "
 		       "type 0x%04x, length %d\n", dev->name, type, len);
-		/* We करोn't actually करो anything about it */
-		अवरोध;
-	पूर्ण
-पूर्ण
+		/* We don't actually do anything about it */
+		break;
+	}
+}
 EXPORT_SYMBOL(__orinoco_ev_info);
 
-अटल व्योम __orinoco_ev_infdrop(काष्ठा net_device *dev, काष्ठा hermes *hw)
-अणु
-	अगर (net_ratelimit())
-		prपूर्णांकk(KERN_DEBUG "%s: Information frame lost.\n", dev->name);
-पूर्ण
+static void __orinoco_ev_infdrop(struct net_device *dev, struct hermes *hw)
+{
+	if (net_ratelimit())
+		printk(KERN_DEBUG "%s: Information frame lost.\n", dev->name);
+}
 
 /********************************************************************/
 /* Internal hardware control routines                               */
 /********************************************************************/
 
-अटल पूर्णांक __orinoco_up(काष्ठा orinoco_निजी *priv)
-अणु
-	काष्ठा net_device *dev = priv->ndev;
-	काष्ठा hermes *hw = &priv->hw;
-	पूर्णांक err;
+static int __orinoco_up(struct orinoco_private *priv)
+{
+	struct net_device *dev = priv->ndev;
+	struct hermes *hw = &priv->hw;
+	int err;
 
-	netअगर_carrier_off(dev); /* just to make sure */
+	netif_carrier_off(dev); /* just to make sure */
 
 	err = __orinoco_commit(priv);
-	अगर (err) अणु
-		prपूर्णांकk(KERN_ERR "%s: Error %d configuring card\n",
+	if (err) {
+		printk(KERN_ERR "%s: Error %d configuring card\n",
 		       dev->name, err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	/* Fire things up again */
 	hermes_set_irqmask(hw, ORINOCO_INTEN);
 	err = hermes_enable_port(hw, 0);
-	अगर (err) अणु
-		prपूर्णांकk(KERN_ERR "%s: Error %d enabling MAC port\n",
+	if (err) {
+		printk(KERN_ERR "%s: Error %d enabling MAC port\n",
 		       dev->name, err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	netअगर_start_queue(dev);
+	netif_start_queue(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __orinoco_करोwn(काष्ठा orinoco_निजी *priv)
-अणु
-	काष्ठा net_device *dev = priv->ndev;
-	काष्ठा hermes *hw = &priv->hw;
-	पूर्णांक err;
+static int __orinoco_down(struct orinoco_private *priv)
+{
+	struct net_device *dev = priv->ndev;
+	struct hermes *hw = &priv->hw;
+	int err;
 
-	netअगर_stop_queue(dev);
+	netif_stop_queue(dev);
 
-	अगर (!priv->hw_unavailable) अणु
-		अगर (!priv->broken_disableport) अणु
+	if (!priv->hw_unavailable) {
+		if (!priv->broken_disableport) {
 			err = hermes_disable_port(hw, 0);
-			अगर (err) अणु
+			if (err) {
 				/* Some firmwares (e.g. Intersil 1.3.x) seem
 				 * to have problems disabling the port, oh
 				 * well, too bad. */
-				prपूर्णांकk(KERN_WARNING "%s: Error %d disabling MAC port\n",
+				printk(KERN_WARNING "%s: Error %d disabling MAC port\n",
 				       dev->name, err);
 				priv->broken_disableport = 1;
-			पूर्ण
-		पूर्ण
+			}
+		}
 		hermes_set_irqmask(hw, 0);
-		hermes_ग_लिखो_regn(hw, EVACK, 0xffff);
-	पूर्ण
+		hermes_write_regn(hw, EVACK, 0xffff);
+	}
 
-	orinoco_scan_करोne(priv, true);
+	orinoco_scan_done(priv, true);
 
 	/* firmware will have to reassociate */
-	netअगर_carrier_off(dev);
+	netif_carrier_off(dev);
 	priv->last_linkstatus = 0xffff;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक orinoco_reinit_firmware(काष्ठा orinoco_निजी *priv)
-अणु
-	काष्ठा hermes *hw = &priv->hw;
-	पूर्णांक err;
+static int orinoco_reinit_firmware(struct orinoco_private *priv)
+{
+	struct hermes *hw = &priv->hw;
+	int err;
 
 	err = hw->ops->init(hw);
-	अगर (priv->करो_fw_करोwnload && !err) अणु
-		err = orinoco_करोwnload(priv);
-		अगर (err)
-			priv->करो_fw_करोwnload = 0;
-	पूर्ण
-	अगर (!err)
+	if (priv->do_fw_download && !err) {
+		err = orinoco_download(priv);
+		if (err)
+			priv->do_fw_download = 0;
+	}
+	if (!err)
 		err = orinoco_hw_allocate_fid(priv);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक
-__orinoco_set_multicast_list(काष्ठा net_device *dev)
-अणु
-	काष्ठा orinoco_निजी *priv = ndev_priv(dev);
-	पूर्णांक err = 0;
-	पूर्णांक promisc, mc_count;
+static int
+__orinoco_set_multicast_list(struct net_device *dev)
+{
+	struct orinoco_private *priv = ndev_priv(dev);
+	int err = 0;
+	int promisc, mc_count;
 
-	/* The Hermes करोesn't seem to have an allmulti mode, so we go
-	 * पूर्णांकo promiscuous mode and let the upper levels deal. */
-	अगर ((dev->flags & IFF_PROMISC) || (dev->flags & IFF_ALLMULTI) ||
-	    (netdev_mc_count(dev) > MAX_MULTICAST(priv))) अणु
+	/* The Hermes doesn't seem to have an allmulti mode, so we go
+	 * into promiscuous mode and let the upper levels deal. */
+	if ((dev->flags & IFF_PROMISC) || (dev->flags & IFF_ALLMULTI) ||
+	    (netdev_mc_count(dev) > MAX_MULTICAST(priv))) {
 		promisc = 1;
 		mc_count = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		promisc = 0;
 		mc_count = netdev_mc_count(dev);
-	पूर्ण
+	}
 
 	err = __orinoco_hw_set_multicast_list(priv, dev, mc_count, promisc);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /* This must be called from user context, without locks held - use
  * schedule_work() */
-व्योम orinoco_reset(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा orinoco_निजी *priv =
-		container_of(work, काष्ठा orinoco_निजी, reset_work);
-	काष्ठा net_device *dev = priv->ndev;
-	काष्ठा hermes *hw = &priv->hw;
-	पूर्णांक err;
-	अचिन्हित दीर्घ flags;
+void orinoco_reset(struct work_struct *work)
+{
+	struct orinoco_private *priv =
+		container_of(work, struct orinoco_private, reset_work);
+	struct net_device *dev = priv->ndev;
+	struct hermes *hw = &priv->hw;
+	int err;
+	unsigned long flags;
 
-	अगर (orinoco_lock(priv, &flags) != 0)
+	if (orinoco_lock(priv, &flags) != 0)
 		/* When the hardware becomes available again, whatever
-		 * detects that is responsible क्रम re-initializing
-		 * it. So no need क्रम anything further */
-		वापस;
+		 * detects that is responsible for re-initializing
+		 * it. So no need for anything further */
+		return;
 
-	netअगर_stop_queue(dev);
+	netif_stop_queue(dev);
 
-	/* Shut off पूर्णांकerrupts.  Depending on what state the hardware
+	/* Shut off interrupts.  Depending on what state the hardware
 	 * is in, this might not work, but we'll try anyway */
 	hermes_set_irqmask(hw, 0);
-	hermes_ग_लिखो_regn(hw, EVACK, 0xffff);
+	hermes_write_regn(hw, EVACK, 0xffff);
 
 	priv->hw_unavailable++;
 	priv->last_linkstatus = 0xffff; /* firmware will have to reassociate */
-	netअगर_carrier_off(dev);
+	netif_carrier_off(dev);
 
 	orinoco_unlock(priv, &flags);
 
-	/* Scanning support: Notअगरy scan cancellation */
-	orinoco_scan_करोne(priv, true);
+	/* Scanning support: Notify scan cancellation */
+	orinoco_scan_done(priv, true);
 
-	अगर (priv->hard_reset) अणु
+	if (priv->hard_reset) {
 		err = (*priv->hard_reset)(priv);
-		अगर (err) अणु
-			prपूर्णांकk(KERN_ERR "%s: orinoco_reset: Error %d "
+		if (err) {
+			printk(KERN_ERR "%s: orinoco_reset: Error %d "
 			       "performing hard reset\n", dev->name, err);
-			जाओ disable;
-		पूर्ण
-	पूर्ण
+			goto disable;
+		}
+	}
 
 	err = orinoco_reinit_firmware(priv);
-	अगर (err) अणु
-		prपूर्णांकk(KERN_ERR "%s: orinoco_reset: Error %d re-initializing firmware\n",
+	if (err) {
+		printk(KERN_ERR "%s: orinoco_reset: Error %d re-initializing firmware\n",
 		       dev->name, err);
-		जाओ disable;
-	पूर्ण
+		goto disable;
+	}
 
 	/* This has to be called from user context */
 	orinoco_lock_irq(priv);
 
 	priv->hw_unavailable--;
 
-	/* priv->खोलो or priv->hw_unavailable might have changed जबतक
+	/* priv->open or priv->hw_unavailable might have changed while
 	 * we dropped the lock */
-	अगर (priv->खोलो && (!priv->hw_unavailable)) अणु
+	if (priv->open && (!priv->hw_unavailable)) {
 		err = __orinoco_up(priv);
-		अगर (err) अणु
-			prपूर्णांकk(KERN_ERR "%s: orinoco_reset: Error %d reenabling card\n",
+		if (err) {
+			printk(KERN_ERR "%s: orinoco_reset: Error %d reenabling card\n",
 			       dev->name, err);
-		पूर्ण अन्यथा
-			netअगर_trans_update(dev);
-	पूर्ण
+		} else
+			netif_trans_update(dev);
+	}
 
 	orinoco_unlock_irq(priv);
 
-	वापस;
+	return;
  disable:
 	hermes_set_irqmask(hw, 0);
-	netअगर_device_detach(dev);
-	prपूर्णांकk(KERN_ERR "%s: Device has been disabled!\n", dev->name);
-पूर्ण
+	netif_device_detach(dev);
+	printk(KERN_ERR "%s: Device has been disabled!\n", dev->name);
+}
 
-अटल पूर्णांक __orinoco_commit(काष्ठा orinoco_निजी *priv)
-अणु
-	काष्ठा net_device *dev = priv->ndev;
-	पूर्णांक err = 0;
+static int __orinoco_commit(struct orinoco_private *priv)
+{
+	struct net_device *dev = priv->ndev;
+	int err = 0;
 
 	/* If we've called commit, we are reconfiguring or bringing the
-	 * पूर्णांकerface up. Maपूर्णांकaining countermeasures across this would
+	 * interface up. Maintaining countermeasures across this would
 	 * be confusing, so note that we've disabled them. The port will
 	 * be enabled later in orinoco_commit or __orinoco_up. */
 	priv->tkip_cm_active = 0;
 
 	err = orinoco_hw_program_rids(priv);
 
-	/* FIXME: what about netअगर_tx_lock */
-	(व्योम) __orinoco_set_multicast_list(dev);
+	/* FIXME: what about netif_tx_lock */
+	(void) __orinoco_set_multicast_list(dev);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /* Ensures configuration changes are applied. May result in a reset.
  * The caller should hold priv->lock
  */
-पूर्णांक orinoco_commit(काष्ठा orinoco_निजी *priv)
-अणु
-	काष्ठा net_device *dev = priv->ndev;
-	काष्ठा hermes *hw = &priv->hw;
-	पूर्णांक err;
+int orinoco_commit(struct orinoco_private *priv)
+{
+	struct net_device *dev = priv->ndev;
+	struct hermes *hw = &priv->hw;
+	int err;
 
-	अगर (priv->broken_disableport) अणु
+	if (priv->broken_disableport) {
 		schedule_work(&priv->reset_work);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	err = hermes_disable_port(hw, 0);
-	अगर (err) अणु
-		prपूर्णांकk(KERN_WARNING "%s: Unable to disable port "
+	if (err) {
+		printk(KERN_WARNING "%s: Unable to disable port "
 		       "while reconfiguring card\n", dev->name);
 		priv->broken_disableport = 1;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	err = __orinoco_commit(priv);
-	अगर (err) अणु
-		prपूर्णांकk(KERN_WARNING "%s: Unable to reconfigure card\n",
+	if (err) {
+		printk(KERN_WARNING "%s: Unable to reconfigure card\n",
 		       dev->name);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	err = hermes_enable_port(hw, 0);
-	अगर (err) अणु
-		prपूर्णांकk(KERN_WARNING "%s: Unable to enable port while reconfiguring card\n",
+	if (err) {
+		printk(KERN_WARNING "%s: Unable to enable port while reconfiguring card\n",
 		       dev->name);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
  out:
-	अगर (err) अणु
-		prपूर्णांकk(KERN_WARNING "%s: Resetting instead...\n", dev->name);
+	if (err) {
+		printk(KERN_WARNING "%s: Resetting instead...\n", dev->name);
 		schedule_work(&priv->reset_work);
 		err = 0;
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
 /********************************************************************/
 /* Interrupt handler                                                */
 /********************************************************************/
 
-अटल व्योम __orinoco_ev_tick(काष्ठा net_device *dev, काष्ठा hermes *hw)
-अणु
-	prपूर्णांकk(KERN_DEBUG "%s: TICK\n", dev->name);
-पूर्ण
+static void __orinoco_ev_tick(struct net_device *dev, struct hermes *hw)
+{
+	printk(KERN_DEBUG "%s: TICK\n", dev->name);
+}
 
-अटल व्योम __orinoco_ev_wterr(काष्ठा net_device *dev, काष्ठा hermes *hw)
-अणु
+static void __orinoco_ev_wterr(struct net_device *dev, struct hermes *hw)
+{
 	/* This seems to happen a fair bit under load, but ignoring it
 	   seems to work fine...*/
-	prपूर्णांकk(KERN_DEBUG "%s: MAC controller error (WTERR). Ignoring.\n",
+	printk(KERN_DEBUG "%s: MAC controller error (WTERR). Ignoring.\n",
 	       dev->name);
-पूर्ण
+}
 
-irqवापस_t orinoco_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा orinoco_निजी *priv = dev_id;
-	काष्ठा net_device *dev = priv->ndev;
-	काष्ठा hermes *hw = &priv->hw;
-	पूर्णांक count = MAX_IRQLOOPS_PER_IRQ;
+irqreturn_t orinoco_interrupt(int irq, void *dev_id)
+{
+	struct orinoco_private *priv = dev_id;
+	struct net_device *dev = priv->ndev;
+	struct hermes *hw = &priv->hw;
+	int count = MAX_IRQLOOPS_PER_IRQ;
 	u16 evstat, events;
-	/* These are used to detect a runaway पूर्णांकerrupt situation.
+	/* These are used to detect a runaway interrupt situation.
 	 *
-	 * If we get more than MAX_IRQLOOPS_PER_JIFFY iterations in a jअगरfy,
-	 * we panic and shut करोwn the hardware
+	 * If we get more than MAX_IRQLOOPS_PER_JIFFY iterations in a jiffy,
+	 * we panic and shut down the hardware
 	 */
-	/* jअगरfies value the last समय we were called */
-	अटल पूर्णांक last_irq_jअगरfy; /* = 0 */
-	अटल पूर्णांक loops_this_jअगरfy; /* = 0 */
-	अचिन्हित दीर्घ flags;
+	/* jiffies value the last time we were called */
+	static int last_irq_jiffy; /* = 0 */
+	static int loops_this_jiffy; /* = 0 */
+	unsigned long flags;
 
-	अगर (orinoco_lock(priv, &flags) != 0) अणु
-		/* If hw is unavailable - we करोn't know अगर the irq was
-		 * क्रम us or not */
-		वापस IRQ_HANDLED;
-	पूर्ण
+	if (orinoco_lock(priv, &flags) != 0) {
+		/* If hw is unavailable - we don't know if the irq was
+		 * for us or not */
+		return IRQ_HANDLED;
+	}
 
-	evstat = hermes_पढ़ो_regn(hw, EVSTAT);
-	events = evstat & hw->पूर्णांकen;
-	अगर (!events) अणु
+	evstat = hermes_read_regn(hw, EVSTAT);
+	events = evstat & hw->inten;
+	if (!events) {
 		orinoco_unlock(priv, &flags);
-		वापस IRQ_NONE;
-	पूर्ण
+		return IRQ_NONE;
+	}
 
-	अगर (jअगरfies != last_irq_jअगरfy)
-		loops_this_jअगरfy = 0;
-	last_irq_jअगरfy = jअगरfies;
+	if (jiffies != last_irq_jiffy)
+		loops_this_jiffy = 0;
+	last_irq_jiffy = jiffies;
 
-	जबतक (events && count--) अणु
-		अगर (++loops_this_jअगरfy > MAX_IRQLOOPS_PER_JIFFY) अणु
-			prपूर्णांकk(KERN_WARNING "%s: IRQ handler is looping too "
+	while (events && count--) {
+		if (++loops_this_jiffy > MAX_IRQLOOPS_PER_JIFFY) {
+			printk(KERN_WARNING "%s: IRQ handler is looping too "
 			       "much! Resetting.\n", dev->name);
-			/* Disable पूर्णांकerrupts क्रम now */
+			/* Disable interrupts for now */
 			hermes_set_irqmask(hw, 0);
 			schedule_work(&priv->reset_work);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		/* Check the card hasn't been हटाओd */
-		अगर (!hermes_present(hw)) अणु
+		/* Check the card hasn't been removed */
+		if (!hermes_present(hw)) {
 			DEBUG(0, "orinoco_interrupt(): card removed\n");
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (events & HERMES_EV_TICK)
+		if (events & HERMES_EV_TICK)
 			__orinoco_ev_tick(dev, hw);
-		अगर (events & HERMES_EV_WTERR)
+		if (events & HERMES_EV_WTERR)
 			__orinoco_ev_wterr(dev, hw);
-		अगर (events & HERMES_EV_INFDROP)
+		if (events & HERMES_EV_INFDROP)
 			__orinoco_ev_infdrop(dev, hw);
-		अगर (events & HERMES_EV_INFO)
+		if (events & HERMES_EV_INFO)
 			__orinoco_ev_info(dev, hw);
-		अगर (events & HERMES_EV_RX)
+		if (events & HERMES_EV_RX)
 			__orinoco_ev_rx(dev, hw);
-		अगर (events & HERMES_EV_TXEXC)
+		if (events & HERMES_EV_TXEXC)
 			__orinoco_ev_txexc(dev, hw);
-		अगर (events & HERMES_EV_TX)
+		if (events & HERMES_EV_TX)
 			__orinoco_ev_tx(dev, hw);
-		अगर (events & HERMES_EV_ALLOC)
+		if (events & HERMES_EV_ALLOC)
 			__orinoco_ev_alloc(dev, hw);
 
-		hermes_ग_लिखो_regn(hw, EVACK, evstat);
+		hermes_write_regn(hw, EVACK, evstat);
 
-		evstat = hermes_पढ़ो_regn(hw, EVSTAT);
-		events = evstat & hw->पूर्णांकen;
-	पूर्ण
+		evstat = hermes_read_regn(hw, EVSTAT);
+		events = evstat & hw->inten;
+	}
 
 	orinoco_unlock(priv, &flags);
-	वापस IRQ_HANDLED;
-पूर्ण
-EXPORT_SYMBOL(orinoco_पूर्णांकerrupt);
+	return IRQ_HANDLED;
+}
+EXPORT_SYMBOL(orinoco_interrupt);
 
 /********************************************************************/
 /* Power management                                                 */
 /********************************************************************/
-#अगर defined(CONFIG_PM_SLEEP) && !defined(CONFIG_HERMES_CACHE_FW_ON_INIT)
-अटल पूर्णांक orinoco_pm_notअगरier(काष्ठा notअगरier_block *notअगरier,
-			       अचिन्हित दीर्घ pm_event,
-			       व्योम *unused)
-अणु
-	काष्ठा orinoco_निजी *priv = container_of(notअगरier,
-						    काष्ठा orinoco_निजी,
-						    pm_notअगरier);
+#if defined(CONFIG_PM_SLEEP) && !defined(CONFIG_HERMES_CACHE_FW_ON_INIT)
+static int orinoco_pm_notifier(struct notifier_block *notifier,
+			       unsigned long pm_event,
+			       void *unused)
+{
+	struct orinoco_private *priv = container_of(notifier,
+						    struct orinoco_private,
+						    pm_notifier);
 
-	/* All we need to करो is cache the firmware beक्रमe suspend, and
+	/* All we need to do is cache the firmware before suspend, and
 	 * release it when we come out.
 	 *
-	 * Only need to करो this अगर we're करोwnloading firmware. */
-	अगर (!priv->करो_fw_करोwnload)
-		वापस NOTIFY_DONE;
+	 * Only need to do this if we're downloading firmware. */
+	if (!priv->do_fw_download)
+		return NOTIFY_DONE;
 
-	चयन (pm_event) अणु
-	हाल PM_HIBERNATION_PREPARE:
-	हाल PM_SUSPEND_PREPARE:
+	switch (pm_event) {
+	case PM_HIBERNATION_PREPARE:
+	case PM_SUSPEND_PREPARE:
 		orinoco_cache_fw(priv, 0);
-		अवरोध;
+		break;
 
-	हाल PM_POST_RESTORE:
+	case PM_POST_RESTORE:
 		/* Restore from hibernation failed. We need to clean
 		 * up in exactly the same way, so fall through. */
-	हाल PM_POST_HIBERNATION:
-	हाल PM_POST_SUSPEND:
+	case PM_POST_HIBERNATION:
+	case PM_POST_SUSPEND:
 		orinoco_uncache_fw(priv);
-		अवरोध;
+		break;
 
-	हाल PM_RESTORE_PREPARE:
-	शेष:
-		अवरोध;
-	पूर्ण
+	case PM_RESTORE_PREPARE:
+	default:
+		break;
+	}
 
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
-अटल व्योम orinoco_रेजिस्टर_pm_notअगरier(काष्ठा orinoco_निजी *priv)
-अणु
-	priv->pm_notअगरier.notअगरier_call = orinoco_pm_notअगरier;
-	रेजिस्टर_pm_notअगरier(&priv->pm_notअगरier);
-पूर्ण
+static void orinoco_register_pm_notifier(struct orinoco_private *priv)
+{
+	priv->pm_notifier.notifier_call = orinoco_pm_notifier;
+	register_pm_notifier(&priv->pm_notifier);
+}
 
-अटल व्योम orinoco_unरेजिस्टर_pm_notअगरier(काष्ठा orinoco_निजी *priv)
-अणु
-	unरेजिस्टर_pm_notअगरier(&priv->pm_notअगरier);
-पूर्ण
-#अन्यथा /* !PM_SLEEP || HERMES_CACHE_FW_ON_INIT */
-#घोषणा orinoco_रेजिस्टर_pm_notअगरier(priv) करो अणु पूर्ण जबतक (0)
-#घोषणा orinoco_unरेजिस्टर_pm_notअगरier(priv) करो अणु पूर्ण जबतक (0)
-#पूर्ण_अगर
+static void orinoco_unregister_pm_notifier(struct orinoco_private *priv)
+{
+	unregister_pm_notifier(&priv->pm_notifier);
+}
+#else /* !PM_SLEEP || HERMES_CACHE_FW_ON_INIT */
+#define orinoco_register_pm_notifier(priv) do { } while (0)
+#define orinoco_unregister_pm_notifier(priv) do { } while (0)
+#endif
 
 /********************************************************************/
 /* Initialization                                                   */
 /********************************************************************/
 
-पूर्णांक orinoco_init(काष्ठा orinoco_निजी *priv)
-अणु
-	काष्ठा device *dev = priv->dev;
-	काष्ठा wiphy *wiphy = priv_to_wiphy(priv);
-	काष्ठा hermes *hw = &priv->hw;
-	पूर्णांक err = 0;
+int orinoco_init(struct orinoco_private *priv)
+{
+	struct device *dev = priv->dev;
+	struct wiphy *wiphy = priv_to_wiphy(priv);
+	struct hermes *hw = &priv->hw;
+	int err = 0;
 
-	/* No need to lock, the hw_unavailable flag is alपढ़ोy set in
+	/* No need to lock, the hw_unavailable flag is already set in
 	 * alloc_orinocodev() */
 	priv->nicbuf_size = IEEE80211_MAX_FRAME_LEN + ETH_HLEN;
 
 	/* Initialize the firmware */
 	err = hw->ops->init(hw);
-	अगर (err != 0) अणु
+	if (err != 0) {
 		dev_err(dev, "Failed to initialize firmware (err = %d)\n",
 			err);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	err = determine_fw_capabilities(priv, wiphy->fw_version,
-					माप(wiphy->fw_version),
+					sizeof(wiphy->fw_version),
 					&wiphy->hw_version);
-	अगर (err != 0) अणु
+	if (err != 0) {
 		dev_err(dev, "Incompatible firmware, aborting\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (priv->करो_fw_करोwnload) अणु
-#अगर_घोषित CONFIG_HERMES_CACHE_FW_ON_INIT
+	if (priv->do_fw_download) {
+#ifdef CONFIG_HERMES_CACHE_FW_ON_INIT
 		orinoco_cache_fw(priv, 0);
-#पूर्ण_अगर
+#endif
 
-		err = orinoco_करोwnload(priv);
-		अगर (err)
-			priv->करो_fw_करोwnload = 0;
+		err = orinoco_download(priv);
+		if (err)
+			priv->do_fw_download = 0;
 
 		/* Check firmware version again */
 		err = determine_fw_capabilities(priv, wiphy->fw_version,
-						माप(wiphy->fw_version),
+						sizeof(wiphy->fw_version),
 						&wiphy->hw_version);
-		अगर (err != 0) अणु
+		if (err != 0) {
 			dev_err(dev, "Incompatible firmware, aborting\n");
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
-	अगर (priv->has_port3)
+	if (priv->has_port3)
 		dev_info(dev, "Ad-hoc demo mode supported\n");
-	अगर (priv->has_ibss)
+	if (priv->has_ibss)
 		dev_info(dev, "IEEE standard IBSS ad-hoc mode supported\n");
-	अगर (priv->has_wep)
+	if (priv->has_wep)
 		dev_info(dev, "WEP supported, %s-bit key\n",
 			 priv->has_big_wep ? "104" : "40");
-	अगर (priv->has_wpa) अणु
+	if (priv->has_wpa) {
 		dev_info(dev, "WPA-PSK supported\n");
-		अगर (orinoco_mic_init(priv)) अणु
+		if (orinoco_mic_init(priv)) {
 			dev_err(dev, "Failed to setup MIC crypto algorithm. "
 				"Disabling WPA support\n");
 			priv->has_wpa = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	err = orinoco_hw_पढ़ो_card_settings(priv, wiphy->perm_addr);
-	अगर (err)
-		जाओ out;
+	err = orinoco_hw_read_card_settings(priv, wiphy->perm_addr);
+	if (err)
+		goto out;
 
 	err = orinoco_hw_allocate_fid(priv);
-	अगर (err) अणु
+	if (err) {
 		dev_err(dev, "Failed to allocate NIC buffer!\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Set up the शेष configuration */
+	/* Set up the default configuration */
 	priv->iw_mode = NL80211_IFTYPE_STATION;
-	/* By शेष use IEEE/IBSS ad-hoc mode अगर we have it */
+	/* By default use IEEE/IBSS ad-hoc mode if we have it */
 	priv->prefer_port3 = priv->has_port3 && (!priv->has_ibss);
 	set_port_type(priv);
-	priv->channel = 0; /* use firmware शेष */
+	priv->channel = 0; /* use firmware default */
 
 	priv->promiscuous = 0;
 	priv->encode_alg = ORINOCO_ALG_NONE;
@@ -2096,15 +2095,15 @@ EXPORT_SYMBOL(orinoco_पूर्णांकerrupt);
 	priv->tkip_cm_active = 0;
 	priv->key_mgmt = 0;
 	priv->wpa_ie_len = 0;
-	priv->wpa_ie = शून्य;
+	priv->wpa_ie = NULL;
 
-	अगर (orinoco_wiphy_रेजिस्टर(wiphy)) अणु
+	if (orinoco_wiphy_register(wiphy)) {
 		err = -ENODEV;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Make the hardware available, as दीर्घ as it hasn't been
-	 * हटाओd अन्यथाwhere (e.g. by PCMCIA hot unplug) */
+	/* Make the hardware available, as long as it hasn't been
+	 * removed elsewhere (e.g. by PCMCIA hot unplug) */
 	orinoco_lock_irq(priv);
 	priv->hw_unavailable--;
 	orinoco_unlock_irq(priv);
@@ -2112,32 +2111,32 @@ EXPORT_SYMBOL(orinoco_पूर्णांकerrupt);
 	dev_dbg(dev, "Ready\n");
 
  out:
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_SYMBOL(orinoco_init);
 
-अटल स्थिर काष्ठा net_device_ops orinoco_netdev_ops = अणु
-	.nकरो_खोलो		= orinoco_खोलो,
-	.nकरो_stop		= orinoco_stop,
-	.nकरो_start_xmit		= orinoco_xmit,
-	.nकरो_set_rx_mode	= orinoco_set_multicast_list,
-	.nकरो_change_mtu		= orinoco_change_mtu,
-	.nकरो_set_mac_address	= eth_mac_addr,
-	.nकरो_validate_addr	= eth_validate_addr,
-	.nकरो_tx_समयout		= orinoco_tx_समयout,
-पूर्ण;
+static const struct net_device_ops orinoco_netdev_ops = {
+	.ndo_open		= orinoco_open,
+	.ndo_stop		= orinoco_stop,
+	.ndo_start_xmit		= orinoco_xmit,
+	.ndo_set_rx_mode	= orinoco_set_multicast_list,
+	.ndo_change_mtu		= orinoco_change_mtu,
+	.ndo_set_mac_address	= eth_mac_addr,
+	.ndo_validate_addr	= eth_validate_addr,
+	.ndo_tx_timeout		= orinoco_tx_timeout,
+};
 
-/* Allocate निजी data.
+/* Allocate private data.
  *
- * This driver has a number of काष्ठाures associated with it
- *  netdev - Net device काष्ठाure क्रम each network पूर्णांकerface
- *  wiphy - काष्ठाure associated with wireless phy
- *  wireless_dev (wdev) - काष्ठाure क्रम each wireless पूर्णांकerface
- *  hw - काष्ठाure क्रम hermes chip info
- *  card - card specअगरic काष्ठाure क्रम use by the card driver
+ * This driver has a number of structures associated with it
+ *  netdev - Net device structure for each network interface
+ *  wiphy - structure associated with wireless phy
+ *  wireless_dev (wdev) - structure for each wireless interface
+ *  hw - structure for hermes chip info
+ *  card - card specific structure for use by the card driver
  *         (airport, orinoco_cs)
- *  priv - orinoco निजी data
- *  device - generic linux device काष्ठाure
+ *  priv - orinoco private data
+ *  device - generic linux device structure
  *
  *  +---------+    +---------+
  *  |  wiphy  |    | netdev  |
@@ -2152,47 +2151,47 @@ EXPORT_SYMBOL(orinoco_init);
  * priv has a link to netdev and device
  * wdev has a link to wiphy
  */
-काष्ठा orinoco_निजी
-*alloc_orinocodev(पूर्णांक माप_card,
-		  काष्ठा device *device,
-		  पूर्णांक (*hard_reset)(काष्ठा orinoco_निजी *),
-		  पूर्णांक (*stop_fw)(काष्ठा orinoco_निजी *, पूर्णांक))
-अणु
-	काष्ठा orinoco_निजी *priv;
-	काष्ठा wiphy *wiphy;
+struct orinoco_private
+*alloc_orinocodev(int sizeof_card,
+		  struct device *device,
+		  int (*hard_reset)(struct orinoco_private *),
+		  int (*stop_fw)(struct orinoco_private *, int))
+{
+	struct orinoco_private *priv;
+	struct wiphy *wiphy;
 
 	/* allocate wiphy
-	 * NOTE: We only support a single भव पूर्णांकerface
+	 * NOTE: We only support a single virtual interface
 	 *       but this may change when monitor mode is added
 	 */
 	wiphy = wiphy_new(&orinoco_cfg_ops,
-			  माप(काष्ठा orinoco_निजी) + माप_card);
-	अगर (!wiphy)
-		वापस शून्य;
+			  sizeof(struct orinoco_private) + sizeof_card);
+	if (!wiphy)
+		return NULL;
 
 	priv = wiphy_priv(wiphy);
 	priv->dev = device;
 
-	अगर (माप_card)
-		priv->card = (व्योम *)((अचिन्हित दीर्घ)priv
-				      + माप(काष्ठा orinoco_निजी));
-	अन्यथा
-		priv->card = शून्य;
+	if (sizeof_card)
+		priv->card = (void *)((unsigned long)priv
+				      + sizeof(struct orinoco_private));
+	else
+		priv->card = NULL;
 
 	orinoco_wiphy_init(wiphy);
 
-#अगर_घोषित WIRELESS_SPY
+#ifdef WIRELESS_SPY
 	priv->wireless_data.spy_data = &priv->spy_data;
-#पूर्ण_अगर
+#endif
 
-	/* Set up शेष callbacks */
+	/* Set up default callbacks */
 	priv->hard_reset = hard_reset;
 	priv->stop_fw = stop_fw;
 
 	spin_lock_init(&priv->lock);
-	priv->खोलो = 0;
+	priv->open = 0;
 	priv->hw_unavailable = 1; /* orinoco_init() must clear this
-				   * beक्रमe anything अन्यथा touches the
+				   * before anything else touches the
 				   * hardware */
 	INIT_WORK(&priv->reset_work, orinoco_reset);
 	INIT_WORK(&priv->join_work, orinoco_join_ap);
@@ -2207,66 +2206,66 @@ EXPORT_SYMBOL(orinoco_init);
 
 	priv->last_linkstatus = 0xffff;
 
-#अगर defined(CONFIG_HERMES_CACHE_FW_ON_INIT) || defined(CONFIG_PM_SLEEP)
-	priv->cached_pri_fw = शून्य;
-	priv->cached_fw = शून्य;
-#पूर्ण_अगर
+#if defined(CONFIG_HERMES_CACHE_FW_ON_INIT) || defined(CONFIG_PM_SLEEP)
+	priv->cached_pri_fw = NULL;
+	priv->cached_fw = NULL;
+#endif
 
-	/* Register PM notअगरiers */
-	orinoco_रेजिस्टर_pm_notअगरier(priv);
+	/* Register PM notifiers */
+	orinoco_register_pm_notifier(priv);
 
-	वापस priv;
-पूर्ण
+	return priv;
+}
 EXPORT_SYMBOL(alloc_orinocodev);
 
-/* We can only support a single पूर्णांकerface. We provide a separate
+/* We can only support a single interface. We provide a separate
  * function to set it up to distinguish between hardware
- * initialisation and पूर्णांकerface setup.
+ * initialisation and interface setup.
  *
- * The base_addr and irq parameters are passed on to netdev क्रम use
+ * The base_addr and irq parameters are passed on to netdev for use
  * with SIOCGIFMAP.
  */
-पूर्णांक orinoco_अगर_add(काष्ठा orinoco_निजी *priv,
-		   अचिन्हित दीर्घ base_addr,
-		   अचिन्हित पूर्णांक irq,
-		   स्थिर काष्ठा net_device_ops *ops)
-अणु
-	काष्ठा wiphy *wiphy = priv_to_wiphy(priv);
-	काष्ठा wireless_dev *wdev;
-	काष्ठा net_device *dev;
-	पूर्णांक ret;
+int orinoco_if_add(struct orinoco_private *priv,
+		   unsigned long base_addr,
+		   unsigned int irq,
+		   const struct net_device_ops *ops)
+{
+	struct wiphy *wiphy = priv_to_wiphy(priv);
+	struct wireless_dev *wdev;
+	struct net_device *dev;
+	int ret;
 
-	dev = alloc_etherdev(माप(काष्ठा wireless_dev));
+	dev = alloc_etherdev(sizeof(struct wireless_dev));
 
-	अगर (!dev)
-		वापस -ENOMEM;
+	if (!dev)
+		return -ENOMEM;
 
 	/* Initialise wireless_dev */
 	wdev = netdev_priv(dev);
 	wdev->wiphy = wiphy;
-	wdev->अगरtype = NL80211_IFTYPE_STATION;
+	wdev->iftype = NL80211_IFTYPE_STATION;
 
 	/* Setup / override net_device fields */
 	dev->ieee80211_ptr = wdev;
-	dev->watchकरोg_समयo = HZ; /* 1 second समयout */
+	dev->watchdog_timeo = HZ; /* 1 second timeout */
 	dev->wireless_handlers = &orinoco_handler_def;
-#अगर_घोषित WIRELESS_SPY
+#ifdef WIRELESS_SPY
 	dev->wireless_data = &priv->wireless_data;
-#पूर्ण_अगर
-	/* Default to standard ops अगर not set */
-	अगर (ops)
+#endif
+	/* Default to standard ops if not set */
+	if (ops)
 		dev->netdev_ops = ops;
-	अन्यथा
+	else
 		dev->netdev_ops = &orinoco_netdev_ops;
 
-	/* we use the शेष eth_mac_addr क्रम setting the MAC addr */
+	/* we use the default eth_mac_addr for setting the MAC addr */
 
-	/* Reserve space in skb क्रम the SNAP header */
+	/* Reserve space in skb for the SNAP header */
 	dev->needed_headroom = ENCAPS_OVERHEAD;
 
-	netअगर_carrier_off(dev);
+	netif_carrier_off(dev);
 
-	स_नकल(dev->dev_addr, wiphy->perm_addr, ETH_ALEN);
+	memcpy(dev->dev_addr, wiphy->perm_addr, ETH_ALEN);
 
 	dev->base_addr = base_addr;
 	dev->irq = irq;
@@ -2275,141 +2274,141 @@ EXPORT_SYMBOL(alloc_orinocodev);
 	dev->max_mtu = ORINOCO_MAX_MTU;
 
 	SET_NETDEV_DEV(dev, priv->dev);
-	ret = रेजिस्टर_netdev(dev);
-	अगर (ret)
-		जाओ fail;
+	ret = register_netdev(dev);
+	if (ret)
+		goto fail;
 
 	priv->ndev = dev;
 
-	/* Report what we've करोne */
+	/* Report what we've done */
 	dev_dbg(priv->dev, "Registered interface %s.\n", dev->name);
 
-	वापस 0;
+	return 0;
 
  fail:
-	मुक्त_netdev(dev);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(orinoco_अगर_add);
+	free_netdev(dev);
+	return ret;
+}
+EXPORT_SYMBOL(orinoco_if_add);
 
-व्योम orinoco_अगर_del(काष्ठा orinoco_निजी *priv)
-अणु
-	काष्ठा net_device *dev = priv->ndev;
+void orinoco_if_del(struct orinoco_private *priv)
+{
+	struct net_device *dev = priv->ndev;
 
-	unरेजिस्टर_netdev(dev);
-	मुक्त_netdev(dev);
-पूर्ण
-EXPORT_SYMBOL(orinoco_अगर_del);
+	unregister_netdev(dev);
+	free_netdev(dev);
+}
+EXPORT_SYMBOL(orinoco_if_del);
 
-व्योम मुक्त_orinocodev(काष्ठा orinoco_निजी *priv)
-अणु
-	काष्ठा wiphy *wiphy = priv_to_wiphy(priv);
-	काष्ठा orinoco_rx_data *rx_data, *temp;
-	काष्ठा orinoco_scan_data *sd, *sdtemp;
+void free_orinocodev(struct orinoco_private *priv)
+{
+	struct wiphy *wiphy = priv_to_wiphy(priv);
+	struct orinoco_rx_data *rx_data, *temp;
+	struct orinoco_scan_data *sd, *sdtemp;
 
-	/* If the tasklet is scheduled when we call tasklet_समाप्त it
-	 * will run one final समय. However the tasklet will only
-	 * drain priv->rx_list अगर the hw is still available. */
-	tasklet_समाप्त(&priv->rx_tasklet);
+	/* If the tasklet is scheduled when we call tasklet_kill it
+	 * will run one final time. However the tasklet will only
+	 * drain priv->rx_list if the hw is still available. */
+	tasklet_kill(&priv->rx_tasklet);
 
 	/* Explicitly drain priv->rx_list */
-	list_क्रम_each_entry_safe(rx_data, temp, &priv->rx_list, list) अणु
+	list_for_each_entry_safe(rx_data, temp, &priv->rx_list, list) {
 		list_del(&rx_data->list);
 
-		dev_kमुक्त_skb(rx_data->skb);
-		kमुक्त(rx_data->desc);
-		kमुक्त(rx_data);
-	पूर्ण
+		dev_kfree_skb(rx_data->skb);
+		kfree(rx_data->desc);
+		kfree(rx_data);
+	}
 
 	cancel_work_sync(&priv->process_scan);
 	/* Explicitly drain priv->scan_list */
-	list_क्रम_each_entry_safe(sd, sdtemp, &priv->scan_list, list) अणु
+	list_for_each_entry_safe(sd, sdtemp, &priv->scan_list, list) {
 		list_del(&sd->list);
 
-		अगर (sd->len > 0)
-			kमुक्त(sd->buf);
-		kमुक्त(sd);
-	पूर्ण
+		if (sd->len > 0)
+			kfree(sd->buf);
+		kfree(sd);
+	}
 
-	orinoco_unरेजिस्टर_pm_notअगरier(priv);
+	orinoco_unregister_pm_notifier(priv);
 	orinoco_uncache_fw(priv);
 
 	priv->wpa_ie_len = 0;
-	kमुक्त(priv->wpa_ie);
-	orinoco_mic_मुक्त(priv);
-	wiphy_मुक्त(wiphy);
-पूर्ण
-EXPORT_SYMBOL(मुक्त_orinocodev);
+	kfree(priv->wpa_ie);
+	orinoco_mic_free(priv);
+	wiphy_free(wiphy);
+}
+EXPORT_SYMBOL(free_orinocodev);
 
-पूर्णांक orinoco_up(काष्ठा orinoco_निजी *priv)
-अणु
-	काष्ठा net_device *dev = priv->ndev;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक err;
+int orinoco_up(struct orinoco_private *priv)
+{
+	struct net_device *dev = priv->ndev;
+	unsigned long flags;
+	int err;
 
 	priv->hw.ops->lock_irqsave(&priv->lock, &flags);
 
 	err = orinoco_reinit_firmware(priv);
-	अगर (err) अणु
-		prपूर्णांकk(KERN_ERR "%s: Error %d re-initializing firmware\n",
+	if (err) {
+		printk(KERN_ERR "%s: Error %d re-initializing firmware\n",
 		       dev->name, err);
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	netअगर_device_attach(dev);
+	netif_device_attach(dev);
 	priv->hw_unavailable--;
 
-	अगर (priv->खोलो && !priv->hw_unavailable) अणु
+	if (priv->open && !priv->hw_unavailable) {
 		err = __orinoco_up(priv);
-		अगर (err)
-			prपूर्णांकk(KERN_ERR "%s: Error %d restarting card\n",
+		if (err)
+			printk(KERN_ERR "%s: Error %d restarting card\n",
 			       dev->name, err);
-	पूर्ण
+	}
 
-निकास:
+exit:
 	priv->hw.ops->unlock_irqrestore(&priv->lock, &flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(orinoco_up);
 
-व्योम orinoco_करोwn(काष्ठा orinoco_निजी *priv)
-अणु
-	काष्ठा net_device *dev = priv->ndev;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक err;
+void orinoco_down(struct orinoco_private *priv)
+{
+	struct net_device *dev = priv->ndev;
+	unsigned long flags;
+	int err;
 
 	priv->hw.ops->lock_irqsave(&priv->lock, &flags);
-	err = __orinoco_करोwn(priv);
-	अगर (err)
-		prपूर्णांकk(KERN_WARNING "%s: Error %d downing interface\n",
+	err = __orinoco_down(priv);
+	if (err)
+		printk(KERN_WARNING "%s: Error %d downing interface\n",
 		       dev->name, err);
 
-	netअगर_device_detach(dev);
+	netif_device_detach(dev);
 	priv->hw_unavailable++;
 	priv->hw.ops->unlock_irqrestore(&priv->lock, &flags);
-पूर्ण
-EXPORT_SYMBOL(orinoco_करोwn);
+}
+EXPORT_SYMBOL(orinoco_down);
 
 /********************************************************************/
 /* Module initialization                                            */
 /********************************************************************/
 
 /* Can't be declared "const" or the whole __initdata section will
- * become स्थिर */
-अटल अक्षर version[] __initdata = DRIVER_NAME " " DRIVER_VERSION
+ * become const */
+static char version[] __initdata = DRIVER_NAME " " DRIVER_VERSION
 	" (David Gibson <hermes@gibson.dropbear.id.au>, "
 	"Pavel Roskin <proski@gnu.org>, et al)";
 
-अटल पूर्णांक __init init_orinoco(व्योम)
-अणु
-	prपूर्णांकk(KERN_DEBUG "%s\n", version);
-	वापस 0;
-पूर्ण
+static int __init init_orinoco(void)
+{
+	printk(KERN_DEBUG "%s\n", version);
+	return 0;
+}
 
-अटल व्योम __निकास निकास_orinoco(व्योम)
-अणु
-पूर्ण
+static void __exit exit_orinoco(void)
+{
+}
 
 module_init(init_orinoco);
-module_निकास(निकास_orinoco);
+module_exit(exit_orinoco);

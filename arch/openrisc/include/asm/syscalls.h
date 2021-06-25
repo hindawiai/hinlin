@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * OpenRISC Linux
  *
@@ -13,19 +12,19 @@
  * et al.
  */
 
-#अगर_अघोषित __ASM_OPENRISC_SYSCALLS_H
-#घोषणा __ASM_OPENRISC_SYSCALLS_H
+#ifndef __ASM_OPENRISC_SYSCALLS_H
+#define __ASM_OPENRISC_SYSCALLS_H
 
-यंत्रlinkage दीर्घ sys_or1k_atomic(अचिन्हित दीर्घ type, अचिन्हित दीर्घ *v1,
-				अचिन्हित दीर्घ *v2);
+asmlinkage long sys_or1k_atomic(unsigned long type, unsigned long *v1,
+				unsigned long *v2);
 
-#समावेश <यंत्र-generic/syscalls.h>
+#include <asm-generic/syscalls.h>
 
-यंत्रlinkage दीर्घ __sys_clone(अचिन्हित दीर्घ clone_flags, अचिन्हित दीर्घ newsp,
-			व्योम __user *parent_tid, व्योम __user *child_tid, पूर्णांक tls);
-यंत्रlinkage दीर्घ __sys_विभाजन(व्योम);
+asmlinkage long __sys_clone(unsigned long clone_flags, unsigned long newsp,
+			void __user *parent_tid, void __user *child_tid, int tls);
+asmlinkage long __sys_fork(void);
 
-#घोषणा sys_clone __sys_clone
-#घोषणा sys_विभाजन __sys_विभाजन
+#define sys_clone __sys_clone
+#define sys_fork __sys_fork
 
-#पूर्ण_अगर /* __ASM_OPENRISC_SYSCALLS_H */
+#endif /* __ASM_OPENRISC_SYSCALLS_H */

@@ -1,47 +1,46 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
 /*
- * Microcode patches क्रम the CPM as supplied by Motorola.
- * This is the one क्रम IIC/SPI.  There is a newer one that
+ * Microcode patches for the CPM as supplied by Motorola.
+ * This is the one for IIC/SPI.  There is a newer one that
  * also relocates SMC2, but this would require additional changes
- * to uart.c, so I am holding off on that क्रम a moment.
+ * to uart.c, so I am holding off on that for a moment.
  */
-#समावेश <linux/init.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/sched.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/param.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/mm.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <यंत्र/irq.h>
-#समावेश <यंत्र/page.h>
-#समावेश <यंत्र/8xx_immap.h>
-#समावेश <यंत्र/cpm.h>
-#समावेश <यंत्र/cpm1.h>
+#include <linux/init.h>
+#include <linux/errno.h>
+#include <linux/sched.h>
+#include <linux/kernel.h>
+#include <linux/param.h>
+#include <linux/string.h>
+#include <linux/mm.h>
+#include <linux/interrupt.h>
+#include <asm/irq.h>
+#include <asm/page.h>
+#include <asm/8xx_immap.h>
+#include <asm/cpm.h>
+#include <asm/cpm1.h>
 
-काष्ठा patch_params अणु
-	uलघु rccr;
-	uलघु cpmcr1;
-	uलघु cpmcr2;
-	uलघु cpmcr3;
-	uलघु cpmcr4;
-पूर्ण;
+struct patch_params {
+	ushort rccr;
+	ushort cpmcr1;
+	ushort cpmcr2;
+	ushort cpmcr3;
+	ushort cpmcr4;
+};
 
 /*
  * I2C/SPI relocation patch arrays.
  */
 
-#अगर_घोषित CONFIG_I2C_SPI_UCODE_PATCH
+#ifdef CONFIG_I2C_SPI_UCODE_PATCH
 
-अटल अक्षर patch_name[] __initdata = "I2C/SPI";
+static char patch_name[] __initdata = "I2C/SPI";
 
-अटल काष्ठा patch_params patch_params __initdata = अणु
+static struct patch_params patch_params __initdata = {
 	1, 0x802a, 0x8028, 0x802e, 0x802c,
-पूर्ण;
+};
 
-अटल uपूर्णांक patch_2000[] __initdata = अणु
+static uint patch_2000[] __initdata = {
 	0x7FFFEFD9, 0x3FFD0000, 0x7FFB49F7, 0x7FF90000,
 	0x5FEFADF7, 0x5F89ADF7, 0x5FEFAFF7, 0x5F89AFF7,
 	0x3A9CFBC8, 0xE7C0EDF0, 0x77C1E1BB, 0xF4DC7F1D,
@@ -71,9 +70,9 @@
 	0xEF717EC1, 0x6BA47F01, 0x2D267EFD, 0x30DE5F5E,
 	0xFFFD5F5E, 0xFFEF5F5E, 0xFFDF0CA0, 0xAFED0A9E,
 	0xAFDD0C3A, 0x5F3AAFBD, 0x7FBDB082, 0x5F8247F8
-पूर्ण;
+};
 
-अटल uपूर्णांक patch_2f00[] __initdata = अणु
+static uint patch_2f00[] __initdata = {
 	0x3E303430, 0x34343737, 0xABF7BF9B, 0x994B4FBD,
 	0xBD599493, 0x349FFF37, 0xFB9B177D, 0xD9936956,
 	0xBBFDD697, 0xBDD2FD11, 0x31DB9BB3, 0x63139637,
@@ -82,24 +81,24 @@
 	0x1D115316, 0x99315315, 0x31694BF4, 0xFBDBD359,
 	0x31497353, 0x76956D69, 0x7B9D9693, 0x13131979,
 	0x79376935
-पूर्ण;
+};
 
-अटल uपूर्णांक patch_2e00[] __initdata = अणुपूर्ण;
-#पूर्ण_अगर
+static uint patch_2e00[] __initdata = {};
+#endif
 
 /*
  * I2C/SPI/SMC1 relocation patch arrays.
  */
 
-#अगर_घोषित CONFIG_I2C_SPI_SMC1_UCODE_PATCH
+#ifdef CONFIG_I2C_SPI_SMC1_UCODE_PATCH
 
-अटल अक्षर patch_name[] __initdata = "I2C/SPI/SMC1";
+static char patch_name[] __initdata = "I2C/SPI/SMC1";
 
-अटल काष्ठा patch_params patch_params __initdata = अणु
+static struct patch_params patch_params __initdata = {
 	3, 0x8080, 0x808a, 0x8028, 0x802a,
-पूर्ण;
+};
 
-अटल uपूर्णांक patch_2000[] __initdata = अणु
+static uint patch_2000[] __initdata = {
 	0x3fff0000, 0x3ffd0000, 0x3ffb0000, 0x3ff90000,
 	0x5f13eff8, 0x5eb5eff8, 0x5f88adf7, 0x5fefadf7,
 	0x3a9cfbc8, 0x77cae1bb, 0xf4de7fad, 0xabae9330,
@@ -180,9 +179,9 @@
 	0x7dfdf093, 0xef7e7f1e, 0x771efb18, 0x6079e722,
 	0xe6bbe5bb, 0xae0ae5bb, 0x600bae85, 0xe2bbe2bb,
 	0xe2bbe2bb, 0xaf02e2bb, 0xe2bb2ff9, 0x6079e2bb
-पूर्ण;
+};
 
-अटल uपूर्णांक patch_2f00[] __initdata = अणु
+static uint patch_2f00[] __initdata = {
 	0x30303030, 0x3e3e3434, 0xabbf9b99, 0x4b4fbdbd,
 	0x59949334, 0x9fff37fb, 0x9b177dd9, 0x936956bb,
 	0xfbdd697b, 0xdd2fd113, 0x1db9f7bb, 0x36313963,
@@ -199,54 +198,54 @@
 	0xb873d87b, 0x3b8fd7f8, 0xf7338883, 0xbb8ee1f8,
 	0xef837377, 0x3337b836, 0x817d11f8, 0x7378b878,
 	0xd3368b7d, 0xed731b7d, 0x833731f3, 0xf22f3f23
-पूर्ण;
+};
 
-अटल uपूर्णांक patch_2e00[] __initdata = अणु
+static uint patch_2e00[] __initdata = {
 	0x27eeeeee, 0xeeeeeeee, 0xeeeeeeee, 0xeeeeeeee,
 	0xee4bf4fb, 0xdbd259bb, 0x1979577f, 0xdfd2d573,
 	0xb773f737, 0x4b4fbdbd, 0x25b9b177, 0xd2d17376,
 	0x956bbfdd, 0x697bdd2f, 0xff9f79ff, 0xff9ff22f
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif
 
 /*
  *  USB SOF patch arrays.
  */
 
-#अगर_घोषित CONFIG_USB_SOF_UCODE_PATCH
+#ifdef CONFIG_USB_SOF_UCODE_PATCH
 
-अटल अक्षर patch_name[] __initdata = "USB SOF";
+static char patch_name[] __initdata = "USB SOF";
 
-अटल काष्ठा patch_params patch_params __initdata = अणु
+static struct patch_params patch_params __initdata = {
 	9,
-पूर्ण;
+};
 
-अटल uपूर्णांक patch_2000[] __initdata = अणु
+static uint patch_2000[] __initdata = {
 	0x7fff0000, 0x7ffd0000, 0x7ffb0000, 0x49f7ba5b,
 	0xba383ffb, 0xf9b8b46d, 0xe5ab4e07, 0xaf77bffe,
 	0x3f7bbf79, 0xba5bba38, 0xe7676076, 0x60750000
-पूर्ण;
+};
 
-अटल uपूर्णांक patch_2f00[] __initdata = अणु
+static uint patch_2f00[] __initdata = {
 	0x3030304c, 0xcab9e441, 0xa1aaf220
-पूर्ण;
+};
 
-अटल uपूर्णांक patch_2e00[] __initdata = अणुपूर्ण;
-#पूर्ण_अगर
+static uint patch_2e00[] __initdata = {};
+#endif
 
 /*
  * SMC relocation patch arrays.
  */
 
-#अगर_घोषित CONFIG_SMC_UCODE_PATCH
+#ifdef CONFIG_SMC_UCODE_PATCH
 
-अटल अक्षर patch_name[] __initdata = "SMC";
+static char patch_name[] __initdata = "SMC";
 
-अटल काष्ठा patch_params patch_params __initdata = अणु
+static struct patch_params patch_params __initdata = {
 	2, 0x8080, 0x8088,
-पूर्ण;
+};
 
-अटल uपूर्णांक patch_2000[] __initdata = अणु
+static uint patch_2000[] __initdata = {
 	0x3fff0000, 0x3ffd0000, 0x3ffb0000, 0x3ff90000,
 	0x5fefeff8, 0x5f91eff8, 0x3ff30000, 0x3ff10000,
 	0x3a11e710, 0xedf0ccb9, 0xf318ed66, 0x7f0e5fe2,
@@ -300,9 +299,9 @@
 	0x771efb18, 0x6079e722, 0xe6bbe5bb, 0x2e66e5bb,
 	0x600b2ee1, 0xe2bbe2bb, 0xe2bbe2bb, 0x2f5ee2bb,
 	0xe2bb2ff9, 0x6079e2bb,
-पूर्ण;
+};
 
-अटल uपूर्णांक patch_2f00[] __initdata = अणु
+static uint patch_2f00[] __initdata = {
 	0x30303030, 0x3e3e3030, 0xaf79b9b3, 0xbaa3b979,
 	0x9693369f, 0x79f79777, 0x97333fff, 0xfb3b9e9f,
 	0x79b91d11, 0x9e13f3ff, 0x3f9b6bd9, 0xe173d136,
@@ -317,66 +316,66 @@
 	0xd573b773, 0xf7374b4f, 0xbdbd25b8, 0xb177d2d1,
 	0x7376856b, 0xbfdd687b, 0xdd2fff8f, 0x78ffff8f,
 	0xf22f0000,
-पूर्ण;
+};
 
-अटल uपूर्णांक patch_2e00[] __initdata = अणुपूर्ण;
-#पूर्ण_अगर
+static uint patch_2e00[] __initdata = {};
+#endif
 
-अटल व्योम __init cpm_ग_लिखो_patch(cpm8xx_t *cp, पूर्णांक offset, uपूर्णांक *patch, पूर्णांक len)
-अणु
-	अगर (!len)
-		वापस;
-	स_नकल_toio(cp->cp_dpmem + offset, patch, len);
-पूर्ण
+static void __init cpm_write_patch(cpm8xx_t *cp, int offset, uint *patch, int len)
+{
+	if (!len)
+		return;
+	memcpy_toio(cp->cp_dpmem + offset, patch, len);
+}
 
-व्योम __init cpm_load_patch(cpm8xx_t *cp)
-अणु
+void __init cpm_load_patch(cpm8xx_t *cp)
+{
 	out_be16(&cp->cp_rccr, 0);
 
-	cpm_ग_लिखो_patch(cp, 0, patch_2000, माप(patch_2000));
-	cpm_ग_लिखो_patch(cp, 0xf00, patch_2f00, माप(patch_2f00));
-	cpm_ग_लिखो_patch(cp, 0xe00, patch_2e00, माप(patch_2e00));
+	cpm_write_patch(cp, 0, patch_2000, sizeof(patch_2000));
+	cpm_write_patch(cp, 0xf00, patch_2f00, sizeof(patch_2f00));
+	cpm_write_patch(cp, 0xe00, patch_2e00, sizeof(patch_2e00));
 
-	अगर (IS_ENABLED(CONFIG_I2C_SPI_UCODE_PATCH) ||
-	    IS_ENABLED(CONFIG_I2C_SPI_SMC1_UCODE_PATCH)) अणु
+	if (IS_ENABLED(CONFIG_I2C_SPI_UCODE_PATCH) ||
+	    IS_ENABLED(CONFIG_I2C_SPI_SMC1_UCODE_PATCH)) {
 		u16 rpbase = 0x500;
 		iic_t *iip;
-		काष्ठा spi_pram *spp;
+		struct spi_pram *spp;
 
 		iip = (iic_t *)&cp->cp_dparam[PROFF_IIC];
 		out_be16(&iip->iic_rpbase, rpbase);
 
 		/* Put SPI above the IIC, also 32-byte aligned. */
-		spp = (काष्ठा spi_pram *)&cp->cp_dparam[PROFF_SPI];
-		out_be16(&spp->rpbase, (rpbase + माप(iic_t) + 31) & ~31);
+		spp = (struct spi_pram *)&cp->cp_dparam[PROFF_SPI];
+		out_be16(&spp->rpbase, (rpbase + sizeof(iic_t) + 31) & ~31);
 
-		अगर (IS_ENABLED(CONFIG_I2C_SPI_SMC1_UCODE_PATCH)) अणु
+		if (IS_ENABLED(CONFIG_I2C_SPI_SMC1_UCODE_PATCH)) {
 			smc_uart_t *smp;
 
 			smp = (smc_uart_t *)&cp->cp_dparam[PROFF_SMC1];
 			out_be16(&smp->smc_rpbase, 0x1FC0);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (IS_ENABLED(CONFIG_SMC_UCODE_PATCH)) अणु
+	if (IS_ENABLED(CONFIG_SMC_UCODE_PATCH)) {
 		smc_uart_t *smp;
 
-		अगर (IS_ENABLED(CONFIG_PPC_EARLY_DEBUG_CPM)) अणु
-			पूर्णांक i;
+		if (IS_ENABLED(CONFIG_PPC_EARLY_DEBUG_CPM)) {
+			int i;
 
-			क्रम (i = 0; i < माप(*smp); i += 4) अणु
+			for (i = 0; i < sizeof(*smp); i += 4) {
 				u32 __iomem *src = (u32 __iomem *)&cp->cp_dparam[PROFF_SMC1 + i];
 				u32 __iomem *dst = (u32 __iomem *)&cp->cp_dparam[PROFF_DSP1 + i];
 
 				out_be32(dst, in_be32(src));
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		smp = (smc_uart_t *)&cp->cp_dparam[PROFF_SMC1];
 		out_be16(&smp->smc_rpbase, 0x1ec0);
 		smp = (smc_uart_t *)&cp->cp_dparam[PROFF_SMC2];
 		out_be16(&smp->smc_rpbase, 0x1fc0);
-	पूर्ण
+	}
 
 	out_be16(&cp->cp_cpmcr1, patch_params.cpmcr1);
 	out_be16(&cp->cp_cpmcr2, patch_params.cpmcr2);
@@ -386,4 +385,4 @@
 	out_be16(&cp->cp_rccr, patch_params.rccr);
 
 	pr_info("%s microcode patch installed\n", patch_name);
-पूर्ण
+}

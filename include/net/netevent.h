@@ -1,39 +1,38 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _NET_EVENT_H
-#घोषणा _NET_EVENT_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _NET_EVENT_H
+#define _NET_EVENT_H
 
 /*
- *	Generic netevent notअगरiers
+ *	Generic netevent notifiers
  *
  *	Authors:
- *      Tom Tucker              <tom@खोलोgridcomputing.com>
- *      Steve Wise              <swise@खोलोgridcomputing.com>
+ *      Tom Tucker              <tom@opengridcomputing.com>
+ *      Steve Wise              <swise@opengridcomputing.com>
  *
  * 	Changes:
  */
 
-काष्ठा dst_entry;
-काष्ठा neighbour;
+struct dst_entry;
+struct neighbour;
 
-काष्ठा netevent_redirect अणु
-	काष्ठा dst_entry *old;
-	काष्ठा dst_entry *new;
-	काष्ठा neighbour *neigh;
-	स्थिर व्योम *daddr;
-पूर्ण;
+struct netevent_redirect {
+	struct dst_entry *old;
+	struct dst_entry *new;
+	struct neighbour *neigh;
+	const void *daddr;
+};
 
-क्रमागत netevent_notअगर_type अणु
-	NETEVENT_NEIGH_UPDATE = 1, /* arg is काष्ठा neighbour ptr */
-	NETEVENT_REसूचीECT,	   /* arg is काष्ठा netevent_redirect ptr */
-	NETEVENT_DELAY_PROBE_TIME_UPDATE, /* arg is काष्ठा neigh_parms ptr */
-	NETEVENT_IPV4_MPATH_HASH_UPDATE, /* arg is काष्ठा net ptr */
-	NETEVENT_IPV6_MPATH_HASH_UPDATE, /* arg is काष्ठा net ptr */
-	NETEVENT_IPV4_FWD_UPDATE_PRIORITY_UPDATE, /* arg is काष्ठा net ptr */
-पूर्ण;
+enum netevent_notif_type {
+	NETEVENT_NEIGH_UPDATE = 1, /* arg is struct neighbour ptr */
+	NETEVENT_REDIRECT,	   /* arg is struct netevent_redirect ptr */
+	NETEVENT_DELAY_PROBE_TIME_UPDATE, /* arg is struct neigh_parms ptr */
+	NETEVENT_IPV4_MPATH_HASH_UPDATE, /* arg is struct net ptr */
+	NETEVENT_IPV6_MPATH_HASH_UPDATE, /* arg is struct net ptr */
+	NETEVENT_IPV4_FWD_UPDATE_PRIORITY_UPDATE, /* arg is struct net ptr */
+};
 
-पूर्णांक रेजिस्टर_netevent_notअगरier(काष्ठा notअगरier_block *nb);
-पूर्णांक unरेजिस्टर_netevent_notअगरier(काष्ठा notअगरier_block *nb);
-पूर्णांक call_netevent_notअगरiers(अचिन्हित दीर्घ val, व्योम *v);
+int register_netevent_notifier(struct notifier_block *nb);
+int unregister_netevent_notifier(struct notifier_block *nb);
+int call_netevent_notifiers(unsigned long val, void *v);
 
-#पूर्ण_अगर
+#endif

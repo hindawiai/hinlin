@@ -1,18 +1,17 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
+/* SPDX-License-Identifier: MIT */
 /*
- * Copyright तऊ 2020 Intel Corporation
+ * Copyright © 2020 Intel Corporation
  */
 
-#अगर_अघोषित SELFTEST_RPS_H
-#घोषणा SELFTEST_RPS_H
+#ifndef SELFTEST_RPS_H
+#define SELFTEST_RPS_H
 
-पूर्णांक live_rps_control(व्योम *arg);
-पूर्णांक live_rps_घड़ी_पूर्णांकerval(व्योम *arg);
-पूर्णांक live_rps_frequency_cs(व्योम *arg);
-पूर्णांक live_rps_frequency_srm(व्योम *arg);
-पूर्णांक live_rps_घातer(व्योम *arg);
-पूर्णांक live_rps_पूर्णांकerrupt(व्योम *arg);
-पूर्णांक live_rps_dynamic(व्योम *arg);
+int live_rps_control(void *arg);
+int live_rps_clock_interval(void *arg);
+int live_rps_frequency_cs(void *arg);
+int live_rps_frequency_srm(void *arg);
+int live_rps_power(void *arg);
+int live_rps_interrupt(void *arg);
+int live_rps_dynamic(void *arg);
 
-#पूर्ण_अगर /* SELFTEST_RPS_H */
+#endif /* SELFTEST_RPS_H */

@@ -1,6 +1,5 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-/* 10G controller driver क्रम Samsung SoCs
+// SPDX-License-Identifier: GPL-2.0-only
+/* 10G controller driver for Samsung SoCs
  *
  * Copyright (C) 2013 Samsung Electronics Co., Ltd.
  *		http://www.samsung.com
@@ -8,244 +7,244 @@
  * Author: Siva Reddy Kallam <siva.kallam@samsung.com>
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/of_net.h>
-#समावेश <linux/phy.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/sxgbe_platक्रमm.h>
+#include <linux/etherdevice.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/netdevice.h>
+#include <linux/of.h>
+#include <linux/of_irq.h>
+#include <linux/of_net.h>
+#include <linux/phy.h>
+#include <linux/platform_device.h>
+#include <linux/sxgbe_platform.h>
 
-#समावेश "sxgbe_common.h"
-#समावेश "sxgbe_reg.h"
+#include "sxgbe_common.h"
+#include "sxgbe_reg.h"
 
-#अगर_घोषित CONFIG_OF
-अटल पूर्णांक sxgbe_probe_config_dt(काष्ठा platक्रमm_device *pdev,
-				 काष्ठा sxgbe_plat_data *plat)
-अणु
-	काष्ठा device_node *np = pdev->dev.of_node;
-	काष्ठा sxgbe_dma_cfg *dma_cfg;
-	पूर्णांक err;
+#ifdef CONFIG_OF
+static int sxgbe_probe_config_dt(struct platform_device *pdev,
+				 struct sxgbe_plat_data *plat)
+{
+	struct device_node *np = pdev->dev.of_node;
+	struct sxgbe_dma_cfg *dma_cfg;
+	int err;
 
-	अगर (!np)
-		वापस -ENODEV;
+	if (!np)
+		return -ENODEV;
 
-	err = of_get_phy_mode(np, &plat->पूर्णांकerface);
-	अगर (err && err != -ENODEV)
-		वापस err;
+	err = of_get_phy_mode(np, &plat->interface);
+	if (err && err != -ENODEV)
+		return err;
 
 	plat->bus_id = of_alias_get_id(np, "ethernet");
-	अगर (plat->bus_id < 0)
+	if (plat->bus_id < 0)
 		plat->bus_id = 0;
 
 	plat->mdio_bus_data = devm_kzalloc(&pdev->dev,
-					   माप(*plat->mdio_bus_data),
+					   sizeof(*plat->mdio_bus_data),
 					   GFP_KERNEL);
-	अगर (!plat->mdio_bus_data)
-		वापस -ENOMEM;
+	if (!plat->mdio_bus_data)
+		return -ENOMEM;
 
-	dma_cfg = devm_kzalloc(&pdev->dev, माप(*dma_cfg), GFP_KERNEL);
-	अगर (!dma_cfg)
-		वापस -ENOMEM;
+	dma_cfg = devm_kzalloc(&pdev->dev, sizeof(*dma_cfg), GFP_KERNEL);
+	if (!dma_cfg)
+		return -ENOMEM;
 
 	plat->dma_cfg = dma_cfg;
-	of_property_पढ़ो_u32(np, "samsung,pbl", &dma_cfg->pbl);
-	अगर (of_property_पढ़ो_u32(np, "samsung,burst-map", &dma_cfg->burst_map) == 0)
+	of_property_read_u32(np, "samsung,pbl", &dma_cfg->pbl);
+	if (of_property_read_u32(np, "samsung,burst-map", &dma_cfg->burst_map) == 0)
 		dma_cfg->fixed_burst = true;
 
-	वापस 0;
-पूर्ण
-#अन्यथा
-अटल पूर्णांक sxgbe_probe_config_dt(काष्ठा platक्रमm_device *pdev,
-				 काष्ठा sxgbe_plat_data *plat)
-अणु
-	वापस -ENOSYS;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_OF */
+	return 0;
+}
+#else
+static int sxgbe_probe_config_dt(struct platform_device *pdev,
+				 struct sxgbe_plat_data *plat)
+{
+	return -ENOSYS;
+}
+#endif /* CONFIG_OF */
 
 /**
- * sxgbe_platक्रमm_probe
- * @pdev: platक्रमm device poपूर्णांकer
- * Description: platक्रमm_device probe function. It allocates
- * the necessary resources and invokes the मुख्य to init
- * the net device, रेजिस्टर the mdio bus etc.
+ * sxgbe_platform_probe
+ * @pdev: platform device pointer
+ * Description: platform_device probe function. It allocates
+ * the necessary resources and invokes the main to init
+ * the net device, register the mdio bus etc.
  */
-अटल पूर्णांक sxgbe_platक्रमm_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक ret;
-	पूर्णांक i, chan;
-	काष्ठा device *dev = &pdev->dev;
-	व्योम __iomem *addr;
-	काष्ठा sxgbe_priv_data *priv = शून्य;
-	काष्ठा sxgbe_plat_data *plat_dat = शून्य;
-	काष्ठा net_device *ndev = platक्रमm_get_drvdata(pdev);
-	काष्ठा device_node *node = dev->of_node;
+static int sxgbe_platform_probe(struct platform_device *pdev)
+{
+	int ret;
+	int i, chan;
+	struct device *dev = &pdev->dev;
+	void __iomem *addr;
+	struct sxgbe_priv_data *priv = NULL;
+	struct sxgbe_plat_data *plat_dat = NULL;
+	struct net_device *ndev = platform_get_drvdata(pdev);
+	struct device_node *node = dev->of_node;
 
 	/* Get memory resource */
-	addr = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(addr))
-		वापस PTR_ERR(addr);
+	addr = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(addr))
+		return PTR_ERR(addr);
 
-	अगर (pdev->dev.of_node) अणु
+	if (pdev->dev.of_node) {
 		plat_dat = devm_kzalloc(&pdev->dev,
-					माप(काष्ठा sxgbe_plat_data),
+					sizeof(struct sxgbe_plat_data),
 					GFP_KERNEL);
-		अगर (!plat_dat)
-			वापस  -ENOMEM;
+		if (!plat_dat)
+			return  -ENOMEM;
 
 		ret = sxgbe_probe_config_dt(pdev, plat_dat);
-		अगर (ret) अणु
+		if (ret) {
 			pr_err("%s: main dt probe failed\n", __func__);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
 	priv = sxgbe_drv_probe(&(pdev->dev), plat_dat, addr);
-	अगर (!priv) अणु
+	if (!priv) {
 		pr_err("%s: main driver probe failed\n", __func__);
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 
-	/* Get the SXGBE common INT inक्रमmation */
+	/* Get the SXGBE common INT information */
 	priv->irq  = irq_of_parse_and_map(node, 0);
-	अगर (priv->irq <= 0) अणु
+	if (priv->irq <= 0) {
 		dev_err(dev, "sxgbe common irq parsing failed\n");
-		जाओ err_drv_हटाओ;
-	पूर्ण
+		goto err_drv_remove;
+	}
 
-	/* Get MAC address अगर available (DT) */
+	/* Get MAC address if available (DT) */
 	of_get_mac_address(node, priv->dev->dev_addr);
 
 	/* Get the TX/RX IRQ numbers */
-	क्रम (i = 0, chan = 1; i < SXGBE_TX_QUEUES; i++) अणु
+	for (i = 0, chan = 1; i < SXGBE_TX_QUEUES; i++) {
 		priv->txq[i]->irq_no = irq_of_parse_and_map(node, chan++);
-		अगर (priv->txq[i]->irq_no <= 0) अणु
+		if (priv->txq[i]->irq_no <= 0) {
 			dev_err(dev, "sxgbe tx irq parsing failed\n");
-			जाओ err_tx_irq_unmap;
-		पूर्ण
-	पूर्ण
+			goto err_tx_irq_unmap;
+		}
+	}
 
-	क्रम (i = 0; i < SXGBE_RX_QUEUES; i++) अणु
+	for (i = 0; i < SXGBE_RX_QUEUES; i++) {
 		priv->rxq[i]->irq_no = irq_of_parse_and_map(node, chan++);
-		अगर (priv->rxq[i]->irq_no <= 0) अणु
+		if (priv->rxq[i]->irq_no <= 0) {
 			dev_err(dev, "sxgbe rx irq parsing failed\n");
-			जाओ err_rx_irq_unmap;
-		पूर्ण
-	पूर्ण
+			goto err_rx_irq_unmap;
+		}
+	}
 
 	priv->lpi_irq = irq_of_parse_and_map(node, chan);
-	अगर (priv->lpi_irq <= 0) अणु
+	if (priv->lpi_irq <= 0) {
 		dev_err(dev, "sxgbe lpi irq parsing failed\n");
-		जाओ err_rx_irq_unmap;
-	पूर्ण
+		goto err_rx_irq_unmap;
+	}
 
-	platक्रमm_set_drvdata(pdev, priv->dev);
+	platform_set_drvdata(pdev, priv->dev);
 
 	pr_debug("platform driver registration completed\n");
 
-	वापस 0;
+	return 0;
 
 err_rx_irq_unmap:
-	जबतक (i--)
+	while (i--)
 		irq_dispose_mapping(priv->rxq[i]->irq_no);
 	i = SXGBE_TX_QUEUES;
 err_tx_irq_unmap:
-	जबतक (i--)
+	while (i--)
 		irq_dispose_mapping(priv->txq[i]->irq_no);
 	irq_dispose_mapping(priv->irq);
-err_drv_हटाओ:
-	sxgbe_drv_हटाओ(ndev);
+err_drv_remove:
+	sxgbe_drv_remove(ndev);
 err_out:
-	वापस -ENODEV;
-पूर्ण
+	return -ENODEV;
+}
 
 /**
- * sxgbe_platक्रमm_हटाओ
- * @pdev: platक्रमm device poपूर्णांकer
- * Description: this function calls the मुख्य to मुक्त the net resources
- * and calls the platक्रमms hook and release the resources (e.g. mem).
+ * sxgbe_platform_remove
+ * @pdev: platform device pointer
+ * Description: this function calls the main to free the net resources
+ * and calls the platforms hook and release the resources (e.g. mem).
  */
-अटल पूर्णांक sxgbe_platक्रमm_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा net_device *ndev = platक्रमm_get_drvdata(pdev);
-	पूर्णांक ret = sxgbe_drv_हटाओ(ndev);
+static int sxgbe_platform_remove(struct platform_device *pdev)
+{
+	struct net_device *ndev = platform_get_drvdata(pdev);
+	int ret = sxgbe_drv_remove(ndev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक sxgbe_platक्रमm_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा net_device *ndev = dev_get_drvdata(dev);
+#ifdef CONFIG_PM
+static int sxgbe_platform_suspend(struct device *dev)
+{
+	struct net_device *ndev = dev_get_drvdata(dev);
 
-	वापस sxgbe_suspend(ndev);
-पूर्ण
+	return sxgbe_suspend(ndev);
+}
 
-अटल पूर्णांक sxgbe_platक्रमm_resume(काष्ठा device *dev)
-अणु
-	काष्ठा net_device *ndev = dev_get_drvdata(dev);
+static int sxgbe_platform_resume(struct device *dev)
+{
+	struct net_device *ndev = dev_get_drvdata(dev);
 
-	वापस sxgbe_resume(ndev);
-पूर्ण
+	return sxgbe_resume(ndev);
+}
 
-अटल पूर्णांक sxgbe_platक्रमm_मुक्तze(काष्ठा device *dev)
-अणु
-	काष्ठा net_device *ndev = dev_get_drvdata(dev);
+static int sxgbe_platform_freeze(struct device *dev)
+{
+	struct net_device *ndev = dev_get_drvdata(dev);
 
-	वापस sxgbe_मुक्तze(ndev);
-पूर्ण
+	return sxgbe_freeze(ndev);
+}
 
-अटल पूर्णांक sxgbe_platक्रमm_restore(काष्ठा device *dev)
-अणु
-	काष्ठा net_device *ndev = dev_get_drvdata(dev);
+static int sxgbe_platform_restore(struct device *dev)
+{
+	struct net_device *ndev = dev_get_drvdata(dev);
 
-	वापस sxgbe_restore(ndev);
-पूर्ण
+	return sxgbe_restore(ndev);
+}
 
-अटल स्थिर काष्ठा dev_pm_ops sxgbe_platक्रमm_pm_ops = अणु
-	.suspend	= sxgbe_platक्रमm_suspend,
-	.resume		= sxgbe_platक्रमm_resume,
-	.मुक्तze		= sxgbe_platक्रमm_मुक्तze,
-	.thaw		= sxgbe_platक्रमm_restore,
-	.restore	= sxgbe_platक्रमm_restore,
-पूर्ण;
-#अन्यथा
-अटल स्थिर काष्ठा dev_pm_ops sxgbe_platक्रमm_pm_ops;
-#पूर्ण_अगर /* CONFIG_PM */
+static const struct dev_pm_ops sxgbe_platform_pm_ops = {
+	.suspend	= sxgbe_platform_suspend,
+	.resume		= sxgbe_platform_resume,
+	.freeze		= sxgbe_platform_freeze,
+	.thaw		= sxgbe_platform_restore,
+	.restore	= sxgbe_platform_restore,
+};
+#else
+static const struct dev_pm_ops sxgbe_platform_pm_ops;
+#endif /* CONFIG_PM */
 
-अटल स्थिर काष्ठा of_device_id sxgbe_dt_ids[] = अणु
-	अणु .compatible = "samsung,sxgbe-v2.0a"पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+static const struct of_device_id sxgbe_dt_ids[] = {
+	{ .compatible = "samsung,sxgbe-v2.0a"},
+	{ /* sentinel */ }
+};
 MODULE_DEVICE_TABLE(of, sxgbe_dt_ids);
 
-अटल काष्ठा platक्रमm_driver sxgbe_platक्रमm_driver = अणु
-	.probe	= sxgbe_platक्रमm_probe,
-	.हटाओ	= sxgbe_platक्रमm_हटाओ,
-	.driver	= अणु
+static struct platform_driver sxgbe_platform_driver = {
+	.probe	= sxgbe_platform_probe,
+	.remove	= sxgbe_platform_remove,
+	.driver	= {
 		.name		= SXGBE_RESOURCE_NAME,
-		.pm		= &sxgbe_platक्रमm_pm_ops,
+		.pm		= &sxgbe_platform_pm_ops,
 		.of_match_table	= of_match_ptr(sxgbe_dt_ids),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-पूर्णांक sxgbe_रेजिस्टर_platक्रमm(व्योम)
-अणु
-	पूर्णांक err;
+int sxgbe_register_platform(void)
+{
+	int err;
 
-	err = platक्रमm_driver_रेजिस्टर(&sxgbe_platक्रमm_driver);
-	अगर (err)
+	err = platform_driver_register(&sxgbe_platform_driver);
+	if (err)
 		pr_err("failed to register the platform driver\n");
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम sxgbe_unरेजिस्टर_platक्रमm(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&sxgbe_platक्रमm_driver);
-पूर्ण
+void sxgbe_unregister_platform(void)
+{
+	platform_driver_unregister(&sxgbe_platform_driver);
+}

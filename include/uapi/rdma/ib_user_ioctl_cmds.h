@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2018, Mellanox Technologies inc.  All rights reserved.
  * Copyright (c) 2020, Intel Corporation. All rights reserved.
@@ -6,20 +5,20 @@
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -32,16 +31,16 @@
  * SOFTWARE.
  */
 
-#अगर_अघोषित IB_USER_IOCTL_CMDS_H
-#घोषणा IB_USER_IOCTL_CMDS_H
+#ifndef IB_USER_IOCTL_CMDS_H
+#define IB_USER_IOCTL_CMDS_H
 
-#घोषणा UVERBS_ID_NS_MASK 0xF000
-#घोषणा UVERBS_ID_NS_SHIFT 12
+#define UVERBS_ID_NS_MASK 0xF000
+#define UVERBS_ID_NS_SHIFT 12
 
-#घोषणा UVERBS_UDATA_DRIVER_DATA_NS	1
-#घोषणा UVERBS_UDATA_DRIVER_DATA_FLAG	(1UL << UVERBS_ID_NS_SHIFT)
+#define UVERBS_UDATA_DRIVER_DATA_NS	1
+#define UVERBS_UDATA_DRIVER_DATA_FLAG	(1UL << UVERBS_ID_NS_SHIFT)
 
-क्रमागत uverbs_शेष_objects अणु
+enum uverbs_default_objects {
 	UVERBS_OBJECT_DEVICE, /* No instances of DEVICE are allowed */
 	UVERBS_OBJECT_PD,
 	UVERBS_OBJECT_COMP_CHANNEL,
@@ -59,14 +58,14 @@
 	UVERBS_OBJECT_DM,
 	UVERBS_OBJECT_COUNTERS,
 	UVERBS_OBJECT_ASYNC_EVENT,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	UVERBS_ATTR_UHW_IN = UVERBS_UDATA_DRIVER_DATA_FLAG,
 	UVERBS_ATTR_UHW_OUT,
-पूर्ण;
+};
 
-क्रमागत uverbs_methods_device अणु
+enum uverbs_methods_device {
 	UVERBS_METHOD_INVOKE_WRITE,
 	UVERBS_METHOD_INFO_HANDLES,
 	UVERBS_METHOD_QUERY_PORT,
@@ -74,30 +73,30 @@
 	UVERBS_METHOD_QUERY_CONTEXT,
 	UVERBS_METHOD_QUERY_GID_TABLE,
 	UVERBS_METHOD_QUERY_GID_ENTRY,
-पूर्ण;
+};
 
-क्रमागत uverbs_attrs_invoke_ग_लिखो_cmd_attr_ids अणु
+enum uverbs_attrs_invoke_write_cmd_attr_ids {
 	UVERBS_ATTR_CORE_IN,
 	UVERBS_ATTR_CORE_OUT,
 	UVERBS_ATTR_WRITE_CMD,
-पूर्ण;
+};
 
-क्रमागत uverbs_attrs_query_port_cmd_attr_ids अणु
+enum uverbs_attrs_query_port_cmd_attr_ids {
 	UVERBS_ATTR_QUERY_PORT_PORT_NUM,
 	UVERBS_ATTR_QUERY_PORT_RESP,
-पूर्ण;
+};
 
-क्रमागत uverbs_attrs_get_context_attr_ids अणु
+enum uverbs_attrs_get_context_attr_ids {
 	UVERBS_ATTR_GET_CONTEXT_NUM_COMP_VECTORS,
 	UVERBS_ATTR_GET_CONTEXT_CORE_SUPPORT,
-पूर्ण;
+};
 
-क्रमागत uverbs_attrs_query_context_attr_ids अणु
+enum uverbs_attrs_query_context_attr_ids {
 	UVERBS_ATTR_QUERY_CONTEXT_NUM_COMP_VECTORS,
 	UVERBS_ATTR_QUERY_CONTEXT_CORE_SUPPORT,
-पूर्ण;
+};
 
-क्रमागत uverbs_attrs_create_cq_cmd_attr_ids अणु
+enum uverbs_attrs_create_cq_cmd_attr_ids {
 	UVERBS_ATTR_CREATE_CQ_HANDLE,
 	UVERBS_ATTR_CREATE_CQ_CQE,
 	UVERBS_ATTR_CREATE_CQ_USER_HANDLE,
@@ -106,32 +105,32 @@
 	UVERBS_ATTR_CREATE_CQ_FLAGS,
 	UVERBS_ATTR_CREATE_CQ_RESP_CQE,
 	UVERBS_ATTR_CREATE_CQ_EVENT_FD,
-पूर्ण;
+};
 
-क्रमागत uverbs_attrs_destroy_cq_cmd_attr_ids अणु
+enum uverbs_attrs_destroy_cq_cmd_attr_ids {
 	UVERBS_ATTR_DESTROY_CQ_HANDLE,
 	UVERBS_ATTR_DESTROY_CQ_RESP,
-पूर्ण;
+};
 
-क्रमागत uverbs_attrs_create_flow_action_esp अणु
+enum uverbs_attrs_create_flow_action_esp {
 	UVERBS_ATTR_CREATE_FLOW_ACTION_ESP_HANDLE,
 	UVERBS_ATTR_FLOW_ACTION_ESP_ATTRS,
 	UVERBS_ATTR_FLOW_ACTION_ESP_ESN,
 	UVERBS_ATTR_FLOW_ACTION_ESP_KEYMAT,
 	UVERBS_ATTR_FLOW_ACTION_ESP_REPLAY,
 	UVERBS_ATTR_FLOW_ACTION_ESP_ENCAP,
-पूर्ण;
+};
 
-क्रमागत uverbs_attrs_modअगरy_flow_action_esp अणु
+enum uverbs_attrs_modify_flow_action_esp {
 	UVERBS_ATTR_MODIFY_FLOW_ACTION_ESP_HANDLE =
 		UVERBS_ATTR_CREATE_FLOW_ACTION_ESP_HANDLE,
-पूर्ण;
+};
 
-क्रमागत uverbs_attrs_destroy_flow_action_esp अणु
+enum uverbs_attrs_destroy_flow_action_esp {
 	UVERBS_ATTR_DESTROY_FLOW_ACTION_HANDLE,
-पूर्ण;
+};
 
-क्रमागत uverbs_attrs_create_qp_cmd_attr_ids अणु
+enum uverbs_attrs_create_qp_cmd_attr_ids {
 	UVERBS_ATTR_CREATE_QP_HANDLE,
 	UVERBS_ATTR_CREATE_QP_XRCD_HANDLE,
 	UVERBS_ATTR_CREATE_QP_PD_HANDLE,
@@ -147,19 +146,19 @@
 	UVERBS_ATTR_CREATE_QP_EVENT_FD,
 	UVERBS_ATTR_CREATE_QP_RESP_CAP,
 	UVERBS_ATTR_CREATE_QP_RESP_QP_NUM,
-पूर्ण;
+};
 
-क्रमागत uverbs_attrs_destroy_qp_cmd_attr_ids अणु
+enum uverbs_attrs_destroy_qp_cmd_attr_ids {
 	UVERBS_ATTR_DESTROY_QP_HANDLE,
 	UVERBS_ATTR_DESTROY_QP_RESP,
-पूर्ण;
+};
 
-क्रमागत uverbs_methods_qp अणु
+enum uverbs_methods_qp {
 	UVERBS_METHOD_QP_CREATE,
 	UVERBS_METHOD_QP_DESTROY,
-पूर्ण;
+};
 
-क्रमागत uverbs_attrs_create_srq_cmd_attr_ids अणु
+enum uverbs_attrs_create_srq_cmd_attr_ids {
 	UVERBS_ATTR_CREATE_SRQ_HANDLE,
 	UVERBS_ATTR_CREATE_SRQ_PD_HANDLE,
 	UVERBS_ATTR_CREATE_SRQ_XRCD_HANDLE,
@@ -174,24 +173,24 @@
 	UVERBS_ATTR_CREATE_SRQ_RESP_MAX_WR,
 	UVERBS_ATTR_CREATE_SRQ_RESP_MAX_SGE,
 	UVERBS_ATTR_CREATE_SRQ_RESP_SRQ_NUM,
-पूर्ण;
+};
 
-क्रमागत uverbs_attrs_destroy_srq_cmd_attr_ids अणु
+enum uverbs_attrs_destroy_srq_cmd_attr_ids {
 	UVERBS_ATTR_DESTROY_SRQ_HANDLE,
 	UVERBS_ATTR_DESTROY_SRQ_RESP,
-पूर्ण;
+};
 
-क्रमागत uverbs_methods_srq अणु
+enum uverbs_methods_srq {
 	UVERBS_METHOD_SRQ_CREATE,
 	UVERBS_METHOD_SRQ_DESTROY,
-पूर्ण;
+};
 
-क्रमागत uverbs_methods_cq अणु
+enum uverbs_methods_cq {
 	UVERBS_METHOD_CQ_CREATE,
 	UVERBS_METHOD_CQ_DESTROY,
-पूर्ण;
+};
 
-क्रमागत uverbs_attrs_create_wq_cmd_attr_ids अणु
+enum uverbs_attrs_create_wq_cmd_attr_ids {
 	UVERBS_ATTR_CREATE_WQ_HANDLE,
 	UVERBS_ATTR_CREATE_WQ_PD_HANDLE,
 	UVERBS_ATTR_CREATE_WQ_CQ_HANDLE,
@@ -204,40 +203,40 @@
 	UVERBS_ATTR_CREATE_WQ_RESP_MAX_WR,
 	UVERBS_ATTR_CREATE_WQ_RESP_MAX_SGE,
 	UVERBS_ATTR_CREATE_WQ_RESP_WQ_NUM,
-पूर्ण;
+};
 
-क्रमागत uverbs_attrs_destroy_wq_cmd_attr_ids अणु
+enum uverbs_attrs_destroy_wq_cmd_attr_ids {
 	UVERBS_ATTR_DESTROY_WQ_HANDLE,
 	UVERBS_ATTR_DESTROY_WQ_RESP,
-पूर्ण;
+};
 
-क्रमागत uverbs_methods_wq अणु
+enum uverbs_methods_wq {
 	UVERBS_METHOD_WQ_CREATE,
 	UVERBS_METHOD_WQ_DESTROY,
-पूर्ण;
+};
 
-क्रमागत uverbs_methods_actions_flow_action_ops अणु
+enum uverbs_methods_actions_flow_action_ops {
 	UVERBS_METHOD_FLOW_ACTION_ESP_CREATE,
 	UVERBS_METHOD_FLOW_ACTION_DESTROY,
 	UVERBS_METHOD_FLOW_ACTION_ESP_MODIFY,
-पूर्ण;
+};
 
-क्रमागत uverbs_attrs_alloc_dm_cmd_attr_ids अणु
+enum uverbs_attrs_alloc_dm_cmd_attr_ids {
 	UVERBS_ATTR_ALLOC_DM_HANDLE,
 	UVERBS_ATTR_ALLOC_DM_LENGTH,
 	UVERBS_ATTR_ALLOC_DM_ALIGNMENT,
-पूर्ण;
+};
 
-क्रमागत uverbs_attrs_मुक्त_dm_cmd_attr_ids अणु
+enum uverbs_attrs_free_dm_cmd_attr_ids {
 	UVERBS_ATTR_FREE_DM_HANDLE,
-पूर्ण;
+};
 
-क्रमागत uverbs_methods_dm अणु
+enum uverbs_methods_dm {
 	UVERBS_METHOD_DM_ALLOC,
 	UVERBS_METHOD_DM_FREE,
-पूर्ण;
+};
 
-क्रमागत uverbs_attrs_reg_dm_mr_cmd_attr_ids अणु
+enum uverbs_attrs_reg_dm_mr_cmd_attr_ids {
 	UVERBS_ATTR_REG_DM_MR_HANDLE,
 	UVERBS_ATTR_REG_DM_MR_OFFSET,
 	UVERBS_ATTR_REG_DM_MR_LENGTH,
@@ -246,36 +245,36 @@
 	UVERBS_ATTR_REG_DM_MR_DM_HANDLE,
 	UVERBS_ATTR_REG_DM_MR_RESP_LKEY,
 	UVERBS_ATTR_REG_DM_MR_RESP_RKEY,
-पूर्ण;
+};
 
-क्रमागत uverbs_methods_mr अणु
+enum uverbs_methods_mr {
 	UVERBS_METHOD_DM_MR_REG,
 	UVERBS_METHOD_MR_DESTROY,
 	UVERBS_METHOD_ADVISE_MR,
 	UVERBS_METHOD_QUERY_MR,
 	UVERBS_METHOD_REG_DMABUF_MR,
-पूर्ण;
+};
 
-क्रमागत uverbs_attrs_mr_destroy_ids अणु
+enum uverbs_attrs_mr_destroy_ids {
 	UVERBS_ATTR_DESTROY_MR_HANDLE,
-पूर्ण;
+};
 
-क्रमागत uverbs_attrs_advise_mr_cmd_attr_ids अणु
+enum uverbs_attrs_advise_mr_cmd_attr_ids {
 	UVERBS_ATTR_ADVISE_MR_PD_HANDLE,
 	UVERBS_ATTR_ADVISE_MR_ADVICE,
 	UVERBS_ATTR_ADVISE_MR_FLAGS,
 	UVERBS_ATTR_ADVISE_MR_SGE_LIST,
-पूर्ण;
+};
 
-क्रमागत uverbs_attrs_query_mr_cmd_attr_ids अणु
+enum uverbs_attrs_query_mr_cmd_attr_ids {
 	UVERBS_ATTR_QUERY_MR_HANDLE,
 	UVERBS_ATTR_QUERY_MR_RESP_LKEY,
 	UVERBS_ATTR_QUERY_MR_RESP_RKEY,
 	UVERBS_ATTR_QUERY_MR_RESP_LENGTH,
 	UVERBS_ATTR_QUERY_MR_RESP_IOVA,
-पूर्ण;
+};
 
-क्रमागत uverbs_attrs_reg_dmabuf_mr_cmd_attr_ids अणु
+enum uverbs_attrs_reg_dmabuf_mr_cmd_attr_ids {
 	UVERBS_ATTR_REG_DMABUF_MR_HANDLE,
 	UVERBS_ATTR_REG_DMABUF_MR_PD_HANDLE,
 	UVERBS_ATTR_REG_DMABUF_MR_OFFSET,
@@ -285,102 +284,102 @@
 	UVERBS_ATTR_REG_DMABUF_MR_ACCESS_FLAGS,
 	UVERBS_ATTR_REG_DMABUF_MR_RESP_LKEY,
 	UVERBS_ATTR_REG_DMABUF_MR_RESP_RKEY,
-पूर्ण;
+};
 
-क्रमागत uverbs_attrs_create_counters_cmd_attr_ids अणु
+enum uverbs_attrs_create_counters_cmd_attr_ids {
 	UVERBS_ATTR_CREATE_COUNTERS_HANDLE,
-पूर्ण;
+};
 
-क्रमागत uverbs_attrs_destroy_counters_cmd_attr_ids अणु
+enum uverbs_attrs_destroy_counters_cmd_attr_ids {
 	UVERBS_ATTR_DESTROY_COUNTERS_HANDLE,
-पूर्ण;
+};
 
-क्रमागत uverbs_attrs_पढ़ो_counters_cmd_attr_ids अणु
+enum uverbs_attrs_read_counters_cmd_attr_ids {
 	UVERBS_ATTR_READ_COUNTERS_HANDLE,
 	UVERBS_ATTR_READ_COUNTERS_BUFF,
 	UVERBS_ATTR_READ_COUNTERS_FLAGS,
-पूर्ण;
+};
 
-क्रमागत uverbs_methods_actions_counters_ops अणु
+enum uverbs_methods_actions_counters_ops {
 	UVERBS_METHOD_COUNTERS_CREATE,
 	UVERBS_METHOD_COUNTERS_DESTROY,
 	UVERBS_METHOD_COUNTERS_READ,
-पूर्ण;
+};
 
-क्रमागत uverbs_attrs_info_handles_id अणु
+enum uverbs_attrs_info_handles_id {
 	UVERBS_ATTR_INFO_OBJECT_ID,
 	UVERBS_ATTR_INFO_TOTAL_HANDLES,
 	UVERBS_ATTR_INFO_HANDLES_LIST,
-पूर्ण;
+};
 
-क्रमागत uverbs_methods_pd अणु
+enum uverbs_methods_pd {
 	UVERBS_METHOD_PD_DESTROY,
-पूर्ण;
+};
 
-क्रमागत uverbs_attrs_pd_destroy_ids अणु
+enum uverbs_attrs_pd_destroy_ids {
 	UVERBS_ATTR_DESTROY_PD_HANDLE,
-पूर्ण;
+};
 
-क्रमागत uverbs_methods_mw अणु
+enum uverbs_methods_mw {
 	UVERBS_METHOD_MW_DESTROY,
-पूर्ण;
+};
 
-क्रमागत uverbs_attrs_mw_destroy_ids अणु
+enum uverbs_attrs_mw_destroy_ids {
 	UVERBS_ATTR_DESTROY_MW_HANDLE,
-पूर्ण;
+};
 
-क्रमागत uverbs_methods_xrcd अणु
+enum uverbs_methods_xrcd {
 	UVERBS_METHOD_XRCD_DESTROY,
-पूर्ण;
+};
 
-क्रमागत uverbs_attrs_xrcd_destroy_ids अणु
+enum uverbs_attrs_xrcd_destroy_ids {
 	UVERBS_ATTR_DESTROY_XRCD_HANDLE,
-पूर्ण;
+};
 
-क्रमागत uverbs_methods_ah अणु
+enum uverbs_methods_ah {
 	UVERBS_METHOD_AH_DESTROY,
-पूर्ण;
+};
 
-क्रमागत uverbs_attrs_ah_destroy_ids अणु
+enum uverbs_attrs_ah_destroy_ids {
 	UVERBS_ATTR_DESTROY_AH_HANDLE,
-पूर्ण;
+};
 
-क्रमागत uverbs_methods_rwq_ind_tbl अणु
+enum uverbs_methods_rwq_ind_tbl {
 	UVERBS_METHOD_RWQ_IND_TBL_DESTROY,
-पूर्ण;
+};
 
-क्रमागत uverbs_attrs_rwq_ind_tbl_destroy_ids अणु
+enum uverbs_attrs_rwq_ind_tbl_destroy_ids {
 	UVERBS_ATTR_DESTROY_RWQ_IND_TBL_HANDLE,
-पूर्ण;
+};
 
-क्रमागत uverbs_methods_flow अणु
+enum uverbs_methods_flow {
 	UVERBS_METHOD_FLOW_DESTROY,
-पूर्ण;
+};
 
-क्रमागत uverbs_attrs_flow_destroy_ids अणु
+enum uverbs_attrs_flow_destroy_ids {
 	UVERBS_ATTR_DESTROY_FLOW_HANDLE,
-पूर्ण;
+};
 
-क्रमागत uverbs_method_async_event अणु
+enum uverbs_method_async_event {
 	UVERBS_METHOD_ASYNC_EVENT_ALLOC,
-पूर्ण;
+};
 
-क्रमागत uverbs_attrs_async_event_create अणु
+enum uverbs_attrs_async_event_create {
 	UVERBS_ATTR_ASYNC_EVENT_ALLOC_FD_HANDLE,
-पूर्ण;
+};
 
-क्रमागत uverbs_attrs_query_gid_table_cmd_attr_ids अणु
+enum uverbs_attrs_query_gid_table_cmd_attr_ids {
 	UVERBS_ATTR_QUERY_GID_TABLE_ENTRY_SIZE,
 	UVERBS_ATTR_QUERY_GID_TABLE_FLAGS,
 	UVERBS_ATTR_QUERY_GID_TABLE_RESP_ENTRIES,
 	UVERBS_ATTR_QUERY_GID_TABLE_RESP_NUM_ENTRIES,
-पूर्ण;
+};
 
-क्रमागत uverbs_attrs_query_gid_entry_cmd_attr_ids अणु
+enum uverbs_attrs_query_gid_entry_cmd_attr_ids {
 	UVERBS_ATTR_QUERY_GID_ENTRY_PORT,
 	UVERBS_ATTR_QUERY_GID_ENTRY_GID_INDEX,
 	UVERBS_ATTR_QUERY_GID_ENTRY_FLAGS,
 	UVERBS_ATTR_QUERY_GID_ENTRY_RESP_ENTRY,
-पूर्ण;
+};
 
-#पूर्ण_अगर
+#endif

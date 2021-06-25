@@ -1,20 +1,19 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0
+/* SPDX-License-Identifier: GPL-2.0
  *
- * Copyright 2018-2020 HabanaLअसल, Ltd.
+ * Copyright 2018-2020 HabanaLabs, Ltd.
  * All Rights Reserved.
  *
  */
 
 /************************************
- ** This is an स्वतः-generated file **
+ ** This is an auto-generated file **
  **       DO NOT EDIT BELOW        **
  ************************************/
 
-#अगर_अघोषित __GAUDI_ASYNC_EVENTS_H_
-#घोषणा __GAUDI_ASYNC_EVENTS_H_
+#ifndef __GAUDI_ASYNC_EVENTS_H_
+#define __GAUDI_ASYNC_EVENTS_H_
 
-क्रमागत gaudi_async_event_id अणु
+enum gaudi_async_event_id {
 	GAUDI_EVENT_PCIE_CORE_SERR = 32,
 	GAUDI_EVENT_PCIE_CORE_DERR = 33,
 	GAUDI_EVENT_PCIE_IF_SERR = 34,
@@ -312,6 +311,6 @@
 	GAUDI_EVENT_FIX_THERMAL_ENV_E = 661,
 	GAUDI_EVENT_RAZWI_OR_ADC_SW = 662,
 	GAUDI_EVENT_SIZE,
-पूर्ण;
+};
 
-#पूर्ण_अगर /* __GAUDI_ASYNC_EVENTS_H_ */
+#endif /* __GAUDI_ASYNC_EVENTS_H_ */

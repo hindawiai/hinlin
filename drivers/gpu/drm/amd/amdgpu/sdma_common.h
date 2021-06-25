@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,22 +21,22 @@
  *
  */
 
-#अगर_अघोषित __SDMA_COMMON_H__
-#घोषणा __SDMA_COMMON_H__
+#ifndef __SDMA_COMMON_H__
+#define __SDMA_COMMON_H__
 
-क्रमागत sdma_utcl2_cache_पढ़ो_policy अणु
+enum sdma_utcl2_cache_read_policy {
 	CACHE_READ_POLICY_L2__LRU    = 0x00000000,
 	CACHE_READ_POLICY_L2__STREAM = 0x00000001,
 	CACHE_READ_POLICY_L2__NOA    = 0x00000002,
 	CACHE_READ_POLICY_L2__DEFAULT = CACHE_READ_POLICY_L2__NOA,
-पूर्ण;
+};
 
-क्रमागत sdma_utcl2_cache_ग_लिखो_policy अणु
+enum sdma_utcl2_cache_write_policy {
 	CACHE_WRITE_POLICY_L2__LRU    = 0x00000000,
 	CACHE_WRITE_POLICY_L2__STREAM = 0x00000001,
 	CACHE_WRITE_POLICY_L2__NOA    = 0x00000002,
 	CACHE_WRITE_POLICY_L2__BYPASS = 0x00000003,
 	CACHE_WRITE_POLICY_L2__DEFAULT = CACHE_WRITE_POLICY_L2__BYPASS,
-पूर्ण;
+};
 
-#पूर्ण_अगर /* __SDMA_COMMON_H__ */
+#endif /* __SDMA_COMMON_H__ */

@@ -1,436 +1,435 @@
-<शैली गुरु>
 /*
- *	An async IO implementation क्रम Linux
+ *	An async IO implementation for Linux
  *	Written by Benjamin LaHaise <bcrl@kvack.org>
  *
- *	Implements an efficient asynchronous io पूर्णांकerface.
+ *	Implements an efficient asynchronous io interface.
  *
  *	Copyright 2000, 2001, 2002 Red Hat, Inc.  All Rights Reserved.
  *	Copyright 2018 Christoph Hellwig.
  *
- *	See ../COPYING क्रम licensing terms.
+ *	See ../COPYING for licensing terms.
  */
-#घोषणा pr_fmt(fmt) "%s: " fmt, __func__
+#define pr_fmt(fmt) "%s: " fmt, __func__
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/समय.स>
-#समावेश <linux/aio_abi.h>
-#समावेश <linux/export.h>
-#समावेश <linux/syscalls.h>
-#समावेश <linux/backing-dev.h>
-#समावेश <linux/refcount.h>
-#समावेश <linux/uपन.स>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/errno.h>
+#include <linux/time.h>
+#include <linux/aio_abi.h>
+#include <linux/export.h>
+#include <linux/syscalls.h>
+#include <linux/backing-dev.h>
+#include <linux/refcount.h>
+#include <linux/uio.h>
 
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/fs.h>
-#समावेश <linux/file.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/mman.h>
-#समावेश <linux/percpu.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/aपन.स>
-#समावेश <linux/highस्मृति.स>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/security.h>
-#समावेश <linux/eventfd.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/compat.h>
-#समावेश <linux/migrate.h>
-#समावेश <linux/ramfs.h>
-#समावेश <linux/percpu-refcount.h>
-#समावेश <linux/mount.h>
-#समावेश <linux/pseuकरो_fs.h>
+#include <linux/sched/signal.h>
+#include <linux/fs.h>
+#include <linux/file.h>
+#include <linux/mm.h>
+#include <linux/mman.h>
+#include <linux/percpu.h>
+#include <linux/slab.h>
+#include <linux/timer.h>
+#include <linux/aio.h>
+#include <linux/highmem.h>
+#include <linux/workqueue.h>
+#include <linux/security.h>
+#include <linux/eventfd.h>
+#include <linux/blkdev.h>
+#include <linux/compat.h>
+#include <linux/migrate.h>
+#include <linux/ramfs.h>
+#include <linux/percpu-refcount.h>
+#include <linux/mount.h>
+#include <linux/pseudo_fs.h>
 
-#समावेश <linux/uaccess.h>
-#समावेश <linux/nospec.h>
+#include <linux/uaccess.h>
+#include <linux/nospec.h>
 
-#समावेश "internal.h"
+#include "internal.h"
 
-#घोषणा KIOCB_KEY		0
+#define KIOCB_KEY		0
 
-#घोषणा AIO_RING_MAGIC			0xa10a10a1
-#घोषणा AIO_RING_COMPAT_FEATURES	1
-#घोषणा AIO_RING_INCOMPAT_FEATURES	0
-काष्ठा aio_ring अणु
-	अचिन्हित	id;	/* kernel पूर्णांकernal index number */
-	अचिन्हित	nr;	/* number of io_events */
-	अचिन्हित	head;	/* Written to by userland or under ring_lock
-				 * mutex by aio_पढ़ो_events_ring(). */
-	अचिन्हित	tail;
+#define AIO_RING_MAGIC			0xa10a10a1
+#define AIO_RING_COMPAT_FEATURES	1
+#define AIO_RING_INCOMPAT_FEATURES	0
+struct aio_ring {
+	unsigned	id;	/* kernel internal index number */
+	unsigned	nr;	/* number of io_events */
+	unsigned	head;	/* Written to by userland or under ring_lock
+				 * mutex by aio_read_events_ring(). */
+	unsigned	tail;
 
-	अचिन्हित	magic;
-	अचिन्हित	compat_features;
-	अचिन्हित	incompat_features;
-	अचिन्हित	header_length;	/* size of aio_ring */
+	unsigned	magic;
+	unsigned	compat_features;
+	unsigned	incompat_features;
+	unsigned	header_length;	/* size of aio_ring */
 
 
-	काष्ठा io_event		io_events[];
-पूर्ण; /* 128 bytes + ring size */
+	struct io_event		io_events[];
+}; /* 128 bytes + ring size */
 
 /*
- * Plugging is meant to work with larger batches of IOs. If we करोn't
- * have more than the below, then करोn't bother setting up a plug.
+ * Plugging is meant to work with larger batches of IOs. If we don't
+ * have more than the below, then don't bother setting up a plug.
  */
-#घोषणा AIO_PLUG_THRESHOLD	2
+#define AIO_PLUG_THRESHOLD	2
 
-#घोषणा AIO_RING_PAGES	8
+#define AIO_RING_PAGES	8
 
-काष्ठा kioctx_table अणु
-	काष्ठा rcu_head		rcu;
-	अचिन्हित		nr;
-	काष्ठा kioctx __rcu	*table[];
-पूर्ण;
+struct kioctx_table {
+	struct rcu_head		rcu;
+	unsigned		nr;
+	struct kioctx __rcu	*table[];
+};
 
-काष्ठा kioctx_cpu अणु
-	अचिन्हित		reqs_available;
-पूर्ण;
+struct kioctx_cpu {
+	unsigned		reqs_available;
+};
 
-काष्ठा ctx_rq_रुको अणु
-	काष्ठा completion comp;
+struct ctx_rq_wait {
+	struct completion comp;
 	atomic_t count;
-पूर्ण;
+};
 
-काष्ठा kioctx अणु
-	काष्ठा percpu_ref	users;
+struct kioctx {
+	struct percpu_ref	users;
 	atomic_t		dead;
 
-	काष्ठा percpu_ref	reqs;
+	struct percpu_ref	reqs;
 
-	अचिन्हित दीर्घ		user_id;
+	unsigned long		user_id;
 
-	काष्ठा __percpu kioctx_cpu *cpu;
+	struct __percpu kioctx_cpu *cpu;
 
 	/*
 	 * For percpu reqs_available, number of slots we move to/from global
-	 * counter at a समय:
+	 * counter at a time:
 	 */
-	अचिन्हित		req_batch;
+	unsigned		req_batch;
 	/*
-	 * This is what userspace passed to io_setup(), it's not used क्रम
+	 * This is what userspace passed to io_setup(), it's not used for
 	 * anything but counting against the global max_reqs quota.
 	 *
 	 * The real limit is nr_events - 1, which will be larger (see
 	 * aio_setup_ring())
 	 */
-	अचिन्हित		max_reqs;
+	unsigned		max_reqs;
 
-	/* Size of ringbuffer, in units of काष्ठा io_event */
-	अचिन्हित		nr_events;
+	/* Size of ringbuffer, in units of struct io_event */
+	unsigned		nr_events;
 
-	अचिन्हित दीर्घ		mmap_base;
-	अचिन्हित दीर्घ		mmap_size;
+	unsigned long		mmap_base;
+	unsigned long		mmap_size;
 
-	काष्ठा page		**ring_pages;
-	दीर्घ			nr_pages;
+	struct page		**ring_pages;
+	long			nr_pages;
 
-	काष्ठा rcu_work		मुक्त_rwork;	/* see मुक्त_ioctx() */
+	struct rcu_work		free_rwork;	/* see free_ioctx() */
 
 	/*
-	 * संकेतs when all in-flight requests are करोne
+	 * signals when all in-flight requests are done
 	 */
-	काष्ठा ctx_rq_रुको	*rq_रुको;
+	struct ctx_rq_wait	*rq_wait;
 
-	काष्ठा अणु
+	struct {
 		/*
 		 * This counts the number of available slots in the ringbuffer,
-		 * so we aव्योम overflowing it: it's decremented (अगर positive)
+		 * so we avoid overflowing it: it's decremented (if positive)
 		 * when allocating a kiocb and incremented when the resulting
 		 * io_event is pulled off the ringbuffer.
 		 *
 		 * We batch accesses to it with a percpu version.
 		 */
 		atomic_t	reqs_available;
-	पूर्ण ____cacheline_aligned_in_smp;
+	} ____cacheline_aligned_in_smp;
 
-	काष्ठा अणु
+	struct {
 		spinlock_t	ctx_lock;
-		काष्ठा list_head active_reqs;	/* used क्रम cancellation */
-	पूर्ण ____cacheline_aligned_in_smp;
+		struct list_head active_reqs;	/* used for cancellation */
+	} ____cacheline_aligned_in_smp;
 
-	काष्ठा अणु
-		काष्ठा mutex	ring_lock;
-		रुको_queue_head_t रुको;
-	पूर्ण ____cacheline_aligned_in_smp;
+	struct {
+		struct mutex	ring_lock;
+		wait_queue_head_t wait;
+	} ____cacheline_aligned_in_smp;
 
-	काष्ठा अणु
-		अचिन्हित	tail;
-		अचिन्हित	completed_events;
+	struct {
+		unsigned	tail;
+		unsigned	completed_events;
 		spinlock_t	completion_lock;
-	पूर्ण ____cacheline_aligned_in_smp;
+	} ____cacheline_aligned_in_smp;
 
-	काष्ठा page		*पूर्णांकernal_pages[AIO_RING_PAGES];
-	काष्ठा file		*aio_ring_file;
+	struct page		*internal_pages[AIO_RING_PAGES];
+	struct file		*aio_ring_file;
 
-	अचिन्हित		id;
-पूर्ण;
+	unsigned		id;
+};
 
 /*
- * First field must be the file poपूर्णांकer in all the
- * iocb जोड़s! See also 'struct kiocb' in <linux/fs.h>
+ * First field must be the file pointer in all the
+ * iocb unions! See also 'struct kiocb' in <linux/fs.h>
  */
-काष्ठा fsync_iocb अणु
-	काष्ठा file		*file;
-	काष्ठा work_काष्ठा	work;
+struct fsync_iocb {
+	struct file		*file;
+	struct work_struct	work;
 	bool			datasync;
-	काष्ठा cred		*creds;
-पूर्ण;
+	struct cred		*creds;
+};
 
-काष्ठा poll_iocb अणु
-	काष्ठा file		*file;
-	काष्ठा रुको_queue_head	*head;
+struct poll_iocb {
+	struct file		*file;
+	struct wait_queue_head	*head;
 	__poll_t		events;
-	bool			करोne;
+	bool			done;
 	bool			cancelled;
-	काष्ठा रुको_queue_entry	रुको;
-	काष्ठा work_काष्ठा	work;
-पूर्ण;
+	struct wait_queue_entry	wait;
+	struct work_struct	work;
+};
 
 /*
- * NOTE! Each of the iocb जोड़ members has the file poपूर्णांकer
- * as the first entry in their काष्ठा definition. So you can
- * access the file poपूर्णांकer through any of the sub-काष्ठाs,
- * or directly as just 'ki_filp' in this काष्ठा.
+ * NOTE! Each of the iocb union members has the file pointer
+ * as the first entry in their struct definition. So you can
+ * access the file pointer through any of the sub-structs,
+ * or directly as just 'ki_filp' in this struct.
  */
-काष्ठा aio_kiocb अणु
-	जोड़ अणु
-		काष्ठा file		*ki_filp;
-		काष्ठा kiocb		rw;
-		काष्ठा fsync_iocb	fsync;
-		काष्ठा poll_iocb	poll;
-	पूर्ण;
+struct aio_kiocb {
+	union {
+		struct file		*ki_filp;
+		struct kiocb		rw;
+		struct fsync_iocb	fsync;
+		struct poll_iocb	poll;
+	};
 
-	काष्ठा kioctx		*ki_ctx;
+	struct kioctx		*ki_ctx;
 	kiocb_cancel_fn		*ki_cancel;
 
-	काष्ठा io_event		ki_res;
+	struct io_event		ki_res;
 
-	काष्ठा list_head	ki_list;	/* the aio core uses this
-						 * क्रम cancellation */
+	struct list_head	ki_list;	/* the aio core uses this
+						 * for cancellation */
 	refcount_t		ki_refcnt;
 
 	/*
 	 * If the aio_resfd field of the userspace iocb is not zero,
 	 * this is the underlying eventfd context to deliver events to.
 	 */
-	काष्ठा eventfd_ctx	*ki_eventfd;
-पूर्ण;
+	struct eventfd_ctx	*ki_eventfd;
+};
 
 /*------ sysctl variables----*/
-अटल DEFINE_SPINLOCK(aio_nr_lock);
-अचिन्हित दीर्घ aio_nr;		/* current प्रणाली wide number of aio requests */
-अचिन्हित दीर्घ aio_max_nr = 0x10000; /* प्रणाली wide maximum number of aio requests */
+static DEFINE_SPINLOCK(aio_nr_lock);
+unsigned long aio_nr;		/* current system wide number of aio requests */
+unsigned long aio_max_nr = 0x10000; /* system wide maximum number of aio requests */
 /*----end sysctl variables---*/
 
-अटल काष्ठा kmem_cache	*kiocb_cachep;
-अटल काष्ठा kmem_cache	*kioctx_cachep;
+static struct kmem_cache	*kiocb_cachep;
+static struct kmem_cache	*kioctx_cachep;
 
-अटल काष्ठा vfsmount *aio_mnt;
+static struct vfsmount *aio_mnt;
 
-अटल स्थिर काष्ठा file_operations aio_ring_fops;
-अटल स्थिर काष्ठा address_space_operations aio_ctx_aops;
+static const struct file_operations aio_ring_fops;
+static const struct address_space_operations aio_ctx_aops;
 
-अटल काष्ठा file *aio_निजी_file(काष्ठा kioctx *ctx, loff_t nr_pages)
-अणु
-	काष्ठा file *file;
-	काष्ठा inode *inode = alloc_anon_inode(aio_mnt->mnt_sb);
-	अगर (IS_ERR(inode))
-		वापस ERR_CAST(inode);
+static struct file *aio_private_file(struct kioctx *ctx, loff_t nr_pages)
+{
+	struct file *file;
+	struct inode *inode = alloc_anon_inode(aio_mnt->mnt_sb);
+	if (IS_ERR(inode))
+		return ERR_CAST(inode);
 
 	inode->i_mapping->a_ops = &aio_ctx_aops;
-	inode->i_mapping->निजी_data = ctx;
+	inode->i_mapping->private_data = ctx;
 	inode->i_size = PAGE_SIZE * nr_pages;
 
-	file = alloc_file_pseuकरो(inode, aio_mnt, "[aio]",
+	file = alloc_file_pseudo(inode, aio_mnt, "[aio]",
 				O_RDWR, &aio_ring_fops);
-	अगर (IS_ERR(file))
+	if (IS_ERR(file))
 		iput(inode);
-	वापस file;
-पूर्ण
+	return file;
+}
 
-अटल पूर्णांक aio_init_fs_context(काष्ठा fs_context *fc)
-अणु
-	अगर (!init_pseuकरो(fc, AIO_RING_MAGIC))
-		वापस -ENOMEM;
-	fc->s_अगरlags |= SB_I_NOEXEC;
-	वापस 0;
-पूर्ण
+static int aio_init_fs_context(struct fs_context *fc)
+{
+	if (!init_pseudo(fc, AIO_RING_MAGIC))
+		return -ENOMEM;
+	fc->s_iflags |= SB_I_NOEXEC;
+	return 0;
+}
 
 /* aio_setup
  *	Creates the slab caches used by the aio routines, panic on
- *	failure as this is करोne early during the boot sequence.
+ *	failure as this is done early during the boot sequence.
  */
-अटल पूर्णांक __init aio_setup(व्योम)
-अणु
-	अटल काष्ठा file_प्रणाली_type aio_fs = अणु
+static int __init aio_setup(void)
+{
+	static struct file_system_type aio_fs = {
 		.name		= "aio",
 		.init_fs_context = aio_init_fs_context,
-		.समाप्त_sb	= समाप्त_anon_super,
-	पूर्ण;
+		.kill_sb	= kill_anon_super,
+	};
 	aio_mnt = kern_mount(&aio_fs);
-	अगर (IS_ERR(aio_mnt))
+	if (IS_ERR(aio_mnt))
 		panic("Failed to create aio fs mount.");
 
 	kiocb_cachep = KMEM_CACHE(aio_kiocb, SLAB_HWCACHE_ALIGN|SLAB_PANIC);
 	kioctx_cachep = KMEM_CACHE(kioctx,SLAB_HWCACHE_ALIGN|SLAB_PANIC);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 __initcall(aio_setup);
 
-अटल व्योम put_aio_ring_file(काष्ठा kioctx *ctx)
-अणु
-	काष्ठा file *aio_ring_file = ctx->aio_ring_file;
-	काष्ठा address_space *i_mapping;
+static void put_aio_ring_file(struct kioctx *ctx)
+{
+	struct file *aio_ring_file = ctx->aio_ring_file;
+	struct address_space *i_mapping;
 
-	अगर (aio_ring_file) अणु
+	if (aio_ring_file) {
 		truncate_setsize(file_inode(aio_ring_file), 0);
 
 		/* Prevent further access to the kioctx from migratepages */
 		i_mapping = aio_ring_file->f_mapping;
-		spin_lock(&i_mapping->निजी_lock);
-		i_mapping->निजी_data = शून्य;
-		ctx->aio_ring_file = शून्य;
-		spin_unlock(&i_mapping->निजी_lock);
+		spin_lock(&i_mapping->private_lock);
+		i_mapping->private_data = NULL;
+		ctx->aio_ring_file = NULL;
+		spin_unlock(&i_mapping->private_lock);
 
 		fput(aio_ring_file);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम aio_मुक्त_ring(काष्ठा kioctx *ctx)
-अणु
-	पूर्णांक i;
+static void aio_free_ring(struct kioctx *ctx)
+{
+	int i;
 
 	/* Disconnect the kiotx from the ring file.  This prevents future
 	 * accesses to the kioctx from page migration.
 	 */
 	put_aio_ring_file(ctx);
 
-	क्रम (i = 0; i < ctx->nr_pages; i++) अणु
-		काष्ठा page *page;
+	for (i = 0; i < ctx->nr_pages; i++) {
+		struct page *page;
 		pr_debug("pid(%d) [%d] page->count=%d\n", current->pid, i,
 				page_count(ctx->ring_pages[i]));
 		page = ctx->ring_pages[i];
-		अगर (!page)
-			जारी;
-		ctx->ring_pages[i] = शून्य;
+		if (!page)
+			continue;
+		ctx->ring_pages[i] = NULL;
 		put_page(page);
-	पूर्ण
+	}
 
-	अगर (ctx->ring_pages && ctx->ring_pages != ctx->पूर्णांकernal_pages) अणु
-		kमुक्त(ctx->ring_pages);
-		ctx->ring_pages = शून्य;
-	पूर्ण
-पूर्ण
+	if (ctx->ring_pages && ctx->ring_pages != ctx->internal_pages) {
+		kfree(ctx->ring_pages);
+		ctx->ring_pages = NULL;
+	}
+}
 
-अटल पूर्णांक aio_ring_mremap(काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा file *file = vma->vm_file;
-	काष्ठा mm_काष्ठा *mm = vma->vm_mm;
-	काष्ठा kioctx_table *table;
-	पूर्णांक i, res = -EINVAL;
+static int aio_ring_mremap(struct vm_area_struct *vma)
+{
+	struct file *file = vma->vm_file;
+	struct mm_struct *mm = vma->vm_mm;
+	struct kioctx_table *table;
+	int i, res = -EINVAL;
 
 	spin_lock(&mm->ioctx_lock);
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	table = rcu_dereference(mm->ioctx_table);
-	क्रम (i = 0; i < table->nr; i++) अणु
-		काष्ठा kioctx *ctx;
+	for (i = 0; i < table->nr; i++) {
+		struct kioctx *ctx;
 
 		ctx = rcu_dereference(table->table[i]);
-		अगर (ctx && ctx->aio_ring_file == file) अणु
-			अगर (!atomic_पढ़ो(&ctx->dead)) अणु
+		if (ctx && ctx->aio_ring_file == file) {
+			if (!atomic_read(&ctx->dead)) {
 				ctx->user_id = ctx->mmap_base = vma->vm_start;
 				res = 0;
-			पूर्ण
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			}
+			break;
+		}
+	}
 
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 	spin_unlock(&mm->ioctx_lock);
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल स्थिर काष्ठा vm_operations_काष्ठा aio_ring_vm_ops = अणु
+static const struct vm_operations_struct aio_ring_vm_ops = {
 	.mremap		= aio_ring_mremap,
-#अगर IS_ENABLED(CONFIG_MMU)
+#if IS_ENABLED(CONFIG_MMU)
 	.fault		= filemap_fault,
 	.map_pages	= filemap_map_pages,
-	.page_mkग_लिखो	= filemap_page_mkग_लिखो,
-#पूर्ण_अगर
-पूर्ण;
+	.page_mkwrite	= filemap_page_mkwrite,
+#endif
+};
 
-अटल पूर्णांक aio_ring_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma)
-अणु
+static int aio_ring_mmap(struct file *file, struct vm_area_struct *vma)
+{
 	vma->vm_flags |= VM_DONTEXPAND;
 	vma->vm_ops = &aio_ring_vm_ops;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा file_operations aio_ring_fops = अणु
+static const struct file_operations aio_ring_fops = {
 	.mmap = aio_ring_mmap,
-पूर्ण;
+};
 
-#अगर IS_ENABLED(CONFIG_MIGRATION)
-अटल पूर्णांक aio_migratepage(काष्ठा address_space *mapping, काष्ठा page *new,
-			काष्ठा page *old, क्रमागत migrate_mode mode)
-अणु
-	काष्ठा kioctx *ctx;
-	अचिन्हित दीर्घ flags;
+#if IS_ENABLED(CONFIG_MIGRATION)
+static int aio_migratepage(struct address_space *mapping, struct page *new,
+			struct page *old, enum migrate_mode mode)
+{
+	struct kioctx *ctx;
+	unsigned long flags;
 	pgoff_t idx;
-	पूर्णांक rc;
+	int rc;
 
 	/*
-	 * We cannot support the _NO_COPY हाल here, because copy needs to
-	 * happen under the ctx->completion_lock. That करोes not work with the
+	 * We cannot support the _NO_COPY case here, because copy needs to
+	 * happen under the ctx->completion_lock. That does not work with the
 	 * migration workflow of MIGRATE_SYNC_NO_COPY.
 	 */
-	अगर (mode == MIGRATE_SYNC_NO_COPY)
-		वापस -EINVAL;
+	if (mode == MIGRATE_SYNC_NO_COPY)
+		return -EINVAL;
 
 	rc = 0;
 
-	/* mapping->निजी_lock here protects against the kioctx tearकरोwn.  */
-	spin_lock(&mapping->निजी_lock);
-	ctx = mapping->निजी_data;
-	अगर (!ctx) अणु
+	/* mapping->private_lock here protects against the kioctx teardown.  */
+	spin_lock(&mapping->private_lock);
+	ctx = mapping->private_data;
+	if (!ctx) {
 		rc = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* The ring_lock mutex.  The prevents aio_पढ़ो_events() from writing
+	/* The ring_lock mutex.  The prevents aio_read_events() from writing
 	 * to the ring's head, and prevents page migration from mucking in
 	 * a partially initialized kiotx.
 	 */
-	अगर (!mutex_trylock(&ctx->ring_lock)) अणु
+	if (!mutex_trylock(&ctx->ring_lock)) {
 		rc = -EAGAIN;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	idx = old->index;
-	अगर (idx < (pgoff_t)ctx->nr_pages) अणु
-		/* Make sure the old page hasn't alपढ़ोy been changed */
-		अगर (ctx->ring_pages[idx] != old)
+	if (idx < (pgoff_t)ctx->nr_pages) {
+		/* Make sure the old page hasn't already been changed */
+		if (ctx->ring_pages[idx] != old)
 			rc = -EAGAIN;
-	पूर्ण अन्यथा
+	} else
 		rc = -EINVAL;
 
-	अगर (rc != 0)
-		जाओ out_unlock;
+	if (rc != 0)
+		goto out_unlock;
 
 	/* Writeback must be complete */
 	BUG_ON(PageWriteback(old));
 	get_page(new);
 
 	rc = migrate_page_move_mapping(mapping, new, old, 1);
-	अगर (rc != MIGRATEPAGE_SUCCESS) अणु
+	if (rc != MIGRATEPAGE_SUCCESS) {
 		put_page(new);
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
-	/* Take completion_lock to prevent other ग_लिखोs to the ring buffer
-	 * जबतक the old page is copied to the new.  This prevents new
+	/* Take completion_lock to prevent other writes to the ring buffer
+	 * while the old page is copied to the new.  This prevents new
 	 * events from being lost.
 	 */
 	spin_lock_irqsave(&ctx->completion_lock, flags);
@@ -439,101 +438,101 @@ __initcall(aio_setup);
 	ctx->ring_pages[idx] = new;
 	spin_unlock_irqrestore(&ctx->completion_lock, flags);
 
-	/* The old page is no दीर्घer accessible. */
+	/* The old page is no longer accessible. */
 	put_page(old);
 
 out_unlock:
 	mutex_unlock(&ctx->ring_lock);
 out:
-	spin_unlock(&mapping->निजी_lock);
-	वापस rc;
-पूर्ण
-#पूर्ण_अगर
+	spin_unlock(&mapping->private_lock);
+	return rc;
+}
+#endif
 
-अटल स्थिर काष्ठा address_space_operations aio_ctx_aops = अणु
-	.set_page_dirty = __set_page_dirty_no_ग_लिखोback,
-#अगर IS_ENABLED(CONFIG_MIGRATION)
+static const struct address_space_operations aio_ctx_aops = {
+	.set_page_dirty = __set_page_dirty_no_writeback,
+#if IS_ENABLED(CONFIG_MIGRATION)
 	.migratepage	= aio_migratepage,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-अटल पूर्णांक aio_setup_ring(काष्ठा kioctx *ctx, अचिन्हित पूर्णांक nr_events)
-अणु
-	काष्ठा aio_ring *ring;
-	काष्ठा mm_काष्ठा *mm = current->mm;
-	अचिन्हित दीर्घ size, unused;
-	पूर्णांक nr_pages;
-	पूर्णांक i;
-	काष्ठा file *file;
+static int aio_setup_ring(struct kioctx *ctx, unsigned int nr_events)
+{
+	struct aio_ring *ring;
+	struct mm_struct *mm = current->mm;
+	unsigned long size, unused;
+	int nr_pages;
+	int i;
+	struct file *file;
 
-	/* Compensate क्रम the ring buffer's head/tail overlap entry */
-	nr_events += 2;	/* 1 is required, 2 क्रम good luck */
+	/* Compensate for the ring buffer's head/tail overlap entry */
+	nr_events += 2;	/* 1 is required, 2 for good luck */
 
-	size = माप(काष्ठा aio_ring);
-	size += माप(काष्ठा io_event) * nr_events;
+	size = sizeof(struct aio_ring);
+	size += sizeof(struct io_event) * nr_events;
 
 	nr_pages = PFN_UP(size);
-	अगर (nr_pages < 0)
-		वापस -EINVAL;
+	if (nr_pages < 0)
+		return -EINVAL;
 
-	file = aio_निजी_file(ctx, nr_pages);
-	अगर (IS_ERR(file)) अणु
-		ctx->aio_ring_file = शून्य;
-		वापस -ENOMEM;
-	पूर्ण
+	file = aio_private_file(ctx, nr_pages);
+	if (IS_ERR(file)) {
+		ctx->aio_ring_file = NULL;
+		return -ENOMEM;
+	}
 
 	ctx->aio_ring_file = file;
-	nr_events = (PAGE_SIZE * nr_pages - माप(काष्ठा aio_ring))
-			/ माप(काष्ठा io_event);
+	nr_events = (PAGE_SIZE * nr_pages - sizeof(struct aio_ring))
+			/ sizeof(struct io_event);
 
-	ctx->ring_pages = ctx->पूर्णांकernal_pages;
-	अगर (nr_pages > AIO_RING_PAGES) अणु
-		ctx->ring_pages = kसुस्मृति(nr_pages, माप(काष्ठा page *),
+	ctx->ring_pages = ctx->internal_pages;
+	if (nr_pages > AIO_RING_PAGES) {
+		ctx->ring_pages = kcalloc(nr_pages, sizeof(struct page *),
 					  GFP_KERNEL);
-		अगर (!ctx->ring_pages) अणु
+		if (!ctx->ring_pages) {
 			put_aio_ring_file(ctx);
-			वापस -ENOMEM;
-		पूर्ण
-	पूर्ण
+			return -ENOMEM;
+		}
+	}
 
-	क्रम (i = 0; i < nr_pages; i++) अणु
-		काष्ठा page *page;
+	for (i = 0; i < nr_pages; i++) {
+		struct page *page;
 		page = find_or_create_page(file->f_mapping,
 					   i, GFP_HIGHUSER | __GFP_ZERO);
-		अगर (!page)
-			अवरोध;
+		if (!page)
+			break;
 		pr_debug("pid(%d) page[%d]->count=%d\n",
 			 current->pid, i, page_count(page));
 		SetPageUptodate(page);
 		unlock_page(page);
 
 		ctx->ring_pages[i] = page;
-	पूर्ण
+	}
 	ctx->nr_pages = i;
 
-	अगर (unlikely(i != nr_pages)) अणु
-		aio_मुक्त_ring(ctx);
-		वापस -ENOMEM;
-	पूर्ण
+	if (unlikely(i != nr_pages)) {
+		aio_free_ring(ctx);
+		return -ENOMEM;
+	}
 
 	ctx->mmap_size = nr_pages * PAGE_SIZE;
 	pr_debug("attempting mmap of %lu bytes\n", ctx->mmap_size);
 
-	अगर (mmap_ग_लिखो_lock_समाप्तable(mm)) अणु
+	if (mmap_write_lock_killable(mm)) {
 		ctx->mmap_size = 0;
-		aio_मुक्त_ring(ctx);
-		वापस -EINTR;
-	पूर्ण
+		aio_free_ring(ctx);
+		return -EINTR;
+	}
 
-	ctx->mmap_base = करो_mmap(ctx->aio_ring_file, 0, ctx->mmap_size,
+	ctx->mmap_base = do_mmap(ctx->aio_ring_file, 0, ctx->mmap_size,
 				 PROT_READ | PROT_WRITE,
-				 MAP_SHARED, 0, &unused, शून्य);
-	mmap_ग_लिखो_unlock(mm);
-	अगर (IS_ERR((व्योम *)ctx->mmap_base)) अणु
+				 MAP_SHARED, 0, &unused, NULL);
+	mmap_write_unlock(mm);
+	if (IS_ERR((void *)ctx->mmap_base)) {
 		ctx->mmap_size = 0;
-		aio_मुक्त_ring(ctx);
-		वापस -ENOMEM;
-	पूर्ण
+		aio_free_ring(ctx);
+		return -ENOMEM;
+	}
 
 	pr_debug("mmap address: 0x%08lx\n", ctx->mmap_base);
 
@@ -547,193 +546,193 @@ out:
 	ring->magic = AIO_RING_MAGIC;
 	ring->compat_features = AIO_RING_COMPAT_FEATURES;
 	ring->incompat_features = AIO_RING_INCOMPAT_FEATURES;
-	ring->header_length = माप(काष्ठा aio_ring);
+	ring->header_length = sizeof(struct aio_ring);
 	kunmap_atomic(ring);
 	flush_dcache_page(ctx->ring_pages[0]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा AIO_EVENTS_PER_PAGE	(PAGE_SIZE / माप(काष्ठा io_event))
-#घोषणा AIO_EVENTS_FIRST_PAGE	((PAGE_SIZE - माप(काष्ठा aio_ring)) / माप(काष्ठा io_event))
-#घोषणा AIO_EVENTS_OFFSET	(AIO_EVENTS_PER_PAGE - AIO_EVENTS_FIRST_PAGE)
+#define AIO_EVENTS_PER_PAGE	(PAGE_SIZE / sizeof(struct io_event))
+#define AIO_EVENTS_FIRST_PAGE	((PAGE_SIZE - sizeof(struct aio_ring)) / sizeof(struct io_event))
+#define AIO_EVENTS_OFFSET	(AIO_EVENTS_PER_PAGE - AIO_EVENTS_FIRST_PAGE)
 
-व्योम kiocb_set_cancel_fn(काष्ठा kiocb *iocb, kiocb_cancel_fn *cancel)
-अणु
-	काष्ठा aio_kiocb *req = container_of(iocb, काष्ठा aio_kiocb, rw);
-	काष्ठा kioctx *ctx = req->ki_ctx;
-	अचिन्हित दीर्घ flags;
+void kiocb_set_cancel_fn(struct kiocb *iocb, kiocb_cancel_fn *cancel)
+{
+	struct aio_kiocb *req = container_of(iocb, struct aio_kiocb, rw);
+	struct kioctx *ctx = req->ki_ctx;
+	unsigned long flags;
 
-	अगर (WARN_ON_ONCE(!list_empty(&req->ki_list)))
-		वापस;
+	if (WARN_ON_ONCE(!list_empty(&req->ki_list)))
+		return;
 
 	spin_lock_irqsave(&ctx->ctx_lock, flags);
 	list_add_tail(&req->ki_list, &ctx->active_reqs);
 	req->ki_cancel = cancel;
 	spin_unlock_irqrestore(&ctx->ctx_lock, flags);
-पूर्ण
+}
 EXPORT_SYMBOL(kiocb_set_cancel_fn);
 
 /*
- * मुक्त_ioctx() should be RCU delayed to synchronize against the RCU
- * रक्षित lookup_ioctx() and also needs process context to call
- * aio_मुक्त_ring().  Use rcu_work.
+ * free_ioctx() should be RCU delayed to synchronize against the RCU
+ * protected lookup_ioctx() and also needs process context to call
+ * aio_free_ring().  Use rcu_work.
  */
-अटल व्योम मुक्त_ioctx(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा kioctx *ctx = container_of(to_rcu_work(work), काष्ठा kioctx,
-					  मुक्त_rwork);
+static void free_ioctx(struct work_struct *work)
+{
+	struct kioctx *ctx = container_of(to_rcu_work(work), struct kioctx,
+					  free_rwork);
 	pr_debug("freeing %p\n", ctx);
 
-	aio_मुक्त_ring(ctx);
-	मुक्त_percpu(ctx->cpu);
-	percpu_ref_निकास(&ctx->reqs);
-	percpu_ref_निकास(&ctx->users);
-	kmem_cache_मुक्त(kioctx_cachep, ctx);
-पूर्ण
+	aio_free_ring(ctx);
+	free_percpu(ctx->cpu);
+	percpu_ref_exit(&ctx->reqs);
+	percpu_ref_exit(&ctx->users);
+	kmem_cache_free(kioctx_cachep, ctx);
+}
 
-अटल व्योम मुक्त_ioctx_reqs(काष्ठा percpu_ref *ref)
-अणु
-	काष्ठा kioctx *ctx = container_of(ref, काष्ठा kioctx, reqs);
+static void free_ioctx_reqs(struct percpu_ref *ref)
+{
+	struct kioctx *ctx = container_of(ref, struct kioctx, reqs);
 
-	/* At this poपूर्णांक we know that there are no any in-flight requests */
-	अगर (ctx->rq_रुको && atomic_dec_and_test(&ctx->rq_रुको->count))
-		complete(&ctx->rq_रुको->comp);
+	/* At this point we know that there are no any in-flight requests */
+	if (ctx->rq_wait && atomic_dec_and_test(&ctx->rq_wait->count))
+		complete(&ctx->rq_wait->comp);
 
-	/* Synchronize against RCU रक्षित table->table[] dereferences */
-	INIT_RCU_WORK(&ctx->मुक्त_rwork, मुक्त_ioctx);
-	queue_rcu_work(प्रणाली_wq, &ctx->मुक्त_rwork);
-पूर्ण
+	/* Synchronize against RCU protected table->table[] dereferences */
+	INIT_RCU_WORK(&ctx->free_rwork, free_ioctx);
+	queue_rcu_work(system_wq, &ctx->free_rwork);
+}
 
 /*
- * When this function runs, the kioctx has been हटाओd from the "hash table"
+ * When this function runs, the kioctx has been removed from the "hash table"
  * and ctx->users has dropped to 0, so we know no more kiocbs can be submitted -
  * now it's safe to cancel any that need to be.
  */
-अटल व्योम मुक्त_ioctx_users(काष्ठा percpu_ref *ref)
-अणु
-	काष्ठा kioctx *ctx = container_of(ref, काष्ठा kioctx, users);
-	काष्ठा aio_kiocb *req;
+static void free_ioctx_users(struct percpu_ref *ref)
+{
+	struct kioctx *ctx = container_of(ref, struct kioctx, users);
+	struct aio_kiocb *req;
 
 	spin_lock_irq(&ctx->ctx_lock);
 
-	जबतक (!list_empty(&ctx->active_reqs)) अणु
+	while (!list_empty(&ctx->active_reqs)) {
 		req = list_first_entry(&ctx->active_reqs,
-				       काष्ठा aio_kiocb, ki_list);
+				       struct aio_kiocb, ki_list);
 		req->ki_cancel(&req->rw);
 		list_del_init(&req->ki_list);
-	पूर्ण
+	}
 
 	spin_unlock_irq(&ctx->ctx_lock);
 
-	percpu_ref_समाप्त(&ctx->reqs);
+	percpu_ref_kill(&ctx->reqs);
 	percpu_ref_put(&ctx->reqs);
-पूर्ण
+}
 
-अटल पूर्णांक ioctx_add_table(काष्ठा kioctx *ctx, काष्ठा mm_काष्ठा *mm)
-अणु
-	अचिन्हित i, new_nr;
-	काष्ठा kioctx_table *table, *old;
-	काष्ठा aio_ring *ring;
+static int ioctx_add_table(struct kioctx *ctx, struct mm_struct *mm)
+{
+	unsigned i, new_nr;
+	struct kioctx_table *table, *old;
+	struct aio_ring *ring;
 
 	spin_lock(&mm->ioctx_lock);
 	table = rcu_dereference_raw(mm->ioctx_table);
 
-	जबतक (1) अणु
-		अगर (table)
-			क्रम (i = 0; i < table->nr; i++)
-				अगर (!rcu_access_poपूर्णांकer(table->table[i])) अणु
+	while (1) {
+		if (table)
+			for (i = 0; i < table->nr; i++)
+				if (!rcu_access_pointer(table->table[i])) {
 					ctx->id = i;
-					rcu_assign_poपूर्णांकer(table->table[i], ctx);
+					rcu_assign_pointer(table->table[i], ctx);
 					spin_unlock(&mm->ioctx_lock);
 
 					/* While kioctx setup is in progress,
-					 * we are रक्षित from page migration
+					 * we are protected from page migration
 					 * changes ring_pages by ->ring_lock.
 					 */
 					ring = kmap_atomic(ctx->ring_pages[0]);
 					ring->id = ctx->id;
 					kunmap_atomic(ring);
-					वापस 0;
-				पूर्ण
+					return 0;
+				}
 
 		new_nr = (table ? table->nr : 1) * 4;
 		spin_unlock(&mm->ioctx_lock);
 
-		table = kzalloc(माप(*table) + माप(काष्ठा kioctx *) *
+		table = kzalloc(sizeof(*table) + sizeof(struct kioctx *) *
 				new_nr, GFP_KERNEL);
-		अगर (!table)
-			वापस -ENOMEM;
+		if (!table)
+			return -ENOMEM;
 
 		table->nr = new_nr;
 
 		spin_lock(&mm->ioctx_lock);
 		old = rcu_dereference_raw(mm->ioctx_table);
 
-		अगर (!old) अणु
-			rcu_assign_poपूर्णांकer(mm->ioctx_table, table);
-		पूर्ण अन्यथा अगर (table->nr > old->nr) अणु
-			स_नकल(table->table, old->table,
-			       old->nr * माप(काष्ठा kioctx *));
+		if (!old) {
+			rcu_assign_pointer(mm->ioctx_table, table);
+		} else if (table->nr > old->nr) {
+			memcpy(table->table, old->table,
+			       old->nr * sizeof(struct kioctx *));
 
-			rcu_assign_poपूर्णांकer(mm->ioctx_table, table);
-			kमुक्त_rcu(old, rcu);
-		पूर्ण अन्यथा अणु
-			kमुक्त(table);
+			rcu_assign_pointer(mm->ioctx_table, table);
+			kfree_rcu(old, rcu);
+		} else {
+			kfree(table);
 			table = old;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम aio_nr_sub(अचिन्हित nr)
-अणु
+static void aio_nr_sub(unsigned nr)
+{
 	spin_lock(&aio_nr_lock);
-	अगर (WARN_ON(aio_nr - nr > aio_nr))
+	if (WARN_ON(aio_nr - nr > aio_nr))
 		aio_nr = 0;
-	अन्यथा
+	else
 		aio_nr -= nr;
 	spin_unlock(&aio_nr_lock);
-पूर्ण
+}
 
 /* ioctx_alloc
- *	Allocates and initializes an ioctx.  Returns an ERR_PTR अगर it failed.
+ *	Allocates and initializes an ioctx.  Returns an ERR_PTR if it failed.
  */
-अटल काष्ठा kioctx *ioctx_alloc(अचिन्हित nr_events)
-अणु
-	काष्ठा mm_काष्ठा *mm = current->mm;
-	काष्ठा kioctx *ctx;
-	पूर्णांक err = -ENOMEM;
+static struct kioctx *ioctx_alloc(unsigned nr_events)
+{
+	struct mm_struct *mm = current->mm;
+	struct kioctx *ctx;
+	int err = -ENOMEM;
 
 	/*
 	 * Store the original nr_events -- what userspace passed to io_setup(),
-	 * क्रम counting against the global limit -- beक्रमe it changes.
+	 * for counting against the global limit -- before it changes.
 	 */
-	अचिन्हित पूर्णांक max_reqs = nr_events;
+	unsigned int max_reqs = nr_events;
 
 	/*
 	 * We keep track of the number of available ringbuffer slots, to prevent
-	 * overflow (reqs_available), and we also use percpu counters क्रम this.
+	 * overflow (reqs_available), and we also use percpu counters for this.
 	 *
 	 * So since up to half the slots might be on other cpu's percpu counters
-	 * and unavailable, द्विगुन nr_events so userspace sees what they
+	 * and unavailable, double nr_events so userspace sees what they
 	 * expected: additionally, we move req_batch slots to/from percpu
-	 * counters at a समय, so make sure that isn't 0:
+	 * counters at a time, so make sure that isn't 0:
 	 */
 	nr_events = max(nr_events, num_possible_cpus() * 4);
 	nr_events *= 2;
 
 	/* Prevent overflows */
-	अगर (nr_events > (0x10000000U / माप(काष्ठा io_event))) अणु
+	if (nr_events > (0x10000000U / sizeof(struct io_event))) {
 		pr_debug("ENOMEM: nr_events too high\n");
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	अगर (!nr_events || (अचिन्हित दीर्घ)max_reqs > aio_max_nr)
-		वापस ERR_PTR(-EAGAIN);
+	if (!nr_events || (unsigned long)max_reqs > aio_max_nr)
+		return ERR_PTR(-EAGAIN);
 
 	ctx = kmem_cache_zalloc(kioctx_cachep, GFP_KERNEL);
-	अगर (!ctx)
-		वापस ERR_PTR(-ENOMEM);
+	if (!ctx)
+		return ERR_PTR(-ENOMEM);
 
 	ctx->max_reqs = max_reqs;
 
@@ -743,259 +742,259 @@ EXPORT_SYMBOL(kiocb_set_cancel_fn);
 	/* Protect against page migration throughout kiotx setup by keeping
 	 * the ring_lock mutex held until setup is complete. */
 	mutex_lock(&ctx->ring_lock);
-	init_रुकोqueue_head(&ctx->रुको);
+	init_waitqueue_head(&ctx->wait);
 
 	INIT_LIST_HEAD(&ctx->active_reqs);
 
-	अगर (percpu_ref_init(&ctx->users, मुक्त_ioctx_users, 0, GFP_KERNEL))
-		जाओ err;
+	if (percpu_ref_init(&ctx->users, free_ioctx_users, 0, GFP_KERNEL))
+		goto err;
 
-	अगर (percpu_ref_init(&ctx->reqs, मुक्त_ioctx_reqs, 0, GFP_KERNEL))
-		जाओ err;
+	if (percpu_ref_init(&ctx->reqs, free_ioctx_reqs, 0, GFP_KERNEL))
+		goto err;
 
-	ctx->cpu = alloc_percpu(काष्ठा kioctx_cpu);
-	अगर (!ctx->cpu)
-		जाओ err;
+	ctx->cpu = alloc_percpu(struct kioctx_cpu);
+	if (!ctx->cpu)
+		goto err;
 
 	err = aio_setup_ring(ctx, nr_events);
-	अगर (err < 0)
-		जाओ err;
+	if (err < 0)
+		goto err;
 
 	atomic_set(&ctx->reqs_available, ctx->nr_events - 1);
 	ctx->req_batch = (ctx->nr_events - 1) / (num_possible_cpus() * 4);
-	अगर (ctx->req_batch < 1)
+	if (ctx->req_batch < 1)
 		ctx->req_batch = 1;
 
-	/* limit the number of प्रणाली wide aios */
+	/* limit the number of system wide aios */
 	spin_lock(&aio_nr_lock);
-	अगर (aio_nr + ctx->max_reqs > aio_max_nr ||
-	    aio_nr + ctx->max_reqs < aio_nr) अणु
+	if (aio_nr + ctx->max_reqs > aio_max_nr ||
+	    aio_nr + ctx->max_reqs < aio_nr) {
 		spin_unlock(&aio_nr_lock);
 		err = -EAGAIN;
-		जाओ err_ctx;
-	पूर्ण
+		goto err_ctx;
+	}
 	aio_nr += ctx->max_reqs;
 	spin_unlock(&aio_nr_lock);
 
 	percpu_ref_get(&ctx->users);	/* io_setup() will drop this ref */
-	percpu_ref_get(&ctx->reqs);	/* मुक्त_ioctx_users() will drop this */
+	percpu_ref_get(&ctx->reqs);	/* free_ioctx_users() will drop this */
 
 	err = ioctx_add_table(ctx, mm);
-	अगर (err)
-		जाओ err_cleanup;
+	if (err)
+		goto err_cleanup;
 
 	/* Release the ring_lock mutex now that all setup is complete. */
 	mutex_unlock(&ctx->ring_lock);
 
 	pr_debug("allocated ioctx %p[%ld]: mm=%p mask=0x%x\n",
 		 ctx, ctx->user_id, mm, ctx->nr_events);
-	वापस ctx;
+	return ctx;
 
 err_cleanup:
 	aio_nr_sub(ctx->max_reqs);
 err_ctx:
 	atomic_set(&ctx->dead, 1);
-	अगर (ctx->mmap_size)
+	if (ctx->mmap_size)
 		vm_munmap(ctx->mmap_base, ctx->mmap_size);
-	aio_मुक्त_ring(ctx);
+	aio_free_ring(ctx);
 err:
 	mutex_unlock(&ctx->ring_lock);
-	मुक्त_percpu(ctx->cpu);
-	percpu_ref_निकास(&ctx->reqs);
-	percpu_ref_निकास(&ctx->users);
-	kmem_cache_मुक्त(kioctx_cachep, ctx);
+	free_percpu(ctx->cpu);
+	percpu_ref_exit(&ctx->reqs);
+	percpu_ref_exit(&ctx->users);
+	kmem_cache_free(kioctx_cachep, ctx);
 	pr_debug("error allocating ioctx %d\n", err);
-	वापस ERR_PTR(err);
-पूर्ण
+	return ERR_PTR(err);
+}
 
-/* समाप्त_ioctx
+/* kill_ioctx
  *	Cancels all outstanding aio requests on an aio context.  Used
- *	when the processes owning a context have all निकासed to encourage
- *	the rapid deकाष्ठाion of the kioctx.
+ *	when the processes owning a context have all exited to encourage
+ *	the rapid destruction of the kioctx.
  */
-अटल पूर्णांक समाप्त_ioctx(काष्ठा mm_काष्ठा *mm, काष्ठा kioctx *ctx,
-		      काष्ठा ctx_rq_रुको *रुको)
-अणु
-	काष्ठा kioctx_table *table;
+static int kill_ioctx(struct mm_struct *mm, struct kioctx *ctx,
+		      struct ctx_rq_wait *wait)
+{
+	struct kioctx_table *table;
 
 	spin_lock(&mm->ioctx_lock);
-	अगर (atomic_xchg(&ctx->dead, 1)) अणु
+	if (atomic_xchg(&ctx->dead, 1)) {
 		spin_unlock(&mm->ioctx_lock);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	table = rcu_dereference_raw(mm->ioctx_table);
-	WARN_ON(ctx != rcu_access_poपूर्णांकer(table->table[ctx->id]));
-	RCU_INIT_POINTER(table->table[ctx->id], शून्य);
+	WARN_ON(ctx != rcu_access_pointer(table->table[ctx->id]));
+	RCU_INIT_POINTER(table->table[ctx->id], NULL);
 	spin_unlock(&mm->ioctx_lock);
 
-	/* मुक्त_ioctx_reqs() will करो the necessary RCU synchronization */
-	wake_up_all(&ctx->रुको);
+	/* free_ioctx_reqs() will do the necessary RCU synchronization */
+	wake_up_all(&ctx->wait);
 
 	/*
-	 * It'd be more correct to करो this in मुक्त_ioctx(), after all
+	 * It'd be more correct to do this in free_ioctx(), after all
 	 * the outstanding kiocbs have finished - but by then io_destroy
-	 * has alपढ़ोy वापसed, so io_setup() could potentially वापस
+	 * has already returned, so io_setup() could potentially return
 	 * -EAGAIN with no ioctxs actually in use (as far as userspace
 	 *  could tell).
 	 */
 	aio_nr_sub(ctx->max_reqs);
 
-	अगर (ctx->mmap_size)
+	if (ctx->mmap_size)
 		vm_munmap(ctx->mmap_base, ctx->mmap_size);
 
-	ctx->rq_रुको = रुको;
-	percpu_ref_समाप्त(&ctx->users);
-	वापस 0;
-पूर्ण
+	ctx->rq_wait = wait;
+	percpu_ref_kill(&ctx->users);
+	return 0;
+}
 
 /*
- * निकास_aio: called when the last user of mm goes away.  At this poपूर्णांक, there is
- * no way क्रम any new requests to be submited or any of the io_* syscalls to be
+ * exit_aio: called when the last user of mm goes away.  At this point, there is
+ * no way for any new requests to be submited or any of the io_* syscalls to be
  * called on the context.
  *
- * There may be outstanding kiocbs, but मुक्त_ioctx() will explicitly रुको on
+ * There may be outstanding kiocbs, but free_ioctx() will explicitly wait on
  * them.
  */
-व्योम निकास_aio(काष्ठा mm_काष्ठा *mm)
-अणु
-	काष्ठा kioctx_table *table = rcu_dereference_raw(mm->ioctx_table);
-	काष्ठा ctx_rq_रुको रुको;
-	पूर्णांक i, skipped;
+void exit_aio(struct mm_struct *mm)
+{
+	struct kioctx_table *table = rcu_dereference_raw(mm->ioctx_table);
+	struct ctx_rq_wait wait;
+	int i, skipped;
 
-	अगर (!table)
-		वापस;
+	if (!table)
+		return;
 
-	atomic_set(&रुको.count, table->nr);
-	init_completion(&रुको.comp);
+	atomic_set(&wait.count, table->nr);
+	init_completion(&wait.comp);
 
 	skipped = 0;
-	क्रम (i = 0; i < table->nr; ++i) अणु
-		काष्ठा kioctx *ctx =
-			rcu_dereference_रक्षित(table->table[i], true);
+	for (i = 0; i < table->nr; ++i) {
+		struct kioctx *ctx =
+			rcu_dereference_protected(table->table[i], true);
 
-		अगर (!ctx) अणु
+		if (!ctx) {
 			skipped++;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/*
-		 * We करोn't need to bother with munmap() here - निकास_mmap(mm)
+		 * We don't need to bother with munmap() here - exit_mmap(mm)
 		 * is coming and it'll unmap everything. And we simply can't,
 		 * this is not necessarily our ->mm.
-		 * Since समाप्त_ioctx() uses non-zero ->mmap_size as indicator
+		 * Since kill_ioctx() uses non-zero ->mmap_size as indicator
 		 * that it needs to unmap the area, just set it to 0.
 		 */
 		ctx->mmap_size = 0;
-		समाप्त_ioctx(mm, ctx, &रुको);
-	पूर्ण
+		kill_ioctx(mm, ctx, &wait);
+	}
 
-	अगर (!atomic_sub_and_test(skipped, &रुको.count)) अणु
-		/* Wait until all IO क्रम the context are करोne. */
-		रुको_क्रम_completion(&रुको.comp);
-	पूर्ण
+	if (!atomic_sub_and_test(skipped, &wait.count)) {
+		/* Wait until all IO for the context are done. */
+		wait_for_completion(&wait.comp);
+	}
 
-	RCU_INIT_POINTER(mm->ioctx_table, शून्य);
-	kमुक्त(table);
-पूर्ण
+	RCU_INIT_POINTER(mm->ioctx_table, NULL);
+	kfree(table);
+}
 
-अटल व्योम put_reqs_available(काष्ठा kioctx *ctx, अचिन्हित nr)
-अणु
-	काष्ठा kioctx_cpu *kcpu;
-	अचिन्हित दीर्घ flags;
+static void put_reqs_available(struct kioctx *ctx, unsigned nr)
+{
+	struct kioctx_cpu *kcpu;
+	unsigned long flags;
 
 	local_irq_save(flags);
 	kcpu = this_cpu_ptr(ctx->cpu);
 	kcpu->reqs_available += nr;
 
-	जबतक (kcpu->reqs_available >= ctx->req_batch * 2) अणु
+	while (kcpu->reqs_available >= ctx->req_batch * 2) {
 		kcpu->reqs_available -= ctx->req_batch;
 		atomic_add(ctx->req_batch, &ctx->reqs_available);
-	पूर्ण
+	}
 
 	local_irq_restore(flags);
-पूर्ण
+}
 
-अटल bool __get_reqs_available(काष्ठा kioctx *ctx)
-अणु
-	काष्ठा kioctx_cpu *kcpu;
+static bool __get_reqs_available(struct kioctx *ctx)
+{
+	struct kioctx_cpu *kcpu;
 	bool ret = false;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	local_irq_save(flags);
 	kcpu = this_cpu_ptr(ctx->cpu);
-	अगर (!kcpu->reqs_available) अणु
-		पूर्णांक old, avail = atomic_पढ़ो(&ctx->reqs_available);
+	if (!kcpu->reqs_available) {
+		int old, avail = atomic_read(&ctx->reqs_available);
 
-		करो अणु
-			अगर (avail < ctx->req_batch)
-				जाओ out;
+		do {
+			if (avail < ctx->req_batch)
+				goto out;
 
 			old = avail;
 			avail = atomic_cmpxchg(&ctx->reqs_available,
 					       avail, avail - ctx->req_batch);
-		पूर्ण जबतक (avail != old);
+		} while (avail != old);
 
 		kcpu->reqs_available += ctx->req_batch;
-	पूर्ण
+	}
 
 	ret = true;
 	kcpu->reqs_available--;
 out:
 	local_irq_restore(flags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* refill_reqs_available
- *	Updates the reqs_available reference counts used क्रम tracking the
- *	number of मुक्त slots in the completion ring.  This can be called
+ *	Updates the reqs_available reference counts used for tracking the
+ *	number of free slots in the completion ring.  This can be called
  *	from aio_complete() (to optimistically update reqs_available) or
- *	from aio_get_req() (the we're out of events हाल).  It must be
+ *	from aio_get_req() (the we're out of events case).  It must be
  *	called holding ctx->completion_lock.
  */
-अटल व्योम refill_reqs_available(काष्ठा kioctx *ctx, अचिन्हित head,
-                                  अचिन्हित tail)
-अणु
-	अचिन्हित events_in_ring, completed;
+static void refill_reqs_available(struct kioctx *ctx, unsigned head,
+                                  unsigned tail)
+{
+	unsigned events_in_ring, completed;
 
-	/* Clamp head since userland can ग_लिखो to it. */
+	/* Clamp head since userland can write to it. */
 	head %= ctx->nr_events;
-	अगर (head <= tail)
+	if (head <= tail)
 		events_in_ring = tail - head;
-	अन्यथा
+	else
 		events_in_ring = ctx->nr_events - (head - tail);
 
 	completed = ctx->completed_events;
-	अगर (events_in_ring < completed)
+	if (events_in_ring < completed)
 		completed -= events_in_ring;
-	अन्यथा
+	else
 		completed = 0;
 
-	अगर (!completed)
-		वापस;
+	if (!completed)
+		return;
 
 	ctx->completed_events -= completed;
 	put_reqs_available(ctx, completed);
-पूर्ण
+}
 
 /* user_refill_reqs_available
  *	Called to refill reqs_available when aio_get_req() encounters an
  *	out of space in the completion ring.
  */
-अटल व्योम user_refill_reqs_available(काष्ठा kioctx *ctx)
-अणु
+static void user_refill_reqs_available(struct kioctx *ctx)
+{
 	spin_lock_irq(&ctx->completion_lock);
-	अगर (ctx->completed_events) अणु
-		काष्ठा aio_ring *ring;
-		अचिन्हित head;
+	if (ctx->completed_events) {
+		struct aio_ring *ring;
+		unsigned head;
 
-		/* Access of ring->head may race with aio_पढ़ो_events_ring()
-		 * here, but that's okay since whether we पढ़ो the old version
+		/* Access of ring->head may race with aio_read_events_ring()
+		 * here, but that's okay since whether we read the old version
 		 * or the new version, and either will be valid.  The important
 		 * part is that head cannot pass tail since we prevent
 		 * aio_complete() from updating tail by holding
-		 * ctx->completion_lock.  Even अगर head is invalid, the check
-		 * against ctx->completed_events below will make sure we करो the
+		 * ctx->completion_lock.  Even if head is invalid, the check
+		 * against ctx->completed_events below will make sure we do the
 		 * safe/right thing.
 		 */
 		ring = kmap_atomic(ctx->ring_pages[0]);
@@ -1003,107 +1002,107 @@ out:
 		kunmap_atomic(ring);
 
 		refill_reqs_available(ctx, head, ctx->tail);
-	पूर्ण
+	}
 
 	spin_unlock_irq(&ctx->completion_lock);
-पूर्ण
+}
 
-अटल bool get_reqs_available(काष्ठा kioctx *ctx)
-अणु
-	अगर (__get_reqs_available(ctx))
-		वापस true;
+static bool get_reqs_available(struct kioctx *ctx)
+{
+	if (__get_reqs_available(ctx))
+		return true;
 	user_refill_reqs_available(ctx);
-	वापस __get_reqs_available(ctx);
-पूर्ण
+	return __get_reqs_available(ctx);
+}
 
 /* aio_get_req
- *	Allocate a slot क्रम an aio request.
- * Returns शून्य अगर no requests are मुक्त.
+ *	Allocate a slot for an aio request.
+ * Returns NULL if no requests are free.
  *
- * The refcount is initialized to 2 - one क्रम the async op completion,
- * one क्रम the synchronous code that करोes this.
+ * The refcount is initialized to 2 - one for the async op completion,
+ * one for the synchronous code that does this.
  */
-अटल अंतरभूत काष्ठा aio_kiocb *aio_get_req(काष्ठा kioctx *ctx)
-अणु
-	काष्ठा aio_kiocb *req;
+static inline struct aio_kiocb *aio_get_req(struct kioctx *ctx)
+{
+	struct aio_kiocb *req;
 
 	req = kmem_cache_alloc(kiocb_cachep, GFP_KERNEL);
-	अगर (unlikely(!req))
-		वापस शून्य;
+	if (unlikely(!req))
+		return NULL;
 
-	अगर (unlikely(!get_reqs_available(ctx))) अणु
-		kmem_cache_मुक्त(kiocb_cachep, req);
-		वापस शून्य;
-	पूर्ण
+	if (unlikely(!get_reqs_available(ctx))) {
+		kmem_cache_free(kiocb_cachep, req);
+		return NULL;
+	}
 
 	percpu_ref_get(&ctx->reqs);
 	req->ki_ctx = ctx;
 	INIT_LIST_HEAD(&req->ki_list);
 	refcount_set(&req->ki_refcnt, 2);
-	req->ki_eventfd = शून्य;
-	वापस req;
-पूर्ण
+	req->ki_eventfd = NULL;
+	return req;
+}
 
-अटल काष्ठा kioctx *lookup_ioctx(अचिन्हित दीर्घ ctx_id)
-अणु
-	काष्ठा aio_ring __user *ring  = (व्योम __user *)ctx_id;
-	काष्ठा mm_काष्ठा *mm = current->mm;
-	काष्ठा kioctx *ctx, *ret = शून्य;
-	काष्ठा kioctx_table *table;
-	अचिन्हित id;
+static struct kioctx *lookup_ioctx(unsigned long ctx_id)
+{
+	struct aio_ring __user *ring  = (void __user *)ctx_id;
+	struct mm_struct *mm = current->mm;
+	struct kioctx *ctx, *ret = NULL;
+	struct kioctx_table *table;
+	unsigned id;
 
-	अगर (get_user(id, &ring->id))
-		वापस शून्य;
+	if (get_user(id, &ring->id))
+		return NULL;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	table = rcu_dereference(mm->ioctx_table);
 
-	अगर (!table || id >= table->nr)
-		जाओ out;
+	if (!table || id >= table->nr)
+		goto out;
 
 	id = array_index_nospec(id, table->nr);
 	ctx = rcu_dereference(table->table[id]);
-	अगर (ctx && ctx->user_id == ctx_id) अणु
-		अगर (percpu_ref_tryget_live(&ctx->users))
+	if (ctx && ctx->user_id == ctx_id) {
+		if (percpu_ref_tryget_live(&ctx->users))
 			ret = ctx;
-	पूर्ण
+	}
 out:
-	rcu_पढ़ो_unlock();
-	वापस ret;
-पूर्ण
+	rcu_read_unlock();
+	return ret;
+}
 
-अटल अंतरभूत व्योम iocb_destroy(काष्ठा aio_kiocb *iocb)
-अणु
-	अगर (iocb->ki_eventfd)
+static inline void iocb_destroy(struct aio_kiocb *iocb)
+{
+	if (iocb->ki_eventfd)
 		eventfd_ctx_put(iocb->ki_eventfd);
-	अगर (iocb->ki_filp)
+	if (iocb->ki_filp)
 		fput(iocb->ki_filp);
 	percpu_ref_put(&iocb->ki_ctx->reqs);
-	kmem_cache_मुक्त(kiocb_cachep, iocb);
-पूर्ण
+	kmem_cache_free(kiocb_cachep, iocb);
+}
 
 /* aio_complete
  *	Called when the io request on the given iocb is complete.
  */
-अटल व्योम aio_complete(काष्ठा aio_kiocb *iocb)
-अणु
-	काष्ठा kioctx	*ctx = iocb->ki_ctx;
-	काष्ठा aio_ring	*ring;
-	काष्ठा io_event	*ev_page, *event;
-	अचिन्हित tail, pos, head;
-	अचिन्हित दीर्घ	flags;
+static void aio_complete(struct aio_kiocb *iocb)
+{
+	struct kioctx	*ctx = iocb->ki_ctx;
+	struct aio_ring	*ring;
+	struct io_event	*ev_page, *event;
+	unsigned tail, pos, head;
+	unsigned long	flags;
 
 	/*
-	 * Add a completion event to the ring buffer. Must be करोne holding
+	 * Add a completion event to the ring buffer. Must be done holding
 	 * ctx->completion_lock to prevent other code from messing with the tail
-	 * poपूर्णांकer since we might be called from irq context.
+	 * pointer since we might be called from irq context.
 	 */
 	spin_lock_irqsave(&ctx->completion_lock, flags);
 
 	tail = ctx->tail;
 	pos = tail + AIO_EVENTS_OFFSET;
 
-	अगर (++tail >= ctx->nr_events)
+	if (++tail >= ctx->nr_events)
 		tail = 0;
 
 	ev_page = kmap_atomic(ctx->ring_pages[pos / AIO_EVENTS_PER_PAGE]);
@@ -1115,13 +1114,13 @@ out:
 	flush_dcache_page(ctx->ring_pages[pos / AIO_EVENTS_PER_PAGE]);
 
 	pr_debug("%p[%u]: %p: %p %Lx %Lx %Lx\n", ctx, tail, iocb,
-		 (व्योम __user *)(अचिन्हित दीर्घ)iocb->ki_res.obj,
+		 (void __user *)(unsigned long)iocb->ki_res.obj,
 		 iocb->ki_res.data, iocb->ki_res.res, iocb->ki_res.res2);
 
-	/* after flagging the request as करोne, we
+	/* after flagging the request as done, we
 	 * must never even look at it again
 	 */
-	smp_wmb();	/* make event visible beक्रमe updating tail */
+	smp_wmb();	/* make event visible before updating tail */
 
 	ctx->tail = tail;
 
@@ -1132,111 +1131,111 @@ out:
 	flush_dcache_page(ctx->ring_pages[0]);
 
 	ctx->completed_events++;
-	अगर (ctx->completed_events > 1)
+	if (ctx->completed_events > 1)
 		refill_reqs_available(ctx, head, tail);
 	spin_unlock_irqrestore(&ctx->completion_lock, flags);
 
 	pr_debug("added to ring %p at [%u]\n", iocb, tail);
 
 	/*
-	 * Check अगर the user asked us to deliver the result through an
-	 * eventfd. The eventfd_संकेत() function is safe to be called
+	 * Check if the user asked us to deliver the result through an
+	 * eventfd. The eventfd_signal() function is safe to be called
 	 * from IRQ context.
 	 */
-	अगर (iocb->ki_eventfd)
-		eventfd_संकेत(iocb->ki_eventfd, 1);
+	if (iocb->ki_eventfd)
+		eventfd_signal(iocb->ki_eventfd, 1);
 
 	/*
 	 * We have to order our ring_info tail store above and test
-	 * of the रुको list below outside the रुको lock.  This is
+	 * of the wait list below outside the wait lock.  This is
 	 * like in wake_up_bit() where clearing a bit has to be
 	 * ordered with the unlocked test.
 	 */
 	smp_mb();
 
-	अगर (रुकोqueue_active(&ctx->रुको))
-		wake_up(&ctx->रुको);
-पूर्ण
+	if (waitqueue_active(&ctx->wait))
+		wake_up(&ctx->wait);
+}
 
-अटल अंतरभूत व्योम iocb_put(काष्ठा aio_kiocb *iocb)
-अणु
-	अगर (refcount_dec_and_test(&iocb->ki_refcnt)) अणु
+static inline void iocb_put(struct aio_kiocb *iocb)
+{
+	if (refcount_dec_and_test(&iocb->ki_refcnt)) {
 		aio_complete(iocb);
 		iocb_destroy(iocb);
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* aio_पढ़ो_events_ring
+/* aio_read_events_ring
  *	Pull an event off of the ioctx's event ring.  Returns the number of
  *	events fetched
  */
-अटल दीर्घ aio_पढ़ो_events_ring(काष्ठा kioctx *ctx,
-				 काष्ठा io_event __user *event, दीर्घ nr)
-अणु
-	काष्ठा aio_ring *ring;
-	अचिन्हित head, tail, pos;
-	दीर्घ ret = 0;
-	पूर्णांक copy_ret;
+static long aio_read_events_ring(struct kioctx *ctx,
+				 struct io_event __user *event, long nr)
+{
+	struct aio_ring *ring;
+	unsigned head, tail, pos;
+	long ret = 0;
+	int copy_ret;
 
 	/*
 	 * The mutex can block and wake us up and that will cause
-	 * रुको_event_पूर्णांकerruptible_hrसमयout() to schedule without sleeping
-	 * and repeat. This should be rare enough that it करोesn't cause
-	 * peक्रमmance issues. See the comment in पढ़ो_events() क्रम more detail.
+	 * wait_event_interruptible_hrtimeout() to schedule without sleeping
+	 * and repeat. This should be rare enough that it doesn't cause
+	 * peformance issues. See the comment in read_events() for more detail.
 	 */
 	sched_annotate_sleep();
 	mutex_lock(&ctx->ring_lock);
 
-	/* Access to ->ring_pages here is रक्षित by ctx->ring_lock. */
+	/* Access to ->ring_pages here is protected by ctx->ring_lock. */
 	ring = kmap_atomic(ctx->ring_pages[0]);
 	head = ring->head;
 	tail = ring->tail;
 	kunmap_atomic(ring);
 
 	/*
-	 * Ensure that once we've पढ़ो the current tail poपूर्णांकer, that
+	 * Ensure that once we've read the current tail pointer, that
 	 * we also see the events that were stored up to the tail.
 	 */
 	smp_rmb();
 
 	pr_debug("h%u t%u m%u\n", head, tail, ctx->nr_events);
 
-	अगर (head == tail)
-		जाओ out;
+	if (head == tail)
+		goto out;
 
 	head %= ctx->nr_events;
 	tail %= ctx->nr_events;
 
-	जबतक (ret < nr) अणु
-		दीर्घ avail;
-		काष्ठा io_event *ev;
-		काष्ठा page *page;
+	while (ret < nr) {
+		long avail;
+		struct io_event *ev;
+		struct page *page;
 
 		avail = (head <= tail ?  tail : ctx->nr_events) - head;
-		अगर (head == tail)
-			अवरोध;
+		if (head == tail)
+			break;
 
 		pos = head + AIO_EVENTS_OFFSET;
 		page = ctx->ring_pages[pos / AIO_EVENTS_PER_PAGE];
 		pos %= AIO_EVENTS_PER_PAGE;
 
 		avail = min(avail, nr - ret);
-		avail = min_t(दीर्घ, avail, AIO_EVENTS_PER_PAGE - pos);
+		avail = min_t(long, avail, AIO_EVENTS_PER_PAGE - pos);
 
 		ev = kmap(page);
 		copy_ret = copy_to_user(event + ret, ev + pos,
-					माप(*ev) * avail);
+					sizeof(*ev) * avail);
 		kunmap(page);
 
-		अगर (unlikely(copy_ret)) अणु
+		if (unlikely(copy_ret)) {
 			ret = -EFAULT;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		ret += avail;
 		head += avail;
 		head %= ctx->nr_events;
-	पूर्ण
+	}
 
 	ring = kmap_atomic(ctx->ring_pages[0]);
 	ring->head = head;
@@ -1247,636 +1246,636 @@ out:
 out:
 	mutex_unlock(&ctx->ring_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल bool aio_पढ़ो_events(काष्ठा kioctx *ctx, दीर्घ min_nr, दीर्घ nr,
-			    काष्ठा io_event __user *event, दीर्घ *i)
-अणु
-	दीर्घ ret = aio_पढ़ो_events_ring(ctx, event + *i, nr - *i);
+static bool aio_read_events(struct kioctx *ctx, long min_nr, long nr,
+			    struct io_event __user *event, long *i)
+{
+	long ret = aio_read_events_ring(ctx, event + *i, nr - *i);
 
-	अगर (ret > 0)
+	if (ret > 0)
 		*i += ret;
 
-	अगर (unlikely(atomic_पढ़ो(&ctx->dead)))
+	if (unlikely(atomic_read(&ctx->dead)))
 		ret = -EINVAL;
 
-	अगर (!*i)
+	if (!*i)
 		*i = ret;
 
-	वापस ret < 0 || *i >= min_nr;
-पूर्ण
+	return ret < 0 || *i >= min_nr;
+}
 
-अटल दीर्घ पढ़ो_events(काष्ठा kioctx *ctx, दीर्घ min_nr, दीर्घ nr,
-			काष्ठा io_event __user *event,
-			kसमय_प्रकार until)
-अणु
-	दीर्घ ret = 0;
+static long read_events(struct kioctx *ctx, long min_nr, long nr,
+			struct io_event __user *event,
+			ktime_t until)
+{
+	long ret = 0;
 
 	/*
-	 * Note that aio_पढ़ो_events() is being called as the conditional - i.e.
-	 * we're calling it after prepare_to_रुको() has set task state to
+	 * Note that aio_read_events() is being called as the conditional - i.e.
+	 * we're calling it after prepare_to_wait() has set task state to
 	 * TASK_INTERRUPTIBLE.
 	 *
-	 * But aio_पढ़ो_events() can block, and अगर it blocks it's going to flip
+	 * But aio_read_events() can block, and if it blocks it's going to flip
 	 * the task state back to TASK_RUNNING.
 	 *
-	 * This should be ok, provided it करोesn't flip the state back to
-	 * TASK_RUNNING and वापस 0 too much - that causes us to spin. That
-	 * will only happen अगर the mutex_lock() call blocks, and we then find
+	 * This should be ok, provided it doesn't flip the state back to
+	 * TASK_RUNNING and return 0 too much - that causes us to spin. That
+	 * will only happen if the mutex_lock() call blocks, and we then find
 	 * the ringbuffer empty. So in practice we should be ok, but it's
 	 * something to be aware of when touching this code.
 	 */
-	अगर (until == 0)
-		aio_पढ़ो_events(ctx, min_nr, nr, event, &ret);
-	अन्यथा
-		रुको_event_पूर्णांकerruptible_hrसमयout(ctx->रुको,
-				aio_पढ़ो_events(ctx, min_nr, nr, event, &ret),
+	if (until == 0)
+		aio_read_events(ctx, min_nr, nr, event, &ret);
+	else
+		wait_event_interruptible_hrtimeout(ctx->wait,
+				aio_read_events(ctx, min_nr, nr, event, &ret),
 				until);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* sys_io_setup:
  *	Create an aio_context capable of receiving at least nr_events.
- *	ctxp must not poपूर्णांक to an aio_context that alपढ़ोy exists, and
+ *	ctxp must not point to an aio_context that already exists, and
  *	must be initialized to 0 prior to the call.  On successful
  *	creation of the aio_context, *ctxp is filled in with the resulting 
- *	handle.  May fail with -EINVAL अगर *ctxp is not initialized,
- *	अगर the specअगरied nr_events exceeds पूर्णांकernal limits.  May fail 
- *	with -EAGAIN अगर the specअगरied nr_events exceeds the user's limit 
- *	of available events.  May fail with -ENOMEM अगर insufficient kernel
- *	resources are available.  May fail with -EFAULT अगर an invalid
- *	poपूर्णांकer is passed क्रम ctxp.  Will fail with -ENOSYS अगर not
+ *	handle.  May fail with -EINVAL if *ctxp is not initialized,
+ *	if the specified nr_events exceeds internal limits.  May fail 
+ *	with -EAGAIN if the specified nr_events exceeds the user's limit 
+ *	of available events.  May fail with -ENOMEM if insufficient kernel
+ *	resources are available.  May fail with -EFAULT if an invalid
+ *	pointer is passed for ctxp.  Will fail with -ENOSYS if not
  *	implemented.
  */
-SYSCALL_DEFINE2(io_setup, अचिन्हित, nr_events, aio_context_t __user *, ctxp)
-अणु
-	काष्ठा kioctx *ioctx = शून्य;
-	अचिन्हित दीर्घ ctx;
-	दीर्घ ret;
+SYSCALL_DEFINE2(io_setup, unsigned, nr_events, aio_context_t __user *, ctxp)
+{
+	struct kioctx *ioctx = NULL;
+	unsigned long ctx;
+	long ret;
 
 	ret = get_user(ctx, ctxp);
-	अगर (unlikely(ret))
-		जाओ out;
+	if (unlikely(ret))
+		goto out;
 
 	ret = -EINVAL;
-	अगर (unlikely(ctx || nr_events == 0)) अणु
+	if (unlikely(ctx || nr_events == 0)) {
 		pr_debug("EINVAL: ctx %lu nr_events %u\n",
 		         ctx, nr_events);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ioctx = ioctx_alloc(nr_events);
 	ret = PTR_ERR(ioctx);
-	अगर (!IS_ERR(ioctx)) अणु
+	if (!IS_ERR(ioctx)) {
 		ret = put_user(ioctx->user_id, ctxp);
-		अगर (ret)
-			समाप्त_ioctx(current->mm, ioctx, शून्य);
+		if (ret)
+			kill_ioctx(current->mm, ioctx, NULL);
 		percpu_ref_put(&ioctx->users);
-	पूर्ण
+	}
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#अगर_घोषित CONFIG_COMPAT
-COMPAT_SYSCALL_DEFINE2(io_setup, अचिन्हित, nr_events, u32 __user *, ctx32p)
-अणु
-	काष्ठा kioctx *ioctx = शून्य;
-	अचिन्हित दीर्घ ctx;
-	दीर्घ ret;
+#ifdef CONFIG_COMPAT
+COMPAT_SYSCALL_DEFINE2(io_setup, unsigned, nr_events, u32 __user *, ctx32p)
+{
+	struct kioctx *ioctx = NULL;
+	unsigned long ctx;
+	long ret;
 
 	ret = get_user(ctx, ctx32p);
-	अगर (unlikely(ret))
-		जाओ out;
+	if (unlikely(ret))
+		goto out;
 
 	ret = -EINVAL;
-	अगर (unlikely(ctx || nr_events == 0)) अणु
+	if (unlikely(ctx || nr_events == 0)) {
 		pr_debug("EINVAL: ctx %lu nr_events %u\n",
 		         ctx, nr_events);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ioctx = ioctx_alloc(nr_events);
 	ret = PTR_ERR(ioctx);
-	अगर (!IS_ERR(ioctx)) अणु
+	if (!IS_ERR(ioctx)) {
 		/* truncating is ok because it's a user address */
 		ret = put_user((u32)ioctx->user_id, ctx32p);
-		अगर (ret)
-			समाप्त_ioctx(current->mm, ioctx, शून्य);
+		if (ret)
+			kill_ioctx(current->mm, ioctx, NULL);
 		percpu_ref_put(&ioctx->users);
-	पूर्ण
+	}
 
 out:
-	वापस ret;
-पूर्ण
-#पूर्ण_अगर
+	return ret;
+}
+#endif
 
 /* sys_io_destroy:
- *	Destroy the aio_context specअगरied.  May cancel any outstanding 
- *	AIOs and block on completion.  Will fail with -ENOSYS अगर not
- *	implemented.  May fail with -EINVAL अगर the context poपूर्णांकed to
+ *	Destroy the aio_context specified.  May cancel any outstanding 
+ *	AIOs and block on completion.  Will fail with -ENOSYS if not
+ *	implemented.  May fail with -EINVAL if the context pointed to
  *	is invalid.
  */
 SYSCALL_DEFINE1(io_destroy, aio_context_t, ctx)
-अणु
-	काष्ठा kioctx *ioctx = lookup_ioctx(ctx);
-	अगर (likely(शून्य != ioctx)) अणु
-		काष्ठा ctx_rq_रुको रुको;
-		पूर्णांक ret;
+{
+	struct kioctx *ioctx = lookup_ioctx(ctx);
+	if (likely(NULL != ioctx)) {
+		struct ctx_rq_wait wait;
+		int ret;
 
-		init_completion(&रुको.comp);
-		atomic_set(&रुको.count, 1);
+		init_completion(&wait.comp);
+		atomic_set(&wait.count, 1);
 
-		/* Pass requests_करोne to समाप्त_ioctx() where it can be set
-		 * in a thपढ़ो-safe way. If we try to set it here then we have
-		 * a race condition अगर two io_destroy() called simultaneously.
+		/* Pass requests_done to kill_ioctx() where it can be set
+		 * in a thread-safe way. If we try to set it here then we have
+		 * a race condition if two io_destroy() called simultaneously.
 		 */
-		ret = समाप्त_ioctx(current->mm, ioctx, &रुको);
+		ret = kill_ioctx(current->mm, ioctx, &wait);
 		percpu_ref_put(&ioctx->users);
 
-		/* Wait until all IO क्रम the context are करोne. Otherwise kernel
-		 * keep using user-space buffers even अगर user thinks the context
+		/* Wait until all IO for the context are done. Otherwise kernel
+		 * keep using user-space buffers even if user thinks the context
 		 * is destroyed.
 		 */
-		अगर (!ret)
-			रुको_क्रम_completion(&रुको.comp);
+		if (!ret)
+			wait_for_completion(&wait.comp);
 
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	pr_debug("EINVAL: invalid context id\n");
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल व्योम aio_हटाओ_iocb(काष्ठा aio_kiocb *iocb)
-अणु
-	काष्ठा kioctx *ctx = iocb->ki_ctx;
-	अचिन्हित दीर्घ flags;
+static void aio_remove_iocb(struct aio_kiocb *iocb)
+{
+	struct kioctx *ctx = iocb->ki_ctx;
+	unsigned long flags;
 
 	spin_lock_irqsave(&ctx->ctx_lock, flags);
 	list_del(&iocb->ki_list);
 	spin_unlock_irqrestore(&ctx->ctx_lock, flags);
-पूर्ण
+}
 
-अटल व्योम aio_complete_rw(काष्ठा kiocb *kiocb, दीर्घ res, दीर्घ res2)
-अणु
-	काष्ठा aio_kiocb *iocb = container_of(kiocb, काष्ठा aio_kiocb, rw);
+static void aio_complete_rw(struct kiocb *kiocb, long res, long res2)
+{
+	struct aio_kiocb *iocb = container_of(kiocb, struct aio_kiocb, rw);
 
-	अगर (!list_empty_careful(&iocb->ki_list))
-		aio_हटाओ_iocb(iocb);
+	if (!list_empty_careful(&iocb->ki_list))
+		aio_remove_iocb(iocb);
 
-	अगर (kiocb->ki_flags & IOCB_WRITE) अणु
-		काष्ठा inode *inode = file_inode(kiocb->ki_filp);
+	if (kiocb->ki_flags & IOCB_WRITE) {
+		struct inode *inode = file_inode(kiocb->ki_filp);
 
 		/*
-		 * Tell lockdep we inherited मुक्तze protection from submission
-		 * thपढ़ो.
+		 * Tell lockdep we inherited freeze protection from submission
+		 * thread.
 		 */
-		अगर (S_ISREG(inode->i_mode))
-			__sb_ग_लिखोrs_acquired(inode->i_sb, SB_FREEZE_WRITE);
-		file_end_ग_लिखो(kiocb->ki_filp);
-	पूर्ण
+		if (S_ISREG(inode->i_mode))
+			__sb_writers_acquired(inode->i_sb, SB_FREEZE_WRITE);
+		file_end_write(kiocb->ki_filp);
+	}
 
 	iocb->ki_res.res = res;
 	iocb->ki_res.res2 = res2;
 	iocb_put(iocb);
-पूर्ण
+}
 
-अटल पूर्णांक aio_prep_rw(काष्ठा kiocb *req, स्थिर काष्ठा iocb *iocb)
-अणु
-	पूर्णांक ret;
+static int aio_prep_rw(struct kiocb *req, const struct iocb *iocb)
+{
+	int ret;
 
 	req->ki_complete = aio_complete_rw;
-	req->निजी = शून्य;
+	req->private = NULL;
 	req->ki_pos = iocb->aio_offset;
 	req->ki_flags = iocb_flags(req->ki_filp);
-	अगर (iocb->aio_flags & IOCB_FLAG_RESFD)
+	if (iocb->aio_flags & IOCB_FLAG_RESFD)
 		req->ki_flags |= IOCB_EVENTFD;
-	req->ki_hपूर्णांक = ki_hपूर्णांक_validate(file_ग_लिखो_hपूर्णांक(req->ki_filp));
-	अगर (iocb->aio_flags & IOCB_FLAG_IOPRIO) अणु
+	req->ki_hint = ki_hint_validate(file_write_hint(req->ki_filp));
+	if (iocb->aio_flags & IOCB_FLAG_IOPRIO) {
 		/*
 		 * If the IOCB_FLAG_IOPRIO flag of aio_flags is set, then
-		 * aio_reqprio is पूर्णांकerpreted as an I/O scheduling
+		 * aio_reqprio is interpreted as an I/O scheduling
 		 * class and priority.
 		 */
 		ret = ioprio_check_cap(iocb->aio_reqprio);
-		अगर (ret) अणु
+		if (ret) {
 			pr_debug("aio ioprio check cap error: %d\n", ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
 		req->ki_ioprio = iocb->aio_reqprio;
-	पूर्ण अन्यथा
+	} else
 		req->ki_ioprio = get_current_ioprio();
 
 	ret = kiocb_set_rw_flags(req, iocb->aio_rw_flags);
-	अगर (unlikely(ret))
-		वापस ret;
+	if (unlikely(ret))
+		return ret;
 
-	req->ki_flags &= ~IOCB_HIPRI; /* no one is going to poll क्रम this I/O */
-	वापस 0;
-पूर्ण
+	req->ki_flags &= ~IOCB_HIPRI; /* no one is going to poll for this I/O */
+	return 0;
+}
 
-अटल sमाप_प्रकार aio_setup_rw(पूर्णांक rw, स्थिर काष्ठा iocb *iocb,
-		काष्ठा iovec **iovec, bool vectored, bool compat,
-		काष्ठा iov_iter *iter)
-अणु
-	व्योम __user *buf = (व्योम __user *)(uपूर्णांकptr_t)iocb->aio_buf;
-	माप_प्रकार len = iocb->aio_nbytes;
+static ssize_t aio_setup_rw(int rw, const struct iocb *iocb,
+		struct iovec **iovec, bool vectored, bool compat,
+		struct iov_iter *iter)
+{
+	void __user *buf = (void __user *)(uintptr_t)iocb->aio_buf;
+	size_t len = iocb->aio_nbytes;
 
-	अगर (!vectored) अणु
-		sमाप_प्रकार ret = import_single_range(rw, buf, len, *iovec, iter);
-		*iovec = शून्य;
-		वापस ret;
-	पूर्ण
+	if (!vectored) {
+		ssize_t ret = import_single_range(rw, buf, len, *iovec, iter);
+		*iovec = NULL;
+		return ret;
+	}
 
-	वापस __import_iovec(rw, buf, len, UIO_FASTIOV, iovec, iter, compat);
-पूर्ण
+	return __import_iovec(rw, buf, len, UIO_FASTIOV, iovec, iter, compat);
+}
 
-अटल अंतरभूत व्योम aio_rw_करोne(काष्ठा kiocb *req, sमाप_प्रकार ret)
-अणु
-	चयन (ret) अणु
-	हाल -EIOCBQUEUED:
-		अवरोध;
-	हाल -ERESTARTSYS:
-	हाल -ERESTARTNOINTR:
-	हाल -ERESTARTNOHAND:
-	हाल -ERESTART_RESTARTBLOCK:
+static inline void aio_rw_done(struct kiocb *req, ssize_t ret)
+{
+	switch (ret) {
+	case -EIOCBQUEUED:
+		break;
+	case -ERESTARTSYS:
+	case -ERESTARTNOINTR:
+	case -ERESTARTNOHAND:
+	case -ERESTART_RESTARTBLOCK:
 		/*
 		 * There's no easy way to restart the syscall since other AIO's
-		 * may be alपढ़ोy running. Just fail this IO with EINTR.
+		 * may be already running. Just fail this IO with EINTR.
 		 */
 		ret = -EINTR;
 		fallthrough;
-	शेष:
+	default:
 		req->ki_complete(req, ret, 0);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक aio_पढ़ो(काष्ठा kiocb *req, स्थिर काष्ठा iocb *iocb,
+static int aio_read(struct kiocb *req, const struct iocb *iocb,
 			bool vectored, bool compat)
-अणु
-	काष्ठा iovec अंतरभूत_vecs[UIO_FASTIOV], *iovec = अंतरभूत_vecs;
-	काष्ठा iov_iter iter;
-	काष्ठा file *file;
-	पूर्णांक ret;
+{
+	struct iovec inline_vecs[UIO_FASTIOV], *iovec = inline_vecs;
+	struct iov_iter iter;
+	struct file *file;
+	int ret;
 
 	ret = aio_prep_rw(req, iocb);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	file = req->ki_filp;
-	अगर (unlikely(!(file->f_mode & FMODE_READ)))
-		वापस -EBADF;
+	if (unlikely(!(file->f_mode & FMODE_READ)))
+		return -EBADF;
 	ret = -EINVAL;
-	अगर (unlikely(!file->f_op->पढ़ो_iter))
-		वापस -EINVAL;
+	if (unlikely(!file->f_op->read_iter))
+		return -EINVAL;
 
 	ret = aio_setup_rw(READ, iocb, &iovec, vectored, compat, &iter);
-	अगर (ret < 0)
-		वापस ret;
-	ret = rw_verअगरy_area(READ, file, &req->ki_pos, iov_iter_count(&iter));
-	अगर (!ret)
-		aio_rw_करोne(req, call_पढ़ो_iter(file, req, &iter));
-	kमुक्त(iovec);
-	वापस ret;
-पूर्ण
+	if (ret < 0)
+		return ret;
+	ret = rw_verify_area(READ, file, &req->ki_pos, iov_iter_count(&iter));
+	if (!ret)
+		aio_rw_done(req, call_read_iter(file, req, &iter));
+	kfree(iovec);
+	return ret;
+}
 
-अटल पूर्णांक aio_ग_लिखो(काष्ठा kiocb *req, स्थिर काष्ठा iocb *iocb,
+static int aio_write(struct kiocb *req, const struct iocb *iocb,
 			 bool vectored, bool compat)
-अणु
-	काष्ठा iovec अंतरभूत_vecs[UIO_FASTIOV], *iovec = अंतरभूत_vecs;
-	काष्ठा iov_iter iter;
-	काष्ठा file *file;
-	पूर्णांक ret;
+{
+	struct iovec inline_vecs[UIO_FASTIOV], *iovec = inline_vecs;
+	struct iov_iter iter;
+	struct file *file;
+	int ret;
 
 	ret = aio_prep_rw(req, iocb);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	file = req->ki_filp;
 
-	अगर (unlikely(!(file->f_mode & FMODE_WRITE)))
-		वापस -EBADF;
-	अगर (unlikely(!file->f_op->ग_लिखो_iter))
-		वापस -EINVAL;
+	if (unlikely(!(file->f_mode & FMODE_WRITE)))
+		return -EBADF;
+	if (unlikely(!file->f_op->write_iter))
+		return -EINVAL;
 
 	ret = aio_setup_rw(WRITE, iocb, &iovec, vectored, compat, &iter);
-	अगर (ret < 0)
-		वापस ret;
-	ret = rw_verअगरy_area(WRITE, file, &req->ki_pos, iov_iter_count(&iter));
-	अगर (!ret) अणु
+	if (ret < 0)
+		return ret;
+	ret = rw_verify_area(WRITE, file, &req->ki_pos, iov_iter_count(&iter));
+	if (!ret) {
 		/*
-		 * Open-code file_start_ग_लिखो here to grab मुक्तze protection,
-		 * which will be released by another thपढ़ो in
+		 * Open-code file_start_write here to grab freeze protection,
+		 * which will be released by another thread in
 		 * aio_complete_rw().  Fool lockdep by telling it the lock got
-		 * released so that it करोesn't complain about the held lock when
-		 * we वापस to userspace.
+		 * released so that it doesn't complain about the held lock when
+		 * we return to userspace.
 		 */
-		अगर (S_ISREG(file_inode(file)->i_mode)) अणु
-			sb_start_ग_लिखो(file_inode(file)->i_sb);
-			__sb_ग_लिखोrs_release(file_inode(file)->i_sb, SB_FREEZE_WRITE);
-		पूर्ण
+		if (S_ISREG(file_inode(file)->i_mode)) {
+			sb_start_write(file_inode(file)->i_sb);
+			__sb_writers_release(file_inode(file)->i_sb, SB_FREEZE_WRITE);
+		}
 		req->ki_flags |= IOCB_WRITE;
-		aio_rw_करोne(req, call_ग_लिखो_iter(file, req, &iter));
-	पूर्ण
-	kमुक्त(iovec);
-	वापस ret;
-पूर्ण
+		aio_rw_done(req, call_write_iter(file, req, &iter));
+	}
+	kfree(iovec);
+	return ret;
+}
 
-अटल व्योम aio_fsync_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा aio_kiocb *iocb = container_of(work, काष्ठा aio_kiocb, fsync.work);
-	स्थिर काष्ठा cred *old_cred = override_creds(iocb->fsync.creds);
+static void aio_fsync_work(struct work_struct *work)
+{
+	struct aio_kiocb *iocb = container_of(work, struct aio_kiocb, fsync.work);
+	const struct cred *old_cred = override_creds(iocb->fsync.creds);
 
 	iocb->ki_res.res = vfs_fsync(iocb->fsync.file, iocb->fsync.datasync);
 	revert_creds(old_cred);
 	put_cred(iocb->fsync.creds);
 	iocb_put(iocb);
-पूर्ण
+}
 
-अटल पूर्णांक aio_fsync(काष्ठा fsync_iocb *req, स्थिर काष्ठा iocb *iocb,
+static int aio_fsync(struct fsync_iocb *req, const struct iocb *iocb,
 		     bool datasync)
-अणु
-	अगर (unlikely(iocb->aio_buf || iocb->aio_offset || iocb->aio_nbytes ||
+{
+	if (unlikely(iocb->aio_buf || iocb->aio_offset || iocb->aio_nbytes ||
 			iocb->aio_rw_flags))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर (unlikely(!req->file->f_op->fsync))
-		वापस -EINVAL;
+	if (unlikely(!req->file->f_op->fsync))
+		return -EINVAL;
 
 	req->creds = prepare_creds();
-	अगर (!req->creds)
-		वापस -ENOMEM;
+	if (!req->creds)
+		return -ENOMEM;
 
 	req->datasync = datasync;
 	INIT_WORK(&req->work, aio_fsync_work);
 	schedule_work(&req->work);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम aio_poll_put_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा poll_iocb *req = container_of(work, काष्ठा poll_iocb, work);
-	काष्ठा aio_kiocb *iocb = container_of(req, काष्ठा aio_kiocb, poll);
+static void aio_poll_put_work(struct work_struct *work)
+{
+	struct poll_iocb *req = container_of(work, struct poll_iocb, work);
+	struct aio_kiocb *iocb = container_of(req, struct aio_kiocb, poll);
 
 	iocb_put(iocb);
-पूर्ण
+}
 
-अटल व्योम aio_poll_complete_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा poll_iocb *req = container_of(work, काष्ठा poll_iocb, work);
-	काष्ठा aio_kiocb *iocb = container_of(req, काष्ठा aio_kiocb, poll);
-	काष्ठा poll_table_काष्ठा pt = अणु ._key = req->events पूर्ण;
-	काष्ठा kioctx *ctx = iocb->ki_ctx;
+static void aio_poll_complete_work(struct work_struct *work)
+{
+	struct poll_iocb *req = container_of(work, struct poll_iocb, work);
+	struct aio_kiocb *iocb = container_of(req, struct aio_kiocb, poll);
+	struct poll_table_struct pt = { ._key = req->events };
+	struct kioctx *ctx = iocb->ki_ctx;
 	__poll_t mask = 0;
 
-	अगर (!READ_ONCE(req->cancelled))
+	if (!READ_ONCE(req->cancelled))
 		mask = vfs_poll(req->file, &pt) & req->events;
 
 	/*
 	 * Note that ->ki_cancel callers also delete iocb from active_reqs after
 	 * calling ->ki_cancel.  We need the ctx_lock roundtrip here to
-	 * synchronize with them.  In the cancellation हाल the list_del_init
+	 * synchronize with them.  In the cancellation case the list_del_init
 	 * itself is not actually needed, but harmless so we keep it in to
-	 * aव्योम further branches in the fast path.
+	 * avoid further branches in the fast path.
 	 */
 	spin_lock_irq(&ctx->ctx_lock);
-	अगर (!mask && !READ_ONCE(req->cancelled)) अणु
-		add_रुको_queue(req->head, &req->रुको);
+	if (!mask && !READ_ONCE(req->cancelled)) {
+		add_wait_queue(req->head, &req->wait);
 		spin_unlock_irq(&ctx->ctx_lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 	list_del_init(&iocb->ki_list);
 	iocb->ki_res.res = mangle_poll(mask);
-	req->करोne = true;
+	req->done = true;
 	spin_unlock_irq(&ctx->ctx_lock);
 
 	iocb_put(iocb);
-पूर्ण
+}
 
 /* assumes we are called with irqs disabled */
-अटल पूर्णांक aio_poll_cancel(काष्ठा kiocb *iocb)
-अणु
-	काष्ठा aio_kiocb *aiocb = container_of(iocb, काष्ठा aio_kiocb, rw);
-	काष्ठा poll_iocb *req = &aiocb->poll;
+static int aio_poll_cancel(struct kiocb *iocb)
+{
+	struct aio_kiocb *aiocb = container_of(iocb, struct aio_kiocb, rw);
+	struct poll_iocb *req = &aiocb->poll;
 
 	spin_lock(&req->head->lock);
 	WRITE_ONCE(req->cancelled, true);
-	अगर (!list_empty(&req->रुको.entry)) अणु
-		list_del_init(&req->रुको.entry);
+	if (!list_empty(&req->wait.entry)) {
+		list_del_init(&req->wait.entry);
 		schedule_work(&aiocb->poll.work);
-	पूर्ण
+	}
 	spin_unlock(&req->head->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक aio_poll_wake(काष्ठा रुको_queue_entry *रुको, अचिन्हित mode, पूर्णांक sync,
-		व्योम *key)
-अणु
-	काष्ठा poll_iocb *req = container_of(रुको, काष्ठा poll_iocb, रुको);
-	काष्ठा aio_kiocb *iocb = container_of(req, काष्ठा aio_kiocb, poll);
+static int aio_poll_wake(struct wait_queue_entry *wait, unsigned mode, int sync,
+		void *key)
+{
+	struct poll_iocb *req = container_of(wait, struct poll_iocb, wait);
+	struct aio_kiocb *iocb = container_of(req, struct aio_kiocb, poll);
 	__poll_t mask = key_to_poll(key);
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
-	/* क्रम instances that support it check क्रम an event match first: */
-	अगर (mask && !(mask & req->events))
-		वापस 0;
+	/* for instances that support it check for an event match first: */
+	if (mask && !(mask & req->events))
+		return 0;
 
-	list_del_init(&req->रुको.entry);
+	list_del_init(&req->wait.entry);
 
-	अगर (mask && spin_trylock_irqsave(&iocb->ki_ctx->ctx_lock, flags)) अणु
-		काष्ठा kioctx *ctx = iocb->ki_ctx;
+	if (mask && spin_trylock_irqsave(&iocb->ki_ctx->ctx_lock, flags)) {
+		struct kioctx *ctx = iocb->ki_ctx;
 
 		/*
-		 * Try to complete the iocb अंतरभूत अगर we can. Use
-		 * irqsave/irqrestore because not all fileप्रणालीs (e.g. fuse)
+		 * Try to complete the iocb inline if we can. Use
+		 * irqsave/irqrestore because not all filesystems (e.g. fuse)
 		 * call this function with IRQs disabled and because IRQs
-		 * have to be disabled beक्रमe ctx_lock is obtained.
+		 * have to be disabled before ctx_lock is obtained.
 		 */
 		list_del(&iocb->ki_list);
 		iocb->ki_res.res = mangle_poll(mask);
-		req->करोne = true;
-		अगर (iocb->ki_eventfd && eventfd_संकेत_count()) अणु
-			iocb = शून्य;
+		req->done = true;
+		if (iocb->ki_eventfd && eventfd_signal_count()) {
+			iocb = NULL;
 			INIT_WORK(&req->work, aio_poll_put_work);
 			schedule_work(&req->work);
-		पूर्ण
+		}
 		spin_unlock_irqrestore(&ctx->ctx_lock, flags);
-		अगर (iocb)
+		if (iocb)
 			iocb_put(iocb);
-	पूर्ण अन्यथा अणु
+	} else {
 		schedule_work(&req->work);
-	पूर्ण
-	वापस 1;
-पूर्ण
+	}
+	return 1;
+}
 
-काष्ठा aio_poll_table अणु
-	काष्ठा poll_table_काष्ठा	pt;
-	काष्ठा aio_kiocb		*iocb;
-	पूर्णांक				error;
-पूर्ण;
+struct aio_poll_table {
+	struct poll_table_struct	pt;
+	struct aio_kiocb		*iocb;
+	int				error;
+};
 
-अटल व्योम
-aio_poll_queue_proc(काष्ठा file *file, काष्ठा रुको_queue_head *head,
-		काष्ठा poll_table_काष्ठा *p)
-अणु
-	काष्ठा aio_poll_table *pt = container_of(p, काष्ठा aio_poll_table, pt);
+static void
+aio_poll_queue_proc(struct file *file, struct wait_queue_head *head,
+		struct poll_table_struct *p)
+{
+	struct aio_poll_table *pt = container_of(p, struct aio_poll_table, pt);
 
-	/* multiple रुको queues per file are not supported */
-	अगर (unlikely(pt->iocb->poll.head)) अणु
+	/* multiple wait queues per file are not supported */
+	if (unlikely(pt->iocb->poll.head)) {
 		pt->error = -EINVAL;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	pt->error = 0;
 	pt->iocb->poll.head = head;
-	add_रुको_queue(head, &pt->iocb->poll.रुको);
-पूर्ण
+	add_wait_queue(head, &pt->iocb->poll.wait);
+}
 
-अटल पूर्णांक aio_poll(काष्ठा aio_kiocb *aiocb, स्थिर काष्ठा iocb *iocb)
-अणु
-	काष्ठा kioctx *ctx = aiocb->ki_ctx;
-	काष्ठा poll_iocb *req = &aiocb->poll;
-	काष्ठा aio_poll_table apt;
+static int aio_poll(struct aio_kiocb *aiocb, const struct iocb *iocb)
+{
+	struct kioctx *ctx = aiocb->ki_ctx;
+	struct poll_iocb *req = &aiocb->poll;
+	struct aio_poll_table apt;
 	bool cancel = false;
 	__poll_t mask;
 
 	/* reject any unknown events outside the normal event mask. */
-	अगर ((u16)iocb->aio_buf != iocb->aio_buf)
-		वापस -EINVAL;
-	/* reject fields that are not defined क्रम poll */
-	अगर (iocb->aio_offset || iocb->aio_nbytes || iocb->aio_rw_flags)
-		वापस -EINVAL;
+	if ((u16)iocb->aio_buf != iocb->aio_buf)
+		return -EINVAL;
+	/* reject fields that are not defined for poll */
+	if (iocb->aio_offset || iocb->aio_nbytes || iocb->aio_rw_flags)
+		return -EINVAL;
 
 	INIT_WORK(&req->work, aio_poll_complete_work);
 	req->events = demangle_poll(iocb->aio_buf) | EPOLLERR | EPOLLHUP;
 
-	req->head = शून्य;
-	req->करोne = false;
+	req->head = NULL;
+	req->done = false;
 	req->cancelled = false;
 
 	apt.pt._qproc = aio_poll_queue_proc;
 	apt.pt._key = req->events;
 	apt.iocb = aiocb;
-	apt.error = -EINVAL; /* same as no support क्रम IOCB_CMD_POLL */
+	apt.error = -EINVAL; /* same as no support for IOCB_CMD_POLL */
 
-	/* initialized the list so that we can करो list_empty checks */
-	INIT_LIST_HEAD(&req->रुको.entry);
-	init_रुकोqueue_func_entry(&req->रुको, aio_poll_wake);
+	/* initialized the list so that we can do list_empty checks */
+	INIT_LIST_HEAD(&req->wait.entry);
+	init_waitqueue_func_entry(&req->wait, aio_poll_wake);
 
 	mask = vfs_poll(req->file, &apt.pt) & req->events;
 	spin_lock_irq(&ctx->ctx_lock);
-	अगर (likely(req->head)) अणु
+	if (likely(req->head)) {
 		spin_lock(&req->head->lock);
-		अगर (unlikely(list_empty(&req->रुको.entry))) अणु
-			अगर (apt.error)
+		if (unlikely(list_empty(&req->wait.entry))) {
+			if (apt.error)
 				cancel = true;
 			apt.error = 0;
 			mask = 0;
-		पूर्ण
-		अगर (mask || apt.error) अणु
-			list_del_init(&req->रुको.entry);
-		पूर्ण अन्यथा अगर (cancel) अणु
+		}
+		if (mask || apt.error) {
+			list_del_init(&req->wait.entry);
+		} else if (cancel) {
 			WRITE_ONCE(req->cancelled, true);
-		पूर्ण अन्यथा अगर (!req->करोne) अणु /* actually रुकोing क्रम an event */
+		} else if (!req->done) { /* actually waiting for an event */
 			list_add_tail(&aiocb->ki_list, &ctx->active_reqs);
 			aiocb->ki_cancel = aio_poll_cancel;
-		पूर्ण
+		}
 		spin_unlock(&req->head->lock);
-	पूर्ण
-	अगर (mask) अणु /* no async, we'd stolen it */
+	}
+	if (mask) { /* no async, we'd stolen it */
 		aiocb->ki_res.res = mangle_poll(mask);
 		apt.error = 0;
-	पूर्ण
+	}
 	spin_unlock_irq(&ctx->ctx_lock);
-	अगर (mask)
+	if (mask)
 		iocb_put(aiocb);
-	वापस apt.error;
-पूर्ण
+	return apt.error;
+}
 
-अटल पूर्णांक __io_submit_one(काष्ठा kioctx *ctx, स्थिर काष्ठा iocb *iocb,
-			   काष्ठा iocb __user *user_iocb, काष्ठा aio_kiocb *req,
+static int __io_submit_one(struct kioctx *ctx, const struct iocb *iocb,
+			   struct iocb __user *user_iocb, struct aio_kiocb *req,
 			   bool compat)
-अणु
+{
 	req->ki_filp = fget(iocb->aio_fildes);
-	अगर (unlikely(!req->ki_filp))
-		वापस -EBADF;
+	if (unlikely(!req->ki_filp))
+		return -EBADF;
 
-	अगर (iocb->aio_flags & IOCB_FLAG_RESFD) अणु
-		काष्ठा eventfd_ctx *eventfd;
+	if (iocb->aio_flags & IOCB_FLAG_RESFD) {
+		struct eventfd_ctx *eventfd;
 		/*
 		 * If the IOCB_FLAG_RESFD flag of aio_flags is set, get an
 		 * instance of the file* now. The file descriptor must be
-		 * an eventfd() fd, and will be संकेतed क्रम each completed
-		 * event using the eventfd_संकेत() function.
+		 * an eventfd() fd, and will be signaled for each completed
+		 * event using the eventfd_signal() function.
 		 */
 		eventfd = eventfd_ctx_fdget(iocb->aio_resfd);
-		अगर (IS_ERR(eventfd))
-			वापस PTR_ERR(eventfd);
+		if (IS_ERR(eventfd))
+			return PTR_ERR(eventfd);
 
 		req->ki_eventfd = eventfd;
-	पूर्ण
+	}
 
-	अगर (unlikely(put_user(KIOCB_KEY, &user_iocb->aio_key))) अणु
+	if (unlikely(put_user(KIOCB_KEY, &user_iocb->aio_key))) {
 		pr_debug("EFAULT: aio_key\n");
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
-	req->ki_res.obj = (u64)(अचिन्हित दीर्घ)user_iocb;
+	req->ki_res.obj = (u64)(unsigned long)user_iocb;
 	req->ki_res.data = iocb->aio_data;
 	req->ki_res.res = 0;
 	req->ki_res.res2 = 0;
 
-	चयन (iocb->aio_lio_opcode) अणु
-	हाल IOCB_CMD_PREAD:
-		वापस aio_पढ़ो(&req->rw, iocb, false, compat);
-	हाल IOCB_CMD_PWRITE:
-		वापस aio_ग_लिखो(&req->rw, iocb, false, compat);
-	हाल IOCB_CMD_PREADV:
-		वापस aio_पढ़ो(&req->rw, iocb, true, compat);
-	हाल IOCB_CMD_PWRITEV:
-		वापस aio_ग_लिखो(&req->rw, iocb, true, compat);
-	हाल IOCB_CMD_FSYNC:
-		वापस aio_fsync(&req->fsync, iocb, false);
-	हाल IOCB_CMD_FDSYNC:
-		वापस aio_fsync(&req->fsync, iocb, true);
-	हाल IOCB_CMD_POLL:
-		वापस aio_poll(req, iocb);
-	शेष:
+	switch (iocb->aio_lio_opcode) {
+	case IOCB_CMD_PREAD:
+		return aio_read(&req->rw, iocb, false, compat);
+	case IOCB_CMD_PWRITE:
+		return aio_write(&req->rw, iocb, false, compat);
+	case IOCB_CMD_PREADV:
+		return aio_read(&req->rw, iocb, true, compat);
+	case IOCB_CMD_PWRITEV:
+		return aio_write(&req->rw, iocb, true, compat);
+	case IOCB_CMD_FSYNC:
+		return aio_fsync(&req->fsync, iocb, false);
+	case IOCB_CMD_FDSYNC:
+		return aio_fsync(&req->fsync, iocb, true);
+	case IOCB_CMD_POLL:
+		return aio_poll(req, iocb);
+	default:
 		pr_debug("invalid aio operation %d\n", iocb->aio_lio_opcode);
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+		return -EINVAL;
+	}
+}
 
-अटल पूर्णांक io_submit_one(काष्ठा kioctx *ctx, काष्ठा iocb __user *user_iocb,
+static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
 			 bool compat)
-अणु
-	काष्ठा aio_kiocb *req;
-	काष्ठा iocb iocb;
-	पूर्णांक err;
+{
+	struct aio_kiocb *req;
+	struct iocb iocb;
+	int err;
 
-	अगर (unlikely(copy_from_user(&iocb, user_iocb, माप(iocb))))
-		वापस -EFAULT;
+	if (unlikely(copy_from_user(&iocb, user_iocb, sizeof(iocb))))
+		return -EFAULT;
 
-	/* enक्रमce क्रमwards compatibility on users */
-	अगर (unlikely(iocb.aio_reserved2)) अणु
+	/* enforce forwards compatibility on users */
+	if (unlikely(iocb.aio_reserved2)) {
 		pr_debug("EINVAL: reserve field set\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* prevent overflows */
-	अगर (unlikely(
-	    (iocb.aio_buf != (अचिन्हित दीर्घ)iocb.aio_buf) ||
-	    (iocb.aio_nbytes != (माप_प्रकार)iocb.aio_nbytes) ||
-	    ((sमाप_प्रकार)iocb.aio_nbytes < 0)
-	   )) अणु
+	if (unlikely(
+	    (iocb.aio_buf != (unsigned long)iocb.aio_buf) ||
+	    (iocb.aio_nbytes != (size_t)iocb.aio_nbytes) ||
+	    ((ssize_t)iocb.aio_nbytes < 0)
+	   )) {
 		pr_debug("EINVAL: overflow check\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	req = aio_get_req(ctx);
-	अगर (unlikely(!req))
-		वापस -EAGAIN;
+	if (unlikely(!req))
+		return -EAGAIN;
 
 	err = __io_submit_one(ctx, &iocb, user_iocb, req, compat);
 
@@ -1884,391 +1883,391 @@ aio_poll_queue_proc(काष्ठा file *file, काष्ठा रुक�
 	iocb_put(req);
 
 	/*
-	 * If err is 0, we'd either करोne aio_complete() ourselves or have
-	 * arranged क्रम that to be करोne asynchronously.  Anything non-zero
+	 * If err is 0, we'd either done aio_complete() ourselves or have
+	 * arranged for that to be done asynchronously.  Anything non-zero
 	 * means that we need to destroy req ourselves.
 	 */
-	अगर (unlikely(err)) अणु
+	if (unlikely(err)) {
 		iocb_destroy(req);
 		put_reqs_available(ctx, 1);
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
 /* sys_io_submit:
- *	Queue the nr iocbs poपूर्णांकed to by iocbpp क्रम processing.  Returns
- *	the number of iocbs queued.  May वापस -EINVAL अगर the aio_context
- *	specअगरied by ctx_id is invalid, अगर nr is < 0, अगर the iocb at
- *	*iocbpp[0] is not properly initialized, अगर the operation specअगरied
- *	is invalid क्रम the file descriptor in the iocb.  May fail with
- *	-EFAULT अगर any of the data काष्ठाures poपूर्णांक to invalid data.  May
- *	fail with -EBADF अगर the file descriptor specअगरied in the first
- *	iocb is invalid.  May fail with -EAGAIN अगर insufficient resources
- *	are available to queue any iocbs.  Will वापस 0 अगर nr is 0.  Will
- *	fail with -ENOSYS अगर not implemented.
+ *	Queue the nr iocbs pointed to by iocbpp for processing.  Returns
+ *	the number of iocbs queued.  May return -EINVAL if the aio_context
+ *	specified by ctx_id is invalid, if nr is < 0, if the iocb at
+ *	*iocbpp[0] is not properly initialized, if the operation specified
+ *	is invalid for the file descriptor in the iocb.  May fail with
+ *	-EFAULT if any of the data structures point to invalid data.  May
+ *	fail with -EBADF if the file descriptor specified in the first
+ *	iocb is invalid.  May fail with -EAGAIN if insufficient resources
+ *	are available to queue any iocbs.  Will return 0 if nr is 0.  Will
+ *	fail with -ENOSYS if not implemented.
  */
-SYSCALL_DEFINE3(io_submit, aio_context_t, ctx_id, दीर्घ, nr,
-		काष्ठा iocb __user * __user *, iocbpp)
-अणु
-	काष्ठा kioctx *ctx;
-	दीर्घ ret = 0;
-	पूर्णांक i = 0;
-	काष्ठा blk_plug plug;
+SYSCALL_DEFINE3(io_submit, aio_context_t, ctx_id, long, nr,
+		struct iocb __user * __user *, iocbpp)
+{
+	struct kioctx *ctx;
+	long ret = 0;
+	int i = 0;
+	struct blk_plug plug;
 
-	अगर (unlikely(nr < 0))
-		वापस -EINVAL;
+	if (unlikely(nr < 0))
+		return -EINVAL;
 
 	ctx = lookup_ioctx(ctx_id);
-	अगर (unlikely(!ctx)) अणु
+	if (unlikely(!ctx)) {
 		pr_debug("EINVAL: invalid context id\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (nr > ctx->nr_events)
+	if (nr > ctx->nr_events)
 		nr = ctx->nr_events;
 
-	अगर (nr > AIO_PLUG_THRESHOLD)
+	if (nr > AIO_PLUG_THRESHOLD)
 		blk_start_plug(&plug);
-	क्रम (i = 0; i < nr; i++) अणु
-		काष्ठा iocb __user *user_iocb;
+	for (i = 0; i < nr; i++) {
+		struct iocb __user *user_iocb;
 
-		अगर (unlikely(get_user(user_iocb, iocbpp + i))) अणु
+		if (unlikely(get_user(user_iocb, iocbpp + i))) {
 			ret = -EFAULT;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		ret = io_submit_one(ctx, user_iocb, false);
-		अगर (ret)
-			अवरोध;
-	पूर्ण
-	अगर (nr > AIO_PLUG_THRESHOLD)
+		if (ret)
+			break;
+	}
+	if (nr > AIO_PLUG_THRESHOLD)
 		blk_finish_plug(&plug);
 
 	percpu_ref_put(&ctx->users);
-	वापस i ? i : ret;
-पूर्ण
+	return i ? i : ret;
+}
 
-#अगर_घोषित CONFIG_COMPAT
+#ifdef CONFIG_COMPAT
 COMPAT_SYSCALL_DEFINE3(io_submit, compat_aio_context_t, ctx_id,
-		       पूर्णांक, nr, compat_uptr_t __user *, iocbpp)
-अणु
-	काष्ठा kioctx *ctx;
-	दीर्घ ret = 0;
-	पूर्णांक i = 0;
-	काष्ठा blk_plug plug;
+		       int, nr, compat_uptr_t __user *, iocbpp)
+{
+	struct kioctx *ctx;
+	long ret = 0;
+	int i = 0;
+	struct blk_plug plug;
 
-	अगर (unlikely(nr < 0))
-		वापस -EINVAL;
+	if (unlikely(nr < 0))
+		return -EINVAL;
 
 	ctx = lookup_ioctx(ctx_id);
-	अगर (unlikely(!ctx)) अणु
+	if (unlikely(!ctx)) {
 		pr_debug("EINVAL: invalid context id\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (nr > ctx->nr_events)
+	if (nr > ctx->nr_events)
 		nr = ctx->nr_events;
 
-	अगर (nr > AIO_PLUG_THRESHOLD)
+	if (nr > AIO_PLUG_THRESHOLD)
 		blk_start_plug(&plug);
-	क्रम (i = 0; i < nr; i++) अणु
+	for (i = 0; i < nr; i++) {
 		compat_uptr_t user_iocb;
 
-		अगर (unlikely(get_user(user_iocb, iocbpp + i))) अणु
+		if (unlikely(get_user(user_iocb, iocbpp + i))) {
 			ret = -EFAULT;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		ret = io_submit_one(ctx, compat_ptr(user_iocb), true);
-		अगर (ret)
-			अवरोध;
-	पूर्ण
-	अगर (nr > AIO_PLUG_THRESHOLD)
+		if (ret)
+			break;
+	}
+	if (nr > AIO_PLUG_THRESHOLD)
 		blk_finish_plug(&plug);
 
 	percpu_ref_put(&ctx->users);
-	वापस i ? i : ret;
-पूर्ण
-#पूर्ण_अगर
+	return i ? i : ret;
+}
+#endif
 
 /* sys_io_cancel:
  *	Attempts to cancel an iocb previously passed to io_submit.  If
  *	the operation is successfully cancelled, the resulting event is
- *	copied पूर्णांकo the memory poपूर्णांकed to by result without being placed
- *	पूर्णांकo the completion queue and 0 is वापसed.  May fail with
- *	-EFAULT अगर any of the data काष्ठाures poपूर्णांकed to are invalid.
- *	May fail with -EINVAL अगर aio_context specअगरied by ctx_id is
- *	invalid.  May fail with -EAGAIN अगर the iocb specअगरied was not
- *	cancelled.  Will fail with -ENOSYS अगर not implemented.
+ *	copied into the memory pointed to by result without being placed
+ *	into the completion queue and 0 is returned.  May fail with
+ *	-EFAULT if any of the data structures pointed to are invalid.
+ *	May fail with -EINVAL if aio_context specified by ctx_id is
+ *	invalid.  May fail with -EAGAIN if the iocb specified was not
+ *	cancelled.  Will fail with -ENOSYS if not implemented.
  */
-SYSCALL_DEFINE3(io_cancel, aio_context_t, ctx_id, काष्ठा iocb __user *, iocb,
-		काष्ठा io_event __user *, result)
-अणु
-	काष्ठा kioctx *ctx;
-	काष्ठा aio_kiocb *kiocb;
-	पूर्णांक ret = -EINVAL;
+SYSCALL_DEFINE3(io_cancel, aio_context_t, ctx_id, struct iocb __user *, iocb,
+		struct io_event __user *, result)
+{
+	struct kioctx *ctx;
+	struct aio_kiocb *kiocb;
+	int ret = -EINVAL;
 	u32 key;
-	u64 obj = (u64)(अचिन्हित दीर्घ)iocb;
+	u64 obj = (u64)(unsigned long)iocb;
 
-	अगर (unlikely(get_user(key, &iocb->aio_key)))
-		वापस -EFAULT;
-	अगर (unlikely(key != KIOCB_KEY))
-		वापस -EINVAL;
+	if (unlikely(get_user(key, &iocb->aio_key)))
+		return -EFAULT;
+	if (unlikely(key != KIOCB_KEY))
+		return -EINVAL;
 
 	ctx = lookup_ioctx(ctx_id);
-	अगर (unlikely(!ctx))
-		वापस -EINVAL;
+	if (unlikely(!ctx))
+		return -EINVAL;
 
 	spin_lock_irq(&ctx->ctx_lock);
 	/* TODO: use a hash or array, this sucks. */
-	list_क्रम_each_entry(kiocb, &ctx->active_reqs, ki_list) अणु
-		अगर (kiocb->ki_res.obj == obj) अणु
+	list_for_each_entry(kiocb, &ctx->active_reqs, ki_list) {
+		if (kiocb->ki_res.obj == obj) {
 			ret = kiocb->ki_cancel(&kiocb->rw);
 			list_del_init(&kiocb->ki_list);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	spin_unlock_irq(&ctx->ctx_lock);
 
-	अगर (!ret) अणु
+	if (!ret) {
 		/*
-		 * The result argument is no दीर्घer used - the io_event is
+		 * The result argument is no longer used - the io_event is
 		 * always delivered via the ring buffer. -EINPROGRESS indicates
 		 * cancellation is progress:
 		 */
 		ret = -EINPROGRESS;
-	पूर्ण
+	}
 
 	percpu_ref_put(&ctx->users);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल दीर्घ करो_io_getevents(aio_context_t ctx_id,
-		दीर्घ min_nr,
-		दीर्घ nr,
-		काष्ठा io_event __user *events,
-		काष्ठा बारpec64 *ts)
-अणु
-	kसमय_प्रकार until = ts ? बारpec64_to_kसमय(*ts) : KTIME_MAX;
-	काष्ठा kioctx *ioctx = lookup_ioctx(ctx_id);
-	दीर्घ ret = -EINVAL;
+static long do_io_getevents(aio_context_t ctx_id,
+		long min_nr,
+		long nr,
+		struct io_event __user *events,
+		struct timespec64 *ts)
+{
+	ktime_t until = ts ? timespec64_to_ktime(*ts) : KTIME_MAX;
+	struct kioctx *ioctx = lookup_ioctx(ctx_id);
+	long ret = -EINVAL;
 
-	अगर (likely(ioctx)) अणु
-		अगर (likely(min_nr <= nr && min_nr >= 0))
-			ret = पढ़ो_events(ioctx, min_nr, nr, events, until);
+	if (likely(ioctx)) {
+		if (likely(min_nr <= nr && min_nr >= 0))
+			ret = read_events(ioctx, min_nr, nr, events, until);
 		percpu_ref_put(&ioctx->users);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* io_getevents:
- *	Attempts to पढ़ो at least min_nr events and up to nr events from
- *	the completion queue क्रम the aio_context specअगरied by ctx_id. If
- *	it succeeds, the number of पढ़ो events is वापसed. May fail with
- *	-EINVAL अगर ctx_id is invalid, अगर min_nr is out of range, अगर nr is
- *	out of range, अगर समयout is out of range.  May fail with -EFAULT
- *	अगर any of the memory specअगरied is invalid.  May वापस 0 or
- *	< min_nr अगर the समयout specअगरied by समयout has elapsed
- *	beक्रमe sufficient events are available, where समयout == शून्य
- *	specअगरies an infinite समयout. Note that the समयout poपूर्णांकed to by
- *	समयout is relative.  Will fail with -ENOSYS अगर not implemented.
+ *	Attempts to read at least min_nr events and up to nr events from
+ *	the completion queue for the aio_context specified by ctx_id. If
+ *	it succeeds, the number of read events is returned. May fail with
+ *	-EINVAL if ctx_id is invalid, if min_nr is out of range, if nr is
+ *	out of range, if timeout is out of range.  May fail with -EFAULT
+ *	if any of the memory specified is invalid.  May return 0 or
+ *	< min_nr if the timeout specified by timeout has elapsed
+ *	before sufficient events are available, where timeout == NULL
+ *	specifies an infinite timeout. Note that the timeout pointed to by
+ *	timeout is relative.  Will fail with -ENOSYS if not implemented.
  */
-#अगर_घोषित CONFIG_64BIT
+#ifdef CONFIG_64BIT
 
 SYSCALL_DEFINE5(io_getevents, aio_context_t, ctx_id,
-		दीर्घ, min_nr,
-		दीर्घ, nr,
-		काष्ठा io_event __user *, events,
-		काष्ठा __kernel_बारpec __user *, समयout)
-अणु
-	काष्ठा बारpec64	ts;
-	पूर्णांक			ret;
+		long, min_nr,
+		long, nr,
+		struct io_event __user *, events,
+		struct __kernel_timespec __user *, timeout)
+{
+	struct timespec64	ts;
+	int			ret;
 
-	अगर (समयout && unlikely(get_बारpec64(&ts, समयout)))
-		वापस -EFAULT;
+	if (timeout && unlikely(get_timespec64(&ts, timeout)))
+		return -EFAULT;
 
-	ret = करो_io_getevents(ctx_id, min_nr, nr, events, समयout ? &ts : शून्य);
-	अगर (!ret && संकेत_pending(current))
+	ret = do_io_getevents(ctx_id, min_nr, nr, events, timeout ? &ts : NULL);
+	if (!ret && signal_pending(current))
 		ret = -EINTR;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#पूर्ण_अगर
+#endif
 
-काष्ठा __aio_sigset अणु
-	स्थिर sigset_t __user	*sigmask;
-	माप_प्रकार		sigsetsize;
-पूर्ण;
+struct __aio_sigset {
+	const sigset_t __user	*sigmask;
+	size_t		sigsetsize;
+};
 
 SYSCALL_DEFINE6(io_pgetevents,
 		aio_context_t, ctx_id,
-		दीर्घ, min_nr,
-		दीर्घ, nr,
-		काष्ठा io_event __user *, events,
-		काष्ठा __kernel_बारpec __user *, समयout,
-		स्थिर काष्ठा __aio_sigset __user *, usig)
-अणु
-	काष्ठा __aio_sigset	ksig = अणु शून्य, पूर्ण;
-	काष्ठा बारpec64	ts;
-	bool पूर्णांकerrupted;
-	पूर्णांक ret;
+		long, min_nr,
+		long, nr,
+		struct io_event __user *, events,
+		struct __kernel_timespec __user *, timeout,
+		const struct __aio_sigset __user *, usig)
+{
+	struct __aio_sigset	ksig = { NULL, };
+	struct timespec64	ts;
+	bool interrupted;
+	int ret;
 
-	अगर (समयout && unlikely(get_बारpec64(&ts, समयout)))
-		वापस -EFAULT;
+	if (timeout && unlikely(get_timespec64(&ts, timeout)))
+		return -EFAULT;
 
-	अगर (usig && copy_from_user(&ksig, usig, माप(ksig)))
-		वापस -EFAULT;
+	if (usig && copy_from_user(&ksig, usig, sizeof(ksig)))
+		return -EFAULT;
 
 	ret = set_user_sigmask(ksig.sigmask, ksig.sigsetsize);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = करो_io_getevents(ctx_id, min_nr, nr, events, समयout ? &ts : शून्य);
+	ret = do_io_getevents(ctx_id, min_nr, nr, events, timeout ? &ts : NULL);
 
-	पूर्णांकerrupted = संकेत_pending(current);
-	restore_saved_sigmask_unless(पूर्णांकerrupted);
-	अगर (पूर्णांकerrupted && !ret)
+	interrupted = signal_pending(current);
+	restore_saved_sigmask_unless(interrupted);
+	if (interrupted && !ret)
 		ret = -ERESTARTNOHAND;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#अगर defined(CONFIG_COMPAT_32BIT_TIME) && !defined(CONFIG_64BIT)
+#if defined(CONFIG_COMPAT_32BIT_TIME) && !defined(CONFIG_64BIT)
 
-SYSCALL_DEFINE6(io_pgetevents_समय32,
+SYSCALL_DEFINE6(io_pgetevents_time32,
 		aio_context_t, ctx_id,
-		दीर्घ, min_nr,
-		दीर्घ, nr,
-		काष्ठा io_event __user *, events,
-		काष्ठा old_बारpec32 __user *, समयout,
-		स्थिर काष्ठा __aio_sigset __user *, usig)
-अणु
-	काष्ठा __aio_sigset	ksig = अणु शून्य, पूर्ण;
-	काष्ठा बारpec64	ts;
-	bool पूर्णांकerrupted;
-	पूर्णांक ret;
+		long, min_nr,
+		long, nr,
+		struct io_event __user *, events,
+		struct old_timespec32 __user *, timeout,
+		const struct __aio_sigset __user *, usig)
+{
+	struct __aio_sigset	ksig = { NULL, };
+	struct timespec64	ts;
+	bool interrupted;
+	int ret;
 
-	अगर (समयout && unlikely(get_old_बारpec32(&ts, समयout)))
-		वापस -EFAULT;
+	if (timeout && unlikely(get_old_timespec32(&ts, timeout)))
+		return -EFAULT;
 
-	अगर (usig && copy_from_user(&ksig, usig, माप(ksig)))
-		वापस -EFAULT;
+	if (usig && copy_from_user(&ksig, usig, sizeof(ksig)))
+		return -EFAULT;
 
 
 	ret = set_user_sigmask(ksig.sigmask, ksig.sigsetsize);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = करो_io_getevents(ctx_id, min_nr, nr, events, समयout ? &ts : शून्य);
+	ret = do_io_getevents(ctx_id, min_nr, nr, events, timeout ? &ts : NULL);
 
-	पूर्णांकerrupted = संकेत_pending(current);
-	restore_saved_sigmask_unless(पूर्णांकerrupted);
-	अगर (पूर्णांकerrupted && !ret)
+	interrupted = signal_pending(current);
+	restore_saved_sigmask_unless(interrupted);
+	if (interrupted && !ret)
 		ret = -ERESTARTNOHAND;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#पूर्ण_अगर
+#endif
 
-#अगर defined(CONFIG_COMPAT_32BIT_TIME)
+#if defined(CONFIG_COMPAT_32BIT_TIME)
 
-SYSCALL_DEFINE5(io_getevents_समय32, __u32, ctx_id,
+SYSCALL_DEFINE5(io_getevents_time32, __u32, ctx_id,
 		__s32, min_nr,
 		__s32, nr,
-		काष्ठा io_event __user *, events,
-		काष्ठा old_बारpec32 __user *, समयout)
-अणु
-	काष्ठा बारpec64 t;
-	पूर्णांक ret;
+		struct io_event __user *, events,
+		struct old_timespec32 __user *, timeout)
+{
+	struct timespec64 t;
+	int ret;
 
-	अगर (समयout && get_old_बारpec32(&t, समयout))
-		वापस -EFAULT;
+	if (timeout && get_old_timespec32(&t, timeout))
+		return -EFAULT;
 
-	ret = करो_io_getevents(ctx_id, min_nr, nr, events, समयout ? &t : शून्य);
-	अगर (!ret && संकेत_pending(current))
+	ret = do_io_getevents(ctx_id, min_nr, nr, events, timeout ? &t : NULL);
+	if (!ret && signal_pending(current))
 		ret = -EINTR;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#पूर्ण_अगर
+#endif
 
-#अगर_घोषित CONFIG_COMPAT
+#ifdef CONFIG_COMPAT
 
-काष्ठा __compat_aio_sigset अणु
+struct __compat_aio_sigset {
 	compat_uptr_t		sigmask;
-	compat_माप_प्रकार		sigsetsize;
-पूर्ण;
+	compat_size_t		sigsetsize;
+};
 
-#अगर defined(CONFIG_COMPAT_32BIT_TIME)
+#if defined(CONFIG_COMPAT_32BIT_TIME)
 
 COMPAT_SYSCALL_DEFINE6(io_pgetevents,
 		compat_aio_context_t, ctx_id,
-		compat_दीर्घ_t, min_nr,
-		compat_दीर्घ_t, nr,
-		काष्ठा io_event __user *, events,
-		काष्ठा old_बारpec32 __user *, समयout,
-		स्थिर काष्ठा __compat_aio_sigset __user *, usig)
-अणु
-	काष्ठा __compat_aio_sigset ksig = अणु 0, पूर्ण;
-	काष्ठा बारpec64 t;
-	bool पूर्णांकerrupted;
-	पूर्णांक ret;
+		compat_long_t, min_nr,
+		compat_long_t, nr,
+		struct io_event __user *, events,
+		struct old_timespec32 __user *, timeout,
+		const struct __compat_aio_sigset __user *, usig)
+{
+	struct __compat_aio_sigset ksig = { 0, };
+	struct timespec64 t;
+	bool interrupted;
+	int ret;
 
-	अगर (समयout && get_old_बारpec32(&t, समयout))
-		वापस -EFAULT;
+	if (timeout && get_old_timespec32(&t, timeout))
+		return -EFAULT;
 
-	अगर (usig && copy_from_user(&ksig, usig, माप(ksig)))
-		वापस -EFAULT;
+	if (usig && copy_from_user(&ksig, usig, sizeof(ksig)))
+		return -EFAULT;
 
 	ret = set_compat_user_sigmask(compat_ptr(ksig.sigmask), ksig.sigsetsize);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = करो_io_getevents(ctx_id, min_nr, nr, events, समयout ? &t : शून्य);
+	ret = do_io_getevents(ctx_id, min_nr, nr, events, timeout ? &t : NULL);
 
-	पूर्णांकerrupted = संकेत_pending(current);
-	restore_saved_sigmask_unless(पूर्णांकerrupted);
-	अगर (पूर्णांकerrupted && !ret)
+	interrupted = signal_pending(current);
+	restore_saved_sigmask_unless(interrupted);
+	if (interrupted && !ret)
 		ret = -ERESTARTNOHAND;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#पूर्ण_अगर
+#endif
 
-COMPAT_SYSCALL_DEFINE6(io_pgetevents_समय64,
+COMPAT_SYSCALL_DEFINE6(io_pgetevents_time64,
 		compat_aio_context_t, ctx_id,
-		compat_दीर्घ_t, min_nr,
-		compat_दीर्घ_t, nr,
-		काष्ठा io_event __user *, events,
-		काष्ठा __kernel_बारpec __user *, समयout,
-		स्थिर काष्ठा __compat_aio_sigset __user *, usig)
-अणु
-	काष्ठा __compat_aio_sigset ksig = अणु 0, पूर्ण;
-	काष्ठा बारpec64 t;
-	bool पूर्णांकerrupted;
-	पूर्णांक ret;
+		compat_long_t, min_nr,
+		compat_long_t, nr,
+		struct io_event __user *, events,
+		struct __kernel_timespec __user *, timeout,
+		const struct __compat_aio_sigset __user *, usig)
+{
+	struct __compat_aio_sigset ksig = { 0, };
+	struct timespec64 t;
+	bool interrupted;
+	int ret;
 
-	अगर (समयout && get_बारpec64(&t, समयout))
-		वापस -EFAULT;
+	if (timeout && get_timespec64(&t, timeout))
+		return -EFAULT;
 
-	अगर (usig && copy_from_user(&ksig, usig, माप(ksig)))
-		वापस -EFAULT;
+	if (usig && copy_from_user(&ksig, usig, sizeof(ksig)))
+		return -EFAULT;
 
 	ret = set_compat_user_sigmask(compat_ptr(ksig.sigmask), ksig.sigsetsize);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = करो_io_getevents(ctx_id, min_nr, nr, events, समयout ? &t : शून्य);
+	ret = do_io_getevents(ctx_id, min_nr, nr, events, timeout ? &t : NULL);
 
-	पूर्णांकerrupted = संकेत_pending(current);
-	restore_saved_sigmask_unless(पूर्णांकerrupted);
-	अगर (पूर्णांकerrupted && !ret)
+	interrupted = signal_pending(current);
+	restore_saved_sigmask_unless(interrupted);
+	if (interrupted && !ret)
 		ret = -ERESTARTNOHAND;
 
-	वापस ret;
-पूर्ण
-#पूर्ण_अगर
+	return ret;
+}
+#endif

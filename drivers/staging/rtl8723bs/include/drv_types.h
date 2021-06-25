@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2012 Realtek Corporation. All rights reserved.
@@ -7,91 +6,91 @@
  ******************************************************************************/
 /*-------------------------------------------------------------------------------
 
-	For type defines and data काष्ठाure defines
+	For type defines and data structure defines
 
 --------------------------------------------------------------------------------*/
 
 
-#अगर_अघोषित __DRV_TYPES_H__
-#घोषणा __DRV_TYPES_H__
+#ifndef __DRV_TYPES_H__
+#define __DRV_TYPES_H__
 
-#समावेश <linux/sched/संकेत.स>
-#समावेश <स्वतःconf.h>
-#समावेश <basic_types.h>
-#समावेश <osdep_service.h>
-#समावेश <rtw_byteorder.h>
-#समावेश <wlan_bssdef.h>
-#समावेश <wअगरi.h>
-#समावेश <ieee80211.h>
+#include <linux/sched/signal.h>
+#include <autoconf.h>
+#include <basic_types.h>
+#include <osdep_service.h>
+#include <rtw_byteorder.h>
+#include <wlan_bssdef.h>
+#include <wifi.h>
+#include <ieee80211.h>
 
-#समावेश <rtw_rf.h>
+#include <rtw_rf.h>
 
-#समावेश <rtw_ht.h>
+#include <rtw_ht.h>
 
-#समावेश <rtw_cmd.h>
-#समावेश <cmd_osdep.h>
-#समावेश <rtw_security.h>
-#समावेश <rtw_xmit.h>
-#समावेश <xmit_osdep.h>
-#समावेश <rtw_recv.h>
+#include <rtw_cmd.h>
+#include <cmd_osdep.h>
+#include <rtw_security.h>
+#include <rtw_xmit.h>
+#include <xmit_osdep.h>
+#include <rtw_recv.h>
 
-#समावेश <recv_osdep.h>
-#समावेश <rtw_efuse.h>
-#समावेश <hal_पूर्णांकf.h>
-#समावेश <hal_com.h>
-#समावेश <rtw_qos.h>
-#समावेश <rtw_pwrctrl.h>
-#समावेश <rtw_mlme.h>
-#समावेश <mlme_osdep.h>
-#समावेश <rtw_पन.स>
-#समावेश <rtw_ioctl.h>
-#समावेश <rtw_ioctl_set.h>
-#समावेश <osdep_पूर्णांकf.h>
-#समावेश <rtw_eeprom.h>
-#समावेश <sta_info.h>
-#समावेश <rtw_event.h>
-#समावेश <rtw_mlme_ext.h>
-#समावेश <rtw_ap.h>
-#समावेश <rtw_version.h>
-#समावेश <rtw_odm.h>
+#include <recv_osdep.h>
+#include <rtw_efuse.h>
+#include <hal_intf.h>
+#include <hal_com.h>
+#include <rtw_qos.h>
+#include <rtw_pwrctrl.h>
+#include <rtw_mlme.h>
+#include <mlme_osdep.h>
+#include <rtw_io.h>
+#include <rtw_ioctl.h>
+#include <rtw_ioctl_set.h>
+#include <osdep_intf.h>
+#include <rtw_eeprom.h>
+#include <sta_info.h>
+#include <rtw_event.h>
+#include <rtw_mlme_ext.h>
+#include <rtw_ap.h>
+#include <rtw_version.h>
+#include <rtw_odm.h>
 
-#समावेश "ioctl_cfg80211.h"
+#include "ioctl_cfg80211.h"
 
-#समावेश <linux/ip.h>
-#समावेश <linux/अगर_ether.h>
-#समावेश <ethernet.h>
+#include <linux/ip.h>
+#include <linux/if_ether.h>
+#include <ethernet.h>
 
-#घोषणा SPEC_DEV_ID_NONE BIT(0)
-#घोषणा SPEC_DEV_ID_DISABLE_HT BIT(1)
-#घोषणा SPEC_DEV_ID_ENABLE_PS BIT(2)
-#घोषणा SPEC_DEV_ID_RF_CONFIG_1T1R BIT(3)
-#घोषणा SPEC_DEV_ID_RF_CONFIG_2T2R BIT(4)
-#घोषणा SPEC_DEV_ID_ASSIGN_IFNAME BIT(5)
+#define SPEC_DEV_ID_NONE BIT(0)
+#define SPEC_DEV_ID_DISABLE_HT BIT(1)
+#define SPEC_DEV_ID_ENABLE_PS BIT(2)
+#define SPEC_DEV_ID_RF_CONFIG_1T1R BIT(3)
+#define SPEC_DEV_ID_RF_CONFIG_2T2R BIT(4)
+#define SPEC_DEV_ID_ASSIGN_IFNAME BIT(5)
 
-काष्ठा registry_priv अणु
+struct registry_priv {
 	u8 chip_version;
-	u8 rfपूर्णांकfs;
+	u8 rfintfs;
 	u8 lbkmode;
 	u8 hci;
-	काष्ठा ndis_802_11_ssid	ssid;
-	u8 network_mode;	/* infra, ad-hoc, स्वतः */
+	struct ndis_802_11_ssid	ssid;
+	u8 network_mode;	/* infra, ad-hoc, auto */
 	u8 channel;/* ad-hoc support requirement */
-	u8 wireless_mode;/* A, B, G, स्वतः */
+	u8 wireless_mode;/* A, B, G, auto */
 	u8 scan_mode;/* active, passive */
 	u8 radio_enable;
-	u8 preamble;/* दीर्घ, लघु, स्वतः */
+	u8 preamble;/* long, short, auto */
 	u8 vrtl_carrier_sense;/* Enable, Disable, Auto */
 	u8 vcs_type;/* RTS/CTS, CTS-to-self */
 	u16 rts_thresh;
 	u16  frag_thresh;
 	u8 adhoc_tx_pwr;
 	u8 soft_ap;
-	u8 घातer_mgnt;
+	u8 power_mgnt;
 	u8 ips_mode;
 	u8 smart_ps;
 	u8   usb_rxagg_mode;
-	u8 दीर्घ_retry_lmt;
-	u8 लघु_retry_lmt;
+	u8 long_retry_lmt;
+	u8 short_retry_lmt;
 	u16 busy_thresh;
 	u8 ack_policy;
 	u8  mp_dm;
@@ -107,14 +106,14 @@
 	u8 uapsd_acvi_en;
 	u8 uapsd_acvo_en;
 
-	काष्ठा wlan_bssid_ex    dev_network;
+	struct wlan_bssid_ex    dev_network;
 
 	u8 ht_enable;
 	/*  0: 20 MHz, 1: 40 MHz, 2: 80 MHz, 3: 160MHz */
 	/*  2.4G use bit 0 ~ 3, 5G use bit 4 ~ 7 */
 	/*  0x21 means enable 2.4G 40MHz & 5G 80MHz */
 	u8 bw_mode;
-	u8 ampdu_enable;/* क्रम tx */
+	u8 ampdu_enable;/* for tx */
 	u8 rx_stbc;
 	u8 ampdu_amsdu;/* A-MPDU Supports A-MSDU is permitted */
 	/*  Short GI support Bit Map */
@@ -122,20 +121,20 @@
 	/*  BIT1 - 40MHz, 1: support, 0: non-support */
 	/*  BIT2 - 80MHz, 1: support, 0: non-support */
 	/*  BIT3 - 160MHz, 1: support, 0: non-support */
-	u8 लघु_gi;
+	u8 short_gi;
 	/*  BIT0: Enable VHT LDPC Rx, BIT1: Enable VHT LDPC Tx, BIT4: Enable HT LDPC Rx, BIT5: Enable HT LDPC Tx */
 	u8 ldpc_cap;
 	/*  BIT0: Enable VHT STBC Rx, BIT1: Enable VHT STBC Tx, BIT4: Enable HT STBC Rx, BIT5: Enable HT STBC Tx */
 	u8 stbc_cap;
-	/*  BIT0: Enable VHT Beamक्रमmer, BIT1: Enable VHT Beamक्रमmee, BIT4: Enable HT Beamक्रमmer, BIT5: Enable HT Beamक्रमmee */
-	u8 beamक्रमm_cap;
+	/*  BIT0: Enable VHT Beamformer, BIT1: Enable VHT Beamformee, BIT4: Enable HT Beamformer, BIT5: Enable HT Beamformee */
+	u8 beamform_cap;
 
 	u8 lowrate_two_xmit;
 
 	u8 rf_config;
-	u8 low_घातer;
+	u8 low_power;
 
-	u8 wअगरi_spec;/*  !turbo_mode */
+	u8 wifi_spec;/*  !turbo_mode */
 
 	u8 channel_plan;
 
@@ -148,8 +147,8 @@
 	/* false:Reject AP's Add BA req, true:accept AP's Add BA req */
 	bool	accept_addba_req;
 
-	u8 antभाग_cfg;
-	u8 antभाग_प्रकारype;
+	u8 antdiv_cfg;
+	u8 antdiv_type;
 
 	u8 usbss_enable;/* 0:disable, 1:enable */
 	u8 hwpdn_mode;/* 0:disable, 1:enable, 2:decide by EFUSE config */
@@ -157,23 +156,23 @@
 
 	u8 hw_wps_pbc;/* 0:disable, 1:enable */
 
-	u8 max_roaming_बार; /*  the max number driver will try to roaming */
+	u8 max_roaming_times; /*  the max number driver will try to roaming */
 
 	u8 enable80211d;
 
-	u8 अगरname[16];
+	u8 ifname[16];
 
 	u8 notch_filter;
 
-	/* define क्रम tx घातer adjust */
+	/* define for tx power adjust */
 	u8 RegEnableTxPowerLimit;
 	u8 RegEnableTxPowerByRate;
 	u8 RegPowerBase;
 	u8 RegPwrTblSel;
 	s8	TxBBSwing_2G;
 	s8	TxBBSwing_5G;
-	u8 AmplअगरierType_2G;
-	u8 AmplअगरierType_5G;
+	u8 AmplifierType_2G;
+	u8 AmplifierType_5G;
 	u8 bEn_RFE;
 	u8 RFE_Type;
 	u8  check_fw_ps;
@@ -181,27 +180,27 @@
 	u8 qos_opt_enable;
 
 	u8 hiq_filter;
-पूर्ण;
+};
 
 
 /* For registry parameters */
-#घोषणा RGTRY_OFT(field) ((u32)FIELD_OFFSET(काष्ठा registry_priv, field))
-#घोषणा RGTRY_SZ(field)   माप(((काष्ठा registry_priv *)0)->field)
-#घोषणा BSSID_OFT(field) ((u32)FIELD_OFFSET(काष्ठा wlan_bssid_ex, field))
-#घोषणा BSSID_SZ(field)   माप(((काष्ठा wlan_bssid_ex *) 0)->field)
+#define RGTRY_OFT(field) ((u32)FIELD_OFFSET(struct registry_priv, field))
+#define RGTRY_SZ(field)   sizeof(((struct registry_priv *)0)->field)
+#define BSSID_OFT(field) ((u32)FIELD_OFFSET(struct wlan_bssid_ex, field))
+#define BSSID_SZ(field)   sizeof(((struct wlan_bssid_ex *) 0)->field)
 
-#समावेश <drv_types_sdपन.स>
+#include <drv_types_sdio.h>
 
-#घोषणा is_primary_adapter(adapter) (1)
-#घोषणा get_अगरace_type(adapter) (IFACE_PORT0)
-#घोषणा GET_PRIMARY_ADAPTER(padapter) (((काष्ठा adapter *)padapter)->dvobj->अगर1)
-#घोषणा GET_IFACE_NUMS(padapter) (((काष्ठा adapter *)padapter)->dvobj->अगरace_nums)
-#घोषणा GET_ADAPTER(padapter, अगरace_id) (((काष्ठा adapter *)padapter)->dvobj->padapters[अगरace_id])
+#define is_primary_adapter(adapter) (1)
+#define get_iface_type(adapter) (IFACE_PORT0)
+#define GET_PRIMARY_ADAPTER(padapter) (((struct adapter *)padapter)->dvobj->if1)
+#define GET_IFACE_NUMS(padapter) (((struct adapter *)padapter)->dvobj->iface_nums)
+#define GET_ADAPTER(padapter, iface_id) (((struct adapter *)padapter)->dvobj->padapters[iface_id])
 
-काष्ठा debug_priv अणु
-	u32 dbg_sdio_मुक्त_irq_error_cnt;
+struct debug_priv {
+	u32 dbg_sdio_free_irq_error_cnt;
 	u32 dbg_sdio_alloc_irq_error_cnt;
-	u32 dbg_sdio_मुक्त_irq_cnt;
+	u32 dbg_sdio_free_irq_cnt;
 	u32 dbg_sdio_alloc_irq_cnt;
 	u32 dbg_sdio_deinit_error_cnt;
 	u32 dbg_sdio_init_error_cnt;
@@ -216,28 +215,28 @@
 	u32 dbg_dev_unload_inIPS_cnt;
 	u32 dbg_wow_leave_ps_fail_cnt;
 	u32 dbg_scan_pwr_state_cnt;
-	u32 dbg_करोwnloadfw_pwr_state_cnt;
-	u32 dbg_fw_पढ़ो_ps_state_fail_cnt;
+	u32 dbg_downloadfw_pwr_state_cnt;
+	u32 dbg_fw_read_ps_state_fail_cnt;
 	u32 dbg_leave_ips_fail_cnt;
 	u32 dbg_leave_lps_fail_cnt;
 	u32 dbg_h2c_leave32k_fail_cnt;
 	u32 dbg_diswow_dload_fw_fail_cnt;
 	u32 dbg_enwow_dload_fw_fail_cnt;
-	u32 dbg_ips_drvखोलो_fail_cnt;
+	u32 dbg_ips_drvopen_fail_cnt;
 	u32 dbg_poll_fail_cnt;
 	u32 dbg_rpwm_toggle_cnt;
-	u32 dbg_rpwm_समयout_fail_cnt;
-	u64 dbg_rx_fअगरo_last_overflow;
-	u64 dbg_rx_fअगरo_curr_overflow;
-	u64 dbg_rx_fअगरo_dअगरf_overflow;
+	u32 dbg_rpwm_timeout_fail_cnt;
+	u64 dbg_rx_fifo_last_overflow;
+	u64 dbg_rx_fifo_curr_overflow;
+	u64 dbg_rx_fifo_diff_overflow;
 	u64 dbg_rx_ampdu_drop_count;
-	u64 dbg_rx_ampdu_क्रमced_indicate_count;
+	u64 dbg_rx_ampdu_forced_indicate_count;
 	u64 dbg_rx_ampdu_loss_count;
 	u64 dbg_rx_dup_mgt_frame_drop_count;
-	u64 dbg_rx_ampdu_winकरोw_shअगरt_cnt;
-पूर्ण;
+	u64 dbg_rx_ampdu_window_shift_cnt;
+};
 
-काष्ठा rtw_traffic_statistics अणु
+struct rtw_traffic_statistics {
 	/*  tx statistics */
 	u64	tx_bytes;
 	u64	tx_pkts;
@@ -253,120 +252,120 @@
 	u64	cur_rx_bytes;
 	u64	last_rx_bytes;
 	u32 cur_rx_tp; /*  Rx throughput in MBps. */
-पूर्ण;
+};
 
-काष्ठा cam_ctl_t अणु
+struct cam_ctl_t {
 	spinlock_t lock;
-	u64 biपंचांगap;
-पूर्ण;
+	u64 bitmap;
+};
 
-काष्ठा cam_entry_cache अणु
+struct cam_entry_cache {
 	u16 ctrl;
 	u8 mac[ETH_ALEN];
 	u8 key[16];
-पूर्ण;
+};
 
-काष्ठा dvobj_priv अणु
+struct dvobj_priv {
 	/*-------- below is common data --------*/
-	काष्ठा adapter *अगर1; /* PRIMARY_ADAPTER */
+	struct adapter *if1; /* PRIMARY_ADAPTER */
 
-	s32	processing_dev_हटाओ;
+	s32	processing_dev_remove;
 
-	काष्ठा debug_priv drv_dbg;
+	struct debug_priv drv_dbg;
 
-	/* क्रम local/global synchronization */
+	/* for local/global synchronization */
 	/*  */
 	spinlock_t	lock;
-	पूर्णांक macid[NUM_STA];
+	int macid[NUM_STA];
 
-	काष्ठा mutex hw_init_mutex;
-	काष्ठा mutex h2c_fwcmd_mutex;
-	काष्ठा mutex setch_mutex;
-	काष्ठा mutex setbw_mutex;
+	struct mutex hw_init_mutex;
+	struct mutex h2c_fwcmd_mutex;
+	struct mutex setch_mutex;
+	struct mutex setbw_mutex;
 
-	अचिन्हित अक्षर oper_channel; /* saved channel info when call set_channel_bw */
-	अचिन्हित अक्षर oper_bwmode;
-	अचिन्हित अक्षर oper_ch_offset;/* PRIME_CHNL_OFFSET */
-	अचिन्हित दीर्घ on_oper_ch_समय;
+	unsigned char oper_channel; /* saved channel info when call set_channel_bw */
+	unsigned char oper_bwmode;
+	unsigned char oper_ch_offset;/* PRIME_CHNL_OFFSET */
+	unsigned long on_oper_ch_time;
 
-	काष्ठा adapter *padapters;
+	struct adapter *padapters;
 
-	काष्ठा cam_ctl_t cam_ctl;
-	काष्ठा cam_entry_cache cam_cache[TOTAL_CAM_ENTRY];
+	struct cam_ctl_t cam_ctl;
+	struct cam_entry_cache cam_cache[TOTAL_CAM_ENTRY];
 
-	/* In /Out Pipe inक्रमmation */
-	पूर्णांक	RtInPipe[2];
-	पूर्णांक	RtOutPipe[4];
-	u8 Queue2Pipe[HW_QUEUE_ENTRY];/* क्रम out pipe mapping */
+	/* In /Out Pipe information */
+	int	RtInPipe[2];
+	int	RtOutPipe[4];
+	u8 Queue2Pipe[HW_QUEUE_ENTRY];/* for out pipe mapping */
 
 	u8 irq_alloc;
 	atomic_t continual_io_error;
 
 	atomic_t disable_func;
 
-	काष्ठा pwrctrl_priv pwrctl_priv;
+	struct pwrctrl_priv pwrctl_priv;
 
-	काष्ठा rtw_traffic_statistics	traffic_stat;
+	struct rtw_traffic_statistics	traffic_stat;
 
-/*-------- below is क्रम SDIO INTERFACE --------*/
+/*-------- below is for SDIO INTERFACE --------*/
 
-काष्ठा sdio_data पूर्णांकf_data;
+struct sdio_data intf_data;
 
-पूर्ण;
+};
 
-#घोषणा dvobj_to_pwrctl(dvobj) (&(dvobj->pwrctl_priv))
-#घोषणा pwrctl_to_dvobj(pwrctl) container_of(pwrctl, काष्ठा dvobj_priv, pwrctl_priv)
+#define dvobj_to_pwrctl(dvobj) (&(dvobj->pwrctl_priv))
+#define pwrctl_to_dvobj(pwrctl) container_of(pwrctl, struct dvobj_priv, pwrctl_priv)
 
-अटल अंतरभूत काष्ठा device *dvobj_to_dev(काष्ठा dvobj_priv *dvobj)
-अणु
-	/* toकरो: get पूर्णांकerface type from dvobj and the वापस the dev accordingly */
-#अगर_घोषित RTW_DVOBJ_CHIP_HW_TYPE
-#पूर्ण_अगर
+static inline struct device *dvobj_to_dev(struct dvobj_priv *dvobj)
+{
+	/* todo: get interface type from dvobj and the return the dev accordingly */
+#ifdef RTW_DVOBJ_CHIP_HW_TYPE
+#endif
 
-	वापस &dvobj->पूर्णांकf_data.func->dev;
-पूर्ण
+	return &dvobj->intf_data.func->dev;
+}
 
-काष्ठा adapter *dvobj_get_port0_adapter(काष्ठा dvobj_priv *dvobj);
+struct adapter *dvobj_get_port0_adapter(struct dvobj_priv *dvobj);
 
-क्रमागत अणु
-	IFACE_PORT0, /* mapping to port0 क्रम C/D series chips */
-	IFACE_PORT1, /* mapping to port1 क्रम C/D series chip */
+enum {
+	IFACE_PORT0, /* mapping to port0 for C/D series chips */
+	IFACE_PORT1, /* mapping to port1 for C/D series chip */
 	MAX_IFACE_PORT,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	DRIVER_NORMAL = 0,
 	DRIVER_DISAPPEAR = 1,
 	DRIVER_REPLACE_DONGLE = 2,
-पूर्ण;
+};
 
-काष्ठा adapter अणु
-	पूर्णांक	DriverState;/*  क्रम disable driver using module, use करोngle to replace module. */
-	पूर्णांक	pid[3];/* process id from UI, 0:wps, 1:hostapd, 2:dhcpcd */
-	पूर्णांक	bDongle;/* build-in module or बाह्यal करोngle */
+struct adapter {
+	int	DriverState;/*  for disable driver using module, use dongle to replace module. */
+	int	pid[3];/* process id from UI, 0:wps, 1:hostapd, 2:dhcpcd */
+	int	bDongle;/* build-in module or external dongle */
 
-	काष्ठा dvobj_priv *dvobj;
-	काष्ठा	mlme_priv mlmepriv;
-	काष्ठा	mlme_ext_priv mlmeextpriv;
-	काष्ठा	cmd_priv cmdpriv;
-	काष्ठा	evt_priv evtpriv;
-	/* काष्ठा	io_queue	*pio_queue; */
-	काष्ठा	io_priv iopriv;
-	काष्ठा	xmit_priv xmitpriv;
-	काष्ठा	recv_priv recvpriv;
-	काष्ठा	sta_priv stapriv;
-	काष्ठा	security_priv securitypriv;
-	spinlock_t   security_key_mutex; /*  add क्रम CONFIG_IEEE80211W, none 11w also can use */
-	काष्ठा	registry_priv registrypriv;
-	काष्ठा	eeprom_priv eeprompriv;
+	struct dvobj_priv *dvobj;
+	struct	mlme_priv mlmepriv;
+	struct	mlme_ext_priv mlmeextpriv;
+	struct	cmd_priv cmdpriv;
+	struct	evt_priv evtpriv;
+	/* struct	io_queue	*pio_queue; */
+	struct	io_priv iopriv;
+	struct	xmit_priv xmitpriv;
+	struct	recv_priv recvpriv;
+	struct	sta_priv stapriv;
+	struct	security_priv securitypriv;
+	spinlock_t   security_key_mutex; /*  add for CONFIG_IEEE80211W, none 11w also can use */
+	struct	registry_priv registrypriv;
+	struct	eeprom_priv eeprompriv;
 
-	काष्ठा	hostapd_priv *phostapdpriv;
+	struct	hostapd_priv *phostapdpriv;
 
 	u32 setband;
 
-	व्योम *HalData;
+	void *HalData;
 	u32 hal_data_sz;
-	काष्ठा hal_ops	HalFunc;
+	struct hal_ops	HalFunc;
 
 	s32	bDriverStopped;
 	s32	bSurpriseRemoved;
@@ -381,40 +380,40 @@
 	u8 init_adpt_in_progress;
 	u8 bHaltInProgress;
 
-	व्योम *cmdThपढ़ो;
-	व्योम *evtThपढ़ो;
-	व्योम *xmitThपढ़ो;
-	व्योम *recvThपढ़ो;
+	void *cmdThread;
+	void *evtThread;
+	void *xmitThread;
+	void *recvThread;
 
-	u32 (*पूर्णांकf_init)(काष्ठा dvobj_priv *dvobj);
-	व्योम (*पूर्णांकf_deinit)(काष्ठा dvobj_priv *dvobj);
-	पूर्णांक (*पूर्णांकf_alloc_irq)(काष्ठा dvobj_priv *dvobj);
-	व्योम (*पूर्णांकf_मुक्त_irq)(काष्ठा dvobj_priv *dvobj);
+	u32 (*intf_init)(struct dvobj_priv *dvobj);
+	void (*intf_deinit)(struct dvobj_priv *dvobj);
+	int (*intf_alloc_irq)(struct dvobj_priv *dvobj);
+	void (*intf_free_irq)(struct dvobj_priv *dvobj);
 
 
-	व्योम (*पूर्णांकf_start)(काष्ठा adapter *adapter);
-	व्योम (*पूर्णांकf_stop)(काष्ठा adapter *adapter);
+	void (*intf_start)(struct adapter *adapter);
+	void (*intf_stop)(struct adapter *adapter);
 
-	काष्ठा net_device *pnetdev;
-	अक्षर old_अगरname[IFNAMSIZ];
+	struct net_device *pnetdev;
+	char old_ifname[IFNAMSIZ];
 
 	/*  used by rtw_rereg_nd_name related function */
-	काष्ठा rereg_nd_name_data अणु
-		काष्ठा net_device *old_pnetdev;
-		अक्षर old_अगरname[IFNAMSIZ];
+	struct rereg_nd_name_data {
+		struct net_device *old_pnetdev;
+		char old_ifname[IFNAMSIZ];
 		u8 old_bRegUseLed;
-	पूर्ण rereg_nd_name_priv;
+	} rereg_nd_name_priv;
 
-	पूर्णांक bup;
-	काष्ठा net_device_stats stats;
-	काष्ठा iw_statistics iwstats;
+	int bup;
+	struct net_device_stats stats;
+	struct iw_statistics iwstats;
 
-	काष्ठा wireless_dev *rtw_wdev;
-	काष्ठा rtw_wdev_priv wdev_data;
+	struct wireless_dev *rtw_wdev;
+	struct rtw_wdev_priv wdev_data;
 
-	पूर्णांक net_बंदd;
+	int net_closed;
 
-	u8 netअगर_up;
+	u8 netif_up;
 
 	u8 bFWReady;
 	u8 bBTFWReady;
@@ -422,97 +421,97 @@
 	u8 bRxRSSIDisplay;
 	/* 	Added by Albert 2012/10/26 */
 	/* 	The driver will show up the desired channel number when this flag is 1. */
-	u8 bNotअगरyChannelChange;
+	u8 bNotifyChannelChange;
 
-	/* pbuddyकाष्ठा adapter is used only in two पूर्णांकerface हाल, (अगरace_nums =2 in काष्ठा dvobj_priv) */
+	/* pbuddystruct adapter is used only in two interface case, (iface_nums =2 in struct dvobj_priv) */
 	/* PRIMARY ADAPTER's buddy is SECONDARY_ADAPTER */
 	/* SECONDARY_ADAPTER's buddy is PRIMARY_ADAPTER */
-	/* क्रम अगरace_id > SECONDARY_ADAPTER(IFACE_ID1), refer to padapters[अगरace_id]  in काष्ठा dvobj_priv */
-	/* and their pbuddyकाष्ठा adapter is PRIMARY_ADAPTER. */
-	/* क्रम PRIMARY_ADAPTER(IFACE_ID0) can directly refer to अगर1 in काष्ठा dvobj_priv */
-	काष्ठा adapter *pbuddy_adapter;
+	/* for iface_id > SECONDARY_ADAPTER(IFACE_ID1), refer to padapters[iface_id]  in struct dvobj_priv */
+	/* and their pbuddystruct adapter is PRIMARY_ADAPTER. */
+	/* for PRIMARY_ADAPTER(IFACE_ID0) can directly refer to if1 in struct dvobj_priv */
+	struct adapter *pbuddy_adapter;
 
-	/* extend to support multi पूर्णांकerface */
+	/* extend to support multi interface */
        /* IFACE_ID0 is equals to PRIMARY_ADAPTER */
        /* IFACE_ID1 is equals to SECONDARY_ADAPTER */
-	u8 अगरace_id;
+	u8 iface_id;
 
-	/* क्रम debug purpose */
+	/* for debug purpose */
 	u8 fix_rate;
-	u8 driver_vcs_en; /* Enable = 1, Disable = 0 driver control vrtl_carrier_sense क्रम tx */
-	u8 driver_vcs_type;/* क्रमce 0:disable VCS, 1:RTS-CTS, 2:CTS-to-self when vcs_en = 1. */
-	u8 driver_ampdu_spacing;/* driver control AMPDU Density क्रम peer sta's rx */
+	u8 driver_vcs_en; /* Enable = 1, Disable = 0 driver control vrtl_carrier_sense for tx */
+	u8 driver_vcs_type;/* force 0:disable VCS, 1:RTS-CTS, 2:CTS-to-self when vcs_en = 1. */
+	u8 driver_ampdu_spacing;/* driver control AMPDU Density for peer sta's rx */
 	u8 driver_rx_ampdu_factor;/* 0xff: disable drv ctrl, 0:8k, 1:16k, 2:32k, 3:64k; */
 
-	अचिन्हित अक्षर     in_cta_test;
-पूर्ण;
+	unsigned char     in_cta_test;
+};
 
-#घोषणा adapter_to_dvobj(adapter) (adapter->dvobj)
-#घोषणा adapter_to_pwrctl(adapter) (dvobj_to_pwrctl(adapter->dvobj))
-#घोषणा adapter_wdev_data(adapter) (&((adapter)->wdev_data))
+#define adapter_to_dvobj(adapter) (adapter->dvobj)
+#define adapter_to_pwrctl(adapter) (dvobj_to_pwrctl(adapter->dvobj))
+#define adapter_wdev_data(adapter) (&((adapter)->wdev_data))
 
 /*  */
 /*  Function disabled. */
 /*  */
-#घोषणा DF_TX_BIT		BIT0
-#घोषणा DF_RX_BIT		BIT1
-#घोषणा DF_IO_BIT		BIT2
+#define DF_TX_BIT		BIT0
+#define DF_RX_BIT		BIT1
+#define DF_IO_BIT		BIT2
 
 /* define RTW_DISABLE_FUNC(padapter, func) (atomic_add(&adapter_to_dvobj(padapter)->disable_func, (func))) */
 /* define RTW_ENABLE_FUNC(padapter, func) (atomic_sub(&adapter_to_dvobj(padapter)->disable_func, (func))) */
-अटल अंतरभूत व्योम RTW_DISABLE_FUNC(काष्ठा adapter *padapter, पूर्णांक func_bit)
-अणु
-	पूर्णांक	df = atomic_पढ़ो(&adapter_to_dvobj(padapter)->disable_func);
+static inline void RTW_DISABLE_FUNC(struct adapter *padapter, int func_bit)
+{
+	int	df = atomic_read(&adapter_to_dvobj(padapter)->disable_func);
 	df |= func_bit;
 	atomic_set(&adapter_to_dvobj(padapter)->disable_func, df);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम RTW_ENABLE_FUNC(काष्ठा adapter *padapter, पूर्णांक func_bit)
-अणु
-	पूर्णांक	df = atomic_पढ़ो(&adapter_to_dvobj(padapter)->disable_func);
+static inline void RTW_ENABLE_FUNC(struct adapter *padapter, int func_bit)
+{
+	int	df = atomic_read(&adapter_to_dvobj(padapter)->disable_func);
 	df &= ~(func_bit);
 	atomic_set(&adapter_to_dvobj(padapter)->disable_func, df);
-पूर्ण
+}
 
-#घोषणा RTW_IS_FUNC_DISABLED(padapter, func_bit) (atomic_पढ़ो(&adapter_to_dvobj(padapter)->disable_func) & (func_bit))
+#define RTW_IS_FUNC_DISABLED(padapter, func_bit) (atomic_read(&adapter_to_dvobj(padapter)->disable_func) & (func_bit))
 
-#घोषणा RTW_CANNOT_IO(padapter) \
+#define RTW_CANNOT_IO(padapter) \
 			((padapter)->bSurpriseRemoved || \
 			 RTW_IS_FUNC_DISABLED((padapter), DF_IO_BIT))
 
-#घोषणा RTW_CANNOT_RX(padapter) \
+#define RTW_CANNOT_RX(padapter) \
 			((padapter)->bDriverStopped || \
 			 (padapter)->bSurpriseRemoved || \
 			 RTW_IS_FUNC_DISABLED((padapter), DF_RX_BIT))
 
-#घोषणा RTW_CANNOT_TX(padapter) \
+#define RTW_CANNOT_TX(padapter) \
 			((padapter)->bDriverStopped || \
 			 (padapter)->bSurpriseRemoved || \
 			 RTW_IS_FUNC_DISABLED((padapter), DF_TX_BIT))
 
-अटल अंतरभूत u8 *myid(काष्ठा eeprom_priv *peepriv)
-अणु
-	वापस peepriv->mac_addr;
-पूर्ण
+static inline u8 *myid(struct eeprom_priv *peepriv)
+{
+	return peepriv->mac_addr;
+}
 
 /*  HCI Related header file */
-#समावेश <sdio_osपूर्णांकf.h>
-#समावेश <sdio_ops.h>
-#समावेश <sdio_hal.h>
+#include <sdio_osintf.h>
+#include <sdio_ops.h>
+#include <sdio_hal.h>
 
-#समावेश <rtw_btcoex.h>
+#include <rtw_btcoex.h>
 
-व्योम rtw_indicate_wx_disassoc_event(काष्ठा adapter *padapter);
-व्योम rtw_indicate_wx_assoc_event(काष्ठा adapter *padapter);
-व्योम rtw_indicate_wx_disassoc_event(काष्ठा adapter *padapter);
-व्योम indicate_wx_scan_complete_event(काष्ठा adapter *padapter);
-पूर्णांक rtw_change_अगरname(काष्ठा adapter *padapter, स्थिर अक्षर *अगरname);
+void rtw_indicate_wx_disassoc_event(struct adapter *padapter);
+void rtw_indicate_wx_assoc_event(struct adapter *padapter);
+void rtw_indicate_wx_disassoc_event(struct adapter *padapter);
+void indicate_wx_scan_complete_event(struct adapter *padapter);
+int rtw_change_ifname(struct adapter *padapter, const char *ifname);
 
-बाह्य अक्षर *rtw_iniपंचांगac;
-बाह्य पूर्णांक rtw_mc2u_disable;
-बाह्य पूर्णांक rtw_ht_enable;
-बाह्य u32 g_रुको_hiq_empty;
-बाह्य u8 g_fwdl_wपूर्णांकपूर्णांक_rdy_fail;
-बाह्य u8 g_fwdl_chksum_fail;
+extern char *rtw_initmac;
+extern int rtw_mc2u_disable;
+extern int rtw_ht_enable;
+extern u32 g_wait_hiq_empty;
+extern u8 g_fwdl_wintint_rdy_fail;
+extern u8 g_fwdl_chksum_fail;
 
-#पूर्ण_अगर /* __DRV_TYPES_H__ */
+#endif /* __DRV_TYPES_H__ */

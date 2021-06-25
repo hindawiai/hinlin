@@ -1,56 +1,55 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Lan Emulation client header file
  *
  * Marko Kiiskila <mkiiskila@yahoo.com>
  */
 
-#अगर_अघोषित _LEC_H_
-#घोषणा _LEC_H_
+#ifndef _LEC_H_
+#define _LEC_H_
 
-#समावेश <linux/aपंचांगdev.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/aपंचांगlec.h>
+#include <linux/atmdev.h>
+#include <linux/netdevice.h>
+#include <linux/atmlec.h>
 
-#घोषणा LEC_HEADER_LEN 16
+#define LEC_HEADER_LEN 16
 
-काष्ठा lecdatahdr_8023 अणु
+struct lecdatahdr_8023 {
 	__be16 le_header;
-	अचिन्हित अक्षर h_dest[ETH_ALEN];
-	अचिन्हित अक्षर h_source[ETH_ALEN];
+	unsigned char h_dest[ETH_ALEN];
+	unsigned char h_source[ETH_ALEN];
 	__be16 h_type;
-पूर्ण;
+};
 
-काष्ठा lecdatahdr_8025 अणु
+struct lecdatahdr_8025 {
 	__be16 le_header;
-	अचिन्हित अक्षर ac_pad;
-	अचिन्हित अक्षर fc;
-	अचिन्हित अक्षर h_dest[ETH_ALEN];
-	अचिन्हित अक्षर h_source[ETH_ALEN];
-पूर्ण;
+	unsigned char ac_pad;
+	unsigned char fc;
+	unsigned char h_dest[ETH_ALEN];
+	unsigned char h_source[ETH_ALEN];
+};
 
-#घोषणा LEC_MINIMUM_8023_SIZE   62
-#घोषणा LEC_MINIMUM_8025_SIZE   16
+#define LEC_MINIMUM_8023_SIZE   62
+#define LEC_MINIMUM_8025_SIZE   16
 
 /*
- * Operations that LANE2 capable device can करो. Two first functions
- * are used to make the device करो things. See spec 3.1.3 and 3.1.4.
+ * Operations that LANE2 capable device can do. Two first functions
+ * are used to make the device do things. See spec 3.1.3 and 3.1.4.
  *
- * The third function is पूर्णांकended क्रम the MPOA component sitting on
+ * The third function is intended for the MPOA component sitting on
  * top of the LANE device. The MPOA component assigns it's own function
  * to (*associate_indicator)() and the LANE device will use that
- * function to tell about TLVs it sees भग्नing through.
+ * function to tell about TLVs it sees floating through.
  *
  */
-काष्ठा lane2_ops अणु
-	पूर्णांक (*resolve) (काष्ठा net_device *dev, स्थिर u8 *dst_mac, पूर्णांक क्रमce,
-			u8 **tlvs, u32 *मापtlvs);
-	पूर्णांक (*associate_req) (काष्ठा net_device *dev, स्थिर u8 *lan_dst,
-			      स्थिर u8 *tlvs, u32 मापtlvs);
-	व्योम (*associate_indicator) (काष्ठा net_device *dev, स्थिर u8 *mac_addr,
-				     स्थिर u8 *tlvs, u32 मापtlvs);
-पूर्ण;
+struct lane2_ops {
+	int (*resolve) (struct net_device *dev, const u8 *dst_mac, int force,
+			u8 **tlvs, u32 *sizeoftlvs);
+	int (*associate_req) (struct net_device *dev, const u8 *lan_dst,
+			      const u8 *tlvs, u32 sizeoftlvs);
+	void (*associate_indicator) (struct net_device *dev, const u8 *mac_addr,
+				     const u8 *tlvs, u32 sizeoftlvs);
+};
 
 /*
  * ATM LAN Emulation supports both LLC & Dix Ethernet EtherType
@@ -62,28 +61,28 @@
  *    but not padding required to meet the minimum data frame length,
  *    is less than ETH_P_802_3_MIN MUST be encoded by placing that length
  *    in the h_type field. The LLC field follows header immediately.
- * 3. LLC data frames दीर्घer than this maximum MUST be encoded by placing
+ * 3. LLC data frames longer than this maximum MUST be encoded by placing
  *    the value 0 in the h_type field.
  *
  */
 
 /* Hash table size */
-#घोषणा LEC_ARP_TABLE_SIZE 16
+#define LEC_ARP_TABLE_SIZE 16
 
-काष्ठा lec_priv अणु
-	अचिन्हित लघु lecid;			/* Lecid of this client */
-	काष्ठा hlist_head lec_arp_empty_ones;
-						/* Used क्रम storing VCC's that don't have a MAC address attached yet */
-	काष्ठा hlist_head lec_arp_tables[LEC_ARP_TABLE_SIZE];
+struct lec_priv {
+	unsigned short lecid;			/* Lecid of this client */
+	struct hlist_head lec_arp_empty_ones;
+						/* Used for storing VCC's that don't have a MAC address attached yet */
+	struct hlist_head lec_arp_tables[LEC_ARP_TABLE_SIZE];
 						/* Actual LE ARP table */
-	काष्ठा hlist_head lec_no_क्रमward;
+	struct hlist_head lec_no_forward;
 						/*
-						 * Used क्रम storing VCC's (and क्रमward packets from) which are to
-						 * age out by not using them to क्रमward packets.
+						 * Used for storing VCC's (and forward packets from) which are to
+						 * age out by not using them to forward packets.
 						 * This is because to some LE clients there will be 2 VCCs. Only
-						 * one of them माला_लो used.
+						 * one of them gets used.
 						 */
-	काष्ठा hlist_head mcast_fwds;
+	struct hlist_head mcast_fwds;
 						/*
 						 * With LANEv2 it is possible that BUS (or a special multicast server)
 						 * establishes multiple Multicast Forward VCCs to us. This list
@@ -91,66 +90,66 @@
 						 * list. These entries are not aged out.
 						 */
 	spinlock_t lec_arp_lock;
-	काष्ठा aपंचांग_vcc *mcast_vcc;		/* Default Multicast Send VCC */
-	काष्ठा aपंचांग_vcc *lecd;
-	काष्ठा delayed_work lec_arp_work;	/* C10 */
-	अचिन्हित पूर्णांक maximum_unknown_frame_count;
+	struct atm_vcc *mcast_vcc;		/* Default Multicast Send VCC */
+	struct atm_vcc *lecd;
+	struct delayed_work lec_arp_work;	/* C10 */
+	unsigned int maximum_unknown_frame_count;
 						/*
-						 * Within the period of समय defined by this variable, the client will send
-						 * no more than C10 frames to BUS क्रम a given unicast destination. (C11)
+						 * Within the period of time defined by this variable, the client will send
+						 * no more than C10 frames to BUS for a given unicast destination. (C11)
 						 */
-	अचिन्हित दीर्घ max_unknown_frame_समय;
+	unsigned long max_unknown_frame_time;
 						/*
-						 * If no traffic has been sent in this vcc क्रम this period of समय,
-						 * vcc will be torn करोwn (C12)
+						 * If no traffic has been sent in this vcc for this period of time,
+						 * vcc will be torn down (C12)
 						 */
-	अचिन्हित दीर्घ vcc_समयout_period;
+	unsigned long vcc_timeout_period;
 						/*
-						 * An LE Client MUST not retry an LE_ARP_REQUEST क्रम a
-						 * given frame's LAN Destination more than maximum retry count बार,
+						 * An LE Client MUST not retry an LE_ARP_REQUEST for a
+						 * given frame's LAN Destination more than maximum retry count times,
 						 * after the first LEC_ARP_REQUEST (C13)
 						 */
-	अचिन्हित लघु max_retry_count;
+	unsigned short max_retry_count;
 						/*
-						 * Max समय the client will मुख्यtain an entry in its arp cache in
-						 * असलence of a verअगरication of that relationship (C17)
+						 * Max time the client will maintain an entry in its arp cache in
+						 * absence of a verification of that relationship (C17)
 						 */
-	अचिन्हित दीर्घ aging_समय;
+	unsigned long aging_time;
 						/*
-						 * Max समय the client will मुख्यtain an entry in cache when
+						 * Max time the client will maintain an entry in cache when
 						 * topology change flag is true (C18)
 						 */
-	अचिन्हित दीर्घ क्रमward_delay_समय;	/* Topology change flag (C19) */
-	पूर्णांक topology_change;
+	unsigned long forward_delay_time;	/* Topology change flag (C19) */
+	int topology_change;
 						/*
-						 * Max समय the client expects an LE_ARP_REQUEST/LE_ARP_RESPONSE
+						 * Max time the client expects an LE_ARP_REQUEST/LE_ARP_RESPONSE
 						 * cycle to take (C20)
 						 */
-	अचिन्हित दीर्घ arp_response_समय;
+	unsigned long arp_response_time;
 						/*
-						 * Time limit ot रुको to receive an LE_FLUSH_RESPONSE after the
-						 * LE_FLUSH_REQUEST has been sent beक्रमe taking recover action. (C21)
+						 * Time limit ot wait to receive an LE_FLUSH_RESPONSE after the
+						 * LE_FLUSH_REQUEST has been sent before taking recover action. (C21)
 						 */
-	अचिन्हित दीर्घ flush_समयout;
-						/* The समय since sending a frame to the bus after which the
+	unsigned long flush_timeout;
+						/* The time since sending a frame to the bus after which the
 						 * LE Client may assume that the frame has been either discarded or
 						 * delivered to the recipient (C22)
 						 */
-	अचिन्हित दीर्घ path_चयनing_delay;
+	unsigned long path_switching_delay;
 
 	u8 *tlvs;				/* LANE2: TLVs are new */
-	u32 मापtlvs;				/* The size of the tlv array in bytes */
-	पूर्णांक lane_version;			/* LANE2 */
-	पूर्णांक itfnum;				/* e.g. 2 क्रम lec2, 5 क्रम lec5 */
-	काष्ठा lane2_ops *lane2_ops;		/* can be शून्य क्रम LANE v1 */
-	पूर्णांक is_proxy;				/* bridge between ATM and Ethernet */
-पूर्ण;
+	u32 sizeoftlvs;				/* The size of the tlv array in bytes */
+	int lane_version;			/* LANE2 */
+	int itfnum;				/* e.g. 2 for lec2, 5 for lec5 */
+	struct lane2_ops *lane2_ops;		/* can be NULL for LANE v1 */
+	int is_proxy;				/* bridge between ATM and Ethernet */
+};
 
-काष्ठा lec_vcc_priv अणु
-	व्योम (*old_pop) (काष्ठा aपंचांग_vcc *vcc, काष्ठा sk_buff *skb);
-	पूर्णांक xoff;
-पूर्ण;
+struct lec_vcc_priv {
+	void (*old_pop) (struct atm_vcc *vcc, struct sk_buff *skb);
+	int xoff;
+};
 
-#घोषणा LEC_VCC_PRIV(vcc)	((काष्ठा lec_vcc_priv *)((vcc)->user_back))
+#define LEC_VCC_PRIV(vcc)	((struct lec_vcc_priv *)((vcc)->user_back))
 
-#पूर्ण_अगर				/* _LEC_H_ */
+#endif				/* _LEC_H_ */

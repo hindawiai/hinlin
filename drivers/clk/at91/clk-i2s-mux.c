@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *  Copyright (C) 2018 Microchip Technology Inc,
  *                     Codrin Ciubotariu <codrin.ciubotariu@microchip.com>
@@ -7,60 +6,60 @@
  *
  */
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/of.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/slab.h>
+#include <linux/clk-provider.h>
+#include <linux/of.h>
+#include <linux/mfd/syscon.h>
+#include <linux/regmap.h>
+#include <linux/slab.h>
 
-#समावेश <soc/at91/aपंचांगel-sfr.h>
+#include <soc/at91/atmel-sfr.h>
 
-#समावेश "pmc.h"
+#include "pmc.h"
 
-काष्ठा clk_i2s_mux अणु
-	काष्ठा clk_hw hw;
-	काष्ठा regmap *regmap;
+struct clk_i2s_mux {
+	struct clk_hw hw;
+	struct regmap *regmap;
 	u8 bus_id;
-पूर्ण;
+};
 
-#घोषणा to_clk_i2s_mux(hw) container_of(hw, काष्ठा clk_i2s_mux, hw)
+#define to_clk_i2s_mux(hw) container_of(hw, struct clk_i2s_mux, hw)
 
-अटल u8 clk_i2s_mux_get_parent(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_i2s_mux *mux = to_clk_i2s_mux(hw);
+static u8 clk_i2s_mux_get_parent(struct clk_hw *hw)
+{
+	struct clk_i2s_mux *mux = to_clk_i2s_mux(hw);
 	u32 val;
 
-	regmap_पढ़ो(mux->regmap, AT91_SFR_I2SCLKSEL, &val);
+	regmap_read(mux->regmap, AT91_SFR_I2SCLKSEL, &val);
 
-	वापस (val & BIT(mux->bus_id)) >> mux->bus_id;
-पूर्ण
+	return (val & BIT(mux->bus_id)) >> mux->bus_id;
+}
 
-अटल पूर्णांक clk_i2s_mux_set_parent(काष्ठा clk_hw *hw, u8 index)
-अणु
-	काष्ठा clk_i2s_mux *mux = to_clk_i2s_mux(hw);
+static int clk_i2s_mux_set_parent(struct clk_hw *hw, u8 index)
+{
+	struct clk_i2s_mux *mux = to_clk_i2s_mux(hw);
 
-	वापस regmap_update_bits(mux->regmap, AT91_SFR_I2SCLKSEL,
+	return regmap_update_bits(mux->regmap, AT91_SFR_I2SCLKSEL,
 				  BIT(mux->bus_id), index << mux->bus_id);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा clk_ops clk_i2s_mux_ops = अणु
+static const struct clk_ops clk_i2s_mux_ops = {
 	.get_parent = clk_i2s_mux_get_parent,
 	.set_parent = clk_i2s_mux_set_parent,
 	.determine_rate = __clk_mux_determine_rate,
-पूर्ण;
+};
 
-काष्ठा clk_hw * __init
-at91_clk_i2s_mux_रेजिस्टर(काष्ठा regmap *regmap, स्थिर अक्षर *name,
-			  स्थिर अक्षर * स्थिर *parent_names,
-			  अचिन्हित पूर्णांक num_parents, u8 bus_id)
-अणु
-	काष्ठा clk_init_data init = अणुपूर्ण;
-	काष्ठा clk_i2s_mux *i2s_ck;
-	पूर्णांक ret;
+struct clk_hw * __init
+at91_clk_i2s_mux_register(struct regmap *regmap, const char *name,
+			  const char * const *parent_names,
+			  unsigned int num_parents, u8 bus_id)
+{
+	struct clk_init_data init = {};
+	struct clk_i2s_mux *i2s_ck;
+	int ret;
 
-	i2s_ck = kzalloc(माप(*i2s_ck), GFP_KERNEL);
-	अगर (!i2s_ck)
-		वापस ERR_PTR(-ENOMEM);
+	i2s_ck = kzalloc(sizeof(*i2s_ck), GFP_KERNEL);
+	if (!i2s_ck)
+		return ERR_PTR(-ENOMEM);
 
 	init.name = name;
 	init.ops = &clk_i2s_mux_ops;
@@ -71,11 +70,11 @@ at91_clk_i2s_mux_रेजिस्टर(काष्ठा regmap *regmap, स
 	i2s_ck->bus_id = bus_id;
 	i2s_ck->regmap = regmap;
 
-	ret = clk_hw_रेजिस्टर(शून्य, &i2s_ck->hw);
-	अगर (ret) अणु
-		kमुक्त(i2s_ck);
-		वापस ERR_PTR(ret);
-	पूर्ण
+	ret = clk_hw_register(NULL, &i2s_ck->hw);
+	if (ret) {
+		kfree(i2s_ck);
+		return ERR_PTR(ret);
+	}
 
-	वापस &i2s_ck->hw;
-पूर्ण
+	return &i2s_ck->hw;
+}

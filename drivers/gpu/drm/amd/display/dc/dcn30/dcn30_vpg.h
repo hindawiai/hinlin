@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2020 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,29 +23,29 @@
  *
  */
 
-#अगर_अघोषित __DAL_DCN30_VPG_H__
-#घोषणा __DAL_DCN30_VPG_H__
+#ifndef __DAL_DCN30_VPG_H__
+#define __DAL_DCN30_VPG_H__
 
 
-#घोषणा DCN30_VPG_FROM_VPG(vpg)\
-	container_of(vpg, काष्ठा dcn30_vpg, base)
+#define DCN30_VPG_FROM_VPG(vpg)\
+	container_of(vpg, struct dcn30_vpg, base)
 
-#घोषणा VPG_DCN3_REG_LIST(id) \
+#define VPG_DCN3_REG_LIST(id) \
 	SRI(VPG_GENERIC_STATUS, VPG, id), \
 	SRI(VPG_GENERIC_PACKET_ACCESS_CTRL, VPG, id), \
 	SRI(VPG_GENERIC_PACKET_DATA, VPG, id), \
 	SRI(VPG_GSP_FRAME_UPDATE_CTRL, VPG, id), \
 	SRI(VPG_GSP_IMMEDIATE_UPDATE_CTRL, VPG, id)
 
-काष्ठा dcn30_vpg_रेजिस्टरs अणु
-	uपूर्णांक32_t VPG_GENERIC_STATUS;
-	uपूर्णांक32_t VPG_GENERIC_PACKET_ACCESS_CTRL;
-	uपूर्णांक32_t VPG_GENERIC_PACKET_DATA;
-	uपूर्णांक32_t VPG_GSP_FRAME_UPDATE_CTRL;
-	uपूर्णांक32_t VPG_GSP_IMMEDIATE_UPDATE_CTRL;
-पूर्ण;
+struct dcn30_vpg_registers {
+	uint32_t VPG_GENERIC_STATUS;
+	uint32_t VPG_GENERIC_PACKET_ACCESS_CTRL;
+	uint32_t VPG_GENERIC_PACKET_DATA;
+	uint32_t VPG_GSP_FRAME_UPDATE_CTRL;
+	uint32_t VPG_GSP_IMMEDIATE_UPDATE_CTRL;
+};
 
-#घोषणा DCN3_VPG_MASK_SH_LIST(mask_sh)\
+#define DCN3_VPG_MASK_SH_LIST(mask_sh)\
 	SE_SF(VPG0_VPG_GENERIC_STATUS, VPG_GENERIC_CONFLICT_OCCURED, mask_sh),\
 	SE_SF(VPG0_VPG_GENERIC_STATUS, VPG_GENERIC_CONFLICT_CLR, mask_sh),\
 	SE_SF(VPG0_VPG_GENERIC_PACKET_ACCESS_CTRL, VPG_GENERIC_DATA_INDEX, mask_sh),\
@@ -85,7 +84,7 @@
 	SE_SF(VPG0_VPG_GSP_IMMEDIATE_UPDATE_CTRL, VPG_GENERIC13_IMMEDIATE_UPDATE, mask_sh),\
 	SE_SF(VPG0_VPG_GSP_IMMEDIATE_UPDATE_CTRL, VPG_GENERIC14_IMMEDIATE_UPDATE, mask_sh)
 
-#घोषणा VPG_DCN3_REG_FIELD_LIST(type) \
+#define VPG_DCN3_REG_FIELD_LIST(type) \
 	type VPG_GENERIC_CONFLICT_OCCURED;\
 	type VPG_GENERIC_CONFLICT_CLR;\
 	type VPG_GENERIC_DATA_INDEX;\
@@ -125,42 +124,42 @@
 	type VPG_GENERIC14_IMMEDIATE_UPDATE
 
 
-काष्ठा dcn30_vpg_shअगरt अणु
-	VPG_DCN3_REG_FIELD_LIST(uपूर्णांक8_t);
-पूर्ण;
+struct dcn30_vpg_shift {
+	VPG_DCN3_REG_FIELD_LIST(uint8_t);
+};
 
-काष्ठा dcn30_vpg_mask अणु
-	VPG_DCN3_REG_FIELD_LIST(uपूर्णांक32_t);
-पूर्ण;
+struct dcn30_vpg_mask {
+	VPG_DCN3_REG_FIELD_LIST(uint32_t);
+};
 
-काष्ठा vpg;
+struct vpg;
 
-काष्ठा vpg_funcs अणु
-	व्योम (*update_generic_info_packet)(
-		काष्ठा vpg *vpg,
-		uपूर्णांक32_t packet_index,
-		स्थिर काष्ठा dc_info_packet *info_packet);
-पूर्ण;
+struct vpg_funcs {
+	void (*update_generic_info_packet)(
+		struct vpg *vpg,
+		uint32_t packet_index,
+		const struct dc_info_packet *info_packet);
+};
 
-काष्ठा vpg अणु
-	स्थिर काष्ठा vpg_funcs *funcs;
-	काष्ठा dc_context *ctx;
-	पूर्णांक inst;
-पूर्ण;
+struct vpg {
+	const struct vpg_funcs *funcs;
+	struct dc_context *ctx;
+	int inst;
+};
 
-काष्ठा dcn30_vpg अणु
-	काष्ठा vpg base;
-	स्थिर काष्ठा dcn30_vpg_रेजिस्टरs *regs;
-	स्थिर काष्ठा dcn30_vpg_shअगरt *vpg_shअगरt;
-	स्थिर काष्ठा dcn30_vpg_mask *vpg_mask;
-पूर्ण;
+struct dcn30_vpg {
+	struct vpg base;
+	const struct dcn30_vpg_registers *regs;
+	const struct dcn30_vpg_shift *vpg_shift;
+	const struct dcn30_vpg_mask *vpg_mask;
+};
 
-व्योम vpg3_स्थिरruct(काष्ठा dcn30_vpg *vpg3,
-	काष्ठा dc_context *ctx,
-	uपूर्णांक32_t inst,
-	स्थिर काष्ठा dcn30_vpg_रेजिस्टरs *vpg_regs,
-	स्थिर काष्ठा dcn30_vpg_shअगरt *vpg_shअगरt,
-	स्थिर काष्ठा dcn30_vpg_mask *vpg_mask);
+void vpg3_construct(struct dcn30_vpg *vpg3,
+	struct dc_context *ctx,
+	uint32_t inst,
+	const struct dcn30_vpg_registers *vpg_regs,
+	const struct dcn30_vpg_shift *vpg_shift,
+	const struct dcn30_vpg_mask *vpg_mask);
 
 
-#पूर्ण_अगर
+#endif

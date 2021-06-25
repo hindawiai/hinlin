@@ -1,532 +1,531 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Intel Sunrisepoपूर्णांक LPSS core support.
+ * Intel Sunrisepoint LPSS core support.
  *
  * Copyright (C) 2015, Intel Corporation
  *
- * Authors: Andy Shevchenko <andriy.shevchenko@linux.पूर्णांकel.com>
- *          Mika Westerberg <mika.westerberg@linux.पूर्णांकel.com>
- *          Heikki Krogerus <heikki.krogerus@linux.पूर्णांकel.com>
- *          Jarkko Nikula <jarkko.nikula@linux.पूर्णांकel.com>
+ * Authors: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+ *          Mika Westerberg <mika.westerberg@linux.intel.com>
+ *          Heikki Krogerus <heikki.krogerus@linux.intel.com>
+ *          Jarkko Nikula <jarkko.nikula@linux.intel.com>
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/clkdev.h>
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/idr.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/ioport.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mfd/core.h>
-#समावेश <linux/pm_qos.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/property.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/io-64-nonatomic-lo-hi.h>
+#include <linux/clk.h>
+#include <linux/clkdev.h>
+#include <linux/clk-provider.h>
+#include <linux/debugfs.h>
+#include <linux/idr.h>
+#include <linux/io.h>
+#include <linux/ioport.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/mfd/core.h>
+#include <linux/pm_qos.h>
+#include <linux/pm_runtime.h>
+#include <linux/property.h>
+#include <linux/seq_file.h>
+#include <linux/io-64-nonatomic-lo-hi.h>
 
-#समावेश <linux/dma/idma64.h>
+#include <linux/dma/idma64.h>
 
-#समावेश "intel-lpss.h"
+#include "intel-lpss.h"
 
-#घोषणा LPSS_DEV_OFFSET		0x000
-#घोषणा LPSS_DEV_SIZE		0x200
-#घोषणा LPSS_PRIV_OFFSET	0x200
-#घोषणा LPSS_PRIV_SIZE		0x100
-#घोषणा LPSS_PRIV_REG_COUNT	(LPSS_PRIV_SIZE / 4)
-#घोषणा LPSS_IDMA64_OFFSET	0x800
-#घोषणा LPSS_IDMA64_SIZE	0x800
+#define LPSS_DEV_OFFSET		0x000
+#define LPSS_DEV_SIZE		0x200
+#define LPSS_PRIV_OFFSET	0x200
+#define LPSS_PRIV_SIZE		0x100
+#define LPSS_PRIV_REG_COUNT	(LPSS_PRIV_SIZE / 4)
+#define LPSS_IDMA64_OFFSET	0x800
+#define LPSS_IDMA64_SIZE	0x800
 
 /* Offsets from lpss->priv */
-#घोषणा LPSS_PRIV_RESETS		0x04
-#घोषणा LPSS_PRIV_RESETS_IDMA		BIT(2)
-#घोषणा LPSS_PRIV_RESETS_FUNC		0x3
+#define LPSS_PRIV_RESETS		0x04
+#define LPSS_PRIV_RESETS_IDMA		BIT(2)
+#define LPSS_PRIV_RESETS_FUNC		0x3
 
-#घोषणा LPSS_PRIV_ACTIVELTR		0x10
-#घोषणा LPSS_PRIV_IDLELTR		0x14
+#define LPSS_PRIV_ACTIVELTR		0x10
+#define LPSS_PRIV_IDLELTR		0x14
 
-#घोषणा LPSS_PRIV_LTR_REQ		BIT(15)
-#घोषणा LPSS_PRIV_LTR_SCALE_MASK	GENMASK(11, 10)
-#घोषणा LPSS_PRIV_LTR_SCALE_1US		(2 << 10)
-#घोषणा LPSS_PRIV_LTR_SCALE_32US	(3 << 10)
-#घोषणा LPSS_PRIV_LTR_VALUE_MASK	GENMASK(9, 0)
+#define LPSS_PRIV_LTR_REQ		BIT(15)
+#define LPSS_PRIV_LTR_SCALE_MASK	GENMASK(11, 10)
+#define LPSS_PRIV_LTR_SCALE_1US		(2 << 10)
+#define LPSS_PRIV_LTR_SCALE_32US	(3 << 10)
+#define LPSS_PRIV_LTR_VALUE_MASK	GENMASK(9, 0)
 
-#घोषणा LPSS_PRIV_SSP_REG		0x20
-#घोषणा LPSS_PRIV_SSP_REG_DIS_DMA_FIN	BIT(0)
+#define LPSS_PRIV_SSP_REG		0x20
+#define LPSS_PRIV_SSP_REG_DIS_DMA_FIN	BIT(0)
 
-#घोषणा LPSS_PRIV_REMAP_ADDR		0x40
+#define LPSS_PRIV_REMAP_ADDR		0x40
 
-#घोषणा LPSS_PRIV_CAPS			0xfc
-#घोषणा LPSS_PRIV_CAPS_NO_IDMA		BIT(8)
-#घोषणा LPSS_PRIV_CAPS_TYPE_MASK	GENMASK(7, 4)
-#घोषणा LPSS_PRIV_CAPS_TYPE_SHIFT	4
+#define LPSS_PRIV_CAPS			0xfc
+#define LPSS_PRIV_CAPS_NO_IDMA		BIT(8)
+#define LPSS_PRIV_CAPS_TYPE_MASK	GENMASK(7, 4)
+#define LPSS_PRIV_CAPS_TYPE_SHIFT	4
 
-/* This matches the type field in CAPS रेजिस्टर */
-क्रमागत पूर्णांकel_lpss_dev_type अणु
+/* This matches the type field in CAPS register */
+enum intel_lpss_dev_type {
 	LPSS_DEV_I2C = 0,
 	LPSS_DEV_UART,
 	LPSS_DEV_SPI,
-पूर्ण;
+};
 
-काष्ठा पूर्णांकel_lpss अणु
-	स्थिर काष्ठा पूर्णांकel_lpss_platक्रमm_info *info;
-	क्रमागत पूर्णांकel_lpss_dev_type type;
-	काष्ठा clk *clk;
-	काष्ठा clk_lookup *घड़ी;
-	काष्ठा mfd_cell *cell;
-	काष्ठा device *dev;
-	व्योम __iomem *priv;
+struct intel_lpss {
+	const struct intel_lpss_platform_info *info;
+	enum intel_lpss_dev_type type;
+	struct clk *clk;
+	struct clk_lookup *clock;
+	struct mfd_cell *cell;
+	struct device *dev;
+	void __iomem *priv;
 	u32 priv_ctx[LPSS_PRIV_REG_COUNT];
-	पूर्णांक devid;
+	int devid;
 	u32 caps;
 	u32 active_ltr;
 	u32 idle_ltr;
-	काष्ठा dentry *debugfs;
-पूर्ण;
+	struct dentry *debugfs;
+};
 
-अटल स्थिर काष्ठा resource पूर्णांकel_lpss_dev_resources[] = अणु
+static const struct resource intel_lpss_dev_resources[] = {
 	DEFINE_RES_MEM_NAMED(LPSS_DEV_OFFSET, LPSS_DEV_SIZE, "lpss_dev"),
 	DEFINE_RES_MEM_NAMED(LPSS_PRIV_OFFSET, LPSS_PRIV_SIZE, "lpss_priv"),
 	DEFINE_RES_IRQ(0),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा resource पूर्णांकel_lpss_idma64_resources[] = अणु
+static const struct resource intel_lpss_idma64_resources[] = {
 	DEFINE_RES_MEM(LPSS_IDMA64_OFFSET, LPSS_IDMA64_SIZE),
 	DEFINE_RES_IRQ(0),
-पूर्ण;
+};
 
 /*
  * Cells needs to be ordered so that the iDMA is created first. This is
  * because we need to be sure the DMA is available when the host controller
  * driver is probed.
  */
-अटल स्थिर काष्ठा mfd_cell पूर्णांकel_lpss_idma64_cell = अणु
+static const struct mfd_cell intel_lpss_idma64_cell = {
 	.name = LPSS_IDMA64_DRIVER_NAME,
-	.num_resources = ARRAY_SIZE(पूर्णांकel_lpss_idma64_resources),
-	.resources = पूर्णांकel_lpss_idma64_resources,
-पूर्ण;
+	.num_resources = ARRAY_SIZE(intel_lpss_idma64_resources),
+	.resources = intel_lpss_idma64_resources,
+};
 
-अटल स्थिर काष्ठा mfd_cell पूर्णांकel_lpss_i2c_cell = अणु
+static const struct mfd_cell intel_lpss_i2c_cell = {
 	.name = "i2c_designware",
-	.num_resources = ARRAY_SIZE(पूर्णांकel_lpss_dev_resources),
-	.resources = पूर्णांकel_lpss_dev_resources,
-पूर्ण;
+	.num_resources = ARRAY_SIZE(intel_lpss_dev_resources),
+	.resources = intel_lpss_dev_resources,
+};
 
-अटल स्थिर काष्ठा mfd_cell पूर्णांकel_lpss_uart_cell = अणु
+static const struct mfd_cell intel_lpss_uart_cell = {
 	.name = "dw-apb-uart",
-	.num_resources = ARRAY_SIZE(पूर्णांकel_lpss_dev_resources),
-	.resources = पूर्णांकel_lpss_dev_resources,
-पूर्ण;
+	.num_resources = ARRAY_SIZE(intel_lpss_dev_resources),
+	.resources = intel_lpss_dev_resources,
+};
 
-अटल स्थिर काष्ठा mfd_cell पूर्णांकel_lpss_spi_cell = अणु
+static const struct mfd_cell intel_lpss_spi_cell = {
 	.name = "pxa2xx-spi",
-	.num_resources = ARRAY_SIZE(पूर्णांकel_lpss_dev_resources),
-	.resources = पूर्णांकel_lpss_dev_resources,
-पूर्ण;
+	.num_resources = ARRAY_SIZE(intel_lpss_dev_resources),
+	.resources = intel_lpss_dev_resources,
+};
 
-अटल DEFINE_IDA(पूर्णांकel_lpss_devid_ida);
-अटल काष्ठा dentry *पूर्णांकel_lpss_debugfs;
+static DEFINE_IDA(intel_lpss_devid_ida);
+static struct dentry *intel_lpss_debugfs;
 
-अटल व्योम पूर्णांकel_lpss_cache_ltr(काष्ठा पूर्णांकel_lpss *lpss)
-अणु
-	lpss->active_ltr = पढ़ोl(lpss->priv + LPSS_PRIV_ACTIVELTR);
-	lpss->idle_ltr = पढ़ोl(lpss->priv + LPSS_PRIV_IDLELTR);
-पूर्ण
+static void intel_lpss_cache_ltr(struct intel_lpss *lpss)
+{
+	lpss->active_ltr = readl(lpss->priv + LPSS_PRIV_ACTIVELTR);
+	lpss->idle_ltr = readl(lpss->priv + LPSS_PRIV_IDLELTR);
+}
 
-अटल पूर्णांक पूर्णांकel_lpss_debugfs_add(काष्ठा पूर्णांकel_lpss *lpss)
-अणु
-	काष्ठा dentry *dir;
+static int intel_lpss_debugfs_add(struct intel_lpss *lpss)
+{
+	struct dentry *dir;
 
-	dir = debugfs_create_dir(dev_name(lpss->dev), पूर्णांकel_lpss_debugfs);
-	अगर (IS_ERR(dir))
-		वापस PTR_ERR(dir);
+	dir = debugfs_create_dir(dev_name(lpss->dev), intel_lpss_debugfs);
+	if (IS_ERR(dir))
+		return PTR_ERR(dir);
 
-	/* Cache the values पूर्णांकo lpss काष्ठाure */
-	पूर्णांकel_lpss_cache_ltr(lpss);
+	/* Cache the values into lpss structure */
+	intel_lpss_cache_ltr(lpss);
 
 	debugfs_create_x32("capabilities", S_IRUGO, dir, &lpss->caps);
 	debugfs_create_x32("active_ltr", S_IRUGO, dir, &lpss->active_ltr);
 	debugfs_create_x32("idle_ltr", S_IRUGO, dir, &lpss->idle_ltr);
 
 	lpss->debugfs = dir;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम पूर्णांकel_lpss_debugfs_हटाओ(काष्ठा पूर्णांकel_lpss *lpss)
-अणु
-	debugfs_हटाओ_recursive(lpss->debugfs);
-पूर्ण
+static void intel_lpss_debugfs_remove(struct intel_lpss *lpss)
+{
+	debugfs_remove_recursive(lpss->debugfs);
+}
 
-अटल व्योम पूर्णांकel_lpss_ltr_set(काष्ठा device *dev, s32 val)
-अणु
-	काष्ठा पूर्णांकel_lpss *lpss = dev_get_drvdata(dev);
+static void intel_lpss_ltr_set(struct device *dev, s32 val)
+{
+	struct intel_lpss *lpss = dev_get_drvdata(dev);
 	u32 ltr;
 
 	/*
 	 * Program latency tolerance (LTR) accordingly what has been asked
-	 * by the PM QoS layer or disable it in हाल we were passed
+	 * by the PM QoS layer or disable it in case we were passed
 	 * negative value or PM_QOS_LATENCY_ANY.
 	 */
-	ltr = पढ़ोl(lpss->priv + LPSS_PRIV_ACTIVELTR);
+	ltr = readl(lpss->priv + LPSS_PRIV_ACTIVELTR);
 
-	अगर (val == PM_QOS_LATENCY_ANY || val < 0) अणु
+	if (val == PM_QOS_LATENCY_ANY || val < 0) {
 		ltr &= ~LPSS_PRIV_LTR_REQ;
-	पूर्ण अन्यथा अणु
+	} else {
 		ltr |= LPSS_PRIV_LTR_REQ;
 		ltr &= ~LPSS_PRIV_LTR_SCALE_MASK;
 		ltr &= ~LPSS_PRIV_LTR_VALUE_MASK;
 
-		अगर (val > LPSS_PRIV_LTR_VALUE_MASK)
+		if (val > LPSS_PRIV_LTR_VALUE_MASK)
 			ltr |= LPSS_PRIV_LTR_SCALE_32US | val >> 5;
-		अन्यथा
+		else
 			ltr |= LPSS_PRIV_LTR_SCALE_1US | val;
-	पूर्ण
+	}
 
-	अगर (ltr == lpss->active_ltr)
-		वापस;
+	if (ltr == lpss->active_ltr)
+		return;
 
-	ग_लिखोl(ltr, lpss->priv + LPSS_PRIV_ACTIVELTR);
-	ग_लिखोl(ltr, lpss->priv + LPSS_PRIV_IDLELTR);
+	writel(ltr, lpss->priv + LPSS_PRIV_ACTIVELTR);
+	writel(ltr, lpss->priv + LPSS_PRIV_IDLELTR);
 
-	/* Cache the values पूर्णांकo lpss काष्ठाure */
-	पूर्णांकel_lpss_cache_ltr(lpss);
-पूर्ण
+	/* Cache the values into lpss structure */
+	intel_lpss_cache_ltr(lpss);
+}
 
-अटल व्योम पूर्णांकel_lpss_ltr_expose(काष्ठा पूर्णांकel_lpss *lpss)
-अणु
-	lpss->dev->घातer.set_latency_tolerance = पूर्णांकel_lpss_ltr_set;
+static void intel_lpss_ltr_expose(struct intel_lpss *lpss)
+{
+	lpss->dev->power.set_latency_tolerance = intel_lpss_ltr_set;
 	dev_pm_qos_expose_latency_tolerance(lpss->dev);
-पूर्ण
+}
 
-अटल व्योम पूर्णांकel_lpss_ltr_hide(काष्ठा पूर्णांकel_lpss *lpss)
-अणु
+static void intel_lpss_ltr_hide(struct intel_lpss *lpss)
+{
 	dev_pm_qos_hide_latency_tolerance(lpss->dev);
-	lpss->dev->घातer.set_latency_tolerance = शून्य;
-पूर्ण
+	lpss->dev->power.set_latency_tolerance = NULL;
+}
 
-अटल पूर्णांक पूर्णांकel_lpss_assign_devs(काष्ठा पूर्णांकel_lpss *lpss)
-अणु
-	स्थिर काष्ठा mfd_cell *cell;
-	अचिन्हित पूर्णांक type;
+static int intel_lpss_assign_devs(struct intel_lpss *lpss)
+{
+	const struct mfd_cell *cell;
+	unsigned int type;
 
 	type = lpss->caps & LPSS_PRIV_CAPS_TYPE_MASK;
 	type >>= LPSS_PRIV_CAPS_TYPE_SHIFT;
 
-	चयन (type) अणु
-	हाल LPSS_DEV_I2C:
-		cell = &पूर्णांकel_lpss_i2c_cell;
-		अवरोध;
-	हाल LPSS_DEV_UART:
-		cell = &पूर्णांकel_lpss_uart_cell;
-		अवरोध;
-	हाल LPSS_DEV_SPI:
-		cell = &पूर्णांकel_lpss_spi_cell;
-		अवरोध;
-	शेष:
-		वापस -ENODEV;
-	पूर्ण
+	switch (type) {
+	case LPSS_DEV_I2C:
+		cell = &intel_lpss_i2c_cell;
+		break;
+	case LPSS_DEV_UART:
+		cell = &intel_lpss_uart_cell;
+		break;
+	case LPSS_DEV_SPI:
+		cell = &intel_lpss_spi_cell;
+		break;
+	default:
+		return -ENODEV;
+	}
 
-	lpss->cell = devm_kmemdup(lpss->dev, cell, माप(*cell), GFP_KERNEL);
-	अगर (!lpss->cell)
-		वापस -ENOMEM;
+	lpss->cell = devm_kmemdup(lpss->dev, cell, sizeof(*cell), GFP_KERNEL);
+	if (!lpss->cell)
+		return -ENOMEM;
 
 	lpss->type = type;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool पूर्णांकel_lpss_has_idma(स्थिर काष्ठा पूर्णांकel_lpss *lpss)
-अणु
-	वापस (lpss->caps & LPSS_PRIV_CAPS_NO_IDMA) == 0;
-पूर्ण
+static bool intel_lpss_has_idma(const struct intel_lpss *lpss)
+{
+	return (lpss->caps & LPSS_PRIV_CAPS_NO_IDMA) == 0;
+}
 
-अटल व्योम पूर्णांकel_lpss_set_remap_addr(स्थिर काष्ठा पूर्णांकel_lpss *lpss)
-अणु
-	resource_माप_प्रकार addr = lpss->info->mem->start;
+static void intel_lpss_set_remap_addr(const struct intel_lpss *lpss)
+{
+	resource_size_t addr = lpss->info->mem->start;
 
-	lo_hi_ग_लिखोq(addr, lpss->priv + LPSS_PRIV_REMAP_ADDR);
-पूर्ण
+	lo_hi_writeq(addr, lpss->priv + LPSS_PRIV_REMAP_ADDR);
+}
 
-अटल व्योम पूर्णांकel_lpss_deनिश्चित_reset(स्थिर काष्ठा पूर्णांकel_lpss *lpss)
-अणु
+static void intel_lpss_deassert_reset(const struct intel_lpss *lpss)
+{
 	u32 value = LPSS_PRIV_RESETS_FUNC | LPSS_PRIV_RESETS_IDMA;
 
 	/* Bring out the device from reset */
-	ग_लिखोl(value, lpss->priv + LPSS_PRIV_RESETS);
-पूर्ण
+	writel(value, lpss->priv + LPSS_PRIV_RESETS);
+}
 
-अटल व्योम पूर्णांकel_lpss_init_dev(स्थिर काष्ठा पूर्णांकel_lpss *lpss)
-अणु
+static void intel_lpss_init_dev(const struct intel_lpss *lpss)
+{
 	u32 value = LPSS_PRIV_SSP_REG_DIS_DMA_FIN;
 
 	/* Set the device in reset state */
-	ग_लिखोl(0, lpss->priv + LPSS_PRIV_RESETS);
+	writel(0, lpss->priv + LPSS_PRIV_RESETS);
 
-	पूर्णांकel_lpss_deनिश्चित_reset(lpss);
+	intel_lpss_deassert_reset(lpss);
 
-	पूर्णांकel_lpss_set_remap_addr(lpss);
+	intel_lpss_set_remap_addr(lpss);
 
-	अगर (!पूर्णांकel_lpss_has_idma(lpss))
-		वापस;
+	if (!intel_lpss_has_idma(lpss))
+		return;
 
 	/* Make sure that SPI multiblock DMA transfers are re-enabled */
-	अगर (lpss->type == LPSS_DEV_SPI)
-		ग_लिखोl(value, lpss->priv + LPSS_PRIV_SSP_REG);
-पूर्ण
+	if (lpss->type == LPSS_DEV_SPI)
+		writel(value, lpss->priv + LPSS_PRIV_SSP_REG);
+}
 
-अटल व्योम पूर्णांकel_lpss_unरेजिस्टर_घड़ी_प्रकारree(काष्ठा clk *clk)
-अणु
-	काष्ठा clk *parent;
+static void intel_lpss_unregister_clock_tree(struct clk *clk)
+{
+	struct clk *parent;
 
-	जबतक (clk) अणु
+	while (clk) {
 		parent = clk_get_parent(clk);
-		clk_unरेजिस्टर(clk);
+		clk_unregister(clk);
 		clk = parent;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक पूर्णांकel_lpss_रेजिस्टर_घड़ी_भागider(काष्ठा पूर्णांकel_lpss *lpss,
-					     स्थिर अक्षर *devname,
-					     काष्ठा clk **clk)
-अणु
-	अक्षर name[32];
-	काष्ठा clk *पंचांगp = *clk;
+static int intel_lpss_register_clock_divider(struct intel_lpss *lpss,
+					     const char *devname,
+					     struct clk **clk)
+{
+	char name[32];
+	struct clk *tmp = *clk;
 
-	snम_लिखो(name, माप(name), "%s-enable", devname);
-	पंचांगp = clk_रेजिस्टर_gate(शून्य, name, __clk_get_name(पंचांगp), 0,
-				lpss->priv, 0, 0, शून्य);
-	अगर (IS_ERR(पंचांगp))
-		वापस PTR_ERR(पंचांगp);
+	snprintf(name, sizeof(name), "%s-enable", devname);
+	tmp = clk_register_gate(NULL, name, __clk_get_name(tmp), 0,
+				lpss->priv, 0, 0, NULL);
+	if (IS_ERR(tmp))
+		return PTR_ERR(tmp);
 
-	snम_लिखो(name, माप(name), "%s-div", devname);
-	पंचांगp = clk_रेजिस्टर_fractional_भागider(शून्य, name, __clk_get_name(पंचांगp),
+	snprintf(name, sizeof(name), "%s-div", devname);
+	tmp = clk_register_fractional_divider(NULL, name, __clk_get_name(tmp),
 					      0, lpss->priv, 1, 15, 16, 15, 0,
-					      शून्य);
-	अगर (IS_ERR(पंचांगp))
-		वापस PTR_ERR(पंचांगp);
-	*clk = पंचांगp;
+					      NULL);
+	if (IS_ERR(tmp))
+		return PTR_ERR(tmp);
+	*clk = tmp;
 
-	snम_लिखो(name, माप(name), "%s-update", devname);
-	पंचांगp = clk_रेजिस्टर_gate(शून्य, name, __clk_get_name(पंचांगp),
-				CLK_SET_RATE_PARENT, lpss->priv, 31, 0, शून्य);
-	अगर (IS_ERR(पंचांगp))
-		वापस PTR_ERR(पंचांगp);
-	*clk = पंचांगp;
+	snprintf(name, sizeof(name), "%s-update", devname);
+	tmp = clk_register_gate(NULL, name, __clk_get_name(tmp),
+				CLK_SET_RATE_PARENT, lpss->priv, 31, 0, NULL);
+	if (IS_ERR(tmp))
+		return PTR_ERR(tmp);
+	*clk = tmp;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक पूर्णांकel_lpss_रेजिस्टर_घड़ी(काष्ठा पूर्णांकel_lpss *lpss)
-अणु
-	स्थिर काष्ठा mfd_cell *cell = lpss->cell;
-	काष्ठा clk *clk;
-	अक्षर devname[24];
-	पूर्णांक ret;
+static int intel_lpss_register_clock(struct intel_lpss *lpss)
+{
+	const struct mfd_cell *cell = lpss->cell;
+	struct clk *clk;
+	char devname[24];
+	int ret;
 
-	अगर (!lpss->info->clk_rate)
-		वापस 0;
+	if (!lpss->info->clk_rate)
+		return 0;
 
-	/* Root घड़ी */
-	clk = clk_रेजिस्टर_fixed_rate(शून्य, dev_name(lpss->dev), शून्य, 0,
+	/* Root clock */
+	clk = clk_register_fixed_rate(NULL, dev_name(lpss->dev), NULL, 0,
 				      lpss->info->clk_rate);
-	अगर (IS_ERR(clk))
-		वापस PTR_ERR(clk);
+	if (IS_ERR(clk))
+		return PTR_ERR(clk);
 
-	snम_लिखो(devname, माप(devname), "%s.%d", cell->name, lpss->devid);
+	snprintf(devname, sizeof(devname), "%s.%d", cell->name, lpss->devid);
 
 	/*
-	 * Support क्रम घड़ी भागider only अगर it has some preset value.
-	 * Otherwise we assume that the भागider is not used.
+	 * Support for clock divider only if it has some preset value.
+	 * Otherwise we assume that the divider is not used.
 	 */
-	अगर (lpss->type != LPSS_DEV_I2C) अणु
-		ret = पूर्णांकel_lpss_रेजिस्टर_घड़ी_भागider(lpss, devname, &clk);
-		अगर (ret)
-			जाओ err_clk_रेजिस्टर;
-	पूर्ण
+	if (lpss->type != LPSS_DEV_I2C) {
+		ret = intel_lpss_register_clock_divider(lpss, devname, &clk);
+		if (ret)
+			goto err_clk_register;
+	}
 
 	ret = -ENOMEM;
 
-	/* Clock क्रम the host controller */
-	lpss->घड़ी = clkdev_create(clk, lpss->info->clk_con_id, "%s", devname);
-	अगर (!lpss->घड़ी)
-		जाओ err_clk_रेजिस्टर;
+	/* Clock for the host controller */
+	lpss->clock = clkdev_create(clk, lpss->info->clk_con_id, "%s", devname);
+	if (!lpss->clock)
+		goto err_clk_register;
 
 	lpss->clk = clk;
 
-	वापस 0;
+	return 0;
 
-err_clk_रेजिस्टर:
-	पूर्णांकel_lpss_unरेजिस्टर_घड़ी_प्रकारree(clk);
+err_clk_register:
+	intel_lpss_unregister_clock_tree(clk);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम पूर्णांकel_lpss_unरेजिस्टर_घड़ी(काष्ठा पूर्णांकel_lpss *lpss)
-अणु
-	अगर (IS_ERR_OR_शून्य(lpss->clk))
-		वापस;
+static void intel_lpss_unregister_clock(struct intel_lpss *lpss)
+{
+	if (IS_ERR_OR_NULL(lpss->clk))
+		return;
 
-	clkdev_drop(lpss->घड़ी);
-	पूर्णांकel_lpss_unरेजिस्टर_घड़ी_प्रकारree(lpss->clk);
-पूर्ण
+	clkdev_drop(lpss->clock);
+	intel_lpss_unregister_clock_tree(lpss->clk);
+}
 
-पूर्णांक पूर्णांकel_lpss_probe(काष्ठा device *dev,
-		     स्थिर काष्ठा पूर्णांकel_lpss_platक्रमm_info *info)
-अणु
-	काष्ठा पूर्णांकel_lpss *lpss;
-	पूर्णांक ret;
+int intel_lpss_probe(struct device *dev,
+		     const struct intel_lpss_platform_info *info)
+{
+	struct intel_lpss *lpss;
+	int ret;
 
-	अगर (!info || !info->mem || info->irq <= 0)
-		वापस -EINVAL;
+	if (!info || !info->mem || info->irq <= 0)
+		return -EINVAL;
 
-	lpss = devm_kzalloc(dev, माप(*lpss), GFP_KERNEL);
-	अगर (!lpss)
-		वापस -ENOMEM;
+	lpss = devm_kzalloc(dev, sizeof(*lpss), GFP_KERNEL);
+	if (!lpss)
+		return -ENOMEM;
 
 	lpss->priv = devm_ioremap_uc(dev, info->mem->start + LPSS_PRIV_OFFSET,
 				  LPSS_PRIV_SIZE);
-	अगर (!lpss->priv)
-		वापस -ENOMEM;
+	if (!lpss->priv)
+		return -ENOMEM;
 
 	lpss->info = info;
 	lpss->dev = dev;
-	lpss->caps = पढ़ोl(lpss->priv + LPSS_PRIV_CAPS);
+	lpss->caps = readl(lpss->priv + LPSS_PRIV_CAPS);
 
 	dev_set_drvdata(dev, lpss);
 
-	ret = पूर्णांकel_lpss_assign_devs(lpss);
-	अगर (ret)
-		वापस ret;
+	ret = intel_lpss_assign_devs(lpss);
+	if (ret)
+		return ret;
 
 	lpss->cell->swnode = info->swnode;
 
-	पूर्णांकel_lpss_init_dev(lpss);
+	intel_lpss_init_dev(lpss);
 
-	lpss->devid = ida_simple_get(&पूर्णांकel_lpss_devid_ida, 0, 0, GFP_KERNEL);
-	अगर (lpss->devid < 0)
-		वापस lpss->devid;
+	lpss->devid = ida_simple_get(&intel_lpss_devid_ida, 0, 0, GFP_KERNEL);
+	if (lpss->devid < 0)
+		return lpss->devid;
 
-	ret = पूर्णांकel_lpss_रेजिस्टर_घड़ी(lpss);
-	अगर (ret)
-		जाओ err_clk_रेजिस्टर;
+	ret = intel_lpss_register_clock(lpss);
+	if (ret)
+		goto err_clk_register;
 
-	पूर्णांकel_lpss_ltr_expose(lpss);
+	intel_lpss_ltr_expose(lpss);
 
-	ret = पूर्णांकel_lpss_debugfs_add(lpss);
-	अगर (ret)
+	ret = intel_lpss_debugfs_add(lpss);
+	if (ret)
 		dev_warn(dev, "Failed to create debugfs entries\n");
 
-	अगर (पूर्णांकel_lpss_has_idma(lpss)) अणु
-		ret = mfd_add_devices(dev, lpss->devid, &पूर्णांकel_lpss_idma64_cell,
-				      1, info->mem, info->irq, शून्य);
-		अगर (ret)
+	if (intel_lpss_has_idma(lpss)) {
+		ret = mfd_add_devices(dev, lpss->devid, &intel_lpss_idma64_cell,
+				      1, info->mem, info->irq, NULL);
+		if (ret)
 			dev_warn(dev, "Failed to add %s, fallback to PIO\n",
 				 LPSS_IDMA64_DRIVER_NAME);
-	पूर्ण
+	}
 
 	ret = mfd_add_devices(dev, lpss->devid, lpss->cell,
-			      1, info->mem, info->irq, शून्य);
-	अगर (ret)
-		जाओ err_हटाओ_ltr;
+			      1, info->mem, info->irq, NULL);
+	if (ret)
+		goto err_remove_ltr;
 
 	dev_pm_set_driver_flags(dev, DPM_FLAG_SMART_SUSPEND);
 
-	वापस 0;
+	return 0;
 
-err_हटाओ_ltr:
-	पूर्णांकel_lpss_debugfs_हटाओ(lpss);
-	पूर्णांकel_lpss_ltr_hide(lpss);
-	पूर्णांकel_lpss_unरेजिस्टर_घड़ी(lpss);
+err_remove_ltr:
+	intel_lpss_debugfs_remove(lpss);
+	intel_lpss_ltr_hide(lpss);
+	intel_lpss_unregister_clock(lpss);
 
-err_clk_रेजिस्टर:
-	ida_simple_हटाओ(&पूर्णांकel_lpss_devid_ida, lpss->devid);
+err_clk_register:
+	ida_simple_remove(&intel_lpss_devid_ida, lpss->devid);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(पूर्णांकel_lpss_probe);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(intel_lpss_probe);
 
-व्योम पूर्णांकel_lpss_हटाओ(काष्ठा device *dev)
-अणु
-	काष्ठा पूर्णांकel_lpss *lpss = dev_get_drvdata(dev);
+void intel_lpss_remove(struct device *dev)
+{
+	struct intel_lpss *lpss = dev_get_drvdata(dev);
 
-	mfd_हटाओ_devices(dev);
-	पूर्णांकel_lpss_debugfs_हटाओ(lpss);
-	पूर्णांकel_lpss_ltr_hide(lpss);
-	पूर्णांकel_lpss_unरेजिस्टर_घड़ी(lpss);
-	ida_simple_हटाओ(&पूर्णांकel_lpss_devid_ida, lpss->devid);
-पूर्ण
-EXPORT_SYMBOL_GPL(पूर्णांकel_lpss_हटाओ);
+	mfd_remove_devices(dev);
+	intel_lpss_debugfs_remove(lpss);
+	intel_lpss_ltr_hide(lpss);
+	intel_lpss_unregister_clock(lpss);
+	ida_simple_remove(&intel_lpss_devid_ida, lpss->devid);
+}
+EXPORT_SYMBOL_GPL(intel_lpss_remove);
 
-अटल पूर्णांक resume_lpss_device(काष्ठा device *dev, व्योम *data)
-अणु
-	अगर (!dev_pm_test_driver_flags(dev, DPM_FLAG_SMART_SUSPEND))
-		pm_runसमय_resume(dev);
+static int resume_lpss_device(struct device *dev, void *data)
+{
+	if (!dev_pm_test_driver_flags(dev, DPM_FLAG_SMART_SUSPEND))
+		pm_runtime_resume(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक पूर्णांकel_lpss_prepare(काष्ठा device *dev)
-अणु
+int intel_lpss_prepare(struct device *dev)
+{
 	/*
-	 * Resume both child devices beक्रमe entering प्रणाली sleep. This
-	 * ensures that they are in proper state beक्रमe they get suspended.
+	 * Resume both child devices before entering system sleep. This
+	 * ensures that they are in proper state before they get suspended.
 	 */
-	device_क्रम_each_child_reverse(dev, शून्य, resume_lpss_device);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(पूर्णांकel_lpss_prepare);
+	device_for_each_child_reverse(dev, NULL, resume_lpss_device);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(intel_lpss_prepare);
 
-पूर्णांक पूर्णांकel_lpss_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा पूर्णांकel_lpss *lpss = dev_get_drvdata(dev);
-	अचिन्हित पूर्णांक i;
+int intel_lpss_suspend(struct device *dev)
+{
+	struct intel_lpss *lpss = dev_get_drvdata(dev);
+	unsigned int i;
 
 	/* Save device context */
-	क्रम (i = 0; i < LPSS_PRIV_REG_COUNT; i++)
-		lpss->priv_ctx[i] = पढ़ोl(lpss->priv + i * 4);
+	for (i = 0; i < LPSS_PRIV_REG_COUNT; i++)
+		lpss->priv_ctx[i] = readl(lpss->priv + i * 4);
 
 	/*
-	 * If the device type is not UART, then put the controller पूर्णांकo
-	 * reset. UART cannot be put पूर्णांकo reset since S3/S0ix fail when
+	 * If the device type is not UART, then put the controller into
+	 * reset. UART cannot be put into reset since S3/S0ix fail when
 	 * no_console_suspend flag is enabled.
 	 */
-	अगर (lpss->type != LPSS_DEV_UART)
-		ग_लिखोl(0, lpss->priv + LPSS_PRIV_RESETS);
+	if (lpss->type != LPSS_DEV_UART)
+		writel(0, lpss->priv + LPSS_PRIV_RESETS);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(पूर्णांकel_lpss_suspend);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(intel_lpss_suspend);
 
-पूर्णांक पूर्णांकel_lpss_resume(काष्ठा device *dev)
-अणु
-	काष्ठा पूर्णांकel_lpss *lpss = dev_get_drvdata(dev);
-	अचिन्हित पूर्णांक i;
+int intel_lpss_resume(struct device *dev)
+{
+	struct intel_lpss *lpss = dev_get_drvdata(dev);
+	unsigned int i;
 
-	पूर्णांकel_lpss_deनिश्चित_reset(lpss);
+	intel_lpss_deassert_reset(lpss);
 
 	/* Restore device context */
-	क्रम (i = 0; i < LPSS_PRIV_REG_COUNT; i++)
-		ग_लिखोl(lpss->priv_ctx[i], lpss->priv + i * 4);
+	for (i = 0; i < LPSS_PRIV_REG_COUNT; i++)
+		writel(lpss->priv_ctx[i], lpss->priv + i * 4);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(पूर्णांकel_lpss_resume);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(intel_lpss_resume);
 
-अटल पूर्णांक __init पूर्णांकel_lpss_init(व्योम)
-अणु
-	पूर्णांकel_lpss_debugfs = debugfs_create_dir("intel_lpss", शून्य);
-	वापस 0;
-पूर्ण
-module_init(पूर्णांकel_lpss_init);
+static int __init intel_lpss_init(void)
+{
+	intel_lpss_debugfs = debugfs_create_dir("intel_lpss", NULL);
+	return 0;
+}
+module_init(intel_lpss_init);
 
-अटल व्योम __निकास पूर्णांकel_lpss_निकास(व्योम)
-अणु
-	ida_destroy(&पूर्णांकel_lpss_devid_ida);
-	debugfs_हटाओ(पूर्णांकel_lpss_debugfs);
-पूर्ण
-module_निकास(पूर्णांकel_lpss_निकास);
+static void __exit intel_lpss_exit(void)
+{
+	ida_destroy(&intel_lpss_devid_ida);
+	debugfs_remove(intel_lpss_debugfs);
+}
+module_exit(intel_lpss_exit);
 
 MODULE_AUTHOR("Andy Shevchenko <andriy.shevchenko@linux.intel.com>");
 MODULE_AUTHOR("Mika Westerberg <mika.westerberg@linux.intel.com>");
@@ -535,7 +534,7 @@ MODULE_AUTHOR("Jarkko Nikula <jarkko.nikula@linux.intel.com>");
 MODULE_DESCRIPTION("Intel LPSS core driver");
 MODULE_LICENSE("GPL v2");
 /*
- * Ensure the DMA driver is loaded beक्रमe the host controller device appears,
+ * Ensure the DMA driver is loaded before the host controller device appears,
  * so that the host controller driver can request its DMA channels as early
  * as possible.
  *

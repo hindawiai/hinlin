@@ -1,344 +1,343 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * reg-भव-consumer.c
+ * reg-virtual-consumer.c
  *
  * Copyright 2008 Wolfson Microelectronics PLC.
  *
- * Author: Mark Brown <broonie@खोलोsource.wolfsonmicro.com>
+ * Author: Mark Brown <broonie@opensource.wolfsonmicro.com>
  */
 
-#समावेश <linux/err.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regulator/consumer.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
+#include <linux/err.h>
+#include <linux/mutex.h>
+#include <linux/platform_device.h>
+#include <linux/regulator/consumer.h>
+#include <linux/slab.h>
+#include <linux/module.h>
 
-काष्ठा भव_consumer_data अणु
-	काष्ठा mutex lock;
-	काष्ठा regulator *regulator;
+struct virtual_consumer_data {
+	struct mutex lock;
+	struct regulator *regulator;
 	bool enabled;
-	पूर्णांक min_uV;
-	पूर्णांक max_uV;
-	पूर्णांक min_uA;
-	पूर्णांक max_uA;
-	अचिन्हित पूर्णांक mode;
-पूर्ण;
+	int min_uV;
+	int max_uV;
+	int min_uA;
+	int max_uA;
+	unsigned int mode;
+};
 
-अटल व्योम update_voltage_स्थिरraपूर्णांकs(काष्ठा device *dev,
-				       काष्ठा भव_consumer_data *data)
-अणु
-	पूर्णांक ret;
+static void update_voltage_constraints(struct device *dev,
+				       struct virtual_consumer_data *data)
+{
+	int ret;
 
-	अगर (data->min_uV && data->max_uV
-	    && data->min_uV <= data->max_uV) अणु
+	if (data->min_uV && data->max_uV
+	    && data->min_uV <= data->max_uV) {
 		dev_dbg(dev, "Requesting %d-%duV\n",
 			data->min_uV, data->max_uV);
 		ret = regulator_set_voltage(data->regulator,
 					data->min_uV, data->max_uV);
-		अगर (ret != 0) अणु
+		if (ret != 0) {
 			dev_err(dev,
 				"regulator_set_voltage() failed: %d\n", ret);
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 
-	अगर (data->min_uV && data->max_uV && !data->enabled) अणु
+	if (data->min_uV && data->max_uV && !data->enabled) {
 		dev_dbg(dev, "Enabling regulator\n");
 		ret = regulator_enable(data->regulator);
-		अगर (ret == 0)
+		if (ret == 0)
 			data->enabled = true;
-		अन्यथा
+		else
 			dev_err(dev, "regulator_enable() failed: %d\n",
 				ret);
-	पूर्ण
+	}
 
-	अगर (!(data->min_uV && data->max_uV) && data->enabled) अणु
+	if (!(data->min_uV && data->max_uV) && data->enabled) {
 		dev_dbg(dev, "Disabling regulator\n");
 		ret = regulator_disable(data->regulator);
-		अगर (ret == 0)
+		if (ret == 0)
 			data->enabled = false;
-		अन्यथा
+		else
 			dev_err(dev, "regulator_disable() failed: %d\n",
 				ret);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम update_current_limit_स्थिरraपूर्णांकs(काष्ठा device *dev,
-					  काष्ठा भव_consumer_data *data)
-अणु
-	पूर्णांक ret;
+static void update_current_limit_constraints(struct device *dev,
+					  struct virtual_consumer_data *data)
+{
+	int ret;
 
-	अगर (data->max_uA
-	    && data->min_uA <= data->max_uA) अणु
+	if (data->max_uA
+	    && data->min_uA <= data->max_uA) {
 		dev_dbg(dev, "Requesting %d-%duA\n",
 			data->min_uA, data->max_uA);
 		ret = regulator_set_current_limit(data->regulator,
 					data->min_uA, data->max_uA);
-		अगर (ret != 0) अणु
+		if (ret != 0) {
 			dev_err(dev,
 				"regulator_set_current_limit() failed: %d\n",
 				ret);
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 
-	अगर (data->max_uA && !data->enabled) अणु
+	if (data->max_uA && !data->enabled) {
 		dev_dbg(dev, "Enabling regulator\n");
 		ret = regulator_enable(data->regulator);
-		अगर (ret == 0)
+		if (ret == 0)
 			data->enabled = true;
-		अन्यथा
+		else
 			dev_err(dev, "regulator_enable() failed: %d\n",
 				ret);
-	पूर्ण
+	}
 
-	अगर (!(data->min_uA && data->max_uA) && data->enabled) अणु
+	if (!(data->min_uA && data->max_uA) && data->enabled) {
 		dev_dbg(dev, "Disabling regulator\n");
 		ret = regulator_disable(data->regulator);
-		अगर (ret == 0)
+		if (ret == 0)
 			data->enabled = false;
-		अन्यथा
+		else
 			dev_err(dev, "regulator_disable() failed: %d\n",
 				ret);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल sमाप_प्रकार show_min_uV(काष्ठा device *dev,
-			   काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा भव_consumer_data *data = dev_get_drvdata(dev);
-	वापस प्र_लिखो(buf, "%d\n", data->min_uV);
-पूर्ण
+static ssize_t show_min_uV(struct device *dev,
+			   struct device_attribute *attr, char *buf)
+{
+	struct virtual_consumer_data *data = dev_get_drvdata(dev);
+	return sprintf(buf, "%d\n", data->min_uV);
+}
 
-अटल sमाप_प्रकार set_min_uV(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			  स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा भव_consumer_data *data = dev_get_drvdata(dev);
-	दीर्घ val;
+static ssize_t set_min_uV(struct device *dev, struct device_attribute *attr,
+			  const char *buf, size_t count)
+{
+	struct virtual_consumer_data *data = dev_get_drvdata(dev);
+	long val;
 
-	अगर (kम_से_दीर्घ(buf, 10, &val) != 0)
-		वापस count;
+	if (kstrtol(buf, 10, &val) != 0)
+		return count;
 
 	mutex_lock(&data->lock);
 
 	data->min_uV = val;
-	update_voltage_स्थिरraपूर्णांकs(dev, data);
+	update_voltage_constraints(dev, data);
 
 	mutex_unlock(&data->lock);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार show_max_uV(काष्ठा device *dev,
-			   काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा भव_consumer_data *data = dev_get_drvdata(dev);
-	वापस प्र_लिखो(buf, "%d\n", data->max_uV);
-पूर्ण
+static ssize_t show_max_uV(struct device *dev,
+			   struct device_attribute *attr, char *buf)
+{
+	struct virtual_consumer_data *data = dev_get_drvdata(dev);
+	return sprintf(buf, "%d\n", data->max_uV);
+}
 
-अटल sमाप_प्रकार set_max_uV(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			  स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा भव_consumer_data *data = dev_get_drvdata(dev);
-	दीर्घ val;
+static ssize_t set_max_uV(struct device *dev, struct device_attribute *attr,
+			  const char *buf, size_t count)
+{
+	struct virtual_consumer_data *data = dev_get_drvdata(dev);
+	long val;
 
-	अगर (kम_से_दीर्घ(buf, 10, &val) != 0)
-		वापस count;
+	if (kstrtol(buf, 10, &val) != 0)
+		return count;
 
 	mutex_lock(&data->lock);
 
 	data->max_uV = val;
-	update_voltage_स्थिरraपूर्णांकs(dev, data);
+	update_voltage_constraints(dev, data);
 
 	mutex_unlock(&data->lock);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार show_min_uA(काष्ठा device *dev,
-			   काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा भव_consumer_data *data = dev_get_drvdata(dev);
-	वापस प्र_लिखो(buf, "%d\n", data->min_uA);
-पूर्ण
+static ssize_t show_min_uA(struct device *dev,
+			   struct device_attribute *attr, char *buf)
+{
+	struct virtual_consumer_data *data = dev_get_drvdata(dev);
+	return sprintf(buf, "%d\n", data->min_uA);
+}
 
-अटल sमाप_प्रकार set_min_uA(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			  स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा भव_consumer_data *data = dev_get_drvdata(dev);
-	दीर्घ val;
+static ssize_t set_min_uA(struct device *dev, struct device_attribute *attr,
+			  const char *buf, size_t count)
+{
+	struct virtual_consumer_data *data = dev_get_drvdata(dev);
+	long val;
 
-	अगर (kम_से_दीर्घ(buf, 10, &val) != 0)
-		वापस count;
+	if (kstrtol(buf, 10, &val) != 0)
+		return count;
 
 	mutex_lock(&data->lock);
 
 	data->min_uA = val;
-	update_current_limit_स्थिरraपूर्णांकs(dev, data);
+	update_current_limit_constraints(dev, data);
 
 	mutex_unlock(&data->lock);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार show_max_uA(काष्ठा device *dev,
-			   काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा भव_consumer_data *data = dev_get_drvdata(dev);
-	वापस प्र_लिखो(buf, "%d\n", data->max_uA);
-पूर्ण
+static ssize_t show_max_uA(struct device *dev,
+			   struct device_attribute *attr, char *buf)
+{
+	struct virtual_consumer_data *data = dev_get_drvdata(dev);
+	return sprintf(buf, "%d\n", data->max_uA);
+}
 
-अटल sमाप_प्रकार set_max_uA(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			  स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा भव_consumer_data *data = dev_get_drvdata(dev);
-	दीर्घ val;
+static ssize_t set_max_uA(struct device *dev, struct device_attribute *attr,
+			  const char *buf, size_t count)
+{
+	struct virtual_consumer_data *data = dev_get_drvdata(dev);
+	long val;
 
-	अगर (kम_से_दीर्घ(buf, 10, &val) != 0)
-		वापस count;
+	if (kstrtol(buf, 10, &val) != 0)
+		return count;
 
 	mutex_lock(&data->lock);
 
 	data->max_uA = val;
-	update_current_limit_स्थिरraपूर्णांकs(dev, data);
+	update_current_limit_constraints(dev, data);
 
 	mutex_unlock(&data->lock);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार show_mode(काष्ठा device *dev,
-			 काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा भव_consumer_data *data = dev_get_drvdata(dev);
+static ssize_t show_mode(struct device *dev,
+			 struct device_attribute *attr, char *buf)
+{
+	struct virtual_consumer_data *data = dev_get_drvdata(dev);
 
-	चयन (data->mode) अणु
-	हाल REGULATOR_MODE_FAST:
-		वापस प्र_लिखो(buf, "fast\n");
-	हाल REGULATOR_MODE_NORMAL:
-		वापस प्र_लिखो(buf, "normal\n");
-	हाल REGULATOR_MODE_IDLE:
-		वापस प्र_लिखो(buf, "idle\n");
-	हाल REGULATOR_MODE_STANDBY:
-		वापस प्र_लिखो(buf, "standby\n");
-	शेष:
-		वापस प्र_लिखो(buf, "unknown\n");
-	पूर्ण
-पूर्ण
+	switch (data->mode) {
+	case REGULATOR_MODE_FAST:
+		return sprintf(buf, "fast\n");
+	case REGULATOR_MODE_NORMAL:
+		return sprintf(buf, "normal\n");
+	case REGULATOR_MODE_IDLE:
+		return sprintf(buf, "idle\n");
+	case REGULATOR_MODE_STANDBY:
+		return sprintf(buf, "standby\n");
+	default:
+		return sprintf(buf, "unknown\n");
+	}
+}
 
-अटल sमाप_प्रकार set_mode(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा भव_consumer_data *data = dev_get_drvdata(dev);
-	अचिन्हित पूर्णांक mode;
-	पूर्णांक ret;
+static ssize_t set_mode(struct device *dev, struct device_attribute *attr,
+			const char *buf, size_t count)
+{
+	struct virtual_consumer_data *data = dev_get_drvdata(dev);
+	unsigned int mode;
+	int ret;
 
 	/*
-	 * sysfs_streq() करोesn't need the \n's, but we add them so the strings
+	 * sysfs_streq() doesn't need the \n's, but we add them so the strings
 	 * will be shared with show_mode(), above.
 	 */
-	अगर (sysfs_streq(buf, "fast\n"))
+	if (sysfs_streq(buf, "fast\n"))
 		mode = REGULATOR_MODE_FAST;
-	अन्यथा अगर (sysfs_streq(buf, "normal\n"))
+	else if (sysfs_streq(buf, "normal\n"))
 		mode = REGULATOR_MODE_NORMAL;
-	अन्यथा अगर (sysfs_streq(buf, "idle\n"))
+	else if (sysfs_streq(buf, "idle\n"))
 		mode = REGULATOR_MODE_IDLE;
-	अन्यथा अगर (sysfs_streq(buf, "standby\n"))
+	else if (sysfs_streq(buf, "standby\n"))
 		mode = REGULATOR_MODE_STANDBY;
-	अन्यथा अणु
+	else {
 		dev_err(dev, "Configuring invalid mode\n");
-		वापस count;
-	पूर्ण
+		return count;
+	}
 
 	mutex_lock(&data->lock);
 	ret = regulator_set_mode(data->regulator, mode);
-	अगर (ret == 0)
+	if (ret == 0)
 		data->mode = mode;
-	अन्यथा
+	else
 		dev_err(dev, "Failed to configure mode: %d\n", ret);
 	mutex_unlock(&data->lock);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल DEVICE_ATTR(min_microvolts, 0664, show_min_uV, set_min_uV);
-अटल DEVICE_ATTR(max_microvolts, 0664, show_max_uV, set_max_uV);
-अटल DEVICE_ATTR(min_microamps, 0664, show_min_uA, set_min_uA);
-अटल DEVICE_ATTR(max_microamps, 0664, show_max_uA, set_max_uA);
-अटल DEVICE_ATTR(mode, 0664, show_mode, set_mode);
+static DEVICE_ATTR(min_microvolts, 0664, show_min_uV, set_min_uV);
+static DEVICE_ATTR(max_microvolts, 0664, show_max_uV, set_max_uV);
+static DEVICE_ATTR(min_microamps, 0664, show_min_uA, set_min_uA);
+static DEVICE_ATTR(max_microamps, 0664, show_max_uA, set_max_uA);
+static DEVICE_ATTR(mode, 0664, show_mode, set_mode);
 
-अटल काष्ठा attribute *regulator_भव_attributes[] = अणु
+static struct attribute *regulator_virtual_attributes[] = {
 	&dev_attr_min_microvolts.attr,
 	&dev_attr_max_microvolts.attr,
 	&dev_attr_min_microamps.attr,
 	&dev_attr_max_microamps.attr,
 	&dev_attr_mode.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group regulator_भव_attr_group = अणु
-	.attrs	= regulator_भव_attributes,
-पूर्ण;
+static const struct attribute_group regulator_virtual_attr_group = {
+	.attrs	= regulator_virtual_attributes,
+};
 
-अटल पूर्णांक regulator_भव_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	अक्षर *reg_id = dev_get_platdata(&pdev->dev);
-	काष्ठा भव_consumer_data *drvdata;
-	पूर्णांक ret;
+static int regulator_virtual_probe(struct platform_device *pdev)
+{
+	char *reg_id = dev_get_platdata(&pdev->dev);
+	struct virtual_consumer_data *drvdata;
+	int ret;
 
-	drvdata = devm_kzalloc(&pdev->dev, माप(काष्ठा भव_consumer_data),
+	drvdata = devm_kzalloc(&pdev->dev, sizeof(struct virtual_consumer_data),
 			       GFP_KERNEL);
-	अगर (drvdata == शून्य)
-		वापस -ENOMEM;
+	if (drvdata == NULL)
+		return -ENOMEM;
 
 	mutex_init(&drvdata->lock);
 
 	drvdata->regulator = devm_regulator_get(&pdev->dev, reg_id);
-	अगर (IS_ERR(drvdata->regulator)) अणु
+	if (IS_ERR(drvdata->regulator)) {
 		ret = PTR_ERR(drvdata->regulator);
 		dev_err(&pdev->dev, "Failed to obtain supply '%s': %d\n",
 			reg_id, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = sysfs_create_group(&pdev->dev.kobj,
-				 &regulator_भव_attr_group);
-	अगर (ret != 0) अणु
+				 &regulator_virtual_attr_group);
+	if (ret != 0) {
 		dev_err(&pdev->dev,
 			"Failed to create attribute group: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	drvdata->mode = regulator_get_mode(drvdata->regulator);
 
-	platक्रमm_set_drvdata(pdev, drvdata);
+	platform_set_drvdata(pdev, drvdata);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक regulator_भव_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा भव_consumer_data *drvdata = platक्रमm_get_drvdata(pdev);
+static int regulator_virtual_remove(struct platform_device *pdev)
+{
+	struct virtual_consumer_data *drvdata = platform_get_drvdata(pdev);
 
-	sysfs_हटाओ_group(&pdev->dev.kobj, &regulator_भव_attr_group);
+	sysfs_remove_group(&pdev->dev.kobj, &regulator_virtual_attr_group);
 
-	अगर (drvdata->enabled)
+	if (drvdata->enabled)
 		regulator_disable(drvdata->regulator);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver regulator_भव_consumer_driver = अणु
-	.probe		= regulator_भव_probe,
-	.हटाओ		= regulator_भव_हटाओ,
-	.driver		= अणु
+static struct platform_driver regulator_virtual_consumer_driver = {
+	.probe		= regulator_virtual_probe,
+	.remove		= regulator_virtual_remove,
+	.driver		= {
 		.name		= "reg-virt-consumer",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(regulator_भव_consumer_driver);
+module_platform_driver(regulator_virtual_consumer_driver);
 
 MODULE_AUTHOR("Mark Brown <broonie@opensource.wolfsonmicro.com>");
 MODULE_DESCRIPTION("Virtual regulator consumer");

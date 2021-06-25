@@ -1,70 +1,69 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: MIT
+// SPDX-License-Identifier: MIT
 /*
- * Copyright तऊ 2019 Intel Corporation
+ * Copyright © 2019 Intel Corporation
  */
 
-#समावेश <linux/suspend.h>
+#include <linux/suspend.h>
 
-#समावेश "i915_drv.h"
-#समावेश "i915_globals.h"
-#समावेश "i915_params.h"
-#समावेश "intel_context.h"
-#समावेश "intel_engine_pm.h"
-#समावेश "intel_gt.h"
-#समावेश "intel_gt_clock_utils.h"
-#समावेश "intel_gt_pm.h"
-#समावेश "intel_gt_requests.h"
-#समावेश "intel_llc.h"
-#समावेश "intel_pm.h"
-#समावेश "intel_rc6.h"
-#समावेश "intel_rps.h"
-#समावेश "intel_wakeref.h"
+#include "i915_drv.h"
+#include "i915_globals.h"
+#include "i915_params.h"
+#include "intel_context.h"
+#include "intel_engine_pm.h"
+#include "intel_gt.h"
+#include "intel_gt_clock_utils.h"
+#include "intel_gt_pm.h"
+#include "intel_gt_requests.h"
+#include "intel_llc.h"
+#include "intel_pm.h"
+#include "intel_rc6.h"
+#include "intel_rps.h"
+#include "intel_wakeref.h"
 
-अटल व्योम user_क्रमcewake(काष्ठा पूर्णांकel_gt *gt, bool suspend)
-अणु
-	पूर्णांक count = atomic_पढ़ो(&gt->user_wakeref);
+static void user_forcewake(struct intel_gt *gt, bool suspend)
+{
+	int count = atomic_read(&gt->user_wakeref);
 
-	/* Inside suspend/resume so single thपढ़ोed, no races to worry about. */
-	अगर (likely(!count))
-		वापस;
+	/* Inside suspend/resume so single threaded, no races to worry about. */
+	if (likely(!count))
+		return;
 
-	पूर्णांकel_gt_pm_get(gt);
-	अगर (suspend) अणु
-		GEM_BUG_ON(count > atomic_पढ़ो(&gt->wakeref.count));
+	intel_gt_pm_get(gt);
+	if (suspend) {
+		GEM_BUG_ON(count > atomic_read(&gt->wakeref.count));
 		atomic_sub(count, &gt->wakeref.count);
-	पूर्ण अन्यथा अणु
+	} else {
 		atomic_add(count, &gt->wakeref.count);
-	पूर्ण
-	पूर्णांकel_gt_pm_put(gt);
-पूर्ण
+	}
+	intel_gt_pm_put(gt);
+}
 
-अटल व्योम runसमय_begin(काष्ठा पूर्णांकel_gt *gt)
-अणु
+static void runtime_begin(struct intel_gt *gt)
+{
 	local_irq_disable();
-	ग_लिखो_seqcount_begin(&gt->stats.lock);
-	gt->stats.start = kसमय_get();
+	write_seqcount_begin(&gt->stats.lock);
+	gt->stats.start = ktime_get();
 	gt->stats.active = true;
-	ग_लिखो_seqcount_end(&gt->stats.lock);
+	write_seqcount_end(&gt->stats.lock);
 	local_irq_enable();
-पूर्ण
+}
 
-अटल व्योम runसमय_end(काष्ठा पूर्णांकel_gt *gt)
-अणु
+static void runtime_end(struct intel_gt *gt)
+{
 	local_irq_disable();
-	ग_लिखो_seqcount_begin(&gt->stats.lock);
+	write_seqcount_begin(&gt->stats.lock);
 	gt->stats.active = false;
 	gt->stats.total =
-		kसमय_add(gt->stats.total,
-			  kसमय_sub(kसमय_get(), gt->stats.start));
-	ग_लिखो_seqcount_end(&gt->stats.lock);
+		ktime_add(gt->stats.total,
+			  ktime_sub(ktime_get(), gt->stats.start));
+	write_seqcount_end(&gt->stats.lock);
 	local_irq_enable();
-पूर्ण
+}
 
-अटल पूर्णांक __gt_unpark(काष्ठा पूर्णांकel_wakeref *wf)
-अणु
-	काष्ठा पूर्णांकel_gt *gt = container_of(wf, typeof(*gt), wakeref);
-	काष्ठा drm_i915_निजी *i915 = gt->i915;
+static int __gt_unpark(struct intel_wakeref *wf)
+{
+	struct intel_gt *gt = container_of(wf, typeof(*gt), wakeref);
+	struct drm_i915_private *i915 = gt->i915;
 
 	GT_TRACE(gt, "\n");
 
@@ -72,322 +71,322 @@
 
 	/*
 	 * It seems that the DMC likes to transition between the DC states a lot
-	 * when there are no connected displays (no active घातer करोमुख्यs) during
+	 * when there are no connected displays (no active power domains) during
 	 * command submission.
 	 *
-	 * This activity has negative impact on the perक्रमmance of the chip with
-	 * huge latencies observed in the पूर्णांकerrupt handler and अन्यथाwhere.
+	 * This activity has negative impact on the performance of the chip with
+	 * huge latencies observed in the interrupt handler and elsewhere.
 	 *
-	 * Work around it by grabbing a GT IRQ घातer करोमुख्य whilst there is any
+	 * Work around it by grabbing a GT IRQ power domain whilst there is any
 	 * GT activity, preventing any DC state transitions.
 	 */
-	gt->awake = पूर्णांकel_display_घातer_get(i915, POWER_DOMAIN_GT_IRQ);
+	gt->awake = intel_display_power_get(i915, POWER_DOMAIN_GT_IRQ);
 	GEM_BUG_ON(!gt->awake);
 
-	पूर्णांकel_rc6_unpark(&gt->rc6);
-	पूर्णांकel_rps_unpark(&gt->rps);
+	intel_rc6_unpark(&gt->rc6);
+	intel_rps_unpark(&gt->rps);
 	i915_pmu_gt_unparked(i915);
 
-	पूर्णांकel_gt_unpark_requests(gt);
-	runसमय_begin(gt);
+	intel_gt_unpark_requests(gt);
+	runtime_begin(gt);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __gt_park(काष्ठा पूर्णांकel_wakeref *wf)
-अणु
-	काष्ठा पूर्णांकel_gt *gt = container_of(wf, typeof(*gt), wakeref);
-	पूर्णांकel_wakeref_t wakeref = fetch_and_zero(&gt->awake);
-	काष्ठा drm_i915_निजी *i915 = gt->i915;
+static int __gt_park(struct intel_wakeref *wf)
+{
+	struct intel_gt *gt = container_of(wf, typeof(*gt), wakeref);
+	intel_wakeref_t wakeref = fetch_and_zero(&gt->awake);
+	struct drm_i915_private *i915 = gt->i915;
 
 	GT_TRACE(gt, "\n");
 
-	runसमय_end(gt);
-	पूर्णांकel_gt_park_requests(gt);
+	runtime_end(gt);
+	intel_gt_park_requests(gt);
 
 	i915_vma_parked(gt);
 	i915_pmu_gt_parked(i915);
-	पूर्णांकel_rps_park(&gt->rps);
-	पूर्णांकel_rc6_park(&gt->rc6);
+	intel_rps_park(&gt->rps);
+	intel_rc6_park(&gt->rc6);
 
-	/* Everything चयनed off, flush any residual पूर्णांकerrupt just in हाल */
-	पूर्णांकel_synchronize_irq(i915);
+	/* Everything switched off, flush any residual interrupt just in case */
+	intel_synchronize_irq(i915);
 
-	/* Defer dropping the display घातer well क्रम 100ms, it's slow! */
+	/* Defer dropping the display power well for 100ms, it's slow! */
 	GEM_BUG_ON(!wakeref);
-	पूर्णांकel_display_घातer_put_async(i915, POWER_DOMAIN_GT_IRQ, wakeref);
+	intel_display_power_put_async(i915, POWER_DOMAIN_GT_IRQ, wakeref);
 
 	i915_globals_park();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा पूर्णांकel_wakeref_ops wf_ops = अणु
+static const struct intel_wakeref_ops wf_ops = {
 	.get = __gt_unpark,
 	.put = __gt_park,
-पूर्ण;
+};
 
-व्योम पूर्णांकel_gt_pm_init_early(काष्ठा पूर्णांकel_gt *gt)
-अणु
-	पूर्णांकel_wakeref_init(&gt->wakeref, gt->uncore->rpm, &wf_ops);
+void intel_gt_pm_init_early(struct intel_gt *gt)
+{
+	intel_wakeref_init(&gt->wakeref, gt->uncore->rpm, &wf_ops);
 	seqcount_mutex_init(&gt->stats.lock, &gt->wakeref.mutex);
-पूर्ण
+}
 
-व्योम पूर्णांकel_gt_pm_init(काष्ठा पूर्णांकel_gt *gt)
-अणु
+void intel_gt_pm_init(struct intel_gt *gt)
+{
 	/*
-	 * Enabling घातer-management should be "self-healing". If we cannot
+	 * Enabling power-management should be "self-healing". If we cannot
 	 * enable a feature, simply leave it disabled with a notice to the
 	 * user.
 	 */
-	पूर्णांकel_rc6_init(&gt->rc6);
-	पूर्णांकel_rps_init(&gt->rps);
-पूर्ण
+	intel_rc6_init(&gt->rc6);
+	intel_rps_init(&gt->rps);
+}
 
-अटल bool reset_engines(काष्ठा पूर्णांकel_gt *gt)
-अणु
-	अगर (INTEL_INFO(gt->i915)->gpu_reset_clobbers_display)
-		वापस false;
+static bool reset_engines(struct intel_gt *gt)
+{
+	if (INTEL_INFO(gt->i915)->gpu_reset_clobbers_display)
+		return false;
 
-	वापस __पूर्णांकel_gt_reset(gt, ALL_ENGINES) == 0;
-पूर्ण
+	return __intel_gt_reset(gt, ALL_ENGINES) == 0;
+}
 
-अटल व्योम gt_sanitize(काष्ठा पूर्णांकel_gt *gt, bool क्रमce)
-अणु
-	काष्ठा पूर्णांकel_engine_cs *engine;
-	क्रमागत पूर्णांकel_engine_id id;
-	पूर्णांकel_wakeref_t wakeref;
+static void gt_sanitize(struct intel_gt *gt, bool force)
+{
+	struct intel_engine_cs *engine;
+	enum intel_engine_id id;
+	intel_wakeref_t wakeref;
 
-	GT_TRACE(gt, "force:%s", yesno(क्रमce));
+	GT_TRACE(gt, "force:%s", yesno(force));
 
-	/* Use a raw wakeref to aव्योम calling पूर्णांकel_display_घातer_get early */
-	wakeref = पूर्णांकel_runसमय_pm_get(gt->uncore->rpm);
-	पूर्णांकel_uncore_क्रमcewake_get(gt->uncore, FORCEWAKE_ALL);
+	/* Use a raw wakeref to avoid calling intel_display_power_get early */
+	wakeref = intel_runtime_pm_get(gt->uncore->rpm);
+	intel_uncore_forcewake_get(gt->uncore, FORCEWAKE_ALL);
 
-	पूर्णांकel_gt_check_घड़ी_frequency(gt);
+	intel_gt_check_clock_frequency(gt);
 
 	/*
 	 * As we have just resumed the machine and woken the device up from
 	 * deep PCI sleep (presumably D3_cold), assume the HW has been reset
-	 * back to शेषs, recovering from whatever wedged state we left it
+	 * back to defaults, recovering from whatever wedged state we left it
 	 * in and so worth trying to use the device once more.
 	 */
-	अगर (पूर्णांकel_gt_is_wedged(gt))
-		पूर्णांकel_gt_unset_wedged(gt);
+	if (intel_gt_is_wedged(gt))
+		intel_gt_unset_wedged(gt);
 
-	पूर्णांकel_uc_sanitize(&gt->uc);
+	intel_uc_sanitize(&gt->uc);
 
-	क्रम_each_engine(engine, gt, id)
-		अगर (engine->reset.prepare)
+	for_each_engine(engine, gt, id)
+		if (engine->reset.prepare)
 			engine->reset.prepare(engine);
 
-	पूर्णांकel_uc_reset_prepare(&gt->uc);
+	intel_uc_reset_prepare(&gt->uc);
 
-	क्रम_each_engine(engine, gt, id)
-		अगर (engine->sanitize)
+	for_each_engine(engine, gt, id)
+		if (engine->sanitize)
 			engine->sanitize(engine);
 
-	अगर (reset_engines(gt) || क्रमce) अणु
-		क्रम_each_engine(engine, gt, id)
-			__पूर्णांकel_engine_reset(engine, false);
-	पूर्ण
+	if (reset_engines(gt) || force) {
+		for_each_engine(engine, gt, id)
+			__intel_engine_reset(engine, false);
+	}
 
-	क्रम_each_engine(engine, gt, id)
-		अगर (engine->reset.finish)
+	for_each_engine(engine, gt, id)
+		if (engine->reset.finish)
 			engine->reset.finish(engine);
 
-	पूर्णांकel_rps_sanitize(&gt->rps);
+	intel_rps_sanitize(&gt->rps);
 
-	पूर्णांकel_uncore_क्रमcewake_put(gt->uncore, FORCEWAKE_ALL);
-	पूर्णांकel_runसमय_pm_put(gt->uncore->rpm, wakeref);
-पूर्ण
+	intel_uncore_forcewake_put(gt->uncore, FORCEWAKE_ALL);
+	intel_runtime_pm_put(gt->uncore->rpm, wakeref);
+}
 
-व्योम पूर्णांकel_gt_pm_fini(काष्ठा पूर्णांकel_gt *gt)
-अणु
-	पूर्णांकel_rc6_fini(&gt->rc6);
-पूर्ण
+void intel_gt_pm_fini(struct intel_gt *gt)
+{
+	intel_rc6_fini(&gt->rc6);
+}
 
-पूर्णांक पूर्णांकel_gt_resume(काष्ठा पूर्णांकel_gt *gt)
-अणु
-	काष्ठा पूर्णांकel_engine_cs *engine;
-	क्रमागत पूर्णांकel_engine_id id;
-	पूर्णांक err;
+int intel_gt_resume(struct intel_gt *gt)
+{
+	struct intel_engine_cs *engine;
+	enum intel_engine_id id;
+	int err;
 
-	err = पूर्णांकel_gt_has_unrecoverable_error(gt);
-	अगर (err)
-		वापस err;
+	err = intel_gt_has_unrecoverable_error(gt);
+	if (err)
+		return err;
 
 	GT_TRACE(gt, "\n");
 
 	/*
-	 * After resume, we may need to poke पूर्णांकo the pinned kernel
+	 * After resume, we may need to poke into the pinned kernel
 	 * contexts to paper over any damage caused by the sudden suspend.
-	 * Only the kernel contexts should reमुख्य pinned over suspend,
+	 * Only the kernel contexts should remain pinned over suspend,
 	 * allowing us to fixup the user contexts on their first pin.
 	 */
 	gt_sanitize(gt, true);
 
-	पूर्णांकel_gt_pm_get(gt);
+	intel_gt_pm_get(gt);
 
-	पूर्णांकel_uncore_क्रमcewake_get(gt->uncore, FORCEWAKE_ALL);
-	पूर्णांकel_rc6_sanitize(&gt->rc6);
-	अगर (पूर्णांकel_gt_is_wedged(gt)) अणु
+	intel_uncore_forcewake_get(gt->uncore, FORCEWAKE_ALL);
+	intel_rc6_sanitize(&gt->rc6);
+	if (intel_gt_is_wedged(gt)) {
 		err = -EIO;
-		जाओ out_fw;
-	पूर्ण
+		goto out_fw;
+	}
 
 	/* Only when the HW is re-initialised, can we replay the requests */
-	err = पूर्णांकel_gt_init_hw(gt);
-	अगर (err) अणु
+	err = intel_gt_init_hw(gt);
+	if (err) {
 		i915_probe_error(gt->i915,
 				 "Failed to initialize GPU, declaring it wedged!\n");
-		जाओ err_wedged;
-	पूर्ण
+		goto err_wedged;
+	}
 
-	पूर्णांकel_rps_enable(&gt->rps);
-	पूर्णांकel_llc_enable(&gt->llc);
+	intel_rps_enable(&gt->rps);
+	intel_llc_enable(&gt->llc);
 
-	क्रम_each_engine(engine, gt, id) अणु
-		पूर्णांकel_engine_pm_get(engine);
+	for_each_engine(engine, gt, id) {
+		intel_engine_pm_get(engine);
 
 		engine->serial++; /* kernel context lost */
-		err = पूर्णांकel_engine_resume(engine);
+		err = intel_engine_resume(engine);
 
-		पूर्णांकel_engine_pm_put(engine);
-		अगर (err) अणु
+		intel_engine_pm_put(engine);
+		if (err) {
 			drm_err(&gt->i915->drm,
 				"Failed to restart %s (%d)\n",
 				engine->name, err);
-			जाओ err_wedged;
-		पूर्ण
-	पूर्ण
+			goto err_wedged;
+		}
+	}
 
-	पूर्णांकel_rc6_enable(&gt->rc6);
+	intel_rc6_enable(&gt->rc6);
 
-	पूर्णांकel_uc_resume(&gt->uc);
+	intel_uc_resume(&gt->uc);
 
-	user_क्रमcewake(gt, false);
+	user_forcewake(gt, false);
 
 out_fw:
-	पूर्णांकel_uncore_क्रमcewake_put(gt->uncore, FORCEWAKE_ALL);
-	पूर्णांकel_gt_pm_put(gt);
-	वापस err;
+	intel_uncore_forcewake_put(gt->uncore, FORCEWAKE_ALL);
+	intel_gt_pm_put(gt);
+	return err;
 
 err_wedged:
-	पूर्णांकel_gt_set_wedged(gt);
-	जाओ out_fw;
-पूर्ण
+	intel_gt_set_wedged(gt);
+	goto out_fw;
+}
 
-अटल व्योम रुको_क्रम_suspend(काष्ठा पूर्णांकel_gt *gt)
-अणु
-	अगर (!पूर्णांकel_gt_pm_is_awake(gt))
-		वापस;
+static void wait_for_suspend(struct intel_gt *gt)
+{
+	if (!intel_gt_pm_is_awake(gt))
+		return;
 
-	अगर (पूर्णांकel_gt_रुको_क्रम_idle(gt, I915_GEM_IDLE_TIMEOUT) == -ETIME) अणु
+	if (intel_gt_wait_for_idle(gt, I915_GEM_IDLE_TIMEOUT) == -ETIME) {
 		/*
 		 * Forcibly cancel outstanding work and leave
 		 * the gpu quiet.
 		 */
-		पूर्णांकel_gt_set_wedged(gt);
-		पूर्णांकel_gt_retire_requests(gt);
-	पूर्ण
+		intel_gt_set_wedged(gt);
+		intel_gt_retire_requests(gt);
+	}
 
-	पूर्णांकel_gt_pm_रुको_क्रम_idle(gt);
-पूर्ण
+	intel_gt_pm_wait_for_idle(gt);
+}
 
-व्योम पूर्णांकel_gt_suspend_prepare(काष्ठा पूर्णांकel_gt *gt)
-अणु
-	user_क्रमcewake(gt, true);
-	रुको_क्रम_suspend(gt);
+void intel_gt_suspend_prepare(struct intel_gt *gt)
+{
+	user_forcewake(gt, true);
+	wait_for_suspend(gt);
 
-	पूर्णांकel_uc_suspend(&gt->uc);
-पूर्ण
+	intel_uc_suspend(&gt->uc);
+}
 
-अटल suspend_state_t pm_suspend_target(व्योम)
-अणु
-#अगर IS_ENABLED(CONFIG_SUSPEND) && IS_ENABLED(CONFIG_PM_SLEEP)
-	वापस pm_suspend_target_state;
-#अन्यथा
-	वापस PM_SUSPEND_TO_IDLE;
-#पूर्ण_अगर
-पूर्ण
+static suspend_state_t pm_suspend_target(void)
+{
+#if IS_ENABLED(CONFIG_SUSPEND) && IS_ENABLED(CONFIG_PM_SLEEP)
+	return pm_suspend_target_state;
+#else
+	return PM_SUSPEND_TO_IDLE;
+#endif
+}
 
-व्योम पूर्णांकel_gt_suspend_late(काष्ठा पूर्णांकel_gt *gt)
-अणु
-	पूर्णांकel_wakeref_t wakeref;
+void intel_gt_suspend_late(struct intel_gt *gt)
+{
+	intel_wakeref_t wakeref;
 
-	/* We expect to be idle alपढ़ोy; but also want to be independent */
-	रुको_क्रम_suspend(gt);
+	/* We expect to be idle already; but also want to be independent */
+	wait_for_suspend(gt);
 
-	अगर (is_mock_gt(gt))
-		वापस;
+	if (is_mock_gt(gt))
+		return;
 
 	GEM_BUG_ON(gt->awake);
 
 	/*
 	 * On disabling the device, we want to turn off HW access to memory
-	 * that we no दीर्घer own.
+	 * that we no longer own.
 	 *
 	 * However, not all suspend-states disable the device. S0 (s2idle)
-	 * is effectively runसमय-suspend, the device is left घातered on
-	 * but needs to be put पूर्णांकo a low घातer state. We need to keep
-	 * घातermanagement enabled, but we also retain प्रणाली state and so
-	 * it reमुख्यs safe to keep on using our allocated memory.
+	 * is effectively runtime-suspend, the device is left powered on
+	 * but needs to be put into a low power state. We need to keep
+	 * powermanagement enabled, but we also retain system state and so
+	 * it remains safe to keep on using our allocated memory.
 	 */
-	अगर (pm_suspend_target() == PM_SUSPEND_TO_IDLE)
-		वापस;
+	if (pm_suspend_target() == PM_SUSPEND_TO_IDLE)
+		return;
 
-	with_पूर्णांकel_runसमय_pm(gt->uncore->rpm, wakeref) अणु
-		पूर्णांकel_rps_disable(&gt->rps);
-		पूर्णांकel_rc6_disable(&gt->rc6);
-		पूर्णांकel_llc_disable(&gt->llc);
-	पूर्ण
+	with_intel_runtime_pm(gt->uncore->rpm, wakeref) {
+		intel_rps_disable(&gt->rps);
+		intel_rc6_disable(&gt->rc6);
+		intel_llc_disable(&gt->llc);
+	}
 
 	gt_sanitize(gt, false);
 
 	GT_TRACE(gt, "\n");
-पूर्ण
+}
 
-व्योम पूर्णांकel_gt_runसमय_suspend(काष्ठा पूर्णांकel_gt *gt)
-अणु
-	पूर्णांकel_uc_runसमय_suspend(&gt->uc);
+void intel_gt_runtime_suspend(struct intel_gt *gt)
+{
+	intel_uc_runtime_suspend(&gt->uc);
 
 	GT_TRACE(gt, "\n");
-पूर्ण
+}
 
-पूर्णांक पूर्णांकel_gt_runसमय_resume(काष्ठा पूर्णांकel_gt *gt)
-अणु
+int intel_gt_runtime_resume(struct intel_gt *gt)
+{
 	GT_TRACE(gt, "\n");
-	पूर्णांकel_gt_init_swizzling(gt);
-	पूर्णांकel_ggtt_restore_fences(gt->ggtt);
+	intel_gt_init_swizzling(gt);
+	intel_ggtt_restore_fences(gt->ggtt);
 
-	वापस पूर्णांकel_uc_runसमय_resume(&gt->uc);
-पूर्ण
+	return intel_uc_runtime_resume(&gt->uc);
+}
 
-अटल kसमय_प्रकार __पूर्णांकel_gt_get_awake_समय(स्थिर काष्ठा पूर्णांकel_gt *gt)
-अणु
-	kसमय_प्रकार total = gt->stats.total;
+static ktime_t __intel_gt_get_awake_time(const struct intel_gt *gt)
+{
+	ktime_t total = gt->stats.total;
 
-	अगर (gt->stats.active)
-		total = kसमय_add(total,
-				  kसमय_sub(kसमय_get(), gt->stats.start));
+	if (gt->stats.active)
+		total = ktime_add(total,
+				  ktime_sub(ktime_get(), gt->stats.start));
 
-	वापस total;
-पूर्ण
+	return total;
+}
 
-kसमय_प्रकार पूर्णांकel_gt_get_awake_समय(स्थिर काष्ठा पूर्णांकel_gt *gt)
-अणु
-	अचिन्हित पूर्णांक seq;
-	kसमय_प्रकार total;
+ktime_t intel_gt_get_awake_time(const struct intel_gt *gt)
+{
+	unsigned int seq;
+	ktime_t total;
 
-	करो अणु
-		seq = पढ़ो_seqcount_begin(&gt->stats.lock);
-		total = __पूर्णांकel_gt_get_awake_समय(gt);
-	पूर्ण जबतक (पढ़ो_seqcount_retry(&gt->stats.lock, seq));
+	do {
+		seq = read_seqcount_begin(&gt->stats.lock);
+		total = __intel_gt_get_awake_time(gt);
+	} while (read_seqcount_retry(&gt->stats.lock, seq));
 
-	वापस total;
-पूर्ण
+	return total;
+}
 
-#अगर IS_ENABLED(CONFIG_DRM_I915_SELFTEST)
-#समावेश "selftest_gt_pm.c"
-#पूर्ण_अगर
+#if IS_ENABLED(CONFIG_DRM_I915_SELFTEST)
+#include "selftest_gt_pm.c"
+#endif

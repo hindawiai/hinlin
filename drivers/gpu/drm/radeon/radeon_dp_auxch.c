@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2015 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,11 +22,11 @@
  * Authors: Dave Airlie
  */
 
-#समावेश <drm/radeon_drm.h>
-#समावेश "radeon.h"
-#समावेश "nid.h"
+#include <drm/radeon_drm.h>
+#include "radeon.h"
+#include "nid.h"
 
-#घोषणा AUX_RX_ERROR_FLAGS (AUX_SW_RX_OVERFLOW |	     \
+#define AUX_RX_ERROR_FLAGS (AUX_SW_RX_OVERFLOW |	     \
 			    AUX_SW_RX_HPD_DISCON |	     \
 			    AUX_SW_RX_PARTIAL_BYTE |	     \
 			    AUX_SW_NON_AUX_MODE |	     \
@@ -38,85 +37,85 @@
 			    AUX_SW_RX_RECV_INVALID_H |	     \
 			    AUX_SW_RX_RECV_INVALID_V)
 
-#घोषणा AUX_SW_REPLY_GET_BYTE_COUNT(x) (((x) >> 24) & 0x1f)
+#define AUX_SW_REPLY_GET_BYTE_COUNT(x) (((x) >> 24) & 0x1f)
 
-#घोषणा BARE_ADDRESS_SIZE 3
+#define BARE_ADDRESS_SIZE 3
 
-अटल स्थिर u32 aux_offset[] =
-अणु
+static const u32 aux_offset[] =
+{
 	0x6200 - 0x6200,
 	0x6250 - 0x6200,
 	0x62a0 - 0x6200,
 	0x6300 - 0x6200,
 	0x6350 - 0x6200,
 	0x63a0 - 0x6200,
-पूर्ण;
+};
 
-sमाप_प्रकार
-radeon_dp_aux_transfer_native(काष्ठा drm_dp_aux *aux, काष्ठा drm_dp_aux_msg *msg)
-अणु
-	काष्ठा radeon_i2c_chan *chan =
-		container_of(aux, काष्ठा radeon_i2c_chan, aux);
-	काष्ठा drm_device *dev = chan->dev;
-	काष्ठा radeon_device *rdev = dev->dev_निजी;
-	पूर्णांक ret = 0, i;
-	uपूर्णांक32_t पंचांगp, ack = 0;
-	पूर्णांक instance = chan->rec.i2c_id & 0xf;
+ssize_t
+radeon_dp_aux_transfer_native(struct drm_dp_aux *aux, struct drm_dp_aux_msg *msg)
+{
+	struct radeon_i2c_chan *chan =
+		container_of(aux, struct radeon_i2c_chan, aux);
+	struct drm_device *dev = chan->dev;
+	struct radeon_device *rdev = dev->dev_private;
+	int ret = 0, i;
+	uint32_t tmp, ack = 0;
+	int instance = chan->rec.i2c_id & 0xf;
 	u8 byte;
 	u8 *buf = msg->buffer;
-	पूर्णांक retry_count = 0;
-	पूर्णांक bytes;
-	पूर्णांक msize;
-	bool is_ग_लिखो = false;
+	int retry_count = 0;
+	int bytes;
+	int msize;
+	bool is_write = false;
 
-	अगर (WARN_ON(msg->size > 16))
-		वापस -E2BIG;
+	if (WARN_ON(msg->size > 16))
+		return -E2BIG;
 
-	चयन (msg->request & ~DP_AUX_I2C_MOT) अणु
-	हाल DP_AUX_NATIVE_WRITE:
-	हाल DP_AUX_I2C_WRITE:
-		is_ग_लिखो = true;
-		अवरोध;
-	हाल DP_AUX_NATIVE_READ:
-	हाल DP_AUX_I2C_READ:
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	switch (msg->request & ~DP_AUX_I2C_MOT) {
+	case DP_AUX_NATIVE_WRITE:
+	case DP_AUX_I2C_WRITE:
+		is_write = true;
+		break;
+	case DP_AUX_NATIVE_READ:
+	case DP_AUX_I2C_READ:
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	/* work out two sizes required */
 	msize = 0;
 	bytes = BARE_ADDRESS_SIZE;
-	अगर (msg->size) अणु
+	if (msg->size) {
 		msize = msg->size - 1;
 		bytes++;
-		अगर (is_ग_लिखो)
+		if (is_write)
 			bytes += msg->size;
-	पूर्ण
+	}
 
 	mutex_lock(&chan->mutex);
 
-	/* चयन the pad to aux mode */
-	पंचांगp = RREG32(chan->rec.mask_clk_reg);
-	पंचांगp |= (1 << 16);
-	WREG32(chan->rec.mask_clk_reg, पंचांगp);
+	/* switch the pad to aux mode */
+	tmp = RREG32(chan->rec.mask_clk_reg);
+	tmp |= (1 << 16);
+	WREG32(chan->rec.mask_clk_reg, tmp);
 
-	/* setup AUX control रेजिस्टर with correct HPD pin */
-	पंचांगp = RREG32(AUX_CONTROL + aux_offset[instance]);
+	/* setup AUX control register with correct HPD pin */
+	tmp = RREG32(AUX_CONTROL + aux_offset[instance]);
 
-	पंचांगp &= AUX_HPD_SEL(0x7);
-	पंचांगp |= AUX_HPD_SEL(chan->rec.hpd);
-	पंचांगp |= AUX_EN | AUX_LS_READ_EN;
+	tmp &= AUX_HPD_SEL(0x7);
+	tmp |= AUX_HPD_SEL(chan->rec.hpd);
+	tmp |= AUX_EN | AUX_LS_READ_EN;
 
-	WREG32(AUX_CONTROL + aux_offset[instance], पंचांगp);
+	WREG32(AUX_CONTROL + aux_offset[instance], tmp);
 
-	/* atombios appears to ग_लिखो this twice lets copy it */
+	/* atombios appears to write this twice lets copy it */
 	WREG32(AUX_SW_CONTROL + aux_offset[instance],
 	       AUX_SW_WR_BYTES(bytes));
 	WREG32(AUX_SW_CONTROL + aux_offset[instance],
 	       AUX_SW_WR_BYTES(bytes));
 
-	/* ग_लिखो the data header पूर्णांकo the रेजिस्टरs */
+	/* write the data header into the registers */
 	/* request, address, msg size */
 	byte = (msg->request << 4) | ((msg->address >> 16) & 0xf);
 	WREG32(AUX_SW_DATA + aux_offset[instance],
@@ -134,72 +133,72 @@ radeon_dp_aux_transfer_native(काष्ठा drm_dp_aux *aux, काष्�
 	WREG32(AUX_SW_DATA + aux_offset[instance],
 	       AUX_SW_DATA_MASK(byte));
 
-	/* अगर we are writing - ग_लिखो the msg buffer */
-	अगर (is_ग_लिखो) अणु
-		क्रम (i = 0; i < msg->size; i++) अणु
+	/* if we are writing - write the msg buffer */
+	if (is_write) {
+		for (i = 0; i < msg->size; i++) {
 			WREG32(AUX_SW_DATA + aux_offset[instance],
 			       AUX_SW_DATA_MASK(buf[i]));
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* clear the ACK */
 	WREG32(AUX_SW_INTERRUPT_CONTROL + aux_offset[instance], AUX_SW_DONE_ACK);
 
-	/* ग_लिखो the size and GO bits */
+	/* write the size and GO bits */
 	WREG32(AUX_SW_CONTROL + aux_offset[instance],
 	       AUX_SW_WR_BYTES(bytes) | AUX_SW_GO);
 
-	/* poll the status रेजिस्टरs - TODO irq support */
-	करो अणु
-		पंचांगp = RREG32(AUX_SW_STATUS + aux_offset[instance]);
-		अगर (पंचांगp & AUX_SW_DONE) अणु
-			अवरोध;
-		पूर्ण
+	/* poll the status registers - TODO irq support */
+	do {
+		tmp = RREG32(AUX_SW_STATUS + aux_offset[instance]);
+		if (tmp & AUX_SW_DONE) {
+			break;
+		}
 		usleep_range(100, 200);
-	पूर्ण जबतक (retry_count++ < 1000);
+	} while (retry_count++ < 1000);
 
-	अगर (retry_count >= 1000) अणु
-		DRM_ERROR("auxch hw never signalled completion, error %08x\n", पंचांगp);
+	if (retry_count >= 1000) {
+		DRM_ERROR("auxch hw never signalled completion, error %08x\n", tmp);
 		ret = -EIO;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	अगर (पंचांगp & AUX_SW_RX_TIMEOUT) अणु
+	if (tmp & AUX_SW_RX_TIMEOUT) {
 		ret = -ETIMEDOUT;
-		जाओ करोne;
-	पूर्ण
-	अगर (पंचांगp & AUX_RX_ERROR_FLAGS) अणु
+		goto done;
+	}
+	if (tmp & AUX_RX_ERROR_FLAGS) {
 		DRM_DEBUG_KMS_RATELIMITED("dp_aux_ch flags not zero: %08x\n",
-					  पंचांगp);
+					  tmp);
 		ret = -EIO;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	bytes = AUX_SW_REPLY_GET_BYTE_COUNT(पंचांगp);
-	अगर (bytes) अणु
+	bytes = AUX_SW_REPLY_GET_BYTE_COUNT(tmp);
+	if (bytes) {
 		WREG32(AUX_SW_DATA + aux_offset[instance],
 		       AUX_SW_DATA_RW | AUX_SW_AUTOINCREMENT_DISABLE);
 
-		पंचांगp = RREG32(AUX_SW_DATA + aux_offset[instance]);
-		ack = (पंचांगp >> 8) & 0xff;
+		tmp = RREG32(AUX_SW_DATA + aux_offset[instance]);
+		ack = (tmp >> 8) & 0xff;
 
-		क्रम (i = 0; i < bytes - 1; i++) अणु
-			पंचांगp = RREG32(AUX_SW_DATA + aux_offset[instance]);
-			अगर (buf)
-				buf[i] = (पंचांगp >> 8) & 0xff;
-		पूर्ण
-		अगर (buf)
+		for (i = 0; i < bytes - 1; i++) {
+			tmp = RREG32(AUX_SW_DATA + aux_offset[instance]);
+			if (buf)
+				buf[i] = (tmp >> 8) & 0xff;
+		}
+		if (buf)
 			ret = bytes - 1;
-	पूर्ण
+	}
 
 	WREG32(AUX_SW_INTERRUPT_CONTROL + aux_offset[instance], AUX_SW_DONE_ACK);
 
-	अगर (is_ग_लिखो)
+	if (is_write)
 		ret = msg->size;
-करोne:
+done:
 	mutex_unlock(&chan->mutex);
 
-	अगर (ret >= 0)
+	if (ret >= 0)
 		msg->reply = ack >> 4;
-	वापस ret;
-पूर्ण
+	return ret;
+}

@@ -1,17 +1,16 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_SWAPखाता_H
-#घोषणा _LINUX_SWAPखाता_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_SWAPFILE_H
+#define _LINUX_SWAPFILE_H
 
 /*
- * these were अटल in swapfile.c but frontswap.c needs them and we करोn't
- * want to expose them to the करोzens of source files that include swap.h
+ * these were static in swapfile.c but frontswap.c needs them and we don't
+ * want to expose them to the dozens of source files that include swap.h
  */
-बाह्य spinlock_t swap_lock;
-बाह्य काष्ठा plist_head swap_active_head;
-बाह्य काष्ठा swap_info_काष्ठा *swap_info[];
-बाह्य पूर्णांक try_to_unuse(अचिन्हित पूर्णांक, bool, अचिन्हित दीर्घ);
-बाह्य अचिन्हित दीर्घ generic_max_swapfile_size(व्योम);
-बाह्य अचिन्हित दीर्घ max_swapfile_size(व्योम);
+extern spinlock_t swap_lock;
+extern struct plist_head swap_active_head;
+extern struct swap_info_struct *swap_info[];
+extern int try_to_unuse(unsigned int, bool, unsigned long);
+extern unsigned long generic_max_swapfile_size(void);
+extern unsigned long max_swapfile_size(void);
 
-#पूर्ण_अगर /* _LINUX_SWAPखाता_H */
+#endif /* _LINUX_SWAPFILE_H */

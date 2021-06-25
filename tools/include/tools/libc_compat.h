@@ -1,21 +1,20 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (LGPL-2.0+ OR BSD-2-Clause)
+// SPDX-License-Identifier: (LGPL-2.0+ OR BSD-2-Clause)
 /* Copyright (C) 2018 Netronome Systems, Inc. */
 
-#अगर_अघोषित __TOOLS_LIBC_COMPAT_H
-#घोषणा __TOOLS_LIBC_COMPAT_H
+#ifndef __TOOLS_LIBC_COMPAT_H
+#define __TOOLS_LIBC_COMPAT_H
 
-#समावेश <मानककोष.स>
-#समावेश <linux/overflow.h>
+#include <stdlib.h>
+#include <linux/overflow.h>
 
-#अगर_घोषित COMPAT_NEED_REALLOCARRAY
-अटल अंतरभूत व्योम *पुनः_स्मृतिarray(व्योम *ptr, माप_प्रकार nmemb, माप_प्रकार size)
-अणु
-	माप_प्रकार bytes;
+#ifdef COMPAT_NEED_REALLOCARRAY
+static inline void *reallocarray(void *ptr, size_t nmemb, size_t size)
+{
+	size_t bytes;
 
-	अगर (unlikely(check_mul_overflow(nmemb, size, &bytes)))
-		वापस शून्य;
-	वापस पुनः_स्मृति(ptr, bytes);
-पूर्ण
-#पूर्ण_अगर
-#पूर्ण_अगर
+	if (unlikely(check_mul_overflow(nmemb, size, &bytes)))
+		return NULL;
+	return realloc(ptr, bytes);
+}
+#endif
+#endif

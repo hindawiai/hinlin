@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,11 +23,11 @@
  *
  */
 
-#अगर_अघोषित __BIOS_PARSER_COMMON_H__
-#घोषणा __BIOS_PARSER_COMMON_H__
+#ifndef __BIOS_PARSER_COMMON_H__
+#define __BIOS_PARSER_COMMON_H__
 
-#समावेश "dm_services.h"
-#समावेश "ObjectID.h"
+#include "dm_services.h"
+#include "ObjectID.h"
 
-काष्ठा graphics_object_id object_id_from_bios_object_id(uपूर्णांक32_t bios_object_id);
-#पूर्ण_अगर
+struct graphics_object_id object_id_from_bios_object_id(uint32_t bios_object_id);
+#endif

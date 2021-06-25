@@ -1,186 +1,185 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  linux/fs/adfs/inode.c
  *
  *  Copyright (C) 1997-1999 Russell King
  */
-#समावेश <linux/buffer_head.h>
-#समावेश <linux/ग_लिखोback.h>
-#समावेश "adfs.h"
+#include <linux/buffer_head.h>
+#include <linux/writeback.h>
+#include "adfs.h"
 
 /*
- * Lookup/Create a block at offset 'block' into 'inode'.  We currently करो
- * not support creation of new blocks, so we वापस -EIO क्रम this हाल.
+ * Lookup/Create a block at offset 'block' into 'inode'.  We currently do
+ * not support creation of new blocks, so we return -EIO for this case.
  */
-अटल पूर्णांक
-adfs_get_block(काष्ठा inode *inode, sector_t block, काष्ठा buffer_head *bh,
-	       पूर्णांक create)
-अणु
-	अगर (!create) अणु
-		अगर (block >= inode->i_blocks)
-			जाओ पात_toobig;
+static int
+adfs_get_block(struct inode *inode, sector_t block, struct buffer_head *bh,
+	       int create)
+{
+	if (!create) {
+		if (block >= inode->i_blocks)
+			goto abort_toobig;
 
 		block = __adfs_block_map(inode->i_sb, ADFS_I(inode)->indaddr,
 					 block);
-		अगर (block)
+		if (block)
 			map_bh(bh, inode->i_sb, block);
-		वापस 0;
-	पूर्ण
-	/* करोn't support allocation of blocks yet */
-	वापस -EIO;
+		return 0;
+	}
+	/* don't support allocation of blocks yet */
+	return -EIO;
 
-पात_toobig:
-	वापस 0;
-पूर्ण
+abort_toobig:
+	return 0;
+}
 
-अटल पूर्णांक adfs_ग_लिखोpage(काष्ठा page *page, काष्ठा ग_लिखोback_control *wbc)
-अणु
-	वापस block_ग_लिखो_full_page(page, adfs_get_block, wbc);
-पूर्ण
+static int adfs_writepage(struct page *page, struct writeback_control *wbc)
+{
+	return block_write_full_page(page, adfs_get_block, wbc);
+}
 
-अटल पूर्णांक adfs_पढ़ोpage(काष्ठा file *file, काष्ठा page *page)
-अणु
-	वापस block_पढ़ो_full_page(page, adfs_get_block);
-पूर्ण
+static int adfs_readpage(struct file *file, struct page *page)
+{
+	return block_read_full_page(page, adfs_get_block);
+}
 
-अटल व्योम adfs_ग_लिखो_failed(काष्ठा address_space *mapping, loff_t to)
-अणु
-	काष्ठा inode *inode = mapping->host;
+static void adfs_write_failed(struct address_space *mapping, loff_t to)
+{
+	struct inode *inode = mapping->host;
 
-	अगर (to > inode->i_size)
+	if (to > inode->i_size)
 		truncate_pagecache(inode, inode->i_size);
-पूर्ण
+}
 
-अटल पूर्णांक adfs_ग_लिखो_begin(काष्ठा file *file, काष्ठा address_space *mapping,
-			loff_t pos, अचिन्हित len, अचिन्हित flags,
-			काष्ठा page **pagep, व्योम **fsdata)
-अणु
-	पूर्णांक ret;
+static int adfs_write_begin(struct file *file, struct address_space *mapping,
+			loff_t pos, unsigned len, unsigned flags,
+			struct page **pagep, void **fsdata)
+{
+	int ret;
 
-	*pagep = शून्य;
-	ret = cont_ग_लिखो_begin(file, mapping, pos, len, flags, pagep, fsdata,
+	*pagep = NULL;
+	ret = cont_write_begin(file, mapping, pos, len, flags, pagep, fsdata,
 				adfs_get_block,
-				&ADFS_I(mapping->host)->mmu_निजी);
-	अगर (unlikely(ret))
-		adfs_ग_लिखो_failed(mapping, pos + len);
+				&ADFS_I(mapping->host)->mmu_private);
+	if (unlikely(ret))
+		adfs_write_failed(mapping, pos + len);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sector_t _adfs_bmap(काष्ठा address_space *mapping, sector_t block)
-अणु
-	वापस generic_block_bmap(mapping, block, adfs_get_block);
-पूर्ण
+static sector_t _adfs_bmap(struct address_space *mapping, sector_t block)
+{
+	return generic_block_bmap(mapping, block, adfs_get_block);
+}
 
-अटल स्थिर काष्ठा address_space_operations adfs_aops = अणु
-	.पढ़ोpage	= adfs_पढ़ोpage,
-	.ग_लिखोpage	= adfs_ग_लिखोpage,
-	.ग_लिखो_begin	= adfs_ग_लिखो_begin,
-	.ग_लिखो_end	= generic_ग_लिखो_end,
+static const struct address_space_operations adfs_aops = {
+	.readpage	= adfs_readpage,
+	.writepage	= adfs_writepage,
+	.write_begin	= adfs_write_begin,
+	.write_end	= generic_write_end,
 	.bmap		= _adfs_bmap
-पूर्ण;
+};
 
 /*
  * Convert ADFS attributes and filetype to Linux permission.
  */
-अटल umode_t
-adfs_atts2mode(काष्ठा super_block *sb, काष्ठा inode *inode)
-अणु
-	अचिन्हित पूर्णांक attr = ADFS_I(inode)->attr;
+static umode_t
+adfs_atts2mode(struct super_block *sb, struct inode *inode)
+{
+	unsigned int attr = ADFS_I(inode)->attr;
 	umode_t mode, rmask;
-	काष्ठा adfs_sb_info *asb = ADFS_SB(sb);
+	struct adfs_sb_info *asb = ADFS_SB(sb);
 
-	अगर (attr & ADFS_NDA_सूचीECTORY) अणु
+	if (attr & ADFS_NDA_DIRECTORY) {
 		mode = S_IRUGO & asb->s_owner_mask;
-		वापस S_IFसूची | S_IXUGO | mode;
-	पूर्ण
+		return S_IFDIR | S_IXUGO | mode;
+	}
 
-	चयन (adfs_filetype(ADFS_I(inode)->loadaddr)) अणु
-	हाल 0xfc0:	/* LinkFS */
-		वापस S_IFLNK|S_IRWXUGO;
+	switch (adfs_filetype(ADFS_I(inode)->loadaddr)) {
+	case 0xfc0:	/* LinkFS */
+		return S_IFLNK|S_IRWXUGO;
 
-	हाल 0xfe6:	/* UnixExec */
+	case 0xfe6:	/* UnixExec */
 		rmask = S_IRUGO | S_IXUGO;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		rmask = S_IRUGO;
-	पूर्ण
+	}
 
 	mode = S_IFREG;
 
-	अगर (attr & ADFS_NDA_OWNER_READ)
+	if (attr & ADFS_NDA_OWNER_READ)
 		mode |= rmask & asb->s_owner_mask;
 
-	अगर (attr & ADFS_NDA_OWNER_WRITE)
+	if (attr & ADFS_NDA_OWNER_WRITE)
 		mode |= S_IWUGO & asb->s_owner_mask;
 
-	अगर (attr & ADFS_NDA_PUBLIC_READ)
+	if (attr & ADFS_NDA_PUBLIC_READ)
 		mode |= rmask & asb->s_other_mask;
 
-	अगर (attr & ADFS_NDA_PUBLIC_WRITE)
+	if (attr & ADFS_NDA_PUBLIC_WRITE)
 		mode |= S_IWUGO & asb->s_other_mask;
-	वापस mode;
-पूर्ण
+	return mode;
+}
 
 /*
- * Convert Linux permission to ADFS attribute.  We try to करो the reverse
+ * Convert Linux permission to ADFS attribute.  We try to do the reverse
  * of atts2mode, but there is not a 1:1 translation.
  */
-अटल पूर्णांक adfs_mode2atts(काष्ठा super_block *sb, काष्ठा inode *inode,
+static int adfs_mode2atts(struct super_block *sb, struct inode *inode,
 			  umode_t ia_mode)
-अणु
-	काष्ठा adfs_sb_info *asb = ADFS_SB(sb);
+{
+	struct adfs_sb_info *asb = ADFS_SB(sb);
 	umode_t mode;
-	पूर्णांक attr;
+	int attr;
 
 	/* FIXME: should we be able to alter a link? */
-	अगर (S_ISLNK(inode->i_mode))
-		वापस ADFS_I(inode)->attr;
+	if (S_ISLNK(inode->i_mode))
+		return ADFS_I(inode)->attr;
 
-	/* Directories करो not have पढ़ो/ग_लिखो permissions on the media */
-	अगर (S_ISसूची(inode->i_mode))
-		वापस ADFS_NDA_सूचीECTORY;
+	/* Directories do not have read/write permissions on the media */
+	if (S_ISDIR(inode->i_mode))
+		return ADFS_NDA_DIRECTORY;
 
 	attr = 0;
 	mode = ia_mode & asb->s_owner_mask;
-	अगर (mode & S_IRUGO)
+	if (mode & S_IRUGO)
 		attr |= ADFS_NDA_OWNER_READ;
-	अगर (mode & S_IWUGO)
+	if (mode & S_IWUGO)
 		attr |= ADFS_NDA_OWNER_WRITE;
 
 	mode = ia_mode & asb->s_other_mask;
 	mode &= ~asb->s_owner_mask;
-	अगर (mode & S_IRUGO)
+	if (mode & S_IRUGO)
 		attr |= ADFS_NDA_PUBLIC_READ;
-	अगर (mode & S_IWUGO)
+	if (mode & S_IWUGO)
 		attr |= ADFS_NDA_PUBLIC_WRITE;
 
-	वापस attr;
-पूर्ण
+	return attr;
+}
 
-अटल स्थिर s64 nsec_unix_epoch_dअगरf_risc_os_epoch = 2208988800000000000LL;
+static const s64 nsec_unix_epoch_diff_risc_os_epoch = 2208988800000000000LL;
 
 /*
- * Convert an ADFS समय to Unix समय.  ADFS has a 40-bit centi-second समय
+ * Convert an ADFS time to Unix time.  ADFS has a 40-bit centi-second time
  * referenced to 1 Jan 1900 (til 2248) so we need to discard 2208988800 seconds
- * of समय to convert from RISC OS epoch to Unix epoch.
+ * of time to convert from RISC OS epoch to Unix epoch.
  */
-अटल व्योम
-adfs_adfs2unix_समय(काष्ठा बारpec64 *tv, काष्ठा inode *inode)
-अणु
-	अचिन्हित पूर्णांक high, low;
+static void
+adfs_adfs2unix_time(struct timespec64 *tv, struct inode *inode)
+{
+	unsigned int high, low;
 	/* 01 Jan 1970 00:00:00 (Unix epoch) as nanoseconds since
 	 * 01 Jan 1900 00:00:00 (RISC OS epoch)
 	 */
 	s64 nsec;
 
-	अगर (!adfs_inode_is_stamped(inode))
-		जाओ cur_समय;
+	if (!adfs_inode_is_stamped(inode))
+		goto cur_time;
 
-	high = ADFS_I(inode)->loadaddr & 0xFF; /* top 8 bits of बारtamp */
-	low  = ADFS_I(inode)->execaddr;    /* bottom 32 bits of बारtamp */
+	high = ADFS_I(inode)->loadaddr & 0xFF; /* top 8 bits of timestamp */
+	low  = ADFS_I(inode)->execaddr;    /* bottom 32 bits of timestamp */
 
 	/* convert 40-bit centi-seconds to 32-bit seconds
 	 * going via nanoseconds to retain precision
@@ -188,63 +187,63 @@ adfs_adfs2unix_समय(काष्ठा बारpec64 *tv, काष्ठ�
 	nsec = (((s64) high << 32) | (s64) low) * 10000000; /* cs to ns */
 
 	/* Files dated pre  01 Jan 1970 00:00:00. */
-	अगर (nsec < nsec_unix_epoch_dअगरf_risc_os_epoch)
-		जाओ too_early;
+	if (nsec < nsec_unix_epoch_diff_risc_os_epoch)
+		goto too_early;
 
 	/* convert from RISC OS to Unix epoch */
-	nsec -= nsec_unix_epoch_dअगरf_risc_os_epoch;
+	nsec -= nsec_unix_epoch_diff_risc_os_epoch;
 
-	*tv = ns_to_बारpec64(nsec);
-	वापस;
+	*tv = ns_to_timespec64(nsec);
+	return;
 
- cur_समय:
-	*tv = current_समय(inode);
-	वापस;
+ cur_time:
+	*tv = current_time(inode);
+	return;
 
  too_early:
 	tv->tv_sec = tv->tv_nsec = 0;
-	वापस;
-पूर्ण
+	return;
+}
 
-/* Convert an Unix समय to ADFS समय क्रम an entry that is alपढ़ोy stamped. */
-अटल व्योम adfs_unix2adfs_समय(काष्ठा inode *inode,
-				स्थिर काष्ठा बारpec64 *ts)
-अणु
-	s64 cs, nsec = बारpec64_to_ns(ts);
+/* Convert an Unix time to ADFS time for an entry that is already stamped. */
+static void adfs_unix2adfs_time(struct inode *inode,
+				const struct timespec64 *ts)
+{
+	s64 cs, nsec = timespec64_to_ns(ts);
 
 	/* convert from Unix to RISC OS epoch */
-	nsec += nsec_unix_epoch_dअगरf_risc_os_epoch;
+	nsec += nsec_unix_epoch_diff_risc_os_epoch;
 
 	/* convert from nanoseconds to centiseconds */
-	cs = भाग_s64(nsec, 10000000);
+	cs = div_s64(nsec, 10000000);
 
 	cs = clamp_t(s64, cs, 0, 0xffffffffff);
 
 	ADFS_I(inode)->loadaddr &= ~0xff;
 	ADFS_I(inode)->loadaddr |= (cs >> 32) & 0xff;
 	ADFS_I(inode)->execaddr = cs;
-पूर्ण
+}
 
 /*
- * Fill in the inode inक्रमmation from the object inक्रमmation.
+ * Fill in the inode information from the object information.
  *
- * Note that this is an inode-less fileप्रणाली, so we can't use the inode
+ * Note that this is an inode-less filesystem, so we can't use the inode
  * number to reference the metadata on the media.  Instead, we use the
  * inode number to hold the object ID, which in turn will tell us where
  * the data is held.  We also save the parent object ID, and with these
  * two, we can locate the metadata.
  *
- * This करोes mean that we rely on an objects parent reमुख्यing the same at
- * all बार - we cannot cope with a cross-directory नाम (yet).
+ * This does mean that we rely on an objects parent remaining the same at
+ * all times - we cannot cope with a cross-directory rename (yet).
  */
-काष्ठा inode *
-adfs_iget(काष्ठा super_block *sb, काष्ठा object_info *obj)
-अणु
-	काष्ठा inode *inode;
+struct inode *
+adfs_iget(struct super_block *sb, struct object_info *obj)
+{
+	struct inode *inode;
 
 	inode = new_inode(sb);
-	अगर (!inode)
-		जाओ out;
+	if (!inode)
+		goto out;
 
 	inode->i_uid	 = ADFS_SB(sb)->s_uid;
 	inode->i_gid	 = ADFS_SB(sb)->s_gid;
@@ -256,9 +255,9 @@ adfs_iget(काष्ठा super_block *sb, काष्ठा object_info *ob
 
 	/*
 	 * we need to save the parent directory ID so that
-	 * ग_लिखो_inode can update the directory inक्रमmation
-	 * क्रम this file.  This will need special handling
-	 * क्रम cross-directory नामs.
+	 * write_inode can update the directory information
+	 * for this file.  This will need special handling
+	 * for cross-directory renames.
 	 */
 	ADFS_I(inode)->parent_id = obj->parent_id;
 	ADFS_I(inode)->indaddr   = obj->indaddr;
@@ -267,39 +266,39 @@ adfs_iget(काष्ठा super_block *sb, काष्ठा object_info *ob
 	ADFS_I(inode)->attr      = obj->attr;
 
 	inode->i_mode	 = adfs_atts2mode(sb, inode);
-	adfs_adfs2unix_समय(&inode->i_mसमय, inode);
-	inode->i_aसमय = inode->i_mसमय;
-	inode->i_स_समय = inode->i_mसमय;
+	adfs_adfs2unix_time(&inode->i_mtime, inode);
+	inode->i_atime = inode->i_mtime;
+	inode->i_ctime = inode->i_mtime;
 
-	अगर (S_ISसूची(inode->i_mode)) अणु
+	if (S_ISDIR(inode->i_mode)) {
 		inode->i_op	= &adfs_dir_inode_operations;
 		inode->i_fop	= &adfs_dir_operations;
-	पूर्ण अन्यथा अगर (S_ISREG(inode->i_mode)) अणु
+	} else if (S_ISREG(inode->i_mode)) {
 		inode->i_op	= &adfs_file_inode_operations;
 		inode->i_fop	= &adfs_file_operations;
 		inode->i_mapping->a_ops = &adfs_aops;
-		ADFS_I(inode)->mmu_निजी = inode->i_size;
-	पूर्ण
+		ADFS_I(inode)->mmu_private = inode->i_size;
+	}
 
 	inode_fake_hash(inode);
 
 out:
-	वापस inode;
-पूर्ण
+	return inode;
+}
 
 /*
- * Validate and convert a changed access mode/समय to their ADFS equivalents.
- * adfs_ग_लिखो_inode will actually ग_लिखो the inक्रमmation back to the directory
+ * Validate and convert a changed access mode/time to their ADFS equivalents.
+ * adfs_write_inode will actually write the information back to the directory
  * later.
  */
-पूर्णांक
-adfs_notअगरy_change(काष्ठा user_namespace *mnt_userns, काष्ठा dentry *dentry,
-		   काष्ठा iattr *attr)
-अणु
-	काष्ठा inode *inode = d_inode(dentry);
-	काष्ठा super_block *sb = inode->i_sb;
-	अचिन्हित पूर्णांक ia_valid = attr->ia_valid;
-	पूर्णांक error;
+int
+adfs_notify_change(struct user_namespace *mnt_userns, struct dentry *dentry,
+		   struct iattr *attr)
+{
+	struct inode *inode = d_inode(dentry);
+	struct super_block *sb = inode->i_sb;
+	unsigned int ia_valid = attr->ia_valid;
+	int error;
 	
 	error = setattr_prepare(&init_user_ns, dentry, attr);
 
@@ -307,55 +306,55 @@ adfs_notअगरy_change(काष्ठा user_namespace *mnt_userns, का�
 	 * we can't change the UID or GID of any file -
 	 * we have a global UID/GID in the superblock
 	 */
-	अगर ((ia_valid & ATTR_UID && !uid_eq(attr->ia_uid, ADFS_SB(sb)->s_uid)) ||
+	if ((ia_valid & ATTR_UID && !uid_eq(attr->ia_uid, ADFS_SB(sb)->s_uid)) ||
 	    (ia_valid & ATTR_GID && !gid_eq(attr->ia_gid, ADFS_SB(sb)->s_gid)))
 		error = -EPERM;
 
-	अगर (error)
-		जाओ out;
+	if (error)
+		goto out;
 
 	/* XXX: this is missing some actual on-disk truncation.. */
-	अगर (ia_valid & ATTR_SIZE)
+	if (ia_valid & ATTR_SIZE)
 		truncate_setsize(inode, attr->ia_size);
 
-	अगर (ia_valid & ATTR_MTIME && adfs_inode_is_stamped(inode)) अणु
-		adfs_unix2adfs_समय(inode, &attr->ia_mसमय);
-		adfs_adfs2unix_समय(&inode->i_mसमय, inode);
-	पूर्ण
+	if (ia_valid & ATTR_MTIME && adfs_inode_is_stamped(inode)) {
+		adfs_unix2adfs_time(inode, &attr->ia_mtime);
+		adfs_adfs2unix_time(&inode->i_mtime, inode);
+	}
 
 	/*
-	 * FIXME: should we make these == to i_mसमय since we करोn't
-	 * have the ability to represent them in our fileप्रणाली?
+	 * FIXME: should we make these == to i_mtime since we don't
+	 * have the ability to represent them in our filesystem?
 	 */
-	अगर (ia_valid & ATTR_ATIME)
-		inode->i_aसमय = attr->ia_aसमय;
-	अगर (ia_valid & ATTR_CTIME)
-		inode->i_स_समय = attr->ia_स_समय;
-	अगर (ia_valid & ATTR_MODE) अणु
+	if (ia_valid & ATTR_ATIME)
+		inode->i_atime = attr->ia_atime;
+	if (ia_valid & ATTR_CTIME)
+		inode->i_ctime = attr->ia_ctime;
+	if (ia_valid & ATTR_MODE) {
 		ADFS_I(inode)->attr = adfs_mode2atts(sb, inode, attr->ia_mode);
 		inode->i_mode = adfs_atts2mode(sb, inode);
-	पूर्ण
+	}
 
 	/*
-	 * FIXME: should we be marking this inode dirty even अगर
-	 * we करोn't have any metadata to ग_लिखो back?
+	 * FIXME: should we be marking this inode dirty even if
+	 * we don't have any metadata to write back?
 	 */
-	अगर (ia_valid & (ATTR_SIZE | ATTR_MTIME | ATTR_MODE))
+	if (ia_valid & (ATTR_SIZE | ATTR_MTIME | ATTR_MODE))
 		mark_inode_dirty(inode);
 out:
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /*
- * ग_लिखो an existing inode back to the directory, and thereक्रमe the disk.
- * The adfs-specअगरic inode data has alपढ़ोy been updated by
- * adfs_notअगरy_change()
+ * write an existing inode back to the directory, and therefore the disk.
+ * The adfs-specific inode data has already been updated by
+ * adfs_notify_change()
  */
-पूर्णांक adfs_ग_लिखो_inode(काष्ठा inode *inode, काष्ठा ग_लिखोback_control *wbc)
-अणु
-	काष्ठा super_block *sb = inode->i_sb;
-	काष्ठा object_info obj;
-	पूर्णांक ret;
+int adfs_write_inode(struct inode *inode, struct writeback_control *wbc)
+{
+	struct super_block *sb = inode->i_sb;
+	struct object_info obj;
+	int ret;
 
 	obj.indaddr	= ADFS_I(inode)->indaddr;
 	obj.name_len	= 0;
@@ -366,5 +365,5 @@ out:
 	obj.size	= inode->i_size;
 
 	ret = adfs_dir_update(sb, &obj, wbc->sync_mode == WB_SYNC_ALL);
-	वापस ret;
-पूर्ण
+	return ret;
+}

@@ -1,10 +1,9 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * NetLabel CIPSO/IPv4 Support
  *
- * This file defines the CIPSO/IPv4 functions क्रम the NetLabel प्रणाली.  The
- * NetLabel प्रणाली manages अटल and dynamic label mappings क्रम network
+ * This file defines the CIPSO/IPv4 functions for the NetLabel system.  The
+ * NetLabel system manages static and dynamic label mappings for network
  * protocols such as CIPSO and RIPSO.
  *
  * Author: Paul Moore <paul@paul-moore.com>
@@ -14,13 +13,13 @@
  * (c) Copyright Hewlett-Packard Development Company, L.P., 2006
  */
 
-#अगर_अघोषित _NETLABEL_CIPSO_V4
-#घोषणा _NETLABEL_CIPSO_V4
+#ifndef _NETLABEL_CIPSO_V4
+#define _NETLABEL_CIPSO_V4
 
-#समावेश <net/netlabel.h>
+#include <net/netlabel.h>
 
 /*
- * The following NetLabel payloads are supported by the CIPSO subप्रणाली.
+ * The following NetLabel payloads are supported by the CIPSO subsystem.
  *
  * o ADD:
  *   Sent by an application to add a new DOI mapping table.
@@ -40,8 +39,8 @@
  *   are required.
  *
  * o REMOVE:
- *   Sent by an application to हटाओ a specअगरic DOI mapping table from the
- *   CIPSO V4 प्रणाली.
+ *   Sent by an application to remove a specific DOI mapping table from the
+ *   CIPSO V4 system.
  *
  *   Required attributes:
  *
@@ -49,14 +48,14 @@
  *
  * o LIST:
  *   Sent by an application to list the details of a DOI definition.  On
- *   success the kernel should send a response using the following क्रमmat.
+ *   success the kernel should send a response using the following format.
  *
  *   Required attributes:
  *
  *     NLBL_CIPSOV4_A_DOI
  *
- *   The valid response message क्रमmat depends on the type of the DOI mapping,
- *   the defined क्रमmats are shown below.
+ *   The valid response message format depends on the type of the DOI mapping,
+ *   the defined formats are shown below.
  *
  *   Required attributes:
  *
@@ -73,7 +72,7 @@
  *
  * o LISTALL:
  *   This message is sent by an application to list the valid DOIs on the
- *   प्रणाली.  When sent by an application there is no payload and the
+ *   system.  When sent by an application there is no payload and the
  *   NLM_F_DUMP flag should be set.  The kernel should respond with a series of
  *   the following messages.
  *
@@ -85,17 +84,17 @@
  */
 
 /* NetLabel CIPSOv4 commands */
-क्रमागत अणु
+enum {
 	NLBL_CIPSOV4_C_UNSPEC,
 	NLBL_CIPSOV4_C_ADD,
 	NLBL_CIPSOV4_C_REMOVE,
 	NLBL_CIPSOV4_C_LIST,
 	NLBL_CIPSOV4_C_LISTALL,
 	__NLBL_CIPSOV4_C_MAX,
-पूर्ण;
+};
 
 /* NetLabel CIPSOv4 attributes */
-क्रमागत अणु
+enum {
 	NLBL_CIPSOV4_A_UNSPEC,
 	NLBL_CIPSOV4_A_DOI,
 	/* (NLA_U32)
@@ -110,7 +109,7 @@
 	 * attribute */
 	NLBL_CIPSOV4_A_TAGLST,
 	/* (NLA_NESTED)
-	 * the CIPSO tag list क्रम the DOI, there must be at least one
+	 * the CIPSO tag list for the DOI, there must be at least one
 	 * NLBL_CIPSOV4_A_TAG attribute, tags listed first are given higher
 	 * priorirty when sending packets */
 	NLBL_CIPSOV4_A_MLSLVLLOC,
@@ -144,13 +143,13 @@
 	 * the CIPSO category mappings, there must be at least one
 	 * NLBL_CIPSOV4_A_MLSCAT attribute */
 	__NLBL_CIPSOV4_A_MAX,
-पूर्ण;
-#घोषणा NLBL_CIPSOV4_A_MAX (__NLBL_CIPSOV4_A_MAX - 1)
+};
+#define NLBL_CIPSOV4_A_MAX (__NLBL_CIPSOV4_A_MAX - 1)
 
 /* NetLabel protocol functions */
-पूर्णांक netlbl_cipsov4_genl_init(व्योम);
+int netlbl_cipsov4_genl_init(void);
 
 /* Free the memory associated with a CIPSOv4 DOI definition */
-व्योम netlbl_cipsov4_करोi_मुक्त(काष्ठा rcu_head *entry);
+void netlbl_cipsov4_doi_free(struct rcu_head *entry);
 
-#पूर्ण_अगर
+#endif

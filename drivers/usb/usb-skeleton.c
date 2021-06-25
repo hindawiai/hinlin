@@ -1,153 +1,152 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * USB Skeleton driver - 2.2
  *
- * Copyright (C) 2001-2004 Greg Kroah-Harपंचांगan (greg@kroah.com)
+ * Copyright (C) 2001-2004 Greg Kroah-Hartman (greg@kroah.com)
  *
  * This driver is based on the 2.6.3 version of drivers/usb/usb-skeleton.c
- * but has been rewritten to be easier to पढ़ो and use.
+ * but has been rewritten to be easier to read and use.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
-#समावेश <linux/kref.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/mutex.h>
+#include <linux/kernel.h>
+#include <linux/errno.h>
+#include <linux/slab.h>
+#include <linux/module.h>
+#include <linux/kref.h>
+#include <linux/uaccess.h>
+#include <linux/usb.h>
+#include <linux/mutex.h>
 
 
 /* Define these values to match your devices */
-#घोषणा USB_SKEL_VENDOR_ID	0xfff0
-#घोषणा USB_SKEL_PRODUCT_ID	0xfff0
+#define USB_SKEL_VENDOR_ID	0xfff0
+#define USB_SKEL_PRODUCT_ID	0xfff0
 
 /* table of devices that work with this driver */
-अटल स्थिर काष्ठा usb_device_id skel_table[] = अणु
-	अणु USB_DEVICE(USB_SKEL_VENDOR_ID, USB_SKEL_PRODUCT_ID) पूर्ण,
-	अणु पूर्ण					/* Terminating entry */
-पूर्ण;
+static const struct usb_device_id skel_table[] = {
+	{ USB_DEVICE(USB_SKEL_VENDOR_ID, USB_SKEL_PRODUCT_ID) },
+	{ }					/* Terminating entry */
+};
 MODULE_DEVICE_TABLE(usb, skel_table);
 
 
-/* Get a minor range क्रम your devices from the usb मुख्यtainer */
-#घोषणा USB_SKEL_MINOR_BASE	192
+/* Get a minor range for your devices from the usb maintainer */
+#define USB_SKEL_MINOR_BASE	192
 
-/* our निजी defines. अगर this grows any larger, use your own .h file */
-#घोषणा MAX_TRANSFER		(PAGE_SIZE - 512)
+/* our private defines. if this grows any larger, use your own .h file */
+#define MAX_TRANSFER		(PAGE_SIZE - 512)
 /*
  * MAX_TRANSFER is chosen so that the VM is not stressed by
  * allocations > PAGE_SIZE and the number of packets in a page
- * is an पूर्णांकeger 512 is the largest possible packet on EHCI
+ * is an integer 512 is the largest possible packet on EHCI
  */
-#घोषणा WRITES_IN_FLIGHT	8
+#define WRITES_IN_FLIGHT	8
 /* arbitrarily chosen */
 
-/* Structure to hold all of our device specअगरic stuff */
-काष्ठा usb_skel अणु
-	काष्ठा usb_device	*udev;			/* the usb device क्रम this device */
-	काष्ठा usb_पूर्णांकerface	*पूर्णांकerface;		/* the पूर्णांकerface क्रम this device */
-	काष्ठा semaphore	limit_sem;		/* limiting the number of ग_लिखोs in progress */
-	काष्ठा usb_anchor	submitted;		/* in हाल we need to retract our submissions */
-	काष्ठा urb		*bulk_in_urb;		/* the urb to पढ़ो data with */
-	अचिन्हित अक्षर           *bulk_in_buffer;	/* the buffer to receive data */
-	माप_प्रकार			bulk_in_size;		/* the size of the receive buffer */
-	माप_प्रकार			bulk_in_filled;		/* number of bytes in the buffer */
-	माप_प्रकार			bulk_in_copied;		/* alपढ़ोy copied to user space */
-	__u8			bulk_in_endpoपूर्णांकAddr;	/* the address of the bulk in endpoपूर्णांक */
-	__u8			bulk_out_endpoपूर्णांकAddr;	/* the address of the bulk out endpoपूर्णांक */
-	पूर्णांक			errors;			/* the last request tanked */
-	bool			ongoing_पढ़ो;		/* a पढ़ो is going on */
-	spinlock_t		err_lock;		/* lock क्रम errors */
-	काष्ठा kref		kref;
-	काष्ठा mutex		io_mutex;		/* synchronize I/O with disconnect */
-	अचिन्हित दीर्घ		disconnected:1;
-	रुको_queue_head_t	bulk_in_रुको;		/* to रुको क्रम an ongoing पढ़ो */
-पूर्ण;
-#घोषणा to_skel_dev(d) container_of(d, काष्ठा usb_skel, kref)
+/* Structure to hold all of our device specific stuff */
+struct usb_skel {
+	struct usb_device	*udev;			/* the usb device for this device */
+	struct usb_interface	*interface;		/* the interface for this device */
+	struct semaphore	limit_sem;		/* limiting the number of writes in progress */
+	struct usb_anchor	submitted;		/* in case we need to retract our submissions */
+	struct urb		*bulk_in_urb;		/* the urb to read data with */
+	unsigned char           *bulk_in_buffer;	/* the buffer to receive data */
+	size_t			bulk_in_size;		/* the size of the receive buffer */
+	size_t			bulk_in_filled;		/* number of bytes in the buffer */
+	size_t			bulk_in_copied;		/* already copied to user space */
+	__u8			bulk_in_endpointAddr;	/* the address of the bulk in endpoint */
+	__u8			bulk_out_endpointAddr;	/* the address of the bulk out endpoint */
+	int			errors;			/* the last request tanked */
+	bool			ongoing_read;		/* a read is going on */
+	spinlock_t		err_lock;		/* lock for errors */
+	struct kref		kref;
+	struct mutex		io_mutex;		/* synchronize I/O with disconnect */
+	unsigned long		disconnected:1;
+	wait_queue_head_t	bulk_in_wait;		/* to wait for an ongoing read */
+};
+#define to_skel_dev(d) container_of(d, struct usb_skel, kref)
 
-अटल काष्ठा usb_driver skel_driver;
-अटल व्योम skel_draw_करोwn(काष्ठा usb_skel *dev);
+static struct usb_driver skel_driver;
+static void skel_draw_down(struct usb_skel *dev);
 
-अटल व्योम skel_delete(काष्ठा kref *kref)
-अणु
-	काष्ठा usb_skel *dev = to_skel_dev(kref);
+static void skel_delete(struct kref *kref)
+{
+	struct usb_skel *dev = to_skel_dev(kref);
 
-	usb_मुक्त_urb(dev->bulk_in_urb);
-	usb_put_पूर्णांकf(dev->पूर्णांकerface);
+	usb_free_urb(dev->bulk_in_urb);
+	usb_put_intf(dev->interface);
 	usb_put_dev(dev->udev);
-	kमुक्त(dev->bulk_in_buffer);
-	kमुक्त(dev);
-पूर्ण
+	kfree(dev->bulk_in_buffer);
+	kfree(dev);
+}
 
-अटल पूर्णांक skel_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा usb_skel *dev;
-	काष्ठा usb_पूर्णांकerface *पूर्णांकerface;
-	पूर्णांक subminor;
-	पूर्णांक retval = 0;
+static int skel_open(struct inode *inode, struct file *file)
+{
+	struct usb_skel *dev;
+	struct usb_interface *interface;
+	int subminor;
+	int retval = 0;
 
 	subminor = iminor(inode);
 
-	पूर्णांकerface = usb_find_पूर्णांकerface(&skel_driver, subminor);
-	अगर (!पूर्णांकerface) अणु
+	interface = usb_find_interface(&skel_driver, subminor);
+	if (!interface) {
 		pr_err("%s - error, can't find device for minor %d\n",
 			__func__, subminor);
 		retval = -ENODEV;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	dev = usb_get_पूर्णांकfdata(पूर्णांकerface);
-	अगर (!dev) अणु
+	dev = usb_get_intfdata(interface);
+	if (!dev) {
 		retval = -ENODEV;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	retval = usb_स्वतःpm_get_पूर्णांकerface(पूर्णांकerface);
-	अगर (retval)
-		जाओ निकास;
+	retval = usb_autopm_get_interface(interface);
+	if (retval)
+		goto exit;
 
-	/* increment our usage count क्रम the device */
+	/* increment our usage count for the device */
 	kref_get(&dev->kref);
 
-	/* save our object in the file's निजी काष्ठाure */
-	file->निजी_data = dev;
+	/* save our object in the file's private structure */
+	file->private_data = dev;
 
-निकास:
-	वापस retval;
-पूर्ण
+exit:
+	return retval;
+}
 
-अटल पूर्णांक skel_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा usb_skel *dev;
+static int skel_release(struct inode *inode, struct file *file)
+{
+	struct usb_skel *dev;
 
-	dev = file->निजी_data;
-	अगर (dev == शून्य)
-		वापस -ENODEV;
+	dev = file->private_data;
+	if (dev == NULL)
+		return -ENODEV;
 
-	/* allow the device to be स्वतःsuspended */
-	usb_स्वतःpm_put_पूर्णांकerface(dev->पूर्णांकerface);
+	/* allow the device to be autosuspended */
+	usb_autopm_put_interface(dev->interface);
 
 	/* decrement the count on our device */
 	kref_put(&dev->kref, skel_delete);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक skel_flush(काष्ठा file *file, fl_owner_t id)
-अणु
-	काष्ठा usb_skel *dev;
-	पूर्णांक res;
+static int skel_flush(struct file *file, fl_owner_t id)
+{
+	struct usb_skel *dev;
+	int res;
 
-	dev = file->निजी_data;
-	अगर (dev == शून्य)
-		वापस -ENODEV;
+	dev = file->private_data;
+	if (dev == NULL)
+		return -ENODEV;
 
-	/* रुको क्रम io to stop */
+	/* wait for io to stop */
 	mutex_lock(&dev->io_mutex);
-	skel_draw_करोwn(dev);
+	skel_draw_down(dev);
 
-	/* पढ़ो out errors, leave subsequent खोलोs a clean slate */
+	/* read out errors, leave subsequent opens a clean slate */
 	spin_lock_irq(&dev->err_lock);
 	res = dev->errors ? (dev->errors == -EPIPE ? -EPIPE : -EIO) : 0;
 	dev->errors = 0;
@@ -155,482 +154,482 @@ MODULE_DEVICE_TABLE(usb, skel_table);
 
 	mutex_unlock(&dev->io_mutex);
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल व्योम skel_पढ़ो_bulk_callback(काष्ठा urb *urb)
-अणु
-	काष्ठा usb_skel *dev;
-	अचिन्हित दीर्घ flags;
+static void skel_read_bulk_callback(struct urb *urb)
+{
+	struct usb_skel *dev;
+	unsigned long flags;
 
 	dev = urb->context;
 
 	spin_lock_irqsave(&dev->err_lock, flags);
 	/* sync/async unlink faults aren't errors */
-	अगर (urb->status) अणु
-		अगर (!(urb->status == -ENOENT ||
+	if (urb->status) {
+		if (!(urb->status == -ENOENT ||
 		    urb->status == -ECONNRESET ||
 		    urb->status == -ESHUTDOWN))
-			dev_err(&dev->पूर्णांकerface->dev,
+			dev_err(&dev->interface->dev,
 				"%s - nonzero write bulk status received: %d\n",
 				__func__, urb->status);
 
 		dev->errors = urb->status;
-	पूर्ण अन्यथा अणु
+	} else {
 		dev->bulk_in_filled = urb->actual_length;
-	पूर्ण
-	dev->ongoing_पढ़ो = 0;
+	}
+	dev->ongoing_read = 0;
 	spin_unlock_irqrestore(&dev->err_lock, flags);
 
-	wake_up_पूर्णांकerruptible(&dev->bulk_in_रुको);
-पूर्ण
+	wake_up_interruptible(&dev->bulk_in_wait);
+}
 
-अटल पूर्णांक skel_करो_पढ़ो_io(काष्ठा usb_skel *dev, माप_प्रकार count)
-अणु
-	पूर्णांक rv;
+static int skel_do_read_io(struct usb_skel *dev, size_t count)
+{
+	int rv;
 
-	/* prepare a पढ़ो */
+	/* prepare a read */
 	usb_fill_bulk_urb(dev->bulk_in_urb,
 			dev->udev,
 			usb_rcvbulkpipe(dev->udev,
-				dev->bulk_in_endpoपूर्णांकAddr),
+				dev->bulk_in_endpointAddr),
 			dev->bulk_in_buffer,
 			min(dev->bulk_in_size, count),
-			skel_पढ़ो_bulk_callback,
+			skel_read_bulk_callback,
 			dev);
 	/* tell everybody to leave the URB alone */
 	spin_lock_irq(&dev->err_lock);
-	dev->ongoing_पढ़ो = 1;
+	dev->ongoing_read = 1;
 	spin_unlock_irq(&dev->err_lock);
 
 	/* submit bulk in urb, which means no data to deliver */
 	dev->bulk_in_filled = 0;
 	dev->bulk_in_copied = 0;
 
-	/* करो it */
+	/* do it */
 	rv = usb_submit_urb(dev->bulk_in_urb, GFP_KERNEL);
-	अगर (rv < 0) अणु
-		dev_err(&dev->पूर्णांकerface->dev,
+	if (rv < 0) {
+		dev_err(&dev->interface->dev,
 			"%s - failed submitting read urb, error %d\n",
 			__func__, rv);
 		rv = (rv == -ENOMEM) ? rv : -EIO;
 		spin_lock_irq(&dev->err_lock);
-		dev->ongoing_पढ़ो = 0;
+		dev->ongoing_read = 0;
 		spin_unlock_irq(&dev->err_lock);
-	पूर्ण
+	}
 
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
-अटल sमाप_प्रकार skel_पढ़ो(काष्ठा file *file, अक्षर *buffer, माप_प्रकार count,
+static ssize_t skel_read(struct file *file, char *buffer, size_t count,
 			 loff_t *ppos)
-अणु
-	काष्ठा usb_skel *dev;
-	पूर्णांक rv;
+{
+	struct usb_skel *dev;
+	int rv;
 	bool ongoing_io;
 
-	dev = file->निजी_data;
+	dev = file->private_data;
 
-	अगर (!count)
-		वापस 0;
+	if (!count)
+		return 0;
 
-	/* no concurrent पढ़ोers */
-	rv = mutex_lock_पूर्णांकerruptible(&dev->io_mutex);
-	अगर (rv < 0)
-		वापस rv;
+	/* no concurrent readers */
+	rv = mutex_lock_interruptible(&dev->io_mutex);
+	if (rv < 0)
+		return rv;
 
-	अगर (dev->disconnected) अणु		/* disconnect() was called */
+	if (dev->disconnected) {		/* disconnect() was called */
 		rv = -ENODEV;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	/* अगर IO is under way, we must not touch things */
+	/* if IO is under way, we must not touch things */
 retry:
 	spin_lock_irq(&dev->err_lock);
-	ongoing_io = dev->ongoing_पढ़ो;
+	ongoing_io = dev->ongoing_read;
 	spin_unlock_irq(&dev->err_lock);
 
-	अगर (ongoing_io) अणु
-		/* nonblocking IO shall not रुको */
-		अगर (file->f_flags & O_NONBLOCK) अणु
+	if (ongoing_io) {
+		/* nonblocking IO shall not wait */
+		if (file->f_flags & O_NONBLOCK) {
 			rv = -EAGAIN;
-			जाओ निकास;
-		पूर्ण
+			goto exit;
+		}
 		/*
-		 * IO may take क्रमever
-		 * hence रुको in an पूर्णांकerruptible state
+		 * IO may take forever
+		 * hence wait in an interruptible state
 		 */
-		rv = रुको_event_पूर्णांकerruptible(dev->bulk_in_रुको, (!dev->ongoing_पढ़ो));
-		अगर (rv < 0)
-			जाओ निकास;
-	पूर्ण
+		rv = wait_event_interruptible(dev->bulk_in_wait, (!dev->ongoing_read));
+		if (rv < 0)
+			goto exit;
+	}
 
 	/* errors must be reported */
 	rv = dev->errors;
-	अगर (rv < 0) अणु
+	if (rv < 0) {
 		/* any error is reported once */
 		dev->errors = 0;
-		/* to preserve notअगरications about reset */
+		/* to preserve notifications about reset */
 		rv = (rv == -EPIPE) ? rv : -EIO;
 		/* report it */
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	/*
-	 * अगर the buffer is filled we may satisfy the पढ़ो
-	 * अन्यथा we need to start IO
+	 * if the buffer is filled we may satisfy the read
+	 * else we need to start IO
 	 */
 
-	अगर (dev->bulk_in_filled) अणु
-		/* we had पढ़ो data */
-		माप_प्रकार available = dev->bulk_in_filled - dev->bulk_in_copied;
-		माप_प्रकार chunk = min(available, count);
+	if (dev->bulk_in_filled) {
+		/* we had read data */
+		size_t available = dev->bulk_in_filled - dev->bulk_in_copied;
+		size_t chunk = min(available, count);
 
-		अगर (!available) अणु
+		if (!available) {
 			/*
 			 * all data has been used
-			 * actual IO needs to be करोne
+			 * actual IO needs to be done
 			 */
-			rv = skel_करो_पढ़ो_io(dev, count);
-			अगर (rv < 0)
-				जाओ निकास;
-			अन्यथा
-				जाओ retry;
-		पूर्ण
+			rv = skel_do_read_io(dev, count);
+			if (rv < 0)
+				goto exit;
+			else
+				goto retry;
+		}
 		/*
 		 * data is available
 		 * chunk tells us how much shall be copied
 		 */
 
-		अगर (copy_to_user(buffer,
+		if (copy_to_user(buffer,
 				 dev->bulk_in_buffer + dev->bulk_in_copied,
 				 chunk))
 			rv = -EFAULT;
-		अन्यथा
+		else
 			rv = chunk;
 
 		dev->bulk_in_copied += chunk;
 
 		/*
-		 * अगर we are asked क्रम more than we have,
-		 * we start IO but करोn't रुको
+		 * if we are asked for more than we have,
+		 * we start IO but don't wait
 		 */
-		अगर (available < count)
-			skel_करो_पढ़ो_io(dev, count - chunk);
-	पूर्ण अन्यथा अणु
+		if (available < count)
+			skel_do_read_io(dev, count - chunk);
+	} else {
 		/* no data in the buffer */
-		rv = skel_करो_पढ़ो_io(dev, count);
-		अगर (rv < 0)
-			जाओ निकास;
-		अन्यथा
-			जाओ retry;
-	पूर्ण
-निकास:
+		rv = skel_do_read_io(dev, count);
+		if (rv < 0)
+			goto exit;
+		else
+			goto retry;
+	}
+exit:
 	mutex_unlock(&dev->io_mutex);
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
-अटल व्योम skel_ग_लिखो_bulk_callback(काष्ठा urb *urb)
-अणु
-	काष्ठा usb_skel *dev;
-	अचिन्हित दीर्घ flags;
+static void skel_write_bulk_callback(struct urb *urb)
+{
+	struct usb_skel *dev;
+	unsigned long flags;
 
 	dev = urb->context;
 
 	/* sync/async unlink faults aren't errors */
-	अगर (urb->status) अणु
-		अगर (!(urb->status == -ENOENT ||
+	if (urb->status) {
+		if (!(urb->status == -ENOENT ||
 		    urb->status == -ECONNRESET ||
 		    urb->status == -ESHUTDOWN))
-			dev_err(&dev->पूर्णांकerface->dev,
+			dev_err(&dev->interface->dev,
 				"%s - nonzero write bulk status received: %d\n",
 				__func__, urb->status);
 
 		spin_lock_irqsave(&dev->err_lock, flags);
 		dev->errors = urb->status;
 		spin_unlock_irqrestore(&dev->err_lock, flags);
-	पूर्ण
+	}
 
-	/* मुक्त up our allocated buffer */
-	usb_मुक्त_coherent(urb->dev, urb->transfer_buffer_length,
+	/* free up our allocated buffer */
+	usb_free_coherent(urb->dev, urb->transfer_buffer_length,
 			  urb->transfer_buffer, urb->transfer_dma);
 	up(&dev->limit_sem);
-पूर्ण
+}
 
-अटल sमाप_प्रकार skel_ग_लिखो(काष्ठा file *file, स्थिर अक्षर *user_buffer,
-			  माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा usb_skel *dev;
-	पूर्णांक retval = 0;
-	काष्ठा urb *urb = शून्य;
-	अक्षर *buf = शून्य;
-	माप_प्रकार ग_लिखोsize = min(count, (माप_प्रकार)MAX_TRANSFER);
+static ssize_t skel_write(struct file *file, const char *user_buffer,
+			  size_t count, loff_t *ppos)
+{
+	struct usb_skel *dev;
+	int retval = 0;
+	struct urb *urb = NULL;
+	char *buf = NULL;
+	size_t writesize = min(count, (size_t)MAX_TRANSFER);
 
-	dev = file->निजी_data;
+	dev = file->private_data;
 
-	/* verअगरy that we actually have some data to ग_लिखो */
-	अगर (count == 0)
-		जाओ निकास;
+	/* verify that we actually have some data to write */
+	if (count == 0)
+		goto exit;
 
 	/*
 	 * limit the number of URBs in flight to stop a user from using up all
 	 * RAM
 	 */
-	अगर (!(file->f_flags & O_NONBLOCK)) अणु
-		अगर (करोwn_पूर्णांकerruptible(&dev->limit_sem)) अणु
+	if (!(file->f_flags & O_NONBLOCK)) {
+		if (down_interruptible(&dev->limit_sem)) {
 			retval = -ERESTARTSYS;
-			जाओ निकास;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (करोwn_trylock(&dev->limit_sem)) अणु
+			goto exit;
+		}
+	} else {
+		if (down_trylock(&dev->limit_sem)) {
 			retval = -EAGAIN;
-			जाओ निकास;
-		पूर्ण
-	पूर्ण
+			goto exit;
+		}
+	}
 
 	spin_lock_irq(&dev->err_lock);
 	retval = dev->errors;
-	अगर (retval < 0) अणु
+	if (retval < 0) {
 		/* any error is reported once */
 		dev->errors = 0;
-		/* to preserve notअगरications about reset */
+		/* to preserve notifications about reset */
 		retval = (retval == -EPIPE) ? retval : -EIO;
-	पूर्ण
+	}
 	spin_unlock_irq(&dev->err_lock);
-	अगर (retval < 0)
-		जाओ error;
+	if (retval < 0)
+		goto error;
 
-	/* create a urb, and a buffer क्रम it, and copy the data to the urb */
+	/* create a urb, and a buffer for it, and copy the data to the urb */
 	urb = usb_alloc_urb(0, GFP_KERNEL);
-	अगर (!urb) अणु
+	if (!urb) {
 		retval = -ENOMEM;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	buf = usb_alloc_coherent(dev->udev, ग_लिखोsize, GFP_KERNEL,
+	buf = usb_alloc_coherent(dev->udev, writesize, GFP_KERNEL,
 				 &urb->transfer_dma);
-	अगर (!buf) अणु
+	if (!buf) {
 		retval = -ENOMEM;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	अगर (copy_from_user(buf, user_buffer, ग_लिखोsize)) अणु
+	if (copy_from_user(buf, user_buffer, writesize)) {
 		retval = -EFAULT;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	/* this lock makes sure we करोn't submit URBs to gone devices */
+	/* this lock makes sure we don't submit URBs to gone devices */
 	mutex_lock(&dev->io_mutex);
-	अगर (dev->disconnected) अणु		/* disconnect() was called */
+	if (dev->disconnected) {		/* disconnect() was called */
 		mutex_unlock(&dev->io_mutex);
 		retval = -ENODEV;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	/* initialize the urb properly */
 	usb_fill_bulk_urb(urb, dev->udev,
-			  usb_sndbulkpipe(dev->udev, dev->bulk_out_endpoपूर्णांकAddr),
-			  buf, ग_लिखोsize, skel_ग_लिखो_bulk_callback, dev);
+			  usb_sndbulkpipe(dev->udev, dev->bulk_out_endpointAddr),
+			  buf, writesize, skel_write_bulk_callback, dev);
 	urb->transfer_flags |= URB_NO_TRANSFER_DMA_MAP;
 	usb_anchor_urb(urb, &dev->submitted);
 
 	/* send the data out the bulk port */
 	retval = usb_submit_urb(urb, GFP_KERNEL);
 	mutex_unlock(&dev->io_mutex);
-	अगर (retval) अणु
-		dev_err(&dev->पूर्णांकerface->dev,
+	if (retval) {
+		dev_err(&dev->interface->dev,
 			"%s - failed submitting write urb, error %d\n",
 			__func__, retval);
-		जाओ error_unanchor;
-	पूर्ण
+		goto error_unanchor;
+	}
 
 	/*
-	 * release our reference to this urb, the USB core will eventually मुक्त
+	 * release our reference to this urb, the USB core will eventually free
 	 * it entirely
 	 */
-	usb_मुक्त_urb(urb);
+	usb_free_urb(urb);
 
 
-	वापस ग_लिखोsize;
+	return writesize;
 
 error_unanchor:
 	usb_unanchor_urb(urb);
 error:
-	अगर (urb) अणु
-		usb_मुक्त_coherent(dev->udev, ग_लिखोsize, buf, urb->transfer_dma);
-		usb_मुक्त_urb(urb);
-	पूर्ण
+	if (urb) {
+		usb_free_coherent(dev->udev, writesize, buf, urb->transfer_dma);
+		usb_free_urb(urb);
+	}
 	up(&dev->limit_sem);
 
-निकास:
-	वापस retval;
-पूर्ण
+exit:
+	return retval;
+}
 
-अटल स्थिर काष्ठा file_operations skel_fops = अणु
+static const struct file_operations skel_fops = {
 	.owner =	THIS_MODULE,
-	.पढ़ो =		skel_पढ़ो,
-	.ग_लिखो =	skel_ग_लिखो,
-	.खोलो =		skel_खोलो,
+	.read =		skel_read,
+	.write =	skel_write,
+	.open =		skel_open,
 	.release =	skel_release,
 	.flush =	skel_flush,
 	.llseek =	noop_llseek,
-पूर्ण;
+};
 
 /*
  * usb class driver info in order to get a minor number from the usb core,
- * and to have the device रेजिस्टरed with the driver core
+ * and to have the device registered with the driver core
  */
-अटल काष्ठा usb_class_driver skel_class = अणु
+static struct usb_class_driver skel_class = {
 	.name =		"skel%d",
 	.fops =		&skel_fops,
 	.minor_base =	USB_SKEL_MINOR_BASE,
-पूर्ण;
+};
 
-अटल पूर्णांक skel_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकerface,
-		      स्थिर काष्ठा usb_device_id *id)
-अणु
-	काष्ठा usb_skel *dev;
-	काष्ठा usb_endpoपूर्णांक_descriptor *bulk_in, *bulk_out;
-	पूर्णांक retval;
+static int skel_probe(struct usb_interface *interface,
+		      const struct usb_device_id *id)
+{
+	struct usb_skel *dev;
+	struct usb_endpoint_descriptor *bulk_in, *bulk_out;
+	int retval;
 
-	/* allocate memory क्रम our device state and initialize it */
-	dev = kzalloc(माप(*dev), GFP_KERNEL);
-	अगर (!dev)
-		वापस -ENOMEM;
+	/* allocate memory for our device state and initialize it */
+	dev = kzalloc(sizeof(*dev), GFP_KERNEL);
+	if (!dev)
+		return -ENOMEM;
 
 	kref_init(&dev->kref);
 	sema_init(&dev->limit_sem, WRITES_IN_FLIGHT);
 	mutex_init(&dev->io_mutex);
 	spin_lock_init(&dev->err_lock);
 	init_usb_anchor(&dev->submitted);
-	init_रुकोqueue_head(&dev->bulk_in_रुको);
+	init_waitqueue_head(&dev->bulk_in_wait);
 
-	dev->udev = usb_get_dev(पूर्णांकerface_to_usbdev(पूर्णांकerface));
-	dev->पूर्णांकerface = usb_get_पूर्णांकf(पूर्णांकerface);
+	dev->udev = usb_get_dev(interface_to_usbdev(interface));
+	dev->interface = usb_get_intf(interface);
 
-	/* set up the endpoपूर्णांक inक्रमmation */
-	/* use only the first bulk-in and bulk-out endpoपूर्णांकs */
-	retval = usb_find_common_endpoपूर्णांकs(पूर्णांकerface->cur_altsetting,
-			&bulk_in, &bulk_out, शून्य, शून्य);
-	अगर (retval) अणु
-		dev_err(&पूर्णांकerface->dev,
+	/* set up the endpoint information */
+	/* use only the first bulk-in and bulk-out endpoints */
+	retval = usb_find_common_endpoints(interface->cur_altsetting,
+			&bulk_in, &bulk_out, NULL, NULL);
+	if (retval) {
+		dev_err(&interface->dev,
 			"Could not find both bulk-in and bulk-out endpoints\n");
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	dev->bulk_in_size = usb_endpoपूर्णांक_maxp(bulk_in);
-	dev->bulk_in_endpoपूर्णांकAddr = bulk_in->bEndpoपूर्णांकAddress;
-	dev->bulk_in_buffer = kदो_स्मृति(dev->bulk_in_size, GFP_KERNEL);
-	अगर (!dev->bulk_in_buffer) अणु
+	dev->bulk_in_size = usb_endpoint_maxp(bulk_in);
+	dev->bulk_in_endpointAddr = bulk_in->bEndpointAddress;
+	dev->bulk_in_buffer = kmalloc(dev->bulk_in_size, GFP_KERNEL);
+	if (!dev->bulk_in_buffer) {
 		retval = -ENOMEM;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 	dev->bulk_in_urb = usb_alloc_urb(0, GFP_KERNEL);
-	अगर (!dev->bulk_in_urb) अणु
+	if (!dev->bulk_in_urb) {
 		retval = -ENOMEM;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	dev->bulk_out_endpoपूर्णांकAddr = bulk_out->bEndpoपूर्णांकAddress;
+	dev->bulk_out_endpointAddr = bulk_out->bEndpointAddress;
 
-	/* save our data poपूर्णांकer in this पूर्णांकerface device */
-	usb_set_पूर्णांकfdata(पूर्णांकerface, dev);
+	/* save our data pointer in this interface device */
+	usb_set_intfdata(interface, dev);
 
-	/* we can रेजिस्टर the device now, as it is पढ़ोy */
-	retval = usb_रेजिस्टर_dev(पूर्णांकerface, &skel_class);
-	अगर (retval) अणु
-		/* something prevented us from रेजिस्टरing this driver */
-		dev_err(&पूर्णांकerface->dev,
+	/* we can register the device now, as it is ready */
+	retval = usb_register_dev(interface, &skel_class);
+	if (retval) {
+		/* something prevented us from registering this driver */
+		dev_err(&interface->dev,
 			"Not able to get a minor for this device.\n");
-		usb_set_पूर्णांकfdata(पूर्णांकerface, शून्य);
-		जाओ error;
-	पूर्ण
+		usb_set_intfdata(interface, NULL);
+		goto error;
+	}
 
 	/* let the user know what node this device is now attached to */
-	dev_info(&पूर्णांकerface->dev,
+	dev_info(&interface->dev,
 		 "USB Skeleton device now attached to USBSkel-%d",
-		 पूर्णांकerface->minor);
-	वापस 0;
+		 interface->minor);
+	return 0;
 
 error:
-	/* this मुक्तs allocated memory */
+	/* this frees allocated memory */
 	kref_put(&dev->kref, skel_delete);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल व्योम skel_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकerface)
-अणु
-	काष्ठा usb_skel *dev;
-	पूर्णांक minor = पूर्णांकerface->minor;
+static void skel_disconnect(struct usb_interface *interface)
+{
+	struct usb_skel *dev;
+	int minor = interface->minor;
 
-	dev = usb_get_पूर्णांकfdata(पूर्णांकerface);
-	usb_set_पूर्णांकfdata(पूर्णांकerface, शून्य);
+	dev = usb_get_intfdata(interface);
+	usb_set_intfdata(interface, NULL);
 
 	/* give back our minor */
-	usb_deरेजिस्टर_dev(पूर्णांकerface, &skel_class);
+	usb_deregister_dev(interface, &skel_class);
 
 	/* prevent more I/O from starting */
 	mutex_lock(&dev->io_mutex);
 	dev->disconnected = 1;
 	mutex_unlock(&dev->io_mutex);
 
-	usb_समाप्त_urb(dev->bulk_in_urb);
-	usb_समाप्त_anchored_urbs(&dev->submitted);
+	usb_kill_urb(dev->bulk_in_urb);
+	usb_kill_anchored_urbs(&dev->submitted);
 
 	/* decrement our usage count */
 	kref_put(&dev->kref, skel_delete);
 
-	dev_info(&पूर्णांकerface->dev, "USB Skeleton #%d now disconnected", minor);
-पूर्ण
+	dev_info(&interface->dev, "USB Skeleton #%d now disconnected", minor);
+}
 
-अटल व्योम skel_draw_करोwn(काष्ठा usb_skel *dev)
-अणु
-	पूर्णांक समय;
+static void skel_draw_down(struct usb_skel *dev)
+{
+	int time;
 
-	समय = usb_रुको_anchor_empty_समयout(&dev->submitted, 1000);
-	अगर (!समय)
-		usb_समाप्त_anchored_urbs(&dev->submitted);
-	usb_समाप्त_urb(dev->bulk_in_urb);
-पूर्ण
+	time = usb_wait_anchor_empty_timeout(&dev->submitted, 1000);
+	if (!time)
+		usb_kill_anchored_urbs(&dev->submitted);
+	usb_kill_urb(dev->bulk_in_urb);
+}
 
-अटल पूर्णांक skel_suspend(काष्ठा usb_पूर्णांकerface *पूर्णांकf, pm_message_t message)
-अणु
-	काष्ठा usb_skel *dev = usb_get_पूर्णांकfdata(पूर्णांकf);
+static int skel_suspend(struct usb_interface *intf, pm_message_t message)
+{
+	struct usb_skel *dev = usb_get_intfdata(intf);
 
-	अगर (!dev)
-		वापस 0;
-	skel_draw_करोwn(dev);
-	वापस 0;
-पूर्ण
+	if (!dev)
+		return 0;
+	skel_draw_down(dev);
+	return 0;
+}
 
-अटल पूर्णांक skel_resume(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
-अणु
-	वापस 0;
-पूर्ण
+static int skel_resume(struct usb_interface *intf)
+{
+	return 0;
+}
 
-अटल पूर्णांक skel_pre_reset(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
-अणु
-	काष्ठा usb_skel *dev = usb_get_पूर्णांकfdata(पूर्णांकf);
+static int skel_pre_reset(struct usb_interface *intf)
+{
+	struct usb_skel *dev = usb_get_intfdata(intf);
 
 	mutex_lock(&dev->io_mutex);
-	skel_draw_करोwn(dev);
+	skel_draw_down(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक skel_post_reset(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
-अणु
-	काष्ठा usb_skel *dev = usb_get_पूर्णांकfdata(पूर्णांकf);
+static int skel_post_reset(struct usb_interface *intf)
+{
+	struct usb_skel *dev = usb_get_intfdata(intf);
 
 	/* we are sure no URBs are active - no locking needed */
 	dev->errors = -EPIPE;
 	mutex_unlock(&dev->io_mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा usb_driver skel_driver = अणु
+static struct usb_driver skel_driver = {
 	.name =		"skeleton",
 	.probe =	skel_probe,
 	.disconnect =	skel_disconnect,
@@ -639,8 +638,8 @@ error:
 	.pre_reset =	skel_pre_reset,
 	.post_reset =	skel_post_reset,
 	.id_table =	skel_table,
-	.supports_स्वतःsuspend = 1,
-पूर्ण;
+	.supports_autosuspend = 1,
+};
 
 module_usb_driver(skel_driver);
 

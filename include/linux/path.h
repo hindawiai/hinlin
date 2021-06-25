@@ -1,28 +1,27 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_PATH_H
-#घोषणा _LINUX_PATH_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_PATH_H
+#define _LINUX_PATH_H
 
-काष्ठा dentry;
-काष्ठा vfsmount;
+struct dentry;
+struct vfsmount;
 
-काष्ठा path अणु
-	काष्ठा vfsmount *mnt;
-	काष्ठा dentry *dentry;
-पूर्ण __अक्रमomize_layout;
+struct path {
+	struct vfsmount *mnt;
+	struct dentry *dentry;
+} __randomize_layout;
 
-बाह्य व्योम path_get(स्थिर काष्ठा path *);
-बाह्य व्योम path_put(स्थिर काष्ठा path *);
+extern void path_get(const struct path *);
+extern void path_put(const struct path *);
 
-अटल अंतरभूत पूर्णांक path_equal(स्थिर काष्ठा path *path1, स्थिर काष्ठा path *path2)
-अणु
-	वापस path1->mnt == path2->mnt && path1->dentry == path2->dentry;
-पूर्ण
+static inline int path_equal(const struct path *path1, const struct path *path2)
+{
+	return path1->mnt == path2->mnt && path1->dentry == path2->dentry;
+}
 
-अटल अंतरभूत व्योम path_put_init(काष्ठा path *path)
-अणु
+static inline void path_put_init(struct path *path)
+{
 	path_put(path);
-	*path = (काष्ठा path) अणु पूर्ण;
-पूर्ण
+	*path = (struct path) { };
+}
 
-#पूर्ण_अगर  /* _LINUX_PATH_H */
+#endif  /* _LINUX_PATH_H */

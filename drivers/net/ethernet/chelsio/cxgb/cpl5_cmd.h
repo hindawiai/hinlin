@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*****************************************************************************
  *                                                                           *
  * File: cpl5_cmd.h                                                          *
@@ -7,12 +6,12 @@
  * Description:                                                              *
  *  part of the Chelsio 10Gb Ethernet Driver.                                *
  *                                                                           *
- * This program is मुक्त software; you can redistribute it and/or modअगरy      *
+ * This program is free software; you can redistribute it and/or modify      *
  * it under the terms of the GNU General Public License, version 2, as       *
  * published by the Free Software Foundation.                                *
  *                                                                           *
- * You should have received a copy of the GNU General Public License aदीर्घ   *
- * with this program; अगर not, see <http://www.gnu.org/licenses/>.            *
+ * You should have received a copy of the GNU General Public License along   *
+ * with this program; if not, see <http://www.gnu.org/licenses/>.            *
  *                                                                           *
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR IMPLIED    *
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF      *
@@ -23,12 +22,12 @@
  * Copyright (c) 2003 - 2005 Chelsio Communications, Inc.                    *
  * All rights reserved.                                                      *
  *                                                                           *
- * Maपूर्णांकainers: मुख्यtainers@chelsio.com                                      *
+ * Maintainers: maintainers@chelsio.com                                      *
  *                                                                           *
  * Authors: Dimitrios Michailidis   <dm@chelsio.com>                         *
  *          Tina Yang               <tainay@chelsio.com>                     *
  *          Felix Marti             <felix@chelsio.com>                      *
- *          Scott Barकरोne           <sbarकरोne@chelsio.com>                   *
+ *          Scott Bardone           <sbardone@chelsio.com>                   *
  *          Kurt Ottaway            <kottaway@chelsio.com>                   *
  *          Frank DiMambro          <frank@chelsio.com>                      *
  *                                                                           *
@@ -36,16 +35,16 @@
  *                                                                           *
  ****************************************************************************/
 
-#अगर_अघोषित _CXGB_CPL5_CMD_H_
-#घोषणा _CXGB_CPL5_CMD_H_
+#ifndef _CXGB_CPL5_CMD_H_
+#define _CXGB_CPL5_CMD_H_
 
-#समावेश <यंत्र/byteorder.h>
+#include <asm/byteorder.h>
 
-#अगर !defined(__LITTLE_ENDIAN_BITFIELD) && !defined(__BIG_ENDIAN_BITFIELD)
-#त्रुटि "Adjust your <asm/byteorder.h> defines"
-#पूर्ण_अगर
+#if !defined(__LITTLE_ENDIAN_BITFIELD) && !defined(__BIG_ENDIAN_BITFIELD)
+#error "Adjust your <asm/byteorder.h> defines"
+#endif
 
-क्रमागत CPL_opcode अणु
+enum CPL_opcode {
 	CPL_PASS_OPEN_REQ     = 0x1,
 	CPL_PASS_OPEN_RPL     = 0x2,
 	CPL_PASS_ESTABLISH    = 0x3,
@@ -103,13 +102,13 @@
 	CPL_MIGRATE_C2T_RPL   = 0xDD,
 	CPL_ERROR             = 0xD7,
 
-	/* पूर्णांकernal: driver -> TOM */
+	/* internal: driver -> TOM */
 	CPL_MSS_CHANGE        = 0xE1
-पूर्ण;
+};
 
-#घोषणा NUM_CPL_CMDS 256
+#define NUM_CPL_CMDS 256
 
-क्रमागत CPL_error अणु
+enum CPL_error {
 	CPL_ERR_NONE               = 0,
 	CPL_ERR_TCAM_PARITY        = 1,
 	CPL_ERR_TCAM_FULL          = 3,
@@ -124,98 +123,98 @@
 	CPL_ERR_KEEPALIVE_TIMEDOUT = 34,
 	CPL_ERR_ABORT_FAILED       = 42,
 	CPL_ERR_GENERAL            = 99
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	CPL_CONN_POLICY_AUTO = 0,
 	CPL_CONN_POLICY_ASK  = 1,
 	CPL_CONN_POLICY_DENY = 3
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	ULP_MODE_NONE   = 0,
 	ULP_MODE_TCPDDP = 1,
 	ULP_MODE_ISCSI  = 2,
 	ULP_MODE_IWARP  = 3,
 	ULP_MODE_SSL    = 4
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	CPL_PASS_OPEN_ACCEPT,
 	CPL_PASS_OPEN_REJECT
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	CPL_ABORT_SEND_RST = 0,
 	CPL_ABORT_NO_RST,
 	CPL_ABORT_POST_CLOSE_REQ = 2
-पूर्ण;
+};
 
-क्रमागत अणु                // TX_PKT_LSO ethernet types
+enum {                // TX_PKT_LSO ethernet types
 	CPL_ETH_II,
 	CPL_ETH_II_VLAN,
 	CPL_ETH_802_3,
 	CPL_ETH_802_3_VLAN
-पूर्ण;
+};
 
-जोड़ opcode_tid अणु
+union opcode_tid {
 	u32 opcode_tid;
 	u8 opcode;
-पूर्ण;
+};
 
-#घोषणा S_OPCODE 24
-#घोषणा V_OPCODE(x) ((x) << S_OPCODE)
-#घोषणा G_OPCODE(x) (((x) >> S_OPCODE) & 0xFF)
-#घोषणा G_TID(x)    ((x) & 0xFFFFFF)
+#define S_OPCODE 24
+#define V_OPCODE(x) ((x) << S_OPCODE)
+#define G_OPCODE(x) (((x) >> S_OPCODE) & 0xFF)
+#define G_TID(x)    ((x) & 0xFFFFFF)
 
 /* tid is assumed to be 24-bits */
-#घोषणा MK_OPCODE_TID(opcode, tid) (V_OPCODE(opcode) | (tid))
+#define MK_OPCODE_TID(opcode, tid) (V_OPCODE(opcode) | (tid))
 
-#घोषणा OPCODE_TID(cmd) ((cmd)->ot.opcode_tid)
+#define OPCODE_TID(cmd) ((cmd)->ot.opcode_tid)
 
 /* extract the TID from a CPL command */
-#घोषणा GET_TID(cmd) (G_TID(ntohl(OPCODE_TID(cmd))))
+#define GET_TID(cmd) (G_TID(ntohl(OPCODE_TID(cmd))))
 
-काष्ठा tcp_options अणु
+struct tcp_options {
 	u16 mss;
 	u8 wsf;
-#अगर defined(__LITTLE_ENDIAN_BITFIELD)
+#if defined(__LITTLE_ENDIAN_BITFIELD)
 	u8 rsvd:4;
 	u8 ecn:1;
 	u8 sack:1;
 	u8 tstamp:1;
-#अन्यथा
+#else
 	u8 tstamp:1;
 	u8 sack:1;
 	u8 ecn:1;
 	u8 rsvd:4;
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-काष्ठा cpl_pass_खोलो_req अणु
-	जोड़ opcode_tid ot;
+struct cpl_pass_open_req {
+	union opcode_tid ot;
 	u16 local_port;
 	u16 peer_port;
 	u32 local_ip;
 	u32 peer_ip;
 	u32 opt0h;
 	u32 opt0l;
-	u32 peer_neपंचांगask;
+	u32 peer_netmask;
 	u32 opt1;
-पूर्ण;
+};
 
-काष्ठा cpl_pass_खोलो_rpl अणु
-	जोड़ opcode_tid ot;
+struct cpl_pass_open_rpl {
+	union opcode_tid ot;
 	u16 local_port;
 	u16 peer_port;
 	u32 local_ip;
 	u32 peer_ip;
 	u8 resvd[7];
 	u8 status;
-पूर्ण;
+};
 
-काष्ठा cpl_pass_establish अणु
-	जोड़ opcode_tid ot;
+struct cpl_pass_establish {
+	union opcode_tid ot;
 	u16 local_port;
 	u16 peer_port;
 	u32 local_ip;
@@ -225,53 +224,53 @@
 	u8  rsvd[3];
 	u32 snd_isn;
 	u32 rcv_isn;
-पूर्ण;
+};
 
-काष्ठा cpl_pass_accept_req अणु
-	जोड़ opcode_tid ot;
+struct cpl_pass_accept_req {
+	union opcode_tid ot;
 	u16 local_port;
 	u16 peer_port;
 	u32 local_ip;
 	u32 peer_ip;
 	u32 tos_tid;
-	काष्ठा tcp_options tcp_options;
+	struct tcp_options tcp_options;
 	u8  dst_mac[6];
 	u16 vlan_tag;
 	u8  src_mac[6];
 	u8  rsvd[2];
 	u32 rcv_isn;
 	u32 unknown_tcp_options;
-पूर्ण;
+};
 
-काष्ठा cpl_pass_accept_rpl अणु
-	जोड़ opcode_tid ot;
+struct cpl_pass_accept_rpl {
+	union opcode_tid ot;
 	u32 rsvd0;
 	u32 rsvd1;
 	u32 peer_ip;
 	u32 opt0h;
-	जोड़ अणु
+	union {
 		u32 opt0l;
-		काष्ठा अणु
+		struct {
 		    u8 rsvd[3];
 		    u8 status;
-		पूर्ण;
-	पूर्ण;
-पूर्ण;
+		};
+	};
+};
 
-काष्ठा cpl_act_खोलो_req अणु
-	जोड़ opcode_tid ot;
+struct cpl_act_open_req {
+	union opcode_tid ot;
 	u16 local_port;
 	u16 peer_port;
 	u32 local_ip;
 	u32 peer_ip;
 	u32 opt0h;
 	u32 opt0l;
-	u32 अगरf_vlantag;
+	u32 iff_vlantag;
 	u32 rsvd;
-पूर्ण;
+};
 
-काष्ठा cpl_act_खोलो_rpl अणु
-	जोड़ opcode_tid ot;
+struct cpl_act_open_rpl {
+	union opcode_tid ot;
 	u16 local_port;
 	u16 peer_port;
 	u32 local_ip;
@@ -279,10 +278,10 @@
 	u32 new_tid;
 	u8  rsvd[3];
 	u8  status;
-पूर्ण;
+};
 
-काष्ठा cpl_act_establish अणु
-	जोड़ opcode_tid ot;
+struct cpl_act_establish {
+	union opcode_tid ot;
 	u16 local_port;
 	u16 peer_port;
 	u32 local_ip;
@@ -291,134 +290,134 @@
 	u32 rsvd;
 	u32 snd_isn;
 	u32 rcv_isn;
-पूर्ण;
+};
 
-काष्ठा cpl_get_tcb अणु
-	जोड़ opcode_tid ot;
+struct cpl_get_tcb {
+	union opcode_tid ot;
 	u32 rsvd;
-पूर्ण;
+};
 
-काष्ठा cpl_get_tcb_rpl अणु
-	जोड़ opcode_tid ot;
+struct cpl_get_tcb_rpl {
+	union opcode_tid ot;
 	u16 len;
 	u8 rsvd;
 	u8 status;
-पूर्ण;
+};
 
-काष्ठा cpl_set_tcb अणु
-	जोड़ opcode_tid ot;
+struct cpl_set_tcb {
+	union opcode_tid ot;
 	u16 len;
 	u16 rsvd;
-पूर्ण;
+};
 
-काष्ठा cpl_set_tcb_field अणु
-	जोड़ opcode_tid ot;
+struct cpl_set_tcb_field {
+	union opcode_tid ot;
 	u8 rsvd[3];
 	u8 offset;
 	u32 mask;
 	u32 val;
-पूर्ण;
+};
 
-काष्ठा cpl_set_tcb_rpl अणु
-	जोड़ opcode_tid ot;
+struct cpl_set_tcb_rpl {
+	union opcode_tid ot;
 	u8 rsvd[3];
 	u8 status;
-पूर्ण;
+};
 
-काष्ठा cpl_pcmd अणु
-	जोड़ opcode_tid ot;
+struct cpl_pcmd {
+	union opcode_tid ot;
 	u16 dlen_in;
 	u16 dlen_out;
 	u32 pcmd_parm[2];
-पूर्ण;
+};
 
-काष्ठा cpl_pcmd_पढ़ो अणु
-	जोड़ opcode_tid ot;
+struct cpl_pcmd_read {
+	union opcode_tid ot;
 	u32 rsvd1;
 	u16 rsvd2;
 	u32 addr;
 	u16 len;
-पूर्ण;
+};
 
-काष्ठा cpl_pcmd_पढ़ो_rpl अणु
-	जोड़ opcode_tid ot;
+struct cpl_pcmd_read_rpl {
+	union opcode_tid ot;
 	u16 len;
-पूर्ण;
+};
 
-काष्ठा cpl_बंद_con_req अणु
-	जोड़ opcode_tid ot;
+struct cpl_close_con_req {
+	union opcode_tid ot;
 	u32 rsvd;
-पूर्ण;
+};
 
-काष्ठा cpl_बंद_con_rpl अणु
-	जोड़ opcode_tid ot;
+struct cpl_close_con_rpl {
+	union opcode_tid ot;
 	u8 rsvd[3];
 	u8 status;
 	u32 snd_nxt;
 	u32 rcv_nxt;
-पूर्ण;
+};
 
-काष्ठा cpl_बंद_listserv_req अणु
-	जोड़ opcode_tid ot;
+struct cpl_close_listserv_req {
+	union opcode_tid ot;
 	u32 rsvd;
-पूर्ण;
+};
 
-काष्ठा cpl_बंद_listserv_rpl अणु
-	जोड़ opcode_tid ot;
+struct cpl_close_listserv_rpl {
+	union opcode_tid ot;
 	u8 rsvd[3];
 	u8 status;
-पूर्ण;
+};
 
-काष्ठा cpl_पात_req अणु
-	जोड़ opcode_tid ot;
+struct cpl_abort_req {
+	union opcode_tid ot;
 	u32 rsvd0;
 	u8  rsvd1;
 	u8  cmd;
 	u8  rsvd2[6];
-पूर्ण;
+};
 
-काष्ठा cpl_पात_rpl अणु
-	जोड़ opcode_tid ot;
+struct cpl_abort_rpl {
+	union opcode_tid ot;
 	u32 rsvd0;
 	u8  rsvd1;
 	u8  status;
 	u8  rsvd2[6];
-पूर्ण;
+};
 
-काष्ठा cpl_peer_बंद अणु
-	जोड़ opcode_tid ot;
+struct cpl_peer_close {
+	union opcode_tid ot;
 	u32 rsvd;
-पूर्ण;
+};
 
-काष्ठा cpl_tx_data अणु
-	जोड़ opcode_tid ot;
+struct cpl_tx_data {
+	union opcode_tid ot;
 	u32 len;
 	u32 rsvd0;
 	u16 urg;
 	u16 flags;
-पूर्ण;
+};
 
-काष्ठा cpl_tx_data_ack अणु
-	जोड़ opcode_tid ot;
+struct cpl_tx_data_ack {
+	union opcode_tid ot;
 	u32 ack_seq;
-पूर्ण;
+};
 
-काष्ठा cpl_rx_data अणु
-	जोड़ opcode_tid ot;
+struct cpl_rx_data {
+	union opcode_tid ot;
 	u32 len;
 	u32 seq;
 	u16 urg;
 	u8  rsvd;
 	u8  status;
-पूर्ण;
+};
 
-काष्ठा cpl_rx_data_ack अणु
-	जोड़ opcode_tid ot;
+struct cpl_rx_data_ack {
+	union opcode_tid ot;
 	u32 credit;
-पूर्ण;
+};
 
-काष्ठा cpl_rx_data_ddp अणु
-	जोड़ opcode_tid ot;
+struct cpl_rx_data_ddp {
+	union opcode_tid ot;
 	u32 len;
 	u32 seq;
 	u32 nxt_seq;
@@ -426,214 +425,214 @@
 	u16 ddp_status;
 	u8  rsvd;
 	u8  status;
-पूर्ण;
+};
 
 /*
  * We want this header's alignment to be no more stringent than 2-byte aligned.
- * All fields are u8 or u16 except क्रम the length.  However that field is not
- * used so we अवरोध it पूर्णांकo 2 16-bit parts to easily meet our alignment needs.
+ * All fields are u8 or u16 except for the length.  However that field is not
+ * used so we break it into 2 16-bit parts to easily meet our alignment needs.
  */
-काष्ठा cpl_tx_pkt अणु
+struct cpl_tx_pkt {
 	u8 opcode;
-#अगर defined(__LITTLE_ENDIAN_BITFIELD)
-	u8 अगरf:4;
+#if defined(__LITTLE_ENDIAN_BITFIELD)
+	u8 iff:4;
 	u8 ip_csum_dis:1;
 	u8 l4_csum_dis:1;
 	u8 vlan_valid:1;
 	u8 rsvd:1;
-#अन्यथा
+#else
 	u8 rsvd:1;
 	u8 vlan_valid:1;
 	u8 l4_csum_dis:1;
 	u8 ip_csum_dis:1;
-	u8 अगरf:4;
-#पूर्ण_अगर
+	u8 iff:4;
+#endif
 	u16 vlan;
 	u16 len_hi;
 	u16 len_lo;
-पूर्ण;
+};
 
-काष्ठा cpl_tx_pkt_lso अणु
+struct cpl_tx_pkt_lso {
 	u8 opcode;
-#अगर defined(__LITTLE_ENDIAN_BITFIELD)
-	u8 अगरf:4;
+#if defined(__LITTLE_ENDIAN_BITFIELD)
+	u8 iff:4;
 	u8 ip_csum_dis:1;
 	u8 l4_csum_dis:1;
 	u8 vlan_valid:1;
 	u8 :1;
-#अन्यथा
+#else
 	u8 :1;
 	u8 vlan_valid:1;
 	u8 l4_csum_dis:1;
 	u8 ip_csum_dis:1;
-	u8 अगरf:4;
-#पूर्ण_अगर
+	u8 iff:4;
+#endif
 	u16 vlan;
 	__be32 len;
 
 	u8 rsvd[5];
-#अगर defined(__LITTLE_ENDIAN_BITFIELD)
+#if defined(__LITTLE_ENDIAN_BITFIELD)
 	u8 tcp_hdr_words:4;
 	u8 ip_hdr_words:4;
-#अन्यथा
+#else
 	u8 ip_hdr_words:4;
 	u8 tcp_hdr_words:4;
-#पूर्ण_अगर
+#endif
 	__be16 eth_type_mss;
-पूर्ण;
+};
 
-काष्ठा cpl_rx_pkt अणु
+struct cpl_rx_pkt {
 	u8 opcode;
-#अगर defined(__LITTLE_ENDIAN_BITFIELD)
-	u8 अगरf:4;
+#if defined(__LITTLE_ENDIAN_BITFIELD)
+	u8 iff:4;
 	u8 csum_valid:1;
 	u8 bad_pkt:1;
 	u8 vlan_valid:1;
 	u8 rsvd:1;
-#अन्यथा
+#else
 	u8 rsvd:1;
 	u8 vlan_valid:1;
 	u8 bad_pkt:1;
 	u8 csum_valid:1;
-	u8 अगरf:4;
-#पूर्ण_अगर
+	u8 iff:4;
+#endif
 	u16 csum;
 	u16 vlan;
 	u16 len;
-पूर्ण;
+};
 
-काष्ठा cpl_l2t_ग_लिखो_req अणु
-	जोड़ opcode_tid ot;
+struct cpl_l2t_write_req {
+	union opcode_tid ot;
 	u32 params;
 	u8 rsvd1[2];
 	u8 dst_mac[6];
-पूर्ण;
+};
 
-काष्ठा cpl_l2t_ग_लिखो_rpl अणु
-	जोड़ opcode_tid ot;
+struct cpl_l2t_write_rpl {
+	union opcode_tid ot;
 	u8 status;
 	u8 rsvd[3];
-पूर्ण;
+};
 
-काष्ठा cpl_l2t_पढ़ो_req अणु
-	जोड़ opcode_tid ot;
+struct cpl_l2t_read_req {
+	union opcode_tid ot;
 	u8 rsvd[3];
 	u8 l2t_idx;
-पूर्ण;
+};
 
-काष्ठा cpl_l2t_पढ़ो_rpl अणु
-	जोड़ opcode_tid ot;
+struct cpl_l2t_read_rpl {
+	union opcode_tid ot;
 	u32 params;
 	u8 rsvd1[2];
 	u8 dst_mac[6];
-पूर्ण;
+};
 
-काष्ठा cpl_smt_ग_लिखो_req अणु
-	जोड़ opcode_tid ot;
+struct cpl_smt_write_req {
+	union opcode_tid ot;
 	u8 rsvd0;
-#अगर defined(__LITTLE_ENDIAN_BITFIELD)
+#if defined(__LITTLE_ENDIAN_BITFIELD)
 	u8 rsvd1:1;
 	u8 mtu_idx:3;
-	u8 अगरf:4;
-#अन्यथा
-	u8 अगरf:4;
+	u8 iff:4;
+#else
+	u8 iff:4;
 	u8 mtu_idx:3;
 	u8 rsvd1:1;
-#पूर्ण_अगर
+#endif
 	u16 rsvd2;
 	u16 rsvd3;
 	u8  src_mac1[6];
 	u16 rsvd4;
 	u8  src_mac0[6];
-पूर्ण;
+};
 
-काष्ठा cpl_smt_ग_लिखो_rpl अणु
-	जोड़ opcode_tid ot;
+struct cpl_smt_write_rpl {
+	union opcode_tid ot;
 	u8 status;
 	u8 rsvd[3];
-पूर्ण;
+};
 
-काष्ठा cpl_smt_पढ़ो_req अणु
-	जोड़ opcode_tid ot;
+struct cpl_smt_read_req {
+	union opcode_tid ot;
 	u8 rsvd0;
-#अगर defined(__LITTLE_ENDIAN_BITFIELD)
+#if defined(__LITTLE_ENDIAN_BITFIELD)
 	u8 rsvd1:4;
-	u8 अगरf:4;
-#अन्यथा
-	u8 अगरf:4;
+	u8 iff:4;
+#else
+	u8 iff:4;
 	u8 rsvd1:4;
-#पूर्ण_अगर
+#endif
 	u16 rsvd2;
-पूर्ण;
+};
 
-काष्ठा cpl_smt_पढ़ो_rpl अणु
-	जोड़ opcode_tid ot;
+struct cpl_smt_read_rpl {
+	union opcode_tid ot;
 	u8 status;
-#अगर defined(__LITTLE_ENDIAN_BITFIELD)
+#if defined(__LITTLE_ENDIAN_BITFIELD)
 	u8 rsvd1:1;
 	u8 mtu_idx:3;
 	u8 rsvd0:4;
-#अन्यथा
+#else
 	u8 rsvd0:4;
 	u8 mtu_idx:3;
 	u8 rsvd1:1;
-#पूर्ण_अगर
+#endif
 	u16 rsvd2;
 	u16 rsvd3;
 	u8  src_mac1[6];
 	u16 rsvd4;
 	u8  src_mac0[6];
-पूर्ण;
+};
 
-काष्ठा cpl_rte_delete_req अणु
-	जोड़ opcode_tid ot;
+struct cpl_rte_delete_req {
+	union opcode_tid ot;
 	u32 params;
-पूर्ण;
+};
 
-काष्ठा cpl_rte_delete_rpl अणु
-	जोड़ opcode_tid ot;
+struct cpl_rte_delete_rpl {
+	union opcode_tid ot;
 	u8 status;
 	u8 rsvd[3];
-पूर्ण;
+};
 
-काष्ठा cpl_rte_ग_लिखो_req अणु
-	जोड़ opcode_tid ot;
+struct cpl_rte_write_req {
+	union opcode_tid ot;
 	u32 params;
-	u32 neपंचांगask;
+	u32 netmask;
 	u32 faddr;
-पूर्ण;
+};
 
-काष्ठा cpl_rte_ग_लिखो_rpl अणु
-	जोड़ opcode_tid ot;
+struct cpl_rte_write_rpl {
+	union opcode_tid ot;
 	u8 status;
 	u8 rsvd[3];
-पूर्ण;
+};
 
-काष्ठा cpl_rte_पढ़ो_req अणु
-	जोड़ opcode_tid ot;
+struct cpl_rte_read_req {
+	union opcode_tid ot;
 	u32 params;
-पूर्ण;
+};
 
-काष्ठा cpl_rte_पढ़ो_rpl अणु
-	जोड़ opcode_tid ot;
+struct cpl_rte_read_rpl {
+	union opcode_tid ot;
 	u8 status;
 	u8 rsvd0[2];
 	u8 l2t_idx;
-#अगर defined(__LITTLE_ENDIAN_BITFIELD)
+#if defined(__LITTLE_ENDIAN_BITFIELD)
 	u8 rsvd1:7;
 	u8 select:1;
-#अन्यथा
+#else
 	u8 select:1;
 	u8 rsvd1:7;
-#पूर्ण_अगर
+#endif
 	u8 rsvd2[3];
 	u32 addr;
-पूर्ण;
+};
 
-काष्ठा cpl_mss_change अणु
-	जोड़ opcode_tid ot;
+struct cpl_mss_change {
+	union opcode_tid ot;
 	u32 mss;
-पूर्ण;
+};
 
-#पूर्ण_अगर /* _CXGB_CPL5_CMD_H_ */
+#endif /* _CXGB_CPL5_CMD_H_ */
 

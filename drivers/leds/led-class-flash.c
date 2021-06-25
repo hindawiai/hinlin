@@ -1,29 +1,28 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * LED Flash class पूर्णांकerface
+ * LED Flash class interface
  *
  * Copyright (C) 2015 Samsung Electronics Co., Ltd.
  * Author: Jacek Anaszewski <j.anaszewski@samsung.com>
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/init.h>
-#समावेश <linux/led-class-flash.h>
-#समावेश <linux/leds.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश "leds.h"
+#include <linux/device.h>
+#include <linux/init.h>
+#include <linux/led-class-flash.h>
+#include <linux/leds.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include "leds.h"
 
-#घोषणा has_flash_op(fled_cdev, op)				\
+#define has_flash_op(fled_cdev, op)				\
 	(fled_cdev && fled_cdev->ops->op)
 
-#घोषणा call_flash_op(fled_cdev, op, args...)		\
+#define call_flash_op(fled_cdev, op, args...)		\
 	((has_flash_op(fled_cdev, op)) ?			\
 			(fled_cdev->ops->op(fled_cdev, args)) :	\
 			-EINVAL)
 
-अटल स्थिर अक्षर * स्थिर led_flash_fault_names[] = अणु
+static const char * const led_flash_fault_names[] = {
 	"led-over-voltage",
 	"flash-timeout-exceeded",
 	"controller-over-temperature",
@@ -33,353 +32,353 @@
 	"led-under-voltage",
 	"controller-under-voltage",
 	"led-over-temperature",
-पूर्ण;
+};
 
-अटल sमाप_प्रकार flash_brightness_store(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार size)
-अणु
-	काष्ठा led_classdev *led_cdev = dev_get_drvdata(dev);
-	काष्ठा led_classdev_flash *fled_cdev = lcdev_to_flcdev(led_cdev);
-	अचिन्हित दीर्घ state;
-	sमाप_प्रकार ret;
+static ssize_t flash_brightness_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t size)
+{
+	struct led_classdev *led_cdev = dev_get_drvdata(dev);
+	struct led_classdev_flash *fled_cdev = lcdev_to_flcdev(led_cdev);
+	unsigned long state;
+	ssize_t ret;
 
 	mutex_lock(&led_cdev->led_access);
 
-	अगर (led_sysfs_is_disabled(led_cdev)) अणु
+	if (led_sysfs_is_disabled(led_cdev)) {
 		ret = -EBUSY;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	ret = kम_से_अदीर्घ(buf, 10, &state);
-	अगर (ret)
-		जाओ unlock;
+	ret = kstrtoul(buf, 10, &state);
+	if (ret)
+		goto unlock;
 
 	ret = led_set_flash_brightness(fled_cdev, state);
-	अगर (ret < 0)
-		जाओ unlock;
+	if (ret < 0)
+		goto unlock;
 
 	ret = size;
 unlock:
 	mutex_unlock(&led_cdev->led_access);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार flash_brightness_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा led_classdev *led_cdev = dev_get_drvdata(dev);
-	काष्ठा led_classdev_flash *fled_cdev = lcdev_to_flcdev(led_cdev);
+static ssize_t flash_brightness_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct led_classdev *led_cdev = dev_get_drvdata(dev);
+	struct led_classdev_flash *fled_cdev = lcdev_to_flcdev(led_cdev);
 
-	/* no lock needed क्रम this */
+	/* no lock needed for this */
 	led_update_flash_brightness(fled_cdev);
 
-	वापस प्र_लिखो(buf, "%u\n", fled_cdev->brightness.val);
-पूर्ण
-अटल DEVICE_ATTR_RW(flash_brightness);
+	return sprintf(buf, "%u\n", fled_cdev->brightness.val);
+}
+static DEVICE_ATTR_RW(flash_brightness);
 
-अटल sमाप_प्रकार max_flash_brightness_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा led_classdev *led_cdev = dev_get_drvdata(dev);
-	काष्ठा led_classdev_flash *fled_cdev = lcdev_to_flcdev(led_cdev);
+static ssize_t max_flash_brightness_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct led_classdev *led_cdev = dev_get_drvdata(dev);
+	struct led_classdev_flash *fled_cdev = lcdev_to_flcdev(led_cdev);
 
-	वापस प्र_लिखो(buf, "%u\n", fled_cdev->brightness.max);
-पूर्ण
-अटल DEVICE_ATTR_RO(max_flash_brightness);
+	return sprintf(buf, "%u\n", fled_cdev->brightness.max);
+}
+static DEVICE_ATTR_RO(max_flash_brightness);
 
-अटल sमाप_प्रकार flash_strobe_store(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार size)
-अणु
-	काष्ठा led_classdev *led_cdev = dev_get_drvdata(dev);
-	काष्ठा led_classdev_flash *fled_cdev = lcdev_to_flcdev(led_cdev);
-	अचिन्हित दीर्घ state;
-	sमाप_प्रकार ret = -EINVAL;
+static ssize_t flash_strobe_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t size)
+{
+	struct led_classdev *led_cdev = dev_get_drvdata(dev);
+	struct led_classdev_flash *fled_cdev = lcdev_to_flcdev(led_cdev);
+	unsigned long state;
+	ssize_t ret = -EINVAL;
 
 	mutex_lock(&led_cdev->led_access);
 
-	अगर (led_sysfs_is_disabled(led_cdev)) अणु
+	if (led_sysfs_is_disabled(led_cdev)) {
 		ret = -EBUSY;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	ret = kम_से_अदीर्घ(buf, 10, &state);
-	अगर (ret)
-		जाओ unlock;
+	ret = kstrtoul(buf, 10, &state);
+	if (ret)
+		goto unlock;
 
-	अगर (state > 1) अणु
+	if (state > 1) {
 		ret = -EINVAL;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	ret = led_set_flash_strobe(fled_cdev, state);
-	अगर (ret < 0)
-		जाओ unlock;
+	if (ret < 0)
+		goto unlock;
 	ret = size;
 unlock:
 	mutex_unlock(&led_cdev->led_access);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार flash_strobe_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा led_classdev *led_cdev = dev_get_drvdata(dev);
-	काष्ठा led_classdev_flash *fled_cdev = lcdev_to_flcdev(led_cdev);
+static ssize_t flash_strobe_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct led_classdev *led_cdev = dev_get_drvdata(dev);
+	struct led_classdev_flash *fled_cdev = lcdev_to_flcdev(led_cdev);
 	bool state;
-	पूर्णांक ret;
+	int ret;
 
-	/* no lock needed क्रम this */
+	/* no lock needed for this */
 	ret = led_get_flash_strobe(fled_cdev, &state);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस प्र_लिखो(buf, "%u\n", state);
-पूर्ण
-अटल DEVICE_ATTR_RW(flash_strobe);
+	return sprintf(buf, "%u\n", state);
+}
+static DEVICE_ATTR_RW(flash_strobe);
 
-अटल sमाप_प्रकार flash_समयout_store(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार size)
-अणु
-	काष्ठा led_classdev *led_cdev = dev_get_drvdata(dev);
-	काष्ठा led_classdev_flash *fled_cdev = lcdev_to_flcdev(led_cdev);
-	अचिन्हित दीर्घ flash_समयout;
-	sमाप_प्रकार ret;
+static ssize_t flash_timeout_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t size)
+{
+	struct led_classdev *led_cdev = dev_get_drvdata(dev);
+	struct led_classdev_flash *fled_cdev = lcdev_to_flcdev(led_cdev);
+	unsigned long flash_timeout;
+	ssize_t ret;
 
 	mutex_lock(&led_cdev->led_access);
 
-	अगर (led_sysfs_is_disabled(led_cdev)) अणु
+	if (led_sysfs_is_disabled(led_cdev)) {
 		ret = -EBUSY;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	ret = kम_से_अदीर्घ(buf, 10, &flash_समयout);
-	अगर (ret)
-		जाओ unlock;
+	ret = kstrtoul(buf, 10, &flash_timeout);
+	if (ret)
+		goto unlock;
 
-	ret = led_set_flash_समयout(fled_cdev, flash_समयout);
-	अगर (ret < 0)
-		जाओ unlock;
+	ret = led_set_flash_timeout(fled_cdev, flash_timeout);
+	if (ret < 0)
+		goto unlock;
 
 	ret = size;
 unlock:
 	mutex_unlock(&led_cdev->led_access);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार flash_समयout_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा led_classdev *led_cdev = dev_get_drvdata(dev);
-	काष्ठा led_classdev_flash *fled_cdev = lcdev_to_flcdev(led_cdev);
+static ssize_t flash_timeout_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct led_classdev *led_cdev = dev_get_drvdata(dev);
+	struct led_classdev_flash *fled_cdev = lcdev_to_flcdev(led_cdev);
 
-	वापस प्र_लिखो(buf, "%u\n", fled_cdev->समयout.val);
-पूर्ण
-अटल DEVICE_ATTR_RW(flash_समयout);
+	return sprintf(buf, "%u\n", fled_cdev->timeout.val);
+}
+static DEVICE_ATTR_RW(flash_timeout);
 
-अटल sमाप_प्रकार max_flash_समयout_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा led_classdev *led_cdev = dev_get_drvdata(dev);
-	काष्ठा led_classdev_flash *fled_cdev = lcdev_to_flcdev(led_cdev);
+static ssize_t max_flash_timeout_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct led_classdev *led_cdev = dev_get_drvdata(dev);
+	struct led_classdev_flash *fled_cdev = lcdev_to_flcdev(led_cdev);
 
-	वापस प्र_लिखो(buf, "%u\n", fled_cdev->समयout.max);
-पूर्ण
-अटल DEVICE_ATTR_RO(max_flash_समयout);
+	return sprintf(buf, "%u\n", fled_cdev->timeout.max);
+}
+static DEVICE_ATTR_RO(max_flash_timeout);
 
-अटल sमाप_प्रकार flash_fault_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा led_classdev *led_cdev = dev_get_drvdata(dev);
-	काष्ठा led_classdev_flash *fled_cdev = lcdev_to_flcdev(led_cdev);
+static ssize_t flash_fault_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct led_classdev *led_cdev = dev_get_drvdata(dev);
+	struct led_classdev_flash *fled_cdev = lcdev_to_flcdev(led_cdev);
 	u32 fault, mask = 0x1;
-	अक्षर *pbuf = buf;
-	पूर्णांक i, ret, buf_len;
+	char *pbuf = buf;
+	int i, ret, buf_len;
 
 	ret = led_get_flash_fault(fled_cdev, &fault);
-	अगर (ret < 0)
-		वापस -EINVAL;
+	if (ret < 0)
+		return -EINVAL;
 
 	*buf = '\0';
 
-	क्रम (i = 0; i < LED_NUM_FLASH_FAULTS; ++i) अणु
-		अगर (fault & mask) अणु
-			buf_len = प्र_लिखो(pbuf, "%s ",
+	for (i = 0; i < LED_NUM_FLASH_FAULTS; ++i) {
+		if (fault & mask) {
+			buf_len = sprintf(pbuf, "%s ",
 					  led_flash_fault_names[i]);
 			pbuf += buf_len;
-		पूर्ण
+		}
 		mask <<= 1;
-	पूर्ण
+	}
 
-	वापस प्र_लिखो(buf, "%s\n", buf);
-पूर्ण
-अटल DEVICE_ATTR_RO(flash_fault);
+	return sprintf(buf, "%s\n", buf);
+}
+static DEVICE_ATTR_RO(flash_fault);
 
-अटल काष्ठा attribute *led_flash_strobe_attrs[] = अणु
+static struct attribute *led_flash_strobe_attrs[] = {
 	&dev_attr_flash_strobe.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल काष्ठा attribute *led_flash_समयout_attrs[] = अणु
-	&dev_attr_flash_समयout.attr,
-	&dev_attr_max_flash_समयout.attr,
-	शून्य,
-पूर्ण;
+static struct attribute *led_flash_timeout_attrs[] = {
+	&dev_attr_flash_timeout.attr,
+	&dev_attr_max_flash_timeout.attr,
+	NULL,
+};
 
-अटल काष्ठा attribute *led_flash_brightness_attrs[] = अणु
+static struct attribute *led_flash_brightness_attrs[] = {
 	&dev_attr_flash_brightness.attr,
 	&dev_attr_max_flash_brightness.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल काष्ठा attribute *led_flash_fault_attrs[] = अणु
+static struct attribute *led_flash_fault_attrs[] = {
 	&dev_attr_flash_fault.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group led_flash_strobe_group = अणु
+static const struct attribute_group led_flash_strobe_group = {
 	.attrs = led_flash_strobe_attrs,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा attribute_group led_flash_समयout_group = अणु
-	.attrs = led_flash_समयout_attrs,
-पूर्ण;
+static const struct attribute_group led_flash_timeout_group = {
+	.attrs = led_flash_timeout_attrs,
+};
 
-अटल स्थिर काष्ठा attribute_group led_flash_brightness_group = अणु
+static const struct attribute_group led_flash_brightness_group = {
 	.attrs = led_flash_brightness_attrs,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा attribute_group led_flash_fault_group = अणु
+static const struct attribute_group led_flash_fault_group = {
 	.attrs = led_flash_fault_attrs,
-पूर्ण;
+};
 
-अटल व्योम led_flash_resume(काष्ठा led_classdev *led_cdev)
-अणु
-	काष्ठा led_classdev_flash *fled_cdev = lcdev_to_flcdev(led_cdev);
+static void led_flash_resume(struct led_classdev *led_cdev)
+{
+	struct led_classdev_flash *fled_cdev = lcdev_to_flcdev(led_cdev);
 
 	call_flash_op(fled_cdev, flash_brightness_set,
 					fled_cdev->brightness.val);
-	call_flash_op(fled_cdev, समयout_set, fled_cdev->समयout.val);
-पूर्ण
+	call_flash_op(fled_cdev, timeout_set, fled_cdev->timeout.val);
+}
 
-अटल व्योम led_flash_init_sysfs_groups(काष्ठा led_classdev_flash *fled_cdev)
-अणु
-	काष्ठा led_classdev *led_cdev = &fled_cdev->led_cdev;
-	स्थिर काष्ठा led_flash_ops *ops = fled_cdev->ops;
-	स्थिर काष्ठा attribute_group **flash_groups = fled_cdev->sysfs_groups;
+static void led_flash_init_sysfs_groups(struct led_classdev_flash *fled_cdev)
+{
+	struct led_classdev *led_cdev = &fled_cdev->led_cdev;
+	const struct led_flash_ops *ops = fled_cdev->ops;
+	const struct attribute_group **flash_groups = fled_cdev->sysfs_groups;
 
-	पूर्णांक num_sysfs_groups = 0;
+	int num_sysfs_groups = 0;
 
 	flash_groups[num_sysfs_groups++] = &led_flash_strobe_group;
 
-	अगर (ops->flash_brightness_set)
+	if (ops->flash_brightness_set)
 		flash_groups[num_sysfs_groups++] = &led_flash_brightness_group;
 
-	अगर (ops->समयout_set)
-		flash_groups[num_sysfs_groups++] = &led_flash_समयout_group;
+	if (ops->timeout_set)
+		flash_groups[num_sysfs_groups++] = &led_flash_timeout_group;
 
-	अगर (ops->fault_get)
+	if (ops->fault_get)
 		flash_groups[num_sysfs_groups++] = &led_flash_fault_group;
 
 	led_cdev->groups = flash_groups;
-पूर्ण
+}
 
-पूर्णांक led_classdev_flash_रेजिस्टर_ext(काष्ठा device *parent,
-				    काष्ठा led_classdev_flash *fled_cdev,
-				    काष्ठा led_init_data *init_data)
-अणु
-	काष्ठा led_classdev *led_cdev;
-	स्थिर काष्ठा led_flash_ops *ops;
-	पूर्णांक ret;
+int led_classdev_flash_register_ext(struct device *parent,
+				    struct led_classdev_flash *fled_cdev,
+				    struct led_init_data *init_data)
+{
+	struct led_classdev *led_cdev;
+	const struct led_flash_ops *ops;
+	int ret;
 
-	अगर (!fled_cdev)
-		वापस -EINVAL;
+	if (!fled_cdev)
+		return -EINVAL;
 
 	led_cdev = &fled_cdev->led_cdev;
 
-	अगर (led_cdev->flags & LED_DEV_CAP_FLASH) अणु
-		अगर (!led_cdev->brightness_set_blocking)
-			वापस -EINVAL;
+	if (led_cdev->flags & LED_DEV_CAP_FLASH) {
+		if (!led_cdev->brightness_set_blocking)
+			return -EINVAL;
 
 		ops = fled_cdev->ops;
-		अगर (!ops || !ops->strobe_set)
-			वापस -EINVAL;
+		if (!ops || !ops->strobe_set)
+			return -EINVAL;
 
 		led_cdev->flash_resume = led_flash_resume;
 
-		/* Select the sysfs attributes to be created क्रम the device */
+		/* Select the sysfs attributes to be created for the device */
 		led_flash_init_sysfs_groups(fled_cdev);
-	पूर्ण
+	}
 
 	/* Register led class device */
-	ret = led_classdev_रेजिस्टर_ext(parent, led_cdev, init_data);
-	अगर (ret < 0)
-		वापस ret;
+	ret = led_classdev_register_ext(parent, led_cdev, init_data);
+	if (ret < 0)
+		return ret;
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(led_classdev_flash_रेजिस्टर_ext);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(led_classdev_flash_register_ext);
 
-व्योम led_classdev_flash_unरेजिस्टर(काष्ठा led_classdev_flash *fled_cdev)
-अणु
-	अगर (!fled_cdev)
-		वापस;
+void led_classdev_flash_unregister(struct led_classdev_flash *fled_cdev)
+{
+	if (!fled_cdev)
+		return;
 
-	led_classdev_unरेजिस्टर(&fled_cdev->led_cdev);
-पूर्ण
-EXPORT_SYMBOL_GPL(led_classdev_flash_unरेजिस्टर);
+	led_classdev_unregister(&fled_cdev->led_cdev);
+}
+EXPORT_SYMBOL_GPL(led_classdev_flash_unregister);
 
-अटल व्योम devm_led_classdev_flash_release(काष्ठा device *dev, व्योम *res)
-अणु
-	led_classdev_flash_unरेजिस्टर(*(काष्ठा led_classdev_flash **)res);
-पूर्ण
+static void devm_led_classdev_flash_release(struct device *dev, void *res)
+{
+	led_classdev_flash_unregister(*(struct led_classdev_flash **)res);
+}
 
-पूर्णांक devm_led_classdev_flash_रेजिस्टर_ext(काष्ठा device *parent,
-				     काष्ठा led_classdev_flash *fled_cdev,
-				     काष्ठा led_init_data *init_data)
-अणु
-	काष्ठा led_classdev_flash **dr;
-	पूर्णांक ret;
+int devm_led_classdev_flash_register_ext(struct device *parent,
+				     struct led_classdev_flash *fled_cdev,
+				     struct led_init_data *init_data)
+{
+	struct led_classdev_flash **dr;
+	int ret;
 
-	dr = devres_alloc(devm_led_classdev_flash_release, माप(*dr),
+	dr = devres_alloc(devm_led_classdev_flash_release, sizeof(*dr),
 			  GFP_KERNEL);
-	अगर (!dr)
-		वापस -ENOMEM;
+	if (!dr)
+		return -ENOMEM;
 
-	ret = led_classdev_flash_रेजिस्टर_ext(parent, fled_cdev, init_data);
-	अगर (ret) अणु
-		devres_मुक्त(dr);
-		वापस ret;
-	पूर्ण
+	ret = led_classdev_flash_register_ext(parent, fled_cdev, init_data);
+	if (ret) {
+		devres_free(dr);
+		return ret;
+	}
 
 	*dr = fled_cdev;
 	devres_add(parent, dr);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(devm_led_classdev_flash_रेजिस्टर_ext);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(devm_led_classdev_flash_register_ext);
 
-अटल पूर्णांक devm_led_classdev_flash_match(काष्ठा device *dev,
-					      व्योम *res, व्योम *data)
-अणु
-	काष्ठा led_classdev_flash **p = res;
+static int devm_led_classdev_flash_match(struct device *dev,
+					      void *res, void *data)
+{
+	struct led_classdev_flash **p = res;
 
-	अगर (WARN_ON(!p || !*p))
-		वापस 0;
+	if (WARN_ON(!p || !*p))
+		return 0;
 
-	वापस *p == data;
-पूर्ण
+	return *p == data;
+}
 
-व्योम devm_led_classdev_flash_unरेजिस्टर(काष्ठा device *dev,
-					काष्ठा led_classdev_flash *fled_cdev)
-अणु
+void devm_led_classdev_flash_unregister(struct device *dev,
+					struct led_classdev_flash *fled_cdev)
+{
 	WARN_ON(devres_release(dev,
 			       devm_led_classdev_flash_release,
 			       devm_led_classdev_flash_match, fled_cdev));
-पूर्ण
-EXPORT_SYMBOL_GPL(devm_led_classdev_flash_unरेजिस्टर);
+}
+EXPORT_SYMBOL_GPL(devm_led_classdev_flash_unregister);
 
-अटल व्योम led_clamp_align(काष्ठा led_flash_setting *s)
-अणु
+static void led_clamp_align(struct led_flash_setting *s)
+{
 	u32 v, offset;
 
 	v = s->val + s->step / 2;
@@ -387,61 +386,61 @@ EXPORT_SYMBOL_GPL(devm_led_classdev_flash_unरेजिस्टर);
 	offset = v - s->min;
 	offset = s->step * (offset / s->step);
 	s->val = s->min + offset;
-पूर्ण
+}
 
-पूर्णांक led_set_flash_समयout(काष्ठा led_classdev_flash *fled_cdev, u32 समयout)
-अणु
-	काष्ठा led_classdev *led_cdev = &fled_cdev->led_cdev;
-	काष्ठा led_flash_setting *s = &fled_cdev->समयout;
+int led_set_flash_timeout(struct led_classdev_flash *fled_cdev, u32 timeout)
+{
+	struct led_classdev *led_cdev = &fled_cdev->led_cdev;
+	struct led_flash_setting *s = &fled_cdev->timeout;
 
-	s->val = समयout;
+	s->val = timeout;
 	led_clamp_align(s);
 
-	अगर (!(led_cdev->flags & LED_SUSPENDED))
-		वापस call_flash_op(fled_cdev, समयout_set, s->val);
+	if (!(led_cdev->flags & LED_SUSPENDED))
+		return call_flash_op(fled_cdev, timeout_set, s->val);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(led_set_flash_समयout);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(led_set_flash_timeout);
 
-पूर्णांक led_get_flash_fault(काष्ठा led_classdev_flash *fled_cdev, u32 *fault)
-अणु
-	वापस call_flash_op(fled_cdev, fault_get, fault);
-पूर्ण
+int led_get_flash_fault(struct led_classdev_flash *fled_cdev, u32 *fault)
+{
+	return call_flash_op(fled_cdev, fault_get, fault);
+}
 EXPORT_SYMBOL_GPL(led_get_flash_fault);
 
-पूर्णांक led_set_flash_brightness(काष्ठा led_classdev_flash *fled_cdev,
+int led_set_flash_brightness(struct led_classdev_flash *fled_cdev,
 				u32 brightness)
-अणु
-	काष्ठा led_classdev *led_cdev = &fled_cdev->led_cdev;
-	काष्ठा led_flash_setting *s = &fled_cdev->brightness;
+{
+	struct led_classdev *led_cdev = &fled_cdev->led_cdev;
+	struct led_flash_setting *s = &fled_cdev->brightness;
 
 	s->val = brightness;
 	led_clamp_align(s);
 
-	अगर (!(led_cdev->flags & LED_SUSPENDED))
-		वापस call_flash_op(fled_cdev, flash_brightness_set, s->val);
+	if (!(led_cdev->flags & LED_SUSPENDED))
+		return call_flash_op(fled_cdev, flash_brightness_set, s->val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(led_set_flash_brightness);
 
-पूर्णांक led_update_flash_brightness(काष्ठा led_classdev_flash *fled_cdev)
-अणु
-	काष्ठा led_flash_setting *s = &fled_cdev->brightness;
+int led_update_flash_brightness(struct led_classdev_flash *fled_cdev)
+{
+	struct led_flash_setting *s = &fled_cdev->brightness;
 	u32 brightness;
 
-	अगर (has_flash_op(fled_cdev, flash_brightness_get)) अणु
-		पूर्णांक ret = call_flash_op(fled_cdev, flash_brightness_get,
+	if (has_flash_op(fled_cdev, flash_brightness_get)) {
+		int ret = call_flash_op(fled_cdev, flash_brightness_get,
 						&brightness);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 
 		s->val = brightness;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(led_update_flash_brightness);
 
 MODULE_AUTHOR("Jacek Anaszewski <j.anaszewski@samsung.com>");

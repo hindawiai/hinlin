@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * MOXA ART SoCs DMA Engine support.
  *
@@ -11,53 +10,53 @@
  * warranty of any kind, whether express or implied.
  */
 
-#समावेश <linux/dmaengine.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/err.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/list.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/of_dma.h>
-#समावेश <linux/bitops.h>
+#include <linux/dmaengine.h>
+#include <linux/dma-mapping.h>
+#include <linux/err.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/list.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
+#include <linux/of_address.h>
+#include <linux/of_irq.h>
+#include <linux/of_dma.h>
+#include <linux/bitops.h>
 
-#समावेश <यंत्र/cacheflush.h>
+#include <asm/cacheflush.h>
 
-#समावेश "dmaengine.h"
-#समावेश "virt-dma.h"
+#include "dmaengine.h"
+#include "virt-dma.h"
 
-#घोषणा APB_DMA_MAX_CHANNEL			4
+#define APB_DMA_MAX_CHANNEL			4
 
-#घोषणा REG_OFF_ADDRESS_SOURCE			0
-#घोषणा REG_OFF_ADDRESS_DEST			4
-#घोषणा REG_OFF_CYCLES				8
-#घोषणा REG_OFF_CTRL				12
-#घोषणा REG_OFF_CHAN_SIZE			16
+#define REG_OFF_ADDRESS_SOURCE			0
+#define REG_OFF_ADDRESS_DEST			4
+#define REG_OFF_CYCLES				8
+#define REG_OFF_CTRL				12
+#define REG_OFF_CHAN_SIZE			16
 
-#घोषणा APB_DMA_ENABLE				BIT(0)
-#घोषणा APB_DMA_FIN_INT_STS			BIT(1)
-#घोषणा APB_DMA_FIN_INT_EN			BIT(2)
-#घोषणा APB_DMA_BURST_MODE			BIT(3)
-#घोषणा APB_DMA_ERR_INT_STS			BIT(4)
-#घोषणा APB_DMA_ERR_INT_EN			BIT(5)
+#define APB_DMA_ENABLE				BIT(0)
+#define APB_DMA_FIN_INT_STS			BIT(1)
+#define APB_DMA_FIN_INT_EN			BIT(2)
+#define APB_DMA_BURST_MODE			BIT(3)
+#define APB_DMA_ERR_INT_STS			BIT(4)
+#define APB_DMA_ERR_INT_EN			BIT(5)
 
 /*
  * Unset: APB
  * Set:   AHB
  */
-#घोषणा APB_DMA_SOURCE_SELECT			0x40
-#घोषणा APB_DMA_DEST_SELECT			0x80
+#define APB_DMA_SOURCE_SELECT			0x40
+#define APB_DMA_DEST_SELECT			0x80
 
-#घोषणा APB_DMA_SOURCE				0x100
-#घोषणा APB_DMA_DEST				0x1000
+#define APB_DMA_SOURCE				0x100
+#define APB_DMA_DEST				0x1000
 
-#घोषणा APB_DMA_SOURCE_MASK			0x700
-#घोषणा APB_DMA_DEST_MASK			0x7000
+#define APB_DMA_SOURCE_MASK			0x700
+#define APB_DMA_DEST_MASK			0x7000
 
 /*
  * 000: No increment
@@ -68,37 +67,37 @@
  * 110: -2 (Burst=0), -8  (Burst=1)
  * 111: -4 (Burst=0), -16 (Burst=1)
  */
-#घोषणा APB_DMA_SOURCE_INC_0			0
-#घोषणा APB_DMA_SOURCE_INC_1_4			0x100
-#घोषणा APB_DMA_SOURCE_INC_2_8			0x200
-#घोषणा APB_DMA_SOURCE_INC_4_16			0x300
-#घोषणा APB_DMA_SOURCE_DEC_1_4			0x500
-#घोषणा APB_DMA_SOURCE_DEC_2_8			0x600
-#घोषणा APB_DMA_SOURCE_DEC_4_16			0x700
-#घोषणा APB_DMA_DEST_INC_0			0
-#घोषणा APB_DMA_DEST_INC_1_4			0x1000
-#घोषणा APB_DMA_DEST_INC_2_8			0x2000
-#घोषणा APB_DMA_DEST_INC_4_16			0x3000
-#घोषणा APB_DMA_DEST_DEC_1_4			0x5000
-#घोषणा APB_DMA_DEST_DEC_2_8			0x6000
-#घोषणा APB_DMA_DEST_DEC_4_16			0x7000
+#define APB_DMA_SOURCE_INC_0			0
+#define APB_DMA_SOURCE_INC_1_4			0x100
+#define APB_DMA_SOURCE_INC_2_8			0x200
+#define APB_DMA_SOURCE_INC_4_16			0x300
+#define APB_DMA_SOURCE_DEC_1_4			0x500
+#define APB_DMA_SOURCE_DEC_2_8			0x600
+#define APB_DMA_SOURCE_DEC_4_16			0x700
+#define APB_DMA_DEST_INC_0			0
+#define APB_DMA_DEST_INC_1_4			0x1000
+#define APB_DMA_DEST_INC_2_8			0x2000
+#define APB_DMA_DEST_INC_4_16			0x3000
+#define APB_DMA_DEST_DEC_1_4			0x5000
+#define APB_DMA_DEST_DEC_2_8			0x6000
+#define APB_DMA_DEST_DEC_4_16			0x7000
 
 /*
- * Request संकेत select source/destination address क्रम DMA hardware handshake.
+ * Request signal select source/destination address for DMA hardware handshake.
  *
  * The request line number is a property of the DMA controller itself,
  * e.g. MMC must always request channels where dma_slave_config->slave_id is 5.
  *
- * 0:    No request / Grant संकेत
- * 1-15: Request    / Grant संकेत
+ * 0:    No request / Grant signal
+ * 1-15: Request    / Grant signal
  */
-#घोषणा APB_DMA_SOURCE_REQ_NO			0x1000000
-#घोषणा APB_DMA_SOURCE_REQ_NO_MASK		0xf000000
-#घोषणा APB_DMA_DEST_REQ_NO			0x10000
-#घोषणा APB_DMA_DEST_REQ_NO_MASK		0xf0000
+#define APB_DMA_SOURCE_REQ_NO			0x1000000
+#define APB_DMA_SOURCE_REQ_NO_MASK		0xf000000
+#define APB_DMA_DEST_REQ_NO			0x10000
+#define APB_DMA_DEST_REQ_NO_MASK		0xf0000
 
-#घोषणा APB_DMA_DATA_WIDTH			0x100000
-#घोषणा APB_DMA_DATA_WIDTH_MASK			0x300000
+#define APB_DMA_DATA_WIDTH			0x100000
+#define APB_DMA_DATA_WIDTH_MASK			0x300000
 /*
  * Data width of transfer:
  *
@@ -106,88 +105,88 @@
  * 01: Half
  * 10: Byte
  */
-#घोषणा APB_DMA_DATA_WIDTH_4			0
-#घोषणा APB_DMA_DATA_WIDTH_2			0x100000
-#घोषणा APB_DMA_DATA_WIDTH_1			0x200000
+#define APB_DMA_DATA_WIDTH_4			0
+#define APB_DMA_DATA_WIDTH_2			0x100000
+#define APB_DMA_DATA_WIDTH_1			0x200000
 
-#घोषणा APB_DMA_CYCLES_MASK			0x00ffffff
+#define APB_DMA_CYCLES_MASK			0x00ffffff
 
-#घोषणा MOXART_DMA_DATA_TYPE_S8			0x00
-#घोषणा MOXART_DMA_DATA_TYPE_S16		0x01
-#घोषणा MOXART_DMA_DATA_TYPE_S32		0x02
+#define MOXART_DMA_DATA_TYPE_S8			0x00
+#define MOXART_DMA_DATA_TYPE_S16		0x01
+#define MOXART_DMA_DATA_TYPE_S32		0x02
 
-काष्ठा moxart_sg अणु
+struct moxart_sg {
 	dma_addr_t addr;
-	uपूर्णांक32_t len;
-पूर्ण;
+	uint32_t len;
+};
 
-काष्ठा moxart_desc अणु
-	क्रमागत dma_transfer_direction	dma_dir;
+struct moxart_desc {
+	enum dma_transfer_direction	dma_dir;
 	dma_addr_t			dev_addr;
-	अचिन्हित पूर्णांक			sglen;
-	अचिन्हित पूर्णांक			dma_cycles;
-	काष्ठा virt_dma_desc		vd;
-	uपूर्णांक8_t				es;
-	काष्ठा moxart_sg		sg[];
-पूर्ण;
+	unsigned int			sglen;
+	unsigned int			dma_cycles;
+	struct virt_dma_desc		vd;
+	uint8_t				es;
+	struct moxart_sg		sg[];
+};
 
-काष्ठा moxart_chan अणु
-	काष्ठा virt_dma_chan		vc;
+struct moxart_chan {
+	struct virt_dma_chan		vc;
 
-	व्योम __iomem			*base;
-	काष्ठा moxart_desc		*desc;
+	void __iomem			*base;
+	struct moxart_desc		*desc;
 
-	काष्ठा dma_slave_config		cfg;
+	struct dma_slave_config		cfg;
 
 	bool				allocated;
 	bool				error;
-	पूर्णांक				ch_num;
-	अचिन्हित पूर्णांक			line_reqno;
-	अचिन्हित पूर्णांक			sgidx;
-पूर्ण;
+	int				ch_num;
+	unsigned int			line_reqno;
+	unsigned int			sgidx;
+};
 
-काष्ठा moxart_dmadev अणु
-	काष्ठा dma_device		dma_slave;
-	काष्ठा moxart_chan		slave_chans[APB_DMA_MAX_CHANNEL];
-	अचिन्हित पूर्णांक			irq;
-पूर्ण;
+struct moxart_dmadev {
+	struct dma_device		dma_slave;
+	struct moxart_chan		slave_chans[APB_DMA_MAX_CHANNEL];
+	unsigned int			irq;
+};
 
-काष्ठा moxart_filter_data अणु
-	काष्ठा moxart_dmadev		*mdc;
-	काष्ठा of_phandle_args		*dma_spec;
-पूर्ण;
+struct moxart_filter_data {
+	struct moxart_dmadev		*mdc;
+	struct of_phandle_args		*dma_spec;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक es_bytes[] = अणु
+static const unsigned int es_bytes[] = {
 	[MOXART_DMA_DATA_TYPE_S8] = 1,
 	[MOXART_DMA_DATA_TYPE_S16] = 2,
 	[MOXART_DMA_DATA_TYPE_S32] = 4,
-पूर्ण;
+};
 
-अटल काष्ठा device *chan2dev(काष्ठा dma_chan *chan)
-अणु
-	वापस &chan->dev->device;
-पूर्ण
+static struct device *chan2dev(struct dma_chan *chan)
+{
+	return &chan->dev->device;
+}
 
-अटल अंतरभूत काष्ठा moxart_chan *to_moxart_dma_chan(काष्ठा dma_chan *c)
-अणु
-	वापस container_of(c, काष्ठा moxart_chan, vc.chan);
-पूर्ण
+static inline struct moxart_chan *to_moxart_dma_chan(struct dma_chan *c)
+{
+	return container_of(c, struct moxart_chan, vc.chan);
+}
 
-अटल अंतरभूत काष्ठा moxart_desc *to_moxart_dma_desc(
-	काष्ठा dma_async_tx_descriptor *t)
-अणु
-	वापस container_of(t, काष्ठा moxart_desc, vd.tx);
-पूर्ण
+static inline struct moxart_desc *to_moxart_dma_desc(
+	struct dma_async_tx_descriptor *t)
+{
+	return container_of(t, struct moxart_desc, vd.tx);
+}
 
-अटल व्योम moxart_dma_desc_मुक्त(काष्ठा virt_dma_desc *vd)
-अणु
-	kमुक्त(container_of(vd, काष्ठा moxart_desc, vd));
-पूर्ण
+static void moxart_dma_desc_free(struct virt_dma_desc *vd)
+{
+	kfree(container_of(vd, struct moxart_desc, vd));
+}
 
-अटल पूर्णांक moxart_terminate_all(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा moxart_chan *ch = to_moxart_dma_chan(chan);
-	अचिन्हित दीर्घ flags;
+static int moxart_terminate_all(struct dma_chan *chan)
+{
+	struct moxart_chan *ch = to_moxart_dma_chan(chan);
+	unsigned long flags;
 	LIST_HEAD(head);
 	u32 ctrl;
 
@@ -195,239 +194,239 @@
 
 	spin_lock_irqsave(&ch->vc.lock, flags);
 
-	अगर (ch->desc) अणु
-		moxart_dma_desc_मुक्त(&ch->desc->vd);
-		ch->desc = शून्य;
-	पूर्ण
+	if (ch->desc) {
+		moxart_dma_desc_free(&ch->desc->vd);
+		ch->desc = NULL;
+	}
 
-	ctrl = पढ़ोl(ch->base + REG_OFF_CTRL);
+	ctrl = readl(ch->base + REG_OFF_CTRL);
 	ctrl &= ~(APB_DMA_ENABLE | APB_DMA_FIN_INT_EN | APB_DMA_ERR_INT_EN);
-	ग_लिखोl(ctrl, ch->base + REG_OFF_CTRL);
+	writel(ctrl, ch->base + REG_OFF_CTRL);
 
 	vchan_get_all_descriptors(&ch->vc, &head);
 	spin_unlock_irqrestore(&ch->vc.lock, flags);
-	vchan_dma_desc_मुक्त_list(&ch->vc, &head);
+	vchan_dma_desc_free_list(&ch->vc, &head);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक moxart_slave_config(काष्ठा dma_chan *chan,
-			       काष्ठा dma_slave_config *cfg)
-अणु
-	काष्ठा moxart_chan *ch = to_moxart_dma_chan(chan);
+static int moxart_slave_config(struct dma_chan *chan,
+			       struct dma_slave_config *cfg)
+{
+	struct moxart_chan *ch = to_moxart_dma_chan(chan);
 	u32 ctrl;
 
 	ch->cfg = *cfg;
 
-	ctrl = पढ़ोl(ch->base + REG_OFF_CTRL);
+	ctrl = readl(ch->base + REG_OFF_CTRL);
 	ctrl |= APB_DMA_BURST_MODE;
 	ctrl &= ~(APB_DMA_DEST_MASK | APB_DMA_SOURCE_MASK);
 	ctrl &= ~(APB_DMA_DEST_REQ_NO_MASK | APB_DMA_SOURCE_REQ_NO_MASK);
 
-	चयन (ch->cfg.src_addr_width) अणु
-	हाल DMA_SLAVE_BUSWIDTH_1_BYTE:
+	switch (ch->cfg.src_addr_width) {
+	case DMA_SLAVE_BUSWIDTH_1_BYTE:
 		ctrl |= APB_DMA_DATA_WIDTH_1;
-		अगर (ch->cfg.direction != DMA_MEM_TO_DEV)
+		if (ch->cfg.direction != DMA_MEM_TO_DEV)
 			ctrl |= APB_DMA_DEST_INC_1_4;
-		अन्यथा
+		else
 			ctrl |= APB_DMA_SOURCE_INC_1_4;
-		अवरोध;
-	हाल DMA_SLAVE_BUSWIDTH_2_BYTES:
+		break;
+	case DMA_SLAVE_BUSWIDTH_2_BYTES:
 		ctrl |= APB_DMA_DATA_WIDTH_2;
-		अगर (ch->cfg.direction != DMA_MEM_TO_DEV)
+		if (ch->cfg.direction != DMA_MEM_TO_DEV)
 			ctrl |= APB_DMA_DEST_INC_2_8;
-		अन्यथा
+		else
 			ctrl |= APB_DMA_SOURCE_INC_2_8;
-		अवरोध;
-	हाल DMA_SLAVE_BUSWIDTH_4_BYTES:
+		break;
+	case DMA_SLAVE_BUSWIDTH_4_BYTES:
 		ctrl &= ~APB_DMA_DATA_WIDTH;
-		अगर (ch->cfg.direction != DMA_MEM_TO_DEV)
+		if (ch->cfg.direction != DMA_MEM_TO_DEV)
 			ctrl |= APB_DMA_DEST_INC_4_16;
-		अन्यथा
+		else
 			ctrl |= APB_DMA_SOURCE_INC_4_16;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	अगर (ch->cfg.direction == DMA_MEM_TO_DEV) अणु
+	if (ch->cfg.direction == DMA_MEM_TO_DEV) {
 		ctrl &= ~APB_DMA_DEST_SELECT;
 		ctrl |= APB_DMA_SOURCE_SELECT;
 		ctrl |= (ch->line_reqno << 16 &
 			 APB_DMA_DEST_REQ_NO_MASK);
-	पूर्ण अन्यथा अणु
+	} else {
 		ctrl |= APB_DMA_DEST_SELECT;
 		ctrl &= ~APB_DMA_SOURCE_SELECT;
 		ctrl |= (ch->line_reqno << 24 &
 			 APB_DMA_SOURCE_REQ_NO_MASK);
-	पूर्ण
+	}
 
-	ग_लिखोl(ctrl, ch->base + REG_OFF_CTRL);
+	writel(ctrl, ch->base + REG_OFF_CTRL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा dma_async_tx_descriptor *moxart_prep_slave_sg(
-	काष्ठा dma_chan *chan, काष्ठा scatterlist *sgl,
-	अचिन्हित पूर्णांक sg_len, क्रमागत dma_transfer_direction dir,
-	अचिन्हित दीर्घ tx_flags, व्योम *context)
-अणु
-	काष्ठा moxart_chan *ch = to_moxart_dma_chan(chan);
-	काष्ठा moxart_desc *d;
-	क्रमागत dma_slave_buswidth dev_width;
+static struct dma_async_tx_descriptor *moxart_prep_slave_sg(
+	struct dma_chan *chan, struct scatterlist *sgl,
+	unsigned int sg_len, enum dma_transfer_direction dir,
+	unsigned long tx_flags, void *context)
+{
+	struct moxart_chan *ch = to_moxart_dma_chan(chan);
+	struct moxart_desc *d;
+	enum dma_slave_buswidth dev_width;
 	dma_addr_t dev_addr;
-	काष्ठा scatterlist *sgent;
-	अचिन्हित पूर्णांक es;
-	अचिन्हित पूर्णांक i;
+	struct scatterlist *sgent;
+	unsigned int es;
+	unsigned int i;
 
-	अगर (!is_slave_direction(dir)) अणु
+	if (!is_slave_direction(dir)) {
 		dev_err(chan2dev(chan), "%s: invalid DMA direction\n",
 			__func__);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	अगर (dir == DMA_DEV_TO_MEM) अणु
+	if (dir == DMA_DEV_TO_MEM) {
 		dev_addr = ch->cfg.src_addr;
 		dev_width = ch->cfg.src_addr_width;
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_addr = ch->cfg.dst_addr;
 		dev_width = ch->cfg.dst_addr_width;
-	पूर्ण
+	}
 
-	चयन (dev_width) अणु
-	हाल DMA_SLAVE_BUSWIDTH_1_BYTE:
+	switch (dev_width) {
+	case DMA_SLAVE_BUSWIDTH_1_BYTE:
 		es = MOXART_DMA_DATA_TYPE_S8;
-		अवरोध;
-	हाल DMA_SLAVE_BUSWIDTH_2_BYTES:
+		break;
+	case DMA_SLAVE_BUSWIDTH_2_BYTES:
 		es = MOXART_DMA_DATA_TYPE_S16;
-		अवरोध;
-	हाल DMA_SLAVE_BUSWIDTH_4_BYTES:
+		break;
+	case DMA_SLAVE_BUSWIDTH_4_BYTES:
 		es = MOXART_DMA_DATA_TYPE_S32;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(chan2dev(chan), "%s: unsupported data width (%u)\n",
 			__func__, dev_width);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	d = kzalloc(काष्ठा_size(d, sg, sg_len), GFP_ATOMIC);
-	अगर (!d)
-		वापस शून्य;
+	d = kzalloc(struct_size(d, sg, sg_len), GFP_ATOMIC);
+	if (!d)
+		return NULL;
 
 	d->dma_dir = dir;
 	d->dev_addr = dev_addr;
 	d->es = es;
 
-	क्रम_each_sg(sgl, sgent, sg_len, i) अणु
+	for_each_sg(sgl, sgent, sg_len, i) {
 		d->sg[i].addr = sg_dma_address(sgent);
 		d->sg[i].len = sg_dma_len(sgent);
-	पूर्ण
+	}
 
 	d->sglen = sg_len;
 
 	ch->error = 0;
 
-	वापस vchan_tx_prep(&ch->vc, &d->vd, tx_flags);
-पूर्ण
+	return vchan_tx_prep(&ch->vc, &d->vd, tx_flags);
+}
 
-अटल काष्ठा dma_chan *moxart_of_xlate(काष्ठा of_phandle_args *dma_spec,
-					काष्ठा of_dma *ofdma)
-अणु
-	काष्ठा moxart_dmadev *mdc = ofdma->of_dma_data;
-	काष्ठा dma_chan *chan;
-	काष्ठा moxart_chan *ch;
+static struct dma_chan *moxart_of_xlate(struct of_phandle_args *dma_spec,
+					struct of_dma *ofdma)
+{
+	struct moxart_dmadev *mdc = ofdma->of_dma_data;
+	struct dma_chan *chan;
+	struct moxart_chan *ch;
 
 	chan = dma_get_any_slave_channel(&mdc->dma_slave);
-	अगर (!chan)
-		वापस शून्य;
+	if (!chan)
+		return NULL;
 
 	ch = to_moxart_dma_chan(chan);
 	ch->line_reqno = dma_spec->args[0];
 
-	वापस chan;
-पूर्ण
+	return chan;
+}
 
-अटल पूर्णांक moxart_alloc_chan_resources(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा moxart_chan *ch = to_moxart_dma_chan(chan);
+static int moxart_alloc_chan_resources(struct dma_chan *chan)
+{
+	struct moxart_chan *ch = to_moxart_dma_chan(chan);
 
 	dev_dbg(chan2dev(chan), "%s: allocating channel #%u\n",
 		__func__, ch->ch_num);
 	ch->allocated = 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम moxart_मुक्त_chan_resources(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा moxart_chan *ch = to_moxart_dma_chan(chan);
+static void moxart_free_chan_resources(struct dma_chan *chan)
+{
+	struct moxart_chan *ch = to_moxart_dma_chan(chan);
 
-	vchan_मुक्त_chan_resources(&ch->vc);
+	vchan_free_chan_resources(&ch->vc);
 
 	dev_dbg(chan2dev(chan), "%s: freeing channel #%u\n",
 		__func__, ch->ch_num);
 	ch->allocated = 0;
-पूर्ण
+}
 
-अटल व्योम moxart_dma_set_params(काष्ठा moxart_chan *ch, dma_addr_t src_addr,
+static void moxart_dma_set_params(struct moxart_chan *ch, dma_addr_t src_addr,
 				  dma_addr_t dst_addr)
-अणु
-	ग_लिखोl(src_addr, ch->base + REG_OFF_ADDRESS_SOURCE);
-	ग_लिखोl(dst_addr, ch->base + REG_OFF_ADDRESS_DEST);
-पूर्ण
+{
+	writel(src_addr, ch->base + REG_OFF_ADDRESS_SOURCE);
+	writel(dst_addr, ch->base + REG_OFF_ADDRESS_DEST);
+}
 
-अटल व्योम moxart_set_transfer_params(काष्ठा moxart_chan *ch, अचिन्हित पूर्णांक len)
-अणु
-	काष्ठा moxart_desc *d = ch->desc;
-	अचिन्हित पूर्णांक sglen_भाग = es_bytes[d->es];
+static void moxart_set_transfer_params(struct moxart_chan *ch, unsigned int len)
+{
+	struct moxart_desc *d = ch->desc;
+	unsigned int sglen_div = es_bytes[d->es];
 
-	d->dma_cycles = len >> sglen_भाग;
+	d->dma_cycles = len >> sglen_div;
 
 	/*
 	 * There are 4 cycles on 64 bytes copied, i.e. one cycle copies 16
 	 * bytes ( when width is APB_DMAB_DATA_WIDTH_4 ).
 	 */
-	ग_लिखोl(d->dma_cycles, ch->base + REG_OFF_CYCLES);
+	writel(d->dma_cycles, ch->base + REG_OFF_CYCLES);
 
 	dev_dbg(chan2dev(&ch->vc.chan), "%s: set %u DMA cycles (len=%u)\n",
 		__func__, d->dma_cycles, len);
-पूर्ण
+}
 
-अटल व्योम moxart_start_dma(काष्ठा moxart_chan *ch)
-अणु
+static void moxart_start_dma(struct moxart_chan *ch)
+{
 	u32 ctrl;
 
-	ctrl = पढ़ोl(ch->base + REG_OFF_CTRL);
+	ctrl = readl(ch->base + REG_OFF_CTRL);
 	ctrl |= (APB_DMA_ENABLE | APB_DMA_FIN_INT_EN | APB_DMA_ERR_INT_EN);
-	ग_लिखोl(ctrl, ch->base + REG_OFF_CTRL);
-पूर्ण
+	writel(ctrl, ch->base + REG_OFF_CTRL);
+}
 
-अटल व्योम moxart_dma_start_sg(काष्ठा moxart_chan *ch, अचिन्हित पूर्णांक idx)
-अणु
-	काष्ठा moxart_desc *d = ch->desc;
-	काष्ठा moxart_sg *sg = ch->desc->sg + idx;
+static void moxart_dma_start_sg(struct moxart_chan *ch, unsigned int idx)
+{
+	struct moxart_desc *d = ch->desc;
+	struct moxart_sg *sg = ch->desc->sg + idx;
 
-	अगर (ch->desc->dma_dir == DMA_MEM_TO_DEV)
+	if (ch->desc->dma_dir == DMA_MEM_TO_DEV)
 		moxart_dma_set_params(ch, sg->addr, d->dev_addr);
-	अन्यथा अगर (ch->desc->dma_dir == DMA_DEV_TO_MEM)
+	else if (ch->desc->dma_dir == DMA_DEV_TO_MEM)
 		moxart_dma_set_params(ch, d->dev_addr, sg->addr);
 
 	moxart_set_transfer_params(ch, sg->len);
 
 	moxart_start_dma(ch);
-पूर्ण
+}
 
-अटल व्योम moxart_dma_start_desc(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा moxart_chan *ch = to_moxart_dma_chan(chan);
-	काष्ठा virt_dma_desc *vd;
+static void moxart_dma_start_desc(struct dma_chan *chan)
+{
+	struct moxart_chan *ch = to_moxart_dma_chan(chan);
+	struct virt_dma_desc *vd;
 
 	vd = vchan_next_desc(&ch->vc);
 
-	अगर (!vd) अणु
-		ch->desc = शून्य;
-		वापस;
-	पूर्ण
+	if (!vd) {
+		ch->desc = NULL;
+		return;
+	}
 
 	list_del(&vd->node);
 
@@ -435,55 +434,55 @@
 	ch->sgidx = 0;
 
 	moxart_dma_start_sg(ch, 0);
-पूर्ण
+}
 
-अटल व्योम moxart_issue_pending(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा moxart_chan *ch = to_moxart_dma_chan(chan);
-	अचिन्हित दीर्घ flags;
+static void moxart_issue_pending(struct dma_chan *chan)
+{
+	struct moxart_chan *ch = to_moxart_dma_chan(chan);
+	unsigned long flags;
 
 	spin_lock_irqsave(&ch->vc.lock, flags);
-	अगर (vchan_issue_pending(&ch->vc) && !ch->desc)
+	if (vchan_issue_pending(&ch->vc) && !ch->desc)
 		moxart_dma_start_desc(chan);
 	spin_unlock_irqrestore(&ch->vc.lock, flags);
-पूर्ण
+}
 
-अटल माप_प्रकार moxart_dma_desc_size(काष्ठा moxart_desc *d,
-				   अचिन्हित पूर्णांक completed_sgs)
-अणु
-	अचिन्हित पूर्णांक i;
-	माप_प्रकार size;
+static size_t moxart_dma_desc_size(struct moxart_desc *d,
+				   unsigned int completed_sgs)
+{
+	unsigned int i;
+	size_t size;
 
-	क्रम (size = i = completed_sgs; i < d->sglen; i++)
+	for (size = i = completed_sgs; i < d->sglen; i++)
 		size += d->sg[i].len;
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल माप_प्रकार moxart_dma_desc_size_in_flight(काष्ठा moxart_chan *ch)
-अणु
-	माप_प्रकार size;
-	अचिन्हित पूर्णांक completed_cycles, cycles;
+static size_t moxart_dma_desc_size_in_flight(struct moxart_chan *ch)
+{
+	size_t size;
+	unsigned int completed_cycles, cycles;
 
 	size = moxart_dma_desc_size(ch->desc, ch->sgidx);
-	cycles = पढ़ोl(ch->base + REG_OFF_CYCLES);
+	cycles = readl(ch->base + REG_OFF_CYCLES);
 	completed_cycles = (ch->desc->dma_cycles - cycles);
 	size -= completed_cycles << es_bytes[ch->desc->es];
 
 	dev_dbg(chan2dev(&ch->vc.chan), "%s: size=%zu\n", __func__, size);
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल क्रमागत dma_status moxart_tx_status(काष्ठा dma_chan *chan,
+static enum dma_status moxart_tx_status(struct dma_chan *chan,
 					dma_cookie_t cookie,
-					काष्ठा dma_tx_state *txstate)
-अणु
-	काष्ठा moxart_chan *ch = to_moxart_dma_chan(chan);
-	काष्ठा virt_dma_desc *vd;
-	काष्ठा moxart_desc *d;
-	क्रमागत dma_status ret;
-	अचिन्हित दीर्घ flags;
+					struct dma_tx_state *txstate)
+{
+	struct moxart_chan *ch = to_moxart_dma_chan(chan);
+	struct virt_dma_desc *vd;
+	struct moxart_desc *d;
+	enum dma_status ret;
+	unsigned long flags;
 
 	/*
 	 * dma_cookie_status() assigns initial residue value.
@@ -492,25 +491,25 @@
 
 	spin_lock_irqsave(&ch->vc.lock, flags);
 	vd = vchan_find_desc(&ch->vc, cookie);
-	अगर (vd) अणु
+	if (vd) {
 		d = to_moxart_dma_desc(&vd->tx);
 		txstate->residue = moxart_dma_desc_size(d, 0);
-	पूर्ण अन्यथा अगर (ch->desc && ch->desc->vd.tx.cookie == cookie) अणु
+	} else if (ch->desc && ch->desc->vd.tx.cookie == cookie) {
 		txstate->residue = moxart_dma_desc_size_in_flight(ch);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&ch->vc.lock, flags);
 
-	अगर (ch->error)
-		वापस DMA_ERROR;
+	if (ch->error)
+		return DMA_ERROR;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम moxart_dma_init(काष्ठा dma_device *dma, काष्ठा device *dev)
-अणु
+static void moxart_dma_init(struct dma_device *dma, struct device *dev)
+{
 	dma->device_prep_slave_sg		= moxart_prep_slave_sg;
 	dma->device_alloc_chan_resources	= moxart_alloc_chan_resources;
-	dma->device_मुक्त_chan_resources		= moxart_मुक्त_chan_resources;
+	dma->device_free_chan_resources		= moxart_free_chan_resources;
 	dma->device_issue_pending		= moxart_issue_pending;
 	dma->device_tx_status			= moxart_tx_status;
 	dma->device_config			= moxart_slave_config;
@@ -518,76 +517,76 @@
 	dma->dev				= dev;
 
 	INIT_LIST_HEAD(&dma->channels);
-पूर्ण
+}
 
-अटल irqवापस_t moxart_dma_पूर्णांकerrupt(पूर्णांक irq, व्योम *devid)
-अणु
-	काष्ठा moxart_dmadev *mc = devid;
-	काष्ठा moxart_chan *ch = &mc->slave_chans[0];
-	अचिन्हित पूर्णांक i;
+static irqreturn_t moxart_dma_interrupt(int irq, void *devid)
+{
+	struct moxart_dmadev *mc = devid;
+	struct moxart_chan *ch = &mc->slave_chans[0];
+	unsigned int i;
 	u32 ctrl;
 
 	dev_dbg(chan2dev(&ch->vc.chan), "%s\n", __func__);
 
-	क्रम (i = 0; i < APB_DMA_MAX_CHANNEL; i++, ch++) अणु
-		अगर (!ch->allocated)
-			जारी;
+	for (i = 0; i < APB_DMA_MAX_CHANNEL; i++, ch++) {
+		if (!ch->allocated)
+			continue;
 
-		ctrl = पढ़ोl(ch->base + REG_OFF_CTRL);
+		ctrl = readl(ch->base + REG_OFF_CTRL);
 
 		dev_dbg(chan2dev(&ch->vc.chan), "%s: ch=%p ch->base=%p ctrl=%x\n",
 			__func__, ch, ch->base, ctrl);
 
-		अगर (ctrl & APB_DMA_FIN_INT_STS) अणु
+		if (ctrl & APB_DMA_FIN_INT_STS) {
 			ctrl &= ~APB_DMA_FIN_INT_STS;
-			अगर (ch->desc) अणु
+			if (ch->desc) {
 				spin_lock(&ch->vc.lock);
-				अगर (++ch->sgidx < ch->desc->sglen) अणु
+				if (++ch->sgidx < ch->desc->sglen) {
 					moxart_dma_start_sg(ch, ch->sgidx);
-				पूर्ण अन्यथा अणु
+				} else {
 					vchan_cookie_complete(&ch->desc->vd);
 					moxart_dma_start_desc(&ch->vc.chan);
-				पूर्ण
+				}
 				spin_unlock(&ch->vc.lock);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अगर (ctrl & APB_DMA_ERR_INT_STS) अणु
+		if (ctrl & APB_DMA_ERR_INT_STS) {
 			ctrl &= ~APB_DMA_ERR_INT_STS;
 			ch->error = 1;
-		पूर्ण
+		}
 
-		ग_लिखोl(ctrl, ch->base + REG_OFF_CTRL);
-	पूर्ण
+		writel(ctrl, ch->base + REG_OFF_CTRL);
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक moxart_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा device_node *node = dev->of_node;
-	काष्ठा resource *res;
-	व्योम __iomem *dma_base_addr;
-	पूर्णांक ret, i;
-	अचिन्हित पूर्णांक irq;
-	काष्ठा moxart_chan *ch;
-	काष्ठा moxart_dmadev *mdc;
+static int moxart_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct device_node *node = dev->of_node;
+	struct resource *res;
+	void __iomem *dma_base_addr;
+	int ret, i;
+	unsigned int irq;
+	struct moxart_chan *ch;
+	struct moxart_dmadev *mdc;
 
-	mdc = devm_kzalloc(dev, माप(*mdc), GFP_KERNEL);
-	अगर (!mdc)
-		वापस -ENOMEM;
+	mdc = devm_kzalloc(dev, sizeof(*mdc), GFP_KERNEL);
+	if (!mdc)
+		return -ENOMEM;
 
 	irq = irq_of_parse_and_map(node, 0);
-	अगर (!irq) अणु
+	if (!irq) {
 		dev_err(dev, "no IRQ resource\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	dma_base_addr = devm_ioremap_resource(dev, res);
-	अगर (IS_ERR(dma_base_addr))
-		वापस PTR_ERR(dma_base_addr);
+	if (IS_ERR(dma_base_addr))
+		return PTR_ERR(dma_base_addr);
 
 	dma_cap_zero(mdc->dma_slave.cap_mask);
 	dma_cap_set(DMA_SLAVE, mdc->dma_slave.cap_mask);
@@ -596,86 +595,86 @@
 	moxart_dma_init(&mdc->dma_slave, dev);
 
 	ch = &mdc->slave_chans[0];
-	क्रम (i = 0; i < APB_DMA_MAX_CHANNEL; i++, ch++) अणु
+	for (i = 0; i < APB_DMA_MAX_CHANNEL; i++, ch++) {
 		ch->ch_num = i;
 		ch->base = dma_base_addr + i * REG_OFF_CHAN_SIZE;
 		ch->allocated = 0;
 
-		ch->vc.desc_मुक्त = moxart_dma_desc_मुक्त;
+		ch->vc.desc_free = moxart_dma_desc_free;
 		vchan_init(&ch->vc, &mdc->dma_slave);
 
 		dev_dbg(dev, "%s: chs[%d]: ch->ch_num=%u ch->base=%p\n",
 			__func__, i, ch->ch_num, ch->base);
-	पूर्ण
+	}
 
-	platक्रमm_set_drvdata(pdev, mdc);
+	platform_set_drvdata(pdev, mdc);
 
-	ret = devm_request_irq(dev, irq, moxart_dma_पूर्णांकerrupt, 0,
+	ret = devm_request_irq(dev, irq, moxart_dma_interrupt, 0,
 			       "moxart-dma-engine", mdc);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "devm_request_irq failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	mdc->irq = irq;
 
-	ret = dma_async_device_रेजिस्टर(&mdc->dma_slave);
-	अगर (ret) अणु
+	ret = dma_async_device_register(&mdc->dma_slave);
+	if (ret) {
 		dev_err(dev, "dma_async_device_register failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = of_dma_controller_रेजिस्टर(node, moxart_of_xlate, mdc);
-	अगर (ret) अणु
+	ret = of_dma_controller_register(node, moxart_of_xlate, mdc);
+	if (ret) {
 		dev_err(dev, "of_dma_controller_register failed\n");
-		dma_async_device_unरेजिस्टर(&mdc->dma_slave);
-		वापस ret;
-	पूर्ण
+		dma_async_device_unregister(&mdc->dma_slave);
+		return ret;
+	}
 
 	dev_dbg(dev, "%s: IRQ=%u\n", __func__, irq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक moxart_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा moxart_dmadev *m = platक्रमm_get_drvdata(pdev);
+static int moxart_remove(struct platform_device *pdev)
+{
+	struct moxart_dmadev *m = platform_get_drvdata(pdev);
 
-	devm_मुक्त_irq(&pdev->dev, m->irq, m);
+	devm_free_irq(&pdev->dev, m->irq, m);
 
-	dma_async_device_unरेजिस्टर(&m->dma_slave);
+	dma_async_device_unregister(&m->dma_slave);
 
-	अगर (pdev->dev.of_node)
-		of_dma_controller_मुक्त(pdev->dev.of_node);
+	if (pdev->dev.of_node)
+		of_dma_controller_free(pdev->dev.of_node);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id moxart_dma_match[] = अणु
-	अणु .compatible = "moxa,moxart-dma" पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id moxart_dma_match[] = {
+	{ .compatible = "moxa,moxart-dma" },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, moxart_dma_match);
 
-अटल काष्ठा platक्रमm_driver moxart_driver = अणु
+static struct platform_driver moxart_driver = {
 	.probe	= moxart_probe,
-	.हटाओ	= moxart_हटाओ,
-	.driver = अणु
+	.remove	= moxart_remove,
+	.driver = {
 		.name		= "moxart-dma-engine",
 		.of_match_table	= moxart_dma_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक moxart_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&moxart_driver);
-पूर्ण
+static int moxart_init(void)
+{
+	return platform_driver_register(&moxart_driver);
+}
 subsys_initcall(moxart_init);
 
-अटल व्योम __निकास moxart_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&moxart_driver);
-पूर्ण
-module_निकास(moxart_निकास);
+static void __exit moxart_exit(void)
+{
+	platform_driver_unregister(&moxart_driver);
+}
+module_exit(moxart_exit);
 
 MODULE_AUTHOR("Jonas Jensen <jonas.jensen@gmail.com>");
 MODULE_DESCRIPTION("MOXART DMA engine driver");

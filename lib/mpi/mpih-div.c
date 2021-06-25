@@ -1,6 +1,5 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
-/* mpihelp-भाग.c  -  MPI helper functions
+// SPDX-License-Identifier: GPL-2.0-or-later
+/* mpihelp-div.c  -  MPI helper functions
  *	Copyright (C) 1994, 1996 Free Software Foundation, Inc.
  *	Copyright (C) 1998, 1999 Free Software Foundation, Inc.
  *
@@ -8,229 +7,229 @@
  *
  * Note: This code is heavily based on the GNU MP Library.
  *	 Actually it's the same code with only minor changes in the
- *	 way the data is stored; this is to support the असलtraction
+ *	 way the data is stored; this is to support the abstraction
  *	 of an optional secure memory allocation which may be used
- *	 to aव्योम revealing of sensitive data due to paging etc.
+ *	 to avoid revealing of sensitive data due to paging etc.
  *	 The GNU MP Library itself is published under the LGPL;
  *	 however I decided to publish this code under the plain GPL.
  */
 
-#समावेश "mpi-internal.h"
-#समावेश "longlong.h"
+#include "mpi-internal.h"
+#include "longlong.h"
 
-#अगर_अघोषित UMUL_TIME
-#घोषणा UMUL_TIME 1
-#पूर्ण_अगर
-#अगर_अघोषित UDIV_TIME
-#घोषणा UDIV_TIME UMUL_TIME
-#पूर्ण_अगर
+#ifndef UMUL_TIME
+#define UMUL_TIME 1
+#endif
+#ifndef UDIV_TIME
+#define UDIV_TIME UMUL_TIME
+#endif
 
 
 mpi_limb_t
-mpihelp_mod_1(mpi_ptr_t भागidend_ptr, mpi_माप_प्रकार भागidend_size,
-			mpi_limb_t भागisor_limb)
-अणु
-	mpi_माप_प्रकार i;
+mpihelp_mod_1(mpi_ptr_t dividend_ptr, mpi_size_t dividend_size,
+			mpi_limb_t divisor_limb)
+{
+	mpi_size_t i;
 	mpi_limb_t n1, n0, r;
 	mpi_limb_t dummy __maybe_unused;
 
 	/* Botch: Should this be handled at all?  Rely on callers?	*/
-	अगर (!भागidend_size)
-		वापस 0;
+	if (!dividend_size)
+		return 0;
 
-	/* If multiplication is much faster than भागision, and the
-	 * भागidend is large, pre-invert the भागisor, and use
+	/* If multiplication is much faster than division, and the
+	 * dividend is large, pre-invert the divisor, and use
 	 * only multiplications in the inner loop.
 	 *
-	 * This test should be पढ़ो:
-	 *	 Does it ever help to use uभाग_qrnnd_preinv?
-	 *	   && Does what we save compensate क्रम the inversion overhead?
+	 * This test should be read:
+	 *	 Does it ever help to use udiv_qrnnd_preinv?
+	 *	   && Does what we save compensate for the inversion overhead?
 	 */
-	अगर (UDIV_TIME > (2 * UMUL_TIME + 6)
-			&& (UDIV_TIME - (2 * UMUL_TIME + 6)) * भागidend_size > UDIV_TIME) अणु
-		पूर्णांक normalization_steps;
+	if (UDIV_TIME > (2 * UMUL_TIME + 6)
+			&& (UDIV_TIME - (2 * UMUL_TIME + 6)) * dividend_size > UDIV_TIME) {
+		int normalization_steps;
 
-		normalization_steps = count_leading_zeros(भागisor_limb);
-		अगर (normalization_steps) अणु
-			mpi_limb_t भागisor_limb_inverted;
+		normalization_steps = count_leading_zeros(divisor_limb);
+		if (normalization_steps) {
+			mpi_limb_t divisor_limb_inverted;
 
-			भागisor_limb <<= normalization_steps;
+			divisor_limb <<= normalization_steps;
 
 			/* Compute (2**2N - 2**N * DIVISOR_LIMB) / DIVISOR_LIMB.  The
 			 * result is a (N+1)-bit approximation to 1/DIVISOR_LIMB, with the
-			 * most signअगरicant bit (with weight 2**N) implicit.
+			 * most significant bit (with weight 2**N) implicit.
 			 *
-			 * Special हाल क्रम DIVISOR_LIMB == 100...000.
+			 * Special case for DIVISOR_LIMB == 100...000.
 			 */
-			अगर (!(भागisor_limb << 1))
-				भागisor_limb_inverted = ~(mpi_limb_t)0;
-			अन्यथा
-				uभाग_qrnnd(भागisor_limb_inverted, dummy,
-						-भागisor_limb, 0, भागisor_limb);
+			if (!(divisor_limb << 1))
+				divisor_limb_inverted = ~(mpi_limb_t)0;
+			else
+				udiv_qrnnd(divisor_limb_inverted, dummy,
+						-divisor_limb, 0, divisor_limb);
 
-			n1 = भागidend_ptr[भागidend_size - 1];
+			n1 = dividend_ptr[dividend_size - 1];
 			r = n1 >> (BITS_PER_MPI_LIMB - normalization_steps);
 
 			/* Possible optimization:
-			 * अगर (r == 0
-			 * && भागisor_limb > ((n1 << normalization_steps)
-			 *		       | (भागidend_ptr[भागidend_size - 2] >> ...)))
-			 * ...one भागision less...
+			 * if (r == 0
+			 * && divisor_limb > ((n1 << normalization_steps)
+			 *		       | (dividend_ptr[dividend_size - 2] >> ...)))
+			 * ...one division less...
 			 */
-			क्रम (i = भागidend_size - 2; i >= 0; i--) अणु
-				n0 = भागidend_ptr[i];
+			for (i = dividend_size - 2; i >= 0; i--) {
+				n0 = dividend_ptr[i];
 				UDIV_QRNND_PREINV(dummy, r, r,
 						((n1 << normalization_steps)
 						 | (n0 >> (BITS_PER_MPI_LIMB - normalization_steps))),
-						भागisor_limb, भागisor_limb_inverted);
+						divisor_limb, divisor_limb_inverted);
 				n1 = n0;
-			पूर्ण
+			}
 			UDIV_QRNND_PREINV(dummy, r, r,
 					n1 << normalization_steps,
-					भागisor_limb, भागisor_limb_inverted);
-			वापस r >> normalization_steps;
-		पूर्ण अन्यथा अणु
-			mpi_limb_t भागisor_limb_inverted;
+					divisor_limb, divisor_limb_inverted);
+			return r >> normalization_steps;
+		} else {
+			mpi_limb_t divisor_limb_inverted;
 
 			/* Compute (2**2N - 2**N * DIVISOR_LIMB) / DIVISOR_LIMB.  The
 			 * result is a (N+1)-bit approximation to 1/DIVISOR_LIMB, with the
-			 * most signअगरicant bit (with weight 2**N) implicit.
+			 * most significant bit (with weight 2**N) implicit.
 			 *
-			 * Special हाल क्रम DIVISOR_LIMB == 100...000.
+			 * Special case for DIVISOR_LIMB == 100...000.
 			 */
-			अगर (!(भागisor_limb << 1))
-				भागisor_limb_inverted = ~(mpi_limb_t)0;
-			अन्यथा
-				uभाग_qrnnd(भागisor_limb_inverted, dummy,
-						-भागisor_limb, 0, भागisor_limb);
+			if (!(divisor_limb << 1))
+				divisor_limb_inverted = ~(mpi_limb_t)0;
+			else
+				udiv_qrnnd(divisor_limb_inverted, dummy,
+						-divisor_limb, 0, divisor_limb);
 
-			i = भागidend_size - 1;
-			r = भागidend_ptr[i];
+			i = dividend_size - 1;
+			r = dividend_ptr[i];
 
-			अगर (r >= भागisor_limb)
+			if (r >= divisor_limb)
 				r = 0;
-			अन्यथा
+			else
 				i--;
 
-			क्रम ( ; i >= 0; i--) अणु
-				n0 = भागidend_ptr[i];
+			for ( ; i >= 0; i--) {
+				n0 = dividend_ptr[i];
 				UDIV_QRNND_PREINV(dummy, r, r,
-						n0, भागisor_limb, भागisor_limb_inverted);
-			पूर्ण
-			वापस r;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (UDIV_NEEDS_NORMALIZATION) अणु
-			पूर्णांक normalization_steps;
+						n0, divisor_limb, divisor_limb_inverted);
+			}
+			return r;
+		}
+	} else {
+		if (UDIV_NEEDS_NORMALIZATION) {
+			int normalization_steps;
 
-			normalization_steps = count_leading_zeros(भागisor_limb);
-			अगर (normalization_steps) अणु
-				भागisor_limb <<= normalization_steps;
+			normalization_steps = count_leading_zeros(divisor_limb);
+			if (normalization_steps) {
+				divisor_limb <<= normalization_steps;
 
-				n1 = भागidend_ptr[भागidend_size - 1];
+				n1 = dividend_ptr[dividend_size - 1];
 				r = n1 >> (BITS_PER_MPI_LIMB - normalization_steps);
 
 				/* Possible optimization:
-				 * अगर (r == 0
-				 * && भागisor_limb > ((n1 << normalization_steps)
-				 *		   | (भागidend_ptr[भागidend_size - 2] >> ...)))
-				 * ...one भागision less...
+				 * if (r == 0
+				 * && divisor_limb > ((n1 << normalization_steps)
+				 *		   | (dividend_ptr[dividend_size - 2] >> ...)))
+				 * ...one division less...
 				 */
-				क्रम (i = भागidend_size - 2; i >= 0; i--) अणु
-					n0 = भागidend_ptr[i];
-					uभाग_qrnnd(dummy, r, r,
+				for (i = dividend_size - 2; i >= 0; i--) {
+					n0 = dividend_ptr[i];
+					udiv_qrnnd(dummy, r, r,
 						((n1 << normalization_steps)
 						 | (n0 >> (BITS_PER_MPI_LIMB - normalization_steps))),
-						भागisor_limb);
+						divisor_limb);
 					n1 = n0;
-				पूर्ण
-				uभाग_qrnnd(dummy, r, r,
+				}
+				udiv_qrnnd(dummy, r, r,
 						n1 << normalization_steps,
-						भागisor_limb);
-				वापस r >> normalization_steps;
-			पूर्ण
-		पूर्ण
-		/* No normalization needed, either because uभाग_qrnnd करोesn't require
-		 * it, or because DIVISOR_LIMB is alपढ़ोy normalized.
+						divisor_limb);
+				return r >> normalization_steps;
+			}
+		}
+		/* No normalization needed, either because udiv_qrnnd doesn't require
+		 * it, or because DIVISOR_LIMB is already normalized.
 		 */
-		i = भागidend_size - 1;
-		r = भागidend_ptr[i];
+		i = dividend_size - 1;
+		r = dividend_ptr[i];
 
-		अगर (r >= भागisor_limb)
+		if (r >= divisor_limb)
 			r = 0;
-		अन्यथा
+		else
 			i--;
 
-		क्रम (; i >= 0; i--) अणु
-			n0 = भागidend_ptr[i];
-			uभाग_qrnnd(dummy, r, r, n0, भागisor_limb);
-		पूर्ण
-		वापस r;
-	पूर्ण
-पूर्ण
+		for (; i >= 0; i--) {
+			n0 = dividend_ptr[i];
+			udiv_qrnnd(dummy, r, r, n0, divisor_limb);
+		}
+		return r;
+	}
+}
 
-/* Divide num (NP/NSIZE) by den (DP/DSIZE) and ग_लिखो
- * the NSIZE-DSIZE least signअगरicant quotient limbs at QP
- * and the DSIZE दीर्घ reमुख्यder at NP.	If QEXTRA_LIMBS is
+/* Divide num (NP/NSIZE) by den (DP/DSIZE) and write
+ * the NSIZE-DSIZE least significant quotient limbs at QP
+ * and the DSIZE long remainder at NP.	If QEXTRA_LIMBS is
  * non-zero, generate that many fraction bits and append them after the
  * other quotient limbs.
- * Return the most signअगरicant limb of the quotient, this is always 0 or 1.
+ * Return the most significant limb of the quotient, this is always 0 or 1.
  *
  * Preconditions:
  * 0. NSIZE >= DSIZE.
- * 1. The most signअगरicant bit of the भागisor must be set.
- * 2. QP must either not overlap with the input opeअक्रमs at all, or
+ * 1. The most significant bit of the divisor must be set.
+ * 2. QP must either not overlap with the input operands at all, or
  *    QP + DSIZE >= NP must hold true.	(This means that it's
  *    possible to put the quotient in the high part of NUM, right after the
- *    reमुख्यder in NUM.
- * 3. NSIZE >= DSIZE, even अगर QEXTRA_LIMBS is non-zero.
+ *    remainder in NUM.
+ * 3. NSIZE >= DSIZE, even if QEXTRA_LIMBS is non-zero.
  */
 
 mpi_limb_t
-mpihelp_भागrem(mpi_ptr_t qp, mpi_माप_प्रकार qextra_limbs,
-	       mpi_ptr_t np, mpi_माप_प्रकार nsize, mpi_ptr_t dp, mpi_माप_प्रकार dsize)
-अणु
-	mpi_limb_t most_signअगरicant_q_limb = 0;
+mpihelp_divrem(mpi_ptr_t qp, mpi_size_t qextra_limbs,
+	       mpi_ptr_t np, mpi_size_t nsize, mpi_ptr_t dp, mpi_size_t dsize)
+{
+	mpi_limb_t most_significant_q_limb = 0;
 
-	चयन (dsize) अणु
-	हाल 0:
-		/* We are asked to भागide by zero, so go ahead and करो it!  (To make
-		   the compiler not हटाओ this statement, वापस the value.)  */
+	switch (dsize) {
+	case 0:
+		/* We are asked to divide by zero, so go ahead and do it!  (To make
+		   the compiler not remove this statement, return the value.)  */
 		/*
-		 * existing clients of this function have been modअगरied
+		 * existing clients of this function have been modified
 		 * not to call it with dsize == 0, so this should not happen
 		 */
-		वापस 1 / dsize;
+		return 1 / dsize;
 
-	हाल 1:
-		अणु
-			mpi_माप_प्रकार i;
+	case 1:
+		{
+			mpi_size_t i;
 			mpi_limb_t n1;
 			mpi_limb_t d;
 
 			d = dp[0];
 			n1 = np[nsize - 1];
 
-			अगर (n1 >= d) अणु
+			if (n1 >= d) {
 				n1 -= d;
-				most_signअगरicant_q_limb = 1;
-			पूर्ण
+				most_significant_q_limb = 1;
+			}
 
 			qp += qextra_limbs;
-			क्रम (i = nsize - 2; i >= 0; i--)
-				uभाग_qrnnd(qp[i], n1, n1, np[i], d);
+			for (i = nsize - 2; i >= 0; i--)
+				udiv_qrnnd(qp[i], n1, n1, np[i], d);
 			qp -= qextra_limbs;
 
-			क्रम (i = qextra_limbs - 1; i >= 0; i--)
-				uभाग_qrnnd(qp[i], n1, n1, 0, d);
+			for (i = qextra_limbs - 1; i >= 0; i--)
+				udiv_qrnnd(qp[i], n1, n1, 0, d);
 
 			np[0] = n1;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल 2:
-		अणु
-			mpi_माप_प्रकार i;
+	case 2:
+		{
+			mpi_size_t i;
 			mpi_limb_t n1, n0, n2;
 			mpi_limb_t d1, d0;
 
@@ -240,62 +239,62 @@ mpihelp_भागrem(mpi_ptr_t qp, mpi_माप_प्रकार qextra_limbs
 			n1 = np[1];
 			n0 = np[0];
 
-			अगर (n1 >= d1 && (n1 > d1 || n0 >= d0)) अणु
+			if (n1 >= d1 && (n1 > d1 || n0 >= d0)) {
 				sub_ddmmss(n1, n0, n1, n0, d1, d0);
-				most_signअगरicant_q_limb = 1;
-			पूर्ण
+				most_significant_q_limb = 1;
+			}
 
-			क्रम (i = qextra_limbs + nsize - 2 - 1; i >= 0; i--) अणु
+			for (i = qextra_limbs + nsize - 2 - 1; i >= 0; i--) {
 				mpi_limb_t q;
 				mpi_limb_t r;
 
-				अगर (i >= qextra_limbs)
+				if (i >= qextra_limbs)
 					np--;
-				अन्यथा
+				else
 					np[0] = 0;
 
-				अगर (n1 == d1) अणु
+				if (n1 == d1) {
 					/* Q should be either 111..111 or 111..110.  Need special
-					 * treaपंचांगent of this rare हाल as normal भागision would
+					 * treatment of this rare case as normal division would
 					 * give overflow.  */
 					q = ~(mpi_limb_t) 0;
 
 					r = n0 + d1;
-					अगर (r < d1) अणु	/* Carry in the addition? */
+					if (r < d1) {	/* Carry in the addition? */
 						add_ssaaaa(n1, n0, r - d0,
 							   np[0], 0, d0);
 						qp[i] = q;
-						जारी;
-					पूर्ण
+						continue;
+					}
 					n1 = d0 - (d0 != 0 ? 1 : 0);
 					n0 = -d0;
-				पूर्ण अन्यथा अणु
-					uभाग_qrnnd(q, r, n1, n0, d1);
+				} else {
+					udiv_qrnnd(q, r, n1, n0, d1);
 					umul_ppmm(n1, n0, d0, q);
-				पूर्ण
+				}
 
 				n2 = np[0];
 q_test:
-				अगर (n1 > r || (n1 == r && n0 > n2)) अणु
+				if (n1 > r || (n1 == r && n0 > n2)) {
 					/* The estimated Q was too large.  */
 					q--;
 					sub_ddmmss(n1, n0, n1, n0, 0, d0);
 					r += d1;
-					अगर (r >= d1)	/* If not carry, test Q again.  */
-						जाओ q_test;
-				पूर्ण
+					if (r >= d1)	/* If not carry, test Q again.  */
+						goto q_test;
+				}
 
 				qp[i] = q;
 				sub_ddmmss(n1, n0, r, n2, n1, n0);
-			पूर्ण
+			}
 			np[1] = n1;
 			np[0] = n0;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	शेष:
-		अणु
-			mpi_माप_प्रकार i;
+	default:
+		{
+			mpi_size_t i;
 			mpi_limb_t dX, d1, n0;
 
 			np += nsize - dsize;
@@ -303,216 +302,216 @@ q_test:
 			d1 = dp[dsize - 2];
 			n0 = np[dsize - 1];
 
-			अगर (n0 >= dX) अणु
-				अगर (n0 > dX
-				    || mpihelp_cmp(np, dp, dsize - 1) >= 0) अणु
+			if (n0 >= dX) {
+				if (n0 > dX
+				    || mpihelp_cmp(np, dp, dsize - 1) >= 0) {
 					mpihelp_sub_n(np, np, dp, dsize);
 					n0 = np[dsize - 1];
-					most_signअगरicant_q_limb = 1;
-				पूर्ण
-			पूर्ण
+					most_significant_q_limb = 1;
+				}
+			}
 
-			क्रम (i = qextra_limbs + nsize - dsize - 1; i >= 0; i--) अणु
+			for (i = qextra_limbs + nsize - dsize - 1; i >= 0; i--) {
 				mpi_limb_t q;
 				mpi_limb_t n1, n2;
 				mpi_limb_t cy_limb;
 
-				अगर (i >= qextra_limbs) अणु
+				if (i >= qextra_limbs) {
 					np--;
 					n2 = np[dsize];
-				पूर्ण अन्यथा अणु
+				} else {
 					n2 = np[dsize - 1];
 					MPN_COPY_DECR(np + 1, np, dsize - 1);
 					np[0] = 0;
-				पूर्ण
+				}
 
-				अगर (n0 == dX) अणु
+				if (n0 == dX) {
 					/* This might over-estimate q, but it's probably not worth
 					 * the extra code here to find out.  */
 					q = ~(mpi_limb_t) 0;
-				पूर्ण अन्यथा अणु
+				} else {
 					mpi_limb_t r;
 
-					uभाग_qrnnd(q, r, n0, np[dsize - 1], dX);
+					udiv_qrnnd(q, r, n0, np[dsize - 1], dX);
 					umul_ppmm(n1, n0, d1, q);
 
-					जबतक (n1 > r
+					while (n1 > r
 					       || (n1 == r
-						   && n0 > np[dsize - 2])) अणु
+						   && n0 > np[dsize - 2])) {
 						q--;
 						r += dX;
-						अगर (r < dX)	/* I.e. "carry in previous addition?" */
-							अवरोध;
+						if (r < dX)	/* I.e. "carry in previous addition?" */
+							break;
 						n1 -= n0 < d1;
 						n0 -= d1;
-					पूर्ण
-				पूर्ण
+					}
+				}
 
-				/* Possible optimization: We alपढ़ोy have (q * n0) and (1 * n1)
+				/* Possible optimization: We already have (q * n0) and (1 * n1)
 				 * after the calculation of q.  Taking advantage of that, we
 				 * could make this loop make two iterations less.  */
 				cy_limb = mpihelp_submul_1(np, dp, dsize, q);
 
-				अगर (n2 != cy_limb) अणु
+				if (n2 != cy_limb) {
 					mpihelp_add_n(np, np, dp, dsize);
 					q--;
-				पूर्ण
+				}
 
 				qp[i] = q;
 				n0 = np[dsize - 1];
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	वापस most_signअगरicant_q_limb;
-पूर्ण
+	return most_significant_q_limb;
+}
 
 /****************
  * Divide (DIVIDEND_PTR,,DIVIDEND_SIZE) by DIVISOR_LIMB.
  * Write DIVIDEND_SIZE limbs of quotient at QUOT_PTR.
- * Return the single-limb reमुख्यder.
- * There are no स्थिरraपूर्णांकs on the value of the भागisor.
+ * Return the single-limb remainder.
+ * There are no constraints on the value of the divisor.
  *
- * QUOT_PTR and DIVIDEND_PTR might poपूर्णांक to the same limb.
+ * QUOT_PTR and DIVIDEND_PTR might point to the same limb.
  */
 
 mpi_limb_t
-mpihelp_भागmod_1(mpi_ptr_t quot_ptr,
-		mpi_ptr_t भागidend_ptr, mpi_माप_प्रकार भागidend_size,
-		mpi_limb_t भागisor_limb)
-अणु
-	mpi_माप_प्रकार i;
+mpihelp_divmod_1(mpi_ptr_t quot_ptr,
+		mpi_ptr_t dividend_ptr, mpi_size_t dividend_size,
+		mpi_limb_t divisor_limb)
+{
+	mpi_size_t i;
 	mpi_limb_t n1, n0, r;
 	mpi_limb_t dummy __maybe_unused;
 
-	अगर (!भागidend_size)
-		वापस 0;
+	if (!dividend_size)
+		return 0;
 
-	/* If multiplication is much faster than भागision, and the
-	 * भागidend is large, pre-invert the भागisor, and use
+	/* If multiplication is much faster than division, and the
+	 * dividend is large, pre-invert the divisor, and use
 	 * only multiplications in the inner loop.
 	 *
-	 * This test should be पढ़ो:
-	 * Does it ever help to use uभाग_qrnnd_preinv?
-	 * && Does what we save compensate क्रम the inversion overhead?
+	 * This test should be read:
+	 * Does it ever help to use udiv_qrnnd_preinv?
+	 * && Does what we save compensate for the inversion overhead?
 	 */
-	अगर (UDIV_TIME > (2 * UMUL_TIME + 6)
-			&& (UDIV_TIME - (2 * UMUL_TIME + 6)) * भागidend_size > UDIV_TIME) अणु
-		पूर्णांक normalization_steps;
+	if (UDIV_TIME > (2 * UMUL_TIME + 6)
+			&& (UDIV_TIME - (2 * UMUL_TIME + 6)) * dividend_size > UDIV_TIME) {
+		int normalization_steps;
 
-		normalization_steps = count_leading_zeros(भागisor_limb);
-		अगर (normalization_steps) अणु
-			mpi_limb_t भागisor_limb_inverted;
+		normalization_steps = count_leading_zeros(divisor_limb);
+		if (normalization_steps) {
+			mpi_limb_t divisor_limb_inverted;
 
-			भागisor_limb <<= normalization_steps;
+			divisor_limb <<= normalization_steps;
 
 			/* Compute (2**2N - 2**N * DIVISOR_LIMB) / DIVISOR_LIMB.  The
 			 * result is a (N+1)-bit approximation to 1/DIVISOR_LIMB, with the
-			 * most signअगरicant bit (with weight 2**N) implicit.
+			 * most significant bit (with weight 2**N) implicit.
 			 */
-			/* Special हाल क्रम DIVISOR_LIMB == 100...000.  */
-			अगर (!(भागisor_limb << 1))
-				भागisor_limb_inverted = ~(mpi_limb_t)0;
-			अन्यथा
-				uभाग_qrnnd(भागisor_limb_inverted, dummy,
-						-भागisor_limb, 0, भागisor_limb);
+			/* Special case for DIVISOR_LIMB == 100...000.  */
+			if (!(divisor_limb << 1))
+				divisor_limb_inverted = ~(mpi_limb_t)0;
+			else
+				udiv_qrnnd(divisor_limb_inverted, dummy,
+						-divisor_limb, 0, divisor_limb);
 
-			n1 = भागidend_ptr[भागidend_size - 1];
+			n1 = dividend_ptr[dividend_size - 1];
 			r = n1 >> (BITS_PER_MPI_LIMB - normalization_steps);
 
 			/* Possible optimization:
-			 * अगर (r == 0
-			 * && भागisor_limb > ((n1 << normalization_steps)
-			 *		       | (भागidend_ptr[भागidend_size - 2] >> ...)))
-			 * ...one भागision less...
+			 * if (r == 0
+			 * && divisor_limb > ((n1 << normalization_steps)
+			 *		       | (dividend_ptr[dividend_size - 2] >> ...)))
+			 * ...one division less...
 			 */
-			क्रम (i = भागidend_size - 2; i >= 0; i--) अणु
-				n0 = भागidend_ptr[i];
+			for (i = dividend_size - 2; i >= 0; i--) {
+				n0 = dividend_ptr[i];
 				UDIV_QRNND_PREINV(quot_ptr[i + 1], r, r,
 						((n1 << normalization_steps)
 						 | (n0 >> (BITS_PER_MPI_LIMB - normalization_steps))),
-						भागisor_limb, भागisor_limb_inverted);
+						divisor_limb, divisor_limb_inverted);
 				n1 = n0;
-			पूर्ण
+			}
 			UDIV_QRNND_PREINV(quot_ptr[0], r, r,
 					n1 << normalization_steps,
-					भागisor_limb, भागisor_limb_inverted);
-			वापस r >> normalization_steps;
-		पूर्ण अन्यथा अणु
-			mpi_limb_t भागisor_limb_inverted;
+					divisor_limb, divisor_limb_inverted);
+			return r >> normalization_steps;
+		} else {
+			mpi_limb_t divisor_limb_inverted;
 
 			/* Compute (2**2N - 2**N * DIVISOR_LIMB) / DIVISOR_LIMB.  The
 			 * result is a (N+1)-bit approximation to 1/DIVISOR_LIMB, with the
-			 * most signअगरicant bit (with weight 2**N) implicit.
+			 * most significant bit (with weight 2**N) implicit.
 			 */
-			/* Special हाल क्रम DIVISOR_LIMB == 100...000.  */
-			अगर (!(भागisor_limb << 1))
-				भागisor_limb_inverted = ~(mpi_limb_t) 0;
-			अन्यथा
-				uभाग_qrnnd(भागisor_limb_inverted, dummy,
-						-भागisor_limb, 0, भागisor_limb);
+			/* Special case for DIVISOR_LIMB == 100...000.  */
+			if (!(divisor_limb << 1))
+				divisor_limb_inverted = ~(mpi_limb_t) 0;
+			else
+				udiv_qrnnd(divisor_limb_inverted, dummy,
+						-divisor_limb, 0, divisor_limb);
 
-			i = भागidend_size - 1;
-			r = भागidend_ptr[i];
+			i = dividend_size - 1;
+			r = dividend_ptr[i];
 
-			अगर (r >= भागisor_limb)
+			if (r >= divisor_limb)
 				r = 0;
-			अन्यथा
+			else
 				quot_ptr[i--] = 0;
 
-			क्रम ( ; i >= 0; i--) अणु
-				n0 = भागidend_ptr[i];
+			for ( ; i >= 0; i--) {
+				n0 = dividend_ptr[i];
 				UDIV_QRNND_PREINV(quot_ptr[i], r, r,
-						n0, भागisor_limb, भागisor_limb_inverted);
-			पूर्ण
-			वापस r;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (UDIV_NEEDS_NORMALIZATION) अणु
-			पूर्णांक normalization_steps;
+						n0, divisor_limb, divisor_limb_inverted);
+			}
+			return r;
+		}
+	} else {
+		if (UDIV_NEEDS_NORMALIZATION) {
+			int normalization_steps;
 
-			normalization_steps = count_leading_zeros(भागisor_limb);
-			अगर (normalization_steps) अणु
-				भागisor_limb <<= normalization_steps;
+			normalization_steps = count_leading_zeros(divisor_limb);
+			if (normalization_steps) {
+				divisor_limb <<= normalization_steps;
 
-				n1 = भागidend_ptr[भागidend_size - 1];
+				n1 = dividend_ptr[dividend_size - 1];
 				r = n1 >> (BITS_PER_MPI_LIMB - normalization_steps);
 
 				/* Possible optimization:
-				 * अगर (r == 0
-				 * && भागisor_limb > ((n1 << normalization_steps)
-				 *		   | (भागidend_ptr[भागidend_size - 2] >> ...)))
-				 * ...one भागision less...
+				 * if (r == 0
+				 * && divisor_limb > ((n1 << normalization_steps)
+				 *		   | (dividend_ptr[dividend_size - 2] >> ...)))
+				 * ...one division less...
 				 */
-				क्रम (i = भागidend_size - 2; i >= 0; i--) अणु
-					n0 = भागidend_ptr[i];
-					uभाग_qrnnd(quot_ptr[i + 1], r, r,
+				for (i = dividend_size - 2; i >= 0; i--) {
+					n0 = dividend_ptr[i];
+					udiv_qrnnd(quot_ptr[i + 1], r, r,
 						((n1 << normalization_steps)
 						 | (n0 >> (BITS_PER_MPI_LIMB - normalization_steps))),
-						भागisor_limb);
+						divisor_limb);
 					n1 = n0;
-				पूर्ण
-				uभाग_qrnnd(quot_ptr[0], r, r,
+				}
+				udiv_qrnnd(quot_ptr[0], r, r,
 						n1 << normalization_steps,
-						भागisor_limb);
-				वापस r >> normalization_steps;
-			पूर्ण
-		पूर्ण
-		/* No normalization needed, either because uभाग_qrnnd करोesn't require
-		 * it, or because DIVISOR_LIMB is alपढ़ोy normalized.
+						divisor_limb);
+				return r >> normalization_steps;
+			}
+		}
+		/* No normalization needed, either because udiv_qrnnd doesn't require
+		 * it, or because DIVISOR_LIMB is already normalized.
 		 */
-		i = भागidend_size - 1;
-		r = भागidend_ptr[i];
+		i = dividend_size - 1;
+		r = dividend_ptr[i];
 
-		अगर (r >= भागisor_limb)
+		if (r >= divisor_limb)
 			r = 0;
-		अन्यथा
+		else
 			quot_ptr[i--] = 0;
 
-		क्रम (; i >= 0; i--) अणु
-			n0 = भागidend_ptr[i];
-			uभाग_qrnnd(quot_ptr[i], r, r, n0, भागisor_limb);
-		पूर्ण
-		वापस r;
-	पूर्ण
-पूर्ण
+		for (; i >= 0; i--) {
+			n0 = dividend_ptr[i];
+			udiv_qrnnd(quot_ptr[i], r, r, n0, divisor_limb);
+		}
+		return r;
+	}
+}

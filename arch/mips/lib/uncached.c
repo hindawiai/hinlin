@@ -1,8 +1,7 @@
-<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 2005 Thiemo Seufer
  * Copyright (C) 2005  MIPS Technologies, Inc.	All rights reserved.
@@ -10,16 +9,16 @@
  */
 
 
-#समावेश <यंत्र/addrspace.h>
-#समावेश <यंत्र/bug.h>
-#समावेश <यंत्र/cacheflush.h>
+#include <asm/addrspace.h>
+#include <asm/bug.h>
+#include <asm/cacheflush.h>
 
-#अगर_अघोषित CKSEG2
-#घोषणा CKSEG2 CKSSEG
-#पूर्ण_अगर
-#अगर_अघोषित TO_PHYS_MASK
-#घोषणा TO_PHYS_MASK -1
-#पूर्ण_अगर
+#ifndef CKSEG2
+#define CKSEG2 CKSSEG
+#endif
+#ifndef TO_PHYS_MASK
+#define TO_PHYS_MASK -1
+#endif
 
 /*
  * FUNC is executed in one of the uncached segments, depending on its
@@ -31,46 +30,46 @@
  *    used is XKPHYS(2).
  * 3. Otherwise it's a bug.
  *
- * The same remapping is करोne with the stack poपूर्णांकer.  Stack handling
- * works because we करोn't handle stack arguments or more complex वापस
- * values, so we can aव्योम sharing the same stack area between a cached
+ * The same remapping is done with the stack pointer.  Stack handling
+ * works because we don't handle stack arguments or more complex return
+ * values, so we can avoid sharing the same stack area between a cached
  * and the uncached mode.
  */
-अचिन्हित दीर्घ run_uncached(व्योम *func)
-अणु
-	रेजिस्टर दीर्घ ret __यंत्र__("$2");
-	दीर्घ lfunc = (दीर्घ)func, ufunc;
-	दीर्घ usp;
-	दीर्घ sp;
+unsigned long run_uncached(void *func)
+{
+	register long ret __asm__("$2");
+	long lfunc = (long)func, ufunc;
+	long usp;
+	long sp;
 
-	__यंत्र__("move %0, $sp" : "=r" (sp));
+	__asm__("move %0, $sp" : "=r" (sp));
 
-	अगर (sp >= (दीर्घ)CKSEG0 && sp < (दीर्घ)CKSEG2)
+	if (sp >= (long)CKSEG0 && sp < (long)CKSEG2)
 		usp = CKSEG1ADDR(sp);
-#अगर_घोषित CONFIG_64BIT
-	अन्यथा अगर ((दीर्घ दीर्घ)sp >= (दीर्घ दीर्घ)PHYS_TO_XKPHYS(0, 0) &&
-		 (दीर्घ दीर्घ)sp < (दीर्घ दीर्घ)PHYS_TO_XKPHYS(8, 0))
+#ifdef CONFIG_64BIT
+	else if ((long long)sp >= (long long)PHYS_TO_XKPHYS(0, 0) &&
+		 (long long)sp < (long long)PHYS_TO_XKPHYS(8, 0))
 		usp = PHYS_TO_XKPHYS(K_CALG_UNCACHED,
-				     XKPHYS_TO_PHYS((दीर्घ दीर्घ)sp));
-#पूर्ण_अगर
-	अन्यथा अणु
+				     XKPHYS_TO_PHYS((long long)sp));
+#endif
+	else {
 		BUG();
 		usp = sp;
-	पूर्ण
-	अगर (lfunc >= (दीर्घ)CKSEG0 && lfunc < (दीर्घ)CKSEG2)
+	}
+	if (lfunc >= (long)CKSEG0 && lfunc < (long)CKSEG2)
 		ufunc = CKSEG1ADDR(lfunc);
-#अगर_घोषित CONFIG_64BIT
-	अन्यथा अगर ((दीर्घ दीर्घ)lfunc >= (दीर्घ दीर्घ)PHYS_TO_XKPHYS(0, 0) &&
-		 (दीर्घ दीर्घ)lfunc < (दीर्घ दीर्घ)PHYS_TO_XKPHYS(8, 0))
+#ifdef CONFIG_64BIT
+	else if ((long long)lfunc >= (long long)PHYS_TO_XKPHYS(0, 0) &&
+		 (long long)lfunc < (long long)PHYS_TO_XKPHYS(8, 0))
 		ufunc = PHYS_TO_XKPHYS(K_CALG_UNCACHED,
-				       XKPHYS_TO_PHYS((दीर्घ दीर्घ)lfunc));
-#पूर्ण_अगर
-	अन्यथा अणु
+				       XKPHYS_TO_PHYS((long long)lfunc));
+#endif
+	else {
 		BUG();
 		ufunc = lfunc;
-	पूर्ण
+	}
 
-	__यंत्र__ __अस्थिर__ (
+	__asm__ __volatile__ (
 		"	move	$16, $sp\n"
 		"	move	$sp, %1\n"
 		"	jalr	%2\n"
@@ -79,5 +78,5 @@
 		: "r" (usp), "r" (ufunc)
 		: "$16", "$31");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

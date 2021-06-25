@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*******************************************************************************
 *
 * Copyright (c) 2015-2016 Intel Corporation.  All rights reserved.
@@ -6,20 +5,20 @@
 * This software is available to you under a choice of one of two
 * licenses.  You may choose to be licensed under the terms of the GNU
 * General Public License (GPL) Version 2, available from the file
-* COPYING in the मुख्य directory of this source tree, or the
+* COPYING in the main directory of this source tree, or the
 * OpenFabrics.org BSD license below:
 *
-*   Redistribution and use in source and binary क्रमms, with or
-*   without modअगरication, are permitted provided that the following
+*   Redistribution and use in source and binary forms, with or
+*   without modification, are permitted provided that the following
 *   conditions are met:
 *
 *    - Redistributions of source code must retain the above
 *	copyright notice, this list of conditions and the following
 *	disclaimer.
 *
-*    - Redistributions in binary क्रमm must reproduce the above
+*    - Redistributions in binary form must reproduce the above
 *	copyright notice, this list of conditions and the following
-*	disclaimer in the करोcumentation and/or other materials
+*	disclaimer in the documentation and/or other materials
 *	provided with the distribution.
 *
 * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -33,57 +32,57 @@
 *
 *******************************************************************************/
 
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/ethtool.h>
-#समावेश <linux/mii.h>
-#समावेश <linux/अगर_vlan.h>
-#समावेश <linux/crc32.h>
-#समावेश <linux/in.h>
-#समावेश <linux/ip.h>
-#समावेश <linux/tcp.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
-#समावेश <यंत्र/irq.h>
-#समावेश <यंत्र/byteorder.h>
-#समावेश <net/netevent.h>
-#समावेश <net/neighbour.h>
-#समावेश "i40iw.h"
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/netdevice.h>
+#include <linux/etherdevice.h>
+#include <linux/ethtool.h>
+#include <linux/mii.h>
+#include <linux/if_vlan.h>
+#include <linux/crc32.h>
+#include <linux/in.h>
+#include <linux/ip.h>
+#include <linux/tcp.h>
+#include <linux/init.h>
+#include <linux/io.h>
+#include <asm/irq.h>
+#include <asm/byteorder.h>
+#include <net/netevent.h>
+#include <net/neighbour.h>
+#include "i40iw.h"
 
 /**
  * i40iw_arp_table - manage arp table
  * @iwdev: iwarp device
- * @ip_addr: ip address क्रम device
+ * @ip_addr: ip address for device
  * @ipv4: flag indicating IPv4 when true
  * @mac_addr: mac address ptr
- * @action: modअगरy, delete or add
+ * @action: modify, delete or add
  */
-पूर्णांक i40iw_arp_table(काष्ठा i40iw_device *iwdev,
+int i40iw_arp_table(struct i40iw_device *iwdev,
 		    u32 *ip_addr,
 		    bool ipv4,
 		    u8 *mac_addr,
 		    u32 action)
-अणु
-	पूर्णांक arp_index;
-	पूर्णांक err;
+{
+	int arp_index;
+	int err;
 	u32 ip[4];
 
-	अगर (ipv4) अणु
-		स_रखो(ip, 0, माप(ip));
+	if (ipv4) {
+		memset(ip, 0, sizeof(ip));
 		ip[0] = *ip_addr;
-	पूर्ण अन्यथा अणु
-		स_नकल(ip, ip_addr, माप(ip));
-	पूर्ण
+	} else {
+		memcpy(ip, ip_addr, sizeof(ip));
+	}
 
-	क्रम (arp_index = 0; (u32)arp_index < iwdev->arp_table_size; arp_index++)
-		अगर (स_भेद(iwdev->arp_table[arp_index].ip_addr, ip, माप(ip)) == 0)
-			अवरोध;
-	चयन (action) अणु
-	हाल I40IW_ARP_ADD:
-		अगर (arp_index != iwdev->arp_table_size)
-			वापस -1;
+	for (arp_index = 0; (u32)arp_index < iwdev->arp_table_size; arp_index++)
+		if (memcmp(iwdev->arp_table[arp_index].ip_addr, ip, sizeof(ip)) == 0)
+			break;
+	switch (action) {
+	case I40IW_ARP_ADD:
+		if (arp_index != iwdev->arp_table_size)
+			return -1;
 
 		arp_index = 0;
 		err = i40iw_alloc_resource(iwdev, iwdev->allocated_arps,
@@ -91,893 +90,893 @@
 					   (u32 *)&arp_index,
 					   &iwdev->next_arp_index);
 
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
-		स_नकल(iwdev->arp_table[arp_index].ip_addr, ip, माप(ip));
+		memcpy(iwdev->arp_table[arp_index].ip_addr, ip, sizeof(ip));
 		ether_addr_copy(iwdev->arp_table[arp_index].mac_addr, mac_addr);
-		अवरोध;
-	हाल I40IW_ARP_RESOLVE:
-		अगर (arp_index == iwdev->arp_table_size)
-			वापस -1;
-		अवरोध;
-	हाल I40IW_ARP_DELETE:
-		अगर (arp_index == iwdev->arp_table_size)
-			वापस -1;
-		स_रखो(iwdev->arp_table[arp_index].ip_addr, 0,
-		       माप(iwdev->arp_table[arp_index].ip_addr));
+		break;
+	case I40IW_ARP_RESOLVE:
+		if (arp_index == iwdev->arp_table_size)
+			return -1;
+		break;
+	case I40IW_ARP_DELETE:
+		if (arp_index == iwdev->arp_table_size)
+			return -1;
+		memset(iwdev->arp_table[arp_index].ip_addr, 0,
+		       sizeof(iwdev->arp_table[arp_index].ip_addr));
 		eth_zero_addr(iwdev->arp_table[arp_index].mac_addr);
-		i40iw_मुक्त_resource(iwdev, iwdev->allocated_arps, arp_index);
-		अवरोध;
-	शेष:
-		वापस -1;
-	पूर्ण
-	वापस arp_index;
-पूर्ण
+		i40iw_free_resource(iwdev, iwdev->allocated_arps, arp_index);
+		break;
+	default:
+		return -1;
+	}
+	return arp_index;
+}
 
 /**
- * i40iw_wr32 - ग_लिखो 32 bits to hw रेजिस्टर
- * @hw: hardware inक्रमmation including रेजिस्टरs
- * @reg: रेजिस्टर offset
- * @value: vvalue to ग_लिखो to रेजिस्टर
+ * i40iw_wr32 - write 32 bits to hw register
+ * @hw: hardware information including registers
+ * @reg: register offset
+ * @value: vvalue to write to register
  */
-अंतरभूत व्योम i40iw_wr32(काष्ठा i40iw_hw *hw, u32 reg, u32 value)
-अणु
-	ग_लिखोl(value, hw->hw_addr + reg);
-पूर्ण
+inline void i40iw_wr32(struct i40iw_hw *hw, u32 reg, u32 value)
+{
+	writel(value, hw->hw_addr + reg);
+}
 
 /**
- * i40iw_rd32 - पढ़ो a 32 bit hw रेजिस्टर
- * @hw: hardware inक्रमmation including रेजिस्टरs
- * @reg: रेजिस्टर offset
+ * i40iw_rd32 - read a 32 bit hw register
+ * @hw: hardware information including registers
+ * @reg: register offset
  *
- * Return value of रेजिस्टर content
+ * Return value of register content
  */
-अंतरभूत u32 i40iw_rd32(काष्ठा i40iw_hw *hw, u32 reg)
-अणु
-	वापस पढ़ोl(hw->hw_addr + reg);
-पूर्ण
+inline u32 i40iw_rd32(struct i40iw_hw *hw, u32 reg)
+{
+	return readl(hw->hw_addr + reg);
+}
 
 /**
- * i40iw_inetaddr_event - प्रणाली notअगरier क्रम ipv4 addr events
- * @notअगरier: not used
- * @event: event क्रम notअगरier
- * @ptr: अगर address
+ * i40iw_inetaddr_event - system notifier for ipv4 addr events
+ * @notifier: not used
+ * @event: event for notifier
+ * @ptr: if address
  */
-पूर्णांक i40iw_inetaddr_event(काष्ठा notअगरier_block *notअगरier,
-			 अचिन्हित दीर्घ event,
-			 व्योम *ptr)
-अणु
-	काष्ठा in_अगरaddr *अगरa = ptr;
-	काष्ठा net_device *event_netdev = अगरa->अगरa_dev->dev;
-	काष्ठा net_device *netdev;
-	काष्ठा net_device *upper_dev;
-	काष्ठा i40iw_device *iwdev;
-	काष्ठा i40iw_handler *hdl;
+int i40iw_inetaddr_event(struct notifier_block *notifier,
+			 unsigned long event,
+			 void *ptr)
+{
+	struct in_ifaddr *ifa = ptr;
+	struct net_device *event_netdev = ifa->ifa_dev->dev;
+	struct net_device *netdev;
+	struct net_device *upper_dev;
+	struct i40iw_device *iwdev;
+	struct i40iw_handler *hdl;
 	u32 local_ipaddr;
 	u32 action = I40IW_ARP_ADD;
 
 	hdl = i40iw_find_netdev(event_netdev);
-	अगर (!hdl)
-		वापस NOTIFY_DONE;
+	if (!hdl)
+		return NOTIFY_DONE;
 
 	iwdev = &hdl->device;
-	अगर (iwdev->init_state < IP_ADDR_REGISTERED || iwdev->closing)
-		वापस NOTIFY_DONE;
+	if (iwdev->init_state < IP_ADDR_REGISTERED || iwdev->closing)
+		return NOTIFY_DONE;
 
 	netdev = iwdev->ldev->netdev;
 	upper_dev = netdev_master_upper_dev_get(netdev);
-	अगर (netdev != event_netdev)
-		वापस NOTIFY_DONE;
+	if (netdev != event_netdev)
+		return NOTIFY_DONE;
 
-	अगर (upper_dev) अणु
-		काष्ठा in_device *in;
+	if (upper_dev) {
+		struct in_device *in;
 
-		rcu_पढ़ो_lock();
+		rcu_read_lock();
 		in = __in_dev_get_rcu(upper_dev);
 
 		local_ipaddr = 0;
-		अगर (in) अणु
-			काष्ठा in_अगरaddr *अगरa;
+		if (in) {
+			struct in_ifaddr *ifa;
 
-			अगरa = rcu_dereference(in->अगरa_list);
-			अगर (अगरa)
-				local_ipaddr = ntohl(अगरa->अगरa_address);
-		पूर्ण
+			ifa = rcu_dereference(in->ifa_list);
+			if (ifa)
+				local_ipaddr = ntohl(ifa->ifa_address);
+		}
 
-		rcu_पढ़ो_unlock();
-	पूर्ण अन्यथा अणु
-		local_ipaddr = ntohl(अगरa->अगरa_address);
-	पूर्ण
-	चयन (event) अणु
-	हाल NETDEV_DOWN:
+		rcu_read_unlock();
+	} else {
+		local_ipaddr = ntohl(ifa->ifa_address);
+	}
+	switch (event) {
+	case NETDEV_DOWN:
 		action = I40IW_ARP_DELETE;
 		fallthrough;
-	हाल NETDEV_UP:
-	हाल NETDEV_CHANGEADDR:
+	case NETDEV_UP:
+	case NETDEV_CHANGEADDR:
 
-		/* Just skip अगर no need to handle ARP cache */
-		अगर (!local_ipaddr)
-			अवरोध;
+		/* Just skip if no need to handle ARP cache */
+		if (!local_ipaddr)
+			break;
 
 		i40iw_manage_arp_cache(iwdev,
 				       netdev->dev_addr,
 				       &local_ipaddr,
 				       true,
 				       action);
-		i40iw_अगर_notअगरy(iwdev, netdev, &local_ipaddr, true,
+		i40iw_if_notify(iwdev, netdev, &local_ipaddr, true,
 				(action == I40IW_ARP_ADD) ? true : false);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-	वापस NOTIFY_DONE;
-पूर्ण
+		break;
+	default:
+		break;
+	}
+	return NOTIFY_DONE;
+}
 
 /**
- * i40iw_inet6addr_event - प्रणाली notअगरier क्रम ipv6 addr events
- * @notअगरier: not used
- * @event: event क्रम notअगरier
- * @ptr: अगर address
+ * i40iw_inet6addr_event - system notifier for ipv6 addr events
+ * @notifier: not used
+ * @event: event for notifier
+ * @ptr: if address
  */
-पूर्णांक i40iw_inet6addr_event(काष्ठा notअगरier_block *notअगरier,
-			  अचिन्हित दीर्घ event,
-			  व्योम *ptr)
-अणु
-	काष्ठा inet6_अगरaddr *अगरa = (काष्ठा inet6_अगरaddr *)ptr;
-	काष्ठा net_device *event_netdev = अगरa->idev->dev;
-	काष्ठा net_device *netdev;
-	काष्ठा i40iw_device *iwdev;
-	काष्ठा i40iw_handler *hdl;
+int i40iw_inet6addr_event(struct notifier_block *notifier,
+			  unsigned long event,
+			  void *ptr)
+{
+	struct inet6_ifaddr *ifa = (struct inet6_ifaddr *)ptr;
+	struct net_device *event_netdev = ifa->idev->dev;
+	struct net_device *netdev;
+	struct i40iw_device *iwdev;
+	struct i40iw_handler *hdl;
 	u32 local_ipaddr6[4];
 	u32 action = I40IW_ARP_ADD;
 
 	hdl = i40iw_find_netdev(event_netdev);
-	अगर (!hdl)
-		वापस NOTIFY_DONE;
+	if (!hdl)
+		return NOTIFY_DONE;
 
 	iwdev = &hdl->device;
-	अगर (iwdev->init_state < IP_ADDR_REGISTERED || iwdev->closing)
-		वापस NOTIFY_DONE;
+	if (iwdev->init_state < IP_ADDR_REGISTERED || iwdev->closing)
+		return NOTIFY_DONE;
 
 	netdev = iwdev->ldev->netdev;
-	अगर (netdev != event_netdev)
-		वापस NOTIFY_DONE;
+	if (netdev != event_netdev)
+		return NOTIFY_DONE;
 
-	i40iw_copy_ip_ntohl(local_ipaddr6, अगरa->addr.in6_u.u6_addr32);
-	चयन (event) अणु
-	हाल NETDEV_DOWN:
+	i40iw_copy_ip_ntohl(local_ipaddr6, ifa->addr.in6_u.u6_addr32);
+	switch (event) {
+	case NETDEV_DOWN:
 		action = I40IW_ARP_DELETE;
 		fallthrough;
-	हाल NETDEV_UP:
-	हाल NETDEV_CHANGEADDR:
+	case NETDEV_UP:
+	case NETDEV_CHANGEADDR:
 		i40iw_manage_arp_cache(iwdev,
 				       netdev->dev_addr,
 				       local_ipaddr6,
 				       false,
 				       action);
-		i40iw_अगर_notअगरy(iwdev, netdev, local_ipaddr6, false,
+		i40iw_if_notify(iwdev, netdev, local_ipaddr6, false,
 				(action == I40IW_ARP_ADD) ? true : false);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-	वापस NOTIFY_DONE;
-पूर्ण
+		break;
+	default:
+		break;
+	}
+	return NOTIFY_DONE;
+}
 
 /**
- * i40iw_net_event - प्रणाली notअगरier क्रम netevents
- * @notअगरier: not used
- * @event: event क्रम notअगरier
+ * i40iw_net_event - system notifier for netevents
+ * @notifier: not used
+ * @event: event for notifier
  * @ptr: neighbor
  */
-पूर्णांक i40iw_net_event(काष्ठा notअगरier_block *notअगरier, अचिन्हित दीर्घ event, व्योम *ptr)
-अणु
-	काष्ठा neighbour *neigh = ptr;
-	काष्ठा i40iw_device *iwdev;
-	काष्ठा i40iw_handler *iwhdl;
+int i40iw_net_event(struct notifier_block *notifier, unsigned long event, void *ptr)
+{
+	struct neighbour *neigh = ptr;
+	struct i40iw_device *iwdev;
+	struct i40iw_handler *iwhdl;
 	__be32 *p;
 	u32 local_ipaddr[4];
 
-	चयन (event) अणु
-	हाल NETEVENT_NEIGH_UPDATE:
-		iwhdl = i40iw_find_netdev((काष्ठा net_device *)neigh->dev);
-		अगर (!iwhdl)
-			वापस NOTIFY_DONE;
+	switch (event) {
+	case NETEVENT_NEIGH_UPDATE:
+		iwhdl = i40iw_find_netdev((struct net_device *)neigh->dev);
+		if (!iwhdl)
+			return NOTIFY_DONE;
 		iwdev = &iwhdl->device;
-		अगर (iwdev->init_state < IP_ADDR_REGISTERED || iwdev->closing)
-			वापस NOTIFY_DONE;
+		if (iwdev->init_state < IP_ADDR_REGISTERED || iwdev->closing)
+			return NOTIFY_DONE;
 		p = (__be32 *)neigh->primary_key;
 		i40iw_copy_ip_ntohl(local_ipaddr, p);
-		अगर (neigh->nud_state & NUD_VALID) अणु
+		if (neigh->nud_state & NUD_VALID) {
 			i40iw_manage_arp_cache(iwdev,
 					       neigh->ha,
 					       local_ipaddr,
 					       false,
 					       I40IW_ARP_ADD);
 
-		पूर्ण अन्यथा अणु
+		} else {
 			i40iw_manage_arp_cache(iwdev,
 					       neigh->ha,
 					       local_ipaddr,
 					       false,
 					       I40IW_ARP_DELETE);
-		पूर्ण
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-	वापस NOTIFY_DONE;
-पूर्ण
+		}
+		break;
+	default:
+		break;
+	}
+	return NOTIFY_DONE;
+}
 
 /**
- * i40iw_netdevice_event - प्रणाली notअगरier क्रम netdev events
- * @notअगरier: not used
- * @event: event क्रम notअगरier
+ * i40iw_netdevice_event - system notifier for netdev events
+ * @notifier: not used
+ * @event: event for notifier
  * @ptr: netdev
  */
-पूर्णांक i40iw_netdevice_event(काष्ठा notअगरier_block *notअगरier,
-			  अचिन्हित दीर्घ event,
-			  व्योम *ptr)
-अणु
-	काष्ठा net_device *event_netdev;
-	काष्ठा net_device *netdev;
-	काष्ठा i40iw_device *iwdev;
-	काष्ठा i40iw_handler *hdl;
+int i40iw_netdevice_event(struct notifier_block *notifier,
+			  unsigned long event,
+			  void *ptr)
+{
+	struct net_device *event_netdev;
+	struct net_device *netdev;
+	struct i40iw_device *iwdev;
+	struct i40iw_handler *hdl;
 
-	event_netdev = netdev_notअगरier_info_to_dev(ptr);
+	event_netdev = netdev_notifier_info_to_dev(ptr);
 
 	hdl = i40iw_find_netdev(event_netdev);
-	अगर (!hdl)
-		वापस NOTIFY_DONE;
+	if (!hdl)
+		return NOTIFY_DONE;
 
 	iwdev = &hdl->device;
-	अगर (iwdev->init_state < RDMA_DEV_REGISTERED || iwdev->closing)
-		वापस NOTIFY_DONE;
+	if (iwdev->init_state < RDMA_DEV_REGISTERED || iwdev->closing)
+		return NOTIFY_DONE;
 
 	netdev = iwdev->ldev->netdev;
-	अगर (netdev != event_netdev)
-		वापस NOTIFY_DONE;
+	if (netdev != event_netdev)
+		return NOTIFY_DONE;
 
 	iwdev->iw_status = 1;
 
-	चयन (event) अणु
-	हाल NETDEV_DOWN:
+	switch (event) {
+	case NETDEV_DOWN:
 		iwdev->iw_status = 0;
 		fallthrough;
-	हाल NETDEV_UP:
+	case NETDEV_UP:
 		i40iw_port_ibevent(iwdev);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-	वापस NOTIFY_DONE;
-पूर्ण
+		break;
+	default:
+		break;
+	}
+	return NOTIFY_DONE;
+}
 
 /**
- * i40iw_get_cqp_request - get cqp काष्ठा
+ * i40iw_get_cqp_request - get cqp struct
  * @cqp: device cqp ptr
- * @रुको: cqp to be used in रुको mode
+ * @wait: cqp to be used in wait mode
  */
-काष्ठा i40iw_cqp_request *i40iw_get_cqp_request(काष्ठा i40iw_cqp *cqp, bool रुको)
-अणु
-	काष्ठा i40iw_cqp_request *cqp_request = शून्य;
-	अचिन्हित दीर्घ flags;
+struct i40iw_cqp_request *i40iw_get_cqp_request(struct i40iw_cqp *cqp, bool wait)
+{
+	struct i40iw_cqp_request *cqp_request = NULL;
+	unsigned long flags;
 
 	spin_lock_irqsave(&cqp->req_lock, flags);
-	अगर (!list_empty(&cqp->cqp_avail_reqs)) अणु
+	if (!list_empty(&cqp->cqp_avail_reqs)) {
 		cqp_request = list_entry(cqp->cqp_avail_reqs.next,
-					 काष्ठा i40iw_cqp_request, list);
+					 struct i40iw_cqp_request, list);
 		list_del_init(&cqp_request->list);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&cqp->req_lock, flags);
-	अगर (!cqp_request) अणु
-		cqp_request = kzalloc(माप(*cqp_request), GFP_ATOMIC);
-		अगर (cqp_request) अणु
+	if (!cqp_request) {
+		cqp_request = kzalloc(sizeof(*cqp_request), GFP_ATOMIC);
+		if (cqp_request) {
 			cqp_request->dynamic = true;
 			INIT_LIST_HEAD(&cqp_request->list);
-			init_रुकोqueue_head(&cqp_request->रुकोq);
-		पूर्ण
-	पूर्ण
-	अगर (!cqp_request) अणु
+			init_waitqueue_head(&cqp_request->waitq);
+		}
+	}
+	if (!cqp_request) {
 		i40iw_pr_err("CQP Request Fail: No Memory");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	अगर (रुको) अणु
+	if (wait) {
 		atomic_set(&cqp_request->refcount, 2);
-		cqp_request->रुकोing = true;
-	पूर्ण अन्यथा अणु
+		cqp_request->waiting = true;
+	} else {
 		atomic_set(&cqp_request->refcount, 1);
-	पूर्ण
-	वापस cqp_request;
-पूर्ण
+	}
+	return cqp_request;
+}
 
 /**
- * i40iw_मुक्त_cqp_request - मुक्त cqp request
+ * i40iw_free_cqp_request - free cqp request
  * @cqp: cqp ptr
  * @cqp_request: to be put back in cqp list
  */
-व्योम i40iw_मुक्त_cqp_request(काष्ठा i40iw_cqp *cqp, काष्ठा i40iw_cqp_request *cqp_request)
-अणु
-	काष्ठा i40iw_device *iwdev = container_of(cqp, काष्ठा i40iw_device, cqp);
-	अचिन्हित दीर्घ flags;
+void i40iw_free_cqp_request(struct i40iw_cqp *cqp, struct i40iw_cqp_request *cqp_request)
+{
+	struct i40iw_device *iwdev = container_of(cqp, struct i40iw_device, cqp);
+	unsigned long flags;
 
-	अगर (cqp_request->dynamic) अणु
-		kमुक्त(cqp_request);
-	पूर्ण अन्यथा अणु
-		cqp_request->request_करोne = false;
-		cqp_request->callback_fcn = शून्य;
-		cqp_request->रुकोing = false;
+	if (cqp_request->dynamic) {
+		kfree(cqp_request);
+	} else {
+		cqp_request->request_done = false;
+		cqp_request->callback_fcn = NULL;
+		cqp_request->waiting = false;
 
 		spin_lock_irqsave(&cqp->req_lock, flags);
 		list_add_tail(&cqp_request->list, &cqp->cqp_avail_reqs);
 		spin_unlock_irqrestore(&cqp->req_lock, flags);
-	पूर्ण
-	wake_up(&iwdev->बंद_wq);
-पूर्ण
+	}
+	wake_up(&iwdev->close_wq);
+}
 
 /**
- * i40iw_put_cqp_request - dec ref count and मुक्त अगर 0
+ * i40iw_put_cqp_request - dec ref count and free if 0
  * @cqp: cqp ptr
  * @cqp_request: to be put back in cqp list
  */
-व्योम i40iw_put_cqp_request(काष्ठा i40iw_cqp *cqp,
-			   काष्ठा i40iw_cqp_request *cqp_request)
-अणु
-	अगर (atomic_dec_and_test(&cqp_request->refcount))
-		i40iw_मुक्त_cqp_request(cqp, cqp_request);
-पूर्ण
+void i40iw_put_cqp_request(struct i40iw_cqp *cqp,
+			   struct i40iw_cqp_request *cqp_request)
+{
+	if (atomic_dec_and_test(&cqp_request->refcount))
+		i40iw_free_cqp_request(cqp, cqp_request);
+}
 
 /**
- * i40iw_मुक्त_pending_cqp_request -मुक्त pending cqp request objs
+ * i40iw_free_pending_cqp_request -free pending cqp request objs
  * @cqp: cqp ptr
  * @cqp_request: to be put back in cqp list
  */
-अटल व्योम i40iw_मुक्त_pending_cqp_request(काष्ठा i40iw_cqp *cqp,
-					   काष्ठा i40iw_cqp_request *cqp_request)
-अणु
-	काष्ठा i40iw_device *iwdev = container_of(cqp, काष्ठा i40iw_device, cqp);
+static void i40iw_free_pending_cqp_request(struct i40iw_cqp *cqp,
+					   struct i40iw_cqp_request *cqp_request)
+{
+	struct i40iw_device *iwdev = container_of(cqp, struct i40iw_device, cqp);
 
-	अगर (cqp_request->रुकोing) अणु
+	if (cqp_request->waiting) {
 		cqp_request->compl_info.error = true;
-		cqp_request->request_करोne = true;
-		wake_up(&cqp_request->रुकोq);
-	पूर्ण
+		cqp_request->request_done = true;
+		wake_up(&cqp_request->waitq);
+	}
 	i40iw_put_cqp_request(cqp, cqp_request);
-	रुको_event_समयout(iwdev->बंद_wq,
-			   !atomic_पढ़ो(&cqp_request->refcount),
+	wait_event_timeout(iwdev->close_wq,
+			   !atomic_read(&cqp_request->refcount),
 			   1000);
-पूर्ण
+}
 
 /**
  * i40iw_cleanup_pending_cqp_op - clean-up cqp with no completions
  * @iwdev: iwarp device
  */
-व्योम i40iw_cleanup_pending_cqp_op(काष्ठा i40iw_device *iwdev)
-अणु
-	काष्ठा i40iw_sc_dev *dev = &iwdev->sc_dev;
-	काष्ठा i40iw_cqp *cqp = &iwdev->cqp;
-	काष्ठा i40iw_cqp_request *cqp_request = शून्य;
-	काष्ठा cqp_commands_info *pcmdinfo = शून्य;
+void i40iw_cleanup_pending_cqp_op(struct i40iw_device *iwdev)
+{
+	struct i40iw_sc_dev *dev = &iwdev->sc_dev;
+	struct i40iw_cqp *cqp = &iwdev->cqp;
+	struct i40iw_cqp_request *cqp_request = NULL;
+	struct cqp_commands_info *pcmdinfo = NULL;
 	u32 i, pending_work, wqe_idx;
 
 	pending_work = I40IW_RING_WORK_AVAILABLE(cqp->sc_cqp.sq_ring);
 	wqe_idx = I40IW_RING_GETCURRENT_TAIL(cqp->sc_cqp.sq_ring);
-	क्रम (i = 0; i < pending_work; i++) अणु
-		cqp_request = (काष्ठा i40iw_cqp_request *)(अचिन्हित दीर्घ)cqp->scratch_array[wqe_idx];
-		अगर (cqp_request)
-			i40iw_मुक्त_pending_cqp_request(cqp, cqp_request);
+	for (i = 0; i < pending_work; i++) {
+		cqp_request = (struct i40iw_cqp_request *)(unsigned long)cqp->scratch_array[wqe_idx];
+		if (cqp_request)
+			i40iw_free_pending_cqp_request(cqp, cqp_request);
 		wqe_idx = (wqe_idx + 1) % I40IW_RING_GETSIZE(cqp->sc_cqp.sq_ring);
-	पूर्ण
+	}
 
-	जबतक (!list_empty(&dev->cqp_cmd_head)) अणु
-		pcmdinfo = (काष्ठा cqp_commands_info *)i40iw_हटाओ_head(&dev->cqp_cmd_head);
-		cqp_request = container_of(pcmdinfo, काष्ठा i40iw_cqp_request, info);
-		अगर (cqp_request)
-			i40iw_मुक्त_pending_cqp_request(cqp, cqp_request);
-	पूर्ण
-पूर्ण
+	while (!list_empty(&dev->cqp_cmd_head)) {
+		pcmdinfo = (struct cqp_commands_info *)i40iw_remove_head(&dev->cqp_cmd_head);
+		cqp_request = container_of(pcmdinfo, struct i40iw_cqp_request, info);
+		if (cqp_request)
+			i40iw_free_pending_cqp_request(cqp, cqp_request);
+	}
+}
 
 /**
- * i40iw_रुको_event - रुको क्रम completion
+ * i40iw_wait_event - wait for completion
  * @iwdev: iwarp device
- * @cqp_request: cqp request to रुको
+ * @cqp_request: cqp request to wait
  */
-अटल पूर्णांक i40iw_रुको_event(काष्ठा i40iw_device *iwdev,
-			    काष्ठा i40iw_cqp_request *cqp_request)
-अणु
-	काष्ठा cqp_commands_info *info = &cqp_request->info;
-	काष्ठा i40iw_cqp *iwcqp = &iwdev->cqp;
-	काष्ठा i40iw_cqp_समयout cqp_समयout;
+static int i40iw_wait_event(struct i40iw_device *iwdev,
+			    struct i40iw_cqp_request *cqp_request)
+{
+	struct cqp_commands_info *info = &cqp_request->info;
+	struct i40iw_cqp *iwcqp = &iwdev->cqp;
+	struct i40iw_cqp_timeout cqp_timeout;
 	bool cqp_error = false;
-	पूर्णांक err_code = 0;
-	स_रखो(&cqp_समयout, 0, माप(cqp_समयout));
-	cqp_समयout.compl_cqp_cmds = iwdev->sc_dev.cqp_cmd_stats[OP_COMPLETED_COMMANDS];
-	करो अणु
-		अगर (रुको_event_समयout(cqp_request->रुकोq,
-				       cqp_request->request_करोne, CQP_COMPL_WAIT_TIME))
-			अवरोध;
+	int err_code = 0;
+	memset(&cqp_timeout, 0, sizeof(cqp_timeout));
+	cqp_timeout.compl_cqp_cmds = iwdev->sc_dev.cqp_cmd_stats[OP_COMPLETED_COMMANDS];
+	do {
+		if (wait_event_timeout(cqp_request->waitq,
+				       cqp_request->request_done, CQP_COMPL_WAIT_TIME))
+			break;
 
-		i40iw_check_cqp_progress(&cqp_समयout, &iwdev->sc_dev);
+		i40iw_check_cqp_progress(&cqp_timeout, &iwdev->sc_dev);
 
-		अगर (cqp_समयout.count < CQP_TIMEOUT_THRESHOLD)
-			जारी;
+		if (cqp_timeout.count < CQP_TIMEOUT_THRESHOLD)
+			continue;
 
 		i40iw_pr_err("error cqp command 0x%x timed out", info->cqp_cmd);
 		err_code = -ETIME;
-		अगर (!iwdev->reset) अणु
+		if (!iwdev->reset) {
 			iwdev->reset = true;
 			i40iw_request_reset(iwdev);
-		पूर्ण
-		जाओ करोne;
-	पूर्ण जबतक (1);
+		}
+		goto done;
+	} while (1);
 	cqp_error = cqp_request->compl_info.error;
-	अगर (cqp_error) अणु
+	if (cqp_error) {
 		i40iw_pr_err("error cqp command 0x%x completion maj = 0x%x min=0x%x\n",
 			     info->cqp_cmd, cqp_request->compl_info.maj_err_code,
 			     cqp_request->compl_info.min_err_code);
 		err_code = -EPROTO;
-		जाओ करोne;
-	पूर्ण
-करोne:
+		goto done;
+	}
+done:
 	i40iw_put_cqp_request(iwcqp, cqp_request);
-	वापस err_code;
-पूर्ण
+	return err_code;
+}
 
 /**
  * i40iw_handle_cqp_op - process cqp command
  * @iwdev: iwarp device
  * @cqp_request: cqp request to process
  */
-क्रमागत i40iw_status_code i40iw_handle_cqp_op(काष्ठा i40iw_device *iwdev,
-					   काष्ठा i40iw_cqp_request
+enum i40iw_status_code i40iw_handle_cqp_op(struct i40iw_device *iwdev,
+					   struct i40iw_cqp_request
 					   *cqp_request)
-अणु
-	काष्ठा i40iw_sc_dev *dev = &iwdev->sc_dev;
-	क्रमागत i40iw_status_code status;
-	काष्ठा cqp_commands_info *info = &cqp_request->info;
-	पूर्णांक err_code = 0;
+{
+	struct i40iw_sc_dev *dev = &iwdev->sc_dev;
+	enum i40iw_status_code status;
+	struct cqp_commands_info *info = &cqp_request->info;
+	int err_code = 0;
 
-	अगर (iwdev->reset) अणु
-		i40iw_मुक्त_cqp_request(&iwdev->cqp, cqp_request);
-		वापस I40IW_ERR_CQP_COMPL_ERROR;
-	पूर्ण
+	if (iwdev->reset) {
+		i40iw_free_cqp_request(&iwdev->cqp, cqp_request);
+		return I40IW_ERR_CQP_COMPL_ERROR;
+	}
 
 	status = i40iw_process_cqp_cmd(dev, info);
-	अगर (status) अणु
+	if (status) {
 		i40iw_pr_err("error cqp command 0x%x failed\n", info->cqp_cmd);
-		i40iw_मुक्त_cqp_request(&iwdev->cqp, cqp_request);
-		वापस status;
-	पूर्ण
-	अगर (cqp_request->रुकोing)
-		err_code = i40iw_रुको_event(iwdev, cqp_request);
-	अगर (err_code)
+		i40iw_free_cqp_request(&iwdev->cqp, cqp_request);
+		return status;
+	}
+	if (cqp_request->waiting)
+		err_code = i40iw_wait_event(iwdev, cqp_request);
+	if (err_code)
 		status = I40IW_ERR_CQP_COMPL_ERROR;
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /**
  * i40iw_add_devusecount - add dev refcount
- * @iwdev: dev क्रम refcount
+ * @iwdev: dev for refcount
  */
-व्योम i40iw_add_devusecount(काष्ठा i40iw_device *iwdev)
-अणु
+void i40iw_add_devusecount(struct i40iw_device *iwdev)
+{
 	atomic64_inc(&iwdev->use_count);
-पूर्ण
+}
 
 /**
- * i40iw_rem_devusecount - decrement refcount क्रम dev
+ * i40iw_rem_devusecount - decrement refcount for dev
  * @iwdev: device
  */
-व्योम i40iw_rem_devusecount(काष्ठा i40iw_device *iwdev)
-अणु
-	अगर (!atomic64_dec_and_test(&iwdev->use_count))
-		वापस;
-	wake_up(&iwdev->बंद_wq);
-पूर्ण
+void i40iw_rem_devusecount(struct i40iw_device *iwdev)
+{
+	if (!atomic64_dec_and_test(&iwdev->use_count))
+		return;
+	wake_up(&iwdev->close_wq);
+}
 
 /**
  * i40iw_add_pdusecount - add pd refcount
- * @iwpd: pd क्रम refcount
+ * @iwpd: pd for refcount
  */
-व्योम i40iw_add_pdusecount(काष्ठा i40iw_pd *iwpd)
-अणु
+void i40iw_add_pdusecount(struct i40iw_pd *iwpd)
+{
 	atomic_inc(&iwpd->usecount);
-पूर्ण
+}
 
 /**
- * i40iw_rem_pdusecount - decrement refcount क्रम pd and मुक्त अगर 0
- * @iwpd: pd क्रम refcount
+ * i40iw_rem_pdusecount - decrement refcount for pd and free if 0
+ * @iwpd: pd for refcount
  * @iwdev: iwarp device
  */
-व्योम i40iw_rem_pdusecount(काष्ठा i40iw_pd *iwpd, काष्ठा i40iw_device *iwdev)
-अणु
-	अगर (!atomic_dec_and_test(&iwpd->usecount))
-		वापस;
-	i40iw_मुक्त_resource(iwdev, iwdev->allocated_pds, iwpd->sc_pd.pd_id);
-पूर्ण
+void i40iw_rem_pdusecount(struct i40iw_pd *iwpd, struct i40iw_device *iwdev)
+{
+	if (!atomic_dec_and_test(&iwpd->usecount))
+		return;
+	i40iw_free_resource(iwdev, iwdev->allocated_pds, iwpd->sc_pd.pd_id);
+}
 
 /**
- * i40iw_qp_add_ref - add refcount क्रम qp
+ * i40iw_qp_add_ref - add refcount for qp
  * @ibqp: iqarp qp
  */
-व्योम i40iw_qp_add_ref(काष्ठा ib_qp *ibqp)
-अणु
-	काष्ठा i40iw_qp *iwqp = (काष्ठा i40iw_qp *)ibqp;
+void i40iw_qp_add_ref(struct ib_qp *ibqp)
+{
+	struct i40iw_qp *iwqp = (struct i40iw_qp *)ibqp;
 
 	refcount_inc(&iwqp->refcount);
-पूर्ण
+}
 
 /**
- * i40iw_qp_rem_ref - rem refcount क्रम qp and मुक्त अगर 0
+ * i40iw_qp_rem_ref - rem refcount for qp and free if 0
  * @ibqp: iqarp qp
  */
-व्योम i40iw_qp_rem_ref(काष्ठा ib_qp *ibqp)
-अणु
-	काष्ठा i40iw_qp *iwqp;
-	काष्ठा i40iw_device *iwdev;
+void i40iw_qp_rem_ref(struct ib_qp *ibqp)
+{
+	struct i40iw_qp *iwqp;
+	struct i40iw_device *iwdev;
 	u32 qp_num;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	iwqp = to_iwqp(ibqp);
 	iwdev = iwqp->iwdev;
 	spin_lock_irqsave(&iwdev->qptable_lock, flags);
-	अगर (!refcount_dec_and_test(&iwqp->refcount)) अणु
+	if (!refcount_dec_and_test(&iwqp->refcount)) {
 		spin_unlock_irqrestore(&iwdev->qptable_lock, flags);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	qp_num = iwqp->ibqp.qp_num;
-	iwdev->qp_table[qp_num] = शून्य;
+	iwdev->qp_table[qp_num] = NULL;
 	spin_unlock_irqrestore(&iwdev->qptable_lock, flags);
-	complete(&iwqp->मुक्त_qp);
+	complete(&iwqp->free_qp);
 
-पूर्ण
+}
 
 /**
  * i40iw_get_qp - get qp address
  * @device: iwarp device
  * @qpn: qp number
  */
-काष्ठा ib_qp *i40iw_get_qp(काष्ठा ib_device *device, पूर्णांक qpn)
-अणु
-	काष्ठा i40iw_device *iwdev = to_iwdev(device);
+struct ib_qp *i40iw_get_qp(struct ib_device *device, int qpn)
+{
+	struct i40iw_device *iwdev = to_iwdev(device);
 
-	अगर ((qpn < IW_FIRST_QPN) || (qpn >= iwdev->max_qp))
-		वापस शून्य;
+	if ((qpn < IW_FIRST_QPN) || (qpn >= iwdev->max_qp))
+		return NULL;
 
-	वापस &iwdev->qp_table[qpn]->ibqp;
-पूर्ण
+	return &iwdev->qp_table[qpn]->ibqp;
+}
 
 /**
- * i40iw_debug_buf - prपूर्णांक debug msg and buffer is mask set
- * @dev: hardware control device काष्ठाure
- * @mask: mask to compare अगर to prपूर्णांक debug buffer
- * @desc: identअगरying string
- * @buf: poपूर्णांकs buffer addr
- * @size: saize of buffer to prपूर्णांक
+ * i40iw_debug_buf - print debug msg and buffer is mask set
+ * @dev: hardware control device structure
+ * @mask: mask to compare if to print debug buffer
+ * @desc: identifying string
+ * @buf: points buffer addr
+ * @size: saize of buffer to print
  */
-व्योम i40iw_debug_buf(काष्ठा i40iw_sc_dev *dev,
-		     क्रमागत i40iw_debug_flag mask,
-		     अक्षर *desc,
+void i40iw_debug_buf(struct i40iw_sc_dev *dev,
+		     enum i40iw_debug_flag mask,
+		     char *desc,
 		     u64 *buf,
 		     u32 size)
-अणु
+{
 	u32 i;
 
-	अगर (!(dev->debug_mask & mask))
-		वापस;
+	if (!(dev->debug_mask & mask))
+		return;
 	i40iw_debug(dev, mask, "%s\n", desc);
 	i40iw_debug(dev, mask, "starting address virt=%p phy=%llxh\n", buf,
-		    (अचिन्हित दीर्घ दीर्घ)virt_to_phys(buf));
+		    (unsigned long long)virt_to_phys(buf));
 
-	क्रम (i = 0; i < size; i += 8)
+	for (i = 0; i < size; i += 8)
 		i40iw_debug(dev, mask, "index %03d val: %016llx\n", i, buf[i / 8]);
-पूर्ण
+}
 
 /**
- * i40iw_get_hw_addr - वापस hw addr
- * @par: poपूर्णांकs to shared dev
+ * i40iw_get_hw_addr - return hw addr
+ * @par: points to shared dev
  */
-u8 __iomem *i40iw_get_hw_addr(व्योम *par)
-अणु
-	काष्ठा i40iw_sc_dev *dev = (काष्ठा i40iw_sc_dev *)par;
+u8 __iomem *i40iw_get_hw_addr(void *par)
+{
+	struct i40iw_sc_dev *dev = (struct i40iw_sc_dev *)par;
 
-	वापस dev->hw->hw_addr;
-पूर्ण
+	return dev->hw->hw_addr;
+}
 
 /**
- * i40iw_हटाओ_head - वापस head entry and हटाओ from list
- * @list: list क्रम entry
+ * i40iw_remove_head - return head entry and remove from list
+ * @list: list for entry
  */
-व्योम *i40iw_हटाओ_head(काष्ठा list_head *list)
-अणु
-	काष्ठा list_head *entry;
+void *i40iw_remove_head(struct list_head *list)
+{
+	struct list_head *entry;
 
-	अगर (list_empty(list))
-		वापस शून्य;
+	if (list_empty(list))
+		return NULL;
 
-	entry = (व्योम *)list->next;
+	entry = (void *)list->next;
 	list_del(entry);
-	वापस (व्योम *)entry;
-पूर्ण
+	return (void *)entry;
+}
 
 /**
  * i40iw_allocate_dma_mem - Memory alloc helper fn
- * @hw:   poपूर्णांकer to the HW काष्ठाure
- * @mem:  ptr to mem काष्ठा to fill out
+ * @hw:   pointer to the HW structure
+ * @mem:  ptr to mem struct to fill out
  * @size: size of memory requested
  * @alignment: what to align the allocation to
  */
-क्रमागत i40iw_status_code i40iw_allocate_dma_mem(काष्ठा i40iw_hw *hw,
-					      काष्ठा i40iw_dma_mem *mem,
+enum i40iw_status_code i40iw_allocate_dma_mem(struct i40iw_hw *hw,
+					      struct i40iw_dma_mem *mem,
 					      u64 size,
 					      u32 alignment)
-अणु
-	काष्ठा pci_dev *pcidev = hw->pcidev;
+{
+	struct pci_dev *pcidev = hw->pcidev;
 
-	अगर (!mem)
-		वापस I40IW_ERR_PARAM;
+	if (!mem)
+		return I40IW_ERR_PARAM;
 	mem->size = ALIGN(size, alignment);
 	mem->va = dma_alloc_coherent(&pcidev->dev, mem->size,
 				     (dma_addr_t *)&mem->pa, GFP_KERNEL);
-	अगर (!mem->va)
-		वापस I40IW_ERR_NO_MEMORY;
-	वापस 0;
-पूर्ण
+	if (!mem->va)
+		return I40IW_ERR_NO_MEMORY;
+	return 0;
+}
 
 /**
- * i40iw_मुक्त_dma_mem - Memory मुक्त helper fn
- * @hw:   poपूर्णांकer to the HW काष्ठाure
- * @mem:  ptr to mem काष्ठा to मुक्त
+ * i40iw_free_dma_mem - Memory free helper fn
+ * @hw:   pointer to the HW structure
+ * @mem:  ptr to mem struct to free
  */
-व्योम i40iw_मुक्त_dma_mem(काष्ठा i40iw_hw *hw, काष्ठा i40iw_dma_mem *mem)
-अणु
-	काष्ठा pci_dev *pcidev = hw->pcidev;
+void i40iw_free_dma_mem(struct i40iw_hw *hw, struct i40iw_dma_mem *mem)
+{
+	struct pci_dev *pcidev = hw->pcidev;
 
-	अगर (!mem || !mem->va)
-		वापस;
+	if (!mem || !mem->va)
+		return;
 
-	dma_मुक्त_coherent(&pcidev->dev, mem->size,
+	dma_free_coherent(&pcidev->dev, mem->size,
 			  mem->va, (dma_addr_t)mem->pa);
-	mem->va = शून्य;
-पूर्ण
+	mem->va = NULL;
+}
 
 /**
- * i40iw_allocate_virt_mem - भव memory alloc helper fn
- * @hw:   poपूर्णांकer to the HW काष्ठाure
- * @mem:  ptr to mem काष्ठा to fill out
+ * i40iw_allocate_virt_mem - virtual memory alloc helper fn
+ * @hw:   pointer to the HW structure
+ * @mem:  ptr to mem struct to fill out
  * @size: size of memory requested
  */
-क्रमागत i40iw_status_code i40iw_allocate_virt_mem(काष्ठा i40iw_hw *hw,
-					       काष्ठा i40iw_virt_mem *mem,
+enum i40iw_status_code i40iw_allocate_virt_mem(struct i40iw_hw *hw,
+					       struct i40iw_virt_mem *mem,
 					       u32 size)
-अणु
-	अगर (!mem)
-		वापस I40IW_ERR_PARAM;
+{
+	if (!mem)
+		return I40IW_ERR_PARAM;
 
 	mem->size = size;
 	mem->va = kzalloc(size, GFP_KERNEL);
 
-	अगर (mem->va)
-		वापस 0;
-	अन्यथा
-		वापस I40IW_ERR_NO_MEMORY;
-पूर्ण
+	if (mem->va)
+		return 0;
+	else
+		return I40IW_ERR_NO_MEMORY;
+}
 
 /**
- * i40iw_मुक्त_virt_mem - भव memory मुक्त helper fn
- * @hw:   poपूर्णांकer to the HW काष्ठाure
- * @mem:  ptr to mem काष्ठा to मुक्त
+ * i40iw_free_virt_mem - virtual memory free helper fn
+ * @hw:   pointer to the HW structure
+ * @mem:  ptr to mem struct to free
  */
-क्रमागत i40iw_status_code i40iw_मुक्त_virt_mem(काष्ठा i40iw_hw *hw,
-					   काष्ठा i40iw_virt_mem *mem)
-अणु
-	अगर (!mem)
-		वापस I40IW_ERR_PARAM;
+enum i40iw_status_code i40iw_free_virt_mem(struct i40iw_hw *hw,
+					   struct i40iw_virt_mem *mem)
+{
+	if (!mem)
+		return I40IW_ERR_PARAM;
 	/*
-	 * mem->va poपूर्णांकs to the parent of mem, so both mem and mem->va
-	 * can not be touched once mem->va is मुक्तd
+	 * mem->va points to the parent of mem, so both mem and mem->va
+	 * can not be touched once mem->va is freed
 	 */
-	kमुक्त(mem->va);
-	वापस 0;
-पूर्ण
+	kfree(mem->va);
+	return 0;
+}
 
 /**
- * i40iw_cqp_sds_cmd - create cqp command क्रम sd
- * @dev: hardware control device काष्ठाure
- * @sdinfo: inक्रमmation  क्रम sd cqp
+ * i40iw_cqp_sds_cmd - create cqp command for sd
+ * @dev: hardware control device structure
+ * @sdinfo: information  for sd cqp
  *
  */
-क्रमागत i40iw_status_code i40iw_cqp_sds_cmd(काष्ठा i40iw_sc_dev *dev,
-					 काष्ठा i40iw_update_sds_info *sdinfo)
-अणु
-	क्रमागत i40iw_status_code status;
-	काष्ठा i40iw_cqp_request *cqp_request;
-	काष्ठा cqp_commands_info *cqp_info;
-	काष्ठा i40iw_device *iwdev = (काष्ठा i40iw_device *)dev->back_dev;
+enum i40iw_status_code i40iw_cqp_sds_cmd(struct i40iw_sc_dev *dev,
+					 struct i40iw_update_sds_info *sdinfo)
+{
+	enum i40iw_status_code status;
+	struct i40iw_cqp_request *cqp_request;
+	struct cqp_commands_info *cqp_info;
+	struct i40iw_device *iwdev = (struct i40iw_device *)dev->back_dev;
 
 	cqp_request = i40iw_get_cqp_request(&iwdev->cqp, true);
-	अगर (!cqp_request)
-		वापस I40IW_ERR_NO_MEMORY;
+	if (!cqp_request)
+		return I40IW_ERR_NO_MEMORY;
 	cqp_info = &cqp_request->info;
-	स_नकल(&cqp_info->in.u.update_pe_sds.info, sdinfo,
-	       माप(cqp_info->in.u.update_pe_sds.info));
+	memcpy(&cqp_info->in.u.update_pe_sds.info, sdinfo,
+	       sizeof(cqp_info->in.u.update_pe_sds.info));
 	cqp_info->cqp_cmd = OP_UPDATE_PE_SDS;
 	cqp_info->post_sq = 1;
 	cqp_info->in.u.update_pe_sds.dev = dev;
-	cqp_info->in.u.update_pe_sds.scratch = (uपूर्णांकptr_t)cqp_request;
+	cqp_info->in.u.update_pe_sds.scratch = (uintptr_t)cqp_request;
 	status = i40iw_handle_cqp_op(iwdev, cqp_request);
-	अगर (status)
+	if (status)
 		i40iw_pr_err("CQP-OP Update SD's fail");
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /**
- * i40iw_qp_suspend_resume - cqp command क्रम suspend/resume
- * @dev: hardware control device काष्ठाure
+ * i40iw_qp_suspend_resume - cqp command for suspend/resume
+ * @dev: hardware control device structure
  * @qp: hardware control qp
- * @suspend: flag अगर suspend or resume
+ * @suspend: flag if suspend or resume
  */
-व्योम i40iw_qp_suspend_resume(काष्ठा i40iw_sc_dev *dev, काष्ठा i40iw_sc_qp *qp, bool suspend)
-अणु
-	काष्ठा i40iw_device *iwdev = (काष्ठा i40iw_device *)dev->back_dev;
-	काष्ठा i40iw_cqp_request *cqp_request;
-	काष्ठा i40iw_sc_cqp *cqp = dev->cqp;
-	काष्ठा cqp_commands_info *cqp_info;
-	क्रमागत i40iw_status_code status;
+void i40iw_qp_suspend_resume(struct i40iw_sc_dev *dev, struct i40iw_sc_qp *qp, bool suspend)
+{
+	struct i40iw_device *iwdev = (struct i40iw_device *)dev->back_dev;
+	struct i40iw_cqp_request *cqp_request;
+	struct i40iw_sc_cqp *cqp = dev->cqp;
+	struct cqp_commands_info *cqp_info;
+	enum i40iw_status_code status;
 
 	cqp_request = i40iw_get_cqp_request(&iwdev->cqp, false);
-	अगर (!cqp_request)
-		वापस;
+	if (!cqp_request)
+		return;
 
 	cqp_info = &cqp_request->info;
 	cqp_info->cqp_cmd = (suspend) ? OP_SUSPEND : OP_RESUME;
 	cqp_info->in.u.suspend_resume.cqp = cqp;
 	cqp_info->in.u.suspend_resume.qp = qp;
-	cqp_info->in.u.suspend_resume.scratch = (uपूर्णांकptr_t)cqp_request;
+	cqp_info->in.u.suspend_resume.scratch = (uintptr_t)cqp_request;
 	status = i40iw_handle_cqp_op(iwdev, cqp_request);
-	अगर (status)
+	if (status)
 		i40iw_pr_err("CQP-OP QP Suspend/Resume fail");
-पूर्ण
+}
 
 /**
- * i40iw_term_modअगरy_qp - modअगरy qp क्रम term message
+ * i40iw_term_modify_qp - modify qp for term message
  * @qp: hardware control qp
  * @next_state: qp's next state
  * @term: terminate code
  * @term_len: length
  */
-व्योम i40iw_term_modअगरy_qp(काष्ठा i40iw_sc_qp *qp, u8 next_state, u8 term, u8 term_len)
-अणु
-	काष्ठा i40iw_qp *iwqp;
+void i40iw_term_modify_qp(struct i40iw_sc_qp *qp, u8 next_state, u8 term, u8 term_len)
+{
+	struct i40iw_qp *iwqp;
 
-	iwqp = (काष्ठा i40iw_qp *)qp->back_qp;
+	iwqp = (struct i40iw_qp *)qp->back_qp;
 	i40iw_next_iw_state(iwqp, next_state, 0, term, term_len);
-पूर्ण;
+};
 
 /**
- * i40iw_terminate_करोne - after terminate is completed
+ * i40iw_terminate_done - after terminate is completed
  * @qp: hardware control qp
- * @समयout_occurred: indicates अगर terminate समयr expired
+ * @timeout_occurred: indicates if terminate timer expired
  */
-व्योम i40iw_terminate_करोne(काष्ठा i40iw_sc_qp *qp, पूर्णांक समयout_occurred)
-अणु
-	काष्ठा i40iw_qp *iwqp;
+void i40iw_terminate_done(struct i40iw_sc_qp *qp, int timeout_occurred)
+{
+	struct i40iw_qp *iwqp;
 	u32 next_iwarp_state = I40IW_QP_STATE_ERROR;
 	u8 hte = 0;
-	bool first_समय;
-	अचिन्हित दीर्घ flags;
+	bool first_time;
+	unsigned long flags;
 
-	iwqp = (काष्ठा i40iw_qp *)qp->back_qp;
+	iwqp = (struct i40iw_qp *)qp->back_qp;
 	spin_lock_irqsave(&iwqp->lock, flags);
-	अगर (iwqp->hte_added) अणु
+	if (iwqp->hte_added) {
 		iwqp->hte_added = 0;
 		hte = 1;
-	पूर्ण
-	first_समय = !(qp->term_flags & I40IW_TERM_DONE);
+	}
+	first_time = !(qp->term_flags & I40IW_TERM_DONE);
 	qp->term_flags |= I40IW_TERM_DONE;
 	spin_unlock_irqrestore(&iwqp->lock, flags);
-	अगर (first_समय) अणु
-		अगर (!समयout_occurred)
-			i40iw_terminate_del_समयr(qp);
-		अन्यथा
+	if (first_time) {
+		if (!timeout_occurred)
+			i40iw_terminate_del_timer(qp);
+		else
 			next_iwarp_state = I40IW_QP_STATE_CLOSING;
 
 		i40iw_next_iw_state(iwqp, next_iwarp_state, hte, 0, 0);
 		i40iw_cm_disconn(iwqp);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * i40iw_terminate_समयout - समयout happened
- * @t: poपूर्णांकs to iwarp qp
+ * i40iw_terminate_timeout - timeout happened
+ * @t: points to iwarp qp
  */
-अटल व्योम i40iw_terminate_समयout(काष्ठा समयr_list *t)
-अणु
-	काष्ठा i40iw_qp *iwqp = from_समयr(iwqp, t, terminate_समयr);
-	काष्ठा i40iw_sc_qp *qp = (काष्ठा i40iw_sc_qp *)&iwqp->sc_qp;
+static void i40iw_terminate_timeout(struct timer_list *t)
+{
+	struct i40iw_qp *iwqp = from_timer(iwqp, t, terminate_timer);
+	struct i40iw_sc_qp *qp = (struct i40iw_sc_qp *)&iwqp->sc_qp;
 
-	i40iw_terminate_करोne(qp, 1);
+	i40iw_terminate_done(qp, 1);
 	i40iw_qp_rem_ref(&iwqp->ibqp);
-पूर्ण
+}
 
 /**
- * i40iw_terminate_start_समयr - start terminate समयout
+ * i40iw_terminate_start_timer - start terminate timeout
  * @qp: hardware control qp
  */
-व्योम i40iw_terminate_start_समयr(काष्ठा i40iw_sc_qp *qp)
-अणु
-	काष्ठा i40iw_qp *iwqp;
+void i40iw_terminate_start_timer(struct i40iw_sc_qp *qp)
+{
+	struct i40iw_qp *iwqp;
 
-	iwqp = (काष्ठा i40iw_qp *)qp->back_qp;
+	iwqp = (struct i40iw_qp *)qp->back_qp;
 	i40iw_qp_add_ref(&iwqp->ibqp);
-	समयr_setup(&iwqp->terminate_समयr, i40iw_terminate_समयout, 0);
-	iwqp->terminate_समयr.expires = jअगरfies + HZ;
-	add_समयr(&iwqp->terminate_समयr);
-पूर्ण
+	timer_setup(&iwqp->terminate_timer, i40iw_terminate_timeout, 0);
+	iwqp->terminate_timer.expires = jiffies + HZ;
+	add_timer(&iwqp->terminate_timer);
+}
 
 /**
- * i40iw_terminate_del_समयr - delete terminate समयout
+ * i40iw_terminate_del_timer - delete terminate timeout
  * @qp: hardware control qp
  */
-व्योम i40iw_terminate_del_समयr(काष्ठा i40iw_sc_qp *qp)
-अणु
-	काष्ठा i40iw_qp *iwqp;
+void i40iw_terminate_del_timer(struct i40iw_sc_qp *qp)
+{
+	struct i40iw_qp *iwqp;
 
-	iwqp = (काष्ठा i40iw_qp *)qp->back_qp;
-	अगर (del_समयr(&iwqp->terminate_समयr))
+	iwqp = (struct i40iw_qp *)qp->back_qp;
+	if (del_timer(&iwqp->terminate_timer))
 		i40iw_qp_rem_ref(&iwqp->ibqp);
-पूर्ण
+}
 
 /**
- * i40iw_cqp_generic_worker - generic worker क्रम cqp
- * @work: work poपूर्णांकer
+ * i40iw_cqp_generic_worker - generic worker for cqp
+ * @work: work pointer
  */
-अटल व्योम i40iw_cqp_generic_worker(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा i40iw_virtchnl_work_info *work_info =
-	    &((काष्ठा virtchnl_work *)work)->work_info;
+static void i40iw_cqp_generic_worker(struct work_struct *work)
+{
+	struct i40iw_virtchnl_work_info *work_info =
+	    &((struct virtchnl_work *)work)->work_info;
 
-	अगर (work_info->worker_vf_dev)
+	if (work_info->worker_vf_dev)
 		work_info->callback_fcn(work_info->worker_vf_dev);
-पूर्ण
+}
 
 /**
- * i40iw_cqp_spawn_worker - spawn worket thपढ़ो
- * @dev: device काष्ठा poपूर्णांकer
+ * i40iw_cqp_spawn_worker - spawn worket thread
+ * @dev: device struct pointer
  * @work_info: work request info
- * @iw_vf_idx: भव function index
+ * @iw_vf_idx: virtual function index
  */
-व्योम i40iw_cqp_spawn_worker(काष्ठा i40iw_sc_dev *dev,
-			    काष्ठा i40iw_virtchnl_work_info *work_info,
+void i40iw_cqp_spawn_worker(struct i40iw_sc_dev *dev,
+			    struct i40iw_virtchnl_work_info *work_info,
 			    u32 iw_vf_idx)
-अणु
-	काष्ठा virtchnl_work *work;
-	काष्ठा i40iw_device *iwdev = (काष्ठा i40iw_device *)dev->back_dev;
+{
+	struct virtchnl_work *work;
+	struct i40iw_device *iwdev = (struct i40iw_device *)dev->back_dev;
 
 	work = &iwdev->virtchnl_w[iw_vf_idx];
-	स_नकल(&work->work_info, work_info, माप(*work_info));
+	memcpy(&work->work_info, work_info, sizeof(*work_info));
 	INIT_WORK(&work->work, i40iw_cqp_generic_worker);
 	queue_work(iwdev->virtchnl_wq, &work->work);
-पूर्ण
+}
 
 /**
  * i40iw_cqp_manage_hmc_fcn_worker -
- * @work: work poपूर्णांकer क्रम hmc info
+ * @work: work pointer for hmc info
  */
-अटल व्योम i40iw_cqp_manage_hmc_fcn_worker(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा i40iw_cqp_request *cqp_request =
-	    ((काष्ठा virtchnl_work *)work)->cqp_request;
-	काष्ठा i40iw_ccq_cqe_info ccq_cqe_info;
-	काष्ठा i40iw_hmc_fcn_info *hmcfcninfo =
+static void i40iw_cqp_manage_hmc_fcn_worker(struct work_struct *work)
+{
+	struct i40iw_cqp_request *cqp_request =
+	    ((struct virtchnl_work *)work)->cqp_request;
+	struct i40iw_ccq_cqe_info ccq_cqe_info;
+	struct i40iw_hmc_fcn_info *hmcfcninfo =
 			&cqp_request->info.in.u.manage_hmc_pm.info;
-	काष्ठा i40iw_device *iwdev =
-	    (काष्ठा i40iw_device *)cqp_request->info.in.u.manage_hmc_pm.dev->back_dev;
+	struct i40iw_device *iwdev =
+	    (struct i40iw_device *)cqp_request->info.in.u.manage_hmc_pm.dev->back_dev;
 
-	ccq_cqe_info.cqp = शून्य;
+	ccq_cqe_info.cqp = NULL;
 	ccq_cqe_info.maj_err_code = cqp_request->compl_info.maj_err_code;
 	ccq_cqe_info.min_err_code = cqp_request->compl_info.min_err_code;
 	ccq_cqe_info.op_code = cqp_request->compl_info.op_code;
@@ -987,24 +986,24 @@ u8 __iomem *i40iw_get_hw_addr(व्योम *par)
 	hmcfcninfo->callback_fcn(cqp_request->info.in.u.manage_hmc_pm.dev,
 				 hmcfcninfo->cqp_callback_param, &ccq_cqe_info);
 	i40iw_put_cqp_request(&iwdev->cqp, cqp_request);
-पूर्ण
+}
 
 /**
  * i40iw_cqp_manage_hmc_fcn_callback - called function after cqp completion
- * @cqp_request: cqp request info काष्ठा क्रम hmc fun
+ * @cqp_request: cqp request info struct for hmc fun
  * @unused: unused param of callback
  */
-अटल व्योम i40iw_cqp_manage_hmc_fcn_callback(काष्ठा i40iw_cqp_request *cqp_request,
+static void i40iw_cqp_manage_hmc_fcn_callback(struct i40iw_cqp_request *cqp_request,
 					      u32 unused)
-अणु
-	काष्ठा virtchnl_work *work;
-	काष्ठा i40iw_hmc_fcn_info *hmcfcninfo =
+{
+	struct virtchnl_work *work;
+	struct i40iw_hmc_fcn_info *hmcfcninfo =
 	    &cqp_request->info.in.u.manage_hmc_pm.info;
-	काष्ठा i40iw_device *iwdev =
-	    (काष्ठा i40iw_device *)cqp_request->info.in.u.manage_hmc_pm.dev->
+	struct i40iw_device *iwdev =
+	    (struct i40iw_device *)cqp_request->info.in.u.manage_hmc_pm.dev->
 	    back_dev;
 
-	अगर (hmcfcninfo && hmcfcninfo->callback_fcn) अणु
+	if (hmcfcninfo && hmcfcninfo->callback_fcn) {
 		i40iw_debug(&iwdev->sc_dev, I40IW_DEBUG_HMC, "%s1\n", __func__);
 		atomic_inc(&cqp_request->refcount);
 		work = &iwdev->virtchnl_w[hmcfcninfo->iw_vf_idx];
@@ -1012,189 +1011,189 @@ u8 __iomem *i40iw_get_hw_addr(व्योम *par)
 		INIT_WORK(&work->work, i40iw_cqp_manage_hmc_fcn_worker);
 		queue_work(iwdev->virtchnl_wq, &work->work);
 		i40iw_debug(&iwdev->sc_dev, I40IW_DEBUG_HMC, "%s2\n", __func__);
-	पूर्ण अन्यथा अणु
+	} else {
 		i40iw_debug(&iwdev->sc_dev, I40IW_DEBUG_HMC, "%s: Something wrong\n", __func__);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * i40iw_cqp_manage_hmc_fcn_cmd - issue cqp command to manage hmc
- * @dev: hardware control device काष्ठाure
- * @hmcfcninfo: info क्रम hmc
+ * @dev: hardware control device structure
+ * @hmcfcninfo: info for hmc
  */
-क्रमागत i40iw_status_code i40iw_cqp_manage_hmc_fcn_cmd(काष्ठा i40iw_sc_dev *dev,
-						    काष्ठा i40iw_hmc_fcn_info *hmcfcninfo)
-अणु
-	क्रमागत i40iw_status_code status;
-	काष्ठा i40iw_cqp_request *cqp_request;
-	काष्ठा cqp_commands_info *cqp_info;
-	काष्ठा i40iw_device *iwdev = (काष्ठा i40iw_device *)dev->back_dev;
+enum i40iw_status_code i40iw_cqp_manage_hmc_fcn_cmd(struct i40iw_sc_dev *dev,
+						    struct i40iw_hmc_fcn_info *hmcfcninfo)
+{
+	enum i40iw_status_code status;
+	struct i40iw_cqp_request *cqp_request;
+	struct cqp_commands_info *cqp_info;
+	struct i40iw_device *iwdev = (struct i40iw_device *)dev->back_dev;
 
 	i40iw_debug(&iwdev->sc_dev, I40IW_DEBUG_HMC, "%s\n", __func__);
 	cqp_request = i40iw_get_cqp_request(&iwdev->cqp, false);
-	अगर (!cqp_request)
-		वापस I40IW_ERR_NO_MEMORY;
+	if (!cqp_request)
+		return I40IW_ERR_NO_MEMORY;
 	cqp_info = &cqp_request->info;
 	cqp_request->callback_fcn = i40iw_cqp_manage_hmc_fcn_callback;
 	cqp_request->param = hmcfcninfo;
-	स_नकल(&cqp_info->in.u.manage_hmc_pm.info, hmcfcninfo,
-	       माप(*hmcfcninfo));
+	memcpy(&cqp_info->in.u.manage_hmc_pm.info, hmcfcninfo,
+	       sizeof(*hmcfcninfo));
 	cqp_info->in.u.manage_hmc_pm.dev = dev;
 	cqp_info->cqp_cmd = OP_MANAGE_HMC_PM_FUNC_TABLE;
 	cqp_info->post_sq = 1;
-	cqp_info->in.u.manage_hmc_pm.scratch = (uपूर्णांकptr_t)cqp_request;
+	cqp_info->in.u.manage_hmc_pm.scratch = (uintptr_t)cqp_request;
 	status = i40iw_handle_cqp_op(iwdev, cqp_request);
-	अगर (status)
+	if (status)
 		i40iw_pr_err("CQP-OP Manage HMC fail");
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /**
- * i40iw_cqp_query_fpm_values_cmd - send cqp command क्रम fpm
- * @dev: function device काष्ठा
- * @values_mem: buffer क्रम fpm
- * @hmc_fn_id: function id क्रम fpm
+ * i40iw_cqp_query_fpm_values_cmd - send cqp command for fpm
+ * @dev: function device struct
+ * @values_mem: buffer for fpm
+ * @hmc_fn_id: function id for fpm
  */
-क्रमागत i40iw_status_code i40iw_cqp_query_fpm_values_cmd(काष्ठा i40iw_sc_dev *dev,
-						      काष्ठा i40iw_dma_mem *values_mem,
+enum i40iw_status_code i40iw_cqp_query_fpm_values_cmd(struct i40iw_sc_dev *dev,
+						      struct i40iw_dma_mem *values_mem,
 						      u8 hmc_fn_id)
-अणु
-	क्रमागत i40iw_status_code status;
-	काष्ठा i40iw_cqp_request *cqp_request;
-	काष्ठा cqp_commands_info *cqp_info;
-	काष्ठा i40iw_device *iwdev = (काष्ठा i40iw_device *)dev->back_dev;
+{
+	enum i40iw_status_code status;
+	struct i40iw_cqp_request *cqp_request;
+	struct cqp_commands_info *cqp_info;
+	struct i40iw_device *iwdev = (struct i40iw_device *)dev->back_dev;
 
 	cqp_request = i40iw_get_cqp_request(&iwdev->cqp, true);
-	अगर (!cqp_request)
-		वापस I40IW_ERR_NO_MEMORY;
+	if (!cqp_request)
+		return I40IW_ERR_NO_MEMORY;
 	cqp_info = &cqp_request->info;
-	cqp_request->param = शून्य;
+	cqp_request->param = NULL;
 	cqp_info->in.u.query_fpm_values.cqp = dev->cqp;
 	cqp_info->in.u.query_fpm_values.fpm_values_pa = values_mem->pa;
 	cqp_info->in.u.query_fpm_values.fpm_values_va = values_mem->va;
 	cqp_info->in.u.query_fpm_values.hmc_fn_id = hmc_fn_id;
 	cqp_info->cqp_cmd = OP_QUERY_FPM_VALUES;
 	cqp_info->post_sq = 1;
-	cqp_info->in.u.query_fpm_values.scratch = (uपूर्णांकptr_t)cqp_request;
+	cqp_info->in.u.query_fpm_values.scratch = (uintptr_t)cqp_request;
 	status = i40iw_handle_cqp_op(iwdev, cqp_request);
-	अगर (status)
+	if (status)
 		i40iw_pr_err("CQP-OP Query FPM fail");
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /**
  * i40iw_cqp_commit_fpm_values_cmd - commit fpm values in hw
- * @dev: hardware control device काष्ठाure
+ * @dev: hardware control device structure
  * @values_mem: buffer with fpm values
- * @hmc_fn_id: function id क्रम fpm
+ * @hmc_fn_id: function id for fpm
  */
-क्रमागत i40iw_status_code i40iw_cqp_commit_fpm_values_cmd(काष्ठा i40iw_sc_dev *dev,
-						       काष्ठा i40iw_dma_mem *values_mem,
+enum i40iw_status_code i40iw_cqp_commit_fpm_values_cmd(struct i40iw_sc_dev *dev,
+						       struct i40iw_dma_mem *values_mem,
 						       u8 hmc_fn_id)
-अणु
-	क्रमागत i40iw_status_code status;
-	काष्ठा i40iw_cqp_request *cqp_request;
-	काष्ठा cqp_commands_info *cqp_info;
-	काष्ठा i40iw_device *iwdev = (काष्ठा i40iw_device *)dev->back_dev;
+{
+	enum i40iw_status_code status;
+	struct i40iw_cqp_request *cqp_request;
+	struct cqp_commands_info *cqp_info;
+	struct i40iw_device *iwdev = (struct i40iw_device *)dev->back_dev;
 
 	cqp_request = i40iw_get_cqp_request(&iwdev->cqp, true);
-	अगर (!cqp_request)
-		वापस I40IW_ERR_NO_MEMORY;
+	if (!cqp_request)
+		return I40IW_ERR_NO_MEMORY;
 	cqp_info = &cqp_request->info;
-	cqp_request->param = शून्य;
+	cqp_request->param = NULL;
 	cqp_info->in.u.commit_fpm_values.cqp = dev->cqp;
 	cqp_info->in.u.commit_fpm_values.fpm_values_pa = values_mem->pa;
 	cqp_info->in.u.commit_fpm_values.fpm_values_va = values_mem->va;
 	cqp_info->in.u.commit_fpm_values.hmc_fn_id = hmc_fn_id;
 	cqp_info->cqp_cmd = OP_COMMIT_FPM_VALUES;
 	cqp_info->post_sq = 1;
-	cqp_info->in.u.commit_fpm_values.scratch = (uपूर्णांकptr_t)cqp_request;
+	cqp_info->in.u.commit_fpm_values.scratch = (uintptr_t)cqp_request;
 	status = i40iw_handle_cqp_op(iwdev, cqp_request);
-	अगर (status)
+	if (status)
 		i40iw_pr_err("CQP-OP Commit FPM fail");
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /**
- * i40iw_vf_रुको_vchnl_resp - रुको क्रम channel msg
- * @dev: function's device काष्ठा
+ * i40iw_vf_wait_vchnl_resp - wait for channel msg
+ * @dev: function's device struct
  */
-क्रमागत i40iw_status_code i40iw_vf_रुको_vchnl_resp(काष्ठा i40iw_sc_dev *dev)
-अणु
-	काष्ठा i40iw_device *iwdev = dev->back_dev;
-	पूर्णांक समयout_ret;
+enum i40iw_status_code i40iw_vf_wait_vchnl_resp(struct i40iw_sc_dev *dev)
+{
+	struct i40iw_device *iwdev = dev->back_dev;
+	int timeout_ret;
 
 	i40iw_debug(dev, I40IW_DEBUG_VIRT, "%s[%u] dev %p, iwdev %p\n",
 		    __func__, __LINE__, dev, iwdev);
 
 	atomic_set(&iwdev->vchnl_msgs, 2);
-	समयout_ret = रुको_event_समयout(iwdev->vchnl_रुकोq,
-					 (atomic_पढ़ो(&iwdev->vchnl_msgs) == 1),
+	timeout_ret = wait_event_timeout(iwdev->vchnl_waitq,
+					 (atomic_read(&iwdev->vchnl_msgs) == 1),
 					 I40IW_VCHNL_EVENT_TIMEOUT);
 	atomic_dec(&iwdev->vchnl_msgs);
-	अगर (!समयout_ret) अणु
-		i40iw_pr_err("virt channel completion timeout = 0x%x\n", समयout_ret);
+	if (!timeout_ret) {
+		i40iw_pr_err("virt channel completion timeout = 0x%x\n", timeout_ret);
 		atomic_set(&iwdev->vchnl_msgs, 0);
 		dev->vchnl_up = false;
-		वापस I40IW_ERR_TIMEOUT;
-	पूर्ण
+		return I40IW_ERR_TIMEOUT;
+	}
 	wake_up(&dev->vf_reqs);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * i40iw_cqp_cq_create_cmd - create a cq क्रम the cqp
- * @dev: device poपूर्णांकer
- * @cq: poपूर्णांकer to created cq
+ * i40iw_cqp_cq_create_cmd - create a cq for the cqp
+ * @dev: device pointer
+ * @cq: pointer to created cq
  */
-क्रमागत i40iw_status_code i40iw_cqp_cq_create_cmd(काष्ठा i40iw_sc_dev *dev,
-					       काष्ठा i40iw_sc_cq *cq)
-अणु
-	काष्ठा i40iw_device *iwdev = (काष्ठा i40iw_device *)dev->back_dev;
-	काष्ठा i40iw_cqp *iwcqp = &iwdev->cqp;
-	काष्ठा i40iw_cqp_request *cqp_request;
-	काष्ठा cqp_commands_info *cqp_info;
-	क्रमागत i40iw_status_code status;
+enum i40iw_status_code i40iw_cqp_cq_create_cmd(struct i40iw_sc_dev *dev,
+					       struct i40iw_sc_cq *cq)
+{
+	struct i40iw_device *iwdev = (struct i40iw_device *)dev->back_dev;
+	struct i40iw_cqp *iwcqp = &iwdev->cqp;
+	struct i40iw_cqp_request *cqp_request;
+	struct cqp_commands_info *cqp_info;
+	enum i40iw_status_code status;
 
 	cqp_request = i40iw_get_cqp_request(iwcqp, true);
-	अगर (!cqp_request)
-		वापस I40IW_ERR_NO_MEMORY;
+	if (!cqp_request)
+		return I40IW_ERR_NO_MEMORY;
 
 	cqp_info = &cqp_request->info;
 	cqp_info->cqp_cmd = OP_CQ_CREATE;
 	cqp_info->post_sq = 1;
 	cqp_info->in.u.cq_create.cq = cq;
-	cqp_info->in.u.cq_create.scratch = (uपूर्णांकptr_t)cqp_request;
+	cqp_info->in.u.cq_create.scratch = (uintptr_t)cqp_request;
 	status = i40iw_handle_cqp_op(iwdev, cqp_request);
-	अगर (status)
+	if (status)
 		i40iw_pr_err("CQP-OP Create QP fail");
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /**
- * i40iw_cqp_qp_create_cmd - create a qp क्रम the cqp
- * @dev: device poपूर्णांकer
- * @qp: poपूर्णांकer to created qp
+ * i40iw_cqp_qp_create_cmd - create a qp for the cqp
+ * @dev: device pointer
+ * @qp: pointer to created qp
  */
-क्रमागत i40iw_status_code i40iw_cqp_qp_create_cmd(काष्ठा i40iw_sc_dev *dev,
-					       काष्ठा i40iw_sc_qp *qp)
-अणु
-	काष्ठा i40iw_device *iwdev = (काष्ठा i40iw_device *)dev->back_dev;
-	काष्ठा i40iw_cqp *iwcqp = &iwdev->cqp;
-	काष्ठा i40iw_cqp_request *cqp_request;
-	काष्ठा cqp_commands_info *cqp_info;
-	काष्ठा i40iw_create_qp_info *qp_info;
-	क्रमागत i40iw_status_code status;
+enum i40iw_status_code i40iw_cqp_qp_create_cmd(struct i40iw_sc_dev *dev,
+					       struct i40iw_sc_qp *qp)
+{
+	struct i40iw_device *iwdev = (struct i40iw_device *)dev->back_dev;
+	struct i40iw_cqp *iwcqp = &iwdev->cqp;
+	struct i40iw_cqp_request *cqp_request;
+	struct cqp_commands_info *cqp_info;
+	struct i40iw_create_qp_info *qp_info;
+	enum i40iw_status_code status;
 
 	cqp_request = i40iw_get_cqp_request(iwcqp, true);
-	अगर (!cqp_request)
-		वापस I40IW_ERR_NO_MEMORY;
+	if (!cqp_request)
+		return I40IW_ERR_NO_MEMORY;
 
 	cqp_info = &cqp_request->info;
 	qp_info = &cqp_request->info.in.u.qp_create.info;
 
-	स_रखो(qp_info, 0, माप(*qp_info));
+	memset(qp_info, 0, sizeof(*qp_info));
 
 	qp_info->cq_num_valid = true;
 	qp_info->next_iwarp_state = I40IW_QP_STATE_RTS;
@@ -1202,318 +1201,318 @@ u8 __iomem *i40iw_get_hw_addr(व्योम *par)
 	cqp_info->cqp_cmd = OP_QP_CREATE;
 	cqp_info->post_sq = 1;
 	cqp_info->in.u.qp_create.qp = qp;
-	cqp_info->in.u.qp_create.scratch = (uपूर्णांकptr_t)cqp_request;
+	cqp_info->in.u.qp_create.scratch = (uintptr_t)cqp_request;
 	status = i40iw_handle_cqp_op(iwdev, cqp_request);
-	अगर (status)
+	if (status)
 		i40iw_pr_err("CQP-OP QP create fail");
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /**
  * i40iw_cqp_cq_destroy_cmd - destroy the cqp cq
- * @dev: device poपूर्णांकer
- * @cq: poपूर्णांकer to cq
+ * @dev: device pointer
+ * @cq: pointer to cq
  */
-व्योम i40iw_cqp_cq_destroy_cmd(काष्ठा i40iw_sc_dev *dev, काष्ठा i40iw_sc_cq *cq)
-अणु
-	काष्ठा i40iw_device *iwdev = (काष्ठा i40iw_device *)dev->back_dev;
+void i40iw_cqp_cq_destroy_cmd(struct i40iw_sc_dev *dev, struct i40iw_sc_cq *cq)
+{
+	struct i40iw_device *iwdev = (struct i40iw_device *)dev->back_dev;
 
 	i40iw_cq_wq_destroy(iwdev, cq);
-पूर्ण
+}
 
 /**
  * i40iw_cqp_qp_destroy_cmd - destroy the cqp
- * @dev: device poपूर्णांकer
- * @qp: poपूर्णांकer to qp
+ * @dev: device pointer
+ * @qp: pointer to qp
  */
-व्योम i40iw_cqp_qp_destroy_cmd(काष्ठा i40iw_sc_dev *dev, काष्ठा i40iw_sc_qp *qp)
-अणु
-	काष्ठा i40iw_device *iwdev = (काष्ठा i40iw_device *)dev->back_dev;
-	काष्ठा i40iw_cqp *iwcqp = &iwdev->cqp;
-	काष्ठा i40iw_cqp_request *cqp_request;
-	काष्ठा cqp_commands_info *cqp_info;
-	क्रमागत i40iw_status_code status;
+void i40iw_cqp_qp_destroy_cmd(struct i40iw_sc_dev *dev, struct i40iw_sc_qp *qp)
+{
+	struct i40iw_device *iwdev = (struct i40iw_device *)dev->back_dev;
+	struct i40iw_cqp *iwcqp = &iwdev->cqp;
+	struct i40iw_cqp_request *cqp_request;
+	struct cqp_commands_info *cqp_info;
+	enum i40iw_status_code status;
 
 	cqp_request = i40iw_get_cqp_request(iwcqp, true);
-	अगर (!cqp_request)
-		वापस;
+	if (!cqp_request)
+		return;
 
 	cqp_info = &cqp_request->info;
-	स_रखो(cqp_info, 0, माप(*cqp_info));
+	memset(cqp_info, 0, sizeof(*cqp_info));
 
 	cqp_info->cqp_cmd = OP_QP_DESTROY;
 	cqp_info->post_sq = 1;
 	cqp_info->in.u.qp_destroy.qp = qp;
-	cqp_info->in.u.qp_destroy.scratch = (uपूर्णांकptr_t)cqp_request;
-	cqp_info->in.u.qp_destroy.हटाओ_hash_idx = true;
+	cqp_info->in.u.qp_destroy.scratch = (uintptr_t)cqp_request;
+	cqp_info->in.u.qp_destroy.remove_hash_idx = true;
 	status = i40iw_handle_cqp_op(iwdev, cqp_request);
-	अगर (status)
+	if (status)
 		i40iw_pr_err("CQP QP_DESTROY fail");
-पूर्ण
+}
 
 
 /**
- * i40iw_ieq_mpa_crc_ae - generate AE क्रम crc error
- * @dev: hardware control device काष्ठाure
+ * i40iw_ieq_mpa_crc_ae - generate AE for crc error
+ * @dev: hardware control device structure
  * @qp: hardware control qp
  */
-व्योम i40iw_ieq_mpa_crc_ae(काष्ठा i40iw_sc_dev *dev, काष्ठा i40iw_sc_qp *qp)
-अणु
-	काष्ठा i40iw_gen_ae_info info;
-	काष्ठा i40iw_device *iwdev = (काष्ठा i40iw_device *)dev->back_dev;
+void i40iw_ieq_mpa_crc_ae(struct i40iw_sc_dev *dev, struct i40iw_sc_qp *qp)
+{
+	struct i40iw_gen_ae_info info;
+	struct i40iw_device *iwdev = (struct i40iw_device *)dev->back_dev;
 
 	i40iw_debug(dev, I40IW_DEBUG_AEQ, "%s entered\n", __func__);
 	info.ae_code = I40IW_AE_LLP_RECEIVED_MPA_CRC_ERROR;
 	info.ae_source = I40IW_AE_SOURCE_RQ;
 	i40iw_gen_ae(iwdev, qp, &info, false);
-पूर्ण
+}
 
 /**
- * i40iw_init_hash_desc - initialize hash क्रम crc calculation
+ * i40iw_init_hash_desc - initialize hash for crc calculation
  * @desc: cryption type
  */
-क्रमागत i40iw_status_code i40iw_init_hash_desc(काष्ठा shash_desc **desc)
-अणु
-	काष्ठा crypto_shash *tfm;
-	काष्ठा shash_desc *tdesc;
+enum i40iw_status_code i40iw_init_hash_desc(struct shash_desc **desc)
+{
+	struct crypto_shash *tfm;
+	struct shash_desc *tdesc;
 
 	tfm = crypto_alloc_shash("crc32c", 0, 0);
-	अगर (IS_ERR(tfm))
-		वापस I40IW_ERR_MPA_CRC;
+	if (IS_ERR(tfm))
+		return I40IW_ERR_MPA_CRC;
 
-	tdesc = kzalloc(माप(*tdesc) + crypto_shash_descsize(tfm),
+	tdesc = kzalloc(sizeof(*tdesc) + crypto_shash_descsize(tfm),
 			GFP_KERNEL);
-	अगर (!tdesc) अणु
-		crypto_मुक्त_shash(tfm);
-		वापस I40IW_ERR_MPA_CRC;
-	पूर्ण
+	if (!tdesc) {
+		crypto_free_shash(tfm);
+		return I40IW_ERR_MPA_CRC;
+	}
 	tdesc->tfm = tfm;
 	*desc = tdesc;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * i40iw_मुक्त_hash_desc - मुक्त hash desc
- * @desc: to be मुक्तd
+ * i40iw_free_hash_desc - free hash desc
+ * @desc: to be freed
  */
-व्योम i40iw_मुक्त_hash_desc(काष्ठा shash_desc *desc)
-अणु
-	अगर (desc) अणु
-		crypto_मुक्त_shash(desc->tfm);
-		kमुक्त(desc);
-	पूर्ण
-पूर्ण
+void i40iw_free_hash_desc(struct shash_desc *desc)
+{
+	if (desc) {
+		crypto_free_shash(desc->tfm);
+		kfree(desc);
+	}
+}
 
 /**
- * i40iw_alloc_query_fpm_buf - allocate buffer क्रम fpm
- * @dev: hardware control device काष्ठाure
- * @mem: buffer ptr क्रम fpm to be allocated
- * @वापस: memory allocation status
+ * i40iw_alloc_query_fpm_buf - allocate buffer for fpm
+ * @dev: hardware control device structure
+ * @mem: buffer ptr for fpm to be allocated
+ * @return: memory allocation status
  */
-क्रमागत i40iw_status_code i40iw_alloc_query_fpm_buf(काष्ठा i40iw_sc_dev *dev,
-						 काष्ठा i40iw_dma_mem *mem)
-अणु
-	क्रमागत i40iw_status_code status;
-	काष्ठा i40iw_device *iwdev = (काष्ठा i40iw_device *)dev->back_dev;
+enum i40iw_status_code i40iw_alloc_query_fpm_buf(struct i40iw_sc_dev *dev,
+						 struct i40iw_dma_mem *mem)
+{
+	enum i40iw_status_code status;
+	struct i40iw_device *iwdev = (struct i40iw_device *)dev->back_dev;
 
 	status = i40iw_obj_aligned_mem(iwdev, mem, I40IW_QUERY_FPM_BUF_SIZE,
 				       I40IW_FPM_QUERY_BUF_ALIGNMENT_MASK);
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /**
- * i40iw_ieq_check_mpacrc - check अगर mpa crc is OK
- * @desc: desc क्रम hash
- * @addr: address of buffer क्रम crc
+ * i40iw_ieq_check_mpacrc - check if mpa crc is OK
+ * @desc: desc for hash
+ * @addr: address of buffer for crc
  * @length: length of buffer
  * @value: value to be compared
  */
-क्रमागत i40iw_status_code i40iw_ieq_check_mpacrc(काष्ठा shash_desc *desc,
-					      व्योम *addr,
+enum i40iw_status_code i40iw_ieq_check_mpacrc(struct shash_desc *desc,
+					      void *addr,
 					      u32 length,
 					      u32 value)
-अणु
+{
 	u32 crc = 0;
-	पूर्णांक ret;
-	क्रमागत i40iw_status_code ret_code = 0;
+	int ret;
+	enum i40iw_status_code ret_code = 0;
 
 	crypto_shash_init(desc);
 	ret = crypto_shash_update(desc, addr, length);
-	अगर (!ret)
+	if (!ret)
 		crypto_shash_final(desc, (u8 *)&crc);
-	अगर (crc != value) अणु
+	if (crc != value) {
 		i40iw_pr_err("mpa crc check fail\n");
 		ret_code = I40IW_ERR_MPA_CRC;
-	पूर्ण
-	वापस ret_code;
-पूर्ण
+	}
+	return ret_code;
+}
 
 /**
  * i40iw_ieq_get_qp - get qp based on quad in puda buffer
- * @dev: hardware control device काष्ठाure
+ * @dev: hardware control device structure
  * @buf: receive puda buffer on exception q
  */
-काष्ठा i40iw_sc_qp *i40iw_ieq_get_qp(काष्ठा i40iw_sc_dev *dev,
-				     काष्ठा i40iw_puda_buf *buf)
-अणु
-	काष्ठा i40iw_device *iwdev = (काष्ठा i40iw_device *)dev->back_dev;
-	काष्ठा i40iw_qp *iwqp;
-	काष्ठा i40iw_cm_node *cm_node;
+struct i40iw_sc_qp *i40iw_ieq_get_qp(struct i40iw_sc_dev *dev,
+				     struct i40iw_puda_buf *buf)
+{
+	struct i40iw_device *iwdev = (struct i40iw_device *)dev->back_dev;
+	struct i40iw_qp *iwqp;
+	struct i40iw_cm_node *cm_node;
 	u32 loc_addr[4], rem_addr[4];
 	u16 loc_port, rem_port;
-	काष्ठा ipv6hdr *ip6h;
-	काष्ठा iphdr *iph = (काष्ठा iphdr *)buf->iph;
-	काष्ठा tcphdr *tcph = (काष्ठा tcphdr *)buf->tcph;
+	struct ipv6hdr *ip6h;
+	struct iphdr *iph = (struct iphdr *)buf->iph;
+	struct tcphdr *tcph = (struct tcphdr *)buf->tcph;
 
-	अगर (iph->version == 4) अणु
-		स_रखो(loc_addr, 0, माप(loc_addr));
+	if (iph->version == 4) {
+		memset(loc_addr, 0, sizeof(loc_addr));
 		loc_addr[0] = ntohl(iph->daddr);
-		स_रखो(rem_addr, 0, माप(rem_addr));
+		memset(rem_addr, 0, sizeof(rem_addr));
 		rem_addr[0] = ntohl(iph->saddr);
-	पूर्ण अन्यथा अणु
-		ip6h = (काष्ठा ipv6hdr *)buf->iph;
+	} else {
+		ip6h = (struct ipv6hdr *)buf->iph;
 		i40iw_copy_ip_ntohl(loc_addr, ip6h->daddr.in6_u.u6_addr32);
 		i40iw_copy_ip_ntohl(rem_addr, ip6h->saddr.in6_u.u6_addr32);
-	पूर्ण
+	}
 	loc_port = ntohs(tcph->dest);
 	rem_port = ntohs(tcph->source);
 
 	cm_node = i40iw_find_node(&iwdev->cm_core, rem_port, rem_addr, loc_port,
 				  loc_addr, false, true);
-	अगर (!cm_node)
-		वापस शून्य;
+	if (!cm_node)
+		return NULL;
 	iwqp = cm_node->iwqp;
-	वापस &iwqp->sc_qp;
-पूर्ण
+	return &iwqp->sc_qp;
+}
 
 /**
  * i40iw_ieq_update_tcpip_info - update tcpip in the buffer
  * @buf: puda to update
  * @length: length of buffer
- * @seqnum: seq number क्रम tcp
+ * @seqnum: seq number for tcp
  */
-व्योम i40iw_ieq_update_tcpip_info(काष्ठा i40iw_puda_buf *buf, u16 length, u32 seqnum)
-अणु
-	काष्ठा tcphdr *tcph;
-	काष्ठा iphdr *iph;
+void i40iw_ieq_update_tcpip_info(struct i40iw_puda_buf *buf, u16 length, u32 seqnum)
+{
+	struct tcphdr *tcph;
+	struct iphdr *iph;
 	u16 iphlen;
 	u16 packetsize;
 	u8 *addr = (u8 *)buf->mem.va;
 
 	iphlen = (buf->ipv4) ? 20 : 40;
-	iph = (काष्ठा iphdr *)(addr + buf->maclen);
-	tcph = (काष्ठा tcphdr *)(addr + buf->maclen + iphlen);
+	iph = (struct iphdr *)(addr + buf->maclen);
+	tcph = (struct tcphdr *)(addr + buf->maclen + iphlen);
 	packetsize = length + buf->tcphlen + iphlen;
 
 	iph->tot_len = htons(packetsize);
 	tcph->seq = htonl(seqnum);
-पूर्ण
+}
 
 /**
  * i40iw_puda_get_tcpip_info - get tcpip info from puda buffer
- * @info: to get inक्रमmation
+ * @info: to get information
  * @buf: puda buffer
  */
-क्रमागत i40iw_status_code i40iw_puda_get_tcpip_info(काष्ठा i40iw_puda_completion_info *info,
-						 काष्ठा i40iw_puda_buf *buf)
-अणु
-	काष्ठा iphdr *iph;
-	काष्ठा ipv6hdr *ip6h;
-	काष्ठा tcphdr *tcph;
+enum i40iw_status_code i40iw_puda_get_tcpip_info(struct i40iw_puda_completion_info *info,
+						 struct i40iw_puda_buf *buf)
+{
+	struct iphdr *iph;
+	struct ipv6hdr *ip6h;
+	struct tcphdr *tcph;
 	u16 iphlen;
 	u16 pkt_len;
 	u8 *mem = (u8 *)buf->mem.va;
-	काष्ठा ethhdr *ethh = (काष्ठा ethhdr *)buf->mem.va;
+	struct ethhdr *ethh = (struct ethhdr *)buf->mem.va;
 
-	अगर (ethh->h_proto == htons(0x8100)) अणु
+	if (ethh->h_proto == htons(0x8100)) {
 		info->vlan_valid = true;
-		buf->vlan_id = ntohs(((काष्ठा vlan_ethhdr *)ethh)->h_vlan_TCI) & VLAN_VID_MASK;
-	पूर्ण
+		buf->vlan_id = ntohs(((struct vlan_ethhdr *)ethh)->h_vlan_TCI) & VLAN_VID_MASK;
+	}
 	buf->maclen = (info->vlan_valid) ? 18 : 14;
 	iphlen = (info->l3proto) ? 40 : 20;
 	buf->ipv4 = (info->l3proto) ? false : true;
 	buf->iph = mem + buf->maclen;
-	iph = (काष्ठा iphdr *)buf->iph;
+	iph = (struct iphdr *)buf->iph;
 
 	buf->tcph = buf->iph + iphlen;
-	tcph = (काष्ठा tcphdr *)buf->tcph;
+	tcph = (struct tcphdr *)buf->tcph;
 
-	अगर (buf->ipv4) अणु
+	if (buf->ipv4) {
 		pkt_len = ntohs(iph->tot_len);
-	पूर्ण अन्यथा अणु
-		ip6h = (काष्ठा ipv6hdr *)buf->iph;
+	} else {
+		ip6h = (struct ipv6hdr *)buf->iph;
 		pkt_len = ntohs(ip6h->payload_len) + iphlen;
-	पूर्ण
+	}
 
 	buf->totallen = pkt_len + buf->maclen;
 
-	अगर (info->payload_len < buf->totallen) अणु
+	if (info->payload_len < buf->totallen) {
 		i40iw_pr_err("payload_len = 0x%x totallen expected0x%x\n",
 			     info->payload_len, buf->totallen);
-		वापस I40IW_ERR_INVALID_SIZE;
-	पूर्ण
+		return I40IW_ERR_INVALID_SIZE;
+	}
 
-	buf->tcphlen = (tcph->करोff) << 2;
+	buf->tcphlen = (tcph->doff) << 2;
 	buf->datalen = pkt_len - iphlen - buf->tcphlen;
-	buf->data = (buf->datalen) ? buf->tcph + buf->tcphlen : शून्य;
+	buf->data = (buf->datalen) ? buf->tcph + buf->tcphlen : NULL;
 	buf->hdrlen = buf->maclen + iphlen + buf->tcphlen;
 	buf->seqnum = ntohl(tcph->seq);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * i40iw_hw_stats_समयout - Stats समयr-handler which updates all HW stats
- * @t: Timer context containing poपूर्णांकer to the vsi काष्ठाure
+ * i40iw_hw_stats_timeout - Stats timer-handler which updates all HW stats
+ * @t: Timer context containing pointer to the vsi structure
  */
-अटल व्योम i40iw_hw_stats_समयout(काष्ठा समयr_list *t)
-अणु
-	काष्ठा i40iw_vsi_pestat *pf_devstat = from_समयr(pf_devstat, t,
-						       stats_समयr);
-	काष्ठा i40iw_sc_vsi *sc_vsi = pf_devstat->vsi;
-	काष्ठा i40iw_sc_dev *pf_dev = sc_vsi->dev;
-	काष्ठा i40iw_vsi_pestat *vf_devstat = शून्य;
+static void i40iw_hw_stats_timeout(struct timer_list *t)
+{
+	struct i40iw_vsi_pestat *pf_devstat = from_timer(pf_devstat, t,
+						       stats_timer);
+	struct i40iw_sc_vsi *sc_vsi = pf_devstat->vsi;
+	struct i40iw_sc_dev *pf_dev = sc_vsi->dev;
+	struct i40iw_vsi_pestat *vf_devstat = NULL;
 	u16 iw_vf_idx;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	/*PF*/
-	i40iw_hw_stats_पढ़ो_all(pf_devstat, &pf_devstat->hw_stats);
+	i40iw_hw_stats_read_all(pf_devstat, &pf_devstat->hw_stats);
 
-	क्रम (iw_vf_idx = 0; iw_vf_idx < I40IW_MAX_PE_ENABLED_VF_COUNT; iw_vf_idx++) अणु
+	for (iw_vf_idx = 0; iw_vf_idx < I40IW_MAX_PE_ENABLED_VF_COUNT; iw_vf_idx++) {
 		spin_lock_irqsave(&pf_devstat->lock, flags);
-		अगर (pf_dev->vf_dev[iw_vf_idx]) अणु
-			अगर (pf_dev->vf_dev[iw_vf_idx]->stats_initialized) अणु
+		if (pf_dev->vf_dev[iw_vf_idx]) {
+			if (pf_dev->vf_dev[iw_vf_idx]->stats_initialized) {
 				vf_devstat = &pf_dev->vf_dev[iw_vf_idx]->pestat;
-				i40iw_hw_stats_पढ़ो_all(vf_devstat, &vf_devstat->hw_stats);
-			पूर्ण
-		पूर्ण
+				i40iw_hw_stats_read_all(vf_devstat, &vf_devstat->hw_stats);
+			}
+		}
 		spin_unlock_irqrestore(&pf_devstat->lock, flags);
-	पूर्ण
+	}
 
-	mod_समयr(&pf_devstat->stats_समयr,
-		  jअगरfies + msecs_to_jअगरfies(STATS_TIMER_DELAY));
-पूर्ण
-
-/**
- * i40iw_hw_stats_start_समयr - Start periodic stats समयr
- * @vsi: poपूर्णांकer to the vsi काष्ठाure
- */
-व्योम i40iw_hw_stats_start_समयr(काष्ठा i40iw_sc_vsi *vsi)
-अणु
-	काष्ठा i40iw_vsi_pestat *devstat = vsi->pestat;
-
-	समयr_setup(&devstat->stats_समयr, i40iw_hw_stats_समयout, 0);
-	mod_समयr(&devstat->stats_समयr,
-		  jअगरfies + msecs_to_jअगरfies(STATS_TIMER_DELAY));
-पूर्ण
+	mod_timer(&pf_devstat->stats_timer,
+		  jiffies + msecs_to_jiffies(STATS_TIMER_DELAY));
+}
 
 /**
- * i40iw_hw_stats_stop_समयr - Delete periodic stats समयr
- * @vsi: poपूर्णांकer to the vsi काष्ठाure
+ * i40iw_hw_stats_start_timer - Start periodic stats timer
+ * @vsi: pointer to the vsi structure
  */
-व्योम i40iw_hw_stats_stop_समयr(काष्ठा i40iw_sc_vsi *vsi)
-अणु
-	काष्ठा i40iw_vsi_pestat *devstat = vsi->pestat;
+void i40iw_hw_stats_start_timer(struct i40iw_sc_vsi *vsi)
+{
+	struct i40iw_vsi_pestat *devstat = vsi->pestat;
 
-	del_समयr_sync(&devstat->stats_समयr);
-पूर्ण
+	timer_setup(&devstat->stats_timer, i40iw_hw_stats_timeout, 0);
+	mod_timer(&devstat->stats_timer,
+		  jiffies + msecs_to_jiffies(STATS_TIMER_DELAY));
+}
+
+/**
+ * i40iw_hw_stats_stop_timer - Delete periodic stats timer
+ * @vsi: pointer to the vsi structure
+ */
+void i40iw_hw_stats_stop_timer(struct i40iw_sc_vsi *vsi)
+{
+	struct i40iw_vsi_pestat *devstat = vsi->pestat;
+
+	del_timer_sync(&devstat->stats_timer);
+}

@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * debug.h - DesignWare USB3 DRD Controller Debug Header
  *
@@ -9,420 +8,420 @@
  *	    Sebastian Andrzej Siewior <bigeasy@linutronix.de>
  */
 
-#अगर_अघोषित __DWC3_DEBUG_H
-#घोषणा __DWC3_DEBUG_H
+#ifndef __DWC3_DEBUG_H
+#define __DWC3_DEBUG_H
 
-#समावेश "core.h"
+#include "core.h"
 
 /**
- * dwc3_gadget_ep_cmd_string - वापसs endpoपूर्णांक command string
+ * dwc3_gadget_ep_cmd_string - returns endpoint command string
  * @cmd: command code
  */
-अटल अंतरभूत स्थिर अक्षर *
+static inline const char *
 dwc3_gadget_ep_cmd_string(u8 cmd)
-अणु
-	चयन (cmd) अणु
-	हाल DWC3_DEPCMD_DEPSTARTCFG:
-		वापस "Start New Configuration";
-	हाल DWC3_DEPCMD_ENDTRANSFER:
-		वापस "End Transfer";
-	हाल DWC3_DEPCMD_UPDATETRANSFER:
-		वापस "Update Transfer";
-	हाल DWC3_DEPCMD_STARTTRANSFER:
-		वापस "Start Transfer";
-	हाल DWC3_DEPCMD_CLEARSTALL:
-		वापस "Clear Stall";
-	हाल DWC3_DEPCMD_SETSTALL:
-		वापस "Set Stall";
-	हाल DWC3_DEPCMD_GETEPSTATE:
-		वापस "Get Endpoint State";
-	हाल DWC3_DEPCMD_SETTRANSFRESOURCE:
-		वापस "Set Endpoint Transfer Resource";
-	हाल DWC3_DEPCMD_SETEPCONFIG:
-		वापस "Set Endpoint Configuration";
-	शेष:
-		वापस "UNKNOWN command";
-	पूर्ण
-पूर्ण
+{
+	switch (cmd) {
+	case DWC3_DEPCMD_DEPSTARTCFG:
+		return "Start New Configuration";
+	case DWC3_DEPCMD_ENDTRANSFER:
+		return "End Transfer";
+	case DWC3_DEPCMD_UPDATETRANSFER:
+		return "Update Transfer";
+	case DWC3_DEPCMD_STARTTRANSFER:
+		return "Start Transfer";
+	case DWC3_DEPCMD_CLEARSTALL:
+		return "Clear Stall";
+	case DWC3_DEPCMD_SETSTALL:
+		return "Set Stall";
+	case DWC3_DEPCMD_GETEPSTATE:
+		return "Get Endpoint State";
+	case DWC3_DEPCMD_SETTRANSFRESOURCE:
+		return "Set Endpoint Transfer Resource";
+	case DWC3_DEPCMD_SETEPCONFIG:
+		return "Set Endpoint Configuration";
+	default:
+		return "UNKNOWN command";
+	}
+}
 
 /**
- * dwc3_gadget_generic_cmd_string - वापसs generic command string
+ * dwc3_gadget_generic_cmd_string - returns generic command string
  * @cmd: command code
  */
-अटल अंतरभूत स्थिर अक्षर *
+static inline const char *
 dwc3_gadget_generic_cmd_string(u8 cmd)
-अणु
-	चयन (cmd) अणु
-	हाल DWC3_DGCMD_SET_LMP:
-		वापस "Set LMP";
-	हाल DWC3_DGCMD_SET_PERIODIC_PAR:
-		वापस "Set Periodic Parameters";
-	हाल DWC3_DGCMD_XMIT_FUNCTION:
-		वापस "Transmit Function Wake Device Notification";
-	हाल DWC3_DGCMD_SET_SCRATCHPAD_ADDR_LO:
-		वापस "Set Scratchpad Buffer Array Address Lo";
-	हाल DWC3_DGCMD_SET_SCRATCHPAD_ADDR_HI:
-		वापस "Set Scratchpad Buffer Array Address Hi";
-	हाल DWC3_DGCMD_SELECTED_FIFO_FLUSH:
-		वापस "Selected FIFO Flush";
-	हाल DWC3_DGCMD_ALL_FIFO_FLUSH:
-		वापस "All FIFO Flush";
-	हाल DWC3_DGCMD_SET_ENDPOINT_NRDY:
-		वापस "Set Endpoint NRDY";
-	हाल DWC3_DGCMD_SET_ENDPOINT_PRIME:
-		वापस "Set Endpoint Prime";
-	हाल DWC3_DGCMD_RUN_SOC_BUS_LOOPBACK:
-		वापस "Run SoC Bus Loopback Test";
-	शेष:
-		वापस "UNKNOWN";
-	पूर्ण
-पूर्ण
+{
+	switch (cmd) {
+	case DWC3_DGCMD_SET_LMP:
+		return "Set LMP";
+	case DWC3_DGCMD_SET_PERIODIC_PAR:
+		return "Set Periodic Parameters";
+	case DWC3_DGCMD_XMIT_FUNCTION:
+		return "Transmit Function Wake Device Notification";
+	case DWC3_DGCMD_SET_SCRATCHPAD_ADDR_LO:
+		return "Set Scratchpad Buffer Array Address Lo";
+	case DWC3_DGCMD_SET_SCRATCHPAD_ADDR_HI:
+		return "Set Scratchpad Buffer Array Address Hi";
+	case DWC3_DGCMD_SELECTED_FIFO_FLUSH:
+		return "Selected FIFO Flush";
+	case DWC3_DGCMD_ALL_FIFO_FLUSH:
+		return "All FIFO Flush";
+	case DWC3_DGCMD_SET_ENDPOINT_NRDY:
+		return "Set Endpoint NRDY";
+	case DWC3_DGCMD_SET_ENDPOINT_PRIME:
+		return "Set Endpoint Prime";
+	case DWC3_DGCMD_RUN_SOC_BUS_LOOPBACK:
+		return "Run SoC Bus Loopback Test";
+	default:
+		return "UNKNOWN";
+	}
+}
 
 /**
- * dwc3_gadget_link_string - वापसs link name
+ * dwc3_gadget_link_string - returns link name
  * @link_state: link state code
  */
-अटल अंतरभूत स्थिर अक्षर *
-dwc3_gadget_link_string(क्रमागत dwc3_link_state link_state)
-अणु
-	चयन (link_state) अणु
-	हाल DWC3_LINK_STATE_U0:
-		वापस "U0";
-	हाल DWC3_LINK_STATE_U1:
-		वापस "U1";
-	हाल DWC3_LINK_STATE_U2:
-		वापस "U2";
-	हाल DWC3_LINK_STATE_U3:
-		वापस "U3";
-	हाल DWC3_LINK_STATE_SS_DIS:
-		वापस "SS.Disabled";
-	हाल DWC3_LINK_STATE_RX_DET:
-		वापस "RX.Detect";
-	हाल DWC3_LINK_STATE_SS_INACT:
-		वापस "SS.Inactive";
-	हाल DWC3_LINK_STATE_POLL:
-		वापस "Polling";
-	हाल DWC3_LINK_STATE_RECOV:
-		वापस "Recovery";
-	हाल DWC3_LINK_STATE_HRESET:
-		वापस "Hot Reset";
-	हाल DWC3_LINK_STATE_CMPLY:
-		वापस "Compliance";
-	हाल DWC3_LINK_STATE_LPBK:
-		वापस "Loopback";
-	हाल DWC3_LINK_STATE_RESET:
-		वापस "Reset";
-	हाल DWC3_LINK_STATE_RESUME:
-		वापस "Resume";
-	शेष:
-		वापस "UNKNOWN link state";
-	पूर्ण
-पूर्ण
+static inline const char *
+dwc3_gadget_link_string(enum dwc3_link_state link_state)
+{
+	switch (link_state) {
+	case DWC3_LINK_STATE_U0:
+		return "U0";
+	case DWC3_LINK_STATE_U1:
+		return "U1";
+	case DWC3_LINK_STATE_U2:
+		return "U2";
+	case DWC3_LINK_STATE_U3:
+		return "U3";
+	case DWC3_LINK_STATE_SS_DIS:
+		return "SS.Disabled";
+	case DWC3_LINK_STATE_RX_DET:
+		return "RX.Detect";
+	case DWC3_LINK_STATE_SS_INACT:
+		return "SS.Inactive";
+	case DWC3_LINK_STATE_POLL:
+		return "Polling";
+	case DWC3_LINK_STATE_RECOV:
+		return "Recovery";
+	case DWC3_LINK_STATE_HRESET:
+		return "Hot Reset";
+	case DWC3_LINK_STATE_CMPLY:
+		return "Compliance";
+	case DWC3_LINK_STATE_LPBK:
+		return "Loopback";
+	case DWC3_LINK_STATE_RESET:
+		return "Reset";
+	case DWC3_LINK_STATE_RESUME:
+		return "Resume";
+	default:
+		return "UNKNOWN link state";
+	}
+}
 
 /**
- * dwc3_gadget_hs_link_string - वापसs highspeed and below link name
+ * dwc3_gadget_hs_link_string - returns highspeed and below link name
  * @link_state: link state code
  */
-अटल अंतरभूत स्थिर अक्षर *
-dwc3_gadget_hs_link_string(क्रमागत dwc3_link_state link_state)
-अणु
-	चयन (link_state) अणु
-	हाल DWC3_LINK_STATE_U0:
-		वापस "On";
-	हाल DWC3_LINK_STATE_U2:
-		वापस "Sleep";
-	हाल DWC3_LINK_STATE_U3:
-		वापस "Suspend";
-	हाल DWC3_LINK_STATE_SS_DIS:
-		वापस "Disconnected";
-	हाल DWC3_LINK_STATE_RX_DET:
-		वापस "Early Suspend";
-	हाल DWC3_LINK_STATE_RECOV:
-		वापस "Recovery";
-	हाल DWC3_LINK_STATE_RESET:
-		वापस "Reset";
-	हाल DWC3_LINK_STATE_RESUME:
-		वापस "Resume";
-	शेष:
-		वापस "UNKNOWN link state";
-	पूर्ण
-पूर्ण
+static inline const char *
+dwc3_gadget_hs_link_string(enum dwc3_link_state link_state)
+{
+	switch (link_state) {
+	case DWC3_LINK_STATE_U0:
+		return "On";
+	case DWC3_LINK_STATE_U2:
+		return "Sleep";
+	case DWC3_LINK_STATE_U3:
+		return "Suspend";
+	case DWC3_LINK_STATE_SS_DIS:
+		return "Disconnected";
+	case DWC3_LINK_STATE_RX_DET:
+		return "Early Suspend";
+	case DWC3_LINK_STATE_RECOV:
+		return "Recovery";
+	case DWC3_LINK_STATE_RESET:
+		return "Reset";
+	case DWC3_LINK_STATE_RESUME:
+		return "Resume";
+	default:
+		return "UNKNOWN link state";
+	}
+}
 
 /**
- * dwc3_trb_type_string - वापसs TRB type as a string
+ * dwc3_trb_type_string - returns TRB type as a string
  * @type: the type of the TRB
  */
-अटल अंतरभूत स्थिर अक्षर *dwc3_trb_type_string(अचिन्हित पूर्णांक type)
-अणु
-	चयन (type) अणु
-	हाल DWC3_TRBCTL_NORMAL:
-		वापस "normal";
-	हाल DWC3_TRBCTL_CONTROL_SETUP:
-		वापस "setup";
-	हाल DWC3_TRBCTL_CONTROL_STATUS2:
-		वापस "status2";
-	हाल DWC3_TRBCTL_CONTROL_STATUS3:
-		वापस "status3";
-	हाल DWC3_TRBCTL_CONTROL_DATA:
-		वापस "data";
-	हाल DWC3_TRBCTL_ISOCHRONOUS_FIRST:
-		वापस "isoc-first";
-	हाल DWC3_TRBCTL_ISOCHRONOUS:
-		वापस "isoc";
-	हाल DWC3_TRBCTL_LINK_TRB:
-		वापस "link";
-	शेष:
-		वापस "UNKNOWN";
-	पूर्ण
-पूर्ण
+static inline const char *dwc3_trb_type_string(unsigned int type)
+{
+	switch (type) {
+	case DWC3_TRBCTL_NORMAL:
+		return "normal";
+	case DWC3_TRBCTL_CONTROL_SETUP:
+		return "setup";
+	case DWC3_TRBCTL_CONTROL_STATUS2:
+		return "status2";
+	case DWC3_TRBCTL_CONTROL_STATUS3:
+		return "status3";
+	case DWC3_TRBCTL_CONTROL_DATA:
+		return "data";
+	case DWC3_TRBCTL_ISOCHRONOUS_FIRST:
+		return "isoc-first";
+	case DWC3_TRBCTL_ISOCHRONOUS:
+		return "isoc";
+	case DWC3_TRBCTL_LINK_TRB:
+		return "link";
+	default:
+		return "UNKNOWN";
+	}
+}
 
-अटल अंतरभूत स्थिर अक्षर *dwc3_ep0_state_string(क्रमागत dwc3_ep0_state state)
-अणु
-	चयन (state) अणु
-	हाल EP0_UNCONNECTED:
-		वापस "Unconnected";
-	हाल EP0_SETUP_PHASE:
-		वापस "Setup Phase";
-	हाल EP0_DATA_PHASE:
-		वापस "Data Phase";
-	हाल EP0_STATUS_PHASE:
-		वापस "Status Phase";
-	शेष:
-		वापस "UNKNOWN";
-	पूर्ण
-पूर्ण
+static inline const char *dwc3_ep0_state_string(enum dwc3_ep0_state state)
+{
+	switch (state) {
+	case EP0_UNCONNECTED:
+		return "Unconnected";
+	case EP0_SETUP_PHASE:
+		return "Setup Phase";
+	case EP0_DATA_PHASE:
+		return "Data Phase";
+	case EP0_STATUS_PHASE:
+		return "Status Phase";
+	default:
+		return "UNKNOWN";
+	}
+}
 
 /**
- * dwc3_gadget_event_string - वापसs event name
+ * dwc3_gadget_event_string - returns event name
  * @event: the event code
  */
-अटल अंतरभूत स्थिर अक्षर *dwc3_gadget_event_string(अक्षर *str, माप_प्रकार size,
-		स्थिर काष्ठा dwc3_event_devt *event)
-अणु
-	क्रमागत dwc3_link_state state = event->event_info & DWC3_LINK_STATE_MASK;
+static inline const char *dwc3_gadget_event_string(char *str, size_t size,
+		const struct dwc3_event_devt *event)
+{
+	enum dwc3_link_state state = event->event_info & DWC3_LINK_STATE_MASK;
 
-	चयन (event->type) अणु
-	हाल DWC3_DEVICE_EVENT_DISCONNECT:
-		snम_लिखो(str, size, "Disconnect: [%s]",
+	switch (event->type) {
+	case DWC3_DEVICE_EVENT_DISCONNECT:
+		snprintf(str, size, "Disconnect: [%s]",
 				dwc3_gadget_link_string(state));
-		अवरोध;
-	हाल DWC3_DEVICE_EVENT_RESET:
-		snम_लिखो(str, size, "Reset [%s]",
+		break;
+	case DWC3_DEVICE_EVENT_RESET:
+		snprintf(str, size, "Reset [%s]",
 				dwc3_gadget_link_string(state));
-		अवरोध;
-	हाल DWC3_DEVICE_EVENT_CONNECT_DONE:
-		snम_लिखो(str, size, "Connection Done [%s]",
+		break;
+	case DWC3_DEVICE_EVENT_CONNECT_DONE:
+		snprintf(str, size, "Connection Done [%s]",
 				dwc3_gadget_link_string(state));
-		अवरोध;
-	हाल DWC3_DEVICE_EVENT_LINK_STATUS_CHANGE:
-		snम_लिखो(str, size, "Link Change [%s]",
+		break;
+	case DWC3_DEVICE_EVENT_LINK_STATUS_CHANGE:
+		snprintf(str, size, "Link Change [%s]",
 				dwc3_gadget_link_string(state));
-		अवरोध;
-	हाल DWC3_DEVICE_EVENT_WAKEUP:
-		snम_लिखो(str, size, "WakeUp [%s]",
+		break;
+	case DWC3_DEVICE_EVENT_WAKEUP:
+		snprintf(str, size, "WakeUp [%s]",
 				dwc3_gadget_link_string(state));
-		अवरोध;
-	हाल DWC3_DEVICE_EVENT_SUSPEND:
-		snम_लिखो(str, size, "Suspend [%s]",
+		break;
+	case DWC3_DEVICE_EVENT_SUSPEND:
+		snprintf(str, size, "Suspend [%s]",
 				dwc3_gadget_link_string(state));
-		अवरोध;
-	हाल DWC3_DEVICE_EVENT_SOF:
-		snम_लिखो(str, size, "Start-Of-Frame [%s]",
+		break;
+	case DWC3_DEVICE_EVENT_SOF:
+		snprintf(str, size, "Start-Of-Frame [%s]",
 				dwc3_gadget_link_string(state));
-		अवरोध;
-	हाल DWC3_DEVICE_EVENT_ERRATIC_ERROR:
-		snम_लिखो(str, size, "Erratic Error [%s]",
+		break;
+	case DWC3_DEVICE_EVENT_ERRATIC_ERROR:
+		snprintf(str, size, "Erratic Error [%s]",
 				dwc3_gadget_link_string(state));
-		अवरोध;
-	हाल DWC3_DEVICE_EVENT_CMD_CMPL:
-		snम_लिखो(str, size, "Command Complete [%s]",
+		break;
+	case DWC3_DEVICE_EVENT_CMD_CMPL:
+		snprintf(str, size, "Command Complete [%s]",
 				dwc3_gadget_link_string(state));
-		अवरोध;
-	हाल DWC3_DEVICE_EVENT_OVERFLOW:
-		snम_लिखो(str, size, "Overflow [%s]",
+		break;
+	case DWC3_DEVICE_EVENT_OVERFLOW:
+		snprintf(str, size, "Overflow [%s]",
 				dwc3_gadget_link_string(state));
-		अवरोध;
-	शेष:
-		snम_लिखो(str, size, "UNKNOWN");
-	पूर्ण
+		break;
+	default:
+		snprintf(str, size, "UNKNOWN");
+	}
 
-	वापस str;
-पूर्ण
+	return str;
+}
 
 /**
- * dwc3_ep_event_string - वापसs event name
+ * dwc3_ep_event_string - returns event name
  * @event: then event code
  */
-अटल अंतरभूत स्थिर अक्षर *dwc3_ep_event_string(अक्षर *str, माप_प्रकार size,
-		स्थिर काष्ठा dwc3_event_depevt *event, u32 ep0state)
-अणु
-	u8 epnum = event->endpoपूर्णांक_number;
-	माप_प्रकार len;
-	पूर्णांक status;
+static inline const char *dwc3_ep_event_string(char *str, size_t size,
+		const struct dwc3_event_depevt *event, u32 ep0state)
+{
+	u8 epnum = event->endpoint_number;
+	size_t len;
+	int status;
 
-	len = scnम_लिखो(str, size, "ep%d%s: ", epnum >> 1,
+	len = scnprintf(str, size, "ep%d%s: ", epnum >> 1,
 			(epnum & 1) ? "in" : "out");
 
 	status = event->status;
 
-	चयन (event->endpoपूर्णांक_event) अणु
-	हाल DWC3_DEPEVT_XFERCOMPLETE:
-		len += scnम_लिखो(str + len, size - len,
+	switch (event->endpoint_event) {
+	case DWC3_DEPEVT_XFERCOMPLETE:
+		len += scnprintf(str + len, size - len,
 				"Transfer Complete (%c%c%c)",
 				status & DEPEVT_STATUS_SHORT ? 'S' : 's',
 				status & DEPEVT_STATUS_IOC ? 'I' : 'i',
 				status & DEPEVT_STATUS_LST ? 'L' : 'l');
 
-		अगर (epnum <= 1)
-			scnम_लिखो(str + len, size - len, " [%s]",
+		if (epnum <= 1)
+			scnprintf(str + len, size - len, " [%s]",
 					dwc3_ep0_state_string(ep0state));
-		अवरोध;
-	हाल DWC3_DEPEVT_XFERINPROGRESS:
-		scnम_लिखो(str + len, size - len,
+		break;
+	case DWC3_DEPEVT_XFERINPROGRESS:
+		scnprintf(str + len, size - len,
 				"Transfer In Progress [%d] (%c%c%c)",
 				event->parameters,
 				status & DEPEVT_STATUS_SHORT ? 'S' : 's',
 				status & DEPEVT_STATUS_IOC ? 'I' : 'i',
 				status & DEPEVT_STATUS_LST ? 'M' : 'm');
-		अवरोध;
-	हाल DWC3_DEPEVT_XFERNOTREADY:
-		len += scnम_लिखो(str + len, size - len,
+		break;
+	case DWC3_DEPEVT_XFERNOTREADY:
+		len += scnprintf(str + len, size - len,
 				"Transfer Not Ready [%d]%s",
 				event->parameters,
 				status & DEPEVT_STATUS_TRANSFER_ACTIVE ?
 				" (Active)" : " (Not Active)");
 
-		/* Control Endpoपूर्णांकs */
-		अगर (epnum <= 1) अणु
-			पूर्णांक phase = DEPEVT_STATUS_CONTROL_PHASE(event->status);
+		/* Control Endpoints */
+		if (epnum <= 1) {
+			int phase = DEPEVT_STATUS_CONTROL_PHASE(event->status);
 
-			चयन (phase) अणु
-			हाल DEPEVT_STATUS_CONTROL_DATA:
-				scnम_लिखो(str + len, size - len,
+			switch (phase) {
+			case DEPEVT_STATUS_CONTROL_DATA:
+				scnprintf(str + len, size - len,
 						" [Data Phase]");
-				अवरोध;
-			हाल DEPEVT_STATUS_CONTROL_STATUS:
-				scnम_लिखो(str + len, size - len,
+				break;
+			case DEPEVT_STATUS_CONTROL_STATUS:
+				scnprintf(str + len, size - len,
 						" [Status Phase]");
-			पूर्ण
-		पूर्ण
-		अवरोध;
-	हाल DWC3_DEPEVT_RXTXFIFOEVT:
-		scnम_लिखो(str + len, size - len, "FIFO");
-		अवरोध;
-	हाल DWC3_DEPEVT_STREAMEVT:
+			}
+		}
+		break;
+	case DWC3_DEPEVT_RXTXFIFOEVT:
+		scnprintf(str + len, size - len, "FIFO");
+		break;
+	case DWC3_DEPEVT_STREAMEVT:
 		status = event->status;
 
-		चयन (status) अणु
-		हाल DEPEVT_STREAMEVT_FOUND:
-			scnम_लिखो(str + len, size - len, " Stream %d Found",
+		switch (status) {
+		case DEPEVT_STREAMEVT_FOUND:
+			scnprintf(str + len, size - len, " Stream %d Found",
 					event->parameters);
-			अवरोध;
-		हाल DEPEVT_STREAMEVT_NOTFOUND:
-		शेष:
-			scnम_लिखो(str + len, size - len, " Stream Not Found");
-			अवरोध;
-		पूर्ण
+			break;
+		case DEPEVT_STREAMEVT_NOTFOUND:
+		default:
+			scnprintf(str + len, size - len, " Stream Not Found");
+			break;
+		}
 
-		अवरोध;
-	हाल DWC3_DEPEVT_EPCMDCMPLT:
-		scnम_लिखो(str + len, size - len, "Endpoint Command Complete");
-		अवरोध;
-	शेष:
-		scnम_लिखो(str + len, size - len, "UNKNOWN");
-	पूर्ण
+		break;
+	case DWC3_DEPEVT_EPCMDCMPLT:
+		scnprintf(str + len, size - len, "Endpoint Command Complete");
+		break;
+	default:
+		scnprintf(str + len, size - len, "UNKNOWN");
+	}
 
-	वापस str;
-पूर्ण
+	return str;
+}
 
 /**
- * dwc3_gadget_event_type_string - वापस event name
+ * dwc3_gadget_event_type_string - return event name
  * @event: the event code
  */
-अटल अंतरभूत स्थिर अक्षर *dwc3_gadget_event_type_string(u8 event)
-अणु
-	चयन (event) अणु
-	हाल DWC3_DEVICE_EVENT_DISCONNECT:
-		वापस "Disconnect";
-	हाल DWC3_DEVICE_EVENT_RESET:
-		वापस "Reset";
-	हाल DWC3_DEVICE_EVENT_CONNECT_DONE:
-		वापस "Connect Done";
-	हाल DWC3_DEVICE_EVENT_LINK_STATUS_CHANGE:
-		वापस "Link Status Change";
-	हाल DWC3_DEVICE_EVENT_WAKEUP:
-		वापस "Wake-Up";
-	हाल DWC3_DEVICE_EVENT_HIBER_REQ:
-		वापस "Hibernation";
-	हाल DWC3_DEVICE_EVENT_SUSPEND:
-		वापस "Suspend";
-	हाल DWC3_DEVICE_EVENT_SOF:
-		वापस "Start of Frame";
-	हाल DWC3_DEVICE_EVENT_ERRATIC_ERROR:
-		वापस "Erratic Error";
-	हाल DWC3_DEVICE_EVENT_CMD_CMPL:
-		वापस "Command Complete";
-	हाल DWC3_DEVICE_EVENT_OVERFLOW:
-		वापस "Overflow";
-	शेष:
-		वापस "UNKNOWN";
-	पूर्ण
-पूर्ण
+static inline const char *dwc3_gadget_event_type_string(u8 event)
+{
+	switch (event) {
+	case DWC3_DEVICE_EVENT_DISCONNECT:
+		return "Disconnect";
+	case DWC3_DEVICE_EVENT_RESET:
+		return "Reset";
+	case DWC3_DEVICE_EVENT_CONNECT_DONE:
+		return "Connect Done";
+	case DWC3_DEVICE_EVENT_LINK_STATUS_CHANGE:
+		return "Link Status Change";
+	case DWC3_DEVICE_EVENT_WAKEUP:
+		return "Wake-Up";
+	case DWC3_DEVICE_EVENT_HIBER_REQ:
+		return "Hibernation";
+	case DWC3_DEVICE_EVENT_SUSPEND:
+		return "Suspend";
+	case DWC3_DEVICE_EVENT_SOF:
+		return "Start of Frame";
+	case DWC3_DEVICE_EVENT_ERRATIC_ERROR:
+		return "Erratic Error";
+	case DWC3_DEVICE_EVENT_CMD_CMPL:
+		return "Command Complete";
+	case DWC3_DEVICE_EVENT_OVERFLOW:
+		return "Overflow";
+	default:
+		return "UNKNOWN";
+	}
+}
 
-अटल अंतरभूत स्थिर अक्षर *dwc3_decode_event(अक्षर *str, माप_प्रकार size, u32 event,
+static inline const char *dwc3_decode_event(char *str, size_t size, u32 event,
 		u32 ep0state)
-अणु
-	जोड़ dwc3_event evt;
+{
+	union dwc3_event evt;
 
-	स_नकल(&evt, &event, माप(event));
+	memcpy(&evt, &event, sizeof(event));
 
-	अगर (evt.type.is_devspec)
-		वापस dwc3_gadget_event_string(str, size, &evt.devt);
-	अन्यथा
-		वापस dwc3_ep_event_string(str, size, &evt.depevt, ep0state);
-पूर्ण
+	if (evt.type.is_devspec)
+		return dwc3_gadget_event_string(str, size, &evt.devt);
+	else
+		return dwc3_ep_event_string(str, size, &evt.depevt, ep0state);
+}
 
-अटल अंतरभूत स्थिर अक्षर *dwc3_ep_cmd_status_string(पूर्णांक status)
-अणु
-	चयन (status) अणु
-	हाल -ETIMEDOUT:
-		वापस "Timed Out";
-	हाल 0:
-		वापस "Successful";
-	हाल DEPEVT_TRANSFER_NO_RESOURCE:
-		वापस "No Resource";
-	हाल DEPEVT_TRANSFER_BUS_EXPIRY:
-		वापस "Bus Expiry";
-	शेष:
-		वापस "UNKNOWN";
-	पूर्ण
-पूर्ण
+static inline const char *dwc3_ep_cmd_status_string(int status)
+{
+	switch (status) {
+	case -ETIMEDOUT:
+		return "Timed Out";
+	case 0:
+		return "Successful";
+	case DEPEVT_TRANSFER_NO_RESOURCE:
+		return "No Resource";
+	case DEPEVT_TRANSFER_BUS_EXPIRY:
+		return "Bus Expiry";
+	default:
+		return "UNKNOWN";
+	}
+}
 
-अटल अंतरभूत स्थिर अक्षर *dwc3_gadget_generic_cmd_status_string(पूर्णांक status)
-अणु
-	चयन (status) अणु
-	हाल -ETIMEDOUT:
-		वापस "Timed Out";
-	हाल 0:
-		वापस "Successful";
-	हाल 1:
-		वापस "Error";
-	शेष:
-		वापस "UNKNOWN";
-	पूर्ण
-पूर्ण
+static inline const char *dwc3_gadget_generic_cmd_status_string(int status)
+{
+	switch (status) {
+	case -ETIMEDOUT:
+		return "Timed Out";
+	case 0:
+		return "Successful";
+	case 1:
+		return "Error";
+	default:
+		return "UNKNOWN";
+	}
+}
 
 
-#अगर_घोषित CONFIG_DEBUG_FS
-बाह्य व्योम dwc3_debugfs_create_endpoपूर्णांक_dir(काष्ठा dwc3_ep *dep);
-बाह्य व्योम dwc3_debugfs_init(काष्ठा dwc3 *d);
-बाह्य व्योम dwc3_debugfs_निकास(काष्ठा dwc3 *d);
-#अन्यथा
-अटल अंतरभूत व्योम dwc3_debugfs_create_endpoपूर्णांक_dir(काष्ठा dwc3_ep *dep)
-अणु  पूर्ण
-अटल अंतरभूत व्योम dwc3_debugfs_init(काष्ठा dwc3 *d)
-अणु  पूर्ण
-अटल अंतरभूत व्योम dwc3_debugfs_निकास(काष्ठा dwc3 *d)
-अणु  पूर्ण
-#पूर्ण_अगर
-#पूर्ण_अगर /* __DWC3_DEBUG_H */
+#ifdef CONFIG_DEBUG_FS
+extern void dwc3_debugfs_create_endpoint_dir(struct dwc3_ep *dep);
+extern void dwc3_debugfs_init(struct dwc3 *d);
+extern void dwc3_debugfs_exit(struct dwc3 *d);
+#else
+static inline void dwc3_debugfs_create_endpoint_dir(struct dwc3_ep *dep)
+{  }
+static inline void dwc3_debugfs_init(struct dwc3 *d)
+{  }
+static inline void dwc3_debugfs_exit(struct dwc3 *d)
+{  }
+#endif
+#endif /* __DWC3_DEBUG_H */

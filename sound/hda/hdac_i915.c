@@ -1,85 +1,84 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *  hdac_i915.c - routines क्रम sync between HD-A core and i915 display driver
+ *  hdac_i915.c - routines for sync between HD-A core and i915 display driver
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
-#समावेश <sound/core.h>
-#समावेश <sound/hdaudपन.स>
-#समावेश <sound/hda_i915.h>
-#समावेश <sound/hda_रेजिस्टर.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/pci.h>
+#include <sound/core.h>
+#include <sound/hdaudio.h>
+#include <sound/hda_i915.h>
+#include <sound/hda_register.h>
 
-#घोषणा IS_HSW_CONTROLLER(pci) (((pci)->device == 0x0a0c) || \
+#define IS_HSW_CONTROLLER(pci) (((pci)->device == 0x0a0c) || \
 				((pci)->device == 0x0c0c) || \
 				((pci)->device == 0x0d0c) || \
 				((pci)->device == 0x160c))
 
 /**
- * snd_hdac_i915_set_bclk - Reprogram BCLK क्रम HSW/BDW
+ * snd_hdac_i915_set_bclk - Reprogram BCLK for HSW/BDW
  * @bus: HDA core bus
  *
- * Intel HSW/BDW display HDA controller is in GPU. Both its घातer and link BCLK
- * depends on GPU. Two Extended Mode रेजिस्टरs EM4 (M value) and EM5 (N Value)
+ * Intel HSW/BDW display HDA controller is in GPU. Both its power and link BCLK
+ * depends on GPU. Two Extended Mode registers EM4 (M value) and EM5 (N Value)
  * are used to convert CDClk (Core Display Clock) to 24MHz BCLK:
  * BCLK = CDCLK * M / N
- * The values will be lost when the display घातer well is disabled and need to
- * be restored to aव्योम abnormal playback speed.
+ * The values will be lost when the display power well is disabled and need to
+ * be restored to avoid abnormal playback speed.
  *
- * Call this function at initializing and changing घातer well, as well as
- * at ELD notअगरier क्रम the hotplug.
+ * Call this function at initializing and changing power well, as well as
+ * at ELD notifier for the hotplug.
  */
-व्योम snd_hdac_i915_set_bclk(काष्ठा hdac_bus *bus)
-अणु
-	काष्ठा drm_audio_component *acomp = bus->audio_component;
-	काष्ठा pci_dev *pci = to_pci_dev(bus->dev);
-	पूर्णांक cdclk_freq;
-	अचिन्हित पूर्णांक bclk_m, bclk_n;
+void snd_hdac_i915_set_bclk(struct hdac_bus *bus)
+{
+	struct drm_audio_component *acomp = bus->audio_component;
+	struct pci_dev *pci = to_pci_dev(bus->dev);
+	int cdclk_freq;
+	unsigned int bclk_m, bclk_n;
 
-	अगर (!acomp || !acomp->ops || !acomp->ops->get_cdclk_freq)
-		वापस; /* only क्रम i915 binding */
-	अगर (!IS_HSW_CONTROLLER(pci))
-		वापस; /* only HSW/BDW */
+	if (!acomp || !acomp->ops || !acomp->ops->get_cdclk_freq)
+		return; /* only for i915 binding */
+	if (!IS_HSW_CONTROLLER(pci))
+		return; /* only HSW/BDW */
 
 	cdclk_freq = acomp->ops->get_cdclk_freq(acomp->dev);
-	चयन (cdclk_freq) अणु
-	हाल 337500:
+	switch (cdclk_freq) {
+	case 337500:
 		bclk_m = 16;
 		bclk_n = 225;
-		अवरोध;
+		break;
 
-	हाल 450000:
-	शेष: /* शेष CDCLK 450MHz */
+	case 450000:
+	default: /* default CDCLK 450MHz */
 		bclk_m = 4;
 		bclk_n = 75;
-		अवरोध;
+		break;
 
-	हाल 540000:
+	case 540000:
 		bclk_m = 4;
 		bclk_n = 90;
-		अवरोध;
+		break;
 
-	हाल 675000:
+	case 675000:
 		bclk_m = 8;
 		bclk_n = 225;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	snd_hdac_chip_ग_लिखोw(bus, HSW_EM4, bclk_m);
-	snd_hdac_chip_ग_लिखोw(bus, HSW_EM5, bclk_n);
-पूर्ण
+	snd_hdac_chip_writew(bus, HSW_EM4, bclk_m);
+	snd_hdac_chip_writew(bus, HSW_EM5, bclk_n);
+}
 EXPORT_SYMBOL_GPL(snd_hdac_i915_set_bclk);
 
-/* वापसs true अगर the devices can be connected क्रम audio */
-अटल bool connectivity_check(काष्ठा pci_dev *i915, काष्ठा pci_dev *hdac)
-अणु
-	काष्ठा pci_bus *bus_a = i915->bus, *bus_b = hdac->bus;
+/* returns true if the devices can be connected for audio */
+static bool connectivity_check(struct pci_dev *i915, struct pci_dev *hdac)
+{
+	struct pci_bus *bus_a = i915->bus, *bus_b = hdac->bus;
 
 	/* directly connected on the same bus */
-	अगर (bus_a == bus_b)
-		वापस true;
+	if (bus_a == bus_b)
+		return true;
 
 	/*
 	 * on i915 discrete GPUs with embedded HDA audio, the two
@@ -87,89 +86,89 @@ EXPORT_SYMBOL_GPL(snd_hdac_i915_set_bclk);
 	 */
 	bus_a = bus_a->parent;
 	bus_b = bus_b->parent;
-	अगर (!bus_a || !bus_b)
-		वापस false;
+	if (!bus_a || !bus_b)
+		return false;
 	bus_a = bus_a->parent;
 	bus_b = bus_b->parent;
-	अगर (bus_a && bus_a == bus_b)
-		वापस true;
+	if (bus_a && bus_a == bus_b)
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल पूर्णांक i915_component_master_match(काष्ठा device *dev, पूर्णांक subcomponent,
-				       व्योम *data)
-अणु
-	काष्ठा pci_dev *hdac_pci, *i915_pci;
-	काष्ठा hdac_bus *bus = data;
+static int i915_component_master_match(struct device *dev, int subcomponent,
+				       void *data)
+{
+	struct pci_dev *hdac_pci, *i915_pci;
+	struct hdac_bus *bus = data;
 
-	अगर (!dev_is_pci(dev))
-		वापस 0;
+	if (!dev_is_pci(dev))
+		return 0;
 
 	hdac_pci = to_pci_dev(bus->dev);
 	i915_pci = to_pci_dev(dev);
 
-	अगर (!म_भेद(dev->driver->name, "i915") &&
+	if (!strcmp(dev->driver->name, "i915") &&
 	    subcomponent == I915_COMPONENT_AUDIO &&
 	    connectivity_check(i915_pci, hdac_pci))
-		वापस 1;
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* check whether पूर्णांकel graphics is present */
-अटल bool i915_gfx_present(व्योम)
-अणु
-	अटल स्थिर काष्ठा pci_device_id ids[] = अणु
-		अणु PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCI_ANY_ID),
+/* check whether intel graphics is present */
+static bool i915_gfx_present(void)
+{
+	static const struct pci_device_id ids[] = {
+		{ PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCI_ANY_ID),
 		  .class = PCI_BASE_CLASS_DISPLAY << 16,
-		  .class_mask = 0xff << 16 पूर्ण,
-		अणुपूर्ण
-	पूर्ण;
-	वापस pci_dev_present(ids);
-पूर्ण
+		  .class_mask = 0xff << 16 },
+		{}
+	};
+	return pci_dev_present(ids);
+}
 
 /**
  * snd_hdac_i915_init - Initialize i915 audio component
  * @bus: HDA core bus
  *
  * This function is supposed to be used only by a HD-audio controller
- * driver that needs the पूर्णांकeraction with i915 graphics.
+ * driver that needs the interaction with i915 graphics.
  *
  * This function initializes and sets up the audio component to communicate
  * with i915 graphics driver.
  *
- * Returns zero क्रम success or a negative error code.
+ * Returns zero for success or a negative error code.
  */
-पूर्णांक snd_hdac_i915_init(काष्ठा hdac_bus *bus)
-अणु
-	काष्ठा drm_audio_component *acomp;
-	पूर्णांक err;
+int snd_hdac_i915_init(struct hdac_bus *bus)
+{
+	struct drm_audio_component *acomp;
+	int err;
 
-	अगर (!i915_gfx_present())
-		वापस -ENODEV;
+	if (!i915_gfx_present())
+		return -ENODEV;
 
-	err = snd_hdac_acomp_init(bus, शून्य,
+	err = snd_hdac_acomp_init(bus, NULL,
 				  i915_component_master_match,
-				  माप(काष्ठा i915_audio_component) - माप(*acomp));
-	अगर (err < 0)
-		वापस err;
+				  sizeof(struct i915_audio_component) - sizeof(*acomp));
+	if (err < 0)
+		return err;
 	acomp = bus->audio_component;
-	अगर (!acomp)
-		वापस -ENODEV;
-	अगर (!acomp->ops) अणु
-		अगर (!IS_ENABLED(CONFIG_MODULES) ||
-		    !request_module("i915")) अणु
-			/* 60s समयout */
-			रुको_क्रम_completion_समयout(&acomp->master_bind_complete,
-						    msecs_to_jअगरfies(60 * 1000));
-		पूर्ण
-	पूर्ण
-	अगर (!acomp->ops) अणु
+	if (!acomp)
+		return -ENODEV;
+	if (!acomp->ops) {
+		if (!IS_ENABLED(CONFIG_MODULES) ||
+		    !request_module("i915")) {
+			/* 60s timeout */
+			wait_for_completion_timeout(&acomp->master_bind_complete,
+						    msecs_to_jiffies(60 * 1000));
+		}
+	}
+	if (!acomp->ops) {
 		dev_info(bus->dev, "couldn't bind with audio component\n");
-		snd_hdac_acomp_निकास(bus);
-		वापस -ENODEV;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		snd_hdac_acomp_exit(bus);
+		return -ENODEV;
+	}
+	return 0;
+}
 EXPORT_SYMBOL_GPL(snd_hdac_i915_init);

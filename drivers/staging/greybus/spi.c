@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * SPI bridge PHY driver.
  *
@@ -7,73 +6,73 @@
  * Copyright 2014-2016 Linaro Ltd.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/greybus.h>
+#include <linux/module.h>
+#include <linux/greybus.h>
 
-#समावेश "gbphy.h"
-#समावेश "spilib.h"
+#include "gbphy.h"
+#include "spilib.h"
 
-अटल काष्ठा spilib_ops *spilib_ops;
+static struct spilib_ops *spilib_ops;
 
-अटल पूर्णांक gb_spi_probe(काष्ठा gbphy_device *gbphy_dev,
-			स्थिर काष्ठा gbphy_device_id *id)
-अणु
-	काष्ठा gb_connection *connection;
-	पूर्णांक ret;
+static int gb_spi_probe(struct gbphy_device *gbphy_dev,
+			const struct gbphy_device_id *id)
+{
+	struct gb_connection *connection;
+	int ret;
 
 	connection = gb_connection_create(gbphy_dev->bundle,
 					  le16_to_cpu(gbphy_dev->cport_desc->id),
-					  शून्य);
-	अगर (IS_ERR(connection))
-		वापस PTR_ERR(connection);
+					  NULL);
+	if (IS_ERR(connection))
+		return PTR_ERR(connection);
 
 	ret = gb_connection_enable(connection);
-	अगर (ret)
-		जाओ निकास_connection_destroy;
+	if (ret)
+		goto exit_connection_destroy;
 
 	ret = gb_spilib_master_init(connection, &gbphy_dev->dev, spilib_ops);
-	अगर (ret)
-		जाओ निकास_connection_disable;
+	if (ret)
+		goto exit_connection_disable;
 
 	gb_gbphy_set_data(gbphy_dev, connection);
 
-	gbphy_runसमय_put_स्वतःsuspend(gbphy_dev);
-	वापस 0;
+	gbphy_runtime_put_autosuspend(gbphy_dev);
+	return 0;
 
-निकास_connection_disable:
+exit_connection_disable:
 	gb_connection_disable(connection);
-निकास_connection_destroy:
+exit_connection_destroy:
 	gb_connection_destroy(connection);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम gb_spi_हटाओ(काष्ठा gbphy_device *gbphy_dev)
-अणु
-	काष्ठा gb_connection *connection = gb_gbphy_get_data(gbphy_dev);
-	पूर्णांक ret;
+static void gb_spi_remove(struct gbphy_device *gbphy_dev)
+{
+	struct gb_connection *connection = gb_gbphy_get_data(gbphy_dev);
+	int ret;
 
-	ret = gbphy_runसमय_get_sync(gbphy_dev);
-	अगर (ret)
-		gbphy_runसमय_get_noresume(gbphy_dev);
+	ret = gbphy_runtime_get_sync(gbphy_dev);
+	if (ret)
+		gbphy_runtime_get_noresume(gbphy_dev);
 
-	gb_spilib_master_निकास(connection);
+	gb_spilib_master_exit(connection);
 	gb_connection_disable(connection);
 	gb_connection_destroy(connection);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा gbphy_device_id gb_spi_id_table[] = अणु
-	अणु GBPHY_PROTOCOL(GREYBUS_PROTOCOL_SPI) पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct gbphy_device_id gb_spi_id_table[] = {
+	{ GBPHY_PROTOCOL(GREYBUS_PROTOCOL_SPI) },
+	{ },
+};
 MODULE_DEVICE_TABLE(gbphy, gb_spi_id_table);
 
-अटल काष्ठा gbphy_driver spi_driver = अणु
+static struct gbphy_driver spi_driver = {
 	.name		= "spi",
 	.probe		= gb_spi_probe,
-	.हटाओ		= gb_spi_हटाओ,
+	.remove		= gb_spi_remove,
 	.id_table	= gb_spi_id_table,
-पूर्ण;
+};
 
 module_gbphy_driver(spi_driver);
 MODULE_LICENSE("GPL v2");

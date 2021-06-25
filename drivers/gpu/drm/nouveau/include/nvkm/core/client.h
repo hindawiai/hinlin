@@ -1,51 +1,50 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
-#अगर_अघोषित __NVKM_CLIENT_H__
-#घोषणा __NVKM_CLIENT_H__
-#घोषणा nvkm_client(p) container_of((p), काष्ठा nvkm_client, object)
-#समावेश <core/object.h>
+/* SPDX-License-Identifier: MIT */
+#ifndef __NVKM_CLIENT_H__
+#define __NVKM_CLIENT_H__
+#define nvkm_client(p) container_of((p), struct nvkm_client, object)
+#include <core/object.h>
 
-काष्ठा nvkm_client अणु
-	काष्ठा nvkm_object object;
-	अक्षर name[32];
+struct nvkm_client {
+	struct nvkm_object object;
+	char name[32];
 	u64 device;
 	u32 debug;
 
-	काष्ठा nvkm_client_notअगरy *notअगरy[32];
-	काष्ठा rb_root objroot;
+	struct nvkm_client_notify *notify[32];
+	struct rb_root objroot;
 
 	bool super;
-	व्योम *data;
-	पूर्णांक (*ntfy)(स्थिर व्योम *, u32, स्थिर व्योम *, u32);
+	void *data;
+	int (*ntfy)(const void *, u32, const void *, u32);
 
-	काष्ठा list_head umem;
+	struct list_head umem;
 	spinlock_t lock;
-पूर्ण;
+};
 
-पूर्णांक  nvkm_client_new(स्थिर अक्षर *name, u64 device, स्थिर अक्षर *cfg,
-		     स्थिर अक्षर *dbg,
-		     पूर्णांक (*)(स्थिर व्योम *, u32, स्थिर व्योम *, u32),
-		     काष्ठा nvkm_client **);
-काष्ठा nvkm_client *nvkm_client_search(काष्ठा nvkm_client *, u64 handle);
+int  nvkm_client_new(const char *name, u64 device, const char *cfg,
+		     const char *dbg,
+		     int (*)(const void *, u32, const void *, u32),
+		     struct nvkm_client **);
+struct nvkm_client *nvkm_client_search(struct nvkm_client *, u64 handle);
 
-पूर्णांक nvkm_client_notअगरy_new(काष्ठा nvkm_object *, काष्ठा nvkm_event *,
-			   व्योम *data, u32 size);
-पूर्णांक nvkm_client_notअगरy_del(काष्ठा nvkm_client *, पूर्णांक index);
-पूर्णांक nvkm_client_notअगरy_get(काष्ठा nvkm_client *, पूर्णांक index);
-पूर्णांक nvkm_client_notअगरy_put(काष्ठा nvkm_client *, पूर्णांक index);
+int nvkm_client_notify_new(struct nvkm_object *, struct nvkm_event *,
+			   void *data, u32 size);
+int nvkm_client_notify_del(struct nvkm_client *, int index);
+int nvkm_client_notify_get(struct nvkm_client *, int index);
+int nvkm_client_notify_put(struct nvkm_client *, int index);
 
-/* logging क्रम client-facing objects */
-#घोषणा nvअगर_prपूर्णांकk(o,l,p,f,a...) करो अणु                                         \
-	स्थिर काष्ठा nvkm_object *_object = (o);                               \
-	स्थिर काष्ठा nvkm_client *_client = _object->client;                   \
-	अगर (_client->debug >= NV_DBG_##l)                                      \
-		prपूर्णांकk(KERN_##p "nouveau: %s:%08x:%08x: "f, _client->name,     \
+/* logging for client-facing objects */
+#define nvif_printk(o,l,p,f,a...) do {                                         \
+	const struct nvkm_object *_object = (o);                               \
+	const struct nvkm_client *_client = _object->client;                   \
+	if (_client->debug >= NV_DBG_##l)                                      \
+		printk(KERN_##p "nouveau: %s:%08x:%08x: "f, _client->name,     \
 		       _object->handle, _object->oclass, ##a);                 \
-पूर्ण जबतक(0)
-#घोषणा nvअगर_fatal(o,f,a...) nvअगर_prपूर्णांकk((o), FATAL, CRIT, f, ##a)
-#घोषणा nvअगर_error(o,f,a...) nvअगर_prपूर्णांकk((o), ERROR,  ERR, f, ##a)
-#घोषणा nvअगर_debug(o,f,a...) nvअगर_prपूर्णांकk((o), DEBUG, INFO, f, ##a)
-#घोषणा nvअगर_trace(o,f,a...) nvअगर_prपूर्णांकk((o), TRACE, INFO, f, ##a)
-#घोषणा nvअगर_info(o,f,a...)  nvअगर_prपूर्णांकk((o),  INFO, INFO, f, ##a)
-#घोषणा nvअगर_ioctl(o,f,a...) nvअगर_trace((o), "ioctl: "f, ##a)
-#पूर्ण_अगर
+} while(0)
+#define nvif_fatal(o,f,a...) nvif_printk((o), FATAL, CRIT, f, ##a)
+#define nvif_error(o,f,a...) nvif_printk((o), ERROR,  ERR, f, ##a)
+#define nvif_debug(o,f,a...) nvif_printk((o), DEBUG, INFO, f, ##a)
+#define nvif_trace(o,f,a...) nvif_printk((o), TRACE, INFO, f, ##a)
+#define nvif_info(o,f,a...)  nvif_printk((o),  INFO, INFO, f, ##a)
+#define nvif_ioctl(o,f,a...) nvif_trace((o), "ioctl: "f, ##a)
+#endif

@@ -1,23 +1,22 @@
-<शैली गुरु>
 /******************************************************************************
  * evtchn.c
  *
- * Driver क्रम receiving and demuxing event-channel संकेतs.
+ * Driver for receiving and demuxing event-channel signals.
  *
  * Copyright (c) 2004-2005, K A Fraser
  * Multi-process extensions Copyright (c) 2004, Steven Smith
  *
- * This program is मुक्त software; you can redistribute it and/or
- * modअगरy it under the terms of the GNU General Public License version 2
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version 2
  * as published by the Free Software Foundation; or, when distributed
- * separately from the Linux kernel or incorporated पूर्णांकo other
+ * separately from the Linux kernel or incorporated into other
  * software packages, subject to the following license:
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a copy
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this source file (the "Software"), to deal in the Software without
- * restriction, including without limitation the rights to use, copy, modअगरy,
+ * restriction, including without limitation the rights to use, copy, modify,
  * merge, publish, distribute, sublicense, and/or sell copies of the Software,
- * and to permit persons to whom the Software is furnished to करो so, subject to
+ * and to permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
@@ -32,138 +31,138 @@
  * IN THE SOFTWARE.
  */
 
-#घोषणा pr_fmt(fmt) "xen:" KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) "xen:" KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/fs.h>
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/major.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/स्थिति.स>
-#समावेश <linux/poll.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/init.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/cpu.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/vदो_स्मृति.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/sched.h>
+#include <linux/slab.h>
+#include <linux/string.h>
+#include <linux/errno.h>
+#include <linux/fs.h>
+#include <linux/miscdevice.h>
+#include <linux/major.h>
+#include <linux/proc_fs.h>
+#include <linux/stat.h>
+#include <linux/poll.h>
+#include <linux/irq.h>
+#include <linux/init.h>
+#include <linux/mutex.h>
+#include <linux/cpu.h>
+#include <linux/mm.h>
+#include <linux/vmalloc.h>
 
-#समावेश <xen/xen.h>
-#समावेश <xen/events.h>
-#समावेश <xen/evtchn.h>
-#समावेश <xen/xen-ops.h>
-#समावेश <यंत्र/xen/hypervisor.h>
+#include <xen/xen.h>
+#include <xen/events.h>
+#include <xen/evtchn.h>
+#include <xen/xen-ops.h>
+#include <asm/xen/hypervisor.h>
 
-काष्ठा per_user_data अणु
-	काष्ठा mutex bind_mutex; /* serialize bind/unbind operations */
-	काष्ठा rb_root evtchns;
-	अचिन्हित पूर्णांक nr_evtchns;
+struct per_user_data {
+	struct mutex bind_mutex; /* serialize bind/unbind operations */
+	struct rb_root evtchns;
+	unsigned int nr_evtchns;
 
-	/* Notअगरication ring, accessed via /dev/xen/evtchn. */
-	अचिन्हित पूर्णांक ring_size;
+	/* Notification ring, accessed via /dev/xen/evtchn. */
+	unsigned int ring_size;
 	evtchn_port_t *ring;
-	अचिन्हित पूर्णांक ring_cons, ring_prod, ring_overflow;
-	काष्ठा mutex ring_cons_mutex; /* protect against concurrent पढ़ोers */
-	spinlock_t ring_prod_lock; /* product against concurrent पूर्णांकerrupts */
+	unsigned int ring_cons, ring_prod, ring_overflow;
+	struct mutex ring_cons_mutex; /* protect against concurrent readers */
+	spinlock_t ring_prod_lock; /* product against concurrent interrupts */
 
-	/* Processes रुको on this queue when ring is empty. */
-	रुको_queue_head_t evtchn_रुको;
-	काष्ठा fasync_काष्ठा *evtchn_async_queue;
-	स्थिर अक्षर *name;
+	/* Processes wait on this queue when ring is empty. */
+	wait_queue_head_t evtchn_wait;
+	struct fasync_struct *evtchn_async_queue;
+	const char *name;
 
-	करोmid_t restrict_करोmid;
-पूर्ण;
+	domid_t restrict_domid;
+};
 
-#घोषणा UNRESTRICTED_DOMID ((करोmid_t)-1)
+#define UNRESTRICTED_DOMID ((domid_t)-1)
 
-काष्ठा user_evtchn अणु
-	काष्ठा rb_node node;
-	काष्ठा per_user_data *user;
+struct user_evtchn {
+	struct rb_node node;
+	struct per_user_data *user;
 	evtchn_port_t port;
 	bool enabled;
-पूर्ण;
+};
 
-अटल व्योम evtchn_मुक्त_ring(evtchn_port_t *ring)
-अणु
-	kvमुक्त(ring);
-पूर्ण
+static void evtchn_free_ring(evtchn_port_t *ring)
+{
+	kvfree(ring);
+}
 
-अटल अचिन्हित पूर्णांक evtchn_ring_offset(काष्ठा per_user_data *u,
-				       अचिन्हित पूर्णांक idx)
-अणु
-	वापस idx & (u->ring_size - 1);
-पूर्ण
+static unsigned int evtchn_ring_offset(struct per_user_data *u,
+				       unsigned int idx)
+{
+	return idx & (u->ring_size - 1);
+}
 
-अटल evtchn_port_t *evtchn_ring_entry(काष्ठा per_user_data *u,
-					अचिन्हित पूर्णांक idx)
-अणु
-	वापस u->ring + evtchn_ring_offset(u, idx);
-पूर्ण
+static evtchn_port_t *evtchn_ring_entry(struct per_user_data *u,
+					unsigned int idx)
+{
+	return u->ring + evtchn_ring_offset(u, idx);
+}
 
-अटल पूर्णांक add_evtchn(काष्ठा per_user_data *u, काष्ठा user_evtchn *evtchn)
-अणु
-	काष्ठा rb_node **new = &(u->evtchns.rb_node), *parent = शून्य;
+static int add_evtchn(struct per_user_data *u, struct user_evtchn *evtchn)
+{
+	struct rb_node **new = &(u->evtchns.rb_node), *parent = NULL;
 
 	u->nr_evtchns++;
 
-	जबतक (*new) अणु
-		काष्ठा user_evtchn *this;
+	while (*new) {
+		struct user_evtchn *this;
 
-		this = rb_entry(*new, काष्ठा user_evtchn, node);
+		this = rb_entry(*new, struct user_evtchn, node);
 
 		parent = *new;
-		अगर (this->port < evtchn->port)
+		if (this->port < evtchn->port)
 			new = &((*new)->rb_left);
-		अन्यथा अगर (this->port > evtchn->port)
+		else if (this->port > evtchn->port)
 			new = &((*new)->rb_right);
-		अन्यथा
-			वापस -EEXIST;
-	पूर्ण
+		else
+			return -EEXIST;
+	}
 
 	/* Add new node and rebalance tree. */
 	rb_link_node(&evtchn->node, parent, new);
 	rb_insert_color(&evtchn->node, &u->evtchns);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम del_evtchn(काष्ठा per_user_data *u, काष्ठा user_evtchn *evtchn)
-अणु
+static void del_evtchn(struct per_user_data *u, struct user_evtchn *evtchn)
+{
 	u->nr_evtchns--;
 	rb_erase(&evtchn->node, &u->evtchns);
-	kमुक्त(evtchn);
-पूर्ण
+	kfree(evtchn);
+}
 
-अटल काष्ठा user_evtchn *find_evtchn(काष्ठा per_user_data *u,
+static struct user_evtchn *find_evtchn(struct per_user_data *u,
 				       evtchn_port_t port)
-अणु
-	काष्ठा rb_node *node = u->evtchns.rb_node;
+{
+	struct rb_node *node = u->evtchns.rb_node;
 
-	जबतक (node) अणु
-		काष्ठा user_evtchn *evtchn;
+	while (node) {
+		struct user_evtchn *evtchn;
 
-		evtchn = rb_entry(node, काष्ठा user_evtchn, node);
+		evtchn = rb_entry(node, struct user_evtchn, node);
 
-		अगर (evtchn->port < port)
+		if (evtchn->port < port)
 			node = node->rb_left;
-		अन्यथा अगर (evtchn->port > port)
+		else if (evtchn->port > port)
 			node = node->rb_right;
-		अन्यथा
-			वापस evtchn;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+		else
+			return evtchn;
+	}
+	return NULL;
+}
 
-अटल irqवापस_t evtchn_पूर्णांकerrupt(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा user_evtchn *evtchn = data;
-	काष्ठा per_user_data *u = evtchn->user;
-	अचिन्हित पूर्णांक prod, cons;
+static irqreturn_t evtchn_interrupt(int irq, void *data)
+{
+	struct user_evtchn *evtchn = data;
+	struct per_user_data *u = evtchn->user;
+	unsigned int prod, cons;
 
 	WARN(!evtchn->enabled,
 	     "Interrupt for port %u, but apparently not enabled; per-user %p\n",
@@ -176,161 +175,161 @@
 	prod = READ_ONCE(u->ring_prod);
 	cons = READ_ONCE(u->ring_cons);
 
-	अगर ((prod - cons) < u->ring_size) अणु
+	if ((prod - cons) < u->ring_size) {
 		*evtchn_ring_entry(u, prod) = evtchn->port;
 		smp_wmb(); /* Ensure ring contents visible */
 		WRITE_ONCE(u->ring_prod, prod + 1);
-		अगर (cons == prod) अणु
-			wake_up_पूर्णांकerruptible(&u->evtchn_रुको);
-			समाप्त_fasync(&u->evtchn_async_queue,
+		if (cons == prod) {
+			wake_up_interruptible(&u->evtchn_wait);
+			kill_fasync(&u->evtchn_async_queue,
 				    SIGIO, POLL_IN);
-		पूर्ण
-	पूर्ण अन्यथा
+		}
+	} else
 		u->ring_overflow = 1;
 
 	spin_unlock(&u->ring_prod_lock);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल sमाप_प्रकार evtchn_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
-			   माप_प्रकार count, loff_t *ppos)
-अणु
-	पूर्णांक rc;
-	अचिन्हित पूर्णांक c, p, bytes1 = 0, bytes2 = 0;
-	काष्ठा per_user_data *u = file->निजी_data;
+static ssize_t evtchn_read(struct file *file, char __user *buf,
+			   size_t count, loff_t *ppos)
+{
+	int rc;
+	unsigned int c, p, bytes1 = 0, bytes2 = 0;
+	struct per_user_data *u = file->private_data;
 
 	/* Whole number of ports. */
-	count &= ~(माप(evtchn_port_t)-1);
+	count &= ~(sizeof(evtchn_port_t)-1);
 
-	अगर (count == 0)
-		वापस 0;
+	if (count == 0)
+		return 0;
 
-	अगर (count > PAGE_SIZE)
+	if (count > PAGE_SIZE)
 		count = PAGE_SIZE;
 
-	क्रम (;;) अणु
+	for (;;) {
 		mutex_lock(&u->ring_cons_mutex);
 
 		rc = -EFBIG;
-		अगर (u->ring_overflow)
-			जाओ unlock_out;
+		if (u->ring_overflow)
+			goto unlock_out;
 
 		c = READ_ONCE(u->ring_cons);
 		p = READ_ONCE(u->ring_prod);
-		अगर (c != p)
-			अवरोध;
+		if (c != p)
+			break;
 
 		mutex_unlock(&u->ring_cons_mutex);
 
-		अगर (file->f_flags & O_NONBLOCK)
-			वापस -EAGAIN;
+		if (file->f_flags & O_NONBLOCK)
+			return -EAGAIN;
 
-		rc = रुको_event_पूर्णांकerruptible(u->evtchn_रुको,
+		rc = wait_event_interruptible(u->evtchn_wait,
 			READ_ONCE(u->ring_cons) != READ_ONCE(u->ring_prod));
-		अगर (rc)
-			वापस rc;
-	पूर्ण
+		if (rc)
+			return rc;
+	}
 
-	/* Byte lengths of two chunks. Chunk split (अगर any) is at ring wrap. */
-	अगर (((c ^ p) & u->ring_size) != 0) अणु
+	/* Byte lengths of two chunks. Chunk split (if any) is at ring wrap. */
+	if (((c ^ p) & u->ring_size) != 0) {
 		bytes1 = (u->ring_size - evtchn_ring_offset(u, c)) *
-			माप(evtchn_port_t);
-		bytes2 = evtchn_ring_offset(u, p) * माप(evtchn_port_t);
-	पूर्ण अन्यथा अणु
-		bytes1 = (p - c) * माप(evtchn_port_t);
+			sizeof(evtchn_port_t);
+		bytes2 = evtchn_ring_offset(u, p) * sizeof(evtchn_port_t);
+	} else {
+		bytes1 = (p - c) * sizeof(evtchn_port_t);
 		bytes2 = 0;
-	पूर्ण
+	}
 
 	/* Truncate chunks according to caller's maximum byte count. */
-	अगर (bytes1 > count) अणु
+	if (bytes1 > count) {
 		bytes1 = count;
 		bytes2 = 0;
-	पूर्ण अन्यथा अगर ((bytes1 + bytes2) > count) अणु
+	} else if ((bytes1 + bytes2) > count) {
 		bytes2 = count - bytes1;
-	पूर्ण
+	}
 
 	rc = -EFAULT;
-	smp_rmb(); /* Ensure that we see the port beक्रमe we copy it. */
-	अगर (copy_to_user(buf, evtchn_ring_entry(u, c), bytes1) ||
+	smp_rmb(); /* Ensure that we see the port before we copy it. */
+	if (copy_to_user(buf, evtchn_ring_entry(u, c), bytes1) ||
 	    ((bytes2 != 0) &&
 	     copy_to_user(&buf[bytes1], &u->ring[0], bytes2)))
-		जाओ unlock_out;
+		goto unlock_out;
 
-	WRITE_ONCE(u->ring_cons, c + (bytes1 + bytes2) / माप(evtchn_port_t));
+	WRITE_ONCE(u->ring_cons, c + (bytes1 + bytes2) / sizeof(evtchn_port_t));
 	rc = bytes1 + bytes2;
 
  unlock_out:
 	mutex_unlock(&u->ring_cons_mutex);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल sमाप_प्रकार evtchn_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
-			    माप_प्रकार count, loff_t *ppos)
-अणु
-	पूर्णांक rc, i;
-	evtchn_port_t *kbuf = (evtchn_port_t *)__get_मुक्त_page(GFP_KERNEL);
-	काष्ठा per_user_data *u = file->निजी_data;
+static ssize_t evtchn_write(struct file *file, const char __user *buf,
+			    size_t count, loff_t *ppos)
+{
+	int rc, i;
+	evtchn_port_t *kbuf = (evtchn_port_t *)__get_free_page(GFP_KERNEL);
+	struct per_user_data *u = file->private_data;
 
-	अगर (kbuf == शून्य)
-		वापस -ENOMEM;
+	if (kbuf == NULL)
+		return -ENOMEM;
 
 	/* Whole number of ports. */
-	count &= ~(माप(evtchn_port_t)-1);
+	count &= ~(sizeof(evtchn_port_t)-1);
 
 	rc = 0;
-	अगर (count == 0)
-		जाओ out;
+	if (count == 0)
+		goto out;
 
-	अगर (count > PAGE_SIZE)
+	if (count > PAGE_SIZE)
 		count = PAGE_SIZE;
 
 	rc = -EFAULT;
-	अगर (copy_from_user(kbuf, buf, count) != 0)
-		जाओ out;
+	if (copy_from_user(kbuf, buf, count) != 0)
+		goto out;
 
 	mutex_lock(&u->bind_mutex);
 
-	क्रम (i = 0; i < (count/माप(evtchn_port_t)); i++) अणु
+	for (i = 0; i < (count/sizeof(evtchn_port_t)); i++) {
 		evtchn_port_t port = kbuf[i];
-		काष्ठा user_evtchn *evtchn;
+		struct user_evtchn *evtchn;
 
 		evtchn = find_evtchn(u, port);
-		अगर (evtchn && !evtchn->enabled) अणु
+		if (evtchn && !evtchn->enabled) {
 			evtchn->enabled = true;
 			xen_irq_lateeoi(irq_from_evtchn(port), 0);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	mutex_unlock(&u->bind_mutex);
 
 	rc = count;
 
  out:
-	मुक्त_page((अचिन्हित दीर्घ)kbuf);
-	वापस rc;
-पूर्ण
+	free_page((unsigned long)kbuf);
+	return rc;
+}
 
-अटल पूर्णांक evtchn_resize_ring(काष्ठा per_user_data *u)
-अणु
-	अचिन्हित पूर्णांक new_size;
+static int evtchn_resize_ring(struct per_user_data *u)
+{
+	unsigned int new_size;
 	evtchn_port_t *new_ring, *old_ring;
 
 	/*
 	 * Ensure the ring is large enough to capture all possible
-	 * events. i.e., one मुक्त slot क्रम each bound event.
+	 * events. i.e., one free slot for each bound event.
 	 */
-	अगर (u->nr_evtchns <= u->ring_size)
-		वापस 0;
+	if (u->nr_evtchns <= u->ring_size)
+		return 0;
 
-	अगर (u->ring_size == 0)
+	if (u->ring_size == 0)
 		new_size = 64;
-	अन्यथा
+	else
 		new_size = 2 * u->ring_size;
 
-	new_ring = kvदो_स्मृति_array(new_size, माप(*new_ring), GFP_KERNEL);
-	अगर (!new_ring)
-		वापस -ENOMEM;
+	new_ring = kvmalloc_array(new_size, sizeof(*new_ring), GFP_KERNEL);
+	if (!new_ring)
+		return -ENOMEM;
 
 	old_ring = u->ring;
 
@@ -345,16 +344,16 @@
 	 * Copy the old ring contents to the new ring.
 	 *
 	 * To take care of wrapping, a full ring, and the new index
-	 * poपूर्णांकing पूर्णांकo the second half, simply copy the old contents
+	 * pointing into the second half, simply copy the old contents
 	 * twice.
 	 *
 	 * +---------+    +------------------+
 	 * |34567  12| -> |34567  1234567  12|
 	 * +-----p-c-+    +-------c------p---+
 	 */
-	स_नकल(new_ring, old_ring, u->ring_size * माप(*u->ring));
-	स_नकल(new_ring + u->ring_size, old_ring,
-	       u->ring_size * माप(*u->ring));
+	memcpy(new_ring, old_ring, u->ring_size * sizeof(*u->ring));
+	memcpy(new_ring + u->ring_size, old_ring,
+	       u->ring_size * sizeof(*u->ring));
 
 	u->ring = new_ring;
 	u->ring_size = new_size;
@@ -362,199 +361,199 @@
 	spin_unlock_irq(&u->ring_prod_lock);
 	mutex_unlock(&u->ring_cons_mutex);
 
-	evtchn_मुक्त_ring(old_ring);
+	evtchn_free_ring(old_ring);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक evtchn_bind_to_user(काष्ठा per_user_data *u, evtchn_port_t port)
-अणु
-	काष्ठा user_evtchn *evtchn;
-	काष्ठा evtchn_बंद बंद;
-	पूर्णांक rc = 0;
+static int evtchn_bind_to_user(struct per_user_data *u, evtchn_port_t port)
+{
+	struct user_evtchn *evtchn;
+	struct evtchn_close close;
+	int rc = 0;
 
 	/*
 	 * Ports are never reused, so every caller should pass in a
 	 * unique port.
 	 *
-	 * (Locking not necessary because we haven't रेजिस्टरed the
-	 * पूर्णांकerrupt handler yet, and our caller has alपढ़ोy
+	 * (Locking not necessary because we haven't registered the
+	 * interrupt handler yet, and our caller has already
 	 * serialized bind operations.)
 	 */
 
-	evtchn = kzalloc(माप(*evtchn), GFP_KERNEL);
-	अगर (!evtchn)
-		वापस -ENOMEM;
+	evtchn = kzalloc(sizeof(*evtchn), GFP_KERNEL);
+	if (!evtchn)
+		return -ENOMEM;
 
 	evtchn->user = u;
 	evtchn->port = port;
 	evtchn->enabled = true; /* start enabled */
 
 	rc = add_evtchn(u, evtchn);
-	अगर (rc < 0)
-		जाओ err;
+	if (rc < 0)
+		goto err;
 
 	rc = evtchn_resize_ring(u);
-	अगर (rc < 0)
-		जाओ err;
+	if (rc < 0)
+		goto err;
 
-	rc = bind_evtchn_to_irqhandler_lateeoi(port, evtchn_पूर्णांकerrupt, 0,
+	rc = bind_evtchn_to_irqhandler_lateeoi(port, evtchn_interrupt, 0,
 					       u->name, evtchn);
-	अगर (rc < 0)
-		जाओ err;
+	if (rc < 0)
+		goto err;
 
 	rc = evtchn_make_refcounted(port);
-	वापस rc;
+	return rc;
 
 err:
-	/* bind failed, should बंद the port now */
-	बंद.port = port;
-	अगर (HYPERVISOR_event_channel_op(EVTCHNOP_बंद, &बंद) != 0)
+	/* bind failed, should close the port now */
+	close.port = port;
+	if (HYPERVISOR_event_channel_op(EVTCHNOP_close, &close) != 0)
 		BUG();
 	del_evtchn(u, evtchn);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम evtchn_unbind_from_user(काष्ठा per_user_data *u,
-				    काष्ठा user_evtchn *evtchn)
-अणु
-	पूर्णांक irq = irq_from_evtchn(evtchn->port);
+static void evtchn_unbind_from_user(struct per_user_data *u,
+				    struct user_evtchn *evtchn)
+{
+	int irq = irq_from_evtchn(evtchn->port);
 
 	BUG_ON(irq < 0);
 
 	unbind_from_irqhandler(irq, evtchn);
 
 	del_evtchn(u, evtchn);
-पूर्ण
+}
 
-अटल दीर्घ evtchn_ioctl(काष्ठा file *file,
-			 अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	पूर्णांक rc;
-	काष्ठा per_user_data *u = file->निजी_data;
-	व्योम __user *uarg = (व्योम __user *) arg;
+static long evtchn_ioctl(struct file *file,
+			 unsigned int cmd, unsigned long arg)
+{
+	int rc;
+	struct per_user_data *u = file->private_data;
+	void __user *uarg = (void __user *) arg;
 
 	/* Prevent bind from racing with unbind */
 	mutex_lock(&u->bind_mutex);
 
-	चयन (cmd) अणु
-	हाल IOCTL_EVTCHN_BIND_VIRQ: अणु
-		काष्ठा ioctl_evtchn_bind_virq bind;
-		काष्ठा evtchn_bind_virq bind_virq;
+	switch (cmd) {
+	case IOCTL_EVTCHN_BIND_VIRQ: {
+		struct ioctl_evtchn_bind_virq bind;
+		struct evtchn_bind_virq bind_virq;
 
 		rc = -EACCES;
-		अगर (u->restrict_करोmid != UNRESTRICTED_DOMID)
-			अवरोध;
+		if (u->restrict_domid != UNRESTRICTED_DOMID)
+			break;
 
 		rc = -EFAULT;
-		अगर (copy_from_user(&bind, uarg, माप(bind)))
-			अवरोध;
+		if (copy_from_user(&bind, uarg, sizeof(bind)))
+			break;
 
 		bind_virq.virq = bind.virq;
 		bind_virq.vcpu = xen_vcpu_nr(0);
 		rc = HYPERVISOR_event_channel_op(EVTCHNOP_bind_virq,
 						 &bind_virq);
-		अगर (rc != 0)
-			अवरोध;
+		if (rc != 0)
+			break;
 
 		rc = evtchn_bind_to_user(u, bind_virq.port);
-		अगर (rc == 0)
+		if (rc == 0)
 			rc = bind_virq.port;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	हाल IOCTL_EVTCHN_BIND_INTERDOMAIN: अणु
-		काष्ठा ioctl_evtchn_bind_पूर्णांकerकरोमुख्य bind;
-		काष्ठा evtchn_bind_पूर्णांकerकरोमुख्य bind_पूर्णांकerकरोमुख्य;
-
-		rc = -EFAULT;
-		अगर (copy_from_user(&bind, uarg, माप(bind)))
-			अवरोध;
-
-		rc = -EACCES;
-		अगर (u->restrict_करोmid != UNRESTRICTED_DOMID &&
-		    u->restrict_करोmid != bind.remote_करोमुख्य)
-			अवरोध;
-
-		bind_पूर्णांकerकरोमुख्य.remote_करोm  = bind.remote_करोमुख्य;
-		bind_पूर्णांकerकरोमुख्य.remote_port = bind.remote_port;
-		rc = HYPERVISOR_event_channel_op(EVTCHNOP_bind_पूर्णांकerकरोमुख्य,
-						 &bind_पूर्णांकerकरोमुख्य);
-		अगर (rc != 0)
-			अवरोध;
-
-		rc = evtchn_bind_to_user(u, bind_पूर्णांकerकरोमुख्य.local_port);
-		अगर (rc == 0)
-			rc = bind_पूर्णांकerकरोमुख्य.local_port;
-		अवरोध;
-	पूर्ण
-
-	हाल IOCTL_EVTCHN_BIND_UNBOUND_PORT: अणु
-		काष्ठा ioctl_evtchn_bind_unbound_port bind;
-		काष्ठा evtchn_alloc_unbound alloc_unbound;
-
-		rc = -EACCES;
-		अगर (u->restrict_करोmid != UNRESTRICTED_DOMID)
-			अवरोध;
+	case IOCTL_EVTCHN_BIND_INTERDOMAIN: {
+		struct ioctl_evtchn_bind_interdomain bind;
+		struct evtchn_bind_interdomain bind_interdomain;
 
 		rc = -EFAULT;
-		अगर (copy_from_user(&bind, uarg, माप(bind)))
-			अवरोध;
+		if (copy_from_user(&bind, uarg, sizeof(bind)))
+			break;
 
-		alloc_unbound.करोm        = DOMID_SELF;
-		alloc_unbound.remote_करोm = bind.remote_करोमुख्य;
+		rc = -EACCES;
+		if (u->restrict_domid != UNRESTRICTED_DOMID &&
+		    u->restrict_domid != bind.remote_domain)
+			break;
+
+		bind_interdomain.remote_dom  = bind.remote_domain;
+		bind_interdomain.remote_port = bind.remote_port;
+		rc = HYPERVISOR_event_channel_op(EVTCHNOP_bind_interdomain,
+						 &bind_interdomain);
+		if (rc != 0)
+			break;
+
+		rc = evtchn_bind_to_user(u, bind_interdomain.local_port);
+		if (rc == 0)
+			rc = bind_interdomain.local_port;
+		break;
+	}
+
+	case IOCTL_EVTCHN_BIND_UNBOUND_PORT: {
+		struct ioctl_evtchn_bind_unbound_port bind;
+		struct evtchn_alloc_unbound alloc_unbound;
+
+		rc = -EACCES;
+		if (u->restrict_domid != UNRESTRICTED_DOMID)
+			break;
+
+		rc = -EFAULT;
+		if (copy_from_user(&bind, uarg, sizeof(bind)))
+			break;
+
+		alloc_unbound.dom        = DOMID_SELF;
+		alloc_unbound.remote_dom = bind.remote_domain;
 		rc = HYPERVISOR_event_channel_op(EVTCHNOP_alloc_unbound,
 						 &alloc_unbound);
-		अगर (rc != 0)
-			अवरोध;
+		if (rc != 0)
+			break;
 
 		rc = evtchn_bind_to_user(u, alloc_unbound.port);
-		अगर (rc == 0)
+		if (rc == 0)
 			rc = alloc_unbound.port;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	हाल IOCTL_EVTCHN_UNBIND: अणु
-		काष्ठा ioctl_evtchn_unbind unbind;
-		काष्ठा user_evtchn *evtchn;
+	case IOCTL_EVTCHN_UNBIND: {
+		struct ioctl_evtchn_unbind unbind;
+		struct user_evtchn *evtchn;
 
 		rc = -EFAULT;
-		अगर (copy_from_user(&unbind, uarg, माप(unbind)))
-			अवरोध;
+		if (copy_from_user(&unbind, uarg, sizeof(unbind)))
+			break;
 
 		rc = -EINVAL;
-		अगर (unbind.port >= xen_evtchn_nr_channels())
-			अवरोध;
+		if (unbind.port >= xen_evtchn_nr_channels())
+			break;
 
 		rc = -ENOTCONN;
 		evtchn = find_evtchn(u, unbind.port);
-		अगर (!evtchn)
-			अवरोध;
+		if (!evtchn)
+			break;
 
 		disable_irq(irq_from_evtchn(unbind.port));
 		evtchn_unbind_from_user(u, evtchn);
 		rc = 0;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	हाल IOCTL_EVTCHN_NOTIFY: अणु
-		काष्ठा ioctl_evtchn_notअगरy notअगरy;
-		काष्ठा user_evtchn *evtchn;
+	case IOCTL_EVTCHN_NOTIFY: {
+		struct ioctl_evtchn_notify notify;
+		struct user_evtchn *evtchn;
 
 		rc = -EFAULT;
-		अगर (copy_from_user(&notअगरy, uarg, माप(notअगरy)))
-			अवरोध;
+		if (copy_from_user(&notify, uarg, sizeof(notify)))
+			break;
 
 		rc = -ENOTCONN;
-		evtchn = find_evtchn(u, notअगरy.port);
-		अगर (evtchn) अणु
-			notअगरy_remote_via_evtchn(notअगरy.port);
+		evtchn = find_evtchn(u, notify.port);
+		if (evtchn) {
+			notify_remote_via_evtchn(notify.port);
 			rc = 0;
-		पूर्ण
-		अवरोध;
-	पूर्ण
+		}
+		break;
+	}
 
-	हाल IOCTL_EVTCHN_RESET: अणु
+	case IOCTL_EVTCHN_RESET: {
 		/* Initialise the ring to empty. Clear errors. */
 		mutex_lock(&u->ring_cons_mutex);
 		spin_lock_irq(&u->ring_prod_lock);
@@ -564,147 +563,147 @@ err:
 		spin_unlock_irq(&u->ring_prod_lock);
 		mutex_unlock(&u->ring_cons_mutex);
 		rc = 0;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	हाल IOCTL_EVTCHN_RESTRICT_DOMID: अणु
-		काष्ठा ioctl_evtchn_restrict_करोmid ierd;
+	case IOCTL_EVTCHN_RESTRICT_DOMID: {
+		struct ioctl_evtchn_restrict_domid ierd;
 
 		rc = -EACCES;
-		अगर (u->restrict_करोmid != UNRESTRICTED_DOMID)
-			अवरोध;
+		if (u->restrict_domid != UNRESTRICTED_DOMID)
+			break;
 
 		rc = -EFAULT;
-		अगर (copy_from_user(&ierd, uarg, माप(ierd)))
-		    अवरोध;
+		if (copy_from_user(&ierd, uarg, sizeof(ierd)))
+		    break;
 
 		rc = -EINVAL;
-		अगर (ierd.करोmid == 0 || ierd.करोmid >= DOMID_FIRST_RESERVED)
-			अवरोध;
+		if (ierd.domid == 0 || ierd.domid >= DOMID_FIRST_RESERVED)
+			break;
 
-		u->restrict_करोmid = ierd.करोmid;
+		u->restrict_domid = ierd.domid;
 		rc = 0;
 
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	शेष:
+	default:
 		rc = -ENOSYS;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	mutex_unlock(&u->bind_mutex);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल __poll_t evtchn_poll(काष्ठा file *file, poll_table *रुको)
-अणु
+static __poll_t evtchn_poll(struct file *file, poll_table *wait)
+{
 	__poll_t mask = EPOLLOUT | EPOLLWRNORM;
-	काष्ठा per_user_data *u = file->निजी_data;
+	struct per_user_data *u = file->private_data;
 
-	poll_रुको(file, &u->evtchn_रुको, रुको);
-	अगर (READ_ONCE(u->ring_cons) != READ_ONCE(u->ring_prod))
+	poll_wait(file, &u->evtchn_wait, wait);
+	if (READ_ONCE(u->ring_cons) != READ_ONCE(u->ring_prod))
 		mask |= EPOLLIN | EPOLLRDNORM;
-	अगर (u->ring_overflow)
+	if (u->ring_overflow)
 		mask = EPOLLERR;
-	वापस mask;
-पूर्ण
+	return mask;
+}
 
-अटल पूर्णांक evtchn_fasync(पूर्णांक fd, काष्ठा file *filp, पूर्णांक on)
-अणु
-	काष्ठा per_user_data *u = filp->निजी_data;
-	वापस fasync_helper(fd, filp, on, &u->evtchn_async_queue);
-पूर्ण
+static int evtchn_fasync(int fd, struct file *filp, int on)
+{
+	struct per_user_data *u = filp->private_data;
+	return fasync_helper(fd, filp, on, &u->evtchn_async_queue);
+}
 
-अटल पूर्णांक evtchn_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
-अणु
-	काष्ठा per_user_data *u;
+static int evtchn_open(struct inode *inode, struct file *filp)
+{
+	struct per_user_data *u;
 
-	u = kzalloc(माप(*u), GFP_KERNEL);
-	अगर (u == शून्य)
-		वापस -ENOMEM;
+	u = kzalloc(sizeof(*u), GFP_KERNEL);
+	if (u == NULL)
+		return -ENOMEM;
 
-	u->name = kaप्र_लिखो(GFP_KERNEL, "evtchn:%s", current->comm);
-	अगर (u->name == शून्य) अणु
-		kमुक्त(u);
-		वापस -ENOMEM;
-	पूर्ण
+	u->name = kasprintf(GFP_KERNEL, "evtchn:%s", current->comm);
+	if (u->name == NULL) {
+		kfree(u);
+		return -ENOMEM;
+	}
 
-	init_रुकोqueue_head(&u->evtchn_रुको);
+	init_waitqueue_head(&u->evtchn_wait);
 
 	mutex_init(&u->bind_mutex);
 	mutex_init(&u->ring_cons_mutex);
 	spin_lock_init(&u->ring_prod_lock);
 
-	u->restrict_करोmid = UNRESTRICTED_DOMID;
+	u->restrict_domid = UNRESTRICTED_DOMID;
 
-	filp->निजी_data = u;
+	filp->private_data = u;
 
-	वापस stream_खोलो(inode, filp);
-पूर्ण
+	return stream_open(inode, filp);
+}
 
-अटल पूर्णांक evtchn_release(काष्ठा inode *inode, काष्ठा file *filp)
-अणु
-	काष्ठा per_user_data *u = filp->निजी_data;
-	काष्ठा rb_node *node;
+static int evtchn_release(struct inode *inode, struct file *filp)
+{
+	struct per_user_data *u = filp->private_data;
+	struct rb_node *node;
 
-	जबतक ((node = u->evtchns.rb_node)) अणु
-		काष्ठा user_evtchn *evtchn;
+	while ((node = u->evtchns.rb_node)) {
+		struct user_evtchn *evtchn;
 
-		evtchn = rb_entry(node, काष्ठा user_evtchn, node);
+		evtchn = rb_entry(node, struct user_evtchn, node);
 		disable_irq(irq_from_evtchn(evtchn->port));
 		evtchn_unbind_from_user(u, evtchn);
-	पूर्ण
+	}
 
-	evtchn_मुक्त_ring(u->ring);
-	kमुक्त(u->name);
-	kमुक्त(u);
+	evtchn_free_ring(u->ring);
+	kfree(u->name);
+	kfree(u);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा file_operations evtchn_fops = अणु
+static const struct file_operations evtchn_fops = {
 	.owner   = THIS_MODULE,
-	.पढ़ो    = evtchn_पढ़ो,
-	.ग_लिखो   = evtchn_ग_लिखो,
+	.read    = evtchn_read,
+	.write   = evtchn_write,
 	.unlocked_ioctl = evtchn_ioctl,
 	.poll    = evtchn_poll,
 	.fasync  = evtchn_fasync,
-	.खोलो    = evtchn_खोलो,
+	.open    = evtchn_open,
 	.release = evtchn_release,
 	.llseek	 = no_llseek,
-पूर्ण;
+};
 
-अटल काष्ठा miscdevice evtchn_miscdev = अणु
+static struct miscdevice evtchn_miscdev = {
 	.minor        = MISC_DYNAMIC_MINOR,
 	.name         = "xen/evtchn",
 	.fops         = &evtchn_fops,
-पूर्ण;
-अटल पूर्णांक __init evtchn_init(व्योम)
-अणु
-	पूर्णांक err;
+};
+static int __init evtchn_init(void)
+{
+	int err;
 
-	अगर (!xen_करोमुख्य())
-		वापस -ENODEV;
+	if (!xen_domain())
+		return -ENODEV;
 
 	/* Create '/dev/xen/evtchn'. */
-	err = misc_रेजिस्टर(&evtchn_miscdev);
-	अगर (err != 0) अणु
+	err = misc_register(&evtchn_miscdev);
+	if (err != 0) {
 		pr_err("Could not register /dev/xen/evtchn\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	pr_info("Event-channel device installed\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास evtchn_cleanup(व्योम)
-अणु
-	misc_deरेजिस्टर(&evtchn_miscdev);
-पूर्ण
+static void __exit evtchn_cleanup(void)
+{
+	misc_deregister(&evtchn_miscdev);
+}
 
 module_init(evtchn_init);
-module_निकास(evtchn_cleanup);
+module_exit(evtchn_cleanup);
 
 MODULE_LICENSE("GPL");

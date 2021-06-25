@@ -1,49 +1,48 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Actions Semi Owl Smart Power System (SPS) shared helpers
  *
  * Copyright 2012 Actions Semi Inc.
  * Author: Actions Semi, Inc.
  *
- * Copyright (c) 2017 Andreas Fथअrber
+ * Copyright (c) 2017 Andreas Färber
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/soc/actions/owl-sps.h>
+#include <linux/delay.h>
+#include <linux/io.h>
+#include <linux/soc/actions/owl-sps.h>
 
-#घोषणा OWL_SPS_PG_CTL	0x0
+#define OWL_SPS_PG_CTL	0x0
 
-पूर्णांक owl_sps_set_pg(व्योम __iomem *base, u32 pwr_mask, u32 ack_mask, bool enable)
-अणु
+int owl_sps_set_pg(void __iomem *base, u32 pwr_mask, u32 ack_mask, bool enable)
+{
 	u32 val;
 	bool ack;
-	पूर्णांक समयout;
+	int timeout;
 
-	val = पढ़ोl(base + OWL_SPS_PG_CTL);
+	val = readl(base + OWL_SPS_PG_CTL);
 	ack = val & ack_mask;
-	अगर (ack == enable)
-		वापस 0;
+	if (ack == enable)
+		return 0;
 
-	अगर (enable)
+	if (enable)
 		val |= pwr_mask;
-	अन्यथा
+	else
 		val &= ~pwr_mask;
 
-	ग_लिखोl(val, base + OWL_SPS_PG_CTL);
+	writel(val, base + OWL_SPS_PG_CTL);
 
-	क्रम (समयout = 5000; समयout > 0; समयout -= 50) अणु
-		val = पढ़ोl(base + OWL_SPS_PG_CTL);
-		अगर ((val & ack_mask) == (enable ? ack_mask : 0))
-			अवरोध;
+	for (timeout = 5000; timeout > 0; timeout -= 50) {
+		val = readl(base + OWL_SPS_PG_CTL);
+		if ((val & ack_mask) == (enable ? ack_mask : 0))
+			break;
 		udelay(50);
-	पूर्ण
-	अगर (समयout <= 0)
-		वापस -ETIMEDOUT;
+	}
+	if (timeout <= 0)
+		return -ETIMEDOUT;
 
 	udelay(10);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(owl_sps_set_pg);

@@ -1,324 +1,323 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/kmod.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/rtnetlink.h>
-#समावेश <linux/net_tstamp.h>
-#समावेश <linux/wireless.h>
-#समावेश <net/dsa.h>
-#समावेश <net/wext.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/kmod.h>
+#include <linux/netdevice.h>
+#include <linux/etherdevice.h>
+#include <linux/rtnetlink.h>
+#include <linux/net_tstamp.h>
+#include <linux/wireless.h>
+#include <net/dsa.h>
+#include <net/wext.h>
 
 /*
- *	Map an पूर्णांकerface index to its name (SIOCGIFNAME)
+ *	Map an interface index to its name (SIOCGIFNAME)
  */
 
 /*
- *	We need this ioctl क्रम efficient implementation of the
- *	अगर_indextoname() function required by the IPv6 API.  Without
- *	it, we would have to search all the पूर्णांकerfaces to find a
+ *	We need this ioctl for efficient implementation of the
+ *	if_indextoname() function required by the IPv6 API.  Without
+ *	it, we would have to search all the interfaces to find a
  *	match.  --pb
  */
 
-अटल पूर्णांक dev_अगरname(काष्ठा net *net, काष्ठा अगरreq *अगरr)
-अणु
-	अगरr->अगरr_name[IFNAMSIZ-1] = 0;
-	वापस netdev_get_name(net, अगरr->अगरr_name, अगरr->अगरr_अगरindex);
-पूर्ण
+static int dev_ifname(struct net *net, struct ifreq *ifr)
+{
+	ifr->ifr_name[IFNAMSIZ-1] = 0;
+	return netdev_get_name(net, ifr->ifr_name, ifr->ifr_ifindex);
+}
 
-अटल gअगरconf_func_t *gअगरconf_list[NPROTO];
+static gifconf_func_t *gifconf_list[NPROTO];
 
 /**
- *	रेजिस्टर_gअगरconf	-	रेजिस्टर a SIOCGIF handler
+ *	register_gifconf	-	register a SIOCGIF handler
  *	@family: Address family
- *	@gअगरconf: Function handler
+ *	@gifconf: Function handler
  *
  *	Register protocol dependent address dumping routines. The handler
- *	that is passed must not be मुक्तd or reused until it has been replaced
+ *	that is passed must not be freed or reused until it has been replaced
  *	by another handler.
  */
-पूर्णांक रेजिस्टर_gअगरconf(अचिन्हित पूर्णांक family, gअगरconf_func_t *gअगरconf)
-अणु
-	अगर (family >= NPROTO)
-		वापस -EINVAL;
-	gअगरconf_list[family] = gअगरconf;
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(रेजिस्टर_gअगरconf);
+int register_gifconf(unsigned int family, gifconf_func_t *gifconf)
+{
+	if (family >= NPROTO)
+		return -EINVAL;
+	gifconf_list[family] = gifconf;
+	return 0;
+}
+EXPORT_SYMBOL(register_gifconf);
 
 /*
- *	Perक्रमm a SIOCGIFCONF call. This काष्ठाure will change
- *	size eventually, and there is nothing I can करो about it.
+ *	Perform a SIOCGIFCONF call. This structure will change
+ *	size eventually, and there is nothing I can do about it.
  *	Thus we will need a 'compatibility mode'.
  */
 
-पूर्णांक dev_अगरconf(काष्ठा net *net, काष्ठा अगरconf *अगरc, पूर्णांक size)
-अणु
-	काष्ठा net_device *dev;
-	अक्षर __user *pos;
-	पूर्णांक len;
-	पूर्णांक total;
-	पूर्णांक i;
+int dev_ifconf(struct net *net, struct ifconf *ifc, int size)
+{
+	struct net_device *dev;
+	char __user *pos;
+	int len;
+	int total;
+	int i;
 
 	/*
 	 *	Fetch the caller's info block.
 	 */
 
-	pos = अगरc->अगरc_buf;
-	len = अगरc->अगरc_len;
+	pos = ifc->ifc_buf;
+	len = ifc->ifc_len;
 
 	/*
-	 *	Loop over the पूर्णांकerfaces, and ग_लिखो an info block क्रम each.
+	 *	Loop over the interfaces, and write an info block for each.
 	 */
 
 	total = 0;
-	क्रम_each_netdev(net, dev) अणु
-		क्रम (i = 0; i < NPROTO; i++) अणु
-			अगर (gअगरconf_list[i]) अणु
-				पूर्णांक करोne;
-				अगर (!pos)
-					करोne = gअगरconf_list[i](dev, शून्य, 0, size);
-				अन्यथा
-					करोne = gअगरconf_list[i](dev, pos + total,
+	for_each_netdev(net, dev) {
+		for (i = 0; i < NPROTO; i++) {
+			if (gifconf_list[i]) {
+				int done;
+				if (!pos)
+					done = gifconf_list[i](dev, NULL, 0, size);
+				else
+					done = gifconf_list[i](dev, pos + total,
 							       len - total, size);
-				अगर (करोne < 0)
-					वापस -EFAULT;
-				total += करोne;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				if (done < 0)
+					return -EFAULT;
+				total += done;
+			}
+		}
+	}
 
 	/*
-	 *	All करोne.  Write the updated control block back to the caller.
+	 *	All done.  Write the updated control block back to the caller.
 	 */
-	अगरc->अगरc_len = total;
+	ifc->ifc_len = total;
 
 	/*
-	 * 	Both BSD and Solaris वापस 0 here, so we करो too.
+	 * 	Both BSD and Solaris return 0 here, so we do too.
 	 */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- *	Perक्रमm the SIOCxIFxxx calls, inside rcu_पढ़ो_lock()
+ *	Perform the SIOCxIFxxx calls, inside rcu_read_lock()
  */
-अटल पूर्णांक dev_अगरsioc_locked(काष्ठा net *net, काष्ठा अगरreq *अगरr, अचिन्हित पूर्णांक cmd)
-अणु
-	पूर्णांक err;
-	काष्ठा net_device *dev = dev_get_by_name_rcu(net, अगरr->अगरr_name);
+static int dev_ifsioc_locked(struct net *net, struct ifreq *ifr, unsigned int cmd)
+{
+	int err;
+	struct net_device *dev = dev_get_by_name_rcu(net, ifr->ifr_name);
 
-	अगर (!dev)
-		वापस -ENODEV;
+	if (!dev)
+		return -ENODEV;
 
-	चयन (cmd) अणु
-	हाल SIOCGIFFLAGS:	/* Get पूर्णांकerface flags */
-		अगरr->अगरr_flags = (लघु) dev_get_flags(dev);
-		वापस 0;
+	switch (cmd) {
+	case SIOCGIFFLAGS:	/* Get interface flags */
+		ifr->ifr_flags = (short) dev_get_flags(dev);
+		return 0;
 
-	हाल SIOCGIFMETRIC:	/* Get the metric on the पूर्णांकerface
+	case SIOCGIFMETRIC:	/* Get the metric on the interface
 				   (currently unused) */
-		अगरr->अगरr_metric = 0;
-		वापस 0;
+		ifr->ifr_metric = 0;
+		return 0;
 
-	हाल SIOCGIFMTU:	/* Get the MTU of a device */
-		अगरr->अगरr_mtu = dev->mtu;
-		वापस 0;
+	case SIOCGIFMTU:	/* Get the MTU of a device */
+		ifr->ifr_mtu = dev->mtu;
+		return 0;
 
-	हाल SIOCGIFSLAVE:
+	case SIOCGIFSLAVE:
 		err = -EINVAL;
-		अवरोध;
+		break;
 
-	हाल SIOCGIFMAP:
-		अगरr->अगरr_map.mem_start = dev->mem_start;
-		अगरr->अगरr_map.mem_end   = dev->mem_end;
-		अगरr->अगरr_map.base_addr = dev->base_addr;
-		अगरr->अगरr_map.irq       = dev->irq;
-		अगरr->अगरr_map.dma       = dev->dma;
-		अगरr->अगरr_map.port      = dev->अगर_port;
-		वापस 0;
+	case SIOCGIFMAP:
+		ifr->ifr_map.mem_start = dev->mem_start;
+		ifr->ifr_map.mem_end   = dev->mem_end;
+		ifr->ifr_map.base_addr = dev->base_addr;
+		ifr->ifr_map.irq       = dev->irq;
+		ifr->ifr_map.dma       = dev->dma;
+		ifr->ifr_map.port      = dev->if_port;
+		return 0;
 
-	हाल SIOCGIFINDEX:
-		अगरr->अगरr_अगरindex = dev->अगरindex;
-		वापस 0;
+	case SIOCGIFINDEX:
+		ifr->ifr_ifindex = dev->ifindex;
+		return 0;
 
-	हाल SIOCGIFTXQLEN:
-		अगरr->अगरr_qlen = dev->tx_queue_len;
-		वापस 0;
+	case SIOCGIFTXQLEN:
+		ifr->ifr_qlen = dev->tx_queue_len;
+		return 0;
 
-	शेष:
-		/* dev_ioctl() should ensure this हाल
+	default:
+		/* dev_ioctl() should ensure this case
 		 * is never reached
 		 */
 		WARN_ON(1);
 		err = -ENOTTY;
-		अवरोध;
+		break;
 
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
-अटल पूर्णांक net_hwtstamp_validate(काष्ठा अगरreq *अगरr)
-अणु
-	काष्ठा hwtstamp_config cfg;
-	क्रमागत hwtstamp_tx_types tx_type;
-	क्रमागत hwtstamp_rx_filters rx_filter;
-	पूर्णांक tx_type_valid = 0;
-	पूर्णांक rx_filter_valid = 0;
+static int net_hwtstamp_validate(struct ifreq *ifr)
+{
+	struct hwtstamp_config cfg;
+	enum hwtstamp_tx_types tx_type;
+	enum hwtstamp_rx_filters rx_filter;
+	int tx_type_valid = 0;
+	int rx_filter_valid = 0;
 
-	अगर (copy_from_user(&cfg, अगरr->अगरr_data, माप(cfg)))
-		वापस -EFAULT;
+	if (copy_from_user(&cfg, ifr->ifr_data, sizeof(cfg)))
+		return -EFAULT;
 
-	अगर (cfg.flags) /* reserved क्रम future extensions */
-		वापस -EINVAL;
+	if (cfg.flags) /* reserved for future extensions */
+		return -EINVAL;
 
 	tx_type = cfg.tx_type;
 	rx_filter = cfg.rx_filter;
 
-	चयन (tx_type) अणु
-	हाल HWTSTAMP_TX_OFF:
-	हाल HWTSTAMP_TX_ON:
-	हाल HWTSTAMP_TX_ONESTEP_SYNC:
-	हाल HWTSTAMP_TX_ONESTEP_P2P:
+	switch (tx_type) {
+	case HWTSTAMP_TX_OFF:
+	case HWTSTAMP_TX_ON:
+	case HWTSTAMP_TX_ONESTEP_SYNC:
+	case HWTSTAMP_TX_ONESTEP_P2P:
 		tx_type_valid = 1;
-		अवरोध;
-	हाल __HWTSTAMP_TX_CNT:
+		break;
+	case __HWTSTAMP_TX_CNT:
 		/* not a real value */
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	चयन (rx_filter) अणु
-	हाल HWTSTAMP_FILTER_NONE:
-	हाल HWTSTAMP_FILTER_ALL:
-	हाल HWTSTAMP_FILTER_SOME:
-	हाल HWTSTAMP_FILTER_PTP_V1_L4_EVENT:
-	हाल HWTSTAMP_FILTER_PTP_V1_L4_SYNC:
-	हाल HWTSTAMP_FILTER_PTP_V1_L4_DELAY_REQ:
-	हाल HWTSTAMP_FILTER_PTP_V2_L4_EVENT:
-	हाल HWTSTAMP_FILTER_PTP_V2_L4_SYNC:
-	हाल HWTSTAMP_FILTER_PTP_V2_L4_DELAY_REQ:
-	हाल HWTSTAMP_FILTER_PTP_V2_L2_EVENT:
-	हाल HWTSTAMP_FILTER_PTP_V2_L2_SYNC:
-	हाल HWTSTAMP_FILTER_PTP_V2_L2_DELAY_REQ:
-	हाल HWTSTAMP_FILTER_PTP_V2_EVENT:
-	हाल HWTSTAMP_FILTER_PTP_V2_SYNC:
-	हाल HWTSTAMP_FILTER_PTP_V2_DELAY_REQ:
-	हाल HWTSTAMP_FILTER_NTP_ALL:
+	switch (rx_filter) {
+	case HWTSTAMP_FILTER_NONE:
+	case HWTSTAMP_FILTER_ALL:
+	case HWTSTAMP_FILTER_SOME:
+	case HWTSTAMP_FILTER_PTP_V1_L4_EVENT:
+	case HWTSTAMP_FILTER_PTP_V1_L4_SYNC:
+	case HWTSTAMP_FILTER_PTP_V1_L4_DELAY_REQ:
+	case HWTSTAMP_FILTER_PTP_V2_L4_EVENT:
+	case HWTSTAMP_FILTER_PTP_V2_L4_SYNC:
+	case HWTSTAMP_FILTER_PTP_V2_L4_DELAY_REQ:
+	case HWTSTAMP_FILTER_PTP_V2_L2_EVENT:
+	case HWTSTAMP_FILTER_PTP_V2_L2_SYNC:
+	case HWTSTAMP_FILTER_PTP_V2_L2_DELAY_REQ:
+	case HWTSTAMP_FILTER_PTP_V2_EVENT:
+	case HWTSTAMP_FILTER_PTP_V2_SYNC:
+	case HWTSTAMP_FILTER_PTP_V2_DELAY_REQ:
+	case HWTSTAMP_FILTER_NTP_ALL:
 		rx_filter_valid = 1;
-		अवरोध;
-	हाल __HWTSTAMP_FILTER_CNT:
+		break;
+	case __HWTSTAMP_FILTER_CNT:
 		/* not a real value */
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (!tx_type_valid || !rx_filter_valid)
-		वापस -दुस्फल;
+	if (!tx_type_valid || !rx_filter_valid)
+		return -ERANGE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dev_करो_ioctl(काष्ठा net_device *dev,
-			काष्ठा अगरreq *अगरr, अचिन्हित पूर्णांक cmd)
-अणु
-	स्थिर काष्ठा net_device_ops *ops = dev->netdev_ops;
-	पूर्णांक err;
+static int dev_do_ioctl(struct net_device *dev,
+			struct ifreq *ifr, unsigned int cmd)
+{
+	const struct net_device_ops *ops = dev->netdev_ops;
+	int err;
 
-	err = dsa_nकरो_करो_ioctl(dev, अगरr, cmd);
-	अगर (err == 0 || err != -EOPNOTSUPP)
-		वापस err;
+	err = dsa_ndo_do_ioctl(dev, ifr, cmd);
+	if (err == 0 || err != -EOPNOTSUPP)
+		return err;
 
-	अगर (ops->nकरो_करो_ioctl) अणु
-		अगर (netअगर_device_present(dev))
-			err = ops->nकरो_करो_ioctl(dev, अगरr, cmd);
-		अन्यथा
+	if (ops->ndo_do_ioctl) {
+		if (netif_device_present(dev))
+			err = ops->ndo_do_ioctl(dev, ifr, cmd);
+		else
 			err = -ENODEV;
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
- *	Perक्रमm the SIOCxIFxxx calls, inside rtnl_lock()
+ *	Perform the SIOCxIFxxx calls, inside rtnl_lock()
  */
-अटल पूर्णांक dev_अगरsioc(काष्ठा net *net, काष्ठा अगरreq *अगरr, अचिन्हित पूर्णांक cmd)
-अणु
-	पूर्णांक err;
-	काष्ठा net_device *dev = __dev_get_by_name(net, अगरr->अगरr_name);
-	स्थिर काष्ठा net_device_ops *ops;
+static int dev_ifsioc(struct net *net, struct ifreq *ifr, unsigned int cmd)
+{
+	int err;
+	struct net_device *dev = __dev_get_by_name(net, ifr->ifr_name);
+	const struct net_device_ops *ops;
 
-	अगर (!dev)
-		वापस -ENODEV;
+	if (!dev)
+		return -ENODEV;
 
 	ops = dev->netdev_ops;
 
-	चयन (cmd) अणु
-	हाल SIOCSIFFLAGS:	/* Set पूर्णांकerface flags */
-		वापस dev_change_flags(dev, अगरr->अगरr_flags, शून्य);
+	switch (cmd) {
+	case SIOCSIFFLAGS:	/* Set interface flags */
+		return dev_change_flags(dev, ifr->ifr_flags, NULL);
 
-	हाल SIOCSIFMETRIC:	/* Set the metric on the पूर्णांकerface
+	case SIOCSIFMETRIC:	/* Set the metric on the interface
 				   (currently unused) */
-		वापस -EOPNOTSUPP;
+		return -EOPNOTSUPP;
 
-	हाल SIOCSIFMTU:	/* Set the MTU of a device */
-		वापस dev_set_mtu(dev, अगरr->अगरr_mtu);
+	case SIOCSIFMTU:	/* Set the MTU of a device */
+		return dev_set_mtu(dev, ifr->ifr_mtu);
 
-	हाल SIOCSIFHWADDR:
-		अगर (dev->addr_len > माप(काष्ठा sockaddr))
-			वापस -EINVAL;
-		वापस dev_set_mac_address_user(dev, &अगरr->अगरr_hwaddr, शून्य);
+	case SIOCSIFHWADDR:
+		if (dev->addr_len > sizeof(struct sockaddr))
+			return -EINVAL;
+		return dev_set_mac_address_user(dev, &ifr->ifr_hwaddr, NULL);
 
-	हाल SIOCSIFHWBROADCAST:
-		अगर (अगरr->अगरr_hwaddr.sa_family != dev->type)
-			वापस -EINVAL;
-		स_नकल(dev->broadcast, अगरr->अगरr_hwaddr.sa_data,
-		       min(माप(अगरr->अगरr_hwaddr.sa_data),
-			   (माप_प्रकार)dev->addr_len));
-		call_netdevice_notअगरiers(NETDEV_CHANGEADDR, dev);
-		वापस 0;
+	case SIOCSIFHWBROADCAST:
+		if (ifr->ifr_hwaddr.sa_family != dev->type)
+			return -EINVAL;
+		memcpy(dev->broadcast, ifr->ifr_hwaddr.sa_data,
+		       min(sizeof(ifr->ifr_hwaddr.sa_data),
+			   (size_t)dev->addr_len));
+		call_netdevice_notifiers(NETDEV_CHANGEADDR, dev);
+		return 0;
 
-	हाल SIOCSIFMAP:
-		अगर (ops->nकरो_set_config) अणु
-			अगर (!netअगर_device_present(dev))
-				वापस -ENODEV;
-			वापस ops->nकरो_set_config(dev, &अगरr->अगरr_map);
-		पूर्ण
-		वापस -EOPNOTSUPP;
+	case SIOCSIFMAP:
+		if (ops->ndo_set_config) {
+			if (!netif_device_present(dev))
+				return -ENODEV;
+			return ops->ndo_set_config(dev, &ifr->ifr_map);
+		}
+		return -EOPNOTSUPP;
 
-	हाल SIOCADDMULTI:
-		अगर (!ops->nकरो_set_rx_mode ||
-		    अगरr->अगरr_hwaddr.sa_family != AF_UNSPEC)
-			वापस -EINVAL;
-		अगर (!netअगर_device_present(dev))
-			वापस -ENODEV;
-		वापस dev_mc_add_global(dev, अगरr->अगरr_hwaddr.sa_data);
+	case SIOCADDMULTI:
+		if (!ops->ndo_set_rx_mode ||
+		    ifr->ifr_hwaddr.sa_family != AF_UNSPEC)
+			return -EINVAL;
+		if (!netif_device_present(dev))
+			return -ENODEV;
+		return dev_mc_add_global(dev, ifr->ifr_hwaddr.sa_data);
 
-	हाल SIOCDELMULTI:
-		अगर (!ops->nकरो_set_rx_mode ||
-		    अगरr->अगरr_hwaddr.sa_family != AF_UNSPEC)
-			वापस -EINVAL;
-		अगर (!netअगर_device_present(dev))
-			वापस -ENODEV;
-		वापस dev_mc_del_global(dev, अगरr->अगरr_hwaddr.sa_data);
+	case SIOCDELMULTI:
+		if (!ops->ndo_set_rx_mode ||
+		    ifr->ifr_hwaddr.sa_family != AF_UNSPEC)
+			return -EINVAL;
+		if (!netif_device_present(dev))
+			return -ENODEV;
+		return dev_mc_del_global(dev, ifr->ifr_hwaddr.sa_data);
 
-	हाल SIOCSIFTXQLEN:
-		अगर (अगरr->अगरr_qlen < 0)
-			वापस -EINVAL;
-		वापस dev_change_tx_queue_len(dev, अगरr->अगरr_qlen);
+	case SIOCSIFTXQLEN:
+		if (ifr->ifr_qlen < 0)
+			return -EINVAL;
+		return dev_change_tx_queue_len(dev, ifr->ifr_qlen);
 
-	हाल SIOCSIFNAME:
-		अगरr->अगरr_newname[IFNAMSIZ-1] = '\0';
-		वापस dev_change_name(dev, अगरr->अगरr_newname);
+	case SIOCSIFNAME:
+		ifr->ifr_newname[IFNAMSIZ-1] = '\0';
+		return dev_change_name(dev, ifr->ifr_newname);
 
-	हाल SIOCSHWTSTAMP:
-		err = net_hwtstamp_validate(अगरr);
-		अगर (err)
-			वापस err;
+	case SIOCSHWTSTAMP:
+		err = net_hwtstamp_validate(ifr);
+		if (err)
+			return err;
 		fallthrough;
 
 	/*
-	 *	Unknown or निजी ioctl
+	 *	Unknown or private ioctl
 	 */
-	शेष:
-		अगर ((cmd >= SIOCDEVPRIVATE &&
+	default:
+		if ((cmd >= SIOCDEVPRIVATE &&
 		    cmd <= SIOCDEVPRIVATE + 15) ||
 		    cmd == SIOCBONDENSLAVE ||
 		    cmd == SIOCBONDRELEASE ||
@@ -333,205 +332,205 @@ EXPORT_SYMBOL(रेजिस्टर_gअगरconf);
 		    cmd == SIOCBRDELIF ||
 		    cmd == SIOCSHWTSTAMP ||
 		    cmd == SIOCGHWTSTAMP ||
-		    cmd == SIOCWANDEV) अणु
-			err = dev_करो_ioctl(dev, अगरr, cmd);
-		पूर्ण अन्यथा
+		    cmd == SIOCWANDEV) {
+			err = dev_do_ioctl(dev, ifr, cmd);
+		} else
 			err = -EINVAL;
 
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
 /**
  *	dev_load 	- load a network module
  *	@net: the applicable net namespace
- *	@name: name of पूर्णांकerface
+ *	@name: name of interface
  *
- *	If a network पूर्णांकerface is not present and the process has suitable
+ *	If a network interface is not present and the process has suitable
  *	privileges this function loads the module. If module loading is not
  *	available in this kernel then it becomes a nop.
  */
 
-व्योम dev_load(काष्ठा net *net, स्थिर अक्षर *name)
-अणु
-	काष्ठा net_device *dev;
-	पूर्णांक no_module;
+void dev_load(struct net *net, const char *name)
+{
+	struct net_device *dev;
+	int no_module;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	dev = dev_get_by_name_rcu(net, name);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
 	no_module = !dev;
-	अगर (no_module && capable(CAP_NET_ADMIN))
+	if (no_module && capable(CAP_NET_ADMIN))
 		no_module = request_module("netdev-%s", name);
-	अगर (no_module && capable(CAP_SYS_MODULE))
+	if (no_module && capable(CAP_SYS_MODULE))
 		request_module("%s", name);
-पूर्ण
+}
 EXPORT_SYMBOL(dev_load);
 
 /*
  *	This function handles all "interface"-type I/O control requests. The actual
- *	'doing' part of this is dev_अगरsioc above.
+ *	'doing' part of this is dev_ifsioc above.
  */
 
 /**
  *	dev_ioctl	-	network device ioctl
  *	@net: the applicable net namespace
  *	@cmd: command to issue
- *	@अगरr: poपूर्णांकer to a काष्ठा अगरreq in user space
+ *	@ifr: pointer to a struct ifreq in user space
  *	@need_copyout: whether or not copy_to_user() should be called
  *
  *	Issue ioctl functions to devices. This is normally called by the
- *	user space syscall पूर्णांकerfaces but can someबार be useful क्रम
- *	other purposes. The वापस value is the वापस from the syscall अगर
- *	positive or a negative त्रुटि_सं code on error.
+ *	user space syscall interfaces but can sometimes be useful for
+ *	other purposes. The return value is the return from the syscall if
+ *	positive or a negative errno code on error.
  */
 
-पूर्णांक dev_ioctl(काष्ठा net *net, अचिन्हित पूर्णांक cmd, काष्ठा अगरreq *अगरr, bool *need_copyout)
-अणु
-	पूर्णांक ret;
-	अक्षर *colon;
+int dev_ioctl(struct net *net, unsigned int cmd, struct ifreq *ifr, bool *need_copyout)
+{
+	int ret;
+	char *colon;
 
-	अगर (need_copyout)
+	if (need_copyout)
 		*need_copyout = true;
-	अगर (cmd == SIOCGIFNAME)
-		वापस dev_अगरname(net, अगरr);
+	if (cmd == SIOCGIFNAME)
+		return dev_ifname(net, ifr);
 
-	अगरr->अगरr_name[IFNAMSIZ-1] = 0;
+	ifr->ifr_name[IFNAMSIZ-1] = 0;
 
-	colon = म_अक्षर(अगरr->अगरr_name, ':');
-	अगर (colon)
+	colon = strchr(ifr->ifr_name, ':');
+	if (colon)
 		*colon = 0;
 
 	/*
-	 *	See which पूर्णांकerface the caller is talking about.
+	 *	See which interface the caller is talking about.
 	 */
 
-	चयन (cmd) अणु
-	हाल SIOCGIFHWADDR:
-		dev_load(net, अगरr->अगरr_name);
-		ret = dev_get_mac_address(&अगरr->अगरr_hwaddr, net, अगरr->अगरr_name);
-		अगर (colon)
+	switch (cmd) {
+	case SIOCGIFHWADDR:
+		dev_load(net, ifr->ifr_name);
+		ret = dev_get_mac_address(&ifr->ifr_hwaddr, net, ifr->ifr_name);
+		if (colon)
 			*colon = ':';
-		वापस ret;
+		return ret;
 	/*
 	 *	These ioctl calls:
-	 *	- can be करोne by all.
-	 *	- atomic and करो not require locking.
-	 *	- वापस a value
+	 *	- can be done by all.
+	 *	- atomic and do not require locking.
+	 *	- return a value
 	 */
-	हाल SIOCGIFFLAGS:
-	हाल SIOCGIFMETRIC:
-	हाल SIOCGIFMTU:
-	हाल SIOCGIFSLAVE:
-	हाल SIOCGIFMAP:
-	हाल SIOCGIFINDEX:
-	हाल SIOCGIFTXQLEN:
-		dev_load(net, अगरr->अगरr_name);
-		rcu_पढ़ो_lock();
-		ret = dev_अगरsioc_locked(net, अगरr, cmd);
-		rcu_पढ़ो_unlock();
-		अगर (colon)
+	case SIOCGIFFLAGS:
+	case SIOCGIFMETRIC:
+	case SIOCGIFMTU:
+	case SIOCGIFSLAVE:
+	case SIOCGIFMAP:
+	case SIOCGIFINDEX:
+	case SIOCGIFTXQLEN:
+		dev_load(net, ifr->ifr_name);
+		rcu_read_lock();
+		ret = dev_ifsioc_locked(net, ifr, cmd);
+		rcu_read_unlock();
+		if (colon)
 			*colon = ':';
-		वापस ret;
+		return ret;
 
-	हाल SIOCETHTOOL:
-		dev_load(net, अगरr->अगरr_name);
+	case SIOCETHTOOL:
+		dev_load(net, ifr->ifr_name);
 		rtnl_lock();
-		ret = dev_ethtool(net, अगरr);
+		ret = dev_ethtool(net, ifr);
 		rtnl_unlock();
-		अगर (colon)
+		if (colon)
 			*colon = ':';
-		वापस ret;
+		return ret;
 
 	/*
 	 *	These ioctl calls:
-	 *	- require superuser घातer.
+	 *	- require superuser power.
 	 *	- require strict serialization.
-	 *	- वापस a value
+	 *	- return a value
 	 */
-	हाल SIOCGMIIPHY:
-	हाल SIOCGMIIREG:
-	हाल SIOCSIFNAME:
-		dev_load(net, अगरr->अगरr_name);
-		अगर (!ns_capable(net->user_ns, CAP_NET_ADMIN))
-			वापस -EPERM;
+	case SIOCGMIIPHY:
+	case SIOCGMIIREG:
+	case SIOCSIFNAME:
+		dev_load(net, ifr->ifr_name);
+		if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
+			return -EPERM;
 		rtnl_lock();
-		ret = dev_अगरsioc(net, अगरr, cmd);
+		ret = dev_ifsioc(net, ifr, cmd);
 		rtnl_unlock();
-		अगर (colon)
+		if (colon)
 			*colon = ':';
-		वापस ret;
+		return ret;
 
 	/*
 	 *	These ioctl calls:
-	 *	- require superuser घातer.
+	 *	- require superuser power.
 	 *	- require strict serialization.
-	 *	- करो not वापस a value
+	 *	- do not return a value
 	 */
-	हाल SIOCSIFMAP:
-	हाल SIOCSIFTXQLEN:
-		अगर (!capable(CAP_NET_ADMIN))
-			वापस -EPERM;
+	case SIOCSIFMAP:
+	case SIOCSIFTXQLEN:
+		if (!capable(CAP_NET_ADMIN))
+			return -EPERM;
 		fallthrough;
 	/*
 	 *	These ioctl calls:
-	 *	- require local superuser घातer.
+	 *	- require local superuser power.
 	 *	- require strict serialization.
-	 *	- करो not वापस a value
+	 *	- do not return a value
 	 */
-	हाल SIOCSIFFLAGS:
-	हाल SIOCSIFMETRIC:
-	हाल SIOCSIFMTU:
-	हाल SIOCSIFHWADDR:
-	हाल SIOCSIFSLAVE:
-	हाल SIOCADDMULTI:
-	हाल SIOCDELMULTI:
-	हाल SIOCSIFHWBROADCAST:
-	हाल SIOCSMIIREG:
-	हाल SIOCBONDENSLAVE:
-	हाल SIOCBONDRELEASE:
-	हाल SIOCBONDSETHWADDR:
-	हाल SIOCBONDCHANGEACTIVE:
-	हाल SIOCBRADDIF:
-	हाल SIOCBRDELIF:
-	हाल SIOCSHWTSTAMP:
-		अगर (!ns_capable(net->user_ns, CAP_NET_ADMIN))
-			वापस -EPERM;
+	case SIOCSIFFLAGS:
+	case SIOCSIFMETRIC:
+	case SIOCSIFMTU:
+	case SIOCSIFHWADDR:
+	case SIOCSIFSLAVE:
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+	case SIOCSIFHWBROADCAST:
+	case SIOCSMIIREG:
+	case SIOCBONDENSLAVE:
+	case SIOCBONDRELEASE:
+	case SIOCBONDSETHWADDR:
+	case SIOCBONDCHANGEACTIVE:
+	case SIOCBRADDIF:
+	case SIOCBRDELIF:
+	case SIOCSHWTSTAMP:
+		if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
+			return -EPERM;
 		fallthrough;
-	हाल SIOCBONDSLAVEINFOQUERY:
-	हाल SIOCBONDINFOQUERY:
-		dev_load(net, अगरr->अगरr_name);
+	case SIOCBONDSLAVEINFOQUERY:
+	case SIOCBONDINFOQUERY:
+		dev_load(net, ifr->ifr_name);
 		rtnl_lock();
-		ret = dev_अगरsioc(net, अगरr, cmd);
+		ret = dev_ifsioc(net, ifr, cmd);
 		rtnl_unlock();
-		अगर (need_copyout)
+		if (need_copyout)
 			*need_copyout = false;
-		वापस ret;
+		return ret;
 
-	हाल SIOCGIFMEM:
+	case SIOCGIFMEM:
 		/* Get the per device memory space. We can add this but
-		 * currently करो not support it */
-	हाल SIOCSIFMEM:
+		 * currently do not support it */
+	case SIOCSIFMEM:
 		/* Set the per device memory buffer space.
-		 * Not applicable in our हाल */
-	हाल SIOCSIFLINK:
-		वापस -ENOTTY;
+		 * Not applicable in our case */
+	case SIOCSIFLINK:
+		return -ENOTTY;
 
 	/*
-	 *	Unknown or निजी ioctl.
+	 *	Unknown or private ioctl.
 	 */
-	शेष:
-		अगर (cmd == SIOCWANDEV ||
+	default:
+		if (cmd == SIOCWANDEV ||
 		    cmd == SIOCGHWTSTAMP ||
 		    (cmd >= SIOCDEVPRIVATE &&
-		     cmd <= SIOCDEVPRIVATE + 15)) अणु
-			dev_load(net, अगरr->अगरr_name);
+		     cmd <= SIOCDEVPRIVATE + 15)) {
+			dev_load(net, ifr->ifr_name);
 			rtnl_lock();
-			ret = dev_अगरsioc(net, अगरr, cmd);
+			ret = dev_ifsioc(net, ifr, cmd);
 			rtnl_unlock();
-			वापस ret;
-		पूर्ण
-		वापस -ENOTTY;
-	पूर्ण
-पूर्ण
+			return ret;
+		}
+		return -ENOTTY;
+	}
+}

@@ -1,104 +1,103 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-/* 8390 core क्रम usual drivers */
+// SPDX-License-Identifier: GPL-2.0-only
+/* 8390 core for usual drivers */
 
-अटल स्थिर अक्षर version[] =
+static const char version[] =
     "8390.c:v1.10cvs 9/23/94 Donald Becker (becker@cesdis.gsfc.nasa.gov)\n";
 
-#समावेश "lib8390.c"
+#include "lib8390.c"
 
-पूर्णांक ei_खोलो(काष्ठा net_device *dev)
-अणु
-	वापस __ei_खोलो(dev);
-पूर्ण
-EXPORT_SYMBOL(ei_खोलो);
+int ei_open(struct net_device *dev)
+{
+	return __ei_open(dev);
+}
+EXPORT_SYMBOL(ei_open);
 
-पूर्णांक ei_बंद(काष्ठा net_device *dev)
-अणु
-	वापस __ei_बंद(dev);
-पूर्ण
-EXPORT_SYMBOL(ei_बंद);
+int ei_close(struct net_device *dev)
+{
+	return __ei_close(dev);
+}
+EXPORT_SYMBOL(ei_close);
 
-netdev_tx_t ei_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
-अणु
-	वापस __ei_start_xmit(skb, dev);
-पूर्ण
+netdev_tx_t ei_start_xmit(struct sk_buff *skb, struct net_device *dev)
+{
+	return __ei_start_xmit(skb, dev);
+}
 EXPORT_SYMBOL(ei_start_xmit);
 
-काष्ठा net_device_stats *ei_get_stats(काष्ठा net_device *dev)
-अणु
-	वापस __ei_get_stats(dev);
-पूर्ण
+struct net_device_stats *ei_get_stats(struct net_device *dev)
+{
+	return __ei_get_stats(dev);
+}
 EXPORT_SYMBOL(ei_get_stats);
 
-व्योम ei_set_multicast_list(काष्ठा net_device *dev)
-अणु
+void ei_set_multicast_list(struct net_device *dev)
+{
 	__ei_set_multicast_list(dev);
-पूर्ण
+}
 EXPORT_SYMBOL(ei_set_multicast_list);
 
-व्योम ei_tx_समयout(काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue)
-अणु
-	__ei_tx_समयout(dev, txqueue);
-पूर्ण
-EXPORT_SYMBOL(ei_tx_समयout);
+void ei_tx_timeout(struct net_device *dev, unsigned int txqueue)
+{
+	__ei_tx_timeout(dev, txqueue);
+}
+EXPORT_SYMBOL(ei_tx_timeout);
 
-irqवापस_t ei_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	वापस __ei_पूर्णांकerrupt(irq, dev_id);
-पूर्ण
-EXPORT_SYMBOL(ei_पूर्णांकerrupt);
+irqreturn_t ei_interrupt(int irq, void *dev_id)
+{
+	return __ei_interrupt(irq, dev_id);
+}
+EXPORT_SYMBOL(ei_interrupt);
 
-#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
-व्योम ei_poll(काष्ठा net_device *dev)
-अणु
+#ifdef CONFIG_NET_POLL_CONTROLLER
+void ei_poll(struct net_device *dev)
+{
 	__ei_poll(dev);
-पूर्ण
+}
 EXPORT_SYMBOL(ei_poll);
-#पूर्ण_अगर
+#endif
 
-स्थिर काष्ठा net_device_ops ei_netdev_ops = अणु
-	.nकरो_खोलो		= ei_खोलो,
-	.nकरो_stop		= ei_बंद,
-	.nकरो_start_xmit		= ei_start_xmit,
-	.nकरो_tx_समयout		= ei_tx_समयout,
-	.nकरो_get_stats		= ei_get_stats,
-	.nकरो_set_rx_mode	= ei_set_multicast_list,
-	.nकरो_validate_addr	= eth_validate_addr,
-	.nकरो_set_mac_address 	= eth_mac_addr,
-#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
-	.nकरो_poll_controller	= ei_poll,
-#पूर्ण_अगर
-पूर्ण;
+const struct net_device_ops ei_netdev_ops = {
+	.ndo_open		= ei_open,
+	.ndo_stop		= ei_close,
+	.ndo_start_xmit		= ei_start_xmit,
+	.ndo_tx_timeout		= ei_tx_timeout,
+	.ndo_get_stats		= ei_get_stats,
+	.ndo_set_rx_mode	= ei_set_multicast_list,
+	.ndo_validate_addr	= eth_validate_addr,
+	.ndo_set_mac_address 	= eth_mac_addr,
+#ifdef CONFIG_NET_POLL_CONTROLLER
+	.ndo_poll_controller	= ei_poll,
+#endif
+};
 EXPORT_SYMBOL(ei_netdev_ops);
 
-काष्ठा net_device *__alloc_ei_netdev(पूर्णांक size)
-अणु
-	काष्ठा net_device *dev = ____alloc_ei_netdev(size);
-	अगर (dev)
+struct net_device *__alloc_ei_netdev(int size)
+{
+	struct net_device *dev = ____alloc_ei_netdev(size);
+	if (dev)
 		dev->netdev_ops = &ei_netdev_ops;
-	वापस dev;
-पूर्ण
+	return dev;
+}
 EXPORT_SYMBOL(__alloc_ei_netdev);
 
-व्योम NS8390_init(काष्ठा net_device *dev, पूर्णांक startp)
-अणु
+void NS8390_init(struct net_device *dev, int startp)
+{
 	__NS8390_init(dev, startp);
-पूर्ण
+}
 EXPORT_SYMBOL(NS8390_init);
 
-#अगर defined(MODULE)
+#if defined(MODULE)
 
-अटल पूर्णांक __init ns8390_module_init(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+static int __init ns8390_module_init(void)
+{
+	return 0;
+}
 
-अटल व्योम __निकास ns8390_module_निकास(व्योम)
-अणु
-पूर्ण
+static void __exit ns8390_module_exit(void)
+{
+}
 
 module_init(ns8390_module_init);
-module_निकास(ns8390_module_निकास);
-#पूर्ण_अगर /* MODULE */
+module_exit(ns8390_module_exit);
+#endif /* MODULE */
 MODULE_LICENSE("GPL");

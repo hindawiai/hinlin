@@ -1,34 +1,33 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* crc32hash.c - derived from linux/lib/crc32.c, GNU GPL v2 */
 /* Usage example:
 $ ./crc32hash "Dual Speed"
 */
 
-#समावेश <माला.स>
-#समावेश <मानकपन.स>
-#समावेश <प्रकार.स>
-#समावेश <मानककोष.स>
+#include <string.h>
+#include <stdio.h>
+#include <ctype.h>
+#include <stdlib.h>
 
-अटल अचिन्हित पूर्णांक crc32(अचिन्हित अक्षर स्थिर *p, अचिन्हित पूर्णांक len)
-अणु
-	पूर्णांक i;
-	अचिन्हित पूर्णांक crc = 0;
-	जबतक (len--) अणु
+static unsigned int crc32(unsigned char const *p, unsigned int len)
+{
+	int i;
+	unsigned int crc = 0;
+	while (len--) {
 		crc ^= *p++;
-		क्रम (i = 0; i < 8; i++)
+		for (i = 0; i < 8; i++)
 			crc = (crc >> 1) ^ ((crc & 1) ? 0xedb88320 : 0);
-	पूर्ण
-	वापस crc;
-पूर्ण
+	}
+	return crc;
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv) अणु
-	अचिन्हित पूर्णांक result;
-	अगर (argc != 2) अणु
-		म_लिखो("no string passed as argument\n");
-		वापस -1;
-	पूर्ण
-	result = crc32((अचिन्हित अक्षर स्थिर *)argv[1], म_माप(argv[1]));
-	म_लिखो("0x%x\n", result);
-	वापस 0;
-पूर्ण
+int main(int argc, char **argv) {
+	unsigned int result;
+	if (argc != 2) {
+		printf("no string passed as argument\n");
+		return -1;
+	}
+	result = crc32((unsigned char const *)argv[1], strlen(argv[1]));
+	printf("0x%x\n", result);
+	return 0;
+}

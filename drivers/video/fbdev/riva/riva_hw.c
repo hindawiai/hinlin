@@ -1,15 +1,14 @@
-<शैली गुरु>
  /***************************************************************************\
 |*                                                                           *|
 |*       Copyright 1993-1999 NVIDIA, Corporation.  All rights reserved.      *|
 |*                                                                           *|
 |*     NOTICE TO USER:   The source code  is copyrighted under  U.S. and     *|
-|*     पूर्णांकernational laws.  Users and possessors of this source code are     *|
-|*     hereby granted a nonexclusive,  royalty-मुक्त copyright license to     *|
-|*     use this code in inभागidual and commercial software.                  *|
+|*     international laws.  Users and possessors of this source code are     *|
+|*     hereby granted a nonexclusive,  royalty-free copyright license to     *|
+|*     use this code in individual and commercial software.                  *|
 |*                                                                           *|
-|*     Any use of this source code must include,  in the user करोcumenta-     *|
-|*     tion and  पूर्णांकernal comments to the code,  notices to the end user     *|
+|*     Any use of this source code must include,  in the user documenta-     *|
+|*     tion and  internal comments to the code,  notices to the end user     *|
 |*     as follows:                                                           *|
 |*                                                                           *|
 |*       Copyright 1993-1999 NVIDIA, Corporation.  All rights reserved.      *|
@@ -20,7 +19,7 @@
 |*     ATION DISCLAIMS ALL WARRANTIES  WITH REGARD  TO THIS SOURCE CODE,     *|
 |*     INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY, NONINFRINGE-     *|
 |*     MENT,  AND FITNESS  FOR A PARTICULAR PURPOSE.   IN NO EVENT SHALL     *|
-|*     NVIDIA, CORPORATION  BE LIABLE FOR ANY SPECIAL,  INसूचीECT,  INCI-     *|
+|*     NVIDIA, CORPORATION  BE LIABLE FOR ANY SPECIAL,  INDIRECT,  INCI-     *|
 |*     DENTAL, OR CONSEQUENTIAL DAMAGES,  OR ANY DAMAGES  WHATSOEVER RE-     *|
 |*     SULTING FROM LOSS OF USE,  DATA OR PROFITS,  WHETHER IN AN ACTION     *|
 |*     OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,  ARISING OUT OF     *|
@@ -29,108 +28,108 @@
 |*     U.S. Government  End  Users.   This source code  is a "commercial     *|
 |*     item,"  as that  term is  defined at  48 C.F.R. 2.101 (OCT 1995),     *|
 |*     consisting  of "commercial  computer  software"  and  "commercial     *|
-|*     computer  software  करोcumentation,"  as such  terms  are  used in     *|
+|*     computer  software  documentation,"  as such  terms  are  used in     *|
 |*     48 C.F.R. 12.212 (SEPT 1995)  and is provided to the U.S. Govern-     *|
 |*     ment only as  a commercial end item.   Consistent with  48 C.F.R.     *|
 |*     12.212 and  48 C.F.R. 227.7202-1 through  227.7202-4 (JUNE 1995),     *|
 |*     all U.S. Government End Users  acquire the source code  with only     *|
-|*     those rights set क्रमth herein.                                        *|
+|*     those rights set forth herein.                                        *|
 |*                                                                           *|
  \***************************************************************************/
 
 /*
- * GPL licensing note -- nVidia is allowing a liberal पूर्णांकerpretation of
- * the करोcumentation restriction above, to merely say that this nVidia's
+ * GPL licensing note -- nVidia is allowing a liberal interpretation of
+ * the documentation restriction above, to merely say that this nVidia's
  * copyright and disclaimer should be included with all code derived
  * from this source.  -- Jeff Garzik <jgarzik@pobox.com>, 01/Nov/99 
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xमुक्त86/drivers/nv/riva_hw.c,v 1.33 2002/08/05 20:47:06 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/riva_hw.c,v 1.33 2002/08/05 20:47:06 mvojkovi Exp $ */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/pci_ids.h>
-#समावेश "riva_hw.h"
-#समावेश "riva_tbl.h"
-#समावेश "nv_type.h"
+#include <linux/kernel.h>
+#include <linux/pci.h>
+#include <linux/pci_ids.h>
+#include "riva_hw.h"
+#include "riva_tbl.h"
+#include "nv_type.h"
 
 /*
  * This file is an OS-agnostic file used to make RIVA 128 and RIVA TNT
  * operate identically (except TNT has more memory and better 3D quality.
  */
-अटल पूर्णांक nv3Busy
+static int nv3Busy
 (
     RIVA_HW_INST *chip
 )
-अणु
-    वापस ((NV_RD32(&chip->Rop->FअगरoFree, 0) < chip->FअगरoEmptyCount) ||
+{
+    return ((NV_RD32(&chip->Rop->FifoFree, 0) < chip->FifoEmptyCount) ||
 	    NV_RD32(&chip->PGRAPH[0x000006B0/4], 0) & 0x01);
-पूर्ण
-अटल पूर्णांक nv4Busy
+}
+static int nv4Busy
 (
     RIVA_HW_INST *chip
 )
-अणु
-    वापस ((NV_RD32(&chip->Rop->FअगरoFree, 0) < chip->FअगरoEmptyCount) ||
+{
+    return ((NV_RD32(&chip->Rop->FifoFree, 0) < chip->FifoEmptyCount) ||
 	    NV_RD32(&chip->PGRAPH[0x00000700/4], 0) & 0x01);
-पूर्ण
-अटल पूर्णांक nv10Busy
+}
+static int nv10Busy
 (
     RIVA_HW_INST *chip
 )
-अणु
-    वापस ((NV_RD32(&chip->Rop->FअगरoFree, 0) < chip->FअगरoEmptyCount) ||
+{
+    return ((NV_RD32(&chip->Rop->FifoFree, 0) < chip->FifoEmptyCount) ||
 	    NV_RD32(&chip->PGRAPH[0x00000700/4], 0) & 0x01);
-पूर्ण
+}
 
-अटल व्योम vgaLockUnlock
+static void vgaLockUnlock
 (
     RIVA_HW_INST *chip,
-    पूर्णांक           Lock
+    int           Lock
 )
-अणु
+{
     U008 cr11;
     VGA_WR08(chip->PCIO, 0x3D4, 0x11);
     cr11 = VGA_RD08(chip->PCIO, 0x3D5);
-    अगर(Lock) cr11 |= 0x80;
-    अन्यथा cr11 &= ~0x80;
+    if(Lock) cr11 |= 0x80;
+    else cr11 &= ~0x80;
     VGA_WR08(chip->PCIO, 0x3D5, cr11);
-पूर्ण
-अटल व्योम nv3LockUnlock
+}
+static void nv3LockUnlock
 (
     RIVA_HW_INST *chip,
-    पूर्णांक           Lock
+    int           Lock
 )
-अणु
+{
     VGA_WR08(chip->PVIO, 0x3C4, 0x06);
     VGA_WR08(chip->PVIO, 0x3C5, Lock ? 0x99 : 0x57);
     vgaLockUnlock(chip, Lock);
-पूर्ण
-अटल व्योम nv4LockUnlock
+}
+static void nv4LockUnlock
 (
     RIVA_HW_INST *chip,
-    पूर्णांक           Lock
+    int           Lock
 )
-अणु
+{
     VGA_WR08(chip->PCIO, 0x3D4, 0x1F);
     VGA_WR08(chip->PCIO, 0x3D5, Lock ? 0x99 : 0x57);
     vgaLockUnlock(chip, Lock);
-पूर्ण
+}
 
-अटल पूर्णांक ShowHideCursor
+static int ShowHideCursor
 (
     RIVA_HW_INST *chip,
-    पूर्णांक           ShowHide
+    int           ShowHide
 )
-अणु
-    पूर्णांक cursor;
+{
+    int cursor;
     cursor                      =  chip->CurrentState->cursor1;
     chip->CurrentState->cursor1 = (chip->CurrentState->cursor1 & 0xFE) |
                                   (ShowHide & 0x01);
     VGA_WR08(chip->PCIO, 0x3D4, 0x31);
     VGA_WR08(chip->PCIO, 0x3D5, chip->CurrentState->cursor1);
-    वापस (cursor & 0x01);
-पूर्ण
+    return (cursor & 0x01);
+}
 
 /****************************************************************************\
 *                                                                            *
@@ -140,118 +139,118 @@
 *                                                                            *
 \****************************************************************************/
 
-#घोषणा DEFAULT_GR_LWM 100
-#घोषणा DEFAULT_VID_LWM 100
-#घोषणा DEFAULT_GR_BURST_SIZE 256
-#घोषणा DEFAULT_VID_BURST_SIZE 128
-#घोषणा VIDEO		0
-#घोषणा GRAPHICS	1
-#घोषणा MPORT		2
-#घोषणा ENGINE		3
-#घोषणा GFIFO_SIZE	320
-#घोषणा GFIFO_SIZE_128	256
-#घोषणा MFIFO_SIZE	120
-#घोषणा VFIFO_SIZE	256
+#define DEFAULT_GR_LWM 100
+#define DEFAULT_VID_LWM 100
+#define DEFAULT_GR_BURST_SIZE 256
+#define DEFAULT_VID_BURST_SIZE 128
+#define VIDEO		0
+#define GRAPHICS	1
+#define MPORT		2
+#define ENGINE		3
+#define GFIFO_SIZE	320
+#define GFIFO_SIZE_128	256
+#define MFIFO_SIZE	120
+#define VFIFO_SIZE	256
 
-प्रकार काष्ठा अणु
-  पूर्णांक gdrain_rate;
-  पूर्णांक vdrain_rate;
-  पूर्णांक mdrain_rate;
-  पूर्णांक gburst_size;
-  पूर्णांक vburst_size;
-  अक्षर vid_en;
-  अक्षर gr_en;
-  पूर्णांक wcmocc, wcgocc, wcvocc, wcvlwm, wcglwm;
-  पूर्णांक by_gfacc;
-  अक्षर vid_only_once;
-  अक्षर gr_only_once;
-  अक्षर first_vacc;
-  अक्षर first_gacc;
-  अक्षर first_macc;
-  पूर्णांक vocc;
-  पूर्णांक gocc;
-  पूर्णांक mocc;
-  अक्षर cur;
-  अक्षर engine_en;
-  अक्षर converged;
-  पूर्णांक priority;
-पूर्ण nv3_arb_info;
-प्रकार काष्ठा अणु
-  पूर्णांक graphics_lwm;
-  पूर्णांक video_lwm;
-  पूर्णांक graphics_burst_size;
-  पूर्णांक video_burst_size;
-  पूर्णांक graphics_hi_priority;
-  पूर्णांक media_hi_priority;
-  पूर्णांक rtl_values;
-  पूर्णांक valid;
-पूर्ण nv3_fअगरo_info;
-प्रकार काष्ठा अणु
-  अक्षर pix_bpp;
-  अक्षर enable_video;
-  अक्षर gr_during_vid;
-  अक्षर enable_mp;
-  पूर्णांक memory_width;
-  पूर्णांक video_scale;
-  पूर्णांक pclk_khz;
-  पूर्णांक mclk_khz;
-  पूर्णांक mem_page_miss;
-  पूर्णांक mem_latency;
-  अक्षर mem_aligned;
-पूर्ण nv3_sim_state;
-प्रकार काष्ठा अणु
-  पूर्णांक graphics_lwm;
-  पूर्णांक video_lwm;
-  पूर्णांक graphics_burst_size;
-  पूर्णांक video_burst_size;
-  पूर्णांक valid;
-पूर्ण nv4_fअगरo_info;
-प्रकार काष्ठा अणु
-  पूर्णांक pclk_khz;
-  पूर्णांक mclk_khz;
-  पूर्णांक nvclk_khz;
-  अक्षर mem_page_miss;
-  अक्षर mem_latency;
-  पूर्णांक memory_width;
-  अक्षर enable_video;
-  अक्षर gr_during_vid;
-  अक्षर pix_bpp;
-  अक्षर mem_aligned;
-  अक्षर enable_mp;
-पूर्ण nv4_sim_state;
-प्रकार काष्ठा अणु
-  पूर्णांक graphics_lwm;
-  पूर्णांक video_lwm;
-  पूर्णांक graphics_burst_size;
-  पूर्णांक video_burst_size;
-  पूर्णांक valid;
-पूर्ण nv10_fअगरo_info;
-प्रकार काष्ठा अणु
-  पूर्णांक pclk_khz;
-  पूर्णांक mclk_khz;
-  पूर्णांक nvclk_khz;
-  अक्षर mem_page_miss;
-  अक्षर mem_latency;
+typedef struct {
+  int gdrain_rate;
+  int vdrain_rate;
+  int mdrain_rate;
+  int gburst_size;
+  int vburst_size;
+  char vid_en;
+  char gr_en;
+  int wcmocc, wcgocc, wcvocc, wcvlwm, wcglwm;
+  int by_gfacc;
+  char vid_only_once;
+  char gr_only_once;
+  char first_vacc;
+  char first_gacc;
+  char first_macc;
+  int vocc;
+  int gocc;
+  int mocc;
+  char cur;
+  char engine_en;
+  char converged;
+  int priority;
+} nv3_arb_info;
+typedef struct {
+  int graphics_lwm;
+  int video_lwm;
+  int graphics_burst_size;
+  int video_burst_size;
+  int graphics_hi_priority;
+  int media_hi_priority;
+  int rtl_values;
+  int valid;
+} nv3_fifo_info;
+typedef struct {
+  char pix_bpp;
+  char enable_video;
+  char gr_during_vid;
+  char enable_mp;
+  int memory_width;
+  int video_scale;
+  int pclk_khz;
+  int mclk_khz;
+  int mem_page_miss;
+  int mem_latency;
+  char mem_aligned;
+} nv3_sim_state;
+typedef struct {
+  int graphics_lwm;
+  int video_lwm;
+  int graphics_burst_size;
+  int video_burst_size;
+  int valid;
+} nv4_fifo_info;
+typedef struct {
+  int pclk_khz;
+  int mclk_khz;
+  int nvclk_khz;
+  char mem_page_miss;
+  char mem_latency;
+  int memory_width;
+  char enable_video;
+  char gr_during_vid;
+  char pix_bpp;
+  char mem_aligned;
+  char enable_mp;
+} nv4_sim_state;
+typedef struct {
+  int graphics_lwm;
+  int video_lwm;
+  int graphics_burst_size;
+  int video_burst_size;
+  int valid;
+} nv10_fifo_info;
+typedef struct {
+  int pclk_khz;
+  int mclk_khz;
+  int nvclk_khz;
+  char mem_page_miss;
+  char mem_latency;
   u32 memory_type;
-  पूर्णांक memory_width;
-  अक्षर enable_video;
-  अक्षर gr_during_vid;
-  अक्षर pix_bpp;
-  अक्षर mem_aligned;
-  अक्षर enable_mp;
-पूर्ण nv10_sim_state;
-अटल पूर्णांक nv3_iterate(nv3_fअगरo_info *res_info, nv3_sim_state * state, nv3_arb_info *ainfo)
-अणु
-    पूर्णांक iter = 0;
-    पूर्णांक पंचांगp;
-    पूर्णांक vfsize, mfsize, gfsize;
-    पूर्णांक mburst_size = 32;
-    पूर्णांक mmisses, gmisses, vmisses;
-    पूर्णांक misses;
-    पूर्णांक vlwm, glwm;
-    पूर्णांक last, next, cur;
-    पूर्णांक max_gfsize ;
-    दीर्घ ns;
+  int memory_width;
+  char enable_video;
+  char gr_during_vid;
+  char pix_bpp;
+  char mem_aligned;
+  char enable_mp;
+} nv10_sim_state;
+static int nv3_iterate(nv3_fifo_info *res_info, nv3_sim_state * state, nv3_arb_info *ainfo)
+{
+    int iter = 0;
+    int tmp;
+    int vfsize, mfsize, gfsize;
+    int mburst_size = 32;
+    int mmisses, gmisses, vmisses;
+    int misses;
+    int vlwm, glwm;
+    int last, next, cur;
+    int max_gfsize ;
+    long ns;
 
     vlwm = 0;
     glwm = 0;
@@ -261,179 +260,179 @@
     mmisses = 2;
     gmisses = 2;
     vmisses = 2;
-    अगर (ainfo->gburst_size == 128) max_gfsize = GFIFO_SIZE_128;
-    अन्यथा  max_gfsize = GFIFO_SIZE;
+    if (ainfo->gburst_size == 128) max_gfsize = GFIFO_SIZE_128;
+    else  max_gfsize = GFIFO_SIZE;
     max_gfsize = GFIFO_SIZE;
-    जबतक (1)
-    अणु
-        अगर (ainfo->vid_en)
-        अणु
-            अगर (ainfo->wcvocc > ainfo->vocc) ainfo->wcvocc = ainfo->vocc;
-            अगर (ainfo->wcvlwm > vlwm) ainfo->wcvlwm = vlwm ;
+    while (1)
+    {
+        if (ainfo->vid_en)
+        {
+            if (ainfo->wcvocc > ainfo->vocc) ainfo->wcvocc = ainfo->vocc;
+            if (ainfo->wcvlwm > vlwm) ainfo->wcvlwm = vlwm ;
             ns = 1000000 * ainfo->vburst_size/(state->memory_width/8)/state->mclk_khz;
             vfsize = ns * ainfo->vdrain_rate / 1000000;
             vfsize =  ainfo->wcvlwm - ainfo->vburst_size + vfsize;
-        पूर्ण
-        अगर (state->enable_mp)
-        अणु
-            अगर (ainfo->wcmocc > ainfo->mocc) ainfo->wcmocc = ainfo->mocc;
-        पूर्ण
-        अगर (ainfo->gr_en)
-        अणु
-            अगर (ainfo->wcglwm > glwm) ainfo->wcglwm = glwm ;
-            अगर (ainfo->wcgocc > ainfo->gocc) ainfo->wcgocc = ainfo->gocc;
+        }
+        if (state->enable_mp)
+        {
+            if (ainfo->wcmocc > ainfo->mocc) ainfo->wcmocc = ainfo->mocc;
+        }
+        if (ainfo->gr_en)
+        {
+            if (ainfo->wcglwm > glwm) ainfo->wcglwm = glwm ;
+            if (ainfo->wcgocc > ainfo->gocc) ainfo->wcgocc = ainfo->gocc;
             ns = 1000000 * (ainfo->gburst_size/(state->memory_width/8))/state->mclk_khz;
-            gfsize = (ns * (दीर्घ) ainfo->gdrain_rate)/1000000;
+            gfsize = (ns * (long) ainfo->gdrain_rate)/1000000;
             gfsize = ainfo->wcglwm - ainfo->gburst_size + gfsize;
-        पूर्ण
+        }
         mfsize = 0;
-        अगर (!state->gr_during_vid && ainfo->vid_en)
-            अगर (ainfo->vid_en && (ainfo->vocc < 0) && !ainfo->vid_only_once)
+        if (!state->gr_during_vid && ainfo->vid_en)
+            if (ainfo->vid_en && (ainfo->vocc < 0) && !ainfo->vid_only_once)
                 next = VIDEO;
-            अन्यथा अगर (ainfo->mocc < 0)
+            else if (ainfo->mocc < 0)
                 next = MPORT;
-            अन्यथा अगर (ainfo->gocc< ainfo->by_gfacc)
+            else if (ainfo->gocc< ainfo->by_gfacc)
                 next = GRAPHICS;
-            अन्यथा वापस (0);
-        अन्यथा चयन (ainfo->priority)
-            अणु
-                हाल VIDEO:
-                    अगर (ainfo->vid_en && ainfo->vocc<0 && !ainfo->vid_only_once)
+            else return (0);
+        else switch (ainfo->priority)
+            {
+                case VIDEO:
+                    if (ainfo->vid_en && ainfo->vocc<0 && !ainfo->vid_only_once)
                         next = VIDEO;
-                    अन्यथा अगर (ainfo->gr_en && ainfo->gocc<0 && !ainfo->gr_only_once)
+                    else if (ainfo->gr_en && ainfo->gocc<0 && !ainfo->gr_only_once)
                         next = GRAPHICS;
-                    अन्यथा अगर (ainfo->mocc<0)
+                    else if (ainfo->mocc<0)
                         next = MPORT;
-                    अन्यथा    वापस (0);
-                    अवरोध;
-                हाल GRAPHICS:
-                    अगर (ainfo->gr_en && ainfo->gocc<0 && !ainfo->gr_only_once)
+                    else    return (0);
+                    break;
+                case GRAPHICS:
+                    if (ainfo->gr_en && ainfo->gocc<0 && !ainfo->gr_only_once)
                         next = GRAPHICS;
-                    अन्यथा अगर (ainfo->vid_en && ainfo->vocc<0 && !ainfo->vid_only_once)
+                    else if (ainfo->vid_en && ainfo->vocc<0 && !ainfo->vid_only_once)
                         next = VIDEO;
-                    अन्यथा अगर (ainfo->mocc<0)
+                    else if (ainfo->mocc<0)
                         next = MPORT;
-                    अन्यथा    वापस (0);
-                    अवरोध;
-                शेष:
-                    अगर (ainfo->mocc<0)
+                    else    return (0);
+                    break;
+                default:
+                    if (ainfo->mocc<0)
                         next = MPORT;
-                    अन्यथा अगर (ainfo->gr_en && ainfo->gocc<0 && !ainfo->gr_only_once)
+                    else if (ainfo->gr_en && ainfo->gocc<0 && !ainfo->gr_only_once)
                         next = GRAPHICS;
-                    अन्यथा अगर (ainfo->vid_en && ainfo->vocc<0 && !ainfo->vid_only_once)
+                    else if (ainfo->vid_en && ainfo->vocc<0 && !ainfo->vid_only_once)
                         next = VIDEO;
-                    अन्यथा    वापस (0);
-                    अवरोध;
-            पूर्ण
+                    else    return (0);
+                    break;
+            }
         last = cur;
         cur = next;
         iter++;
-        चयन (cur)
-        अणु
-            हाल VIDEO:
-                अगर (last==cur)    misses = 0;
-                अन्यथा अगर (ainfo->first_vacc)   misses = vmisses;
-                अन्यथा    misses = 1;
+        switch (cur)
+        {
+            case VIDEO:
+                if (last==cur)    misses = 0;
+                else if (ainfo->first_vacc)   misses = vmisses;
+                else    misses = 1;
                 ainfo->first_vacc = 0;
-                अगर (last!=cur)
-                अणु
+                if (last!=cur)
+                {
                     ns =  1000000 * (vmisses*state->mem_page_miss + state->mem_latency)/state->mclk_khz; 
                     vlwm = ns * ainfo->vdrain_rate/ 1000000;
                     vlwm = ainfo->vocc - vlwm;
-                पूर्ण
+                }
                 ns = 1000000*(misses*state->mem_page_miss + ainfo->vburst_size)/(state->memory_width/8)/state->mclk_khz;
                 ainfo->vocc = ainfo->vocc + ainfo->vburst_size - ns*ainfo->vdrain_rate/1000000;
                 ainfo->gocc = ainfo->gocc - ns*ainfo->gdrain_rate/1000000;
                 ainfo->mocc = ainfo->mocc - ns*ainfo->mdrain_rate/1000000;
-                अवरोध;
-            हाल GRAPHICS:
-                अगर (last==cur)    misses = 0;
-                अन्यथा अगर (ainfo->first_gacc)   misses = gmisses;
-                अन्यथा    misses = 1;
+                break;
+            case GRAPHICS:
+                if (last==cur)    misses = 0;
+                else if (ainfo->first_gacc)   misses = gmisses;
+                else    misses = 1;
                 ainfo->first_gacc = 0;
-                अगर (last!=cur)
-                अणु
+                if (last!=cur)
+                {
                     ns = 1000000*(gmisses*state->mem_page_miss + state->mem_latency)/state->mclk_khz ;
                     glwm = ns * ainfo->gdrain_rate/1000000;
                     glwm = ainfo->gocc - glwm;
-                पूर्ण
+                }
                 ns = 1000000*(misses*state->mem_page_miss + ainfo->gburst_size/(state->memory_width/8))/state->mclk_khz;
                 ainfo->vocc = ainfo->vocc + 0 - ns*ainfo->vdrain_rate/1000000;
                 ainfo->gocc = ainfo->gocc + ainfo->gburst_size - ns*ainfo->gdrain_rate/1000000;
                 ainfo->mocc = ainfo->mocc + 0 - ns*ainfo->mdrain_rate/1000000;
-                अवरोध;
-            शेष:
-                अगर (last==cur)    misses = 0;
-                अन्यथा अगर (ainfo->first_macc)   misses = mmisses;
-                अन्यथा    misses = 1;
+                break;
+            default:
+                if (last==cur)    misses = 0;
+                else if (ainfo->first_macc)   misses = mmisses;
+                else    misses = 1;
                 ainfo->first_macc = 0;
                 ns = 1000000*(misses*state->mem_page_miss + mburst_size/(state->memory_width/8))/state->mclk_khz;
                 ainfo->vocc = ainfo->vocc + 0 - ns*ainfo->vdrain_rate/1000000;
                 ainfo->gocc = ainfo->gocc + 0 - ns*ainfo->gdrain_rate/1000000;
                 ainfo->mocc = ainfo->mocc + mburst_size - ns*ainfo->mdrain_rate/1000000;
-                अवरोध;
-        पूर्ण
-        अगर (iter>100)
-        अणु
+                break;
+        }
+        if (iter>100)
+        {
             ainfo->converged = 0;
-            वापस (1);
-        पूर्ण
+            return (1);
+        }
         ns = 1000000*ainfo->gburst_size/(state->memory_width/8)/state->mclk_khz;
-        पंचांगp = ns * ainfo->gdrain_rate/1000000;
-        अगर (असल(ainfo->gburst_size) + ((असल(ainfo->wcglwm) + 16 ) & ~0x7) - पंचांगp > max_gfsize)
-        अणु
+        tmp = ns * ainfo->gdrain_rate/1000000;
+        if (abs(ainfo->gburst_size) + ((abs(ainfo->wcglwm) + 16 ) & ~0x7) - tmp > max_gfsize)
+        {
             ainfo->converged = 0;
-            वापस (1);
-        पूर्ण
+            return (1);
+        }
         ns = 1000000*ainfo->vburst_size/(state->memory_width/8)/state->mclk_khz;
-        पंचांगp = ns * ainfo->vdrain_rate/1000000;
-        अगर (असल(ainfo->vburst_size) + (असल(ainfo->wcvlwm + 32) & ~0xf)  - पंचांगp> VFIFO_SIZE)
-        अणु
+        tmp = ns * ainfo->vdrain_rate/1000000;
+        if (abs(ainfo->vburst_size) + (abs(ainfo->wcvlwm + 32) & ~0xf)  - tmp> VFIFO_SIZE)
+        {
             ainfo->converged = 0;
-            वापस (1);
-        पूर्ण
-        अगर (असल(ainfo->gocc) > max_gfsize)
-        अणु
+            return (1);
+        }
+        if (abs(ainfo->gocc) > max_gfsize)
+        {
             ainfo->converged = 0;
-            वापस (1);
-        पूर्ण
-        अगर (असल(ainfo->vocc) > VFIFO_SIZE)
-        अणु
+            return (1);
+        }
+        if (abs(ainfo->vocc) > VFIFO_SIZE)
+        {
             ainfo->converged = 0;
-            वापस (1);
-        पूर्ण
-        अगर (असल(ainfo->mocc) > MFIFO_SIZE)
-        अणु
+            return (1);
+        }
+        if (abs(ainfo->mocc) > MFIFO_SIZE)
+        {
             ainfo->converged = 0;
-            वापस (1);
-        पूर्ण
-        अगर (असल(vfsize) > VFIFO_SIZE)
-        अणु
+            return (1);
+        }
+        if (abs(vfsize) > VFIFO_SIZE)
+        {
             ainfo->converged = 0;
-            वापस (1);
-        पूर्ण
-        अगर (असल(gfsize) > max_gfsize)
-        अणु
+            return (1);
+        }
+        if (abs(gfsize) > max_gfsize)
+        {
             ainfo->converged = 0;
-            वापस (1);
-        पूर्ण
-        अगर (असल(mfsize) > MFIFO_SIZE)
-        अणु
+            return (1);
+        }
+        if (abs(mfsize) > MFIFO_SIZE)
+        {
             ainfo->converged = 0;
-            वापस (1);
-        पूर्ण
-    पूर्ण
-पूर्ण
-अटल अक्षर nv3_arb(nv3_fअगरo_info * res_info, nv3_sim_state * state,  nv3_arb_info *ainfo) 
-अणु
-    दीर्घ ens, vns, mns, gns;
-    पूर्णांक mmisses, gmisses, vmisses, eburst_size, mburst_size;
-    पूर्णांक refresh_cycle;
+            return (1);
+        }
+    }
+}
+static char nv3_arb(nv3_fifo_info * res_info, nv3_sim_state * state,  nv3_arb_info *ainfo) 
+{
+    long ens, vns, mns, gns;
+    int mmisses, gmisses, vmisses, eburst_size, mburst_size;
+    int refresh_cycle;
 
     refresh_cycle = 2*(state->mclk_khz/state->pclk_khz) + 5;
     mmisses = 2;
-    अगर (state->mem_aligned) gmisses = 2;
-    अन्यथा    gmisses = 3;
+    if (state->mem_aligned) gmisses = 2;
+    else    gmisses = 3;
     vmisses = 2;
     eburst_size = state->memory_width * 1;
     mburst_size = 32;
@@ -446,8 +445,8 @@
     ainfo->wcglwm = 0;
     ainfo->engine_en = 1;
     ainfo->converged = 1;
-    अगर (ainfo->engine_en)
-    अणु
+    if (ainfo->engine_en)
+    {
         ens =  1000000*(state->mem_page_miss + eburst_size/(state->memory_width/8) +refresh_cycle)/state->mclk_khz;
         ainfo->mocc = state->enable_mp ? 0-ens*ainfo->mdrain_rate/1000000 : 0;
         ainfo->vocc = ainfo->vid_en ? 0-ens*ainfo->vdrain_rate/1000000 : 0;
@@ -457,9 +456,9 @@
         ainfo->first_gacc = 1;
         ainfo->first_macc = 1;
         nv3_iterate(res_info, state,ainfo);
-    पूर्ण
-    अगर (state->enable_mp)
-    अणु
+    }
+    if (state->enable_mp)
+    {
         mns = 1000000 * (mmisses*state->mem_page_miss + mburst_size/(state->memory_width/8) + refresh_cycle)/state->mclk_khz;
         ainfo->mocc = state->enable_mp ? 0 : mburst_size - mns*ainfo->mdrain_rate/1000000;
         ainfo->vocc = ainfo->vid_en ? 0 : 0- mns*ainfo->vdrain_rate/1000000;
@@ -469,9 +468,9 @@
         ainfo->first_gacc = 1;
         ainfo->first_macc = 0;
         nv3_iterate(res_info, state,ainfo);
-    पूर्ण
-    अगर (ainfo->gr_en)
-    अणु
+    }
+    if (ainfo->gr_en)
+    {
         ainfo->first_vacc = 1;
         ainfo->first_gacc = 0;
         ainfo->first_macc = 1;
@@ -481,9 +480,9 @@
         ainfo->mocc = state->enable_mp ?  0-gns*ainfo->mdrain_rate/1000000: 0;
         ainfo->cur = GRAPHICS;
         nv3_iterate(res_info, state,ainfo);
-    पूर्ण
-    अगर (ainfo->vid_en)
-    अणु
+    }
+    if (ainfo->vid_en)
+    {
         ainfo->first_vacc = 0;
         ainfo->first_gacc = 1;
         ainfo->first_macc = 1;
@@ -493,17 +492,17 @@
         ainfo->mocc = state->enable_mp? 0-vns*ainfo->mdrain_rate/1000000 :0 ;
         ainfo->cur = VIDEO;
         nv3_iterate(res_info, state, ainfo);
-    पूर्ण
-    अगर (ainfo->converged)
-    अणु
-        res_info->graphics_lwm = (पूर्णांक)असल(ainfo->wcglwm) + 16;
-        res_info->video_lwm = (पूर्णांक)असल(ainfo->wcvlwm) + 32;
+    }
+    if (ainfo->converged)
+    {
+        res_info->graphics_lwm = (int)abs(ainfo->wcglwm) + 16;
+        res_info->video_lwm = (int)abs(ainfo->wcvlwm) + 32;
         res_info->graphics_burst_size = ainfo->gburst_size;
         res_info->video_burst_size = ainfo->vburst_size;
         res_info->graphics_hi_priority = (ainfo->priority == GRAPHICS);
         res_info->media_hi_priority = (ainfo->priority == MPORT);
-        अगर (res_info->video_lwm > 160)
-        अणु
+        if (res_info->video_lwm > 160)
+        {
             res_info->graphics_lwm = 256;
             res_info->video_lwm = 128;
             res_info->graphics_burst_size = 64;
@@ -511,74 +510,74 @@
             res_info->graphics_hi_priority = 0;
             res_info->media_hi_priority = 0;
             ainfo->converged = 0;
-            वापस (0);
-        पूर्ण
-        अगर (res_info->video_lwm > 128)
-        अणु
+            return (0);
+        }
+        if (res_info->video_lwm > 128)
+        {
             res_info->video_lwm = 128;
-        पूर्ण
-        वापस (1);
-    पूर्ण
-    अन्यथा
-    अणु
+        }
+        return (1);
+    }
+    else
+    {
         res_info->graphics_lwm = 256;
         res_info->video_lwm = 128;
         res_info->graphics_burst_size = 64;
         res_info->video_burst_size = 64;
         res_info->graphics_hi_priority = 0;
         res_info->media_hi_priority = 0;
-        वापस (0);
-    पूर्ण
-पूर्ण
-अटल अक्षर nv3_get_param(nv3_fअगरo_info *res_info, nv3_sim_state * state, nv3_arb_info *ainfo)
-अणु
-    पूर्णांक करोne, g,v, p;
+        return (0);
+    }
+}
+static char nv3_get_param(nv3_fifo_info *res_info, nv3_sim_state * state, nv3_arb_info *ainfo)
+{
+    int done, g,v, p;
     
-    करोne = 0;
-    क्रम (p=0; p < 2; p++)
-    अणु
-        क्रम (g=128 ; g > 32; g= g>> 1)
-        अणु
-            क्रम (v=128; v >=32; v = v>> 1)
-            अणु
+    done = 0;
+    for (p=0; p < 2; p++)
+    {
+        for (g=128 ; g > 32; g= g>> 1)
+        {
+            for (v=128; v >=32; v = v>> 1)
+            {
                 ainfo->priority = p;
                 ainfo->gburst_size = g;     
                 ainfo->vburst_size = v;
-                करोne = nv3_arb(res_info, state,ainfo);
-                अगर (करोne && (g==128))
-                    अगर ((res_info->graphics_lwm + g) > 256)
-                        करोne = 0;
-                अगर (करोne)
-                    जाओ Done;
-            पूर्ण
-        पूर्ण
-    पूर्ण
+                done = nv3_arb(res_info, state,ainfo);
+                if (done && (g==128))
+                    if ((res_info->graphics_lwm + g) > 256)
+                        done = 0;
+                if (done)
+                    goto Done;
+            }
+        }
+    }
 
  Done:
-    वापस करोne;
-पूर्ण
-अटल व्योम nv3CalcArbitration 
+    return done;
+}
+static void nv3CalcArbitration 
 (
-    nv3_fअगरo_info * res_info,
+    nv3_fifo_info * res_info,
     nv3_sim_state * state
 )
-अणु
-    nv3_fअगरo_info save_info;
+{
+    nv3_fifo_info save_info;
     nv3_arb_info ainfo;
-    अक्षर   res_gr, res_vid;
+    char   res_gr, res_vid;
 
     ainfo.gr_en = 1;
     ainfo.vid_en = state->enable_video;
     ainfo.vid_only_once = 0;
     ainfo.gr_only_once = 0;
-    ainfo.gdrain_rate = (पूर्णांक) state->pclk_khz * (state->pix_bpp/8);
-    ainfo.vdrain_rate = (पूर्णांक) state->pclk_khz * 2;
-    अगर (state->video_scale != 0)
+    ainfo.gdrain_rate = (int) state->pclk_khz * (state->pix_bpp/8);
+    ainfo.vdrain_rate = (int) state->pclk_khz * 2;
+    if (state->video_scale != 0)
         ainfo.vdrain_rate = ainfo.vdrain_rate/state->video_scale;
     ainfo.mdrain_rate = 33000;
     res_info->rtl_values = 0;
-    अगर (!state->gr_during_vid && state->enable_video)
-    अणु
+    if (!state->gr_during_vid && state->enable_video)
+    {
         ainfo.gr_only_once = 1;
         ainfo.gr_en = 1;
         ainfo.gdrain_rate = 0;
@@ -589,39 +588,39 @@
         ainfo.vid_en = 1;
         ainfo.vid_only_once = 1;
         ainfo.gr_en = 1;
-        ainfo.gdrain_rate = (पूर्णांक) state->pclk_khz * (state->pix_bpp/8);
+        ainfo.gdrain_rate = (int) state->pclk_khz * (state->pix_bpp/8);
         ainfo.vdrain_rate = 0;
         res_gr = nv3_get_param(res_info, state,  &ainfo);
         res_gr = ainfo.converged;
         res_info->video_lwm = save_info.video_lwm;
         res_info->video_burst_size = save_info.video_burst_size;
         res_info->valid = res_gr & res_vid;
-    पूर्ण
-    अन्यथा
-    अणु
-        अगर (!ainfo.gr_en) ainfo.gdrain_rate = 0;
-        अगर (!ainfo.vid_en) ainfo.vdrain_rate = 0;
+    }
+    else
+    {
+        if (!ainfo.gr_en) ainfo.gdrain_rate = 0;
+        if (!ainfo.vid_en) ainfo.vdrain_rate = 0;
         res_gr = nv3_get_param(res_info, state,  &ainfo);
         res_info->valid = ainfo.converged;
-    पूर्ण
-पूर्ण
-अटल व्योम nv3UpdateArbitrationSettings
+    }
+}
+static void nv3UpdateArbitrationSettings
 (
-    अचिन्हित      VClk, 
-    अचिन्हित      pixelDepth, 
-    अचिन्हित     *burst,
-    अचिन्हित     *lwm,
+    unsigned      VClk, 
+    unsigned      pixelDepth, 
+    unsigned     *burst,
+    unsigned     *lwm,
     RIVA_HW_INST *chip
 )
-अणु
-    nv3_fअगरo_info fअगरo_data;
+{
+    nv3_fifo_info fifo_data;
     nv3_sim_state sim_data;
-    अचिन्हित पूर्णांक M, N, P, pll, MClk;
+    unsigned int M, N, P, pll, MClk;
     
     pll = NV_RD32(&chip->PRAMDAC0[0x00000504/4], 0);
     M = (pll >> 0) & 0xFF; N = (pll >> 8) & 0xFF; P = (pll >> 16) & 0x0F;
     MClk = (N * chip->CrystalFreqKHz / M) >> P;
-    sim_data.pix_bpp        = (अक्षर)pixelDepth;
+    sim_data.pix_bpp        = (char)pixelDepth;
     sim_data.enable_video   = 0;
     sim_data.enable_mp      = 0;
     sim_data.video_scale    = 1;
@@ -635,35 +634,35 @@
     sim_data.gr_during_vid  = 0;
     sim_data.pclk_khz       = VClk;
     sim_data.mclk_khz       = MClk;
-    nv3CalcArbitration(&fअगरo_data, &sim_data);
-    अगर (fअगरo_data.valid)
-    अणु
-        पूर्णांक  b = fअगरo_data.graphics_burst_size >> 4;
+    nv3CalcArbitration(&fifo_data, &sim_data);
+    if (fifo_data.valid)
+    {
+        int  b = fifo_data.graphics_burst_size >> 4;
         *burst = 0;
-        जबतक (b >>= 1)
+        while (b >>= 1)
 	    (*burst)++;
-        *lwm   = fअगरo_data.graphics_lwm >> 3;
-    पूर्ण
-    अन्यथा
-    अणु
+        *lwm   = fifo_data.graphics_lwm >> 3;
+    }
+    else
+    {
         *lwm   = 0x24;
         *burst = 0x2;
-    पूर्ण
-पूर्ण
-अटल व्योम nv4CalcArbitration 
+    }
+}
+static void nv4CalcArbitration 
 (
-    nv4_fअगरo_info *fअगरo,
+    nv4_fifo_info *fifo,
     nv4_sim_state *arb
 )
-अणु
-    पूर्णांक data, pagemiss, cas,width, video_enable, bpp;
-    पूर्णांक nvclks, mclks, pclks, vpagemiss, crtpagemiss, vbs;
-    पूर्णांक found, mclk_extra, mclk_loop, cbs, m1, p1;
-    पूर्णांक mclk_freq, pclk_freq, nvclk_freq, mp_enable;
-    पूर्णांक us_m, us_n, us_p, video_drain_rate, crtc_drain_rate;
-    पूर्णांक vpm_us, us_video, vlwm, video_fill_us, cpm_us, us_crt,clwm;
+{
+    int data, pagemiss, cas,width, video_enable, bpp;
+    int nvclks, mclks, pclks, vpagemiss, crtpagemiss, vbs;
+    int found, mclk_extra, mclk_loop, cbs, m1, p1;
+    int mclk_freq, pclk_freq, nvclk_freq, mp_enable;
+    int us_m, us_n, us_p, video_drain_rate, crtc_drain_rate;
+    int vpm_us, us_video, vlwm, video_fill_us, cpm_us, us_crt,clwm;
 
-    fअगरo->valid = 1;
+    fifo->valid = 1;
     pclk_freq = arb->pclk_khz;
     mclk_freq = arb->mclk_khz;
     nvclk_freq = arb->nvclk_khz;
@@ -693,41 +692,41 @@
     nvclks += 1;
     nvclks += 1;
     nvclks += 1;
-    अगर (mp_enable)
+    if (mp_enable)
         mclks+=4;
     nvclks += 0;
     pclks += 0;
     found = 0;
     vbs = 0;
-    जबतक (found != 1)
-    अणु
-        fअगरo->valid = 1;
+    while (found != 1)
+    {
+        fifo->valid = 1;
         found = 1;
         mclk_loop = mclks+mclk_extra;
         us_m = mclk_loop *1000*1000 / mclk_freq;
         us_n = nvclks*1000*1000 / nvclk_freq;
         us_p = nvclks*1000*1000 / pclk_freq;
-        अगर (video_enable)
-        अणु
+        if (video_enable)
+        {
             video_drain_rate = pclk_freq * 2;
             crtc_drain_rate = pclk_freq * bpp/8;
             vpagemiss = 2;
             vpagemiss += 1;
             crtpagemiss = 2;
             vpm_us = (vpagemiss * pagemiss)*1000*1000/mclk_freq;
-            अगर (nvclk_freq * 2 > mclk_freq * width)
+            if (nvclk_freq * 2 > mclk_freq * width)
                 video_fill_us = cbs*1000*1000 / 16 / nvclk_freq ;
-            अन्यथा
+            else
                 video_fill_us = cbs*1000*1000 / (8 * width) / mclk_freq;
             us_video = vpm_us + us_m + us_n + us_p + video_fill_us;
             vlwm = us_video * video_drain_rate/(1000*1000);
             vlwm++;
             vbs = 128;
-            अगर (vlwm > 128) vbs = 64;
-            अगर (vlwm > (256-64)) vbs = 32;
-            अगर (nvclk_freq * 2 > mclk_freq * width)
+            if (vlwm > 128) vbs = 64;
+            if (vlwm > (256-64)) vbs = 32;
+            if (nvclk_freq * 2 > mclk_freq * width)
                 video_fill_us = vbs *1000*1000/ 16 / nvclk_freq ;
-            अन्यथा
+            else
                 video_fill_us = vbs*1000*1000 / (8 * width) / mclk_freq;
             cpm_us = crtpagemiss  * pagemiss *1000*1000/ mclk_freq;
             us_crt =
@@ -738,9 +737,9 @@
             ;
             clwm = us_crt * crtc_drain_rate/(1000*1000);
             clwm++;
-        पूर्ण
-        अन्यथा
-        अणु
+        }
+        else
+        {
             crtc_drain_rate = pclk_freq * bpp/8;
             crtpagemiss = 2;
             crtpagemiss += 1;
@@ -748,59 +747,59 @@
             us_crt =  cpm_us + us_m + us_n + us_p ;
             clwm = us_crt * crtc_drain_rate/(1000*1000);
             clwm++;
-        पूर्ण
+        }
         m1 = clwm + cbs - 512;
         p1 = m1 * pclk_freq / mclk_freq;
         p1 = p1 * bpp / 8;
-        अगर ((p1 < m1) && (m1 > 0))
-        अणु
-            fअगरo->valid = 0;
+        if ((p1 < m1) && (m1 > 0))
+        {
+            fifo->valid = 0;
             found = 0;
-            अगर (mclk_extra ==0)   found = 1;
+            if (mclk_extra ==0)   found = 1;
             mclk_extra--;
-        पूर्ण
-        अन्यथा अगर (video_enable)
-        अणु
-            अगर ((clwm > 511) || (vlwm > 255))
-            अणु
-                fअगरo->valid = 0;
+        }
+        else if (video_enable)
+        {
+            if ((clwm > 511) || (vlwm > 255))
+            {
+                fifo->valid = 0;
                 found = 0;
-                अगर (mclk_extra ==0)   found = 1;
+                if (mclk_extra ==0)   found = 1;
                 mclk_extra--;
-            पूर्ण
-        पूर्ण
-        अन्यथा
-        अणु
-            अगर (clwm > 519)
-            अणु
-                fअगरo->valid = 0;
+            }
+        }
+        else
+        {
+            if (clwm > 519)
+            {
+                fifo->valid = 0;
                 found = 0;
-                अगर (mclk_extra ==0)   found = 1;
+                if (mclk_extra ==0)   found = 1;
                 mclk_extra--;
-            पूर्ण
-        पूर्ण
-        अगर (clwm < 384) clwm = 384;
-        अगर (vlwm < 128) vlwm = 128;
-        data = (पूर्णांक)(clwm);
-        fअगरo->graphics_lwm = data;
-        fअगरo->graphics_burst_size = 128;
-        data = (पूर्णांक)((vlwm+15));
-        fअगरo->video_lwm = data;
-        fअगरo->video_burst_size = vbs;
-    पूर्ण
-पूर्ण
-अटल व्योम nv4UpdateArbitrationSettings
+            }
+        }
+        if (clwm < 384) clwm = 384;
+        if (vlwm < 128) vlwm = 128;
+        data = (int)(clwm);
+        fifo->graphics_lwm = data;
+        fifo->graphics_burst_size = 128;
+        data = (int)((vlwm+15));
+        fifo->video_lwm = data;
+        fifo->video_burst_size = vbs;
+    }
+}
+static void nv4UpdateArbitrationSettings
 (
-    अचिन्हित      VClk, 
-    अचिन्हित      pixelDepth, 
-    अचिन्हित     *burst,
-    अचिन्हित     *lwm,
+    unsigned      VClk, 
+    unsigned      pixelDepth, 
+    unsigned     *burst,
+    unsigned     *lwm,
     RIVA_HW_INST *chip
 )
-अणु
-    nv4_fअगरo_info fअगरo_data;
+{
+    nv4_fifo_info fifo_data;
     nv4_sim_state sim_data;
-    अचिन्हित पूर्णांक M, N, P, pll, MClk, NVClk, cfg1;
+    unsigned int M, N, P, pll, MClk, NVClk, cfg1;
 
     pll = NV_RD32(&chip->PRAMDAC0[0x00000504/4], 0);
     M = (pll >> 0)  & 0xFF; N = (pll >> 8)  & 0xFF; P = (pll >> 16) & 0x0F;
@@ -809,48 +808,48 @@
     M = (pll >> 0)  & 0xFF; N = (pll >> 8)  & 0xFF; P = (pll >> 16) & 0x0F;
     NVClk  = (N * chip->CrystalFreqKHz / M) >> P;
     cfg1 = NV_RD32(&chip->PFB[0x00000204/4], 0);
-    sim_data.pix_bpp        = (अक्षर)pixelDepth;
+    sim_data.pix_bpp        = (char)pixelDepth;
     sim_data.enable_video   = 0;
     sim_data.enable_mp      = 0;
     sim_data.memory_width   = (NV_RD32(&chip->PEXTDEV[0x00000000/4], 0) & 0x10) ?
 	128 : 64;
-    sim_data.mem_latency    = (अक्षर)cfg1 & 0x0F;
+    sim_data.mem_latency    = (char)cfg1 & 0x0F;
     sim_data.mem_aligned    = 1;
-    sim_data.mem_page_miss  = (अक्षर)(((cfg1 >> 4) &0x0F) + ((cfg1 >> 31) & 0x01));
+    sim_data.mem_page_miss  = (char)(((cfg1 >> 4) &0x0F) + ((cfg1 >> 31) & 0x01));
     sim_data.gr_during_vid  = 0;
     sim_data.pclk_khz       = VClk;
     sim_data.mclk_khz       = MClk;
     sim_data.nvclk_khz      = NVClk;
-    nv4CalcArbitration(&fअगरo_data, &sim_data);
-    अगर (fअगरo_data.valid)
-    अणु
-        पूर्णांक  b = fअगरo_data.graphics_burst_size >> 4;
+    nv4CalcArbitration(&fifo_data, &sim_data);
+    if (fifo_data.valid)
+    {
+        int  b = fifo_data.graphics_burst_size >> 4;
         *burst = 0;
-        जबतक (b >>= 1)
+        while (b >>= 1)
 	    (*burst)++;
-        *lwm   = fअगरo_data.graphics_lwm >> 3;
-    पूर्ण
-पूर्ण
-अटल व्योम nv10CalcArbitration 
+        *lwm   = fifo_data.graphics_lwm >> 3;
+    }
+}
+static void nv10CalcArbitration 
 (
-    nv10_fअगरo_info *fअगरo,
+    nv10_fifo_info *fifo,
     nv10_sim_state *arb
 )
-अणु
-    पूर्णांक data, pagemiss, width, video_enable, bpp;
-    पूर्णांक nvclks, mclks, pclks, vpagemiss, crtpagemiss;
-    पूर्णांक nvclk_fill;
-    पूर्णांक found, mclk_extra, mclk_loop, cbs, m1;
-    पूर्णांक mclk_freq, pclk_freq, nvclk_freq, mp_enable;
-    पूर्णांक us_m, us_m_min, us_n, us_p, crtc_drain_rate;
-    पूर्णांक vus_m;
-    पूर्णांक vpm_us, us_video, cpm_us, us_crt,clwm;
-    पूर्णांक clwm_rnd_करोwn;
-    पूर्णांक m2us, us_pipe_min, p1clk, p2;
-    पूर्णांक min_mclk_extra;
-    पूर्णांक us_min_mclk_extra;
+{
+    int data, pagemiss, width, video_enable, bpp;
+    int nvclks, mclks, pclks, vpagemiss, crtpagemiss;
+    int nvclk_fill;
+    int found, mclk_extra, mclk_loop, cbs, m1;
+    int mclk_freq, pclk_freq, nvclk_freq, mp_enable;
+    int us_m, us_m_min, us_n, us_p, crtc_drain_rate;
+    int vus_m;
+    int vpm_us, us_video, cpm_us, us_crt,clwm;
+    int clwm_rnd_down;
+    int m2us, us_pipe_min, p1clk, p2;
+    int min_mclk_extra;
+    int us_min_mclk_extra;
 
-    fअगरo->valid = 1;
+    fifo->valid = 1;
     pclk_freq = arb->pclk_khz; /* freq in KHz */
     mclk_freq = arb->mclk_khz;
     nvclk_freq = arb->nvclk_khz;
@@ -868,53 +867,53 @@
     nvclks = 3; /* lwm -> sync. */
     nvclks += 2; /* fbi bus cycles (1 req + 1 busy) */
 
-    mclks  = 1;   /* 2 edge sync.  may be very बंद to edge so just put one. */
+    mclks  = 1;   /* 2 edge sync.  may be very close to edge so just put one. */
 
     mclks += 1;   /* arb_hp_req */
     mclks += 5;   /* ap_hp_req   tiling pipeline */
 
-    mclks += 2;    /* tc_req     latency fअगरo */
+    mclks += 2;    /* tc_req     latency fifo */
     mclks += 2;    /* fb_cas_n_  memory request to fbio block */
-    mclks += 7;    /* sm_d_rdv   data वापसed from fbio block */
+    mclks += 7;    /* sm_d_rdv   data returned from fbio block */
 
-    /* fb.rd.d.Put_gc   need to accumulate 256 bits क्रम पढ़ो */
-    अगर (arb->memory_type == 0)
-      अगर (arb->memory_width == 64) /* 64 bit bus */
+    /* fb.rd.d.Put_gc   need to accumulate 256 bits for read */
+    if (arb->memory_type == 0)
+      if (arb->memory_width == 64) /* 64 bit bus */
         mclks += 4;
-      अन्यथा
+      else
         mclks += 2;
-    अन्यथा
-      अगर (arb->memory_width == 64) /* 64 bit bus */
+    else
+      if (arb->memory_width == 64) /* 64 bit bus */
         mclks += 2;
-      अन्यथा
+      else
         mclks += 1;
 
-    अगर ((!video_enable) && (arb->memory_width == 128))
-    अणु  
+    if ((!video_enable) && (arb->memory_width == 128))
+    {  
       mclk_extra = (bpp == 32) ? 31 : 42; /* Margin of error */
       min_mclk_extra = 17;
-    पूर्ण
-    अन्यथा
-    अणु
+    }
+    else
+    {
       mclk_extra = (bpp == 32) ? 8 : 4; /* Margin of error */
       /* mclk_extra = 4; */ /* Margin of error */
       min_mclk_extra = 18;
-    पूर्ण
+    }
 
-    nvclks += 1; /* 2 edge sync.  may be very बंद to edge so just put one. */
+    nvclks += 1; /* 2 edge sync.  may be very close to edge so just put one. */
     nvclks += 1; /* fbi_d_rdv_n */
     nvclks += 1; /* Fbi_d_rdata */
-    nvclks += 1; /* crtfअगरo load */
+    nvclks += 1; /* crtfifo load */
 
-    अगर(mp_enable)
+    if(mp_enable)
       mclks+=4; /* Mp can get in with a burst of 8. */
-    /* Extra घड़ीs determined by heuristics */
+    /* Extra clocks determined by heuristics */
 
     nvclks += 0;
     pclks += 0;
     found = 0;
-    जबतक(found != 1) अणु
-      fअगरo->valid = 1;
+    while(found != 1) {
+      fifo->valid = 1;
       found = 1;
       mclk_loop = mclks+mclk_extra;
       us_m = mclk_loop *1000*1000 / mclk_freq; /* Mclk latency in us */
@@ -926,68 +925,68 @@
 
       vus_m = mclk_loop *1000*1000 / mclk_freq; /* Mclk latency in us */
 
-      अगर(video_enable) अणु
+      if(video_enable) {
         crtc_drain_rate = pclk_freq * bpp/8; /* MB/s */
 
         vpagemiss = 1; /* self generating page miss */
-        vpagemiss += 1; /* One higher priority beक्रमe */
+        vpagemiss += 1; /* One higher priority before */
 
         crtpagemiss = 2; /* self generating page miss */
-        अगर(mp_enable)
-            crtpagemiss += 1; /* अगर MA0 conflict */
+        if(mp_enable)
+            crtpagemiss += 1; /* if MA0 conflict */
 
         vpm_us = (vpagemiss * pagemiss)*1000*1000/mclk_freq;
 
-        us_video = vpm_us + vus_m; /* Video has separate पढ़ो वापस path */
+        us_video = vpm_us + vus_m; /* Video has separate read return path */
 
         cpm_us = crtpagemiss  * pagemiss *1000*1000/ mclk_freq;
         us_crt =
-          us_video  /* Wait क्रम video */
+          us_video  /* Wait for video */
           +cpm_us /* CRT Page miss */
           +us_m + us_n +us_p /* other latency */
           ;
 
         clwm = us_crt * crtc_drain_rate/(1000*1000);
-        clwm++; /* fixed poपूर्णांक <= भग्न_poपूर्णांक - 1.  Fixes that */
-      पूर्ण अन्यथा अणु
+        clwm++; /* fixed point <= float_point - 1.  Fixes that */
+      } else {
         crtc_drain_rate = pclk_freq * bpp/8; /* bpp * pclk/8 */
 
         crtpagemiss = 1; /* self generating page miss */
         crtpagemiss += 1; /* MA0 page miss */
-        अगर(mp_enable)
-            crtpagemiss += 1; /* अगर MA0 conflict */
+        if(mp_enable)
+            crtpagemiss += 1; /* if MA0 conflict */
         cpm_us = crtpagemiss  * pagemiss *1000*1000/ mclk_freq;
         us_crt =  cpm_us + us_m + us_n + us_p ;
         clwm = us_crt * crtc_drain_rate/(1000*1000);
-        clwm++; /* fixed poपूर्णांक <= भग्न_poपूर्णांक - 1.  Fixes that */
+        clwm++; /* fixed point <= float_point - 1.  Fixes that */
 
   /*
           //
-          // Another concern, only क्रम high pclks so करोn't करो this
+          // Another concern, only for high pclks so don't do this
           // with video:
-          // What happens अगर the latency to fetch the cbs is so large that
-          // fअगरo empties.  In that हाल we need to have an alternate clwm value
+          // What happens if the latency to fetch the cbs is so large that
+          // fifo empties.  In that case we need to have an alternate clwm value
           // based off the total burst fetch
           //
           us_crt = (cbs * 1000 * 1000)/ (8*width)/mclk_freq ;
           us_crt = us_crt + us_m + us_n + us_p + (4 * 1000 * 1000)/mclk_freq;
           clwm_mt = us_crt * crtc_drain_rate/(1000*1000);
           clwm_mt ++;
-          अगर(clwm_mt > clwm)
+          if(clwm_mt > clwm)
               clwm = clwm_mt;
   */
           /* Finally, a heuristic check when width == 64 bits */
-          अगर(width == 1)अणु
+          if(width == 1){
               nvclk_fill = nvclk_freq * 8;
-              अगर(crtc_drain_rate * 100 >= nvclk_fill * 102)
+              if(crtc_drain_rate * 100 >= nvclk_fill * 102)
                       clwm = 0xfff; /*Large number to fail */
 
-              अन्यथा अगर(crtc_drain_rate * 100  >= nvclk_fill * 98) अणु
+              else if(crtc_drain_rate * 100  >= nvclk_fill * 98) {
                   clwm = 1024;
                   cbs = 512;
-              पूर्ण
-          पूर्ण
-      पूर्ण
+              }
+          }
+      }
 
 
       /*
@@ -995,8 +994,8 @@
 
         */
 
-      clwm_rnd_करोwn = ((पूर्णांक)clwm/8)*8;
-      अगर (clwm_rnd_करोwn < clwm)
+      clwm_rnd_down = ((int)clwm/8)*8;
+      if (clwm_rnd_down < clwm)
           clwm += 8;
 
       m1 = clwm + cbs -  1024; /* Amount of overfill */
@@ -1006,50 +1005,50 @@
       p1clk = m2us * pclk_freq/(1000*1000); 
       p2 = p1clk * bpp / 8; /* bytes drained. */
 
-      अगर((p2 < m1) && (m1 > 0)) अणु
-          fअगरo->valid = 0;
+      if((p2 < m1) && (m1 > 0)) {
+          fifo->valid = 0;
           found = 0;
-          अगर(min_mclk_extra == 0)   अणु
-            अगर(cbs <= 32) अणु
+          if(min_mclk_extra == 0)   {
+            if(cbs <= 32) {
               found = 1; /* Can't adjust anymore! */
-            पूर्ण अन्यथा अणु
+            } else {
               cbs = cbs/2;  /* reduce the burst size */
-            पूर्ण
-          पूर्ण अन्यथा अणु
+            }
+          } else {
             min_mclk_extra--;
-          पूर्ण
-      पूर्ण अन्यथा अणु
-        अगर (clwm > 1023)अणु /* Have some margin */
-          fअगरo->valid = 0;
+          }
+      } else {
+        if (clwm > 1023){ /* Have some margin */
+          fifo->valid = 0;
           found = 0;
-          अगर(min_mclk_extra == 0)   
+          if(min_mclk_extra == 0)   
               found = 1; /* Can't adjust anymore! */
-          अन्यथा 
+          else 
               min_mclk_extra--;
-        पूर्ण
-      पूर्ण
+        }
+      }
 
-      अगर(clwm < (1024-cbs+8)) clwm = 1024-cbs+8;
-      data = (पूर्णांक)(clwm);
-      /*  म_लिखो("CRT LWM: %f bytes, prog: 0x%x, bs: 256\n", clwm, data ); */
-      fअगरo->graphics_lwm = data;   fअगरo->graphics_burst_size = cbs;
+      if(clwm < (1024-cbs+8)) clwm = 1024-cbs+8;
+      data = (int)(clwm);
+      /*  printf("CRT LWM: %f bytes, prog: 0x%x, bs: 256\n", clwm, data ); */
+      fifo->graphics_lwm = data;   fifo->graphics_burst_size = cbs;
 
-      /*  म_लिखो("VID LWM: %f bytes, prog: 0x%x, bs: %d\n, ", vlwm, data, vbs ); */
-      fअगरo->video_lwm = 1024;  fअगरo->video_burst_size = 512;
-    पूर्ण
-पूर्ण
-अटल व्योम nv10UpdateArbitrationSettings
+      /*  printf("VID LWM: %f bytes, prog: 0x%x, bs: %d\n, ", vlwm, data, vbs ); */
+      fifo->video_lwm = 1024;  fifo->video_burst_size = 512;
+    }
+}
+static void nv10UpdateArbitrationSettings
 (
-    अचिन्हित      VClk, 
-    अचिन्हित      pixelDepth, 
-    अचिन्हित     *burst,
-    अचिन्हित     *lwm,
+    unsigned      VClk, 
+    unsigned      pixelDepth, 
+    unsigned     *burst,
+    unsigned     *lwm,
     RIVA_HW_INST *chip
 )
-अणु
-    nv10_fअगरo_info fअगरo_data;
+{
+    nv10_fifo_info fifo_data;
     nv10_sim_state sim_data;
-    अचिन्हित पूर्णांक M, N, P, pll, MClk, NVClk, cfg1;
+    unsigned int M, N, P, pll, MClk, NVClk, cfg1;
 
     pll = NV_RD32(&chip->PRAMDAC0[0x00000504/4], 0);
     M = (pll >> 0)  & 0xFF; N = (pll >> 8)  & 0xFF; P = (pll >> 16) & 0x0F;
@@ -1058,65 +1057,65 @@
     M = (pll >> 0)  & 0xFF; N = (pll >> 8)  & 0xFF; P = (pll >> 16) & 0x0F;
     NVClk  = (N * chip->CrystalFreqKHz / M) >> P;
     cfg1 = NV_RD32(&chip->PFB[0x00000204/4], 0);
-    sim_data.pix_bpp        = (अक्षर)pixelDepth;
+    sim_data.pix_bpp        = (char)pixelDepth;
     sim_data.enable_video   = 0;
     sim_data.enable_mp      = 0;
     sim_data.memory_type    = (NV_RD32(&chip->PFB[0x00000200/4], 0) & 0x01) ?
 	1 : 0;
     sim_data.memory_width   = (NV_RD32(&chip->PEXTDEV[0x00000000/4], 0) & 0x10) ?
 	128 : 64;
-    sim_data.mem_latency    = (अक्षर)cfg1 & 0x0F;
+    sim_data.mem_latency    = (char)cfg1 & 0x0F;
     sim_data.mem_aligned    = 1;
-    sim_data.mem_page_miss  = (अक्षर)(((cfg1 >> 4) &0x0F) + ((cfg1 >> 31) & 0x01));
+    sim_data.mem_page_miss  = (char)(((cfg1 >> 4) &0x0F) + ((cfg1 >> 31) & 0x01));
     sim_data.gr_during_vid  = 0;
     sim_data.pclk_khz       = VClk;
     sim_data.mclk_khz       = MClk;
     sim_data.nvclk_khz      = NVClk;
-    nv10CalcArbitration(&fअगरo_data, &sim_data);
-    अगर (fअगरo_data.valid)
-    अणु
-        पूर्णांक  b = fअगरo_data.graphics_burst_size >> 4;
+    nv10CalcArbitration(&fifo_data, &sim_data);
+    if (fifo_data.valid)
+    {
+        int  b = fifo_data.graphics_burst_size >> 4;
         *burst = 0;
-        जबतक (b >>= 1)
+        while (b >>= 1)
 	    (*burst)++;
-        *lwm   = fअगरo_data.graphics_lwm >> 3;
-    पूर्ण
-पूर्ण
+        *lwm   = fifo_data.graphics_lwm >> 3;
+    }
+}
 
-अटल व्योम nForceUpdateArbitrationSettings
+static void nForceUpdateArbitrationSettings
 (
-    अचिन्हित      VClk,
-    अचिन्हित      pixelDepth,
-    अचिन्हित     *burst,
-    अचिन्हित     *lwm,
+    unsigned      VClk,
+    unsigned      pixelDepth,
+    unsigned     *burst,
+    unsigned     *lwm,
     RIVA_HW_INST *chip,
-    काष्ठा pci_dev *pdev
+    struct pci_dev *pdev
 )
-अणु
-    nv10_fअगरo_info fअगरo_data;
+{
+    nv10_fifo_info fifo_data;
     nv10_sim_state sim_data;
-    अचिन्हित पूर्णांक M, N, P, pll, MClk, NVClk;
-    अचिन्हित पूर्णांक uMClkPostDiv;
-    काष्ठा pci_dev *dev;
-    पूर्णांक करोमुख्य = pci_करोमुख्य_nr(pdev->bus);
+    unsigned int M, N, P, pll, MClk, NVClk;
+    unsigned int uMClkPostDiv;
+    struct pci_dev *dev;
+    int domain = pci_domain_nr(pdev->bus);
 
-    dev = pci_get_करोमुख्य_bus_and_slot(करोमुख्य, 0, 3);
-    pci_पढ़ो_config_dword(dev, 0x6C, &uMClkPostDiv);
+    dev = pci_get_domain_bus_and_slot(domain, 0, 3);
+    pci_read_config_dword(dev, 0x6C, &uMClkPostDiv);
     pci_dev_put(dev);
     uMClkPostDiv = (uMClkPostDiv >> 8) & 0xf;
 
-    अगर(!uMClkPostDiv) uMClkPostDiv = 4;
+    if(!uMClkPostDiv) uMClkPostDiv = 4;
     MClk = 400000 / uMClkPostDiv;
 
     pll = NV_RD32(&chip->PRAMDAC0[0x00000500/4], 0);
     M = (pll >> 0)  & 0xFF; N = (pll >> 8)  & 0xFF; P = (pll >> 16) & 0x0F;
     NVClk  = (N * chip->CrystalFreqKHz / M) >> P;
-    sim_data.pix_bpp        = (अक्षर)pixelDepth;
+    sim_data.pix_bpp        = (char)pixelDepth;
     sim_data.enable_video   = 0;
     sim_data.enable_mp      = 0;
 
-    dev = pci_get_करोमुख्य_bus_and_slot(करोमुख्य, 0, 1);
-    pci_पढ़ो_config_dword(dev, 0x7C, &sim_data.memory_type);
+    dev = pci_get_domain_bus_and_slot(domain, 0, 1);
+    pci_read_config_dword(dev, 0x7C, &sim_data.memory_type);
     pci_dev_put(dev);
     sim_data.memory_type    = (sim_data.memory_type >> 12) & 1;
 
@@ -1128,16 +1127,16 @@
     sim_data.pclk_khz       = VClk;
     sim_data.mclk_khz       = MClk;
     sim_data.nvclk_khz      = NVClk;
-    nv10CalcArbitration(&fअगरo_data, &sim_data);
-    अगर (fअगरo_data.valid)
-    अणु
-        पूर्णांक  b = fअगरo_data.graphics_burst_size >> 4;
+    nv10CalcArbitration(&fifo_data, &sim_data);
+    if (fifo_data.valid)
+    {
+        int  b = fifo_data.graphics_burst_size >> 4;
         *burst = 0;
-        जबतक (b >>= 1)
+        while (b >>= 1)
 	    (*burst)++;
-        *lwm   = fअगरo_data.graphics_lwm >> 3;
-    पूर्ण
-पूर्ण
+        *lwm   = fifo_data.graphics_lwm >> 3;
+    }
+}
 
 /****************************************************************************\
 *                                                                            *
@@ -1146,87 +1145,87 @@
 \****************************************************************************/
 
 /*
- * Calculate the Video Clock parameters क्रम the PLL.
+ * Calculate the Video Clock parameters for the PLL.
  */
-अटल पूर्णांक CalcVClock
+static int CalcVClock
 (
-    पूर्णांक           घड़ीIn,
-    पूर्णांक          *घड़ीOut,
-    पूर्णांक          *mOut,
-    पूर्णांक          *nOut,
-    पूर्णांक          *pOut,
+    int           clockIn,
+    int          *clockOut,
+    int          *mOut,
+    int          *nOut,
+    int          *pOut,
     RIVA_HW_INST *chip
 )
-अणु
-    अचिन्हित lowM, highM, highP;
-    अचिन्हित DeltaNew, DeltaOld;
-    अचिन्हित VClk, Freq;
-    अचिन्हित M, N, P;
+{
+    unsigned lowM, highM, highP;
+    unsigned DeltaNew, DeltaOld;
+    unsigned VClk, Freq;
+    unsigned M, N, P;
     
     DeltaOld = 0xFFFFFFFF;
 
-    VClk     = (अचिन्हित)घड़ीIn;
+    VClk     = (unsigned)clockIn;
     
-    अगर (chip->CrystalFreqKHz == 13500)
-    अणु
+    if (chip->CrystalFreqKHz == 13500)
+    {
         lowM  = 7;
         highM = 13 - (chip->Architecture == NV_ARCH_03);
-    पूर्ण
-    अन्यथा
-    अणु
+    }
+    else
+    {
         lowM  = 8;
         highM = 14 - (chip->Architecture == NV_ARCH_03);
-    पूर्ण                      
+    }                      
 
     highP = 4 - (chip->Architecture == NV_ARCH_03);
-    क्रम (P = 0; P <= highP; P ++)
-    अणु
+    for (P = 0; P <= highP; P ++)
+    {
         Freq = VClk << P;
-        अगर ((Freq >= 128000) && (Freq <= chip->MaxVClockFreqKHz))
-        अणु
-            क्रम (M = lowM; M <= highM; M++)
-            अणु
+        if ((Freq >= 128000) && (Freq <= chip->MaxVClockFreqKHz))
+        {
+            for (M = lowM; M <= highM; M++)
+            {
                 N    = (VClk << P) * M / chip->CrystalFreqKHz;
-                अगर(N <= 255) अणु
+                if(N <= 255) {
                 Freq = (chip->CrystalFreqKHz * N / M) >> P;
-                अगर (Freq > VClk)
+                if (Freq > VClk)
                     DeltaNew = Freq - VClk;
-                अन्यथा
+                else
                     DeltaNew = VClk - Freq;
-                अगर (DeltaNew < DeltaOld)
-                अणु
+                if (DeltaNew < DeltaOld)
+                {
                     *mOut     = M;
                     *nOut     = N;
                     *pOut     = P;
-                    *घड़ीOut = Freq;
+                    *clockOut = Freq;
                     DeltaOld  = DeltaNew;
-                पूर्ण
-            पूर्ण
-        पूर्ण
-    पूर्ण
-    पूर्ण
+                }
+            }
+        }
+    }
+    }
 
-    /* non-zero: M/N/P/घड़ी values asचिन्हित.  zero: error (not set) */
-    वापस (DeltaOld != 0xFFFFFFFF);
-पूर्ण
+    /* non-zero: M/N/P/clock values assigned.  zero: error (not set) */
+    return (DeltaOld != 0xFFFFFFFF);
+}
 /*
  * Calculate extended mode parameters (SVGA) and save in a 
- * mode state काष्ठाure.
+ * mode state structure.
  */
-पूर्णांक CalcStateExt
+int CalcStateExt
 (
     RIVA_HW_INST  *chip,
     RIVA_HW_STATE *state,
-    काष्ठा pci_dev *pdev,
-    पूर्णांक            bpp,
-    पूर्णांक            width,
-    पूर्णांक            hDisplaySize,
-    पूर्णांक            height,
-    पूर्णांक            करोtClock
+    struct pci_dev *pdev,
+    int            bpp,
+    int            width,
+    int            hDisplaySize,
+    int            height,
+    int            dotClock
 )
-अणु
-    पूर्णांक pixelDepth;
-    पूर्णांक VClk, m, n, p;
+{
+    int pixelDepth;
+    int VClk, m, n, p;
 
     /*
      * Save mode parameters.
@@ -1235,15 +1234,15 @@
     state->width  = width;
     state->height = height;
     /*
-     * Extended RIVA रेजिस्टरs.
+     * Extended RIVA registers.
      */
     pixelDepth = (bpp + 1)/8;
-    अगर (!CalcVClock(करोtClock, &VClk, &m, &n, &p, chip))
-    	वापस -EINVAL;
+    if (!CalcVClock(dotClock, &VClk, &m, &n, &p, chip))
+    	return -EINVAL;
 
-    चयन (chip->Architecture)
-    अणु
-        हाल NV_ARCH_03:
+    switch (chip->Architecture)
+    {
+        case NV_ARCH_03:
             nv3UpdateArbitrationSettings(VClk, 
                                          pixelDepth * 8, 
                                         &(state->arbitration0),
@@ -1257,9 +1256,9 @@
                             | (((pixelDepth > 2) ? 3 : pixelDepth) << 8)
                             | 0x1000;
             state->general  = 0x00100100;
-            state->repaपूर्णांक1 = hDisplaySize < 1280 ? 0x06 : 0x02;
-            अवरोध;
-        हाल NV_ARCH_04:
+            state->repaint1 = hDisplaySize < 1280 ? 0x06 : 0x02;
+            break;
+        case NV_ARCH_04:
             nv4UpdateArbitrationSettings(VClk, 
                                          pixelDepth * 8, 
                                         &(state->arbitration0),
@@ -1271,43 +1270,43 @@
             state->pllsel   = 0x10000700;
             state->config   = 0x00001114;
             state->general  = bpp == 16 ? 0x00101100 : 0x00100100;
-            state->repaपूर्णांक1 = hDisplaySize < 1280 ? 0x04 : 0x00;
-            अवरोध;
-        हाल NV_ARCH_10:
-        हाल NV_ARCH_20:
-        हाल NV_ARCH_30:
-            अगर((chip->Chipset == NV_CHIP_IGEFORCE2) ||
+            state->repaint1 = hDisplaySize < 1280 ? 0x04 : 0x00;
+            break;
+        case NV_ARCH_10:
+        case NV_ARCH_20:
+        case NV_ARCH_30:
+            if((chip->Chipset == NV_CHIP_IGEFORCE2) ||
                (chip->Chipset == NV_CHIP_0x01F0))
-            अणु
+            {
                 nForceUpdateArbitrationSettings(VClk,
                                           pixelDepth * 8,
                                          &(state->arbitration0),
                                          &(state->arbitration1),
                                           chip, pdev);
-            पूर्ण अन्यथा अणु
+            } else {
                 nv10UpdateArbitrationSettings(VClk, 
                                           pixelDepth * 8, 
                                          &(state->arbitration0),
                                          &(state->arbitration1),
                                           chip);
-            पूर्ण
+            }
             state->cursor0  = 0x80 | (chip->CursorStart >> 17);
             state->cursor1  = (chip->CursorStart >> 11) << 2;
             state->cursor2  = chip->CursorStart >> 24;
             state->pllsel   = 0x10000700;
             state->config   = NV_RD32(&chip->PFB[0x00000200/4], 0);
             state->general  = bpp == 16 ? 0x00101100 : 0x00100100;
-            state->repaपूर्णांक1 = hDisplaySize < 1280 ? 0x04 : 0x00;
-            अवरोध;
-    पूर्ण
+            state->repaint1 = hDisplaySize < 1280 ? 0x04 : 0x00;
+            break;
+    }
 
-     /* Paul Riअक्षरds: below अगर block borks things in kernel क्रम some reason */
+     /* Paul Richards: below if block borks things in kernel for some reason */
      /* Tony: Below is needed to set hardware in DirectColor */
-    अगर((bpp != 8) && (chip->Architecture != NV_ARCH_03))
+    if((bpp != 8) && (chip->Architecture != NV_ARCH_03))
 	    state->general |= 0x00000030;
 
     state->vpll     = (p << 16) | (n << 8) | m;
-    state->repaपूर्णांक0 = (((width/8)*pixelDepth) & 0x700) >> 3;
+    state->repaint0 = (((width/8)*pixelDepth) & 0x700) >> 3;
     state->pixel    = pixelDepth > 2   ? 3    : pixelDepth;
     state->offset0  =
     state->offset1  =
@@ -1318,99 +1317,99 @@
     state->pitch2   =
     state->pitch3   = pixelDepth * width;
 
-    वापस 0;
-पूर्ण
+    return 0;
+}
 /*
  * Load fixed function state and pre-calculated/stored state.
  */
-#घोषणा LOAD_FIXED_STATE(tbl,dev)                                       \
-    क्रम (i = 0; i < माप(tbl##Table##dev)/8; i++)                 \
+#define LOAD_FIXED_STATE(tbl,dev)                                       \
+    for (i = 0; i < sizeof(tbl##Table##dev)/8; i++)                 \
         NV_WR32(&chip->dev[tbl##Table##dev[i][0]], 0, tbl##Table##dev[i][1])
-#घोषणा LOAD_FIXED_STATE_8BPP(tbl,dev)                                  \
-    क्रम (i = 0; i < माप(tbl##Table##dev##_8BPP)/8; i++)            \
+#define LOAD_FIXED_STATE_8BPP(tbl,dev)                                  \
+    for (i = 0; i < sizeof(tbl##Table##dev##_8BPP)/8; i++)            \
         NV_WR32(&chip->dev[tbl##Table##dev##_8BPP[i][0]], 0, tbl##Table##dev##_8BPP[i][1])
-#घोषणा LOAD_FIXED_STATE_15BPP(tbl,dev)                                 \
-    क्रम (i = 0; i < माप(tbl##Table##dev##_15BPP)/8; i++)           \
+#define LOAD_FIXED_STATE_15BPP(tbl,dev)                                 \
+    for (i = 0; i < sizeof(tbl##Table##dev##_15BPP)/8; i++)           \
         NV_WR32(&chip->dev[tbl##Table##dev##_15BPP[i][0]], 0, tbl##Table##dev##_15BPP[i][1])
-#घोषणा LOAD_FIXED_STATE_16BPP(tbl,dev)                                 \
-    क्रम (i = 0; i < माप(tbl##Table##dev##_16BPP)/8; i++)           \
+#define LOAD_FIXED_STATE_16BPP(tbl,dev)                                 \
+    for (i = 0; i < sizeof(tbl##Table##dev##_16BPP)/8; i++)           \
         NV_WR32(&chip->dev[tbl##Table##dev##_16BPP[i][0]], 0, tbl##Table##dev##_16BPP[i][1])
-#घोषणा LOAD_FIXED_STATE_32BPP(tbl,dev)                                 \
-    क्रम (i = 0; i < माप(tbl##Table##dev##_32BPP)/8; i++)           \
+#define LOAD_FIXED_STATE_32BPP(tbl,dev)                                 \
+    for (i = 0; i < sizeof(tbl##Table##dev##_32BPP)/8; i++)           \
         NV_WR32(&chip->dev[tbl##Table##dev##_32BPP[i][0]], 0, tbl##Table##dev##_32BPP[i][1])
 
-अटल व्योम UpdateFअगरoState
+static void UpdateFifoState
 (
     RIVA_HW_INST  *chip
 )
-अणु
-    पूर्णांक i;
+{
+    int i;
 
-    चयन (chip->Architecture)
-    अणु
-        हाल NV_ARCH_04:
+    switch (chip->Architecture)
+    {
+        case NV_ARCH_04:
             LOAD_FIXED_STATE(nv4,FIFO);
-            chip->Tri03 = शून्य;
+            chip->Tri03 = NULL;
             chip->Tri05 = (RivaTexturedTriangle05 __iomem *)&(chip->FIFO[0x0000E000/4]);
-            अवरोध;
-        हाल NV_ARCH_10:
-        हाल NV_ARCH_20:
-        हाल NV_ARCH_30:
+            break;
+        case NV_ARCH_10:
+        case NV_ARCH_20:
+        case NV_ARCH_30:
             /*
-             * Initialize state क्रम the RivaTriangle3D05 routines.
+             * Initialize state for the RivaTriangle3D05 routines.
              */
             LOAD_FIXED_STATE(nv10tri05,PGRAPH);
             LOAD_FIXED_STATE(nv10,FIFO);
-            chip->Tri03 = शून्य;
+            chip->Tri03 = NULL;
             chip->Tri05 = (RivaTexturedTriangle05 __iomem *)&(chip->FIFO[0x0000E000/4]);
-            अवरोध;
-    पूर्ण
-पूर्ण
-अटल व्योम LoadStateExt
+            break;
+    }
+}
+static void LoadStateExt
 (
     RIVA_HW_INST  *chip,
     RIVA_HW_STATE *state
 )
-अणु
-    पूर्णांक i;
+{
+    int i;
 
     /*
      * Load HW fixed function state.
      */
     LOAD_FIXED_STATE(Riva,PMC);
     LOAD_FIXED_STATE(Riva,PTIMER);
-    चयन (chip->Architecture)
-    अणु
-        हाल NV_ARCH_03:
+    switch (chip->Architecture)
+    {
+        case NV_ARCH_03:
             /*
-             * Make sure frame buffer config माला_लो set beक्रमe loading PRAMIN.
+             * Make sure frame buffer config gets set before loading PRAMIN.
              */
             NV_WR32(chip->PFB, 0x00000200, state->config);
             LOAD_FIXED_STATE(nv3,PFIFO);
             LOAD_FIXED_STATE(nv3,PRAMIN);
             LOAD_FIXED_STATE(nv3,PGRAPH);
-            चयन (state->bpp)
-            अणु
-                हाल 15:
-                हाल 16:
+            switch (state->bpp)
+            {
+                case 15:
+                case 16:
                     LOAD_FIXED_STATE_15BPP(nv3,PRAMIN);
                     LOAD_FIXED_STATE_15BPP(nv3,PGRAPH);
                     chip->Tri03 = (RivaTexturedTriangle03  __iomem *)&(chip->FIFO[0x0000E000/4]);
-                    अवरोध;
-                हाल 24:
-                हाल 32:
+                    break;
+                case 24:
+                case 32:
                     LOAD_FIXED_STATE_32BPP(nv3,PRAMIN);
                     LOAD_FIXED_STATE_32BPP(nv3,PGRAPH);
-                    chip->Tri03 = शून्य;
-                    अवरोध;
-                हाल 8:
-                शेष:
+                    chip->Tri03 = NULL;
+                    break;
+                case 8:
+                default:
                     LOAD_FIXED_STATE_8BPP(nv3,PRAMIN);
                     LOAD_FIXED_STATE_8BPP(nv3,PGRAPH);
-                    chip->Tri03 = शून्य;
-                    अवरोध;
-            पूर्ण
-            क्रम (i = 0x00000; i < 0x00800; i++)
+                    chip->Tri03 = NULL;
+                    break;
+            }
+            for (i = 0x00000; i < 0x00800; i++)
                 NV_WR32(&chip->PRAMIN[0x00000502 + i], 0, (i << 12) | 0x03);
             NV_WR32(chip->PGRAPH, 0x00000630, state->offset0);
             NV_WR32(chip->PGRAPH, 0x00000634, state->offset1);
@@ -1420,40 +1419,40 @@
             NV_WR32(chip->PGRAPH, 0x00000654, state->pitch1);
             NV_WR32(chip->PGRAPH, 0x00000658, state->pitch2);
             NV_WR32(chip->PGRAPH, 0x0000065C, state->pitch3);
-            अवरोध;
-        हाल NV_ARCH_04:
+            break;
+        case NV_ARCH_04:
             /*
-             * Make sure frame buffer config माला_लो set beक्रमe loading PRAMIN.
+             * Make sure frame buffer config gets set before loading PRAMIN.
              */
             NV_WR32(chip->PFB, 0x00000200, state->config);
             LOAD_FIXED_STATE(nv4,PFIFO);
             LOAD_FIXED_STATE(nv4,PRAMIN);
             LOAD_FIXED_STATE(nv4,PGRAPH);
-            चयन (state->bpp)
-            अणु
-                हाल 15:
+            switch (state->bpp)
+            {
+                case 15:
                     LOAD_FIXED_STATE_15BPP(nv4,PRAMIN);
                     LOAD_FIXED_STATE_15BPP(nv4,PGRAPH);
                     chip->Tri03 = (RivaTexturedTriangle03  __iomem *)&(chip->FIFO[0x0000E000/4]);
-                    अवरोध;
-                हाल 16:
+                    break;
+                case 16:
                     LOAD_FIXED_STATE_16BPP(nv4,PRAMIN);
                     LOAD_FIXED_STATE_16BPP(nv4,PGRAPH);
                     chip->Tri03 = (RivaTexturedTriangle03  __iomem *)&(chip->FIFO[0x0000E000/4]);
-                    अवरोध;
-                हाल 24:
-                हाल 32:
+                    break;
+                case 24:
+                case 32:
                     LOAD_FIXED_STATE_32BPP(nv4,PRAMIN);
                     LOAD_FIXED_STATE_32BPP(nv4,PGRAPH);
-                    chip->Tri03 = शून्य;
-                    अवरोध;
-                हाल 8:
-                शेष:
+                    chip->Tri03 = NULL;
+                    break;
+                case 8:
+                default:
                     LOAD_FIXED_STATE_8BPP(nv4,PRAMIN);
                     LOAD_FIXED_STATE_8BPP(nv4,PGRAPH);
-                    chip->Tri03 = शून्य;
-                    अवरोध;
-            पूर्ण
+                    chip->Tri03 = NULL;
+                    break;
+            }
             NV_WR32(chip->PGRAPH, 0x00000640, state->offset0);
             NV_WR32(chip->PGRAPH, 0x00000644, state->offset1);
             NV_WR32(chip->PGRAPH, 0x00000648, state->offset2);
@@ -1462,46 +1461,46 @@
             NV_WR32(chip->PGRAPH, 0x00000674, state->pitch1);
             NV_WR32(chip->PGRAPH, 0x00000678, state->pitch2);
             NV_WR32(chip->PGRAPH, 0x0000067C, state->pitch3);
-            अवरोध;
-        हाल NV_ARCH_10:
-        हाल NV_ARCH_20:
-        हाल NV_ARCH_30:
-            अगर(chip->twoHeads) अणु
+            break;
+        case NV_ARCH_10:
+        case NV_ARCH_20:
+        case NV_ARCH_30:
+            if(chip->twoHeads) {
                VGA_WR08(chip->PCIO, 0x03D4, 0x44);
                VGA_WR08(chip->PCIO, 0x03D5, state->crtcOwner);
                chip->LockUnlock(chip, 0);
-            पूर्ण
+            }
 
             LOAD_FIXED_STATE(nv10,PFIFO);
             LOAD_FIXED_STATE(nv10,PRAMIN);
             LOAD_FIXED_STATE(nv10,PGRAPH);
-            चयन (state->bpp)
-            अणु
-                हाल 15:
+            switch (state->bpp)
+            {
+                case 15:
                     LOAD_FIXED_STATE_15BPP(nv10,PRAMIN);
                     LOAD_FIXED_STATE_15BPP(nv10,PGRAPH);
                     chip->Tri03 = (RivaTexturedTriangle03  __iomem *)&(chip->FIFO[0x0000E000/4]);
-                    अवरोध;
-                हाल 16:
+                    break;
+                case 16:
                     LOAD_FIXED_STATE_16BPP(nv10,PRAMIN);
                     LOAD_FIXED_STATE_16BPP(nv10,PGRAPH);
                     chip->Tri03 = (RivaTexturedTriangle03  __iomem *)&(chip->FIFO[0x0000E000/4]);
-                    अवरोध;
-                हाल 24:
-                हाल 32:
+                    break;
+                case 24:
+                case 32:
                     LOAD_FIXED_STATE_32BPP(nv10,PRAMIN);
                     LOAD_FIXED_STATE_32BPP(nv10,PGRAPH);
-                    chip->Tri03 = शून्य;
-                    अवरोध;
-                हाल 8:
-                शेष:
+                    chip->Tri03 = NULL;
+                    break;
+                case 8:
+                default:
                     LOAD_FIXED_STATE_8BPP(nv10,PRAMIN);
                     LOAD_FIXED_STATE_8BPP(nv10,PGRAPH);
-                    chip->Tri03 = शून्य;
-                    अवरोध;
-            पूर्ण
+                    chip->Tri03 = NULL;
+                    break;
+            }
 
-            अगर(chip->Architecture == NV_ARCH_10) अणु
+            if(chip->Architecture == NV_ARCH_10) {
                 NV_WR32(chip->PGRAPH, 0x00000640, state->offset0);
                 NV_WR32(chip->PGRAPH, 0x00000644, state->offset1);
                 NV_WR32(chip->PGRAPH, 0x00000648, state->offset2);
@@ -1511,7 +1510,7 @@
                 NV_WR32(chip->PGRAPH, 0x00000678, state->pitch2);
                 NV_WR32(chip->PGRAPH, 0x0000067C, state->pitch3);
                 NV_WR32(chip->PGRAPH, 0x00000680, state->pitch3);
-        पूर्ण अन्यथा अणु
+        } else {
         NV_WR32(chip->PGRAPH, 0x00000820, state->offset0);
         NV_WR32(chip->PGRAPH, 0x00000824, state->offset1);
         NV_WR32(chip->PGRAPH, 0x00000828, state->offset2);
@@ -1524,11 +1523,11 @@
         NV_WR32(chip->PGRAPH, 0x00000864, state->pitch3);
         NV_WR32(chip->PGRAPH, 0x000009A4, NV_RD32(chip->PFB, 0x00000200));
         NV_WR32(chip->PGRAPH, 0x000009A8, NV_RD32(chip->PFB, 0x00000204));
-        पूर्ण
-            अगर(chip->twoHeads) अणु
+        }
+            if(chip->twoHeads) {
                NV_WR32(chip->PCRTC0, 0x00000860, state->head);
                NV_WR32(chip->PCRTC0, 0x00002860, state->head2);
-            पूर्ण
+            }
             NV_WR32(chip->PRAMDAC, 0x00000404, NV_RD32(chip->PRAMDAC, 0x00000404) | (1 << 25));
 
             NV_WR32(chip->PMC, 0x00008704, 1);
@@ -1585,52 +1584,52 @@
             NV_WR32(chip->PGRAPH, 0x00000F50, 0x00000040);
             NV_WR32(chip->PGRAPH, 0x00000F54, 0x00000008);
             NV_WR32(chip->PGRAPH, 0x00000F50, 0x00000200);
-            क्रम (i = 0; i < (3*16); i++)
+            for (i = 0; i < (3*16); i++)
                 NV_WR32(chip->PGRAPH, 0x00000F54, 0x00000000);
             NV_WR32(chip->PGRAPH, 0x00000F50, 0x00000040);
             NV_WR32(chip->PGRAPH, 0x00000F54, 0x00000000);
             NV_WR32(chip->PGRAPH, 0x00000F50, 0x00000800);
-            क्रम (i = 0; i < (16*16); i++)
+            for (i = 0; i < (16*16); i++)
                 NV_WR32(chip->PGRAPH, 0x00000F54, 0x00000000);
             NV_WR32(chip->PGRAPH, 0x00000F40, 0x30000000);
             NV_WR32(chip->PGRAPH, 0x00000F44, 0x00000004);
             NV_WR32(chip->PGRAPH, 0x00000F50, 0x00006400);
-            क्रम (i = 0; i < (59*4); i++)
+            for (i = 0; i < (59*4); i++)
                 NV_WR32(chip->PGRAPH, 0x00000F54, 0x00000000);
             NV_WR32(chip->PGRAPH, 0x00000F50, 0x00006800);
-            क्रम (i = 0; i < (47*4); i++)
+            for (i = 0; i < (47*4); i++)
                 NV_WR32(chip->PGRAPH, 0x00000F54, 0x00000000);
             NV_WR32(chip->PGRAPH, 0x00000F50, 0x00006C00);
-            क्रम (i = 0; i < (3*4); i++)
+            for (i = 0; i < (3*4); i++)
                 NV_WR32(chip->PGRAPH, 0x00000F54, 0x00000000);
             NV_WR32(chip->PGRAPH, 0x00000F50, 0x00007000);
-            क्रम (i = 0; i < (19*4); i++)
+            for (i = 0; i < (19*4); i++)
                 NV_WR32(chip->PGRAPH, 0x00000F54, 0x00000000);
             NV_WR32(chip->PGRAPH, 0x00000F50, 0x00007400);
-            क्रम (i = 0; i < (12*4); i++)
+            for (i = 0; i < (12*4); i++)
                 NV_WR32(chip->PGRAPH, 0x00000F54, 0x00000000);
             NV_WR32(chip->PGRAPH, 0x00000F50, 0x00007800);
-            क्रम (i = 0; i < (12*4); i++)
+            for (i = 0; i < (12*4); i++)
                 NV_WR32(chip->PGRAPH, 0x00000F54, 0x00000000);
             NV_WR32(chip->PGRAPH, 0x00000F50, 0x00004400);
-            क्रम (i = 0; i < (8*4); i++)
+            for (i = 0; i < (8*4); i++)
                 NV_WR32(chip->PGRAPH, 0x00000F54, 0x00000000);
             NV_WR32(chip->PGRAPH, 0x00000F50, 0x00000000);
-            क्रम (i = 0; i < 16; i++)
+            for (i = 0; i < 16; i++)
                 NV_WR32(chip->PGRAPH, 0x00000F54, 0x00000000);
             NV_WR32(chip->PGRAPH, 0x00000F50, 0x00000040);
-            क्रम (i = 0; i < 4; i++)
+            for (i = 0; i < 4; i++)
                 NV_WR32(chip->PGRAPH, 0x00000F54, 0x00000000);
 
             NV_WR32(chip->PCRTC, 0x00000810, state->cursorConfig);
 
-            अगर(chip->flatPanel) अणु
-               अगर((chip->Chipset & 0x0ff0) == 0x0110) अणु
+            if(chip->flatPanel) {
+               if((chip->Chipset & 0x0ff0) == 0x0110) {
                    NV_WR32(chip->PRAMDAC, 0x0528, state->dither);
-               पूर्ण अन्यथा 
-               अगर((chip->Chipset & 0x0ff0) >= 0x0170) अणु
+               } else 
+               if((chip->Chipset & 0x0ff0) >= 0x0170) {
                    NV_WR32(chip->PRAMDAC, 0x083C, state->dither);
-               पूर्ण
+               }
             
                VGA_WR08(chip->PCIO, 0x03D4, 0x53);
                VGA_WR08(chip->PCIO, 0x03D5, 0);
@@ -1638,20 +1637,20 @@
                VGA_WR08(chip->PCIO, 0x03D5, 0);
                VGA_WR08(chip->PCIO, 0x03D4, 0x21);
                VGA_WR08(chip->PCIO, 0x03D5, 0xfa);
-            पूर्ण
+            }
 
             VGA_WR08(chip->PCIO, 0x03D4, 0x41);
             VGA_WR08(chip->PCIO, 0x03D5, state->extra);
-    पूर्ण
+    }
     LOAD_FIXED_STATE(Riva,FIFO);
-    UpdateFअगरoState(chip);
+    UpdateFifoState(chip);
     /*
      * Load HW mode state.
      */
     VGA_WR08(chip->PCIO, 0x03D4, 0x19);
-    VGA_WR08(chip->PCIO, 0x03D5, state->repaपूर्णांक0);
+    VGA_WR08(chip->PCIO, 0x03D5, state->repaint0);
     VGA_WR08(chip->PCIO, 0x03D4, 0x1A);
-    VGA_WR08(chip->PCIO, 0x03D5, state->repaपूर्णांक1);
+    VGA_WR08(chip->PCIO, 0x03D5, state->repaint1);
     VGA_WR08(chip->PCIO, 0x03D4, 0x25);
     VGA_WR08(chip->PCIO, 0x03D5, state->screen);
     VGA_WR08(chip->PCIO, 0x03D4, 0x28);
@@ -1669,16 +1668,16 @@
     VGA_WR08(chip->PCIO, 0x03D4, 0x2F);
     VGA_WR08(chip->PCIO, 0x03D5, state->cursor2);
     VGA_WR08(chip->PCIO, 0x03D4, 0x39);
-    VGA_WR08(chip->PCIO, 0x03D5, state->पूर्णांकerlace);
+    VGA_WR08(chip->PCIO, 0x03D5, state->interlace);
 
-    अगर(!chip->flatPanel) अणु
+    if(!chip->flatPanel) {
        NV_WR32(chip->PRAMDAC0, 0x00000508, state->vpll);
        NV_WR32(chip->PRAMDAC0, 0x0000050C, state->pllsel);
-       अगर(chip->twoHeads)
+       if(chip->twoHeads)
           NV_WR32(chip->PRAMDAC0, 0x00000520, state->vpll2);
-    पूर्ण  अन्यथा अणु
+    }  else {
        NV_WR32(chip->PRAMDAC, 0x00000848 , state->scale);
-    पूर्ण  
+    }  
     NV_WR32(chip->PRAMDAC, 0x00000600 , state->general);
 
     /*
@@ -1687,33 +1686,33 @@
     NV_WR32(chip->PCRTC, 0x00000140, 0);
     NV_WR32(chip->PCRTC, 0x00000100, chip->VBlankBit);
     /*
-     * Set पूर्णांकerrupt enable.
+     * Set interrupt enable.
      */    
     NV_WR32(chip->PMC, 0x00000140, chip->EnableIRQ & 0x01);
     /*
-     * Set current state poपूर्णांकer.
+     * Set current state pointer.
      */
     chip->CurrentState = state;
     /*
-     * Reset FIFO मुक्त and empty counts.
+     * Reset FIFO free and empty counts.
      */
-    chip->FअगरoFreeCount  = 0;
+    chip->FifoFreeCount  = 0;
     /* Free count from first subchannel */
-    chip->FअगरoEmptyCount = NV_RD32(&chip->Rop->FअगरoFree, 0);
-पूर्ण
-अटल व्योम UnloadStateExt
+    chip->FifoEmptyCount = NV_RD32(&chip->Rop->FifoFree, 0);
+}
+static void UnloadStateExt
 (
     RIVA_HW_INST  *chip,
     RIVA_HW_STATE *state
 )
-अणु
+{
     /*
      * Save current HW state.
      */
     VGA_WR08(chip->PCIO, 0x03D4, 0x19);
-    state->repaपूर्णांक0     = VGA_RD08(chip->PCIO, 0x03D5);
+    state->repaint0     = VGA_RD08(chip->PCIO, 0x03D5);
     VGA_WR08(chip->PCIO, 0x03D4, 0x1A);
-    state->repaपूर्णांक1     = VGA_RD08(chip->PCIO, 0x03D5);
+    state->repaint1     = VGA_RD08(chip->PCIO, 0x03D5);
     VGA_WR08(chip->PCIO, 0x03D4, 0x25);
     state->screen       = VGA_RD08(chip->PCIO, 0x03D5);
     VGA_WR08(chip->PCIO, 0x03D4, 0x28);
@@ -1731,16 +1730,16 @@
     VGA_WR08(chip->PCIO, 0x03D4, 0x2F);
     state->cursor2      = VGA_RD08(chip->PCIO, 0x03D5);
     VGA_WR08(chip->PCIO, 0x03D4, 0x39);
-    state->पूर्णांकerlace    = VGA_RD08(chip->PCIO, 0x03D5);
+    state->interlace    = VGA_RD08(chip->PCIO, 0x03D5);
     state->vpll         = NV_RD32(chip->PRAMDAC0, 0x00000508);
     state->vpll2        = NV_RD32(chip->PRAMDAC0, 0x00000520);
     state->pllsel       = NV_RD32(chip->PRAMDAC0, 0x0000050C);
     state->general      = NV_RD32(chip->PRAMDAC, 0x00000600);
     state->scale        = NV_RD32(chip->PRAMDAC, 0x00000848);
     state->config       = NV_RD32(chip->PFB, 0x00000200);
-    चयन (chip->Architecture)
-    अणु
-        हाल NV_ARCH_03:
+    switch (chip->Architecture)
+    {
+        case NV_ARCH_03:
             state->offset0  = NV_RD32(chip->PGRAPH, 0x00000630);
             state->offset1  = NV_RD32(chip->PGRAPH, 0x00000634);
             state->offset2  = NV_RD32(chip->PGRAPH, 0x00000638);
@@ -1749,8 +1748,8 @@
             state->pitch1   = NV_RD32(chip->PGRAPH, 0x00000654);
             state->pitch2   = NV_RD32(chip->PGRAPH, 0x00000658);
             state->pitch3   = NV_RD32(chip->PGRAPH, 0x0000065C);
-            अवरोध;
-        हाल NV_ARCH_04:
+            break;
+        case NV_ARCH_04:
             state->offset0  = NV_RD32(chip->PGRAPH, 0x00000640);
             state->offset1  = NV_RD32(chip->PGRAPH, 0x00000644);
             state->offset2  = NV_RD32(chip->PGRAPH, 0x00000648);
@@ -1759,10 +1758,10 @@
             state->pitch1   = NV_RD32(chip->PGRAPH, 0x00000674);
             state->pitch2   = NV_RD32(chip->PGRAPH, 0x00000678);
             state->pitch3   = NV_RD32(chip->PGRAPH, 0x0000067C);
-            अवरोध;
-        हाल NV_ARCH_10:
-        हाल NV_ARCH_20:
-        हाल NV_ARCH_30:
+            break;
+        case NV_ARCH_10:
+        case NV_ARCH_20:
+        case NV_ARCH_30:
             state->offset0  = NV_RD32(chip->PGRAPH, 0x00000640);
             state->offset1  = NV_RD32(chip->PGRAPH, 0x00000644);
             state->offset2  = NV_RD32(chip->PGRAPH, 0x00000648);
@@ -1771,46 +1770,46 @@
             state->pitch1   = NV_RD32(chip->PGRAPH, 0x00000674);
             state->pitch2   = NV_RD32(chip->PGRAPH, 0x00000678);
             state->pitch3   = NV_RD32(chip->PGRAPH, 0x0000067C);
-            अगर(chip->twoHeads) अणु
+            if(chip->twoHeads) {
                state->head     = NV_RD32(chip->PCRTC0, 0x00000860);
                state->head2    = NV_RD32(chip->PCRTC0, 0x00002860);
                VGA_WR08(chip->PCIO, 0x03D4, 0x44);
                state->crtcOwner = VGA_RD08(chip->PCIO, 0x03D5);
-            पूर्ण
+            }
             VGA_WR08(chip->PCIO, 0x03D4, 0x41);
             state->extra = VGA_RD08(chip->PCIO, 0x03D5);
             state->cursorConfig = NV_RD32(chip->PCRTC, 0x00000810);
 
-            अगर((chip->Chipset & 0x0ff0) == 0x0110) अणु
+            if((chip->Chipset & 0x0ff0) == 0x0110) {
                 state->dither = NV_RD32(chip->PRAMDAC, 0x0528);
-            पूर्ण अन्यथा 
-            अगर((chip->Chipset & 0x0ff0) >= 0x0170) अणु
+            } else 
+            if((chip->Chipset & 0x0ff0) >= 0x0170) {
                 state->dither = NV_RD32(chip->PRAMDAC, 0x083C);
-            पूर्ण
-            अवरोध;
-    पूर्ण
-पूर्ण
-अटल व्योम SetStartAddress
+            }
+            break;
+    }
+}
+static void SetStartAddress
 (
     RIVA_HW_INST *chip,
-    अचिन्हित      start
+    unsigned      start
 )
-अणु
+{
     NV_WR32(chip->PCRTC, 0x800, start);
-पूर्ण
+}
 
-अटल व्योम SetStartAddress3
+static void SetStartAddress3
 (
     RIVA_HW_INST *chip,
-    अचिन्हित      start
+    unsigned      start
 )
-अणु
-    पूर्णांक offset = start >> 2;
-    पूर्णांक pan    = (start & 3) << 1;
-    अचिन्हित अक्षर पंचांगp;
+{
+    int offset = start >> 2;
+    int pan    = (start & 3) << 1;
+    unsigned char tmp;
 
     /*
-     * Unlock extended रेजिस्टरs.
+     * Unlock extended registers.
      */
     chip->LockUnlock(chip, 0);
     /*
@@ -1820,24 +1819,24 @@
     offset >>= 8;
     VGA_WR08(chip->PCIO, 0x3D4, 0x0C); VGA_WR08(chip->PCIO, 0x3D5, offset);
     offset >>= 8;
-    VGA_WR08(chip->PCIO, 0x3D4, 0x19); पंचांगp = VGA_RD08(chip->PCIO, 0x3D5);
-    VGA_WR08(chip->PCIO, 0x3D5, (offset & 0x01F) | (पंचांगp & ~0x1F));
-    VGA_WR08(chip->PCIO, 0x3D4, 0x2D); पंचांगp = VGA_RD08(chip->PCIO, 0x3D5);
-    VGA_WR08(chip->PCIO, 0x3D5, (offset & 0x60) | (पंचांगp & ~0x60));
+    VGA_WR08(chip->PCIO, 0x3D4, 0x19); tmp = VGA_RD08(chip->PCIO, 0x3D5);
+    VGA_WR08(chip->PCIO, 0x3D5, (offset & 0x01F) | (tmp & ~0x1F));
+    VGA_WR08(chip->PCIO, 0x3D4, 0x2D); tmp = VGA_RD08(chip->PCIO, 0x3D5);
+    VGA_WR08(chip->PCIO, 0x3D5, (offset & 0x60) | (tmp & ~0x60));
     /*
-     * 4 pixel pan रेजिस्टर.
+     * 4 pixel pan register.
      */
     offset = VGA_RD08(chip->PCIO, chip->IO + 0x0A);
     VGA_WR08(chip->PCIO, 0x3C0, 0x13);
     VGA_WR08(chip->PCIO, 0x3C0, pan);
-पूर्ण
-अटल व्योम nv3SetSurfaces2D
+}
+static void nv3SetSurfaces2D
 (
     RIVA_HW_INST *chip,
-    अचिन्हित     surf0,
-    अचिन्हित     surf1
+    unsigned     surf0,
+    unsigned     surf1
 )
-अणु
+{
     RivaSurface __iomem *Surface =
 	(RivaSurface __iomem *)&(chip->FIFO[0x0000E000/4]);
 
@@ -1847,14 +1846,14 @@
     NV_WR32(&chip->FIFO[0x00003800], 0, 0x80000004);
     NV_WR32(&Surface->Offset, 0, surf1);
     NV_WR32(&chip->FIFO[0x00003800], 0, 0x80000013);
-पूर्ण
-अटल व्योम nv4SetSurfaces2D
+}
+static void nv4SetSurfaces2D
 (
     RIVA_HW_INST *chip,
-    अचिन्हित     surf0,
-    अचिन्हित     surf1
+    unsigned     surf0,
+    unsigned     surf1
 )
-अणु
+{
     RivaSurface __iomem *Surface =
 	(RivaSurface __iomem *)&(chip->FIFO[0x0000E000/4]);
 
@@ -1863,14 +1862,14 @@
     NV_WR32(&chip->FIFO[0x00003800], 0, 0x80000004);
     NV_WR32(&Surface->Offset, 0, surf1);
     NV_WR32(&chip->FIFO[0x00003800], 0, 0x80000014);
-पूर्ण
-अटल व्योम nv10SetSurfaces2D
+}
+static void nv10SetSurfaces2D
 (
     RIVA_HW_INST *chip,
-    अचिन्हित     surf0,
-    अचिन्हित     surf1
+    unsigned     surf0,
+    unsigned     surf1
 )
-अणु
+{
     RivaSurface __iomem *Surface =
 	(RivaSurface __iomem *)&(chip->FIFO[0x0000E000/4]);
 
@@ -1879,14 +1878,14 @@
     NV_WR32(&chip->FIFO[0x00003800], 0, 0x80000004);
     NV_WR32(&Surface->Offset, 0, surf1);
     NV_WR32(&chip->FIFO[0x00003800], 0, 0x80000014);
-पूर्ण
-अटल व्योम nv3SetSurfaces3D
+}
+static void nv3SetSurfaces3D
 (
     RIVA_HW_INST *chip,
-    अचिन्हित     surf0,
-    अचिन्हित     surf1
+    unsigned     surf0,
+    unsigned     surf1
 )
-अणु
+{
     RivaSurface __iomem *Surface =
 	(RivaSurface __iomem *)&(chip->FIFO[0x0000E000/4]);
 
@@ -1896,14 +1895,14 @@
     NV_WR32(&chip->FIFO[0x00003800], 0, 0x80000006);
     NV_WR32(&Surface->Offset, 0, surf1);
     NV_WR32(&chip->FIFO[0x00003800], 0, 0x80000013);
-पूर्ण
-अटल व्योम nv4SetSurfaces3D
+}
+static void nv4SetSurfaces3D
 (
     RIVA_HW_INST *chip,
-    अचिन्हित     surf0,
-    अचिन्हित     surf1
+    unsigned     surf0,
+    unsigned     surf1
 )
-अणु
+{
     RivaSurface __iomem *Surface =
 	(RivaSurface __iomem *)&(chip->FIFO[0x0000E000/4]);
 
@@ -1912,14 +1911,14 @@
     NV_WR32(&chip->FIFO[0x00003800], 0, 0x80000006);
     NV_WR32(&Surface->Offset, 0, surf1);
     NV_WR32(&chip->FIFO[0x00003800], 0, 0x80000014);
-पूर्ण
-अटल व्योम nv10SetSurfaces3D
+}
+static void nv10SetSurfaces3D
 (
     RIVA_HW_INST *chip,
-    अचिन्हित     surf0,
-    अचिन्हित     surf1
+    unsigned     surf0,
+    unsigned     surf1
 )
-अणु
+{
     RivaSurface3D __iomem *Surfaces3D =
 	(RivaSurface3D __iomem *)&(chip->FIFO[0x0000E000/4]);
 
@@ -1928,7 +1927,7 @@
     NV_WR32(&Surfaces3D->RenderBufferOffset, 0, surf0);
     NV_WR32(&Surfaces3D->ZBufferOffset, 0, surf1);
     NV_WR32(&chip->FIFO[0x00003800], 0, 0x80000014);
-पूर्ण
+}
 
 /****************************************************************************\
 *                                                                            *
@@ -1936,61 +1935,61 @@
 *                                                                            *
 \****************************************************************************/
 
-अटल व्योम nv3GetConfig
+static void nv3GetConfig
 (
     RIVA_HW_INST *chip
 )
-अणु
+{
     /*
      * Fill in chip configuration.
      */
-    अगर (NV_RD32(&chip->PFB[0x00000000/4], 0) & 0x00000020)
-    अणु
-        अगर (((NV_RD32(chip->PMC, 0x00000000) & 0xF0) == 0x20)
+    if (NV_RD32(&chip->PFB[0x00000000/4], 0) & 0x00000020)
+    {
+        if (((NV_RD32(chip->PMC, 0x00000000) & 0xF0) == 0x20)
          && ((NV_RD32(chip->PMC, 0x00000000) & 0x0F) >= 0x02))
-        अणु        
+        {        
             /*
              * SDRAM 128 ZX.
              */
             chip->RamBandwidthKBytesPerSec = 800000;
-            चयन (NV_RD32(chip->PFB, 0x00000000) & 0x03)
-            अणु
-                हाल 2:
+            switch (NV_RD32(chip->PFB, 0x00000000) & 0x03)
+            {
+                case 2:
                     chip->RamAmountKBytes = 1024 * 4;
-                    अवरोध;
-                हाल 1:
+                    break;
+                case 1:
                     chip->RamAmountKBytes = 1024 * 2;
-                    अवरोध;
-                शेष:
+                    break;
+                default:
                     chip->RamAmountKBytes = 1024 * 8;
-                    अवरोध;
-            पूर्ण
-        पूर्ण            
-        अन्यथा            
-        अणु
+                    break;
+            }
+        }            
+        else            
+        {
             chip->RamBandwidthKBytesPerSec = 1000000;
             chip->RamAmountKBytes          = 1024 * 8;
-        पूर्ण            
-    पूर्ण
-    अन्यथा
-    अणु
+        }            
+    }
+    else
+    {
         /*
          * SGRAM 128.
          */
         chip->RamBandwidthKBytesPerSec = 1000000;
-        चयन (NV_RD32(chip->PFB, 0x00000000) & 0x00000003)
-        अणु
-            हाल 0:
+        switch (NV_RD32(chip->PFB, 0x00000000) & 0x00000003)
+        {
+            case 0:
                 chip->RamAmountKBytes = 1024 * 8;
-                अवरोध;
-            हाल 2:
+                break;
+            case 2:
                 chip->RamAmountKBytes = 1024 * 4;
-                अवरोध;
-            शेष:
+                break;
+            default:
                 chip->RamAmountKBytes = 1024 * 2;
-                अवरोध;
-        पूर्ण
-    पूर्ण        
+                break;
+        }
+    }        
     chip->CrystalFreqKHz   = (NV_RD32(chip->PEXTDEV, 0x00000000) & 0x00000040) ? 14318 : 13500;
     chip->CURSOR           = &(chip->PRAMIN[0x00008000/4 - 0x0800/4]);
     chip->VBlankBit        = 0x00000100;
@@ -2006,48 +2005,48 @@
     chip->SetSurfaces2D   = nv3SetSurfaces2D;
     chip->SetSurfaces3D   = nv3SetSurfaces3D;
     chip->LockUnlock      = nv3LockUnlock;
-पूर्ण
-अटल व्योम nv4GetConfig
+}
+static void nv4GetConfig
 (
     RIVA_HW_INST *chip
 )
-अणु
+{
     /*
      * Fill in chip configuration.
      */
-    अगर (NV_RD32(chip->PFB, 0x00000000) & 0x00000100)
-    अणु
+    if (NV_RD32(chip->PFB, 0x00000000) & 0x00000100)
+    {
         chip->RamAmountKBytes = ((NV_RD32(chip->PFB, 0x00000000) >> 12) & 0x0F) * 1024 * 2
                               + 1024 * 2;
-    पूर्ण
-    अन्यथा
-    अणु
-        चयन (NV_RD32(chip->PFB, 0x00000000) & 0x00000003)
-        अणु
-            हाल 0:
+    }
+    else
+    {
+        switch (NV_RD32(chip->PFB, 0x00000000) & 0x00000003)
+        {
+            case 0:
                 chip->RamAmountKBytes = 1024 * 32;
-                अवरोध;
-            हाल 1:
+                break;
+            case 1:
                 chip->RamAmountKBytes = 1024 * 4;
-                अवरोध;
-            हाल 2:
+                break;
+            case 2:
                 chip->RamAmountKBytes = 1024 * 8;
-                अवरोध;
-            हाल 3:
-            शेष:
+                break;
+            case 3:
+            default:
                 chip->RamAmountKBytes = 1024 * 16;
-                अवरोध;
-        पूर्ण
-    पूर्ण
-    चयन ((NV_RD32(chip->PFB, 0x00000000) >> 3) & 0x00000003)
-    अणु
-        हाल 3:
+                break;
+        }
+    }
+    switch ((NV_RD32(chip->PFB, 0x00000000) >> 3) & 0x00000003)
+    {
+        case 3:
             chip->RamBandwidthKBytesPerSec = 800000;
-            अवरोध;
-        शेष:
+            break;
+        default:
             chip->RamBandwidthKBytesPerSec = 1000000;
-            अवरोध;
-    पूर्ण
+            break;
+    }
     chip->CrystalFreqKHz   = (NV_RD32(chip->PEXTDEV, 0x00000000) & 0x00000040) ? 14318 : 13500;
     chip->CURSOR           = &(chip->PRAMIN[0x00010000/4 - 0x0800/4]);
     chip->VBlankBit        = 0x00000001;
@@ -2063,98 +2062,98 @@
     chip->SetSurfaces2D   = nv4SetSurfaces2D;
     chip->SetSurfaces3D   = nv4SetSurfaces3D;
     chip->LockUnlock      = nv4LockUnlock;
-पूर्ण
-अटल व्योम nv10GetConfig
+}
+static void nv10GetConfig
 (
     RIVA_HW_INST *chip,
-    काष्ठा pci_dev *pdev,
-    अचिन्हित पूर्णांक chipset
+    struct pci_dev *pdev,
+    unsigned int chipset
 )
-अणु
-    काष्ठा pci_dev* dev;
-    पूर्णांक करोमुख्य = pci_करोमुख्य_nr(pdev->bus);
+{
+    struct pci_dev* dev;
+    int domain = pci_domain_nr(pdev->bus);
     u32 amt;
 
-#अगर_घोषित __BIG_ENDIAN
-    /* turn on big endian रेजिस्टर access */
-    अगर(!(NV_RD32(chip->PMC, 0x00000004) & 0x01000001))
+#ifdef __BIG_ENDIAN
+    /* turn on big endian register access */
+    if(!(NV_RD32(chip->PMC, 0x00000004) & 0x01000001))
     	NV_WR32(chip->PMC, 0x00000004, 0x01000001);
-#पूर्ण_अगर
+#endif
 
     /*
      * Fill in chip configuration.
      */
-    अगर(chipset == NV_CHIP_IGEFORCE2) अणु
-        dev = pci_get_करोमुख्य_bus_and_slot(करोमुख्य, 0, 1);
-        pci_पढ़ो_config_dword(dev, 0x7C, &amt);
+    if(chipset == NV_CHIP_IGEFORCE2) {
+        dev = pci_get_domain_bus_and_slot(domain, 0, 1);
+        pci_read_config_dword(dev, 0x7C, &amt);
         pci_dev_put(dev);
         chip->RamAmountKBytes = (((amt >> 6) & 31) + 1) * 1024;
-    पूर्ण अन्यथा अगर(chipset == NV_CHIP_0x01F0) अणु
-        dev = pci_get_करोमुख्य_bus_and_slot(करोमुख्य, 0, 1);
-        pci_पढ़ो_config_dword(dev, 0x84, &amt);
+    } else if(chipset == NV_CHIP_0x01F0) {
+        dev = pci_get_domain_bus_and_slot(domain, 0, 1);
+        pci_read_config_dword(dev, 0x84, &amt);
         pci_dev_put(dev);
         chip->RamAmountKBytes = (((amt >> 4) & 127) + 1) * 1024;
-    पूर्ण अन्यथा अणु
-        चयन ((NV_RD32(chip->PFB, 0x0000020C) >> 20) & 0x000000FF)
-        अणु
-            हाल 0x02:
+    } else {
+        switch ((NV_RD32(chip->PFB, 0x0000020C) >> 20) & 0x000000FF)
+        {
+            case 0x02:
                 chip->RamAmountKBytes = 1024 * 2;
-                अवरोध;
-            हाल 0x04:
+                break;
+            case 0x04:
                 chip->RamAmountKBytes = 1024 * 4;
-                अवरोध;
-            हाल 0x08:
+                break;
+            case 0x08:
                 chip->RamAmountKBytes = 1024 * 8;
-                अवरोध;
-            हाल 0x10:
+                break;
+            case 0x10:
                 chip->RamAmountKBytes = 1024 * 16;
-                अवरोध;
-            हाल 0x20:
+                break;
+            case 0x20:
                 chip->RamAmountKBytes = 1024 * 32;
-                अवरोध;
-            हाल 0x40:
+                break;
+            case 0x40:
                 chip->RamAmountKBytes = 1024 * 64;
-                अवरोध;
-            हाल 0x80:
+                break;
+            case 0x80:
                 chip->RamAmountKBytes = 1024 * 128;
-                अवरोध;
-            शेष:
+                break;
+            default:
                 chip->RamAmountKBytes = 1024 * 16;
-                अवरोध;
-        पूर्ण
-    पूर्ण
-    चयन ((NV_RD32(chip->PFB, 0x00000000) >> 3) & 0x00000003)
-    अणु
-        हाल 3:
+                break;
+        }
+    }
+    switch ((NV_RD32(chip->PFB, 0x00000000) >> 3) & 0x00000003)
+    {
+        case 3:
             chip->RamBandwidthKBytesPerSec = 800000;
-            अवरोध;
-        शेष:
+            break;
+        default:
             chip->RamBandwidthKBytesPerSec = 1000000;
-            अवरोध;
-    पूर्ण
+            break;
+    }
     chip->CrystalFreqKHz = (NV_RD32(chip->PEXTDEV, 0x0000) & (1 << 6)) ?
 	14318 : 13500;
 
-    चयन (chipset & 0x0ff0) अणु
-    हाल 0x0170:
-    हाल 0x0180:
-    हाल 0x01F0:
-    हाल 0x0250:
-    हाल 0x0280:
-    हाल 0x0300:
-    हाल 0x0310:
-    हाल 0x0320:
-    हाल 0x0330:
-    हाल 0x0340:
-       अगर(NV_RD32(chip->PEXTDEV, 0x0000) & (1 << 22))
+    switch (chipset & 0x0ff0) {
+    case 0x0170:
+    case 0x0180:
+    case 0x01F0:
+    case 0x0250:
+    case 0x0280:
+    case 0x0300:
+    case 0x0310:
+    case 0x0320:
+    case 0x0330:
+    case 0x0340:
+       if(NV_RD32(chip->PEXTDEV, 0x0000) & (1 << 22))
            chip->CrystalFreqKHz = 27000;
-       अवरोध;
-    शेष:
-       अवरोध;
-    पूर्ण
+       break;
+    default:
+       break;
+    }
 
     chip->CursorStart      = (chip->RamAmountKBytes - 128) * 1024;
-    chip->CURSOR           = शून्य;  /* can't set this here */
+    chip->CURSOR           = NULL;  /* can't set this here */
     chip->VBlankBit        = 0x00000001;
     chip->MaxVClockFreqKHz = 350000;
     /*
@@ -2169,67 +2168,67 @@
     chip->SetSurfaces3D   = nv10SetSurfaces3D;
     chip->LockUnlock      = nv4LockUnlock;
 
-    चयन(chipset & 0x0ff0) अणु
-    हाल 0x0110:
-    हाल 0x0170:
-    हाल 0x0180:
-    हाल 0x01F0:
-    हाल 0x0250:
-    हाल 0x0280:
-    हाल 0x0300:
-    हाल 0x0310:
-    हाल 0x0320:
-    हाल 0x0330:
-    हाल 0x0340:
+    switch(chipset & 0x0ff0) {
+    case 0x0110:
+    case 0x0170:
+    case 0x0180:
+    case 0x01F0:
+    case 0x0250:
+    case 0x0280:
+    case 0x0300:
+    case 0x0310:
+    case 0x0320:
+    case 0x0330:
+    case 0x0340:
         chip->twoHeads = TRUE;
-        अवरोध;
-    शेष:
+        break;
+    default:
         chip->twoHeads = FALSE;
-        अवरोध;
-    पूर्ण
-पूर्ण
-पूर्णांक RivaGetConfig
+        break;
+    }
+}
+int RivaGetConfig
 (
     RIVA_HW_INST *chip,
-    काष्ठा pci_dev *pdev,
-    अचिन्हित पूर्णांक chipset
+    struct pci_dev *pdev,
+    unsigned int chipset
 )
-अणु
+{
     /*
      * Save this so future SW know whats it's dealing with.
      */
     chip->Version = RIVA_SW_VERSION;
     /*
-     * Chip specअगरic configuration.
+     * Chip specific configuration.
      */
-    चयन (chip->Architecture)
-    अणु
-        हाल NV_ARCH_03:
+    switch (chip->Architecture)
+    {
+        case NV_ARCH_03:
             nv3GetConfig(chip);
-            अवरोध;
-        हाल NV_ARCH_04:
+            break;
+        case NV_ARCH_04:
             nv4GetConfig(chip);
-            अवरोध;
-        हाल NV_ARCH_10:
-        हाल NV_ARCH_20:
-        हाल NV_ARCH_30:
+            break;
+        case NV_ARCH_10:
+        case NV_ARCH_20:
+        case NV_ARCH_30:
             nv10GetConfig(chip, pdev, chipset);
-            अवरोध;
-        शेष:
-            वापस (-1);
-    पूर्ण
+            break;
+        default:
+            return (-1);
+    }
     chip->Chipset = chipset;
     /*
-     * Fill in FIFO poपूर्णांकers.
+     * Fill in FIFO pointers.
      */
     chip->Rop    = (RivaRop __iomem         *)&(chip->FIFO[0x00000000/4]);
     chip->Clip   = (RivaClip __iomem        *)&(chip->FIFO[0x00002000/4]);
     chip->Patt   = (RivaPattern __iomem     *)&(chip->FIFO[0x00004000/4]);
     chip->Pixmap = (RivaPixmap __iomem      *)&(chip->FIFO[0x00006000/4]);
     chip->Blt    = (RivaScreenBlt __iomem   *)&(chip->FIFO[0x00008000/4]);
-    chip->Biपंचांगap = (RivaBiपंचांगap __iomem      *)&(chip->FIFO[0x0000A000/4]);
+    chip->Bitmap = (RivaBitmap __iomem      *)&(chip->FIFO[0x0000A000/4]);
     chip->Line   = (RivaLine __iomem        *)&(chip->FIFO[0x0000C000/4]);
     chip->Tri03  = (RivaTexturedTriangle03 __iomem *)&(chip->FIFO[0x0000E000/4]);
-    वापस (0);
-पूर्ण
+    return (0);
+}
 

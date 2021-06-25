@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2015 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial busions of the Software.
@@ -22,91 +21,91 @@
  *
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
-#घोषणा g94_i2c_aux(p) container_of((p), काष्ठा g94_i2c_aux, base)
-#समावेश "aux.h"
+#define g94_i2c_aux(p) container_of((p), struct g94_i2c_aux, base)
+#include "aux.h"
 
-काष्ठा g94_i2c_aux अणु
-	काष्ठा nvkm_i2c_aux base;
-	पूर्णांक ch;
-पूर्ण;
+struct g94_i2c_aux {
+	struct nvkm_i2c_aux base;
+	int ch;
+};
 
-अटल व्योम
-g94_i2c_aux_fini(काष्ठा g94_i2c_aux *aux)
-अणु
-	काष्ठा nvkm_device *device = aux->base.pad->i2c->subdev.device;
+static void
+g94_i2c_aux_fini(struct g94_i2c_aux *aux)
+{
+	struct nvkm_device *device = aux->base.pad->i2c->subdev.device;
 	nvkm_mask(device, 0x00e4e4 + (aux->ch * 0x50), 0x00310000, 0x00000000);
-पूर्ण
+}
 
-अटल पूर्णांक
-g94_i2c_aux_init(काष्ठा g94_i2c_aux *aux)
-अणु
-	काष्ठा nvkm_device *device = aux->base.pad->i2c->subdev.device;
-	स्थिर u32 unksel = 1; /* nfi which to use, or अगर it matters.. */
-	स्थिर u32 ureq = unksel ? 0x00100000 : 0x00200000;
-	स्थिर u32 urep = unksel ? 0x01000000 : 0x02000000;
-	u32 ctrl, समयout;
+static int
+g94_i2c_aux_init(struct g94_i2c_aux *aux)
+{
+	struct nvkm_device *device = aux->base.pad->i2c->subdev.device;
+	const u32 unksel = 1; /* nfi which to use, or if it matters.. */
+	const u32 ureq = unksel ? 0x00100000 : 0x00200000;
+	const u32 urep = unksel ? 0x01000000 : 0x02000000;
+	u32 ctrl, timeout;
 
-	/* रुको up to 1ms क्रम any previous transaction to be करोne... */
-	समयout = 1000;
-	करो अणु
+	/* wait up to 1ms for any previous transaction to be done... */
+	timeout = 1000;
+	do {
 		ctrl = nvkm_rd32(device, 0x00e4e4 + (aux->ch * 0x50));
 		udelay(1);
-		अगर (!समयout--) अणु
+		if (!timeout--) {
 			AUX_ERR(&aux->base, "begin idle timeout %08x", ctrl);
-			वापस -EBUSY;
-		पूर्ण
-	पूर्ण जबतक (ctrl & 0x03010000);
+			return -EBUSY;
+		}
+	} while (ctrl & 0x03010000);
 
-	/* set some magic, and रुको up to 1ms क्रम it to appear */
+	/* set some magic, and wait up to 1ms for it to appear */
 	nvkm_mask(device, 0x00e4e4 + (aux->ch * 0x50), 0x00300000, ureq);
-	समयout = 1000;
-	करो अणु
+	timeout = 1000;
+	do {
 		ctrl = nvkm_rd32(device, 0x00e4e4 + (aux->ch * 0x50));
 		udelay(1);
-		अगर (!समयout--) अणु
+		if (!timeout--) {
 			AUX_ERR(&aux->base, "magic wait %08x", ctrl);
 			g94_i2c_aux_fini(aux);
-			वापस -EBUSY;
-		पूर्ण
-	पूर्ण जबतक ((ctrl & 0x03000000) != urep);
+			return -EBUSY;
+		}
+	} while ((ctrl & 0x03000000) != urep);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक
-g94_i2c_aux_xfer(काष्ठा nvkm_i2c_aux *obj, bool retry,
+int
+g94_i2c_aux_xfer(struct nvkm_i2c_aux *obj, bool retry,
 		 u8 type, u32 addr, u8 *data, u8 *size)
-अणु
-	काष्ठा g94_i2c_aux *aux = g94_i2c_aux(obj);
-	काष्ठा nvkm_i2c *i2c = aux->base.pad->i2c;
-	काष्ठा nvkm_device *device = i2c->subdev.device;
-	स्थिर u32 base = aux->ch * 0x50;
-	u32 ctrl, stat, समयout, retries = 0;
-	u32 xbuf[4] = अणुपूर्ण;
-	पूर्णांक ret, i;
+{
+	struct g94_i2c_aux *aux = g94_i2c_aux(obj);
+	struct nvkm_i2c *i2c = aux->base.pad->i2c;
+	struct nvkm_device *device = i2c->subdev.device;
+	const u32 base = aux->ch * 0x50;
+	u32 ctrl, stat, timeout, retries = 0;
+	u32 xbuf[4] = {};
+	int ret, i;
 
 	AUX_TRACE(&aux->base, "%d: %08x %d", type, addr, *size);
 
 	ret = g94_i2c_aux_init(aux);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 
 	stat = nvkm_rd32(device, 0x00e4e8 + base);
-	अगर (!(stat & 0x10000000)) अणु
+	if (!(stat & 0x10000000)) {
 		AUX_TRACE(&aux->base, "sink not detected");
 		ret = -ENXIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	nvkm_i2c_aux_स्वतःdpcd(i2c, aux->ch, false);
+	nvkm_i2c_aux_autodpcd(i2c, aux->ch, false);
 
-	अगर (!(type & 1)) अणु
-		स_नकल(xbuf, data, *size);
-		क्रम (i = 0; i < 16; i += 4) अणु
+	if (!(type & 1)) {
+		memcpy(xbuf, data, *size);
+		for (i = 0; i < 16; i += 4) {
 			AUX_TRACE(&aux->base, "wr %08x", xbuf[i / 4]);
 			nvkm_wr32(device, 0x00e4c0 + base + i, xbuf[i / 4]);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	ctrl  = nvkm_rd32(device, 0x00e4e4 + base);
 	ctrl &= ~0x0001f1ff;
@@ -114,82 +113,82 @@ g94_i2c_aux_xfer(काष्ठा nvkm_i2c_aux *obj, bool retry,
 	ctrl |= (*size ? (*size - 1) : 0x00000100);
 	nvkm_wr32(device, 0x00e4e0 + base, addr);
 
-	/* (maybe) retry transaction a number of बार on failure... */
-	करो अणु
-		/* reset, and delay a जबतक अगर this is a retry */
+	/* (maybe) retry transaction a number of times on failure... */
+	do {
+		/* reset, and delay a while if this is a retry */
 		nvkm_wr32(device, 0x00e4e4 + base, 0x80000000 | ctrl);
 		nvkm_wr32(device, 0x00e4e4 + base, 0x00000000 | ctrl);
-		अगर (retries)
+		if (retries)
 			udelay(400);
 
-		/* transaction request, रुको up to 2ms क्रम it to complete */
+		/* transaction request, wait up to 2ms for it to complete */
 		nvkm_wr32(device, 0x00e4e4 + base, 0x00010000 | ctrl);
 
-		समयout = 2000;
-		करो अणु
+		timeout = 2000;
+		do {
 			ctrl = nvkm_rd32(device, 0x00e4e4 + base);
 			udelay(1);
-			अगर (!समयout--) अणु
+			if (!timeout--) {
 				AUX_ERR(&aux->base, "timeout %08x", ctrl);
 				ret = -EIO;
-				जाओ out_err;
-			पूर्ण
-		पूर्ण जबतक (ctrl & 0x00010000);
+				goto out_err;
+			}
+		} while (ctrl & 0x00010000);
 		ret = 0;
 
-		/* पढ़ो status, and check अगर transaction completed ok */
+		/* read status, and check if transaction completed ok */
 		stat = nvkm_mask(device, 0x00e4e8 + base, 0, 0);
-		अगर ((stat & 0x000f0000) == 0x00080000 ||
+		if ((stat & 0x000f0000) == 0x00080000 ||
 		    (stat & 0x000f0000) == 0x00020000)
 			ret = 1;
-		अगर ((stat & 0x00000100))
+		if ((stat & 0x00000100))
 			ret = -ETIMEDOUT;
-		अगर ((stat & 0x00000e00))
+		if ((stat & 0x00000e00))
 			ret = -EIO;
 
 		AUX_TRACE(&aux->base, "%02d %08x %08x", retries, ctrl, stat);
-	पूर्ण जबतक (ret && retry && retries++ < 32);
+	} while (ret && retry && retries++ < 32);
 
-	अगर (type & 1) अणु
-		क्रम (i = 0; i < 16; i += 4) अणु
+	if (type & 1) {
+		for (i = 0; i < 16; i += 4) {
 			xbuf[i / 4] = nvkm_rd32(device, 0x00e4d0 + base + i);
 			AUX_TRACE(&aux->base, "rd %08x", xbuf[i / 4]);
-		पूर्ण
-		स_नकल(data, xbuf, *size);
+		}
+		memcpy(data, xbuf, *size);
 		*size = stat & 0x0000001f;
-	पूर्ण
+	}
 out_err:
-	nvkm_i2c_aux_स्वतःdpcd(i2c, aux->ch, true);
+	nvkm_i2c_aux_autodpcd(i2c, aux->ch, true);
 out:
 	g94_i2c_aux_fini(aux);
-	वापस ret < 0 ? ret : (stat & 0x000f0000) >> 16;
-पूर्ण
+	return ret < 0 ? ret : (stat & 0x000f0000) >> 16;
+}
 
-पूर्णांक
-g94_i2c_aux_new_(स्थिर काष्ठा nvkm_i2c_aux_func *func,
-		 काष्ठा nvkm_i2c_pad *pad, पूर्णांक index, u8 drive,
-		 काष्ठा nvkm_i2c_aux **paux)
-अणु
-	काष्ठा g94_i2c_aux *aux;
+int
+g94_i2c_aux_new_(const struct nvkm_i2c_aux_func *func,
+		 struct nvkm_i2c_pad *pad, int index, u8 drive,
+		 struct nvkm_i2c_aux **paux)
+{
+	struct g94_i2c_aux *aux;
 
-	अगर (!(aux = kzalloc(माप(*aux), GFP_KERNEL)))
-		वापस -ENOMEM;
+	if (!(aux = kzalloc(sizeof(*aux), GFP_KERNEL)))
+		return -ENOMEM;
 	*paux = &aux->base;
 
 	nvkm_i2c_aux_ctor(func, pad, index, &aux->base);
 	aux->ch = drive;
-	aux->base.पूर्णांकr = 1 << aux->ch;
-	वापस 0;
-पूर्ण
+	aux->base.intr = 1 << aux->ch;
+	return 0;
+}
 
-अटल स्थिर काष्ठा nvkm_i2c_aux_func
-g94_i2c_aux = अणु
+static const struct nvkm_i2c_aux_func
+g94_i2c_aux = {
 	.xfer = g94_i2c_aux_xfer,
-पूर्ण;
+};
 
-पूर्णांक
-g94_i2c_aux_new(काष्ठा nvkm_i2c_pad *pad, पूर्णांक index, u8 drive,
-		काष्ठा nvkm_i2c_aux **paux)
-अणु
-	वापस g94_i2c_aux_new_(&g94_i2c_aux, pad, index, drive, paux);
-पूर्ण
+int
+g94_i2c_aux_new(struct nvkm_i2c_pad *pad, int index, u8 drive,
+		struct nvkm_i2c_aux **paux)
+{
+	return g94_i2c_aux_new_(&g94_i2c_aux, pad, index, drive, paux);
+}

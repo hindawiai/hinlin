@@ -1,17 +1,16 @@
-<शैली गुरु>
 /* i810_drv.c -- I810 driver -*- linux-c -*-
- * Created: Mon Dec 13 01:56:22 1999 by jharपंचांगann@precisioninsight.com
+ * Created: Mon Dec 13 01:56:22 1999 by jhartmann@precisioninsight.com
  *
  * Copyright 1999 Precision Insight, Inc., Cedar Park, Texas.
- * Copyright 2000 VA Linux Systems, Inc., Sunnyvale, Calअगरornia.
+ * Copyright 2000 VA Linux Systems, Inc., Sunnyvale, California.
  * All Rights Reserved.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -27,42 +26,42 @@
  *
  * Authors:
  *    Rickard E. (Rik) Faith <faith@valinux.com>
- *    Jeff Harपंचांगann <jharपंचांगann@valinux.com>
+ *    Jeff Hartmann <jhartmann@valinux.com>
  *    Gareth Hughes <gareth@valinux.com>
  */
 
-#समावेश "i810_drv.h"
+#include "i810_drv.h"
 
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
+#include <linux/module.h>
+#include <linux/pci.h>
 
-#समावेश <drm/drm_drv.h>
-#समावेश <drm/drm_file.h>
-#समावेश <drm/drm_pciids.h>
-#समावेश <drm/i810_drm.h>
+#include <drm/drm_drv.h>
+#include <drm/drm_file.h>
+#include <drm/drm_pciids.h>
+#include <drm/i810_drm.h>
 
 
-अटल काष्ठा pci_device_id pciidlist[] = अणु
+static struct pci_device_id pciidlist[] = {
 	i810_PCI_IDS
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा file_operations i810_driver_fops = अणु
+static const struct file_operations i810_driver_fops = {
 	.owner = THIS_MODULE,
-	.खोलो = drm_खोलो,
+	.open = drm_open,
 	.release = drm_release,
 	.unlocked_ioctl = drm_ioctl,
 	.mmap = drm_legacy_mmap,
 	.poll = drm_poll,
 	.compat_ioctl = drm_compat_ioctl,
 	.llseek = noop_llseek,
-पूर्ण;
+};
 
-अटल काष्ठा drm_driver driver = अणु
+static struct drm_driver driver = {
 	.driver_features = DRIVER_USE_AGP | DRIVER_HAVE_DMA | DRIVER_LEGACY,
-	.dev_priv_size = माप(drm_i810_buf_priv_t),
+	.dev_priv_size = sizeof(drm_i810_buf_priv_t),
 	.load = i810_driver_load,
-	.lastबंद = i810_driver_lastबंद,
-	.preबंद = i810_driver_preबंद,
+	.lastclose = i810_driver_lastclose,
+	.preclose = i810_driver_preclose,
 	.dma_quiescent = i810_driver_dma_quiescent,
 	.ioctls = i810_ioctls,
 	.fops = &i810_driver_fops,
@@ -72,30 +71,30 @@
 	.major = DRIVER_MAJOR,
 	.minor = DRIVER_MINOR,
 	.patchlevel = DRIVER_PATCHLEVEL,
-पूर्ण;
+};
 
-अटल काष्ठा pci_driver i810_pci_driver = अणु
+static struct pci_driver i810_pci_driver = {
 	.name = DRIVER_NAME,
 	.id_table = pciidlist,
-पूर्ण;
+};
 
-अटल पूर्णांक __init i810_init(व्योम)
-अणु
-	अगर (num_possible_cpus() > 1) अणु
+static int __init i810_init(void)
+{
+	if (num_possible_cpus() > 1) {
 		pr_err("drm/i810 does not support SMP\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	driver.num_ioctls = i810_max_ioctl;
-	वापस drm_legacy_pci_init(&driver, &i810_pci_driver);
-पूर्ण
+	return drm_legacy_pci_init(&driver, &i810_pci_driver);
+}
 
-अटल व्योम __निकास i810_निकास(व्योम)
-अणु
-	drm_legacy_pci_निकास(&driver, &i810_pci_driver);
-पूर्ण
+static void __exit i810_exit(void)
+{
+	drm_legacy_pci_exit(&driver, &i810_pci_driver);
+}
 
 module_init(i810_init);
-module_निकास(i810_निकास);
+module_exit(i810_exit);
 
 MODULE_AUTHOR(DRIVER_AUTHOR);
 MODULE_DESCRIPTION(DRIVER_DESC);

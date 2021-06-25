@@ -1,26 +1,25 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2021 Facebook */
 
-#समावेश <test_progs.h>
-#समावेश <bpf/libbpf.h>
-#समावेश <bpf/btf.h>
-#समावेश "test_ksyms_module.skel.h"
+#include <test_progs.h>
+#include <bpf/libbpf.h>
+#include <bpf/btf.h>
+#include "test_ksyms_module.skel.h"
 
-अटल पूर्णांक duration;
+static int duration;
 
-व्योम test_ksyms_module(व्योम)
-अणु
-	काष्ठा test_ksyms_module* skel;
-	पूर्णांक err;
+void test_ksyms_module(void)
+{
+	struct test_ksyms_module* skel;
+	int err;
 
-	skel = test_ksyms_module__खोलो_and_load();
-	अगर (CHECK(!skel, "skel_open", "failed to open skeleton\n"))
-		वापस;
+	skel = test_ksyms_module__open_and_load();
+	if (CHECK(!skel, "skel_open", "failed to open skeleton\n"))
+		return;
 
 	err = test_ksyms_module__attach(skel);
-	अगर (CHECK(err, "skel_attach", "skeleton attach failed: %d\n", err))
-		जाओ cleanup;
+	if (CHECK(err, "skel_attach", "skeleton attach failed: %d\n", err))
+		goto cleanup;
 
 	usleep(1);
 
@@ -29,4 +28,4 @@
 
 cleanup:
 	test_ksyms_module__destroy(skel);
-पूर्ण
+}

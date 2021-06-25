@@ -1,146 +1,145 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* Atlantic Network Driver
  *
  * Copyright (C) 2014-2019 aQuantia Corporation
  * Copyright (C) 2019-2020 Marvell International Ltd.
  */
 
-/* File aq_ring.c: Definition of functions क्रम Rx/Tx rings. */
+/* File aq_ring.c: Definition of functions for Rx/Tx rings. */
 
-#समावेश "aq_ring.h"
-#समावेश "aq_nic.h"
-#समावेश "aq_hw.h"
-#समावेश "aq_hw_utils.h"
-#समावेश "aq_ptp.h"
+#include "aq_ring.h"
+#include "aq_nic.h"
+#include "aq_hw.h"
+#include "aq_hw_utils.h"
+#include "aq_ptp.h"
 
-#समावेश <linux/netdevice.h>
-#समावेश <linux/etherdevice.h>
+#include <linux/netdevice.h>
+#include <linux/etherdevice.h>
 
-अटल अंतरभूत व्योम aq_मुक्त_rxpage(काष्ठा aq_rxpage *rxpage, काष्ठा device *dev)
-अणु
-	अचिन्हित पूर्णांक len = PAGE_SIZE << rxpage->order;
+static inline void aq_free_rxpage(struct aq_rxpage *rxpage, struct device *dev)
+{
+	unsigned int len = PAGE_SIZE << rxpage->order;
 
 	dma_unmap_page(dev, rxpage->daddr, len, DMA_FROM_DEVICE);
 
-	/* Drop the ref क्रम being in the ring. */
-	__मुक्त_pages(rxpage->page, rxpage->order);
-	rxpage->page = शून्य;
-पूर्ण
+	/* Drop the ref for being in the ring. */
+	__free_pages(rxpage->page, rxpage->order);
+	rxpage->page = NULL;
+}
 
-अटल पूर्णांक aq_get_rxpage(काष्ठा aq_rxpage *rxpage, अचिन्हित पूर्णांक order,
-			 काष्ठा device *dev)
-अणु
-	काष्ठा page *page;
-	पूर्णांक ret = -ENOMEM;
+static int aq_get_rxpage(struct aq_rxpage *rxpage, unsigned int order,
+			 struct device *dev)
+{
+	struct page *page;
+	int ret = -ENOMEM;
 	dma_addr_t daddr;
 
 	page = dev_alloc_pages(order);
-	अगर (unlikely(!page))
-		जाओ err_निकास;
+	if (unlikely(!page))
+		goto err_exit;
 
 	daddr = dma_map_page(dev, page, 0, PAGE_SIZE << order,
 			     DMA_FROM_DEVICE);
 
-	अगर (unlikely(dma_mapping_error(dev, daddr)))
-		जाओ मुक्त_page;
+	if (unlikely(dma_mapping_error(dev, daddr)))
+		goto free_page;
 
 	rxpage->page = page;
 	rxpage->daddr = daddr;
 	rxpage->order = order;
 	rxpage->pg_off = 0;
 
-	वापस 0;
+	return 0;
 
-मुक्त_page:
-	__मुक्त_pages(page, order);
+free_page:
+	__free_pages(page, order);
 
-err_निकास:
-	वापस ret;
-पूर्ण
+err_exit:
+	return ret;
+}
 
-अटल पूर्णांक aq_get_rxpages(काष्ठा aq_ring_s *self, काष्ठा aq_ring_buff_s *rxbuf,
-			  पूर्णांक order)
-अणु
-	पूर्णांक ret;
+static int aq_get_rxpages(struct aq_ring_s *self, struct aq_ring_buff_s *rxbuf,
+			  int order)
+{
+	int ret;
 
-	अगर (rxbuf->rxdata.page) अणु
+	if (rxbuf->rxdata.page) {
 		/* One means ring is the only user and can reuse */
-		अगर (page_ref_count(rxbuf->rxdata.page) > 1) अणु
+		if (page_ref_count(rxbuf->rxdata.page) > 1) {
 			/* Try reuse buffer */
 			rxbuf->rxdata.pg_off += AQ_CFG_RX_FRAME_MAX;
-			अगर (rxbuf->rxdata.pg_off + AQ_CFG_RX_FRAME_MAX <=
-				(PAGE_SIZE << order)) अणु
+			if (rxbuf->rxdata.pg_off + AQ_CFG_RX_FRAME_MAX <=
+				(PAGE_SIZE << order)) {
 				u64_stats_update_begin(&self->stats.rx.syncp);
 				self->stats.rx.pg_flips++;
 				u64_stats_update_end(&self->stats.rx.syncp);
-			पूर्ण अन्यथा अणु
+			} else {
 				/* Buffer exhausted. We have other users and
-				 * should release this page and पुनः_स्मृति
+				 * should release this page and realloc
 				 */
-				aq_मुक्त_rxpage(&rxbuf->rxdata,
+				aq_free_rxpage(&rxbuf->rxdata,
 					       aq_nic_get_dev(self->aq_nic));
 				u64_stats_update_begin(&self->stats.rx.syncp);
 				self->stats.rx.pg_losts++;
 				u64_stats_update_end(&self->stats.rx.syncp);
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			rxbuf->rxdata.pg_off = 0;
 			u64_stats_update_begin(&self->stats.rx.syncp);
 			self->stats.rx.pg_reuses++;
 			u64_stats_update_end(&self->stats.rx.syncp);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!rxbuf->rxdata.page) अणु
+	if (!rxbuf->rxdata.page) {
 		ret = aq_get_rxpage(&rxbuf->rxdata, order,
 				    aq_nic_get_dev(self->aq_nic));
-		अगर (ret) अणु
+		if (ret) {
 			u64_stats_update_begin(&self->stats.rx.syncp);
 			self->stats.rx.alloc_fails++;
 			u64_stats_update_end(&self->stats.rx.syncp);
-		पूर्ण
-		वापस ret;
-	पूर्ण
+		}
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा aq_ring_s *aq_ring_alloc(काष्ठा aq_ring_s *self,
-				       काष्ठा aq_nic_s *aq_nic)
-अणु
-	पूर्णांक err = 0;
+static struct aq_ring_s *aq_ring_alloc(struct aq_ring_s *self,
+				       struct aq_nic_s *aq_nic)
+{
+	int err = 0;
 
 	self->buff_ring =
-		kसुस्मृति(self->size, माप(काष्ठा aq_ring_buff_s), GFP_KERNEL);
+		kcalloc(self->size, sizeof(struct aq_ring_buff_s), GFP_KERNEL);
 
-	अगर (!self->buff_ring) अणु
+	if (!self->buff_ring) {
 		err = -ENOMEM;
-		जाओ err_निकास;
-	पूर्ण
+		goto err_exit;
+	}
 	self->dx_ring = dma_alloc_coherent(aq_nic_get_dev(aq_nic),
 					   self->size * self->dx_size,
 					   &self->dx_ring_pa, GFP_KERNEL);
-	अगर (!self->dx_ring) अणु
+	if (!self->dx_ring) {
 		err = -ENOMEM;
-		जाओ err_निकास;
-	पूर्ण
+		goto err_exit;
+	}
 
-err_निकास:
-	अगर (err < 0) अणु
-		aq_ring_मुक्त(self);
-		self = शून्य;
-	पूर्ण
+err_exit:
+	if (err < 0) {
+		aq_ring_free(self);
+		self = NULL;
+	}
 
-	वापस self;
-पूर्ण
+	return self;
+}
 
-काष्ठा aq_ring_s *aq_ring_tx_alloc(काष्ठा aq_ring_s *self,
-				   काष्ठा aq_nic_s *aq_nic,
-				   अचिन्हित पूर्णांक idx,
-				   काष्ठा aq_nic_cfg_s *aq_nic_cfg)
-अणु
-	पूर्णांक err = 0;
+struct aq_ring_s *aq_ring_tx_alloc(struct aq_ring_s *self,
+				   struct aq_nic_s *aq_nic,
+				   unsigned int idx,
+				   struct aq_nic_cfg_s *aq_nic_cfg)
+{
+	int err = 0;
 
 	self->aq_nic = aq_nic;
 	self->idx = idx;
@@ -148,26 +147,26 @@ err_निकास:
 	self->dx_size = aq_nic_cfg->aq_hw_caps->txd_size;
 
 	self = aq_ring_alloc(self, aq_nic);
-	अगर (!self) अणु
+	if (!self) {
 		err = -ENOMEM;
-		जाओ err_निकास;
-	पूर्ण
+		goto err_exit;
+	}
 
-err_निकास:
-	अगर (err < 0) अणु
-		aq_ring_मुक्त(self);
-		self = शून्य;
-	पूर्ण
+err_exit:
+	if (err < 0) {
+		aq_ring_free(self);
+		self = NULL;
+	}
 
-	वापस self;
-पूर्ण
+	return self;
+}
 
-काष्ठा aq_ring_s *aq_ring_rx_alloc(काष्ठा aq_ring_s *self,
-				   काष्ठा aq_nic_s *aq_nic,
-				   अचिन्हित पूर्णांक idx,
-				   काष्ठा aq_nic_cfg_s *aq_nic_cfg)
-अणु
-	पूर्णांक err = 0;
+struct aq_ring_s *aq_ring_rx_alloc(struct aq_ring_s *self,
+				   struct aq_nic_s *aq_nic,
+				   unsigned int idx,
+				   struct aq_nic_cfg_s *aq_nic_cfg)
+{
+	int err = 0;
 
 	self->aq_nic = aq_nic;
 	self->idx = idx;
@@ -176,32 +175,32 @@ err_निकास:
 	self->page_order = fls(AQ_CFG_RX_FRAME_MAX / PAGE_SIZE +
 			       (AQ_CFG_RX_FRAME_MAX % PAGE_SIZE ? 1 : 0)) - 1;
 
-	अगर (aq_nic_cfg->rxpageorder > self->page_order)
+	if (aq_nic_cfg->rxpageorder > self->page_order)
 		self->page_order = aq_nic_cfg->rxpageorder;
 
 	self = aq_ring_alloc(self, aq_nic);
-	अगर (!self) अणु
+	if (!self) {
 		err = -ENOMEM;
-		जाओ err_निकास;
-	पूर्ण
+		goto err_exit;
+	}
 
-err_निकास:
-	अगर (err < 0) अणु
-		aq_ring_मुक्त(self);
-		self = शून्य;
-	पूर्ण
+err_exit:
+	if (err < 0) {
+		aq_ring_free(self);
+		self = NULL;
+	}
 
-	वापस self;
-पूर्ण
+	return self;
+}
 
-काष्ठा aq_ring_s *
-aq_ring_hwts_rx_alloc(काष्ठा aq_ring_s *self, काष्ठा aq_nic_s *aq_nic,
-		      अचिन्हित पूर्णांक idx, अचिन्हित पूर्णांक size, अचिन्हित पूर्णांक dx_size)
-अणु
-	काष्ठा device *dev = aq_nic_get_dev(aq_nic);
-	माप_प्रकार sz = size * dx_size + AQ_CFG_RXDS_DEF;
+struct aq_ring_s *
+aq_ring_hwts_rx_alloc(struct aq_ring_s *self, struct aq_nic_s *aq_nic,
+		      unsigned int idx, unsigned int size, unsigned int dx_size)
+{
+	struct device *dev = aq_nic_get_dev(aq_nic);
+	size_t sz = size * dx_size + AQ_CFG_RXDS_DEF;
 
-	स_रखो(self, 0, माप(*self));
+	memset(self, 0, sizeof(*self));
 
 	self->aq_nic = aq_nic;
 	self->idx = idx;
@@ -210,162 +209,162 @@ aq_ring_hwts_rx_alloc(काष्ठा aq_ring_s *self, काष्ठा aq_
 
 	self->dx_ring = dma_alloc_coherent(dev, sz, &self->dx_ring_pa,
 					   GFP_KERNEL);
-	अगर (!self->dx_ring) अणु
-		aq_ring_मुक्त(self);
-		वापस शून्य;
-	पूर्ण
+	if (!self->dx_ring) {
+		aq_ring_free(self);
+		return NULL;
+	}
 
-	वापस self;
-पूर्ण
+	return self;
+}
 
-पूर्णांक aq_ring_init(काष्ठा aq_ring_s *self, स्थिर क्रमागत atl_ring_type ring_type)
-अणु
+int aq_ring_init(struct aq_ring_s *self, const enum atl_ring_type ring_type)
+{
 	self->hw_head = 0;
 	self->sw_head = 0;
 	self->sw_tail = 0;
 	self->ring_type = ring_type;
 
-	अगर (self->ring_type == ATL_RING_RX)
+	if (self->ring_type == ATL_RING_RX)
 		u64_stats_init(&self->stats.rx.syncp);
-	अन्यथा
+	else
 		u64_stats_init(&self->stats.tx.syncp);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत bool aq_ring_dx_in_range(अचिन्हित पूर्णांक h, अचिन्हित पूर्णांक i,
-				       अचिन्हित पूर्णांक t)
-अणु
-	वापस (h < t) ? ((h < i) && (i < t)) : ((h < i) || (i < t));
-पूर्ण
+static inline bool aq_ring_dx_in_range(unsigned int h, unsigned int i,
+				       unsigned int t)
+{
+	return (h < t) ? ((h < i) && (i < t)) : ((h < i) || (i < t));
+}
 
-व्योम aq_ring_update_queue_state(काष्ठा aq_ring_s *ring)
-अणु
-	अगर (aq_ring_avail_dx(ring) <= AQ_CFG_SKB_FRAGS_MAX)
+void aq_ring_update_queue_state(struct aq_ring_s *ring)
+{
+	if (aq_ring_avail_dx(ring) <= AQ_CFG_SKB_FRAGS_MAX)
 		aq_ring_queue_stop(ring);
-	अन्यथा अगर (aq_ring_avail_dx(ring) > AQ_CFG_RESTART_DESC_THRES)
+	else if (aq_ring_avail_dx(ring) > AQ_CFG_RESTART_DESC_THRES)
 		aq_ring_queue_wake(ring);
-पूर्ण
+}
 
-व्योम aq_ring_queue_wake(काष्ठा aq_ring_s *ring)
-अणु
-	काष्ठा net_device *ndev = aq_nic_get_ndev(ring->aq_nic);
+void aq_ring_queue_wake(struct aq_ring_s *ring)
+{
+	struct net_device *ndev = aq_nic_get_ndev(ring->aq_nic);
 
-	अगर (__netअगर_subqueue_stopped(ndev,
+	if (__netif_subqueue_stopped(ndev,
 				     AQ_NIC_RING2QMAP(ring->aq_nic,
-						      ring->idx))) अणु
-		netअगर_wake_subqueue(ndev,
+						      ring->idx))) {
+		netif_wake_subqueue(ndev,
 				    AQ_NIC_RING2QMAP(ring->aq_nic, ring->idx));
 		u64_stats_update_begin(&ring->stats.tx.syncp);
 		ring->stats.tx.queue_restarts++;
 		u64_stats_update_end(&ring->stats.tx.syncp);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम aq_ring_queue_stop(काष्ठा aq_ring_s *ring)
-अणु
-	काष्ठा net_device *ndev = aq_nic_get_ndev(ring->aq_nic);
+void aq_ring_queue_stop(struct aq_ring_s *ring)
+{
+	struct net_device *ndev = aq_nic_get_ndev(ring->aq_nic);
 
-	अगर (!__netअगर_subqueue_stopped(ndev,
+	if (!__netif_subqueue_stopped(ndev,
 				      AQ_NIC_RING2QMAP(ring->aq_nic,
 						       ring->idx)))
-		netअगर_stop_subqueue(ndev,
+		netif_stop_subqueue(ndev,
 				    AQ_NIC_RING2QMAP(ring->aq_nic, ring->idx));
-पूर्ण
+}
 
-bool aq_ring_tx_clean(काष्ठा aq_ring_s *self)
-अणु
-	काष्ठा device *dev = aq_nic_get_dev(self->aq_nic);
-	अचिन्हित पूर्णांक budget;
+bool aq_ring_tx_clean(struct aq_ring_s *self)
+{
+	struct device *dev = aq_nic_get_dev(self->aq_nic);
+	unsigned int budget;
 
-	क्रम (budget = AQ_CFG_TX_CLEAN_BUDGET;
-	     budget && self->sw_head != self->hw_head; budget--) अणु
-		काष्ठा aq_ring_buff_s *buff = &self->buff_ring[self->sw_head];
+	for (budget = AQ_CFG_TX_CLEAN_BUDGET;
+	     budget && self->sw_head != self->hw_head; budget--) {
+		struct aq_ring_buff_s *buff = &self->buff_ring[self->sw_head];
 
-		अगर (likely(buff->is_mapped)) अणु
-			अगर (unlikely(buff->is_sop)) अणु
-				अगर (!buff->is_eop &&
+		if (likely(buff->is_mapped)) {
+			if (unlikely(buff->is_sop)) {
+				if (!buff->is_eop &&
 				    buff->eop_index != 0xffffU &&
 				    (!aq_ring_dx_in_range(self->sw_head,
 						buff->eop_index,
 						self->hw_head)))
-					अवरोध;
+					break;
 
 				dma_unmap_single(dev, buff->pa, buff->len,
 						 DMA_TO_DEVICE);
-			पूर्ण अन्यथा अणु
+			} else {
 				dma_unmap_page(dev, buff->pa, buff->len,
 					       DMA_TO_DEVICE);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अगर (unlikely(buff->is_eop)) अणु
+		if (unlikely(buff->is_eop)) {
 			u64_stats_update_begin(&self->stats.tx.syncp);
 			++self->stats.tx.packets;
 			self->stats.tx.bytes += buff->skb->len;
 			u64_stats_update_end(&self->stats.tx.syncp);
 
-			dev_kमुक्त_skb_any(buff->skb);
-		पूर्ण
+			dev_kfree_skb_any(buff->skb);
+		}
 		buff->pa = 0U;
 		buff->eop_index = 0xffffU;
 		self->sw_head = aq_ring_next_dx(self, self->sw_head);
-	पूर्ण
+	}
 
-	वापस !!budget;
-पूर्ण
+	return !!budget;
+}
 
-अटल व्योम aq_rx_checksum(काष्ठा aq_ring_s *self,
-			   काष्ठा aq_ring_buff_s *buff,
-			   काष्ठा sk_buff *skb)
-अणु
-	अगर (!(self->aq_nic->ndev->features & NETIF_F_RXCSUM))
-		वापस;
+static void aq_rx_checksum(struct aq_ring_s *self,
+			   struct aq_ring_buff_s *buff,
+			   struct sk_buff *skb)
+{
+	if (!(self->aq_nic->ndev->features & NETIF_F_RXCSUM))
+		return;
 
-	अगर (unlikely(buff->is_cso_err)) अणु
+	if (unlikely(buff->is_cso_err)) {
 		u64_stats_update_begin(&self->stats.rx.syncp);
 		++self->stats.rx.errors;
 		u64_stats_update_end(&self->stats.rx.syncp);
 		skb->ip_summed = CHECKSUM_NONE;
-		वापस;
-	पूर्ण
-	अगर (buff->is_ip_cso) अणु
+		return;
+	}
+	if (buff->is_ip_cso) {
 		__skb_incr_checksum_unnecessary(skb);
-	पूर्ण अन्यथा अणु
+	} else {
 		skb->ip_summed = CHECKSUM_NONE;
-	पूर्ण
+	}
 
-	अगर (buff->is_udp_cso || buff->is_tcp_cso)
+	if (buff->is_udp_cso || buff->is_tcp_cso)
 		__skb_incr_checksum_unnecessary(skb);
-पूर्ण
+}
 
-#घोषणा AQ_SKB_ALIGN SKB_DATA_ALIGN(माप(काष्ठा skb_shared_info))
-पूर्णांक aq_ring_rx_clean(काष्ठा aq_ring_s *self,
-		     काष्ठा napi_काष्ठा *napi,
-		     पूर्णांक *work_करोne,
-		     पूर्णांक budget)
-अणु
-	काष्ठा net_device *ndev = aq_nic_get_ndev(self->aq_nic);
+#define AQ_SKB_ALIGN SKB_DATA_ALIGN(sizeof(struct skb_shared_info))
+int aq_ring_rx_clean(struct aq_ring_s *self,
+		     struct napi_struct *napi,
+		     int *work_done,
+		     int budget)
+{
+	struct net_device *ndev = aq_nic_get_ndev(self->aq_nic);
 	bool is_rsc_completed = true;
-	पूर्णांक err = 0;
+	int err = 0;
 
-	क्रम (; (self->sw_head != self->hw_head) && budget;
+	for (; (self->sw_head != self->hw_head) && budget;
 		self->sw_head = aq_ring_next_dx(self, self->sw_head),
-		--budget, ++(*work_करोne)) अणु
-		काष्ठा aq_ring_buff_s *buff = &self->buff_ring[self->sw_head];
+		--budget, ++(*work_done)) {
+		struct aq_ring_buff_s *buff = &self->buff_ring[self->sw_head];
 		bool is_ptp_ring = aq_ptp_ring(self->aq_nic, self);
-		काष्ठा aq_ring_buff_s *buff_ = शून्य;
-		काष्ठा sk_buff *skb = शून्य;
-		अचिन्हित पूर्णांक next_ = 0U;
-		अचिन्हित पूर्णांक i = 0U;
+		struct aq_ring_buff_s *buff_ = NULL;
+		struct sk_buff *skb = NULL;
+		unsigned int next_ = 0U;
+		unsigned int i = 0U;
 		u16 hdr_len;
 
-		अगर (buff->is_cleaned)
-			जारी;
+		if (buff->is_cleaned)
+			continue;
 
-		अगर (!buff->is_eop) अणु
+		if (!buff->is_eop) {
 			buff_ = buff;
-			करो अणु
+			do {
 				next_ = buff_->next,
 				buff_ = &self->buff_ring[next_];
 				is_rsc_completed =
@@ -373,86 +372,86 @@ bool aq_ring_tx_clean(काष्ठा aq_ring_s *self)
 							    next_,
 							    self->hw_head);
 
-				अगर (unlikely(!is_rsc_completed))
-					अवरोध;
+				if (unlikely(!is_rsc_completed))
+					break;
 
 				buff->is_error |= buff_->is_error;
 				buff->is_cso_err |= buff_->is_cso_err;
 
-			पूर्ण जबतक (!buff_->is_eop);
+			} while (!buff_->is_eop);
 
-			अगर (!is_rsc_completed) अणु
+			if (!is_rsc_completed) {
 				err = 0;
-				जाओ err_निकास;
-			पूर्ण
-			अगर (buff->is_error ||
-			    (buff->is_lro && buff->is_cso_err)) अणु
+				goto err_exit;
+			}
+			if (buff->is_error ||
+			    (buff->is_lro && buff->is_cso_err)) {
 				buff_ = buff;
-				करो अणु
+				do {
 					next_ = buff_->next,
 					buff_ = &self->buff_ring[next_];
 
 					buff_->is_cleaned = true;
-				पूर्ण जबतक (!buff_->is_eop);
+				} while (!buff_->is_eop);
 
 				u64_stats_update_begin(&self->stats.rx.syncp);
 				++self->stats.rx.errors;
 				u64_stats_update_end(&self->stats.rx.syncp);
-				जारी;
-			पूर्ण
-		पूर्ण
+				continue;
+			}
+		}
 
-		अगर (buff->is_error) अणु
+		if (buff->is_error) {
 			u64_stats_update_begin(&self->stats.rx.syncp);
 			++self->stats.rx.errors;
 			u64_stats_update_end(&self->stats.rx.syncp);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		dma_sync_single_range_क्रम_cpu(aq_nic_get_dev(self->aq_nic),
+		dma_sync_single_range_for_cpu(aq_nic_get_dev(self->aq_nic),
 					      buff->rxdata.daddr,
 					      buff->rxdata.pg_off,
 					      buff->len, DMA_FROM_DEVICE);
 
 		skb = napi_alloc_skb(napi, AQ_CFG_RX_HDR_SIZE);
-		अगर (unlikely(!skb)) अणु
+		if (unlikely(!skb)) {
 			u64_stats_update_begin(&self->stats.rx.syncp);
 			self->stats.rx.skb_alloc_fails++;
 			u64_stats_update_end(&self->stats.rx.syncp);
 			err = -ENOMEM;
-			जाओ err_निकास;
-		पूर्ण
-		अगर (is_ptp_ring)
+			goto err_exit;
+		}
+		if (is_ptp_ring)
 			buff->len -=
 				aq_ptp_extract_ts(self->aq_nic, skb,
 						  aq_buf_vaddr(&buff->rxdata),
 						  buff->len);
 
 		hdr_len = buff->len;
-		अगर (hdr_len > AQ_CFG_RX_HDR_SIZE)
+		if (hdr_len > AQ_CFG_RX_HDR_SIZE)
 			hdr_len = eth_get_headlen(skb->dev,
 						  aq_buf_vaddr(&buff->rxdata),
 						  AQ_CFG_RX_HDR_SIZE);
 
-		स_नकल(__skb_put(skb, hdr_len), aq_buf_vaddr(&buff->rxdata),
-		       ALIGN(hdr_len, माप(दीर्घ)));
+		memcpy(__skb_put(skb, hdr_len), aq_buf_vaddr(&buff->rxdata),
+		       ALIGN(hdr_len, sizeof(long)));
 
-		अगर (buff->len - hdr_len > 0) अणु
+		if (buff->len - hdr_len > 0) {
 			skb_add_rx_frag(skb, 0, buff->rxdata.page,
 					buff->rxdata.pg_off + hdr_len,
 					buff->len - hdr_len,
 					AQ_CFG_RX_FRAME_MAX);
 			page_ref_inc(buff->rxdata.page);
-		पूर्ण
+		}
 
-		अगर (!buff->is_eop) अणु
+		if (!buff->is_eop) {
 			buff_ = buff;
 			i = 1U;
-			करो अणु
+			do {
 				next_ = buff_->next;
 				buff_ = &self->buff_ring[next_];
 
-				dma_sync_single_range_क्रम_cpu(aq_nic_get_dev(self->aq_nic),
+				dma_sync_single_range_for_cpu(aq_nic_get_dev(self->aq_nic),
 							      buff_->rxdata.daddr,
 							      buff_->rxdata.pg_off,
 							      buff_->len,
@@ -470,10 +469,10 @@ bool aq_ring_tx_clean(काष्ठा aq_ring_s *self)
 				buff->is_tcp_cso &= buff_->is_tcp_cso;
 				buff->is_cso_err |= buff_->is_cso_err;
 
-			पूर्ण जबतक (!buff_->is_eop);
-		पूर्ण
+			} while (!buff_->is_eop);
+		}
 
-		अगर (buff->is_vlan)
+		if (buff->is_vlan)
 			__vlan_hwaccel_put_tag(skb, htons(ETH_P_8021Q),
 					       buff->vlan_rx_tag);
 
@@ -496,16 +495,16 @@ bool aq_ring_tx_clean(काष्ठा aq_ring_s *self)
 		u64_stats_update_end(&self->stats.rx.syncp);
 
 		napi_gro_receive(napi, skb);
-	पूर्ण
+	}
 
-err_निकास:
-	वापस err;
-पूर्ण
+err_exit:
+	return err;
+}
 
-व्योम aq_ring_hwts_rx_clean(काष्ठा aq_ring_s *self, काष्ठा aq_nic_s *aq_nic)
-अणु
-#अगर IS_REACHABLE(CONFIG_PTP_1588_CLOCK)
-	जबतक (self->sw_head != self->hw_head) अणु
+void aq_ring_hwts_rx_clean(struct aq_ring_s *self, struct aq_nic_s *aq_nic)
+{
+#if IS_REACHABLE(CONFIG_PTP_1588_CLOCK)
+	while (self->sw_head != self->hw_head) {
 		u64 ns;
 
 		aq_nic->aq_hw_ops->extract_hwts(aq_nic->aq_hw,
@@ -515,74 +514,74 @@ err_निकास:
 		aq_ptp_tx_hwtstamp(aq_nic, ns);
 
 		self->sw_head = aq_ring_next_dx(self, self->sw_head);
-	पूर्ण
-#पूर्ण_अगर
-पूर्ण
+	}
+#endif
+}
 
-पूर्णांक aq_ring_rx_fill(काष्ठा aq_ring_s *self)
-अणु
-	अचिन्हित पूर्णांक page_order = self->page_order;
-	काष्ठा aq_ring_buff_s *buff = शून्य;
-	पूर्णांक err = 0;
-	पूर्णांक i = 0;
+int aq_ring_rx_fill(struct aq_ring_s *self)
+{
+	unsigned int page_order = self->page_order;
+	struct aq_ring_buff_s *buff = NULL;
+	int err = 0;
+	int i = 0;
 
-	अगर (aq_ring_avail_dx(self) < min_t(अचिन्हित पूर्णांक, AQ_CFG_RX_REFILL_THRES,
+	if (aq_ring_avail_dx(self) < min_t(unsigned int, AQ_CFG_RX_REFILL_THRES,
 					   self->size / 2))
-		वापस err;
+		return err;
 
-	क्रम (i = aq_ring_avail_dx(self); i--;
-		self->sw_tail = aq_ring_next_dx(self, self->sw_tail)) अणु
+	for (i = aq_ring_avail_dx(self); i--;
+		self->sw_tail = aq_ring_next_dx(self, self->sw_tail)) {
 		buff = &self->buff_ring[self->sw_tail];
 
 		buff->flags = 0U;
 		buff->len = AQ_CFG_RX_FRAME_MAX;
 
 		err = aq_get_rxpages(self, buff, page_order);
-		अगर (err)
-			जाओ err_निकास;
+		if (err)
+			goto err_exit;
 
 		buff->pa = aq_buf_daddr(&buff->rxdata);
-		buff = शून्य;
-	पूर्ण
+		buff = NULL;
+	}
 
-err_निकास:
-	वापस err;
-पूर्ण
+err_exit:
+	return err;
+}
 
-व्योम aq_ring_rx_deinit(काष्ठा aq_ring_s *self)
-अणु
-	अगर (!self)
-		वापस;
+void aq_ring_rx_deinit(struct aq_ring_s *self)
+{
+	if (!self)
+		return;
 
-	क्रम (; self->sw_head != self->sw_tail;
-		self->sw_head = aq_ring_next_dx(self, self->sw_head)) अणु
-		काष्ठा aq_ring_buff_s *buff = &self->buff_ring[self->sw_head];
+	for (; self->sw_head != self->sw_tail;
+		self->sw_head = aq_ring_next_dx(self, self->sw_head)) {
+		struct aq_ring_buff_s *buff = &self->buff_ring[self->sw_head];
 
-		aq_मुक्त_rxpage(&buff->rxdata, aq_nic_get_dev(self->aq_nic));
-	पूर्ण
-पूर्ण
+		aq_free_rxpage(&buff->rxdata, aq_nic_get_dev(self->aq_nic));
+	}
+}
 
-व्योम aq_ring_मुक्त(काष्ठा aq_ring_s *self)
-अणु
-	अगर (!self)
-		वापस;
+void aq_ring_free(struct aq_ring_s *self)
+{
+	if (!self)
+		return;
 
-	kमुक्त(self->buff_ring);
+	kfree(self->buff_ring);
 
-	अगर (self->dx_ring)
-		dma_मुक्त_coherent(aq_nic_get_dev(self->aq_nic),
+	if (self->dx_ring)
+		dma_free_coherent(aq_nic_get_dev(self->aq_nic),
 				  self->size * self->dx_size, self->dx_ring,
 				  self->dx_ring_pa);
-पूर्ण
+}
 
-अचिन्हित पूर्णांक aq_ring_fill_stats_data(काष्ठा aq_ring_s *self, u64 *data)
-अणु
-	अचिन्हित पूर्णांक count;
-	अचिन्हित पूर्णांक start;
+unsigned int aq_ring_fill_stats_data(struct aq_ring_s *self, u64 *data)
+{
+	unsigned int count;
+	unsigned int start;
 
-	अगर (self->ring_type == ATL_RING_RX) अणु
-		/* This data should mimic aq_ethtool_queue_rx_stat_names काष्ठाure */
-		करो अणु
+	if (self->ring_type == ATL_RING_RX) {
+		/* This data should mimic aq_ethtool_queue_rx_stat_names structure */
+		do {
 			count = 0;
 			start = u64_stats_fetch_begin_irq(&self->stats.rx.syncp);
 			data[count] = self->stats.rx.packets;
@@ -592,16 +591,16 @@ err_निकास:
 			data[++count] = self->stats.rx.alloc_fails;
 			data[++count] = self->stats.rx.skb_alloc_fails;
 			data[++count] = self->stats.rx.polls;
-		पूर्ण जबतक (u64_stats_fetch_retry_irq(&self->stats.rx.syncp, start));
-	पूर्ण अन्यथा अणु
-		/* This data should mimic aq_ethtool_queue_tx_stat_names काष्ठाure */
-		करो अणु
+		} while (u64_stats_fetch_retry_irq(&self->stats.rx.syncp, start));
+	} else {
+		/* This data should mimic aq_ethtool_queue_tx_stat_names structure */
+		do {
 			count = 0;
 			start = u64_stats_fetch_begin_irq(&self->stats.tx.syncp);
 			data[count] = self->stats.tx.packets;
 			data[++count] = self->stats.tx.queue_restarts;
-		पूर्ण जबतक (u64_stats_fetch_retry_irq(&self->stats.tx.syncp, start));
-	पूर्ण
+		} while (u64_stats_fetch_retry_irq(&self->stats.tx.syncp, start));
+	}
 
-	वापस ++count;
-पूर्ण
+	return ++count;
+}

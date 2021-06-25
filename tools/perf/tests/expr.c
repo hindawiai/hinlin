@@ -1,29 +1,28 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश "util/debug.h"
-#समावेश "util/expr.h"
-#समावेश "tests.h"
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <linux/zभाग.स>
+// SPDX-License-Identifier: GPL-2.0
+#include "util/debug.h"
+#include "util/expr.h"
+#include "tests.h"
+#include <stdlib.h>
+#include <string.h>
+#include <linux/zalloc.h>
 
-अटल पूर्णांक test(काष्ठा expr_parse_ctx *ctx, स्थिर अक्षर *e, द्विगुन val2)
-अणु
-	द्विगुन val;
+static int test(struct expr_parse_ctx *ctx, const char *e, double val2)
+{
+	double val;
 
-	अगर (expr__parse(&val, ctx, e, 1))
+	if (expr__parse(&val, ctx, e, 1))
 		TEST_ASSERT_VAL("parse test failed", 0);
 	TEST_ASSERT_VAL("unexpected value", val == val2);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक test__expr(काष्ठा test *t __maybe_unused, पूर्णांक subtest __maybe_unused)
-अणु
-	काष्ठा expr_id_data *val_ptr;
-	स्थिर अक्षर *p;
-	द्विगुन val;
-	पूर्णांक ret;
-	काष्ठा expr_parse_ctx ctx;
+int test__expr(struct test *t __maybe_unused, int subtest __maybe_unused)
+{
+	struct expr_id_data *val_ptr;
+	const char *p;
+	double val;
+	int ret;
+	struct expr_parse_ctx ctx;
 
 	expr__ctx_init(&ctx);
 	expr__add_id_val(&ctx, strdup("FOO"), 1);
@@ -50,8 +49,8 @@
 	ret |= test(&ctx, "2.2 < 1.1", 0);
 	ret |= test(&ctx, "1.1 > 2.2", 0);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	p = "FOO/0";
 	ret = expr__parse(&val, &ctx, p, 1);
@@ -67,23 +66,23 @@
 					 &ctx, 1) == 0);
 	TEST_ASSERT_VAL("find other", hashmap__size(&ctx.ids) == 3);
 	TEST_ASSERT_VAL("find other", hashmap__find(&ctx.ids, "BAR",
-						    (व्योम **)&val_ptr));
+						    (void **)&val_ptr));
 	TEST_ASSERT_VAL("find other", hashmap__find(&ctx.ids, "BAZ",
-						    (व्योम **)&val_ptr));
+						    (void **)&val_ptr));
 	TEST_ASSERT_VAL("find other", hashmap__find(&ctx.ids, "BOZO",
-						    (व्योम **)&val_ptr));
+						    (void **)&val_ptr));
 
 	expr__ctx_clear(&ctx);
 	TEST_ASSERT_VAL("find other",
 			expr__find_other("EVENT1\\,param\\=?@ + EVENT2\\,param\\=?@",
-					 शून्य, &ctx, 3) == 0);
+					 NULL, &ctx, 3) == 0);
 	TEST_ASSERT_VAL("find other", hashmap__size(&ctx.ids) == 2);
 	TEST_ASSERT_VAL("find other", hashmap__find(&ctx.ids, "EVENT1,param=3/",
-						    (व्योम **)&val_ptr));
+						    (void **)&val_ptr));
 	TEST_ASSERT_VAL("find other", hashmap__find(&ctx.ids, "EVENT2,param=3/",
-						    (व्योम **)&val_ptr));
+						    (void **)&val_ptr));
 
 	expr__ctx_clear(&ctx);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

@@ -1,344 +1,343 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * fail_function.c: Function-based error injection
  */
-#समावेश <linux/error-injection.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/fault-inject.h>
-#समावेश <linux/kallsyms.h>
-#समावेश <linux/kprobes.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/uaccess.h>
+#include <linux/error-injection.h>
+#include <linux/debugfs.h>
+#include <linux/fault-inject.h>
+#include <linux/kallsyms.h>
+#include <linux/kprobes.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <linux/slab.h>
+#include <linux/uaccess.h>
 
-अटल पूर्णांक fei_kprobe_handler(काष्ठा kprobe *kp, काष्ठा pt_regs *regs);
+static int fei_kprobe_handler(struct kprobe *kp, struct pt_regs *regs);
 
-अटल व्योम fei_post_handler(काष्ठा kprobe *kp, काष्ठा pt_regs *regs,
-			     अचिन्हित दीर्घ flags)
-अणु
+static void fei_post_handler(struct kprobe *kp, struct pt_regs *regs,
+			     unsigned long flags)
+{
 	/*
 	 * A dummy post handler is required to prohibit optimizing, because
-	 * jump optimization करोes not support execution path overriding.
+	 * jump optimization does not support execution path overriding.
 	 */
-पूर्ण
+}
 
-काष्ठा fei_attr अणु
-	काष्ठा list_head list;
-	काष्ठा kprobe kp;
-	अचिन्हित दीर्घ retval;
-पूर्ण;
-अटल DEFINE_MUTEX(fei_lock);
-अटल LIST_HEAD(fei_attr_list);
-अटल DECLARE_FAULT_ATTR(fei_fault_attr);
-अटल काष्ठा dentry *fei_debugfs_dir;
+struct fei_attr {
+	struct list_head list;
+	struct kprobe kp;
+	unsigned long retval;
+};
+static DEFINE_MUTEX(fei_lock);
+static LIST_HEAD(fei_attr_list);
+static DECLARE_FAULT_ATTR(fei_fault_attr);
+static struct dentry *fei_debugfs_dir;
 
-अटल अचिन्हित दीर्घ adjust_error_retval(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ retv)
-अणु
-	चयन (get_injectable_error_type(addr)) अणु
-	हाल EI_ETYPE_शून्य:
-		वापस 0;
-	हाल EI_ETYPE_ERRNO:
-		अगर (retv < (अचिन्हित दीर्घ)-MAX_ERRNO)
-			वापस (अचिन्हित दीर्घ)-EINVAL;
-		अवरोध;
-	हाल EI_ETYPE_ERRNO_शून्य:
-		अगर (retv != 0 && retv < (अचिन्हित दीर्घ)-MAX_ERRNO)
-			वापस (अचिन्हित दीर्घ)-EINVAL;
-		अवरोध;
-	हाल EI_ETYPE_TRUE:
-		वापस 1;
-	पूर्ण
+static unsigned long adjust_error_retval(unsigned long addr, unsigned long retv)
+{
+	switch (get_injectable_error_type(addr)) {
+	case EI_ETYPE_NULL:
+		return 0;
+	case EI_ETYPE_ERRNO:
+		if (retv < (unsigned long)-MAX_ERRNO)
+			return (unsigned long)-EINVAL;
+		break;
+	case EI_ETYPE_ERRNO_NULL:
+		if (retv != 0 && retv < (unsigned long)-MAX_ERRNO)
+			return (unsigned long)-EINVAL;
+		break;
+	case EI_ETYPE_TRUE:
+		return 1;
+	}
 
-	वापस retv;
-पूर्ण
+	return retv;
+}
 
-अटल काष्ठा fei_attr *fei_attr_new(स्थिर अक्षर *sym, अचिन्हित दीर्घ addr)
-अणु
-	काष्ठा fei_attr *attr;
+static struct fei_attr *fei_attr_new(const char *sym, unsigned long addr)
+{
+	struct fei_attr *attr;
 
-	attr = kzalloc(माप(*attr), GFP_KERNEL);
-	अगर (attr) अणु
+	attr = kzalloc(sizeof(*attr), GFP_KERNEL);
+	if (attr) {
 		attr->kp.symbol_name = kstrdup(sym, GFP_KERNEL);
-		अगर (!attr->kp.symbol_name) अणु
-			kमुक्त(attr);
-			वापस शून्य;
-		पूर्ण
+		if (!attr->kp.symbol_name) {
+			kfree(attr);
+			return NULL;
+		}
 		attr->kp.pre_handler = fei_kprobe_handler;
 		attr->kp.post_handler = fei_post_handler;
 		attr->retval = adjust_error_retval(addr, 0);
 		INIT_LIST_HEAD(&attr->list);
-	पूर्ण
-	वापस attr;
-पूर्ण
+	}
+	return attr;
+}
 
-अटल व्योम fei_attr_मुक्त(काष्ठा fei_attr *attr)
-अणु
-	अगर (attr) अणु
-		kमुक्त(attr->kp.symbol_name);
-		kमुक्त(attr);
-	पूर्ण
-पूर्ण
+static void fei_attr_free(struct fei_attr *attr)
+{
+	if (attr) {
+		kfree(attr->kp.symbol_name);
+		kfree(attr);
+	}
+}
 
-अटल काष्ठा fei_attr *fei_attr_lookup(स्थिर अक्षर *sym)
-अणु
-	काष्ठा fei_attr *attr;
+static struct fei_attr *fei_attr_lookup(const char *sym)
+{
+	struct fei_attr *attr;
 
-	list_क्रम_each_entry(attr, &fei_attr_list, list) अणु
-		अगर (!म_भेद(attr->kp.symbol_name, sym))
-			वापस attr;
-	पूर्ण
+	list_for_each_entry(attr, &fei_attr_list, list) {
+		if (!strcmp(attr->kp.symbol_name, sym))
+			return attr;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल bool fei_attr_is_valid(काष्ठा fei_attr *_attr)
-अणु
-	काष्ठा fei_attr *attr;
+static bool fei_attr_is_valid(struct fei_attr *_attr)
+{
+	struct fei_attr *attr;
 
-	list_क्रम_each_entry(attr, &fei_attr_list, list) अणु
-		अगर (attr == _attr)
-			वापस true;
-	पूर्ण
+	list_for_each_entry(attr, &fei_attr_list, list) {
+		if (attr == _attr)
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल पूर्णांक fei_retval_set(व्योम *data, u64 val)
-अणु
-	काष्ठा fei_attr *attr = data;
-	अचिन्हित दीर्घ retv = (अचिन्हित दीर्घ)val;
-	पूर्णांक err = 0;
+static int fei_retval_set(void *data, u64 val)
+{
+	struct fei_attr *attr = data;
+	unsigned long retv = (unsigned long)val;
+	int err = 0;
 
 	mutex_lock(&fei_lock);
 	/*
-	 * Since this operation can be करोne after retval file is हटाओd,
-	 * It is safer to check the attr is still valid beक्रमe accessing
+	 * Since this operation can be done after retval file is removed,
+	 * It is safer to check the attr is still valid before accessing
 	 * its member.
 	 */
-	अगर (!fei_attr_is_valid(attr)) अणु
+	if (!fei_attr_is_valid(attr)) {
 		err = -ENOENT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (attr->kp.addr) अणु
-		अगर (adjust_error_retval((अचिन्हित दीर्घ)attr->kp.addr,
+	if (attr->kp.addr) {
+		if (adjust_error_retval((unsigned long)attr->kp.addr,
 					val) != retv)
 			err = -EINVAL;
-	पूर्ण
-	अगर (!err)
+	}
+	if (!err)
 		attr->retval = val;
 out:
 	mutex_unlock(&fei_lock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक fei_retval_get(व्योम *data, u64 *val)
-अणु
-	काष्ठा fei_attr *attr = data;
-	पूर्णांक err = 0;
+static int fei_retval_get(void *data, u64 *val)
+{
+	struct fei_attr *attr = data;
+	int err = 0;
 
 	mutex_lock(&fei_lock);
 	/* Here we also validate @attr to ensure it still exists. */
-	अगर (!fei_attr_is_valid(attr))
+	if (!fei_attr_is_valid(attr))
 		err = -ENOENT;
-	अन्यथा
+	else
 		*val = attr->retval;
 	mutex_unlock(&fei_lock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 DEFINE_DEBUGFS_ATTRIBUTE(fei_retval_ops, fei_retval_get, fei_retval_set,
 			 "%llx\n");
 
-अटल व्योम fei_debugfs_add_attr(काष्ठा fei_attr *attr)
-अणु
-	काष्ठा dentry *dir;
+static void fei_debugfs_add_attr(struct fei_attr *attr)
+{
+	struct dentry *dir;
 
 	dir = debugfs_create_dir(attr->kp.symbol_name, fei_debugfs_dir);
 
 	debugfs_create_file("retval", 0600, dir, attr, &fei_retval_ops);
-पूर्ण
+}
 
-अटल व्योम fei_debugfs_हटाओ_attr(काष्ठा fei_attr *attr)
-अणु
-	काष्ठा dentry *dir;
+static void fei_debugfs_remove_attr(struct fei_attr *attr)
+{
+	struct dentry *dir;
 
 	dir = debugfs_lookup(attr->kp.symbol_name, fei_debugfs_dir);
-	debugfs_हटाओ_recursive(dir);
-पूर्ण
+	debugfs_remove_recursive(dir);
+}
 
-अटल पूर्णांक fei_kprobe_handler(काष्ठा kprobe *kp, काष्ठा pt_regs *regs)
-अणु
-	काष्ठा fei_attr *attr = container_of(kp, काष्ठा fei_attr, kp);
+static int fei_kprobe_handler(struct kprobe *kp, struct pt_regs *regs)
+{
+	struct fei_attr *attr = container_of(kp, struct fei_attr, kp);
 
-	अगर (should_fail(&fei_fault_attr, 1)) अणु
-		regs_set_वापस_value(regs, attr->retval);
-		override_function_with_वापस(regs);
-		वापस 1;
-	पूर्ण
+	if (should_fail(&fei_fault_attr, 1)) {
+		regs_set_return_value(regs, attr->retval);
+		override_function_with_return(regs);
+		return 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 NOKPROBE_SYMBOL(fei_kprobe_handler)
 
-अटल व्योम *fei_seq_start(काष्ठा seq_file *m, loff_t *pos)
-अणु
+static void *fei_seq_start(struct seq_file *m, loff_t *pos)
+{
 	mutex_lock(&fei_lock);
-	वापस seq_list_start(&fei_attr_list, *pos);
-पूर्ण
+	return seq_list_start(&fei_attr_list, *pos);
+}
 
-अटल व्योम fei_seq_stop(काष्ठा seq_file *m, व्योम *v)
-अणु
+static void fei_seq_stop(struct seq_file *m, void *v)
+{
 	mutex_unlock(&fei_lock);
-पूर्ण
+}
 
-अटल व्योम *fei_seq_next(काष्ठा seq_file *m, व्योम *v, loff_t *pos)
-अणु
-	वापस seq_list_next(v, &fei_attr_list, pos);
-पूर्ण
+static void *fei_seq_next(struct seq_file *m, void *v, loff_t *pos)
+{
+	return seq_list_next(v, &fei_attr_list, pos);
+}
 
-अटल पूर्णांक fei_seq_show(काष्ठा seq_file *m, व्योम *v)
-अणु
-	काष्ठा fei_attr *attr = list_entry(v, काष्ठा fei_attr, list);
+static int fei_seq_show(struct seq_file *m, void *v)
+{
+	struct fei_attr *attr = list_entry(v, struct fei_attr, list);
 
-	seq_म_लिखो(m, "%ps\n", attr->kp.addr);
-	वापस 0;
-पूर्ण
+	seq_printf(m, "%ps\n", attr->kp.addr);
+	return 0;
+}
 
-अटल स्थिर काष्ठा seq_operations fei_seq_ops = अणु
+static const struct seq_operations fei_seq_ops = {
 	.start	= fei_seq_start,
 	.next	= fei_seq_next,
 	.stop	= fei_seq_stop,
 	.show	= fei_seq_show,
-पूर्ण;
+};
 
-अटल पूर्णांक fei_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस seq_खोलो(file, &fei_seq_ops);
-पूर्ण
+static int fei_open(struct inode *inode, struct file *file)
+{
+	return seq_open(file, &fei_seq_ops);
+}
 
-अटल व्योम fei_attr_हटाओ(काष्ठा fei_attr *attr)
-अणु
-	fei_debugfs_हटाओ_attr(attr);
-	unरेजिस्टर_kprobe(&attr->kp);
+static void fei_attr_remove(struct fei_attr *attr)
+{
+	fei_debugfs_remove_attr(attr);
+	unregister_kprobe(&attr->kp);
 	list_del(&attr->list);
-	fei_attr_मुक्त(attr);
-पूर्ण
+	fei_attr_free(attr);
+}
 
-अटल व्योम fei_attr_हटाओ_all(व्योम)
-अणु
-	काष्ठा fei_attr *attr, *n;
+static void fei_attr_remove_all(void)
+{
+	struct fei_attr *attr, *n;
 
-	list_क्रम_each_entry_safe(attr, n, &fei_attr_list, list) अणु
-		fei_attr_हटाओ(attr);
-	पूर्ण
-पूर्ण
+	list_for_each_entry_safe(attr, n, &fei_attr_list, list) {
+		fei_attr_remove(attr);
+	}
+}
 
-अटल sमाप_प्रकार fei_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buffer,
-			 माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा fei_attr *attr;
-	अचिन्हित दीर्घ addr;
-	अक्षर *buf, *sym;
-	पूर्णांक ret;
+static ssize_t fei_write(struct file *file, const char __user *buffer,
+			 size_t count, loff_t *ppos)
+{
+	struct fei_attr *attr;
+	unsigned long addr;
+	char *buf, *sym;
+	int ret;
 
-	/* cut off अगर it is too दीर्घ */
-	अगर (count > KSYM_NAME_LEN)
+	/* cut off if it is too long */
+	if (count > KSYM_NAME_LEN)
 		count = KSYM_NAME_LEN;
-	buf = kदो_स्मृति(count + 1, GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	buf = kmalloc(count + 1, GFP_KERNEL);
+	if (!buf)
+		return -ENOMEM;
 
-	अगर (copy_from_user(buf, buffer, count)) अणु
+	if (copy_from_user(buf, buffer, count)) {
 		ret = -EFAULT;
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 	buf[count] = '\0';
-	sym = म_मालाip(buf);
+	sym = strstrip(buf);
 
 	mutex_lock(&fei_lock);
 
-	/* Writing just spaces will हटाओ all injection poपूर्णांकs */
-	अगर (sym[0] == '\0') अणु
-		fei_attr_हटाओ_all();
+	/* Writing just spaces will remove all injection points */
+	if (sym[0] == '\0') {
+		fei_attr_remove_all();
 		ret = count;
-		जाओ out;
-	पूर्ण
-	/* Writing !function will हटाओ one injection poपूर्णांक */
-	अगर (sym[0] == '!') अणु
+		goto out;
+	}
+	/* Writing !function will remove one injection point */
+	if (sym[0] == '!') {
 		attr = fei_attr_lookup(sym + 1);
-		अगर (!attr) अणु
+		if (!attr) {
 			ret = -ENOENT;
-			जाओ out;
-		पूर्ण
-		fei_attr_हटाओ(attr);
+			goto out;
+		}
+		fei_attr_remove(attr);
 		ret = count;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	addr = kallsyms_lookup_name(sym);
-	अगर (!addr) अणु
+	if (!addr) {
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
-	अगर (!within_error_injection_list(addr)) अणु
-		ret = -दुस्फल;
-		जाओ out;
-	पूर्ण
-	अगर (fei_attr_lookup(sym)) अणु
+		goto out;
+	}
+	if (!within_error_injection_list(addr)) {
+		ret = -ERANGE;
+		goto out;
+	}
+	if (fei_attr_lookup(sym)) {
 		ret = -EBUSY;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	attr = fei_attr_new(sym, addr);
-	अगर (!attr) अणु
+	if (!attr) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	ret = रेजिस्टर_kprobe(&attr->kp);
-	अगर (!ret)
+	ret = register_kprobe(&attr->kp);
+	if (!ret)
 		fei_debugfs_add_attr(attr);
-	अगर (ret < 0)
-		fei_attr_हटाओ(attr);
-	अन्यथा अणु
+	if (ret < 0)
+		fei_attr_remove(attr);
+	else {
 		list_add_tail(&attr->list, &fei_attr_list);
 		ret = count;
-	पूर्ण
+	}
 out:
 	mutex_unlock(&fei_lock);
-out_मुक्त:
-	kमुक्त(buf);
-	वापस ret;
-पूर्ण
+out_free:
+	kfree(buf);
+	return ret;
+}
 
-अटल स्थिर काष्ठा file_operations fei_ops = अणु
-	.खोलो =		fei_खोलो,
-	.पढ़ो =		seq_पढ़ो,
-	.ग_लिखो =	fei_ग_लिखो,
+static const struct file_operations fei_ops = {
+	.open =		fei_open,
+	.read =		seq_read,
+	.write =	fei_write,
 	.llseek =	seq_lseek,
 	.release =	seq_release,
-पूर्ण;
+};
 
-अटल पूर्णांक __init fei_debugfs_init(व्योम)
-अणु
-	काष्ठा dentry *dir;
+static int __init fei_debugfs_init(void)
+{
+	struct dentry *dir;
 
-	dir = fault_create_debugfs_attr("fail_function", शून्य,
+	dir = fault_create_debugfs_attr("fail_function", NULL,
 					&fei_fault_attr);
-	अगर (IS_ERR(dir))
-		वापस PTR_ERR(dir);
+	if (IS_ERR(dir))
+		return PTR_ERR(dir);
 
 	/* injectable attribute is just a symlink of error_inject/list */
 	debugfs_create_symlink("injectable", dir, "../error_injection/list");
 
-	debugfs_create_file("inject", 0600, dir, शून्य, &fei_ops);
+	debugfs_create_file("inject", 0600, dir, NULL, &fei_ops);
 
 	fei_debugfs_dir = dir;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 late_initcall(fei_debugfs_init);

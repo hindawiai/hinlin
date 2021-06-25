@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Abilis Systems TB10x pin control driver
  *
@@ -8,36 +7,36 @@
  * Author: Christian Ruppert <christian.ruppert@abilis.com>
  */
 
-#समावेश <linux/stringअगरy.h>
-#समावेश <linux/pinctrl/pinctrl.h>
-#समावेश <linux/pinctrl/pinmux.h>
-#समावेश <linux/pinctrl/machine.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/err.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of.h>
-#समावेश <linux/slab.h>
+#include <linux/stringify.h>
+#include <linux/pinctrl/pinctrl.h>
+#include <linux/pinctrl/pinmux.h>
+#include <linux/pinctrl/machine.h>
+#include <linux/platform_device.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <linux/err.h>
+#include <linux/io.h>
+#include <linux/of.h>
+#include <linux/slab.h>
 
-#समावेश "pinctrl-utils.h"
+#include "pinctrl-utils.h"
 
-#घोषणा TB10X_PORT1 (0)
-#घोषणा TB10X_PORT2 (16)
-#घोषणा TB10X_PORT3 (32)
-#घोषणा TB10X_PORT4 (48)
-#घोषणा TB10X_PORT5 (128)
-#घोषणा TB10X_PORT6 (64)
-#घोषणा TB10X_PORT7 (80)
-#घोषणा TB10X_PORT8 (96)
-#घोषणा TB10X_PORT9 (112)
-#घोषणा TB10X_GPIOS (256)
+#define TB10X_PORT1 (0)
+#define TB10X_PORT2 (16)
+#define TB10X_PORT3 (32)
+#define TB10X_PORT4 (48)
+#define TB10X_PORT5 (128)
+#define TB10X_PORT6 (64)
+#define TB10X_PORT7 (80)
+#define TB10X_PORT8 (96)
+#define TB10X_PORT9 (112)
+#define TB10X_GPIOS (256)
 
-#घोषणा PCFG_PORT_BITWIDTH (2)
-#घोषणा PCFG_PORT_MASK(PORT) \
+#define PCFG_PORT_BITWIDTH (2)
+#define PCFG_PORT_MASK(PORT) \
 	(((1 << PCFG_PORT_BITWIDTH) - 1) << (PCFG_PORT_BITWIDTH * (PORT)))
 
-अटल स्थिर काष्ठा pinctrl_pin_desc tb10x_pins[] = अणु
+static const struct pinctrl_pin_desc tb10x_pins[] = {
 	/* Port 1 */
 	PINCTRL_PIN(TB10X_PORT1 +  0, "MICLK_S0"),
 	PINCTRL_PIN(TB10X_PORT1 +  1, "MISTRT_S0"),
@@ -202,107 +201,107 @@
 	PINCTRL_PIN(TB10X_GPIOS + 21, "GPION1"),
 	PINCTRL_PIN(TB10X_GPIOS + 22, "GPION2"),
 	PINCTRL_PIN(TB10X_GPIOS + 23, "GPION3"),
-#घोषणा MAX_PIN (TB10X_GPIOS + 24)
+#define MAX_PIN (TB10X_GPIOS + 24)
 	PINCTRL_PIN(MAX_PIN,  "GPION4"),
-पूर्ण;
+};
 
 
 /* Port 1 */
-अटल स्थिर अचिन्हित mis0_pins[]  = अणु	TB10X_PORT1 + 0, TB10X_PORT1 + 1,
-					TB10X_PORT1 + 2, TB10X_PORT1 + 3पूर्ण;
-अटल स्थिर अचिन्हित gpioa_pins[] = अणु	TB10X_PORT1 + 4, TB10X_PORT1 + 5,
-					TB10X_PORT1 + 6पूर्ण;
-अटल स्थिर अचिन्हित mis1_pins[]  = अणु	TB10X_PORT1 + 7, TB10X_PORT1 + 8,
-					TB10X_PORT1 + 9, TB10X_PORT1 + 10पूर्ण;
-अटल स्थिर अचिन्हित mip1_pins[]  = अणु	TB10X_PORT1 + 0, TB10X_PORT1 + 1,
+static const unsigned mis0_pins[]  = {	TB10X_PORT1 + 0, TB10X_PORT1 + 1,
+					TB10X_PORT1 + 2, TB10X_PORT1 + 3};
+static const unsigned gpioa_pins[] = {	TB10X_PORT1 + 4, TB10X_PORT1 + 5,
+					TB10X_PORT1 + 6};
+static const unsigned mis1_pins[]  = {	TB10X_PORT1 + 7, TB10X_PORT1 + 8,
+					TB10X_PORT1 + 9, TB10X_PORT1 + 10};
+static const unsigned mip1_pins[]  = {	TB10X_PORT1 + 0, TB10X_PORT1 + 1,
 					TB10X_PORT1 + 2, TB10X_PORT1 + 3,
 					TB10X_PORT1 + 4, TB10X_PORT1 + 5,
 					TB10X_PORT1 + 6, TB10X_PORT1 + 7,
 					TB10X_PORT1 + 8, TB10X_PORT1 + 9,
-					TB10X_PORT1 + 10पूर्ण;
+					TB10X_PORT1 + 10};
 
 /* Port 2 */
-अटल स्थिर अचिन्हित mis2_pins[]  = अणु	TB10X_PORT2 + 0, TB10X_PORT2 + 1,
-					TB10X_PORT2 + 2, TB10X_PORT2 + 3पूर्ण;
-अटल स्थिर अचिन्हित gpioc_pins[] = अणु	TB10X_PORT2 + 4, TB10X_PORT2 + 5,
-					TB10X_PORT2 + 6पूर्ण;
-अटल स्थिर अचिन्हित mis3_pins[]  = अणु	TB10X_PORT2 + 7, TB10X_PORT2 + 8,
-					TB10X_PORT2 + 9, TB10X_PORT2 + 10पूर्ण;
-अटल स्थिर अचिन्हित mip3_pins[]  = अणु	TB10X_PORT2 + 0, TB10X_PORT2 + 1,
+static const unsigned mis2_pins[]  = {	TB10X_PORT2 + 0, TB10X_PORT2 + 1,
+					TB10X_PORT2 + 2, TB10X_PORT2 + 3};
+static const unsigned gpioc_pins[] = {	TB10X_PORT2 + 4, TB10X_PORT2 + 5,
+					TB10X_PORT2 + 6};
+static const unsigned mis3_pins[]  = {	TB10X_PORT2 + 7, TB10X_PORT2 + 8,
+					TB10X_PORT2 + 9, TB10X_PORT2 + 10};
+static const unsigned mip3_pins[]  = {	TB10X_PORT2 + 0, TB10X_PORT2 + 1,
 					TB10X_PORT2 + 2, TB10X_PORT2 + 3,
 					TB10X_PORT2 + 4, TB10X_PORT2 + 5,
 					TB10X_PORT2 + 6, TB10X_PORT2 + 7,
 					TB10X_PORT2 + 8, TB10X_PORT2 + 9,
-					TB10X_PORT2 + 10पूर्ण;
+					TB10X_PORT2 + 10};
 
 /* Port 3 */
-अटल स्थिर अचिन्हित mis4_pins[]  = अणु	TB10X_PORT3 + 0, TB10X_PORT3 + 1,
-					TB10X_PORT3 + 2, TB10X_PORT3 + 3पूर्ण;
-अटल स्थिर अचिन्हित gpioe_pins[] = अणु	TB10X_PORT3 + 4, TB10X_PORT3 + 5,
-					TB10X_PORT3 + 6पूर्ण;
-अटल स्थिर अचिन्हित mis5_pins[]  = अणु	TB10X_PORT3 + 7, TB10X_PORT3 + 8,
-					TB10X_PORT3 + 9, TB10X_PORT3 + 10पूर्ण;
-अटल स्थिर अचिन्हित mip5_pins[]  = अणु	TB10X_PORT3 + 0, TB10X_PORT3 + 1,
+static const unsigned mis4_pins[]  = {	TB10X_PORT3 + 0, TB10X_PORT3 + 1,
+					TB10X_PORT3 + 2, TB10X_PORT3 + 3};
+static const unsigned gpioe_pins[] = {	TB10X_PORT3 + 4, TB10X_PORT3 + 5,
+					TB10X_PORT3 + 6};
+static const unsigned mis5_pins[]  = {	TB10X_PORT3 + 7, TB10X_PORT3 + 8,
+					TB10X_PORT3 + 9, TB10X_PORT3 + 10};
+static const unsigned mip5_pins[]  = {	TB10X_PORT3 + 0, TB10X_PORT3 + 1,
 					TB10X_PORT3 + 2, TB10X_PORT3 + 3,
 					TB10X_PORT3 + 4, TB10X_PORT3 + 5,
 					TB10X_PORT3 + 6, TB10X_PORT3 + 7,
 					TB10X_PORT3 + 8, TB10X_PORT3 + 9,
-					TB10X_PORT3 + 10पूर्ण;
+					TB10X_PORT3 + 10};
 
 /* Port 4 */
-अटल स्थिर अचिन्हित mis6_pins[]  = अणु	TB10X_PORT4 + 0, TB10X_PORT4 + 1,
-					TB10X_PORT4 + 2, TB10X_PORT4 + 3पूर्ण;
-अटल स्थिर अचिन्हित gpiog_pins[] = अणु	TB10X_PORT4 + 4, TB10X_PORT4 + 5,
-					TB10X_PORT4 + 6पूर्ण;
-अटल स्थिर अचिन्हित mis7_pins[]  = अणु	TB10X_PORT4 + 7, TB10X_PORT4 + 8,
-					TB10X_PORT4 + 9, TB10X_PORT4 + 10पूर्ण;
-अटल स्थिर अचिन्हित mip7_pins[]  = अणु	TB10X_PORT4 + 0, TB10X_PORT4 + 1,
+static const unsigned mis6_pins[]  = {	TB10X_PORT4 + 0, TB10X_PORT4 + 1,
+					TB10X_PORT4 + 2, TB10X_PORT4 + 3};
+static const unsigned gpiog_pins[] = {	TB10X_PORT4 + 4, TB10X_PORT4 + 5,
+					TB10X_PORT4 + 6};
+static const unsigned mis7_pins[]  = {	TB10X_PORT4 + 7, TB10X_PORT4 + 8,
+					TB10X_PORT4 + 9, TB10X_PORT4 + 10};
+static const unsigned mip7_pins[]  = {	TB10X_PORT4 + 0, TB10X_PORT4 + 1,
 					TB10X_PORT4 + 2, TB10X_PORT4 + 3,
 					TB10X_PORT4 + 4, TB10X_PORT4 + 5,
 					TB10X_PORT4 + 6, TB10X_PORT4 + 7,
 					TB10X_PORT4 + 8, TB10X_PORT4 + 9,
-					TB10X_PORT4 + 10पूर्ण;
+					TB10X_PORT4 + 10};
 
 /* Port 6 */
-अटल स्थिर अचिन्हित mop_pins[] = अणु	TB10X_PORT6 + 0, TB10X_PORT6 + 1,
+static const unsigned mop_pins[] = {	TB10X_PORT6 + 0, TB10X_PORT6 + 1,
 					TB10X_PORT6 + 2, TB10X_PORT6 + 3,
 					TB10X_PORT6 + 4, TB10X_PORT6 + 5,
 					TB10X_PORT6 + 6, TB10X_PORT6 + 7,
-					TB10X_PORT6 + 8, TB10X_PORT6 + 9पूर्ण;
-अटल स्थिर अचिन्हित mos0_pins[] = अणु	TB10X_PORT6 + 0, TB10X_PORT6 + 1,
-					TB10X_PORT6 + 2पूर्ण;
-अटल स्थिर अचिन्हित mos1_pins[] = अणु	TB10X_PORT6 + 3, TB10X_PORT6 + 4,
-					TB10X_PORT6 + 5पूर्ण;
-अटल स्थिर अचिन्हित mos2_pins[] = अणु	TB10X_PORT6 + 6, TB10X_PORT6 + 7,
-					TB10X_PORT6 + 8पूर्ण;
-अटल स्थिर अचिन्हित mos3_pins[] = अणु	TB10X_PORT6 + 9पूर्ण;
+					TB10X_PORT6 + 8, TB10X_PORT6 + 9};
+static const unsigned mos0_pins[] = {	TB10X_PORT6 + 0, TB10X_PORT6 + 1,
+					TB10X_PORT6 + 2};
+static const unsigned mos1_pins[] = {	TB10X_PORT6 + 3, TB10X_PORT6 + 4,
+					TB10X_PORT6 + 5};
+static const unsigned mos2_pins[] = {	TB10X_PORT6 + 6, TB10X_PORT6 + 7,
+					TB10X_PORT6 + 8};
+static const unsigned mos3_pins[] = {	TB10X_PORT6 + 9};
 
 /* Port 7 */
-अटल स्थिर अचिन्हित uart0_pins[] = अणु	TB10X_PORT7 + 0, TB10X_PORT7 + 1,
-					TB10X_PORT7 + 2, TB10X_PORT7 + 3पूर्ण;
-अटल स्थिर अचिन्हित uart1_pins[] = अणु	TB10X_PORT7 + 4, TB10X_PORT7 + 5,
-					TB10X_PORT7 + 6, TB10X_PORT7 + 7पूर्ण;
-अटल स्थिर अचिन्हित gpiol_pins[] = अणु	TB10X_PORT7 + 0, TB10X_PORT7 + 1,
-					TB10X_PORT7 + 2, TB10X_PORT7 + 3पूर्ण;
-अटल स्थिर अचिन्हित gpiom_pins[] = अणु	TB10X_PORT7 + 4, TB10X_PORT7 + 5,
-					TB10X_PORT7 + 6, TB10X_PORT7 + 7पूर्ण;
+static const unsigned uart0_pins[] = {	TB10X_PORT7 + 0, TB10X_PORT7 + 1,
+					TB10X_PORT7 + 2, TB10X_PORT7 + 3};
+static const unsigned uart1_pins[] = {	TB10X_PORT7 + 4, TB10X_PORT7 + 5,
+					TB10X_PORT7 + 6, TB10X_PORT7 + 7};
+static const unsigned gpiol_pins[] = {	TB10X_PORT7 + 0, TB10X_PORT7 + 1,
+					TB10X_PORT7 + 2, TB10X_PORT7 + 3};
+static const unsigned gpiom_pins[] = {	TB10X_PORT7 + 4, TB10X_PORT7 + 5,
+					TB10X_PORT7 + 6, TB10X_PORT7 + 7};
 
 /* Port 8 */
-अटल स्थिर अचिन्हित spi3_pins[] = अणु	TB10X_PORT8 + 0, TB10X_PORT8 + 1,
-					TB10X_PORT8 + 2, TB10X_PORT8 + 3पूर्ण;
-अटल स्थिर अचिन्हित jtag_pins[] = अणु	TB10X_PORT8 + 0, TB10X_PORT8 + 1,
-					TB10X_PORT8 + 2, TB10X_PORT8 + 3पूर्ण;
+static const unsigned spi3_pins[] = {	TB10X_PORT8 + 0, TB10X_PORT8 + 1,
+					TB10X_PORT8 + 2, TB10X_PORT8 + 3};
+static const unsigned jtag_pins[] = {	TB10X_PORT8 + 0, TB10X_PORT8 + 1,
+					TB10X_PORT8 + 2, TB10X_PORT8 + 3};
 
 /* Port 9 */
-अटल स्थिर अचिन्हित spi1_pins[] = अणु	TB10X_PORT9 + 0, TB10X_PORT9 + 1,
+static const unsigned spi1_pins[] = {	TB10X_PORT9 + 0, TB10X_PORT9 + 1,
 					TB10X_PORT9 + 2, TB10X_PORT9 + 3,
-					TB10X_PORT9 + 4पूर्ण;
-अटल स्थिर अचिन्हित gpion_pins[] = अणु	TB10X_PORT9 + 0, TB10X_PORT9 + 1,
+					TB10X_PORT9 + 4};
+static const unsigned gpion_pins[] = {	TB10X_PORT9 + 0, TB10X_PORT9 + 1,
 					TB10X_PORT9 + 2, TB10X_PORT9 + 3,
-					TB10X_PORT9 + 4पूर्ण;
+					TB10X_PORT9 + 4};
 
 /* Port 5 */
-अटल स्थिर अचिन्हित gpioj_pins[] = अणु	TB10X_PORT5 + 0, TB10X_PORT5 + 1,
+static const unsigned gpioj_pins[] = {	TB10X_PORT5 + 0, TB10X_PORT5 + 1,
 					TB10X_PORT5 + 2, TB10X_PORT5 + 3,
 					TB10X_PORT5 + 4, TB10X_PORT5 + 5,
 					TB10X_PORT5 + 6, TB10X_PORT5 + 7,
@@ -317,8 +316,8 @@
 					TB10X_PORT5 + 24, TB10X_PORT5 + 25,
 					TB10X_PORT5 + 26, TB10X_PORT5 + 27,
 					TB10X_PORT5 + 28, TB10X_PORT5 + 29,
-					TB10X_PORT5 + 30, TB10X_PORT5 + 31पूर्ण;
-अटल स्थिर अचिन्हित gpiok_pins[] = अणु	TB10X_PORT5 + 32, TB10X_PORT5 + 33,
+					TB10X_PORT5 + 30, TB10X_PORT5 + 31};
+static const unsigned gpiok_pins[] = {	TB10X_PORT5 + 32, TB10X_PORT5 + 33,
 					TB10X_PORT5 + 34, TB10X_PORT5 + 35,
 					TB10X_PORT5 + 36, TB10X_PORT5 + 37,
 					TB10X_PORT5 + 38, TB10X_PORT5 + 39,
@@ -328,8 +327,8 @@
 					TB10X_PORT5 + 46, TB10X_PORT5 + 47,
 					TB10X_PORT5 + 48, TB10X_PORT5 + 49,
 					TB10X_PORT5 + 50, TB10X_PORT5 + 51,
-					TB10X_PORT5 + 52, TB10X_PORT5 + 53पूर्ण;
-अटल स्थिर अचिन्हित ciplus_pins[] = अणु	TB10X_PORT5 + 0, TB10X_PORT5 + 1,
+					TB10X_PORT5 + 52, TB10X_PORT5 + 53};
+static const unsigned ciplus_pins[] = {	TB10X_PORT5 + 0, TB10X_PORT5 + 1,
 					TB10X_PORT5 + 2, TB10X_PORT5 + 3,
 					TB10X_PORT5 + 4, TB10X_PORT5 + 5,
 					TB10X_PORT5 + 6, TB10X_PORT5 + 7,
@@ -355,8 +354,8 @@
 					TB10X_PORT5 + 46, TB10X_PORT5 + 47,
 					TB10X_PORT5 + 48, TB10X_PORT5 + 49,
 					TB10X_PORT5 + 50, TB10X_PORT5 + 51,
-					TB10X_PORT5 + 52, TB10X_PORT5 + 53पूर्ण;
-अटल स्थिर अचिन्हित mcard_pins[] = अणु	TB10X_PORT5 + 3, TB10X_PORT5 + 10,
+					TB10X_PORT5 + 52, TB10X_PORT5 + 53};
+static const unsigned mcard_pins[] = {	TB10X_PORT5 + 3, TB10X_PORT5 + 10,
 					TB10X_PORT5 + 11, TB10X_PORT5 + 12,
 					TB10X_PORT5 + 22, TB10X_PORT5 + 23,
 					TB10X_PORT5 + 33, TB10X_PORT5 + 35,
@@ -368,43 +367,43 @@
 					TB10X_PORT5 + 47, TB10X_PORT5 + 48,
 					TB10X_PORT5 + 49, TB10X_PORT5 + 50,
 					TB10X_PORT5 + 51, TB10X_PORT5 + 52,
-					TB10X_PORT5 + 53पूर्ण;
-अटल स्थिर अचिन्हित stc0_pins[] = अणु	TB10X_PORT5 + 34, TB10X_PORT5 + 35,
+					TB10X_PORT5 + 53};
+static const unsigned stc0_pins[] = {	TB10X_PORT5 + 34, TB10X_PORT5 + 35,
 					TB10X_PORT5 + 36, TB10X_PORT5 + 37,
 					TB10X_PORT5 + 38, TB10X_PORT5 + 39,
-					TB10X_PORT5 + 40पूर्ण;
-अटल स्थिर अचिन्हित stc1_pins[] = अणु	TB10X_PORT5 + 25, TB10X_PORT5 + 26,
+					TB10X_PORT5 + 40};
+static const unsigned stc1_pins[] = {	TB10X_PORT5 + 25, TB10X_PORT5 + 26,
 					TB10X_PORT5 + 27, TB10X_PORT5 + 28,
 					TB10X_PORT5 + 29, TB10X_PORT5 + 30,
-					TB10X_PORT5 + 44पूर्ण;
+					TB10X_PORT5 + 44};
 
 /* Unmuxed GPIOs */
-अटल स्थिर अचिन्हित gpiob_pins[] = अणु	TB10X_GPIOS + 0, TB10X_GPIOS + 1पूर्ण;
-अटल स्थिर अचिन्हित gpiod_pins[] = अणु	TB10X_GPIOS + 2, TB10X_GPIOS + 3पूर्ण;
-अटल स्थिर अचिन्हित gpiof_pins[] = अणु	TB10X_GPIOS + 4, TB10X_GPIOS + 5पूर्ण;
-अटल स्थिर अचिन्हित gpioh_pins[] = अणु	TB10X_GPIOS + 6, TB10X_GPIOS + 7पूर्ण;
-अटल स्थिर अचिन्हित gpioi_pins[] = अणु	TB10X_GPIOS + 8, TB10X_GPIOS + 9,
+static const unsigned gpiob_pins[] = {	TB10X_GPIOS + 0, TB10X_GPIOS + 1};
+static const unsigned gpiod_pins[] = {	TB10X_GPIOS + 2, TB10X_GPIOS + 3};
+static const unsigned gpiof_pins[] = {	TB10X_GPIOS + 4, TB10X_GPIOS + 5};
+static const unsigned gpioh_pins[] = {	TB10X_GPIOS + 6, TB10X_GPIOS + 7};
+static const unsigned gpioi_pins[] = {	TB10X_GPIOS + 8, TB10X_GPIOS + 9,
 					TB10X_GPIOS + 10, TB10X_GPIOS + 11,
 					TB10X_GPIOS + 12, TB10X_GPIOS + 13,
 					TB10X_GPIOS + 14, TB10X_GPIOS + 15,
 					TB10X_GPIOS + 16, TB10X_GPIOS + 17,
-					TB10X_GPIOS + 18, TB10X_GPIOS + 19पूर्ण;
+					TB10X_GPIOS + 18, TB10X_GPIOS + 19};
 
-काष्ठा tb10x_pinfuncgrp अणु
-	स्थिर अक्षर *name;
-	स्थिर अचिन्हित पूर्णांक *pins;
-	स्थिर अचिन्हित पूर्णांक pincnt;
-	स्थिर पूर्णांक port;
-	स्थिर अचिन्हित पूर्णांक mode;
-	स्थिर पूर्णांक isgpio;
-पूर्ण;
-#घोषणा DEFPINFUNCGRP(NAME, PORT, MODE, ISGPIO) अणु \
-		.name = __stringअगरy(NAME), \
+struct tb10x_pinfuncgrp {
+	const char *name;
+	const unsigned int *pins;
+	const unsigned int pincnt;
+	const int port;
+	const unsigned int mode;
+	const int isgpio;
+};
+#define DEFPINFUNCGRP(NAME, PORT, MODE, ISGPIO) { \
+		.name = __stringify(NAME), \
 		.pins = NAME##_pins, .pincnt = ARRAY_SIZE(NAME##_pins), \
 		.port = (PORT), .mode = (MODE), \
 		.isgpio = (ISGPIO), \
-	पूर्ण
-अटल स्थिर काष्ठा tb10x_pinfuncgrp tb10x_pingroups[] = अणु
+	}
+static const struct tb10x_pinfuncgrp tb10x_pingroups[] = {
 	DEFPINFUNCGRP(mis0,   0, 0, 0),
 	DEFPINFUNCGRP(gpioa,  0, 0, 1),
 	DEFPINFUNCGRP(mis1,   0, 0, 0),
@@ -445,278 +444,278 @@
 	DEFPINFUNCGRP(gpiof, -1, 0, 1),
 	DEFPINFUNCGRP(gpioh, -1, 0, 1),
 	DEFPINFUNCGRP(gpioi, -1, 0, 1),
-पूर्ण;
-#अघोषित DEFPINFUNCGRP
+};
+#undef DEFPINFUNCGRP
 
-काष्ठा tb10x_of_pinfunc अणु
-	स्थिर अक्षर *name;
-	स्थिर अक्षर *group;
-पूर्ण;
+struct tb10x_of_pinfunc {
+	const char *name;
+	const char *group;
+};
 
-#घोषणा TB10X_PORTS (9)
+#define TB10X_PORTS (9)
 
 /**
- * काष्ठा tb10x_port - state of an I/O port
+ * struct tb10x_port - state of an I/O port
  * @mode: Node this port is currently in.
  * @count: Number of enabled functions which require this port to be
  *         configured in @mode.
  */
-काष्ठा tb10x_port अणु
-	अचिन्हित पूर्णांक mode;
-	अचिन्हित पूर्णांक count;
-पूर्ण;
+struct tb10x_port {
+	unsigned int mode;
+	unsigned int count;
+};
 
 /**
- * काष्ठा tb10x_pinctrl - TB10x pin controller पूर्णांकernal state
- * @pctl: poपूर्णांकer to the pinctrl_dev काष्ठाure of this pin controller.
- * @base: रेजिस्टर set base address.
- * @pingroups: poपूर्णांकer to an array of the pin groups this driver manages.
+ * struct tb10x_pinctrl - TB10x pin controller internal state
+ * @pctl: pointer to the pinctrl_dev structure of this pin controller.
+ * @base: register set base address.
+ * @pingroups: pointer to an array of the pin groups this driver manages.
  * @pinfuncgrpcnt: number of pingroups in @pingroups.
  * @pinfuncnt: number of pin functions in @pinfuncs.
- * @mutex: mutex क्रम exclusive access to a pin controller's state.
+ * @mutex: mutex for exclusive access to a pin controller's state.
  * @ports: current state of each port.
- * @gpios: Indicates अगर a given pin is currently used as GPIO (1) or not (0).
+ * @gpios: Indicates if a given pin is currently used as GPIO (1) or not (0).
  * @pinfuncs: flexible array of pin functions this driver manages.
  */
-काष्ठा tb10x_pinctrl अणु
-	काष्ठा pinctrl_dev *pctl;
-	व्योम *base;
-	स्थिर काष्ठा tb10x_pinfuncgrp *pingroups;
-	अचिन्हित पूर्णांक pinfuncgrpcnt;
-	अचिन्हित पूर्णांक pinfuncnt;
-	काष्ठा mutex mutex;
-	काष्ठा tb10x_port ports[TB10X_PORTS];
+struct tb10x_pinctrl {
+	struct pinctrl_dev *pctl;
+	void *base;
+	const struct tb10x_pinfuncgrp *pingroups;
+	unsigned int pinfuncgrpcnt;
+	unsigned int pinfuncnt;
+	struct mutex mutex;
+	struct tb10x_port ports[TB10X_PORTS];
 	DECLARE_BITMAP(gpios, MAX_PIN + 1);
-	काष्ठा tb10x_of_pinfunc pinfuncs[];
-पूर्ण;
+	struct tb10x_of_pinfunc pinfuncs[];
+};
 
-अटल अंतरभूत व्योम tb10x_pinctrl_set_config(काष्ठा tb10x_pinctrl *state,
-				अचिन्हित पूर्णांक port, अचिन्हित पूर्णांक mode)
-अणु
+static inline void tb10x_pinctrl_set_config(struct tb10x_pinctrl *state,
+				unsigned int port, unsigned int mode)
+{
 	u32 pcfg;
 
-	अगर (state->ports[port].count)
-		वापस;
+	if (state->ports[port].count)
+		return;
 
 	state->ports[port].mode = mode;
 
-	pcfg = ioपढ़ो32(state->base) & ~(PCFG_PORT_MASK(port));
+	pcfg = ioread32(state->base) & ~(PCFG_PORT_MASK(port));
 	pcfg |= (mode << (PCFG_PORT_BITWIDTH * port)) & PCFG_PORT_MASK(port);
-	ioग_लिखो32(pcfg, state->base);
-पूर्ण
+	iowrite32(pcfg, state->base);
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक tb10x_pinctrl_get_config(
-				काष्ठा tb10x_pinctrl *state,
-				अचिन्हित पूर्णांक port)
-अणु
-	वापस (ioपढ़ो32(state->base) & PCFG_PORT_MASK(port))
+static inline unsigned int tb10x_pinctrl_get_config(
+				struct tb10x_pinctrl *state,
+				unsigned int port)
+{
+	return (ioread32(state->base) & PCFG_PORT_MASK(port))
 		>> (PCFG_PORT_BITWIDTH * port);
-पूर्ण
+}
 
-अटल पूर्णांक tb10x_get_groups_count(काष्ठा pinctrl_dev *pctl)
-अणु
-	काष्ठा tb10x_pinctrl *state = pinctrl_dev_get_drvdata(pctl);
-	वापस state->pinfuncgrpcnt;
-पूर्ण
+static int tb10x_get_groups_count(struct pinctrl_dev *pctl)
+{
+	struct tb10x_pinctrl *state = pinctrl_dev_get_drvdata(pctl);
+	return state->pinfuncgrpcnt;
+}
 
-अटल स्थिर अक्षर *tb10x_get_group_name(काष्ठा pinctrl_dev *pctl, अचिन्हित n)
-अणु
-	काष्ठा tb10x_pinctrl *state = pinctrl_dev_get_drvdata(pctl);
-	वापस state->pingroups[n].name;
-पूर्ण
+static const char *tb10x_get_group_name(struct pinctrl_dev *pctl, unsigned n)
+{
+	struct tb10x_pinctrl *state = pinctrl_dev_get_drvdata(pctl);
+	return state->pingroups[n].name;
+}
 
-अटल पूर्णांक tb10x_get_group_pins(काष्ठा pinctrl_dev *pctl, अचिन्हित n,
-				अचिन्हित स्थिर **pins,
-				अचिन्हित * स्थिर num_pins)
-अणु
-	काष्ठा tb10x_pinctrl *state = pinctrl_dev_get_drvdata(pctl);
+static int tb10x_get_group_pins(struct pinctrl_dev *pctl, unsigned n,
+				unsigned const **pins,
+				unsigned * const num_pins)
+{
+	struct tb10x_pinctrl *state = pinctrl_dev_get_drvdata(pctl);
 
 	*pins = state->pingroups[n].pins;
 	*num_pins = state->pingroups[n].pincnt;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tb10x_dt_node_to_map(काष्ठा pinctrl_dev *pctl,
-				काष्ठा device_node *np_config,
-				काष्ठा pinctrl_map **map, अचिन्हित *num_maps)
-अणु
-	स्थिर अक्षर *string;
-	अचिन्हित reserved_maps = 0;
-	पूर्णांक ret = 0;
+static int tb10x_dt_node_to_map(struct pinctrl_dev *pctl,
+				struct device_node *np_config,
+				struct pinctrl_map **map, unsigned *num_maps)
+{
+	const char *string;
+	unsigned reserved_maps = 0;
+	int ret = 0;
 
-	अगर (of_property_पढ़ो_string(np_config, "abilis,function", &string)) अणु
+	if (of_property_read_string(np_config, "abilis,function", &string)) {
 		pr_err("%pOF: No abilis,function property in device tree.\n",
 			np_config);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	*map = शून्य;
+	*map = NULL;
 	*num_maps = 0;
 
 	ret = pinctrl_utils_reserve_map(pctl, map, &reserved_maps,
 					num_maps, 1);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	ret = pinctrl_utils_add_map_mux(pctl, map, &reserved_maps,
 					num_maps, string, np_config->name);
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा pinctrl_ops tb10x_pinctrl_ops = अणु
+static const struct pinctrl_ops tb10x_pinctrl_ops = {
 	.get_groups_count = tb10x_get_groups_count,
 	.get_group_name   = tb10x_get_group_name,
 	.get_group_pins   = tb10x_get_group_pins,
 	.dt_node_to_map   = tb10x_dt_node_to_map,
-	.dt_मुक्त_map      = pinctrl_utils_मुक्त_map,
-पूर्ण;
+	.dt_free_map      = pinctrl_utils_free_map,
+};
 
-अटल पूर्णांक tb10x_get_functions_count(काष्ठा pinctrl_dev *pctl)
-अणु
-	काष्ठा tb10x_pinctrl *state = pinctrl_dev_get_drvdata(pctl);
-	वापस state->pinfuncnt;
-पूर्ण
+static int tb10x_get_functions_count(struct pinctrl_dev *pctl)
+{
+	struct tb10x_pinctrl *state = pinctrl_dev_get_drvdata(pctl);
+	return state->pinfuncnt;
+}
 
-अटल स्थिर अक्षर *tb10x_get_function_name(काष्ठा pinctrl_dev *pctl,
-					अचिन्हित n)
-अणु
-	काष्ठा tb10x_pinctrl *state = pinctrl_dev_get_drvdata(pctl);
-	वापस state->pinfuncs[n].name;
-पूर्ण
+static const char *tb10x_get_function_name(struct pinctrl_dev *pctl,
+					unsigned n)
+{
+	struct tb10x_pinctrl *state = pinctrl_dev_get_drvdata(pctl);
+	return state->pinfuncs[n].name;
+}
 
-अटल पूर्णांक tb10x_get_function_groups(काष्ठा pinctrl_dev *pctl,
-				अचिन्हित n, स्थिर अक्षर * स्थिर **groups,
-				अचिन्हित * स्थिर num_groups)
-अणु
-	काष्ठा tb10x_pinctrl *state = pinctrl_dev_get_drvdata(pctl);
+static int tb10x_get_function_groups(struct pinctrl_dev *pctl,
+				unsigned n, const char * const **groups,
+				unsigned * const num_groups)
+{
+	struct tb10x_pinctrl *state = pinctrl_dev_get_drvdata(pctl);
 
 	*groups = &state->pinfuncs[n].group;
 	*num_groups = 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tb10x_gpio_request_enable(काष्ठा pinctrl_dev *pctl,
-					काष्ठा pinctrl_gpio_range *range,
-					अचिन्हित pin)
-अणु
-	काष्ठा tb10x_pinctrl *state = pinctrl_dev_get_drvdata(pctl);
-	पूर्णांक muxport = -1;
-	पूर्णांक muxmode = -1;
-	पूर्णांक i;
+static int tb10x_gpio_request_enable(struct pinctrl_dev *pctl,
+					struct pinctrl_gpio_range *range,
+					unsigned pin)
+{
+	struct tb10x_pinctrl *state = pinctrl_dev_get_drvdata(pctl);
+	int muxport = -1;
+	int muxmode = -1;
+	int i;
 
 	mutex_lock(&state->mutex);
 
 	/*
-	 * Figure out to which port the requested GPIO beदीर्घs and how to
+	 * Figure out to which port the requested GPIO belongs and how to
 	 * configure that port.
-	 * This loop also checks क्रम pin conflicts between GPIOs and other
+	 * This loop also checks for pin conflicts between GPIOs and other
 	 * functions.
 	 */
-	क्रम (i = 0; i < state->pinfuncgrpcnt; i++) अणु
-		स्थिर काष्ठा tb10x_pinfuncgrp *pfg = &state->pingroups[i];
-		अचिन्हित पूर्णांक mode = pfg->mode;
-		पूर्णांक j, port = pfg->port;
+	for (i = 0; i < state->pinfuncgrpcnt; i++) {
+		const struct tb10x_pinfuncgrp *pfg = &state->pingroups[i];
+		unsigned int mode = pfg->mode;
+		int j, port = pfg->port;
 
 		/*
-		 * Skip pin groups which are always mapped and करोn't need
+		 * Skip pin groups which are always mapped and don't need
 		 * to be configured.
 		 */
-		अगर (port < 0)
-			जारी;
+		if (port < 0)
+			continue;
 
-		क्रम (j = 0; j < pfg->pincnt; j++) अणु
-			अगर (pin == pfg->pins[j]) अणु
-				अगर (pfg->isgpio) अणु
+		for (j = 0; j < pfg->pincnt; j++) {
+			if (pin == pfg->pins[j]) {
+				if (pfg->isgpio) {
 					/*
 					 * Remember the GPIO-only setting of
-					 * the port this pin beदीर्घs to.
+					 * the port this pin belongs to.
 					 */
 					muxport = port;
 					muxmode = mode;
-				पूर्ण अन्यथा अगर (state->ports[port].count
-					&& (state->ports[port].mode == mode)) अणु
+				} else if (state->ports[port].count
+					&& (state->ports[port].mode == mode)) {
 					/*
-					 * Error: The requested pin is alपढ़ोy
-					 * used क्रम something अन्यथा.
+					 * Error: The requested pin is already
+					 * used for something else.
 					 */
 					mutex_unlock(&state->mutex);
-					वापस -EBUSY;
-				पूर्ण
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+					return -EBUSY;
+				}
+				break;
+			}
+		}
+	}
 
 	/*
-	 * If we haven't वापसed an error at this poपूर्णांक, the GPIO pin is not
+	 * If we haven't returned an error at this point, the GPIO pin is not
 	 * used by another function and the GPIO request can be granted:
-	 * Register pin as being used as GPIO so we करोn't allocate it to
+	 * Register pin as being used as GPIO so we don't allocate it to
 	 * another function later.
 	 */
 	set_bit(pin, state->gpios);
 
 	/*
 	 * Potential conflicts between GPIOs and pin functions were caught
-	 * earlier in this function and tb10x_pinctrl_set_config will करो the
+	 * earlier in this function and tb10x_pinctrl_set_config will do the
 	 * Right Thing, either configure the port in GPIO only mode or leave
 	 * another mode compatible with this GPIO request untouched.
 	 */
-	अगर (muxport >= 0)
+	if (muxport >= 0)
 		tb10x_pinctrl_set_config(state, muxport, muxmode);
 
 	mutex_unlock(&state->mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tb10x_gpio_disable_मुक्त(काष्ठा pinctrl_dev *pctl,
-					काष्ठा pinctrl_gpio_range *range,
-					अचिन्हित pin)
-अणु
-	काष्ठा tb10x_pinctrl *state = pinctrl_dev_get_drvdata(pctl);
+static void tb10x_gpio_disable_free(struct pinctrl_dev *pctl,
+					struct pinctrl_gpio_range *range,
+					unsigned pin)
+{
+	struct tb10x_pinctrl *state = pinctrl_dev_get_drvdata(pctl);
 
 	mutex_lock(&state->mutex);
 
 	clear_bit(pin, state->gpios);
 
 	mutex_unlock(&state->mutex);
-पूर्ण
+}
 
-अटल पूर्णांक tb10x_pctl_set_mux(काष्ठा pinctrl_dev *pctl,
-			अचिन्हित func_selector, अचिन्हित group_selector)
-अणु
-	काष्ठा tb10x_pinctrl *state = pinctrl_dev_get_drvdata(pctl);
-	स्थिर काष्ठा tb10x_pinfuncgrp *grp = &state->pingroups[group_selector];
-	पूर्णांक i;
+static int tb10x_pctl_set_mux(struct pinctrl_dev *pctl,
+			unsigned func_selector, unsigned group_selector)
+{
+	struct tb10x_pinctrl *state = pinctrl_dev_get_drvdata(pctl);
+	const struct tb10x_pinfuncgrp *grp = &state->pingroups[group_selector];
+	int i;
 
-	अगर (grp->port < 0)
-		वापस 0;
+	if (grp->port < 0)
+		return 0;
 
 	mutex_lock(&state->mutex);
 
 	/*
-	 * Check अगर the requested function is compatible with previously
+	 * Check if the requested function is compatible with previously
 	 * requested functions.
 	 */
-	अगर (state->ports[grp->port].count
-			&& (state->ports[grp->port].mode != grp->mode)) अणु
+	if (state->ports[grp->port].count
+			&& (state->ports[grp->port].mode != grp->mode)) {
 		mutex_unlock(&state->mutex);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	/*
-	 * Check अगर the requested function is compatible with previously
+	 * Check if the requested function is compatible with previously
 	 * requested GPIOs.
 	 */
-	क्रम (i = 0; i < grp->pincnt; i++)
-		अगर (test_bit(grp->pins[i], state->gpios)) अणु
+	for (i = 0; i < grp->pincnt; i++)
+		if (test_bit(grp->pins[i], state->gpios)) {
 			mutex_unlock(&state->mutex);
-			वापस -EBUSY;
-		पूर्ण
+			return -EBUSY;
+		}
 
 	tb10x_pinctrl_set_config(state, grp->port, grp->mode);
 
@@ -724,113 +723,113 @@ out:
 
 	mutex_unlock(&state->mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा pinmux_ops tb10x_pinmux_ops = अणु
+static const struct pinmux_ops tb10x_pinmux_ops = {
 	.get_functions_count = tb10x_get_functions_count,
 	.get_function_name = tb10x_get_function_name,
 	.get_function_groups = tb10x_get_function_groups,
 	.gpio_request_enable = tb10x_gpio_request_enable,
-	.gpio_disable_मुक्त = tb10x_gpio_disable_मुक्त,
+	.gpio_disable_free = tb10x_gpio_disable_free,
 	.set_mux = tb10x_pctl_set_mux,
-पूर्ण;
+};
 
-अटल काष्ठा pinctrl_desc tb10x_pindesc = अणु
+static struct pinctrl_desc tb10x_pindesc = {
 	.name = "TB10x",
 	.pins = tb10x_pins,
 	.npins = ARRAY_SIZE(tb10x_pins),
 	.owner = THIS_MODULE,
 	.pctlops = &tb10x_pinctrl_ops,
 	.pmxops  = &tb10x_pinmux_ops,
-पूर्ण;
+};
 
-अटल पूर्णांक tb10x_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक ret = -EINVAL;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा device_node *of_node = dev->of_node;
-	काष्ठा device_node *child;
-	काष्ठा tb10x_pinctrl *state;
-	पूर्णांक i;
+static int tb10x_pinctrl_probe(struct platform_device *pdev)
+{
+	int ret = -EINVAL;
+	struct device *dev = &pdev->dev;
+	struct device_node *of_node = dev->of_node;
+	struct device_node *child;
+	struct tb10x_pinctrl *state;
+	int i;
 
-	अगर (!of_node) अणु
+	if (!of_node) {
 		dev_err(dev, "No device tree node found.\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	state = devm_kzalloc(dev, काष्ठा_size(state, pinfuncs,
+	state = devm_kzalloc(dev, struct_size(state, pinfuncs,
 					      of_get_child_count(of_node)),
 			     GFP_KERNEL);
-	अगर (!state)
-		वापस -ENOMEM;
+	if (!state)
+		return -ENOMEM;
 
-	platक्रमm_set_drvdata(pdev, state);
+	platform_set_drvdata(pdev, state);
 	mutex_init(&state->mutex);
 
-	state->base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(state->base)) अणु
+	state->base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(state->base)) {
 		ret = PTR_ERR(state->base);
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	state->pingroups = tb10x_pingroups;
 	state->pinfuncgrpcnt = ARRAY_SIZE(tb10x_pingroups);
 
-	क्रम (i = 0; i < TB10X_PORTS; i++)
+	for (i = 0; i < TB10X_PORTS; i++)
 		state->ports[i].mode = tb10x_pinctrl_get_config(state, i);
 
-	क्रम_each_child_of_node(of_node, child) अणु
-		स्थिर अक्षर *name;
+	for_each_child_of_node(of_node, child) {
+		const char *name;
 
-		अगर (!of_property_पढ़ो_string(child, "abilis,function",
-						&name)) अणु
+		if (!of_property_read_string(child, "abilis,function",
+						&name)) {
 			state->pinfuncs[state->pinfuncnt].name = child->name;
 			state->pinfuncs[state->pinfuncnt].group = name;
 			state->pinfuncnt++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	state->pctl = devm_pinctrl_रेजिस्टर(dev, &tb10x_pindesc, state);
-	अगर (IS_ERR(state->pctl)) अणु
+	state->pctl = devm_pinctrl_register(dev, &tb10x_pindesc, state);
+	if (IS_ERR(state->pctl)) {
 		dev_err(dev, "could not register TB10x pin driver\n");
 		ret = PTR_ERR(state->pctl);
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	वापस 0;
+	return 0;
 
 fail:
 	mutex_destroy(&state->mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक tb10x_pinctrl_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा tb10x_pinctrl *state = platक्रमm_get_drvdata(pdev);
+static int tb10x_pinctrl_remove(struct platform_device *pdev)
+{
+	struct tb10x_pinctrl *state = platform_get_drvdata(pdev);
 
 	mutex_destroy(&state->mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल स्थिर काष्ठा of_device_id tb10x_pinctrl_dt_ids[] = अणु
-	अणु .compatible = "abilis,tb10x-iomux" पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id tb10x_pinctrl_dt_ids[] = {
+	{ .compatible = "abilis,tb10x-iomux" },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, tb10x_pinctrl_dt_ids);
 
-अटल काष्ठा platक्रमm_driver tb10x_pinctrl_pdrv = अणु
+static struct platform_driver tb10x_pinctrl_pdrv = {
 	.probe   = tb10x_pinctrl_probe,
-	.हटाओ  = tb10x_pinctrl_हटाओ,
-	.driver  = अणु
+	.remove  = tb10x_pinctrl_remove,
+	.driver  = {
 		.name  = "tb10x_pinctrl",
 		.of_match_table = of_match_ptr(tb10x_pinctrl_dt_ids),
-	पूर्ण
-पूर्ण;
+	}
+};
 
-module_platक्रमm_driver(tb10x_pinctrl_pdrv);
+module_platform_driver(tb10x_pinctrl_pdrv);
 
 MODULE_AUTHOR("Christian Ruppert <christian.ruppert@abilis.com>");
 MODULE_LICENSE("GPL");

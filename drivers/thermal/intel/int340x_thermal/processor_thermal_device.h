@@ -1,83 +1,82 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * processor_thermal_device.h
  * Copyright (c) 2020, Intel Corporation.
  */
 
-#अगर_अघोषित __PROCESSOR_THERMAL_DEVICE_H__
-#घोषणा __PROCESSOR_THERMAL_DEVICE_H__
+#ifndef __PROCESSOR_THERMAL_DEVICE_H__
+#define __PROCESSOR_THERMAL_DEVICE_H__
 
-#समावेश <linux/पूर्णांकel_rapl.h>
+#include <linux/intel_rapl.h>
 
-#घोषणा PCI_DEVICE_ID_INTEL_ADL_THERMAL	0x461d
-#घोषणा PCI_DEVICE_ID_INTEL_BDW_THERMAL	0x1603
-#घोषणा PCI_DEVICE_ID_INTEL_BSW_THERMAL	0x22DC
+#define PCI_DEVICE_ID_INTEL_ADL_THERMAL	0x461d
+#define PCI_DEVICE_ID_INTEL_BDW_THERMAL	0x1603
+#define PCI_DEVICE_ID_INTEL_BSW_THERMAL	0x22DC
 
-#घोषणा PCI_DEVICE_ID_INTEL_BXT0_THERMAL	0x0A8C
-#घोषणा PCI_DEVICE_ID_INTEL_BXT1_THERMAL	0x1A8C
-#घोषणा PCI_DEVICE_ID_INTEL_BXTX_THERMAL	0x4A8C
-#घोषणा PCI_DEVICE_ID_INTEL_BXTP_THERMAL	0x5A8C
+#define PCI_DEVICE_ID_INTEL_BXT0_THERMAL	0x0A8C
+#define PCI_DEVICE_ID_INTEL_BXT1_THERMAL	0x1A8C
+#define PCI_DEVICE_ID_INTEL_BXTX_THERMAL	0x4A8C
+#define PCI_DEVICE_ID_INTEL_BXTP_THERMAL	0x5A8C
 
-#घोषणा PCI_DEVICE_ID_INTEL_CNL_THERMAL	0x5a03
-#घोषणा PCI_DEVICE_ID_INTEL_CFL_THERMAL	0x3E83
-#घोषणा PCI_DEVICE_ID_INTEL_GLK_THERMAL	0x318C
-#घोषणा PCI_DEVICE_ID_INTEL_HSB_THERMAL	0x0A03
-#घोषणा PCI_DEVICE_ID_INTEL_ICL_THERMAL	0x8a03
-#घोषणा PCI_DEVICE_ID_INTEL_JSL_THERMAL	0x4E03
-#घोषणा PCI_DEVICE_ID_INTEL_SKL_THERMAL	0x1903
-#घोषणा PCI_DEVICE_ID_INTEL_TGL_THERMAL	0x9A03
+#define PCI_DEVICE_ID_INTEL_CNL_THERMAL	0x5a03
+#define PCI_DEVICE_ID_INTEL_CFL_THERMAL	0x3E83
+#define PCI_DEVICE_ID_INTEL_GLK_THERMAL	0x318C
+#define PCI_DEVICE_ID_INTEL_HSB_THERMAL	0x0A03
+#define PCI_DEVICE_ID_INTEL_ICL_THERMAL	0x8a03
+#define PCI_DEVICE_ID_INTEL_JSL_THERMAL	0x4E03
+#define PCI_DEVICE_ID_INTEL_SKL_THERMAL	0x1903
+#define PCI_DEVICE_ID_INTEL_TGL_THERMAL	0x9A03
 
-काष्ठा घातer_config अणु
+struct power_config {
 	u32	index;
 	u32	min_uw;
 	u32	max_uw;
-	u32	पंचांगin_us;
-	u32	पंचांगax_us;
+	u32	tmin_us;
+	u32	tmax_us;
 	u32	step_uw;
-पूर्ण;
+};
 
-काष्ठा proc_thermal_device अणु
-	काष्ठा device *dev;
-	काष्ठा acpi_device *adev;
-	काष्ठा घातer_config घातer_limits[2];
-	काष्ठा पूर्णांक34x_thermal_zone *पूर्णांक340x_zone;
-	काष्ठा पूर्णांकel_soc_dts_sensors *soc_dts;
+struct proc_thermal_device {
+	struct device *dev;
+	struct acpi_device *adev;
+	struct power_config power_limits[2];
+	struct int34x_thermal_zone *int340x_zone;
+	struct intel_soc_dts_sensors *soc_dts;
 	u32 mmio_feature_mask;
-	व्योम __iomem *mmio_base;
-पूर्ण;
+	void __iomem *mmio_base;
+};
 
-काष्ठा rapl_mmio_regs अणु
+struct rapl_mmio_regs {
 	u64 reg_unit;
 	u64 regs[RAPL_DOMAIN_MAX][RAPL_DOMAIN_REG_MAX];
-	पूर्णांक limits[RAPL_DOMAIN_MAX];
-पूर्ण;
+	int limits[RAPL_DOMAIN_MAX];
+};
 
-#घोषणा PROC_THERMAL_FEATURE_NONE	0x00
-#घोषणा PROC_THERMAL_FEATURE_RAPL	0x01
-#घोषणा PROC_THERMAL_FEATURE_FIVR	0x02
-#घोषणा PROC_THERMAL_FEATURE_DVFS	0x04
-#घोषणा PROC_THERMAL_FEATURE_MBOX	0x08
+#define PROC_THERMAL_FEATURE_NONE	0x00
+#define PROC_THERMAL_FEATURE_RAPL	0x01
+#define PROC_THERMAL_FEATURE_FIVR	0x02
+#define PROC_THERMAL_FEATURE_DVFS	0x04
+#define PROC_THERMAL_FEATURE_MBOX	0x08
 
-#अगर IS_ENABLED(CONFIG_PROC_THERMAL_MMIO_RAPL)
-पूर्णांक proc_thermal_rapl_add(काष्ठा pci_dev *pdev, काष्ठा proc_thermal_device *proc_priv);
-व्योम proc_thermal_rapl_हटाओ(व्योम);
-#अन्यथा
-अटल पूर्णांक __maybe_unused proc_thermal_rapl_add(काष्ठा pci_dev *pdev,
-						काष्ठा proc_thermal_device *proc_priv)
-अणु
-	वापस 0;
-पूर्ण
+#if IS_ENABLED(CONFIG_PROC_THERMAL_MMIO_RAPL)
+int proc_thermal_rapl_add(struct pci_dev *pdev, struct proc_thermal_device *proc_priv);
+void proc_thermal_rapl_remove(void);
+#else
+static int __maybe_unused proc_thermal_rapl_add(struct pci_dev *pdev,
+						struct proc_thermal_device *proc_priv)
+{
+	return 0;
+}
 
-अटल व्योम __maybe_unused proc_thermal_rapl_हटाओ(व्योम)
-अणु
-पूर्ण
-#पूर्ण_अगर
+static void __maybe_unused proc_thermal_rapl_remove(void)
+{
+}
+#endif
 
-पूर्णांक proc_thermal_rfim_add(काष्ठा pci_dev *pdev, काष्ठा proc_thermal_device *proc_priv);
-व्योम proc_thermal_rfim_हटाओ(काष्ठा pci_dev *pdev);
+int proc_thermal_rfim_add(struct pci_dev *pdev, struct proc_thermal_device *proc_priv);
+void proc_thermal_rfim_remove(struct pci_dev *pdev);
 
-पूर्णांक proc_thermal_mbox_add(काष्ठा pci_dev *pdev, काष्ठा proc_thermal_device *proc_priv);
-व्योम proc_thermal_mbox_हटाओ(काष्ठा pci_dev *pdev);
+int proc_thermal_mbox_add(struct pci_dev *pdev, struct proc_thermal_device *proc_priv);
+void proc_thermal_mbox_remove(struct pci_dev *pdev);
 
-#पूर्ण_अगर
+#endif

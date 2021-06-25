@@ -1,14 +1,13 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * gamma_table.h
  *
- * TI OMAP3 ISP - Default gamma table क्रम all components
+ * TI OMAP3 ISP - Default gamma table for all components
  *
  * Copyright (C) 2010 Nokia Corporation
  * Copyright (C) 2009 Texas Instruments, Inc.
  *
- * Contacts: Laurent Pinअक्षरt <laurent.pinअक्षरt@ideasonboard.com>
+ * Contacts: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
  *	     Sakari Ailus <sakari.ailus@iki.fi>
  */
 

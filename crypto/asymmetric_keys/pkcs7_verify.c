@@ -1,189 +1,188 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
-/* Verअगरy the signature on a PKCS#7 message.
+// SPDX-License-Identifier: GPL-2.0-or-later
+/* Verify the signature on a PKCS#7 message.
  *
  * Copyright (C) 2012 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#घोषणा pr_fmt(fmt) "PKCS7: "fmt
-#समावेश <linux/kernel.h>
-#समावेश <linux/export.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/err.h>
-#समावेश <linux/asn1.h>
-#समावेश <crypto/hash.h>
-#समावेश <crypto/hash_info.h>
-#समावेश <crypto/खुला_key.h>
-#समावेश "pkcs7_parser.h"
+#define pr_fmt(fmt) "PKCS7: "fmt
+#include <linux/kernel.h>
+#include <linux/export.h>
+#include <linux/slab.h>
+#include <linux/err.h>
+#include <linux/asn1.h>
+#include <crypto/hash.h>
+#include <crypto/hash_info.h>
+#include <crypto/public_key.h>
+#include "pkcs7_parser.h"
 
 /*
  * Digest the relevant parts of the PKCS#7 data
  */
-अटल पूर्णांक pkcs7_digest(काष्ठा pkcs7_message *pkcs7,
-			काष्ठा pkcs7_चिन्हित_info *sinfo)
-अणु
-	काष्ठा खुला_key_signature *sig = sinfo->sig;
-	काष्ठा crypto_shash *tfm;
-	काष्ठा shash_desc *desc;
-	माप_प्रकार desc_size;
-	पूर्णांक ret;
+static int pkcs7_digest(struct pkcs7_message *pkcs7,
+			struct pkcs7_signed_info *sinfo)
+{
+	struct public_key_signature *sig = sinfo->sig;
+	struct crypto_shash *tfm;
+	struct shash_desc *desc;
+	size_t desc_size;
+	int ret;
 
 	kenter(",%u,%s", sinfo->index, sinfo->sig->hash_algo);
 
-	/* The digest was calculated alपढ़ोy. */
-	अगर (sig->digest)
-		वापस 0;
+	/* The digest was calculated already. */
+	if (sig->digest)
+		return 0;
 
-	अगर (!sinfo->sig->hash_algo)
-		वापस -ENOPKG;
+	if (!sinfo->sig->hash_algo)
+		return -ENOPKG;
 
 	/* Allocate the hashing algorithm we're going to need and find out how
 	 * big the hash operational data will be.
 	 */
 	tfm = crypto_alloc_shash(sinfo->sig->hash_algo, 0, 0);
-	अगर (IS_ERR(tfm))
-		वापस (PTR_ERR(tfm) == -ENOENT) ? -ENOPKG : PTR_ERR(tfm);
+	if (IS_ERR(tfm))
+		return (PTR_ERR(tfm) == -ENOENT) ? -ENOPKG : PTR_ERR(tfm);
 
-	desc_size = crypto_shash_descsize(tfm) + माप(*desc);
+	desc_size = crypto_shash_descsize(tfm) + sizeof(*desc);
 	sig->digest_size = crypto_shash_digestsize(tfm);
 
 	ret = -ENOMEM;
-	sig->digest = kदो_स्मृति(sig->digest_size, GFP_KERNEL);
-	अगर (!sig->digest)
-		जाओ error_no_desc;
+	sig->digest = kmalloc(sig->digest_size, GFP_KERNEL);
+	if (!sig->digest)
+		goto error_no_desc;
 
 	desc = kzalloc(desc_size, GFP_KERNEL);
-	अगर (!desc)
-		जाओ error_no_desc;
+	if (!desc)
+		goto error_no_desc;
 
 	desc->tfm   = tfm;
 
 	/* Digest the message [RFC2315 9.3] */
 	ret = crypto_shash_digest(desc, pkcs7->data, pkcs7->data_len,
 				  sig->digest);
-	अगर (ret < 0)
-		जाओ error;
+	if (ret < 0)
+		goto error;
 	pr_devel("MsgDigest = [%*ph]\n", 8, sig->digest);
 
-	/* However, अगर there are authenticated attributes, there must be a
+	/* However, if there are authenticated attributes, there must be a
 	 * message digest attribute amongst them which corresponds to the
 	 * digest we just calculated.
 	 */
-	अगर (sinfo->authattrs) अणु
+	if (sinfo->authattrs) {
 		u8 tag;
 
-		अगर (!sinfo->msgdigest) अणु
+		if (!sinfo->msgdigest) {
 			pr_warn("Sig %u: No messageDigest\n", sinfo->index);
 			ret = -EKEYREJECTED;
-			जाओ error;
-		पूर्ण
+			goto error;
+		}
 
-		अगर (sinfo->msgdigest_len != sig->digest_size) अणु
+		if (sinfo->msgdigest_len != sig->digest_size) {
 			pr_debug("Sig %u: Invalid digest size (%u)\n",
 				 sinfo->index, sinfo->msgdigest_len);
 			ret = -EBADMSG;
-			जाओ error;
-		पूर्ण
+			goto error;
+		}
 
-		अगर (स_भेद(sig->digest, sinfo->msgdigest,
-			   sinfo->msgdigest_len) != 0) अणु
+		if (memcmp(sig->digest, sinfo->msgdigest,
+			   sinfo->msgdigest_len) != 0) {
 			pr_debug("Sig %u: Message digest doesn't match\n",
 				 sinfo->index);
 			ret = -EKEYREJECTED;
-			जाओ error;
-		पूर्ण
+			goto error;
+		}
 
 		/* We then calculate anew, using the authenticated attributes
 		 * as the contents of the digest instead.  Note that we need to
-		 * convert the attributes from a CONT.0 पूर्णांकo a SET beक्रमe we
+		 * convert the attributes from a CONT.0 into a SET before we
 		 * hash it.
 		 */
-		स_रखो(sig->digest, 0, sig->digest_size);
+		memset(sig->digest, 0, sig->digest_size);
 
 		ret = crypto_shash_init(desc);
-		अगर (ret < 0)
-			जाओ error;
+		if (ret < 0)
+			goto error;
 		tag = ASN1_CONS_BIT | ASN1_SET;
 		ret = crypto_shash_update(desc, &tag, 1);
-		अगर (ret < 0)
-			जाओ error;
+		if (ret < 0)
+			goto error;
 		ret = crypto_shash_finup(desc, sinfo->authattrs,
 					 sinfo->authattrs_len, sig->digest);
-		अगर (ret < 0)
-			जाओ error;
+		if (ret < 0)
+			goto error;
 		pr_devel("AADigest = [%*ph]\n", 8, sig->digest);
-	पूर्ण
+	}
 
 error:
-	kमुक्त(desc);
+	kfree(desc);
 error_no_desc:
-	crypto_मुक्त_shash(tfm);
+	crypto_free_shash(tfm);
 	kleave(" = %d", ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक pkcs7_get_digest(काष्ठा pkcs7_message *pkcs7, स्थिर u8 **buf, u32 *len,
-		     क्रमागत hash_algo *hash_algo)
-अणु
-	काष्ठा pkcs7_चिन्हित_info *sinfo = pkcs7->चिन्हित_infos;
-	पूर्णांक i, ret;
+int pkcs7_get_digest(struct pkcs7_message *pkcs7, const u8 **buf, u32 *len,
+		     enum hash_algo *hash_algo)
+{
+	struct pkcs7_signed_info *sinfo = pkcs7->signed_infos;
+	int i, ret;
 
 	/*
-	 * This function करोesn't support messages with more than one signature.
+	 * This function doesn't support messages with more than one signature.
 	 */
-	अगर (sinfo == शून्य || sinfo->next != शून्य)
-		वापस -EBADMSG;
+	if (sinfo == NULL || sinfo->next != NULL)
+		return -EBADMSG;
 
 	ret = pkcs7_digest(pkcs7, sinfo);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	*buf = sinfo->sig->digest;
 	*len = sinfo->sig->digest_size;
 
 	i = match_string(hash_algo_name, HASH_ALGO__LAST,
 			 sinfo->sig->hash_algo);
-	अगर (i >= 0)
+	if (i >= 0)
 		*hash_algo = i;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Find the key (X.509 certअगरicate) to use to verअगरy a PKCS#7 message.  PKCS#7
- * uses the issuer's name and the issuing certअगरicate serial number क्रम
- * matching purposes.  These must match the certअगरicate issuer's name (not
- * subject's name) and the certअगरicate serial number [RFC 2315 6.7].
+ * Find the key (X.509 certificate) to use to verify a PKCS#7 message.  PKCS#7
+ * uses the issuer's name and the issuing certificate serial number for
+ * matching purposes.  These must match the certificate issuer's name (not
+ * subject's name) and the certificate serial number [RFC 2315 6.7].
  */
-अटल पूर्णांक pkcs7_find_key(काष्ठा pkcs7_message *pkcs7,
-			  काष्ठा pkcs7_चिन्हित_info *sinfo)
-अणु
-	काष्ठा x509_certअगरicate *x509;
-	अचिन्हित certix = 1;
+static int pkcs7_find_key(struct pkcs7_message *pkcs7,
+			  struct pkcs7_signed_info *sinfo)
+{
+	struct x509_certificate *x509;
+	unsigned certix = 1;
 
 	kenter("%u", sinfo->index);
 
-	क्रम (x509 = pkcs7->certs; x509; x509 = x509->next, certix++) अणु
+	for (x509 = pkcs7->certs; x509; x509 = x509->next, certix++) {
 		/* I'm _assuming_ that the generator of the PKCS#7 message will
 		 * encode the fields from the X.509 cert in the same way in the
 		 * PKCS#7 message - but I can't be 100% sure of that.  It's
 		 * possible this will need element-by-element comparison.
 		 */
-		अगर (!asymmetric_key_id_same(x509->id, sinfo->sig->auth_ids[0]))
-			जारी;
+		if (!asymmetric_key_id_same(x509->id, sinfo->sig->auth_ids[0]))
+			continue;
 		pr_devel("Sig %u: Found cert serial match X.509[%u]\n",
 			 sinfo->index, certix);
 
-		अगर (म_भेद(x509->pub->pkey_algo, sinfo->sig->pkey_algo) != 0) अणु
+		if (strcmp(x509->pub->pkey_algo, sinfo->sig->pkey_algo) != 0) {
 			pr_warn("Sig %u: X.509 algo and PKCS#7 sig algo don't match\n",
 				sinfo->index);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		sinfo->signer = x509;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* The relevant X.509 cert isn't found here, but it might be found in
 	 * the trust keyring.
@@ -191,307 +190,307 @@ error_no_desc:
 	pr_debug("Sig %u: Issuing X.509 cert not found (#%*phN)\n",
 		 sinfo->index,
 		 sinfo->sig->auth_ids[0]->len, sinfo->sig->auth_ids[0]->data);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Verअगरy the पूर्णांकernal certअगरicate chain as best we can.
+ * Verify the internal certificate chain as best we can.
  */
-अटल पूर्णांक pkcs7_verअगरy_sig_chain(काष्ठा pkcs7_message *pkcs7,
-				  काष्ठा pkcs7_चिन्हित_info *sinfo)
-अणु
-	काष्ठा खुला_key_signature *sig;
-	काष्ठा x509_certअगरicate *x509 = sinfo->signer, *p;
-	काष्ठा asymmetric_key_id *auth;
-	पूर्णांक ret;
+static int pkcs7_verify_sig_chain(struct pkcs7_message *pkcs7,
+				  struct pkcs7_signed_info *sinfo)
+{
+	struct public_key_signature *sig;
+	struct x509_certificate *x509 = sinfo->signer, *p;
+	struct asymmetric_key_id *auth;
+	int ret;
 
 	kenter("");
 
-	क्रम (p = pkcs7->certs; p; p = p->next)
+	for (p = pkcs7->certs; p; p = p->next)
 		p->seen = false;
 
-	क्रम (;;) अणु
+	for (;;) {
 		pr_debug("verify %s: %*phN\n",
 			 x509->subject,
 			 x509->raw_serial_size, x509->raw_serial);
 		x509->seen = true;
 
-		अगर (x509->blacklisted) अणु
+		if (x509->blacklisted) {
 			/* If this cert is blacklisted, then mark everything
 			 * that depends on this as blacklisted too.
 			 */
 			sinfo->blacklisted = true;
-			क्रम (p = sinfo->signer; p != x509; p = p->signer)
+			for (p = sinfo->signer; p != x509; p = p->signer)
 				p->blacklisted = true;
 			pr_debug("- blacklisted\n");
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
-		अगर (x509->unsupported_key)
-			जाओ unsupported_crypto_in_x509;
+		if (x509->unsupported_key)
+			goto unsupported_crypto_in_x509;
 
 		pr_debug("- issuer %s\n", x509->issuer);
 		sig = x509->sig;
-		अगर (sig->auth_ids[0])
+		if (sig->auth_ids[0])
 			pr_debug("- authkeyid.id %*phN\n",
 				 sig->auth_ids[0]->len, sig->auth_ids[0]->data);
-		अगर (sig->auth_ids[1])
+		if (sig->auth_ids[1])
 			pr_debug("- authkeyid.skid %*phN\n",
 				 sig->auth_ids[1]->len, sig->auth_ids[1]->data);
 
-		अगर (x509->self_चिन्हित) अणु
-			/* If there's no authority certअगरicate specअगरied, then
-			 * the certअगरicate must be self-चिन्हित and is the root
-			 * of the chain.  Likewise अगर the cert is its own
+		if (x509->self_signed) {
+			/* If there's no authority certificate specified, then
+			 * the certificate must be self-signed and is the root
+			 * of the chain.  Likewise if the cert is its own
 			 * authority.
 			 */
-			अगर (x509->unsupported_sig)
-				जाओ unsupported_crypto_in_x509;
+			if (x509->unsupported_sig)
+				goto unsupported_crypto_in_x509;
 			x509->signer = x509;
 			pr_debug("- self-signed\n");
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
-		/* Look through the X.509 certअगरicates in the PKCS#7 message's
-		 * list to see अगर the next one is there.
+		/* Look through the X.509 certificates in the PKCS#7 message's
+		 * list to see if the next one is there.
 		 */
 		auth = sig->auth_ids[0];
-		अगर (auth) अणु
+		if (auth) {
 			pr_debug("- want %*phN\n", auth->len, auth->data);
-			क्रम (p = pkcs7->certs; p; p = p->next) अणु
+			for (p = pkcs7->certs; p; p = p->next) {
 				pr_debug("- cmp [%u] %*phN\n",
 					 p->index, p->id->len, p->id->data);
-				अगर (asymmetric_key_id_same(p->id, auth))
-					जाओ found_issuer_check_skid;
-			पूर्ण
-		पूर्ण अन्यथा अगर (sig->auth_ids[1]) अणु
+				if (asymmetric_key_id_same(p->id, auth))
+					goto found_issuer_check_skid;
+			}
+		} else if (sig->auth_ids[1]) {
 			auth = sig->auth_ids[1];
 			pr_debug("- want %*phN\n", auth->len, auth->data);
-			क्रम (p = pkcs7->certs; p; p = p->next) अणु
-				अगर (!p->skid)
-					जारी;
+			for (p = pkcs7->certs; p; p = p->next) {
+				if (!p->skid)
+					continue;
 				pr_debug("- cmp [%u] %*phN\n",
 					 p->index, p->skid->len, p->skid->data);
-				अगर (asymmetric_key_id_same(p->skid, auth))
-					जाओ found_issuer;
-			पूर्ण
-		पूर्ण
+				if (asymmetric_key_id_same(p->skid, auth))
+					goto found_issuer;
+			}
+		}
 
 		/* We didn't find the root of this chain */
 		pr_debug("- top\n");
-		वापस 0;
+		return 0;
 
 	found_issuer_check_skid:
-		/* We matched issuer + serialNumber, but अगर there's an
+		/* We matched issuer + serialNumber, but if there's an
 		 * authKeyId.keyId, that must match the CA subjKeyId also.
 		 */
-		अगर (sig->auth_ids[1] &&
-		    !asymmetric_key_id_same(p->skid, sig->auth_ids[1])) अणु
+		if (sig->auth_ids[1] &&
+		    !asymmetric_key_id_same(p->skid, sig->auth_ids[1])) {
 			pr_warn("Sig %u: X.509 chain contains auth-skid nonmatch (%u->%u)\n",
 				sinfo->index, x509->index, p->index);
-			वापस -EKEYREJECTED;
-		पूर्ण
+			return -EKEYREJECTED;
+		}
 	found_issuer:
 		pr_debug("- subject %s\n", p->subject);
-		अगर (p->seen) अणु
+		if (p->seen) {
 			pr_warn("Sig %u: X.509 chain contains loop\n",
 				sinfo->index);
-			वापस 0;
-		पूर्ण
-		ret = खुला_key_verअगरy_signature(p->pub, x509->sig);
-		अगर (ret < 0)
-			वापस ret;
+			return 0;
+		}
+		ret = public_key_verify_signature(p->pub, x509->sig);
+		if (ret < 0)
+			return ret;
 		x509->signer = p;
-		अगर (x509 == p) अणु
+		if (x509 == p) {
 			pr_debug("- self-signed\n");
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 		x509 = p;
 		might_sleep();
-	पूर्ण
+	}
 
 unsupported_crypto_in_x509:
-	/* Just prune the certअगरicate chain at this poपूर्णांक अगर we lack some
-	 * crypto module to go further.  Note, however, we करोn't want to set
-	 * sinfo->unsupported_crypto as the चिन्हित info block may still be
+	/* Just prune the certificate chain at this point if we lack some
+	 * crypto module to go further.  Note, however, we don't want to set
+	 * sinfo->unsupported_crypto as the signed info block may still be
 	 * validatable against an X.509 cert lower in the chain that we have a
 	 * trusted copy of.
 	 */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Verअगरy one चिन्हित inक्रमmation block from a PKCS#7 message.
+ * Verify one signed information block from a PKCS#7 message.
  */
-अटल पूर्णांक pkcs7_verअगरy_one(काष्ठा pkcs7_message *pkcs7,
-			    काष्ठा pkcs7_चिन्हित_info *sinfo)
-अणु
-	पूर्णांक ret;
+static int pkcs7_verify_one(struct pkcs7_message *pkcs7,
+			    struct pkcs7_signed_info *sinfo)
+{
+	int ret;
 
 	kenter(",%u", sinfo->index);
 
 	/* First of all, digest the data in the PKCS#7 message and the
-	 * चिन्हित inक्रमmation block
+	 * signed information block
 	 */
 	ret = pkcs7_digest(pkcs7, sinfo);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	/* Find the key क्रम the signature अगर there is one */
+	/* Find the key for the signature if there is one */
 	ret = pkcs7_find_key(pkcs7, sinfo);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	अगर (!sinfo->signer)
-		वापस 0;
+	if (!sinfo->signer)
+		return 0;
 
 	pr_devel("Using X.509[%u] for sig %u\n",
 		 sinfo->signer->index, sinfo->index);
 
-	/* Check that the PKCS#7 signing समय is valid according to the X.509
-	 * certअगरicate.  We can't, however, check against the प्रणाली घड़ी
+	/* Check that the PKCS#7 signing time is valid according to the X.509
+	 * certificate.  We can't, however, check against the system clock
 	 * since that may not have been set yet and may be wrong.
 	 */
-	अगर (test_bit(sinfo_has_signing_समय, &sinfo->aa_set)) अणु
-		अगर (sinfo->signing_समय < sinfo->signer->valid_from ||
-		    sinfo->signing_समय > sinfo->signer->valid_to) अणु
+	if (test_bit(sinfo_has_signing_time, &sinfo->aa_set)) {
+		if (sinfo->signing_time < sinfo->signer->valid_from ||
+		    sinfo->signing_time > sinfo->signer->valid_to) {
 			pr_warn("Message signed outside of X.509 validity window\n");
-			वापस -EKEYREJECTED;
-		पूर्ण
-	पूर्ण
+			return -EKEYREJECTED;
+		}
+	}
 
-	/* Verअगरy the PKCS#7 binary against the key */
-	ret = खुला_key_verअगरy_signature(sinfo->signer->pub, sinfo->sig);
-	अगर (ret < 0)
-		वापस ret;
+	/* Verify the PKCS#7 binary against the key */
+	ret = public_key_verify_signature(sinfo->signer->pub, sinfo->sig);
+	if (ret < 0)
+		return ret;
 
 	pr_devel("Verified signature %u\n", sinfo->index);
 
-	/* Verअगरy the पूर्णांकernal certअगरicate chain */
-	वापस pkcs7_verअगरy_sig_chain(pkcs7, sinfo);
-पूर्ण
+	/* Verify the internal certificate chain */
+	return pkcs7_verify_sig_chain(pkcs7, sinfo);
+}
 
 /**
- * pkcs7_verअगरy - Verअगरy a PKCS#7 message
- * @pkcs7: The PKCS#7 message to be verअगरied
+ * pkcs7_verify - Verify a PKCS#7 message
+ * @pkcs7: The PKCS#7 message to be verified
  * @usage: The use to which the key is being put
  *
- * Verअगरy a PKCS#7 message is पूर्णांकernally consistent - that is, the data digest
+ * Verify a PKCS#7 message is internally consistent - that is, the data digest
  * matches the digest in the AuthAttrs and any signature in the message or one
- * of the X.509 certअगरicates it carries that matches another X.509 cert in the
- * message can be verअगरied.
+ * of the X.509 certificates it carries that matches another X.509 cert in the
+ * message can be verified.
  *
- * This करोes not look to match the contents of the PKCS#7 message against any
- * बाह्यal खुला keys.
+ * This does not look to match the contents of the PKCS#7 message against any
+ * external public keys.
  *
  * Returns, in order of descending priority:
  *
- *  (*) -EKEYREJECTED अगर a key was selected that had a usage restriction at
- *      odds with the specअगरied usage, or:
+ *  (*) -EKEYREJECTED if a key was selected that had a usage restriction at
+ *      odds with the specified usage, or:
  *
- *  (*) -EKEYREJECTED अगर a signature failed to match क्रम which we found an
- *	appropriate X.509 certअगरicate, or:
+ *  (*) -EKEYREJECTED if a signature failed to match for which we found an
+ *	appropriate X.509 certificate, or:
  *
- *  (*) -EBADMSG अगर some part of the message was invalid, or:
+ *  (*) -EBADMSG if some part of the message was invalid, or:
  *
- *  (*) 0 अगर a signature chain passed verअगरication, or:
+ *  (*) 0 if a signature chain passed verification, or:
  *
- *  (*) -EKEYREJECTED अगर a blacklisted key was encountered, or:
+ *  (*) -EKEYREJECTED if a blacklisted key was encountered, or:
  *
- *  (*) -ENOPKG अगर none of the signature chains are verअगरiable because suitable
+ *  (*) -ENOPKG if none of the signature chains are verifiable because suitable
  *	crypto modules couldn't be found.
  */
-पूर्णांक pkcs7_verअगरy(काष्ठा pkcs7_message *pkcs7,
-		 क्रमागत key_being_used_क्रम usage)
-अणु
-	काष्ठा pkcs7_चिन्हित_info *sinfo;
-	पूर्णांक actual_ret = -ENOPKG;
-	पूर्णांक ret;
+int pkcs7_verify(struct pkcs7_message *pkcs7,
+		 enum key_being_used_for usage)
+{
+	struct pkcs7_signed_info *sinfo;
+	int actual_ret = -ENOPKG;
+	int ret;
 
 	kenter("");
 
-	चयन (usage) अणु
-	हाल VERIFYING_MODULE_SIGNATURE:
-		अगर (pkcs7->data_type != OID_data) अणु
+	switch (usage) {
+	case VERIFYING_MODULE_SIGNATURE:
+		if (pkcs7->data_type != OID_data) {
 			pr_warn("Invalid module sig (not pkcs7-data)\n");
-			वापस -EKEYREJECTED;
-		पूर्ण
-		अगर (pkcs7->have_authattrs) अणु
+			return -EKEYREJECTED;
+		}
+		if (pkcs7->have_authattrs) {
 			pr_warn("Invalid module sig (has authattrs)\n");
-			वापस -EKEYREJECTED;
-		पूर्ण
-		अवरोध;
-	हाल VERIFYING_FIRMWARE_SIGNATURE:
-		अगर (pkcs7->data_type != OID_data) अणु
+			return -EKEYREJECTED;
+		}
+		break;
+	case VERIFYING_FIRMWARE_SIGNATURE:
+		if (pkcs7->data_type != OID_data) {
 			pr_warn("Invalid firmware sig (not pkcs7-data)\n");
-			वापस -EKEYREJECTED;
-		पूर्ण
-		अगर (!pkcs7->have_authattrs) अणु
+			return -EKEYREJECTED;
+		}
+		if (!pkcs7->have_authattrs) {
 			pr_warn("Invalid firmware sig (missing authattrs)\n");
-			वापस -EKEYREJECTED;
-		पूर्ण
-		अवरोध;
-	हाल VERIFYING_KEXEC_PE_SIGNATURE:
-		अगर (pkcs7->data_type != OID_msIndirectData) अणु
+			return -EKEYREJECTED;
+		}
+		break;
+	case VERIFYING_KEXEC_PE_SIGNATURE:
+		if (pkcs7->data_type != OID_msIndirectData) {
 			pr_warn("Invalid kexec sig (not Authenticode)\n");
-			वापस -EKEYREJECTED;
-		पूर्ण
+			return -EKEYREJECTED;
+		}
 		/* Authattr presence checked in parser */
-		अवरोध;
-	हाल VERIFYING_UNSPECIFIED_SIGNATURE:
-		अगर (pkcs7->data_type != OID_data) अणु
+		break;
+	case VERIFYING_UNSPECIFIED_SIGNATURE:
+		if (pkcs7->data_type != OID_data) {
 			pr_warn("Invalid unspecified sig (not pkcs7-data)\n");
-			वापस -EKEYREJECTED;
-		पूर्ण
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+			return -EKEYREJECTED;
+		}
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	क्रम (sinfo = pkcs7->चिन्हित_infos; sinfo; sinfo = sinfo->next) अणु
-		ret = pkcs7_verअगरy_one(pkcs7, sinfo);
-		अगर (sinfo->blacklisted) अणु
-			अगर (actual_ret == -ENOPKG)
+	for (sinfo = pkcs7->signed_infos; sinfo; sinfo = sinfo->next) {
+		ret = pkcs7_verify_one(pkcs7, sinfo);
+		if (sinfo->blacklisted) {
+			if (actual_ret == -ENOPKG)
 				actual_ret = -EKEYREJECTED;
-			जारी;
-		पूर्ण
-		अगर (ret < 0) अणु
-			अगर (ret == -ENOPKG) अणु
+			continue;
+		}
+		if (ret < 0) {
+			if (ret == -ENOPKG) {
 				sinfo->unsupported_crypto = true;
-				जारी;
-			पूर्ण
+				continue;
+			}
 			kleave(" = %d", ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		actual_ret = 0;
-	पूर्ण
+	}
 
 	kleave(" = %d", actual_ret);
-	वापस actual_ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(pkcs7_verअगरy);
+	return actual_ret;
+}
+EXPORT_SYMBOL_GPL(pkcs7_verify);
 
 /**
- * pkcs7_supply_detached_data - Supply the data needed to verअगरy a PKCS#7 message
+ * pkcs7_supply_detached_data - Supply the data needed to verify a PKCS#7 message
  * @pkcs7: The PKCS#7 message
- * @data: The data to be verअगरied
+ * @data: The data to be verified
  * @datalen: The amount of data
  *
- * Supply the detached data needed to verअगरy a PKCS#7 message.  Note that no
+ * Supply the detached data needed to verify a PKCS#7 message.  Note that no
  * attempt to retain/pin the data is made.  That is left to the caller.  The
- * data will not be modअगरied by pkcs7_verअगरy() and will not be मुक्तd when the
- * PKCS#7 message is मुक्तd.
+ * data will not be modified by pkcs7_verify() and will not be freed when the
+ * PKCS#7 message is freed.
  *
- * Returns -EINVAL अगर data is alपढ़ोy supplied in the message, 0 otherwise.
+ * Returns -EINVAL if data is already supplied in the message, 0 otherwise.
  */
-पूर्णांक pkcs7_supply_detached_data(काष्ठा pkcs7_message *pkcs7,
-			       स्थिर व्योम *data, माप_प्रकार datalen)
-अणु
-	अगर (pkcs7->data) अणु
+int pkcs7_supply_detached_data(struct pkcs7_message *pkcs7,
+			       const void *data, size_t datalen)
+{
+	if (pkcs7->data) {
 		pr_debug("Data already supplied\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	pkcs7->data = data;
 	pkcs7->data_len = datalen;
-	वापस 0;
-पूर्ण
+	return 0;
+}

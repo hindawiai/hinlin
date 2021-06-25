@@ -1,81 +1,80 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * tools/testing/selftests/kvm/lib/x86_64/svm.c
- * Helpers used क्रम nested SVM testing
+ * Helpers used for nested SVM testing
  * Largely inspired from KVM unit test svm.c
  *
  * Copyright (C) 2020, Red Hat, Inc.
  */
 
-#समावेश "test_util.h"
-#समावेश "kvm_util.h"
-#समावेश "../kvm_util_internal.h"
-#समावेश "processor.h"
-#समावेश "svm_util.h"
+#include "test_util.h"
+#include "kvm_util.h"
+#include "../kvm_util_internal.h"
+#include "processor.h"
+#include "svm_util.h"
 
-काष्ठा gpr64_regs guest_regs;
+struct gpr64_regs guest_regs;
 u64 rflags;
 
-/* Allocate memory regions क्रम nested SVM tests.
+/* Allocate memory regions for nested SVM tests.
  *
  * Input Args:
- *   vm - The VM to allocate guest-भव addresses in.
+ *   vm - The VM to allocate guest-virtual addresses in.
  *
  * Output Args:
- *   p_svm_gva - The guest भव address क्रम the काष्ठा svm_test_data.
+ *   p_svm_gva - The guest virtual address for the struct svm_test_data.
  *
  * Return:
- *   Poपूर्णांकer to काष्ठाure with the addresses of the SVM areas.
+ *   Pointer to structure with the addresses of the SVM areas.
  */
-काष्ठा svm_test_data *
-vcpu_alloc_svm(काष्ठा kvm_vm *vm, vm_vaddr_t *p_svm_gva)
-अणु
+struct svm_test_data *
+vcpu_alloc_svm(struct kvm_vm *vm, vm_vaddr_t *p_svm_gva)
+{
 	vm_vaddr_t svm_gva = vm_vaddr_alloc(vm, getpagesize(),
 					    0x10000, 0, 0);
-	काष्ठा svm_test_data *svm = addr_gva2hva(vm, svm_gva);
+	struct svm_test_data *svm = addr_gva2hva(vm, svm_gva);
 
-	svm->vmcb = (व्योम *)vm_vaddr_alloc(vm, getpagesize(),
+	svm->vmcb = (void *)vm_vaddr_alloc(vm, getpagesize(),
 					   0x10000, 0, 0);
-	svm->vmcb_hva = addr_gva2hva(vm, (uपूर्णांकptr_t)svm->vmcb);
-	svm->vmcb_gpa = addr_gva2gpa(vm, (uपूर्णांकptr_t)svm->vmcb);
+	svm->vmcb_hva = addr_gva2hva(vm, (uintptr_t)svm->vmcb);
+	svm->vmcb_gpa = addr_gva2gpa(vm, (uintptr_t)svm->vmcb);
 
-	svm->save_area = (व्योम *)vm_vaddr_alloc(vm, getpagesize(),
+	svm->save_area = (void *)vm_vaddr_alloc(vm, getpagesize(),
 						0x10000, 0, 0);
-	svm->save_area_hva = addr_gva2hva(vm, (uपूर्णांकptr_t)svm->save_area);
-	svm->save_area_gpa = addr_gva2gpa(vm, (uपूर्णांकptr_t)svm->save_area);
+	svm->save_area_hva = addr_gva2hva(vm, (uintptr_t)svm->save_area);
+	svm->save_area_gpa = addr_gva2gpa(vm, (uintptr_t)svm->save_area);
 
 	*p_svm_gva = svm_gva;
-	वापस svm;
-पूर्ण
+	return svm;
+}
 
-अटल व्योम vmcb_set_seg(काष्ठा vmcb_seg *seg, u16 selector,
+static void vmcb_set_seg(struct vmcb_seg *seg, u16 selector,
 			 u64 base, u32 limit, u32 attr)
-अणु
+{
 	seg->selector = selector;
 	seg->attrib = attr;
 	seg->limit = limit;
 	seg->base = base;
-पूर्ण
+}
 
-व्योम generic_svm_setup(काष्ठा svm_test_data *svm, व्योम *guest_rip, व्योम *guest_rsp)
-अणु
-	काष्ठा vmcb *vmcb = svm->vmcb;
-	uपूर्णांक64_t vmcb_gpa = svm->vmcb_gpa;
-	काष्ठा vmcb_save_area *save = &vmcb->save;
-	काष्ठा vmcb_control_area *ctrl = &vmcb->control;
+void generic_svm_setup(struct svm_test_data *svm, void *guest_rip, void *guest_rsp)
+{
+	struct vmcb *vmcb = svm->vmcb;
+	uint64_t vmcb_gpa = svm->vmcb_gpa;
+	struct vmcb_save_area *save = &vmcb->save;
+	struct vmcb_control_area *ctrl = &vmcb->control;
 	u32 data_seg_attr = 3 | SVM_SELECTOR_S_MASK | SVM_SELECTOR_P_MASK
 	      | SVM_SELECTOR_DB_MASK | SVM_SELECTOR_G_MASK;
 	u32 code_seg_attr = 9 | SVM_SELECTOR_S_MASK | SVM_SELECTOR_P_MASK
 		| SVM_SELECTOR_L_MASK | SVM_SELECTOR_G_MASK;
-	uपूर्णांक64_t efer;
+	uint64_t efer;
 
 	efer = rdmsr(MSR_EFER);
 	wrmsr(MSR_EFER, efer | EFER_SVME);
 	wrmsr(MSR_VM_HSAVE_PA, svm->save_area_gpa);
 
-	स_रखो(vmcb, 0, माप(*vmcb));
-	यंत्र अस्थिर ("vmsave %0\n\t" : : "a" (vmcb_gpa) : "memory");
+	memset(vmcb, 0, sizeof(*vmcb));
+	asm volatile ("vmsave %0\n\t" : : "a" (vmcb_gpa) : "memory");
 	vmcb_set_seg(&save->es, get_es(), 0, -1U, data_seg_attr);
 	vmcb_set_seg(&save->cs, get_cs(), 0, -1U, code_seg_attr);
 	vmcb_set_seg(&save->ss, get_ss(), 0, -1U, data_seg_attr);
@@ -86,27 +85,27 @@ vcpu_alloc_svm(काष्ठा kvm_vm *vm, vm_vaddr_t *p_svm_gva)
 	ctrl->asid = 1;
 	save->cpl = 0;
 	save->efer = rdmsr(MSR_EFER);
-	यंत्र अस्थिर ("mov %%cr4, %0" : "=r"(save->cr4) : : "memory");
-	यंत्र अस्थिर ("mov %%cr3, %0" : "=r"(save->cr3) : : "memory");
-	यंत्र अस्थिर ("mov %%cr0, %0" : "=r"(save->cr0) : : "memory");
-	यंत्र अस्थिर ("mov %%dr7, %0" : "=r"(save->dr7) : : "memory");
-	यंत्र अस्थिर ("mov %%dr6, %0" : "=r"(save->dr6) : : "memory");
-	यंत्र अस्थिर ("mov %%cr2, %0" : "=r"(save->cr2) : : "memory");
+	asm volatile ("mov %%cr4, %0" : "=r"(save->cr4) : : "memory");
+	asm volatile ("mov %%cr3, %0" : "=r"(save->cr3) : : "memory");
+	asm volatile ("mov %%cr0, %0" : "=r"(save->cr0) : : "memory");
+	asm volatile ("mov %%dr7, %0" : "=r"(save->dr7) : : "memory");
+	asm volatile ("mov %%dr6, %0" : "=r"(save->dr6) : : "memory");
+	asm volatile ("mov %%cr2, %0" : "=r"(save->cr2) : : "memory");
 	save->g_pat = rdmsr(MSR_IA32_CR_PAT);
 	save->dbgctl = rdmsr(MSR_IA32_DEBUGCTLMSR);
-	ctrl->पूर्णांकercept = (1ULL << INTERCEPT_VMRUN) |
+	ctrl->intercept = (1ULL << INTERCEPT_VMRUN) |
 				(1ULL << INTERCEPT_VMMCALL);
 
 	vmcb->save.rip = (u64)guest_rip;
 	vmcb->save.rsp = (u64)guest_rsp;
 	guest_regs.rdi = (u64)svm;
-पूर्ण
+}
 
 /*
- * save/restore 64-bit general रेजिस्टरs except rax, rip, rsp
+ * save/restore 64-bit general registers except rax, rip, rsp
  * which are directly handed through the VMCB guest processor state
  */
-#घोषणा SAVE_GPR_C				\
+#define SAVE_GPR_C				\
 	"xchg %%rbx, guest_regs+0x20\n\t"	\
 	"xchg %%rcx, guest_regs+0x10\n\t"	\
 	"xchg %%rdx, guest_regs+0x18\n\t"	\
@@ -122,16 +121,16 @@ vcpu_alloc_svm(काष्ठा kvm_vm *vm, vm_vaddr_t *p_svm_gva)
 	"xchg %%r14, guest_regs+0x78\n\t"	\
 	"xchg %%r15, guest_regs+0x80\n\t"
 
-#घोषणा LOAD_GPR_C      SAVE_GPR_C
+#define LOAD_GPR_C      SAVE_GPR_C
 
 /*
- * selftests करो not use पूर्णांकerrupts so we dropped clgi/sti/cli/stgi
- * क्रम now. रेजिस्टरs involved in LOAD/SAVE_GPR_C are eventually
- * unmodअगरied so they करो not need to be in the clobber list.
+ * selftests do not use interrupts so we dropped clgi/sti/cli/stgi
+ * for now. registers involved in LOAD/SAVE_GPR_C are eventually
+ * unmodified so they do not need to be in the clobber list.
  */
-व्योम run_guest(काष्ठा vmcb *vmcb, uपूर्णांक64_t vmcb_gpa)
-अणु
-	यंत्र अस्थिर (
+void run_guest(struct vmcb *vmcb, uint64_t vmcb_gpa)
+{
+	asm volatile (
 		"vmload %[vmcb_gpa]\n\t"
 		"mov rflags, %%r15\n\t"	// rflags
 		"mov %%r15, 0x170(%[vmcb])\n\t"
@@ -147,20 +146,20 @@ vcpu_alloc_svm(काष्ठा kvm_vm *vm, vm_vaddr_t *p_svm_gva)
 		"vmsave %[vmcb_gpa]\n\t"
 		: : [vmcb] "r" (vmcb), [vmcb_gpa] "a" (vmcb_gpa)
 		: "r15", "memory");
-पूर्ण
+}
 
-bool nested_svm_supported(व्योम)
-अणु
-	काष्ठा kvm_cpuid_entry2 *entry =
+bool nested_svm_supported(void)
+{
+	struct kvm_cpuid_entry2 *entry =
 		kvm_get_supported_cpuid_entry(0x80000001);
 
-	वापस entry->ecx & CPUID_SVM;
-पूर्ण
+	return entry->ecx & CPUID_SVM;
+}
 
-व्योम nested_svm_check_supported(व्योम)
-अणु
-	अगर (!nested_svm_supported()) अणु
-		prपूर्णांक_skip("nested SVM not enabled");
-		निकास(KSFT_SKIP);
-	पूर्ण
-पूर्ण
+void nested_svm_check_supported(void)
+{
+	if (!nested_svm_supported()) {
+		print_skip("nested SVM not enabled");
+		exit(KSFT_SKIP);
+	}
+}

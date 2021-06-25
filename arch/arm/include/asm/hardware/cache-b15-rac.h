@@ -1,11 +1,10 @@
-<शैली गुरु>
-#अगर_अघोषित __ASM_ARM_HARDWARE_CACHE_B15_RAC_H
-#घोषणा __ASM_ARM_HARDWARE_CACHE_B15_RAC_H
+#ifndef __ASM_ARM_HARDWARE_CACHE_B15_RAC_H
+#define __ASM_ARM_HARDWARE_CACHE_B15_RAC_H
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-व्योम b15_flush_kern_cache_all(व्योम);
+void b15_flush_kern_cache_all(void);
 
-#पूर्ण_अगर
+#endif
 
-#पूर्ण_अगर
+#endif

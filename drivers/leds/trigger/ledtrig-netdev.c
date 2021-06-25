@@ -1,35 +1,34 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 // Copyright 2017 Ben Whitten <ben.whitten@gmail.com>
-// Copyright 2007 Oliver Jowett <oliver@खोलोcloud.com>
+// Copyright 2007 Oliver Jowett <oliver@opencloud.com>
 //
 // LED Kernel Netdev Trigger
 //
 // Toggles the LED to reflect the link and traffic state of a named net device
 //
-// Derived from ledtrig-समयr.c which is:
+// Derived from ledtrig-timer.c which is:
 //  Copyright 2005-2006 Openedhand Ltd.
-//  Author: Riअक्षरd Purdie <rpurdie@खोलोedhand.com>
+//  Author: Richard Purdie <rpurdie@openedhand.com>
 
-#समावेश <linux/atomic.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/device.h>
-#समावेश <linux/init.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/leds.h>
-#समावेश <linux/list.h>
-#समावेश <linux/module.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/समयr.h>
-#समावेश "../leds.h"
+#include <linux/atomic.h>
+#include <linux/ctype.h>
+#include <linux/device.h>
+#include <linux/init.h>
+#include <linux/jiffies.h>
+#include <linux/kernel.h>
+#include <linux/leds.h>
+#include <linux/list.h>
+#include <linux/module.h>
+#include <linux/netdevice.h>
+#include <linux/spinlock.h>
+#include <linux/timer.h>
+#include "../leds.h"
 
 /*
  * Configurable sysfs attributes:
  *
  * device_name - network device name to monitor
- * पूर्णांकerval - duration of LED blink, in milliseconds
+ * interval - duration of LED blink, in milliseconds
  * link -  LED's normal state reflects whether the link is up
  *         (has carrier) or not
  * tx -  LED blinks on transmitted data
@@ -37,104 +36,104 @@
  *
  */
 
-काष्ठा led_netdev_data अणु
+struct led_netdev_data {
 	spinlock_t lock;
 
-	काष्ठा delayed_work work;
-	काष्ठा notअगरier_block notअगरier;
+	struct delayed_work work;
+	struct notifier_block notifier;
 
-	काष्ठा led_classdev *led_cdev;
-	काष्ठा net_device *net_dev;
+	struct led_classdev *led_cdev;
+	struct net_device *net_dev;
 
-	अक्षर device_name[IFNAMSIZ];
-	atomic_t पूर्णांकerval;
-	अचिन्हित पूर्णांक last_activity;
+	char device_name[IFNAMSIZ];
+	atomic_t interval;
+	unsigned int last_activity;
 
-	अचिन्हित दीर्घ mode;
-#घोषणा NETDEV_LED_LINK	0
-#घोषणा NETDEV_LED_TX	1
-#घोषणा NETDEV_LED_RX	2
-#घोषणा NETDEV_LED_MODE_LINKUP	3
-पूर्ण;
+	unsigned long mode;
+#define NETDEV_LED_LINK	0
+#define NETDEV_LED_TX	1
+#define NETDEV_LED_RX	2
+#define NETDEV_LED_MODE_LINKUP	3
+};
 
-क्रमागत netdev_led_attr अणु
+enum netdev_led_attr {
 	NETDEV_ATTR_LINK,
 	NETDEV_ATTR_TX,
 	NETDEV_ATTR_RX
-पूर्ण;
+};
 
-अटल व्योम set_baseline_state(काष्ठा led_netdev_data *trigger_data)
-अणु
-	पूर्णांक current_brightness;
-	काष्ठा led_classdev *led_cdev = trigger_data->led_cdev;
+static void set_baseline_state(struct led_netdev_data *trigger_data)
+{
+	int current_brightness;
+	struct led_classdev *led_cdev = trigger_data->led_cdev;
 
 	current_brightness = led_cdev->brightness;
-	अगर (current_brightness)
+	if (current_brightness)
 		led_cdev->blink_brightness = current_brightness;
-	अगर (!led_cdev->blink_brightness)
+	if (!led_cdev->blink_brightness)
 		led_cdev->blink_brightness = led_cdev->max_brightness;
 
-	अगर (!test_bit(NETDEV_LED_MODE_LINKUP, &trigger_data->mode))
+	if (!test_bit(NETDEV_LED_MODE_LINKUP, &trigger_data->mode))
 		led_set_brightness(led_cdev, LED_OFF);
-	अन्यथा अणु
-		अगर (test_bit(NETDEV_LED_LINK, &trigger_data->mode))
+	else {
+		if (test_bit(NETDEV_LED_LINK, &trigger_data->mode))
 			led_set_brightness(led_cdev,
 					   led_cdev->blink_brightness);
-		अन्यथा
+		else
 			led_set_brightness(led_cdev, LED_OFF);
 
-		/* If we are looking क्रम RX/TX start periodically
+		/* If we are looking for RX/TX start periodically
 		 * checking stats
 		 */
-		अगर (test_bit(NETDEV_LED_TX, &trigger_data->mode) ||
+		if (test_bit(NETDEV_LED_TX, &trigger_data->mode) ||
 		    test_bit(NETDEV_LED_RX, &trigger_data->mode))
 			schedule_delayed_work(&trigger_data->work, 0);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल sमाप_प्रकार device_name_show(काष्ठा device *dev,
-				काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा led_netdev_data *trigger_data = led_trigger_get_drvdata(dev);
-	sमाप_प्रकार len;
+static ssize_t device_name_show(struct device *dev,
+				struct device_attribute *attr, char *buf)
+{
+	struct led_netdev_data *trigger_data = led_trigger_get_drvdata(dev);
+	ssize_t len;
 
 	spin_lock_bh(&trigger_data->lock);
-	len = प्र_लिखो(buf, "%s\n", trigger_data->device_name);
+	len = sprintf(buf, "%s\n", trigger_data->device_name);
 	spin_unlock_bh(&trigger_data->lock);
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल sमाप_प्रकार device_name_store(काष्ठा device *dev,
-				 काष्ठा device_attribute *attr, स्थिर अक्षर *buf,
-				 माप_प्रकार size)
-अणु
-	काष्ठा led_netdev_data *trigger_data = led_trigger_get_drvdata(dev);
+static ssize_t device_name_store(struct device *dev,
+				 struct device_attribute *attr, const char *buf,
+				 size_t size)
+{
+	struct led_netdev_data *trigger_data = led_trigger_get_drvdata(dev);
 
-	अगर (size >= IFNAMSIZ)
-		वापस -EINVAL;
+	if (size >= IFNAMSIZ)
+		return -EINVAL;
 
 	cancel_delayed_work_sync(&trigger_data->work);
 
 	spin_lock_bh(&trigger_data->lock);
 
-	अगर (trigger_data->net_dev) अणु
+	if (trigger_data->net_dev) {
 		dev_put(trigger_data->net_dev);
-		trigger_data->net_dev = शून्य;
-	पूर्ण
+		trigger_data->net_dev = NULL;
+	}
 
-	स_नकल(trigger_data->device_name, buf, size);
+	memcpy(trigger_data->device_name, buf, size);
 	trigger_data->device_name[size] = 0;
-	अगर (size > 0 && trigger_data->device_name[size - 1] == '\n')
+	if (size > 0 && trigger_data->device_name[size - 1] == '\n')
 		trigger_data->device_name[size - 1] = 0;
 
-	अगर (trigger_data->device_name[0] != 0)
+	if (trigger_data->device_name[0] != 0)
 		trigger_data->net_dev =
 		    dev_get_by_name(&init_net, trigger_data->device_name);
 
 	clear_bit(NETDEV_LED_MODE_LINKUP, &trigger_data->mode);
-	अगर (trigger_data->net_dev != शून्य)
-		अगर (netअगर_carrier_ok(trigger_data->net_dev))
+	if (trigger_data->net_dev != NULL)
+		if (netif_carrier_ok(trigger_data->net_dev))
 			set_bit(NETDEV_LED_MODE_LINKUP, &trigger_data->mode);
 
 	trigger_data->last_activity = 0;
@@ -142,228 +141,228 @@
 	set_baseline_state(trigger_data);
 	spin_unlock_bh(&trigger_data->lock);
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल DEVICE_ATTR_RW(device_name);
+static DEVICE_ATTR_RW(device_name);
 
-अटल sमाप_प्रकार netdev_led_attr_show(काष्ठा device *dev, अक्षर *buf,
-	क्रमागत netdev_led_attr attr)
-अणु
-	काष्ठा led_netdev_data *trigger_data = led_trigger_get_drvdata(dev);
-	पूर्णांक bit;
+static ssize_t netdev_led_attr_show(struct device *dev, char *buf,
+	enum netdev_led_attr attr)
+{
+	struct led_netdev_data *trigger_data = led_trigger_get_drvdata(dev);
+	int bit;
 
-	चयन (attr) अणु
-	हाल NETDEV_ATTR_LINK:
+	switch (attr) {
+	case NETDEV_ATTR_LINK:
 		bit = NETDEV_LED_LINK;
-		अवरोध;
-	हाल NETDEV_ATTR_TX:
+		break;
+	case NETDEV_ATTR_TX:
 		bit = NETDEV_LED_TX;
-		अवरोध;
-	हाल NETDEV_ATTR_RX:
+		break;
+	case NETDEV_ATTR_RX:
 		bit = NETDEV_LED_RX;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस प्र_लिखो(buf, "%u\n", test_bit(bit, &trigger_data->mode));
-पूर्ण
+	return sprintf(buf, "%u\n", test_bit(bit, &trigger_data->mode));
+}
 
-अटल sमाप_प्रकार netdev_led_attr_store(काष्ठा device *dev, स्थिर अक्षर *buf,
-	माप_प्रकार size, क्रमागत netdev_led_attr attr)
-अणु
-	काष्ठा led_netdev_data *trigger_data = led_trigger_get_drvdata(dev);
-	अचिन्हित दीर्घ state;
-	पूर्णांक ret;
-	पूर्णांक bit;
+static ssize_t netdev_led_attr_store(struct device *dev, const char *buf,
+	size_t size, enum netdev_led_attr attr)
+{
+	struct led_netdev_data *trigger_data = led_trigger_get_drvdata(dev);
+	unsigned long state;
+	int ret;
+	int bit;
 
-	ret = kम_से_अदीर्घ(buf, 0, &state);
-	अगर (ret)
-		वापस ret;
+	ret = kstrtoul(buf, 0, &state);
+	if (ret)
+		return ret;
 
-	चयन (attr) अणु
-	हाल NETDEV_ATTR_LINK:
+	switch (attr) {
+	case NETDEV_ATTR_LINK:
 		bit = NETDEV_LED_LINK;
-		अवरोध;
-	हाल NETDEV_ATTR_TX:
+		break;
+	case NETDEV_ATTR_TX:
 		bit = NETDEV_LED_TX;
-		अवरोध;
-	हाल NETDEV_ATTR_RX:
+		break;
+	case NETDEV_ATTR_RX:
 		bit = NETDEV_LED_RX;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	cancel_delayed_work_sync(&trigger_data->work);
 
-	अगर (state)
+	if (state)
 		set_bit(bit, &trigger_data->mode);
-	अन्यथा
+	else
 		clear_bit(bit, &trigger_data->mode);
 
 	set_baseline_state(trigger_data);
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल sमाप_प्रकार link_show(काष्ठा device *dev,
-	काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	वापस netdev_led_attr_show(dev, buf, NETDEV_ATTR_LINK);
-पूर्ण
+static ssize_t link_show(struct device *dev,
+	struct device_attribute *attr, char *buf)
+{
+	return netdev_led_attr_show(dev, buf, NETDEV_ATTR_LINK);
+}
 
-अटल sमाप_प्रकार link_store(काष्ठा device *dev,
-	काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार size)
-अणु
-	वापस netdev_led_attr_store(dev, buf, size, NETDEV_ATTR_LINK);
-पूर्ण
+static ssize_t link_store(struct device *dev,
+	struct device_attribute *attr, const char *buf, size_t size)
+{
+	return netdev_led_attr_store(dev, buf, size, NETDEV_ATTR_LINK);
+}
 
-अटल DEVICE_ATTR_RW(link);
+static DEVICE_ATTR_RW(link);
 
-अटल sमाप_प्रकार tx_show(काष्ठा device *dev,
-	काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	वापस netdev_led_attr_show(dev, buf, NETDEV_ATTR_TX);
-पूर्ण
+static ssize_t tx_show(struct device *dev,
+	struct device_attribute *attr, char *buf)
+{
+	return netdev_led_attr_show(dev, buf, NETDEV_ATTR_TX);
+}
 
-अटल sमाप_प्रकार tx_store(काष्ठा device *dev,
-	काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार size)
-अणु
-	वापस netdev_led_attr_store(dev, buf, size, NETDEV_ATTR_TX);
-पूर्ण
+static ssize_t tx_store(struct device *dev,
+	struct device_attribute *attr, const char *buf, size_t size)
+{
+	return netdev_led_attr_store(dev, buf, size, NETDEV_ATTR_TX);
+}
 
-अटल DEVICE_ATTR_RW(tx);
+static DEVICE_ATTR_RW(tx);
 
-अटल sमाप_प्रकार rx_show(काष्ठा device *dev,
-	काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	वापस netdev_led_attr_show(dev, buf, NETDEV_ATTR_RX);
-पूर्ण
+static ssize_t rx_show(struct device *dev,
+	struct device_attribute *attr, char *buf)
+{
+	return netdev_led_attr_show(dev, buf, NETDEV_ATTR_RX);
+}
 
-अटल sमाप_प्रकार rx_store(काष्ठा device *dev,
-	काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार size)
-अणु
-	वापस netdev_led_attr_store(dev, buf, size, NETDEV_ATTR_RX);
-पूर्ण
+static ssize_t rx_store(struct device *dev,
+	struct device_attribute *attr, const char *buf, size_t size)
+{
+	return netdev_led_attr_store(dev, buf, size, NETDEV_ATTR_RX);
+}
 
-अटल DEVICE_ATTR_RW(rx);
+static DEVICE_ATTR_RW(rx);
 
-अटल sमाप_प्रकार पूर्णांकerval_show(काष्ठा device *dev,
-			     काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा led_netdev_data *trigger_data = led_trigger_get_drvdata(dev);
+static ssize_t interval_show(struct device *dev,
+			     struct device_attribute *attr, char *buf)
+{
+	struct led_netdev_data *trigger_data = led_trigger_get_drvdata(dev);
 
-	वापस प्र_लिखो(buf, "%u\n",
-		       jअगरfies_to_msecs(atomic_पढ़ो(&trigger_data->पूर्णांकerval)));
-पूर्ण
+	return sprintf(buf, "%u\n",
+		       jiffies_to_msecs(atomic_read(&trigger_data->interval)));
+}
 
-अटल sमाप_प्रकार पूर्णांकerval_store(काष्ठा device *dev,
-			      काष्ठा device_attribute *attr, स्थिर अक्षर *buf,
-			      माप_प्रकार size)
-अणु
-	काष्ठा led_netdev_data *trigger_data = led_trigger_get_drvdata(dev);
-	अचिन्हित दीर्घ value;
-	पूर्णांक ret;
+static ssize_t interval_store(struct device *dev,
+			      struct device_attribute *attr, const char *buf,
+			      size_t size)
+{
+	struct led_netdev_data *trigger_data = led_trigger_get_drvdata(dev);
+	unsigned long value;
+	int ret;
 
-	ret = kम_से_अदीर्घ(buf, 0, &value);
-	अगर (ret)
-		वापस ret;
+	ret = kstrtoul(buf, 0, &value);
+	if (ret)
+		return ret;
 
-	/* impose some basic bounds on the समयr पूर्णांकerval */
-	अगर (value >= 5 && value <= 10000) अणु
+	/* impose some basic bounds on the timer interval */
+	if (value >= 5 && value <= 10000) {
 		cancel_delayed_work_sync(&trigger_data->work);
 
-		atomic_set(&trigger_data->पूर्णांकerval, msecs_to_jअगरfies(value));
-		set_baseline_state(trigger_data);	/* resets समयr */
-	पूर्ण
+		atomic_set(&trigger_data->interval, msecs_to_jiffies(value));
+		set_baseline_state(trigger_data);	/* resets timer */
+	}
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल DEVICE_ATTR_RW(पूर्णांकerval);
+static DEVICE_ATTR_RW(interval);
 
-अटल काष्ठा attribute *netdev_trig_attrs[] = अणु
+static struct attribute *netdev_trig_attrs[] = {
 	&dev_attr_device_name.attr,
 	&dev_attr_link.attr,
 	&dev_attr_rx.attr,
 	&dev_attr_tx.attr,
-	&dev_attr_पूर्णांकerval.attr,
-	शून्य
-पूर्ण;
+	&dev_attr_interval.attr,
+	NULL
+};
 ATTRIBUTE_GROUPS(netdev_trig);
 
-अटल पूर्णांक netdev_trig_notअगरy(काष्ठा notअगरier_block *nb,
-			      अचिन्हित दीर्घ evt, व्योम *dv)
-अणु
-	काष्ठा net_device *dev =
-		netdev_notअगरier_info_to_dev((काष्ठा netdev_notअगरier_info *)dv);
-	काष्ठा led_netdev_data *trigger_data =
-		container_of(nb, काष्ठा led_netdev_data, notअगरier);
+static int netdev_trig_notify(struct notifier_block *nb,
+			      unsigned long evt, void *dv)
+{
+	struct net_device *dev =
+		netdev_notifier_info_to_dev((struct netdev_notifier_info *)dv);
+	struct led_netdev_data *trigger_data =
+		container_of(nb, struct led_netdev_data, notifier);
 
-	अगर (evt != NETDEV_UP && evt != NETDEV_DOWN && evt != NETDEV_CHANGE
+	if (evt != NETDEV_UP && evt != NETDEV_DOWN && evt != NETDEV_CHANGE
 	    && evt != NETDEV_REGISTER && evt != NETDEV_UNREGISTER
 	    && evt != NETDEV_CHANGENAME)
-		वापस NOTIFY_DONE;
+		return NOTIFY_DONE;
 
-	अगर (!(dev == trigger_data->net_dev ||
-	      (evt == NETDEV_CHANGENAME && !म_भेद(dev->name, trigger_data->device_name)) ||
-	      (evt == NETDEV_REGISTER && !म_भेद(dev->name, trigger_data->device_name))))
-		वापस NOTIFY_DONE;
+	if (!(dev == trigger_data->net_dev ||
+	      (evt == NETDEV_CHANGENAME && !strcmp(dev->name, trigger_data->device_name)) ||
+	      (evt == NETDEV_REGISTER && !strcmp(dev->name, trigger_data->device_name))))
+		return NOTIFY_DONE;
 
 	cancel_delayed_work_sync(&trigger_data->work);
 
 	spin_lock_bh(&trigger_data->lock);
 
 	clear_bit(NETDEV_LED_MODE_LINKUP, &trigger_data->mode);
-	चयन (evt) अणु
-	हाल NETDEV_CHANGENAME:
-	हाल NETDEV_REGISTER:
-		अगर (trigger_data->net_dev)
+	switch (evt) {
+	case NETDEV_CHANGENAME:
+	case NETDEV_REGISTER:
+		if (trigger_data->net_dev)
 			dev_put(trigger_data->net_dev);
 		dev_hold(dev);
 		trigger_data->net_dev = dev;
-		अवरोध;
-	हाल NETDEV_UNREGISTER:
+		break;
+	case NETDEV_UNREGISTER:
 		dev_put(trigger_data->net_dev);
-		trigger_data->net_dev = शून्य;
-		अवरोध;
-	हाल NETDEV_UP:
-	हाल NETDEV_CHANGE:
-		अगर (netअगर_carrier_ok(dev))
+		trigger_data->net_dev = NULL;
+		break;
+	case NETDEV_UP:
+	case NETDEV_CHANGE:
+		if (netif_carrier_ok(dev))
 			set_bit(NETDEV_LED_MODE_LINKUP, &trigger_data->mode);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	set_baseline_state(trigger_data);
 
 	spin_unlock_bh(&trigger_data->lock);
 
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
 /* here's the real work! */
-अटल व्योम netdev_trig_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा led_netdev_data *trigger_data =
-		container_of(work, काष्ठा led_netdev_data, work.work);
-	काष्ठा rtnl_link_stats64 *dev_stats;
-	अचिन्हित पूर्णांक new_activity;
-	काष्ठा rtnl_link_stats64 temp;
-	अचिन्हित दीर्घ पूर्णांकerval;
-	पूर्णांक invert;
+static void netdev_trig_work(struct work_struct *work)
+{
+	struct led_netdev_data *trigger_data =
+		container_of(work, struct led_netdev_data, work.work);
+	struct rtnl_link_stats64 *dev_stats;
+	unsigned int new_activity;
+	struct rtnl_link_stats64 temp;
+	unsigned long interval;
+	int invert;
 
-	/* If we करोnt have a device, insure we are off */
-	अगर (!trigger_data->net_dev) अणु
+	/* If we dont have a device, insure we are off */
+	if (!trigger_data->net_dev) {
 		led_set_brightness(trigger_data->led_cdev, LED_OFF);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* If we are not looking क्रम RX/TX then वापस  */
-	अगर (!test_bit(NETDEV_LED_TX, &trigger_data->mode) &&
+	/* If we are not looking for RX/TX then return  */
+	if (!test_bit(NETDEV_LED_TX, &trigger_data->mode) &&
 	    !test_bit(NETDEV_LED_RX, &trigger_data->mode))
-		वापस;
+		return;
 
 	dev_stats = dev_get_stats(trigger_data->net_dev, &temp);
 	new_activity =
@@ -372,90 +371,90 @@ ATTRIBUTE_GROUPS(netdev_trig);
 	    (test_bit(NETDEV_LED_RX, &trigger_data->mode) ?
 		dev_stats->rx_packets : 0);
 
-	अगर (trigger_data->last_activity != new_activity) अणु
+	if (trigger_data->last_activity != new_activity) {
 		led_stop_software_blink(trigger_data->led_cdev);
 
 		invert = test_bit(NETDEV_LED_LINK, &trigger_data->mode);
-		पूर्णांकerval = jअगरfies_to_msecs(
-				atomic_पढ़ो(&trigger_data->पूर्णांकerval));
+		interval = jiffies_to_msecs(
+				atomic_read(&trigger_data->interval));
 		/* base state is ON (link present) */
 		led_blink_set_oneshot(trigger_data->led_cdev,
-				      &पूर्णांकerval,
-				      &पूर्णांकerval,
+				      &interval,
+				      &interval,
 				      invert);
 		trigger_data->last_activity = new_activity;
-	पूर्ण
+	}
 
 	schedule_delayed_work(&trigger_data->work,
-			(atomic_पढ़ो(&trigger_data->पूर्णांकerval)*2));
-पूर्ण
+			(atomic_read(&trigger_data->interval)*2));
+}
 
-अटल पूर्णांक netdev_trig_activate(काष्ठा led_classdev *led_cdev)
-अणु
-	काष्ठा led_netdev_data *trigger_data;
-	पूर्णांक rc;
+static int netdev_trig_activate(struct led_classdev *led_cdev)
+{
+	struct led_netdev_data *trigger_data;
+	int rc;
 
-	trigger_data = kzalloc(माप(काष्ठा led_netdev_data), GFP_KERNEL);
-	अगर (!trigger_data)
-		वापस -ENOMEM;
+	trigger_data = kzalloc(sizeof(struct led_netdev_data), GFP_KERNEL);
+	if (!trigger_data)
+		return -ENOMEM;
 
 	spin_lock_init(&trigger_data->lock);
 
-	trigger_data->notअगरier.notअगरier_call = netdev_trig_notअगरy;
-	trigger_data->notअगरier.priority = 10;
+	trigger_data->notifier.notifier_call = netdev_trig_notify;
+	trigger_data->notifier.priority = 10;
 
 	INIT_DELAYED_WORK(&trigger_data->work, netdev_trig_work);
 
 	trigger_data->led_cdev = led_cdev;
-	trigger_data->net_dev = शून्य;
+	trigger_data->net_dev = NULL;
 	trigger_data->device_name[0] = 0;
 
 	trigger_data->mode = 0;
-	atomic_set(&trigger_data->पूर्णांकerval, msecs_to_jअगरfies(50));
+	atomic_set(&trigger_data->interval, msecs_to_jiffies(50));
 	trigger_data->last_activity = 0;
 
 	led_set_trigger_data(led_cdev, trigger_data);
 
-	rc = रेजिस्टर_netdevice_notअगरier(&trigger_data->notअगरier);
-	अगर (rc)
-		kमुक्त(trigger_data);
+	rc = register_netdevice_notifier(&trigger_data->notifier);
+	if (rc)
+		kfree(trigger_data);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम netdev_trig_deactivate(काष्ठा led_classdev *led_cdev)
-अणु
-	काष्ठा led_netdev_data *trigger_data = led_get_trigger_data(led_cdev);
+static void netdev_trig_deactivate(struct led_classdev *led_cdev)
+{
+	struct led_netdev_data *trigger_data = led_get_trigger_data(led_cdev);
 
-	unरेजिस्टर_netdevice_notअगरier(&trigger_data->notअगरier);
+	unregister_netdevice_notifier(&trigger_data->notifier);
 
 	cancel_delayed_work_sync(&trigger_data->work);
 
-	अगर (trigger_data->net_dev)
+	if (trigger_data->net_dev)
 		dev_put(trigger_data->net_dev);
 
-	kमुक्त(trigger_data);
-पूर्ण
+	kfree(trigger_data);
+}
 
-अटल काष्ठा led_trigger netdev_led_trigger = अणु
+static struct led_trigger netdev_led_trigger = {
 	.name = "netdev",
 	.activate = netdev_trig_activate,
 	.deactivate = netdev_trig_deactivate,
 	.groups = netdev_trig_groups,
-पूर्ण;
+};
 
-अटल पूर्णांक __init netdev_trig_init(व्योम)
-अणु
-	वापस led_trigger_रेजिस्टर(&netdev_led_trigger);
-पूर्ण
+static int __init netdev_trig_init(void)
+{
+	return led_trigger_register(&netdev_led_trigger);
+}
 
-अटल व्योम __निकास netdev_trig_निकास(व्योम)
-अणु
-	led_trigger_unरेजिस्टर(&netdev_led_trigger);
-पूर्ण
+static void __exit netdev_trig_exit(void)
+{
+	led_trigger_unregister(&netdev_led_trigger);
+}
 
 module_init(netdev_trig_init);
-module_निकास(netdev_trig_निकास);
+module_exit(netdev_trig_exit);
 
 MODULE_AUTHOR("Ben Whitten <ben.whitten@gmail.com>");
 MODULE_AUTHOR("Oliver Jowett <oliver@opencloud.com>");

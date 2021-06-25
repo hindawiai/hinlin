@@ -1,24 +1,23 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2007 Cisco Systems, Inc.  All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *	- Redistributions of source code must retain the above
  *	  copyright notice, this list of conditions and the following
  *	  disclaimer.
  *
- *	- Redistributions in binary क्रमm must reproduce the above
+ *	- Redistributions in binary form must reproduce the above
  *	  copyright notice, this list of conditions and the following
- *	  disclaimer in the करोcumentation and/or other materials
+ *	  disclaimer in the documentation and/or other materials
  *	  provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -31,15 +30,15 @@
  * SOFTWARE.
  */
 
-#अगर_अघोषित MLX4_SRQ_H
-#घोषणा MLX4_SRQ_H
+#ifndef MLX4_SRQ_H
+#define MLX4_SRQ_H
 
-काष्ठा mlx4_wqe_srq_next_seg अणु
+struct mlx4_wqe_srq_next_seg {
 	u16			reserved1;
 	__be16			next_wqe_index;
 	u32			reserved2[3];
-पूर्ण;
+};
 
-काष्ठा mlx4_srq *mlx4_srq_lookup(काष्ठा mlx4_dev *dev, u32 srqn);
+struct mlx4_srq *mlx4_srq_lookup(struct mlx4_dev *dev, u32 srqn);
 
-#पूर्ण_अगर /* MLX4_SRQ_H */
+#endif /* MLX4_SRQ_H */

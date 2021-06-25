@@ -1,13 +1,12 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __SOUND_PCM_IEC958_H
-#घोषणा __SOUND_PCM_IEC958_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __SOUND_PCM_IEC958_H
+#define __SOUND_PCM_IEC958_H
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-पूर्णांक snd_pcm_create_iec958_consumer(काष्ठा snd_pcm_runसमय *runसमय, u8 *cs,
-	माप_प्रकार len);
+int snd_pcm_create_iec958_consumer(struct snd_pcm_runtime *runtime, u8 *cs,
+	size_t len);
 
-पूर्णांक snd_pcm_create_iec958_consumer_hw_params(काष्ठा snd_pcm_hw_params *params,
-					     u8 *cs, माप_प्रकार len);
-#पूर्ण_अगर
+int snd_pcm_create_iec958_consumer_hw_params(struct snd_pcm_hw_params *params,
+					     u8 *cs, size_t len);
+#endif

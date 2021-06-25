@@ -1,90 +1,89 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * QLogic iSCSI HBA Driver
  * Copyright (c)  2003-2013 QLogic Corporation
  */
 
-#समावेश <scsi/iscsi_अगर.h>
-#समावेश "ql4_def.h"
-#समावेश "ql4_glbl.h"
-#समावेश "ql4_dbg.h"
-#समावेश "ql4_inline.h"
+#include <scsi/iscsi_if.h>
+#include "ql4_def.h"
+#include "ql4_glbl.h"
+#include "ql4_dbg.h"
+#include "ql4_inline.h"
 
-अटल व्योम ql4xxx_set_mac_number(काष्ठा scsi_qla_host *ha)
-अणु
-	uपूर्णांक32_t value;
-	अचिन्हित दीर्घ flags;
+static void ql4xxx_set_mac_number(struct scsi_qla_host *ha)
+{
+	uint32_t value;
+	unsigned long flags;
 
 	/* Get the function number */
 	spin_lock_irqsave(&ha->hardware_lock, flags);
-	value = पढ़ोw(&ha->reg->ctrl_status);
+	value = readw(&ha->reg->ctrl_status);
 	spin_unlock_irqrestore(&ha->hardware_lock, flags);
 
-	चयन (value & ISP_CONTROL_FN_MASK) अणु
-	हाल ISP_CONTROL_FN0_SCSI:
+	switch (value & ISP_CONTROL_FN_MASK) {
+	case ISP_CONTROL_FN0_SCSI:
 		ha->mac_index = 1;
-		अवरोध;
-	हाल ISP_CONTROL_FN1_SCSI:
+		break;
+	case ISP_CONTROL_FN1_SCSI:
 		ha->mac_index = 3;
-		अवरोध;
-	शेष:
-		DEBUG2(prपूर्णांकk("scsi%ld: %s: Invalid function number, "
+		break;
+	default:
+		DEBUG2(printk("scsi%ld: %s: Invalid function number, "
 			      "ispControlStatus = 0x%x\n", ha->host_no,
 			      __func__, value));
-		अवरोध;
-	पूर्ण
-	DEBUG2(prपूर्णांकk("scsi%ld: %s: mac_index %d.\n", ha->host_no, __func__,
+		break;
+	}
+	DEBUG2(printk("scsi%ld: %s: mac_index %d.\n", ha->host_no, __func__,
 		      ha->mac_index));
-पूर्ण
+}
 
 /**
- * qla4xxx_मुक्त_ddb - deallocate ddb
- * @ha: poपूर्णांकer to host adapter काष्ठाure.
- * @ddb_entry: poपूर्णांकer to device database entry
+ * qla4xxx_free_ddb - deallocate ddb
+ * @ha: pointer to host adapter structure.
+ * @ddb_entry: pointer to device database entry
  *
  * This routine marks a DDB entry INVALID
  **/
-व्योम qla4xxx_मुक्त_ddb(काष्ठा scsi_qla_host *ha,
-    काष्ठा ddb_entry *ddb_entry)
-अणु
-	/* Remove device poपूर्णांकer from index mapping arrays */
+void qla4xxx_free_ddb(struct scsi_qla_host *ha,
+    struct ddb_entry *ddb_entry)
+{
+	/* Remove device pointer from index mapping arrays */
 	ha->fw_ddb_index_map[ddb_entry->fw_ddb_index] =
-		(काष्ठा ddb_entry *) INVALID_ENTRY;
+		(struct ddb_entry *) INVALID_ENTRY;
 	ha->tot_ddbs--;
-पूर्ण
+}
 
 /**
  * qla4xxx_init_response_q_entries() - Initializes response queue entries.
  * @ha: HA context
  *
- * Beginning of request ring has initialization control block alपढ़ोy built
+ * Beginning of request ring has initialization control block already built
  * by nvram config routine.
  **/
-अटल व्योम qla4xxx_init_response_q_entries(काष्ठा scsi_qla_host *ha)
-अणु
-	uपूर्णांक16_t cnt;
-	काष्ठा response *pkt;
+static void qla4xxx_init_response_q_entries(struct scsi_qla_host *ha)
+{
+	uint16_t cnt;
+	struct response *pkt;
 
-	pkt = (काष्ठा response *)ha->response_ptr;
-	क्रम (cnt = 0; cnt < RESPONSE_QUEUE_DEPTH; cnt++) अणु
+	pkt = (struct response *)ha->response_ptr;
+	for (cnt = 0; cnt < RESPONSE_QUEUE_DEPTH; cnt++) {
 		pkt->signature = RESPONSE_PROCESSED;
 		pkt++;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * qla4xxx_init_rings - initialize hw queues
- * @ha: poपूर्णांकer to host adapter काष्ठाure.
+ * @ha: pointer to host adapter structure.
  *
- * This routine initializes the पूर्णांकernal queues क्रम the specअगरied adapter.
+ * This routine initializes the internal queues for the specified adapter.
  * The QLA4010 requires us to restart the queues at index 0.
- * The QLA4000 करोesn't care, so just default to QLA4010's requirement.
+ * The QLA4000 doesn't care, so just default to QLA4010's requirement.
  **/
-पूर्णांक qla4xxx_init_rings(काष्ठा scsi_qla_host *ha)
-अणु
-	अचिन्हित दीर्घ flags = 0;
-	पूर्णांक i;
+int qla4xxx_init_rings(struct scsi_qla_host *ha)
+{
+	unsigned long flags = 0;
+	int i;
 
 	/* Initialize request queue. */
 	spin_lock_irqsave(&ha->hardware_lock, flags);
@@ -98,407 +97,407 @@
 	ha->response_out = 0;
 	ha->response_ptr = &ha->response_ring[ha->response_out];
 
-	अगर (is_qla8022(ha)) अणु
-		ग_लिखोl(0,
-		    (अचिन्हित दीर्घ  __iomem *)&ha->qla4_82xx_reg->req_q_out);
-		ग_लिखोl(0,
-		    (अचिन्हित दीर्घ  __iomem *)&ha->qla4_82xx_reg->rsp_q_in);
-		ग_लिखोl(0,
-		    (अचिन्हित दीर्घ  __iomem *)&ha->qla4_82xx_reg->rsp_q_out);
-	पूर्ण अन्यथा अगर (is_qla8032(ha) || is_qla8042(ha)) अणु
-		ग_लिखोl(0,
-		       (अचिन्हित दीर्घ __iomem *)&ha->qla4_83xx_reg->req_q_in);
-		ग_लिखोl(0,
-		       (अचिन्हित दीर्घ __iomem *)&ha->qla4_83xx_reg->rsp_q_in);
-		ग_लिखोl(0,
-		       (अचिन्हित दीर्घ __iomem *)&ha->qla4_83xx_reg->rsp_q_out);
-	पूर्ण अन्यथा अणु
+	if (is_qla8022(ha)) {
+		writel(0,
+		    (unsigned long  __iomem *)&ha->qla4_82xx_reg->req_q_out);
+		writel(0,
+		    (unsigned long  __iomem *)&ha->qla4_82xx_reg->rsp_q_in);
+		writel(0,
+		    (unsigned long  __iomem *)&ha->qla4_82xx_reg->rsp_q_out);
+	} else if (is_qla8032(ha) || is_qla8042(ha)) {
+		writel(0,
+		       (unsigned long __iomem *)&ha->qla4_83xx_reg->req_q_in);
+		writel(0,
+		       (unsigned long __iomem *)&ha->qla4_83xx_reg->rsp_q_in);
+		writel(0,
+		       (unsigned long __iomem *)&ha->qla4_83xx_reg->rsp_q_out);
+	} else {
 		/*
-		 * Initialize DMA Shaकरोw रेजिस्टरs.  The firmware is really
+		 * Initialize DMA Shadow registers.  The firmware is really
 		 * supposed to take care of this, but on some uniprocessor
-		 * प्रणालीs, the shaकरोw रेजिस्टरs aren't cleared-- causing
-		 * the पूर्णांकerrupt_handler to think there are responses to be
+		 * systems, the shadow registers aren't cleared-- causing
+		 * the interrupt_handler to think there are responses to be
 		 * processed when there aren't.
 		 */
-		ha->shaकरोw_regs->req_q_out = __स्थिरant_cpu_to_le32(0);
-		ha->shaकरोw_regs->rsp_q_in = __स्थिरant_cpu_to_le32(0);
+		ha->shadow_regs->req_q_out = __constant_cpu_to_le32(0);
+		ha->shadow_regs->rsp_q_in = __constant_cpu_to_le32(0);
 		wmb();
 
-		ग_लिखोl(0, &ha->reg->req_q_in);
-		ग_लिखोl(0, &ha->reg->rsp_q_out);
-		पढ़ोl(&ha->reg->rsp_q_out);
-	पूर्ण
+		writel(0, &ha->reg->req_q_in);
+		writel(0, &ha->reg->rsp_q_out);
+		readl(&ha->reg->rsp_q_out);
+	}
 
 	qla4xxx_init_response_q_entries(ha);
 
 	/* Initialize mailbox active array */
-	क्रम (i = 0; i < MAX_MRB; i++)
-		ha->active_mrb_array[i] = शून्य;
+	for (i = 0; i < MAX_MRB; i++)
+		ha->active_mrb_array[i] = NULL;
 
 	spin_unlock_irqrestore(&ha->hardware_lock, flags);
 
-	वापस QLA_SUCCESS;
-पूर्ण
+	return QLA_SUCCESS;
+}
 
 /**
  * qla4xxx_get_sys_info - validate adapter MAC address(es)
- * @ha: poपूर्णांकer to host adapter काष्ठाure.
+ * @ha: pointer to host adapter structure.
  *
  **/
-पूर्णांक qla4xxx_get_sys_info(काष्ठा scsi_qla_host *ha)
-अणु
-	काष्ठा flash_sys_info *sys_info;
+int qla4xxx_get_sys_info(struct scsi_qla_host *ha)
+{
+	struct flash_sys_info *sys_info;
 	dma_addr_t sys_info_dma;
-	पूर्णांक status = QLA_ERROR;
+	int status = QLA_ERROR;
 
-	sys_info = dma_alloc_coherent(&ha->pdev->dev, माप(*sys_info),
+	sys_info = dma_alloc_coherent(&ha->pdev->dev, sizeof(*sys_info),
 				      &sys_info_dma, GFP_KERNEL);
-	अगर (sys_info == शून्य) अणु
-		DEBUG2(prपूर्णांकk("scsi%ld: %s: Unable to allocate dma buffer.\n",
+	if (sys_info == NULL) {
+		DEBUG2(printk("scsi%ld: %s: Unable to allocate dma buffer.\n",
 			      ha->host_no, __func__));
 
-		जाओ निकास_get_sys_info_no_मुक्त;
-	पूर्ण
+		goto exit_get_sys_info_no_free;
+	}
 
 	/* Get flash sys info */
-	अगर (qla4xxx_get_flash(ha, sys_info_dma, FLASH_OFFSET_SYS_INFO,
-			      माप(*sys_info)) != QLA_SUCCESS) अणु
-		DEBUG2(prपूर्णांकk("scsi%ld: %s: get_flash FLASH_OFFSET_SYS_INFO "
+	if (qla4xxx_get_flash(ha, sys_info_dma, FLASH_OFFSET_SYS_INFO,
+			      sizeof(*sys_info)) != QLA_SUCCESS) {
+		DEBUG2(printk("scsi%ld: %s: get_flash FLASH_OFFSET_SYS_INFO "
 			      "failed\n", ha->host_no, __func__));
 
-		जाओ निकास_get_sys_info;
-	पूर्ण
+		goto exit_get_sys_info;
+	}
 
 	/* Save M.A.C. address & serial_number */
-	स_नकल(ha->my_mac, &sys_info->physAddr[0].address[0],
-	       min(माप(ha->my_mac),
-		   माप(sys_info->physAddr[0].address)));
-	स_नकल(ha->serial_number, &sys_info->acSerialNumber,
-	       min(माप(ha->serial_number),
-		   माप(sys_info->acSerialNumber)));
+	memcpy(ha->my_mac, &sys_info->physAddr[0].address[0],
+	       min(sizeof(ha->my_mac),
+		   sizeof(sys_info->physAddr[0].address)));
+	memcpy(ha->serial_number, &sys_info->acSerialNumber,
+	       min(sizeof(ha->serial_number),
+		   sizeof(sys_info->acSerialNumber)));
 
 	status = QLA_SUCCESS;
 
-निकास_get_sys_info:
-	dma_मुक्त_coherent(&ha->pdev->dev, माप(*sys_info), sys_info,
+exit_get_sys_info:
+	dma_free_coherent(&ha->pdev->dev, sizeof(*sys_info), sys_info,
 			  sys_info_dma);
 
-निकास_get_sys_info_no_मुक्त:
-	वापस status;
-पूर्ण
+exit_get_sys_info_no_free:
+	return status;
+}
 
 /**
- * qla4xxx_init_local_data - initialize adapter specअगरic local data
- * @ha: poपूर्णांकer to host adapter काष्ठाure.
+ * qla4xxx_init_local_data - initialize adapter specific local data
+ * @ha: pointer to host adapter structure.
  *
  **/
-अटल व्योम qla4xxx_init_local_data(काष्ठा scsi_qla_host *ha)
-अणु
+static void qla4xxx_init_local_data(struct scsi_qla_host *ha)
+{
 	/* Initialize aen queue */
 	ha->aen_q_count = MAX_AEN_ENTRIES;
-पूर्ण
+}
 
-अटल uपूर्णांक8_t
-qla4xxx_रुको_क्रम_ip_config(काष्ठा scsi_qla_host *ha)
-अणु
-	uपूर्णांक8_t ipv4_रुको = 0;
-	uपूर्णांक8_t ipv6_रुको = 0;
-	पूर्णांक8_t ip_address[IPv6_ADDR_LEN] = अणु0पूर्ण ;
+static uint8_t
+qla4xxx_wait_for_ip_config(struct scsi_qla_host *ha)
+{
+	uint8_t ipv4_wait = 0;
+	uint8_t ipv6_wait = 0;
+	int8_t ip_address[IPv6_ADDR_LEN] = {0} ;
 
 	/* If both IPv4 & IPv6 are enabled, possibly only one
-	 * IP address may be acquired, so check to see अगर we
-	 * need to रुको क्रम another */
-	अगर (is_ipv4_enabled(ha) && is_ipv6_enabled(ha)) अणु
-		अगर (((ha->addl_fw_state & FW_ADDSTATE_DHCPv4_ENABLED) != 0) &&
+	 * IP address may be acquired, so check to see if we
+	 * need to wait for another */
+	if (is_ipv4_enabled(ha) && is_ipv6_enabled(ha)) {
+		if (((ha->addl_fw_state & FW_ADDSTATE_DHCPv4_ENABLED) != 0) &&
 		    ((ha->addl_fw_state &
-				    FW_ADDSTATE_DHCPv4_LEASE_ACQUIRED) == 0)) अणु
-			ipv4_रुको = 1;
-		पूर्ण
-		अगर (((ha->ip_config.ipv6_addl_options &
+				    FW_ADDSTATE_DHCPv4_LEASE_ACQUIRED) == 0)) {
+			ipv4_wait = 1;
+		}
+		if (((ha->ip_config.ipv6_addl_options &
 		      IPV6_ADDOPT_NEIGHBOR_DISCOVERY_ADDR_ENABLE) != 0) &&
 		    ((ha->ip_config.ipv6_link_local_state ==
 		      IP_ADDRSTATE_ACQUIRING) ||
 		     (ha->ip_config.ipv6_addr0_state ==
 		      IP_ADDRSTATE_ACQUIRING) ||
 		     (ha->ip_config.ipv6_addr1_state ==
-		      IP_ADDRSTATE_ACQUIRING))) अणु
+		      IP_ADDRSTATE_ACQUIRING))) {
 
-			ipv6_रुको = 1;
+			ipv6_wait = 1;
 
-			अगर ((ha->ip_config.ipv6_link_local_state ==
+			if ((ha->ip_config.ipv6_link_local_state ==
 			     IP_ADDRSTATE_PREFERRED) ||
 			    (ha->ip_config.ipv6_addr0_state ==
 			     IP_ADDRSTATE_PREFERRED) ||
 			    (ha->ip_config.ipv6_addr1_state ==
-			     IP_ADDRSTATE_PREFERRED)) अणु
-				DEBUG2(prपूर्णांकk(KERN_INFO "scsi%ld: %s: "
+			     IP_ADDRSTATE_PREFERRED)) {
+				DEBUG2(printk(KERN_INFO "scsi%ld: %s: "
 					      "Preferred IP configured."
 					      " Don't wait!\n", ha->host_no,
 					      __func__));
-				ipv6_रुको = 0;
-			पूर्ण
-			अगर (स_भेद(&ha->ip_config.ipv6_शेष_router_addr,
-				   ip_address, IPv6_ADDR_LEN) == 0) अणु
-				DEBUG2(prपूर्णांकk(KERN_INFO "scsi%ld: %s: "
+				ipv6_wait = 0;
+			}
+			if (memcmp(&ha->ip_config.ipv6_default_router_addr,
+				   ip_address, IPv6_ADDR_LEN) == 0) {
+				DEBUG2(printk(KERN_INFO "scsi%ld: %s: "
 					      "No Router configured. "
 					      "Don't wait!\n", ha->host_no,
 					      __func__));
-				ipv6_रुको = 0;
-			पूर्ण
-			अगर ((ha->ip_config.ipv6_शेष_router_state ==
+				ipv6_wait = 0;
+			}
+			if ((ha->ip_config.ipv6_default_router_state ==
 			     IPV6_RTRSTATE_MANUAL) &&
 			    (ha->ip_config.ipv6_link_local_state ==
 			     IP_ADDRSTATE_TENTATIVE) &&
-			    (स_भेद(&ha->ip_config.ipv6_link_local_addr,
-			     &ha->ip_config.ipv6_शेष_router_addr, 4) ==
-			     0)) अणु
-				DEBUG2(prपूर्णांकk("scsi%ld: %s: LinkLocal Router & "
+			    (memcmp(&ha->ip_config.ipv6_link_local_addr,
+			     &ha->ip_config.ipv6_default_router_addr, 4) ==
+			     0)) {
+				DEBUG2(printk("scsi%ld: %s: LinkLocal Router & "
 					"IP configured. Don't wait!\n",
 					ha->host_no, __func__));
-				ipv6_रुको = 0;
-			पूर्ण
-		पूर्ण
-		अगर (ipv4_रुको || ipv6_रुको) अणु
-			DEBUG2(prपूर्णांकk("scsi%ld: %s: Wait for additional "
+				ipv6_wait = 0;
+			}
+		}
+		if (ipv4_wait || ipv6_wait) {
+			DEBUG2(printk("scsi%ld: %s: Wait for additional "
 				      "IP(s) \"", ha->host_no, __func__));
-			अगर (ipv4_रुको)
-				DEBUG2(prपूर्णांकk("IPv4 "));
-			अगर (ha->ip_config.ipv6_link_local_state ==
+			if (ipv4_wait)
+				DEBUG2(printk("IPv4 "));
+			if (ha->ip_config.ipv6_link_local_state ==
 			    IP_ADDRSTATE_ACQUIRING)
-				DEBUG2(prपूर्णांकk("IPv6LinkLocal "));
-			अगर (ha->ip_config.ipv6_addr0_state ==
+				DEBUG2(printk("IPv6LinkLocal "));
+			if (ha->ip_config.ipv6_addr0_state ==
 			    IP_ADDRSTATE_ACQUIRING)
-				DEBUG2(prपूर्णांकk("IPv6Addr0 "));
-			अगर (ha->ip_config.ipv6_addr1_state ==
+				DEBUG2(printk("IPv6Addr0 "));
+			if (ha->ip_config.ipv6_addr1_state ==
 			    IP_ADDRSTATE_ACQUIRING)
-				DEBUG2(prपूर्णांकk("IPv6Addr1 "));
-			DEBUG2(prपूर्णांकk("\"\n"));
-		पूर्ण
-	पूर्ण
+				DEBUG2(printk("IPv6Addr1 "));
+			DEBUG2(printk("\"\n"));
+		}
+	}
 
-	वापस ipv4_रुको|ipv6_रुको;
-पूर्ण
+	return ipv4_wait|ipv6_wait;
+}
 
-अटल पूर्णांक qla4_80xx_is_minidump_dma_capable(काष्ठा scsi_qla_host *ha,
-		काष्ठा qla4_8xxx_minidump_ढाँचा_hdr *md_hdr)
-अणु
-	पूर्णांक offset = (is_qla8022(ha)) ? QLA8022_TEMPLATE_CAP_OFFSET :
+static int qla4_80xx_is_minidump_dma_capable(struct scsi_qla_host *ha,
+		struct qla4_8xxx_minidump_template_hdr *md_hdr)
+{
+	int offset = (is_qla8022(ha)) ? QLA8022_TEMPLATE_CAP_OFFSET :
 					QLA83XX_TEMPLATE_CAP_OFFSET;
-	पूर्णांक rval = 1;
-	uपूर्णांक32_t *cap_offset;
+	int rval = 1;
+	uint32_t *cap_offset;
 
-	cap_offset = (uपूर्णांक32_t *)((अक्षर *)md_hdr + offset);
+	cap_offset = (uint32_t *)((char *)md_hdr + offset);
 
-	अगर (!(le32_to_cpu(*cap_offset) & BIT_0)) अणु
-		ql4_prपूर्णांकk(KERN_INFO, ha, "PEX DMA Not supported %d\n",
+	if (!(le32_to_cpu(*cap_offset) & BIT_0)) {
+		ql4_printk(KERN_INFO, ha, "PEX DMA Not supported %d\n",
 			   *cap_offset);
 		rval = 0;
-	पूर्ण
+	}
 
-	वापस rval;
-पूर्ण
+	return rval;
+}
 
 /**
- * qla4xxx_alloc_fw_dump - Allocate memory क्रम minidump data.
- * @ha: poपूर्णांकer to host adapter काष्ठाure.
+ * qla4xxx_alloc_fw_dump - Allocate memory for minidump data.
+ * @ha: pointer to host adapter structure.
  **/
-व्योम qla4xxx_alloc_fw_dump(काष्ठा scsi_qla_host *ha)
-अणु
-	पूर्णांक status;
-	uपूर्णांक32_t capture_debug_level;
-	पूर्णांक hdr_entry_bit, k;
-	व्योम *md_पंचांगp;
-	dma_addr_t md_पंचांगp_dma;
-	काष्ठा qla4_8xxx_minidump_ढाँचा_hdr *md_hdr;
-	पूर्णांक dma_capable;
+void qla4xxx_alloc_fw_dump(struct scsi_qla_host *ha)
+{
+	int status;
+	uint32_t capture_debug_level;
+	int hdr_entry_bit, k;
+	void *md_tmp;
+	dma_addr_t md_tmp_dma;
+	struct qla4_8xxx_minidump_template_hdr *md_hdr;
+	int dma_capable;
 
-	अगर (ha->fw_dump) अणु
-		ql4_prपूर्णांकk(KERN_WARNING, ha,
+	if (ha->fw_dump) {
+		ql4_printk(KERN_WARNING, ha,
 			   "Firmware dump previously allocated.\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	status = qla4xxx_req_ढाँचा_size(ha);
-	अगर (status != QLA_SUCCESS) अणु
-		ql4_prपूर्णांकk(KERN_INFO, ha,
+	status = qla4xxx_req_template_size(ha);
+	if (status != QLA_SUCCESS) {
+		ql4_printk(KERN_INFO, ha,
 			   "scsi%ld: Failed to get template size\n",
 			   ha->host_no);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	clear_bit(AF_82XX_FW_DUMPED, &ha->flags);
 
-	/* Allocate memory क्रम saving the ढाँचा */
-	md_पंचांगp = dma_alloc_coherent(&ha->pdev->dev, ha->fw_dump_पंचांगplt_size,
-				    &md_पंचांगp_dma, GFP_KERNEL);
-	अगर (!md_पंचांगp) अणु
-		ql4_prपूर्णांकk(KERN_INFO, ha,
+	/* Allocate memory for saving the template */
+	md_tmp = dma_alloc_coherent(&ha->pdev->dev, ha->fw_dump_tmplt_size,
+				    &md_tmp_dma, GFP_KERNEL);
+	if (!md_tmp) {
+		ql4_printk(KERN_INFO, ha,
 			   "scsi%ld: Failed to allocate DMA memory\n",
 			   ha->host_no);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* Request ढाँचा */
-	status =  qla4xxx_get_minidump_ढाँचा(ha, md_पंचांगp_dma);
-	अगर (status != QLA_SUCCESS) अणु
-		ql4_prपूर्णांकk(KERN_INFO, ha,
+	/* Request template */
+	status =  qla4xxx_get_minidump_template(ha, md_tmp_dma);
+	if (status != QLA_SUCCESS) {
+		ql4_printk(KERN_INFO, ha,
 			   "scsi%ld: Failed to get minidump template\n",
 			   ha->host_no);
-		जाओ alloc_cleanup;
-	पूर्ण
+		goto alloc_cleanup;
+	}
 
-	md_hdr = (काष्ठा qla4_8xxx_minidump_ढाँचा_hdr *)md_पंचांगp;
+	md_hdr = (struct qla4_8xxx_minidump_template_hdr *)md_tmp;
 
 	dma_capable = qla4_80xx_is_minidump_dma_capable(ha, md_hdr);
 
 	capture_debug_level = md_hdr->capture_debug_level;
 
-	/* Get capture mask based on module loadसमय setting. */
-	अगर ((ql4xmdcapmask >= 0x3 && ql4xmdcapmask <= 0x7F) ||
-	    (ql4xmdcapmask == 0xFF && dma_capable))  अणु
+	/* Get capture mask based on module loadtime setting. */
+	if ((ql4xmdcapmask >= 0x3 && ql4xmdcapmask <= 0x7F) ||
+	    (ql4xmdcapmask == 0xFF && dma_capable))  {
 		ha->fw_dump_capture_mask = ql4xmdcapmask;
-	पूर्ण अन्यथा अणु
-		अगर (ql4xmdcapmask == 0xFF)
-			ql4_prपूर्णांकk(KERN_INFO, ha, "Falling back to default capture mask, as PEX DMA is not supported\n");
+	} else {
+		if (ql4xmdcapmask == 0xFF)
+			ql4_printk(KERN_INFO, ha, "Falling back to default capture mask, as PEX DMA is not supported\n");
 		ha->fw_dump_capture_mask = capture_debug_level;
-	पूर्ण
+	}
 
 	md_hdr->driver_capture_mask = ha->fw_dump_capture_mask;
 
-	DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha, "Minimum num of entries = %d\n",
+	DEBUG2(ql4_printk(KERN_INFO, ha, "Minimum num of entries = %d\n",
 			  md_hdr->num_of_entries));
-	DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha, "Dump template size  = %d\n",
-			  ha->fw_dump_पंचांगplt_size));
-	DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha, "Selected Capture mask =0x%x\n",
+	DEBUG2(ql4_printk(KERN_INFO, ha, "Dump template size  = %d\n",
+			  ha->fw_dump_tmplt_size));
+	DEBUG2(ql4_printk(KERN_INFO, ha, "Selected Capture mask =0x%x\n",
 			  ha->fw_dump_capture_mask));
 
 	/* Calculate fw_dump_size */
-	क्रम (hdr_entry_bit = 0x2, k = 1; (hdr_entry_bit & 0xFF);
-	     hdr_entry_bit <<= 1, k++) अणु
-		अगर (hdr_entry_bit & ha->fw_dump_capture_mask)
+	for (hdr_entry_bit = 0x2, k = 1; (hdr_entry_bit & 0xFF);
+	     hdr_entry_bit <<= 1, k++) {
+		if (hdr_entry_bit & ha->fw_dump_capture_mask)
 			ha->fw_dump_size += md_hdr->capture_size_array[k];
-	पूर्ण
+	}
 
 	/* Total firmware dump size including command header */
-	ha->fw_dump_size += ha->fw_dump_पंचांगplt_size;
-	ha->fw_dump = vदो_स्मृति(ha->fw_dump_size);
-	अगर (!ha->fw_dump)
-		जाओ alloc_cleanup;
+	ha->fw_dump_size += ha->fw_dump_tmplt_size;
+	ha->fw_dump = vmalloc(ha->fw_dump_size);
+	if (!ha->fw_dump)
+		goto alloc_cleanup;
 
-	DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha,
+	DEBUG2(ql4_printk(KERN_INFO, ha,
 			  "Minidump Template Size = 0x%x KB\n",
-			  ha->fw_dump_पंचांगplt_size));
-	DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha,
+			  ha->fw_dump_tmplt_size));
+	DEBUG2(ql4_printk(KERN_INFO, ha,
 			  "Total Minidump size = 0x%x KB\n", ha->fw_dump_size));
 
-	स_नकल(ha->fw_dump, md_पंचांगp, ha->fw_dump_पंचांगplt_size);
-	ha->fw_dump_पंचांगplt_hdr = ha->fw_dump;
+	memcpy(ha->fw_dump, md_tmp, ha->fw_dump_tmplt_size);
+	ha->fw_dump_tmplt_hdr = ha->fw_dump;
 
 alloc_cleanup:
-	dma_मुक्त_coherent(&ha->pdev->dev, ha->fw_dump_पंचांगplt_size,
-			  md_पंचांगp, md_पंचांगp_dma);
-पूर्ण
+	dma_free_coherent(&ha->pdev->dev, ha->fw_dump_tmplt_size,
+			  md_tmp, md_tmp_dma);
+}
 
-अटल पूर्णांक qla4xxx_fw_पढ़ोy(काष्ठा scsi_qla_host *ha)
-अणु
-	uपूर्णांक32_t समयout_count;
-	पूर्णांक पढ़ोy = 0;
+static int qla4xxx_fw_ready(struct scsi_qla_host *ha)
+{
+	uint32_t timeout_count;
+	int ready = 0;
 
-	DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha, "Waiting for Firmware Ready..\n"));
-	क्रम (समयout_count = ADAPTER_INIT_TOV; समयout_count > 0;
-	     समयout_count--) अणु
-		अगर (test_and_clear_bit(DPC_GET_DHCP_IP_ADDR, &ha->dpc_flags))
+	DEBUG2(ql4_printk(KERN_INFO, ha, "Waiting for Firmware Ready..\n"));
+	for (timeout_count = ADAPTER_INIT_TOV; timeout_count > 0;
+	     timeout_count--) {
+		if (test_and_clear_bit(DPC_GET_DHCP_IP_ADDR, &ha->dpc_flags))
 			qla4xxx_get_dhcp_ip_address(ha);
 
 		/* Get firmware state. */
-		अगर (qla4xxx_get_firmware_state(ha) != QLA_SUCCESS) अणु
-			DEBUG2(prपूर्णांकk("scsi%ld: %s: unable to get firmware "
+		if (qla4xxx_get_firmware_state(ha) != QLA_SUCCESS) {
+			DEBUG2(printk("scsi%ld: %s: unable to get firmware "
 				      "state\n", ha->host_no, __func__));
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (ha->firmware_state & FW_STATE_ERROR) अणु
-			DEBUG2(prपूर्णांकk("scsi%ld: %s: an unrecoverable error has"
+		if (ha->firmware_state & FW_STATE_ERROR) {
+			DEBUG2(printk("scsi%ld: %s: an unrecoverable error has"
 				      " occurred\n", ha->host_no, __func__));
-			अवरोध;
+			break;
 
-		पूर्ण
-		अगर (ha->firmware_state & FW_STATE_CONFIG_WAIT) अणु
+		}
+		if (ha->firmware_state & FW_STATE_CONFIG_WAIT) {
 			/*
 			 * The firmware has not yet been issued an Initialize
 			 * Firmware command, so issue it now.
 			 */
-			अगर (qla4xxx_initialize_fw_cb(ha) == QLA_ERROR)
-				अवरोध;
+			if (qla4xxx_initialize_fw_cb(ha) == QLA_ERROR)
+				break;
 
-			/* Go back and test क्रम पढ़ोy state - no रुको. */
-			जारी;
-		पूर्ण
+			/* Go back and test for ready state - no wait. */
+			continue;
+		}
 
-		अगर (ha->firmware_state & FW_STATE_WAIT_AUTOCONNECT) अणु
-			DEBUG2(prपूर्णांकk(KERN_INFO "scsi%ld: %s: fwstate:"
+		if (ha->firmware_state & FW_STATE_WAIT_AUTOCONNECT) {
+			DEBUG2(printk(KERN_INFO "scsi%ld: %s: fwstate:"
 				      "AUTOCONNECT in progress\n",
 				      ha->host_no, __func__));
-		पूर्ण
+		}
 
-		अगर (ha->firmware_state & FW_STATE_CONFIGURING_IP) अणु
-			DEBUG2(prपूर्णांकk(KERN_INFO "scsi%ld: %s: fwstate:"
+		if (ha->firmware_state & FW_STATE_CONFIGURING_IP) {
+			DEBUG2(printk(KERN_INFO "scsi%ld: %s: fwstate:"
 				      " CONFIGURING IP\n",
 				      ha->host_no, __func__));
 			/*
-			 * Check क्रम link state after 15 secs and अगर link is
+			 * Check for link state after 15 secs and if link is
 			 * still DOWN then, cable is unplugged. Ignore "DHCP
-			 * in Progress/CONFIGURING IP" bit to check अगर firmware
-			 * is in पढ़ोy state or not after 15 secs.
-			 * This is applicable क्रम both 2.x & 3.x firmware
+			 * in Progress/CONFIGURING IP" bit to check if firmware
+			 * is in ready state or not after 15 secs.
+			 * This is applicable for both 2.x & 3.x firmware
 			 */
-			अगर (समयout_count <= (ADAPTER_INIT_TOV - 15)) अणु
-				अगर (ha->addl_fw_state & FW_ADDSTATE_LINK_UP) अणु
-					DEBUG2(prपूर्णांकk(KERN_INFO "scsi%ld: %s:"
+			if (timeout_count <= (ADAPTER_INIT_TOV - 15)) {
+				if (ha->addl_fw_state & FW_ADDSTATE_LINK_UP) {
+					DEBUG2(printk(KERN_INFO "scsi%ld: %s:"
 						  " LINK UP (Cable plugged)\n",
 						  ha->host_no, __func__));
-				पूर्ण अन्यथा अगर (ha->firmware_state &
+				} else if (ha->firmware_state &
 					  (FW_STATE_CONFIGURING_IP |
-							     FW_STATE_READY)) अणु
-					DEBUG2(prपूर्णांकk(KERN_INFO "scsi%ld: %s: "
+							     FW_STATE_READY)) {
+					DEBUG2(printk(KERN_INFO "scsi%ld: %s: "
 						"LINK DOWN (Cable unplugged)\n",
 						ha->host_no, __func__));
 					ha->firmware_state = FW_STATE_READY;
-				पूर्ण
-			पूर्ण
-		पूर्ण
+				}
+			}
+		}
 
-		अगर (ha->firmware_state == FW_STATE_READY) अणु
+		if (ha->firmware_state == FW_STATE_READY) {
 			/* If DHCP IP Addr is available, retrieve it now. */
-			अगर (test_and_clear_bit(DPC_GET_DHCP_IP_ADDR,
+			if (test_and_clear_bit(DPC_GET_DHCP_IP_ADDR,
 								&ha->dpc_flags))
 				qla4xxx_get_dhcp_ip_address(ha);
 
-			अगर (!qla4xxx_रुको_क्रम_ip_config(ha) ||
-							समयout_count == 1) अणु
-				DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha,
+			if (!qla4xxx_wait_for_ip_config(ha) ||
+							timeout_count == 1) {
+				DEBUG2(ql4_printk(KERN_INFO, ha,
 				    "Firmware Ready..\n"));
-				/* The firmware is पढ़ोy to process SCSI
+				/* The firmware is ready to process SCSI
 				   commands. */
-				DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha,
+				DEBUG2(ql4_printk(KERN_INFO, ha,
 					"scsi%ld: %s: MEDIA TYPE"
 					" - %s\n", ha->host_no,
 					__func__, (ha->addl_fw_state &
 					FW_ADDSTATE_OPTICAL_MEDIA)
 					!= 0 ? "OPTICAL" : "COPPER"));
-				DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha,
+				DEBUG2(ql4_printk(KERN_INFO, ha,
 					"scsi%ld: %s: DHCPv4 STATE"
 					" Enabled %s\n", ha->host_no,
 					 __func__, (ha->addl_fw_state &
 					 FW_ADDSTATE_DHCPv4_ENABLED) != 0 ?
 					"YES" : "NO"));
-				DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha,
+				DEBUG2(ql4_printk(KERN_INFO, ha,
 					"scsi%ld: %s: LINK %s\n",
 					ha->host_no, __func__,
 					(ha->addl_fw_state &
 					 FW_ADDSTATE_LINK_UP) != 0 ?
 					"UP" : "DOWN"));
-				DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha,
+				DEBUG2(ql4_printk(KERN_INFO, ha,
 					"scsi%ld: %s: iSNS Service "
 					"Started %s\n",
 					ha->host_no, __func__,
@@ -506,342 +505,342 @@ alloc_cleanup:
 					 FW_ADDSTATE_ISNS_SVC_ENABLED) != 0 ?
 					"YES" : "NO"));
 
-				पढ़ोy = 1;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		DEBUG2(prपूर्णांकk("scsi%ld: %s: waiting on fw, state=%x:%x - "
+				ready = 1;
+				break;
+			}
+		}
+		DEBUG2(printk("scsi%ld: %s: waiting on fw, state=%x:%x - "
 			      "seconds expired= %d\n", ha->host_no, __func__,
 			      ha->firmware_state, ha->addl_fw_state,
-			      समयout_count));
-		अगर (is_qla4032(ha) &&
+			      timeout_count));
+		if (is_qla4032(ha) &&
 			!(ha->addl_fw_state & FW_ADDSTATE_LINK_UP) &&
-			(समयout_count < ADAPTER_INIT_TOV - 5)) अणु
-			अवरोध;
-		पूर्ण
+			(timeout_count < ADAPTER_INIT_TOV - 5)) {
+			break;
+		}
 
 		msleep(1000);
-	पूर्ण			/* end of क्रम */
+	}			/* end of for */
 
-	अगर (समयout_count <= 0)
-		DEBUG2(prपूर्णांकk("scsi%ld: %s: FW Initialization timed out!\n",
+	if (timeout_count <= 0)
+		DEBUG2(printk("scsi%ld: %s: FW Initialization timed out!\n",
 			      ha->host_no, __func__));
 
-	अगर (ha->firmware_state & FW_STATE_CONFIGURING_IP) अणु
-		DEBUG2(prपूर्णांकk("scsi%ld: %s: FW initialized, but is reporting "
+	if (ha->firmware_state & FW_STATE_CONFIGURING_IP) {
+		DEBUG2(printk("scsi%ld: %s: FW initialized, but is reporting "
 			      "it's waiting to configure an IP address\n",
 			       ha->host_no, __func__));
-		पढ़ोy = 1;
-	पूर्ण अन्यथा अगर (ha->firmware_state & FW_STATE_WAIT_AUTOCONNECT) अणु
-		DEBUG2(prपूर्णांकk("scsi%ld: %s: FW initialized, but "
+		ready = 1;
+	} else if (ha->firmware_state & FW_STATE_WAIT_AUTOCONNECT) {
+		DEBUG2(printk("scsi%ld: %s: FW initialized, but "
 			      "auto-discovery still in process\n",
 			       ha->host_no, __func__));
-		पढ़ोy = 1;
-	पूर्ण
+		ready = 1;
+	}
 
-	वापस पढ़ोy;
-पूर्ण
+	return ready;
+}
 
 /**
  * qla4xxx_init_firmware - initializes the firmware.
- * @ha: poपूर्णांकer to host adapter काष्ठाure.
+ * @ha: pointer to host adapter structure.
  *
  **/
-अटल पूर्णांक qla4xxx_init_firmware(काष्ठा scsi_qla_host *ha)
-अणु
-	पूर्णांक status = QLA_ERROR;
+static int qla4xxx_init_firmware(struct scsi_qla_host *ha)
+{
+	int status = QLA_ERROR;
 
-	अगर (is_aer_supported(ha) &&
+	if (is_aer_supported(ha) &&
 	    test_bit(AF_PCI_CHANNEL_IO_PERM_FAILURE, &ha->flags))
-		वापस status;
+		return status;
 
-	/* For 82xx, stop firmware beक्रमe initializing because अगर BIOS
+	/* For 82xx, stop firmware before initializing because if BIOS
 	 * has previously initialized firmware, then driver's initialize
 	 * firmware will fail. */
-	अगर (is_qla80XX(ha))
+	if (is_qla80XX(ha))
 		qla4_8xxx_stop_firmware(ha);
 
-	ql4_prपूर्णांकk(KERN_INFO, ha, "Initializing firmware..\n");
-	अगर (qla4xxx_initialize_fw_cb(ha) == QLA_ERROR) अणु
-		DEBUG2(prपूर्णांकk("scsi%ld: %s: Failed to initialize firmware "
+	ql4_printk(KERN_INFO, ha, "Initializing firmware..\n");
+	if (qla4xxx_initialize_fw_cb(ha) == QLA_ERROR) {
+		DEBUG2(printk("scsi%ld: %s: Failed to initialize firmware "
 			      "control block\n", ha->host_no, __func__));
-		वापस status;
-	पूर्ण
+		return status;
+	}
 
-	अगर (!qla4xxx_fw_पढ़ोy(ha))
-		वापस status;
+	if (!qla4xxx_fw_ready(ha))
+		return status;
 
-	अगर (is_qla80XX(ha) && !test_bit(AF_INIT_DONE, &ha->flags))
+	if (is_qla80XX(ha) && !test_bit(AF_INIT_DONE, &ha->flags))
 		qla4xxx_alloc_fw_dump(ha);
 
-	वापस qla4xxx_get_firmware_status(ha);
-पूर्ण
+	return qla4xxx_get_firmware_status(ha);
+}
 
-अटल व्योम qla4xxx_set_model_info(काष्ठा scsi_qla_host *ha)
-अणु
-	uपूर्णांक16_t board_id_string[8];
-	पूर्णांक i;
-	पूर्णांक size = माप(ha->nvram->isp4022.boardIdStr);
-	पूर्णांक offset = दुरत्व(काष्ठा eeprom_data, isp4022.boardIdStr) / 2;
+static void qla4xxx_set_model_info(struct scsi_qla_host *ha)
+{
+	uint16_t board_id_string[8];
+	int i;
+	int size = sizeof(ha->nvram->isp4022.boardIdStr);
+	int offset = offsetof(struct eeprom_data, isp4022.boardIdStr) / 2;
 
-	क्रम (i = 0; i < (size / 2) ; i++) अणु
+	for (i = 0; i < (size / 2) ; i++) {
 		board_id_string[i] = rd_nvram_word(ha, offset);
 		offset += 1;
-	पूर्ण
+	}
 
-	स_नकल(ha->model_name, board_id_string, size);
-पूर्ण
+	memcpy(ha->model_name, board_id_string, size);
+}
 
-अटल पूर्णांक qla4xxx_config_nvram(काष्ठा scsi_qla_host *ha)
-अणु
-	अचिन्हित दीर्घ flags;
-	जोड़ बाह्यal_hw_config_reg extHwConfig;
+static int qla4xxx_config_nvram(struct scsi_qla_host *ha)
+{
+	unsigned long flags;
+	union external_hw_config_reg extHwConfig;
 
-	DEBUG2(prपूर्णांकk("scsi%ld: %s: Get EEProm parameters \n", ha->host_no,
+	DEBUG2(printk("scsi%ld: %s: Get EEProm parameters \n", ha->host_no,
 		      __func__));
-	अगर (ql4xxx_lock_flash(ha) != QLA_SUCCESS)
-		वापस QLA_ERROR;
-	अगर (ql4xxx_lock_nvram(ha) != QLA_SUCCESS) अणु
+	if (ql4xxx_lock_flash(ha) != QLA_SUCCESS)
+		return QLA_ERROR;
+	if (ql4xxx_lock_nvram(ha) != QLA_SUCCESS) {
 		ql4xxx_unlock_flash(ha);
-		वापस QLA_ERROR;
-	पूर्ण
+		return QLA_ERROR;
+	}
 
 	/* Get EEPRom Parameters from NVRAM and validate */
-	ql4_prपूर्णांकk(KERN_INFO, ha, "Configuring NVRAM ...\n");
-	अगर (qla4xxx_is_nvram_configuration_valid(ha) == QLA_SUCCESS) अणु
+	ql4_printk(KERN_INFO, ha, "Configuring NVRAM ...\n");
+	if (qla4xxx_is_nvram_configuration_valid(ha) == QLA_SUCCESS) {
 		spin_lock_irqsave(&ha->hardware_lock, flags);
-		extHwConfig.Asuपूर्णांक32_t =
+		extHwConfig.Asuint32_t =
 			rd_nvram_word(ha, eeprom_ext_hw_conf_offset(ha));
 		spin_unlock_irqrestore(&ha->hardware_lock, flags);
-	पूर्ण अन्यथा अणु
-		ql4_prपूर्णांकk(KERN_WARNING, ha,
+	} else {
+		ql4_printk(KERN_WARNING, ha,
 		    "scsi%ld: %s: EEProm checksum invalid.  "
 		    "Please update your EEPROM\n", ha->host_no,
 		    __func__);
 
-		/* Attempt to set शेषs */
-		अगर (is_qla4010(ha))
-			extHwConfig.Asuपूर्णांक32_t = 0x1912;
-		अन्यथा अगर (is_qla4022(ha) | is_qla4032(ha))
-			extHwConfig.Asuपूर्णांक32_t = 0x0023;
-		अन्यथा
-			वापस QLA_ERROR;
-	पूर्ण
+		/* Attempt to set defaults */
+		if (is_qla4010(ha))
+			extHwConfig.Asuint32_t = 0x1912;
+		else if (is_qla4022(ha) | is_qla4032(ha))
+			extHwConfig.Asuint32_t = 0x0023;
+		else
+			return QLA_ERROR;
+	}
 
-	अगर (is_qla4022(ha) || is_qla4032(ha))
+	if (is_qla4022(ha) || is_qla4032(ha))
 		qla4xxx_set_model_info(ha);
-	अन्यथा
-		म_नकल(ha->model_name, "QLA4010");
+	else
+		strcpy(ha->model_name, "QLA4010");
 
-	DEBUG(prपूर्णांकk("scsi%ld: %s: Setting extHwConfig to 0xFFFF%04x\n",
-		     ha->host_no, __func__, extHwConfig.Asuपूर्णांक32_t));
+	DEBUG(printk("scsi%ld: %s: Setting extHwConfig to 0xFFFF%04x\n",
+		     ha->host_no, __func__, extHwConfig.Asuint32_t));
 
 	spin_lock_irqsave(&ha->hardware_lock, flags);
-	ग_लिखोl((0xFFFF << 16) | extHwConfig.Asuपूर्णांक32_t, isp_ext_hw_conf(ha));
-	पढ़ोl(isp_ext_hw_conf(ha));
+	writel((0xFFFF << 16) | extHwConfig.Asuint32_t, isp_ext_hw_conf(ha));
+	readl(isp_ext_hw_conf(ha));
 	spin_unlock_irqrestore(&ha->hardware_lock, flags);
 
 	ql4xxx_unlock_nvram(ha);
 	ql4xxx_unlock_flash(ha);
 
-	वापस QLA_SUCCESS;
-पूर्ण
+	return QLA_SUCCESS;
+}
 
 /**
- * qla4_8xxx_pci_config() - Setup ISP82xx PCI configuration रेजिस्टरs.
+ * qla4_8xxx_pci_config() - Setup ISP82xx PCI configuration registers.
  * @ha: HA context
  */
-व्योम qla4_8xxx_pci_config(काष्ठा scsi_qla_host *ha)
-अणु
+void qla4_8xxx_pci_config(struct scsi_qla_host *ha)
+{
 	pci_set_master(ha->pdev);
-पूर्ण
+}
 
-व्योम qla4xxx_pci_config(काष्ठा scsi_qla_host *ha)
-अणु
-	uपूर्णांक16_t w;
-	पूर्णांक status;
+void qla4xxx_pci_config(struct scsi_qla_host *ha)
+{
+	uint16_t w;
+	int status;
 
-	ql4_prपूर्णांकk(KERN_INFO, ha, "Configuring PCI space...\n");
+	ql4_printk(KERN_INFO, ha, "Configuring PCI space...\n");
 
 	pci_set_master(ha->pdev);
 	status = pci_set_mwi(ha->pdev);
-	अगर (status)
-		ql4_prपूर्णांकk(KERN_WARNING, ha, "Failed to set MWI\n");
+	if (status)
+		ql4_printk(KERN_WARNING, ha, "Failed to set MWI\n");
 
 	/*
 	 * We want to respect framework's setting of PCI configuration space
-	 * command रेजिस्टर and also want to make sure that all bits of
-	 * पूर्णांकerest to us are properly set in command रेजिस्टर.
+	 * command register and also want to make sure that all bits of
+	 * interest to us are properly set in command register.
 	 */
-	pci_पढ़ो_config_word(ha->pdev, PCI_COMMAND, &w);
+	pci_read_config_word(ha->pdev, PCI_COMMAND, &w);
 	w |= PCI_COMMAND_PARITY | PCI_COMMAND_SERR;
 	w &= ~PCI_COMMAND_INTX_DISABLE;
-	pci_ग_लिखो_config_word(ha->pdev, PCI_COMMAND, w);
-पूर्ण
+	pci_write_config_word(ha->pdev, PCI_COMMAND, w);
+}
 
-अटल पूर्णांक qla4xxx_start_firmware_from_flash(काष्ठा scsi_qla_host *ha)
-अणु
-	पूर्णांक status = QLA_ERROR;
-	अचिन्हित दीर्घ max_रुको_समय;
-	अचिन्हित दीर्घ flags;
-	uपूर्णांक32_t mbox_status;
+static int qla4xxx_start_firmware_from_flash(struct scsi_qla_host *ha)
+{
+	int status = QLA_ERROR;
+	unsigned long max_wait_time;
+	unsigned long flags;
+	uint32_t mbox_status;
 
-	ql4_prपूर्णांकk(KERN_INFO, ha, "Starting firmware ...\n");
+	ql4_printk(KERN_INFO, ha, "Starting firmware ...\n");
 
 	/*
 	 * Start firmware from flash ROM
 	 *
-	 * WORKAROUND: Stuff a non-स्थिरant value that the firmware can
-	 * use as a seed क्रम a अक्रमom number generator in MB7 prior to
+	 * WORKAROUND: Stuff a non-constant value that the firmware can
+	 * use as a seed for a random number generator in MB7 prior to
 	 * setting BOOT_ENABLE.	 Fixes problem where the TCP
 	 * connections use the same TCP ports after each reboot,
 	 * causing some connections to not get re-established.
 	 */
-	DEBUG(prपूर्णांकk("scsi%d: %s: Start firmware from flash ROM\n",
+	DEBUG(printk("scsi%d: %s: Start firmware from flash ROM\n",
 		     ha->host_no, __func__));
 
 	spin_lock_irqsave(&ha->hardware_lock, flags);
-	ग_लिखोl(jअगरfies, &ha->reg->mailbox[7]);
-	अगर (is_qla4022(ha) | is_qla4032(ha))
-		ग_लिखोl(set_rmask(NVR_WRITE_ENABLE),
+	writel(jiffies, &ha->reg->mailbox[7]);
+	if (is_qla4022(ha) | is_qla4032(ha))
+		writel(set_rmask(NVR_WRITE_ENABLE),
 		       &ha->reg->u1.isp4022.nvram);
 
-        ग_लिखोl(2, &ha->reg->mailbox[6]);
-        पढ़ोl(&ha->reg->mailbox[6]);
+        writel(2, &ha->reg->mailbox[6]);
+        readl(&ha->reg->mailbox[6]);
 
-	ग_लिखोl(set_rmask(CSR_BOOT_ENABLE), &ha->reg->ctrl_status);
-	पढ़ोl(&ha->reg->ctrl_status);
+	writel(set_rmask(CSR_BOOT_ENABLE), &ha->reg->ctrl_status);
+	readl(&ha->reg->ctrl_status);
 	spin_unlock_irqrestore(&ha->hardware_lock, flags);
 
-	/* Wait क्रम firmware to come UP. */
-	DEBUG2(prपूर्णांकk(KERN_INFO "scsi%ld: %s: Wait up to %d seconds for "
+	/* Wait for firmware to come UP. */
+	DEBUG2(printk(KERN_INFO "scsi%ld: %s: Wait up to %d seconds for "
 		      "boot firmware to complete...\n",
 		      ha->host_no, __func__, FIRMWARE_UP_TOV));
-	max_रुको_समय = jअगरfies + (FIRMWARE_UP_TOV * HZ);
-	करो अणु
-		uपूर्णांक32_t ctrl_status;
+	max_wait_time = jiffies + (FIRMWARE_UP_TOV * HZ);
+	do {
+		uint32_t ctrl_status;
 
 		spin_lock_irqsave(&ha->hardware_lock, flags);
-		ctrl_status = पढ़ोw(&ha->reg->ctrl_status);
-		mbox_status = पढ़ोw(&ha->reg->mailbox[0]);
+		ctrl_status = readw(&ha->reg->ctrl_status);
+		mbox_status = readw(&ha->reg->mailbox[0]);
 		spin_unlock_irqrestore(&ha->hardware_lock, flags);
 
-		अगर (ctrl_status & set_rmask(CSR_SCSI_PROCESSOR_INTR))
-			अवरोध;
-		अगर (mbox_status == MBOX_STS_COMMAND_COMPLETE)
-			अवरोध;
+		if (ctrl_status & set_rmask(CSR_SCSI_PROCESSOR_INTR))
+			break;
+		if (mbox_status == MBOX_STS_COMMAND_COMPLETE)
+			break;
 
-		DEBUG2(prपूर्णांकk(KERN_INFO "scsi%ld: %s: Waiting for boot "
+		DEBUG2(printk(KERN_INFO "scsi%ld: %s: Waiting for boot "
 		    "firmware to complete... ctrl_sts=0x%x, remaining=%ld\n",
-		    ha->host_no, __func__, ctrl_status, max_रुको_समय));
+		    ha->host_no, __func__, ctrl_status, max_wait_time));
 
-		msleep_पूर्णांकerruptible(250);
-	पूर्ण जबतक (!समय_after_eq(jअगरfies, max_रुको_समय));
+		msleep_interruptible(250);
+	} while (!time_after_eq(jiffies, max_wait_time));
 
-	अगर (mbox_status == MBOX_STS_COMMAND_COMPLETE) अणु
-		DEBUG(prपूर्णांकk(KERN_INFO "scsi%ld: %s: Firmware has started\n",
+	if (mbox_status == MBOX_STS_COMMAND_COMPLETE) {
+		DEBUG(printk(KERN_INFO "scsi%ld: %s: Firmware has started\n",
 			     ha->host_no, __func__));
 
 		spin_lock_irqsave(&ha->hardware_lock, flags);
-		ग_लिखोl(set_rmask(CSR_SCSI_PROCESSOR_INTR),
+		writel(set_rmask(CSR_SCSI_PROCESSOR_INTR),
 		       &ha->reg->ctrl_status);
-		पढ़ोl(&ha->reg->ctrl_status);
+		readl(&ha->reg->ctrl_status);
 		spin_unlock_irqrestore(&ha->hardware_lock, flags);
 
 		status = QLA_SUCCESS;
-	पूर्ण अन्यथा अणु
-		prपूर्णांकk(KERN_INFO "scsi%ld: %s: Boot firmware failed "
+	} else {
+		printk(KERN_INFO "scsi%ld: %s: Boot firmware failed "
 		       "-  mbox status 0x%x\n", ha->host_no, __func__,
 		       mbox_status);
 		status = QLA_ERROR;
-	पूर्ण
-	वापस status;
-पूर्ण
+	}
+	return status;
+}
 
-पूर्णांक ql4xxx_lock_drvr_रुको(काष्ठा scsi_qla_host *a)
-अणु
-#घोषणा QL4_LOCK_DRVR_WAIT	60
-#घोषणा QL4_LOCK_DRVR_SLEEP	1
+int ql4xxx_lock_drvr_wait(struct scsi_qla_host *a)
+{
+#define QL4_LOCK_DRVR_WAIT	60
+#define QL4_LOCK_DRVR_SLEEP	1
 
-	पूर्णांक drvr_रुको = QL4_LOCK_DRVR_WAIT;
-	जबतक (drvr_रुको) अणु
-		अगर (ql4xxx_lock_drvr(a) == 0) अणु
+	int drvr_wait = QL4_LOCK_DRVR_WAIT;
+	while (drvr_wait) {
+		if (ql4xxx_lock_drvr(a) == 0) {
 			ssleep(QL4_LOCK_DRVR_SLEEP);
-			DEBUG2(prपूर्णांकk("scsi%ld: %s: Waiting for "
+			DEBUG2(printk("scsi%ld: %s: Waiting for "
 				      "Global Init Semaphore(%d)...\n",
 				      a->host_no,
-				      __func__, drvr_रुको));
-			drvr_रुको -= QL4_LOCK_DRVR_SLEEP;
-		पूर्ण अन्यथा अणु
-			DEBUG2(prपूर्णांकk("scsi%ld: %s: Global Init Semaphore "
+				      __func__, drvr_wait));
+			drvr_wait -= QL4_LOCK_DRVR_SLEEP;
+		} else {
+			DEBUG2(printk("scsi%ld: %s: Global Init Semaphore "
 				      "acquired\n", a->host_no, __func__));
-			वापस QLA_SUCCESS;
-		पूर्ण
-	पूर्ण
-	वापस QLA_ERROR;
-पूर्ण
+			return QLA_SUCCESS;
+		}
+	}
+	return QLA_ERROR;
+}
 
 /**
  * qla4xxx_start_firmware - starts qla4xxx firmware
- * @ha: Poपूर्णांकer to host adapter काष्ठाure.
+ * @ha: Pointer to host adapter structure.
  *
- * This routine perक्रमms the necessary steps to start the firmware क्रम
+ * This routine performs the necessary steps to start the firmware for
  * the QLA4010 adapter.
  **/
-पूर्णांक qla4xxx_start_firmware(काष्ठा scsi_qla_host *ha)
-अणु
-	अचिन्हित दीर्घ flags = 0;
-	uपूर्णांक32_t mbox_status;
-	पूर्णांक status = QLA_ERROR;
-	पूर्णांक soft_reset = 1;
-	पूर्णांक config_chip = 0;
+int qla4xxx_start_firmware(struct scsi_qla_host *ha)
+{
+	unsigned long flags = 0;
+	uint32_t mbox_status;
+	int status = QLA_ERROR;
+	int soft_reset = 1;
+	int config_chip = 0;
 
-	अगर (is_qla4022(ha) | is_qla4032(ha))
+	if (is_qla4022(ha) | is_qla4032(ha))
 		ql4xxx_set_mac_number(ha);
 
-	अगर (ql4xxx_lock_drvr_रुको(ha) != QLA_SUCCESS)
-		वापस QLA_ERROR;
+	if (ql4xxx_lock_drvr_wait(ha) != QLA_SUCCESS)
+		return QLA_ERROR;
 
 	spin_lock_irqsave(&ha->hardware_lock, flags);
 
-	DEBUG2(prपूर्णांकk("scsi%ld: %s: port_ctrl	= 0x%08X\n", ha->host_no,
-		      __func__, पढ़ोw(isp_port_ctrl(ha))));
-	DEBUG(prपूर्णांकk("scsi%ld: %s: port_status = 0x%08X\n", ha->host_no,
-		     __func__, पढ़ोw(isp_port_status(ha))));
+	DEBUG2(printk("scsi%ld: %s: port_ctrl	= 0x%08X\n", ha->host_no,
+		      __func__, readw(isp_port_ctrl(ha))));
+	DEBUG(printk("scsi%ld: %s: port_status = 0x%08X\n", ha->host_no,
+		     __func__, readw(isp_port_status(ha))));
 
-	/* Is Hardware alपढ़ोy initialized? */
-	अगर ((पढ़ोw(isp_port_ctrl(ha)) & 0x8000) != 0) अणु
-		DEBUG(prपूर्णांकk("scsi%ld: %s: Hardware has already been "
+	/* Is Hardware already initialized? */
+	if ((readw(isp_port_ctrl(ha)) & 0x8000) != 0) {
+		DEBUG(printk("scsi%ld: %s: Hardware has already been "
 			     "initialized\n", ha->host_no, __func__));
 
 		/* Receive firmware boot acknowledgement */
-		mbox_status = पढ़ोw(&ha->reg->mailbox[0]);
+		mbox_status = readw(&ha->reg->mailbox[0]);
 
-		DEBUG2(prपूर्णांकk("scsi%ld: %s: H/W Config complete - mbox[0]= "
+		DEBUG2(printk("scsi%ld: %s: H/W Config complete - mbox[0]= "
 			      "0x%x\n", ha->host_no, __func__, mbox_status));
 
-		/* Is firmware alपढ़ोy booted? */
-		अगर (mbox_status == 0) अणु
+		/* Is firmware already booted? */
+		if (mbox_status == 0) {
 			/* F/W not running, must be config by net driver */
 			config_chip = 1;
 			soft_reset = 0;
-		पूर्ण अन्यथा अणु
-			ग_लिखोl(set_rmask(CSR_SCSI_PROCESSOR_INTR),
+		} else {
+			writel(set_rmask(CSR_SCSI_PROCESSOR_INTR),
 			       &ha->reg->ctrl_status);
-			पढ़ोl(&ha->reg->ctrl_status);
-			ग_लिखोl(set_rmask(CSR_SCSI_COMPLETION_INTR),
+			readl(&ha->reg->ctrl_status);
+			writel(set_rmask(CSR_SCSI_COMPLETION_INTR),
 			       &ha->reg->ctrl_status);
-			पढ़ोl(&ha->reg->ctrl_status);
+			readl(&ha->reg->ctrl_status);
 			spin_unlock_irqrestore(&ha->hardware_lock, flags);
-			अगर (qla4xxx_get_firmware_state(ha) == QLA_SUCCESS) अणु
-				DEBUG2(prपूर्णांकk("scsi%ld: %s: Get firmware "
+			if (qla4xxx_get_firmware_state(ha) == QLA_SUCCESS) {
+				DEBUG2(printk("scsi%ld: %s: Get firmware "
 					      "state -- state = 0x%x\n",
 					      ha->host_no,
 					      __func__, ha->firmware_state));
 				/* F/W is running */
-				अगर (ha->firmware_state &
-				    FW_STATE_CONFIG_WAIT) अणु
-					DEBUG2(prपूर्णांकk("scsi%ld: %s: Firmware "
+				if (ha->firmware_state &
+				    FW_STATE_CONFIG_WAIT) {
+					DEBUG2(printk("scsi%ld: %s: Firmware "
 						      "in known state -- "
 						      "config and "
 						      "boot, state = 0x%x\n",
@@ -849,191 +848,191 @@ alloc_cleanup:
 						      ha->firmware_state));
 					config_chip = 1;
 					soft_reset = 0;
-				पूर्ण
-			पूर्ण अन्यथा अणु
-				DEBUG2(prपूर्णांकk("scsi%ld: %s: Firmware in "
+				}
+			} else {
+				DEBUG2(printk("scsi%ld: %s: Firmware in "
 					      "unknown state -- resetting,"
 					      " state = "
 					      "0x%x\n", ha->host_no, __func__,
 					      ha->firmware_state));
-			पूर्ण
+			}
 			spin_lock_irqsave(&ha->hardware_lock, flags);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		DEBUG(prपूर्णांकk("scsi%ld: %s: H/W initialization hasn't been "
+		}
+	} else {
+		DEBUG(printk("scsi%ld: %s: H/W initialization hasn't been "
 			     "started - resetting\n", ha->host_no, __func__));
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&ha->hardware_lock, flags);
 
-	DEBUG(prपूर्णांकk("scsi%ld: %s: Flags soft_rest=%d, config= %d\n ",
+	DEBUG(printk("scsi%ld: %s: Flags soft_rest=%d, config= %d\n ",
 		     ha->host_no, __func__, soft_reset, config_chip));
-	अगर (soft_reset) अणु
-		DEBUG(prपूर्णांकk("scsi%ld: %s: Issue Soft Reset\n", ha->host_no,
+	if (soft_reset) {
+		DEBUG(printk("scsi%ld: %s: Issue Soft Reset\n", ha->host_no,
 			     __func__));
 		status = qla4xxx_soft_reset(ha);	/* NOTE: acquires drvr
 							 * lock again, but ok */
-		अगर (status == QLA_ERROR) अणु
-			DEBUG(prपूर्णांकk("scsi%d: %s: Soft Reset failed!\n",
+		if (status == QLA_ERROR) {
+			DEBUG(printk("scsi%d: %s: Soft Reset failed!\n",
 				     ha->host_no, __func__));
 			ql4xxx_unlock_drvr(ha);
-			वापस QLA_ERROR;
-		पूर्ण
+			return QLA_ERROR;
+		}
 		config_chip = 1;
 
 		/* Reset clears the semaphore, so acquire again */
-		अगर (ql4xxx_lock_drvr_रुको(ha) != QLA_SUCCESS)
-			वापस QLA_ERROR;
-	पूर्ण
+		if (ql4xxx_lock_drvr_wait(ha) != QLA_SUCCESS)
+			return QLA_ERROR;
+	}
 
-	अगर (config_chip) अणु
-		अगर ((status = qla4xxx_config_nvram(ha)) == QLA_SUCCESS)
+	if (config_chip) {
+		if ((status = qla4xxx_config_nvram(ha)) == QLA_SUCCESS)
 			status = qla4xxx_start_firmware_from_flash(ha);
-	पूर्ण
+	}
 
 	ql4xxx_unlock_drvr(ha);
-	अगर (status == QLA_SUCCESS) अणु
-		अगर (test_and_clear_bit(AF_GET_CRASH_RECORD, &ha->flags))
+	if (status == QLA_SUCCESS) {
+		if (test_and_clear_bit(AF_GET_CRASH_RECORD, &ha->flags))
 			qla4xxx_get_crash_record(ha);
 
 		qla4xxx_init_rings(ha);
-	पूर्ण अन्यथा अणु
-		DEBUG(prपूर्णांकk("scsi%ld: %s: Firmware has NOT started\n",
+	} else {
+		DEBUG(printk("scsi%ld: %s: Firmware has NOT started\n",
 			     ha->host_no, __func__));
-	पूर्ण
-	वापस status;
-पूर्ण
+	}
+	return status;
+}
 /**
- * qla4xxx_मुक्त_ddb_index - Free DDBs reserved by firmware
- * @ha: poपूर्णांकer to adapter काष्ठाure
+ * qla4xxx_free_ddb_index - Free DDBs reserved by firmware
+ * @ha: pointer to adapter structure
  *
- * Since firmware is not running in स्वतःconnect mode the DDB indices should
- * be मुक्तd so that when login happens from user space there are मुक्त DDB
+ * Since firmware is not running in autoconnect mode the DDB indices should
+ * be freed so that when login happens from user space there are free DDB
  * indices available.
  **/
-व्योम qla4xxx_मुक्त_ddb_index(काष्ठा scsi_qla_host *ha)
-अणु
-	पूर्णांक max_ddbs;
-	पूर्णांक ret;
-	uपूर्णांक32_t idx = 0, next_idx = 0;
-	uपूर्णांक32_t state = 0, conn_err = 0;
+void qla4xxx_free_ddb_index(struct scsi_qla_host *ha)
+{
+	int max_ddbs;
+	int ret;
+	uint32_t idx = 0, next_idx = 0;
+	uint32_t state = 0, conn_err = 0;
 
 	max_ddbs =  is_qla40XX(ha) ? MAX_DEV_DB_ENTRIES_40XX :
 				     MAX_DEV_DB_ENTRIES;
 
-	क्रम (idx = 0; idx < max_ddbs; idx = next_idx) अणु
-		ret = qla4xxx_get_fwddb_entry(ha, idx, शून्य, 0, शून्य,
+	for (idx = 0; idx < max_ddbs; idx = next_idx) {
+		ret = qla4xxx_get_fwddb_entry(ha, idx, NULL, 0, NULL,
 					      &next_idx, &state, &conn_err,
-						शून्य, शून्य);
-		अगर (ret == QLA_ERROR) अणु
+						NULL, NULL);
+		if (ret == QLA_ERROR) {
 			next_idx++;
-			जारी;
-		पूर्ण
-		अगर (state == DDB_DS_NO_CONNECTION_ACTIVE ||
-		    state == DDB_DS_SESSION_FAILED) अणु
-			DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha,
+			continue;
+		}
+		if (state == DDB_DS_NO_CONNECTION_ACTIVE ||
+		    state == DDB_DS_SESSION_FAILED) {
+			DEBUG2(ql4_printk(KERN_INFO, ha,
 					  "Freeing DDB index = 0x%x\n", idx));
 			ret = qla4xxx_clear_ddb_entry(ha, idx);
-			अगर (ret == QLA_ERROR)
-				ql4_prपूर्णांकk(KERN_ERR, ha,
+			if (ret == QLA_ERROR)
+				ql4_printk(KERN_ERR, ha,
 					   "Unable to clear DDB index = "
 					   "0x%x\n", idx);
-		पूर्ण
-		अगर (next_idx == 0)
-			अवरोध;
-	पूर्ण
-पूर्ण
+		}
+		if (next_idx == 0)
+			break;
+	}
+}
 
 /**
  * qla4xxx_initialize_adapter - initiailizes hba
- * @ha: Poपूर्णांकer to host adapter काष्ठाure.
+ * @ha: Pointer to host adapter structure.
  * @is_reset: Is this init path or reset path
  *
- * This routine parक्रमms all of the steps necessary to initialize the adapter.
+ * This routine parforms all of the steps necessary to initialize the adapter.
  *
  **/
-पूर्णांक qla4xxx_initialize_adapter(काष्ठा scsi_qla_host *ha, पूर्णांक is_reset)
-अणु
-	पूर्णांक status = QLA_ERROR;
+int qla4xxx_initialize_adapter(struct scsi_qla_host *ha, int is_reset)
+{
+	int status = QLA_ERROR;
 
 	ha->eeprom_cmd_data = 0;
 
-	ql4_prपूर्णांकk(KERN_INFO, ha, "Configuring PCI space...\n");
+	ql4_printk(KERN_INFO, ha, "Configuring PCI space...\n");
 	ha->isp_ops->pci_config(ha);
 
-	ha->isp_ops->disable_पूर्णांकrs(ha);
+	ha->isp_ops->disable_intrs(ha);
 
 	/* Initialize the Host adapter request/response queues and firmware */
-	अगर (ha->isp_ops->start_firmware(ha) == QLA_ERROR)
-		जाओ निकास_init_hba;
+	if (ha->isp_ops->start_firmware(ha) == QLA_ERROR)
+		goto exit_init_hba;
 
 	/*
-	 * For ISP83XX, mailbox and IOCB पूर्णांकerrupts are enabled separately.
-	 * Mailbox पूर्णांकerrupts must be enabled prior to issuing any mailbox
-	 * command in order to prevent the possibility of losing पूर्णांकerrupts
-	 * जबतक चयनing from polling to पूर्णांकerrupt mode. IOCB पूर्णांकerrupts are
-	 * enabled via isp_ops->enable_पूर्णांकrs.
+	 * For ISP83XX, mailbox and IOCB interrupts are enabled separately.
+	 * Mailbox interrupts must be enabled prior to issuing any mailbox
+	 * command in order to prevent the possibility of losing interrupts
+	 * while switching from polling to interrupt mode. IOCB interrupts are
+	 * enabled via isp_ops->enable_intrs.
 	 */
-	अगर (is_qla8032(ha) || is_qla8042(ha))
-		qla4_83xx_enable_mbox_पूर्णांकrs(ha);
+	if (is_qla8032(ha) || is_qla8042(ha))
+		qla4_83xx_enable_mbox_intrs(ha);
 
-	अगर (qla4xxx_about_firmware(ha) == QLA_ERROR)
-		जाओ निकास_init_hba;
+	if (qla4xxx_about_firmware(ha) == QLA_ERROR)
+		goto exit_init_hba;
 
-	अगर (ha->isp_ops->get_sys_info(ha) == QLA_ERROR)
-		जाओ निकास_init_hba;
+	if (ha->isp_ops->get_sys_info(ha) == QLA_ERROR)
+		goto exit_init_hba;
 
 	qla4xxx_init_local_data(ha);
 
 	status = qla4xxx_init_firmware(ha);
-	अगर (status == QLA_ERROR)
-		जाओ निकास_init_hba;
+	if (status == QLA_ERROR)
+		goto exit_init_hba;
 
-	अगर (is_reset == RESET_ADAPTER)
+	if (is_reset == RESET_ADAPTER)
 		qla4xxx_build_ddb_list(ha, is_reset);
 
 	set_bit(AF_ONLINE, &ha->flags);
 
-निकास_init_hba:
-	DEBUG2(prपूर्णांकk("scsi%ld: initialize adapter: %s\n", ha->host_no,
+exit_init_hba:
+	DEBUG2(printk("scsi%ld: initialize adapter: %s\n", ha->host_no,
 	    status == QLA_ERROR ? "FAILED" : "SUCCEEDED"));
-	वापस status;
-पूर्ण
+	return status;
+}
 
-पूर्णांक qla4xxx_ddb_change(काष्ठा scsi_qla_host *ha, uपूर्णांक32_t fw_ddb_index,
-		       काष्ठा ddb_entry *ddb_entry, uपूर्णांक32_t state)
-अणु
-	uपूर्णांक32_t old_fw_ddb_device_state;
-	पूर्णांक status = QLA_ERROR;
+int qla4xxx_ddb_change(struct scsi_qla_host *ha, uint32_t fw_ddb_index,
+		       struct ddb_entry *ddb_entry, uint32_t state)
+{
+	uint32_t old_fw_ddb_device_state;
+	int status = QLA_ERROR;
 
 	old_fw_ddb_device_state = ddb_entry->fw_ddb_device_state;
-	DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha,
+	DEBUG2(ql4_printk(KERN_INFO, ha,
 			  "%s: DDB - old state = 0x%x, new state = 0x%x for "
 			  "index [%d]\n", __func__,
 			  ddb_entry->fw_ddb_device_state, state, fw_ddb_index));
 
 	ddb_entry->fw_ddb_device_state = state;
 
-	चयन (old_fw_ddb_device_state) अणु
-	हाल DDB_DS_LOGIN_IN_PROCESS:
-		चयन (state) अणु
-		हाल DDB_DS_SESSION_ACTIVE:
-		हाल DDB_DS_DISCOVERY:
+	switch (old_fw_ddb_device_state) {
+	case DDB_DS_LOGIN_IN_PROCESS:
+		switch (state) {
+		case DDB_DS_SESSION_ACTIVE:
+		case DDB_DS_DISCOVERY:
 			qla4xxx_update_session_conn_param(ha, ddb_entry);
 			ddb_entry->unblock_sess(ddb_entry->sess);
 			status = QLA_SUCCESS;
-			अवरोध;
-		हाल DDB_DS_SESSION_FAILED:
-		हाल DDB_DS_NO_CONNECTION_ACTIVE:
+			break;
+		case DDB_DS_SESSION_FAILED:
+		case DDB_DS_NO_CONNECTION_ACTIVE:
 			iscsi_conn_login_event(ddb_entry->conn,
 					       ISCSI_CONN_STATE_FREE);
 			status = QLA_SUCCESS;
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल DDB_DS_SESSION_ACTIVE:
-	हाल DDB_DS_DISCOVERY:
-		चयन (state) अणु
-		हाल DDB_DS_SESSION_FAILED:
+			break;
+		}
+		break;
+	case DDB_DS_SESSION_ACTIVE:
+	case DDB_DS_DISCOVERY:
+		switch (state) {
+		case DDB_DS_SESSION_FAILED:
 			/*
 			 * iscsi_session failure  will cause userspace to
 			 * stop the connection which in turn would block the
@@ -1042,225 +1041,225 @@ alloc_cleanup:
 			iscsi_session_failure(ddb_entry->sess->dd_data,
 					      ISCSI_ERR_CONN_FAILED);
 			status = QLA_SUCCESS;
-			अवरोध;
-		हाल DDB_DS_NO_CONNECTION_ACTIVE:
+			break;
+		case DDB_DS_NO_CONNECTION_ACTIVE:
 			clear_bit(fw_ddb_index, ha->ddb_idx_map);
 			status = QLA_SUCCESS;
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल DDB_DS_SESSION_FAILED:
-		चयन (state) अणु
-		हाल DDB_DS_SESSION_ACTIVE:
-		हाल DDB_DS_DISCOVERY:
+			break;
+		}
+		break;
+	case DDB_DS_SESSION_FAILED:
+		switch (state) {
+		case DDB_DS_SESSION_ACTIVE:
+		case DDB_DS_DISCOVERY:
 			ddb_entry->unblock_sess(ddb_entry->sess);
 			qla4xxx_update_session_conn_param(ha, ddb_entry);
 			status = QLA_SUCCESS;
-			अवरोध;
-		हाल DDB_DS_SESSION_FAILED:
+			break;
+		case DDB_DS_SESSION_FAILED:
 			iscsi_session_failure(ddb_entry->sess->dd_data,
 					      ISCSI_ERR_CONN_FAILED);
 			status = QLA_SUCCESS;
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	शेष:
-		DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha, "%s: Unknown Event\n",
+			break;
+		}
+		break;
+	default:
+		DEBUG2(ql4_printk(KERN_INFO, ha, "%s: Unknown Event\n",
 				__func__));
-		अवरोध;
-	पूर्ण
-	वापस status;
-पूर्ण
+		break;
+	}
+	return status;
+}
 
-व्योम qla4xxx_arm_relogin_समयr(काष्ठा ddb_entry *ddb_entry)
-अणु
+void qla4xxx_arm_relogin_timer(struct ddb_entry *ddb_entry)
+{
 	/*
-	 * This triggers a relogin.  After the relogin_समयr
-	 * expires, the relogin माला_लो scheduled.  We must रुको a
-	 * minimum amount of समय since receiving an 0x8014 AEN
-	 * with failed device_state or a logout response beक्रमe
+	 * This triggers a relogin.  After the relogin_timer
+	 * expires, the relogin gets scheduled.  We must wait a
+	 * minimum amount of time since receiving an 0x8014 AEN
+	 * with failed device_state or a logout response before
 	 * we can issue another relogin.
 	 *
-	 * Firmware pads this समयout: (समय2रुको +1).
-	 * Driver retry to login should be दीर्घer than F/W.
+	 * Firmware pads this timeout: (time2wait +1).
+	 * Driver retry to login should be longer than F/W.
 	 * Otherwise F/W will fail
 	 * set_ddb() mbx cmd with 0x4005 since it still
-	 * counting करोwn its समय2रुको.
+	 * counting down its time2wait.
 	 */
-	atomic_set(&ddb_entry->relogin_समयr, 0);
-	atomic_set(&ddb_entry->retry_relogin_समयr,
-		   ddb_entry->शेष_समय2रुको + 4);
+	atomic_set(&ddb_entry->relogin_timer, 0);
+	atomic_set(&ddb_entry->retry_relogin_timer,
+		   ddb_entry->default_time2wait + 4);
 
-पूर्ण
+}
 
-पूर्णांक qla4xxx_flash_ddb_change(काष्ठा scsi_qla_host *ha, uपूर्णांक32_t fw_ddb_index,
-			     काष्ठा ddb_entry *ddb_entry, uपूर्णांक32_t state)
-अणु
-	uपूर्णांक32_t old_fw_ddb_device_state;
-	पूर्णांक status = QLA_ERROR;
+int qla4xxx_flash_ddb_change(struct scsi_qla_host *ha, uint32_t fw_ddb_index,
+			     struct ddb_entry *ddb_entry, uint32_t state)
+{
+	uint32_t old_fw_ddb_device_state;
+	int status = QLA_ERROR;
 
 	old_fw_ddb_device_state = ddb_entry->fw_ddb_device_state;
-	DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha,
+	DEBUG2(ql4_printk(KERN_INFO, ha,
 			  "%s: DDB - old state = 0x%x, new state = 0x%x for "
 			  "index [%d]\n", __func__,
 			  ddb_entry->fw_ddb_device_state, state, fw_ddb_index));
 
 	ddb_entry->fw_ddb_device_state = state;
 
-	चयन (old_fw_ddb_device_state) अणु
-	हाल DDB_DS_LOGIN_IN_PROCESS:
-	हाल DDB_DS_NO_CONNECTION_ACTIVE:
-		चयन (state) अणु
-		हाल DDB_DS_SESSION_ACTIVE:
+	switch (old_fw_ddb_device_state) {
+	case DDB_DS_LOGIN_IN_PROCESS:
+	case DDB_DS_NO_CONNECTION_ACTIVE:
+		switch (state) {
+		case DDB_DS_SESSION_ACTIVE:
 			ddb_entry->unblock_sess(ddb_entry->sess);
 			qla4xxx_update_session_conn_fwddb_param(ha, ddb_entry);
 			status = QLA_SUCCESS;
-			अवरोध;
-		हाल DDB_DS_SESSION_FAILED:
+			break;
+		case DDB_DS_SESSION_FAILED:
 			iscsi_block_session(ddb_entry->sess);
-			अगर (!test_bit(DF_RELOGIN, &ddb_entry->flags))
-				qla4xxx_arm_relogin_समयr(ddb_entry);
+			if (!test_bit(DF_RELOGIN, &ddb_entry->flags))
+				qla4xxx_arm_relogin_timer(ddb_entry);
 			status = QLA_SUCCESS;
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल DDB_DS_SESSION_ACTIVE:
-		चयन (state) अणु
-		हाल DDB_DS_SESSION_FAILED:
+			break;
+		}
+		break;
+	case DDB_DS_SESSION_ACTIVE:
+		switch (state) {
+		case DDB_DS_SESSION_FAILED:
 			iscsi_block_session(ddb_entry->sess);
-			अगर (!test_bit(DF_RELOGIN, &ddb_entry->flags))
-				qla4xxx_arm_relogin_समयr(ddb_entry);
+			if (!test_bit(DF_RELOGIN, &ddb_entry->flags))
+				qla4xxx_arm_relogin_timer(ddb_entry);
 			status = QLA_SUCCESS;
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल DDB_DS_SESSION_FAILED:
-		चयन (state) अणु
-		हाल DDB_DS_SESSION_ACTIVE:
+			break;
+		}
+		break;
+	case DDB_DS_SESSION_FAILED:
+		switch (state) {
+		case DDB_DS_SESSION_ACTIVE:
 			ddb_entry->unblock_sess(ddb_entry->sess);
 			qla4xxx_update_session_conn_fwddb_param(ha, ddb_entry);
 			status = QLA_SUCCESS;
-			अवरोध;
-		हाल DDB_DS_SESSION_FAILED:
-			अगर (!test_bit(DF_RELOGIN, &ddb_entry->flags))
-				qla4xxx_arm_relogin_समयr(ddb_entry);
+			break;
+		case DDB_DS_SESSION_FAILED:
+			if (!test_bit(DF_RELOGIN, &ddb_entry->flags))
+				qla4xxx_arm_relogin_timer(ddb_entry);
 			status = QLA_SUCCESS;
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	शेष:
-		DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha, "%s: Unknown Event\n",
+			break;
+		}
+		break;
+	default:
+		DEBUG2(ql4_printk(KERN_INFO, ha, "%s: Unknown Event\n",
 				  __func__));
-		अवरोध;
-	पूर्ण
-	वापस status;
-पूर्ण
+		break;
+	}
+	return status;
+}
 
 /**
  * qla4xxx_process_ddb_changed - process ddb state change
- * @ha: Poपूर्णांकer to host adapter काष्ठाure.
+ * @ha: Pointer to host adapter structure.
  * @fw_ddb_index: Firmware's device database index
  * @state: Device state
  * @conn_err: Unused
  *
  * This routine processes a Decive Database Changed AEN Event.
  **/
-पूर्णांक qla4xxx_process_ddb_changed(काष्ठा scsi_qla_host *ha,
-				uपूर्णांक32_t fw_ddb_index,
-				uपूर्णांक32_t state, uपूर्णांक32_t conn_err)
-अणु
-	काष्ठा ddb_entry *ddb_entry;
+int qla4xxx_process_ddb_changed(struct scsi_qla_host *ha,
+				uint32_t fw_ddb_index,
+				uint32_t state, uint32_t conn_err)
+{
+	struct ddb_entry *ddb_entry;
 
-	/* check क्रम out of range index */
-	अगर (fw_ddb_index >= MAX_DDB_ENTRIES)
-		जाओ निकास_ddb_event;
+	/* check for out of range index */
+	if (fw_ddb_index >= MAX_DDB_ENTRIES)
+		goto exit_ddb_event;
 
 	/* Get the corresponging ddb entry */
 	ddb_entry = qla4xxx_lookup_ddb_by_fw_index(ha, fw_ddb_index);
-	/* Device करोes not currently exist in our database. */
-	अगर (ddb_entry == शून्य) अणु
-		ql4_prपूर्णांकk(KERN_ERR, ha, "%s: No ddb_entry at FW index [%d]\n",
+	/* Device does not currently exist in our database. */
+	if (ddb_entry == NULL) {
+		ql4_printk(KERN_ERR, ha, "%s: No ddb_entry at FW index [%d]\n",
 			   __func__, fw_ddb_index);
 
-		अगर (state == DDB_DS_NO_CONNECTION_ACTIVE)
+		if (state == DDB_DS_NO_CONNECTION_ACTIVE)
 			clear_bit(fw_ddb_index, ha->ddb_idx_map);
 
-		जाओ निकास_ddb_event;
-	पूर्ण
+		goto exit_ddb_event;
+	}
 
 	ddb_entry->ddb_change(ha, fw_ddb_index, ddb_entry, state);
 
-निकास_ddb_event:
-	वापस QLA_ERROR;
-पूर्ण
+exit_ddb_event:
+	return QLA_ERROR;
+}
 
 /**
  * qla4xxx_login_flash_ddb - Login to target (DDB)
- * @cls_session: Poपूर्णांकer to the session to login
+ * @cls_session: Pointer to the session to login
  *
  * This routine logins to the target.
- * Issues setddb and conn खोलो mbx
+ * Issues setddb and conn open mbx
  **/
-व्योम qla4xxx_login_flash_ddb(काष्ठा iscsi_cls_session *cls_session)
-अणु
-	काष्ठा iscsi_session *sess;
-	काष्ठा ddb_entry *ddb_entry;
-	काष्ठा scsi_qla_host *ha;
-	काष्ठा dev_db_entry *fw_ddb_entry = शून्य;
+void qla4xxx_login_flash_ddb(struct iscsi_cls_session *cls_session)
+{
+	struct iscsi_session *sess;
+	struct ddb_entry *ddb_entry;
+	struct scsi_qla_host *ha;
+	struct dev_db_entry *fw_ddb_entry = NULL;
 	dma_addr_t fw_ddb_dma;
-	uपूर्णांक32_t mbx_sts = 0;
-	पूर्णांक ret;
+	uint32_t mbx_sts = 0;
+	int ret;
 
 	sess = cls_session->dd_data;
 	ddb_entry = sess->dd_data;
 	ha =  ddb_entry->ha;
 
-	अगर (!test_bit(AF_LINK_UP, &ha->flags))
-		वापस;
+	if (!test_bit(AF_LINK_UP, &ha->flags))
+		return;
 
-	अगर (ddb_entry->ddb_type != FLASH_DDB) अणु
-		DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha,
+	if (ddb_entry->ddb_type != FLASH_DDB) {
+		DEBUG2(ql4_printk(KERN_INFO, ha,
 				  "Skipping login to non FLASH DB"));
-		जाओ निकास_login;
-	पूर्ण
+		goto exit_login;
+	}
 
 	fw_ddb_entry = dma_pool_alloc(ha->fw_ddb_dma_pool, GFP_KERNEL,
 				      &fw_ddb_dma);
-	अगर (fw_ddb_entry == शून्य) अणु
-		DEBUG2(ql4_prपूर्णांकk(KERN_ERR, ha, "Out of memory\n"));
-		जाओ निकास_login;
-	पूर्ण
+	if (fw_ddb_entry == NULL) {
+		DEBUG2(ql4_printk(KERN_ERR, ha, "Out of memory\n"));
+		goto exit_login;
+	}
 
-	अगर (ddb_entry->fw_ddb_index == INVALID_ENTRY) अणु
+	if (ddb_entry->fw_ddb_index == INVALID_ENTRY) {
 		ret = qla4xxx_get_ddb_index(ha, &ddb_entry->fw_ddb_index);
-		अगर (ret == QLA_ERROR)
-			जाओ निकास_login;
+		if (ret == QLA_ERROR)
+			goto exit_login;
 
 		ha->fw_ddb_index_map[ddb_entry->fw_ddb_index] = ddb_entry;
 		ha->tot_ddbs++;
-	पूर्ण
+	}
 
-	स_नकल(fw_ddb_entry, &ddb_entry->fw_ddb_entry,
-	       माप(काष्ठा dev_db_entry));
+	memcpy(fw_ddb_entry, &ddb_entry->fw_ddb_entry,
+	       sizeof(struct dev_db_entry));
 	ddb_entry->sess->target_id = ddb_entry->fw_ddb_index;
 
 	ret = qla4xxx_set_ddb_entry(ha, ddb_entry->fw_ddb_index,
 				    fw_ddb_dma, &mbx_sts);
-	अगर (ret == QLA_ERROR) अणु
-		DEBUG2(ql4_prपूर्णांकk(KERN_ERR, ha, "Set DDB failed\n"));
-		जाओ निकास_login;
-	पूर्ण
+	if (ret == QLA_ERROR) {
+		DEBUG2(ql4_printk(KERN_ERR, ha, "Set DDB failed\n"));
+		goto exit_login;
+	}
 
 	ddb_entry->fw_ddb_device_state = DDB_DS_LOGIN_IN_PROCESS;
-	ret = qla4xxx_conn_खोलो(ha, ddb_entry->fw_ddb_index);
-	अगर (ret == QLA_ERROR) अणु
-		ql4_prपूर्णांकk(KERN_ERR, ha, "%s: Login failed: %s\n", __func__,
+	ret = qla4xxx_conn_open(ha, ddb_entry->fw_ddb_index);
+	if (ret == QLA_ERROR) {
+		ql4_printk(KERN_ERR, ha, "%s: Login failed: %s\n", __func__,
 			   sess->targetname);
-		जाओ निकास_login;
-	पूर्ण
+		goto exit_login;
+	}
 
-निकास_login:
-	अगर (fw_ddb_entry)
-		dma_pool_मुक्त(ha->fw_ddb_dma_pool, fw_ddb_entry, fw_ddb_dma);
-पूर्ण
+exit_login:
+	if (fw_ddb_entry)
+		dma_pool_free(ha->fw_ddb_dma_pool, fw_ddb_entry, fw_ddb_dma);
+}
 

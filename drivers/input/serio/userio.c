@@ -1,10 +1,9 @@
-<शैली गुरु>
 /*
  * userio kernel serio device emulation module
  * Copyright (C) 2015 Red Hat
  * Copyright (C) 2015 Stephen Chandler Paul <thatslyude@gmail.com>
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or (at
  * your option) any later version.
@@ -12,30 +11,30 @@
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
- * General Public License क्रम more details.
+ * General Public License for more details.
  */
 
-#समावेश <linux/circ_buf.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/serपन.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/poll.h>
-#समावेश <uapi/linux/userपन.स>
+#include <linux/circ_buf.h>
+#include <linux/mutex.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/serio.h>
+#include <linux/slab.h>
+#include <linux/fs.h>
+#include <linux/miscdevice.h>
+#include <linux/sched.h>
+#include <linux/poll.h>
+#include <uapi/linux/userio.h>
 
-#घोषणा USERIO_NAME		"userio"
-#घोषणा USERIO_बफ_मानE		16
+#define USERIO_NAME		"userio"
+#define USERIO_BUFSIZE		16
 
-अटल काष्ठा miscdevice userio_misc;
+static struct miscdevice userio_misc;
 
-काष्ठा userio_device अणु
-	काष्ठा serio *serio;
-	काष्ठा mutex mutex;
+struct userio_device {
+	struct serio *serio;
+	struct mutex mutex;
 
 	bool running;
 
@@ -43,240 +42,240 @@
 	u8 tail;
 
 	spinlock_t buf_lock;
-	अचिन्हित अक्षर buf[USERIO_बफ_मानE];
+	unsigned char buf[USERIO_BUFSIZE];
 
-	रुको_queue_head_t रुकोq;
-पूर्ण;
+	wait_queue_head_t waitq;
+};
 
 /**
- * userio_device_ग_लिखो - Write data from serio to a userio device in userspace
- * @id: The serio port क्रम the userio device
- * @val: The data to ग_लिखो to the device
+ * userio_device_write - Write data from serio to a userio device in userspace
+ * @id: The serio port for the userio device
+ * @val: The data to write to the device
  */
-अटल पूर्णांक userio_device_ग_लिखो(काष्ठा serio *id, अचिन्हित अक्षर val)
-अणु
-	काष्ठा userio_device *userio = id->port_data;
-	अचिन्हित दीर्घ flags;
+static int userio_device_write(struct serio *id, unsigned char val)
+{
+	struct userio_device *userio = id->port_data;
+	unsigned long flags;
 
 	spin_lock_irqsave(&userio->buf_lock, flags);
 
 	userio->buf[userio->head] = val;
-	userio->head = (userio->head + 1) % USERIO_बफ_मानE;
+	userio->head = (userio->head + 1) % USERIO_BUFSIZE;
 
-	अगर (userio->head == userio->tail)
+	if (userio->head == userio->tail)
 		dev_warn(userio_misc.this_device,
 			 "Buffer overflowed, userio client isn't keeping up");
 
 	spin_unlock_irqrestore(&userio->buf_lock, flags);
 
-	wake_up_पूर्णांकerruptible(&userio->रुकोq);
+	wake_up_interruptible(&userio->waitq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक userio_अक्षर_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा userio_device *userio;
+static int userio_char_open(struct inode *inode, struct file *file)
+{
+	struct userio_device *userio;
 
-	userio = kzalloc(माप(काष्ठा userio_device), GFP_KERNEL);
-	अगर (!userio)
-		वापस -ENOMEM;
+	userio = kzalloc(sizeof(struct userio_device), GFP_KERNEL);
+	if (!userio)
+		return -ENOMEM;
 
 	mutex_init(&userio->mutex);
 	spin_lock_init(&userio->buf_lock);
-	init_रुकोqueue_head(&userio->रुकोq);
+	init_waitqueue_head(&userio->waitq);
 
-	userio->serio = kzalloc(माप(काष्ठा serio), GFP_KERNEL);
-	अगर (!userio->serio) अणु
-		kमुक्त(userio);
-		वापस -ENOMEM;
-	पूर्ण
+	userio->serio = kzalloc(sizeof(struct serio), GFP_KERNEL);
+	if (!userio->serio) {
+		kfree(userio);
+		return -ENOMEM;
+	}
 
-	userio->serio->ग_लिखो = userio_device_ग_लिखो;
+	userio->serio->write = userio_device_write;
 	userio->serio->port_data = userio;
 
-	file->निजी_data = userio;
+	file->private_data = userio;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक userio_अक्षर_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा userio_device *userio = file->निजी_data;
+static int userio_char_release(struct inode *inode, struct file *file)
+{
+	struct userio_device *userio = file->private_data;
 
-	अगर (userio->running) अणु
+	if (userio->running) {
 		/*
-		 * Don't मुक्त the serio port here, serio_unरेजिस्टर_port()
-		 * करोes it क्रम us.
+		 * Don't free the serio port here, serio_unregister_port()
+		 * does it for us.
 		 */
-		serio_unरेजिस्टर_port(userio->serio);
-	पूर्ण अन्यथा अणु
-		kमुक्त(userio->serio);
-	पूर्ण
+		serio_unregister_port(userio->serio);
+	} else {
+		kfree(userio->serio);
+	}
 
-	kमुक्त(userio);
+	kfree(userio);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार userio_अक्षर_पढ़ो(काष्ठा file *file, अक्षर __user *user_buffer,
-				माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा userio_device *userio = file->निजी_data;
-	पूर्णांक error;
-	माप_प्रकार nonwrap_len, copylen;
-	अचिन्हित अक्षर buf[USERIO_बफ_मानE];
-	अचिन्हित दीर्घ flags;
+static ssize_t userio_char_read(struct file *file, char __user *user_buffer,
+				size_t count, loff_t *ppos)
+{
+	struct userio_device *userio = file->private_data;
+	int error;
+	size_t nonwrap_len, copylen;
+	unsigned char buf[USERIO_BUFSIZE];
+	unsigned long flags;
 
 	/*
-	 * By the समय we get here, the data that was रुकोing might have
-	 * been taken by another thपढ़ो. Grab the buffer lock and check अगर
-	 * there's still any data रुकोing, otherwise repeat this process
+	 * By the time we get here, the data that was waiting might have
+	 * been taken by another thread. Grab the buffer lock and check if
+	 * there's still any data waiting, otherwise repeat this process
 	 * until we have data (unless the file descriptor is non-blocking
 	 * of course).
 	 */
-	क्रम (;;) अणु
+	for (;;) {
 		spin_lock_irqsave(&userio->buf_lock, flags);
 
 		nonwrap_len = CIRC_CNT_TO_END(userio->head,
 					      userio->tail,
-					      USERIO_बफ_मानE);
+					      USERIO_BUFSIZE);
 		copylen = min(nonwrap_len, count);
-		अगर (copylen) अणु
-			स_नकल(buf, &userio->buf[userio->tail], copylen);
+		if (copylen) {
+			memcpy(buf, &userio->buf[userio->tail], copylen);
 			userio->tail = (userio->tail + copylen) %
-							USERIO_बफ_मानE;
-		पूर्ण
+							USERIO_BUFSIZE;
+		}
 
 		spin_unlock_irqrestore(&userio->buf_lock, flags);
 
-		अगर (nonwrap_len)
-			अवरोध;
+		if (nonwrap_len)
+			break;
 
 		/* buffer was/is empty */
-		अगर (file->f_flags & O_NONBLOCK)
-			वापस -EAGAIN;
+		if (file->f_flags & O_NONBLOCK)
+			return -EAGAIN;
 
 		/*
-		 * count == 0 is special - no IO is करोne but we check
-		 * क्रम error conditions (see above).
+		 * count == 0 is special - no IO is done but we check
+		 * for error conditions (see above).
 		 */
-		अगर (count == 0)
-			वापस 0;
+		if (count == 0)
+			return 0;
 
-		error = रुको_event_पूर्णांकerruptible(userio->रुकोq,
+		error = wait_event_interruptible(userio->waitq,
 						 userio->head != userio->tail);
-		अगर (error)
-			वापस error;
-	पूर्ण
+		if (error)
+			return error;
+	}
 
-	अगर (copylen)
-		अगर (copy_to_user(user_buffer, buf, copylen))
-			वापस -EFAULT;
+	if (copylen)
+		if (copy_to_user(user_buffer, buf, copylen))
+			return -EFAULT;
 
-	वापस copylen;
-पूर्ण
+	return copylen;
+}
 
-अटल sमाप_प्रकार userio_अक्षर_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buffer,
-				 माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा userio_device *userio = file->निजी_data;
-	काष्ठा userio_cmd cmd;
-	पूर्णांक error;
+static ssize_t userio_char_write(struct file *file, const char __user *buffer,
+				 size_t count, loff_t *ppos)
+{
+	struct userio_device *userio = file->private_data;
+	struct userio_cmd cmd;
+	int error;
 
-	अगर (count != माप(cmd)) अणु
+	if (count != sizeof(cmd)) {
 		dev_warn(userio_misc.this_device, "Invalid payload size\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (copy_from_user(&cmd, buffer, माप(cmd)))
-		वापस -EFAULT;
+	if (copy_from_user(&cmd, buffer, sizeof(cmd)))
+		return -EFAULT;
 
-	error = mutex_lock_पूर्णांकerruptible(&userio->mutex);
-	अगर (error)
-		वापस error;
+	error = mutex_lock_interruptible(&userio->mutex);
+	if (error)
+		return error;
 
-	चयन (cmd.type) अणु
-	हाल USERIO_CMD_REGISTER:
-		अगर (!userio->serio->id.type) अणु
+	switch (cmd.type) {
+	case USERIO_CMD_REGISTER:
+		if (!userio->serio->id.type) {
 			dev_warn(userio_misc.this_device,
 				 "No port type given on /dev/userio\n");
 
 			error = -EINVAL;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		अगर (userio->running) अणु
+		if (userio->running) {
 			dev_warn(userio_misc.this_device,
 				 "Begin command sent, but we're already running\n");
 			error = -EBUSY;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		userio->running = true;
-		serio_रेजिस्टर_port(userio->serio);
-		अवरोध;
+		serio_register_port(userio->serio);
+		break;
 
-	हाल USERIO_CMD_SET_PORT_TYPE:
-		अगर (userio->running) अणु
+	case USERIO_CMD_SET_PORT_TYPE:
+		if (userio->running) {
 			dev_warn(userio_misc.this_device,
 				 "Can't change port type on an already running userio instance\n");
 			error = -EBUSY;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		userio->serio->id.type = cmd.data;
-		अवरोध;
+		break;
 
-	हाल USERIO_CMD_SEND_INTERRUPT:
-		अगर (!userio->running) अणु
+	case USERIO_CMD_SEND_INTERRUPT:
+		if (!userio->running) {
 			dev_warn(userio_misc.this_device,
 				 "The device must be registered before sending interrupts\n");
 			error = -ENODEV;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		serio_पूर्णांकerrupt(userio->serio, cmd.data, 0);
-		अवरोध;
+		serio_interrupt(userio->serio, cmd.data, 0);
+		break;
 
-	शेष:
+	default:
 		error = -EOPNOTSUPP;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 out:
 	mutex_unlock(&userio->mutex);
-	वापस error ?: count;
-पूर्ण
+	return error ?: count;
+}
 
-अटल __poll_t userio_अक्षर_poll(काष्ठा file *file, poll_table *रुको)
-अणु
-	काष्ठा userio_device *userio = file->निजी_data;
+static __poll_t userio_char_poll(struct file *file, poll_table *wait)
+{
+	struct userio_device *userio = file->private_data;
 
-	poll_रुको(file, &userio->रुकोq, रुको);
+	poll_wait(file, &userio->waitq, wait);
 
-	अगर (userio->head != userio->tail)
-		वापस EPOLLIN | EPOLLRDNORM;
+	if (userio->head != userio->tail)
+		return EPOLLIN | EPOLLRDNORM;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा file_operations userio_fops = अणु
+static const struct file_operations userio_fops = {
 	.owner		= THIS_MODULE,
-	.खोलो		= userio_अक्षर_खोलो,
-	.release	= userio_अक्षर_release,
-	.पढ़ो		= userio_अक्षर_पढ़ो,
-	.ग_लिखो		= userio_अक्षर_ग_लिखो,
-	.poll		= userio_अक्षर_poll,
+	.open		= userio_char_open,
+	.release	= userio_char_release,
+	.read		= userio_char_read,
+	.write		= userio_char_write,
+	.poll		= userio_char_poll,
 	.llseek		= no_llseek,
-पूर्ण;
+};
 
-अटल काष्ठा miscdevice userio_misc = अणु
+static struct miscdevice userio_misc = {
 	.fops	= &userio_fops,
 	.minor	= USERIO_MINOR,
 	.name	= USERIO_NAME,
-पूर्ण;
-module_driver(userio_misc, misc_रेजिस्टर, misc_deरेजिस्टर);
+};
+module_driver(userio_misc, misc_register, misc_deregister);
 
 MODULE_ALIAS_MISCDEV(USERIO_MINOR);
 MODULE_ALIAS("devname:" USERIO_NAME);

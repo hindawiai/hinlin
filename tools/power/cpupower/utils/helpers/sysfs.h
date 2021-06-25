@@ -1,40 +1,39 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __CPUPOWER_HELPERS_SYSFS_H__
-#घोषणा __CPUPOWER_HELPERS_SYSFS_H__
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __CPUPOWER_HELPERS_SYSFS_H__
+#define __CPUPOWER_HELPERS_SYSFS_H__
 
-#घोषणा PATH_TO_CPU "/sys/devices/system/cpu/"
-#घोषणा MAX_LINE_LEN 255
-#घोषणा SYSFS_PATH_MAX 255
+#define PATH_TO_CPU "/sys/devices/system/cpu/"
+#define MAX_LINE_LEN 255
+#define SYSFS_PATH_MAX 255
 
-बाह्य अचिन्हित पूर्णांक sysfs_पढ़ो_file(स्थिर अक्षर *path, अक्षर *buf, माप_प्रकार buflen);
+extern unsigned int sysfs_read_file(const char *path, char *buf, size_t buflen);
 
-बाह्य अचिन्हित पूर्णांक sysfs_idlestate_file_exists(अचिन्हित पूर्णांक cpu,
-						अचिन्हित पूर्णांक idlestate,
-						स्थिर अक्षर *fname);
+extern unsigned int sysfs_idlestate_file_exists(unsigned int cpu,
+						unsigned int idlestate,
+						const char *fname);
 
-बाह्य पूर्णांक sysfs_is_cpu_online(अचिन्हित पूर्णांक cpu);
+extern int sysfs_is_cpu_online(unsigned int cpu);
 
-बाह्य पूर्णांक sysfs_is_idlestate_disabled(अचिन्हित पूर्णांक cpu,
-				       अचिन्हित पूर्णांक idlestate);
-बाह्य पूर्णांक sysfs_idlestate_disable(अचिन्हित पूर्णांक cpu, अचिन्हित पूर्णांक idlestate,
-				   अचिन्हित पूर्णांक disable);
-बाह्य अचिन्हित दीर्घ sysfs_get_idlestate_latency(अचिन्हित पूर्णांक cpu,
-						अचिन्हित पूर्णांक idlestate);
-बाह्य अचिन्हित दीर्घ sysfs_get_idlestate_usage(अचिन्हित पूर्णांक cpu,
-					अचिन्हित पूर्णांक idlestate);
-बाह्य अचिन्हित दीर्घ दीर्घ sysfs_get_idlestate_समय(अचिन्हित पूर्णांक cpu,
-						अचिन्हित पूर्णांक idlestate);
-बाह्य अक्षर *sysfs_get_idlestate_name(अचिन्हित पूर्णांक cpu,
-				अचिन्हित पूर्णांक idlestate);
-बाह्य अक्षर *sysfs_get_idlestate_desc(अचिन्हित पूर्णांक cpu,
-				अचिन्हित पूर्णांक idlestate);
-बाह्य अचिन्हित पूर्णांक sysfs_get_idlestate_count(अचिन्हित पूर्णांक cpu);
+extern int sysfs_is_idlestate_disabled(unsigned int cpu,
+				       unsigned int idlestate);
+extern int sysfs_idlestate_disable(unsigned int cpu, unsigned int idlestate,
+				   unsigned int disable);
+extern unsigned long sysfs_get_idlestate_latency(unsigned int cpu,
+						unsigned int idlestate);
+extern unsigned long sysfs_get_idlestate_usage(unsigned int cpu,
+					unsigned int idlestate);
+extern unsigned long long sysfs_get_idlestate_time(unsigned int cpu,
+						unsigned int idlestate);
+extern char *sysfs_get_idlestate_name(unsigned int cpu,
+				unsigned int idlestate);
+extern char *sysfs_get_idlestate_desc(unsigned int cpu,
+				unsigned int idlestate);
+extern unsigned int sysfs_get_idlestate_count(unsigned int cpu);
 
-बाह्य अक्षर *sysfs_get_cpuidle_governor(व्योम);
-बाह्य अक्षर *sysfs_get_cpuidle_driver(व्योम);
+extern char *sysfs_get_cpuidle_governor(void);
+extern char *sysfs_get_cpuidle_driver(void);
 
-बाह्य पूर्णांक sysfs_get_sched(स्थिर अक्षर *smt_mc);
-बाह्य पूर्णांक sysfs_set_sched(स्थिर अक्षर *smt_mc, पूर्णांक val);
+extern int sysfs_get_sched(const char *smt_mc);
+extern int sysfs_set_sched(const char *smt_mc, int val);
 
-#पूर्ण_अगर /* __CPUPOWER_HELPERS_SYSFS_H__ */
+#endif /* __CPUPOWER_HELPERS_SYSFS_H__ */

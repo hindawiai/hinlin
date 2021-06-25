@@ -1,27 +1,26 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: ISC
+// SPDX-License-Identifier: ISC
 /*
  * Copyright (C) 2016 Felix Fietkau <nbd@nbd.name>
  */
-#समावेश <linux/sched.h>
-#समावेश <linux/of.h>
-#समावेश "mt76.h"
+#include <linux/sched.h>
+#include <linux/of.h>
+#include "mt76.h"
 
-#घोषणा CHAN2G(_idx, _freq) अणु			\
+#define CHAN2G(_idx, _freq) {			\
 	.band = NL80211_BAND_2GHZ,		\
 	.center_freq = (_freq),			\
 	.hw_value = (_idx),			\
-	.max_घातer = 30,			\
-पूर्ण
+	.max_power = 30,			\
+}
 
-#घोषणा CHAN5G(_idx, _freq) अणु			\
+#define CHAN5G(_idx, _freq) {			\
 	.band = NL80211_BAND_5GHZ,		\
 	.center_freq = (_freq),			\
 	.hw_value = (_idx),			\
-	.max_घातer = 30,			\
-पूर्ण
+	.max_power = 30,			\
+}
 
-अटल स्थिर काष्ठा ieee80211_channel mt76_channels_2ghz[] = अणु
+static const struct ieee80211_channel mt76_channels_2ghz[] = {
 	CHAN2G(1, 2412),
 	CHAN2G(2, 2417),
 	CHAN2G(3, 2422),
@@ -36,9 +35,9 @@
 	CHAN2G(12, 2467),
 	CHAN2G(13, 2472),
 	CHAN2G(14, 2484),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा ieee80211_channel mt76_channels_5ghz[] = अणु
+static const struct ieee80211_channel mt76_channels_5ghz[] = {
 	CHAN5G(36, 5180),
 	CHAN5G(40, 5200),
 	CHAN5G(44, 5220),
@@ -69,125 +68,125 @@
 	CHAN5G(165, 5825),
 	CHAN5G(169, 5845),
 	CHAN5G(173, 5865),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा ieee80211_tpt_blink mt76_tpt_blink[] = अणु
-	अणु .throughput =   0 * 1024, .blink_समय = 334 पूर्ण,
-	अणु .throughput =   1 * 1024, .blink_समय = 260 पूर्ण,
-	अणु .throughput =   5 * 1024, .blink_समय = 220 पूर्ण,
-	अणु .throughput =  10 * 1024, .blink_समय = 190 पूर्ण,
-	अणु .throughput =  20 * 1024, .blink_समय = 170 पूर्ण,
-	अणु .throughput =  50 * 1024, .blink_समय = 150 पूर्ण,
-	अणु .throughput =  70 * 1024, .blink_समय = 130 पूर्ण,
-	अणु .throughput = 100 * 1024, .blink_समय = 110 पूर्ण,
-	अणु .throughput = 200 * 1024, .blink_समय =  80 पूर्ण,
-	अणु .throughput = 300 * 1024, .blink_समय =  50 पूर्ण,
-पूर्ण;
+static const struct ieee80211_tpt_blink mt76_tpt_blink[] = {
+	{ .throughput =   0 * 1024, .blink_time = 334 },
+	{ .throughput =   1 * 1024, .blink_time = 260 },
+	{ .throughput =   5 * 1024, .blink_time = 220 },
+	{ .throughput =  10 * 1024, .blink_time = 190 },
+	{ .throughput =  20 * 1024, .blink_time = 170 },
+	{ .throughput =  50 * 1024, .blink_time = 150 },
+	{ .throughput =  70 * 1024, .blink_time = 130 },
+	{ .throughput = 100 * 1024, .blink_time = 110 },
+	{ .throughput = 200 * 1024, .blink_time =  80 },
+	{ .throughput = 300 * 1024, .blink_time =  50 },
+};
 
-अटल पूर्णांक mt76_led_init(काष्ठा mt76_dev *dev)
-अणु
-	काष्ठा device_node *np = dev->dev->of_node;
-	काष्ठा ieee80211_hw *hw = dev->hw;
-	पूर्णांक led_pin;
+static int mt76_led_init(struct mt76_dev *dev)
+{
+	struct device_node *np = dev->dev->of_node;
+	struct ieee80211_hw *hw = dev->hw;
+	int led_pin;
 
-	अगर (!dev->led_cdev.brightness_set && !dev->led_cdev.blink_set)
-		वापस 0;
+	if (!dev->led_cdev.brightness_set && !dev->led_cdev.blink_set)
+		return 0;
 
-	snम_लिखो(dev->led_name, माप(dev->led_name),
+	snprintf(dev->led_name, sizeof(dev->led_name),
 		 "mt76-%s", wiphy_name(hw->wiphy));
 
 	dev->led_cdev.name = dev->led_name;
-	dev->led_cdev.शेष_trigger =
+	dev->led_cdev.default_trigger =
 		ieee80211_create_tpt_led_trigger(hw,
 					IEEE80211_TPT_LEDTRIG_FL_RADIO,
 					mt76_tpt_blink,
 					ARRAY_SIZE(mt76_tpt_blink));
 
 	np = of_get_child_by_name(np, "led");
-	अगर (np) अणु
-		अगर (!of_property_पढ़ो_u32(np, "led-sources", &led_pin))
+	if (np) {
+		if (!of_property_read_u32(np, "led-sources", &led_pin))
 			dev->led_pin = led_pin;
-		dev->led_al = of_property_पढ़ो_bool(np, "led-active-low");
-	पूर्ण
+		dev->led_al = of_property_read_bool(np, "led-active-low");
+	}
 
-	वापस led_classdev_रेजिस्टर(dev->dev, &dev->led_cdev);
-पूर्ण
+	return led_classdev_register(dev->dev, &dev->led_cdev);
+}
 
-अटल व्योम mt76_led_cleanup(काष्ठा mt76_dev *dev)
-अणु
-	अगर (!dev->led_cdev.brightness_set && !dev->led_cdev.blink_set)
-		वापस;
+static void mt76_led_cleanup(struct mt76_dev *dev)
+{
+	if (!dev->led_cdev.brightness_set && !dev->led_cdev.blink_set)
+		return;
 
-	led_classdev_unरेजिस्टर(&dev->led_cdev);
-पूर्ण
+	led_classdev_unregister(&dev->led_cdev);
+}
 
-अटल व्योम mt76_init_stream_cap(काष्ठा mt76_phy *phy,
-				 काष्ठा ieee80211_supported_band *sband,
+static void mt76_init_stream_cap(struct mt76_phy *phy,
+				 struct ieee80211_supported_band *sband,
 				 bool vht)
-अणु
-	काष्ठा ieee80211_sta_ht_cap *ht_cap = &sband->ht_cap;
-	पूर्णांक i, nstream = hweight8(phy->antenna_mask);
-	काष्ठा ieee80211_sta_vht_cap *vht_cap;
+{
+	struct ieee80211_sta_ht_cap *ht_cap = &sband->ht_cap;
+	int i, nstream = hweight8(phy->antenna_mask);
+	struct ieee80211_sta_vht_cap *vht_cap;
 	u16 mcs_map = 0;
 
-	अगर (nstream > 1)
+	if (nstream > 1)
 		ht_cap->cap |= IEEE80211_HT_CAP_TX_STBC;
-	अन्यथा
+	else
 		ht_cap->cap &= ~IEEE80211_HT_CAP_TX_STBC;
 
-	क्रम (i = 0; i < IEEE80211_HT_MCS_MASK_LEN; i++)
+	for (i = 0; i < IEEE80211_HT_MCS_MASK_LEN; i++)
 		ht_cap->mcs.rx_mask[i] = i < nstream ? 0xff : 0;
 
-	अगर (!vht)
-		वापस;
+	if (!vht)
+		return;
 
 	vht_cap = &sband->vht_cap;
-	अगर (nstream > 1)
+	if (nstream > 1)
 		vht_cap->cap |= IEEE80211_VHT_CAP_TXSTBC;
-	अन्यथा
+	else
 		vht_cap->cap &= ~IEEE80211_VHT_CAP_TXSTBC;
 
-	क्रम (i = 0; i < 8; i++) अणु
-		अगर (i < nstream)
+	for (i = 0; i < 8; i++) {
+		if (i < nstream)
 			mcs_map |= (IEEE80211_VHT_MCS_SUPPORT_0_9 << (i * 2));
-		अन्यथा
+		else
 			mcs_map |=
 				(IEEE80211_VHT_MCS_NOT_SUPPORTED << (i * 2));
-	पूर्ण
+	}
 	vht_cap->vht_mcs.rx_mcs_map = cpu_to_le16(mcs_map);
 	vht_cap->vht_mcs.tx_mcs_map = cpu_to_le16(mcs_map);
-पूर्ण
+}
 
-व्योम mt76_set_stream_caps(काष्ठा mt76_phy *phy, bool vht)
-अणु
-	अगर (phy->cap.has_2ghz)
+void mt76_set_stream_caps(struct mt76_phy *phy, bool vht)
+{
+	if (phy->cap.has_2ghz)
 		mt76_init_stream_cap(phy, &phy->sband_2g.sband, false);
-	अगर (phy->cap.has_5ghz)
+	if (phy->cap.has_5ghz)
 		mt76_init_stream_cap(phy, &phy->sband_5g.sband, vht);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(mt76_set_stream_caps);
 
-अटल पूर्णांक
-mt76_init_sband(काष्ठा mt76_phy *phy, काष्ठा mt76_sband *msband,
-		स्थिर काष्ठा ieee80211_channel *chan, पूर्णांक n_chan,
-		काष्ठा ieee80211_rate *rates, पूर्णांक n_rates, bool vht)
-अणु
-	काष्ठा ieee80211_supported_band *sband = &msband->sband;
-	काष्ठा ieee80211_sta_vht_cap *vht_cap;
-	काष्ठा ieee80211_sta_ht_cap *ht_cap;
-	काष्ठा mt76_dev *dev = phy->dev;
-	व्योम *chanlist;
-	पूर्णांक size;
+static int
+mt76_init_sband(struct mt76_phy *phy, struct mt76_sband *msband,
+		const struct ieee80211_channel *chan, int n_chan,
+		struct ieee80211_rate *rates, int n_rates, bool vht)
+{
+	struct ieee80211_supported_band *sband = &msband->sband;
+	struct ieee80211_sta_vht_cap *vht_cap;
+	struct ieee80211_sta_ht_cap *ht_cap;
+	struct mt76_dev *dev = phy->dev;
+	void *chanlist;
+	int size;
 
-	size = n_chan * माप(*chan);
+	size = n_chan * sizeof(*chan);
 	chanlist = devm_kmemdup(dev->dev, chan, size, GFP_KERNEL);
-	अगर (!chanlist)
-		वापस -ENOMEM;
+	if (!chanlist)
+		return -ENOMEM;
 
-	msband->chan = devm_kसुस्मृति(dev->dev, n_chan, माप(*msband->chan),
+	msband->chan = devm_kcalloc(dev->dev, n_chan, sizeof(*msband->chan),
 				    GFP_KERNEL);
-	अगर (!msband->chan)
-		वापस -ENOMEM;
+	if (!msband->chan)
+		return -ENOMEM;
 
 	sband->channels = chanlist;
 	sband->n_channels = n_chan;
@@ -207,8 +206,8 @@ mt76_init_sband(काष्ठा mt76_phy *phy, काष्ठा mt76_sband 
 
 	mt76_init_stream_cap(phy, sband, vht);
 
-	अगर (!vht)
-		वापस 0;
+	if (!vht)
+		return 0;
 
 	vht_cap = &sband->vht_cap;
 	vht_cap->vht_supported = true;
@@ -219,65 +218,65 @@ mt76_init_sband(काष्ठा mt76_phy *phy, काष्ठा mt76_sband 
 			IEEE80211_VHT_CAP_TX_ANTENNA_PATTERN |
 			(3 << IEEE80211_VHT_CAP_MAX_A_MPDU_LENGTH_EXPONENT_SHIFT);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-mt76_init_sband_2g(काष्ठा mt76_phy *phy, काष्ठा ieee80211_rate *rates,
-		   पूर्णांक n_rates)
-अणु
+static int
+mt76_init_sband_2g(struct mt76_phy *phy, struct ieee80211_rate *rates,
+		   int n_rates)
+{
 	phy->hw->wiphy->bands[NL80211_BAND_2GHZ] = &phy->sband_2g.sband;
 
-	वापस mt76_init_sband(phy, &phy->sband_2g, mt76_channels_2ghz,
+	return mt76_init_sband(phy, &phy->sband_2g, mt76_channels_2ghz,
 			       ARRAY_SIZE(mt76_channels_2ghz), rates,
 			       n_rates, false);
-पूर्ण
+}
 
-अटल पूर्णांक
-mt76_init_sband_5g(काष्ठा mt76_phy *phy, काष्ठा ieee80211_rate *rates,
-		   पूर्णांक n_rates, bool vht)
-अणु
+static int
+mt76_init_sband_5g(struct mt76_phy *phy, struct ieee80211_rate *rates,
+		   int n_rates, bool vht)
+{
 	phy->hw->wiphy->bands[NL80211_BAND_5GHZ] = &phy->sband_5g.sband;
 
-	वापस mt76_init_sband(phy, &phy->sband_5g, mt76_channels_5ghz,
+	return mt76_init_sband(phy, &phy->sband_5g, mt76_channels_5ghz,
 			       ARRAY_SIZE(mt76_channels_5ghz), rates,
 			       n_rates, vht);
-पूर्ण
+}
 
-अटल व्योम
-mt76_check_sband(काष्ठा mt76_phy *phy, काष्ठा mt76_sband *msband,
-		 क्रमागत nl80211_band band)
-अणु
-	काष्ठा ieee80211_supported_band *sband = &msband->sband;
+static void
+mt76_check_sband(struct mt76_phy *phy, struct mt76_sband *msband,
+		 enum nl80211_band band)
+{
+	struct ieee80211_supported_band *sband = &msband->sband;
 	bool found = false;
-	पूर्णांक i;
+	int i;
 
-	अगर (!sband)
-		वापस;
+	if (!sband)
+		return;
 
-	क्रम (i = 0; i < sband->n_channels; i++) अणु
-		अगर (sband->channels[i].flags & IEEE80211_CHAN_DISABLED)
-			जारी;
+	for (i = 0; i < sband->n_channels; i++) {
+		if (sband->channels[i].flags & IEEE80211_CHAN_DISABLED)
+			continue;
 
 		found = true;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (found) अणु
+	if (found) {
 		phy->chandef.chan = &sband->channels[0];
 		phy->chan_state = &msband->chan[0];
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	sband->n_channels = 0;
-	phy->hw->wiphy->bands[band] = शून्य;
-पूर्ण
+	phy->hw->wiphy->bands[band] = NULL;
+}
 
-अटल व्योम
-mt76_phy_init(काष्ठा mt76_phy *phy, काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा mt76_dev *dev = phy->dev;
-	काष्ठा wiphy *wiphy = hw->wiphy;
+static void
+mt76_phy_init(struct mt76_phy *phy, struct ieee80211_hw *hw)
+{
+	struct mt76_dev *dev = phy->dev;
+	struct wiphy *wiphy = hw->wiphy;
 
 	SET_IEEE80211_DEV(hw, dev->dev);
 	SET_IEEE80211_PERM_ADDR(hw, phy->macaddr);
@@ -294,10 +293,10 @@ mt76_phy_init(काष्ठा mt76_phy *phy, काष्ठा ieee80211_hw 
 	wiphy->available_antennas_tx = dev->phy.antenna_mask;
 	wiphy->available_antennas_rx = dev->phy.antenna_mask;
 
-	hw->txq_data_size = माप(काष्ठा mt76_txq);
+	hw->txq_data_size = sizeof(struct mt76_txq);
 	hw->uapsd_max_sp_len = IEEE80211_WMM_IE_STA_QOSINFO_SP_ALL;
 
-	अगर (!hw->max_tx_fragments)
+	if (!hw->max_tx_fragments)
 		hw->max_tx_fragments = 16;
 
 	ieee80211_hw_set(hw, SIGNAL_DBM);
@@ -308,105 +307,105 @@ mt76_phy_init(काष्ठा mt76_phy *phy, काष्ठा ieee80211_hw 
 	ieee80211_hw_set(hw, SUPPORTS_AMSDU_IN_AMPDU);
 	ieee80211_hw_set(hw, SUPPORTS_REORDERING_BUFFER);
 
-	अगर (!(dev->drv->drv_flags & MT_DRV_AMSDU_OFFLOAD)) अणु
+	if (!(dev->drv->drv_flags & MT_DRV_AMSDU_OFFLOAD)) {
 		ieee80211_hw_set(hw, TX_AMSDU);
 		ieee80211_hw_set(hw, TX_FRAG_LIST);
-	पूर्ण
+	}
 
 	ieee80211_hw_set(hw, MFP_CAPABLE);
 	ieee80211_hw_set(hw, AP_LINK_PS);
 	ieee80211_hw_set(hw, REPORTS_TX_ACK_STATUS);
 
 	wiphy->flags |= WIPHY_FLAG_IBSS_RSN;
-	wiphy->पूर्णांकerface_modes =
+	wiphy->interface_modes =
 		BIT(NL80211_IFTYPE_STATION) |
 		BIT(NL80211_IFTYPE_AP) |
-#अगर_घोषित CONFIG_MAC80211_MESH
+#ifdef CONFIG_MAC80211_MESH
 		BIT(NL80211_IFTYPE_MESH_POINT) |
-#पूर्ण_अगर
+#endif
 		BIT(NL80211_IFTYPE_P2P_CLIENT) |
 		BIT(NL80211_IFTYPE_P2P_GO) |
 		BIT(NL80211_IFTYPE_ADHOC);
-पूर्ण
+}
 
-काष्ठा mt76_phy *
-mt76_alloc_phy(काष्ठा mt76_dev *dev, अचिन्हित पूर्णांक size,
-	       स्थिर काष्ठा ieee80211_ops *ops)
-अणु
-	काष्ठा ieee80211_hw *hw;
-	अचिन्हित पूर्णांक phy_size;
-	काष्ठा mt76_phy *phy;
+struct mt76_phy *
+mt76_alloc_phy(struct mt76_dev *dev, unsigned int size,
+	       const struct ieee80211_ops *ops)
+{
+	struct ieee80211_hw *hw;
+	unsigned int phy_size;
+	struct mt76_phy *phy;
 
-	phy_size = ALIGN(माप(*phy), 8);
+	phy_size = ALIGN(sizeof(*phy), 8);
 	hw = ieee80211_alloc_hw(size + phy_size, ops);
-	अगर (!hw)
-		वापस शून्य;
+	if (!hw)
+		return NULL;
 
 	phy = hw->priv;
 	phy->dev = dev;
 	phy->hw = hw;
 	phy->priv = hw->priv + phy_size;
 
-	वापस phy;
-पूर्ण
+	return phy;
+}
 EXPORT_SYMBOL_GPL(mt76_alloc_phy);
 
-पूर्णांक mt76_रेजिस्टर_phy(काष्ठा mt76_phy *phy, bool vht,
-		      काष्ठा ieee80211_rate *rates, पूर्णांक n_rates)
-अणु
-	पूर्णांक ret;
+int mt76_register_phy(struct mt76_phy *phy, bool vht,
+		      struct ieee80211_rate *rates, int n_rates)
+{
+	int ret;
 
 	mt76_phy_init(phy, phy->hw);
 
-	अगर (phy->cap.has_2ghz) अणु
+	if (phy->cap.has_2ghz) {
 		ret = mt76_init_sband_2g(phy, rates, n_rates);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	अगर (phy->cap.has_5ghz) अणु
+	if (phy->cap.has_5ghz) {
 		ret = mt76_init_sband_5g(phy, rates + 4, n_rates - 4, vht);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	wiphy_पढ़ो_of_freq_limits(phy->hw->wiphy);
+	wiphy_read_of_freq_limits(phy->hw->wiphy);
 	mt76_check_sband(phy, &phy->sband_2g, NL80211_BAND_2GHZ);
 	mt76_check_sband(phy, &phy->sband_5g, NL80211_BAND_5GHZ);
 
-	ret = ieee80211_रेजिस्टर_hw(phy->hw);
-	अगर (ret)
-		वापस ret;
+	ret = ieee80211_register_hw(phy->hw);
+	if (ret)
+		return ret;
 
 	phy->dev->phy2 = phy;
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(mt76_रेजिस्टर_phy);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(mt76_register_phy);
 
-व्योम mt76_unरेजिस्टर_phy(काष्ठा mt76_phy *phy)
-अणु
-	काष्ठा mt76_dev *dev = phy->dev;
+void mt76_unregister_phy(struct mt76_phy *phy)
+{
+	struct mt76_dev *dev = phy->dev;
 
-	mt76_tx_status_check(dev, शून्य, true);
-	ieee80211_unरेजिस्टर_hw(phy->hw);
-	dev->phy2 = शून्य;
-पूर्ण
-EXPORT_SYMBOL_GPL(mt76_unरेजिस्टर_phy);
+	mt76_tx_status_check(dev, NULL, true);
+	ieee80211_unregister_hw(phy->hw);
+	dev->phy2 = NULL;
+}
+EXPORT_SYMBOL_GPL(mt76_unregister_phy);
 
-काष्ठा mt76_dev *
-mt76_alloc_device(काष्ठा device *pdev, अचिन्हित पूर्णांक size,
-		  स्थिर काष्ठा ieee80211_ops *ops,
-		  स्थिर काष्ठा mt76_driver_ops *drv_ops)
-अणु
-	काष्ठा ieee80211_hw *hw;
-	काष्ठा mt76_phy *phy;
-	काष्ठा mt76_dev *dev;
-	पूर्णांक i;
+struct mt76_dev *
+mt76_alloc_device(struct device *pdev, unsigned int size,
+		  const struct ieee80211_ops *ops,
+		  const struct mt76_driver_ops *drv_ops)
+{
+	struct ieee80211_hw *hw;
+	struct mt76_phy *phy;
+	struct mt76_dev *dev;
+	int i;
 
 	hw = ieee80211_alloc_hw(size, ops);
-	अगर (!hw)
-		वापस शून्य;
+	if (!hw)
+		return NULL;
 
 	dev = hw->priv;
 	dev->hw = hw;
@@ -421,11 +420,11 @@ mt76_alloc_device(काष्ठा device *pdev, अचिन्हित प�
 	spin_lock_init(&dev->lock);
 	spin_lock_init(&dev->cc_lock);
 	mutex_init(&dev->mutex);
-	init_रुकोqueue_head(&dev->tx_रुको);
+	init_waitqueue_head(&dev->tx_wait);
 	skb_queue_head_init(&dev->status_list);
 
 	skb_queue_head_init(&dev->mcu.res_q);
-	init_रुकोqueue_head(&dev->mcu.रुको);
+	init_waitqueue_head(&dev->mcu.wait);
 	mutex_init(&dev->mcu.mutex);
 	dev->tx_worker.fn = mt76_tx_worker;
 
@@ -434,795 +433,795 @@ mt76_alloc_device(काष्ठा device *pdev, अचिन्हित प�
 
 	INIT_LIST_HEAD(&dev->txwi_cache);
 
-	क्रम (i = 0; i < ARRAY_SIZE(dev->q_rx); i++)
+	for (i = 0; i < ARRAY_SIZE(dev->q_rx); i++)
 		skb_queue_head_init(&dev->rx_skb[i]);
 
 	dev->wq = alloc_ordered_workqueue("mt76", 0);
-	अगर (!dev->wq) अणु
-		ieee80211_मुक्त_hw(hw);
-		वापस शून्य;
-	पूर्ण
+	if (!dev->wq) {
+		ieee80211_free_hw(hw);
+		return NULL;
+	}
 
-	वापस dev;
-पूर्ण
+	return dev;
+}
 EXPORT_SYMBOL_GPL(mt76_alloc_device);
 
-पूर्णांक mt76_रेजिस्टर_device(काष्ठा mt76_dev *dev, bool vht,
-			 काष्ठा ieee80211_rate *rates, पूर्णांक n_rates)
-अणु
-	काष्ठा ieee80211_hw *hw = dev->hw;
-	काष्ठा mt76_phy *phy = &dev->phy;
-	पूर्णांक ret;
+int mt76_register_device(struct mt76_dev *dev, bool vht,
+			 struct ieee80211_rate *rates, int n_rates)
+{
+	struct ieee80211_hw *hw = dev->hw;
+	struct mt76_phy *phy = &dev->phy;
+	int ret;
 
 	dev_set_drvdata(dev->dev, dev);
 	mt76_phy_init(phy, hw);
 
-	अगर (phy->cap.has_2ghz) अणु
+	if (phy->cap.has_2ghz) {
 		ret = mt76_init_sband_2g(phy, rates, n_rates);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	अगर (phy->cap.has_5ghz) अणु
+	if (phy->cap.has_5ghz) {
 		ret = mt76_init_sband_5g(phy, rates + 4, n_rates - 4, vht);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	wiphy_पढ़ो_of_freq_limits(hw->wiphy);
+	wiphy_read_of_freq_limits(hw->wiphy);
 	mt76_check_sband(&dev->phy, &phy->sband_2g, NL80211_BAND_2GHZ);
 	mt76_check_sband(&dev->phy, &phy->sband_5g, NL80211_BAND_5GHZ);
 
-	अगर (IS_ENABLED(CONFIG_MT76_LEDS)) अणु
+	if (IS_ENABLED(CONFIG_MT76_LEDS)) {
 		ret = mt76_led_init(dev);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	ret = ieee80211_रेजिस्टर_hw(hw);
-	अगर (ret)
-		वापस ret;
+	ret = ieee80211_register_hw(hw);
+	if (ret)
+		return ret;
 
-	WARN_ON(mt76_worker_setup(hw, &dev->tx_worker, शून्य, "tx"));
-	sched_set_fअगरo_low(dev->tx_worker.task);
+	WARN_ON(mt76_worker_setup(hw, &dev->tx_worker, NULL, "tx"));
+	sched_set_fifo_low(dev->tx_worker.task);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(mt76_रेजिस्टर_device);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(mt76_register_device);
 
-व्योम mt76_unरेजिस्टर_device(काष्ठा mt76_dev *dev)
-अणु
-	काष्ठा ieee80211_hw *hw = dev->hw;
+void mt76_unregister_device(struct mt76_dev *dev)
+{
+	struct ieee80211_hw *hw = dev->hw;
 
-	अगर (IS_ENABLED(CONFIG_MT76_LEDS))
+	if (IS_ENABLED(CONFIG_MT76_LEDS))
 		mt76_led_cleanup(dev);
-	mt76_tx_status_check(dev, शून्य, true);
-	ieee80211_unरेजिस्टर_hw(hw);
-पूर्ण
-EXPORT_SYMBOL_GPL(mt76_unरेजिस्टर_device);
+	mt76_tx_status_check(dev, NULL, true);
+	ieee80211_unregister_hw(hw);
+}
+EXPORT_SYMBOL_GPL(mt76_unregister_device);
 
-व्योम mt76_मुक्त_device(काष्ठा mt76_dev *dev)
-अणु
-	mt76_worker_tearकरोwn(&dev->tx_worker);
-	अगर (dev->wq) अणु
+void mt76_free_device(struct mt76_dev *dev)
+{
+	mt76_worker_teardown(&dev->tx_worker);
+	if (dev->wq) {
 		destroy_workqueue(dev->wq);
-		dev->wq = शून्य;
-	पूर्ण
-	ieee80211_मुक्त_hw(dev->hw);
-पूर्ण
-EXPORT_SYMBOL_GPL(mt76_मुक्त_device);
+		dev->wq = NULL;
+	}
+	ieee80211_free_hw(dev->hw);
+}
+EXPORT_SYMBOL_GPL(mt76_free_device);
 
-अटल व्योम mt76_rx_release_amsdu(काष्ठा mt76_phy *phy, क्रमागत mt76_rxq_id q)
-अणु
-	काष्ठा sk_buff *skb = phy->rx_amsdu[q].head;
-	काष्ठा mt76_rx_status *status = (काष्ठा mt76_rx_status *)skb->cb;
-	काष्ठा mt76_dev *dev = phy->dev;
+static void mt76_rx_release_amsdu(struct mt76_phy *phy, enum mt76_rxq_id q)
+{
+	struct sk_buff *skb = phy->rx_amsdu[q].head;
+	struct mt76_rx_status *status = (struct mt76_rx_status *)skb->cb;
+	struct mt76_dev *dev = phy->dev;
 
-	phy->rx_amsdu[q].head = शून्य;
-	phy->rx_amsdu[q].tail = शून्य;
+	phy->rx_amsdu[q].head = NULL;
+	phy->rx_amsdu[q].tail = NULL;
 
 	/*
-	 * Validate अगर the amsdu has a proper first subframe.
+	 * Validate if the amsdu has a proper first subframe.
 	 * A single MSDU can be parsed as A-MSDU when the unauthenticated A-MSDU
-	 * flag of the QoS header माला_लो flipped. In such हालs, the first
+	 * flag of the QoS header gets flipped. In such cases, the first
 	 * subframe has a LLC/SNAP header in the location of the destination
 	 * address.
 	 */
-	अगर (skb_shinfo(skb)->frag_list) अणु
-		पूर्णांक offset = 0;
+	if (skb_shinfo(skb)->frag_list) {
+		int offset = 0;
 
-		अगर (!(status->flag & RX_FLAG_8023)) अणु
+		if (!(status->flag & RX_FLAG_8023)) {
 			offset = ieee80211_get_hdrlen_from_skb(skb);
 
-			अगर ((status->flag &
+			if ((status->flag &
 			     (RX_FLAG_DECRYPTED | RX_FLAG_IV_STRIPPED)) ==
 			    RX_FLAG_DECRYPTED)
 				offset += 8;
-		पूर्ण
+		}
 
-		अगर (ether_addr_equal(skb->data + offset, rfc1042_header)) अणु
-			dev_kमुक्त_skb(skb);
-			वापस;
-		पूर्ण
-	पूर्ण
+		if (ether_addr_equal(skb->data + offset, rfc1042_header)) {
+			dev_kfree_skb(skb);
+			return;
+		}
+	}
 	__skb_queue_tail(&dev->rx_skb[q], skb);
-पूर्ण
+}
 
-अटल व्योम mt76_rx_release_burst(काष्ठा mt76_phy *phy, क्रमागत mt76_rxq_id q,
-				  काष्ठा sk_buff *skb)
-अणु
-	काष्ठा mt76_rx_status *status = (काष्ठा mt76_rx_status *)skb->cb;
+static void mt76_rx_release_burst(struct mt76_phy *phy, enum mt76_rxq_id q,
+				  struct sk_buff *skb)
+{
+	struct mt76_rx_status *status = (struct mt76_rx_status *)skb->cb;
 
-	अगर (phy->rx_amsdu[q].head &&
+	if (phy->rx_amsdu[q].head &&
 	    (!status->amsdu || status->first_amsdu ||
 	     status->seqno != phy->rx_amsdu[q].seqno))
 		mt76_rx_release_amsdu(phy, q);
 
-	अगर (!phy->rx_amsdu[q].head) अणु
+	if (!phy->rx_amsdu[q].head) {
 		phy->rx_amsdu[q].tail = &skb_shinfo(skb)->frag_list;
 		phy->rx_amsdu[q].seqno = status->seqno;
 		phy->rx_amsdu[q].head = skb;
-	पूर्ण अन्यथा अणु
+	} else {
 		*phy->rx_amsdu[q].tail = skb;
 		phy->rx_amsdu[q].tail = &skb->next;
-	पूर्ण
+	}
 
-	अगर (!status->amsdu || status->last_amsdu)
+	if (!status->amsdu || status->last_amsdu)
 		mt76_rx_release_amsdu(phy, q);
-पूर्ण
+}
 
-व्योम mt76_rx(काष्ठा mt76_dev *dev, क्रमागत mt76_rxq_id q, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा mt76_rx_status *status = (काष्ठा mt76_rx_status *)skb->cb;
-	काष्ठा mt76_phy *phy = mt76_dev_phy(dev, status->ext_phy);
+void mt76_rx(struct mt76_dev *dev, enum mt76_rxq_id q, struct sk_buff *skb)
+{
+	struct mt76_rx_status *status = (struct mt76_rx_status *)skb->cb;
+	struct mt76_phy *phy = mt76_dev_phy(dev, status->ext_phy);
 
-	अगर (!test_bit(MT76_STATE_RUNNING, &phy->state)) अणु
-		dev_kमुक्त_skb(skb);
-		वापस;
-	पूर्ण
+	if (!test_bit(MT76_STATE_RUNNING, &phy->state)) {
+		dev_kfree_skb(skb);
+		return;
+	}
 
-#अगर_घोषित CONFIG_NL80211_TESTMODE
-	अगर (phy->test.state == MT76_TM_STATE_RX_FRAMES) अणु
+#ifdef CONFIG_NL80211_TESTMODE
+	if (phy->test.state == MT76_TM_STATE_RX_FRAMES) {
 		phy->test.rx_stats.packets[q]++;
-		अगर (status->flag & RX_FLAG_FAILED_FCS_CRC)
+		if (status->flag & RX_FLAG_FAILED_FCS_CRC)
 			phy->test.rx_stats.fcs_error[q]++;
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
 	mt76_rx_release_burst(phy, q, skb);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(mt76_rx);
 
-bool mt76_has_tx_pending(काष्ठा mt76_phy *phy)
-अणु
-	काष्ठा mt76_queue *q;
-	पूर्णांक i;
+bool mt76_has_tx_pending(struct mt76_phy *phy)
+{
+	struct mt76_queue *q;
+	int i;
 
-	क्रम (i = 0; i < __MT_TXQ_MAX; i++) अणु
+	for (i = 0; i < __MT_TXQ_MAX; i++) {
 		q = phy->q_tx[i];
-		अगर (q && q->queued)
-			वापस true;
-	पूर्ण
+		if (q && q->queued)
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 EXPORT_SYMBOL_GPL(mt76_has_tx_pending);
 
-अटल काष्ठा mt76_channel_state *
-mt76_channel_state(काष्ठा mt76_phy *phy, काष्ठा ieee80211_channel *c)
-अणु
-	काष्ठा mt76_sband *msband;
-	पूर्णांक idx;
+static struct mt76_channel_state *
+mt76_channel_state(struct mt76_phy *phy, struct ieee80211_channel *c)
+{
+	struct mt76_sband *msband;
+	int idx;
 
-	अगर (c->band == NL80211_BAND_2GHZ)
+	if (c->band == NL80211_BAND_2GHZ)
 		msband = &phy->sband_2g;
-	अन्यथा
+	else
 		msband = &phy->sband_5g;
 
 	idx = c - &msband->sband.channels[0];
-	वापस &msband->chan[idx];
-पूर्ण
+	return &msband->chan[idx];
+}
 
-व्योम mt76_update_survey_active_समय(काष्ठा mt76_phy *phy, kसमय_प्रकार समय)
-अणु
-	काष्ठा mt76_channel_state *state = phy->chan_state;
+void mt76_update_survey_active_time(struct mt76_phy *phy, ktime_t time)
+{
+	struct mt76_channel_state *state = phy->chan_state;
 
-	state->cc_active += kसमय_प्रकारo_us(kसमय_sub(समय,
-						  phy->survey_समय));
-	phy->survey_समय = समय;
-पूर्ण
-EXPORT_SYMBOL_GPL(mt76_update_survey_active_समय);
+	state->cc_active += ktime_to_us(ktime_sub(time,
+						  phy->survey_time));
+	phy->survey_time = time;
+}
+EXPORT_SYMBOL_GPL(mt76_update_survey_active_time);
 
-व्योम mt76_update_survey(काष्ठा mt76_dev *dev)
-अणु
-	kसमय_प्रकार cur_समय;
+void mt76_update_survey(struct mt76_dev *dev)
+{
+	ktime_t cur_time;
 
-	अगर (dev->drv->update_survey)
+	if (dev->drv->update_survey)
 		dev->drv->update_survey(dev);
 
-	cur_समय = kसमय_get_bootसमय();
-	mt76_update_survey_active_समय(&dev->phy, cur_समय);
-	अगर (dev->phy2)
-		mt76_update_survey_active_समय(dev->phy2, cur_समय);
+	cur_time = ktime_get_boottime();
+	mt76_update_survey_active_time(&dev->phy, cur_time);
+	if (dev->phy2)
+		mt76_update_survey_active_time(dev->phy2, cur_time);
 
-	अगर (dev->drv->drv_flags & MT_DRV_SW_RX_AIRTIME) अणु
-		काष्ठा mt76_channel_state *state = dev->phy.chan_state;
+	if (dev->drv->drv_flags & MT_DRV_SW_RX_AIRTIME) {
+		struct mt76_channel_state *state = dev->phy.chan_state;
 
 		spin_lock_bh(&dev->cc_lock);
 		state->cc_bss_rx += dev->cur_cc_bss_rx;
 		dev->cur_cc_bss_rx = 0;
 		spin_unlock_bh(&dev->cc_lock);
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL_GPL(mt76_update_survey);
 
-व्योम mt76_set_channel(काष्ठा mt76_phy *phy)
-अणु
-	काष्ठा mt76_dev *dev = phy->dev;
-	काष्ठा ieee80211_hw *hw = phy->hw;
-	काष्ठा cfg80211_chan_def *chandef = &hw->conf.chandef;
+void mt76_set_channel(struct mt76_phy *phy)
+{
+	struct mt76_dev *dev = phy->dev;
+	struct ieee80211_hw *hw = phy->hw;
+	struct cfg80211_chan_def *chandef = &hw->conf.chandef;
 	bool offchannel = hw->conf.flags & IEEE80211_CONF_OFFCHANNEL;
-	पूर्णांक समयout = HZ / 5;
+	int timeout = HZ / 5;
 
-	रुको_event_समयout(dev->tx_रुको, !mt76_has_tx_pending(phy), समयout);
+	wait_event_timeout(dev->tx_wait, !mt76_has_tx_pending(phy), timeout);
 	mt76_update_survey(dev);
 
 	phy->chandef = *chandef;
 	phy->chan_state = mt76_channel_state(phy, chandef->chan);
 
-	अगर (!offchannel)
-		phy->मुख्य_chan = chandef->chan;
+	if (!offchannel)
+		phy->main_chan = chandef->chan;
 
-	अगर (chandef->chan != phy->मुख्य_chan)
-		स_रखो(phy->chan_state, 0, माप(*phy->chan_state));
-पूर्ण
+	if (chandef->chan != phy->main_chan)
+		memset(phy->chan_state, 0, sizeof(*phy->chan_state));
+}
 EXPORT_SYMBOL_GPL(mt76_set_channel);
 
-पूर्णांक mt76_get_survey(काष्ठा ieee80211_hw *hw, पूर्णांक idx,
-		    काष्ठा survey_info *survey)
-अणु
-	काष्ठा mt76_phy *phy = hw->priv;
-	काष्ठा mt76_dev *dev = phy->dev;
-	काष्ठा mt76_sband *sband;
-	काष्ठा ieee80211_channel *chan;
-	काष्ठा mt76_channel_state *state;
-	पूर्णांक ret = 0;
+int mt76_get_survey(struct ieee80211_hw *hw, int idx,
+		    struct survey_info *survey)
+{
+	struct mt76_phy *phy = hw->priv;
+	struct mt76_dev *dev = phy->dev;
+	struct mt76_sband *sband;
+	struct ieee80211_channel *chan;
+	struct mt76_channel_state *state;
+	int ret = 0;
 
 	mutex_lock(&dev->mutex);
-	अगर (idx == 0 && dev->drv->update_survey)
+	if (idx == 0 && dev->drv->update_survey)
 		mt76_update_survey(dev);
 
 	sband = &phy->sband_2g;
-	अगर (idx >= sband->sband.n_channels) अणु
+	if (idx >= sband->sband.n_channels) {
 		idx -= sband->sband.n_channels;
 		sband = &phy->sband_5g;
-	पूर्ण
+	}
 
-	अगर (idx >= sband->sband.n_channels) अणु
+	if (idx >= sband->sband.n_channels) {
 		ret = -ENOENT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	chan = &sband->sband.channels[idx];
 	state = mt76_channel_state(phy, chan);
 
-	स_रखो(survey, 0, माप(*survey));
+	memset(survey, 0, sizeof(*survey));
 	survey->channel = chan;
 	survey->filled = SURVEY_INFO_TIME | SURVEY_INFO_TIME_BUSY;
 	survey->filled |= dev->drv->survey_flags;
-	अगर (state->noise)
+	if (state->noise)
 		survey->filled |= SURVEY_INFO_NOISE_DBM;
 
-	अगर (chan == phy->मुख्य_chan) अणु
+	if (chan == phy->main_chan) {
 		survey->filled |= SURVEY_INFO_IN_USE;
 
-		अगर (dev->drv->drv_flags & MT_DRV_SW_RX_AIRTIME)
+		if (dev->drv->drv_flags & MT_DRV_SW_RX_AIRTIME)
 			survey->filled |= SURVEY_INFO_TIME_BSS_RX;
-	पूर्ण
+	}
 
-	survey->समय_busy = भाग_u64(state->cc_busy, 1000);
-	survey->समय_rx = भाग_u64(state->cc_rx, 1000);
-	survey->समय = भाग_u64(state->cc_active, 1000);
+	survey->time_busy = div_u64(state->cc_busy, 1000);
+	survey->time_rx = div_u64(state->cc_rx, 1000);
+	survey->time = div_u64(state->cc_active, 1000);
 	survey->noise = state->noise;
 
 	spin_lock_bh(&dev->cc_lock);
-	survey->समय_bss_rx = भाग_u64(state->cc_bss_rx, 1000);
-	survey->समय_प्रकारx = भाग_u64(state->cc_tx, 1000);
+	survey->time_bss_rx = div_u64(state->cc_bss_rx, 1000);
+	survey->time_tx = div_u64(state->cc_tx, 1000);
 	spin_unlock_bh(&dev->cc_lock);
 
 out:
 	mutex_unlock(&dev->mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(mt76_get_survey);
 
-व्योम mt76_wcid_key_setup(काष्ठा mt76_dev *dev, काष्ठा mt76_wcid *wcid,
-			 काष्ठा ieee80211_key_conf *key)
-अणु
-	काष्ठा ieee80211_key_seq seq;
-	पूर्णांक i;
+void mt76_wcid_key_setup(struct mt76_dev *dev, struct mt76_wcid *wcid,
+			 struct ieee80211_key_conf *key)
+{
+	struct ieee80211_key_seq seq;
+	int i;
 
 	wcid->rx_check_pn = false;
 
-	अगर (!key)
-		वापस;
+	if (!key)
+		return;
 
-	अगर (key->cipher != WLAN_CIPHER_SUITE_CCMP)
-		वापस;
+	if (key->cipher != WLAN_CIPHER_SUITE_CCMP)
+		return;
 
 	wcid->rx_check_pn = true;
-	क्रम (i = 0; i < IEEE80211_NUM_TIDS; i++) अणु
+	for (i = 0; i < IEEE80211_NUM_TIDS; i++) {
 		ieee80211_get_key_rx_seq(key, i, &seq);
-		स_नकल(wcid->rx_key_pn[i], seq.ccmp.pn, माप(seq.ccmp.pn));
-	पूर्ण
-पूर्ण
+		memcpy(wcid->rx_key_pn[i], seq.ccmp.pn, sizeof(seq.ccmp.pn));
+	}
+}
 EXPORT_SYMBOL(mt76_wcid_key_setup);
 
-अटल व्योम
-mt76_rx_convert(काष्ठा mt76_dev *dev, काष्ठा sk_buff *skb,
-		काष्ठा ieee80211_hw **hw,
-		काष्ठा ieee80211_sta **sta)
-अणु
-	काष्ठा ieee80211_rx_status *status = IEEE80211_SKB_RXCB(skb);
-	काष्ठा mt76_rx_status mstat;
+static void
+mt76_rx_convert(struct mt76_dev *dev, struct sk_buff *skb,
+		struct ieee80211_hw **hw,
+		struct ieee80211_sta **sta)
+{
+	struct ieee80211_rx_status *status = IEEE80211_SKB_RXCB(skb);
+	struct mt76_rx_status mstat;
 
-	mstat = *((काष्ठा mt76_rx_status *)skb->cb);
-	स_रखो(status, 0, माप(*status));
+	mstat = *((struct mt76_rx_status *)skb->cb);
+	memset(status, 0, sizeof(*status));
 
 	status->flag = mstat.flag;
 	status->freq = mstat.freq;
 	status->enc_flags = mstat.enc_flags;
 	status->encoding = mstat.encoding;
 	status->bw = mstat.bw;
-	status->he_ru = mस्थिति.सe_ru;
-	status->he_gi = mस्थिति.सe_gi;
-	status->he_dcm = mस्थिति.सe_dcm;
+	status->he_ru = mstat.he_ru;
+	status->he_gi = mstat.he_gi;
+	status->he_dcm = mstat.he_dcm;
 	status->rate_idx = mstat.rate_idx;
 	status->nss = mstat.nss;
 	status->band = mstat.band;
-	status->संकेत = mstat.संकेत;
+	status->signal = mstat.signal;
 	status->chains = mstat.chains;
 	status->ampdu_reference = mstat.ampdu_ref;
-	status->device_बारtamp = mstat.बारtamp;
-	status->maस_समय = mstat.बारtamp;
+	status->device_timestamp = mstat.timestamp;
+	status->mactime = mstat.timestamp;
 
-	BUILD_BUG_ON(माप(mstat) > माप(skb->cb));
-	BUILD_BUG_ON(माप(status->chain_संकेत) !=
-		     माप(mstat.chain_संकेत));
-	स_नकल(status->chain_संकेत, mstat.chain_संकेत,
-	       माप(mstat.chain_संकेत));
+	BUILD_BUG_ON(sizeof(mstat) > sizeof(skb->cb));
+	BUILD_BUG_ON(sizeof(status->chain_signal) !=
+		     sizeof(mstat.chain_signal));
+	memcpy(status->chain_signal, mstat.chain_signal,
+	       sizeof(mstat.chain_signal));
 
 	*sta = wcid_to_sta(mstat.wcid);
 	*hw = mt76_phy_hw(dev, mstat.ext_phy);
-पूर्ण
+}
 
-अटल पूर्णांक
-mt76_check_ccmp_pn(काष्ठा sk_buff *skb)
-अणु
-	काष्ठा mt76_rx_status *status = (काष्ठा mt76_rx_status *)skb->cb;
-	काष्ठा mt76_wcid *wcid = status->wcid;
-	काष्ठा ieee80211_hdr *hdr;
+static int
+mt76_check_ccmp_pn(struct sk_buff *skb)
+{
+	struct mt76_rx_status *status = (struct mt76_rx_status *)skb->cb;
+	struct mt76_wcid *wcid = status->wcid;
+	struct ieee80211_hdr *hdr;
 	u8 tidno = status->qos_ctl & IEEE80211_QOS_CTL_TID_MASK;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!(status->flag & RX_FLAG_DECRYPTED))
-		वापस 0;
+	if (!(status->flag & RX_FLAG_DECRYPTED))
+		return 0;
 
-	अगर (!wcid || !wcid->rx_check_pn)
-		वापस 0;
+	if (!wcid || !wcid->rx_check_pn)
+		return 0;
 
-	अगर (!(status->flag & RX_FLAG_IV_STRIPPED)) अणु
+	if (!(status->flag & RX_FLAG_IV_STRIPPED)) {
 		/*
 		 * Validate the first fragment both here and in mac80211
 		 * All further fragments will be validated by mac80211 only.
 		 */
 		hdr = mt76_skb_get_hdr(skb);
-		अगर (ieee80211_is_frag(hdr) &&
+		if (ieee80211_is_frag(hdr) &&
 		    !ieee80211_is_first_frag(hdr->frame_control))
-			वापस 0;
-	पूर्ण
+			return 0;
+	}
 
-	BUILD_BUG_ON(माप(status->iv) != माप(wcid->rx_key_pn[0]));
-	ret = स_भेद(status->iv, wcid->rx_key_pn[tidno],
-		     माप(status->iv));
-	अगर (ret <= 0)
-		वापस -EINVAL; /* replay */
+	BUILD_BUG_ON(sizeof(status->iv) != sizeof(wcid->rx_key_pn[0]));
+	ret = memcmp(status->iv, wcid->rx_key_pn[tidno],
+		     sizeof(status->iv));
+	if (ret <= 0)
+		return -EINVAL; /* replay */
 
-	स_नकल(wcid->rx_key_pn[tidno], status->iv, माप(status->iv));
+	memcpy(wcid->rx_key_pn[tidno], status->iv, sizeof(status->iv));
 
-	अगर (status->flag & RX_FLAG_IV_STRIPPED)
+	if (status->flag & RX_FLAG_IV_STRIPPED)
 		status->flag |= RX_FLAG_PN_VALIDATED;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-mt76_airसमय_report(काष्ठा mt76_dev *dev, काष्ठा mt76_rx_status *status,
-		    पूर्णांक len)
-अणु
-	काष्ठा mt76_wcid *wcid = status->wcid;
-	काष्ठा ieee80211_rx_status info = अणु
+static void
+mt76_airtime_report(struct mt76_dev *dev, struct mt76_rx_status *status,
+		    int len)
+{
+	struct mt76_wcid *wcid = status->wcid;
+	struct ieee80211_rx_status info = {
 		.enc_flags = status->enc_flags,
 		.rate_idx = status->rate_idx,
 		.encoding = status->encoding,
 		.band = status->band,
 		.nss = status->nss,
 		.bw = status->bw,
-	पूर्ण;
-	काष्ठा ieee80211_sta *sta;
-	u32 airसमय;
+	};
+	struct ieee80211_sta *sta;
+	u32 airtime;
 	u8 tidno = status->qos_ctl & IEEE80211_QOS_CTL_TID_MASK;
 
-	airसमय = ieee80211_calc_rx_airसमय(dev->hw, &info, len);
+	airtime = ieee80211_calc_rx_airtime(dev->hw, &info, len);
 	spin_lock(&dev->cc_lock);
-	dev->cur_cc_bss_rx += airसमय;
+	dev->cur_cc_bss_rx += airtime;
 	spin_unlock(&dev->cc_lock);
 
-	अगर (!wcid || !wcid->sta)
-		वापस;
+	if (!wcid || !wcid->sta)
+		return;
 
-	sta = container_of((व्योम *)wcid, काष्ठा ieee80211_sta, drv_priv);
-	ieee80211_sta_रेजिस्टर_airसमय(sta, tidno, 0, airसमय);
-पूर्ण
+	sta = container_of((void *)wcid, struct ieee80211_sta, drv_priv);
+	ieee80211_sta_register_airtime(sta, tidno, 0, airtime);
+}
 
-अटल व्योम
-mt76_airसमय_flush_ampdu(काष्ठा mt76_dev *dev)
-अणु
-	काष्ठा mt76_wcid *wcid;
-	पूर्णांक wcid_idx;
+static void
+mt76_airtime_flush_ampdu(struct mt76_dev *dev)
+{
+	struct mt76_wcid *wcid;
+	int wcid_idx;
 
-	अगर (!dev->rx_ampdu_len)
-		वापस;
+	if (!dev->rx_ampdu_len)
+		return;
 
 	wcid_idx = dev->rx_ampdu_status.wcid_idx;
-	अगर (wcid_idx < ARRAY_SIZE(dev->wcid))
+	if (wcid_idx < ARRAY_SIZE(dev->wcid))
 		wcid = rcu_dereference(dev->wcid[wcid_idx]);
-	अन्यथा
-		wcid = शून्य;
+	else
+		wcid = NULL;
 	dev->rx_ampdu_status.wcid = wcid;
 
-	mt76_airसमय_report(dev, &dev->rx_ampdu_status, dev->rx_ampdu_len);
+	mt76_airtime_report(dev, &dev->rx_ampdu_status, dev->rx_ampdu_len);
 
 	dev->rx_ampdu_len = 0;
 	dev->rx_ampdu_ref = 0;
-पूर्ण
+}
 
-अटल व्योम
-mt76_airसमय_check(काष्ठा mt76_dev *dev, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा mt76_rx_status *status = (काष्ठा mt76_rx_status *)skb->cb;
-	काष्ठा mt76_wcid *wcid = status->wcid;
+static void
+mt76_airtime_check(struct mt76_dev *dev, struct sk_buff *skb)
+{
+	struct mt76_rx_status *status = (struct mt76_rx_status *)skb->cb;
+	struct mt76_wcid *wcid = status->wcid;
 
-	अगर (!(dev->drv->drv_flags & MT_DRV_SW_RX_AIRTIME))
-		वापस;
+	if (!(dev->drv->drv_flags & MT_DRV_SW_RX_AIRTIME))
+		return;
 
-	अगर (!wcid || !wcid->sta) अणु
-		काष्ठा ieee80211_hdr *hdr = mt76_skb_get_hdr(skb);
+	if (!wcid || !wcid->sta) {
+		struct ieee80211_hdr *hdr = mt76_skb_get_hdr(skb);
 
-		अगर (status->flag & RX_FLAG_8023)
-			वापस;
+		if (status->flag & RX_FLAG_8023)
+			return;
 
-		अगर (!ether_addr_equal(hdr->addr1, dev->phy.macaddr))
-			वापस;
+		if (!ether_addr_equal(hdr->addr1, dev->phy.macaddr))
+			return;
 
-		wcid = शून्य;
-	पूर्ण
+		wcid = NULL;
+	}
 
-	अगर (!(status->flag & RX_FLAG_AMPDU_DETAILS) ||
+	if (!(status->flag & RX_FLAG_AMPDU_DETAILS) ||
 	    status->ampdu_ref != dev->rx_ampdu_ref)
-		mt76_airसमय_flush_ampdu(dev);
+		mt76_airtime_flush_ampdu(dev);
 
-	अगर (status->flag & RX_FLAG_AMPDU_DETAILS) अणु
-		अगर (!dev->rx_ampdu_len ||
-		    status->ampdu_ref != dev->rx_ampdu_ref) अणु
+	if (status->flag & RX_FLAG_AMPDU_DETAILS) {
+		if (!dev->rx_ampdu_len ||
+		    status->ampdu_ref != dev->rx_ampdu_ref) {
 			dev->rx_ampdu_status = *status;
 			dev->rx_ampdu_status.wcid_idx = wcid ? wcid->idx : 0xff;
 			dev->rx_ampdu_ref = status->ampdu_ref;
-		पूर्ण
+		}
 
 		dev->rx_ampdu_len += skb->len;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	mt76_airसमय_report(dev, status, skb->len);
-पूर्ण
+	mt76_airtime_report(dev, status, skb->len);
+}
 
-अटल व्योम
-mt76_check_sta(काष्ठा mt76_dev *dev, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा mt76_rx_status *status = (काष्ठा mt76_rx_status *)skb->cb;
-	काष्ठा ieee80211_hdr *hdr = mt76_skb_get_hdr(skb);
-	काष्ठा ieee80211_sta *sta;
-	काष्ठा ieee80211_hw *hw;
-	काष्ठा mt76_wcid *wcid = status->wcid;
+static void
+mt76_check_sta(struct mt76_dev *dev, struct sk_buff *skb)
+{
+	struct mt76_rx_status *status = (struct mt76_rx_status *)skb->cb;
+	struct ieee80211_hdr *hdr = mt76_skb_get_hdr(skb);
+	struct ieee80211_sta *sta;
+	struct ieee80211_hw *hw;
+	struct mt76_wcid *wcid = status->wcid;
 	u8 tidno = status->qos_ctl & IEEE80211_QOS_CTL_TID_MASK;
 	bool ps;
 
 	hw = mt76_phy_hw(dev, status->ext_phy);
-	अगर (ieee80211_is_pspoll(hdr->frame_control) && !wcid &&
-	    !(status->flag & RX_FLAG_8023)) अणु
-		sta = ieee80211_find_sta_by_अगरaddr(hw, hdr->addr2, शून्य);
-		अगर (sta)
-			wcid = status->wcid = (काष्ठा mt76_wcid *)sta->drv_priv;
-	पूर्ण
+	if (ieee80211_is_pspoll(hdr->frame_control) && !wcid &&
+	    !(status->flag & RX_FLAG_8023)) {
+		sta = ieee80211_find_sta_by_ifaddr(hw, hdr->addr2, NULL);
+		if (sta)
+			wcid = status->wcid = (struct mt76_wcid *)sta->drv_priv;
+	}
 
-	mt76_airसमय_check(dev, skb);
+	mt76_airtime_check(dev, skb);
 
-	अगर (!wcid || !wcid->sta)
-		वापस;
+	if (!wcid || !wcid->sta)
+		return;
 
-	sta = container_of((व्योम *)wcid, काष्ठा ieee80211_sta, drv_priv);
+	sta = container_of((void *)wcid, struct ieee80211_sta, drv_priv);
 
-	अगर (status->संकेत <= 0)
-		ewma_संकेत_add(&wcid->rssi, -status->संकेत);
+	if (status->signal <= 0)
+		ewma_signal_add(&wcid->rssi, -status->signal);
 
 	wcid->inactive_count = 0;
 
-	अगर (status->flag & RX_FLAG_8023)
-		वापस;
+	if (status->flag & RX_FLAG_8023)
+		return;
 
-	अगर (!test_bit(MT_WCID_FLAG_CHECK_PS, &wcid->flags))
-		वापस;
+	if (!test_bit(MT_WCID_FLAG_CHECK_PS, &wcid->flags))
+		return;
 
-	अगर (ieee80211_is_pspoll(hdr->frame_control)) अणु
+	if (ieee80211_is_pspoll(hdr->frame_control)) {
 		ieee80211_sta_pspoll(sta);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (ieee80211_has_morefrags(hdr->frame_control) ||
+	if (ieee80211_has_morefrags(hdr->frame_control) ||
 	    !(ieee80211_is_mgmt(hdr->frame_control) ||
 	      ieee80211_is_data(hdr->frame_control)))
-		वापस;
+		return;
 
 	ps = ieee80211_has_pm(hdr->frame_control);
 
-	अगर (ps && (ieee80211_is_data_qos(hdr->frame_control) ||
+	if (ps && (ieee80211_is_data_qos(hdr->frame_control) ||
 		   ieee80211_is_qos_nullfunc(hdr->frame_control)))
 		ieee80211_sta_uapsd_trigger(sta, tidno);
 
-	अगर (!!test_bit(MT_WCID_FLAG_PS, &wcid->flags) == ps)
-		वापस;
+	if (!!test_bit(MT_WCID_FLAG_PS, &wcid->flags) == ps)
+		return;
 
-	अगर (ps)
+	if (ps)
 		set_bit(MT_WCID_FLAG_PS, &wcid->flags);
-	अन्यथा
+	else
 		clear_bit(MT_WCID_FLAG_PS, &wcid->flags);
 
 	dev->drv->sta_ps(dev, sta, ps);
 	ieee80211_sta_ps_transition(sta, ps);
-पूर्ण
+}
 
-व्योम mt76_rx_complete(काष्ठा mt76_dev *dev, काष्ठा sk_buff_head *frames,
-		      काष्ठा napi_काष्ठा *napi)
-अणु
-	काष्ठा ieee80211_sta *sta;
-	काष्ठा ieee80211_hw *hw;
-	काष्ठा sk_buff *skb, *पंचांगp;
+void mt76_rx_complete(struct mt76_dev *dev, struct sk_buff_head *frames,
+		      struct napi_struct *napi)
+{
+	struct ieee80211_sta *sta;
+	struct ieee80211_hw *hw;
+	struct sk_buff *skb, *tmp;
 	LIST_HEAD(list);
 
 	spin_lock(&dev->rx_lock);
-	जबतक ((skb = __skb_dequeue(frames)) != शून्य) अणु
-		काष्ठा sk_buff *nskb = skb_shinfo(skb)->frag_list;
+	while ((skb = __skb_dequeue(frames)) != NULL) {
+		struct sk_buff *nskb = skb_shinfo(skb)->frag_list;
 
-		अगर (mt76_check_ccmp_pn(skb)) अणु
-			dev_kमुक्त_skb(skb);
-			जारी;
-		पूर्ण
+		if (mt76_check_ccmp_pn(skb)) {
+			dev_kfree_skb(skb);
+			continue;
+		}
 
-		skb_shinfo(skb)->frag_list = शून्य;
+		skb_shinfo(skb)->frag_list = NULL;
 		mt76_rx_convert(dev, skb, &hw, &sta);
 		ieee80211_rx_list(hw, sta, skb, &list);
 
 		/* subsequent amsdu frames */
-		जबतक (nskb) अणु
+		while (nskb) {
 			skb = nskb;
 			nskb = nskb->next;
-			skb->next = शून्य;
+			skb->next = NULL;
 
 			mt76_rx_convert(dev, skb, &hw, &sta);
 			ieee80211_rx_list(hw, sta, skb, &list);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	spin_unlock(&dev->rx_lock);
 
-	अगर (!napi) अणु
-		netअगर_receive_skb_list(&list);
-		वापस;
-	पूर्ण
+	if (!napi) {
+		netif_receive_skb_list(&list);
+		return;
+	}
 
-	list_क्रम_each_entry_safe(skb, पंचांगp, &list, list) अणु
+	list_for_each_entry_safe(skb, tmp, &list, list) {
 		skb_list_del_init(skb);
 		napi_gro_receive(napi, skb);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम mt76_rx_poll_complete(काष्ठा mt76_dev *dev, क्रमागत mt76_rxq_id q,
-			   काष्ठा napi_काष्ठा *napi)
-अणु
-	काष्ठा sk_buff_head frames;
-	काष्ठा sk_buff *skb;
+void mt76_rx_poll_complete(struct mt76_dev *dev, enum mt76_rxq_id q,
+			   struct napi_struct *napi)
+{
+	struct sk_buff_head frames;
+	struct sk_buff *skb;
 
 	__skb_queue_head_init(&frames);
 
-	जबतक ((skb = __skb_dequeue(&dev->rx_skb[q])) != शून्य) अणु
+	while ((skb = __skb_dequeue(&dev->rx_skb[q])) != NULL) {
 		mt76_check_sta(dev, skb);
 		mt76_rx_aggr_reorder(skb, &frames);
-	पूर्ण
+	}
 
 	mt76_rx_complete(dev, &frames, napi);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(mt76_rx_poll_complete);
 
-अटल पूर्णांक
-mt76_sta_add(काष्ठा mt76_dev *dev, काष्ठा ieee80211_vअगर *vअगर,
-	     काष्ठा ieee80211_sta *sta, bool ext_phy)
-अणु
-	काष्ठा mt76_wcid *wcid = (काष्ठा mt76_wcid *)sta->drv_priv;
-	पूर्णांक ret;
-	पूर्णांक i;
+static int
+mt76_sta_add(struct mt76_dev *dev, struct ieee80211_vif *vif,
+	     struct ieee80211_sta *sta, bool ext_phy)
+{
+	struct mt76_wcid *wcid = (struct mt76_wcid *)sta->drv_priv;
+	int ret;
+	int i;
 
 	mutex_lock(&dev->mutex);
 
-	ret = dev->drv->sta_add(dev, vअगर, sta);
-	अगर (ret)
-		जाओ out;
+	ret = dev->drv->sta_add(dev, vif, sta);
+	if (ret)
+		goto out;
 
-	क्रम (i = 0; i < ARRAY_SIZE(sta->txq); i++) अणु
-		काष्ठा mt76_txq *mtxq;
+	for (i = 0; i < ARRAY_SIZE(sta->txq); i++) {
+		struct mt76_txq *mtxq;
 
-		अगर (!sta->txq[i])
-			जारी;
+		if (!sta->txq[i])
+			continue;
 
-		mtxq = (काष्ठा mt76_txq *)sta->txq[i]->drv_priv;
+		mtxq = (struct mt76_txq *)sta->txq[i]->drv_priv;
 		mtxq->wcid = wcid;
-	पूर्ण
+	}
 
-	ewma_संकेत_init(&wcid->rssi);
-	अगर (ext_phy)
+	ewma_signal_init(&wcid->rssi);
+	if (ext_phy)
 		mt76_wcid_mask_set(dev->wcid_phy_mask, wcid->idx);
 	wcid->ext_phy = ext_phy;
-	rcu_assign_poपूर्णांकer(dev->wcid[wcid->idx], wcid);
+	rcu_assign_pointer(dev->wcid[wcid->idx], wcid);
 
 out:
 	mutex_unlock(&dev->mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम __mt76_sta_हटाओ(काष्ठा mt76_dev *dev, काष्ठा ieee80211_vअगर *vअगर,
-		       काष्ठा ieee80211_sta *sta)
-अणु
-	काष्ठा mt76_wcid *wcid = (काष्ठा mt76_wcid *)sta->drv_priv;
-	पूर्णांक i, idx = wcid->idx;
+void __mt76_sta_remove(struct mt76_dev *dev, struct ieee80211_vif *vif,
+		       struct ieee80211_sta *sta)
+{
+	struct mt76_wcid *wcid = (struct mt76_wcid *)sta->drv_priv;
+	int i, idx = wcid->idx;
 
-	क्रम (i = 0; i < ARRAY_SIZE(wcid->aggr); i++)
+	for (i = 0; i < ARRAY_SIZE(wcid->aggr); i++)
 		mt76_rx_aggr_stop(dev, wcid, i);
 
-	अगर (dev->drv->sta_हटाओ)
-		dev->drv->sta_हटाओ(dev, vअगर, sta);
+	if (dev->drv->sta_remove)
+		dev->drv->sta_remove(dev, vif, sta);
 
 	mt76_tx_status_check(dev, wcid, true);
 	mt76_wcid_mask_clear(dev->wcid_mask, idx);
 	mt76_wcid_mask_clear(dev->wcid_phy_mask, idx);
-पूर्ण
-EXPORT_SYMBOL_GPL(__mt76_sta_हटाओ);
+}
+EXPORT_SYMBOL_GPL(__mt76_sta_remove);
 
-अटल व्योम
-mt76_sta_हटाओ(काष्ठा mt76_dev *dev, काष्ठा ieee80211_vअगर *vअगर,
-		काष्ठा ieee80211_sta *sta)
-अणु
+static void
+mt76_sta_remove(struct mt76_dev *dev, struct ieee80211_vif *vif,
+		struct ieee80211_sta *sta)
+{
 	mutex_lock(&dev->mutex);
-	__mt76_sta_हटाओ(dev, vअगर, sta);
+	__mt76_sta_remove(dev, vif, sta);
 	mutex_unlock(&dev->mutex);
-पूर्ण
+}
 
-पूर्णांक mt76_sta_state(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर,
-		   काष्ठा ieee80211_sta *sta,
-		   क्रमागत ieee80211_sta_state old_state,
-		   क्रमागत ieee80211_sta_state new_state)
-अणु
-	काष्ठा mt76_phy *phy = hw->priv;
-	काष्ठा mt76_dev *dev = phy->dev;
+int mt76_sta_state(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
+		   struct ieee80211_sta *sta,
+		   enum ieee80211_sta_state old_state,
+		   enum ieee80211_sta_state new_state)
+{
+	struct mt76_phy *phy = hw->priv;
+	struct mt76_dev *dev = phy->dev;
 	bool ext_phy = phy != &dev->phy;
 
-	अगर (old_state == IEEE80211_STA_NOTEXIST &&
+	if (old_state == IEEE80211_STA_NOTEXIST &&
 	    new_state == IEEE80211_STA_NONE)
-		वापस mt76_sta_add(dev, vअगर, sta, ext_phy);
+		return mt76_sta_add(dev, vif, sta, ext_phy);
 
-	अगर (old_state == IEEE80211_STA_AUTH &&
+	if (old_state == IEEE80211_STA_AUTH &&
 	    new_state == IEEE80211_STA_ASSOC &&
 	    dev->drv->sta_assoc)
-		dev->drv->sta_assoc(dev, vअगर, sta);
+		dev->drv->sta_assoc(dev, vif, sta);
 
-	अगर (old_state == IEEE80211_STA_NONE &&
+	if (old_state == IEEE80211_STA_NONE &&
 	    new_state == IEEE80211_STA_NOTEXIST)
-		mt76_sta_हटाओ(dev, vअगर, sta);
+		mt76_sta_remove(dev, vif, sta);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(mt76_sta_state);
 
-व्योम mt76_sta_pre_rcu_हटाओ(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर,
-			     काष्ठा ieee80211_sta *sta)
-अणु
-	काष्ठा mt76_phy *phy = hw->priv;
-	काष्ठा mt76_dev *dev = phy->dev;
-	काष्ठा mt76_wcid *wcid = (काष्ठा mt76_wcid *)sta->drv_priv;
+void mt76_sta_pre_rcu_remove(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
+			     struct ieee80211_sta *sta)
+{
+	struct mt76_phy *phy = hw->priv;
+	struct mt76_dev *dev = phy->dev;
+	struct mt76_wcid *wcid = (struct mt76_wcid *)sta->drv_priv;
 
 	mutex_lock(&dev->mutex);
-	rcu_assign_poपूर्णांकer(dev->wcid[wcid->idx], शून्य);
+	rcu_assign_pointer(dev->wcid[wcid->idx], NULL);
 	mutex_unlock(&dev->mutex);
-पूर्ण
-EXPORT_SYMBOL_GPL(mt76_sta_pre_rcu_हटाओ);
+}
+EXPORT_SYMBOL_GPL(mt76_sta_pre_rcu_remove);
 
-पूर्णांक mt76_get_txघातer(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर,
-		     पूर्णांक *dbm)
-अणु
-	काष्ठा mt76_phy *phy = hw->priv;
-	पूर्णांक n_chains = hweight8(phy->antenna_mask);
-	पूर्णांक delta = mt76_tx_घातer_nss_delta(n_chains);
+int mt76_get_txpower(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
+		     int *dbm)
+{
+	struct mt76_phy *phy = hw->priv;
+	int n_chains = hweight8(phy->antenna_mask);
+	int delta = mt76_tx_power_nss_delta(n_chains);
 
-	*dbm = DIV_ROUND_UP(phy->txघातer_cur + delta, 2);
+	*dbm = DIV_ROUND_UP(phy->txpower_cur + delta, 2);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(mt76_get_txघातer);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(mt76_get_txpower);
 
-अटल व्योम
-__mt76_csa_finish(व्योम *priv, u8 *mac, काष्ठा ieee80211_vअगर *vअगर)
-अणु
-	अगर (vअगर->csa_active && ieee80211_beacon_cntdwn_is_complete(vअगर))
-		ieee80211_csa_finish(vअगर);
-पूर्ण
+static void
+__mt76_csa_finish(void *priv, u8 *mac, struct ieee80211_vif *vif)
+{
+	if (vif->csa_active && ieee80211_beacon_cntdwn_is_complete(vif))
+		ieee80211_csa_finish(vif);
+}
 
-व्योम mt76_csa_finish(काष्ठा mt76_dev *dev)
-अणु
-	अगर (!dev->csa_complete)
-		वापस;
+void mt76_csa_finish(struct mt76_dev *dev)
+{
+	if (!dev->csa_complete)
+		return;
 
-	ieee80211_iterate_active_पूर्णांकerfaces_atomic(dev->hw,
+	ieee80211_iterate_active_interfaces_atomic(dev->hw,
 		IEEE80211_IFACE_ITER_RESUME_ALL,
 		__mt76_csa_finish, dev);
 
 	dev->csa_complete = 0;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(mt76_csa_finish);
 
-अटल व्योम
-__mt76_csa_check(व्योम *priv, u8 *mac, काष्ठा ieee80211_vअगर *vअगर)
-अणु
-	काष्ठा mt76_dev *dev = priv;
+static void
+__mt76_csa_check(void *priv, u8 *mac, struct ieee80211_vif *vif)
+{
+	struct mt76_dev *dev = priv;
 
-	अगर (!vअगर->csa_active)
-		वापस;
+	if (!vif->csa_active)
+		return;
 
-	dev->csa_complete |= ieee80211_beacon_cntdwn_is_complete(vअगर);
-पूर्ण
+	dev->csa_complete |= ieee80211_beacon_cntdwn_is_complete(vif);
+}
 
-व्योम mt76_csa_check(काष्ठा mt76_dev *dev)
-अणु
-	ieee80211_iterate_active_पूर्णांकerfaces_atomic(dev->hw,
+void mt76_csa_check(struct mt76_dev *dev)
+{
+	ieee80211_iterate_active_interfaces_atomic(dev->hw,
 		IEEE80211_IFACE_ITER_RESUME_ALL,
 		__mt76_csa_check, dev);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(mt76_csa_check);
 
-पूर्णांक
-mt76_set_tim(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_sta *sta, bool set)
-अणु
-	वापस 0;
-पूर्ण
+int
+mt76_set_tim(struct ieee80211_hw *hw, struct ieee80211_sta *sta, bool set)
+{
+	return 0;
+}
 EXPORT_SYMBOL_GPL(mt76_set_tim);
 
-व्योम mt76_insert_ccmp_hdr(काष्ठा sk_buff *skb, u8 key_id)
-अणु
-	काष्ठा mt76_rx_status *status = (काष्ठा mt76_rx_status *)skb->cb;
-	पूर्णांक hdr_len = ieee80211_get_hdrlen_from_skb(skb);
+void mt76_insert_ccmp_hdr(struct sk_buff *skb, u8 key_id)
+{
+	struct mt76_rx_status *status = (struct mt76_rx_status *)skb->cb;
+	int hdr_len = ieee80211_get_hdrlen_from_skb(skb);
 	u8 *hdr, *pn = status->iv;
 
 	__skb_push(skb, 8);
-	स_हटाओ(skb->data, skb->data + 8, hdr_len);
+	memmove(skb->data, skb->data + 8, hdr_len);
 	hdr = skb->data + hdr_len;
 
 	hdr[0] = pn[5];
@@ -1235,79 +1234,79 @@ EXPORT_SYMBOL_GPL(mt76_set_tim);
 	hdr[7] = pn[0];
 
 	status->flag &= ~RX_FLAG_IV_STRIPPED;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(mt76_insert_ccmp_hdr);
 
-पूर्णांक mt76_get_rate(काष्ठा mt76_dev *dev,
-		  काष्ठा ieee80211_supported_band *sband,
-		  पूर्णांक idx, bool cck)
-अणु
-	पूर्णांक i, offset = 0, len = sband->n_bitrates;
+int mt76_get_rate(struct mt76_dev *dev,
+		  struct ieee80211_supported_band *sband,
+		  int idx, bool cck)
+{
+	int i, offset = 0, len = sband->n_bitrates;
 
-	अगर (cck) अणु
-		अगर (sband == &dev->phy.sband_5g.sband)
-			वापस 0;
+	if (cck) {
+		if (sband == &dev->phy.sband_5g.sband)
+			return 0;
 
-		idx &= ~BIT(2); /* लघु preamble */
-	पूर्ण अन्यथा अगर (sband == &dev->phy.sband_2g.sband) अणु
+		idx &= ~BIT(2); /* short preamble */
+	} else if (sband == &dev->phy.sband_2g.sband) {
 		offset = 4;
-	पूर्ण
+	}
 
-	क्रम (i = offset; i < len; i++) अणु
-		अगर ((sband->bitrates[i].hw_value & GENMASK(7, 0)) == idx)
-			वापस i;
-	पूर्ण
+	for (i = offset; i < len; i++) {
+		if ((sband->bitrates[i].hw_value & GENMASK(7, 0)) == idx)
+			return i;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(mt76_get_rate);
 
-व्योम mt76_sw_scan(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर,
-		  स्थिर u8 *mac)
-अणु
-	काष्ठा mt76_phy *phy = hw->priv;
+void mt76_sw_scan(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
+		  const u8 *mac)
+{
+	struct mt76_phy *phy = hw->priv;
 
 	set_bit(MT76_SCANNING, &phy->state);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(mt76_sw_scan);
 
-व्योम mt76_sw_scan_complete(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर)
-अणु
-	काष्ठा mt76_phy *phy = hw->priv;
+void mt76_sw_scan_complete(struct ieee80211_hw *hw, struct ieee80211_vif *vif)
+{
+	struct mt76_phy *phy = hw->priv;
 
 	clear_bit(MT76_SCANNING, &phy->state);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(mt76_sw_scan_complete);
 
-पूर्णांक mt76_get_antenna(काष्ठा ieee80211_hw *hw, u32 *tx_ant, u32 *rx_ant)
-अणु
-	काष्ठा mt76_phy *phy = hw->priv;
-	काष्ठा mt76_dev *dev = phy->dev;
+int mt76_get_antenna(struct ieee80211_hw *hw, u32 *tx_ant, u32 *rx_ant)
+{
+	struct mt76_phy *phy = hw->priv;
+	struct mt76_dev *dev = phy->dev;
 
 	mutex_lock(&dev->mutex);
 	*tx_ant = phy->antenna_mask;
 	*rx_ant = phy->antenna_mask;
 	mutex_unlock(&dev->mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(mt76_get_antenna);
 
-काष्ठा mt76_queue *
-mt76_init_queue(काष्ठा mt76_dev *dev, पूर्णांक qid, पूर्णांक idx, पूर्णांक n_desc,
-		पूर्णांक ring_base)
-अणु
-	काष्ठा mt76_queue *hwq;
-	पूर्णांक err;
+struct mt76_queue *
+mt76_init_queue(struct mt76_dev *dev, int qid, int idx, int n_desc,
+		int ring_base)
+{
+	struct mt76_queue *hwq;
+	int err;
 
-	hwq = devm_kzalloc(dev->dev, माप(*hwq), GFP_KERNEL);
-	अगर (!hwq)
-		वापस ERR_PTR(-ENOMEM);
+	hwq = devm_kzalloc(dev->dev, sizeof(*hwq), GFP_KERNEL);
+	if (!hwq)
+		return ERR_PTR(-ENOMEM);
 
 	err = dev->queue_ops->alloc(dev, hwq, idx, n_desc, 0, ring_base);
-	अगर (err < 0)
-		वापस ERR_PTR(err);
+	if (err < 0)
+		return ERR_PTR(err);
 
-	वापस hwq;
-पूर्ण
+	return hwq;
+}
 EXPORT_SYMBOL_GPL(mt76_init_queue);

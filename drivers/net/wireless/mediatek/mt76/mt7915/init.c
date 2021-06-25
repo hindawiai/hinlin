@@ -1,27 +1,26 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: ISC
+// SPDX-License-Identifier: ISC
 /* Copyright (C) 2020 MediaTek Inc. */
 
-#समावेश <linux/etherdevice.h>
-#समावेश "mt7915.h"
-#समावेश "mac.h"
-#समावेश "mcu.h"
-#समावेश "eeprom.h"
+#include <linux/etherdevice.h>
+#include "mt7915.h"
+#include "mac.h"
+#include "mcu.h"
+#include "eeprom.h"
 
-#घोषणा CCK_RATE(_idx, _rate) अणु						\
+#define CCK_RATE(_idx, _rate) {						\
 	.bitrate = _rate,						\
 	.flags = IEEE80211_RATE_SHORT_PREAMBLE,				\
 	.hw_value = (MT_PHY_TYPE_CCK << 8) | (_idx),			\
-	.hw_value_लघु = (MT_PHY_TYPE_CCK << 8) | (4 + (_idx)),	\
-पूर्ण
+	.hw_value_short = (MT_PHY_TYPE_CCK << 8) | (4 + (_idx)),	\
+}
 
-#घोषणा OFDM_RATE(_idx, _rate) अणु					\
+#define OFDM_RATE(_idx, _rate) {					\
 	.bitrate = _rate,						\
 	.hw_value = (MT_PHY_TYPE_OFDM << 8) | (_idx),			\
-	.hw_value_लघु = (MT_PHY_TYPE_OFDM << 8) | (_idx),		\
-पूर्ण
+	.hw_value_short = (MT_PHY_TYPE_OFDM << 8) | (_idx),		\
+}
 
-अटल काष्ठा ieee80211_rate mt7915_rates[] = अणु
+static struct ieee80211_rate mt7915_rates[] = {
 	CCK_RATE(0, 10),
 	CCK_RATE(1, 20),
 	CCK_RATE(2, 55),
@@ -34,117 +33,117 @@
 	OFDM_RATE(13, 360),
 	OFDM_RATE(8,  480),
 	OFDM_RATE(12, 540),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा ieee80211_अगरace_limit अगर_limits[] = अणु
-	अणु
+static const struct ieee80211_iface_limit if_limits[] = {
+	{
 		.max = 1,
 		.types = BIT(NL80211_IFTYPE_ADHOC)
-	पूर्ण, अणु
+	}, {
 		.max = 16,
 		.types = BIT(NL80211_IFTYPE_AP)
-#अगर_घोषित CONFIG_MAC80211_MESH
+#ifdef CONFIG_MAC80211_MESH
 			 | BIT(NL80211_IFTYPE_MESH_POINT)
-#पूर्ण_अगर
-	पूर्ण, अणु
+#endif
+	}, {
 		.max = MT7915_MAX_INTERFACES,
 		.types = BIT(NL80211_IFTYPE_STATION)
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल स्थिर काष्ठा ieee80211_अगरace_combination अगर_comb[] = अणु
-	अणु
-		.limits = अगर_limits,
-		.n_limits = ARRAY_SIZE(अगर_limits),
-		.max_पूर्णांकerfaces = MT7915_MAX_INTERFACES,
-		.num_dअगरferent_channels = 1,
-		.beacon_पूर्णांक_infra_match = true,
+static const struct ieee80211_iface_combination if_comb[] = {
+	{
+		.limits = if_limits,
+		.n_limits = ARRAY_SIZE(if_limits),
+		.max_interfaces = MT7915_MAX_INTERFACES,
+		.num_different_channels = 1,
+		.beacon_int_infra_match = true,
 		.radar_detect_widths = BIT(NL80211_CHAN_WIDTH_20_NOHT) |
 				       BIT(NL80211_CHAN_WIDTH_20) |
 				       BIT(NL80211_CHAN_WIDTH_40) |
 				       BIT(NL80211_CHAN_WIDTH_80) |
 				       BIT(NL80211_CHAN_WIDTH_160) |
 				       BIT(NL80211_CHAN_WIDTH_80P80),
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल व्योम
-mt7915_init_txघातer(काष्ठा mt7915_dev *dev,
-		    काष्ठा ieee80211_supported_band *sband)
-अणु
-	पूर्णांक i, n_chains = hweight8(dev->mphy.antenna_mask);
-	पूर्णांक nss_delta = mt76_tx_घातer_nss_delta(n_chains);
-	पूर्णांक pwr_delta = mt7915_eeprom_get_घातer_delta(dev, sband->band);
-	काष्ठा mt76_घातer_limits limits;
+static void
+mt7915_init_txpower(struct mt7915_dev *dev,
+		    struct ieee80211_supported_band *sband)
+{
+	int i, n_chains = hweight8(dev->mphy.antenna_mask);
+	int nss_delta = mt76_tx_power_nss_delta(n_chains);
+	int pwr_delta = mt7915_eeprom_get_power_delta(dev, sband->band);
+	struct mt76_power_limits limits;
 
-	क्रम (i = 0; i < sband->n_channels; i++) अणु
-		काष्ठा ieee80211_channel *chan = &sband->channels[i];
-		u32 target_घातer = 0;
-		पूर्णांक j;
+	for (i = 0; i < sband->n_channels; i++) {
+		struct ieee80211_channel *chan = &sband->channels[i];
+		u32 target_power = 0;
+		int j;
 
-		क्रम (j = 0; j < n_chains; j++) अणु
+		for (j = 0; j < n_chains; j++) {
 			u32 val;
 
-			val = mt7915_eeprom_get_target_घातer(dev, chan, j);
-			target_घातer = max(target_घातer, val);
-		पूर्ण
+			val = mt7915_eeprom_get_target_power(dev, chan, j);
+			target_power = max(target_power, val);
+		}
 
-		target_घातer += pwr_delta;
-		target_घातer = mt76_get_rate_घातer_limits(&dev->mphy, chan,
+		target_power += pwr_delta;
+		target_power = mt76_get_rate_power_limits(&dev->mphy, chan,
 							  &limits,
-							  target_घातer);
-		target_घातer += nss_delta;
-		target_घातer = DIV_ROUND_UP(target_घातer, 2);
-		chan->max_घातer = min_t(पूर्णांक, chan->max_reg_घातer,
-					target_घातer);
-		chan->orig_mpwr = target_घातer;
-	पूर्ण
-पूर्ण
+							  target_power);
+		target_power += nss_delta;
+		target_power = DIV_ROUND_UP(target_power, 2);
+		chan->max_power = min_t(int, chan->max_reg_power,
+					target_power);
+		chan->orig_mpwr = target_power;
+	}
+}
 
-अटल व्योम
-mt7915_regd_notअगरier(काष्ठा wiphy *wiphy,
-		     काष्ठा regulatory_request *request)
-अणु
-	काष्ठा ieee80211_hw *hw = wiphy_to_ieee80211_hw(wiphy);
-	काष्ठा mt7915_dev *dev = mt7915_hw_dev(hw);
-	काष्ठा mt76_phy *mphy = hw->priv;
-	काष्ठा mt7915_phy *phy = mphy->priv;
-	काष्ठा cfg80211_chan_def *chandef = &mphy->chandef;
+static void
+mt7915_regd_notifier(struct wiphy *wiphy,
+		     struct regulatory_request *request)
+{
+	struct ieee80211_hw *hw = wiphy_to_ieee80211_hw(wiphy);
+	struct mt7915_dev *dev = mt7915_hw_dev(hw);
+	struct mt76_phy *mphy = hw->priv;
+	struct mt7915_phy *phy = mphy->priv;
+	struct cfg80211_chan_def *chandef = &mphy->chandef;
 
-	स_नकल(dev->mt76.alpha2, request->alpha2, माप(dev->mt76.alpha2));
+	memcpy(dev->mt76.alpha2, request->alpha2, sizeof(dev->mt76.alpha2));
 	dev->mt76.region = request->dfs_region;
 
-	mt7915_init_txघातer(dev, &mphy->sband_2g.sband);
-	mt7915_init_txघातer(dev, &mphy->sband_5g.sband);
+	mt7915_init_txpower(dev, &mphy->sband_2g.sband);
+	mt7915_init_txpower(dev, &mphy->sband_5g.sband);
 
-	अगर (!(chandef->chan->flags & IEEE80211_CHAN_RADAR))
-		वापस;
+	if (!(chandef->chan->flags & IEEE80211_CHAN_RADAR))
+		return;
 
 	mt7915_dfs_init_radar_detector(phy);
-पूर्ण
+}
 
-अटल व्योम
-mt7915_init_wiphy(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा mt7915_phy *phy = mt7915_hw_phy(hw);
-	काष्ठा wiphy *wiphy = hw->wiphy;
+static void
+mt7915_init_wiphy(struct ieee80211_hw *hw)
+{
+	struct mt7915_phy *phy = mt7915_hw_phy(hw);
+	struct wiphy *wiphy = hw->wiphy;
 
 	hw->queues = 4;
 	hw->max_rx_aggregation_subframes = IEEE80211_MAX_AMPDU_BUF;
 	hw->max_tx_aggregation_subframes = IEEE80211_MAX_AMPDU_BUF;
 	hw->netdev_features = NETIF_F_RXCSUM;
 
-	hw->radiotap_बारtamp.units_pos =
+	hw->radiotap_timestamp.units_pos =
 		IEEE80211_RADIOTAP_TIMESTAMP_UNIT_US;
 
-	phy->slotसमय = 9;
+	phy->slottime = 9;
 
-	hw->sta_data_size = माप(काष्ठा mt7915_sta);
-	hw->vअगर_data_size = माप(काष्ठा mt7915_vअगर);
+	hw->sta_data_size = sizeof(struct mt7915_sta);
+	hw->vif_data_size = sizeof(struct mt7915_vif);
 
-	wiphy->अगरace_combinations = अगर_comb;
-	wiphy->n_अगरace_combinations = ARRAY_SIZE(अगर_comb);
-	wiphy->reg_notअगरier = mt7915_regd_notअगरier;
+	wiphy->iface_combinations = if_comb;
+	wiphy->n_iface_combinations = ARRAY_SIZE(if_comb);
+	wiphy->reg_notifier = mt7915_regd_notifier;
 	wiphy->flags |= WIPHY_FLAG_HAS_CHANNEL_SWITCH;
 
 	wiphy_ext_feature_set(wiphy, NL80211_EXT_FEATURE_VHT_IBSS);
@@ -156,28 +155,28 @@ mt7915_init_wiphy(काष्ठा ieee80211_hw *hw)
 
 	hw->max_tx_fragments = 4;
 
-	अगर (phy->mt76->cap.has_2ghz)
+	if (phy->mt76->cap.has_2ghz)
 		phy->mt76->sband_2g.sband.ht_cap.cap |=
 			IEEE80211_HT_CAP_LDPC_CODING |
 			IEEE80211_HT_CAP_MAX_AMSDU;
 
-	अगर (phy->mt76->cap.has_5ghz) अणु
+	if (phy->mt76->cap.has_5ghz) {
 		phy->mt76->sband_5g.sband.ht_cap.cap |=
 			IEEE80211_HT_CAP_LDPC_CODING |
 			IEEE80211_HT_CAP_MAX_AMSDU;
 		phy->mt76->sband_5g.sband.vht_cap.cap |=
 			IEEE80211_VHT_CAP_MAX_MPDU_LENGTH_7991 |
 			IEEE80211_VHT_CAP_MAX_A_MPDU_LENGTH_EXPONENT_MASK;
-	पूर्ण
+	}
 
 	mt76_set_stream_caps(phy->mt76, true);
 	mt7915_set_stream_vht_txbf_caps(phy);
 	mt7915_set_stream_he_caps(phy);
-पूर्ण
+}
 
-अटल व्योम
-mt7915_mac_init_band(काष्ठा mt7915_dev *dev, u8 band)
-अणु
+static void
+mt7915_mac_init_band(struct mt7915_dev *dev, u8 band)
+{
 	u32 mask, set;
 
 	mt76_rmw_field(dev, MT_TMAC_CTCR0(band),
@@ -206,60 +205,60 @@ mt7915_mac_init_band(काष्ठा mt7915_dev *dev, u8 band)
 	mt76_set(dev, MT_WF_RMAC_MIB_AIRTIME0(band), MT_WF_RMAC_MIB_RXTIME_EN);
 
 	mt76_rmw_field(dev, MT_DMA_DCR0(band), MT_DMA_DCR0_MAX_RX_LEN, 1536);
-	/* disable rx rate report by शेष due to hw issues */
+	/* disable rx rate report by default due to hw issues */
 	mt76_clear(dev, MT_DMA_DCR0(band), MT_DMA_DCR0_RXD_G5_EN);
-पूर्ण
+}
 
-अटल व्योम mt7915_mac_init(काष्ठा mt7915_dev *dev)
-अणु
-	पूर्णांक i;
+static void mt7915_mac_init(struct mt7915_dev *dev)
+{
+	int i;
 
 	mt76_rmw_field(dev, MT_MDP_DCR1, MT_MDP_DCR1_MAX_RX_LEN, 1536);
 	/* enable hardware de-agg */
 	mt76_set(dev, MT_MDP_DCR0, MT_MDP_DCR0_DAMSDU_EN);
 
-	क्रम (i = 0; i < MT7915_WTBL_SIZE; i++)
+	for (i = 0; i < MT7915_WTBL_SIZE; i++)
 		mt7915_mac_wtbl_update(dev, i,
 				       MT_WTBL_UPDATE_ADM_COUNT_CLEAR);
-	क्रम (i = 0; i < 2; i++)
+	for (i = 0; i < 2; i++)
 		mt7915_mac_init_band(dev, i);
-पूर्ण
+}
 
-अटल पूर्णांक mt7915_txbf_init(काष्ठा mt7915_dev *dev)
-अणु
-	पूर्णांक ret;
+static int mt7915_txbf_init(struct mt7915_dev *dev)
+{
+	int ret;
 
 
-	अगर (dev->dbdc_support) अणु
+	if (dev->dbdc_support) {
 		ret = mt7915_mcu_set_txbf_module(dev);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	/* trigger sounding packets */
 	ret = mt7915_mcu_set_txbf_sounding(dev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* enable eBF */
-	वापस mt7915_mcu_set_txbf_type(dev);
-पूर्ण
+	return mt7915_mcu_set_txbf_type(dev);
+}
 
-अटल पूर्णांक mt7915_रेजिस्टर_ext_phy(काष्ठा mt7915_dev *dev)
-अणु
-	काष्ठा mt7915_phy *phy = mt7915_ext_phy(dev);
-	काष्ठा mt76_phy *mphy;
-	पूर्णांक ret;
+static int mt7915_register_ext_phy(struct mt7915_dev *dev)
+{
+	struct mt7915_phy *phy = mt7915_ext_phy(dev);
+	struct mt76_phy *mphy;
+	int ret;
 
-	अगर (!dev->dbdc_support)
-		वापस 0;
+	if (!dev->dbdc_support)
+		return 0;
 
-	अगर (phy)
-		वापस 0;
+	if (phy)
+		return 0;
 
-	mphy = mt76_alloc_phy(&dev->mt76, माप(*phy), &mt7915_ops);
-	अगर (!mphy)
-		वापस -ENOMEM;
+	mphy = mt76_alloc_phy(&dev->mt76, sizeof(*phy), &mt7915_ops);
+	if (!mphy)
+		return -ENOMEM;
 
 	phy = mphy->priv;
 	phy->dev = dev;
@@ -273,45 +272,45 @@ mt7915_mac_init_band(काष्ठा mt7915_dev *dev, u8 band)
 	mt7915_eeprom_parse_band_config(phy);
 	mt7915_init_wiphy(mphy->hw);
 
-	स_नकल(mphy->macaddr, dev->mt76.eeprom.data + MT_EE_MAC_ADDR2,
+	memcpy(mphy->macaddr, dev->mt76.eeprom.data + MT_EE_MAC_ADDR2,
 	       ETH_ALEN);
 	mt76_eeprom_override(mphy);
 
 	ret = mt7915_init_tx_queues(phy, MT7915_TXQ_BAND1,
 				    MT7915_TX_RING_SIZE);
-	अगर (ret)
-		जाओ error;
+	if (ret)
+		goto error;
 
-	ret = mt76_रेजिस्टर_phy(mphy, true, mt7915_rates,
+	ret = mt76_register_phy(mphy, true, mt7915_rates,
 				ARRAY_SIZE(mt7915_rates));
-	अगर (ret)
-		जाओ error;
+	if (ret)
+		goto error;
 
-	वापस 0;
+	return 0;
 
 error:
-	ieee80211_मुक्त_hw(mphy->hw);
-	वापस ret;
-पूर्ण
+	ieee80211_free_hw(mphy->hw);
+	return ret;
+}
 
-अटल व्योम mt7915_init_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा mt7915_dev *dev = container_of(work, काष्ठा mt7915_dev,
+static void mt7915_init_work(struct work_struct *work)
+{
+	struct mt7915_dev *dev = container_of(work, struct mt7915_dev,
 				 init_work);
 
 	mt7915_mcu_set_eeprom(dev);
 	mt7915_mac_init(dev);
-	mt7915_init_txघातer(dev, &dev->mphy.sband_2g.sband);
-	mt7915_init_txघातer(dev, &dev->mphy.sband_5g.sband);
+	mt7915_init_txpower(dev, &dev->mphy.sband_2g.sband);
+	mt7915_init_txpower(dev, &dev->mphy.sband_5g.sband);
 	mt7915_txbf_init(dev);
-पूर्ण
+}
 
-अटल व्योम mt7915_wfsys_reset(काष्ठा mt7915_dev *dev)
-अणु
+static void mt7915_wfsys_reset(struct mt7915_dev *dev)
+{
 	u32 val = MT_TOP_PWR_KEY | MT_TOP_PWR_SW_PWR_ON | MT_TOP_PWR_PWR_ON;
 
-#घोषणा MT_MCU_DUMMY_RANDOM	GENMASK(15, 0)
-#घोषणा MT_MCU_DUMMY_DEFAULT	GENMASK(31, 16)
+#define MT_MCU_DUMMY_RANDOM	GENMASK(15, 0)
+#define MT_MCU_DUMMY_DEFAULT	GENMASK(31, 16)
 
 	mt76_wr(dev, MT_MCU_WFDMA0_DUMMY_CR, MT_MCU_DUMMY_RANDOM);
 
@@ -327,91 +326,91 @@ error:
 	val |= MT_TOP_PWR_SW_RST;
 	mt76_wr(dev, MT_TOP_PWR_CTRL, val);
 
-	/* चयन to hw control */
+	/* switch to hw control */
 	val &= ~MT_TOP_PWR_SW_RST;
 	val |= MT_TOP_PWR_HW_CTRL;
 	mt76_wr(dev, MT_TOP_PWR_CTRL, val);
 
-	/* check whether mcu resets to शेष */
-	अगर (!mt76_poll_msec(dev, MT_MCU_WFDMA0_DUMMY_CR, MT_MCU_DUMMY_DEFAULT,
-			    MT_MCU_DUMMY_DEFAULT, 1000)) अणु
+	/* check whether mcu resets to default */
+	if (!mt76_poll_msec(dev, MT_MCU_WFDMA0_DUMMY_CR, MT_MCU_DUMMY_DEFAULT,
+			    MT_MCU_DUMMY_DEFAULT, 1000)) {
 		dev_err(dev->mt76.dev, "wifi subsystem reset failure\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* wfsys reset won't clear host रेजिस्टरs */
+	/* wfsys reset won't clear host registers */
 	mt76_clear(dev, MT_TOP_MISC, MT_TOP_MISC_FW_STATE);
 
 	msleep(100);
-पूर्ण
+}
 
-अटल पूर्णांक mt7915_init_hardware(काष्ठा mt7915_dev *dev)
-अणु
-	पूर्णांक ret, idx;
+static int mt7915_init_hardware(struct mt7915_dev *dev)
+{
+	int ret, idx;
 
 	mt76_wr(dev, MT_INT_SOURCE_CSR, ~0);
 
 	INIT_WORK(&dev->init_work, mt7915_init_work);
 	dev->dbdc_support = !!(mt76_rr(dev, MT_HW_BOUND) & BIT(5));
 
-	/* If MCU was alपढ़ोy running, it is likely in a bad state */
-	अगर (mt76_get_field(dev, MT_TOP_MISC, MT_TOP_MISC_FW_STATE) >
+	/* If MCU was already running, it is likely in a bad state */
+	if (mt76_get_field(dev, MT_TOP_MISC, MT_TOP_MISC_FW_STATE) >
 	    FW_STATE_FW_DOWNLOAD)
 		mt7915_wfsys_reset(dev);
 
 	ret = mt7915_dma_init(dev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	set_bit(MT76_STATE_INITIALIZED, &dev->mphy.state);
 
 	/*
-	 * क्रमce firmware operation mode पूर्णांकo normal state,
-	 * which should be set beक्रमe firmware करोwnload stage.
+	 * force firmware operation mode into normal state,
+	 * which should be set before firmware download stage.
 	 */
 	mt76_wr(dev, MT_SWDEF_MODE, MT_SWDEF_NORMAL_MODE);
 
 	ret = mt7915_mcu_init(dev);
-	अगर (ret) अणु
+	if (ret) {
 		/* Reset and try again */
 		mt7915_wfsys_reset(dev);
 
 		ret = mt7915_mcu_init(dev);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	ret = mt7915_eeprom_init(dev);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 
-	अगर (dev->flash_mode) अणु
+	if (dev->flash_mode) {
 		ret = mt7915_mcu_apply_group_cal(dev);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	/* Beacon and mgmt frames should occupy wcid 0 */
 	idx = mt76_wcid_alloc(dev->mt76.wcid_mask, MT7915_WTBL_STA - 1);
-	अगर (idx)
-		वापस -ENOSPC;
+	if (idx)
+		return -ENOSPC;
 
 	dev->mt76.global_wcid.idx = idx;
 	dev->mt76.global_wcid.hw_key_idx = -1;
 	dev->mt76.global_wcid.tx_info |= MT_WCID_TX_INFO_SET;
-	rcu_assign_poपूर्णांकer(dev->mt76.wcid[idx], &dev->mt76.global_wcid);
+	rcu_assign_pointer(dev->mt76.wcid[idx], &dev->mt76.global_wcid);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम mt7915_set_stream_vht_txbf_caps(काष्ठा mt7915_phy *phy)
-अणु
-	पूर्णांक nss;
+void mt7915_set_stream_vht_txbf_caps(struct mt7915_phy *phy)
+{
+	int nss;
 	u32 *cap;
 
-	अगर (!phy->mt76->cap.has_5ghz)
-		वापस;
+	if (!phy->mt76->cap.has_5ghz)
+		return;
 
 	nss = hweight8(phy->mt76->chainmask);
 	cap = &phy->mt76->sband_5g.sband.vht_cap.cap;
@@ -424,27 +423,27 @@ error:
 		  IEEE80211_VHT_CAP_SU_BEAMFORMER_CAPABLE |
 		  IEEE80211_VHT_CAP_MU_BEAMFORMER_CAPABLE);
 
-	अगर (nss < 2)
-		वापस;
+	if (nss < 2)
+		return;
 
 	*cap |= IEEE80211_VHT_CAP_SU_BEAMFORMER_CAPABLE |
 		IEEE80211_VHT_CAP_MU_BEAMFORMER_CAPABLE |
 		FIELD_PREP(IEEE80211_VHT_CAP_SOUNDING_DIMENSIONS_MASK,
 			   nss - 1);
-पूर्ण
+}
 
-अटल व्योम
-mt7915_set_stream_he_txbf_caps(काष्ठा ieee80211_sta_he_cap *he_cap,
-			       पूर्णांक vअगर, पूर्णांक nss)
-अणु
-	काष्ठा ieee80211_he_cap_elem *elem = &he_cap->he_cap_elem;
-	काष्ठा ieee80211_he_mcs_nss_supp *mcs = &he_cap->he_mcs_nss_supp;
+static void
+mt7915_set_stream_he_txbf_caps(struct ieee80211_sta_he_cap *he_cap,
+			       int vif, int nss)
+{
+	struct ieee80211_he_cap_elem *elem = &he_cap->he_cap_elem;
+	struct ieee80211_he_mcs_nss_supp *mcs = &he_cap->he_mcs_nss_supp;
 	u8 c;
 
-#अगर_घोषित CONFIG_MAC80211_MESH
-	अगर (vअगर == NL80211_IFTYPE_MESH_POINT)
-		वापस;
-#पूर्ण_अगर
+#ifdef CONFIG_MAC80211_MESH
+	if (vif == NL80211_IFTYPE_MESH_POINT)
+		return;
+#endif
 
 	elem->phy_cap_info[3] &= ~IEEE80211_HE_PHY_CAP3_SU_BEAMFORMER;
 	elem->phy_cap_info[4] &= ~IEEE80211_HE_PHY_CAP4_MU_BEAMFORMER;
@@ -469,26 +468,26 @@ mt7915_set_stream_he_txbf_caps(काष्ठा ieee80211_sta_he_cap *he_cap,
 	    IEEE80211_HE_PHY_CAP4_BEAMFORMEE_MAX_STS_ABOVE_80MHZ_4;
 	elem->phy_cap_info[4] |= c;
 
-	/* करो not support NG16 due to spec D4.0 changes subcarrier idx */
+	/* do not support NG16 due to spec D4.0 changes subcarrier idx */
 	c = IEEE80211_HE_PHY_CAP6_CODEBOOK_SIZE_42_SU |
 	    IEEE80211_HE_PHY_CAP6_CODEBOOK_SIZE_75_MU;
 
-	अगर (vअगर == NL80211_IFTYPE_STATION)
+	if (vif == NL80211_IFTYPE_STATION)
 		c |= IEEE80211_HE_PHY_CAP6_PARTIAL_BANDWIDTH_DL_MUMIMO;
 
 	elem->phy_cap_info[6] |= c;
 
-	अगर (nss < 2)
-		वापस;
+	if (nss < 2)
+		return;
 
-	अगर (vअगर != NL80211_IFTYPE_AP)
-		वापस;
+	if (vif != NL80211_IFTYPE_AP)
+		return;
 
 	elem->phy_cap_info[3] |= IEEE80211_HE_PHY_CAP3_SU_BEAMFORMER;
 	elem->phy_cap_info[4] |= IEEE80211_HE_PHY_CAP4_MU_BEAMFORMER;
 
 	/* num_snd_dim */
-	c = (nss - 1) | (max_t(पूर्णांक, le16_to_cpu(mcs->tx_mcs_160), 1) << 3);
+	c = (nss - 1) | (max_t(int, le16_to_cpu(mcs->tx_mcs_160), 1) << 3);
 	elem->phy_cap_info[5] |= c;
 
 	c = IEEE80211_HE_PHY_CAP6_TRIG_SU_BEAMFORMING_FB |
@@ -496,14 +495,14 @@ mt7915_set_stream_he_txbf_caps(काष्ठा ieee80211_sta_he_cap *he_cap,
 	elem->phy_cap_info[6] |= c;
 
 	/* the maximum cap is 4 x 3, (Nr, Nc) = (3, 2) */
-	elem->phy_cap_info[7] |= min_t(पूर्णांक, nss - 1, 2) << 3;
-पूर्ण
+	elem->phy_cap_info[7] |= min_t(int, nss - 1, 2) << 3;
+}
 
-अटल व्योम
-mt7915_gen_ppe_thresh(u8 *he_ppet, पूर्णांक nss)
-अणु
+static void
+mt7915_gen_ppe_thresh(u8 *he_ppet, int nss)
+{
 	u8 i, ppet_bits, ppet_size, ru_bit_mask = 0x7; /* HE80 */
-	u8 ppet16_ppet8_ru3_ru0[] = अणु0x1c, 0xc7, 0x71पूर्ण;
+	u8 ppet16_ppet8_ru3_ru0[] = {0x1c, 0xc7, 0x71};
 
 	he_ppet[0] = FIELD_PREP(IEEE80211_PPE_THRES_NSS_MASK, nss - 1) |
 		     FIELD_PREP(IEEE80211_PPE_THRES_RU_INDEX_BITMASK_MASK,
@@ -513,44 +512,44 @@ mt7915_gen_ppe_thresh(u8 *he_ppet, पूर्णांक nss)
 		    nss * hweight8(ru_bit_mask) * 2;
 	ppet_size = DIV_ROUND_UP(ppet_bits, 8);
 
-	क्रम (i = 0; i < ppet_size - 1; i++)
+	for (i = 0; i < ppet_size - 1; i++)
 		he_ppet[i + 1] = ppet16_ppet8_ru3_ru0[i % 3];
 
 	he_ppet[i + 1] = ppet16_ppet8_ru3_ru0[i % 3] &
 			 (0xff >> (8 - (ppet_bits - 1) % 8));
-पूर्ण
+}
 
-अटल पूर्णांक
-mt7915_init_he_caps(काष्ठा mt7915_phy *phy, क्रमागत nl80211_band band,
-		    काष्ठा ieee80211_sband_अगरtype_data *data)
-अणु
-	पूर्णांक i, idx = 0, nss = hweight8(phy->mt76->chainmask);
+static int
+mt7915_init_he_caps(struct mt7915_phy *phy, enum nl80211_band band,
+		    struct ieee80211_sband_iftype_data *data)
+{
+	int i, idx = 0, nss = hweight8(phy->mt76->chainmask);
 	u16 mcs_map = 0;
 
-	क्रम (i = 0; i < 8; i++) अणु
-		अगर (i < nss)
+	for (i = 0; i < 8; i++) {
+		if (i < nss)
 			mcs_map |= (IEEE80211_HE_MCS_SUPPORT_0_11 << (i * 2));
-		अन्यथा
+		else
 			mcs_map |= (IEEE80211_HE_MCS_NOT_SUPPORTED << (i * 2));
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < NUM_NL80211_IFTYPES; i++) अणु
-		काष्ठा ieee80211_sta_he_cap *he_cap = &data[idx].he_cap;
-		काष्ठा ieee80211_he_cap_elem *he_cap_elem =
+	for (i = 0; i < NUM_NL80211_IFTYPES; i++) {
+		struct ieee80211_sta_he_cap *he_cap = &data[idx].he_cap;
+		struct ieee80211_he_cap_elem *he_cap_elem =
 				&he_cap->he_cap_elem;
-		काष्ठा ieee80211_he_mcs_nss_supp *he_mcs =
+		struct ieee80211_he_mcs_nss_supp *he_mcs =
 				&he_cap->he_mcs_nss_supp;
 
-		चयन (i) अणु
-		हाल NL80211_IFTYPE_STATION:
-		हाल NL80211_IFTYPE_AP:
-#अगर_घोषित CONFIG_MAC80211_MESH
-		हाल NL80211_IFTYPE_MESH_POINT:
-#पूर्ण_अगर
-			अवरोध;
-		शेष:
-			जारी;
-		पूर्ण
+		switch (i) {
+		case NL80211_IFTYPE_STATION:
+		case NL80211_IFTYPE_AP:
+#ifdef CONFIG_MAC80211_MESH
+		case NL80211_IFTYPE_MESH_POINT:
+#endif
+			break;
+		default:
+			continue;
+		}
 
 		data[idx].types_mask = BIT(i);
 		he_cap->has_he = true;
@@ -563,10 +562,10 @@ mt7915_init_he_caps(काष्ठा mt7915_phy *phy, क्रमागत nl
 		he_cap_elem->mac_cap_info[4] =
 			IEEE80211_HE_MAC_CAP4_AMSDU_IN_AMPDU;
 
-		अगर (band == NL80211_BAND_2GHZ)
+		if (band == NL80211_BAND_2GHZ)
 			he_cap_elem->phy_cap_info[0] =
 				IEEE80211_HE_PHY_CAP0_CHANNEL_WIDTH_SET_40MHZ_IN_2G;
-		अन्यथा अगर (band == NL80211_BAND_5GHZ)
+		else if (band == NL80211_BAND_5GHZ)
 			he_cap_elem->phy_cap_info[0] =
 				IEEE80211_HE_PHY_CAP0_CHANNEL_WIDTH_SET_40MHZ_80MHZ_IN_5G |
 				IEEE80211_HE_PHY_CAP0_CHANNEL_WIDTH_SET_160MHZ_IN_5G |
@@ -578,8 +577,8 @@ mt7915_init_he_caps(काष्ठा mt7915_phy *phy, क्रमागत nl
 			IEEE80211_HE_PHY_CAP2_STBC_TX_UNDER_80MHZ |
 			IEEE80211_HE_PHY_CAP2_STBC_RX_UNDER_80MHZ;
 
-		चयन (i) अणु
-		हाल NL80211_IFTYPE_AP:
+		switch (i) {
+		case NL80211_IFTYPE_AP:
 			he_cap_elem->mac_cap_info[0] |=
 				IEEE80211_HE_MAC_CAP0_TWT_RES;
 			he_cap_elem->mac_cap_info[2] |=
@@ -593,17 +592,17 @@ mt7915_init_he_caps(काष्ठा mt7915_phy *phy, क्रमागत nl
 				IEEE80211_HE_PHY_CAP3_DCM_MAX_CONST_RX_QPSK;
 			he_cap_elem->phy_cap_info[6] |=
 				IEEE80211_HE_PHY_CAP6_PPE_THRESHOLD_PRESENT;
-			अवरोध;
-		हाल NL80211_IFTYPE_STATION:
+			break;
+		case NL80211_IFTYPE_STATION:
 			he_cap_elem->mac_cap_info[0] |=
 				IEEE80211_HE_MAC_CAP0_TWT_REQ;
 			he_cap_elem->mac_cap_info[1] |=
 				IEEE80211_HE_MAC_CAP1_TF_MAC_PAD_DUR_16US;
 
-			अगर (band == NL80211_BAND_2GHZ)
+			if (band == NL80211_BAND_2GHZ)
 				he_cap_elem->phy_cap_info[0] |=
 					IEEE80211_HE_PHY_CAP0_CHANNEL_WIDTH_SET_RU_MAPPING_IN_2G;
-			अन्यथा अगर (band == NL80211_BAND_5GHZ)
+			else if (band == NL80211_BAND_5GHZ)
 				he_cap_elem->phy_cap_info[0] |=
 					IEEE80211_HE_PHY_CAP0_CHANNEL_WIDTH_SET_RU_MAPPING_IN_5G;
 
@@ -632,8 +631,8 @@ mt7915_init_he_caps(काष्ठा mt7915_phy *phy, क्रमागत nl
 				IEEE80211_HE_PHY_CAP9_RX_1024_QAM_LESS_THAN_242_TONE_RU |
 				IEEE80211_HE_PHY_CAP9_RX_FULL_BW_SU_USING_MU_WITH_COMP_SIGB |
 				IEEE80211_HE_PHY_CAP9_RX_FULL_BW_SU_USING_MU_WITH_NON_COMP_SIGB;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		he_mcs->rx_mcs_80 = cpu_to_le16(mcs_map);
 		he_mcs->tx_mcs_80 = cpu_to_le16(mcs_map);
@@ -644,61 +643,61 @@ mt7915_init_he_caps(काष्ठा mt7915_phy *phy, क्रमागत nl
 
 		mt7915_set_stream_he_txbf_caps(he_cap, i, nss);
 
-		स_रखो(he_cap->ppe_thres, 0, माप(he_cap->ppe_thres));
-		अगर (he_cap_elem->phy_cap_info[6] &
-		    IEEE80211_HE_PHY_CAP6_PPE_THRESHOLD_PRESENT) अणु
+		memset(he_cap->ppe_thres, 0, sizeof(he_cap->ppe_thres));
+		if (he_cap_elem->phy_cap_info[6] &
+		    IEEE80211_HE_PHY_CAP6_PPE_THRESHOLD_PRESENT) {
 			mt7915_gen_ppe_thresh(he_cap->ppe_thres, nss);
-		पूर्ण अन्यथा अणु
+		} else {
 			he_cap_elem->phy_cap_info[9] |=
 				IEEE80211_HE_PHY_CAP9_NOMIMAL_PKT_PADDING_16US;
-		पूर्ण
+		}
 		idx++;
-	पूर्ण
+	}
 
-	वापस idx;
-पूर्ण
+	return idx;
+}
 
-व्योम mt7915_set_stream_he_caps(काष्ठा mt7915_phy *phy)
-अणु
-	काष्ठा ieee80211_sband_अगरtype_data *data;
-	काष्ठा ieee80211_supported_band *band;
-	पूर्णांक n;
+void mt7915_set_stream_he_caps(struct mt7915_phy *phy)
+{
+	struct ieee80211_sband_iftype_data *data;
+	struct ieee80211_supported_band *band;
+	int n;
 
-	अगर (phy->mt76->cap.has_2ghz) अणु
-		data = phy->अगरtype[NL80211_BAND_2GHZ];
+	if (phy->mt76->cap.has_2ghz) {
+		data = phy->iftype[NL80211_BAND_2GHZ];
 		n = mt7915_init_he_caps(phy, NL80211_BAND_2GHZ, data);
 
 		band = &phy->mt76->sband_2g.sband;
-		band->अगरtype_data = data;
-		band->n_अगरtype_data = n;
-	पूर्ण
+		band->iftype_data = data;
+		band->n_iftype_data = n;
+	}
 
-	अगर (phy->mt76->cap.has_5ghz) अणु
-		data = phy->अगरtype[NL80211_BAND_5GHZ];
+	if (phy->mt76->cap.has_5ghz) {
+		data = phy->iftype[NL80211_BAND_5GHZ];
 		n = mt7915_init_he_caps(phy, NL80211_BAND_5GHZ, data);
 
 		band = &phy->mt76->sband_5g.sband;
-		band->अगरtype_data = data;
-		band->n_अगरtype_data = n;
-	पूर्ण
-पूर्ण
+		band->iftype_data = data;
+		band->n_iftype_data = n;
+	}
+}
 
-अटल व्योम mt7915_unरेजिस्टर_ext_phy(काष्ठा mt7915_dev *dev)
-अणु
-	काष्ठा mt7915_phy *phy = mt7915_ext_phy(dev);
-	काष्ठा mt76_phy *mphy = dev->mt76.phy2;
+static void mt7915_unregister_ext_phy(struct mt7915_dev *dev)
+{
+	struct mt7915_phy *phy = mt7915_ext_phy(dev);
+	struct mt76_phy *mphy = dev->mt76.phy2;
 
-	अगर (!phy)
-		वापस;
+	if (!phy)
+		return;
 
-	mt76_unरेजिस्टर_phy(mphy);
-	ieee80211_मुक्त_hw(mphy->hw);
-पूर्ण
+	mt76_unregister_phy(mphy);
+	ieee80211_free_hw(mphy->hw);
+}
 
-पूर्णांक mt7915_रेजिस्टर_device(काष्ठा mt7915_dev *dev)
-अणु
-	काष्ठा ieee80211_hw *hw = mt76_hw(dev);
-	पूर्णांक ret;
+int mt7915_register_device(struct mt7915_dev *dev)
+{
+	struct ieee80211_hw *hw = mt76_hw(dev);
+	int ret;
 
 	dev->phy.dev = dev;
 	dev->phy.mt76 = &dev->mt76.phy;
@@ -710,16 +709,16 @@ mt7915_init_he_caps(काष्ठा mt7915_phy *phy, क्रमागत nl
 	INIT_LIST_HEAD(&dev->sta_poll_list);
 	spin_lock_init(&dev->sta_poll_lock);
 
-	init_रुकोqueue_head(&dev->reset_रुको);
+	init_waitqueue_head(&dev->reset_wait);
 	INIT_WORK(&dev->reset_work, mt7915_mac_reset_work);
 
 	ret = mt7915_init_hardware(dev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	mt7915_init_wiphy(hw);
 
-	अगर (!dev->dbdc_support)
+	if (!dev->dbdc_support)
 		dev->mphy.sband_5g.sband.vht_cap.cap |=
 			IEEE80211_VHT_CAP_SHORT_GI_160 |
 			IEEE80211_VHT_CAP_SUPP_CHAN_WIDTH_160_80PLUS80MHZ;
@@ -728,31 +727,31 @@ mt7915_init_he_caps(काष्ठा mt7915_phy *phy, क्रमागत nl
 	dev->mphy.hw->wiphy->available_antennas_tx = dev->mphy.chainmask;
 	dev->phy.dfs_state = -1;
 
-#अगर_घोषित CONFIG_NL80211_TESTMODE
-	dev->mt76.test_ops = &mt7915_tesपंचांगode_ops;
-#पूर्ण_अगर
+#ifdef CONFIG_NL80211_TESTMODE
+	dev->mt76.test_ops = &mt7915_testmode_ops;
+#endif
 
-	ret = mt76_रेजिस्टर_device(&dev->mt76, true, mt7915_rates,
+	ret = mt76_register_device(&dev->mt76, true, mt7915_rates,
 				   ARRAY_SIZE(mt7915_rates));
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ieee80211_queue_work(mt76_hw(dev), &dev->init_work);
 
-	ret = mt7915_रेजिस्टर_ext_phy(dev);
-	अगर (ret)
-		वापस ret;
+	ret = mt7915_register_ext_phy(dev);
+	if (ret)
+		return ret;
 
-	वापस mt7915_init_debugfs(dev);
-पूर्ण
+	return mt7915_init_debugfs(dev);
+}
 
-व्योम mt7915_unरेजिस्टर_device(काष्ठा mt7915_dev *dev)
-अणु
-	mt7915_unरेजिस्टर_ext_phy(dev);
-	mt76_unरेजिस्टर_device(&dev->mt76);
-	mt7915_mcu_निकास(dev);
+void mt7915_unregister_device(struct mt7915_dev *dev)
+{
+	mt7915_unregister_ext_phy(dev);
+	mt76_unregister_device(&dev->mt76);
+	mt7915_mcu_exit(dev);
 	mt7915_tx_token_put(dev);
 	mt7915_dma_cleanup(dev);
 
-	mt76_मुक्त_device(&dev->mt76);
-पूर्ण
+	mt76_free_device(&dev->mt76);
+}

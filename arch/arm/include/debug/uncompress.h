@@ -1,9 +1,8 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_घोषित CONFIG_DEBUG_UNCOMPRESS
-बाह्य व्योम अ_दो(पूर्णांक c);
-#अन्यथा
-अटल अंतरभूत व्योम अ_दो(पूर्णांक c) अणुपूर्ण
-#पूर्ण_अगर
-अटल अंतरभूत व्योम flush(व्योम) अणुपूर्ण
-अटल अंतरभूत व्योम arch_decomp_setup(व्योम) अणुपूर्ण
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifdef CONFIG_DEBUG_UNCOMPRESS
+extern void putc(int c);
+#else
+static inline void putc(int c) {}
+#endif
+static inline void flush(void) {}
+static inline void arch_decomp_setup(void) {}

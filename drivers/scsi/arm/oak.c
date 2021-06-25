@@ -1,112 +1,111 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Oak Generic NCR5380 driver
  *
  * Copyright 1995-2002, Russell King
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/init.h>
+#include <linux/module.h>
+#include <linux/ioport.h>
+#include <linux/blkdev.h>
+#include <linux/init.h>
 
-#समावेश <यंत्र/ecard.h>
-#समावेश <यंत्र/पन.स>
+#include <asm/ecard.h>
+#include <asm/io.h>
 
-#समावेश <scsi/scsi_host.h>
+#include <scsi/scsi_host.h>
 
-#घोषणा priv(host)			((काष्ठा NCR5380_hostdata *)(host)->hostdata)
+#define priv(host)			((struct NCR5380_hostdata *)(host)->hostdata)
 
-#घोषणा NCR5380_पढ़ो(reg)           पढ़ोb(hostdata->io + ((reg) << 2))
-#घोषणा NCR5380_ग_लिखो(reg, value)   ग_लिखोb(value, hostdata->io + ((reg) << 2))
+#define NCR5380_read(reg)           readb(hostdata->io + ((reg) << 2))
+#define NCR5380_write(reg, value)   writeb(value, hostdata->io + ((reg) << 2))
 
-#घोषणा NCR5380_dma_xfer_len		NCR5380_dma_xfer_none
-#घोषणा NCR5380_dma_recv_setup		oakscsi_pपढ़ो
-#घोषणा NCR5380_dma_send_setup		oakscsi_pग_लिखो
-#घोषणा NCR5380_dma_residual		NCR5380_dma_residual_none
+#define NCR5380_dma_xfer_len		NCR5380_dma_xfer_none
+#define NCR5380_dma_recv_setup		oakscsi_pread
+#define NCR5380_dma_send_setup		oakscsi_pwrite
+#define NCR5380_dma_residual		NCR5380_dma_residual_none
 
-#घोषणा NCR5380_queue_command		oakscsi_queue_command
-#घोषणा NCR5380_info			oakscsi_info
+#define NCR5380_queue_command		oakscsi_queue_command
+#define NCR5380_info			oakscsi_info
 
-#घोषणा NCR5380_implementation_fields	/* none */
+#define NCR5380_implementation_fields	/* none */
 
-#समावेश "../NCR5380.h"
+#include "../NCR5380.h"
 
-#अघोषित START_DMA_INITIATOR_RECEIVE_REG
-#घोषणा START_DMA_INITIATOR_RECEIVE_REG	(128 + 7)
+#undef START_DMA_INITIATOR_RECEIVE_REG
+#define START_DMA_INITIATOR_RECEIVE_REG	(128 + 7)
 
-#घोषणा STAT	((128 + 16) << 2)
-#घोषणा DATA	((128 + 8) << 2)
+#define STAT	((128 + 16) << 2)
+#define DATA	((128 + 8) << 2)
 
-अटल अंतरभूत पूर्णांक oakscsi_pग_लिखो(काष्ठा NCR5380_hostdata *hostdata,
-                                 अचिन्हित अक्षर *addr, पूर्णांक len)
-अणु
+static inline int oakscsi_pwrite(struct NCR5380_hostdata *hostdata,
+                                 unsigned char *addr, int len)
+{
   u8 __iomem *base = hostdata->io;
 
-prपूर्णांकk("writing %p len %d\n",addr, len);
+printk("writing %p len %d\n",addr, len);
 
-  जबतक(1)
-  अणु
-    पूर्णांक status;
-    जबतक (((status = पढ़ोw(base + STAT)) & 0x100)==0);
-  पूर्ण
-  वापस 0;
-पूर्ण
+  while(1)
+  {
+    int status;
+    while (((status = readw(base + STAT)) & 0x100)==0);
+  }
+  return 0;
+}
 
-अटल अंतरभूत पूर्णांक oakscsi_pपढ़ो(काष्ठा NCR5380_hostdata *hostdata,
-                                अचिन्हित अक्षर *addr, पूर्णांक len)
-अणु
+static inline int oakscsi_pread(struct NCR5380_hostdata *hostdata,
+                                unsigned char *addr, int len)
+{
   u8 __iomem *base = hostdata->io;
 
-prपूर्णांकk("reading %p len %d\n", addr, len);
-  जबतक(len > 0)
-  अणु
-    अचिन्हित पूर्णांक status, समयout;
-    अचिन्हित दीर्घ b;
+printk("reading %p len %d\n", addr, len);
+  while(len > 0)
+  {
+    unsigned int status, timeout;
+    unsigned long b;
     
-    समयout = 0x01FFFFFF;
+    timeout = 0x01FFFFFF;
     
-    जबतक (((status = पढ़ोw(base + STAT)) & 0x100)==0)
-    अणु
-      समयout--;
-      अगर(status & 0x200 || !समयout)
-      अणु
-        prपूर्णांकk("status = %08X\n", status);
-        वापस -1;
-      पूर्ण
-    पूर्ण
+    while (((status = readw(base + STAT)) & 0x100)==0)
+    {
+      timeout--;
+      if(status & 0x200 || !timeout)
+      {
+        printk("status = %08X\n", status);
+        return -1;
+      }
+    }
 
-    अगर(len >= 128)
-    अणु
-      पढ़ोsw(base + DATA, addr, 128);
+    if(len >= 128)
+    {
+      readsw(base + DATA, addr, 128);
       addr += 128;
       len -= 128;
-    पूर्ण
-    अन्यथा
-    अणु
-      b = (अचिन्हित दीर्घ) पढ़ोw(base + DATA);
+    }
+    else
+    {
+      b = (unsigned long) readw(base + DATA);
       *addr ++ = b;
       len -= 1;
-      अगर(len)
+      if(len)
         *addr ++ = b>>8;
       len -= 1;
-    पूर्ण
-  पूर्ण
-  वापस 0;
-पूर्ण
+    }
+  }
+  return 0;
+}
 
-#अघोषित STAT
-#अघोषित DATA
+#undef STAT
+#undef DATA
 
-#समावेश "../NCR5380.c"
+#include "../NCR5380.c"
 
-अटल काष्ठा scsi_host_ढाँचा oakscsi_ढाँचा = अणु
+static struct scsi_host_template oakscsi_template = {
 	.module			= THIS_MODULE,
 	.name			= "Oak 16-bit SCSI",
 	.info			= oakscsi_info,
 	.queuecommand		= oakscsi_queue_command,
-	.eh_पात_handler	= NCR5380_पात,
+	.eh_abort_handler	= NCR5380_abort,
 	.eh_host_reset_handler	= NCR5380_host_reset,
 	.can_queue		= 16,
 	.this_id		= 7,
@@ -116,47 +115,47 @@ prपूर्णांकk("reading %p len %d\n", addr, len);
 	.proc_name		= "oakscsi",
 	.cmd_size		= NCR5380_CMD_SIZE,
 	.max_sectors		= 128,
-पूर्ण;
+};
 
-अटल पूर्णांक oakscsi_probe(काष्ठा expansion_card *ec, स्थिर काष्ठा ecard_id *id)
-अणु
-	काष्ठा Scsi_Host *host;
-	पूर्णांक ret;
+static int oakscsi_probe(struct expansion_card *ec, const struct ecard_id *id)
+{
+	struct Scsi_Host *host;
+	int ret;
 
 	ret = ecard_request_resources(ec);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	host = scsi_host_alloc(&oakscsi_ढाँचा, माप(काष्ठा NCR5380_hostdata));
-	अगर (!host) अणु
+	host = scsi_host_alloc(&oakscsi_template, sizeof(struct NCR5380_hostdata));
+	if (!host) {
 		ret = -ENOMEM;
-		जाओ release;
-	पूर्ण
+		goto release;
+	}
 
 	priv(host)->io = ioremap(ecard_resource_start(ec, ECARD_RES_MEMC),
 	                         ecard_resource_len(ec, ECARD_RES_MEMC));
-	अगर (!priv(host)->io) अणु
+	if (!priv(host)->io) {
 		ret = -ENOMEM;
-		जाओ unreg;
-	पूर्ण
+		goto unreg;
+	}
 
 	host->irq = NO_IRQ;
 
 	ret = NCR5380_init(host, FLAG_DMA_FIXUP | FLAG_LATE_DMA_SETUP);
-	अगर (ret)
-		जाओ out_unmap;
+	if (ret)
+		goto out_unmap;
 
 	NCR5380_maybe_reset_bus(host);
 
 	ret = scsi_add_host(host, &ec->dev);
-	अगर (ret)
-		जाओ out_निकास;
+	if (ret)
+		goto out_exit;
 
 	scsi_scan_host(host);
-	जाओ out;
+	goto out;
 
- out_निकास:
-	NCR5380_निकास(host);
+ out_exit:
+	NCR5380_exit(host);
  out_unmap:
 	iounmap(priv(host)->io);
  unreg:
@@ -164,49 +163,49 @@ prपूर्णांकk("reading %p len %d\n", addr, len);
  release:
 	ecard_release_resources(ec);
  out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम oakscsi_हटाओ(काष्ठा expansion_card *ec)
-अणु
-	काष्ठा Scsi_Host *host = ecard_get_drvdata(ec);
-	व्योम __iomem *base = priv(host)->io;
+static void oakscsi_remove(struct expansion_card *ec)
+{
+	struct Scsi_Host *host = ecard_get_drvdata(ec);
+	void __iomem *base = priv(host)->io;
 
-	ecard_set_drvdata(ec, शून्य);
-	scsi_हटाओ_host(host);
+	ecard_set_drvdata(ec, NULL);
+	scsi_remove_host(host);
 
-	NCR5380_निकास(host);
+	NCR5380_exit(host);
 	scsi_host_put(host);
 	iounmap(base);
 	ecard_release_resources(ec);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा ecard_id oakscsi_cids[] = अणु
-	अणु MANU_OAK, PROD_OAK_SCSI पूर्ण,
-	अणु 0xffff, 0xffff पूर्ण
-पूर्ण;
+static const struct ecard_id oakscsi_cids[] = {
+	{ MANU_OAK, PROD_OAK_SCSI },
+	{ 0xffff, 0xffff }
+};
 
-अटल काष्ठा ecard_driver oakscsi_driver = अणु
+static struct ecard_driver oakscsi_driver = {
 	.probe		= oakscsi_probe,
-	.हटाओ		= oakscsi_हटाओ,
+	.remove		= oakscsi_remove,
 	.id_table	= oakscsi_cids,
-	.drv = अणु
+	.drv = {
 		.name		= "oakscsi",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init oakscsi_init(व्योम)
-अणु
-	वापस ecard_रेजिस्टर_driver(&oakscsi_driver);
-पूर्ण
+static int __init oakscsi_init(void)
+{
+	return ecard_register_driver(&oakscsi_driver);
+}
 
-अटल व्योम __निकास oakscsi_निकास(व्योम)
-अणु
-	ecard_हटाओ_driver(&oakscsi_driver);
-पूर्ण
+static void __exit oakscsi_exit(void)
+{
+	ecard_remove_driver(&oakscsi_driver);
+}
 
 module_init(oakscsi_init);
-module_निकास(oakscsi_निकास);
+module_exit(oakscsi_exit);
 
 MODULE_AUTHOR("Russell King");
 MODULE_DESCRIPTION("Oak SCSI driver");

@@ -1,108 +1,107 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * TI DaVinci घड़ीsource driver
+ * TI DaVinci clocksource driver
  *
  * Copyright (C) 2019 Texas Instruments
  * Author: Bartosz Golaszewski <bgolaszewski@baylibre.com>
- * (with tiny parts aकरोpted from code by Kevin Hilman <khilman@baylibre.com>)
+ * (with tiny parts adopted from code by Kevin Hilman <khilman@baylibre.com>)
  */
 
-#घोषणा pr_fmt(fmt) "%s: " fmt, __func__
+#define pr_fmt(fmt) "%s: " fmt, __func__
 
-#समावेश <linux/clk.h>
-#समावेश <linux/घड़ीchips.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/sched_घड़ी.h>
+#include <linux/clk.h>
+#include <linux/clockchips.h>
+#include <linux/interrupt.h>
+#include <linux/kernel.h>
+#include <linux/of_address.h>
+#include <linux/of_irq.h>
+#include <linux/sched_clock.h>
 
-#समावेश <घड़ीsource/समयr-davinci.h>
+#include <clocksource/timer-davinci.h>
 
-#घोषणा DAVINCI_TIMER_REG_TIM12			0x10
-#घोषणा DAVINCI_TIMER_REG_TIM34			0x14
-#घोषणा DAVINCI_TIMER_REG_PRD12			0x18
-#घोषणा DAVINCI_TIMER_REG_PRD34			0x1c
-#घोषणा DAVINCI_TIMER_REG_TCR			0x20
-#घोषणा DAVINCI_TIMER_REG_TGCR			0x24
+#define DAVINCI_TIMER_REG_TIM12			0x10
+#define DAVINCI_TIMER_REG_TIM34			0x14
+#define DAVINCI_TIMER_REG_PRD12			0x18
+#define DAVINCI_TIMER_REG_PRD34			0x1c
+#define DAVINCI_TIMER_REG_TCR			0x20
+#define DAVINCI_TIMER_REG_TGCR			0x24
 
-#घोषणा DAVINCI_TIMER_TIMMODE_MASK		GENMASK(3, 2)
-#घोषणा DAVINCI_TIMER_RESET_MASK		GENMASK(1, 0)
-#घोषणा DAVINCI_TIMER_TIMMODE_32BIT_UNCHAINED	BIT(2)
-#घोषणा DAVINCI_TIMER_UNRESET			GENMASK(1, 0)
+#define DAVINCI_TIMER_TIMMODE_MASK		GENMASK(3, 2)
+#define DAVINCI_TIMER_RESET_MASK		GENMASK(1, 0)
+#define DAVINCI_TIMER_TIMMODE_32BIT_UNCHAINED	BIT(2)
+#define DAVINCI_TIMER_UNRESET			GENMASK(1, 0)
 
-#घोषणा DAVINCI_TIMER_ENAMODE_MASK		GENMASK(1, 0)
-#घोषणा DAVINCI_TIMER_ENAMODE_DISABLED		0x00
-#घोषणा DAVINCI_TIMER_ENAMODE_ONESHOT		BIT(0)
-#घोषणा DAVINCI_TIMER_ENAMODE_PERIODIC		BIT(1)
+#define DAVINCI_TIMER_ENAMODE_MASK		GENMASK(1, 0)
+#define DAVINCI_TIMER_ENAMODE_DISABLED		0x00
+#define DAVINCI_TIMER_ENAMODE_ONESHOT		BIT(0)
+#define DAVINCI_TIMER_ENAMODE_PERIODIC		BIT(1)
 
-#घोषणा DAVINCI_TIMER_ENAMODE_SHIFT_TIM12	6
-#घोषणा DAVINCI_TIMER_ENAMODE_SHIFT_TIM34	22
+#define DAVINCI_TIMER_ENAMODE_SHIFT_TIM12	6
+#define DAVINCI_TIMER_ENAMODE_SHIFT_TIM34	22
 
-#घोषणा DAVINCI_TIMER_MIN_DELTA			0x01
-#घोषणा DAVINCI_TIMER_MAX_DELTA			0xfffffffe
+#define DAVINCI_TIMER_MIN_DELTA			0x01
+#define DAVINCI_TIMER_MAX_DELTA			0xfffffffe
 
-#घोषणा DAVINCI_TIMER_CLKSRC_BITS		32
+#define DAVINCI_TIMER_CLKSRC_BITS		32
 
-#घोषणा DAVINCI_TIMER_TGCR_DEFAULT \
+#define DAVINCI_TIMER_TGCR_DEFAULT \
 		(DAVINCI_TIMER_TIMMODE_32BIT_UNCHAINED | DAVINCI_TIMER_UNRESET)
 
-काष्ठा davinci_घड़ीevent अणु
-	काष्ठा घड़ी_event_device dev;
-	व्योम __iomem *base;
-	अचिन्हित पूर्णांक cmp_off;
-पूर्ण;
+struct davinci_clockevent {
+	struct clock_event_device dev;
+	void __iomem *base;
+	unsigned int cmp_off;
+};
 
 /*
- * This must be globally accessible by davinci_समयr_पढ़ो_sched_घड़ी(), so
+ * This must be globally accessible by davinci_timer_read_sched_clock(), so
  * let's keep it here.
  */
-अटल काष्ठा अणु
-	काष्ठा घड़ीsource dev;
-	व्योम __iomem *base;
-	अचिन्हित पूर्णांक tim_off;
-पूर्ण davinci_घड़ीsource;
+static struct {
+	struct clocksource dev;
+	void __iomem *base;
+	unsigned int tim_off;
+} davinci_clocksource;
 
-अटल काष्ठा davinci_घड़ीevent *
-to_davinci_घड़ीevent(काष्ठा घड़ी_event_device *घड़ीevent)
-अणु
-	वापस container_of(घड़ीevent, काष्ठा davinci_घड़ीevent, dev);
-पूर्ण
+static struct davinci_clockevent *
+to_davinci_clockevent(struct clock_event_device *clockevent)
+{
+	return container_of(clockevent, struct davinci_clockevent, dev);
+}
 
-अटल अचिन्हित पूर्णांक
-davinci_घड़ीevent_पढ़ो(काष्ठा davinci_घड़ीevent *घड़ीevent,
-			अचिन्हित पूर्णांक reg)
-अणु
-	वापस पढ़ोl_relaxed(घड़ीevent->base + reg);
-पूर्ण
+static unsigned int
+davinci_clockevent_read(struct davinci_clockevent *clockevent,
+			unsigned int reg)
+{
+	return readl_relaxed(clockevent->base + reg);
+}
 
-अटल व्योम davinci_घड़ीevent_ग_लिखो(काष्ठा davinci_घड़ीevent *घड़ीevent,
-				     अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक val)
-अणु
-	ग_लिखोl_relaxed(val, घड़ीevent->base + reg);
-पूर्ण
+static void davinci_clockevent_write(struct davinci_clockevent *clockevent,
+				     unsigned int reg, unsigned int val)
+{
+	writel_relaxed(val, clockevent->base + reg);
+}
 
-अटल व्योम davinci_tim12_shutकरोwn(व्योम __iomem *base)
-अणु
-	अचिन्हित पूर्णांक tcr;
+static void davinci_tim12_shutdown(void __iomem *base)
+{
+	unsigned int tcr;
 
 	tcr = DAVINCI_TIMER_ENAMODE_DISABLED <<
 		DAVINCI_TIMER_ENAMODE_SHIFT_TIM12;
 	/*
-	 * This function is only ever called अगर we're using both समयr
-	 * halves. In this हाल TIM34 runs in periodic mode and we must
-	 * not modअगरy it.
+	 * This function is only ever called if we're using both timer
+	 * halves. In this case TIM34 runs in periodic mode and we must
+	 * not modify it.
 	 */
 	tcr |= DAVINCI_TIMER_ENAMODE_PERIODIC <<
 		DAVINCI_TIMER_ENAMODE_SHIFT_TIM34;
 
-	ग_लिखोl_relaxed(tcr, base + DAVINCI_TIMER_REG_TCR);
-पूर्ण
+	writel_relaxed(tcr, base + DAVINCI_TIMER_REG_TCR);
+}
 
-अटल व्योम davinci_tim12_set_oneshot(व्योम __iomem *base)
-अणु
-	अचिन्हित पूर्णांक tcr;
+static void davinci_tim12_set_oneshot(void __iomem *base)
+{
+	unsigned int tcr;
 
 	tcr = DAVINCI_TIMER_ENAMODE_ONESHOT <<
 		DAVINCI_TIMER_ENAMODE_SHIFT_TIM12;
@@ -110,258 +109,258 @@ davinci_घड़ीevent_पढ़ो(काष्ठा davinci_घड़ीev
 	tcr |= DAVINCI_TIMER_ENAMODE_PERIODIC <<
 		DAVINCI_TIMER_ENAMODE_SHIFT_TIM34;
 
-	ग_लिखोl_relaxed(tcr, base + DAVINCI_TIMER_REG_TCR);
-पूर्ण
+	writel_relaxed(tcr, base + DAVINCI_TIMER_REG_TCR);
+}
 
-अटल पूर्णांक davinci_घड़ीevent_shutकरोwn(काष्ठा घड़ी_event_device *dev)
-अणु
-	काष्ठा davinci_घड़ीevent *घड़ीevent;
+static int davinci_clockevent_shutdown(struct clock_event_device *dev)
+{
+	struct davinci_clockevent *clockevent;
 
-	घड़ीevent = to_davinci_घड़ीevent(dev);
+	clockevent = to_davinci_clockevent(dev);
 
-	davinci_tim12_shutकरोwn(घड़ीevent->base);
+	davinci_tim12_shutdown(clockevent->base);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक davinci_घड़ीevent_set_oneshot(काष्ठा घड़ी_event_device *dev)
-अणु
-	काष्ठा davinci_घड़ीevent *घड़ीevent = to_davinci_घड़ीevent(dev);
+static int davinci_clockevent_set_oneshot(struct clock_event_device *dev)
+{
+	struct davinci_clockevent *clockevent = to_davinci_clockevent(dev);
 
-	davinci_घड़ीevent_ग_लिखो(घड़ीevent, DAVINCI_TIMER_REG_TIM12, 0x0);
+	davinci_clockevent_write(clockevent, DAVINCI_TIMER_REG_TIM12, 0x0);
 
-	davinci_tim12_set_oneshot(घड़ीevent->base);
+	davinci_tim12_set_oneshot(clockevent->base);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-davinci_घड़ीevent_set_next_event_std(अचिन्हित दीर्घ cycles,
-				      काष्ठा घड़ी_event_device *dev)
-अणु
-	काष्ठा davinci_घड़ीevent *घड़ीevent = to_davinci_घड़ीevent(dev);
+static int
+davinci_clockevent_set_next_event_std(unsigned long cycles,
+				      struct clock_event_device *dev)
+{
+	struct davinci_clockevent *clockevent = to_davinci_clockevent(dev);
 
-	davinci_घड़ीevent_shutकरोwn(dev);
+	davinci_clockevent_shutdown(dev);
 
-	davinci_घड़ीevent_ग_लिखो(घड़ीevent, DAVINCI_TIMER_REG_TIM12, 0x0);
-	davinci_घड़ीevent_ग_लिखो(घड़ीevent, DAVINCI_TIMER_REG_PRD12, cycles);
+	davinci_clockevent_write(clockevent, DAVINCI_TIMER_REG_TIM12, 0x0);
+	davinci_clockevent_write(clockevent, DAVINCI_TIMER_REG_PRD12, cycles);
 
-	davinci_घड़ीevent_set_oneshot(dev);
+	davinci_clockevent_set_oneshot(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-davinci_घड़ीevent_set_next_event_cmp(अचिन्हित दीर्घ cycles,
-				      काष्ठा घड़ी_event_device *dev)
-अणु
-	काष्ठा davinci_घड़ीevent *घड़ीevent = to_davinci_घड़ीevent(dev);
-	अचिन्हित पूर्णांक curr_समय;
+static int
+davinci_clockevent_set_next_event_cmp(unsigned long cycles,
+				      struct clock_event_device *dev)
+{
+	struct davinci_clockevent *clockevent = to_davinci_clockevent(dev);
+	unsigned int curr_time;
 
-	curr_समय = davinci_घड़ीevent_पढ़ो(घड़ीevent,
+	curr_time = davinci_clockevent_read(clockevent,
 					    DAVINCI_TIMER_REG_TIM12);
-	davinci_घड़ीevent_ग_लिखो(घड़ीevent,
-				 घड़ीevent->cmp_off, curr_समय + cycles);
+	davinci_clockevent_write(clockevent,
+				 clockevent->cmp_off, curr_time + cycles);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल irqवापस_t davinci_समयr_irq_समयr(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा davinci_घड़ीevent *घड़ीevent = data;
+static irqreturn_t davinci_timer_irq_timer(int irq, void *data)
+{
+	struct davinci_clockevent *clockevent = data;
 
-	अगर (!घड़ीevent_state_oneshot(&घड़ीevent->dev))
-		davinci_tim12_shutकरोwn(घड़ीevent->base);
+	if (!clockevent_state_oneshot(&clockevent->dev))
+		davinci_tim12_shutdown(clockevent->base);
 
-	घड़ीevent->dev.event_handler(&घड़ीevent->dev);
+	clockevent->dev.event_handler(&clockevent->dev);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल u64 notrace davinci_समयr_पढ़ो_sched_घड़ी(व्योम)
-अणु
-	वापस पढ़ोl_relaxed(davinci_घड़ीsource.base +
-			     davinci_घड़ीsource.tim_off);
-पूर्ण
+static u64 notrace davinci_timer_read_sched_clock(void)
+{
+	return readl_relaxed(davinci_clocksource.base +
+			     davinci_clocksource.tim_off);
+}
 
-अटल u64 davinci_घड़ीsource_पढ़ो(काष्ठा घड़ीsource *dev)
-अणु
-	वापस davinci_समयr_पढ़ो_sched_घड़ी();
-पूर्ण
+static u64 davinci_clocksource_read(struct clocksource *dev)
+{
+	return davinci_timer_read_sched_clock();
+}
 
 /*
- * Standard use-हाल: we're using tim12 क्रम घड़ीevent and tim34 क्रम
- * घड़ीsource. The शेष is making the क्रमmer run in oneshot mode
+ * Standard use-case: we're using tim12 for clockevent and tim34 for
+ * clocksource. The default is making the former run in oneshot mode
  * and the latter in periodic mode.
  */
-अटल व्योम davinci_घड़ीsource_init_tim34(व्योम __iomem *base)
-अणु
-	पूर्णांक tcr;
+static void davinci_clocksource_init_tim34(void __iomem *base)
+{
+	int tcr;
 
 	tcr = DAVINCI_TIMER_ENAMODE_PERIODIC <<
 		DAVINCI_TIMER_ENAMODE_SHIFT_TIM34;
 	tcr |= DAVINCI_TIMER_ENAMODE_ONESHOT <<
 		DAVINCI_TIMER_ENAMODE_SHIFT_TIM12;
 
-	ग_लिखोl_relaxed(0x0, base + DAVINCI_TIMER_REG_TIM34);
-	ग_लिखोl_relaxed(अच_पूर्णांक_उच्च, base + DAVINCI_TIMER_REG_PRD34);
-	ग_लिखोl_relaxed(tcr, base + DAVINCI_TIMER_REG_TCR);
-पूर्ण
+	writel_relaxed(0x0, base + DAVINCI_TIMER_REG_TIM34);
+	writel_relaxed(UINT_MAX, base + DAVINCI_TIMER_REG_PRD34);
+	writel_relaxed(tcr, base + DAVINCI_TIMER_REG_TCR);
+}
 
 /*
- * Special use-हाल on da830: the DSP may use tim34. We're using tim12 क्रम
- * both घड़ीsource and घड़ीevent. We set tim12 to periodic and करोn't touch
+ * Special use-case on da830: the DSP may use tim34. We're using tim12 for
+ * both clocksource and clockevent. We set tim12 to periodic and don't touch
  * tim34.
  */
-अटल व्योम davinci_घड़ीsource_init_tim12(व्योम __iomem *base)
-अणु
-	अचिन्हित पूर्णांक tcr;
+static void davinci_clocksource_init_tim12(void __iomem *base)
+{
+	unsigned int tcr;
 
 	tcr = DAVINCI_TIMER_ENAMODE_PERIODIC <<
 		DAVINCI_TIMER_ENAMODE_SHIFT_TIM12;
 
-	ग_लिखोl_relaxed(0x0, base + DAVINCI_TIMER_REG_TIM12);
-	ग_लिखोl_relaxed(अच_पूर्णांक_उच्च, base + DAVINCI_TIMER_REG_PRD12);
-	ग_लिखोl_relaxed(tcr, base + DAVINCI_TIMER_REG_TCR);
-पूर्ण
+	writel_relaxed(0x0, base + DAVINCI_TIMER_REG_TIM12);
+	writel_relaxed(UINT_MAX, base + DAVINCI_TIMER_REG_PRD12);
+	writel_relaxed(tcr, base + DAVINCI_TIMER_REG_TCR);
+}
 
-अटल व्योम davinci_समयr_init(व्योम __iomem *base)
-अणु
-	/* Set घड़ी to पूर्णांकernal mode and disable it. */
-	ग_लिखोl_relaxed(0x0, base + DAVINCI_TIMER_REG_TCR);
+static void davinci_timer_init(void __iomem *base)
+{
+	/* Set clock to internal mode and disable it. */
+	writel_relaxed(0x0, base + DAVINCI_TIMER_REG_TCR);
 	/*
-	 * Reset both 32-bit समयrs, set no prescaler क्रम समयr 34, set the
-	 * समयr to dual 32-bit unchained mode, unreset both 32-bit समयrs.
+	 * Reset both 32-bit timers, set no prescaler for timer 34, set the
+	 * timer to dual 32-bit unchained mode, unreset both 32-bit timers.
 	 */
-	ग_लिखोl_relaxed(DAVINCI_TIMER_TGCR_DEFAULT,
+	writel_relaxed(DAVINCI_TIMER_TGCR_DEFAULT,
 		       base + DAVINCI_TIMER_REG_TGCR);
 	/* Init both counters to zero. */
-	ग_लिखोl_relaxed(0x0, base + DAVINCI_TIMER_REG_TIM12);
-	ग_लिखोl_relaxed(0x0, base + DAVINCI_TIMER_REG_TIM34);
-पूर्ण
+	writel_relaxed(0x0, base + DAVINCI_TIMER_REG_TIM12);
+	writel_relaxed(0x0, base + DAVINCI_TIMER_REG_TIM34);
+}
 
-पूर्णांक __init davinci_समयr_रेजिस्टर(काष्ठा clk *clk,
-				  स्थिर काष्ठा davinci_समयr_cfg *समयr_cfg)
-अणु
-	काष्ठा davinci_घड़ीevent *घड़ीevent;
-	अचिन्हित पूर्णांक tick_rate;
-	व्योम __iomem *base;
-	पूर्णांक rv;
+int __init davinci_timer_register(struct clk *clk,
+				  const struct davinci_timer_cfg *timer_cfg)
+{
+	struct davinci_clockevent *clockevent;
+	unsigned int tick_rate;
+	void __iomem *base;
+	int rv;
 
 	rv = clk_prepare_enable(clk);
-	अगर (rv) अणु
+	if (rv) {
 		pr_err("Unable to prepare and enable the timer clock\n");
-		वापस rv;
-	पूर्ण
+		return rv;
+	}
 
-	अगर (!request_mem_region(समयr_cfg->reg.start,
-				resource_size(&समयr_cfg->reg),
-				"davinci-timer")) अणु
+	if (!request_mem_region(timer_cfg->reg.start,
+				resource_size(&timer_cfg->reg),
+				"davinci-timer")) {
 		pr_err("Unable to request memory region\n");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	base = ioremap(समयr_cfg->reg.start, resource_size(&समयr_cfg->reg));
-	अगर (!base) अणु
+	base = ioremap(timer_cfg->reg.start, resource_size(&timer_cfg->reg));
+	if (!base) {
 		pr_err("Unable to map the register range\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	davinci_समयr_init(base);
+	davinci_timer_init(base);
 	tick_rate = clk_get_rate(clk);
 
-	घड़ीevent = kzalloc(माप(*घड़ीevent), GFP_KERNEL);
-	अगर (!घड़ीevent)
-		वापस -ENOMEM;
+	clockevent = kzalloc(sizeof(*clockevent), GFP_KERNEL);
+	if (!clockevent)
+		return -ENOMEM;
 
-	घड़ीevent->dev.name = "tim12";
-	घड़ीevent->dev.features = CLOCK_EVT_FEAT_ONESHOT;
-	घड़ीevent->dev.cpumask = cpumask_of(0);
-	घड़ीevent->base = base;
+	clockevent->dev.name = "tim12";
+	clockevent->dev.features = CLOCK_EVT_FEAT_ONESHOT;
+	clockevent->dev.cpumask = cpumask_of(0);
+	clockevent->base = base;
 
-	अगर (समयr_cfg->cmp_off) अणु
-		घड़ीevent->cmp_off = समयr_cfg->cmp_off;
-		घड़ीevent->dev.set_next_event =
-				davinci_घड़ीevent_set_next_event_cmp;
-	पूर्ण अन्यथा अणु
-		घड़ीevent->dev.set_next_event =
-				davinci_घड़ीevent_set_next_event_std;
-		घड़ीevent->dev.set_state_oneshot =
-				davinci_घड़ीevent_set_oneshot;
-		घड़ीevent->dev.set_state_shutकरोwn =
-				davinci_घड़ीevent_shutकरोwn;
-	पूर्ण
+	if (timer_cfg->cmp_off) {
+		clockevent->cmp_off = timer_cfg->cmp_off;
+		clockevent->dev.set_next_event =
+				davinci_clockevent_set_next_event_cmp;
+	} else {
+		clockevent->dev.set_next_event =
+				davinci_clockevent_set_next_event_std;
+		clockevent->dev.set_state_oneshot =
+				davinci_clockevent_set_oneshot;
+		clockevent->dev.set_state_shutdown =
+				davinci_clockevent_shutdown;
+	}
 
-	rv = request_irq(समयr_cfg->irq[DAVINCI_TIMER_CLOCKEVENT_IRQ].start,
-			 davinci_समयr_irq_समयr, IRQF_TIMER,
-			 "clockevent/tim12", घड़ीevent);
-	अगर (rv) अणु
+	rv = request_irq(timer_cfg->irq[DAVINCI_TIMER_CLOCKEVENT_IRQ].start,
+			 davinci_timer_irq_timer, IRQF_TIMER,
+			 "clockevent/tim12", clockevent);
+	if (rv) {
 		pr_err("Unable to request the clockevent interrupt\n");
-		वापस rv;
-	पूर्ण
+		return rv;
+	}
 
-	davinci_घड़ीsource.dev.rating = 300;
-	davinci_घड़ीsource.dev.पढ़ो = davinci_घड़ीsource_पढ़ो;
-	davinci_घड़ीsource.dev.mask =
+	davinci_clocksource.dev.rating = 300;
+	davinci_clocksource.dev.read = davinci_clocksource_read;
+	davinci_clocksource.dev.mask =
 			CLOCKSOURCE_MASK(DAVINCI_TIMER_CLKSRC_BITS);
-	davinci_घड़ीsource.dev.flags = CLOCK_SOURCE_IS_CONTINUOUS;
-	davinci_घड़ीsource.base = base;
+	davinci_clocksource.dev.flags = CLOCK_SOURCE_IS_CONTINUOUS;
+	davinci_clocksource.base = base;
 
-	अगर (समयr_cfg->cmp_off) अणु
-		davinci_घड़ीsource.dev.name = "tim12";
-		davinci_घड़ीsource.tim_off = DAVINCI_TIMER_REG_TIM12;
-		davinci_घड़ीsource_init_tim12(base);
-	पूर्ण अन्यथा अणु
-		davinci_घड़ीsource.dev.name = "tim34";
-		davinci_घड़ीsource.tim_off = DAVINCI_TIMER_REG_TIM34;
-		davinci_घड़ीsource_init_tim34(base);
-	पूर्ण
+	if (timer_cfg->cmp_off) {
+		davinci_clocksource.dev.name = "tim12";
+		davinci_clocksource.tim_off = DAVINCI_TIMER_REG_TIM12;
+		davinci_clocksource_init_tim12(base);
+	} else {
+		davinci_clocksource.dev.name = "tim34";
+		davinci_clocksource.tim_off = DAVINCI_TIMER_REG_TIM34;
+		davinci_clocksource_init_tim34(base);
+	}
 
-	घड़ीevents_config_and_रेजिस्टर(&घड़ीevent->dev, tick_rate,
+	clockevents_config_and_register(&clockevent->dev, tick_rate,
 					DAVINCI_TIMER_MIN_DELTA,
 					DAVINCI_TIMER_MAX_DELTA);
 
-	rv = घड़ीsource_रेजिस्टर_hz(&davinci_घड़ीsource.dev, tick_rate);
-	अगर (rv) अणु
+	rv = clocksource_register_hz(&davinci_clocksource.dev, tick_rate);
+	if (rv) {
 		pr_err("Unable to register clocksource\n");
-		वापस rv;
-	पूर्ण
+		return rv;
+	}
 
-	sched_घड़ी_रेजिस्टर(davinci_समयr_पढ़ो_sched_घड़ी,
+	sched_clock_register(davinci_timer_read_sched_clock,
 			     DAVINCI_TIMER_CLKSRC_BITS, tick_rate);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __init of_davinci_समयr_रेजिस्टर(काष्ठा device_node *np)
-अणु
-	काष्ठा davinci_समयr_cfg समयr_cfg = अणु पूर्ण;
-	काष्ठा clk *clk;
-	पूर्णांक rv;
+static int __init of_davinci_timer_register(struct device_node *np)
+{
+	struct davinci_timer_cfg timer_cfg = { };
+	struct clk *clk;
+	int rv;
 
-	rv = of_address_to_resource(np, 0, &समयr_cfg.reg);
-	अगर (rv) अणु
+	rv = of_address_to_resource(np, 0, &timer_cfg.reg);
+	if (rv) {
 		pr_err("Unable to get the register range for timer\n");
-		वापस rv;
-	पूर्ण
+		return rv;
+	}
 
-	rv = of_irq_to_resource_table(np, समयr_cfg.irq,
+	rv = of_irq_to_resource_table(np, timer_cfg.irq,
 				      DAVINCI_TIMER_NUM_IRQS);
-	अगर (rv != DAVINCI_TIMER_NUM_IRQS) अणु
+	if (rv != DAVINCI_TIMER_NUM_IRQS) {
 		pr_err("Unable to get the interrupts for timer\n");
-		वापस rv;
-	पूर्ण
+		return rv;
+	}
 
 	clk = of_clk_get(np, 0);
-	अगर (IS_ERR(clk)) अणु
+	if (IS_ERR(clk)) {
 		pr_err("Unable to get the timer clock\n");
-		वापस PTR_ERR(clk);
-	पूर्ण
+		return PTR_ERR(clk);
+	}
 
-	rv = davinci_समयr_रेजिस्टर(clk, &समयr_cfg);
-	अगर (rv)
+	rv = davinci_timer_register(clk, &timer_cfg);
+	if (rv)
 		clk_put(clk);
 
-	वापस rv;
-पूर्ण
-TIMER_OF_DECLARE(davinci_समयr, "ti,da830-timer", of_davinci_समयr_रेजिस्टर);
+	return rv;
+}
+TIMER_OF_DECLARE(davinci_timer, "ti,da830-timer", of_davinci_timer_register);

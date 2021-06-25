@@ -1,32 +1,31 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * linux/arch/arm/mach-pxa/zylonite_pxa300.c
  *
- * PXA300/PXA310 specअगरic support code क्रम the
- * PXA3xx Development Platक्रमm (aka Zylonite)
+ * PXA300/PXA310 specific support code for the
+ * PXA3xx Development Platform (aka Zylonite)
  *
  * Copyright (C) 2007 Marvell Internation Ltd.
  * 2007-08-21: eric miao <eric.miao@marvell.com>
  *             initial version
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/platक्रमm_data/i2c-pxa.h>
-#समावेश <linux/platक्रमm_data/pca953x.h>
-#समावेश <linux/gpपन.स>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/i2c.h>
+#include <linux/platform_data/i2c-pxa.h>
+#include <linux/platform_data/pca953x.h>
+#include <linux/gpio.h>
 
-#समावेश "pxa300.h"
-#समावेश "devices.h"
-#समावेश "zylonite.h"
+#include "pxa300.h"
+#include "devices.h"
+#include "zylonite.h"
 
-#समावेश "generic.h"
+#include "generic.h"
 
 /* PXA300/PXA310 common configurations */
-अटल mfp_cfg_t common_mfp_cfg[] __initdata = अणु
+static mfp_cfg_t common_mfp_cfg[] __initdata = {
 	/* LCD */
 	GPIO54_LCD_LDD_0,
 	GPIO55_LCD_LDD_1,
@@ -108,8 +107,8 @@
 	GPIO5_MMC1_DAT2,
 	GPIO6_MMC1_DAT3,
 	GPIO7_MMC1_CLK,
-	GPIO8_MMC1_CMD,	/* CMD0 क्रम slot 0 */
-	GPIO15_GPIO,	/* CMD1 शेष as GPIO क्रम slot 0 */
+	GPIO8_MMC1_CMD,	/* CMD0 for slot 0 */
+	GPIO15_GPIO,	/* CMD1 default as GPIO for slot 0 */
 
 	/* MMC2 */
 	GPIO9_MMC2_DAT0,
@@ -130,9 +129,9 @@
 	/* GPIO */
 	GPIO18_GPIO | MFP_PULL_HIGH,	/* GPIO Expander #0 INT_N */
 	GPIO19_GPIO | MFP_PULL_HIGH,	/* GPIO Expander #1 INT_N */
-पूर्ण;
+};
 
-अटल mfp_cfg_t pxa300_mfp_cfg[] __initdata = अणु
+static mfp_cfg_t pxa300_mfp_cfg[] __initdata = {
 	/* FFUART */
 	GPIO30_UART1_RXD | MFP_LPM_EDGE_FALL,
 	GPIO31_UART1_TXD,
@@ -146,9 +145,9 @@
 	/* Ethernet */
 	GPIO2_nCS3,
 	GPIO99_GPIO,
-पूर्ण;
+};
 
-अटल mfp_cfg_t pxa310_mfp_cfg[] __initdata = अणु
+static mfp_cfg_t pxa310_mfp_cfg[] __initdata = {
 	/* FFUART */
 	GPIO99_UART1_RXD | MFP_LPM_EDGE_FALL,
 	GPIO100_UART1_TXD,
@@ -166,11 +165,11 @@
 	GPIO10_2_MMC3_DAT3,
 	GPIO103_MMC3_CLK,
 	GPIO105_MMC3_CMD,
-पूर्ण;
+};
 
-#घोषणा NUM_LCD_DETECT_PINS	7
+#define NUM_LCD_DETECT_PINS	7
 
-अटल पूर्णांक lcd_detect_pins[] __initdata = अणु
+static int lcd_detect_pins[] __initdata = {
 	MFP_PIN_GPIO71,	/* LCD_LDD_17 - ORIENT */
 	MFP_PIN_GPIO70, /* LCD_LDD_16 - LCDID[5] */
 	MFP_PIN_GPIO75, /* LCD_BIAS   - LCDID[4] */
@@ -178,31 +177,31 @@
 	MFP_PIN_GPIO72, /* LCD_FCLK   - LCDID[2] */
 	MFP_PIN_GPIO127,/* LCD_CS_N   - LCDID[1] */
 	MFP_PIN_GPIO76, /* LCD_VSYNC  - LCDID[0] */
-पूर्ण;
+};
 
-अटल व्योम __init zylonite_detect_lcd_panel(व्योम)
-अणु
-	अचिन्हित दीर्घ mfpr_save[NUM_LCD_DETECT_PINS];
-	पूर्णांक i, gpio, id = 0;
+static void __init zylonite_detect_lcd_panel(void)
+{
+	unsigned long mfpr_save[NUM_LCD_DETECT_PINS];
+	int i, gpio, id = 0;
 
 	/* save the original MFP settings of these pins and configure
 	 * them as GPIO Input, DS01X, Pull Neither, Edge Clear
 	 */
-	क्रम (i = 0; i < NUM_LCD_DETECT_PINS; i++) अणु
-		mfpr_save[i] = pxa3xx_mfp_पढ़ो(lcd_detect_pins[i]);
-		pxa3xx_mfp_ग_लिखो(lcd_detect_pins[i], 0x8440);
-	पूर्ण
+	for (i = 0; i < NUM_LCD_DETECT_PINS; i++) {
+		mfpr_save[i] = pxa3xx_mfp_read(lcd_detect_pins[i]);
+		pxa3xx_mfp_write(lcd_detect_pins[i], 0x8440);
+	}
 
-	क्रम (i = 0; i < NUM_LCD_DETECT_PINS; i++) अणु
+	for (i = 0; i < NUM_LCD_DETECT_PINS; i++) {
 		id = id << 1;
 		gpio = mfp_to_gpio(lcd_detect_pins[i]);
 		gpio_request(gpio, "LCD_ID_PINS");
 		gpio_direction_input(gpio);
 
-		अगर (gpio_get_value(gpio))
+		if (gpio_get_value(gpio))
 			id = id | 0x1;
-		gpio_मुक्त(gpio);
-	पूर्ण
+		gpio_free(gpio);
+	}
 
 	/* lcd id, flush out bit 1 */
 	lcd_id = id & 0x3d;
@@ -211,48 +210,48 @@
 	lcd_orientation = (id >> 6) & 0x1;
 
 	/* restore the original MFP settings */
-	क्रम (i = 0; i < NUM_LCD_DETECT_PINS; i++)
-		pxa3xx_mfp_ग_लिखो(lcd_detect_pins[i], mfpr_save[i]);
-पूर्ण
+	for (i = 0; i < NUM_LCD_DETECT_PINS; i++)
+		pxa3xx_mfp_write(lcd_detect_pins[i], mfpr_save[i]);
+}
 
-#अगर defined(CONFIG_I2C) || defined(CONFIG_I2C_MODULE)
-अटल काष्ठा pca953x_platक्रमm_data gpio_exp[] = अणु
-	[0] = अणु
+#if defined(CONFIG_I2C) || defined(CONFIG_I2C_MODULE)
+static struct pca953x_platform_data gpio_exp[] = {
+	[0] = {
 		.gpio_base	= 128,
-	पूर्ण,
-	[1] = अणु
+	},
+	[1] = {
 		.gpio_base	= 144,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा i2c_board_info zylonite_i2c_board_info[] = अणु
-	अणु
+static struct i2c_board_info zylonite_i2c_board_info[] = {
+	{
 		.type		= "pca9539",
 		.dev_name	= "pca9539-a",
 		.addr		= 0x74,
-		.platक्रमm_data	= &gpio_exp[0],
+		.platform_data	= &gpio_exp[0],
 		.irq		= PXA_GPIO_TO_IRQ(18),
-	पूर्ण, अणु
+	}, {
 		.type		= "pca9539",
 		.dev_name	= "pca9539-b",
 		.addr		= 0x75,
-		.platक्रमm_data	= &gpio_exp[1],
+		.platform_data	= &gpio_exp[1],
 		.irq		= PXA_GPIO_TO_IRQ(19),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल व्योम __init zylonite_init_i2c(व्योम)
-अणु
-	pxa_set_i2c_info(शून्य);
-	i2c_रेजिस्टर_board_info(0, ARRAY_AND_SIZE(zylonite_i2c_board_info));
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम zylonite_init_i2c(व्योम) अणुपूर्ण
-#पूर्ण_अगर
+static void __init zylonite_init_i2c(void)
+{
+	pxa_set_i2c_info(NULL);
+	i2c_register_board_info(0, ARRAY_AND_SIZE(zylonite_i2c_board_info));
+}
+#else
+static inline void zylonite_init_i2c(void) {}
+#endif
 
-व्योम __init zylonite_pxa300_init(व्योम)
-अणु
-	अगर (cpu_is_pxa300() || cpu_is_pxa310()) अणु
+void __init zylonite_pxa300_init(void)
+{
+	if (cpu_is_pxa300() || cpu_is_pxa310()) {
 		/* initialize MFP */
 		pxa3xx_mfp_config(ARRAY_AND_SIZE(common_mfp_cfg));
 
@@ -263,19 +262,19 @@
 		wm9713_irq = mfp_to_gpio(MFP_PIN_GPIO26);
 
 		zylonite_init_i2c();
-	पूर्ण
+	}
 
-	अगर (cpu_is_pxa300()) अणु
+	if (cpu_is_pxa300()) {
 		pxa3xx_mfp_config(ARRAY_AND_SIZE(pxa300_mfp_cfg));
 		gpio_eth_irq = mfp_to_gpio(MFP_PIN_GPIO99);
-	पूर्ण
+	}
 
-	अगर (cpu_is_pxa310()) अणु
+	if (cpu_is_pxa310()) {
 		pxa3xx_mfp_config(ARRAY_AND_SIZE(pxa310_mfp_cfg));
 		gpio_eth_irq = mfp_to_gpio(MFP_PIN_GPIO102);
-	पूर्ण
+	}
 
-	/* GPIOs क्रम Debug LEDs */
+	/* GPIOs for Debug LEDs */
 	gpio_debug_led1 = EXT_GPIO(25);
 	gpio_debug_led2 = EXT_GPIO(26);
-पूर्ण
+}

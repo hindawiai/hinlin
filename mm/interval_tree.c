@@ -1,112 +1,111 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * mm/पूर्णांकerval_tree.c - पूर्णांकerval tree क्रम mapping->i_mmap
+ * mm/interval_tree.c - interval tree for mapping->i_mmap
  *
  * Copyright (C) 2012, Michel Lespinasse <walken@google.com>
  */
 
-#समावेश <linux/mm.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/rmap.h>
-#समावेश <linux/पूर्णांकerval_tree_generic.h>
+#include <linux/mm.h>
+#include <linux/fs.h>
+#include <linux/rmap.h>
+#include <linux/interval_tree_generic.h>
 
-अटल अंतरभूत अचिन्हित दीर्घ vma_start_pgoff(काष्ठा vm_area_काष्ठा *v)
-अणु
-	वापस v->vm_pgoff;
-पूर्ण
+static inline unsigned long vma_start_pgoff(struct vm_area_struct *v)
+{
+	return v->vm_pgoff;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ vma_last_pgoff(काष्ठा vm_area_काष्ठा *v)
-अणु
-	वापस v->vm_pgoff + vma_pages(v) - 1;
-पूर्ण
+static inline unsigned long vma_last_pgoff(struct vm_area_struct *v)
+{
+	return v->vm_pgoff + vma_pages(v) - 1;
+}
 
-INTERVAL_TREE_DEFINE(काष्ठा vm_area_काष्ठा, shared.rb,
-		     अचिन्हित दीर्घ, shared.rb_subtree_last,
-		     vma_start_pgoff, vma_last_pgoff, /* empty */, vma_पूर्णांकerval_tree)
+INTERVAL_TREE_DEFINE(struct vm_area_struct, shared.rb,
+		     unsigned long, shared.rb_subtree_last,
+		     vma_start_pgoff, vma_last_pgoff, /* empty */, vma_interval_tree)
 
-/* Insert node immediately after prev in the पूर्णांकerval tree */
-व्योम vma_पूर्णांकerval_tree_insert_after(काष्ठा vm_area_काष्ठा *node,
-				    काष्ठा vm_area_काष्ठा *prev,
-				    काष्ठा rb_root_cached *root)
-अणु
-	काष्ठा rb_node **link;
-	काष्ठा vm_area_काष्ठा *parent;
-	अचिन्हित दीर्घ last = vma_last_pgoff(node);
+/* Insert node immediately after prev in the interval tree */
+void vma_interval_tree_insert_after(struct vm_area_struct *node,
+				    struct vm_area_struct *prev,
+				    struct rb_root_cached *root)
+{
+	struct rb_node **link;
+	struct vm_area_struct *parent;
+	unsigned long last = vma_last_pgoff(node);
 
 	VM_BUG_ON_VMA(vma_start_pgoff(node) != vma_start_pgoff(prev), node);
 
-	अगर (!prev->shared.rb.rb_right) अणु
+	if (!prev->shared.rb.rb_right) {
 		parent = prev;
 		link = &prev->shared.rb.rb_right;
-	पूर्ण अन्यथा अणु
+	} else {
 		parent = rb_entry(prev->shared.rb.rb_right,
-				  काष्ठा vm_area_काष्ठा, shared.rb);
-		अगर (parent->shared.rb_subtree_last < last)
+				  struct vm_area_struct, shared.rb);
+		if (parent->shared.rb_subtree_last < last)
 			parent->shared.rb_subtree_last = last;
-		जबतक (parent->shared.rb.rb_left) अणु
+		while (parent->shared.rb.rb_left) {
 			parent = rb_entry(parent->shared.rb.rb_left,
-				काष्ठा vm_area_काष्ठा, shared.rb);
-			अगर (parent->shared.rb_subtree_last < last)
+				struct vm_area_struct, shared.rb);
+			if (parent->shared.rb_subtree_last < last)
 				parent->shared.rb_subtree_last = last;
-		पूर्ण
+		}
 		link = &parent->shared.rb.rb_left;
-	पूर्ण
+	}
 
 	node->shared.rb_subtree_last = last;
 	rb_link_node(&node->shared.rb, &parent->shared.rb, link);
 	rb_insert_augmented(&node->shared.rb, &root->rb_root,
-			    &vma_पूर्णांकerval_tree_augment);
-पूर्ण
+			    &vma_interval_tree_augment);
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ avc_start_pgoff(काष्ठा anon_vma_chain *avc)
-अणु
-	वापस vma_start_pgoff(avc->vma);
-पूर्ण
+static inline unsigned long avc_start_pgoff(struct anon_vma_chain *avc)
+{
+	return vma_start_pgoff(avc->vma);
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ avc_last_pgoff(काष्ठा anon_vma_chain *avc)
-अणु
-	वापस vma_last_pgoff(avc->vma);
-पूर्ण
+static inline unsigned long avc_last_pgoff(struct anon_vma_chain *avc)
+{
+	return vma_last_pgoff(avc->vma);
+}
 
-INTERVAL_TREE_DEFINE(काष्ठा anon_vma_chain, rb, अचिन्हित दीर्घ, rb_subtree_last,
+INTERVAL_TREE_DEFINE(struct anon_vma_chain, rb, unsigned long, rb_subtree_last,
 		     avc_start_pgoff, avc_last_pgoff,
-		     अटल अंतरभूत, __anon_vma_पूर्णांकerval_tree)
+		     static inline, __anon_vma_interval_tree)
 
-व्योम anon_vma_पूर्णांकerval_tree_insert(काष्ठा anon_vma_chain *node,
-				   काष्ठा rb_root_cached *root)
-अणु
-#अगर_घोषित CONFIG_DEBUG_VM_RB
+void anon_vma_interval_tree_insert(struct anon_vma_chain *node,
+				   struct rb_root_cached *root)
+{
+#ifdef CONFIG_DEBUG_VM_RB
 	node->cached_vma_start = avc_start_pgoff(node);
 	node->cached_vma_last = avc_last_pgoff(node);
-#पूर्ण_अगर
-	__anon_vma_पूर्णांकerval_tree_insert(node, root);
-पूर्ण
+#endif
+	__anon_vma_interval_tree_insert(node, root);
+}
 
-व्योम anon_vma_पूर्णांकerval_tree_हटाओ(काष्ठा anon_vma_chain *node,
-				   काष्ठा rb_root_cached *root)
-अणु
-	__anon_vma_पूर्णांकerval_tree_हटाओ(node, root);
-पूर्ण
+void anon_vma_interval_tree_remove(struct anon_vma_chain *node,
+				   struct rb_root_cached *root)
+{
+	__anon_vma_interval_tree_remove(node, root);
+}
 
-काष्ठा anon_vma_chain *
-anon_vma_पूर्णांकerval_tree_iter_first(काष्ठा rb_root_cached *root,
-				  अचिन्हित दीर्घ first, अचिन्हित दीर्घ last)
-अणु
-	वापस __anon_vma_पूर्णांकerval_tree_iter_first(root, first, last);
-पूर्ण
+struct anon_vma_chain *
+anon_vma_interval_tree_iter_first(struct rb_root_cached *root,
+				  unsigned long first, unsigned long last)
+{
+	return __anon_vma_interval_tree_iter_first(root, first, last);
+}
 
-काष्ठा anon_vma_chain *
-anon_vma_पूर्णांकerval_tree_iter_next(काष्ठा anon_vma_chain *node,
-				 अचिन्हित दीर्घ first, अचिन्हित दीर्घ last)
-अणु
-	वापस __anon_vma_पूर्णांकerval_tree_iter_next(node, first, last);
-पूर्ण
+struct anon_vma_chain *
+anon_vma_interval_tree_iter_next(struct anon_vma_chain *node,
+				 unsigned long first, unsigned long last)
+{
+	return __anon_vma_interval_tree_iter_next(node, first, last);
+}
 
-#अगर_घोषित CONFIG_DEBUG_VM_RB
-व्योम anon_vma_पूर्णांकerval_tree_verअगरy(काष्ठा anon_vma_chain *node)
-अणु
+#ifdef CONFIG_DEBUG_VM_RB
+void anon_vma_interval_tree_verify(struct anon_vma_chain *node)
+{
 	WARN_ON_ONCE(node->cached_vma_start != avc_start_pgoff(node));
 	WARN_ON_ONCE(node->cached_vma_last != avc_last_pgoff(node));
-पूर्ण
-#पूर्ण_अगर
+}
+#endif

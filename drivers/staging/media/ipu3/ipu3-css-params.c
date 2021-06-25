@@ -1,90 +1,89 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 // Copyright (C) 2018 Intel Corporation
 
-#समावेश <linux/device.h>
+#include <linux/device.h>
 
-#समावेश "ipu3-css.h"
-#समावेश "ipu3-css-fw.h"
-#समावेश "ipu3-tables.h"
-#समावेश "ipu3-css-params.h"
+#include "ipu3-css.h"
+#include "ipu3-css-fw.h"
+#include "ipu3-tables.h"
+#include "ipu3-css-params.h"
 
-#घोषणा DIV_ROUND_CLOSEST_DOWN(a, b)	(((a) + ((b) / 2) - 1) / (b))
-#घोषणा roundबंदst_करोwn(a, b)		(DIV_ROUND_CLOSEST_DOWN(a, b) * (b))
+#define DIV_ROUND_CLOSEST_DOWN(a, b)	(((a) + ((b) / 2) - 1) / (b))
+#define roundclosest_down(a, b)		(DIV_ROUND_CLOSEST_DOWN(a, b) * (b))
 
-#घोषणा IPU3_UAPI_ANR_MAX_RESET		((1 << 12) - 1)
-#घोषणा IPU3_UAPI_ANR_MIN_RESET		(((-1) << 12) + 1)
+#define IPU3_UAPI_ANR_MAX_RESET		((1 << 12) - 1)
+#define IPU3_UAPI_ANR_MIN_RESET		(((-1) << 12) + 1)
 
-काष्ठा imgu_css_scaler_info अणु
-	अचिन्हित पूर्णांक phase_step;	/* Same क्रम luma/chroma */
-	पूर्णांक exp_shअगरt;
+struct imgu_css_scaler_info {
+	unsigned int phase_step;	/* Same for luma/chroma */
+	int exp_shift;
 
-	अचिन्हित पूर्णांक phase_init;	/* luma/chroma dependent */
-	पूर्णांक pad_left;
-	पूर्णांक pad_right;
-	पूर्णांक crop_left;
-	पूर्णांक crop_top;
-पूर्ण;
+	unsigned int phase_init;	/* luma/chroma dependent */
+	int pad_left;
+	int pad_right;
+	int crop_left;
+	int crop_top;
+};
 
-अटल अचिन्हित पूर्णांक imgu_css_scaler_get_exp(अचिन्हित पूर्णांक counter,
-					    अचिन्हित पूर्णांक भागider)
-अणु
-	पूर्णांक i = fls(भागider) - fls(counter);
+static unsigned int imgu_css_scaler_get_exp(unsigned int counter,
+					    unsigned int divider)
+{
+	int i = fls(divider) - fls(counter);
 
-	अगर (i <= 0)
-		वापस 0;
+	if (i <= 0)
+		return 0;
 
-	अगर (भागider >> i < counter)
+	if (divider >> i < counter)
 		i = i - 1;
 
-	वापस i;
-पूर्ण
+	return i;
+}
 
 /* Set up the CSS scaler look up table */
-अटल व्योम
-imgu_css_scaler_setup_lut(अचिन्हित पूर्णांक taps, अचिन्हित पूर्णांक input_width,
-			  अचिन्हित पूर्णांक output_width, पूर्णांक phase_step_correction,
-			  स्थिर पूर्णांक *coeffs, अचिन्हित पूर्णांक coeffs_size,
-			  s8 coeff_lut[], काष्ठा imgu_css_scaler_info *info)
-अणु
-	पूर्णांक tap, phase, phase_sum_left, phase_sum_right;
-	पूर्णांक exponent = imgu_css_scaler_get_exp(output_width, input_width);
-	पूर्णांक mantissa = (1 << exponent) * output_width;
-	अचिन्हित पूर्णांक phase_step, phase_taps;
+static void
+imgu_css_scaler_setup_lut(unsigned int taps, unsigned int input_width,
+			  unsigned int output_width, int phase_step_correction,
+			  const int *coeffs, unsigned int coeffs_size,
+			  s8 coeff_lut[], struct imgu_css_scaler_info *info)
+{
+	int tap, phase, phase_sum_left, phase_sum_right;
+	int exponent = imgu_css_scaler_get_exp(output_width, input_width);
+	int mantissa = (1 << exponent) * output_width;
+	unsigned int phase_step, phase_taps;
 
-	अगर (input_width == output_width) अणु
-		क्रम (phase = 0; phase < IMGU_SCALER_PHASES; phase++) अणु
+	if (input_width == output_width) {
+		for (phase = 0; phase < IMGU_SCALER_PHASES; phase++) {
 			phase_taps = phase * IMGU_SCALER_FILTER_TAPS;
-			क्रम (tap = 0; tap < taps; tap++)
+			for (tap = 0; tap < taps; tap++)
 				coeff_lut[phase_taps + tap] = 0;
-		पूर्ण
+		}
 
 		info->phase_step = IMGU_SCALER_PHASES *
 			(1 << IMGU_SCALER_PHASE_COUNTER_PREC_REF);
-		info->exp_shअगरt = 0;
+		info->exp_shift = 0;
 		info->pad_left = 0;
 		info->pad_right = 0;
 		info->phase_init = 0;
 		info->crop_left = 0;
 		info->crop_top = 0;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	क्रम (phase = 0; phase < IMGU_SCALER_PHASES; phase++) अणु
+	for (phase = 0; phase < IMGU_SCALER_PHASES; phase++) {
 		phase_taps = phase * IMGU_SCALER_FILTER_TAPS;
-		क्रम (tap = 0; tap < taps; tap++) अणु
-			/* flip table to क्रम convolution reverse indexing */
+		for (tap = 0; tap < taps; tap++) {
+			/* flip table to for convolution reverse indexing */
 			s64 coeff = coeffs[coeffs_size -
 				((tap * (coeffs_size / taps)) + phase) - 1];
 			coeff *= mantissa;
-			coeff = भाग64_दीर्घ(coeff, input_width);
+			coeff = div64_long(coeff, input_width);
 
 			/* Add +"0.5" */
 			coeff += 1 << (IMGU_SCALER_COEFF_BITS - 1);
 			coeff >>= IMGU_SCALER_COEFF_BITS;
 			coeff_lut[phase_taps + tap] = coeff;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	phase_step = IMGU_SCALER_PHASES *
 			(1 << IMGU_SCALER_PHASE_COUNTER_PREC_REF) *
@@ -97,7 +96,7 @@ imgu_css_scaler_setup_lut(अचिन्हित पूर्णांक taps
 			(1 << IMGU_SCALER_PHASE_COUNTER_PREC_REF)) +
 			(1 << (IMGU_SCALER_PHASE_COUNTER_PREC_REF - 1));
 
-	info->exp_shअगरt = IMGU_SCALER_MAX_EXPONENT_SHIFT - exponent;
+	info->exp_shift = IMGU_SCALER_MAX_EXPONENT_SHIFT - exponent;
 	info->pad_left = (phase_sum_left % phase_step == 0) ?
 		phase_sum_left / phase_step - 1 : phase_sum_left / phase_step;
 	info->pad_right = (phase_sum_right % phase_step == 0) ?
@@ -106,75 +105,75 @@ imgu_css_scaler_setup_lut(अचिन्हित पूर्णांक taps
 	info->phase_step = phase_step;
 	info->crop_left = taps - 1;
 	info->crop_top = taps - 1;
-पूर्ण
+}
 
 /*
  * Calculates the exact output image width/height, based on phase_step setting
  * (must be perfectly aligned with hardware).
  */
-अटल अचिन्हित पूर्णांक
-imgu_css_scaler_calc_scaled_output(अचिन्हित पूर्णांक input,
-				   काष्ठा imgu_css_scaler_info *info)
-अणु
-	अचिन्हित पूर्णांक arg1 = input * info->phase_step +
+static unsigned int
+imgu_css_scaler_calc_scaled_output(unsigned int input,
+				   struct imgu_css_scaler_info *info)
+{
+	unsigned int arg1 = input * info->phase_step +
 			(1 - IMGU_SCALER_TAPS_Y / 2) * IMGU_SCALER_FIR_PHASES -
 			IMGU_SCALER_FIR_PHASES / (2 * IMGU_SCALER_PHASES);
-	अचिन्हित पूर्णांक arg2 = ((IMGU_SCALER_TAPS_Y / 2) * IMGU_SCALER_FIR_PHASES +
+	unsigned int arg2 = ((IMGU_SCALER_TAPS_Y / 2) * IMGU_SCALER_FIR_PHASES +
 			IMGU_SCALER_FIR_PHASES / (2 * IMGU_SCALER_PHASES)) *
 			IMGU_SCALER_FIR_PHASES + info->phase_step / 2;
 
-	वापस ((arg1 + (arg2 - IMGU_SCALER_FIR_PHASES * info->phase_step) /
+	return ((arg1 + (arg2 - IMGU_SCALER_FIR_PHASES * info->phase_step) /
 		IMGU_SCALER_FIR_PHASES) / (2 * IMGU_SCALER_FIR_PHASES)) * 2;
-पूर्ण
+}
 
 /*
  * Calculate the output width and height, given the luma
  * and chroma details of a scaler
  */
-अटल व्योम
+static void
 imgu_css_scaler_calc(u32 input_width, u32 input_height, u32 target_width,
-		     u32 target_height, काष्ठा imgu_abi_osys_config *cfg,
-		     काष्ठा imgu_css_scaler_info *info_luma,
-		     काष्ठा imgu_css_scaler_info *info_chroma,
-		     अचिन्हित पूर्णांक *output_width, अचिन्हित पूर्णांक *output_height,
-		     अचिन्हित पूर्णांक *procmode)
-अणु
+		     u32 target_height, struct imgu_abi_osys_config *cfg,
+		     struct imgu_css_scaler_info *info_luma,
+		     struct imgu_css_scaler_info *info_chroma,
+		     unsigned int *output_width, unsigned int *output_height,
+		     unsigned int *procmode)
+{
 	u32 out_width = target_width;
 	u32 out_height = target_height;
-	स्थिर अचिन्हित पूर्णांक height_alignment = 2;
-	पूर्णांक phase_step_correction = -1;
+	const unsigned int height_alignment = 2;
+	int phase_step_correction = -1;
 
 	/*
 	 * Calculate scaled output width. If the horizontal and vertical scaling
-	 * factor is dअगरferent, then choose the biggest and crop off excess
-	 * lines or columns after क्रमmatting.
+	 * factor is different, then choose the biggest and crop off excess
+	 * lines or columns after formatting.
 	 */
-	अगर (target_height * input_width > target_width * input_height)
+	if (target_height * input_width > target_width * input_height)
 		target_width = DIV_ROUND_UP(target_height * input_width,
 					    input_height);
 
-	अगर (input_width == target_width)
+	if (input_width == target_width)
 		*procmode = IMGU_ABI_OSYS_PROCMODE_BYPASS;
-	अन्यथा
+	else
 		*procmode = IMGU_ABI_OSYS_PROCMODE_DOWNSCALE;
 
-	स_रखो(&cfg->scaler_coeffs_chroma, 0,
-	       माप(cfg->scaler_coeffs_chroma));
-	स_रखो(&cfg->scaler_coeffs_luma, 0, माप(cfg->scaler_coeffs_luma));
-	करो अणु
+	memset(&cfg->scaler_coeffs_chroma, 0,
+	       sizeof(cfg->scaler_coeffs_chroma));
+	memset(&cfg->scaler_coeffs_luma, 0, sizeof(cfg->scaler_coeffs_luma));
+	do {
 		phase_step_correction++;
 
 		imgu_css_scaler_setup_lut(IMGU_SCALER_TAPS_Y,
 					  input_width, target_width,
 					  phase_step_correction,
-					  imgu_css_करोwnscale_4taps,
+					  imgu_css_downscale_4taps,
 					  IMGU_SCALER_DOWNSCALE_4TAPS_LEN,
 					  cfg->scaler_coeffs_luma, info_luma);
 
 		imgu_css_scaler_setup_lut(IMGU_SCALER_TAPS_UV,
 					  input_width, target_width,
 					  phase_step_correction,
-					  imgu_css_करोwnscale_2taps,
+					  imgu_css_downscale_2taps,
 					  IMGU_SCALER_DOWNSCALE_2TAPS_LEN,
 					  cfg->scaler_coeffs_chroma,
 					  info_chroma);
@@ -183,195 +182,195 @@ imgu_css_scaler_calc(u32 input_width, u32 input_height, u32 target_width,
 							       info_luma);
 		out_height = imgu_css_scaler_calc_scaled_output(input_height,
 								info_luma);
-	पूर्ण जबतक ((out_width < target_width || out_height < target_height ||
+	} while ((out_width < target_width || out_height < target_height ||
 		 !IS_ALIGNED(out_height, height_alignment)) &&
 		 phase_step_correction <= 5);
 
 	*output_width = out_width;
 	*output_height = out_height;
-पूर्ण
+}
 
-/********************** Osys routines क्रम scaler****************************/
+/********************** Osys routines for scaler****************************/
 
-अटल व्योम imgu_css_osys_set_क्रमmat(क्रमागत imgu_abi_frame_क्रमmat host_क्रमmat,
-				     अचिन्हित पूर्णांक *osys_क्रमmat,
-				     अचिन्हित पूर्णांक *osys_tiling)
-अणु
-	*osys_क्रमmat = IMGU_ABI_OSYS_FORMAT_YUV420;
+static void imgu_css_osys_set_format(enum imgu_abi_frame_format host_format,
+				     unsigned int *osys_format,
+				     unsigned int *osys_tiling)
+{
+	*osys_format = IMGU_ABI_OSYS_FORMAT_YUV420;
 	*osys_tiling = IMGU_ABI_OSYS_TILING_NONE;
 
-	चयन (host_क्रमmat) अणु
-	हाल IMGU_ABI_FRAME_FORMAT_YUV420:
-		*osys_क्रमmat = IMGU_ABI_OSYS_FORMAT_YUV420;
-		अवरोध;
-	हाल IMGU_ABI_FRAME_FORMAT_YV12:
-		*osys_क्रमmat = IMGU_ABI_OSYS_FORMAT_YV12;
-		अवरोध;
-	हाल IMGU_ABI_FRAME_FORMAT_NV12:
-		*osys_क्रमmat = IMGU_ABI_OSYS_FORMAT_NV12;
-		अवरोध;
-	हाल IMGU_ABI_FRAME_FORMAT_NV16:
-		*osys_क्रमmat = IMGU_ABI_OSYS_FORMAT_NV16;
-		अवरोध;
-	हाल IMGU_ABI_FRAME_FORMAT_NV21:
-		*osys_क्रमmat = IMGU_ABI_OSYS_FORMAT_NV21;
-		अवरोध;
-	हाल IMGU_ABI_FRAME_FORMAT_NV12_TILEY:
-		*osys_क्रमmat = IMGU_ABI_OSYS_FORMAT_NV12;
+	switch (host_format) {
+	case IMGU_ABI_FRAME_FORMAT_YUV420:
+		*osys_format = IMGU_ABI_OSYS_FORMAT_YUV420;
+		break;
+	case IMGU_ABI_FRAME_FORMAT_YV12:
+		*osys_format = IMGU_ABI_OSYS_FORMAT_YV12;
+		break;
+	case IMGU_ABI_FRAME_FORMAT_NV12:
+		*osys_format = IMGU_ABI_OSYS_FORMAT_NV12;
+		break;
+	case IMGU_ABI_FRAME_FORMAT_NV16:
+		*osys_format = IMGU_ABI_OSYS_FORMAT_NV16;
+		break;
+	case IMGU_ABI_FRAME_FORMAT_NV21:
+		*osys_format = IMGU_ABI_OSYS_FORMAT_NV21;
+		break;
+	case IMGU_ABI_FRAME_FORMAT_NV12_TILEY:
+		*osys_format = IMGU_ABI_OSYS_FORMAT_NV12;
 		*osys_tiling = IMGU_ABI_OSYS_TILING_Y;
-		अवरोध;
-	शेष:
-		/* For now, assume use शेष values */
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		/* For now, assume use default values */
+		break;
+	}
+}
 
 /*
  * Function calculates input frame stripe offset, based
  * on output frame stripe offset and filter parameters.
  */
-अटल पूर्णांक imgu_css_osys_calc_stripe_offset(पूर्णांक stripe_offset_out,
-					    पूर्णांक fir_phases, पूर्णांक phase_init,
-					    पूर्णांक phase_step, पूर्णांक pad_left)
-अणु
-	पूर्णांक stripe_offset_inp = stripe_offset_out * fir_phases -
+static int imgu_css_osys_calc_stripe_offset(int stripe_offset_out,
+					    int fir_phases, int phase_init,
+					    int phase_step, int pad_left)
+{
+	int stripe_offset_inp = stripe_offset_out * fir_phases -
 				pad_left * phase_step;
 
-	वापस DIV_ROUND_UP(stripe_offset_inp - phase_init, phase_step);
-पूर्ण
+	return DIV_ROUND_UP(stripe_offset_inp - phase_init, phase_step);
+}
 
 /*
  * Calculate input frame phase, given the output frame
  * stripe offset and filter parameters
  */
-अटल पूर्णांक imgu_css_osys_calc_stripe_phase_init(पूर्णांक stripe_offset_out,
-						पूर्णांक fir_phases, पूर्णांक phase_init,
-						पूर्णांक phase_step, पूर्णांक pad_left)
-अणु
-	पूर्णांक stripe_offset_inp =
+static int imgu_css_osys_calc_stripe_phase_init(int stripe_offset_out,
+						int fir_phases, int phase_init,
+						int phase_step, int pad_left)
+{
+	int stripe_offset_inp =
 		imgu_css_osys_calc_stripe_offset(stripe_offset_out,
 						 fir_phases, phase_init,
 						 phase_step, pad_left);
 
-	वापस phase_init + ((pad_left + stripe_offset_inp) * phase_step) -
+	return phase_init + ((pad_left + stripe_offset_inp) * phase_step) -
 		stripe_offset_out * fir_phases;
-पूर्ण
+}
 
 /*
  * This function calculates input frame stripe width,
  * based on output frame stripe offset and filter parameters
  */
-अटल पूर्णांक imgu_css_osys_calc_inp_stripe_width(पूर्णांक stripe_width_out,
-					       पूर्णांक fir_phases, पूर्णांक phase_init,
-					       पूर्णांक phase_step, पूर्णांक fir_taps,
-					       पूर्णांक pad_left, पूर्णांक pad_right)
-अणु
-	पूर्णांक stripe_width_inp = (stripe_width_out + fir_taps - 1) * fir_phases;
+static int imgu_css_osys_calc_inp_stripe_width(int stripe_width_out,
+					       int fir_phases, int phase_init,
+					       int phase_step, int fir_taps,
+					       int pad_left, int pad_right)
+{
+	int stripe_width_inp = (stripe_width_out + fir_taps - 1) * fir_phases;
 
 	stripe_width_inp = DIV_ROUND_UP(stripe_width_inp - phase_init,
 					phase_step);
 
-	वापस stripe_width_inp - pad_left - pad_right;
-पूर्ण
+	return stripe_width_inp - pad_left - pad_right;
+}
 
 /*
  * This function calculates output frame stripe width, basedi
  * on output frame stripe offset and filter parameters
  */
-अटल पूर्णांक imgu_css_osys_out_stripe_width(पूर्णांक stripe_width_inp, पूर्णांक fir_phases,
-					  पूर्णांक phase_init, पूर्णांक phase_step,
-					  पूर्णांक fir_taps, पूर्णांक pad_left,
-					  पूर्णांक pad_right, पूर्णांक column_offset)
-अणु
-	पूर्णांक stripe_width_out = (pad_left + stripe_width_inp +
+static int imgu_css_osys_out_stripe_width(int stripe_width_inp, int fir_phases,
+					  int phase_init, int phase_step,
+					  int fir_taps, int pad_left,
+					  int pad_right, int column_offset)
+{
+	int stripe_width_out = (pad_left + stripe_width_inp +
 				pad_right - column_offset) * phase_step;
 
 	stripe_width_out = (stripe_width_out + phase_init) / fir_phases;
 
-	वापस stripe_width_out - (fir_taps - 1);
-पूर्ण
+	return stripe_width_out - (fir_taps - 1);
+}
 
-काष्ठा imgu_css_reso अणु
-	अचिन्हित पूर्णांक input_width;
-	अचिन्हित पूर्णांक input_height;
-	क्रमागत imgu_abi_frame_क्रमmat input_क्रमmat;
-	अचिन्हित पूर्णांक pin_width[IMGU_ABI_OSYS_PINS];
-	अचिन्हित पूर्णांक pin_height[IMGU_ABI_OSYS_PINS];
-	अचिन्हित पूर्णांक pin_stride[IMGU_ABI_OSYS_PINS];
-	क्रमागत imgu_abi_frame_क्रमmat pin_क्रमmat[IMGU_ABI_OSYS_PINS];
-	पूर्णांक chunk_width;
-	पूर्णांक chunk_height;
-	पूर्णांक block_height;
-	पूर्णांक block_width;
-पूर्ण;
+struct imgu_css_reso {
+	unsigned int input_width;
+	unsigned int input_height;
+	enum imgu_abi_frame_format input_format;
+	unsigned int pin_width[IMGU_ABI_OSYS_PINS];
+	unsigned int pin_height[IMGU_ABI_OSYS_PINS];
+	unsigned int pin_stride[IMGU_ABI_OSYS_PINS];
+	enum imgu_abi_frame_format pin_format[IMGU_ABI_OSYS_PINS];
+	int chunk_width;
+	int chunk_height;
+	int block_height;
+	int block_width;
+};
 
-काष्ठा imgu_css_frame_params अणु
+struct imgu_css_frame_params {
 	/* Output pins */
-	अचिन्हित पूर्णांक enable;
-	अचिन्हित पूर्णांक क्रमmat;
-	अचिन्हित पूर्णांक flip;
-	अचिन्हित पूर्णांक mirror;
-	अचिन्हित पूर्णांक tiling;
-	अचिन्हित पूर्णांक reduce_range;
-	अचिन्हित पूर्णांक width;
-	अचिन्हित पूर्णांक height;
-	अचिन्हित पूर्णांक stride;
-	अचिन्हित पूर्णांक scaled;
-	अचिन्हित पूर्णांक crop_left;
-	अचिन्हित पूर्णांक crop_top;
-पूर्ण;
+	unsigned int enable;
+	unsigned int format;
+	unsigned int flip;
+	unsigned int mirror;
+	unsigned int tiling;
+	unsigned int reduce_range;
+	unsigned int width;
+	unsigned int height;
+	unsigned int stride;
+	unsigned int scaled;
+	unsigned int crop_left;
+	unsigned int crop_top;
+};
 
-काष्ठा imgu_css_stripe_params अणु
-	अचिन्हित पूर्णांक processing_mode;
-	अचिन्हित पूर्णांक phase_step;
-	अचिन्हित पूर्णांक exp_shअगरt;
-	अचिन्हित पूर्णांक phase_init_left_y;
-	अचिन्हित पूर्णांक phase_init_left_uv;
-	अचिन्हित पूर्णांक phase_init_top_y;
-	अचिन्हित पूर्णांक phase_init_top_uv;
-	अचिन्हित पूर्णांक pad_left_y;
-	अचिन्हित पूर्णांक pad_left_uv;
-	अचिन्हित पूर्णांक pad_right_y;
-	अचिन्हित पूर्णांक pad_right_uv;
-	अचिन्हित पूर्णांक pad_top_y;
-	अचिन्हित पूर्णांक pad_top_uv;
-	अचिन्हित पूर्णांक pad_bottom_y;
-	अचिन्हित पूर्णांक pad_bottom_uv;
-	अचिन्हित पूर्णांक crop_left_y;
-	अचिन्हित पूर्णांक crop_top_y;
-	अचिन्हित पूर्णांक crop_left_uv;
-	अचिन्हित पूर्णांक crop_top_uv;
-	अचिन्हित पूर्णांक start_column_y;
-	अचिन्हित पूर्णांक start_column_uv;
-	अचिन्हित पूर्णांक chunk_width;
-	अचिन्हित पूर्णांक chunk_height;
-	अचिन्हित पूर्णांक block_width;
-	अचिन्हित पूर्णांक block_height;
-	अचिन्हित पूर्णांक input_width;
-	अचिन्हित पूर्णांक input_height;
-	पूर्णांक output_width[IMGU_ABI_OSYS_PINS];
-	पूर्णांक output_height[IMGU_ABI_OSYS_PINS];
-	पूर्णांक output_offset[IMGU_ABI_OSYS_PINS];
-पूर्ण;
+struct imgu_css_stripe_params {
+	unsigned int processing_mode;
+	unsigned int phase_step;
+	unsigned int exp_shift;
+	unsigned int phase_init_left_y;
+	unsigned int phase_init_left_uv;
+	unsigned int phase_init_top_y;
+	unsigned int phase_init_top_uv;
+	unsigned int pad_left_y;
+	unsigned int pad_left_uv;
+	unsigned int pad_right_y;
+	unsigned int pad_right_uv;
+	unsigned int pad_top_y;
+	unsigned int pad_top_uv;
+	unsigned int pad_bottom_y;
+	unsigned int pad_bottom_uv;
+	unsigned int crop_left_y;
+	unsigned int crop_top_y;
+	unsigned int crop_left_uv;
+	unsigned int crop_top_uv;
+	unsigned int start_column_y;
+	unsigned int start_column_uv;
+	unsigned int chunk_width;
+	unsigned int chunk_height;
+	unsigned int block_width;
+	unsigned int block_height;
+	unsigned int input_width;
+	unsigned int input_height;
+	int output_width[IMGU_ABI_OSYS_PINS];
+	int output_height[IMGU_ABI_OSYS_PINS];
+	int output_offset[IMGU_ABI_OSYS_PINS];
+};
 
 /*
  * frame_params - size IMGU_ABI_OSYS_PINS
  * stripe_params - size IPU3_UAPI_MAX_STRIPES
  */
-अटल पूर्णांक imgu_css_osys_calc_frame_and_stripe_params(
-		काष्ठा imgu_css *css, अचिन्हित पूर्णांक stripes,
-		काष्ठा imgu_abi_osys_config *osys,
-		काष्ठा imgu_css_scaler_info *scaler_luma,
-		काष्ठा imgu_css_scaler_info *scaler_chroma,
-		काष्ठा imgu_css_frame_params frame_params[],
-		काष्ठा imgu_css_stripe_params stripe_params[],
-		अचिन्हित पूर्णांक pipe)
-अणु
-	काष्ठा imgu_css_reso reso;
-	अचिन्हित पूर्णांक output_width, pin, s;
+static int imgu_css_osys_calc_frame_and_stripe_params(
+		struct imgu_css *css, unsigned int stripes,
+		struct imgu_abi_osys_config *osys,
+		struct imgu_css_scaler_info *scaler_luma,
+		struct imgu_css_scaler_info *scaler_chroma,
+		struct imgu_css_frame_params frame_params[],
+		struct imgu_css_stripe_params stripe_params[],
+		unsigned int pipe)
+{
+	struct imgu_css_reso reso;
+	unsigned int output_width, pin, s;
 	u32 input_width, input_height, target_width, target_height;
-	अचिन्हित पूर्णांक procmode = 0;
-	काष्ठा imgu_css_pipe *css_pipe = &css->pipes[pipe];
+	unsigned int procmode = 0;
+	struct imgu_css_pipe *css_pipe = &css->pipes[pipe];
 
 	input_width = css_pipe->rect[IPU3_CSS_RECT_GDC].width;
 	input_height = css_pipe->rect[IPU3_CSS_RECT_GDC].height;
@@ -380,14 +379,14 @@ imgu_css_scaler_calc(u32 input_width, u32 input_height, u32 target_width,
 
 	/* Frame parameters */
 
-	/* Input width क्रम Output System is output width of DVS (with GDC) */
+	/* Input width for Output System is output width of DVS (with GDC) */
 	reso.input_width = css_pipe->rect[IPU3_CSS_RECT_GDC].width;
 
-	/* Input height क्रम Output System is output height of DVS (with GDC) */
+	/* Input height for Output System is output height of DVS (with GDC) */
 	reso.input_height = css_pipe->rect[IPU3_CSS_RECT_GDC].height;
 
-	reso.input_क्रमmat =
-		css_pipe->queue[IPU3_CSS_QUEUE_OUT].css_fmt->frame_क्रमmat;
+	reso.input_format =
+		css_pipe->queue[IPU3_CSS_QUEUE_OUT].css_fmt->frame_format;
 
 	reso.pin_width[IMGU_ABI_OSYS_PIN_OUT] =
 		css_pipe->queue[IPU3_CSS_QUEUE_OUT].fmt.mpix.width;
@@ -395,8 +394,8 @@ imgu_css_scaler_calc(u32 input_width, u32 input_height, u32 target_width,
 		css_pipe->queue[IPU3_CSS_QUEUE_OUT].fmt.mpix.height;
 	reso.pin_stride[IMGU_ABI_OSYS_PIN_OUT] =
 		css_pipe->queue[IPU3_CSS_QUEUE_OUT].width_pad;
-	reso.pin_क्रमmat[IMGU_ABI_OSYS_PIN_OUT] =
-		css_pipe->queue[IPU3_CSS_QUEUE_OUT].css_fmt->frame_क्रमmat;
+	reso.pin_format[IMGU_ABI_OSYS_PIN_OUT] =
+		css_pipe->queue[IPU3_CSS_QUEUE_OUT].css_fmt->frame_format;
 
 	reso.pin_width[IMGU_ABI_OSYS_PIN_VF] =
 		css_pipe->queue[IPU3_CSS_QUEUE_VF].fmt.mpix.width;
@@ -404,10 +403,10 @@ imgu_css_scaler_calc(u32 input_width, u32 input_height, u32 target_width,
 		css_pipe->queue[IPU3_CSS_QUEUE_VF].fmt.mpix.height;
 	reso.pin_stride[IMGU_ABI_OSYS_PIN_VF] =
 		css_pipe->queue[IPU3_CSS_QUEUE_VF].width_pad;
-	reso.pin_क्रमmat[IMGU_ABI_OSYS_PIN_VF] =
-		css_pipe->queue[IPU3_CSS_QUEUE_VF].css_fmt->frame_क्रमmat;
+	reso.pin_format[IMGU_ABI_OSYS_PIN_VF] =
+		css_pipe->queue[IPU3_CSS_QUEUE_VF].css_fmt->frame_format;
 
-	/* Configure the frame parameters क्रम all output pins */
+	/* Configure the frame parameters for all output pins */
 
 	frame_params[IMGU_ABI_OSYS_PIN_OUT].width =
 		css_pipe->queue[IPU3_CSS_QUEUE_OUT].fmt.mpix.width;
@@ -420,60 +419,60 @@ imgu_css_scaler_calc(u32 input_width, u32 input_height, u32 target_width,
 	frame_params[IMGU_ABI_OSYS_PIN_VF].crop_top = 0;
 	frame_params[IMGU_ABI_OSYS_PIN_VF].crop_left = 0;
 
-	क्रम (pin = 0; pin < IMGU_ABI_OSYS_PINS; pin++) अणु
-		पूर्णांक enable = 0;
-		पूर्णांक scaled = 0;
-		अचिन्हित पूर्णांक क्रमmat = 0;
-		अचिन्हित पूर्णांक tiling = 0;
+	for (pin = 0; pin < IMGU_ABI_OSYS_PINS; pin++) {
+		int enable = 0;
+		int scaled = 0;
+		unsigned int format = 0;
+		unsigned int tiling = 0;
 
 		frame_params[pin].flip = 0;
 		frame_params[pin].mirror = 0;
 		frame_params[pin].reduce_range = 0;
-		अगर (reso.pin_width[pin] != 0 && reso.pin_height[pin] != 0) अणु
+		if (reso.pin_width[pin] != 0 && reso.pin_height[pin] != 0) {
 			enable = 1;
-			अगर (pin == IMGU_ABI_OSYS_PIN_OUT) अणु
-				अगर (reso.input_width < reso.pin_width[pin] ||
+			if (pin == IMGU_ABI_OSYS_PIN_OUT) {
+				if (reso.input_width < reso.pin_width[pin] ||
 				    reso.input_height < reso.pin_height[pin])
-					वापस -EINVAL;
+					return -EINVAL;
 				/*
 				 * When input and output resolution is
-				 * dअगरferent instead of scaling, cropping
+				 * different instead of scaling, cropping
 				 * should happen. Determine the crop factor
-				 * to करो the symmetric cropping
+				 * to do the symmetric cropping
 				 */
-				frame_params[pin].crop_left = roundबंदst_करोwn(
+				frame_params[pin].crop_left = roundclosest_down(
 						(reso.input_width -
 						 reso.pin_width[pin]) / 2,
 						 IMGU_OSYS_DMA_CROP_W_LIMIT);
-				frame_params[pin].crop_top = roundबंदst_करोwn(
+				frame_params[pin].crop_top = roundclosest_down(
 						(reso.input_height -
 						 reso.pin_height[pin]) / 2,
 						 IMGU_OSYS_DMA_CROP_H_LIMIT);
-			पूर्ण अन्यथा अणु
-				अगर (reso.pin_width[pin] != reso.input_width ||
-				    reso.pin_height[pin] != reso.input_height) अणु
+			} else {
+				if (reso.pin_width[pin] != reso.input_width ||
+				    reso.pin_height[pin] != reso.input_height) {
 					/*
-					 * If resolution is dअगरferent at input
+					 * If resolution is different at input
 					 * and output of OSYS, scaling is
 					 * considered except when pin is MAIN.
 					 * Later it will be decide whether
 					 * scaler factor is 1 or other
-					 * and cropping has to be करोne or not.
+					 * and cropping has to be done or not.
 					 */
 					scaled = 1;
-				पूर्ण
-			पूर्ण
-			imgu_css_osys_set_क्रमmat(reso.pin_क्रमmat[pin], &क्रमmat,
+				}
+			}
+			imgu_css_osys_set_format(reso.pin_format[pin], &format,
 						 &tiling);
-		पूर्ण अन्यथा अणु
+		} else {
 			enable = 0;
-		पूर्ण
+		}
 		frame_params[pin].enable = enable;
-		frame_params[pin].क्रमmat = क्रमmat;
+		frame_params[pin].format = format;
 		frame_params[pin].tiling = tiling;
 		frame_params[pin].stride = reso.pin_stride[pin];
 		frame_params[pin].scaled = scaled;
-	पूर्ण
+	}
 
 	imgu_css_scaler_calc(input_width, input_height, target_width,
 			     target_height, osys, scaler_luma, scaler_chroma,
@@ -482,33 +481,33 @@ imgu_css_scaler_calc(u32 input_width, u32 input_height, u32 target_width,
 	dev_dbg(css->dev, "osys scaler procmode is %u", procmode);
 	output_width = reso.pin_width[IMGU_ABI_OSYS_PIN_VF];
 
-	अगर (output_width < reso.input_width / 2) अणु
+	if (output_width < reso.input_width / 2) {
 		/* Scaling factor <= 0.5 */
 		reso.chunk_width = IMGU_OSYS_BLOCK_WIDTH;
 		reso.block_width = IMGU_OSYS_BLOCK_WIDTH;
-	पूर्ण अन्यथा अणु /* 0.5 <= Scaling factor <= 1.0 */
+	} else { /* 0.5 <= Scaling factor <= 1.0 */
 		reso.chunk_width = IMGU_OSYS_BLOCK_WIDTH / 2;
 		reso.block_width = IMGU_OSYS_BLOCK_WIDTH;
-	पूर्ण
+	}
 
-	अगर (output_width <= reso.input_width * 7 / 8) अणु
+	if (output_width <= reso.input_width * 7 / 8) {
 		/* Scaling factor <= 0.875 */
 		reso.chunk_height = IMGU_OSYS_BLOCK_HEIGHT;
 		reso.block_height = IMGU_OSYS_BLOCK_HEIGHT;
-	पूर्ण अन्यथा अणु /* 1.0 <= Scaling factor <= 1.75 */
+	} else { /* 1.0 <= Scaling factor <= 1.75 */
 		reso.chunk_height = IMGU_OSYS_BLOCK_HEIGHT / 2;
 		reso.block_height = IMGU_OSYS_BLOCK_HEIGHT;
-	पूर्ण
+	}
 
 	/*
 	 * Calculate scaler configuration parameters based on input and output
 	 * resolution.
 	 */
 
-	अगर (frame_params[IMGU_ABI_OSYS_PIN_VF].enable) अणु
+	if (frame_params[IMGU_ABI_OSYS_PIN_VF].enable) {
 		/*
-		 * When aspect ratio is dअगरferent between target resolution and
-		 * required resolution, determine the crop factor to करो
+		 * When aspect ratio is different between target resolution and
+		 * required resolution, determine the crop factor to do
 		 * symmetric cropping
 		 */
 		u32 w = reso.pin_width[IMGU_ABI_OSYS_PIN_VF] -
@@ -517,65 +516,65 @@ imgu_css_scaler_calc(u32 input_width, u32 input_height, u32 target_width,
 			frame_params[IMGU_ABI_OSYS_PIN_VF].height;
 
 		frame_params[IMGU_ABI_OSYS_PIN_VF].crop_left =
-			roundबंदst_करोwn(w / 2, IMGU_OSYS_DMA_CROP_W_LIMIT);
+			roundclosest_down(w / 2, IMGU_OSYS_DMA_CROP_W_LIMIT);
 		frame_params[IMGU_ABI_OSYS_PIN_VF].crop_top =
-			roundबंदst_करोwn(h / 2, IMGU_OSYS_DMA_CROP_H_LIMIT);
+			roundclosest_down(h / 2, IMGU_OSYS_DMA_CROP_H_LIMIT);
 
-		अगर (reso.input_height % 4 || reso.input_width % 8) अणु
+		if (reso.input_height % 4 || reso.input_width % 8) {
 			dev_err(css->dev, "OSYS input width is not multiple of 8 or\n");
 			dev_err(css->dev, "height is not multiple of 4\n");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
 	/* Stripe parameters */
 
-	अगर (frame_params[IMGU_ABI_OSYS_PIN_VF].enable) अणु
+	if (frame_params[IMGU_ABI_OSYS_PIN_VF].enable) {
 		output_width = reso.pin_width[IMGU_ABI_OSYS_PIN_VF];
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
-		 * in हाल scaler output is not enabled
+		 * in case scaler output is not enabled
 		 * take output width as input width since
-		 * there is no scaling at मुख्य pin.
-		 * Due to the fact that मुख्य pin can be dअगरferent
-		 * from input resolution to osys in the हाल of cropping,
-		 * मुख्य pin resolution is not taken.
+		 * there is no scaling at main pin.
+		 * Due to the fact that main pin can be different
+		 * from input resolution to osys in the case of cropping,
+		 * main pin resolution is not taken.
 		 */
 		output_width = reso.input_width;
-	पूर्ण
+	}
 
-	क्रम (s = 0; s < stripes; s++) अणु
-		पूर्णांक stripe_offset_inp_y = 0;
-		पूर्णांक stripe_offset_inp_uv = 0;
-		पूर्णांक stripe_offset_out_y = 0;
-		पूर्णांक stripe_offset_out_uv = 0;
-		पूर्णांक stripe_phase_init_y = scaler_luma->phase_init;
-		पूर्णांक stripe_phase_init_uv = scaler_chroma->phase_init;
-		पूर्णांक stripe_offset_blk_y = 0;
-		पूर्णांक stripe_offset_blk_uv = 0;
-		पूर्णांक stripe_offset_col_y = 0;
-		पूर्णांक stripe_offset_col_uv = 0;
-		पूर्णांक stripe_pad_left_y = scaler_luma->pad_left;
-		पूर्णांक stripe_pad_left_uv = scaler_chroma->pad_left;
-		पूर्णांक stripe_pad_right_y = scaler_luma->pad_right;
-		पूर्णांक stripe_pad_right_uv = scaler_chroma->pad_right;
-		पूर्णांक stripe_crop_left_y = scaler_luma->crop_left;
-		पूर्णांक stripe_crop_left_uv = scaler_chroma->crop_left;
-		पूर्णांक stripe_input_width_y = reso.input_width;
-		पूर्णांक stripe_input_width_uv = 0;
-		पूर्णांक stripe_output_width_y = output_width;
-		पूर्णांक stripe_output_width_uv = 0;
-		पूर्णांक chunk_न्यूनमान_y = 0;
-		पूर्णांक chunk_न्यूनमान_uv = 0;
-		पूर्णांक chunk_उच्चमान_uv = 0;
+	for (s = 0; s < stripes; s++) {
+		int stripe_offset_inp_y = 0;
+		int stripe_offset_inp_uv = 0;
+		int stripe_offset_out_y = 0;
+		int stripe_offset_out_uv = 0;
+		int stripe_phase_init_y = scaler_luma->phase_init;
+		int stripe_phase_init_uv = scaler_chroma->phase_init;
+		int stripe_offset_blk_y = 0;
+		int stripe_offset_blk_uv = 0;
+		int stripe_offset_col_y = 0;
+		int stripe_offset_col_uv = 0;
+		int stripe_pad_left_y = scaler_luma->pad_left;
+		int stripe_pad_left_uv = scaler_chroma->pad_left;
+		int stripe_pad_right_y = scaler_luma->pad_right;
+		int stripe_pad_right_uv = scaler_chroma->pad_right;
+		int stripe_crop_left_y = scaler_luma->crop_left;
+		int stripe_crop_left_uv = scaler_chroma->crop_left;
+		int stripe_input_width_y = reso.input_width;
+		int stripe_input_width_uv = 0;
+		int stripe_output_width_y = output_width;
+		int stripe_output_width_uv = 0;
+		int chunk_floor_y = 0;
+		int chunk_floor_uv = 0;
+		int chunk_ceil_uv = 0;
 
-		अगर (stripes > 1) अणु
-			अगर (s > 0) अणु
+		if (stripes > 1) {
+			if (s > 0) {
 				/* Calculate stripe offsets */
 				stripe_offset_out_y =
 					output_width * s / stripes;
 				stripe_offset_out_y =
-					roundकरोwn(stripe_offset_out_y,
+					rounddown(stripe_offset_out_y,
 						  IPU3_UAPI_ISP_VEC_ELEMS);
 				stripe_offset_out_uv = stripe_offset_out_y /
 						IMGU_LUMA_TO_CHROMA_RATIO;
@@ -611,46 +610,46 @@ imgu_css_scaler_calc(u32 input_width, u32 input_height, u32 target_width,
 						scaler_chroma->pad_left);
 
 				/*
-				 * Chunk boundary corner हाल - luma and chroma
-				 * start from dअगरferent input chunks.
+				 * Chunk boundary corner case - luma and chroma
+				 * start from different input chunks.
 				 */
-				chunk_न्यूनमान_y = roundकरोwn(stripe_offset_inp_y,
+				chunk_floor_y = rounddown(stripe_offset_inp_y,
 							  reso.chunk_width);
-				chunk_न्यूनमान_uv =
-					roundकरोwn(stripe_offset_inp_uv,
+				chunk_floor_uv =
+					rounddown(stripe_offset_inp_uv,
 						  reso.chunk_width /
 						  IMGU_LUMA_TO_CHROMA_RATIO);
 
-				अगर (chunk_न्यूनमान_y != chunk_न्यूनमान_uv *
-				    IMGU_LUMA_TO_CHROMA_RATIO) अणु
+				if (chunk_floor_y != chunk_floor_uv *
+				    IMGU_LUMA_TO_CHROMA_RATIO) {
 					/*
 					 * Match starting luma/chroma chunks.
-					 * Decrease offset क्रम UV and add output
+					 * Decrease offset for UV and add output
 					 * cropping.
 					 */
 					stripe_offset_inp_uv -= 1;
 					stripe_crop_left_uv += 1;
 					stripe_phase_init_uv -=
 						scaler_luma->phase_step;
-					अगर (stripe_phase_init_uv < 0)
+					if (stripe_phase_init_uv < 0)
 						stripe_phase_init_uv =
 							stripe_phase_init_uv +
 							IMGU_OSYS_FIR_PHASES;
-				पूर्ण
+				}
 				/*
-				 * FW workaround क्रम a HW bug: अगर the first
+				 * FW workaround for a HW bug: if the first
 				 * chroma pixel is generated exactly at the end
 				 * of chunck scaler HW may not output the pixel
-				 * क्रम करोwnscale factors smaller than 1.5
+				 * for downscale factors smaller than 1.5
 				 * (timing issue).
 				 */
-				chunk_उच्चमान_uv =
+				chunk_ceil_uv =
 					roundup(stripe_offset_inp_uv,
 						reso.chunk_width /
 						IMGU_LUMA_TO_CHROMA_RATIO);
 
-				अगर (stripe_offset_inp_uv ==
-				    chunk_उच्चमान_uv - IMGU_OSYS_TAPS_UV) अणु
+				if (stripe_offset_inp_uv ==
+				    chunk_ceil_uv - IMGU_OSYS_TAPS_UV) {
 					/*
 					 * Decrease input offset and add
 					 * output cropping
@@ -658,22 +657,22 @@ imgu_css_scaler_calc(u32 input_width, u32 input_height, u32 target_width,
 					stripe_offset_inp_uv -= 1;
 					stripe_phase_init_uv -=
 						scaler_luma->phase_step;
-					अगर (stripe_phase_init_uv < 0) अणु
+					if (stripe_phase_init_uv < 0) {
 						stripe_phase_init_uv +=
 							IMGU_OSYS_FIR_PHASES;
 						stripe_crop_left_uv += 1;
-					पूर्ण
-				पूर्ण
+					}
+				}
 
 				/*
-				 * Calculate block and column offsets क्रम the
+				 * Calculate block and column offsets for the
 				 * input stripe
 				 */
 				stripe_offset_blk_y =
-					roundकरोwn(stripe_offset_inp_y,
+					rounddown(stripe_offset_inp_y,
 						  IMGU_INPUT_BLOCK_WIDTH);
 				stripe_offset_blk_uv =
-					roundकरोwn(stripe_offset_inp_uv,
+					rounddown(stripe_offset_inp_uv,
 						  IMGU_INPUT_BLOCK_WIDTH /
 						  IMGU_LUMA_TO_CHROMA_RATIO);
 				stripe_offset_col_y = stripe_offset_inp_y -
@@ -681,26 +680,26 @@ imgu_css_scaler_calc(u32 input_width, u32 input_height, u32 target_width,
 				stripe_offset_col_uv = stripe_offset_inp_uv -
 							stripe_offset_blk_uv;
 
-				/* Left padding is only क्रम the first stripe */
+				/* Left padding is only for the first stripe */
 				stripe_pad_left_y = 0;
 				stripe_pad_left_uv = 0;
-			पूर्ण
+			}
 
-			/* Right padding is only क्रम the last stripe */
-			अगर (s < stripes - 1) अणु
-				पूर्णांक next_offset;
+			/* Right padding is only for the last stripe */
+			if (s < stripes - 1) {
+				int next_offset;
 
 				stripe_pad_right_y = 0;
 				stripe_pad_right_uv = 0;
 
 				next_offset = output_width * (s + 1) / stripes;
-				next_offset = roundकरोwn(next_offset, 64);
+				next_offset = rounddown(next_offset, 64);
 				stripe_output_width_y = next_offset -
 							stripe_offset_out_y;
-			पूर्ण अन्यथा अणु
+			} else {
 				stripe_output_width_y = output_width -
 							stripe_offset_out_y;
-			पूर्ण
+			}
 
 			/* Calculate target output stripe width */
 			stripe_output_width_uv = stripe_output_width_y /
@@ -734,14 +733,14 @@ imgu_css_scaler_calc(u32 input_width, u32 input_height, u32 target_width,
 			stripe_input_width_y = stripe_input_width_uv *
 						IMGU_LUMA_TO_CHROMA_RATIO;
 
-			अगर (s >= stripes - 1) अणु
+			if (s >= stripes - 1) {
 				stripe_input_width_y = reso.input_width -
 					stripe_offset_blk_y;
 				/*
 				 * The scaler requires that the last stripe
 				 * spans at least two input blocks.
 				 */
-			पूर्ण
+			}
 
 			/*
 			 * Spec: input stripe width must be a multiple of 8.
@@ -763,23 +762,23 @@ imgu_css_scaler_calc(u32 input_width, u32 input_height, u32 target_width,
 						stripe_offset_col_y);
 
 			stripe_output_width_y =
-					roundकरोwn(stripe_output_width_y,
+					rounddown(stripe_output_width_y,
 						  IMGU_LUMA_TO_CHROMA_RATIO);
-		पूर्ण
+		}
 		/*
 		 * Following section executes and process parameters
-		 * क्रम both हालs - Striping or No Striping.
+		 * for both cases - Striping or No Striping.
 		 */
-		अणु
-			अचिन्हित पूर्णांक i;
-			पूर्णांक pin_scale = 0;
+		{
+			unsigned int i;
+			int pin_scale = 0;
 			/*Input resolution */
 
 			stripe_params[s].input_width = stripe_input_width_y;
 			stripe_params[s].input_height = reso.input_height;
 
-			क्रम (i = 0; i < IMGU_ABI_OSYS_PINS; i++) अणु
-				अगर (frame_params[i].scaled) अणु
+			for (i = 0; i < IMGU_ABI_OSYS_PINS; i++) {
+				if (frame_params[i].scaled) {
 					/*
 					 * Output stripe resolution and offset
 					 * as produced by the scaler; actual
@@ -794,7 +793,7 @@ imgu_css_scaler_calc(u32 input_width, u32 input_height, u32 target_width,
 						stripe_offset_out_y;
 
 					pin_scale += frame_params[i].scaled;
-				पूर्ण अन्यथा अणु
+				} else {
 					/* Unscaled pin */
 					stripe_params[s].output_width[i] =
 						stripe_params[s].input_width;
@@ -802,13 +801,13 @@ imgu_css_scaler_calc(u32 input_width, u32 input_height, u32 target_width,
 						stripe_params[s].input_height;
 					stripe_params[s].output_offset[i] =
 						stripe_offset_blk_y;
-				पूर्ण
-			पूर्ण
+				}
+			}
 
 			/* If no pin use scale, we use BYPASS mode */
 			stripe_params[s].processing_mode = procmode;
 			stripe_params[s].phase_step = scaler_luma->phase_step;
-			stripe_params[s].exp_shअगरt = scaler_luma->exp_shअगरt;
+			stripe_params[s].exp_shift = scaler_luma->exp_shift;
 			stripe_params[s].phase_init_left_y =
 				stripe_phase_init_y;
 			stripe_params[s].phase_init_left_uv =
@@ -836,46 +835,46 @@ imgu_css_scaler_calc(u32 input_width, u32 input_height, u32 target_width,
 			stripe_params[s].chunk_height = reso.chunk_height;
 			stripe_params[s].block_width = reso.block_width;
 			stripe_params[s].block_height = reso.block_height;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * This function configures the Output Formatter System, given the number of
  * stripes, scaler luma and chrome parameters
  */
-अटल पूर्णांक imgu_css_osys_calc(काष्ठा imgu_css *css, अचिन्हित पूर्णांक pipe,
-			      अचिन्हित पूर्णांक stripes,
-			      काष्ठा imgu_abi_osys_config *osys,
-			      काष्ठा imgu_css_scaler_info *scaler_luma,
-			      काष्ठा imgu_css_scaler_info *scaler_chroma,
-			      काष्ठा imgu_abi_stripes block_stripes[])
-अणु
-	काष्ठा imgu_css_frame_params frame_params[IMGU_ABI_OSYS_PINS];
-	काष्ठा imgu_css_stripe_params stripe_params[IPU3_UAPI_MAX_STRIPES];
-	काष्ठा imgu_abi_osys_क्रमmatter_params *param;
-	अचिन्हित पूर्णांक pin, s;
-	काष्ठा imgu_css_pipe *css_pipe = &css->pipes[pipe];
+static int imgu_css_osys_calc(struct imgu_css *css, unsigned int pipe,
+			      unsigned int stripes,
+			      struct imgu_abi_osys_config *osys,
+			      struct imgu_css_scaler_info *scaler_luma,
+			      struct imgu_css_scaler_info *scaler_chroma,
+			      struct imgu_abi_stripes block_stripes[])
+{
+	struct imgu_css_frame_params frame_params[IMGU_ABI_OSYS_PINS];
+	struct imgu_css_stripe_params stripe_params[IPU3_UAPI_MAX_STRIPES];
+	struct imgu_abi_osys_formatter_params *param;
+	unsigned int pin, s;
+	struct imgu_css_pipe *css_pipe = &css->pipes[pipe];
 
-	स_रखो(osys, 0, माप(*osys));
+	memset(osys, 0, sizeof(*osys));
 
 	/* Compute the frame and stripe params */
-	अगर (imgu_css_osys_calc_frame_and_stripe_params(css, stripes, osys,
+	if (imgu_css_osys_calc_frame_and_stripe_params(css, stripes, osys,
 						       scaler_luma,
 						       scaler_chroma,
 						       frame_params,
 						       stripe_params, pipe))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	/* Output क्रमmatter प्रणाली parameters */
+	/* Output formatter system parameters */
 
-	क्रम (s = 0; s < stripes; s++) अणु
-		काष्ठा imgu_abi_osys_scaler_params *scaler =
+	for (s = 0; s < stripes; s++) {
+		struct imgu_abi_osys_scaler_params *scaler =
 					&osys->scaler[s].param;
-		पूर्णांक fअगरo_addr_fmt = IMGU_FIFO_ADDR_SCALER_TO_FMT;
-		पूर्णांक fअगरo_addr_ack = IMGU_FIFO_ADDR_SCALER_TO_SP;
+		int fifo_addr_fmt = IMGU_FIFO_ADDR_SCALER_TO_FMT;
+		int fifo_addr_ack = IMGU_FIFO_ADDR_SCALER_TO_SP;
 
 		/* OUTPUT 0 / PIN 0 is only Scaler output */
 		scaler->inp_buf_y_st_addr = IMGU_VMEM1_INP_BUF_ADDR;
@@ -920,14 +919,14 @@ imgu_css_scaler_calc(u32 input_width, u32 input_height, u32 target_width,
 		scaler->out_buf_nr_buffers = IMGU_OSYS_NUM_INTERM_BUFFERS;
 
 		/* Intermediate buffers */
-		scaler->पूर्णांक_buf_y_st_addr = IMGU_VMEM2_BUF_Y_ADDR;
-		scaler->पूर्णांक_buf_y_line_stride = IMGU_VMEM2_BUF_Y_STRIDE;
-		scaler->पूर्णांक_buf_u_st_addr = IMGU_VMEM2_BUF_U_ADDR;
-		scaler->पूर्णांक_buf_v_st_addr = IMGU_VMEM2_BUF_V_ADDR;
-		scaler->पूर्णांक_buf_uv_line_stride = IMGU_VMEM2_BUF_UV_STRIDE;
-		scaler->पूर्णांक_buf_height = IMGU_VMEM2_LINES_PER_BLOCK;
-		scaler->पूर्णांक_buf_chunk_width = stripe_params[s].chunk_height;
-		scaler->पूर्णांक_buf_chunk_height = stripe_params[s].block_width;
+		scaler->int_buf_y_st_addr = IMGU_VMEM2_BUF_Y_ADDR;
+		scaler->int_buf_y_line_stride = IMGU_VMEM2_BUF_Y_STRIDE;
+		scaler->int_buf_u_st_addr = IMGU_VMEM2_BUF_U_ADDR;
+		scaler->int_buf_v_st_addr = IMGU_VMEM2_BUF_V_ADDR;
+		scaler->int_buf_uv_line_stride = IMGU_VMEM2_BUF_UV_STRIDE;
+		scaler->int_buf_height = IMGU_VMEM2_LINES_PER_BLOCK;
+		scaler->int_buf_chunk_width = stripe_params[s].chunk_height;
+		scaler->int_buf_chunk_height = stripe_params[s].block_width;
 
 		/* Context buffers */
 		scaler->ctx_buf_hor_y_st_addr = IMGU_VMEM3_HOR_Y_ADDR;
@@ -937,11 +936,11 @@ imgu_css_scaler_calc(u32 input_width, u32 input_height, u32 target_width,
 		scaler->ctx_buf_ver_u_st_addr = IMGU_VMEM3_VER_U_ADDR;
 		scaler->ctx_buf_ver_v_st_addr = IMGU_VMEM3_VER_V_ADDR;
 
-		/* Addresses क्रम release-input and process-output tokens */
-		scaler->release_inp_buf_addr = fअगरo_addr_ack;
+		/* Addresses for release-input and process-output tokens */
+		scaler->release_inp_buf_addr = fifo_addr_ack;
 		scaler->release_inp_buf_en = 1;
 		scaler->release_out_buf_en = 1;
-		scaler->process_out_buf_addr = fअगरo_addr_fmt;
+		scaler->process_out_buf_addr = fifo_addr_fmt;
 
 		/* Settings dimensions, padding, cropping */
 		scaler->input_image_y_width = stripe_params[s].input_width;
@@ -968,35 +967,35 @@ imgu_css_scaler_calc(u32 input_width, u32 input_height, u32 target_width,
 					stripe_params[s].phase_init_left_uv;
 		scaler->y_top_phase_init = stripe_params[s].phase_init_top_y;
 		scaler->uv_top_phase_init = stripe_params[s].phase_init_top_uv;
-		scaler->coeffs_exp_shअगरt = stripe_params[s].exp_shअगरt;
+		scaler->coeffs_exp_shift = stripe_params[s].exp_shift;
 		scaler->out_y_left_crop = stripe_params[s].crop_left_y;
 		scaler->out_uv_left_crop = stripe_params[s].crop_left_uv;
 		scaler->out_y_top_crop = stripe_params[s].crop_top_y;
 		scaler->out_uv_top_crop = stripe_params[s].crop_top_uv;
 
-		क्रम (pin = 0; pin < IMGU_ABI_OSYS_PINS; pin++) अणु
-			पूर्णांक in_fअगरo_addr;
-			पूर्णांक out_fअगरo_addr;
-			पूर्णांक block_width_vecs;
-			पूर्णांक input_width_s;
-			पूर्णांक input_width_vecs;
-			पूर्णांक input_buf_y_st_addr;
-			पूर्णांक input_buf_u_st_addr;
-			पूर्णांक input_buf_v_st_addr;
-			पूर्णांक input_buf_y_line_stride;
-			पूर्णांक input_buf_uv_line_stride;
-			पूर्णांक output_buf_y_line_stride;
-			पूर्णांक output_buf_uv_line_stride;
-			पूर्णांक output_buf_nr_y_lines;
-			पूर्णांक block_height;
-			पूर्णांक block_width;
-			काष्ठा imgu_abi_osys_frame_params *fr_pr;
+		for (pin = 0; pin < IMGU_ABI_OSYS_PINS; pin++) {
+			int in_fifo_addr;
+			int out_fifo_addr;
+			int block_width_vecs;
+			int input_width_s;
+			int input_width_vecs;
+			int input_buf_y_st_addr;
+			int input_buf_u_st_addr;
+			int input_buf_v_st_addr;
+			int input_buf_y_line_stride;
+			int input_buf_uv_line_stride;
+			int output_buf_y_line_stride;
+			int output_buf_uv_line_stride;
+			int output_buf_nr_y_lines;
+			int block_height;
+			int block_width;
+			struct imgu_abi_osys_frame_params *fr_pr;
 
 			fr_pr = &osys->frame[pin].param;
 
 			/* Frame parameters */
 			fr_pr->enable = frame_params[pin].enable;
-			fr_pr->क्रमmat = frame_params[pin].क्रमmat;
+			fr_pr->format = frame_params[pin].format;
 			fr_pr->mirror = frame_params[pin].mirror;
 			fr_pr->flip = frame_params[pin].flip;
 			fr_pr->tiling = frame_params[pin].tiling;
@@ -1021,41 +1020,41 @@ imgu_css_scaler_calc(u32 input_width, u32 input_height, u32 target_width,
 			osys->stripe[s].output_height[pin] =
 				stripe_params[s].output_height[pin];
 
-			अगर (s == 0) अणु
-				/* Only first stripe should करो left cropping */
+			if (s == 0) {
+				/* Only first stripe should do left cropping */
 				osys->stripe[s].crop_left[pin] =
 					frame_params[pin].crop_left;
 				osys->stripe[s].output_offset[pin] =
 					stripe_params[s].output_offset[pin];
-			पूर्ण अन्यथा अणु
+			} else {
 				/*
-				 * Stripe offset क्रम other strips should be
-				 * adjusted according to the cropping करोne
+				 * Stripe offset for other strips should be
+				 * adjusted according to the cropping done
 				 * at the first strip
 				 */
 				osys->stripe[s].crop_left[pin] = 0;
 				osys->stripe[s].output_offset[pin] =
 					(stripe_params[s].output_offset[pin] -
 					 osys->stripe[0].crop_left[pin]);
-			पूर्ण
+			}
 
-			अगर (!frame_params[pin].enable)
-				जारी;
+			if (!frame_params[pin].enable)
+				continue;
 
 			/* Formatter: configurations */
 
 			/*
 			 * Get the dimensions of the input blocks of the
-			 * क्रमmatter, which is the same as the output
+			 * formatter, which is the same as the output
 			 * blocks of the scaler.
 			 */
-			अगर (frame_params[pin].scaled) अणु
+			if (frame_params[pin].scaled) {
 				block_height = stripe_params[s].block_height;
 				block_width = stripe_params[s].block_width;
-			पूर्ण अन्यथा अणु
+			} else {
 				block_height = IMGU_OSYS_BLOCK_HEIGHT;
 				block_width = IMGU_OSYS_BLOCK_WIDTH;
-			पूर्ण
+			}
 			block_width_vecs =
 					block_width / IMGU_VMEM1_ELEMS_PER_VEC;
 			/*
@@ -1067,28 +1066,28 @@ imgu_css_scaler_calc(u32 input_width, u32 input_height, u32 target_width,
 			output_buf_y_line_stride = block_width_vecs;
 			output_buf_uv_line_stride = block_width_vecs / 2;
 			output_buf_nr_y_lines = block_height;
-			अगर (frame_params[pin].क्रमmat ==
+			if (frame_params[pin].format ==
 			    IMGU_ABI_OSYS_FORMAT_NV12 ||
-			    frame_params[pin].क्रमmat ==
+			    frame_params[pin].format ==
 			    IMGU_ABI_OSYS_FORMAT_NV21)
 				output_buf_uv_line_stride =
 					output_buf_y_line_stride;
 
 			/*
-			 * Tiled outमाला_दो use a dअगरferent output buffer
+			 * Tiled outputs use a different output buffer
 			 * configuration. The input (= scaler output) block
 			 * width translates to a tile height, and the block
-			 * height to the tile width. The शेष block size of
-			 * 128x32 maps exactly onto a 4kB tile (512x8) क्रम Y.
+			 * height to the tile width. The default block size of
+			 * 128x32 maps exactly onto a 4kB tile (512x8) for Y.
 			 * For UV, the tile width is always half.
 			 */
-			अगर (frame_params[pin].tiling) अणु
+			if (frame_params[pin].tiling) {
 				output_buf_nr_y_lines = 8;
 				output_buf_y_line_stride = 512 /
 					IMGU_VMEM1_ELEMS_PER_VEC;
 				output_buf_uv_line_stride = 256 /
 					IMGU_VMEM1_ELEMS_PER_VEC;
-			पूर्ण
+			}
 
 			/*
 			 * Store the output buffer line stride. Will be
@@ -1099,9 +1098,9 @@ imgu_css_scaler_calc(u32 input_width, u32 input_height, u32 target_width,
 			osys->stripe[s].buf_stride[pin] =
 				output_buf_y_line_stride *
 				IMGU_HIVE_OF_SYS_OF_SYSTEM_NWAYS;
-			अगर (frame_params[pin].scaled) अणु
+			if (frame_params[pin].scaled) {
 				/*
-				 * The input buffs are the पूर्णांकermediate
+				 * The input buffs are the intermediate
 				 * buffers (scalers' output)
 				 */
 				input_buf_y_st_addr = IMGU_VMEM1_INT_BUF_ADDR;
@@ -1109,7 +1108,7 @@ imgu_css_scaler_calc(u32 input_width, u32 input_height, u32 target_width,
 							IMGU_VMEM1_U_OFFSET;
 				input_buf_v_st_addr = IMGU_VMEM1_INT_BUF_ADDR +
 							IMGU_VMEM1_V_OFFSET;
-			पूर्ण अन्यथा अणु
+			} else {
 				/*
 				 * The input bufferss are the buffers
 				 * filled by the SP
@@ -1119,13 +1118,13 @@ imgu_css_scaler_calc(u32 input_width, u32 input_height, u32 target_width,
 							IMGU_VMEM1_U_OFFSET;
 				input_buf_v_st_addr = IMGU_VMEM1_INP_BUF_ADDR +
 							IMGU_VMEM1_V_OFFSET;
-			पूर्ण
+			}
 
 			/*
-			 * The क्रमmatter input width must be rounded to
-			 * the block width. Otherwise the क्रमmatter will
+			 * The formatter input width must be rounded to
+			 * the block width. Otherwise the formatter will
 			 * not recognize the end of the line, resulting
-			 * in incorrect tiling (प्रणाली may hang!) and
+			 * in incorrect tiling (system may hang!) and
 			 * possibly other problems.
 			 */
 			input_width_s =
@@ -1133,38 +1132,38 @@ imgu_css_scaler_calc(u32 input_width, u32 input_height, u32 target_width,
 					block_width);
 			input_width_vecs = input_width_s /
 					IMGU_VMEM1_ELEMS_PER_VEC;
-			out_fअगरo_addr = IMGU_FIFO_ADDR_FMT_TO_SP;
+			out_fifo_addr = IMGU_FIFO_ADDR_FMT_TO_SP;
 			/*
 			 * Process-output tokens must be sent to the SP.
 			 * When scaling, the release-input tokens can be
 			 * sent directly to the scaler, otherwise the
-			 * क्रमmatter should send them to the SP.
+			 * formatter should send them to the SP.
 			 */
-			अगर (frame_params[pin].scaled)
-				in_fअगरo_addr = IMGU_FIFO_ADDR_FMT_TO_SCALER;
-			अन्यथा
-				in_fअगरo_addr = IMGU_FIFO_ADDR_FMT_TO_SP;
+			if (frame_params[pin].scaled)
+				in_fifo_addr = IMGU_FIFO_ADDR_FMT_TO_SCALER;
+			else
+				in_fifo_addr = IMGU_FIFO_ADDR_FMT_TO_SP;
 
 			/* Formatter */
-			param = &osys->क्रमmatter[s][pin].param;
+			param = &osys->formatter[s][pin].param;
 
-			param->क्रमmat = frame_params[pin].क्रमmat;
+			param->format = frame_params[pin].format;
 			param->flip = frame_params[pin].flip;
 			param->mirror = frame_params[pin].mirror;
 			param->tiling = frame_params[pin].tiling;
 			param->reduce_range = frame_params[pin].reduce_range;
 			param->alpha_blending = 0;
-			param->release_inp_addr = in_fअगरo_addr;
+			param->release_inp_addr = in_fifo_addr;
 			param->release_inp_en = 1;
-			param->process_out_buf_addr = out_fअगरo_addr;
+			param->process_out_buf_addr = out_fifo_addr;
 			param->image_width_vecs = input_width_vecs;
 			param->image_height_lines =
 				stripe_params[s].output_height[pin];
 			param->inp_buff_y_st_addr = input_buf_y_st_addr;
 			param->inp_buff_y_line_stride = input_buf_y_line_stride;
 			param->inp_buff_y_buffer_stride = IMGU_VMEM1_BUF_SIZE;
-			param->पूर्णांक_buff_u_st_addr = input_buf_u_st_addr;
-			param->पूर्णांक_buff_v_st_addr = input_buf_v_st_addr;
+			param->int_buff_u_st_addr = input_buf_u_st_addr;
+			param->int_buff_v_st_addr = input_buf_v_st_addr;
 			param->inp_buff_uv_line_stride =
 				input_buf_uv_line_stride;
 			param->inp_buff_uv_buffer_stride = IMGU_VMEM1_BUF_SIZE;
@@ -1180,59 +1179,59 @@ imgu_css_scaler_calc(u32 input_width, u32 input_height, u32 target_width,
 			param->hist_buff_line_stride =
 				IMGU_VMEM1_HST_BUF_STRIDE;
 			param->hist_buff_nr_lines = IMGU_VMEM1_HST_BUF_NLINES;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	block_stripes[0].offset = 0;
-	अगर (stripes <= 1) अणु
+	if (stripes <= 1) {
 		block_stripes[0].width = stripe_params[0].input_width;
 		block_stripes[0].height = stripe_params[0].input_height;
-	पूर्ण अन्यथा अणु
-		काष्ठा imgu_fw_info *bi =
+	} else {
+		struct imgu_fw_info *bi =
 			&css->fwp->binary_header[css_pipe->bindex];
-		अचिन्हित पूर्णांक sp_block_width =
+		unsigned int sp_block_width =
 				bi->info.isp.sp.block.block_width *
 				IPU3_UAPI_ISP_VEC_ELEMS;
 
 		block_stripes[0].width = roundup(stripe_params[0].input_width,
 						 sp_block_width);
 		block_stripes[1].offset =
-			roundकरोwn(css_pipe->rect[IPU3_CSS_RECT_GDC].width -
+			rounddown(css_pipe->rect[IPU3_CSS_RECT_GDC].width -
 				  stripe_params[1].input_width, sp_block_width);
 		block_stripes[1].width =
 			roundup(css_pipe->rect[IPU3_CSS_RECT_GDC].width -
 				block_stripes[1].offset, sp_block_width);
 		block_stripes[0].height = css_pipe->rect[IPU3_CSS_RECT_GDC].height;
 		block_stripes[1].height = block_stripes[0].height;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*********************** Mostly 3A operations ******************************/
 
 /*
- * This function creates a "TO-DO list" (operations) क्रम the sp code.
+ * This function creates a "TO-DO list" (operations) for the sp code.
  *
  * There are 2 types of operations:
- * 1. Transfer: Issue DMA transfer request क्रम copying grid cells from DDR to
+ * 1. Transfer: Issue DMA transfer request for copying grid cells from DDR to
  *    accelerator space (NOTE that this space is limited) associated data:
  *    DDR address + accelerator's config set index(acc's address).
  *
  * 2. Issue "Process Lines Command" to shd accelerator
- *    associated data: #पंक्तिs + which config set to use (actually, accelerator
+ *    associated data: #lines + which config set to use (actually, accelerator
  *    will use x AND (x+1)%num_of_sets - NOTE that this implies the restriction
  *    of not touching config sets x & (x+1)%num_of_sets when process_lines(x)
  *    is active).
  *
  * Basically there are 2 types of operations "chunks":
- * 1. "initial chunk": Initially, we करो as much transfers as we can (and need)
+ * 1. "initial chunk": Initially, we do as much transfers as we can (and need)
  *    [0 - max sets(3) ] followed by 1 or 2 "process lines" operations.
  *
  * 2. "regular chunk" - 1 transfer followed by 1 process line operation.
- *    (in some हालs we might need additional transfer ate the last chunk).
+ *    (in some cases we might need additional transfer ate the last chunk).
  *
- * क्रम some हाल:
+ * for some case:
  * --> init
  *	tr (0)
  *	tr (1)
@@ -1245,40 +1244,40 @@ imgu_css_scaler_calc(u32 input_width, u32 input_height, u32 target_width,
  * --> ack (1)
  *	pl (3)
  * --> ack (2)
- *	करो nothing
+ *	do nothing
  * --> ack (3)
- *	करो nothing
+ *	do nothing
  */
 
-अटल पूर्णांक
-imgu_css_shd_ops_calc(काष्ठा imgu_abi_shd_पूर्णांकra_frame_operations_data *ops,
-		      स्थिर काष्ठा ipu3_uapi_shd_grid_config *grid,
-		      अचिन्हित पूर्णांक image_height)
-अणु
-	अचिन्हित पूर्णांक block_height = 1 << grid->block_height_log2;
-	अचिन्हित पूर्णांक grid_height_per_slice = grid->grid_height_per_slice;
-	अचिन्हित पूर्णांक set_height = grid_height_per_slice * block_height;
+static int
+imgu_css_shd_ops_calc(struct imgu_abi_shd_intra_frame_operations_data *ops,
+		      const struct ipu3_uapi_shd_grid_config *grid,
+		      unsigned int image_height)
+{
+	unsigned int block_height = 1 << grid->block_height_log2;
+	unsigned int grid_height_per_slice = grid->grid_height_per_slice;
+	unsigned int set_height = grid_height_per_slice * block_height;
 
-	/* We currently support only असल(y_start) > grid_height_per_slice */
-	अचिन्हित पूर्णांक positive_y_start = (अचिन्हित पूर्णांक)-grid->y_start;
-	अचिन्हित पूर्णांक first_process_lines =
+	/* We currently support only abs(y_start) > grid_height_per_slice */
+	unsigned int positive_y_start = (unsigned int)-grid->y_start;
+	unsigned int first_process_lines =
 				set_height - (positive_y_start % set_height);
-	अचिन्हित पूर्णांक last_set_height;
-	अचिन्हित पूर्णांक num_of_sets;
+	unsigned int last_set_height;
+	unsigned int num_of_sets;
 
-	काष्ठा imgu_abi_acc_operation *p_op;
-	काष्ठा imgu_abi_acc_process_lines_cmd_data *p_pl;
-	काष्ठा imgu_abi_shd_transfer_luts_set_data *p_tr;
+	struct imgu_abi_acc_operation *p_op;
+	struct imgu_abi_acc_process_lines_cmd_data *p_pl;
+	struct imgu_abi_shd_transfer_luts_set_data *p_tr;
 
-	अचिन्हित पूर्णांक op_idx, pl_idx, tr_idx;
-	अचिन्हित अक्षर tr_set_num, pl_cfg_set;
+	unsigned int op_idx, pl_idx, tr_idx;
+	unsigned char tr_set_num, pl_cfg_set;
 
 	/*
-	 * When the number of lines क्रम the last process lines command
+	 * When the number of lines for the last process lines command
 	 * is equal to a set height, we need another line of grid cell -
 	 * additional transfer is required.
 	 */
-	अचिन्हित अक्षर last_tr = 0;
+	unsigned char last_tr = 0;
 
 	/* Add "process lines" command to the list of operations */
 	bool add_pl;
@@ -1286,10 +1285,10 @@ imgu_css_shd_ops_calc(काष्ठा imgu_abi_shd_पूर्णांकra
 	bool add_tr;
 
 	/*
-	 * Available partial grid (the part that fits पूर्णांकo #IMGU_SHD_SETS sets)
-	 * करोesn't cover whole frame - need to process in chunks
+	 * Available partial grid (the part that fits into #IMGU_SHD_SETS sets)
+	 * doesn't cover whole frame - need to process in chunks
 	 */
-	अगर (image_height > first_process_lines) अणु
+	if (image_height > first_process_lines) {
 		last_set_height =
 			(image_height - first_process_lines) % set_height;
 		num_of_sets = last_set_height > 0 ?
@@ -1297,12 +1296,12 @@ imgu_css_shd_ops_calc(काष्ठा imgu_abi_shd_पूर्णांकra
 			(image_height - first_process_lines) / set_height + 1;
 		last_tr = (set_height - last_set_height <= block_height ||
 			   last_set_height == 0) ? 1 : 0;
-	पूर्ण अन्यथा अणु /* partial grid covers whole frame */
+	} else { /* partial grid covers whole frame */
 		last_set_height = 0;
 		num_of_sets = 1;
 		first_process_lines = image_height;
 		last_tr = set_height - image_height <= block_height ? 1 : 0;
-	पूर्ण
+	}
 
 	/* Init operations lists and counters */
 	p_op = ops->operation_list;
@@ -1312,7 +1311,7 @@ imgu_css_shd_ops_calc(काष्ठा imgu_abi_shd_पूर्णांकra
 	p_tr = ops->transfer_data;
 	tr_idx = 0;
 
-	स_रखो(ops, 0, माप(*ops));
+	memset(ops, 0, sizeof(*ops));
 
 	/* Cyclic counters that holds config set number [0,IMGU_SHD_SETS) */
 	tr_set_num = 0;
@@ -1321,17 +1320,17 @@ imgu_css_shd_ops_calc(काष्ठा imgu_abi_shd_पूर्णांकra
 	/*
 	 * Always start with a transfer - process lines command must be
 	 * initiated only after appropriate config sets are in place
-	 * (2 configuration sets per process line command, except क्रम last one).
+	 * (2 configuration sets per process line command, except for last one).
 	 */
 	add_pl = false;
 	add_tr = true;
 
-	जबतक (add_pl || add_tr) अणु
+	while (add_pl || add_tr) {
 		/* Transfer ops */
-		अगर (add_tr) अणु
-			अगर (op_idx >= IMGU_ABI_SHD_MAX_OPERATIONS ||
+		if (add_tr) {
+			if (op_idx >= IMGU_ABI_SHD_MAX_OPERATIONS ||
 			    tr_idx >= IMGU_ABI_SHD_MAX_TRANSFERS)
-				वापस -EINVAL;
+				return -EINVAL;
 			p_op[op_idx].op_type =
 				IMGU_ABI_ACC_OPTYPE_TRANSFER_DATA;
 			p_op[op_idx].op_indicator = IMGU_ABI_ACC_OP_IDLE;
@@ -1339,28 +1338,28 @@ imgu_css_shd_ops_calc(काष्ठा imgu_abi_shd_पूर्णांकra
 			p_tr[tr_idx].set_number = tr_set_num;
 			tr_idx++;
 			tr_set_num = (tr_set_num + 1) % IMGU_SHD_SETS;
-		पूर्ण
+		}
 
 		/* Process-lines ops */
-		अगर (add_pl) अणु
-			अगर (op_idx >= IMGU_ABI_SHD_MAX_OPERATIONS ||
+		if (add_pl) {
+			if (op_idx >= IMGU_ABI_SHD_MAX_OPERATIONS ||
 			    pl_idx >= IMGU_ABI_SHD_MAX_PROCESS_LINES)
-				वापस -EINVAL;
+				return -EINVAL;
 			p_op[op_idx].op_type =
 				IMGU_ABI_ACC_OPTYPE_PROCESS_LINES;
 
 			/*
-			 * In हाल we have 2 process lines commands -
-			 * करोn't stop after the first one
+			 * In case we have 2 process lines commands -
+			 * don't stop after the first one
 			 */
-			अगर (pl_idx == 0 && num_of_sets != 1)
+			if (pl_idx == 0 && num_of_sets != 1)
 				p_op[op_idx].op_indicator =
 					IMGU_ABI_ACC_OP_IDLE;
 			/*
 			 * Initiate last process lines command -
 			 * end of operation list.
 			 */
-			अन्यथा अगर (pl_idx == num_of_sets - 1)
+			else if (pl_idx == num_of_sets - 1)
 				p_op[op_idx].op_indicator =
 					IMGU_ABI_ACC_OP_END_OF_OPS;
 			/*
@@ -1368,101 +1367,101 @@ imgu_css_shd_ops_calc(काष्ठा imgu_abi_shd_पूर्णांकra
 			 * "chunk" (meaning few "transfers" followed by few
 			 * "process lines" commands).
 			 */
-			अन्यथा
+			else
 				p_op[op_idx].op_indicator =
 					IMGU_ABI_ACC_OP_END_OF_ACK;
 
 			op_idx++;
 
 			/* first process line operation */
-			अगर (pl_idx == 0)
+			if (pl_idx == 0)
 				p_pl[pl_idx].lines = first_process_lines;
 			/* Last process line operation */
-			अन्यथा अगर (pl_idx == num_of_sets - 1 &&
+			else if (pl_idx == num_of_sets - 1 &&
 				 last_set_height > 0)
 				p_pl[pl_idx].lines = last_set_height;
-			अन्यथा	/* "regular" process lines operation */
+			else	/* "regular" process lines operation */
 				p_pl[pl_idx].lines = set_height;
 
 			p_pl[pl_idx].cfg_set = pl_cfg_set;
 			pl_idx++;
 			pl_cfg_set = (pl_cfg_set + 1) % IMGU_SHD_SETS;
-		पूर्ण
+		}
 
 		/*
 		 * Initially, we always transfer
 		 * min(IMGU_SHD_SETS, num_of_sets) - after that we fill in the
 		 * corresponding process lines commands.
 		 */
-		अगर (tr_idx == IMGU_SHD_SETS ||
-		    tr_idx == num_of_sets + last_tr) अणु
+		if (tr_idx == IMGU_SHD_SETS ||
+		    tr_idx == num_of_sets + last_tr) {
 			add_tr = false;
 			add_pl = true;
-		पूर्ण
+		}
 
 		/*
 		 * We have finished the "initial" operations chunk -
-		 * be पढ़ोy to get more chunks.
+		 * be ready to get more chunks.
 		 */
-		अगर (pl_idx == 2) अणु
+		if (pl_idx == 2) {
 			add_tr = true;
 			add_pl = true;
-		पूर्ण
+		}
 
-		/* Stop conditions क्रम each operation type */
-		अगर (tr_idx == num_of_sets + last_tr)
+		/* Stop conditions for each operation type */
+		if (tr_idx == num_of_sets + last_tr)
 			add_tr = false;
-		अगर (pl_idx == num_of_sets)
+		if (pl_idx == num_of_sets)
 			add_pl = false;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * The follow handshake procotol is the same क्रम AF, AWB and AWB FR.
+ * The follow handshake procotol is the same for AF, AWB and AWB FR.
  *
- * क्रम n sets of meta-data, the flow is:
+ * for n sets of meta-data, the flow is:
  * --> init
  *  process-lines  (0)
  *  process-lines  (1)	 eoc
  *  --> ack (0)
- *  पढ़ो-meta-data (0)
+ *  read-meta-data (0)
  *  process-lines  (2)	 eoc
  *  --> ack (1)
- *  पढ़ो-meta-data (1)
+ *  read-meta-data (1)
  *  process-lines  (3)	 eoc
  *  ...
  *
  *  --> ack (n-3)
- *  पढ़ो-meta-data (n-3)
+ *  read-meta-data (n-3)
  *  process-lines  (n-1) eoc
  *  --> ack (n-2)
- *  पढ़ो-meta-data (n-2) eoc
+ *  read-meta-data (n-2) eoc
  *  --> ack (n-1)
- *  पढ़ो-meta-data (n-1) eof
+ *  read-meta-data (n-1) eof
  *
- * क्रम 2 sets we get:
+ * for 2 sets we get:
  * --> init
  * pl (0)
  * pl (1) eoc
  * --> ack (0)
- * pl (2) - rest of image, अगर applicable)
+ * pl (2) - rest of image, if applicable)
  * rmd (0) eoc
  * --> ack (1)
  * rmd (1) eof
  * --> (ack (2))
- * करो nothing
+ * do nothing
  *
- * क्रम only one set:
+ * for only one set:
  *
  * --> init
  * pl(0)   eoc
  * --> ack (0)
  * rmd (0) eof
  *
- * grid smaller than image हाल
- * क्रम example 128x128 grid (block size 8x8, 16x16 num of blocks)
+ * grid smaller than image case
+ * for example 128x128 grid (block size 8x8, 16x16 num of blocks)
  * start at (0,0)
  * 1st set holds 160 cells - 10 blocks vertical, 16 horizontal
  * => 1st process lines = 80
@@ -1479,169 +1478,169 @@ imgu_css_shd_ops_calc(काष्ठा imgu_abi_shd_पूर्णांकra
  * --> ack (1)
  * rmd (1) eof
  * --> ack (2)
- * करो nothing
+ * do nothing
  */
-काष्ठा process_lines अणु
-	अचिन्हित पूर्णांक image_height;
-	अचिन्हित लघु grid_height;
-	अचिन्हित लघु block_height;
-	अचिन्हित लघु y_start;
-	अचिन्हित अक्षर grid_height_per_slice;
+struct process_lines {
+	unsigned int image_height;
+	unsigned short grid_height;
+	unsigned short block_height;
+	unsigned short y_start;
+	unsigned char grid_height_per_slice;
 
-	अचिन्हित लघु max_op; /* max operation */
-	अचिन्हित लघु max_tr; /* max transaction */
-	अचिन्हित अक्षर acc_enable;
-पूर्ण;
+	unsigned short max_op; /* max operation */
+	unsigned short max_tr; /* max transaction */
+	unsigned char acc_enable;
+};
 
-/* Helper to config पूर्णांकra_frame_operations_data. */
-अटल पूर्णांक
-imgu_css_acc_process_lines(स्थिर काष्ठा process_lines *pl,
-			   काष्ठा imgu_abi_acc_operation *p_op,
-			   काष्ठा imgu_abi_acc_process_lines_cmd_data *p_pl,
-			   काष्ठा imgu_abi_acc_transfer_op_data *p_tr)
-अणु
-	अचिन्हित लघु op_idx = 0, pl_idx = 0, tr_idx = 0;
-	अचिन्हित अक्षर tr_set_num = 0, pl_cfg_set = 0;
-	स्थिर अचिन्हित लघु grid_last_line =
+/* Helper to config intra_frame_operations_data. */
+static int
+imgu_css_acc_process_lines(const struct process_lines *pl,
+			   struct imgu_abi_acc_operation *p_op,
+			   struct imgu_abi_acc_process_lines_cmd_data *p_pl,
+			   struct imgu_abi_acc_transfer_op_data *p_tr)
+{
+	unsigned short op_idx = 0, pl_idx = 0, tr_idx = 0;
+	unsigned char tr_set_num = 0, pl_cfg_set = 0;
+	const unsigned short grid_last_line =
 			pl->y_start + pl->grid_height * pl->block_height;
-	स्थिर अचिन्हित लघु process_lines =
+	const unsigned short process_lines =
 			pl->grid_height_per_slice * pl->block_height;
 
-	अचिन्हित पूर्णांक process_lines_after_grid;
-	अचिन्हित लघु first_process_lines;
-	अचिन्हित लघु last_process_lines_in_grid;
+	unsigned int process_lines_after_grid;
+	unsigned short first_process_lines;
+	unsigned short last_process_lines_in_grid;
 
-	अचिन्हित लघु num_of_process_lines;
-	अचिन्हित लघु num_of_sets;
+	unsigned short num_of_process_lines;
+	unsigned short num_of_sets;
 
-	अगर (pl->grid_height_per_slice == 0)
-		वापस -EINVAL;
+	if (pl->grid_height_per_slice == 0)
+		return -EINVAL;
 
-	अगर (pl->acc_enable && grid_last_line > pl->image_height)
-		वापस -EINVAL;
+	if (pl->acc_enable && grid_last_line > pl->image_height)
+		return -EINVAL;
 
 	num_of_sets = pl->grid_height / pl->grid_height_per_slice;
-	अगर (num_of_sets * pl->grid_height_per_slice < pl->grid_height)
+	if (num_of_sets * pl->grid_height_per_slice < pl->grid_height)
 		num_of_sets++;
 
-	/* Account क्रम two line delay inside the FF */
-	अगर (pl->max_op == IMGU_ABI_AF_MAX_OPERATIONS) अणु
+	/* Account for two line delay inside the FF */
+	if (pl->max_op == IMGU_ABI_AF_MAX_OPERATIONS) {
 		first_process_lines = process_lines + pl->y_start + 2;
 		last_process_lines_in_grid =
 			(grid_last_line - first_process_lines) -
 			((num_of_sets - 2) * process_lines) + 4;
 		process_lines_after_grid =
 			pl->image_height - grid_last_line - 4;
-	पूर्ण अन्यथा अणु
+	} else {
 		first_process_lines = process_lines + pl->y_start;
 		last_process_lines_in_grid =
 			(grid_last_line - first_process_lines) -
 			((num_of_sets - 2) * process_lines);
 		process_lines_after_grid = pl->image_height - grid_last_line;
-	पूर्ण
+	}
 
 	num_of_process_lines = num_of_sets;
-	अगर (process_lines_after_grid > 0)
+	if (process_lines_after_grid > 0)
 		num_of_process_lines++;
 
-	जबतक (tr_idx < num_of_sets || pl_idx < num_of_process_lines) अणु
+	while (tr_idx < num_of_sets || pl_idx < num_of_process_lines) {
 		/* Read meta-data */
-		अगर (pl_idx >= 2 || (pl_idx == 1 && num_of_sets == 1)) अणु
-			अगर (op_idx >= pl->max_op || tr_idx >= pl->max_tr)
-				वापस -EINVAL;
+		if (pl_idx >= 2 || (pl_idx == 1 && num_of_sets == 1)) {
+			if (op_idx >= pl->max_op || tr_idx >= pl->max_tr)
+				return -EINVAL;
 
 			p_op[op_idx].op_type =
 				IMGU_ABI_ACC_OPTYPE_TRANSFER_DATA;
 
-			अगर (tr_idx == num_of_sets - 1)
+			if (tr_idx == num_of_sets - 1)
 				/* The last operation is always a tr */
 				p_op[op_idx].op_indicator =
 					IMGU_ABI_ACC_OP_END_OF_OPS;
-			अन्यथा अगर (tr_idx == num_of_sets - 2)
-				अगर (process_lines_after_grid == 0)
+			else if (tr_idx == num_of_sets - 2)
+				if (process_lines_after_grid == 0)
 					/*
 					 * No additional pl op left -
 					 * this op is left as lats of cycle
 					 */
 					p_op[op_idx].op_indicator =
 						IMGU_ABI_ACC_OP_END_OF_ACK;
-				अन्यथा
+				else
 					/*
 					 * We still have to process-lines after
 					 * the grid so have one more pl op
 					 */
 					p_op[op_idx].op_indicator =
 						IMGU_ABI_ACC_OP_IDLE;
-			अन्यथा
+			else
 				/* Default - usually there's a pl after a tr */
 				p_op[op_idx].op_indicator =
 					IMGU_ABI_ACC_OP_IDLE;
 
 			op_idx++;
-			अगर (p_tr) अणु
+			if (p_tr) {
 				p_tr[tr_idx].set_number = tr_set_num;
 				tr_set_num = 1 - tr_set_num;
-			पूर्ण
+			}
 			tr_idx++;
-		पूर्ण
+		}
 
 		/* process_lines */
-		अगर (pl_idx < num_of_process_lines) अणु
-			अगर (op_idx >= pl->max_op || pl_idx >= pl->max_tr)
-				वापस -EINVAL;
+		if (pl_idx < num_of_process_lines) {
+			if (op_idx >= pl->max_op || pl_idx >= pl->max_tr)
+				return -EINVAL;
 
 			p_op[op_idx].op_type =
 				IMGU_ABI_ACC_OPTYPE_PROCESS_LINES;
-			अगर (pl_idx == 0)
-				अगर (num_of_process_lines == 1)
+			if (pl_idx == 0)
+				if (num_of_process_lines == 1)
 					/* Only one pl op */
 					p_op[op_idx].op_indicator =
 						IMGU_ABI_ACC_OP_END_OF_ACK;
-				अन्यथा
-					/* On init - करो two pl ops */
+				else
+					/* On init - do two pl ops */
 					p_op[op_idx].op_indicator =
 						IMGU_ABI_ACC_OP_IDLE;
-			अन्यथा
+			else
 				/* Usually pl is the end of the ack cycle */
 				p_op[op_idx].op_indicator =
 					IMGU_ABI_ACC_OP_END_OF_ACK;
 
 			op_idx++;
 
-			अगर (pl_idx == 0)
+			if (pl_idx == 0)
 				/* First process line */
 				p_pl[pl_idx].lines = first_process_lines;
-			अन्यथा अगर (pl_idx == num_of_sets - 1)
+			else if (pl_idx == num_of_sets - 1)
 				/* Last in grid */
 				p_pl[pl_idx].lines = last_process_lines_in_grid;
-			अन्यथा अगर (pl_idx == num_of_process_lines - 1)
+			else if (pl_idx == num_of_process_lines - 1)
 				/* After the grid */
 				p_pl[pl_idx].lines = process_lines_after_grid;
-			अन्यथा
+			else
 				/* Inside the grid */
 				p_pl[pl_idx].lines = process_lines;
 
-			अगर (p_tr) अणु
+			if (p_tr) {
 				p_pl[pl_idx].cfg_set = pl_cfg_set;
 				pl_cfg_set = 1 - pl_cfg_set;
-			पूर्ण
+			}
 			pl_idx++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक imgu_css_af_ops_calc(काष्ठा imgu_css *css, अचिन्हित पूर्णांक pipe,
-				काष्ठा imgu_abi_af_config *af_config)
-अणु
-	काष्ठा imgu_abi_af_पूर्णांकra_frame_operations_data *to =
+static int imgu_css_af_ops_calc(struct imgu_css *css, unsigned int pipe,
+				struct imgu_abi_af_config *af_config)
+{
+	struct imgu_abi_af_intra_frame_operations_data *to =
 		&af_config->operations_data;
-	काष्ठा imgu_css_pipe *css_pipe = &css->pipes[pipe];
-	काष्ठा imgu_fw_info *bi =
+	struct imgu_css_pipe *css_pipe = &css->pipes[pipe];
+	struct imgu_fw_info *bi =
 		&css->fwp->binary_header[css_pipe->bindex];
 
-	काष्ठा process_lines pl = अणु
+	struct process_lines pl = {
 		.image_height = css_pipe->rect[IPU3_CSS_RECT_BDS].height,
 		.grid_height = af_config->config.grid_cfg.height,
 		.block_height =
@@ -1653,22 +1652,22 @@ imgu_css_acc_process_lines(स्थिर काष्ठा process_lines *pl,
 		.max_op = IMGU_ABI_AF_MAX_OPERATIONS,
 		.max_tr = IMGU_ABI_AF_MAX_TRANSFERS,
 		.acc_enable = bi->info.isp.sp.enable.af,
-	पूर्ण;
+	};
 
-	वापस imgu_css_acc_process_lines(&pl, to->ops, to->process_lines_data,
-					  शून्य);
-पूर्ण
+	return imgu_css_acc_process_lines(&pl, to->ops, to->process_lines_data,
+					  NULL);
+}
 
-अटल पूर्णांक
-imgu_css_awb_fr_ops_calc(काष्ठा imgu_css *css, अचिन्हित पूर्णांक pipe,
-			 काष्ठा imgu_abi_awb_fr_config *awb_fr_config)
-अणु
-	काष्ठा imgu_abi_awb_fr_पूर्णांकra_frame_operations_data *to =
+static int
+imgu_css_awb_fr_ops_calc(struct imgu_css *css, unsigned int pipe,
+			 struct imgu_abi_awb_fr_config *awb_fr_config)
+{
+	struct imgu_abi_awb_fr_intra_frame_operations_data *to =
 		&awb_fr_config->operations_data;
-	काष्ठा imgu_css_pipe *css_pipe = &css->pipes[pipe];
-	काष्ठा imgu_fw_info *bi =
+	struct imgu_css_pipe *css_pipe = &css->pipes[pipe];
+	struct imgu_fw_info *bi =
 		&css->fwp->binary_header[css_pipe->bindex];
-	काष्ठा process_lines pl = अणु
+	struct process_lines pl = {
 		.image_height = css_pipe->rect[IPU3_CSS_RECT_BDS].height,
 		.grid_height = awb_fr_config->config.grid_cfg.height,
 		.block_height =
@@ -1680,22 +1679,22 @@ imgu_css_awb_fr_ops_calc(काष्ठा imgu_css *css, अचिन्हि
 		.max_op = IMGU_ABI_AWB_FR_MAX_OPERATIONS,
 		.max_tr = IMGU_ABI_AWB_FR_MAX_PROCESS_LINES,
 		.acc_enable = bi->info.isp.sp.enable.awb_fr_acc,
-	पूर्ण;
+	};
 
-	वापस imgu_css_acc_process_lines(&pl, to->ops, to->process_lines_data,
-					  शून्य);
-पूर्ण
+	return imgu_css_acc_process_lines(&pl, to->ops, to->process_lines_data,
+					  NULL);
+}
 
-अटल पूर्णांक imgu_css_awb_ops_calc(काष्ठा imgu_css *css, अचिन्हित पूर्णांक pipe,
-				 काष्ठा imgu_abi_awb_config *awb_config)
-अणु
-	काष्ठा imgu_abi_awb_पूर्णांकra_frame_operations_data *to =
+static int imgu_css_awb_ops_calc(struct imgu_css *css, unsigned int pipe,
+				 struct imgu_abi_awb_config *awb_config)
+{
+	struct imgu_abi_awb_intra_frame_operations_data *to =
 		&awb_config->operations_data;
-	काष्ठा imgu_css_pipe *css_pipe = &css->pipes[pipe];
-	काष्ठा imgu_fw_info *bi =
+	struct imgu_css_pipe *css_pipe = &css->pipes[pipe];
+	struct imgu_fw_info *bi =
 		&css->fwp->binary_header[css_pipe->bindex];
 
-	काष्ठा process_lines pl = अणु
+	struct process_lines pl = {
 		.image_height = css_pipe->rect[IPU3_CSS_RECT_BDS].height,
 		.grid_height = awb_config->config.grid.height,
 		.block_height =
@@ -1706,56 +1705,56 @@ imgu_css_awb_fr_ops_calc(काष्ठा imgu_css *css, अचिन्हि
 		.max_op = IMGU_ABI_AWB_MAX_OPERATIONS,
 		.max_tr = IMGU_ABI_AWB_MAX_TRANSFERS,
 		.acc_enable = bi->info.isp.sp.enable.awb_acc,
-	पूर्ण;
+	};
 
-	वापस imgu_css_acc_process_lines(&pl, to->ops, to->process_lines_data,
+	return imgu_css_acc_process_lines(&pl, to->ops, to->process_lines_data,
 					  to->transfer_data);
-पूर्ण
+}
 
-अटल u16 imgu_css_grid_end(u16 start, u8 width, u8 block_width_log2)
-अणु
-	वापस (start & IPU3_UAPI_GRID_START_MASK) +
+static u16 imgu_css_grid_end(u16 start, u8 width, u8 block_width_log2)
+{
+	return (start & IPU3_UAPI_GRID_START_MASK) +
 		(width << block_width_log2) - 1;
-पूर्ण
+}
 
-अटल व्योम imgu_css_grid_end_calc(काष्ठा ipu3_uapi_grid_config *grid_cfg)
-अणु
+static void imgu_css_grid_end_calc(struct ipu3_uapi_grid_config *grid_cfg)
+{
 	grid_cfg->x_end = imgu_css_grid_end(grid_cfg->x_start, grid_cfg->width,
 					    grid_cfg->block_width_log2);
 	grid_cfg->y_end = imgu_css_grid_end(grid_cfg->y_start, grid_cfg->height,
 					    grid_cfg->block_height_log2);
-पूर्ण
+}
 
 /****************** config computation *****************************/
 
-अटल पूर्णांक imgu_css_cfg_acc_stripe(काष्ठा imgu_css *css, अचिन्हित पूर्णांक pipe,
-				   काष्ठा imgu_abi_acc_param *acc)
-अणु
-	काष्ठा imgu_css_pipe *css_pipe = &css->pipes[pipe];
-	स्थिर काष्ठा imgu_fw_info *bi =
+static int imgu_css_cfg_acc_stripe(struct imgu_css *css, unsigned int pipe,
+				   struct imgu_abi_acc_param *acc)
+{
+	struct imgu_css_pipe *css_pipe = &css->pipes[pipe];
+	const struct imgu_fw_info *bi =
 		&css->fwp->binary_header[css_pipe->bindex];
-	काष्ठा imgu_css_scaler_info scaler_luma, scaler_chroma;
-	स्थिर अचिन्हित पूर्णांक stripes = bi->info.isp.sp.iterator.num_stripes;
-	स्थिर अचिन्हित पूर्णांक f = IPU3_UAPI_ISP_VEC_ELEMS * 2;
-	अचिन्हित पूर्णांक bds_ds, i;
+	struct imgu_css_scaler_info scaler_luma, scaler_chroma;
+	const unsigned int stripes = bi->info.isp.sp.iterator.num_stripes;
+	const unsigned int f = IPU3_UAPI_ISP_VEC_ELEMS * 2;
+	unsigned int bds_ds, i;
 
-	स_रखो(acc, 0, माप(*acc));
+	memset(acc, 0, sizeof(*acc));
 
 	/* acc_param: osys_config */
 
-	अगर (imgu_css_osys_calc(css, pipe, stripes, &acc->osys, &scaler_luma,
+	if (imgu_css_osys_calc(css, pipe, stripes, &acc->osys, &scaler_luma,
 			       &scaler_chroma, acc->stripe.block_stripes))
-		वापस -EINVAL;
+		return -EINVAL;
 
 	/* acc_param: stripe data */
 
 	/*
-	 * For the striped हाल the approach is as follows:
-	 * 1. करोwn-scaled stripes are calculated - with 128 overlap
-	 *    (this is the मुख्य limiter thereक्रमe it's first)
-	 * 2. input stripes are derived by up-scaling the करोwn-scaled stripes
+	 * For the striped case the approach is as follows:
+	 * 1. down-scaled stripes are calculated - with 128 overlap
+	 *    (this is the main limiter therefore it's first)
+	 * 2. input stripes are derived by up-scaling the down-scaled stripes
 	 *    (there are no alignment requirements on input stripes)
-	 * 3. output stripes are derived from करोwn-scaled stripes too
+	 * 3. output stripes are derived from down-scaled stripes too
 	 */
 
 	acc->stripe.num_of_stripes = stripes;
@@ -1766,35 +1765,35 @@ imgu_css_awb_fr_ops_calc(काष्ठा imgu_css *css, अचिन्हि
 	acc->stripe.input_frame.bayer_order =
 		css_pipe->queue[IPU3_CSS_QUEUE_IN].css_fmt->bayer_order;
 
-	क्रम (i = 0; i < stripes; i++)
+	for (i = 0; i < stripes; i++)
 		acc->stripe.bds_out_stripes[i].height =
 					css_pipe->rect[IPU3_CSS_RECT_BDS].height;
 	acc->stripe.bds_out_stripes[0].offset = 0;
-	अगर (stripes <= 1) अणु
+	if (stripes <= 1) {
 		acc->stripe.bds_out_stripes[0].width =
 			ALIGN(css_pipe->rect[IPU3_CSS_RECT_BDS].width, f);
-	पूर्ण अन्यथा अणु
-		/* Image processing is भागided पूर्णांकo two stripes */
+	} else {
+		/* Image processing is divided into two stripes */
 		acc->stripe.bds_out_stripes[0].width =
 			acc->stripe.bds_out_stripes[1].width =
 			(css_pipe->rect[IPU3_CSS_RECT_BDS].width / 2 & ~(f - 1)) + f;
 		/*
 		 * Sum of width of the two stripes should not be smaller
-		 * than output width and must be even बार of overlapping
+		 * than output width and must be even times of overlapping
 		 * unit f.
 		 */
-		अगर ((css_pipe->rect[IPU3_CSS_RECT_BDS].width / f & 1) !=
+		if ((css_pipe->rect[IPU3_CSS_RECT_BDS].width / f & 1) !=
 		    !!(css_pipe->rect[IPU3_CSS_RECT_BDS].width & (f - 1)))
 			acc->stripe.bds_out_stripes[0].width += f;
-		अगर ((css_pipe->rect[IPU3_CSS_RECT_BDS].width / f & 1) &&
-		    (css_pipe->rect[IPU3_CSS_RECT_BDS].width & (f - 1))) अणु
+		if ((css_pipe->rect[IPU3_CSS_RECT_BDS].width / f & 1) &&
+		    (css_pipe->rect[IPU3_CSS_RECT_BDS].width & (f - 1))) {
 			acc->stripe.bds_out_stripes[0].width += f;
 			acc->stripe.bds_out_stripes[1].width += f;
-		पूर्ण
+		}
 		/* Overlap between stripes is IPU3_UAPI_ISP_VEC_ELEMS * 4 */
 		acc->stripe.bds_out_stripes[1].offset =
 			acc->stripe.bds_out_stripes[0].width - 2 * f;
-	पूर्ण
+	}
 
 	acc->stripe.effective_stripes[0].height =
 				css_pipe->rect[IPU3_CSS_RECT_EFFECTIVE].height;
@@ -1805,12 +1804,12 @@ imgu_css_awb_fr_ops_calc(काष्ठा imgu_css *css, अचिन्हि
 	acc->stripe.output_stripes[0].height =
 				css_pipe->queue[IPU3_CSS_QUEUE_OUT].fmt.mpix.height;
 	acc->stripe.output_stripes[0].offset = 0;
-	अगर (stripes <= 1) अणु
-		acc->stripe.करोwn_scaled_stripes[0].width =
+	if (stripes <= 1) {
+		acc->stripe.down_scaled_stripes[0].width =
 				css_pipe->rect[IPU3_CSS_RECT_BDS].width;
-		acc->stripe.करोwn_scaled_stripes[0].height =
+		acc->stripe.down_scaled_stripes[0].height =
 				css_pipe->rect[IPU3_CSS_RECT_BDS].height;
-		acc->stripe.करोwn_scaled_stripes[0].offset = 0;
+		acc->stripe.down_scaled_stripes[0].offset = 0;
 
 		acc->stripe.effective_stripes[0].width =
 				css_pipe->rect[IPU3_CSS_RECT_EFFECTIVE].width;
@@ -1819,30 +1818,30 @@ imgu_css_awb_fr_ops_calc(काष्ठा imgu_css *css, अचिन्हि
 
 		acc->stripe.output_stripes[0].width =
 			css_pipe->queue[IPU3_CSS_QUEUE_OUT].fmt.mpix.width;
-	पूर्ण अन्यथा अणु /* Two stripes */
+	} else { /* Two stripes */
 		bds_ds = css_pipe->rect[IPU3_CSS_RECT_EFFECTIVE].width *
 				IMGU_BDS_GRANULARITY /
 				css_pipe->rect[IPU3_CSS_RECT_BDS].width;
 
-		acc->stripe.करोwn_scaled_stripes[0] =
+		acc->stripe.down_scaled_stripes[0] =
 			acc->stripe.bds_out_stripes[0];
-		acc->stripe.करोwn_scaled_stripes[1] =
+		acc->stripe.down_scaled_stripes[1] =
 			acc->stripe.bds_out_stripes[1];
-		अगर (!IS_ALIGNED(css_pipe->rect[IPU3_CSS_RECT_BDS].width, f))
-			acc->stripe.करोwn_scaled_stripes[1].width +=
+		if (!IS_ALIGNED(css_pipe->rect[IPU3_CSS_RECT_BDS].width, f))
+			acc->stripe.down_scaled_stripes[1].width +=
 				(css_pipe->rect[IPU3_CSS_RECT_BDS].width
 				& (f - 1)) - f;
 
 		acc->stripe.effective_stripes[0].width = bds_ds *
-			acc->stripe.करोwn_scaled_stripes[0].width /
+			acc->stripe.down_scaled_stripes[0].width /
 			IMGU_BDS_GRANULARITY;
 		acc->stripe.effective_stripes[1].width = bds_ds *
-			acc->stripe.करोwn_scaled_stripes[1].width /
+			acc->stripe.down_scaled_stripes[1].width /
 			IMGU_BDS_GRANULARITY;
 		acc->stripe.effective_stripes[1].height =
 			css_pipe->rect[IPU3_CSS_RECT_EFFECTIVE].height;
 		acc->stripe.effective_stripes[1].offset = bds_ds *
-			acc->stripe.करोwn_scaled_stripes[1].offset /
+			acc->stripe.down_scaled_stripes[1].offset /
 			IMGU_BDS_GRANULARITY;
 
 		acc->stripe.bds_out_stripes_no_overlap[0].width =
@@ -1855,18 +1854,18 @@ imgu_css_awb_fr_ops_calc(काष्ठा imgu_css *css, अचिन्हि
 			css_pipe->rect[IPU3_CSS_RECT_BDS].height;
 
 		acc->stripe.output_stripes[0].width =
-			acc->stripe.करोwn_scaled_stripes[0].width - f;
+			acc->stripe.down_scaled_stripes[0].width - f;
 		acc->stripe.output_stripes[1].width =
-			acc->stripe.करोwn_scaled_stripes[1].width - f;
+			acc->stripe.down_scaled_stripes[1].width - f;
 		acc->stripe.output_stripes[1].height =
 			css_pipe->queue[IPU3_CSS_QUEUE_OUT].fmt.mpix.height;
 		acc->stripe.output_stripes[1].offset =
 			acc->stripe.output_stripes[0].width;
-	पूर्ण
+	}
 
-	acc->stripe.output_प्रणाली_in_frame_width =
+	acc->stripe.output_system_in_frame_width =
 		css_pipe->rect[IPU3_CSS_RECT_GDC].width;
-	acc->stripe.output_प्रणाली_in_frame_height =
+	acc->stripe.output_system_in_frame_height =
 		css_pipe->rect[IPU3_CSS_RECT_GDC].height;
 
 	acc->stripe.effective_frame_width =
@@ -1891,21 +1890,21 @@ imgu_css_awb_fr_ops_calc(काष्ठा imgu_css *css, अचिन्हि
 		roundup(css_pipe->rect[IPU3_CSS_RECT_BDS].width,
 			2 * IPU3_UAPI_ISP_VEC_ELEMS);
 
-	अगर (stripes > 1)
+	if (stripes > 1)
 		acc->stripe.half_overlap_vectors =
 			IMGU_STRIPE_FIXED_HALF_OVERLAP;
-	अन्यथा
+	else
 		acc->stripe.half_overlap_vectors = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम imgu_css_cfg_acc_dvs(काष्ठा imgu_css *css,
-				 काष्ठा imgu_abi_acc_param *acc,
-				 अचिन्हित पूर्णांक pipe)
-अणु
-	अचिन्हित पूर्णांक i;
-	काष्ठा imgu_css_pipe *css_pipe = &css->pipes[pipe];
+static void imgu_css_cfg_acc_dvs(struct imgu_css *css,
+				 struct imgu_abi_acc_param *acc,
+				 unsigned int pipe)
+{
+	unsigned int i;
+	struct imgu_css_pipe *css_pipe = &css->pipes[pipe];
 
 	/* Disable DVS statistics */
 	acc->dvs_stat.operations_data.process_lines_data[0].lines =
@@ -1915,15 +1914,15 @@ imgu_css_awb_fr_ops_calc(काष्ठा imgu_css *css, अचिन्हि
 		IMGU_ABI_ACC_OPTYPE_PROCESS_LINES;
 	acc->dvs_stat.operations_data.ops[0].op_indicator =
 		IMGU_ABI_ACC_OP_NO_OPS;
-	क्रम (i = 0; i < IMGU_ABI_DVS_STAT_LEVELS; i++)
+	for (i = 0; i < IMGU_ABI_DVS_STAT_LEVELS; i++)
 		acc->dvs_stat.cfg.grd_config[i].enable = 0;
-पूर्ण
+}
 
-अटल व्योम acc_bds_per_stripe_data(काष्ठा imgu_css *css,
-				    काष्ठा imgu_abi_acc_param *acc,
-				    स्थिर पूर्णांक i, अचिन्हित पूर्णांक pipe)
-अणु
-	काष्ठा imgu_css_pipe *css_pipe = &css->pipes[pipe];
+static void acc_bds_per_stripe_data(struct imgu_css *css,
+				    struct imgu_abi_acc_param *acc,
+				    const int i, unsigned int pipe)
+{
+	struct imgu_css_pipe *css_pipe = &css->pipes[pipe];
 
 	acc->bds.per_stripe.aligned_data[i].data.crop.hor_crop_en = 0;
 	acc->bds.per_stripe.aligned_data[i].data.crop.hor_crop_start = 0;
@@ -1931,44 +1930,44 @@ imgu_css_awb_fr_ops_calc(काष्ठा imgu_css *css, अचिन्हि
 	acc->bds.per_stripe.aligned_data[i].data.hor_ctrl0 =
 		acc->bds.hor.hor_ctrl0;
 	acc->bds.per_stripe.aligned_data[i].data.hor_ctrl0.out_frame_width =
-		acc->stripe.करोwn_scaled_stripes[i].width;
+		acc->stripe.down_scaled_stripes[i].width;
 	acc->bds.per_stripe.aligned_data[i].data.ver_ctrl1.out_frame_width =
-		acc->stripe.करोwn_scaled_stripes[i].width;
+		acc->stripe.down_scaled_stripes[i].width;
 	acc->bds.per_stripe.aligned_data[i].data.ver_ctrl1.out_frame_height =
 		css_pipe->rect[IPU3_CSS_RECT_BDS].height;
-पूर्ण
+}
 
 /*
- * Configure `acc' parameters. `acc_old' contains the old values (or is शून्य)
+ * Configure `acc' parameters. `acc_old' contains the old values (or is NULL)
  * and `acc_user' contains new prospective values. `use' contains flags
- * telling which fields to take from the old values (or generate अगर it is शून्य)
+ * telling which fields to take from the old values (or generate if it is NULL)
  * and which to take from the new user values.
  */
-पूर्णांक imgu_css_cfg_acc(काष्ठा imgu_css *css, अचिन्हित पूर्णांक pipe,
-		     काष्ठा ipu3_uapi_flags *use,
-		     काष्ठा imgu_abi_acc_param *acc,
-		     काष्ठा imgu_abi_acc_param *acc_old,
-		     काष्ठा ipu3_uapi_acc_param *acc_user)
-अणु
-	काष्ठा imgu_css_pipe *css_pipe = &css->pipes[pipe];
-	स्थिर काष्ठा imgu_fw_info *bi =
+int imgu_css_cfg_acc(struct imgu_css *css, unsigned int pipe,
+		     struct ipu3_uapi_flags *use,
+		     struct imgu_abi_acc_param *acc,
+		     struct imgu_abi_acc_param *acc_old,
+		     struct ipu3_uapi_acc_param *acc_user)
+{
+	struct imgu_css_pipe *css_pipe = &css->pipes[pipe];
+	const struct imgu_fw_info *bi =
 		&css->fwp->binary_header[css_pipe->bindex];
-	स्थिर अचिन्हित पूर्णांक stripes = bi->info.isp.sp.iterator.num_stripes;
-	स्थिर अचिन्हित पूर्णांक tnr_frame_width =
+	const unsigned int stripes = bi->info.isp.sp.iterator.num_stripes;
+	const unsigned int tnr_frame_width =
 		acc->stripe.bds_aligned_frame_width;
-	स्थिर अचिन्हित पूर्णांक min_overlap = 10;
-	स्थिर काष्ठा v4l2_pix_क्रमmat_mplane *pixm =
+	const unsigned int min_overlap = 10;
+	const struct v4l2_pix_format_mplane *pixm =
 		&css_pipe->queue[IPU3_CSS_QUEUE_IN].fmt.mpix;
-	स्थिर काष्ठा imgu_css_bds_config *cfg_bds;
-	काष्ठा imgu_abi_input_feeder_data *feeder_data;
+	const struct imgu_css_bds_config *cfg_bds;
+	struct imgu_abi_input_feeder_data *feeder_data;
 
-	अचिन्हित पूर्णांक bds_ds, ofs_x, ofs_y, i, width, height;
+	unsigned int bds_ds, ofs_x, ofs_y, i, width, height;
 	u8 b_w_log2; /* Block width log2 */
 
 	/* Update stripe using chroma and luma */
 
-	अगर (imgu_css_cfg_acc_stripe(css, pipe, acc))
-		वापस -EINVAL;
+	if (imgu_css_cfg_acc_stripe(css, pipe, acc))
+		return -EINVAL;
 
 	/* acc_param: input_feeder_config */
 
@@ -2003,292 +2002,292 @@ imgu_css_awb_fr_ops_calc(काष्ठा imgu_css *css, अचिन्हि
 		ofs_y * acc->input_feeder.data.row_stride;
 	feeder_data->start_pixel = ofs_x % IMGU_PIXELS_PER_WORD;
 
-	/* acc_param: bnr_अटल_config */
+	/* acc_param: bnr_static_config */
 
 	/*
-	 * Originate from user or be the original शेष values अगर user has
-	 * never set them beक्रमe, when user gives a new set of parameters,
-	 * क्रम each chunk in the parameter काष्ठाure there is a flag use->xxx
+	 * Originate from user or be the original default values if user has
+	 * never set them before, when user gives a new set of parameters,
+	 * for each chunk in the parameter structure there is a flag use->xxx
 	 * whether to use the user-provided parameter or not. If not, the
-	 * parameter reमुख्यs unchanged in the driver:
+	 * parameter remains unchanged in the driver:
 	 * it's value is taken from acc_old.
 	 */
-	अगर (use && use->acc_bnr) अणु
+	if (use && use->acc_bnr) {
 		/* Take values from user */
 		acc->bnr = acc_user->bnr;
-	पूर्ण अन्यथा अगर (acc_old) अणु
+	} else if (acc_old) {
 		/* Use old value */
 		acc->bnr = acc_old->bnr;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Calculate from scratch */
-		acc->bnr = imgu_css_bnr_शेषs;
-	पूर्ण
+		acc->bnr = imgu_css_bnr_defaults;
+	}
 
 	acc->bnr.column_size = tnr_frame_width;
 
-	/* acc_param: bnr_अटल_config_green_disparity */
+	/* acc_param: bnr_static_config_green_disparity */
 
-	अगर (use && use->acc_green_disparity) अणु
+	if (use && use->acc_green_disparity) {
 		/* Take values from user */
 		acc->green_disparity = acc_user->green_disparity;
-	पूर्ण अन्यथा अगर (acc_old) अणु
+	} else if (acc_old) {
 		/* Use old value */
 		acc->green_disparity = acc_old->green_disparity;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Calculate from scratch */
-		स_रखो(&acc->green_disparity, 0, माप(acc->green_disparity));
-	पूर्ण
+		memset(&acc->green_disparity, 0, sizeof(acc->green_disparity));
+	}
 
 	/* acc_param: dm_config */
 
-	अगर (use && use->acc_dm) अणु
+	if (use && use->acc_dm) {
 		/* Take values from user */
 		acc->dm = acc_user->dm;
-	पूर्ण अन्यथा अगर (acc_old) अणु
+	} else if (acc_old) {
 		/* Use old value */
 		acc->dm = acc_old->dm;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Calculate from scratch */
-		acc->dm = imgu_css_dm_शेषs;
-	पूर्ण
+		acc->dm = imgu_css_dm_defaults;
+	}
 
 	acc->dm.frame_width = tnr_frame_width;
 
 	/* acc_param: ccm_mat_config */
 
-	अगर (use && use->acc_ccm) अणु
+	if (use && use->acc_ccm) {
 		/* Take values from user */
 		acc->ccm = acc_user->ccm;
-	पूर्ण अन्यथा अगर (acc_old) अणु
+	} else if (acc_old) {
 		/* Use old value */
 		acc->ccm = acc_old->ccm;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Calculate from scratch */
-		acc->ccm = imgu_css_ccm_शेषs;
-	पूर्ण
+		acc->ccm = imgu_css_ccm_defaults;
+	}
 
 	/* acc_param: gamma_config */
 
-	अगर (use && use->acc_gamma) अणु
+	if (use && use->acc_gamma) {
 		/* Take values from user */
 		acc->gamma = acc_user->gamma;
-	पूर्ण अन्यथा अगर (acc_old) अणु
+	} else if (acc_old) {
 		/* Use old value */
 		acc->gamma = acc_old->gamma;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Calculate from scratch */
 		acc->gamma.gc_ctrl.enable = 1;
 		acc->gamma.gc_lut = imgu_css_gamma_lut;
-	पूर्ण
+	}
 
 	/* acc_param: csc_mat_config */
 
-	अगर (use && use->acc_csc) अणु
+	if (use && use->acc_csc) {
 		/* Take values from user */
 		acc->csc = acc_user->csc;
-	पूर्ण अन्यथा अगर (acc_old) अणु
+	} else if (acc_old) {
 		/* Use old value */
 		acc->csc = acc_old->csc;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Calculate from scratch */
-		acc->csc = imgu_css_csc_शेषs;
-	पूर्ण
+		acc->csc = imgu_css_csc_defaults;
+	}
 
 	/* acc_param: cds_params */
 
-	अगर (use && use->acc_cds) अणु
+	if (use && use->acc_cds) {
 		/* Take values from user */
 		acc->cds = acc_user->cds;
-	पूर्ण अन्यथा अगर (acc_old) अणु
+	} else if (acc_old) {
 		/* Use old value */
 		acc->cds = acc_old->cds;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Calculate from scratch */
-		acc->cds = imgu_css_cds_शेषs;
-	पूर्ण
+		acc->cds = imgu_css_cds_defaults;
+	}
 
 	/* acc_param: shd_config */
 
-	अगर (use && use->acc_shd) अणु
+	if (use && use->acc_shd) {
 		/* Take values from user */
 		acc->shd.shd = acc_user->shd.shd;
 		acc->shd.shd_lut = acc_user->shd.shd_lut;
-	पूर्ण अन्यथा अगर (acc_old) अणु
+	} else if (acc_old) {
 		/* Use old value */
 		acc->shd.shd = acc_old->shd.shd;
 		acc->shd.shd_lut = acc_old->shd.shd_lut;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Calculate from scratch */
-		acc->shd.shd = imgu_css_shd_शेषs;
-		स_रखो(&acc->shd.shd_lut, 0, माप(acc->shd.shd_lut));
-	पूर्ण
+		acc->shd.shd = imgu_css_shd_defaults;
+		memset(&acc->shd.shd_lut, 0, sizeof(acc->shd.shd_lut));
+	}
 
-	अगर (acc->shd.shd.grid.width <= 0)
-		वापस -EINVAL;
+	if (acc->shd.shd.grid.width <= 0)
+		return -EINVAL;
 
 	acc->shd.shd.grid.grid_height_per_slice =
 		IMGU_ABI_SHD_MAX_CELLS_PER_SET / acc->shd.shd.grid.width;
 
-	अगर (acc->shd.shd.grid.grid_height_per_slice <= 0)
-		वापस -EINVAL;
+	if (acc->shd.shd.grid.grid_height_per_slice <= 0)
+		return -EINVAL;
 
 	acc->shd.shd.general.init_set_vrt_offst_ul =
 				(-acc->shd.shd.grid.y_start >>
 				 acc->shd.shd.grid.block_height_log2) %
 				acc->shd.shd.grid.grid_height_per_slice;
 
-	अगर (imgu_css_shd_ops_calc(&acc->shd.shd_ops, &acc->shd.shd.grid,
+	if (imgu_css_shd_ops_calc(&acc->shd.shd_ops, &acc->shd.shd.grid,
 				  css_pipe->rect[IPU3_CSS_RECT_BDS].height))
-		वापस -EINVAL;
+		return -EINVAL;
 
 	/* acc_param: dvs_stat_config */
 	imgu_css_cfg_acc_dvs(css, acc, pipe);
 
 	/* acc_param: yuvp1_iefd_config */
 
-	अगर (use && use->acc_iefd) अणु
+	if (use && use->acc_iefd) {
 		/* Take values from user */
 		acc->iefd = acc_user->iefd;
-	पूर्ण अन्यथा अगर (acc_old) अणु
+	} else if (acc_old) {
 		/* Use old value */
 		acc->iefd = acc_old->iefd;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Calculate from scratch */
-		acc->iefd = imgu_css_iefd_शेषs;
-	पूर्ण
+		acc->iefd = imgu_css_iefd_defaults;
+	}
 
 	/* acc_param: yuvp1_yds_config yds_c0 */
 
-	अगर (use && use->acc_yds_c0) अणु
+	if (use && use->acc_yds_c0) {
 		/* Take values from user */
 		acc->yds_c0 = acc_user->yds_c0;
-	पूर्ण अन्यथा अगर (acc_old) अणु
+	} else if (acc_old) {
 		/* Use old value */
 		acc->yds_c0 = acc_old->yds_c0;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Calculate from scratch */
-		acc->yds_c0 = imgu_css_yds_शेषs;
-	पूर्ण
+		acc->yds_c0 = imgu_css_yds_defaults;
+	}
 
 	/* acc_param: yuvp1_chnr_config chnr_c0 */
 
-	अगर (use && use->acc_chnr_c0) अणु
+	if (use && use->acc_chnr_c0) {
 		/* Take values from user */
 		acc->chnr_c0 = acc_user->chnr_c0;
-	पूर्ण अन्यथा अगर (acc_old) अणु
+	} else if (acc_old) {
 		/* Use old value */
 		acc->chnr_c0 = acc_old->chnr_c0;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Calculate from scratch */
-		acc->chnr_c0 = imgu_css_chnr_शेषs;
-	पूर्ण
+		acc->chnr_c0 = imgu_css_chnr_defaults;
+	}
 
 	/* acc_param: yuvp1_y_ee_nr_config */
 
-	अगर (use && use->acc_y_ee_nr) अणु
+	if (use && use->acc_y_ee_nr) {
 		/* Take values from user */
 		acc->y_ee_nr = acc_user->y_ee_nr;
-	पूर्ण अन्यथा अगर (acc_old) अणु
+	} else if (acc_old) {
 		/* Use old value */
 		acc->y_ee_nr = acc_old->y_ee_nr;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Calculate from scratch */
-		acc->y_ee_nr = imgu_css_y_ee_nr_शेषs;
-	पूर्ण
+		acc->y_ee_nr = imgu_css_y_ee_nr_defaults;
+	}
 
 	/* acc_param: yuvp1_yds_config yds */
 
-	अगर (use && use->acc_yds) अणु
+	if (use && use->acc_yds) {
 		/* Take values from user */
 		acc->yds = acc_user->yds;
-	पूर्ण अन्यथा अगर (acc_old) अणु
+	} else if (acc_old) {
 		/* Use old value */
 		acc->yds = acc_old->yds;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Calculate from scratch */
-		acc->yds = imgu_css_yds_शेषs;
-	पूर्ण
+		acc->yds = imgu_css_yds_defaults;
+	}
 
 	/* acc_param: yuvp1_chnr_config chnr */
 
-	अगर (use && use->acc_chnr) अणु
+	if (use && use->acc_chnr) {
 		/* Take values from user */
 		acc->chnr = acc_user->chnr;
-	पूर्ण अन्यथा अगर (acc_old) अणु
+	} else if (acc_old) {
 		/* Use old value */
 		acc->chnr = acc_old->chnr;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Calculate from scratch */
-		acc->chnr = imgu_css_chnr_शेषs;
-	पूर्ण
+		acc->chnr = imgu_css_chnr_defaults;
+	}
 
-	/* acc_param: yuvp2_y_पंचांग_lut_अटल_config */
+	/* acc_param: yuvp2_y_tm_lut_static_config */
 
-	क्रम (i = 0; i < IMGU_ABI_YUVP2_YTM_LUT_ENTRIES; i++)
-		acc->yपंचांग.entries[i] = i * 32;
-	acc->yपंचांग.enable = 0;	/* Always disabled on IPU3 */
+	for (i = 0; i < IMGU_ABI_YUVP2_YTM_LUT_ENTRIES; i++)
+		acc->ytm.entries[i] = i * 32;
+	acc->ytm.enable = 0;	/* Always disabled on IPU3 */
 
 	/* acc_param: yuvp1_yds_config yds2 */
 
-	अगर (use && use->acc_yds2) अणु
+	if (use && use->acc_yds2) {
 		/* Take values from user */
 		acc->yds2 = acc_user->yds2;
-	पूर्ण अन्यथा अगर (acc_old) अणु
+	} else if (acc_old) {
 		/* Use old value */
 		acc->yds2 = acc_old->yds2;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Calculate from scratch */
-		acc->yds2 = imgu_css_yds_शेषs;
-	पूर्ण
+		acc->yds2 = imgu_css_yds_defaults;
+	}
 
-	/* acc_param: yuvp2_tcc_अटल_config */
+	/* acc_param: yuvp2_tcc_static_config */
 
-	अगर (use && use->acc_tcc) अणु
+	if (use && use->acc_tcc) {
 		/* Take values from user */
 		acc->tcc = acc_user->tcc;
-	पूर्ण अन्यथा अगर (acc_old) अणु
+	} else if (acc_old) {
 		/* Use old value */
 		acc->tcc = acc_old->tcc;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Calculate from scratch */
-		स_रखो(&acc->tcc, 0, माप(acc->tcc));
+		memset(&acc->tcc, 0, sizeof(acc->tcc));
 
 		acc->tcc.gen_control.en = 1;
-		acc->tcc.gen_control.blend_shअगरt = 3;
+		acc->tcc.gen_control.blend_shift = 3;
 		acc->tcc.gen_control.gain_according_to_y_only = 1;
 		acc->tcc.gen_control.gamma = 8;
 		acc->tcc.gen_control.delta = 0;
 
-		क्रम (i = 0; i < IPU3_UAPI_YUVP2_TCC_MACC_TABLE_ELEMENTS; i++) अणु
+		for (i = 0; i < IPU3_UAPI_YUVP2_TCC_MACC_TABLE_ELEMENTS; i++) {
 			acc->tcc.macc_table.entries[i].a = 1024;
 			acc->tcc.macc_table.entries[i].b = 0;
 			acc->tcc.macc_table.entries[i].c = 0;
 			acc->tcc.macc_table.entries[i].d = 1024;
-		पूर्ण
+		}
 
 		acc->tcc.inv_y_lut.entries[6] = 1023;
-		क्रम (i = 7; i < IPU3_UAPI_YUVP2_TCC_INV_Y_LUT_ELEMENTS; i++)
+		for (i = 7; i < IPU3_UAPI_YUVP2_TCC_INV_Y_LUT_ELEMENTS; i++)
 			acc->tcc.inv_y_lut.entries[i] = 1024 >> (i - 6);
 
 		acc->tcc.gain_pcwl = imgu_css_tcc_gain_pcwl_lut;
 		acc->tcc.r_sqr_lut = imgu_css_tcc_r_sqr_lut;
-	पूर्ण
+	}
 
 	/* acc_param: dpc_config */
 
-	अगर (use && use->acc_dpc)
-		वापस -EINVAL;	/* Not supported yet */
+	if (use && use->acc_dpc)
+		return -EINVAL;	/* Not supported yet */
 
-	/* Just disable by शेष */
-	स_रखो(&acc->dpc, 0, माप(acc->dpc));
+	/* Just disable by default */
+	memset(&acc->dpc, 0, sizeof(acc->dpc));
 
 	/* acc_param: bds_config */
 
 	bds_ds = (css_pipe->rect[IPU3_CSS_RECT_EFFECTIVE].height *
 		  IMGU_BDS_GRANULARITY) / css_pipe->rect[IPU3_CSS_RECT_BDS].height;
-	अगर (bds_ds < IMGU_BDS_MIN_SF_INV ||
+	if (bds_ds < IMGU_BDS_MIN_SF_INV ||
 	    bds_ds - IMGU_BDS_MIN_SF_INV >= ARRAY_SIZE(imgu_css_bds_configs))
-		वापस -EINVAL;
+		return -EINVAL;
 
 	cfg_bds = &imgu_css_bds_configs[bds_ds - IMGU_BDS_MIN_SF_INV];
 	acc->bds.hor.hor_ctrl1.hor_crop_en = 0;
@@ -2316,35 +2315,35 @@ imgu_css_awb_fr_ops_calc(काष्ठा imgu_css *css, अचिन्हि
 				css_pipe->rect[IPU3_CSS_RECT_BDS].width;
 	acc->bds.ver.ver_ctrl1.out_frame_height =
 				css_pipe->rect[IPU3_CSS_RECT_BDS].height;
-	क्रम (i = 0; i < stripes; i++)
+	for (i = 0; i < stripes; i++)
 		acc_bds_per_stripe_data(css, acc, i, pipe);
 
 	acc->bds.enabled = cfg_bds->hor_ds_en || cfg_bds->ver_ds_en;
 
 	/* acc_param: anr_config */
 
-	अगर (use && use->acc_anr) अणु
+	if (use && use->acc_anr) {
 		/* Take values from user */
-		acc->anr.transक्रमm = acc_user->anr.transक्रमm;
+		acc->anr.transform = acc_user->anr.transform;
 		acc->anr.stitch.anr_stitch_en =
 			acc_user->anr.stitch.anr_stitch_en;
-		स_नकल(acc->anr.stitch.pyramid, acc_user->anr.stitch.pyramid,
-		       माप(acc->anr.stitch.pyramid));
-	पूर्ण अन्यथा अगर (acc_old) अणु
+		memcpy(acc->anr.stitch.pyramid, acc_user->anr.stitch.pyramid,
+		       sizeof(acc->anr.stitch.pyramid));
+	} else if (acc_old) {
 		/* Use old value */
-		acc->anr.transक्रमm = acc_old->anr.transक्रमm;
+		acc->anr.transform = acc_old->anr.transform;
 		acc->anr.stitch.anr_stitch_en =
 			acc_old->anr.stitch.anr_stitch_en;
-		स_नकल(acc->anr.stitch.pyramid, acc_old->anr.stitch.pyramid,
-		       माप(acc->anr.stitch.pyramid));
-	पूर्ण अन्यथा अणु
+		memcpy(acc->anr.stitch.pyramid, acc_old->anr.stitch.pyramid,
+		       sizeof(acc->anr.stitch.pyramid));
+	} else {
 		/* Calculate from scratch */
-		acc->anr = imgu_css_anr_शेषs;
-	पूर्ण
+		acc->anr = imgu_css_anr_defaults;
+	}
 
 	/* Always enabled */
 	acc->anr.search.enable = 1;
-	acc->anr.transक्रमm.enable = 1;
+	acc->anr.transform.enable = 1;
 	acc->anr.tile2strm.enable = 1;
 	acc->anr.tile2strm.frame_width =
 		ALIGN(css_pipe->rect[IPU3_CSS_RECT_BDS].width, IMGU_ISP_VMEM_ALIGN);
@@ -2357,54 +2356,54 @@ imgu_css_awb_fr_ops_calc(काष्ठा imgu_css *css, अचिन्हि
 	width = ALIGN(css_pipe->rect[IPU3_CSS_RECT_BDS].width, IMGU_ISP_VMEM_ALIGN);
 	height = css_pipe->rect[IPU3_CSS_RECT_BDS].height;
 
-	अगर (acc->anr.transक्रमm.xreset + width > IPU3_UAPI_ANR_MAX_RESET)
-		acc->anr.transक्रमm.xreset = IPU3_UAPI_ANR_MAX_RESET - width;
-	अगर (acc->anr.transक्रमm.xreset < IPU3_UAPI_ANR_MIN_RESET)
-		acc->anr.transक्रमm.xreset = IPU3_UAPI_ANR_MIN_RESET;
+	if (acc->anr.transform.xreset + width > IPU3_UAPI_ANR_MAX_RESET)
+		acc->anr.transform.xreset = IPU3_UAPI_ANR_MAX_RESET - width;
+	if (acc->anr.transform.xreset < IPU3_UAPI_ANR_MIN_RESET)
+		acc->anr.transform.xreset = IPU3_UAPI_ANR_MIN_RESET;
 
-	अगर (acc->anr.transक्रमm.yreset + height > IPU3_UAPI_ANR_MAX_RESET)
-		acc->anr.transक्रमm.yreset = IPU3_UAPI_ANR_MAX_RESET - height;
-	अगर (acc->anr.transक्रमm.yreset < IPU3_UAPI_ANR_MIN_RESET)
-		acc->anr.transक्रमm.yreset = IPU3_UAPI_ANR_MIN_RESET;
+	if (acc->anr.transform.yreset + height > IPU3_UAPI_ANR_MAX_RESET)
+		acc->anr.transform.yreset = IPU3_UAPI_ANR_MAX_RESET - height;
+	if (acc->anr.transform.yreset < IPU3_UAPI_ANR_MIN_RESET)
+		acc->anr.transform.yreset = IPU3_UAPI_ANR_MIN_RESET;
 
 	/* acc_param: awb_fr_config */
 
-	अगर (use && use->acc_awb_fr) अणु
+	if (use && use->acc_awb_fr) {
 		/* Take values from user */
 		acc->awb_fr.config = acc_user->awb_fr;
-	पूर्ण अन्यथा अगर (acc_old) अणु
+	} else if (acc_old) {
 		/* Use old value */
 		acc->awb_fr.config = acc_old->awb_fr.config;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Set from scratch */
-		acc->awb_fr.config = imgu_css_awb_fr_शेषs;
-	पूर्ण
+		acc->awb_fr.config = imgu_css_awb_fr_defaults;
+	}
 
 	imgu_css_grid_end_calc(&acc->awb_fr.config.grid_cfg);
 
-	अगर (acc->awb_fr.config.grid_cfg.width <= 0)
-		वापस -EINVAL;
+	if (acc->awb_fr.config.grid_cfg.width <= 0)
+		return -EINVAL;
 
 	acc->awb_fr.config.grid_cfg.height_per_slice =
 		IMGU_ABI_AWB_FR_MAX_CELLS_PER_SET /
 		acc->awb_fr.config.grid_cfg.width;
 
-	क्रम (i = 0; i < stripes; i++)
+	for (i = 0; i < stripes; i++)
 		acc->awb_fr.stripes[i] = acc->awb_fr.config;
 
-	अगर (acc->awb_fr.config.grid_cfg.x_start >=
-	    acc->stripe.करोwn_scaled_stripes[1].offset + min_overlap) अणु
-		/* Enable only क्रम righपंचांगost stripe, disable left */
+	if (acc->awb_fr.config.grid_cfg.x_start >=
+	    acc->stripe.down_scaled_stripes[1].offset + min_overlap) {
+		/* Enable only for rightmost stripe, disable left */
 		acc->awb_fr.stripes[0].grid_cfg.y_start &=
 					~IPU3_UAPI_GRID_Y_START_EN;
-	पूर्ण अन्यथा अगर (acc->awb_fr.config.grid_cfg.x_end <=
-		   acc->stripe.bds_out_stripes[0].width - min_overlap) अणु
-		/* Enable only क्रम lefपंचांगost stripe, disable right */
+	} else if (acc->awb_fr.config.grid_cfg.x_end <=
+		   acc->stripe.bds_out_stripes[0].width - min_overlap) {
+		/* Enable only for leftmost stripe, disable right */
 		acc->awb_fr.stripes[1].grid_cfg.y_start &=
 					~IPU3_UAPI_GRID_Y_START_EN;
-	पूर्ण अन्यथा अणु
-		/* Enable क्रम both stripes */
-		u16 end; /* width क्रम grid end */
+	} else {
+		/* Enable for both stripes */
+		u16 end; /* width for grid end */
 
 		acc->awb_fr.stripes[0].grid_cfg.width =
 			(acc->stripe.bds_out_stripes[0].width - min_overlap -
@@ -2422,7 +2421,7 @@ imgu_css_awb_fr_ops_calc(काष्ठा imgu_css *css, अचिन्हि
 
 		acc->awb_fr.stripes[1].grid_cfg.x_start =
 			(acc->awb_fr.stripes[0].grid_cfg.x_end + 1 -
-			 acc->stripe.करोwn_scaled_stripes[1].offset) &
+			 acc->stripe.down_scaled_stripes[1].offset) &
 			IPU3_UAPI_GRID_START_MASK;
 		b_w_log2 = acc->awb_fr.stripes[1].grid_cfg.block_width_log2;
 		end = imgu_css_grid_end(acc->awb_fr.stripes[1].grid_cfg.x_start,
@@ -2431,41 +2430,41 @@ imgu_css_awb_fr_ops_calc(काष्ठा imgu_css *css, अचिन्हि
 		acc->awb_fr.stripes[1].grid_cfg.x_end = end;
 
 		/*
-		 * To reduce complनिकासy of debubbling and loading
-		 * statistics fix grid_height_per_slice to 1 क्रम both
+		 * To reduce complexity of debubbling and loading
+		 * statistics fix grid_height_per_slice to 1 for both
 		 * stripes.
 		 */
-		क्रम (i = 0; i < stripes; i++)
+		for (i = 0; i < stripes; i++)
 			acc->awb_fr.stripes[i].grid_cfg.height_per_slice = 1;
-	पूर्ण
+	}
 
-	अगर (imgu_css_awb_fr_ops_calc(css, pipe, &acc->awb_fr))
-		वापस -EINVAL;
+	if (imgu_css_awb_fr_ops_calc(css, pipe, &acc->awb_fr))
+		return -EINVAL;
 
 	/* acc_param: ae_config */
 
-	अगर (use && use->acc_ae) अणु
+	if (use && use->acc_ae) {
 		/* Take values from user */
 		acc->ae.grid_cfg = acc_user->ae.grid_cfg;
 		acc->ae.ae_ccm = acc_user->ae.ae_ccm;
-		क्रम (i = 0; i < IPU3_UAPI_AE_WEIGHTS; i++)
+		for (i = 0; i < IPU3_UAPI_AE_WEIGHTS; i++)
 			acc->ae.weights[i] = acc_user->ae.weights[i];
-	पूर्ण अन्यथा अगर (acc_old) अणु
+	} else if (acc_old) {
 		/* Use old value */
 		acc->ae.grid_cfg = acc_old->ae.grid_cfg;
 		acc->ae.ae_ccm = acc_old->ae.ae_ccm;
-		क्रम (i = 0; i < IPU3_UAPI_AE_WEIGHTS; i++)
+		for (i = 0; i < IPU3_UAPI_AE_WEIGHTS; i++)
 			acc->ae.weights[i] = acc_old->ae.weights[i];
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Set from scratch */
-		अटल स्थिर काष्ठा ipu3_uapi_ae_weight_elem
-			weight_def = अणु 1, 1, 1, 1, 1, 1, 1, 1 पूर्ण;
+		static const struct ipu3_uapi_ae_weight_elem
+			weight_def = { 1, 1, 1, 1, 1, 1, 1, 1 };
 
-		acc->ae.grid_cfg = imgu_css_ae_grid_शेषs;
-		acc->ae.ae_ccm = imgu_css_ae_ccm_शेषs;
-		क्रम (i = 0; i < IPU3_UAPI_AE_WEIGHTS; i++)
+		acc->ae.grid_cfg = imgu_css_ae_grid_defaults;
+		acc->ae.ae_ccm = imgu_css_ae_ccm_defaults;
+		for (i = 0; i < IPU3_UAPI_AE_WEIGHTS; i++)
 			acc->ae.weights[i] = weight_def;
-	पूर्ण
+	}
 
 	b_w_log2 = acc->ae.grid_cfg.block_width_log2;
 	acc->ae.grid_cfg.x_end = imgu_css_grid_end(acc->ae.grid_cfg.x_start,
@@ -2476,19 +2475,19 @@ imgu_css_awb_fr_ops_calc(काष्ठा imgu_css *css, अचिन्हि
 						   acc->ae.grid_cfg.height,
 						   b_w_log2);
 
-	क्रम (i = 0; i < stripes; i++)
+	for (i = 0; i < stripes; i++)
 		acc->ae.stripes[i].grid = acc->ae.grid_cfg;
 
-	अगर (acc->ae.grid_cfg.x_start >=
-	    acc->stripe.करोwn_scaled_stripes[1].offset) अणु
-		/* Enable only क्रम righपंचांगost stripe, disable left */
+	if (acc->ae.grid_cfg.x_start >=
+	    acc->stripe.down_scaled_stripes[1].offset) {
+		/* Enable only for rightmost stripe, disable left */
 		acc->ae.stripes[0].grid.ae_en = 0;
-	पूर्ण अन्यथा अगर (acc->ae.grid_cfg.x_end <=
-		   acc->stripe.bds_out_stripes[0].width) अणु
-		/* Enable only क्रम lefपंचांगost stripe, disable right */
+	} else if (acc->ae.grid_cfg.x_end <=
+		   acc->stripe.bds_out_stripes[0].width) {
+		/* Enable only for leftmost stripe, disable right */
 		acc->ae.stripes[1].grid.ae_en = 0;
-	पूर्ण अन्यथा अणु
-		/* Enable क्रम both stripes */
+	} else {
+		/* Enable for both stripes */
 		u8 b_w_log2;
 
 		acc->ae.stripes[0].grid.width =
@@ -2507,35 +2506,35 @@ imgu_css_awb_fr_ops_calc(काष्ठा imgu_css *css, अचिन्हि
 
 		acc->ae.stripes[1].grid.x_start =
 			(acc->ae.stripes[0].grid.x_end + 1 -
-			 acc->stripe.करोwn_scaled_stripes[1].offset) &
+			 acc->stripe.down_scaled_stripes[1].offset) &
 			IPU3_UAPI_GRID_START_MASK;
 		b_w_log2 = acc->ae.stripes[1].grid.block_width_log2;
 		acc->ae.stripes[1].grid.x_end =
 			imgu_css_grid_end(acc->ae.stripes[1].grid.x_start,
 					  acc->ae.stripes[1].grid.width,
 					  b_w_log2);
-	पूर्ण
+	}
 
 	/* acc_param: af_config */
 
-	अगर (use && use->acc_af) अणु
+	if (use && use->acc_af) {
 		/* Take values from user */
 		acc->af.config.filter_config = acc_user->af.filter_config;
 		acc->af.config.grid_cfg = acc_user->af.grid_cfg;
-	पूर्ण अन्यथा अगर (acc_old) अणु
+	} else if (acc_old) {
 		/* Use old value */
 		acc->af.config = acc_old->af.config;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Set from scratch */
 		acc->af.config.filter_config =
-				imgu_css_af_शेषs.filter_config;
-		acc->af.config.grid_cfg = imgu_css_af_शेषs.grid_cfg;
-	पूर्ण
+				imgu_css_af_defaults.filter_config;
+		acc->af.config.grid_cfg = imgu_css_af_defaults.grid_cfg;
+	}
 
 	imgu_css_grid_end_calc(&acc->af.config.grid_cfg);
 
-	अगर (acc->af.config.grid_cfg.width <= 0)
-		वापस -EINVAL;
+	if (acc->af.config.grid_cfg.width <= 0)
+		return -EINVAL;
 
 	acc->af.config.grid_cfg.height_per_slice =
 		IMGU_ABI_AF_MAX_CELLS_PER_SET / acc->af.config.grid_cfg.width;
@@ -2544,29 +2543,29 @@ imgu_css_awb_fr_ops_calc(काष्ठा imgu_css *css, अचिन्हि
 	acc->af.config.frame_size.height =
 		css_pipe->rect[IPU3_CSS_RECT_BDS].height;
 
-	अगर (acc->stripe.bds_out_stripes[0].width <= min_overlap)
-		वापस -EINVAL;
+	if (acc->stripe.bds_out_stripes[0].width <= min_overlap)
+		return -EINVAL;
 
-	क्रम (i = 0; i < stripes; i++) अणु
+	for (i = 0; i < stripes; i++) {
 		acc->af.stripes[i].grid_cfg = acc->af.config.grid_cfg;
 		acc->af.stripes[i].frame_size.height =
 				css_pipe->rect[IPU3_CSS_RECT_BDS].height;
 		acc->af.stripes[i].frame_size.width =
 			acc->stripe.bds_out_stripes[i].width;
-	पूर्ण
+	}
 
-	अगर (acc->af.config.grid_cfg.x_start >=
-	    acc->stripe.करोwn_scaled_stripes[1].offset + min_overlap) अणु
-		/* Enable only क्रम righपंचांगost stripe, disable left */
+	if (acc->af.config.grid_cfg.x_start >=
+	    acc->stripe.down_scaled_stripes[1].offset + min_overlap) {
+		/* Enable only for rightmost stripe, disable left */
 		acc->af.stripes[0].grid_cfg.y_start &=
 			~IPU3_UAPI_GRID_Y_START_EN;
-	पूर्ण अन्यथा अगर (acc->af.config.grid_cfg.x_end <=
-		   acc->stripe.bds_out_stripes[0].width - min_overlap) अणु
-		/* Enable only क्रम lefपंचांगost stripe, disable right */
+	} else if (acc->af.config.grid_cfg.x_end <=
+		   acc->stripe.bds_out_stripes[0].width - min_overlap) {
+		/* Enable only for leftmost stripe, disable right */
 		acc->af.stripes[1].grid_cfg.y_start &=
 			~IPU3_UAPI_GRID_Y_START_EN;
-	पूर्ण अन्यथा अणु
-		/* Enable क्रम both stripes */
+	} else {
+		/* Enable for both stripes */
 
 		acc->af.stripes[0].grid_cfg.width =
 			(acc->stripe.bds_out_stripes[0].width - min_overlap -
@@ -2584,7 +2583,7 @@ imgu_css_awb_fr_ops_calc(काष्ठा imgu_css *css, अचिन्हि
 
 		acc->af.stripes[1].grid_cfg.x_start =
 			(acc->af.stripes[0].grid_cfg.x_end + 1 -
-			 acc->stripe.करोwn_scaled_stripes[1].offset) &
+			 acc->stripe.down_scaled_stripes[1].offset) &
 			IPU3_UAPI_GRID_START_MASK;
 
 		b_w_log2 = acc->af.stripes[1].grid_cfg.block_width_log2;
@@ -2594,49 +2593,49 @@ imgu_css_awb_fr_ops_calc(काष्ठा imgu_css *css, अचिन्हि
 					  b_w_log2);
 
 		/*
-		 * To reduce complनिकासy of debubbling and loading statistics
-		 * fix grid_height_per_slice to 1 क्रम both stripes
+		 * To reduce complexity of debubbling and loading statistics
+		 * fix grid_height_per_slice to 1 for both stripes
 		 */
-		क्रम (i = 0; i < stripes; i++)
+		for (i = 0; i < stripes; i++)
 			acc->af.stripes[i].grid_cfg.height_per_slice = 1;
-	पूर्ण
+	}
 
-	अगर (imgu_css_af_ops_calc(css, pipe, &acc->af))
-		वापस -EINVAL;
+	if (imgu_css_af_ops_calc(css, pipe, &acc->af))
+		return -EINVAL;
 
 	/* acc_param: awb_config */
 
-	अगर (use && use->acc_awb) अणु
+	if (use && use->acc_awb) {
 		/* Take values from user */
 		acc->awb.config = acc_user->awb.config;
-	पूर्ण अन्यथा अगर (acc_old) अणु
+	} else if (acc_old) {
 		/* Use old value */
 		acc->awb.config = acc_old->awb.config;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Set from scratch */
-		acc->awb.config = imgu_css_awb_शेषs;
-	पूर्ण
+		acc->awb.config = imgu_css_awb_defaults;
+	}
 
-	अगर (acc->awb.config.grid.width <= 0)
-		वापस -EINVAL;
+	if (acc->awb.config.grid.width <= 0)
+		return -EINVAL;
 
 	acc->awb.config.grid.height_per_slice =
 		IMGU_ABI_AWB_MAX_CELLS_PER_SET / acc->awb.config.grid.width,
 	imgu_css_grid_end_calc(&acc->awb.config.grid);
 
-	क्रम (i = 0; i < stripes; i++)
+	for (i = 0; i < stripes; i++)
 		acc->awb.stripes[i] = acc->awb.config;
 
-	अगर (acc->awb.config.grid.x_start >=
-	    acc->stripe.करोwn_scaled_stripes[1].offset + min_overlap) अणु
-		/* Enable only क्रम righपंचांगost stripe, disable left */
+	if (acc->awb.config.grid.x_start >=
+	    acc->stripe.down_scaled_stripes[1].offset + min_overlap) {
+		/* Enable only for rightmost stripe, disable left */
 		acc->awb.stripes[0].rgbs_thr_b &= ~IPU3_UAPI_AWB_RGBS_THR_B_EN;
-	पूर्ण अन्यथा अगर (acc->awb.config.grid.x_end <=
-		   acc->stripe.bds_out_stripes[0].width - min_overlap) अणु
-		/* Enable only क्रम lefपंचांगost stripe, disable right */
+	} else if (acc->awb.config.grid.x_end <=
+		   acc->stripe.bds_out_stripes[0].width - min_overlap) {
+		/* Enable only for leftmost stripe, disable right */
 		acc->awb.stripes[1].rgbs_thr_b &= ~IPU3_UAPI_AWB_RGBS_THR_B_EN;
-	पूर्ण अन्यथा अणु
-		/* Enable क्रम both stripes */
+	} else {
+		/* Enable for both stripes */
 
 		acc->awb.stripes[0].grid.width =
 			(acc->stripe.bds_out_stripes[0].width -
@@ -2653,7 +2652,7 @@ imgu_css_awb_fr_ops_calc(काष्ठा imgu_css *css, अचिन्हि
 
 		acc->awb.stripes[1].grid.x_start =
 			(acc->awb.stripes[0].grid.x_end + 1 -
-			 acc->stripe.करोwn_scaled_stripes[1].offset) &
+			 acc->stripe.down_scaled_stripes[1].offset) &
 			IPU3_UAPI_GRID_START_MASK;
 
 		b_w_log2 = acc->awb.stripes[1].grid.block_width_log2;
@@ -2663,215 +2662,215 @@ imgu_css_awb_fr_ops_calc(काष्ठा imgu_css *css, अचिन्हि
 					  b_w_log2);
 
 		/*
-		 * To reduce complनिकासy of debubbling and loading statistics
-		 * fix grid_height_per_slice to 1 क्रम both stripes
+		 * To reduce complexity of debubbling and loading statistics
+		 * fix grid_height_per_slice to 1 for both stripes
 		 */
-		क्रम (i = 0; i < stripes; i++)
+		for (i = 0; i < stripes; i++)
 			acc->awb.stripes[i].grid.height_per_slice = 1;
-	पूर्ण
+	}
 
-	अगर (imgu_css_awb_ops_calc(css, pipe, &acc->awb))
-		वापस -EINVAL;
+	if (imgu_css_awb_ops_calc(css, pipe, &acc->awb))
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Fill the indicated काष्ठाure in `new_binary_params' from the possible
- * sources based on `use_user' flag: अगर the flag is false, copy from
+ * Fill the indicated structure in `new_binary_params' from the possible
+ * sources based on `use_user' flag: if the flag is false, copy from
  * `old_binary_params', or if the flag is true, copy from `user_setting'
- * and वापस शून्य (or error poपूर्णांकer on error).
- * If the flag is false and `old_binary_params' is शून्य, वापस poपूर्णांकer
- * to the काष्ठाure inside `new_binary_params'. In that हाल the caller
- * should calculate and fill the काष्ठाure from scratch.
+ * and return NULL (or error pointer on error).
+ * If the flag is false and `old_binary_params' is NULL, return pointer
+ * to the structure inside `new_binary_params'. In that case the caller
+ * should calculate and fill the structure from scratch.
  */
-अटल व्योम *imgu_css_cfg_copy(काष्ठा imgu_css *css,
-			       अचिन्हित पूर्णांक pipe, bool use_user,
-			       व्योम *user_setting, व्योम *old_binary_params,
-			       व्योम *new_binary_params,
-			       क्रमागत imgu_abi_memories m,
-			       काष्ठा imgu_fw_isp_parameter *par,
-			       माप_प्रकार par_size)
-अणु
-	स्थिर क्रमागत imgu_abi_param_class c = IMGU_ABI_PARAM_CLASS_PARAM;
-	व्योम *new_setting, *old_setting;
+static void *imgu_css_cfg_copy(struct imgu_css *css,
+			       unsigned int pipe, bool use_user,
+			       void *user_setting, void *old_binary_params,
+			       void *new_binary_params,
+			       enum imgu_abi_memories m,
+			       struct imgu_fw_isp_parameter *par,
+			       size_t par_size)
+{
+	const enum imgu_abi_param_class c = IMGU_ABI_PARAM_CLASS_PARAM;
+	void *new_setting, *old_setting;
 
 	new_setting = imgu_css_fw_pipeline_params(css, pipe, c, m, par,
 						  par_size, new_binary_params);
-	अगर (!new_setting)
-		वापस ERR_PTR(-EPROTO);	/* Corrupted firmware */
+	if (!new_setting)
+		return ERR_PTR(-EPROTO);	/* Corrupted firmware */
 
-	अगर (use_user) अणु
+	if (use_user) {
 		/* Take new user parameters */
-		स_नकल(new_setting, user_setting, par_size);
-	पूर्ण अन्यथा अगर (old_binary_params) अणु
+		memcpy(new_setting, user_setting, par_size);
+	} else if (old_binary_params) {
 		/* Take previous value */
 		old_setting = imgu_css_fw_pipeline_params(css, pipe, c, m, par,
 							  par_size,
 							  old_binary_params);
-		अगर (!old_setting)
-			वापस ERR_PTR(-EPROTO);
-		स_नकल(new_setting, old_setting, par_size);
-	पूर्ण अन्यथा अणु
-		वापस new_setting;	/* Need to calculate */
-	पूर्ण
+		if (!old_setting)
+			return ERR_PTR(-EPROTO);
+		memcpy(new_setting, old_setting, par_size);
+	} else {
+		return new_setting;	/* Need to calculate */
+	}
 
-	वापस शून्य;		/* Copied from other value */
-पूर्ण
+	return NULL;		/* Copied from other value */
+}
 
 /*
  * Configure VMEM0 parameters (late binding parameters).
  */
-पूर्णांक imgu_css_cfg_vmem0(काष्ठा imgu_css *css, अचिन्हित पूर्णांक pipe,
-		       काष्ठा ipu3_uapi_flags *use,
-		       व्योम *vmem0, व्योम *vmem0_old,
-		       काष्ठा ipu3_uapi_params *user)
-अणु
-	स्थिर काष्ठा imgu_fw_info *bi =
+int imgu_css_cfg_vmem0(struct imgu_css *css, unsigned int pipe,
+		       struct ipu3_uapi_flags *use,
+		       void *vmem0, void *vmem0_old,
+		       struct ipu3_uapi_params *user)
+{
+	const struct imgu_fw_info *bi =
 		&css->fwp->binary_header[css->pipes[pipe].bindex];
-	काष्ठा imgu_fw_param_memory_offsets *pofs = (व्योम *)css->fwp +
+	struct imgu_fw_param_memory_offsets *pofs = (void *)css->fwp +
 		bi->blob.memory_offsets.offsets[IMGU_ABI_PARAM_CLASS_PARAM];
-	काष्ठा ipu3_uapi_isp_lin_vmem_params *lin_vmem = शून्य;
-	काष्ठा ipu3_uapi_isp_tnr3_vmem_params *tnr_vmem = शून्य;
-	काष्ठा ipu3_uapi_isp_xnr3_vmem_params *xnr_vmem = शून्य;
-	स्थिर क्रमागत imgu_abi_param_class c = IMGU_ABI_PARAM_CLASS_PARAM;
-	स्थिर क्रमागत imgu_abi_memories m = IMGU_ABI_MEM_ISP_VMEM0;
-	अचिन्हित पूर्णांक i;
+	struct ipu3_uapi_isp_lin_vmem_params *lin_vmem = NULL;
+	struct ipu3_uapi_isp_tnr3_vmem_params *tnr_vmem = NULL;
+	struct ipu3_uapi_isp_xnr3_vmem_params *xnr_vmem = NULL;
+	const enum imgu_abi_param_class c = IMGU_ABI_PARAM_CLASS_PARAM;
+	const enum imgu_abi_memories m = IMGU_ABI_MEM_ISP_VMEM0;
+	unsigned int i;
 
 	/* Configure VMEM0 */
 
-	स_रखो(vmem0, 0, bi->info.isp.sp.mem_initializers.params[c][m].size);
+	memset(vmem0, 0, bi->info.isp.sp.mem_initializers.params[c][m].size);
 
 	/* Configure Linearization VMEM0 parameters */
 
 	lin_vmem = imgu_css_cfg_copy(css, pipe, use && use->lin_vmem_params,
 				     &user->lin_vmem_params, vmem0_old, vmem0,
-				     m, &pofs->vmem.lin, माप(*lin_vmem));
-	अगर (!IS_ERR_OR_शून्य(lin_vmem)) अणु
+				     m, &pofs->vmem.lin, sizeof(*lin_vmem));
+	if (!IS_ERR_OR_NULL(lin_vmem)) {
 		/* Generate parameter from scratch */
-		क्रम (i = 0; i < IPU3_UAPI_LIN_LUT_SIZE; i++) अणु
+		for (i = 0; i < IPU3_UAPI_LIN_LUT_SIZE; i++) {
 			lin_vmem->lin_lutlow_gr[i] = 32 * i;
 			lin_vmem->lin_lutlow_r[i] = 32 * i;
 			lin_vmem->lin_lutlow_b[i] = 32 * i;
 			lin_vmem->lin_lutlow_gb[i] = 32 * i;
 
-			lin_vmem->lin_lutdअगर_gr[i] = 32;
-			lin_vmem->lin_lutdअगर_r[i] = 32;
-			lin_vmem->lin_lutdअगर_b[i] = 32;
-			lin_vmem->lin_lutdअगर_gb[i] = 32;
-		पूर्ण
-	पूर्ण
+			lin_vmem->lin_lutdif_gr[i] = 32;
+			lin_vmem->lin_lutdif_r[i] = 32;
+			lin_vmem->lin_lutdif_b[i] = 32;
+			lin_vmem->lin_lutdif_gb[i] = 32;
+		}
+	}
 
 	/* Configure TNR3 VMEM parameters */
-	अगर (css->pipes[pipe].pipe_id == IPU3_CSS_PIPE_ID_VIDEO) अणु
+	if (css->pipes[pipe].pipe_id == IPU3_CSS_PIPE_ID_VIDEO) {
 		tnr_vmem = imgu_css_cfg_copy(css, pipe,
 					     use && use->tnr3_vmem_params,
 					     &user->tnr3_vmem_params,
 					     vmem0_old, vmem0, m,
 					     &pofs->vmem.tnr3,
-					     माप(*tnr_vmem));
-		अगर (!IS_ERR_OR_शून्य(tnr_vmem)) अणु
+					     sizeof(*tnr_vmem));
+		if (!IS_ERR_OR_NULL(tnr_vmem)) {
 			/* Generate parameter from scratch */
-			क्रम (i = 0; i < IPU3_UAPI_ISP_TNR3_VMEM_LEN; i++)
+			for (i = 0; i < IPU3_UAPI_ISP_TNR3_VMEM_LEN; i++)
 				tnr_vmem->sigma[i] = 256;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	i = IPU3_UAPI_ISP_TNR3_VMEM_LEN;
 
 	/* Configure XNR3 VMEM parameters */
 
 	xnr_vmem = imgu_css_cfg_copy(css, pipe, use && use->xnr3_vmem_params,
 				     &user->xnr3_vmem_params, vmem0_old, vmem0,
-				     m, &pofs->vmem.xnr3, माप(*xnr_vmem));
-	अगर (!IS_ERR_OR_शून्य(xnr_vmem)) अणु
-		xnr_vmem->x[i] = imgu_css_xnr3_vmem_शेषs.x
+				     m, &pofs->vmem.xnr3, sizeof(*xnr_vmem));
+	if (!IS_ERR_OR_NULL(xnr_vmem)) {
+		xnr_vmem->x[i] = imgu_css_xnr3_vmem_defaults.x
 			[i % IMGU_XNR3_VMEM_LUT_LEN];
-		xnr_vmem->a[i] = imgu_css_xnr3_vmem_शेषs.a
+		xnr_vmem->a[i] = imgu_css_xnr3_vmem_defaults.a
 			[i % IMGU_XNR3_VMEM_LUT_LEN];
-		xnr_vmem->b[i] = imgu_css_xnr3_vmem_शेषs.b
+		xnr_vmem->b[i] = imgu_css_xnr3_vmem_defaults.b
 			[i % IMGU_XNR3_VMEM_LUT_LEN];
-		xnr_vmem->c[i] = imgu_css_xnr3_vmem_शेषs.c
+		xnr_vmem->c[i] = imgu_css_xnr3_vmem_defaults.c
 			[i % IMGU_XNR3_VMEM_LUT_LEN];
-	पूर्ण
+	}
 
-	वापस IS_ERR(lin_vmem) || IS_ERR(tnr_vmem) || IS_ERR(xnr_vmem) ?
+	return IS_ERR(lin_vmem) || IS_ERR(tnr_vmem) || IS_ERR(xnr_vmem) ?
 		-EPROTO : 0;
-पूर्ण
+}
 
 /*
  * Configure DMEM0 parameters (late binding parameters).
  */
-पूर्णांक imgu_css_cfg_dmem0(काष्ठा imgu_css *css, अचिन्हित पूर्णांक pipe,
-		       काष्ठा ipu3_uapi_flags *use,
-		       व्योम *dmem0, व्योम *dmem0_old,
-		       काष्ठा ipu3_uapi_params *user)
-अणु
-	काष्ठा imgu_css_pipe *css_pipe = &css->pipes[pipe];
-	स्थिर काष्ठा imgu_fw_info *bi =
+int imgu_css_cfg_dmem0(struct imgu_css *css, unsigned int pipe,
+		       struct ipu3_uapi_flags *use,
+		       void *dmem0, void *dmem0_old,
+		       struct ipu3_uapi_params *user)
+{
+	struct imgu_css_pipe *css_pipe = &css->pipes[pipe];
+	const struct imgu_fw_info *bi =
 		&css->fwp->binary_header[css_pipe->bindex];
-	काष्ठा imgu_fw_param_memory_offsets *pofs = (व्योम *)css->fwp +
+	struct imgu_fw_param_memory_offsets *pofs = (void *)css->fwp +
 		bi->blob.memory_offsets.offsets[IMGU_ABI_PARAM_CLASS_PARAM];
 
-	काष्ठा ipu3_uapi_isp_tnr3_params *tnr_dmem = शून्य;
-	काष्ठा ipu3_uapi_isp_xnr3_params *xnr_dmem;
+	struct ipu3_uapi_isp_tnr3_params *tnr_dmem = NULL;
+	struct ipu3_uapi_isp_xnr3_params *xnr_dmem;
 
-	स्थिर क्रमागत imgu_abi_param_class c = IMGU_ABI_PARAM_CLASS_PARAM;
-	स्थिर क्रमागत imgu_abi_memories m = IMGU_ABI_MEM_ISP_DMEM0;
+	const enum imgu_abi_param_class c = IMGU_ABI_PARAM_CLASS_PARAM;
+	const enum imgu_abi_memories m = IMGU_ABI_MEM_ISP_DMEM0;
 
 	/* Configure DMEM0 */
 
-	स_रखो(dmem0, 0, bi->info.isp.sp.mem_initializers.params[c][m].size);
+	memset(dmem0, 0, bi->info.isp.sp.mem_initializers.params[c][m].size);
 
 	/* Configure TNR3 DMEM0 parameters */
-	अगर (css_pipe->pipe_id == IPU3_CSS_PIPE_ID_VIDEO) अणु
+	if (css_pipe->pipe_id == IPU3_CSS_PIPE_ID_VIDEO) {
 		tnr_dmem = imgu_css_cfg_copy(css, pipe,
 					     use && use->tnr3_dmem_params,
 					     &user->tnr3_dmem_params,
 					     dmem0_old, dmem0, m,
 					     &pofs->dmem.tnr3,
-					     माप(*tnr_dmem));
-		अगर (!IS_ERR_OR_शून्य(tnr_dmem)) अणु
+					     sizeof(*tnr_dmem));
+		if (!IS_ERR_OR_NULL(tnr_dmem)) {
 			/* Generate parameter from scratch */
 			tnr_dmem->knee_y1 = 768;
 			tnr_dmem->knee_y2 = 1280;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Configure XNR3 DMEM0 parameters */
 
 	xnr_dmem = imgu_css_cfg_copy(css, pipe, use && use->xnr3_dmem_params,
 				     &user->xnr3_dmem_params, dmem0_old, dmem0,
-				     m, &pofs->dmem.xnr3, माप(*xnr_dmem));
-	अगर (!IS_ERR_OR_शून्य(xnr_dmem)) अणु
+				     m, &pofs->dmem.xnr3, sizeof(*xnr_dmem));
+	if (!IS_ERR_OR_NULL(xnr_dmem)) {
 		/* Generate parameter from scratch */
 		xnr_dmem->alpha.y0 = 2047;
 		xnr_dmem->alpha.u0 = 2047;
 		xnr_dmem->alpha.v0 = 2047;
-	पूर्ण
+	}
 
-	वापस IS_ERR(tnr_dmem) || IS_ERR(xnr_dmem) ? -EPROTO : 0;
-पूर्ण
+	return IS_ERR(tnr_dmem) || IS_ERR(xnr_dmem) ? -EPROTO : 0;
+}
 
 /* Generate unity morphing table without morphing effect */
-व्योम imgu_css_cfg_gdc_table(काष्ठा imgu_abi_gdc_warp_param *gdc,
-			    पूर्णांक frame_in_x, पूर्णांक frame_in_y,
-			    पूर्णांक frame_out_x, पूर्णांक frame_out_y,
-			    पूर्णांक env_w, पूर्णांक env_h)
-अणु
-	अटल स्थिर अचिन्हित पूर्णांक FRAC_BITS = IMGU_ABI_GDC_FRAC_BITS;
-	अटल स्थिर अचिन्हित पूर्णांक XMEM_ALIGN = 1 << 4;
-	स्थिर अचिन्हित पूर्णांक XMEM_ALIGN_MASK = ~(XMEM_ALIGN - 1);
-	अटल स्थिर अचिन्हित पूर्णांक BCI_ENV = 4;
-	अटल स्थिर अचिन्हित पूर्णांक BYP = 2;	/* Bytes per pixel */
-	स्थिर अचिन्हित पूर्णांक OFFSET_X = 2 * IMGU_DVS_BLOCK_W + env_w + 1;
-	स्थिर अचिन्हित पूर्णांक OFFSET_Y = IMGU_DVS_BLOCK_H + env_h + 1;
+void imgu_css_cfg_gdc_table(struct imgu_abi_gdc_warp_param *gdc,
+			    int frame_in_x, int frame_in_y,
+			    int frame_out_x, int frame_out_y,
+			    int env_w, int env_h)
+{
+	static const unsigned int FRAC_BITS = IMGU_ABI_GDC_FRAC_BITS;
+	static const unsigned int XMEM_ALIGN = 1 << 4;
+	const unsigned int XMEM_ALIGN_MASK = ~(XMEM_ALIGN - 1);
+	static const unsigned int BCI_ENV = 4;
+	static const unsigned int BYP = 2;	/* Bytes per pixel */
+	const unsigned int OFFSET_X = 2 * IMGU_DVS_BLOCK_W + env_w + 1;
+	const unsigned int OFFSET_Y = IMGU_DVS_BLOCK_H + env_h + 1;
 
-	काष्ठा imgu_abi_gdc_warp_param gdc_luma, gdc_chroma;
+	struct imgu_abi_gdc_warp_param gdc_luma, gdc_chroma;
 
-	अचिन्हित पूर्णांक blocks_x = ALIGN(DIV_ROUND_UP(frame_out_x,
+	unsigned int blocks_x = ALIGN(DIV_ROUND_UP(frame_out_x,
 						   IMGU_DVS_BLOCK_W), 2);
-	अचिन्हित पूर्णांक blocks_y = DIV_ROUND_UP(frame_out_y, IMGU_DVS_BLOCK_H);
-	अचिन्हित पूर्णांक y0, x0, x1, x, y;
+	unsigned int blocks_y = DIV_ROUND_UP(frame_out_y, IMGU_DVS_BLOCK_H);
+	unsigned int y0, x0, x1, x, y;
 
 	/* Global luma settings */
 	gdc_luma.origin_x = 0;
@@ -2917,10 +2916,10 @@ imgu_css_awb_fr_ops_calc(काष्ठा imgu_css *css, अचिन्हि
 	gdc_chroma.in_block_height = IMGU_DVS_BLOCK_H / 2 + BCI_ENV;
 	gdc_chroma.padding = 0;
 
-	/* Calculate block offsets क्रम luma and chroma */
-	क्रम (y0 = 0; y0 < blocks_y; y0++) अणु
-		क्रम (x0 = 0; x0 < blocks_x / 2; x0++) अणु
-			क्रम (x1 = 0; x1 < 2; x1++) अणु
+	/* Calculate block offsets for luma and chroma */
+	for (y0 = 0; y0 < blocks_y; y0++) {
+		for (x0 = 0; x0 < blocks_x / 2; x0++) {
+			for (x1 = 0; x1 < 2; x1++) {
 				/* Luma blocks */
 				x = (x0 * 2 + x1) * IMGU_DVS_BLOCK_W + OFFSET_X;
 				x &= XMEM_ALIGN_MASK;
@@ -2929,7 +2928,7 @@ imgu_css_awb_fr_ops_calc(काष्ठा imgu_css *css, अचिन्हि
 				gdc->in_addr_offset =
 					(y * frame_in_x + x) * BYP;
 				gdc++;
-			पूर्ण
+			}
 
 			/* Chroma block */
 			x = x0 * IMGU_DVS_BLOCK_W + OFFSET_X / 2;
@@ -2938,6 +2937,6 @@ imgu_css_awb_fr_ops_calc(काष्ठा imgu_css *css, अचिन्हि
 			*gdc = gdc_chroma;
 			gdc->in_addr_offset = (y * frame_in_x + x) * BYP;
 			gdc++;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}

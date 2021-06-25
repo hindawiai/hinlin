@@ -1,36 +1,35 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
-#अगर_अघोषित __NV20_GR_H__
-#घोषणा __NV20_GR_H__
-#घोषणा nv20_gr(p) container_of((p), काष्ठा nv20_gr, base)
-#समावेश "priv.h"
+/* SPDX-License-Identifier: MIT */
+#ifndef __NV20_GR_H__
+#define __NV20_GR_H__
+#define nv20_gr(p) container_of((p), struct nv20_gr, base)
+#include "priv.h"
 
-काष्ठा nv20_gr अणु
-	काष्ठा nvkm_gr base;
-	काष्ठा nvkm_memory *ctxtab;
-पूर्ण;
+struct nv20_gr {
+	struct nvkm_gr base;
+	struct nvkm_memory *ctxtab;
+};
 
-पूर्णांक nv20_gr_new_(स्थिर काष्ठा nvkm_gr_func *, काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक,
-		 काष्ठा nvkm_gr **);
-व्योम *nv20_gr_dtor(काष्ठा nvkm_gr *);
-पूर्णांक nv20_gr_oneinit(काष्ठा nvkm_gr *);
-पूर्णांक nv20_gr_init(काष्ठा nvkm_gr *);
-व्योम nv20_gr_पूर्णांकr(काष्ठा nvkm_gr *);
-व्योम nv20_gr_tile(काष्ठा nvkm_gr *, पूर्णांक, काष्ठा nvkm_fb_tile *);
+int nv20_gr_new_(const struct nvkm_gr_func *, struct nvkm_device *, enum nvkm_subdev_type, int,
+		 struct nvkm_gr **);
+void *nv20_gr_dtor(struct nvkm_gr *);
+int nv20_gr_oneinit(struct nvkm_gr *);
+int nv20_gr_init(struct nvkm_gr *);
+void nv20_gr_intr(struct nvkm_gr *);
+void nv20_gr_tile(struct nvkm_gr *, int, struct nvkm_fb_tile *);
 
-पूर्णांक nv30_gr_init(काष्ठा nvkm_gr *);
+int nv30_gr_init(struct nvkm_gr *);
 
-#घोषणा nv20_gr_chan(p) container_of((p), काष्ठा nv20_gr_chan, object)
-#समावेश <core/object.h>
+#define nv20_gr_chan(p) container_of((p), struct nv20_gr_chan, object)
+#include <core/object.h>
 
-काष्ठा nv20_gr_chan अणु
-	काष्ठा nvkm_object object;
-	काष्ठा nv20_gr *gr;
-	पूर्णांक chid;
-	काष्ठा nvkm_memory *inst;
-पूर्ण;
+struct nv20_gr_chan {
+	struct nvkm_object object;
+	struct nv20_gr *gr;
+	int chid;
+	struct nvkm_memory *inst;
+};
 
-व्योम *nv20_gr_chan_dtor(काष्ठा nvkm_object *);
-पूर्णांक nv20_gr_chan_init(काष्ठा nvkm_object *);
-पूर्णांक nv20_gr_chan_fini(काष्ठा nvkm_object *, bool);
-#पूर्ण_अगर
+void *nv20_gr_chan_dtor(struct nvkm_object *);
+int nv20_gr_chan_init(struct nvkm_object *);
+int nv20_gr_chan_fini(struct nvkm_object *, bool);
+#endif

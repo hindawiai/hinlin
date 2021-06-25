@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * TI OMAP4 ISS V4L2 Driver - Generic video node
  *
@@ -8,384 +7,384 @@
  * Author: Sergio Aguirre <sergio.a.aguirre@gmail.com>
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/module.h>
+#include <linux/clk.h>
+#include <linux/mm.h>
+#include <linux/pagemap.h>
+#include <linux/sched.h>
+#include <linux/slab.h>
+#include <linux/vmalloc.h>
+#include <linux/module.h>
 
-#समावेश <media/v4l2-dev.h>
-#समावेश <media/v4l2-ioctl.h>
-#समावेश <media/v4l2-mc.h>
+#include <media/v4l2-dev.h>
+#include <media/v4l2-ioctl.h>
+#include <media/v4l2-mc.h>
 
-#समावेश <यंत्र/cacheflush.h>
+#include <asm/cacheflush.h>
 
-#समावेश "iss_video.h"
-#समावेश "iss.h"
+#include "iss_video.h"
+#include "iss.h"
 
 /* -----------------------------------------------------------------------------
  * Helper functions
  */
 
-अटल काष्ठा iss_क्रमmat_info क्रमmats[] = अणु
-	अणु MEDIA_BUS_FMT_Y8_1X8, MEDIA_BUS_FMT_Y8_1X8,
+static struct iss_format_info formats[] = {
+	{ MEDIA_BUS_FMT_Y8_1X8, MEDIA_BUS_FMT_Y8_1X8,
 	  MEDIA_BUS_FMT_Y8_1X8, MEDIA_BUS_FMT_Y8_1X8,
-	  V4L2_PIX_FMT_GREY, 8, पूर्ण,
-	अणु MEDIA_BUS_FMT_Y10_1X10, MEDIA_BUS_FMT_Y10_1X10,
+	  V4L2_PIX_FMT_GREY, 8, },
+	{ MEDIA_BUS_FMT_Y10_1X10, MEDIA_BUS_FMT_Y10_1X10,
 	  MEDIA_BUS_FMT_Y10_1X10, MEDIA_BUS_FMT_Y8_1X8,
-	  V4L2_PIX_FMT_Y10, 10, पूर्ण,
-	अणु MEDIA_BUS_FMT_Y12_1X12, MEDIA_BUS_FMT_Y10_1X10,
+	  V4L2_PIX_FMT_Y10, 10, },
+	{ MEDIA_BUS_FMT_Y12_1X12, MEDIA_BUS_FMT_Y10_1X10,
 	  MEDIA_BUS_FMT_Y12_1X12, MEDIA_BUS_FMT_Y8_1X8,
-	  V4L2_PIX_FMT_Y12, 12, पूर्ण,
-	अणु MEDIA_BUS_FMT_SBGGR8_1X8, MEDIA_BUS_FMT_SBGGR8_1X8,
+	  V4L2_PIX_FMT_Y12, 12, },
+	{ MEDIA_BUS_FMT_SBGGR8_1X8, MEDIA_BUS_FMT_SBGGR8_1X8,
 	  MEDIA_BUS_FMT_SBGGR8_1X8, MEDIA_BUS_FMT_SBGGR8_1X8,
-	  V4L2_PIX_FMT_SBGGR8, 8, पूर्ण,
-	अणु MEDIA_BUS_FMT_SGBRG8_1X8, MEDIA_BUS_FMT_SGBRG8_1X8,
+	  V4L2_PIX_FMT_SBGGR8, 8, },
+	{ MEDIA_BUS_FMT_SGBRG8_1X8, MEDIA_BUS_FMT_SGBRG8_1X8,
 	  MEDIA_BUS_FMT_SGBRG8_1X8, MEDIA_BUS_FMT_SGBRG8_1X8,
-	  V4L2_PIX_FMT_SGBRG8, 8, पूर्ण,
-	अणु MEDIA_BUS_FMT_SGRBG8_1X8, MEDIA_BUS_FMT_SGRBG8_1X8,
+	  V4L2_PIX_FMT_SGBRG8, 8, },
+	{ MEDIA_BUS_FMT_SGRBG8_1X8, MEDIA_BUS_FMT_SGRBG8_1X8,
 	  MEDIA_BUS_FMT_SGRBG8_1X8, MEDIA_BUS_FMT_SGRBG8_1X8,
-	  V4L2_PIX_FMT_SGRBG8, 8, पूर्ण,
-	अणु MEDIA_BUS_FMT_SRGGB8_1X8, MEDIA_BUS_FMT_SRGGB8_1X8,
+	  V4L2_PIX_FMT_SGRBG8, 8, },
+	{ MEDIA_BUS_FMT_SRGGB8_1X8, MEDIA_BUS_FMT_SRGGB8_1X8,
 	  MEDIA_BUS_FMT_SRGGB8_1X8, MEDIA_BUS_FMT_SRGGB8_1X8,
-	  V4L2_PIX_FMT_SRGGB8, 8, पूर्ण,
-	अणु MEDIA_BUS_FMT_SGRBG10_DPCM8_1X8, MEDIA_BUS_FMT_SGRBG10_DPCM8_1X8,
+	  V4L2_PIX_FMT_SRGGB8, 8, },
+	{ MEDIA_BUS_FMT_SGRBG10_DPCM8_1X8, MEDIA_BUS_FMT_SGRBG10_DPCM8_1X8,
 	  MEDIA_BUS_FMT_SGRBG10_1X10, 0,
-	  V4L2_PIX_FMT_SGRBG10DPCM8, 8, पूर्ण,
-	अणु MEDIA_BUS_FMT_SBGGR10_1X10, MEDIA_BUS_FMT_SBGGR10_1X10,
+	  V4L2_PIX_FMT_SGRBG10DPCM8, 8, },
+	{ MEDIA_BUS_FMT_SBGGR10_1X10, MEDIA_BUS_FMT_SBGGR10_1X10,
 	  MEDIA_BUS_FMT_SBGGR10_1X10, MEDIA_BUS_FMT_SBGGR8_1X8,
-	  V4L2_PIX_FMT_SBGGR10, 10, पूर्ण,
-	अणु MEDIA_BUS_FMT_SGBRG10_1X10, MEDIA_BUS_FMT_SGBRG10_1X10,
+	  V4L2_PIX_FMT_SBGGR10, 10, },
+	{ MEDIA_BUS_FMT_SGBRG10_1X10, MEDIA_BUS_FMT_SGBRG10_1X10,
 	  MEDIA_BUS_FMT_SGBRG10_1X10, MEDIA_BUS_FMT_SGBRG8_1X8,
-	  V4L2_PIX_FMT_SGBRG10, 10, पूर्ण,
-	अणु MEDIA_BUS_FMT_SGRBG10_1X10, MEDIA_BUS_FMT_SGRBG10_1X10,
+	  V4L2_PIX_FMT_SGBRG10, 10, },
+	{ MEDIA_BUS_FMT_SGRBG10_1X10, MEDIA_BUS_FMT_SGRBG10_1X10,
 	  MEDIA_BUS_FMT_SGRBG10_1X10, MEDIA_BUS_FMT_SGRBG8_1X8,
-	  V4L2_PIX_FMT_SGRBG10, 10, पूर्ण,
-	अणु MEDIA_BUS_FMT_SRGGB10_1X10, MEDIA_BUS_FMT_SRGGB10_1X10,
+	  V4L2_PIX_FMT_SGRBG10, 10, },
+	{ MEDIA_BUS_FMT_SRGGB10_1X10, MEDIA_BUS_FMT_SRGGB10_1X10,
 	  MEDIA_BUS_FMT_SRGGB10_1X10, MEDIA_BUS_FMT_SRGGB8_1X8,
-	  V4L2_PIX_FMT_SRGGB10, 10, पूर्ण,
-	अणु MEDIA_BUS_FMT_SBGGR12_1X12, MEDIA_BUS_FMT_SBGGR10_1X10,
+	  V4L2_PIX_FMT_SRGGB10, 10, },
+	{ MEDIA_BUS_FMT_SBGGR12_1X12, MEDIA_BUS_FMT_SBGGR10_1X10,
 	  MEDIA_BUS_FMT_SBGGR12_1X12, MEDIA_BUS_FMT_SBGGR8_1X8,
-	  V4L2_PIX_FMT_SBGGR12, 12, पूर्ण,
-	अणु MEDIA_BUS_FMT_SGBRG12_1X12, MEDIA_BUS_FMT_SGBRG10_1X10,
+	  V4L2_PIX_FMT_SBGGR12, 12, },
+	{ MEDIA_BUS_FMT_SGBRG12_1X12, MEDIA_BUS_FMT_SGBRG10_1X10,
 	  MEDIA_BUS_FMT_SGBRG12_1X12, MEDIA_BUS_FMT_SGBRG8_1X8,
-	  V4L2_PIX_FMT_SGBRG12, 12, पूर्ण,
-	अणु MEDIA_BUS_FMT_SGRBG12_1X12, MEDIA_BUS_FMT_SGRBG10_1X10,
+	  V4L2_PIX_FMT_SGBRG12, 12, },
+	{ MEDIA_BUS_FMT_SGRBG12_1X12, MEDIA_BUS_FMT_SGRBG10_1X10,
 	  MEDIA_BUS_FMT_SGRBG12_1X12, MEDIA_BUS_FMT_SGRBG8_1X8,
-	  V4L2_PIX_FMT_SGRBG12, 12, पूर्ण,
-	अणु MEDIA_BUS_FMT_SRGGB12_1X12, MEDIA_BUS_FMT_SRGGB10_1X10,
+	  V4L2_PIX_FMT_SGRBG12, 12, },
+	{ MEDIA_BUS_FMT_SRGGB12_1X12, MEDIA_BUS_FMT_SRGGB10_1X10,
 	  MEDIA_BUS_FMT_SRGGB12_1X12, MEDIA_BUS_FMT_SRGGB8_1X8,
-	  V4L2_PIX_FMT_SRGGB12, 12, पूर्ण,
-	अणु MEDIA_BUS_FMT_UYVY8_1X16, MEDIA_BUS_FMT_UYVY8_1X16,
+	  V4L2_PIX_FMT_SRGGB12, 12, },
+	{ MEDIA_BUS_FMT_UYVY8_1X16, MEDIA_BUS_FMT_UYVY8_1X16,
 	  MEDIA_BUS_FMT_UYVY8_1X16, 0,
-	  V4L2_PIX_FMT_UYVY, 16, पूर्ण,
-	अणु MEDIA_BUS_FMT_YUYV8_1X16, MEDIA_BUS_FMT_YUYV8_1X16,
+	  V4L2_PIX_FMT_UYVY, 16, },
+	{ MEDIA_BUS_FMT_YUYV8_1X16, MEDIA_BUS_FMT_YUYV8_1X16,
 	  MEDIA_BUS_FMT_YUYV8_1X16, 0,
-	  V4L2_PIX_FMT_YUYV, 16, पूर्ण,
-	अणु MEDIA_BUS_FMT_YUYV8_1_5X8, MEDIA_BUS_FMT_YUYV8_1_5X8,
+	  V4L2_PIX_FMT_YUYV, 16, },
+	{ MEDIA_BUS_FMT_YUYV8_1_5X8, MEDIA_BUS_FMT_YUYV8_1_5X8,
 	  MEDIA_BUS_FMT_YUYV8_1_5X8, 0,
-	  V4L2_PIX_FMT_NV12, 8, पूर्ण,
-पूर्ण;
+	  V4L2_PIX_FMT_NV12, 8, },
+};
 
-स्थिर काष्ठा iss_क्रमmat_info *
-omap4iss_video_क्रमmat_info(u32 code)
-अणु
-	अचिन्हित पूर्णांक i;
+const struct iss_format_info *
+omap4iss_video_format_info(u32 code)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(क्रमmats); ++i) अणु
-		अगर (क्रमmats[i].code == code)
-			वापस &क्रमmats[i];
-	पूर्ण
+	for (i = 0; i < ARRAY_SIZE(formats); ++i) {
+		if (formats[i].code == code)
+			return &formats[i];
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /*
- * iss_video_mbus_to_pix - Convert v4l2_mbus_framefmt to v4l2_pix_क्रमmat
+ * iss_video_mbus_to_pix - Convert v4l2_mbus_framefmt to v4l2_pix_format
  * @video: ISS video instance
- * @mbus: v4l2_mbus_framefmt क्रमmat (input)
- * @pix: v4l2_pix_क्रमmat क्रमmat (output)
+ * @mbus: v4l2_mbus_framefmt format (input)
+ * @pix: v4l2_pix_format format (output)
  *
- * Fill the output pix काष्ठाure with inक्रमmation from the input mbus क्रमmat.
+ * Fill the output pix structure with information from the input mbus format.
  * The bytesperline and sizeimage fields are computed from the requested bytes
- * per line value in the pix क्रमmat and inक्रमmation from the video instance.
+ * per line value in the pix format and information from the video instance.
  *
  * Return the number of padding bytes at end of line.
  */
-अटल अचिन्हित पूर्णांक iss_video_mbus_to_pix(स्थिर काष्ठा iss_video *video,
-					  स्थिर काष्ठा v4l2_mbus_framefmt *mbus,
-					  काष्ठा v4l2_pix_क्रमmat *pix)
-अणु
-	अचिन्हित पूर्णांक bpl = pix->bytesperline;
-	अचिन्हित पूर्णांक min_bpl;
-	अचिन्हित पूर्णांक i;
+static unsigned int iss_video_mbus_to_pix(const struct iss_video *video,
+					  const struct v4l2_mbus_framefmt *mbus,
+					  struct v4l2_pix_format *pix)
+{
+	unsigned int bpl = pix->bytesperline;
+	unsigned int min_bpl;
+	unsigned int i;
 
-	स_रखो(pix, 0, माप(*pix));
+	memset(pix, 0, sizeof(*pix));
 	pix->width = mbus->width;
 	pix->height = mbus->height;
 
 	/*
-	 * Skip the last क्रमmat in the loop so that it will be selected अगर no
+	 * Skip the last format in the loop so that it will be selected if no
 	 * match is found.
 	 */
-	क्रम (i = 0; i < ARRAY_SIZE(क्रमmats) - 1; ++i) अणु
-		अगर (क्रमmats[i].code == mbus->code)
-			अवरोध;
-	पूर्ण
+	for (i = 0; i < ARRAY_SIZE(formats) - 1; ++i) {
+		if (formats[i].code == mbus->code)
+			break;
+	}
 
-	min_bpl = pix->width * ALIGN(क्रमmats[i].bpp, 8) / 8;
+	min_bpl = pix->width * ALIGN(formats[i].bpp, 8) / 8;
 
 	/*
 	 * Clamp the requested bytes per line value. If the maximum bytes per
-	 * line value is zero, the module करोesn't support user configurable line
-	 * sizes. Override the requested value with the minimum in that हाल.
+	 * line value is zero, the module doesn't support user configurable line
+	 * sizes. Override the requested value with the minimum in that case.
 	 */
-	अगर (video->bpl_max)
+	if (video->bpl_max)
 		bpl = clamp(bpl, min_bpl, video->bpl_max);
-	अन्यथा
+	else
 		bpl = min_bpl;
 
-	अगर (!video->bpl_zero_padding || bpl != min_bpl)
+	if (!video->bpl_zero_padding || bpl != min_bpl)
 		bpl = ALIGN(bpl, video->bpl_alignment);
 
-	pix->pixelक्रमmat = क्रमmats[i].pixelक्रमmat;
+	pix->pixelformat = formats[i].pixelformat;
 	pix->bytesperline = bpl;
 	pix->sizeimage = pix->bytesperline * pix->height;
 	pix->colorspace = mbus->colorspace;
 	pix->field = mbus->field;
 
-	/* FIXME: Special हाल क्रम NV12! We should make this nicer... */
-	अगर (pix->pixelक्रमmat == V4L2_PIX_FMT_NV12)
+	/* FIXME: Special case for NV12! We should make this nicer... */
+	if (pix->pixelformat == V4L2_PIX_FMT_NV12)
 		pix->sizeimage += (pix->bytesperline * pix->height) / 2;
 
-	वापस bpl - min_bpl;
-पूर्ण
+	return bpl - min_bpl;
+}
 
-अटल व्योम iss_video_pix_to_mbus(स्थिर काष्ठा v4l2_pix_क्रमmat *pix,
-				  काष्ठा v4l2_mbus_framefmt *mbus)
-अणु
-	अचिन्हित पूर्णांक i;
+static void iss_video_pix_to_mbus(const struct v4l2_pix_format *pix,
+				  struct v4l2_mbus_framefmt *mbus)
+{
+	unsigned int i;
 
-	स_रखो(mbus, 0, माप(*mbus));
+	memset(mbus, 0, sizeof(*mbus));
 	mbus->width = pix->width;
 	mbus->height = pix->height;
 
 	/*
-	 * Skip the last क्रमmat in the loop so that it will be selected अगर no
+	 * Skip the last format in the loop so that it will be selected if no
 	 * match is found.
 	 */
-	क्रम (i = 0; i < ARRAY_SIZE(क्रमmats) - 1; ++i) अणु
-		अगर (क्रमmats[i].pixelक्रमmat == pix->pixelक्रमmat)
-			अवरोध;
-	पूर्ण
+	for (i = 0; i < ARRAY_SIZE(formats) - 1; ++i) {
+		if (formats[i].pixelformat == pix->pixelformat)
+			break;
+	}
 
-	mbus->code = क्रमmats[i].code;
+	mbus->code = formats[i].code;
 	mbus->colorspace = pix->colorspace;
 	mbus->field = pix->field;
-पूर्ण
+}
 
-अटल काष्ठा v4l2_subdev *
-iss_video_remote_subdev(काष्ठा iss_video *video, u32 *pad)
-अणु
-	काष्ठा media_pad *remote;
+static struct v4l2_subdev *
+iss_video_remote_subdev(struct iss_video *video, u32 *pad)
+{
+	struct media_pad *remote;
 
 	remote = media_entity_remote_pad(&video->pad);
 
-	अगर (!remote || !is_media_entity_v4l2_subdev(remote->entity))
-		वापस शून्य;
+	if (!remote || !is_media_entity_v4l2_subdev(remote->entity))
+		return NULL;
 
-	अगर (pad)
+	if (pad)
 		*pad = remote->index;
 
-	वापस media_entity_to_v4l2_subdev(remote->entity);
-पूर्ण
+	return media_entity_to_v4l2_subdev(remote->entity);
+}
 
-/* Return a poपूर्णांकer to the ISS video instance at the far end of the pipeline. */
-अटल काष्ठा iss_video *
-iss_video_far_end(काष्ठा iss_video *video)
-अणु
-	काष्ठा media_graph graph;
-	काष्ठा media_entity *entity = &video->video.entity;
-	काष्ठा media_device *mdev = entity->graph_obj.mdev;
-	काष्ठा iss_video *far_end = शून्य;
+/* Return a pointer to the ISS video instance at the far end of the pipeline. */
+static struct iss_video *
+iss_video_far_end(struct iss_video *video)
+{
+	struct media_graph graph;
+	struct media_entity *entity = &video->video.entity;
+	struct media_device *mdev = entity->graph_obj.mdev;
+	struct iss_video *far_end = NULL;
 
 	mutex_lock(&mdev->graph_mutex);
 
-	अगर (media_graph_walk_init(&graph, mdev)) अणु
+	if (media_graph_walk_init(&graph, mdev)) {
 		mutex_unlock(&mdev->graph_mutex);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	media_graph_walk_start(&graph, entity);
 
-	जबतक ((entity = media_graph_walk_next(&graph))) अणु
-		अगर (entity == &video->video.entity)
-			जारी;
+	while ((entity = media_graph_walk_next(&graph))) {
+		if (entity == &video->video.entity)
+			continue;
 
-		अगर (!is_media_entity_v4l2_video_device(entity))
-			जारी;
+		if (!is_media_entity_v4l2_video_device(entity))
+			continue;
 
 		far_end = to_iss_video(media_entity_to_video_device(entity));
-		अगर (far_end->type != video->type)
-			अवरोध;
+		if (far_end->type != video->type)
+			break;
 
-		far_end = शून्य;
-	पूर्ण
+		far_end = NULL;
+	}
 
 	mutex_unlock(&mdev->graph_mutex);
 
 	media_graph_walk_cleanup(&graph);
 
-	वापस far_end;
-पूर्ण
+	return far_end;
+}
 
-अटल पूर्णांक
-__iss_video_get_क्रमmat(काष्ठा iss_video *video,
-		       काष्ठा v4l2_mbus_framefmt *क्रमmat)
-अणु
-	काष्ठा v4l2_subdev_क्रमmat fmt;
-	काष्ठा v4l2_subdev *subdev;
+static int
+__iss_video_get_format(struct iss_video *video,
+		       struct v4l2_mbus_framefmt *format)
+{
+	struct v4l2_subdev_format fmt;
+	struct v4l2_subdev *subdev;
 	u32 pad;
-	पूर्णांक ret;
+	int ret;
 
 	subdev = iss_video_remote_subdev(video, &pad);
-	अगर (!subdev)
-		वापस -EINVAL;
+	if (!subdev)
+		return -EINVAL;
 
-	स_रखो(&fmt, 0, माप(fmt));
+	memset(&fmt, 0, sizeof(fmt));
 	fmt.pad = pad;
 	fmt.which = V4L2_SUBDEV_FORMAT_ACTIVE;
 
 	mutex_lock(&video->mutex);
-	ret = v4l2_subdev_call(subdev, pad, get_fmt, शून्य, &fmt);
+	ret = v4l2_subdev_call(subdev, pad, get_fmt, NULL, &fmt);
 	mutex_unlock(&video->mutex);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	*क्रमmat = fmt.क्रमmat;
-	वापस 0;
-पूर्ण
+	*format = fmt.format;
+	return 0;
+}
 
-अटल पूर्णांक
-iss_video_check_क्रमmat(काष्ठा iss_video *video, काष्ठा iss_video_fh *vfh)
-अणु
-	काष्ठा v4l2_mbus_framefmt क्रमmat;
-	काष्ठा v4l2_pix_क्रमmat pixfmt;
-	पूर्णांक ret;
+static int
+iss_video_check_format(struct iss_video *video, struct iss_video_fh *vfh)
+{
+	struct v4l2_mbus_framefmt format;
+	struct v4l2_pix_format pixfmt;
+	int ret;
 
-	ret = __iss_video_get_क्रमmat(video, &क्रमmat);
-	अगर (ret < 0)
-		वापस ret;
+	ret = __iss_video_get_format(video, &format);
+	if (ret < 0)
+		return ret;
 
 	pixfmt.bytesperline = 0;
-	ret = iss_video_mbus_to_pix(video, &क्रमmat, &pixfmt);
+	ret = iss_video_mbus_to_pix(video, &format, &pixfmt);
 
-	अगर (vfh->क्रमmat.fmt.pix.pixelक्रमmat != pixfmt.pixelक्रमmat ||
-	    vfh->क्रमmat.fmt.pix.height != pixfmt.height ||
-	    vfh->क्रमmat.fmt.pix.width != pixfmt.width ||
-	    vfh->क्रमmat.fmt.pix.bytesperline != pixfmt.bytesperline ||
-	    vfh->क्रमmat.fmt.pix.sizeimage != pixfmt.sizeimage)
-		वापस -EINVAL;
+	if (vfh->format.fmt.pix.pixelformat != pixfmt.pixelformat ||
+	    vfh->format.fmt.pix.height != pixfmt.height ||
+	    vfh->format.fmt.pix.width != pixfmt.width ||
+	    vfh->format.fmt.pix.bytesperline != pixfmt.bytesperline ||
+	    vfh->format.fmt.pix.sizeimage != pixfmt.sizeimage)
+		return -EINVAL;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* -----------------------------------------------------------------------------
  * Video queue operations
  */
 
-अटल पूर्णांक iss_video_queue_setup(काष्ठा vb2_queue *vq,
-				 अचिन्हित पूर्णांक *count, अचिन्हित पूर्णांक *num_planes,
-				 अचिन्हित पूर्णांक sizes[],
-				 काष्ठा device *alloc_devs[])
-अणु
-	काष्ठा iss_video_fh *vfh = vb2_get_drv_priv(vq);
-	काष्ठा iss_video *video = vfh->video;
+static int iss_video_queue_setup(struct vb2_queue *vq,
+				 unsigned int *count, unsigned int *num_planes,
+				 unsigned int sizes[],
+				 struct device *alloc_devs[])
+{
+	struct iss_video_fh *vfh = vb2_get_drv_priv(vq);
+	struct iss_video *video = vfh->video;
 
-	/* Revisit multi-planar support क्रम NV12 */
+	/* Revisit multi-planar support for NV12 */
 	*num_planes = 1;
 
-	sizes[0] = vfh->क्रमmat.fmt.pix.sizeimage;
-	अगर (sizes[0] == 0)
-		वापस -EINVAL;
+	sizes[0] = vfh->format.fmt.pix.sizeimage;
+	if (sizes[0] == 0)
+		return -EINVAL;
 
 	*count = min(*count, video->capture_mem / PAGE_ALIGN(sizes[0]));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम iss_video_buf_cleanup(काष्ठा vb2_buffer *vb)
-अणु
-	काष्ठा vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
-	काष्ठा iss_buffer *buffer = container_of(vbuf, काष्ठा iss_buffer, vb);
+static void iss_video_buf_cleanup(struct vb2_buffer *vb)
+{
+	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
+	struct iss_buffer *buffer = container_of(vbuf, struct iss_buffer, vb);
 
-	अगर (buffer->iss_addr)
+	if (buffer->iss_addr)
 		buffer->iss_addr = 0;
-पूर्ण
+}
 
-अटल पूर्णांक iss_video_buf_prepare(काष्ठा vb2_buffer *vb)
-अणु
-	काष्ठा vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
-	काष्ठा iss_video_fh *vfh = vb2_get_drv_priv(vb->vb2_queue);
-	काष्ठा iss_buffer *buffer = container_of(vbuf, काष्ठा iss_buffer, vb);
-	काष्ठा iss_video *video = vfh->video;
-	अचिन्हित दीर्घ size = vfh->क्रमmat.fmt.pix.sizeimage;
+static int iss_video_buf_prepare(struct vb2_buffer *vb)
+{
+	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
+	struct iss_video_fh *vfh = vb2_get_drv_priv(vb->vb2_queue);
+	struct iss_buffer *buffer = container_of(vbuf, struct iss_buffer, vb);
+	struct iss_video *video = vfh->video;
+	unsigned long size = vfh->format.fmt.pix.sizeimage;
 	dma_addr_t addr;
 
-	अगर (vb2_plane_size(vb, 0) < size)
-		वापस -ENOBUFS;
+	if (vb2_plane_size(vb, 0) < size)
+		return -ENOBUFS;
 
 	addr = vb2_dma_contig_plane_dma_addr(vb, 0);
-	अगर (!IS_ALIGNED(addr, 32)) अणु
+	if (!IS_ALIGNED(addr, 32)) {
 		dev_dbg(video->iss->dev,
 			"Buffer address must be aligned to 32 bytes boundary.\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	vb2_set_plane_payload(vb, 0, size);
 	buffer->iss_addr = addr;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम iss_video_buf_queue(काष्ठा vb2_buffer *vb)
-अणु
-	काष्ठा vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
-	काष्ठा iss_video_fh *vfh = vb2_get_drv_priv(vb->vb2_queue);
-	काष्ठा iss_video *video = vfh->video;
-	काष्ठा iss_buffer *buffer = container_of(vbuf, काष्ठा iss_buffer, vb);
-	काष्ठा iss_pipeline *pipe = to_iss_pipeline(&video->video.entity);
-	अचिन्हित दीर्घ flags;
+static void iss_video_buf_queue(struct vb2_buffer *vb)
+{
+	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
+	struct iss_video_fh *vfh = vb2_get_drv_priv(vb->vb2_queue);
+	struct iss_video *video = vfh->video;
+	struct iss_buffer *buffer = container_of(vbuf, struct iss_buffer, vb);
+	struct iss_pipeline *pipe = to_iss_pipeline(&video->video.entity);
+	unsigned long flags;
 	bool empty;
 
 	spin_lock_irqsave(&video->qlock, flags);
 
 	/*
 	 * Mark the buffer is faulty and give it back to the queue immediately
-	 * अगर the video node has रेजिस्टरed an error. vb2 will perक्रमm the same
+	 * if the video node has registered an error. vb2 will perform the same
 	 * check when preparing the buffer, but that is inherently racy, so we
 	 * need to handle the race condition with an authoritative check here.
 	 */
-	अगर (unlikely(video->error)) अणु
-		vb2_buffer_करोne(vb, VB2_BUF_STATE_ERROR);
+	if (unlikely(video->error)) {
+		vb2_buffer_done(vb, VB2_BUF_STATE_ERROR);
 		spin_unlock_irqrestore(&video->qlock, flags);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	empty = list_empty(&video->dmaqueue);
 	list_add_tail(&buffer->list, &video->dmaqueue);
 
 	spin_unlock_irqrestore(&video->qlock, flags);
 
-	अगर (empty) अणु
-		क्रमागत iss_pipeline_state state;
-		अचिन्हित पूर्णांक start;
+	if (empty) {
+		enum iss_pipeline_state state;
+		unsigned int start;
 
-		अगर (video->type == V4L2_BUF_TYPE_VIDEO_CAPTURE)
+		if (video->type == V4L2_BUF_TYPE_VIDEO_CAPTURE)
 			state = ISS_PIPELINE_QUEUE_OUTPUT;
-		अन्यथा
+		else
 			state = ISS_PIPELINE_QUEUE_INPUT;
 
 		spin_lock_irqsave(&pipe->lock, flags);
@@ -393,106 +392,106 @@ iss_video_check_क्रमmat(काष्ठा iss_video *video, काष�
 		video->ops->queue(video, buffer);
 		video->dmaqueue_flags |= ISS_VIDEO_DMAQUEUE_QUEUED;
 
-		start = iss_pipeline_पढ़ोy(pipe);
-		अगर (start)
+		start = iss_pipeline_ready(pipe);
+		if (start)
 			pipe->state |= ISS_PIPELINE_STREAM;
 		spin_unlock_irqrestore(&pipe->lock, flags);
 
-		अगर (start)
+		if (start)
 			omap4iss_pipeline_set_stream(pipe,
 						ISS_PIPELINE_STREAM_SINGLESHOT);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल स्थिर काष्ठा vb2_ops iss_video_vb2ops = अणु
+static const struct vb2_ops iss_video_vb2ops = {
 	.queue_setup	= iss_video_queue_setup,
 	.buf_prepare	= iss_video_buf_prepare,
 	.buf_queue	= iss_video_buf_queue,
 	.buf_cleanup	= iss_video_buf_cleanup,
-पूर्ण;
+};
 
 /*
- * omap4iss_video_buffer_next - Complete the current buffer and वापस the next
+ * omap4iss_video_buffer_next - Complete the current buffer and return the next
  * @video: ISS video object
  *
- * Remove the current video buffer from the DMA queue and fill its बारtamp,
- * field count and state fields beक्रमe waking up its completion handler.
+ * Remove the current video buffer from the DMA queue and fill its timestamp,
+ * field count and state fields before waking up its completion handler.
  *
- * For capture video nodes, the buffer state is set to VB2_BUF_STATE_DONE अगर no
+ * For capture video nodes, the buffer state is set to VB2_BUF_STATE_DONE if no
  * error has been flagged in the pipeline, or to VB2_BUF_STATE_ERROR otherwise.
  *
  * The DMA queue is expected to contain at least one buffer.
  *
- * Return a poपूर्णांकer to the next buffer in the DMA queue, or शून्य अगर the queue is
+ * Return a pointer to the next buffer in the DMA queue, or NULL if the queue is
  * empty.
  */
-काष्ठा iss_buffer *omap4iss_video_buffer_next(काष्ठा iss_video *video)
-अणु
-	काष्ठा iss_pipeline *pipe = to_iss_pipeline(&video->video.entity);
-	क्रमागत iss_pipeline_state state;
-	काष्ठा iss_buffer *buf;
-	अचिन्हित दीर्घ flags;
+struct iss_buffer *omap4iss_video_buffer_next(struct iss_video *video)
+{
+	struct iss_pipeline *pipe = to_iss_pipeline(&video->video.entity);
+	enum iss_pipeline_state state;
+	struct iss_buffer *buf;
+	unsigned long flags;
 
 	spin_lock_irqsave(&video->qlock, flags);
-	अगर (WARN_ON(list_empty(&video->dmaqueue))) अणु
+	if (WARN_ON(list_empty(&video->dmaqueue))) {
 		spin_unlock_irqrestore(&video->qlock, flags);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	buf = list_first_entry(&video->dmaqueue, काष्ठा iss_buffer,
+	buf = list_first_entry(&video->dmaqueue, struct iss_buffer,
 			       list);
 	list_del(&buf->list);
 	spin_unlock_irqrestore(&video->qlock, flags);
 
-	buf->vb.vb2_buf.बारtamp = kसमय_get_ns();
+	buf->vb.vb2_buf.timestamp = ktime_get_ns();
 
 	/*
-	 * Do frame number propagation only अगर this is the output video node.
-	 * Frame number either comes from the CSI receivers or it माला_लो
-	 * incremented here अगर H3A is not active.
+	 * Do frame number propagation only if this is the output video node.
+	 * Frame number either comes from the CSI receivers or it gets
+	 * incremented here if H3A is not active.
 	 * Note: There is no guarantee that the output buffer will finish
-	 * first, so the input number might lag behind by 1 in some हालs.
+	 * first, so the input number might lag behind by 1 in some cases.
 	 */
-	अगर (video == pipe->output && !pipe->करो_propagation)
+	if (video == pipe->output && !pipe->do_propagation)
 		buf->vb.sequence =
-			atomic_inc_वापस(&pipe->frame_number);
-	अन्यथा
-		buf->vb.sequence = atomic_पढ़ो(&pipe->frame_number);
+			atomic_inc_return(&pipe->frame_number);
+	else
+		buf->vb.sequence = atomic_read(&pipe->frame_number);
 
-	vb2_buffer_करोne(&buf->vb.vb2_buf, pipe->error ?
+	vb2_buffer_done(&buf->vb.vb2_buf, pipe->error ?
 			VB2_BUF_STATE_ERROR : VB2_BUF_STATE_DONE);
 	pipe->error = false;
 
 	spin_lock_irqsave(&video->qlock, flags);
-	अगर (list_empty(&video->dmaqueue)) अणु
+	if (list_empty(&video->dmaqueue)) {
 		spin_unlock_irqrestore(&video->qlock, flags);
-		अगर (video->type == V4L2_BUF_TYPE_VIDEO_CAPTURE)
+		if (video->type == V4L2_BUF_TYPE_VIDEO_CAPTURE)
 			state = ISS_PIPELINE_QUEUE_OUTPUT
 			      | ISS_PIPELINE_STREAM;
-		अन्यथा
+		else
 			state = ISS_PIPELINE_QUEUE_INPUT
 			      | ISS_PIPELINE_STREAM;
 
 		spin_lock_irqsave(&pipe->lock, flags);
 		pipe->state &= ~state;
-		अगर (video->pipe.stream_state == ISS_PIPELINE_STREAM_CONTINUOUS)
+		if (video->pipe.stream_state == ISS_PIPELINE_STREAM_CONTINUOUS)
 			video->dmaqueue_flags |= ISS_VIDEO_DMAQUEUE_UNDERRUN;
 		spin_unlock_irqrestore(&pipe->lock, flags);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	अगर (video->type == V4L2_BUF_TYPE_VIDEO_CAPTURE && pipe->input) अणु
+	if (video->type == V4L2_BUF_TYPE_VIDEO_CAPTURE && pipe->input) {
 		spin_lock(&pipe->lock);
 		pipe->state &= ~ISS_PIPELINE_STREAM;
 		spin_unlock(&pipe->lock);
-	पूर्ण
+	}
 
-	buf = list_first_entry(&video->dmaqueue, काष्ठा iss_buffer,
+	buf = list_first_entry(&video->dmaqueue, struct iss_buffer,
 			       list);
 	spin_unlock_irqrestore(&video->qlock, flags);
 	buf->vb.vb2_buf.state = VB2_BUF_STATE_ACTIVE;
-	वापस buf;
-पूर्ण
+	return buf;
+}
 
 /*
  * omap4iss_video_cancel_stream - Cancel stream on a video node
@@ -501,321 +500,321 @@ iss_video_check_क्रमmat(काष्ठा iss_video *video, काष�
  * Cancelling a stream mark all buffers on the video node as erroneous and makes
  * sure no new buffer can be queued.
  */
-व्योम omap4iss_video_cancel_stream(काष्ठा iss_video *video)
-अणु
-	अचिन्हित दीर्घ flags;
+void omap4iss_video_cancel_stream(struct iss_video *video)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&video->qlock, flags);
 
-	जबतक (!list_empty(&video->dmaqueue)) अणु
-		काष्ठा iss_buffer *buf;
+	while (!list_empty(&video->dmaqueue)) {
+		struct iss_buffer *buf;
 
-		buf = list_first_entry(&video->dmaqueue, काष्ठा iss_buffer,
+		buf = list_first_entry(&video->dmaqueue, struct iss_buffer,
 				       list);
 		list_del(&buf->list);
-		vb2_buffer_करोne(&buf->vb.vb2_buf, VB2_BUF_STATE_ERROR);
-	पूर्ण
+		vb2_buffer_done(&buf->vb.vb2_buf, VB2_BUF_STATE_ERROR);
+	}
 
 	vb2_queue_error(video->queue);
 	video->error = true;
 
 	spin_unlock_irqrestore(&video->qlock, flags);
-पूर्ण
+}
 
 /* -----------------------------------------------------------------------------
  * V4L2 ioctls
  */
 
-अटल पूर्णांक
-iss_video_querycap(काष्ठा file *file, व्योम *fh, काष्ठा v4l2_capability *cap)
-अणु
-	काष्ठा iss_video *video = video_drvdata(file);
+static int
+iss_video_querycap(struct file *file, void *fh, struct v4l2_capability *cap)
+{
+	struct iss_video *video = video_drvdata(file);
 
-	strscpy(cap->driver, ISS_VIDEO_DRIVER_NAME, माप(cap->driver));
-	strscpy(cap->card, video->video.name, माप(cap->card));
-	strscpy(cap->bus_info, "media", माप(cap->bus_info));
+	strscpy(cap->driver, ISS_VIDEO_DRIVER_NAME, sizeof(cap->driver));
+	strscpy(cap->card, video->video.name, sizeof(cap->card));
+	strscpy(cap->bus_info, "media", sizeof(cap->bus_info));
 	cap->capabilities = V4L2_CAP_DEVICE_CAPS | V4L2_CAP_STREAMING
 			  | V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VIDEO_OUTPUT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-iss_video_क्रमागत_क्रमmat(काष्ठा file *file, व्योम *fh, काष्ठा v4l2_fmtdesc *f)
-अणु
-	काष्ठा iss_video *video = video_drvdata(file);
-	काष्ठा v4l2_mbus_framefmt क्रमmat;
-	अचिन्हित पूर्णांक index = f->index;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक ret;
+static int
+iss_video_enum_format(struct file *file, void *fh, struct v4l2_fmtdesc *f)
+{
+	struct iss_video *video = video_drvdata(file);
+	struct v4l2_mbus_framefmt format;
+	unsigned int index = f->index;
+	unsigned int i;
+	int ret;
 
-	अगर (f->type != video->type)
-		वापस -EINVAL;
+	if (f->type != video->type)
+		return -EINVAL;
 
-	ret = __iss_video_get_क्रमmat(video, &क्रमmat);
-	अगर (ret < 0)
-		वापस ret;
+	ret = __iss_video_get_format(video, &format);
+	if (ret < 0)
+		return ret;
 
-	क्रम (i = 0; i < ARRAY_SIZE(क्रमmats); ++i) अणु
-		स्थिर काष्ठा iss_क्रमmat_info *info = &क्रमmats[i];
+	for (i = 0; i < ARRAY_SIZE(formats); ++i) {
+		const struct iss_format_info *info = &formats[i];
 
-		अगर (क्रमmat.code != info->code)
-			जारी;
+		if (format.code != info->code)
+			continue;
 
-		अगर (index == 0) अणु
-			f->pixelक्रमmat = info->pixelक्रमmat;
-			वापस 0;
-		पूर्ण
+		if (index == 0) {
+			f->pixelformat = info->pixelformat;
+			return 0;
+		}
 
 		index--;
-	पूर्ण
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक
-iss_video_get_क्रमmat(काष्ठा file *file, व्योम *fh, काष्ठा v4l2_क्रमmat *क्रमmat)
-अणु
-	काष्ठा iss_video_fh *vfh = to_iss_video_fh(fh);
-	काष्ठा iss_video *video = video_drvdata(file);
+static int
+iss_video_get_format(struct file *file, void *fh, struct v4l2_format *format)
+{
+	struct iss_video_fh *vfh = to_iss_video_fh(fh);
+	struct iss_video *video = video_drvdata(file);
 
-	अगर (क्रमmat->type != video->type)
-		वापस -EINVAL;
+	if (format->type != video->type)
+		return -EINVAL;
 
 	mutex_lock(&video->mutex);
-	*क्रमmat = vfh->क्रमmat;
+	*format = vfh->format;
 	mutex_unlock(&video->mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-iss_video_set_क्रमmat(काष्ठा file *file, व्योम *fh, काष्ठा v4l2_क्रमmat *क्रमmat)
-अणु
-	काष्ठा iss_video_fh *vfh = to_iss_video_fh(fh);
-	काष्ठा iss_video *video = video_drvdata(file);
-	काष्ठा v4l2_mbus_framefmt fmt;
+static int
+iss_video_set_format(struct file *file, void *fh, struct v4l2_format *format)
+{
+	struct iss_video_fh *vfh = to_iss_video_fh(fh);
+	struct iss_video *video = video_drvdata(file);
+	struct v4l2_mbus_framefmt fmt;
 
-	अगर (क्रमmat->type != video->type)
-		वापस -EINVAL;
+	if (format->type != video->type)
+		return -EINVAL;
 
 	mutex_lock(&video->mutex);
 
 	/*
 	 * Fill the bytesperline and sizeimage fields by converting to media bus
-	 * क्रमmat and back to pixel क्रमmat.
+	 * format and back to pixel format.
 	 */
-	iss_video_pix_to_mbus(&क्रमmat->fmt.pix, &fmt);
-	iss_video_mbus_to_pix(video, &fmt, &क्रमmat->fmt.pix);
+	iss_video_pix_to_mbus(&format->fmt.pix, &fmt);
+	iss_video_mbus_to_pix(video, &fmt, &format->fmt.pix);
 
-	vfh->क्रमmat = *क्रमmat;
+	vfh->format = *format;
 
 	mutex_unlock(&video->mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-iss_video_try_क्रमmat(काष्ठा file *file, व्योम *fh, काष्ठा v4l2_क्रमmat *क्रमmat)
-अणु
-	काष्ठा iss_video *video = video_drvdata(file);
-	काष्ठा v4l2_subdev_क्रमmat fmt;
-	काष्ठा v4l2_subdev *subdev;
+static int
+iss_video_try_format(struct file *file, void *fh, struct v4l2_format *format)
+{
+	struct iss_video *video = video_drvdata(file);
+	struct v4l2_subdev_format fmt;
+	struct v4l2_subdev *subdev;
 	u32 pad;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (क्रमmat->type != video->type)
-		वापस -EINVAL;
+	if (format->type != video->type)
+		return -EINVAL;
 
 	subdev = iss_video_remote_subdev(video, &pad);
-	अगर (!subdev)
-		वापस -EINVAL;
+	if (!subdev)
+		return -EINVAL;
 
-	iss_video_pix_to_mbus(&क्रमmat->fmt.pix, &fmt.क्रमmat);
+	iss_video_pix_to_mbus(&format->fmt.pix, &fmt.format);
 
 	fmt.pad = pad;
 	fmt.which = V4L2_SUBDEV_FORMAT_ACTIVE;
-	ret = v4l2_subdev_call(subdev, pad, get_fmt, शून्य, &fmt);
-	अगर (ret)
-		वापस ret;
+	ret = v4l2_subdev_call(subdev, pad, get_fmt, NULL, &fmt);
+	if (ret)
+		return ret;
 
-	iss_video_mbus_to_pix(video, &fmt.क्रमmat, &क्रमmat->fmt.pix);
-	वापस 0;
-पूर्ण
+	iss_video_mbus_to_pix(video, &fmt.format, &format->fmt.pix);
+	return 0;
+}
 
-अटल पूर्णांक
-iss_video_get_selection(काष्ठा file *file, व्योम *fh, काष्ठा v4l2_selection *sel)
-अणु
-	काष्ठा iss_video *video = video_drvdata(file);
-	काष्ठा v4l2_subdev_क्रमmat क्रमmat;
-	काष्ठा v4l2_subdev *subdev;
-	काष्ठा v4l2_subdev_selection sdsel = अणु
+static int
+iss_video_get_selection(struct file *file, void *fh, struct v4l2_selection *sel)
+{
+	struct iss_video *video = video_drvdata(file);
+	struct v4l2_subdev_format format;
+	struct v4l2_subdev *subdev;
+	struct v4l2_subdev_selection sdsel = {
 		.which = V4L2_SUBDEV_FORMAT_ACTIVE,
 		.target = sel->target,
-	पूर्ण;
+	};
 	u32 pad;
-	पूर्णांक ret;
+	int ret;
 
-	चयन (sel->target) अणु
-	हाल V4L2_SEL_TGT_CROP:
-	हाल V4L2_SEL_TGT_CROP_BOUNDS:
-	हाल V4L2_SEL_TGT_CROP_DEFAULT:
-		अगर (video->type == V4L2_BUF_TYPE_VIDEO_OUTPUT)
-			वापस -EINVAL;
-		अवरोध;
-	हाल V4L2_SEL_TGT_COMPOSE:
-	हाल V4L2_SEL_TGT_COMPOSE_BOUNDS:
-	हाल V4L2_SEL_TGT_COMPOSE_DEFAULT:
-		अगर (video->type == V4L2_BUF_TYPE_VIDEO_CAPTURE)
-			वापस -EINVAL;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	switch (sel->target) {
+	case V4L2_SEL_TGT_CROP:
+	case V4L2_SEL_TGT_CROP_BOUNDS:
+	case V4L2_SEL_TGT_CROP_DEFAULT:
+		if (video->type == V4L2_BUF_TYPE_VIDEO_OUTPUT)
+			return -EINVAL;
+		break;
+	case V4L2_SEL_TGT_COMPOSE:
+	case V4L2_SEL_TGT_COMPOSE_BOUNDS:
+	case V4L2_SEL_TGT_COMPOSE_DEFAULT:
+		if (video->type == V4L2_BUF_TYPE_VIDEO_CAPTURE)
+			return -EINVAL;
+		break;
+	default:
+		return -EINVAL;
+	}
 	subdev = iss_video_remote_subdev(video, &pad);
-	अगर (!subdev)
-		वापस -EINVAL;
+	if (!subdev)
+		return -EINVAL;
 
 	/*
-	 * Try the get selection operation first and fallback to get क्रमmat अगर
+	 * Try the get selection operation first and fallback to get format if
 	 * not implemented.
 	 */
 	sdsel.pad = pad;
-	ret = v4l2_subdev_call(subdev, pad, get_selection, शून्य, &sdsel);
-	अगर (!ret)
+	ret = v4l2_subdev_call(subdev, pad, get_selection, NULL, &sdsel);
+	if (!ret)
 		sel->r = sdsel.r;
-	अगर (ret != -ENOIOCTLCMD)
-		वापस ret;
+	if (ret != -ENOIOCTLCMD)
+		return ret;
 
-	क्रमmat.pad = pad;
-	क्रमmat.which = V4L2_SUBDEV_FORMAT_ACTIVE;
-	ret = v4l2_subdev_call(subdev, pad, get_fmt, शून्य, &क्रमmat);
-	अगर (ret < 0)
-		वापस ret == -ENOIOCTLCMD ? -ENOTTY : ret;
+	format.pad = pad;
+	format.which = V4L2_SUBDEV_FORMAT_ACTIVE;
+	ret = v4l2_subdev_call(subdev, pad, get_fmt, NULL, &format);
+	if (ret < 0)
+		return ret == -ENOIOCTLCMD ? -ENOTTY : ret;
 
 	sel->r.left = 0;
 	sel->r.top = 0;
-	sel->r.width = क्रमmat.क्रमmat.width;
-	sel->r.height = क्रमmat.क्रमmat.height;
+	sel->r.width = format.format.width;
+	sel->r.height = format.format.height;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-iss_video_set_selection(काष्ठा file *file, व्योम *fh, काष्ठा v4l2_selection *sel)
-अणु
-	काष्ठा iss_video *video = video_drvdata(file);
-	काष्ठा v4l2_subdev *subdev;
-	काष्ठा v4l2_subdev_selection sdsel = अणु
+static int
+iss_video_set_selection(struct file *file, void *fh, struct v4l2_selection *sel)
+{
+	struct iss_video *video = video_drvdata(file);
+	struct v4l2_subdev *subdev;
+	struct v4l2_subdev_selection sdsel = {
 		.which = V4L2_SUBDEV_FORMAT_ACTIVE,
 		.target = sel->target,
 		.flags = sel->flags,
 		.r = sel->r,
-	पूर्ण;
+	};
 	u32 pad;
-	पूर्णांक ret;
+	int ret;
 
-	चयन (sel->target) अणु
-	हाल V4L2_SEL_TGT_CROP:
-		अगर (video->type == V4L2_BUF_TYPE_VIDEO_OUTPUT)
-			वापस -EINVAL;
-		अवरोध;
-	हाल V4L2_SEL_TGT_COMPOSE:
-		अगर (video->type == V4L2_BUF_TYPE_VIDEO_CAPTURE)
-			वापस -EINVAL;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	switch (sel->target) {
+	case V4L2_SEL_TGT_CROP:
+		if (video->type == V4L2_BUF_TYPE_VIDEO_OUTPUT)
+			return -EINVAL;
+		break;
+	case V4L2_SEL_TGT_COMPOSE:
+		if (video->type == V4L2_BUF_TYPE_VIDEO_CAPTURE)
+			return -EINVAL;
+		break;
+	default:
+		return -EINVAL;
+	}
 	subdev = iss_video_remote_subdev(video, &pad);
-	अगर (!subdev)
-		वापस -EINVAL;
+	if (!subdev)
+		return -EINVAL;
 
 	sdsel.pad = pad;
 	mutex_lock(&video->mutex);
-	ret = v4l2_subdev_call(subdev, pad, set_selection, शून्य, &sdsel);
+	ret = v4l2_subdev_call(subdev, pad, set_selection, NULL, &sdsel);
 	mutex_unlock(&video->mutex);
-	अगर (!ret)
+	if (!ret)
 		sel->r = sdsel.r;
 
-	वापस ret == -ENOIOCTLCMD ? -ENOTTY : ret;
-पूर्ण
+	return ret == -ENOIOCTLCMD ? -ENOTTY : ret;
+}
 
-अटल पूर्णांक
-iss_video_get_param(काष्ठा file *file, व्योम *fh, काष्ठा v4l2_streamparm *a)
-अणु
-	काष्ठा iss_video_fh *vfh = to_iss_video_fh(fh);
-	काष्ठा iss_video *video = video_drvdata(file);
+static int
+iss_video_get_param(struct file *file, void *fh, struct v4l2_streamparm *a)
+{
+	struct iss_video_fh *vfh = to_iss_video_fh(fh);
+	struct iss_video *video = video_drvdata(file);
 
-	अगर (video->type != V4L2_BUF_TYPE_VIDEO_OUTPUT ||
+	if (video->type != V4L2_BUF_TYPE_VIDEO_OUTPUT ||
 	    video->type != a->type)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	स_रखो(a, 0, माप(*a));
+	memset(a, 0, sizeof(*a));
 	a->type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
 	a->parm.output.capability = V4L2_CAP_TIMEPERFRAME;
-	a->parm.output.समयperframe = vfh->समयperframe;
+	a->parm.output.timeperframe = vfh->timeperframe;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-iss_video_set_param(काष्ठा file *file, व्योम *fh, काष्ठा v4l2_streamparm *a)
-अणु
-	काष्ठा iss_video_fh *vfh = to_iss_video_fh(fh);
-	काष्ठा iss_video *video = video_drvdata(file);
+static int
+iss_video_set_param(struct file *file, void *fh, struct v4l2_streamparm *a)
+{
+	struct iss_video_fh *vfh = to_iss_video_fh(fh);
+	struct iss_video *video = video_drvdata(file);
 
-	अगर (video->type != V4L2_BUF_TYPE_VIDEO_OUTPUT ||
+	if (video->type != V4L2_BUF_TYPE_VIDEO_OUTPUT ||
 	    video->type != a->type)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर (a->parm.output.समयperframe.denominator == 0)
-		a->parm.output.समयperframe.denominator = 1;
+	if (a->parm.output.timeperframe.denominator == 0)
+		a->parm.output.timeperframe.denominator = 1;
 
-	vfh->समयperframe = a->parm.output.समयperframe;
+	vfh->timeperframe = a->parm.output.timeperframe;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-iss_video_reqbufs(काष्ठा file *file, व्योम *fh, काष्ठा v4l2_requestbuffers *rb)
-अणु
-	काष्ठा iss_video_fh *vfh = to_iss_video_fh(fh);
+static int
+iss_video_reqbufs(struct file *file, void *fh, struct v4l2_requestbuffers *rb)
+{
+	struct iss_video_fh *vfh = to_iss_video_fh(fh);
 
-	वापस vb2_reqbufs(&vfh->queue, rb);
-पूर्ण
+	return vb2_reqbufs(&vfh->queue, rb);
+}
 
-अटल पूर्णांक
-iss_video_querybuf(काष्ठा file *file, व्योम *fh, काष्ठा v4l2_buffer *b)
-अणु
-	काष्ठा iss_video_fh *vfh = to_iss_video_fh(fh);
+static int
+iss_video_querybuf(struct file *file, void *fh, struct v4l2_buffer *b)
+{
+	struct iss_video_fh *vfh = to_iss_video_fh(fh);
 
-	वापस vb2_querybuf(&vfh->queue, b);
-पूर्ण
+	return vb2_querybuf(&vfh->queue, b);
+}
 
-अटल पूर्णांक
-iss_video_qbuf(काष्ठा file *file, व्योम *fh, काष्ठा v4l2_buffer *b)
-अणु
-	काष्ठा iss_video *video = video_drvdata(file);
-	काष्ठा iss_video_fh *vfh = to_iss_video_fh(fh);
+static int
+iss_video_qbuf(struct file *file, void *fh, struct v4l2_buffer *b)
+{
+	struct iss_video *video = video_drvdata(file);
+	struct iss_video_fh *vfh = to_iss_video_fh(fh);
 
-	वापस vb2_qbuf(&vfh->queue, video->video.v4l2_dev->mdev, b);
-पूर्ण
+	return vb2_qbuf(&vfh->queue, video->video.v4l2_dev->mdev, b);
+}
 
-अटल पूर्णांक
-iss_video_expbuf(काष्ठा file *file, व्योम *fh, काष्ठा v4l2_exportbuffer *e)
-अणु
-	काष्ठा iss_video_fh *vfh = to_iss_video_fh(fh);
+static int
+iss_video_expbuf(struct file *file, void *fh, struct v4l2_exportbuffer *e)
+{
+	struct iss_video_fh *vfh = to_iss_video_fh(fh);
 
-	वापस vb2_expbuf(&vfh->queue, e);
-पूर्ण
+	return vb2_expbuf(&vfh->queue, e);
+}
 
-अटल पूर्णांक
-iss_video_dqbuf(काष्ठा file *file, व्योम *fh, काष्ठा v4l2_buffer *b)
-अणु
-	काष्ठा iss_video_fh *vfh = to_iss_video_fh(fh);
+static int
+iss_video_dqbuf(struct file *file, void *fh, struct v4l2_buffer *b)
+{
+	struct iss_video_fh *vfh = to_iss_video_fh(fh);
 
-	वापस vb2_dqbuf(&vfh->queue, b, file->f_flags & O_NONBLOCK);
-पूर्ण
+	return vb2_dqbuf(&vfh->queue, b, file->f_flags & O_NONBLOCK);
+}
 
 /*
  * Stream management
@@ -828,8 +827,8 @@ iss_video_dqbuf(काष्ठा file *file, व्योम *fh, काष्
  * both the input and output, as well as the availability of buffers.
  *
  * In sensor-to-memory mode, frames are always available at the pipeline input.
- * Starting the sensor usually requires I2C transfers and must be करोne in
- * पूर्णांकerruptible context. The pipeline is started and stopped synchronously
+ * Starting the sensor usually requires I2C transfers and must be done in
+ * interruptible context. The pipeline is started and stopped synchronously
  * to the stream on/off commands. All modules in the pipeline will get their
  * subdev set stream handler called. The module at the end of the pipeline must
  * delay starting the hardware until buffers are available at its output.
@@ -839,8 +838,8 @@ iss_video_dqbuf(काष्ठा file *file, व्योम *fh, काष्
  * in the middle of a frame, and at least some of the modules seem to become
  * busy as soon as they're started, even if they don't receive a frame start
  * event. For that reason frames need to be processed in single-shot mode. The
- * driver needs to रुको until a frame is completely processed and written to
- * memory beक्रमe restarting the pipeline क्रम the next frame. Pipelined
+ * driver needs to wait until a frame is completely processed and written to
+ * memory before restarting the pipeline for the next frame. Pipelined
  * processing might be possible but requires more testing.
  *
  * Stream start must be delayed until buffers are available at both the input
@@ -848,22 +847,22 @@ iss_video_dqbuf(काष्ठा file *file, व्योम *fh, काष्
  * the buffers queue spinlock held. The modules subdev set stream operation must
  * not sleep.
  */
-अटल पूर्णांक
-iss_video_streamon(काष्ठा file *file, व्योम *fh, क्रमागत v4l2_buf_type type)
-अणु
-	काष्ठा iss_video_fh *vfh = to_iss_video_fh(fh);
-	काष्ठा iss_video *video = video_drvdata(file);
-	काष्ठा media_graph graph;
-	काष्ठा media_entity *entity = &video->video.entity;
-	काष्ठा media_device *mdev = entity->graph_obj.mdev;
-	क्रमागत iss_pipeline_state state;
-	काष्ठा iss_pipeline *pipe;
-	काष्ठा iss_video *far_end;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+static int
+iss_video_streamon(struct file *file, void *fh, enum v4l2_buf_type type)
+{
+	struct iss_video_fh *vfh = to_iss_video_fh(fh);
+	struct iss_video *video = video_drvdata(file);
+	struct media_graph graph;
+	struct media_entity *entity = &video->video.entity;
+	struct media_device *mdev = entity->graph_obj.mdev;
+	enum iss_pipeline_state state;
+	struct iss_pipeline *pipe;
+	struct iss_video *far_end;
+	unsigned long flags;
+	int ret;
 
-	अगर (type != video->type)
-		वापस -EINVAL;
+	if (type != video->type)
+		return -EINVAL;
 
 	mutex_lock(&video->stream_lock);
 
@@ -873,41 +872,41 @@ iss_video_streamon(काष्ठा file *file, व्योम *fh, क्र
 	 */
 	pipe = entity->pipe
 	     ? to_iss_pipeline(entity) : &video->pipe;
-	pipe->बाह्यal = शून्य;
-	pipe->बाह्यal_rate = 0;
-	pipe->बाह्यal_bpp = 0;
+	pipe->external = NULL;
+	pipe->external_rate = 0;
+	pipe->external_bpp = 0;
 
-	ret = media_entity_क्रमागत_init(&pipe->ent_क्रमागत, entity->graph_obj.mdev);
-	अगर (ret)
-		जाओ err_graph_walk_init;
+	ret = media_entity_enum_init(&pipe->ent_enum, entity->graph_obj.mdev);
+	if (ret)
+		goto err_graph_walk_init;
 
 	ret = media_graph_walk_init(&graph, entity->graph_obj.mdev);
-	अगर (ret)
-		जाओ err_graph_walk_init;
+	if (ret)
+		goto err_graph_walk_init;
 
-	अगर (video->iss->pdata->set_स्थिरraपूर्णांकs)
-		video->iss->pdata->set_स्थिरraपूर्णांकs(video->iss, true);
+	if (video->iss->pdata->set_constraints)
+		video->iss->pdata->set_constraints(video->iss, true);
 
 	ret = media_pipeline_start(entity, &pipe->pipe);
-	अगर (ret < 0)
-		जाओ err_media_pipeline_start;
+	if (ret < 0)
+		goto err_media_pipeline_start;
 
 	mutex_lock(&mdev->graph_mutex);
 	media_graph_walk_start(&graph, entity);
-	जबतक ((entity = media_graph_walk_next(&graph)))
-		media_entity_क्रमागत_set(&pipe->ent_क्रमागत, entity);
+	while ((entity = media_graph_walk_next(&graph)))
+		media_entity_enum_set(&pipe->ent_enum, entity);
 	mutex_unlock(&mdev->graph_mutex);
 
 	/*
-	 * Verअगरy that the currently configured क्रमmat matches the output of
+	 * Verify that the currently configured format matches the output of
 	 * the connected subdev.
 	 */
-	ret = iss_video_check_क्रमmat(video, vfh);
-	अगर (ret < 0)
-		जाओ err_iss_video_check_क्रमmat;
+	ret = iss_video_check_format(video, vfh);
+	if (ret < 0)
+		goto err_iss_video_check_format;
 
 	video->bpl_padding = ret;
-	video->bpl_value = vfh->क्रमmat.fmt.pix.bytesperline;
+	video->bpl_value = vfh->format.fmt.pix.bytesperline;
 
 	/*
 	 * Find the ISS video node connected at the far end of the pipeline and
@@ -915,20 +914,20 @@ iss_video_streamon(काष्ठा file *file, व्योम *fh, क्र
 	 */
 	far_end = iss_video_far_end(video);
 
-	अगर (video->type == V4L2_BUF_TYPE_VIDEO_CAPTURE) अणु
+	if (video->type == V4L2_BUF_TYPE_VIDEO_CAPTURE) {
 		state = ISS_PIPELINE_STREAM_OUTPUT | ISS_PIPELINE_IDLE_OUTPUT;
 		pipe->input = far_end;
 		pipe->output = video;
-	पूर्ण अन्यथा अणु
-		अगर (!far_end) अणु
+	} else {
+		if (!far_end) {
 			ret = -EPIPE;
-			जाओ err_iss_video_check_क्रमmat;
-		पूर्ण
+			goto err_iss_video_check_format;
+		}
 
 		state = ISS_PIPELINE_STREAM_INPUT | ISS_PIPELINE_IDLE_INPUT;
 		pipe->input = video;
 		pipe->output = far_end;
-	पूर्ण
+	}
 
 	spin_lock_irqsave(&pipe->lock, flags);
 	pipe->state &= ~ISS_PIPELINE_STREAM;
@@ -936,12 +935,12 @@ iss_video_streamon(काष्ठा file *file, व्योम *fh, क्र
 	spin_unlock_irqrestore(&pipe->lock, flags);
 
 	/*
-	 * Set the maximum समय per frame as the value requested by userspace.
-	 * This is a soft limit that can be overridden अगर the hardware करोesn't
+	 * Set the maximum time per frame as the value requested by userspace.
+	 * This is a soft limit that can be overridden if the hardware doesn't
 	 * support the request limit.
 	 */
-	अगर (video->type == V4L2_BUF_TYPE_VIDEO_OUTPUT)
-		pipe->max_समयperframe = vfh->समयperframe;
+	if (video->type == V4L2_BUF_TYPE_VIDEO_OUTPUT)
+		pipe->max_timeperframe = vfh->timeperframe;
 
 	video->queue = &vfh->queue;
 	INIT_LIST_HEAD(&video->dmaqueue);
@@ -949,74 +948,74 @@ iss_video_streamon(काष्ठा file *file, व्योम *fh, क्र
 	atomic_set(&pipe->frame_number, -1);
 
 	ret = vb2_streamon(&vfh->queue, type);
-	अगर (ret < 0)
-		जाओ err_iss_video_check_क्रमmat;
+	if (ret < 0)
+		goto err_iss_video_check_format;
 
 	/*
 	 * In sensor-to-memory mode, the stream can be started synchronously
 	 * to the stream on command. In memory-to-memory mode, it will be
 	 * started when buffers are queued on both the input and output.
 	 */
-	अगर (!pipe->input) अणु
-		अचिन्हित दीर्घ flags;
+	if (!pipe->input) {
+		unsigned long flags;
 
 		ret = omap4iss_pipeline_set_stream(pipe,
 					      ISS_PIPELINE_STREAM_CONTINUOUS);
-		अगर (ret < 0)
-			जाओ err_omap4iss_set_stream;
+		if (ret < 0)
+			goto err_omap4iss_set_stream;
 		spin_lock_irqsave(&video->qlock, flags);
-		अगर (list_empty(&video->dmaqueue))
+		if (list_empty(&video->dmaqueue))
 			video->dmaqueue_flags |= ISS_VIDEO_DMAQUEUE_UNDERRUN;
 		spin_unlock_irqrestore(&video->qlock, flags);
-	पूर्ण
+	}
 
 	media_graph_walk_cleanup(&graph);
 
 	mutex_unlock(&video->stream_lock);
 
-	वापस 0;
+	return 0;
 
 err_omap4iss_set_stream:
 	vb2_streamoff(&vfh->queue, type);
-err_iss_video_check_क्रमmat:
+err_iss_video_check_format:
 	media_pipeline_stop(&video->video.entity);
 err_media_pipeline_start:
-	अगर (video->iss->pdata->set_स्थिरraपूर्णांकs)
-		video->iss->pdata->set_स्थिरraपूर्णांकs(video->iss, false);
-	video->queue = शून्य;
+	if (video->iss->pdata->set_constraints)
+		video->iss->pdata->set_constraints(video->iss, false);
+	video->queue = NULL;
 
 	media_graph_walk_cleanup(&graph);
 
 err_graph_walk_init:
-	media_entity_क्रमागत_cleanup(&pipe->ent_क्रमागत);
+	media_entity_enum_cleanup(&pipe->ent_enum);
 
 	mutex_unlock(&video->stream_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक
-iss_video_streamoff(काष्ठा file *file, व्योम *fh, क्रमागत v4l2_buf_type type)
-अणु
-	काष्ठा iss_video_fh *vfh = to_iss_video_fh(fh);
-	काष्ठा iss_video *video = video_drvdata(file);
-	काष्ठा iss_pipeline *pipe = to_iss_pipeline(&video->video.entity);
-	क्रमागत iss_pipeline_state state;
-	अचिन्हित दीर्घ flags;
+static int
+iss_video_streamoff(struct file *file, void *fh, enum v4l2_buf_type type)
+{
+	struct iss_video_fh *vfh = to_iss_video_fh(fh);
+	struct iss_video *video = video_drvdata(file);
+	struct iss_pipeline *pipe = to_iss_pipeline(&video->video.entity);
+	enum iss_pipeline_state state;
+	unsigned long flags;
 
-	अगर (type != video->type)
-		वापस -EINVAL;
+	if (type != video->type)
+		return -EINVAL;
 
 	mutex_lock(&video->stream_lock);
 
-	अगर (!vb2_is_streaming(&vfh->queue))
-		जाओ करोne;
+	if (!vb2_is_streaming(&vfh->queue))
+		goto done;
 
 	/* Update the pipeline state. */
-	अगर (video->type == V4L2_BUF_TYPE_VIDEO_CAPTURE)
+	if (video->type == V4L2_BUF_TYPE_VIDEO_CAPTURE)
 		state = ISS_PIPELINE_STREAM_OUTPUT
 		      | ISS_PIPELINE_QUEUE_OUTPUT;
-	अन्यथा
+	else
 		state = ISS_PIPELINE_STREAM_INPUT
 		      | ISS_PIPELINE_QUEUE_INPUT;
 
@@ -1027,54 +1026,54 @@ iss_video_streamoff(काष्ठा file *file, व्योम *fh, क्�
 	/* Stop the stream. */
 	omap4iss_pipeline_set_stream(pipe, ISS_PIPELINE_STREAM_STOPPED);
 	vb2_streamoff(&vfh->queue, type);
-	video->queue = शून्य;
+	video->queue = NULL;
 
-	media_entity_क्रमागत_cleanup(&pipe->ent_क्रमागत);
+	media_entity_enum_cleanup(&pipe->ent_enum);
 
-	अगर (video->iss->pdata->set_स्थिरraपूर्णांकs)
-		video->iss->pdata->set_स्थिरraपूर्णांकs(video->iss, false);
+	if (video->iss->pdata->set_constraints)
+		video->iss->pdata->set_constraints(video->iss, false);
 	media_pipeline_stop(&video->video.entity);
 
-करोne:
+done:
 	mutex_unlock(&video->stream_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-iss_video_क्रमागत_input(काष्ठा file *file, व्योम *fh, काष्ठा v4l2_input *input)
-अणु
-	अगर (input->index > 0)
-		वापस -EINVAL;
+static int
+iss_video_enum_input(struct file *file, void *fh, struct v4l2_input *input)
+{
+	if (input->index > 0)
+		return -EINVAL;
 
-	strscpy(input->name, "camera", माप(input->name));
+	strscpy(input->name, "camera", sizeof(input->name));
 	input->type = V4L2_INPUT_TYPE_CAMERA;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-iss_video_g_input(काष्ठा file *file, व्योम *fh, अचिन्हित पूर्णांक *input)
-अणु
+static int
+iss_video_g_input(struct file *file, void *fh, unsigned int *input)
+{
 	*input = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-iss_video_s_input(काष्ठा file *file, व्योम *fh, अचिन्हित पूर्णांक input)
-अणु
-	वापस input == 0 ? 0 : -EINVAL;
-पूर्ण
+static int
+iss_video_s_input(struct file *file, void *fh, unsigned int input)
+{
+	return input == 0 ? 0 : -EINVAL;
+}
 
-अटल स्थिर काष्ठा v4l2_ioctl_ops iss_video_ioctl_ops = अणु
+static const struct v4l2_ioctl_ops iss_video_ioctl_ops = {
 	.vidioc_querycap		= iss_video_querycap,
-	.vidioc_क्रमागत_fmt_vid_cap        = iss_video_क्रमागत_क्रमmat,
-	.vidioc_g_fmt_vid_cap		= iss_video_get_क्रमmat,
-	.vidioc_s_fmt_vid_cap		= iss_video_set_क्रमmat,
-	.vidioc_try_fmt_vid_cap		= iss_video_try_क्रमmat,
-	.vidioc_g_fmt_vid_out		= iss_video_get_क्रमmat,
-	.vidioc_s_fmt_vid_out		= iss_video_set_क्रमmat,
-	.vidioc_try_fmt_vid_out		= iss_video_try_क्रमmat,
+	.vidioc_enum_fmt_vid_cap        = iss_video_enum_format,
+	.vidioc_g_fmt_vid_cap		= iss_video_get_format,
+	.vidioc_s_fmt_vid_cap		= iss_video_set_format,
+	.vidioc_try_fmt_vid_cap		= iss_video_try_format,
+	.vidioc_g_fmt_vid_out		= iss_video_get_format,
+	.vidioc_s_fmt_vid_out		= iss_video_set_format,
+	.vidioc_try_fmt_vid_out		= iss_video_try_format,
 	.vidioc_g_selection		= iss_video_get_selection,
 	.vidioc_s_selection		= iss_video_set_selection,
 	.vidioc_g_parm			= iss_video_get_param,
@@ -1086,40 +1085,40 @@ iss_video_s_input(काष्ठा file *file, व्योम *fh, अचि�
 	.vidioc_dqbuf			= iss_video_dqbuf,
 	.vidioc_streamon		= iss_video_streamon,
 	.vidioc_streamoff		= iss_video_streamoff,
-	.vidioc_क्रमागत_input		= iss_video_क्रमागत_input,
+	.vidioc_enum_input		= iss_video_enum_input,
 	.vidioc_g_input			= iss_video_g_input,
 	.vidioc_s_input			= iss_video_s_input,
-पूर्ण;
+};
 
 /* -----------------------------------------------------------------------------
  * V4L2 file operations
  */
 
-अटल पूर्णांक iss_video_खोलो(काष्ठा file *file)
-अणु
-	काष्ठा iss_video *video = video_drvdata(file);
-	काष्ठा iss_video_fh *handle;
-	काष्ठा vb2_queue *q;
-	पूर्णांक ret = 0;
+static int iss_video_open(struct file *file)
+{
+	struct iss_video *video = video_drvdata(file);
+	struct iss_video_fh *handle;
+	struct vb2_queue *q;
+	int ret = 0;
 
-	handle = kzalloc(माप(*handle), GFP_KERNEL);
-	अगर (!handle)
-		वापस -ENOMEM;
+	handle = kzalloc(sizeof(*handle), GFP_KERNEL);
+	if (!handle)
+		return -ENOMEM;
 
 	v4l2_fh_init(&handle->vfh, &video->video);
 	v4l2_fh_add(&handle->vfh);
 
 	/* If this is the first user, initialise the pipeline. */
-	अगर (!omap4iss_get(video->iss)) अणु
+	if (!omap4iss_get(video->iss)) {
 		ret = -EBUSY;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	ret = v4l2_pipeline_pm_get(&video->video.entity);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		omap4iss_put(video->iss);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	q = &handle->queue;
 
@@ -1128,40 +1127,40 @@ iss_video_s_input(काष्ठा file *file, व्योम *fh, अचि�
 	q->drv_priv = handle;
 	q->ops = &iss_video_vb2ops;
 	q->mem_ops = &vb2_dma_contig_memops;
-	q->buf_काष्ठा_size = माप(काष्ठा iss_buffer);
-	q->बारtamp_flags = V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC;
+	q->buf_struct_size = sizeof(struct iss_buffer);
+	q->timestamp_flags = V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC;
 	q->dev = video->iss->dev;
 
 	ret = vb2_queue_init(q);
-	अगर (ret) अणु
+	if (ret) {
 		omap4iss_put(video->iss);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	स_रखो(&handle->क्रमmat, 0, माप(handle->क्रमmat));
-	handle->क्रमmat.type = video->type;
-	handle->समयperframe.denominator = 1;
+	memset(&handle->format, 0, sizeof(handle->format));
+	handle->format.type = video->type;
+	handle->timeperframe.denominator = 1;
 
 	handle->video = video;
-	file->निजी_data = &handle->vfh;
+	file->private_data = &handle->vfh;
 
-करोne:
-	अगर (ret < 0) अणु
+done:
+	if (ret < 0) {
 		v4l2_fh_del(&handle->vfh);
-		v4l2_fh_निकास(&handle->vfh);
-		kमुक्त(handle);
-	पूर्ण
+		v4l2_fh_exit(&handle->vfh);
+		kfree(handle);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक iss_video_release(काष्ठा file *file)
-अणु
-	काष्ठा iss_video *video = video_drvdata(file);
-	काष्ठा v4l2_fh *vfh = file->निजी_data;
-	काष्ठा iss_video_fh *handle = to_iss_video_fh(vfh);
+static int iss_video_release(struct file *file)
+{
+	struct iss_video *video = video_drvdata(file);
+	struct v4l2_fh *vfh = file->private_data;
+	struct iss_video_fh *handle = to_iss_video_fh(vfh);
 
-	/* Disable streaming and मुक्त the buffers queue resources. */
+	/* Disable streaming and free the buffers queue resources. */
 	iss_video_streamoff(file, vfh, video->type);
 
 	v4l2_pipeline_pm_put(&video->video.entity);
@@ -1170,67 +1169,67 @@ iss_video_s_input(काष्ठा file *file, व्योम *fh, अचि�
 	vb2_queue_release(&handle->queue);
 
 	v4l2_fh_del(vfh);
-	v4l2_fh_निकास(vfh);
-	kमुक्त(handle);
-	file->निजी_data = शून्य;
+	v4l2_fh_exit(vfh);
+	kfree(handle);
+	file->private_data = NULL;
 
 	omap4iss_put(video->iss);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल __poll_t iss_video_poll(काष्ठा file *file, poll_table *रुको)
-अणु
-	काष्ठा iss_video_fh *vfh = to_iss_video_fh(file->निजी_data);
+static __poll_t iss_video_poll(struct file *file, poll_table *wait)
+{
+	struct iss_video_fh *vfh = to_iss_video_fh(file->private_data);
 
-	वापस vb2_poll(&vfh->queue, file, रुको);
-पूर्ण
+	return vb2_poll(&vfh->queue, file, wait);
+}
 
-अटल पूर्णांक iss_video_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा iss_video_fh *vfh = to_iss_video_fh(file->निजी_data);
+static int iss_video_mmap(struct file *file, struct vm_area_struct *vma)
+{
+	struct iss_video_fh *vfh = to_iss_video_fh(file->private_data);
 
-	वापस vb2_mmap(&vfh->queue, vma);
-पूर्ण
+	return vb2_mmap(&vfh->queue, vma);
+}
 
-अटल स्थिर काष्ठा v4l2_file_operations iss_video_fops = अणु
+static const struct v4l2_file_operations iss_video_fops = {
 	.owner = THIS_MODULE,
 	.unlocked_ioctl = video_ioctl2,
-	.खोलो = iss_video_खोलो,
+	.open = iss_video_open,
 	.release = iss_video_release,
 	.poll = iss_video_poll,
 	.mmap = iss_video_mmap,
-पूर्ण;
+};
 
 /* -----------------------------------------------------------------------------
  * ISS video core
  */
 
-अटल स्थिर काष्ठा iss_video_operations iss_video_dummy_ops = अणु
-पूर्ण;
+static const struct iss_video_operations iss_video_dummy_ops = {
+};
 
-पूर्णांक omap4iss_video_init(काष्ठा iss_video *video, स्थिर अक्षर *name)
-अणु
-	स्थिर अक्षर *direction;
-	पूर्णांक ret;
+int omap4iss_video_init(struct iss_video *video, const char *name)
+{
+	const char *direction;
+	int ret;
 
-	चयन (video->type) अणु
-	हाल V4L2_BUF_TYPE_VIDEO_CAPTURE:
+	switch (video->type) {
+	case V4L2_BUF_TYPE_VIDEO_CAPTURE:
 		direction = "output";
 		video->pad.flags = MEDIA_PAD_FL_SINK;
-		अवरोध;
-	हाल V4L2_BUF_TYPE_VIDEO_OUTPUT:
+		break;
+	case V4L2_BUF_TYPE_VIDEO_OUTPUT:
 		direction = "input";
 		video->pad.flags = MEDIA_PAD_FL_SOURCE;
-		अवरोध;
+		break;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		return -EINVAL;
+	}
 
 	ret = media_entity_pads_init(&video->video.entity, 1, &video->pad);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	spin_lock_init(&video->qlock);
 	mutex_init(&video->mutex);
@@ -1240,11 +1239,11 @@ iss_video_s_input(काष्ठा file *file, व्योम *fh, अचि�
 	mutex_init(&video->stream_lock);
 
 	/* Initialize the video device. */
-	अगर (!video->ops)
+	if (!video->ops)
 		video->ops = &iss_video_dummy_ops;
 
 	video->video.fops = &iss_video_fops;
-	snम_लिखो(video->video.name, माप(video->video.name),
+	snprintf(video->video.name, sizeof(video->video.name),
 		 "OMAP4 ISS %s %s", name, direction);
 	video->video.vfl_type = VFL_TYPE_VIDEO;
 	video->video.release = video_device_release_empty;
@@ -1253,36 +1252,36 @@ iss_video_s_input(काष्ठा file *file, व्योम *fh, अचि�
 
 	video_set_drvdata(&video->video, video);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम omap4iss_video_cleanup(काष्ठा iss_video *video)
-अणु
+void omap4iss_video_cleanup(struct iss_video *video)
+{
 	media_entity_cleanup(&video->video.entity);
 	mutex_destroy(&video->stream_lock);
 	mutex_destroy(&video->mutex);
-पूर्ण
+}
 
-पूर्णांक omap4iss_video_रेजिस्टर(काष्ठा iss_video *video, काष्ठा v4l2_device *vdev)
-अणु
-	पूर्णांक ret;
+int omap4iss_video_register(struct iss_video *video, struct v4l2_device *vdev)
+{
+	int ret;
 
 	video->video.v4l2_dev = vdev;
-	अगर (video->type == V4L2_BUF_TYPE_VIDEO_CAPTURE)
+	if (video->type == V4L2_BUF_TYPE_VIDEO_CAPTURE)
 		video->video.device_caps = V4L2_CAP_VIDEO_CAPTURE;
-	अन्यथा
+	else
 		video->video.device_caps = V4L2_CAP_VIDEO_OUTPUT;
 	video->video.device_caps |= V4L2_CAP_STREAMING;
 
-	ret = video_रेजिस्टर_device(&video->video, VFL_TYPE_VIDEO, -1);
-	अगर (ret < 0)
+	ret = video_register_device(&video->video, VFL_TYPE_VIDEO, -1);
+	if (ret < 0)
 		dev_err(video->iss->dev,
 			"could not register video device (%d)\n", ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम omap4iss_video_unरेजिस्टर(काष्ठा iss_video *video)
-अणु
-	video_unरेजिस्टर_device(&video->video);
-पूर्ण
+void omap4iss_video_unregister(struct iss_video *video)
+{
+	video_unregister_device(&video->video);
+}

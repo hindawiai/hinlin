@@ -1,14 +1,13 @@
-<शैली गुरु>
 /*
  * Copyright (C) 2009 Francisco Jerez.
  * All Rights Reserved.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining
- * a copy of this software and associated करोcumentation files (the
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modअगरy, merge, publish,
+ * without limitation the rights to use, copy, modify, merge, publish,
  * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to करो so, subject to
+ * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -25,9 +24,9 @@
  *
  */
 
-#समावेश "ch7006_priv.h"
+#include "ch7006_priv.h"
 
-स्थिर अक्षर * स्थिर ch7006_tv_norm_names[] = अणु
+const char * const ch7006_tv_norm_names[] = {
 	[TV_NORM_PAL] = "PAL",
 	[TV_NORM_PAL_M] = "PAL-M",
 	[TV_NORM_PAL_N] = "PAL-N",
@@ -35,81 +34,81 @@
 	[TV_NORM_PAL_60] = "PAL-60",
 	[TV_NORM_NTSC_M] = "NTSC-M",
 	[TV_NORM_NTSC_J] = "NTSC-J",
-पूर्ण;
+};
 
-#घोषणा NTSC_LIKE_TIMINGS .vrefresh = 60 * fixed1/1.001,		\
+#define NTSC_LIKE_TIMINGS .vrefresh = 60 * fixed1/1.001,		\
 		.vdisplay = 480,					\
 		.vtotal = 525,						\
-		.hभव = 660
+		.hvirtual = 660
 
-#घोषणा PAL_LIKE_TIMINGS .vrefresh = 50 * fixed1,		\
+#define PAL_LIKE_TIMINGS .vrefresh = 50 * fixed1,		\
 		.vdisplay = 576,				\
 		.vtotal = 625,					\
-		.hभव = 810
+		.hvirtual = 810
 
-स्थिर काष्ठा ch7006_tv_norm_info ch7006_tv_norms[] = अणु
-	[TV_NORM_NTSC_M] = अणु
+const struct ch7006_tv_norm_info ch7006_tv_norms[] = {
+	[TV_NORM_NTSC_M] = {
 		NTSC_LIKE_TIMINGS,
 		.black_level = 0.339 * fixed1,
 		.subc_freq = 3579545 * fixed1,
 		.dispmode = bitfs(CH7006_DISPMODE_OUTPUT_STD, NTSC),
 		.voffset = 0,
-	पूर्ण,
-	[TV_NORM_NTSC_J] = अणु
+	},
+	[TV_NORM_NTSC_J] = {
 		NTSC_LIKE_TIMINGS,
 		.black_level = 0.286 * fixed1,
 		.subc_freq = 3579545 * fixed1,
 		.dispmode = bitfs(CH7006_DISPMODE_OUTPUT_STD, NTSC_J),
 		.voffset = 0,
-	पूर्ण,
-	[TV_NORM_PAL] = अणु
+	},
+	[TV_NORM_PAL] = {
 		PAL_LIKE_TIMINGS,
 		.black_level = 0.3 * fixed1,
 		.subc_freq = 4433618.75 * fixed1,
 		.dispmode = bitfs(CH7006_DISPMODE_OUTPUT_STD, PAL),
 		.voffset = 0,
-	पूर्ण,
-	[TV_NORM_PAL_M] = अणु
+	},
+	[TV_NORM_PAL_M] = {
 		NTSC_LIKE_TIMINGS,
 		.black_level = 0.339 * fixed1,
 		.subc_freq = 3575611.433 * fixed1,
 		.dispmode = bitfs(CH7006_DISPMODE_OUTPUT_STD, PAL_M),
 		.voffset = 16,
-	पूर्ण,
+	},
 
 	/* The following modes seem to work right but they're
-	 * unकरोcumented */
+	 * undocumented */
 
-	[TV_NORM_PAL_N] = अणु
+	[TV_NORM_PAL_N] = {
 		PAL_LIKE_TIMINGS,
 		.black_level = 0.339 * fixed1,
 		.subc_freq = 4433618.75 * fixed1,
 		.dispmode = bitfs(CH7006_DISPMODE_OUTPUT_STD, PAL),
 		.voffset = 0,
-	पूर्ण,
-	[TV_NORM_PAL_NC] = अणु
+	},
+	[TV_NORM_PAL_NC] = {
 		PAL_LIKE_TIMINGS,
 		.black_level = 0.3 * fixed1,
 		.subc_freq = 3582056.25 * fixed1,
 		.dispmode = bitfs(CH7006_DISPMODE_OUTPUT_STD, PAL),
 		.voffset = 0,
-	पूर्ण,
-	[TV_NORM_PAL_60] = अणु
+	},
+	[TV_NORM_PAL_60] = {
 		NTSC_LIKE_TIMINGS,
 		.black_level = 0.3 * fixed1,
 		.subc_freq = 4433618.75 * fixed1,
 		.dispmode = bitfs(CH7006_DISPMODE_OUTPUT_STD, PAL_M),
 		.voffset = 16,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-#घोषणा __MODE(f, hd, vd, ht, vt, hsynp, vsynp,				\
-	       subc, scale, scale_mask, norm_mask, e_hd, e_vd) अणु	\
-		.mode = अणु						\
+#define __MODE(f, hd, vd, ht, vt, hsynp, vsynp,				\
+	       subc, scale, scale_mask, norm_mask, e_hd, e_vd) {	\
+		.mode = {						\
 			.name = #hd "x" #vd,				\
 			.status = 0,					\
 			.type = DRM_MODE_TYPE_DRIVER,			\
-			.घड़ी = f,					\
+			.clock = f,					\
 			.hdisplay = hd,					\
 			.hsync_start = e_hd + 16,			\
 			.hsync_end = e_hd + 80,				\
@@ -122,7 +121,7 @@
 			.vscan = 0,					\
 			.flags = DRM_MODE_FLAG_##hsynp##HSYNC |		\
 				DRM_MODE_FLAG_##vsynp##VSYNC,		\
-		पूर्ण,							\
+		},							\
 		.enc_hdisp = e_hd,					\
 		.enc_vdisp = e_vd,					\
 		.subc_coeff = subc * fixed1,				\
@@ -130,19 +129,19 @@
 			    bitfs(CH7006_DISPMODE_INPUT_RES, e_hd##x##e_vd), \
 		.valid_scales = scale_mask,				\
 		.valid_norms = norm_mask				\
-	 पूर्ण
+	 }
 
-#घोषणा MODE(f, hd, vd, ht, vt, hsynp, vsynp,				\
+#define MODE(f, hd, vd, ht, vt, hsynp, vsynp,				\
 	     subc, scale, scale_mask, norm_mask)			\
 	__MODE(f, hd, vd, ht, vt, hsynp, vsynp, subc, scale,		\
 	       scale_mask, norm_mask, hd, vd)
 
-#घोषणा NTSC_LIKE (1 << TV_NORM_NTSC_M | 1 << TV_NORM_NTSC_J |		\
+#define NTSC_LIKE (1 << TV_NORM_NTSC_M | 1 << TV_NORM_NTSC_J |		\
 		   1 << TV_NORM_PAL_M | 1 << TV_NORM_PAL_60)
 
-#घोषणा PAL_LIKE (1 << TV_NORM_PAL | 1 << TV_NORM_PAL_N | 1 << TV_NORM_PAL_NC)
+#define PAL_LIKE (1 << TV_NORM_PAL | 1 << TV_NORM_PAL_N | 1 << TV_NORM_PAL_NC)
 
-स्थिर काष्ठा ch7006_mode ch7006_modes[] = अणु
+const struct ch7006_mode ch7006_modes[] = {
 	MODE(21000, 512, 384, 840, 500, N, N, 181.797557582, 5_4, 0x6, PAL_LIKE),
 	MODE(26250, 512, 384, 840, 625, N, N, 145.438046066, 1_1, 0x1, PAL_LIKE),
 	MODE(20140, 512, 384, 800, 420, N, N, 213.257083791, 5_4, 0x4, NTSC_LIKE),
@@ -168,74 +167,74 @@
 	MODE(39273, 800, 600, 1040, 630, P, P, 145.816809399, 5_6, 0x4, NTSC_LIKE),
 	MODE(43636, 800, 600, 1040, 700, P, P, 131.235128487, 3_4, 0x2, NTSC_LIKE),
 	MODE(47832, 800, 600, 1064, 750, P, P, 119.723275165, 7_10, 0x1, NTSC_LIKE),
-	अणुपूर्ण
-पूर्ण;
+	{}
+};
 
-स्थिर काष्ठा ch7006_mode *ch7006_lookup_mode(काष्ठा drm_encoder *encoder,
-					     स्थिर काष्ठा drm_display_mode *drm_mode)
-अणु
-	काष्ठा ch7006_priv *priv = to_ch7006_priv(encoder);
-	स्थिर काष्ठा ch7006_mode *mode;
+const struct ch7006_mode *ch7006_lookup_mode(struct drm_encoder *encoder,
+					     const struct drm_display_mode *drm_mode)
+{
+	struct ch7006_priv *priv = to_ch7006_priv(encoder);
+	const struct ch7006_mode *mode;
 
-	क्रम (mode = ch7006_modes; mode->mode.घड़ी; mode++) अणु
+	for (mode = ch7006_modes; mode->mode.clock; mode++) {
 
-		अगर (~mode->valid_norms & 1<<priv->norm)
-			जारी;
+		if (~mode->valid_norms & 1<<priv->norm)
+			continue;
 
-		अगर (mode->mode.hdisplay != drm_mode->hdisplay ||
+		if (mode->mode.hdisplay != drm_mode->hdisplay ||
 		    mode->mode.vdisplay != drm_mode->vdisplay ||
 		    mode->mode.vtotal != drm_mode->vtotal ||
 		    mode->mode.htotal != drm_mode->htotal ||
-		    mode->mode.घड़ी != drm_mode->घड़ी)
-			जारी;
+		    mode->mode.clock != drm_mode->clock)
+			continue;
 
-		वापस mode;
-	पूर्ण
+		return mode;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /* Some common HW state calculation code */
 
-व्योम ch7006_setup_levels(काष्ठा drm_encoder *encoder)
-अणु
-	काष्ठा i2c_client *client = drm_i2c_encoder_get_client(encoder);
-	काष्ठा ch7006_priv *priv = to_ch7006_priv(encoder);
-	uपूर्णांक8_t *regs = priv->state.regs;
-	स्थिर काष्ठा ch7006_tv_norm_info *norm = &ch7006_tv_norms[priv->norm];
-	पूर्णांक gain;
-	पूर्णांक black_level;
+void ch7006_setup_levels(struct drm_encoder *encoder)
+{
+	struct i2c_client *client = drm_i2c_encoder_get_client(encoder);
+	struct ch7006_priv *priv = to_ch7006_priv(encoder);
+	uint8_t *regs = priv->state.regs;
+	const struct ch7006_tv_norm_info *norm = &ch7006_tv_norms[priv->norm];
+	int gain;
+	int black_level;
 
-	/* Set DAC_GAIN अगर the voltage drop between white and black is
+	/* Set DAC_GAIN if the voltage drop between white and black is
 	 * high enough. */
-	अगर (norm->black_level < 339*fixed1/1000) अणु
+	if (norm->black_level < 339*fixed1/1000) {
 		gain = 76;
 
 		regs[CH7006_INPUT_FORMAT] |= CH7006_INPUT_FORMAT_DAC_GAIN;
-	पूर्ण अन्यथा अणु
+	} else {
 		gain = 71;
 
 		regs[CH7006_INPUT_FORMAT] &= ~CH7006_INPUT_FORMAT_DAC_GAIN;
-	पूर्ण
+	}
 
 	black_level = round_fixed(norm->black_level*26625)/gain;
 
-	/* Correct it with the specअगरied brightness. */
-	black_level = पूर्णांकerpolate(90, black_level, 208, priv->brightness);
+	/* Correct it with the specified brightness. */
+	black_level = interpolate(90, black_level, 208, priv->brightness);
 
 	regs[CH7006_BLACK_LEVEL] = bitf(CH7006_BLACK_LEVEL_0, black_level);
 
 	ch7006_dbg(client, "black level: %d\n", black_level);
-पूर्ण
+}
 
-व्योम ch7006_setup_subcarrier(काष्ठा drm_encoder *encoder)
-अणु
-	काष्ठा i2c_client *client = drm_i2c_encoder_get_client(encoder);
-	काष्ठा ch7006_priv *priv = to_ch7006_priv(encoder);
-	काष्ठा ch7006_state *state = &priv->state;
-	स्थिर काष्ठा ch7006_tv_norm_info *norm = &ch7006_tv_norms[priv->norm];
-	स्थिर काष्ठा ch7006_mode *mode = priv->mode;
-	uपूर्णांक32_t subc_inc;
+void ch7006_setup_subcarrier(struct drm_encoder *encoder)
+{
+	struct i2c_client *client = drm_i2c_encoder_get_client(encoder);
+	struct ch7006_priv *priv = to_ch7006_priv(encoder);
+	struct ch7006_state *state = &priv->state;
+	const struct ch7006_tv_norm_info *norm = &ch7006_tv_norms[priv->norm];
+	const struct ch7006_mode *mode = priv->mode;
+	uint32_t subc_inc;
 
 	subc_inc = round_fixed((mode->subc_coeff >> 8)
 			       * (norm->subc_freq >> 24));
@@ -250,30 +249,30 @@
 	setbitf(state, CH7006_SUBC_INC7, 0, subc_inc);
 
 	ch7006_dbg(client, "subcarrier inc: %u\n", subc_inc);
-पूर्ण
+}
 
-व्योम ch7006_setup_pll(काष्ठा drm_encoder *encoder)
-अणु
-	काष्ठा i2c_client *client = drm_i2c_encoder_get_client(encoder);
-	काष्ठा ch7006_priv *priv = to_ch7006_priv(encoder);
-	uपूर्णांक8_t *regs = priv->state.regs;
-	स्थिर काष्ठा ch7006_mode *mode = priv->mode;
-	पूर्णांक n, best_n = 0;
-	पूर्णांक m, best_m = 0;
-	पूर्णांक freq, best_freq = 0;
+void ch7006_setup_pll(struct drm_encoder *encoder)
+{
+	struct i2c_client *client = drm_i2c_encoder_get_client(encoder);
+	struct ch7006_priv *priv = to_ch7006_priv(encoder);
+	uint8_t *regs = priv->state.regs;
+	const struct ch7006_mode *mode = priv->mode;
+	int n, best_n = 0;
+	int m, best_m = 0;
+	int freq, best_freq = 0;
 
-	क्रम (n = 0; n < CH7006_MAXN; n++) अणु
-		क्रम (m = 0; m < CH7006_MAXM; m++) अणु
+	for (n = 0; n < CH7006_MAXN; n++) {
+		for (m = 0; m < CH7006_MAXM; m++) {
 			freq = CH7006_FREQ0*(n+2)/(m+2);
 
-			अगर (असल(freq - mode->mode.घड़ी) <
-			    असल(best_freq - mode->mode.घड़ी)) अणु
+			if (abs(freq - mode->mode.clock) <
+			    abs(best_freq - mode->mode.clock)) {
 				best_freq = freq;
 				best_n = n;
 				best_m = m;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 	regs[CH7006_PLLOV] = bitf(CH7006_PLLOV_N_8, best_n) |
 		bitf(CH7006_PLLOV_M_8, best_m);
@@ -281,75 +280,75 @@
 	regs[CH7006_PLLM] = bitf(CH7006_PLLM_0, best_m);
 	regs[CH7006_PLLN] = bitf(CH7006_PLLN_0, best_n);
 
-	अगर (best_n < 108)
+	if (best_n < 108)
 		regs[CH7006_PLL_CONTROL] |= CH7006_PLL_CONTROL_CAPACITOR;
-	अन्यथा
+	else
 		regs[CH7006_PLL_CONTROL] &= ~CH7006_PLL_CONTROL_CAPACITOR;
 
 	ch7006_dbg(client, "n=%d m=%d f=%d c=%d\n",
 		   best_n, best_m, best_freq, best_n < 108);
-पूर्ण
+}
 
-व्योम ch7006_setup_घातer_state(काष्ठा drm_encoder *encoder)
-अणु
-	काष्ठा ch7006_priv *priv = to_ch7006_priv(encoder);
-	uपूर्णांक8_t *घातer = &priv->state.regs[CH7006_POWER];
-	पूर्णांक subconnector;
+void ch7006_setup_power_state(struct drm_encoder *encoder)
+{
+	struct ch7006_priv *priv = to_ch7006_priv(encoder);
+	uint8_t *power = &priv->state.regs[CH7006_POWER];
+	int subconnector;
 
 	subconnector = priv->select_subconnector ? priv->select_subconnector :
 							priv->subconnector;
 
-	*घातer = CH7006_POWER_RESET;
+	*power = CH7006_POWER_RESET;
 
-	अगर (priv->last_dpms == DRM_MODE_DPMS_ON) अणु
-		चयन (subconnector) अणु
-		हाल DRM_MODE_SUBCONNECTOR_SVIDEO:
-			*घातer |= bitfs(CH7006_POWER_LEVEL, CVBS_OFF);
-			अवरोध;
-		हाल DRM_MODE_SUBCONNECTOR_Composite:
-			*घातer |= bitfs(CH7006_POWER_LEVEL, SVIDEO_OFF);
-			अवरोध;
-		हाल DRM_MODE_SUBCONNECTOR_SCART:
-			*घातer |= bitfs(CH7006_POWER_LEVEL, NORMAL) |
+	if (priv->last_dpms == DRM_MODE_DPMS_ON) {
+		switch (subconnector) {
+		case DRM_MODE_SUBCONNECTOR_SVIDEO:
+			*power |= bitfs(CH7006_POWER_LEVEL, CVBS_OFF);
+			break;
+		case DRM_MODE_SUBCONNECTOR_Composite:
+			*power |= bitfs(CH7006_POWER_LEVEL, SVIDEO_OFF);
+			break;
+		case DRM_MODE_SUBCONNECTOR_SCART:
+			*power |= bitfs(CH7006_POWER_LEVEL, NORMAL) |
 				CH7006_POWER_SCART;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-	पूर्ण अन्यथा अणु
-		अगर (priv->chip_version >= 0x20)
-			*घातer |= bitfs(CH7006_POWER_LEVEL, FULL_POWER_OFF);
-		अन्यथा
-			*घातer |= bitfs(CH7006_POWER_LEVEL, POWER_OFF);
-	पूर्ण
-पूर्ण
+	} else {
+		if (priv->chip_version >= 0x20)
+			*power |= bitfs(CH7006_POWER_LEVEL, FULL_POWER_OFF);
+		else
+			*power |= bitfs(CH7006_POWER_LEVEL, POWER_OFF);
+	}
+}
 
-व्योम ch7006_setup_properties(काष्ठा drm_encoder *encoder)
-अणु
-	काष्ठा i2c_client *client = drm_i2c_encoder_get_client(encoder);
-	काष्ठा ch7006_priv *priv = to_ch7006_priv(encoder);
-	काष्ठा ch7006_state *state = &priv->state;
-	स्थिर काष्ठा ch7006_tv_norm_info *norm = &ch7006_tv_norms[priv->norm];
-	स्थिर काष्ठा ch7006_mode *ch_mode = priv->mode;
-	स्थिर काष्ठा drm_display_mode *mode = &ch_mode->mode;
-	uपूर्णांक8_t *regs = state->regs;
-	पूर्णांक flicker, contrast, hpos, vpos;
-	uपूर्णांक64_t scale, aspect;
+void ch7006_setup_properties(struct drm_encoder *encoder)
+{
+	struct i2c_client *client = drm_i2c_encoder_get_client(encoder);
+	struct ch7006_priv *priv = to_ch7006_priv(encoder);
+	struct ch7006_state *state = &priv->state;
+	const struct ch7006_tv_norm_info *norm = &ch7006_tv_norms[priv->norm];
+	const struct ch7006_mode *ch_mode = priv->mode;
+	const struct drm_display_mode *mode = &ch_mode->mode;
+	uint8_t *regs = state->regs;
+	int flicker, contrast, hpos, vpos;
+	uint64_t scale, aspect;
 
-	flicker = पूर्णांकerpolate(0, 2, 3, priv->flicker);
+	flicker = interpolate(0, 2, 3, priv->flicker);
 	regs[CH7006_FFILTER] = bitf(CH7006_FFILTER_TEXT, flicker) |
 		bitf(CH7006_FFILTER_LUMA, flicker) |
 		bitf(CH7006_FFILTER_CHROMA, 1);
 
-	contrast = पूर्णांकerpolate(0, 5, 7, priv->contrast);
+	contrast = interpolate(0, 5, 7, priv->contrast);
 	regs[CH7006_CONTRAST] = bitf(CH7006_CONTRAST_0, contrast);
 
 	scale = norm->vtotal*fixed1;
-	करो_भाग(scale, mode->vtotal);
+	do_div(scale, mode->vtotal);
 
 	aspect = ch_mode->enc_hdisp*fixed1;
-	करो_भाग(aspect, ch_mode->enc_vdisp);
+	do_div(aspect, ch_mode->enc_vdisp);
 
-	hpos = round_fixed((norm->hभव * aspect - mode->hdisplay * scale)
+	hpos = round_fixed((norm->hvirtual * aspect - mode->hdisplay * scale)
 			   * priv->hmargin * mode->vtotal) / norm->vtotal / 100 / 4;
 
 	setbitf(state, CH7006_POV, HPOS_8, hpos);
@@ -362,45 +361,45 @@
 	setbitf(state, CH7006_VPOS, 0, vpos);
 
 	ch7006_dbg(client, "hpos: %d, vpos: %d\n", hpos, vpos);
-पूर्ण
+}
 
 /* HW access functions */
 
-व्योम ch7006_ग_लिखो(काष्ठा i2c_client *client, uपूर्णांक8_t addr, uपूर्णांक8_t val)
-अणु
-	uपूर्णांक8_t buf[] = अणुaddr, valपूर्ण;
-	पूर्णांक ret;
+void ch7006_write(struct i2c_client *client, uint8_t addr, uint8_t val)
+{
+	uint8_t buf[] = {addr, val};
+	int ret;
 
 	ret = i2c_master_send(client, buf, ARRAY_SIZE(buf));
-	अगर (ret < 0)
+	if (ret < 0)
 		ch7006_err(client, "Error %d writing to subaddress 0x%x\n",
 			   ret, addr);
-पूर्ण
+}
 
-uपूर्णांक8_t ch7006_पढ़ो(काष्ठा i2c_client *client, uपूर्णांक8_t addr)
-अणु
-	uपूर्णांक8_t val;
-	पूर्णांक ret;
+uint8_t ch7006_read(struct i2c_client *client, uint8_t addr)
+{
+	uint8_t val;
+	int ret;
 
-	ret = i2c_master_send(client, &addr, माप(addr));
-	अगर (ret < 0)
-		जाओ fail;
+	ret = i2c_master_send(client, &addr, sizeof(addr));
+	if (ret < 0)
+		goto fail;
 
-	ret = i2c_master_recv(client, &val, माप(val));
-	अगर (ret < 0)
-		जाओ fail;
+	ret = i2c_master_recv(client, &val, sizeof(val));
+	if (ret < 0)
+		goto fail;
 
-	वापस val;
+	return val;
 
 fail:
 	ch7006_err(client, "Error %d reading from subaddress 0x%x\n",
 		   ret, addr);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम ch7006_state_load(काष्ठा i2c_client *client,
-		       काष्ठा ch7006_state *state)
-अणु
+void ch7006_state_load(struct i2c_client *client,
+		       struct ch7006_state *state)
+{
 	ch7006_load_reg(client, state, CH7006_POWER);
 
 	ch7006_load_reg(client, state, CH7006_DISPMODE);
@@ -430,11 +429,11 @@ fail:
 	ch7006_load_reg(client, state, CH7006_SUBC_INC7);
 	ch7006_load_reg(client, state, CH7006_PLL_CONTROL);
 	ch7006_load_reg(client, state, CH7006_CALC_SUBC_INC0);
-पूर्ण
+}
 
-व्योम ch7006_state_save(काष्ठा i2c_client *client,
-		       काष्ठा ch7006_state *state)
-अणु
+void ch7006_state_save(struct i2c_client *client,
+		       struct ch7006_state *state)
+{
 	ch7006_save_reg(client, state, CH7006_POWER);
 
 	ch7006_save_reg(client, state, CH7006_DISPMODE);
@@ -468,4 +467,4 @@ fail:
 	state->regs[CH7006_FFILTER] = (state->regs[CH7006_FFILTER] & 0xf0) |
 		(state->regs[CH7006_FFILTER] & 0x0c) >> 2 |
 		(state->regs[CH7006_FFILTER] & 0x03) << 2;
-पूर्ण
+}

@@ -1,29 +1,28 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) 2019 ARM Limited
  *
- * Utility macro to ease definition of testहालs toggling mode EL
+ * Utility macro to ease definition of testcases toggling mode EL
  */
 
-#घोषणा DEFINE_TESTCASE_MANGLE_PSTATE_INVALID_MODE(_mode)		\
+#define DEFINE_TESTCASE_MANGLE_PSTATE_INVALID_MODE(_mode)		\
 									\
-अटल पूर्णांक mangle_invalid_pstate_run(काष्ठा tdescr *td, siginfo_t *si,	\
+static int mangle_invalid_pstate_run(struct tdescr *td, siginfo_t *si,	\
 				     ucontext_t *uc)			\
-अणु									\
+{									\
 	ASSERT_GOOD_CONTEXT(uc);					\
 									\
 	uc->uc_mcontext.pstate &= ~PSR_MODE_MASK;			\
 	uc->uc_mcontext.pstate |= PSR_MODE_EL ## _mode;			\
 									\
-	वापस 1;							\
-पूर्ण									\
+	return 1;							\
+}									\
 									\
-काष्ठा tdescr tde = अणु							\
+struct tdescr tde = {							\
 		.sanity_disabled = true,				\
 		.name = "MANGLE_PSTATE_INVALID_MODE_EL"#_mode,		\
 		.descr = "Mangling uc_mcontext INVALID MODE EL"#_mode,	\
 		.sig_trig = SIGUSR1,					\
-		.sig_ok = संक_अंश,					\
+		.sig_ok = SIGSEGV,					\
 		.run = mangle_invalid_pstate_run,			\
-पूर्ण
+}

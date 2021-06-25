@@ -1,118 +1,117 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *	linux/arch/alpha/kernel/sys_rx164.c
  *
  *	Copyright (C) 1995 David A Rusling
  *	Copyright (C) 1996 Jay A Estabrook
- *	Copyright (C) 1998, 1999 Riअक्षरd Henderson
+ *	Copyright (C) 1998, 1999 Richard Henderson
  *
  * Code supporting the RX164 (PCA56+POLARIS).
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/types.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/init.h>
-#समावेश <linux/bitops.h>
+#include <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/mm.h>
+#include <linux/sched.h>
+#include <linux/pci.h>
+#include <linux/init.h>
+#include <linux/bitops.h>
 
-#समावेश <यंत्र/ptrace.h>
-#समावेश <यंत्र/dma.h>
-#समावेश <यंत्र/irq.h>
-#समावेश <यंत्र/mmu_context.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/core_polaris.h>
-#समावेश <यंत्र/tlbflush.h>
+#include <asm/ptrace.h>
+#include <asm/dma.h>
+#include <asm/irq.h>
+#include <asm/mmu_context.h>
+#include <asm/io.h>
+#include <asm/core_polaris.h>
+#include <asm/tlbflush.h>
 
-#समावेश "proto.h"
-#समावेश "irq_impl.h"
-#समावेश "pci_impl.h"
-#समावेश "machvec_impl.h"
+#include "proto.h"
+#include "irq_impl.h"
+#include "pci_impl.h"
+#include "machvec_impl.h"
 
 
-/* Note mask bit is true क्रम ENABLED irqs.  */
-अटल अचिन्हित दीर्घ cached_irq_mask;
+/* Note mask bit is true for ENABLED irqs.  */
+static unsigned long cached_irq_mask;
 
-अटल अंतरभूत व्योम
-rx164_update_irq_hw(अचिन्हित दीर्घ mask)
-अणु
-	अस्थिर अचिन्हित पूर्णांक *irq_mask;
+static inline void
+rx164_update_irq_hw(unsigned long mask)
+{
+	volatile unsigned int *irq_mask;
 
-	irq_mask = (व्योम *)(POLARIS_DENSE_CONFIG_BASE + 0x74);
+	irq_mask = (void *)(POLARIS_DENSE_CONFIG_BASE + 0x74);
 	*irq_mask = mask;
 	mb();
 	*irq_mask;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम
-rx164_enable_irq(काष्ठा irq_data *d)
-अणु
+static inline void
+rx164_enable_irq(struct irq_data *d)
+{
 	rx164_update_irq_hw(cached_irq_mask |= 1UL << (d->irq - 16));
-पूर्ण
+}
 
-अटल व्योम
-rx164_disable_irq(काष्ठा irq_data *d)
-अणु
+static void
+rx164_disable_irq(struct irq_data *d)
+{
 	rx164_update_irq_hw(cached_irq_mask &= ~(1UL << (d->irq - 16)));
-पूर्ण
+}
 
-अटल काष्ठा irq_chip rx164_irq_type = अणु
+static struct irq_chip rx164_irq_type = {
 	.name		= "RX164",
 	.irq_unmask	= rx164_enable_irq,
 	.irq_mask	= rx164_disable_irq,
 	.irq_mask_ack	= rx164_disable_irq,
-पूर्ण;
+};
 
-अटल व्योम 
-rx164_device_पूर्णांकerrupt(अचिन्हित दीर्घ vector)
-अणु
-	अचिन्हित दीर्घ pld;
-	अस्थिर अचिन्हित पूर्णांक *dirr;
-	दीर्घ i;
+static void 
+rx164_device_interrupt(unsigned long vector)
+{
+	unsigned long pld;
+	volatile unsigned int *dirr;
+	long i;
 
-	/* Read the पूर्णांकerrupt summary रेजिस्टर.  On Polaris, this is
-	   the सूचीR रेजिस्टर in PCI config space (offset 0x84).  */
-	dirr = (व्योम *)(POLARIS_DENSE_CONFIG_BASE + 0x84);
+	/* Read the interrupt summary register.  On Polaris, this is
+	   the DIRR register in PCI config space (offset 0x84).  */
+	dirr = (void *)(POLARIS_DENSE_CONFIG_BASE + 0x84);
 	pld = *dirr;
 
 	/*
-	 * Now क्रम every possible bit set, work through them and call
-	 * the appropriate पूर्णांकerrupt handler.
+	 * Now for every possible bit set, work through them and call
+	 * the appropriate interrupt handler.
 	 */
-	जबतक (pld) अणु
+	while (pld) {
 		i = ffz(~pld);
 		pld &= pld - 1; /* clear least bit set */
-		अगर (i == 20) अणु
-			isa_no_iack_sc_device_पूर्णांकerrupt(vector);
-		पूर्ण अन्यथा अणु
+		if (i == 20) {
+			isa_no_iack_sc_device_interrupt(vector);
+		} else {
 			handle_irq(16+i);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम __init
-rx164_init_irq(व्योम)
-अणु
-	दीर्घ i;
+static void __init
+rx164_init_irq(void)
+{
+	long i;
 
 	rx164_update_irq_hw(0);
-	क्रम (i = 16; i < 40; ++i) अणु
+	for (i = 16; i < 40; ++i) {
 		irq_set_chip_and_handler(i, &rx164_irq_type, handle_level_irq);
 		irq_set_status_flags(i, IRQ_LEVEL);
-	पूर्ण
+	}
 
 	init_i8259a_irqs();
 	common_init_isa_dma();
 
-	अगर (request_irq(16 + 20, no_action, 0, "isa-cascade", शून्य))
+	if (request_irq(16 + 20, no_action, 0, "isa-cascade", NULL))
 		pr_err("Failed to register isa-cascade interrupt\n");
-पूर्ण
+}
 
 
 /*
- * The RX164 changed its पूर्णांकerrupt routing between pass1 and pass2...
+ * The RX164 changed its interrupt routing between pass1 and pass2...
  *
  * PASS1:
  *
@@ -144,43 +143,43 @@ rx164_init_irq(व्योम)
  * 
  */
 
-अटल पूर्णांक
-rx164_map_irq(स्थिर काष्ठा pci_dev *dev, u8 slot, u8 pin)
-अणु
-#अगर 0
-	अटल अक्षर irq_tab_pass1[6][5] __initdata = अणु
+static int
+rx164_map_irq(const struct pci_dev *dev, u8 slot, u8 pin)
+{
+#if 0
+	static char irq_tab_pass1[6][5] __initdata = {
 	  /*INT   INTA  INTB  INTC   INTD */
-	  अणु 16+3, 16+3, 16+8, 16+13, 16+18पूर्ण,      /* IdSel 5,  slot 2 */
-	  अणु 16+5, 16+5, 16+10, 16+15, 16+20पूर्ण,     /* IdSel 6,  slot 0 */
-	  अणु 16+4, 16+4, 16+9, 16+14, 16+19पूर्ण,      /* IdSel 7,  slot 1 */
-	  अणु -1,     -1,    -1,    -1,   -1पूर्ण,      /* IdSel 8, PCI/ISA bridge */
-	  अणु 16+2, 16+2, 16+7, 16+12, 16+17पूर्ण,      /* IdSel 9,  slot 3 */
-	  अणु 16+1, 16+1, 16+6, 16+11, 16+16पूर्ण,      /* IdSel 10, slot 4 */
-	पूर्ण;
-#अन्यथा
-	अटल अक्षर irq_tab[6][5] = अणु
+	  { 16+3, 16+3, 16+8, 16+13, 16+18},      /* IdSel 5,  slot 2 */
+	  { 16+5, 16+5, 16+10, 16+15, 16+20},     /* IdSel 6,  slot 0 */
+	  { 16+4, 16+4, 16+9, 16+14, 16+19},      /* IdSel 7,  slot 1 */
+	  { -1,     -1,    -1,    -1,   -1},      /* IdSel 8, PCI/ISA bridge */
+	  { 16+2, 16+2, 16+7, 16+12, 16+17},      /* IdSel 9,  slot 3 */
+	  { 16+1, 16+1, 16+6, 16+11, 16+16},      /* IdSel 10, slot 4 */
+	};
+#else
+	static char irq_tab[6][5] = {
 	  /*INT   INTA  INTB  INTC   INTD */
-	  अणु 16+0, 16+0, 16+6, 16+11, 16+16पूर्ण,      /* IdSel 5,  slot 0 */
-	  अणु 16+1, 16+1, 16+7, 16+12, 16+17पूर्ण,      /* IdSel 6,  slot 1 */
-	  अणु -1,     -1,    -1,    -1,   -1पूर्ण,      /* IdSel 7, PCI/ISA bridge */
-	  अणु 16+2, 16+2, 16+8, 16+13, 16+18पूर्ण,      /* IdSel 8,  slot 2 */
-	  अणु 16+3, 16+3, 16+9, 16+14, 16+19पूर्ण,      /* IdSel 9,  slot 3 */
-	  अणु 16+4, 16+4, 16+10, 16+15, 16+5पूर्ण,      /* IdSel 10, PCI-PCI */
-	पूर्ण;
-#पूर्ण_अगर
-	स्थिर दीर्घ min_idsel = 5, max_idsel = 10, irqs_per_slot = 5;
+	  { 16+0, 16+0, 16+6, 16+11, 16+16},      /* IdSel 5,  slot 0 */
+	  { 16+1, 16+1, 16+7, 16+12, 16+17},      /* IdSel 6,  slot 1 */
+	  { -1,     -1,    -1,    -1,   -1},      /* IdSel 7, PCI/ISA bridge */
+	  { 16+2, 16+2, 16+8, 16+13, 16+18},      /* IdSel 8,  slot 2 */
+	  { 16+3, 16+3, 16+9, 16+14, 16+19},      /* IdSel 9,  slot 3 */
+	  { 16+4, 16+4, 16+10, 16+15, 16+5},      /* IdSel 10, PCI-PCI */
+	};
+#endif
+	const long min_idsel = 5, max_idsel = 10, irqs_per_slot = 5;
 
 	/* JRP - Need to figure out how to distinguish pass1 from pass2,
 	   and use the correct table.  */
-	वापस COMMON_TABLE_LOOKUP;
-पूर्ण
+	return COMMON_TABLE_LOOKUP;
+}
 
 
 /*
  * The System Vector
  */
 
-काष्ठा alpha_machine_vector rx164_mv __iniपंचांगv = अणु
+struct alpha_machine_vector rx164_mv __initmv = {
 	.vector_name		= "RX164",
 	DO_EV5_MMU,
 	DO_DEFAULT_RTC,
@@ -191,14 +190,14 @@ rx164_map_irq(स्थिर काष्ठा pci_dev *dev, u8 slot, u8 pin)
 	.min_mem_address	= DEFAULT_MEM_BASE,
 
 	.nr_irqs		= 40,
-	.device_पूर्णांकerrupt	= rx164_device_पूर्णांकerrupt,
+	.device_interrupt	= rx164_device_interrupt,
 
 	.init_arch		= polaris_init_arch,
 	.init_irq		= rx164_init_irq,
 	.init_rtc		= common_init_rtc,
 	.init_pci		= common_init_pci,
-	.समाप्त_arch		= शून्य,
+	.kill_arch		= NULL,
 	.pci_map_irq		= rx164_map_irq,
 	.pci_swizzle		= common_swizzle,
-पूर्ण;
+};
 ALIAS_MV(rx164)

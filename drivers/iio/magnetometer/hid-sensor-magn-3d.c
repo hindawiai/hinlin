@@ -1,23 +1,22 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * HID Sensors Driver
  * Copyright (c) 2012, Intel Corporation.
  */
-#समावेश <linux/device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/module.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/hid-sensor-hub.h>
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/iio/sysfs.h>
-#समावेश <linux/iio/buffer.h>
-#समावेश "../common/hid-sensors/hid-sensor-trigger.h"
+#include <linux/device.h>
+#include <linux/platform_device.h>
+#include <linux/module.h>
+#include <linux/interrupt.h>
+#include <linux/irq.h>
+#include <linux/slab.h>
+#include <linux/delay.h>
+#include <linux/hid-sensor-hub.h>
+#include <linux/iio/iio.h>
+#include <linux/iio/sysfs.h>
+#include <linux/iio/buffer.h>
+#include "../common/hid-sensors/hid-sensor-trigger.h"
 
-क्रमागत magn_3d_channel अणु
+enum magn_3d_channel {
 	CHANNEL_SCAN_INDEX_X,
 	CHANNEL_SCAN_INDEX_Y,
 	CHANNEL_SCAN_INDEX_Z,
@@ -27,32 +26,32 @@
 	CHANNEL_SCAN_INDEX_NORTH_TRUE,
 	CHANNEL_SCAN_INDEX_TIMESTAMP,
 	MAGN_3D_CHANNEL_MAX,
-पूर्ण;
+};
 
-काष्ठा common_attributes अणु
-	पूर्णांक scale_pre_decml;
-	पूर्णांक scale_post_decml;
-	पूर्णांक scale_precision;
-	पूर्णांक value_offset;
-पूर्ण;
+struct common_attributes {
+	int scale_pre_decml;
+	int scale_post_decml;
+	int scale_precision;
+	int value_offset;
+};
 
-काष्ठा magn_3d_state अणु
-	काष्ठा hid_sensor_hub_callbacks callbacks;
-	काष्ठा hid_sensor_common magn_flux_attributes;
-	काष्ठा hid_sensor_common rot_attributes;
-	काष्ठा hid_sensor_hub_attribute_info magn[MAGN_3D_CHANNEL_MAX];
+struct magn_3d_state {
+	struct hid_sensor_hub_callbacks callbacks;
+	struct hid_sensor_common magn_flux_attributes;
+	struct hid_sensor_common rot_attributes;
+	struct hid_sensor_hub_attribute_info magn[MAGN_3D_CHANNEL_MAX];
 
 	/* dynamically sized array to hold sensor values */
 	u32 *iio_vals;
-	/* array of poपूर्णांकers to sensor value */
+	/* array of pointers to sensor value */
 	u32 *magn_val_addr[MAGN_3D_CHANNEL_MAX];
 
-	काष्ठा common_attributes magn_flux_attr;
-	काष्ठा common_attributes rot_attr;
-	s64 बारtamp;
-पूर्ण;
+	struct common_attributes magn_flux_attr;
+	struct common_attributes rot_attr;
+	s64 timestamp;
+};
 
-अटल स्थिर u32 magn_3d_addresses[MAGN_3D_CHANNEL_MAX] = अणु
+static const u32 magn_3d_addresses[MAGN_3D_CHANNEL_MAX] = {
 	HID_USAGE_SENSOR_ORIENT_MAGN_FLUX_X_AXIS,
 	HID_USAGE_SENSOR_ORIENT_MAGN_FLUX_Y_AXIS,
 	HID_USAGE_SENSOR_ORIENT_MAGN_FLUX_Z_AXIS,
@@ -61,327 +60,327 @@
 	HID_USAGE_SENSOR_ORIENT_MAGN_NORTH,
 	HID_USAGE_SENSOR_ORIENT_TRUE_NORTH,
 	HID_USAGE_SENSOR_TIME_TIMESTAMP,
-पूर्ण;
+};
 
-अटल स्थिर u32 magn_3d_sensitivity_addresses[] = अणु
+static const u32 magn_3d_sensitivity_addresses[] = {
 	HID_USAGE_SENSOR_DATA_ORIENTATION,
 	HID_USAGE_SENSOR_ORIENT_MAGN_FLUX,
-पूर्ण;
+};
 
 /* Channel definitions */
-अटल स्थिर काष्ठा iio_chan_spec magn_3d_channels[] = अणु
-	अणु
+static const struct iio_chan_spec magn_3d_channels[] = {
+	{
 		.type = IIO_MAGN,
-		.modअगरied = 1,
+		.modified = 1,
 		.channel2 = IIO_MOD_X,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),
 		.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_OFFSET) |
 		BIT(IIO_CHAN_INFO_SCALE) |
 		BIT(IIO_CHAN_INFO_SAMP_FREQ) |
 		BIT(IIO_CHAN_INFO_HYSTERESIS),
-	पूर्ण, अणु
+	}, {
 		.type = IIO_MAGN,
-		.modअगरied = 1,
+		.modified = 1,
 		.channel2 = IIO_MOD_Y,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),
 		.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_OFFSET) |
 		BIT(IIO_CHAN_INFO_SCALE) |
 		BIT(IIO_CHAN_INFO_SAMP_FREQ) |
 		BIT(IIO_CHAN_INFO_HYSTERESIS),
-	पूर्ण, अणु
+	}, {
 		.type = IIO_MAGN,
-		.modअगरied = 1,
+		.modified = 1,
 		.channel2 = IIO_MOD_Z,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),
 		.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_OFFSET) |
 		BIT(IIO_CHAN_INFO_SCALE) |
 		BIT(IIO_CHAN_INFO_SAMP_FREQ) |
 		BIT(IIO_CHAN_INFO_HYSTERESIS),
-	पूर्ण, अणु
+	}, {
 		.type = IIO_ROT,
-		.modअगरied = 1,
+		.modified = 1,
 		.channel2 = IIO_MOD_NORTH_MAGN_TILT_COMP,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),
 		.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_OFFSET) |
 		BIT(IIO_CHAN_INFO_SCALE) |
 		BIT(IIO_CHAN_INFO_SAMP_FREQ) |
 		BIT(IIO_CHAN_INFO_HYSTERESIS),
-	पूर्ण, अणु
+	}, {
 		.type = IIO_ROT,
-		.modअगरied = 1,
+		.modified = 1,
 		.channel2 = IIO_MOD_NORTH_TRUE_TILT_COMP,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),
 		.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_OFFSET) |
 		BIT(IIO_CHAN_INFO_SCALE) |
 		BIT(IIO_CHAN_INFO_SAMP_FREQ) |
 		BIT(IIO_CHAN_INFO_HYSTERESIS),
-	पूर्ण, अणु
+	}, {
 		.type = IIO_ROT,
-		.modअगरied = 1,
+		.modified = 1,
 		.channel2 = IIO_MOD_NORTH_MAGN,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),
 		.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_OFFSET) |
 		BIT(IIO_CHAN_INFO_SCALE) |
 		BIT(IIO_CHAN_INFO_SAMP_FREQ) |
 		BIT(IIO_CHAN_INFO_HYSTERESIS),
-	पूर्ण, अणु
+	}, {
 		.type = IIO_ROT,
-		.modअगरied = 1,
+		.modified = 1,
 		.channel2 = IIO_MOD_NORTH_TRUE,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),
 		.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_OFFSET) |
 		BIT(IIO_CHAN_INFO_SCALE) |
 		BIT(IIO_CHAN_INFO_SAMP_FREQ) |
 		BIT(IIO_CHAN_INFO_HYSTERESIS),
-	पूर्ण,
+	},
 	IIO_CHAN_SOFT_TIMESTAMP(7)
-पूर्ण;
+};
 
 /* Adjust channel real bits based on report descriptor */
-अटल व्योम magn_3d_adjust_channel_bit_mask(काष्ठा iio_chan_spec *channels,
-						पूर्णांक channel, पूर्णांक size)
-अणु
+static void magn_3d_adjust_channel_bit_mask(struct iio_chan_spec *channels,
+						int channel, int size)
+{
 	channels[channel].scan_type.sign = 's';
 	/* Real storage bits will change based on the report desc. */
 	channels[channel].scan_type.realbits = size * 8;
 	/* Maximum size of a sample to capture is u32 */
-	channels[channel].scan_type.storagebits = माप(u32) * 8;
-पूर्ण
+	channels[channel].scan_type.storagebits = sizeof(u32) * 8;
+}
 
-/* Channel पढ़ो_raw handler */
-अटल पूर्णांक magn_3d_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
-			      काष्ठा iio_chan_spec स्थिर *chan,
-			      पूर्णांक *val, पूर्णांक *val2,
-			      दीर्घ mask)
-अणु
-	काष्ठा magn_3d_state *magn_state = iio_priv(indio_dev);
-	पूर्णांक report_id = -1;
+/* Channel read_raw handler */
+static int magn_3d_read_raw(struct iio_dev *indio_dev,
+			      struct iio_chan_spec const *chan,
+			      int *val, int *val2,
+			      long mask)
+{
+	struct magn_3d_state *magn_state = iio_priv(indio_dev);
+	int report_id = -1;
 	u32 address;
-	पूर्णांक ret_type;
+	int ret_type;
 	s32 min;
 
 	*val = 0;
 	*val2 = 0;
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_RAW:
-		hid_sensor_घातer_state(&magn_state->magn_flux_attributes, true);
+	switch (mask) {
+	case IIO_CHAN_INFO_RAW:
+		hid_sensor_power_state(&magn_state->magn_flux_attributes, true);
 		report_id = magn_state->magn[chan->address].report_id;
 		min = magn_state->magn[chan->address].logical_minimum;
 		address = magn_3d_addresses[chan->address];
-		अगर (report_id >= 0)
+		if (report_id >= 0)
 			*val = sensor_hub_input_attr_get_raw_value(
 				magn_state->magn_flux_attributes.hsdev,
 				HID_USAGE_SENSOR_COMPASS_3D, address,
 				report_id,
 				SENSOR_HUB_SYNC,
 				min < 0);
-		अन्यथा अणु
+		else {
 			*val = 0;
-			hid_sensor_घातer_state(
+			hid_sensor_power_state(
 				&magn_state->magn_flux_attributes,
 				false);
-			वापस -EINVAL;
-		पूर्ण
-		hid_sensor_घातer_state(&magn_state->magn_flux_attributes,
+			return -EINVAL;
+		}
+		hid_sensor_power_state(&magn_state->magn_flux_attributes,
 					false);
 		ret_type = IIO_VAL_INT;
-		अवरोध;
-	हाल IIO_CHAN_INFO_SCALE:
-		चयन (chan->type) अणु
-		हाल IIO_MAGN:
+		break;
+	case IIO_CHAN_INFO_SCALE:
+		switch (chan->type) {
+		case IIO_MAGN:
 			*val = magn_state->magn_flux_attr.scale_pre_decml;
 			*val2 = magn_state->magn_flux_attr.scale_post_decml;
 			ret_type = magn_state->magn_flux_attr.scale_precision;
-			अवरोध;
-		हाल IIO_ROT:
+			break;
+		case IIO_ROT:
 			*val = magn_state->rot_attr.scale_pre_decml;
 			*val2 = magn_state->rot_attr.scale_post_decml;
 			ret_type = magn_state->rot_attr.scale_precision;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			ret_type = -EINVAL;
-		पूर्ण
-		अवरोध;
-	हाल IIO_CHAN_INFO_OFFSET:
-		चयन (chan->type) अणु
-		हाल IIO_MAGN:
+		}
+		break;
+	case IIO_CHAN_INFO_OFFSET:
+		switch (chan->type) {
+		case IIO_MAGN:
 			*val = magn_state->magn_flux_attr.value_offset;
 			ret_type = IIO_VAL_INT;
-			अवरोध;
-		हाल IIO_ROT:
+			break;
+		case IIO_ROT:
 			*val = magn_state->rot_attr.value_offset;
 			ret_type = IIO_VAL_INT;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			ret_type = -EINVAL;
-		पूर्ण
-		अवरोध;
-	हाल IIO_CHAN_INFO_SAMP_FREQ:
-		ret_type = hid_sensor_पढ़ो_samp_freq_value(
+		}
+		break;
+	case IIO_CHAN_INFO_SAMP_FREQ:
+		ret_type = hid_sensor_read_samp_freq_value(
 			&magn_state->magn_flux_attributes, val, val2);
-		अवरोध;
-	हाल IIO_CHAN_INFO_HYSTERESIS:
-		चयन (chan->type) अणु
-		हाल IIO_MAGN:
-			ret_type = hid_sensor_पढ़ो_raw_hyst_value(
+		break;
+	case IIO_CHAN_INFO_HYSTERESIS:
+		switch (chan->type) {
+		case IIO_MAGN:
+			ret_type = hid_sensor_read_raw_hyst_value(
 				&magn_state->magn_flux_attributes, val, val2);
-			अवरोध;
-		हाल IIO_ROT:
-			ret_type = hid_sensor_पढ़ो_raw_hyst_value(
+			break;
+		case IIO_ROT:
+			ret_type = hid_sensor_read_raw_hyst_value(
 				&magn_state->rot_attributes, val, val2);
-			अवरोध;
-		शेष:
+			break;
+		default:
 			ret_type = -EINVAL;
-		पूर्ण
-		अवरोध;
-	शेष:
+		}
+		break;
+	default:
 		ret_type = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस ret_type;
-पूर्ण
+	return ret_type;
+}
 
-/* Channel ग_लिखो_raw handler */
-अटल पूर्णांक magn_3d_ग_लिखो_raw(काष्ठा iio_dev *indio_dev,
-			       काष्ठा iio_chan_spec स्थिर *chan,
-			       पूर्णांक val,
-			       पूर्णांक val2,
-			       दीर्घ mask)
-अणु
-	काष्ठा magn_3d_state *magn_state = iio_priv(indio_dev);
-	पूर्णांक ret = 0;
+/* Channel write_raw handler */
+static int magn_3d_write_raw(struct iio_dev *indio_dev,
+			       struct iio_chan_spec const *chan,
+			       int val,
+			       int val2,
+			       long mask)
+{
+	struct magn_3d_state *magn_state = iio_priv(indio_dev);
+	int ret = 0;
 
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_SAMP_FREQ:
-		ret = hid_sensor_ग_लिखो_samp_freq_value(
+	switch (mask) {
+	case IIO_CHAN_INFO_SAMP_FREQ:
+		ret = hid_sensor_write_samp_freq_value(
 				&magn_state->magn_flux_attributes, val, val2);
-		अवरोध;
-	हाल IIO_CHAN_INFO_HYSTERESIS:
-		चयन (chan->type) अणु
-		हाल IIO_MAGN:
-			ret = hid_sensor_ग_लिखो_raw_hyst_value(
+		break;
+	case IIO_CHAN_INFO_HYSTERESIS:
+		switch (chan->type) {
+		case IIO_MAGN:
+			ret = hid_sensor_write_raw_hyst_value(
 				&magn_state->magn_flux_attributes, val, val2);
-			अवरोध;
-		हाल IIO_ROT:
-			ret = hid_sensor_ग_लिखो_raw_hyst_value(
+			break;
+		case IIO_ROT:
+			ret = hid_sensor_write_raw_hyst_value(
 				&magn_state->rot_attributes, val, val2);
-			अवरोध;
-		शेष:
+			break;
+		default:
 			ret = -EINVAL;
-		पूर्ण
-		अवरोध;
-	शेष:
+		}
+		break;
+	default:
 		ret = -EINVAL;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा iio_info magn_3d_info = अणु
-	.पढ़ो_raw = &magn_3d_पढ़ो_raw,
-	.ग_लिखो_raw = &magn_3d_ग_लिखो_raw,
-पूर्ण;
+static const struct iio_info magn_3d_info = {
+	.read_raw = &magn_3d_read_raw,
+	.write_raw = &magn_3d_write_raw,
+};
 
 /* Callback handler to send event after all samples are received and captured */
-अटल पूर्णांक magn_3d_proc_event(काष्ठा hid_sensor_hub_device *hsdev,
-				अचिन्हित usage_id,
-				व्योम *priv)
-अणु
-	काष्ठा iio_dev *indio_dev = platक्रमm_get_drvdata(priv);
-	काष्ठा magn_3d_state *magn_state = iio_priv(indio_dev);
+static int magn_3d_proc_event(struct hid_sensor_hub_device *hsdev,
+				unsigned usage_id,
+				void *priv)
+{
+	struct iio_dev *indio_dev = platform_get_drvdata(priv);
+	struct magn_3d_state *magn_state = iio_priv(indio_dev);
 
 	dev_dbg(&indio_dev->dev, "magn_3d_proc_event\n");
-	अगर (atomic_पढ़ो(&magn_state->magn_flux_attributes.data_पढ़ोy)) अणु
-		अगर (!magn_state->बारtamp)
-			magn_state->बारtamp = iio_get_समय_ns(indio_dev);
+	if (atomic_read(&magn_state->magn_flux_attributes.data_ready)) {
+		if (!magn_state->timestamp)
+			magn_state->timestamp = iio_get_time_ns(indio_dev);
 
-		iio_push_to_buffers_with_बारtamp(indio_dev,
+		iio_push_to_buffers_with_timestamp(indio_dev,
 						   magn_state->iio_vals,
-						   magn_state->बारtamp);
-		magn_state->बारtamp = 0;
-	पूर्ण
+						   magn_state->timestamp);
+		magn_state->timestamp = 0;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Capture samples in local storage */
-अटल पूर्णांक magn_3d_capture_sample(काष्ठा hid_sensor_hub_device *hsdev,
-				अचिन्हित usage_id,
-				माप_प्रकार raw_len, अक्षर *raw_data,
-				व्योम *priv)
-अणु
-	काष्ठा iio_dev *indio_dev = platक्रमm_get_drvdata(priv);
-	काष्ठा magn_3d_state *magn_state = iio_priv(indio_dev);
-	पूर्णांक offset;
-	पूर्णांक ret = 0;
-	u32 *iio_val = शून्य;
+static int magn_3d_capture_sample(struct hid_sensor_hub_device *hsdev,
+				unsigned usage_id,
+				size_t raw_len, char *raw_data,
+				void *priv)
+{
+	struct iio_dev *indio_dev = platform_get_drvdata(priv);
+	struct magn_3d_state *magn_state = iio_priv(indio_dev);
+	int offset;
+	int ret = 0;
+	u32 *iio_val = NULL;
 
-	चयन (usage_id) अणु
-	हाल HID_USAGE_SENSOR_ORIENT_MAGN_FLUX_X_AXIS:
-	हाल HID_USAGE_SENSOR_ORIENT_MAGN_FLUX_Y_AXIS:
-	हाल HID_USAGE_SENSOR_ORIENT_MAGN_FLUX_Z_AXIS:
+	switch (usage_id) {
+	case HID_USAGE_SENSOR_ORIENT_MAGN_FLUX_X_AXIS:
+	case HID_USAGE_SENSOR_ORIENT_MAGN_FLUX_Y_AXIS:
+	case HID_USAGE_SENSOR_ORIENT_MAGN_FLUX_Z_AXIS:
 		offset = (usage_id - HID_USAGE_SENSOR_ORIENT_MAGN_FLUX_X_AXIS)
 				+ CHANNEL_SCAN_INDEX_X;
-	अवरोध;
-	हाल HID_USAGE_SENSOR_ORIENT_COMP_MAGN_NORTH:
-	हाल HID_USAGE_SENSOR_ORIENT_COMP_TRUE_NORTH:
-	हाल HID_USAGE_SENSOR_ORIENT_MAGN_NORTH:
-	हाल HID_USAGE_SENSOR_ORIENT_TRUE_NORTH:
+	break;
+	case HID_USAGE_SENSOR_ORIENT_COMP_MAGN_NORTH:
+	case HID_USAGE_SENSOR_ORIENT_COMP_TRUE_NORTH:
+	case HID_USAGE_SENSOR_ORIENT_MAGN_NORTH:
+	case HID_USAGE_SENSOR_ORIENT_TRUE_NORTH:
 		offset = (usage_id - HID_USAGE_SENSOR_ORIENT_COMP_MAGN_NORTH)
 				+ CHANNEL_SCAN_INDEX_NORTH_MAGN_TILT_COMP;
-	अवरोध;
-	हाल HID_USAGE_SENSOR_TIME_TIMESTAMP:
-		magn_state->बारtamp =
-			hid_sensor_convert_बारtamp(&magn_state->magn_flux_attributes,
+	break;
+	case HID_USAGE_SENSOR_TIME_TIMESTAMP:
+		magn_state->timestamp =
+			hid_sensor_convert_timestamp(&magn_state->magn_flux_attributes,
 						     *(s64 *)raw_data);
-		वापस ret;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		return ret;
+	default:
+		return -EINVAL;
+	}
 
 	iio_val = magn_state->magn_val_addr[offset];
 
-	अगर (iio_val != शून्य)
+	if (iio_val != NULL)
 		*iio_val = *((u32 *)raw_data);
-	अन्यथा
+	else
 		ret = -EINVAL;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* Parse report which is specअगरic to an usage id*/
-अटल पूर्णांक magn_3d_parse_report(काष्ठा platक्रमm_device *pdev,
-				काष्ठा hid_sensor_hub_device *hsdev,
-				काष्ठा iio_chan_spec **channels,
-				पूर्णांक *chan_count,
-				अचिन्हित usage_id,
-				काष्ठा magn_3d_state *st)
-अणु
-	पूर्णांक i;
-	पूर्णांक attr_count = 0;
-	काष्ठा iio_chan_spec *_channels;
+/* Parse report which is specific to an usage id*/
+static int magn_3d_parse_report(struct platform_device *pdev,
+				struct hid_sensor_hub_device *hsdev,
+				struct iio_chan_spec **channels,
+				int *chan_count,
+				unsigned usage_id,
+				struct magn_3d_state *st)
+{
+	int i;
+	int attr_count = 0;
+	struct iio_chan_spec *_channels;
 
-	/* Scan क्रम each usage attribute supported */
-	क्रम (i = 0; i < MAGN_3D_CHANNEL_MAX; i++) अणु
-		पूर्णांक status;
+	/* Scan for each usage attribute supported */
+	for (i = 0; i < MAGN_3D_CHANNEL_MAX; i++) {
+		int status;
 		u32 address = magn_3d_addresses[i];
 
-		/* Check अगर usage attribute exists in the sensor hub device */
+		/* Check if usage attribute exists in the sensor hub device */
 		status = sensor_hub_input_get_attribute_info(hsdev,
 			HID_INPUT_REPORT,
 			usage_id,
 			address,
 			&(st->magn[i]));
-		अगर (!status)
+		if (!status)
 			attr_count++;
-	पूर्ण
+	}
 
-	अगर (attr_count <= 0) अणु
+	if (attr_count <= 0) {
 		dev_err(&pdev->dev,
 			"failed to find any supported usage attributes in report\n");
-		वापस  -EINVAL;
-	पूर्ण
+		return  -EINVAL;
+	}
 
 	dev_dbg(&pdev->dev, "magn_3d Found %d usage attributes\n",
 			attr_count);
@@ -392,69 +391,69 @@
 			st->magn[2].index, st->magn[2].report_id);
 
 	/* Setup IIO channel array */
-	_channels = devm_kसुस्मृति(&pdev->dev, attr_count,
-				माप(काष्ठा iio_chan_spec),
+	_channels = devm_kcalloc(&pdev->dev, attr_count,
+				sizeof(struct iio_chan_spec),
 				GFP_KERNEL);
-	अगर (!_channels) अणु
+	if (!_channels) {
 		dev_err(&pdev->dev,
 			"failed to allocate space for iio channels\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	/* attr_count include बारtamp channel, and the iio_vals should be aligned to 8byte */
-	st->iio_vals = devm_kसुस्मृति(&pdev->dev,
+	/* attr_count include timestamp channel, and the iio_vals should be aligned to 8byte */
+	st->iio_vals = devm_kcalloc(&pdev->dev,
 				    ((attr_count + 1) % 2 + (attr_count + 1) / 2) * 2,
-				    माप(u32), GFP_KERNEL);
-	अगर (!st->iio_vals) अणु
+				    sizeof(u32), GFP_KERNEL);
+	if (!st->iio_vals) {
 		dev_err(&pdev->dev,
 			"failed to allocate space for iio values array\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	क्रम (i = 0, *chan_count = 0;
+	for (i = 0, *chan_count = 0;
 	i < MAGN_3D_CHANNEL_MAX && *chan_count < attr_count;
-	i++)अणु
-		अगर (st->magn[i].index >= 0) अणु
-			/* Setup IIO channel काष्ठा */
+	i++){
+		if (st->magn[i].index >= 0) {
+			/* Setup IIO channel struct */
 			(_channels[*chan_count]) = magn_3d_channels[i];
 			(_channels[*chan_count]).scan_index = *chan_count;
 			(_channels[*chan_count]).address = i;
 
-			अगर (i != CHANNEL_SCAN_INDEX_TIMESTAMP) अणु
+			if (i != CHANNEL_SCAN_INDEX_TIMESTAMP) {
 				/* Set magn_val_addr to iio value address */
 				st->magn_val_addr[i] = &st->iio_vals[*chan_count];
 				magn_3d_adjust_channel_bit_mask(_channels,
 								*chan_count,
 								st->magn[i].size);
-			पूर्ण
+			}
 			(*chan_count)++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (*chan_count <= 0) अणु
+	if (*chan_count <= 0) {
 		dev_err(&pdev->dev,
 			"failed to find any magnetic channels setup\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	*channels = _channels;
 
 	dev_dbg(&pdev->dev, "magn_3d Setup %d IIO channels\n",
 			*chan_count);
 
-	st->magn_flux_attr.scale_precision = hid_sensor_क्रमmat_scale(
+	st->magn_flux_attr.scale_precision = hid_sensor_format_scale(
 				HID_USAGE_SENSOR_COMPASS_3D,
 				&st->magn[CHANNEL_SCAN_INDEX_X],
 				&st->magn_flux_attr.scale_pre_decml,
 				&st->magn_flux_attr.scale_post_decml);
 	st->rot_attr.scale_precision
-		= hid_sensor_क्रमmat_scale(
+		= hid_sensor_format_scale(
 			HID_USAGE_SENSOR_ORIENT_COMP_MAGN_NORTH,
 			&st->magn[CHANNEL_SCAN_INDEX_NORTH_MAGN_TILT_COMP],
 			&st->rot_attr.scale_pre_decml,
 			&st->rot_attr.scale_post_decml);
 
-	अगर (st->rot_attributes.sensitivity.index < 0) अणु
+	if (st->rot_attributes.sensitivity.index < 0) {
 		sensor_hub_input_get_attribute_info(hsdev,
 			HID_FEATURE_REPORT, usage_id,
 			HID_USAGE_SENSOR_DATA_MOD_CHANGE_SENSITIVITY_ABS |
@@ -463,28 +462,28 @@
 		dev_dbg(&pdev->dev, "Sensitivity index:report %d:%d\n",
 			st->rot_attributes.sensitivity.index,
 			st->rot_attributes.sensitivity.report_id);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Function to initialize the processing क्रम usage id */
-अटल पूर्णांक hid_magn_3d_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक ret = 0;
-	अटल अक्षर *name = "magn_3d";
-	काष्ठा iio_dev *indio_dev;
-	काष्ठा magn_3d_state *magn_state;
-	काष्ठा hid_sensor_hub_device *hsdev = pdev->dev.platक्रमm_data;
-	काष्ठा iio_chan_spec *channels;
-	पूर्णांक chan_count = 0;
+/* Function to initialize the processing for usage id */
+static int hid_magn_3d_probe(struct platform_device *pdev)
+{
+	int ret = 0;
+	static char *name = "magn_3d";
+	struct iio_dev *indio_dev;
+	struct magn_3d_state *magn_state;
+	struct hid_sensor_hub_device *hsdev = pdev->dev.platform_data;
+	struct iio_chan_spec *channels;
+	int chan_count = 0;
 
 	indio_dev = devm_iio_device_alloc(&pdev->dev,
-					  माप(काष्ठा magn_3d_state));
-	अगर (indio_dev == शून्य)
-		वापस -ENOMEM;
+					  sizeof(struct magn_3d_state));
+	if (indio_dev == NULL)
+		return -ENOMEM;
 
-	platक्रमm_set_drvdata(pdev, indio_dev);
+	platform_set_drvdata(pdev, indio_dev);
 
 	magn_state = iio_priv(indio_dev);
 	magn_state->magn_flux_attributes.hsdev = hsdev;
@@ -495,10 +494,10 @@
 				&magn_state->magn_flux_attributes,
 				magn_3d_sensitivity_addresses,
 				ARRAY_SIZE(magn_3d_sensitivity_addresses));
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "failed to setup common attributes\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	magn_state->rot_attributes = magn_state->magn_flux_attributes;
 	/* sensitivity of rot_attribute is not the same as magn_flux_attributes */
 	magn_state->rot_attributes.sensitivity.index = -1;
@@ -506,84 +505,84 @@
 	ret = magn_3d_parse_report(pdev, hsdev,
 				&channels, &chan_count,
 				HID_USAGE_SENSOR_COMPASS_3D, magn_state);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "failed to parse report\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	indio_dev->channels = channels;
 	indio_dev->num_channels = chan_count;
 	indio_dev->info = &magn_3d_info;
 	indio_dev->name = name;
-	indio_dev->modes = INDIO_सूचीECT_MODE;
+	indio_dev->modes = INDIO_DIRECT_MODE;
 
-	atomic_set(&magn_state->magn_flux_attributes.data_पढ़ोy, 0);
+	atomic_set(&magn_state->magn_flux_attributes.data_ready, 0);
 
 	ret = hid_sensor_setup_trigger(indio_dev, name,
 					&magn_state->magn_flux_attributes);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&pdev->dev, "trigger setup failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = iio_device_रेजिस्टर(indio_dev);
-	अगर (ret) अणु
+	ret = iio_device_register(indio_dev);
+	if (ret) {
 		dev_err(&pdev->dev, "device register failed\n");
-		जाओ error_हटाओ_trigger;
-	पूर्ण
+		goto error_remove_trigger;
+	}
 
 	magn_state->callbacks.send_event = magn_3d_proc_event;
 	magn_state->callbacks.capture_sample = magn_3d_capture_sample;
 	magn_state->callbacks.pdev = pdev;
-	ret = sensor_hub_रेजिस्टर_callback(hsdev, HID_USAGE_SENSOR_COMPASS_3D,
+	ret = sensor_hub_register_callback(hsdev, HID_USAGE_SENSOR_COMPASS_3D,
 					&magn_state->callbacks);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&pdev->dev, "callback reg failed\n");
-		जाओ error_iio_unreg;
-	पूर्ण
+		goto error_iio_unreg;
+	}
 
-	वापस ret;
+	return ret;
 
 error_iio_unreg:
-	iio_device_unरेजिस्टर(indio_dev);
-error_हटाओ_trigger:
-	hid_sensor_हटाओ_trigger(indio_dev, &magn_state->magn_flux_attributes);
-	वापस ret;
-पूर्ण
+	iio_device_unregister(indio_dev);
+error_remove_trigger:
+	hid_sensor_remove_trigger(indio_dev, &magn_state->magn_flux_attributes);
+	return ret;
+}
 
-/* Function to deinitialize the processing क्रम usage id */
-अटल पूर्णांक hid_magn_3d_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा hid_sensor_hub_device *hsdev = pdev->dev.platक्रमm_data;
-	काष्ठा iio_dev *indio_dev = platक्रमm_get_drvdata(pdev);
-	काष्ठा magn_3d_state *magn_state = iio_priv(indio_dev);
+/* Function to deinitialize the processing for usage id */
+static int hid_magn_3d_remove(struct platform_device *pdev)
+{
+	struct hid_sensor_hub_device *hsdev = pdev->dev.platform_data;
+	struct iio_dev *indio_dev = platform_get_drvdata(pdev);
+	struct magn_3d_state *magn_state = iio_priv(indio_dev);
 
-	sensor_hub_हटाओ_callback(hsdev, HID_USAGE_SENSOR_COMPASS_3D);
-	iio_device_unरेजिस्टर(indio_dev);
-	hid_sensor_हटाओ_trigger(indio_dev, &magn_state->magn_flux_attributes);
+	sensor_hub_remove_callback(hsdev, HID_USAGE_SENSOR_COMPASS_3D);
+	iio_device_unregister(indio_dev);
+	hid_sensor_remove_trigger(indio_dev, &magn_state->magn_flux_attributes);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा platक्रमm_device_id hid_magn_3d_ids[] = अणु
-	अणु
-		/* Format: HID-SENSOR-usage_id_in_hex_lowerहाल */
+static const struct platform_device_id hid_magn_3d_ids[] = {
+	{
+		/* Format: HID-SENSOR-usage_id_in_hex_lowercase */
 		.name = "HID-SENSOR-200083",
-	पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
-MODULE_DEVICE_TABLE(platक्रमm, hid_magn_3d_ids);
+	},
+	{ /* sentinel */ }
+};
+MODULE_DEVICE_TABLE(platform, hid_magn_3d_ids);
 
-अटल काष्ठा platक्रमm_driver hid_magn_3d_platक्रमm_driver = अणु
+static struct platform_driver hid_magn_3d_platform_driver = {
 	.id_table = hid_magn_3d_ids,
-	.driver = अणु
+	.driver = {
 		.name	= KBUILD_MODNAME,
 		.pm	= &hid_sensor_pm_ops,
-	पूर्ण,
+	},
 	.probe		= hid_magn_3d_probe,
-	.हटाओ		= hid_magn_3d_हटाओ,
-पूर्ण;
-module_platक्रमm_driver(hid_magn_3d_platक्रमm_driver);
+	.remove		= hid_magn_3d_remove,
+};
+module_platform_driver(hid_magn_3d_platform_driver);
 
 MODULE_DESCRIPTION("HID Sensor Magnetometer 3D");
 MODULE_AUTHOR("Srinivas Pandruvada <srinivas.pandruvada@intel.com>");

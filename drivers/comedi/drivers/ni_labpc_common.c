@@ -1,36 +1,35 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * comedi/drivers/ni_labpc_common.c
  *
- * Common support code क्रम "ni_labpc", "ni_labpc_pci" and "ni_labpc_cs".
+ * Common support code for "ni_labpc", "ni_labpc_pci" and "ni_labpc_cs".
  *
- * Copyright (C) 2001-2003 Frank Mori Hess <fmhess@users.sourceक्रमge.net>
+ * Copyright (C) 2001-2003 Frank Mori Hess <fmhess@users.sourceforge.net>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/delay.h>
-#समावेश <linux/slab.h>
+#include <linux/module.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/delay.h>
+#include <linux/slab.h>
 
-#समावेश "../comedidev.h"
+#include "../comedidev.h"
 
-#समावेश "comedi_8254.h"
-#समावेश "8255.h"
-#समावेश "ni_labpc.h"
-#समावेश "ni_labpc_regs.h"
-#समावेश "ni_labpc_isadma.h"
+#include "comedi_8254.h"
+#include "8255.h"
+#include "ni_labpc.h"
+#include "ni_labpc_regs.h"
+#include "ni_labpc_isadma.h"
 
-क्रमागत scan_mode अणु
+enum scan_mode {
 	MODE_SINGLE_CHAN,
 	MODE_SINGLE_CHAN_INTERVAL,
 	MODE_MULT_CHAN_UP,
 	MODE_MULT_CHAN_DOWN,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा comedi_lrange range_labpc_plus_ai = अणु
-	16, अणु
+static const struct comedi_lrange range_labpc_plus_ai = {
+	16, {
 		BIP_RANGE(5),
 		BIP_RANGE(4),
 		BIP_RANGE(2.5),
@@ -47,11 +46,11 @@
 		UNI_RANGE(0.5),
 		UNI_RANGE(0.2),
 		UNI_RANGE(0.1)
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल स्थिर काष्ठा comedi_lrange range_labpc_1200_ai = अणु
-	14, अणु
+static const struct comedi_lrange range_labpc_1200_ai = {
+	14, {
 		BIP_RANGE(5),
 		BIP_RANGE(2.5),
 		BIP_RANGE(1),
@@ -66,445 +65,445 @@
 		UNI_RANGE(0.5),
 		UNI_RANGE(0.2),
 		UNI_RANGE(0.1)
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल स्थिर काष्ठा comedi_lrange range_labpc_ao = अणु
-	2, अणु
+static const struct comedi_lrange range_labpc_ao = {
+	2, {
 		BIP_RANGE(5),
 		UNI_RANGE(10)
-	पूर्ण
-पूर्ण;
+	}
+};
 
 /*
- * functions that करो inb/outb and पढ़ोb/ग_लिखोb so we can use
- * function poपूर्णांकers to decide which to use
+ * functions that do inb/outb and readb/writeb so we can use
+ * function pointers to decide which to use
  */
-अटल अचिन्हित पूर्णांक labpc_inb(काष्ठा comedi_device *dev, अचिन्हित दीर्घ reg)
-अणु
-	वापस inb(dev->iobase + reg);
-पूर्ण
+static unsigned int labpc_inb(struct comedi_device *dev, unsigned long reg)
+{
+	return inb(dev->iobase + reg);
+}
 
-अटल व्योम labpc_outb(काष्ठा comedi_device *dev,
-		       अचिन्हित पूर्णांक byte, अचिन्हित दीर्घ reg)
-अणु
+static void labpc_outb(struct comedi_device *dev,
+		       unsigned int byte, unsigned long reg)
+{
 	outb(byte, dev->iobase + reg);
-पूर्ण
+}
 
-अटल अचिन्हित पूर्णांक labpc_पढ़ोb(काष्ठा comedi_device *dev, अचिन्हित दीर्घ reg)
-अणु
-	वापस पढ़ोb(dev->mmio + reg);
-पूर्ण
+static unsigned int labpc_readb(struct comedi_device *dev, unsigned long reg)
+{
+	return readb(dev->mmio + reg);
+}
 
-अटल व्योम labpc_ग_लिखोb(काष्ठा comedi_device *dev,
-			 अचिन्हित पूर्णांक byte, अचिन्हित दीर्घ reg)
-अणु
-	ग_लिखोb(byte, dev->mmio + reg);
-पूर्ण
+static void labpc_writeb(struct comedi_device *dev,
+			 unsigned int byte, unsigned long reg)
+{
+	writeb(byte, dev->mmio + reg);
+}
 
-अटल पूर्णांक labpc_cancel(काष्ठा comedi_device *dev, काष्ठा comedi_subdevice *s)
-अणु
-	काष्ठा labpc_निजी *devpriv = dev->निजी;
-	अचिन्हित दीर्घ flags;
+static int labpc_cancel(struct comedi_device *dev, struct comedi_subdevice *s)
+{
+	struct labpc_private *devpriv = dev->private;
+	unsigned long flags;
 
 	spin_lock_irqsave(&dev->spinlock, flags);
 	devpriv->cmd2 &= ~(CMD2_SWTRIG | CMD2_HWTRIG | CMD2_PRETRIG);
-	devpriv->ग_लिखो_byte(dev, devpriv->cmd2, CMD2_REG);
+	devpriv->write_byte(dev, devpriv->cmd2, CMD2_REG);
 	spin_unlock_irqrestore(&dev->spinlock, flags);
 
 	devpriv->cmd3 = 0;
-	devpriv->ग_लिखो_byte(dev, devpriv->cmd3, CMD3_REG);
+	devpriv->write_byte(dev, devpriv->cmd3, CMD3_REG);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम labpc_ai_set_chan_and_gain(काष्ठा comedi_device *dev,
-				       क्रमागत scan_mode mode,
-				       अचिन्हित पूर्णांक chan,
-				       अचिन्हित पूर्णांक range,
-				       अचिन्हित पूर्णांक aref)
-अणु
-	स्थिर काष्ठा labpc_boardinfo *board = dev->board_ptr;
-	काष्ठा labpc_निजी *devpriv = dev->निजी;
+static void labpc_ai_set_chan_and_gain(struct comedi_device *dev,
+				       enum scan_mode mode,
+				       unsigned int chan,
+				       unsigned int range,
+				       unsigned int aref)
+{
+	const struct labpc_boardinfo *board = dev->board_ptr;
+	struct labpc_private *devpriv = dev->private;
 
-	अगर (board->is_labpc1200) अणु
+	if (board->is_labpc1200) {
 		/*
-		 * The LabPC-1200 boards करो not have a gain
+		 * The LabPC-1200 boards do not have a gain
 		 * of '0x10'. Skip the range values that would
 		 * result in this gain.
 		 */
 		range += (range > 0) + (range > 7);
-	पूर्ण
+	}
 
-	/* munge channel bits क्रम dअगरferential/scan disabled mode */
-	अगर ((mode == MODE_SINGLE_CHAN || mode == MODE_SINGLE_CHAN_INTERVAL) &&
+	/* munge channel bits for differential/scan disabled mode */
+	if ((mode == MODE_SINGLE_CHAN || mode == MODE_SINGLE_CHAN_INTERVAL) &&
 	    aref == AREF_DIFF)
 		chan *= 2;
 	devpriv->cmd1 = CMD1_MA(chan);
 	devpriv->cmd1 |= CMD1_GAIN(range);
 
-	devpriv->ग_लिखो_byte(dev, devpriv->cmd1, CMD1_REG);
-पूर्ण
+	devpriv->write_byte(dev, devpriv->cmd1, CMD1_REG);
+}
 
-अटल व्योम labpc_setup_cmd6_reg(काष्ठा comedi_device *dev,
-				 काष्ठा comedi_subdevice *s,
-				 क्रमागत scan_mode mode,
-				 क्रमागत transfer_type xfer,
-				 अचिन्हित पूर्णांक range,
-				 अचिन्हित पूर्णांक aref,
-				 bool ena_पूर्णांकr)
-अणु
-	स्थिर काष्ठा labpc_boardinfo *board = dev->board_ptr;
-	काष्ठा labpc_निजी *devpriv = dev->निजी;
+static void labpc_setup_cmd6_reg(struct comedi_device *dev,
+				 struct comedi_subdevice *s,
+				 enum scan_mode mode,
+				 enum transfer_type xfer,
+				 unsigned int range,
+				 unsigned int aref,
+				 bool ena_intr)
+{
+	const struct labpc_boardinfo *board = dev->board_ptr;
+	struct labpc_private *devpriv = dev->private;
 
-	अगर (!board->is_labpc1200)
-		वापस;
+	if (!board->is_labpc1200)
+		return;
 
-	/* reference inमाला_दो to ground or common? */
-	अगर (aref != AREF_GROUND)
+	/* reference inputs to ground or common? */
+	if (aref != AREF_GROUND)
 		devpriv->cmd6 |= CMD6_NRSE;
-	अन्यथा
+	else
 		devpriv->cmd6 &= ~CMD6_NRSE;
 
 	/* bipolar or unipolar range? */
-	अगर (comedi_range_is_unipolar(s, range))
+	if (comedi_range_is_unipolar(s, range))
 		devpriv->cmd6 |= CMD6_ADCUNI;
-	अन्यथा
+	else
 		devpriv->cmd6 &= ~CMD6_ADCUNI;
 
-	/*  पूर्णांकerrupt on fअगरo half full? */
-	अगर (xfer == fअगरo_half_full_transfer)
+	/*  interrupt on fifo half full? */
+	if (xfer == fifo_half_full_transfer)
 		devpriv->cmd6 |= CMD6_HFINTEN;
-	अन्यथा
+	else
 		devpriv->cmd6 &= ~CMD6_HFINTEN;
 
-	/* enable पूर्णांकerrupt on counter a1 terminal count? */
-	अगर (ena_पूर्णांकr)
+	/* enable interrupt on counter a1 terminal count? */
+	if (ena_intr)
 		devpriv->cmd6 |= CMD6_DQINTEN;
-	अन्यथा
+	else
 		devpriv->cmd6 &= ~CMD6_DQINTEN;
 
-	/* are we scanning up or करोwn through channels? */
-	अगर (mode == MODE_MULT_CHAN_UP)
+	/* are we scanning up or down through channels? */
+	if (mode == MODE_MULT_CHAN_UP)
 		devpriv->cmd6 |= CMD6_SCANUP;
-	अन्यथा
+	else
 		devpriv->cmd6 &= ~CMD6_SCANUP;
 
-	devpriv->ग_लिखो_byte(dev, devpriv->cmd6, CMD6_REG);
-पूर्ण
+	devpriv->write_byte(dev, devpriv->cmd6, CMD6_REG);
+}
 
-अटल अचिन्हित पूर्णांक labpc_पढ़ो_adc_fअगरo(काष्ठा comedi_device *dev)
-अणु
-	काष्ठा labpc_निजी *devpriv = dev->निजी;
-	अचिन्हित पूर्णांक lsb = devpriv->पढ़ो_byte(dev, ADC_FIFO_REG);
-	अचिन्हित पूर्णांक msb = devpriv->पढ़ो_byte(dev, ADC_FIFO_REG);
+static unsigned int labpc_read_adc_fifo(struct comedi_device *dev)
+{
+	struct labpc_private *devpriv = dev->private;
+	unsigned int lsb = devpriv->read_byte(dev, ADC_FIFO_REG);
+	unsigned int msb = devpriv->read_byte(dev, ADC_FIFO_REG);
 
-	वापस (msb << 8) | lsb;
-पूर्ण
+	return (msb << 8) | lsb;
+}
 
-अटल व्योम labpc_clear_adc_fअगरo(काष्ठा comedi_device *dev)
-अणु
-	काष्ठा labpc_निजी *devpriv = dev->निजी;
+static void labpc_clear_adc_fifo(struct comedi_device *dev)
+{
+	struct labpc_private *devpriv = dev->private;
 
-	devpriv->ग_लिखो_byte(dev, 0x1, ADC_FIFO_CLEAR_REG);
-	labpc_पढ़ो_adc_fअगरo(dev);
-पूर्ण
+	devpriv->write_byte(dev, 0x1, ADC_FIFO_CLEAR_REG);
+	labpc_read_adc_fifo(dev);
+}
 
-अटल पूर्णांक labpc_ai_eoc(काष्ठा comedi_device *dev,
-			काष्ठा comedi_subdevice *s,
-			काष्ठा comedi_insn *insn,
-			अचिन्हित दीर्घ context)
-अणु
-	काष्ठा labpc_निजी *devpriv = dev->निजी;
+static int labpc_ai_eoc(struct comedi_device *dev,
+			struct comedi_subdevice *s,
+			struct comedi_insn *insn,
+			unsigned long context)
+{
+	struct labpc_private *devpriv = dev->private;
 
-	devpriv->stat1 = devpriv->पढ़ो_byte(dev, STAT1_REG);
-	अगर (devpriv->stat1 & STAT1_DAVAIL)
-		वापस 0;
-	वापस -EBUSY;
-पूर्ण
+	devpriv->stat1 = devpriv->read_byte(dev, STAT1_REG);
+	if (devpriv->stat1 & STAT1_DAVAIL)
+		return 0;
+	return -EBUSY;
+}
 
-अटल पूर्णांक labpc_ai_insn_पढ़ो(काष्ठा comedi_device *dev,
-			      काष्ठा comedi_subdevice *s,
-			      काष्ठा comedi_insn *insn,
-			      अचिन्हित पूर्णांक *data)
-अणु
-	काष्ठा labpc_निजी *devpriv = dev->निजी;
-	अचिन्हित पूर्णांक chan = CR_CHAN(insn->chanspec);
-	अचिन्हित पूर्णांक range = CR_RANGE(insn->chanspec);
-	अचिन्हित पूर्णांक aref = CR_AREF(insn->chanspec);
-	पूर्णांक ret;
-	पूर्णांक i;
+static int labpc_ai_insn_read(struct comedi_device *dev,
+			      struct comedi_subdevice *s,
+			      struct comedi_insn *insn,
+			      unsigned int *data)
+{
+	struct labpc_private *devpriv = dev->private;
+	unsigned int chan = CR_CHAN(insn->chanspec);
+	unsigned int range = CR_RANGE(insn->chanspec);
+	unsigned int aref = CR_AREF(insn->chanspec);
+	int ret;
+	int i;
 
-	/* disable समयd conversions, पूर्णांकerrupt generation and dma */
+	/* disable timed conversions, interrupt generation and dma */
 	labpc_cancel(dev, s);
 
 	labpc_ai_set_chan_and_gain(dev, MODE_SINGLE_CHAN, chan, range, aref);
 
-	labpc_setup_cmd6_reg(dev, s, MODE_SINGLE_CHAN, fअगरo_not_empty_transfer,
+	labpc_setup_cmd6_reg(dev, s, MODE_SINGLE_CHAN, fifo_not_empty_transfer,
 			     range, aref, false);
 
-	/* setup cmd4 रेजिस्टर */
+	/* setup cmd4 register */
 	devpriv->cmd4 = 0;
 	devpriv->cmd4 |= CMD4_ECLKRCV;
-	/* single-ended/dअगरferential */
-	अगर (aref == AREF_DIFF)
+	/* single-ended/differential */
+	if (aref == AREF_DIFF)
 		devpriv->cmd4 |= CMD4_SEDIFF;
-	devpriv->ग_लिखो_byte(dev, devpriv->cmd4, CMD4_REG);
+	devpriv->write_byte(dev, devpriv->cmd4, CMD4_REG);
 
 	/* initialize pacer counter to prevent any problems */
 	comedi_8254_set_mode(devpriv->counter, 0, I8254_MODE2 | I8254_BINARY);
 
-	labpc_clear_adc_fअगरo(dev);
+	labpc_clear_adc_fifo(dev);
 
-	क्रम (i = 0; i < insn->n; i++) अणु
+	for (i = 0; i < insn->n; i++) {
 		/* trigger conversion */
-		devpriv->ग_लिखो_byte(dev, 0x1, ADC_START_CONVERT_REG);
+		devpriv->write_byte(dev, 0x1, ADC_START_CONVERT_REG);
 
-		ret = comedi_समयout(dev, s, insn, labpc_ai_eoc, 0);
-		अगर (ret)
-			वापस ret;
+		ret = comedi_timeout(dev, s, insn, labpc_ai_eoc, 0);
+		if (ret)
+			return ret;
 
-		data[i] = labpc_पढ़ो_adc_fअगरo(dev);
-	पूर्ण
+		data[i] = labpc_read_adc_fifo(dev);
+	}
 
-	वापस insn->n;
-पूर्ण
+	return insn->n;
+}
 
-अटल bool labpc_use_continuous_mode(स्थिर काष्ठा comedi_cmd *cmd,
-				      क्रमागत scan_mode mode)
-अणु
-	अगर (mode == MODE_SINGLE_CHAN || cmd->scan_begin_src == TRIG_FOLLOW)
-		वापस true;
+static bool labpc_use_continuous_mode(const struct comedi_cmd *cmd,
+				      enum scan_mode mode)
+{
+	if (mode == MODE_SINGLE_CHAN || cmd->scan_begin_src == TRIG_FOLLOW)
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल अचिन्हित पूर्णांक labpc_ai_convert_period(स्थिर काष्ठा comedi_cmd *cmd,
-					    क्रमागत scan_mode mode)
-अणु
-	अगर (cmd->convert_src != TRIG_TIMER)
-		वापस 0;
+static unsigned int labpc_ai_convert_period(const struct comedi_cmd *cmd,
+					    enum scan_mode mode)
+{
+	if (cmd->convert_src != TRIG_TIMER)
+		return 0;
 
-	अगर (mode == MODE_SINGLE_CHAN && cmd->scan_begin_src == TRIG_TIMER)
-		वापस cmd->scan_begin_arg;
+	if (mode == MODE_SINGLE_CHAN && cmd->scan_begin_src == TRIG_TIMER)
+		return cmd->scan_begin_arg;
 
-	वापस cmd->convert_arg;
-पूर्ण
+	return cmd->convert_arg;
+}
 
-अटल व्योम labpc_set_ai_convert_period(काष्ठा comedi_cmd *cmd,
-					क्रमागत scan_mode mode, अचिन्हित पूर्णांक ns)
-अणु
-	अगर (cmd->convert_src != TRIG_TIMER)
-		वापस;
+static void labpc_set_ai_convert_period(struct comedi_cmd *cmd,
+					enum scan_mode mode, unsigned int ns)
+{
+	if (cmd->convert_src != TRIG_TIMER)
+		return;
 
-	अगर (mode == MODE_SINGLE_CHAN &&
-	    cmd->scan_begin_src == TRIG_TIMER) अणु
+	if (mode == MODE_SINGLE_CHAN &&
+	    cmd->scan_begin_src == TRIG_TIMER) {
 		cmd->scan_begin_arg = ns;
-		अगर (cmd->convert_arg > cmd->scan_begin_arg)
+		if (cmd->convert_arg > cmd->scan_begin_arg)
 			cmd->convert_arg = cmd->scan_begin_arg;
-	पूर्ण अन्यथा अणु
+	} else {
 		cmd->convert_arg = ns;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अचिन्हित पूर्णांक labpc_ai_scan_period(स्थिर काष्ठा comedi_cmd *cmd,
-					 क्रमागत scan_mode mode)
-अणु
-	अगर (cmd->scan_begin_src != TRIG_TIMER)
-		वापस 0;
+static unsigned int labpc_ai_scan_period(const struct comedi_cmd *cmd,
+					 enum scan_mode mode)
+{
+	if (cmd->scan_begin_src != TRIG_TIMER)
+		return 0;
 
-	अगर (mode == MODE_SINGLE_CHAN && cmd->convert_src == TRIG_TIMER)
-		वापस 0;
+	if (mode == MODE_SINGLE_CHAN && cmd->convert_src == TRIG_TIMER)
+		return 0;
 
-	वापस cmd->scan_begin_arg;
-पूर्ण
+	return cmd->scan_begin_arg;
+}
 
-अटल व्योम labpc_set_ai_scan_period(काष्ठा comedi_cmd *cmd,
-				     क्रमागत scan_mode mode, अचिन्हित पूर्णांक ns)
-अणु
-	अगर (cmd->scan_begin_src != TRIG_TIMER)
-		वापस;
+static void labpc_set_ai_scan_period(struct comedi_cmd *cmd,
+				     enum scan_mode mode, unsigned int ns)
+{
+	if (cmd->scan_begin_src != TRIG_TIMER)
+		return;
 
-	अगर (mode == MODE_SINGLE_CHAN && cmd->convert_src == TRIG_TIMER)
-		वापस;
+	if (mode == MODE_SINGLE_CHAN && cmd->convert_src == TRIG_TIMER)
+		return;
 
 	cmd->scan_begin_arg = ns;
-पूर्ण
+}
 
 /* figures out what counter values to use based on command */
-अटल व्योम labpc_adc_timing(काष्ठा comedi_device *dev, काष्ठा comedi_cmd *cmd,
-			     क्रमागत scan_mode mode)
-अणु
-	काष्ठा comedi_8254 *pacer = dev->pacer;
-	अचिन्हित पूर्णांक convert_period = labpc_ai_convert_period(cmd, mode);
-	अचिन्हित पूर्णांक scan_period = labpc_ai_scan_period(cmd, mode);
-	अचिन्हित पूर्णांक base_period;
+static void labpc_adc_timing(struct comedi_device *dev, struct comedi_cmd *cmd,
+			     enum scan_mode mode)
+{
+	struct comedi_8254 *pacer = dev->pacer;
+	unsigned int convert_period = labpc_ai_convert_period(cmd, mode);
+	unsigned int scan_period = labpc_ai_scan_period(cmd, mode);
+	unsigned int base_period;
 
 	/*
 	 * If both convert and scan triggers are TRIG_TIMER, then they
 	 * both rely on counter b0. If only one TRIG_TIMER is used, we
 	 * can use the generic cascaded timing functions.
 	 */
-	अगर (convert_period && scan_period) अणु
+	if (convert_period && scan_period) {
 		/*
-		 * pick the lowest भागisor value we can (क्रम maximum input
-		 * घड़ी speed on convert and scan counters)
+		 * pick the lowest divisor value we can (for maximum input
+		 * clock speed on convert and scan counters)
 		 */
-		pacer->next_भाग1 = (scan_period - 1) /
+		pacer->next_div1 = (scan_period - 1) /
 				   (pacer->osc_base * I8254_MAX_COUNT) + 1;
 
-		comedi_check_trigger_arg_min(&pacer->next_भाग1, 2);
-		comedi_check_trigger_arg_max(&pacer->next_भाग1,
+		comedi_check_trigger_arg_min(&pacer->next_div1, 2);
+		comedi_check_trigger_arg_max(&pacer->next_div1,
 					     I8254_MAX_COUNT);
 
-		base_period = pacer->osc_base * pacer->next_भाग1;
+		base_period = pacer->osc_base * pacer->next_div1;
 
-		/*  set a0 क्रम conversion frequency and b1 क्रम scan frequency */
-		चयन (cmd->flags & CMDF_ROUND_MASK) अणु
-		शेष:
-		हाल CMDF_ROUND_NEAREST:
-			pacer->next_भाग = DIV_ROUND_CLOSEST(convert_period,
+		/*  set a0 for conversion frequency and b1 for scan frequency */
+		switch (cmd->flags & CMDF_ROUND_MASK) {
+		default:
+		case CMDF_ROUND_NEAREST:
+			pacer->next_div = DIV_ROUND_CLOSEST(convert_period,
 							    base_period);
-			pacer->next_भाग2 = DIV_ROUND_CLOSEST(scan_period,
+			pacer->next_div2 = DIV_ROUND_CLOSEST(scan_period,
 							     base_period);
-			अवरोध;
-		हाल CMDF_ROUND_UP:
-			pacer->next_भाग = DIV_ROUND_UP(convert_period,
+			break;
+		case CMDF_ROUND_UP:
+			pacer->next_div = DIV_ROUND_UP(convert_period,
 						       base_period);
-			pacer->next_भाग2 = DIV_ROUND_UP(scan_period,
+			pacer->next_div2 = DIV_ROUND_UP(scan_period,
 							base_period);
-			अवरोध;
-		हाल CMDF_ROUND_DOWN:
-			pacer->next_भाग = convert_period / base_period;
-			pacer->next_भाग2 = scan_period / base_period;
-			अवरोध;
-		पूर्ण
+			break;
+		case CMDF_ROUND_DOWN:
+			pacer->next_div = convert_period / base_period;
+			pacer->next_div2 = scan_period / base_period;
+			break;
+		}
 		/*  make sure a0 and b1 values are acceptable */
-		comedi_check_trigger_arg_min(&pacer->next_भाग, 2);
-		comedi_check_trigger_arg_max(&pacer->next_भाग, I8254_MAX_COUNT);
-		comedi_check_trigger_arg_min(&pacer->next_भाग2, 2);
-		comedi_check_trigger_arg_max(&pacer->next_भाग2,
+		comedi_check_trigger_arg_min(&pacer->next_div, 2);
+		comedi_check_trigger_arg_max(&pacer->next_div, I8254_MAX_COUNT);
+		comedi_check_trigger_arg_min(&pacer->next_div2, 2);
+		comedi_check_trigger_arg_max(&pacer->next_div2,
 					     I8254_MAX_COUNT);
 
-		/*  ग_लिखो corrected timings to command */
+		/*  write corrected timings to command */
 		labpc_set_ai_convert_period(cmd, mode,
-					    base_period * pacer->next_भाग);
+					    base_period * pacer->next_div);
 		labpc_set_ai_scan_period(cmd, mode,
-					 base_period * pacer->next_भाग2);
-	पूर्ण अन्यथा अगर (scan_period) अणु
+					 base_period * pacer->next_div2);
+	} else if (scan_period) {
 		/*
 		 * calculate cascaded counter values
 		 * that give desired scan timing
-		 * (pacer->next_भाग2 / pacer->next_भाग1)
+		 * (pacer->next_div2 / pacer->next_div1)
 		 */
-		comedi_8254_cascade_ns_to_समयr(pacer, &scan_period,
+		comedi_8254_cascade_ns_to_timer(pacer, &scan_period,
 						cmd->flags);
 		labpc_set_ai_scan_period(cmd, mode, scan_period);
-	पूर्ण अन्यथा अगर (convert_period) अणु
+	} else if (convert_period) {
 		/*
 		 * calculate cascaded counter values
 		 * that give desired conversion timing
-		 * (pacer->next_भाग / pacer->next_भाग1)
+		 * (pacer->next_div / pacer->next_div1)
 		 */
-		comedi_8254_cascade_ns_to_समयr(pacer, &convert_period,
+		comedi_8254_cascade_ns_to_timer(pacer, &convert_period,
 						cmd->flags);
-		/* transfer भाग2 value so correct समयr माला_लो updated */
-		pacer->next_भाग = pacer->next_भाग2;
+		/* transfer div2 value so correct timer gets updated */
+		pacer->next_div = pacer->next_div2;
 		labpc_set_ai_convert_period(cmd, mode, convert_period);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल क्रमागत scan_mode labpc_ai_scan_mode(स्थिर काष्ठा comedi_cmd *cmd)
-अणु
-	अचिन्हित पूर्णांक chan0;
-	अचिन्हित पूर्णांक chan1;
+static enum scan_mode labpc_ai_scan_mode(const struct comedi_cmd *cmd)
+{
+	unsigned int chan0;
+	unsigned int chan1;
 
-	अगर (cmd->chanlist_len == 1)
-		वापस MODE_SINGLE_CHAN;
+	if (cmd->chanlist_len == 1)
+		return MODE_SINGLE_CHAN;
 
-	/* chanlist may be शून्य during cmdtest */
-	अगर (!cmd->chanlist)
-		वापस MODE_MULT_CHAN_UP;
+	/* chanlist may be NULL during cmdtest */
+	if (!cmd->chanlist)
+		return MODE_MULT_CHAN_UP;
 
 	chan0 = CR_CHAN(cmd->chanlist[0]);
 	chan1 = CR_CHAN(cmd->chanlist[1]);
 
-	अगर (chan0 < chan1)
-		वापस MODE_MULT_CHAN_UP;
+	if (chan0 < chan1)
+		return MODE_MULT_CHAN_UP;
 
-	अगर (chan0 > chan1)
-		वापस MODE_MULT_CHAN_DOWN;
+	if (chan0 > chan1)
+		return MODE_MULT_CHAN_DOWN;
 
-	वापस MODE_SINGLE_CHAN_INTERVAL;
-पूर्ण
+	return MODE_SINGLE_CHAN_INTERVAL;
+}
 
-अटल पूर्णांक labpc_ai_check_chanlist(काष्ठा comedi_device *dev,
-				   काष्ठा comedi_subdevice *s,
-				   काष्ठा comedi_cmd *cmd)
-अणु
-	क्रमागत scan_mode mode = labpc_ai_scan_mode(cmd);
-	अचिन्हित पूर्णांक chan0 = CR_CHAN(cmd->chanlist[0]);
-	अचिन्हित पूर्णांक range0 = CR_RANGE(cmd->chanlist[0]);
-	अचिन्हित पूर्णांक aref0 = CR_AREF(cmd->chanlist[0]);
-	पूर्णांक i;
+static int labpc_ai_check_chanlist(struct comedi_device *dev,
+				   struct comedi_subdevice *s,
+				   struct comedi_cmd *cmd)
+{
+	enum scan_mode mode = labpc_ai_scan_mode(cmd);
+	unsigned int chan0 = CR_CHAN(cmd->chanlist[0]);
+	unsigned int range0 = CR_RANGE(cmd->chanlist[0]);
+	unsigned int aref0 = CR_AREF(cmd->chanlist[0]);
+	int i;
 
-	क्रम (i = 0; i < cmd->chanlist_len; i++) अणु
-		अचिन्हित पूर्णांक chan = CR_CHAN(cmd->chanlist[i]);
-		अचिन्हित पूर्णांक range = CR_RANGE(cmd->chanlist[i]);
-		अचिन्हित पूर्णांक aref = CR_AREF(cmd->chanlist[i]);
+	for (i = 0; i < cmd->chanlist_len; i++) {
+		unsigned int chan = CR_CHAN(cmd->chanlist[i]);
+		unsigned int range = CR_RANGE(cmd->chanlist[i]);
+		unsigned int aref = CR_AREF(cmd->chanlist[i]);
 
-		चयन (mode) अणु
-		हाल MODE_SINGLE_CHAN:
-			अवरोध;
-		हाल MODE_SINGLE_CHAN_INTERVAL:
-			अगर (chan != chan0) अणु
+		switch (mode) {
+		case MODE_SINGLE_CHAN:
+			break;
+		case MODE_SINGLE_CHAN_INTERVAL:
+			if (chan != chan0) {
 				dev_dbg(dev->class_dev,
 					"channel scanning order specified in chanlist is not supported by hardware\n");
-				वापस -EINVAL;
-			पूर्ण
-			अवरोध;
-		हाल MODE_MULT_CHAN_UP:
-			अगर (chan != i) अणु
+				return -EINVAL;
+			}
+			break;
+		case MODE_MULT_CHAN_UP:
+			if (chan != i) {
 				dev_dbg(dev->class_dev,
 					"channel scanning order specified in chanlist is not supported by hardware\n");
-				वापस -EINVAL;
-			पूर्ण
-			अवरोध;
-		हाल MODE_MULT_CHAN_DOWN:
-			अगर (chan != (cmd->chanlist_len - i - 1)) अणु
+				return -EINVAL;
+			}
+			break;
+		case MODE_MULT_CHAN_DOWN:
+			if (chan != (cmd->chanlist_len - i - 1)) {
 				dev_dbg(dev->class_dev,
 					"channel scanning order specified in chanlist is not supported by hardware\n");
-				वापस -EINVAL;
-			पूर्ण
-			अवरोध;
-		पूर्ण
+				return -EINVAL;
+			}
+			break;
+		}
 
-		अगर (range != range0) अणु
+		if (range != range0) {
 			dev_dbg(dev->class_dev,
 				"entries in chanlist must all have the same range\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगर (aref != aref0) अणु
+		if (aref != aref0) {
 			dev_dbg(dev->class_dev,
 				"entries in chanlist must all have the same reference\n");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक labpc_ai_cmdtest(काष्ठा comedi_device *dev,
-			    काष्ठा comedi_subdevice *s, काष्ठा comedi_cmd *cmd)
-अणु
-	स्थिर काष्ठा labpc_boardinfo *board = dev->board_ptr;
-	पूर्णांक err = 0;
-	पूर्णांक पंचांगp, पंचांगp2;
-	अचिन्हित पूर्णांक stop_mask;
-	क्रमागत scan_mode mode;
+static int labpc_ai_cmdtest(struct comedi_device *dev,
+			    struct comedi_subdevice *s, struct comedi_cmd *cmd)
+{
+	const struct labpc_boardinfo *board = dev->board_ptr;
+	int err = 0;
+	int tmp, tmp2;
+	unsigned int stop_mask;
+	enum scan_mode mode;
 
-	/* Step 1 : check अगर triggers are trivially valid */
+	/* Step 1 : check if triggers are trivially valid */
 
 	err |= comedi_check_trigger_src(&cmd->start_src, TRIG_NOW | TRIG_EXT);
 	err |= comedi_check_trigger_src(&cmd->scan_begin_src,
@@ -514,12 +513,12 @@
 	err |= comedi_check_trigger_src(&cmd->scan_end_src, TRIG_COUNT);
 
 	stop_mask = TRIG_COUNT | TRIG_NONE;
-	अगर (board->is_labpc1200)
+	if (board->is_labpc1200)
 		stop_mask |= TRIG_EXT;
 	err |= comedi_check_trigger_src(&cmd->stop_src, stop_mask);
 
-	अगर (err)
-		वापस 1;
+	if (err)
+		return 1;
 
 	/* Step 2a : make sure trigger sources are unique */
 
@@ -530,143 +529,143 @@
 
 	/* Step 2b : and mutually compatible */
 
-	/* can't have बाह्यal stop and start triggers at once */
-	अगर (cmd->start_src == TRIG_EXT && cmd->stop_src == TRIG_EXT)
+	/* can't have external stop and start triggers at once */
+	if (cmd->start_src == TRIG_EXT && cmd->stop_src == TRIG_EXT)
 		err++;
 
-	अगर (err)
-		वापस 2;
+	if (err)
+		return 2;
 
-	/* Step 3: check अगर arguments are trivially valid */
+	/* Step 3: check if arguments are trivially valid */
 
-	चयन (cmd->start_src) अणु
-	हाल TRIG_NOW:
+	switch (cmd->start_src) {
+	case TRIG_NOW:
 		err |= comedi_check_trigger_arg_is(&cmd->start_arg, 0);
-		अवरोध;
-	हाल TRIG_EXT:
+		break;
+	case TRIG_EXT:
 		/* start_arg value is ignored */
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (!cmd->chanlist_len)
+	if (!cmd->chanlist_len)
 		err |= -EINVAL;
 	err |= comedi_check_trigger_arg_is(&cmd->scan_end_arg,
 					   cmd->chanlist_len);
 
-	अगर (cmd->convert_src == TRIG_TIMER) अणु
+	if (cmd->convert_src == TRIG_TIMER) {
 		err |= comedi_check_trigger_arg_min(&cmd->convert_arg,
 						    board->ai_speed);
-	पूर्ण
+	}
 
 	/* make sure scan timing is not too fast */
-	अगर (cmd->scan_begin_src == TRIG_TIMER) अणु
-		अगर (cmd->convert_src == TRIG_TIMER) अणु
+	if (cmd->scan_begin_src == TRIG_TIMER) {
+		if (cmd->convert_src == TRIG_TIMER) {
 			err |= comedi_check_trigger_arg_min(
 					&cmd->scan_begin_arg,
 					cmd->convert_arg * cmd->chanlist_len);
-		पूर्ण
+		}
 		err |= comedi_check_trigger_arg_min(
 					&cmd->scan_begin_arg,
 					board->ai_speed * cmd->chanlist_len);
-	पूर्ण
+	}
 
-	चयन (cmd->stop_src) अणु
-	हाल TRIG_COUNT:
+	switch (cmd->stop_src) {
+	case TRIG_COUNT:
 		err |= comedi_check_trigger_arg_min(&cmd->stop_arg, 1);
-		अवरोध;
-	हाल TRIG_NONE:
+		break;
+	case TRIG_NONE:
 		err |= comedi_check_trigger_arg_is(&cmd->stop_arg, 0);
-		अवरोध;
+		break;
 		/*
-		 * TRIG_EXT करोesn't care since it doesn't
+		 * TRIG_EXT doesn't care since it doesn't
 		 * trigger off a numbered channel
 		 */
-	शेष:
-		अवरोध;
-	पूर्ण
+	default:
+		break;
+	}
 
-	अगर (err)
-		वापस 3;
+	if (err)
+		return 3;
 
 	/* step 4: fix up any arguments */
 
-	पंचांगp = cmd->convert_arg;
-	पंचांगp2 = cmd->scan_begin_arg;
+	tmp = cmd->convert_arg;
+	tmp2 = cmd->scan_begin_arg;
 	mode = labpc_ai_scan_mode(cmd);
 	labpc_adc_timing(dev, cmd, mode);
-	अगर (पंचांगp != cmd->convert_arg || पंचांगp2 != cmd->scan_begin_arg)
+	if (tmp != cmd->convert_arg || tmp2 != cmd->scan_begin_arg)
 		err++;
 
-	अगर (err)
-		वापस 4;
+	if (err)
+		return 4;
 
-	/* Step 5: check channel list अगर it exists */
-	अगर (cmd->chanlist && cmd->chanlist_len > 0)
+	/* Step 5: check channel list if it exists */
+	if (cmd->chanlist && cmd->chanlist_len > 0)
 		err |= labpc_ai_check_chanlist(dev, s, cmd);
 
-	अगर (err)
-		वापस 5;
+	if (err)
+		return 5;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक labpc_ai_cmd(काष्ठा comedi_device *dev, काष्ठा comedi_subdevice *s)
-अणु
-	स्थिर काष्ठा labpc_boardinfo *board = dev->board_ptr;
-	काष्ठा labpc_निजी *devpriv = dev->निजी;
-	काष्ठा comedi_async *async = s->async;
-	काष्ठा comedi_cmd *cmd = &async->cmd;
-	क्रमागत scan_mode mode = labpc_ai_scan_mode(cmd);
-	अचिन्हित पूर्णांक chanspec = (mode == MODE_MULT_CHAN_UP) ?
+static int labpc_ai_cmd(struct comedi_device *dev, struct comedi_subdevice *s)
+{
+	const struct labpc_boardinfo *board = dev->board_ptr;
+	struct labpc_private *devpriv = dev->private;
+	struct comedi_async *async = s->async;
+	struct comedi_cmd *cmd = &async->cmd;
+	enum scan_mode mode = labpc_ai_scan_mode(cmd);
+	unsigned int chanspec = (mode == MODE_MULT_CHAN_UP) ?
 				cmd->chanlist[cmd->chanlist_len - 1] :
 				cmd->chanlist[0];
-	अचिन्हित पूर्णांक chan = CR_CHAN(chanspec);
-	अचिन्हित पूर्णांक range = CR_RANGE(chanspec);
-	अचिन्हित पूर्णांक aref = CR_AREF(chanspec);
-	क्रमागत transfer_type xfer;
-	अचिन्हित दीर्घ flags;
+	unsigned int chan = CR_CHAN(chanspec);
+	unsigned int range = CR_RANGE(chanspec);
+	unsigned int aref = CR_AREF(chanspec);
+	enum transfer_type xfer;
+	unsigned long flags;
 
-	/* make sure board is disabled beक्रमe setting up acquisition */
+	/* make sure board is disabled before setting up acquisition */
 	labpc_cancel(dev, s);
 
 	/*  initialize software conversion count */
-	अगर (cmd->stop_src == TRIG_COUNT)
+	if (cmd->stop_src == TRIG_COUNT)
 		devpriv->count = cmd->stop_arg * cmd->chanlist_len;
 
 	/*  setup hardware conversion counter */
-	अगर (cmd->stop_src == TRIG_EXT) अणु
+	if (cmd->stop_src == TRIG_EXT) {
 		/*
 		 * load counter a1 with count of 3
 		 * (pc+ manual says this is minimum allowed) using mode 0
 		 */
 		comedi_8254_load(devpriv->counter, 1,
 				 3, I8254_MODE0 | I8254_BINARY);
-	पूर्ण अन्यथा	अणु
+	} else	{
 		/* just put counter a1 in mode 0 to set its output low */
 		comedi_8254_set_mode(devpriv->counter, 1,
 				     I8254_MODE0 | I8254_BINARY);
-	पूर्ण
+	}
 
 	/* figure out what method we will use to transfer data */
-	अगर (devpriv->dma &&
-	    (cmd->flags & (CMDF_WAKE_EOS | CMDF_PRIORITY)) == 0) अणु
+	if (devpriv->dma &&
+	    (cmd->flags & (CMDF_WAKE_EOS | CMDF_PRIORITY)) == 0) {
 		/*
 		 * dma unsafe at RT priority,
-		 * and too much setup समय क्रम CMDF_WAKE_EOS
+		 * and too much setup time for CMDF_WAKE_EOS
 		 */
 		xfer = isa_dma_transfer;
-	पूर्ण अन्यथा अगर (board->is_labpc1200 &&
+	} else if (board->is_labpc1200 &&
 		   (cmd->flags & CMDF_WAKE_EOS) == 0 &&
-		   (cmd->stop_src != TRIG_COUNT || devpriv->count > 256)) अणु
+		   (cmd->stop_src != TRIG_COUNT || devpriv->count > 256)) {
 		/*
-		 * pc-plus has no fअगरo-half full पूर्णांकerrupt
-		 * wake-end-of-scan should पूर्णांकerrupt on fअगरo not empty
-		 * make sure we are taking more than just a few poपूर्णांकs
+		 * pc-plus has no fifo-half full interrupt
+		 * wake-end-of-scan should interrupt on fifo not empty
+		 * make sure we are taking more than just a few points
 		 */
-		xfer = fअगरo_half_full_transfer;
-	पूर्ण अन्यथा अणु
-		xfer = fअगरo_not_empty_transfer;
-	पूर्ण
+		xfer = fifo_half_full_transfer;
+	} else {
+		xfer = fifo_not_empty_transfer;
+	}
 	devpriv->current_transfer = xfer;
 
 	labpc_ai_set_chan_and_gain(dev, mode, chan, range, aref);
@@ -675,555 +674,555 @@
 			     (cmd->stop_src == TRIG_EXT));
 
 	/* manual says to set scan enable bit on second pass */
-	अगर (mode == MODE_MULT_CHAN_UP || mode == MODE_MULT_CHAN_DOWN) अणु
+	if (mode == MODE_MULT_CHAN_UP || mode == MODE_MULT_CHAN_DOWN) {
 		devpriv->cmd1 |= CMD1_SCANEN;
 		/*
-		 * Need a brief delay beक्रमe enabling scan, or scan
-		 * list will get screwed when you चयन between
-		 * scan up to scan करोwn mode - dunno why.
+		 * Need a brief delay before enabling scan, or scan
+		 * list will get screwed when you switch between
+		 * scan up to scan down mode - dunno why.
 		 */
 		udelay(1);
-		devpriv->ग_लिखो_byte(dev, devpriv->cmd1, CMD1_REG);
-	पूर्ण
+		devpriv->write_byte(dev, devpriv->cmd1, CMD1_REG);
+	}
 
-	devpriv->ग_लिखो_byte(dev, cmd->chanlist_len, INTERVAL_COUNT_REG);
+	devpriv->write_byte(dev, cmd->chanlist_len, INTERVAL_COUNT_REG);
 	/*  load count */
-	devpriv->ग_लिखो_byte(dev, 0x1, INTERVAL_STROBE_REG);
+	devpriv->write_byte(dev, 0x1, INTERVAL_STROBE_REG);
 
-	अगर (cmd->convert_src == TRIG_TIMER ||
-	    cmd->scan_begin_src == TRIG_TIMER) अणु
-		काष्ठा comedi_8254 *pacer = dev->pacer;
-		काष्ठा comedi_8254 *counter = devpriv->counter;
+	if (cmd->convert_src == TRIG_TIMER ||
+	    cmd->scan_begin_src == TRIG_TIMER) {
+		struct comedi_8254 *pacer = dev->pacer;
+		struct comedi_8254 *counter = devpriv->counter;
 
-		comedi_8254_update_भागisors(pacer);
+		comedi_8254_update_divisors(pacer);
 
 		/* set up pacing */
-		comedi_8254_load(pacer, 0, pacer->भागisor1,
+		comedi_8254_load(pacer, 0, pacer->divisor1,
 				 I8254_MODE3 | I8254_BINARY);
 
 		/* set up conversion pacing */
 		comedi_8254_set_mode(counter, 0, I8254_MODE2 | I8254_BINARY);
-		अगर (labpc_ai_convert_period(cmd, mode))
-			comedi_8254_ग_लिखो(counter, 0, pacer->भागisor);
+		if (labpc_ai_convert_period(cmd, mode))
+			comedi_8254_write(counter, 0, pacer->divisor);
 
 		/* set up scan pacing */
-		अगर (labpc_ai_scan_period(cmd, mode))
-			comedi_8254_load(pacer, 1, pacer->भागisor2,
+		if (labpc_ai_scan_period(cmd, mode))
+			comedi_8254_load(pacer, 1, pacer->divisor2,
 					 I8254_MODE2 | I8254_BINARY);
-	पूर्ण
+	}
 
-	labpc_clear_adc_fअगरo(dev);
+	labpc_clear_adc_fifo(dev);
 
-	अगर (xfer == isa_dma_transfer)
+	if (xfer == isa_dma_transfer)
 		labpc_setup_dma(dev, s);
 
-	/*  enable error पूर्णांकerrupts */
+	/*  enable error interrupts */
 	devpriv->cmd3 |= CMD3_ERRINTEN;
-	/*  enable fअगरo not empty पूर्णांकerrupt? */
-	अगर (xfer == fअगरo_not_empty_transfer)
+	/*  enable fifo not empty interrupt? */
+	if (xfer == fifo_not_empty_transfer)
 		devpriv->cmd3 |= CMD3_FIFOINTEN;
-	devpriv->ग_लिखो_byte(dev, devpriv->cmd3, CMD3_REG);
+	devpriv->write_byte(dev, devpriv->cmd3, CMD3_REG);
 
-	/*  setup any बाह्यal triggering/pacing (cmd4 रेजिस्टर) */
+	/*  setup any external triggering/pacing (cmd4 register) */
 	devpriv->cmd4 = 0;
-	अगर (cmd->convert_src != TRIG_EXT)
+	if (cmd->convert_src != TRIG_EXT)
 		devpriv->cmd4 |= CMD4_ECLKRCV;
 	/*
-	 * XXX should discard first scan when using पूर्णांकerval scanning
-	 * since manual says it is not synced with scan घड़ी.
+	 * XXX should discard first scan when using interval scanning
+	 * since manual says it is not synced with scan clock.
 	 */
-	अगर (!labpc_use_continuous_mode(cmd, mode)) अणु
+	if (!labpc_use_continuous_mode(cmd, mode)) {
 		devpriv->cmd4 |= CMD4_INTSCAN;
-		अगर (cmd->scan_begin_src == TRIG_EXT)
+		if (cmd->scan_begin_src == TRIG_EXT)
 			devpriv->cmd4 |= CMD4_EOIRCV;
-	पूर्ण
-	/*  single-ended/dअगरferential */
-	अगर (aref == AREF_DIFF)
+	}
+	/*  single-ended/differential */
+	if (aref == AREF_DIFF)
 		devpriv->cmd4 |= CMD4_SEDIFF;
-	devpriv->ग_लिखो_byte(dev, devpriv->cmd4, CMD4_REG);
+	devpriv->write_byte(dev, devpriv->cmd4, CMD4_REG);
 
 	/*  startup acquisition */
 
 	spin_lock_irqsave(&dev->spinlock, flags);
 
-	/* use 2 cascaded counters क्रम pacing */
+	/* use 2 cascaded counters for pacing */
 	devpriv->cmd2 |= CMD2_TBSEL;
 
 	devpriv->cmd2 &= ~(CMD2_SWTRIG | CMD2_HWTRIG | CMD2_PRETRIG);
-	अगर (cmd->start_src == TRIG_EXT)
+	if (cmd->start_src == TRIG_EXT)
 		devpriv->cmd2 |= CMD2_HWTRIG;
-	अन्यथा
+	else
 		devpriv->cmd2 |= CMD2_SWTRIG;
-	अगर (cmd->stop_src == TRIG_EXT)
+	if (cmd->stop_src == TRIG_EXT)
 		devpriv->cmd2 |= (CMD2_HWTRIG | CMD2_PRETRIG);
 
-	devpriv->ग_लिखो_byte(dev, devpriv->cmd2, CMD2_REG);
+	devpriv->write_byte(dev, devpriv->cmd2, CMD2_REG);
 
 	spin_unlock_irqrestore(&dev->spinlock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* पढ़ो all available samples from ai fअगरo */
-अटल पूर्णांक labpc_drain_fअगरo(काष्ठा comedi_device *dev)
-अणु
-	काष्ठा labpc_निजी *devpriv = dev->निजी;
-	काष्ठा comedi_async *async = dev->पढ़ो_subdev->async;
-	काष्ठा comedi_cmd *cmd = &async->cmd;
-	अचिन्हित लघु data;
-	स्थिर पूर्णांक समयout = 10000;
-	अचिन्हित पूर्णांक i;
+/* read all available samples from ai fifo */
+static int labpc_drain_fifo(struct comedi_device *dev)
+{
+	struct labpc_private *devpriv = dev->private;
+	struct comedi_async *async = dev->read_subdev->async;
+	struct comedi_cmd *cmd = &async->cmd;
+	unsigned short data;
+	const int timeout = 10000;
+	unsigned int i;
 
-	devpriv->stat1 = devpriv->पढ़ो_byte(dev, STAT1_REG);
+	devpriv->stat1 = devpriv->read_byte(dev, STAT1_REG);
 
-	क्रम (i = 0; (devpriv->stat1 & STAT1_DAVAIL) && i < समयout;
-	     i++) अणु
-		/*  quit अगर we have all the data we want */
-		अगर (cmd->stop_src == TRIG_COUNT) अणु
-			अगर (devpriv->count == 0)
-				अवरोध;
+	for (i = 0; (devpriv->stat1 & STAT1_DAVAIL) && i < timeout;
+	     i++) {
+		/*  quit if we have all the data we want */
+		if (cmd->stop_src == TRIG_COUNT) {
+			if (devpriv->count == 0)
+				break;
 			devpriv->count--;
-		पूर्ण
-		data = labpc_पढ़ो_adc_fअगरo(dev);
-		comedi_buf_ग_लिखो_samples(dev->पढ़ो_subdev, &data, 1);
-		devpriv->stat1 = devpriv->पढ़ो_byte(dev, STAT1_REG);
-	पूर्ण
-	अगर (i == समयout) अणु
+		}
+		data = labpc_read_adc_fifo(dev);
+		comedi_buf_write_samples(dev->read_subdev, &data, 1);
+		devpriv->stat1 = devpriv->read_byte(dev, STAT1_REG);
+	}
+	if (i == timeout) {
 		dev_err(dev->class_dev, "ai timeout, fifo never empties\n");
 		async->events |= COMEDI_CB_ERROR;
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Makes sure all data acquired by board is transferred to comedi (used
  * when acquisition is terminated by stop_src == TRIG_EXT).
  */
-अटल व्योम labpc_drain_dregs(काष्ठा comedi_device *dev)
-अणु
-	काष्ठा labpc_निजी *devpriv = dev->निजी;
+static void labpc_drain_dregs(struct comedi_device *dev)
+{
+	struct labpc_private *devpriv = dev->private;
 
-	अगर (devpriv->current_transfer == isa_dma_transfer)
+	if (devpriv->current_transfer == isa_dma_transfer)
 		labpc_drain_dma(dev);
 
-	labpc_drain_fअगरo(dev);
-पूर्ण
+	labpc_drain_fifo(dev);
+}
 
-/* पूर्णांकerrupt service routine */
-अटल irqवापस_t labpc_पूर्णांकerrupt(पूर्णांक irq, व्योम *d)
-अणु
-	काष्ठा comedi_device *dev = d;
-	स्थिर काष्ठा labpc_boardinfo *board = dev->board_ptr;
-	काष्ठा labpc_निजी *devpriv = dev->निजी;
-	काष्ठा comedi_subdevice *s = dev->पढ़ो_subdev;
-	काष्ठा comedi_async *async;
-	काष्ठा comedi_cmd *cmd;
+/* interrupt service routine */
+static irqreturn_t labpc_interrupt(int irq, void *d)
+{
+	struct comedi_device *dev = d;
+	const struct labpc_boardinfo *board = dev->board_ptr;
+	struct labpc_private *devpriv = dev->private;
+	struct comedi_subdevice *s = dev->read_subdev;
+	struct comedi_async *async;
+	struct comedi_cmd *cmd;
 
-	अगर (!dev->attached) अणु
+	if (!dev->attached) {
 		dev_err(dev->class_dev, "premature interrupt\n");
-		वापस IRQ_HANDLED;
-	पूर्ण
+		return IRQ_HANDLED;
+	}
 
 	async = s->async;
 	cmd = &async->cmd;
 
-	/* पढ़ो board status */
-	devpriv->stat1 = devpriv->पढ़ो_byte(dev, STAT1_REG);
-	अगर (board->is_labpc1200)
-		devpriv->stat2 = devpriv->पढ़ो_byte(dev, STAT2_REG);
+	/* read board status */
+	devpriv->stat1 = devpriv->read_byte(dev, STAT1_REG);
+	if (board->is_labpc1200)
+		devpriv->stat2 = devpriv->read_byte(dev, STAT2_REG);
 
-	अगर ((devpriv->stat1 & (STAT1_GATA0 | STAT1_CNTINT | STAT1_OVERFLOW |
+	if ((devpriv->stat1 & (STAT1_GATA0 | STAT1_CNTINT | STAT1_OVERFLOW |
 			       STAT1_OVERRUN | STAT1_DAVAIL)) == 0 &&
 	    (devpriv->stat2 & STAT2_OUTA1) == 0 &&
-	    (devpriv->stat2 & STAT2_FIFONHF)) अणु
-		वापस IRQ_NONE;
-	पूर्ण
+	    (devpriv->stat2 & STAT2_FIFONHF)) {
+		return IRQ_NONE;
+	}
 
-	अगर (devpriv->stat1 & STAT1_OVERRUN) अणु
-		/* clear error पूर्णांकerrupt */
-		devpriv->ग_लिखो_byte(dev, 0x1, ADC_FIFO_CLEAR_REG);
+	if (devpriv->stat1 & STAT1_OVERRUN) {
+		/* clear error interrupt */
+		devpriv->write_byte(dev, 0x1, ADC_FIFO_CLEAR_REG);
 		async->events |= COMEDI_CB_ERROR;
 		comedi_handle_events(dev, s);
 		dev_err(dev->class_dev, "overrun\n");
-		वापस IRQ_HANDLED;
-	पूर्ण
+		return IRQ_HANDLED;
+	}
 
-	अगर (devpriv->current_transfer == isa_dma_transfer)
+	if (devpriv->current_transfer == isa_dma_transfer)
 		labpc_handle_dma_status(dev);
-	अन्यथा
-		labpc_drain_fअगरo(dev);
+	else
+		labpc_drain_fifo(dev);
 
-	अगर (devpriv->stat1 & STAT1_CNTINT) अणु
+	if (devpriv->stat1 & STAT1_CNTINT) {
 		dev_err(dev->class_dev, "handled timer interrupt?\n");
 		/*  clear it */
-		devpriv->ग_लिखो_byte(dev, 0x1, TIMER_CLEAR_REG);
-	पूर्ण
+		devpriv->write_byte(dev, 0x1, TIMER_CLEAR_REG);
+	}
 
-	अगर (devpriv->stat1 & STAT1_OVERFLOW) अणु
-		/*  clear error पूर्णांकerrupt */
-		devpriv->ग_लिखो_byte(dev, 0x1, ADC_FIFO_CLEAR_REG);
+	if (devpriv->stat1 & STAT1_OVERFLOW) {
+		/*  clear error interrupt */
+		devpriv->write_byte(dev, 0x1, ADC_FIFO_CLEAR_REG);
 		async->events |= COMEDI_CB_ERROR;
 		comedi_handle_events(dev, s);
 		dev_err(dev->class_dev, "overflow\n");
-		वापस IRQ_HANDLED;
-	पूर्ण
-	/*  handle बाह्यal stop trigger */
-	अगर (cmd->stop_src == TRIG_EXT) अणु
-		अगर (devpriv->stat2 & STAT2_OUTA1) अणु
+		return IRQ_HANDLED;
+	}
+	/*  handle external stop trigger */
+	if (cmd->stop_src == TRIG_EXT) {
+		if (devpriv->stat2 & STAT2_OUTA1) {
 			labpc_drain_dregs(dev);
 			async->events |= COMEDI_CB_EOA;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* TRIG_COUNT end of acquisition */
-	अगर (cmd->stop_src == TRIG_COUNT) अणु
-		अगर (devpriv->count == 0)
+	if (cmd->stop_src == TRIG_COUNT) {
+		if (devpriv->count == 0)
 			async->events |= COMEDI_CB_EOA;
-	पूर्ण
+	}
 
 	comedi_handle_events(dev, s);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम labpc_ao_ग_लिखो(काष्ठा comedi_device *dev,
-			   काष्ठा comedi_subdevice *s,
-			   अचिन्हित पूर्णांक chan, अचिन्हित पूर्णांक val)
-अणु
-	काष्ठा labpc_निजी *devpriv = dev->निजी;
+static void labpc_ao_write(struct comedi_device *dev,
+			   struct comedi_subdevice *s,
+			   unsigned int chan, unsigned int val)
+{
+	struct labpc_private *devpriv = dev->private;
 
-	devpriv->ग_लिखो_byte(dev, val & 0xff, DAC_LSB_REG(chan));
-	devpriv->ग_लिखो_byte(dev, (val >> 8) & 0xff, DAC_MSB_REG(chan));
+	devpriv->write_byte(dev, val & 0xff, DAC_LSB_REG(chan));
+	devpriv->write_byte(dev, (val >> 8) & 0xff, DAC_MSB_REG(chan));
 
-	s->पढ़ोback[chan] = val;
-पूर्ण
+	s->readback[chan] = val;
+}
 
-अटल पूर्णांक labpc_ao_insn_ग_लिखो(काष्ठा comedi_device *dev,
-			       काष्ठा comedi_subdevice *s,
-			       काष्ठा comedi_insn *insn,
-			       अचिन्हित पूर्णांक *data)
-अणु
-	स्थिर काष्ठा labpc_boardinfo *board = dev->board_ptr;
-	काष्ठा labpc_निजी *devpriv = dev->निजी;
-	अचिन्हित पूर्णांक channel;
-	अचिन्हित पूर्णांक range;
-	अचिन्हित पूर्णांक i;
-	अचिन्हित दीर्घ flags;
+static int labpc_ao_insn_write(struct comedi_device *dev,
+			       struct comedi_subdevice *s,
+			       struct comedi_insn *insn,
+			       unsigned int *data)
+{
+	const struct labpc_boardinfo *board = dev->board_ptr;
+	struct labpc_private *devpriv = dev->private;
+	unsigned int channel;
+	unsigned int range;
+	unsigned int i;
+	unsigned long flags;
 
 	channel = CR_CHAN(insn->chanspec);
 
 	/*
 	 * Turn off pacing of analog output channel.
 	 * NOTE: hardware bug in daqcard-1200 means pacing cannot
-	 * be independently enabled/disabled क्रम its the two channels.
+	 * be independently enabled/disabled for its the two channels.
 	 */
 	spin_lock_irqsave(&dev->spinlock, flags);
 	devpriv->cmd2 &= ~CMD2_LDAC(channel);
-	devpriv->ग_लिखो_byte(dev, devpriv->cmd2, CMD2_REG);
+	devpriv->write_byte(dev, devpriv->cmd2, CMD2_REG);
 	spin_unlock_irqrestore(&dev->spinlock, flags);
 
 	/* set range */
-	अगर (board->is_labpc1200) अणु
+	if (board->is_labpc1200) {
 		range = CR_RANGE(insn->chanspec);
-		अगर (comedi_range_is_unipolar(s, range))
+		if (comedi_range_is_unipolar(s, range))
 			devpriv->cmd6 |= CMD6_DACUNI(channel);
-		अन्यथा
+		else
 			devpriv->cmd6 &= ~CMD6_DACUNI(channel);
-		/*  ग_लिखो to रेजिस्टर */
-		devpriv->ग_लिखो_byte(dev, devpriv->cmd6, CMD6_REG);
-	पूर्ण
+		/*  write to register */
+		devpriv->write_byte(dev, devpriv->cmd6, CMD6_REG);
+	}
 	/* send data */
-	क्रम (i = 0; i < insn->n; i++)
-		labpc_ao_ग_लिखो(dev, s, channel, data[i]);
+	for (i = 0; i < insn->n; i++)
+		labpc_ao_write(dev, s, channel, data[i]);
 
-	वापस insn->n;
-पूर्ण
+	return insn->n;
+}
 
-/* lowlevel ग_लिखो to eeprom/dac */
-अटल व्योम labpc_serial_out(काष्ठा comedi_device *dev, अचिन्हित पूर्णांक value,
-			     अचिन्हित पूर्णांक value_width)
-अणु
-	काष्ठा labpc_निजी *devpriv = dev->निजी;
-	पूर्णांक i;
+/* lowlevel write to eeprom/dac */
+static void labpc_serial_out(struct comedi_device *dev, unsigned int value,
+			     unsigned int value_width)
+{
+	struct labpc_private *devpriv = dev->private;
+	int i;
 
-	क्रम (i = 1; i <= value_width; i++) अणु
-		/*  clear serial घड़ी */
+	for (i = 1; i <= value_width; i++) {
+		/*  clear serial clock */
 		devpriv->cmd5 &= ~CMD5_SCLK;
-		/*  send bits most signअगरicant bit first */
-		अगर (value & (1 << (value_width - i)))
+		/*  send bits most significant bit first */
+		if (value & (1 << (value_width - i)))
 			devpriv->cmd5 |= CMD5_SDATA;
-		अन्यथा
+		else
 			devpriv->cmd5 &= ~CMD5_SDATA;
 		udelay(1);
-		devpriv->ग_लिखो_byte(dev, devpriv->cmd5, CMD5_REG);
-		/*  set घड़ी to load bit */
+		devpriv->write_byte(dev, devpriv->cmd5, CMD5_REG);
+		/*  set clock to load bit */
 		devpriv->cmd5 |= CMD5_SCLK;
 		udelay(1);
-		devpriv->ग_लिखो_byte(dev, devpriv->cmd5, CMD5_REG);
-	पूर्ण
-पूर्ण
+		devpriv->write_byte(dev, devpriv->cmd5, CMD5_REG);
+	}
+}
 
-/* lowlevel पढ़ो from eeprom */
-अटल अचिन्हित पूर्णांक labpc_serial_in(काष्ठा comedi_device *dev)
-अणु
-	काष्ठा labpc_निजी *devpriv = dev->निजी;
-	अचिन्हित पूर्णांक value = 0;
-	पूर्णांक i;
-	स्थिर पूर्णांक value_width = 8;	/*  number of bits wide values are */
+/* lowlevel read from eeprom */
+static unsigned int labpc_serial_in(struct comedi_device *dev)
+{
+	struct labpc_private *devpriv = dev->private;
+	unsigned int value = 0;
+	int i;
+	const int value_width = 8;	/*  number of bits wide values are */
 
-	क्रम (i = 1; i <= value_width; i++) अणु
-		/*  set serial घड़ी */
+	for (i = 1; i <= value_width; i++) {
+		/*  set serial clock */
 		devpriv->cmd5 |= CMD5_SCLK;
 		udelay(1);
-		devpriv->ग_लिखो_byte(dev, devpriv->cmd5, CMD5_REG);
-		/*  clear घड़ी bit */
+		devpriv->write_byte(dev, devpriv->cmd5, CMD5_REG);
+		/*  clear clock bit */
 		devpriv->cmd5 &= ~CMD5_SCLK;
 		udelay(1);
-		devpriv->ग_लिखो_byte(dev, devpriv->cmd5, CMD5_REG);
-		/*  पढ़ो bits most signअगरicant bit first */
+		devpriv->write_byte(dev, devpriv->cmd5, CMD5_REG);
+		/*  read bits most significant bit first */
 		udelay(1);
-		devpriv->stat2 = devpriv->पढ़ो_byte(dev, STAT2_REG);
-		अगर (devpriv->stat2 & STAT2_PROMOUT)
+		devpriv->stat2 = devpriv->read_byte(dev, STAT2_REG);
+		if (devpriv->stat2 & STAT2_PROMOUT)
 			value |= 1 << (value_width - i);
-	पूर्ण
+	}
 
-	वापस value;
-पूर्ण
+	return value;
+}
 
-अटल अचिन्हित पूर्णांक labpc_eeprom_पढ़ो(काष्ठा comedi_device *dev,
-				      अचिन्हित पूर्णांक address)
-अणु
-	काष्ठा labpc_निजी *devpriv = dev->निजी;
-	अचिन्हित पूर्णांक value;
-	/*  bits to tell eeprom to expect a पढ़ो */
-	स्थिर पूर्णांक पढ़ो_inकाष्ठाion = 0x3;
-	/*  8 bit ग_लिखो lengths to eeprom */
-	स्थिर पूर्णांक ग_लिखो_length = 8;
+static unsigned int labpc_eeprom_read(struct comedi_device *dev,
+				      unsigned int address)
+{
+	struct labpc_private *devpriv = dev->private;
+	unsigned int value;
+	/*  bits to tell eeprom to expect a read */
+	const int read_instruction = 0x3;
+	/*  8 bit write lengths to eeprom */
+	const int write_length = 8;
 
-	/*  enable पढ़ो/ग_लिखो to eeprom */
+	/*  enable read/write to eeprom */
 	devpriv->cmd5 &= ~CMD5_EEPROMCS;
 	udelay(1);
-	devpriv->ग_लिखो_byte(dev, devpriv->cmd5, CMD5_REG);
+	devpriv->write_byte(dev, devpriv->cmd5, CMD5_REG);
 	devpriv->cmd5 |= (CMD5_EEPROMCS | CMD5_WRTPRT);
 	udelay(1);
-	devpriv->ग_लिखो_byte(dev, devpriv->cmd5, CMD5_REG);
+	devpriv->write_byte(dev, devpriv->cmd5, CMD5_REG);
 
-	/*  send पढ़ो inकाष्ठाion */
-	labpc_serial_out(dev, पढ़ो_inकाष्ठाion, ग_लिखो_length);
-	/*  send 8 bit address to पढ़ो from */
-	labpc_serial_out(dev, address, ग_लिखो_length);
-	/*  पढ़ो result */
+	/*  send read instruction */
+	labpc_serial_out(dev, read_instruction, write_length);
+	/*  send 8 bit address to read from */
+	labpc_serial_out(dev, address, write_length);
+	/*  read result */
 	value = labpc_serial_in(dev);
 
-	/*  disable पढ़ो/ग_लिखो to eeprom */
+	/*  disable read/write to eeprom */
 	devpriv->cmd5 &= ~(CMD5_EEPROMCS | CMD5_WRTPRT);
 	udelay(1);
-	devpriv->ग_लिखो_byte(dev, devpriv->cmd5, CMD5_REG);
+	devpriv->write_byte(dev, devpriv->cmd5, CMD5_REG);
 
-	वापस value;
-पूर्ण
+	return value;
+}
 
-अटल अचिन्हित पूर्णांक labpc_eeprom_पढ़ो_status(काष्ठा comedi_device *dev)
-अणु
-	काष्ठा labpc_निजी *devpriv = dev->निजी;
-	अचिन्हित पूर्णांक value;
-	स्थिर पूर्णांक पढ़ो_status_inकाष्ठाion = 0x5;
-	स्थिर पूर्णांक ग_लिखो_length = 8;	/*  8 bit ग_लिखो lengths to eeprom */
+static unsigned int labpc_eeprom_read_status(struct comedi_device *dev)
+{
+	struct labpc_private *devpriv = dev->private;
+	unsigned int value;
+	const int read_status_instruction = 0x5;
+	const int write_length = 8;	/*  8 bit write lengths to eeprom */
 
-	/*  enable पढ़ो/ग_लिखो to eeprom */
+	/*  enable read/write to eeprom */
 	devpriv->cmd5 &= ~CMD5_EEPROMCS;
 	udelay(1);
-	devpriv->ग_लिखो_byte(dev, devpriv->cmd5, CMD5_REG);
+	devpriv->write_byte(dev, devpriv->cmd5, CMD5_REG);
 	devpriv->cmd5 |= (CMD5_EEPROMCS | CMD5_WRTPRT);
 	udelay(1);
-	devpriv->ग_लिखो_byte(dev, devpriv->cmd5, CMD5_REG);
+	devpriv->write_byte(dev, devpriv->cmd5, CMD5_REG);
 
-	/*  send पढ़ो status inकाष्ठाion */
-	labpc_serial_out(dev, पढ़ो_status_inकाष्ठाion, ग_लिखो_length);
-	/*  पढ़ो result */
+	/*  send read status instruction */
+	labpc_serial_out(dev, read_status_instruction, write_length);
+	/*  read result */
 	value = labpc_serial_in(dev);
 
-	/*  disable पढ़ो/ग_लिखो to eeprom */
+	/*  disable read/write to eeprom */
 	devpriv->cmd5 &= ~(CMD5_EEPROMCS | CMD5_WRTPRT);
 	udelay(1);
-	devpriv->ग_लिखो_byte(dev, devpriv->cmd5, CMD5_REG);
+	devpriv->write_byte(dev, devpriv->cmd5, CMD5_REG);
 
-	वापस value;
-पूर्ण
+	return value;
+}
 
-अटल व्योम labpc_eeprom_ग_लिखो(काष्ठा comedi_device *dev,
-			       अचिन्हित पूर्णांक address, अचिन्हित पूर्णांक value)
-अणु
-	काष्ठा labpc_निजी *devpriv = dev->निजी;
-	स्थिर पूर्णांक ग_लिखो_enable_inकाष्ठाion = 0x6;
-	स्थिर पूर्णांक ग_लिखो_inकाष्ठाion = 0x2;
-	स्थिर पूर्णांक ग_लिखो_length = 8;	/*  8 bit ग_लिखो lengths to eeprom */
+static void labpc_eeprom_write(struct comedi_device *dev,
+			       unsigned int address, unsigned int value)
+{
+	struct labpc_private *devpriv = dev->private;
+	const int write_enable_instruction = 0x6;
+	const int write_instruction = 0x2;
+	const int write_length = 8;	/*  8 bit write lengths to eeprom */
 
-	/*  enable पढ़ो/ग_लिखो to eeprom */
+	/*  enable read/write to eeprom */
 	devpriv->cmd5 &= ~CMD5_EEPROMCS;
 	udelay(1);
-	devpriv->ग_लिखो_byte(dev, devpriv->cmd5, CMD5_REG);
+	devpriv->write_byte(dev, devpriv->cmd5, CMD5_REG);
 	devpriv->cmd5 |= (CMD5_EEPROMCS | CMD5_WRTPRT);
 	udelay(1);
-	devpriv->ग_लिखो_byte(dev, devpriv->cmd5, CMD5_REG);
+	devpriv->write_byte(dev, devpriv->cmd5, CMD5_REG);
 
-	/*  send ग_लिखो_enable inकाष्ठाion */
-	labpc_serial_out(dev, ग_लिखो_enable_inकाष्ठाion, ग_लिखो_length);
+	/*  send write_enable instruction */
+	labpc_serial_out(dev, write_enable_instruction, write_length);
 	devpriv->cmd5 &= ~CMD5_EEPROMCS;
 	udelay(1);
-	devpriv->ग_लिखो_byte(dev, devpriv->cmd5, CMD5_REG);
+	devpriv->write_byte(dev, devpriv->cmd5, CMD5_REG);
 
-	/*  send ग_लिखो inकाष्ठाion */
+	/*  send write instruction */
 	devpriv->cmd5 |= CMD5_EEPROMCS;
 	udelay(1);
-	devpriv->ग_लिखो_byte(dev, devpriv->cmd5, CMD5_REG);
-	labpc_serial_out(dev, ग_लिखो_inकाष्ठाion, ग_लिखो_length);
-	/*  send 8 bit address to ग_लिखो to */
-	labpc_serial_out(dev, address, ग_लिखो_length);
-	/*  ग_लिखो value */
-	labpc_serial_out(dev, value, ग_लिखो_length);
+	devpriv->write_byte(dev, devpriv->cmd5, CMD5_REG);
+	labpc_serial_out(dev, write_instruction, write_length);
+	/*  send 8 bit address to write to */
+	labpc_serial_out(dev, address, write_length);
+	/*  write value */
+	labpc_serial_out(dev, value, write_length);
 	devpriv->cmd5 &= ~CMD5_EEPROMCS;
 	udelay(1);
-	devpriv->ग_लिखो_byte(dev, devpriv->cmd5, CMD5_REG);
+	devpriv->write_byte(dev, devpriv->cmd5, CMD5_REG);
 
-	/*  disable पढ़ो/ग_लिखो to eeprom */
+	/*  disable read/write to eeprom */
 	devpriv->cmd5 &= ~(CMD5_EEPROMCS | CMD5_WRTPRT);
 	udelay(1);
-	devpriv->ग_लिखो_byte(dev, devpriv->cmd5, CMD5_REG);
-पूर्ण
+	devpriv->write_byte(dev, devpriv->cmd5, CMD5_REG);
+}
 
-/* ग_लिखोs to 8 bit calibration dacs */
-अटल व्योम ग_लिखो_caldac(काष्ठा comedi_device *dev, अचिन्हित पूर्णांक channel,
-			 अचिन्हित पूर्णांक value)
-अणु
-	काष्ठा labpc_निजी *devpriv = dev->निजी;
+/* writes to 8 bit calibration dacs */
+static void write_caldac(struct comedi_device *dev, unsigned int channel,
+			 unsigned int value)
+{
+	struct labpc_private *devpriv = dev->private;
 
-	/*  clear caldac load bit and make sure we करोn't ग_लिखो to eeprom */
+	/*  clear caldac load bit and make sure we don't write to eeprom */
 	devpriv->cmd5 &= ~(CMD5_CALDACLD | CMD5_EEPROMCS | CMD5_WRTPRT);
 	udelay(1);
-	devpriv->ग_लिखो_byte(dev, devpriv->cmd5, CMD5_REG);
+	devpriv->write_byte(dev, devpriv->cmd5, CMD5_REG);
 
-	/*  ग_लिखो 4 bit channel */
+	/*  write 4 bit channel */
 	labpc_serial_out(dev, channel, 4);
-	/*  ग_लिखो 8 bit caldac value */
+	/*  write 8 bit caldac value */
 	labpc_serial_out(dev, value, 8);
 
 	/*  set and clear caldac bit to load caldac value */
 	devpriv->cmd5 |= CMD5_CALDACLD;
 	udelay(1);
-	devpriv->ग_लिखो_byte(dev, devpriv->cmd5, CMD5_REG);
+	devpriv->write_byte(dev, devpriv->cmd5, CMD5_REG);
 	devpriv->cmd5 &= ~CMD5_CALDACLD;
 	udelay(1);
-	devpriv->ग_लिखो_byte(dev, devpriv->cmd5, CMD5_REG);
-पूर्ण
+	devpriv->write_byte(dev, devpriv->cmd5, CMD5_REG);
+}
 
-अटल पूर्णांक labpc_calib_insn_ग_लिखो(काष्ठा comedi_device *dev,
-				  काष्ठा comedi_subdevice *s,
-				  काष्ठा comedi_insn *insn,
-				  अचिन्हित पूर्णांक *data)
-अणु
-	अचिन्हित पूर्णांक chan = CR_CHAN(insn->chanspec);
-
-	/*
-	 * Only ग_लिखो the last data value to the caldac. Preceding
-	 * data would be overwritten anyway.
-	 */
-	अगर (insn->n > 0) अणु
-		अचिन्हित पूर्णांक val = data[insn->n - 1];
-
-		अगर (s->पढ़ोback[chan] != val) अणु
-			ग_लिखो_caldac(dev, chan, val);
-			s->पढ़ोback[chan] = val;
-		पूर्ण
-	पूर्ण
-
-	वापस insn->n;
-पूर्ण
-
-अटल पूर्णांक labpc_eeprom_पढ़ोy(काष्ठा comedi_device *dev,
-			      काष्ठा comedi_subdevice *s,
-			      काष्ठा comedi_insn *insn,
-			      अचिन्हित दीर्घ context)
-अणु
-	अचिन्हित पूर्णांक status;
-
-	/* make sure there isn't alपढ़ोy a ग_लिखो in progress */
-	status = labpc_eeprom_पढ़ो_status(dev);
-	अगर ((status & 0x1) == 0)
-		वापस 0;
-	वापस -EBUSY;
-पूर्ण
-
-अटल पूर्णांक labpc_eeprom_insn_ग_लिखो(काष्ठा comedi_device *dev,
-				   काष्ठा comedi_subdevice *s,
-				   काष्ठा comedi_insn *insn,
-				   अचिन्हित पूर्णांक *data)
-अणु
-	अचिन्हित पूर्णांक chan = CR_CHAN(insn->chanspec);
-	पूर्णांक ret;
-
-	/* only allow ग_लिखोs to user area of eeprom */
-	अगर (chan < 16 || chan > 127)
-		वापस -EINVAL;
+static int labpc_calib_insn_write(struct comedi_device *dev,
+				  struct comedi_subdevice *s,
+				  struct comedi_insn *insn,
+				  unsigned int *data)
+{
+	unsigned int chan = CR_CHAN(insn->chanspec);
 
 	/*
-	 * Only ग_लिखो the last data value to the eeprom. Preceding
+	 * Only write the last data value to the caldac. Preceding
 	 * data would be overwritten anyway.
 	 */
-	अगर (insn->n > 0) अणु
-		अचिन्हित पूर्णांक val = data[insn->n - 1];
+	if (insn->n > 0) {
+		unsigned int val = data[insn->n - 1];
 
-		ret = comedi_समयout(dev, s, insn, labpc_eeprom_पढ़ोy, 0);
-		अगर (ret)
-			वापस ret;
+		if (s->readback[chan] != val) {
+			write_caldac(dev, chan, val);
+			s->readback[chan] = val;
+		}
+	}
 
-		labpc_eeprom_ग_लिखो(dev, chan, val);
-		s->पढ़ोback[chan] = val;
-	पूर्ण
+	return insn->n;
+}
 
-	वापस insn->n;
-पूर्ण
+static int labpc_eeprom_ready(struct comedi_device *dev,
+			      struct comedi_subdevice *s,
+			      struct comedi_insn *insn,
+			      unsigned long context)
+{
+	unsigned int status;
 
-पूर्णांक labpc_common_attach(काष्ठा comedi_device *dev,
-			अचिन्हित पूर्णांक irq, अचिन्हित दीर्घ isr_flags)
-अणु
-	स्थिर काष्ठा labpc_boardinfo *board = dev->board_ptr;
-	काष्ठा labpc_निजी *devpriv;
-	काष्ठा comedi_subdevice *s;
-	पूर्णांक ret;
-	पूर्णांक i;
+	/* make sure there isn't already a write in progress */
+	status = labpc_eeprom_read_status(dev);
+	if ((status & 0x1) == 0)
+		return 0;
+	return -EBUSY;
+}
 
-	devpriv = comedi_alloc_devpriv(dev, माप(*devpriv));
-	अगर (!devpriv)
-		वापस -ENOMEM;
+static int labpc_eeprom_insn_write(struct comedi_device *dev,
+				   struct comedi_subdevice *s,
+				   struct comedi_insn *insn,
+				   unsigned int *data)
+{
+	unsigned int chan = CR_CHAN(insn->chanspec);
+	int ret;
 
-	अगर (dev->mmio) अणु
-		devpriv->पढ़ो_byte = labpc_पढ़ोb;
-		devpriv->ग_लिखो_byte = labpc_ग_लिखोb;
-	पूर्ण अन्यथा अणु
-		devpriv->पढ़ो_byte = labpc_inb;
-		devpriv->ग_लिखो_byte = labpc_outb;
-	पूर्ण
+	/* only allow writes to user area of eeprom */
+	if (chan < 16 || chan > 127)
+		return -EINVAL;
 
-	/* initialize board's command रेजिस्टरs */
-	devpriv->ग_लिखो_byte(dev, devpriv->cmd1, CMD1_REG);
-	devpriv->ग_लिखो_byte(dev, devpriv->cmd2, CMD2_REG);
-	devpriv->ग_लिखो_byte(dev, devpriv->cmd3, CMD3_REG);
-	devpriv->ग_लिखो_byte(dev, devpriv->cmd4, CMD4_REG);
-	अगर (board->is_labpc1200) अणु
-		devpriv->ग_लिखो_byte(dev, devpriv->cmd5, CMD5_REG);
-		devpriv->ग_लिखो_byte(dev, devpriv->cmd6, CMD6_REG);
-	पूर्ण
+	/*
+	 * Only write the last data value to the eeprom. Preceding
+	 * data would be overwritten anyway.
+	 */
+	if (insn->n > 0) {
+		unsigned int val = data[insn->n - 1];
 
-	अगर (irq) अणु
-		ret = request_irq(irq, labpc_पूर्णांकerrupt, isr_flags,
+		ret = comedi_timeout(dev, s, insn, labpc_eeprom_ready, 0);
+		if (ret)
+			return ret;
+
+		labpc_eeprom_write(dev, chan, val);
+		s->readback[chan] = val;
+	}
+
+	return insn->n;
+}
+
+int labpc_common_attach(struct comedi_device *dev,
+			unsigned int irq, unsigned long isr_flags)
+{
+	const struct labpc_boardinfo *board = dev->board_ptr;
+	struct labpc_private *devpriv;
+	struct comedi_subdevice *s;
+	int ret;
+	int i;
+
+	devpriv = comedi_alloc_devpriv(dev, sizeof(*devpriv));
+	if (!devpriv)
+		return -ENOMEM;
+
+	if (dev->mmio) {
+		devpriv->read_byte = labpc_readb;
+		devpriv->write_byte = labpc_writeb;
+	} else {
+		devpriv->read_byte = labpc_inb;
+		devpriv->write_byte = labpc_outb;
+	}
+
+	/* initialize board's command registers */
+	devpriv->write_byte(dev, devpriv->cmd1, CMD1_REG);
+	devpriv->write_byte(dev, devpriv->cmd2, CMD2_REG);
+	devpriv->write_byte(dev, devpriv->cmd3, CMD3_REG);
+	devpriv->write_byte(dev, devpriv->cmd4, CMD4_REG);
+	if (board->is_labpc1200) {
+		devpriv->write_byte(dev, devpriv->cmd5, CMD5_REG);
+		devpriv->write_byte(dev, devpriv->cmd6, CMD6_REG);
+	}
+
+	if (irq) {
+		ret = request_irq(irq, labpc_interrupt, isr_flags,
 				  dev->board_name, dev);
-		अगर (ret == 0)
+		if (ret == 0)
 			dev->irq = irq;
-	पूर्ण
+	}
 
-	अगर (dev->mmio) अणु
+	if (dev->mmio) {
 		dev->pacer = comedi_8254_mm_init(dev->mmio + COUNTER_B_BASE_REG,
 						 I8254_OSC_BASE_2MHZ,
 						 I8254_IO8, 0);
@@ -1231,7 +1230,7 @@
 						       COUNTER_A_BASE_REG,
 						       I8254_OSC_BASE_2MHZ,
 						       I8254_IO8, 0);
-	पूर्ण अन्यथा अणु
+	} else {
 		dev->pacer = comedi_8254_init(dev->iobase + COUNTER_B_BASE_REG,
 					      I8254_OSC_BASE_2MHZ,
 					      I8254_IO8, 0);
@@ -1239,13 +1238,13 @@
 						    COUNTER_A_BASE_REG,
 						    I8254_OSC_BASE_2MHZ,
 						    I8254_IO8, 0);
-	पूर्ण
-	अगर (!dev->pacer || !devpriv->counter)
-		वापस -ENOMEM;
+	}
+	if (!dev->pacer || !devpriv->counter)
+		return -ENOMEM;
 
 	ret = comedi_alloc_subdevices(dev, 5);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* analog input subdevice */
 	s = &dev->subdevices[0];
@@ -1256,108 +1255,108 @@
 	s->maxdata	= 0x0fff;
 	s->range_table	= board->is_labpc1200 ?
 			  &range_labpc_1200_ai : &range_labpc_plus_ai;
-	s->insn_पढ़ो	= labpc_ai_insn_पढ़ो;
-	अगर (dev->irq) अणु
-		dev->पढ़ो_subdev = s;
+	s->insn_read	= labpc_ai_insn_read;
+	if (dev->irq) {
+		dev->read_subdev = s;
 		s->subdev_flags	|= SDF_CMD_READ;
-		s->करो_cmd	= labpc_ai_cmd;
-		s->करो_cmdtest	= labpc_ai_cmdtest;
+		s->do_cmd	= labpc_ai_cmd;
+		s->do_cmdtest	= labpc_ai_cmdtest;
 		s->cancel	= labpc_cancel;
-	पूर्ण
+	}
 
 	/* analog output */
 	s = &dev->subdevices[1];
-	अगर (board->has_ao) अणु
+	if (board->has_ao) {
 		s->type		= COMEDI_SUBD_AO;
 		s->subdev_flags	= SDF_READABLE | SDF_WRITABLE | SDF_GROUND;
 		s->n_chan	= 2;
 		s->maxdata	= 0x0fff;
 		s->range_table	= &range_labpc_ao;
-		s->insn_ग_लिखो	= labpc_ao_insn_ग_लिखो;
+		s->insn_write	= labpc_ao_insn_write;
 
-		ret = comedi_alloc_subdev_पढ़ोback(s);
-		अगर (ret)
-			वापस ret;
+		ret = comedi_alloc_subdev_readback(s);
+		if (ret)
+			return ret;
 
-		/* initialize analog outमाला_दो to a known value */
-		क्रम (i = 0; i < s->n_chan; i++)
-			labpc_ao_ग_लिखो(dev, s, i, s->maxdata / 2);
-	पूर्ण अन्यथा अणु
+		/* initialize analog outputs to a known value */
+		for (i = 0; i < s->n_chan; i++)
+			labpc_ao_write(dev, s, i, s->maxdata / 2);
+	} else {
 		s->type		= COMEDI_SUBD_UNUSED;
-	पूर्ण
+	}
 
 	/* 8255 dio */
 	s = &dev->subdevices[2];
-	अगर (dev->mmio)
-		ret = subdev_8255_mm_init(dev, s, शून्य, DIO_BASE_REG);
-	अन्यथा
-		ret = subdev_8255_init(dev, s, शून्य, DIO_BASE_REG);
-	अगर (ret)
-		वापस ret;
+	if (dev->mmio)
+		ret = subdev_8255_mm_init(dev, s, NULL, DIO_BASE_REG);
+	else
+		ret = subdev_8255_init(dev, s, NULL, DIO_BASE_REG);
+	if (ret)
+		return ret;
 
-	/*  calibration subdevices क्रम boards that have one */
+	/*  calibration subdevices for boards that have one */
 	s = &dev->subdevices[3];
-	अगर (board->is_labpc1200) अणु
+	if (board->is_labpc1200) {
 		s->type		= COMEDI_SUBD_CALIB;
 		s->subdev_flags	= SDF_READABLE | SDF_WRITABLE | SDF_INTERNAL;
 		s->n_chan	= 16;
 		s->maxdata	= 0xff;
-		s->insn_ग_लिखो	= labpc_calib_insn_ग_लिखो;
+		s->insn_write	= labpc_calib_insn_write;
 
-		ret = comedi_alloc_subdev_पढ़ोback(s);
-		अगर (ret)
-			वापस ret;
+		ret = comedi_alloc_subdev_readback(s);
+		if (ret)
+			return ret;
 
-		क्रम (i = 0; i < s->n_chan; i++) अणु
-			ग_लिखो_caldac(dev, i, s->maxdata / 2);
-			s->पढ़ोback[i] = s->maxdata / 2;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		for (i = 0; i < s->n_chan; i++) {
+			write_caldac(dev, i, s->maxdata / 2);
+			s->readback[i] = s->maxdata / 2;
+		}
+	} else {
 		s->type		= COMEDI_SUBD_UNUSED;
-	पूर्ण
+	}
 
 	/* EEPROM (256 bytes) */
 	s = &dev->subdevices[4];
-	अगर (board->is_labpc1200) अणु
+	if (board->is_labpc1200) {
 		s->type		= COMEDI_SUBD_MEMORY;
 		s->subdev_flags	= SDF_READABLE | SDF_WRITABLE | SDF_INTERNAL;
 		s->n_chan	= 256;
 		s->maxdata	= 0xff;
-		s->insn_ग_लिखो	= labpc_eeprom_insn_ग_लिखो;
+		s->insn_write	= labpc_eeprom_insn_write;
 
-		ret = comedi_alloc_subdev_पढ़ोback(s);
-		अगर (ret)
-			वापस ret;
+		ret = comedi_alloc_subdev_readback(s);
+		if (ret)
+			return ret;
 
-		क्रम (i = 0; i < s->n_chan; i++)
-			s->पढ़ोback[i] = labpc_eeprom_पढ़ो(dev, i);
-	पूर्ण अन्यथा अणु
+		for (i = 0; i < s->n_chan; i++)
+			s->readback[i] = labpc_eeprom_read(dev, i);
+	} else {
 		s->type		= COMEDI_SUBD_UNUSED;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(labpc_common_attach);
 
-व्योम labpc_common_detach(काष्ठा comedi_device *dev)
-अणु
-	काष्ठा labpc_निजी *devpriv = dev->निजी;
+void labpc_common_detach(struct comedi_device *dev)
+{
+	struct labpc_private *devpriv = dev->private;
 
-	अगर (devpriv)
-		kमुक्त(devpriv->counter);
-पूर्ण
+	if (devpriv)
+		kfree(devpriv->counter);
+}
 EXPORT_SYMBOL_GPL(labpc_common_detach);
 
-अटल पूर्णांक __init labpc_common_init(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+static int __init labpc_common_init(void)
+{
+	return 0;
+}
 module_init(labpc_common_init);
 
-अटल व्योम __निकास labpc_common_निकास(व्योम)
-अणु
-पूर्ण
-module_निकास(labpc_common_निकास);
+static void __exit labpc_common_exit(void)
+{
+}
+module_exit(labpc_common_exit);
 
 MODULE_AUTHOR("Comedi https://www.comedi.org");
 MODULE_DESCRIPTION("Comedi helper for ni_labpc, ni_labpc_pci, ni_labpc_cs");

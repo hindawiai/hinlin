@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * ADXL345 3-Axis Digital Accelerometer I2C driver
  *
@@ -9,66 +8,66 @@
  * 0x53 (ALT ADDRESS pin grounded)
  */
 
-#समावेश <linux/i2c.h>
-#समावेश <linux/module.h>
-#समावेश <linux/regmap.h>
+#include <linux/i2c.h>
+#include <linux/module.h>
+#include <linux/regmap.h>
 
-#समावेश "adxl345.h"
+#include "adxl345.h"
 
-अटल स्थिर काष्ठा regmap_config adxl345_i2c_regmap_config = अणु
+static const struct regmap_config adxl345_i2c_regmap_config = {
 	.reg_bits = 8,
 	.val_bits = 8,
-पूर्ण;
+};
 
-अटल पूर्णांक adxl345_i2c_probe(काष्ठा i2c_client *client,
-			     स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा regmap *regmap;
+static int adxl345_i2c_probe(struct i2c_client *client,
+			     const struct i2c_device_id *id)
+{
+	struct regmap *regmap;
 
-	अगर (!id)
-		वापस -ENODEV;
+	if (!id)
+		return -ENODEV;
 
 	regmap = devm_regmap_init_i2c(client, &adxl345_i2c_regmap_config);
-	अगर (IS_ERR(regmap)) अणु
+	if (IS_ERR(regmap)) {
 		dev_err(&client->dev, "Error initializing i2c regmap: %ld\n",
 			PTR_ERR(regmap));
-		वापस PTR_ERR(regmap);
-	पूर्ण
+		return PTR_ERR(regmap);
+	}
 
-	वापस adxl345_core_probe(&client->dev, regmap, id->driver_data,
+	return adxl345_core_probe(&client->dev, regmap, id->driver_data,
 				  id->name);
-पूर्ण
+}
 
-अटल पूर्णांक adxl345_i2c_हटाओ(काष्ठा i2c_client *client)
-अणु
-	वापस adxl345_core_हटाओ(&client->dev);
-पूर्ण
+static int adxl345_i2c_remove(struct i2c_client *client)
+{
+	return adxl345_core_remove(&client->dev);
+}
 
-अटल स्थिर काष्ठा i2c_device_id adxl345_i2c_id[] = अणु
-	अणु "adxl345", ADXL345 पूर्ण,
-	अणु "adxl375", ADXL375 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id adxl345_i2c_id[] = {
+	{ "adxl345", ADXL345 },
+	{ "adxl375", ADXL375 },
+	{ }
+};
 
 MODULE_DEVICE_TABLE(i2c, adxl345_i2c_id);
 
-अटल स्थिर काष्ठा of_device_id adxl345_of_match[] = अणु
-	अणु .compatible = "adi,adxl345" पूर्ण,
-	अणु .compatible = "adi,adxl375" पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct of_device_id adxl345_of_match[] = {
+	{ .compatible = "adi,adxl345" },
+	{ .compatible = "adi,adxl375" },
+	{ },
+};
 
 MODULE_DEVICE_TABLE(of, adxl345_of_match);
 
-अटल काष्ठा i2c_driver adxl345_i2c_driver = अणु
-	.driver = अणु
+static struct i2c_driver adxl345_i2c_driver = {
+	.driver = {
 		.name	= "adxl345_i2c",
 		.of_match_table = adxl345_of_match,
-	पूर्ण,
+	},
 	.probe		= adxl345_i2c_probe,
-	.हटाओ		= adxl345_i2c_हटाओ,
+	.remove		= adxl345_i2c_remove,
 	.id_table	= adxl345_i2c_id,
-पूर्ण;
+};
 
 module_i2c_driver(adxl345_i2c_driver);
 

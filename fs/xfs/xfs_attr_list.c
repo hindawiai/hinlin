@@ -1,151 +1,150 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2000-2005 Silicon Graphics, Inc.
  * Copyright (c) 2013 Red Hat, Inc.
  * All Rights Reserved.
  */
-#समावेश "xfs.h"
-#समावेश "xfs_fs.h"
-#समावेश "xfs_shared.h"
-#समावेश "xfs_format.h"
-#समावेश "xfs_log_format.h"
-#समावेश "xfs_trans_resv.h"
-#समावेश "xfs_mount.h"
-#समावेश "xfs_da_format.h"
-#समावेश "xfs_inode.h"
-#समावेश "xfs_trans.h"
-#समावेश "xfs_bmap.h"
-#समावेश "xfs_attr.h"
-#समावेश "xfs_attr_sf.h"
-#समावेश "xfs_attr_leaf.h"
-#समावेश "xfs_error.h"
-#समावेश "xfs_trace.h"
-#समावेश "xfs_dir2.h"
+#include "xfs.h"
+#include "xfs_fs.h"
+#include "xfs_shared.h"
+#include "xfs_format.h"
+#include "xfs_log_format.h"
+#include "xfs_trans_resv.h"
+#include "xfs_mount.h"
+#include "xfs_da_format.h"
+#include "xfs_inode.h"
+#include "xfs_trans.h"
+#include "xfs_bmap.h"
+#include "xfs_attr.h"
+#include "xfs_attr_sf.h"
+#include "xfs_attr_leaf.h"
+#include "xfs_error.h"
+#include "xfs_trace.h"
+#include "xfs_dir2.h"
 
-STATIC पूर्णांक
-xfs_attr_लघुक्रमm_compare(स्थिर व्योम *a, स्थिर व्योम *b)
-अणु
+STATIC int
+xfs_attr_shortform_compare(const void *a, const void *b)
+{
 	xfs_attr_sf_sort_t *sa, *sb;
 
 	sa = (xfs_attr_sf_sort_t *)a;
 	sb = (xfs_attr_sf_sort_t *)b;
-	अगर (sa->hash < sb->hash) अणु
-		वापस -1;
-	पूर्ण अन्यथा अगर (sa->hash > sb->hash) अणु
-		वापस 1;
-	पूर्ण अन्यथा अणु
-		वापस sa->entno - sb->entno;
-	पूर्ण
-पूर्ण
+	if (sa->hash < sb->hash) {
+		return -1;
+	} else if (sa->hash > sb->hash) {
+		return 1;
+	} else {
+		return sa->entno - sb->entno;
+	}
+}
 
-#घोषणा XFS_ISRESET_CURSOR(cursor) \
+#define XFS_ISRESET_CURSOR(cursor) \
 	(!((cursor)->initted) && !((cursor)->hashval) && \
 	 !((cursor)->blkno) && !((cursor)->offset))
 /*
- * Copy out entries of लघुक्रमm attribute lists क्रम attr_list().
- * Shortक्रमm attribute lists are not stored in hashval sorted order.
+ * Copy out entries of shortform attribute lists for attr_list().
+ * Shortform attribute lists are not stored in hashval sorted order.
  * If the output buffer is not large enough to hold them all, then
- * we have to calculate each entries' hashvalue and sort them beक्रमe
- * we can begin वापसing them to the user.
+ * we have to calculate each entries' hashvalue and sort them before
+ * we can begin returning them to the user.
  */
-अटल पूर्णांक
-xfs_attr_लघुक्रमm_list(
-	काष्ठा xfs_attr_list_context	*context)
-अणु
-	काष्ठा xfs_attrlist_cursor_kern	*cursor = &context->cursor;
-	काष्ठा xfs_inode		*dp = context->dp;
-	काष्ठा xfs_attr_sf_sort		*sbuf, *sbp;
-	काष्ठा xfs_attr_लघुक्रमm	*sf;
-	काष्ठा xfs_attr_sf_entry	*sfe;
-	पूर्णांक				sbsize, nsbuf, count, i;
-	पूर्णांक				error = 0;
+static int
+xfs_attr_shortform_list(
+	struct xfs_attr_list_context	*context)
+{
+	struct xfs_attrlist_cursor_kern	*cursor = &context->cursor;
+	struct xfs_inode		*dp = context->dp;
+	struct xfs_attr_sf_sort		*sbuf, *sbp;
+	struct xfs_attr_shortform	*sf;
+	struct xfs_attr_sf_entry	*sfe;
+	int				sbsize, nsbuf, count, i;
+	int				error = 0;
 
-	ASSERT(dp->i_afp != शून्य);
-	sf = (काष्ठा xfs_attr_लघुक्रमm *)dp->i_afp->अगर_u1.अगर_data;
-	ASSERT(sf != शून्य);
-	अगर (!sf->hdr.count)
-		वापस 0;
+	ASSERT(dp->i_afp != NULL);
+	sf = (struct xfs_attr_shortform *)dp->i_afp->if_u1.if_data;
+	ASSERT(sf != NULL);
+	if (!sf->hdr.count)
+		return 0;
 
 	trace_xfs_attr_list_sf(context);
 
 	/*
 	 * If the buffer is large enough and the cursor is at the start,
-	 * करो not bother with sorting since we will वापस everything in
+	 * do not bother with sorting since we will return everything in
 	 * one buffer and another call using the cursor won't need to be
 	 * made.
 	 * Note the generous fudge factor of 16 overhead bytes per entry.
 	 * If bufsize is zero then put_listent must be a search function
 	 * and can just scan through what we have.
 	 */
-	अगर (context->bufsize == 0 ||
+	if (context->bufsize == 0 ||
 	    (XFS_ISRESET_CURSOR(cursor) &&
-	     (dp->i_afp->अगर_bytes + sf->hdr.count * 16) < context->bufsize)) अणु
-		क्रम (i = 0, sfe = &sf->list[0]; i < sf->hdr.count; i++) अणु
-			अगर (XFS_IS_CORRUPT(context->dp->i_mount,
+	     (dp->i_afp->if_bytes + sf->hdr.count * 16) < context->bufsize)) {
+		for (i = 0, sfe = &sf->list[0]; i < sf->hdr.count; i++) {
+			if (XFS_IS_CORRUPT(context->dp->i_mount,
 					   !xfs_attr_namecheck(sfe->nameval,
 							       sfe->namelen)))
-				वापस -EFSCORRUPTED;
+				return -EFSCORRUPTED;
 			context->put_listent(context,
 					     sfe->flags,
 					     sfe->nameval,
-					     (पूर्णांक)sfe->namelen,
-					     (पूर्णांक)sfe->valuelen);
+					     (int)sfe->namelen,
+					     (int)sfe->valuelen);
 			/*
 			 * Either search callback finished early or
 			 * didn't fit it all in the buffer after all.
 			 */
-			अगर (context->seen_enough)
-				अवरोध;
+			if (context->seen_enough)
+				break;
 			sfe = xfs_attr_sf_nextentry(sfe);
-		पूर्ण
+		}
 		trace_xfs_attr_list_sf_all(context);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	/* करो no more क्रम a search callback */
-	अगर (context->bufsize == 0)
-		वापस 0;
+	/* do no more for a search callback */
+	if (context->bufsize == 0)
+		return 0;
 
 	/*
 	 * It didn't all fit, so we have to sort everything on hashval.
 	 */
-	sbsize = sf->hdr.count * माप(*sbuf);
+	sbsize = sf->hdr.count * sizeof(*sbuf);
 	sbp = sbuf = kmem_alloc(sbsize, KM_NOFS);
 
 	/*
-	 * Scan the attribute list क्रम the rest of the entries, storing
-	 * the relevant info from only those that match पूर्णांकo a buffer.
+	 * Scan the attribute list for the rest of the entries, storing
+	 * the relevant info from only those that match into a buffer.
 	 */
 	nsbuf = 0;
-	क्रम (i = 0, sfe = &sf->list[0]; i < sf->hdr.count; i++) अणु
-		अगर (unlikely(
-		    ((अक्षर *)sfe < (अक्षर *)sf) ||
-		    ((अक्षर *)sfe >= ((अक्षर *)sf + dp->i_afp->अगर_bytes)))) अणु
+	for (i = 0, sfe = &sf->list[0]; i < sf->hdr.count; i++) {
+		if (unlikely(
+		    ((char *)sfe < (char *)sf) ||
+		    ((char *)sfe >= ((char *)sf + dp->i_afp->if_bytes)))) {
 			XFS_CORRUPTION_ERROR("xfs_attr_shortform_list",
 					     XFS_ERRLEVEL_LOW,
 					     context->dp->i_mount, sfe,
-					     माप(*sfe));
-			kmem_मुक्त(sbuf);
-			वापस -EFSCORRUPTED;
-		पूर्ण
+					     sizeof(*sfe));
+			kmem_free(sbuf);
+			return -EFSCORRUPTED;
+		}
 
 		sbp->entno = i;
 		sbp->hash = xfs_da_hashname(sfe->nameval, sfe->namelen);
 		sbp->name = sfe->nameval;
 		sbp->namelen = sfe->namelen;
-		/* These are bytes, and both on-disk, करोn't endian-flip */
+		/* These are bytes, and both on-disk, don't endian-flip */
 		sbp->valuelen = sfe->valuelen;
 		sbp->flags = sfe->flags;
 		sfe = xfs_attr_sf_nextentry(sfe);
 		sbp++;
 		nsbuf++;
-	पूर्ण
+	}
 
 	/*
 	 * Sort the entries on hash then entno.
 	 */
-	xfs_sort(sbuf, nsbuf, माप(*sbuf), xfs_attr_लघुक्रमm_compare);
+	xfs_sort(sbuf, nsbuf, sizeof(*sbuf), xfs_attr_shortform_compare);
 
 	/*
 	 * Re-find our place IN THE SORTED LIST.
@@ -153,249 +152,249 @@ xfs_attr_लघुक्रमm_list(
 	count = 0;
 	cursor->initted = 1;
 	cursor->blkno = 0;
-	क्रम (sbp = sbuf, i = 0; i < nsbuf; i++, sbp++) अणु
-		अगर (sbp->hash == cursor->hashval) अणु
-			अगर (cursor->offset == count) अणु
-				अवरोध;
-			पूर्ण
+	for (sbp = sbuf, i = 0; i < nsbuf; i++, sbp++) {
+		if (sbp->hash == cursor->hashval) {
+			if (cursor->offset == count) {
+				break;
+			}
 			count++;
-		पूर्ण अन्यथा अगर (sbp->hash > cursor->hashval) अणु
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (i == nsbuf)
-		जाओ out;
+		} else if (sbp->hash > cursor->hashval) {
+			break;
+		}
+	}
+	if (i == nsbuf)
+		goto out;
 
 	/*
-	 * Loop putting entries पूर्णांकo the user buffer.
+	 * Loop putting entries into the user buffer.
 	 */
-	क्रम ( ; i < nsbuf; i++, sbp++) अणु
-		अगर (cursor->hashval != sbp->hash) अणु
+	for ( ; i < nsbuf; i++, sbp++) {
+		if (cursor->hashval != sbp->hash) {
 			cursor->hashval = sbp->hash;
 			cursor->offset = 0;
-		पूर्ण
-		अगर (XFS_IS_CORRUPT(context->dp->i_mount,
+		}
+		if (XFS_IS_CORRUPT(context->dp->i_mount,
 				   !xfs_attr_namecheck(sbp->name,
-						       sbp->namelen))) अणु
+						       sbp->namelen))) {
 			error = -EFSCORRUPTED;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		context->put_listent(context,
 				     sbp->flags,
 				     sbp->name,
 				     sbp->namelen,
 				     sbp->valuelen);
-		अगर (context->seen_enough)
-			अवरोध;
+		if (context->seen_enough)
+			break;
 		cursor->offset++;
-	पूर्ण
+	}
 out:
-	kmem_मुक्त(sbuf);
-	वापस error;
-पूर्ण
+	kmem_free(sbuf);
+	return error;
+}
 
 /*
  * We didn't find the block & hash mentioned in the cursor state, so
- * walk करोwn the attr btree looking क्रम the hash.
+ * walk down the attr btree looking for the hash.
  */
-STATIC पूर्णांक
+STATIC int
 xfs_attr_node_list_lookup(
-	काष्ठा xfs_attr_list_context	*context,
-	काष्ठा xfs_attrlist_cursor_kern	*cursor,
-	काष्ठा xfs_buf			**pbp)
-अणु
-	काष्ठा xfs_da3_icnode_hdr	nodehdr;
-	काष्ठा xfs_da_पूर्णांकnode		*node;
-	काष्ठा xfs_da_node_entry	*btree;
-	काष्ठा xfs_inode		*dp = context->dp;
-	काष्ठा xfs_mount		*mp = dp->i_mount;
-	काष्ठा xfs_trans		*tp = context->tp;
-	काष्ठा xfs_buf			*bp;
-	पूर्णांक				i;
-	पूर्णांक				error = 0;
-	अचिन्हित पूर्णांक			expected_level = 0;
-	uपूर्णांक16_t			magic;
+	struct xfs_attr_list_context	*context,
+	struct xfs_attrlist_cursor_kern	*cursor,
+	struct xfs_buf			**pbp)
+{
+	struct xfs_da3_icnode_hdr	nodehdr;
+	struct xfs_da_intnode		*node;
+	struct xfs_da_node_entry	*btree;
+	struct xfs_inode		*dp = context->dp;
+	struct xfs_mount		*mp = dp->i_mount;
+	struct xfs_trans		*tp = context->tp;
+	struct xfs_buf			*bp;
+	int				i;
+	int				error = 0;
+	unsigned int			expected_level = 0;
+	uint16_t			magic;
 
-	ASSERT(*pbp == शून्य);
+	ASSERT(*pbp == NULL);
 	cursor->blkno = 0;
-	क्रम (;;) अणु
-		error = xfs_da3_node_पढ़ो(tp, dp, cursor->blkno, &bp,
+	for (;;) {
+		error = xfs_da3_node_read(tp, dp, cursor->blkno, &bp,
 				XFS_ATTR_FORK);
-		अगर (error)
-			वापस error;
+		if (error)
+			return error;
 		node = bp->b_addr;
 		magic = be16_to_cpu(node->hdr.info.magic);
-		अगर (magic == XFS_ATTR_LEAF_MAGIC ||
+		if (magic == XFS_ATTR_LEAF_MAGIC ||
 		    magic == XFS_ATTR3_LEAF_MAGIC)
-			अवरोध;
-		अगर (magic != XFS_DA_NODE_MAGIC &&
-		    magic != XFS_DA3_NODE_MAGIC) अणु
+			break;
+		if (magic != XFS_DA_NODE_MAGIC &&
+		    magic != XFS_DA3_NODE_MAGIC) {
 			XFS_CORRUPTION_ERROR(__func__, XFS_ERRLEVEL_LOW, mp,
-					node, माप(*node));
-			जाओ out_corruptbuf;
-		पूर्ण
+					node, sizeof(*node));
+			goto out_corruptbuf;
+		}
 
 		xfs_da3_node_hdr_from_disk(mp, &nodehdr, node);
 
 		/* Tree taller than we can handle; bail out! */
-		अगर (nodehdr.level >= XFS_DA_NODE_MAXDEPTH)
-			जाओ out_corruptbuf;
+		if (nodehdr.level >= XFS_DA_NODE_MAXDEPTH)
+			goto out_corruptbuf;
 
 		/* Check the level from the root node. */
-		अगर (cursor->blkno == 0)
+		if (cursor->blkno == 0)
 			expected_level = nodehdr.level - 1;
-		अन्यथा अगर (expected_level != nodehdr.level)
-			जाओ out_corruptbuf;
-		अन्यथा
+		else if (expected_level != nodehdr.level)
+			goto out_corruptbuf;
+		else
 			expected_level--;
 
 		btree = nodehdr.btree;
-		क्रम (i = 0; i < nodehdr.count; btree++, i++) अणु
-			अगर (cursor->hashval <= be32_to_cpu(btree->hashval)) अणु
-				cursor->blkno = be32_to_cpu(btree->beक्रमe);
+		for (i = 0; i < nodehdr.count; btree++, i++) {
+			if (cursor->hashval <= be32_to_cpu(btree->hashval)) {
+				cursor->blkno = be32_to_cpu(btree->before);
 				trace_xfs_attr_list_node_descend(context,
 						btree);
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		xfs_trans_brअन्यथा(tp, bp);
+				break;
+			}
+		}
+		xfs_trans_brelse(tp, bp);
 
-		अगर (i == nodehdr.count)
-			वापस 0;
+		if (i == nodehdr.count)
+			return 0;
 
-		/* We can't poपूर्णांक back to the root. */
-		अगर (XFS_IS_CORRUPT(mp, cursor->blkno == 0))
-			वापस -EFSCORRUPTED;
-	पूर्ण
+		/* We can't point back to the root. */
+		if (XFS_IS_CORRUPT(mp, cursor->blkno == 0))
+			return -EFSCORRUPTED;
+	}
 
-	अगर (expected_level != 0)
-		जाओ out_corruptbuf;
+	if (expected_level != 0)
+		goto out_corruptbuf;
 
 	*pbp = bp;
-	वापस 0;
+	return 0;
 
 out_corruptbuf:
 	xfs_buf_mark_corrupt(bp);
-	xfs_trans_brअन्यथा(tp, bp);
-	वापस -EFSCORRUPTED;
-पूर्ण
+	xfs_trans_brelse(tp, bp);
+	return -EFSCORRUPTED;
+}
 
-STATIC पूर्णांक
+STATIC int
 xfs_attr_node_list(
-	काष्ठा xfs_attr_list_context	*context)
-अणु
-	काष्ठा xfs_attrlist_cursor_kern	*cursor = &context->cursor;
-	काष्ठा xfs_attr3_icleaf_hdr	leafhdr;
-	काष्ठा xfs_attr_leafblock	*leaf;
-	काष्ठा xfs_da_पूर्णांकnode		*node;
-	काष्ठा xfs_buf			*bp;
-	काष्ठा xfs_inode		*dp = context->dp;
-	काष्ठा xfs_mount		*mp = dp->i_mount;
-	पूर्णांक				error = 0;
+	struct xfs_attr_list_context	*context)
+{
+	struct xfs_attrlist_cursor_kern	*cursor = &context->cursor;
+	struct xfs_attr3_icleaf_hdr	leafhdr;
+	struct xfs_attr_leafblock	*leaf;
+	struct xfs_da_intnode		*node;
+	struct xfs_buf			*bp;
+	struct xfs_inode		*dp = context->dp;
+	struct xfs_mount		*mp = dp->i_mount;
+	int				error = 0;
 
 	trace_xfs_attr_node_list(context);
 
 	cursor->initted = 1;
 
 	/*
-	 * Do all sorts of validation on the passed-in cursor काष्ठाure.
+	 * Do all sorts of validation on the passed-in cursor structure.
 	 * If anything is amiss, ignore the cursor and look up the hashval
 	 * starting from the btree root.
 	 */
-	bp = शून्य;
-	अगर (cursor->blkno > 0) अणु
-		error = xfs_da3_node_पढ़ो(context->tp, dp, cursor->blkno, &bp,
+	bp = NULL;
+	if (cursor->blkno > 0) {
+		error = xfs_da3_node_read(context->tp, dp, cursor->blkno, &bp,
 				XFS_ATTR_FORK);
-		अगर ((error != 0) && (error != -EFSCORRUPTED))
-			वापस error;
-		अगर (bp) अणु
-			काष्ठा xfs_attr_leaf_entry *entries;
+		if ((error != 0) && (error != -EFSCORRUPTED))
+			return error;
+		if (bp) {
+			struct xfs_attr_leaf_entry *entries;
 
 			node = bp->b_addr;
-			चयन (be16_to_cpu(node->hdr.info.magic)) अणु
-			हाल XFS_DA_NODE_MAGIC:
-			हाल XFS_DA3_NODE_MAGIC:
+			switch (be16_to_cpu(node->hdr.info.magic)) {
+			case XFS_DA_NODE_MAGIC:
+			case XFS_DA3_NODE_MAGIC:
 				trace_xfs_attr_list_wrong_blk(context);
-				xfs_trans_brअन्यथा(context->tp, bp);
-				bp = शून्य;
-				अवरोध;
-			हाल XFS_ATTR_LEAF_MAGIC:
-			हाल XFS_ATTR3_LEAF_MAGIC:
+				xfs_trans_brelse(context->tp, bp);
+				bp = NULL;
+				break;
+			case XFS_ATTR_LEAF_MAGIC:
+			case XFS_ATTR3_LEAF_MAGIC:
 				leaf = bp->b_addr;
 				xfs_attr3_leaf_hdr_from_disk(mp->m_attr_geo,
 							     &leafhdr, leaf);
 				entries = xfs_attr3_leaf_entryp(leaf);
-				अगर (cursor->hashval > be32_to_cpu(
-						entries[leafhdr.count - 1].hashval)) अणु
+				if (cursor->hashval > be32_to_cpu(
+						entries[leafhdr.count - 1].hashval)) {
 					trace_xfs_attr_list_wrong_blk(context);
-					xfs_trans_brअन्यथा(context->tp, bp);
-					bp = शून्य;
-				पूर्ण अन्यथा अगर (cursor->hashval <= be32_to_cpu(
-						entries[0].hashval)) अणु
+					xfs_trans_brelse(context->tp, bp);
+					bp = NULL;
+				} else if (cursor->hashval <= be32_to_cpu(
+						entries[0].hashval)) {
 					trace_xfs_attr_list_wrong_blk(context);
-					xfs_trans_brअन्यथा(context->tp, bp);
-					bp = शून्य;
-				पूर्ण
-				अवरोध;
-			शेष:
+					xfs_trans_brelse(context->tp, bp);
+					bp = NULL;
+				}
+				break;
+			default:
 				trace_xfs_attr_list_wrong_blk(context);
-				xfs_trans_brअन्यथा(context->tp, bp);
-				bp = शून्य;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				xfs_trans_brelse(context->tp, bp);
+				bp = NULL;
+			}
+		}
+	}
 
 	/*
 	 * We did not find what we expected given the cursor's contents,
-	 * so we start from the top and work करोwn based on the hash value.
+	 * so we start from the top and work down based on the hash value.
 	 * Note that start of node block is same as start of leaf block.
 	 */
-	अगर (bp == शून्य) अणु
+	if (bp == NULL) {
 		error = xfs_attr_node_list_lookup(context, cursor, &bp);
-		अगर (error || !bp)
-			वापस error;
-	पूर्ण
-	ASSERT(bp != शून्य);
+		if (error || !bp)
+			return error;
+	}
+	ASSERT(bp != NULL);
 
 	/*
 	 * Roll upward through the blocks, processing each leaf block in
-	 * order.  As दीर्घ as there is space in the result buffer, keep
-	 * adding the inक्रमmation.
+	 * order.  As long as there is space in the result buffer, keep
+	 * adding the information.
 	 */
-	क्रम (;;) अणु
+	for (;;) {
 		leaf = bp->b_addr;
-		error = xfs_attr3_leaf_list_पूर्णांक(bp, context);
-		अगर (error)
-			अवरोध;
+		error = xfs_attr3_leaf_list_int(bp, context);
+		if (error)
+			break;
 		xfs_attr3_leaf_hdr_from_disk(mp->m_attr_geo, &leafhdr, leaf);
-		अगर (context->seen_enough || leafhdr.क्रमw == 0)
-			अवरोध;
-		cursor->blkno = leafhdr.क्रमw;
-		xfs_trans_brअन्यथा(context->tp, bp);
-		error = xfs_attr3_leaf_पढ़ो(context->tp, dp, cursor->blkno,
+		if (context->seen_enough || leafhdr.forw == 0)
+			break;
+		cursor->blkno = leafhdr.forw;
+		xfs_trans_brelse(context->tp, bp);
+		error = xfs_attr3_leaf_read(context->tp, dp, cursor->blkno,
 					    &bp);
-		अगर (error)
-			वापस error;
-	पूर्ण
-	xfs_trans_brअन्यथा(context->tp, bp);
-	वापस error;
-पूर्ण
+		if (error)
+			return error;
+	}
+	xfs_trans_brelse(context->tp, bp);
+	return error;
+}
 
 /*
- * Copy out attribute list entries क्रम attr_list(), क्रम leaf attribute lists.
+ * Copy out attribute list entries for attr_list(), for leaf attribute lists.
  */
-पूर्णांक
-xfs_attr3_leaf_list_पूर्णांक(
-	काष्ठा xfs_buf			*bp,
-	काष्ठा xfs_attr_list_context	*context)
-अणु
-	काष्ठा xfs_attrlist_cursor_kern	*cursor = &context->cursor;
-	काष्ठा xfs_attr_leafblock	*leaf;
-	काष्ठा xfs_attr3_icleaf_hdr	ichdr;
-	काष्ठा xfs_attr_leaf_entry	*entries;
-	काष्ठा xfs_attr_leaf_entry	*entry;
-	पूर्णांक				i;
-	काष्ठा xfs_mount		*mp = context->dp->i_mount;
+int
+xfs_attr3_leaf_list_int(
+	struct xfs_buf			*bp,
+	struct xfs_attr_list_context	*context)
+{
+	struct xfs_attrlist_cursor_kern	*cursor = &context->cursor;
+	struct xfs_attr_leafblock	*leaf;
+	struct xfs_attr3_icleaf_hdr	ichdr;
+	struct xfs_attr_leaf_entry	*entries;
+	struct xfs_attr_leaf_entry	*entry;
+	int				i;
+	struct xfs_mount		*mp = context->dp->i_mount;
 
 	trace_xfs_attr_list_leaf(context);
 
@@ -406,135 +405,135 @@ xfs_attr3_leaf_list_पूर्णांक(
 	cursor->initted = 1;
 
 	/*
-	 * Re-find our place in the leaf block अगर this is a new syscall.
+	 * Re-find our place in the leaf block if this is a new syscall.
 	 */
-	अगर (context->resynch) अणु
+	if (context->resynch) {
 		entry = &entries[0];
-		क्रम (i = 0; i < ichdr.count; entry++, i++) अणु
-			अगर (be32_to_cpu(entry->hashval) == cursor->hashval) अणु
-				अगर (cursor->offset == context->dupcnt) अणु
+		for (i = 0; i < ichdr.count; entry++, i++) {
+			if (be32_to_cpu(entry->hashval) == cursor->hashval) {
+				if (cursor->offset == context->dupcnt) {
 					context->dupcnt = 0;
-					अवरोध;
-				पूर्ण
+					break;
+				}
 				context->dupcnt++;
-			पूर्ण अन्यथा अगर (be32_to_cpu(entry->hashval) >
-					cursor->hashval) अणु
+			} else if (be32_to_cpu(entry->hashval) >
+					cursor->hashval) {
 				context->dupcnt = 0;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		अगर (i == ichdr.count) अणु
+				break;
+			}
+		}
+		if (i == ichdr.count) {
 			trace_xfs_attr_list_notfound(context);
-			वापस 0;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			return 0;
+		}
+	} else {
 		entry = &entries[0];
 		i = 0;
-	पूर्ण
+	}
 	context->resynch = 0;
 
 	/*
 	 * We have found our place, start copying out the new attributes.
 	 */
-	क्रम (; i < ichdr.count; entry++, i++) अणु
-		अक्षर *name;
-		पूर्णांक namelen, valuelen;
+	for (; i < ichdr.count; entry++, i++) {
+		char *name;
+		int namelen, valuelen;
 
-		अगर (be32_to_cpu(entry->hashval) != cursor->hashval) अणु
+		if (be32_to_cpu(entry->hashval) != cursor->hashval) {
 			cursor->hashval = be32_to_cpu(entry->hashval);
 			cursor->offset = 0;
-		पूर्ण
+		}
 
-		अगर ((entry->flags & XFS_ATTR_INCOMPLETE) &&
+		if ((entry->flags & XFS_ATTR_INCOMPLETE) &&
 		    !context->allow_incomplete)
-			जारी;
+			continue;
 
-		अगर (entry->flags & XFS_ATTR_LOCAL) अणु
+		if (entry->flags & XFS_ATTR_LOCAL) {
 			xfs_attr_leaf_name_local_t *name_loc;
 
 			name_loc = xfs_attr3_leaf_name_local(leaf, i);
 			name = name_loc->nameval;
 			namelen = name_loc->namelen;
 			valuelen = be16_to_cpu(name_loc->valuelen);
-		पूर्ण अन्यथा अणु
+		} else {
 			xfs_attr_leaf_name_remote_t *name_rmt;
 
 			name_rmt = xfs_attr3_leaf_name_remote(leaf, i);
 			name = name_rmt->name;
 			namelen = name_rmt->namelen;
 			valuelen = be32_to_cpu(name_rmt->valuelen);
-		पूर्ण
+		}
 
-		अगर (XFS_IS_CORRUPT(context->dp->i_mount,
+		if (XFS_IS_CORRUPT(context->dp->i_mount,
 				   !xfs_attr_namecheck(name, namelen)))
-			वापस -EFSCORRUPTED;
+			return -EFSCORRUPTED;
 		context->put_listent(context, entry->flags,
 					      name, namelen, valuelen);
-		अगर (context->seen_enough)
-			अवरोध;
+		if (context->seen_enough)
+			break;
 		cursor->offset++;
-	पूर्ण
+	}
 	trace_xfs_attr_list_leaf_end(context);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Copy out attribute entries क्रम attr_list(), क्रम leaf attribute lists.
+ * Copy out attribute entries for attr_list(), for leaf attribute lists.
  */
-STATIC पूर्णांक
+STATIC int
 xfs_attr_leaf_list(
-	काष्ठा xfs_attr_list_context	*context)
-अणु
-	काष्ठा xfs_buf			*bp;
-	पूर्णांक				error;
+	struct xfs_attr_list_context	*context)
+{
+	struct xfs_buf			*bp;
+	int				error;
 
 	trace_xfs_attr_leaf_list(context);
 
 	context->cursor.blkno = 0;
-	error = xfs_attr3_leaf_पढ़ो(context->tp, context->dp, 0, &bp);
-	अगर (error)
-		वापस error;
+	error = xfs_attr3_leaf_read(context->tp, context->dp, 0, &bp);
+	if (error)
+		return error;
 
-	error = xfs_attr3_leaf_list_पूर्णांक(bp, context);
-	xfs_trans_brअन्यथा(context->tp, bp);
-	वापस error;
-पूर्ण
+	error = xfs_attr3_leaf_list_int(bp, context);
+	xfs_trans_brelse(context->tp, bp);
+	return error;
+}
 
-पूर्णांक
+int
 xfs_attr_list_ilocked(
-	काष्ठा xfs_attr_list_context	*context)
-अणु
-	काष्ठा xfs_inode		*dp = context->dp;
+	struct xfs_attr_list_context	*context)
+{
+	struct xfs_inode		*dp = context->dp;
 
 	ASSERT(xfs_isilocked(dp, XFS_ILOCK_SHARED | XFS_ILOCK_EXCL));
 
 	/*
 	 * Decide on what work routines to call based on the inode size.
 	 */
-	अगर (!xfs_inode_hasattr(dp))
-		वापस 0;
-	अगर (dp->i_afp->अगर_क्रमmat == XFS_DINODE_FMT_LOCAL)
-		वापस xfs_attr_लघुक्रमm_list(context);
-	अगर (xfs_attr_is_leaf(dp))
-		वापस xfs_attr_leaf_list(context);
-	वापस xfs_attr_node_list(context);
-पूर्ण
+	if (!xfs_inode_hasattr(dp))
+		return 0;
+	if (dp->i_afp->if_format == XFS_DINODE_FMT_LOCAL)
+		return xfs_attr_shortform_list(context);
+	if (xfs_attr_is_leaf(dp))
+		return xfs_attr_leaf_list(context);
+	return xfs_attr_node_list(context);
+}
 
-पूर्णांक
+int
 xfs_attr_list(
-	काष्ठा xfs_attr_list_context	*context)
-अणु
-	काष्ठा xfs_inode		*dp = context->dp;
-	uपूर्णांक				lock_mode;
-	पूर्णांक				error;
+	struct xfs_attr_list_context	*context)
+{
+	struct xfs_inode		*dp = context->dp;
+	uint				lock_mode;
+	int				error;
 
 	XFS_STATS_INC(dp->i_mount, xs_attr_list);
 
-	अगर (XFS_FORCED_SHUTDOWN(dp->i_mount))
-		वापस -EIO;
+	if (XFS_FORCED_SHUTDOWN(dp->i_mount))
+		return -EIO;
 
 	lock_mode = xfs_ilock_attr_map_shared(dp);
 	error = xfs_attr_list_ilocked(context);
 	xfs_iunlock(dp, lock_mode);
-	वापस error;
-पूर्ण
+	return error;
+}

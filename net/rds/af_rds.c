@@ -1,24 +1,23 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2006, 2019 Oracle and/or its affiliates. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -31,25 +30,25 @@
  * SOFTWARE.
  *
  */
-#समावेश <linux/module.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/gfp.h>
-#समावेश <linux/in.h>
-#समावेश <linux/ipv6.h>
-#समावेश <linux/poll.h>
-#समावेश <net/sock.h>
+#include <linux/module.h>
+#include <linux/errno.h>
+#include <linux/kernel.h>
+#include <linux/gfp.h>
+#include <linux/in.h>
+#include <linux/ipv6.h>
+#include <linux/poll.h>
+#include <net/sock.h>
 
-#समावेश "rds.h"
+#include "rds.h"
 
-/* this is just used क्रम stats gathering :/ */
-अटल DEFINE_SPINLOCK(rds_sock_lock);
-अटल अचिन्हित दीर्घ rds_sock_count;
-अटल LIST_HEAD(rds_sock_list);
-DECLARE_WAIT_QUEUE_HEAD(rds_poll_रुकोq);
+/* this is just used for stats gathering :/ */
+static DEFINE_SPINLOCK(rds_sock_lock);
+static unsigned long rds_sock_count;
+static LIST_HEAD(rds_sock_list);
+DECLARE_WAIT_QUEUE_HEAD(rds_poll_waitq);
 
 /*
- * This is called as the final descriptor referencing this socket is बंदd.
+ * This is called as the final descriptor referencing this socket is closed.
  * We have to unbind the socket so that another socket can be bound to the
  * address it was using.
  *
@@ -57,29 +56,29 @@ DECLARE_WAIT_QUEUE_HEAD(rds_poll_रुकोq);
  * sets SOCK_DEAD and we use that as an indicator to the rx path that new
  * messages shouldn't be queued.
  */
-अटल पूर्णांक rds_release(काष्ठा socket *sock)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा rds_sock *rs;
+static int rds_release(struct socket *sock)
+{
+	struct sock *sk = sock->sk;
+	struct rds_sock *rs;
 
-	अगर (!sk)
-		जाओ out;
+	if (!sk)
+		goto out;
 
 	rs = rds_sk_to_rs(sk);
 
 	sock_orphan(sk);
-	/* Note - rds_clear_recv_queue grअसल rs_recv_lock, so
+	/* Note - rds_clear_recv_queue grabs rs_recv_lock, so
 	 * that ensures the recv path has completed messing
 	 * with the socket. */
 	rds_clear_recv_queue(rs);
-	rds_cong_हटाओ_socket(rs);
+	rds_cong_remove_socket(rs);
 
-	rds_हटाओ_bound(rs);
+	rds_remove_bound(rs);
 
-	rds_send_drop_to(rs, शून्य);
+	rds_send_drop_to(rs, NULL);
 	rds_rdma_drop_keys(rs);
-	rds_notअगरy_queue_get(rs, शून्य);
-	rds_notअगरy_msg_zcopy_purge(&rs->rs_zcookie_queue);
+	rds_notify_queue_get(rs, NULL);
+	rds_notify_msg_zcopy_purge(&rs->rs_zcookie_queue);
 
 	spin_lock_bh(&rds_sock_lock);
 	list_del_init(&rs->rs_item);
@@ -88,555 +87,555 @@ DECLARE_WAIT_QUEUE_HEAD(rds_poll_रुकोq);
 
 	rds_trans_put(rs->rs_transport);
 
-	sock->sk = शून्य;
+	sock->sk = NULL;
 	sock_put(sk);
 out:
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Careful not to race with rds_release -> sock_orphan which clears sk_sleep.
  * _bh() isn't OK here, we're called from interrupt handlers.  It's probably OK
- * to wake the रुकोqueue after sk_sleep is clear as we hold a sock ref, but
+ * to wake the waitqueue after sk_sleep is clear as we hold a sock ref, but
  * this seems more conservative.
- * NB - normally, one would use sk_callback_lock क्रम this, but we can
- * get here from पूर्णांकerrupts, whereas the network code grअसल sk_callback_lock
- * with _lock_bh only - so relying on sk_callback_lock पूर्णांकroduces livelocks.
+ * NB - normally, one would use sk_callback_lock for this, but we can
+ * get here from interrupts, whereas the network code grabs sk_callback_lock
+ * with _lock_bh only - so relying on sk_callback_lock introduces livelocks.
  */
-व्योम rds_wake_sk_sleep(काष्ठा rds_sock *rs)
-अणु
-	अचिन्हित दीर्घ flags;
+void rds_wake_sk_sleep(struct rds_sock *rs)
+{
+	unsigned long flags;
 
-	पढ़ो_lock_irqsave(&rs->rs_recv_lock, flags);
+	read_lock_irqsave(&rs->rs_recv_lock, flags);
 	__rds_wake_sk_sleep(rds_rs_to_sk(rs));
-	पढ़ो_unlock_irqrestore(&rs->rs_recv_lock, flags);
-पूर्ण
+	read_unlock_irqrestore(&rs->rs_recv_lock, flags);
+}
 
-अटल पूर्णांक rds_getname(काष्ठा socket *sock, काष्ठा sockaddr *uaddr,
-		       पूर्णांक peer)
-अणु
-	काष्ठा rds_sock *rs = rds_sk_to_rs(sock->sk);
-	काष्ठा sockaddr_in6 *sin6;
-	काष्ठा sockaddr_in *sin;
-	पूर्णांक uaddr_len;
+static int rds_getname(struct socket *sock, struct sockaddr *uaddr,
+		       int peer)
+{
+	struct rds_sock *rs = rds_sk_to_rs(sock->sk);
+	struct sockaddr_in6 *sin6;
+	struct sockaddr_in *sin;
+	int uaddr_len;
 
-	/* racey, करोn't care */
-	अगर (peer) अणु
-		अगर (ipv6_addr_any(&rs->rs_conn_addr))
-			वापस -ENOTCONN;
+	/* racey, don't care */
+	if (peer) {
+		if (ipv6_addr_any(&rs->rs_conn_addr))
+			return -ENOTCONN;
 
-		अगर (ipv6_addr_v4mapped(&rs->rs_conn_addr)) अणु
-			sin = (काष्ठा sockaddr_in *)uaddr;
-			स_रखो(sin->sin_zero, 0, माप(sin->sin_zero));
+		if (ipv6_addr_v4mapped(&rs->rs_conn_addr)) {
+			sin = (struct sockaddr_in *)uaddr;
+			memset(sin->sin_zero, 0, sizeof(sin->sin_zero));
 			sin->sin_family = AF_INET;
 			sin->sin_port = rs->rs_conn_port;
 			sin->sin_addr.s_addr = rs->rs_conn_addr_v4;
-			uaddr_len = माप(*sin);
-		पूर्ण अन्यथा अणु
-			sin6 = (काष्ठा sockaddr_in6 *)uaddr;
+			uaddr_len = sizeof(*sin);
+		} else {
+			sin6 = (struct sockaddr_in6 *)uaddr;
 			sin6->sin6_family = AF_INET6;
 			sin6->sin6_port = rs->rs_conn_port;
 			sin6->sin6_addr = rs->rs_conn_addr;
 			sin6->sin6_flowinfo = 0;
 			/* scope_id is the same as in the bound address. */
 			sin6->sin6_scope_id = rs->rs_bound_scope_id;
-			uaddr_len = माप(*sin6);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			uaddr_len = sizeof(*sin6);
+		}
+	} else {
 		/* If socket is not yet bound and the socket is connected,
-		 * set the वापस address family to be the same as the
+		 * set the return address family to be the same as the
 		 * connected address, but with 0 address value.  If it is not
 		 * connected, set the family to be AF_UNSPEC (value 0) and
 		 * the address size to be that of an IPv4 address.
 		 */
-		अगर (ipv6_addr_any(&rs->rs_bound_addr)) अणु
-			अगर (ipv6_addr_any(&rs->rs_conn_addr)) अणु
-				sin = (काष्ठा sockaddr_in *)uaddr;
-				स_रखो(sin, 0, माप(*sin));
+		if (ipv6_addr_any(&rs->rs_bound_addr)) {
+			if (ipv6_addr_any(&rs->rs_conn_addr)) {
+				sin = (struct sockaddr_in *)uaddr;
+				memset(sin, 0, sizeof(*sin));
 				sin->sin_family = AF_UNSPEC;
-				वापस माप(*sin);
-			पूर्ण
+				return sizeof(*sin);
+			}
 
-#अगर IS_ENABLED(CONFIG_IPV6)
-			अगर (!(ipv6_addr_type(&rs->rs_conn_addr) &
-			      IPV6_ADDR_MAPPED)) अणु
-				sin6 = (काष्ठा sockaddr_in6 *)uaddr;
-				स_रखो(sin6, 0, माप(*sin6));
+#if IS_ENABLED(CONFIG_IPV6)
+			if (!(ipv6_addr_type(&rs->rs_conn_addr) &
+			      IPV6_ADDR_MAPPED)) {
+				sin6 = (struct sockaddr_in6 *)uaddr;
+				memset(sin6, 0, sizeof(*sin6));
 				sin6->sin6_family = AF_INET6;
-				वापस माप(*sin6);
-			पूर्ण
-#पूर्ण_अगर
+				return sizeof(*sin6);
+			}
+#endif
 
-			sin = (काष्ठा sockaddr_in *)uaddr;
-			स_रखो(sin, 0, माप(*sin));
+			sin = (struct sockaddr_in *)uaddr;
+			memset(sin, 0, sizeof(*sin));
 			sin->sin_family = AF_INET;
-			वापस माप(*sin);
-		पूर्ण
-		अगर (ipv6_addr_v4mapped(&rs->rs_bound_addr)) अणु
-			sin = (काष्ठा sockaddr_in *)uaddr;
-			स_रखो(sin->sin_zero, 0, माप(sin->sin_zero));
+			return sizeof(*sin);
+		}
+		if (ipv6_addr_v4mapped(&rs->rs_bound_addr)) {
+			sin = (struct sockaddr_in *)uaddr;
+			memset(sin->sin_zero, 0, sizeof(sin->sin_zero));
 			sin->sin_family = AF_INET;
 			sin->sin_port = rs->rs_bound_port;
 			sin->sin_addr.s_addr = rs->rs_bound_addr_v4;
-			uaddr_len = माप(*sin);
-		पूर्ण अन्यथा अणु
-			sin6 = (काष्ठा sockaddr_in6 *)uaddr;
+			uaddr_len = sizeof(*sin);
+		} else {
+			sin6 = (struct sockaddr_in6 *)uaddr;
 			sin6->sin6_family = AF_INET6;
 			sin6->sin6_port = rs->rs_bound_port;
 			sin6->sin6_addr = rs->rs_bound_addr;
 			sin6->sin6_flowinfo = 0;
 			sin6->sin6_scope_id = rs->rs_bound_scope_id;
-			uaddr_len = माप(*sin6);
-		पूर्ण
-	पूर्ण
+			uaddr_len = sizeof(*sin6);
+		}
+	}
 
-	वापस uaddr_len;
-पूर्ण
+	return uaddr_len;
+}
 
 /*
- * RDS' poll is without a करोubt the least पूर्णांकuitive part of the पूर्णांकerface,
- * as EPOLLIN and EPOLLOUT करो not behave entirely as you would expect from
+ * RDS' poll is without a doubt the least intuitive part of the interface,
+ * as EPOLLIN and EPOLLOUT do not behave entirely as you would expect from
  * a network protocol.
  *
- * EPOLLIN is निश्चितed अगर
+ * EPOLLIN is asserted if
  *  -	there is data on the receive queue.
- *  -	to संकेत that a previously congested destination may have become
+ *  -	to signal that a previously congested destination may have become
  *	uncongested
- *  -	A notअगरication has been queued to the socket (this can be a congestion
+ *  -	A notification has been queued to the socket (this can be a congestion
  *	update, or a RDMA completion, or a MSG_ZEROCOPY completion).
  *
- * EPOLLOUT is निश्चितed अगर there is room on the send queue. This करोes not mean
+ * EPOLLOUT is asserted if there is room on the send queue. This does not mean
  * however, that the next sendmsg() call will succeed. If the application tries
- * to send to a congested destination, the प्रणाली call may still fail (and
- * वापस ENOBUFS).
+ * to send to a congested destination, the system call may still fail (and
+ * return ENOBUFS).
  */
-अटल __poll_t rds_poll(काष्ठा file *file, काष्ठा socket *sock,
-			     poll_table *रुको)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा rds_sock *rs = rds_sk_to_rs(sk);
+static __poll_t rds_poll(struct file *file, struct socket *sock,
+			     poll_table *wait)
+{
+	struct sock *sk = sock->sk;
+	struct rds_sock *rs = rds_sk_to_rs(sk);
 	__poll_t mask = 0;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
-	poll_रुको(file, sk_sleep(sk), रुको);
+	poll_wait(file, sk_sleep(sk), wait);
 
-	अगर (rs->rs_seen_congestion)
-		poll_रुको(file, &rds_poll_रुकोq, रुको);
+	if (rs->rs_seen_congestion)
+		poll_wait(file, &rds_poll_waitq, wait);
 
-	पढ़ो_lock_irqsave(&rs->rs_recv_lock, flags);
-	अगर (!rs->rs_cong_monitor) अणु
-		/* When a congestion map was updated, we संकेत EPOLLIN क्रम
-		 * "historical" reasons. Applications can also poll क्रम
+	read_lock_irqsave(&rs->rs_recv_lock, flags);
+	if (!rs->rs_cong_monitor) {
+		/* When a congestion map was updated, we signal EPOLLIN for
+		 * "historical" reasons. Applications can also poll for
 		 * WRBAND instead. */
-		अगर (rds_cong_updated_since(&rs->rs_cong_track))
+		if (rds_cong_updated_since(&rs->rs_cong_track))
 			mask |= (EPOLLIN | EPOLLRDNORM | EPOLLWRBAND);
-	पूर्ण अन्यथा अणु
+	} else {
 		spin_lock(&rs->rs_lock);
-		अगर (rs->rs_cong_notअगरy)
+		if (rs->rs_cong_notify)
 			mask |= (EPOLLIN | EPOLLRDNORM);
 		spin_unlock(&rs->rs_lock);
-	पूर्ण
-	अगर (!list_empty(&rs->rs_recv_queue) ||
-	    !list_empty(&rs->rs_notअगरy_queue) ||
+	}
+	if (!list_empty(&rs->rs_recv_queue) ||
+	    !list_empty(&rs->rs_notify_queue) ||
 	    !list_empty(&rs->rs_zcookie_queue.zcookie_head))
 		mask |= (EPOLLIN | EPOLLRDNORM);
-	अगर (rs->rs_snd_bytes < rds_sk_sndbuf(rs))
+	if (rs->rs_snd_bytes < rds_sk_sndbuf(rs))
 		mask |= (EPOLLOUT | EPOLLWRNORM);
-	अगर (sk->sk_err || !skb_queue_empty(&sk->sk_error_queue))
+	if (sk->sk_err || !skb_queue_empty(&sk->sk_error_queue))
 		mask |= POLLERR;
-	पढ़ो_unlock_irqrestore(&rs->rs_recv_lock, flags);
+	read_unlock_irqrestore(&rs->rs_recv_lock, flags);
 
-	/* clear state any समय we wake a seen-congested socket */
-	अगर (mask)
+	/* clear state any time we wake a seen-congested socket */
+	if (mask)
 		rs->rs_seen_congestion = 0;
 
-	वापस mask;
-पूर्ण
+	return mask;
+}
 
-अटल पूर्णांक rds_ioctl(काष्ठा socket *sock, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा rds_sock *rs = rds_sk_to_rs(sock->sk);
+static int rds_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
+{
+	struct rds_sock *rs = rds_sk_to_rs(sock->sk);
 	rds_tos_t utos, tos = 0;
 
-	चयन (cmd) अणु
-	हाल SIOCRDSSETTOS:
-		अगर (get_user(utos, (rds_tos_t __user *)arg))
-			वापस -EFAULT;
+	switch (cmd) {
+	case SIOCRDSSETTOS:
+		if (get_user(utos, (rds_tos_t __user *)arg))
+			return -EFAULT;
 
-		अगर (rs->rs_transport &&
+		if (rs->rs_transport &&
 		    rs->rs_transport->get_tos_map)
 			tos = rs->rs_transport->get_tos_map(utos);
-		अन्यथा
-			वापस -ENOIOCTLCMD;
+		else
+			return -ENOIOCTLCMD;
 
 		spin_lock_bh(&rds_sock_lock);
-		अगर (rs->rs_tos || rs->rs_conn) अणु
+		if (rs->rs_tos || rs->rs_conn) {
 			spin_unlock_bh(&rds_sock_lock);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		rs->rs_tos = tos;
 		spin_unlock_bh(&rds_sock_lock);
-		अवरोध;
-	हाल SIOCRDSGETTOS:
+		break;
+	case SIOCRDSGETTOS:
 		spin_lock_bh(&rds_sock_lock);
 		tos = rs->rs_tos;
 		spin_unlock_bh(&rds_sock_lock);
-		अगर (put_user(tos, (rds_tos_t __user *)arg))
-			वापस -EFAULT;
-		अवरोध;
-	शेष:
-		वापस -ENOIOCTLCMD;
-	पूर्ण
+		if (put_user(tos, (rds_tos_t __user *)arg))
+			return -EFAULT;
+		break;
+	default:
+		return -ENOIOCTLCMD;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rds_cancel_sent_to(काष्ठा rds_sock *rs, sockptr_t optval, पूर्णांक len)
-अणु
-	काष्ठा sockaddr_in6 sin6;
-	काष्ठा sockaddr_in sin;
-	पूर्णांक ret = 0;
+static int rds_cancel_sent_to(struct rds_sock *rs, sockptr_t optval, int len)
+{
+	struct sockaddr_in6 sin6;
+	struct sockaddr_in sin;
+	int ret = 0;
 
-	/* racing with another thपढ़ो binding seems ok here */
-	अगर (ipv6_addr_any(&rs->rs_bound_addr)) अणु
-		ret = -ENOTCONN; /* XXX not a great त्रुटि_सं */
-		जाओ out;
-	पूर्ण
+	/* racing with another thread binding seems ok here */
+	if (ipv6_addr_any(&rs->rs_bound_addr)) {
+		ret = -ENOTCONN; /* XXX not a great errno */
+		goto out;
+	}
 
-	अगर (len < माप(काष्ठा sockaddr_in)) अणु
+	if (len < sizeof(struct sockaddr_in)) {
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण अन्यथा अगर (len < माप(काष्ठा sockaddr_in6)) अणु
+		goto out;
+	} else if (len < sizeof(struct sockaddr_in6)) {
 		/* Assume IPv4 */
-		अगर (copy_from_sockptr(&sin, optval,
-				माप(काष्ठा sockaddr_in))) अणु
+		if (copy_from_sockptr(&sin, optval,
+				sizeof(struct sockaddr_in))) {
 			ret = -EFAULT;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		ipv6_addr_set_v4mapped(sin.sin_addr.s_addr, &sin6.sin6_addr);
 		sin6.sin6_port = sin.sin_port;
-	पूर्ण अन्यथा अणु
-		अगर (copy_from_sockptr(&sin6, optval,
-				   माप(काष्ठा sockaddr_in6))) अणु
+	} else {
+		if (copy_from_sockptr(&sin6, optval,
+				   sizeof(struct sockaddr_in6))) {
 			ret = -EFAULT;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 	rds_send_drop_to(rs, &sin6);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक rds_set_bool_option(अचिन्हित अक्षर *optvar, sockptr_t optval,
-			       पूर्णांक optlen)
-अणु
-	पूर्णांक value;
+static int rds_set_bool_option(unsigned char *optvar, sockptr_t optval,
+			       int optlen)
+{
+	int value;
 
-	अगर (optlen < माप(पूर्णांक))
-		वापस -EINVAL;
-	अगर (copy_from_sockptr(&value, optval, माप(पूर्णांक)))
-		वापस -EFAULT;
+	if (optlen < sizeof(int))
+		return -EINVAL;
+	if (copy_from_sockptr(&value, optval, sizeof(int)))
+		return -EFAULT;
 	*optvar = !!value;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rds_cong_monitor(काष्ठा rds_sock *rs, sockptr_t optval, पूर्णांक optlen)
-अणु
-	पूर्णांक ret;
+static int rds_cong_monitor(struct rds_sock *rs, sockptr_t optval, int optlen)
+{
+	int ret;
 
 	ret = rds_set_bool_option(&rs->rs_cong_monitor, optval, optlen);
-	अगर (ret == 0) अणु
-		अगर (rs->rs_cong_monitor) अणु
+	if (ret == 0) {
+		if (rs->rs_cong_monitor) {
 			rds_cong_add_socket(rs);
-		पूर्ण अन्यथा अणु
-			rds_cong_हटाओ_socket(rs);
+		} else {
+			rds_cong_remove_socket(rs);
 			rs->rs_cong_mask = 0;
-			rs->rs_cong_notअगरy = 0;
-		पूर्ण
-	पूर्ण
-	वापस ret;
-पूर्ण
+			rs->rs_cong_notify = 0;
+		}
+	}
+	return ret;
+}
 
-अटल पूर्णांक rds_set_transport(काष्ठा rds_sock *rs, sockptr_t optval, पूर्णांक optlen)
-अणु
-	पूर्णांक t_type;
+static int rds_set_transport(struct rds_sock *rs, sockptr_t optval, int optlen)
+{
+	int t_type;
 
-	अगर (rs->rs_transport)
-		वापस -EOPNOTSUPP; /* previously attached to transport */
+	if (rs->rs_transport)
+		return -EOPNOTSUPP; /* previously attached to transport */
 
-	अगर (optlen != माप(पूर्णांक))
-		वापस -EINVAL;
+	if (optlen != sizeof(int))
+		return -EINVAL;
 
-	अगर (copy_from_sockptr(&t_type, optval, माप(t_type)))
-		वापस -EFAULT;
+	if (copy_from_sockptr(&t_type, optval, sizeof(t_type)))
+		return -EFAULT;
 
-	अगर (t_type < 0 || t_type >= RDS_TRANS_COUNT)
-		वापस -EINVAL;
+	if (t_type < 0 || t_type >= RDS_TRANS_COUNT)
+		return -EINVAL;
 
 	rs->rs_transport = rds_trans_get(t_type);
 
-	वापस rs->rs_transport ? 0 : -ENOPROTOOPT;
-पूर्ण
+	return rs->rs_transport ? 0 : -ENOPROTOOPT;
+}
 
-अटल पूर्णांक rds_enable_recvtstamp(काष्ठा sock *sk, sockptr_t optval,
-				 पूर्णांक optlen, पूर्णांक optname)
-अणु
-	पूर्णांक val, valbool;
+static int rds_enable_recvtstamp(struct sock *sk, sockptr_t optval,
+				 int optlen, int optname)
+{
+	int val, valbool;
 
-	अगर (optlen != माप(पूर्णांक))
-		वापस -EFAULT;
+	if (optlen != sizeof(int))
+		return -EFAULT;
 
-	अगर (copy_from_sockptr(&val, optval, माप(पूर्णांक)))
-		वापस -EFAULT;
+	if (copy_from_sockptr(&val, optval, sizeof(int)))
+		return -EFAULT;
 
 	valbool = val ? 1 : 0;
 
-	अगर (optname == SO_TIMESTAMP_NEW)
+	if (optname == SO_TIMESTAMP_NEW)
 		sock_set_flag(sk, SOCK_TSTAMP_NEW);
 
-	अगर (valbool)
+	if (valbool)
 		sock_set_flag(sk, SOCK_RCVTSTAMP);
-	अन्यथा
+	else
 		sock_reset_flag(sk, SOCK_RCVTSTAMP);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rds_recv_track_latency(काष्ठा rds_sock *rs, sockptr_t optval,
-				  पूर्णांक optlen)
-अणु
-	काष्ठा rds_rx_trace_so trace;
-	पूर्णांक i;
+static int rds_recv_track_latency(struct rds_sock *rs, sockptr_t optval,
+				  int optlen)
+{
+	struct rds_rx_trace_so trace;
+	int i;
 
-	अगर (optlen != माप(काष्ठा rds_rx_trace_so))
-		वापस -EFAULT;
+	if (optlen != sizeof(struct rds_rx_trace_so))
+		return -EFAULT;
 
-	अगर (copy_from_sockptr(&trace, optval, माप(trace)))
-		वापस -EFAULT;
+	if (copy_from_sockptr(&trace, optval, sizeof(trace)))
+		return -EFAULT;
 
-	अगर (trace.rx_traces > RDS_MSG_RX_DGRAM_TRACE_MAX)
-		वापस -EFAULT;
+	if (trace.rx_traces > RDS_MSG_RX_DGRAM_TRACE_MAX)
+		return -EFAULT;
 
 	rs->rs_rx_traces = trace.rx_traces;
-	क्रम (i = 0; i < rs->rs_rx_traces; i++) अणु
-		अगर (trace.rx_trace_pos[i] > RDS_MSG_RX_DGRAM_TRACE_MAX) अणु
+	for (i = 0; i < rs->rs_rx_traces; i++) {
+		if (trace.rx_trace_pos[i] > RDS_MSG_RX_DGRAM_TRACE_MAX) {
 			rs->rs_rx_traces = 0;
-			वापस -EFAULT;
-		पूर्ण
+			return -EFAULT;
+		}
 		rs->rs_rx_trace[i] = trace.rx_trace_pos[i];
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rds_setsockopt(काष्ठा socket *sock, पूर्णांक level, पूर्णांक optname,
-			  sockptr_t optval, अचिन्हित पूर्णांक optlen)
-अणु
-	काष्ठा rds_sock *rs = rds_sk_to_rs(sock->sk);
-	पूर्णांक ret;
+static int rds_setsockopt(struct socket *sock, int level, int optname,
+			  sockptr_t optval, unsigned int optlen)
+{
+	struct rds_sock *rs = rds_sk_to_rs(sock->sk);
+	int ret;
 
-	अगर (level != SOL_RDS) अणु
+	if (level != SOL_RDS) {
 		ret = -ENOPROTOOPT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	चयन (optname) अणु
-	हाल RDS_CANCEL_SENT_TO:
+	switch (optname) {
+	case RDS_CANCEL_SENT_TO:
 		ret = rds_cancel_sent_to(rs, optval, optlen);
-		अवरोध;
-	हाल RDS_GET_MR:
+		break;
+	case RDS_GET_MR:
 		ret = rds_get_mr(rs, optval, optlen);
-		अवरोध;
-	हाल RDS_GET_MR_FOR_DEST:
-		ret = rds_get_mr_क्रम_dest(rs, optval, optlen);
-		अवरोध;
-	हाल RDS_FREE_MR:
-		ret = rds_मुक्त_mr(rs, optval, optlen);
-		अवरोध;
-	हाल RDS_RECVERR:
+		break;
+	case RDS_GET_MR_FOR_DEST:
+		ret = rds_get_mr_for_dest(rs, optval, optlen);
+		break;
+	case RDS_FREE_MR:
+		ret = rds_free_mr(rs, optval, optlen);
+		break;
+	case RDS_RECVERR:
 		ret = rds_set_bool_option(&rs->rs_recverr, optval, optlen);
-		अवरोध;
-	हाल RDS_CONG_MONITOR:
+		break;
+	case RDS_CONG_MONITOR:
 		ret = rds_cong_monitor(rs, optval, optlen);
-		अवरोध;
-	हाल SO_RDS_TRANSPORT:
+		break;
+	case SO_RDS_TRANSPORT:
 		lock_sock(sock->sk);
 		ret = rds_set_transport(rs, optval, optlen);
 		release_sock(sock->sk);
-		अवरोध;
-	हाल SO_TIMESTAMP_OLD:
-	हाल SO_TIMESTAMP_NEW:
+		break;
+	case SO_TIMESTAMP_OLD:
+	case SO_TIMESTAMP_NEW:
 		lock_sock(sock->sk);
 		ret = rds_enable_recvtstamp(sock->sk, optval, optlen, optname);
 		release_sock(sock->sk);
-		अवरोध;
-	हाल SO_RDS_MSG_RXPATH_LATENCY:
+		break;
+	case SO_RDS_MSG_RXPATH_LATENCY:
 		ret = rds_recv_track_latency(rs, optval, optlen);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -ENOPROTOOPT;
-	पूर्ण
+	}
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक rds_माला_लोockopt(काष्ठा socket *sock, पूर्णांक level, पूर्णांक optname,
-			  अक्षर __user *optval, पूर्णांक __user *optlen)
-अणु
-	काष्ठा rds_sock *rs = rds_sk_to_rs(sock->sk);
-	पूर्णांक ret = -ENOPROTOOPT, len;
-	पूर्णांक trans;
+static int rds_getsockopt(struct socket *sock, int level, int optname,
+			  char __user *optval, int __user *optlen)
+{
+	struct rds_sock *rs = rds_sk_to_rs(sock->sk);
+	int ret = -ENOPROTOOPT, len;
+	int trans;
 
-	अगर (level != SOL_RDS)
-		जाओ out;
+	if (level != SOL_RDS)
+		goto out;
 
-	अगर (get_user(len, optlen)) अणु
+	if (get_user(len, optlen)) {
 		ret = -EFAULT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	चयन (optname) अणु
-	हाल RDS_INFO_FIRST ... RDS_INFO_LAST:
-		ret = rds_info_माला_लोockopt(sock, optname, optval,
+	switch (optname) {
+	case RDS_INFO_FIRST ... RDS_INFO_LAST:
+		ret = rds_info_getsockopt(sock, optname, optval,
 					  optlen);
-		अवरोध;
+		break;
 
-	हाल RDS_RECVERR:
-		अगर (len < माप(पूर्णांक))
+	case RDS_RECVERR:
+		if (len < sizeof(int))
 			ret = -EINVAL;
-		अन्यथा
-		अगर (put_user(rs->rs_recverr, (पूर्णांक __user *) optval) ||
-		    put_user(माप(पूर्णांक), optlen))
+		else
+		if (put_user(rs->rs_recverr, (int __user *) optval) ||
+		    put_user(sizeof(int), optlen))
 			ret = -EFAULT;
-		अन्यथा
+		else
 			ret = 0;
-		अवरोध;
-	हाल SO_RDS_TRANSPORT:
-		अगर (len < माप(पूर्णांक)) अणु
+		break;
+	case SO_RDS_TRANSPORT:
+		if (len < sizeof(int)) {
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		trans = (rs->rs_transport ? rs->rs_transport->t_type :
 			 RDS_TRANS_NONE); /* unbound */
-		अगर (put_user(trans, (पूर्णांक __user *)optval) ||
-		    put_user(माप(पूर्णांक), optlen))
+		if (put_user(trans, (int __user *)optval) ||
+		    put_user(sizeof(int), optlen))
 			ret = -EFAULT;
-		अन्यथा
+		else
 			ret = 0;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
 out:
-	वापस ret;
+	return ret;
 
-पूर्ण
+}
 
-अटल पूर्णांक rds_connect(काष्ठा socket *sock, काष्ठा sockaddr *uaddr,
-		       पूर्णांक addr_len, पूर्णांक flags)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा sockaddr_in *sin;
-	काष्ठा rds_sock *rs = rds_sk_to_rs(sk);
-	पूर्णांक ret = 0;
+static int rds_connect(struct socket *sock, struct sockaddr *uaddr,
+		       int addr_len, int flags)
+{
+	struct sock *sk = sock->sk;
+	struct sockaddr_in *sin;
+	struct rds_sock *rs = rds_sk_to_rs(sk);
+	int ret = 0;
 
-	अगर (addr_len < दुरत्वend(काष्ठा sockaddr, sa_family))
-		वापस -EINVAL;
+	if (addr_len < offsetofend(struct sockaddr, sa_family))
+		return -EINVAL;
 
 	lock_sock(sk);
 
-	चयन (uaddr->sa_family) अणु
-	हाल AF_INET:
-		sin = (काष्ठा sockaddr_in *)uaddr;
-		अगर (addr_len < माप(काष्ठा sockaddr_in)) अणु
+	switch (uaddr->sa_family) {
+	case AF_INET:
+		sin = (struct sockaddr_in *)uaddr;
+		if (addr_len < sizeof(struct sockaddr_in)) {
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
-		अगर (sin->sin_addr.s_addr == htonl(INADDR_ANY)) अणु
+			break;
+		}
+		if (sin->sin_addr.s_addr == htonl(INADDR_ANY)) {
 			ret = -EDESTADDRREQ;
-			अवरोध;
-		पूर्ण
-		अगर (ipv4_is_multicast(sin->sin_addr.s_addr) ||
-		    sin->sin_addr.s_addr == htonl(INADDR_BROADCAST)) अणु
+			break;
+		}
+		if (ipv4_is_multicast(sin->sin_addr.s_addr) ||
+		    sin->sin_addr.s_addr == htonl(INADDR_BROADCAST)) {
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		ipv6_addr_set_v4mapped(sin->sin_addr.s_addr, &rs->rs_conn_addr);
 		rs->rs_conn_port = sin->sin_port;
-		अवरोध;
+		break;
 
-#अगर IS_ENABLED(CONFIG_IPV6)
-	हाल AF_INET6: अणु
-		काष्ठा sockaddr_in6 *sin6;
-		पूर्णांक addr_type;
+#if IS_ENABLED(CONFIG_IPV6)
+	case AF_INET6: {
+		struct sockaddr_in6 *sin6;
+		int addr_type;
 
-		sin6 = (काष्ठा sockaddr_in6 *)uaddr;
-		अगर (addr_len < माप(काष्ठा sockaddr_in6)) अणु
+		sin6 = (struct sockaddr_in6 *)uaddr;
+		if (addr_len < sizeof(struct sockaddr_in6)) {
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		addr_type = ipv6_addr_type(&sin6->sin6_addr);
-		अगर (!(addr_type & IPV6_ADDR_UNICAST)) अणु
+		if (!(addr_type & IPV6_ADDR_UNICAST)) {
 			__be32 addr4;
 
-			अगर (!(addr_type & IPV6_ADDR_MAPPED)) अणु
+			if (!(addr_type & IPV6_ADDR_MAPPED)) {
 				ret = -EPROTOTYPE;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-			/* It is a mapped address.  Need to करो some sanity
+			/* It is a mapped address.  Need to do some sanity
 			 * checks.
 			 */
 			addr4 = sin6->sin6_addr.s6_addr32[3];
-			अगर (addr4 == htonl(INADDR_ANY) ||
+			if (addr4 == htonl(INADDR_ANY) ||
 			    addr4 == htonl(INADDR_BROADCAST) ||
-			    ipv4_is_multicast(addr4)) अणु
+			    ipv4_is_multicast(addr4)) {
 				ret = -EPROTOTYPE;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 
-		अगर (addr_type & IPV6_ADDR_LINKLOCAL) अणु
+		if (addr_type & IPV6_ADDR_LINKLOCAL) {
 			/* If socket is arleady bound to a link local address,
 			 * the peer address must be on the same link.
 			 */
-			अगर (sin6->sin6_scope_id == 0 ||
+			if (sin6->sin6_scope_id == 0 ||
 			    (!ipv6_addr_any(&rs->rs_bound_addr) &&
 			     rs->rs_bound_scope_id &&
-			     sin6->sin6_scope_id != rs->rs_bound_scope_id)) अणु
+			     sin6->sin6_scope_id != rs->rs_bound_scope_id)) {
 				ret = -EINVAL;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			/* Remember the connected address scope ID.  It will
 			 * be checked against the binding local address when
 			 * the socket is bound.
 			 */
 			rs->rs_bound_scope_id = sin6->sin6_scope_id;
-		पूर्ण
+		}
 		rs->rs_conn_addr = sin6->sin6_addr;
 		rs->rs_conn_port = sin6->sin6_port;
-		अवरोध;
-	पूर्ण
-#पूर्ण_अगर
+		break;
+	}
+#endif
 
-	शेष:
+	default:
 		ret = -EAFNOSUPPORT;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	release_sock(sk);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा proto rds_proto = अणु
+static struct proto rds_proto = {
 	.name	  = "RDS",
 	.owner	  = THIS_MODULE,
-	.obj_size = माप(काष्ठा rds_sock),
-पूर्ण;
+	.obj_size = sizeof(struct rds_sock),
+};
 
-अटल स्थिर काष्ठा proto_ops rds_proto_ops = अणु
+static const struct proto_ops rds_proto_ops = {
 	.family =	AF_RDS,
 	.owner =	THIS_MODULE,
 	.release =	rds_release,
@@ -648,177 +647,177 @@ out:
 	.poll =		rds_poll,
 	.ioctl =	rds_ioctl,
 	.listen =	sock_no_listen,
-	.shutकरोwn =	sock_no_shutकरोwn,
+	.shutdown =	sock_no_shutdown,
 	.setsockopt =	rds_setsockopt,
-	.माला_लोockopt =	rds_माला_लोockopt,
+	.getsockopt =	rds_getsockopt,
 	.sendmsg =	rds_sendmsg,
 	.recvmsg =	rds_recvmsg,
 	.mmap =		sock_no_mmap,
 	.sendpage =	sock_no_sendpage,
-पूर्ण;
+};
 
-अटल व्योम rds_sock_deकाष्ठा(काष्ठा sock *sk)
-अणु
-	काष्ठा rds_sock *rs = rds_sk_to_rs(sk);
+static void rds_sock_destruct(struct sock *sk)
+{
+	struct rds_sock *rs = rds_sk_to_rs(sk);
 
 	WARN_ON((&rs->rs_item != rs->rs_item.next ||
 		 &rs->rs_item != rs->rs_item.prev));
-पूर्ण
+}
 
-अटल पूर्णांक __rds_create(काष्ठा socket *sock, काष्ठा sock *sk, पूर्णांक protocol)
-अणु
-	काष्ठा rds_sock *rs;
+static int __rds_create(struct socket *sock, struct sock *sk, int protocol)
+{
+	struct rds_sock *rs;
 
 	sock_init_data(sock, sk);
 	sock->ops		= &rds_proto_ops;
 	sk->sk_protocol		= protocol;
-	sk->sk_deकाष्ठा		= rds_sock_deकाष्ठा;
+	sk->sk_destruct		= rds_sock_destruct;
 
 	rs = rds_sk_to_rs(sk);
 	spin_lock_init(&rs->rs_lock);
 	rwlock_init(&rs->rs_recv_lock);
 	INIT_LIST_HEAD(&rs->rs_send_queue);
 	INIT_LIST_HEAD(&rs->rs_recv_queue);
-	INIT_LIST_HEAD(&rs->rs_notअगरy_queue);
+	INIT_LIST_HEAD(&rs->rs_notify_queue);
 	INIT_LIST_HEAD(&rs->rs_cong_list);
 	rds_message_zcopy_queue_init(&rs->rs_zcookie_queue);
 	spin_lock_init(&rs->rs_rdma_lock);
 	rs->rs_rdma_keys = RB_ROOT;
 	rs->rs_rx_traces = 0;
 	rs->rs_tos = 0;
-	rs->rs_conn = शून्य;
+	rs->rs_conn = NULL;
 
 	spin_lock_bh(&rds_sock_lock);
 	list_add_tail(&rs->rs_item, &rds_sock_list);
 	rds_sock_count++;
 	spin_unlock_bh(&rds_sock_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rds_create(काष्ठा net *net, काष्ठा socket *sock, पूर्णांक protocol,
-		      पूर्णांक kern)
-अणु
-	काष्ठा sock *sk;
+static int rds_create(struct net *net, struct socket *sock, int protocol,
+		      int kern)
+{
+	struct sock *sk;
 
-	अगर (sock->type != SOCK_SEQPACKET || protocol)
-		वापस -ESOCKTNOSUPPORT;
+	if (sock->type != SOCK_SEQPACKET || protocol)
+		return -ESOCKTNOSUPPORT;
 
 	sk = sk_alloc(net, AF_RDS, GFP_KERNEL, &rds_proto, kern);
-	अगर (!sk)
-		वापस -ENOMEM;
+	if (!sk)
+		return -ENOMEM;
 
-	वापस __rds_create(sock, sk, protocol);
-पूर्ण
+	return __rds_create(sock, sk, protocol);
+}
 
-व्योम rds_sock_addref(काष्ठा rds_sock *rs)
-अणु
+void rds_sock_addref(struct rds_sock *rs)
+{
 	sock_hold(rds_rs_to_sk(rs));
-पूर्ण
+}
 
-व्योम rds_sock_put(काष्ठा rds_sock *rs)
-अणु
+void rds_sock_put(struct rds_sock *rs)
+{
 	sock_put(rds_rs_to_sk(rs));
-पूर्ण
+}
 
-अटल स्थिर काष्ठा net_proto_family rds_family_ops = अणु
+static const struct net_proto_family rds_family_ops = {
 	.family =	AF_RDS,
 	.create =	rds_create,
 	.owner	=	THIS_MODULE,
-पूर्ण;
+};
 
-अटल व्योम rds_sock_inc_info(काष्ठा socket *sock, अचिन्हित पूर्णांक len,
-			      काष्ठा rds_info_iterator *iter,
-			      काष्ठा rds_info_lengths *lens)
-अणु
-	काष्ठा rds_sock *rs;
-	काष्ठा rds_incoming *inc;
-	अचिन्हित पूर्णांक total = 0;
+static void rds_sock_inc_info(struct socket *sock, unsigned int len,
+			      struct rds_info_iterator *iter,
+			      struct rds_info_lengths *lens)
+{
+	struct rds_sock *rs;
+	struct rds_incoming *inc;
+	unsigned int total = 0;
 
-	len /= माप(काष्ठा rds_info_message);
+	len /= sizeof(struct rds_info_message);
 
 	spin_lock_bh(&rds_sock_lock);
 
-	list_क्रम_each_entry(rs, &rds_sock_list, rs_item) अणु
+	list_for_each_entry(rs, &rds_sock_list, rs_item) {
 		/* This option only supports IPv4 sockets. */
-		अगर (!ipv6_addr_v4mapped(&rs->rs_bound_addr))
-			जारी;
+		if (!ipv6_addr_v4mapped(&rs->rs_bound_addr))
+			continue;
 
-		पढ़ो_lock(&rs->rs_recv_lock);
+		read_lock(&rs->rs_recv_lock);
 
-		/* XXX too lazy to मुख्यtain counts.. */
-		list_क्रम_each_entry(inc, &rs->rs_recv_queue, i_item) अणु
+		/* XXX too lazy to maintain counts.. */
+		list_for_each_entry(inc, &rs->rs_recv_queue, i_item) {
 			total++;
-			अगर (total <= len)
+			if (total <= len)
 				rds_inc_info_copy(inc, iter,
 						  inc->i_saddr.s6_addr32[3],
 						  rs->rs_bound_addr_v4,
 						  1);
-		पूर्ण
+		}
 
-		पढ़ो_unlock(&rs->rs_recv_lock);
-	पूर्ण
+		read_unlock(&rs->rs_recv_lock);
+	}
 
 	spin_unlock_bh(&rds_sock_lock);
 
 	lens->nr = total;
-	lens->each = माप(काष्ठा rds_info_message);
-पूर्ण
+	lens->each = sizeof(struct rds_info_message);
+}
 
-#अगर IS_ENABLED(CONFIG_IPV6)
-अटल व्योम rds6_sock_inc_info(काष्ठा socket *sock, अचिन्हित पूर्णांक len,
-			       काष्ठा rds_info_iterator *iter,
-			       काष्ठा rds_info_lengths *lens)
-अणु
-	काष्ठा rds_incoming *inc;
-	अचिन्हित पूर्णांक total = 0;
-	काष्ठा rds_sock *rs;
+#if IS_ENABLED(CONFIG_IPV6)
+static void rds6_sock_inc_info(struct socket *sock, unsigned int len,
+			       struct rds_info_iterator *iter,
+			       struct rds_info_lengths *lens)
+{
+	struct rds_incoming *inc;
+	unsigned int total = 0;
+	struct rds_sock *rs;
 
-	len /= माप(काष्ठा rds6_info_message);
+	len /= sizeof(struct rds6_info_message);
 
 	spin_lock_bh(&rds_sock_lock);
 
-	list_क्रम_each_entry(rs, &rds_sock_list, rs_item) अणु
-		पढ़ो_lock(&rs->rs_recv_lock);
+	list_for_each_entry(rs, &rds_sock_list, rs_item) {
+		read_lock(&rs->rs_recv_lock);
 
-		list_क्रम_each_entry(inc, &rs->rs_recv_queue, i_item) अणु
+		list_for_each_entry(inc, &rs->rs_recv_queue, i_item) {
 			total++;
-			अगर (total <= len)
+			if (total <= len)
 				rds6_inc_info_copy(inc, iter, &inc->i_saddr,
 						   &rs->rs_bound_addr, 1);
-		पूर्ण
+		}
 
-		पढ़ो_unlock(&rs->rs_recv_lock);
-	पूर्ण
+		read_unlock(&rs->rs_recv_lock);
+	}
 
 	spin_unlock_bh(&rds_sock_lock);
 
 	lens->nr = total;
-	lens->each = माप(काष्ठा rds6_info_message);
-पूर्ण
-#पूर्ण_अगर
+	lens->each = sizeof(struct rds6_info_message);
+}
+#endif
 
-अटल व्योम rds_sock_info(काष्ठा socket *sock, अचिन्हित पूर्णांक len,
-			  काष्ठा rds_info_iterator *iter,
-			  काष्ठा rds_info_lengths *lens)
-अणु
-	काष्ठा rds_info_socket sinfo;
-	अचिन्हित पूर्णांक cnt = 0;
-	काष्ठा rds_sock *rs;
+static void rds_sock_info(struct socket *sock, unsigned int len,
+			  struct rds_info_iterator *iter,
+			  struct rds_info_lengths *lens)
+{
+	struct rds_info_socket sinfo;
+	unsigned int cnt = 0;
+	struct rds_sock *rs;
 
-	len /= माप(काष्ठा rds_info_socket);
+	len /= sizeof(struct rds_info_socket);
 
 	spin_lock_bh(&rds_sock_lock);
 
-	अगर (len < rds_sock_count) अणु
+	if (len < rds_sock_count) {
 		cnt = rds_sock_count;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	list_क्रम_each_entry(rs, &rds_sock_list, rs_item) अणु
+	list_for_each_entry(rs, &rds_sock_list, rs_item) {
 		/* This option only supports IPv4 sockets. */
-		अगर (!ipv6_addr_v4mapped(&rs->rs_bound_addr))
-			जारी;
+		if (!ipv6_addr_v4mapped(&rs->rs_bound_addr))
+			continue;
 		sinfo.sndbuf = rds_sk_sndbuf(rs);
 		sinfo.rcvbuf = rds_sk_rcvbuf(rs);
 		sinfo.bound_addr = rs->rs_bound_addr_v4;
@@ -827,33 +826,33 @@ out:
 		sinfo.connected_port = rs->rs_conn_port;
 		sinfo.inum = sock_i_ino(rds_rs_to_sk(rs));
 
-		rds_info_copy(iter, &sinfo, माप(sinfo));
+		rds_info_copy(iter, &sinfo, sizeof(sinfo));
 		cnt++;
-	पूर्ण
+	}
 
 out:
 	lens->nr = cnt;
-	lens->each = माप(काष्ठा rds_info_socket);
+	lens->each = sizeof(struct rds_info_socket);
 
 	spin_unlock_bh(&rds_sock_lock);
-पूर्ण
+}
 
-#अगर IS_ENABLED(CONFIG_IPV6)
-अटल व्योम rds6_sock_info(काष्ठा socket *sock, अचिन्हित पूर्णांक len,
-			   काष्ठा rds_info_iterator *iter,
-			   काष्ठा rds_info_lengths *lens)
-अणु
-	काष्ठा rds6_info_socket sinfo6;
-	काष्ठा rds_sock *rs;
+#if IS_ENABLED(CONFIG_IPV6)
+static void rds6_sock_info(struct socket *sock, unsigned int len,
+			   struct rds_info_iterator *iter,
+			   struct rds_info_lengths *lens)
+{
+	struct rds6_info_socket sinfo6;
+	struct rds_sock *rs;
 
-	len /= माप(काष्ठा rds6_info_socket);
+	len /= sizeof(struct rds6_info_socket);
 
 	spin_lock_bh(&rds_sock_lock);
 
-	अगर (len < rds_sock_count)
-		जाओ out;
+	if (len < rds_sock_count)
+		goto out;
 
-	list_क्रम_each_entry(rs, &rds_sock_list, rs_item) अणु
+	list_for_each_entry(rs, &rds_sock_list, rs_item) {
 		sinfo6.sndbuf = rds_sk_sndbuf(rs);
 		sinfo6.rcvbuf = rds_sk_rcvbuf(rs);
 		sinfo6.bound_addr = rs->rs_bound_addr;
@@ -862,99 +861,99 @@ out:
 		sinfo6.connected_port = rs->rs_conn_port;
 		sinfo6.inum = sock_i_ino(rds_rs_to_sk(rs));
 
-		rds_info_copy(iter, &sinfo6, माप(sinfo6));
-	पूर्ण
+		rds_info_copy(iter, &sinfo6, sizeof(sinfo6));
+	}
 
  out:
 	lens->nr = rds_sock_count;
-	lens->each = माप(काष्ठा rds6_info_socket);
+	lens->each = sizeof(struct rds6_info_socket);
 
 	spin_unlock_bh(&rds_sock_lock);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-अटल व्योम rds_निकास(व्योम)
-अणु
-	sock_unरेजिस्टर(rds_family_ops.family);
-	proto_unरेजिस्टर(&rds_proto);
-	rds_conn_निकास();
-	rds_cong_निकास();
-	rds_sysctl_निकास();
-	rds_thपढ़ोs_निकास();
-	rds_stats_निकास();
-	rds_page_निकास();
+static void rds_exit(void)
+{
+	sock_unregister(rds_family_ops.family);
+	proto_unregister(&rds_proto);
+	rds_conn_exit();
+	rds_cong_exit();
+	rds_sysctl_exit();
+	rds_threads_exit();
+	rds_stats_exit();
+	rds_page_exit();
 	rds_bind_lock_destroy();
-	rds_info_deरेजिस्टर_func(RDS_INFO_SOCKETS, rds_sock_info);
-	rds_info_deरेजिस्टर_func(RDS_INFO_RECV_MESSAGES, rds_sock_inc_info);
-#अगर IS_ENABLED(CONFIG_IPV6)
-	rds_info_deरेजिस्टर_func(RDS6_INFO_SOCKETS, rds6_sock_info);
-	rds_info_deरेजिस्टर_func(RDS6_INFO_RECV_MESSAGES, rds6_sock_inc_info);
-#पूर्ण_अगर
-पूर्ण
-module_निकास(rds_निकास);
+	rds_info_deregister_func(RDS_INFO_SOCKETS, rds_sock_info);
+	rds_info_deregister_func(RDS_INFO_RECV_MESSAGES, rds_sock_inc_info);
+#if IS_ENABLED(CONFIG_IPV6)
+	rds_info_deregister_func(RDS6_INFO_SOCKETS, rds6_sock_info);
+	rds_info_deregister_func(RDS6_INFO_RECV_MESSAGES, rds6_sock_inc_info);
+#endif
+}
+module_exit(rds_exit);
 
 u32 rds_gen_num;
 
-अटल पूर्णांक rds_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int rds_init(void)
+{
+	int ret;
 
-	net_get_अक्रमom_once(&rds_gen_num, माप(rds_gen_num));
+	net_get_random_once(&rds_gen_num, sizeof(rds_gen_num));
 
 	ret = rds_bind_lock_init();
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	ret = rds_conn_init();
-	अगर (ret)
-		जाओ out_bind;
+	if (ret)
+		goto out_bind;
 
-	ret = rds_thपढ़ोs_init();
-	अगर (ret)
-		जाओ out_conn;
+	ret = rds_threads_init();
+	if (ret)
+		goto out_conn;
 	ret = rds_sysctl_init();
-	अगर (ret)
-		जाओ out_thपढ़ोs;
+	if (ret)
+		goto out_threads;
 	ret = rds_stats_init();
-	अगर (ret)
-		जाओ out_sysctl;
-	ret = proto_रेजिस्टर(&rds_proto, 1);
-	अगर (ret)
-		जाओ out_stats;
-	ret = sock_रेजिस्टर(&rds_family_ops);
-	अगर (ret)
-		जाओ out_proto;
+	if (ret)
+		goto out_sysctl;
+	ret = proto_register(&rds_proto, 1);
+	if (ret)
+		goto out_stats;
+	ret = sock_register(&rds_family_ops);
+	if (ret)
+		goto out_proto;
 
-	rds_info_रेजिस्टर_func(RDS_INFO_SOCKETS, rds_sock_info);
-	rds_info_रेजिस्टर_func(RDS_INFO_RECV_MESSAGES, rds_sock_inc_info);
-#अगर IS_ENABLED(CONFIG_IPV6)
-	rds_info_रेजिस्टर_func(RDS6_INFO_SOCKETS, rds6_sock_info);
-	rds_info_रेजिस्टर_func(RDS6_INFO_RECV_MESSAGES, rds6_sock_inc_info);
-#पूर्ण_अगर
+	rds_info_register_func(RDS_INFO_SOCKETS, rds_sock_info);
+	rds_info_register_func(RDS_INFO_RECV_MESSAGES, rds_sock_inc_info);
+#if IS_ENABLED(CONFIG_IPV6)
+	rds_info_register_func(RDS6_INFO_SOCKETS, rds6_sock_info);
+	rds_info_register_func(RDS6_INFO_RECV_MESSAGES, rds6_sock_inc_info);
+#endif
 
-	जाओ out;
+	goto out;
 
 out_proto:
-	proto_unरेजिस्टर(&rds_proto);
+	proto_unregister(&rds_proto);
 out_stats:
-	rds_stats_निकास();
+	rds_stats_exit();
 out_sysctl:
-	rds_sysctl_निकास();
-out_thपढ़ोs:
-	rds_thपढ़ोs_निकास();
+	rds_sysctl_exit();
+out_threads:
+	rds_threads_exit();
 out_conn:
-	rds_conn_निकास();
-	rds_cong_निकास();
-	rds_page_निकास();
+	rds_conn_exit();
+	rds_cong_exit();
+	rds_page_exit();
 out_bind:
 	rds_bind_lock_destroy();
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 module_init(rds_init);
 
-#घोषणा DRV_VERSION     "4.0"
-#घोषणा DRV_RELDATE     "Feb 12, 2009"
+#define DRV_VERSION     "4.0"
+#define DRV_RELDATE     "Feb 12, 2009"
 
 MODULE_AUTHOR("Oracle Corporation <rds-devel@oss.oracle.com>");
 MODULE_DESCRIPTION("RDS: Reliable Datagram Sockets"

@@ -1,213 +1,212 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2015 Anton Ivanov (aivanov@अणुbrocade.com,kot-begemot.co.ukपूर्ण)
+ * Copyright (C) 2015 Anton Ivanov (aivanov@{brocade.com,kot-begemot.co.uk})
  * Copyright (C) 2015 Thomas Meyer (thomas@m3y3r.de)
  * Copyright (C) 2004 PathScale, Inc
- * Copyright (C) 2004 - 2007 Jeff Dike (jdike@अणुaddtoit,linux.पूर्णांकelपूर्ण.com)
+ * Copyright (C) 2004 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
  */
 
-#समावेश <मानककोष.स>
-#समावेश <मानकतर्क.स>
-#समावेश <त्रुटिसं.स>
-#समावेश <संकेत.स>
-#समावेश <माला.स>
-#समावेश <strings.h>
-#समावेश <as-layout.h>
-#समावेश <kern_util.h>
-#समावेश <os.h>
-#समावेश <sysdep/mcontext.h>
-#समावेश <um_दो_स्मृति.h>
-#समावेश <sys/ucontext.h>
+#include <stdlib.h>
+#include <stdarg.h>
+#include <errno.h>
+#include <signal.h>
+#include <string.h>
+#include <strings.h>
+#include <as-layout.h>
+#include <kern_util.h>
+#include <os.h>
+#include <sysdep/mcontext.h>
+#include <um_malloc.h>
+#include <sys/ucontext.h>
 
-व्योम (*sig_info[NSIG])(पूर्णांक, काष्ठा siginfo *, काष्ठा uml_pt_regs *) = अणु
-	[SIGTRAP]	= relay_संकेत,
-	[संक_भ_त्रुटि]	= relay_संकेत,
-	[संक_अवैध]	= relay_संकेत,
+void (*sig_info[NSIG])(int, struct siginfo *, struct uml_pt_regs *) = {
+	[SIGTRAP]	= relay_signal,
+	[SIGFPE]	= relay_signal,
+	[SIGILL]	= relay_signal,
 	[SIGWINCH]	= winch,
 	[SIGBUS]	= bus_handler,
-	[संक_अंश]	= segv_handler,
+	[SIGSEGV]	= segv_handler,
 	[SIGIO]		= sigio_handler,
-पूर्ण;
+};
 
-अटल व्योम sig_handler_common(पूर्णांक sig, काष्ठा siginfo *si, mcontext_t *mc)
-अणु
-	काष्ठा uml_pt_regs r;
-	पूर्णांक save_त्रुटि_सं = त्रुटि_सं;
+static void sig_handler_common(int sig, struct siginfo *si, mcontext_t *mc)
+{
+	struct uml_pt_regs r;
+	int save_errno = errno;
 
 	r.is_user = 0;
-	अगर (sig == संक_अंश) अणु
+	if (sig == SIGSEGV) {
 		/* For segfaults, we want the data from the sigcontext. */
 		get_regs_from_mc(&r, mc);
 		GET_FAULTINFO_FROM_MC(r.faultinfo, mc);
-	पूर्ण
+	}
 
-	/* enable संकेतs अगर sig isn't IRQ संकेत */
-	अगर ((sig != SIGIO) && (sig != SIGWINCH))
-		unblock_संकेतs_trace();
+	/* enable signals if sig isn't IRQ signal */
+	if ((sig != SIGIO) && (sig != SIGWINCH))
+		unblock_signals_trace();
 
 	(*sig_info[sig])(sig, si, &r);
 
-	त्रुटि_सं = save_त्रुटि_सं;
-पूर्ण
+	errno = save_errno;
+}
 
 /*
- * These are the asynchronous संकेतs.  SIGPROF is excluded because we want to
+ * These are the asynchronous signals.  SIGPROF is excluded because we want to
  * be able to profile all of UML, not just the non-critical sections.  If
- * profiling is not thपढ़ो-safe, then that is not my problem.  We can disable
- * profiling when SMP is enabled in that हाल.
+ * profiling is not thread-safe, then that is not my problem.  We can disable
+ * profiling when SMP is enabled in that case.
  */
-#घोषणा SIGIO_BIT 0
-#घोषणा SIGIO_MASK (1 << SIGIO_BIT)
+#define SIGIO_BIT 0
+#define SIGIO_MASK (1 << SIGIO_BIT)
 
-#घोषणा SIGALRM_BIT 1
-#घोषणा SIGALRM_MASK (1 << SIGALRM_BIT)
+#define SIGALRM_BIT 1
+#define SIGALRM_MASK (1 << SIGALRM_BIT)
 
-अटल पूर्णांक संकेतs_enabled;
-अटल अचिन्हित पूर्णांक संकेतs_pending;
-अटल अचिन्हित पूर्णांक संकेतs_active = 0;
+static int signals_enabled;
+static unsigned int signals_pending;
+static unsigned int signals_active = 0;
 
-व्योम sig_handler(पूर्णांक sig, काष्ठा siginfo *si, mcontext_t *mc)
-अणु
-	पूर्णांक enabled;
+void sig_handler(int sig, struct siginfo *si, mcontext_t *mc)
+{
+	int enabled;
 
-	enabled = संकेतs_enabled;
-	अगर (!enabled && (sig == SIGIO)) अणु
-		संकेतs_pending |= SIGIO_MASK;
-		वापस;
-	पूर्ण
+	enabled = signals_enabled;
+	if (!enabled && (sig == SIGIO)) {
+		signals_pending |= SIGIO_MASK;
+		return;
+	}
 
-	block_संकेतs_trace();
+	block_signals_trace();
 
 	sig_handler_common(sig, si, mc);
 
-	set_संकेतs_trace(enabled);
-पूर्ण
+	set_signals_trace(enabled);
+}
 
-अटल व्योम समयr_real_alarm_handler(mcontext_t *mc)
-अणु
-	काष्ठा uml_pt_regs regs;
+static void timer_real_alarm_handler(mcontext_t *mc)
+{
+	struct uml_pt_regs regs;
 
-	अगर (mc != शून्य)
+	if (mc != NULL)
 		get_regs_from_mc(&regs, mc);
-	अन्यथा
-		स_रखो(&regs, 0, माप(regs));
-	समयr_handler(SIGALRM, शून्य, &regs);
-पूर्ण
+	else
+		memset(&regs, 0, sizeof(regs));
+	timer_handler(SIGALRM, NULL, &regs);
+}
 
-व्योम समयr_alarm_handler(पूर्णांक sig, काष्ठा siginfo *unused_si, mcontext_t *mc)
-अणु
-	पूर्णांक enabled;
+void timer_alarm_handler(int sig, struct siginfo *unused_si, mcontext_t *mc)
+{
+	int enabled;
 
-	enabled = संकेतs_enabled;
-	अगर (!संकेतs_enabled) अणु
-		संकेतs_pending |= SIGALRM_MASK;
-		वापस;
-	पूर्ण
+	enabled = signals_enabled;
+	if (!signals_enabled) {
+		signals_pending |= SIGALRM_MASK;
+		return;
+	}
 
-	block_संकेतs_trace();
+	block_signals_trace();
 
-	संकेतs_active |= SIGALRM_MASK;
+	signals_active |= SIGALRM_MASK;
 
-	समयr_real_alarm_handler(mc);
+	timer_real_alarm_handler(mc);
 
-	संकेतs_active &= ~SIGALRM_MASK;
+	signals_active &= ~SIGALRM_MASK;
 
-	set_संकेतs_trace(enabled);
-पूर्ण
+	set_signals_trace(enabled);
+}
 
-व्योम deliver_alarm(व्योम) अणु
-    समयr_alarm_handler(SIGALRM, शून्य, शून्य);
-पूर्ण
+void deliver_alarm(void) {
+    timer_alarm_handler(SIGALRM, NULL, NULL);
+}
 
-व्योम समयr_set_संकेत_handler(व्योम)
-अणु
+void timer_set_signal_handler(void)
+{
 	set_handler(SIGALRM);
-पूर्ण
+}
 
-व्योम set_sigstack(व्योम *sig_stack, पूर्णांक size)
-अणु
-	stack_t stack = अणु
+void set_sigstack(void *sig_stack, int size)
+{
+	stack_t stack = {
 		.ss_flags = 0,
 		.ss_sp = sig_stack,
-		.ss_size = size - माप(व्योम *)
-	पूर्ण;
+		.ss_size = size - sizeof(void *)
+	};
 
-	अगर (sigaltstack(&stack, शून्य) != 0)
-		panic("enabling signal stack failed, errno = %d\n", त्रुटि_सं);
-पूर्ण
+	if (sigaltstack(&stack, NULL) != 0)
+		panic("enabling signal stack failed, errno = %d\n", errno);
+}
 
-अटल व्योम sigusr1_handler(पूर्णांक sig, काष्ठा siginfo *unused_si, mcontext_t *mc)
-अणु
+static void sigusr1_handler(int sig, struct siginfo *unused_si, mcontext_t *mc)
+{
 	uml_pm_wake();
-पूर्ण
+}
 
-व्योम रेजिस्टर_pm_wake_संकेत(व्योम)
-अणु
+void register_pm_wake_signal(void)
+{
 	set_handler(SIGUSR1);
-पूर्ण
+}
 
-अटल व्योम (*handlers[_NSIG])(पूर्णांक sig, काष्ठा siginfo *si, mcontext_t *mc) = अणु
-	[संक_अंश] = sig_handler,
+static void (*handlers[_NSIG])(int sig, struct siginfo *si, mcontext_t *mc) = {
+	[SIGSEGV] = sig_handler,
 	[SIGBUS] = sig_handler,
-	[संक_अवैध] = sig_handler,
-	[संक_भ_त्रुटि] = sig_handler,
+	[SIGILL] = sig_handler,
+	[SIGFPE] = sig_handler,
 	[SIGTRAP] = sig_handler,
 
 	[SIGIO] = sig_handler,
 	[SIGWINCH] = sig_handler,
-	[SIGALRM] = समयr_alarm_handler,
+	[SIGALRM] = timer_alarm_handler,
 
 	[SIGUSR1] = sigusr1_handler,
-पूर्ण;
+};
 
-अटल व्योम hard_handler(पूर्णांक sig, siginfo_t *si, व्योम *p)
-अणु
+static void hard_handler(int sig, siginfo_t *si, void *p)
+{
 	ucontext_t *uc = p;
 	mcontext_t *mc = &uc->uc_mcontext;
-	अचिन्हित दीर्घ pending = 1UL << sig;
+	unsigned long pending = 1UL << sig;
 
-	करो अणु
-		पूर्णांक nested, bail;
+	do {
+		int nested, bail;
 
 		/*
-		 * pending comes back with one bit set क्रम each
-		 * पूर्णांकerrupt that arrived जबतक setting up the stack,
-		 * plus a bit क्रम this पूर्णांकerrupt, plus the zero bit is
-		 * set अगर this is a nested पूर्णांकerrupt.
-		 * If bail is true, then we पूर्णांकerrupted another
-		 * handler setting up the stack.  In this हाल, we
-		 * have to वापस, and the upper handler will deal
-		 * with this पूर्णांकerrupt.
+		 * pending comes back with one bit set for each
+		 * interrupt that arrived while setting up the stack,
+		 * plus a bit for this interrupt, plus the zero bit is
+		 * set if this is a nested interrupt.
+		 * If bail is true, then we interrupted another
+		 * handler setting up the stack.  In this case, we
+		 * have to return, and the upper handler will deal
+		 * with this interrupt.
 		 */
 		bail = to_irq_stack(&pending);
-		अगर (bail)
-			वापस;
+		if (bail)
+			return;
 
 		nested = pending & 1;
 		pending &= ~1;
 
-		जबतक ((sig = ffs(pending)) != 0)अणु
+		while ((sig = ffs(pending)) != 0){
 			sig--;
 			pending &= ~(1 << sig);
-			(*handlers[sig])(sig, (काष्ठा siginfo *)si, mc);
-		पूर्ण
+			(*handlers[sig])(sig, (struct siginfo *)si, mc);
+		}
 
 		/*
-		 * Again, pending comes back with a mask of संकेतs
-		 * that arrived जबतक tearing करोwn the stack.  If this
+		 * Again, pending comes back with a mask of signals
+		 * that arrived while tearing down the stack.  If this
 		 * is non-zero, we just go back, set up the stack
-		 * again, and handle the new पूर्णांकerrupts.
+		 * again, and handle the new interrupts.
 		 */
-		अगर (!nested)
+		if (!nested)
 			pending = from_irq_stack(nested);
-	पूर्ण जबतक (pending);
-पूर्ण
+	} while (pending);
+}
 
-व्योम set_handler(पूर्णांक sig)
-अणु
-	काष्ठा sigaction action;
-	पूर्णांक flags = SA_SIGINFO | SA_ONSTACK;
+void set_handler(int sig)
+{
+	struct sigaction action;
+	int flags = SA_SIGINFO | SA_ONSTACK;
 	sigset_t sig_mask;
 
 	action.sa_sigaction = hard_handler;
@@ -218,161 +217,161 @@
 	sigaddset(&action.sa_mask, SIGWINCH);
 	sigaddset(&action.sa_mask, SIGALRM);
 
-	अगर (sig == संक_अंश)
+	if (sig == SIGSEGV)
 		flags |= SA_NODEFER;
 
-	अगर (sigismember(&action.sa_mask, sig))
-		flags |= SA_RESTART; /* अगर it's an irq संकेत */
+	if (sigismember(&action.sa_mask, sig))
+		flags |= SA_RESTART; /* if it's an irq signal */
 
 	action.sa_flags = flags;
-	action.sa_restorer = शून्य;
-	अगर (sigaction(sig, &action, शून्य) < 0)
-		panic("sigaction failed - errno = %d\n", त्रुटि_सं);
+	action.sa_restorer = NULL;
+	if (sigaction(sig, &action, NULL) < 0)
+		panic("sigaction failed - errno = %d\n", errno);
 
 	sigemptyset(&sig_mask);
 	sigaddset(&sig_mask, sig);
-	अगर (sigprocmask(SIG_UNBLOCK, &sig_mask, शून्य) < 0)
-		panic("sigprocmask failed - errno = %d\n", त्रुटि_सं);
-पूर्ण
+	if (sigprocmask(SIG_UNBLOCK, &sig_mask, NULL) < 0)
+		panic("sigprocmask failed - errno = %d\n", errno);
+}
 
-व्योम send_sigio_to_self(व्योम)
-अणु
-	समाप्त(os_getpid(), SIGIO);
-पूर्ण
+void send_sigio_to_self(void)
+{
+	kill(os_getpid(), SIGIO);
+}
 
-पूर्णांक change_sig(पूर्णांक संकेत, पूर्णांक on)
-अणु
+int change_sig(int signal, int on)
+{
 	sigset_t sigset;
 
 	sigemptyset(&sigset);
-	sigaddset(&sigset, संकेत);
-	अगर (sigprocmask(on ? SIG_UNBLOCK : SIG_BLOCK, &sigset, शून्य) < 0)
-		वापस -त्रुटि_सं;
+	sigaddset(&sigset, signal);
+	if (sigprocmask(on ? SIG_UNBLOCK : SIG_BLOCK, &sigset, NULL) < 0)
+		return -errno;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम block_संकेतs(व्योम)
-अणु
-	संकेतs_enabled = 0;
+void block_signals(void)
+{
+	signals_enabled = 0;
 	/*
-	 * This must वापस with संकेतs disabled, so this barrier
-	 * ensures that ग_लिखोs are flushed out beक्रमe the वापस.
-	 * This might matter अगर gcc figures out how to अंतरभूत this and
-	 * decides to shuffle this code पूर्णांकo the caller.
+	 * This must return with signals disabled, so this barrier
+	 * ensures that writes are flushed out before the return.
+	 * This might matter if gcc figures out how to inline this and
+	 * decides to shuffle this code into the caller.
 	 */
 	barrier();
-पूर्ण
+}
 
-व्योम unblock_संकेतs(व्योम)
-अणु
-	पूर्णांक save_pending;
+void unblock_signals(void)
+{
+	int save_pending;
 
-	अगर (संकेतs_enabled == 1)
-		वापस;
+	if (signals_enabled == 1)
+		return;
 
-	संकेतs_enabled = 1;
-#अगर_घोषित UML_CONFIG_UML_TIME_TRAVEL_SUPPORT
-	deliver_समय_प्रकारravel_irqs();
-#पूर्ण_अगर
+	signals_enabled = 1;
+#ifdef UML_CONFIG_UML_TIME_TRAVEL_SUPPORT
+	deliver_time_travel_irqs();
+#endif
 
 	/*
-	 * We loop because the IRQ handler वापसs with पूर्णांकerrupts off.  So,
-	 * पूर्णांकerrupts may have arrived and we need to re-enable them and
-	 * recheck संकेतs_pending.
+	 * We loop because the IRQ handler returns with interrupts off.  So,
+	 * interrupts may have arrived and we need to re-enable them and
+	 * recheck signals_pending.
 	 */
-	जबतक (1) अणु
+	while (1) {
 		/*
-		 * Save and reset save_pending after enabling संकेतs.  This
-		 * way, संकेतs_pending won't be changed while we're पढ़ोing it.
+		 * Save and reset save_pending after enabling signals.  This
+		 * way, signals_pending won't be changed while we're reading it.
 		 *
-		 * Setting संकेतs_enabled and पढ़ोing संकेतs_pending must
+		 * Setting signals_enabled and reading signals_pending must
 		 * happen in this order, so have the barrier here.
 		 */
 		barrier();
 
-		save_pending = संकेतs_pending;
-		अगर (save_pending == 0)
-			वापस;
+		save_pending = signals_pending;
+		if (save_pending == 0)
+			return;
 
-		संकेतs_pending = 0;
+		signals_pending = 0;
 
 		/*
-		 * We have pending पूर्णांकerrupts, so disable संकेतs, as the
+		 * We have pending interrupts, so disable signals, as the
 		 * handlers expect them off when they are called.  They will
 		 * be enabled again above. We need to trace this, as we're
-		 * expected to be enabling पूर्णांकerrupts alपढ़ोy, but any more
-		 * tracing that happens inside the handlers we call क्रम the
-		 * pending संकेतs will mess up the tracing state.
+		 * expected to be enabling interrupts already, but any more
+		 * tracing that happens inside the handlers we call for the
+		 * pending signals will mess up the tracing state.
 		 */
-		संकेतs_enabled = 0;
-		um_trace_संकेतs_off();
+		signals_enabled = 0;
+		um_trace_signals_off();
 
 		/*
 		 * Deal with SIGIO first because the alarm handler might
-		 * schedule, leaving the pending SIGIO stअक्रमed until we come
+		 * schedule, leaving the pending SIGIO stranded until we come
 		 * back here.
 		 *
 		 * SIGIO's handler doesn't use siginfo or mcontext,
-		 * so they can be शून्य.
+		 * so they can be NULL.
 		 */
-		अगर (save_pending & SIGIO_MASK)
-			sig_handler_common(SIGIO, शून्य, शून्य);
+		if (save_pending & SIGIO_MASK)
+			sig_handler_common(SIGIO, NULL, NULL);
 
 		/* Do not reenter the handler */
 
-		अगर ((save_pending & SIGALRM_MASK) && (!(संकेतs_active & SIGALRM_MASK)))
-			समयr_real_alarm_handler(शून्य);
+		if ((save_pending & SIGALRM_MASK) && (!(signals_active & SIGALRM_MASK)))
+			timer_real_alarm_handler(NULL);
 
-		/* Rerun the loop only अगर there is still pending SIGIO and not in TIMER handler */
+		/* Rerun the loop only if there is still pending SIGIO and not in TIMER handler */
 
-		अगर (!(संकेतs_pending & SIGIO_MASK) && (संकेतs_active & SIGALRM_MASK))
-			वापस;
+		if (!(signals_pending & SIGIO_MASK) && (signals_active & SIGALRM_MASK))
+			return;
 
-		/* Re-enable संकेतs and trace that we're करोing so. */
-		um_trace_संकेतs_on();
-		संकेतs_enabled = 1;
-	पूर्ण
-पूर्ण
+		/* Re-enable signals and trace that we're doing so. */
+		um_trace_signals_on();
+		signals_enabled = 1;
+	}
+}
 
-पूर्णांक get_संकेतs(व्योम)
-अणु
-	वापस संकेतs_enabled;
-पूर्ण
+int get_signals(void)
+{
+	return signals_enabled;
+}
 
-पूर्णांक set_संकेतs(पूर्णांक enable)
-अणु
-	पूर्णांक ret;
-	अगर (संकेतs_enabled == enable)
-		वापस enable;
+int set_signals(int enable)
+{
+	int ret;
+	if (signals_enabled == enable)
+		return enable;
 
-	ret = संकेतs_enabled;
-	अगर (enable)
-		unblock_संकेतs();
-	अन्यथा block_संकेतs();
+	ret = signals_enabled;
+	if (enable)
+		unblock_signals();
+	else block_signals();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक set_संकेतs_trace(पूर्णांक enable)
-अणु
-	पूर्णांक ret;
-	अगर (संकेतs_enabled == enable)
-		वापस enable;
+int set_signals_trace(int enable)
+{
+	int ret;
+	if (signals_enabled == enable)
+		return enable;
 
-	ret = संकेतs_enabled;
-	अगर (enable)
-		unblock_संकेतs_trace();
-	अन्यथा
-		block_संकेतs_trace();
+	ret = signals_enabled;
+	if (enable)
+		unblock_signals_trace();
+	else
+		block_signals_trace();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक os_is_संकेत_stack(व्योम)
-अणु
+int os_is_signal_stack(void)
+{
 	stack_t ss;
-	sigaltstack(शून्य, &ss);
+	sigaltstack(NULL, &ss);
 
-	वापस ss.ss_flags & SS_ONSTACK;
-पूर्ण
+	return ss.ss_flags & SS_ONSTACK;
+}

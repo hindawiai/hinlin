@@ -1,30 +1,29 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * These are exported solely क्रम the purpose of mtd_blkdevs.c and mtdअक्षर.c.
- * You should not use them क्रम _anything_ अन्यथा.
+ * These are exported solely for the purpose of mtd_blkdevs.c and mtdchar.c.
+ * You should not use them for _anything_ else.
  */
 
-बाह्य काष्ठा mutex mtd_table_mutex;
-बाह्य काष्ठा backing_dev_info *mtd_bdi;
+extern struct mutex mtd_table_mutex;
+extern struct backing_dev_info *mtd_bdi;
 
-काष्ठा mtd_info *__mtd_next_device(पूर्णांक i);
-पूर्णांक __must_check add_mtd_device(काष्ठा mtd_info *mtd);
-पूर्णांक del_mtd_device(काष्ठा mtd_info *mtd);
-पूर्णांक add_mtd_partitions(काष्ठा mtd_info *, स्थिर काष्ठा mtd_partition *, पूर्णांक);
-पूर्णांक del_mtd_partitions(काष्ठा mtd_info *);
+struct mtd_info *__mtd_next_device(int i);
+int __must_check add_mtd_device(struct mtd_info *mtd);
+int del_mtd_device(struct mtd_info *mtd);
+int add_mtd_partitions(struct mtd_info *, const struct mtd_partition *, int);
+int del_mtd_partitions(struct mtd_info *);
 
-काष्ठा mtd_partitions;
+struct mtd_partitions;
 
-पूर्णांक parse_mtd_partitions(काष्ठा mtd_info *master, स्थिर अक्षर * स्थिर *types,
-			 काष्ठा mtd_part_parser_data *data);
+int parse_mtd_partitions(struct mtd_info *master, const char * const *types,
+			 struct mtd_part_parser_data *data);
 
-व्योम mtd_part_parser_cleanup(काष्ठा mtd_partitions *parts);
+void mtd_part_parser_cleanup(struct mtd_partitions *parts);
 
-पूर्णांक __init init_mtdअक्षर(व्योम);
-व्योम __निकास cleanup_mtdअक्षर(व्योम);
+int __init init_mtdchar(void);
+void __exit cleanup_mtdchar(void);
 
-#घोषणा mtd_क्रम_each_device(mtd)			\
-	क्रम ((mtd) = __mtd_next_device(0);		\
-	     (mtd) != शून्य;				\
+#define mtd_for_each_device(mtd)			\
+	for ((mtd) = __mtd_next_device(0);		\
+	     (mtd) != NULL;				\
 	     (mtd) = __mtd_next_device(mtd->index + 1))

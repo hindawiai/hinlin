@@ -1,23 +1,22 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_BLKPG_H
-#घोषणा _LINUX_BLKPG_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_BLKPG_H
+#define _LINUX_BLKPG_H
 
 /*
  * Partition table and disk geometry handling
  */
 
-#समावेश <linux/compat.h>
-#समावेश <uapi/linux/blkpg.h>
+#include <linux/compat.h>
+#include <uapi/linux/blkpg.h>
 
-#अगर_घोषित CONFIG_COMPAT
-/* For 32-bit/64-bit compatibility of काष्ठा blkpg_ioctl_arg */
-काष्ठा blkpg_compat_ioctl_arg अणु
-	compat_पूर्णांक_t op;
-	compat_पूर्णांक_t flags;
-	compat_पूर्णांक_t datalen;
+#ifdef CONFIG_COMPAT
+/* For 32-bit/64-bit compatibility of struct blkpg_ioctl_arg */
+struct blkpg_compat_ioctl_arg {
+	compat_int_t op;
+	compat_int_t flags;
+	compat_int_t datalen;
 	compat_uptr_t data;
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif
 
-#पूर्ण_अगर /* _LINUX_BLKPG_H */
+#endif /* _LINUX_BLKPG_H */

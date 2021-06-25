@@ -1,62 +1,61 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * MTX-1 platक्रमm devices registration (Au1500)
+ * MTX-1 platform devices registration (Au1500)
  *
- * Copyright (C) 2007-2009, Florian Fainelli <florian@खोलोwrt.org>
+ * Copyright (C) 2007-2009, Florian Fainelli <florian@openwrt.org>
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/leds.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/gpio/machine.h>
-#समावेश <linux/gpio_keys.h>
-#समावेश <linux/input.h>
-#समावेश <linux/mtd/partitions.h>
-#समावेश <linux/mtd/physmap.h>
-#समावेश <mtd/mtd-abi.h>
-#समावेश <यंत्र/bootinfo.h>
-#समावेश <यंत्र/reboot.h>
-#समावेश <यंत्र/setup.h>
-#समावेश <यंत्र/mach-au1x00/au1000.h>
-#समावेश <यंत्र/mach-au1x00/gpio-au1000.h>
-#समावेश <यंत्र/mach-au1x00/au1xxx_eth.h>
-#समावेश <prom.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/kernel.h>
+#include <linux/platform_device.h>
+#include <linux/leds.h>
+#include <linux/gpio.h>
+#include <linux/gpio/machine.h>
+#include <linux/gpio_keys.h>
+#include <linux/input.h>
+#include <linux/mtd/partitions.h>
+#include <linux/mtd/physmap.h>
+#include <mtd/mtd-abi.h>
+#include <asm/bootinfo.h>
+#include <asm/reboot.h>
+#include <asm/setup.h>
+#include <asm/mach-au1x00/au1000.h>
+#include <asm/mach-au1x00/gpio-au1000.h>
+#include <asm/mach-au1x00/au1xxx_eth.h>
+#include <prom.h>
 
-स्थिर अक्षर *get_प्रणाली_type(व्योम)
-अणु
-	वापस "MTX-1";
-पूर्ण
+const char *get_system_type(void)
+{
+	return "MTX-1";
+}
 
-व्योम prom_अक्षर_दो(अक्षर c)
-अणु
-	alchemy_uart_अक्षर_दो(AU1000_UART0_PHYS_ADDR, c);
-पूर्ण
+void prom_putchar(char c)
+{
+	alchemy_uart_putchar(AU1000_UART0_PHYS_ADDR, c);
+}
 
-अटल व्योम mtx1_reset(अक्षर *c)
-अणु
+static void mtx1_reset(char *c)
+{
 	/* Jump to the reset vector */
-	__यंत्र__ __अस्थिर__("jr\t%0" : : "r"(0xbfc00000));
-पूर्ण
+	__asm__ __volatile__("jr\t%0" : : "r"(0xbfc00000));
+}
 
-अटल व्योम mtx1_घातer_off(व्योम)
-अणु
-	जबतक (1)
-		यंत्र अस्थिर (
+static void mtx1_power_off(void)
+{
+	while (1)
+		asm volatile (
 		"	.set	mips32					\n"
 		"	wait						\n"
 		"	.set	mips0					\n");
-पूर्ण
+}
 
-व्योम __init board_setup(व्योम)
-अणु
-#अगर IS_ENABLED(CONFIG_USB_OHCI_HCD)
-	/* Enable USB घातer चयन */
+void __init board_setup(void)
+{
+#if IS_ENABLED(CONFIG_USB_OHCI_HCD)
+	/* Enable USB power switch */
 	alchemy_gpio_direction_output(204, 0);
-#पूर्ण_अगर /* IS_ENABLED(CONFIG_USB_OHCI_HCD) */
+#endif /* IS_ENABLED(CONFIG_USB_OHCI_HCD) */
 
 	/* Initialize sys_pinfunc */
 	alchemy_wrsys(SYS_PF_NI2, AU1000_SYS_PINFUNC);
@@ -72,196 +71,196 @@
 	alchemy_gpio_direction_output(211, 1);	/* green on */
 	alchemy_gpio_direction_output(212, 0);	/* red off */
 
-	pm_घातer_off = mtx1_घातer_off;
-	_machine_halt = mtx1_घातer_off;
+	pm_power_off = mtx1_power_off;
+	_machine_halt = mtx1_power_off;
 	_machine_restart = mtx1_reset;
 
-	prपूर्णांकk(KERN_INFO "4G Systems MTX-1 Board\n");
-पूर्ण
+	printk(KERN_INFO "4G Systems MTX-1 Board\n");
+}
 
 /******************************************************************************/
 
-अटल काष्ठा gpio_keys_button mtx1_gpio_button[] = अणु
-	अणु
+static struct gpio_keys_button mtx1_gpio_button[] = {
+	{
 		.gpio = 207,
 		.code = BTN_0,
 		.desc = "System button",
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल काष्ठा gpio_keys_platक्रमm_data mtx1_buttons_data = अणु
+static struct gpio_keys_platform_data mtx1_buttons_data = {
 	.buttons = mtx1_gpio_button,
 	.nbuttons = ARRAY_SIZE(mtx1_gpio_button),
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device mtx1_button = अणु
+static struct platform_device mtx1_button = {
 	.name = "gpio-keys",
 	.id = -1,
-	.dev = अणु
-		.platक्रमm_data = &mtx1_buttons_data,
-	पूर्ण
-पूर्ण;
+	.dev = {
+		.platform_data = &mtx1_buttons_data,
+	}
+};
 
-अटल काष्ठा gpiod_lookup_table mtx1_wdt_gpio_table = अणु
+static struct gpiod_lookup_table mtx1_wdt_gpio_table = {
 	.dev_id = "mtx1-wdt.0",
-	.table = अणु
+	.table = {
 		/* Global number 215 is offset 15 on Alchemy GPIO 2 */
-		GPIO_LOOKUP("alchemy-gpio2", 15, शून्य, GPIO_ACTIVE_HIGH),
-		अणु पूर्ण,
-	पूर्ण,
-पूर्ण;
+		GPIO_LOOKUP("alchemy-gpio2", 15, NULL, GPIO_ACTIVE_HIGH),
+		{ },
+	},
+};
 
-अटल काष्ठा platक्रमm_device mtx1_wdt = अणु
+static struct platform_device mtx1_wdt = {
 	.name = "mtx1-wdt",
 	.id = 0,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा gpio_led शेष_leds[] = अणु
-	अणु
+static const struct gpio_led default_leds[] = {
+	{
 		.name	= "mtx1:green",
 		.gpio = 211,
-	पूर्ण, अणु
+	}, {
 		.name = "mtx1:red",
 		.gpio = 212,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा gpio_led_platक्रमm_data mtx1_led_data = अणु
-	.num_leds = ARRAY_SIZE(शेष_leds),
-	.leds = शेष_leds,
-पूर्ण;
+static struct gpio_led_platform_data mtx1_led_data = {
+	.num_leds = ARRAY_SIZE(default_leds),
+	.leds = default_leds,
+};
 
-अटल काष्ठा platक्रमm_device mtx1_gpio_leds = अणु
+static struct platform_device mtx1_gpio_leds = {
 	.name = "leds-gpio",
 	.id = -1,
-	.dev = अणु
-		.platक्रमm_data = &mtx1_led_data,
-	पूर्ण
-पूर्ण;
+	.dev = {
+		.platform_data = &mtx1_led_data,
+	}
+};
 
-अटल काष्ठा mtd_partition mtx1_mtd_partitions[] = अणु
-	अणु
+static struct mtd_partition mtx1_mtd_partitions[] = {
+	{
 		.name	= "filesystem",
 		.size	= 0x01C00000,
 		.offset = 0,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name	= "yamon",
 		.size	= 0x00100000,
 		.offset = MTDPART_OFS_APPEND,
 		.mask_flags = MTD_WRITEABLE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name	= "kernel",
 		.size	= 0x002c0000,
 		.offset = MTDPART_OFS_APPEND,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name	= "yamon env",
 		.size	= 0x00040000,
 		.offset = MTDPART_OFS_APPEND,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा physmap_flash_data mtx1_flash_data = अणु
+static struct physmap_flash_data mtx1_flash_data = {
 	.width		= 4,
 	.nr_parts	= 4,
 	.parts		= mtx1_mtd_partitions,
-पूर्ण;
+};
 
-अटल काष्ठा resource mtx1_mtd_resource = अणु
+static struct resource mtx1_mtd_resource = {
 	.start	= 0x1e000000,
 	.end	= 0x1fffffff,
 	.flags	= IORESOURCE_MEM,
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device mtx1_mtd = अणु
+static struct platform_device mtx1_mtd = {
 	.name		= "physmap-flash",
-	.dev		= अणु
-		.platक्रमm_data	= &mtx1_flash_data,
-	पूर्ण,
+	.dev		= {
+		.platform_data	= &mtx1_flash_data,
+	},
 	.num_resources	= 1,
 	.resource	= &mtx1_mtd_resource,
-पूर्ण;
+};
 
-अटल काष्ठा resource alchemy_pci_host_res[] = अणु
-	[0] = अणु
+static struct resource alchemy_pci_host_res[] = {
+	[0] = {
 		.start	= AU1500_PCI_PHYS_ADDR,
 		.end	= AU1500_PCI_PHYS_ADDR + 0xfff,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक mtx1_pci_idsel(अचिन्हित पूर्णांक devsel, पूर्णांक निश्चित)
-अणु
+static int mtx1_pci_idsel(unsigned int devsel, int assert)
+{
 	/* This function is only necessary to support a proprietary Cardbus
 	 * adapter on the mtx-1 "singleboard" variant. It triggers a custom
-	 * logic chip connected to EXT_IO3 (GPIO1) to suppress IDSEL संकेतs.
+	 * logic chip connected to EXT_IO3 (GPIO1) to suppress IDSEL signals.
 	 */
 	udelay(1);
 
-	अगर (निश्चित && devsel != 0)
-		/* Suppress संकेत to Cardbus */
+	if (assert && devsel != 0)
+		/* Suppress signal to Cardbus */
 		alchemy_gpio_set_value(1, 0);	/* set EXT_IO3 OFF */
-	अन्यथा
+	else
 		alchemy_gpio_set_value(1, 1);	/* set EXT_IO3 ON */
 
 	udelay(1);
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल स्थिर अक्षर mtx1_irqtab[][5] = अणु
-	[0] = अणु -1, AU1500_PCI_INTA, AU1500_PCI_INTA, 0xff, 0xff पूर्ण, /* IDSEL 00 - AdapterA-Slot0 (top) */
-	[1] = अणु -1, AU1500_PCI_INTB, AU1500_PCI_INTA, 0xff, 0xff पूर्ण, /* IDSEL 01 - AdapterA-Slot1 (bottom) */
-	[2] = अणु -1, AU1500_PCI_INTC, AU1500_PCI_INTD, 0xff, 0xff पूर्ण, /* IDSEL 02 - AdapterB-Slot0 (top) */
-	[3] = अणु -1, AU1500_PCI_INTD, AU1500_PCI_INTC, 0xff, 0xff पूर्ण, /* IDSEL 03 - AdapterB-Slot1 (bottom) */
-	[4] = अणु -1, AU1500_PCI_INTA, AU1500_PCI_INTB, 0xff, 0xff पूर्ण, /* IDSEL 04 - AdapterC-Slot0 (top) */
-	[5] = अणु -1, AU1500_PCI_INTB, AU1500_PCI_INTA, 0xff, 0xff पूर्ण, /* IDSEL 05 - AdapterC-Slot1 (bottom) */
-	[6] = अणु -1, AU1500_PCI_INTC, AU1500_PCI_INTD, 0xff, 0xff पूर्ण, /* IDSEL 06 - AdapterD-Slot0 (top) */
-	[7] = अणु -1, AU1500_PCI_INTD, AU1500_PCI_INTC, 0xff, 0xff पूर्ण, /* IDSEL 07 - AdapterD-Slot1 (bottom) */
-पूर्ण;
+static const char mtx1_irqtab[][5] = {
+	[0] = { -1, AU1500_PCI_INTA, AU1500_PCI_INTA, 0xff, 0xff }, /* IDSEL 00 - AdapterA-Slot0 (top) */
+	[1] = { -1, AU1500_PCI_INTB, AU1500_PCI_INTA, 0xff, 0xff }, /* IDSEL 01 - AdapterA-Slot1 (bottom) */
+	[2] = { -1, AU1500_PCI_INTC, AU1500_PCI_INTD, 0xff, 0xff }, /* IDSEL 02 - AdapterB-Slot0 (top) */
+	[3] = { -1, AU1500_PCI_INTD, AU1500_PCI_INTC, 0xff, 0xff }, /* IDSEL 03 - AdapterB-Slot1 (bottom) */
+	[4] = { -1, AU1500_PCI_INTA, AU1500_PCI_INTB, 0xff, 0xff }, /* IDSEL 04 - AdapterC-Slot0 (top) */
+	[5] = { -1, AU1500_PCI_INTB, AU1500_PCI_INTA, 0xff, 0xff }, /* IDSEL 05 - AdapterC-Slot1 (bottom) */
+	[6] = { -1, AU1500_PCI_INTC, AU1500_PCI_INTD, 0xff, 0xff }, /* IDSEL 06 - AdapterD-Slot0 (top) */
+	[7] = { -1, AU1500_PCI_INTD, AU1500_PCI_INTC, 0xff, 0xff }, /* IDSEL 07 - AdapterD-Slot1 (bottom) */
+};
 
-अटल पूर्णांक mtx1_map_pci_irq(स्थिर काष्ठा pci_dev *d, u8 slot, u8 pin)
-अणु
-	वापस mtx1_irqtab[slot][pin];
-पूर्ण
+static int mtx1_map_pci_irq(const struct pci_dev *d, u8 slot, u8 pin)
+{
+	return mtx1_irqtab[slot][pin];
+}
 
-अटल काष्ठा alchemy_pci_platdata mtx1_pci_pd = अणु
+static struct alchemy_pci_platdata mtx1_pci_pd = {
 	.board_map_irq	 = mtx1_map_pci_irq,
 	.board_pci_idsel = mtx1_pci_idsel,
 	.pci_cfg_set	 = PCI_CONFIG_AEN | PCI_CONFIG_R2H | PCI_CONFIG_R1H |
 			   PCI_CONFIG_CH |
-#अगर defined(__MIPSEB__)
+#if defined(__MIPSEB__)
 			   PCI_CONFIG_SIC_HWA_DAT | PCI_CONFIG_SM,
-#अन्यथा
+#else
 			   0,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-अटल काष्ठा platक्रमm_device mtx1_pci_host = अणु
-	.dev.platक्रमm_data = &mtx1_pci_pd,
+static struct platform_device mtx1_pci_host = {
+	.dev.platform_data = &mtx1_pci_pd,
 	.name		= "alchemy-pci",
 	.id		= 0,
 	.num_resources	= ARRAY_SIZE(alchemy_pci_host_res),
 	.resource	= alchemy_pci_host_res,
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device *mtx1_devs[] __initdata = अणु
+static struct platform_device *mtx1_devs[] __initdata = {
 	&mtx1_pci_host,
 	&mtx1_gpio_leds,
 	&mtx1_wdt,
 	&mtx1_button,
 	&mtx1_mtd,
-पूर्ण;
+};
 
-अटल काष्ठा au1000_eth_platक्रमm_data mtx1_au1000_eth0_pdata = अणु
+static struct au1000_eth_platform_data mtx1_au1000_eth0_pdata = {
 	.phy_search_highest_addr	= 1,
 	.phy1_search_mac0		= 1,
-पूर्ण;
+};
 
-अटल पूर्णांक __init mtx1_रेजिस्टर_devices(व्योम)
-अणु
-	पूर्णांक rc;
+static int __init mtx1_register_devices(void)
+{
+	int rc;
 
 	irq_set_irq_type(AU1500_GPIO204_INT, IRQ_TYPE_LEVEL_HIGH);
 	irq_set_irq_type(AU1500_GPIO201_INT, IRQ_TYPE_LEVEL_LOW);
@@ -273,14 +272,14 @@
 
 	rc = gpio_request(mtx1_gpio_button[0].gpio,
 					mtx1_gpio_button[0].desc);
-	अगर (rc < 0) अणु
-		prपूर्णांकk(KERN_INFO "mtx1: failed to request %d\n",
+	if (rc < 0) {
+		printk(KERN_INFO "mtx1: failed to request %d\n",
 					mtx1_gpio_button[0].gpio);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	gpio_direction_input(mtx1_gpio_button[0].gpio);
 out:
 	gpiod_add_lookup_table(&mtx1_wdt_gpio_table);
-	वापस platक्रमm_add_devices(mtx1_devs, ARRAY_SIZE(mtx1_devs));
-पूर्ण
-arch_initcall(mtx1_रेजिस्टर_devices);
+	return platform_add_devices(mtx1_devs, ARRAY_SIZE(mtx1_devs));
+}
+arch_initcall(mtx1_register_devices);

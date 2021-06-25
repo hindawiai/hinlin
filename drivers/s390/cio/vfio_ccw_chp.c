@@ -1,150 +1,149 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Channel path related status regions क्रम vfio_ccw
+ * Channel path related status regions for vfio_ccw
  *
  * Copyright IBM Corp. 2020
  *
- * Author(s): Farhan Ali <alअगरm@linux.ibm.com>
+ * Author(s): Farhan Ali <alifm@linux.ibm.com>
  *            Eric Farman <farman@linux.ibm.com>
  */
 
-#समावेश <linux/slab.h>
-#समावेश <linux/vfपन.स>
-#समावेश "vfio_ccw_private.h"
+#include <linux/slab.h>
+#include <linux/vfio.h>
+#include "vfio_ccw_private.h"
 
-अटल sमाप_प्रकार vfio_ccw_schib_region_पढ़ो(काष्ठा vfio_ccw_निजी *निजी,
-					  अक्षर __user *buf, माप_प्रकार count,
+static ssize_t vfio_ccw_schib_region_read(struct vfio_ccw_private *private,
+					  char __user *buf, size_t count,
 					  loff_t *ppos)
-अणु
-	अचिन्हित पूर्णांक i = VFIO_CCW_OFFSET_TO_INDEX(*ppos) - VFIO_CCW_NUM_REGIONS;
+{
+	unsigned int i = VFIO_CCW_OFFSET_TO_INDEX(*ppos) - VFIO_CCW_NUM_REGIONS;
 	loff_t pos = *ppos & VFIO_CCW_OFFSET_MASK;
-	काष्ठा ccw_schib_region *region;
-	पूर्णांक ret;
+	struct ccw_schib_region *region;
+	int ret;
 
-	अगर (pos + count > माप(*region))
-		वापस -EINVAL;
+	if (pos + count > sizeof(*region))
+		return -EINVAL;
 
-	mutex_lock(&निजी->io_mutex);
-	region = निजी->region[i].data;
+	mutex_lock(&private->io_mutex);
+	region = private->region[i].data;
 
-	अगर (cio_update_schib(निजी->sch)) अणु
+	if (cio_update_schib(private->sch)) {
 		ret = -ENODEV;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	स_नकल(region, &निजी->sch->schib, माप(*region));
+	memcpy(region, &private->sch->schib, sizeof(*region));
 
-	अगर (copy_to_user(buf, (व्योम *)region + pos, count)) अणु
+	if (copy_to_user(buf, (void *)region + pos, count)) {
 		ret = -EFAULT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = count;
 
 out:
-	mutex_unlock(&निजी->io_mutex);
-	वापस ret;
-पूर्ण
+	mutex_unlock(&private->io_mutex);
+	return ret;
+}
 
-अटल sमाप_प्रकार vfio_ccw_schib_region_ग_लिखो(काष्ठा vfio_ccw_निजी *निजी,
-					   स्थिर अक्षर __user *buf, माप_प्रकार count,
+static ssize_t vfio_ccw_schib_region_write(struct vfio_ccw_private *private,
+					   const char __user *buf, size_t count,
 					   loff_t *ppos)
-अणु
-	वापस -EINVAL;
-पूर्ण
+{
+	return -EINVAL;
+}
 
 
-अटल व्योम vfio_ccw_schib_region_release(काष्ठा vfio_ccw_निजी *निजी,
-					  काष्ठा vfio_ccw_region *region)
-अणु
+static void vfio_ccw_schib_region_release(struct vfio_ccw_private *private,
+					  struct vfio_ccw_region *region)
+{
 
-पूर्ण
+}
 
-अटल स्थिर काष्ठा vfio_ccw_regops vfio_ccw_schib_region_ops = अणु
-	.पढ़ो = vfio_ccw_schib_region_पढ़ो,
-	.ग_लिखो = vfio_ccw_schib_region_ग_लिखो,
+static const struct vfio_ccw_regops vfio_ccw_schib_region_ops = {
+	.read = vfio_ccw_schib_region_read,
+	.write = vfio_ccw_schib_region_write,
 	.release = vfio_ccw_schib_region_release,
-पूर्ण;
+};
 
-पूर्णांक vfio_ccw_रेजिस्टर_schib_dev_regions(काष्ठा vfio_ccw_निजी *निजी)
-अणु
-	वापस vfio_ccw_रेजिस्टर_dev_region(निजी,
+int vfio_ccw_register_schib_dev_regions(struct vfio_ccw_private *private)
+{
+	return vfio_ccw_register_dev_region(private,
 					    VFIO_REGION_SUBTYPE_CCW_SCHIB,
 					    &vfio_ccw_schib_region_ops,
-					    माप(काष्ठा ccw_schib_region),
+					    sizeof(struct ccw_schib_region),
 					    VFIO_REGION_INFO_FLAG_READ,
-					    निजी->schib_region);
-पूर्ण
+					    private->schib_region);
+}
 
-अटल sमाप_प्रकार vfio_ccw_crw_region_पढ़ो(काष्ठा vfio_ccw_निजी *निजी,
-					अक्षर __user *buf, माप_प्रकार count,
+static ssize_t vfio_ccw_crw_region_read(struct vfio_ccw_private *private,
+					char __user *buf, size_t count,
 					loff_t *ppos)
-अणु
-	अचिन्हित पूर्णांक i = VFIO_CCW_OFFSET_TO_INDEX(*ppos) - VFIO_CCW_NUM_REGIONS;
+{
+	unsigned int i = VFIO_CCW_OFFSET_TO_INDEX(*ppos) - VFIO_CCW_NUM_REGIONS;
 	loff_t pos = *ppos & VFIO_CCW_OFFSET_MASK;
-	काष्ठा ccw_crw_region *region;
-	काष्ठा vfio_ccw_crw *crw;
-	पूर्णांक ret;
+	struct ccw_crw_region *region;
+	struct vfio_ccw_crw *crw;
+	int ret;
 
-	अगर (pos + count > माप(*region))
-		वापस -EINVAL;
+	if (pos + count > sizeof(*region))
+		return -EINVAL;
 
-	crw = list_first_entry_or_null(&निजी->crw,
-				       काष्ठा vfio_ccw_crw, next);
+	crw = list_first_entry_or_null(&private->crw,
+				       struct vfio_ccw_crw, next);
 
-	अगर (crw)
+	if (crw)
 		list_del(&crw->next);
 
-	mutex_lock(&निजी->io_mutex);
-	region = निजी->region[i].data;
+	mutex_lock(&private->io_mutex);
+	region = private->region[i].data;
 
-	अगर (crw)
-		स_नकल(&region->crw, &crw->crw, माप(region->crw));
+	if (crw)
+		memcpy(&region->crw, &crw->crw, sizeof(region->crw));
 
-	अगर (copy_to_user(buf, (व्योम *)region + pos, count))
+	if (copy_to_user(buf, (void *)region + pos, count))
 		ret = -EFAULT;
-	अन्यथा
+	else
 		ret = count;
 
 	region->crw = 0;
 
-	mutex_unlock(&निजी->io_mutex);
+	mutex_unlock(&private->io_mutex);
 
-	kमुक्त(crw);
+	kfree(crw);
 
-	/* Notअगरy the guest अगर more CRWs are on our queue */
-	अगर (!list_empty(&निजी->crw) && निजी->crw_trigger)
-		eventfd_संकेत(निजी->crw_trigger, 1);
+	/* Notify the guest if more CRWs are on our queue */
+	if (!list_empty(&private->crw) && private->crw_trigger)
+		eventfd_signal(private->crw_trigger, 1);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार vfio_ccw_crw_region_ग_लिखो(काष्ठा vfio_ccw_निजी *निजी,
-					 स्थिर अक्षर __user *buf, माप_प्रकार count,
+static ssize_t vfio_ccw_crw_region_write(struct vfio_ccw_private *private,
+					 const char __user *buf, size_t count,
 					 loff_t *ppos)
-अणु
-	वापस -EINVAL;
-पूर्ण
+{
+	return -EINVAL;
+}
 
-अटल व्योम vfio_ccw_crw_region_release(काष्ठा vfio_ccw_निजी *निजी,
-					काष्ठा vfio_ccw_region *region)
-अणु
+static void vfio_ccw_crw_region_release(struct vfio_ccw_private *private,
+					struct vfio_ccw_region *region)
+{
 
-पूर्ण
+}
 
-अटल स्थिर काष्ठा vfio_ccw_regops vfio_ccw_crw_region_ops = अणु
-	.पढ़ो = vfio_ccw_crw_region_पढ़ो,
-	.ग_लिखो = vfio_ccw_crw_region_ग_लिखो,
+static const struct vfio_ccw_regops vfio_ccw_crw_region_ops = {
+	.read = vfio_ccw_crw_region_read,
+	.write = vfio_ccw_crw_region_write,
 	.release = vfio_ccw_crw_region_release,
-पूर्ण;
+};
 
-पूर्णांक vfio_ccw_रेजिस्टर_crw_dev_regions(काष्ठा vfio_ccw_निजी *निजी)
-अणु
-	वापस vfio_ccw_रेजिस्टर_dev_region(निजी,
+int vfio_ccw_register_crw_dev_regions(struct vfio_ccw_private *private)
+{
+	return vfio_ccw_register_dev_region(private,
 					    VFIO_REGION_SUBTYPE_CCW_CRW,
 					    &vfio_ccw_crw_region_ops,
-					    माप(काष्ठा ccw_crw_region),
+					    sizeof(struct ccw_crw_region),
 					    VFIO_REGION_INFO_FLAG_READ,
-					    निजी->crw_region);
-पूर्ण
+					    private->crw_region);
+}

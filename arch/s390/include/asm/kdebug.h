@@ -1,15 +1,14 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _S390_KDEBUG_H
-#घोषणा _S390_KDEBUG_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _S390_KDEBUG_H
+#define _S390_KDEBUG_H
 
 /*
  * Feb 2006 Ported to s390 <grundym@us.ibm.com>
  */
 
-काष्ठा pt_regs;
+struct pt_regs;
 
-क्रमागत die_val अणु
+enum die_val {
 	DIE_OOPS = 1,
 	DIE_BPT,
 	DIE_SSTEP,
@@ -22,8 +21,8 @@
 	DIE_GPF,
 	DIE_CALL,
 	DIE_NMI_IPI,
-पूर्ण;
+};
 
-बाह्य व्योम die(काष्ठा pt_regs *, स्थिर अक्षर *);
+extern void die(struct pt_regs *, const char *);
 
-#पूर्ण_अगर
+#endif

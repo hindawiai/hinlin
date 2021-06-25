@@ -1,264 +1,263 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Example wrapper around BPF macros.
  *
  * Copyright (c) 2012 The Chromium OS Authors <chromium-os-dev@chromium.org>
  * Author: Will Drewry <wad@chromium.org>
  *
- * The code may be used by anyone क्रम any purpose,
- * and can serve as a starting poपूर्णांक क्रम developing
+ * The code may be used by anyone for any purpose,
+ * and can serve as a starting point for developing
  * applications using prctl(PR_SET_SECCOMP, 2, ...).
  *
  * No guarantees are provided with respect to the correctness
  * or functionality of this code.
  */
-#अगर_अघोषित __BPF_HELPER_H__
-#घोषणा __BPF_HELPER_H__
+#ifndef __BPF_HELPER_H__
+#define __BPF_HELPER_H__
 
-#समावेश <यंत्र/bitsperदीर्घ.h>	/* क्रम __BITS_PER_LONG */
-#समावेश <endian.h>
-#समावेश <linux/filter.h>
-#समावेश <linux/seccomp.h>	/* क्रम seccomp_data */
-#समावेश <linux/types.h>
-#समावेश <linux/unistd.h>
-#समावेश <मानकघोष.स>
+#include <asm/bitsperlong.h>	/* for __BITS_PER_LONG */
+#include <endian.h>
+#include <linux/filter.h>
+#include <linux/seccomp.h>	/* for seccomp_data */
+#include <linux/types.h>
+#include <linux/unistd.h>
+#include <stddef.h>
 
-#घोषणा BPF_LABELS_MAX 256
-काष्ठा bpf_labels अणु
-	पूर्णांक count;
-	काष्ठा __bpf_label अणु
-		स्थिर अक्षर *label;
+#define BPF_LABELS_MAX 256
+struct bpf_labels {
+	int count;
+	struct __bpf_label {
+		const char *label;
 		__u32 location;
-	पूर्ण labels[BPF_LABELS_MAX];
-पूर्ण;
+	} labels[BPF_LABELS_MAX];
+};
 
-पूर्णांक bpf_resolve_jumps(काष्ठा bpf_labels *labels,
-		      काष्ठा sock_filter *filter, माप_प्रकार count);
-__u32 seccomp_bpf_label(काष्ठा bpf_labels *labels, स्थिर अक्षर *label);
-व्योम seccomp_bpf_prपूर्णांक(काष्ठा sock_filter *filter, माप_प्रकार count);
+int bpf_resolve_jumps(struct bpf_labels *labels,
+		      struct sock_filter *filter, size_t count);
+__u32 seccomp_bpf_label(struct bpf_labels *labels, const char *label);
+void seccomp_bpf_print(struct sock_filter *filter, size_t count);
 
-#घोषणा JUMP_JT 0xff
-#घोषणा JUMP_JF 0xff
-#घोषणा LABEL_JT 0xfe
-#घोषणा LABEL_JF 0xfe
+#define JUMP_JT 0xff
+#define JUMP_JF 0xff
+#define LABEL_JT 0xfe
+#define LABEL_JF 0xfe
 
-#घोषणा ALLOW \
+#define ALLOW \
 	BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_ALLOW)
-#घोषणा DENY \
+#define DENY \
 	BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL)
-#घोषणा JUMP(labels, label) \
+#define JUMP(labels, label) \
 	BPF_JUMP(BPF_JMP+BPF_JA, FIND_LABEL((labels), (label)), \
 		 JUMP_JT, JUMP_JF)
-#घोषणा LABEL(labels, label) \
+#define LABEL(labels, label) \
 	BPF_JUMP(BPF_JMP+BPF_JA, FIND_LABEL((labels), (label)), \
 		 LABEL_JT, LABEL_JF)
-#घोषणा SYSCALL(nr, jt) \
+#define SYSCALL(nr, jt) \
 	BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, (nr), 0, 1), \
 	jt
 
 /* Lame, but just an example */
-#घोषणा FIND_LABEL(labels, label) seccomp_bpf_label((labels), #label)
+#define FIND_LABEL(labels, label) seccomp_bpf_label((labels), #label)
 
-#घोषणा EXPAND(...) __VA_ARGS__
+#define EXPAND(...) __VA_ARGS__
 
 /* Ensure that we load the logically correct offset. */
-#अगर __BYTE_ORDER == __LITTLE_ENDIAN
-#घोषणा LO_ARG(idx) दुरत्व(काष्ठा seccomp_data, args[(idx)])
-#या_अगर __BYTE_ORDER == __BIG_ENDIAN
-#घोषणा LO_ARG(idx) दुरत्व(काष्ठा seccomp_data, args[(idx)]) + माप(__u32)
-#अन्यथा
-#त्रुटि "Unknown endianness"
-#पूर्ण_अगर
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+#define LO_ARG(idx) offsetof(struct seccomp_data, args[(idx)])
+#elif __BYTE_ORDER == __BIG_ENDIAN
+#define LO_ARG(idx) offsetof(struct seccomp_data, args[(idx)]) + sizeof(__u32)
+#else
+#error "Unknown endianness"
+#endif
 
 /* Map all width-sensitive operations */
-#अगर __BITS_PER_LONG == 32
+#if __BITS_PER_LONG == 32
 
-#घोषणा JEQ(x, jt) JEQ32(x, EXPAND(jt))
-#घोषणा JNE(x, jt) JNE32(x, EXPAND(jt))
-#घोषणा JGT(x, jt) JGT32(x, EXPAND(jt))
-#घोषणा JLT(x, jt) JLT32(x, EXPAND(jt))
-#घोषणा JGE(x, jt) JGE32(x, EXPAND(jt))
-#घोषणा JLE(x, jt) JLE32(x, EXPAND(jt))
-#घोषणा JA(x, jt) JA32(x, EXPAND(jt))
-#घोषणा ARG(i) ARG_32(i)
+#define JEQ(x, jt) JEQ32(x, EXPAND(jt))
+#define JNE(x, jt) JNE32(x, EXPAND(jt))
+#define JGT(x, jt) JGT32(x, EXPAND(jt))
+#define JLT(x, jt) JLT32(x, EXPAND(jt))
+#define JGE(x, jt) JGE32(x, EXPAND(jt))
+#define JLE(x, jt) JLE32(x, EXPAND(jt))
+#define JA(x, jt) JA32(x, EXPAND(jt))
+#define ARG(i) ARG_32(i)
 
-#या_अगर __BITS_PER_LONG == 64
+#elif __BITS_PER_LONG == 64
 
 /* Ensure that we load the logically correct offset. */
-#अगर __BYTE_ORDER == __LITTLE_ENDIAN
-#घोषणा ENDIAN(_lo, _hi) _lo, _hi
-#घोषणा HI_ARG(idx) दुरत्व(काष्ठा seccomp_data, args[(idx)]) + माप(__u32)
-#या_अगर __BYTE_ORDER == __BIG_ENDIAN
-#घोषणा ENDIAN(_lo, _hi) _hi, _lo
-#घोषणा HI_ARG(idx) दुरत्व(काष्ठा seccomp_data, args[(idx)])
-#पूर्ण_अगर
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+#define ENDIAN(_lo, _hi) _lo, _hi
+#define HI_ARG(idx) offsetof(struct seccomp_data, args[(idx)]) + sizeof(__u32)
+#elif __BYTE_ORDER == __BIG_ENDIAN
+#define ENDIAN(_lo, _hi) _hi, _lo
+#define HI_ARG(idx) offsetof(struct seccomp_data, args[(idx)])
+#endif
 
-जोड़ arg64 अणु
-	काष्ठा अणु
+union arg64 {
+	struct {
 		__u32 ENDIAN(lo32, hi32);
-	पूर्ण;
+	};
 	__u64 u64;
-पूर्ण;
+};
 
-#घोषणा JEQ(x, jt) \
-	JEQ64(((जोड़ arg64)अणु.u64 = (x)पूर्ण).lo32, \
-	      ((जोड़ arg64)अणु.u64 = (x)पूर्ण).hi32, \
+#define JEQ(x, jt) \
+	JEQ64(((union arg64){.u64 = (x)}).lo32, \
+	      ((union arg64){.u64 = (x)}).hi32, \
 	      EXPAND(jt))
-#घोषणा JGT(x, jt) \
-	JGT64(((जोड़ arg64)अणु.u64 = (x)पूर्ण).lo32, \
-	      ((जोड़ arg64)अणु.u64 = (x)पूर्ण).hi32, \
+#define JGT(x, jt) \
+	JGT64(((union arg64){.u64 = (x)}).lo32, \
+	      ((union arg64){.u64 = (x)}).hi32, \
 	      EXPAND(jt))
-#घोषणा JGE(x, jt) \
-	JGE64(((जोड़ arg64)अणु.u64 = (x)पूर्ण).lo32, \
-	      ((जोड़ arg64)अणु.u64 = (x)पूर्ण).hi32, \
+#define JGE(x, jt) \
+	JGE64(((union arg64){.u64 = (x)}).lo32, \
+	      ((union arg64){.u64 = (x)}).hi32, \
 	      EXPAND(jt))
-#घोषणा JNE(x, jt) \
-	JNE64(((जोड़ arg64)अणु.u64 = (x)पूर्ण).lo32, \
-	      ((जोड़ arg64)अणु.u64 = (x)पूर्ण).hi32, \
+#define JNE(x, jt) \
+	JNE64(((union arg64){.u64 = (x)}).lo32, \
+	      ((union arg64){.u64 = (x)}).hi32, \
 	      EXPAND(jt))
-#घोषणा JLT(x, jt) \
-	JLT64(((जोड़ arg64)अणु.u64 = (x)पूर्ण).lo32, \
-	      ((जोड़ arg64)अणु.u64 = (x)पूर्ण).hi32, \
+#define JLT(x, jt) \
+	JLT64(((union arg64){.u64 = (x)}).lo32, \
+	      ((union arg64){.u64 = (x)}).hi32, \
 	      EXPAND(jt))
-#घोषणा JLE(x, jt) \
-	JLE64(((जोड़ arg64)अणु.u64 = (x)पूर्ण).lo32, \
-	      ((जोड़ arg64)अणु.u64 = (x)पूर्ण).hi32, \
+#define JLE(x, jt) \
+	JLE64(((union arg64){.u64 = (x)}).lo32, \
+	      ((union arg64){.u64 = (x)}).hi32, \
 	      EXPAND(jt))
 
-#घोषणा JA(x, jt) \
-	JA64(((जोड़ arg64)अणु.u64 = (x)पूर्ण).lo32, \
-	       ((जोड़ arg64)अणु.u64 = (x)पूर्ण).hi32, \
+#define JA(x, jt) \
+	JA64(((union arg64){.u64 = (x)}).lo32, \
+	       ((union arg64){.u64 = (x)}).hi32, \
 	       EXPAND(jt))
-#घोषणा ARG(i) ARG_64(i)
+#define ARG(i) ARG_64(i)
 
-#अन्यथा
-#त्रुटि __BITS_PER_LONG value unusable.
-#पूर्ण_अगर
+#else
+#error __BITS_PER_LONG value unusable.
+#endif
 
-/* Loads the arg पूर्णांकo A */
-#घोषणा ARG_32(idx) \
+/* Loads the arg into A */
+#define ARG_32(idx) \
 	BPF_STMT(BPF_LD+BPF_W+BPF_ABS, LO_ARG(idx))
 
-/* Loads lo पूर्णांकo M[0] and hi पूर्णांकo M[1] and A */
-#घोषणा ARG_64(idx) \
+/* Loads lo into M[0] and hi into M[1] and A */
+#define ARG_64(idx) \
 	BPF_STMT(BPF_LD+BPF_W+BPF_ABS, LO_ARG(idx)), \
 	BPF_STMT(BPF_ST, 0), /* lo -> M[0] */ \
 	BPF_STMT(BPF_LD+BPF_W+BPF_ABS, HI_ARG(idx)), \
 	BPF_STMT(BPF_ST, 1) /* hi -> M[1] */
 
-#घोषणा JEQ32(value, jt) \
+#define JEQ32(value, jt) \
 	BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, (value), 0, 1), \
 	jt
 
-#घोषणा JNE32(value, jt) \
+#define JNE32(value, jt) \
 	BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, (value), 1, 0), \
 	jt
 
-#घोषणा JA32(value, jt) \
+#define JA32(value, jt) \
 	BPF_JUMP(BPF_JMP+BPF_JSET+BPF_K, (value), 0, 1), \
 	jt
 
-#घोषणा JGE32(value, jt) \
+#define JGE32(value, jt) \
 	BPF_JUMP(BPF_JMP+BPF_JGE+BPF_K, (value), 0, 1), \
 	jt
 
-#घोषणा JGT32(value, jt) \
+#define JGT32(value, jt) \
 	BPF_JUMP(BPF_JMP+BPF_JGT+BPF_K, (value), 0, 1), \
 	jt
 
-#घोषणा JLE32(value, jt) \
+#define JLE32(value, jt) \
 	BPF_JUMP(BPF_JMP+BPF_JGT+BPF_K, (value), 1, 0), \
 	jt
 
-#घोषणा JLT32(value, jt) \
+#define JLT32(value, jt) \
 	BPF_JUMP(BPF_JMP+BPF_JGE+BPF_K, (value), 1, 0), \
 	jt
 
 /*
  * All the JXX64 checks assume lo is saved in M[0] and hi is saved in both
- * A and M[1]. This invariant is kept by restoring A अगर necessary.
+ * A and M[1]. This invariant is kept by restoring A if necessary.
  */
-#घोषणा JEQ64(lo, hi, jt) \
-	/* अगर (hi != arg.hi) जाओ NOMATCH; */ \
+#define JEQ64(lo, hi, jt) \
+	/* if (hi != arg.hi) goto NOMATCH; */ \
 	BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, (hi), 0, 5), \
 	BPF_STMT(BPF_LD+BPF_MEM, 0), /* swap in lo */ \
-	/* अगर (lo != arg.lo) जाओ NOMATCH; */ \
+	/* if (lo != arg.lo) goto NOMATCH; */ \
 	BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, (lo), 0, 2), \
 	BPF_STMT(BPF_LD+BPF_MEM, 1), \
 	jt, \
 	BPF_STMT(BPF_LD+BPF_MEM, 1)
 
-#घोषणा JNE64(lo, hi, jt) \
-	/* अगर (hi != arg.hi) जाओ MATCH; */ \
+#define JNE64(lo, hi, jt) \
+	/* if (hi != arg.hi) goto MATCH; */ \
 	BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, (hi), 0, 3), \
 	BPF_STMT(BPF_LD+BPF_MEM, 0), \
-	/* अगर (lo != arg.lo) जाओ MATCH; */ \
+	/* if (lo != arg.lo) goto MATCH; */ \
 	BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, (lo), 2, 0), \
 	BPF_STMT(BPF_LD+BPF_MEM, 1), \
 	jt, \
 	BPF_STMT(BPF_LD+BPF_MEM, 1)
 
-#घोषणा JA64(lo, hi, jt) \
-	/* अगर (hi & arg.hi) जाओ MATCH; */ \
+#define JA64(lo, hi, jt) \
+	/* if (hi & arg.hi) goto MATCH; */ \
 	BPF_JUMP(BPF_JMP+BPF_JSET+BPF_K, (hi), 3, 0), \
 	BPF_STMT(BPF_LD+BPF_MEM, 0), \
-	/* अगर (lo & arg.lo) जाओ MATCH; */ \
+	/* if (lo & arg.lo) goto MATCH; */ \
 	BPF_JUMP(BPF_JMP+BPF_JSET+BPF_K, (lo), 0, 2), \
 	BPF_STMT(BPF_LD+BPF_MEM, 1), \
 	jt, \
 	BPF_STMT(BPF_LD+BPF_MEM, 1)
 
-#घोषणा JGE64(lo, hi, jt) \
-	/* अगर (hi > arg.hi) जाओ MATCH; */ \
+#define JGE64(lo, hi, jt) \
+	/* if (hi > arg.hi) goto MATCH; */ \
 	BPF_JUMP(BPF_JMP+BPF_JGT+BPF_K, (hi), 4, 0), \
-	/* अगर (hi != arg.hi) जाओ NOMATCH; */ \
+	/* if (hi != arg.hi) goto NOMATCH; */ \
 	BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, (hi), 0, 5), \
 	BPF_STMT(BPF_LD+BPF_MEM, 0), \
-	/* अगर (lo >= arg.lo) जाओ MATCH; */ \
+	/* if (lo >= arg.lo) goto MATCH; */ \
 	BPF_JUMP(BPF_JMP+BPF_JGE+BPF_K, (lo), 0, 2), \
 	BPF_STMT(BPF_LD+BPF_MEM, 1), \
 	jt, \
 	BPF_STMT(BPF_LD+BPF_MEM, 1)
 
-#घोषणा JGT64(lo, hi, jt) \
-	/* अगर (hi > arg.hi) जाओ MATCH; */ \
+#define JGT64(lo, hi, jt) \
+	/* if (hi > arg.hi) goto MATCH; */ \
 	BPF_JUMP(BPF_JMP+BPF_JGT+BPF_K, (hi), 4, 0), \
-	/* अगर (hi != arg.hi) जाओ NOMATCH; */ \
+	/* if (hi != arg.hi) goto NOMATCH; */ \
 	BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, (hi), 0, 5), \
 	BPF_STMT(BPF_LD+BPF_MEM, 0), \
-	/* अगर (lo > arg.lo) जाओ MATCH; */ \
+	/* if (lo > arg.lo) goto MATCH; */ \
 	BPF_JUMP(BPF_JMP+BPF_JGT+BPF_K, (lo), 0, 2), \
 	BPF_STMT(BPF_LD+BPF_MEM, 1), \
 	jt, \
 	BPF_STMT(BPF_LD+BPF_MEM, 1)
 
-#घोषणा JLE64(lo, hi, jt) \
-	/* अगर (hi < arg.hi) जाओ MATCH; */ \
+#define JLE64(lo, hi, jt) \
+	/* if (hi < arg.hi) goto MATCH; */ \
 	BPF_JUMP(BPF_JMP+BPF_JGE+BPF_K, (hi), 0, 4), \
-	/* अगर (hi != arg.hi) जाओ NOMATCH; */ \
+	/* if (hi != arg.hi) goto NOMATCH; */ \
 	BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, (hi), 0, 5), \
 	BPF_STMT(BPF_LD+BPF_MEM, 0), \
-	/* अगर (lo <= arg.lo) जाओ MATCH; */ \
+	/* if (lo <= arg.lo) goto MATCH; */ \
 	BPF_JUMP(BPF_JMP+BPF_JGT+BPF_K, (lo), 2, 0), \
 	BPF_STMT(BPF_LD+BPF_MEM, 1), \
 	jt, \
 	BPF_STMT(BPF_LD+BPF_MEM, 1)
 
-#घोषणा JLT64(lo, hi, jt) \
-	/* अगर (hi < arg.hi) जाओ MATCH; */ \
+#define JLT64(lo, hi, jt) \
+	/* if (hi < arg.hi) goto MATCH; */ \
 	BPF_JUMP(BPF_JMP+BPF_JGE+BPF_K, (hi), 0, 4), \
-	/* अगर (hi != arg.hi) जाओ NOMATCH; */ \
+	/* if (hi != arg.hi) goto NOMATCH; */ \
 	BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, (hi), 0, 5), \
 	BPF_STMT(BPF_LD+BPF_MEM, 0), \
-	/* अगर (lo < arg.lo) जाओ MATCH; */ \
+	/* if (lo < arg.lo) goto MATCH; */ \
 	BPF_JUMP(BPF_JMP+BPF_JGE+BPF_K, (lo), 2, 0), \
 	BPF_STMT(BPF_LD+BPF_MEM, 1), \
 	jt, \
 	BPF_STMT(BPF_LD+BPF_MEM, 1)
 
-#घोषणा LOAD_SYSCALL_NR \
+#define LOAD_SYSCALL_NR \
 	BPF_STMT(BPF_LD+BPF_W+BPF_ABS, \
-		 दुरत्व(काष्ठा seccomp_data, nr))
+		 offsetof(struct seccomp_data, nr))
 
-#पूर्ण_अगर  /* __BPF_HELPER_H__ */
+#endif  /* __BPF_HELPER_H__ */

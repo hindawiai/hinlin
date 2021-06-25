@@ -1,166 +1,165 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Range add and subtract
  */
-#समावेश <linux/init.h>
-#समावेश <linux/minmax.h>
-#समावेश <linux/prपूर्णांकk.h>
-#समावेश <linux/sort.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/range.h>
+#include <linux/init.h>
+#include <linux/minmax.h>
+#include <linux/printk.h>
+#include <linux/sort.h>
+#include <linux/string.h>
+#include <linux/range.h>
 
-पूर्णांक add_range(काष्ठा range *range, पूर्णांक az, पूर्णांक nr_range, u64 start, u64 end)
-अणु
-	अगर (start >= end)
-		वापस nr_range;
+int add_range(struct range *range, int az, int nr_range, u64 start, u64 end)
+{
+	if (start >= end)
+		return nr_range;
 
 	/* Out of slots: */
-	अगर (nr_range >= az)
-		वापस nr_range;
+	if (nr_range >= az)
+		return nr_range;
 
 	range[nr_range].start = start;
 	range[nr_range].end = end;
 
 	nr_range++;
 
-	वापस nr_range;
-पूर्ण
+	return nr_range;
+}
 
-पूर्णांक add_range_with_merge(काष्ठा range *range, पूर्णांक az, पूर्णांक nr_range,
+int add_range_with_merge(struct range *range, int az, int nr_range,
 		     u64 start, u64 end)
-अणु
-	पूर्णांक i;
+{
+	int i;
 
-	अगर (start >= end)
-		वापस nr_range;
+	if (start >= end)
+		return nr_range;
 
 	/* get new start/end: */
-	क्रम (i = 0; i < nr_range; i++) अणु
+	for (i = 0; i < nr_range; i++) {
 		u64 common_start, common_end;
 
-		अगर (!range[i].end)
-			जारी;
+		if (!range[i].end)
+			continue;
 
 		common_start = max(range[i].start, start);
 		common_end = min(range[i].end, end);
-		अगर (common_start > common_end)
-			जारी;
+		if (common_start > common_end)
+			continue;
 
 		/* new start/end, will add it back at last */
 		start = min(range[i].start, start);
 		end = max(range[i].end, end);
 
-		स_हटाओ(&range[i], &range[i + 1],
-			(nr_range - (i + 1)) * माप(range[i]));
+		memmove(&range[i], &range[i + 1],
+			(nr_range - (i + 1)) * sizeof(range[i]));
 		range[nr_range - 1].start = 0;
 		range[nr_range - 1].end   = 0;
 		nr_range--;
 		i--;
-	पूर्ण
+	}
 
 	/* Need to add it: */
-	वापस add_range(range, az, nr_range, start, end);
-पूर्ण
+	return add_range(range, az, nr_range, start, end);
+}
 
-व्योम subtract_range(काष्ठा range *range, पूर्णांक az, u64 start, u64 end)
-अणु
-	पूर्णांक i, j;
+void subtract_range(struct range *range, int az, u64 start, u64 end)
+{
+	int i, j;
 
-	अगर (start >= end)
-		वापस;
+	if (start >= end)
+		return;
 
-	क्रम (j = 0; j < az; j++) अणु
-		अगर (!range[j].end)
-			जारी;
+	for (j = 0; j < az; j++) {
+		if (!range[j].end)
+			continue;
 
-		अगर (start <= range[j].start && end >= range[j].end) अणु
+		if (start <= range[j].start && end >= range[j].end) {
 			range[j].start = 0;
 			range[j].end = 0;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (start <= range[j].start && end < range[j].end &&
-		    range[j].start < end) अणु
+		if (start <= range[j].start && end < range[j].end &&
+		    range[j].start < end) {
 			range[j].start = end;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 
-		अगर (start > range[j].start && end >= range[j].end &&
-		    range[j].end > start) अणु
+		if (start > range[j].start && end >= range[j].end &&
+		    range[j].end > start) {
 			range[j].end = start;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (start > range[j].start && end < range[j].end) अणु
+		if (start > range[j].start && end < range[j].end) {
 			/* Find the new spare: */
-			क्रम (i = 0; i < az; i++) अणु
-				अगर (range[i].end == 0)
-					अवरोध;
-			पूर्ण
-			अगर (i < az) अणु
+			for (i = 0; i < az; i++) {
+				if (range[i].end == 0)
+					break;
+			}
+			if (i < az) {
 				range[i].end = range[j].end;
 				range[i].start = end;
-			पूर्ण अन्यथा अणु
+			} else {
 				pr_err("%s: run out of slot in ranges\n",
 					__func__);
-			पूर्ण
+			}
 			range[j].end = start;
-			जारी;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			continue;
+		}
+	}
+}
 
-अटल पूर्णांक cmp_range(स्थिर व्योम *x1, स्थिर व्योम *x2)
-अणु
-	स्थिर काष्ठा range *r1 = x1;
-	स्थिर काष्ठा range *r2 = x2;
+static int cmp_range(const void *x1, const void *x2)
+{
+	const struct range *r1 = x1;
+	const struct range *r2 = x2;
 
-	अगर (r1->start < r2->start)
-		वापस -1;
-	अगर (r1->start > r2->start)
-		वापस 1;
-	वापस 0;
-पूर्ण
+	if (r1->start < r2->start)
+		return -1;
+	if (r1->start > r2->start)
+		return 1;
+	return 0;
+}
 
-पूर्णांक clean_sort_range(काष्ठा range *range, पूर्णांक az)
-अणु
-	पूर्णांक i, j, k = az - 1, nr_range = az;
+int clean_sort_range(struct range *range, int az)
+{
+	int i, j, k = az - 1, nr_range = az;
 
-	क्रम (i = 0; i < k; i++) अणु
-		अगर (range[i].end)
-			जारी;
-		क्रम (j = k; j > i; j--) अणु
-			अगर (range[j].end) अणु
+	for (i = 0; i < k; i++) {
+		if (range[i].end)
+			continue;
+		for (j = k; j > i; j--) {
+			if (range[j].end) {
 				k = j;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		अगर (j == i)
-			अवरोध;
+				break;
+			}
+		}
+		if (j == i)
+			break;
 		range[i].start = range[k].start;
 		range[i].end   = range[k].end;
 		range[k].start = 0;
 		range[k].end   = 0;
 		k--;
-	पूर्ण
+	}
 	/* count it */
-	क्रम (i = 0; i < az; i++) अणु
-		अगर (!range[i].end) अणु
+	for (i = 0; i < az; i++) {
+		if (!range[i].end) {
 			nr_range = i;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	/* sort them */
-	sort(range, nr_range, माप(काष्ठा range), cmp_range, शून्य);
+	sort(range, nr_range, sizeof(struct range), cmp_range, NULL);
 
-	वापस nr_range;
-पूर्ण
+	return nr_range;
+}
 
-व्योम sort_range(काष्ठा range *range, पूर्णांक nr_range)
-अणु
+void sort_range(struct range *range, int nr_range)
+{
 	/* sort them */
-	sort(range, nr_range, माप(काष्ठा range), cmp_range, शून्य);
-पूर्ण
+	sort(range, nr_range, sizeof(struct range), cmp_range, NULL);
+}

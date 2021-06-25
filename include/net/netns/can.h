@@ -1,41 +1,40 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * can in net namespaces
  */
 
-#अगर_अघोषित __NETNS_CAN_H__
-#घोषणा __NETNS_CAN_H__
+#ifndef __NETNS_CAN_H__
+#define __NETNS_CAN_H__
 
-#समावेश <linux/spinlock.h>
+#include <linux/spinlock.h>
 
-काष्ठा can_dev_rcv_lists;
-काष्ठा can_pkg_stats;
-काष्ठा can_rcv_lists_stats;
+struct can_dev_rcv_lists;
+struct can_pkg_stats;
+struct can_rcv_lists_stats;
 
-काष्ठा netns_can अणु
-#अगर IS_ENABLED(CONFIG_PROC_FS)
-	काष्ठा proc_dir_entry *proc_dir;
-	काष्ठा proc_dir_entry *pde_stats;
-	काष्ठा proc_dir_entry *pde_reset_stats;
-	काष्ठा proc_dir_entry *pde_rcvlist_all;
-	काष्ठा proc_dir_entry *pde_rcvlist_fil;
-	काष्ठा proc_dir_entry *pde_rcvlist_inv;
-	काष्ठा proc_dir_entry *pde_rcvlist_sff;
-	काष्ठा proc_dir_entry *pde_rcvlist_eff;
-	काष्ठा proc_dir_entry *pde_rcvlist_err;
-	काष्ठा proc_dir_entry *bcmproc_dir;
-#पूर्ण_अगर
+struct netns_can {
+#if IS_ENABLED(CONFIG_PROC_FS)
+	struct proc_dir_entry *proc_dir;
+	struct proc_dir_entry *pde_stats;
+	struct proc_dir_entry *pde_reset_stats;
+	struct proc_dir_entry *pde_rcvlist_all;
+	struct proc_dir_entry *pde_rcvlist_fil;
+	struct proc_dir_entry *pde_rcvlist_inv;
+	struct proc_dir_entry *pde_rcvlist_sff;
+	struct proc_dir_entry *pde_rcvlist_eff;
+	struct proc_dir_entry *pde_rcvlist_err;
+	struct proc_dir_entry *bcmproc_dir;
+#endif
 
-	/* receive filters subscribed क्रम 'all' CAN devices */
-	काष्ठा can_dev_rcv_lists *rx_alldev_list;
+	/* receive filters subscribed for 'all' CAN devices */
+	struct can_dev_rcv_lists *rx_alldev_list;
 	spinlock_t rcvlists_lock;
-	काष्ठा समयr_list statसमयr; /* समयr क्रम statistics update */
-	काष्ठा can_pkg_stats *pkg_stats;
-	काष्ठा can_rcv_lists_stats *rcv_lists_stats;
+	struct timer_list stattimer; /* timer for statistics update */
+	struct can_pkg_stats *pkg_stats;
+	struct can_rcv_lists_stats *rcv_lists_stats;
 
 	/* CAN GW per-net gateway jobs */
-	काष्ठा hlist_head cgw_list;
-पूर्ण;
+	struct hlist_head cgw_list;
+};
 
-#पूर्ण_अगर /* __NETNS_CAN_H__ */
+#endif /* __NETNS_CAN_H__ */

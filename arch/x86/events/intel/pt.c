@@ -1,63 +1,62 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Intel(R) Processor Trace PMU driver क्रम perf
+ * Intel(R) Processor Trace PMU driver for perf
  * Copyright (c) 2013-2014, Intel Corporation.
  *
- * Intel PT is specअगरied in the Intel Architecture Inकाष्ठाion Set Extensions
+ * Intel PT is specified in the Intel Architecture Instruction Set Extensions
  * Programming Reference:
- * http://software.पूर्णांकel.com/en-us/पूर्णांकel-isa-extensions
+ * http://software.intel.com/en-us/intel-isa-extensions
  */
 
-#अघोषित DEBUG
+#undef DEBUG
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/types.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/device.h>
+#include <linux/types.h>
+#include <linux/slab.h>
+#include <linux/device.h>
 
-#समावेश <यंत्र/perf_event.h>
-#समावेश <यंत्र/insn.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/पूर्णांकel_pt.h>
-#समावेश <यंत्र/पूर्णांकel-family.h>
+#include <asm/perf_event.h>
+#include <asm/insn.h>
+#include <asm/io.h>
+#include <asm/intel_pt.h>
+#include <asm/intel-family.h>
 
-#समावेश "../perf_event.h"
-#समावेश "pt.h"
+#include "../perf_event.h"
+#include "pt.h"
 
-अटल DEFINE_PER_CPU(काष्ठा pt, pt_ctx);
+static DEFINE_PER_CPU(struct pt, pt_ctx);
 
-अटल काष्ठा pt_pmu pt_pmu;
+static struct pt_pmu pt_pmu;
 
 /*
  * Capabilities of Intel PT hardware, such as number of address bits or
  * supported output schemes, are cached and exported to userspace as "caps"
  * attribute group of pt pmu device
- * (/sys/bus/event_source/devices/पूर्णांकel_pt/caps/) so that userspace can store
- * relevant bits together with पूर्णांकel_pt traces.
+ * (/sys/bus/event_source/devices/intel_pt/caps/) so that userspace can store
+ * relevant bits together with intel_pt traces.
  *
- * These are necessary क्रम both trace decoding (payloads_lip, contains address
- * width encoded in IP-related packets), and event configuration (biपंचांगasks with
- * permitted values क्रम certain bit fields).
+ * These are necessary for both trace decoding (payloads_lip, contains address
+ * width encoded in IP-related packets), and event configuration (bitmasks with
+ * permitted values for certain bit fields).
  */
-#घोषणा PT_CAP(_n, _l, _r, _m)						\
-	[PT_CAP_ ## _n] = अणु .name = __stringअगरy(_n), .leaf = _l,	\
-			    .reg = _r, .mask = _m पूर्ण
+#define PT_CAP(_n, _l, _r, _m)						\
+	[PT_CAP_ ## _n] = { .name = __stringify(_n), .leaf = _l,	\
+			    .reg = _r, .mask = _m }
 
-अटल काष्ठा pt_cap_desc अणु
-	स्थिर अक्षर	*name;
+static struct pt_cap_desc {
+	const char	*name;
 	u32		leaf;
 	u8		reg;
 	u32		mask;
-पूर्ण pt_caps[] = अणु
+} pt_caps[] = {
 	PT_CAP(max_subleaf,		0, CPUID_EAX, 0xffffffff),
 	PT_CAP(cr3_filtering,		0, CPUID_EBX, BIT(0)),
 	PT_CAP(psb_cyc,			0, CPUID_EBX, BIT(1)),
 	PT_CAP(ip_filtering,		0, CPUID_EBX, BIT(2)),
 	PT_CAP(mtc,			0, CPUID_EBX, BIT(3)),
-	PT_CAP(ptग_लिखो,			0, CPUID_EBX, BIT(4)),
-	PT_CAP(घातer_event_trace,	0, CPUID_EBX, BIT(5)),
+	PT_CAP(ptwrite,			0, CPUID_EBX, BIT(4)),
+	PT_CAP(power_event_trace,	0, CPUID_EBX, BIT(5)),
 	PT_CAP(topa_output,		0, CPUID_ECX, BIT(0)),
 	PT_CAP(topa_multiple_entries,	0, CPUID_ECX, BIT(1)),
 	PT_CAP(single_range_output,	0, CPUID_ECX, BIT(2)),
@@ -67,38 +66,38 @@
 	PT_CAP(mtc_periods,		1, CPUID_EAX, 0xffff0000),
 	PT_CAP(cycle_thresholds,	1, CPUID_EBX, 0xffff),
 	PT_CAP(psb_periods,		1, CPUID_EBX, 0xffff0000),
-पूर्ण;
+};
 
-u32 पूर्णांकel_pt_validate_cap(u32 *caps, क्रमागत pt_capabilities capability)
-अणु
-	काष्ठा pt_cap_desc *cd = &pt_caps[capability];
+u32 intel_pt_validate_cap(u32 *caps, enum pt_capabilities capability)
+{
+	struct pt_cap_desc *cd = &pt_caps[capability];
 	u32 c = caps[cd->leaf * PT_CPUID_REGS_NUM + cd->reg];
-	अचिन्हित पूर्णांक shअगरt = __ffs(cd->mask);
+	unsigned int shift = __ffs(cd->mask);
 
-	वापस (c & cd->mask) >> shअगरt;
-पूर्ण
-EXPORT_SYMBOL_GPL(पूर्णांकel_pt_validate_cap);
+	return (c & cd->mask) >> shift;
+}
+EXPORT_SYMBOL_GPL(intel_pt_validate_cap);
 
-u32 पूर्णांकel_pt_validate_hw_cap(क्रमागत pt_capabilities cap)
-अणु
-	वापस पूर्णांकel_pt_validate_cap(pt_pmu.caps, cap);
-पूर्ण
-EXPORT_SYMBOL_GPL(पूर्णांकel_pt_validate_hw_cap);
+u32 intel_pt_validate_hw_cap(enum pt_capabilities cap)
+{
+	return intel_pt_validate_cap(pt_pmu.caps, cap);
+}
+EXPORT_SYMBOL_GPL(intel_pt_validate_hw_cap);
 
-अटल sमाप_प्रकार pt_cap_show(काष्ठा device *cdev,
-			   काष्ठा device_attribute *attr,
-			   अक्षर *buf)
-अणु
-	काष्ठा dev_ext_attribute *ea =
-		container_of(attr, काष्ठा dev_ext_attribute, attr);
-	क्रमागत pt_capabilities cap = (दीर्घ)ea->var;
+static ssize_t pt_cap_show(struct device *cdev,
+			   struct device_attribute *attr,
+			   char *buf)
+{
+	struct dev_ext_attribute *ea =
+		container_of(attr, struct dev_ext_attribute, attr);
+	enum pt_capabilities cap = (long)ea->var;
 
-	वापस snम_लिखो(buf, PAGE_SIZE, "%x\n", पूर्णांकel_pt_validate_hw_cap(cap));
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, "%x\n", intel_pt_validate_hw_cap(cap));
+}
 
-अटल काष्ठा attribute_group pt_cap_group __ro_after_init = अणु
+static struct attribute_group pt_cap_group __ro_after_init = {
 	.name	= "caps",
-पूर्ण;
+};
 
 PMU_FORMAT_ATTR(pt,		"config:0"	);
 PMU_FORMAT_ATTR(cyc,		"config:1"	);
@@ -113,141 +112,141 @@ PMU_FORMAT_ATTR(mtc_period,	"config:14-17"	);
 PMU_FORMAT_ATTR(cyc_thresh,	"config:19-22"	);
 PMU_FORMAT_ATTR(psb_period,	"config:24-27"	);
 
-अटल काष्ठा attribute *pt_क्रमmats_attr[] = अणु
-	&क्रमmat_attr_pt.attr,
-	&क्रमmat_attr_cyc.attr,
-	&क्रमmat_attr_pwr_evt.attr,
-	&क्रमmat_attr_fup_on_ptw.attr,
-	&क्रमmat_attr_mtc.attr,
-	&क्रमmat_attr_tsc.attr,
-	&क्रमmat_attr_noretcomp.attr,
-	&क्रमmat_attr_ptw.attr,
-	&क्रमmat_attr_branch.attr,
-	&क्रमmat_attr_mtc_period.attr,
-	&क्रमmat_attr_cyc_thresh.attr,
-	&क्रमmat_attr_psb_period.attr,
-	शून्य,
-पूर्ण;
+static struct attribute *pt_formats_attr[] = {
+	&format_attr_pt.attr,
+	&format_attr_cyc.attr,
+	&format_attr_pwr_evt.attr,
+	&format_attr_fup_on_ptw.attr,
+	&format_attr_mtc.attr,
+	&format_attr_tsc.attr,
+	&format_attr_noretcomp.attr,
+	&format_attr_ptw.attr,
+	&format_attr_branch.attr,
+	&format_attr_mtc_period.attr,
+	&format_attr_cyc_thresh.attr,
+	&format_attr_psb_period.attr,
+	NULL,
+};
 
-अटल काष्ठा attribute_group pt_क्रमmat_group = अणु
+static struct attribute_group pt_format_group = {
 	.name	= "format",
-	.attrs	= pt_क्रमmats_attr,
-पूर्ण;
+	.attrs	= pt_formats_attr,
+};
 
-अटल sमाप_प्रकार
-pt_timing_attr_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		    अक्षर *page)
-अणु
-	काष्ठा perf_pmu_events_attr *pmu_attr =
-		container_of(attr, काष्ठा perf_pmu_events_attr, attr);
+static ssize_t
+pt_timing_attr_show(struct device *dev, struct device_attribute *attr,
+		    char *page)
+{
+	struct perf_pmu_events_attr *pmu_attr =
+		container_of(attr, struct perf_pmu_events_attr, attr);
 
-	चयन (pmu_attr->id) अणु
-	हाल 0:
-		वापस प्र_लिखो(page, "%lu\n", pt_pmu.max_nonturbo_ratio);
-	हाल 1:
-		वापस प्र_लिखो(page, "%u:%u\n",
+	switch (pmu_attr->id) {
+	case 0:
+		return sprintf(page, "%lu\n", pt_pmu.max_nonturbo_ratio);
+	case 1:
+		return sprintf(page, "%u:%u\n",
 			       pt_pmu.tsc_art_num,
 			       pt_pmu.tsc_art_den);
-	शेष:
-		अवरोध;
-	पूर्ण
+	default:
+		break;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
 PMU_EVENT_ATTR(max_nonturbo_ratio, timing_attr_max_nonturbo_ratio, 0,
 	       pt_timing_attr_show);
 PMU_EVENT_ATTR(tsc_art_ratio, timing_attr_tsc_art_ratio, 1,
 	       pt_timing_attr_show);
 
-अटल काष्ठा attribute *pt_timing_attr[] = अणु
+static struct attribute *pt_timing_attr[] = {
 	&timing_attr_max_nonturbo_ratio.attr.attr,
 	&timing_attr_tsc_art_ratio.attr.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल काष्ठा attribute_group pt_timing_group = अणु
+static struct attribute_group pt_timing_group = {
 	.attrs	= pt_timing_attr,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा attribute_group *pt_attr_groups[] = अणु
+static const struct attribute_group *pt_attr_groups[] = {
 	&pt_cap_group,
-	&pt_क्रमmat_group,
+	&pt_format_group,
 	&pt_timing_group,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल पूर्णांक __init pt_pmu_hw_init(व्योम)
-अणु
-	काष्ठा dev_ext_attribute *de_attrs;
-	काष्ठा attribute **attrs;
-	माप_प्रकार size;
+static int __init pt_pmu_hw_init(void)
+{
+	struct dev_ext_attribute *de_attrs;
+	struct attribute **attrs;
+	size_t size;
 	u64 reg;
-	पूर्णांक ret;
-	दीर्घ i;
+	int ret;
+	long i;
 
 	rdmsrl(MSR_PLATFORM_INFO, reg);
 	pt_pmu.max_nonturbo_ratio = (reg & 0xff00) >> 8;
 
 	/*
-	 * अगर available, पढ़ो in TSC to core crystal घड़ी ratio,
-	 * otherwise, zero क्रम numerator stands क्रम "not enumerated"
+	 * if available, read in TSC to core crystal clock ratio,
+	 * otherwise, zero for numerator stands for "not enumerated"
 	 * as per SDM
 	 */
-	अगर (boot_cpu_data.cpuid_level >= CPUID_TSC_LEAF) अणु
+	if (boot_cpu_data.cpuid_level >= CPUID_TSC_LEAF) {
 		u32 eax, ebx, ecx, edx;
 
 		cpuid(CPUID_TSC_LEAF, &eax, &ebx, &ecx, &edx);
 
 		pt_pmu.tsc_art_num = ebx;
 		pt_pmu.tsc_art_den = eax;
-	पूर्ण
+	}
 
-	/* model-specअगरic quirks */
-	चयन (boot_cpu_data.x86_model) अणु
-	हाल INTEL_FAM6_BROADWELL:
-	हाल INTEL_FAM6_BROADWELL_D:
-	हाल INTEL_FAM6_BROADWELL_G:
-	हाल INTEL_FAM6_BROADWELL_X:
+	/* model-specific quirks */
+	switch (boot_cpu_data.x86_model) {
+	case INTEL_FAM6_BROADWELL:
+	case INTEL_FAM6_BROADWELL_D:
+	case INTEL_FAM6_BROADWELL_G:
+	case INTEL_FAM6_BROADWELL_X:
 		/* not setting BRANCH_EN will #GP, erratum BDM106 */
 		pt_pmu.branch_en_always_on = true;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	अगर (boot_cpu_has(X86_FEATURE_VMX)) अणु
+	if (boot_cpu_has(X86_FEATURE_VMX)) {
 		/*
 		 * Intel SDM, 36.5 "Tracing post-VMXON" says that
 		 * "IA32_VMX_MISC[bit 14]" being 1 means PT can trace
 		 * post-VMXON.
 		 */
 		rdmsrl(MSR_IA32_VMX_MISC, reg);
-		अगर (reg & BIT(14))
+		if (reg & BIT(14))
 			pt_pmu.vmx = true;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < PT_CPUID_LEAVES; i++) अणु
+	for (i = 0; i < PT_CPUID_LEAVES; i++) {
 		cpuid_count(20, i,
 			    &pt_pmu.caps[CPUID_EAX + i*PT_CPUID_REGS_NUM],
 			    &pt_pmu.caps[CPUID_EBX + i*PT_CPUID_REGS_NUM],
 			    &pt_pmu.caps[CPUID_ECX + i*PT_CPUID_REGS_NUM],
 			    &pt_pmu.caps[CPUID_EDX + i*PT_CPUID_REGS_NUM]);
-	पूर्ण
+	}
 
 	ret = -ENOMEM;
-	size = माप(काष्ठा attribute *) * (ARRAY_SIZE(pt_caps)+1);
+	size = sizeof(struct attribute *) * (ARRAY_SIZE(pt_caps)+1);
 	attrs = kzalloc(size, GFP_KERNEL);
-	अगर (!attrs)
-		जाओ fail;
+	if (!attrs)
+		goto fail;
 
-	size = माप(काष्ठा dev_ext_attribute) * (ARRAY_SIZE(pt_caps)+1);
+	size = sizeof(struct dev_ext_attribute) * (ARRAY_SIZE(pt_caps)+1);
 	de_attrs = kzalloc(size, GFP_KERNEL);
-	अगर (!de_attrs)
-		जाओ fail;
+	if (!de_attrs)
+		goto fail;
 
-	क्रम (i = 0; i < ARRAY_SIZE(pt_caps); i++) अणु
-		काष्ठा dev_ext_attribute *de_attr = de_attrs + i;
+	for (i = 0; i < ARRAY_SIZE(pt_caps); i++) {
+		struct dev_ext_attribute *de_attr = de_attrs + i;
 
 		de_attr->attr.attr.name = pt_caps[i].name;
 
@@ -255,42 +254,42 @@ PMU_EVENT_ATTR(tsc_art_ratio, timing_attr_tsc_art_ratio, 1,
 
 		de_attr->attr.attr.mode		= S_IRUGO;
 		de_attr->attr.show		= pt_cap_show;
-		de_attr->var			= (व्योम *)i;
+		de_attr->var			= (void *)i;
 
 		attrs[i] = &de_attr->attr.attr;
-	पूर्ण
+	}
 
 	pt_cap_group.attrs = attrs;
 
-	वापस 0;
+	return 0;
 
 fail:
-	kमुक्त(attrs);
+	kfree(attrs);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#घोषणा RTIT_CTL_CYC_PSB (RTIT_CTL_CYCLEACC	| \
+#define RTIT_CTL_CYC_PSB (RTIT_CTL_CYCLEACC	| \
 			  RTIT_CTL_CYC_THRESH	| \
 			  RTIT_CTL_PSB_FREQ)
 
-#घोषणा RTIT_CTL_MTC	(RTIT_CTL_MTC_EN	| \
+#define RTIT_CTL_MTC	(RTIT_CTL_MTC_EN	| \
 			 RTIT_CTL_MTC_RANGE)
 
-#घोषणा RTIT_CTL_PTW	(RTIT_CTL_PTW_EN	| \
+#define RTIT_CTL_PTW	(RTIT_CTL_PTW_EN	| \
 			 RTIT_CTL_FUP_ON_PTW)
 
 /*
  * Bit 0 (TraceEn) in the attr.config is meaningless as the
  * corresponding bit in the RTIT_CTL can only be controlled
- * by the driver; thereक्रमe, repurpose it to mean: pass
+ * by the driver; therefore, repurpose it to mean: pass
  * through the bit that was previously assumed to be always
- * on क्रम PT, thereby allowing the user to *not* set it अगर
+ * on for PT, thereby allowing the user to *not* set it if
  * they so wish. See also pt_event_valid() and pt_config().
  */
-#घोषणा RTIT_CTL_PASSTHROUGH RTIT_CTL_TRACEEN
+#define RTIT_CTL_PASSTHROUGH RTIT_CTL_TRACEEN
 
-#घोषणा PT_CONFIG_MASK (RTIT_CTL_TRACEEN	| \
+#define PT_CONFIG_MASK (RTIT_CTL_TRACEEN	| \
 			RTIT_CTL_TSC_EN		| \
 			RTIT_CTL_DISRETC	| \
 			RTIT_CTL_BRANCH_EN	| \
@@ -300,421 +299,421 @@ fail:
 			RTIT_CTL_FUP_ON_PTW	| \
 			RTIT_CTL_PTW_EN)
 
-अटल bool pt_event_valid(काष्ठा perf_event *event)
-अणु
+static bool pt_event_valid(struct perf_event *event)
+{
 	u64 config = event->attr.config;
 	u64 allowed, requested;
 
-	अगर ((config & PT_CONFIG_MASK) != config)
-		वापस false;
+	if ((config & PT_CONFIG_MASK) != config)
+		return false;
 
-	अगर (config & RTIT_CTL_CYC_PSB) अणु
-		अगर (!पूर्णांकel_pt_validate_hw_cap(PT_CAP_psb_cyc))
-			वापस false;
+	if (config & RTIT_CTL_CYC_PSB) {
+		if (!intel_pt_validate_hw_cap(PT_CAP_psb_cyc))
+			return false;
 
-		allowed = पूर्णांकel_pt_validate_hw_cap(PT_CAP_psb_periods);
+		allowed = intel_pt_validate_hw_cap(PT_CAP_psb_periods);
 		requested = (config & RTIT_CTL_PSB_FREQ) >>
 			RTIT_CTL_PSB_FREQ_OFFSET;
-		अगर (requested && (!(allowed & BIT(requested))))
-			वापस false;
+		if (requested && (!(allowed & BIT(requested))))
+			return false;
 
-		allowed = पूर्णांकel_pt_validate_hw_cap(PT_CAP_cycle_thresholds);
+		allowed = intel_pt_validate_hw_cap(PT_CAP_cycle_thresholds);
 		requested = (config & RTIT_CTL_CYC_THRESH) >>
 			RTIT_CTL_CYC_THRESH_OFFSET;
-		अगर (requested && (!(allowed & BIT(requested))))
-			वापस false;
-	पूर्ण
+		if (requested && (!(allowed & BIT(requested))))
+			return false;
+	}
 
-	अगर (config & RTIT_CTL_MTC) अणु
+	if (config & RTIT_CTL_MTC) {
 		/*
-		 * In the unlikely हाल that CPUID lists valid mtc periods,
+		 * In the unlikely case that CPUID lists valid mtc periods,
 		 * but not the mtc capability, drop out here.
 		 *
-		 * Spec says that setting mtc period bits जबतक mtc bit in
+		 * Spec says that setting mtc period bits while mtc bit in
 		 * CPUID is 0 will #GP, so better safe than sorry.
 		 */
-		अगर (!पूर्णांकel_pt_validate_hw_cap(PT_CAP_mtc))
-			वापस false;
+		if (!intel_pt_validate_hw_cap(PT_CAP_mtc))
+			return false;
 
-		allowed = पूर्णांकel_pt_validate_hw_cap(PT_CAP_mtc_periods);
-		अगर (!allowed)
-			वापस false;
+		allowed = intel_pt_validate_hw_cap(PT_CAP_mtc_periods);
+		if (!allowed)
+			return false;
 
 		requested = (config & RTIT_CTL_MTC_RANGE) >>
 			RTIT_CTL_MTC_RANGE_OFFSET;
 
-		अगर (!(allowed & BIT(requested)))
-			वापस false;
-	पूर्ण
+		if (!(allowed & BIT(requested)))
+			return false;
+	}
 
-	अगर (config & RTIT_CTL_PWR_EVT_EN &&
-	    !पूर्णांकel_pt_validate_hw_cap(PT_CAP_घातer_event_trace))
-		वापस false;
+	if (config & RTIT_CTL_PWR_EVT_EN &&
+	    !intel_pt_validate_hw_cap(PT_CAP_power_event_trace))
+		return false;
 
-	अगर (config & RTIT_CTL_PTW) अणु
-		अगर (!पूर्णांकel_pt_validate_hw_cap(PT_CAP_ptग_लिखो))
-			वापस false;
+	if (config & RTIT_CTL_PTW) {
+		if (!intel_pt_validate_hw_cap(PT_CAP_ptwrite))
+			return false;
 
-		/* FUPonPTW without PTW करोesn't make sense */
-		अगर ((config & RTIT_CTL_FUP_ON_PTW) &&
+		/* FUPonPTW without PTW doesn't make sense */
+		if ((config & RTIT_CTL_FUP_ON_PTW) &&
 		    !(config & RTIT_CTL_PTW_EN))
-			वापस false;
-	पूर्ण
+			return false;
+	}
 
 	/*
 	 * Setting bit 0 (TraceEn in RTIT_CTL MSR) in the attr.config
 	 * clears the assumption that BranchEn must always be enabled,
-	 * as was the हाल with the first implementation of PT.
+	 * as was the case with the first implementation of PT.
 	 * If this bit is not set, the legacy behavior is preserved
-	 * क्रम compatibility with the older userspace.
+	 * for compatibility with the older userspace.
 	 *
-	 * Re-using bit 0 क्रम this purpose is fine because it is never
+	 * Re-using bit 0 for this purpose is fine because it is never
 	 * directly set by the user; previous attempts at setting it in
 	 * the attr.config resulted in -EINVAL.
 	 */
-	अगर (config & RTIT_CTL_PASSTHROUGH) अणु
+	if (config & RTIT_CTL_PASSTHROUGH) {
 		/*
 		 * Disallow not setting BRANCH_EN where BRANCH_EN is
 		 * always required.
 		 */
-		अगर (pt_pmu.branch_en_always_on &&
+		if (pt_pmu.branch_en_always_on &&
 		    !(config & RTIT_CTL_BRANCH_EN))
-			वापस false;
-	पूर्ण अन्यथा अणु
+			return false;
+	} else {
 		/*
 		 * Disallow BRANCH_EN without the PASSTHROUGH.
 		 */
-		अगर (config & RTIT_CTL_BRANCH_EN)
-			वापस false;
-	पूर्ण
+		if (config & RTIT_CTL_BRANCH_EN)
+			return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /*
  * PT configuration helpers
  * These all are cpu affine and operate on a local PT
  */
 
-अटल व्योम pt_config_start(काष्ठा perf_event *event)
-अणु
-	काष्ठा pt *pt = this_cpu_ptr(&pt_ctx);
+static void pt_config_start(struct perf_event *event)
+{
+	struct pt *pt = this_cpu_ptr(&pt_ctx);
 	u64 ctl = event->hw.config;
 
 	ctl |= RTIT_CTL_TRACEEN;
-	अगर (READ_ONCE(pt->vmx_on))
+	if (READ_ONCE(pt->vmx_on))
 		perf_aux_output_flag(&pt->handle, PERF_AUX_FLAG_PARTIAL);
-	अन्यथा
+	else
 		wrmsrl(MSR_IA32_RTIT_CTL, ctl);
 
 	WRITE_ONCE(event->hw.config, ctl);
-पूर्ण
+}
 
-/* Address ranges and their corresponding msr configuration रेजिस्टरs */
-अटल स्थिर काष्ठा pt_address_range अणु
-	अचिन्हित दीर्घ	msr_a;
-	अचिन्हित दीर्घ	msr_b;
-	अचिन्हित पूर्णांक	reg_off;
-पूर्ण pt_address_ranges[] = अणु
-	अणु
+/* Address ranges and their corresponding msr configuration registers */
+static const struct pt_address_range {
+	unsigned long	msr_a;
+	unsigned long	msr_b;
+	unsigned int	reg_off;
+} pt_address_ranges[] = {
+	{
 		.msr_a	 = MSR_IA32_RTIT_ADDR0_A,
 		.msr_b	 = MSR_IA32_RTIT_ADDR0_B,
 		.reg_off = RTIT_CTL_ADDR0_OFFSET,
-	पूर्ण,
-	अणु
+	},
+	{
 		.msr_a	 = MSR_IA32_RTIT_ADDR1_A,
 		.msr_b	 = MSR_IA32_RTIT_ADDR1_B,
 		.reg_off = RTIT_CTL_ADDR1_OFFSET,
-	पूर्ण,
-	अणु
+	},
+	{
 		.msr_a	 = MSR_IA32_RTIT_ADDR2_A,
 		.msr_b	 = MSR_IA32_RTIT_ADDR2_B,
 		.reg_off = RTIT_CTL_ADDR2_OFFSET,
-	पूर्ण,
-	अणु
+	},
+	{
 		.msr_a	 = MSR_IA32_RTIT_ADDR3_A,
 		.msr_b	 = MSR_IA32_RTIT_ADDR3_B,
 		.reg_off = RTIT_CTL_ADDR3_OFFSET,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल u64 pt_config_filters(काष्ठा perf_event *event)
-अणु
-	काष्ठा pt_filters *filters = event->hw.addr_filters;
-	काष्ठा pt *pt = this_cpu_ptr(&pt_ctx);
-	अचिन्हित पूर्णांक range = 0;
+static u64 pt_config_filters(struct perf_event *event)
+{
+	struct pt_filters *filters = event->hw.addr_filters;
+	struct pt *pt = this_cpu_ptr(&pt_ctx);
+	unsigned int range = 0;
 	u64 rtit_ctl = 0;
 
-	अगर (!filters)
-		वापस 0;
+	if (!filters)
+		return 0;
 
 	perf_event_addr_filters_sync(event);
 
-	क्रम (range = 0; range < filters->nr_filters; range++) अणु
-		काष्ठा pt_filter *filter = &filters->filter[range];
+	for (range = 0; range < filters->nr_filters; range++) {
+		struct pt_filter *filter = &filters->filter[range];
 
 		/*
-		 * Note, अगर the range has zero start/end addresses due
+		 * Note, if the range has zero start/end addresses due
 		 * to its dynamic object not being loaded yet, we just
 		 * go ahead and program zeroed range, which will simply
-		 * produce no data. Note^2: अगर executable code at 0x0
+		 * produce no data. Note^2: if executable code at 0x0
 		 * is a concern, we can set up an "invalid" configuration
 		 * such as msr_b < msr_a.
 		 */
 
-		/* aव्योम redundant msr ग_लिखोs */
-		अगर (pt->filters.filter[range].msr_a != filter->msr_a) अणु
+		/* avoid redundant msr writes */
+		if (pt->filters.filter[range].msr_a != filter->msr_a) {
 			wrmsrl(pt_address_ranges[range].msr_a, filter->msr_a);
 			pt->filters.filter[range].msr_a = filter->msr_a;
-		पूर्ण
+		}
 
-		अगर (pt->filters.filter[range].msr_b != filter->msr_b) अणु
+		if (pt->filters.filter[range].msr_b != filter->msr_b) {
 			wrmsrl(pt_address_ranges[range].msr_b, filter->msr_b);
 			pt->filters.filter[range].msr_b = filter->msr_b;
-		पूर्ण
+		}
 
 		rtit_ctl |= filter->config << pt_address_ranges[range].reg_off;
-	पूर्ण
+	}
 
-	वापस rtit_ctl;
-पूर्ण
+	return rtit_ctl;
+}
 
-अटल व्योम pt_config(काष्ठा perf_event *event)
-अणु
-	काष्ठा pt *pt = this_cpu_ptr(&pt_ctx);
-	काष्ठा pt_buffer *buf = perf_get_aux(&pt->handle);
+static void pt_config(struct perf_event *event)
+{
+	struct pt *pt = this_cpu_ptr(&pt_ctx);
+	struct pt_buffer *buf = perf_get_aux(&pt->handle);
 	u64 reg;
 
 	/* First round: clear STATUS, in particular the PSB byte counter. */
-	अगर (!event->hw.config) अणु
+	if (!event->hw.config) {
 		perf_event_itrace_started(event);
 		wrmsrl(MSR_IA32_RTIT_STATUS, 0);
-	पूर्ण
+	}
 
 	reg = pt_config_filters(event);
 	reg |= RTIT_CTL_TRACEEN;
-	अगर (!buf->single)
+	if (!buf->single)
 		reg |= RTIT_CTL_TOPA;
 
 	/*
-	 * Previously, we had BRANCH_EN on by शेष, but now that PT has
+	 * Previously, we had BRANCH_EN on by default, but now that PT has
 	 * grown features outside of branch tracing, it is useful to allow
 	 * the user to disable it. Setting bit 0 in the event's attr.config
 	 * allows BRANCH_EN to pass through instead of being always on. See
 	 * also the comment in pt_event_valid().
 	 */
-	अगर (event->attr.config & BIT(0)) अणु
+	if (event->attr.config & BIT(0)) {
 		reg |= event->attr.config & RTIT_CTL_BRANCH_EN;
-	पूर्ण अन्यथा अणु
+	} else {
 		reg |= RTIT_CTL_BRANCH_EN;
-	पूर्ण
+	}
 
-	अगर (!event->attr.exclude_kernel)
+	if (!event->attr.exclude_kernel)
 		reg |= RTIT_CTL_OS;
-	अगर (!event->attr.exclude_user)
+	if (!event->attr.exclude_user)
 		reg |= RTIT_CTL_USR;
 
 	reg |= (event->attr.config & PT_CONFIG_MASK);
 
 	event->hw.config = reg;
 	pt_config_start(event);
-पूर्ण
+}
 
-अटल व्योम pt_config_stop(काष्ठा perf_event *event)
-अणु
-	काष्ठा pt *pt = this_cpu_ptr(&pt_ctx);
+static void pt_config_stop(struct perf_event *event)
+{
+	struct pt *pt = this_cpu_ptr(&pt_ctx);
 	u64 ctl = READ_ONCE(event->hw.config);
 
-	/* may be alपढ़ोy stopped by a PMI */
-	अगर (!(ctl & RTIT_CTL_TRACEEN))
-		वापस;
+	/* may be already stopped by a PMI */
+	if (!(ctl & RTIT_CTL_TRACEEN))
+		return;
 
 	ctl &= ~RTIT_CTL_TRACEEN;
-	अगर (!READ_ONCE(pt->vmx_on))
+	if (!READ_ONCE(pt->vmx_on))
 		wrmsrl(MSR_IA32_RTIT_CTL, ctl);
 
 	WRITE_ONCE(event->hw.config, ctl);
 
 	/*
 	 * A wrmsr that disables trace generation serializes other PT
-	 * रेजिस्टरs and causes all data packets to be written to memory,
-	 * but a fence is required क्रम the data to become globally visible.
+	 * registers and causes all data packets to be written to memory,
+	 * but a fence is required for the data to become globally visible.
 	 *
 	 * The below WMB, separating data store and aux_head store matches
 	 * the consumer's RMB that separates aux_head load and data load.
 	 */
 	wmb();
-पूर्ण
+}
 
 /**
- * काष्ठा topa - ToPA metadata
- * @list:	linkage to काष्ठा pt_buffer's list of tables
+ * struct topa - ToPA metadata
+ * @list:	linkage to struct pt_buffer's list of tables
  * @offset:	offset of the first entry in this table in the buffer
  * @size:	total size of all entries in this table
  * @last:	index of the last initialized entry in this table
- * @z_count:	how many बार the first entry repeats
+ * @z_count:	how many times the first entry repeats
  */
-काष्ठा topa अणु
-	काष्ठा list_head	list;
+struct topa {
+	struct list_head	list;
 	u64			offset;
-	माप_प्रकार			size;
-	पूर्णांक			last;
-	अचिन्हित पूर्णांक		z_count;
-पूर्ण;
+	size_t			size;
+	int			last;
+	unsigned int		z_count;
+};
 
 /*
  * Keep ToPA table-related metadata on the same page as the actual table,
  * taking up a few words from the top
  */
 
-#घोषणा TENTS_PER_PAGE	\
-	((PAGE_SIZE - माप(काष्ठा topa)) / माप(काष्ठा topa_entry))
+#define TENTS_PER_PAGE	\
+	((PAGE_SIZE - sizeof(struct topa)) / sizeof(struct topa_entry))
 
 /**
- * काष्ठा topa_page - page-sized ToPA table with metadata at the top
+ * struct topa_page - page-sized ToPA table with metadata at the top
  * @table:	actual ToPA table entries, as understood by PT hardware
  * @topa:	metadata
  */
-काष्ठा topa_page अणु
-	काष्ठा topa_entry	table[TENTS_PER_PAGE];
-	काष्ठा topa		topa;
-पूर्ण;
+struct topa_page {
+	struct topa_entry	table[TENTS_PER_PAGE];
+	struct topa		topa;
+};
 
-अटल अंतरभूत काष्ठा topa_page *topa_to_page(काष्ठा topa *topa)
-अणु
-	वापस container_of(topa, काष्ठा topa_page, topa);
-पूर्ण
+static inline struct topa_page *topa_to_page(struct topa *topa)
+{
+	return container_of(topa, struct topa_page, topa);
+}
 
-अटल अंतरभूत काष्ठा topa_page *topa_entry_to_page(काष्ठा topa_entry *te)
-अणु
-	वापस (काष्ठा topa_page *)((अचिन्हित दीर्घ)te & PAGE_MASK);
-पूर्ण
+static inline struct topa_page *topa_entry_to_page(struct topa_entry *te)
+{
+	return (struct topa_page *)((unsigned long)te & PAGE_MASK);
+}
 
-अटल अंतरभूत phys_addr_t topa_pfn(काष्ठा topa *topa)
-अणु
-	वापस PFN_DOWN(virt_to_phys(topa_to_page(topa)));
-पूर्ण
+static inline phys_addr_t topa_pfn(struct topa *topa)
+{
+	return PFN_DOWN(virt_to_phys(topa_to_page(topa)));
+}
 
-/* make -1 stand क्रम the last table entry */
-#घोषणा TOPA_ENTRY(t, i)				\
+/* make -1 stand for the last table entry */
+#define TOPA_ENTRY(t, i)				\
 	((i) == -1					\
 		? &topa_to_page(t)->table[(t)->last]	\
 		: &topa_to_page(t)->table[(i)])
-#घोषणा TOPA_ENTRY_SIZE(t, i) (sizes(TOPA_ENTRY((t), (i))->size))
-#घोषणा TOPA_ENTRY_PAGES(t, i) (1 << TOPA_ENTRY((t), (i))->size)
+#define TOPA_ENTRY_SIZE(t, i) (sizes(TOPA_ENTRY((t), (i))->size))
+#define TOPA_ENTRY_PAGES(t, i) (1 << TOPA_ENTRY((t), (i))->size)
 
-अटल व्योम pt_config_buffer(काष्ठा pt_buffer *buf)
-अणु
-	काष्ठा pt *pt = this_cpu_ptr(&pt_ctx);
+static void pt_config_buffer(struct pt_buffer *buf)
+{
+	struct pt *pt = this_cpu_ptr(&pt_ctx);
 	u64 reg, mask;
-	व्योम *base;
+	void *base;
 
-	अगर (buf->single) अणु
+	if (buf->single) {
 		base = buf->data_pages[0];
 		mask = (buf->nr_pages * PAGE_SIZE - 1) >> 7;
-	पूर्ण अन्यथा अणु
+	} else {
 		base = topa_to_page(buf->cur)->table;
 		mask = (u64)buf->cur_idx;
-	पूर्ण
+	}
 
 	reg = virt_to_phys(base);
-	अगर (pt->output_base != reg) अणु
+	if (pt->output_base != reg) {
 		pt->output_base = reg;
 		wrmsrl(MSR_IA32_RTIT_OUTPUT_BASE, reg);
-	पूर्ण
+	}
 
 	reg = 0x7f | (mask << 7) | ((u64)buf->output_off << 32);
-	अगर (pt->output_mask != reg) अणु
+	if (pt->output_mask != reg) {
 		pt->output_mask = reg;
 		wrmsrl(MSR_IA32_RTIT_OUTPUT_MASK, reg);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * topa_alloc() - allocate page-sized ToPA table
  * @cpu:	CPU on which to allocate.
  * @gfp:	Allocation flags.
  *
- * Return:	On success, वापस the poपूर्णांकer to ToPA table page.
+ * Return:	On success, return the pointer to ToPA table page.
  */
-अटल काष्ठा topa *topa_alloc(पूर्णांक cpu, gfp_t gfp)
-अणु
-	पूर्णांक node = cpu_to_node(cpu);
-	काष्ठा topa_page *tp;
-	काष्ठा page *p;
+static struct topa *topa_alloc(int cpu, gfp_t gfp)
+{
+	int node = cpu_to_node(cpu);
+	struct topa_page *tp;
+	struct page *p;
 
 	p = alloc_pages_node(node, gfp | __GFP_ZERO, 0);
-	अगर (!p)
-		वापस शून्य;
+	if (!p)
+		return NULL;
 
 	tp = page_address(p);
 	tp->topa.last = 0;
 
 	/*
-	 * In हाल of singe-entry ToPA, always put the self-referencing END
+	 * In case of singe-entry ToPA, always put the self-referencing END
 	 * link as the 2nd entry in the table
 	 */
-	अगर (!पूर्णांकel_pt_validate_hw_cap(PT_CAP_topa_multiple_entries)) अणु
+	if (!intel_pt_validate_hw_cap(PT_CAP_topa_multiple_entries)) {
 		TOPA_ENTRY(&tp->topa, 1)->base = page_to_phys(p) >> TOPA_SHIFT;
 		TOPA_ENTRY(&tp->topa, 1)->end = 1;
-	पूर्ण
+	}
 
-	वापस &tp->topa;
-पूर्ण
+	return &tp->topa;
+}
 
 /**
- * topa_मुक्त() - मुक्त a page-sized ToPA table
+ * topa_free() - free a page-sized ToPA table
  * @topa:	Table to deallocate.
  */
-अटल व्योम topa_मुक्त(काष्ठा topa *topa)
-अणु
-	मुक्त_page((अचिन्हित दीर्घ)topa);
-पूर्ण
+static void topa_free(struct topa *topa)
+{
+	free_page((unsigned long)topa);
+}
 
 /**
- * topa_insert_table() - insert a ToPA table पूर्णांकo a buffer
+ * topa_insert_table() - insert a ToPA table into a buffer
  * @buf:	 PT buffer that's being extended.
  * @topa:	 New topa table to be inserted.
  *
- * If it's the first table in this buffer, set up buffer's poपूर्णांकers
+ * If it's the first table in this buffer, set up buffer's pointers
  * accordingly; otherwise, add a END=1 link entry to @topa to the current
- * "last" table and adjust the last table poपूर्णांकer to @topa.
+ * "last" table and adjust the last table pointer to @topa.
  */
-अटल व्योम topa_insert_table(काष्ठा pt_buffer *buf, काष्ठा topa *topa)
-अणु
-	काष्ठा topa *last = buf->last;
+static void topa_insert_table(struct pt_buffer *buf, struct topa *topa)
+{
+	struct topa *last = buf->last;
 
 	list_add_tail(&topa->list, &buf->tables);
 
-	अगर (!buf->first) अणु
+	if (!buf->first) {
 		buf->first = buf->last = buf->cur = topa;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	topa->offset = last->offset + last->size;
 	buf->last = topa;
 
-	अगर (!पूर्णांकel_pt_validate_hw_cap(PT_CAP_topa_multiple_entries))
-		वापस;
+	if (!intel_pt_validate_hw_cap(PT_CAP_topa_multiple_entries))
+		return;
 
 	BUG_ON(last->last != TENTS_PER_PAGE - 1);
 
 	TOPA_ENTRY(last, -1)->base = topa_pfn(topa);
 	TOPA_ENTRY(last, -1)->end = 1;
-पूर्ण
+}
 
 /**
- * topa_table_full() - check अगर a ToPA table is filled up
+ * topa_table_full() - check if a ToPA table is filled up
  * @topa:	ToPA table.
  */
-अटल bool topa_table_full(काष्ठा topa *topa)
-अणु
-	/* single-entry ToPA is a special हाल */
-	अगर (!पूर्णांकel_pt_validate_hw_cap(PT_CAP_topa_multiple_entries))
-		वापस !!topa->last;
+static bool topa_table_full(struct topa *topa)
+{
+	/* single-entry ToPA is a special case */
+	if (!intel_pt_validate_hw_cap(PT_CAP_topa_multiple_entries))
+		return !!topa->last;
 
-	वापस topa->last == TENTS_PER_PAGE - 1;
-पूर्ण
+	return topa->last == TENTS_PER_PAGE - 1;
+}
 
 /**
  * topa_insert_pages() - create a list of ToPA tables
@@ -726,254 +725,254 @@ fail:
  *
  * Return:	0 on success or error code.
  */
-अटल पूर्णांक topa_insert_pages(काष्ठा pt_buffer *buf, पूर्णांक cpu, gfp_t gfp)
-अणु
-	काष्ठा topa *topa = buf->last;
-	पूर्णांक order = 0;
-	काष्ठा page *p;
+static int topa_insert_pages(struct pt_buffer *buf, int cpu, gfp_t gfp)
+{
+	struct topa *topa = buf->last;
+	int order = 0;
+	struct page *p;
 
 	p = virt_to_page(buf->data_pages[buf->nr_pages]);
-	अगर (PagePrivate(p))
-		order = page_निजी(p);
+	if (PagePrivate(p))
+		order = page_private(p);
 
-	अगर (topa_table_full(topa)) अणु
+	if (topa_table_full(topa)) {
 		topa = topa_alloc(cpu, gfp);
-		अगर (!topa)
-			वापस -ENOMEM;
+		if (!topa)
+			return -ENOMEM;
 
 		topa_insert_table(buf, topa);
-	पूर्ण
+	}
 
-	अगर (topa->z_count == topa->last - 1) अणु
-		अगर (order == TOPA_ENTRY(topa, topa->last - 1)->size)
+	if (topa->z_count == topa->last - 1) {
+		if (order == TOPA_ENTRY(topa, topa->last - 1)->size)
 			topa->z_count++;
-	पूर्ण
+	}
 
 	TOPA_ENTRY(topa, -1)->base = page_to_phys(p) >> TOPA_SHIFT;
 	TOPA_ENTRY(topa, -1)->size = order;
-	अगर (!buf->snapshot &&
-	    !पूर्णांकel_pt_validate_hw_cap(PT_CAP_topa_multiple_entries)) अणु
-		TOPA_ENTRY(topa, -1)->पूर्णांकr = 1;
+	if (!buf->snapshot &&
+	    !intel_pt_validate_hw_cap(PT_CAP_topa_multiple_entries)) {
+		TOPA_ENTRY(topa, -1)->intr = 1;
 		TOPA_ENTRY(topa, -1)->stop = 1;
-	पूर्ण
+	}
 
 	topa->last++;
 	topa->size += sizes(order);
 
 	buf->nr_pages += 1ul << order;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * pt_topa_dump() - prपूर्णांक ToPA tables and their entries
+ * pt_topa_dump() - print ToPA tables and their entries
  * @buf:	PT buffer.
  */
-अटल व्योम pt_topa_dump(काष्ठा pt_buffer *buf)
-अणु
-	काष्ठा topa *topa;
+static void pt_topa_dump(struct pt_buffer *buf)
+{
+	struct topa *topa;
 
-	list_क्रम_each_entry(topa, &buf->tables, list) अणु
-		काष्ठा topa_page *tp = topa_to_page(topa);
-		पूर्णांक i;
+	list_for_each_entry(topa, &buf->tables, list) {
+		struct topa_page *tp = topa_to_page(topa);
+		int i;
 
 		pr_debug("# table @%p, off %llx size %zx\n", tp->table,
 			 topa->offset, topa->size);
-		क्रम (i = 0; i < TENTS_PER_PAGE; i++) अणु
+		for (i = 0; i < TENTS_PER_PAGE; i++) {
 			pr_debug("# entry @%p (%lx sz %u %c%c%c) raw=%16llx\n",
 				 &tp->table[i],
-				 (अचिन्हित दीर्घ)tp->table[i].base << TOPA_SHIFT,
+				 (unsigned long)tp->table[i].base << TOPA_SHIFT,
 				 sizes(tp->table[i].size),
 				 tp->table[i].end ?  'E' : ' ',
-				 tp->table[i].पूर्णांकr ? 'I' : ' ',
+				 tp->table[i].intr ? 'I' : ' ',
 				 tp->table[i].stop ? 'S' : ' ',
 				 *(u64 *)&tp->table[i]);
-			अगर ((पूर्णांकel_pt_validate_hw_cap(PT_CAP_topa_multiple_entries) &&
+			if ((intel_pt_validate_hw_cap(PT_CAP_topa_multiple_entries) &&
 			     tp->table[i].stop) ||
 			    tp->table[i].end)
-				अवरोध;
-			अगर (!i && topa->z_count)
+				break;
+			if (!i && topa->z_count)
 				i += topa->z_count;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /**
  * pt_buffer_advance() - advance to the next output region
  * @buf:	PT buffer.
  *
- * Advance the current poपूर्णांकers in the buffer to the next ToPA entry.
+ * Advance the current pointers in the buffer to the next ToPA entry.
  */
-अटल व्योम pt_buffer_advance(काष्ठा pt_buffer *buf)
-अणु
+static void pt_buffer_advance(struct pt_buffer *buf)
+{
 	buf->output_off = 0;
 	buf->cur_idx++;
 
-	अगर (buf->cur_idx == buf->cur->last) अणु
-		अगर (buf->cur == buf->last)
+	if (buf->cur_idx == buf->cur->last) {
+		if (buf->cur == buf->last)
 			buf->cur = buf->first;
-		अन्यथा
-			buf->cur = list_entry(buf->cur->list.next, काष्ठा topa,
+		else
+			buf->cur = list_entry(buf->cur->list.next, struct topa,
 					      list);
 		buf->cur_idx = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * pt_update_head() - calculate current offsets and sizes
  * @pt:		Per-cpu pt context.
  *
- * Update buffer's current ग_लिखो poपूर्णांकer position and data size.
+ * Update buffer's current write pointer position and data size.
  */
-अटल व्योम pt_update_head(काष्ठा pt *pt)
-अणु
-	काष्ठा pt_buffer *buf = perf_get_aux(&pt->handle);
+static void pt_update_head(struct pt *pt)
+{
+	struct pt_buffer *buf = perf_get_aux(&pt->handle);
 	u64 topa_idx, base, old;
 
-	अगर (buf->single) अणु
+	if (buf->single) {
 		local_set(&buf->data_size, buf->output_off);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* offset of the first region in this table from the beginning of buf */
 	base = buf->cur->offset + buf->output_off;
 
 	/* offset of the current output region within this table */
-	क्रम (topa_idx = 0; topa_idx < buf->cur_idx; topa_idx++)
+	for (topa_idx = 0; topa_idx < buf->cur_idx; topa_idx++)
 		base += TOPA_ENTRY_SIZE(buf->cur, topa_idx);
 
-	अगर (buf->snapshot) अणु
+	if (buf->snapshot) {
 		local_set(&buf->data_size, base);
-	पूर्ण अन्यथा अणु
+	} else {
 		old = (local64_xchg(&buf->head, base) &
 		       ((buf->nr_pages << PAGE_SHIFT) - 1));
-		अगर (base < old)
+		if (base < old)
 			base += buf->nr_pages << PAGE_SHIFT;
 
 		local_add(base - old, &buf->data_size);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * pt_buffer_region() - obtain current output region's address
  * @buf:	PT buffer.
  */
-अटल व्योम *pt_buffer_region(काष्ठा pt_buffer *buf)
-अणु
-	वापस phys_to_virt(TOPA_ENTRY(buf->cur, buf->cur_idx)->base << TOPA_SHIFT);
-पूर्ण
+static void *pt_buffer_region(struct pt_buffer *buf)
+{
+	return phys_to_virt(TOPA_ENTRY(buf->cur, buf->cur_idx)->base << TOPA_SHIFT);
+}
 
 /**
  * pt_buffer_region_size() - obtain current output region's size
  * @buf:	PT buffer.
  */
-अटल माप_प्रकार pt_buffer_region_size(काष्ठा pt_buffer *buf)
-अणु
-	वापस TOPA_ENTRY_SIZE(buf->cur, buf->cur_idx);
-पूर्ण
+static size_t pt_buffer_region_size(struct pt_buffer *buf)
+{
+	return TOPA_ENTRY_SIZE(buf->cur, buf->cur_idx);
+}
 
 /**
  * pt_handle_status() - take care of possible status conditions
  * @pt:		Per-cpu pt context.
  */
-अटल व्योम pt_handle_status(काष्ठा pt *pt)
-अणु
-	काष्ठा pt_buffer *buf = perf_get_aux(&pt->handle);
-	पूर्णांक advance = 0;
+static void pt_handle_status(struct pt *pt)
+{
+	struct pt_buffer *buf = perf_get_aux(&pt->handle);
+	int advance = 0;
 	u64 status;
 
 	rdmsrl(MSR_IA32_RTIT_STATUS, status);
 
-	अगर (status & RTIT_STATUS_ERROR) अणु
+	if (status & RTIT_STATUS_ERROR) {
 		pr_err_ratelimited("ToPA ERROR encountered, trying to recover\n");
 		pt_topa_dump(buf);
 		status &= ~RTIT_STATUS_ERROR;
-	पूर्ण
+	}
 
-	अगर (status & RTIT_STATUS_STOPPED) अणु
+	if (status & RTIT_STATUS_STOPPED) {
 		status &= ~RTIT_STATUS_STOPPED;
 
 		/*
-		 * On प्रणालीs that only करो single-entry ToPA, hitting STOP
-		 * means we are alपढ़ोy losing data; need to let the decoder
+		 * On systems that only do single-entry ToPA, hitting STOP
+		 * means we are already losing data; need to let the decoder
 		 * know.
 		 */
-		अगर (!पूर्णांकel_pt_validate_hw_cap(PT_CAP_topa_multiple_entries) ||
-		    buf->output_off == pt_buffer_region_size(buf)) अणु
+		if (!intel_pt_validate_hw_cap(PT_CAP_topa_multiple_entries) ||
+		    buf->output_off == pt_buffer_region_size(buf)) {
 			perf_aux_output_flag(&pt->handle,
 			                     PERF_AUX_FLAG_TRUNCATED);
 			advance++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/*
-	 * Also on single-entry ToPA implementations, पूर्णांकerrupt will come
-	 * beक्रमe the output reaches its output region's boundary.
+	 * Also on single-entry ToPA implementations, interrupt will come
+	 * before the output reaches its output region's boundary.
 	 */
-	अगर (!पूर्णांकel_pt_validate_hw_cap(PT_CAP_topa_multiple_entries) &&
+	if (!intel_pt_validate_hw_cap(PT_CAP_topa_multiple_entries) &&
 	    !buf->snapshot &&
-	    pt_buffer_region_size(buf) - buf->output_off <= TOPA_PMI_MARGIN) अणु
-		व्योम *head = pt_buffer_region(buf);
+	    pt_buffer_region_size(buf) - buf->output_off <= TOPA_PMI_MARGIN) {
+		void *head = pt_buffer_region(buf);
 
 		/* everything within this margin needs to be zeroed out */
-		स_रखो(head + buf->output_off, 0,
+		memset(head + buf->output_off, 0,
 		       pt_buffer_region_size(buf) -
 		       buf->output_off);
 		advance++;
-	पूर्ण
+	}
 
-	अगर (advance)
+	if (advance)
 		pt_buffer_advance(buf);
 
 	wrmsrl(MSR_IA32_RTIT_STATUS, status);
-पूर्ण
+}
 
 /**
- * pt_पढ़ो_offset() - translate रेजिस्टरs पूर्णांकo buffer poपूर्णांकers
+ * pt_read_offset() - translate registers into buffer pointers
  * @buf:	PT buffer.
  *
- * Set buffer's output poपूर्णांकers from MSR values.
+ * Set buffer's output pointers from MSR values.
  */
-अटल व्योम pt_पढ़ो_offset(काष्ठा pt_buffer *buf)
-अणु
-	काष्ठा pt *pt = this_cpu_ptr(&pt_ctx);
-	काष्ठा topa_page *tp;
+static void pt_read_offset(struct pt_buffer *buf)
+{
+	struct pt *pt = this_cpu_ptr(&pt_ctx);
+	struct topa_page *tp;
 
-	अगर (!buf->single) अणु
+	if (!buf->single) {
 		rdmsrl(MSR_IA32_RTIT_OUTPUT_BASE, pt->output_base);
 		tp = phys_to_virt(pt->output_base);
 		buf->cur = &tp->topa;
-	पूर्ण
+	}
 
 	rdmsrl(MSR_IA32_RTIT_OUTPUT_MASK, pt->output_mask);
 	/* offset within current output region */
 	buf->output_off = pt->output_mask >> 32;
 	/* index of current output region within this table */
-	अगर (!buf->single)
+	if (!buf->single)
 		buf->cur_idx = (pt->output_mask & 0xffffff80) >> 7;
-पूर्ण
+}
 
-अटल काष्ठा topa_entry *
-pt_topa_entry_क्रम_page(काष्ठा pt_buffer *buf, अचिन्हित पूर्णांक pg)
-अणु
-	काष्ठा topa_page *tp;
-	काष्ठा topa *topa;
-	अचिन्हित पूर्णांक idx, cur_pg = 0, z_pg = 0, start_idx = 0;
+static struct topa_entry *
+pt_topa_entry_for_page(struct pt_buffer *buf, unsigned int pg)
+{
+	struct topa_page *tp;
+	struct topa *topa;
+	unsigned int idx, cur_pg = 0, z_pg = 0, start_idx = 0;
 
 	/*
 	 * Indicates a bug in the caller.
 	 */
-	अगर (WARN_ON_ONCE(pg >= buf->nr_pages))
-		वापस शून्य;
+	if (WARN_ON_ONCE(pg >= buf->nr_pages))
+		return NULL;
 
 	/*
 	 * First, find the ToPA table where @pg fits. With high
 	 * order allocations, there shouldn't be many of these.
 	 */
-	list_क्रम_each_entry(topa, &buf->tables, list) अणु
-		अगर (topa->offset + topa->size > pg << PAGE_SHIFT)
-			जाओ found;
-	पूर्ण
+	list_for_each_entry(topa, &buf->tables, list) {
+		if (topa->offset + topa->size > pg << PAGE_SHIFT)
+			goto found;
+	}
 
 	/*
 	 * Hitting this means we have a problem in the ToPA
@@ -981,467 +980,467 @@ pt_topa_entry_क्रम_page(काष्ठा pt_buffer *buf, अचिन�
 	 */
 	WARN_ON_ONCE(1);
 
-	वापस शून्य;
+	return NULL;
 
 found:
 	/*
 	 * Indicates a problem in the ToPA allocation code.
 	 */
-	अगर (WARN_ON_ONCE(topa->last == -1))
-		वापस शून्य;
+	if (WARN_ON_ONCE(topa->last == -1))
+		return NULL;
 
 	tp = topa_to_page(topa);
 	cur_pg = PFN_DOWN(topa->offset);
-	अगर (topa->z_count) अणु
+	if (topa->z_count) {
 		z_pg = TOPA_ENTRY_PAGES(topa, 0) * (topa->z_count + 1);
 		start_idx = topa->z_count + 1;
-	पूर्ण
+	}
 
 	/*
 	 * Multiple entries at the beginning of the table have the same size,
-	 * ideally all of them; अगर @pg falls there, the search is करोne.
+	 * ideally all of them; if @pg falls there, the search is done.
 	 */
-	अगर (pg >= cur_pg && pg < cur_pg + z_pg) अणु
+	if (pg >= cur_pg && pg < cur_pg + z_pg) {
 		idx = (pg - cur_pg) / TOPA_ENTRY_PAGES(topa, 0);
-		वापस &tp->table[idx];
-	पूर्ण
+		return &tp->table[idx];
+	}
 
 	/*
-	 * Otherwise, slow path: iterate through the reमुख्यing entries.
+	 * Otherwise, slow path: iterate through the remaining entries.
 	 */
-	क्रम (idx = start_idx, cur_pg += z_pg; idx < topa->last; idx++) अणु
-		अगर (cur_pg + TOPA_ENTRY_PAGES(topa, idx) > pg)
-			वापस &tp->table[idx];
+	for (idx = start_idx, cur_pg += z_pg; idx < topa->last; idx++) {
+		if (cur_pg + TOPA_ENTRY_PAGES(topa, idx) > pg)
+			return &tp->table[idx];
 
 		cur_pg += TOPA_ENTRY_PAGES(topa, idx);
-	पूर्ण
+	}
 
 	/*
-	 * Means we couldn't find a ToPA entry in the table that करोes match.
+	 * Means we couldn't find a ToPA entry in the table that does match.
 	 */
 	WARN_ON_ONCE(1);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा topa_entry *
-pt_topa_prev_entry(काष्ठा pt_buffer *buf, काष्ठा topa_entry *te)
-अणु
-	अचिन्हित दीर्घ table = (अचिन्हित दीर्घ)te & ~(PAGE_SIZE - 1);
-	काष्ठा topa_page *tp;
-	काष्ठा topa *topa;
+static struct topa_entry *
+pt_topa_prev_entry(struct pt_buffer *buf, struct topa_entry *te)
+{
+	unsigned long table = (unsigned long)te & ~(PAGE_SIZE - 1);
+	struct topa_page *tp;
+	struct topa *topa;
 
-	tp = (काष्ठा topa_page *)table;
-	अगर (tp->table != te)
-		वापस --te;
+	tp = (struct topa_page *)table;
+	if (tp->table != te)
+		return --te;
 
 	topa = &tp->topa;
-	अगर (topa == buf->first)
+	if (topa == buf->first)
 		topa = buf->last;
-	अन्यथा
+	else
 		topa = list_prev_entry(topa, list);
 
 	tp = topa_to_page(topa);
 
-	वापस &tp->table[topa->last - 1];
-पूर्ण
+	return &tp->table[topa->last - 1];
+}
 
 /**
- * pt_buffer_reset_markers() - place पूर्णांकerrupt and stop bits in the buffer
+ * pt_buffer_reset_markers() - place interrupt and stop bits in the buffer
  * @buf:	PT buffer.
  * @handle:	Current output handle.
  *
  * Place INT and STOP marks to prevent overwriting old data that the consumer
  * hasn't yet collected and waking up the consumer after a certain fraction of
- * the buffer has filled up. Only needed and sensible क्रम non-snapshot counters.
+ * the buffer has filled up. Only needed and sensible for non-snapshot counters.
  *
  * This obviously relies on buf::head to figure out buffer markers, so it has
- * to be called after pt_buffer_reset_offsets() and beक्रमe the hardware tracing
+ * to be called after pt_buffer_reset_offsets() and before the hardware tracing
  * is enabled.
  */
-अटल पूर्णांक pt_buffer_reset_markers(काष्ठा pt_buffer *buf,
-				   काष्ठा perf_output_handle *handle)
+static int pt_buffer_reset_markers(struct pt_buffer *buf,
+				   struct perf_output_handle *handle)
 
-अणु
-	अचिन्हित दीर्घ head = local64_पढ़ो(&buf->head);
-	अचिन्हित दीर्घ idx, npages, wakeup;
+{
+	unsigned long head = local64_read(&buf->head);
+	unsigned long idx, npages, wakeup;
 
-	अगर (buf->single)
-		वापस 0;
+	if (buf->single)
+		return 0;
 
 	/* can't stop in the middle of an output region */
-	अगर (buf->output_off + handle->size + 1 < pt_buffer_region_size(buf)) अणु
+	if (buf->output_off + handle->size + 1 < pt_buffer_region_size(buf)) {
 		perf_aux_output_flag(handle, PERF_AUX_FLAG_TRUNCATED);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 
 	/* single entry ToPA is handled by marking all regions STOP=1 INT=1 */
-	अगर (!पूर्णांकel_pt_validate_hw_cap(PT_CAP_topa_multiple_entries))
-		वापस 0;
+	if (!intel_pt_validate_hw_cap(PT_CAP_topa_multiple_entries))
+		return 0;
 
 	/* clear STOP and INT from current entry */
-	अगर (buf->stop_te) अणु
+	if (buf->stop_te) {
 		buf->stop_te->stop = 0;
-		buf->stop_te->पूर्णांकr = 0;
-	पूर्ण
+		buf->stop_te->intr = 0;
+	}
 
-	अगर (buf->पूर्णांकr_te)
-		buf->पूर्णांकr_te->पूर्णांकr = 0;
+	if (buf->intr_te)
+		buf->intr_te->intr = 0;
 
 	/* how many pages till the STOP marker */
 	npages = handle->size >> PAGE_SHIFT;
 
-	/* अगर it's on a page boundary, fill up one more page */
-	अगर (!offset_in_page(head + handle->size + 1))
+	/* if it's on a page boundary, fill up one more page */
+	if (!offset_in_page(head + handle->size + 1))
 		npages++;
 
 	idx = (head >> PAGE_SHIFT) + npages;
 	idx &= buf->nr_pages - 1;
 
-	अगर (idx != buf->stop_pos) अणु
+	if (idx != buf->stop_pos) {
 		buf->stop_pos = idx;
-		buf->stop_te = pt_topa_entry_क्रम_page(buf, idx);
+		buf->stop_te = pt_topa_entry_for_page(buf, idx);
 		buf->stop_te = pt_topa_prev_entry(buf, buf->stop_te);
-	पूर्ण
+	}
 
 	wakeup = handle->wakeup >> PAGE_SHIFT;
 
-	/* in the worst हाल, wake up the consumer one page beक्रमe hard stop */
+	/* in the worst case, wake up the consumer one page before hard stop */
 	idx = (head >> PAGE_SHIFT) + npages - 1;
-	अगर (idx > wakeup)
+	if (idx > wakeup)
 		idx = wakeup;
 
 	idx &= buf->nr_pages - 1;
-	अगर (idx != buf->पूर्णांकr_pos) अणु
-		buf->पूर्णांकr_pos = idx;
-		buf->पूर्णांकr_te = pt_topa_entry_क्रम_page(buf, idx);
-		buf->पूर्णांकr_te = pt_topa_prev_entry(buf, buf->पूर्णांकr_te);
-	पूर्ण
+	if (idx != buf->intr_pos) {
+		buf->intr_pos = idx;
+		buf->intr_te = pt_topa_entry_for_page(buf, idx);
+		buf->intr_te = pt_topa_prev_entry(buf, buf->intr_te);
+	}
 
 	buf->stop_te->stop = 1;
-	buf->stop_te->पूर्णांकr = 1;
-	buf->पूर्णांकr_te->पूर्णांकr = 1;
+	buf->stop_te->intr = 1;
+	buf->intr_te->intr = 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * pt_buffer_reset_offsets() - adjust buffer's ग_लिखो poपूर्णांकers from aux_head
+ * pt_buffer_reset_offsets() - adjust buffer's write pointers from aux_head
  * @buf:	PT buffer.
- * @head:	Write poपूर्णांकer (aux_head) from AUX buffer.
+ * @head:	Write pointer (aux_head) from AUX buffer.
  *
  * Find the ToPA table and entry corresponding to given @head and set buffer's
- * "current" poपूर्णांकers accordingly. This is करोne after we have obtained the
+ * "current" pointers accordingly. This is done after we have obtained the
  * current aux_head position from a successful call to perf_aux_output_begin()
  * to make sure the hardware is writing to the right place.
  *
- * This function modअगरies buf::अणुcur,cur_idx,output_offपूर्ण that will be programmed
- * पूर्णांकo PT msrs when the tracing is enabled and buf::head and buf::data_size,
+ * This function modifies buf::{cur,cur_idx,output_off} that will be programmed
+ * into PT msrs when the tracing is enabled and buf::head and buf::data_size,
  * which are used to determine INT and STOP markers' locations by a subsequent
  * call to pt_buffer_reset_markers().
  */
-अटल व्योम pt_buffer_reset_offsets(काष्ठा pt_buffer *buf, अचिन्हित दीर्घ head)
-अणु
-	काष्ठा topa_page *cur_tp;
-	काष्ठा topa_entry *te;
-	पूर्णांक pg;
+static void pt_buffer_reset_offsets(struct pt_buffer *buf, unsigned long head)
+{
+	struct topa_page *cur_tp;
+	struct topa_entry *te;
+	int pg;
 
-	अगर (buf->snapshot)
+	if (buf->snapshot)
 		head &= (buf->nr_pages << PAGE_SHIFT) - 1;
 
-	अगर (!buf->single) अणु
+	if (!buf->single) {
 		pg = (head >> PAGE_SHIFT) & (buf->nr_pages - 1);
-		te = pt_topa_entry_क्रम_page(buf, pg);
+		te = pt_topa_entry_for_page(buf, pg);
 
 		cur_tp = topa_entry_to_page(te);
 		buf->cur = &cur_tp->topa;
 		buf->cur_idx = te - TOPA_ENTRY(buf->cur, 0);
 		buf->output_off = head & (pt_buffer_region_size(buf) - 1);
-	पूर्ण अन्यथा अणु
+	} else {
 		buf->output_off = head;
-	पूर्ण
+	}
 
 	local64_set(&buf->head, head);
 	local_set(&buf->data_size, 0);
-पूर्ण
+}
 
 /**
- * pt_buffer_fini_topa() - deallocate ToPA काष्ठाure of a buffer
+ * pt_buffer_fini_topa() - deallocate ToPA structure of a buffer
  * @buf:	PT buffer.
  */
-अटल व्योम pt_buffer_fini_topa(काष्ठा pt_buffer *buf)
-अणु
-	काष्ठा topa *topa, *iter;
+static void pt_buffer_fini_topa(struct pt_buffer *buf)
+{
+	struct topa *topa, *iter;
 
-	अगर (buf->single)
-		वापस;
+	if (buf->single)
+		return;
 
-	list_क्रम_each_entry_safe(topa, iter, &buf->tables, list) अणु
+	list_for_each_entry_safe(topa, iter, &buf->tables, list) {
 		/*
-		 * right now, this is in मुक्त_aux() path only, so
+		 * right now, this is in free_aux() path only, so
 		 * no need to unlink this table from the list
 		 */
-		topa_मुक्त(topa);
-	पूर्ण
-पूर्ण
+		topa_free(topa);
+	}
+}
 
 /**
- * pt_buffer_init_topa() - initialize ToPA table क्रम pt buffer
+ * pt_buffer_init_topa() - initialize ToPA table for pt buffer
  * @buf:	PT buffer.
  * @size:	Total size of all regions within this ToPA.
  * @gfp:	Allocation flags.
  */
-अटल पूर्णांक pt_buffer_init_topa(काष्ठा pt_buffer *buf, पूर्णांक cpu,
-			       अचिन्हित दीर्घ nr_pages, gfp_t gfp)
-अणु
-	काष्ठा topa *topa;
-	पूर्णांक err;
+static int pt_buffer_init_topa(struct pt_buffer *buf, int cpu,
+			       unsigned long nr_pages, gfp_t gfp)
+{
+	struct topa *topa;
+	int err;
 
 	topa = topa_alloc(cpu, gfp);
-	अगर (!topa)
-		वापस -ENOMEM;
+	if (!topa)
+		return -ENOMEM;
 
 	topa_insert_table(buf, topa);
 
-	जबतक (buf->nr_pages < nr_pages) अणु
+	while (buf->nr_pages < nr_pages) {
 		err = topa_insert_pages(buf, cpu, gfp);
-		अगर (err) अणु
+		if (err) {
 			pt_buffer_fini_topa(buf);
-			वापस -ENOMEM;
-		पूर्ण
-	पूर्ण
+			return -ENOMEM;
+		}
+	}
 
-	/* link last table to the first one, unless we're द्विगुन buffering */
-	अगर (पूर्णांकel_pt_validate_hw_cap(PT_CAP_topa_multiple_entries)) अणु
+	/* link last table to the first one, unless we're double buffering */
+	if (intel_pt_validate_hw_cap(PT_CAP_topa_multiple_entries)) {
 		TOPA_ENTRY(buf->last, -1)->base = topa_pfn(buf->first);
 		TOPA_ENTRY(buf->last, -1)->end = 1;
-	पूर्ण
+	}
 
 	pt_topa_dump(buf);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pt_buffer_try_single(काष्ठा pt_buffer *buf, पूर्णांक nr_pages)
-अणु
-	काष्ठा page *p = virt_to_page(buf->data_pages[0]);
-	पूर्णांक ret = -ENOTSUPP, order = 0;
+static int pt_buffer_try_single(struct pt_buffer *buf, int nr_pages)
+{
+	struct page *p = virt_to_page(buf->data_pages[0]);
+	int ret = -ENOTSUPP, order = 0;
 
 	/*
 	 * We can use single range output mode
-	 * + in snapshot mode, where we करोn't need पूर्णांकerrupts;
-	 * + अगर the hardware supports it;
-	 * + अगर the entire buffer is one contiguous allocation.
+	 * + in snapshot mode, where we don't need interrupts;
+	 * + if the hardware supports it;
+	 * + if the entire buffer is one contiguous allocation.
 	 */
-	अगर (!buf->snapshot)
-		जाओ out;
+	if (!buf->snapshot)
+		goto out;
 
-	अगर (!पूर्णांकel_pt_validate_hw_cap(PT_CAP_single_range_output))
-		जाओ out;
+	if (!intel_pt_validate_hw_cap(PT_CAP_single_range_output))
+		goto out;
 
-	अगर (PagePrivate(p))
-		order = page_निजी(p);
+	if (PagePrivate(p))
+		order = page_private(p);
 
-	अगर (1 << order != nr_pages)
-		जाओ out;
+	if (1 << order != nr_pages)
+		goto out;
 
 	buf->single = true;
 	buf->nr_pages = nr_pages;
 	ret = 0;
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * pt_buffer_setup_aux() - set up topa tables क्रम a PT buffer
+ * pt_buffer_setup_aux() - set up topa tables for a PT buffer
  * @cpu:	Cpu on which to allocate, -1 means current.
- * @pages:	Array of poपूर्णांकers to buffer pages passed from perf core.
+ * @pages:	Array of pointers to buffer pages passed from perf core.
  * @nr_pages:	Number of pages in the buffer.
- * @snapshot:	If this is a snapshot/overग_लिखो counter.
+ * @snapshot:	If this is a snapshot/overwrite counter.
  *
  * This is a pmu::setup_aux callback that sets up ToPA tables and all the
- * bookkeeping क्रम an AUX buffer.
+ * bookkeeping for an AUX buffer.
  *
- * Return:	Our निजी PT buffer काष्ठाure.
+ * Return:	Our private PT buffer structure.
  */
-अटल व्योम *
-pt_buffer_setup_aux(काष्ठा perf_event *event, व्योम **pages,
-		    पूर्णांक nr_pages, bool snapshot)
-अणु
-	काष्ठा pt_buffer *buf;
-	पूर्णांक node, ret, cpu = event->cpu;
+static void *
+pt_buffer_setup_aux(struct perf_event *event, void **pages,
+		    int nr_pages, bool snapshot)
+{
+	struct pt_buffer *buf;
+	int node, ret, cpu = event->cpu;
 
-	अगर (!nr_pages)
-		वापस शून्य;
+	if (!nr_pages)
+		return NULL;
 
 	/*
-	 * Only support AUX sampling in snapshot mode, where we करोn't
+	 * Only support AUX sampling in snapshot mode, where we don't
 	 * generate NMIs.
 	 */
-	अगर (event->attr.aux_sample_size && !snapshot)
-		वापस शून्य;
+	if (event->attr.aux_sample_size && !snapshot)
+		return NULL;
 
-	अगर (cpu == -1)
+	if (cpu == -1)
 		cpu = raw_smp_processor_id();
 	node = cpu_to_node(cpu);
 
-	buf = kzalloc_node(माप(काष्ठा pt_buffer), GFP_KERNEL, node);
-	अगर (!buf)
-		वापस शून्य;
+	buf = kzalloc_node(sizeof(struct pt_buffer), GFP_KERNEL, node);
+	if (!buf)
+		return NULL;
 
 	buf->snapshot = snapshot;
 	buf->data_pages = pages;
 	buf->stop_pos = -1;
-	buf->पूर्णांकr_pos = -1;
+	buf->intr_pos = -1;
 
 	INIT_LIST_HEAD(&buf->tables);
 
 	ret = pt_buffer_try_single(buf, nr_pages);
-	अगर (!ret)
-		वापस buf;
+	if (!ret)
+		return buf;
 
 	ret = pt_buffer_init_topa(buf, cpu, nr_pages, GFP_KERNEL);
-	अगर (ret) अणु
-		kमुक्त(buf);
-		वापस शून्य;
-	पूर्ण
+	if (ret) {
+		kfree(buf);
+		return NULL;
+	}
 
-	वापस buf;
-पूर्ण
+	return buf;
+}
 
 /**
- * pt_buffer_मुक्त_aux() - perf AUX deallocation path callback
+ * pt_buffer_free_aux() - perf AUX deallocation path callback
  * @data:	PT buffer.
  */
-अटल व्योम pt_buffer_मुक्त_aux(व्योम *data)
-अणु
-	काष्ठा pt_buffer *buf = data;
+static void pt_buffer_free_aux(void *data)
+{
+	struct pt_buffer *buf = data;
 
 	pt_buffer_fini_topa(buf);
-	kमुक्त(buf);
-पूर्ण
+	kfree(buf);
+}
 
-अटल पूर्णांक pt_addr_filters_init(काष्ठा perf_event *event)
-अणु
-	काष्ठा pt_filters *filters;
-	पूर्णांक node = event->cpu == -1 ? -1 : cpu_to_node(event->cpu);
+static int pt_addr_filters_init(struct perf_event *event)
+{
+	struct pt_filters *filters;
+	int node = event->cpu == -1 ? -1 : cpu_to_node(event->cpu);
 
-	अगर (!पूर्णांकel_pt_validate_hw_cap(PT_CAP_num_address_ranges))
-		वापस 0;
+	if (!intel_pt_validate_hw_cap(PT_CAP_num_address_ranges))
+		return 0;
 
-	filters = kzalloc_node(माप(काष्ठा pt_filters), GFP_KERNEL, node);
-	अगर (!filters)
-		वापस -ENOMEM;
+	filters = kzalloc_node(sizeof(struct pt_filters), GFP_KERNEL, node);
+	if (!filters)
+		return -ENOMEM;
 
-	अगर (event->parent)
-		स_नकल(filters, event->parent->hw.addr_filters,
-		       माप(*filters));
+	if (event->parent)
+		memcpy(filters, event->parent->hw.addr_filters,
+		       sizeof(*filters));
 
 	event->hw.addr_filters = filters;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम pt_addr_filters_fini(काष्ठा perf_event *event)
-अणु
-	kमुक्त(event->hw.addr_filters);
-	event->hw.addr_filters = शून्य;
-पूर्ण
+static void pt_addr_filters_fini(struct perf_event *event)
+{
+	kfree(event->hw.addr_filters);
+	event->hw.addr_filters = NULL;
+}
 
-अटल अंतरभूत bool valid_kernel_ip(अचिन्हित दीर्घ ip)
-अणु
-	वापस virt_addr_valid(ip) && kernel_ip(ip);
-पूर्ण
+static inline bool valid_kernel_ip(unsigned long ip)
+{
+	return virt_addr_valid(ip) && kernel_ip(ip);
+}
 
-अटल पूर्णांक pt_event_addr_filters_validate(काष्ठा list_head *filters)
-अणु
-	काष्ठा perf_addr_filter *filter;
-	पूर्णांक range = 0;
+static int pt_event_addr_filters_validate(struct list_head *filters)
+{
+	struct perf_addr_filter *filter;
+	int range = 0;
 
-	list_क्रम_each_entry(filter, filters, entry) अणु
+	list_for_each_entry(filter, filters, entry) {
 		/*
-		 * PT करोesn't support single address triggers and
+		 * PT doesn't support single address triggers and
 		 * 'start' filters.
 		 */
-		अगर (!filter->size ||
+		if (!filter->size ||
 		    filter->action == PERF_ADDR_FILTER_ACTION_START)
-			वापस -EOPNOTSUPP;
+			return -EOPNOTSUPP;
 
-		अगर (!filter->path.dentry) अणु
-			अगर (!valid_kernel_ip(filter->offset))
-				वापस -EINVAL;
+		if (!filter->path.dentry) {
+			if (!valid_kernel_ip(filter->offset))
+				return -EINVAL;
 
-			अगर (!valid_kernel_ip(filter->offset + filter->size))
-				वापस -EINVAL;
-		पूर्ण
+			if (!valid_kernel_ip(filter->offset + filter->size))
+				return -EINVAL;
+		}
 
-		अगर (++range > पूर्णांकel_pt_validate_hw_cap(PT_CAP_num_address_ranges))
-			वापस -EOPNOTSUPP;
-	पूर्ण
+		if (++range > intel_pt_validate_hw_cap(PT_CAP_num_address_ranges))
+			return -EOPNOTSUPP;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम pt_event_addr_filters_sync(काष्ठा perf_event *event)
-अणु
-	काष्ठा perf_addr_filters_head *head = perf_event_addr_filters(event);
-	अचिन्हित दीर्घ msr_a, msr_b;
-	काष्ठा perf_addr_filter_range *fr = event->addr_filter_ranges;
-	काष्ठा pt_filters *filters = event->hw.addr_filters;
-	काष्ठा perf_addr_filter *filter;
-	पूर्णांक range = 0;
+static void pt_event_addr_filters_sync(struct perf_event *event)
+{
+	struct perf_addr_filters_head *head = perf_event_addr_filters(event);
+	unsigned long msr_a, msr_b;
+	struct perf_addr_filter_range *fr = event->addr_filter_ranges;
+	struct pt_filters *filters = event->hw.addr_filters;
+	struct perf_addr_filter *filter;
+	int range = 0;
 
-	अगर (!filters)
-		वापस;
+	if (!filters)
+		return;
 
-	list_क्रम_each_entry(filter, &head->list, entry) अणु
-		अगर (filter->path.dentry && !fr[range].start) अणु
+	list_for_each_entry(filter, &head->list, entry) {
+		if (filter->path.dentry && !fr[range].start) {
 			msr_a = msr_b = 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* apply the offset */
 			msr_a = fr[range].start;
 			msr_b = msr_a + fr[range].size - 1;
-		पूर्ण
+		}
 
 		filters->filter[range].msr_a  = msr_a;
 		filters->filter[range].msr_b  = msr_b;
-		अगर (filter->action == PERF_ADDR_FILTER_ACTION_FILTER)
+		if (filter->action == PERF_ADDR_FILTER_ACTION_FILTER)
 			filters->filter[range].config = 1;
-		अन्यथा
+		else
 			filters->filter[range].config = 2;
 		range++;
-	पूर्ण
+	}
 
 	filters->nr_filters = range;
-पूर्ण
+}
 
 /**
- * पूर्णांकel_pt_पूर्णांकerrupt() - PT PMI handler
+ * intel_pt_interrupt() - PT PMI handler
  */
-व्योम पूर्णांकel_pt_पूर्णांकerrupt(व्योम)
-अणु
-	काष्ठा pt *pt = this_cpu_ptr(&pt_ctx);
-	काष्ठा pt_buffer *buf;
-	काष्ठा perf_event *event = pt->handle.event;
+void intel_pt_interrupt(void)
+{
+	struct pt *pt = this_cpu_ptr(&pt_ctx);
+	struct pt_buffer *buf;
+	struct perf_event *event = pt->handle.event;
 
 	/*
-	 * There may be a dangling PT bit in the पूर्णांकerrupt status रेजिस्टर
-	 * after PT has been disabled by pt_event_stop(). Make sure we करोn't
-	 * करो anything (particularly, re-enable) क्रम this event here.
+	 * There may be a dangling PT bit in the interrupt status register
+	 * after PT has been disabled by pt_event_stop(). Make sure we don't
+	 * do anything (particularly, re-enable) for this event here.
 	 */
-	अगर (!READ_ONCE(pt->handle_nmi))
-		वापस;
+	if (!READ_ONCE(pt->handle_nmi))
+		return;
 
-	अगर (!event)
-		वापस;
+	if (!event)
+		return;
 
 	pt_config_stop(event);
 
 	buf = perf_get_aux(&pt->handle);
-	अगर (!buf)
-		वापस;
+	if (!buf)
+		return;
 
-	pt_पढ़ो_offset(buf);
+	pt_read_offset(buf);
 
 	pt_handle_status(pt);
 
@@ -1449,42 +1448,42 @@ pt_buffer_setup_aux(काष्ठा perf_event *event, व्योम **page
 
 	perf_aux_output_end(&pt->handle, local_xchg(&buf->data_size, 0));
 
-	अगर (!event->hw.state) अणु
-		पूर्णांक ret;
+	if (!event->hw.state) {
+		int ret;
 
 		buf = perf_aux_output_begin(&pt->handle, event);
-		अगर (!buf) अणु
+		if (!buf) {
 			event->hw.state = PERF_HES_STOPPED;
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		pt_buffer_reset_offsets(buf, pt->handle.head);
-		/* snapshot counters करोn't use PMI, so it's safe */
+		/* snapshot counters don't use PMI, so it's safe */
 		ret = pt_buffer_reset_markers(buf, &pt->handle);
-		अगर (ret) अणु
+		if (ret) {
 			perf_aux_output_end(&pt->handle, 0);
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		pt_config_buffer(buf);
 		pt_config_start(event);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम पूर्णांकel_pt_handle_vmx(पूर्णांक on)
-अणु
-	काष्ठा pt *pt = this_cpu_ptr(&pt_ctx);
-	काष्ठा perf_event *event;
-	अचिन्हित दीर्घ flags;
+void intel_pt_handle_vmx(int on)
+{
+	struct pt *pt = this_cpu_ptr(&pt_ctx);
+	struct perf_event *event;
+	unsigned long flags;
 
-	/* PT plays nice with VMX, करो nothing */
-	अगर (pt_pmu.vmx)
-		वापस;
+	/* PT plays nice with VMX, do nothing */
+	if (pt_pmu.vmx)
+		return;
 
 	/*
 	 * VMXON will clear RTIT_CTL.TraceEn; we need to make
-	 * sure to not try to set it जबतक VMX is on. Disable
-	 * पूर्णांकerrupts to aव्योम racing with pmu callbacks;
+	 * sure to not try to set it while VMX is on. Disable
+	 * interrupts to avoid racing with pmu callbacks;
 	 * concurrent PMI should be handled fine.
 	 */
 	local_irq_save(flags);
@@ -1492,40 +1491,40 @@ pt_buffer_setup_aux(काष्ठा perf_event *event, व्योम **page
 
 	/*
 	 * If an AUX transaction is in progress, it will contain
-	 * gap(s), so flag it PARTIAL to inक्रमm the user.
+	 * gap(s), so flag it PARTIAL to inform the user.
 	 */
 	event = pt->handle.event;
-	अगर (event)
+	if (event)
 		perf_aux_output_flag(&pt->handle,
 		                     PERF_AUX_FLAG_PARTIAL);
 
 	/* Turn PTs back on */
-	अगर (!on && event)
+	if (!on && event)
 		wrmsrl(MSR_IA32_RTIT_CTL, event->hw.config);
 
 	local_irq_restore(flags);
-पूर्ण
-EXPORT_SYMBOL_GPL(पूर्णांकel_pt_handle_vmx);
+}
+EXPORT_SYMBOL_GPL(intel_pt_handle_vmx);
 
 /*
  * PMU callbacks
  */
 
-अटल व्योम pt_event_start(काष्ठा perf_event *event, पूर्णांक mode)
-अणु
-	काष्ठा hw_perf_event *hwc = &event->hw;
-	काष्ठा pt *pt = this_cpu_ptr(&pt_ctx);
-	काष्ठा pt_buffer *buf;
+static void pt_event_start(struct perf_event *event, int mode)
+{
+	struct hw_perf_event *hwc = &event->hw;
+	struct pt *pt = this_cpu_ptr(&pt_ctx);
+	struct pt_buffer *buf;
 
 	buf = perf_aux_output_begin(&pt->handle, event);
-	अगर (!buf)
-		जाओ fail_stop;
+	if (!buf)
+		goto fail_stop;
 
 	pt_buffer_reset_offsets(buf, pt->handle.head);
-	अगर (!buf->snapshot) अणु
-		अगर (pt_buffer_reset_markers(buf, &pt->handle))
-			जाओ fail_end_stop;
-	पूर्ण
+	if (!buf->snapshot) {
+		if (pt_buffer_reset_markers(buf, &pt->handle))
+			goto fail_end_stop;
+	}
 
 	WRITE_ONCE(pt->handle_nmi, 1);
 	hwc->state = 0;
@@ -1533,84 +1532,84 @@ EXPORT_SYMBOL_GPL(पूर्णांकel_pt_handle_vmx);
 	pt_config_buffer(buf);
 	pt_config(event);
 
-	वापस;
+	return;
 
 fail_end_stop:
 	perf_aux_output_end(&pt->handle, 0);
 fail_stop:
 	hwc->state = PERF_HES_STOPPED;
-पूर्ण
+}
 
-अटल व्योम pt_event_stop(काष्ठा perf_event *event, पूर्णांक mode)
-अणु
-	काष्ठा pt *pt = this_cpu_ptr(&pt_ctx);
+static void pt_event_stop(struct perf_event *event, int mode)
+{
+	struct pt *pt = this_cpu_ptr(&pt_ctx);
 
 	/*
 	 * Protect against the PMI racing with disabling wrmsr,
-	 * see comment in पूर्णांकel_pt_पूर्णांकerrupt().
+	 * see comment in intel_pt_interrupt().
 	 */
 	WRITE_ONCE(pt->handle_nmi, 0);
 
 	pt_config_stop(event);
 
-	अगर (event->hw.state == PERF_HES_STOPPED)
-		वापस;
+	if (event->hw.state == PERF_HES_STOPPED)
+		return;
 
 	event->hw.state = PERF_HES_STOPPED;
 
-	अगर (mode & PERF_EF_UPDATE) अणु
-		काष्ठा pt_buffer *buf = perf_get_aux(&pt->handle);
+	if (mode & PERF_EF_UPDATE) {
+		struct pt_buffer *buf = perf_get_aux(&pt->handle);
 
-		अगर (!buf)
-			वापस;
+		if (!buf)
+			return;
 
-		अगर (WARN_ON_ONCE(pt->handle.event != event))
-			वापस;
+		if (WARN_ON_ONCE(pt->handle.event != event))
+			return;
 
-		pt_पढ़ो_offset(buf);
+		pt_read_offset(buf);
 
 		pt_handle_status(pt);
 
 		pt_update_head(pt);
 
-		अगर (buf->snapshot)
+		if (buf->snapshot)
 			pt->handle.head =
 				local_xchg(&buf->data_size,
 					   buf->nr_pages << PAGE_SHIFT);
 		perf_aux_output_end(&pt->handle, local_xchg(&buf->data_size, 0));
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल दीर्घ pt_event_snapshot_aux(काष्ठा perf_event *event,
-				  काष्ठा perf_output_handle *handle,
-				  अचिन्हित दीर्घ size)
-अणु
-	काष्ठा pt *pt = this_cpu_ptr(&pt_ctx);
-	काष्ठा pt_buffer *buf = perf_get_aux(&pt->handle);
-	अचिन्हित दीर्घ from = 0, to;
-	दीर्घ ret;
+static long pt_event_snapshot_aux(struct perf_event *event,
+				  struct perf_output_handle *handle,
+				  unsigned long size)
+{
+	struct pt *pt = this_cpu_ptr(&pt_ctx);
+	struct pt_buffer *buf = perf_get_aux(&pt->handle);
+	unsigned long from = 0, to;
+	long ret;
 
-	अगर (WARN_ON_ONCE(!buf))
-		वापस 0;
+	if (WARN_ON_ONCE(!buf))
+		return 0;
 
 	/*
 	 * Sampling is only allowed on snapshot events;
 	 * see pt_buffer_setup_aux().
 	 */
-	अगर (WARN_ON_ONCE(!buf->snapshot))
-		वापस 0;
+	if (WARN_ON_ONCE(!buf->snapshot))
+		return 0;
 
 	/*
-	 * Here, handle_nmi tells us अगर the tracing is on
+	 * Here, handle_nmi tells us if the tracing is on
 	 */
-	अगर (READ_ONCE(pt->handle_nmi))
+	if (READ_ONCE(pt->handle_nmi))
 		pt_config_stop(event);
 
-	pt_पढ़ो_offset(buf);
+	pt_read_offset(buf);
 	pt_update_head(pt);
 
-	to = local_पढ़ो(&buf->data_size);
-	अगर (to < size)
+	to = local_read(&buf->data_size);
+	if (to < size)
 		from = buf->nr_pages << PAGE_SHIFT;
 	from += to - size;
 
@@ -1621,121 +1620,121 @@ fail_stop:
 	 * Compiler barrier not needed as we couldn't have been
 	 * preempted by anything that touches pt->handle_nmi.
 	 */
-	अगर (pt->handle_nmi)
+	if (pt->handle_nmi)
 		pt_config_start(event);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम pt_event_del(काष्ठा perf_event *event, पूर्णांक mode)
-अणु
+static void pt_event_del(struct perf_event *event, int mode)
+{
 	pt_event_stop(event, PERF_EF_UPDATE);
-पूर्ण
+}
 
-अटल पूर्णांक pt_event_add(काष्ठा perf_event *event, पूर्णांक mode)
-अणु
-	काष्ठा pt *pt = this_cpu_ptr(&pt_ctx);
-	काष्ठा hw_perf_event *hwc = &event->hw;
-	पूर्णांक ret = -EBUSY;
+static int pt_event_add(struct perf_event *event, int mode)
+{
+	struct pt *pt = this_cpu_ptr(&pt_ctx);
+	struct hw_perf_event *hwc = &event->hw;
+	int ret = -EBUSY;
 
-	अगर (pt->handle.event)
-		जाओ fail;
+	if (pt->handle.event)
+		goto fail;
 
-	अगर (mode & PERF_EF_START) अणु
+	if (mode & PERF_EF_START) {
 		pt_event_start(event, 0);
 		ret = -EINVAL;
-		अगर (hwc->state == PERF_HES_STOPPED)
-			जाओ fail;
-	पूर्ण अन्यथा अणु
+		if (hwc->state == PERF_HES_STOPPED)
+			goto fail;
+	} else {
 		hwc->state = PERF_HES_STOPPED;
-	पूर्ण
+	}
 
 	ret = 0;
 fail:
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम pt_event_पढ़ो(काष्ठा perf_event *event)
-अणु
-पूर्ण
+static void pt_event_read(struct perf_event *event)
+{
+}
 
-अटल व्योम pt_event_destroy(काष्ठा perf_event *event)
-अणु
+static void pt_event_destroy(struct perf_event *event)
+{
 	pt_addr_filters_fini(event);
 	x86_del_exclusive(x86_lbr_exclusive_pt);
-पूर्ण
+}
 
-अटल पूर्णांक pt_event_init(काष्ठा perf_event *event)
-अणु
-	अगर (event->attr.type != pt_pmu.pmu.type)
-		वापस -ENOENT;
+static int pt_event_init(struct perf_event *event)
+{
+	if (event->attr.type != pt_pmu.pmu.type)
+		return -ENOENT;
 
-	अगर (!pt_event_valid(event))
-		वापस -EINVAL;
+	if (!pt_event_valid(event))
+		return -EINVAL;
 
-	अगर (x86_add_exclusive(x86_lbr_exclusive_pt))
-		वापस -EBUSY;
+	if (x86_add_exclusive(x86_lbr_exclusive_pt))
+		return -EBUSY;
 
-	अगर (pt_addr_filters_init(event)) अणु
+	if (pt_addr_filters_init(event)) {
 		x86_del_exclusive(x86_lbr_exclusive_pt);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	event->destroy = pt_event_destroy;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम cpu_emergency_stop_pt(व्योम)
-अणु
-	काष्ठा pt *pt = this_cpu_ptr(&pt_ctx);
+void cpu_emergency_stop_pt(void)
+{
+	struct pt *pt = this_cpu_ptr(&pt_ctx);
 
-	अगर (pt->handle.event)
+	if (pt->handle.event)
 		pt_event_stop(pt->handle.event, PERF_EF_UPDATE);
-पूर्ण
+}
 
-पूर्णांक is_पूर्णांकel_pt_event(काष्ठा perf_event *event)
-अणु
-	वापस event->pmu == &pt_pmu.pmu;
-पूर्ण
+int is_intel_pt_event(struct perf_event *event)
+{
+	return event->pmu == &pt_pmu.pmu;
+}
 
-अटल __init पूर्णांक pt_init(व्योम)
-अणु
-	पूर्णांक ret, cpu, prior_warn = 0;
+static __init int pt_init(void)
+{
+	int ret, cpu, prior_warn = 0;
 
-	BUILD_BUG_ON(माप(काष्ठा topa) > PAGE_SIZE);
+	BUILD_BUG_ON(sizeof(struct topa) > PAGE_SIZE);
 
-	अगर (!boot_cpu_has(X86_FEATURE_INTEL_PT))
-		वापस -ENODEV;
+	if (!boot_cpu_has(X86_FEATURE_INTEL_PT))
+		return -ENODEV;
 
 	get_online_cpus();
-	क्रम_each_online_cpu(cpu) अणु
+	for_each_online_cpu(cpu) {
 		u64 ctl;
 
 		ret = rdmsrl_safe_on_cpu(cpu, MSR_IA32_RTIT_CTL, &ctl);
-		अगर (!ret && (ctl & RTIT_CTL_TRACEEN))
+		if (!ret && (ctl & RTIT_CTL_TRACEEN))
 			prior_warn++;
-	पूर्ण
+	}
 	put_online_cpus();
 
-	अगर (prior_warn) अणु
+	if (prior_warn) {
 		x86_add_exclusive(x86_lbr_exclusive_pt);
 		pr_warn("PT is enabled at boot time, doing nothing\n");
 
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	ret = pt_pmu_hw_init();
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (!पूर्णांकel_pt_validate_hw_cap(PT_CAP_topa_output)) अणु
+	if (!intel_pt_validate_hw_cap(PT_CAP_topa_output)) {
 		pr_warn("ToPA output is not supported on this CPU\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (!पूर्णांकel_pt_validate_hw_cap(PT_CAP_topa_multiple_entries))
+	if (!intel_pt_validate_hw_cap(PT_CAP_topa_multiple_entries))
 		pt_pmu.pmu.capabilities = PERF_PMU_CAP_AUX_NO_SG;
 
 	pt_pmu.pmu.capabilities	|= PERF_PMU_CAP_EXCLUSIVE | PERF_PMU_CAP_ITRACE;
@@ -1747,16 +1746,16 @@ fail:
 	pt_pmu.pmu.start		 = pt_event_start;
 	pt_pmu.pmu.stop			 = pt_event_stop;
 	pt_pmu.pmu.snapshot_aux		 = pt_event_snapshot_aux;
-	pt_pmu.pmu.पढ़ो			 = pt_event_पढ़ो;
+	pt_pmu.pmu.read			 = pt_event_read;
 	pt_pmu.pmu.setup_aux		 = pt_buffer_setup_aux;
-	pt_pmu.pmu.मुक्त_aux		 = pt_buffer_मुक्त_aux;
+	pt_pmu.pmu.free_aux		 = pt_buffer_free_aux;
 	pt_pmu.pmu.addr_filters_sync     = pt_event_addr_filters_sync;
 	pt_pmu.pmu.addr_filters_validate = pt_event_addr_filters_validate;
 	pt_pmu.pmu.nr_addr_filters       =
-		पूर्णांकel_pt_validate_hw_cap(PT_CAP_num_address_ranges);
+		intel_pt_validate_hw_cap(PT_CAP_num_address_ranges);
 
-	ret = perf_pmu_रेजिस्टर(&pt_pmu.pmu, "intel_pt", -1);
+	ret = perf_pmu_register(&pt_pmu.pmu, "intel_pt", -1);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 arch_initcall(pt_init);

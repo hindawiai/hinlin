@@ -1,18 +1,17 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __SUBCMD_EXEC_CMD_H
-#घोषणा __SUBCMD_EXEC_CMD_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __SUBCMD_EXEC_CMD_H
+#define __SUBCMD_EXEC_CMD_H
 
-बाह्य व्योम exec_cmd_init(स्थिर अक्षर *exec_name, स्थिर अक्षर *prefix,
-			  स्थिर अक्षर *exec_path, स्थिर अक्षर *exec_path_env);
+extern void exec_cmd_init(const char *exec_name, const char *prefix,
+			  const char *exec_path, const char *exec_path_env);
 
-बाह्य व्योम set_argv_exec_path(स्थिर अक्षर *exec_path);
-बाह्य स्थिर अक्षर *extract_argv0_path(स्थिर अक्षर *path);
-बाह्य व्योम setup_path(व्योम);
-बाह्य पूर्णांक execv_cmd(स्थिर अक्षर **argv); /* शून्य terminated */
-बाह्य पूर्णांक execl_cmd(स्थिर अक्षर *cmd, ...);
-/* get_argv_exec_path and प्रणाली_path वापस दो_स्मृति'd string, caller must मुक्त it */
-बाह्य अक्षर *get_argv_exec_path(व्योम);
-बाह्य अक्षर *प्रणाली_path(स्थिर अक्षर *path);
+extern void set_argv_exec_path(const char *exec_path);
+extern const char *extract_argv0_path(const char *path);
+extern void setup_path(void);
+extern int execv_cmd(const char **argv); /* NULL terminated */
+extern int execl_cmd(const char *cmd, ...);
+/* get_argv_exec_path and system_path return malloc'd string, caller must free it */
+extern char *get_argv_exec_path(void);
+extern char *system_path(const char *path);
 
-#पूर्ण_अगर /* __SUBCMD_EXEC_CMD_H */
+#endif /* __SUBCMD_EXEC_CMD_H */

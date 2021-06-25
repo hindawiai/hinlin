@@ -1,22 +1,21 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _PARISC_SECTIONS_H
-#घोषणा _PARISC_SECTIONS_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _PARISC_SECTIONS_H
+#define _PARISC_SECTIONS_H
 
-/* nothing to see, move aदीर्घ */
-#समावेश <यंत्र-generic/sections.h>
+/* nothing to see, move along */
+#include <asm-generic/sections.h>
 
-बाह्य अक्षर __alt_inकाष्ठाions[], __alt_inकाष्ठाions_end[];
+extern char __alt_instructions[], __alt_instructions_end[];
 
-#अगर_घोषित CONFIG_64BIT
+#ifdef CONFIG_64BIT
 
-#घोषणा HAVE_DEREFERENCE_FUNCTION_DESCRIPTOR 1
+#define HAVE_DEREFERENCE_FUNCTION_DESCRIPTOR 1
 
-#अघोषित dereference_function_descriptor
-व्योम *dereference_function_descriptor(व्योम *);
+#undef dereference_function_descriptor
+void *dereference_function_descriptor(void *);
 
-#अघोषित dereference_kernel_function_descriptor
-व्योम *dereference_kernel_function_descriptor(व्योम *);
-#पूर्ण_अगर
+#undef dereference_kernel_function_descriptor
+void *dereference_kernel_function_descriptor(void *);
+#endif
 
-#पूर्ण_अगर
+#endif

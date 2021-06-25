@@ -1,31 +1,30 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Support क्रम Intel Camera Imaging ISP subप्रणाली.
+ * Support for Intel Camera Imaging ISP subsystem.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  */
 
-#अगर_अघोषित __INPUT_SYSTEM_LOCAL_H_INCLUDED__
-#घोषणा __INPUT_SYSTEM_LOCAL_H_INCLUDED__
+#ifndef __INPUT_SYSTEM_LOCAL_H_INCLUDED__
+#define __INPUT_SYSTEM_LOCAL_H_INCLUDED__
 
-#समावेश "type_support.h"
-#समावेश "input_system_global.h"
+#include "type_support.h"
+#include "input_system_global.h"
 
-#समावेश "csi_rx.h"
-#समावेश "pixelgen.h"
-#समावेश "isys_stream2mmio.h"
-#समावेश "isys_irq.h"
+#include "csi_rx.h"
+#include "pixelgen.h"
+#include "isys_stream2mmio.h"
+#include "isys_irq.h"
 
-प्रकार क्रमागत अणु
+typedef enum {
 	MIPI_FORMAT_SHORT1 = 0x08,
 	MIPI_FORMAT_SHORT2,
 	MIPI_FORMAT_SHORT3,
@@ -64,18 +63,18 @@
 	//MIPI_FORMAT_RAW16, /*not supported by 2401*/
 	//MIPI_FORMAT_RAW18,
 	N_MIPI_FORMAT
-पूर्ण mipi_क्रमmat_t;
+} mipi_format_t;
 
-#घोषणा N_MIPI_FORMAT_CUSTOM	8
+#define N_MIPI_FORMAT_CUSTOM	8
 
-/* The number of stores क्रम compressed क्रमmat types */
-#घोषणा	N_MIPI_COMPRESSOR_CONTEXT	(N_RX_CHANNEL_ID * N_MIPI_FORMAT_CUSTOM)
-#घोषणा UNCOMPRESSED_BITS_PER_PIXEL_10	10
-#घोषणा UNCOMPRESSED_BITS_PER_PIXEL_12	12
-#घोषणा COMPRESSED_BITS_PER_PIXEL_6	6
-#घोषणा COMPRESSED_BITS_PER_PIXEL_7	7
-#घोषणा COMPRESSED_BITS_PER_PIXEL_8	8
-क्रमागत mipi_compressor अणु
+/* The number of stores for compressed format types */
+#define	N_MIPI_COMPRESSOR_CONTEXT	(N_RX_CHANNEL_ID * N_MIPI_FORMAT_CUSTOM)
+#define UNCOMPRESSED_BITS_PER_PIXEL_10	10
+#define UNCOMPRESSED_BITS_PER_PIXEL_12	12
+#define COMPRESSED_BITS_PER_PIXEL_6	6
+#define COMPRESSED_BITS_PER_PIXEL_7	7
+#define COMPRESSED_BITS_PER_PIXEL_8	8
+enum mipi_compressor {
 	MIPI_COMPRESSOR_NONE = 0,
 	MIPI_COMPRESSOR_10_6_10,
 	MIPI_COMPRESSOR_10_7_10,
@@ -84,22 +83,22 @@
 	MIPI_COMPRESSOR_12_7_12,
 	MIPI_COMPRESSOR_12_8_12,
 	N_MIPI_COMPRESSOR_METHODS
-पूर्ण;
+};
 
-प्रकार क्रमागत अणु
+typedef enum {
 	MIPI_PREDICTOR_NONE = 0,
 	MIPI_PREDICTOR_TYPE1,
 	MIPI_PREDICTOR_TYPE2,
 	N_MIPI_PREDICTOR_TYPES
-पूर्ण mipi_predictor_t;
+} mipi_predictor_t;
 
-प्रकार काष्ठा input_प्रणाली_state_s	input_प्रणाली_state_t;
-काष्ठा input_प्रणाली_state_s अणु
+typedef struct input_system_state_s	input_system_state_t;
+struct input_system_state_s {
 	ibuf_ctrl_state_t	ibuf_ctrl_state[N_IBUF_CTRL_ID];
 	csi_rx_fe_ctrl_state_t	csi_rx_fe_ctrl_state[N_CSI_RX_FRONTEND_ID];
 	csi_rx_be_ctrl_state_t	csi_rx_be_ctrl_state[N_CSI_RX_BACKEND_ID];
 	pixelgen_ctrl_state_t	pixelgen_ctrl_state[N_PIXELGEN_ID];
 	stream2mmio_state_t	stream2mmio_state[N_STREAM2MMIO_ID];
 	isys_irqc_state_t	isys_irqc_state[N_ISYS_IRQ_ID];
-पूर्ण;
-#पूर्ण_अगर /* __INPUT_SYSTEM_LOCAL_H_INCLUDED__ */
+};
+#endif /* __INPUT_SYSTEM_LOCAL_H_INCLUDED__ */

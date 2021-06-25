@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * TI Palma series PMIC's GPIO driver.
  *
@@ -8,157 +7,157 @@
  * Author: Laxman Dewangan <ldewangan@nvidia.com>
  */
 
-#समावेश <linux/gpio/driver.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/mfd/palmas.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/gpio/driver.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/mfd/palmas.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/platform_device.h>
 
-काष्ठा palmas_gpio अणु
-	काष्ठा gpio_chip gpio_chip;
-	काष्ठा palmas *palmas;
-पूर्ण;
+struct palmas_gpio {
+	struct gpio_chip gpio_chip;
+	struct palmas *palmas;
+};
 
-काष्ठा palmas_device_data अणु
-	पूर्णांक ngpio;
-पूर्ण;
+struct palmas_device_data {
+	int ngpio;
+};
 
-अटल पूर्णांक palmas_gpio_get(काष्ठा gpio_chip *gc, अचिन्हित offset)
-अणु
-	काष्ठा palmas_gpio *pg = gpiochip_get_data(gc);
-	काष्ठा palmas *palmas = pg->palmas;
-	अचिन्हित पूर्णांक val;
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक reg;
-	पूर्णांक gpio16 = (offset/8);
+static int palmas_gpio_get(struct gpio_chip *gc, unsigned offset)
+{
+	struct palmas_gpio *pg = gpiochip_get_data(gc);
+	struct palmas *palmas = pg->palmas;
+	unsigned int val;
+	int ret;
+	unsigned int reg;
+	int gpio16 = (offset/8);
 
 	offset %= 8;
-	reg = (gpio16) ? PALMAS_GPIO_DATA_सूची2 : PALMAS_GPIO_DATA_सूची;
+	reg = (gpio16) ? PALMAS_GPIO_DATA_DIR2 : PALMAS_GPIO_DATA_DIR;
 
-	ret = palmas_पढ़ो(palmas, PALMAS_GPIO_BASE, reg, &val);
-	अगर (ret < 0) अणु
+	ret = palmas_read(palmas, PALMAS_GPIO_BASE, reg, &val);
+	if (ret < 0) {
 		dev_err(gc->parent, "Reg 0x%02x read failed, %d\n", reg, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (val & BIT(offset))
+	if (val & BIT(offset))
 		reg = (gpio16) ? PALMAS_GPIO_DATA_OUT2 : PALMAS_GPIO_DATA_OUT;
-	अन्यथा
+	else
 		reg = (gpio16) ? PALMAS_GPIO_DATA_IN2 : PALMAS_GPIO_DATA_IN;
 
-	ret = palmas_पढ़ो(palmas, PALMAS_GPIO_BASE, reg, &val);
-	अगर (ret < 0) अणु
+	ret = palmas_read(palmas, PALMAS_GPIO_BASE, reg, &val);
+	if (ret < 0) {
 		dev_err(gc->parent, "Reg 0x%02x read failed, %d\n", reg, ret);
-		वापस ret;
-	पूर्ण
-	वापस !!(val & BIT(offset));
-पूर्ण
+		return ret;
+	}
+	return !!(val & BIT(offset));
+}
 
-अटल व्योम palmas_gpio_set(काष्ठा gpio_chip *gc, अचिन्हित offset,
-			पूर्णांक value)
-अणु
-	काष्ठा palmas_gpio *pg = gpiochip_get_data(gc);
-	काष्ठा palmas *palmas = pg->palmas;
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक reg;
-	पूर्णांक gpio16 = (offset/8);
+static void palmas_gpio_set(struct gpio_chip *gc, unsigned offset,
+			int value)
+{
+	struct palmas_gpio *pg = gpiochip_get_data(gc);
+	struct palmas *palmas = pg->palmas;
+	int ret;
+	unsigned int reg;
+	int gpio16 = (offset/8);
 
 	offset %= 8;
-	अगर (gpio16)
+	if (gpio16)
 		reg = (value) ?
 			PALMAS_GPIO_SET_DATA_OUT2 : PALMAS_GPIO_CLEAR_DATA_OUT2;
-	अन्यथा
+	else
 		reg = (value) ?
 			PALMAS_GPIO_SET_DATA_OUT : PALMAS_GPIO_CLEAR_DATA_OUT;
 
-	ret = palmas_ग_लिखो(palmas, PALMAS_GPIO_BASE, reg, BIT(offset));
-	अगर (ret < 0)
+	ret = palmas_write(palmas, PALMAS_GPIO_BASE, reg, BIT(offset));
+	if (ret < 0)
 		dev_err(gc->parent, "Reg 0x%02x write failed, %d\n", reg, ret);
-पूर्ण
+}
 
-अटल पूर्णांक palmas_gpio_output(काष्ठा gpio_chip *gc, अचिन्हित offset,
-				पूर्णांक value)
-अणु
-	काष्ठा palmas_gpio *pg = gpiochip_get_data(gc);
-	काष्ठा palmas *palmas = pg->palmas;
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक reg;
-	पूर्णांक gpio16 = (offset/8);
+static int palmas_gpio_output(struct gpio_chip *gc, unsigned offset,
+				int value)
+{
+	struct palmas_gpio *pg = gpiochip_get_data(gc);
+	struct palmas *palmas = pg->palmas;
+	int ret;
+	unsigned int reg;
+	int gpio16 = (offset/8);
 
 	offset %= 8;
-	reg = (gpio16) ? PALMAS_GPIO_DATA_सूची2 : PALMAS_GPIO_DATA_सूची;
+	reg = (gpio16) ? PALMAS_GPIO_DATA_DIR2 : PALMAS_GPIO_DATA_DIR;
 
 	/* Set the initial value */
 	palmas_gpio_set(gc, offset, value);
 
 	ret = palmas_update_bits(palmas, PALMAS_GPIO_BASE, reg,
 				BIT(offset), BIT(offset));
-	अगर (ret < 0)
+	if (ret < 0)
 		dev_err(gc->parent, "Reg 0x%02x update failed, %d\n", reg,
 			ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक palmas_gpio_input(काष्ठा gpio_chip *gc, अचिन्हित offset)
-अणु
-	काष्ठा palmas_gpio *pg = gpiochip_get_data(gc);
-	काष्ठा palmas *palmas = pg->palmas;
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक reg;
-	पूर्णांक gpio16 = (offset/8);
+static int palmas_gpio_input(struct gpio_chip *gc, unsigned offset)
+{
+	struct palmas_gpio *pg = gpiochip_get_data(gc);
+	struct palmas *palmas = pg->palmas;
+	int ret;
+	unsigned int reg;
+	int gpio16 = (offset/8);
 
 	offset %= 8;
-	reg = (gpio16) ? PALMAS_GPIO_DATA_सूची2 : PALMAS_GPIO_DATA_सूची;
+	reg = (gpio16) ? PALMAS_GPIO_DATA_DIR2 : PALMAS_GPIO_DATA_DIR;
 
 	ret = palmas_update_bits(palmas, PALMAS_GPIO_BASE, reg, BIT(offset), 0);
-	अगर (ret < 0)
+	if (ret < 0)
 		dev_err(gc->parent, "Reg 0x%02x update failed, %d\n", reg,
 			ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक palmas_gpio_to_irq(काष्ठा gpio_chip *gc, अचिन्हित offset)
-अणु
-	काष्ठा palmas_gpio *pg = gpiochip_get_data(gc);
-	काष्ठा palmas *palmas = pg->palmas;
+static int palmas_gpio_to_irq(struct gpio_chip *gc, unsigned offset)
+{
+	struct palmas_gpio *pg = gpiochip_get_data(gc);
+	struct palmas *palmas = pg->palmas;
 
-	वापस palmas_irq_get_virq(palmas, PALMAS_GPIO_0_IRQ + offset);
-पूर्ण
+	return palmas_irq_get_virq(palmas, PALMAS_GPIO_0_IRQ + offset);
+}
 
-अटल स्थिर काष्ठा palmas_device_data palmas_dev_data = अणु
+static const struct palmas_device_data palmas_dev_data = {
 	.ngpio = 8,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा palmas_device_data tps80036_dev_data = अणु
+static const struct palmas_device_data tps80036_dev_data = {
 	.ngpio = 16,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id of_palmas_gpio_match[] = अणु
-	अणु .compatible = "ti,palmas-gpio", .data = &palmas_dev_data,पूर्ण,
-	अणु .compatible = "ti,tps65913-gpio", .data = &palmas_dev_data,पूर्ण,
-	अणु .compatible = "ti,tps65914-gpio", .data = &palmas_dev_data,पूर्ण,
-	अणु .compatible = "ti,tps80036-gpio", .data = &tps80036_dev_data,पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct of_device_id of_palmas_gpio_match[] = {
+	{ .compatible = "ti,palmas-gpio", .data = &palmas_dev_data,},
+	{ .compatible = "ti,tps65913-gpio", .data = &palmas_dev_data,},
+	{ .compatible = "ti,tps65914-gpio", .data = &palmas_dev_data,},
+	{ .compatible = "ti,tps80036-gpio", .data = &tps80036_dev_data,},
+	{ },
+};
 
-अटल पूर्णांक palmas_gpio_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा palmas *palmas = dev_get_drvdata(pdev->dev.parent);
-	काष्ठा palmas_platक्रमm_data *palmas_pdata;
-	काष्ठा palmas_gpio *palmas_gpio;
-	पूर्णांक ret;
-	स्थिर काष्ठा palmas_device_data *dev_data;
+static int palmas_gpio_probe(struct platform_device *pdev)
+{
+	struct palmas *palmas = dev_get_drvdata(pdev->dev.parent);
+	struct palmas_platform_data *palmas_pdata;
+	struct palmas_gpio *palmas_gpio;
+	int ret;
+	const struct palmas_device_data *dev_data;
 
 	dev_data = of_device_get_match_data(&pdev->dev);
-	अगर (!dev_data)
+	if (!dev_data)
 		dev_data = &palmas_dev_data;
 
 	palmas_gpio = devm_kzalloc(&pdev->dev,
-				माप(*palmas_gpio), GFP_KERNEL);
-	अगर (!palmas_gpio)
-		वापस -ENOMEM;
+				sizeof(*palmas_gpio), GFP_KERNEL);
+	if (!palmas_gpio)
+		return -ENOMEM;
 
 	palmas_gpio->palmas = palmas;
 	palmas_gpio->gpio_chip.owner = THIS_MODULE;
@@ -171,34 +170,34 @@
 	palmas_gpio->gpio_chip.set	= palmas_gpio_set;
 	palmas_gpio->gpio_chip.get	= palmas_gpio_get;
 	palmas_gpio->gpio_chip.parent = &pdev->dev;
-#अगर_घोषित CONFIG_OF_GPIO
+#ifdef CONFIG_OF_GPIO
 	palmas_gpio->gpio_chip.of_node = pdev->dev.of_node;
-#पूर्ण_अगर
+#endif
 	palmas_pdata = dev_get_platdata(palmas->dev);
-	अगर (palmas_pdata && palmas_pdata->gpio_base)
+	if (palmas_pdata && palmas_pdata->gpio_base)
 		palmas_gpio->gpio_chip.base = palmas_pdata->gpio_base;
-	अन्यथा
+	else
 		palmas_gpio->gpio_chip.base = -1;
 
 	ret = devm_gpiochip_add_data(&pdev->dev, &palmas_gpio->gpio_chip,
 				     palmas_gpio);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&pdev->dev, "Could not register gpiochip, %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	platक्रमm_set_drvdata(pdev, palmas_gpio);
-	वापस ret;
-पूर्ण
+	platform_set_drvdata(pdev, palmas_gpio);
+	return ret;
+}
 
-अटल काष्ठा platक्रमm_driver palmas_gpio_driver = अणु
+static struct platform_driver palmas_gpio_driver = {
 	.driver.name	= "palmas-gpio",
 	.driver.of_match_table = of_palmas_gpio_match,
 	.probe		= palmas_gpio_probe,
-पूर्ण;
+};
 
-अटल पूर्णांक __init palmas_gpio_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&palmas_gpio_driver);
-पूर्ण
+static int __init palmas_gpio_init(void)
+{
+	return platform_driver_register(&palmas_gpio_driver);
+}
 subsys_initcall(palmas_gpio_init);

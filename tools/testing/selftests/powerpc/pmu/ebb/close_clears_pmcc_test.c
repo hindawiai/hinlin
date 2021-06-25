@@ -1,15 +1,14 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright 2014, Michael Ellerman, IBM Corp.
  */
 
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <समलाँघ.स>
-#समावेश <संकेत.स>
+#include <stdio.h>
+#include <stdlib.h>
+#include <setjmp.h>
+#include <signal.h>
 
-#समावेश "ebb.h"
+#include "ebb.h"
 
 
 /*
@@ -17,16 +16,16 @@
  * by userspace to the PMU hardware.
  */
 
-पूर्णांक बंद_clears_pmcc(व्योम)
-अणु
-	काष्ठा event event;
+int close_clears_pmcc(void)
+{
+	struct event event;
 
 	SKIP_IF(!ebb_is_supported());
 
 	event_init_named(&event, 0x1001e, "cycles");
 	event_leader_ebb_init(&event);
 
-	FAIL_IF(event_खोलो(&event));
+	FAIL_IF(event_open(&event));
 
 	ebb_enable_pmc_counting(1);
 	setup_ebb_handler(standard_ebb_callee);
@@ -35,28 +34,28 @@
 
 	mtspr(SPRN_PMC1, pmc_sample_period(sample_period));
 
-	जबतक (ebb_state.stats.ebb_count < 1)
+	while (ebb_state.stats.ebb_count < 1)
 		FAIL_IF(core_busy_loop());
 
 	ebb_global_disable();
-	event_बंद(&event);
+	event_close(&event);
 
 	FAIL_IF(ebb_state.stats.ebb_count == 0);
 
-	/* The real test is here, करो we take a संक_अवैध when writing PMU regs now
-	 * that we have बंदd the event. We expect that we will. */
+	/* The real test is here, do we take a SIGILL when writing PMU regs now
+	 * that we have closed the event. We expect that we will. */
 
-	FAIL_IF(catch_sigill(ग_लिखो_pmc1));
+	FAIL_IF(catch_sigill(write_pmc1));
 
-	/* We should still be able to पढ़ो EBB regs though */
+	/* We should still be able to read EBB regs though */
 	mfspr(SPRN_EBBHR);
 	mfspr(SPRN_EBBRR);
 	mfspr(SPRN_BESCR);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक मुख्य(व्योम)
-अणु
-	वापस test_harness(बंद_clears_pmcc, "close_clears_pmcc");
-पूर्ण
+int main(void)
+{
+	return test_harness(close_clears_pmcc, "close_clears_pmcc");
+}

@@ -1,56 +1,55 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) ST-Ericsson SA 2010
  *
- * Author: Bengt Jonsson <bengt.jonsson@stericsson.com> क्रम ST-Ericsson,
- *	   Jonas Aaberg <jonas.aberg@stericsson.com> क्रम ST-Ericsson
+ * Author: Bengt Jonsson <bengt.jonsson@stericsson.com> for ST-Ericsson,
+ *	   Jonas Aaberg <jonas.aberg@stericsson.com> for ST-Ericsson
  */
 
-#अगर_अघोषित DBX500_REGULATOR_H
-#घोषणा DBX500_REGULATOR_H
+#ifndef DBX500_REGULATOR_H
+#define DBX500_REGULATOR_H
 
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/platform_device.h>
 
 /**
- * काष्ठा dbx500_regulator_info - dbx500 regulator inक्रमmation
+ * struct dbx500_regulator_info - dbx500 regulator information
  * @desc: regulator description
  * @is_enabled: status of the regulator
- * @epod_id: id क्रम EPOD (घातer करोमुख्य)
- * @is_ramret: RAM retention चयन क्रम EPOD (घातer करोमुख्य)
+ * @epod_id: id for EPOD (power domain)
+ * @is_ramret: RAM retention switch for EPOD (power domain)
  *
  */
-काष्ठा dbx500_regulator_info अणु
-	काष्ठा regulator_desc desc;
+struct dbx500_regulator_info {
+	struct regulator_desc desc;
 	bool is_enabled;
 	u16 epod_id;
 	bool is_ramret;
-	bool exclude_from_घातer_state;
-पूर्ण;
+	bool exclude_from_power_state;
+};
 
-व्योम घातer_state_active_enable(व्योम);
-पूर्णांक घातer_state_active_disable(व्योम);
+void power_state_active_enable(void);
+int power_state_active_disable(void);
 
 
-#अगर_घोषित CONFIG_REGULATOR_DEBUG
-पूर्णांक ux500_regulator_debug_init(काष्ठा platक्रमm_device *pdev,
-			       काष्ठा dbx500_regulator_info *regulator_info,
-			       पूर्णांक num_regulators);
+#ifdef CONFIG_REGULATOR_DEBUG
+int ux500_regulator_debug_init(struct platform_device *pdev,
+			       struct dbx500_regulator_info *regulator_info,
+			       int num_regulators);
 
-पूर्णांक ux500_regulator_debug_निकास(व्योम);
-#अन्यथा
+int ux500_regulator_debug_exit(void);
+#else
 
-अटल अंतरभूत पूर्णांक ux500_regulator_debug_init(काष्ठा platक्रमm_device *pdev,
-			     काष्ठा dbx500_regulator_info *regulator_info,
-			     पूर्णांक num_regulators)
-अणु
-	वापस 0;
-पूर्ण
+static inline int ux500_regulator_debug_init(struct platform_device *pdev,
+			     struct dbx500_regulator_info *regulator_info,
+			     int num_regulators)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक ux500_regulator_debug_निकास(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+static inline int ux500_regulator_debug_exit(void)
+{
+	return 0;
+}
 
-#पूर्ण_अगर
-#पूर्ण_अगर
+#endif
+#endif

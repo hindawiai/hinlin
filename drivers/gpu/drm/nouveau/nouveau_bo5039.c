@@ -1,14 +1,13 @@
-<शैली गुरु>
 /*
  * Copyright 2007 Dave Airlied
  * All Rights Reserved.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -25,42 +24,42 @@
 /*
  * Authors: Dave Airlied <airlied@linux.ie>
  *	    Ben Skeggs   <darktama@iinet.net.au>
- *	    Jeremy Kolb  <jkolb@bअक्रमeis.edu>
+ *	    Jeremy Kolb  <jkolb@brandeis.edu>
  */
-#समावेश "nouveau_bo.h"
-#समावेश "nouveau_dma.h"
-#समावेश "nouveau_drv.h"
-#समावेश "nouveau_mem.h"
+#include "nouveau_bo.h"
+#include "nouveau_dma.h"
+#include "nouveau_drv.h"
+#include "nouveau_mem.h"
 
-#समावेश <nvअगर/push206e.h>
+#include <nvif/push206e.h>
 
-#समावेश <nvhw/class/cl5039.h>
+#include <nvhw/class/cl5039.h>
 
-पूर्णांक
-nv50_bo_move_m2mf(काष्ठा nouveau_channel *chan, काष्ठा tपंचांग_buffer_object *bo,
-		  काष्ठा tपंचांग_resource *old_reg, काष्ठा tपंचांग_resource *new_reg)
-अणु
-	काष्ठा nouveau_mem *mem = nouveau_mem(old_reg);
-	काष्ठा nvअगर_push *push = chan->chan.push;
+int
+nv50_bo_move_m2mf(struct nouveau_channel *chan, struct ttm_buffer_object *bo,
+		  struct ttm_resource *old_reg, struct ttm_resource *new_reg)
+{
+	struct nouveau_mem *mem = nouveau_mem(old_reg);
+	struct nvif_push *push = chan->chan.push;
 	u64 length = (new_reg->num_pages << PAGE_SHIFT);
 	u64 src_offset = mem->vma[0].addr;
 	u64 dst_offset = mem->vma[1].addr;
-	पूर्णांक src_tiled = !!mem->kind;
-	पूर्णांक dst_tiled = !!nouveau_mem(new_reg)->kind;
-	पूर्णांक ret;
+	int src_tiled = !!mem->kind;
+	int dst_tiled = !!nouveau_mem(new_reg)->kind;
+	int ret;
 
-	जबतक (length) अणु
+	while (length) {
 		u32 amount, stride, height;
 
 		ret = PUSH_WAIT(push, 18 + 6 * (src_tiled + dst_tiled));
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		amount  = min(length, (u64)(4 * 1024 * 1024));
 		stride  = 16 * 4;
 		height  = amount / stride;
 
-		अगर (src_tiled) अणु
+		if (src_tiled) {
 			PUSH_MTHD(push, NV5039, SET_SRC_MEMORY_LAYOUT,
 				  NVDEF(NV5039, SET_SRC_MEMORY_LAYOUT, V, BLOCKLINEAR),
 
@@ -77,12 +76,12 @@ nv50_bo_move_m2mf(काष्ठा nouveau_channel *chan, काष्ठा t
 						SET_SRC_ORIGIN,
 				  NVVAL(NV5039, SET_SRC_ORIGIN, X, 0) |
 				  NVVAL(NV5039, SET_SRC_ORIGIN, Y, 0));
-		पूर्ण अन्यथा अणु
+		} else {
 			PUSH_MTHD(push, NV5039, SET_SRC_MEMORY_LAYOUT,
 				  NVDEF(NV5039, SET_SRC_MEMORY_LAYOUT, V, PITCH));
-		पूर्ण
+		}
 
-		अगर (dst_tiled) अणु
+		if (dst_tiled) {
 			PUSH_MTHD(push, NV5039, SET_DST_MEMORY_LAYOUT,
 				  NVDEF(NV5039, SET_DST_MEMORY_LAYOUT, V, BLOCKLINEAR),
 
@@ -99,10 +98,10 @@ nv50_bo_move_m2mf(काष्ठा nouveau_channel *chan, काष्ठा t
 						SET_DST_ORIGIN,
 				  NVVAL(NV5039, SET_DST_ORIGIN, X, 0) |
 				  NVVAL(NV5039, SET_DST_ORIGIN, Y, 0));
-		पूर्ण अन्यथा अणु
+		} else {
 			PUSH_MTHD(push, NV5039, SET_DST_MEMORY_LAYOUT,
 				  NVDEF(NV5039, SET_DST_MEMORY_LAYOUT, V, PITCH));
-		पूर्ण
+		}
 
 		PUSH_MTHD(push, NV5039, OFFSET_IN_UPPER,
 			  NVVAL(NV5039, OFFSET_IN_UPPER, VALUE, upper_32_bits(src_offset)),
@@ -129,24 +128,24 @@ nv50_bo_move_m2mf(काष्ठा nouveau_channel *chan, काष्ठा t
 		length -= amount;
 		src_offset += amount;
 		dst_offset += amount;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक
-nv50_bo_move_init(काष्ठा nouveau_channel *chan, u32 handle)
-अणु
-	काष्ठा nvअगर_push *push = chan->chan.push;
-	पूर्णांक ret;
+int
+nv50_bo_move_init(struct nouveau_channel *chan, u32 handle)
+{
+	struct nvif_push *push = chan->chan.push;
+	int ret;
 
 	ret = PUSH_WAIT(push, 6);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	PUSH_MTHD(push, NV5039, SET_OBJECT, handle);
 	PUSH_MTHD(push, NV5039, SET_CONTEXT_DMA_NOTIFY, chan->drm->ntfy.handle,
 				SET_CONTEXT_DMA_BUFFER_IN, chan->vram.handle,
 				SET_CONTEXT_DMA_BUFFER_OUT, chan->vram.handle);
-	वापस 0;
-पूर्ण
+	return 0;
+}

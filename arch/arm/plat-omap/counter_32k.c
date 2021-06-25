@@ -1,115 +1,114 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * OMAP 32ksynस_समयr/counter_32k-related code
+ * OMAP 32ksynctimer/counter_32k-related code
  *
  * Copyright (C) 2009 Texas Instruments
  * Copyright (C) 2010 Nokia Corporation
  * Tony Lindgren <tony@atomide.com>
  * Added OMAP4 support - Santosh Shilimkar <santosh.shilimkar@ti.com>
  *
- * NOTE: This समयr is not the same समयr as the old OMAP1 MPU समयr.
+ * NOTE: This timer is not the same timer as the old OMAP1 MPU timer.
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/err.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/घड़ीsource.h>
-#समावेश <linux/sched_घड़ी.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/clk.h>
+#include <linux/err.h>
+#include <linux/io.h>
+#include <linux/clocksource.h>
+#include <linux/sched_clock.h>
 
-#समावेश <यंत्र/mach/समय.स>
+#include <asm/mach/time.h>
 
-#समावेश <plat/counter-32k.h>
+#include <plat/counter-32k.h>
 
-/* OMAP2_32KSYNCNT_CR_OFF: offset of 32ksync counter रेजिस्टर */
-#घोषणा OMAP2_32KSYNCNT_REV_OFF		0x0
-#घोषणा OMAP2_32KSYNCNT_REV_SCHEME	(0x3 << 30)
-#घोषणा OMAP2_32KSYNCNT_CR_OFF_LOW	0x10
-#घोषणा OMAP2_32KSYNCNT_CR_OFF_HIGH	0x30
+/* OMAP2_32KSYNCNT_CR_OFF: offset of 32ksync counter register */
+#define OMAP2_32KSYNCNT_REV_OFF		0x0
+#define OMAP2_32KSYNCNT_REV_SCHEME	(0x3 << 30)
+#define OMAP2_32KSYNCNT_CR_OFF_LOW	0x10
+#define OMAP2_32KSYNCNT_CR_OFF_HIGH	0x30
 
 /*
- * 32KHz घड़ीsource ... always available, on pretty most chips except
- * OMAP 730 and 1510.  Other समयrs could be used as घड़ीsources, with
- * higher resolution in मुक्त-running counter modes (e.g. 12 MHz xtal),
- * but प्रणालीs won't necessarily want to spend resources that way.
+ * 32KHz clocksource ... always available, on pretty most chips except
+ * OMAP 730 and 1510.  Other timers could be used as clocksources, with
+ * higher resolution in free-running counter modes (e.g. 12 MHz xtal),
+ * but systems won't necessarily want to spend resources that way.
  */
-अटल व्योम __iomem *sync32k_cnt_reg;
+static void __iomem *sync32k_cnt_reg;
 
-अटल u64 notrace omap_32k_पढ़ो_sched_घड़ी(व्योम)
-अणु
-	वापस sync32k_cnt_reg ? पढ़ोl_relaxed(sync32k_cnt_reg) : 0;
-पूर्ण
+static u64 notrace omap_32k_read_sched_clock(void)
+{
+	return sync32k_cnt_reg ? readl_relaxed(sync32k_cnt_reg) : 0;
+}
 
 /**
- * omap_पढ़ो_persistent_घड़ी64 -  Return समय from a persistent घड़ी.
+ * omap_read_persistent_clock64 -  Return time from a persistent clock.
  *
- * Reads the समय from a source which isn't disabled during PM, the
- * 32k sync समयr.  Convert the cycles elapsed since last पढ़ो पूर्णांकo
- * nsecs and adds to a monotonically increasing बारpec64.
+ * Reads the time from a source which isn't disabled during PM, the
+ * 32k sync timer.  Convert the cycles elapsed since last read into
+ * nsecs and adds to a monotonically increasing timespec64.
  */
-अटल काष्ठा बारpec64 persistent_ts;
-अटल cycles_t cycles;
-अटल अचिन्हित पूर्णांक persistent_mult, persistent_shअगरt;
+static struct timespec64 persistent_ts;
+static cycles_t cycles;
+static unsigned int persistent_mult, persistent_shift;
 
-अटल व्योम omap_पढ़ो_persistent_घड़ी64(काष्ठा बारpec64 *ts)
-अणु
-	अचिन्हित दीर्घ दीर्घ nsecs;
+static void omap_read_persistent_clock64(struct timespec64 *ts)
+{
+	unsigned long long nsecs;
 	cycles_t last_cycles;
 
 	last_cycles = cycles;
-	cycles = sync32k_cnt_reg ? पढ़ोl_relaxed(sync32k_cnt_reg) : 0;
+	cycles = sync32k_cnt_reg ? readl_relaxed(sync32k_cnt_reg) : 0;
 
-	nsecs = घड़ीsource_cyc2ns(cycles - last_cycles,
-					persistent_mult, persistent_shअगरt);
+	nsecs = clocksource_cyc2ns(cycles - last_cycles,
+					persistent_mult, persistent_shift);
 
-	बारpec64_add_ns(&persistent_ts, nsecs);
+	timespec64_add_ns(&persistent_ts, nsecs);
 
 	*ts = persistent_ts;
-पूर्ण
+}
 
 /**
- * omap_init_घड़ीsource_32k - setup and रेजिस्टर counter 32k as a
- * kernel घड़ीsource
+ * omap_init_clocksource_32k - setup and register counter 32k as a
+ * kernel clocksource
  * @pbase: base addr of counter_32k module
  * @size: size of counter_32k to map
  *
  * Returns 0 upon success or negative error code upon failure.
  *
  */
-पूर्णांक __init omap_init_घड़ीsource_32k(व्योम __iomem *vbase)
-अणु
-	पूर्णांक ret;
+int __init omap_init_clocksource_32k(void __iomem *vbase)
+{
+	int ret;
 
 	/*
-	 * 32k sync Counter IP रेजिस्टर offsets vary between the
+	 * 32k sync Counter IP register offsets vary between the
 	 * highlander version and the legacy ones.
-	 * The 'SCHEME' bits(30-31) of the revision रेजिस्टर is used
-	 * to identअगरy the version.
+	 * The 'SCHEME' bits(30-31) of the revision register is used
+	 * to identify the version.
 	 */
-	अगर (पढ़ोl_relaxed(vbase + OMAP2_32KSYNCNT_REV_OFF) &
+	if (readl_relaxed(vbase + OMAP2_32KSYNCNT_REV_OFF) &
 						OMAP2_32KSYNCNT_REV_SCHEME)
 		sync32k_cnt_reg = vbase + OMAP2_32KSYNCNT_CR_OFF_HIGH;
-	अन्यथा
+	else
 		sync32k_cnt_reg = vbase + OMAP2_32KSYNCNT_CR_OFF_LOW;
 
 	/*
 	 * 120000 rough estimate from the calculations in
-	 * __घड़ीsource_update_freq_scale.
+	 * __clocksource_update_freq_scale.
 	 */
-	घड़ीs_calc_mult_shअगरt(&persistent_mult, &persistent_shअगरt,
+	clocks_calc_mult_shift(&persistent_mult, &persistent_shift,
 			32768, NSEC_PER_SEC, 120000);
 
-	ret = घड़ीsource_mmio_init(sync32k_cnt_reg, "32k_counter", 32768,
-				250, 32, घड़ीsource_mmio_पढ़ोl_up);
-	अगर (ret) अणु
+	ret = clocksource_mmio_init(sync32k_cnt_reg, "32k_counter", 32768,
+				250, 32, clocksource_mmio_readl_up);
+	if (ret) {
 		pr_err("32k_counter: can't register clocksource\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	sched_घड़ी_रेजिस्टर(omap_32k_पढ़ो_sched_घड़ी, 32, 32768);
-	रेजिस्टर_persistent_घड़ी(omap_पढ़ो_persistent_घड़ी64);
+	sched_clock_register(omap_32k_read_sched_clock, 32, 32768);
+	register_persistent_clock(omap_read_persistent_clock64);
 	pr_info("OMAP clocksource: 32k_counter at 32768 Hz\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

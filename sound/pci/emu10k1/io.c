@@ -1,9 +1,8 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
- *                   Creative Lअसल, Inc.
- *  Routines क्रम control of EMU10K1 chips
+ *                   Creative Labs, Inc.
+ *  Routines for control of EMU10K1 chips
  *
  *  BUGS:
  *    --
@@ -12,24 +11,24 @@
  *    --
  */
 
-#समावेश <linux/समय.स>
-#समावेश <sound/core.h>
-#समावेश <sound/emu10k1.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/export.h>
-#समावेश "p17v.h"
+#include <linux/time.h>
+#include <sound/core.h>
+#include <sound/emu10k1.h>
+#include <linux/delay.h>
+#include <linux/export.h>
+#include "p17v.h"
 
-अचिन्हित पूर्णांक snd_emu10k1_ptr_पढ़ो(काष्ठा snd_emu10k1 * emu, अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक chn)
-अणु
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक regptr, val;
-	अचिन्हित पूर्णांक mask;
+unsigned int snd_emu10k1_ptr_read(struct snd_emu10k1 * emu, unsigned int reg, unsigned int chn)
+{
+	unsigned long flags;
+	unsigned int regptr, val;
+	unsigned int mask;
 
 	mask = emu->audigy ? A_PTR_ADDRESS_MASK : PTR_ADDRESS_MASK;
 	regptr = ((reg << 16) & mask) | (chn & PTR_CHANNELNUM_MASK);
 
-	अगर (reg & 0xff000000) अणु
-		अचिन्हित अक्षर size, offset;
+	if (reg & 0xff000000) {
+		unsigned char size, offset;
 		
 		size = (reg >> 24) & 0x3f;
 		offset = (reg >> 16) & 0x1f;
@@ -40,31 +39,31 @@
 		val = inl(emu->port + DATA);
 		spin_unlock_irqrestore(&emu->emu_lock, flags);
 		
-		वापस (val & mask) >> offset;
-	पूर्ण अन्यथा अणु
+		return (val & mask) >> offset;
+	} else {
 		spin_lock_irqsave(&emu->emu_lock, flags);
 		outl(regptr, emu->port + PTR);
 		val = inl(emu->port + DATA);
 		spin_unlock_irqrestore(&emu->emu_lock, flags);
-		वापस val;
-	पूर्ण
-पूर्ण
+		return val;
+	}
+}
 
-EXPORT_SYMBOL(snd_emu10k1_ptr_पढ़ो);
+EXPORT_SYMBOL(snd_emu10k1_ptr_read);
 
-व्योम snd_emu10k1_ptr_ग_लिखो(काष्ठा snd_emu10k1 *emu, अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक chn, अचिन्हित पूर्णांक data)
-अणु
-	अचिन्हित पूर्णांक regptr;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक mask;
+void snd_emu10k1_ptr_write(struct snd_emu10k1 *emu, unsigned int reg, unsigned int chn, unsigned int data)
+{
+	unsigned int regptr;
+	unsigned long flags;
+	unsigned int mask;
 
-	अगर (snd_BUG_ON(!emu))
-		वापस;
+	if (snd_BUG_ON(!emu))
+		return;
 	mask = emu->audigy ? A_PTR_ADDRESS_MASK : PTR_ADDRESS_MASK;
 	regptr = ((reg << 16) & mask) | (chn & PTR_CHANNELNUM_MASK);
 
-	अगर (reg & 0xff000000) अणु
-		अचिन्हित अक्षर size, offset;
+	if (reg & 0xff000000) {
+		unsigned char size, offset;
 
 		size = (reg >> 24) & 0x3f;
 		offset = (reg >> 16) & 0x1f;
@@ -76,22 +75,22 @@ EXPORT_SYMBOL(snd_emu10k1_ptr_पढ़ो);
 		data |= inl(emu->port + DATA) & ~mask;
 		outl(data, emu->port + DATA);
 		spin_unlock_irqrestore(&emu->emu_lock, flags);		
-	पूर्ण अन्यथा अणु
+	} else {
 		spin_lock_irqsave(&emu->emu_lock, flags);
 		outl(regptr, emu->port + PTR);
 		outl(data, emu->port + DATA);
 		spin_unlock_irqrestore(&emu->emu_lock, flags);
-	पूर्ण
-पूर्ण
+	}
+}
 
-EXPORT_SYMBOL(snd_emu10k1_ptr_ग_लिखो);
+EXPORT_SYMBOL(snd_emu10k1_ptr_write);
 
-अचिन्हित पूर्णांक snd_emu10k1_ptr20_पढ़ो(काष्ठा snd_emu10k1 * emu, 
-					  अचिन्हित पूर्णांक reg, 
-					  अचिन्हित पूर्णांक chn)
-अणु
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक regptr, val;
+unsigned int snd_emu10k1_ptr20_read(struct snd_emu10k1 * emu, 
+					  unsigned int reg, 
+					  unsigned int chn)
+{
+	unsigned long flags;
+	unsigned int regptr, val;
   
 	regptr = (reg << 16) | chn;
 
@@ -99,16 +98,16 @@ EXPORT_SYMBOL(snd_emu10k1_ptr_ग_लिखो);
 	outl(regptr, emu->port + 0x20 + PTR);
 	val = inl(emu->port + 0x20 + DATA);
 	spin_unlock_irqrestore(&emu->emu_lock, flags);
-	वापस val;
-पूर्ण
+	return val;
+}
 
-व्योम snd_emu10k1_ptr20_ग_लिखो(काष्ठा snd_emu10k1 *emu, 
-				   अचिन्हित पूर्णांक reg, 
-				   अचिन्हित पूर्णांक chn, 
-				   अचिन्हित पूर्णांक data)
-अणु
-	अचिन्हित पूर्णांक regptr;
-	अचिन्हित दीर्घ flags;
+void snd_emu10k1_ptr20_write(struct snd_emu10k1 *emu, 
+				   unsigned int reg, 
+				   unsigned int chn, 
+				   unsigned int data)
+{
+	unsigned int regptr;
+	unsigned long flags;
 
 	regptr = (reg << 16) | chn;
 
@@ -116,402 +115,402 @@ EXPORT_SYMBOL(snd_emu10k1_ptr_ग_लिखो);
 	outl(regptr, emu->port + 0x20 + PTR);
 	outl(data, emu->port + 0x20 + DATA);
 	spin_unlock_irqrestore(&emu->emu_lock, flags);
-पूर्ण
+}
 
-पूर्णांक snd_emu10k1_spi_ग_लिखो(काष्ठा snd_emu10k1 * emu,
-				   अचिन्हित पूर्णांक data)
-अणु
-	अचिन्हित पूर्णांक reset, set;
-	अचिन्हित पूर्णांक reg, पंचांगp;
-	पूर्णांक n, result;
-	पूर्णांक err = 0;
+int snd_emu10k1_spi_write(struct snd_emu10k1 * emu,
+				   unsigned int data)
+{
+	unsigned int reset, set;
+	unsigned int reg, tmp;
+	int n, result;
+	int err = 0;
 
 	/* This function is not re-entrant, so protect against it. */
 	spin_lock(&emu->spi_lock);
-	अगर (emu->card_capabilities->ca0108_chip)
+	if (emu->card_capabilities->ca0108_chip)
 		reg = 0x3c; /* PTR20, reg 0x3c */
-	अन्यथा अणु
-		/* For other chip types the SPI रेजिस्टर
+	else {
+		/* For other chip types the SPI register
 		 * is currently unknown. */
 		err = 1;
-		जाओ spi_ग_लिखो_निकास;
-	पूर्ण
-	अगर (data > 0xffff) अणु
+		goto spi_write_exit;
+	}
+	if (data > 0xffff) {
 		/* Only 16bit values allowed */
 		err = 1;
-		जाओ spi_ग_लिखो_निकास;
-	पूर्ण
+		goto spi_write_exit;
+	}
 
-	पंचांगp = snd_emu10k1_ptr20_पढ़ो(emu, reg, 0);
-	reset = (पंचांगp & ~0x3ffff) | 0x20000; /* Set xxx20000 */
+	tmp = snd_emu10k1_ptr20_read(emu, reg, 0);
+	reset = (tmp & ~0x3ffff) | 0x20000; /* Set xxx20000 */
 	set = reset | 0x10000; /* Set xxx1xxxx */
-	snd_emu10k1_ptr20_ग_लिखो(emu, reg, 0, reset | data);
-	पंचांगp = snd_emu10k1_ptr20_पढ़ो(emu, reg, 0); /* ग_लिखो post */
-	snd_emu10k1_ptr20_ग_लिखो(emu, reg, 0, set | data);
+	snd_emu10k1_ptr20_write(emu, reg, 0, reset | data);
+	tmp = snd_emu10k1_ptr20_read(emu, reg, 0); /* write post */
+	snd_emu10k1_ptr20_write(emu, reg, 0, set | data);
 	result = 1;
-	/* Wait क्रम status bit to वापस to 0 */
-	क्रम (n = 0; n < 100; n++) अणु
+	/* Wait for status bit to return to 0 */
+	for (n = 0; n < 100; n++) {
 		udelay(10);
-		पंचांगp = snd_emu10k1_ptr20_पढ़ो(emu, reg, 0);
-		अगर (!(पंचांगp & 0x10000)) अणु
+		tmp = snd_emu10k1_ptr20_read(emu, reg, 0);
+		if (!(tmp & 0x10000)) {
 			result = 0;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (result) अणु
+			break;
+		}
+	}
+	if (result) {
 		/* Timed out */
 		err = 1;
-		जाओ spi_ग_लिखो_निकास;
-	पूर्ण
-	snd_emu10k1_ptr20_ग_लिखो(emu, reg, 0, reset | data);
-	पंचांगp = snd_emu10k1_ptr20_पढ़ो(emu, reg, 0); /* Write post */
+		goto spi_write_exit;
+	}
+	snd_emu10k1_ptr20_write(emu, reg, 0, reset | data);
+	tmp = snd_emu10k1_ptr20_read(emu, reg, 0); /* Write post */
 	err = 0;
-spi_ग_लिखो_निकास:
+spi_write_exit:
 	spin_unlock(&emu->spi_lock);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-/* The ADC करोes not support i2c पढ़ो, so only ग_लिखो is implemented */
-पूर्णांक snd_emu10k1_i2c_ग_लिखो(काष्ठा snd_emu10k1 *emu,
+/* The ADC does not support i2c read, so only write is implemented */
+int snd_emu10k1_i2c_write(struct snd_emu10k1 *emu,
 				u32 reg,
 				u32 value)
-अणु
-	u32 पंचांगp;
-	पूर्णांक समयout = 0;
-	पूर्णांक status;
-	पूर्णांक retry;
-	पूर्णांक err = 0;
+{
+	u32 tmp;
+	int timeout = 0;
+	int status;
+	int retry;
+	int err = 0;
 
-	अगर ((reg > 0x7f) || (value > 0x1ff)) अणु
+	if ((reg > 0x7f) || (value > 0x1ff)) {
 		dev_err(emu->card->dev, "i2c_write: invalid values.\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* This function is not re-entrant, so protect against it. */
 	spin_lock(&emu->i2c_lock);
 
-	पंचांगp = reg << 25 | value << 16;
+	tmp = reg << 25 | value << 16;
 
 	/* This controls the I2C connected to the WM8775 ADC Codec */
-	snd_emu10k1_ptr20_ग_लिखो(emu, P17V_I2C_1, 0, पंचांगp);
-	पंचांगp = snd_emu10k1_ptr20_पढ़ो(emu, P17V_I2C_1, 0); /* ग_लिखो post */
+	snd_emu10k1_ptr20_write(emu, P17V_I2C_1, 0, tmp);
+	tmp = snd_emu10k1_ptr20_read(emu, P17V_I2C_1, 0); /* write post */
 
-	क्रम (retry = 0; retry < 10; retry++) अणु
+	for (retry = 0; retry < 10; retry++) {
 		/* Send the data to i2c */
-		पंचांगp = 0;
-		पंचांगp = पंचांगp | (I2C_A_ADC_LAST|I2C_A_ADC_START|I2C_A_ADC_ADD);
-		snd_emu10k1_ptr20_ग_लिखो(emu, P17V_I2C_ADDR, 0, पंचांगp);
+		tmp = 0;
+		tmp = tmp | (I2C_A_ADC_LAST|I2C_A_ADC_START|I2C_A_ADC_ADD);
+		snd_emu10k1_ptr20_write(emu, P17V_I2C_ADDR, 0, tmp);
 
 		/* Wait till the transaction ends */
-		जबतक (1) अणु
+		while (1) {
 			mdelay(1);
-			status = snd_emu10k1_ptr20_पढ़ो(emu, P17V_I2C_ADDR, 0);
-			समयout++;
-			अगर ((status & I2C_A_ADC_START) == 0)
-				अवरोध;
+			status = snd_emu10k1_ptr20_read(emu, P17V_I2C_ADDR, 0);
+			timeout++;
+			if ((status & I2C_A_ADC_START) == 0)
+				break;
 
-			अगर (समयout > 1000) अणु
+			if (timeout > 1000) {
 				dev_warn(emu->card->dev,
 					   "emu10k1:I2C:timeout status=0x%x\n",
 					   status);
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		//Read back and see अगर the transaction is successful
-		अगर ((status & I2C_A_ADC_ABORT) == 0)
-			अवरोध;
-	पूर्ण
+				break;
+			}
+		}
+		//Read back and see if the transaction is successful
+		if ((status & I2C_A_ADC_ABORT) == 0)
+			break;
+	}
 
-	अगर (retry == 10) अणु
+	if (retry == 10) {
 		dev_err(emu->card->dev, "Writing to ADC failed!\n");
 		dev_err(emu->card->dev, "status=0x%x, reg=%d, value=%d\n",
 			status, reg, value);
 		/* dump_stack(); */
 		err = -EINVAL;
-	पूर्ण
+	}
     
 	spin_unlock(&emu->i2c_lock);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक snd_emu1010_fpga_ग_लिखो(काष्ठा snd_emu10k1 * emu, u32 reg, u32 value)
-अणु
-	अचिन्हित दीर्घ flags;
+int snd_emu1010_fpga_write(struct snd_emu10k1 * emu, u32 reg, u32 value)
+{
+	unsigned long flags;
 
-	अगर (reg > 0x3f)
-		वापस 1;
-	reg += 0x40; /* 0x40 upwards are रेजिस्टरs. */
-	अगर (value > 0x3f) /* 0 to 0x3f are values */
-		वापस 1;
+	if (reg > 0x3f)
+		return 1;
+	reg += 0x40; /* 0x40 upwards are registers. */
+	if (value > 0x3f) /* 0 to 0x3f are values */
+		return 1;
 	spin_lock_irqsave(&emu->emu_lock, flags);
 	outl(reg, emu->port + A_IOCFG);
 	udelay(10);
-	outl(reg | 0x80, emu->port + A_IOCFG);  /* High bit घड़ीs the value पूर्णांकo the fpga. */
+	outl(reg | 0x80, emu->port + A_IOCFG);  /* High bit clocks the value into the fpga. */
 	udelay(10);
 	outl(value, emu->port + A_IOCFG);
 	udelay(10);
-	outl(value | 0x80 , emu->port + A_IOCFG);  /* High bit घड़ीs the value पूर्णांकo the fpga. */
+	outl(value | 0x80 , emu->port + A_IOCFG);  /* High bit clocks the value into the fpga. */
 	spin_unlock_irqrestore(&emu->emu_lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक snd_emu1010_fpga_पढ़ो(काष्ठा snd_emu10k1 * emu, u32 reg, u32 *value)
-अणु
-	अचिन्हित दीर्घ flags;
-	अगर (reg > 0x3f)
-		वापस 1;
-	reg += 0x40; /* 0x40 upwards are रेजिस्टरs. */
+int snd_emu1010_fpga_read(struct snd_emu10k1 * emu, u32 reg, u32 *value)
+{
+	unsigned long flags;
+	if (reg > 0x3f)
+		return 1;
+	reg += 0x40; /* 0x40 upwards are registers. */
 	spin_lock_irqsave(&emu->emu_lock, flags);
 	outl(reg, emu->port + A_IOCFG);
 	udelay(10);
-	outl(reg | 0x80, emu->port + A_IOCFG);  /* High bit घड़ीs the value पूर्णांकo the fpga. */
+	outl(reg | 0x80, emu->port + A_IOCFG);  /* High bit clocks the value into the fpga. */
 	udelay(10);
 	*value = ((inl(emu->port + A_IOCFG) >> 8) & 0x7f);
 	spin_unlock_irqrestore(&emu->emu_lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Each Destination has one and only one Source,
  * but one Source can feed any number of Destinations simultaneously.
  */
-पूर्णांक snd_emu1010_fpga_link_dst_src_ग_लिखो(काष्ठा snd_emu10k1 * emu, u32 dst, u32 src)
-अणु
-	snd_emu1010_fpga_ग_लिखो(emu, 0x00, ((dst >> 8) & 0x3f) );
-	snd_emu1010_fpga_ग_लिखो(emu, 0x01, (dst & 0x3f) );
-	snd_emu1010_fpga_ग_लिखो(emu, 0x02, ((src >> 8) & 0x3f) );
-	snd_emu1010_fpga_ग_लिखो(emu, 0x03, (src & 0x3f) );
+int snd_emu1010_fpga_link_dst_src_write(struct snd_emu10k1 * emu, u32 dst, u32 src)
+{
+	snd_emu1010_fpga_write(emu, 0x00, ((dst >> 8) & 0x3f) );
+	snd_emu1010_fpga_write(emu, 0x01, (dst & 0x3f) );
+	snd_emu1010_fpga_write(emu, 0x02, ((src >> 8) & 0x3f) );
+	snd_emu1010_fpga_write(emu, 0x03, (src & 0x3f) );
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम snd_emu10k1_पूर्णांकr_enable(काष्ठा snd_emu10k1 *emu, अचिन्हित पूर्णांक पूर्णांकrenb)
-अणु
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक enable;
+void snd_emu10k1_intr_enable(struct snd_emu10k1 *emu, unsigned int intrenb)
+{
+	unsigned long flags;
+	unsigned int enable;
 
 	spin_lock_irqsave(&emu->emu_lock, flags);
-	enable = inl(emu->port + INTE) | पूर्णांकrenb;
+	enable = inl(emu->port + INTE) | intrenb;
 	outl(enable, emu->port + INTE);
 	spin_unlock_irqrestore(&emu->emu_lock, flags);
-पूर्ण
+}
 
-व्योम snd_emu10k1_पूर्णांकr_disable(काष्ठा snd_emu10k1 *emu, अचिन्हित पूर्णांक पूर्णांकrenb)
-अणु
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक enable;
+void snd_emu10k1_intr_disable(struct snd_emu10k1 *emu, unsigned int intrenb)
+{
+	unsigned long flags;
+	unsigned int enable;
 
 	spin_lock_irqsave(&emu->emu_lock, flags);
-	enable = inl(emu->port + INTE) & ~पूर्णांकrenb;
+	enable = inl(emu->port + INTE) & ~intrenb;
 	outl(enable, emu->port + INTE);
 	spin_unlock_irqrestore(&emu->emu_lock, flags);
-पूर्ण
+}
 
-व्योम snd_emu10k1_voice_पूर्णांकr_enable(काष्ठा snd_emu10k1 *emu, अचिन्हित पूर्णांक voicक्रमागत)
-अणु
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक val;
+void snd_emu10k1_voice_intr_enable(struct snd_emu10k1 *emu, unsigned int voicenum)
+{
+	unsigned long flags;
+	unsigned int val;
 
 	spin_lock_irqsave(&emu->emu_lock, flags);
-	/* voice पूर्णांकerrupt */
-	अगर (voicक्रमागत >= 32) अणु
+	/* voice interrupt */
+	if (voicenum >= 32) {
 		outl(CLIEH << 16, emu->port + PTR);
 		val = inl(emu->port + DATA);
-		val |= 1 << (voicक्रमागत - 32);
-	पूर्ण अन्यथा अणु
+		val |= 1 << (voicenum - 32);
+	} else {
 		outl(CLIEL << 16, emu->port + PTR);
 		val = inl(emu->port + DATA);
-		val |= 1 << voicक्रमागत;
-	पूर्ण
+		val |= 1 << voicenum;
+	}
 	outl(val, emu->port + DATA);
 	spin_unlock_irqrestore(&emu->emu_lock, flags);
-पूर्ण
+}
 
-व्योम snd_emu10k1_voice_पूर्णांकr_disable(काष्ठा snd_emu10k1 *emu, अचिन्हित पूर्णांक voicक्रमागत)
-अणु
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक val;
+void snd_emu10k1_voice_intr_disable(struct snd_emu10k1 *emu, unsigned int voicenum)
+{
+	unsigned long flags;
+	unsigned int val;
 
 	spin_lock_irqsave(&emu->emu_lock, flags);
-	/* voice पूर्णांकerrupt */
-	अगर (voicक्रमागत >= 32) अणु
+	/* voice interrupt */
+	if (voicenum >= 32) {
 		outl(CLIEH << 16, emu->port + PTR);
 		val = inl(emu->port + DATA);
-		val &= ~(1 << (voicक्रमागत - 32));
-	पूर्ण अन्यथा अणु
+		val &= ~(1 << (voicenum - 32));
+	} else {
 		outl(CLIEL << 16, emu->port + PTR);
 		val = inl(emu->port + DATA);
-		val &= ~(1 << voicक्रमागत);
-	पूर्ण
+		val &= ~(1 << voicenum);
+	}
 	outl(val, emu->port + DATA);
 	spin_unlock_irqrestore(&emu->emu_lock, flags);
-पूर्ण
+}
 
-व्योम snd_emu10k1_voice_पूर्णांकr_ack(काष्ठा snd_emu10k1 *emu, अचिन्हित पूर्णांक voicक्रमागत)
-अणु
-	अचिन्हित दीर्घ flags;
+void snd_emu10k1_voice_intr_ack(struct snd_emu10k1 *emu, unsigned int voicenum)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&emu->emu_lock, flags);
-	/* voice पूर्णांकerrupt */
-	अगर (voicक्रमागत >= 32) अणु
+	/* voice interrupt */
+	if (voicenum >= 32) {
 		outl(CLIPH << 16, emu->port + PTR);
-		voicक्रमागत = 1 << (voicक्रमागत - 32);
-	पूर्ण अन्यथा अणु
+		voicenum = 1 << (voicenum - 32);
+	} else {
 		outl(CLIPL << 16, emu->port + PTR);
-		voicक्रमागत = 1 << voicक्रमागत;
-	पूर्ण
-	outl(voicक्रमागत, emu->port + DATA);
+		voicenum = 1 << voicenum;
+	}
+	outl(voicenum, emu->port + DATA);
 	spin_unlock_irqrestore(&emu->emu_lock, flags);
-पूर्ण
+}
 
-व्योम snd_emu10k1_voice_half_loop_पूर्णांकr_enable(काष्ठा snd_emu10k1 *emu, अचिन्हित पूर्णांक voicक्रमागत)
-अणु
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक val;
+void snd_emu10k1_voice_half_loop_intr_enable(struct snd_emu10k1 *emu, unsigned int voicenum)
+{
+	unsigned long flags;
+	unsigned int val;
 
 	spin_lock_irqsave(&emu->emu_lock, flags);
-	/* voice पूर्णांकerrupt */
-	अगर (voicक्रमागत >= 32) अणु
+	/* voice interrupt */
+	if (voicenum >= 32) {
 		outl(HLIEH << 16, emu->port + PTR);
 		val = inl(emu->port + DATA);
-		val |= 1 << (voicक्रमागत - 32);
-	पूर्ण अन्यथा अणु
+		val |= 1 << (voicenum - 32);
+	} else {
 		outl(HLIEL << 16, emu->port + PTR);
 		val = inl(emu->port + DATA);
-		val |= 1 << voicक्रमागत;
-	पूर्ण
+		val |= 1 << voicenum;
+	}
 	outl(val, emu->port + DATA);
 	spin_unlock_irqrestore(&emu->emu_lock, flags);
-पूर्ण
+}
 
-व्योम snd_emu10k1_voice_half_loop_पूर्णांकr_disable(काष्ठा snd_emu10k1 *emu, अचिन्हित पूर्णांक voicक्रमागत)
-अणु
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक val;
+void snd_emu10k1_voice_half_loop_intr_disable(struct snd_emu10k1 *emu, unsigned int voicenum)
+{
+	unsigned long flags;
+	unsigned int val;
 
 	spin_lock_irqsave(&emu->emu_lock, flags);
-	/* voice पूर्णांकerrupt */
-	अगर (voicक्रमागत >= 32) अणु
+	/* voice interrupt */
+	if (voicenum >= 32) {
 		outl(HLIEH << 16, emu->port + PTR);
 		val = inl(emu->port + DATA);
-		val &= ~(1 << (voicक्रमागत - 32));
-	पूर्ण अन्यथा अणु
+		val &= ~(1 << (voicenum - 32));
+	} else {
 		outl(HLIEL << 16, emu->port + PTR);
 		val = inl(emu->port + DATA);
-		val &= ~(1 << voicक्रमागत);
-	पूर्ण
+		val &= ~(1 << voicenum);
+	}
 	outl(val, emu->port + DATA);
 	spin_unlock_irqrestore(&emu->emu_lock, flags);
-पूर्ण
+}
 
-व्योम snd_emu10k1_voice_half_loop_पूर्णांकr_ack(काष्ठा snd_emu10k1 *emu, अचिन्हित पूर्णांक voicक्रमागत)
-अणु
-	अचिन्हित दीर्घ flags;
+void snd_emu10k1_voice_half_loop_intr_ack(struct snd_emu10k1 *emu, unsigned int voicenum)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&emu->emu_lock, flags);
-	/* voice पूर्णांकerrupt */
-	अगर (voicक्रमागत >= 32) अणु
+	/* voice interrupt */
+	if (voicenum >= 32) {
 		outl(HLIPH << 16, emu->port + PTR);
-		voicक्रमागत = 1 << (voicक्रमागत - 32);
-	पूर्ण अन्यथा अणु
+		voicenum = 1 << (voicenum - 32);
+	} else {
 		outl(HLIPL << 16, emu->port + PTR);
-		voicक्रमागत = 1 << voicक्रमागत;
-	पूर्ण
-	outl(voicक्रमागत, emu->port + DATA);
+		voicenum = 1 << voicenum;
+	}
+	outl(voicenum, emu->port + DATA);
 	spin_unlock_irqrestore(&emu->emu_lock, flags);
-पूर्ण
+}
 
-व्योम snd_emu10k1_voice_set_loop_stop(काष्ठा snd_emu10k1 *emu, अचिन्हित पूर्णांक voicक्रमागत)
-अणु
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक sol;
+void snd_emu10k1_voice_set_loop_stop(struct snd_emu10k1 *emu, unsigned int voicenum)
+{
+	unsigned long flags;
+	unsigned int sol;
 
 	spin_lock_irqsave(&emu->emu_lock, flags);
-	/* voice पूर्णांकerrupt */
-	अगर (voicक्रमागत >= 32) अणु
+	/* voice interrupt */
+	if (voicenum >= 32) {
 		outl(SOLEH << 16, emu->port + PTR);
 		sol = inl(emu->port + DATA);
-		sol |= 1 << (voicक्रमागत - 32);
-	पूर्ण अन्यथा अणु
+		sol |= 1 << (voicenum - 32);
+	} else {
 		outl(SOLEL << 16, emu->port + PTR);
 		sol = inl(emu->port + DATA);
-		sol |= 1 << voicक्रमागत;
-	पूर्ण
+		sol |= 1 << voicenum;
+	}
 	outl(sol, emu->port + DATA);
 	spin_unlock_irqrestore(&emu->emu_lock, flags);
-पूर्ण
+}
 
-व्योम snd_emu10k1_voice_clear_loop_stop(काष्ठा snd_emu10k1 *emu, अचिन्हित पूर्णांक voicक्रमागत)
-अणु
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक sol;
+void snd_emu10k1_voice_clear_loop_stop(struct snd_emu10k1 *emu, unsigned int voicenum)
+{
+	unsigned long flags;
+	unsigned int sol;
 
 	spin_lock_irqsave(&emu->emu_lock, flags);
-	/* voice पूर्णांकerrupt */
-	अगर (voicक्रमागत >= 32) अणु
+	/* voice interrupt */
+	if (voicenum >= 32) {
 		outl(SOLEH << 16, emu->port + PTR);
 		sol = inl(emu->port + DATA);
-		sol &= ~(1 << (voicक्रमागत - 32));
-	पूर्ण अन्यथा अणु
+		sol &= ~(1 << (voicenum - 32));
+	} else {
 		outl(SOLEL << 16, emu->port + PTR);
 		sol = inl(emu->port + DATA);
-		sol &= ~(1 << voicक्रमागत);
-	पूर्ण
+		sol &= ~(1 << voicenum);
+	}
 	outl(sol, emu->port + DATA);
 	spin_unlock_irqrestore(&emu->emu_lock, flags);
-पूर्ण
+}
 
-व्योम snd_emu10k1_रुको(काष्ठा snd_emu10k1 *emu, अचिन्हित पूर्णांक रुको)
-अणु
-	अस्थिर अचिन्हित count;
-	अचिन्हित पूर्णांक newसमय = 0, curसमय;
+void snd_emu10k1_wait(struct snd_emu10k1 *emu, unsigned int wait)
+{
+	volatile unsigned count;
+	unsigned int newtime = 0, curtime;
 
-	curसमय = inl(emu->port + WC) >> 6;
-	जबतक (रुको-- > 0) अणु
+	curtime = inl(emu->port + WC) >> 6;
+	while (wait-- > 0) {
 		count = 0;
-		जबतक (count++ < 16384) अणु
-			newसमय = inl(emu->port + WC) >> 6;
-			अगर (newसमय != curसमय)
-				अवरोध;
-		पूर्ण
-		अगर (count > 16384)
-			अवरोध;
-		curसमय = newसमय;
-	पूर्ण
-पूर्ण
+		while (count++ < 16384) {
+			newtime = inl(emu->port + WC) >> 6;
+			if (newtime != curtime)
+				break;
+		}
+		if (count > 16384)
+			break;
+		curtime = newtime;
+	}
+}
 
-अचिन्हित लघु snd_emu10k1_ac97_पढ़ो(काष्ठा snd_ac97 *ac97, अचिन्हित लघु reg)
-अणु
-	काष्ठा snd_emu10k1 *emu = ac97->निजी_data;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित लघु val;
+unsigned short snd_emu10k1_ac97_read(struct snd_ac97 *ac97, unsigned short reg)
+{
+	struct snd_emu10k1 *emu = ac97->private_data;
+	unsigned long flags;
+	unsigned short val;
 
 	spin_lock_irqsave(&emu->emu_lock, flags);
 	outb(reg, emu->port + AC97ADDRESS);
 	val = inw(emu->port + AC97DATA);
 	spin_unlock_irqrestore(&emu->emu_lock, flags);
-	वापस val;
-पूर्ण
+	return val;
+}
 
-व्योम snd_emu10k1_ac97_ग_लिखो(काष्ठा snd_ac97 *ac97, अचिन्हित लघु reg, अचिन्हित लघु data)
-अणु
-	काष्ठा snd_emu10k1 *emu = ac97->निजी_data;
-	अचिन्हित दीर्घ flags;
+void snd_emu10k1_ac97_write(struct snd_ac97 *ac97, unsigned short reg, unsigned short data)
+{
+	struct snd_emu10k1 *emu = ac97->private_data;
+	unsigned long flags;
 
 	spin_lock_irqsave(&emu->emu_lock, flags);
 	outb(reg, emu->port + AC97ADDRESS);
 	outw(data, emu->port + AC97DATA);
 	spin_unlock_irqrestore(&emu->emu_lock, flags);
-पूर्ण
+}
 
 /*
  *  convert rate to pitch
  */
 
-अचिन्हित पूर्णांक snd_emu10k1_rate_to_pitch(अचिन्हित पूर्णांक rate)
-अणु
-	अटल स्थिर u32 logMagTable[128] = अणु
+unsigned int snd_emu10k1_rate_to_pitch(unsigned int rate)
+{
+	static const u32 logMagTable[128] = {
 		0x00000, 0x02dfc, 0x05b9e, 0x088e6, 0x0b5d6, 0x0e26f, 0x10eb3, 0x13aa2,
 		0x1663f, 0x1918a, 0x1bc84, 0x1e72e, 0x2118b, 0x23b9a, 0x2655d, 0x28ed5,
 		0x2b803, 0x2e0e8, 0x30985, 0x331db, 0x359eb, 0x381b6, 0x3a93d, 0x3d081,
@@ -528,8 +527,8 @@ spi_ग_लिखो_निकास:
 		0xdba4a, 0xdd3b4, 0xded03, 0xe0636, 0xe1f4e, 0xe384a, 0xe512c, 0xe69f3,
 		0xe829f, 0xe9b31, 0xeb3a9, 0xecc08, 0xee44c, 0xefc78, 0xf148a, 0xf2c83,
 		0xf4463, 0xf5c2a, 0xf73da, 0xf8b71, 0xfa2f0, 0xfba57, 0xfd1a7, 0xfe8df
-	पूर्ण;
-	अटल स्थिर अक्षर logSlopeTable[128] = अणु
+	};
+	static const char logSlopeTable[128] = {
 		0x5c, 0x5c, 0x5b, 0x5a, 0x5a, 0x59, 0x58, 0x58,
 		0x57, 0x56, 0x56, 0x55, 0x55, 0x54, 0x53, 0x53,
 		0x52, 0x52, 0x51, 0x51, 0x50, 0x50, 0x4f, 0x4f,
@@ -546,22 +545,22 @@ spi_ग_लिखो_निकास:
 		0x33, 0x33, 0x33, 0x33, 0x32, 0x32, 0x32, 0x32,
 		0x32, 0x31, 0x31, 0x31, 0x31, 0x31, 0x30, 0x30,
 		0x30, 0x30, 0x30, 0x2f, 0x2f, 0x2f, 0x2f, 0x2f
-	पूर्ण;
-	पूर्णांक i;
+	};
+	int i;
 
-	अगर (rate == 0)
-		वापस 0;	/* Bail out अगर no leading "1" */
+	if (rate == 0)
+		return 0;	/* Bail out if no leading "1" */
 	rate *= 11185;		/* Scale 48000 to 0x20002380 */
-	क्रम (i = 31; i > 0; i--) अणु
-		अगर (rate & 0x80000000) अणु	/* Detect leading "1" */
-			वापस (((अचिन्हित पूर्णांक) (i - 15) << 20) +
+	for (i = 31; i > 0; i--) {
+		if (rate & 0x80000000) {	/* Detect leading "1" */
+			return (((unsigned int) (i - 15) << 20) +
 			       logMagTable[0x7f & (rate >> 24)] +
 					(0x7f & (rate >> 17)) *
 					logSlopeTable[0x7f & (rate >> 24)]);
-		पूर्ण
+		}
 		rate <<= 1;
-	पूर्ण
+	}
 
-	वापस 0;		/* Should never reach this poपूर्णांक */
-पूर्ण
+	return 0;		/* Should never reach this point */
+}
 

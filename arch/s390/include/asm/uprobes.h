@@ -1,34 +1,33 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- *    User-space Probes (UProbes) क्रम s390
+ *    User-space Probes (UProbes) for s390
  *
  *    Copyright IBM Corp. 2014
  *    Author(s): Jan Willeke,
  */
 
-#अगर_अघोषित _ASM_UPROBES_H
-#घोषणा _ASM_UPROBES_H
+#ifndef _ASM_UPROBES_H
+#define _ASM_UPROBES_H
 
-#समावेश <linux/notअगरier.h>
+#include <linux/notifier.h>
 
-प्रकार u16 uprobe_opcode_t;
+typedef u16 uprobe_opcode_t;
 
-#घोषणा UPROBE_XOL_SLOT_BYTES	256 /* cache aligned */
+#define UPROBE_XOL_SLOT_BYTES	256 /* cache aligned */
 
-#घोषणा UPROBE_SWBP_INSN	0x0002
-#घोषणा UPROBE_SWBP_INSN_SIZE	2
+#define UPROBE_SWBP_INSN	0x0002
+#define UPROBE_SWBP_INSN_SIZE	2
 
-काष्ठा arch_uprobe अणु
-	जोड़अणु
+struct arch_uprobe {
+	union{
 		uprobe_opcode_t insn[3];
 		uprobe_opcode_t ixol[3];
-	पूर्ण;
-	अचिन्हित पूर्णांक saved_per : 1;
-	अचिन्हित पूर्णांक saved_पूर्णांक_code;
-पूर्ण;
+	};
+	unsigned int saved_per : 1;
+	unsigned int saved_int_code;
+};
 
-काष्ठा arch_uprobe_task अणु
-पूर्ण;
+struct arch_uprobe_task {
+};
 
-#पूर्ण_अगर	/* _ASM_UPROBES_H */
+#endif	/* _ASM_UPROBES_H */

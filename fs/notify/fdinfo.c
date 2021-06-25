@@ -1,158 +1,157 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/file.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/fsnotअगरy_backend.h>
-#समावेश <linux/idr.h>
-#समावेश <linux/init.h>
-#समावेश <linux/inotअगरy.h>
-#समावेश <linux/fanotअगरy.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/namei.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/types.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/exportfs.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/file.h>
+#include <linux/fs.h>
+#include <linux/fsnotify_backend.h>
+#include <linux/idr.h>
+#include <linux/init.h>
+#include <linux/inotify.h>
+#include <linux/fanotify.h>
+#include <linux/kernel.h>
+#include <linux/namei.h>
+#include <linux/sched.h>
+#include <linux/types.h>
+#include <linux/seq_file.h>
+#include <linux/exportfs.h>
 
-#समावेश "inotify/inotify.h"
-#समावेश "fdinfo.h"
-#समावेश "fsnotify.h"
+#include "inotify/inotify.h"
+#include "fdinfo.h"
+#include "fsnotify.h"
 
-#अगर defined(CONFIG_PROC_FS)
+#if defined(CONFIG_PROC_FS)
 
-#अगर defined(CONFIG_INOTIFY_USER) || defined(CONFIG_FANOTIFY)
+#if defined(CONFIG_INOTIFY_USER) || defined(CONFIG_FANOTIFY)
 
-अटल व्योम show_fdinfo(काष्ठा seq_file *m, काष्ठा file *f,
-			व्योम (*show)(काष्ठा seq_file *m,
-				     काष्ठा fsnotअगरy_mark *mark))
-अणु
-	काष्ठा fsnotअगरy_group *group = f->निजी_data;
-	काष्ठा fsnotअगरy_mark *mark;
+static void show_fdinfo(struct seq_file *m, struct file *f,
+			void (*show)(struct seq_file *m,
+				     struct fsnotify_mark *mark))
+{
+	struct fsnotify_group *group = f->private_data;
+	struct fsnotify_mark *mark;
 
 	mutex_lock(&group->mark_mutex);
-	list_क्रम_each_entry(mark, &group->marks_list, g_list) अणु
+	list_for_each_entry(mark, &group->marks_list, g_list) {
 		show(m, mark);
-		अगर (seq_has_overflowed(m))
-			अवरोध;
-	पूर्ण
+		if (seq_has_overflowed(m))
+			break;
+	}
 	mutex_unlock(&group->mark_mutex);
-पूर्ण
+}
 
-#अगर defined(CONFIG_EXPORTFS)
-अटल व्योम show_mark_fhandle(काष्ठा seq_file *m, काष्ठा inode *inode)
-अणु
-	काष्ठा अणु
-		काष्ठा file_handle handle;
+#if defined(CONFIG_EXPORTFS)
+static void show_mark_fhandle(struct seq_file *m, struct inode *inode)
+{
+	struct {
+		struct file_handle handle;
 		u8 pad[MAX_HANDLE_SZ];
-	पूर्ण f;
-	पूर्णांक size, ret, i;
+	} f;
+	int size, ret, i;
 
-	f.handle.handle_bytes = माप(f.pad);
+	f.handle.handle_bytes = sizeof(f.pad);
 	size = f.handle.handle_bytes >> 2;
 
-	ret = exportfs_encode_inode_fh(inode, (काष्ठा fid *)f.handle.f_handle, &size, शून्य);
-	अगर ((ret == खाताID_INVALID) || (ret < 0)) अणु
+	ret = exportfs_encode_inode_fh(inode, (struct fid *)f.handle.f_handle, &size, NULL);
+	if ((ret == FILEID_INVALID) || (ret < 0)) {
 		WARN_ONCE(1, "Can't encode file handler for inotify: %d\n", ret);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	f.handle.handle_type = ret;
-	f.handle.handle_bytes = size * माप(u32);
+	f.handle.handle_bytes = size * sizeof(u32);
 
-	seq_म_लिखो(m, "fhandle-bytes:%x fhandle-type:%x f_handle:",
+	seq_printf(m, "fhandle-bytes:%x fhandle-type:%x f_handle:",
 		   f.handle.handle_bytes, f.handle.handle_type);
 
-	क्रम (i = 0; i < f.handle.handle_bytes; i++)
-		seq_म_लिखो(m, "%02x", (पूर्णांक)f.handle.f_handle[i]);
-पूर्ण
-#अन्यथा
-अटल व्योम show_mark_fhandle(काष्ठा seq_file *m, काष्ठा inode *inode)
-अणु
-पूर्ण
-#पूर्ण_अगर
+	for (i = 0; i < f.handle.handle_bytes; i++)
+		seq_printf(m, "%02x", (int)f.handle.f_handle[i]);
+}
+#else
+static void show_mark_fhandle(struct seq_file *m, struct inode *inode)
+{
+}
+#endif
 
-#अगर_घोषित CONFIG_INOTIFY_USER
+#ifdef CONFIG_INOTIFY_USER
 
-अटल व्योम inotअगरy_fdinfo(काष्ठा seq_file *m, काष्ठा fsnotअगरy_mark *mark)
-अणु
-	काष्ठा inotअगरy_inode_mark *inode_mark;
-	काष्ठा inode *inode;
+static void inotify_fdinfo(struct seq_file *m, struct fsnotify_mark *mark)
+{
+	struct inotify_inode_mark *inode_mark;
+	struct inode *inode;
 
-	अगर (mark->connector->type != FSNOTIFY_OBJ_TYPE_INODE)
-		वापस;
+	if (mark->connector->type != FSNOTIFY_OBJ_TYPE_INODE)
+		return;
 
-	inode_mark = container_of(mark, काष्ठा inotअगरy_inode_mark, fsn_mark);
-	inode = igrab(fsnotअगरy_conn_inode(mark->connector));
-	अगर (inode) अणु
+	inode_mark = container_of(mark, struct inotify_inode_mark, fsn_mark);
+	inode = igrab(fsnotify_conn_inode(mark->connector));
+	if (inode) {
 		/*
 		 * IN_ALL_EVENTS represents all of the mask bits
 		 * that we expose to userspace.  There is at
 		 * least one bit (FS_EVENT_ON_CHILD) which is
-		 * used only पूर्णांकernally to the kernel.
+		 * used only internally to the kernel.
 		 */
 		u32 mask = mark->mask & IN_ALL_EVENTS;
-		seq_म_लिखो(m, "inotify wd:%x ino:%lx sdev:%x mask:%x ignored_mask:%x ",
+		seq_printf(m, "inotify wd:%x ino:%lx sdev:%x mask:%x ignored_mask:%x ",
 			   inode_mark->wd, inode->i_ino, inode->i_sb->s_dev,
 			   mask, mark->ignored_mask);
 		show_mark_fhandle(m, inode);
-		seq_अ_दो(m, '\n');
+		seq_putc(m, '\n');
 		iput(inode);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम inotअगरy_show_fdinfo(काष्ठा seq_file *m, काष्ठा file *f)
-अणु
-	show_fdinfo(m, f, inotअगरy_fdinfo);
-पूर्ण
+void inotify_show_fdinfo(struct seq_file *m, struct file *f)
+{
+	show_fdinfo(m, f, inotify_fdinfo);
+}
 
-#पूर्ण_अगर /* CONFIG_INOTIFY_USER */
+#endif /* CONFIG_INOTIFY_USER */
 
-#अगर_घोषित CONFIG_FANOTIFY
+#ifdef CONFIG_FANOTIFY
 
-अटल व्योम fanotअगरy_fdinfo(काष्ठा seq_file *m, काष्ठा fsnotअगरy_mark *mark)
-अणु
-	अचिन्हित पूर्णांक mflags = 0;
-	काष्ठा inode *inode;
+static void fanotify_fdinfo(struct seq_file *m, struct fsnotify_mark *mark)
+{
+	unsigned int mflags = 0;
+	struct inode *inode;
 
-	अगर (mark->flags & FSNOTIFY_MARK_FLAG_IGNORED_SURV_MODIFY)
+	if (mark->flags & FSNOTIFY_MARK_FLAG_IGNORED_SURV_MODIFY)
 		mflags |= FAN_MARK_IGNORED_SURV_MODIFY;
 
-	अगर (mark->connector->type == FSNOTIFY_OBJ_TYPE_INODE) अणु
-		inode = igrab(fsnotअगरy_conn_inode(mark->connector));
-		अगर (!inode)
-			वापस;
-		seq_म_लिखो(m, "fanotify ino:%lx sdev:%x mflags:%x mask:%x ignored_mask:%x ",
+	if (mark->connector->type == FSNOTIFY_OBJ_TYPE_INODE) {
+		inode = igrab(fsnotify_conn_inode(mark->connector));
+		if (!inode)
+			return;
+		seq_printf(m, "fanotify ino:%lx sdev:%x mflags:%x mask:%x ignored_mask:%x ",
 			   inode->i_ino, inode->i_sb->s_dev,
 			   mflags, mark->mask, mark->ignored_mask);
 		show_mark_fhandle(m, inode);
-		seq_अ_दो(m, '\n');
+		seq_putc(m, '\n');
 		iput(inode);
-	पूर्ण अन्यथा अगर (mark->connector->type == FSNOTIFY_OBJ_TYPE_VFSMOUNT) अणु
-		काष्ठा mount *mnt = fsnotअगरy_conn_mount(mark->connector);
+	} else if (mark->connector->type == FSNOTIFY_OBJ_TYPE_VFSMOUNT) {
+		struct mount *mnt = fsnotify_conn_mount(mark->connector);
 
-		seq_म_लिखो(m, "fanotify mnt_id:%x mflags:%x mask:%x ignored_mask:%x\n",
+		seq_printf(m, "fanotify mnt_id:%x mflags:%x mask:%x ignored_mask:%x\n",
 			   mnt->mnt_id, mflags, mark->mask, mark->ignored_mask);
-	पूर्ण अन्यथा अगर (mark->connector->type == FSNOTIFY_OBJ_TYPE_SB) अणु
-		काष्ठा super_block *sb = fsnotअगरy_conn_sb(mark->connector);
+	} else if (mark->connector->type == FSNOTIFY_OBJ_TYPE_SB) {
+		struct super_block *sb = fsnotify_conn_sb(mark->connector);
 
-		seq_म_लिखो(m, "fanotify sdev:%x mflags:%x mask:%x ignored_mask:%x\n",
+		seq_printf(m, "fanotify sdev:%x mflags:%x mask:%x ignored_mask:%x\n",
 			   sb->s_dev, mflags, mark->mask, mark->ignored_mask);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम fanotअगरy_show_fdinfo(काष्ठा seq_file *m, काष्ठा file *f)
-अणु
-	काष्ठा fsnotअगरy_group *group = f->निजी_data;
+void fanotify_show_fdinfo(struct seq_file *m, struct file *f)
+{
+	struct fsnotify_group *group = f->private_data;
 
-	seq_म_लिखो(m, "fanotify flags:%x event-flags:%x\n",
-		   group->fanotअगरy_data.flags & FANOTIFY_INIT_FLAGS,
-		   group->fanotअगरy_data.f_flags);
+	seq_printf(m, "fanotify flags:%x event-flags:%x\n",
+		   group->fanotify_data.flags & FANOTIFY_INIT_FLAGS,
+		   group->fanotify_data.f_flags);
 
-	show_fdinfo(m, f, fanotअगरy_fdinfo);
-पूर्ण
+	show_fdinfo(m, f, fanotify_fdinfo);
+}
 
-#पूर्ण_अगर /* CONFIG_FANOTIFY */
+#endif /* CONFIG_FANOTIFY */
 
-#पूर्ण_अगर /* CONFIG_INOTIFY_USER || CONFIG_FANOTIFY */
+#endif /* CONFIG_INOTIFY_USER || CONFIG_FANOTIFY */
 
-#पूर्ण_अगर /* CONFIG_PROC_FS */
+#endif /* CONFIG_PROC_FS */

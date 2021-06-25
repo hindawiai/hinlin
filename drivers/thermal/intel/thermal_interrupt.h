@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _INTEL_THERMAL_INTERRUPT_H
-#घोषणा _INTEL_THERMAL_INTERRUPT_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _INTEL_THERMAL_INTERRUPT_H
+#define _INTEL_THERMAL_INTERRUPT_H
 
-/* Interrupt Handler क्रम package thermal thresholds */
-बाह्य पूर्णांक (*platक्रमm_thermal_package_notअगरy)(__u64 msr_val);
+/* Interrupt Handler for package thermal thresholds */
+extern int (*platform_thermal_package_notify)(__u64 msr_val);
 
-/* Interrupt Handler क्रम core thermal thresholds */
-बाह्य पूर्णांक (*platक्रमm_thermal_notअगरy)(__u64 msr_val);
+/* Interrupt Handler for core thermal thresholds */
+extern int (*platform_thermal_notify)(__u64 msr_val);
 
-/* Callback support of rate control, वापस true, अगर
+/* Callback support of rate control, return true, if
  * callback has rate control */
-बाह्य bool (*platक्रमm_thermal_package_rate_control)(व्योम);
+extern bool (*platform_thermal_package_rate_control)(void);
 
-#पूर्ण_अगर /* _INTEL_THERMAL_INTERRUPT_H */
+#endif /* _INTEL_THERMAL_INTERRUPT_H */

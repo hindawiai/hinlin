@@ -1,281 +1,280 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * AC driver क्रम 7th-generation Microsoft Surface devices via Surface System
+ * AC driver for 7th-generation Microsoft Surface devices via Surface System
  * Aggregator Module (SSAM).
  *
  * Copyright (C) 2019-2021 Maximilian Luz <luzmaximilian@gmail.com>
  */
 
-#समावेश <यंत्र/unaligned.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/घातer_supply.h>
-#समावेश <linux/types.h>
+#include <asm/unaligned.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <linux/power_supply.h>
+#include <linux/types.h>
 
-#समावेश <linux/surface_aggregator/device.h>
+#include <linux/surface_aggregator/device.h>
 
 
-/* -- SAM पूर्णांकerface. -------------------------------------------------------- */
+/* -- SAM interface. -------------------------------------------------------- */
 
-क्रमागत sam_event_cid_bat अणु
+enum sam_event_cid_bat {
 	SAM_EVENT_CID_BAT_ADP   = 0x17,
-पूर्ण;
+};
 
-क्रमागत sam_battery_sta अणु
+enum sam_battery_sta {
 	SAM_BATTERY_STA_OK      = 0x0f,
 	SAM_BATTERY_STA_PRESENT	= 0x10,
-पूर्ण;
+};
 
 /* Get battery status (_STA). */
-SSAM_DEFINE_SYNC_REQUEST_CL_R(ssam_bat_get_sta, __le32, अणु
+SSAM_DEFINE_SYNC_REQUEST_CL_R(ssam_bat_get_sta, __le32, {
 	.target_category = SSAM_SSH_TC_BAT,
 	.command_id      = 0x01,
-पूर्ण);
+});
 
-/* Get platक्रमm घातer source क्रम battery (_PSR / DPTF PSRC). */
-SSAM_DEFINE_SYNC_REQUEST_CL_R(ssam_bat_get_psrc, __le32, अणु
+/* Get platform power source for battery (_PSR / DPTF PSRC). */
+SSAM_DEFINE_SYNC_REQUEST_CL_R(ssam_bat_get_psrc, __le32, {
 	.target_category = SSAM_SSH_TC_BAT,
 	.command_id      = 0x0d,
-पूर्ण);
+});
 
 
-/* -- Device काष्ठाures. ---------------------------------------------------- */
+/* -- Device structures. ---------------------------------------------------- */
 
-काष्ठा spwr_psy_properties अणु
-	स्थिर अक्षर *name;
-	काष्ठा ssam_event_registry registry;
-पूर्ण;
+struct spwr_psy_properties {
+	const char *name;
+	struct ssam_event_registry registry;
+};
 
-काष्ठा spwr_ac_device अणु
-	काष्ठा ssam_device *sdev;
+struct spwr_ac_device {
+	struct ssam_device *sdev;
 
-	अक्षर name[32];
-	काष्ठा घातer_supply *psy;
-	काष्ठा घातer_supply_desc psy_desc;
+	char name[32];
+	struct power_supply *psy;
+	struct power_supply_desc psy_desc;
 
-	काष्ठा ssam_event_notअगरier notअगर;
+	struct ssam_event_notifier notif;
 
-	काष्ठा mutex lock;  /* Guards access to state below. */
+	struct mutex lock;  /* Guards access to state below. */
 
 	__le32 state;
-पूर्ण;
+};
 
 
 /* -- State management. ----------------------------------------------------- */
 
-अटल पूर्णांक spwr_ac_update_unlocked(काष्ठा spwr_ac_device *ac)
-अणु
+static int spwr_ac_update_unlocked(struct spwr_ac_device *ac)
+{
 	u32 old = ac->state;
-	पूर्णांक status;
+	int status;
 
-	lockdep_निश्चित_held(&ac->lock);
+	lockdep_assert_held(&ac->lock);
 
 	status = ssam_retry(ssam_bat_get_psrc, ac->sdev, &ac->state);
-	अगर (status < 0)
-		वापस status;
+	if (status < 0)
+		return status;
 
-	वापस old != ac->state;
-पूर्ण
+	return old != ac->state;
+}
 
-अटल पूर्णांक spwr_ac_update(काष्ठा spwr_ac_device *ac)
-अणु
-	पूर्णांक status;
+static int spwr_ac_update(struct spwr_ac_device *ac)
+{
+	int status;
 
 	mutex_lock(&ac->lock);
 	status = spwr_ac_update_unlocked(ac);
 	mutex_unlock(&ac->lock);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक spwr_ac_recheck(काष्ठा spwr_ac_device *ac)
-अणु
-	पूर्णांक status;
+static int spwr_ac_recheck(struct spwr_ac_device *ac)
+{
+	int status;
 
 	status = spwr_ac_update(ac);
-	अगर (status > 0)
-		घातer_supply_changed(ac->psy);
+	if (status > 0)
+		power_supply_changed(ac->psy);
 
-	वापस status >= 0 ? 0 : status;
-पूर्ण
+	return status >= 0 ? 0 : status;
+}
 
-अटल u32 spwr_notअगरy_ac(काष्ठा ssam_event_notअगरier *nf, स्थिर काष्ठा ssam_event *event)
-अणु
-	काष्ठा spwr_ac_device *ac;
-	पूर्णांक status;
+static u32 spwr_notify_ac(struct ssam_event_notifier *nf, const struct ssam_event *event)
+{
+	struct spwr_ac_device *ac;
+	int status;
 
-	ac = container_of(nf, काष्ठा spwr_ac_device, notअगर);
+	ac = container_of(nf, struct spwr_ac_device, notif);
 
 	dev_dbg(&ac->sdev->dev, "power event (cid = %#04x, iid = %#04x, tid = %#04x)\n",
 		event->command_id, event->instance_id, event->target_id);
 
 	/*
-	 * Allow events of all tarमाला_लो/instances here. Global adapter status
+	 * Allow events of all targets/instances here. Global adapter status
 	 * seems to be handled via target=1 and instance=1, but events are
-	 * reported on all tarमाला_लो/instances in use.
+	 * reported on all targets/instances in use.
 	 *
 	 * While it should be enough to just listen on 1/1, listen everywhere to
-	 * make sure we करोn't miss anything.
+	 * make sure we don't miss anything.
 	 */
 
-	चयन (event->command_id) अणु
-	हाल SAM_EVENT_CID_BAT_ADP:
+	switch (event->command_id) {
+	case SAM_EVENT_CID_BAT_ADP:
 		status = spwr_ac_recheck(ac);
-		वापस ssam_notअगरier_from_त्रुटि_सं(status) | SSAM_NOTIF_HANDLED;
+		return ssam_notifier_from_errno(status) | SSAM_NOTIF_HANDLED;
 
-	शेष:
-		वापस 0;
-	पूर्ण
-पूर्ण
+	default:
+		return 0;
+	}
+}
 
 
 /* -- Properties. ----------------------------------------------------------- */
 
-अटल स्थिर क्रमागत घातer_supply_property spwr_ac_props[] = अणु
+static const enum power_supply_property spwr_ac_props[] = {
 	POWER_SUPPLY_PROP_ONLINE,
-पूर्ण;
+};
 
-अटल पूर्णांक spwr_ac_get_property(काष्ठा घातer_supply *psy, क्रमागत घातer_supply_property psp,
-				जोड़ घातer_supply_propval *val)
-अणु
-	काष्ठा spwr_ac_device *ac = घातer_supply_get_drvdata(psy);
-	पूर्णांक status;
+static int spwr_ac_get_property(struct power_supply *psy, enum power_supply_property psp,
+				union power_supply_propval *val)
+{
+	struct spwr_ac_device *ac = power_supply_get_drvdata(psy);
+	int status;
 
 	mutex_lock(&ac->lock);
 
 	status = spwr_ac_update_unlocked(ac);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 
-	चयन (psp) अणु
-	हाल POWER_SUPPLY_PROP_ONLINE:
-		val->पूर्णांकval = !!le32_to_cpu(ac->state);
-		अवरोध;
+	switch (psp) {
+	case POWER_SUPPLY_PROP_ONLINE:
+		val->intval = !!le32_to_cpu(ac->state);
+		break;
 
-	शेष:
+	default:
 		status = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 out:
 	mutex_unlock(&ac->lock);
-	वापस status;
-पूर्ण
+	return status;
+}
 
 
 /* -- Device setup. --------------------------------------------------------- */
 
-अटल अक्षर *battery_supplied_to[] = अणु
+static char *battery_supplied_to[] = {
 	"BAT1",
 	"BAT2",
-पूर्ण;
+};
 
-अटल व्योम spwr_ac_init(काष्ठा spwr_ac_device *ac, काष्ठा ssam_device *sdev,
-			 काष्ठा ssam_event_registry registry, स्थिर अक्षर *name)
-अणु
+static void spwr_ac_init(struct spwr_ac_device *ac, struct ssam_device *sdev,
+			 struct ssam_event_registry registry, const char *name)
+{
 	mutex_init(&ac->lock);
-	म_नकलन(ac->name, name, ARRAY_SIZE(ac->name) - 1);
+	strncpy(ac->name, name, ARRAY_SIZE(ac->name) - 1);
 
 	ac->sdev = sdev;
 
-	ac->notअगर.base.priority = 1;
-	ac->notअगर.base.fn = spwr_notअगरy_ac;
-	ac->notअगर.event.reg = registry;
-	ac->notअगर.event.id.target_category = sdev->uid.category;
-	ac->notअगर.event.id.instance = 0;
-	ac->notअगर.event.mask = SSAM_EVENT_MASK_NONE;
-	ac->notअगर.event.flags = SSAM_EVENT_SEQUENCED;
+	ac->notif.base.priority = 1;
+	ac->notif.base.fn = spwr_notify_ac;
+	ac->notif.event.reg = registry;
+	ac->notif.event.id.target_category = sdev->uid.category;
+	ac->notif.event.id.instance = 0;
+	ac->notif.event.mask = SSAM_EVENT_MASK_NONE;
+	ac->notif.event.flags = SSAM_EVENT_SEQUENCED;
 
 	ac->psy_desc.name = ac->name;
 	ac->psy_desc.type = POWER_SUPPLY_TYPE_MAINS;
 	ac->psy_desc.properties = spwr_ac_props;
 	ac->psy_desc.num_properties = ARRAY_SIZE(spwr_ac_props);
 	ac->psy_desc.get_property = spwr_ac_get_property;
-पूर्ण
+}
 
-अटल पूर्णांक spwr_ac_रेजिस्टर(काष्ठा spwr_ac_device *ac)
-अणु
-	काष्ठा घातer_supply_config psy_cfg = अणुपूर्ण;
+static int spwr_ac_register(struct spwr_ac_device *ac)
+{
+	struct power_supply_config psy_cfg = {};
 	__le32 sta;
-	पूर्णांक status;
+	int status;
 
 	/* Make sure the device is there and functioning properly. */
 	status = ssam_retry(ssam_bat_get_sta, ac->sdev, &sta);
-	अगर (status)
-		वापस status;
+	if (status)
+		return status;
 
-	अगर ((le32_to_cpu(sta) & SAM_BATTERY_STA_OK) != SAM_BATTERY_STA_OK)
-		वापस -ENODEV;
+	if ((le32_to_cpu(sta) & SAM_BATTERY_STA_OK) != SAM_BATTERY_STA_OK)
+		return -ENODEV;
 
 	psy_cfg.drv_data = ac;
 	psy_cfg.supplied_to = battery_supplied_to;
 	psy_cfg.num_supplicants = ARRAY_SIZE(battery_supplied_to);
 
-	ac->psy = devm_घातer_supply_रेजिस्टर(&ac->sdev->dev, &ac->psy_desc, &psy_cfg);
-	अगर (IS_ERR(ac->psy))
-		वापस PTR_ERR(ac->psy);
+	ac->psy = devm_power_supply_register(&ac->sdev->dev, &ac->psy_desc, &psy_cfg);
+	if (IS_ERR(ac->psy))
+		return PTR_ERR(ac->psy);
 
-	वापस ssam_notअगरier_रेजिस्टर(ac->sdev->ctrl, &ac->notअगर);
-पूर्ण
+	return ssam_notifier_register(ac->sdev->ctrl, &ac->notif);
+}
 
 
 /* -- Driver setup. --------------------------------------------------------- */
 
-अटल पूर्णांक __maybe_unused surface_ac_resume(काष्ठा device *dev)
-अणु
-	वापस spwr_ac_recheck(dev_get_drvdata(dev));
-पूर्ण
-अटल SIMPLE_DEV_PM_OPS(surface_ac_pm_ops, शून्य, surface_ac_resume);
+static int __maybe_unused surface_ac_resume(struct device *dev)
+{
+	return spwr_ac_recheck(dev_get_drvdata(dev));
+}
+static SIMPLE_DEV_PM_OPS(surface_ac_pm_ops, NULL, surface_ac_resume);
 
-अटल पूर्णांक surface_ac_probe(काष्ठा ssam_device *sdev)
-अणु
-	स्थिर काष्ठा spwr_psy_properties *p;
-	काष्ठा spwr_ac_device *ac;
+static int surface_ac_probe(struct ssam_device *sdev)
+{
+	const struct spwr_psy_properties *p;
+	struct spwr_ac_device *ac;
 
 	p = ssam_device_get_match_data(sdev);
-	अगर (!p)
-		वापस -ENODEV;
+	if (!p)
+		return -ENODEV;
 
-	ac = devm_kzalloc(&sdev->dev, माप(*ac), GFP_KERNEL);
-	अगर (!ac)
-		वापस -ENOMEM;
+	ac = devm_kzalloc(&sdev->dev, sizeof(*ac), GFP_KERNEL);
+	if (!ac)
+		return -ENOMEM;
 
 	spwr_ac_init(ac, sdev, p->registry, p->name);
 	ssam_device_set_drvdata(sdev, ac);
 
-	वापस spwr_ac_रेजिस्टर(ac);
-पूर्ण
+	return spwr_ac_register(ac);
+}
 
-अटल व्योम surface_ac_हटाओ(काष्ठा ssam_device *sdev)
-अणु
-	काष्ठा spwr_ac_device *ac = ssam_device_get_drvdata(sdev);
+static void surface_ac_remove(struct ssam_device *sdev)
+{
+	struct spwr_ac_device *ac = ssam_device_get_drvdata(sdev);
 
-	ssam_notअगरier_unरेजिस्टर(sdev->ctrl, &ac->notअगर);
-पूर्ण
+	ssam_notifier_unregister(sdev->ctrl, &ac->notif);
+}
 
-अटल स्थिर काष्ठा spwr_psy_properties spwr_psy_props_adp1 = अणु
+static const struct spwr_psy_properties spwr_psy_props_adp1 = {
 	.name = "ADP1",
 	.registry = SSAM_EVENT_REGISTRY_SAM,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा ssam_device_id surface_ac_match[] = अणु
-	अणु SSAM_SDEV(BAT, 0x01, 0x01, 0x01), (अचिन्हित दीर्घ)&spwr_psy_props_adp1 पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct ssam_device_id surface_ac_match[] = {
+	{ SSAM_SDEV(BAT, 0x01, 0x01, 0x01), (unsigned long)&spwr_psy_props_adp1 },
+	{ },
+};
 MODULE_DEVICE_TABLE(ssam, surface_ac_match);
 
-अटल काष्ठा ssam_device_driver surface_ac_driver = अणु
+static struct ssam_device_driver surface_ac_driver = {
 	.probe = surface_ac_probe,
-	.हटाओ = surface_ac_हटाओ,
+	.remove = surface_ac_remove,
 	.match_table = surface_ac_match,
-	.driver = अणु
+	.driver = {
 		.name = "surface_ac",
 		.pm = &surface_ac_pm_ops,
 		.probe_type = PROBE_PREFER_ASYNCHRONOUS,
-	पूर्ण,
-पूर्ण;
+	},
+};
 module_ssam_device_driver(surface_ac_driver);
 
 MODULE_AUTHOR("Maximilian Luz <luzmaximilian@gmail.com>");

@@ -1,60 +1,59 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Sample dynamic sized record fअगरo implementation
+ * Sample dynamic sized record fifo implementation
  *
  * Copyright (C) 2010 Stefani Seibold <stefani@seibold.net>
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/kfअगरo.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/proc_fs.h>
+#include <linux/mutex.h>
+#include <linux/kfifo.h>
 
 /*
- * This module shows how to create a variable sized record fअगरo.
+ * This module shows how to create a variable sized record fifo.
  */
 
-/* fअगरo size in elements (bytes) */
-#घोषणा FIFO_SIZE	128
+/* fifo size in elements (bytes) */
+#define FIFO_SIZE	128
 
 /* name of the proc entry */
-#घोषणा	PROC_FIFO	"record-fifo"
+#define	PROC_FIFO	"record-fifo"
 
-/* lock क्रम procfs पढ़ो access */
-अटल DEFINE_MUTEX(पढ़ो_lock);
+/* lock for procfs read access */
+static DEFINE_MUTEX(read_lock);
 
-/* lock क्रम procfs ग_लिखो access */
-अटल DEFINE_MUTEX(ग_लिखो_lock);
+/* lock for procfs write access */
+static DEFINE_MUTEX(write_lock);
 
 /*
- * define DYNAMIC in this example क्रम a dynamically allocated fअगरo.
+ * define DYNAMIC in this example for a dynamically allocated fifo.
  *
- * Otherwise the fअगरo storage will be a part of the fअगरo काष्ठाure.
+ * Otherwise the fifo storage will be a part of the fifo structure.
  */
-#अगर 0
-#घोषणा DYNAMIC
-#पूर्ण_अगर
+#if 0
+#define DYNAMIC
+#endif
 
 /*
- * काष्ठा kfअगरo_rec_ptr_1 and  STRUCT_KFIFO_REC_1 can handle records of a
+ * struct kfifo_rec_ptr_1 and  STRUCT_KFIFO_REC_1 can handle records of a
  * length between 0 and 255 bytes.
  *
- * काष्ठा kfअगरo_rec_ptr_2 and  STRUCT_KFIFO_REC_2 can handle records of a
+ * struct kfifo_rec_ptr_2 and  STRUCT_KFIFO_REC_2 can handle records of a
  * length between 0 and 65535 bytes.
  */
 
-#अगर_घोषित DYNAMIC
-काष्ठा kfअगरo_rec_ptr_1 test;
+#ifdef DYNAMIC
+struct kfifo_rec_ptr_1 test;
 
-#अन्यथा
-प्रकार STRUCT_KFIFO_REC_1(FIFO_SIZE) mytest;
+#else
+typedef STRUCT_KFIFO_REC_1(FIFO_SIZE) mytest;
 
-अटल mytest test;
-#पूर्ण_अगर
+static mytest test;
+#endif
 
-अटल स्थिर अक्षर *expected_result[] = अणु
+static const char *expected_result[] = {
 	"a",
 	"bb",
 	"ccc",
@@ -65,139 +64,139 @@
 	"hhhhhhhh",
 	"iiiiiiiii",
 	"jjjjjjjjjj",
-पूर्ण;
+};
 
-अटल पूर्णांक __init testfunc(व्योम)
-अणु
-	अक्षर		buf[100];
-	अचिन्हित पूर्णांक	i;
-	अचिन्हित पूर्णांक	ret;
-	काष्ठा अणु अचिन्हित अक्षर buf[6]; पूर्ण hello = अणु "hello" पूर्ण;
+static int __init testfunc(void)
+{
+	char		buf[100];
+	unsigned int	i;
+	unsigned int	ret;
+	struct { unsigned char buf[6]; } hello = { "hello" };
 
-	prपूर्णांकk(KERN_INFO "record fifo test start\n");
+	printk(KERN_INFO "record fifo test start\n");
 
-	kfअगरo_in(&test, &hello, माप(hello));
+	kfifo_in(&test, &hello, sizeof(hello));
 
-	/* show the size of the next record in the fअगरo */
-	prपूर्णांकk(KERN_INFO "fifo peek len: %u\n", kfअगरo_peek_len(&test));
+	/* show the size of the next record in the fifo */
+	printk(KERN_INFO "fifo peek len: %u\n", kfifo_peek_len(&test));
 
 	/* put in variable length data */
-	क्रम (i = 0; i < 10; i++) अणु
-		स_रखो(buf, 'a' + i, i + 1);
-		kfअगरo_in(&test, buf, i + 1);
-	पूर्ण
+	for (i = 0; i < 10; i++) {
+		memset(buf, 'a' + i, i + 1);
+		kfifo_in(&test, buf, i + 1);
+	}
 
-	/* skip first element of the fअगरo */
-	prपूर्णांकk(KERN_INFO "skip 1st element\n");
-	kfअगरo_skip(&test);
+	/* skip first element of the fifo */
+	printk(KERN_INFO "skip 1st element\n");
+	kfifo_skip(&test);
 
-	prपूर्णांकk(KERN_INFO "fifo len: %u\n", kfअगरo_len(&test));
+	printk(KERN_INFO "fifo len: %u\n", kfifo_len(&test));
 
-	/* show the first record without removing from the fअगरo */
-	ret = kfअगरo_out_peek(&test, buf, माप(buf));
-	अगर (ret)
-		prपूर्णांकk(KERN_INFO "%.*s\n", ret, buf);
+	/* show the first record without removing from the fifo */
+	ret = kfifo_out_peek(&test, buf, sizeof(buf));
+	if (ret)
+		printk(KERN_INFO "%.*s\n", ret, buf);
 
-	/* check the correctness of all values in the fअगरo */
+	/* check the correctness of all values in the fifo */
 	i = 0;
-	जबतक (!kfअगरo_is_empty(&test)) अणु
-		ret = kfअगरo_out(&test, buf, माप(buf));
+	while (!kfifo_is_empty(&test)) {
+		ret = kfifo_out(&test, buf, sizeof(buf));
 		buf[ret] = '\0';
-		prपूर्णांकk(KERN_INFO "item = %.*s\n", ret, buf);
-		अगर (म_भेद(buf, expected_result[i++])) अणु
-			prपूर्णांकk(KERN_WARNING "value mismatch: test failed\n");
-			वापस -EIO;
-		पूर्ण
-	पूर्ण
-	अगर (i != ARRAY_SIZE(expected_result)) अणु
-		prपूर्णांकk(KERN_WARNING "size mismatch: test failed\n");
-		वापस -EIO;
-	पूर्ण
-	prपूर्णांकk(KERN_INFO "test passed\n");
+		printk(KERN_INFO "item = %.*s\n", ret, buf);
+		if (strcmp(buf, expected_result[i++])) {
+			printk(KERN_WARNING "value mismatch: test failed\n");
+			return -EIO;
+		}
+	}
+	if (i != ARRAY_SIZE(expected_result)) {
+		printk(KERN_WARNING "size mismatch: test failed\n");
+		return -EIO;
+	}
+	printk(KERN_INFO "test passed\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार fअगरo_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
-						माप_प्रकार count, loff_t *ppos)
-अणु
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक copied;
+static ssize_t fifo_write(struct file *file, const char __user *buf,
+						size_t count, loff_t *ppos)
+{
+	int ret;
+	unsigned int copied;
 
-	अगर (mutex_lock_पूर्णांकerruptible(&ग_लिखो_lock))
-		वापस -ERESTARTSYS;
+	if (mutex_lock_interruptible(&write_lock))
+		return -ERESTARTSYS;
 
-	ret = kfअगरo_from_user(&test, buf, count, &copied);
+	ret = kfifo_from_user(&test, buf, count, &copied);
 
-	mutex_unlock(&ग_लिखो_lock);
-	अगर (ret)
-		वापस ret;
+	mutex_unlock(&write_lock);
+	if (ret)
+		return ret;
 
-	वापस copied;
-पूर्ण
+	return copied;
+}
 
-अटल sमाप_प्रकार fअगरo_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
-						माप_प्रकार count, loff_t *ppos)
-अणु
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक copied;
+static ssize_t fifo_read(struct file *file, char __user *buf,
+						size_t count, loff_t *ppos)
+{
+	int ret;
+	unsigned int copied;
 
-	अगर (mutex_lock_पूर्णांकerruptible(&पढ़ो_lock))
-		वापस -ERESTARTSYS;
+	if (mutex_lock_interruptible(&read_lock))
+		return -ERESTARTSYS;
 
-	ret = kfअगरo_to_user(&test, buf, count, &copied);
+	ret = kfifo_to_user(&test, buf, count, &copied);
 
-	mutex_unlock(&पढ़ो_lock);
-	अगर (ret)
-		वापस ret;
+	mutex_unlock(&read_lock);
+	if (ret)
+		return ret;
 
-	वापस copied;
-पूर्ण
+	return copied;
+}
 
-अटल स्थिर काष्ठा proc_ops fअगरo_proc_ops = अणु
-	.proc_पढ़ो	= fअगरo_पढ़ो,
-	.proc_ग_लिखो	= fअगरo_ग_लिखो,
+static const struct proc_ops fifo_proc_ops = {
+	.proc_read	= fifo_read,
+	.proc_write	= fifo_write,
 	.proc_lseek	= noop_llseek,
-पूर्ण;
+};
 
-अटल पूर्णांक __init example_init(व्योम)
-अणु
-#अगर_घोषित DYNAMIC
-	पूर्णांक ret;
+static int __init example_init(void)
+{
+#ifdef DYNAMIC
+	int ret;
 
-	ret = kfअगरo_alloc(&test, FIFO_SIZE, GFP_KERNEL);
-	अगर (ret) अणु
-		prपूर्णांकk(KERN_ERR "error kfifo_alloc\n");
-		वापस ret;
-	पूर्ण
-#अन्यथा
+	ret = kfifo_alloc(&test, FIFO_SIZE, GFP_KERNEL);
+	if (ret) {
+		printk(KERN_ERR "error kfifo_alloc\n");
+		return ret;
+	}
+#else
 	INIT_KFIFO(test);
-#पूर्ण_अगर
-	अगर (testfunc() < 0) अणु
-#अगर_घोषित DYNAMIC
-		kfअगरo_मुक्त(&test);
-#पूर्ण_अगर
-		वापस -EIO;
-	पूर्ण
+#endif
+	if (testfunc() < 0) {
+#ifdef DYNAMIC
+		kfifo_free(&test);
+#endif
+		return -EIO;
+	}
 
-	अगर (proc_create(PROC_FIFO, 0, शून्य, &fअगरo_proc_ops) == शून्य) अणु
-#अगर_घोषित DYNAMIC
-		kfअगरo_मुक्त(&test);
-#पूर्ण_अगर
-		वापस -ENOMEM;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	if (proc_create(PROC_FIFO, 0, NULL, &fifo_proc_ops) == NULL) {
+#ifdef DYNAMIC
+		kfifo_free(&test);
+#endif
+		return -ENOMEM;
+	}
+	return 0;
+}
 
-अटल व्योम __निकास example_निकास(व्योम)
-अणु
-	हटाओ_proc_entry(PROC_FIFO, शून्य);
-#अगर_घोषित DYNAMIC
-	kfअगरo_मुक्त(&test);
-#पूर्ण_अगर
-पूर्ण
+static void __exit example_exit(void)
+{
+	remove_proc_entry(PROC_FIFO, NULL);
+#ifdef DYNAMIC
+	kfifo_free(&test);
+#endif
+}
 
 module_init(example_init);
-module_निकास(example_निकास);
+module_exit(example_exit);
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Stefani Seibold <stefani@seibold.net>");

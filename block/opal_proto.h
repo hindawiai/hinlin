@@ -1,89 +1,88 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Copyright तऊ 2016 Intel Corporation
+ * Copyright © 2016 Intel Corporation
  *
  * Authors:
- *    Rafael Antognolli <rafael.antognolli@पूर्णांकel.com>
- *    Scott  Bauer      <scott.bauer@पूर्णांकel.com>
+ *    Rafael Antognolli <rafael.antognolli@intel.com>
+ *    Scott  Bauer      <scott.bauer@intel.com>
  */
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-#अगर_अघोषित _OPAL_PROTO_H
-#घोषणा _OPAL_PROTO_H
+#ifndef _OPAL_PROTO_H
+#define _OPAL_PROTO_H
 
 /*
- * These स्थिरant values come from:
+ * These constant values come from:
  * SPC-4 section
  * 6.30 SECURITY PROTOCOL IN command / table 265.
  */
-क्रमागत अणु
+enum {
 	TCG_SECP_00 = 0,
 	TCG_SECP_01,
-पूर्ण;
+};
 
 /*
  * Token defs derived from:
  * TCG_Storage_Architecture_Core_Spec_v2.01_r1.00
  * 3.2.2 Data Stream Encoding
  */
-क्रमागत opal_response_token अणु
+enum opal_response_token {
 	OPAL_DTA_TOKENID_BYTESTRING = 0xe0,
 	OPAL_DTA_TOKENID_SINT = 0xe1,
 	OPAL_DTA_TOKENID_UINT = 0xe2,
-	OPAL_DTA_TOKENID_TOKEN = 0xe3, /* actual token is वापसed */
+	OPAL_DTA_TOKENID_TOKEN = 0xe3, /* actual token is returned */
 	OPAL_DTA_TOKENID_INVALID = 0X0
-पूर्ण;
+};
 
-#घोषणा DTAERROR_NO_METHOD_STATUS 0x89
-#घोषणा GENERIC_HOST_SESSION_NUM 0x41
-#घोषणा FIRST_TPER_SESSION_NUM	4096
+#define DTAERROR_NO_METHOD_STATUS 0x89
+#define GENERIC_HOST_SESSION_NUM 0x41
+#define FIRST_TPER_SESSION_NUM	4096
 
-#घोषणा TPER_SYNC_SUPPORTED 0x01
-#घोषणा MBR_ENABLED_MASK 0x10
+#define TPER_SYNC_SUPPORTED 0x01
+#define MBR_ENABLED_MASK 0x10
 
-#घोषणा TINY_ATOM_DATA_MASK 0x3F
-#घोषणा TINY_ATOM_SIGNED 0x40
+#define TINY_ATOM_DATA_MASK 0x3F
+#define TINY_ATOM_SIGNED 0x40
 
-#घोषणा SHORT_ATOM_ID 0x80
-#घोषणा SHORT_ATOM_BYTESTRING 0x20
-#घोषणा SHORT_ATOM_SIGNED 0x10
-#घोषणा SHORT_ATOM_LEN_MASK 0xF
+#define SHORT_ATOM_ID 0x80
+#define SHORT_ATOM_BYTESTRING 0x20
+#define SHORT_ATOM_SIGNED 0x10
+#define SHORT_ATOM_LEN_MASK 0xF
 
-#घोषणा MEDIUM_ATOM_ID 0xC0
-#घोषणा MEDIUM_ATOM_BYTESTRING 0x10
-#घोषणा MEDIUM_ATOM_SIGNED 0x8
-#घोषणा MEDIUM_ATOM_LEN_MASK 0x7
+#define MEDIUM_ATOM_ID 0xC0
+#define MEDIUM_ATOM_BYTESTRING 0x10
+#define MEDIUM_ATOM_SIGNED 0x8
+#define MEDIUM_ATOM_LEN_MASK 0x7
 
-#घोषणा LONG_ATOM_ID 0xe0
-#घोषणा LONG_ATOM_BYTESTRING 0x2
-#घोषणा LONG_ATOM_SIGNED 0x1
+#define LONG_ATOM_ID 0xe0
+#define LONG_ATOM_BYTESTRING 0x2
+#define LONG_ATOM_SIGNED 0x1
 
 /* Derived from TCG Core spec 2.01 Section:
  * 3.2.2.1
  * Data Type
  */
-#घोषणा TINY_ATOM_BYTE   0x7F
-#घोषणा SHORT_ATOM_BYTE  0xBF
-#घोषणा MEDIUM_ATOM_BYTE 0xDF
-#घोषणा LONG_ATOM_BYTE   0xE3
+#define TINY_ATOM_BYTE   0x7F
+#define SHORT_ATOM_BYTE  0xBF
+#define MEDIUM_ATOM_BYTE 0xDF
+#define LONG_ATOM_BYTE   0xE3
 
-#घोषणा OPAL_INVAL_PARAM 12
-#घोषणा OPAL_MANUFACTURED_INACTIVE 0x08
-#घोषणा OPAL_DISCOVERY_COMID 0x0001
+#define OPAL_INVAL_PARAM 12
+#define OPAL_MANUFACTURED_INACTIVE 0x08
+#define OPAL_DISCOVERY_COMID 0x0001
 
-#घोषणा LOCKING_RANGE_NON_GLOBAL 0x03
+#define LOCKING_RANGE_NON_GLOBAL 0x03
 /*
  * User IDs used in the TCG storage SSCs
  * Derived from: TCG_Storage_Architecture_Core_Spec_v2.01_r1.00
- * Section: 6.3 Asचिन्हित UIDs
+ * Section: 6.3 Assigned UIDs
  */
-#घोषणा OPAL_METHOD_LENGTH 8
-#घोषणा OPAL_MSID_KEYLEN 15
-#घोषणा OPAL_UID_LENGTH_HALF 4
+#define OPAL_METHOD_LENGTH 8
+#define OPAL_MSID_KEYLEN 15
+#define OPAL_UID_LENGTH_HALF 4
 
 /* Enum to index OPALUID array */
-क्रमागत opal_uid अणु
+enum opal_uid {
 	/* users */
 	OPAL_SMUID_UID,
 	OPAL_THISSP_UID,
@@ -119,10 +118,10 @@
 	OPAL_HALF_UID_BOOLEAN_ACE,
 	/* omitted optional parameter */
 	OPAL_UID_HEXFF,
-पूर्ण;
+};
 
-/* Enum क्रम indexing the OPALMETHOD array */
-क्रमागत opal_method अणु
+/* Enum for indexing the OPALMETHOD array */
+enum opal_method {
 	OPAL_PROPERTIES,
 	OPAL_STARTSESSION,
 	OPAL_REVERT,
@@ -139,9 +138,9 @@
 	OPAL_AUTHENTICATE,
 	OPAL_RANDOM,
 	OPAL_ERASE,
-पूर्ण;
+};
 
-क्रमागत opal_token अणु
+enum opal_token {
 	/* Boolean */
 	OPAL_TRUE = 0x01,
 	OPAL_FALSE = 0x00,
@@ -198,35 +197,35 @@
 	OPAL_ENDTRANSACTON = 0xfC,
 	OPAL_EMPTYATOM = 0xff,
 	OPAL_WHERE = 0x00,
-पूर्ण;
+};
 
-/* Locking state क्रम a locking range */
-क्रमागत opal_lockingstate अणु
+/* Locking state for a locking range */
+enum opal_lockingstate {
 	OPAL_LOCKING_READWRITE = 0x01,
 	OPAL_LOCKING_READONLY = 0x02,
 	OPAL_LOCKING_LOCKED = 0x03,
-पूर्ण;
+};
 
-क्रमागत opal_parameter अणु
+enum opal_parameter {
 	OPAL_SUM_SET_LIST = 0x060000,
-पूर्ण;
+};
 
 /* Packets derived from:
  * TCG_Storage_Architecture_Core_Spec_v2.01_r1.00
  * Secion: 3.2.3 ComPackets, Packets & Subpackets
  */
 
-/* Comm Packet (header) क्रम transmissions. */
-काष्ठा opal_compacket अणु
+/* Comm Packet (header) for transmissions. */
+struct opal_compacket {
 	__be32 reserved0;
 	u8 extendedComID[4];
 	__be32 outstandingData;
 	__be32 minTransfer;
 	__be32 length;
-पूर्ण;
+};
 
-/* Packet काष्ठाure. */
-काष्ठा opal_packet अणु
+/* Packet structure. */
+struct opal_packet {
 	__be32 tsn;
 	__be32 hsn;
 	__be32 seq_number;
@@ -234,56 +233,56 @@
 	__be16 ack_type;
 	__be32 acknowledgment;
 	__be32 length;
-पूर्ण;
+};
 
 /* Data sub packet header */
-काष्ठा opal_data_subpacket अणु
+struct opal_data_subpacket {
 	u8 reserved0[6];
 	__be16 kind;
 	__be32 length;
-पूर्ण;
+};
 
 /* header of a response */
-काष्ठा opal_header अणु
-	काष्ठा opal_compacket cp;
-	काष्ठा opal_packet pkt;
-	काष्ठा opal_data_subpacket subpkt;
-पूर्ण;
+struct opal_header {
+	struct opal_compacket cp;
+	struct opal_packet pkt;
+	struct opal_data_subpacket subpkt;
+};
 
-#घोषणा FC_TPER       0x0001
-#घोषणा FC_LOCKING    0x0002
-#घोषणा FC_GEOMETRY   0x0003
-#घोषणा FC_ENTERPRISE 0x0100
-#घोषणा FC_DATASTORE  0x0202
-#घोषणा FC_SINGLEUSER 0x0201
-#घोषणा FC_OPALV100   0x0200
-#घोषणा FC_OPALV200   0x0203
+#define FC_TPER       0x0001
+#define FC_LOCKING    0x0002
+#define FC_GEOMETRY   0x0003
+#define FC_ENTERPRISE 0x0100
+#define FC_DATASTORE  0x0202
+#define FC_SINGLEUSER 0x0201
+#define FC_OPALV100   0x0200
+#define FC_OPALV200   0x0203
 
 /*
  * The Discovery 0 Header. As defined in
  * Opal SSC Documentation
  * Section: 3.3.5 Capability Discovery
  */
-काष्ठा d0_header अणु
+struct d0_header {
 	__be32 length; /* the length of the header 48 in 2.00.100 */
 	__be32 revision; /**< revision of the header 1 in 2.00.100 */
 	__be32 reserved01;
 	__be32 reserved02;
 	/*
-	 * the reमुख्यder of the काष्ठाure is venकरोr specअगरic and will not be
+	 * the remainder of the structure is vendor specific and will not be
 	 * addressed now
 	 */
 	u8 ignored[32];
-पूर्ण;
+};
 
 /*
- * TPer Feature Descriptor. Contains flags indicating support क्रम the
- * TPer features described in the OPAL specअगरication. The names match the
+ * TPer Feature Descriptor. Contains flags indicating support for the
+ * TPer features described in the OPAL specification. The names match the
  * OPAL terminology
  *
  * code == 0x001 in 2.00.100
  */
-काष्ठा d0_tper_features अणु
+struct d0_tper_features {
 	/*
 	 * supported_features bits:
 	 * bit 7: reserved
@@ -298,25 +297,25 @@
 	u8 supported_features;
 	/*
 	 * bytes 5 through 15 are reserved, but we represent the first 3 as
-	 * u8 to keep the other two 32bits पूर्णांकegers aligned.
+	 * u8 to keep the other two 32bits integers aligned.
 	 */
 	u8 reserved01[3];
 	__be32 reserved02;
 	__be32 reserved03;
-पूर्ण;
+};
 
 /*
- * Locking Feature Descriptor. Contains flags indicating support क्रम the
- * locking features described in the OPAL specअगरication. The names match the
+ * Locking Feature Descriptor. Contains flags indicating support for the
+ * locking features described in the OPAL specification. The names match the
  * OPAL terminology
  *
  * code == 0x0002 in 2.00.100
  */
-काष्ठा d0_locking_features अणु
+struct d0_locking_features {
 	/*
 	 * supported_features bits:
 	 * bits 6-7: reserved
-	 * bit 5: MBR करोne
+	 * bit 5: MBR done
 	 * bit 4: MBR enabled
 	 * bit 3: media encryption
 	 * bit 2: locked
@@ -326,23 +325,23 @@
 	u8 supported_features;
 	/*
 	 * bytes 5 through 15 are reserved, but we represent the first 3 as
-	 * u8 to keep the other two 32bits पूर्णांकegers aligned.
+	 * u8 to keep the other two 32bits integers aligned.
 	 */
 	u8 reserved01[3];
 	__be32 reserved02;
 	__be32 reserved03;
-पूर्ण;
+};
 
 /*
- * Geometry Feature Descriptor. Contains flags indicating support क्रम the
- * geometry features described in the OPAL specअगरication. The names match the
+ * Geometry Feature Descriptor. Contains flags indicating support for the
+ * geometry features described in the OPAL specification. The names match the
  * OPAL terminology
  *
  * code == 0x0003 in 2.00.100
  */
-काष्ठा d0_geometry_features अणु
+struct d0_geometry_features {
 	/*
-	 * skip 32 bits from header, needed to align the काष्ठा to 64 bits.
+	 * skip 32 bits from header, needed to align the struct to 64 bits.
 	 */
 	u8 header[4];
 	/*
@@ -355,14 +354,14 @@
 	__be32 logical_block_size;
 	__be64 alignment_granularity;
 	__be64 lowest_aligned_lba;
-पूर्ण;
+};
 
 /*
  * Enterprise SSC Feature
  *
  * code == 0x0100
  */
-काष्ठा d0_enterprise_ssc अणु
+struct d0_enterprise_ssc {
 	__be16 baseComID;
 	__be16 numComIDs;
 	/* range_crossing:
@@ -374,24 +373,24 @@
 	__be16 reserved02;
 	__be32 reserved03;
 	__be32 reserved04;
-पूर्ण;
+};
 
 /*
  * Opal V1 feature
  *
  * code == 0x0200
  */
-काष्ठा d0_opal_v100 अणु
+struct d0_opal_v100 {
 	__be16 baseComID;
 	__be16 numComIDs;
-पूर्ण;
+};
 
 /*
  * Single User Mode feature
  *
  * code == 0x0201
  */
-काष्ठा d0_single_user_mode अणु
+struct d0_single_user_mode {
 	__be32 num_locking_objects;
 	/* reserved01:
 	 * bit 0: any
@@ -403,26 +402,26 @@
 	u8 reserved02;
 	__be16 reserved03;
 	__be32 reserved04;
-पूर्ण;
+};
 
 /*
  * Additonal Datastores feature
  *
  * code == 0x0202
  */
-काष्ठा d0_datastore_table अणु
+struct d0_datastore_table {
 	__be16 reserved01;
 	__be16 max_tables;
-	__be32 max_माप_प्रकारables;
+	__be32 max_size_tables;
 	__be32 table_size_alignment;
-पूर्ण;
+};
 
 /*
  * OPAL 2.0 feature
  *
  * code == 0x0203
  */
-काष्ठा d0_opal_v200 अणु
+struct d0_opal_v200 {
 	__be16 baseComID;
 	__be16 numComIDs;
 	/* range_crossing:
@@ -448,10 +447,10 @@
 	u8 revertedPIN;
 	u8 reserved01;
 	__be32 reserved02;
-पूर्ण;
+};
 
 /* Union of features used to parse the discovery 0 response */
-काष्ठा d0_features अणु
+struct d0_features {
 	__be16 code;
 	/*
 	 * r_version bits:
@@ -461,6 +460,6 @@
 	u8 r_version;
 	u8 length;
 	u8 features[];
-पूर्ण;
+};
 
-#पूर्ण_अगर /* _OPAL_PROTO_H */
+#endif /* _OPAL_PROTO_H */

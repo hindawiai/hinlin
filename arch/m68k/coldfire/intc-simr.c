@@ -1,200 +1,199 @@
-<शैली गुरु>
 /*
- * पूर्णांकc-simr.c
+ * intc-simr.c
  *
- * Interrupt controller code क्रम the ColdFire 5208, 5207 & 532x parts.
+ * Interrupt controller code for the ColdFire 5208, 5207 & 532x parts.
  *
  * (C) Copyright 2009-2011, Greg Ungerer <gerg@snapgear.com>
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file COPYING in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file COPYING in the main directory of this archive
+ * for more details.
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/पन.स>
-#समावेश <यंत्र/coldfire.h>
-#समावेश <यंत्र/mcfsim.h>
-#समावेश <यंत्र/traps.h>
+#include <linux/types.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/interrupt.h>
+#include <linux/irq.h>
+#include <linux/io.h>
+#include <asm/coldfire.h>
+#include <asm/mcfsim.h>
+#include <asm/traps.h>
 
 /*
- *	The EDGE Port पूर्णांकerrupts are the fixed 7 बाह्यal पूर्णांकerrupts.
- *	They need some special treaपंचांगent, क्रम example they need to be acked.
+ *	The EDGE Port interrupts are the fixed 7 external interrupts.
+ *	They need some special treatment, for example they need to be acked.
  */
-#अगर_घोषित CONFIG_M520x
+#ifdef CONFIG_M520x
 /*
- *	The 520x parts only support a limited range of these बाह्यal
- *	पूर्णांकerrupts, only 1, 4 and 7 (as पूर्णांकerrupts 65, 66 and 67).
+ *	The 520x parts only support a limited range of these external
+ *	interrupts, only 1, 4 and 7 (as interrupts 65, 66 and 67).
  */
-#घोषणा	EINT0	64	/* Is not actually used, but spot reserved क्रम it */
-#घोषणा	EINT1	65	/* EDGE Port पूर्णांकerrupt 1 */
-#घोषणा	EINT4	66	/* EDGE Port पूर्णांकerrupt 4 */
-#घोषणा	EINT7	67	/* EDGE Port पूर्णांकerrupt 7 */
+#define	EINT0	64	/* Is not actually used, but spot reserved for it */
+#define	EINT1	65	/* EDGE Port interrupt 1 */
+#define	EINT4	66	/* EDGE Port interrupt 4 */
+#define	EINT7	67	/* EDGE Port interrupt 7 */
 
-अटल अचिन्हित पूर्णांक irqebiपंचांगap[] = अणु 0, 1, 4, 7 पूर्ण;
-अटल अंतरभूत अचिन्हित पूर्णांक irq2ebit(अचिन्हित पूर्णांक irq)
-अणु
-	वापस irqebiपंचांगap[irq - EINT0];
-पूर्ण
+static unsigned int irqebitmap[] = { 0, 1, 4, 7 };
+static inline unsigned int irq2ebit(unsigned int irq)
+{
+	return irqebitmap[irq - EINT0];
+}
 
-#अन्यथा
+#else
 
 /*
  *	Most of the ColdFire parts with the EDGE Port module just have
- *	a strait direct mapping of the 7 बाह्यal पूर्णांकerrupts. Although
- *	there is a bit reserved क्रम 0, it is not used.
+ *	a strait direct mapping of the 7 external interrupts. Although
+ *	there is a bit reserved for 0, it is not used.
  */
-#घोषणा	EINT0	64	/* Is not actually used, but spot reserved क्रम it */
-#घोषणा	EINT1	65	/* EDGE Port पूर्णांकerrupt 1 */
-#घोषणा	EINT7	71	/* EDGE Port पूर्णांकerrupt 7 */
+#define	EINT0	64	/* Is not actually used, but spot reserved for it */
+#define	EINT1	65	/* EDGE Port interrupt 1 */
+#define	EINT7	71	/* EDGE Port interrupt 7 */
 
-अटल अंतरभूत अचिन्हित पूर्णांक irq2ebit(अचिन्हित पूर्णांक irq)
-अणु
-	वापस irq - EINT0;
-पूर्ण
+static inline unsigned int irq2ebit(unsigned int irq)
+{
+	return irq - EINT0;
+}
 
-#पूर्ण_अगर
+#endif
 
 /*
- *	There maybe one, two or three पूर्णांकerrupt control units, each has 64
- *	पूर्णांकerrupts. If there is no second or third unit then MCFINTC1_* or
- *	MCFINTC2_* defines will be 0 (and code क्रम them optimized away).
+ *	There maybe one, two or three interrupt control units, each has 64
+ *	interrupts. If there is no second or third unit then MCFINTC1_* or
+ *	MCFINTC2_* defines will be 0 (and code for them optimized away).
  */
 
-अटल व्योम पूर्णांकc_irq_mask(काष्ठा irq_data *d)
-अणु
-	अचिन्हित पूर्णांक irq = d->irq - MCFINT_VECBASE;
+static void intc_irq_mask(struct irq_data *d)
+{
+	unsigned int irq = d->irq - MCFINT_VECBASE;
 
-	अगर (MCFINTC2_SIMR && (irq > 127))
-		__raw_ग_लिखोb(irq - 128, MCFINTC2_SIMR);
-	अन्यथा अगर (MCFINTC1_SIMR && (irq > 63))
-		__raw_ग_लिखोb(irq - 64, MCFINTC1_SIMR);
-	अन्यथा
-		__raw_ग_लिखोb(irq, MCFINTC0_SIMR);
-पूर्ण
+	if (MCFINTC2_SIMR && (irq > 127))
+		__raw_writeb(irq - 128, MCFINTC2_SIMR);
+	else if (MCFINTC1_SIMR && (irq > 63))
+		__raw_writeb(irq - 64, MCFINTC1_SIMR);
+	else
+		__raw_writeb(irq, MCFINTC0_SIMR);
+}
 
-अटल व्योम पूर्णांकc_irq_unmask(काष्ठा irq_data *d)
-अणु
-	अचिन्हित पूर्णांक irq = d->irq - MCFINT_VECBASE;
+static void intc_irq_unmask(struct irq_data *d)
+{
+	unsigned int irq = d->irq - MCFINT_VECBASE;
 
-	अगर (MCFINTC2_CIMR && (irq > 127))
-		__raw_ग_लिखोb(irq - 128, MCFINTC2_CIMR);
-	अन्यथा अगर (MCFINTC1_CIMR && (irq > 63))
-		__raw_ग_लिखोb(irq - 64, MCFINTC1_CIMR);
-	अन्यथा
-		__raw_ग_लिखोb(irq, MCFINTC0_CIMR);
-पूर्ण
+	if (MCFINTC2_CIMR && (irq > 127))
+		__raw_writeb(irq - 128, MCFINTC2_CIMR);
+	else if (MCFINTC1_CIMR && (irq > 63))
+		__raw_writeb(irq - 64, MCFINTC1_CIMR);
+	else
+		__raw_writeb(irq, MCFINTC0_CIMR);
+}
 
-अटल व्योम पूर्णांकc_irq_ack(काष्ठा irq_data *d)
-अणु
-	अचिन्हित पूर्णांक ebit = irq2ebit(d->irq);
+static void intc_irq_ack(struct irq_data *d)
+{
+	unsigned int ebit = irq2ebit(d->irq);
 
-	__raw_ग_लिखोb(0x1 << ebit, MCFEPORT_EPFR);
-पूर्ण
+	__raw_writeb(0x1 << ebit, MCFEPORT_EPFR);
+}
 
-अटल अचिन्हित पूर्णांक पूर्णांकc_irq_startup(काष्ठा irq_data *d)
-अणु
-	अचिन्हित पूर्णांक irq = d->irq;
+static unsigned int intc_irq_startup(struct irq_data *d)
+{
+	unsigned int irq = d->irq;
 
-	अगर ((irq >= EINT1) && (irq <= EINT7)) अणु
-		अचिन्हित पूर्णांक ebit = irq2ebit(irq);
+	if ((irq >= EINT1) && (irq <= EINT7)) {
+		unsigned int ebit = irq2ebit(irq);
 		u8 v;
 
-#अगर defined(MCFEPORT_EPDDR)
+#if defined(MCFEPORT_EPDDR)
 		/* Set EPORT line as input */
-		v = __raw_पढ़ोb(MCFEPORT_EPDDR);
-		__raw_ग_लिखोb(v & ~(0x1 << ebit), MCFEPORT_EPDDR);
-#पूर्ण_अगर
+		v = __raw_readb(MCFEPORT_EPDDR);
+		__raw_writeb(v & ~(0x1 << ebit), MCFEPORT_EPDDR);
+#endif
 
-		/* Set EPORT line as पूर्णांकerrupt source */
-		v = __raw_पढ़ोb(MCFEPORT_EPIER);
-		__raw_ग_लिखोb(v | (0x1 << ebit), MCFEPORT_EPIER);
-	पूर्ण
+		/* Set EPORT line as interrupt source */
+		v = __raw_readb(MCFEPORT_EPIER);
+		__raw_writeb(v | (0x1 << ebit), MCFEPORT_EPIER);
+	}
 
 	irq -= MCFINT_VECBASE;
-	अगर (MCFINTC2_ICR0 && (irq > 127))
-		__raw_ग_लिखोb(5, MCFINTC2_ICR0 + irq - 128);
-	अन्यथा अगर (MCFINTC1_ICR0 && (irq > 63))
-		__raw_ग_लिखोb(5, MCFINTC1_ICR0 + irq - 64);
-	अन्यथा
-		__raw_ग_लिखोb(5, MCFINTC0_ICR0 + irq);
+	if (MCFINTC2_ICR0 && (irq > 127))
+		__raw_writeb(5, MCFINTC2_ICR0 + irq - 128);
+	else if (MCFINTC1_ICR0 && (irq > 63))
+		__raw_writeb(5, MCFINTC1_ICR0 + irq - 64);
+	else
+		__raw_writeb(5, MCFINTC0_ICR0 + irq);
 
-	पूर्णांकc_irq_unmask(d);
-	वापस 0;
-पूर्ण
+	intc_irq_unmask(d);
+	return 0;
+}
 
-अटल पूर्णांक पूर्णांकc_irq_set_type(काष्ठा irq_data *d, अचिन्हित पूर्णांक type)
-अणु
-	अचिन्हित पूर्णांक ebit, irq = d->irq;
+static int intc_irq_set_type(struct irq_data *d, unsigned int type)
+{
+	unsigned int ebit, irq = d->irq;
 	u16 pa, tb;
 
-	चयन (type) अणु
-	हाल IRQ_TYPE_EDGE_RISING:
+	switch (type) {
+	case IRQ_TYPE_EDGE_RISING:
 		tb = 0x1;
-		अवरोध;
-	हाल IRQ_TYPE_EDGE_FALLING:
+		break;
+	case IRQ_TYPE_EDGE_FALLING:
 		tb = 0x2;
-		अवरोध;
-	हाल IRQ_TYPE_EDGE_BOTH:
+		break;
+	case IRQ_TYPE_EDGE_BOTH:
 		tb = 0x3;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		/* Level triggered */
 		tb = 0;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (tb)
+	if (tb)
 		irq_set_handler(irq, handle_edge_irq);
 
 	ebit = irq2ebit(irq) * 2;
-	pa = __raw_पढ़ोw(MCFEPORT_EPPAR);
+	pa = __raw_readw(MCFEPORT_EPPAR);
 	pa = (pa & ~(0x3 << ebit)) | (tb << ebit);
-	__raw_ग_लिखोw(pa, MCFEPORT_EPPAR);
+	__raw_writew(pa, MCFEPORT_EPPAR);
 	
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा irq_chip पूर्णांकc_irq_chip = अणु
+static struct irq_chip intc_irq_chip = {
 	.name		= "CF-INTC",
-	.irq_startup	= पूर्णांकc_irq_startup,
-	.irq_mask	= पूर्णांकc_irq_mask,
-	.irq_unmask	= पूर्णांकc_irq_unmask,
-पूर्ण;
+	.irq_startup	= intc_irq_startup,
+	.irq_mask	= intc_irq_mask,
+	.irq_unmask	= intc_irq_unmask,
+};
 
-अटल काष्ठा irq_chip पूर्णांकc_irq_chip_edge_port = अणु
+static struct irq_chip intc_irq_chip_edge_port = {
 	.name		= "CF-INTC-EP",
-	.irq_startup	= पूर्णांकc_irq_startup,
-	.irq_mask	= पूर्णांकc_irq_mask,
-	.irq_unmask	= पूर्णांकc_irq_unmask,
-	.irq_ack	= पूर्णांकc_irq_ack,
-	.irq_set_type	= पूर्णांकc_irq_set_type,
-पूर्ण;
+	.irq_startup	= intc_irq_startup,
+	.irq_mask	= intc_irq_mask,
+	.irq_unmask	= intc_irq_unmask,
+	.irq_ack	= intc_irq_ack,
+	.irq_set_type	= intc_irq_set_type,
+};
 
-व्योम __init init_IRQ(व्योम)
-अणु
-	पूर्णांक irq, eirq;
+void __init init_IRQ(void)
+{
+	int irq, eirq;
 
-	/* Mask all पूर्णांकerrupt sources */
-	__raw_ग_लिखोb(0xff, MCFINTC0_SIMR);
-	अगर (MCFINTC1_SIMR)
-		__raw_ग_लिखोb(0xff, MCFINTC1_SIMR);
-	अगर (MCFINTC2_SIMR)
-		__raw_ग_लिखोb(0xff, MCFINTC2_SIMR);
+	/* Mask all interrupt sources */
+	__raw_writeb(0xff, MCFINTC0_SIMR);
+	if (MCFINTC1_SIMR)
+		__raw_writeb(0xff, MCFINTC1_SIMR);
+	if (MCFINTC2_SIMR)
+		__raw_writeb(0xff, MCFINTC2_SIMR);
 
 	eirq = MCFINT_VECBASE + 64 + (MCFINTC1_ICR0 ? 64 : 0) +
 						(MCFINTC2_ICR0 ? 64 : 0);
-	क्रम (irq = MCFINT_VECBASE; (irq < eirq); irq++) अणु
-		अगर ((irq >= EINT1) && (irq <= EINT7))
-			irq_set_chip(irq, &पूर्णांकc_irq_chip_edge_port);
-		अन्यथा
-			irq_set_chip(irq, &पूर्णांकc_irq_chip);
+	for (irq = MCFINT_VECBASE; (irq < eirq); irq++) {
+		if ((irq >= EINT1) && (irq <= EINT7))
+			irq_set_chip(irq, &intc_irq_chip_edge_port);
+		else
+			irq_set_chip(irq, &intc_irq_chip);
 		irq_set_irq_type(irq, IRQ_TYPE_LEVEL_HIGH);
 		irq_set_handler(irq, handle_level_irq);
-	पूर्ण
-पूर्ण
+	}
+}
 

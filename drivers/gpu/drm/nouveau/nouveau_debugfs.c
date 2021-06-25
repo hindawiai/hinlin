@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright (C) 2009 Red Hat <bskeggs@redhat.com>
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining
- * a copy of this software and associated करोcumentation files (the
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modअगरy, merge, publish,
+ * without limitation the rights to use, copy, modify, merge, publish,
  * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to करो so, subject to
+ * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -29,253 +28,253 @@
  *  Ben Skeggs <bskeggs@redhat.com>
  */
 
-#समावेश <linux/debugfs.h>
-#समावेश <nvअगर/class.h>
-#समावेश <nvअगर/अगर0001.h>
-#समावेश "nouveau_debugfs.h"
-#समावेश "nouveau_drv.h"
+#include <linux/debugfs.h>
+#include <nvif/class.h>
+#include <nvif/if0001.h>
+#include "nouveau_debugfs.h"
+#include "nouveau_drv.h"
 
-अटल पूर्णांक
-nouveau_debugfs_vbios_image(काष्ठा seq_file *m, व्योम *data)
-अणु
-	काष्ठा drm_info_node *node = (काष्ठा drm_info_node *) m->निजी;
-	काष्ठा nouveau_drm *drm = nouveau_drm(node->minor->dev);
-	पूर्णांक i;
+static int
+nouveau_debugfs_vbios_image(struct seq_file *m, void *data)
+{
+	struct drm_info_node *node = (struct drm_info_node *) m->private;
+	struct nouveau_drm *drm = nouveau_drm(node->minor->dev);
+	int i;
 
-	क्रम (i = 0; i < drm->vbios.length; i++)
-		seq_म_लिखो(m, "%c", drm->vbios.data[i]);
-	वापस 0;
-पूर्ण
+	for (i = 0; i < drm->vbios.length; i++)
+		seq_printf(m, "%c", drm->vbios.data[i]);
+	return 0;
+}
 
-अटल पूर्णांक
-nouveau_debugfs_strap_peek(काष्ठा seq_file *m, व्योम *data)
-अणु
-	काष्ठा drm_info_node *node = m->निजी;
-	काष्ठा nouveau_drm *drm = nouveau_drm(node->minor->dev);
-	पूर्णांक ret;
+static int
+nouveau_debugfs_strap_peek(struct seq_file *m, void *data)
+{
+	struct drm_info_node *node = m->private;
+	struct nouveau_drm *drm = nouveau_drm(node->minor->dev);
+	int ret;
 
-	ret = pm_runसमय_get_sync(drm->dev->dev);
-	अगर (ret < 0 && ret != -EACCES) अणु
-		pm_runसमय_put_स्वतःsuspend(drm->dev->dev);
-		वापस ret;
-	पूर्ण
+	ret = pm_runtime_get_sync(drm->dev->dev);
+	if (ret < 0 && ret != -EACCES) {
+		pm_runtime_put_autosuspend(drm->dev->dev);
+		return ret;
+	}
 
-	seq_म_लिखो(m, "0x%08x\n",
-		   nvअगर_rd32(&drm->client.device.object, 0x101000));
+	seq_printf(m, "0x%08x\n",
+		   nvif_rd32(&drm->client.device.object, 0x101000));
 
-	pm_runसमय_mark_last_busy(drm->dev->dev);
-	pm_runसमय_put_स्वतःsuspend(drm->dev->dev);
+	pm_runtime_mark_last_busy(drm->dev->dev);
+	pm_runtime_put_autosuspend(drm->dev->dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-nouveau_debugfs_pstate_get(काष्ठा seq_file *m, व्योम *data)
-अणु
-	काष्ठा drm_device *drm = m->निजी;
-	काष्ठा nouveau_debugfs *debugfs = nouveau_debugfs(drm);
-	काष्ठा nvअगर_object *ctrl = &debugfs->ctrl;
-	काष्ठा nvअगर_control_pstate_info_v0 info = अणुपूर्ण;
-	पूर्णांक ret, i;
+static int
+nouveau_debugfs_pstate_get(struct seq_file *m, void *data)
+{
+	struct drm_device *drm = m->private;
+	struct nouveau_debugfs *debugfs = nouveau_debugfs(drm);
+	struct nvif_object *ctrl = &debugfs->ctrl;
+	struct nvif_control_pstate_info_v0 info = {};
+	int ret, i;
 
-	अगर (!debugfs)
-		वापस -ENODEV;
+	if (!debugfs)
+		return -ENODEV;
 
-	ret = nvअगर_mthd(ctrl, NVIF_CONTROL_PSTATE_INFO, &info, माप(info));
-	अगर (ret)
-		वापस ret;
+	ret = nvif_mthd(ctrl, NVIF_CONTROL_PSTATE_INFO, &info, sizeof(info));
+	if (ret)
+		return ret;
 
-	क्रम (i = 0; i < info.count + 1; i++) अणु
-		स्थिर s32 state = i < info.count ? i :
+	for (i = 0; i < info.count + 1; i++) {
+		const s32 state = i < info.count ? i :
 			NVIF_CONTROL_PSTATE_ATTR_V0_STATE_CURRENT;
-		काष्ठा nvअगर_control_pstate_attr_v0 attr = अणु
+		struct nvif_control_pstate_attr_v0 attr = {
 			.state = state,
 			.index = 0,
-		पूर्ण;
+		};
 
-		ret = nvअगर_mthd(ctrl, NVIF_CONTROL_PSTATE_ATTR,
-				&attr, माप(attr));
-		अगर (ret)
-			वापस ret;
+		ret = nvif_mthd(ctrl, NVIF_CONTROL_PSTATE_ATTR,
+				&attr, sizeof(attr));
+		if (ret)
+			return ret;
 
-		अगर (i < info.count)
-			seq_म_लिखो(m, "%02x:", attr.state);
-		अन्यथा
-			seq_म_लिखो(m, "%s:", info.pwrsrc == 0 ? "DC" :
+		if (i < info.count)
+			seq_printf(m, "%02x:", attr.state);
+		else
+			seq_printf(m, "%s:", info.pwrsrc == 0 ? "DC" :
 					     info.pwrsrc == 1 ? "AC" : "--");
 
 		attr.index = 0;
-		करो अणु
+		do {
 			attr.state = state;
-			ret = nvअगर_mthd(ctrl, NVIF_CONTROL_PSTATE_ATTR,
-					&attr, माप(attr));
-			अगर (ret)
-				वापस ret;
+			ret = nvif_mthd(ctrl, NVIF_CONTROL_PSTATE_ATTR,
+					&attr, sizeof(attr));
+			if (ret)
+				return ret;
 
-			seq_म_लिखो(m, " %s %d", attr.name, attr.min);
-			अगर (attr.min != attr.max)
-				seq_म_लिखो(m, "-%d", attr.max);
-			seq_म_लिखो(m, " %s", attr.unit);
-		पूर्ण जबतक (attr.index);
+			seq_printf(m, " %s %d", attr.name, attr.min);
+			if (attr.min != attr.max)
+				seq_printf(m, "-%d", attr.max);
+			seq_printf(m, " %s", attr.unit);
+		} while (attr.index);
 
-		अगर (state >= 0) अणु
-			अगर (info.ustate_ac == state)
-				seq_म_लिखो(m, " AC");
-			अगर (info.ustate_dc == state)
-				seq_म_लिखो(m, " DC");
-			अगर (info.pstate == state)
-				seq_म_लिखो(m, " *");
-		पूर्ण अन्यथा अणु
-			अगर (info.ustate_ac < -1)
-				seq_म_लिखो(m, " AC");
-			अगर (info.ustate_dc < -1)
-				seq_म_लिखो(m, " DC");
-		पूर्ण
+		if (state >= 0) {
+			if (info.ustate_ac == state)
+				seq_printf(m, " AC");
+			if (info.ustate_dc == state)
+				seq_printf(m, " DC");
+			if (info.pstate == state)
+				seq_printf(m, " *");
+		} else {
+			if (info.ustate_ac < -1)
+				seq_printf(m, " AC");
+			if (info.ustate_dc < -1)
+				seq_printf(m, " DC");
+		}
 
-		seq_म_लिखो(m, "\n");
-	पूर्ण
+		seq_printf(m, "\n");
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार
-nouveau_debugfs_pstate_set(काष्ठा file *file, स्थिर अक्षर __user *ubuf,
-			   माप_प्रकार len, loff_t *offp)
-अणु
-	काष्ठा seq_file *m = file->निजी_data;
-	काष्ठा drm_device *drm = m->निजी;
-	काष्ठा nouveau_debugfs *debugfs = nouveau_debugfs(drm);
-	काष्ठा nvअगर_object *ctrl = &debugfs->ctrl;
-	काष्ठा nvअगर_control_pstate_user_v0 args = अणु .pwrsrc = -EINVAL पूर्ण;
-	अक्षर buf[32] = अणुपूर्ण, *पंचांगp, *cur = buf;
-	दीर्घ value, ret;
+static ssize_t
+nouveau_debugfs_pstate_set(struct file *file, const char __user *ubuf,
+			   size_t len, loff_t *offp)
+{
+	struct seq_file *m = file->private_data;
+	struct drm_device *drm = m->private;
+	struct nouveau_debugfs *debugfs = nouveau_debugfs(drm);
+	struct nvif_object *ctrl = &debugfs->ctrl;
+	struct nvif_control_pstate_user_v0 args = { .pwrsrc = -EINVAL };
+	char buf[32] = {}, *tmp, *cur = buf;
+	long value, ret;
 
-	अगर (!debugfs)
-		वापस -ENODEV;
+	if (!debugfs)
+		return -ENODEV;
 
-	अगर (len >= माप(buf))
-		वापस -EINVAL;
+	if (len >= sizeof(buf))
+		return -EINVAL;
 
-	अगर (copy_from_user(buf, ubuf, len))
-		वापस -EFAULT;
+	if (copy_from_user(buf, ubuf, len))
+		return -EFAULT;
 
-	अगर ((पंचांगp = म_अक्षर(buf, '\n')))
-		*पंचांगp = '\0';
+	if ((tmp = strchr(buf, '\n')))
+		*tmp = '\0';
 
-	अगर (!strnहालcmp(cur, "dc:", 3)) अणु
+	if (!strncasecmp(cur, "dc:", 3)) {
 		args.pwrsrc = 0;
 		cur += 3;
-	पूर्ण अन्यथा
-	अगर (!strnहालcmp(cur, "ac:", 3)) अणु
+	} else
+	if (!strncasecmp(cur, "ac:", 3)) {
 		args.pwrsrc = 1;
 		cur += 3;
-	पूर्ण
+	}
 
-	अगर (!strहालcmp(cur, "none"))
+	if (!strcasecmp(cur, "none"))
 		args.ustate = NVIF_CONTROL_PSTATE_USER_V0_STATE_UNKNOWN;
-	अन्यथा
-	अगर (!strहालcmp(cur, "auto"))
+	else
+	if (!strcasecmp(cur, "auto"))
 		args.ustate = NVIF_CONTROL_PSTATE_USER_V0_STATE_PERFMON;
-	अन्यथा अणु
-		ret = kम_से_दीर्घ(cur, 16, &value);
-		अगर (ret)
-			वापस ret;
+	else {
+		ret = kstrtol(cur, 16, &value);
+		if (ret)
+			return ret;
 		args.ustate = value;
-	पूर्ण
+	}
 
-	ret = pm_runसमय_get_sync(drm->dev);
-	अगर (ret < 0 && ret != -EACCES) अणु
-		pm_runसमय_put_स्वतःsuspend(drm->dev);
-		वापस ret;
-	पूर्ण
+	ret = pm_runtime_get_sync(drm->dev);
+	if (ret < 0 && ret != -EACCES) {
+		pm_runtime_put_autosuspend(drm->dev);
+		return ret;
+	}
 
-	ret = nvअगर_mthd(ctrl, NVIF_CONTROL_PSTATE_USER, &args, माप(args));
-	pm_runसमय_put_स्वतःsuspend(drm->dev);
-	अगर (ret < 0)
-		वापस ret;
+	ret = nvif_mthd(ctrl, NVIF_CONTROL_PSTATE_USER, &args, sizeof(args));
+	pm_runtime_put_autosuspend(drm->dev);
+	if (ret < 0)
+		return ret;
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल पूर्णांक
-nouveau_debugfs_pstate_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस single_खोलो(file, nouveau_debugfs_pstate_get, inode->i_निजी);
-पूर्ण
+static int
+nouveau_debugfs_pstate_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, nouveau_debugfs_pstate_get, inode->i_private);
+}
 
-अटल स्थिर काष्ठा file_operations nouveau_pstate_fops = अणु
+static const struct file_operations nouveau_pstate_fops = {
 	.owner = THIS_MODULE,
-	.खोलो = nouveau_debugfs_pstate_खोलो,
-	.पढ़ो = seq_पढ़ो,
-	.ग_लिखो = nouveau_debugfs_pstate_set,
-पूर्ण;
+	.open = nouveau_debugfs_pstate_open,
+	.read = seq_read,
+	.write = nouveau_debugfs_pstate_set,
+};
 
-अटल काष्ठा drm_info_list nouveau_debugfs_list[] = अणु
-	अणु "vbios.rom",  nouveau_debugfs_vbios_image, 0, शून्य पूर्ण,
-	अणु "strap_peek", nouveau_debugfs_strap_peek, 0, शून्य पूर्ण,
-पूर्ण;
-#घोषणा NOUVEAU_DEBUGFS_ENTRIES ARRAY_SIZE(nouveau_debugfs_list)
+static struct drm_info_list nouveau_debugfs_list[] = {
+	{ "vbios.rom",  nouveau_debugfs_vbios_image, 0, NULL },
+	{ "strap_peek", nouveau_debugfs_strap_peek, 0, NULL },
+};
+#define NOUVEAU_DEBUGFS_ENTRIES ARRAY_SIZE(nouveau_debugfs_list)
 
-अटल स्थिर काष्ठा nouveau_debugfs_files अणु
-	स्थिर अक्षर *name;
-	स्थिर काष्ठा file_operations *fops;
-पूर्ण nouveau_debugfs_files[] = अणु
-	अणु"pstate", &nouveau_pstate_fopsपूर्ण,
-पूर्ण;
+static const struct nouveau_debugfs_files {
+	const char *name;
+	const struct file_operations *fops;
+} nouveau_debugfs_files[] = {
+	{"pstate", &nouveau_pstate_fops},
+};
 
-व्योम
-nouveau_drm_debugfs_init(काष्ठा drm_minor *minor)
-अणु
-	काष्ठा nouveau_drm *drm = nouveau_drm(minor->dev);
-	काष्ठा dentry *dentry;
-	पूर्णांक i;
+void
+nouveau_drm_debugfs_init(struct drm_minor *minor)
+{
+	struct nouveau_drm *drm = nouveau_drm(minor->dev);
+	struct dentry *dentry;
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(nouveau_debugfs_files); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(nouveau_debugfs_files); i++) {
 		debugfs_create_file(nouveau_debugfs_files[i].name,
 				    S_IRUGO | S_IWUSR,
 				    minor->debugfs_root, minor->dev,
 				    nouveau_debugfs_files[i].fops);
-	पूर्ण
+	}
 
 	drm_debugfs_create_files(nouveau_debugfs_list,
 				 NOUVEAU_DEBUGFS_ENTRIES,
 				 minor->debugfs_root, minor);
 
 	/* Set the size of the vbios since we know it, and it's confusing to
-	 * userspace अगर it wants to seek() but the file has a length of 0
+	 * userspace if it wants to seek() but the file has a length of 0
 	 */
 	dentry = debugfs_lookup("vbios.rom", minor->debugfs_root);
-	अगर (!dentry)
-		वापस;
+	if (!dentry)
+		return;
 
 	d_inode(dentry)->i_size = drm->vbios.length;
 	dput(dentry);
-पूर्ण
+}
 
-पूर्णांक
-nouveau_debugfs_init(काष्ठा nouveau_drm *drm)
-अणु
-	पूर्णांक ret;
+int
+nouveau_debugfs_init(struct nouveau_drm *drm)
+{
+	int ret;
 
-	drm->debugfs = kzalloc(माप(*drm->debugfs), GFP_KERNEL);
-	अगर (!drm->debugfs)
-		वापस -ENOMEM;
+	drm->debugfs = kzalloc(sizeof(*drm->debugfs), GFP_KERNEL);
+	if (!drm->debugfs)
+		return -ENOMEM;
 
-	ret = nvअगर_object_ctor(&drm->client.device.object, "debugfsCtrl", 0,
-			       NVIF_CLASS_CONTROL, शून्य, 0,
+	ret = nvif_object_ctor(&drm->client.device.object, "debugfsCtrl", 0,
+			       NVIF_CLASS_CONTROL, NULL, 0,
 			       &drm->debugfs->ctrl);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम
-nouveau_debugfs_fini(काष्ठा nouveau_drm *drm)
-अणु
-	अगर (drm->debugfs && drm->debugfs->ctrl.priv)
-		nvअगर_object_dtor(&drm->debugfs->ctrl);
+void
+nouveau_debugfs_fini(struct nouveau_drm *drm)
+{
+	if (drm->debugfs && drm->debugfs->ctrl.priv)
+		nvif_object_dtor(&drm->debugfs->ctrl);
 
-	kमुक्त(drm->debugfs);
-	drm->debugfs = शून्य;
-पूर्ण
+	kfree(drm->debugfs);
+	drm->debugfs = NULL;
+}

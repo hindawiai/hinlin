@@ -1,14 +1,13 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /* vim: set ts=8 sw=8 noet tw=80 nowrap: */
 /*
  *  comedi/drivers/ni_routing/ni_route_values/ni_mseries.c
- *  Route inक्रमmation क्रम NI_MSERIES boards.
+ *  Route information for NI_MSERIES boards.
  *
  *  COMEDI - Linux Control and Measurement Device Interface
  *  Copyright (C) 2016 Spencer E. Olson <olsonse@umich.edu>
  *
- *  This program is मुक्त software; you can redistribute it and/or modअगरy
+ *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
  *  (at your option) any later version.
@@ -16,46 +15,46 @@
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License क्रम more details.
+ *  GNU General Public License for more details.
  */
 
 /*
- * This file includes a list of all the values of various संकेतs routes
- * available on NI 660x hardware.  In many हालs, one करोes not explicitly make
+ * This file includes a list of all the values of various signals routes
+ * available on NI 660x hardware.  In many cases, one does not explicitly make
  * these routes, rather one might indicate that something is used as the source
  * of one particular trigger or another (using *_src=TRIG_EXT).
  *
  * The contents of this file can be generated using the tools in
- * comedi/drivers/ni_routing/tools.  This file also contains specअगरic notes to
+ * comedi/drivers/ni_routing/tools.  This file also contains specific notes to
  * this family of devices.
  *
- * Please use those tools to help मुख्यtain the contents of this file, but be
- * mindful to not lose the notes alपढ़ोy made in this file, since these notes
- * are critical to a complete undertsanding of the रेजिस्टर values of this
+ * Please use those tools to help maintain the contents of this file, but be
+ * mindful to not lose the notes already made in this file, since these notes
+ * are critical to a complete undertsanding of the register values of this
  * family.
  */
 
-#समावेश "../ni_route_values.h"
-#समावेश "all.h"
+#include "../ni_route_values.h"
+#include "all.h"
 
 /*
  * GATE SELECT NOTE:
- * CtrAux and CtrArmStartrigger रेजिस्टर values are not करोcumented in the
+ * CtrAux and CtrArmStartrigger register values are not documented in the
  * DAQ-STC.  There is some evidence that using CtrGate values is valid (see
- * comedi.h).  Some inक्रमmation and hपूर्णांकs exist in the M-Series user manual
+ * comedi.h).  Some information and hints exist in the M-Series user manual
  * (ni-62xx user-manual 371022K-01).
  */
 
-स्थिर काष्ठा family_route_values ni_mseries_route_values = अणु
+const struct family_route_values ni_mseries_route_values = {
 	.family = "ni_mseries",
-	.रेजिस्टर_values = अणु
+	.register_values = {
 		/*
-		 * destination = अणु
-		 *              source          = रेजिस्टर value,
+		 * destination = {
+		 *              source          = register value,
 		 *              ...
-		 * पूर्ण
+		 * }
 		 */
-		[B(NI_PFI(0))] = अणु
+		[B(NI_PFI(0))] = {
 			[B(TRIGGER_LINE(0))]	= I(18),
 			[B(TRIGGER_LINE(1))]	= I(19),
 			[B(TRIGGER_LINE(2))]	= I(20),
@@ -86,8 +85,8 @@
 			[B(NI_SCXI_Trig1)]	= I(27),
 			[B(NI_ExternalStrobe)]	= I(11),
 			[B(NI_PFI_DO)]	= I(16),
-		पूर्ण,
-		[B(NI_PFI(1))] = अणु
+		},
+		[B(NI_PFI(1))] = {
 			[B(TRIGGER_LINE(0))]	= I(18),
 			[B(TRIGGER_LINE(1))]	= I(19),
 			[B(TRIGGER_LINE(2))]	= I(20),
@@ -118,8 +117,8 @@
 			[B(NI_SCXI_Trig1)]	= I(27),
 			[B(NI_ExternalStrobe)]	= I(11),
 			[B(NI_PFI_DO)]	= I(16),
-		पूर्ण,
-		[B(NI_PFI(2))] = अणु
+		},
+		[B(NI_PFI(2))] = {
 			[B(TRIGGER_LINE(0))]	= I(18),
 			[B(TRIGGER_LINE(1))]	= I(19),
 			[B(TRIGGER_LINE(2))]	= I(20),
@@ -150,8 +149,8 @@
 			[B(NI_SCXI_Trig1)]	= I(27),
 			[B(NI_ExternalStrobe)]	= I(11),
 			[B(NI_PFI_DO)]	= I(16),
-		पूर्ण,
-		[B(NI_PFI(3))] = अणु
+		},
+		[B(NI_PFI(3))] = {
 			[B(TRIGGER_LINE(0))]	= I(18),
 			[B(TRIGGER_LINE(1))]	= I(19),
 			[B(TRIGGER_LINE(2))]	= I(20),
@@ -182,8 +181,8 @@
 			[B(NI_SCXI_Trig1)]	= I(27),
 			[B(NI_ExternalStrobe)]	= I(11),
 			[B(NI_PFI_DO)]	= I(16),
-		पूर्ण,
-		[B(NI_PFI(4))] = अणु
+		},
+		[B(NI_PFI(4))] = {
 			[B(TRIGGER_LINE(0))]	= I(18),
 			[B(TRIGGER_LINE(1))]	= I(19),
 			[B(TRIGGER_LINE(2))]	= I(20),
@@ -214,8 +213,8 @@
 			[B(NI_SCXI_Trig1)]	= I(27),
 			[B(NI_ExternalStrobe)]	= I(11),
 			[B(NI_PFI_DO)]	= I(16),
-		पूर्ण,
-		[B(NI_PFI(5))] = अणु
+		},
+		[B(NI_PFI(5))] = {
 			[B(TRIGGER_LINE(0))]	= I(18),
 			[B(TRIGGER_LINE(1))]	= I(19),
 			[B(TRIGGER_LINE(2))]	= I(20),
@@ -246,8 +245,8 @@
 			[B(NI_SCXI_Trig1)]	= I(27),
 			[B(NI_ExternalStrobe)]	= I(11),
 			[B(NI_PFI_DO)]	= I(16),
-		पूर्ण,
-		[B(NI_PFI(6))] = अणु
+		},
+		[B(NI_PFI(6))] = {
 			[B(TRIGGER_LINE(0))]	= I(18),
 			[B(TRIGGER_LINE(1))]	= I(19),
 			[B(TRIGGER_LINE(2))]	= I(20),
@@ -278,8 +277,8 @@
 			[B(NI_SCXI_Trig1)]	= I(27),
 			[B(NI_ExternalStrobe)]	= I(11),
 			[B(NI_PFI_DO)]	= I(16),
-		पूर्ण,
-		[B(NI_PFI(7))] = अणु
+		},
+		[B(NI_PFI(7))] = {
 			[B(TRIGGER_LINE(0))]	= I(18),
 			[B(TRIGGER_LINE(1))]	= I(19),
 			[B(TRIGGER_LINE(2))]	= I(20),
@@ -310,8 +309,8 @@
 			[B(NI_SCXI_Trig1)]	= I(27),
 			[B(NI_ExternalStrobe)]	= I(11),
 			[B(NI_PFI_DO)]	= I(16),
-		पूर्ण,
-		[B(NI_PFI(8))] = अणु
+		},
+		[B(NI_PFI(8))] = {
 			[B(TRIGGER_LINE(0))]	= I(18),
 			[B(TRIGGER_LINE(1))]	= I(19),
 			[B(TRIGGER_LINE(2))]	= I(20),
@@ -342,8 +341,8 @@
 			[B(NI_SCXI_Trig1)]	= I(27),
 			[B(NI_ExternalStrobe)]	= I(11),
 			[B(NI_PFI_DO)]	= I(16),
-		पूर्ण,
-		[B(NI_PFI(9))] = अणु
+		},
+		[B(NI_PFI(9))] = {
 			[B(TRIGGER_LINE(0))]	= I(18),
 			[B(TRIGGER_LINE(1))]	= I(19),
 			[B(TRIGGER_LINE(2))]	= I(20),
@@ -374,8 +373,8 @@
 			[B(NI_SCXI_Trig1)]	= I(27),
 			[B(NI_ExternalStrobe)]	= I(11),
 			[B(NI_PFI_DO)]	= I(16),
-		पूर्ण,
-		[B(NI_PFI(10))] = अणु
+		},
+		[B(NI_PFI(10))] = {
 			[B(TRIGGER_LINE(0))]	= I(18),
 			[B(TRIGGER_LINE(1))]	= I(19),
 			[B(TRIGGER_LINE(2))]	= I(20),
@@ -406,8 +405,8 @@
 			[B(NI_SCXI_Trig1)]	= I(27),
 			[B(NI_ExternalStrobe)]	= I(11),
 			[B(NI_PFI_DO)]	= I(16),
-		पूर्ण,
-		[B(NI_PFI(11))] = अणु
+		},
+		[B(NI_PFI(11))] = {
 			[B(TRIGGER_LINE(0))]	= I(18),
 			[B(TRIGGER_LINE(1))]	= I(19),
 			[B(TRIGGER_LINE(2))]	= I(20),
@@ -438,8 +437,8 @@
 			[B(NI_SCXI_Trig1)]	= I(27),
 			[B(NI_ExternalStrobe)]	= I(11),
 			[B(NI_PFI_DO)]	= I(16),
-		पूर्ण,
-		[B(NI_PFI(12))] = अणु
+		},
+		[B(NI_PFI(12))] = {
 			[B(TRIGGER_LINE(0))]	= I(18),
 			[B(TRIGGER_LINE(1))]	= I(19),
 			[B(TRIGGER_LINE(2))]	= I(20),
@@ -470,8 +469,8 @@
 			[B(NI_SCXI_Trig1)]	= I(27),
 			[B(NI_ExternalStrobe)]	= I(11),
 			[B(NI_PFI_DO)]	= I(16),
-		पूर्ण,
-		[B(NI_PFI(13))] = अणु
+		},
+		[B(NI_PFI(13))] = {
 			[B(TRIGGER_LINE(0))]	= I(18),
 			[B(TRIGGER_LINE(1))]	= I(19),
 			[B(TRIGGER_LINE(2))]	= I(20),
@@ -502,8 +501,8 @@
 			[B(NI_SCXI_Trig1)]	= I(27),
 			[B(NI_ExternalStrobe)]	= I(11),
 			[B(NI_PFI_DO)]	= I(16),
-		पूर्ण,
-		[B(NI_PFI(14))] = अणु
+		},
+		[B(NI_PFI(14))] = {
 			[B(TRIGGER_LINE(0))]	= I(18),
 			[B(TRIGGER_LINE(1))]	= I(19),
 			[B(TRIGGER_LINE(2))]	= I(20),
@@ -534,8 +533,8 @@
 			[B(NI_SCXI_Trig1)]	= I(27),
 			[B(NI_ExternalStrobe)]	= I(11),
 			[B(NI_PFI_DO)]	= I(16),
-		पूर्ण,
-		[B(NI_PFI(15))] = अणु
+		},
+		[B(NI_PFI(15))] = {
 			[B(TRIGGER_LINE(0))]	= I(18),
 			[B(TRIGGER_LINE(1))]	= I(19),
 			[B(TRIGGER_LINE(2))]	= I(20),
@@ -566,8 +565,8 @@
 			[B(NI_SCXI_Trig1)]	= I(27),
 			[B(NI_ExternalStrobe)]	= I(11),
 			[B(NI_PFI_DO)]	= I(16),
-		पूर्ण,
-		[B(TRIGGER_LINE(0))] = अणु
+		},
+		[B(TRIGGER_LINE(0))] = {
 			[B(NI_RTSI_BRD(0))]	= I(8),
 			[B(NI_RTSI_BRD(1))]	= I(9),
 			[B(NI_RTSI_BRD(2))]	= I(10),
@@ -580,15 +579,15 @@
 			[B(NI_AO_SampleClock)]	= I(3),
 			[B(NI_AO_StartTrigger)]	= I(4),
 			/*
-			 * क्रम (*->TRIGGER_LINE(*)) MUX, a value of 12 should be
+			 * for (*->TRIGGER_LINE(*)) MUX, a value of 12 should be
 			 * RTSI_OSC according to MHDDK mseries source.  There
-			 * are hपूर्णांकs in comedi that show that this is actually a
-			 * 20MHz source क्रम 628x cards(?)
+			 * are hints in comedi that show that this is actually a
+			 * 20MHz source for 628x cards(?)
 			 */
 			[B(NI_10MHzRefClock)]	= I(12),
 			[B(NI_RGOUT0)]	= I(7),
-		पूर्ण,
-		[B(TRIGGER_LINE(1))] = अणु
+		},
+		[B(TRIGGER_LINE(1))] = {
 			[B(NI_RTSI_BRD(0))]	= I(8),
 			[B(NI_RTSI_BRD(1))]	= I(9),
 			[B(NI_RTSI_BRD(2))]	= I(10),
@@ -601,15 +600,15 @@
 			[B(NI_AO_SampleClock)]	= I(3),
 			[B(NI_AO_StartTrigger)]	= I(4),
 			/*
-			 * क्रम (*->TRIGGER_LINE(*)) MUX, a value of 12 should be
+			 * for (*->TRIGGER_LINE(*)) MUX, a value of 12 should be
 			 * RTSI_OSC according to MHDDK mseries source.  There
-			 * are hपूर्णांकs in comedi that show that this is actually a
-			 * 20MHz source क्रम 628x cards(?)
+			 * are hints in comedi that show that this is actually a
+			 * 20MHz source for 628x cards(?)
 			 */
 			[B(NI_10MHzRefClock)]	= I(12),
 			[B(NI_RGOUT0)]	= I(7),
-		पूर्ण,
-		[B(TRIGGER_LINE(2))] = अणु
+		},
+		[B(TRIGGER_LINE(2))] = {
 			[B(NI_RTSI_BRD(0))]	= I(8),
 			[B(NI_RTSI_BRD(1))]	= I(9),
 			[B(NI_RTSI_BRD(2))]	= I(10),
@@ -622,15 +621,15 @@
 			[B(NI_AO_SampleClock)]	= I(3),
 			[B(NI_AO_StartTrigger)]	= I(4),
 			/*
-			 * क्रम (*->TRIGGER_LINE(*)) MUX, a value of 12 should be
+			 * for (*->TRIGGER_LINE(*)) MUX, a value of 12 should be
 			 * RTSI_OSC according to MHDDK mseries source.  There
-			 * are hपूर्णांकs in comedi that show that this is actually a
-			 * 20MHz source क्रम 628x cards(?)
+			 * are hints in comedi that show that this is actually a
+			 * 20MHz source for 628x cards(?)
 			 */
 			[B(NI_10MHzRefClock)]	= I(12),
 			[B(NI_RGOUT0)]	= I(7),
-		पूर्ण,
-		[B(TRIGGER_LINE(3))] = अणु
+		},
+		[B(TRIGGER_LINE(3))] = {
 			[B(NI_RTSI_BRD(0))]	= I(8),
 			[B(NI_RTSI_BRD(1))]	= I(9),
 			[B(NI_RTSI_BRD(2))]	= I(10),
@@ -643,15 +642,15 @@
 			[B(NI_AO_SampleClock)]	= I(3),
 			[B(NI_AO_StartTrigger)]	= I(4),
 			/*
-			 * क्रम (*->TRIGGER_LINE(*)) MUX, a value of 12 should be
+			 * for (*->TRIGGER_LINE(*)) MUX, a value of 12 should be
 			 * RTSI_OSC according to MHDDK mseries source.  There
-			 * are hपूर्णांकs in comedi that show that this is actually a
-			 * 20MHz source क्रम 628x cards(?)
+			 * are hints in comedi that show that this is actually a
+			 * 20MHz source for 628x cards(?)
 			 */
 			[B(NI_10MHzRefClock)]	= I(12),
 			[B(NI_RGOUT0)]	= I(7),
-		पूर्ण,
-		[B(TRIGGER_LINE(4))] = अणु
+		},
+		[B(TRIGGER_LINE(4))] = {
 			[B(NI_RTSI_BRD(0))]	= I(8),
 			[B(NI_RTSI_BRD(1))]	= I(9),
 			[B(NI_RTSI_BRD(2))]	= I(10),
@@ -664,15 +663,15 @@
 			[B(NI_AO_SampleClock)]	= I(3),
 			[B(NI_AO_StartTrigger)]	= I(4),
 			/*
-			 * क्रम (*->TRIGGER_LINE(*)) MUX, a value of 12 should be
+			 * for (*->TRIGGER_LINE(*)) MUX, a value of 12 should be
 			 * RTSI_OSC according to MHDDK mseries source.  There
-			 * are hपूर्णांकs in comedi that show that this is actually a
-			 * 20MHz source क्रम 628x cards(?)
+			 * are hints in comedi that show that this is actually a
+			 * 20MHz source for 628x cards(?)
 			 */
 			[B(NI_10MHzRefClock)]	= I(12),
 			[B(NI_RGOUT0)]	= I(7),
-		पूर्ण,
-		[B(TRIGGER_LINE(5))] = अणु
+		},
+		[B(TRIGGER_LINE(5))] = {
 			[B(NI_RTSI_BRD(0))]	= I(8),
 			[B(NI_RTSI_BRD(1))]	= I(9),
 			[B(NI_RTSI_BRD(2))]	= I(10),
@@ -685,15 +684,15 @@
 			[B(NI_AO_SampleClock)]	= I(3),
 			[B(NI_AO_StartTrigger)]	= I(4),
 			/*
-			 * क्रम (*->TRIGGER_LINE(*)) MUX, a value of 12 should be
+			 * for (*->TRIGGER_LINE(*)) MUX, a value of 12 should be
 			 * RTSI_OSC according to MHDDK mseries source.  There
-			 * are hपूर्णांकs in comedi that show that this is actually a
-			 * 20MHz source क्रम 628x cards(?)
+			 * are hints in comedi that show that this is actually a
+			 * 20MHz source for 628x cards(?)
 			 */
 			[B(NI_10MHzRefClock)]	= I(12),
 			[B(NI_RGOUT0)]	= I(7),
-		पूर्ण,
-		[B(TRIGGER_LINE(6))] = अणु
+		},
+		[B(TRIGGER_LINE(6))] = {
 			[B(NI_RTSI_BRD(0))]	= I(8),
 			[B(NI_RTSI_BRD(1))]	= I(9),
 			[B(NI_RTSI_BRD(2))]	= I(10),
@@ -706,15 +705,15 @@
 			[B(NI_AO_SampleClock)]	= I(3),
 			[B(NI_AO_StartTrigger)]	= I(4),
 			/*
-			 * क्रम (*->TRIGGER_LINE(*)) MUX, a value of 12 should be
+			 * for (*->TRIGGER_LINE(*)) MUX, a value of 12 should be
 			 * RTSI_OSC according to MHDDK mseries source.  There
-			 * are hपूर्णांकs in comedi that show that this is actually a
-			 * 20MHz source क्रम 628x cards(?)
+			 * are hints in comedi that show that this is actually a
+			 * 20MHz source for 628x cards(?)
 			 */
 			[B(NI_10MHzRefClock)]	= I(12),
 			[B(NI_RGOUT0)]	= I(7),
-		पूर्ण,
-		[B(TRIGGER_LINE(7))] = अणु
+		},
+		[B(TRIGGER_LINE(7))] = {
 			[B(NI_RTSI_BRD(0))]	= I(8),
 			[B(NI_RTSI_BRD(1))]	= I(9),
 			[B(NI_RTSI_BRD(2))]	= I(10),
@@ -727,15 +726,15 @@
 			[B(NI_AO_SampleClock)]	= I(3),
 			[B(NI_AO_StartTrigger)]	= I(4),
 			/*
-			 * क्रम (*->TRIGGER_LINE(*)) MUX, a value of 12 should be
+			 * for (*->TRIGGER_LINE(*)) MUX, a value of 12 should be
 			 * RTSI_OSC according to MHDDK mseries source.  There
-			 * are hपूर्णांकs in comedi that show that this is actually a
-			 * 20MHz source क्रम 628x cards(?)
+			 * are hints in comedi that show that this is actually a
+			 * 20MHz source for 628x cards(?)
 			 */
 			[B(NI_10MHzRefClock)]	= I(12),
 			[B(NI_RGOUT0)]	= I(7),
-		पूर्ण,
-		[B(NI_RTSI_BRD(0))] = अणु
+		},
+		[B(NI_RTSI_BRD(0))] = {
 			[B(NI_PFI(0))]	= I(0),
 			[B(NI_PFI(1))]	= I(1),
 			[B(NI_PFI(2))]	= I(2),
@@ -752,8 +751,8 @@
 			[B(NI_AO_PauseTrigger)]	= I(6),
 			[B(NI_FrequencyOutput)]	= I(8),
 			[B(NI_AnalogComparisonEvent)]	= I(14),
-		पूर्ण,
-		[B(NI_RTSI_BRD(1))] = अणु
+		},
+		[B(NI_RTSI_BRD(1))] = {
 			[B(NI_PFI(0))]	= I(0),
 			[B(NI_PFI(1))]	= I(1),
 			[B(NI_PFI(2))]	= I(2),
@@ -770,8 +769,8 @@
 			[B(NI_AO_PauseTrigger)]	= I(6),
 			[B(NI_FrequencyOutput)]	= I(8),
 			[B(NI_AnalogComparisonEvent)]	= I(14),
-		पूर्ण,
-		[B(NI_RTSI_BRD(2))] = अणु
+		},
+		[B(NI_RTSI_BRD(2))] = {
 			[B(NI_PFI(0))]	= I(0),
 			[B(NI_PFI(1))]	= I(1),
 			[B(NI_PFI(2))]	= I(2),
@@ -788,8 +787,8 @@
 			[B(NI_AO_PauseTrigger)]	= I(6),
 			[B(NI_FrequencyOutput)]	= I(8),
 			[B(NI_AnalogComparisonEvent)]	= I(14),
-		पूर्ण,
-		[B(NI_RTSI_BRD(3))] = अणु
+		},
+		[B(NI_RTSI_BRD(3))] = {
 			[B(NI_PFI(0))]	= I(0),
 			[B(NI_PFI(1))]	= I(1),
 			[B(NI_PFI(2))]	= I(2),
@@ -806,8 +805,8 @@
 			[B(NI_AO_PauseTrigger)]	= I(6),
 			[B(NI_FrequencyOutput)]	= I(8),
 			[B(NI_AnalogComparisonEvent)]	= I(14),
-		पूर्ण,
-		[B(NI_CtrSource(0))] = अणु
+		},
+		[B(NI_CtrSource(0))] = {
 			/* These are not currently implemented in ni modules */
 			[B(NI_PFI(0))]	= U(1),
 			[B(NI_PFI(1))]	= U(2),
@@ -842,8 +841,8 @@
 			[B(NI_100kHzTimebase)]	= U(18),
 			[B(NI_AnalogComparisonEvent)]	= U(Gi_SRC(30, 1)),
 			[B(NI_LogicLow)]	= U(31),
-		पूर्ण,
-		[B(NI_CtrSource(1))] = अणु
+		},
+		[B(NI_CtrSource(1))] = {
 			/* These are not currently implemented in ni modules */
 			[B(NI_PFI(0))]	= U(1),
 			[B(NI_PFI(1))]	= U(2),
@@ -878,8 +877,8 @@
 			[B(NI_100kHzTimebase)]	= U(18),
 			[B(NI_AnalogComparisonEvent)]	= U(Gi_SRC(30, 1)),
 			[B(NI_LogicLow)]	= U(31),
-		पूर्ण,
-		[B(NI_CtrGate(0))] = अणु
+		},
+		[B(NI_CtrGate(0))] = {
 			[B(NI_PFI(0))]	= I(1 /* source:  mhddk examples */),
 			[B(NI_PFI(1))]	= I(2),
 			[B(NI_PFI(2))]	= I(3),
@@ -905,16 +904,16 @@
 			[B(TRIGGER_LINE(6))]	= I(17),
 			[B(TRIGGER_LINE(7))]	= I(27),
 			[B(NI_CtrSource(1))]	= I(29),
-			/* source क्रम following line:  mhddk GP examples */
+			/* source for following line:  mhddk GP examples */
 			[B(NI_CtrInternalOutput(1))]	= I(20),
 			[B(PXI_Star)]	= I(19),
 			[B(NI_AI_StartTrigger)]	= I(28),
 			[B(NI_AI_ReferenceTrigger)]	= I(18),
 			[B(NI_AnalogComparisonEvent)]	= I(30),
 			[B(NI_LogicLow)]	= I(31),
-		पूर्ण,
-		[B(NI_CtrGate(1))] = अणु
-			/* source क्रम following line:  mhddk examples */
+		},
+		[B(NI_CtrGate(1))] = {
+			/* source for following line:  mhddk examples */
 			[B(NI_PFI(0))]	= I(1),
 			[B(NI_PFI(1))]	= I(2),
 			[B(NI_PFI(2))]	= I(3),
@@ -940,15 +939,15 @@
 			[B(TRIGGER_LINE(6))]	= I(17),
 			[B(TRIGGER_LINE(7))]	= I(27),
 			[B(NI_CtrSource(0))]	= I(29),
-			/* source क्रम following line:  mhddk GP examples */
+			/* source for following line:  mhddk GP examples */
 			[B(NI_CtrInternalOutput(0))]	= I(20),
 			[B(PXI_Star)]	= I(19),
 			[B(NI_AI_StartTrigger)]	= I(28),
 			[B(NI_AI_ReferenceTrigger)]	= I(18),
 			[B(NI_AnalogComparisonEvent)]	= I(30),
 			[B(NI_LogicLow)]	= I(31),
-		पूर्ण,
-		[B(NI_CtrAux(0))] = अणु
+		},
+		[B(NI_CtrAux(0))] = {
 			/* these are just a guess; see GATE SELECT NOTE */
 			[B(NI_PFI(0))]	= I(1),
 			[B(NI_PFI(1))]	= I(2),
@@ -975,15 +974,15 @@
 			[B(TRIGGER_LINE(6))]	= I(17),
 			[B(TRIGGER_LINE(7))]	= I(27),
 			[B(NI_CtrSource(1))]	= I(29),
-			/* source क्रम following line:  mhddk GP examples */
+			/* source for following line:  mhddk GP examples */
 			[B(NI_CtrInternalOutput(1))]	= I(20),
 			[B(PXI_Star)]	= I(19),
 			[B(NI_AI_StartTrigger)]	= I(28),
 			[B(NI_AI_ReferenceTrigger)]	= I(18),
 			[B(NI_AnalogComparisonEvent)]	= I(30),
 			[B(NI_LogicLow)]	= I(31),
-		पूर्ण,
-		[B(NI_CtrAux(1))] = अणु
+		},
+		[B(NI_CtrAux(1))] = {
 			/* these are just a guess; see GATE SELECT NOTE */
 			[B(NI_PFI(0))]	= I(1),
 			[B(NI_PFI(1))]	= I(2),
@@ -1010,17 +1009,17 @@
 			[B(TRIGGER_LINE(6))]	= I(17),
 			[B(TRIGGER_LINE(7))]	= I(27),
 			[B(NI_CtrSource(0))]	= I(29),
-			/* source क्रम following line:  mhddk GP examples */
+			/* source for following line:  mhddk GP examples */
 			[B(NI_CtrInternalOutput(0))]	= I(20),
 			[B(PXI_Star)]	= I(19),
 			[B(NI_AI_StartTrigger)]	= I(28),
 			[B(NI_AI_ReferenceTrigger)]	= I(18),
 			[B(NI_AnalogComparisonEvent)]	= I(30),
 			[B(NI_LogicLow)]	= I(31),
-		पूर्ण,
-		[B(NI_CtrA(0))] = अणु
+		},
+		[B(NI_CtrA(0))] = {
 			/*
-			 * See nimseries/Examples क्रम outमाला_दो; inमाला_दो a guess
+			 * See nimseries/Examples for outputs; inputs a guess
 			 * from device routes shown on NI-MAX.
 			 * see M-Series user manual (371022K-01)
 			 */
@@ -1051,10 +1050,10 @@
 			[B(PXI_Star)]	= I(20),
 			[B(NI_AnalogComparisonEvent)]	= I(30),
 			[B(NI_LogicLow)]	= I(31),
-		पूर्ण,
-		[B(NI_CtrA(1))] = अणु
+		},
+		[B(NI_CtrA(1))] = {
 			/*
-			 * See nimseries/Examples क्रम outमाला_दो; inमाला_दो a guess
+			 * See nimseries/Examples for outputs; inputs a guess
 			 * from device routes shown on NI-MAX.
 			 * see M-Series user manual (371022K-01)
 			 */
@@ -1085,10 +1084,10 @@
 			[B(PXI_Star)]	= I(20),
 			[B(NI_AnalogComparisonEvent)]	= I(30),
 			[B(NI_LogicLow)]	= I(31),
-		पूर्ण,
-		[B(NI_CtrB(0))] = अणु
+		},
+		[B(NI_CtrB(0))] = {
 			/*
-			 * See nimseries/Examples क्रम outमाला_दो; inमाला_दो a guess
+			 * See nimseries/Examples for outputs; inputs a guess
 			 * from device routes shown on NI-MAX.
 			 * see M-Series user manual (371022K-01)
 			 */
@@ -1119,10 +1118,10 @@
 			[B(PXI_Star)]	= I(20),
 			[B(NI_AnalogComparisonEvent)]	= I(30),
 			[B(NI_LogicLow)]	= I(31),
-		पूर्ण,
-		[B(NI_CtrB(1))] = अणु
+		},
+		[B(NI_CtrB(1))] = {
 			/*
-			 * See nimseries/Examples क्रम outमाला_दो; inमाला_दो a guess
+			 * See nimseries/Examples for outputs; inputs a guess
 			 * from device routes shown on NI-MAX.
 			 * see M-Series user manual (371022K-01)
 			 */
@@ -1153,10 +1152,10 @@
 			[B(PXI_Star)]	= I(20),
 			[B(NI_AnalogComparisonEvent)]	= I(30),
 			[B(NI_LogicLow)]	= I(31),
-		पूर्ण,
-		[B(NI_CtrZ(0))] = अणु
+		},
+		[B(NI_CtrZ(0))] = {
 			/*
-			 * See nimseries/Examples क्रम outमाला_दो; inमाला_दो a guess
+			 * See nimseries/Examples for outputs; inputs a guess
 			 * from device routes shown on NI-MAX.
 			 * see M-Series user manual (371022K-01)
 			 */
@@ -1187,10 +1186,10 @@
 			[B(PXI_Star)]	= I(20),
 			[B(NI_AnalogComparisonEvent)]	= I(30),
 			[B(NI_LogicLow)]	= I(31),
-		पूर्ण,
-		[B(NI_CtrZ(1))] = अणु
+		},
+		[B(NI_CtrZ(1))] = {
 			/*
-			 * See nimseries/Examples क्रम outमाला_दो; inमाला_दो a guess
+			 * See nimseries/Examples for outputs; inputs a guess
 			 * from device routes shown on NI-MAX.
 			 * see M-Series user manual (371022K-01)
 			 */
@@ -1221,8 +1220,8 @@
 			[B(PXI_Star)]	= I(20),
 			[B(NI_AnalogComparisonEvent)]	= I(30),
 			[B(NI_LogicLow)]	= I(31),
-		पूर्ण,
-		[B(NI_CtrArmStartTrigger(0))] = अणु
+		},
+		[B(NI_CtrArmStartTrigger(0))] = {
 			/* these are just a guess; see GATE SELECT NOTE */
 			[B(NI_PFI(0))]	= I(1),
 			[B(NI_PFI(1))]	= I(2),
@@ -1249,15 +1248,15 @@
 			[B(TRIGGER_LINE(6))]	= I(17),
 			[B(TRIGGER_LINE(7))]	= I(27),
 			[B(NI_CtrSource(1))]	= I(29),
-			/* source क्रम following line:  mhddk GP examples */
+			/* source for following line:  mhddk GP examples */
 			[B(NI_CtrInternalOutput(1))]	= I(20),
 			[B(PXI_Star)]	= I(19),
 			[B(NI_AI_StartTrigger)]	= I(28),
 			[B(NI_AI_ReferenceTrigger)]	= I(18),
 			[B(NI_AnalogComparisonEvent)]	= I(30),
 			[B(NI_LogicLow)]	= I(31),
-		पूर्ण,
-		[B(NI_CtrArmStartTrigger(1))] = अणु
+		},
+		[B(NI_CtrArmStartTrigger(1))] = {
 			/* these are just a guess; see GATE SELECT NOTE */
 			[B(NI_PFI(0))]	= I(1),
 			[B(NI_PFI(1))]	= I(2),
@@ -1284,15 +1283,15 @@
 			[B(TRIGGER_LINE(6))]	= I(17),
 			[B(TRIGGER_LINE(7))]	= I(27),
 			[B(NI_CtrSource(0))]	= I(29),
-			/* source क्रम following line:  mhddk GP examples */
+			/* source for following line:  mhddk GP examples */
 			[B(NI_CtrInternalOutput(0))]	= I(20),
 			[B(PXI_Star)]	= I(19),
 			[B(NI_AI_StartTrigger)]	= I(28),
 			[B(NI_AI_ReferenceTrigger)]	= I(18),
 			[B(NI_AnalogComparisonEvent)]	= I(30),
 			[B(NI_LogicLow)]	= I(31),
-		पूर्ण,
-		[B(NI_CtrOut(0))] = अणु
+		},
+		[B(NI_CtrOut(0))] = {
 			[B(TRIGGER_LINE(0))]	= I(1),
 			[B(TRIGGER_LINE(1))]	= I(2),
 			[B(TRIGGER_LINE(2))]	= I(3),
@@ -1301,11 +1300,11 @@
 			[B(TRIGGER_LINE(5))]	= I(6),
 			[B(TRIGGER_LINE(6))]	= I(7),
 			[B(NI_CtrInternalOutput(0))]	= I(0),
-		पूर्ण,
-		[B(NI_CtrOut(1))] = अणु
+		},
+		[B(NI_CtrOut(1))] = {
 			[B(NI_CtrInternalOutput(1))]	= I(0),
-		पूर्ण,
-		[B(NI_AI_SampleClock)] = अणु
+		},
+		[B(NI_AI_SampleClock)] = {
 			[B(NI_PFI(0))]	= I(1),
 			[B(NI_PFI(1))]	= I(2),
 			[B(NI_PFI(2))]	= I(3),
@@ -1337,8 +1336,8 @@
 			[B(NI_AnalogComparisonEvent)]	= I(30),
 			[B(NI_SCXI_Trig1)]	= I(29),
 			[B(NI_LogicLow)]	= I(31),
-		पूर्ण,
-		[B(NI_AI_SampleClockTimebase)] = अणु
+		},
+		[B(NI_AI_SampleClockTimebase)] = {
 			/* These are not currently implemented in ni modules */
 			[B(NI_PFI(0))]	= U(1),
 			[B(NI_PFI(1))]	= U(2),
@@ -1369,7 +1368,7 @@
 			/*
 			 * For routes (*->NI_AI_SampleClockTimebase) and
 			 * (*->NI_AO_SampleClockTimebase), tMSeries.h of MHDDK
-			 * shows 0 value as selecting ground (हाल ground?) and
+			 * shows 0 value as selecting ground (case ground?) and
 			 * 28 value selecting TIMEBASE 1.
 			 */
 			[B(NI_20MHzTimebase)]	= U(28),
@@ -1377,8 +1376,8 @@
 			[B(NI_AnalogComparisonEvent)]	= U(30),
 			[B(NI_LogicLow)]	= U(31),
 			[B(NI_CaseGround)]	= U(0),
-		पूर्ण,
-		[B(NI_AI_StartTrigger)] = अणु
+		},
+		[B(NI_AI_StartTrigger)] = {
 			[B(NI_PFI(0))]	= I(1),
 			[B(NI_PFI(1))]	= I(2),
 			[B(NI_PFI(2))]	= I(3),
@@ -1408,8 +1407,8 @@
 			[B(PXI_Star)]	= I(20),
 			[B(NI_AnalogComparisonEvent)]	= I(30),
 			[B(NI_LogicLow)]	= I(31),
-		पूर्ण,
-		[B(NI_AI_ReferenceTrigger)] = अणु
+		},
+		[B(NI_AI_ReferenceTrigger)] = {
 			/* These are not currently implemented in ni modules */
 			[B(NI_PFI(0))]	= U(1),
 			[B(NI_PFI(1))]	= U(2),
@@ -1438,8 +1437,8 @@
 			[B(PXI_Star)]	= U(20),
 			[B(NI_AnalogComparisonEvent)]	= U(30),
 			[B(NI_LogicLow)]	= U(31),
-		पूर्ण,
-		[B(NI_AI_ConvertClock)] = अणु
+		},
+		[B(NI_AI_ConvertClock)] = {
 			[B(NI_PFI(0))]	= I(1),
 			[B(NI_PFI(1))]	= I(2),
 			[B(NI_PFI(2))]	= I(3),
@@ -1464,21 +1463,21 @@
 			[B(TRIGGER_LINE(5))]	= I(16),
 			[B(TRIGGER_LINE(6))]	= I(17),
 			[B(TRIGGER_LINE(7))]	= I(27),
-			/* source क्रम following line:  mhddk example headers */
+			/* source for following line:  mhddk example headers */
 			[B(NI_CtrInternalOutput(0))]	= I(19),
-			/* source क्रम following line:  mhddk example headers */
+			/* source for following line:  mhddk example headers */
 			[B(NI_CtrInternalOutput(1))]	= I(18),
 			[B(PXI_Star)]	= I(20),
 			[B(NI_AI_ConvertClockTimebase)]	= I(0),
 			[B(NI_AnalogComparisonEvent)]	= I(30),
 			[B(NI_LogicLow)]	= I(31),
-		पूर्ण,
-		[B(NI_AI_ConvertClockTimebase)] = अणु
+		},
+		[B(NI_AI_ConvertClockTimebase)] = {
 			/* These are not currently implemented in ni modules */
 			[B(NI_AI_SampleClockTimebase)]	= U(0),
 			[B(NI_20MHzTimebase)]	= U(1),
-		पूर्ण,
-		[B(NI_AI_PauseTrigger)] = अणु
+		},
+		[B(NI_AI_PauseTrigger)] = {
 			/* These are not currently implemented in ni modules */
 			[B(NI_PFI(0))]	= U(1),
 			[B(NI_PFI(1))]	= U(2),
@@ -1507,8 +1506,8 @@
 			[B(PXI_Star)]	= U(20),
 			[B(NI_AnalogComparisonEvent)]	= U(30),
 			[B(NI_LogicLow)]	= U(31),
-		पूर्ण,
-		[B(NI_AO_SampleClock)] = अणु
+		},
+		[B(NI_AO_SampleClock)] = {
 			[B(NI_PFI(0))]	= I(1),
 			[B(NI_PFI(1))]	= I(2),
 			[B(NI_PFI(2))]	= I(3),
@@ -1539,8 +1538,8 @@
 			[B(NI_AO_SampleClockTimebase)]	= I(0),
 			[B(NI_AnalogComparisonEvent)]	= I(30),
 			[B(NI_LogicLow)]	= I(31),
-		पूर्ण,
-		[B(NI_AO_SampleClockTimebase)] = अणु
+		},
+		[B(NI_AO_SampleClockTimebase)] = {
 			/* These are not currently implemented in ni modules */
 			[B(NI_PFI(0))]	= U(1),
 			[B(NI_PFI(1))]	= U(2),
@@ -1571,7 +1570,7 @@
 			/*
 			 * For routes (*->NI_AI_SampleClockTimebase) and
 			 * (*->NI_AO_SampleClockTimebase), tMSeries.h of MHDDK
-			 * shows 0 value as selecting ground (हाल ground?) and
+			 * shows 0 value as selecting ground (case ground?) and
 			 * 28 value selecting TIMEBASE 1.
 			 */
 			[B(NI_20MHzTimebase)]	= U(28),
@@ -1579,8 +1578,8 @@
 			[B(NI_AnalogComparisonEvent)]	= U(30),
 			[B(NI_LogicLow)]	= U(31),
 			[B(NI_CaseGround)]	= U(0),
-		पूर्ण,
-		[B(NI_AO_StartTrigger)] = अणु
+		},
+		[B(NI_AO_StartTrigger)] = {
 			[B(NI_PFI(0))]	= I(1),
 			[B(NI_PFI(1))]	= I(2),
 			[B(NI_PFI(2))]	= I(3),
@@ -1607,21 +1606,21 @@
 			[B(TRIGGER_LINE(7))]	= I(27),
 			[B(PXI_Star)]	= I(20),
 			/*
-			 * क्रम the संकेत route
+			 * for the signal route
 			 * (NI_AI_StartTrigger->NI_AO_StartTrigger), DAQ-STC &
-			 * MHDDK disagreed क्रम e-series.  MHDDK क्रम m-series
+			 * MHDDK disagreed for e-series.  MHDDK for m-series
 			 * agrees with DAQ-STC description and uses the value 18
-			 * क्रम the route
+			 * for the route
 			 * (NI_AI_ReferenceTrigger->NI_AO_StartTrigger).  The
 			 * m-series devices are supposed to have DAQ-STC2.
-			 * There are no DAQ-STC2 करोcs to compare with.
+			 * There are no DAQ-STC2 docs to compare with.
 			 */
 			[B(NI_AI_StartTrigger)]	= I(19),
 			[B(NI_AI_ReferenceTrigger)]	= I(18),
 			[B(NI_AnalogComparisonEvent)]	= I(30),
 			[B(NI_LogicLow)]	= I(31),
-		पूर्ण,
-		[B(NI_AO_PauseTrigger)] = अणु
+		},
+		[B(NI_AO_PauseTrigger)] = {
 			/* These are not currently implemented in ni modules */
 			[B(NI_PFI(0))]	= U(1),
 			[B(NI_PFI(1))]	= U(2),
@@ -1650,8 +1649,8 @@
 			[B(PXI_Star)]	= U(20),
 			[B(NI_AnalogComparisonEvent)]	= U(30),
 			[B(NI_LogicLow)]	= U(31),
-		पूर्ण,
-		[B(NI_DI_SampleClock)] = अणु
+		},
+		[B(NI_DI_SampleClock)] = {
 			[B(NI_PFI(0))]	= I(1),
 			[B(NI_PFI(1))]	= I(2),
 			[B(NI_PFI(2))]	= I(3),
@@ -1685,8 +1684,8 @@
 			[B(NI_FrequencyOutput)]	= I(32),
 			[B(NI_ChangeDetectionEvent)]	= I(33),
 			[B(NI_CaseGround)]	= I(0),
-		पूर्ण,
-		[B(NI_DO_SampleClock)] = अणु
+		},
+		[B(NI_DO_SampleClock)] = {
 			[B(NI_PFI(0))]	= I(1),
 			[B(NI_PFI(1))]	= I(2),
 			[B(NI_PFI(2))]	= I(3),
@@ -1720,8 +1719,8 @@
 			[B(NI_FrequencyOutput)]	= I(32),
 			[B(NI_ChangeDetectionEvent)]	= I(33),
 			[B(NI_CaseGround)]	= I(0),
-		पूर्ण,
-		[B(NI_MasterTimebase)] = अणु
+		},
+		[B(NI_MasterTimebase)] = {
 			/* These are not currently implemented in ni modules */
 			[B(TRIGGER_LINE(0))]	= U(11),
 			[B(TRIGGER_LINE(1))]	= U(12),
@@ -1734,20 +1733,20 @@
 			[B(PXI_Star)]	= U(20),
 			[B(PXI_Clk10)]	= U(29),
 			[B(NI_10MHzRefClock)]	= U(0),
-		पूर्ण,
+		},
 		/*
-		 * This symbol is not defined and nothing क्रम this is
+		 * This symbol is not defined and nothing for this is
 		 * implemented--just including this because data was found in
-		 * the NI-STC क्रम it--can't remember where.
-		 * [B(NI_FrequencyOutTimebase)] = अणु
+		 * the NI-STC for it--can't remember where.
+		 * [B(NI_FrequencyOutTimebase)] = {
 		 *	** These are not currently implemented in ni modules **
 		 *	[B(NI_20MHzTimebase)]	= U(0),
 		 *	[B(NI_100kHzTimebase)]	= U(1),
-		 * पूर्ण,
+		 * },
 		 */
-		[B(NI_RGOUT0)] = अणु
+		[B(NI_RGOUT0)] = {
 			[B(NI_CtrInternalOutput(0))]	= I(0),
 			[B(NI_CtrOut(0))]	= I(1),
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};

@@ -1,40 +1,39 @@
-<शैली गुरु>
 /*
- * SPDX-License-Identअगरier: GPL-2.0
+ * SPDX-License-Identifier: GPL-2.0
  *
- * dvb-vb2.h - DVB driver helper framework क्रम streaming I/O
+ * dvb-vb2.h - DVB driver helper framework for streaming I/O
  *
  * Copyright (C) 2015 Samsung Electronics
  *
  * Author: jh1009.sung@samsung.com
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy
+ * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation.
  */
 
-#अगर_अघोषित _DVB_VB2_H
-#घोषणा _DVB_VB2_H
+#ifndef _DVB_VB2_H
+#define _DVB_VB2_H
 
-#समावेश <linux/mutex.h>
-#समावेश <linux/poll.h>
-#समावेश <linux/dvb/dmx.h>
-#समावेश <media/videobuf2-core.h>
-#समावेश <media/videobuf2-dma-contig.h>
-#समावेश <media/videobuf2-vदो_स्मृति.h>
+#include <linux/mutex.h>
+#include <linux/poll.h>
+#include <linux/dvb/dmx.h>
+#include <media/videobuf2-core.h>
+#include <media/videobuf2-dma-contig.h>
+#include <media/videobuf2-vmalloc.h>
 
 /**
- * क्रमागत dvb_buf_type - types of Digital TV memory-mapped buffers
+ * enum dvb_buf_type - types of Digital TV memory-mapped buffers
  *
  * @DVB_BUF_TYPE_CAPTURE: buffer is filled by the Kernel,
  *			  with a received Digital TV stream
  */
-क्रमागत dvb_buf_type अणु
+enum dvb_buf_type {
 	DVB_BUF_TYPE_CAPTURE        = 1,
-पूर्ण;
+};
 
 /**
- * क्रमागत dvb_vb2_states - states to control VB2 state machine
+ * enum dvb_vb2_states - states to control VB2 state machine
  * @DVB_VB2_STATE_NONE:
  *	VB2 engine not initialized yet, init failed or VB2 was released.
  * @DVB_VB2_STATE_INIT:
@@ -50,232 +49,232 @@
  * Callers should not touch at the state machine directly. This
  * is handled inside dvb_vb2.c.
  */
-क्रमागत dvb_vb2_states अणु
+enum dvb_vb2_states {
 	DVB_VB2_STATE_NONE	= 0x0,
 	DVB_VB2_STATE_INIT	= 0x1,
 	DVB_VB2_STATE_REQBUFS	= 0x2,
 	DVB_VB2_STATE_STREAMON	= 0x4,
-पूर्ण;
+};
 
-#घोषणा DVB_VB2_NAME_MAX (20)
+#define DVB_VB2_NAME_MAX (20)
 
 /**
- * काष्ठा dvb_buffer - video buffer inक्रमmation क्रम v4l2.
+ * struct dvb_buffer - video buffer information for v4l2.
  *
- * @vb:		embedded काष्ठा &vb2_buffer.
- * @list:	list of &काष्ठा dvb_buffer.
+ * @vb:		embedded struct &vb2_buffer.
+ * @list:	list of &struct dvb_buffer.
  */
-काष्ठा dvb_buffer अणु
-	काष्ठा vb2_buffer	vb;
-	काष्ठा list_head	list;
-पूर्ण;
+struct dvb_buffer {
+	struct vb2_buffer	vb;
+	struct list_head	list;
+};
 
 /**
- * काष्ठा dvb_vb2_ctx - control काष्ठा क्रम VB2 handler
- * @vb_q:	poपूर्णांकer to &काष्ठा vb2_queue with videobuf2 queue.
+ * struct dvb_vb2_ctx - control struct for VB2 handler
+ * @vb_q:	pointer to &struct vb2_queue with videobuf2 queue.
  * @mutex:	mutex to serialize vb2 operations. Used by
- *		vb2 core %रुको_prepare and %रुको_finish operations.
+ *		vb2 core %wait_prepare and %wait_finish operations.
  * @slock:	spin lock used to protect buffer filling at dvb_vb2.c.
  * @dvb_q:	List of buffers that are not filled yet.
- * @buf:	Poपूर्णांकer to the buffer that are currently being filled.
+ * @buf:	Pointer to the buffer that are currently being filled.
  * @offset:	index to the next position at the @buf to be filled.
- * @reमुख्य:	How many bytes are left to be filled at @buf.
- * @state:	biपंचांगask of buffer states as defined by &क्रमागत dvb_vb2_states.
+ * @remain:	How many bytes are left to be filled at @buf.
+ * @state:	bitmask of buffer states as defined by &enum dvb_vb2_states.
  * @buf_siz:	size of each VB2 buffer.
  * @buf_cnt:	number of VB2 buffers.
  * @nonblocking:
- *		If dअगरferent than zero, device is operating on non-blocking
+ *		If different than zero, device is operating on non-blocking
  *		mode.
- * @flags:	buffer flags as defined by &क्रमागत dmx_buffer_flags.
+ * @flags:	buffer flags as defined by &enum dmx_buffer_flags.
  *		Filled only at &DMX_DQBUF. &DMX_QBUF should zero this field.
- * @count:	monotonic counter क्रम filled buffers. Helps to identअगरy
+ * @count:	monotonic counter for filled buffers. Helps to identify
  *		data stream loses. Filled only at &DMX_DQBUF. &DMX_QBUF should
  *		zero this field.
  *
  * @name:	name of the device type. Currently, it can either be
  *		"dvr" or "demux_filter".
  */
-काष्ठा dvb_vb2_ctx अणु
-	काष्ठा vb2_queue	vb_q;
-	काष्ठा mutex		mutex;
+struct dvb_vb2_ctx {
+	struct vb2_queue	vb_q;
+	struct mutex		mutex;
 	spinlock_t		slock;
-	काष्ठा list_head	dvb_q;
-	काष्ठा dvb_buffer	*buf;
-	पूर्णांक	offset;
-	पूर्णांक	reमुख्य;
-	पूर्णांक	state;
-	पूर्णांक	buf_siz;
-	पूर्णांक	buf_cnt;
-	पूर्णांक	nonblocking;
+	struct list_head	dvb_q;
+	struct dvb_buffer	*buf;
+	int	offset;
+	int	remain;
+	int	state;
+	int	buf_siz;
+	int	buf_cnt;
+	int	nonblocking;
 
-	क्रमागत dmx_buffer_flags flags;
+	enum dmx_buffer_flags flags;
 	u32	count;
 
-	अक्षर	name[DVB_VB2_NAME_MAX + 1];
-पूर्ण;
+	char	name[DVB_VB2_NAME_MAX + 1];
+};
 
-#अगर_अघोषित CONFIG_DVB_MMAP
-अटल अंतरभूत पूर्णांक dvb_vb2_init(काष्ठा dvb_vb2_ctx *ctx,
-			       स्थिर अक्षर *name, पूर्णांक non_blocking)
-अणु
-	वापस 0;
-पूर्ण;
-अटल अंतरभूत पूर्णांक dvb_vb2_release(काष्ठा dvb_vb2_ctx *ctx)
-अणु
-	वापस 0;
-पूर्ण;
-#घोषणा dvb_vb2_is_streaming(ctx) (0)
-#घोषणा dvb_vb2_fill_buffer(ctx, file, रुको, flags) (0)
+#ifndef CONFIG_DVB_MMAP
+static inline int dvb_vb2_init(struct dvb_vb2_ctx *ctx,
+			       const char *name, int non_blocking)
+{
+	return 0;
+};
+static inline int dvb_vb2_release(struct dvb_vb2_ctx *ctx)
+{
+	return 0;
+};
+#define dvb_vb2_is_streaming(ctx) (0)
+#define dvb_vb2_fill_buffer(ctx, file, wait, flags) (0)
 
-अटल अंतरभूत __poll_t dvb_vb2_poll(काष्ठा dvb_vb2_ctx *ctx,
-				    काष्ठा file *file,
-				    poll_table *रुको)
-अणु
-	वापस 0;
-पूर्ण
-#अन्यथा
+static inline __poll_t dvb_vb2_poll(struct dvb_vb2_ctx *ctx,
+				    struct file *file,
+				    poll_table *wait)
+{
+	return 0;
+}
+#else
 /**
  * dvb_vb2_init - initializes VB2 handler
  *
- * @ctx:	control काष्ठा क्रम VB2 handler
- * @name:	name क्रम the VB2 handler
+ * @ctx:	control struct for VB2 handler
+ * @name:	name for the VB2 handler
  * @non_blocking:
- *		अगर not zero, it means that the device is at non-blocking mode
+ *		if not zero, it means that the device is at non-blocking mode
  */
-पूर्णांक dvb_vb2_init(काष्ठा dvb_vb2_ctx *ctx, स्थिर अक्षर *name, पूर्णांक non_blocking);
+int dvb_vb2_init(struct dvb_vb2_ctx *ctx, const char *name, int non_blocking);
 
 /**
  * dvb_vb2_release - Releases the VB2 handler allocated resources and
  *	put @ctx at DVB_VB2_STATE_NONE state.
- * @ctx:	control काष्ठा क्रम VB2 handler
+ * @ctx:	control struct for VB2 handler
  */
-पूर्णांक dvb_vb2_release(काष्ठा dvb_vb2_ctx *ctx);
+int dvb_vb2_release(struct dvb_vb2_ctx *ctx);
 
 /**
- * dvb_vb2_is_streaming - checks अगर the VB2 handler is streaming
- * @ctx:	control काष्ठा क्रम VB2 handler
+ * dvb_vb2_is_streaming - checks if the VB2 handler is streaming
+ * @ctx:	control struct for VB2 handler
  *
- * Return: 0 अगर not streaming, 1 otherwise.
+ * Return: 0 if not streaming, 1 otherwise.
  */
-पूर्णांक dvb_vb2_is_streaming(काष्ठा dvb_vb2_ctx *ctx);
+int dvb_vb2_is_streaming(struct dvb_vb2_ctx *ctx);
 
 /**
  * dvb_vb2_fill_buffer - fills a VB2 buffer
- * @ctx:	control काष्ठा क्रम VB2 handler
+ * @ctx:	control struct for VB2 handler
  * @src:	place where the data is stored
  * @len:	number of bytes to be copied from @src
  * @buffer_flags:
- *		poपूर्णांकer to buffer flags as defined by &क्रमागत dmx_buffer_flags.
- *		can be शून्य.
+ *		pointer to buffer flags as defined by &enum dmx_buffer_flags.
+ *		can be NULL.
  */
-पूर्णांक dvb_vb2_fill_buffer(काष्ठा dvb_vb2_ctx *ctx,
-			स्थिर अचिन्हित अक्षर *src, पूर्णांक len,
-			क्रमागत dmx_buffer_flags *buffer_flags);
+int dvb_vb2_fill_buffer(struct dvb_vb2_ctx *ctx,
+			const unsigned char *src, int len,
+			enum dmx_buffer_flags *buffer_flags);
 
 /**
- * dvb_vb2_poll - Wrapper to vb2_core_streamon() क्रम Digital TV
+ * dvb_vb2_poll - Wrapper to vb2_core_streamon() for Digital TV
  *      buffer handling.
  *
- * @ctx:	control काष्ठा क्रम VB2 handler
- * @file:	&काष्ठा file argument passed to the poll
+ * @ctx:	control struct for VB2 handler
+ * @file:	&struct file argument passed to the poll
  *		file operation handler.
- * @रुको:	&poll_table रुको argument passed to the poll
+ * @wait:	&poll_table wait argument passed to the poll
  *		file operation handler.
  *
  * Implements poll syscall() logic.
  */
-__poll_t dvb_vb2_poll(काष्ठा dvb_vb2_ctx *ctx, काष्ठा file *file,
-		      poll_table *रुको);
-#पूर्ण_अगर
+__poll_t dvb_vb2_poll(struct dvb_vb2_ctx *ctx, struct file *file,
+		      poll_table *wait);
+#endif
 
 /**
- * dvb_vb2_stream_on() - Wrapper to vb2_core_streamon() क्रम Digital TV
+ * dvb_vb2_stream_on() - Wrapper to vb2_core_streamon() for Digital TV
  *	buffer handling.
  *
- * @ctx:	control काष्ठा क्रम VB2 handler
+ * @ctx:	control struct for VB2 handler
  *
  * Starts dvb streaming
  */
-पूर्णांक dvb_vb2_stream_on(काष्ठा dvb_vb2_ctx *ctx);
+int dvb_vb2_stream_on(struct dvb_vb2_ctx *ctx);
 /**
- * dvb_vb2_stream_off() - Wrapper to vb2_core_streamoff() क्रम Digital TV
+ * dvb_vb2_stream_off() - Wrapper to vb2_core_streamoff() for Digital TV
  *	buffer handling.
  *
- * @ctx:	control काष्ठा क्रम VB2 handler
+ * @ctx:	control struct for VB2 handler
  *
  * Stops dvb streaming
  */
-पूर्णांक dvb_vb2_stream_off(काष्ठा dvb_vb2_ctx *ctx);
+int dvb_vb2_stream_off(struct dvb_vb2_ctx *ctx);
 
 /**
- * dvb_vb2_reqbufs() - Wrapper to vb2_core_reqbufs() क्रम Digital TV
+ * dvb_vb2_reqbufs() - Wrapper to vb2_core_reqbufs() for Digital TV
  *	buffer handling.
  *
- * @ctx:	control काष्ठा क्रम VB2 handler
- * @req:	&काष्ठा dmx_requestbuffers passed from userspace in
+ * @ctx:	control struct for VB2 handler
+ * @req:	&struct dmx_requestbuffers passed from userspace in
  *		order to handle &DMX_REQBUFS.
  *
  * Initiate streaming by requesting a number of buffers. Also used to
- * मुक्त previously requested buffers, is ``req->count`` is zero.
+ * free previously requested buffers, is ``req->count`` is zero.
  */
-पूर्णांक dvb_vb2_reqbufs(काष्ठा dvb_vb2_ctx *ctx, काष्ठा dmx_requestbuffers *req);
+int dvb_vb2_reqbufs(struct dvb_vb2_ctx *ctx, struct dmx_requestbuffers *req);
 
 /**
- * dvb_vb2_querybuf() - Wrapper to vb2_core_querybuf() क्रम Digital TV
+ * dvb_vb2_querybuf() - Wrapper to vb2_core_querybuf() for Digital TV
  *	buffer handling.
  *
- * @ctx:	control काष्ठा क्रम VB2 handler
- * @b:		&काष्ठा dmx_buffer passed from userspace in
+ * @ctx:	control struct for VB2 handler
+ * @b:		&struct dmx_buffer passed from userspace in
  *		order to handle &DMX_QUERYBUF.
  *
  *
  */
-पूर्णांक dvb_vb2_querybuf(काष्ठा dvb_vb2_ctx *ctx, काष्ठा dmx_buffer *b);
+int dvb_vb2_querybuf(struct dvb_vb2_ctx *ctx, struct dmx_buffer *b);
 
 /**
- * dvb_vb2_expbuf() - Wrapper to vb2_core_expbuf() क्रम Digital TV
+ * dvb_vb2_expbuf() - Wrapper to vb2_core_expbuf() for Digital TV
  *	buffer handling.
  *
- * @ctx:	control काष्ठा क्रम VB2 handler
- * @exp:	&काष्ठा dmx_exportbuffer passed from userspace in
+ * @ctx:	control struct for VB2 handler
+ * @exp:	&struct dmx_exportbuffer passed from userspace in
  *		order to handle &DMX_EXPBUF.
  *
  * Export a buffer as a file descriptor.
  */
-पूर्णांक dvb_vb2_expbuf(काष्ठा dvb_vb2_ctx *ctx, काष्ठा dmx_exportbuffer *exp);
+int dvb_vb2_expbuf(struct dvb_vb2_ctx *ctx, struct dmx_exportbuffer *exp);
 
 /**
- * dvb_vb2_qbuf() - Wrapper to vb2_core_qbuf() क्रम Digital TV buffer handling.
+ * dvb_vb2_qbuf() - Wrapper to vb2_core_qbuf() for Digital TV buffer handling.
  *
- * @ctx:	control काष्ठा क्रम VB2 handler
- * @b:		&काष्ठा dmx_buffer passed from userspace in
+ * @ctx:	control struct for VB2 handler
+ * @b:		&struct dmx_buffer passed from userspace in
  *		order to handle &DMX_QBUF.
  *
  * Queue a Digital TV buffer as requested by userspace
  */
-पूर्णांक dvb_vb2_qbuf(काष्ठा dvb_vb2_ctx *ctx, काष्ठा dmx_buffer *b);
+int dvb_vb2_qbuf(struct dvb_vb2_ctx *ctx, struct dmx_buffer *b);
 
 /**
- * dvb_vb2_dqbuf() - Wrapper to vb2_core_dqbuf() क्रम Digital TV
+ * dvb_vb2_dqbuf() - Wrapper to vb2_core_dqbuf() for Digital TV
  *	buffer handling.
  *
- * @ctx:	control काष्ठा क्रम VB2 handler
- * @b:		&काष्ठा dmx_buffer passed from userspace in
+ * @ctx:	control struct for VB2 handler
+ * @b:		&struct dmx_buffer passed from userspace in
  *		order to handle &DMX_DQBUF.
  *
  * Dequeue a Digital TV buffer to the userspace
  */
-पूर्णांक dvb_vb2_dqbuf(काष्ठा dvb_vb2_ctx *ctx, काष्ठा dmx_buffer *b);
+int dvb_vb2_dqbuf(struct dvb_vb2_ctx *ctx, struct dmx_buffer *b);
 
 /**
- * dvb_vb2_mmap() - Wrapper to vb2_mmap() क्रम Digital TV buffer handling.
+ * dvb_vb2_mmap() - Wrapper to vb2_mmap() for Digital TV buffer handling.
  *
- * @ctx:	control काष्ठा क्रम VB2 handler
- * @vma:        poपूर्णांकer to &काष्ठा vm_area_काष्ठा with the vma passed
+ * @ctx:	control struct for VB2 handler
+ * @vma:        pointer to &struct vm_area_struct with the vma passed
  *              to the mmap file operation handler in the driver.
  *
- * map Digital TV video buffers पूर्णांकo application address space.
+ * map Digital TV video buffers into application address space.
  */
-पूर्णांक dvb_vb2_mmap(काष्ठा dvb_vb2_ctx *ctx, काष्ठा vm_area_काष्ठा *vma);
+int dvb_vb2_mmap(struct dvb_vb2_ctx *ctx, struct vm_area_struct *vma);
 
-#पूर्ण_अगर /* _DVB_VB2_H */
+#endif /* _DVB_VB2_H */

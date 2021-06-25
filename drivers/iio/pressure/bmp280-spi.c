@@ -1,120 +1,119 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * SPI पूर्णांकerface क्रम the BMP280 driver
+ * SPI interface for the BMP280 driver
  *
  * Inspired by the older BMP085 driver drivers/misc/bmp085-spi.c
  */
-#समावेश <linux/module.h>
-#समावेश <linux/spi/spi.h>
-#समावेश <linux/err.h>
-#समावेश <linux/regmap.h>
+#include <linux/module.h>
+#include <linux/spi/spi.h>
+#include <linux/err.h>
+#include <linux/regmap.h>
 
-#समावेश "bmp280.h"
+#include "bmp280.h"
 
-अटल पूर्णांक bmp280_regmap_spi_ग_लिखो(व्योम *context, स्थिर व्योम *data,
-                                   माप_प्रकार count)
-अणु
-	काष्ठा device *dev = context;
-	काष्ठा spi_device *spi = to_spi_device(dev);
+static int bmp280_regmap_spi_write(void *context, const void *data,
+                                   size_t count)
+{
+	struct device *dev = context;
+	struct spi_device *spi = to_spi_device(dev);
 	u8 buf[2];
 
-	स_नकल(buf, data, 2);
+	memcpy(buf, data, 2);
 	/*
-	 * The SPI रेजिस्टर address (= full रेजिस्टर address without bit 7) and
-	 * the ग_लिखो command (bit7 = RW = '0')
+	 * The SPI register address (= full register address without bit 7) and
+	 * the write command (bit7 = RW = '0')
 	 */
 	buf[0] &= ~0x80;
 
-	वापस spi_ग_लिखो_then_पढ़ो(spi, buf, 2, शून्य, 0);
-पूर्ण
+	return spi_write_then_read(spi, buf, 2, NULL, 0);
+}
 
-अटल पूर्णांक bmp280_regmap_spi_पढ़ो(व्योम *context, स्थिर व्योम *reg,
-                                  माप_प्रकार reg_size, व्योम *val, माप_प्रकार val_size)
-अणु
-	काष्ठा device *dev = context;
-	काष्ठा spi_device *spi = to_spi_device(dev);
+static int bmp280_regmap_spi_read(void *context, const void *reg,
+                                  size_t reg_size, void *val, size_t val_size)
+{
+	struct device *dev = context;
+	struct spi_device *spi = to_spi_device(dev);
 
-	वापस spi_ग_लिखो_then_पढ़ो(spi, reg, reg_size, val, val_size);
-पूर्ण
+	return spi_write_then_read(spi, reg, reg_size, val, val_size);
+}
 
-अटल काष्ठा regmap_bus bmp280_regmap_bus = अणु
-	.ग_लिखो = bmp280_regmap_spi_ग_लिखो,
-	.पढ़ो = bmp280_regmap_spi_पढ़ो,
-	.reg_क्रमmat_endian_शेष = REGMAP_ENDIAN_BIG,
-	.val_क्रमmat_endian_शेष = REGMAP_ENDIAN_BIG,
-पूर्ण;
+static struct regmap_bus bmp280_regmap_bus = {
+	.write = bmp280_regmap_spi_write,
+	.read = bmp280_regmap_spi_read,
+	.reg_format_endian_default = REGMAP_ENDIAN_BIG,
+	.val_format_endian_default = REGMAP_ENDIAN_BIG,
+};
 
-अटल पूर्णांक bmp280_spi_probe(काष्ठा spi_device *spi)
-अणु
-	स्थिर काष्ठा spi_device_id *id = spi_get_device_id(spi);
-	काष्ठा regmap *regmap;
-	स्थिर काष्ठा regmap_config *regmap_config;
-	पूर्णांक ret;
+static int bmp280_spi_probe(struct spi_device *spi)
+{
+	const struct spi_device_id *id = spi_get_device_id(spi);
+	struct regmap *regmap;
+	const struct regmap_config *regmap_config;
+	int ret;
 
 	spi->bits_per_word = 8;
 	ret = spi_setup(spi);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&spi->dev, "spi_setup failed!\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	चयन (id->driver_data) अणु
-	हाल BMP180_CHIP_ID:
+	switch (id->driver_data) {
+	case BMP180_CHIP_ID:
 		regmap_config = &bmp180_regmap_config;
-		अवरोध;
-	हाल BMP280_CHIP_ID:
-	हाल BME280_CHIP_ID:
+		break;
+	case BMP280_CHIP_ID:
+	case BME280_CHIP_ID:
 		regmap_config = &bmp280_regmap_config;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	regmap = devm_regmap_init(&spi->dev,
 				  &bmp280_regmap_bus,
 				  &spi->dev,
 				  regmap_config);
-	अगर (IS_ERR(regmap)) अणु
+	if (IS_ERR(regmap)) {
 		dev_err(&spi->dev, "failed to allocate register map\n");
-		वापस PTR_ERR(regmap);
-	पूर्ण
+		return PTR_ERR(regmap);
+	}
 
-	वापस bmp280_common_probe(&spi->dev,
+	return bmp280_common_probe(&spi->dev,
 				   regmap,
 				   id->driver_data,
 				   id->name,
 				   spi->irq);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा of_device_id bmp280_of_spi_match[] = अणु
-	अणु .compatible = "bosch,bmp085", पूर्ण,
-	अणु .compatible = "bosch,bmp180", पूर्ण,
-	अणु .compatible = "bosch,bmp181", पूर्ण,
-	अणु .compatible = "bosch,bmp280", पूर्ण,
-	अणु .compatible = "bosch,bme280", पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct of_device_id bmp280_of_spi_match[] = {
+	{ .compatible = "bosch,bmp085", },
+	{ .compatible = "bosch,bmp180", },
+	{ .compatible = "bosch,bmp181", },
+	{ .compatible = "bosch,bmp280", },
+	{ .compatible = "bosch,bme280", },
+	{ },
+};
 MODULE_DEVICE_TABLE(of, bmp280_of_spi_match);
 
-अटल स्थिर काष्ठा spi_device_id bmp280_spi_id[] = अणु
-	अणु "bmp180", BMP180_CHIP_ID पूर्ण,
-	अणु "bmp181", BMP180_CHIP_ID पूर्ण,
-	अणु "bmp280", BMP280_CHIP_ID पूर्ण,
-	अणु "bme280", BME280_CHIP_ID पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct spi_device_id bmp280_spi_id[] = {
+	{ "bmp180", BMP180_CHIP_ID },
+	{ "bmp181", BMP180_CHIP_ID },
+	{ "bmp280", BMP280_CHIP_ID },
+	{ "bme280", BME280_CHIP_ID },
+	{ }
+};
 MODULE_DEVICE_TABLE(spi, bmp280_spi_id);
 
-अटल काष्ठा spi_driver bmp280_spi_driver = अणु
-	.driver = अणु
+static struct spi_driver bmp280_spi_driver = {
+	.driver = {
 		.name = "bmp280",
 		.of_match_table = bmp280_of_spi_match,
 		.pm = &bmp280_dev_pm_ops,
-	पूर्ण,
+	},
 	.id_table = bmp280_spi_id,
 	.probe = bmp280_spi_probe,
-पूर्ण;
+};
 module_spi_driver(bmp280_spi_driver);
 
 MODULE_DESCRIPTION("BMP280 SPI bus driver");

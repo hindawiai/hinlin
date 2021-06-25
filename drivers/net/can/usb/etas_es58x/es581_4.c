@@ -1,378 +1,377 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
-/* Driver क्रम ETAS GmbH ES58X USB CAN(-FD) Bus Interfaces.
+/* Driver for ETAS GmbH ES58X USB CAN(-FD) Bus Interfaces.
  *
  * File es581_4.c: Adds support to ETAS ES581.4.
  *
  * Copyright (c) 2019 Robert Bosch Engineering and Business Solutions. All rights reserved.
  * Copyright (c) 2020 ETAS K.K.. All rights reserved.
- * Copyright (c) 2020, 2021 Vincent Mailhol <mailhol.vincent@wanaकरोo.fr>
+ * Copyright (c) 2020, 2021 Vincent Mailhol <mailhol.vincent@wanadoo.fr>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <यंत्र/unaligned.h>
+#include <linux/kernel.h>
+#include <asm/unaligned.h>
 
-#समावेश "es58x_core.h"
-#समावेश "es581_4.h"
+#include "es58x_core.h"
+#include "es581_4.h"
 
 /**
- * es581_4_माप_rx_tx_msg() - Calculate the actual length of the
- *	काष्ठाure of a rx or tx message.
+ * es581_4_sizeof_rx_tx_msg() - Calculate the actual length of the
+ *	structure of a rx or tx message.
  * @msg: message of variable length, must have a dlc field.
  *
- * Even अगर RTR frames have actually no payload, the ES58X devices
+ * Even if RTR frames have actually no payload, the ES58X devices
  * still expect it. Must be a macro in order to accept several types
- * (काष्ठा es581_4_tx_can_msg and काष्ठा es581_4_rx_can_msg) as an
+ * (struct es581_4_tx_can_msg and struct es581_4_rx_can_msg) as an
  * input.
  *
  * Return: length of the message.
  */
-#घोषणा es581_4_माप_rx_tx_msg(msg)				\
-	दुरत्व(typeof(msg), data[can_cc_dlc2len((msg).dlc)])
+#define es581_4_sizeof_rx_tx_msg(msg)				\
+	offsetof(typeof(msg), data[can_cc_dlc2len((msg).dlc)])
 
-अटल u16 es581_4_get_msg_len(स्थिर जोड़ es58x_urb_cmd *urb_cmd)
-अणु
-	वापस get_unaligned_le16(&urb_cmd->es581_4_urb_cmd.msg_len);
-पूर्ण
+static u16 es581_4_get_msg_len(const union es58x_urb_cmd *urb_cmd)
+{
+	return get_unaligned_le16(&urb_cmd->es581_4_urb_cmd.msg_len);
+}
 
-अटल पूर्णांक es581_4_echo_msg(काष्ठा es58x_device *es58x_dev,
-			    स्थिर काष्ठा es581_4_urb_cmd *es581_4_urb_cmd)
-अणु
-	काष्ठा net_device *netdev;
-	स्थिर काष्ठा es581_4_bulk_echo_msg *bulk_echo_msg;
-	स्थिर काष्ठा es581_4_echo_msg *echo_msg;
-	u64 *tstamps = es58x_dev->बारtamps;
+static int es581_4_echo_msg(struct es58x_device *es58x_dev,
+			    const struct es581_4_urb_cmd *es581_4_urb_cmd)
+{
+	struct net_device *netdev;
+	const struct es581_4_bulk_echo_msg *bulk_echo_msg;
+	const struct es581_4_echo_msg *echo_msg;
+	u64 *tstamps = es58x_dev->timestamps;
 	u16 msg_len;
 	u32 first_packet_idx, packet_idx;
-	अचिन्हित पूर्णांक dropped = 0;
-	पूर्णांक i, num_element, ret;
+	unsigned int dropped = 0;
+	int i, num_element, ret;
 
 	bulk_echo_msg = &es581_4_urb_cmd->bulk_echo_msg;
 	msg_len = get_unaligned_le16(&es581_4_urb_cmd->msg_len) -
-	    माप(bulk_echo_msg->channel_no);
+	    sizeof(bulk_echo_msg->channel_no);
 	num_element = es58x_msg_num_element(es58x_dev->dev,
 					    bulk_echo_msg->echo_msg, msg_len);
-	अगर (num_element <= 0)
-		वापस num_element;
+	if (num_element <= 0)
+		return num_element;
 
 	ret = es58x_get_netdev(es58x_dev, bulk_echo_msg->channel_no,
 			       ES581_4_CHANNEL_IDX_OFFSET, &netdev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	echo_msg = &bulk_echo_msg->echo_msg[0];
 	first_packet_idx = get_unaligned_le32(&echo_msg->packet_idx);
 	packet_idx = first_packet_idx;
-	क्रम (i = 0; i < num_element; i++) अणु
-		u32 पंचांगp_idx;
+	for (i = 0; i < num_element; i++) {
+		u32 tmp_idx;
 
 		echo_msg = &bulk_echo_msg->echo_msg[i];
-		पंचांगp_idx = get_unaligned_le32(&echo_msg->packet_idx);
-		अगर (पंचांगp_idx == packet_idx - 1) अणु
-			अगर (net_ratelimit())
+		tmp_idx = get_unaligned_le32(&echo_msg->packet_idx);
+		if (tmp_idx == packet_idx - 1) {
+			if (net_ratelimit())
 				netdev_warn(netdev,
 					    "Received echo packet idx %u twice\n",
 					    packet_idx - 1);
 			dropped++;
-			जारी;
-		पूर्ण
-		अगर (पंचांगp_idx != packet_idx) अणु
+			continue;
+		}
+		if (tmp_idx != packet_idx) {
 			netdev_err(netdev, "Echo packet idx jumped from %u to %u\n",
 				   packet_idx - 1, echo_msg->packet_idx);
-			वापस -EBADMSG;
-		पूर्ण
+			return -EBADMSG;
+		}
 
-		tstamps[i] = get_unaligned_le64(&echo_msg->बारtamp);
+		tstamps[i] = get_unaligned_le64(&echo_msg->timestamp);
 		packet_idx++;
-	पूर्ण
+	}
 
 	netdev->stats.tx_dropped += dropped;
-	वापस es58x_can_get_echo_skb(netdev, first_packet_idx,
+	return es58x_can_get_echo_skb(netdev, first_packet_idx,
 				      tstamps, num_element - dropped);
-पूर्ण
+}
 
-अटल पूर्णांक es581_4_rx_can_msg(काष्ठा es58x_device *es58x_dev,
-			      स्थिर काष्ठा es581_4_urb_cmd *es581_4_urb_cmd,
+static int es581_4_rx_can_msg(struct es58x_device *es58x_dev,
+			      const struct es581_4_urb_cmd *es581_4_urb_cmd,
 			      u16 msg_len)
-अणु
-	स्थिर काष्ठा device *dev = es58x_dev->dev;
-	काष्ठा net_device *netdev;
-	पूर्णांक pkts, num_element, channel_no, ret;
+{
+	const struct device *dev = es58x_dev->dev;
+	struct net_device *netdev;
+	int pkts, num_element, channel_no, ret;
 
 	num_element = es58x_msg_num_element(dev, es581_4_urb_cmd->rx_can_msg,
 					    msg_len);
-	अगर (num_element <= 0)
-		वापस num_element;
+	if (num_element <= 0)
+		return num_element;
 
 	channel_no = es581_4_urb_cmd->rx_can_msg[0].channel_no;
 	ret = es58x_get_netdev(es58x_dev, channel_no,
 			       ES581_4_CHANNEL_IDX_OFFSET, &netdev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (!netअगर_running(netdev)) अणु
-		अगर (net_ratelimit())
+	if (!netif_running(netdev)) {
+		if (net_ratelimit())
 			netdev_info(netdev,
 				    "%s: %s is down, dropping %d rx packets\n",
 				    __func__, netdev->name, num_element);
 		netdev->stats.rx_dropped += num_element;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	क्रम (pkts = 0; pkts < num_element; pkts++) अणु
-		स्थिर काष्ठा es581_4_rx_can_msg *rx_can_msg =
+	for (pkts = 0; pkts < num_element; pkts++) {
+		const struct es581_4_rx_can_msg *rx_can_msg =
 		    &es581_4_urb_cmd->rx_can_msg[pkts];
-		u64 tstamp = get_unaligned_le64(&rx_can_msg->बारtamp);
+		u64 tstamp = get_unaligned_le64(&rx_can_msg->timestamp);
 		canid_t can_id = get_unaligned_le32(&rx_can_msg->can_id);
 
-		अगर (channel_no != rx_can_msg->channel_no)
-			वापस -EBADMSG;
+		if (channel_no != rx_can_msg->channel_no)
+			return -EBADMSG;
 
 		ret = es58x_rx_can_msg(netdev, tstamp, rx_can_msg->data,
 				       can_id, rx_can_msg->flags,
 				       rx_can_msg->dlc);
-		अगर (ret)
-			अवरोध;
-	पूर्ण
+		if (ret)
+			break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक es581_4_rx_err_msg(काष्ठा es58x_device *es58x_dev,
-			      स्थिर काष्ठा es581_4_rx_err_msg *rx_err_msg)
-अणु
-	काष्ठा net_device *netdev;
-	क्रमागत es58x_err error = get_unaligned_le32(&rx_err_msg->error);
-	पूर्णांक ret;
+static int es581_4_rx_err_msg(struct es58x_device *es58x_dev,
+			      const struct es581_4_rx_err_msg *rx_err_msg)
+{
+	struct net_device *netdev;
+	enum es58x_err error = get_unaligned_le32(&rx_err_msg->error);
+	int ret;
 
 	ret = es58x_get_netdev(es58x_dev, rx_err_msg->channel_no,
 			       ES581_4_CHANNEL_IDX_OFFSET, &netdev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस es58x_rx_err_msg(netdev, error, 0,
-				get_unaligned_le64(&rx_err_msg->बारtamp));
-पूर्ण
+	return es58x_rx_err_msg(netdev, error, 0,
+				get_unaligned_le64(&rx_err_msg->timestamp));
+}
 
-अटल पूर्णांक es581_4_rx_event_msg(काष्ठा es58x_device *es58x_dev,
-				स्थिर काष्ठा es581_4_rx_event_msg *rx_event_msg)
-अणु
-	काष्ठा net_device *netdev;
-	क्रमागत es58x_event event = get_unaligned_le32(&rx_event_msg->event);
-	पूर्णांक ret;
+static int es581_4_rx_event_msg(struct es58x_device *es58x_dev,
+				const struct es581_4_rx_event_msg *rx_event_msg)
+{
+	struct net_device *netdev;
+	enum es58x_event event = get_unaligned_le32(&rx_event_msg->event);
+	int ret;
 
 	ret = es58x_get_netdev(es58x_dev, rx_event_msg->channel_no,
 			       ES581_4_CHANNEL_IDX_OFFSET, &netdev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस es58x_rx_err_msg(netdev, 0, event,
-				get_unaligned_le64(&rx_event_msg->बारtamp));
-पूर्ण
+	return es58x_rx_err_msg(netdev, 0, event,
+				get_unaligned_le64(&rx_event_msg->timestamp));
+}
 
-अटल पूर्णांक es581_4_rx_cmd_ret_u32(काष्ठा es58x_device *es58x_dev,
-				  स्थिर काष्ठा es581_4_urb_cmd *es581_4_urb_cmd,
-				  क्रमागत es58x_ret_type ret_type)
-अणु
-	काष्ठा net_device *netdev;
-	स्थिर काष्ठा es581_4_rx_cmd_ret *rx_cmd_ret;
+static int es581_4_rx_cmd_ret_u32(struct es58x_device *es58x_dev,
+				  const struct es581_4_urb_cmd *es581_4_urb_cmd,
+				  enum es58x_ret_type ret_type)
+{
+	struct net_device *netdev;
+	const struct es581_4_rx_cmd_ret *rx_cmd_ret;
 	u16 msg_len = get_unaligned_le16(&es581_4_urb_cmd->msg_len);
-	पूर्णांक ret;
+	int ret;
 
 	ret = es58x_check_msg_len(es58x_dev->dev,
 				  es581_4_urb_cmd->rx_cmd_ret, msg_len);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	rx_cmd_ret = &es581_4_urb_cmd->rx_cmd_ret;
 
 	ret = es58x_get_netdev(es58x_dev, rx_cmd_ret->channel_no,
 			       ES581_4_CHANNEL_IDX_OFFSET, &netdev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस es58x_rx_cmd_ret_u32(netdev, ret_type,
+	return es58x_rx_cmd_ret_u32(netdev, ret_type,
 				    get_unaligned_le32(&rx_cmd_ret->rx_cmd_ret_le32));
-पूर्ण
+}
 
-अटल पूर्णांक es581_4_tx_ack_msg(काष्ठा es58x_device *es58x_dev,
-			      स्थिर काष्ठा es581_4_urb_cmd *es581_4_urb_cmd)
-अणु
-	काष्ठा net_device *netdev;
-	स्थिर काष्ठा es581_4_tx_ack_msg *tx_ack_msg;
+static int es581_4_tx_ack_msg(struct es58x_device *es58x_dev,
+			      const struct es581_4_urb_cmd *es581_4_urb_cmd)
+{
+	struct net_device *netdev;
+	const struct es581_4_tx_ack_msg *tx_ack_msg;
 	u16 msg_len = get_unaligned_le16(&es581_4_urb_cmd->msg_len);
-	पूर्णांक ret;
+	int ret;
 
 	tx_ack_msg = &es581_4_urb_cmd->tx_ack_msg;
 	ret = es58x_check_msg_len(es58x_dev->dev, *tx_ack_msg, msg_len);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (tx_ack_msg->rx_cmd_ret_u8 != ES58X_RET_U8_OK)
-		वापस es58x_rx_cmd_ret_u8(es58x_dev->dev,
+	if (tx_ack_msg->rx_cmd_ret_u8 != ES58X_RET_U8_OK)
+		return es58x_rx_cmd_ret_u8(es58x_dev->dev,
 					   ES58X_RET_TYPE_TX_MSG,
 					   tx_ack_msg->rx_cmd_ret_u8);
 
 	ret = es58x_get_netdev(es58x_dev, tx_ack_msg->channel_no,
 			       ES581_4_CHANNEL_IDX_OFFSET, &netdev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस es58x_tx_ack_msg(netdev,
-				get_unaligned_le16(&tx_ack_msg->tx_मुक्त_entries),
+	return es58x_tx_ack_msg(netdev,
+				get_unaligned_le16(&tx_ack_msg->tx_free_entries),
 				ES58X_RET_U32_OK);
-पूर्ण
+}
 
-अटल पूर्णांक es581_4_dispatch_rx_cmd(काष्ठा es58x_device *es58x_dev,
-				   स्थिर काष्ठा es581_4_urb_cmd *es581_4_urb_cmd)
-अणु
-	स्थिर काष्ठा device *dev = es58x_dev->dev;
+static int es581_4_dispatch_rx_cmd(struct es58x_device *es58x_dev,
+				   const struct es581_4_urb_cmd *es581_4_urb_cmd)
+{
+	const struct device *dev = es58x_dev->dev;
 	u16 msg_len = get_unaligned_le16(&es581_4_urb_cmd->msg_len);
-	क्रमागत es581_4_rx_type rx_type = es581_4_urb_cmd->rx_can_msg[0].rx_type;
-	पूर्णांक ret = 0;
+	enum es581_4_rx_type rx_type = es581_4_urb_cmd->rx_can_msg[0].rx_type;
+	int ret = 0;
 
-	चयन (rx_type) अणु
-	हाल ES581_4_RX_TYPE_MESSAGE:
-		वापस es581_4_rx_can_msg(es58x_dev, es581_4_urb_cmd, msg_len);
+	switch (rx_type) {
+	case ES581_4_RX_TYPE_MESSAGE:
+		return es581_4_rx_can_msg(es58x_dev, es581_4_urb_cmd, msg_len);
 
-	हाल ES581_4_RX_TYPE_ERROR:
+	case ES581_4_RX_TYPE_ERROR:
 		ret = es58x_check_msg_len(dev, es581_4_urb_cmd->rx_err_msg,
 					  msg_len);
-		अगर (ret < 0)
-			वापस ret;
-		वापस es581_4_rx_err_msg(es58x_dev,
+		if (ret < 0)
+			return ret;
+		return es581_4_rx_err_msg(es58x_dev,
 					  &es581_4_urb_cmd->rx_err_msg);
 
-	हाल ES581_4_RX_TYPE_EVENT:
+	case ES581_4_RX_TYPE_EVENT:
 		ret = es58x_check_msg_len(dev, es581_4_urb_cmd->rx_event_msg,
 					  msg_len);
-		अगर (ret < 0)
-			वापस ret;
-		वापस es581_4_rx_event_msg(es58x_dev,
+		if (ret < 0)
+			return ret;
+		return es581_4_rx_event_msg(es58x_dev,
 					    &es581_4_urb_cmd->rx_event_msg);
 
-	शेष:
+	default:
 		dev_err(dev, "%s: Unknown rx_type 0x%02X\n", __func__, rx_type);
-		वापस -EBADRQC;
-	पूर्ण
-पूर्ण
+		return -EBADRQC;
+	}
+}
 
-अटल पूर्णांक es581_4_handle_urb_cmd(काष्ठा es58x_device *es58x_dev,
-				  स्थिर जोड़ es58x_urb_cmd *urb_cmd)
-अणु
-	स्थिर काष्ठा es581_4_urb_cmd *es581_4_urb_cmd;
-	काष्ठा device *dev = es58x_dev->dev;
+static int es581_4_handle_urb_cmd(struct es58x_device *es58x_dev,
+				  const union es58x_urb_cmd *urb_cmd)
+{
+	const struct es581_4_urb_cmd *es581_4_urb_cmd;
+	struct device *dev = es58x_dev->dev;
 	u16 msg_len = es581_4_get_msg_len(urb_cmd);
-	पूर्णांक ret;
+	int ret;
 
 	es581_4_urb_cmd = &urb_cmd->es581_4_urb_cmd;
 
-	अगर (es581_4_urb_cmd->cmd_type != ES581_4_CAN_COMMAND_TYPE) अणु
+	if (es581_4_urb_cmd->cmd_type != ES581_4_CAN_COMMAND_TYPE) {
 		dev_err(dev, "%s: Unknown command type (0x%02X)\n",
 			__func__, es581_4_urb_cmd->cmd_type);
-		वापस -EBADRQC;
-	पूर्ण
+		return -EBADRQC;
+	}
 
-	चयन ((क्रमागत es581_4_cmd_id)es581_4_urb_cmd->cmd_id) अणु
-	हाल ES581_4_CMD_ID_SET_BITTIMING:
-		वापस es581_4_rx_cmd_ret_u32(es58x_dev, es581_4_urb_cmd,
+	switch ((enum es581_4_cmd_id)es581_4_urb_cmd->cmd_id) {
+	case ES581_4_CMD_ID_SET_BITTIMING:
+		return es581_4_rx_cmd_ret_u32(es58x_dev, es581_4_urb_cmd,
 					      ES58X_RET_TYPE_SET_BITTIMING);
 
-	हाल ES581_4_CMD_ID_ENABLE_CHANNEL:
-		वापस es581_4_rx_cmd_ret_u32(es58x_dev, es581_4_urb_cmd,
+	case ES581_4_CMD_ID_ENABLE_CHANNEL:
+		return es581_4_rx_cmd_ret_u32(es58x_dev, es581_4_urb_cmd,
 					      ES58X_RET_TYPE_ENABLE_CHANNEL);
 
-	हाल ES581_4_CMD_ID_TX_MSG:
-		वापस es581_4_tx_ack_msg(es58x_dev, es581_4_urb_cmd);
+	case ES581_4_CMD_ID_TX_MSG:
+		return es581_4_tx_ack_msg(es58x_dev, es581_4_urb_cmd);
 
-	हाल ES581_4_CMD_ID_RX_MSG:
-		वापस es581_4_dispatch_rx_cmd(es58x_dev, es581_4_urb_cmd);
+	case ES581_4_CMD_ID_RX_MSG:
+		return es581_4_dispatch_rx_cmd(es58x_dev, es581_4_urb_cmd);
 
-	हाल ES581_4_CMD_ID_RESET_RX:
+	case ES581_4_CMD_ID_RESET_RX:
 		ret = es581_4_rx_cmd_ret_u32(es58x_dev, es581_4_urb_cmd,
 					     ES58X_RET_TYPE_RESET_RX);
-		वापस ret;
+		return ret;
 
-	हाल ES581_4_CMD_ID_RESET_TX:
+	case ES581_4_CMD_ID_RESET_TX:
 		ret = es581_4_rx_cmd_ret_u32(es58x_dev, es581_4_urb_cmd,
 					     ES58X_RET_TYPE_RESET_TX);
-		वापस ret;
+		return ret;
 
-	हाल ES581_4_CMD_ID_DISABLE_CHANNEL:
-		वापस es581_4_rx_cmd_ret_u32(es58x_dev, es581_4_urb_cmd,
+	case ES581_4_CMD_ID_DISABLE_CHANNEL:
+		return es581_4_rx_cmd_ret_u32(es58x_dev, es581_4_urb_cmd,
 					      ES58X_RET_TYPE_DISABLE_CHANNEL);
 
-	हाल ES581_4_CMD_ID_TIMESTAMP:
-		ret = es58x_check_msg_len(dev, es581_4_urb_cmd->बारtamp,
+	case ES581_4_CMD_ID_TIMESTAMP:
+		ret = es58x_check_msg_len(dev, es581_4_urb_cmd->timestamp,
 					  msg_len);
-		अगर (ret < 0)
-			वापस ret;
-		es58x_rx_बारtamp(es58x_dev,
-				   get_unaligned_le64(&es581_4_urb_cmd->बारtamp));
-		वापस 0;
+		if (ret < 0)
+			return ret;
+		es58x_rx_timestamp(es58x_dev,
+				   get_unaligned_le64(&es581_4_urb_cmd->timestamp));
+		return 0;
 
-	हाल ES581_4_CMD_ID_ECHO:
-		वापस es581_4_echo_msg(es58x_dev, es581_4_urb_cmd);
+	case ES581_4_CMD_ID_ECHO:
+		return es581_4_echo_msg(es58x_dev, es581_4_urb_cmd);
 
-	हाल ES581_4_CMD_ID_DEVICE_ERR:
+	case ES581_4_CMD_ID_DEVICE_ERR:
 		ret = es58x_check_msg_len(dev, es581_4_urb_cmd->rx_cmd_ret_u8,
 					  msg_len);
-		अगर (ret)
-			वापस ret;
-		वापस es58x_rx_cmd_ret_u8(dev, ES58X_RET_TYPE_DEVICE_ERR,
+		if (ret)
+			return ret;
+		return es58x_rx_cmd_ret_u8(dev, ES58X_RET_TYPE_DEVICE_ERR,
 					   es581_4_urb_cmd->rx_cmd_ret_u8);
 
-	शेष:
+	default:
 		dev_warn(dev, "%s: Unexpected command ID: 0x%02X\n",
 			 __func__, es581_4_urb_cmd->cmd_id);
-		वापस -EBADRQC;
-	पूर्ण
-पूर्ण
+		return -EBADRQC;
+	}
+}
 
-अटल व्योम es581_4_fill_urb_header(जोड़ es58x_urb_cmd *urb_cmd, u8 cmd_type,
+static void es581_4_fill_urb_header(union es58x_urb_cmd *urb_cmd, u8 cmd_type,
 				    u8 cmd_id, u8 channel_idx, u16 msg_len)
-अणु
-	काष्ठा es581_4_urb_cmd *es581_4_urb_cmd = &urb_cmd->es581_4_urb_cmd;
+{
+	struct es581_4_urb_cmd *es581_4_urb_cmd = &urb_cmd->es581_4_urb_cmd;
 
 	es581_4_urb_cmd->SOF = cpu_to_le16(es581_4_param.tx_start_of_frame);
 	es581_4_urb_cmd->cmd_type = cmd_type;
 	es581_4_urb_cmd->cmd_id = cmd_id;
 	es581_4_urb_cmd->msg_len = cpu_to_le16(msg_len);
-पूर्ण
+}
 
-अटल पूर्णांक es581_4_tx_can_msg(काष्ठा es58x_priv *priv,
-			      स्थिर काष्ठा sk_buff *skb)
-अणु
-	काष्ठा es58x_device *es58x_dev = priv->es58x_dev;
-	जोड़ es58x_urb_cmd *urb_cmd = priv->tx_urb->transfer_buffer;
-	काष्ठा es581_4_urb_cmd *es581_4_urb_cmd = &urb_cmd->es581_4_urb_cmd;
-	काष्ठा can_frame *cf = (काष्ठा can_frame *)skb->data;
-	काष्ठा es581_4_tx_can_msg *tx_can_msg;
+static int es581_4_tx_can_msg(struct es58x_priv *priv,
+			      const struct sk_buff *skb)
+{
+	struct es58x_device *es58x_dev = priv->es58x_dev;
+	union es58x_urb_cmd *urb_cmd = priv->tx_urb->transfer_buffer;
+	struct es581_4_urb_cmd *es581_4_urb_cmd = &urb_cmd->es581_4_urb_cmd;
+	struct can_frame *cf = (struct can_frame *)skb->data;
+	struct es581_4_tx_can_msg *tx_can_msg;
 	u16 msg_len;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (can_is_canfd_skb(skb))
-		वापस -EMSGSIZE;
+	if (can_is_canfd_skb(skb))
+		return -EMSGSIZE;
 
-	अगर (priv->tx_can_msg_cnt == 0) अणु
-		msg_len = 1; /* काष्ठा es581_4_bulk_tx_can_msg:num_can_msg */
+	if (priv->tx_can_msg_cnt == 0) {
+		msg_len = 1; /* struct es581_4_bulk_tx_can_msg:num_can_msg */
 		es581_4_fill_urb_header(urb_cmd, ES581_4_CAN_COMMAND_TYPE,
 					ES581_4_CMD_ID_TX_MSG,
 					priv->channel_idx, msg_len);
 		es581_4_urb_cmd->bulk_tx_can_msg.num_can_msg = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		msg_len = es581_4_get_msg_len(urb_cmd);
-	पूर्ण
+	}
 
 	ret = es58x_check_msg_max_len(es58x_dev->dev,
 				      es581_4_urb_cmd->bulk_tx_can_msg,
-				      msg_len + माप(*tx_can_msg));
-	अगर (ret)
-		वापस ret;
+				      msg_len + sizeof(*tx_can_msg));
+	if (ret)
+		return ret;
 
 	/* Fill message contents. */
-	tx_can_msg = (काष्ठा es581_4_tx_can_msg *)
+	tx_can_msg = (struct es581_4_tx_can_msg *)
 	    &es581_4_urb_cmd->bulk_tx_can_msg.tx_can_msg_buf[msg_len - 1];
 	put_unaligned_le32(es58x_get_raw_can_id(cf), &tx_can_msg->can_id);
 	put_unaligned_le32(priv->tx_head, &tx_can_msg->packet_idx);
@@ -380,28 +379,28 @@
 	tx_can_msg->channel_no = priv->channel_idx + ES581_4_CHANNEL_IDX_OFFSET;
 	tx_can_msg->dlc = can_get_cc_dlc(cf, priv->can.ctrlmode);
 
-	स_नकल(tx_can_msg->data, cf->data, cf->len);
+	memcpy(tx_can_msg->data, cf->data, cf->len);
 
 	/* Calculate new sizes. */
 	es581_4_urb_cmd->bulk_tx_can_msg.num_can_msg++;
-	msg_len += es581_4_माप_rx_tx_msg(*tx_can_msg);
+	msg_len += es581_4_sizeof_rx_tx_msg(*tx_can_msg);
 	priv->tx_urb->transfer_buffer_length = es58x_get_urb_cmd_len(es58x_dev,
 								     msg_len);
 	es581_4_urb_cmd->msg_len = cpu_to_le16(msg_len);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक es581_4_set_bittiming(काष्ठा es58x_priv *priv)
-अणु
-	काष्ठा es581_4_tx_conf_msg tx_conf_msg = अणु 0 पूर्ण;
-	काष्ठा can_bittiming *bt = &priv->can.bittiming;
+static int es581_4_set_bittiming(struct es58x_priv *priv)
+{
+	struct es581_4_tx_conf_msg tx_conf_msg = { 0 };
+	struct can_bittiming *bt = &priv->can.bittiming;
 
 	tx_conf_msg.bitrate = cpu_to_le32(bt->bitrate);
-	/* bt->sample_poपूर्णांक is in tenth of percent. Convert it to percent. */
-	tx_conf_msg.sample_poपूर्णांक = cpu_to_le32(bt->sample_poपूर्णांक / 10U);
+	/* bt->sample_point is in tenth of percent. Convert it to percent. */
+	tx_conf_msg.sample_point = cpu_to_le32(bt->sample_point / 10U);
 	tx_conf_msg.samples_per_bit = cpu_to_le32(ES58X_SAMPLES_PER_BIT_ONE);
-	tx_conf_msg.bit_समय = cpu_to_le32(can_bit_समय(bt));
+	tx_conf_msg.bit_time = cpu_to_le32(can_bit_time(bt));
 	tx_conf_msg.sjw = cpu_to_le32(bt->sjw);
 	tx_conf_msg.sync_edge = cpu_to_le32(ES58X_SYNC_EDGE_SINGLE);
 	tx_conf_msg.physical_layer =
@@ -409,53 +408,53 @@
 	tx_conf_msg.echo_mode = cpu_to_le32(ES58X_ECHO_ON);
 	tx_conf_msg.channel_no = priv->channel_idx + ES581_4_CHANNEL_IDX_OFFSET;
 
-	वापस es58x_send_msg(priv->es58x_dev, ES581_4_CAN_COMMAND_TYPE,
+	return es58x_send_msg(priv->es58x_dev, ES581_4_CAN_COMMAND_TYPE,
 			      ES581_4_CMD_ID_SET_BITTIMING, &tx_conf_msg,
-			      माप(tx_conf_msg), priv->channel_idx);
-पूर्ण
+			      sizeof(tx_conf_msg), priv->channel_idx);
+}
 
-अटल पूर्णांक es581_4_enable_channel(काष्ठा es58x_priv *priv)
-अणु
-	पूर्णांक ret;
+static int es581_4_enable_channel(struct es58x_priv *priv)
+{
+	int ret;
 	u8 msg = priv->channel_idx + ES581_4_CHANNEL_IDX_OFFSET;
 
 	ret = es581_4_set_bittiming(priv);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस es58x_send_msg(priv->es58x_dev, ES581_4_CAN_COMMAND_TYPE,
-			      ES581_4_CMD_ID_ENABLE_CHANNEL, &msg, माप(msg),
+	return es58x_send_msg(priv->es58x_dev, ES581_4_CAN_COMMAND_TYPE,
+			      ES581_4_CMD_ID_ENABLE_CHANNEL, &msg, sizeof(msg),
 			      priv->channel_idx);
-पूर्ण
+}
 
-अटल पूर्णांक es581_4_disable_channel(काष्ठा es58x_priv *priv)
-अणु
+static int es581_4_disable_channel(struct es58x_priv *priv)
+{
 	u8 msg = priv->channel_idx + ES581_4_CHANNEL_IDX_OFFSET;
 
-	वापस es58x_send_msg(priv->es58x_dev, ES581_4_CAN_COMMAND_TYPE,
-			      ES581_4_CMD_ID_DISABLE_CHANNEL, &msg, माप(msg),
+	return es58x_send_msg(priv->es58x_dev, ES581_4_CAN_COMMAND_TYPE,
+			      ES581_4_CMD_ID_DISABLE_CHANNEL, &msg, sizeof(msg),
 			      priv->channel_idx);
-पूर्ण
+}
 
-अटल पूर्णांक es581_4_reset_device(काष्ठा es58x_device *es58x_dev)
-अणु
-	वापस es58x_send_msg(es58x_dev, ES581_4_CAN_COMMAND_TYPE,
+static int es581_4_reset_device(struct es58x_device *es58x_dev)
+{
+	return es58x_send_msg(es58x_dev, ES581_4_CAN_COMMAND_TYPE,
 			      ES581_4_CMD_ID_RESET_DEVICE,
 			      ES58X_EMPTY_MSG, 0, ES58X_CHANNEL_IDX_NA);
-पूर्ण
+}
 
-अटल पूर्णांक es581_4_get_बारtamp(काष्ठा es58x_device *es58x_dev)
-अणु
-	वापस es58x_send_msg(es58x_dev, ES581_4_CAN_COMMAND_TYPE,
+static int es581_4_get_timestamp(struct es58x_device *es58x_dev)
+{
+	return es58x_send_msg(es58x_dev, ES581_4_CAN_COMMAND_TYPE,
 			      ES581_4_CMD_ID_TIMESTAMP,
 			      ES58X_EMPTY_MSG, 0, ES58X_CHANNEL_IDX_NA);
-पूर्ण
+}
 
-/* Nominal bittiming स्थिरants क्रम ES581.4 as specअगरied in the
+/* Nominal bittiming constants for ES581.4 as specified in the
  * microcontroller datasheet: "Stellaris(R) LM3S5B91 Microcontroller"
  * table 17-4 "CAN Protocol Ranges" from Texas Instruments.
  */
-अटल स्थिर काष्ठा can_bittiming_स्थिर es581_4_bittiming_स्थिर = अणु
+static const struct can_bittiming_const es581_4_bittiming_const = {
 	.name = "ES581.4",
 	.tseg1_min = 1,
 	.tseg1_max = 8,
@@ -465,38 +464,38 @@
 	.brp_min = 1,
 	.brp_max = 128,
 	.brp_inc = 1
-पूर्ण;
+};
 
-स्थिर काष्ठा es58x_parameters es581_4_param = अणु
-	.bittiming_स्थिर = &es581_4_bittiming_स्थिर,
-	.data_bittiming_स्थिर = शून्य,
-	.tdc_स्थिर = शून्य,
+const struct es58x_parameters es581_4_param = {
+	.bittiming_const = &es581_4_bittiming_const,
+	.data_bittiming_const = NULL,
+	.tdc_const = NULL,
 	.bitrate_max = 1 * CAN_MBPS,
-	.घड़ी = अणु.freq = 50 * CAN_MHZपूर्ण,
+	.clock = {.freq = 50 * CAN_MHZ},
 	.ctrlmode_supported = CAN_CTRLMODE_CC_LEN8_DLC,
 	.tx_start_of_frame = 0xAFAF,
 	.rx_start_of_frame = 0xFAFA,
 	.tx_urb_cmd_max_len = ES581_4_TX_URB_CMD_MAX_LEN,
 	.rx_urb_cmd_max_len = ES581_4_RX_URB_CMD_MAX_LEN,
-	/* Size of पूर्णांकernal device TX queue is 330.
+	/* Size of internal device TX queue is 330.
 	 *
 	 * However, we witnessed some ES58X_ERR_PROT_CRC errors from
 	 * the device and thus, echo_skb_max was lowered to the
 	 * empirical value of 75 which seems stable and then rounded
-	 * करोwn to become a घातer of two.
+	 * down to become a power of two.
 	 *
 	 * Root cause of those ES58X_ERR_PROT_CRC errors is still
 	 * unclear.
 	 */
-	.fअगरo_mask = 63, /* echo_skb_max = 64 */
+	.fifo_mask = 63, /* echo_skb_max = 64 */
 	.dql_min_limit = CAN_FRAME_LEN_MAX * 50, /* Empirical value. */
 	.tx_bulk_max = ES581_4_TX_BULK_MAX,
 	.urb_cmd_header_len = ES581_4_URB_CMD_HEADER_LEN,
 	.rx_urb_max = ES58X_RX_URBS_MAX,
 	.tx_urb_max = ES58X_TX_URBS_MAX
-पूर्ण;
+};
 
-स्थिर काष्ठा es58x_चालकs es581_4_ops = अणु
+const struct es58x_operators es581_4_ops = {
 	.get_msg_len = es581_4_get_msg_len,
 	.handle_urb_cmd = es581_4_handle_urb_cmd,
 	.fill_urb_header = es581_4_fill_urb_header,
@@ -504,5 +503,5 @@
 	.enable_channel = es581_4_enable_channel,
 	.disable_channel = es581_4_disable_channel,
 	.reset_device = es581_4_reset_device,
-	.get_बारtamp = es581_4_get_बारtamp
-पूर्ण;
+	.get_timestamp = es581_4_get_timestamp
+};

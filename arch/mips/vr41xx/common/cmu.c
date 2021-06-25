@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *  cmu.c, Clock Mask Unit routines क्रम the NEC VR4100 series.
+ *  cmu.c, Clock Mask Unit routines for the NEC VR4100 series.
  *
  *  Copyright (C) 2001-2002  MontaVista Software Inc.
  *    Author: Yoichi Yuasa <source@mvista.com>
@@ -11,235 +10,235 @@
  * Changes:
  *  MontaVista Software Inc. <source@mvista.com>
  *  - New creation, NEC VR4122 and VR4131 are supported.
- *  - Added support क्रम NEC VR4111 and VR4121.
+ *  - Added support for NEC VR4111 and VR4121.
  *
  *  Yoichi Yuasa <yuasa@linux-mips.org>
- *  - Added support क्रम NEC VR4133.
+ *  - Added support for NEC VR4133.
  */
-#समावेश <linux/export.h>
-#समावेश <linux/init.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/types.h>
+#include <linux/export.h>
+#include <linux/init.h>
+#include <linux/ioport.h>
+#include <linux/smp.h>
+#include <linux/spinlock.h>
+#include <linux/types.h>
 
-#समावेश <यंत्र/cpu.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/vr41xx/vr41xx.h>
+#include <asm/cpu.h>
+#include <asm/io.h>
+#include <asm/vr41xx/vr41xx.h>
 
-#घोषणा CMU_TYPE1_BASE	0x0b000060UL
-#घोषणा CMU_TYPE1_SIZE	0x4
+#define CMU_TYPE1_BASE	0x0b000060UL
+#define CMU_TYPE1_SIZE	0x4
 
-#घोषणा CMU_TYPE2_BASE	0x0f000060UL
-#घोषणा CMU_TYPE2_SIZE	0x4
+#define CMU_TYPE2_BASE	0x0f000060UL
+#define CMU_TYPE2_SIZE	0x4
 
-#घोषणा CMU_TYPE3_BASE	0x0f000060UL
-#घोषणा CMU_TYPE3_SIZE	0x8
+#define CMU_TYPE3_BASE	0x0f000060UL
+#define CMU_TYPE3_SIZE	0x8
 
-#घोषणा CMUCLKMSK	0x0
- #घोषणा MSKPIU		0x0001
- #घोषणा MSKSIU		0x0002
- #घोषणा MSKAIU		0x0004
- #घोषणा MSKKIU		0x0008
- #घोषणा MSKFIR		0x0010
- #घोषणा MSKDSIU	0x0820
- #घोषणा MSKCSI		0x0040
- #घोषणा MSKPCIU	0x0080
- #घोषणा MSKSSIU	0x0100
- #घोषणा MSKSHSP	0x0200
- #घोषणा MSKFFIR	0x0400
- #घोषणा MSKSCSI	0x1000
- #घोषणा MSKPPCIU	0x2000
-#घोषणा CMUCLKMSK2	0x4
- #घोषणा MSKCEU		0x0001
- #घोषणा MSKMAC0	0x0002
- #घोषणा MSKMAC1	0x0004
+#define CMUCLKMSK	0x0
+ #define MSKPIU		0x0001
+ #define MSKSIU		0x0002
+ #define MSKAIU		0x0004
+ #define MSKKIU		0x0008
+ #define MSKFIR		0x0010
+ #define MSKDSIU	0x0820
+ #define MSKCSI		0x0040
+ #define MSKPCIU	0x0080
+ #define MSKSSIU	0x0100
+ #define MSKSHSP	0x0200
+ #define MSKFFIR	0x0400
+ #define MSKSCSI	0x1000
+ #define MSKPPCIU	0x2000
+#define CMUCLKMSK2	0x4
+ #define MSKCEU		0x0001
+ #define MSKMAC0	0x0002
+ #define MSKMAC1	0x0004
 
-अटल व्योम __iomem *cmu_base;
-अटल uपूर्णांक16_t cmuclkmsk, cmuclkmsk2;
-अटल DEFINE_SPINLOCK(cmu_lock);
+static void __iomem *cmu_base;
+static uint16_t cmuclkmsk, cmuclkmsk2;
+static DEFINE_SPINLOCK(cmu_lock);
 
-#घोषणा cmu_पढ़ो(offset)		पढ़ोw(cmu_base + (offset))
-#घोषणा cmu_ग_लिखो(offset, value)	ग_लिखोw((value), cmu_base + (offset))
+#define cmu_read(offset)		readw(cmu_base + (offset))
+#define cmu_write(offset, value)	writew((value), cmu_base + (offset))
 
-व्योम vr41xx_supply_घड़ी(vr41xx_घड़ी_प्रकार घड़ी)
-अणु
+void vr41xx_supply_clock(vr41xx_clock_t clock)
+{
 	spin_lock_irq(&cmu_lock);
 
-	चयन (घड़ी) अणु
-	हाल PIU_CLOCK:
+	switch (clock) {
+	case PIU_CLOCK:
 		cmuclkmsk |= MSKPIU;
-		अवरोध;
-	हाल SIU_CLOCK:
+		break;
+	case SIU_CLOCK:
 		cmuclkmsk |= MSKSIU | MSKSSIU;
-		अवरोध;
-	हाल AIU_CLOCK:
+		break;
+	case AIU_CLOCK:
 		cmuclkmsk |= MSKAIU;
-		अवरोध;
-	हाल KIU_CLOCK:
+		break;
+	case KIU_CLOCK:
 		cmuclkmsk |= MSKKIU;
-		अवरोध;
-	हाल FIR_CLOCK:
+		break;
+	case FIR_CLOCK:
 		cmuclkmsk |= MSKFIR | MSKFFIR;
-		अवरोध;
-	हाल DSIU_CLOCK:
-		अगर (current_cpu_type() == CPU_VR4111 ||
+		break;
+	case DSIU_CLOCK:
+		if (current_cpu_type() == CPU_VR4111 ||
 		    current_cpu_type() == CPU_VR4121)
 			cmuclkmsk |= MSKDSIU;
-		अन्यथा
+		else
 			cmuclkmsk |= MSKSIU | MSKDSIU;
-		अवरोध;
-	हाल CSI_CLOCK:
+		break;
+	case CSI_CLOCK:
 		cmuclkmsk |= MSKCSI | MSKSCSI;
-		अवरोध;
-	हाल PCIU_CLOCK:
+		break;
+	case PCIU_CLOCK:
 		cmuclkmsk |= MSKPCIU;
-		अवरोध;
-	हाल HSP_CLOCK:
+		break;
+	case HSP_CLOCK:
 		cmuclkmsk |= MSKSHSP;
-		अवरोध;
-	हाल PCI_CLOCK:
+		break;
+	case PCI_CLOCK:
 		cmuclkmsk |= MSKPPCIU;
-		अवरोध;
-	हाल CEU_CLOCK:
+		break;
+	case CEU_CLOCK:
 		cmuclkmsk2 |= MSKCEU;
-		अवरोध;
-	हाल ETHER0_CLOCK:
+		break;
+	case ETHER0_CLOCK:
 		cmuclkmsk2 |= MSKMAC0;
-		अवरोध;
-	हाल ETHER1_CLOCK:
+		break;
+	case ETHER1_CLOCK:
 		cmuclkmsk2 |= MSKMAC1;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	अगर (घड़ी == CEU_CLOCK || घड़ी == ETHER0_CLOCK ||
-	    घड़ी == ETHER1_CLOCK)
-		cmu_ग_लिखो(CMUCLKMSK2, cmuclkmsk2);
-	अन्यथा
-		cmu_ग_लिखो(CMUCLKMSK, cmuclkmsk);
+	if (clock == CEU_CLOCK || clock == ETHER0_CLOCK ||
+	    clock == ETHER1_CLOCK)
+		cmu_write(CMUCLKMSK2, cmuclkmsk2);
+	else
+		cmu_write(CMUCLKMSK, cmuclkmsk);
 
 	spin_unlock_irq(&cmu_lock);
-पूर्ण
+}
 
-EXPORT_SYMBOL_GPL(vr41xx_supply_घड़ी);
+EXPORT_SYMBOL_GPL(vr41xx_supply_clock);
 
-व्योम vr41xx_mask_घड़ी(vr41xx_घड़ी_प्रकार घड़ी)
-अणु
+void vr41xx_mask_clock(vr41xx_clock_t clock)
+{
 	spin_lock_irq(&cmu_lock);
 
-	चयन (घड़ी) अणु
-	हाल PIU_CLOCK:
+	switch (clock) {
+	case PIU_CLOCK:
 		cmuclkmsk &= ~MSKPIU;
-		अवरोध;
-	हाल SIU_CLOCK:
-		अगर (current_cpu_type() == CPU_VR4111 ||
-		    current_cpu_type() == CPU_VR4121) अणु
+		break;
+	case SIU_CLOCK:
+		if (current_cpu_type() == CPU_VR4111 ||
+		    current_cpu_type() == CPU_VR4121) {
 			cmuclkmsk &= ~(MSKSIU | MSKSSIU);
-		पूर्ण अन्यथा अणु
-			अगर (cmuclkmsk & MSKDSIU)
+		} else {
+			if (cmuclkmsk & MSKDSIU)
 				cmuclkmsk &= ~MSKSSIU;
-			अन्यथा
+			else
 				cmuclkmsk &= ~(MSKSIU | MSKSSIU);
-		पूर्ण
-		अवरोध;
-	हाल AIU_CLOCK:
+		}
+		break;
+	case AIU_CLOCK:
 		cmuclkmsk &= ~MSKAIU;
-		अवरोध;
-	हाल KIU_CLOCK:
+		break;
+	case KIU_CLOCK:
 		cmuclkmsk &= ~MSKKIU;
-		अवरोध;
-	हाल FIR_CLOCK:
+		break;
+	case FIR_CLOCK:
 		cmuclkmsk &= ~(MSKFIR | MSKFFIR);
-		अवरोध;
-	हाल DSIU_CLOCK:
-		अगर (current_cpu_type() == CPU_VR4111 ||
-		    current_cpu_type() == CPU_VR4121) अणु
+		break;
+	case DSIU_CLOCK:
+		if (current_cpu_type() == CPU_VR4111 ||
+		    current_cpu_type() == CPU_VR4121) {
 			cmuclkmsk &= ~MSKDSIU;
-		पूर्ण अन्यथा अणु
-			अगर (cmuclkmsk & MSKSSIU)
+		} else {
+			if (cmuclkmsk & MSKSSIU)
 				cmuclkmsk &= ~MSKDSIU;
-			अन्यथा
+			else
 				cmuclkmsk &= ~(MSKSIU | MSKDSIU);
-		पूर्ण
-		अवरोध;
-	हाल CSI_CLOCK:
+		}
+		break;
+	case CSI_CLOCK:
 		cmuclkmsk &= ~(MSKCSI | MSKSCSI);
-		अवरोध;
-	हाल PCIU_CLOCK:
+		break;
+	case PCIU_CLOCK:
 		cmuclkmsk &= ~MSKPCIU;
-		अवरोध;
-	हाल HSP_CLOCK:
+		break;
+	case HSP_CLOCK:
 		cmuclkmsk &= ~MSKSHSP;
-		अवरोध;
-	हाल PCI_CLOCK:
+		break;
+	case PCI_CLOCK:
 		cmuclkmsk &= ~MSKPPCIU;
-		अवरोध;
-	हाल CEU_CLOCK:
+		break;
+	case CEU_CLOCK:
 		cmuclkmsk2 &= ~MSKCEU;
-		अवरोध;
-	हाल ETHER0_CLOCK:
+		break;
+	case ETHER0_CLOCK:
 		cmuclkmsk2 &= ~MSKMAC0;
-		अवरोध;
-	हाल ETHER1_CLOCK:
+		break;
+	case ETHER1_CLOCK:
 		cmuclkmsk2 &= ~MSKMAC1;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	अगर (घड़ी == CEU_CLOCK || घड़ी == ETHER0_CLOCK ||
-	    घड़ी == ETHER1_CLOCK)
-		cmu_ग_लिखो(CMUCLKMSK2, cmuclkmsk2);
-	अन्यथा
-		cmu_ग_लिखो(CMUCLKMSK, cmuclkmsk);
+	if (clock == CEU_CLOCK || clock == ETHER0_CLOCK ||
+	    clock == ETHER1_CLOCK)
+		cmu_write(CMUCLKMSK2, cmuclkmsk2);
+	else
+		cmu_write(CMUCLKMSK, cmuclkmsk);
 
 	spin_unlock_irq(&cmu_lock);
-पूर्ण
+}
 
-EXPORT_SYMBOL_GPL(vr41xx_mask_घड़ी);
+EXPORT_SYMBOL_GPL(vr41xx_mask_clock);
 
-अटल पूर्णांक __init vr41xx_cmu_init(व्योम)
-अणु
-	अचिन्हित दीर्घ start, size;
+static int __init vr41xx_cmu_init(void)
+{
+	unsigned long start, size;
 
-	चयन (current_cpu_type()) अणु
-	हाल CPU_VR4111:
-	हाल CPU_VR4121:
+	switch (current_cpu_type()) {
+	case CPU_VR4111:
+	case CPU_VR4121:
 		start = CMU_TYPE1_BASE;
 		size = CMU_TYPE1_SIZE;
-		अवरोध;
-	हाल CPU_VR4122:
-	हाल CPU_VR4131:
+		break;
+	case CPU_VR4122:
+	case CPU_VR4131:
 		start = CMU_TYPE2_BASE;
 		size = CMU_TYPE2_SIZE;
-		अवरोध;
-	हाल CPU_VR4133:
+		break;
+	case CPU_VR4133:
 		start = CMU_TYPE3_BASE;
 		size = CMU_TYPE3_SIZE;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		panic("Unexpected CPU of NEC VR4100 series");
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (request_mem_region(start, size, "CMU") == शून्य)
-		वापस -EBUSY;
+	if (request_mem_region(start, size, "CMU") == NULL)
+		return -EBUSY;
 
 	cmu_base = ioremap(start, size);
-	अगर (cmu_base == शून्य) अणु
+	if (cmu_base == NULL) {
 		release_mem_region(start, size);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	cmuclkmsk = cmu_पढ़ो(CMUCLKMSK);
-	अगर (current_cpu_type() == CPU_VR4133)
-		cmuclkmsk2 = cmu_पढ़ो(CMUCLKMSK2);
+	cmuclkmsk = cmu_read(CMUCLKMSK);
+	if (current_cpu_type() == CPU_VR4133)
+		cmuclkmsk2 = cmu_read(CMUCLKMSK2);
 
 	spin_lock_init(&cmu_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 core_initcall(vr41xx_cmu_init);

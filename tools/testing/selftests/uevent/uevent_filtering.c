@@ -1,376 +1,375 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
-#घोषणा _GNU_SOURCE
-#समावेश <त्रुटिसं.स>
-#समावेश <fcntl.h>
-#समावेश <linux/netlink.h>
-#समावेश <संकेत.स>
-#समावेश <stdbool.h>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <sys/prctl.h>
-#समावेश <sys/socket.h>
-#समावेश <sched.h>
-#समावेश <sys/eventfd.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <sys/syscall.h>
-#समावेश <sys/types.h>
-#समावेश <sys/रुको.h>
-#समावेश <unistd.h>
+#define _GNU_SOURCE
+#include <errno.h>
+#include <fcntl.h>
+#include <linux/netlink.h>
+#include <signal.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/prctl.h>
+#include <sys/socket.h>
+#include <sched.h>
+#include <sys/eventfd.h>
+#include <sys/stat.h>
+#include <sys/syscall.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
-#समावेश "../kselftest_harness.h"
+#include "../kselftest_harness.h"
 
-#घोषणा __DEV_FULL "/sys/devices/virtual/mem/full/uevent"
-#घोषणा __UEVENT_BUFFER_SIZE (2048 * 2)
-#घोषणा __UEVENT_HEADER "add@/devices/virtual/mem/full"
-#घोषणा __UEVENT_HEADER_LEN माप("add@/devices/virtual/mem/full")
-#घोषणा __UEVENT_LISTEN_ALL -1
+#define __DEV_FULL "/sys/devices/virtual/mem/full/uevent"
+#define __UEVENT_BUFFER_SIZE (2048 * 2)
+#define __UEVENT_HEADER "add@/devices/virtual/mem/full"
+#define __UEVENT_HEADER_LEN sizeof("add@/devices/virtual/mem/full")
+#define __UEVENT_LISTEN_ALL -1
 
-sमाप_प्रकार पढ़ो_noपूर्णांकr(पूर्णांक fd, व्योम *buf, माप_प्रकार count)
-अणु
-	sमाप_प्रकार ret;
-
-again:
-	ret = पढ़ो(fd, buf, count);
-	अगर (ret < 0 && त्रुटि_सं == EINTR)
-		जाओ again;
-
-	वापस ret;
-पूर्ण
-
-sमाप_प्रकार ग_लिखो_noपूर्णांकr(पूर्णांक fd, स्थिर व्योम *buf, माप_प्रकार count)
-अणु
-	sमाप_प्रकार ret;
+ssize_t read_nointr(int fd, void *buf, size_t count)
+{
+	ssize_t ret;
 
 again:
-	ret = ग_लिखो(fd, buf, count);
-	अगर (ret < 0 && त्रुटि_सं == EINTR)
-		जाओ again;
+	ret = read(fd, buf, count);
+	if (ret < 0 && errno == EINTR)
+		goto again;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक रुको_क्रम_pid(pid_t pid)
-अणु
-	पूर्णांक status, ret;
+ssize_t write_nointr(int fd, const void *buf, size_t count)
+{
+	ssize_t ret;
 
 again:
-	ret = रुकोpid(pid, &status, 0);
-	अगर (ret == -1) अणु
-		अगर (त्रुटि_सं == EINTR)
-			जाओ again;
+	ret = write(fd, buf, count);
+	if (ret < 0 && errno == EINTR)
+		goto again;
 
-		वापस -1;
-	पूर्ण
+	return ret;
+}
 
-	अगर (ret != pid)
-		जाओ again;
+int wait_for_pid(pid_t pid)
+{
+	int status, ret;
 
-	अगर (!WIFEXITED(status) || WEXITSTATUS(status) != 0)
-		वापस -1;
+again:
+	ret = waitpid(pid, &status, 0);
+	if (ret == -1) {
+		if (errno == EINTR)
+			goto again;
 
-	वापस 0;
-पूर्ण
+		return -1;
+	}
 
-अटल पूर्णांक uevent_listener(अचिन्हित दीर्घ post_flags, bool expect_uevent,
-			   पूर्णांक sync_fd)
-अणु
-	पूर्णांक sk_fd, ret;
+	if (ret != pid)
+		goto again;
+
+	if (!WIFEXITED(status) || WEXITSTATUS(status) != 0)
+		return -1;
+
+	return 0;
+}
+
+static int uevent_listener(unsigned long post_flags, bool expect_uevent,
+			   int sync_fd)
+{
+	int sk_fd, ret;
 	socklen_t sk_addr_len;
-	पूर्णांक fret = -1, rcv_buf_sz = __UEVENT_BUFFER_SIZE;
-	uपूर्णांक64_t sync_add = 1;
-	काष्ठा sockaddr_nl sk_addr = अणु 0 पूर्ण, rcv_addr = अणु 0 पूर्ण;
-	अक्षर buf[__UEVENT_BUFFER_SIZE] = अणु 0 पूर्ण;
-	काष्ठा iovec iov = अणु buf, __UEVENT_BUFFER_SIZE पूर्ण;
-	अक्षर control[CMSG_SPACE(माप(काष्ठा ucred))];
-	काष्ठा msghdr hdr = अणु
-		&rcv_addr, माप(rcv_addr), &iov, 1,
-		control,   माप(control),  0,
-	पूर्ण;
+	int fret = -1, rcv_buf_sz = __UEVENT_BUFFER_SIZE;
+	uint64_t sync_add = 1;
+	struct sockaddr_nl sk_addr = { 0 }, rcv_addr = { 0 };
+	char buf[__UEVENT_BUFFER_SIZE] = { 0 };
+	struct iovec iov = { buf, __UEVENT_BUFFER_SIZE };
+	char control[CMSG_SPACE(sizeof(struct ucred))];
+	struct msghdr hdr = {
+		&rcv_addr, sizeof(rcv_addr), &iov, 1,
+		control,   sizeof(control),  0,
+	};
 
 	sk_fd = socket(AF_NETLINK, SOCK_RAW | SOCK_CLOEXEC,
 		       NETLINK_KOBJECT_UEVENT);
-	अगर (sk_fd < 0) अणु
-		ख_लिखो(मानक_त्रुटि, "%s - Failed to open uevent socket\n", म_त्रुटि(त्रुटि_सं));
-		वापस -1;
-	पूर्ण
+	if (sk_fd < 0) {
+		fprintf(stderr, "%s - Failed to open uevent socket\n", strerror(errno));
+		return -1;
+	}
 
 	ret = setsockopt(sk_fd, SOL_SOCKET, SO_RCVBUF, &rcv_buf_sz,
-			 माप(rcv_buf_sz));
-	अगर (ret < 0) अणु
-		ख_लिखो(मानक_त्रुटि, "%s - Failed to set socket options\n", म_त्रुटि(त्रुटि_सं));
-		जाओ on_error;
-	पूर्ण
+			 sizeof(rcv_buf_sz));
+	if (ret < 0) {
+		fprintf(stderr, "%s - Failed to set socket options\n", strerror(errno));
+		goto on_error;
+	}
 
 	sk_addr.nl_family = AF_NETLINK;
 	sk_addr.nl_groups = __UEVENT_LISTEN_ALL;
 
-	sk_addr_len = माप(sk_addr);
-	ret = bind(sk_fd, (काष्ठा sockaddr *)&sk_addr, sk_addr_len);
-	अगर (ret < 0) अणु
-		ख_लिखो(मानक_त्रुटि, "%s - Failed to bind socket\n", म_त्रुटि(त्रुटि_सं));
-		जाओ on_error;
-	पूर्ण
+	sk_addr_len = sizeof(sk_addr);
+	ret = bind(sk_fd, (struct sockaddr *)&sk_addr, sk_addr_len);
+	if (ret < 0) {
+		fprintf(stderr, "%s - Failed to bind socket\n", strerror(errno));
+		goto on_error;
+	}
 
-	ret = माला_लोockname(sk_fd, (काष्ठा sockaddr *)&sk_addr, &sk_addr_len);
-	अगर (ret < 0) अणु
-		ख_लिखो(मानक_त्रुटि, "%s - Failed to retrieve socket name\n", म_त्रुटि(त्रुटि_सं));
-		जाओ on_error;
-	पूर्ण
+	ret = getsockname(sk_fd, (struct sockaddr *)&sk_addr, &sk_addr_len);
+	if (ret < 0) {
+		fprintf(stderr, "%s - Failed to retrieve socket name\n", strerror(errno));
+		goto on_error;
+	}
 
-	अगर ((माप_प्रकार)sk_addr_len != माप(sk_addr)) अणु
-		ख_लिखो(मानक_त्रुटि, "Invalid socket address size\n");
-		जाओ on_error;
-	पूर्ण
+	if ((size_t)sk_addr_len != sizeof(sk_addr)) {
+		fprintf(stderr, "Invalid socket address size\n");
+		goto on_error;
+	}
 
-	अगर (post_flags & CLONE_NEWUSER) अणु
+	if (post_flags & CLONE_NEWUSER) {
 		ret = unshare(CLONE_NEWUSER);
-		अगर (ret < 0) अणु
-			ख_लिखो(मानक_त्रुटि,
+		if (ret < 0) {
+			fprintf(stderr,
 				"%s - Failed to unshare user namespace\n",
-				म_त्रुटि(त्रुटि_सं));
-			जाओ on_error;
-		पूर्ण
-	पूर्ण
+				strerror(errno));
+			goto on_error;
+		}
+	}
 
-	अगर (post_flags & CLONE_NEWNET) अणु
+	if (post_flags & CLONE_NEWNET) {
 		ret = unshare(CLONE_NEWNET);
-		अगर (ret < 0) अणु
-			ख_लिखो(मानक_त्रुटि,
+		if (ret < 0) {
+			fprintf(stderr,
 				"%s - Failed to unshare network namespace\n",
-				म_त्रुटि(त्रुटि_सं));
-			जाओ on_error;
-		पूर्ण
-	पूर्ण
+				strerror(errno));
+			goto on_error;
+		}
+	}
 
-	ret = ग_लिखो_noपूर्णांकr(sync_fd, &sync_add, माप(sync_add));
-	बंद(sync_fd);
-	अगर (ret != माप(sync_add)) अणु
-		ख_लिखो(मानक_त्रुटि, "Failed to synchronize with parent process\n");
-		जाओ on_error;
-	पूर्ण
+	ret = write_nointr(sync_fd, &sync_add, sizeof(sync_add));
+	close(sync_fd);
+	if (ret != sizeof(sync_add)) {
+		fprintf(stderr, "Failed to synchronize with parent process\n");
+		goto on_error;
+	}
 
 	fret = 0;
-	क्रम (;;) अणु
-		sमाप_प्रकार r;
+	for (;;) {
+		ssize_t r;
 
 		r = recvmsg(sk_fd, &hdr, 0);
-		अगर (r <= 0) अणु
-			ख_लिखो(मानक_त्रुटि, "%s - Failed to receive uevent\n", म_त्रुटि(त्रुटि_सं));
+		if (r <= 0) {
+			fprintf(stderr, "%s - Failed to receive uevent\n", strerror(errno));
 			ret = -1;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		/* ignore libudev messages */
-		अगर (स_भेद(buf, "libudev", 8) == 0)
-			जारी;
+		if (memcmp(buf, "libudev", 8) == 0)
+			continue;
 
 		/* ignore uevents we didn't trigger */
-		अगर (स_भेद(buf, __UEVENT_HEADER, __UEVENT_HEADER_LEN) != 0)
-			जारी;
+		if (memcmp(buf, __UEVENT_HEADER, __UEVENT_HEADER_LEN) != 0)
+			continue;
 
-		अगर (!expect_uevent) अणु
-			ख_लिखो(मानक_त्रुटि, "Received unexpected uevent:\n");
+		if (!expect_uevent) {
+			fprintf(stderr, "Received unexpected uevent:\n");
 			ret = -1;
-		पूर्ण
+		}
 
-		अगर (TH_LOG_ENABLED) अणु
+		if (TH_LOG_ENABLED) {
 			/* If logging is enabled dump the received uevent. */
-			(व्योम)ग_लिखो_noपूर्णांकr(STDERR_खाताNO, buf, r);
-			(व्योम)ग_लिखो_noपूर्णांकr(STDERR_खाताNO, "\n", 1);
-		पूर्ण
+			(void)write_nointr(STDERR_FILENO, buf, r);
+			(void)write_nointr(STDERR_FILENO, "\n", 1);
+		}
 
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 on_error:
-	बंद(sk_fd);
+	close(sk_fd);
 
-	वापस fret;
-पूर्ण
+	return fret;
+}
 
-पूर्णांक trigger_uevent(अचिन्हित पूर्णांक बार)
-अणु
-	पूर्णांक fd, ret;
-	अचिन्हित पूर्णांक i;
+int trigger_uevent(unsigned int times)
+{
+	int fd, ret;
+	unsigned int i;
 
-	fd = खोलो(__DEV_FULL, O_RDWR | O_CLOEXEC);
-	अगर (fd < 0) अणु
-		अगर (त्रुटि_सं != ENOENT)
-			वापस -EINVAL;
+	fd = open(__DEV_FULL, O_RDWR | O_CLOEXEC);
+	if (fd < 0) {
+		if (errno != ENOENT)
+			return -EINVAL;
 
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	क्रम (i = 0; i < बार; i++) अणु
-		ret = ग_लिखो_noपूर्णांकr(fd, "add\n", माप("add\n") - 1);
-		अगर (ret < 0) अणु
-			ख_लिखो(मानक_त्रुटि, "Failed to trigger uevent\n");
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	बंद(fd);
+	for (i = 0; i < times; i++) {
+		ret = write_nointr(fd, "add\n", sizeof("add\n") - 1);
+		if (ret < 0) {
+			fprintf(stderr, "Failed to trigger uevent\n");
+			break;
+		}
+	}
+	close(fd);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक set_death_संकेत(व्योम)
-अणु
-	पूर्णांक ret;
+int set_death_signal(void)
+{
+	int ret;
 	pid_t ppid;
 
 	ret = prctl(PR_SET_PDEATHSIG, SIGKILL, 0, 0, 0);
 
 	/* Check whether we have been orphaned. */
 	ppid = getppid();
-	अगर (ppid == 1) अणु
+	if (ppid == 1) {
 		pid_t self;
 
 		self = getpid();
-		ret = समाप्त(self, SIGKILL);
-	पूर्ण
+		ret = kill(self, SIGKILL);
+	}
 
-	अगर (ret < 0)
-		वापस -1;
+	if (ret < 0)
+		return -1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक करो_test(अचिन्हित दीर्घ pre_flags, अचिन्हित दीर्घ post_flags,
-		   bool expect_uevent, पूर्णांक sync_fd)
-अणु
-	पूर्णांक ret;
-	uपूर्णांक64_t रुको_val;
+static int do_test(unsigned long pre_flags, unsigned long post_flags,
+		   bool expect_uevent, int sync_fd)
+{
+	int ret;
+	uint64_t wait_val;
 	pid_t pid;
 	sigset_t mask;
 	sigset_t orig_mask;
-	काष्ठा बारpec समयout;
+	struct timespec timeout;
 
 	sigemptyset(&mask);
 	sigaddset(&mask, SIGCHLD);
 
 	ret = sigprocmask(SIG_BLOCK, &mask, &orig_mask);
-	अगर (ret < 0) अणु
-		ख_लिखो(मानक_त्रुटि, "%s- Failed to block SIGCHLD\n", म_त्रुटि(त्रुटि_सं));
-		वापस -1;
-	पूर्ण
+	if (ret < 0) {
+		fprintf(stderr, "%s- Failed to block SIGCHLD\n", strerror(errno));
+		return -1;
+	}
 
-	pid = विभाजन();
-	अगर (pid < 0) अणु
-		ख_लिखो(मानक_त्रुटि, "%s - Failed to fork() new process\n", म_त्रुटि(त्रुटि_सं));
-		वापस -1;
-	पूर्ण
+	pid = fork();
+	if (pid < 0) {
+		fprintf(stderr, "%s - Failed to fork() new process\n", strerror(errno));
+		return -1;
+	}
 
-	अगर (pid == 0) अणु
+	if (pid == 0) {
 		/* Make sure that we go away when our parent dies. */
-		ret = set_death_संकेत();
-		अगर (ret < 0) अणु
-			ख_लिखो(मानक_त्रुटि, "Failed to set PR_SET_PDEATHSIG to SIGKILL\n");
-			_निकास(निकास_त्रुटि);
-		पूर्ण
+		ret = set_death_signal();
+		if (ret < 0) {
+			fprintf(stderr, "Failed to set PR_SET_PDEATHSIG to SIGKILL\n");
+			_exit(EXIT_FAILURE);
+		}
 
-		अगर (pre_flags & CLONE_NEWUSER) अणु
+		if (pre_flags & CLONE_NEWUSER) {
 			ret = unshare(CLONE_NEWUSER);
-			अगर (ret < 0) अणु
-				ख_लिखो(मानक_त्रुटि,
+			if (ret < 0) {
+				fprintf(stderr,
 					"%s - Failed to unshare user namespace\n",
-					म_त्रुटि(त्रुटि_सं));
-				_निकास(निकास_त्रुटि);
-			पूर्ण
-		पूर्ण
+					strerror(errno));
+				_exit(EXIT_FAILURE);
+			}
+		}
 
-		अगर (pre_flags & CLONE_NEWNET) अणु
+		if (pre_flags & CLONE_NEWNET) {
 			ret = unshare(CLONE_NEWNET);
-			अगर (ret < 0) अणु
-				ख_लिखो(मानक_त्रुटि,
+			if (ret < 0) {
+				fprintf(stderr,
 					"%s - Failed to unshare network namespace\n",
-					म_त्रुटि(त्रुटि_सं));
-				_निकास(निकास_त्रुटि);
-			पूर्ण
-		पूर्ण
+					strerror(errno));
+				_exit(EXIT_FAILURE);
+			}
+		}
 
-		अगर (uevent_listener(post_flags, expect_uevent, sync_fd) < 0)
-			_निकास(निकास_त्रुटि);
+		if (uevent_listener(post_flags, expect_uevent, sync_fd) < 0)
+			_exit(EXIT_FAILURE);
 
-		_निकास(निकास_सफल);
-	पूर्ण
+		_exit(EXIT_SUCCESS);
+	}
 
-	ret = पढ़ो_noपूर्णांकr(sync_fd, &रुको_val, माप(रुको_val));
-	अगर (ret != माप(रुको_val)) अणु
-		ख_लिखो(मानक_त्रुटि, "Failed to synchronize with child process\n");
-		_निकास(निकास_त्रुटि);
-	पूर्ण
+	ret = read_nointr(sync_fd, &wait_val, sizeof(wait_val));
+	if (ret != sizeof(wait_val)) {
+		fprintf(stderr, "Failed to synchronize with child process\n");
+		_exit(EXIT_FAILURE);
+	}
 
-	/* Trigger 10 uevents to account क्रम the हाल where the kernel might
+	/* Trigger 10 uevents to account for the case where the kernel might
 	 * drop some.
 	 */
 	ret = trigger_uevent(10);
-	अगर (ret < 0)
-		ख_लिखो(मानक_त्रुटि, "Failed triggering uevents\n");
+	if (ret < 0)
+		fprintf(stderr, "Failed triggering uevents\n");
 
-	/* Wait क्रम 2 seconds beक्रमe considering this failed. This should be
-	 * plenty of समय क्रम the kernel to deliver the uevent even under heavy
+	/* Wait for 2 seconds before considering this failed. This should be
+	 * plenty of time for the kernel to deliver the uevent even under heavy
 	 * load.
 	 */
-	समयout.tv_sec = 2;
-	समयout.tv_nsec = 0;
+	timeout.tv_sec = 2;
+	timeout.tv_nsec = 0;
 
 again:
-	ret = sigसमयdरुको(&mask, शून्य, &समयout);
-	अगर (ret < 0) अणु
-		अगर (त्रुटि_सं == EINTR)
-			जाओ again;
+	ret = sigtimedwait(&mask, NULL, &timeout);
+	if (ret < 0) {
+		if (errno == EINTR)
+			goto again;
 
-		अगर (!expect_uevent)
-			ret = समाप्त(pid, संक_इति); /* success */
-		अन्यथा
-			ret = समाप्त(pid, SIGUSR1); /* error */
-		अगर (ret < 0)
-			वापस -1;
-	पूर्ण
+		if (!expect_uevent)
+			ret = kill(pid, SIGTERM); /* success */
+		else
+			ret = kill(pid, SIGUSR1); /* error */
+		if (ret < 0)
+			return -1;
+	}
 
-	ret = रुको_क्रम_pid(pid);
-	अगर (ret < 0)
-		वापस -1;
+	ret = wait_for_pid(pid);
+	if (ret < 0)
+		return -1;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम संकेत_handler(पूर्णांक sig)
-अणु
-	अगर (sig == संक_इति)
-		_निकास(निकास_सफल);
+static void signal_handler(int sig)
+{
+	if (sig == SIGTERM)
+		_exit(EXIT_SUCCESS);
 
-	_निकास(निकास_त्रुटि);
-पूर्ण
+	_exit(EXIT_FAILURE);
+}
 
 TEST(uevent_filtering)
-अणु
-	पूर्णांक ret, sync_fd;
-	काष्ठा sigaction act;
+{
+	int ret, sync_fd;
+	struct sigaction act;
 
-	अगर (geteuid()) अणु
+	if (geteuid()) {
 		TH_LOG("Uevent filtering tests require root privileges. Skipping test");
-		_निकास(KSFT_SKIP);
-	पूर्ण
+		_exit(KSFT_SKIP);
+	}
 
 	ret = access(__DEV_FULL, F_OK);
-	EXPECT_EQ(0, ret) अणु
-		अगर (त्रुटि_सं == ENOENT) अणु
+	EXPECT_EQ(0, ret) {
+		if (errno == ENOENT) {
 			TH_LOG(__DEV_FULL " does not exist. Skipping test");
-			_निकास(KSFT_SKIP);
-		पूर्ण
+			_exit(KSFT_SKIP);
+		}
 
-		_निकास(KSFT_FAIL);
-	पूर्ण
+		_exit(KSFT_FAIL);
+	}
 
-	act.sa_handler = संकेत_handler;
+	act.sa_handler = signal_handler;
 	act.sa_flags = 0;
 	sigemptyset(&act.sa_mask);
 
-	ret = sigaction(संक_इति, &act, शून्य);
+	ret = sigaction(SIGTERM, &act, NULL);
 	ASSERT_EQ(0, ret);
 
 	sync_fd = eventfd(0, EFD_CLOEXEC);
@@ -385,10 +384,10 @@ TEST(uevent_filtering)
 	 * Expected Result:
 	 * - uevent listening socket receives uevent
 	 */
-	ret = करो_test(0, 0, true, sync_fd);
-	ASSERT_EQ(0, ret) अणु
-		जाओ करो_cleanup;
-	पूर्ण
+	ret = do_test(0, 0, true, sync_fd);
+	ASSERT_EQ(0, ret) {
+		goto do_cleanup;
+	}
 
 	/*
 	 * Setup:
@@ -399,10 +398,10 @@ TEST(uevent_filtering)
 	 * Expected Result:
 	 * - uevent listening socket receives uevent
 	 */
-	ret = करो_test(CLONE_NEWNET, 0, true, sync_fd);
-	ASSERT_EQ(0, ret) अणु
-		जाओ करो_cleanup;
-	पूर्ण
+	ret = do_test(CLONE_NEWNET, 0, true, sync_fd);
+	ASSERT_EQ(0, ret) {
+		goto do_cleanup;
+	}
 
 	/*
 	 * Setup:
@@ -414,10 +413,10 @@ TEST(uevent_filtering)
 	 * Expected Result:
 	 * - uevent listening socket receives uevent
 	 */
-	ret = करो_test(CLONE_NEWUSER, 0, true, sync_fd);
-	ASSERT_EQ(0, ret) अणु
-		जाओ करो_cleanup;
-	पूर्ण
+	ret = do_test(CLONE_NEWUSER, 0, true, sync_fd);
+	ASSERT_EQ(0, ret) {
+		goto do_cleanup;
+	}
 
 	/*
 	 * Setup:
@@ -428,10 +427,10 @@ TEST(uevent_filtering)
 	 * Expected Result:
 	 * - uevent listening socket receives no uevent
 	 */
-	ret = करो_test(CLONE_NEWUSER | CLONE_NEWNET, 0, false, sync_fd);
-	ASSERT_EQ(0, ret) अणु
-		जाओ करो_cleanup;
-	पूर्ण
+	ret = do_test(CLONE_NEWUSER | CLONE_NEWNET, 0, false, sync_fd);
+	ASSERT_EQ(0, ret) {
+		goto do_cleanup;
+	}
 
 	/*
 	 * Setup:
@@ -443,10 +442,10 @@ TEST(uevent_filtering)
 	 * Expected Result:
 	 * - uevent listening socket receives uevent
 	 */
-	ret = करो_test(0, CLONE_NEWNET, true, sync_fd);
-	ASSERT_EQ(0, ret) अणु
-		जाओ करो_cleanup;
-	पूर्ण
+	ret = do_test(0, CLONE_NEWNET, true, sync_fd);
+	ASSERT_EQ(0, ret) {
+		goto do_cleanup;
+	}
 
 	/*
 	 * Setup:
@@ -458,10 +457,10 @@ TEST(uevent_filtering)
 	 * Expected Result:
 	 * - uevent listening socket receives uevent
 	 */
-	ret = करो_test(0, CLONE_NEWUSER, true, sync_fd);
-	ASSERT_EQ(0, ret) अणु
-		जाओ करो_cleanup;
-	पूर्ण
+	ret = do_test(0, CLONE_NEWUSER, true, sync_fd);
+	ASSERT_EQ(0, ret) {
+		goto do_cleanup;
+	}
 
 	/*
 	 * Setup:
@@ -474,13 +473,13 @@ TEST(uevent_filtering)
 	 * Expected Result:
 	 * - uevent listening socket receives uevent
 	 */
-	ret = करो_test(0, CLONE_NEWUSER | CLONE_NEWNET, true, sync_fd);
-	ASSERT_EQ(0, ret) अणु
-		जाओ करो_cleanup;
-	पूर्ण
+	ret = do_test(0, CLONE_NEWUSER | CLONE_NEWNET, true, sync_fd);
+	ASSERT_EQ(0, ret) {
+		goto do_cleanup;
+	}
 
-करो_cleanup:
-	बंद(sync_fd);
-पूर्ण
+do_cleanup:
+	close(sync_fd);
+}
 
 TEST_HARNESS_MAIN

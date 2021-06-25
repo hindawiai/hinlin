@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * STMicroelectronics sensors spi library driver
  *
@@ -8,104 +7,104 @@
  * Denis Ciocca <denis.ciocca@st.com>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/property.h>
-#समावेश <linux/regmap.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/iio/iio.h>
+#include <linux/property.h>
+#include <linux/regmap.h>
 
-#समावेश <linux/iio/common/st_sensors_spi.h>
-#समावेश "st_sensors_core.h"
+#include <linux/iio/common/st_sensors_spi.h>
+#include "st_sensors_core.h"
 
-#घोषणा ST_SENSORS_SPI_MULTIREAD	0xc0
+#define ST_SENSORS_SPI_MULTIREAD	0xc0
 
-अटल स्थिर काष्ठा regmap_config st_sensors_spi_regmap_config = अणु
+static const struct regmap_config st_sensors_spi_regmap_config = {
 	.reg_bits = 8,
 	.val_bits = 8,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा regmap_config st_sensors_spi_regmap_multiपढ़ो_bit_config = अणु
+static const struct regmap_config st_sensors_spi_regmap_multiread_bit_config = {
 	.reg_bits = 8,
 	.val_bits = 8,
-	.पढ़ो_flag_mask = ST_SENSORS_SPI_MULTIREAD,
-पूर्ण;
+	.read_flag_mask = ST_SENSORS_SPI_MULTIREAD,
+};
 
 /*
- * st_sensors_is_spi_3_wire() - check अगर SPI 3-wire mode has been selected
+ * st_sensors_is_spi_3_wire() - check if SPI 3-wire mode has been selected
  * @spi: spi device reference.
  *
- * Return: true अगर SPI 3-wire mode is selected, false otherwise.
+ * Return: true if SPI 3-wire mode is selected, false otherwise.
  */
-अटल bool st_sensors_is_spi_3_wire(काष्ठा spi_device *spi)
-अणु
-	काष्ठा st_sensors_platक्रमm_data *pdata;
-	काष्ठा device *dev = &spi->dev;
+static bool st_sensors_is_spi_3_wire(struct spi_device *spi)
+{
+	struct st_sensors_platform_data *pdata;
+	struct device *dev = &spi->dev;
 
-	अगर (device_property_पढ़ो_bool(dev, "spi-3wire"))
-		वापस true;
+	if (device_property_read_bool(dev, "spi-3wire"))
+		return true;
 
 	pdata = dev_get_platdata(dev);
-	अगर (pdata && pdata->spi_3wire)
-		वापस true;
+	if (pdata && pdata->spi_3wire)
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /*
- * st_sensors_configure_spi_3_wire() - configure SPI 3-wire अगर needed
+ * st_sensors_configure_spi_3_wire() - configure SPI 3-wire if needed
  * @spi: spi device reference.
- * @settings: sensor specअगरic settings reference.
+ * @settings: sensor specific settings reference.
  *
- * Return: 0 on success, अन्यथा a negative error code.
+ * Return: 0 on success, else a negative error code.
  */
-अटल पूर्णांक st_sensors_configure_spi_3_wire(काष्ठा spi_device *spi,
-					   काष्ठा st_sensor_settings *settings)
-अणु
-	अगर (settings->sim.addr) अणु
-		u8 buffer[] = अणु
+static int st_sensors_configure_spi_3_wire(struct spi_device *spi,
+					   struct st_sensor_settings *settings)
+{
+	if (settings->sim.addr) {
+		u8 buffer[] = {
 			settings->sim.addr,
 			settings->sim.value
-		पूर्ण;
+		};
 
-		वापस spi_ग_लिखो(spi, buffer, 2);
-	पूर्ण
+		return spi_write(spi, buffer, 2);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * st_sensors_spi_configure() - configure SPI पूर्णांकerface
+ * st_sensors_spi_configure() - configure SPI interface
  * @indio_dev: IIO device reference.
  * @spi: spi device reference.
  *
- * Return: 0 on success, अन्यथा a negative error code.
+ * Return: 0 on success, else a negative error code.
  */
-पूर्णांक st_sensors_spi_configure(काष्ठा iio_dev *indio_dev,
-			     काष्ठा spi_device *spi)
-अणु
-	काष्ठा st_sensor_data *sdata = iio_priv(indio_dev);
-	स्थिर काष्ठा regmap_config *config;
-	पूर्णांक err;
+int st_sensors_spi_configure(struct iio_dev *indio_dev,
+			     struct spi_device *spi)
+{
+	struct st_sensor_data *sdata = iio_priv(indio_dev);
+	const struct regmap_config *config;
+	int err;
 
-	अगर (st_sensors_is_spi_3_wire(spi)) अणु
+	if (st_sensors_is_spi_3_wire(spi)) {
 		err = st_sensors_configure_spi_3_wire(spi,
 						      sdata->sensor_settings);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+		if (err < 0)
+			return err;
+	}
 
-	अगर (sdata->sensor_settings->multi_पढ़ो_bit)
-		config = &st_sensors_spi_regmap_multiपढ़ो_bit_config;
-	अन्यथा
+	if (sdata->sensor_settings->multi_read_bit)
+		config = &st_sensors_spi_regmap_multiread_bit_config;
+	else
 		config = &st_sensors_spi_regmap_config;
 
 	sdata->regmap = devm_regmap_init_spi(spi, config);
-	अगर (IS_ERR(sdata->regmap)) अणु
+	if (IS_ERR(sdata->regmap)) {
 		dev_err(&spi->dev, "Failed to register spi regmap (%ld)\n",
 			PTR_ERR(sdata->regmap));
-		वापस PTR_ERR(sdata->regmap);
-	पूर्ण
+		return PTR_ERR(sdata->regmap);
+	}
 
 	spi_set_drvdata(spi, indio_dev);
 
@@ -114,8 +113,8 @@
 	sdata->dev = &spi->dev;
 	sdata->irq = spi->irq;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(st_sensors_spi_configure);
 
 MODULE_AUTHOR("Denis Ciocca <denis.ciocca@st.com>");

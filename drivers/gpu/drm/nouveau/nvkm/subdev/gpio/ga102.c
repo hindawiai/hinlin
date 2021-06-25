@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2021 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,18 +19,18 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#समावेश "priv.h"
+#include "priv.h"
 
-अटल व्योम
-ga102_gpio_reset(काष्ठा nvkm_gpio *gpio, u8 match)
-अणु
-	काष्ठा nvkm_device *device = gpio->subdev.device;
-	काष्ठा nvkm_bios *bios = device->bios;
+static void
+ga102_gpio_reset(struct nvkm_gpio *gpio, u8 match)
+{
+	struct nvkm_device *device = gpio->subdev.device;
+	struct nvkm_bios *bios = device->bios;
 	u8 ver, len;
 	u16 entry;
-	पूर्णांक ent = -1;
+	int ent = -1;
 
-	जबतक ((entry = dcb_gpio_entry(bios, 0, ++ent, &ver, &len))) अणु
+	while ((entry = dcb_gpio_entry(bios, 0, ++ent, &ver, &len))) {
 		u32 data = nvbios_rd32(bios, entry);
 		u8  line =   (data & 0x0000003f);
 		u8  defs = !!(data & 0x00000080);
@@ -39,82 +38,82 @@ ga102_gpio_reset(काष्ठा nvkm_gpio *gpio, u8 match)
 		u8  unk0 =   (data & 0x00ff0000) >> 16;
 		u8  unk1 =   (data & 0x1f000000) >> 24;
 
-		अगर ( func  == DCB_GPIO_UNUSED ||
+		if ( func  == DCB_GPIO_UNUSED ||
 		    (match != DCB_GPIO_UNUSED && match != func))
-			जारी;
+			continue;
 
 		nvkm_gpio_set(gpio, 0, func, line, defs);
 
 		nvkm_mask(device, 0x021200 + (line * 4), 0xff, unk0);
-		अगर (unk1--)
+		if (unk1--)
 			nvkm_mask(device, 0x00d740 + (unk1 * 4), 0xff, line);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक
-ga102_gpio_drive(काष्ठा nvkm_gpio *gpio, पूर्णांक line, पूर्णांक dir, पूर्णांक out)
-अणु
-	काष्ठा nvkm_device *device = gpio->subdev.device;
+static int
+ga102_gpio_drive(struct nvkm_gpio *gpio, int line, int dir, int out)
+{
+	struct nvkm_device *device = gpio->subdev.device;
 	u32 data = ((dir ^ 1) << 13) | (out << 12);
 	nvkm_mask(device, 0x021200 + (line * 4), 0x00003000, data);
 	nvkm_mask(device, 0x00d604, 0x00000001, 0x00000001); /* update? */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-ga102_gpio_sense(काष्ठा nvkm_gpio *gpio, पूर्णांक line)
-अणु
-	काष्ठा nvkm_device *device = gpio->subdev.device;
-	वापस !!(nvkm_rd32(device, 0x021200 + (line * 4)) & 0x00004000);
-पूर्ण
+static int
+ga102_gpio_sense(struct nvkm_gpio *gpio, int line)
+{
+	struct nvkm_device *device = gpio->subdev.device;
+	return !!(nvkm_rd32(device, 0x021200 + (line * 4)) & 0x00004000);
+}
 
-अटल व्योम
-ga102_gpio_पूर्णांकr_stat(काष्ठा nvkm_gpio *gpio, u32 *hi, u32 *lo)
-अणु
-	काष्ठा nvkm_device *device = gpio->subdev.device;
-	u32 पूर्णांकr0 = nvkm_rd32(device, 0x021640);
-	u32 पूर्णांकr1 = nvkm_rd32(device, 0x02164c);
-	u32 stat0 = nvkm_rd32(device, 0x021648) & पूर्णांकr0;
-	u32 stat1 = nvkm_rd32(device, 0x021654) & पूर्णांकr1;
+static void
+ga102_gpio_intr_stat(struct nvkm_gpio *gpio, u32 *hi, u32 *lo)
+{
+	struct nvkm_device *device = gpio->subdev.device;
+	u32 intr0 = nvkm_rd32(device, 0x021640);
+	u32 intr1 = nvkm_rd32(device, 0x02164c);
+	u32 stat0 = nvkm_rd32(device, 0x021648) & intr0;
+	u32 stat1 = nvkm_rd32(device, 0x021654) & intr1;
 	*lo = (stat1 & 0xffff0000) | (stat0 >> 16);
 	*hi = (stat1 << 16) | (stat0 & 0x0000ffff);
-	nvkm_wr32(device, 0x021640, पूर्णांकr0);
-	nvkm_wr32(device, 0x02164c, पूर्णांकr1);
-पूर्ण
+	nvkm_wr32(device, 0x021640, intr0);
+	nvkm_wr32(device, 0x02164c, intr1);
+}
 
-अटल व्योम
-ga102_gpio_पूर्णांकr_mask(काष्ठा nvkm_gpio *gpio, u32 type, u32 mask, u32 data)
-अणु
-	काष्ठा nvkm_device *device = gpio->subdev.device;
-	u32 पूर्णांकe0 = nvkm_rd32(device, 0x021648);
-	u32 पूर्णांकe1 = nvkm_rd32(device, 0x021654);
-	अगर (type & NVKM_GPIO_LO)
-		पूर्णांकe0 = (पूर्णांकe0 & ~(mask << 16)) | (data << 16);
-	अगर (type & NVKM_GPIO_HI)
-		पूर्णांकe0 = (पूर्णांकe0 & ~(mask & 0xffff)) | (data & 0xffff);
+static void
+ga102_gpio_intr_mask(struct nvkm_gpio *gpio, u32 type, u32 mask, u32 data)
+{
+	struct nvkm_device *device = gpio->subdev.device;
+	u32 inte0 = nvkm_rd32(device, 0x021648);
+	u32 inte1 = nvkm_rd32(device, 0x021654);
+	if (type & NVKM_GPIO_LO)
+		inte0 = (inte0 & ~(mask << 16)) | (data << 16);
+	if (type & NVKM_GPIO_HI)
+		inte0 = (inte0 & ~(mask & 0xffff)) | (data & 0xffff);
 	mask >>= 16;
 	data >>= 16;
-	अगर (type & NVKM_GPIO_LO)
-		पूर्णांकe1 = (पूर्णांकe1 & ~(mask << 16)) | (data << 16);
-	अगर (type & NVKM_GPIO_HI)
-		पूर्णांकe1 = (पूर्णांकe1 & ~mask) | data;
-	nvkm_wr32(device, 0x021648, पूर्णांकe0);
-	nvkm_wr32(device, 0x021654, पूर्णांकe1);
-पूर्ण
+	if (type & NVKM_GPIO_LO)
+		inte1 = (inte1 & ~(mask << 16)) | (data << 16);
+	if (type & NVKM_GPIO_HI)
+		inte1 = (inte1 & ~mask) | data;
+	nvkm_wr32(device, 0x021648, inte0);
+	nvkm_wr32(device, 0x021654, inte1);
+}
 
-अटल स्थिर काष्ठा nvkm_gpio_func
-ga102_gpio = अणु
+static const struct nvkm_gpio_func
+ga102_gpio = {
 	.lines = 32,
-	.पूर्णांकr_stat = ga102_gpio_पूर्णांकr_stat,
-	.पूर्णांकr_mask = ga102_gpio_पूर्णांकr_mask,
+	.intr_stat = ga102_gpio_intr_stat,
+	.intr_mask = ga102_gpio_intr_mask,
 	.drive = ga102_gpio_drive,
 	.sense = ga102_gpio_sense,
 	.reset = ga102_gpio_reset,
-पूर्ण;
+};
 
-पूर्णांक
-ga102_gpio_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst,
-	       काष्ठा nvkm_gpio **pgpio)
-अणु
-	वापस nvkm_gpio_new_(&ga102_gpio, device, type, inst, pgpio);
-पूर्ण
+int
+ga102_gpio_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst,
+	       struct nvkm_gpio **pgpio)
+{
+	return nvkm_gpio_new_(&ga102_gpio, device, type, inst, pgpio);
+}

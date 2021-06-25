@@ -1,1490 +1,1489 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *  Copyright(C) 2005-2006, Thomas Gleixner <tglx@linutronix.de>
  *  Copyright(C) 2005-2007, Red Hat, Inc., Ingo Molnar
  *  Copyright(C) 2006-2007  Timesys Corp., Thomas Gleixner
  *
- *  No idle tick implementation क्रम low and high resolution समयrs
+ *  No idle tick implementation for low and high resolution timers
  *
  *  Started by: Thomas Gleixner and Ingo Molnar
  */
-#समावेश <linux/cpu.h>
-#समावेश <linux/err.h>
-#समावेश <linux/hrसमयr.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/kernel_स्थिति.स>
-#समावेश <linux/percpu.h>
-#समावेश <linux/nmi.h>
-#समावेश <linux/profile.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/sched/घड़ी.h>
-#समावेश <linux/sched/स्थिति.स>
-#समावेश <linux/sched/nohz.h>
-#समावेश <linux/sched/loadavg.h>
-#समावेश <linux/module.h>
-#समावेश <linux/irq_work.h>
-#समावेश <linux/posix-समयrs.h>
-#समावेश <linux/context_tracking.h>
-#समावेश <linux/mm.h>
+#include <linux/cpu.h>
+#include <linux/err.h>
+#include <linux/hrtimer.h>
+#include <linux/interrupt.h>
+#include <linux/kernel_stat.h>
+#include <linux/percpu.h>
+#include <linux/nmi.h>
+#include <linux/profile.h>
+#include <linux/sched/signal.h>
+#include <linux/sched/clock.h>
+#include <linux/sched/stat.h>
+#include <linux/sched/nohz.h>
+#include <linux/sched/loadavg.h>
+#include <linux/module.h>
+#include <linux/irq_work.h>
+#include <linux/posix-timers.h>
+#include <linux/context_tracking.h>
+#include <linux/mm.h>
 
-#समावेश <यंत्र/irq_regs.h>
+#include <asm/irq_regs.h>
 
-#समावेश "tick-internal.h"
+#include "tick-internal.h"
 
-#समावेश <trace/events/समयr.h>
-
-/*
- * Per-CPU nohz control काष्ठाure
- */
-अटल DEFINE_PER_CPU(काष्ठा tick_sched, tick_cpu_sched);
-
-काष्ठा tick_sched *tick_get_tick_sched(पूर्णांक cpu)
-अणु
-	वापस &per_cpu(tick_cpu_sched, cpu);
-पूर्ण
-
-#अगर defined(CONFIG_NO_HZ_COMMON) || defined(CONFIG_HIGH_RES_TIMERS)
-/*
- * The समय, when the last jअगरfy update happened. Write access must hold
- * jअगरfies_lock and jअगरfies_seq. tick_nohz_next_event() needs to get a
- * consistent view of jअगरfies and last_jअगरfies_update.
- */
-अटल kसमय_प्रकार last_jअगरfies_update;
+#include <trace/events/timer.h>
 
 /*
- * Must be called with पूर्णांकerrupts disabled !
+ * Per-CPU nohz control structure
  */
-अटल व्योम tick_करो_update_jअगरfies64(kसमय_प्रकार now)
-अणु
-	अचिन्हित दीर्घ ticks = 1;
-	kसमय_प्रकार delta, nextp;
+static DEFINE_PER_CPU(struct tick_sched, tick_cpu_sched);
+
+struct tick_sched *tick_get_tick_sched(int cpu)
+{
+	return &per_cpu(tick_cpu_sched, cpu);
+}
+
+#if defined(CONFIG_NO_HZ_COMMON) || defined(CONFIG_HIGH_RES_TIMERS)
+/*
+ * The time, when the last jiffy update happened. Write access must hold
+ * jiffies_lock and jiffies_seq. tick_nohz_next_event() needs to get a
+ * consistent view of jiffies and last_jiffies_update.
+ */
+static ktime_t last_jiffies_update;
+
+/*
+ * Must be called with interrupts disabled !
+ */
+static void tick_do_update_jiffies64(ktime_t now)
+{
+	unsigned long ticks = 1;
+	ktime_t delta, nextp;
 
 	/*
-	 * 64bit can करो a quick check without holding jअगरfies lock and
+	 * 64bit can do a quick check without holding jiffies lock and
 	 * without looking at the sequence count. The smp_load_acquire()
-	 * pairs with the update करोne later in this function.
+	 * pairs with the update done later in this function.
 	 *
-	 * 32bit cannot करो that because the store of tick_next_period
+	 * 32bit cannot do that because the store of tick_next_period
 	 * consists of two 32bit stores and the first store could move it
-	 * to a अक्रमom poपूर्णांक in the future.
+	 * to a random point in the future.
 	 */
-	अगर (IS_ENABLED(CONFIG_64BIT)) अणु
-		अगर (kसमय_beक्रमe(now, smp_load_acquire(&tick_next_period)))
-			वापस;
-	पूर्ण अन्यथा अणु
-		अचिन्हित पूर्णांक seq;
+	if (IS_ENABLED(CONFIG_64BIT)) {
+		if (ktime_before(now, smp_load_acquire(&tick_next_period)))
+			return;
+	} else {
+		unsigned int seq;
 
 		/*
-		 * Aव्योम contention on jअगरfies_lock and protect the quick
+		 * Avoid contention on jiffies_lock and protect the quick
 		 * check with the sequence count.
 		 */
-		करो अणु
-			seq = पढ़ो_seqcount_begin(&jअगरfies_seq);
+		do {
+			seq = read_seqcount_begin(&jiffies_seq);
 			nextp = tick_next_period;
-		पूर्ण जबतक (पढ़ो_seqcount_retry(&jअगरfies_seq, seq));
+		} while (read_seqcount_retry(&jiffies_seq, seq));
 
-		अगर (kसमय_beक्रमe(now, nextp))
-			वापस;
-	पूर्ण
+		if (ktime_before(now, nextp))
+			return;
+	}
 
 	/* Quick check failed, i.e. update is required. */
-	raw_spin_lock(&jअगरfies_lock);
+	raw_spin_lock(&jiffies_lock);
 	/*
-	 * Reevaluate with the lock held. Another CPU might have करोne the
-	 * update alपढ़ोy.
+	 * Reevaluate with the lock held. Another CPU might have done the
+	 * update already.
 	 */
-	अगर (kसमय_beक्रमe(now, tick_next_period)) अणु
-		raw_spin_unlock(&jअगरfies_lock);
-		वापस;
-	पूर्ण
+	if (ktime_before(now, tick_next_period)) {
+		raw_spin_unlock(&jiffies_lock);
+		return;
+	}
 
-	ग_लिखो_seqcount_begin(&jअगरfies_seq);
+	write_seqcount_begin(&jiffies_seq);
 
-	delta = kसमय_sub(now, tick_next_period);
-	अगर (unlikely(delta >= TICK_NSEC)) अणु
-		/* Slow path क्रम दीर्घ idle sleep बार */
+	delta = ktime_sub(now, tick_next_period);
+	if (unlikely(delta >= TICK_NSEC)) {
+		/* Slow path for long idle sleep times */
 		s64 incr = TICK_NSEC;
 
-		ticks += kसमय_भागns(delta, incr);
+		ticks += ktime_divns(delta, incr);
 
-		last_jअगरfies_update = kसमय_add_ns(last_jअगरfies_update,
+		last_jiffies_update = ktime_add_ns(last_jiffies_update,
 						   incr * ticks);
-	पूर्ण अन्यथा अणु
-		last_jअगरfies_update = kसमय_add_ns(last_jअगरfies_update,
+	} else {
+		last_jiffies_update = ktime_add_ns(last_jiffies_update,
 						   TICK_NSEC);
-	पूर्ण
+	}
 
-	/* Advance jअगरfies to complete the jअगरfies_seq रक्षित job */
-	jअगरfies_64 += ticks;
+	/* Advance jiffies to complete the jiffies_seq protected job */
+	jiffies_64 += ticks;
 
 	/*
 	 * Keep the tick_next_period variable up to date.
 	 */
-	nextp = kसमय_add_ns(last_jअगरfies_update, TICK_NSEC);
+	nextp = ktime_add_ns(last_jiffies_update, TICK_NSEC);
 
-	अगर (IS_ENABLED(CONFIG_64BIT)) अणु
+	if (IS_ENABLED(CONFIG_64BIT)) {
 		/*
 		 * Pairs with smp_load_acquire() in the lockless quick
-		 * check above and ensures that the update to jअगरfies_64 is
+		 * check above and ensures that the update to jiffies_64 is
 		 * not reordered vs. the store to tick_next_period, neither
 		 * by the compiler nor by the CPU.
 		 */
 		smp_store_release(&tick_next_period, nextp);
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
 		 * A plain store is good enough on 32bit as the quick check
-		 * above is रक्षित by the sequence count.
+		 * above is protected by the sequence count.
 		 */
 		tick_next_period = nextp;
-	पूर्ण
+	}
 
 	/*
 	 * Release the sequence count. calc_global_load() below is not
-	 * रक्षित by it, but jअगरfies_lock needs to be held to prevent
+	 * protected by it, but jiffies_lock needs to be held to prevent
 	 * concurrent invocations.
 	 */
-	ग_लिखो_seqcount_end(&jअगरfies_seq);
+	write_seqcount_end(&jiffies_seq);
 
 	calc_global_load();
 
-	raw_spin_unlock(&jअगरfies_lock);
-	update_wall_समय();
-पूर्ण
+	raw_spin_unlock(&jiffies_lock);
+	update_wall_time();
+}
 
 /*
- * Initialize and वापस retrieve the jअगरfies update.
+ * Initialize and return retrieve the jiffies update.
  */
-अटल kसमय_प्रकार tick_init_jअगरfy_update(व्योम)
-अणु
-	kसमय_प्रकार period;
+static ktime_t tick_init_jiffy_update(void)
+{
+	ktime_t period;
 
-	raw_spin_lock(&jअगरfies_lock);
-	ग_लिखो_seqcount_begin(&jअगरfies_seq);
-	/* Did we start the jअगरfies update yet ? */
-	अगर (last_jअगरfies_update == 0)
-		last_jअगरfies_update = tick_next_period;
-	period = last_jअगरfies_update;
-	ग_लिखो_seqcount_end(&jअगरfies_seq);
-	raw_spin_unlock(&jअगरfies_lock);
-	वापस period;
-पूर्ण
+	raw_spin_lock(&jiffies_lock);
+	write_seqcount_begin(&jiffies_seq);
+	/* Did we start the jiffies update yet ? */
+	if (last_jiffies_update == 0)
+		last_jiffies_update = tick_next_period;
+	period = last_jiffies_update;
+	write_seqcount_end(&jiffies_seq);
+	raw_spin_unlock(&jiffies_lock);
+	return period;
+}
 
-अटल व्योम tick_sched_करो_समयr(काष्ठा tick_sched *ts, kसमय_प्रकार now)
-अणु
-	पूर्णांक cpu = smp_processor_id();
+static void tick_sched_do_timer(struct tick_sched *ts, ktime_t now)
+{
+	int cpu = smp_processor_id();
 
-#अगर_घोषित CONFIG_NO_HZ_COMMON
+#ifdef CONFIG_NO_HZ_COMMON
 	/*
-	 * Check अगर the करो_समयr duty was dropped. We करोn't care about
-	 * concurrency: This happens only when the CPU in अक्षरge went
-	 * पूर्णांकo a दीर्घ sleep. If two CPUs happen to assign themselves to
-	 * this duty, then the jअगरfies update is still serialized by
-	 * jअगरfies_lock.
+	 * Check if the do_timer duty was dropped. We don't care about
+	 * concurrency: This happens only when the CPU in charge went
+	 * into a long sleep. If two CPUs happen to assign themselves to
+	 * this duty, then the jiffies update is still serialized by
+	 * jiffies_lock.
 	 *
 	 * If nohz_full is enabled, this should not happen because the
-	 * tick_करो_समयr_cpu never relinquishes.
+	 * tick_do_timer_cpu never relinquishes.
 	 */
-	अगर (unlikely(tick_करो_समयr_cpu == TICK_DO_TIMER_NONE)) अणु
-#अगर_घोषित CONFIG_NO_HZ_FULL
+	if (unlikely(tick_do_timer_cpu == TICK_DO_TIMER_NONE)) {
+#ifdef CONFIG_NO_HZ_FULL
 		WARN_ON(tick_nohz_full_running);
-#पूर्ण_अगर
-		tick_करो_समयr_cpu = cpu;
-	पूर्ण
-#पूर्ण_अगर
+#endif
+		tick_do_timer_cpu = cpu;
+	}
+#endif
 
-	/* Check, अगर the jअगरfies need an update */
-	अगर (tick_करो_समयr_cpu == cpu)
-		tick_करो_update_jअगरfies64(now);
+	/* Check, if the jiffies need an update */
+	if (tick_do_timer_cpu == cpu)
+		tick_do_update_jiffies64(now);
 
-	अगर (ts->inidle)
+	if (ts->inidle)
 		ts->got_idle_tick = 1;
-पूर्ण
+}
 
-अटल व्योम tick_sched_handle(काष्ठा tick_sched *ts, काष्ठा pt_regs *regs)
-अणु
-#अगर_घोषित CONFIG_NO_HZ_COMMON
+static void tick_sched_handle(struct tick_sched *ts, struct pt_regs *regs)
+{
+#ifdef CONFIG_NO_HZ_COMMON
 	/*
 	 * When we are idle and the tick is stopped, we have to touch
-	 * the watchकरोg as we might not schedule क्रम a really दीर्घ
-	 * समय. This happens on complete idle SMP प्रणालीs जबतक
-	 * रुकोing on the login prompt. We also increment the "start of
-	 * idle" jअगरfy stamp so the idle accounting adjusपंचांगent we करो
-	 * when we go busy again करोes not account too much ticks.
+	 * the watchdog as we might not schedule for a really long
+	 * time. This happens on complete idle SMP systems while
+	 * waiting on the login prompt. We also increment the "start of
+	 * idle" jiffy stamp so the idle accounting adjustment we do
+	 * when we go busy again does not account too much ticks.
 	 */
-	अगर (ts->tick_stopped) अणु
-		touch_softlockup_watchकरोg_sched();
-		अगर (is_idle_task(current))
-			ts->idle_jअगरfies++;
+	if (ts->tick_stopped) {
+		touch_softlockup_watchdog_sched();
+		if (is_idle_task(current))
+			ts->idle_jiffies++;
 		/*
-		 * In हाल the current tick fired too early past its expected
-		 * expiration, make sure we करोn't bypass the next घड़ी reprogramming
+		 * In case the current tick fired too early past its expected
+		 * expiration, make sure we don't bypass the next clock reprogramming
 		 * to the same deadline.
 		 */
 		ts->next_tick = 0;
-	पूर्ण
-#पूर्ण_अगर
-	update_process_बार(user_mode(regs));
+	}
+#endif
+	update_process_times(user_mode(regs));
 	profile_tick(CPU_PROFILING);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-#अगर_घोषित CONFIG_NO_HZ_FULL
+#ifdef CONFIG_NO_HZ_FULL
 cpumask_var_t tick_nohz_full_mask;
 EXPORT_SYMBOL_GPL(tick_nohz_full_mask);
 bool tick_nohz_full_running;
 EXPORT_SYMBOL_GPL(tick_nohz_full_running);
-अटल atomic_t tick_dep_mask;
+static atomic_t tick_dep_mask;
 
-अटल bool check_tick_dependency(atomic_t *dep)
-अणु
-	पूर्णांक val = atomic_पढ़ो(dep);
+static bool check_tick_dependency(atomic_t *dep)
+{
+	int val = atomic_read(dep);
 
-	अगर (val & TICK_DEP_MASK_POSIX_TIMER) अणु
+	if (val & TICK_DEP_MASK_POSIX_TIMER) {
 		trace_tick_stop(0, TICK_DEP_MASK_POSIX_TIMER);
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	अगर (val & TICK_DEP_MASK_PERF_EVENTS) अणु
+	if (val & TICK_DEP_MASK_PERF_EVENTS) {
 		trace_tick_stop(0, TICK_DEP_MASK_PERF_EVENTS);
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	अगर (val & TICK_DEP_MASK_SCHED) अणु
+	if (val & TICK_DEP_MASK_SCHED) {
 		trace_tick_stop(0, TICK_DEP_MASK_SCHED);
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	अगर (val & TICK_DEP_MASK_CLOCK_UNSTABLE) अणु
+	if (val & TICK_DEP_MASK_CLOCK_UNSTABLE) {
 		trace_tick_stop(0, TICK_DEP_MASK_CLOCK_UNSTABLE);
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	अगर (val & TICK_DEP_MASK_RCU) अणु
+	if (val & TICK_DEP_MASK_RCU) {
 		trace_tick_stop(0, TICK_DEP_MASK_RCU);
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल bool can_stop_full_tick(पूर्णांक cpu, काष्ठा tick_sched *ts)
-अणु
-	lockdep_निश्चित_irqs_disabled();
+static bool can_stop_full_tick(int cpu, struct tick_sched *ts)
+{
+	lockdep_assert_irqs_disabled();
 
-	अगर (unlikely(!cpu_online(cpu)))
-		वापस false;
+	if (unlikely(!cpu_online(cpu)))
+		return false;
 
-	अगर (check_tick_dependency(&tick_dep_mask))
-		वापस false;
+	if (check_tick_dependency(&tick_dep_mask))
+		return false;
 
-	अगर (check_tick_dependency(&ts->tick_dep_mask))
-		वापस false;
+	if (check_tick_dependency(&ts->tick_dep_mask))
+		return false;
 
-	अगर (check_tick_dependency(&current->tick_dep_mask))
-		वापस false;
+	if (check_tick_dependency(&current->tick_dep_mask))
+		return false;
 
-	अगर (check_tick_dependency(&current->संकेत->tick_dep_mask))
-		वापस false;
+	if (check_tick_dependency(&current->signal->tick_dep_mask))
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल व्योम nohz_full_kick_func(काष्ठा irq_work *work)
-अणु
-	/* Empty, the tick restart happens on tick_nohz_irq_निकास() */
-पूर्ण
+static void nohz_full_kick_func(struct irq_work *work)
+{
+	/* Empty, the tick restart happens on tick_nohz_irq_exit() */
+}
 
-अटल DEFINE_PER_CPU(काष्ठा irq_work, nohz_full_kick_work) =
+static DEFINE_PER_CPU(struct irq_work, nohz_full_kick_work) =
 	IRQ_WORK_INIT_HARD(nohz_full_kick_func);
 
 /*
- * Kick this CPU अगर it's full dynticks in order to क्रमce it to
- * re-evaluate its dependency on the tick and restart it अगर necessary.
+ * Kick this CPU if it's full dynticks in order to force it to
+ * re-evaluate its dependency on the tick and restart it if necessary.
  * This kick, unlike tick_nohz_full_kick_cpu() and tick_nohz_full_kick_all(),
  * is NMI safe.
  */
-अटल व्योम tick_nohz_full_kick(व्योम)
-अणु
-	अगर (!tick_nohz_full_cpu(smp_processor_id()))
-		वापस;
+static void tick_nohz_full_kick(void)
+{
+	if (!tick_nohz_full_cpu(smp_processor_id()))
+		return;
 
 	irq_work_queue(this_cpu_ptr(&nohz_full_kick_work));
-पूर्ण
+}
 
 /*
- * Kick the CPU अगर it's full dynticks in order to क्रमce it to
- * re-evaluate its dependency on the tick and restart it अगर necessary.
+ * Kick the CPU if it's full dynticks in order to force it to
+ * re-evaluate its dependency on the tick and restart it if necessary.
  */
-व्योम tick_nohz_full_kick_cpu(पूर्णांक cpu)
-अणु
-	अगर (!tick_nohz_full_cpu(cpu))
-		वापस;
+void tick_nohz_full_kick_cpu(int cpu)
+{
+	if (!tick_nohz_full_cpu(cpu))
+		return;
 
 	irq_work_queue_on(&per_cpu(nohz_full_kick_work, cpu), cpu);
-पूर्ण
+}
 
 /*
- * Kick all full dynticks CPUs in order to क्रमce these to re-evaluate
- * their dependency on the tick and restart it अगर necessary.
+ * Kick all full dynticks CPUs in order to force these to re-evaluate
+ * their dependency on the tick and restart it if necessary.
  */
-अटल व्योम tick_nohz_full_kick_all(व्योम)
-अणु
-	पूर्णांक cpu;
+static void tick_nohz_full_kick_all(void)
+{
+	int cpu;
 
-	अगर (!tick_nohz_full_running)
-		वापस;
+	if (!tick_nohz_full_running)
+		return;
 
 	preempt_disable();
-	क्रम_each_cpu_and(cpu, tick_nohz_full_mask, cpu_online_mask)
+	for_each_cpu_and(cpu, tick_nohz_full_mask, cpu_online_mask)
 		tick_nohz_full_kick_cpu(cpu);
 	preempt_enable();
-पूर्ण
+}
 
-अटल व्योम tick_nohz_dep_set_all(atomic_t *dep,
-				  क्रमागत tick_dep_bits bit)
-अणु
-	पूर्णांक prev;
+static void tick_nohz_dep_set_all(atomic_t *dep,
+				  enum tick_dep_bits bit)
+{
+	int prev;
 
 	prev = atomic_fetch_or(BIT(bit), dep);
-	अगर (!prev)
+	if (!prev)
 		tick_nohz_full_kick_all();
-पूर्ण
+}
 
 /*
  * Set a global tick dependency. Used by perf events that rely on freq and
- * by unstable घड़ी.
+ * by unstable clock.
  */
-व्योम tick_nohz_dep_set(क्रमागत tick_dep_bits bit)
-अणु
+void tick_nohz_dep_set(enum tick_dep_bits bit)
+{
 	tick_nohz_dep_set_all(&tick_dep_mask, bit);
-पूर्ण
+}
 
-व्योम tick_nohz_dep_clear(क्रमागत tick_dep_bits bit)
-अणु
+void tick_nohz_dep_clear(enum tick_dep_bits bit)
+{
 	atomic_andnot(BIT(bit), &tick_dep_mask);
-पूर्ण
+}
 
 /*
  * Set per-CPU tick dependency. Used by scheduler and perf events in order to
  * manage events throttling.
  */
-व्योम tick_nohz_dep_set_cpu(पूर्णांक cpu, क्रमागत tick_dep_bits bit)
-अणु
-	पूर्णांक prev;
-	काष्ठा tick_sched *ts;
+void tick_nohz_dep_set_cpu(int cpu, enum tick_dep_bits bit)
+{
+	int prev;
+	struct tick_sched *ts;
 
 	ts = per_cpu_ptr(&tick_cpu_sched, cpu);
 
 	prev = atomic_fetch_or(BIT(bit), &ts->tick_dep_mask);
-	अगर (!prev) अणु
+	if (!prev) {
 		preempt_disable();
 		/* Perf needs local kick that is NMI safe */
-		अगर (cpu == smp_processor_id()) अणु
+		if (cpu == smp_processor_id()) {
 			tick_nohz_full_kick();
-		पूर्ण अन्यथा अणु
+		} else {
 			/* Remote irq work not NMI-safe */
-			अगर (!WARN_ON_ONCE(in_nmi()))
+			if (!WARN_ON_ONCE(in_nmi()))
 				tick_nohz_full_kick_cpu(cpu);
-		पूर्ण
+		}
 		preempt_enable();
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL_GPL(tick_nohz_dep_set_cpu);
 
-व्योम tick_nohz_dep_clear_cpu(पूर्णांक cpu, क्रमागत tick_dep_bits bit)
-अणु
-	काष्ठा tick_sched *ts = per_cpu_ptr(&tick_cpu_sched, cpu);
+void tick_nohz_dep_clear_cpu(int cpu, enum tick_dep_bits bit)
+{
+	struct tick_sched *ts = per_cpu_ptr(&tick_cpu_sched, cpu);
 
 	atomic_andnot(BIT(bit), &ts->tick_dep_mask);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(tick_nohz_dep_clear_cpu);
 
 /*
- * Set a per-task tick dependency. RCU need this. Also posix CPU समयrs
- * in order to elapse per task समयrs.
+ * Set a per-task tick dependency. RCU need this. Also posix CPU timers
+ * in order to elapse per task timers.
  */
-व्योम tick_nohz_dep_set_task(काष्ठा task_काष्ठा *tsk, क्रमागत tick_dep_bits bit)
-अणु
-	अगर (!atomic_fetch_or(BIT(bit), &tsk->tick_dep_mask)) अणु
-		अगर (tsk == current) अणु
+void tick_nohz_dep_set_task(struct task_struct *tsk, enum tick_dep_bits bit)
+{
+	if (!atomic_fetch_or(BIT(bit), &tsk->tick_dep_mask)) {
+		if (tsk == current) {
 			preempt_disable();
 			tick_nohz_full_kick();
 			preempt_enable();
-		पूर्ण अन्यथा अणु
+		} else {
 			/*
 			 * Some future tick_nohz_full_kick_task()
 			 * should optimize this.
 			 */
 			tick_nohz_full_kick_all();
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 EXPORT_SYMBOL_GPL(tick_nohz_dep_set_task);
 
-व्योम tick_nohz_dep_clear_task(काष्ठा task_काष्ठा *tsk, क्रमागत tick_dep_bits bit)
-अणु
+void tick_nohz_dep_clear_task(struct task_struct *tsk, enum tick_dep_bits bit)
+{
 	atomic_andnot(BIT(bit), &tsk->tick_dep_mask);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(tick_nohz_dep_clear_task);
 
 /*
- * Set a per-taskgroup tick dependency. Posix CPU समयrs need this in order to elapse
- * per process समयrs.
+ * Set a per-taskgroup tick dependency. Posix CPU timers need this in order to elapse
+ * per process timers.
  */
-व्योम tick_nohz_dep_set_संकेत(काष्ठा संकेत_काष्ठा *sig, क्रमागत tick_dep_bits bit)
-अणु
+void tick_nohz_dep_set_signal(struct signal_struct *sig, enum tick_dep_bits bit)
+{
 	tick_nohz_dep_set_all(&sig->tick_dep_mask, bit);
-पूर्ण
+}
 
-व्योम tick_nohz_dep_clear_संकेत(काष्ठा संकेत_काष्ठा *sig, क्रमागत tick_dep_bits bit)
-अणु
+void tick_nohz_dep_clear_signal(struct signal_struct *sig, enum tick_dep_bits bit)
+{
 	atomic_andnot(BIT(bit), &sig->tick_dep_mask);
-पूर्ण
+}
 
 /*
- * Re-evaluate the need क्रम the tick as we चयन the current task.
+ * Re-evaluate the need for the tick as we switch the current task.
  * It might need the tick due to per task/process properties:
- * perf events, posix CPU समयrs, ...
+ * perf events, posix CPU timers, ...
  */
-व्योम __tick_nohz_task_चयन(व्योम)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा tick_sched *ts;
+void __tick_nohz_task_switch(void)
+{
+	unsigned long flags;
+	struct tick_sched *ts;
 
 	local_irq_save(flags);
 
-	अगर (!tick_nohz_full_cpu(smp_processor_id()))
-		जाओ out;
+	if (!tick_nohz_full_cpu(smp_processor_id()))
+		goto out;
 
 	ts = this_cpu_ptr(&tick_cpu_sched);
 
-	अगर (ts->tick_stopped) अणु
-		अगर (atomic_पढ़ो(&current->tick_dep_mask) ||
-		    atomic_पढ़ो(&current->संकेत->tick_dep_mask))
+	if (ts->tick_stopped) {
+		if (atomic_read(&current->tick_dep_mask) ||
+		    atomic_read(&current->signal->tick_dep_mask))
 			tick_nohz_full_kick();
-	पूर्ण
+	}
 out:
 	local_irq_restore(flags);
-पूर्ण
+}
 
-/* Get the boot-समय nohz CPU list from the kernel parameters. */
-व्योम __init tick_nohz_full_setup(cpumask_var_t cpumask)
-अणु
-	alloc_booपंचांगem_cpumask_var(&tick_nohz_full_mask);
+/* Get the boot-time nohz CPU list from the kernel parameters. */
+void __init tick_nohz_full_setup(cpumask_var_t cpumask)
+{
+	alloc_bootmem_cpumask_var(&tick_nohz_full_mask);
 	cpumask_copy(tick_nohz_full_mask, cpumask);
 	tick_nohz_full_running = true;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(tick_nohz_full_setup);
 
-अटल पूर्णांक tick_nohz_cpu_करोwn(अचिन्हित पूर्णांक cpu)
-अणु
+static int tick_nohz_cpu_down(unsigned int cpu)
+{
 	/*
-	 * The tick_करो_समयr_cpu CPU handles housekeeping duty (unbound
-	 * समयrs, workqueues, समयkeeping, ...) on behalf of full dynticks
-	 * CPUs. It must reमुख्य online when nohz full is enabled.
+	 * The tick_do_timer_cpu CPU handles housekeeping duty (unbound
+	 * timers, workqueues, timekeeping, ...) on behalf of full dynticks
+	 * CPUs. It must remain online when nohz full is enabled.
 	 */
-	अगर (tick_nohz_full_running && tick_करो_समयr_cpu == cpu)
-		वापस -EBUSY;
-	वापस 0;
-पूर्ण
+	if (tick_nohz_full_running && tick_do_timer_cpu == cpu)
+		return -EBUSY;
+	return 0;
+}
 
-व्योम __init tick_nohz_init(व्योम)
-अणु
-	पूर्णांक cpu, ret;
+void __init tick_nohz_init(void)
+{
+	int cpu, ret;
 
-	अगर (!tick_nohz_full_running)
-		वापस;
+	if (!tick_nohz_full_running)
+		return;
 
 	/*
 	 * Full dynticks uses irq work to drive the tick rescheduling on safe
-	 * locking contexts. But then we need irq work to उठाओ its own
-	 * पूर्णांकerrupts to aव्योम circular dependency on the tick
+	 * locking contexts. But then we need irq work to raise its own
+	 * interrupts to avoid circular dependency on the tick
 	 */
-	अगर (!arch_irq_work_has_पूर्णांकerrupt()) अणु
+	if (!arch_irq_work_has_interrupt()) {
 		pr_warn("NO_HZ: Can't run full dynticks because arch doesn't support irq work self-IPIs\n");
 		cpumask_clear(tick_nohz_full_mask);
 		tick_nohz_full_running = false;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (IS_ENABLED(CONFIG_PM_SLEEP_SMP) &&
-			!IS_ENABLED(CONFIG_PM_SLEEP_SMP_NONZERO_CPU)) अणु
+	if (IS_ENABLED(CONFIG_PM_SLEEP_SMP) &&
+			!IS_ENABLED(CONFIG_PM_SLEEP_SMP_NONZERO_CPU)) {
 		cpu = smp_processor_id();
 
-		अगर (cpumask_test_cpu(cpu, tick_nohz_full_mask)) अणु
+		if (cpumask_test_cpu(cpu, tick_nohz_full_mask)) {
 			pr_warn("NO_HZ: Clearing %d from nohz_full range "
 				"for timekeeping\n", cpu);
 			cpumask_clear_cpu(cpu, tick_nohz_full_mask);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	क्रम_each_cpu(cpu, tick_nohz_full_mask)
+	for_each_cpu(cpu, tick_nohz_full_mask)
 		context_tracking_cpu_set(cpu);
 
 	ret = cpuhp_setup_state_nocalls(CPUHP_AP_ONLINE_DYN,
-					"kernel/nohz:predown", शून्य,
-					tick_nohz_cpu_करोwn);
+					"kernel/nohz:predown", NULL,
+					tick_nohz_cpu_down);
 	WARN_ON(ret < 0);
 	pr_info("NO_HZ: Full dynticks CPUs: %*pbl.\n",
 		cpumask_pr_args(tick_nohz_full_mask));
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
 /*
  * NOHZ - aka dynamic tick functionality
  */
-#अगर_घोषित CONFIG_NO_HZ_COMMON
+#ifdef CONFIG_NO_HZ_COMMON
 /*
  * NO HZ enabled ?
  */
-bool tick_nohz_enabled __पढ़ो_mostly  = true;
-अचिन्हित दीर्घ tick_nohz_active  __पढ़ो_mostly;
+bool tick_nohz_enabled __read_mostly  = true;
+unsigned long tick_nohz_active  __read_mostly;
 /*
  * Enable / Disable tickless mode
  */
-अटल पूर्णांक __init setup_tick_nohz(अक्षर *str)
-अणु
-	वापस (kstrtobool(str, &tick_nohz_enabled) == 0);
-पूर्ण
+static int __init setup_tick_nohz(char *str)
+{
+	return (kstrtobool(str, &tick_nohz_enabled) == 0);
+}
 
 __setup("nohz=", setup_tick_nohz);
 
-bool tick_nohz_tick_stopped(व्योम)
-अणु
-	काष्ठा tick_sched *ts = this_cpu_ptr(&tick_cpu_sched);
+bool tick_nohz_tick_stopped(void)
+{
+	struct tick_sched *ts = this_cpu_ptr(&tick_cpu_sched);
 
-	वापस ts->tick_stopped;
-पूर्ण
+	return ts->tick_stopped;
+}
 
-bool tick_nohz_tick_stopped_cpu(पूर्णांक cpu)
-अणु
-	काष्ठा tick_sched *ts = per_cpu_ptr(&tick_cpu_sched, cpu);
+bool tick_nohz_tick_stopped_cpu(int cpu)
+{
+	struct tick_sched *ts = per_cpu_ptr(&tick_cpu_sched, cpu);
 
-	वापस ts->tick_stopped;
-पूर्ण
+	return ts->tick_stopped;
+}
 
 /**
- * tick_nohz_update_jअगरfies - update jअगरfies when idle was पूर्णांकerrupted
+ * tick_nohz_update_jiffies - update jiffies when idle was interrupted
  *
- * Called from पूर्णांकerrupt entry when the CPU was idle
+ * Called from interrupt entry when the CPU was idle
  *
- * In हाल the sched_tick was stopped on this CPU, we have to check अगर jअगरfies
- * must be updated. Otherwise an पूर्णांकerrupt handler could use a stale jअगरfy
- * value. We करो this unconditionally on any CPU, as we करोn't know whether the
- * CPU, which has the update task asचिन्हित is in a दीर्घ sleep.
+ * In case the sched_tick was stopped on this CPU, we have to check if jiffies
+ * must be updated. Otherwise an interrupt handler could use a stale jiffy
+ * value. We do this unconditionally on any CPU, as we don't know whether the
+ * CPU, which has the update task assigned is in a long sleep.
  */
-अटल व्योम tick_nohz_update_jअगरfies(kसमय_प्रकार now)
-अणु
-	अचिन्हित दीर्घ flags;
+static void tick_nohz_update_jiffies(ktime_t now)
+{
+	unsigned long flags;
 
-	__this_cpu_ग_लिखो(tick_cpu_sched.idle_wakeसमय, now);
+	__this_cpu_write(tick_cpu_sched.idle_waketime, now);
 
 	local_irq_save(flags);
-	tick_करो_update_jअगरfies64(now);
+	tick_do_update_jiffies64(now);
 	local_irq_restore(flags);
 
-	touch_softlockup_watchकरोg_sched();
-पूर्ण
+	touch_softlockup_watchdog_sched();
+}
 
 /*
- * Updates the per-CPU समय idle statistics counters
+ * Updates the per-CPU time idle statistics counters
  */
-अटल व्योम
-update_ts_समय_stats(पूर्णांक cpu, काष्ठा tick_sched *ts, kसमय_प्रकार now, u64 *last_update_समय)
-अणु
-	kसमय_प्रकार delta;
+static void
+update_ts_time_stats(int cpu, struct tick_sched *ts, ktime_t now, u64 *last_update_time)
+{
+	ktime_t delta;
 
-	अगर (ts->idle_active) अणु
-		delta = kसमय_sub(now, ts->idle_entryसमय);
-		अगर (nr_ioरुको_cpu(cpu) > 0)
-			ts->ioरुको_sleepसमय = kसमय_add(ts->ioरुको_sleepसमय, delta);
-		अन्यथा
-			ts->idle_sleepसमय = kसमय_add(ts->idle_sleepसमय, delta);
-		ts->idle_entryसमय = now;
-	पूर्ण
+	if (ts->idle_active) {
+		delta = ktime_sub(now, ts->idle_entrytime);
+		if (nr_iowait_cpu(cpu) > 0)
+			ts->iowait_sleeptime = ktime_add(ts->iowait_sleeptime, delta);
+		else
+			ts->idle_sleeptime = ktime_add(ts->idle_sleeptime, delta);
+		ts->idle_entrytime = now;
+	}
 
-	अगर (last_update_समय)
-		*last_update_समय = kसमय_प्रकारo_us(now);
+	if (last_update_time)
+		*last_update_time = ktime_to_us(now);
 
-पूर्ण
+}
 
-अटल व्योम tick_nohz_stop_idle(काष्ठा tick_sched *ts, kसमय_प्रकार now)
-अणु
-	update_ts_समय_stats(smp_processor_id(), ts, now, शून्य);
+static void tick_nohz_stop_idle(struct tick_sched *ts, ktime_t now)
+{
+	update_ts_time_stats(smp_processor_id(), ts, now, NULL);
 	ts->idle_active = 0;
 
-	sched_घड़ी_idle_wakeup_event();
-पूर्ण
+	sched_clock_idle_wakeup_event();
+}
 
-अटल व्योम tick_nohz_start_idle(काष्ठा tick_sched *ts)
-अणु
-	ts->idle_entryसमय = kसमय_get();
+static void tick_nohz_start_idle(struct tick_sched *ts)
+{
+	ts->idle_entrytime = ktime_get();
 	ts->idle_active = 1;
-	sched_घड़ी_idle_sleep_event();
-पूर्ण
+	sched_clock_idle_sleep_event();
+}
 
 /**
- * get_cpu_idle_समय_us - get the total idle समय of a CPU
+ * get_cpu_idle_time_us - get the total idle time of a CPU
  * @cpu: CPU number to query
- * @last_update_समय: variable to store update समय in. Do not update
- * counters अगर शून्य.
+ * @last_update_time: variable to store update time in. Do not update
+ * counters if NULL.
  *
- * Return the cumulative idle समय (since boot) क्रम a given
+ * Return the cumulative idle time (since boot) for a given
  * CPU, in microseconds.
  *
- * This समय is measured via accounting rather than sampling,
- * and is as accurate as kसमय_get() is.
+ * This time is measured via accounting rather than sampling,
+ * and is as accurate as ktime_get() is.
  *
- * This function वापसs -1 अगर NOHZ is not enabled.
+ * This function returns -1 if NOHZ is not enabled.
  */
-u64 get_cpu_idle_समय_us(पूर्णांक cpu, u64 *last_update_समय)
-अणु
-	काष्ठा tick_sched *ts = &per_cpu(tick_cpu_sched, cpu);
-	kसमय_प्रकार now, idle;
+u64 get_cpu_idle_time_us(int cpu, u64 *last_update_time)
+{
+	struct tick_sched *ts = &per_cpu(tick_cpu_sched, cpu);
+	ktime_t now, idle;
 
-	अगर (!tick_nohz_active)
-		वापस -1;
+	if (!tick_nohz_active)
+		return -1;
 
-	now = kसमय_get();
-	अगर (last_update_समय) अणु
-		update_ts_समय_stats(cpu, ts, now, last_update_समय);
-		idle = ts->idle_sleepसमय;
-	पूर्ण अन्यथा अणु
-		अगर (ts->idle_active && !nr_ioरुको_cpu(cpu)) अणु
-			kसमय_प्रकार delta = kसमय_sub(now, ts->idle_entryसमय);
+	now = ktime_get();
+	if (last_update_time) {
+		update_ts_time_stats(cpu, ts, now, last_update_time);
+		idle = ts->idle_sleeptime;
+	} else {
+		if (ts->idle_active && !nr_iowait_cpu(cpu)) {
+			ktime_t delta = ktime_sub(now, ts->idle_entrytime);
 
-			idle = kसमय_add(ts->idle_sleepसमय, delta);
-		पूर्ण अन्यथा अणु
-			idle = ts->idle_sleepसमय;
-		पूर्ण
-	पूर्ण
+			idle = ktime_add(ts->idle_sleeptime, delta);
+		} else {
+			idle = ts->idle_sleeptime;
+		}
+	}
 
-	वापस kसमय_प्रकारo_us(idle);
+	return ktime_to_us(idle);
 
-पूर्ण
-EXPORT_SYMBOL_GPL(get_cpu_idle_समय_us);
+}
+EXPORT_SYMBOL_GPL(get_cpu_idle_time_us);
 
 /**
- * get_cpu_ioरुको_समय_us - get the total ioरुको समय of a CPU
+ * get_cpu_iowait_time_us - get the total iowait time of a CPU
  * @cpu: CPU number to query
- * @last_update_समय: variable to store update समय in. Do not update
- * counters अगर शून्य.
+ * @last_update_time: variable to store update time in. Do not update
+ * counters if NULL.
  *
- * Return the cumulative ioरुको समय (since boot) क्रम a given
+ * Return the cumulative iowait time (since boot) for a given
  * CPU, in microseconds.
  *
- * This समय is measured via accounting rather than sampling,
- * and is as accurate as kसमय_get() is.
+ * This time is measured via accounting rather than sampling,
+ * and is as accurate as ktime_get() is.
  *
- * This function वापसs -1 अगर NOHZ is not enabled.
+ * This function returns -1 if NOHZ is not enabled.
  */
-u64 get_cpu_ioरुको_समय_us(पूर्णांक cpu, u64 *last_update_समय)
-अणु
-	काष्ठा tick_sched *ts = &per_cpu(tick_cpu_sched, cpu);
-	kसमय_प्रकार now, ioरुको;
+u64 get_cpu_iowait_time_us(int cpu, u64 *last_update_time)
+{
+	struct tick_sched *ts = &per_cpu(tick_cpu_sched, cpu);
+	ktime_t now, iowait;
 
-	अगर (!tick_nohz_active)
-		वापस -1;
+	if (!tick_nohz_active)
+		return -1;
 
-	now = kसमय_get();
-	अगर (last_update_समय) अणु
-		update_ts_समय_stats(cpu, ts, now, last_update_समय);
-		ioरुको = ts->ioरुको_sleepसमय;
-	पूर्ण अन्यथा अणु
-		अगर (ts->idle_active && nr_ioरुको_cpu(cpu) > 0) अणु
-			kसमय_प्रकार delta = kसमय_sub(now, ts->idle_entryसमय);
+	now = ktime_get();
+	if (last_update_time) {
+		update_ts_time_stats(cpu, ts, now, last_update_time);
+		iowait = ts->iowait_sleeptime;
+	} else {
+		if (ts->idle_active && nr_iowait_cpu(cpu) > 0) {
+			ktime_t delta = ktime_sub(now, ts->idle_entrytime);
 
-			ioरुको = kसमय_add(ts->ioरुको_sleepसमय, delta);
-		पूर्ण अन्यथा अणु
-			ioरुको = ts->ioरुको_sleepसमय;
-		पूर्ण
-	पूर्ण
+			iowait = ktime_add(ts->iowait_sleeptime, delta);
+		} else {
+			iowait = ts->iowait_sleeptime;
+		}
+	}
 
-	वापस kसमय_प्रकारo_us(ioरुको);
-पूर्ण
-EXPORT_SYMBOL_GPL(get_cpu_ioरुको_समय_us);
+	return ktime_to_us(iowait);
+}
+EXPORT_SYMBOL_GPL(get_cpu_iowait_time_us);
 
-अटल व्योम tick_nohz_restart(काष्ठा tick_sched *ts, kसमय_प्रकार now)
-अणु
-	hrसमयr_cancel(&ts->sched_समयr);
-	hrसमयr_set_expires(&ts->sched_समयr, ts->last_tick);
+static void tick_nohz_restart(struct tick_sched *ts, ktime_t now)
+{
+	hrtimer_cancel(&ts->sched_timer);
+	hrtimer_set_expires(&ts->sched_timer, ts->last_tick);
 
-	/* Forward the समय to expire in the future */
-	hrसमयr_क्रमward(&ts->sched_समयr, now, TICK_NSEC);
+	/* Forward the time to expire in the future */
+	hrtimer_forward(&ts->sched_timer, now, TICK_NSEC);
 
-	अगर (ts->nohz_mode == NOHZ_MODE_HIGHRES) अणु
-		hrसमयr_start_expires(&ts->sched_समयr,
+	if (ts->nohz_mode == NOHZ_MODE_HIGHRES) {
+		hrtimer_start_expires(&ts->sched_timer,
 				      HRTIMER_MODE_ABS_PINNED_HARD);
-	पूर्ण अन्यथा अणु
-		tick_program_event(hrसमयr_get_expires(&ts->sched_समयr), 1);
-	पूर्ण
+	} else {
+		tick_program_event(hrtimer_get_expires(&ts->sched_timer), 1);
+	}
 
 	/*
-	 * Reset to make sure next tick stop करोesn't get fooled by past
-	 * cached घड़ी deadline.
+	 * Reset to make sure next tick stop doesn't get fooled by past
+	 * cached clock deadline.
 	 */
 	ts->next_tick = 0;
-पूर्ण
+}
 
-अटल अंतरभूत bool local_समयr_softirq_pending(व्योम)
-अणु
-	वापस local_softirq_pending() & BIT(TIMER_SOFTIRQ);
-पूर्ण
+static inline bool local_timer_softirq_pending(void)
+{
+	return local_softirq_pending() & BIT(TIMER_SOFTIRQ);
+}
 
-अटल kसमय_प्रकार tick_nohz_next_event(काष्ठा tick_sched *ts, पूर्णांक cpu)
-अणु
-	u64 basemono, next_tick, next_पंचांगr, next_rcu, delta, expires;
-	अचिन्हित दीर्घ basejअगरf;
-	अचिन्हित पूर्णांक seq;
+static ktime_t tick_nohz_next_event(struct tick_sched *ts, int cpu)
+{
+	u64 basemono, next_tick, next_tmr, next_rcu, delta, expires;
+	unsigned long basejiff;
+	unsigned int seq;
 
-	/* Read jअगरfies and the समय when jअगरfies were updated last */
-	करो अणु
-		seq = पढ़ो_seqcount_begin(&jअगरfies_seq);
-		basemono = last_jअगरfies_update;
-		basejअगरf = jअगरfies;
-	पूर्ण जबतक (पढ़ो_seqcount_retry(&jअगरfies_seq, seq));
-	ts->last_jअगरfies = basejअगरf;
-	ts->समयr_expires_base = basemono;
+	/* Read jiffies and the time when jiffies were updated last */
+	do {
+		seq = read_seqcount_begin(&jiffies_seq);
+		basemono = last_jiffies_update;
+		basejiff = jiffies;
+	} while (read_seqcount_retry(&jiffies_seq, seq));
+	ts->last_jiffies = basejiff;
+	ts->timer_expires_base = basemono;
 
 	/*
 	 * Keep the periodic tick, when RCU, architecture or irq_work
 	 * requests it.
-	 * Aside of that check whether the local समयr softirq is
-	 * pending. If so its a bad idea to call get_next_समयr_पूर्णांकerrupt()
-	 * because there is an alपढ़ोy expired समयr, so it will request
-	 * immediate expiry, which rearms the hardware समयr with a
+	 * Aside of that check whether the local timer softirq is
+	 * pending. If so its a bad idea to call get_next_timer_interrupt()
+	 * because there is an already expired timer, so it will request
+	 * immediate expiry, which rearms the hardware timer with a
 	 * minimal delta which brings us back to this place
 	 * immediately. Lather, rinse and repeat...
 	 */
-	अगर (rcu_needs_cpu(basemono, &next_rcu) || arch_needs_cpu() ||
-	    irq_work_needs_cpu() || local_समयr_softirq_pending()) अणु
+	if (rcu_needs_cpu(basemono, &next_rcu) || arch_needs_cpu() ||
+	    irq_work_needs_cpu() || local_timer_softirq_pending()) {
 		next_tick = basemono + TICK_NSEC;
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
-		 * Get the next pending समयr. If high resolution
-		 * समयrs are enabled this only takes the समयr wheel
-		 * समयrs पूर्णांकo account. If high resolution समयrs are
+		 * Get the next pending timer. If high resolution
+		 * timers are enabled this only takes the timer wheel
+		 * timers into account. If high resolution timers are
 		 * disabled this also looks at the next expiring
-		 * hrसमयr.
+		 * hrtimer.
 		 */
-		next_पंचांगr = get_next_समयr_पूर्णांकerrupt(basejअगरf, basemono);
-		ts->next_समयr = next_पंचांगr;
-		/* Take the next rcu event पूर्णांकo account */
-		next_tick = next_rcu < next_पंचांगr ? next_rcu : next_पंचांगr;
-	पूर्ण
+		next_tmr = get_next_timer_interrupt(basejiff, basemono);
+		ts->next_timer = next_tmr;
+		/* Take the next rcu event into account */
+		next_tick = next_rcu < next_tmr ? next_rcu : next_tmr;
+	}
 
 	/*
 	 * If the tick is due in the next period, keep it ticking or
-	 * क्रमce prod the समयr.
+	 * force prod the timer.
 	 */
 	delta = next_tick - basemono;
-	अगर (delta <= (u64)TICK_NSEC) अणु
+	if (delta <= (u64)TICK_NSEC) {
 		/*
-		 * Tell the समयr code that the base is not idle, i.e. unकरो
-		 * the effect of get_next_समयr_पूर्णांकerrupt():
+		 * Tell the timer code that the base is not idle, i.e. undo
+		 * the effect of get_next_timer_interrupt():
 		 */
-		समयr_clear_idle();
+		timer_clear_idle();
 		/*
-		 * We've not stopped the tick yet, and there's a समयr in the
-		 * next period, so no poपूर्णांक in stopping it either, bail.
+		 * We've not stopped the tick yet, and there's a timer in the
+		 * next period, so no point in stopping it either, bail.
 		 */
-		अगर (!ts->tick_stopped) अणु
-			ts->समयr_expires = 0;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+		if (!ts->tick_stopped) {
+			ts->timer_expires = 0;
+			goto out;
+		}
+	}
 
 	/*
-	 * If this CPU is the one which had the करो_समयr() duty last, we limit
-	 * the sleep समय to the समयkeeping max_deferment value.
-	 * Otherwise we can sleep as दीर्घ as we want.
+	 * If this CPU is the one which had the do_timer() duty last, we limit
+	 * the sleep time to the timekeeping max_deferment value.
+	 * Otherwise we can sleep as long as we want.
 	 */
-	delta = समयkeeping_max_deferment();
-	अगर (cpu != tick_करो_समयr_cpu &&
-	    (tick_करो_समयr_cpu != TICK_DO_TIMER_NONE || !ts->करो_समयr_last))
+	delta = timekeeping_max_deferment();
+	if (cpu != tick_do_timer_cpu &&
+	    (tick_do_timer_cpu != TICK_DO_TIMER_NONE || !ts->do_timer_last))
 		delta = KTIME_MAX;
 
-	/* Calculate the next expiry समय */
-	अगर (delta < (KTIME_MAX - basemono))
+	/* Calculate the next expiry time */
+	if (delta < (KTIME_MAX - basemono))
 		expires = basemono + delta;
-	अन्यथा
+	else
 		expires = KTIME_MAX;
 
-	ts->समयr_expires = min_t(u64, expires, next_tick);
+	ts->timer_expires = min_t(u64, expires, next_tick);
 
 out:
-	वापस ts->समयr_expires;
-पूर्ण
+	return ts->timer_expires;
+}
 
-अटल व्योम tick_nohz_stop_tick(काष्ठा tick_sched *ts, पूर्णांक cpu)
-अणु
-	काष्ठा घड़ी_event_device *dev = __this_cpu_पढ़ो(tick_cpu_device.evtdev);
-	u64 basemono = ts->समयr_expires_base;
-	u64 expires = ts->समयr_expires;
-	kसमय_प्रकार tick = expires;
+static void tick_nohz_stop_tick(struct tick_sched *ts, int cpu)
+{
+	struct clock_event_device *dev = __this_cpu_read(tick_cpu_device.evtdev);
+	u64 basemono = ts->timer_expires_base;
+	u64 expires = ts->timer_expires;
+	ktime_t tick = expires;
 
 	/* Make sure we won't be trying to stop it twice in a row. */
-	ts->समयr_expires_base = 0;
+	ts->timer_expires_base = 0;
 
 	/*
-	 * If this CPU is the one which updates jअगरfies, then give up
+	 * If this CPU is the one which updates jiffies, then give up
 	 * the assignment and let it be taken by the CPU which runs
-	 * the tick समयr next, which might be this CPU as well. If we
-	 * करोn't drop this here the jअगरfies might be stale and
-	 * करो_समयr() never invoked. Keep track of the fact that it
-	 * was the one which had the करो_समयr() duty last.
+	 * the tick timer next, which might be this CPU as well. If we
+	 * don't drop this here the jiffies might be stale and
+	 * do_timer() never invoked. Keep track of the fact that it
+	 * was the one which had the do_timer() duty last.
 	 */
-	अगर (cpu == tick_करो_समयr_cpu) अणु
-		tick_करो_समयr_cpu = TICK_DO_TIMER_NONE;
-		ts->करो_समयr_last = 1;
-	पूर्ण अन्यथा अगर (tick_करो_समयr_cpu != TICK_DO_TIMER_NONE) अणु
-		ts->करो_समयr_last = 0;
-	पूर्ण
+	if (cpu == tick_do_timer_cpu) {
+		tick_do_timer_cpu = TICK_DO_TIMER_NONE;
+		ts->do_timer_last = 1;
+	} else if (tick_do_timer_cpu != TICK_DO_TIMER_NONE) {
+		ts->do_timer_last = 0;
+	}
 
-	/* Skip reprogram of event अगर its not changed */
-	अगर (ts->tick_stopped && (expires == ts->next_tick)) अणु
-		/* Sanity check: make sure घड़ीevent is actually programmed */
-		अगर (tick == KTIME_MAX || ts->next_tick == hrसमयr_get_expires(&ts->sched_समयr))
-			वापस;
+	/* Skip reprogram of event if its not changed */
+	if (ts->tick_stopped && (expires == ts->next_tick)) {
+		/* Sanity check: make sure clockevent is actually programmed */
+		if (tick == KTIME_MAX || ts->next_tick == hrtimer_get_expires(&ts->sched_timer))
+			return;
 
 		WARN_ON_ONCE(1);
-		prपूर्णांकk_once("basemono: %llu ts->next_tick: %llu dev->next_event: %llu timer->active: %d timer->expires: %llu\n",
+		printk_once("basemono: %llu ts->next_tick: %llu dev->next_event: %llu timer->active: %d timer->expires: %llu\n",
 			    basemono, ts->next_tick, dev->next_event,
-			    hrसमयr_active(&ts->sched_समयr), hrसमयr_get_expires(&ts->sched_समयr));
-	पूर्ण
+			    hrtimer_active(&ts->sched_timer), hrtimer_get_expires(&ts->sched_timer));
+	}
 
 	/*
-	 * nohz_stop_sched_tick can be called several बार beक्रमe
+	 * nohz_stop_sched_tick can be called several times before
 	 * the nohz_restart_sched_tick is called. This happens when
-	 * पूर्णांकerrupts arrive which करो not cause a reschedule. In the
-	 * first call we save the current tick समय, so we can restart
+	 * interrupts arrive which do not cause a reschedule. In the
+	 * first call we save the current tick time, so we can restart
 	 * the scheduler tick in nohz_restart_sched_tick.
 	 */
-	अगर (!ts->tick_stopped) अणु
+	if (!ts->tick_stopped) {
 		calc_load_nohz_start();
 		quiet_vmstat();
 
-		ts->last_tick = hrसमयr_get_expires(&ts->sched_समयr);
+		ts->last_tick = hrtimer_get_expires(&ts->sched_timer);
 		ts->tick_stopped = 1;
 		trace_tick_stop(1, TICK_DEP_MASK_NONE);
-	पूर्ण
+	}
 
 	ts->next_tick = tick;
 
 	/*
-	 * If the expiration समय == KTIME_MAX, then we simply stop
-	 * the tick समयr.
+	 * If the expiration time == KTIME_MAX, then we simply stop
+	 * the tick timer.
 	 */
-	अगर (unlikely(expires == KTIME_MAX)) अणु
-		अगर (ts->nohz_mode == NOHZ_MODE_HIGHRES)
-			hrसमयr_cancel(&ts->sched_समयr);
-		वापस;
-	पूर्ण
+	if (unlikely(expires == KTIME_MAX)) {
+		if (ts->nohz_mode == NOHZ_MODE_HIGHRES)
+			hrtimer_cancel(&ts->sched_timer);
+		return;
+	}
 
-	अगर (ts->nohz_mode == NOHZ_MODE_HIGHRES) अणु
-		hrसमयr_start(&ts->sched_समयr, tick,
+	if (ts->nohz_mode == NOHZ_MODE_HIGHRES) {
+		hrtimer_start(&ts->sched_timer, tick,
 			      HRTIMER_MODE_ABS_PINNED_HARD);
-	पूर्ण अन्यथा अणु
-		hrसमयr_set_expires(&ts->sched_समयr, tick);
+	} else {
+		hrtimer_set_expires(&ts->sched_timer, tick);
 		tick_program_event(tick, 1);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम tick_nohz_retain_tick(काष्ठा tick_sched *ts)
-अणु
-	ts->समयr_expires_base = 0;
-पूर्ण
+static void tick_nohz_retain_tick(struct tick_sched *ts)
+{
+	ts->timer_expires_base = 0;
+}
 
-#अगर_घोषित CONFIG_NO_HZ_FULL
-अटल व्योम tick_nohz_stop_sched_tick(काष्ठा tick_sched *ts, पूर्णांक cpu)
-अणु
-	अगर (tick_nohz_next_event(ts, cpu))
+#ifdef CONFIG_NO_HZ_FULL
+static void tick_nohz_stop_sched_tick(struct tick_sched *ts, int cpu)
+{
+	if (tick_nohz_next_event(ts, cpu))
 		tick_nohz_stop_tick(ts, cpu);
-	अन्यथा
+	else
 		tick_nohz_retain_tick(ts);
-पूर्ण
-#पूर्ण_अगर /* CONFIG_NO_HZ_FULL */
+}
+#endif /* CONFIG_NO_HZ_FULL */
 
-अटल व्योम tick_nohz_restart_sched_tick(काष्ठा tick_sched *ts, kसमय_प्रकार now)
-अणु
-	/* Update jअगरfies first */
-	tick_करो_update_jअगरfies64(now);
+static void tick_nohz_restart_sched_tick(struct tick_sched *ts, ktime_t now)
+{
+	/* Update jiffies first */
+	tick_do_update_jiffies64(now);
 
 	/*
-	 * Clear the समयr idle flag, so we aव्योम IPIs on remote queueing and
-	 * the घड़ी क्रमward checks in the enqueue path:
+	 * Clear the timer idle flag, so we avoid IPIs on remote queueing and
+	 * the clock forward checks in the enqueue path:
 	 */
-	समयr_clear_idle();
+	timer_clear_idle();
 
 	calc_load_nohz_stop();
-	touch_softlockup_watchकरोg_sched();
+	touch_softlockup_watchdog_sched();
 	/*
-	 * Cancel the scheduled समयr and restore the tick
+	 * Cancel the scheduled timer and restore the tick
 	 */
 	ts->tick_stopped  = 0;
-	ts->idle_निकाससमय = now;
+	ts->idle_exittime = now;
 
 	tick_nohz_restart(ts, now);
-पूर्ण
+}
 
-अटल व्योम tick_nohz_full_update_tick(काष्ठा tick_sched *ts)
-अणु
-#अगर_घोषित CONFIG_NO_HZ_FULL
-	पूर्णांक cpu = smp_processor_id();
+static void tick_nohz_full_update_tick(struct tick_sched *ts)
+{
+#ifdef CONFIG_NO_HZ_FULL
+	int cpu = smp_processor_id();
 
-	अगर (!tick_nohz_full_cpu(cpu))
-		वापस;
+	if (!tick_nohz_full_cpu(cpu))
+		return;
 
-	अगर (!ts->tick_stopped && ts->nohz_mode == NOHZ_MODE_INACTIVE)
-		वापस;
+	if (!ts->tick_stopped && ts->nohz_mode == NOHZ_MODE_INACTIVE)
+		return;
 
-	अगर (can_stop_full_tick(cpu, ts))
+	if (can_stop_full_tick(cpu, ts))
 		tick_nohz_stop_sched_tick(ts, cpu);
-	अन्यथा अगर (ts->tick_stopped)
-		tick_nohz_restart_sched_tick(ts, kसमय_get());
-#पूर्ण_अगर
-पूर्ण
+	else if (ts->tick_stopped)
+		tick_nohz_restart_sched_tick(ts, ktime_get());
+#endif
+}
 
-अटल bool can_stop_idle_tick(पूर्णांक cpu, काष्ठा tick_sched *ts)
-अणु
+static bool can_stop_idle_tick(int cpu, struct tick_sched *ts)
+{
 	/*
 	 * If this CPU is offline and it is the one which updates
-	 * jअगरfies, then give up the assignment and let it be taken by
-	 * the CPU which runs the tick समयr next. If we करोn't drop
-	 * this here the jअगरfies might be stale and करो_समयr() never
+	 * jiffies, then give up the assignment and let it be taken by
+	 * the CPU which runs the tick timer next. If we don't drop
+	 * this here the jiffies might be stale and do_timer() never
 	 * invoked.
 	 */
-	अगर (unlikely(!cpu_online(cpu))) अणु
-		अगर (cpu == tick_करो_समयr_cpu)
-			tick_करो_समयr_cpu = TICK_DO_TIMER_NONE;
+	if (unlikely(!cpu_online(cpu))) {
+		if (cpu == tick_do_timer_cpu)
+			tick_do_timer_cpu = TICK_DO_TIMER_NONE;
 		/*
-		 * Make sure the CPU करोesn't get fooled by obsolete tick
-		 * deadline अगर it comes back online later.
+		 * Make sure the CPU doesn't get fooled by obsolete tick
+		 * deadline if it comes back online later.
 		 */
 		ts->next_tick = 0;
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	अगर (unlikely(ts->nohz_mode == NOHZ_MODE_INACTIVE))
-		वापस false;
+	if (unlikely(ts->nohz_mode == NOHZ_MODE_INACTIVE))
+		return false;
 
-	अगर (need_resched())
-		वापस false;
+	if (need_resched())
+		return false;
 
-	अगर (unlikely(local_softirq_pending())) अणु
-		अटल पूर्णांक ratelimit;
+	if (unlikely(local_softirq_pending())) {
+		static int ratelimit;
 
-		अगर (ratelimit < 10 && !local_bh_blocked() &&
-		    (local_softirq_pending() & SOFTIRQ_STOP_IDLE_MASK)) अणु
+		if (ratelimit < 10 && !local_bh_blocked() &&
+		    (local_softirq_pending() & SOFTIRQ_STOP_IDLE_MASK)) {
 			pr_warn("NOHZ tick-stop error: Non-RCU local softirq work is pending, handler #%02x!!!\n",
-				(अचिन्हित पूर्णांक) local_softirq_pending());
+				(unsigned int) local_softirq_pending());
 			ratelimit++;
-		पूर्ण
-		वापस false;
-	पूर्ण
+		}
+		return false;
+	}
 
-	अगर (tick_nohz_full_enabled()) अणु
+	if (tick_nohz_full_enabled()) {
 		/*
-		 * Keep the tick alive to guarantee समयkeeping progression
-		 * अगर there are full dynticks CPUs around
+		 * Keep the tick alive to guarantee timekeeping progression
+		 * if there are full dynticks CPUs around
 		 */
-		अगर (tick_करो_समयr_cpu == cpu)
-			वापस false;
+		if (tick_do_timer_cpu == cpu)
+			return false;
 
-		/* Should not happen क्रम nohz-full */
-		अगर (WARN_ON_ONCE(tick_करो_समयr_cpu == TICK_DO_TIMER_NONE))
-			वापस false;
-	पूर्ण
+		/* Should not happen for nohz-full */
+		if (WARN_ON_ONCE(tick_do_timer_cpu == TICK_DO_TIMER_NONE))
+			return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल व्योम __tick_nohz_idle_stop_tick(काष्ठा tick_sched *ts)
-अणु
-	kसमय_प्रकार expires;
-	पूर्णांक cpu = smp_processor_id();
+static void __tick_nohz_idle_stop_tick(struct tick_sched *ts)
+{
+	ktime_t expires;
+	int cpu = smp_processor_id();
 
 	/*
 	 * If tick_nohz_get_sleep_length() ran tick_nohz_next_event(), the
-	 * tick समयr expiration समय is known alपढ़ोy.
+	 * tick timer expiration time is known already.
 	 */
-	अगर (ts->समयr_expires_base)
-		expires = ts->समयr_expires;
-	अन्यथा अगर (can_stop_idle_tick(cpu, ts))
+	if (ts->timer_expires_base)
+		expires = ts->timer_expires;
+	else if (can_stop_idle_tick(cpu, ts))
 		expires = tick_nohz_next_event(ts, cpu);
-	अन्यथा
-		वापस;
+	else
+		return;
 
 	ts->idle_calls++;
 
-	अगर (expires > 0LL) अणु
-		पूर्णांक was_stopped = ts->tick_stopped;
+	if (expires > 0LL) {
+		int was_stopped = ts->tick_stopped;
 
 		tick_nohz_stop_tick(ts, cpu);
 
 		ts->idle_sleeps++;
 		ts->idle_expires = expires;
 
-		अगर (!was_stopped && ts->tick_stopped) अणु
-			ts->idle_jअगरfies = ts->last_jअगरfies;
+		if (!was_stopped && ts->tick_stopped) {
+			ts->idle_jiffies = ts->last_jiffies;
 			nohz_balance_enter_idle(cpu);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		tick_nohz_retain_tick(ts);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * tick_nohz_idle_stop_tick - stop the idle tick from the idle task
  *
- * When the next event is more than a tick पूर्णांकo the future, stop the idle tick
+ * When the next event is more than a tick into the future, stop the idle tick
  */
-व्योम tick_nohz_idle_stop_tick(व्योम)
-अणु
+void tick_nohz_idle_stop_tick(void)
+{
 	__tick_nohz_idle_stop_tick(this_cpu_ptr(&tick_cpu_sched));
-पूर्ण
+}
 
-व्योम tick_nohz_idle_retain_tick(व्योम)
-अणु
+void tick_nohz_idle_retain_tick(void)
+{
 	tick_nohz_retain_tick(this_cpu_ptr(&tick_cpu_sched));
 	/*
-	 * Unकरो the effect of get_next_समयr_पूर्णांकerrupt() called from
+	 * Undo the effect of get_next_timer_interrupt() called from
 	 * tick_nohz_next_event().
 	 */
-	समयr_clear_idle();
-पूर्ण
+	timer_clear_idle();
+}
 
 /**
- * tick_nohz_idle_enter - prepare क्रम entering idle on the current CPU
+ * tick_nohz_idle_enter - prepare for entering idle on the current CPU
  *
  * Called when we start the idle loop.
  */
-व्योम tick_nohz_idle_enter(व्योम)
-अणु
-	काष्ठा tick_sched *ts;
+void tick_nohz_idle_enter(void)
+{
+	struct tick_sched *ts;
 
-	lockdep_निश्चित_irqs_enabled();
+	lockdep_assert_irqs_enabled();
 
 	local_irq_disable();
 
 	ts = this_cpu_ptr(&tick_cpu_sched);
 
-	WARN_ON_ONCE(ts->समयr_expires_base);
+	WARN_ON_ONCE(ts->timer_expires_base);
 
 	ts->inidle = 1;
 	tick_nohz_start_idle(ts);
 
 	local_irq_enable();
-पूर्ण
+}
 
 /**
- * tick_nohz_irq_निकास - update next tick event from पूर्णांकerrupt निकास
+ * tick_nohz_irq_exit - update next tick event from interrupt exit
  *
- * When an पूर्णांकerrupt fires जबतक we are idle and it करोesn't cause
- * a reschedule, it may still add, modअगरy or delete a समयr, enqueue
+ * When an interrupt fires while we are idle and it doesn't cause
+ * a reschedule, it may still add, modify or delete a timer, enqueue
  * an RCU callback, etc...
  * So we need to re-calculate and reprogram the next tick event.
  */
-व्योम tick_nohz_irq_निकास(व्योम)
-अणु
-	काष्ठा tick_sched *ts = this_cpu_ptr(&tick_cpu_sched);
+void tick_nohz_irq_exit(void)
+{
+	struct tick_sched *ts = this_cpu_ptr(&tick_cpu_sched);
 
-	अगर (ts->inidle)
+	if (ts->inidle)
 		tick_nohz_start_idle(ts);
-	अन्यथा
+	else
 		tick_nohz_full_update_tick(ts);
-पूर्ण
+}
 
 /**
  * tick_nohz_idle_got_tick - Check whether or not the tick handler has run
  */
-bool tick_nohz_idle_got_tick(व्योम)
-अणु
-	काष्ठा tick_sched *ts = this_cpu_ptr(&tick_cpu_sched);
+bool tick_nohz_idle_got_tick(void)
+{
+	struct tick_sched *ts = this_cpu_ptr(&tick_cpu_sched);
 
-	अगर (ts->got_idle_tick) अणु
+	if (ts->got_idle_tick) {
 		ts->got_idle_tick = 0;
-		वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+		return true;
+	}
+	return false;
+}
 
 /**
- * tick_nohz_get_next_hrसमयr - वापस the next expiration समय क्रम the hrसमयr
- * or the tick, whatever that expires first. Note that, अगर the tick has been
- * stopped, it वापसs the next hrसमयr.
+ * tick_nohz_get_next_hrtimer - return the next expiration time for the hrtimer
+ * or the tick, whatever that expires first. Note that, if the tick has been
+ * stopped, it returns the next hrtimer.
  *
- * Called from घातer state control code with पूर्णांकerrupts disabled
+ * Called from power state control code with interrupts disabled
  */
-kसमय_प्रकार tick_nohz_get_next_hrसमयr(व्योम)
-अणु
-	वापस __this_cpu_पढ़ो(tick_cpu_device.evtdev)->next_event;
-पूर्ण
+ktime_t tick_nohz_get_next_hrtimer(void)
+{
+	return __this_cpu_read(tick_cpu_device.evtdev)->next_event;
+}
 
 /**
- * tick_nohz_get_sleep_length - वापस the expected length of the current sleep
- * @delta_next: duration until the next event अगर the tick cannot be stopped
+ * tick_nohz_get_sleep_length - return the expected length of the current sleep
+ * @delta_next: duration until the next event if the tick cannot be stopped
  *
- * Called from घातer state control code with पूर्णांकerrupts disabled.
+ * Called from power state control code with interrupts disabled.
  *
- * The वापस value of this function and/or the value वापसed by it through the
- * @delta_next poपूर्णांकer can be negative which must be taken पूर्णांकo account by its
+ * The return value of this function and/or the value returned by it through the
+ * @delta_next pointer can be negative which must be taken into account by its
  * callers.
  */
-kसमय_प्रकार tick_nohz_get_sleep_length(kसमय_प्रकार *delta_next)
-अणु
-	काष्ठा घड़ी_event_device *dev = __this_cpu_पढ़ो(tick_cpu_device.evtdev);
-	काष्ठा tick_sched *ts = this_cpu_ptr(&tick_cpu_sched);
-	पूर्णांक cpu = smp_processor_id();
+ktime_t tick_nohz_get_sleep_length(ktime_t *delta_next)
+{
+	struct clock_event_device *dev = __this_cpu_read(tick_cpu_device.evtdev);
+	struct tick_sched *ts = this_cpu_ptr(&tick_cpu_sched);
+	int cpu = smp_processor_id();
 	/*
-	 * The idle entry समय is expected to be a sufficient approximation of
-	 * the current समय at this poपूर्णांक.
+	 * The idle entry time is expected to be a sufficient approximation of
+	 * the current time at this point.
 	 */
-	kसमय_प्रकार now = ts->idle_entryसमय;
-	kसमय_प्रकार next_event;
+	ktime_t now = ts->idle_entrytime;
+	ktime_t next_event;
 
 	WARN_ON_ONCE(!ts->inidle);
 
-	*delta_next = kसमय_sub(dev->next_event, now);
+	*delta_next = ktime_sub(dev->next_event, now);
 
-	अगर (!can_stop_idle_tick(cpu, ts))
-		वापस *delta_next;
+	if (!can_stop_idle_tick(cpu, ts))
+		return *delta_next;
 
 	next_event = tick_nohz_next_event(ts, cpu);
-	अगर (!next_event)
-		वापस *delta_next;
+	if (!next_event)
+		return *delta_next;
 
 	/*
-	 * If the next highres समयr to expire is earlier than next_event, the
+	 * If the next highres timer to expire is earlier than next_event, the
 	 * idle governor needs to know that.
 	 */
 	next_event = min_t(u64, next_event,
-			   hrसमयr_next_event_without(&ts->sched_समयr));
+			   hrtimer_next_event_without(&ts->sched_timer));
 
-	वापस kसमय_sub(next_event, now);
-पूर्ण
+	return ktime_sub(next_event, now);
+}
 
 /**
- * tick_nohz_get_idle_calls_cpu - वापस the current idle calls counter value
- * क्रम a particular CPU.
+ * tick_nohz_get_idle_calls_cpu - return the current idle calls counter value
+ * for a particular CPU.
  *
  * Called from the schedutil frequency scaling governor in scheduler context.
  */
-अचिन्हित दीर्घ tick_nohz_get_idle_calls_cpu(पूर्णांक cpu)
-अणु
-	काष्ठा tick_sched *ts = tick_get_tick_sched(cpu);
+unsigned long tick_nohz_get_idle_calls_cpu(int cpu)
+{
+	struct tick_sched *ts = tick_get_tick_sched(cpu);
 
-	वापस ts->idle_calls;
-पूर्ण
+	return ts->idle_calls;
+}
 
 /**
- * tick_nohz_get_idle_calls - वापस the current idle calls counter value
+ * tick_nohz_get_idle_calls - return the current idle calls counter value
  *
  * Called from the schedutil frequency scaling governor in scheduler context.
  */
-अचिन्हित दीर्घ tick_nohz_get_idle_calls(व्योम)
-अणु
-	काष्ठा tick_sched *ts = this_cpu_ptr(&tick_cpu_sched);
+unsigned long tick_nohz_get_idle_calls(void)
+{
+	struct tick_sched *ts = this_cpu_ptr(&tick_cpu_sched);
 
-	वापस ts->idle_calls;
-पूर्ण
+	return ts->idle_calls;
+}
 
-अटल व्योम tick_nohz_account_idle_ticks(काष्ठा tick_sched *ts)
-अणु
-#अगर_अघोषित CONFIG_VIRT_CPU_ACCOUNTING_NATIVE
-	अचिन्हित दीर्घ ticks;
+static void tick_nohz_account_idle_ticks(struct tick_sched *ts)
+{
+#ifndef CONFIG_VIRT_CPU_ACCOUNTING_NATIVE
+	unsigned long ticks;
 
-	अगर (vसमय_accounting_enabled_this_cpu())
-		वापस;
+	if (vtime_accounting_enabled_this_cpu())
+		return;
 	/*
-	 * We stopped the tick in idle. Update process बार would miss the
-	 * समय we slept as update_process_बार करोes only a 1 tick
-	 * accounting. Enक्रमce that this is accounted to idle !
+	 * We stopped the tick in idle. Update process times would miss the
+	 * time we slept as update_process_times does only a 1 tick
+	 * accounting. Enforce that this is accounted to idle !
 	 */
-	ticks = jअगरfies - ts->idle_jअगरfies;
+	ticks = jiffies - ts->idle_jiffies;
 	/*
-	 * We might be one off. Do not अक्रमomly account a huge number of ticks!
+	 * We might be one off. Do not randomly account a huge number of ticks!
 	 */
-	अगर (ticks && ticks < दीर्घ_उच्च)
+	if (ticks && ticks < LONG_MAX)
 		account_idle_ticks(ticks);
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-अटल व्योम __tick_nohz_idle_restart_tick(काष्ठा tick_sched *ts, kसमय_प्रकार now)
-अणु
+static void __tick_nohz_idle_restart_tick(struct tick_sched *ts, ktime_t now)
+{
 	tick_nohz_restart_sched_tick(ts, now);
 	tick_nohz_account_idle_ticks(ts);
-पूर्ण
+}
 
-व्योम tick_nohz_idle_restart_tick(व्योम)
-अणु
-	काष्ठा tick_sched *ts = this_cpu_ptr(&tick_cpu_sched);
+void tick_nohz_idle_restart_tick(void)
+{
+	struct tick_sched *ts = this_cpu_ptr(&tick_cpu_sched);
 
-	अगर (ts->tick_stopped)
-		__tick_nohz_idle_restart_tick(ts, kसमय_get());
-पूर्ण
+	if (ts->tick_stopped)
+		__tick_nohz_idle_restart_tick(ts, ktime_get());
+}
 
 /**
- * tick_nohz_idle_निकास - restart the idle tick from the idle task
+ * tick_nohz_idle_exit - restart the idle tick from the idle task
  *
  * Restart the idle tick when the CPU is woken up from idle
- * This also निकास the RCU extended quiescent state. The CPU
+ * This also exit the RCU extended quiescent state. The CPU
  * can use RCU again after this function is called.
  */
-व्योम tick_nohz_idle_निकास(व्योम)
-अणु
-	काष्ठा tick_sched *ts = this_cpu_ptr(&tick_cpu_sched);
+void tick_nohz_idle_exit(void)
+{
+	struct tick_sched *ts = this_cpu_ptr(&tick_cpu_sched);
 	bool idle_active, tick_stopped;
-	kसमय_प्रकार now;
+	ktime_t now;
 
 	local_irq_disable();
 
 	WARN_ON_ONCE(!ts->inidle);
-	WARN_ON_ONCE(ts->समयr_expires_base);
+	WARN_ON_ONCE(ts->timer_expires_base);
 
 	ts->inidle = 0;
 	idle_active = ts->idle_active;
 	tick_stopped = ts->tick_stopped;
 
-	अगर (idle_active || tick_stopped)
-		now = kसमय_get();
+	if (idle_active || tick_stopped)
+		now = ktime_get();
 
-	अगर (idle_active)
+	if (idle_active)
 		tick_nohz_stop_idle(ts, now);
 
-	अगर (tick_stopped)
+	if (tick_stopped)
 		__tick_nohz_idle_restart_tick(ts, now);
 
 	local_irq_enable();
-पूर्ण
+}
 
 /*
- * The nohz low res पूर्णांकerrupt handler
+ * The nohz low res interrupt handler
  */
-अटल व्योम tick_nohz_handler(काष्ठा घड़ी_event_device *dev)
-अणु
-	काष्ठा tick_sched *ts = this_cpu_ptr(&tick_cpu_sched);
-	काष्ठा pt_regs *regs = get_irq_regs();
-	kसमय_प्रकार now = kसमय_get();
+static void tick_nohz_handler(struct clock_event_device *dev)
+{
+	struct tick_sched *ts = this_cpu_ptr(&tick_cpu_sched);
+	struct pt_regs *regs = get_irq_regs();
+	ktime_t now = ktime_get();
 
 	dev->next_event = KTIME_MAX;
 
-	tick_sched_करो_समयr(ts, now);
+	tick_sched_do_timer(ts, now);
 	tick_sched_handle(ts, regs);
 
-	/* No need to reprogram अगर we are running tickless  */
-	अगर (unlikely(ts->tick_stopped))
-		वापस;
+	/* No need to reprogram if we are running tickless  */
+	if (unlikely(ts->tick_stopped))
+		return;
 
-	hrसमयr_क्रमward(&ts->sched_समयr, now, TICK_NSEC);
-	tick_program_event(hrसमयr_get_expires(&ts->sched_समयr), 1);
-पूर्ण
+	hrtimer_forward(&ts->sched_timer, now, TICK_NSEC);
+	tick_program_event(hrtimer_get_expires(&ts->sched_timer), 1);
+}
 
-अटल अंतरभूत व्योम tick_nohz_activate(काष्ठा tick_sched *ts, पूर्णांक mode)
-अणु
-	अगर (!tick_nohz_enabled)
-		वापस;
+static inline void tick_nohz_activate(struct tick_sched *ts, int mode)
+{
+	if (!tick_nohz_enabled)
+		return;
 	ts->nohz_mode = mode;
 	/* One update is enough */
-	अगर (!test_and_set_bit(0, &tick_nohz_active))
-		समयrs_update_nohz();
-पूर्ण
+	if (!test_and_set_bit(0, &tick_nohz_active))
+		timers_update_nohz();
+}
 
 /**
- * tick_nohz_चयन_to_nohz - चयन to nohz mode
+ * tick_nohz_switch_to_nohz - switch to nohz mode
  */
-अटल व्योम tick_nohz_चयन_to_nohz(व्योम)
-अणु
-	काष्ठा tick_sched *ts = this_cpu_ptr(&tick_cpu_sched);
-	kसमय_प्रकार next;
+static void tick_nohz_switch_to_nohz(void)
+{
+	struct tick_sched *ts = this_cpu_ptr(&tick_cpu_sched);
+	ktime_t next;
 
-	अगर (!tick_nohz_enabled)
-		वापस;
+	if (!tick_nohz_enabled)
+		return;
 
-	अगर (tick_चयन_to_oneshot(tick_nohz_handler))
-		वापस;
+	if (tick_switch_to_oneshot(tick_nohz_handler))
+		return;
 
 	/*
-	 * Recycle the hrसमयr in ts, so we can share the
-	 * hrसमयr_क्रमward with the highres code.
+	 * Recycle the hrtimer in ts, so we can share the
+	 * hrtimer_forward with the highres code.
 	 */
-	hrसमयr_init(&ts->sched_समयr, CLOCK_MONOTONIC, HRTIMER_MODE_ABS_HARD);
+	hrtimer_init(&ts->sched_timer, CLOCK_MONOTONIC, HRTIMER_MODE_ABS_HARD);
 	/* Get the next period */
-	next = tick_init_jअगरfy_update();
+	next = tick_init_jiffy_update();
 
-	hrसमयr_set_expires(&ts->sched_समयr, next);
-	hrसमयr_क्रमward_now(&ts->sched_समयr, TICK_NSEC);
-	tick_program_event(hrसमयr_get_expires(&ts->sched_समयr), 1);
+	hrtimer_set_expires(&ts->sched_timer, next);
+	hrtimer_forward_now(&ts->sched_timer, TICK_NSEC);
+	tick_program_event(hrtimer_get_expires(&ts->sched_timer), 1);
 	tick_nohz_activate(ts, NOHZ_MODE_LOWRES);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम tick_nohz_irq_enter(व्योम)
-अणु
-	काष्ठा tick_sched *ts = this_cpu_ptr(&tick_cpu_sched);
-	kसमय_प्रकार now;
+static inline void tick_nohz_irq_enter(void)
+{
+	struct tick_sched *ts = this_cpu_ptr(&tick_cpu_sched);
+	ktime_t now;
 
-	अगर (!ts->idle_active && !ts->tick_stopped)
-		वापस;
-	now = kसमय_get();
-	अगर (ts->idle_active)
+	if (!ts->idle_active && !ts->tick_stopped)
+		return;
+	now = ktime_get();
+	if (ts->idle_active)
 		tick_nohz_stop_idle(ts, now);
-	अगर (ts->tick_stopped)
-		tick_nohz_update_jअगरfies(now);
-पूर्ण
+	if (ts->tick_stopped)
+		tick_nohz_update_jiffies(now);
+}
 
-#अन्यथा
+#else
 
-अटल अंतरभूत व्योम tick_nohz_चयन_to_nohz(व्योम) अणु पूर्ण
-अटल अंतरभूत व्योम tick_nohz_irq_enter(व्योम) अणु पूर्ण
-अटल अंतरभूत व्योम tick_nohz_activate(काष्ठा tick_sched *ts, पूर्णांक mode) अणु पूर्ण
+static inline void tick_nohz_switch_to_nohz(void) { }
+static inline void tick_nohz_irq_enter(void) { }
+static inline void tick_nohz_activate(struct tick_sched *ts, int mode) { }
 
-#पूर्ण_अगर /* CONFIG_NO_HZ_COMMON */
+#endif /* CONFIG_NO_HZ_COMMON */
 
 /*
- * Called from irq_enter to notअगरy about the possible पूर्णांकerruption of idle()
+ * Called from irq_enter to notify about the possible interruption of idle()
  */
-व्योम tick_irq_enter(व्योम)
-अणु
+void tick_irq_enter(void)
+{
 	tick_check_oneshot_broadcast_this_cpu();
 	tick_nohz_irq_enter();
-पूर्ण
+}
 
 /*
- * High resolution समयr specअगरic code
+ * High resolution timer specific code
  */
-#अगर_घोषित CONFIG_HIGH_RES_TIMERS
+#ifdef CONFIG_HIGH_RES_TIMERS
 /*
- * We rearm the समयr until we get disabled by the idle code.
- * Called with पूर्णांकerrupts disabled.
+ * We rearm the timer until we get disabled by the idle code.
+ * Called with interrupts disabled.
  */
-अटल क्रमागत hrसमयr_restart tick_sched_समयr(काष्ठा hrसमयr *समयr)
-अणु
-	काष्ठा tick_sched *ts =
-		container_of(समयr, काष्ठा tick_sched, sched_समयr);
-	काष्ठा pt_regs *regs = get_irq_regs();
-	kसमय_प्रकार now = kसमय_get();
+static enum hrtimer_restart tick_sched_timer(struct hrtimer *timer)
+{
+	struct tick_sched *ts =
+		container_of(timer, struct tick_sched, sched_timer);
+	struct pt_regs *regs = get_irq_regs();
+	ktime_t now = ktime_get();
 
-	tick_sched_करो_समयr(ts, now);
+	tick_sched_do_timer(ts, now);
 
 	/*
 	 * Do not call, when we are not in irq context and have
-	 * no valid regs poपूर्णांकer
+	 * no valid regs pointer
 	 */
-	अगर (regs)
+	if (regs)
 		tick_sched_handle(ts, regs);
-	अन्यथा
+	else
 		ts->next_tick = 0;
 
-	/* No need to reprogram अगर we are in idle or full dynticks mode */
-	अगर (unlikely(ts->tick_stopped))
-		वापस HRTIMER_NORESTART;
+	/* No need to reprogram if we are in idle or full dynticks mode */
+	if (unlikely(ts->tick_stopped))
+		return HRTIMER_NORESTART;
 
-	hrसमयr_क्रमward(समयr, now, TICK_NSEC);
+	hrtimer_forward(timer, now, TICK_NSEC);
 
-	वापस HRTIMER_RESTART;
-पूर्ण
+	return HRTIMER_RESTART;
+}
 
-अटल पूर्णांक sched_skew_tick;
+static int sched_skew_tick;
 
-अटल पूर्णांक __init skew_tick(अक्षर *str)
-अणु
+static int __init skew_tick(char *str)
+{
 	get_option(&str, &sched_skew_tick);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 early_param("skew_tick", skew_tick);
 
 /**
- * tick_setup_sched_समयr - setup the tick emulation समयr
+ * tick_setup_sched_timer - setup the tick emulation timer
  */
-व्योम tick_setup_sched_समयr(व्योम)
-अणु
-	काष्ठा tick_sched *ts = this_cpu_ptr(&tick_cpu_sched);
-	kसमय_प्रकार now = kसमय_get();
+void tick_setup_sched_timer(void)
+{
+	struct tick_sched *ts = this_cpu_ptr(&tick_cpu_sched);
+	ktime_t now = ktime_get();
 
 	/*
-	 * Emulate tick processing via per-CPU hrसमयrs:
+	 * Emulate tick processing via per-CPU hrtimers:
 	 */
-	hrसमयr_init(&ts->sched_समयr, CLOCK_MONOTONIC, HRTIMER_MODE_ABS_HARD);
-	ts->sched_समयr.function = tick_sched_समयr;
+	hrtimer_init(&ts->sched_timer, CLOCK_MONOTONIC, HRTIMER_MODE_ABS_HARD);
+	ts->sched_timer.function = tick_sched_timer;
 
 	/* Get the next period (per-CPU) */
-	hrसमयr_set_expires(&ts->sched_समयr, tick_init_jअगरfy_update());
+	hrtimer_set_expires(&ts->sched_timer, tick_init_jiffy_update());
 
-	/* Offset the tick to avert jअगरfies_lock contention. */
-	अगर (sched_skew_tick) अणु
+	/* Offset the tick to avert jiffies_lock contention. */
+	if (sched_skew_tick) {
 		u64 offset = TICK_NSEC >> 1;
-		करो_भाग(offset, num_possible_cpus());
+		do_div(offset, num_possible_cpus());
 		offset *= smp_processor_id();
-		hrसमयr_add_expires_ns(&ts->sched_समयr, offset);
-	पूर्ण
+		hrtimer_add_expires_ns(&ts->sched_timer, offset);
+	}
 
-	hrसमयr_क्रमward(&ts->sched_समयr, now, TICK_NSEC);
-	hrसमयr_start_expires(&ts->sched_समयr, HRTIMER_MODE_ABS_PINNED_HARD);
+	hrtimer_forward(&ts->sched_timer, now, TICK_NSEC);
+	hrtimer_start_expires(&ts->sched_timer, HRTIMER_MODE_ABS_PINNED_HARD);
 	tick_nohz_activate(ts, NOHZ_MODE_HIGHRES);
-पूर्ण
-#पूर्ण_अगर /* HIGH_RES_TIMERS */
+}
+#endif /* HIGH_RES_TIMERS */
 
-#अगर defined CONFIG_NO_HZ_COMMON || defined CONFIG_HIGH_RES_TIMERS
-व्योम tick_cancel_sched_समयr(पूर्णांक cpu)
-अणु
-	काष्ठा tick_sched *ts = &per_cpu(tick_cpu_sched, cpu);
+#if defined CONFIG_NO_HZ_COMMON || defined CONFIG_HIGH_RES_TIMERS
+void tick_cancel_sched_timer(int cpu)
+{
+	struct tick_sched *ts = &per_cpu(tick_cpu_sched, cpu);
 
-# अगरdef CONFIG_HIGH_RES_TIMERS
-	अगर (ts->sched_समयr.base)
-		hrसमयr_cancel(&ts->sched_समयr);
-# endअगर
+# ifdef CONFIG_HIGH_RES_TIMERS
+	if (ts->sched_timer.base)
+		hrtimer_cancel(&ts->sched_timer);
+# endif
 
-	स_रखो(ts, 0, माप(*ts));
-पूर्ण
-#पूर्ण_अगर
+	memset(ts, 0, sizeof(*ts));
+}
+#endif
 
 /**
- * Async notअगरication about घड़ीsource changes
+ * Async notification about clocksource changes
  */
-व्योम tick_घड़ी_notअगरy(व्योम)
-अणु
-	पूर्णांक cpu;
+void tick_clock_notify(void)
+{
+	int cpu;
 
-	क्रम_each_possible_cpu(cpu)
-		set_bit(0, &per_cpu(tick_cpu_sched, cpu).check_घड़ीs);
-पूर्ण
+	for_each_possible_cpu(cpu)
+		set_bit(0, &per_cpu(tick_cpu_sched, cpu).check_clocks);
+}
 
 /*
- * Async notअगरication about घड़ी event changes
+ * Async notification about clock event changes
  */
-व्योम tick_oneshot_notअगरy(व्योम)
-अणु
-	काष्ठा tick_sched *ts = this_cpu_ptr(&tick_cpu_sched);
+void tick_oneshot_notify(void)
+{
+	struct tick_sched *ts = this_cpu_ptr(&tick_cpu_sched);
 
-	set_bit(0, &ts->check_घड़ीs);
-पूर्ण
+	set_bit(0, &ts->check_clocks);
+}
 
 /**
- * Check, अगर a change happened, which makes oneshot possible.
+ * Check, if a change happened, which makes oneshot possible.
  *
- * Called cyclic from the hrसमयr softirq (driven by the समयr
- * softirq) allow_nohz संकेतs, that we can चयन पूर्णांकo low-res nohz
- * mode, because high resolution समयrs are disabled (either compile
- * or runसमय). Called with पूर्णांकerrupts disabled.
+ * Called cyclic from the hrtimer softirq (driven by the timer
+ * softirq) allow_nohz signals, that we can switch into low-res nohz
+ * mode, because high resolution timers are disabled (either compile
+ * or runtime). Called with interrupts disabled.
  */
-पूर्णांक tick_check_oneshot_change(पूर्णांक allow_nohz)
-अणु
-	काष्ठा tick_sched *ts = this_cpu_ptr(&tick_cpu_sched);
+int tick_check_oneshot_change(int allow_nohz)
+{
+	struct tick_sched *ts = this_cpu_ptr(&tick_cpu_sched);
 
-	अगर (!test_and_clear_bit(0, &ts->check_घड़ीs))
-		वापस 0;
+	if (!test_and_clear_bit(0, &ts->check_clocks))
+		return 0;
 
-	अगर (ts->nohz_mode != NOHZ_MODE_INACTIVE)
-		वापस 0;
+	if (ts->nohz_mode != NOHZ_MODE_INACTIVE)
+		return 0;
 
-	अगर (!समयkeeping_valid_क्रम_hres() || !tick_is_oneshot_available())
-		वापस 0;
+	if (!timekeeping_valid_for_hres() || !tick_is_oneshot_available())
+		return 0;
 
-	अगर (!allow_nohz)
-		वापस 1;
+	if (!allow_nohz)
+		return 1;
 
-	tick_nohz_चयन_to_nohz();
-	वापस 0;
-पूर्ण
+	tick_nohz_switch_to_nohz();
+	return 0;
+}

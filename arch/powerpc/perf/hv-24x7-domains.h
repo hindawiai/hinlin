@@ -1,25 +1,24 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 
 /*
  * DOMAIN(name, num, index_kind, is_physical)
  *
- * @name:	An all caps token, suitable क्रम use in generating an क्रमागत
+ * @name:	An all caps token, suitable for use in generating an enum
  *		member and appending to an event name in sysfs.
  *
- * @num:	The number corresponding to the करोमुख्य as given in
- *		करोcumentation. We assume the catalog करोमुख्य and the hcall
- *		करोमुख्य have the same numbering (so far they करो), but this
+ * @num:	The number corresponding to the domain as given in
+ *		documentation. We assume the catalog domain and the hcall
+ *		domain have the same numbering (so far they do), but this
  *		may need to be changed in the future.
  *
- * @index_kind: A stringअगरiable token describing the meaning of the index
- *		within the given करोमुख्य. Must fit the parsing rules of the
+ * @index_kind: A stringifiable token describing the meaning of the index
+ *		within the given domain. Must fit the parsing rules of the
  *		perf sysfs api.
  *
- * @is_physical: True अगर the करोमुख्य is physical, false otherwise (अगर भव).
+ * @is_physical: True if the domain is physical, false otherwise (if virtual).
  *
  * Note: The terms PHYS_CHIP, PHYS_CORE, VCPU correspond to physical chip,
- *	 physical core and भव processor in 24x7 Counters specअगरications.
+ *	 physical core and virtual processor in 24x7 Counters specifications.
  */
 
 DOMAIN(PHYS_CHIP, 0x01, chip, true)

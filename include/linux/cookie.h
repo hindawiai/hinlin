@@ -1,52 +1,51 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __LINUX_COOKIE_H
-#घोषणा __LINUX_COOKIE_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __LINUX_COOKIE_H
+#define __LINUX_COOKIE_H
 
-#समावेश <linux/atomic.h>
-#समावेश <linux/percpu.h>
-#समावेश <यंत्र/local.h>
+#include <linux/atomic.h>
+#include <linux/percpu.h>
+#include <asm/local.h>
 
-काष्ठा pcpu_gen_cookie अणु
+struct pcpu_gen_cookie {
 	local_t nesting;
 	u64 last;
-पूर्ण __aligned(16);
+} __aligned(16);
 
-काष्ठा gen_cookie अणु
-	काष्ठा pcpu_gen_cookie __percpu *local;
-	atomic64_t क्रमward_last ____cacheline_aligned_in_smp;
+struct gen_cookie {
+	struct pcpu_gen_cookie __percpu *local;
+	atomic64_t forward_last ____cacheline_aligned_in_smp;
 	atomic64_t reverse_last;
-पूर्ण;
+};
 
-#घोषणा COOKIE_LOCAL_BATCH	4096
+#define COOKIE_LOCAL_BATCH	4096
 
-#घोषणा DEFINE_COOKIE(name)						\
-	अटल DEFINE_PER_CPU(काष्ठा pcpu_gen_cookie, __##name);	\
-	अटल काष्ठा gen_cookie name = अणु				\
+#define DEFINE_COOKIE(name)						\
+	static DEFINE_PER_CPU(struct pcpu_gen_cookie, __##name);	\
+	static struct gen_cookie name = {				\
 		.local		= &__##name,				\
-		.क्रमward_last	= ATOMIC64_INIT(0),			\
+		.forward_last	= ATOMIC64_INIT(0),			\
 		.reverse_last	= ATOMIC64_INIT(0),			\
-	पूर्ण
+	}
 
-अटल __always_अंतरभूत u64 gen_cookie_next(काष्ठा gen_cookie *gc)
-अणु
-	काष्ठा pcpu_gen_cookie *local = this_cpu_ptr(gc->local);
+static __always_inline u64 gen_cookie_next(struct gen_cookie *gc)
+{
+	struct pcpu_gen_cookie *local = this_cpu_ptr(gc->local);
 	u64 val;
 
-	अगर (likely(local_inc_वापस(&local->nesting) == 1)) अणु
+	if (likely(local_inc_return(&local->nesting) == 1)) {
 		val = local->last;
-		अगर (__is_defined(CONFIG_SMP) &&
-		    unlikely((val & (COOKIE_LOCAL_BATCH - 1)) == 0)) अणु
-			s64 next = atomic64_add_वापस(COOKIE_LOCAL_BATCH,
-						       &gc->क्रमward_last);
+		if (__is_defined(CONFIG_SMP) &&
+		    unlikely((val & (COOKIE_LOCAL_BATCH - 1)) == 0)) {
+			s64 next = atomic64_add_return(COOKIE_LOCAL_BATCH,
+						       &gc->forward_last);
 			val = next - COOKIE_LOCAL_BATCH;
-		पूर्ण
+		}
 		local->last = ++val;
-	पूर्ण अन्यथा अणु
-		val = atomic64_dec_वापस(&gc->reverse_last);
-	पूर्ण
+	} else {
+		val = atomic64_dec_return(&gc->reverse_last);
+	}
 	local_dec(&local->nesting);
-	वापस val;
-पूर्ण
+	return val;
+}
 
-#पूर्ण_अगर /* __LINUX_COOKIE_H */
+#endif /* __LINUX_COOKIE_H */

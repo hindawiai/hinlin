@@ -1,194 +1,193 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * i2sbus driver -- bus control routines
  *
  * Copyright 2006 Johannes Berg <johannes@sipsolutions.net>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/पन.स>
+#include <linux/kernel.h>
+#include <linux/delay.h>
+#include <linux/slab.h>
+#include <linux/io.h>
 
-#समावेश <यंत्र/prom.h>
-#समावेश <यंत्र/macपन.स>
-#समावेश <यंत्र/pmac_feature.h>
-#समावेश <यंत्र/pmac_pfunc.h>
-#समावेश <यंत्र/keylargo.h>
+#include <asm/prom.h>
+#include <asm/macio.h>
+#include <asm/pmac_feature.h>
+#include <asm/pmac_pfunc.h>
+#include <asm/keylargo.h>
 
-#समावेश "i2sbus.h"
+#include "i2sbus.h"
 
-पूर्णांक i2sbus_control_init(काष्ठा macio_dev* dev, काष्ठा i2sbus_control **c)
-अणु
-	*c = kzalloc(माप(काष्ठा i2sbus_control), GFP_KERNEL);
-	अगर (!*c)
-		वापस -ENOMEM;
+int i2sbus_control_init(struct macio_dev* dev, struct i2sbus_control **c)
+{
+	*c = kzalloc(sizeof(struct i2sbus_control), GFP_KERNEL);
+	if (!*c)
+		return -ENOMEM;
 
 	INIT_LIST_HEAD(&(*c)->list);
 
 	(*c)->macio = dev->bus->chip;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम i2sbus_control_destroy(काष्ठा i2sbus_control *c)
-अणु
-	kमुक्त(c);
-पूर्ण
+void i2sbus_control_destroy(struct i2sbus_control *c)
+{
+	kfree(c);
+}
 
-/* this is serialised बाह्यally */
-पूर्णांक i2sbus_control_add_dev(काष्ठा i2sbus_control *c,
-			   काष्ठा i2sbus_dev *i2sdev)
-अणु
-	काष्ठा device_node *np;
+/* this is serialised externally */
+int i2sbus_control_add_dev(struct i2sbus_control *c,
+			   struct i2sbus_dev *i2sdev)
+{
+	struct device_node *np;
 
 	np = i2sdev->sound.ofdev.dev.of_node;
 	i2sdev->enable = pmf_find_function(np, "enable");
 	i2sdev->cell_enable = pmf_find_function(np, "cell-enable");
-	i2sdev->घड़ी_enable = pmf_find_function(np, "clock-enable");
+	i2sdev->clock_enable = pmf_find_function(np, "clock-enable");
 	i2sdev->cell_disable = pmf_find_function(np, "cell-disable");
-	i2sdev->घड़ी_disable = pmf_find_function(np, "clock-disable");
+	i2sdev->clock_disable = pmf_find_function(np, "clock-disable");
 
-	/* अगर the bus number is not 0 or 1 we असलolutely need to use
-	 * the platक्रमm functions -- there's nothing in Darwin that
-	 * would allow seeing a प्रणाली behind what the FCRs are then,
-	 * and I करोn't want to go parsing a bunch of platक्रमm functions
-	 * by hand to try finding a प्रणाली... */
-	अगर (i2sdev->bus_number != 0 && i2sdev->bus_number != 1 &&
+	/* if the bus number is not 0 or 1 we absolutely need to use
+	 * the platform functions -- there's nothing in Darwin that
+	 * would allow seeing a system behind what the FCRs are then,
+	 * and I don't want to go parsing a bunch of platform functions
+	 * by hand to try finding a system... */
+	if (i2sdev->bus_number != 0 && i2sdev->bus_number != 1 &&
 	    (!i2sdev->enable ||
-	     !i2sdev->cell_enable || !i2sdev->घड़ी_enable ||
-	     !i2sdev->cell_disable || !i2sdev->घड़ी_disable)) अणु
+	     !i2sdev->cell_enable || !i2sdev->clock_enable ||
+	     !i2sdev->cell_disable || !i2sdev->clock_disable)) {
 		pmf_put_function(i2sdev->enable);
 		pmf_put_function(i2sdev->cell_enable);
-		pmf_put_function(i2sdev->घड़ी_enable);
+		pmf_put_function(i2sdev->clock_enable);
 		pmf_put_function(i2sdev->cell_disable);
-		pmf_put_function(i2sdev->घड़ी_disable);
-		वापस -ENODEV;
-	पूर्ण
+		pmf_put_function(i2sdev->clock_disable);
+		return -ENODEV;
+	}
 
 	list_add(&i2sdev->item, &c->list);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम i2sbus_control_हटाओ_dev(काष्ठा i2sbus_control *c,
-			       काष्ठा i2sbus_dev *i2sdev)
-अणु
-	/* this is serialised बाह्यally */
+void i2sbus_control_remove_dev(struct i2sbus_control *c,
+			       struct i2sbus_dev *i2sdev)
+{
+	/* this is serialised externally */
 	list_del(&i2sdev->item);
-	अगर (list_empty(&c->list))
+	if (list_empty(&c->list))
 		i2sbus_control_destroy(c);
-पूर्ण
+}
 
-पूर्णांक i2sbus_control_enable(काष्ठा i2sbus_control *c,
-			  काष्ठा i2sbus_dev *i2sdev)
-अणु
-	काष्ठा pmf_args args = अणु .count = 0 पूर्ण;
-	काष्ठा macio_chip *macio = c->macio;
+int i2sbus_control_enable(struct i2sbus_control *c,
+			  struct i2sbus_dev *i2sdev)
+{
+	struct pmf_args args = { .count = 0 };
+	struct macio_chip *macio = c->macio;
 
-	अगर (i2sdev->enable)
-		वापस pmf_call_one(i2sdev->enable, &args);
+	if (i2sdev->enable)
+		return pmf_call_one(i2sdev->enable, &args);
 
-	अगर (macio == शून्य || macio->base == शून्य)
-		वापस -ENODEV;
+	if (macio == NULL || macio->base == NULL)
+		return -ENODEV;
 
-	चयन (i2sdev->bus_number) अणु
-	हाल 0:
-		/* these need to be locked or करोne through
+	switch (i2sdev->bus_number) {
+	case 0:
+		/* these need to be locked or done through
 		 * newly created feature calls! */
 		MACIO_BIS(KEYLARGO_FCR1, KL1_I2S0_ENABLE);
-		अवरोध;
-	हाल 1:
+		break;
+	case 1:
 		MACIO_BIS(KEYLARGO_FCR1, KL1_I2S1_ENABLE);
-		अवरोध;
-	शेष:
-		वापस -ENODEV;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		break;
+	default:
+		return -ENODEV;
+	}
+	return 0;
+}
 
-पूर्णांक i2sbus_control_cell(काष्ठा i2sbus_control *c,
-			काष्ठा i2sbus_dev *i2sdev,
-			पूर्णांक enable)
-अणु
-	काष्ठा pmf_args args = अणु .count = 0 पूर्ण;
-	काष्ठा macio_chip *macio = c->macio;
+int i2sbus_control_cell(struct i2sbus_control *c,
+			struct i2sbus_dev *i2sdev,
+			int enable)
+{
+	struct pmf_args args = { .count = 0 };
+	struct macio_chip *macio = c->macio;
 
-	चयन (enable) अणु
-	हाल 0:
-		अगर (i2sdev->cell_disable)
-			वापस pmf_call_one(i2sdev->cell_disable, &args);
-		अवरोध;
-	हाल 1:
-		अगर (i2sdev->cell_enable)
-			वापस pmf_call_one(i2sdev->cell_enable, &args);
-		अवरोध;
-	शेष:
-		prपूर्णांकk(KERN_ERR "i2sbus: INVALID CELL ENABLE VALUE\n");
-		वापस -ENODEV;
-	पूर्ण
+	switch (enable) {
+	case 0:
+		if (i2sdev->cell_disable)
+			return pmf_call_one(i2sdev->cell_disable, &args);
+		break;
+	case 1:
+		if (i2sdev->cell_enable)
+			return pmf_call_one(i2sdev->cell_enable, &args);
+		break;
+	default:
+		printk(KERN_ERR "i2sbus: INVALID CELL ENABLE VALUE\n");
+		return -ENODEV;
+	}
 
-	अगर (macio == शून्य || macio->base == शून्य)
-		वापस -ENODEV;
+	if (macio == NULL || macio->base == NULL)
+		return -ENODEV;
 
-	चयन (i2sdev->bus_number) अणु
-	हाल 0:
-		अगर (enable)
+	switch (i2sdev->bus_number) {
+	case 0:
+		if (enable)
 			MACIO_BIS(KEYLARGO_FCR1, KL1_I2S0_CELL_ENABLE);
-		अन्यथा
+		else
 			MACIO_BIC(KEYLARGO_FCR1, KL1_I2S0_CELL_ENABLE);
-		अवरोध;
-	हाल 1:
-		अगर (enable)
+		break;
+	case 1:
+		if (enable)
 			MACIO_BIS(KEYLARGO_FCR1, KL1_I2S1_CELL_ENABLE);
-		अन्यथा
+		else
 			MACIO_BIC(KEYLARGO_FCR1, KL1_I2S1_CELL_ENABLE);
-		अवरोध;
-	शेष:
-		वापस -ENODEV;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		break;
+	default:
+		return -ENODEV;
+	}
+	return 0;
+}
 
-पूर्णांक i2sbus_control_घड़ी(काष्ठा i2sbus_control *c,
-			 काष्ठा i2sbus_dev *i2sdev,
-			 पूर्णांक enable)
-अणु
-	काष्ठा pmf_args args = अणु .count = 0 पूर्ण;
-	काष्ठा macio_chip *macio = c->macio;
+int i2sbus_control_clock(struct i2sbus_control *c,
+			 struct i2sbus_dev *i2sdev,
+			 int enable)
+{
+	struct pmf_args args = { .count = 0 };
+	struct macio_chip *macio = c->macio;
 
-	चयन (enable) अणु
-	हाल 0:
-		अगर (i2sdev->घड़ी_disable)
-			वापस pmf_call_one(i2sdev->घड़ी_disable, &args);
-		अवरोध;
-	हाल 1:
-		अगर (i2sdev->घड़ी_enable)
-			वापस pmf_call_one(i2sdev->घड़ी_enable, &args);
-		अवरोध;
-	शेष:
-		prपूर्णांकk(KERN_ERR "i2sbus: INVALID CLOCK ENABLE VALUE\n");
-		वापस -ENODEV;
-	पूर्ण
+	switch (enable) {
+	case 0:
+		if (i2sdev->clock_disable)
+			return pmf_call_one(i2sdev->clock_disable, &args);
+		break;
+	case 1:
+		if (i2sdev->clock_enable)
+			return pmf_call_one(i2sdev->clock_enable, &args);
+		break;
+	default:
+		printk(KERN_ERR "i2sbus: INVALID CLOCK ENABLE VALUE\n");
+		return -ENODEV;
+	}
 
-	अगर (macio == शून्य || macio->base == शून्य)
-		वापस -ENODEV;
+	if (macio == NULL || macio->base == NULL)
+		return -ENODEV;
 
-	चयन (i2sdev->bus_number) अणु
-	हाल 0:
-		अगर (enable)
+	switch (i2sdev->bus_number) {
+	case 0:
+		if (enable)
 			MACIO_BIS(KEYLARGO_FCR1, KL1_I2S0_CLK_ENABLE_BIT);
-		अन्यथा
+		else
 			MACIO_BIC(KEYLARGO_FCR1, KL1_I2S0_CLK_ENABLE_BIT);
-		अवरोध;
-	हाल 1:
-		अगर (enable)
+		break;
+	case 1:
+		if (enable)
 			MACIO_BIS(KEYLARGO_FCR1, KL1_I2S1_CLK_ENABLE_BIT);
-		अन्यथा
+		else
 			MACIO_BIC(KEYLARGO_FCR1, KL1_I2S1_CLK_ENABLE_BIT);
-		अवरोध;
-	शेष:
-		वापस -ENODEV;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		break;
+	default:
+		return -ENODEV;
+	}
+	return 0;
+}

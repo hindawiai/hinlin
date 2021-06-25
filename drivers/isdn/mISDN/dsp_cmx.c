@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Audio crossconnecting/conferrencing (hardware level).
  *
@@ -12,36 +11,36 @@
 /*
  * The process of adding and removing parties to/from a conference:
  *
- * There is a chain of काष्ठा dsp_conf which has one or more members in a chain
- * of काष्ठा dsp_conf_member.
+ * There is a chain of struct dsp_conf which has one or more members in a chain
+ * of struct dsp_conf_member.
  *
- * After a party is added, the conference is checked क्रम hardware capability.
- * Also अगर a party is हटाओd, the conference is checked again.
+ * After a party is added, the conference is checked for hardware capability.
+ * Also if a party is removed, the conference is checked again.
  *
- * There are 3 dअगरferent solutions: -1 = software, 0 = hardware-crossconnect
+ * There are 3 different solutions: -1 = software, 0 = hardware-crossconnect
  * 1-n = hardware-conference. The n will give the conference number.
  *
  * Depending on the change after removal or insertion of a party, hardware
  * commands are given.
  *
- * The current solution is stored within the काष्ठा dsp_conf entry.
+ * The current solution is stored within the struct dsp_conf entry.
  */
 
 /*
  * HOW THE CMX WORKS:
  *
- * There are 3 types of पूर्णांकeraction: One member is alone, in this हाल only
- * data flow from upper to lower layer is करोne.
+ * There are 3 types of interaction: One member is alone, in this case only
+ * data flow from upper to lower layer is done.
  * Two members will also exchange their data so they are crossconnected.
  * Three or more members will be added in a conference and will hear each
- * other but will not receive their own speech (echo) अगर not enabled.
+ * other but will not receive their own speech (echo) if not enabled.
  *
  * Features of CMX are:
- *  - Crossconnecting or even conference, अगर more than two members are together.
+ *  - Crossconnecting or even conference, if more than two members are together.
  *  - Force mixing of transmit data with other crossconnect/conference members.
  *  - Echo generation to benchmark the delay of audio processing.
  *  - Use hardware to minimize cpu load, disable FIFO load and minimize delay.
- *  - Dejittering and घड़ी generation.
+ *  - Dejittering and clock generation.
  *
  * There are 2 buffers:
  *
@@ -51,13 +50,13 @@
  *                 |             |
  * ----------------+-------------+-------------------
  *
- * The rx-buffer is a ring buffer used to store the received data क्रम each
- * inभागidual member. This is only the हाल अगर data needs to be dejittered
- * or in हाल of a conference where dअगरferent घड़ीs require reघड़ीing.
- * The transmit-घड़ी (R) will पढ़ो the buffer.
- * If the घड़ी overruns the ग_लिखो-poपूर्णांकer, we will have a buffer underrun.
- * If the ग_लिखो poपूर्णांकer always has a certain distance from the transmit-
- * घड़ी, we will have a delay. The delay will dynamically be increased and
+ * The rx-buffer is a ring buffer used to store the received data for each
+ * individual member. This is only the case if data needs to be dejittered
+ * or in case of a conference where different clocks require reclocking.
+ * The transmit-clock (R) will read the buffer.
+ * If the clock overruns the write-pointer, we will have a buffer underrun.
+ * If the write pointer always has a certain distance from the transmit-
+ * clock, we will have a delay. The delay will dynamically be increased and
  * reduced.
  *
  *
@@ -67,28 +66,28 @@
  * -----------------+--------+-----------------------
  *
  * The tx-buffer is a ring buffer to queue the transmit data from user space
- * until it will be mixed or sent. There are two poपूर्णांकers, R and W. If the ग_लिखो
- * poपूर्णांकer W would reach or overrun R, the buffer would overrun. In this हाल
+ * until it will be mixed or sent. There are two pointers, R and W. If the write
+ * pointer W would reach or overrun R, the buffer would overrun. In this case
  * (some) data is dropped so that it will not overrun.
  * Additionally a dynamic dejittering can be enabled. this allows data from
- * user space that have jitter and dअगरferent घड़ी source.
+ * user space that have jitter and different clock source.
  *
  *
  * Clock:
  *
- * A Clock is not required, अगर the data source has exactly one घड़ी. In this
- * हाल the data source is क्रमwarded to the destination.
+ * A Clock is not required, if the data source has exactly one clock. In this
+ * case the data source is forwarded to the destination.
  *
  * A Clock is required, because the data source
- *  - has multiple घड़ीs.
- *  - has no usable घड़ी due to jitter or packet loss (VoIP).
- * In this हाल the प्रणाली's घड़ी is used. The घड़ी resolution depends on
- * the jअगरfie resolution.
+ *  - has multiple clocks.
+ *  - has no usable clock due to jitter or packet loss (VoIP).
+ * In this case the system's clock is used. The clock resolution depends on
+ * the jiffie resolution.
  *
  * If a member joins a conference:
  *
- * - If a member joins, its rx_buff is set to silence and change पढ़ो poपूर्णांकer
- *   to transmit घड़ी.
+ * - If a member joins, its rx_buff is set to silence and change read pointer
+ *   to transmit clock.
  *
  * The procedure of received data from card is explained in cmx_receive.
  * The procedure of received data from user space is explained in cmx_transmit.
@@ -98,87 +97,87 @@
  * Interaction with other features:
  *
  * DTMF:
- * DTMF decoding is करोne beक्रमe the data is crossconnected.
+ * DTMF decoding is done before the data is crossconnected.
  *
  * Volume change:
- * Changing rx-volume is करोne beक्रमe the data is crossconnected. The tx-volume
+ * Changing rx-volume is done before the data is crossconnected. The tx-volume
  * must be changed whenever data is transmitted to the card by the cmx.
  *
  * Tones:
  * If a tone is enabled, it will be processed whenever data is transmitted to
  * the card. It will replace the tx-data from the user space.
- * If tones are generated by hardware, this conference member is हटाओd क्रम
- * this समय.
+ * If tones are generated by hardware, this conference member is removed for
+ * this time.
  *
  * Disable rx-data:
- * If cmx is realized in hardware, rx data will be disabled अगर requested by
- * the upper layer. If dपंचांगf decoding is करोne by software and enabled, rx data
+ * If cmx is realized in hardware, rx data will be disabled if requested by
+ * the upper layer. If dtmf decoding is done by software and enabled, rx data
  * will not be disabled but blocked to the upper layer.
  *
  * HFC conference engine:
  * If it is possible to realize all features using hardware, hardware will be
- * used अगर not क्रमbidden by control command. Disabling rx-data provides
- * असलolutely traffic मुक्त audio processing. (except क्रम the quick 1-frame
- * upload of a tone loop, only once क्रम a new tone)
+ * used if not forbidden by control command. Disabling rx-data provides
+ * absolutely traffic free audio processing. (except for the quick 1-frame
+ * upload of a tone loop, only once for a new tone)
  *
  */
 
-/* delay.h is required क्रम hw_lock.h */
+/* delay.h is required for hw_lock.h */
 
-#समावेश <linux/slab.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/mISDNअगर.h>
-#समावेश <linux/mISDNdsp.h>
-#समावेश "core.h"
-#समावेश "dsp.h"
+#include <linux/slab.h>
+#include <linux/delay.h>
+#include <linux/mISDNif.h>
+#include <linux/mISDNdsp.h>
+#include "core.h"
+#include "dsp.h"
 /*
  * debugging of multi party conference,
  * by using conference even with two members
  */
 
-/* #घोषणा CMX_CONF_DEBUG */
+/* #define CMX_CONF_DEBUG */
 
-/*#घोषणा CMX_DEBUG * massive पढ़ो/ग_लिखो poपूर्णांकer output */
-/*#घोषणा CMX_DELAY_DEBUG * gives rx-buffer delay overview */
-/*#घोषणा CMX_TX_DEBUG * massive पढ़ो/ग_लिखो on tx-buffer with content */
+/*#define CMX_DEBUG * massive read/write pointer output */
+/*#define CMX_DELAY_DEBUG * gives rx-buffer delay overview */
+/*#define CMX_TX_DEBUG * massive read/write on tx-buffer with content */
 
-अटल अंतरभूत पूर्णांक
-count_list_member(काष्ठा list_head *head)
-अणु
-	पूर्णांक			cnt = 0;
-	काष्ठा list_head	*m;
+static inline int
+count_list_member(struct list_head *head)
+{
+	int			cnt = 0;
+	struct list_head	*m;
 
-	list_क्रम_each(m, head)
+	list_for_each(m, head)
 		cnt++;
-	वापस cnt;
-पूर्ण
+	return cnt;
+}
 
 /*
- * debug cmx memory काष्ठाure
+ * debug cmx memory structure
  */
-व्योम
-dsp_cmx_debug(काष्ठा dsp *dsp)
-अणु
-	काष्ठा dsp_conf	*conf;
-	काष्ठा dsp_conf_member	*member;
-	काष्ठा dsp		*odsp;
+void
+dsp_cmx_debug(struct dsp *dsp)
+{
+	struct dsp_conf	*conf;
+	struct dsp_conf_member	*member;
+	struct dsp		*odsp;
 
-	prपूर्णांकk(KERN_DEBUG "-----Current DSP\n");
-	list_क्रम_each_entry(odsp, &dsp_ilist, list) अणु
-		prपूर्णांकk(KERN_DEBUG "* %s hardecho=%d softecho=%d txmix=%d",
+	printk(KERN_DEBUG "-----Current DSP\n");
+	list_for_each_entry(odsp, &dsp_ilist, list) {
+		printk(KERN_DEBUG "* %s hardecho=%d softecho=%d txmix=%d",
 		       odsp->name, odsp->echo.hardware, odsp->echo.software,
 		       odsp->tx_mix);
-		अगर (odsp->conf)
-			prपूर्णांकk(" (Conf %d)", odsp->conf->id);
-		अगर (dsp == odsp)
-			prपूर्णांकk(" *this*");
-		prपूर्णांकk("\n");
-	पूर्ण
-	prपूर्णांकk(KERN_DEBUG "-----Current Conf:\n");
-	list_क्रम_each_entry(conf, &conf_ilist, list) अणु
-		prपूर्णांकk(KERN_DEBUG "* Conf %d (%p)\n", conf->id, conf);
-		list_क्रम_each_entry(member, &conf->mlist, list) अणु
-			prपूर्णांकk(KERN_DEBUG
+		if (odsp->conf)
+			printk(" (Conf %d)", odsp->conf->id);
+		if (dsp == odsp)
+			printk(" *this*");
+		printk("\n");
+	}
+	printk(KERN_DEBUG "-----Current Conf:\n");
+	list_for_each_entry(conf, &conf_ilist, list) {
+		printk(KERN_DEBUG "* Conf %d (%p)\n", conf->id, conf);
+		list_for_each_entry(member, &conf->mlist, list) {
+			printk(KERN_DEBUG
 			       "  - member = %s (slot_tx %d, bank_tx %d, "
 			       "slot_rx %d, bank_rx %d hfc_conf %d "
 			       "tx_data %d rx_is_off %d)%s\n",
@@ -187,65 +186,65 @@ dsp_cmx_debug(काष्ठा dsp *dsp)
 			       member->dsp->pcm_bank_rx, member->dsp->hfc_conf,
 			       member->dsp->tx_data, member->dsp->rx_is_off,
 			       (member->dsp == dsp) ? " *this*" : "");
-		पूर्ण
-	पूर्ण
-	prपूर्णांकk(KERN_DEBUG "-----end\n");
-पूर्ण
+		}
+	}
+	printk(KERN_DEBUG "-----end\n");
+}
 
 /*
  * search conference
  */
-अटल काष्ठा dsp_conf *
+static struct dsp_conf *
 dsp_cmx_search_conf(u32 id)
-अणु
-	काष्ठा dsp_conf *conf;
+{
+	struct dsp_conf *conf;
 
-	अगर (!id) अणु
-		prपूर्णांकk(KERN_WARNING "%s: conference ID is 0.\n", __func__);
-		वापस शून्य;
-	पूर्ण
+	if (!id) {
+		printk(KERN_WARNING "%s: conference ID is 0.\n", __func__);
+		return NULL;
+	}
 
 	/* search conference */
-	list_क्रम_each_entry(conf, &conf_ilist, list)
-		अगर (conf->id == id)
-			वापस conf;
+	list_for_each_entry(conf, &conf_ilist, list)
+		if (conf->id == id)
+			return conf;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 
 /*
  * add member to conference
  */
-अटल पूर्णांक
-dsp_cmx_add_conf_member(काष्ठा dsp *dsp, काष्ठा dsp_conf *conf)
-अणु
-	काष्ठा dsp_conf_member *member;
+static int
+dsp_cmx_add_conf_member(struct dsp *dsp, struct dsp_conf *conf)
+{
+	struct dsp_conf_member *member;
 
-	अगर (!conf || !dsp) अणु
-		prपूर्णांकk(KERN_WARNING "%s: conf or dsp is 0.\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
-	अगर (dsp->member) अणु
-		prपूर्णांकk(KERN_WARNING "%s: dsp is already member in a conf.\n",
+	if (!conf || !dsp) {
+		printk(KERN_WARNING "%s: conf or dsp is 0.\n", __func__);
+		return -EINVAL;
+	}
+	if (dsp->member) {
+		printk(KERN_WARNING "%s: dsp is already member in a conf.\n",
 		       __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (dsp->conf) अणु
-		prपूर्णांकk(KERN_WARNING "%s: dsp is already in a conf.\n",
+	if (dsp->conf) {
+		printk(KERN_WARNING "%s: dsp is already in a conf.\n",
 		       __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	member = kzalloc(माप(काष्ठा dsp_conf_member), GFP_ATOMIC);
-	अगर (!member) अणु
-		prपूर्णांकk(KERN_ERR "kzalloc struct dsp_conf_member failed\n");
-		वापस -ENOMEM;
-	पूर्ण
+	member = kzalloc(sizeof(struct dsp_conf_member), GFP_ATOMIC);
+	if (!member) {
+		printk(KERN_ERR "kzalloc struct dsp_conf_member failed\n");
+		return -ENOMEM;
+	}
 	member->dsp = dsp;
 	/* clear rx buffer */
-	स_रखो(dsp->rx_buff, dsp_silence, माप(dsp->rx_buff));
+	memset(dsp->rx_buff, dsp_silence, sizeof(dsp->rx_buff));
 	dsp->rx_init = 1; /* rx_W and rx_R will be adjusted on first frame */
 	dsp->rx_W = 0;
 	dsp->rx_R = 0;
@@ -255,170 +254,170 @@ dsp_cmx_add_conf_member(काष्ठा dsp *dsp, काष्ठा dsp_conf
 	dsp->conf = conf;
 	dsp->member = member;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /*
  * del member from conference
  */
-पूर्णांक
-dsp_cmx_del_conf_member(काष्ठा dsp *dsp)
-अणु
-	काष्ठा dsp_conf_member *member;
+int
+dsp_cmx_del_conf_member(struct dsp *dsp)
+{
+	struct dsp_conf_member *member;
 
-	अगर (!dsp) अणु
-		prपूर्णांकk(KERN_WARNING "%s: dsp is 0.\n",
+	if (!dsp) {
+		printk(KERN_WARNING "%s: dsp is 0.\n",
 		       __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!dsp->conf) अणु
-		prपूर्णांकk(KERN_WARNING "%s: dsp is not in a conf.\n",
+	if (!dsp->conf) {
+		printk(KERN_WARNING "%s: dsp is not in a conf.\n",
 		       __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (list_empty(&dsp->conf->mlist)) अणु
-		prपूर्णांकk(KERN_WARNING "%s: dsp has linked an empty conf.\n",
+	if (list_empty(&dsp->conf->mlist)) {
+		printk(KERN_WARNING "%s: dsp has linked an empty conf.\n",
 		       __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* find us in conf */
-	list_क्रम_each_entry(member, &dsp->conf->mlist, list) अणु
-		अगर (member->dsp == dsp) अणु
+	list_for_each_entry(member, &dsp->conf->mlist, list) {
+		if (member->dsp == dsp) {
 			list_del(&member->list);
-			dsp->conf = शून्य;
-			dsp->member = शून्य;
-			kमुक्त(member);
-			वापस 0;
-		पूर्ण
-	पूर्ण
-	prपूर्णांकk(KERN_WARNING
+			dsp->conf = NULL;
+			dsp->member = NULL;
+			kfree(member);
+			return 0;
+		}
+	}
+	printk(KERN_WARNING
 	       "%s: dsp is not present in its own conf_member list.\n",
 	       __func__);
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
 
 /*
  * new conference
  */
-अटल काष्ठा dsp_conf
+static struct dsp_conf
 *dsp_cmx_new_conf(u32 id)
-अणु
-	काष्ठा dsp_conf *conf;
+{
+	struct dsp_conf *conf;
 
-	अगर (!id) अणु
-		prपूर्णांकk(KERN_WARNING "%s: id is 0.\n",
+	if (!id) {
+		printk(KERN_WARNING "%s: id is 0.\n",
 		       __func__);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	conf = kzalloc(माप(काष्ठा dsp_conf), GFP_ATOMIC);
-	अगर (!conf) अणु
-		prपूर्णांकk(KERN_ERR "kzalloc struct dsp_conf failed\n");
-		वापस शून्य;
-	पूर्ण
+	conf = kzalloc(sizeof(struct dsp_conf), GFP_ATOMIC);
+	if (!conf) {
+		printk(KERN_ERR "kzalloc struct dsp_conf failed\n");
+		return NULL;
+	}
 	INIT_LIST_HEAD(&conf->mlist);
 	conf->id = id;
 
 	list_add_tail(&conf->list, &conf_ilist);
 
-	वापस conf;
-पूर्ण
+	return conf;
+}
 
 
 /*
  * del conference
  */
-पूर्णांक
-dsp_cmx_del_conf(काष्ठा dsp_conf *conf)
-अणु
-	अगर (!conf) अणु
-		prपूर्णांकk(KERN_WARNING "%s: conf is null.\n",
+int
+dsp_cmx_del_conf(struct dsp_conf *conf)
+{
+	if (!conf) {
+		printk(KERN_WARNING "%s: conf is null.\n",
 		       __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!list_empty(&conf->mlist)) अणु
-		prपूर्णांकk(KERN_WARNING "%s: conf not empty.\n",
+	if (!list_empty(&conf->mlist)) {
+		printk(KERN_WARNING "%s: conf not empty.\n",
 		       __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	list_del(&conf->list);
-	kमुक्त(conf);
+	kfree(conf);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /*
  * send HW message to hfc card
  */
-अटल व्योम
-dsp_cmx_hw_message(काष्ठा dsp *dsp, u32 message, u32 param1, u32 param2,
+static void
+dsp_cmx_hw_message(struct dsp *dsp, u32 message, u32 param1, u32 param2,
 		   u32 param3, u32 param4)
-अणु
-	काष्ठा mISDN_ctrl_req cq;
+{
+	struct mISDN_ctrl_req cq;
 
-	स_रखो(&cq, 0, माप(cq));
+	memset(&cq, 0, sizeof(cq));
 	cq.op = message;
 	cq.p1 = param1 | (param2 << 8);
 	cq.p2 = param3 | (param4 << 8);
-	अगर (dsp->ch.peer)
+	if (dsp->ch.peer)
 		dsp->ch.peer->ctrl(dsp->ch.peer, CONTROL_CHANNEL, &cq);
-पूर्ण
+}
 
 
 /*
- * करो hardware update and set the software/hardware flag
+ * do hardware update and set the software/hardware flag
  *
  * either a conference or a dsp instance can be given
- * अगर only dsp instance is given, the instance is not associated with a conf
- * and thereक्रमe हटाओd. अगर a conference is given, the dsp is expected to
+ * if only dsp instance is given, the instance is not associated with a conf
+ * and therefore removed. if a conference is given, the dsp is expected to
  * be member of that conference.
  */
-व्योम
-dsp_cmx_hardware(काष्ठा dsp_conf *conf, काष्ठा dsp *dsp)
-अणु
-	काष्ठा dsp_conf_member	*member, *nexपंचांग;
-	काष्ठा dsp		*finddsp;
-	पूर्णांक		memb = 0, i, ii, i1, i2;
-	पूर्णांक		मुक्तunits[8];
-	u_अक्षर		मुक्तslots[256];
-	पूर्णांक		same_hfc = -1, same_pcm = -1, current_conf = -1,
+void
+dsp_cmx_hardware(struct dsp_conf *conf, struct dsp *dsp)
+{
+	struct dsp_conf_member	*member, *nextm;
+	struct dsp		*finddsp;
+	int		memb = 0, i, ii, i1, i2;
+	int		freeunits[8];
+	u_char		freeslots[256];
+	int		same_hfc = -1, same_pcm = -1, current_conf = -1,
 		all_conf = 1, tx_data = 0;
 
-	/* dsp माला_लो updated (no conf) */
-	अगर (!conf) अणु
-		अगर (!dsp)
-			वापस;
-		अगर (dsp_debug & DEBUG_DSP_CMX)
-			prपूर्णांकk(KERN_DEBUG "%s checking dsp %s\n",
+	/* dsp gets updated (no conf) */
+	if (!conf) {
+		if (!dsp)
+			return;
+		if (dsp_debug & DEBUG_DSP_CMX)
+			printk(KERN_DEBUG "%s checking dsp %s\n",
 			       __func__, dsp->name);
 	one_member:
-		/* हटाओ HFC conference अगर enabled */
-		अगर (dsp->hfc_conf >= 0) अणु
-			अगर (dsp_debug & DEBUG_DSP_CMX)
-				prपूर्णांकk(KERN_DEBUG
+		/* remove HFC conference if enabled */
+		if (dsp->hfc_conf >= 0) {
+			if (dsp_debug & DEBUG_DSP_CMX)
+				printk(KERN_DEBUG
 				       "%s removing %s from HFC conf %d "
 				       "because dsp is split\n", __func__,
 				       dsp->name, dsp->hfc_conf);
 			dsp_cmx_hw_message(dsp, MISDN_CTRL_HFC_CONF_SPLIT,
 					   0, 0, 0, 0);
 			dsp->hfc_conf = -1;
-		पूर्ण
+		}
 		/* process hw echo */
-		अगर (dsp->features.pcm_banks < 1)
-			वापस;
-		अगर (!dsp->echo.software && !dsp->echo.hardware) अणु
-			/* NO ECHO: हटाओ PCM slot अगर asचिन्हित */
-			अगर (dsp->pcm_slot_tx >= 0 || dsp->pcm_slot_rx >= 0) अणु
-				अगर (dsp_debug & DEBUG_DSP_CMX)
-					prपूर्णांकk(KERN_DEBUG "%s removing %s from"
+		if (dsp->features.pcm_banks < 1)
+			return;
+		if (!dsp->echo.software && !dsp->echo.hardware) {
+			/* NO ECHO: remove PCM slot if assigned */
+			if (dsp->pcm_slot_tx >= 0 || dsp->pcm_slot_rx >= 0) {
+				if (dsp_debug & DEBUG_DSP_CMX)
+					printk(KERN_DEBUG "%s removing %s from"
 					       " PCM slot %d (TX) %d (RX) because"
 					       " dsp is split (no echo)\n",
 					       __func__, dsp->name,
@@ -429,107 +428,107 @@ dsp_cmx_hardware(काष्ठा dsp_conf *conf, काष्ठा dsp *dsp)
 				dsp->pcm_bank_tx = -1;
 				dsp->pcm_slot_rx = -1;
 				dsp->pcm_bank_rx = -1;
-			पूर्ण
-			वापस;
-		पूर्ण
-		/* echo is enabled, find out अगर we use soft or hardware */
+			}
+			return;
+		}
+		/* echo is enabled, find out if we use soft or hardware */
 		dsp->echo.software = dsp->tx_data;
 		dsp->echo.hardware = 0;
-		/* ECHO: alपढ़ोy echo */
-		अगर (dsp->pcm_slot_tx >= 0 && dsp->pcm_slot_rx < 0 &&
-		    dsp->pcm_bank_tx == 2 && dsp->pcm_bank_rx == 2) अणु
+		/* ECHO: already echo */
+		if (dsp->pcm_slot_tx >= 0 && dsp->pcm_slot_rx < 0 &&
+		    dsp->pcm_bank_tx == 2 && dsp->pcm_bank_rx == 2) {
 			dsp->echo.hardware = 1;
-			वापस;
-		पूर्ण
-		/* ECHO: अगर slot alपढ़ोy asचिन्हित */
-		अगर (dsp->pcm_slot_tx >= 0) अणु
+			return;
+		}
+		/* ECHO: if slot already assigned */
+		if (dsp->pcm_slot_tx >= 0) {
 			dsp->pcm_slot_rx = dsp->pcm_slot_tx;
 			dsp->pcm_bank_tx = 2; /* 2 means loop */
 			dsp->pcm_bank_rx = 2;
-			अगर (dsp_debug & DEBUG_DSP_CMX)
-				prपूर्णांकk(KERN_DEBUG
+			if (dsp_debug & DEBUG_DSP_CMX)
+				printk(KERN_DEBUG
 				       "%s refresh %s for echo using slot %d\n",
 				       __func__, dsp->name,
 				       dsp->pcm_slot_tx);
 			dsp_cmx_hw_message(dsp, MISDN_CTRL_HFC_PCM_CONN,
 					   dsp->pcm_slot_tx, 2, dsp->pcm_slot_rx, 2);
 			dsp->echo.hardware = 1;
-			वापस;
-		पूर्ण
+			return;
+		}
 		/* ECHO: find slot */
 		dsp->pcm_slot_tx = -1;
 		dsp->pcm_slot_rx = -1;
-		स_रखो(मुक्तslots, 1, माप(मुक्तslots));
-		list_क्रम_each_entry(finddsp, &dsp_ilist, list) अणु
-			अगर (finddsp->features.pcm_id == dsp->features.pcm_id) अणु
-				अगर (finddsp->pcm_slot_rx >= 0 &&
-				    finddsp->pcm_slot_rx < माप(मुक्तslots))
-					मुक्तslots[finddsp->pcm_slot_rx] = 0;
-				अगर (finddsp->pcm_slot_tx >= 0 &&
-				    finddsp->pcm_slot_tx < माप(मुक्तslots))
-					मुक्तslots[finddsp->pcm_slot_tx] = 0;
-			पूर्ण
-		पूर्ण
+		memset(freeslots, 1, sizeof(freeslots));
+		list_for_each_entry(finddsp, &dsp_ilist, list) {
+			if (finddsp->features.pcm_id == dsp->features.pcm_id) {
+				if (finddsp->pcm_slot_rx >= 0 &&
+				    finddsp->pcm_slot_rx < sizeof(freeslots))
+					freeslots[finddsp->pcm_slot_rx] = 0;
+				if (finddsp->pcm_slot_tx >= 0 &&
+				    finddsp->pcm_slot_tx < sizeof(freeslots))
+					freeslots[finddsp->pcm_slot_tx] = 0;
+			}
+		}
 		i = 0;
 		ii = dsp->features.pcm_slots;
-		जबतक (i < ii) अणु
-			अगर (मुक्तslots[i])
-				अवरोध;
+		while (i < ii) {
+			if (freeslots[i])
+				break;
 			i++;
-		पूर्ण
-		अगर (i == ii) अणु
-			अगर (dsp_debug & DEBUG_DSP_CMX)
-				prपूर्णांकk(KERN_DEBUG
+		}
+		if (i == ii) {
+			if (dsp_debug & DEBUG_DSP_CMX)
+				printk(KERN_DEBUG
 				       "%s no slot available for echo\n",
 				       __func__);
 			/* no more slots available */
 			dsp->echo.software = 1;
-			वापस;
-		पूर्ण
-		/* assign मुक्त slot */
+			return;
+		}
+		/* assign free slot */
 		dsp->pcm_slot_tx = i;
 		dsp->pcm_slot_rx = i;
 		dsp->pcm_bank_tx = 2; /* loop */
 		dsp->pcm_bank_rx = 2;
-		अगर (dsp_debug & DEBUG_DSP_CMX)
-			prपूर्णांकk(KERN_DEBUG
+		if (dsp_debug & DEBUG_DSP_CMX)
+			printk(KERN_DEBUG
 			       "%s assign echo for %s using slot %d\n",
 			       __func__, dsp->name, dsp->pcm_slot_tx);
 		dsp_cmx_hw_message(dsp, MISDN_CTRL_HFC_PCM_CONN,
 				   dsp->pcm_slot_tx, 2, dsp->pcm_slot_rx, 2);
 		dsp->echo.hardware = 1;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* conf माला_लो updated (all members) */
-	अगर (dsp_debug & DEBUG_DSP_CMX)
-		prपूर्णांकk(KERN_DEBUG "%s checking conference %d\n",
+	/* conf gets updated (all members) */
+	if (dsp_debug & DEBUG_DSP_CMX)
+		printk(KERN_DEBUG "%s checking conference %d\n",
 		       __func__, conf->id);
 
-	अगर (list_empty(&conf->mlist)) अणु
-		prपूर्णांकk(KERN_ERR "%s: conference without members\n",
+	if (list_empty(&conf->mlist)) {
+		printk(KERN_ERR "%s: conference without members\n",
 		       __func__);
-		वापस;
-	पूर्ण
-	member = list_entry(conf->mlist.next, काष्ठा dsp_conf_member, list);
+		return;
+	}
+	member = list_entry(conf->mlist.next, struct dsp_conf_member, list);
 	same_hfc = member->dsp->features.hfc_id;
 	same_pcm = member->dsp->features.pcm_id;
 	/* check all members in our conference */
-	list_क्रम_each_entry(member, &conf->mlist, list) अणु
-		/* check अगर member uses mixing */
-		अगर (member->dsp->tx_mix) अणु
-			अगर (dsp_debug & DEBUG_DSP_CMX)
-				prपूर्णांकk(KERN_DEBUG
+	list_for_each_entry(member, &conf->mlist, list) {
+		/* check if member uses mixing */
+		if (member->dsp->tx_mix) {
+			if (dsp_debug & DEBUG_DSP_CMX)
+				printk(KERN_DEBUG
 				       "%s dsp %s cannot form a conf, because "
 				       "tx_mix is turned on\n", __func__,
 				       member->dsp->name);
 		conf_software:
-			list_क्रम_each_entry(member, &conf->mlist, list) अणु
+			list_for_each_entry(member, &conf->mlist, list) {
 				dsp = member->dsp;
-				/* हटाओ HFC conference अगर enabled */
-				अगर (dsp->hfc_conf >= 0) अणु
-					अगर (dsp_debug & DEBUG_DSP_CMX)
-						prपूर्णांकk(KERN_DEBUG
+				/* remove HFC conference if enabled */
+				if (dsp->hfc_conf >= 0) {
+					if (dsp_debug & DEBUG_DSP_CMX)
+						printk(KERN_DEBUG
 						       "%s removing %s from HFC "
 						       "conf %d because not "
 						       "possible with hardware\n",
@@ -540,12 +539,12 @@ dsp_cmx_hardware(काष्ठा dsp_conf *conf, काष्ठा dsp *dsp)
 							   MISDN_CTRL_HFC_CONF_SPLIT,
 							   0, 0, 0, 0);
 					dsp->hfc_conf = -1;
-				पूर्ण
-				/* हटाओ PCM slot अगर asचिन्हित */
-				अगर (dsp->pcm_slot_tx >= 0 ||
-				    dsp->pcm_slot_rx >= 0) अणु
-					अगर (dsp_debug & DEBUG_DSP_CMX)
-						prपूर्णांकk(KERN_DEBUG "%s removing "
+				}
+				/* remove PCM slot if assigned */
+				if (dsp->pcm_slot_tx >= 0 ||
+				    dsp->pcm_slot_rx >= 0) {
+					if (dsp_debug & DEBUG_DSP_CMX)
+						printk(KERN_DEBUG "%s removing "
 						       "%s from PCM slot %d (TX)"
 						       " slot %d (RX) because not"
 						       " possible with hardware\n",
@@ -560,138 +559,138 @@ dsp_cmx_hardware(काष्ठा dsp_conf *conf, काष्ठा dsp *dsp)
 					dsp->pcm_bank_tx = -1;
 					dsp->pcm_slot_rx = -1;
 					dsp->pcm_bank_rx = -1;
-				पूर्ण
-			पूर्ण
+				}
+			}
 			conf->hardware = 0;
 			conf->software = 1;
-			वापस;
-		पूर्ण
-		/* check अगर member has echo turned on */
-		अगर (member->dsp->echo.hardware || member->dsp->echo.software) अणु
-			अगर (dsp_debug & DEBUG_DSP_CMX)
-				prपूर्णांकk(KERN_DEBUG
+			return;
+		}
+		/* check if member has echo turned on */
+		if (member->dsp->echo.hardware || member->dsp->echo.software) {
+			if (dsp_debug & DEBUG_DSP_CMX)
+				printk(KERN_DEBUG
 				       "%s dsp %s cannot form a conf, because "
 				       "echo is turned on\n", __func__,
 				       member->dsp->name);
-			जाओ conf_software;
-		पूर्ण
-		/* check अगर member has tx_mix turned on */
-		अगर (member->dsp->tx_mix) अणु
-			अगर (dsp_debug & DEBUG_DSP_CMX)
-				prपूर्णांकk(KERN_DEBUG
+			goto conf_software;
+		}
+		/* check if member has tx_mix turned on */
+		if (member->dsp->tx_mix) {
+			if (dsp_debug & DEBUG_DSP_CMX)
+				printk(KERN_DEBUG
 				       "%s dsp %s cannot form a conf, because "
 				       "tx_mix is turned on\n",
 				       __func__, member->dsp->name);
-			जाओ conf_software;
-		पूर्ण
-		/* check अगर member changes volume at an not suppoted level */
-		अगर (member->dsp->tx_volume) अणु
-			अगर (dsp_debug & DEBUG_DSP_CMX)
-				prपूर्णांकk(KERN_DEBUG
+			goto conf_software;
+		}
+		/* check if member changes volume at an not suppoted level */
+		if (member->dsp->tx_volume) {
+			if (dsp_debug & DEBUG_DSP_CMX)
+				printk(KERN_DEBUG
 				       "%s dsp %s cannot form a conf, because "
 				       "tx_volume is changed\n",
 				       __func__, member->dsp->name);
-			जाओ conf_software;
-		पूर्ण
-		अगर (member->dsp->rx_volume) अणु
-			अगर (dsp_debug & DEBUG_DSP_CMX)
-				prपूर्णांकk(KERN_DEBUG
+			goto conf_software;
+		}
+		if (member->dsp->rx_volume) {
+			if (dsp_debug & DEBUG_DSP_CMX)
+				printk(KERN_DEBUG
 				       "%s dsp %s cannot form a conf, because "
 				       "rx_volume is changed\n",
 				       __func__, member->dsp->name);
-			जाओ conf_software;
-		पूर्ण
-		/* check अगर tx-data turned on */
-		अगर (member->dsp->tx_data) अणु
-			अगर (dsp_debug & DEBUG_DSP_CMX)
-				prपूर्णांकk(KERN_DEBUG
+			goto conf_software;
+		}
+		/* check if tx-data turned on */
+		if (member->dsp->tx_data) {
+			if (dsp_debug & DEBUG_DSP_CMX)
+				printk(KERN_DEBUG
 				       "%s dsp %s tx_data is turned on\n",
 				       __func__, member->dsp->name);
 			tx_data = 1;
-		पूर्ण
-		/* check अगर pipeline exists */
-		अगर (member->dsp->pipeline.inuse) अणु
-			अगर (dsp_debug & DEBUG_DSP_CMX)
-				prपूर्णांकk(KERN_DEBUG
+		}
+		/* check if pipeline exists */
+		if (member->dsp->pipeline.inuse) {
+			if (dsp_debug & DEBUG_DSP_CMX)
+				printk(KERN_DEBUG
 				       "%s dsp %s cannot form a conf, because "
 				       "pipeline exists\n", __func__,
 				       member->dsp->name);
-			जाओ conf_software;
-		पूर्ण
-		/* check अगर encryption is enabled */
-		अगर (member->dsp->bf_enable) अणु
-			अगर (dsp_debug & DEBUG_DSP_CMX)
-				prपूर्णांकk(KERN_DEBUG "%s dsp %s cannot form a "
+			goto conf_software;
+		}
+		/* check if encryption is enabled */
+		if (member->dsp->bf_enable) {
+			if (dsp_debug & DEBUG_DSP_CMX)
+				printk(KERN_DEBUG "%s dsp %s cannot form a "
 				       "conf, because encryption is enabled\n",
 				       __func__, member->dsp->name);
-			जाओ conf_software;
-		पूर्ण
-		/* check अगर member is on a card with PCM support */
-		अगर (member->dsp->features.pcm_id < 0) अणु
-			अगर (dsp_debug & DEBUG_DSP_CMX)
-				prपूर्णांकk(KERN_DEBUG
+			goto conf_software;
+		}
+		/* check if member is on a card with PCM support */
+		if (member->dsp->features.pcm_id < 0) {
+			if (dsp_debug & DEBUG_DSP_CMX)
+				printk(KERN_DEBUG
 				       "%s dsp %s cannot form a conf, because "
 				       "dsp has no PCM bus\n",
 				       __func__, member->dsp->name);
-			जाओ conf_software;
-		पूर्ण
-		/* check अगर relations are on the same PCM bus */
-		अगर (member->dsp->features.pcm_id != same_pcm) अणु
-			अगर (dsp_debug & DEBUG_DSP_CMX)
-				prपूर्णांकk(KERN_DEBUG
+			goto conf_software;
+		}
+		/* check if relations are on the same PCM bus */
+		if (member->dsp->features.pcm_id != same_pcm) {
+			if (dsp_debug & DEBUG_DSP_CMX)
+				printk(KERN_DEBUG
 				       "%s dsp %s cannot form a conf, because "
 				       "dsp is on a different PCM bus than the "
 				       "first dsp\n",
 				       __func__, member->dsp->name);
-			जाओ conf_software;
-		पूर्ण
-		/* determine अगर members are on the same hfc chip */
-		अगर (same_hfc != member->dsp->features.hfc_id)
+			goto conf_software;
+		}
+		/* determine if members are on the same hfc chip */
+		if (same_hfc != member->dsp->features.hfc_id)
 			same_hfc = -1;
-		/* अगर there are members alपढ़ोy in a conference */
-		अगर (current_conf < 0 && member->dsp->hfc_conf >= 0)
+		/* if there are members already in a conference */
+		if (current_conf < 0 && member->dsp->hfc_conf >= 0)
 			current_conf = member->dsp->hfc_conf;
-		/* अगर any member is not in a conference */
-		अगर (member->dsp->hfc_conf < 0)
+		/* if any member is not in a conference */
+		if (member->dsp->hfc_conf < 0)
 			all_conf = 0;
 
 		memb++;
-	पूर्ण
+	}
 
-	/* अगर no member, this is an error */
-	अगर (memb < 1)
-		वापस;
+	/* if no member, this is an error */
+	if (memb < 1)
+		return;
 
 	/* one member */
-	अगर (memb == 1) अणु
-		अगर (dsp_debug & DEBUG_DSP_CMX)
-			prपूर्णांकk(KERN_DEBUG
+	if (memb == 1) {
+		if (dsp_debug & DEBUG_DSP_CMX)
+			printk(KERN_DEBUG
 			       "%s conf %d cannot form a HW conference, "
 			       "because dsp is alone\n", __func__, conf->id);
 		conf->hardware = 0;
 		conf->software = 0;
-		member = list_entry(conf->mlist.next, काष्ठा dsp_conf_member,
+		member = list_entry(conf->mlist.next, struct dsp_conf_member,
 				    list);
 		dsp = member->dsp;
-		जाओ one_member;
-	पूर्ण
+		goto one_member;
+	}
 
 	/*
 	 * ok, now we are sure that all members are on the same pcm.
-	 * now we will see अगर we have only two members, so we can करो
-	 * crossconnections, which करोn't have any limitations.
+	 * now we will see if we have only two members, so we can do
+	 * crossconnections, which don't have any limitations.
 	 */
 
-	/* अगर we have only two members */
-	अगर (memb == 2) अणु
-		member = list_entry(conf->mlist.next, काष्ठा dsp_conf_member,
+	/* if we have only two members */
+	if (memb == 2) {
+		member = list_entry(conf->mlist.next, struct dsp_conf_member,
 				    list);
-		nexपंचांग = list_entry(member->list.next, काष्ठा dsp_conf_member,
+		nextm = list_entry(member->list.next, struct dsp_conf_member,
 				   list);
-		/* हटाओ HFC conference अगर enabled */
-		अगर (member->dsp->hfc_conf >= 0) अणु
-			अगर (dsp_debug & DEBUG_DSP_CMX)
-				prपूर्णांकk(KERN_DEBUG
+		/* remove HFC conference if enabled */
+		if (member->dsp->hfc_conf >= 0) {
+			if (dsp_debug & DEBUG_DSP_CMX)
+				printk(KERN_DEBUG
 				       "%s removing %s from HFC conf %d because "
 				       "two parties require only a PCM slot\n",
 				       __func__, member->dsp->name,
@@ -699,314 +698,314 @@ dsp_cmx_hardware(काष्ठा dsp_conf *conf, काष्ठा dsp *dsp)
 			dsp_cmx_hw_message(member->dsp,
 					   MISDN_CTRL_HFC_CONF_SPLIT, 0, 0, 0, 0);
 			member->dsp->hfc_conf = -1;
-		पूर्ण
-		अगर (nexपंचांग->dsp->hfc_conf >= 0) अणु
-			अगर (dsp_debug & DEBUG_DSP_CMX)
-				prपूर्णांकk(KERN_DEBUG
+		}
+		if (nextm->dsp->hfc_conf >= 0) {
+			if (dsp_debug & DEBUG_DSP_CMX)
+				printk(KERN_DEBUG
 				       "%s removing %s from HFC conf %d because "
 				       "two parties require only a PCM slot\n",
-				       __func__, nexपंचांग->dsp->name,
-				       nexपंचांग->dsp->hfc_conf);
-			dsp_cmx_hw_message(nexपंचांग->dsp,
+				       __func__, nextm->dsp->name,
+				       nextm->dsp->hfc_conf);
+			dsp_cmx_hw_message(nextm->dsp,
 					   MISDN_CTRL_HFC_CONF_SPLIT, 0, 0, 0, 0);
-			nexपंचांग->dsp->hfc_conf = -1;
-		पूर्ण
-		/* अगर members have two banks (and not on the same chip) */
-		अगर (member->dsp->features.pcm_banks > 1 &&
-		    nexपंचांग->dsp->features.pcm_banks > 1 &&
+			nextm->dsp->hfc_conf = -1;
+		}
+		/* if members have two banks (and not on the same chip) */
+		if (member->dsp->features.pcm_banks > 1 &&
+		    nextm->dsp->features.pcm_banks > 1 &&
 		    member->dsp->features.hfc_id !=
-		    nexपंचांग->dsp->features.hfc_id) अणु
-			/* अगर both members have same slots with crossed banks */
-			अगर (member->dsp->pcm_slot_tx >= 0 &&
+		    nextm->dsp->features.hfc_id) {
+			/* if both members have same slots with crossed banks */
+			if (member->dsp->pcm_slot_tx >= 0 &&
 			    member->dsp->pcm_slot_rx >= 0 &&
-			    nexपंचांग->dsp->pcm_slot_tx >= 0 &&
-			    nexपंचांग->dsp->pcm_slot_rx >= 0 &&
-			    nexपंचांग->dsp->pcm_slot_tx ==
+			    nextm->dsp->pcm_slot_tx >= 0 &&
+			    nextm->dsp->pcm_slot_rx >= 0 &&
+			    nextm->dsp->pcm_slot_tx ==
 			    member->dsp->pcm_slot_rx &&
-			    nexपंचांग->dsp->pcm_slot_rx ==
+			    nextm->dsp->pcm_slot_rx ==
 			    member->dsp->pcm_slot_tx &&
-			    nexपंचांग->dsp->pcm_slot_tx ==
+			    nextm->dsp->pcm_slot_tx ==
 			    member->dsp->pcm_slot_tx &&
 			    member->dsp->pcm_bank_tx !=
 			    member->dsp->pcm_bank_rx &&
-			    nexपंचांग->dsp->pcm_bank_tx !=
-			    nexपंचांग->dsp->pcm_bank_rx) अणु
+			    nextm->dsp->pcm_bank_tx !=
+			    nextm->dsp->pcm_bank_rx) {
 				/* all members have same slot */
-				अगर (dsp_debug & DEBUG_DSP_CMX)
-					prपूर्णांकk(KERN_DEBUG
+				if (dsp_debug & DEBUG_DSP_CMX)
+					printk(KERN_DEBUG
 					       "%s dsp %s & %s stay joined on "
 					       "PCM slot %d bank %d (TX) bank %d "
 					       "(RX) (on different chips)\n",
 					       __func__,
 					       member->dsp->name,
-					       nexपंचांग->dsp->name,
+					       nextm->dsp->name,
 					       member->dsp->pcm_slot_tx,
 					       member->dsp->pcm_bank_tx,
 					       member->dsp->pcm_bank_rx);
 				conf->hardware = 1;
 				conf->software = tx_data;
-				वापस;
-			पूर्ण
+				return;
+			}
 			/* find a new slot */
-			स_रखो(मुक्तslots, 1, माप(मुक्तslots));
-			list_क्रम_each_entry(dsp, &dsp_ilist, list) अणु
-				अगर (dsp != member->dsp &&
-				    dsp != nexपंचांग->dsp &&
+			memset(freeslots, 1, sizeof(freeslots));
+			list_for_each_entry(dsp, &dsp_ilist, list) {
+				if (dsp != member->dsp &&
+				    dsp != nextm->dsp &&
 				    member->dsp->features.pcm_id ==
-				    dsp->features.pcm_id) अणु
-					अगर (dsp->pcm_slot_rx >= 0 &&
+				    dsp->features.pcm_id) {
+					if (dsp->pcm_slot_rx >= 0 &&
 					    dsp->pcm_slot_rx <
-					    माप(मुक्तslots))
-						मुक्तslots[dsp->pcm_slot_rx] = 0;
-					अगर (dsp->pcm_slot_tx >= 0 &&
+					    sizeof(freeslots))
+						freeslots[dsp->pcm_slot_rx] = 0;
+					if (dsp->pcm_slot_tx >= 0 &&
 					    dsp->pcm_slot_tx <
-					    माप(मुक्तslots))
-						मुक्तslots[dsp->pcm_slot_tx] = 0;
-				पूर्ण
-			पूर्ण
+					    sizeof(freeslots))
+						freeslots[dsp->pcm_slot_tx] = 0;
+				}
+			}
 			i = 0;
 			ii = member->dsp->features.pcm_slots;
-			जबतक (i < ii) अणु
-				अगर (मुक्तslots[i])
-					अवरोध;
+			while (i < ii) {
+				if (freeslots[i])
+					break;
 				i++;
-			पूर्ण
-			अगर (i == ii) अणु
-				अगर (dsp_debug & DEBUG_DSP_CMX)
-					prपूर्णांकk(KERN_DEBUG
+			}
+			if (i == ii) {
+				if (dsp_debug & DEBUG_DSP_CMX)
+					printk(KERN_DEBUG
 					       "%s no slot available for "
 					       "%s & %s\n", __func__,
 					       member->dsp->name,
-					       nexपंचांग->dsp->name);
+					       nextm->dsp->name);
 				/* no more slots available */
-				जाओ conf_software;
-			पूर्ण
-			/* assign मुक्त slot */
+				goto conf_software;
+			}
+			/* assign free slot */
 			member->dsp->pcm_slot_tx = i;
 			member->dsp->pcm_slot_rx = i;
-			nexपंचांग->dsp->pcm_slot_tx = i;
-			nexपंचांग->dsp->pcm_slot_rx = i;
+			nextm->dsp->pcm_slot_tx = i;
+			nextm->dsp->pcm_slot_rx = i;
 			member->dsp->pcm_bank_rx = 0;
 			member->dsp->pcm_bank_tx = 1;
-			nexपंचांग->dsp->pcm_bank_rx = 1;
-			nexपंचांग->dsp->pcm_bank_tx = 0;
-			अगर (dsp_debug & DEBUG_DSP_CMX)
-				prपूर्णांकk(KERN_DEBUG
+			nextm->dsp->pcm_bank_rx = 1;
+			nextm->dsp->pcm_bank_tx = 0;
+			if (dsp_debug & DEBUG_DSP_CMX)
+				printk(KERN_DEBUG
 				       "%s adding %s & %s to new PCM slot %d "
 				       "(TX and RX on different chips) because "
 				       "both members have not same slots\n",
 				       __func__,
 				       member->dsp->name,
-				       nexपंचांग->dsp->name,
+				       nextm->dsp->name,
 				       member->dsp->pcm_slot_tx);
 			dsp_cmx_hw_message(member->dsp, MISDN_CTRL_HFC_PCM_CONN,
 					   member->dsp->pcm_slot_tx, member->dsp->pcm_bank_tx,
 					   member->dsp->pcm_slot_rx, member->dsp->pcm_bank_rx);
-			dsp_cmx_hw_message(nexपंचांग->dsp, MISDN_CTRL_HFC_PCM_CONN,
-					   nexपंचांग->dsp->pcm_slot_tx, nexपंचांग->dsp->pcm_bank_tx,
-					   nexपंचांग->dsp->pcm_slot_rx, nexपंचांग->dsp->pcm_bank_rx);
+			dsp_cmx_hw_message(nextm->dsp, MISDN_CTRL_HFC_PCM_CONN,
+					   nextm->dsp->pcm_slot_tx, nextm->dsp->pcm_bank_tx,
+					   nextm->dsp->pcm_slot_rx, nextm->dsp->pcm_bank_rx);
 			conf->hardware = 1;
 			conf->software = tx_data;
-			वापस;
-			/* अगर members have one bank (or on the same chip) */
-		पूर्ण अन्यथा अणु
-			/* अगर both members have dअगरferent crossed slots */
-			अगर (member->dsp->pcm_slot_tx >= 0 &&
+			return;
+			/* if members have one bank (or on the same chip) */
+		} else {
+			/* if both members have different crossed slots */
+			if (member->dsp->pcm_slot_tx >= 0 &&
 			    member->dsp->pcm_slot_rx >= 0 &&
-			    nexपंचांग->dsp->pcm_slot_tx >= 0 &&
-			    nexपंचांग->dsp->pcm_slot_rx >= 0 &&
-			    nexपंचांग->dsp->pcm_slot_tx ==
+			    nextm->dsp->pcm_slot_tx >= 0 &&
+			    nextm->dsp->pcm_slot_rx >= 0 &&
+			    nextm->dsp->pcm_slot_tx ==
 			    member->dsp->pcm_slot_rx &&
-			    nexपंचांग->dsp->pcm_slot_rx ==
+			    nextm->dsp->pcm_slot_rx ==
 			    member->dsp->pcm_slot_tx &&
 			    member->dsp->pcm_slot_tx !=
 			    member->dsp->pcm_slot_rx &&
 			    member->dsp->pcm_bank_tx == 0 &&
 			    member->dsp->pcm_bank_rx == 0 &&
-			    nexपंचांग->dsp->pcm_bank_tx == 0 &&
-			    nexपंचांग->dsp->pcm_bank_rx == 0) अणु
+			    nextm->dsp->pcm_bank_tx == 0 &&
+			    nextm->dsp->pcm_bank_rx == 0) {
 				/* all members have same slot */
-				अगर (dsp_debug & DEBUG_DSP_CMX)
-					prपूर्णांकk(KERN_DEBUG
+				if (dsp_debug & DEBUG_DSP_CMX)
+					printk(KERN_DEBUG
 					       "%s dsp %s & %s stay joined on PCM "
 					       "slot %d (TX) %d (RX) on same chip "
 					       "or one bank PCM)\n", __func__,
 					       member->dsp->name,
-					       nexपंचांग->dsp->name,
+					       nextm->dsp->name,
 					       member->dsp->pcm_slot_tx,
 					       member->dsp->pcm_slot_rx);
 				conf->hardware = 1;
 				conf->software = tx_data;
-				वापस;
-			पूर्ण
+				return;
+			}
 			/* find two new slot */
-			स_रखो(मुक्तslots, 1, माप(मुक्तslots));
-			list_क्रम_each_entry(dsp, &dsp_ilist, list) अणु
-				अगर (dsp != member->dsp &&
-				    dsp != nexपंचांग->dsp &&
+			memset(freeslots, 1, sizeof(freeslots));
+			list_for_each_entry(dsp, &dsp_ilist, list) {
+				if (dsp != member->dsp &&
+				    dsp != nextm->dsp &&
 				    member->dsp->features.pcm_id ==
-				    dsp->features.pcm_id) अणु
-					अगर (dsp->pcm_slot_rx >= 0 &&
+				    dsp->features.pcm_id) {
+					if (dsp->pcm_slot_rx >= 0 &&
 					    dsp->pcm_slot_rx <
-					    माप(मुक्तslots))
-						मुक्तslots[dsp->pcm_slot_rx] = 0;
-					अगर (dsp->pcm_slot_tx >= 0 &&
+					    sizeof(freeslots))
+						freeslots[dsp->pcm_slot_rx] = 0;
+					if (dsp->pcm_slot_tx >= 0 &&
 					    dsp->pcm_slot_tx <
-					    माप(मुक्तslots))
-						मुक्तslots[dsp->pcm_slot_tx] = 0;
-				पूर्ण
-			पूर्ण
+					    sizeof(freeslots))
+						freeslots[dsp->pcm_slot_tx] = 0;
+				}
+			}
 			i1 = 0;
 			ii = member->dsp->features.pcm_slots;
-			जबतक (i1 < ii) अणु
-				अगर (मुक्तslots[i1])
-					अवरोध;
+			while (i1 < ii) {
+				if (freeslots[i1])
+					break;
 				i1++;
-			पूर्ण
-			अगर (i1 == ii) अणु
-				अगर (dsp_debug & DEBUG_DSP_CMX)
-					prपूर्णांकk(KERN_DEBUG
+			}
+			if (i1 == ii) {
+				if (dsp_debug & DEBUG_DSP_CMX)
+					printk(KERN_DEBUG
 					       "%s no slot available "
 					       "for %s & %s\n", __func__,
 					       member->dsp->name,
-					       nexपंचांग->dsp->name);
+					       nextm->dsp->name);
 				/* no more slots available */
-				जाओ conf_software;
-			पूर्ण
+				goto conf_software;
+			}
 			i2 = i1 + 1;
-			जबतक (i2 < ii) अणु
-				अगर (मुक्तslots[i2])
-					अवरोध;
+			while (i2 < ii) {
+				if (freeslots[i2])
+					break;
 				i2++;
-			पूर्ण
-			अगर (i2 == ii) अणु
-				अगर (dsp_debug & DEBUG_DSP_CMX)
-					prपूर्णांकk(KERN_DEBUG
+			}
+			if (i2 == ii) {
+				if (dsp_debug & DEBUG_DSP_CMX)
+					printk(KERN_DEBUG
 					       "%s no slot available "
 					       "for %s & %s\n",
 					       __func__,
 					       member->dsp->name,
-					       nexपंचांग->dsp->name);
+					       nextm->dsp->name);
 				/* no more slots available */
-				जाओ conf_software;
-			पूर्ण
-			/* assign मुक्त slots */
+				goto conf_software;
+			}
+			/* assign free slots */
 			member->dsp->pcm_slot_tx = i1;
 			member->dsp->pcm_slot_rx = i2;
-			nexपंचांग->dsp->pcm_slot_tx = i2;
-			nexपंचांग->dsp->pcm_slot_rx = i1;
+			nextm->dsp->pcm_slot_tx = i2;
+			nextm->dsp->pcm_slot_rx = i1;
 			member->dsp->pcm_bank_rx = 0;
 			member->dsp->pcm_bank_tx = 0;
-			nexपंचांग->dsp->pcm_bank_rx = 0;
-			nexपंचांग->dsp->pcm_bank_tx = 0;
-			अगर (dsp_debug & DEBUG_DSP_CMX)
-				prपूर्णांकk(KERN_DEBUG
+			nextm->dsp->pcm_bank_rx = 0;
+			nextm->dsp->pcm_bank_tx = 0;
+			if (dsp_debug & DEBUG_DSP_CMX)
+				printk(KERN_DEBUG
 				       "%s adding %s & %s to new PCM slot %d "
 				       "(TX) %d (RX) on same chip or one bank "
 				       "PCM, because both members have not "
 				       "crossed slots\n", __func__,
 				       member->dsp->name,
-				       nexपंचांग->dsp->name,
+				       nextm->dsp->name,
 				       member->dsp->pcm_slot_tx,
 				       member->dsp->pcm_slot_rx);
 			dsp_cmx_hw_message(member->dsp, MISDN_CTRL_HFC_PCM_CONN,
 					   member->dsp->pcm_slot_tx, member->dsp->pcm_bank_tx,
 					   member->dsp->pcm_slot_rx, member->dsp->pcm_bank_rx);
-			dsp_cmx_hw_message(nexपंचांग->dsp, MISDN_CTRL_HFC_PCM_CONN,
-					   nexपंचांग->dsp->pcm_slot_tx, nexपंचांग->dsp->pcm_bank_tx,
-					   nexपंचांग->dsp->pcm_slot_rx, nexपंचांग->dsp->pcm_bank_rx);
+			dsp_cmx_hw_message(nextm->dsp, MISDN_CTRL_HFC_PCM_CONN,
+					   nextm->dsp->pcm_slot_tx, nextm->dsp->pcm_bank_tx,
+					   nextm->dsp->pcm_slot_rx, nextm->dsp->pcm_bank_rx);
 			conf->hardware = 1;
 			conf->software = tx_data;
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 
 	/*
-	 * अगर we have more than two, we may check अगर we have a conference
+	 * if we have more than two, we may check if we have a conference
 	 * unit available on the chip. also all members must be on the same
 	 */
 
-	/* अगर not the same HFC chip */
-	अगर (same_hfc < 0) अणु
-		अगर (dsp_debug & DEBUG_DSP_CMX)
-			prपूर्णांकk(KERN_DEBUG
+	/* if not the same HFC chip */
+	if (same_hfc < 0) {
+		if (dsp_debug & DEBUG_DSP_CMX)
+			printk(KERN_DEBUG
 			       "%s conference %d cannot be formed, because "
 			       "members are on different chips or not "
 			       "on HFC chip\n",
 			       __func__, conf->id);
-		जाओ conf_software;
-	पूर्ण
+		goto conf_software;
+	}
 
-	/* क्रम more than two members.. */
+	/* for more than two members.. */
 
-	/* अगर all members alपढ़ोy have the same conference */
-	अगर (all_conf) अणु
+	/* if all members already have the same conference */
+	if (all_conf) {
 		conf->hardware = 1;
 		conf->software = tx_data;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
-	 * अगर there is an existing conference, but not all members have joined
+	 * if there is an existing conference, but not all members have joined
 	 */
-	अगर (current_conf >= 0) अणु
+	if (current_conf >= 0) {
 	join_members:
-		list_क्रम_each_entry(member, &conf->mlist, list) अणु
-			/* अगर no conference engine on our chip, change to
+		list_for_each_entry(member, &conf->mlist, list) {
+			/* if no conference engine on our chip, change to
 			 * software */
-			अगर (!member->dsp->features.hfc_conf)
-				जाओ conf_software;
-			/* in हाल of hdlc, change to software */
-			अगर (member->dsp->hdlc)
-				जाओ conf_software;
+			if (!member->dsp->features.hfc_conf)
+				goto conf_software;
+			/* in case of hdlc, change to software */
+			if (member->dsp->hdlc)
+				goto conf_software;
 			/* join to current conference */
-			अगर (member->dsp->hfc_conf == current_conf)
-				जारी;
-			/* get a मुक्त बारlot first */
-			स_रखो(मुक्तslots, 1, माप(मुक्तslots));
-			list_क्रम_each_entry(dsp, &dsp_ilist, list) अणु
+			if (member->dsp->hfc_conf == current_conf)
+				continue;
+			/* get a free timeslot first */
+			memset(freeslots, 1, sizeof(freeslots));
+			list_for_each_entry(dsp, &dsp_ilist, list) {
 				/*
 				 * not checking current member, because
 				 * slot will be overwritten.
 				 */
-				अगर (
+				if (
 					dsp != member->dsp &&
 					/* dsp must be on the same PCM */
 					member->dsp->features.pcm_id ==
-					dsp->features.pcm_id) अणु
+					dsp->features.pcm_id) {
 					/* dsp must be on a slot */
-					अगर (dsp->pcm_slot_tx >= 0 &&
+					if (dsp->pcm_slot_tx >= 0 &&
 					    dsp->pcm_slot_tx <
-					    माप(मुक्तslots))
-						मुक्तslots[dsp->pcm_slot_tx] = 0;
-					अगर (dsp->pcm_slot_rx >= 0 &&
+					    sizeof(freeslots))
+						freeslots[dsp->pcm_slot_tx] = 0;
+					if (dsp->pcm_slot_rx >= 0 &&
 					    dsp->pcm_slot_rx <
-					    माप(मुक्तslots))
-						मुक्तslots[dsp->pcm_slot_rx] = 0;
-				पूर्ण
-			पूर्ण
+					    sizeof(freeslots))
+						freeslots[dsp->pcm_slot_rx] = 0;
+				}
+			}
 			i = 0;
 			ii = member->dsp->features.pcm_slots;
-			जबतक (i < ii) अणु
-				अगर (मुक्तslots[i])
-					अवरोध;
+			while (i < ii) {
+				if (freeslots[i])
+					break;
 				i++;
-			पूर्ण
-			अगर (i == ii) अणु
+			}
+			if (i == ii) {
 				/* no more slots available */
-				अगर (dsp_debug & DEBUG_DSP_CMX)
-					prपूर्णांकk(KERN_DEBUG
+				if (dsp_debug & DEBUG_DSP_CMX)
+					printk(KERN_DEBUG
 					       "%s conference %d cannot be formed,"
 					       " because no slot free\n",
 					       __func__, conf->id);
-				जाओ conf_software;
-			पूर्ण
-			अगर (dsp_debug & DEBUG_DSP_CMX)
-				prपूर्णांकk(KERN_DEBUG
+				goto conf_software;
+			}
+			if (dsp_debug & DEBUG_DSP_CMX)
+				printk(KERN_DEBUG
 				       "%s changing dsp %s to HW conference "
 				       "%d slot %d\n", __func__,
 				       member->dsp->name, current_conf, i);
-			/* assign मुक्त slot & set PCM & join conf */
+			/* assign free slot & set PCM & join conf */
 			member->dsp->pcm_slot_tx = i;
 			member->dsp->pcm_slot_rx = i;
 			member->dsp->pcm_bank_tx = 2; /* loop */
@@ -1016,700 +1015,700 @@ dsp_cmx_hardware(काष्ठा dsp_conf *conf, काष्ठा dsp *dsp)
 					   i, 2, i, 2);
 			dsp_cmx_hw_message(member->dsp,
 					   MISDN_CTRL_HFC_CONF_JOIN, current_conf, 0, 0, 0);
-		पूर्ण
+		}
 		conf->hardware = 1;
 		conf->software = tx_data;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
-	 * no member is in a conference yet, so we find a मुक्त one
+	 * no member is in a conference yet, so we find a free one
 	 */
-	स_रखो(मुक्तunits, 1, माप(मुक्तunits));
-	list_क्रम_each_entry(dsp, &dsp_ilist, list) अणु
+	memset(freeunits, 1, sizeof(freeunits));
+	list_for_each_entry(dsp, &dsp_ilist, list) {
 		/* dsp must be on the same chip */
-		अगर (dsp->features.hfc_id == same_hfc &&
+		if (dsp->features.hfc_id == same_hfc &&
 		    /* dsp must have joined a HW conference */
 		    dsp->hfc_conf >= 0 &&
 		    /* slot must be within range */
 		    dsp->hfc_conf < 8)
-			मुक्तunits[dsp->hfc_conf] = 0;
-	पूर्ण
+			freeunits[dsp->hfc_conf] = 0;
+	}
 	i = 0;
 	ii = 8;
-	जबतक (i < ii) अणु
-		अगर (मुक्तunits[i])
-			अवरोध;
+	while (i < ii) {
+		if (freeunits[i])
+			break;
 		i++;
-	पूर्ण
-	अगर (i == ii) अणु
+	}
+	if (i == ii) {
 		/* no more conferences available */
-		अगर (dsp_debug & DEBUG_DSP_CMX)
-			prपूर्णांकk(KERN_DEBUG
+		if (dsp_debug & DEBUG_DSP_CMX)
+			printk(KERN_DEBUG
 			       "%s conference %d cannot be formed, because "
 			       "no conference number free\n",
 			       __func__, conf->id);
-		जाओ conf_software;
-	पूर्ण
+		goto conf_software;
+	}
 	/* join all members */
 	current_conf = i;
-	जाओ join_members;
-पूर्ण
+	goto join_members;
+}
 
 
 /*
  * conf_id != 0: join or change conference
- * conf_id == 0: split from conference अगर not alपढ़ोy
+ * conf_id == 0: split from conference if not already
  */
-पूर्णांक
-dsp_cmx_conf(काष्ठा dsp *dsp, u32 conf_id)
-अणु
-	पूर्णांक err;
-	काष्ठा dsp_conf *conf;
-	काष्ठा dsp_conf_member	*member;
+int
+dsp_cmx_conf(struct dsp *dsp, u32 conf_id)
+{
+	int err;
+	struct dsp_conf *conf;
+	struct dsp_conf_member	*member;
 
-	/* अगर conference करोesn't change */
-	अगर (dsp->conf_id == conf_id)
-		वापस 0;
+	/* if conference doesn't change */
+	if (dsp->conf_id == conf_id)
+		return 0;
 
-	/* first हटाओ us from current conf */
-	अगर (dsp->conf_id) अणु
-		अगर (dsp_debug & DEBUG_DSP_CMX)
-			prपूर्णांकk(KERN_DEBUG "removing us from conference %d\n",
+	/* first remove us from current conf */
+	if (dsp->conf_id) {
+		if (dsp_debug & DEBUG_DSP_CMX)
+			printk(KERN_DEBUG "removing us from conference %d\n",
 			       dsp->conf->id);
-		/* हटाओ us from conf */
+		/* remove us from conf */
 		conf = dsp->conf;
 		err = dsp_cmx_del_conf_member(dsp);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 		dsp->conf_id = 0;
 
 		/* update hardware */
-		dsp_cmx_hardware(शून्य, dsp);
+		dsp_cmx_hardware(NULL, dsp);
 
 		/* conf now empty? */
-		अगर (list_empty(&conf->mlist)) अणु
-			अगर (dsp_debug & DEBUG_DSP_CMX)
-				prपूर्णांकk(KERN_DEBUG
+		if (list_empty(&conf->mlist)) {
+			if (dsp_debug & DEBUG_DSP_CMX)
+				printk(KERN_DEBUG
 				       "conference is empty, so we remove it.\n");
 			err = dsp_cmx_del_conf(conf);
-			अगर (err)
-				वापस err;
-		पूर्ण अन्यथा अणु
+			if (err)
+				return err;
+		} else {
 			/* update members left on conf */
-			dsp_cmx_hardware(conf, शून्य);
-		पूर्ण
-	पूर्ण
+			dsp_cmx_hardware(conf, NULL);
+		}
+	}
 
-	/* अगर split */
-	अगर (!conf_id)
-		वापस 0;
+	/* if split */
+	if (!conf_id)
+		return 0;
 
 	/* now add us to conf */
-	अगर (dsp_debug & DEBUG_DSP_CMX)
-		prपूर्णांकk(KERN_DEBUG "searching conference %d\n",
+	if (dsp_debug & DEBUG_DSP_CMX)
+		printk(KERN_DEBUG "searching conference %d\n",
 		       conf_id);
 	conf = dsp_cmx_search_conf(conf_id);
-	अगर (!conf) अणु
-		अगर (dsp_debug & DEBUG_DSP_CMX)
-			prपूर्णांकk(KERN_DEBUG
+	if (!conf) {
+		if (dsp_debug & DEBUG_DSP_CMX)
+			printk(KERN_DEBUG
 			       "conference doesn't exist yet, creating.\n");
-		/* the conference करोesn't exist, so we create */
+		/* the conference doesn't exist, so we create */
 		conf = dsp_cmx_new_conf(conf_id);
-		अगर (!conf)
-			वापस -EINVAL;
-	पूर्ण अन्यथा अगर (!list_empty(&conf->mlist)) अणु
-		member = list_entry(conf->mlist.next, काष्ठा dsp_conf_member,
+		if (!conf)
+			return -EINVAL;
+	} else if (!list_empty(&conf->mlist)) {
+		member = list_entry(conf->mlist.next, struct dsp_conf_member,
 				    list);
-		अगर (dsp->hdlc && !member->dsp->hdlc) अणु
-			अगर (dsp_debug & DEBUG_DSP_CMX)
-				prपूर्णांकk(KERN_DEBUG
+		if (dsp->hdlc && !member->dsp->hdlc) {
+			if (dsp_debug & DEBUG_DSP_CMX)
+				printk(KERN_DEBUG
 				       "cannot join transparent conference.\n");
-			वापस -EINVAL;
-		पूर्ण
-		अगर (!dsp->hdlc && member->dsp->hdlc) अणु
-			अगर (dsp_debug & DEBUG_DSP_CMX)
-				prपूर्णांकk(KERN_DEBUG
+			return -EINVAL;
+		}
+		if (!dsp->hdlc && member->dsp->hdlc) {
+			if (dsp_debug & DEBUG_DSP_CMX)
+				printk(KERN_DEBUG
 				       "cannot join hdlc conference.\n");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 	/* add conference member */
 	err = dsp_cmx_add_conf_member(dsp, conf);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 	dsp->conf_id = conf_id;
 
-	/* अगर we are alone, we करो nothing! */
-	अगर (list_empty(&conf->mlist)) अणु
-		अगर (dsp_debug & DEBUG_DSP_CMX)
-			prपूर्णांकk(KERN_DEBUG
+	/* if we are alone, we do nothing! */
+	if (list_empty(&conf->mlist)) {
+		if (dsp_debug & DEBUG_DSP_CMX)
+			printk(KERN_DEBUG
 			       "we are alone in this conference, so exit.\n");
 		/* update hardware */
-		dsp_cmx_hardware(शून्य, dsp);
-		वापस 0;
-	पूर्ण
+		dsp_cmx_hardware(NULL, dsp);
+		return 0;
+	}
 
 	/* update members on conf */
-	dsp_cmx_hardware(conf, शून्य);
+	dsp_cmx_hardware(conf, NULL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CMX_DELAY_DEBUG
-पूर्णांक delaycount;
-अटल व्योम
-showdelay(काष्ठा dsp *dsp, पूर्णांक samples, पूर्णांक delay)
-अणु
-	अक्षर bar[] = "--------------------------------------------------|";
-	पूर्णांक sdelay;
+#ifdef CMX_DELAY_DEBUG
+int delaycount;
+static void
+showdelay(struct dsp *dsp, int samples, int delay)
+{
+	char bar[] = "--------------------------------------------------|";
+	int sdelay;
 
 	delaycount += samples;
-	अगर (delaycount < 8000)
-		वापस;
+	if (delaycount < 8000)
+		return;
 	delaycount = 0;
 
 	sdelay = delay * 50 / (dsp_poll << 2);
 
-	prपूर्णांकk(KERN_DEBUG "DELAY (%s) %3d >%s\n", dsp->name, delay,
+	printk(KERN_DEBUG "DELAY (%s) %3d >%s\n", dsp->name, delay,
 	       sdelay > 50 ? "..." : bar + 50 - sdelay);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
 /*
  * audio data is received from card
  */
-व्योम
-dsp_cmx_receive(काष्ठा dsp *dsp, काष्ठा sk_buff *skb)
-अणु
+void
+dsp_cmx_receive(struct dsp *dsp, struct sk_buff *skb)
+{
 	u8 *d, *p;
-	पूर्णांक len = skb->len;
-	काष्ठा mISDNhead *hh = mISDN_HEAD_P(skb);
-	पूर्णांक w, i, ii;
+	int len = skb->len;
+	struct mISDNhead *hh = mISDN_HEAD_P(skb);
+	int w, i, ii;
 
-	/* check अगर we have sompen */
-	अगर (len < 1)
-		वापस;
+	/* check if we have sompen */
+	if (len < 1)
+		return;
 
 	/* half of the buffer should be larger than maximum packet size */
-	अगर (len >= CMX_BUFF_HALF) अणु
-		prपूर्णांकk(KERN_ERR
+	if (len >= CMX_BUFF_HALF) {
+		printk(KERN_ERR
 		       "%s line %d: packet from card is too large (%d bytes). "
 		       "please make card send smaller packets OR increase "
-		       "CMX_BUFF_SIZE\n", __खाता__, __LINE__, len);
-		वापस;
-	पूर्ण
+		       "CMX_BUFF_SIZE\n", __FILE__, __LINE__, len);
+		return;
+	}
 
 	/*
-	 * initialize poपूर्णांकers अगर not alपढ़ोy -
-	 * also add delay अगर requested by PH_SIGNAL
+	 * initialize pointers if not already -
+	 * also add delay if requested by PH_SIGNAL
 	 */
-	अगर (dsp->rx_init) अणु
+	if (dsp->rx_init) {
 		dsp->rx_init = 0;
-		अगर (dsp->features.unordered) अणु
+		if (dsp->features.unordered) {
 			dsp->rx_R = (hh->id & CMX_BUFF_MASK);
-			अगर (dsp->cmx_delay)
+			if (dsp->cmx_delay)
 				dsp->rx_W = (dsp->rx_R + dsp->cmx_delay)
 					& CMX_BUFF_MASK;
-			अन्यथा
+			else
 				dsp->rx_W = (dsp->rx_R + (dsp_poll >> 1))
 					& CMX_BUFF_MASK;
-		पूर्ण अन्यथा अणु
+		} else {
 			dsp->rx_R = 0;
-			अगर (dsp->cmx_delay)
+			if (dsp->cmx_delay)
 				dsp->rx_W = dsp->cmx_delay;
-			अन्यथा
+			else
 				dsp->rx_W = dsp_poll >> 1;
-		पूर्ण
-	पूर्ण
-	/* अगर frame contains समय code, ग_लिखो directly */
-	अगर (dsp->features.unordered) अणु
+		}
+	}
+	/* if frame contains time code, write directly */
+	if (dsp->features.unordered) {
 		dsp->rx_W = (hh->id & CMX_BUFF_MASK);
-		/* prपूर्णांकk(KERN_DEBUG "%s %08x\n", dsp->name, hh->id); */
-	पूर्ण
+		/* printk(KERN_DEBUG "%s %08x\n", dsp->name, hh->id); */
+	}
 	/*
-	 * अगर we underrun (or maybe overrun),
-	 * we set our new पढ़ो poपूर्णांकer, and ग_लिखो silence to buffer
+	 * if we underrun (or maybe overrun),
+	 * we set our new read pointer, and write silence to buffer
 	 */
-	अगर (((dsp->rx_W-dsp->rx_R) & CMX_BUFF_MASK) >= CMX_BUFF_HALF) अणु
-		अगर (dsp_debug & DEBUG_DSP_CLOCK)
-			prपूर्णांकk(KERN_DEBUG
+	if (((dsp->rx_W-dsp->rx_R) & CMX_BUFF_MASK) >= CMX_BUFF_HALF) {
+		if (dsp_debug & DEBUG_DSP_CLOCK)
+			printk(KERN_DEBUG
 			       "cmx_receive(dsp=%lx): UNDERRUN (or overrun the "
 			       "maximum delay), adjusting read pointer! "
-			       "(inst %s)\n", (u_दीर्घ)dsp, dsp->name);
+			       "(inst %s)\n", (u_long)dsp, dsp->name);
 		/* flush rx buffer and set delay to dsp_poll / 2 */
-		अगर (dsp->features.unordered) अणु
+		if (dsp->features.unordered) {
 			dsp->rx_R = (hh->id & CMX_BUFF_MASK);
-			अगर (dsp->cmx_delay)
+			if (dsp->cmx_delay)
 				dsp->rx_W = (dsp->rx_R + dsp->cmx_delay)
 					& CMX_BUFF_MASK;
-			अन्यथा
+			else
 				dsp->rx_W = (dsp->rx_R + (dsp_poll >> 1))
 					& CMX_BUFF_MASK;
-		पूर्ण अन्यथा अणु
+		} else {
 			dsp->rx_R = 0;
-			अगर (dsp->cmx_delay)
+			if (dsp->cmx_delay)
 				dsp->rx_W = dsp->cmx_delay;
-			अन्यथा
+			else
 				dsp->rx_W = dsp_poll >> 1;
-		पूर्ण
-		स_रखो(dsp->rx_buff, dsp_silence, माप(dsp->rx_buff));
-	पूर्ण
-	/* अगर we have reached द्विगुन delay, jump back to middle */
-	अगर (dsp->cmx_delay)
-		अगर (((dsp->rx_W - dsp->rx_R) & CMX_BUFF_MASK) >=
-		    (dsp->cmx_delay << 1)) अणु
-			अगर (dsp_debug & DEBUG_DSP_CLOCK)
-				prपूर्णांकk(KERN_DEBUG
+		}
+		memset(dsp->rx_buff, dsp_silence, sizeof(dsp->rx_buff));
+	}
+	/* if we have reached double delay, jump back to middle */
+	if (dsp->cmx_delay)
+		if (((dsp->rx_W - dsp->rx_R) & CMX_BUFF_MASK) >=
+		    (dsp->cmx_delay << 1)) {
+			if (dsp_debug & DEBUG_DSP_CLOCK)
+				printk(KERN_DEBUG
 				       "cmx_receive(dsp=%lx): OVERRUN (because "
 				       "twice the delay is reached), adjusting "
 				       "read pointer! (inst %s)\n",
-				       (u_दीर्घ)dsp, dsp->name);
+				       (u_long)dsp, dsp->name);
 			/* flush buffer */
-			अगर (dsp->features.unordered) अणु
+			if (dsp->features.unordered) {
 				dsp->rx_R = (hh->id & CMX_BUFF_MASK);
 				dsp->rx_W = (dsp->rx_R + dsp->cmx_delay)
 					& CMX_BUFF_MASK;
-			पूर्ण अन्यथा अणु
+			} else {
 				dsp->rx_R = 0;
 				dsp->rx_W = dsp->cmx_delay;
-			पूर्ण
-			स_रखो(dsp->rx_buff, dsp_silence, माप(dsp->rx_buff));
-		पूर्ण
+			}
+			memset(dsp->rx_buff, dsp_silence, sizeof(dsp->rx_buff));
+		}
 
-	/* show where to ग_लिखो */
-#अगर_घोषित CMX_DEBUG
-	prपूर्णांकk(KERN_DEBUG
+	/* show where to write */
+#ifdef CMX_DEBUG
+	printk(KERN_DEBUG
 	       "cmx_receive(dsp=%lx): rx_R(dsp)=%05x rx_W(dsp)=%05x len=%d %s\n",
-	       (u_दीर्घ)dsp, dsp->rx_R, dsp->rx_W, len, dsp->name);
-#पूर्ण_अगर
+	       (u_long)dsp, dsp->rx_R, dsp->rx_W, len, dsp->name);
+#endif
 
-	/* ग_लिखो data पूर्णांकo rx_buffer */
+	/* write data into rx_buffer */
 	p = skb->data;
 	d = dsp->rx_buff;
 	w = dsp->rx_W;
 	i = 0;
 	ii = len;
-	जबतक (i < ii) अणु
+	while (i < ii) {
 		d[w++ & CMX_BUFF_MASK] = *p++;
 		i++;
-	पूर्ण
+	}
 
-	/* increase ग_लिखो-poपूर्णांकer */
+	/* increase write-pointer */
 	dsp->rx_W = ((dsp->rx_W + len) & CMX_BUFF_MASK);
-#अगर_घोषित CMX_DELAY_DEBUG
+#ifdef CMX_DELAY_DEBUG
 	showdelay(dsp, len, (dsp->rx_W-dsp->rx_R) & CMX_BUFF_MASK);
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
 
 /*
  * send (mixed) audio data to card and control jitter
  */
-अटल व्योम
-dsp_cmx_send_member(काष्ठा dsp *dsp, पूर्णांक len, s32 *c, पूर्णांक members)
-अणु
-	काष्ठा dsp_conf *conf = dsp->conf;
-	काष्ठा dsp *member, *other;
-	रेजिस्टर s32 sample;
+static void
+dsp_cmx_send_member(struct dsp *dsp, int len, s32 *c, int members)
+{
+	struct dsp_conf *conf = dsp->conf;
+	struct dsp *member, *other;
+	register s32 sample;
 	u8 *d, *p, *q, *o_q;
-	काष्ठा sk_buff *nskb, *txskb;
-	पूर्णांक r, rr, t, tt, o_r, o_rr;
-	पूर्णांक preload = 0;
-	काष्ठा mISDNhead *hh, *thh;
-	पूर्णांक tx_data_only = 0;
+	struct sk_buff *nskb, *txskb;
+	int r, rr, t, tt, o_r, o_rr;
+	int preload = 0;
+	struct mISDNhead *hh, *thh;
+	int tx_data_only = 0;
 
-	/* करोn't process अगर: */
-	अगर (!dsp->b_active) अणु /* अगर not active */
+	/* don't process if: */
+	if (!dsp->b_active) { /* if not active */
 		dsp->last_tx = 0;
-		वापस;
-	पूर्ण
-	अगर (((dsp->conf && dsp->conf->hardware) || /* hardware conf */
+		return;
+	}
+	if (((dsp->conf && dsp->conf->hardware) || /* hardware conf */
 	     dsp->echo.hardware) && /* OR hardware echo */
 	    dsp->tx_R == dsp->tx_W && /* AND no tx-data */
-	    !(dsp->tone.tone && dsp->tone.software)) अणु /* AND not soft tones */
-		अगर (!dsp->tx_data) अणु /* no tx_data क्रम user space required */
+	    !(dsp->tone.tone && dsp->tone.software)) { /* AND not soft tones */
+		if (!dsp->tx_data) { /* no tx_data for user space required */
 			dsp->last_tx = 0;
-			वापस;
-		पूर्ण
-		अगर (dsp->conf && dsp->conf->software && dsp->conf->hardware)
+			return;
+		}
+		if (dsp->conf && dsp->conf->software && dsp->conf->hardware)
 			tx_data_only = 1;
-		अगर (dsp->echo.software && dsp->echo.hardware)
+		if (dsp->echo.software && dsp->echo.hardware)
 			tx_data_only = 1;
-	पूर्ण
+	}
 
-#अगर_घोषित CMX_DEBUG
-	prपूर्णांकk(KERN_DEBUG
+#ifdef CMX_DEBUG
+	printk(KERN_DEBUG
 	       "SEND members=%d dsp=%s, conf=%p, rx_R=%05x rx_W=%05x\n",
 	       members, dsp->name, conf, dsp->rx_R, dsp->rx_W);
-#पूर्ण_अगर
+#endif
 
-	/* preload अगर we have delay set */
-	अगर (dsp->cmx_delay && !dsp->last_tx) अणु
+	/* preload if we have delay set */
+	if (dsp->cmx_delay && !dsp->last_tx) {
 		preload = len;
-		अगर (preload < 128)
+		if (preload < 128)
 			preload = 128;
-	पूर्ण
+	}
 
 	/* PREPARE RESULT */
 	nskb = mI_alloc_skb(len + preload, GFP_ATOMIC);
-	अगर (!nskb) अणु
-		prपूर्णांकk(KERN_ERR
+	if (!nskb) {
+		printk(KERN_ERR
 		       "FATAL ERROR in mISDN_dsp.o: cannot alloc %d bytes\n",
 		       len + preload);
-		वापस;
-	पूर्ण
+		return;
+	}
 	hh = mISDN_HEAD_P(nskb);
 	hh->prim = PH_DATA_REQ;
 	hh->id = 0;
 	dsp->last_tx = 1;
 
-	/* set poपूर्णांकers, indexes and stuff */
+	/* set pointers, indexes and stuff */
 	member = dsp;
 	p = dsp->tx_buff; /* transmit data */
 	q = dsp->rx_buff; /* received data */
 	d = skb_put(nskb, preload + len); /* result */
-	t = dsp->tx_R; /* tx-poपूर्णांकers */
+	t = dsp->tx_R; /* tx-pointers */
 	tt = dsp->tx_W;
-	r = dsp->rx_R; /* rx-poपूर्णांकers */
+	r = dsp->rx_R; /* rx-pointers */
 	rr = (r + len) & CMX_BUFF_MASK;
 
-	/* preload with silence, अगर required */
-	अगर (preload) अणु
-		स_रखो(d, dsp_silence, preload);
+	/* preload with silence, if required */
+	if (preload) {
+		memset(d, dsp_silence, preload);
 		d += preload;
-	पूर्ण
+	}
 
 	/* PROCESS TONES/TX-DATA ONLY */
-	अगर (dsp->tone.tone && dsp->tone.software) अणु
+	if (dsp->tone.tone && dsp->tone.software) {
 		/* -> copy tone */
 		dsp_tone_copy(dsp, d, len);
 		dsp->tx_R = 0; /* clear tx buffer */
 		dsp->tx_W = 0;
-		जाओ send_packet;
-	पूर्ण
-	/* अगर we have tx-data but करो not use mixing */
-	अगर (!dsp->tx_mix && t != tt) अणु
-		/* -> send tx-data and जारी when not enough */
-#अगर_घोषित CMX_TX_DEBUG
-		प्र_लिखो(debugbuf, "TX sending (%04x-%04x)%p: ", t, tt, p);
-#पूर्ण_अगर
-		जबतक (r != rr && t != tt) अणु
-#अगर_घोषित CMX_TX_DEBUG
-			अगर (म_माप(debugbuf) < 48)
-				प्र_लिखो(debugbuf + म_माप(debugbuf), " %02x",
+		goto send_packet;
+	}
+	/* if we have tx-data but do not use mixing */
+	if (!dsp->tx_mix && t != tt) {
+		/* -> send tx-data and continue when not enough */
+#ifdef CMX_TX_DEBUG
+		sprintf(debugbuf, "TX sending (%04x-%04x)%p: ", t, tt, p);
+#endif
+		while (r != rr && t != tt) {
+#ifdef CMX_TX_DEBUG
+			if (strlen(debugbuf) < 48)
+				sprintf(debugbuf + strlen(debugbuf), " %02x",
 					p[t]);
-#पूर्ण_अगर
-			*d++ = p[t]; /* ग_लिखो tx_buff */
+#endif
+			*d++ = p[t]; /* write tx_buff */
 			t = (t + 1) & CMX_BUFF_MASK;
 			r = (r + 1) & CMX_BUFF_MASK;
-		पूर्ण
-		अगर (r == rr) अणु
+		}
+		if (r == rr) {
 			dsp->tx_R = t;
-#अगर_घोषित CMX_TX_DEBUG
-			prपूर्णांकk(KERN_DEBUG "%s\n", debugbuf);
-#पूर्ण_अगर
-			जाओ send_packet;
-		पूर्ण
-	पूर्ण
-#अगर_घोषित CMX_TX_DEBUG
-	prपूर्णांकk(KERN_DEBUG "%s\n", debugbuf);
-#पूर्ण_अगर
+#ifdef CMX_TX_DEBUG
+			printk(KERN_DEBUG "%s\n", debugbuf);
+#endif
+			goto send_packet;
+		}
+	}
+#ifdef CMX_TX_DEBUG
+	printk(KERN_DEBUG "%s\n", debugbuf);
+#endif
 
 	/* PROCESS DATA (one member / no conf) */
-	अगर (!conf || members <= 1) अणु
-		/* -> अगर echo is NOT enabled */
-		अगर (!dsp->echo.software) अणु
-			/* -> send tx-data अगर available or use 0-volume */
-			जबतक (r != rr && t != tt) अणु
-				*d++ = p[t]; /* ग_लिखो tx_buff */
+	if (!conf || members <= 1) {
+		/* -> if echo is NOT enabled */
+		if (!dsp->echo.software) {
+			/* -> send tx-data if available or use 0-volume */
+			while (r != rr && t != tt) {
+				*d++ = p[t]; /* write tx_buff */
 				t = (t + 1) & CMX_BUFF_MASK;
 				r = (r + 1) & CMX_BUFF_MASK;
-			पूर्ण
-			अगर (r != rr) अणु
-				अगर (dsp_debug & DEBUG_DSP_CLOCK)
-					prपूर्णांकk(KERN_DEBUG "%s: RX empty\n",
+			}
+			if (r != rr) {
+				if (dsp_debug & DEBUG_DSP_CLOCK)
+					printk(KERN_DEBUG "%s: RX empty\n",
 					       __func__);
-				स_रखो(d, dsp_silence, (rr - r) & CMX_BUFF_MASK);
-			पूर्ण
-			/* -> अगर echo is enabled */
-		पूर्ण अन्यथा अणु
+				memset(d, dsp_silence, (rr - r) & CMX_BUFF_MASK);
+			}
+			/* -> if echo is enabled */
+		} else {
 			/*
-			 * -> mix tx-data with echo अगर available,
+			 * -> mix tx-data with echo if available,
 			 * or use echo only
 			 */
-			जबतक (r != rr && t != tt) अणु
+			while (r != rr && t != tt) {
 				*d++ = dsp_audio_mix_law[(p[t] << 8) | q[r]];
 				t = (t + 1) & CMX_BUFF_MASK;
 				r = (r + 1) & CMX_BUFF_MASK;
-			पूर्ण
-			जबतक (r != rr) अणु
+			}
+			while (r != rr) {
 				*d++ = q[r]; /* echo */
 				r = (r + 1) & CMX_BUFF_MASK;
-			पूर्ण
-		पूर्ण
+			}
+		}
 		dsp->tx_R = t;
-		जाओ send_packet;
-	पूर्ण
+		goto send_packet;
+	}
 	/* PROCESS DATA (two members) */
-#अगर_घोषित CMX_CONF_DEBUG
-	अगर (0) अणु
-#अन्यथा
-	अगर (members == 2) अणु
-#पूर्ण_अगर
+#ifdef CMX_CONF_DEBUG
+	if (0) {
+#else
+	if (members == 2) {
+#endif
 		/* "other" becomes other party */
 		other = (list_entry(conf->mlist.next,
-				    काष्ठा dsp_conf_member, list))->dsp;
-		अगर (other == member)
+				    struct dsp_conf_member, list))->dsp;
+		if (other == member)
 			other = (list_entry(conf->mlist.prev,
-				    काष्ठा dsp_conf_member, list))->dsp;
+				    struct dsp_conf_member, list))->dsp;
 		o_q = other->rx_buff; /* received data */
 		o_rr = (other->rx_R + len) & CMX_BUFF_MASK;
-		/* end of rx-poपूर्णांकer */
+		/* end of rx-pointer */
 		o_r = (o_rr - rr + r) & CMX_BUFF_MASK;
-		/* start rx-poपूर्णांकer at current पढ़ो position*/
-		/* -> अगर echo is NOT enabled */
-		अगर (!dsp->echo.software) अणु
+		/* start rx-pointer at current read position*/
+		/* -> if echo is NOT enabled */
+		if (!dsp->echo.software) {
 			/*
 			 * -> copy other member's rx-data,
-			 * अगर tx-data is available, mix
+			 * if tx-data is available, mix
 			 */
-			जबतक (o_r != o_rr && t != tt) अणु
+			while (o_r != o_rr && t != tt) {
 				*d++ = dsp_audio_mix_law[(p[t] << 8) | o_q[o_r]];
 				t = (t + 1) & CMX_BUFF_MASK;
 				o_r = (o_r + 1) & CMX_BUFF_MASK;
-			पूर्ण
-			जबतक (o_r != o_rr) अणु
+			}
+			while (o_r != o_rr) {
 				*d++ = o_q[o_r];
 				o_r = (o_r + 1) & CMX_BUFF_MASK;
-			पूर्ण
-			/* -> अगर echo is enabled */
-		पूर्ण अन्यथा अणु
+			}
+			/* -> if echo is enabled */
+		} else {
 			/*
 			 * -> mix other member's rx-data with echo,
-			 * अगर tx-data is available, mix
+			 * if tx-data is available, mix
 			 */
-			जबतक (r != rr && t != tt) अणु
+			while (r != rr && t != tt) {
 				sample = dsp_audio_law_to_s32[p[t]] +
 					dsp_audio_law_to_s32[q[r]] +
 					dsp_audio_law_to_s32[o_q[o_r]];
-				अगर (sample < -32768)
+				if (sample < -32768)
 					sample = -32768;
-				अन्यथा अगर (sample > 32767)
+				else if (sample > 32767)
 					sample = 32767;
 				*d++ = dsp_audio_s16_to_law[sample & 0xffff];
 				/* tx-data + rx_data + echo */
 				t = (t + 1) & CMX_BUFF_MASK;
 				r = (r + 1) & CMX_BUFF_MASK;
 				o_r = (o_r + 1) & CMX_BUFF_MASK;
-			पूर्ण
-			जबतक (r != rr) अणु
+			}
+			while (r != rr) {
 				*d++ = dsp_audio_mix_law[(q[r] << 8) | o_q[o_r]];
 				r = (r + 1) & CMX_BUFF_MASK;
 				o_r = (o_r + 1) & CMX_BUFF_MASK;
-			पूर्ण
-		पूर्ण
+			}
+		}
 		dsp->tx_R = t;
-		जाओ send_packet;
-	पूर्ण
+		goto send_packet;
+	}
 	/* PROCESS DATA (three or more members) */
-	/* -> अगर echo is NOT enabled */
-	अगर (!dsp->echo.software) अणु
+	/* -> if echo is NOT enabled */
+	if (!dsp->echo.software) {
 		/*
 		 * -> subtract rx-data from conf-data,
-		 * अगर tx-data is available, mix
+		 * if tx-data is available, mix
 		 */
-		जबतक (r != rr && t != tt) अणु
+		while (r != rr && t != tt) {
 			sample = dsp_audio_law_to_s32[p[t]] + *c++ -
 				dsp_audio_law_to_s32[q[r]];
-			अगर (sample < -32768)
+			if (sample < -32768)
 				sample = -32768;
-			अन्यथा अगर (sample > 32767)
+			else if (sample > 32767)
 				sample = 32767;
 			*d++ = dsp_audio_s16_to_law[sample & 0xffff];
 			/* conf-rx+tx */
 			r = (r + 1) & CMX_BUFF_MASK;
 			t = (t + 1) & CMX_BUFF_MASK;
-		पूर्ण
-		जबतक (r != rr) अणु
+		}
+		while (r != rr) {
 			sample = *c++ - dsp_audio_law_to_s32[q[r]];
-			अगर (sample < -32768)
+			if (sample < -32768)
 				sample = -32768;
-			अन्यथा अगर (sample > 32767)
+			else if (sample > 32767)
 				sample = 32767;
 			*d++ = dsp_audio_s16_to_law[sample & 0xffff];
 			/* conf-rx */
 			r = (r + 1) & CMX_BUFF_MASK;
-		पूर्ण
-		/* -> अगर echo is enabled */
-	पूर्ण अन्यथा अणु
+		}
+		/* -> if echo is enabled */
+	} else {
 		/*
-		 * -> encode conf-data, अगर tx-data
+		 * -> encode conf-data, if tx-data
 		 * is available, mix
 		 */
-		जबतक (r != rr && t != tt) अणु
+		while (r != rr && t != tt) {
 			sample = dsp_audio_law_to_s32[p[t]] + *c++;
-			अगर (sample < -32768)
+			if (sample < -32768)
 				sample = -32768;
-			अन्यथा अगर (sample > 32767)
+			else if (sample > 32767)
 				sample = 32767;
 			*d++ = dsp_audio_s16_to_law[sample & 0xffff];
 			/* conf(echo)+tx */
 			t = (t + 1) & CMX_BUFF_MASK;
 			r = (r + 1) & CMX_BUFF_MASK;
-		पूर्ण
-		जबतक (r != rr) अणु
+		}
+		while (r != rr) {
 			sample = *c++;
-			अगर (sample < -32768)
+			if (sample < -32768)
 				sample = -32768;
-			अन्यथा अगर (sample > 32767)
+			else if (sample > 32767)
 				sample = 32767;
 			*d++ = dsp_audio_s16_to_law[sample & 0xffff];
 			/* conf(echo) */
 			r = (r + 1) & CMX_BUFF_MASK;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	dsp->tx_R = t;
-	जाओ send_packet;
+	goto send_packet;
 
 send_packet:
 	/*
-	 * send tx-data अगर enabled - करोn't filter,
+	 * send tx-data if enabled - don't filter,
 	 * because we want what we send, not what we filtered
 	 */
-	अगर (dsp->tx_data) अणु
-		अगर (tx_data_only) अणु
+	if (dsp->tx_data) {
+		if (tx_data_only) {
 			hh->prim = DL_DATA_REQ;
 			hh->id = 0;
 			/* queue and trigger */
 			skb_queue_tail(&dsp->sendq, nskb);
 			schedule_work(&dsp->workq);
-			/* निकास because only tx_data is used */
-			वापस;
-		पूर्ण अन्यथा अणु
+			/* exit because only tx_data is used */
+			return;
+		} else {
 			txskb = mI_alloc_skb(len, GFP_ATOMIC);
-			अगर (!txskb) अणु
-				prपूर्णांकk(KERN_ERR
+			if (!txskb) {
+				printk(KERN_ERR
 				       "FATAL ERROR in mISDN_dsp.o: "
 				       "cannot alloc %d bytes\n", len);
-			पूर्ण अन्यथा अणु
+			} else {
 				thh = mISDN_HEAD_P(txskb);
 				thh->prim = DL_DATA_REQ;
 				thh->id = 0;
 				skb_put_data(txskb, nskb->data + preload, len);
 				/* queue (trigger later) */
 				skb_queue_tail(&dsp->sendq, txskb);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	/* send data only to card, अगर we करोn't just calculated tx_data */
+	/* send data only to card, if we don't just calculated tx_data */
 	/* adjust volume */
-	अगर (dsp->tx_volume)
+	if (dsp->tx_volume)
 		dsp_change_volume(nskb, dsp->tx_volume);
 	/* pipeline */
-	अगर (dsp->pipeline.inuse)
+	if (dsp->pipeline.inuse)
 		dsp_pipeline_process_tx(&dsp->pipeline, nskb->data,
 					nskb->len);
 	/* crypt */
-	अगर (dsp->bf_enable)
+	if (dsp->bf_enable)
 		dsp_bf_encrypt(dsp, nskb->data, nskb->len);
 	/* queue and trigger */
 	skb_queue_tail(&dsp->sendq, nskb);
 	schedule_work(&dsp->workq);
-पूर्ण
+}
 
-अटल u32	jittercount; /* counter क्रम jitter check */
-काष्ठा समयr_list dsp_spl_tl;
-अचिन्हित दीर्घ	dsp_spl_jअगरfies; /* calculate the next समय to fire */
-अटल u16	dsp_count; /* last sample count */
-अटल पूर्णांक	dsp_count_valid; /* अगर we have last sample count */
+static u32	jittercount; /* counter for jitter check */
+struct timer_list dsp_spl_tl;
+unsigned long	dsp_spl_jiffies; /* calculate the next time to fire */
+static u16	dsp_count; /* last sample count */
+static int	dsp_count_valid; /* if we have last sample count */
 
-व्योम
-dsp_cmx_send(व्योम *arg)
-अणु
-	काष्ठा dsp_conf *conf;
-	काष्ठा dsp_conf_member *member;
-	काष्ठा dsp *dsp;
-	पूर्णांक musपंचांगix, members;
-	अटल s32 mixbuffer[MAX_POLL + 100];
+void
+dsp_cmx_send(void *arg)
+{
+	struct dsp_conf *conf;
+	struct dsp_conf_member *member;
+	struct dsp *dsp;
+	int mustmix, members;
+	static s32 mixbuffer[MAX_POLL + 100];
 	s32 *c;
 	u8 *p, *q;
-	पूर्णांक r, rr;
-	पूर्णांक jittercheck = 0, delay, i;
-	u_दीर्घ flags;
+	int r, rr;
+	int jittercheck = 0, delay, i;
+	u_long flags;
 	u16 length, count;
 
 	/* lock */
 	spin_lock_irqsave(&dsp_lock, flags);
 
-	अगर (!dsp_count_valid) अणु
-		dsp_count = mISDN_घड़ी_get();
+	if (!dsp_count_valid) {
+		dsp_count = mISDN_clock_get();
 		length = dsp_poll;
 		dsp_count_valid = 1;
-	पूर्ण अन्यथा अणु
-		count = mISDN_घड़ी_get();
+	} else {
+		count = mISDN_clock_get();
 		length = count - dsp_count;
 		dsp_count = count;
-	पूर्ण
-	अगर (length > MAX_POLL + 100)
+	}
+	if (length > MAX_POLL + 100)
 		length = MAX_POLL + 100;
-	/* prपूर्णांकk(KERN_DEBUG "len=%d dsp_count=0x%x\n", length, dsp_count); */
+	/* printk(KERN_DEBUG "len=%d dsp_count=0x%x\n", length, dsp_count); */
 
 	/*
-	 * check अगर jitter needs to be checked (this is every second)
+	 * check if jitter needs to be checked (this is every second)
 	 */
 	jittercount += length;
-	अगर (jittercount >= 8000) अणु
+	if (jittercount >= 8000) {
 		jittercount -= 8000;
 		jittercheck = 1;
-	पूर्ण
+	}
 
-	/* loop all members that करो not require conference mixing */
-	list_क्रम_each_entry(dsp, &dsp_ilist, list) अणु
-		अगर (dsp->hdlc)
-			जारी;
+	/* loop all members that do not require conference mixing */
+	list_for_each_entry(dsp, &dsp_ilist, list) {
+		if (dsp->hdlc)
+			continue;
 		conf = dsp->conf;
-		musपंचांगix = 0;
+		mustmix = 0;
 		members = 0;
-		अगर (conf) अणु
+		if (conf) {
 			members = count_list_member(&conf->mlist);
-#अगर_घोषित CMX_CONF_DEBUG
-			अगर (conf->software && members > 1)
-#अन्यथा
-			अगर (conf->software && members > 2)
-#पूर्ण_अगर
-				musपंचांगix = 1;
-		पूर्ण
+#ifdef CMX_CONF_DEBUG
+			if (conf->software && members > 1)
+#else
+			if (conf->software && members > 2)
+#endif
+				mustmix = 1;
+		}
 
 		/* transmission required */
-		अगर (!musपंचांगix) अणु
+		if (!mustmix) {
 			dsp_cmx_send_member(dsp, length, mixbuffer, members);
 
 			/*
 			 * unused mixbuffer is given to prevent a
-			 * potential null-poपूर्णांकer-bug
+			 * potential null-pointer-bug
 			 */
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* loop all members that require conference mixing */
-	list_क्रम_each_entry(conf, &conf_ilist, list) अणु
+	list_for_each_entry(conf, &conf_ilist, list) {
 		/* count members and check hardware */
 		members = count_list_member(&conf->mlist);
-#अगर_घोषित CMX_CONF_DEBUG
-		अगर (conf->software && members > 1) अणु
-#अन्यथा
-		अगर (conf->software && members > 2) अणु
-#पूर्ण_अगर
-			/* check क्रम hdlc conf */
+#ifdef CMX_CONF_DEBUG
+		if (conf->software && members > 1) {
+#else
+		if (conf->software && members > 2) {
+#endif
+			/* check for hdlc conf */
 			member = list_entry(conf->mlist.next,
-					    काष्ठा dsp_conf_member, list);
-			अगर (member->dsp->hdlc)
-				जारी;
+					    struct dsp_conf_member, list);
+			if (member->dsp->hdlc)
+				continue;
 			/* mix all data */
-			स_रखो(mixbuffer, 0, length * माप(s32));
-			list_क्रम_each_entry(member, &conf->mlist, list) अणु
+			memset(mixbuffer, 0, length * sizeof(s32));
+			list_for_each_entry(member, &conf->mlist, list) {
 				dsp = member->dsp;
 				/* get range of data to mix */
 				c = mixbuffer;
@@ -1717,71 +1716,71 @@ dsp_cmx_send(व्योम *arg)
 				r = dsp->rx_R;
 				rr = (r + length) & CMX_BUFF_MASK;
 				/* add member's data */
-				जबतक (r != rr) अणु
+				while (r != rr) {
 					*c++ += dsp_audio_law_to_s32[q[r]];
 					r = (r + 1) & CMX_BUFF_MASK;
-				पूर्ण
-			पूर्ण
+				}
+			}
 
 			/* process each member */
-			list_क्रम_each_entry(member, &conf->mlist, list) अणु
+			list_for_each_entry(member, &conf->mlist, list) {
 				/* transmission */
 				dsp_cmx_send_member(member->dsp, length,
 						    mixbuffer, members);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	/* delete rx-data, increment buffers, change poपूर्णांकers */
-	list_क्रम_each_entry(dsp, &dsp_ilist, list) अणु
-		अगर (dsp->hdlc)
-			जारी;
+	/* delete rx-data, increment buffers, change pointers */
+	list_for_each_entry(dsp, &dsp_ilist, list) {
+		if (dsp->hdlc)
+			continue;
 		p = dsp->rx_buff;
 		q = dsp->tx_buff;
 		r = dsp->rx_R;
-		/* move receive poपूर्णांकer when receiving */
-		अगर (!dsp->rx_is_off) अणु
+		/* move receive pointer when receiving */
+		if (!dsp->rx_is_off) {
 			rr = (r + length) & CMX_BUFF_MASK;
 			/* delete rx-data */
-			जबतक (r != rr) अणु
+			while (r != rr) {
 				p[r] = dsp_silence;
 				r = (r + 1) & CMX_BUFF_MASK;
-			पूर्ण
-			/* increment rx-buffer poपूर्णांकer */
-			dsp->rx_R = r; /* ग_लिखो incremented पढ़ो poपूर्णांकer */
-		पूर्ण
+			}
+			/* increment rx-buffer pointer */
+			dsp->rx_R = r; /* write incremented read pointer */
+		}
 
 		/* check current rx_delay */
 		delay = (dsp->rx_W-dsp->rx_R) & CMX_BUFF_MASK;
-		अगर (delay >= CMX_BUFF_HALF)
-			delay = 0; /* will be the delay beक्रमe next ग_लिखो */
-		/* check क्रम lower delay */
-		अगर (delay < dsp->rx_delay[0])
+		if (delay >= CMX_BUFF_HALF)
+			delay = 0; /* will be the delay before next write */
+		/* check for lower delay */
+		if (delay < dsp->rx_delay[0])
 			dsp->rx_delay[0] = delay;
 		/* check current tx_delay */
 		delay = (dsp->tx_W-dsp->tx_R) & CMX_BUFF_MASK;
-		अगर (delay >= CMX_BUFF_HALF)
-			delay = 0; /* will be the delay beक्रमe next ग_लिखो */
-		/* check क्रम lower delay */
-		अगर (delay < dsp->tx_delay[0])
+		if (delay >= CMX_BUFF_HALF)
+			delay = 0; /* will be the delay before next write */
+		/* check for lower delay */
+		if (delay < dsp->tx_delay[0])
 			dsp->tx_delay[0] = delay;
-		अगर (jittercheck) अणु
+		if (jittercheck) {
 			/* find the lowest of all rx_delays */
 			delay = dsp->rx_delay[0];
 			i = 1;
-			जबतक (i < MAX_SECONDS_JITTER_CHECK) अणु
-				अगर (delay > dsp->rx_delay[i])
+			while (i < MAX_SECONDS_JITTER_CHECK) {
+				if (delay > dsp->rx_delay[i])
 					delay = dsp->rx_delay[i];
 				i++;
-			पूर्ण
+			}
 			/*
-			 * हटाओ rx_delay only अगर we have delay AND we
+			 * remove rx_delay only if we have delay AND we
 			 * have not preset cmx_delay AND
 			 * the delay is greater dsp_poll
 			 */
-			अगर (delay > dsp_poll && !dsp->cmx_delay) अणु
-				अगर (dsp_debug & DEBUG_DSP_CLOCK)
-					prपूर्णांकk(KERN_DEBUG
+			if (delay > dsp_poll && !dsp->cmx_delay) {
+				if (dsp_debug & DEBUG_DSP_CLOCK)
+					printk(KERN_DEBUG
 					       "%s lowest rx_delay of %d bytes for"
 					       " dsp %s are now removed.\n",
 					       __func__, delay,
@@ -1790,29 +1789,29 @@ dsp_cmx_send(व्योम *arg)
 				rr = (r + delay - (dsp_poll >> 1))
 					& CMX_BUFF_MASK;
 				/* delete rx-data */
-				जबतक (r != rr) अणु
+				while (r != rr) {
 					p[r] = dsp_silence;
 					r = (r + 1) & CMX_BUFF_MASK;
-				पूर्ण
-				/* increment rx-buffer poपूर्णांकer */
+				}
+				/* increment rx-buffer pointer */
 				dsp->rx_R = r;
-				/* ग_लिखो incremented पढ़ो poपूर्णांकer */
-			पूर्ण
+				/* write incremented read pointer */
+			}
 			/* find the lowest of all tx_delays */
 			delay = dsp->tx_delay[0];
 			i = 1;
-			जबतक (i < MAX_SECONDS_JITTER_CHECK) अणु
-				अगर (delay > dsp->tx_delay[i])
+			while (i < MAX_SECONDS_JITTER_CHECK) {
+				if (delay > dsp->tx_delay[i])
 					delay = dsp->tx_delay[i];
 				i++;
-			पूर्ण
+			}
 			/*
-			 * हटाओ delay only अगर we have delay AND we
+			 * remove delay only if we have delay AND we
 			 * have enabled tx_dejitter
 			 */
-			अगर (delay > dsp_poll && dsp->tx_dejitter) अणु
-				अगर (dsp_debug & DEBUG_DSP_CLOCK)
-					prपूर्णांकk(KERN_DEBUG
+			if (delay > dsp_poll && dsp->tx_dejitter) {
+				if (dsp_debug & DEBUG_DSP_CLOCK)
+					printk(KERN_DEBUG
 					       "%s lowest tx_delay of %d bytes for"
 					       " dsp %s are now removed.\n",
 					       __func__, delay,
@@ -1821,141 +1820,141 @@ dsp_cmx_send(व्योम *arg)
 				rr = (r + delay - (dsp_poll >> 1))
 					& CMX_BUFF_MASK;
 				/* delete tx-data */
-				जबतक (r != rr) अणु
+				while (r != rr) {
 					q[r] = dsp_silence;
 					r = (r + 1) & CMX_BUFF_MASK;
-				पूर्ण
-				/* increment rx-buffer poपूर्णांकer */
+				}
+				/* increment rx-buffer pointer */
 				dsp->tx_R = r;
-				/* ग_लिखो incremented पढ़ो poपूर्णांकer */
-			पूर्ण
+				/* write incremented read pointer */
+			}
 			/* scroll up delays */
 			i = MAX_SECONDS_JITTER_CHECK - 1;
-			जबतक (i) अणु
+			while (i) {
 				dsp->rx_delay[i] = dsp->rx_delay[i - 1];
 				dsp->tx_delay[i] = dsp->tx_delay[i - 1];
 				i--;
-			पूर्ण
+			}
 			dsp->tx_delay[0] = CMX_BUFF_HALF; /* (infinite) delay */
 			dsp->rx_delay[0] = CMX_BUFF_HALF; /* (infinite) delay */
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* अगर next event would be in the past ... */
-	अगर ((s32)(dsp_spl_jअगरfies + dsp_tics-jअगरfies) <= 0)
-		dsp_spl_jअगरfies = jअगरfies + 1;
-	अन्यथा
-		dsp_spl_jअगरfies += dsp_tics;
+	/* if next event would be in the past ... */
+	if ((s32)(dsp_spl_jiffies + dsp_tics-jiffies) <= 0)
+		dsp_spl_jiffies = jiffies + 1;
+	else
+		dsp_spl_jiffies += dsp_tics;
 
-	dsp_spl_tl.expires = dsp_spl_jअगरfies;
-	add_समयr(&dsp_spl_tl);
+	dsp_spl_tl.expires = dsp_spl_jiffies;
+	add_timer(&dsp_spl_tl);
 
 	/* unlock */
 	spin_unlock_irqrestore(&dsp_lock, flags);
-पूर्ण
+}
 
 /*
  * audio data is transmitted from upper layer to the dsp
  */
-व्योम
-dsp_cmx_transmit(काष्ठा dsp *dsp, काष्ठा sk_buff *skb)
-अणु
-	u_पूर्णांक w, ww;
+void
+dsp_cmx_transmit(struct dsp *dsp, struct sk_buff *skb)
+{
+	u_int w, ww;
 	u8 *d, *p;
-	पूर्णांक space; /* toकरो: , l = skb->len; */
-#अगर_घोषित CMX_TX_DEBUG
-	अक्षर debugbuf[256] = "";
-#पूर्ण_अगर
+	int space; /* todo: , l = skb->len; */
+#ifdef CMX_TX_DEBUG
+	char debugbuf[256] = "";
+#endif
 
-	/* check अगर there is enough space, and then copy */
+	/* check if there is enough space, and then copy */
 	w = dsp->tx_W;
 	ww = dsp->tx_R;
 	p = dsp->tx_buff;
 	d = skb->data;
 	space = (ww - w - 1) & CMX_BUFF_MASK;
-	/* ग_लिखो-poपूर्णांकer should not overrun nor reach पढ़ो poपूर्णांकer */
-	अगर (space < skb->len) अणु
-		/* ग_लिखो to the space we have left */
+	/* write-pointer should not overrun nor reach read pointer */
+	if (space < skb->len) {
+		/* write to the space we have left */
 		ww = (ww - 1) & CMX_BUFF_MASK; /* end one byte prior tx_R */
-		अगर (dsp_debug & DEBUG_DSP_CLOCK)
-			prपूर्णांकk(KERN_DEBUG "%s: TX overflow space=%d skb->len="
+		if (dsp_debug & DEBUG_DSP_CLOCK)
+			printk(KERN_DEBUG "%s: TX overflow space=%d skb->len="
 			       "%d, w=0x%04x, ww=0x%04x\n", __func__, space,
 			       skb->len, w, ww);
-	पूर्ण अन्यथा
-		/* ग_लिखो until all byte are copied */
+	} else
+		/* write until all byte are copied */
 		ww = (w + skb->len) & CMX_BUFF_MASK;
 	dsp->tx_W = ww;
 		/* show current buffer */
-#अगर_घोषित CMX_DEBUG
-	prपूर्णांकk(KERN_DEBUG
+#ifdef CMX_DEBUG
+	printk(KERN_DEBUG
 	       "cmx_transmit(dsp=%lx) %d bytes to 0x%x-0x%x. %s\n",
-	       (u_दीर्घ)dsp, (ww - w) & CMX_BUFF_MASK, w, ww, dsp->name);
-#पूर्ण_अगर
+	       (u_long)dsp, (ww - w) & CMX_BUFF_MASK, w, ww, dsp->name);
+#endif
 
 	/* copy transmit data to tx-buffer */
-#अगर_घोषित CMX_TX_DEBUG
-	प्र_लिखो(debugbuf, "TX getting (%04x-%04x)%p: ", w, ww, p);
-#पूर्ण_अगर
-	जबतक (w != ww) अणु
-#अगर_घोषित CMX_TX_DEBUG
-		अगर (म_माप(debugbuf) < 48)
-			प्र_लिखो(debugbuf + म_माप(debugbuf), " %02x", *d);
-#पूर्ण_अगर
+#ifdef CMX_TX_DEBUG
+	sprintf(debugbuf, "TX getting (%04x-%04x)%p: ", w, ww, p);
+#endif
+	while (w != ww) {
+#ifdef CMX_TX_DEBUG
+		if (strlen(debugbuf) < 48)
+			sprintf(debugbuf + strlen(debugbuf), " %02x", *d);
+#endif
 		p[w] = *d++;
 		w = (w + 1) & CMX_BUFF_MASK;
-	पूर्ण
-#अगर_घोषित CMX_TX_DEBUG
-	prपूर्णांकk(KERN_DEBUG "%s\n", debugbuf);
-#पूर्ण_अगर
+	}
+#ifdef CMX_TX_DEBUG
+	printk(KERN_DEBUG "%s\n", debugbuf);
+#endif
 
-पूर्ण
+}
 
 /*
  * hdlc data is received from card and sent to all members.
  */
-व्योम
-dsp_cmx_hdlc(काष्ठा dsp *dsp, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा sk_buff *nskb = शून्य;
-	काष्ठा dsp_conf_member *member;
-	काष्ठा mISDNhead *hh;
+void
+dsp_cmx_hdlc(struct dsp *dsp, struct sk_buff *skb)
+{
+	struct sk_buff *nskb = NULL;
+	struct dsp_conf_member *member;
+	struct mISDNhead *hh;
 
-	/* not अगर not active */
-	अगर (!dsp->b_active)
-		वापस;
+	/* not if not active */
+	if (!dsp->b_active)
+		return;
 
-	/* check अगर we have sompen */
-	अगर (skb->len < 1)
-		वापस;
+	/* check if we have sompen */
+	if (skb->len < 1)
+		return;
 
 	/* no conf */
-	अगर (!dsp->conf) अणु
-		/* in हाल of software echo */
-		अगर (dsp->echo.software) अणु
+	if (!dsp->conf) {
+		/* in case of software echo */
+		if (dsp->echo.software) {
 			nskb = skb_clone(skb, GFP_ATOMIC);
-			अगर (nskb) अणु
+			if (nskb) {
 				hh = mISDN_HEAD_P(nskb);
 				hh->prim = PH_DATA_REQ;
 				hh->id = 0;
 				skb_queue_tail(&dsp->sendq, nskb);
 				schedule_work(&dsp->workq);
-			पूर्ण
-		पूर्ण
-		वापस;
-	पूर्ण
-	/* in हाल of hardware conference */
-	अगर (dsp->conf->hardware)
-		वापस;
-	list_क्रम_each_entry(member, &dsp->conf->mlist, list) अणु
-		अगर (dsp->echo.software || member->dsp != dsp) अणु
+			}
+		}
+		return;
+	}
+	/* in case of hardware conference */
+	if (dsp->conf->hardware)
+		return;
+	list_for_each_entry(member, &dsp->conf->mlist, list) {
+		if (dsp->echo.software || member->dsp != dsp) {
 			nskb = skb_clone(skb, GFP_ATOMIC);
-			अगर (nskb) अणु
+			if (nskb) {
 				hh = mISDN_HEAD_P(nskb);
 				hh->prim = PH_DATA_REQ;
 				hh->id = 0;
 				skb_queue_tail(&member->dsp->sendq, nskb);
 				schedule_work(&member->dsp->workq);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+			}
+		}
+	}
+}

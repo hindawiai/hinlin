@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (GPL-2.0+ OR BSD-3-Clause)
+// SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
 /*
  * Copyright 2013-2016 Freescale Semiconductor Inc.
  *
@@ -7,46 +6,46 @@
  *
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/device.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/io-64-nonatomic-hi-lo.h>
-#समावेश <linux/fsl/mc.h>
+#include <linux/delay.h>
+#include <linux/slab.h>
+#include <linux/ioport.h>
+#include <linux/device.h>
+#include <linux/io.h>
+#include <linux/io-64-nonatomic-hi-lo.h>
+#include <linux/fsl/mc.h>
 
-#समावेश "fsl-mc-private.h"
+#include "fsl-mc-private.h"
 
 /**
- * Timeout in milliseconds to रुको क्रम the completion of an MC command
+ * Timeout in milliseconds to wait for the completion of an MC command
  */
-#घोषणा MC_CMD_COMPLETION_TIMEOUT_MS	500
+#define MC_CMD_COMPLETION_TIMEOUT_MS	500
 
 /*
- * usleep_range() min and max values used to throttle करोwn polling
- * iterations जबतक रुकोing क्रम MC command completion
+ * usleep_range() min and max values used to throttle down polling
+ * iterations while waiting for MC command completion
  */
-#घोषणा MC_CMD_COMPLETION_POLLING_MIN_SLEEP_USECS    10
-#घोषणा MC_CMD_COMPLETION_POLLING_MAX_SLEEP_USECS    500
+#define MC_CMD_COMPLETION_POLLING_MIN_SLEEP_USECS    10
+#define MC_CMD_COMPLETION_POLLING_MAX_SLEEP_USECS    500
 
-अटल क्रमागत mc_cmd_status mc_cmd_hdr_पढ़ो_status(काष्ठा fsl_mc_command *cmd)
-अणु
-	काष्ठा mc_cmd_header *hdr = (काष्ठा mc_cmd_header *)&cmd->header;
+static enum mc_cmd_status mc_cmd_hdr_read_status(struct fsl_mc_command *cmd)
+{
+	struct mc_cmd_header *hdr = (struct mc_cmd_header *)&cmd->header;
 
-	वापस (क्रमागत mc_cmd_status)hdr->status;
-पूर्ण
+	return (enum mc_cmd_status)hdr->status;
+}
 
-u16 mc_cmd_hdr_पढ़ो_cmdid(काष्ठा fsl_mc_command *cmd)
-अणु
-	काष्ठा mc_cmd_header *hdr = (काष्ठा mc_cmd_header *)&cmd->header;
+u16 mc_cmd_hdr_read_cmdid(struct fsl_mc_command *cmd)
+{
+	struct mc_cmd_header *hdr = (struct mc_cmd_header *)&cmd->header;
 	u16 cmd_id = le16_to_cpu(hdr->cmd_id);
 
-	वापस cmd_id;
-पूर्ण
+	return cmd_id;
+}
 
-अटल पूर्णांक mc_status_to_error(क्रमागत mc_cmd_status status)
-अणु
-	अटल स्थिर पूर्णांक mc_status_to_error_map[] = अणु
+static int mc_status_to_error(enum mc_cmd_status status)
+{
+	static const int mc_status_to_error_map[] = {
 		[MC_CMD_STATUS_OK] = 0,
 		[MC_CMD_STATUS_AUTH_ERR] = -EACCES,
 		[MC_CMD_STATUS_NO_PRIVILEGE] = -EPERM,
@@ -58,17 +57,17 @@ u16 mc_cmd_hdr_पढ़ो_cmdid(काष्ठा fsl_mc_command *cmd)
 		[MC_CMD_STATUS_BUSY] = -EBUSY,
 		[MC_CMD_STATUS_UNSUPPORTED_OP] = -ENOTSUPP,
 		[MC_CMD_STATUS_INVALID_STATE] = -ENODEV,
-	पूर्ण;
+	};
 
-	अगर ((u32)status >= ARRAY_SIZE(mc_status_to_error_map))
-		वापस -EINVAL;
+	if ((u32)status >= ARRAY_SIZE(mc_status_to_error_map))
+		return -EINVAL;
 
-	वापस mc_status_to_error_map[status];
-पूर्ण
+	return mc_status_to_error_map[status];
+}
 
-अटल स्थिर अक्षर *mc_status_to_string(क्रमागत mc_cmd_status status)
-अणु
-	अटल स्थिर अक्षर *स्थिर status_strings[] = अणु
+static const char *mc_status_to_string(enum mc_cmd_status status)
+{
+	static const char *const status_strings[] = {
 		[MC_CMD_STATUS_OK] = "Command completed successfully",
 		[MC_CMD_STATUS_READY] = "Command ready to be processed",
 		[MC_CMD_STATUS_AUTH_ERR] = "Authentication error",
@@ -81,158 +80,158 @@ u16 mc_cmd_hdr_पढ़ो_cmdid(काष्ठा fsl_mc_command *cmd)
 		[MC_CMD_STATUS_BUSY] = "Device is busy",
 		[MC_CMD_STATUS_UNSUPPORTED_OP] = "Unsupported operation",
 		[MC_CMD_STATUS_INVALID_STATE] = "Invalid state"
-	पूर्ण;
+	};
 
-	अगर ((अचिन्हित पूर्णांक)status >= ARRAY_SIZE(status_strings))
-		वापस "Unknown MC error";
+	if ((unsigned int)status >= ARRAY_SIZE(status_strings))
+		return "Unknown MC error";
 
-	वापस status_strings[status];
-पूर्ण
+	return status_strings[status];
+}
 
 /**
- * mc_ग_लिखो_command - ग_लिखोs a command to a Management Complex (MC) portal
+ * mc_write_command - writes a command to a Management Complex (MC) portal
  *
- * @portal: poपूर्णांकer to an MC portal
- * @cmd: poपूर्णांकer to a filled command
+ * @portal: pointer to an MC portal
+ * @cmd: pointer to a filled command
  */
-अटल अंतरभूत व्योम mc_ग_लिखो_command(काष्ठा fsl_mc_command __iomem *portal,
-				    काष्ठा fsl_mc_command *cmd)
-अणु
-	पूर्णांक i;
+static inline void mc_write_command(struct fsl_mc_command __iomem *portal,
+				    struct fsl_mc_command *cmd)
+{
+	int i;
 
-	/* copy command parameters पूर्णांकo the portal */
-	क्रम (i = 0; i < MC_CMD_NUM_OF_PARAMS; i++)
+	/* copy command parameters into the portal */
+	for (i = 0; i < MC_CMD_NUM_OF_PARAMS; i++)
 		/*
-		 * Data is alपढ़ोy in the expected LE byte-order. Do an
-		 * extra LE -> CPU conversion so that the CPU -> LE करोne in
-		 * the device io ग_लिखो api माला_दो it back in the right order.
+		 * Data is already in the expected LE byte-order. Do an
+		 * extra LE -> CPU conversion so that the CPU -> LE done in
+		 * the device io write api puts it back in the right order.
 		 */
-		ग_लिखोq_relaxed(le64_to_cpu(cmd->params[i]), &portal->params[i]);
+		writeq_relaxed(le64_to_cpu(cmd->params[i]), &portal->params[i]);
 
 	/* submit the command by writing the header */
-	ग_लिखोq(le64_to_cpu(cmd->header), &portal->header);
-पूर्ण
+	writeq(le64_to_cpu(cmd->header), &portal->header);
+}
 
 /**
- * mc_पढ़ो_response - पढ़ोs the response क्रम the last MC command from a
+ * mc_read_response - reads the response for the last MC command from a
  * Management Complex (MC) portal
  *
- * @portal: poपूर्णांकer to an MC portal
- * @resp: poपूर्णांकer to command response buffer
+ * @portal: pointer to an MC portal
+ * @resp: pointer to command response buffer
  *
  * Returns MC_CMD_STATUS_OK on Success; Error code otherwise.
  */
-अटल अंतरभूत क्रमागत mc_cmd_status mc_पढ़ो_response(काष्ठा fsl_mc_command __iomem
+static inline enum mc_cmd_status mc_read_response(struct fsl_mc_command __iomem
 						  *portal,
-						  काष्ठा fsl_mc_command *resp)
-अणु
-	पूर्णांक i;
-	क्रमागत mc_cmd_status status;
+						  struct fsl_mc_command *resp)
+{
+	int i;
+	enum mc_cmd_status status;
 
 	/* Copy command response header from MC portal: */
-	resp->header = cpu_to_le64(पढ़ोq_relaxed(&portal->header));
-	status = mc_cmd_hdr_पढ़ो_status(resp);
-	अगर (status != MC_CMD_STATUS_OK)
-		वापस status;
+	resp->header = cpu_to_le64(readq_relaxed(&portal->header));
+	status = mc_cmd_hdr_read_status(resp);
+	if (status != MC_CMD_STATUS_OK)
+		return status;
 
 	/* Copy command response data from MC portal: */
-	क्रम (i = 0; i < MC_CMD_NUM_OF_PARAMS; i++)
+	for (i = 0; i < MC_CMD_NUM_OF_PARAMS; i++)
 		/*
 		 * Data is expected to be in LE byte-order. Do an
-		 * extra CPU -> LE to revert the LE -> CPU करोne in
-		 * the device io पढ़ो api.
+		 * extra CPU -> LE to revert the LE -> CPU done in
+		 * the device io read api.
 		 */
 		resp->params[i] =
-			cpu_to_le64(पढ़ोq_relaxed(&portal->params[i]));
+			cpu_to_le64(readq_relaxed(&portal->params[i]));
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /**
- * Waits क्रम the completion of an MC command करोing preemptible polling.
+ * Waits for the completion of an MC command doing preemptible polling.
  * uslepp_range() is called between polling iterations.
  *
  * @mc_io: MC I/O object to be used
  * @cmd: command buffer to receive MC response
  * @mc_status: MC command completion status
  */
-अटल पूर्णांक mc_polling_रुको_preemptible(काष्ठा fsl_mc_io *mc_io,
-				       काष्ठा fsl_mc_command *cmd,
-				       क्रमागत mc_cmd_status *mc_status)
-अणु
-	क्रमागत mc_cmd_status status;
-	अचिन्हित दीर्घ jअगरfies_until_समयout =
-		jअगरfies + msecs_to_jअगरfies(MC_CMD_COMPLETION_TIMEOUT_MS);
+static int mc_polling_wait_preemptible(struct fsl_mc_io *mc_io,
+				       struct fsl_mc_command *cmd,
+				       enum mc_cmd_status *mc_status)
+{
+	enum mc_cmd_status status;
+	unsigned long jiffies_until_timeout =
+		jiffies + msecs_to_jiffies(MC_CMD_COMPLETION_TIMEOUT_MS);
 
 	/*
-	 * Wait क्रम response from the MC hardware:
+	 * Wait for response from the MC hardware:
 	 */
-	क्रम (;;) अणु
-		status = mc_पढ़ो_response(mc_io->portal_virt_addr, cmd);
-		अगर (status != MC_CMD_STATUS_READY)
-			अवरोध;
+	for (;;) {
+		status = mc_read_response(mc_io->portal_virt_addr, cmd);
+		if (status != MC_CMD_STATUS_READY)
+			break;
 
 		/*
-		 * TODO: When MC command completion पूर्णांकerrupts are supported
-		 * call रुको function here instead of usleep_range()
+		 * TODO: When MC command completion interrupts are supported
+		 * call wait function here instead of usleep_range()
 		 */
 		usleep_range(MC_CMD_COMPLETION_POLLING_MIN_SLEEP_USECS,
 			     MC_CMD_COMPLETION_POLLING_MAX_SLEEP_USECS);
 
-		अगर (समय_after_eq(jअगरfies, jअगरfies_until_समयout)) अणु
+		if (time_after_eq(jiffies, jiffies_until_timeout)) {
 			dev_dbg(mc_io->dev,
 				"MC command timed out (portal: %pa, dprc handle: %#x, command: %#x)\n",
 				 &mc_io->portal_phys_addr,
-				 (अचिन्हित पूर्णांक)mc_cmd_hdr_पढ़ो_token(cmd),
-				 (अचिन्हित पूर्णांक)mc_cmd_hdr_पढ़ो_cmdid(cmd));
+				 (unsigned int)mc_cmd_hdr_read_token(cmd),
+				 (unsigned int)mc_cmd_hdr_read_cmdid(cmd));
 
-			वापस -ETIMEDOUT;
-		पूर्ण
-	पूर्ण
+			return -ETIMEDOUT;
+		}
+	}
 
 	*mc_status = status;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * Waits क्रम the completion of an MC command करोing atomic polling.
+ * Waits for the completion of an MC command doing atomic polling.
  * udelay() is called between polling iterations.
  *
  * @mc_io: MC I/O object to be used
  * @cmd: command buffer to receive MC response
  * @mc_status: MC command completion status
  */
-अटल पूर्णांक mc_polling_रुको_atomic(काष्ठा fsl_mc_io *mc_io,
-				  काष्ठा fsl_mc_command *cmd,
-				  क्रमागत mc_cmd_status *mc_status)
-अणु
-	क्रमागत mc_cmd_status status;
-	अचिन्हित दीर्घ समयout_usecs = MC_CMD_COMPLETION_TIMEOUT_MS * 1000;
+static int mc_polling_wait_atomic(struct fsl_mc_io *mc_io,
+				  struct fsl_mc_command *cmd,
+				  enum mc_cmd_status *mc_status)
+{
+	enum mc_cmd_status status;
+	unsigned long timeout_usecs = MC_CMD_COMPLETION_TIMEOUT_MS * 1000;
 
 	BUILD_BUG_ON((MC_CMD_COMPLETION_TIMEOUT_MS * 1000) %
 		     MC_CMD_COMPLETION_POLLING_MAX_SLEEP_USECS != 0);
 
-	क्रम (;;) अणु
-		status = mc_पढ़ो_response(mc_io->portal_virt_addr, cmd);
-		अगर (status != MC_CMD_STATUS_READY)
-			अवरोध;
+	for (;;) {
+		status = mc_read_response(mc_io->portal_virt_addr, cmd);
+		if (status != MC_CMD_STATUS_READY)
+			break;
 
 		udelay(MC_CMD_COMPLETION_POLLING_MAX_SLEEP_USECS);
-		समयout_usecs -= MC_CMD_COMPLETION_POLLING_MAX_SLEEP_USECS;
-		अगर (समयout_usecs == 0) अणु
+		timeout_usecs -= MC_CMD_COMPLETION_POLLING_MAX_SLEEP_USECS;
+		if (timeout_usecs == 0) {
 			dev_dbg(mc_io->dev,
 				"MC command timed out (portal: %pa, dprc handle: %#x, command: %#x)\n",
 				 &mc_io->portal_phys_addr,
-				 (अचिन्हित पूर्णांक)mc_cmd_hdr_पढ़ो_token(cmd),
-				 (अचिन्हित पूर्णांक)mc_cmd_hdr_पढ़ो_cmdid(cmd));
+				 (unsigned int)mc_cmd_hdr_read_token(cmd),
+				 (unsigned int)mc_cmd_hdr_read_cmdid(cmd));
 
-			वापस -ETIMEDOUT;
-		पूर्ण
-	पूर्ण
+			return -ETIMEDOUT;
+		}
+	}
 
 	*mc_status = status;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * Sends a command to the MC device using the given MC I/O object
@@ -242,56 +241,56 @@ u16 mc_cmd_hdr_पढ़ो_cmdid(काष्ठा fsl_mc_command *cmd)
  *
  * Returns '0' on Success; Error code otherwise.
  */
-पूर्णांक mc_send_command(काष्ठा fsl_mc_io *mc_io, काष्ठा fsl_mc_command *cmd)
-अणु
-	पूर्णांक error;
-	क्रमागत mc_cmd_status status;
-	अचिन्हित दीर्घ irq_flags = 0;
+int mc_send_command(struct fsl_mc_io *mc_io, struct fsl_mc_command *cmd)
+{
+	int error;
+	enum mc_cmd_status status;
+	unsigned long irq_flags = 0;
 
-	अगर (in_irq() && !(mc_io->flags & FSL_MC_IO_ATOMIC_CONTEXT_PORTAL))
-		वापस -EINVAL;
+	if (in_irq() && !(mc_io->flags & FSL_MC_IO_ATOMIC_CONTEXT_PORTAL))
+		return -EINVAL;
 
-	अगर (mc_io->flags & FSL_MC_IO_ATOMIC_CONTEXT_PORTAL)
+	if (mc_io->flags & FSL_MC_IO_ATOMIC_CONTEXT_PORTAL)
 		raw_spin_lock_irqsave(&mc_io->spinlock, irq_flags);
-	अन्यथा
+	else
 		mutex_lock(&mc_io->mutex);
 
 	/*
 	 * Send command to the MC hardware:
 	 */
-	mc_ग_लिखो_command(mc_io->portal_virt_addr, cmd);
+	mc_write_command(mc_io->portal_virt_addr, cmd);
 
 	/*
-	 * Wait क्रम response from the MC hardware:
+	 * Wait for response from the MC hardware:
 	 */
-	अगर (!(mc_io->flags & FSL_MC_IO_ATOMIC_CONTEXT_PORTAL))
-		error = mc_polling_रुको_preemptible(mc_io, cmd, &status);
-	अन्यथा
-		error = mc_polling_रुको_atomic(mc_io, cmd, &status);
+	if (!(mc_io->flags & FSL_MC_IO_ATOMIC_CONTEXT_PORTAL))
+		error = mc_polling_wait_preemptible(mc_io, cmd, &status);
+	else
+		error = mc_polling_wait_atomic(mc_io, cmd, &status);
 
-	अगर (error < 0)
-		जाओ common_निकास;
+	if (error < 0)
+		goto common_exit;
 
-	अगर (status != MC_CMD_STATUS_OK) अणु
+	if (status != MC_CMD_STATUS_OK) {
 		dev_dbg(mc_io->dev,
 			"MC command failed: portal: %pa, dprc handle: %#x, command: %#x, status: %s (%#x)\n",
 			 &mc_io->portal_phys_addr,
-			 (अचिन्हित पूर्णांक)mc_cmd_hdr_पढ़ो_token(cmd),
-			 (अचिन्हित पूर्णांक)mc_cmd_hdr_पढ़ो_cmdid(cmd),
+			 (unsigned int)mc_cmd_hdr_read_token(cmd),
+			 (unsigned int)mc_cmd_hdr_read_cmdid(cmd),
 			 mc_status_to_string(status),
-			 (अचिन्हित पूर्णांक)status);
+			 (unsigned int)status);
 
 		error = mc_status_to_error(status);
-		जाओ common_निकास;
-	पूर्ण
+		goto common_exit;
+	}
 
 	error = 0;
-common_निकास:
-	अगर (mc_io->flags & FSL_MC_IO_ATOMIC_CONTEXT_PORTAL)
+common_exit:
+	if (mc_io->flags & FSL_MC_IO_ATOMIC_CONTEXT_PORTAL)
 		raw_spin_unlock_irqrestore(&mc_io->spinlock, irq_flags);
-	अन्यथा
+	else
 		mutex_unlock(&mc_io->mutex);
 
-	वापस error;
-पूर्ण
+	return error;
+}
 EXPORT_SYMBOL_GPL(mc_send_command);

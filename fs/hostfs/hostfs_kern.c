@@ -1,76 +1,75 @@
-<शैली गुरु>
 /*
- * Copyright (C) 2000 - 2007 Jeff Dike (jdike@अणुaddtoit,linux.पूर्णांकelपूर्ण.com)
+ * Copyright (C) 2000 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
  * Licensed under the GPL
  *
- * Ported the fileप्रणाली routines to 2.5.
+ * Ported the filesystem routines to 2.5.
  * 2003-02-10 Petr Baudis <pasky@ucw.cz>
  */
 
-#समावेश <linux/fs.h>
-#समावेश <linux/magic.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/statfs.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/mount.h>
-#समावेश <linux/namei.h>
-#समावेश "hostfs.h"
-#समावेश <init.h>
-#समावेश <kern.h>
+#include <linux/fs.h>
+#include <linux/magic.h>
+#include <linux/module.h>
+#include <linux/mm.h>
+#include <linux/pagemap.h>
+#include <linux/statfs.h>
+#include <linux/slab.h>
+#include <linux/seq_file.h>
+#include <linux/mount.h>
+#include <linux/namei.h>
+#include "hostfs.h"
+#include <init.h>
+#include <kern.h>
 
-काष्ठा hostfs_inode_info अणु
-	पूर्णांक fd;
-	भ_शेषe_t mode;
-	काष्ठा inode vfs_inode;
-	काष्ठा mutex खोलो_mutex;
-पूर्ण;
+struct hostfs_inode_info {
+	int fd;
+	fmode_t mode;
+	struct inode vfs_inode;
+	struct mutex open_mutex;
+};
 
-अटल अंतरभूत काष्ठा hostfs_inode_info *HOSTFS_I(काष्ठा inode *inode)
-अणु
-	वापस list_entry(inode, काष्ठा hostfs_inode_info, vfs_inode);
-पूर्ण
+static inline struct hostfs_inode_info *HOSTFS_I(struct inode *inode)
+{
+	return list_entry(inode, struct hostfs_inode_info, vfs_inode);
+}
 
-#घोषणा खाता_HOSTFS_I(file) HOSTFS_I(file_inode(file))
+#define FILE_HOSTFS_I(file) HOSTFS_I(file_inode(file))
 
-अटल काष्ठा kmem_cache *hostfs_inode_cache;
+static struct kmem_cache *hostfs_inode_cache;
 
-/* Changed in hostfs_args beक्रमe the kernel starts running */
-अटल अक्षर *root_ino = "";
-अटल पूर्णांक append = 0;
+/* Changed in hostfs_args before the kernel starts running */
+static char *root_ino = "";
+static int append = 0;
 
-अटल स्थिर काष्ठा inode_operations hostfs_iops;
-अटल स्थिर काष्ठा inode_operations hostfs_dir_iops;
-अटल स्थिर काष्ठा inode_operations hostfs_link_iops;
+static const struct inode_operations hostfs_iops;
+static const struct inode_operations hostfs_dir_iops;
+static const struct inode_operations hostfs_link_iops;
 
-#अगर_अघोषित MODULE
-अटल पूर्णांक __init hostfs_args(अक्षर *options, पूर्णांक *add)
-अणु
-	अक्षर *ptr;
+#ifndef MODULE
+static int __init hostfs_args(char *options, int *add)
+{
+	char *ptr;
 
-	ptr = म_अक्षर(options, ',');
-	अगर (ptr != शून्य)
+	ptr = strchr(options, ',');
+	if (ptr != NULL)
 		*ptr++ = '\0';
-	अगर (*options != '\0')
+	if (*options != '\0')
 		root_ino = options;
 
 	options = ptr;
-	जबतक (options) अणु
-		ptr = म_अक्षर(options, ',');
-		अगर (ptr != शून्य)
+	while (options) {
+		ptr = strchr(options, ',');
+		if (ptr != NULL)
 			*ptr++ = '\0';
-		अगर (*options != '\0') अणु
-			अगर (!म_भेद(options, "append"))
+		if (*options != '\0') {
+			if (!strcmp(options, "append"))
 				append = 1;
-			अन्यथा म_लिखो("hostfs_args - unsupported option - %s\n",
+			else printf("hostfs_args - unsupported option - %s\n",
 				    options);
-		पूर्ण
+		}
 		options = ptr;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 __uml_setup("hostfs=", hostfs_args,
 "hostfs=<root dir>,<flags>,...\n"
@@ -82,347 +81,347 @@ __uml_setup("hostfs=", hostfs_args,
 "    The only flag currently supported is 'append', which specifies that all\n"
 "    files opened by hostfs will be opened in append mode.\n\n"
 );
-#पूर्ण_अगर
+#endif
 
-अटल अक्षर *__dentry_name(काष्ठा dentry *dentry, अक्षर *name)
-अणु
-	अक्षर *p = dentry_path_raw(dentry, name, PATH_MAX);
-	अक्षर *root;
-	माप_प्रकार len;
+static char *__dentry_name(struct dentry *dentry, char *name)
+{
+	char *p = dentry_path_raw(dentry, name, PATH_MAX);
+	char *root;
+	size_t len;
 
 	root = dentry->d_sb->s_fs_info;
-	len = म_माप(root);
-	अगर (IS_ERR(p)) अणु
+	len = strlen(root);
+	if (IS_ERR(p)) {
 		__putname(name);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	/*
 	 * This function relies on the fact that dentry_path_raw() will place
 	 * the path name at the end of the provided buffer.
 	 */
-	BUG_ON(p + म_माप(p) + 1 != name + PATH_MAX);
+	BUG_ON(p + strlen(p) + 1 != name + PATH_MAX);
 
 	strlcpy(name, root, PATH_MAX);
-	अगर (len > p - name) अणु
+	if (len > p - name) {
 		__putname(name);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	अगर (p > name + len)
-		म_नकल(name + len, p);
+	if (p > name + len)
+		strcpy(name + len, p);
 
-	वापस name;
-पूर्ण
+	return name;
+}
 
-अटल अक्षर *dentry_name(काष्ठा dentry *dentry)
-अणु
-	अक्षर *name = __getname();
-	अगर (!name)
-		वापस शून्य;
+static char *dentry_name(struct dentry *dentry)
+{
+	char *name = __getname();
+	if (!name)
+		return NULL;
 
-	वापस __dentry_name(dentry, name);
-पूर्ण
+	return __dentry_name(dentry, name);
+}
 
-अटल अक्षर *inode_name(काष्ठा inode *ino)
-अणु
-	काष्ठा dentry *dentry;
-	अक्षर *name;
+static char *inode_name(struct inode *ino)
+{
+	struct dentry *dentry;
+	char *name;
 
 	dentry = d_find_alias(ino);
-	अगर (!dentry)
-		वापस शून्य;
+	if (!dentry)
+		return NULL;
 
 	name = dentry_name(dentry);
 
 	dput(dentry);
 
-	वापस name;
-पूर्ण
+	return name;
+}
 
-अटल अक्षर *follow_link(अक्षर *link)
-अणु
-	अक्षर *name, *resolved, *end;
-	पूर्णांक n;
+static char *follow_link(char *link)
+{
+	char *name, *resolved, *end;
+	int n;
 
-	name = kदो_स्मृति(PATH_MAX, GFP_KERNEL);
-	अगर (!name) अणु
+	name = kmalloc(PATH_MAX, GFP_KERNEL);
+	if (!name) {
 		n = -ENOMEM;
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
-	n = hostfs_करो_पढ़ोlink(link, name, PATH_MAX);
-	अगर (n < 0)
-		जाओ out_मुक्त;
-	अन्यथा अगर (n == PATH_MAX) अणु
+	n = hostfs_do_readlink(link, name, PATH_MAX);
+	if (n < 0)
+		goto out_free;
+	else if (n == PATH_MAX) {
 		n = -E2BIG;
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
-	अगर (*name == '/')
-		वापस name;
+	if (*name == '/')
+		return name;
 
-	end = म_खोजप(link, '/');
-	अगर (end == शून्य)
-		वापस name;
+	end = strrchr(link, '/');
+	if (end == NULL)
+		return name;
 
 	*(end + 1) = '\0';
 
-	resolved = kaप्र_लिखो(GFP_KERNEL, "%s%s", link, name);
-	अगर (resolved == शून्य) अणु
+	resolved = kasprintf(GFP_KERNEL, "%s%s", link, name);
+	if (resolved == NULL) {
 		n = -ENOMEM;
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
-	kमुक्त(name);
-	वापस resolved;
+	kfree(name);
+	return resolved;
 
- out_मुक्त:
-	kमुक्त(name);
-	वापस ERR_PTR(n);
-पूर्ण
+ out_free:
+	kfree(name);
+	return ERR_PTR(n);
+}
 
-अटल काष्ठा inode *hostfs_iget(काष्ठा super_block *sb)
-अणु
-	काष्ठा inode *inode = new_inode(sb);
-	अगर (!inode)
-		वापस ERR_PTR(-ENOMEM);
-	वापस inode;
-पूर्ण
+static struct inode *hostfs_iget(struct super_block *sb)
+{
+	struct inode *inode = new_inode(sb);
+	if (!inode)
+		return ERR_PTR(-ENOMEM);
+	return inode;
+}
 
-अटल पूर्णांक hostfs_statfs(काष्ठा dentry *dentry, काष्ठा kstatfs *sf)
-अणु
+static int hostfs_statfs(struct dentry *dentry, struct kstatfs *sf)
+{
 	/*
-	 * करो_statfs uses काष्ठा statfs64 पूर्णांकernally, but the linux kernel
-	 * काष्ठा statfs still has 32-bit versions क्रम most of these fields,
+	 * do_statfs uses struct statfs64 internally, but the linux kernel
+	 * struct statfs still has 32-bit versions for most of these fields,
 	 * so we convert them here
 	 */
-	पूर्णांक err;
-	दीर्घ दीर्घ f_blocks;
-	दीर्घ दीर्घ f_bमुक्त;
-	दीर्घ दीर्घ f_bavail;
-	दीर्घ दीर्घ f_files;
-	दीर्घ दीर्घ f_fमुक्त;
+	int err;
+	long long f_blocks;
+	long long f_bfree;
+	long long f_bavail;
+	long long f_files;
+	long long f_ffree;
 
-	err = करो_statfs(dentry->d_sb->s_fs_info,
-			&sf->f_bsize, &f_blocks, &f_bमुक्त, &f_bavail, &f_files,
-			&f_fमुक्त, &sf->f_fsid, माप(sf->f_fsid),
+	err = do_statfs(dentry->d_sb->s_fs_info,
+			&sf->f_bsize, &f_blocks, &f_bfree, &f_bavail, &f_files,
+			&f_ffree, &sf->f_fsid, sizeof(sf->f_fsid),
 			&sf->f_namelen);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 	sf->f_blocks = f_blocks;
-	sf->f_bमुक्त = f_bमुक्त;
+	sf->f_bfree = f_bfree;
 	sf->f_bavail = f_bavail;
 	sf->f_files = f_files;
-	sf->f_fमुक्त = f_fमुक्त;
+	sf->f_ffree = f_ffree;
 	sf->f_type = HOSTFS_SUPER_MAGIC;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा inode *hostfs_alloc_inode(काष्ठा super_block *sb)
-अणु
-	काष्ठा hostfs_inode_info *hi;
+static struct inode *hostfs_alloc_inode(struct super_block *sb)
+{
+	struct hostfs_inode_info *hi;
 
 	hi = kmem_cache_alloc(hostfs_inode_cache, GFP_KERNEL_ACCOUNT);
-	अगर (hi == शून्य)
-		वापस शून्य;
+	if (hi == NULL)
+		return NULL;
 	hi->fd = -1;
 	hi->mode = 0;
 	inode_init_once(&hi->vfs_inode);
-	mutex_init(&hi->खोलो_mutex);
-	वापस &hi->vfs_inode;
-पूर्ण
+	mutex_init(&hi->open_mutex);
+	return &hi->vfs_inode;
+}
 
-अटल व्योम hostfs_evict_inode(काष्ठा inode *inode)
-अणु
+static void hostfs_evict_inode(struct inode *inode)
+{
 	truncate_inode_pages_final(&inode->i_data);
 	clear_inode(inode);
-	अगर (HOSTFS_I(inode)->fd != -1) अणु
-		बंद_file(&HOSTFS_I(inode)->fd);
+	if (HOSTFS_I(inode)->fd != -1) {
+		close_file(&HOSTFS_I(inode)->fd);
 		HOSTFS_I(inode)->fd = -1;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम hostfs_मुक्त_inode(काष्ठा inode *inode)
-अणु
-	kmem_cache_मुक्त(hostfs_inode_cache, HOSTFS_I(inode));
-पूर्ण
+static void hostfs_free_inode(struct inode *inode)
+{
+	kmem_cache_free(hostfs_inode_cache, HOSTFS_I(inode));
+}
 
-अटल पूर्णांक hostfs_show_options(काष्ठा seq_file *seq, काष्ठा dentry *root)
-अणु
-	स्थिर अक्षर *root_path = root->d_sb->s_fs_info;
-	माप_प्रकार offset = म_माप(root_ino) + 1;
+static int hostfs_show_options(struct seq_file *seq, struct dentry *root)
+{
+	const char *root_path = root->d_sb->s_fs_info;
+	size_t offset = strlen(root_ino) + 1;
 
-	अगर (म_माप(root_path) > offset)
-		seq_show_option(seq, root_path + offset, शून्य);
+	if (strlen(root_path) > offset)
+		seq_show_option(seq, root_path + offset, NULL);
 
-	अगर (append)
-		seq_माला_दो(seq, ",append");
+	if (append)
+		seq_puts(seq, ",append");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा super_operations hostfs_sbops = अणु
+static const struct super_operations hostfs_sbops = {
 	.alloc_inode	= hostfs_alloc_inode,
-	.मुक्त_inode	= hostfs_मुक्त_inode,
+	.free_inode	= hostfs_free_inode,
 	.evict_inode	= hostfs_evict_inode,
 	.statfs		= hostfs_statfs,
 	.show_options	= hostfs_show_options,
-पूर्ण;
+};
 
-अटल पूर्णांक hostfs_सूची_पढ़ो(काष्ठा file *file, काष्ठा dir_context *ctx)
-अणु
-	व्योम *dir;
-	अक्षर *name;
-	अचिन्हित दीर्घ दीर्घ next, ino;
-	पूर्णांक error, len;
-	अचिन्हित पूर्णांक type;
+static int hostfs_readdir(struct file *file, struct dir_context *ctx)
+{
+	void *dir;
+	char *name;
+	unsigned long long next, ino;
+	int error, len;
+	unsigned int type;
 
 	name = dentry_name(file->f_path.dentry);
-	अगर (name == शून्य)
-		वापस -ENOMEM;
-	dir = खोलो_dir(name, &error);
+	if (name == NULL)
+		return -ENOMEM;
+	dir = open_dir(name, &error);
 	__putname(name);
-	अगर (dir == शून्य)
-		वापस -error;
+	if (dir == NULL)
+		return -error;
 	next = ctx->pos;
 	seek_dir(dir, next);
-	जबतक ((name = पढ़ो_dir(dir, &next, &ino, &len, &type)) != शून्य) अणु
-		अगर (!dir_emit(ctx, name, len, ino, type))
-			अवरोध;
+	while ((name = read_dir(dir, &next, &ino, &len, &type)) != NULL) {
+		if (!dir_emit(ctx, name, len, ino, type))
+			break;
 		ctx->pos = next;
-	पूर्ण
-	बंद_dir(dir);
-	वापस 0;
-पूर्ण
+	}
+	close_dir(dir);
+	return 0;
+}
 
-अटल पूर्णांक hostfs_खोलो(काष्ठा inode *ino, काष्ठा file *file)
-अणु
-	अक्षर *name;
-	भ_शेषe_t mode;
-	पूर्णांक err;
-	पूर्णांक r, w, fd;
+static int hostfs_open(struct inode *ino, struct file *file)
+{
+	char *name;
+	fmode_t mode;
+	int err;
+	int r, w, fd;
 
 	mode = file->f_mode & (FMODE_READ | FMODE_WRITE);
-	अगर ((mode & HOSTFS_I(ino)->mode) == mode)
-		वापस 0;
+	if ((mode & HOSTFS_I(ino)->mode) == mode)
+		return 0;
 
 	mode |= HOSTFS_I(ino)->mode;
 
 retry:
 	r = w = 0;
 
-	अगर (mode & FMODE_READ)
+	if (mode & FMODE_READ)
 		r = 1;
-	अगर (mode & FMODE_WRITE)
+	if (mode & FMODE_WRITE)
 		r = w = 1;
 
 	name = dentry_name(file_dentry(file));
-	अगर (name == शून्य)
-		वापस -ENOMEM;
+	if (name == NULL)
+		return -ENOMEM;
 
-	fd = खोलो_file(name, r, w, append);
+	fd = open_file(name, r, w, append);
 	__putname(name);
-	अगर (fd < 0)
-		वापस fd;
+	if (fd < 0)
+		return fd;
 
-	mutex_lock(&HOSTFS_I(ino)->खोलो_mutex);
-	/* somebody अन्यथा had handled it first? */
-	अगर ((mode & HOSTFS_I(ino)->mode) == mode) अणु
-		mutex_unlock(&HOSTFS_I(ino)->खोलो_mutex);
-		बंद_file(&fd);
-		वापस 0;
-	पूर्ण
-	अगर ((mode | HOSTFS_I(ino)->mode) != mode) अणु
+	mutex_lock(&HOSTFS_I(ino)->open_mutex);
+	/* somebody else had handled it first? */
+	if ((mode & HOSTFS_I(ino)->mode) == mode) {
+		mutex_unlock(&HOSTFS_I(ino)->open_mutex);
+		close_file(&fd);
+		return 0;
+	}
+	if ((mode | HOSTFS_I(ino)->mode) != mode) {
 		mode |= HOSTFS_I(ino)->mode;
-		mutex_unlock(&HOSTFS_I(ino)->खोलो_mutex);
-		बंद_file(&fd);
-		जाओ retry;
-	पूर्ण
-	अगर (HOSTFS_I(ino)->fd == -1) अणु
+		mutex_unlock(&HOSTFS_I(ino)->open_mutex);
+		close_file(&fd);
+		goto retry;
+	}
+	if (HOSTFS_I(ino)->fd == -1) {
 		HOSTFS_I(ino)->fd = fd;
-	पूर्ण अन्यथा अणु
+	} else {
 		err = replace_file(fd, HOSTFS_I(ino)->fd);
-		बंद_file(&fd);
-		अगर (err < 0) अणु
-			mutex_unlock(&HOSTFS_I(ino)->खोलो_mutex);
-			वापस err;
-		पूर्ण
-	पूर्ण
+		close_file(&fd);
+		if (err < 0) {
+			mutex_unlock(&HOSTFS_I(ino)->open_mutex);
+			return err;
+		}
+	}
 	HOSTFS_I(ino)->mode = mode;
-	mutex_unlock(&HOSTFS_I(ino)->खोलो_mutex);
+	mutex_unlock(&HOSTFS_I(ino)->open_mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hostfs_file_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	filemap_ग_लिखो_and_रुको(inode->i_mapping);
+static int hostfs_file_release(struct inode *inode, struct file *file)
+{
+	filemap_write_and_wait(inode->i_mapping);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hostfs_fsync(काष्ठा file *file, loff_t start, loff_t end,
-			पूर्णांक datasync)
-अणु
-	काष्ठा inode *inode = file->f_mapping->host;
-	पूर्णांक ret;
+static int hostfs_fsync(struct file *file, loff_t start, loff_t end,
+			int datasync)
+{
+	struct inode *inode = file->f_mapping->host;
+	int ret;
 
-	ret = file_ग_लिखो_and_रुको_range(file, start, end);
-	अगर (ret)
-		वापस ret;
+	ret = file_write_and_wait_range(file, start, end);
+	if (ret)
+		return ret;
 
 	inode_lock(inode);
 	ret = fsync_file(HOSTFS_I(inode)->fd, datasync);
 	inode_unlock(inode);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा file_operations hostfs_file_fops = अणु
+static const struct file_operations hostfs_file_fops = {
 	.llseek		= generic_file_llseek,
-	.splice_पढ़ो	= generic_file_splice_पढ़ो,
-	.पढ़ो_iter	= generic_file_पढ़ो_iter,
-	.ग_लिखो_iter	= generic_file_ग_लिखो_iter,
+	.splice_read	= generic_file_splice_read,
+	.read_iter	= generic_file_read_iter,
+	.write_iter	= generic_file_write_iter,
 	.mmap		= generic_file_mmap,
-	.खोलो		= hostfs_खोलो,
+	.open		= hostfs_open,
 	.release	= hostfs_file_release,
 	.fsync		= hostfs_fsync,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा file_operations hostfs_dir_fops = अणु
+static const struct file_operations hostfs_dir_fops = {
 	.llseek		= generic_file_llseek,
-	.iterate_shared	= hostfs_सूची_पढ़ो,
-	.पढ़ो		= generic_पढ़ो_dir,
-	.खोलो		= hostfs_खोलो,
+	.iterate_shared	= hostfs_readdir,
+	.read		= generic_read_dir,
+	.open		= hostfs_open,
 	.fsync		= hostfs_fsync,
-पूर्ण;
+};
 
-अटल पूर्णांक hostfs_ग_लिखोpage(काष्ठा page *page, काष्ठा ग_लिखोback_control *wbc)
-अणु
-	काष्ठा address_space *mapping = page->mapping;
-	काष्ठा inode *inode = mapping->host;
-	अक्षर *buffer;
+static int hostfs_writepage(struct page *page, struct writeback_control *wbc)
+{
+	struct address_space *mapping = page->mapping;
+	struct inode *inode = mapping->host;
+	char *buffer;
 	loff_t base = page_offset(page);
-	पूर्णांक count = PAGE_SIZE;
-	पूर्णांक end_index = inode->i_size >> PAGE_SHIFT;
-	पूर्णांक err;
+	int count = PAGE_SIZE;
+	int end_index = inode->i_size >> PAGE_SHIFT;
+	int err;
 
-	अगर (page->index >= end_index)
+	if (page->index >= end_index)
 		count = inode->i_size & (PAGE_SIZE-1);
 
 	buffer = kmap(page);
 
-	err = ग_लिखो_file(HOSTFS_I(inode)->fd, &base, buffer, count);
-	अगर (err != count) अणु
+	err = write_file(HOSTFS_I(inode)->fd, &base, buffer, count);
+	if (err != count) {
 		ClearPageUptodate(page);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (base > inode->i_size)
+	if (base > inode->i_size)
 		inode->i_size = base;
 
-	अगर (PageError(page))
+	if (PageError(page))
 		ClearPageError(page);
 	err = 0;
 
@@ -430,26 +429,26 @@ retry:
 	kunmap(page);
 
 	unlock_page(page);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक hostfs_पढ़ोpage(काष्ठा file *file, काष्ठा page *page)
-अणु
-	अक्षर *buffer;
+static int hostfs_readpage(struct file *file, struct page *page)
+{
+	char *buffer;
 	loff_t start = page_offset(page);
-	पूर्णांक bytes_पढ़ो, ret = 0;
+	int bytes_read, ret = 0;
 
 	buffer = kmap(page);
-	bytes_पढ़ो = पढ़ो_file(खाता_HOSTFS_I(file)->fd, &start, buffer,
+	bytes_read = read_file(FILE_HOSTFS_I(file)->fd, &start, buffer,
 			PAGE_SIZE);
-	अगर (bytes_पढ़ो < 0) अणु
+	if (bytes_read < 0) {
 		ClearPageUptodate(page);
 		SetPageError(page);
-		ret = bytes_पढ़ो;
-		जाओ out;
-	पूर्ण
+		ret = bytes_read;
+		goto out;
+	}
 
-	स_रखो(buffer + bytes_पढ़ो, 0, PAGE_SIZE - bytes_पढ़ो);
+	memset(buffer + bytes_read, 0, PAGE_SIZE - bytes_read);
 
 	ClearPageError(page);
 	SetPageUptodate(page);
@@ -458,552 +457,552 @@ retry:
 	flush_dcache_page(page);
 	kunmap(page);
 	unlock_page(page);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक hostfs_ग_लिखो_begin(काष्ठा file *file, काष्ठा address_space *mapping,
-			      loff_t pos, अचिन्हित len, अचिन्हित flags,
-			      काष्ठा page **pagep, व्योम **fsdata)
-अणु
+static int hostfs_write_begin(struct file *file, struct address_space *mapping,
+			      loff_t pos, unsigned len, unsigned flags,
+			      struct page **pagep, void **fsdata)
+{
 	pgoff_t index = pos >> PAGE_SHIFT;
 
-	*pagep = grab_cache_page_ग_लिखो_begin(mapping, index, flags);
-	अगर (!*pagep)
-		वापस -ENOMEM;
-	वापस 0;
-पूर्ण
+	*pagep = grab_cache_page_write_begin(mapping, index, flags);
+	if (!*pagep)
+		return -ENOMEM;
+	return 0;
+}
 
-अटल पूर्णांक hostfs_ग_लिखो_end(काष्ठा file *file, काष्ठा address_space *mapping,
-			    loff_t pos, अचिन्हित len, अचिन्हित copied,
-			    काष्ठा page *page, व्योम *fsdata)
-अणु
-	काष्ठा inode *inode = mapping->host;
-	व्योम *buffer;
-	अचिन्हित from = pos & (PAGE_SIZE - 1);
-	पूर्णांक err;
+static int hostfs_write_end(struct file *file, struct address_space *mapping,
+			    loff_t pos, unsigned len, unsigned copied,
+			    struct page *page, void *fsdata)
+{
+	struct inode *inode = mapping->host;
+	void *buffer;
+	unsigned from = pos & (PAGE_SIZE - 1);
+	int err;
 
 	buffer = kmap(page);
-	err = ग_लिखो_file(खाता_HOSTFS_I(file)->fd, &pos, buffer + from, copied);
+	err = write_file(FILE_HOSTFS_I(file)->fd, &pos, buffer + from, copied);
 	kunmap(page);
 
-	अगर (!PageUptodate(page) && err == PAGE_SIZE)
+	if (!PageUptodate(page) && err == PAGE_SIZE)
 		SetPageUptodate(page);
 
 	/*
-	 * If err > 0, ग_लिखो_file has added err to pos, so we are comparing
+	 * If err > 0, write_file has added err to pos, so we are comparing
 	 * i_size against the last byte written.
 	 */
-	अगर (err > 0 && (pos > inode->i_size))
+	if (err > 0 && (pos > inode->i_size))
 		inode->i_size = pos;
 	unlock_page(page);
 	put_page(page);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल स्थिर काष्ठा address_space_operations hostfs_aops = अणु
-	.ग_लिखोpage 	= hostfs_ग_लिखोpage,
-	.पढ़ोpage	= hostfs_पढ़ोpage,
+static const struct address_space_operations hostfs_aops = {
+	.writepage 	= hostfs_writepage,
+	.readpage	= hostfs_readpage,
 	.set_page_dirty = __set_page_dirty_nobuffers,
-	.ग_लिखो_begin	= hostfs_ग_लिखो_begin,
-	.ग_लिखो_end	= hostfs_ग_लिखो_end,
-पूर्ण;
+	.write_begin	= hostfs_write_begin,
+	.write_end	= hostfs_write_end,
+};
 
-अटल पूर्णांक पढ़ो_name(काष्ठा inode *ino, अक्षर *name)
-अणु
+static int read_name(struct inode *ino, char *name)
+{
 	dev_t rdev;
-	काष्ठा hostfs_stat st;
-	पूर्णांक err = stat_file(name, &st, -1);
-	अगर (err)
-		वापस err;
+	struct hostfs_stat st;
+	int err = stat_file(name, &st, -1);
+	if (err)
+		return err;
 
 	/* Reencode maj and min with the kernel encoding.*/
 	rdev = MKDEV(st.maj, st.min);
 
-	चयन (st.mode & S_IFMT) अणु
-	हाल S_IFLNK:
+	switch (st.mode & S_IFMT) {
+	case S_IFLNK:
 		ino->i_op = &hostfs_link_iops;
-		अवरोध;
-	हाल S_IFसूची:
+		break;
+	case S_IFDIR:
 		ino->i_op = &hostfs_dir_iops;
 		ino->i_fop = &hostfs_dir_fops;
-		अवरोध;
-	हाल S_IFCHR:
-	हाल S_IFBLK:
-	हाल S_IFIFO:
-	हाल S_IFSOCK:
+		break;
+	case S_IFCHR:
+	case S_IFBLK:
+	case S_IFIFO:
+	case S_IFSOCK:
 		init_special_inode(ino, st.mode & S_IFMT, rdev);
 		ino->i_op = &hostfs_iops;
-		अवरोध;
-	हाल S_IFREG:
+		break;
+	case S_IFREG:
 		ino->i_op = &hostfs_iops;
 		ino->i_fop = &hostfs_file_fops;
 		ino->i_mapping->a_ops = &hostfs_aops;
-		अवरोध;
-	शेष:
-		वापस -EIO;
-	पूर्ण
+		break;
+	default:
+		return -EIO;
+	}
 
 	ino->i_ino = st.ino;
 	ino->i_mode = st.mode;
 	set_nlink(ino, st.nlink);
-	i_uid_ग_लिखो(ino, st.uid);
-	i_gid_ग_लिखो(ino, st.gid);
-	ino->i_aसमय = (काष्ठा बारpec64)अणु st.aसमय.tv_sec, st.aसमय.tv_nsec पूर्ण;
-	ino->i_mसमय = (काष्ठा बारpec64)अणु st.mसमय.tv_sec, st.mसमय.tv_nsec पूर्ण;
-	ino->i_स_समय = (काष्ठा बारpec64)अणु st.स_समय.tv_sec, st.स_समय.tv_nsec पूर्ण;
+	i_uid_write(ino, st.uid);
+	i_gid_write(ino, st.gid);
+	ino->i_atime = (struct timespec64){ st.atime.tv_sec, st.atime.tv_nsec };
+	ino->i_mtime = (struct timespec64){ st.mtime.tv_sec, st.mtime.tv_nsec };
+	ino->i_ctime = (struct timespec64){ st.ctime.tv_sec, st.ctime.tv_nsec };
 	ino->i_size = st.size;
 	ino->i_blocks = st.blocks;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hostfs_create(काष्ठा user_namespace *mnt_userns, काष्ठा inode *dir,
-			 काष्ठा dentry *dentry, umode_t mode, bool excl)
-अणु
-	काष्ठा inode *inode;
-	अक्षर *name;
-	पूर्णांक error, fd;
+static int hostfs_create(struct user_namespace *mnt_userns, struct inode *dir,
+			 struct dentry *dentry, umode_t mode, bool excl)
+{
+	struct inode *inode;
+	char *name;
+	int error, fd;
 
 	inode = hostfs_iget(dir->i_sb);
-	अगर (IS_ERR(inode)) अणु
+	if (IS_ERR(inode)) {
 		error = PTR_ERR(inode);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	error = -ENOMEM;
 	name = dentry_name(dentry);
-	अगर (name == शून्य)
-		जाओ out_put;
+	if (name == NULL)
+		goto out_put;
 
 	fd = file_create(name, mode & 0777);
-	अगर (fd < 0)
+	if (fd < 0)
 		error = fd;
-	अन्यथा
-		error = पढ़ो_name(inode, name);
+	else
+		error = read_name(inode, name);
 
 	__putname(name);
-	अगर (error)
-		जाओ out_put;
+	if (error)
+		goto out_put;
 
 	HOSTFS_I(inode)->fd = fd;
 	HOSTFS_I(inode)->mode = FMODE_READ | FMODE_WRITE;
 	d_instantiate(dentry, inode);
-	वापस 0;
+	return 0;
 
  out_put:
 	iput(inode);
  out:
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल काष्ठा dentry *hostfs_lookup(काष्ठा inode *ino, काष्ठा dentry *dentry,
-				    अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा inode *inode;
-	अक्षर *name;
-	पूर्णांक err;
+static struct dentry *hostfs_lookup(struct inode *ino, struct dentry *dentry,
+				    unsigned int flags)
+{
+	struct inode *inode;
+	char *name;
+	int err;
 
 	inode = hostfs_iget(ino->i_sb);
-	अगर (IS_ERR(inode))
-		जाओ out;
+	if (IS_ERR(inode))
+		goto out;
 
 	err = -ENOMEM;
 	name = dentry_name(dentry);
-	अगर (name) अणु
-		err = पढ़ो_name(inode, name);
+	if (name) {
+		err = read_name(inode, name);
 		__putname(name);
-	पूर्ण
-	अगर (err) अणु
+	}
+	if (err) {
 		iput(inode);
-		inode = (err == -ENOENT) ? शून्य : ERR_PTR(err);
-	पूर्ण
+		inode = (err == -ENOENT) ? NULL : ERR_PTR(err);
+	}
  out:
-	वापस d_splice_alias(inode, dentry);
-पूर्ण
+	return d_splice_alias(inode, dentry);
+}
 
-अटल पूर्णांक hostfs_link(काष्ठा dentry *to, काष्ठा inode *ino,
-		       काष्ठा dentry *from)
-अणु
-	अक्षर *from_name, *to_name;
-	पूर्णांक err;
+static int hostfs_link(struct dentry *to, struct inode *ino,
+		       struct dentry *from)
+{
+	char *from_name, *to_name;
+	int err;
 
-	अगर ((from_name = dentry_name(from)) == शून्य)
-		वापस -ENOMEM;
+	if ((from_name = dentry_name(from)) == NULL)
+		return -ENOMEM;
 	to_name = dentry_name(to);
-	अगर (to_name == शून्य) अणु
+	if (to_name == NULL) {
 		__putname(from_name);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	err = link_file(to_name, from_name);
 	__putname(from_name);
 	__putname(to_name);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक hostfs_unlink(काष्ठा inode *ino, काष्ठा dentry *dentry)
-अणु
-	अक्षर *file;
-	पूर्णांक err;
+static int hostfs_unlink(struct inode *ino, struct dentry *dentry)
+{
+	char *file;
+	int err;
 
-	अगर (append)
-		वापस -EPERM;
+	if (append)
+		return -EPERM;
 
-	अगर ((file = dentry_name(dentry)) == शून्य)
-		वापस -ENOMEM;
+	if ((file = dentry_name(dentry)) == NULL)
+		return -ENOMEM;
 
 	err = unlink_file(file);
 	__putname(file);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक hostfs_symlink(काष्ठा user_namespace *mnt_userns, काष्ठा inode *ino,
-			  काष्ठा dentry *dentry, स्थिर अक्षर *to)
-अणु
-	अक्षर *file;
-	पूर्णांक err;
+static int hostfs_symlink(struct user_namespace *mnt_userns, struct inode *ino,
+			  struct dentry *dentry, const char *to)
+{
+	char *file;
+	int err;
 
-	अगर ((file = dentry_name(dentry)) == शून्य)
-		वापस -ENOMEM;
+	if ((file = dentry_name(dentry)) == NULL)
+		return -ENOMEM;
 	err = make_symlink(file, to);
 	__putname(file);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक hostfs_सूची_गढ़ो(काष्ठा user_namespace *mnt_userns, काष्ठा inode *ino,
-			काष्ठा dentry *dentry, umode_t mode)
-अणु
-	अक्षर *file;
-	पूर्णांक err;
+static int hostfs_mkdir(struct user_namespace *mnt_userns, struct inode *ino,
+			struct dentry *dentry, umode_t mode)
+{
+	char *file;
+	int err;
 
-	अगर ((file = dentry_name(dentry)) == शून्य)
-		वापस -ENOMEM;
-	err = करो_सूची_गढ़ो(file, mode);
+	if ((file = dentry_name(dentry)) == NULL)
+		return -ENOMEM;
+	err = do_mkdir(file, mode);
 	__putname(file);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक hostfs_सूची_हटाओ(काष्ठा inode *ino, काष्ठा dentry *dentry)
-अणु
-	अक्षर *file;
-	पूर्णांक err;
+static int hostfs_rmdir(struct inode *ino, struct dentry *dentry)
+{
+	char *file;
+	int err;
 
-	अगर ((file = dentry_name(dentry)) == शून्य)
-		वापस -ENOMEM;
-	err = hostfs_करो_सूची_हटाओ(file);
+	if ((file = dentry_name(dentry)) == NULL)
+		return -ENOMEM;
+	err = hostfs_do_rmdir(file);
 	__putname(file);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक hostfs_mknod(काष्ठा user_namespace *mnt_userns, काष्ठा inode *dir,
-			काष्ठा dentry *dentry, umode_t mode, dev_t dev)
-अणु
-	काष्ठा inode *inode;
-	अक्षर *name;
-	पूर्णांक err;
+static int hostfs_mknod(struct user_namespace *mnt_userns, struct inode *dir,
+			struct dentry *dentry, umode_t mode, dev_t dev)
+{
+	struct inode *inode;
+	char *name;
+	int err;
 
 	inode = hostfs_iget(dir->i_sb);
-	अगर (IS_ERR(inode)) अणु
+	if (IS_ERR(inode)) {
 		err = PTR_ERR(inode);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	err = -ENOMEM;
 	name = dentry_name(dentry);
-	अगर (name == शून्य)
-		जाओ out_put;
+	if (name == NULL)
+		goto out_put;
 
-	err = करो_mknod(name, mode, MAJOR(dev), MINOR(dev));
-	अगर (err)
-		जाओ out_मुक्त;
+	err = do_mknod(name, mode, MAJOR(dev), MINOR(dev));
+	if (err)
+		goto out_free;
 
-	err = पढ़ो_name(inode, name);
+	err = read_name(inode, name);
 	__putname(name);
-	अगर (err)
-		जाओ out_put;
+	if (err)
+		goto out_put;
 
 	d_instantiate(dentry, inode);
-	वापस 0;
+	return 0;
 
- out_मुक्त:
+ out_free:
 	__putname(name);
  out_put:
 	iput(inode);
  out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक hostfs_नाम2(काष्ठा user_namespace *mnt_userns,
-			  काष्ठा inode *old_dir, काष्ठा dentry *old_dentry,
-			  काष्ठा inode *new_dir, काष्ठा dentry *new_dentry,
-			  अचिन्हित पूर्णांक flags)
-अणु
-	अक्षर *old_name, *new_name;
-	पूर्णांक err;
+static int hostfs_rename2(struct user_namespace *mnt_userns,
+			  struct inode *old_dir, struct dentry *old_dentry,
+			  struct inode *new_dir, struct dentry *new_dentry,
+			  unsigned int flags)
+{
+	char *old_name, *new_name;
+	int err;
 
-	अगर (flags & ~(RENAME_NOREPLACE | RENAME_EXCHANGE))
-		वापस -EINVAL;
+	if (flags & ~(RENAME_NOREPLACE | RENAME_EXCHANGE))
+		return -EINVAL;
 
 	old_name = dentry_name(old_dentry);
-	अगर (old_name == शून्य)
-		वापस -ENOMEM;
+	if (old_name == NULL)
+		return -ENOMEM;
 	new_name = dentry_name(new_dentry);
-	अगर (new_name == शून्य) अणु
+	if (new_name == NULL) {
 		__putname(old_name);
-		वापस -ENOMEM;
-	पूर्ण
-	अगर (!flags)
-		err = नाम_file(old_name, new_name);
-	अन्यथा
-		err = नाम2_file(old_name, new_name, flags);
+		return -ENOMEM;
+	}
+	if (!flags)
+		err = rename_file(old_name, new_name);
+	else
+		err = rename2_file(old_name, new_name, flags);
 
 	__putname(old_name);
 	__putname(new_name);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक hostfs_permission(काष्ठा user_namespace *mnt_userns,
-			     काष्ठा inode *ino, पूर्णांक desired)
-अणु
-	अक्षर *name;
-	पूर्णांक r = 0, w = 0, x = 0, err;
+static int hostfs_permission(struct user_namespace *mnt_userns,
+			     struct inode *ino, int desired)
+{
+	char *name;
+	int r = 0, w = 0, x = 0, err;
 
-	अगर (desired & MAY_NOT_BLOCK)
-		वापस -ECHILD;
+	if (desired & MAY_NOT_BLOCK)
+		return -ECHILD;
 
-	अगर (desired & MAY_READ) r = 1;
-	अगर (desired & MAY_WRITE) w = 1;
-	अगर (desired & MAY_EXEC) x = 1;
+	if (desired & MAY_READ) r = 1;
+	if (desired & MAY_WRITE) w = 1;
+	if (desired & MAY_EXEC) x = 1;
 	name = inode_name(ino);
-	अगर (name == शून्य)
-		वापस -ENOMEM;
+	if (name == NULL)
+		return -ENOMEM;
 
-	अगर (S_ISCHR(ino->i_mode) || S_ISBLK(ino->i_mode) ||
+	if (S_ISCHR(ino->i_mode) || S_ISBLK(ino->i_mode) ||
 	    S_ISFIFO(ino->i_mode) || S_ISSOCK(ino->i_mode))
 		err = 0;
-	अन्यथा
+	else
 		err = access_file(name, r, w, x);
 	__putname(name);
-	अगर (!err)
+	if (!err)
 		err = generic_permission(&init_user_ns, ino, desired);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक hostfs_setattr(काष्ठा user_namespace *mnt_userns,
-			  काष्ठा dentry *dentry, काष्ठा iattr *attr)
-अणु
-	काष्ठा inode *inode = d_inode(dentry);
-	काष्ठा hostfs_iattr attrs;
-	अक्षर *name;
-	पूर्णांक err;
+static int hostfs_setattr(struct user_namespace *mnt_userns,
+			  struct dentry *dentry, struct iattr *attr)
+{
+	struct inode *inode = d_inode(dentry);
+	struct hostfs_iattr attrs;
+	char *name;
+	int err;
 
-	पूर्णांक fd = HOSTFS_I(inode)->fd;
+	int fd = HOSTFS_I(inode)->fd;
 
 	err = setattr_prepare(&init_user_ns, dentry, attr);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (append)
+	if (append)
 		attr->ia_valid &= ~ATTR_SIZE;
 
 	attrs.ia_valid = 0;
-	अगर (attr->ia_valid & ATTR_MODE) अणु
+	if (attr->ia_valid & ATTR_MODE) {
 		attrs.ia_valid |= HOSTFS_ATTR_MODE;
 		attrs.ia_mode = attr->ia_mode;
-	पूर्ण
-	अगर (attr->ia_valid & ATTR_UID) अणु
+	}
+	if (attr->ia_valid & ATTR_UID) {
 		attrs.ia_valid |= HOSTFS_ATTR_UID;
 		attrs.ia_uid = from_kuid(&init_user_ns, attr->ia_uid);
-	पूर्ण
-	अगर (attr->ia_valid & ATTR_GID) अणु
+	}
+	if (attr->ia_valid & ATTR_GID) {
 		attrs.ia_valid |= HOSTFS_ATTR_GID;
 		attrs.ia_gid = from_kgid(&init_user_ns, attr->ia_gid);
-	पूर्ण
-	अगर (attr->ia_valid & ATTR_SIZE) अणु
+	}
+	if (attr->ia_valid & ATTR_SIZE) {
 		attrs.ia_valid |= HOSTFS_ATTR_SIZE;
 		attrs.ia_size = attr->ia_size;
-	पूर्ण
-	अगर (attr->ia_valid & ATTR_ATIME) अणु
+	}
+	if (attr->ia_valid & ATTR_ATIME) {
 		attrs.ia_valid |= HOSTFS_ATTR_ATIME;
-		attrs.ia_aसमय = (काष्ठा hostfs_बारpec)
-			अणु attr->ia_aसमय.tv_sec, attr->ia_aसमय.tv_nsec पूर्ण;
-	पूर्ण
-	अगर (attr->ia_valid & ATTR_MTIME) अणु
+		attrs.ia_atime = (struct hostfs_timespec)
+			{ attr->ia_atime.tv_sec, attr->ia_atime.tv_nsec };
+	}
+	if (attr->ia_valid & ATTR_MTIME) {
 		attrs.ia_valid |= HOSTFS_ATTR_MTIME;
-		attrs.ia_mसमय = (काष्ठा hostfs_बारpec)
-			अणु attr->ia_mसमय.tv_sec, attr->ia_mसमय.tv_nsec पूर्ण;
-	पूर्ण
-	अगर (attr->ia_valid & ATTR_CTIME) अणु
+		attrs.ia_mtime = (struct hostfs_timespec)
+			{ attr->ia_mtime.tv_sec, attr->ia_mtime.tv_nsec };
+	}
+	if (attr->ia_valid & ATTR_CTIME) {
 		attrs.ia_valid |= HOSTFS_ATTR_CTIME;
-		attrs.ia_स_समय = (काष्ठा hostfs_बारpec)
-			अणु attr->ia_स_समय.tv_sec, attr->ia_स_समय.tv_nsec पूर्ण;
-	पूर्ण
-	अगर (attr->ia_valid & ATTR_ATIME_SET) अणु
+		attrs.ia_ctime = (struct hostfs_timespec)
+			{ attr->ia_ctime.tv_sec, attr->ia_ctime.tv_nsec };
+	}
+	if (attr->ia_valid & ATTR_ATIME_SET) {
 		attrs.ia_valid |= HOSTFS_ATTR_ATIME_SET;
-	पूर्ण
-	अगर (attr->ia_valid & ATTR_MTIME_SET) अणु
+	}
+	if (attr->ia_valid & ATTR_MTIME_SET) {
 		attrs.ia_valid |= HOSTFS_ATTR_MTIME_SET;
-	पूर्ण
+	}
 	name = dentry_name(dentry);
-	अगर (name == शून्य)
-		वापस -ENOMEM;
+	if (name == NULL)
+		return -ENOMEM;
 	err = set_attr(name, &attrs, fd);
 	__putname(name);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर ((attr->ia_valid & ATTR_SIZE) &&
-	    attr->ia_size != i_size_पढ़ो(inode))
+	if ((attr->ia_valid & ATTR_SIZE) &&
+	    attr->ia_size != i_size_read(inode))
 		truncate_setsize(inode, attr->ia_size);
 
 	setattr_copy(&init_user_ns, inode, attr);
 	mark_inode_dirty(inode);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा inode_operations hostfs_iops = अणु
+static const struct inode_operations hostfs_iops = {
 	.permission	= hostfs_permission,
 	.setattr	= hostfs_setattr,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा inode_operations hostfs_dir_iops = अणु
+static const struct inode_operations hostfs_dir_iops = {
 	.create		= hostfs_create,
 	.lookup		= hostfs_lookup,
 	.link		= hostfs_link,
 	.unlink		= hostfs_unlink,
 	.symlink	= hostfs_symlink,
-	.सूची_गढ़ो		= hostfs_सूची_गढ़ो,
-	.सूची_हटाओ		= hostfs_सूची_हटाओ,
+	.mkdir		= hostfs_mkdir,
+	.rmdir		= hostfs_rmdir,
 	.mknod		= hostfs_mknod,
-	.नाम		= hostfs_नाम2,
+	.rename		= hostfs_rename2,
 	.permission	= hostfs_permission,
 	.setattr	= hostfs_setattr,
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *hostfs_get_link(काष्ठा dentry *dentry,
-				   काष्ठा inode *inode,
-				   काष्ठा delayed_call *करोne)
-अणु
-	अक्षर *link;
-	अगर (!dentry)
-		वापस ERR_PTR(-ECHILD);
-	link = kदो_स्मृति(PATH_MAX, GFP_KERNEL);
-	अगर (link) अणु
-		अक्षर *path = dentry_name(dentry);
-		पूर्णांक err = -ENOMEM;
-		अगर (path) अणु
-			err = hostfs_करो_पढ़ोlink(path, link, PATH_MAX);
-			अगर (err == PATH_MAX)
+static const char *hostfs_get_link(struct dentry *dentry,
+				   struct inode *inode,
+				   struct delayed_call *done)
+{
+	char *link;
+	if (!dentry)
+		return ERR_PTR(-ECHILD);
+	link = kmalloc(PATH_MAX, GFP_KERNEL);
+	if (link) {
+		char *path = dentry_name(dentry);
+		int err = -ENOMEM;
+		if (path) {
+			err = hostfs_do_readlink(path, link, PATH_MAX);
+			if (err == PATH_MAX)
 				err = -E2BIG;
 			__putname(path);
-		पूर्ण
-		अगर (err < 0) अणु
-			kमुक्त(link);
-			वापस ERR_PTR(err);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+		}
+		if (err < 0) {
+			kfree(link);
+			return ERR_PTR(err);
+		}
+	} else {
+		return ERR_PTR(-ENOMEM);
+	}
 
-	set_delayed_call(करोne, kमुक्त_link, link);
-	वापस link;
-पूर्ण
+	set_delayed_call(done, kfree_link, link);
+	return link;
+}
 
-अटल स्थिर काष्ठा inode_operations hostfs_link_iops = अणु
+static const struct inode_operations hostfs_link_iops = {
 	.get_link	= hostfs_get_link,
-पूर्ण;
+};
 
-अटल पूर्णांक hostfs_fill_sb_common(काष्ठा super_block *sb, व्योम *d, पूर्णांक silent)
-अणु
-	काष्ठा inode *root_inode;
-	अक्षर *host_root_path, *req_root = d;
-	पूर्णांक err;
+static int hostfs_fill_sb_common(struct super_block *sb, void *d, int silent)
+{
+	struct inode *root_inode;
+	char *host_root_path, *req_root = d;
+	int err;
 
 	sb->s_blocksize = 1024;
 	sb->s_blocksize_bits = 10;
 	sb->s_magic = HOSTFS_SUPER_MAGIC;
 	sb->s_op = &hostfs_sbops;
 	sb->s_d_op = &simple_dentry_operations;
-	sb->s_maxbytes = MAX_LFS_खाताSIZE;
+	sb->s_maxbytes = MAX_LFS_FILESIZE;
 
-	/* शून्य is prपूर्णांकed as '(null)' by म_लिखो(): aव्योम that. */
-	अगर (req_root == शून्य)
+	/* NULL is printed as '(null)' by printf(): avoid that. */
+	if (req_root == NULL)
 		req_root = "";
 
 	err = -ENOMEM;
 	sb->s_fs_info = host_root_path =
-		kaप्र_लिखो(GFP_KERNEL, "%s/%s", root_ino, req_root);
-	अगर (host_root_path == शून्य)
-		जाओ out;
+		kasprintf(GFP_KERNEL, "%s/%s", root_ino, req_root);
+	if (host_root_path == NULL)
+		goto out;
 
 	root_inode = new_inode(sb);
-	अगर (!root_inode)
-		जाओ out;
+	if (!root_inode)
+		goto out;
 
-	err = पढ़ो_name(root_inode, host_root_path);
-	अगर (err)
-		जाओ out_put;
+	err = read_name(root_inode, host_root_path);
+	if (err)
+		goto out_put;
 
-	अगर (S_ISLNK(root_inode->i_mode)) अणु
-		अक्षर *name = follow_link(host_root_path);
-		अगर (IS_ERR(name)) अणु
+	if (S_ISLNK(root_inode->i_mode)) {
+		char *name = follow_link(host_root_path);
+		if (IS_ERR(name)) {
 			err = PTR_ERR(name);
-			जाओ out_put;
-		पूर्ण
-		err = पढ़ो_name(root_inode, name);
-		kमुक्त(name);
-		अगर (err)
-			जाओ out_put;
-	पूर्ण
+			goto out_put;
+		}
+		err = read_name(root_inode, name);
+		kfree(name);
+		if (err)
+			goto out_put;
+	}
 
 	err = -ENOMEM;
 	sb->s_root = d_make_root(root_inode);
-	अगर (sb->s_root == शून्य)
-		जाओ out;
+	if (sb->s_root == NULL)
+		goto out;
 
-	वापस 0;
+	return 0;
 
 out_put:
 	iput(root_inode);
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल काष्ठा dentry *hostfs_पढ़ो_sb(काष्ठा file_प्रणाली_type *type,
-			  पूर्णांक flags, स्थिर अक्षर *dev_name,
-			  व्योम *data)
-अणु
-	वापस mount_nodev(type, flags, data, hostfs_fill_sb_common);
-पूर्ण
+static struct dentry *hostfs_read_sb(struct file_system_type *type,
+			  int flags, const char *dev_name,
+			  void *data)
+{
+	return mount_nodev(type, flags, data, hostfs_fill_sb_common);
+}
 
-अटल व्योम hostfs_समाप्त_sb(काष्ठा super_block *s)
-अणु
-	समाप्त_anon_super(s);
-	kमुक्त(s->s_fs_info);
-पूर्ण
+static void hostfs_kill_sb(struct super_block *s)
+{
+	kill_anon_super(s);
+	kfree(s->s_fs_info);
+}
 
-अटल काष्ठा file_प्रणाली_type hostfs_type = अणु
+static struct file_system_type hostfs_type = {
 	.owner 		= THIS_MODULE,
 	.name 		= "hostfs",
-	.mount	 	= hostfs_पढ़ो_sb,
-	.समाप्त_sb	= hostfs_समाप्त_sb,
+	.mount	 	= hostfs_read_sb,
+	.kill_sb	= hostfs_kill_sb,
 	.fs_flags 	= 0,
-पूर्ण;
+};
 MODULE_ALIAS_FS("hostfs");
 
-अटल पूर्णांक __init init_hostfs(व्योम)
-अणु
+static int __init init_hostfs(void)
+{
 	hostfs_inode_cache = KMEM_CACHE(hostfs_inode_info, 0);
-	अगर (!hostfs_inode_cache)
-		वापस -ENOMEM;
-	वापस रेजिस्टर_fileप्रणाली(&hostfs_type);
-पूर्ण
+	if (!hostfs_inode_cache)
+		return -ENOMEM;
+	return register_filesystem(&hostfs_type);
+}
 
-अटल व्योम __निकास निकास_hostfs(व्योम)
-अणु
-	unरेजिस्टर_fileप्रणाली(&hostfs_type);
+static void __exit exit_hostfs(void)
+{
+	unregister_filesystem(&hostfs_type);
 	kmem_cache_destroy(hostfs_inode_cache);
-पूर्ण
+}
 
 module_init(init_hostfs)
-module_निकास(निकास_hostfs)
+module_exit(exit_hostfs)
 MODULE_LICENSE("GPL");

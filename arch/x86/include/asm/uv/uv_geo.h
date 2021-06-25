@@ -1,104 +1,103 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later
+/* SPDX-License-Identifier: GPL-2.0-or-later
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 2020 Hewlett Packard Enterprise Development LP. All rights reserved.
  */
 
-#अगर_अघोषित _ASM_UV_GEO_H
-#घोषणा _ASM_UV_GEO_H
+#ifndef _ASM_UV_GEO_H
+#define _ASM_UV_GEO_H
 
 /* Type declarations */
 
-/* Size of a geoid_s काष्ठाure (must be beक्रमe decl. of geoid_u) */
-#घोषणा GEOID_SIZE	8
+/* Size of a geoid_s structure (must be before decl. of geoid_u) */
+#define GEOID_SIZE	8
 
-/* Fields common to all subकाष्ठाures */
-काष्ठा geo_common_s अणु
-	अचिन्हित अक्षर type;		/* What type of h/w is named by this geoid_s */
-	अचिन्हित अक्षर blade;
-	अचिन्हित अक्षर slot;		/* slot is IRU */
-	अचिन्हित अक्षर upos;
-	अचिन्हित अक्षर rack;
-पूर्ण;
+/* Fields common to all substructures */
+struct geo_common_s {
+	unsigned char type;		/* What type of h/w is named by this geoid_s */
+	unsigned char blade;
+	unsigned char slot;		/* slot is IRU */
+	unsigned char upos;
+	unsigned char rack;
+};
 
-/* Additional fields क्रम particular types of hardware */
-काष्ठा geo_node_s अणु
-	काष्ठा geo_common_s common;		/* No additional fields needed */
-पूर्ण;
+/* Additional fields for particular types of hardware */
+struct geo_node_s {
+	struct geo_common_s common;		/* No additional fields needed */
+};
 
-काष्ठा geo_rtr_s अणु
-	काष्ठा geo_common_s common;		/* No additional fields needed */
-पूर्ण;
+struct geo_rtr_s {
+	struct geo_common_s common;		/* No additional fields needed */
+};
 
-काष्ठा geo_iocntl_s अणु
-	काष्ठा geo_common_s common;		/* No additional fields needed */
-पूर्ण;
+struct geo_iocntl_s {
+	struct geo_common_s common;		/* No additional fields needed */
+};
 
-काष्ठा geo_pcicard_s अणु
-	काष्ठा geo_iocntl_s common;
-	अक्षर bus;				/* Bus/widget number */
-	अक्षर slot;				/* PCI slot number */
-पूर्ण;
+struct geo_pcicard_s {
+	struct geo_iocntl_s common;
+	char bus;				/* Bus/widget number */
+	char slot;				/* PCI slot number */
+};
 
 /* Subcomponents of a node */
-काष्ठा geo_cpu_s अणु
-	काष्ठा geo_node_s node;
-	अचिन्हित अक्षर	socket:4,	/* Which CPU on the node */
-			thपढ़ो:4;
-	अचिन्हित अक्षर	core;
-पूर्ण;
+struct geo_cpu_s {
+	struct geo_node_s node;
+	unsigned char	socket:4,	/* Which CPU on the node */
+			thread:4;
+	unsigned char	core;
+};
 
-काष्ठा geo_mem_s अणु
-	काष्ठा geo_node_s node;
-	अक्षर membus;			/* The memory bus on the node */
-	अक्षर memslot;			/* The memory slot on the bus */
-पूर्ण;
+struct geo_mem_s {
+	struct geo_node_s node;
+	char membus;			/* The memory bus on the node */
+	char memslot;			/* The memory slot on the bus */
+};
 
-जोड़ geoid_u अणु
-	काष्ठा geo_common_s common;
-	काष्ठा geo_node_s node;
-	काष्ठा geo_iocntl_s iocntl;
-	काष्ठा geo_pcicard_s pcicard;
-	काष्ठा geo_rtr_s rtr;
-	काष्ठा geo_cpu_s cpu;
-	काष्ठा geo_mem_s mem;
-	अक्षर padsize[GEOID_SIZE];
-पूर्ण;
+union geoid_u {
+	struct geo_common_s common;
+	struct geo_node_s node;
+	struct geo_iocntl_s iocntl;
+	struct geo_pcicard_s pcicard;
+	struct geo_rtr_s rtr;
+	struct geo_cpu_s cpu;
+	struct geo_mem_s mem;
+	char padsize[GEOID_SIZE];
+};
 
-/* Defined स्थिरants */
+/* Defined constants */
 
-#घोषणा GEO_MAX_LEN	48
+#define GEO_MAX_LEN	48
 
-#घोषणा GEO_TYPE_INVALID	0
-#घोषणा GEO_TYPE_MODULE		1
-#घोषणा GEO_TYPE_NODE		2
-#घोषणा GEO_TYPE_RTR		3
-#घोषणा GEO_TYPE_IOCNTL		4
-#घोषणा GEO_TYPE_IOCARD		5
-#घोषणा GEO_TYPE_CPU		6
-#घोषणा GEO_TYPE_MEM		7
-#घोषणा GEO_TYPE_MAX		(GEO_TYPE_MEM+1)
+#define GEO_TYPE_INVALID	0
+#define GEO_TYPE_MODULE		1
+#define GEO_TYPE_NODE		2
+#define GEO_TYPE_RTR		3
+#define GEO_TYPE_IOCNTL		4
+#define GEO_TYPE_IOCARD		5
+#define GEO_TYPE_CPU		6
+#define GEO_TYPE_MEM		7
+#define GEO_TYPE_MAX		(GEO_TYPE_MEM+1)
 
-अटल अंतरभूत पूर्णांक geo_rack(जोड़ geoid_u g)
-अणु
-	वापस (g.common.type == GEO_TYPE_INVALID) ?
+static inline int geo_rack(union geoid_u g)
+{
+	return (g.common.type == GEO_TYPE_INVALID) ?
 		-1 : g.common.rack;
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक geo_slot(जोड़ geoid_u g)
-अणु
-	वापस (g.common.type == GEO_TYPE_INVALID) ?
+static inline int geo_slot(union geoid_u g)
+{
+	return (g.common.type == GEO_TYPE_INVALID) ?
 		-1 : g.common.upos;
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक geo_blade(जोड़ geoid_u g)
-अणु
-	वापस (g.common.type == GEO_TYPE_INVALID) ?
+static inline int geo_blade(union geoid_u g)
+{
+	return (g.common.type == GEO_TYPE_INVALID) ?
 		-1 : g.common.blade * 2 + g.common.slot;
-पूर्ण
+}
 
-#पूर्ण_अगर /* _ASM_UV_GEO_H */
+#endif /* _ASM_UV_GEO_H */

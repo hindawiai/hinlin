@@ -1,59 +1,58 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * WM831x घड़ी control
+ * WM831x clock control
  *
  * Copyright 2011-2 Wolfson Microelectronics PLC.
  *
- * Author: Mark Brown <broonie@खोलोsource.wolfsonmicro.com>
+ * Author: Mark Brown <broonie@opensource.wolfsonmicro.com>
  */
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/mfd/wm831x/core.h>
+#include <linux/clk-provider.h>
+#include <linux/delay.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/platform_device.h>
+#include <linux/mfd/wm831x/core.h>
 
-काष्ठा wm831x_clk अणु
-	काष्ठा wm831x *wm831x;
-	काष्ठा clk_hw xtal_hw;
-	काष्ठा clk_hw fll_hw;
-	काष्ठा clk_hw clkout_hw;
+struct wm831x_clk {
+	struct wm831x *wm831x;
+	struct clk_hw xtal_hw;
+	struct clk_hw fll_hw;
+	struct clk_hw clkout_hw;
 	bool xtal_ena;
-पूर्ण;
+};
 
-अटल पूर्णांक wm831x_xtal_is_prepared(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा wm831x_clk *clkdata = container_of(hw, काष्ठा wm831x_clk,
+static int wm831x_xtal_is_prepared(struct clk_hw *hw)
+{
+	struct wm831x_clk *clkdata = container_of(hw, struct wm831x_clk,
 						  xtal_hw);
 
-	वापस clkdata->xtal_ena;
-पूर्ण
+	return clkdata->xtal_ena;
+}
 
-अटल अचिन्हित दीर्घ wm831x_xtal_recalc_rate(काष्ठा clk_hw *hw,
-					     अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा wm831x_clk *clkdata = container_of(hw, काष्ठा wm831x_clk,
+static unsigned long wm831x_xtal_recalc_rate(struct clk_hw *hw,
+					     unsigned long parent_rate)
+{
+	struct wm831x_clk *clkdata = container_of(hw, struct wm831x_clk,
 						  xtal_hw);
 
-	अगर (clkdata->xtal_ena)
-		वापस 32768;
-	अन्यथा
-		वापस 0;
-पूर्ण
+	if (clkdata->xtal_ena)
+		return 32768;
+	else
+		return 0;
+}
 
-अटल स्थिर काष्ठा clk_ops wm831x_xtal_ops = अणु
+static const struct clk_ops wm831x_xtal_ops = {
 	.is_prepared = wm831x_xtal_is_prepared,
 	.recalc_rate = wm831x_xtal_recalc_rate,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा clk_init_data wm831x_xtal_init = अणु
+static const struct clk_init_data wm831x_xtal_init = {
 	.name = "xtal",
 	.ops = &wm831x_xtal_ops,
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित दीर्घ wm831x_fll_स्वतः_rates[] = अणु
+static const unsigned long wm831x_fll_auto_rates[] = {
 	 2048000,
 	11289600,
 	12000000,
@@ -62,156 +61,156 @@
 	22579600,
 	24000000,
 	24576000,
-पूर्ण;
+};
 
-अटल पूर्णांक wm831x_fll_is_prepared(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा wm831x_clk *clkdata = container_of(hw, काष्ठा wm831x_clk,
+static int wm831x_fll_is_prepared(struct clk_hw *hw)
+{
+	struct wm831x_clk *clkdata = container_of(hw, struct wm831x_clk,
 						  fll_hw);
-	काष्ठा wm831x *wm831x = clkdata->wm831x;
-	पूर्णांक ret;
+	struct wm831x *wm831x = clkdata->wm831x;
+	int ret;
 
-	ret = wm831x_reg_पढ़ो(wm831x, WM831X_FLL_CONTROL_1);
-	अगर (ret < 0) अणु
+	ret = wm831x_reg_read(wm831x, WM831X_FLL_CONTROL_1);
+	if (ret < 0) {
 		dev_err(wm831x->dev, "Unable to read FLL_CONTROL_1: %d\n",
 			ret);
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	वापस (ret & WM831X_FLL_ENA) != 0;
-पूर्ण
+	return (ret & WM831X_FLL_ENA) != 0;
+}
 
-अटल पूर्णांक wm831x_fll_prepare(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा wm831x_clk *clkdata = container_of(hw, काष्ठा wm831x_clk,
+static int wm831x_fll_prepare(struct clk_hw *hw)
+{
+	struct wm831x_clk *clkdata = container_of(hw, struct wm831x_clk,
 						  fll_hw);
-	काष्ठा wm831x *wm831x = clkdata->wm831x;
-	पूर्णांक ret;
+	struct wm831x *wm831x = clkdata->wm831x;
+	int ret;
 
 	ret = wm831x_set_bits(wm831x, WM831X_FLL_CONTROL_1,
 			      WM831X_FLL_ENA, WM831X_FLL_ENA);
-	अगर (ret != 0)
+	if (ret != 0)
 		dev_crit(wm831x->dev, "Failed to enable FLL: %d\n", ret);
 
-	/* रुको 2-3 ms क्रम new frequency taking effect */
+	/* wait 2-3 ms for new frequency taking effect */
 	usleep_range(2000, 3000);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम wm831x_fll_unprepare(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा wm831x_clk *clkdata = container_of(hw, काष्ठा wm831x_clk,
+static void wm831x_fll_unprepare(struct clk_hw *hw)
+{
+	struct wm831x_clk *clkdata = container_of(hw, struct wm831x_clk,
 						  fll_hw);
-	काष्ठा wm831x *wm831x = clkdata->wm831x;
-	पूर्णांक ret;
+	struct wm831x *wm831x = clkdata->wm831x;
+	int ret;
 
 	ret = wm831x_set_bits(wm831x, WM831X_FLL_CONTROL_1, WM831X_FLL_ENA, 0);
-	अगर (ret != 0)
+	if (ret != 0)
 		dev_crit(wm831x->dev, "Failed to disable FLL: %d\n", ret);
-पूर्ण
+}
 
-अटल अचिन्हित दीर्घ wm831x_fll_recalc_rate(काष्ठा clk_hw *hw,
-					    अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा wm831x_clk *clkdata = container_of(hw, काष्ठा wm831x_clk,
+static unsigned long wm831x_fll_recalc_rate(struct clk_hw *hw,
+					    unsigned long parent_rate)
+{
+	struct wm831x_clk *clkdata = container_of(hw, struct wm831x_clk,
 						  fll_hw);
-	काष्ठा wm831x *wm831x = clkdata->wm831x;
-	पूर्णांक ret;
+	struct wm831x *wm831x = clkdata->wm831x;
+	int ret;
 
-	ret = wm831x_reg_पढ़ो(wm831x, WM831X_CLOCK_CONTROL_2);
-	अगर (ret < 0) अणु
+	ret = wm831x_reg_read(wm831x, WM831X_CLOCK_CONTROL_2);
+	if (ret < 0) {
 		dev_err(wm831x->dev, "Unable to read CLOCK_CONTROL_2: %d\n",
 			ret);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (ret & WM831X_FLL_AUTO)
-		वापस wm831x_fll_स्वतः_rates[ret & WM831X_FLL_AUTO_FREQ_MASK];
+	if (ret & WM831X_FLL_AUTO)
+		return wm831x_fll_auto_rates[ret & WM831X_FLL_AUTO_FREQ_MASK];
 
 	dev_err(wm831x->dev, "FLL only supported in AUTO mode\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल दीर्घ wm831x_fll_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				  अचिन्हित दीर्घ *unused)
-अणु
-	पूर्णांक best = 0;
-	पूर्णांक i;
+static long wm831x_fll_round_rate(struct clk_hw *hw, unsigned long rate,
+				  unsigned long *unused)
+{
+	int best = 0;
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(wm831x_fll_स्वतः_rates); i++)
-		अगर (असल(wm831x_fll_स्वतः_rates[i] - rate) <
-		    असल(wm831x_fll_स्वतः_rates[best] - rate))
+	for (i = 0; i < ARRAY_SIZE(wm831x_fll_auto_rates); i++)
+		if (abs(wm831x_fll_auto_rates[i] - rate) <
+		    abs(wm831x_fll_auto_rates[best] - rate))
 			best = i;
 
-	वापस wm831x_fll_स्वतः_rates[best];
-पूर्ण
+	return wm831x_fll_auto_rates[best];
+}
 
-अटल पूर्णांक wm831x_fll_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-			       अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा wm831x_clk *clkdata = container_of(hw, काष्ठा wm831x_clk,
+static int wm831x_fll_set_rate(struct clk_hw *hw, unsigned long rate,
+			       unsigned long parent_rate)
+{
+	struct wm831x_clk *clkdata = container_of(hw, struct wm831x_clk,
 						  fll_hw);
-	काष्ठा wm831x *wm831x = clkdata->wm831x;
-	पूर्णांक i;
+	struct wm831x *wm831x = clkdata->wm831x;
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(wm831x_fll_स्वतः_rates); i++)
-		अगर (wm831x_fll_स्वतः_rates[i] == rate)
-			अवरोध;
-	अगर (i == ARRAY_SIZE(wm831x_fll_स्वतः_rates))
-		वापस -EINVAL;
+	for (i = 0; i < ARRAY_SIZE(wm831x_fll_auto_rates); i++)
+		if (wm831x_fll_auto_rates[i] == rate)
+			break;
+	if (i == ARRAY_SIZE(wm831x_fll_auto_rates))
+		return -EINVAL;
 
-	अगर (wm831x_fll_is_prepared(hw))
-		वापस -EPERM;
+	if (wm831x_fll_is_prepared(hw))
+		return -EPERM;
 
-	वापस wm831x_set_bits(wm831x, WM831X_CLOCK_CONTROL_2,
+	return wm831x_set_bits(wm831x, WM831X_CLOCK_CONTROL_2,
 			       WM831X_FLL_AUTO_FREQ_MASK, i);
-पूर्ण
+}
 
-अटल स्थिर अक्षर *wm831x_fll_parents[] = अणु
+static const char *wm831x_fll_parents[] = {
 	"xtal",
 	"clkin",
-पूर्ण;
+};
 
-अटल u8 wm831x_fll_get_parent(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा wm831x_clk *clkdata = container_of(hw, काष्ठा wm831x_clk,
+static u8 wm831x_fll_get_parent(struct clk_hw *hw)
+{
+	struct wm831x_clk *clkdata = container_of(hw, struct wm831x_clk,
 						  fll_hw);
-	काष्ठा wm831x *wm831x = clkdata->wm831x;
-	पूर्णांक ret;
+	struct wm831x *wm831x = clkdata->wm831x;
+	int ret;
 
-	/* AUTO mode is always घड़ीed from the crystal */
-	ret = wm831x_reg_पढ़ो(wm831x, WM831X_CLOCK_CONTROL_2);
-	अगर (ret < 0) अणु
+	/* AUTO mode is always clocked from the crystal */
+	ret = wm831x_reg_read(wm831x, WM831X_CLOCK_CONTROL_2);
+	if (ret < 0) {
 		dev_err(wm831x->dev, "Unable to read CLOCK_CONTROL_2: %d\n",
 			ret);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (ret & WM831X_FLL_AUTO)
-		वापस 0;
+	if (ret & WM831X_FLL_AUTO)
+		return 0;
 
-	ret = wm831x_reg_पढ़ो(wm831x, WM831X_FLL_CONTROL_5);
-	अगर (ret < 0) अणु
+	ret = wm831x_reg_read(wm831x, WM831X_FLL_CONTROL_5);
+	if (ret < 0) {
 		dev_err(wm831x->dev, "Unable to read FLL_CONTROL_5: %d\n",
 			ret);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	चयन (ret & WM831X_FLL_CLK_SRC_MASK) अणु
-	हाल 0:
-		वापस 0;
-	हाल 1:
-		वापस 1;
-	शेष:
+	switch (ret & WM831X_FLL_CLK_SRC_MASK) {
+	case 0:
+		return 0;
+	case 1:
+		return 1;
+	default:
 		dev_err(wm831x->dev, "Unsupported FLL clock source %d\n",
 			ret & WM831X_FLL_CLK_SRC_MASK);
-		वापस 0;
-	पूर्ण
-पूर्ण
+		return 0;
+	}
+}
 
-अटल स्थिर काष्ठा clk_ops wm831x_fll_ops = अणु
+static const struct clk_ops wm831x_fll_ops = {
 	.is_prepared = wm831x_fll_is_prepared,
 	.prepare = wm831x_fll_prepare,
 	.unprepare = wm831x_fll_unprepare,
@@ -219,180 +218,180 @@
 	.recalc_rate = wm831x_fll_recalc_rate,
 	.set_rate = wm831x_fll_set_rate,
 	.get_parent = wm831x_fll_get_parent,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा clk_init_data wm831x_fll_init = अणु
+static const struct clk_init_data wm831x_fll_init = {
 	.name = "fll",
 	.ops = &wm831x_fll_ops,
 	.parent_names = wm831x_fll_parents,
 	.num_parents = ARRAY_SIZE(wm831x_fll_parents),
 	.flags = CLK_SET_RATE_GATE,
-पूर्ण;
+};
 
-अटल पूर्णांक wm831x_clkout_is_prepared(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा wm831x_clk *clkdata = container_of(hw, काष्ठा wm831x_clk,
+static int wm831x_clkout_is_prepared(struct clk_hw *hw)
+{
+	struct wm831x_clk *clkdata = container_of(hw, struct wm831x_clk,
 						  clkout_hw);
-	काष्ठा wm831x *wm831x = clkdata->wm831x;
-	पूर्णांक ret;
+	struct wm831x *wm831x = clkdata->wm831x;
+	int ret;
 
-	ret = wm831x_reg_पढ़ो(wm831x, WM831X_CLOCK_CONTROL_1);
-	अगर (ret < 0) अणु
+	ret = wm831x_reg_read(wm831x, WM831X_CLOCK_CONTROL_1);
+	if (ret < 0) {
 		dev_err(wm831x->dev, "Unable to read CLOCK_CONTROL_1: %d\n",
 			ret);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	वापस (ret & WM831X_CLKOUT_ENA) != 0;
-पूर्ण
+	return (ret & WM831X_CLKOUT_ENA) != 0;
+}
 
-अटल पूर्णांक wm831x_clkout_prepare(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा wm831x_clk *clkdata = container_of(hw, काष्ठा wm831x_clk,
+static int wm831x_clkout_prepare(struct clk_hw *hw)
+{
+	struct wm831x_clk *clkdata = container_of(hw, struct wm831x_clk,
 						  clkout_hw);
-	काष्ठा wm831x *wm831x = clkdata->wm831x;
-	पूर्णांक ret;
+	struct wm831x *wm831x = clkdata->wm831x;
+	int ret;
 
 	ret = wm831x_reg_unlock(wm831x);
-	अगर (ret != 0) अणु
+	if (ret != 0) {
 		dev_crit(wm831x->dev, "Failed to lock registers: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = wm831x_set_bits(wm831x, WM831X_CLOCK_CONTROL_1,
 			      WM831X_CLKOUT_ENA, WM831X_CLKOUT_ENA);
-	अगर (ret != 0)
+	if (ret != 0)
 		dev_crit(wm831x->dev, "Failed to enable CLKOUT: %d\n", ret);
 
 	wm831x_reg_lock(wm831x);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम wm831x_clkout_unprepare(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा wm831x_clk *clkdata = container_of(hw, काष्ठा wm831x_clk,
+static void wm831x_clkout_unprepare(struct clk_hw *hw)
+{
+	struct wm831x_clk *clkdata = container_of(hw, struct wm831x_clk,
 						  clkout_hw);
-	काष्ठा wm831x *wm831x = clkdata->wm831x;
-	पूर्णांक ret;
+	struct wm831x *wm831x = clkdata->wm831x;
+	int ret;
 
 	ret = wm831x_reg_unlock(wm831x);
-	अगर (ret != 0) अणु
+	if (ret != 0) {
 		dev_crit(wm831x->dev, "Failed to lock registers: %d\n", ret);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	ret = wm831x_set_bits(wm831x, WM831X_CLOCK_CONTROL_1,
 			      WM831X_CLKOUT_ENA, 0);
-	अगर (ret != 0)
+	if (ret != 0)
 		dev_crit(wm831x->dev, "Failed to disable CLKOUT: %d\n", ret);
 
 	wm831x_reg_lock(wm831x);
-पूर्ण
+}
 
-अटल स्थिर अक्षर *wm831x_clkout_parents[] = अणु
+static const char *wm831x_clkout_parents[] = {
 	"fll",
 	"xtal",
-पूर्ण;
+};
 
-अटल u8 wm831x_clkout_get_parent(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा wm831x_clk *clkdata = container_of(hw, काष्ठा wm831x_clk,
+static u8 wm831x_clkout_get_parent(struct clk_hw *hw)
+{
+	struct wm831x_clk *clkdata = container_of(hw, struct wm831x_clk,
 						  clkout_hw);
-	काष्ठा wm831x *wm831x = clkdata->wm831x;
-	पूर्णांक ret;
+	struct wm831x *wm831x = clkdata->wm831x;
+	int ret;
 
-	ret = wm831x_reg_पढ़ो(wm831x, WM831X_CLOCK_CONTROL_1);
-	अगर (ret < 0) अणु
+	ret = wm831x_reg_read(wm831x, WM831X_CLOCK_CONTROL_1);
+	if (ret < 0) {
 		dev_err(wm831x->dev, "Unable to read CLOCK_CONTROL_1: %d\n",
 			ret);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (ret & WM831X_CLKOUT_SRC)
-		वापस 1;
-	अन्यथा
-		वापस 0;
-पूर्ण
+	if (ret & WM831X_CLKOUT_SRC)
+		return 1;
+	else
+		return 0;
+}
 
-अटल पूर्णांक wm831x_clkout_set_parent(काष्ठा clk_hw *hw, u8 parent)
-अणु
-	काष्ठा wm831x_clk *clkdata = container_of(hw, काष्ठा wm831x_clk,
+static int wm831x_clkout_set_parent(struct clk_hw *hw, u8 parent)
+{
+	struct wm831x_clk *clkdata = container_of(hw, struct wm831x_clk,
 						  clkout_hw);
-	काष्ठा wm831x *wm831x = clkdata->wm831x;
+	struct wm831x *wm831x = clkdata->wm831x;
 
-	वापस wm831x_set_bits(wm831x, WM831X_CLOCK_CONTROL_1,
+	return wm831x_set_bits(wm831x, WM831X_CLOCK_CONTROL_1,
 			       WM831X_CLKOUT_SRC,
 			       parent << WM831X_CLKOUT_SRC_SHIFT);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा clk_ops wm831x_clkout_ops = अणु
+static const struct clk_ops wm831x_clkout_ops = {
 	.is_prepared = wm831x_clkout_is_prepared,
 	.prepare = wm831x_clkout_prepare,
 	.unprepare = wm831x_clkout_unprepare,
 	.get_parent = wm831x_clkout_get_parent,
 	.set_parent = wm831x_clkout_set_parent,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा clk_init_data wm831x_clkout_init = अणु
+static const struct clk_init_data wm831x_clkout_init = {
 	.name = "clkout",
 	.ops = &wm831x_clkout_ops,
 	.parent_names = wm831x_clkout_parents,
 	.num_parents = ARRAY_SIZE(wm831x_clkout_parents),
 	.flags = CLK_SET_RATE_PARENT,
-पूर्ण;
+};
 
-अटल पूर्णांक wm831x_clk_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा wm831x *wm831x = dev_get_drvdata(pdev->dev.parent);
-	काष्ठा wm831x_clk *clkdata;
-	पूर्णांक ret;
+static int wm831x_clk_probe(struct platform_device *pdev)
+{
+	struct wm831x *wm831x = dev_get_drvdata(pdev->dev.parent);
+	struct wm831x_clk *clkdata;
+	int ret;
 
-	clkdata = devm_kzalloc(&pdev->dev, माप(*clkdata), GFP_KERNEL);
-	अगर (!clkdata)
-		वापस -ENOMEM;
+	clkdata = devm_kzalloc(&pdev->dev, sizeof(*clkdata), GFP_KERNEL);
+	if (!clkdata)
+		return -ENOMEM;
 
 	clkdata->wm831x = wm831x;
 
-	/* XTAL_ENA can only be set via OTP/InstantConfig so just पढ़ो once */
-	ret = wm831x_reg_पढ़ो(wm831x, WM831X_CLOCK_CONTROL_2);
-	अगर (ret < 0) अणु
+	/* XTAL_ENA can only be set via OTP/InstantConfig so just read once */
+	ret = wm831x_reg_read(wm831x, WM831X_CLOCK_CONTROL_2);
+	if (ret < 0) {
 		dev_err(wm831x->dev, "Unable to read CLOCK_CONTROL_2: %d\n",
 			ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	clkdata->xtal_ena = ret & WM831X_XTAL_ENA;
 
 	clkdata->xtal_hw.init = &wm831x_xtal_init;
-	ret = devm_clk_hw_रेजिस्टर(&pdev->dev, &clkdata->xtal_hw);
-	अगर (ret)
-		वापस ret;
+	ret = devm_clk_hw_register(&pdev->dev, &clkdata->xtal_hw);
+	if (ret)
+		return ret;
 
 	clkdata->fll_hw.init = &wm831x_fll_init;
-	ret = devm_clk_hw_रेजिस्टर(&pdev->dev, &clkdata->fll_hw);
-	अगर (ret)
-		वापस ret;
+	ret = devm_clk_hw_register(&pdev->dev, &clkdata->fll_hw);
+	if (ret)
+		return ret;
 
 	clkdata->clkout_hw.init = &wm831x_clkout_init;
-	ret = devm_clk_hw_रेजिस्टर(&pdev->dev, &clkdata->clkout_hw);
-	अगर (ret)
-		वापस ret;
+	ret = devm_clk_hw_register(&pdev->dev, &clkdata->clkout_hw);
+	if (ret)
+		return ret;
 
-	platक्रमm_set_drvdata(pdev, clkdata);
+	platform_set_drvdata(pdev, clkdata);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver wm831x_clk_driver = अणु
+static struct platform_driver wm831x_clk_driver = {
 	.probe = wm831x_clk_probe,
-	.driver		= अणु
+	.driver		= {
 		.name	= "wm831x-clk",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(wm831x_clk_driver);
+module_platform_driver(wm831x_clk_driver);
 
-/* Module inक्रमmation */
+/* Module information */
 MODULE_AUTHOR("Mark Brown <broonie@opensource.wolfsonmicro.com>");
 MODULE_DESCRIPTION("WM831x clock driver");
 MODULE_LICENSE("GPL");

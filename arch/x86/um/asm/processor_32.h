@@ -1,54 +1,53 @@
-<शैली गुरु>
 /*
  * Copyright (C) 2002 Jeff Dike (jdike@karaya.com)
  * Licensed under the GPL
  */
 
-#अगर_अघोषित __UM_PROCESSOR_I386_H
-#घोषणा __UM_PROCESSOR_I386_H
+#ifndef __UM_PROCESSOR_I386_H
+#define __UM_PROCESSOR_I386_H
 
-#समावेश <linux/माला.स>
-#समावेश <यंत्र/segment.h>
-#समावेश <यंत्र/ldt.h>
+#include <linux/string.h>
+#include <asm/segment.h>
+#include <asm/ldt.h>
 
-बाह्य पूर्णांक host_has_cmov;
+extern int host_has_cmov;
 
-काष्ठा uml_tls_काष्ठा अणु
-	काष्ठा user_desc tls;
-	अचिन्हित flushed:1;
-	अचिन्हित present:1;
-पूर्ण;
+struct uml_tls_struct {
+	struct user_desc tls;
+	unsigned flushed:1;
+	unsigned present:1;
+};
 
-काष्ठा arch_thपढ़ो अणु
-	काष्ठा uml_tls_काष्ठा tls_array[GDT_ENTRY_TLS_ENTRIES];
-	अचिन्हित दीर्घ debugregs[8];
-	पूर्णांक debugregs_seq;
-	काष्ठा faultinfo faultinfo;
-पूर्ण;
+struct arch_thread {
+	struct uml_tls_struct tls_array[GDT_ENTRY_TLS_ENTRIES];
+	unsigned long debugregs[8];
+	int debugregs_seq;
+	struct faultinfo faultinfo;
+};
 
-#घोषणा INIT_ARCH_THREAD अणु \
-	.tls_array  		= अणु [ 0 ... GDT_ENTRY_TLS_ENTRIES - 1 ] = \
-				    अणु .present = 0, .flushed = 0 पूर्ण पूर्ण, \
-	.debugregs  		= अणु [ 0 ... 7 ] = 0 पूर्ण, \
+#define INIT_ARCH_THREAD { \
+	.tls_array  		= { [ 0 ... GDT_ENTRY_TLS_ENTRIES - 1 ] = \
+				    { .present = 0, .flushed = 0 } }, \
+	.debugregs  		= { [ 0 ... 7 ] = 0 }, \
 	.debugregs_seq		= 0, \
-	.faultinfo		= अणु 0, 0, 0 पूर्ण \
-पूर्ण
+	.faultinfo		= { 0, 0, 0 } \
+}
 
-#घोषणा STACKSLOTS_PER_LINE 8
+#define STACKSLOTS_PER_LINE 8
 
-अटल अंतरभूत व्योम arch_flush_thपढ़ो(काष्ठा arch_thपढ़ो *thपढ़ो)
-अणु
+static inline void arch_flush_thread(struct arch_thread *thread)
+{
 	/* Clear any TLS still hanging */
-	स_रखो(&thपढ़ो->tls_array, 0, माप(thपढ़ो->tls_array));
-पूर्ण
+	memset(&thread->tls_array, 0, sizeof(thread->tls_array));
+}
 
-अटल अंतरभूत व्योम arch_copy_thपढ़ो(काष्ठा arch_thपढ़ो *from,
-                                    काष्ठा arch_thपढ़ो *to)
-अणु
-        स_नकल(&to->tls_array, &from->tls_array, माप(from->tls_array));
-पूर्ण
+static inline void arch_copy_thread(struct arch_thread *from,
+                                    struct arch_thread *to)
+{
+        memcpy(&to->tls_array, &from->tls_array, sizeof(from->tls_array));
+}
 
-#घोषणा current_sp() (अणु व्योम *sp; __यंत्र__("movl %%esp, %0" : "=r" (sp) : ); sp; पूर्ण)
-#घोषणा current_bp() (अणु अचिन्हित दीर्घ bp; __यंत्र__("movl %%ebp, %0" : "=r" (bp) : ); bp; पूर्ण)
+#define current_sp() ({ void *sp; __asm__("movl %%esp, %0" : "=r" (sp) : ); sp; })
+#define current_bp() ({ unsigned long bp; __asm__("movl %%ebp, %0" : "=r" (bp) : ); bp; })
 
-#पूर्ण_अगर
+#endif

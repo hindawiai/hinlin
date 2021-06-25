@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * pata_cmd64x.c 	- CMD64x PATA क्रम new ATA layer
+ * pata_cmd64x.c 	- CMD64x PATA for new ATA layer
  *			  (C) 2005 Red Hat Inc
  *			  Alan Cox <alan@lxorguk.ukuu.org.uk>
  *			  (C) 2009-2010 Bartlomiej Zolnierkiewicz
@@ -10,9 +9,9 @@
  * Based upon
  * linux/drivers/ide/pci/cmd64x.c		Version 1.30	Sept 10, 2002
  *
- * cmd64x.c: Enable पूर्णांकerrupts at initialization समय on Ultra/PCI machines.
- *           Note, this driver is not used at all on other प्रणालीs because
- *           there the "BIOS" has करोne all of the following alपढ़ोy.
+ * cmd64x.c: Enable interrupts at initialization time on Ultra/PCI machines.
+ *           Note, this driver is not used at all on other systems because
+ *           there the "BIOS" has done all of the following already.
  *           Due to massive hardware bugs, UltraDMA is only supported
  *           on the 646U2 and not on the 646U.
  *
@@ -25,22 +24,22 @@
  *	Testing work
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/delay.h>
-#समावेश <scsi/scsi_host.h>
-#समावेश <linux/libata.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/pci.h>
+#include <linux/blkdev.h>
+#include <linux/delay.h>
+#include <scsi/scsi_host.h>
+#include <linux/libata.h>
 
-#घोषणा DRV_NAME "pata_cmd64x"
-#घोषणा DRV_VERSION "0.2.18"
+#define DRV_NAME "pata_cmd64x"
+#define DRV_VERSION "0.2.18"
 
 /*
- * CMD64x specअगरic रेजिस्टरs definition.
+ * CMD64x specific registers definition.
  */
 
-क्रमागत अणु
+enum {
 	CFR 		= 0x50,
 		CFR_INTR_CH0  = 0x04,
 	CNTRL		= 0x51,
@@ -69,462 +68,462 @@
 	BMIDECSR	= 0x79,
 	UDIDETCR1	= 0x7B,
 	DTPR1		= 0x7C
-पूर्ण;
+};
 
-अटल पूर्णांक cmd648_cable_detect(काष्ठा ata_port *ap)
-अणु
-	काष्ठा pci_dev *pdev = to_pci_dev(ap->host->dev);
+static int cmd648_cable_detect(struct ata_port *ap)
+{
+	struct pci_dev *pdev = to_pci_dev(ap->host->dev);
 	u8 r;
 
 	/* Check cable detect bits */
-	pci_पढ़ो_config_byte(pdev, BMIDECSR, &r);
-	अगर (r & (1 << ap->port_no))
-		वापस ATA_CBL_PATA80;
-	वापस ATA_CBL_PATA40;
-पूर्ण
+	pci_read_config_byte(pdev, BMIDECSR, &r);
+	if (r & (1 << ap->port_no))
+		return ATA_CBL_PATA80;
+	return ATA_CBL_PATA40;
+}
 
 /**
  *	cmd64x_set_timing	-	set PIO and MWDMA timing
- *	@ap: ATA पूर्णांकerface
+ *	@ap: ATA interface
  *	@adev: ATA device
  *	@mode: mode
  *
- *	Called to करो the PIO and MWDMA mode setup.
+ *	Called to do the PIO and MWDMA mode setup.
  */
 
-अटल व्योम cmd64x_set_timing(काष्ठा ata_port *ap, काष्ठा ata_device *adev, u8 mode)
-अणु
-	काष्ठा pci_dev *pdev = to_pci_dev(ap->host->dev);
-	काष्ठा ata_timing t;
-	स्थिर अचिन्हित दीर्घ T = 1000000 / 33;
-	स्थिर u8 setup_data[] = अणु 0x40, 0x40, 0x40, 0x80, 0x00 पूर्ण;
+static void cmd64x_set_timing(struct ata_port *ap, struct ata_device *adev, u8 mode)
+{
+	struct pci_dev *pdev = to_pci_dev(ap->host->dev);
+	struct ata_timing t;
+	const unsigned long T = 1000000 / 33;
+	const u8 setup_data[] = { 0x40, 0x40, 0x40, 0x80, 0x00 };
 
 	u8 reg;
 
 	/* Port layout is not logical so use a table */
-	स्थिर u8 arttim_port[2][2] = अणु
-		अणु ARTTIM0, ARTTIM1 पूर्ण,
-		अणु ARTTIM23, ARTTIM23 पूर्ण
-	पूर्ण;
-	स्थिर u8 drwtim_port[2][2] = अणु
-		अणु DRWTIM0, DRWTIM1 पूर्ण,
-		अणु DRWTIM2, DRWTIM3 पूर्ण
-	पूर्ण;
+	const u8 arttim_port[2][2] = {
+		{ ARTTIM0, ARTTIM1 },
+		{ ARTTIM23, ARTTIM23 }
+	};
+	const u8 drwtim_port[2][2] = {
+		{ DRWTIM0, DRWTIM1 },
+		{ DRWTIM2, DRWTIM3 }
+	};
 
-	पूर्णांक arttim = arttim_port[ap->port_no][adev->devno];
-	पूर्णांक drwtim = drwtim_port[ap->port_no][adev->devno];
+	int arttim = arttim_port[ap->port_no][adev->devno];
+	int drwtim = drwtim_port[ap->port_no][adev->devno];
 
-	/* ata_timing_compute is smart and will produce timings क्रम MWDMA
-	   that करोn't violate the drives PIO capabilities. */
-	अगर (ata_timing_compute(adev, mode, &t, T, 0) < 0) अणु
-		prपूर्णांकk(KERN_ERR DRV_NAME ": mode computation failed.\n");
-		वापस;
-	पूर्ण
-	अगर (ap->port_no) अणु
+	/* ata_timing_compute is smart and will produce timings for MWDMA
+	   that don't violate the drives PIO capabilities. */
+	if (ata_timing_compute(adev, mode, &t, T, 0) < 0) {
+		printk(KERN_ERR DRV_NAME ": mode computation failed.\n");
+		return;
+	}
+	if (ap->port_no) {
 		/* Slave has shared address setup */
-		काष्ठा ata_device *pair = ata_dev_pair(adev);
+		struct ata_device *pair = ata_dev_pair(adev);
 
-		अगर (pair) अणु
-			काष्ठा ata_timing tp;
+		if (pair) {
+			struct ata_timing tp;
 			ata_timing_compute(pair, pair->pio_mode, &tp, T, 0);
 			ata_timing_merge(&t, &tp, &t, ATA_TIMING_SETUP);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	prपूर्णांकk(KERN_DEBUG DRV_NAME ": active %d recovery %d setup %d.\n",
+	printk(KERN_DEBUG DRV_NAME ": active %d recovery %d setup %d.\n",
 		t.active, t.recover, t.setup);
-	अगर (t.recover > 16) अणु
+	if (t.recover > 16) {
 		t.active += t.recover - 16;
 		t.recover = 16;
-	पूर्ण
-	अगर (t.active > 16)
+	}
+	if (t.active > 16)
 		t.active = 16;
 
-	/* Now convert the घड़ीs पूर्णांकo values we can actually stuff पूर्णांकo
+	/* Now convert the clocks into values we can actually stuff into
 	   the chip */
 
-	अगर (t.recover == 16)
+	if (t.recover == 16)
 		t.recover = 0;
-	अन्यथा अगर (t.recover > 1)
+	else if (t.recover > 1)
 		t.recover--;
-	अन्यथा
+	else
 		t.recover = 15;
 
-	अगर (t.setup > 4)
+	if (t.setup > 4)
 		t.setup = 0xC0;
-	अन्यथा
+	else
 		t.setup = setup_data[t.setup];
 
 	t.active &= 0x0F;	/* 0 = 16 */
 
 	/* Load setup timing */
-	pci_पढ़ो_config_byte(pdev, arttim, &reg);
+	pci_read_config_byte(pdev, arttim, &reg);
 	reg &= 0x3F;
 	reg |= t.setup;
-	pci_ग_लिखो_config_byte(pdev, arttim, reg);
+	pci_write_config_byte(pdev, arttim, reg);
 
 	/* Load active/recovery */
-	pci_ग_लिखो_config_byte(pdev, drwtim, (t.active << 4) | t.recover);
-पूर्ण
+	pci_write_config_byte(pdev, drwtim, (t.active << 4) | t.recover);
+}
 
 /**
  *	cmd64x_set_piomode	-	set initial PIO mode data
- *	@ap: ATA पूर्णांकerface
+ *	@ap: ATA interface
  *	@adev: ATA device
  *
  *	Used when configuring the devices ot set the PIO timings. All the
- *	actual work is करोne by the PIO/MWDMA setting helper
+ *	actual work is done by the PIO/MWDMA setting helper
  */
 
-अटल व्योम cmd64x_set_piomode(काष्ठा ata_port *ap, काष्ठा ata_device *adev)
-अणु
+static void cmd64x_set_piomode(struct ata_port *ap, struct ata_device *adev)
+{
 	cmd64x_set_timing(ap, adev, adev->pio_mode);
-पूर्ण
+}
 
 /**
  *	cmd64x_set_dmamode	-	set initial DMA mode data
- *	@ap: ATA पूर्णांकerface
+ *	@ap: ATA interface
  *	@adev: ATA device
  *
- *	Called to करो the DMA mode setup.
+ *	Called to do the DMA mode setup.
  */
 
-अटल व्योम cmd64x_set_dmamode(काष्ठा ata_port *ap, काष्ठा ata_device *adev)
-अणु
-	अटल स्थिर u8 udma_data[] = अणु
+static void cmd64x_set_dmamode(struct ata_port *ap, struct ata_device *adev)
+{
+	static const u8 udma_data[] = {
 		0x30, 0x20, 0x10, 0x20, 0x10, 0x00
-	पूर्ण;
+	};
 
-	काष्ठा pci_dev *pdev = to_pci_dev(ap->host->dev);
+	struct pci_dev *pdev = to_pci_dev(ap->host->dev);
 	u8 regU, regD;
 
-	पूर्णांक pciU = UDIDETCR0 + 8 * ap->port_no;
-	पूर्णांक pciD = BMIDESR0 + 8 * ap->port_no;
-	पूर्णांक shअगरt = 2 * adev->devno;
+	int pciU = UDIDETCR0 + 8 * ap->port_no;
+	int pciD = BMIDESR0 + 8 * ap->port_no;
+	int shift = 2 * adev->devno;
 
-	pci_पढ़ो_config_byte(pdev, pciD, &regD);
-	pci_पढ़ो_config_byte(pdev, pciU, &regU);
+	pci_read_config_byte(pdev, pciD, &regD);
+	pci_read_config_byte(pdev, pciU, &regU);
 
 	/* DMA bits off */
 	regD &= ~(0x20 << adev->devno);
 	/* DMA control bits */
-	regU &= ~(0x30 << shअगरt);
+	regU &= ~(0x30 << shift);
 	/* DMA timing bits */
 	regU &= ~(0x05 << adev->devno);
 
-	अगर (adev->dma_mode >= XFER_UDMA_0) अणु
+	if (adev->dma_mode >= XFER_UDMA_0) {
 		/* Merge the timing value */
-		regU |= udma_data[adev->dma_mode - XFER_UDMA_0] << shअगरt;
+		regU |= udma_data[adev->dma_mode - XFER_UDMA_0] << shift;
 		/* Merge the control bits */
 		regU |= 1 << adev->devno; /* UDMA on */
-		अगर (adev->dma_mode > XFER_UDMA_2) /* 15nS timing */
+		if (adev->dma_mode > XFER_UDMA_2) /* 15nS timing */
 			regU |= 4 << adev->devno;
-	पूर्ण अन्यथा अणु
+	} else {
 		regU &= ~ (1 << adev->devno);	/* UDMA off */
 		cmd64x_set_timing(ap, adev, adev->dma_mode);
-	पूर्ण
+	}
 
 	regD |= 0x20 << adev->devno;
 
-	pci_ग_लिखो_config_byte(pdev, pciU, regU);
-	pci_ग_लिखो_config_byte(pdev, pciD, regD);
-पूर्ण
+	pci_write_config_byte(pdev, pciU, regU);
+	pci_write_config_byte(pdev, pciD, regD);
+}
 
 /**
- *	cmd64x_sff_irq_check	-	check IDE पूर्णांकerrupt
- *	@ap: ATA पूर्णांकerface
+ *	cmd64x_sff_irq_check	-	check IDE interrupt
+ *	@ap: ATA interface
  *
- *	Check IDE पूर्णांकerrupt in CFR/ARTTIM23 रेजिस्टरs.
+ *	Check IDE interrupt in CFR/ARTTIM23 registers.
  */
 
-अटल bool cmd64x_sff_irq_check(काष्ठा ata_port *ap)
-अणु
-	काष्ठा pci_dev *pdev = to_pci_dev(ap->host->dev);
-	पूर्णांक irq_mask = ap->port_no ? ARTTIM23_INTR_CH1 : CFR_INTR_CH0;
-	पूर्णांक irq_reg  = ap->port_no ? ARTTIM23 : CFR;
+static bool cmd64x_sff_irq_check(struct ata_port *ap)
+{
+	struct pci_dev *pdev = to_pci_dev(ap->host->dev);
+	int irq_mask = ap->port_no ? ARTTIM23_INTR_CH1 : CFR_INTR_CH0;
+	int irq_reg  = ap->port_no ? ARTTIM23 : CFR;
 	u8 irq_stat;
 
-	/* NOTE: पढ़ोing the रेजिस्टर should clear the पूर्णांकerrupt */
-	pci_पढ़ो_config_byte(pdev, irq_reg, &irq_stat);
+	/* NOTE: reading the register should clear the interrupt */
+	pci_read_config_byte(pdev, irq_reg, &irq_stat);
 
-	वापस irq_stat & irq_mask;
-पूर्ण
+	return irq_stat & irq_mask;
+}
 
 /**
- *	cmd64x_sff_irq_clear	-	clear IDE पूर्णांकerrupt
- *	@ap: ATA पूर्णांकerface
+ *	cmd64x_sff_irq_clear	-	clear IDE interrupt
+ *	@ap: ATA interface
  *
- *	Clear IDE पूर्णांकerrupt in CFR/ARTTIM23 and DMA status रेजिस्टरs.
+ *	Clear IDE interrupt in CFR/ARTTIM23 and DMA status registers.
  */
 
-अटल व्योम cmd64x_sff_irq_clear(काष्ठा ata_port *ap)
-अणु
-	काष्ठा pci_dev *pdev = to_pci_dev(ap->host->dev);
-	पूर्णांक irq_reg = ap->port_no ? ARTTIM23 : CFR;
+static void cmd64x_sff_irq_clear(struct ata_port *ap)
+{
+	struct pci_dev *pdev = to_pci_dev(ap->host->dev);
+	int irq_reg = ap->port_no ? ARTTIM23 : CFR;
 	u8 irq_stat;
 
 	ata_bmdma_irq_clear(ap);
 
-	/* Reading the रेजिस्टर should be enough to clear the पूर्णांकerrupt */
-	pci_पढ़ो_config_byte(pdev, irq_reg, &irq_stat);
-पूर्ण
+	/* Reading the register should be enough to clear the interrupt */
+	pci_read_config_byte(pdev, irq_reg, &irq_stat);
+}
 
 /**
- *	cmd648_sff_irq_check	-	check IDE पूर्णांकerrupt
- *	@ap: ATA पूर्णांकerface
+ *	cmd648_sff_irq_check	-	check IDE interrupt
+ *	@ap: ATA interface
  *
- *	Check IDE पूर्णांकerrupt in MRDMODE रेजिस्टर.
+ *	Check IDE interrupt in MRDMODE register.
  */
 
-अटल bool cmd648_sff_irq_check(काष्ठा ata_port *ap)
-अणु
-	काष्ठा pci_dev *pdev = to_pci_dev(ap->host->dev);
-	अचिन्हित दीर्घ base = pci_resource_start(pdev, 4);
-	पूर्णांक irq_mask = ap->port_no ? MRDMODE_INTR_CH1 : MRDMODE_INTR_CH0;
+static bool cmd648_sff_irq_check(struct ata_port *ap)
+{
+	struct pci_dev *pdev = to_pci_dev(ap->host->dev);
+	unsigned long base = pci_resource_start(pdev, 4);
+	int irq_mask = ap->port_no ? MRDMODE_INTR_CH1 : MRDMODE_INTR_CH0;
 	u8 mrdmode = inb(base + 1);
 
-	वापस mrdmode & irq_mask;
-पूर्ण
+	return mrdmode & irq_mask;
+}
 
 /**
- *	cmd648_sff_irq_clear	-	clear IDE पूर्णांकerrupt
- *	@ap: ATA पूर्णांकerface
+ *	cmd648_sff_irq_clear	-	clear IDE interrupt
+ *	@ap: ATA interface
  *
- *	Clear IDE पूर्णांकerrupt in MRDMODE and DMA status रेजिस्टरs.
+ *	Clear IDE interrupt in MRDMODE and DMA status registers.
  */
 
-अटल व्योम cmd648_sff_irq_clear(काष्ठा ata_port *ap)
-अणु
-	काष्ठा pci_dev *pdev = to_pci_dev(ap->host->dev);
-	अचिन्हित दीर्घ base = pci_resource_start(pdev, 4);
-	पूर्णांक irq_mask = ap->port_no ? MRDMODE_INTR_CH1 : MRDMODE_INTR_CH0;
+static void cmd648_sff_irq_clear(struct ata_port *ap)
+{
+	struct pci_dev *pdev = to_pci_dev(ap->host->dev);
+	unsigned long base = pci_resource_start(pdev, 4);
+	int irq_mask = ap->port_no ? MRDMODE_INTR_CH1 : MRDMODE_INTR_CH0;
 	u8 mrdmode;
 
 	ata_bmdma_irq_clear(ap);
 
-	/* Clear this port's पूर्णांकerrupt bit (leaving the other port alone) */
+	/* Clear this port's interrupt bit (leaving the other port alone) */
 	mrdmode  = inb(base + 1);
 	mrdmode &= ~(MRDMODE_INTR_CH0 | MRDMODE_INTR_CH1);
 	outb(mrdmode | irq_mask, base + 1);
-पूर्ण
+}
 
 /**
  *	cmd646r1_bmdma_stop	-	DMA stop callback
  *	@qc: Command in progress
  *
- *	Stub क्रम now जबतक investigating the r1 quirk in the old driver.
+ *	Stub for now while investigating the r1 quirk in the old driver.
  */
 
-अटल व्योम cmd646r1_bmdma_stop(काष्ठा ata_queued_cmd *qc)
-अणु
+static void cmd646r1_bmdma_stop(struct ata_queued_cmd *qc)
+{
 	ata_bmdma_stop(qc);
-पूर्ण
+}
 
-अटल काष्ठा scsi_host_ढाँचा cmd64x_sht = अणु
+static struct scsi_host_template cmd64x_sht = {
 	ATA_BMDMA_SHT(DRV_NAME),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा ata_port_operations cmd64x_base_ops = अणु
+static const struct ata_port_operations cmd64x_base_ops = {
 	.inherits	= &ata_bmdma_port_ops,
 	.set_piomode	= cmd64x_set_piomode,
 	.set_dmamode	= cmd64x_set_dmamode,
-पूर्ण;
+};
 
-अटल काष्ठा ata_port_operations cmd64x_port_ops = अणु
+static struct ata_port_operations cmd64x_port_ops = {
 	.inherits	= &cmd64x_base_ops,
 	.sff_irq_check	= cmd64x_sff_irq_check,
 	.sff_irq_clear	= cmd64x_sff_irq_clear,
 	.cable_detect	= ata_cable_40wire,
-पूर्ण;
+};
 
-अटल काष्ठा ata_port_operations cmd646r1_port_ops = अणु
+static struct ata_port_operations cmd646r1_port_ops = {
 	.inherits	= &cmd64x_base_ops,
 	.sff_irq_check	= cmd64x_sff_irq_check,
 	.sff_irq_clear	= cmd64x_sff_irq_clear,
 	.bmdma_stop	= cmd646r1_bmdma_stop,
 	.cable_detect	= ata_cable_40wire,
-पूर्ण;
+};
 
-अटल काष्ठा ata_port_operations cmd646r3_port_ops = अणु
+static struct ata_port_operations cmd646r3_port_ops = {
 	.inherits	= &cmd64x_base_ops,
 	.sff_irq_check	= cmd648_sff_irq_check,
 	.sff_irq_clear	= cmd648_sff_irq_clear,
 	.cable_detect	= ata_cable_40wire,
-पूर्ण;
+};
 
-अटल काष्ठा ata_port_operations cmd648_port_ops = अणु
+static struct ata_port_operations cmd648_port_ops = {
 	.inherits	= &cmd64x_base_ops,
 	.sff_irq_check	= cmd648_sff_irq_check,
 	.sff_irq_clear	= cmd648_sff_irq_clear,
 	.cable_detect	= cmd648_cable_detect,
-पूर्ण;
+};
 
-अटल व्योम cmd64x_fixup(काष्ठा pci_dev *pdev)
-अणु
+static void cmd64x_fixup(struct pci_dev *pdev)
+{
 	u8 mrdmode;
 
-	pci_ग_लिखो_config_byte(pdev, PCI_LATENCY_TIMER, 64);
-	pci_पढ़ो_config_byte(pdev, MRDMODE, &mrdmode);
+	pci_write_config_byte(pdev, PCI_LATENCY_TIMER, 64);
+	pci_read_config_byte(pdev, MRDMODE, &mrdmode);
 	mrdmode &= ~0x30;	/* IRQ set up */
-	mrdmode |= 0x02;	/* Memory पढ़ो line enable */
-	pci_ग_लिखो_config_byte(pdev, MRDMODE, mrdmode);
+	mrdmode |= 0x02;	/* Memory read line enable */
+	pci_write_config_byte(pdev, MRDMODE, mrdmode);
 
-	/* PPC specअगरic fixup copied from old driver */
-#अगर_घोषित CONFIG_PPC
-	pci_ग_लिखो_config_byte(pdev, UDIDETCR0, 0xF0);
-#पूर्ण_अगर
-पूर्ण
+	/* PPC specific fixup copied from old driver */
+#ifdef CONFIG_PPC
+	pci_write_config_byte(pdev, UDIDETCR0, 0xF0);
+#endif
+}
 
-अटल पूर्णांक cmd64x_init_one(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *id)
-अणु
-	अटल स्थिर काष्ठा ata_port_info cmd_info[7] = अणु
-		अणु	/* CMD 643 - no UDMA */
+static int cmd64x_init_one(struct pci_dev *pdev, const struct pci_device_id *id)
+{
+	static const struct ata_port_info cmd_info[7] = {
+		{	/* CMD 643 - no UDMA */
 			.flags = ATA_FLAG_SLAVE_POSS,
 			.pio_mask = ATA_PIO4,
 			.mwdma_mask = ATA_MWDMA2,
 			.port_ops = &cmd64x_port_ops
-		पूर्ण,
-		अणु	/* CMD 646 with broken UDMA */
+		},
+		{	/* CMD 646 with broken UDMA */
 			.flags = ATA_FLAG_SLAVE_POSS,
 			.pio_mask = ATA_PIO4,
 			.mwdma_mask = ATA_MWDMA2,
 			.port_ops = &cmd64x_port_ops
-		पूर्ण,
-		अणु	/* CMD 646U with broken UDMA */
+		},
+		{	/* CMD 646U with broken UDMA */
 			.flags = ATA_FLAG_SLAVE_POSS,
 			.pio_mask = ATA_PIO4,
 			.mwdma_mask = ATA_MWDMA2,
 			.port_ops = &cmd646r3_port_ops
-		पूर्ण,
-		अणु	/* CMD 646U2 with working UDMA */
+		},
+		{	/* CMD 646U2 with working UDMA */
 			.flags = ATA_FLAG_SLAVE_POSS,
 			.pio_mask = ATA_PIO4,
 			.mwdma_mask = ATA_MWDMA2,
 			.udma_mask = ATA_UDMA2,
 			.port_ops = &cmd646r3_port_ops
-		पूर्ण,
-		अणु	/* CMD 646 rev 1  */
+		},
+		{	/* CMD 646 rev 1  */
 			.flags = ATA_FLAG_SLAVE_POSS,
 			.pio_mask = ATA_PIO4,
 			.mwdma_mask = ATA_MWDMA2,
 			.port_ops = &cmd646r1_port_ops
-		पूर्ण,
-		अणु	/* CMD 648 */
+		},
+		{	/* CMD 648 */
 			.flags = ATA_FLAG_SLAVE_POSS,
 			.pio_mask = ATA_PIO4,
 			.mwdma_mask = ATA_MWDMA2,
 			.udma_mask = ATA_UDMA4,
 			.port_ops = &cmd648_port_ops
-		पूर्ण,
-		अणु	/* CMD 649 */
+		},
+		{	/* CMD 649 */
 			.flags = ATA_FLAG_SLAVE_POSS,
 			.pio_mask = ATA_PIO4,
 			.mwdma_mask = ATA_MWDMA2,
 			.udma_mask = ATA_UDMA5,
 			.port_ops = &cmd648_port_ops
-		पूर्ण
-	पूर्ण;
-	स्थिर काष्ठा ata_port_info *ppi[] = अणु
+		}
+	};
+	const struct ata_port_info *ppi[] = {
 		&cmd_info[id->driver_data],
 		&cmd_info[id->driver_data],
-		शून्य
-	पूर्ण;
+		NULL
+	};
 	u8 reg;
-	पूर्णांक rc;
-	काष्ठा pci_dev *bridge = pdev->bus->self;
-	/* mobility split bridges करोn't report enabled ports correctly */
-	पूर्णांक port_ok = !(bridge && bridge->venकरोr ==
+	int rc;
+	struct pci_dev *bridge = pdev->bus->self;
+	/* mobility split bridges don't report enabled ports correctly */
+	int port_ok = !(bridge && bridge->vendor ==
 			PCI_VENDOR_ID_MOBILITY_ELECTRONICS);
 	/* all (with exceptions below) apart from 643 have CNTRL_CH0 bit */
-	पूर्णांक cntrl_ch0_ok = (id->driver_data != 0);
+	int cntrl_ch0_ok = (id->driver_data != 0);
 
 	rc = pcim_enable_device(pdev);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	अगर (id->driver_data == 0)	/* 643 */
+	if (id->driver_data == 0)	/* 643 */
 		ata_pci_bmdma_clear_simplex(pdev);
 
-	अगर (pdev->device == PCI_DEVICE_ID_CMD_646)
-		चयन (pdev->revision) अणु
+	if (pdev->device == PCI_DEVICE_ID_CMD_646)
+		switch (pdev->revision) {
 		/* UDMA works since rev 5 */
-		शेष:
+		default:
 			ppi[0] = &cmd_info[3];
 			ppi[1] = &cmd_info[3];
-			अवरोध;
+			break;
 		/* Interrupts in MRDMODE since rev 3 */
-		हाल 3:
-		हाल 4:
+		case 3:
+		case 4:
 			ppi[0] = &cmd_info[2];
 			ppi[1] = &cmd_info[2];
-			अवरोध;
+			break;
 		/* Rev 1 with other problems? */
-		हाल 1:
+		case 1:
 			ppi[0] = &cmd_info[4];
 			ppi[1] = &cmd_info[4];
 			fallthrough;
 		/* Early revs have no CNTRL_CH0 */
-		हाल 2:
-		हाल 0:
+		case 2:
+		case 0:
 			cntrl_ch0_ok = 0;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 	cmd64x_fixup(pdev);
 
-	/* check क्रम enabled ports */
-	pci_पढ़ो_config_byte(pdev, CNTRL, &reg);
-	अगर (!port_ok)
+	/* check for enabled ports */
+	pci_read_config_byte(pdev, CNTRL, &reg);
+	if (!port_ok)
 		dev_notice(&pdev->dev, "Mobility Bridge detected, ignoring CNTRL port enable/disable\n");
-	अगर (port_ok && cntrl_ch0_ok && !(reg & CNTRL_CH0)) अणु
+	if (port_ok && cntrl_ch0_ok && !(reg & CNTRL_CH0)) {
 		dev_notice(&pdev->dev, "Primary port is disabled\n");
 		ppi[0] = &ata_dummy_port_info;
 
-	पूर्ण
-	अगर (port_ok && !(reg & CNTRL_CH1)) अणु
+	}
+	if (port_ok && !(reg & CNTRL_CH1)) {
 		dev_notice(&pdev->dev, "Secondary port is disabled\n");
 		ppi[1] = &ata_dummy_port_info;
-	पूर्ण
+	}
 
-	वापस ata_pci_bmdma_init_one(pdev, ppi, &cmd64x_sht, शून्य, 0);
-पूर्ण
+	return ata_pci_bmdma_init_one(pdev, ppi, &cmd64x_sht, NULL, 0);
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक cmd64x_reinit_one(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा ata_host *host = pci_get_drvdata(pdev);
-	पूर्णांक rc;
+#ifdef CONFIG_PM_SLEEP
+static int cmd64x_reinit_one(struct pci_dev *pdev)
+{
+	struct ata_host *host = pci_get_drvdata(pdev);
+	int rc;
 
-	rc = ata_pci_device_करो_resume(pdev);
-	अगर (rc)
-		वापस rc;
+	rc = ata_pci_device_do_resume(pdev);
+	if (rc)
+		return rc;
 
 	cmd64x_fixup(pdev);
 
 	ata_host_resume(host);
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल स्थिर काष्ठा pci_device_id cmd64x[] = अणु
-	अणु PCI_VDEVICE(CMD, PCI_DEVICE_ID_CMD_643), 0 पूर्ण,
-	अणु PCI_VDEVICE(CMD, PCI_DEVICE_ID_CMD_646), 1 पूर्ण,
-	अणु PCI_VDEVICE(CMD, PCI_DEVICE_ID_CMD_648), 5 पूर्ण,
-	अणु PCI_VDEVICE(CMD, PCI_DEVICE_ID_CMD_649), 6 पूर्ण,
+static const struct pci_device_id cmd64x[] = {
+	{ PCI_VDEVICE(CMD, PCI_DEVICE_ID_CMD_643), 0 },
+	{ PCI_VDEVICE(CMD, PCI_DEVICE_ID_CMD_646), 1 },
+	{ PCI_VDEVICE(CMD, PCI_DEVICE_ID_CMD_648), 5 },
+	{ PCI_VDEVICE(CMD, PCI_DEVICE_ID_CMD_649), 6 },
 
-	अणु पूर्ण,
-पूर्ण;
+	{ },
+};
 
-अटल काष्ठा pci_driver cmd64x_pci_driver = अणु
+static struct pci_driver cmd64x_pci_driver = {
 	.name 		= DRV_NAME,
 	.id_table	= cmd64x,
 	.probe 		= cmd64x_init_one,
-	.हटाओ		= ata_pci_हटाओ_one,
-#अगर_घोषित CONFIG_PM_SLEEP
+	.remove		= ata_pci_remove_one,
+#ifdef CONFIG_PM_SLEEP
 	.suspend	= ata_pci_device_suspend,
 	.resume		= cmd64x_reinit_one,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
 module_pci_driver(cmd64x_pci_driver);
 

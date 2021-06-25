@@ -1,151 +1,150 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  Atheros AR71xx PCI host controller driver
  *
- *  Copyright (C) 2008-2011 Gabor Juhos <juhosg@खोलोwrt.org>
- *  Copyright (C) 2008 Imre Kaloz <kaloz@खोलोwrt.org>
+ *  Copyright (C) 2008-2011 Gabor Juhos <juhosg@openwrt.org>
+ *  Copyright (C) 2008 Imre Kaloz <kaloz@openwrt.org>
  *
  *  Parts of this file are based on Atheros' 2.6.15 BSP
  */
 
-#समावेश <linux/resource.h>
-#समावेश <linux/types.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/pci_regs.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/init.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/resource.h>
+#include <linux/types.h>
+#include <linux/delay.h>
+#include <linux/bitops.h>
+#include <linux/pci.h>
+#include <linux/pci_regs.h>
+#include <linux/interrupt.h>
+#include <linux/init.h>
+#include <linux/platform_device.h>
 
-#समावेश <यंत्र/mach-ath79/ar71xx_regs.h>
-#समावेश <यंत्र/mach-ath79/ath79.h>
+#include <asm/mach-ath79/ar71xx_regs.h>
+#include <asm/mach-ath79/ath79.h>
 
-#घोषणा AR71XX_PCI_REG_CRP_AD_CBE	0x00
-#घोषणा AR71XX_PCI_REG_CRP_WRDATA	0x04
-#घोषणा AR71XX_PCI_REG_CRP_RDDATA	0x08
-#घोषणा AR71XX_PCI_REG_CFG_AD		0x0c
-#घोषणा AR71XX_PCI_REG_CFG_CBE		0x10
-#घोषणा AR71XX_PCI_REG_CFG_WRDATA	0x14
-#घोषणा AR71XX_PCI_REG_CFG_RDDATA	0x18
-#घोषणा AR71XX_PCI_REG_PCI_ERR		0x1c
-#घोषणा AR71XX_PCI_REG_PCI_ERR_ADDR	0x20
-#घोषणा AR71XX_PCI_REG_AHB_ERR		0x24
-#घोषणा AR71XX_PCI_REG_AHB_ERR_ADDR	0x28
+#define AR71XX_PCI_REG_CRP_AD_CBE	0x00
+#define AR71XX_PCI_REG_CRP_WRDATA	0x04
+#define AR71XX_PCI_REG_CRP_RDDATA	0x08
+#define AR71XX_PCI_REG_CFG_AD		0x0c
+#define AR71XX_PCI_REG_CFG_CBE		0x10
+#define AR71XX_PCI_REG_CFG_WRDATA	0x14
+#define AR71XX_PCI_REG_CFG_RDDATA	0x18
+#define AR71XX_PCI_REG_PCI_ERR		0x1c
+#define AR71XX_PCI_REG_PCI_ERR_ADDR	0x20
+#define AR71XX_PCI_REG_AHB_ERR		0x24
+#define AR71XX_PCI_REG_AHB_ERR_ADDR	0x28
 
-#घोषणा AR71XX_PCI_CRP_CMD_WRITE	0x00010000
-#घोषणा AR71XX_PCI_CRP_CMD_READ		0x00000000
-#घोषणा AR71XX_PCI_CFG_CMD_READ		0x0000000a
-#घोषणा AR71XX_PCI_CFG_CMD_WRITE	0x0000000b
+#define AR71XX_PCI_CRP_CMD_WRITE	0x00010000
+#define AR71XX_PCI_CRP_CMD_READ		0x00000000
+#define AR71XX_PCI_CFG_CMD_READ		0x0000000a
+#define AR71XX_PCI_CFG_CMD_WRITE	0x0000000b
 
-#घोषणा AR71XX_PCI_INT_CORE		BIT(4)
-#घोषणा AR71XX_PCI_INT_DEV2		BIT(2)
-#घोषणा AR71XX_PCI_INT_DEV1		BIT(1)
-#घोषणा AR71XX_PCI_INT_DEV0		BIT(0)
+#define AR71XX_PCI_INT_CORE		BIT(4)
+#define AR71XX_PCI_INT_DEV2		BIT(2)
+#define AR71XX_PCI_INT_DEV1		BIT(1)
+#define AR71XX_PCI_INT_DEV0		BIT(0)
 
-#घोषणा AR71XX_PCI_IRQ_COUNT		5
+#define AR71XX_PCI_IRQ_COUNT		5
 
-काष्ठा ar71xx_pci_controller अणु
-	व्योम __iomem *cfg_base;
-	पूर्णांक irq;
-	पूर्णांक irq_base;
-	काष्ठा pci_controller pci_ctrl;
-	काष्ठा resource io_res;
-	काष्ठा resource mem_res;
-पूर्ण;
+struct ar71xx_pci_controller {
+	void __iomem *cfg_base;
+	int irq;
+	int irq_base;
+	struct pci_controller pci_ctrl;
+	struct resource io_res;
+	struct resource mem_res;
+};
 
 /* Byte lane enable bits */
-अटल स्थिर u8 ar71xx_pci_ble_table[4][4] = अणु
-	अणु0x0, 0xf, 0xf, 0xfपूर्ण,
-	अणु0xe, 0xd, 0xb, 0x7पूर्ण,
-	अणु0xc, 0xf, 0x3, 0xfपूर्ण,
-	अणु0xf, 0xf, 0xf, 0xfपूर्ण,
-पूर्ण;
+static const u8 ar71xx_pci_ble_table[4][4] = {
+	{0x0, 0xf, 0xf, 0xf},
+	{0xe, 0xd, 0xb, 0x7},
+	{0xc, 0xf, 0x3, 0xf},
+	{0xf, 0xf, 0xf, 0xf},
+};
 
-अटल स्थिर u32 ar71xx_pci_पढ़ो_mask[8] = अणु
+static const u32 ar71xx_pci_read_mask[8] = {
 	0, 0xff, 0xffff, 0, 0xffffffff, 0, 0, 0
-पूर्ण;
+};
 
-अटल अंतरभूत u32 ar71xx_pci_get_ble(पूर्णांक where, पूर्णांक size, पूर्णांक local)
-अणु
+static inline u32 ar71xx_pci_get_ble(int where, int size, int local)
+{
 	u32 t;
 
 	t = ar71xx_pci_ble_table[size & 3][where & 3];
 	BUG_ON(t == 0xf);
 	t <<= (local) ? 20 : 4;
 
-	वापस t;
-पूर्ण
+	return t;
+}
 
-अटल अंतरभूत u32 ar71xx_pci_bus_addr(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn,
-				      पूर्णांक where)
-अणु
+static inline u32 ar71xx_pci_bus_addr(struct pci_bus *bus, unsigned int devfn,
+				      int where)
+{
 	u32 ret;
 
-	अगर (!bus->number) अणु
+	if (!bus->number) {
 		/* type 0 */
 		ret = (1 << PCI_SLOT(devfn)) | (PCI_FUNC(devfn) << 8) |
 		      (where & ~3);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* type 1 */
 		ret = (bus->number << 16) | (PCI_SLOT(devfn) << 11) |
 		      (PCI_FUNC(devfn) << 8) | (where & ~3) | 1;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत काष्ठा ar71xx_pci_controller *
-pci_bus_to_ar71xx_controller(काष्ठा pci_bus *bus)
-अणु
-	काष्ठा pci_controller *hose;
+static inline struct ar71xx_pci_controller *
+pci_bus_to_ar71xx_controller(struct pci_bus *bus)
+{
+	struct pci_controller *hose;
 
-	hose = (काष्ठा pci_controller *) bus->sysdata;
-	वापस container_of(hose, काष्ठा ar71xx_pci_controller, pci_ctrl);
-पूर्ण
+	hose = (struct pci_controller *) bus->sysdata;
+	return container_of(hose, struct ar71xx_pci_controller, pci_ctrl);
+}
 
-अटल पूर्णांक ar71xx_pci_check_error(काष्ठा ar71xx_pci_controller *apc, पूर्णांक quiet)
-अणु
-	व्योम __iomem *base = apc->cfg_base;
+static int ar71xx_pci_check_error(struct ar71xx_pci_controller *apc, int quiet)
+{
+	void __iomem *base = apc->cfg_base;
 	u32 pci_err;
 	u32 ahb_err;
 
-	pci_err = __raw_पढ़ोl(base + AR71XX_PCI_REG_PCI_ERR) & 3;
-	अगर (pci_err) अणु
-		अगर (!quiet) अणु
+	pci_err = __raw_readl(base + AR71XX_PCI_REG_PCI_ERR) & 3;
+	if (pci_err) {
+		if (!quiet) {
 			u32 addr;
 
-			addr = __raw_पढ़ोl(base + AR71XX_PCI_REG_PCI_ERR_ADDR);
+			addr = __raw_readl(base + AR71XX_PCI_REG_PCI_ERR_ADDR);
 			pr_crit("ar71xx: %s bus error %d at addr 0x%x\n",
 				"PCI", pci_err, addr);
-		पूर्ण
+		}
 
 		/* clear PCI error status */
-		__raw_ग_लिखोl(pci_err, base + AR71XX_PCI_REG_PCI_ERR);
-	पूर्ण
+		__raw_writel(pci_err, base + AR71XX_PCI_REG_PCI_ERR);
+	}
 
-	ahb_err = __raw_पढ़ोl(base + AR71XX_PCI_REG_AHB_ERR) & 1;
-	अगर (ahb_err) अणु
-		अगर (!quiet) अणु
+	ahb_err = __raw_readl(base + AR71XX_PCI_REG_AHB_ERR) & 1;
+	if (ahb_err) {
+		if (!quiet) {
 			u32 addr;
 
-			addr = __raw_पढ़ोl(base + AR71XX_PCI_REG_AHB_ERR_ADDR);
+			addr = __raw_readl(base + AR71XX_PCI_REG_AHB_ERR_ADDR);
 			pr_crit("ar71xx: %s bus error %d at addr 0x%x\n",
 				"AHB", ahb_err, addr);
-		पूर्ण
+		}
 
 		/* clear AHB error status */
-		__raw_ग_लिखोl(ahb_err, base + AR71XX_PCI_REG_AHB_ERR);
-	पूर्ण
+		__raw_writel(ahb_err, base + AR71XX_PCI_REG_AHB_ERR);
+	}
 
-	वापस !!(ahb_err | pci_err);
-पूर्ण
+	return !!(ahb_err | pci_err);
+}
 
-अटल अंतरभूत व्योम ar71xx_pci_local_ग_लिखो(काष्ठा ar71xx_pci_controller *apc,
-					  पूर्णांक where, पूर्णांक size, u32 value)
-अणु
-	व्योम __iomem *base = apc->cfg_base;
+static inline void ar71xx_pci_local_write(struct ar71xx_pci_controller *apc,
+					  int where, int size, u32 value)
+{
+	void __iomem *base = apc->cfg_base;
 	u32 ad_cbe;
 
 	value = value << (8 * (where & 3));
@@ -153,202 +152,202 @@ pci_bus_to_ar71xx_controller(काष्ठा pci_bus *bus)
 	ad_cbe = AR71XX_PCI_CRP_CMD_WRITE | (where & ~3);
 	ad_cbe |= ar71xx_pci_get_ble(where, size, 1);
 
-	__raw_ग_लिखोl(ad_cbe, base + AR71XX_PCI_REG_CRP_AD_CBE);
-	__raw_ग_लिखोl(value, base + AR71XX_PCI_REG_CRP_WRDATA);
-पूर्ण
+	__raw_writel(ad_cbe, base + AR71XX_PCI_REG_CRP_AD_CBE);
+	__raw_writel(value, base + AR71XX_PCI_REG_CRP_WRDATA);
+}
 
-अटल अंतरभूत पूर्णांक ar71xx_pci_set_cfgaddr(काष्ठा pci_bus *bus,
-					 अचिन्हित पूर्णांक devfn,
-					 पूर्णांक where, पूर्णांक size, u32 cmd)
-अणु
-	काष्ठा ar71xx_pci_controller *apc = pci_bus_to_ar71xx_controller(bus);
-	व्योम __iomem *base = apc->cfg_base;
+static inline int ar71xx_pci_set_cfgaddr(struct pci_bus *bus,
+					 unsigned int devfn,
+					 int where, int size, u32 cmd)
+{
+	struct ar71xx_pci_controller *apc = pci_bus_to_ar71xx_controller(bus);
+	void __iomem *base = apc->cfg_base;
 	u32 addr;
 
 	addr = ar71xx_pci_bus_addr(bus, devfn, where);
 
-	__raw_ग_लिखोl(addr, base + AR71XX_PCI_REG_CFG_AD);
-	__raw_ग_लिखोl(cmd | ar71xx_pci_get_ble(where, size, 0),
+	__raw_writel(addr, base + AR71XX_PCI_REG_CFG_AD);
+	__raw_writel(cmd | ar71xx_pci_get_ble(where, size, 0),
 		     base + AR71XX_PCI_REG_CFG_CBE);
 
-	वापस ar71xx_pci_check_error(apc, 1);
-पूर्ण
+	return ar71xx_pci_check_error(apc, 1);
+}
 
-अटल पूर्णांक ar71xx_pci_पढ़ो_config(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn,
-				  पूर्णांक where, पूर्णांक size, u32 *value)
-अणु
-	काष्ठा ar71xx_pci_controller *apc = pci_bus_to_ar71xx_controller(bus);
-	व्योम __iomem *base = apc->cfg_base;
+static int ar71xx_pci_read_config(struct pci_bus *bus, unsigned int devfn,
+				  int where, int size, u32 *value)
+{
+	struct ar71xx_pci_controller *apc = pci_bus_to_ar71xx_controller(bus);
+	void __iomem *base = apc->cfg_base;
 	u32 data;
-	पूर्णांक err;
-	पूर्णांक ret;
+	int err;
+	int ret;
 
 	ret = PCIBIOS_SUCCESSFUL;
 	data = ~0;
 
 	err = ar71xx_pci_set_cfgaddr(bus, devfn, where, size,
 				     AR71XX_PCI_CFG_CMD_READ);
-	अगर (err)
+	if (err)
 		ret = PCIBIOS_DEVICE_NOT_FOUND;
-	अन्यथा
-		data = __raw_पढ़ोl(base + AR71XX_PCI_REG_CFG_RDDATA);
+	else
+		data = __raw_readl(base + AR71XX_PCI_REG_CFG_RDDATA);
 
-	*value = (data >> (8 * (where & 3))) & ar71xx_pci_पढ़ो_mask[size & 7];
+	*value = (data >> (8 * (where & 3))) & ar71xx_pci_read_mask[size & 7];
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ar71xx_pci_ग_लिखो_config(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn,
-				   पूर्णांक where, पूर्णांक size, u32 value)
-अणु
-	काष्ठा ar71xx_pci_controller *apc = pci_bus_to_ar71xx_controller(bus);
-	व्योम __iomem *base = apc->cfg_base;
-	पूर्णांक err;
-	पूर्णांक ret;
+static int ar71xx_pci_write_config(struct pci_bus *bus, unsigned int devfn,
+				   int where, int size, u32 value)
+{
+	struct ar71xx_pci_controller *apc = pci_bus_to_ar71xx_controller(bus);
+	void __iomem *base = apc->cfg_base;
+	int err;
+	int ret;
 
 	value = value << (8 * (where & 3));
 	ret = PCIBIOS_SUCCESSFUL;
 
 	err = ar71xx_pci_set_cfgaddr(bus, devfn, where, size,
 				     AR71XX_PCI_CFG_CMD_WRITE);
-	अगर (err)
+	if (err)
 		ret = PCIBIOS_DEVICE_NOT_FOUND;
-	अन्यथा
-		__raw_ग_लिखोl(value, base + AR71XX_PCI_REG_CFG_WRDATA);
+	else
+		__raw_writel(value, base + AR71XX_PCI_REG_CFG_WRDATA);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा pci_ops ar71xx_pci_ops = अणु
-	.पढ़ो	= ar71xx_pci_पढ़ो_config,
-	.ग_लिखो	= ar71xx_pci_ग_लिखो_config,
-पूर्ण;
+static struct pci_ops ar71xx_pci_ops = {
+	.read	= ar71xx_pci_read_config,
+	.write	= ar71xx_pci_write_config,
+};
 
-अटल व्योम ar71xx_pci_irq_handler(काष्ठा irq_desc *desc)
-अणु
-	काष्ठा ar71xx_pci_controller *apc;
-	व्योम __iomem *base = ath79_reset_base;
+static void ar71xx_pci_irq_handler(struct irq_desc *desc)
+{
+	struct ar71xx_pci_controller *apc;
+	void __iomem *base = ath79_reset_base;
 	u32 pending;
 
 	apc = irq_desc_get_handler_data(desc);
 
-	pending = __raw_पढ़ोl(base + AR71XX_RESET_REG_PCI_INT_STATUS) &
-		  __raw_पढ़ोl(base + AR71XX_RESET_REG_PCI_INT_ENABLE);
+	pending = __raw_readl(base + AR71XX_RESET_REG_PCI_INT_STATUS) &
+		  __raw_readl(base + AR71XX_RESET_REG_PCI_INT_ENABLE);
 
-	अगर (pending & AR71XX_PCI_INT_DEV0)
+	if (pending & AR71XX_PCI_INT_DEV0)
 		generic_handle_irq(apc->irq_base + 0);
 
-	अन्यथा अगर (pending & AR71XX_PCI_INT_DEV1)
+	else if (pending & AR71XX_PCI_INT_DEV1)
 		generic_handle_irq(apc->irq_base + 1);
 
-	अन्यथा अगर (pending & AR71XX_PCI_INT_DEV2)
+	else if (pending & AR71XX_PCI_INT_DEV2)
 		generic_handle_irq(apc->irq_base + 2);
 
-	अन्यथा अगर (pending & AR71XX_PCI_INT_CORE)
+	else if (pending & AR71XX_PCI_INT_CORE)
 		generic_handle_irq(apc->irq_base + 4);
 
-	अन्यथा
-		spurious_पूर्णांकerrupt();
-पूर्ण
+	else
+		spurious_interrupt();
+}
 
-अटल व्योम ar71xx_pci_irq_unmask(काष्ठा irq_data *d)
-अणु
-	काष्ठा ar71xx_pci_controller *apc;
-	अचिन्हित पूर्णांक irq;
-	व्योम __iomem *base = ath79_reset_base;
+static void ar71xx_pci_irq_unmask(struct irq_data *d)
+{
+	struct ar71xx_pci_controller *apc;
+	unsigned int irq;
+	void __iomem *base = ath79_reset_base;
 	u32 t;
 
 	apc = irq_data_get_irq_chip_data(d);
 	irq = d->irq - apc->irq_base;
 
-	t = __raw_पढ़ोl(base + AR71XX_RESET_REG_PCI_INT_ENABLE);
-	__raw_ग_लिखोl(t | (1 << irq), base + AR71XX_RESET_REG_PCI_INT_ENABLE);
+	t = __raw_readl(base + AR71XX_RESET_REG_PCI_INT_ENABLE);
+	__raw_writel(t | (1 << irq), base + AR71XX_RESET_REG_PCI_INT_ENABLE);
 
-	/* flush ग_लिखो */
-	__raw_पढ़ोl(base + AR71XX_RESET_REG_PCI_INT_ENABLE);
-पूर्ण
+	/* flush write */
+	__raw_readl(base + AR71XX_RESET_REG_PCI_INT_ENABLE);
+}
 
-अटल व्योम ar71xx_pci_irq_mask(काष्ठा irq_data *d)
-अणु
-	काष्ठा ar71xx_pci_controller *apc;
-	अचिन्हित पूर्णांक irq;
-	व्योम __iomem *base = ath79_reset_base;
+static void ar71xx_pci_irq_mask(struct irq_data *d)
+{
+	struct ar71xx_pci_controller *apc;
+	unsigned int irq;
+	void __iomem *base = ath79_reset_base;
 	u32 t;
 
 	apc = irq_data_get_irq_chip_data(d);
 	irq = d->irq - apc->irq_base;
 
-	t = __raw_पढ़ोl(base + AR71XX_RESET_REG_PCI_INT_ENABLE);
-	__raw_ग_लिखोl(t & ~(1 << irq), base + AR71XX_RESET_REG_PCI_INT_ENABLE);
+	t = __raw_readl(base + AR71XX_RESET_REG_PCI_INT_ENABLE);
+	__raw_writel(t & ~(1 << irq), base + AR71XX_RESET_REG_PCI_INT_ENABLE);
 
-	/* flush ग_लिखो */
-	__raw_पढ़ोl(base + AR71XX_RESET_REG_PCI_INT_ENABLE);
-पूर्ण
+	/* flush write */
+	__raw_readl(base + AR71XX_RESET_REG_PCI_INT_ENABLE);
+}
 
-अटल काष्ठा irq_chip ar71xx_pci_irq_chip = अणु
+static struct irq_chip ar71xx_pci_irq_chip = {
 	.name		= "AR71XX PCI",
 	.irq_mask	= ar71xx_pci_irq_mask,
 	.irq_unmask	= ar71xx_pci_irq_unmask,
 	.irq_mask_ack	= ar71xx_pci_irq_mask,
-पूर्ण;
+};
 
-अटल व्योम ar71xx_pci_irq_init(काष्ठा ar71xx_pci_controller *apc)
-अणु
-	व्योम __iomem *base = ath79_reset_base;
-	पूर्णांक i;
+static void ar71xx_pci_irq_init(struct ar71xx_pci_controller *apc)
+{
+	void __iomem *base = ath79_reset_base;
+	int i;
 
-	__raw_ग_लिखोl(0, base + AR71XX_RESET_REG_PCI_INT_ENABLE);
-	__raw_ग_लिखोl(0, base + AR71XX_RESET_REG_PCI_INT_STATUS);
+	__raw_writel(0, base + AR71XX_RESET_REG_PCI_INT_ENABLE);
+	__raw_writel(0, base + AR71XX_RESET_REG_PCI_INT_STATUS);
 
 	BUILD_BUG_ON(ATH79_PCI_IRQ_COUNT < AR71XX_PCI_IRQ_COUNT);
 
 	apc->irq_base = ATH79_PCI_IRQ_BASE;
-	क्रम (i = apc->irq_base;
-	     i < apc->irq_base + AR71XX_PCI_IRQ_COUNT; i++) अणु
+	for (i = apc->irq_base;
+	     i < apc->irq_base + AR71XX_PCI_IRQ_COUNT; i++) {
 		irq_set_chip_and_handler(i, &ar71xx_pci_irq_chip,
 					 handle_level_irq);
 		irq_set_chip_data(i, apc);
-	पूर्ण
+	}
 
 	irq_set_chained_handler_and_data(apc->irq, ar71xx_pci_irq_handler,
 					 apc);
-पूर्ण
+}
 
-अटल व्योम ar71xx_pci_reset(व्योम)
-अणु
+static void ar71xx_pci_reset(void)
+{
 	ath79_device_reset_set(AR71XX_RESET_PCI_BUS | AR71XX_RESET_PCI_CORE);
 	mdelay(100);
 
 	ath79_device_reset_clear(AR71XX_RESET_PCI_BUS | AR71XX_RESET_PCI_CORE);
 	mdelay(100);
 
-	ath79_ddr_set_pci_winकरोws();
+	ath79_ddr_set_pci_windows();
 	mdelay(100);
-पूर्ण
+}
 
-अटल पूर्णांक ar71xx_pci_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा ar71xx_pci_controller *apc;
-	काष्ठा resource *res;
+static int ar71xx_pci_probe(struct platform_device *pdev)
+{
+	struct ar71xx_pci_controller *apc;
+	struct resource *res;
 	u32 t;
 
-	apc = devm_kzalloc(&pdev->dev, माप(काष्ठा ar71xx_pci_controller),
+	apc = devm_kzalloc(&pdev->dev, sizeof(struct ar71xx_pci_controller),
 			   GFP_KERNEL);
-	अगर (!apc)
-		वापस -ENOMEM;
+	if (!apc)
+		return -ENOMEM;
 
-	apc->cfg_base = devm_platक्रमm_ioremap_resource_byname(pdev,
+	apc->cfg_base = devm_platform_ioremap_resource_byname(pdev,
 							      "cfg_base");
-	अगर (IS_ERR(apc->cfg_base))
-		वापस PTR_ERR(apc->cfg_base);
+	if (IS_ERR(apc->cfg_base))
+		return PTR_ERR(apc->cfg_base);
 
-	apc->irq = platक्रमm_get_irq(pdev, 0);
-	अगर (apc->irq < 0)
-		वापस -EINVAL;
+	apc->irq = platform_get_irq(pdev, 0);
+	if (apc->irq < 0)
+		return -EINVAL;
 
-	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_IO, "io_base");
-	अगर (!res)
-		वापस -EINVAL;
+	res = platform_get_resource_byname(pdev, IORESOURCE_IO, "io_base");
+	if (!res)
+		return -EINVAL;
 
 	apc->io_res.parent = res;
 	apc->io_res.name = "PCI IO space";
@@ -356,9 +355,9 @@ pci_bus_to_ar71xx_controller(काष्ठा pci_bus *bus)
 	apc->io_res.end = res->end;
 	apc->io_res.flags = IORESOURCE_IO;
 
-	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, "mem_base");
-	अगर (!res)
-		वापस -EINVAL;
+	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "mem_base");
+	if (!res)
+		return -EINVAL;
 
 	apc->mem_res.parent = res;
 	apc->mem_res.name = "PCI memory space";
@@ -368,10 +367,10 @@ pci_bus_to_ar71xx_controller(काष्ठा pci_bus *bus)
 
 	ar71xx_pci_reset();
 
-	/* setup COMMAND रेजिस्टर */
+	/* setup COMMAND register */
 	t = PCI_COMMAND_MEMORY | PCI_COMMAND_MASTER | PCI_COMMAND_INVALIDATE
 	  | PCI_COMMAND_PARITY | PCI_COMMAND_SERR | PCI_COMMAND_FAST_BACK;
-	ar71xx_pci_local_ग_लिखो(apc, PCI_COMMAND, 4, t);
+	ar71xx_pci_local_write(apc, PCI_COMMAND, 4, t);
 
 	/* clear bus errors */
 	ar71xx_pci_check_error(apc, 1);
@@ -382,21 +381,21 @@ pci_bus_to_ar71xx_controller(काष्ठा pci_bus *bus)
 	apc->pci_ctrl.mem_resource = &apc->mem_res;
 	apc->pci_ctrl.io_resource = &apc->io_res;
 
-	रेजिस्टर_pci_controller(&apc->pci_ctrl);
+	register_pci_controller(&apc->pci_ctrl);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver ar71xx_pci_driver = अणु
+static struct platform_driver ar71xx_pci_driver = {
 	.probe = ar71xx_pci_probe,
-	.driver = अणु
+	.driver = {
 		.name = "ar71xx-pci",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init ar71xx_pci_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&ar71xx_pci_driver);
-पूर्ण
+static int __init ar71xx_pci_init(void)
+{
+	return platform_driver_register(&ar71xx_pci_driver);
+}
 
 postcore_initcall(ar71xx_pci_init);

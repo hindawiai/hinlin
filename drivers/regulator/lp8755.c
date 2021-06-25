@@ -1,190 +1,189 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * LP8755 High Perक्रमmance Power Management Unit : System Interface Driver
+ * LP8755 High Performance Power Management Unit : System Interface Driver
  * (based on rev. 0.26)
  * Copyright 2012 Texas Instruments
  *
  * Author: Daniel(Geon Si) Jeong <daniel.jeong@ti.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/err.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/regmap.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/regulator/driver.h>
-#समावेश <linux/regulator/machine.h>
-#समावेश <linux/platक्रमm_data/lp8755.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/i2c.h>
+#include <linux/err.h>
+#include <linux/irq.h>
+#include <linux/interrupt.h>
+#include <linux/gpio.h>
+#include <linux/regmap.h>
+#include <linux/uaccess.h>
+#include <linux/regulator/driver.h>
+#include <linux/regulator/machine.h>
+#include <linux/platform_data/lp8755.h>
 
-#घोषणा LP8755_REG_BUCK0	0x00
-#घोषणा LP8755_REG_BUCK1	0x03
-#घोषणा LP8755_REG_BUCK2	0x04
-#घोषणा LP8755_REG_BUCK3	0x01
-#घोषणा LP8755_REG_BUCK4	0x05
-#घोषणा LP8755_REG_BUCK5	0x02
-#घोषणा LP8755_REG_MAX		0xFF
+#define LP8755_REG_BUCK0	0x00
+#define LP8755_REG_BUCK1	0x03
+#define LP8755_REG_BUCK2	0x04
+#define LP8755_REG_BUCK3	0x01
+#define LP8755_REG_BUCK4	0x05
+#define LP8755_REG_BUCK5	0x02
+#define LP8755_REG_MAX		0xFF
 
-#घोषणा LP8755_BUCK_EN_M	BIT(7)
-#घोषणा LP8755_BUCK_LINEAR_OUT_MAX	0x76
-#घोषणा LP8755_BUCK_VOUT_M	0x7F
+#define LP8755_BUCK_EN_M	BIT(7)
+#define LP8755_BUCK_LINEAR_OUT_MAX	0x76
+#define LP8755_BUCK_VOUT_M	0x7F
 
-काष्ठा lp8755_mphase अणु
-	पूर्णांक nreg;
-	पूर्णांक buck_num[LP8755_BUCK_MAX];
-पूर्ण;
+struct lp8755_mphase {
+	int nreg;
+	int buck_num[LP8755_BUCK_MAX];
+};
 
-काष्ठा lp8755_chip अणु
-	काष्ठा device *dev;
-	काष्ठा regmap *regmap;
-	काष्ठा lp8755_platक्रमm_data *pdata;
+struct lp8755_chip {
+	struct device *dev;
+	struct regmap *regmap;
+	struct lp8755_platform_data *pdata;
 
-	पूर्णांक irq;
-	अचिन्हित पूर्णांक irqmask;
+	int irq;
+	unsigned int irqmask;
 
-	पूर्णांक mphase;
-	काष्ठा regulator_dev *rdev[LP8755_BUCK_MAX];
-पूर्ण;
+	int mphase;
+	struct regulator_dev *rdev[LP8755_BUCK_MAX];
+};
 
-अटल पूर्णांक lp8755_buck_enable_समय(काष्ठा regulator_dev *rdev)
-अणु
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक regval;
-	क्रमागत lp8755_bucks id = rdev_get_id(rdev);
+static int lp8755_buck_enable_time(struct regulator_dev *rdev)
+{
+	int ret;
+	unsigned int regval;
+	enum lp8755_bucks id = rdev_get_id(rdev);
 
-	ret = regmap_पढ़ो(rdev->regmap, 0x12 + id, &regval);
-	अगर (ret < 0) अणु
+	ret = regmap_read(rdev->regmap, 0x12 + id, &regval);
+	if (ret < 0) {
 		dev_err(&rdev->dev, "i2c access error %s\n", __func__);
-		वापस ret;
-	पूर्ण
-	वापस (regval & 0xff) * 100;
-पूर्ण
+		return ret;
+	}
+	return (regval & 0xff) * 100;
+}
 
-अटल पूर्णांक lp8755_buck_set_mode(काष्ठा regulator_dev *rdev, अचिन्हित पूर्णांक mode)
-अणु
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक regbval = 0x0;
-	क्रमागत lp8755_bucks id = rdev_get_id(rdev);
-	काष्ठा lp8755_chip *pchip = rdev_get_drvdata(rdev);
+static int lp8755_buck_set_mode(struct regulator_dev *rdev, unsigned int mode)
+{
+	int ret;
+	unsigned int regbval = 0x0;
+	enum lp8755_bucks id = rdev_get_id(rdev);
+	struct lp8755_chip *pchip = rdev_get_drvdata(rdev);
 
-	चयन (mode) अणु
-	हाल REGULATOR_MODE_FAST:
-		/* क्रमced pwm mode */
+	switch (mode) {
+	case REGULATOR_MODE_FAST:
+		/* forced pwm mode */
 		regbval = (0x01 << id);
-		अवरोध;
-	हाल REGULATOR_MODE_NORMAL:
-		/* enable स्वतःmatic pwm/pfm mode */
+		break;
+	case REGULATOR_MODE_NORMAL:
+		/* enable automatic pwm/pfm mode */
 		ret = regmap_update_bits(rdev->regmap, 0x08 + id, 0x20, 0x00);
-		अगर (ret < 0)
-			जाओ err_i2c;
-		अवरोध;
-	हाल REGULATOR_MODE_IDLE:
-		/* enable स्वतःmatic pwm/pfm/lppfm mode */
+		if (ret < 0)
+			goto err_i2c;
+		break;
+	case REGULATOR_MODE_IDLE:
+		/* enable automatic pwm/pfm/lppfm mode */
 		ret = regmap_update_bits(rdev->regmap, 0x08 + id, 0x20, 0x20);
-		अगर (ret < 0)
-			जाओ err_i2c;
+		if (ret < 0)
+			goto err_i2c;
 
 		ret = regmap_update_bits(rdev->regmap, 0x10, 0x01, 0x01);
-		अगर (ret < 0)
-			जाओ err_i2c;
-		अवरोध;
-	शेष:
+		if (ret < 0)
+			goto err_i2c;
+		break;
+	default:
 		dev_err(pchip->dev, "Not supported buck mode %s\n", __func__);
-		/* क्रमced pwm mode */
+		/* forced pwm mode */
 		regbval = (0x01 << id);
-	पूर्ण
+	}
 
 	ret = regmap_update_bits(rdev->regmap, 0x06, 0x01 << id, regbval);
-	अगर (ret < 0)
-		जाओ err_i2c;
-	वापस ret;
+	if (ret < 0)
+		goto err_i2c;
+	return ret;
 err_i2c:
 	dev_err(&rdev->dev, "i2c access error %s\n", __func__);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अचिन्हित पूर्णांक lp8755_buck_get_mode(काष्ठा regulator_dev *rdev)
-अणु
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक regval;
-	क्रमागत lp8755_bucks id = rdev_get_id(rdev);
+static unsigned int lp8755_buck_get_mode(struct regulator_dev *rdev)
+{
+	int ret;
+	unsigned int regval;
+	enum lp8755_bucks id = rdev_get_id(rdev);
 
-	ret = regmap_पढ़ो(rdev->regmap, 0x06, &regval);
-	अगर (ret < 0)
-		जाओ err_i2c;
+	ret = regmap_read(rdev->regmap, 0x06, &regval);
+	if (ret < 0)
+		goto err_i2c;
 
-	/* mode fast means क्रमced pwm mode */
-	अगर (regval & (0x01 << id))
-		वापस REGULATOR_MODE_FAST;
+	/* mode fast means forced pwm mode */
+	if (regval & (0x01 << id))
+		return REGULATOR_MODE_FAST;
 
-	ret = regmap_पढ़ो(rdev->regmap, 0x08 + id, &regval);
-	अगर (ret < 0)
-		जाओ err_i2c;
+	ret = regmap_read(rdev->regmap, 0x08 + id, &regval);
+	if (ret < 0)
+		goto err_i2c;
 
-	/* mode idle means स्वतःmatic pwm/pfm/lppfm mode */
-	अगर (regval & 0x20)
-		वापस REGULATOR_MODE_IDLE;
+	/* mode idle means automatic pwm/pfm/lppfm mode */
+	if (regval & 0x20)
+		return REGULATOR_MODE_IDLE;
 
-	/* mode normal means स्वतःmatic pwm/pfm mode */
-	वापस REGULATOR_MODE_NORMAL;
+	/* mode normal means automatic pwm/pfm mode */
+	return REGULATOR_MODE_NORMAL;
 
 err_i2c:
 	dev_err(&rdev->dev, "i2c access error %s\n", __func__);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lp8755_buck_set_ramp(काष्ठा regulator_dev *rdev, पूर्णांक ramp)
-अणु
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक regval = 0x00;
-	क्रमागत lp8755_bucks id = rdev_get_id(rdev);
+static int lp8755_buck_set_ramp(struct regulator_dev *rdev, int ramp)
+{
+	int ret;
+	unsigned int regval = 0x00;
+	enum lp8755_bucks id = rdev_get_id(rdev);
 
 	/* uV/us */
-	चयन (ramp) अणु
-	हाल 0 ... 230:
+	switch (ramp) {
+	case 0 ... 230:
 		regval = 0x07;
-		अवरोध;
-	हाल 231 ... 470:
+		break;
+	case 231 ... 470:
 		regval = 0x06;
-		अवरोध;
-	हाल 471 ... 940:
+		break;
+	case 471 ... 940:
 		regval = 0x05;
-		अवरोध;
-	हाल 941 ... 1900:
+		break;
+	case 941 ... 1900:
 		regval = 0x04;
-		अवरोध;
-	हाल 1901 ... 3800:
+		break;
+	case 1901 ... 3800:
 		regval = 0x03;
-		अवरोध;
-	हाल 3801 ... 7500:
+		break;
+	case 3801 ... 7500:
 		regval = 0x02;
-		अवरोध;
-	हाल 7501 ... 15000:
+		break;
+	case 7501 ... 15000:
 		regval = 0x01;
-		अवरोध;
-	हाल 15001 ... 30000:
+		break;
+	case 15001 ... 30000:
 		regval = 0x00;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(&rdev->dev,
 			"Not supported ramp value %d %s\n", ramp, __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	ret = regmap_update_bits(rdev->regmap, 0x07 + id, 0x07, regval);
-	अगर (ret < 0)
-		जाओ err_i2c;
-	वापस ret;
+	if (ret < 0)
+		goto err_i2c;
+	return ret;
 err_i2c:
 	dev_err(&rdev->dev, "i2c access error %s\n", __func__);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा regulator_ops lp8755_buck_ops = अणु
+static const struct regulator_ops lp8755_buck_ops = {
 	.map_voltage = regulator_map_voltage_linear,
 	.list_voltage = regulator_list_voltage_linear,
 	.set_voltage_sel = regulator_set_voltage_sel_regmap,
@@ -192,72 +191,72 @@ err_i2c:
 	.enable = regulator_enable_regmap,
 	.disable = regulator_disable_regmap,
 	.is_enabled = regulator_is_enabled_regmap,
-	.enable_समय = lp8755_buck_enable_समय,
+	.enable_time = lp8755_buck_enable_time,
 	.set_mode = lp8755_buck_set_mode,
 	.get_mode = lp8755_buck_get_mode,
 	.set_ramp_delay = lp8755_buck_set_ramp,
-पूर्ण;
+};
 
-#घोषणा lp8755_rail(_id) "lp8755_buck"#_id
-#घोषणा lp8755_buck_init(_id)\
-अणु\
-	.स्थिरraपूर्णांकs = अणु\
+#define lp8755_rail(_id) "lp8755_buck"#_id
+#define lp8755_buck_init(_id)\
+{\
+	.constraints = {\
 		.name = lp8755_rail(_id),\
 		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE,\
 		.min_uV = 500000,\
 		.max_uV = 1675000,\
-	पूर्ण,\
-पूर्ण
+	},\
+}
 
-अटल काष्ठा regulator_init_data lp8755_reg_शेष[LP8755_BUCK_MAX] = अणु
+static struct regulator_init_data lp8755_reg_default[LP8755_BUCK_MAX] = {
 	[LP8755_BUCK0] = lp8755_buck_init(0),
 	[LP8755_BUCK1] = lp8755_buck_init(1),
 	[LP8755_BUCK2] = lp8755_buck_init(2),
 	[LP8755_BUCK3] = lp8755_buck_init(3),
 	[LP8755_BUCK4] = lp8755_buck_init(4),
 	[LP8755_BUCK5] = lp8755_buck_init(5),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा lp8755_mphase mphase_buck[MPHASE_CONF_MAX] = अणु
-	अणु 3, अणु LP8755_BUCK0, LP8755_BUCK3, LP8755_BUCK5 पूर्ण पूर्ण,
-	अणु 6, अणु LP8755_BUCK0, LP8755_BUCK1, LP8755_BUCK2, LP8755_BUCK3,
-	       LP8755_BUCK4, LP8755_BUCK5 पूर्ण पूर्ण,
-	अणु 5, अणु LP8755_BUCK0, LP8755_BUCK2, LP8755_BUCK3, LP8755_BUCK4,
-	       LP8755_BUCK5पूर्ण पूर्ण,
-	अणु 4, अणु LP8755_BUCK0, LP8755_BUCK3, LP8755_BUCK4, LP8755_BUCK5पूर्ण पूर्ण,
-	अणु 3, अणु LP8755_BUCK0, LP8755_BUCK4, LP8755_BUCK5पूर्ण पूर्ण,
-	अणु 2, अणु LP8755_BUCK0, LP8755_BUCK5पूर्ण पूर्ण,
-	अणु 1, अणु LP8755_BUCK0पूर्ण पूर्ण,
-	अणु 2, अणु LP8755_BUCK0, LP8755_BUCK3पूर्ण पूर्ण,
-	अणु 4, अणु LP8755_BUCK0, LP8755_BUCK2, LP8755_BUCK3, LP8755_BUCK5पूर्ण पूर्ण,
-पूर्ण;
+static const struct lp8755_mphase mphase_buck[MPHASE_CONF_MAX] = {
+	{ 3, { LP8755_BUCK0, LP8755_BUCK3, LP8755_BUCK5 } },
+	{ 6, { LP8755_BUCK0, LP8755_BUCK1, LP8755_BUCK2, LP8755_BUCK3,
+	       LP8755_BUCK4, LP8755_BUCK5 } },
+	{ 5, { LP8755_BUCK0, LP8755_BUCK2, LP8755_BUCK3, LP8755_BUCK4,
+	       LP8755_BUCK5} },
+	{ 4, { LP8755_BUCK0, LP8755_BUCK3, LP8755_BUCK4, LP8755_BUCK5} },
+	{ 3, { LP8755_BUCK0, LP8755_BUCK4, LP8755_BUCK5} },
+	{ 2, { LP8755_BUCK0, LP8755_BUCK5} },
+	{ 1, { LP8755_BUCK0} },
+	{ 2, { LP8755_BUCK0, LP8755_BUCK3} },
+	{ 4, { LP8755_BUCK0, LP8755_BUCK2, LP8755_BUCK3, LP8755_BUCK5} },
+};
 
-अटल पूर्णांक lp8755_init_data(काष्ठा lp8755_chip *pchip)
-अणु
-	अचिन्हित पूर्णांक regval;
-	पूर्णांक ret, icnt, buck_num;
-	काष्ठा lp8755_platक्रमm_data *pdata = pchip->pdata;
+static int lp8755_init_data(struct lp8755_chip *pchip)
+{
+	unsigned int regval;
+	int ret, icnt, buck_num;
+	struct lp8755_platform_data *pdata = pchip->pdata;
 
-	/* पढ़ो back  muti-phase configuration */
-	ret = regmap_पढ़ो(pchip->regmap, 0x3D, &regval);
-	अगर (ret < 0)
-		जाओ out_i2c_error;
+	/* read back  muti-phase configuration */
+	ret = regmap_read(pchip->regmap, 0x3D, &regval);
+	if (ret < 0)
+		goto out_i2c_error;
 	pchip->mphase = regval & 0x0F;
 
-	/* set शेष data based on multi-phase config */
-	क्रम (icnt = 0; icnt < mphase_buck[pchip->mphase].nreg; icnt++) अणु
+	/* set default data based on multi-phase config */
+	for (icnt = 0; icnt < mphase_buck[pchip->mphase].nreg; icnt++) {
 		buck_num = mphase_buck[pchip->mphase].buck_num[icnt];
-		pdata->buck_data[buck_num] = &lp8755_reg_शेष[buck_num];
-	पूर्ण
-	वापस ret;
+		pdata->buck_data[buck_num] = &lp8755_reg_default[buck_num];
+	}
+	return ret;
 
 out_i2c_error:
 	dev_err(pchip->dev, "i2c access error %s\n", __func__);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#घोषणा lp8755_buck_desc(_id)\
-अणु\
+#define lp8755_buck_desc(_id)\
+{\
 	.name = lp8755_rail(_id),\
 	.id   = LP8755_BUCK##_id,\
 	.ops  = &lp8755_buck_ops,\
@@ -270,238 +269,238 @@ out_i2c_error:
 	.enable_mask = LP8755_BUCK_EN_M,\
 	.vsel_reg = LP8755_REG_BUCK##_id,\
 	.vsel_mask = LP8755_BUCK_VOUT_M,\
-पूर्ण
+}
 
-अटल स्थिर काष्ठा regulator_desc lp8755_regulators[] = अणु
+static const struct regulator_desc lp8755_regulators[] = {
 	lp8755_buck_desc(0),
 	lp8755_buck_desc(1),
 	lp8755_buck_desc(2),
 	lp8755_buck_desc(3),
 	lp8755_buck_desc(4),
 	lp8755_buck_desc(5),
-पूर्ण;
+};
 
-अटल पूर्णांक lp8755_regulator_init(काष्ठा lp8755_chip *pchip)
-अणु
-	पूर्णांक ret, icnt, buck_num;
-	काष्ठा lp8755_platक्रमm_data *pdata = pchip->pdata;
-	काष्ठा regulator_config rconfig = अणु पूर्ण;
+static int lp8755_regulator_init(struct lp8755_chip *pchip)
+{
+	int ret, icnt, buck_num;
+	struct lp8755_platform_data *pdata = pchip->pdata;
+	struct regulator_config rconfig = { };
 
 	rconfig.regmap = pchip->regmap;
 	rconfig.dev = pchip->dev;
 	rconfig.driver_data = pchip;
 
-	क्रम (icnt = 0; icnt < mphase_buck[pchip->mphase].nreg; icnt++) अणु
+	for (icnt = 0; icnt < mphase_buck[pchip->mphase].nreg; icnt++) {
 		buck_num = mphase_buck[pchip->mphase].buck_num[icnt];
 		rconfig.init_data = pdata->buck_data[buck_num];
 		rconfig.of_node = pchip->dev->of_node;
 		pchip->rdev[buck_num] =
-		    devm_regulator_रेजिस्टर(pchip->dev,
+		    devm_regulator_register(pchip->dev,
 				    &lp8755_regulators[buck_num], &rconfig);
-		अगर (IS_ERR(pchip->rdev[buck_num])) अणु
+		if (IS_ERR(pchip->rdev[buck_num])) {
 			ret = PTR_ERR(pchip->rdev[buck_num]);
-			pchip->rdev[buck_num] = शून्य;
+			pchip->rdev[buck_num] = NULL;
 			dev_err(pchip->dev, "regulator init failed: buck %d\n",
 				buck_num);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल irqवापस_t lp8755_irq_handler(पूर्णांक irq, व्योम *data)
-अणु
-	पूर्णांक ret, icnt;
-	अचिन्हित पूर्णांक flag0, flag1;
-	काष्ठा lp8755_chip *pchip = data;
+static irqreturn_t lp8755_irq_handler(int irq, void *data)
+{
+	int ret, icnt;
+	unsigned int flag0, flag1;
+	struct lp8755_chip *pchip = data;
 
-	/* पढ़ो flag0 रेजिस्टर */
-	ret = regmap_पढ़ो(pchip->regmap, 0x0D, &flag0);
-	अगर (ret < 0)
-		जाओ err_i2c;
-	/* clear flag रेजिस्टर to pull up पूर्णांक. pin */
-	ret = regmap_ग_लिखो(pchip->regmap, 0x0D, 0x00);
-	अगर (ret < 0)
-		जाओ err_i2c;
+	/* read flag0 register */
+	ret = regmap_read(pchip->regmap, 0x0D, &flag0);
+	if (ret < 0)
+		goto err_i2c;
+	/* clear flag register to pull up int. pin */
+	ret = regmap_write(pchip->regmap, 0x0D, 0x00);
+	if (ret < 0)
+		goto err_i2c;
 
-	/* sent घातer fault detection event to specअगरic regulator */
-	क्रम (icnt = 0; icnt < LP8755_BUCK_MAX; icnt++)
-		अगर ((flag0 & (0x4 << icnt))
+	/* sent power fault detection event to specific regulator */
+	for (icnt = 0; icnt < LP8755_BUCK_MAX; icnt++)
+		if ((flag0 & (0x4 << icnt))
 		    && (pchip->irqmask & (0x04 << icnt))
-		    && (pchip->rdev[icnt] != शून्य)) अणु
-			regulator_notअगरier_call_chain(pchip->rdev[icnt],
+		    && (pchip->rdev[icnt] != NULL)) {
+			regulator_notifier_call_chain(pchip->rdev[icnt],
 						      LP8755_EVENT_PWR_FAULT,
-						      शून्य);
-		पूर्ण
+						      NULL);
+		}
 
-	/* पढ़ो flag1 रेजिस्टर */
-	ret = regmap_पढ़ो(pchip->regmap, 0x0E, &flag1);
-	अगर (ret < 0)
-		जाओ err_i2c;
-	/* clear flag रेजिस्टर to pull up पूर्णांक. pin */
-	ret = regmap_ग_लिखो(pchip->regmap, 0x0E, 0x00);
-	अगर (ret < 0)
-		जाओ err_i2c;
+	/* read flag1 register */
+	ret = regmap_read(pchip->regmap, 0x0E, &flag1);
+	if (ret < 0)
+		goto err_i2c;
+	/* clear flag register to pull up int. pin */
+	ret = regmap_write(pchip->regmap, 0x0E, 0x00);
+	if (ret < 0)
+		goto err_i2c;
 
 	/* send OCP event to all regulator devices */
-	अगर ((flag1 & 0x01) && (pchip->irqmask & 0x01))
-		क्रम (icnt = 0; icnt < LP8755_BUCK_MAX; icnt++)
-			अगर (pchip->rdev[icnt] != शून्य) अणु
-				regulator_notअगरier_call_chain(pchip->rdev[icnt],
+	if ((flag1 & 0x01) && (pchip->irqmask & 0x01))
+		for (icnt = 0; icnt < LP8755_BUCK_MAX; icnt++)
+			if (pchip->rdev[icnt] != NULL) {
+				regulator_notifier_call_chain(pchip->rdev[icnt],
 							      LP8755_EVENT_OCP,
-							      शून्य);
-			पूर्ण
+							      NULL);
+			}
 
 	/* send OVP event to all regulator devices */
-	अगर ((flag1 & 0x02) && (pchip->irqmask & 0x02))
-		क्रम (icnt = 0; icnt < LP8755_BUCK_MAX; icnt++)
-			अगर (pchip->rdev[icnt] != शून्य) अणु
-				regulator_notअगरier_call_chain(pchip->rdev[icnt],
+	if ((flag1 & 0x02) && (pchip->irqmask & 0x02))
+		for (icnt = 0; icnt < LP8755_BUCK_MAX; icnt++)
+			if (pchip->rdev[icnt] != NULL) {
+				regulator_notifier_call_chain(pchip->rdev[icnt],
 							      LP8755_EVENT_OVP,
-							      शून्य);
-			पूर्ण
-	वापस IRQ_HANDLED;
+							      NULL);
+			}
+	return IRQ_HANDLED;
 
 err_i2c:
 	dev_err(pchip->dev, "i2c access error %s\n", __func__);
-	वापस IRQ_NONE;
-पूर्ण
+	return IRQ_NONE;
+}
 
-अटल पूर्णांक lp8755_पूर्णांक_config(काष्ठा lp8755_chip *pchip)
-अणु
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक regval;
+static int lp8755_int_config(struct lp8755_chip *pchip)
+{
+	int ret;
+	unsigned int regval;
 
-	अगर (pchip->irq == 0) अणु
+	if (pchip->irq == 0) {
 		dev_warn(pchip->dev, "not use interrupt : %s\n", __func__);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	ret = regmap_पढ़ो(pchip->regmap, 0x0F, &regval);
-	अगर (ret < 0) अणु
+	ret = regmap_read(pchip->regmap, 0x0F, &regval);
+	if (ret < 0) {
 		dev_err(pchip->dev, "i2c access error %s\n", __func__);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	pchip->irqmask = regval;
-	वापस devm_request_thपढ़ोed_irq(pchip->dev, pchip->irq, शून्य,
+	return devm_request_threaded_irq(pchip->dev, pchip->irq, NULL,
 					 lp8755_irq_handler,
 					 IRQF_TRIGGER_FALLING | IRQF_ONESHOT,
 					 "lp8755-irq", pchip);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा regmap_config lp8755_regmap = अणु
+static const struct regmap_config lp8755_regmap = {
 	.reg_bits = 8,
 	.val_bits = 8,
-	.max_रेजिस्टर = LP8755_REG_MAX,
-पूर्ण;
+	.max_register = LP8755_REG_MAX,
+};
 
-अटल पूर्णांक lp8755_probe(काष्ठा i2c_client *client,
-			स्थिर काष्ठा i2c_device_id *id)
-अणु
-	पूर्णांक ret, icnt;
-	काष्ठा lp8755_chip *pchip;
-	काष्ठा lp8755_platक्रमm_data *pdata = dev_get_platdata(&client->dev);
+static int lp8755_probe(struct i2c_client *client,
+			const struct i2c_device_id *id)
+{
+	int ret, icnt;
+	struct lp8755_chip *pchip;
+	struct lp8755_platform_data *pdata = dev_get_platdata(&client->dev);
 
-	अगर (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C)) अणु
+	if (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C)) {
 		dev_err(&client->dev, "i2c functionality check fail.\n");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
 	pchip = devm_kzalloc(&client->dev,
-			     माप(काष्ठा lp8755_chip), GFP_KERNEL);
-	अगर (!pchip)
-		वापस -ENOMEM;
+			     sizeof(struct lp8755_chip), GFP_KERNEL);
+	if (!pchip)
+		return -ENOMEM;
 
 	pchip->dev = &client->dev;
 	pchip->regmap = devm_regmap_init_i2c(client, &lp8755_regmap);
-	अगर (IS_ERR(pchip->regmap)) अणु
+	if (IS_ERR(pchip->regmap)) {
 		ret = PTR_ERR(pchip->regmap);
 		dev_err(&client->dev, "fail to allocate regmap %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	i2c_set_clientdata(client, pchip);
 
-	अगर (pdata != शून्य) अणु
+	if (pdata != NULL) {
 		pchip->pdata = pdata;
 		pchip->mphase = pdata->mphase;
-	पूर्ण अन्यथा अणु
+	} else {
 		pchip->pdata = devm_kzalloc(pchip->dev,
-					    माप(काष्ठा lp8755_platक्रमm_data),
+					    sizeof(struct lp8755_platform_data),
 					    GFP_KERNEL);
-		अगर (!pchip->pdata)
-			वापस -ENOMEM;
+		if (!pchip->pdata)
+			return -ENOMEM;
 		ret = lp8755_init_data(pchip);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(&client->dev, "fail to initialize chip\n");
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
 	ret = lp8755_regulator_init(pchip);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&client->dev, "fail to initialize regulators\n");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	pchip->irq = client->irq;
-	ret = lp8755_पूर्णांक_config(pchip);
-	अगर (ret < 0) अणु
+	ret = lp8755_int_config(pchip);
+	if (ret < 0) {
 		dev_err(&client->dev, "fail to irq config\n");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	वापस ret;
+	return ret;
 
 err:
 	/* output disable */
-	क्रम (icnt = 0; icnt < LP8755_BUCK_MAX; icnt++)
-		regmap_ग_लिखो(pchip->regmap, icnt, 0x00);
+	for (icnt = 0; icnt < LP8755_BUCK_MAX; icnt++)
+		regmap_write(pchip->regmap, icnt, 0x00);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक lp8755_हटाओ(काष्ठा i2c_client *client)
-अणु
-	पूर्णांक icnt;
-	काष्ठा lp8755_chip *pchip = i2c_get_clientdata(client);
+static int lp8755_remove(struct i2c_client *client)
+{
+	int icnt;
+	struct lp8755_chip *pchip = i2c_get_clientdata(client);
 
-	क्रम (icnt = 0; icnt < LP8755_BUCK_MAX; icnt++)
-		regmap_ग_लिखो(pchip->regmap, icnt, 0x00);
+	for (icnt = 0; icnt < LP8755_BUCK_MAX; icnt++)
+		regmap_write(pchip->regmap, icnt, 0x00);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा i2c_device_id lp8755_id[] = अणु
-	अणुLP8755_NAME, 0पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct i2c_device_id lp8755_id[] = {
+	{LP8755_NAME, 0},
+	{}
+};
 
 MODULE_DEVICE_TABLE(i2c, lp8755_id);
 
-अटल काष्ठा i2c_driver lp8755_i2c_driver = अणु
-	.driver = अणु
+static struct i2c_driver lp8755_i2c_driver = {
+	.driver = {
 		   .name = LP8755_NAME,
-		   पूर्ण,
+		   },
 	.probe = lp8755_probe,
-	.हटाओ = lp8755_हटाओ,
+	.remove = lp8755_remove,
 	.id_table = lp8755_id,
-पूर्ण;
+};
 
-अटल पूर्णांक __init lp8755_init(व्योम)
-अणु
-	वापस i2c_add_driver(&lp8755_i2c_driver);
-पूर्ण
+static int __init lp8755_init(void)
+{
+	return i2c_add_driver(&lp8755_i2c_driver);
+}
 
 subsys_initcall(lp8755_init);
 
-अटल व्योम __निकास lp8755_निकास(व्योम)
-अणु
+static void __exit lp8755_exit(void)
+{
 	i2c_del_driver(&lp8755_i2c_driver);
-पूर्ण
+}
 
-module_निकास(lp8755_निकास);
+module_exit(lp8755_exit);
 
 MODULE_DESCRIPTION("Texas Instruments lp8755 driver");
 MODULE_AUTHOR("Daniel Jeong <daniel.jeong@ti.com>");

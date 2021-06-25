@@ -1,325 +1,324 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * wm8903.c  --  WM8903 ALSA SoC Audio driver
  *
  * Copyright 2008-12 Wolfson Microelectronics
  * Copyright 2011-2012 NVIDIA, Inc.
  *
- * Author: Mark Brown <broonie@खोलोsource.wolfsonmicro.com>
+ * Author: Mark Brown <broonie@opensource.wolfsonmicro.com>
  *
  * TODO:
  *  - TDM mode configuration.
  *  - Digital microphone support.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/init.h>
-#समावेश <linux/completion.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/gpio/driver.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/regulator/consumer.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/mutex.h>
-#समावेश <sound/core.h>
-#समावेश <sound/jack.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/pcm_params.h>
-#समावेश <sound/tlv.h>
-#समावेश <sound/soc.h>
-#समावेश <sound/initval.h>
-#समावेश <sound/wm8903.h>
-#समावेश <trace/events/asoc.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/init.h>
+#include <linux/completion.h>
+#include <linux/delay.h>
+#include <linux/gpio/driver.h>
+#include <linux/pm.h>
+#include <linux/i2c.h>
+#include <linux/regmap.h>
+#include <linux/regulator/consumer.h>
+#include <linux/slab.h>
+#include <linux/irq.h>
+#include <linux/mutex.h>
+#include <sound/core.h>
+#include <sound/jack.h>
+#include <sound/pcm.h>
+#include <sound/pcm_params.h>
+#include <sound/tlv.h>
+#include <sound/soc.h>
+#include <sound/initval.h>
+#include <sound/wm8903.h>
+#include <trace/events/asoc.h>
 
-#समावेश "wm8903.h"
+#include "wm8903.h"
 
-/* Register शेषs at reset */
-अटल स्थिर काष्ठा reg_शेष wm8903_reg_शेषs[] = अणु
-	अणु 4,  0x0018 पूर्ण,     /* R4   - Bias Control 0 */
-	अणु 5,  0x0000 पूर्ण,     /* R5   - VMID Control 0 */
-	अणु 6,  0x0000 पूर्ण,     /* R6   - Mic Bias Control 0 */
-	अणु 8,  0x0001 पूर्ण,     /* R8   - Analogue DAC 0 */
-	अणु 10, 0x0001 पूर्ण,     /* R10  - Analogue ADC 0 */
-	अणु 12, 0x0000 पूर्ण,     /* R12  - Power Management 0 */
-	अणु 13, 0x0000 पूर्ण,     /* R13  - Power Management 1 */
-	अणु 14, 0x0000 पूर्ण,     /* R14  - Power Management 2 */
-	अणु 15, 0x0000 पूर्ण,     /* R15  - Power Management 3 */
-	अणु 16, 0x0000 पूर्ण,     /* R16  - Power Management 4 */
-	अणु 17, 0x0000 पूर्ण,     /* R17  - Power Management 5 */
-	अणु 18, 0x0000 पूर्ण,     /* R18  - Power Management 6 */
-	अणु 20, 0x0400 पूर्ण,     /* R20  - Clock Rates 0 */
-	अणु 21, 0x0D07 पूर्ण,     /* R21  - Clock Rates 1 */
-	अणु 22, 0x0000 पूर्ण,     /* R22  - Clock Rates 2 */
-	अणु 24, 0x0050 पूर्ण,     /* R24  - Audio Interface 0 */
-	अणु 25, 0x0242 पूर्ण,     /* R25  - Audio Interface 1 */
-	अणु 26, 0x0008 पूर्ण,     /* R26  - Audio Interface 2 */
-	अणु 27, 0x0022 पूर्ण,     /* R27  - Audio Interface 3 */
-	अणु 30, 0x00C0 पूर्ण,     /* R30  - DAC Digital Volume Left */
-	अणु 31, 0x00C0 पूर्ण,     /* R31  - DAC Digital Volume Right */
-	अणु 32, 0x0000 पूर्ण,     /* R32  - DAC Digital 0 */
-	अणु 33, 0x0000 पूर्ण,     /* R33  - DAC Digital 1 */
-	अणु 36, 0x00C0 पूर्ण,     /* R36  - ADC Digital Volume Left */
-	अणु 37, 0x00C0 पूर्ण,     /* R37  - ADC Digital Volume Right */
-	अणु 38, 0x0000 पूर्ण,     /* R38  - ADC Digital 0 */
-	अणु 39, 0x0073 पूर्ण,     /* R39  - Digital Microphone 0 */
-	अणु 40, 0x09BF पूर्ण,     /* R40  - DRC 0 */
-	अणु 41, 0x3241 पूर्ण,     /* R41  - DRC 1 */
-	अणु 42, 0x0020 पूर्ण,     /* R42  - DRC 2 */
-	अणु 43, 0x0000 पूर्ण,     /* R43  - DRC 3 */
-	अणु 44, 0x0085 पूर्ण,     /* R44  - Analogue Left Input 0 */
-	अणु 45, 0x0085 पूर्ण,     /* R45  - Analogue Right Input 0 */
-	अणु 46, 0x0044 पूर्ण,     /* R46  - Analogue Left Input 1 */
-	अणु 47, 0x0044 पूर्ण,     /* R47  - Analogue Right Input 1 */
-	अणु 50, 0x0008 पूर्ण,     /* R50  - Analogue Left Mix 0 */
-	अणु 51, 0x0004 पूर्ण,     /* R51  - Analogue Right Mix 0 */
-	अणु 52, 0x0000 पूर्ण,     /* R52  - Analogue Spk Mix Left 0 */
-	अणु 53, 0x0000 पूर्ण,     /* R53  - Analogue Spk Mix Left 1 */
-	अणु 54, 0x0000 पूर्ण,     /* R54  - Analogue Spk Mix Right 0 */
-	अणु 55, 0x0000 पूर्ण,     /* R55  - Analogue Spk Mix Right 1 */
-	अणु 57, 0x002D पूर्ण,     /* R57  - Analogue OUT1 Left */
-	अणु 58, 0x002D पूर्ण,     /* R58  - Analogue OUT1 Right */
-	अणु 59, 0x0039 पूर्ण,     /* R59  - Analogue OUT2 Left */
-	अणु 60, 0x0039 पूर्ण,     /* R60  - Analogue OUT2 Right */
-	अणु 62, 0x0139 पूर्ण,     /* R62  - Analogue OUT3 Left */
-	अणु 63, 0x0139 पूर्ण,     /* R63  - Analogue OUT3 Right */
-	अणु 64, 0x0000 पूर्ण,     /* R65  - Analogue SPK Output Control 0 */
-	अणु 67, 0x0010 पूर्ण,     /* R67  - DC Servo 0 */
-	अणु 69, 0x00A4 पूर्ण,     /* R69  - DC Servo 2 */
-	अणु 90, 0x0000 पूर्ण,     /* R90  - Analogue HP 0 */
-	अणु 94, 0x0000 पूर्ण,     /* R94  - Analogue Lineout 0 */
-	अणु 98, 0x0000 पूर्ण,     /* R98  - Charge Pump 0 */
-	अणु 104, 0x0000 पूर्ण,    /* R104 - Class W 0 */
-	अणु 108, 0x0000 पूर्ण,    /* R108 - Write Sequencer 0 */
-	अणु 109, 0x0000 पूर्ण,    /* R109 - Write Sequencer 1 */
-	अणु 110, 0x0000 पूर्ण,    /* R110 - Write Sequencer 2 */
-	अणु 111, 0x0000 पूर्ण,    /* R111 - Write Sequencer 3 */
-	अणु 112, 0x0000 पूर्ण,    /* R112 - Write Sequencer 4 */
-	अणु 114, 0x0000 पूर्ण,    /* R114 - Control Interface */
-	अणु 116, 0x00A8 पूर्ण,    /* R116 - GPIO Control 1 */
-	अणु 117, 0x00A8 पूर्ण,    /* R117 - GPIO Control 2 */
-	अणु 118, 0x00A8 पूर्ण,    /* R118 - GPIO Control 3 */
-	अणु 119, 0x0220 पूर्ण,    /* R119 - GPIO Control 4 */
-	अणु 120, 0x01A0 पूर्ण,    /* R120 - GPIO Control 5 */
-	अणु 122, 0xFFFF पूर्ण,    /* R122 - Interrupt Status 1 Mask */
-	अणु 123, 0x0000 पूर्ण,    /* R123 - Interrupt Polarity 1 */
-	अणु 126, 0x0000 पूर्ण,    /* R126 - Interrupt Control */
-	अणु 129, 0x0000 पूर्ण,    /* R129 - Control Interface Test 1 */
-	अणु 149, 0x6810 पूर्ण,    /* R149 - Charge Pump Test 1 */
-	अणु 164, 0x0028 पूर्ण,    /* R164 - Clock Rate Test 4 */
-	अणु 172, 0x0000 पूर्ण,    /* R172 - Analogue Output Bias 0 */
-पूर्ण;
+/* Register defaults at reset */
+static const struct reg_default wm8903_reg_defaults[] = {
+	{ 4,  0x0018 },     /* R4   - Bias Control 0 */
+	{ 5,  0x0000 },     /* R5   - VMID Control 0 */
+	{ 6,  0x0000 },     /* R6   - Mic Bias Control 0 */
+	{ 8,  0x0001 },     /* R8   - Analogue DAC 0 */
+	{ 10, 0x0001 },     /* R10  - Analogue ADC 0 */
+	{ 12, 0x0000 },     /* R12  - Power Management 0 */
+	{ 13, 0x0000 },     /* R13  - Power Management 1 */
+	{ 14, 0x0000 },     /* R14  - Power Management 2 */
+	{ 15, 0x0000 },     /* R15  - Power Management 3 */
+	{ 16, 0x0000 },     /* R16  - Power Management 4 */
+	{ 17, 0x0000 },     /* R17  - Power Management 5 */
+	{ 18, 0x0000 },     /* R18  - Power Management 6 */
+	{ 20, 0x0400 },     /* R20  - Clock Rates 0 */
+	{ 21, 0x0D07 },     /* R21  - Clock Rates 1 */
+	{ 22, 0x0000 },     /* R22  - Clock Rates 2 */
+	{ 24, 0x0050 },     /* R24  - Audio Interface 0 */
+	{ 25, 0x0242 },     /* R25  - Audio Interface 1 */
+	{ 26, 0x0008 },     /* R26  - Audio Interface 2 */
+	{ 27, 0x0022 },     /* R27  - Audio Interface 3 */
+	{ 30, 0x00C0 },     /* R30  - DAC Digital Volume Left */
+	{ 31, 0x00C0 },     /* R31  - DAC Digital Volume Right */
+	{ 32, 0x0000 },     /* R32  - DAC Digital 0 */
+	{ 33, 0x0000 },     /* R33  - DAC Digital 1 */
+	{ 36, 0x00C0 },     /* R36  - ADC Digital Volume Left */
+	{ 37, 0x00C0 },     /* R37  - ADC Digital Volume Right */
+	{ 38, 0x0000 },     /* R38  - ADC Digital 0 */
+	{ 39, 0x0073 },     /* R39  - Digital Microphone 0 */
+	{ 40, 0x09BF },     /* R40  - DRC 0 */
+	{ 41, 0x3241 },     /* R41  - DRC 1 */
+	{ 42, 0x0020 },     /* R42  - DRC 2 */
+	{ 43, 0x0000 },     /* R43  - DRC 3 */
+	{ 44, 0x0085 },     /* R44  - Analogue Left Input 0 */
+	{ 45, 0x0085 },     /* R45  - Analogue Right Input 0 */
+	{ 46, 0x0044 },     /* R46  - Analogue Left Input 1 */
+	{ 47, 0x0044 },     /* R47  - Analogue Right Input 1 */
+	{ 50, 0x0008 },     /* R50  - Analogue Left Mix 0 */
+	{ 51, 0x0004 },     /* R51  - Analogue Right Mix 0 */
+	{ 52, 0x0000 },     /* R52  - Analogue Spk Mix Left 0 */
+	{ 53, 0x0000 },     /* R53  - Analogue Spk Mix Left 1 */
+	{ 54, 0x0000 },     /* R54  - Analogue Spk Mix Right 0 */
+	{ 55, 0x0000 },     /* R55  - Analogue Spk Mix Right 1 */
+	{ 57, 0x002D },     /* R57  - Analogue OUT1 Left */
+	{ 58, 0x002D },     /* R58  - Analogue OUT1 Right */
+	{ 59, 0x0039 },     /* R59  - Analogue OUT2 Left */
+	{ 60, 0x0039 },     /* R60  - Analogue OUT2 Right */
+	{ 62, 0x0139 },     /* R62  - Analogue OUT3 Left */
+	{ 63, 0x0139 },     /* R63  - Analogue OUT3 Right */
+	{ 64, 0x0000 },     /* R65  - Analogue SPK Output Control 0 */
+	{ 67, 0x0010 },     /* R67  - DC Servo 0 */
+	{ 69, 0x00A4 },     /* R69  - DC Servo 2 */
+	{ 90, 0x0000 },     /* R90  - Analogue HP 0 */
+	{ 94, 0x0000 },     /* R94  - Analogue Lineout 0 */
+	{ 98, 0x0000 },     /* R98  - Charge Pump 0 */
+	{ 104, 0x0000 },    /* R104 - Class W 0 */
+	{ 108, 0x0000 },    /* R108 - Write Sequencer 0 */
+	{ 109, 0x0000 },    /* R109 - Write Sequencer 1 */
+	{ 110, 0x0000 },    /* R110 - Write Sequencer 2 */
+	{ 111, 0x0000 },    /* R111 - Write Sequencer 3 */
+	{ 112, 0x0000 },    /* R112 - Write Sequencer 4 */
+	{ 114, 0x0000 },    /* R114 - Control Interface */
+	{ 116, 0x00A8 },    /* R116 - GPIO Control 1 */
+	{ 117, 0x00A8 },    /* R117 - GPIO Control 2 */
+	{ 118, 0x00A8 },    /* R118 - GPIO Control 3 */
+	{ 119, 0x0220 },    /* R119 - GPIO Control 4 */
+	{ 120, 0x01A0 },    /* R120 - GPIO Control 5 */
+	{ 122, 0xFFFF },    /* R122 - Interrupt Status 1 Mask */
+	{ 123, 0x0000 },    /* R123 - Interrupt Polarity 1 */
+	{ 126, 0x0000 },    /* R126 - Interrupt Control */
+	{ 129, 0x0000 },    /* R129 - Control Interface Test 1 */
+	{ 149, 0x6810 },    /* R149 - Charge Pump Test 1 */
+	{ 164, 0x0028 },    /* R164 - Clock Rate Test 4 */
+	{ 172, 0x0000 },    /* R172 - Analogue Output Bias 0 */
+};
 
-#घोषणा WM8903_NUM_SUPPLIES 4
-अटल स्थिर अक्षर *wm8903_supply_names[WM8903_NUM_SUPPLIES] = अणु
+#define WM8903_NUM_SUPPLIES 4
+static const char *wm8903_supply_names[WM8903_NUM_SUPPLIES] = {
 	"AVDD",
 	"CPVDD",
 	"DBVDD",
 	"DCVDD",
-पूर्ण;
+};
 
-काष्ठा wm8903_priv अणु
-	काष्ठा wm8903_platक्रमm_data *pdata;
-	काष्ठा device *dev;
-	काष्ठा regmap *regmap;
-	काष्ठा regulator_bulk_data supplies[WM8903_NUM_SUPPLIES];
+struct wm8903_priv {
+	struct wm8903_platform_data *pdata;
+	struct device *dev;
+	struct regmap *regmap;
+	struct regulator_bulk_data supplies[WM8903_NUM_SUPPLIES];
 
-	पूर्णांक sysclk;
-	पूर्णांक irq;
+	int sysclk;
+	int irq;
 
-	काष्ठा mutex lock;
-	पूर्णांक fs;
-	पूर्णांक deemph;
+	struct mutex lock;
+	int fs;
+	int deemph;
 
-	पूर्णांक dcs_pending;
-	पूर्णांक dcs_cache[4];
+	int dcs_pending;
+	int dcs_cache[4];
 
 	/* Reference count */
-	पूर्णांक class_w_users;
+	int class_w_users;
 
-	काष्ठा snd_soc_jack *mic_jack;
-	पूर्णांक mic_det;
-	पूर्णांक mic_लघु;
-	पूर्णांक mic_last_report;
-	पूर्णांक mic_delay;
+	struct snd_soc_jack *mic_jack;
+	int mic_det;
+	int mic_short;
+	int mic_last_report;
+	int mic_delay;
 
-#अगर_घोषित CONFIG_GPIOLIB
-	काष्ठा gpio_chip gpio_chip;
-#पूर्ण_अगर
-पूर्ण;
+#ifdef CONFIG_GPIOLIB
+	struct gpio_chip gpio_chip;
+#endif
+};
 
-अटल bool wm8903_पढ़ोable_रेजिस्टर(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	हाल WM8903_SW_RESET_AND_ID:
-	हाल WM8903_REVISION_NUMBER:
-	हाल WM8903_BIAS_CONTROL_0:
-	हाल WM8903_VMID_CONTROL_0:
-	हाल WM8903_MIC_BIAS_CONTROL_0:
-	हाल WM8903_ANALOGUE_DAC_0:
-	हाल WM8903_ANALOGUE_ADC_0:
-	हाल WM8903_POWER_MANAGEMENT_0:
-	हाल WM8903_POWER_MANAGEMENT_1:
-	हाल WM8903_POWER_MANAGEMENT_2:
-	हाल WM8903_POWER_MANAGEMENT_3:
-	हाल WM8903_POWER_MANAGEMENT_4:
-	हाल WM8903_POWER_MANAGEMENT_5:
-	हाल WM8903_POWER_MANAGEMENT_6:
-	हाल WM8903_CLOCK_RATES_0:
-	हाल WM8903_CLOCK_RATES_1:
-	हाल WM8903_CLOCK_RATES_2:
-	हाल WM8903_AUDIO_INTERFACE_0:
-	हाल WM8903_AUDIO_INTERFACE_1:
-	हाल WM8903_AUDIO_INTERFACE_2:
-	हाल WM8903_AUDIO_INTERFACE_3:
-	हाल WM8903_DAC_DIGITAL_VOLUME_LEFT:
-	हाल WM8903_DAC_DIGITAL_VOLUME_RIGHT:
-	हाल WM8903_DAC_DIGITAL_0:
-	हाल WM8903_DAC_DIGITAL_1:
-	हाल WM8903_ADC_DIGITAL_VOLUME_LEFT:
-	हाल WM8903_ADC_DIGITAL_VOLUME_RIGHT:
-	हाल WM8903_ADC_DIGITAL_0:
-	हाल WM8903_DIGITAL_MICROPHONE_0:
-	हाल WM8903_DRC_0:
-	हाल WM8903_DRC_1:
-	हाल WM8903_DRC_2:
-	हाल WM8903_DRC_3:
-	हाल WM8903_ANALOGUE_LEFT_INPUT_0:
-	हाल WM8903_ANALOGUE_RIGHT_INPUT_0:
-	हाल WM8903_ANALOGUE_LEFT_INPUT_1:
-	हाल WM8903_ANALOGUE_RIGHT_INPUT_1:
-	हाल WM8903_ANALOGUE_LEFT_MIX_0:
-	हाल WM8903_ANALOGUE_RIGHT_MIX_0:
-	हाल WM8903_ANALOGUE_SPK_MIX_LEFT_0:
-	हाल WM8903_ANALOGUE_SPK_MIX_LEFT_1:
-	हाल WM8903_ANALOGUE_SPK_MIX_RIGHT_0:
-	हाल WM8903_ANALOGUE_SPK_MIX_RIGHT_1:
-	हाल WM8903_ANALOGUE_OUT1_LEFT:
-	हाल WM8903_ANALOGUE_OUT1_RIGHT:
-	हाल WM8903_ANALOGUE_OUT2_LEFT:
-	हाल WM8903_ANALOGUE_OUT2_RIGHT:
-	हाल WM8903_ANALOGUE_OUT3_LEFT:
-	हाल WM8903_ANALOGUE_OUT3_RIGHT:
-	हाल WM8903_ANALOGUE_SPK_OUTPUT_CONTROL_0:
-	हाल WM8903_DC_SERVO_0:
-	हाल WM8903_DC_SERVO_2:
-	हाल WM8903_DC_SERVO_READBACK_1:
-	हाल WM8903_DC_SERVO_READBACK_2:
-	हाल WM8903_DC_SERVO_READBACK_3:
-	हाल WM8903_DC_SERVO_READBACK_4:
-	हाल WM8903_ANALOGUE_HP_0:
-	हाल WM8903_ANALOGUE_LINEOUT_0:
-	हाल WM8903_CHARGE_PUMP_0:
-	हाल WM8903_CLASS_W_0:
-	हाल WM8903_WRITE_SEQUENCER_0:
-	हाल WM8903_WRITE_SEQUENCER_1:
-	हाल WM8903_WRITE_SEQUENCER_2:
-	हाल WM8903_WRITE_SEQUENCER_3:
-	हाल WM8903_WRITE_SEQUENCER_4:
-	हाल WM8903_CONTROL_INTERFACE:
-	हाल WM8903_GPIO_CONTROL_1:
-	हाल WM8903_GPIO_CONTROL_2:
-	हाल WM8903_GPIO_CONTROL_3:
-	हाल WM8903_GPIO_CONTROL_4:
-	हाल WM8903_GPIO_CONTROL_5:
-	हाल WM8903_INTERRUPT_STATUS_1:
-	हाल WM8903_INTERRUPT_STATUS_1_MASK:
-	हाल WM8903_INTERRUPT_POLARITY_1:
-	हाल WM8903_INTERRUPT_CONTROL:
-	हाल WM8903_CLOCK_RATE_TEST_4:
-	हाल WM8903_ANALOGUE_OUTPUT_BIAS_0:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool wm8903_readable_register(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case WM8903_SW_RESET_AND_ID:
+	case WM8903_REVISION_NUMBER:
+	case WM8903_BIAS_CONTROL_0:
+	case WM8903_VMID_CONTROL_0:
+	case WM8903_MIC_BIAS_CONTROL_0:
+	case WM8903_ANALOGUE_DAC_0:
+	case WM8903_ANALOGUE_ADC_0:
+	case WM8903_POWER_MANAGEMENT_0:
+	case WM8903_POWER_MANAGEMENT_1:
+	case WM8903_POWER_MANAGEMENT_2:
+	case WM8903_POWER_MANAGEMENT_3:
+	case WM8903_POWER_MANAGEMENT_4:
+	case WM8903_POWER_MANAGEMENT_5:
+	case WM8903_POWER_MANAGEMENT_6:
+	case WM8903_CLOCK_RATES_0:
+	case WM8903_CLOCK_RATES_1:
+	case WM8903_CLOCK_RATES_2:
+	case WM8903_AUDIO_INTERFACE_0:
+	case WM8903_AUDIO_INTERFACE_1:
+	case WM8903_AUDIO_INTERFACE_2:
+	case WM8903_AUDIO_INTERFACE_3:
+	case WM8903_DAC_DIGITAL_VOLUME_LEFT:
+	case WM8903_DAC_DIGITAL_VOLUME_RIGHT:
+	case WM8903_DAC_DIGITAL_0:
+	case WM8903_DAC_DIGITAL_1:
+	case WM8903_ADC_DIGITAL_VOLUME_LEFT:
+	case WM8903_ADC_DIGITAL_VOLUME_RIGHT:
+	case WM8903_ADC_DIGITAL_0:
+	case WM8903_DIGITAL_MICROPHONE_0:
+	case WM8903_DRC_0:
+	case WM8903_DRC_1:
+	case WM8903_DRC_2:
+	case WM8903_DRC_3:
+	case WM8903_ANALOGUE_LEFT_INPUT_0:
+	case WM8903_ANALOGUE_RIGHT_INPUT_0:
+	case WM8903_ANALOGUE_LEFT_INPUT_1:
+	case WM8903_ANALOGUE_RIGHT_INPUT_1:
+	case WM8903_ANALOGUE_LEFT_MIX_0:
+	case WM8903_ANALOGUE_RIGHT_MIX_0:
+	case WM8903_ANALOGUE_SPK_MIX_LEFT_0:
+	case WM8903_ANALOGUE_SPK_MIX_LEFT_1:
+	case WM8903_ANALOGUE_SPK_MIX_RIGHT_0:
+	case WM8903_ANALOGUE_SPK_MIX_RIGHT_1:
+	case WM8903_ANALOGUE_OUT1_LEFT:
+	case WM8903_ANALOGUE_OUT1_RIGHT:
+	case WM8903_ANALOGUE_OUT2_LEFT:
+	case WM8903_ANALOGUE_OUT2_RIGHT:
+	case WM8903_ANALOGUE_OUT3_LEFT:
+	case WM8903_ANALOGUE_OUT3_RIGHT:
+	case WM8903_ANALOGUE_SPK_OUTPUT_CONTROL_0:
+	case WM8903_DC_SERVO_0:
+	case WM8903_DC_SERVO_2:
+	case WM8903_DC_SERVO_READBACK_1:
+	case WM8903_DC_SERVO_READBACK_2:
+	case WM8903_DC_SERVO_READBACK_3:
+	case WM8903_DC_SERVO_READBACK_4:
+	case WM8903_ANALOGUE_HP_0:
+	case WM8903_ANALOGUE_LINEOUT_0:
+	case WM8903_CHARGE_PUMP_0:
+	case WM8903_CLASS_W_0:
+	case WM8903_WRITE_SEQUENCER_0:
+	case WM8903_WRITE_SEQUENCER_1:
+	case WM8903_WRITE_SEQUENCER_2:
+	case WM8903_WRITE_SEQUENCER_3:
+	case WM8903_WRITE_SEQUENCER_4:
+	case WM8903_CONTROL_INTERFACE:
+	case WM8903_GPIO_CONTROL_1:
+	case WM8903_GPIO_CONTROL_2:
+	case WM8903_GPIO_CONTROL_3:
+	case WM8903_GPIO_CONTROL_4:
+	case WM8903_GPIO_CONTROL_5:
+	case WM8903_INTERRUPT_STATUS_1:
+	case WM8903_INTERRUPT_STATUS_1_MASK:
+	case WM8903_INTERRUPT_POLARITY_1:
+	case WM8903_INTERRUPT_CONTROL:
+	case WM8903_CLOCK_RATE_TEST_4:
+	case WM8903_ANALOGUE_OUTPUT_BIAS_0:
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल bool wm8903_अस्थिर_रेजिस्टर(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	हाल WM8903_SW_RESET_AND_ID:
-	हाल WM8903_REVISION_NUMBER:
-	हाल WM8903_INTERRUPT_STATUS_1:
-	हाल WM8903_WRITE_SEQUENCER_4:
-	हाल WM8903_DC_SERVO_READBACK_1:
-	हाल WM8903_DC_SERVO_READBACK_2:
-	हाल WM8903_DC_SERVO_READBACK_3:
-	हाल WM8903_DC_SERVO_READBACK_4:
-		वापस true;
+static bool wm8903_volatile_register(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case WM8903_SW_RESET_AND_ID:
+	case WM8903_REVISION_NUMBER:
+	case WM8903_INTERRUPT_STATUS_1:
+	case WM8903_WRITE_SEQUENCER_4:
+	case WM8903_DC_SERVO_READBACK_1:
+	case WM8903_DC_SERVO_READBACK_2:
+	case WM8903_DC_SERVO_READBACK_3:
+	case WM8903_DC_SERVO_READBACK_4:
+		return true;
 
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+	default:
+		return false;
+	}
+}
 
-अटल पूर्णांक wm8903_cp_event(काष्ठा snd_soc_dapm_widget *w,
-			   काष्ठा snd_kcontrol *kcontrol, पूर्णांक event)
-अणु
+static int wm8903_cp_event(struct snd_soc_dapm_widget *w,
+			   struct snd_kcontrol *kcontrol, int event)
+{
 	WARN_ON(event != SND_SOC_DAPM_POST_PMU);
 	mdelay(4);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wm8903_dcs_event(काष्ठा snd_soc_dapm_widget *w,
-			    काष्ठा snd_kcontrol *kcontrol, पूर्णांक event)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
-	काष्ठा wm8903_priv *wm8903 = snd_soc_component_get_drvdata(component);
+static int wm8903_dcs_event(struct snd_soc_dapm_widget *w,
+			    struct snd_kcontrol *kcontrol, int event)
+{
+	struct snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
+	struct wm8903_priv *wm8903 = snd_soc_component_get_drvdata(component);
 
-	चयन (event) अणु
-	हाल SND_SOC_DAPM_POST_PMU:
-		wm8903->dcs_pending |= 1 << w->shअगरt;
-		अवरोध;
-	हाल SND_SOC_DAPM_PRE_PMD:
+	switch (event) {
+	case SND_SOC_DAPM_POST_PMU:
+		wm8903->dcs_pending |= 1 << w->shift;
+		break;
+	case SND_SOC_DAPM_PRE_PMD:
 		snd_soc_component_update_bits(component, WM8903_DC_SERVO_0,
-				    1 << w->shअगरt, 0);
-		अवरोध;
-	पूर्ण
+				    1 << w->shift, 0);
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा WM8903_DCS_MODE_WRITE_STOP 0
-#घोषणा WM8903_DCS_MODE_START_STOP 2
+#define WM8903_DCS_MODE_WRITE_STOP 0
+#define WM8903_DCS_MODE_START_STOP 2
 
-अटल व्योम wm8903_seq_notअगरier(काष्ठा snd_soc_component *component,
-				क्रमागत snd_soc_dapm_type event, पूर्णांक subseq)
-अणु
-	काष्ठा wm8903_priv *wm8903 = snd_soc_component_get_drvdata(component);
-	पूर्णांक dcs_mode = WM8903_DCS_MODE_WRITE_STOP;
-	पूर्णांक i, val;
+static void wm8903_seq_notifier(struct snd_soc_component *component,
+				enum snd_soc_dapm_type event, int subseq)
+{
+	struct wm8903_priv *wm8903 = snd_soc_component_get_drvdata(component);
+	int dcs_mode = WM8903_DCS_MODE_WRITE_STOP;
+	int i, val;
 
 	/* Complete any pending DC servo starts */
-	अगर (wm8903->dcs_pending) अणु
+	if (wm8903->dcs_pending) {
 		dev_dbg(component->dev, "Starting DC servo for %x\n",
 			wm8903->dcs_pending);
 
-		/* If we've no cached values then we need to करो startup */
-		क्रम (i = 0; i < ARRAY_SIZE(wm8903->dcs_cache); i++) अणु
-			अगर (!(wm8903->dcs_pending & (1 << i)))
-				जारी;
+		/* If we've no cached values then we need to do startup */
+		for (i = 0; i < ARRAY_SIZE(wm8903->dcs_cache); i++) {
+			if (!(wm8903->dcs_pending & (1 << i)))
+				continue;
 
-			अगर (wm8903->dcs_cache[i]) अणु
+			if (wm8903->dcs_cache[i]) {
 				dev_dbg(component->dev,
 					"Restore DC servo %d value %x\n",
 					3 - i, wm8903->dcs_cache[i]);
 
-				snd_soc_component_ग_लिखो(component, WM8903_DC_SERVO_4 + i,
+				snd_soc_component_write(component, WM8903_DC_SERVO_4 + i,
 					      wm8903->dcs_cache[i] & 0xff);
-			पूर्ण अन्यथा अणु
+			} else {
 				dev_dbg(component->dev,
 					"Calibrate DC servo %d\n", 3 - i);
 				dcs_mode = WM8903_DCS_MODE_START_STOP;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		/* Don't trust the cache क्रम analogue */
-		अगर (wm8903->class_w_users)
+		/* Don't trust the cache for analogue */
+		if (wm8903->class_w_users)
 			dcs_mode = WM8903_DCS_MODE_START_STOP;
 
 		snd_soc_component_update_bits(component, WM8903_DC_SERVO_2,
@@ -328,324 +327,324 @@
 		snd_soc_component_update_bits(component, WM8903_DC_SERVO_0,
 				    WM8903_DCS_ENA_MASK, wm8903->dcs_pending);
 
-		चयन (dcs_mode) अणु
-		हाल WM8903_DCS_MODE_WRITE_STOP:
-			अवरोध;
+		switch (dcs_mode) {
+		case WM8903_DCS_MODE_WRITE_STOP:
+			break;
 
-		हाल WM8903_DCS_MODE_START_STOP:
+		case WM8903_DCS_MODE_START_STOP:
 			msleep(270);
 
-			/* Cache the measured offsets क्रम digital */
-			अगर (wm8903->class_w_users)
-				अवरोध;
+			/* Cache the measured offsets for digital */
+			if (wm8903->class_w_users)
+				break;
 
-			क्रम (i = 0; i < ARRAY_SIZE(wm8903->dcs_cache); i++) अणु
-				अगर (!(wm8903->dcs_pending & (1 << i)))
-					जारी;
+			for (i = 0; i < ARRAY_SIZE(wm8903->dcs_cache); i++) {
+				if (!(wm8903->dcs_pending & (1 << i)))
+					continue;
 
-				val = snd_soc_component_पढ़ो(component,
+				val = snd_soc_component_read(component,
 						   WM8903_DC_SERVO_READBACK_1 + i);
 				dev_dbg(component->dev, "DC servo %d: %x\n",
 					3 - i, val);
 				wm8903->dcs_cache[i] = val;
-			पूर्ण
-			अवरोध;
+			}
+			break;
 
-		शेष:
+		default:
 			pr_warn("DCS mode %d delay not set\n", dcs_mode);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		wm8903->dcs_pending = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * When used with DAC outमाला_दो only the WM8903 अक्षरge pump supports
- * operation in class W mode, providing very low घातer consumption
+ * When used with DAC outputs only the WM8903 charge pump supports
+ * operation in class W mode, providing very low power consumption
  * when used with digital sources.  Enable and disable this mode
- * स्वतःmatically depending on the mixer configuration.
+ * automatically depending on the mixer configuration.
  *
- * All the relevant controls are simple चयनes.
+ * All the relevant controls are simple switches.
  */
-अटल पूर्णांक wm8903_class_w_put(काष्ठा snd_kcontrol *kcontrol,
-			      काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_dapm_kcontrol_component(kcontrol);
-	काष्ठा wm8903_priv *wm8903 = snd_soc_component_get_drvdata(component);
+static int wm8903_class_w_put(struct snd_kcontrol *kcontrol,
+			      struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component = snd_soc_dapm_kcontrol_component(kcontrol);
+	struct wm8903_priv *wm8903 = snd_soc_component_get_drvdata(component);
 	u16 reg;
-	पूर्णांक ret;
+	int ret;
 
-	reg = snd_soc_component_पढ़ो(component, WM8903_CLASS_W_0);
+	reg = snd_soc_component_read(component, WM8903_CLASS_W_0);
 
-	/* Turn it off अगर we're about to enable bypass */
-	अगर (ucontrol->value.पूर्णांकeger.value[0]) अणु
-		अगर (wm8903->class_w_users == 0) अणु
+	/* Turn it off if we're about to enable bypass */
+	if (ucontrol->value.integer.value[0]) {
+		if (wm8903->class_w_users == 0) {
 			dev_dbg(component->dev, "Disabling Class W\n");
-			snd_soc_component_ग_लिखो(component, WM8903_CLASS_W_0, reg &
+			snd_soc_component_write(component, WM8903_CLASS_W_0, reg &
 				     ~(WM8903_CP_DYN_FREQ | WM8903_CP_DYN_V));
-		पूर्ण
+		}
 		wm8903->class_w_users++;
-	पूर्ण
+	}
 
 	/* Implement the change */
 	ret = snd_soc_dapm_put_volsw(kcontrol, ucontrol);
 
 	/* If we've just disabled the last bypass path turn Class W on */
-	अगर (!ucontrol->value.पूर्णांकeger.value[0]) अणु
-		अगर (wm8903->class_w_users == 1) अणु
+	if (!ucontrol->value.integer.value[0]) {
+		if (wm8903->class_w_users == 1) {
 			dev_dbg(component->dev, "Enabling Class W\n");
-			snd_soc_component_ग_लिखो(component, WM8903_CLASS_W_0, reg |
+			snd_soc_component_write(component, WM8903_CLASS_W_0, reg |
 				     WM8903_CP_DYN_FREQ | WM8903_CP_DYN_V);
-		पूर्ण
+		}
 		wm8903->class_w_users--;
-	पूर्ण
+	}
 
 	dev_dbg(component->dev, "Bypass use count now %d\n",
 		wm8903->class_w_users);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#घोषणा SOC_DAPM_SINGLE_W(xname, reg, shअगरt, max, invert) \
-	SOC_SINGLE_EXT(xname, reg, shअगरt, max, invert, \
+#define SOC_DAPM_SINGLE_W(xname, reg, shift, max, invert) \
+	SOC_SINGLE_EXT(xname, reg, shift, max, invert, \
 		snd_soc_dapm_get_volsw, wm8903_class_w_put)
 
 
-अटल पूर्णांक wm8903_deemph[] = अणु 0, 32000, 44100, 48000 पूर्ण;
+static int wm8903_deemph[] = { 0, 32000, 44100, 48000 };
 
-अटल पूर्णांक wm8903_set_deemph(काष्ठा snd_soc_component *component)
-अणु
-	काष्ठा wm8903_priv *wm8903 = snd_soc_component_get_drvdata(component);
-	पूर्णांक val, i, best;
+static int wm8903_set_deemph(struct snd_soc_component *component)
+{
+	struct wm8903_priv *wm8903 = snd_soc_component_get_drvdata(component);
+	int val, i, best;
 
 	/* If we're using deemphasis select the nearest available sample
 	 * rate.
 	 */
-	अगर (wm8903->deemph) अणु
+	if (wm8903->deemph) {
 		best = 1;
-		क्रम (i = 2; i < ARRAY_SIZE(wm8903_deemph); i++) अणु
-			अगर (असल(wm8903_deemph[i] - wm8903->fs) <
-			    असल(wm8903_deemph[best] - wm8903->fs))
+		for (i = 2; i < ARRAY_SIZE(wm8903_deemph); i++) {
+			if (abs(wm8903_deemph[i] - wm8903->fs) <
+			    abs(wm8903_deemph[best] - wm8903->fs))
 				best = i;
-		पूर्ण
+		}
 
 		val = best << WM8903_DEEMPH_SHIFT;
-	पूर्ण अन्यथा अणु
+	} else {
 		best = 0;
 		val = 0;
-	पूर्ण
+	}
 
 	dev_dbg(component->dev, "Set deemphasis %d (%dHz)\n",
 		best, wm8903_deemph[best]);
 
-	वापस snd_soc_component_update_bits(component, WM8903_DAC_DIGITAL_1,
+	return snd_soc_component_update_bits(component, WM8903_DAC_DIGITAL_1,
 				   WM8903_DEEMPH_MASK, val);
-पूर्ण
+}
 
-अटल पूर्णांक wm8903_get_deemph(काष्ठा snd_kcontrol *kcontrol,
-			     काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
-	काष्ठा wm8903_priv *wm8903 = snd_soc_component_get_drvdata(component);
+static int wm8903_get_deemph(struct snd_kcontrol *kcontrol,
+			     struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
+	struct wm8903_priv *wm8903 = snd_soc_component_get_drvdata(component);
 
-	ucontrol->value.पूर्णांकeger.value[0] = wm8903->deemph;
+	ucontrol->value.integer.value[0] = wm8903->deemph;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wm8903_put_deemph(काष्ठा snd_kcontrol *kcontrol,
-			     काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
-	काष्ठा wm8903_priv *wm8903 = snd_soc_component_get_drvdata(component);
-	अचिन्हित पूर्णांक deemph = ucontrol->value.पूर्णांकeger.value[0];
-	पूर्णांक ret = 0;
+static int wm8903_put_deemph(struct snd_kcontrol *kcontrol,
+			     struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
+	struct wm8903_priv *wm8903 = snd_soc_component_get_drvdata(component);
+	unsigned int deemph = ucontrol->value.integer.value[0];
+	int ret = 0;
 
-	अगर (deemph > 1)
-		वापस -EINVAL;
+	if (deemph > 1)
+		return -EINVAL;
 
 	mutex_lock(&wm8903->lock);
-	अगर (wm8903->deemph != deemph) अणु
+	if (wm8903->deemph != deemph) {
 		wm8903->deemph = deemph;
 
 		wm8903_set_deemph(component);
 
 		ret = 1;
-	पूर्ण
+	}
 	mutex_unlock(&wm8903->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* ALSA can only करो steps of .01dB */
-अटल स्थिर DECLARE_TLV_DB_SCALE(digital_tlv, -7200, 75, 1);
+/* ALSA can only do steps of .01dB */
+static const DECLARE_TLV_DB_SCALE(digital_tlv, -7200, 75, 1);
 
-अटल स्थिर DECLARE_TLV_DB_SCALE(dac_boost_tlv, 0, 600, 0);
+static const DECLARE_TLV_DB_SCALE(dac_boost_tlv, 0, 600, 0);
 
-अटल स्थिर DECLARE_TLV_DB_SCALE(digital_sidetone_tlv, -3600, 300, 0);
-अटल स्थिर DECLARE_TLV_DB_SCALE(out_tlv, -5700, 100, 0);
+static const DECLARE_TLV_DB_SCALE(digital_sidetone_tlv, -3600, 300, 0);
+static const DECLARE_TLV_DB_SCALE(out_tlv, -5700, 100, 0);
 
-अटल स्थिर DECLARE_TLV_DB_SCALE(drc_tlv_thresh, 0, 75, 0);
-अटल स्थिर DECLARE_TLV_DB_SCALE(drc_tlv_amp, -2250, 75, 0);
-अटल स्थिर DECLARE_TLV_DB_SCALE(drc_tlv_min, 0, 600, 0);
-अटल स्थिर DECLARE_TLV_DB_SCALE(drc_tlv_max, 1200, 600, 0);
-अटल स्थिर DECLARE_TLV_DB_SCALE(drc_tlv_startup, -300, 50, 0);
+static const DECLARE_TLV_DB_SCALE(drc_tlv_thresh, 0, 75, 0);
+static const DECLARE_TLV_DB_SCALE(drc_tlv_amp, -2250, 75, 0);
+static const DECLARE_TLV_DB_SCALE(drc_tlv_min, 0, 600, 0);
+static const DECLARE_TLV_DB_SCALE(drc_tlv_max, 1200, 600, 0);
+static const DECLARE_TLV_DB_SCALE(drc_tlv_startup, -300, 50, 0);
 
-अटल स्थिर अक्षर *hpf_mode_text[] = अणु
+static const char *hpf_mode_text[] = {
 	"Hi-fi", "Voice 1", "Voice 2", "Voice 3"
-पूर्ण;
+};
 
-अटल SOC_ENUM_SINGLE_DECL(hpf_mode,
+static SOC_ENUM_SINGLE_DECL(hpf_mode,
 			    WM8903_ADC_DIGITAL_0, 5, hpf_mode_text);
 
-अटल स्थिर अक्षर *osr_text[] = अणु
+static const char *osr_text[] = {
 	"Low power", "High performance"
-पूर्ण;
+};
 
-अटल SOC_ENUM_SINGLE_DECL(adc_osr,
+static SOC_ENUM_SINGLE_DECL(adc_osr,
 			    WM8903_ANALOGUE_ADC_0, 0, osr_text);
 
-अटल SOC_ENUM_SINGLE_DECL(dac_osr,
+static SOC_ENUM_SINGLE_DECL(dac_osr,
 			    WM8903_DAC_DIGITAL_1, 0, osr_text);
 
-अटल स्थिर अक्षर *drc_slope_text[] = अणु
+static const char *drc_slope_text[] = {
 	"1", "1/2", "1/4", "1/8", "1/16", "0"
-पूर्ण;
+};
 
-अटल SOC_ENUM_SINGLE_DECL(drc_slope_r0,
+static SOC_ENUM_SINGLE_DECL(drc_slope_r0,
 			    WM8903_DRC_2, 3, drc_slope_text);
 
-अटल SOC_ENUM_SINGLE_DECL(drc_slope_r1,
+static SOC_ENUM_SINGLE_DECL(drc_slope_r1,
 			    WM8903_DRC_2, 0, drc_slope_text);
 
-अटल स्थिर अक्षर *drc_attack_text[] = अणु
+static const char *drc_attack_text[] = {
 	"instantaneous",
 	"363us", "762us", "1.45ms", "2.9ms", "5.8ms", "11.6ms", "23.2ms",
 	"46.4ms", "92.8ms", "185.6ms"
-पूर्ण;
+};
 
-अटल SOC_ENUM_SINGLE_DECL(drc_attack,
+static SOC_ENUM_SINGLE_DECL(drc_attack,
 			    WM8903_DRC_1, 12, drc_attack_text);
 
-अटल स्थिर अक्षर *drc_decay_text[] = अणु
+static const char *drc_decay_text[] = {
 	"186ms", "372ms", "743ms", "1.49s", "2.97s", "5.94s", "11.89s",
 	"23.87s", "47.56s"
-पूर्ण;
+};
 
-अटल SOC_ENUM_SINGLE_DECL(drc_decay,
+static SOC_ENUM_SINGLE_DECL(drc_decay,
 			    WM8903_DRC_1, 8, drc_decay_text);
 
-अटल स्थिर अक्षर *drc_ff_delay_text[] = अणु
+static const char *drc_ff_delay_text[] = {
 	"5 samples", "9 samples"
-पूर्ण;
+};
 
-अटल SOC_ENUM_SINGLE_DECL(drc_ff_delay,
+static SOC_ENUM_SINGLE_DECL(drc_ff_delay,
 			    WM8903_DRC_0, 5, drc_ff_delay_text);
 
-अटल स्थिर अक्षर *drc_qr_decay_text[] = अणु
+static const char *drc_qr_decay_text[] = {
 	"0.725ms", "1.45ms", "5.8ms"
-पूर्ण;
+};
 
-अटल SOC_ENUM_SINGLE_DECL(drc_qr_decay,
+static SOC_ENUM_SINGLE_DECL(drc_qr_decay,
 			    WM8903_DRC_1, 4, drc_qr_decay_text);
 
-अटल स्थिर अक्षर *drc_smoothing_text[] = अणु
+static const char *drc_smoothing_text[] = {
 	"Low", "Medium", "High"
-पूर्ण;
+};
 
-अटल SOC_ENUM_SINGLE_DECL(drc_smoothing,
+static SOC_ENUM_SINGLE_DECL(drc_smoothing,
 			    WM8903_DRC_0, 11, drc_smoothing_text);
 
-अटल स्थिर अक्षर *soft_mute_text[] = अणु
+static const char *soft_mute_text[] = {
 	"Fast (fs/2)", "Slow (fs/32)"
-पूर्ण;
+};
 
-अटल SOC_ENUM_SINGLE_DECL(soft_mute,
+static SOC_ENUM_SINGLE_DECL(soft_mute,
 			    WM8903_DAC_DIGITAL_1, 10, soft_mute_text);
 
-अटल स्थिर अक्षर *mute_mode_text[] = अणु
+static const char *mute_mode_text[] = {
 	"Hard", "Soft"
-पूर्ण;
+};
 
-अटल SOC_ENUM_SINGLE_DECL(mute_mode,
+static SOC_ENUM_SINGLE_DECL(mute_mode,
 			    WM8903_DAC_DIGITAL_1, 9, mute_mode_text);
 
-अटल स्थिर अक्षर *companding_text[] = अणु
+static const char *companding_text[] = {
 	"ulaw", "alaw"
-पूर्ण;
+};
 
-अटल SOC_ENUM_SINGLE_DECL(dac_companding,
+static SOC_ENUM_SINGLE_DECL(dac_companding,
 			    WM8903_AUDIO_INTERFACE_0, 0, companding_text);
 
-अटल SOC_ENUM_SINGLE_DECL(adc_companding,
+static SOC_ENUM_SINGLE_DECL(adc_companding,
 			    WM8903_AUDIO_INTERFACE_0, 2, companding_text);
 
-अटल स्थिर अक्षर *input_mode_text[] = अणु
+static const char *input_mode_text[] = {
 	"Single-Ended", "Differential Line", "Differential Mic"
-पूर्ण;
+};
 
-अटल SOC_ENUM_SINGLE_DECL(linput_mode_क्रमागत,
+static SOC_ENUM_SINGLE_DECL(linput_mode_enum,
 			    WM8903_ANALOGUE_LEFT_INPUT_1, 0, input_mode_text);
 
-अटल SOC_ENUM_SINGLE_DECL(rinput_mode_क्रमागत,
+static SOC_ENUM_SINGLE_DECL(rinput_mode_enum,
 			    WM8903_ANALOGUE_RIGHT_INPUT_1, 0, input_mode_text);
 
-अटल स्थिर अक्षर *linput_mux_text[] = अणु
+static const char *linput_mux_text[] = {
 	"IN1L", "IN2L", "IN3L"
-पूर्ण;
+};
 
-अटल SOC_ENUM_SINGLE_DECL(linput_क्रमागत,
+static SOC_ENUM_SINGLE_DECL(linput_enum,
 			    WM8903_ANALOGUE_LEFT_INPUT_1, 2, linput_mux_text);
 
-अटल SOC_ENUM_SINGLE_DECL(linput_inv_क्रमागत,
+static SOC_ENUM_SINGLE_DECL(linput_inv_enum,
 			    WM8903_ANALOGUE_LEFT_INPUT_1, 4, linput_mux_text);
 
-अटल स्थिर अक्षर *rinput_mux_text[] = अणु
+static const char *rinput_mux_text[] = {
 	"IN1R", "IN2R", "IN3R"
-पूर्ण;
+};
 
-अटल SOC_ENUM_SINGLE_DECL(rinput_क्रमागत,
+static SOC_ENUM_SINGLE_DECL(rinput_enum,
 			    WM8903_ANALOGUE_RIGHT_INPUT_1, 2, rinput_mux_text);
 
-अटल SOC_ENUM_SINGLE_DECL(rinput_inv_क्रमागत,
+static SOC_ENUM_SINGLE_DECL(rinput_inv_enum,
 			    WM8903_ANALOGUE_RIGHT_INPUT_1, 4, rinput_mux_text);
 
 
-अटल स्थिर अक्षर *sidetone_text[] = अणु
+static const char *sidetone_text[] = {
 	"None", "Left", "Right"
-पूर्ण;
+};
 
-अटल SOC_ENUM_SINGLE_DECL(lsidetone_क्रमागत,
+static SOC_ENUM_SINGLE_DECL(lsidetone_enum,
 			    WM8903_DAC_DIGITAL_0, 2, sidetone_text);
 
-अटल SOC_ENUM_SINGLE_DECL(rsidetone_क्रमागत,
+static SOC_ENUM_SINGLE_DECL(rsidetone_enum,
 			    WM8903_DAC_DIGITAL_0, 0, sidetone_text);
 
-अटल स्थिर अक्षर *adcinput_text[] = अणु
+static const char *adcinput_text[] = {
 	"ADC", "DMIC"
-पूर्ण;
+};
 
-अटल SOC_ENUM_SINGLE_DECL(adcinput_क्रमागत,
+static SOC_ENUM_SINGLE_DECL(adcinput_enum,
 			    WM8903_CLOCK_RATE_TEST_4, 9, adcinput_text);
 
-अटल स्थिर अक्षर *aअगर_text[] = अणु
+static const char *aif_text[] = {
 	"Left", "Right"
-पूर्ण;
+};
 
-अटल SOC_ENUM_SINGLE_DECL(lcapture_क्रमागत,
-			    WM8903_AUDIO_INTERFACE_0, 7, aअगर_text);
+static SOC_ENUM_SINGLE_DECL(lcapture_enum,
+			    WM8903_AUDIO_INTERFACE_0, 7, aif_text);
 
-अटल SOC_ENUM_SINGLE_DECL(rcapture_क्रमागत,
-			    WM8903_AUDIO_INTERFACE_0, 6, aअगर_text);
+static SOC_ENUM_SINGLE_DECL(rcapture_enum,
+			    WM8903_AUDIO_INTERFACE_0, 6, aif_text);
 
-अटल SOC_ENUM_SINGLE_DECL(lplay_क्रमागत,
-			    WM8903_AUDIO_INTERFACE_0, 5, aअगर_text);
+static SOC_ENUM_SINGLE_DECL(lplay_enum,
+			    WM8903_AUDIO_INTERFACE_0, 5, aif_text);
 
-अटल SOC_ENUM_SINGLE_DECL(rplay_क्रमागत,
-			    WM8903_AUDIO_INTERFACE_0, 4, aअगर_text);
+static SOC_ENUM_SINGLE_DECL(rplay_enum,
+			    WM8903_AUDIO_INTERFACE_0, 4, aif_text);
 
-अटल स्थिर काष्ठा snd_kcontrol_new wm8903_snd_controls[] = अणु
+static const struct snd_kcontrol_new wm8903_snd_controls[] = {
 
 /* Input PGAs - No TLV since the scale depends on PGA mode */
 SOC_SINGLE("Left Input PGA Switch", WM8903_ANALOGUE_LEFT_INPUT_0,
@@ -738,79 +737,79 @@ SOC_DOUBLE_R("Speaker ZC Switch",
 SOC_DOUBLE_R_TLV("Speaker Volume",
 		 WM8903_ANALOGUE_OUT3_LEFT, WM8903_ANALOGUE_OUT3_RIGHT,
 		 0, 63, 0, out_tlv),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_kcontrol_new linput_mode_mux =
-	SOC_DAPM_ENUM("Left Input Mode Mux", linput_mode_क्रमागत);
+static const struct snd_kcontrol_new linput_mode_mux =
+	SOC_DAPM_ENUM("Left Input Mode Mux", linput_mode_enum);
 
-अटल स्थिर काष्ठा snd_kcontrol_new rinput_mode_mux =
-	SOC_DAPM_ENUM("Right Input Mode Mux", rinput_mode_क्रमागत);
+static const struct snd_kcontrol_new rinput_mode_mux =
+	SOC_DAPM_ENUM("Right Input Mode Mux", rinput_mode_enum);
 
-अटल स्थिर काष्ठा snd_kcontrol_new linput_mux =
-	SOC_DAPM_ENUM("Left Input Mux", linput_क्रमागत);
+static const struct snd_kcontrol_new linput_mux =
+	SOC_DAPM_ENUM("Left Input Mux", linput_enum);
 
-अटल स्थिर काष्ठा snd_kcontrol_new linput_inv_mux =
-	SOC_DAPM_ENUM("Left Inverting Input Mux", linput_inv_क्रमागत);
+static const struct snd_kcontrol_new linput_inv_mux =
+	SOC_DAPM_ENUM("Left Inverting Input Mux", linput_inv_enum);
 
-अटल स्थिर काष्ठा snd_kcontrol_new rinput_mux =
-	SOC_DAPM_ENUM("Right Input Mux", rinput_क्रमागत);
+static const struct snd_kcontrol_new rinput_mux =
+	SOC_DAPM_ENUM("Right Input Mux", rinput_enum);
 
-अटल स्थिर काष्ठा snd_kcontrol_new rinput_inv_mux =
-	SOC_DAPM_ENUM("Right Inverting Input Mux", rinput_inv_क्रमागत);
+static const struct snd_kcontrol_new rinput_inv_mux =
+	SOC_DAPM_ENUM("Right Inverting Input Mux", rinput_inv_enum);
 
-अटल स्थिर काष्ठा snd_kcontrol_new lsidetone_mux =
-	SOC_DAPM_ENUM("DACL Sidetone Mux", lsidetone_क्रमागत);
+static const struct snd_kcontrol_new lsidetone_mux =
+	SOC_DAPM_ENUM("DACL Sidetone Mux", lsidetone_enum);
 
-अटल स्थिर काष्ठा snd_kcontrol_new rsidetone_mux =
-	SOC_DAPM_ENUM("DACR Sidetone Mux", rsidetone_क्रमागत);
+static const struct snd_kcontrol_new rsidetone_mux =
+	SOC_DAPM_ENUM("DACR Sidetone Mux", rsidetone_enum);
 
-अटल स्थिर काष्ठा snd_kcontrol_new adcinput_mux =
-	SOC_DAPM_ENUM("ADC Input", adcinput_क्रमागत);
+static const struct snd_kcontrol_new adcinput_mux =
+	SOC_DAPM_ENUM("ADC Input", adcinput_enum);
 
-अटल स्थिर काष्ठा snd_kcontrol_new lcapture_mux =
-	SOC_DAPM_ENUM("Left Capture Mux", lcapture_क्रमागत);
+static const struct snd_kcontrol_new lcapture_mux =
+	SOC_DAPM_ENUM("Left Capture Mux", lcapture_enum);
 
-अटल स्थिर काष्ठा snd_kcontrol_new rcapture_mux =
-	SOC_DAPM_ENUM("Right Capture Mux", rcapture_क्रमागत);
+static const struct snd_kcontrol_new rcapture_mux =
+	SOC_DAPM_ENUM("Right Capture Mux", rcapture_enum);
 
-अटल स्थिर काष्ठा snd_kcontrol_new lplay_mux =
-	SOC_DAPM_ENUM("Left Playback Mux", lplay_क्रमागत);
+static const struct snd_kcontrol_new lplay_mux =
+	SOC_DAPM_ENUM("Left Playback Mux", lplay_enum);
 
-अटल स्थिर काष्ठा snd_kcontrol_new rplay_mux =
-	SOC_DAPM_ENUM("Right Playback Mux", rplay_क्रमागत);
+static const struct snd_kcontrol_new rplay_mux =
+	SOC_DAPM_ENUM("Right Playback Mux", rplay_enum);
 
-अटल स्थिर काष्ठा snd_kcontrol_new left_output_mixer[] = अणु
+static const struct snd_kcontrol_new left_output_mixer[] = {
 SOC_DAPM_SINGLE("DACL Switch", WM8903_ANALOGUE_LEFT_MIX_0, 3, 1, 0),
 SOC_DAPM_SINGLE("DACR Switch", WM8903_ANALOGUE_LEFT_MIX_0, 2, 1, 0),
 SOC_DAPM_SINGLE_W("Left Bypass Switch", WM8903_ANALOGUE_LEFT_MIX_0, 1, 1, 0),
 SOC_DAPM_SINGLE_W("Right Bypass Switch", WM8903_ANALOGUE_LEFT_MIX_0, 0, 1, 0),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_kcontrol_new right_output_mixer[] = अणु
+static const struct snd_kcontrol_new right_output_mixer[] = {
 SOC_DAPM_SINGLE("DACL Switch", WM8903_ANALOGUE_RIGHT_MIX_0, 3, 1, 0),
 SOC_DAPM_SINGLE("DACR Switch", WM8903_ANALOGUE_RIGHT_MIX_0, 2, 1, 0),
 SOC_DAPM_SINGLE_W("Left Bypass Switch", WM8903_ANALOGUE_RIGHT_MIX_0, 1, 1, 0),
 SOC_DAPM_SINGLE_W("Right Bypass Switch", WM8903_ANALOGUE_RIGHT_MIX_0, 0, 1, 0),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_kcontrol_new left_speaker_mixer[] = अणु
+static const struct snd_kcontrol_new left_speaker_mixer[] = {
 SOC_DAPM_SINGLE("DACL Switch", WM8903_ANALOGUE_SPK_MIX_LEFT_0, 3, 1, 0),
 SOC_DAPM_SINGLE("DACR Switch", WM8903_ANALOGUE_SPK_MIX_LEFT_0, 2, 1, 0),
 SOC_DAPM_SINGLE("Left Bypass Switch", WM8903_ANALOGUE_SPK_MIX_LEFT_0, 1, 1, 0),
 SOC_DAPM_SINGLE("Right Bypass Switch", WM8903_ANALOGUE_SPK_MIX_LEFT_0,
 		0, 1, 0),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_kcontrol_new right_speaker_mixer[] = अणु
+static const struct snd_kcontrol_new right_speaker_mixer[] = {
 SOC_DAPM_SINGLE("DACL Switch", WM8903_ANALOGUE_SPK_MIX_RIGHT_0, 3, 1, 0),
 SOC_DAPM_SINGLE("DACR Switch", WM8903_ANALOGUE_SPK_MIX_RIGHT_0, 2, 1, 0),
 SOC_DAPM_SINGLE("Left Bypass Switch", WM8903_ANALOGUE_SPK_MIX_RIGHT_0,
 		1, 1, 0),
 SOC_DAPM_SINGLE("Right Bypass Switch", WM8903_ANALOGUE_SPK_MIX_RIGHT_0,
 		0, 1, 0),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_soc_dapm_widget wm8903_dapm_widमाला_लो[] = अणु
+static const struct snd_soc_dapm_widget wm8903_dapm_widgets[] = {
 SND_SOC_DAPM_INPUT("IN1L"),
 SND_SOC_DAPM_INPUT("IN1R"),
 SND_SOC_DAPM_INPUT("IN2L"),
@@ -828,7 +827,7 @@ SND_SOC_DAPM_OUTPUT("LON"),
 SND_SOC_DAPM_OUTPUT("ROP"),
 SND_SOC_DAPM_OUTPUT("RON"),
 
-SND_SOC_DAPM_SUPPLY("MICBIAS", WM8903_MIC_BIAS_CONTROL_0, 0, 0, शून्य, 0),
+SND_SOC_DAPM_SUPPLY("MICBIAS", WM8903_MIC_BIAS_CONTROL_0, 0, 0, NULL, 0),
 
 SND_SOC_DAPM_MUX("Left Input Mux", SND_SOC_NOPM, 0, 0, &linput_mux),
 SND_SOC_DAPM_MUX("Left Input Inverting Mux", SND_SOC_NOPM, 0, 0,
@@ -840,14 +839,14 @@ SND_SOC_DAPM_MUX("Right Input Inverting Mux", SND_SOC_NOPM, 0, 0,
 		 &rinput_inv_mux),
 SND_SOC_DAPM_MUX("Right Input Mode Mux", SND_SOC_NOPM, 0, 0, &rinput_mode_mux),
 
-SND_SOC_DAPM_PGA("Left Input PGA", WM8903_POWER_MANAGEMENT_0, 1, 0, शून्य, 0),
-SND_SOC_DAPM_PGA("Right Input PGA", WM8903_POWER_MANAGEMENT_0, 0, 0, शून्य, 0),
+SND_SOC_DAPM_PGA("Left Input PGA", WM8903_POWER_MANAGEMENT_0, 1, 0, NULL, 0),
+SND_SOC_DAPM_PGA("Right Input PGA", WM8903_POWER_MANAGEMENT_0, 0, 0, NULL, 0),
 
 SND_SOC_DAPM_MUX("Left ADC Input", SND_SOC_NOPM, 0, 0, &adcinput_mux),
 SND_SOC_DAPM_MUX("Right ADC Input", SND_SOC_NOPM, 0, 0, &adcinput_mux),
 
-SND_SOC_DAPM_ADC("ADCL", शून्य, WM8903_POWER_MANAGEMENT_6, 1, 0),
-SND_SOC_DAPM_ADC("ADCR", शून्य, WM8903_POWER_MANAGEMENT_6, 0, 0),
+SND_SOC_DAPM_ADC("ADCL", NULL, WM8903_POWER_MANAGEMENT_6, 1, 0),
+SND_SOC_DAPM_ADC("ADCR", NULL, WM8903_POWER_MANAGEMENT_6, 0, 0),
 
 SND_SOC_DAPM_MUX("Left Capture Mux", SND_SOC_NOPM, 0, 0, &lcapture_mux),
 SND_SOC_DAPM_MUX("Right Capture Mux", SND_SOC_NOPM, 0, 0, &rcapture_mux),
@@ -864,8 +863,8 @@ SND_SOC_DAPM_AIF_IN("AIFRXR", "Right Playback", 0, SND_SOC_NOPM, 0, 0),
 SND_SOC_DAPM_MUX("Left Playback Mux", SND_SOC_NOPM, 0, 0, &lplay_mux),
 SND_SOC_DAPM_MUX("Right Playback Mux", SND_SOC_NOPM, 0, 0, &rplay_mux),
 
-SND_SOC_DAPM_DAC("DACL", शून्य, WM8903_POWER_MANAGEMENT_6, 3, 0),
-SND_SOC_DAPM_DAC("DACR", शून्य, WM8903_POWER_MANAGEMENT_6, 2, 0),
+SND_SOC_DAPM_DAC("DACL", NULL, WM8903_POWER_MANAGEMENT_6, 3, 0),
+SND_SOC_DAPM_DAC("DACR", NULL, WM8903_POWER_MANAGEMENT_6, 2, 0),
 
 SND_SOC_DAPM_MIXER("Left Output Mixer", WM8903_POWER_MANAGEMENT_1, 1, 0,
 		   left_output_mixer, ARRAY_SIZE(left_output_mixer)),
@@ -878,42 +877,42 @@ SND_SOC_DAPM_MIXER("Right Speaker Mixer", WM8903_POWER_MANAGEMENT_4, 0, 0,
 		   right_speaker_mixer, ARRAY_SIZE(right_speaker_mixer)),
 
 SND_SOC_DAPM_PGA_S("Left Headphone Output PGA", 0, WM8903_POWER_MANAGEMENT_2,
-		   1, 0, शून्य, 0),
+		   1, 0, NULL, 0),
 SND_SOC_DAPM_PGA_S("Right Headphone Output PGA", 0, WM8903_POWER_MANAGEMENT_2,
-		   0, 0, शून्य, 0),
+		   0, 0, NULL, 0),
 
 SND_SOC_DAPM_PGA_S("Left Line Output PGA", 0, WM8903_POWER_MANAGEMENT_3, 1, 0,
-		   शून्य, 0),
+		   NULL, 0),
 SND_SOC_DAPM_PGA_S("Right Line Output PGA", 0, WM8903_POWER_MANAGEMENT_3, 0, 0,
-		   शून्य, 0),
+		   NULL, 0),
 
-SND_SOC_DAPM_PGA_S("HPL_RMV_SHORT", 4, WM8903_ANALOGUE_HP_0, 7, 0, शून्य, 0),
-SND_SOC_DAPM_PGA_S("HPL_ENA_OUTP", 3, WM8903_ANALOGUE_HP_0, 6, 0, शून्य, 0),
-SND_SOC_DAPM_PGA_S("HPL_ENA_DLY", 2, WM8903_ANALOGUE_HP_0, 5, 0, शून्य, 0),
-SND_SOC_DAPM_PGA_S("HPL_ENA", 1, WM8903_ANALOGUE_HP_0, 4, 0, शून्य, 0),
-SND_SOC_DAPM_PGA_S("HPR_RMV_SHORT", 4, WM8903_ANALOGUE_HP_0, 3, 0, शून्य, 0),
-SND_SOC_DAPM_PGA_S("HPR_ENA_OUTP", 3, WM8903_ANALOGUE_HP_0, 2, 0, शून्य, 0),
-SND_SOC_DAPM_PGA_S("HPR_ENA_DLY", 2, WM8903_ANALOGUE_HP_0, 1, 0, शून्य, 0),
-SND_SOC_DAPM_PGA_S("HPR_ENA", 1, WM8903_ANALOGUE_HP_0, 0, 0, शून्य, 0),
+SND_SOC_DAPM_PGA_S("HPL_RMV_SHORT", 4, WM8903_ANALOGUE_HP_0, 7, 0, NULL, 0),
+SND_SOC_DAPM_PGA_S("HPL_ENA_OUTP", 3, WM8903_ANALOGUE_HP_0, 6, 0, NULL, 0),
+SND_SOC_DAPM_PGA_S("HPL_ENA_DLY", 2, WM8903_ANALOGUE_HP_0, 5, 0, NULL, 0),
+SND_SOC_DAPM_PGA_S("HPL_ENA", 1, WM8903_ANALOGUE_HP_0, 4, 0, NULL, 0),
+SND_SOC_DAPM_PGA_S("HPR_RMV_SHORT", 4, WM8903_ANALOGUE_HP_0, 3, 0, NULL, 0),
+SND_SOC_DAPM_PGA_S("HPR_ENA_OUTP", 3, WM8903_ANALOGUE_HP_0, 2, 0, NULL, 0),
+SND_SOC_DAPM_PGA_S("HPR_ENA_DLY", 2, WM8903_ANALOGUE_HP_0, 1, 0, NULL, 0),
+SND_SOC_DAPM_PGA_S("HPR_ENA", 1, WM8903_ANALOGUE_HP_0, 0, 0, NULL, 0),
 
 SND_SOC_DAPM_PGA_S("LINEOUTL_RMV_SHORT", 4, WM8903_ANALOGUE_LINEOUT_0, 7, 0,
-		   शून्य, 0),
+		   NULL, 0),
 SND_SOC_DAPM_PGA_S("LINEOUTL_ENA_OUTP", 3, WM8903_ANALOGUE_LINEOUT_0, 6, 0,
-		   शून्य, 0),
+		   NULL, 0),
 SND_SOC_DAPM_PGA_S("LINEOUTL_ENA_DLY", 2, WM8903_ANALOGUE_LINEOUT_0, 5, 0,
-		   शून्य, 0),
+		   NULL, 0),
 SND_SOC_DAPM_PGA_S("LINEOUTL_ENA", 1, WM8903_ANALOGUE_LINEOUT_0, 4, 0,
-		   शून्य, 0),
+		   NULL, 0),
 SND_SOC_DAPM_PGA_S("LINEOUTR_RMV_SHORT", 4, WM8903_ANALOGUE_LINEOUT_0, 3, 0,
-		   शून्य, 0),
+		   NULL, 0),
 SND_SOC_DAPM_PGA_S("LINEOUTR_ENA_OUTP", 3, WM8903_ANALOGUE_LINEOUT_0, 2, 0,
-		   शून्य, 0),
+		   NULL, 0),
 SND_SOC_DAPM_PGA_S("LINEOUTR_ENA_DLY", 2, WM8903_ANALOGUE_LINEOUT_0, 1, 0,
-		   शून्य, 0),
+		   NULL, 0),
 SND_SOC_DAPM_PGA_S("LINEOUTR_ENA", 1, WM8903_ANALOGUE_LINEOUT_0, 0, 0,
-		   शून्य, 0),
+		   NULL, 0),
 
-SND_SOC_DAPM_SUPPLY("DCS Master", WM8903_DC_SERVO_0, 4, 0, शून्य, 0),
+SND_SOC_DAPM_SUPPLY("DCS Master", WM8903_DC_SERVO_0, 4, 0, NULL, 0),
 SND_SOC_DAPM_PGA_S("HPL_DCS", 3, SND_SOC_NOPM, 3, 0, wm8903_dcs_event,
 		   SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_PRE_PMD),
 SND_SOC_DAPM_PGA_S("HPR_DCS", 3, SND_SOC_NOPM, 2, 0, wm8903_dcs_event,
@@ -924,195 +923,195 @@ SND_SOC_DAPM_PGA_S("LINEOUTR_DCS", 3, SND_SOC_NOPM, 0, 0, wm8903_dcs_event,
 		   SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_PRE_PMD),
 
 SND_SOC_DAPM_PGA("Left Speaker PGA", WM8903_POWER_MANAGEMENT_5, 1, 0,
-		 शून्य, 0),
+		 NULL, 0),
 SND_SOC_DAPM_PGA("Right Speaker PGA", WM8903_POWER_MANAGEMENT_5, 0, 0,
-		 शून्य, 0),
+		 NULL, 0),
 
 SND_SOC_DAPM_SUPPLY("Charge Pump", WM8903_CHARGE_PUMP_0, 0, 0,
 		    wm8903_cp_event, SND_SOC_DAPM_POST_PMU),
-SND_SOC_DAPM_SUPPLY("CLK_DSP", WM8903_CLOCK_RATES_2, 1, 0, शून्य, 0),
-SND_SOC_DAPM_SUPPLY("CLK_SYS", WM8903_CLOCK_RATES_2, 2, 0, शून्य, 0),
-पूर्ण;
+SND_SOC_DAPM_SUPPLY("CLK_DSP", WM8903_CLOCK_RATES_2, 1, 0, NULL, 0),
+SND_SOC_DAPM_SUPPLY("CLK_SYS", WM8903_CLOCK_RATES_2, 2, 0, NULL, 0),
+};
 
-अटल स्थिर काष्ठा snd_soc_dapm_route wm8903_पूर्णांकercon[] = अणु
+static const struct snd_soc_dapm_route wm8903_intercon[] = {
 
-	अणु "CLK_DSP", शून्य, "CLK_SYS" पूर्ण,
-	अणु "MICBIAS", शून्य, "CLK_SYS" पूर्ण,
-	अणु "HPL_DCS", शून्य, "CLK_SYS" पूर्ण,
-	अणु "HPR_DCS", शून्य, "CLK_SYS" पूर्ण,
-	अणु "LINEOUTL_DCS", शून्य, "CLK_SYS" पूर्ण,
-	अणु "LINEOUTR_DCS", शून्य, "CLK_SYS" पूर्ण,
+	{ "CLK_DSP", NULL, "CLK_SYS" },
+	{ "MICBIAS", NULL, "CLK_SYS" },
+	{ "HPL_DCS", NULL, "CLK_SYS" },
+	{ "HPR_DCS", NULL, "CLK_SYS" },
+	{ "LINEOUTL_DCS", NULL, "CLK_SYS" },
+	{ "LINEOUTR_DCS", NULL, "CLK_SYS" },
 
-	अणु "Left Input Mux", "IN1L", "IN1L" पूर्ण,
-	अणु "Left Input Mux", "IN2L", "IN2L" पूर्ण,
-	अणु "Left Input Mux", "IN3L", "IN3L" पूर्ण,
+	{ "Left Input Mux", "IN1L", "IN1L" },
+	{ "Left Input Mux", "IN2L", "IN2L" },
+	{ "Left Input Mux", "IN3L", "IN3L" },
 
-	अणु "Left Input Inverting Mux", "IN1L", "IN1L" पूर्ण,
-	अणु "Left Input Inverting Mux", "IN2L", "IN2L" पूर्ण,
-	अणु "Left Input Inverting Mux", "IN3L", "IN3L" पूर्ण,
+	{ "Left Input Inverting Mux", "IN1L", "IN1L" },
+	{ "Left Input Inverting Mux", "IN2L", "IN2L" },
+	{ "Left Input Inverting Mux", "IN3L", "IN3L" },
 
-	अणु "Right Input Mux", "IN1R", "IN1R" पूर्ण,
-	अणु "Right Input Mux", "IN2R", "IN2R" पूर्ण,
-	अणु "Right Input Mux", "IN3R", "IN3R" पूर्ण,
+	{ "Right Input Mux", "IN1R", "IN1R" },
+	{ "Right Input Mux", "IN2R", "IN2R" },
+	{ "Right Input Mux", "IN3R", "IN3R" },
 
-	अणु "Right Input Inverting Mux", "IN1R", "IN1R" पूर्ण,
-	अणु "Right Input Inverting Mux", "IN2R", "IN2R" पूर्ण,
-	अणु "Right Input Inverting Mux", "IN3R", "IN3R" पूर्ण,
+	{ "Right Input Inverting Mux", "IN1R", "IN1R" },
+	{ "Right Input Inverting Mux", "IN2R", "IN2R" },
+	{ "Right Input Inverting Mux", "IN3R", "IN3R" },
 
-	अणु "Left Input Mode Mux", "Single-Ended", "Left Input Inverting Mux" पूर्ण,
-	अणु "Left Input Mode Mux", "Differential Line",
-	  "Left Input Mux" पूर्ण,
-	अणु "Left Input Mode Mux", "Differential Line",
-	  "Left Input Inverting Mux" पूर्ण,
-	अणु "Left Input Mode Mux", "Differential Mic",
-	  "Left Input Mux" पूर्ण,
-	अणु "Left Input Mode Mux", "Differential Mic",
-	  "Left Input Inverting Mux" पूर्ण,
+	{ "Left Input Mode Mux", "Single-Ended", "Left Input Inverting Mux" },
+	{ "Left Input Mode Mux", "Differential Line",
+	  "Left Input Mux" },
+	{ "Left Input Mode Mux", "Differential Line",
+	  "Left Input Inverting Mux" },
+	{ "Left Input Mode Mux", "Differential Mic",
+	  "Left Input Mux" },
+	{ "Left Input Mode Mux", "Differential Mic",
+	  "Left Input Inverting Mux" },
 
-	अणु "Right Input Mode Mux", "Single-Ended",
-	  "Right Input Inverting Mux" पूर्ण,
-	अणु "Right Input Mode Mux", "Differential Line",
-	  "Right Input Mux" पूर्ण,
-	अणु "Right Input Mode Mux", "Differential Line",
-	  "Right Input Inverting Mux" पूर्ण,
-	अणु "Right Input Mode Mux", "Differential Mic",
-	  "Right Input Mux" पूर्ण,
-	अणु "Right Input Mode Mux", "Differential Mic",
-	  "Right Input Inverting Mux" पूर्ण,
+	{ "Right Input Mode Mux", "Single-Ended",
+	  "Right Input Inverting Mux" },
+	{ "Right Input Mode Mux", "Differential Line",
+	  "Right Input Mux" },
+	{ "Right Input Mode Mux", "Differential Line",
+	  "Right Input Inverting Mux" },
+	{ "Right Input Mode Mux", "Differential Mic",
+	  "Right Input Mux" },
+	{ "Right Input Mode Mux", "Differential Mic",
+	  "Right Input Inverting Mux" },
 
-	अणु "Left Input PGA", शून्य, "Left Input Mode Mux" पूर्ण,
-	अणु "Right Input PGA", शून्य, "Right Input Mode Mux" पूर्ण,
+	{ "Left Input PGA", NULL, "Left Input Mode Mux" },
+	{ "Right Input PGA", NULL, "Right Input Mode Mux" },
 
-	अणु "Left ADC Input", "ADC", "Left Input PGA" पूर्ण,
-	अणु "Left ADC Input", "DMIC", "DMICDAT" पूर्ण,
-	अणु "Right ADC Input", "ADC", "Right Input PGA" पूर्ण,
-	अणु "Right ADC Input", "DMIC", "DMICDAT" पूर्ण,
+	{ "Left ADC Input", "ADC", "Left Input PGA" },
+	{ "Left ADC Input", "DMIC", "DMICDAT" },
+	{ "Right ADC Input", "ADC", "Right Input PGA" },
+	{ "Right ADC Input", "DMIC", "DMICDAT" },
 
-	अणु "Left Capture Mux", "Left", "ADCL" पूर्ण,
-	अणु "Left Capture Mux", "Right", "ADCR" पूर्ण,
+	{ "Left Capture Mux", "Left", "ADCL" },
+	{ "Left Capture Mux", "Right", "ADCR" },
 
-	अणु "Right Capture Mux", "Left", "ADCL" पूर्ण,
-	अणु "Right Capture Mux", "Right", "ADCR" पूर्ण,
+	{ "Right Capture Mux", "Left", "ADCL" },
+	{ "Right Capture Mux", "Right", "ADCR" },
 
-	अणु "AIFTXL", शून्य, "Left Capture Mux" पूर्ण,
-	अणु "AIFTXR", शून्य, "Right Capture Mux" पूर्ण,
+	{ "AIFTXL", NULL, "Left Capture Mux" },
+	{ "AIFTXR", NULL, "Right Capture Mux" },
 
-	अणु "ADCL", शून्य, "Left ADC Input" पूर्ण,
-	अणु "ADCL", शून्य, "CLK_DSP" पूर्ण,
-	अणु "ADCR", शून्य, "Right ADC Input" पूर्ण,
-	अणु "ADCR", शून्य, "CLK_DSP" पूर्ण,
+	{ "ADCL", NULL, "Left ADC Input" },
+	{ "ADCL", NULL, "CLK_DSP" },
+	{ "ADCR", NULL, "Right ADC Input" },
+	{ "ADCR", NULL, "CLK_DSP" },
 
-	अणु "Left Playback Mux", "Left", "AIFRXL" पूर्ण,
-	अणु "Left Playback Mux", "Right", "AIFRXR" पूर्ण,
+	{ "Left Playback Mux", "Left", "AIFRXL" },
+	{ "Left Playback Mux", "Right", "AIFRXR" },
 
-	अणु "Right Playback Mux", "Left", "AIFRXL" पूर्ण,
-	अणु "Right Playback Mux", "Right", "AIFRXR" पूर्ण,
+	{ "Right Playback Mux", "Left", "AIFRXL" },
+	{ "Right Playback Mux", "Right", "AIFRXR" },
 
-	अणु "DACL Sidetone", "Left", "ADCL" पूर्ण,
-	अणु "DACL Sidetone", "Right", "ADCR" पूर्ण,
-	अणु "DACR Sidetone", "Left", "ADCL" पूर्ण,
-	अणु "DACR Sidetone", "Right", "ADCR" पूर्ण,
+	{ "DACL Sidetone", "Left", "ADCL" },
+	{ "DACL Sidetone", "Right", "ADCR" },
+	{ "DACR Sidetone", "Left", "ADCL" },
+	{ "DACR Sidetone", "Right", "ADCR" },
 
-	अणु "DACL", शून्य, "Left Playback Mux" पूर्ण,
-	अणु "DACL", शून्य, "DACL Sidetone" पूर्ण,
-	अणु "DACL", शून्य, "CLK_DSP" पूर्ण,
+	{ "DACL", NULL, "Left Playback Mux" },
+	{ "DACL", NULL, "DACL Sidetone" },
+	{ "DACL", NULL, "CLK_DSP" },
 
-	अणु "DACR", शून्य, "Right Playback Mux" पूर्ण,
-	अणु "DACR", शून्य, "DACR Sidetone" पूर्ण,
-	अणु "DACR", शून्य, "CLK_DSP" पूर्ण,
+	{ "DACR", NULL, "Right Playback Mux" },
+	{ "DACR", NULL, "DACR Sidetone" },
+	{ "DACR", NULL, "CLK_DSP" },
 
-	अणु "Left Output Mixer", "Left Bypass Switch", "Left Input PGA" पूर्ण,
-	अणु "Left Output Mixer", "Right Bypass Switch", "Right Input PGA" पूर्ण,
-	अणु "Left Output Mixer", "DACL Switch", "DACL" पूर्ण,
-	अणु "Left Output Mixer", "DACR Switch", "DACR" पूर्ण,
+	{ "Left Output Mixer", "Left Bypass Switch", "Left Input PGA" },
+	{ "Left Output Mixer", "Right Bypass Switch", "Right Input PGA" },
+	{ "Left Output Mixer", "DACL Switch", "DACL" },
+	{ "Left Output Mixer", "DACR Switch", "DACR" },
 
-	अणु "Right Output Mixer", "Left Bypass Switch", "Left Input PGA" पूर्ण,
-	अणु "Right Output Mixer", "Right Bypass Switch", "Right Input PGA" पूर्ण,
-	अणु "Right Output Mixer", "DACL Switch", "DACL" पूर्ण,
-	अणु "Right Output Mixer", "DACR Switch", "DACR" पूर्ण,
+	{ "Right Output Mixer", "Left Bypass Switch", "Left Input PGA" },
+	{ "Right Output Mixer", "Right Bypass Switch", "Right Input PGA" },
+	{ "Right Output Mixer", "DACL Switch", "DACL" },
+	{ "Right Output Mixer", "DACR Switch", "DACR" },
 
-	अणु "Left Speaker Mixer", "Left Bypass Switch", "Left Input PGA" पूर्ण,
-	अणु "Left Speaker Mixer", "Right Bypass Switch", "Right Input PGA" पूर्ण,
-	अणु "Left Speaker Mixer", "DACL Switch", "DACL" पूर्ण,
-	अणु "Left Speaker Mixer", "DACR Switch", "DACR" पूर्ण,
+	{ "Left Speaker Mixer", "Left Bypass Switch", "Left Input PGA" },
+	{ "Left Speaker Mixer", "Right Bypass Switch", "Right Input PGA" },
+	{ "Left Speaker Mixer", "DACL Switch", "DACL" },
+	{ "Left Speaker Mixer", "DACR Switch", "DACR" },
 
-	अणु "Right Speaker Mixer", "Left Bypass Switch", "Left Input PGA" पूर्ण,
-	अणु "Right Speaker Mixer", "Right Bypass Switch", "Right Input PGA" पूर्ण,
-	अणु "Right Speaker Mixer", "DACL Switch", "DACL" पूर्ण,
-	अणु "Right Speaker Mixer", "DACR Switch", "DACR" पूर्ण,
+	{ "Right Speaker Mixer", "Left Bypass Switch", "Left Input PGA" },
+	{ "Right Speaker Mixer", "Right Bypass Switch", "Right Input PGA" },
+	{ "Right Speaker Mixer", "DACL Switch", "DACL" },
+	{ "Right Speaker Mixer", "DACR Switch", "DACR" },
 
-	अणु "Left Line Output PGA", शून्य, "Left Output Mixer" पूर्ण,
-	अणु "Right Line Output PGA", शून्य, "Right Output Mixer" पूर्ण,
+	{ "Left Line Output PGA", NULL, "Left Output Mixer" },
+	{ "Right Line Output PGA", NULL, "Right Output Mixer" },
 
-	अणु "Left Headphone Output PGA", शून्य, "Left Output Mixer" पूर्ण,
-	अणु "Right Headphone Output PGA", शून्य, "Right Output Mixer" पूर्ण,
+	{ "Left Headphone Output PGA", NULL, "Left Output Mixer" },
+	{ "Right Headphone Output PGA", NULL, "Right Output Mixer" },
 
-	अणु "Left Speaker PGA", शून्य, "Left Speaker Mixer" पूर्ण,
-	अणु "Right Speaker PGA", शून्य, "Right Speaker Mixer" पूर्ण,
+	{ "Left Speaker PGA", NULL, "Left Speaker Mixer" },
+	{ "Right Speaker PGA", NULL, "Right Speaker Mixer" },
 
-	अणु "HPL_ENA", शून्य, "Left Headphone Output PGA" पूर्ण,
-	अणु "HPR_ENA", शून्य, "Right Headphone Output PGA" पूर्ण,
-	अणु "HPL_ENA_DLY", शून्य, "HPL_ENA" पूर्ण,
-	अणु "HPR_ENA_DLY", शून्य, "HPR_ENA" पूर्ण,
-	अणु "LINEOUTL_ENA", शून्य, "Left Line Output PGA" पूर्ण,
-	अणु "LINEOUTR_ENA", शून्य, "Right Line Output PGA" पूर्ण,
-	अणु "LINEOUTL_ENA_DLY", शून्य, "LINEOUTL_ENA" पूर्ण,
-	अणु "LINEOUTR_ENA_DLY", शून्य, "LINEOUTR_ENA" पूर्ण,
+	{ "HPL_ENA", NULL, "Left Headphone Output PGA" },
+	{ "HPR_ENA", NULL, "Right Headphone Output PGA" },
+	{ "HPL_ENA_DLY", NULL, "HPL_ENA" },
+	{ "HPR_ENA_DLY", NULL, "HPR_ENA" },
+	{ "LINEOUTL_ENA", NULL, "Left Line Output PGA" },
+	{ "LINEOUTR_ENA", NULL, "Right Line Output PGA" },
+	{ "LINEOUTL_ENA_DLY", NULL, "LINEOUTL_ENA" },
+	{ "LINEOUTR_ENA_DLY", NULL, "LINEOUTR_ENA" },
 
-	अणु "HPL_DCS", शून्य, "DCS Master" पूर्ण,
-	अणु "HPR_DCS", शून्य, "DCS Master" पूर्ण,
-	अणु "LINEOUTL_DCS", शून्य, "DCS Master" पूर्ण,
-	अणु "LINEOUTR_DCS", शून्य, "DCS Master" पूर्ण,
+	{ "HPL_DCS", NULL, "DCS Master" },
+	{ "HPR_DCS", NULL, "DCS Master" },
+	{ "LINEOUTL_DCS", NULL, "DCS Master" },
+	{ "LINEOUTR_DCS", NULL, "DCS Master" },
 
-	अणु "HPL_DCS", शून्य, "HPL_ENA_DLY" पूर्ण,
-	अणु "HPR_DCS", शून्य, "HPR_ENA_DLY" पूर्ण,
-	अणु "LINEOUTL_DCS", शून्य, "LINEOUTL_ENA_DLY" पूर्ण,
-	अणु "LINEOUTR_DCS", शून्य, "LINEOUTR_ENA_DLY" पूर्ण,
+	{ "HPL_DCS", NULL, "HPL_ENA_DLY" },
+	{ "HPR_DCS", NULL, "HPR_ENA_DLY" },
+	{ "LINEOUTL_DCS", NULL, "LINEOUTL_ENA_DLY" },
+	{ "LINEOUTR_DCS", NULL, "LINEOUTR_ENA_DLY" },
 
-	अणु "HPL_ENA_OUTP", शून्य, "HPL_DCS" पूर्ण,
-	अणु "HPR_ENA_OUTP", शून्य, "HPR_DCS" पूर्ण,
-	अणु "LINEOUTL_ENA_OUTP", शून्य, "LINEOUTL_DCS" पूर्ण,
-	अणु "LINEOUTR_ENA_OUTP", शून्य, "LINEOUTR_DCS" पूर्ण,
+	{ "HPL_ENA_OUTP", NULL, "HPL_DCS" },
+	{ "HPR_ENA_OUTP", NULL, "HPR_DCS" },
+	{ "LINEOUTL_ENA_OUTP", NULL, "LINEOUTL_DCS" },
+	{ "LINEOUTR_ENA_OUTP", NULL, "LINEOUTR_DCS" },
 
-	अणु "HPL_RMV_SHORT", शून्य, "HPL_ENA_OUTP" पूर्ण,
-	अणु "HPR_RMV_SHORT", शून्य, "HPR_ENA_OUTP" पूर्ण,
-	अणु "LINEOUTL_RMV_SHORT", शून्य, "LINEOUTL_ENA_OUTP" पूर्ण,
-	अणु "LINEOUTR_RMV_SHORT", शून्य, "LINEOUTR_ENA_OUTP" पूर्ण,
+	{ "HPL_RMV_SHORT", NULL, "HPL_ENA_OUTP" },
+	{ "HPR_RMV_SHORT", NULL, "HPR_ENA_OUTP" },
+	{ "LINEOUTL_RMV_SHORT", NULL, "LINEOUTL_ENA_OUTP" },
+	{ "LINEOUTR_RMV_SHORT", NULL, "LINEOUTR_ENA_OUTP" },
 
-	अणु "HPOUTL", शून्य, "HPL_RMV_SHORT" पूर्ण,
-	अणु "HPOUTR", शून्य, "HPR_RMV_SHORT" पूर्ण,
-	अणु "LINEOUTL", शून्य, "LINEOUTL_RMV_SHORT" पूर्ण,
-	अणु "LINEOUTR", शून्य, "LINEOUTR_RMV_SHORT" पूर्ण,
+	{ "HPOUTL", NULL, "HPL_RMV_SHORT" },
+	{ "HPOUTR", NULL, "HPR_RMV_SHORT" },
+	{ "LINEOUTL", NULL, "LINEOUTL_RMV_SHORT" },
+	{ "LINEOUTR", NULL, "LINEOUTR_RMV_SHORT" },
 
-	अणु "LOP", शून्य, "Left Speaker PGA" पूर्ण,
-	अणु "LON", शून्य, "Left Speaker PGA" पूर्ण,
+	{ "LOP", NULL, "Left Speaker PGA" },
+	{ "LON", NULL, "Left Speaker PGA" },
 
-	अणु "ROP", शून्य, "Right Speaker PGA" पूर्ण,
-	अणु "RON", शून्य, "Right Speaker PGA" पूर्ण,
+	{ "ROP", NULL, "Right Speaker PGA" },
+	{ "RON", NULL, "Right Speaker PGA" },
 
-	अणु "Charge Pump", शून्य, "CLK_DSP" पूर्ण,
+	{ "Charge Pump", NULL, "CLK_DSP" },
 
-	अणु "Left Headphone Output PGA", शून्य, "Charge Pump" पूर्ण,
-	अणु "Right Headphone Output PGA", शून्य, "Charge Pump" पूर्ण,
-	अणु "Left Line Output PGA", शून्य, "Charge Pump" पूर्ण,
-	अणु "Right Line Output PGA", शून्य, "Charge Pump" पूर्ण,
-पूर्ण;
+	{ "Left Headphone Output PGA", NULL, "Charge Pump" },
+	{ "Right Headphone Output PGA", NULL, "Charge Pump" },
+	{ "Left Line Output PGA", NULL, "Charge Pump" },
+	{ "Right Line Output PGA", NULL, "Charge Pump" },
+};
 
-अटल पूर्णांक wm8903_set_bias_level(काष्ठा snd_soc_component *component,
-				 क्रमागत snd_soc_bias_level level)
-अणु
-	चयन (level) अणु
-	हाल SND_SOC_BIAS_ON:
-		अवरोध;
+static int wm8903_set_bias_level(struct snd_soc_component *component,
+				 enum snd_soc_bias_level level)
+{
+	switch (level) {
+	case SND_SOC_BIAS_ON:
+		break;
 
-	हाल SND_SOC_BIAS_PREPARE:
+	case SND_SOC_BIAS_PREPARE:
 		snd_soc_component_update_bits(component, WM8903_VMID_CONTROL_0,
 				    WM8903_VMID_RES_MASK,
 				    WM8903_VMID_RES_50K);
-		अवरोध;
+		break;
 
-	हाल SND_SOC_BIAS_STANDBY:
-		अगर (snd_soc_component_get_bias_level(component) == SND_SOC_BIAS_OFF) अणु
+	case SND_SOC_BIAS_STANDBY:
+		if (snd_soc_component_get_bias_level(component) == SND_SOC_BIAS_OFF) {
 			snd_soc_component_update_bits(component, WM8903_BIAS_CONTROL_0,
 					    WM8903_POBCTRL | WM8903_ISEL_MASK |
 					    WM8903_STARTUP_BIAS_ENA |
@@ -1167,7 +1166,7 @@ SND_SOC_DAPM_SUPPLY("CLK_SYS", WM8903_CLOCK_RATES_2, 2, 0, शून्य, 0),
 					    WM8903_BIAS_ENA | WM8903_POBCTRL,
 					    WM8903_BIAS_ENA);
 
-			/* By शेष no bypass paths are enabled so
+			/* By default no bypass paths are enabled so
 			 * enable Class W support.
 			 */
 			dev_dbg(component->dev, "Enabling Class W\n");
@@ -1176,14 +1175,14 @@ SND_SOC_DAPM_SUPPLY("CLK_SYS", WM8903_CLOCK_RATES_2, 2, 0, शून्य, 0),
 					    WM8903_CP_DYN_V,
 					    WM8903_CP_DYN_FREQ |
 					    WM8903_CP_DYN_V);
-		पूर्ण
+		}
 
 		snd_soc_component_update_bits(component, WM8903_VMID_CONTROL_0,
 				    WM8903_VMID_RES_MASK,
 				    WM8903_VMID_RES_250K);
-		अवरोध;
+		break;
 
-	हाल SND_SOC_BIAS_OFF:
+	case SND_SOC_BIAS_OFF:
 		snd_soc_component_update_bits(component, WM8903_BIAS_CONTROL_0,
 				    WM8903_BIAS_ENA, 0);
 
@@ -1204,406 +1203,406 @@ SND_SOC_DAPM_SUPPLY("CLK_SYS", WM8903_CLOCK_RATES_2, 2, 0, शून्य, 0),
 
 		snd_soc_component_update_bits(component, WM8903_BIAS_CONTROL_0,
 				    WM8903_STARTUP_BIAS_ENA, 0);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wm8903_set_dai_sysclk(काष्ठा snd_soc_dai *codec_dai,
-				 पूर्णांक clk_id, अचिन्हित पूर्णांक freq, पूर्णांक dir)
-अणु
-	काष्ठा snd_soc_component *component = codec_dai->component;
-	काष्ठा wm8903_priv *wm8903 = snd_soc_component_get_drvdata(component);
+static int wm8903_set_dai_sysclk(struct snd_soc_dai *codec_dai,
+				 int clk_id, unsigned int freq, int dir)
+{
+	struct snd_soc_component *component = codec_dai->component;
+	struct wm8903_priv *wm8903 = snd_soc_component_get_drvdata(component);
 
 	wm8903->sysclk = freq;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wm8903_set_dai_fmt(काष्ठा snd_soc_dai *codec_dai,
-			      अचिन्हित पूर्णांक fmt)
-अणु
-	काष्ठा snd_soc_component *component = codec_dai->component;
-	u16 aअगर1 = snd_soc_component_पढ़ो(component, WM8903_AUDIO_INTERFACE_1);
+static int wm8903_set_dai_fmt(struct snd_soc_dai *codec_dai,
+			      unsigned int fmt)
+{
+	struct snd_soc_component *component = codec_dai->component;
+	u16 aif1 = snd_soc_component_read(component, WM8903_AUDIO_INTERFACE_1);
 
-	aअगर1 &= ~(WM8903_LRCLK_सूची | WM8903_BCLK_सूची | WM8903_AIF_FMT_MASK |
+	aif1 &= ~(WM8903_LRCLK_DIR | WM8903_BCLK_DIR | WM8903_AIF_FMT_MASK |
 		  WM8903_AIF_LRCLK_INV | WM8903_AIF_BCLK_INV);
 
-	चयन (fmt & SND_SOC_DAIFMT_MASTER_MASK) अणु
-	हाल SND_SOC_DAIFMT_CBS_CFS:
-		अवरोध;
-	हाल SND_SOC_DAIFMT_CBS_CFM:
-		aअगर1 |= WM8903_LRCLK_सूची;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_CBM_CFM:
-		aअगर1 |= WM8903_LRCLK_सूची | WM8903_BCLK_सूची;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_CBM_CFS:
-		aअगर1 |= WM8903_BCLK_सूची;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
+	case SND_SOC_DAIFMT_CBS_CFS:
+		break;
+	case SND_SOC_DAIFMT_CBS_CFM:
+		aif1 |= WM8903_LRCLK_DIR;
+		break;
+	case SND_SOC_DAIFMT_CBM_CFM:
+		aif1 |= WM8903_LRCLK_DIR | WM8903_BCLK_DIR;
+		break;
+	case SND_SOC_DAIFMT_CBM_CFS:
+		aif1 |= WM8903_BCLK_DIR;
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	चयन (fmt & SND_SOC_DAIFMT_FORMAT_MASK) अणु
-	हाल SND_SOC_DAIFMT_DSP_A:
-		aअगर1 |= 0x3;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_DSP_B:
-		aअगर1 |= 0x3 | WM8903_AIF_LRCLK_INV;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_I2S:
-		aअगर1 |= 0x2;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_RIGHT_J:
-		aअगर1 |= 0x1;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_LEFT_J:
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
+	case SND_SOC_DAIFMT_DSP_A:
+		aif1 |= 0x3;
+		break;
+	case SND_SOC_DAIFMT_DSP_B:
+		aif1 |= 0x3 | WM8903_AIF_LRCLK_INV;
+		break;
+	case SND_SOC_DAIFMT_I2S:
+		aif1 |= 0x2;
+		break;
+	case SND_SOC_DAIFMT_RIGHT_J:
+		aif1 |= 0x1;
+		break;
+	case SND_SOC_DAIFMT_LEFT_J:
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	/* Clock inversion */
-	चयन (fmt & SND_SOC_DAIFMT_FORMAT_MASK) अणु
-	हाल SND_SOC_DAIFMT_DSP_A:
-	हाल SND_SOC_DAIFMT_DSP_B:
-		/* frame inversion not valid क्रम DSP modes */
-		चयन (fmt & SND_SOC_DAIFMT_INV_MASK) अणु
-		हाल SND_SOC_DAIFMT_NB_NF:
-			अवरोध;
-		हाल SND_SOC_DAIFMT_IB_NF:
-			aअगर1 |= WM8903_AIF_BCLK_INV;
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-		अवरोध;
-	हाल SND_SOC_DAIFMT_I2S:
-	हाल SND_SOC_DAIFMT_RIGHT_J:
-	हाल SND_SOC_DAIFMT_LEFT_J:
-		चयन (fmt & SND_SOC_DAIFMT_INV_MASK) अणु
-		हाल SND_SOC_DAIFMT_NB_NF:
-			अवरोध;
-		हाल SND_SOC_DAIFMT_IB_IF:
-			aअगर1 |= WM8903_AIF_BCLK_INV | WM8903_AIF_LRCLK_INV;
-			अवरोध;
-		हाल SND_SOC_DAIFMT_IB_NF:
-			aअगर1 |= WM8903_AIF_BCLK_INV;
-			अवरोध;
-		हाल SND_SOC_DAIFMT_NB_IF:
-			aअगर1 |= WM8903_AIF_LRCLK_INV;
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
+	case SND_SOC_DAIFMT_DSP_A:
+	case SND_SOC_DAIFMT_DSP_B:
+		/* frame inversion not valid for DSP modes */
+		switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
+		case SND_SOC_DAIFMT_NB_NF:
+			break;
+		case SND_SOC_DAIFMT_IB_NF:
+			aif1 |= WM8903_AIF_BCLK_INV;
+			break;
+		default:
+			return -EINVAL;
+		}
+		break;
+	case SND_SOC_DAIFMT_I2S:
+	case SND_SOC_DAIFMT_RIGHT_J:
+	case SND_SOC_DAIFMT_LEFT_J:
+		switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
+		case SND_SOC_DAIFMT_NB_NF:
+			break;
+		case SND_SOC_DAIFMT_IB_IF:
+			aif1 |= WM8903_AIF_BCLK_INV | WM8903_AIF_LRCLK_INV;
+			break;
+		case SND_SOC_DAIFMT_IB_NF:
+			aif1 |= WM8903_AIF_BCLK_INV;
+			break;
+		case SND_SOC_DAIFMT_NB_IF:
+			aif1 |= WM8903_AIF_LRCLK_INV;
+			break;
+		default:
+			return -EINVAL;
+		}
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	snd_soc_component_ग_लिखो(component, WM8903_AUDIO_INTERFACE_1, aअगर1);
+	snd_soc_component_write(component, WM8903_AUDIO_INTERFACE_1, aif1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wm8903_mute(काष्ठा snd_soc_dai *codec_dai, पूर्णांक mute, पूर्णांक direction)
-अणु
-	काष्ठा snd_soc_component *component = codec_dai->component;
+static int wm8903_mute(struct snd_soc_dai *codec_dai, int mute, int direction)
+{
+	struct snd_soc_component *component = codec_dai->component;
 	u16 reg;
 
-	reg = snd_soc_component_पढ़ो(component, WM8903_DAC_DIGITAL_1);
+	reg = snd_soc_component_read(component, WM8903_DAC_DIGITAL_1);
 
-	अगर (mute)
+	if (mute)
 		reg |= WM8903_DAC_MUTE;
-	अन्यथा
+	else
 		reg &= ~WM8903_DAC_MUTE;
 
-	snd_soc_component_ग_लिखो(component, WM8903_DAC_DIGITAL_1, reg);
+	snd_soc_component_write(component, WM8903_DAC_DIGITAL_1, reg);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Lookup table क्रम CLK_SYS/fs ratio.  256fs or more is recommended
- * क्रम optimal perक्रमmance so we list the lower rates first and match
+/* Lookup table for CLK_SYS/fs ratio.  256fs or more is recommended
+ * for optimal performance so we list the lower rates first and match
  * on the last match we find. */
-अटल काष्ठा अणु
-	पूर्णांक भाग;
-	पूर्णांक rate;
-	पूर्णांक mode;
-	पूर्णांक mclk_भाग;
-पूर्ण clk_sys_ratios[] = अणु
-	अणु   64, 0x0, 0x0, 1 पूर्ण,
-	अणु   68, 0x0, 0x1, 1 पूर्ण,
-	अणु  125, 0x0, 0x2, 1 पूर्ण,
-	अणु  128, 0x1, 0x0, 1 पूर्ण,
-	अणु  136, 0x1, 0x1, 1 पूर्ण,
-	अणु  192, 0x2, 0x0, 1 पूर्ण,
-	अणु  204, 0x2, 0x1, 1 पूर्ण,
+static struct {
+	int div;
+	int rate;
+	int mode;
+	int mclk_div;
+} clk_sys_ratios[] = {
+	{   64, 0x0, 0x0, 1 },
+	{   68, 0x0, 0x1, 1 },
+	{  125, 0x0, 0x2, 1 },
+	{  128, 0x1, 0x0, 1 },
+	{  136, 0x1, 0x1, 1 },
+	{  192, 0x2, 0x0, 1 },
+	{  204, 0x2, 0x1, 1 },
 
-	अणु   64, 0x0, 0x0, 2 पूर्ण,
-	अणु   68, 0x0, 0x1, 2 पूर्ण,
-	अणु  125, 0x0, 0x2, 2 पूर्ण,
-	अणु  128, 0x1, 0x0, 2 पूर्ण,
-	अणु  136, 0x1, 0x1, 2 पूर्ण,
-	अणु  192, 0x2, 0x0, 2 पूर्ण,
-	अणु  204, 0x2, 0x1, 2 पूर्ण,
+	{   64, 0x0, 0x0, 2 },
+	{   68, 0x0, 0x1, 2 },
+	{  125, 0x0, 0x2, 2 },
+	{  128, 0x1, 0x0, 2 },
+	{  136, 0x1, 0x1, 2 },
+	{  192, 0x2, 0x0, 2 },
+	{  204, 0x2, 0x1, 2 },
 
-	अणु  250, 0x2, 0x2, 1 पूर्ण,
-	अणु  256, 0x3, 0x0, 1 पूर्ण,
-	अणु  272, 0x3, 0x1, 1 पूर्ण,
-	अणु  384, 0x4, 0x0, 1 पूर्ण,
-	अणु  408, 0x4, 0x1, 1 पूर्ण,
-	अणु  375, 0x4, 0x2, 1 पूर्ण,
-	अणु  512, 0x5, 0x0, 1 पूर्ण,
-	अणु  544, 0x5, 0x1, 1 पूर्ण,
-	अणु  500, 0x5, 0x2, 1 पूर्ण,
-	अणु  768, 0x6, 0x0, 1 पूर्ण,
-	अणु  816, 0x6, 0x1, 1 पूर्ण,
-	अणु  750, 0x6, 0x2, 1 पूर्ण,
-	अणु 1024, 0x7, 0x0, 1 पूर्ण,
-	अणु 1088, 0x7, 0x1, 1 पूर्ण,
-	अणु 1000, 0x7, 0x2, 1 पूर्ण,
-	अणु 1408, 0x8, 0x0, 1 पूर्ण,
-	अणु 1496, 0x8, 0x1, 1 पूर्ण,
-	अणु 1536, 0x9, 0x0, 1 पूर्ण,
-	अणु 1632, 0x9, 0x1, 1 पूर्ण,
-	अणु 1500, 0x9, 0x2, 1 पूर्ण,
+	{  250, 0x2, 0x2, 1 },
+	{  256, 0x3, 0x0, 1 },
+	{  272, 0x3, 0x1, 1 },
+	{  384, 0x4, 0x0, 1 },
+	{  408, 0x4, 0x1, 1 },
+	{  375, 0x4, 0x2, 1 },
+	{  512, 0x5, 0x0, 1 },
+	{  544, 0x5, 0x1, 1 },
+	{  500, 0x5, 0x2, 1 },
+	{  768, 0x6, 0x0, 1 },
+	{  816, 0x6, 0x1, 1 },
+	{  750, 0x6, 0x2, 1 },
+	{ 1024, 0x7, 0x0, 1 },
+	{ 1088, 0x7, 0x1, 1 },
+	{ 1000, 0x7, 0x2, 1 },
+	{ 1408, 0x8, 0x0, 1 },
+	{ 1496, 0x8, 0x1, 1 },
+	{ 1536, 0x9, 0x0, 1 },
+	{ 1632, 0x9, 0x1, 1 },
+	{ 1500, 0x9, 0x2, 1 },
 
-	अणु  250, 0x2, 0x2, 2 पूर्ण,
-	अणु  256, 0x3, 0x0, 2 पूर्ण,
-	अणु  272, 0x3, 0x1, 2 पूर्ण,
-	अणु  384, 0x4, 0x0, 2 पूर्ण,
-	अणु  408, 0x4, 0x1, 2 पूर्ण,
-	अणु  375, 0x4, 0x2, 2 पूर्ण,
-	अणु  512, 0x5, 0x0, 2 पूर्ण,
-	अणु  544, 0x5, 0x1, 2 पूर्ण,
-	अणु  500, 0x5, 0x2, 2 पूर्ण,
-	अणु  768, 0x6, 0x0, 2 पूर्ण,
-	अणु  816, 0x6, 0x1, 2 पूर्ण,
-	अणु  750, 0x6, 0x2, 2 पूर्ण,
-	अणु 1024, 0x7, 0x0, 2 पूर्ण,
-	अणु 1088, 0x7, 0x1, 2 पूर्ण,
-	अणु 1000, 0x7, 0x2, 2 पूर्ण,
-	अणु 1408, 0x8, 0x0, 2 पूर्ण,
-	अणु 1496, 0x8, 0x1, 2 पूर्ण,
-	अणु 1536, 0x9, 0x0, 2 पूर्ण,
-	अणु 1632, 0x9, 0x1, 2 पूर्ण,
-	अणु 1500, 0x9, 0x2, 2 पूर्ण,
-पूर्ण;
+	{  250, 0x2, 0x2, 2 },
+	{  256, 0x3, 0x0, 2 },
+	{  272, 0x3, 0x1, 2 },
+	{  384, 0x4, 0x0, 2 },
+	{  408, 0x4, 0x1, 2 },
+	{  375, 0x4, 0x2, 2 },
+	{  512, 0x5, 0x0, 2 },
+	{  544, 0x5, 0x1, 2 },
+	{  500, 0x5, 0x2, 2 },
+	{  768, 0x6, 0x0, 2 },
+	{  816, 0x6, 0x1, 2 },
+	{  750, 0x6, 0x2, 2 },
+	{ 1024, 0x7, 0x0, 2 },
+	{ 1088, 0x7, 0x1, 2 },
+	{ 1000, 0x7, 0x2, 2 },
+	{ 1408, 0x8, 0x0, 2 },
+	{ 1496, 0x8, 0x1, 2 },
+	{ 1536, 0x9, 0x0, 2 },
+	{ 1632, 0x9, 0x1, 2 },
+	{ 1500, 0x9, 0x2, 2 },
+};
 
 /* CLK_SYS/BCLK ratios - multiplied by 10 due to .5s */
-अटल काष्ठा अणु
-	पूर्णांक ratio;
-	पूर्णांक भाग;
-पूर्ण bclk_भागs[] = अणु
-	अणु  10,  0 पूर्ण,
-	अणु  20,  2 पूर्ण,
-	अणु  30,  3 पूर्ण,
-	अणु  40,  4 पूर्ण,
-	अणु  50,  5 पूर्ण,
-	अणु  60,  7 पूर्ण,
-	अणु  80,  8 पूर्ण,
-	अणु 100,  9 पूर्ण,
-	अणु 120, 11 पूर्ण,
-	अणु 160, 12 पूर्ण,
-	अणु 200, 13 पूर्ण,
-	अणु 220, 14 पूर्ण,
-	अणु 240, 15 पूर्ण,
-	अणु 300, 17 पूर्ण,
-	अणु 320, 18 पूर्ण,
-	अणु 440, 19 पूर्ण,
-	अणु 480, 20 पूर्ण,
-पूर्ण;
+static struct {
+	int ratio;
+	int div;
+} bclk_divs[] = {
+	{  10,  0 },
+	{  20,  2 },
+	{  30,  3 },
+	{  40,  4 },
+	{  50,  5 },
+	{  60,  7 },
+	{  80,  8 },
+	{ 100,  9 },
+	{ 120, 11 },
+	{ 160, 12 },
+	{ 200, 13 },
+	{ 220, 14 },
+	{ 240, 15 },
+	{ 300, 17 },
+	{ 320, 18 },
+	{ 440, 19 },
+	{ 480, 20 },
+};
 
-/* Sample rates क्रम DSP */
-अटल काष्ठा अणु
-	पूर्णांक rate;
-	पूर्णांक value;
-पूर्ण sample_rates[] = अणु
-	अणु  8000,  0 पूर्ण,
-	अणु 11025,  1 पूर्ण,
-	अणु 12000,  2 पूर्ण,
-	अणु 16000,  3 पूर्ण,
-	अणु 22050,  4 पूर्ण,
-	अणु 24000,  5 पूर्ण,
-	अणु 32000,  6 पूर्ण,
-	अणु 44100,  7 पूर्ण,
-	अणु 48000,  8 पूर्ण,
-	अणु 88200,  9 पूर्ण,
-	अणु 96000, 10 पूर्ण,
-	अणु 0,      0 पूर्ण,
-पूर्ण;
+/* Sample rates for DSP */
+static struct {
+	int rate;
+	int value;
+} sample_rates[] = {
+	{  8000,  0 },
+	{ 11025,  1 },
+	{ 12000,  2 },
+	{ 16000,  3 },
+	{ 22050,  4 },
+	{ 24000,  5 },
+	{ 32000,  6 },
+	{ 44100,  7 },
+	{ 48000,  8 },
+	{ 88200,  9 },
+	{ 96000, 10 },
+	{ 0,      0 },
+};
 
-अटल पूर्णांक wm8903_hw_params(काष्ठा snd_pcm_substream *substream,
-			    काष्ठा snd_pcm_hw_params *params,
-			    काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा snd_soc_component *component = dai->component;
-	काष्ठा wm8903_priv *wm8903 = snd_soc_component_get_drvdata(component);
-	पूर्णांक fs = params_rate(params);
-	पूर्णांक bclk;
-	पूर्णांक bclk_भाग;
-	पूर्णांक i;
-	पूर्णांक dsp_config;
-	पूर्णांक clk_config;
-	पूर्णांक best_val;
-	पूर्णांक cur_val;
-	पूर्णांक clk_sys;
+static int wm8903_hw_params(struct snd_pcm_substream *substream,
+			    struct snd_pcm_hw_params *params,
+			    struct snd_soc_dai *dai)
+{
+	struct snd_soc_component *component = dai->component;
+	struct wm8903_priv *wm8903 = snd_soc_component_get_drvdata(component);
+	int fs = params_rate(params);
+	int bclk;
+	int bclk_div;
+	int i;
+	int dsp_config;
+	int clk_config;
+	int best_val;
+	int cur_val;
+	int clk_sys;
 
-	u16 aअगर1 = snd_soc_component_पढ़ो(component, WM8903_AUDIO_INTERFACE_1);
-	u16 aअगर2 = snd_soc_component_पढ़ो(component, WM8903_AUDIO_INTERFACE_2);
-	u16 aअगर3 = snd_soc_component_पढ़ो(component, WM8903_AUDIO_INTERFACE_3);
-	u16 घड़ी0 = snd_soc_component_पढ़ो(component, WM8903_CLOCK_RATES_0);
-	u16 घड़ी1 = snd_soc_component_पढ़ो(component, WM8903_CLOCK_RATES_1);
-	u16 dac_digital1 = snd_soc_component_पढ़ो(component, WM8903_DAC_DIGITAL_1);
+	u16 aif1 = snd_soc_component_read(component, WM8903_AUDIO_INTERFACE_1);
+	u16 aif2 = snd_soc_component_read(component, WM8903_AUDIO_INTERFACE_2);
+	u16 aif3 = snd_soc_component_read(component, WM8903_AUDIO_INTERFACE_3);
+	u16 clock0 = snd_soc_component_read(component, WM8903_CLOCK_RATES_0);
+	u16 clock1 = snd_soc_component_read(component, WM8903_CLOCK_RATES_1);
+	u16 dac_digital1 = snd_soc_component_read(component, WM8903_DAC_DIGITAL_1);
 
-	/* Enable sloping stopband filter क्रम low sample rates */
-	अगर (fs <= 24000)
+	/* Enable sloping stopband filter for low sample rates */
+	if (fs <= 24000)
 		dac_digital1 |= WM8903_DAC_SB_FILT;
-	अन्यथा
+	else
 		dac_digital1 &= ~WM8903_DAC_SB_FILT;
 
-	/* Configure sample rate logic क्रम DSP - choose nearest rate */
+	/* Configure sample rate logic for DSP - choose nearest rate */
 	dsp_config = 0;
-	best_val = असल(sample_rates[dsp_config].rate - fs);
-	क्रम (i = 1; i < ARRAY_SIZE(sample_rates); i++) अणु
-		cur_val = असल(sample_rates[i].rate - fs);
-		अगर (cur_val <= best_val) अणु
+	best_val = abs(sample_rates[dsp_config].rate - fs);
+	for (i = 1; i < ARRAY_SIZE(sample_rates); i++) {
+		cur_val = abs(sample_rates[i].rate - fs);
+		if (cur_val <= best_val) {
 			dsp_config = i;
 			best_val = cur_val;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	dev_dbg(component->dev, "DSP fs = %dHz\n", sample_rates[dsp_config].rate);
-	घड़ी1 &= ~WM8903_SAMPLE_RATE_MASK;
-	घड़ी1 |= sample_rates[dsp_config].value;
+	clock1 &= ~WM8903_SAMPLE_RATE_MASK;
+	clock1 |= sample_rates[dsp_config].value;
 
-	aअगर1 &= ~WM8903_AIF_WL_MASK;
+	aif1 &= ~WM8903_AIF_WL_MASK;
 	bclk = 2 * fs;
-	चयन (params_width(params)) अणु
-	हाल 16:
+	switch (params_width(params)) {
+	case 16:
 		bclk *= 16;
-		अवरोध;
-	हाल 20:
+		break;
+	case 20:
 		bclk *= 20;
-		aअगर1 |= 0x4;
-		अवरोध;
-	हाल 24:
+		aif1 |= 0x4;
+		break;
+	case 24:
 		bclk *= 24;
-		aअगर1 |= 0x8;
-		अवरोध;
-	हाल 32:
+		aif1 |= 0x8;
+		break;
+	case 32:
 		bclk *= 32;
-		aअगर1 |= 0xc;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		aif1 |= 0xc;
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	dev_dbg(component->dev, "MCLK = %dHz, target sample rate = %dHz\n",
 		wm8903->sysclk, fs);
 
 	/* We may not have an MCLK which allows us to generate exactly
-	 * the घड़ी we want, particularly with USB derived inमाला_दो, so
+	 * the clock we want, particularly with USB derived inputs, so
 	 * approximate.
 	 */
 	clk_config = 0;
-	best_val = असल((wm8903->sysclk /
-			(clk_sys_ratios[0].mclk_भाग *
-			 clk_sys_ratios[0].भाग)) - fs);
-	क्रम (i = 1; i < ARRAY_SIZE(clk_sys_ratios); i++) अणु
-		cur_val = असल((wm8903->sysclk /
-			       (clk_sys_ratios[i].mclk_भाग *
-				clk_sys_ratios[i].भाग)) - fs);
+	best_val = abs((wm8903->sysclk /
+			(clk_sys_ratios[0].mclk_div *
+			 clk_sys_ratios[0].div)) - fs);
+	for (i = 1; i < ARRAY_SIZE(clk_sys_ratios); i++) {
+		cur_val = abs((wm8903->sysclk /
+			       (clk_sys_ratios[i].mclk_div *
+				clk_sys_ratios[i].div)) - fs);
 
-		अगर (cur_val <= best_val) अणु
+		if (cur_val <= best_val) {
 			clk_config = i;
 			best_val = cur_val;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (clk_sys_ratios[clk_config].mclk_भाग == 2) अणु
-		घड़ी0 |= WM8903_MCLKDIV2;
+	if (clk_sys_ratios[clk_config].mclk_div == 2) {
+		clock0 |= WM8903_MCLKDIV2;
 		clk_sys = wm8903->sysclk / 2;
-	पूर्ण अन्यथा अणु
-		घड़ी0 &= ~WM8903_MCLKDIV2;
+	} else {
+		clock0 &= ~WM8903_MCLKDIV2;
 		clk_sys = wm8903->sysclk;
-	पूर्ण
+	}
 
-	घड़ी1 &= ~(WM8903_CLK_SYS_RATE_MASK |
+	clock1 &= ~(WM8903_CLK_SYS_RATE_MASK |
 		    WM8903_CLK_SYS_MODE_MASK);
-	घड़ी1 |= clk_sys_ratios[clk_config].rate << WM8903_CLK_SYS_RATE_SHIFT;
-	घड़ी1 |= clk_sys_ratios[clk_config].mode << WM8903_CLK_SYS_MODE_SHIFT;
+	clock1 |= clk_sys_ratios[clk_config].rate << WM8903_CLK_SYS_RATE_SHIFT;
+	clock1 |= clk_sys_ratios[clk_config].mode << WM8903_CLK_SYS_MODE_SHIFT;
 
 	dev_dbg(component->dev, "CLK_SYS_RATE=%x, CLK_SYS_MODE=%x div=%d\n",
 		clk_sys_ratios[clk_config].rate,
 		clk_sys_ratios[clk_config].mode,
-		clk_sys_ratios[clk_config].भाग);
+		clk_sys_ratios[clk_config].div);
 
 	dev_dbg(component->dev, "Actual CLK_SYS = %dHz\n", clk_sys);
 
-	/* We may not get quite the right frequency अगर using
-	 * approximate घड़ीs so look क्रम the बंदst match that is
+	/* We may not get quite the right frequency if using
+	 * approximate clocks so look for the closest match that is
 	 * higher than the target (we need to ensure that there enough
-	 * BCLKs to घड़ी out the samples).
+	 * BCLKs to clock out the samples).
 	 */
-	bclk_भाग = 0;
+	bclk_div = 0;
 	i = 1;
-	जबतक (i < ARRAY_SIZE(bclk_भागs)) अणु
-		cur_val = ((clk_sys * 10) / bclk_भागs[i].ratio) - bclk;
-		अगर (cur_val < 0) /* BCLK table is sorted */
-			अवरोध;
-		bclk_भाग = i;
+	while (i < ARRAY_SIZE(bclk_divs)) {
+		cur_val = ((clk_sys * 10) / bclk_divs[i].ratio) - bclk;
+		if (cur_val < 0) /* BCLK table is sorted */
+			break;
+		bclk_div = i;
 		i++;
-	पूर्ण
+	}
 
-	aअगर2 &= ~WM8903_BCLK_DIV_MASK;
-	aअगर3 &= ~WM8903_LRCLK_RATE_MASK;
+	aif2 &= ~WM8903_BCLK_DIV_MASK;
+	aif3 &= ~WM8903_LRCLK_RATE_MASK;
 
 	dev_dbg(component->dev, "BCLK ratio %d for %dHz - actual BCLK = %dHz\n",
-		bclk_भागs[bclk_भाग].ratio / 10, bclk,
-		(clk_sys * 10) / bclk_भागs[bclk_भाग].ratio);
+		bclk_divs[bclk_div].ratio / 10, bclk,
+		(clk_sys * 10) / bclk_divs[bclk_div].ratio);
 
-	aअगर2 |= bclk_भागs[bclk_भाग].भाग;
-	aअगर3 |= bclk / fs;
+	aif2 |= bclk_divs[bclk_div].div;
+	aif3 |= bclk / fs;
 
 	wm8903->fs = params_rate(params);
 	wm8903_set_deemph(component);
 
-	snd_soc_component_ग_लिखो(component, WM8903_CLOCK_RATES_0, घड़ी0);
-	snd_soc_component_ग_लिखो(component, WM8903_CLOCK_RATES_1, घड़ी1);
-	snd_soc_component_ग_लिखो(component, WM8903_AUDIO_INTERFACE_1, aअगर1);
-	snd_soc_component_ग_लिखो(component, WM8903_AUDIO_INTERFACE_2, aअगर2);
-	snd_soc_component_ग_लिखो(component, WM8903_AUDIO_INTERFACE_3, aअगर3);
-	snd_soc_component_ग_लिखो(component, WM8903_DAC_DIGITAL_1, dac_digital1);
+	snd_soc_component_write(component, WM8903_CLOCK_RATES_0, clock0);
+	snd_soc_component_write(component, WM8903_CLOCK_RATES_1, clock1);
+	snd_soc_component_write(component, WM8903_AUDIO_INTERFACE_1, aif1);
+	snd_soc_component_write(component, WM8903_AUDIO_INTERFACE_2, aif2);
+	snd_soc_component_write(component, WM8903_AUDIO_INTERFACE_3, aif3);
+	snd_soc_component_write(component, WM8903_DAC_DIGITAL_1, dac_digital1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * wm8903_mic_detect - Enable microphone detection via the WM8903 IRQ
  *
  * @component:  WM8903 component
  * @jack:   jack to report detection events on
- * @det:    value to report क्रम presence detection
- * @shrt:   value to report क्रम लघु detection
+ * @det:    value to report for presence detection
+ * @shrt:   value to report for short detection
  *
  * Enable microphone detection via IRQ on the WM8903.  If GPIOs are
- * being used to bring out संकेतs to the processor then only platक्रमm
- * data configuration is needed क्रम WM8903 and processor GPIOs should
+ * being used to bring out signals to the processor then only platform
+ * data configuration is needed for WM8903 and processor GPIOs should
  * be configured using snd_soc_jack_add_gpios() instead.
  *
- * The current threasholds क्रम detection should be configured using
- * micdet_cfg in the platक्रमm data.  Using this function will क्रमce on
- * the microphone bias क्रम the device.
+ * The current threasholds for detection should be configured using
+ * micdet_cfg in the platform data.  Using this function will force on
+ * the microphone bias for the device.
  */
-पूर्णांक wm8903_mic_detect(काष्ठा snd_soc_component *component, काष्ठा snd_soc_jack *jack,
-		      पूर्णांक det, पूर्णांक shrt)
-अणु
-	काष्ठा wm8903_priv *wm8903 = snd_soc_component_get_drvdata(component);
-	पूर्णांक irq_mask = WM8903_MICDET_EINT | WM8903_MICSHRT_EINT;
+int wm8903_mic_detect(struct snd_soc_component *component, struct snd_soc_jack *jack,
+		      int det, int shrt)
+{
+	struct wm8903_priv *wm8903 = snd_soc_component_get_drvdata(component);
+	int irq_mask = WM8903_MICDET_EINT | WM8903_MICSHRT_EINT;
 
 	dev_dbg(component->dev, "Enabling microphone detection: %x %x\n",
 		det, shrt);
@@ -1611,108 +1610,108 @@ SND_SOC_DAPM_SUPPLY("CLK_SYS", WM8903_CLOCK_RATES_2, 2, 0, शून्य, 0),
 	/* Store the configuration */
 	wm8903->mic_jack = jack;
 	wm8903->mic_det = det;
-	wm8903->mic_लघु = shrt;
+	wm8903->mic_short = shrt;
 
-	/* Enable पूर्णांकerrupts we've got a report configured क्रम */
-	अगर (det)
+	/* Enable interrupts we've got a report configured for */
+	if (det)
 		irq_mask &= ~WM8903_MICDET_EINT;
-	अगर (shrt)
+	if (shrt)
 		irq_mask &= ~WM8903_MICSHRT_EINT;
 
 	snd_soc_component_update_bits(component, WM8903_INTERRUPT_STATUS_1_MASK,
 			    WM8903_MICDET_EINT | WM8903_MICSHRT_EINT,
 			    irq_mask);
 
-	अगर (det || shrt) अणु
+	if (det || shrt) {
 		/* Enable mic detection, this may not have been set through
-		 * platक्रमm data (eg, अगर the शेषs are OK). */
+		 * platform data (eg, if the defaults are OK). */
 		snd_soc_component_update_bits(component, WM8903_WRITE_SEQUENCER_0,
 				    WM8903_WSEQ_ENA, WM8903_WSEQ_ENA);
 		snd_soc_component_update_bits(component, WM8903_MIC_BIAS_CONTROL_0,
 				    WM8903_MICDET_ENA, WM8903_MICDET_ENA);
-	पूर्ण अन्यथा अणु
+	} else {
 		snd_soc_component_update_bits(component, WM8903_MIC_BIAS_CONTROL_0,
 				    WM8903_MICDET_ENA, 0);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(wm8903_mic_detect);
 
-अटल irqवापस_t wm8903_irq(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा wm8903_priv *wm8903 = data;
-	पूर्णांक mic_report, ret;
-	अचिन्हित पूर्णांक पूर्णांक_val, mask, पूर्णांक_pol;
+static irqreturn_t wm8903_irq(int irq, void *data)
+{
+	struct wm8903_priv *wm8903 = data;
+	int mic_report, ret;
+	unsigned int int_val, mask, int_pol;
 
-	ret = regmap_पढ़ो(wm8903->regmap, WM8903_INTERRUPT_STATUS_1_MASK,
+	ret = regmap_read(wm8903->regmap, WM8903_INTERRUPT_STATUS_1_MASK,
 			  &mask);
-	अगर (ret != 0) अणु
+	if (ret != 0) {
 		dev_err(wm8903->dev, "Failed to read IRQ mask: %d\n", ret);
-		वापस IRQ_NONE;
-	पूर्ण
+		return IRQ_NONE;
+	}
 
-	ret = regmap_पढ़ो(wm8903->regmap, WM8903_INTERRUPT_STATUS_1, &पूर्णांक_val);
-	अगर (ret != 0) अणु
+	ret = regmap_read(wm8903->regmap, WM8903_INTERRUPT_STATUS_1, &int_val);
+	if (ret != 0) {
 		dev_err(wm8903->dev, "Failed to read IRQ status: %d\n", ret);
-		वापस IRQ_NONE;
-	पूर्ण
+		return IRQ_NONE;
+	}
 
-	पूर्णांक_val &= ~mask;
+	int_val &= ~mask;
 
-	अगर (पूर्णांक_val & WM8903_WSEQ_BUSY_EINT) अणु
+	if (int_val & WM8903_WSEQ_BUSY_EINT) {
 		dev_warn(wm8903->dev, "Write sequencer done\n");
-	पूर्ण
+	}
 
 	/*
 	 * The rest is microphone jack detection.  We need to manually
-	 * invert the polarity of the पूर्णांकerrupt after each event - to
-	 * simplअगरy the code keep track of the last state we reported
+	 * invert the polarity of the interrupt after each event - to
+	 * simplify the code keep track of the last state we reported
 	 * and just invert the relevant bits in both the report and
-	 * the polarity रेजिस्टर.
+	 * the polarity register.
 	 */
 	mic_report = wm8903->mic_last_report;
-	ret = regmap_पढ़ो(wm8903->regmap, WM8903_INTERRUPT_POLARITY_1,
-			  &पूर्णांक_pol);
-	अगर (ret != 0) अणु
+	ret = regmap_read(wm8903->regmap, WM8903_INTERRUPT_POLARITY_1,
+			  &int_pol);
+	if (ret != 0) {
 		dev_err(wm8903->dev, "Failed to read interrupt polarity: %d\n",
 			ret);
-		वापस IRQ_HANDLED;
-	पूर्ण
+		return IRQ_HANDLED;
+	}
 
-#अगर_अघोषित CONFIG_SND_SOC_WM8903_MODULE
-	अगर (पूर्णांक_val & (WM8903_MICSHRT_EINT | WM8903_MICDET_EINT))
+#ifndef CONFIG_SND_SOC_WM8903_MODULE
+	if (int_val & (WM8903_MICSHRT_EINT | WM8903_MICDET_EINT))
 		trace_snd_soc_jack_irq(dev_name(wm8903->dev));
-#पूर्ण_अगर
+#endif
 
-	अगर (पूर्णांक_val & WM8903_MICSHRT_EINT) अणु
-		dev_dbg(wm8903->dev, "Microphone short (pol=%x)\n", पूर्णांक_pol);
+	if (int_val & WM8903_MICSHRT_EINT) {
+		dev_dbg(wm8903->dev, "Microphone short (pol=%x)\n", int_pol);
 
-		mic_report ^= wm8903->mic_लघु;
-		पूर्णांक_pol ^= WM8903_MICSHRT_INV;
-	पूर्ण
+		mic_report ^= wm8903->mic_short;
+		int_pol ^= WM8903_MICSHRT_INV;
+	}
 
-	अगर (पूर्णांक_val & WM8903_MICDET_EINT) अणु
-		dev_dbg(wm8903->dev, "Microphone detect (pol=%x)\n", पूर्णांक_pol);
+	if (int_val & WM8903_MICDET_EINT) {
+		dev_dbg(wm8903->dev, "Microphone detect (pol=%x)\n", int_pol);
 
 		mic_report ^= wm8903->mic_det;
-		पूर्णांक_pol ^= WM8903_MICDET_INV;
+		int_pol ^= WM8903_MICDET_INV;
 
 		msleep(wm8903->mic_delay);
-	पूर्ण
+	}
 
 	regmap_update_bits(wm8903->regmap, WM8903_INTERRUPT_POLARITY_1,
-			   WM8903_MICSHRT_INV | WM8903_MICDET_INV, पूर्णांक_pol);
+			   WM8903_MICSHRT_INV | WM8903_MICDET_INV, int_pol);
 
 	snd_soc_jack_report(wm8903->mic_jack, mic_report,
-			    wm8903->mic_लघु | wm8903->mic_det);
+			    wm8903->mic_short | wm8903->mic_det);
 
 	wm8903->mic_last_report = mic_report;
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-#घोषणा WM8903_PLAYBACK_RATES (SNDRV_PCM_RATE_8000 |\
+#define WM8903_PLAYBACK_RATES (SNDRV_PCM_RATE_8000 |\
 			       SNDRV_PCM_RATE_11025 |	\
 			       SNDRV_PCM_RATE_16000 |	\
 			       SNDRV_PCM_RATE_22050 |	\
@@ -1722,7 +1721,7 @@ EXPORT_SYMBOL_GPL(wm8903_mic_detect);
 			       SNDRV_PCM_RATE_88200 |	\
 			       SNDRV_PCM_RATE_96000)
 
-#घोषणा WM8903_CAPTURE_RATES (SNDRV_PCM_RATE_8000 |\
+#define WM8903_CAPTURE_RATES (SNDRV_PCM_RATE_8000 |\
 			      SNDRV_PCM_RATE_11025 |	\
 			      SNDRV_PCM_RATE_16000 |	\
 			      SNDRV_PCM_RATE_22050 |	\
@@ -1730,113 +1729,113 @@ EXPORT_SYMBOL_GPL(wm8903_mic_detect);
 			      SNDRV_PCM_RATE_44100 |	\
 			      SNDRV_PCM_RATE_48000)
 
-#घोषणा WM8903_FORMATS (SNDRV_PCM_FMTBIT_S16_LE |\
+#define WM8903_FORMATS (SNDRV_PCM_FMTBIT_S16_LE |\
 			SNDRV_PCM_FMTBIT_S20_3LE |\
 			SNDRV_PCM_FMTBIT_S24_LE)
 
-अटल स्थिर काष्ठा snd_soc_dai_ops wm8903_dai_ops = अणु
+static const struct snd_soc_dai_ops wm8903_dai_ops = {
 	.hw_params	= wm8903_hw_params,
 	.mute_stream	= wm8903_mute,
 	.set_fmt	= wm8903_set_dai_fmt,
 	.set_sysclk	= wm8903_set_dai_sysclk,
 	.no_capture_mute = 1,
-पूर्ण;
+};
 
-अटल काष्ठा snd_soc_dai_driver wm8903_dai = अणु
+static struct snd_soc_dai_driver wm8903_dai = {
 	.name = "wm8903-hifi",
-	.playback = अणु
+	.playback = {
 		.stream_name = "Playback",
 		.channels_min = 2,
 		.channels_max = 2,
 		.rates = WM8903_PLAYBACK_RATES,
-		.क्रमmats = WM8903_FORMATS,
-	पूर्ण,
-	.capture = अणु
+		.formats = WM8903_FORMATS,
+	},
+	.capture = {
 		 .stream_name = "Capture",
 		 .channels_min = 2,
 		 .channels_max = 2,
 		 .rates = WM8903_CAPTURE_RATES,
-		 .क्रमmats = WM8903_FORMATS,
-	 पूर्ण,
+		 .formats = WM8903_FORMATS,
+	 },
 	.ops = &wm8903_dai_ops,
 	.symmetric_rate = 1,
-पूर्ण;
+};
 
-अटल पूर्णांक wm8903_resume(काष्ठा snd_soc_component *component)
-अणु
-	काष्ठा wm8903_priv *wm8903 = snd_soc_component_get_drvdata(component);
+static int wm8903_resume(struct snd_soc_component *component)
+{
+	struct wm8903_priv *wm8903 = snd_soc_component_get_drvdata(component);
 
 	regcache_sync(wm8903->regmap);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_GPIOLIB
-अटल पूर्णांक wm8903_gpio_request(काष्ठा gpio_chip *chip, अचिन्हित offset)
-अणु
-	अगर (offset >= WM8903_NUM_GPIO)
-		वापस -EINVAL;
+#ifdef CONFIG_GPIOLIB
+static int wm8903_gpio_request(struct gpio_chip *chip, unsigned offset)
+{
+	if (offset >= WM8903_NUM_GPIO)
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wm8903_gpio_direction_in(काष्ठा gpio_chip *chip, अचिन्हित offset)
-अणु
-	काष्ठा wm8903_priv *wm8903 = gpiochip_get_data(chip);
-	अचिन्हित पूर्णांक mask, val;
-	पूर्णांक ret;
+static int wm8903_gpio_direction_in(struct gpio_chip *chip, unsigned offset)
+{
+	struct wm8903_priv *wm8903 = gpiochip_get_data(chip);
+	unsigned int mask, val;
+	int ret;
 
-	mask = WM8903_GP1_FN_MASK | WM8903_GP1_सूची_MASK;
+	mask = WM8903_GP1_FN_MASK | WM8903_GP1_DIR_MASK;
 	val = (WM8903_GPn_FN_GPIO_INPUT << WM8903_GP1_FN_SHIFT) |
-		WM8903_GP1_सूची;
+		WM8903_GP1_DIR;
 
 	ret = regmap_update_bits(wm8903->regmap,
 				 WM8903_GPIO_CONTROL_1 + offset, mask, val);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wm8903_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित offset)
-अणु
-	काष्ठा wm8903_priv *wm8903 = gpiochip_get_data(chip);
-	अचिन्हित पूर्णांक reg;
+static int wm8903_gpio_get(struct gpio_chip *chip, unsigned offset)
+{
+	struct wm8903_priv *wm8903 = gpiochip_get_data(chip);
+	unsigned int reg;
 
-	regmap_पढ़ो(wm8903->regmap, WM8903_GPIO_CONTROL_1 + offset, &reg);
+	regmap_read(wm8903->regmap, WM8903_GPIO_CONTROL_1 + offset, &reg);
 
-	वापस !!((reg & WM8903_GP1_LVL_MASK) >> WM8903_GP1_LVL_SHIFT);
-पूर्ण
+	return !!((reg & WM8903_GP1_LVL_MASK) >> WM8903_GP1_LVL_SHIFT);
+}
 
-अटल पूर्णांक wm8903_gpio_direction_out(काष्ठा gpio_chip *chip,
-				     अचिन्हित offset, पूर्णांक value)
-अणु
-	काष्ठा wm8903_priv *wm8903 = gpiochip_get_data(chip);
-	अचिन्हित पूर्णांक mask, val;
-	पूर्णांक ret;
+static int wm8903_gpio_direction_out(struct gpio_chip *chip,
+				     unsigned offset, int value)
+{
+	struct wm8903_priv *wm8903 = gpiochip_get_data(chip);
+	unsigned int mask, val;
+	int ret;
 
-	mask = WM8903_GP1_FN_MASK | WM8903_GP1_सूची_MASK | WM8903_GP1_LVL_MASK;
+	mask = WM8903_GP1_FN_MASK | WM8903_GP1_DIR_MASK | WM8903_GP1_LVL_MASK;
 	val = (WM8903_GPn_FN_GPIO_OUTPUT << WM8903_GP1_FN_SHIFT) |
 		(value << WM8903_GP2_LVL_SHIFT);
 
 	ret = regmap_update_bits(wm8903->regmap,
 				 WM8903_GPIO_CONTROL_1 + offset, mask, val);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम wm8903_gpio_set(काष्ठा gpio_chip *chip, अचिन्हित offset, पूर्णांक value)
-अणु
-	काष्ठा wm8903_priv *wm8903 = gpiochip_get_data(chip);
+static void wm8903_gpio_set(struct gpio_chip *chip, unsigned offset, int value)
+{
+	struct wm8903_priv *wm8903 = gpiochip_get_data(chip);
 
 	regmap_update_bits(wm8903->regmap, WM8903_GPIO_CONTROL_1 + offset,
 			   WM8903_GP1_LVL_MASK,
 			   !!value << WM8903_GP1_LVL_SHIFT);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा gpio_chip wm8903_ढाँचा_chip = अणु
+static const struct gpio_chip wm8903_template_chip = {
 	.label			= "wm8903",
 	.owner			= THIS_MODULE,
 	.request		= wm8903_gpio_request,
@@ -1845,120 +1844,120 @@ EXPORT_SYMBOL_GPL(wm8903_mic_detect);
 	.direction_output	= wm8903_gpio_direction_out,
 	.set			= wm8903_gpio_set,
 	.can_sleep		= 1,
-पूर्ण;
+};
 
-अटल व्योम wm8903_init_gpio(काष्ठा wm8903_priv *wm8903)
-अणु
-	काष्ठा wm8903_platक्रमm_data *pdata = wm8903->pdata;
-	पूर्णांक ret;
+static void wm8903_init_gpio(struct wm8903_priv *wm8903)
+{
+	struct wm8903_platform_data *pdata = wm8903->pdata;
+	int ret;
 
-	wm8903->gpio_chip = wm8903_ढाँचा_chip;
+	wm8903->gpio_chip = wm8903_template_chip;
 	wm8903->gpio_chip.ngpio = WM8903_NUM_GPIO;
 	wm8903->gpio_chip.parent = wm8903->dev;
 
-	अगर (pdata->gpio_base)
+	if (pdata->gpio_base)
 		wm8903->gpio_chip.base = pdata->gpio_base;
-	अन्यथा
+	else
 		wm8903->gpio_chip.base = -1;
 
 	ret = gpiochip_add_data(&wm8903->gpio_chip, wm8903);
-	अगर (ret != 0)
+	if (ret != 0)
 		dev_err(wm8903->dev, "Failed to add GPIOs: %d\n", ret);
-पूर्ण
+}
 
-अटल व्योम wm8903_मुक्त_gpio(काष्ठा wm8903_priv *wm8903)
-अणु
-	gpiochip_हटाओ(&wm8903->gpio_chip);
-पूर्ण
-#अन्यथा
-अटल व्योम wm8903_init_gpio(काष्ठा wm8903_priv *wm8903)
-अणु
-पूर्ण
+static void wm8903_free_gpio(struct wm8903_priv *wm8903)
+{
+	gpiochip_remove(&wm8903->gpio_chip);
+}
+#else
+static void wm8903_init_gpio(struct wm8903_priv *wm8903)
+{
+}
 
-अटल व्योम wm8903_मुक्त_gpio(काष्ठा wm8903_priv *wm8903)
-अणु
-पूर्ण
-#पूर्ण_अगर
+static void wm8903_free_gpio(struct wm8903_priv *wm8903)
+{
+}
+#endif
 
-अटल स्थिर काष्ठा snd_soc_component_driver soc_component_dev_wm8903 = अणु
+static const struct snd_soc_component_driver soc_component_dev_wm8903 = {
 	.resume			= wm8903_resume,
 	.set_bias_level		= wm8903_set_bias_level,
-	.seq_notअगरier		= wm8903_seq_notअगरier,
+	.seq_notifier		= wm8903_seq_notifier,
 	.controls		= wm8903_snd_controls,
 	.num_controls		= ARRAY_SIZE(wm8903_snd_controls),
-	.dapm_widमाला_लो		= wm8903_dapm_widमाला_लो,
-	.num_dapm_widमाला_लो	= ARRAY_SIZE(wm8903_dapm_widमाला_लो),
-	.dapm_routes		= wm8903_पूर्णांकercon,
-	.num_dapm_routes	= ARRAY_SIZE(wm8903_पूर्णांकercon),
+	.dapm_widgets		= wm8903_dapm_widgets,
+	.num_dapm_widgets	= ARRAY_SIZE(wm8903_dapm_widgets),
+	.dapm_routes		= wm8903_intercon,
+	.num_dapm_routes	= ARRAY_SIZE(wm8903_intercon),
 	.suspend_bias_off	= 1,
 	.idle_bias_on		= 1,
-	.use_pmकरोwn_समय	= 1,
+	.use_pmdown_time	= 1,
 	.endianness		= 1,
 	.non_legacy_dai_naming	= 1,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा regmap_config wm8903_regmap = अणु
+static const struct regmap_config wm8903_regmap = {
 	.reg_bits = 8,
 	.val_bits = 16,
 
-	.max_रेजिस्टर = WM8903_MAX_REGISTER,
-	.अस्थिर_reg = wm8903_अस्थिर_रेजिस्टर,
-	.पढ़ोable_reg = wm8903_पढ़ोable_रेजिस्टर,
+	.max_register = WM8903_MAX_REGISTER,
+	.volatile_reg = wm8903_volatile_register,
+	.readable_reg = wm8903_readable_register,
 
 	.cache_type = REGCACHE_RBTREE,
-	.reg_शेषs = wm8903_reg_शेषs,
-	.num_reg_शेषs = ARRAY_SIZE(wm8903_reg_शेषs),
-पूर्ण;
+	.reg_defaults = wm8903_reg_defaults,
+	.num_reg_defaults = ARRAY_SIZE(wm8903_reg_defaults),
+};
 
-अटल पूर्णांक wm8903_set_pdata_irq_trigger(काष्ठा i2c_client *i2c,
-					काष्ठा wm8903_platक्रमm_data *pdata)
-अणु
-	काष्ठा irq_data *irq_data = irq_get_irq_data(i2c->irq);
-	अगर (!irq_data) अणु
+static int wm8903_set_pdata_irq_trigger(struct i2c_client *i2c,
+					struct wm8903_platform_data *pdata)
+{
+	struct irq_data *irq_data = irq_get_irq_data(i2c->irq);
+	if (!irq_data) {
 		dev_err(&i2c->dev, "Invalid IRQ: %d\n",
 			i2c->irq);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	चयन (irqd_get_trigger_type(irq_data)) अणु
-	हाल IRQ_TYPE_NONE:
-	शेष:
+	switch (irqd_get_trigger_type(irq_data)) {
+	case IRQ_TYPE_NONE:
+	default:
 		/*
 		* We assume the controller imposes no restrictions,
 		* so we are able to select active-high
 		*/
 		fallthrough;
-	हाल IRQ_TYPE_LEVEL_HIGH:
+	case IRQ_TYPE_LEVEL_HIGH:
 		pdata->irq_active_low = false;
-		अवरोध;
-	हाल IRQ_TYPE_LEVEL_LOW:
+		break;
+	case IRQ_TYPE_LEVEL_LOW:
 		pdata->irq_active_low = true;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wm8903_set_pdata_from_of(काष्ठा i2c_client *i2c,
-				    काष्ठा wm8903_platक्रमm_data *pdata)
-अणु
-	स्थिर काष्ठा device_node *np = i2c->dev.of_node;
+static int wm8903_set_pdata_from_of(struct i2c_client *i2c,
+				    struct wm8903_platform_data *pdata)
+{
+	const struct device_node *np = i2c->dev.of_node;
 	u32 val32;
-	पूर्णांक i;
+	int i;
 
-	अगर (of_property_पढ़ो_u32(np, "micdet-cfg", &val32) >= 0)
+	if (of_property_read_u32(np, "micdet-cfg", &val32) >= 0)
 		pdata->micdet_cfg = val32;
 
-	अगर (of_property_पढ़ो_u32(np, "micdet-delay", &val32) >= 0)
+	if (of_property_read_u32(np, "micdet-delay", &val32) >= 0)
 		pdata->micdet_delay = val32;
 
-	अगर (of_property_पढ़ो_u32_array(np, "gpio-cfg", pdata->gpio_cfg,
-				       ARRAY_SIZE(pdata->gpio_cfg)) >= 0) अणु
+	if (of_property_read_u32_array(np, "gpio-cfg", pdata->gpio_cfg,
+				       ARRAY_SIZE(pdata->gpio_cfg)) >= 0) {
 		/*
 		 * In device tree: 0 means "write 0",
 		 * 0xffffffff means "don't touch".
 		 *
-		 * In platक्रमm data: 0 means "don't touch",
+		 * In platform data: 0 means "don't touch",
 		 * 0x8000 means "write 0".
 		 *
 		 * Note: WM8903_GPIO_CONFIG_ZERO == 0x8000.
@@ -1966,181 +1965,181 @@ EXPORT_SYMBOL_GPL(wm8903_mic_detect);
 		 *  Convert from DT to pdata representation here,
 		 * so no other code needs to change.
 		 */
-		क्रम (i = 0; i < ARRAY_SIZE(pdata->gpio_cfg); i++) अणु
-			अगर (pdata->gpio_cfg[i] == 0) अणु
+		for (i = 0; i < ARRAY_SIZE(pdata->gpio_cfg); i++) {
+			if (pdata->gpio_cfg[i] == 0) {
 				pdata->gpio_cfg[i] = WM8903_GPIO_CONFIG_ZERO;
-			पूर्ण अन्यथा अगर (pdata->gpio_cfg[i] == 0xffffffff) अणु
+			} else if (pdata->gpio_cfg[i] == 0xffffffff) {
 				pdata->gpio_cfg[i] = 0;
-			पूर्ण अन्यथा अगर (pdata->gpio_cfg[i] > 0x7fff) अणु
+			} else if (pdata->gpio_cfg[i] > 0x7fff) {
 				dev_err(&i2c->dev, "Invalid gpio-cfg[%d] %x\n",
 					i, pdata->gpio_cfg[i]);
-				वापस -EINVAL;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				return -EINVAL;
+			}
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wm8903_i2c_probe(काष्ठा i2c_client *i2c,
-			    स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा wm8903_platक्रमm_data *pdata = dev_get_platdata(&i2c->dev);
-	काष्ठा wm8903_priv *wm8903;
-	पूर्णांक trigger;
+static int wm8903_i2c_probe(struct i2c_client *i2c,
+			    const struct i2c_device_id *id)
+{
+	struct wm8903_platform_data *pdata = dev_get_platdata(&i2c->dev);
+	struct wm8903_priv *wm8903;
+	int trigger;
 	bool mic_gpio = false;
-	अचिन्हित पूर्णांक val, irq_pol;
-	पूर्णांक ret, i;
+	unsigned int val, irq_pol;
+	int ret, i;
 
-	wm8903 = devm_kzalloc(&i2c->dev, माप(*wm8903), GFP_KERNEL);
-	अगर (wm8903 == शून्य)
-		वापस -ENOMEM;
+	wm8903 = devm_kzalloc(&i2c->dev, sizeof(*wm8903), GFP_KERNEL);
+	if (wm8903 == NULL)
+		return -ENOMEM;
 
 	mutex_init(&wm8903->lock);
 	wm8903->dev = &i2c->dev;
 
 	wm8903->regmap = devm_regmap_init_i2c(i2c, &wm8903_regmap);
-	अगर (IS_ERR(wm8903->regmap)) अणु
+	if (IS_ERR(wm8903->regmap)) {
 		ret = PTR_ERR(wm8903->regmap);
 		dev_err(&i2c->dev, "Failed to allocate register map: %d\n",
 			ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	i2c_set_clientdata(i2c, wm8903);
 
-	/* If no platक्रमm data was supplied, create storage क्रम शेषs */
-	अगर (pdata) अणु
+	/* If no platform data was supplied, create storage for defaults */
+	if (pdata) {
 		wm8903->pdata = pdata;
-	पूर्ण अन्यथा अणु
-		wm8903->pdata = devm_kzalloc(&i2c->dev, माप(*wm8903->pdata),
+	} else {
+		wm8903->pdata = devm_kzalloc(&i2c->dev, sizeof(*wm8903->pdata),
 					     GFP_KERNEL);
-		अगर (!wm8903->pdata)
-			वापस -ENOMEM;
+		if (!wm8903->pdata)
+			return -ENOMEM;
 
-		अगर (i2c->irq) अणु
+		if (i2c->irq) {
 			ret = wm8903_set_pdata_irq_trigger(i2c, wm8903->pdata);
-			अगर (ret != 0)
-				वापस ret;
-		पूर्ण
+			if (ret != 0)
+				return ret;
+		}
 
-		अगर (i2c->dev.of_node) अणु
+		if (i2c->dev.of_node) {
 			ret = wm8903_set_pdata_from_of(i2c, wm8903->pdata);
-			अगर (ret != 0)
-				वापस ret;
-		पूर्ण
-	पूर्ण
+			if (ret != 0)
+				return ret;
+		}
+	}
 
 	pdata = wm8903->pdata;
 
-	क्रम (i = 0; i < ARRAY_SIZE(wm8903->supplies); i++)
+	for (i = 0; i < ARRAY_SIZE(wm8903->supplies); i++)
 		wm8903->supplies[i].supply = wm8903_supply_names[i];
 
 	ret = devm_regulator_bulk_get(&i2c->dev, ARRAY_SIZE(wm8903->supplies),
 				      wm8903->supplies);
-	अगर (ret != 0) अणु
+	if (ret != 0) {
 		dev_err(&i2c->dev, "Failed to request supplies: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = regulator_bulk_enable(ARRAY_SIZE(wm8903->supplies),
 				    wm8903->supplies);
-	अगर (ret != 0) अणु
+	if (ret != 0) {
 		dev_err(&i2c->dev, "Failed to enable supplies: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = regmap_पढ़ो(wm8903->regmap, WM8903_SW_RESET_AND_ID, &val);
-	अगर (ret != 0) अणु
+	ret = regmap_read(wm8903->regmap, WM8903_SW_RESET_AND_ID, &val);
+	if (ret != 0) {
 		dev_err(&i2c->dev, "Failed to read chip ID: %d\n", ret);
-		जाओ err;
-	पूर्ण
-	अगर (val != 0x8903) अणु
+		goto err;
+	}
+	if (val != 0x8903) {
 		dev_err(&i2c->dev, "Device with ID %x is not a WM8903\n", val);
 		ret = -ENODEV;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	ret = regmap_पढ़ो(wm8903->regmap, WM8903_REVISION_NUMBER, &val);
-	अगर (ret != 0) अणु
+	ret = regmap_read(wm8903->regmap, WM8903_REVISION_NUMBER, &val);
+	if (ret != 0) {
 		dev_err(&i2c->dev, "Failed to read chip revision: %d\n", ret);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 	dev_info(&i2c->dev, "WM8903 revision %c\n",
 		 (val & WM8903_CHIP_REV_MASK) + 'A');
 
 	/* Reset the device */
-	regmap_ग_लिखो(wm8903->regmap, WM8903_SW_RESET_AND_ID, 0x8903);
+	regmap_write(wm8903->regmap, WM8903_SW_RESET_AND_ID, 0x8903);
 
 	wm8903_init_gpio(wm8903);
 
-	/* Set up GPIO pin state, detect अगर any are MIC detect outमाला_दो */
-	क्रम (i = 0; i < ARRAY_SIZE(pdata->gpio_cfg); i++) अणु
-		अगर ((!pdata->gpio_cfg[i]) ||
+	/* Set up GPIO pin state, detect if any are MIC detect outputs */
+	for (i = 0; i < ARRAY_SIZE(pdata->gpio_cfg); i++) {
+		if ((!pdata->gpio_cfg[i]) ||
 		    (pdata->gpio_cfg[i] > WM8903_GPIO_CONFIG_ZERO))
-			जारी;
+			continue;
 
-		regmap_ग_लिखो(wm8903->regmap, WM8903_GPIO_CONTROL_1 + i,
+		regmap_write(wm8903->regmap, WM8903_GPIO_CONTROL_1 + i,
 				pdata->gpio_cfg[i] & 0x7fff);
 
 		val = (pdata->gpio_cfg[i] & WM8903_GP1_FN_MASK)
 			>> WM8903_GP1_FN_SHIFT;
 
-		चयन (val) अणु
-		हाल WM8903_GPn_FN_MICBIAS_CURRENT_DETECT:
-		हाल WM8903_GPn_FN_MICBIAS_SHORT_DETECT:
+		switch (val) {
+		case WM8903_GPn_FN_MICBIAS_CURRENT_DETECT:
+		case WM8903_GPn_FN_MICBIAS_SHORT_DETECT:
 			mic_gpio = true;
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		default:
+			break;
+		}
+	}
 
 	/* Set up microphone detection */
-	regmap_ग_लिखो(wm8903->regmap, WM8903_MIC_BIAS_CONTROL_0,
+	regmap_write(wm8903->regmap, WM8903_MIC_BIAS_CONTROL_0,
 		     pdata->micdet_cfg);
 
-	/* Microphone detection needs the WSEQ घड़ी */
-	अगर (pdata->micdet_cfg)
+	/* Microphone detection needs the WSEQ clock */
+	if (pdata->micdet_cfg)
 		regmap_update_bits(wm8903->regmap, WM8903_WRITE_SEQUENCER_0,
 				   WM8903_WSEQ_ENA, WM8903_WSEQ_ENA);
 
 	/* If microphone detection is enabled by pdata but
-	 * detected via IRQ then पूर्णांकerrupts can be lost beक्रमe
+	 * detected via IRQ then interrupts can be lost before
 	 * the machine driver has set up microphone detection
-	 * IRQs as the IRQs are clear on पढ़ो.  The detection
+	 * IRQs as the IRQs are clear on read.  The detection
 	 * will be enabled when the machine driver configures.
 	 */
 	WARN_ON(!mic_gpio && (pdata->micdet_cfg & WM8903_MICDET_ENA));
 
 	wm8903->mic_delay = pdata->micdet_delay;
 
-	अगर (i2c->irq) अणु
-		अगर (pdata->irq_active_low) अणु
+	if (i2c->irq) {
+		if (pdata->irq_active_low) {
 			trigger = IRQF_TRIGGER_LOW;
 			irq_pol = WM8903_IRQ_POL;
-		पूर्ण अन्यथा अणु
+		} else {
 			trigger = IRQF_TRIGGER_HIGH;
 			irq_pol = 0;
-		पूर्ण
+		}
 
 		regmap_update_bits(wm8903->regmap, WM8903_INTERRUPT_CONTROL,
 				   WM8903_IRQ_POL, irq_pol);
 
-		ret = request_thपढ़ोed_irq(i2c->irq, शून्य, wm8903_irq,
+		ret = request_threaded_irq(i2c->irq, NULL, wm8903_irq,
 					   trigger | IRQF_ONESHOT,
 					   "wm8903", wm8903);
-		अगर (ret != 0) अणु
+		if (ret != 0) {
 			dev_err(wm8903->dev, "Failed to request IRQ: %d\n",
 				ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
-		/* Enable ग_लिखो sequencer पूर्णांकerrupts */
+		/* Enable write sequencer interrupts */
 		regmap_update_bits(wm8903->regmap,
 				   WM8903_INTERRUPT_STATUS_1_MASK,
 				   WM8903_IM_WSEQ_BUSY_EINT, 0);
-	पूर्ण
+	}
 
 	/* Latch volume update bits */
 	regmap_update_bits(wm8903->regmap, WM8903_ADC_DIGITAL_VOLUME_LEFT,
@@ -2168,57 +2167,57 @@ EXPORT_SYMBOL_GPL(wm8903_mic_detect);
 	regmap_update_bits(wm8903->regmap, WM8903_ANALOGUE_OUT3_RIGHT,
 			   WM8903_SPKVU, WM8903_SPKVU);
 
-	/* Enable DAC soft mute by शेष */
+	/* Enable DAC soft mute by default */
 	regmap_update_bits(wm8903->regmap, WM8903_DAC_DIGITAL_1,
 			   WM8903_DAC_MUTEMODE | WM8903_DAC_MUTE,
 			   WM8903_DAC_MUTEMODE | WM8903_DAC_MUTE);
 
-	ret = devm_snd_soc_रेजिस्टर_component(&i2c->dev,
+	ret = devm_snd_soc_register_component(&i2c->dev,
 			&soc_component_dev_wm8903, &wm8903_dai, 1);
-	अगर (ret != 0)
-		जाओ err;
+	if (ret != 0)
+		goto err;
 
-	वापस 0;
+	return 0;
 err:
 	regulator_bulk_disable(ARRAY_SIZE(wm8903->supplies),
 			       wm8903->supplies);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक wm8903_i2c_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा wm8903_priv *wm8903 = i2c_get_clientdata(client);
+static int wm8903_i2c_remove(struct i2c_client *client)
+{
+	struct wm8903_priv *wm8903 = i2c_get_clientdata(client);
 
 	regulator_bulk_disable(ARRAY_SIZE(wm8903->supplies),
 			       wm8903->supplies);
-	अगर (client->irq)
-		मुक्त_irq(client->irq, wm8903);
-	wm8903_मुक्त_gpio(wm8903);
+	if (client->irq)
+		free_irq(client->irq, wm8903);
+	wm8903_free_gpio(wm8903);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id wm8903_of_match[] = अणु
-	अणु .compatible = "wlf,wm8903", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id wm8903_of_match[] = {
+	{ .compatible = "wlf,wm8903", },
+	{},
+};
 MODULE_DEVICE_TABLE(of, wm8903_of_match);
 
-अटल स्थिर काष्ठा i2c_device_id wm8903_i2c_id[] = अणु
-	अणु "wm8903", 0 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id wm8903_i2c_id[] = {
+	{ "wm8903", 0 },
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, wm8903_i2c_id);
 
-अटल काष्ठा i2c_driver wm8903_i2c_driver = अणु
-	.driver = अणु
+static struct i2c_driver wm8903_i2c_driver = {
+	.driver = {
 		.name = "wm8903",
 		.of_match_table = wm8903_of_match,
-	पूर्ण,
+	},
 	.probe =    wm8903_i2c_probe,
-	.हटाओ =   wm8903_i2c_हटाओ,
+	.remove =   wm8903_i2c_remove,
 	.id_table = wm8903_i2c_id,
-पूर्ण;
+};
 
 module_i2c_driver(wm8903_i2c_driver);
 

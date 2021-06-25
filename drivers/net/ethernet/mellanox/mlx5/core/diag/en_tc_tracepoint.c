@@ -1,28 +1,27 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB
+// SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
 /* Copyright (c) 2019 Mellanox Technologies. */
 
-#घोषणा CREATE_TRACE_POINTS
-#समावेश "en_tc_tracepoint.h"
+#define CREATE_TRACE_POINTS
+#include "en_tc_tracepoint.h"
 
-व्योम put_ids_to_array(पूर्णांक *ids,
-		      स्थिर काष्ठा flow_action_entry *entries,
-		      अचिन्हित पूर्णांक num)
-अणु
-	अचिन्हित पूर्णांक i;
+void put_ids_to_array(int *ids,
+		      const struct flow_action_entry *entries,
+		      unsigned int num)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < num; i++)
+	for (i = 0; i < num; i++)
 		ids[i] = entries[i].id;
-पूर्ण
+}
 
-#घोषणा NAME_SIZE 16
+#define NAME_SIZE 16
 
-अटल स्थिर अक्षर FLOWACT2STR[NUM_FLOW_ACTIONS][NAME_SIZE] = अणु
+static const char FLOWACT2STR[NUM_FLOW_ACTIONS][NAME_SIZE] = {
 	[FLOW_ACTION_ACCEPT]	= "ACCEPT",
 	[FLOW_ACTION_DROP]	= "DROP",
 	[FLOW_ACTION_TRAP]	= "TRAP",
 	[FLOW_ACTION_GOTO]	= "GOTO",
-	[FLOW_ACTION_REसूचीECT]	= "REDIRECT",
+	[FLOW_ACTION_REDIRECT]	= "REDIRECT",
 	[FLOW_ACTION_MIRRED]	= "MIRRED",
 	[FLOW_ACTION_VLAN_PUSH]	= "VLAN_PUSH",
 	[FLOW_ACTION_VLAN_POP]	= "VLAN_POP",
@@ -38,22 +37,22 @@
 	[FLOW_ACTION_SAMPLE]	= "SAMPLE",
 	[FLOW_ACTION_POLICE]	= "POLICE",
 	[FLOW_ACTION_CT]	= "CT",
-पूर्ण;
+};
 
-स्थिर अक्षर *parse_action(काष्ठा trace_seq *p,
-			 पूर्णांक *ids,
-			 अचिन्हित पूर्णांक num)
-अणु
-	स्थिर अक्षर *ret = trace_seq_buffer_ptr(p);
-	अचिन्हित पूर्णांक i;
+const char *parse_action(struct trace_seq *p,
+			 int *ids,
+			 unsigned int num)
+{
+	const char *ret = trace_seq_buffer_ptr(p);
+	unsigned int i;
 
-	क्रम (i = 0; i < num; i++) अणु
-		अगर (ids[i] < NUM_FLOW_ACTIONS)
-			trace_seq_म_लिखो(p, "%s ", FLOWACT2STR[ids[i]]);
-		अन्यथा
-			trace_seq_म_लिखो(p, "UNKNOWN ");
-	पूर्ण
+	for (i = 0; i < num; i++) {
+		if (ids[i] < NUM_FLOW_ACTIONS)
+			trace_seq_printf(p, "%s ", FLOWACT2STR[ids[i]]);
+		else
+			trace_seq_printf(p, "UNKNOWN ");
+	}
 
-	trace_seq_अ_दो(p, 0);
-	वापस ret;
-पूर्ण
+	trace_seq_putc(p, 0);
+	return ret;
+}

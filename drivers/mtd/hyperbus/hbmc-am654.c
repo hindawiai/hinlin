@@ -1,103 +1,102 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 //
 // Copyright (C) 2019 Texas Instruments Incorporated - https://www.ti.com/
 // Author: Vignesh Raghavendra <vigneshr@ti.com>
 
-#समावेश <linux/completion.h>
-#समावेश <linux/dma-direction.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/dmaengine.h>
-#समावेश <linux/err.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mtd/cfi.h>
-#समावेश <linux/mtd/hyperbus.h>
-#समावेश <linux/mtd/mtd.h>
-#समावेश <linux/mux/consumer.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/sched/task_stack.h>
-#समावेश <linux/types.h>
+#include <linux/completion.h>
+#include <linux/dma-direction.h>
+#include <linux/dma-mapping.h>
+#include <linux/dmaengine.h>
+#include <linux/err.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/mtd/cfi.h>
+#include <linux/mtd/hyperbus.h>
+#include <linux/mtd/mtd.h>
+#include <linux/mux/consumer.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/platform_device.h>
+#include <linux/sched/task_stack.h>
+#include <linux/types.h>
 
-#घोषणा AM654_HBMC_CALIB_COUNT 25
+#define AM654_HBMC_CALIB_COUNT 25
 
-काष्ठा am654_hbmc_device_priv अणु
-	काष्ठा completion rx_dma_complete;
+struct am654_hbmc_device_priv {
+	struct completion rx_dma_complete;
 	phys_addr_t device_base;
-	काष्ठा hyperbus_ctlr *ctlr;
-	काष्ठा dma_chan *rx_chan;
-पूर्ण;
+	struct hyperbus_ctlr *ctlr;
+	struct dma_chan *rx_chan;
+};
 
-काष्ठा am654_hbmc_priv अणु
-	काष्ठा hyperbus_ctlr ctlr;
-	काष्ठा hyperbus_device hbdev;
-	काष्ठा mux_control *mux_ctrl;
-पूर्ण;
+struct am654_hbmc_priv {
+	struct hyperbus_ctlr ctlr;
+	struct hyperbus_device hbdev;
+	struct mux_control *mux_ctrl;
+};
 
-अटल पूर्णांक am654_hbmc_calibrate(काष्ठा hyperbus_device *hbdev)
-अणु
-	काष्ठा map_info *map = &hbdev->map;
-	काष्ठा cfi_निजी cfi;
-	पूर्णांक count = AM654_HBMC_CALIB_COUNT;
-	पूर्णांक pass_count = 0;
-	पूर्णांक ret;
+static int am654_hbmc_calibrate(struct hyperbus_device *hbdev)
+{
+	struct map_info *map = &hbdev->map;
+	struct cfi_private cfi;
+	int count = AM654_HBMC_CALIB_COUNT;
+	int pass_count = 0;
+	int ret;
 
-	cfi.पूर्णांकerleave = 1;
+	cfi.interleave = 1;
 	cfi.device_type = CFI_DEVICETYPE_X16;
-	cfi_send_gen_cmd(0xF0, 0, 0, map, &cfi, cfi.device_type, शून्य);
-	cfi_send_gen_cmd(0x98, 0x55, 0, map, &cfi, cfi.device_type, शून्य);
+	cfi_send_gen_cmd(0xF0, 0, 0, map, &cfi, cfi.device_type, NULL);
+	cfi_send_gen_cmd(0x98, 0x55, 0, map, &cfi, cfi.device_type, NULL);
 
-	जबतक (count--) अणु
+	while (count--) {
 		ret = cfi_qry_present(map, 0, &cfi);
-		अगर (ret)
+		if (ret)
 			pass_count++;
-		अन्यथा
+		else
 			pass_count = 0;
-		अगर (pass_count == 5)
-			अवरोध;
-	पूर्ण
+		if (pass_count == 5)
+			break;
+	}
 
 	cfi_qry_mode_off(0, map, &cfi);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम am654_hbmc_dma_callback(व्योम *param)
-अणु
-	काष्ठा am654_hbmc_device_priv *priv = param;
+static void am654_hbmc_dma_callback(void *param)
+{
+	struct am654_hbmc_device_priv *priv = param;
 
 	complete(&priv->rx_dma_complete);
-पूर्ण
+}
 
-अटल पूर्णांक am654_hbmc_dma_पढ़ो(काष्ठा am654_hbmc_device_priv *priv, व्योम *to,
-			       अचिन्हित दीर्घ from, sमाप_प्रकार len)
+static int am654_hbmc_dma_read(struct am654_hbmc_device_priv *priv, void *to,
+			       unsigned long from, ssize_t len)
 
-अणु
-	क्रमागत dma_ctrl_flags flags = DMA_CTRL_ACK | DMA_PREP_INTERRUPT;
-	काष्ठा dma_chan *rx_chan = priv->rx_chan;
-	काष्ठा dma_async_tx_descriptor *tx;
+{
+	enum dma_ctrl_flags flags = DMA_CTRL_ACK | DMA_PREP_INTERRUPT;
+	struct dma_chan *rx_chan = priv->rx_chan;
+	struct dma_async_tx_descriptor *tx;
 	dma_addr_t dma_dst, dma_src;
 	dma_cookie_t cookie;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!priv->rx_chan || !virt_addr_valid(to) || object_is_on_stack(to))
-		वापस -EINVAL;
+	if (!priv->rx_chan || !virt_addr_valid(to) || object_is_on_stack(to))
+		return -EINVAL;
 
 	dma_dst = dma_map_single(rx_chan->device->dev, to, len, DMA_FROM_DEVICE);
-	अगर (dma_mapping_error(rx_chan->device->dev, dma_dst)) अणु
+	if (dma_mapping_error(rx_chan->device->dev, dma_dst)) {
 		dev_dbg(priv->ctlr->dev, "DMA mapping failed\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	dma_src = priv->device_base + from;
-	tx = dmaengine_prep_dma_स_नकल(rx_chan, dma_dst, dma_src, len, flags);
-	अगर (!tx) अणु
+	tx = dmaengine_prep_dma_memcpy(rx_chan, dma_dst, dma_src, len, flags);
+	if (!tx) {
 		dev_err(priv->ctlr->dev, "device_prep_dma_memcpy error\n");
 		ret = -EIO;
-		जाओ unmap_dma;
-	पूर्ण
+		goto unmap_dma;
+	}
 
 	reinit_completion(&priv->rx_dma_complete);
 	tx->callback = am654_hbmc_dma_callback;
@@ -105,166 +104,166 @@
 	cookie = dmaengine_submit(tx);
 
 	ret = dma_submit_error(cookie);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(priv->ctlr->dev, "dma_submit_error %d\n", cookie);
-		जाओ unmap_dma;
-	पूर्ण
+		goto unmap_dma;
+	}
 
 	dma_async_issue_pending(rx_chan);
-	अगर (!रुको_क्रम_completion_समयout(&priv->rx_dma_complete,  msecs_to_jअगरfies(len + 1000))) अणु
+	if (!wait_for_completion_timeout(&priv->rx_dma_complete,  msecs_to_jiffies(len + 1000))) {
 		dmaengine_terminate_sync(rx_chan);
 		dev_err(priv->ctlr->dev, "DMA wait_for_completion_timeout\n");
 		ret = -ETIMEDOUT;
-	पूर्ण
+	}
 
 unmap_dma:
 	dma_unmap_single(rx_chan->device->dev, dma_dst, len, DMA_FROM_DEVICE);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम am654_hbmc_पढ़ो(काष्ठा hyperbus_device *hbdev, व्योम *to,
-			    अचिन्हित दीर्घ from, sमाप_प्रकार len)
-अणु
-	काष्ठा am654_hbmc_device_priv *priv = hbdev->priv;
+static void am654_hbmc_read(struct hyperbus_device *hbdev, void *to,
+			    unsigned long from, ssize_t len)
+{
+	struct am654_hbmc_device_priv *priv = hbdev->priv;
 
-	अगर (len < SZ_1K || am654_hbmc_dma_पढ़ो(priv, to, from, len))
-		स_नकल_fromio(to, hbdev->map.virt + from, len);
-पूर्ण
+	if (len < SZ_1K || am654_hbmc_dma_read(priv, to, from, len))
+		memcpy_fromio(to, hbdev->map.virt + from, len);
+}
 
-अटल स्थिर काष्ठा hyperbus_ops am654_hbmc_ops = अणु
+static const struct hyperbus_ops am654_hbmc_ops = {
 	.calibrate = am654_hbmc_calibrate,
-	.copy_from = am654_hbmc_पढ़ो,
-पूर्ण;
+	.copy_from = am654_hbmc_read,
+};
 
-अटल पूर्णांक am654_hbmc_request_mmap_dma(काष्ठा am654_hbmc_device_priv *priv)
-अणु
-	काष्ठा dma_chan *rx_chan;
+static int am654_hbmc_request_mmap_dma(struct am654_hbmc_device_priv *priv)
+{
+	struct dma_chan *rx_chan;
 	dma_cap_mask_t mask;
 
 	dma_cap_zero(mask);
 	dma_cap_set(DMA_MEMCPY, mask);
 
 	rx_chan = dma_request_chan_by_mask(&mask);
-	अगर (IS_ERR(rx_chan)) अणु
-		अगर (PTR_ERR(rx_chan) == -EPROBE_DEFER)
-			वापस -EPROBE_DEFER;
+	if (IS_ERR(rx_chan)) {
+		if (PTR_ERR(rx_chan) == -EPROBE_DEFER)
+			return -EPROBE_DEFER;
 		dev_dbg(priv->ctlr->dev, "No DMA channel available\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	priv->rx_chan = rx_chan;
 	init_completion(&priv->rx_dma_complete);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक am654_hbmc_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device_node *np = pdev->dev.of_node;
-	काष्ठा am654_hbmc_device_priv *dev_priv;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा am654_hbmc_priv *priv;
-	काष्ठा resource res;
-	पूर्णांक ret;
+static int am654_hbmc_probe(struct platform_device *pdev)
+{
+	struct device_node *np = pdev->dev.of_node;
+	struct am654_hbmc_device_priv *dev_priv;
+	struct device *dev = &pdev->dev;
+	struct am654_hbmc_priv *priv;
+	struct resource res;
+	int ret;
 
-	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
-	platक्रमm_set_drvdata(pdev, priv);
+	platform_set_drvdata(pdev, priv);
 
-	priv->hbdev.np = of_get_next_child(np, शून्य);
+	priv->hbdev.np = of_get_next_child(np, NULL);
 	ret = of_address_to_resource(priv->hbdev.np, 0, &res);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (of_property_पढ़ो_bool(dev->of_node, "mux-controls")) अणु
-		काष्ठा mux_control *control = devm_mux_control_get(dev, शून्य);
+	if (of_property_read_bool(dev->of_node, "mux-controls")) {
+		struct mux_control *control = devm_mux_control_get(dev, NULL);
 
-		अगर (IS_ERR(control))
-			वापस PTR_ERR(control);
+		if (IS_ERR(control))
+			return PTR_ERR(control);
 
 		ret = mux_control_select(control, 1);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev, "Failed to select HBMC mux\n");
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		priv->mux_ctrl = control;
-	पूर्ण
+	}
 
 	priv->hbdev.map.size = resource_size(&res);
 	priv->hbdev.map.virt = devm_ioremap_resource(dev, &res);
-	अगर (IS_ERR(priv->hbdev.map.virt))
-		वापस PTR_ERR(priv->hbdev.map.virt);
+	if (IS_ERR(priv->hbdev.map.virt))
+		return PTR_ERR(priv->hbdev.map.virt);
 
 	priv->ctlr.dev = dev;
 	priv->ctlr.ops = &am654_hbmc_ops;
 	priv->hbdev.ctlr = &priv->ctlr;
 
-	dev_priv = devm_kzalloc(dev, माप(*dev_priv), GFP_KERNEL);
-	अगर (!dev_priv) अणु
+	dev_priv = devm_kzalloc(dev, sizeof(*dev_priv), GFP_KERNEL);
+	if (!dev_priv) {
 		ret = -ENOMEM;
-		जाओ disable_mux;
-	पूर्ण
+		goto disable_mux;
+	}
 
 	priv->hbdev.priv = dev_priv;
 	dev_priv->device_base = res.start;
 	dev_priv->ctlr = &priv->ctlr;
 
 	ret = am654_hbmc_request_mmap_dma(dev_priv);
-	अगर (ret)
-		जाओ disable_mux;
+	if (ret)
+		goto disable_mux;
 
-	ret = hyperbus_रेजिस्टर_device(&priv->hbdev);
-	अगर (ret) अणु
+	ret = hyperbus_register_device(&priv->hbdev);
+	if (ret) {
 		dev_err(dev, "failed to register controller\n");
-		जाओ release_dma;
-	पूर्ण
+		goto release_dma;
+	}
 
-	वापस 0;
+	return 0;
 release_dma:
-	अगर (dev_priv->rx_chan)
+	if (dev_priv->rx_chan)
 		dma_release_channel(dev_priv->rx_chan);
 disable_mux:
-	अगर (priv->mux_ctrl)
+	if (priv->mux_ctrl)
 		mux_control_deselect(priv->mux_ctrl);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक am654_hbmc_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा am654_hbmc_priv *priv = platक्रमm_get_drvdata(pdev);
-	काष्ठा am654_hbmc_device_priv *dev_priv = priv->hbdev.priv;
-	पूर्णांक ret;
+static int am654_hbmc_remove(struct platform_device *pdev)
+{
+	struct am654_hbmc_priv *priv = platform_get_drvdata(pdev);
+	struct am654_hbmc_device_priv *dev_priv = priv->hbdev.priv;
+	int ret;
 
-	ret = hyperbus_unरेजिस्टर_device(&priv->hbdev);
-	अगर (priv->mux_ctrl)
+	ret = hyperbus_unregister_device(&priv->hbdev);
+	if (priv->mux_ctrl)
 		mux_control_deselect(priv->mux_ctrl);
 
-	अगर (dev_priv->rx_chan)
+	if (dev_priv->rx_chan)
 		dma_release_channel(dev_priv->rx_chan);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा of_device_id am654_hbmc_dt_ids[] = अणु
-	अणु
+static const struct of_device_id am654_hbmc_dt_ids[] = {
+	{
 		.compatible = "ti,am654-hbmc",
-	पूर्ण,
-	अणु /* end of table */ पूर्ण
-पूर्ण;
+	},
+	{ /* end of table */ }
+};
 
 MODULE_DEVICE_TABLE(of, am654_hbmc_dt_ids);
 
-अटल काष्ठा platक्रमm_driver am654_hbmc_platक्रमm_driver = अणु
+static struct platform_driver am654_hbmc_platform_driver = {
 	.probe = am654_hbmc_probe,
-	.हटाओ = am654_hbmc_हटाओ,
-	.driver = अणु
+	.remove = am654_hbmc_remove,
+	.driver = {
 		.name = "hbmc-am654",
 		.of_match_table = am654_hbmc_dt_ids,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(am654_hbmc_platक्रमm_driver);
+module_platform_driver(am654_hbmc_platform_driver);
 
 MODULE_DESCRIPTION("HBMC driver for AM654 SoC");
 MODULE_LICENSE("GPL v2");

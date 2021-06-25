@@ -1,47 +1,46 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Miscellaneous procedures क्रम dealing with the PowerMac hardware.
- * Contains support क्रम the backlight.
+ * Miscellaneous procedures for dealing with the PowerMac hardware.
+ * Contains support for the backlight.
  *
  *   Copyright (C) 2000 Benjamin Herrenschmidt
  *   Copyright (C) 2006 Michael Hanselmann <linux-kernel@hansmi.ch>
  *
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/fb.h>
-#समावेश <linux/backlight.h>
-#समावेश <linux/adb.h>
-#समावेश <linux/pmu.h>
-#समावेश <linux/atomic.h>
-#समावेश <linux/export.h>
-#समावेश <यंत्र/prom.h>
-#समावेश <यंत्र/backlight.h>
+#include <linux/kernel.h>
+#include <linux/fb.h>
+#include <linux/backlight.h>
+#include <linux/adb.h>
+#include <linux/pmu.h>
+#include <linux/atomic.h>
+#include <linux/export.h>
+#include <asm/prom.h>
+#include <asm/backlight.h>
 
-#घोषणा OLD_BACKLIGHT_MAX 15
+#define OLD_BACKLIGHT_MAX 15
 
-अटल व्योम pmac_backlight_key_worker(काष्ठा work_काष्ठा *work);
-अटल व्योम pmac_backlight_set_legacy_worker(काष्ठा work_काष्ठा *work);
+static void pmac_backlight_key_worker(struct work_struct *work);
+static void pmac_backlight_set_legacy_worker(struct work_struct *work);
 
-अटल DECLARE_WORK(pmac_backlight_key_work, pmac_backlight_key_worker);
-अटल DECLARE_WORK(pmac_backlight_set_legacy_work, pmac_backlight_set_legacy_worker);
+static DECLARE_WORK(pmac_backlight_key_work, pmac_backlight_key_worker);
+static DECLARE_WORK(pmac_backlight_set_legacy_work, pmac_backlight_set_legacy_worker);
 
-/* Although these variables are used in पूर्णांकerrupt context, it makes no sense to
+/* Although these variables are used in interrupt context, it makes no sense to
  * protect them. No user is able to produce enough key events per second and
  * notice the errors that might happen.
  */
-अटल पूर्णांक pmac_backlight_key_queued;
-अटल पूर्णांक pmac_backlight_set_legacy_queued;
+static int pmac_backlight_key_queued;
+static int pmac_backlight_set_legacy_queued;
 
-/* The via-pmu code allows the backlight to be grabbed, in which हाल the
+/* The via-pmu code allows the backlight to be grabbed, in which case the
  * in-kernel control of the brightness needs to be disabled. This should
  * only be used by really old PowerBooks.
  */
-अटल atomic_t kernel_backlight_disabled = ATOMIC_INIT(0);
+static atomic_t kernel_backlight_disabled = ATOMIC_INIT(0);
 
 /* Protect the pmac_backlight variable below.
-   You should hold this lock when using the pmac_backlight poपूर्णांकer to
+   You should hold this lock when using the pmac_backlight pointer to
    prevent its potential removal. */
 DEFINE_MUTEX(pmac_backlight_mutex);
 
@@ -51,63 +50,63 @@ DEFINE_MUTEX(pmac_backlight_mutex);
  * attribute set and to have an update_status function.
  *
  * We can only store one backlight here, but since Apple laptops have only one
- * पूर्णांकernal display, it करोesn't matter. Other backlight drivers can be used
+ * internal display, it doesn't matter. Other backlight drivers can be used
  * independently.
  *
  */
-काष्ठा backlight_device *pmac_backlight;
+struct backlight_device *pmac_backlight;
 
-पूर्णांक pmac_has_backlight_type(स्थिर अक्षर *type)
-अणु
-	काष्ठा device_node* bk_node = of_find_node_by_name(शून्य, "backlight");
+int pmac_has_backlight_type(const char *type)
+{
+	struct device_node* bk_node = of_find_node_by_name(NULL, "backlight");
 
-	अगर (bk_node) अणु
-		स्थिर अक्षर *prop = of_get_property(bk_node,
-				"backlight-control", शून्य);
-		अगर (prop && म_भेदन(prop, type, म_माप(type)) == 0) अणु
+	if (bk_node) {
+		const char *prop = of_get_property(bk_node,
+				"backlight-control", NULL);
+		if (prop && strncmp(prop, type, strlen(type)) == 0) {
 			of_node_put(bk_node);
-			वापस 1;
-		पूर्ण
+			return 1;
+		}
 		of_node_put(bk_node);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक pmac_backlight_curve_lookup(काष्ठा fb_info *info, पूर्णांक value)
-अणु
-	पूर्णांक level = (FB_BACKLIGHT_LEVELS - 1);
+int pmac_backlight_curve_lookup(struct fb_info *info, int value)
+{
+	int level = (FB_BACKLIGHT_LEVELS - 1);
 
-	अगर (info && info->bl_dev) अणु
-		पूर्णांक i, max = 0;
+	if (info && info->bl_dev) {
+		int i, max = 0;
 
-		/* Look क्रम biggest value */
-		क्रम (i = 0; i < FB_BACKLIGHT_LEVELS; i++)
-			max = max((पूर्णांक)info->bl_curve[i], max);
+		/* Look for biggest value */
+		for (i = 0; i < FB_BACKLIGHT_LEVELS; i++)
+			max = max((int)info->bl_curve[i], max);
 
-		/* Look क्रम nearest value */
-		क्रम (i = 0; i < FB_BACKLIGHT_LEVELS; i++) अणु
-			पूर्णांक dअगरf = असल(info->bl_curve[i] - value);
-			अगर (dअगरf < max) अणु
-				max = dअगरf;
+		/* Look for nearest value */
+		for (i = 0; i < FB_BACKLIGHT_LEVELS; i++) {
+			int diff = abs(info->bl_curve[i] - value);
+			if (diff < max) {
+				max = diff;
 				level = i;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-	पूर्ण
+	}
 
-	वापस level;
-पूर्ण
+	return level;
+}
 
-अटल व्योम pmac_backlight_key_worker(काष्ठा work_काष्ठा *work)
-अणु
-	अगर (atomic_पढ़ो(&kernel_backlight_disabled))
-		वापस;
+static void pmac_backlight_key_worker(struct work_struct *work)
+{
+	if (atomic_read(&kernel_backlight_disabled))
+		return;
 
 	mutex_lock(&pmac_backlight_mutex);
-	अगर (pmac_backlight) अणु
-		काष्ठा backlight_properties *props;
-		पूर्णांक brightness;
+	if (pmac_backlight) {
+		struct backlight_properties *props;
+		int brightness;
 
 		props = &pmac_backlight->props;
 
@@ -115,107 +114,107 @@ DEFINE_MUTEX(pmac_backlight_mutex);
 			((pmac_backlight_key_queued?-1:1) *
 			 (props->max_brightness / 15));
 
-		अगर (brightness < 0)
+		if (brightness < 0)
 			brightness = 0;
-		अन्यथा अगर (brightness > props->max_brightness)
+		else if (brightness > props->max_brightness)
 			brightness = props->max_brightness;
 
 		props->brightness = brightness;
 		backlight_update_status(pmac_backlight);
-	पूर्ण
+	}
 	mutex_unlock(&pmac_backlight_mutex);
-पूर्ण
+}
 
-/* This function is called in पूर्णांकerrupt context */
-व्योम pmac_backlight_key(पूर्णांक direction)
-अणु
-	अगर (atomic_पढ़ो(&kernel_backlight_disabled))
-		वापस;
+/* This function is called in interrupt context */
+void pmac_backlight_key(int direction)
+{
+	if (atomic_read(&kernel_backlight_disabled))
+		return;
 
-	/* we can receive multiple पूर्णांकerrupts here, but the scheduled work
+	/* we can receive multiple interrupts here, but the scheduled work
 	 * will run only once, with the last value
 	 */
 	pmac_backlight_key_queued = direction;
 	schedule_work(&pmac_backlight_key_work);
-पूर्ण
+}
 
-अटल पूर्णांक __pmac_backlight_set_legacy_brightness(पूर्णांक brightness)
-अणु
-	पूर्णांक error = -ENXIO;
+static int __pmac_backlight_set_legacy_brightness(int brightness)
+{
+	int error = -ENXIO;
 
 	mutex_lock(&pmac_backlight_mutex);
-	अगर (pmac_backlight) अणु
-		काष्ठा backlight_properties *props;
+	if (pmac_backlight) {
+		struct backlight_properties *props;
 
 		props = &pmac_backlight->props;
 		props->brightness = brightness *
 			(props->max_brightness + 1) /
 			(OLD_BACKLIGHT_MAX + 1);
 
-		अगर (props->brightness > props->max_brightness)
+		if (props->brightness > props->max_brightness)
 			props->brightness = props->max_brightness;
-		अन्यथा अगर (props->brightness < 0)
+		else if (props->brightness < 0)
 			props->brightness = 0;
 
 		backlight_update_status(pmac_backlight);
 
 		error = 0;
-	पूर्ण
+	}
 	mutex_unlock(&pmac_backlight_mutex);
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल व्योम pmac_backlight_set_legacy_worker(काष्ठा work_काष्ठा *work)
-अणु
-	अगर (atomic_पढ़ो(&kernel_backlight_disabled))
-		वापस;
+static void pmac_backlight_set_legacy_worker(struct work_struct *work)
+{
+	if (atomic_read(&kernel_backlight_disabled))
+		return;
 
 	__pmac_backlight_set_legacy_brightness(pmac_backlight_set_legacy_queued);
-पूर्ण
+}
 
-/* This function is called in पूर्णांकerrupt context */
-व्योम pmac_backlight_set_legacy_brightness_pmu(पूर्णांक brightness) अणु
-	अगर (atomic_पढ़ो(&kernel_backlight_disabled))
-		वापस;
+/* This function is called in interrupt context */
+void pmac_backlight_set_legacy_brightness_pmu(int brightness) {
+	if (atomic_read(&kernel_backlight_disabled))
+		return;
 
 	pmac_backlight_set_legacy_queued = brightness;
 	schedule_work(&pmac_backlight_set_legacy_work);
-पूर्ण
+}
 
-पूर्णांक pmac_backlight_set_legacy_brightness(पूर्णांक brightness)
-अणु
-	वापस __pmac_backlight_set_legacy_brightness(brightness);
-पूर्ण
+int pmac_backlight_set_legacy_brightness(int brightness)
+{
+	return __pmac_backlight_set_legacy_brightness(brightness);
+}
 
-पूर्णांक pmac_backlight_get_legacy_brightness(व्योम)
-अणु
-	पूर्णांक result = -ENXIO;
+int pmac_backlight_get_legacy_brightness(void)
+{
+	int result = -ENXIO;
 
 	mutex_lock(&pmac_backlight_mutex);
-	अगर (pmac_backlight) अणु
-		काष्ठा backlight_properties *props;
+	if (pmac_backlight) {
+		struct backlight_properties *props;
 
 		props = &pmac_backlight->props;
 
 		result = props->brightness *
 			(OLD_BACKLIGHT_MAX + 1) /
 			(props->max_brightness + 1);
-	पूर्ण
+	}
 	mutex_unlock(&pmac_backlight_mutex);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-व्योम pmac_backlight_disable(व्योम)
-अणु
+void pmac_backlight_disable(void)
+{
 	atomic_inc(&kernel_backlight_disabled);
-पूर्ण
+}
 
-व्योम pmac_backlight_enable(व्योम)
-अणु
+void pmac_backlight_enable(void)
+{
 	atomic_dec(&kernel_backlight_disabled);
-पूर्ण
+}
 
 EXPORT_SYMBOL_GPL(pmac_backlight);
 EXPORT_SYMBOL_GPL(pmac_backlight_mutex);

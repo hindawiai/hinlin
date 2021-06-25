@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright 2016, Chris Smart, IBM Corporation.
  *
@@ -7,62 +6,62 @@
  * caught and sent a SIGBUS.
  */
 
-#समावेश <संकेत.स>
-#समावेश <माला.स>
-#समावेश <unistd.h>
-#समावेश "utils.h"
-#समावेश "instructions.h"
+#include <signal.h>
+#include <string.h>
+#include <unistd.h>
+#include "utils.h"
+#include "instructions.h"
 
-अचिन्हित पूर्णांक expected_inकाष्ठाion = PPC_INST_COPY_FIRST;
-अचिन्हित पूर्णांक inकाष्ठाion_mask = 0xfc2007fe;
+unsigned int expected_instruction = PPC_INST_COPY_FIRST;
+unsigned int instruction_mask = 0xfc2007fe;
 
-व्योम संकेत_action_handler(पूर्णांक संकेत_num, siginfo_t *info, व्योम *ptr)
-अणु
+void signal_action_handler(int signal_num, siginfo_t *info, void *ptr)
+{
 	ucontext_t *ctx = ptr;
-#अगर_घोषित __घातerpc64__
-	अचिन्हित पूर्णांक *pc = (अचिन्हित पूर्णांक *)ctx->uc_mcontext.gp_regs[PT_NIP];
-#अन्यथा
-	अचिन्हित पूर्णांक *pc = (अचिन्हित पूर्णांक *)ctx->uc_mcontext.uc_regs->gregs[PT_NIP];
-#पूर्ण_अगर
+#ifdef __powerpc64__
+	unsigned int *pc = (unsigned int *)ctx->uc_mcontext.gp_regs[PT_NIP];
+#else
+	unsigned int *pc = (unsigned int *)ctx->uc_mcontext.uc_regs->gregs[PT_NIP];
+#endif
 
 	/*
-	 * Check that the संकेत was on the correct inकाष्ठाion, using a
-	 * mask because the compiler assigns the रेजिस्टर at RB.
+	 * Check that the signal was on the correct instruction, using a
+	 * mask because the compiler assigns the register at RB.
 	 */
-	अगर ((*pc & inकाष्ठाion_mask) == expected_inकाष्ठाion)
-		_निकास(0); /* We hit the right inकाष्ठाion */
+	if ((*pc & instruction_mask) == expected_instruction)
+		_exit(0); /* We hit the right instruction */
 
-	_निकास(1);
-पूर्ण
+	_exit(1);
+}
 
-व्योम setup_संकेत_handler(व्योम)
-अणु
-	काष्ठा sigaction संकेत_action;
+void setup_signal_handler(void)
+{
+	struct sigaction signal_action;
 
-	स_रखो(&संकेत_action, 0, माप(संकेत_action));
-	संकेत_action.sa_sigaction = संकेत_action_handler;
-	संकेत_action.sa_flags = SA_SIGINFO;
-	sigaction(SIGBUS, &संकेत_action, शून्य);
-पूर्ण
+	memset(&signal_action, 0, sizeof(signal_action));
+	signal_action.sa_sigaction = signal_action_handler;
+	signal_action.sa_flags = SA_SIGINFO;
+	sigaction(SIGBUS, &signal_action, NULL);
+}
 
-अक्षर cacheline_buf[128] __cacheline_aligned;
+char cacheline_buf[128] __cacheline_aligned;
 
-पूर्णांक test_copy_first_unaligned(व्योम)
-अणु
+int test_copy_first_unaligned(void)
+{
 	/* Only run this test on a P9 or later */
 	SKIP_IF(!have_hwcap2(PPC_FEATURE2_ARCH_3_00));
 
-	/* Register our संकेत handler with SIGBUS */
-	setup_संकेत_handler();
+	/* Register our signal handler with SIGBUS */
+	setup_signal_handler();
 
 	/* +1 makes buf unaligned */
 	copy_first(cacheline_buf+1);
 
 	/* We should not get here */
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
-अणु
-	वापस test_harness(test_copy_first_unaligned, "test_copy_first_unaligned");
-पूर्ण
+int main(int argc, char *argv[])
+{
+	return test_harness(test_copy_first_unaligned, "test_copy_first_unaligned");
+}

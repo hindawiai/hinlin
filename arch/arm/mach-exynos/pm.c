@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 //
 // Copyright (c) 2011-2014 Samsung Electronics Co., Ltd.
 //		http://www.samsung.com
@@ -10,206 +9,206 @@
 // Copyright (c) 2006 Simtec Electronics
 //	Ben Dooks <ben@simtec.co.uk>
 
-#समावेश <linux/init.h>
-#समावेश <linux/suspend.h>
-#समावेश <linux/cpu_pm.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of.h>
-#समावेश <linux/soc/samsung/exynos-regs-pmu.h>
-#समावेश <linux/soc/samsung/exynos-pmu.h>
+#include <linux/init.h>
+#include <linux/suspend.h>
+#include <linux/cpu_pm.h>
+#include <linux/io.h>
+#include <linux/of.h>
+#include <linux/soc/samsung/exynos-regs-pmu.h>
+#include <linux/soc/samsung/exynos-pmu.h>
 
-#समावेश <यंत्र/firmware.h>
-#समावेश <यंत्र/smp_scu.h>
-#समावेश <यंत्र/suspend.h>
-#समावेश <यंत्र/cacheflush.h>
+#include <asm/firmware.h>
+#include <asm/smp_scu.h>
+#include <asm/suspend.h>
+#include <asm/cacheflush.h>
 
-#समावेश "common.h"
+#include "common.h"
 
-अटल अंतरभूत व्योम __iomem *exynos_boot_vector_addr(व्योम)
-अणु
-	अगर (exynos_rev() == EXYNOS4210_REV_1_1)
-		वापस pmu_base_addr + S5P_INFORM7;
-	अन्यथा अगर (exynos_rev() == EXYNOS4210_REV_1_0)
-		वापस sysram_base_addr + 0x24;
-	वापस pmu_base_addr + S5P_INFORM0;
-पूर्ण
+static inline void __iomem *exynos_boot_vector_addr(void)
+{
+	if (exynos_rev() == EXYNOS4210_REV_1_1)
+		return pmu_base_addr + S5P_INFORM7;
+	else if (exynos_rev() == EXYNOS4210_REV_1_0)
+		return sysram_base_addr + 0x24;
+	return pmu_base_addr + S5P_INFORM0;
+}
 
-अटल अंतरभूत व्योम __iomem *exynos_boot_vector_flag(व्योम)
-अणु
-	अगर (exynos_rev() == EXYNOS4210_REV_1_1)
-		वापस pmu_base_addr + S5P_INFORM6;
-	अन्यथा अगर (exynos_rev() == EXYNOS4210_REV_1_0)
-		वापस sysram_base_addr + 0x20;
-	वापस pmu_base_addr + S5P_INFORM1;
-पूर्ण
+static inline void __iomem *exynos_boot_vector_flag(void)
+{
+	if (exynos_rev() == EXYNOS4210_REV_1_1)
+		return pmu_base_addr + S5P_INFORM6;
+	else if (exynos_rev() == EXYNOS4210_REV_1_0)
+		return sysram_base_addr + 0x20;
+	return pmu_base_addr + S5P_INFORM1;
+}
 
-#घोषणा S5P_CHECK_AFTR  0xFCBA0D10
+#define S5P_CHECK_AFTR  0xFCBA0D10
 
-/* For Cortex-A9 Diagnostic and Power control रेजिस्टर */
-अटल अचिन्हित पूर्णांक save_arm_रेजिस्टर[2];
+/* For Cortex-A9 Diagnostic and Power control register */
+static unsigned int save_arm_register[2];
 
-व्योम exynos_cpu_save_रेजिस्टर(व्योम)
-अणु
-	अचिन्हित दीर्घ पंचांगp;
+void exynos_cpu_save_register(void)
+{
+	unsigned long tmp;
 
-	/* Save Power control रेजिस्टर */
-	यंत्र ("mrc p15, 0, %0, c15, c0, 0"
-	     : "=r" (पंचांगp) : : "cc");
+	/* Save Power control register */
+	asm ("mrc p15, 0, %0, c15, c0, 0"
+	     : "=r" (tmp) : : "cc");
 
-	save_arm_रेजिस्टर[0] = पंचांगp;
+	save_arm_register[0] = tmp;
 
-	/* Save Diagnostic रेजिस्टर */
-	यंत्र ("mrc p15, 0, %0, c15, c0, 1"
-	     : "=r" (पंचांगp) : : "cc");
+	/* Save Diagnostic register */
+	asm ("mrc p15, 0, %0, c15, c0, 1"
+	     : "=r" (tmp) : : "cc");
 
-	save_arm_रेजिस्टर[1] = पंचांगp;
-पूर्ण
+	save_arm_register[1] = tmp;
+}
 
-व्योम exynos_cpu_restore_रेजिस्टर(व्योम)
-अणु
-	अचिन्हित दीर्घ पंचांगp;
+void exynos_cpu_restore_register(void)
+{
+	unsigned long tmp;
 
-	/* Restore Power control रेजिस्टर */
-	पंचांगp = save_arm_रेजिस्टर[0];
+	/* Restore Power control register */
+	tmp = save_arm_register[0];
 
-	यंत्र अस्थिर ("mcr p15, 0, %0, c15, c0, 0"
-		      : : "r" (पंचांगp)
+	asm volatile ("mcr p15, 0, %0, c15, c0, 0"
+		      : : "r" (tmp)
 		      : "cc");
 
-	/* Restore Diagnostic रेजिस्टर */
-	पंचांगp = save_arm_रेजिस्टर[1];
+	/* Restore Diagnostic register */
+	tmp = save_arm_register[1];
 
-	यंत्र अस्थिर ("mcr p15, 0, %0, c15, c0, 1"
-		      : : "r" (पंचांगp)
+	asm volatile ("mcr p15, 0, %0, c15, c0, 1"
+		      : : "r" (tmp)
 		      : "cc");
-पूर्ण
+}
 
-व्योम exynos_pm_central_suspend(व्योम)
-अणु
-	अचिन्हित दीर्घ पंचांगp;
+void exynos_pm_central_suspend(void)
+{
+	unsigned long tmp;
 
-	/* Setting Central Sequence Register क्रम घातer करोwn mode */
-	पंचांगp = pmu_raw_पढ़ोl(S5P_CENTRAL_SEQ_CONFIGURATION);
-	पंचांगp &= ~S5P_CENTRAL_LOWPWR_CFG;
-	pmu_raw_ग_लिखोl(पंचांगp, S5P_CENTRAL_SEQ_CONFIGURATION);
-पूर्ण
+	/* Setting Central Sequence Register for power down mode */
+	tmp = pmu_raw_readl(S5P_CENTRAL_SEQ_CONFIGURATION);
+	tmp &= ~S5P_CENTRAL_LOWPWR_CFG;
+	pmu_raw_writel(tmp, S5P_CENTRAL_SEQ_CONFIGURATION);
+}
 
-पूर्णांक exynos_pm_central_resume(व्योम)
-अणु
-	अचिन्हित दीर्घ पंचांगp;
+int exynos_pm_central_resume(void)
+{
+	unsigned long tmp;
 
 	/*
-	 * If PMU failed जबतक entering sleep mode, WFI will be
-	 * ignored by PMU and then निकासing cpu_करो_idle().
-	 * S5P_CENTRAL_LOWPWR_CFG bit will not be set स्वतःmatically
+	 * If PMU failed while entering sleep mode, WFI will be
+	 * ignored by PMU and then exiting cpu_do_idle().
+	 * S5P_CENTRAL_LOWPWR_CFG bit will not be set automatically
 	 * in this situation.
 	 */
-	पंचांगp = pmu_raw_पढ़ोl(S5P_CENTRAL_SEQ_CONFIGURATION);
-	अगर (!(पंचांगp & S5P_CENTRAL_LOWPWR_CFG)) अणु
-		पंचांगp |= S5P_CENTRAL_LOWPWR_CFG;
-		pmu_raw_ग_लिखोl(पंचांगp, S5P_CENTRAL_SEQ_CONFIGURATION);
-		/* clear the wakeup state रेजिस्टर */
-		pmu_raw_ग_लिखोl(0x0, S5P_WAKEUP_STAT);
-		/* No need to perक्रमm below restore code */
-		वापस -1;
-	पूर्ण
+	tmp = pmu_raw_readl(S5P_CENTRAL_SEQ_CONFIGURATION);
+	if (!(tmp & S5P_CENTRAL_LOWPWR_CFG)) {
+		tmp |= S5P_CENTRAL_LOWPWR_CFG;
+		pmu_raw_writel(tmp, S5P_CENTRAL_SEQ_CONFIGURATION);
+		/* clear the wakeup state register */
+		pmu_raw_writel(0x0, S5P_WAKEUP_STAT);
+		/* No need to perform below restore code */
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Ext-GIC nIRQ/nFIQ is the only wakeup source in AFTR */
-अटल व्योम exynos_set_wakeupmask(दीर्घ mask)
-अणु
-	pmu_raw_ग_लिखोl(mask, S5P_WAKEUP_MASK);
-	अगर (soc_is_exynos3250())
-		pmu_raw_ग_लिखोl(0x0, S5P_WAKEUP_MASK2);
-पूर्ण
+static void exynos_set_wakeupmask(long mask)
+{
+	pmu_raw_writel(mask, S5P_WAKEUP_MASK);
+	if (soc_is_exynos3250())
+		pmu_raw_writel(0x0, S5P_WAKEUP_MASK2);
+}
 
-अटल व्योम exynos_cpu_set_boot_vector(दीर्घ flags)
-अणु
-	ग_लिखोl_relaxed(__pa_symbol(exynos_cpu_resume),
+static void exynos_cpu_set_boot_vector(long flags)
+{
+	writel_relaxed(__pa_symbol(exynos_cpu_resume),
 		       exynos_boot_vector_addr());
-	ग_लिखोl_relaxed(flags, exynos_boot_vector_flag());
-पूर्ण
+	writel_relaxed(flags, exynos_boot_vector_flag());
+}
 
-अटल पूर्णांक exynos_aftr_finisher(अचिन्हित दीर्घ flags)
-अणु
-	पूर्णांक ret;
+static int exynos_aftr_finisher(unsigned long flags)
+{
+	int ret;
 
 	exynos_set_wakeupmask(soc_is_exynos3250() ? 0x40003ffe : 0x0000ff3e);
-	/* Set value of घातer करोwn रेजिस्टर क्रम aftr mode */
-	exynos_sys_घातerकरोwn_conf(SYS_AFTR);
+	/* Set value of power down register for aftr mode */
+	exynos_sys_powerdown_conf(SYS_AFTR);
 
-	ret = call_firmware_op(करो_idle, FW_DO_IDLE_AFTR);
-	अगर (ret == -ENOSYS) अणु
-		अगर (पढ़ो_cpuid_part() == ARM_CPU_PART_CORTEX_A9)
-			exynos_cpu_save_रेजिस्टर();
+	ret = call_firmware_op(do_idle, FW_DO_IDLE_AFTR);
+	if (ret == -ENOSYS) {
+		if (read_cpuid_part() == ARM_CPU_PART_CORTEX_A9)
+			exynos_cpu_save_register();
 		exynos_cpu_set_boot_vector(S5P_CHECK_AFTR);
-		cpu_करो_idle();
-	पूर्ण
+		cpu_do_idle();
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-व्योम exynos_enter_aftr(व्योम)
-अणु
-	अचिन्हित पूर्णांक cpuid = smp_processor_id();
+void exynos_enter_aftr(void)
+{
+	unsigned int cpuid = smp_processor_id();
 
 	cpu_pm_enter();
 
-	अगर (soc_is_exynos3250())
+	if (soc_is_exynos3250())
 		exynos_set_boot_flag(cpuid, C2_STATE);
 
 	exynos_pm_central_suspend();
 
-	अगर (soc_is_exynos4412()) अणु
-		/* Setting SEQ_OPTION रेजिस्टर */
-		pmu_raw_ग_लिखोl(S5P_USE_STANDBY_WFI0 | S5P_USE_STANDBY_WFE0,
+	if (soc_is_exynos4412()) {
+		/* Setting SEQ_OPTION register */
+		pmu_raw_writel(S5P_USE_STANDBY_WFI0 | S5P_USE_STANDBY_WFE0,
 			       S5P_CENTRAL_SEQ_OPTION);
-	पूर्ण
+	}
 
 	cpu_suspend(0, exynos_aftr_finisher);
 
-	अगर (पढ़ो_cpuid_part() == ARM_CPU_PART_CORTEX_A9) अणु
+	if (read_cpuid_part() == ARM_CPU_PART_CORTEX_A9) {
 		exynos_scu_enable();
-		अगर (call_firmware_op(resume) == -ENOSYS)
-			exynos_cpu_restore_रेजिस्टर();
-	पूर्ण
+		if (call_firmware_op(resume) == -ENOSYS)
+			exynos_cpu_restore_register();
+	}
 
 	exynos_pm_central_resume();
 
-	अगर (soc_is_exynos3250())
+	if (soc_is_exynos3250())
 		exynos_clear_boot_flag(cpuid, C2_STATE);
 
-	cpu_pm_निकास();
-पूर्ण
+	cpu_pm_exit();
+}
 
-#अगर defined(CONFIG_SMP) && defined(CONFIG_ARM_EXYNOS_CPUIDLE)
-अटल atomic_t cpu1_wakeup = ATOMIC_INIT(0);
+#if defined(CONFIG_SMP) && defined(CONFIG_ARM_EXYNOS_CPUIDLE)
+static atomic_t cpu1_wakeup = ATOMIC_INIT(0);
 
-अटल पूर्णांक exynos_cpu0_enter_aftr(व्योम)
-अणु
-	पूर्णांक ret = -1;
+static int exynos_cpu0_enter_aftr(void)
+{
+	int ret = -1;
 
 	/*
-	 * If the other cpu is घातered on, we have to घातer it off, because
+	 * If the other cpu is powered on, we have to power it off, because
 	 * the AFTR state won't work otherwise
 	 */
-	अगर (cpu_online(1)) अणु
+	if (cpu_online(1)) {
 		/*
-		 * We reach a sync poपूर्णांक with the coupled idle state, we know
-		 * the other cpu will घातer करोwn itself or will पात the
-		 * sequence, let's रुको क्रम one of these to happen
+		 * We reach a sync point with the coupled idle state, we know
+		 * the other cpu will power down itself or will abort the
+		 * sequence, let's wait for one of these to happen
 		 */
-		जबतक (exynos_cpu_घातer_state(1)) अणु
-			अचिन्हित दीर्घ boot_addr;
+		while (exynos_cpu_power_state(1)) {
+			unsigned long boot_addr;
 
 			/*
 			 * The other cpu may skip idle and boot back
 			 * up again
 			 */
-			अगर (atomic_पढ़ो(&cpu1_wakeup))
-				जाओ पात;
+			if (atomic_read(&cpu1_wakeup))
+				goto abort;
 
 			/*
 			 * The other cpu may bounce through idle and
@@ -217,48 +216,48 @@
 			 * boot rom code
 			 */
 			ret = exynos_get_boot_addr(1, &boot_addr);
-			अगर (ret)
-				जाओ fail;
+			if (ret)
+				goto fail;
 			ret = -1;
-			अगर (boot_addr == 0)
-				जाओ पात;
+			if (boot_addr == 0)
+				goto abort;
 
 			cpu_relax();
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	exynos_enter_aftr();
 	ret = 0;
 
-पात:
-	अगर (cpu_online(1)) अणु
-		अचिन्हित दीर्घ boot_addr = __pa_symbol(exynos_cpu_resume);
+abort:
+	if (cpu_online(1)) {
+		unsigned long boot_addr = __pa_symbol(exynos_cpu_resume);
 
 		/*
 		 * Set the boot vector to something non-zero
 		 */
 		ret = exynos_set_boot_addr(1, boot_addr);
-		अगर (ret)
-			जाओ fail;
+		if (ret)
+			goto fail;
 		dsb();
 
 		/*
-		 * Turn on cpu1 and रुको क्रम it to be on
+		 * Turn on cpu1 and wait for it to be on
 		 */
-		exynos_cpu_घातer_up(1);
-		जबतक (exynos_cpu_घातer_state(1) != S5P_CORE_LOCAL_PWR_EN)
+		exynos_cpu_power_up(1);
+		while (exynos_cpu_power_state(1) != S5P_CORE_LOCAL_PWR_EN)
 			cpu_relax();
 
-		अगर (soc_is_exynos3250()) अणु
-			जबतक (!pmu_raw_पढ़ोl(S5P_PMU_SPARE2) &&
-			       !atomic_पढ़ो(&cpu1_wakeup))
+		if (soc_is_exynos3250()) {
+			while (!pmu_raw_readl(S5P_PMU_SPARE2) &&
+			       !atomic_read(&cpu1_wakeup))
 				cpu_relax();
 
-			अगर (!atomic_पढ़ो(&cpu1_wakeup))
+			if (!atomic_read(&cpu1_wakeup))
 				exynos_core_restart(1);
-		पूर्ण
+		}
 
-		जबतक (!atomic_पढ़ो(&cpu1_wakeup)) अणु
+		while (!atomic_read(&cpu1_wakeup)) {
 			smp_rmb();
 
 			/*
@@ -266,74 +265,74 @@
 			 */
 
 			ret = exynos_set_boot_addr(1, boot_addr);
-			अगर (ret)
-				जाओ fail;
+			if (ret)
+				goto fail;
 
 			call_firmware_op(cpu_boot, 1);
 			dsb_sev();
-		पूर्ण
-	पूर्ण
+		}
+	}
 fail:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक exynos_wfi_finisher(अचिन्हित दीर्घ flags)
-अणु
-	अगर (soc_is_exynos3250())
+static int exynos_wfi_finisher(unsigned long flags)
+{
+	if (soc_is_exynos3250())
 		flush_cache_all();
-	cpu_करो_idle();
+	cpu_do_idle();
 
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल पूर्णांक exynos_cpu1_घातerकरोwn(व्योम)
-अणु
-	पूर्णांक ret = -1;
+static int exynos_cpu1_powerdown(void)
+{
+	int ret = -1;
 
 	/*
-	 * Idle sequence क्रम cpu1
+	 * Idle sequence for cpu1
 	 */
-	अगर (cpu_pm_enter())
-		जाओ cpu1_पातed;
+	if (cpu_pm_enter())
+		goto cpu1_aborted;
 
 	/*
 	 * Turn off cpu 1
 	 */
-	exynos_cpu_घातer_करोwn(1);
+	exynos_cpu_power_down(1);
 
-	अगर (soc_is_exynos3250())
-		pmu_raw_ग_लिखोl(0, S5P_PMU_SPARE2);
+	if (soc_is_exynos3250())
+		pmu_raw_writel(0, S5P_PMU_SPARE2);
 
 	ret = cpu_suspend(0, exynos_wfi_finisher);
 
-	cpu_pm_निकास();
+	cpu_pm_exit();
 
-cpu1_पातed:
+cpu1_aborted:
 	dsb();
 	/*
-	 * Notअगरy cpu 0 that cpu 1 is awake
+	 * Notify cpu 0 that cpu 1 is awake
 	 */
 	atomic_set(&cpu1_wakeup, 1);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम exynos_pre_enter_aftr(व्योम)
-अणु
-	अचिन्हित दीर्घ boot_addr = __pa_symbol(exynos_cpu_resume);
+static void exynos_pre_enter_aftr(void)
+{
+	unsigned long boot_addr = __pa_symbol(exynos_cpu_resume);
 
-	(व्योम)exynos_set_boot_addr(1, boot_addr);
-पूर्ण
+	(void)exynos_set_boot_addr(1, boot_addr);
+}
 
-अटल व्योम exynos_post_enter_aftr(व्योम)
-अणु
+static void exynos_post_enter_aftr(void)
+{
 	atomic_set(&cpu1_wakeup, 0);
-पूर्ण
+}
 
-काष्ठा cpuidle_exynos_data cpuidle_coupled_exynos_data = अणु
+struct cpuidle_exynos_data cpuidle_coupled_exynos_data = {
 	.cpu0_enter_aftr		= exynos_cpu0_enter_aftr,
-	.cpu1_घातerकरोwn		= exynos_cpu1_घातerकरोwn,
+	.cpu1_powerdown		= exynos_cpu1_powerdown,
 	.pre_enter_aftr		= exynos_pre_enter_aftr,
 	.post_enter_aftr		= exynos_post_enter_aftr,
-पूर्ण;
-#पूर्ण_अगर /* CONFIG_SMP && CONFIG_ARM_EXYNOS_CPUIDLE */
+};
+#endif /* CONFIG_SMP && CONFIG_ARM_EXYNOS_CPUIDLE */

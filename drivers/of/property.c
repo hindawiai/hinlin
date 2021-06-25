@@ -1,1080 +1,1079 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * drivers/of/property.c - Procedures क्रम accessing and पूर्णांकerpreting
+ * drivers/of/property.c - Procedures for accessing and interpreting
  *			   Devicetree properties and graphs.
  *
  * Initially created by copying procedures from drivers/of/base.c. This
- * file contains the OF property as well as the OF graph पूर्णांकerface
+ * file contains the OF property as well as the OF graph interface
  * functions.
  *
  * Paul Mackerras	August 1996.
  * Copyright (C) 1996-2005 Paul Mackerras.
  *
- *  Adapted क्रम 64bit PowerPC by Dave Engebretsen and Peter Bergner.
- *    अणुengebret|bergnerपूर्ण@us.ibm.com
+ *  Adapted for 64bit PowerPC by Dave Engebretsen and Peter Bergner.
+ *    {engebret|bergner}@us.ibm.com
  *
- *  Adapted क्रम sparc and sparc64 by David S. Miller davem@davemloft.net
+ *  Adapted for sparc and sparc64 by David S. Miller davem@davemloft.net
  *
  *  Reconsolidated from arch/x/kernel/prom.c by Stephen Rothwell and
  *  Grant Likely.
  */
 
-#घोषणा pr_fmt(fmt)	"OF: " fmt
+#define pr_fmt(fmt)	"OF: " fmt
 
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/of_graph.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/moduleparam.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/of_graph.h>
+#include <linux/of_irq.h>
+#include <linux/string.h>
+#include <linux/moduleparam.h>
 
-#समावेश "of_private.h"
+#include "of_private.h"
 
 /**
  * of_graph_is_present() - check graph's presence
- * @node: poपूर्णांकer to device_node containing graph port
+ * @node: pointer to device_node containing graph port
  *
- * Return: True अगर @node has a port or ports (with a port) sub-node,
+ * Return: True if @node has a port or ports (with a port) sub-node,
  * false otherwise.
  */
-bool of_graph_is_present(स्थिर काष्ठा device_node *node)
-अणु
-	काष्ठा device_node *ports, *port;
+bool of_graph_is_present(const struct device_node *node)
+{
+	struct device_node *ports, *port;
 
 	ports = of_get_child_by_name(node, "ports");
-	अगर (ports)
+	if (ports)
 		node = ports;
 
 	port = of_get_child_by_name(node, "port");
 	of_node_put(ports);
 	of_node_put(port);
 
-	वापस !!port;
-पूर्ण
+	return !!port;
+}
 EXPORT_SYMBOL(of_graph_is_present);
 
 /**
  * of_property_count_elems_of_size - Count the number of elements in a property
  *
- * @np:		device node from which the property value is to be पढ़ो.
+ * @np:		device node from which the property value is to be read.
  * @propname:	name of the property to be searched.
- * @elem_size:	size of the inभागidual element
+ * @elem_size:	size of the individual element
  *
- * Search क्रम a property in a device node and count the number of elements of
+ * Search for a property in a device node and count the number of elements of
  * size elem_size in it.
  *
- * Return: The number of elements on sucess, -EINVAL अगर the property करोes not
- * exist or its length करोes not match a multiple of elem_size and -ENODATA अगर
- * the property करोes not have a value.
+ * Return: The number of elements on sucess, -EINVAL if the property does not
+ * exist or its length does not match a multiple of elem_size and -ENODATA if
+ * the property does not have a value.
  */
-पूर्णांक of_property_count_elems_of_size(स्थिर काष्ठा device_node *np,
-				स्थिर अक्षर *propname, पूर्णांक elem_size)
-अणु
-	काष्ठा property *prop = of_find_property(np, propname, शून्य);
+int of_property_count_elems_of_size(const struct device_node *np,
+				const char *propname, int elem_size)
+{
+	struct property *prop = of_find_property(np, propname, NULL);
 
-	अगर (!prop)
-		वापस -EINVAL;
-	अगर (!prop->value)
-		वापस -ENODATA;
+	if (!prop)
+		return -EINVAL;
+	if (!prop->value)
+		return -ENODATA;
 
-	अगर (prop->length % elem_size != 0) अणु
+	if (prop->length % elem_size != 0) {
 		pr_err("size of %s in node %pOF is not a multiple of %d\n",
 		       propname, np, elem_size);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस prop->length / elem_size;
-पूर्ण
+	return prop->length / elem_size;
+}
 EXPORT_SYMBOL_GPL(of_property_count_elems_of_size);
 
 /**
  * of_find_property_value_of_size
  *
- * @np:		device node from which the property value is to be पढ़ो.
+ * @np:		device node from which the property value is to be read.
  * @propname:	name of the property to be searched.
  * @min:	minimum allowed length of property value
  * @max:	maximum allowed length of property value (0 means unlimited)
- * @len:	अगर !=शून्य, actual length is written to here
+ * @len:	if !=NULL, actual length is written to here
  *
- * Search क्रम a property in a device node and valid the requested size.
+ * Search for a property in a device node and valid the requested size.
  *
- * Return: The property value on success, -EINVAL अगर the property करोes not
- * exist, -ENODATA अगर property करोes not have a value, and -EOVERFLOW अगर the
+ * Return: The property value on success, -EINVAL if the property does not
+ * exist, -ENODATA if property does not have a value, and -EOVERFLOW if the
  * property data is too small or too large.
  *
  */
-अटल व्योम *of_find_property_value_of_size(स्थिर काष्ठा device_node *np,
-			स्थिर अक्षर *propname, u32 min, u32 max, माप_प्रकार *len)
-अणु
-	काष्ठा property *prop = of_find_property(np, propname, शून्य);
+static void *of_find_property_value_of_size(const struct device_node *np,
+			const char *propname, u32 min, u32 max, size_t *len)
+{
+	struct property *prop = of_find_property(np, propname, NULL);
 
-	अगर (!prop)
-		वापस ERR_PTR(-EINVAL);
-	अगर (!prop->value)
-		वापस ERR_PTR(-ENODATA);
-	अगर (prop->length < min)
-		वापस ERR_PTR(-EOVERFLOW);
-	अगर (max && prop->length > max)
-		वापस ERR_PTR(-EOVERFLOW);
+	if (!prop)
+		return ERR_PTR(-EINVAL);
+	if (!prop->value)
+		return ERR_PTR(-ENODATA);
+	if (prop->length < min)
+		return ERR_PTR(-EOVERFLOW);
+	if (max && prop->length > max)
+		return ERR_PTR(-EOVERFLOW);
 
-	अगर (len)
+	if (len)
 		*len = prop->length;
 
-	वापस prop->value;
-पूर्ण
+	return prop->value;
+}
 
 /**
- * of_property_पढ़ो_u32_index - Find and पढ़ो a u32 from a multi-value property.
+ * of_property_read_u32_index - Find and read a u32 from a multi-value property.
  *
- * @np:		device node from which the property value is to be पढ़ो.
+ * @np:		device node from which the property value is to be read.
  * @propname:	name of the property to be searched.
  * @index:	index of the u32 in the list of values
- * @out_value:	poपूर्णांकer to वापस value, modअगरied only अगर no error.
+ * @out_value:	pointer to return value, modified only if no error.
  *
- * Search क्रम a property in a device node and पढ़ो nth 32-bit value from
+ * Search for a property in a device node and read nth 32-bit value from
  * it.
  *
- * Return: 0 on success, -EINVAL अगर the property करोes not exist,
- * -ENODATA अगर property करोes not have a value, and -EOVERFLOW अगर the
+ * Return: 0 on success, -EINVAL if the property does not exist,
+ * -ENODATA if property does not have a value, and -EOVERFLOW if the
  * property data isn't large enough.
  *
- * The out_value is modअगरied only अगर a valid u32 value can be decoded.
+ * The out_value is modified only if a valid u32 value can be decoded.
  */
-पूर्णांक of_property_पढ़ो_u32_index(स्थिर काष्ठा device_node *np,
-				       स्थिर अक्षर *propname,
+int of_property_read_u32_index(const struct device_node *np,
+				       const char *propname,
 				       u32 index, u32 *out_value)
-अणु
-	स्थिर u32 *val = of_find_property_value_of_size(np, propname,
-					((index + 1) * माप(*out_value)),
+{
+	const u32 *val = of_find_property_value_of_size(np, propname,
+					((index + 1) * sizeof(*out_value)),
 					0,
-					शून्य);
+					NULL);
 
-	अगर (IS_ERR(val))
-		वापस PTR_ERR(val);
+	if (IS_ERR(val))
+		return PTR_ERR(val);
 
 	*out_value = be32_to_cpup(((__be32 *)val) + index);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(of_property_पढ़ो_u32_index);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(of_property_read_u32_index);
 
 /**
- * of_property_पढ़ो_u64_index - Find and पढ़ो a u64 from a multi-value property.
+ * of_property_read_u64_index - Find and read a u64 from a multi-value property.
  *
- * @np:		device node from which the property value is to be पढ़ो.
+ * @np:		device node from which the property value is to be read.
  * @propname:	name of the property to be searched.
  * @index:	index of the u64 in the list of values
- * @out_value:	poपूर्णांकer to वापस value, modअगरied only अगर no error.
+ * @out_value:	pointer to return value, modified only if no error.
  *
- * Search क्रम a property in a device node and पढ़ो nth 64-bit value from
+ * Search for a property in a device node and read nth 64-bit value from
  * it.
  *
- * Return: 0 on success, -EINVAL अगर the property करोes not exist,
- * -ENODATA अगर property करोes not have a value, and -EOVERFLOW अगर the
+ * Return: 0 on success, -EINVAL if the property does not exist,
+ * -ENODATA if property does not have a value, and -EOVERFLOW if the
  * property data isn't large enough.
  *
- * The out_value is modअगरied only अगर a valid u64 value can be decoded.
+ * The out_value is modified only if a valid u64 value can be decoded.
  */
-पूर्णांक of_property_पढ़ो_u64_index(स्थिर काष्ठा device_node *np,
-				       स्थिर अक्षर *propname,
+int of_property_read_u64_index(const struct device_node *np,
+				       const char *propname,
 				       u32 index, u64 *out_value)
-अणु
-	स्थिर u64 *val = of_find_property_value_of_size(np, propname,
-					((index + 1) * माप(*out_value)),
-					0, शून्य);
+{
+	const u64 *val = of_find_property_value_of_size(np, propname,
+					((index + 1) * sizeof(*out_value)),
+					0, NULL);
 
-	अगर (IS_ERR(val))
-		वापस PTR_ERR(val);
+	if (IS_ERR(val))
+		return PTR_ERR(val);
 
 	*out_value = be64_to_cpup(((__be64 *)val) + index);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(of_property_पढ़ो_u64_index);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(of_property_read_u64_index);
 
 /**
- * of_property_पढ़ो_variable_u8_array - Find and पढ़ो an array of u8 from a
+ * of_property_read_variable_u8_array - Find and read an array of u8 from a
  * property, with bounds on the minimum and maximum array size.
  *
- * @np:		device node from which the property value is to be पढ़ो.
+ * @np:		device node from which the property value is to be read.
  * @propname:	name of the property to be searched.
- * @out_values:	poपूर्णांकer to found values.
- * @sz_min:	minimum number of array elements to पढ़ो
- * @sz_max:	maximum number of array elements to पढ़ो, अगर zero there is no
+ * @out_values:	pointer to found values.
+ * @sz_min:	minimum number of array elements to read
+ * @sz_max:	maximum number of array elements to read, if zero there is no
  *		upper limit on the number of elements in the dts entry but only
- *		sz_min will be पढ़ो.
+ *		sz_min will be read.
  *
- * Search क्रम a property in a device node and पढ़ो 8-bit value(s) from
+ * Search for a property in a device node and read 8-bit value(s) from
  * it.
  *
  * dts entry of array should be like:
  *  ``property = /bits/ 8 <0x50 0x60 0x70>;``
  *
- * Return: The number of elements पढ़ो on success, -EINVAL अगर the property
- * करोes not exist, -ENODATA अगर property करोes not have a value, and -EOVERFLOW
- * अगर the property data is smaller than sz_min or दीर्घer than sz_max.
+ * Return: The number of elements read on success, -EINVAL if the property
+ * does not exist, -ENODATA if property does not have a value, and -EOVERFLOW
+ * if the property data is smaller than sz_min or longer than sz_max.
  *
- * The out_values is modअगरied only अगर a valid u8 value can be decoded.
+ * The out_values is modified only if a valid u8 value can be decoded.
  */
-पूर्णांक of_property_पढ़ो_variable_u8_array(स्थिर काष्ठा device_node *np,
-					स्थिर अक्षर *propname, u8 *out_values,
-					माप_प्रकार sz_min, माप_प्रकार sz_max)
-अणु
-	माप_प्रकार sz, count;
-	स्थिर u8 *val = of_find_property_value_of_size(np, propname,
-						(sz_min * माप(*out_values)),
-						(sz_max * माप(*out_values)),
+int of_property_read_variable_u8_array(const struct device_node *np,
+					const char *propname, u8 *out_values,
+					size_t sz_min, size_t sz_max)
+{
+	size_t sz, count;
+	const u8 *val = of_find_property_value_of_size(np, propname,
+						(sz_min * sizeof(*out_values)),
+						(sz_max * sizeof(*out_values)),
 						&sz);
 
-	अगर (IS_ERR(val))
-		वापस PTR_ERR(val);
+	if (IS_ERR(val))
+		return PTR_ERR(val);
 
-	अगर (!sz_max)
+	if (!sz_max)
 		sz = sz_min;
-	अन्यथा
-		sz /= माप(*out_values);
+	else
+		sz /= sizeof(*out_values);
 
 	count = sz;
-	जबतक (count--)
+	while (count--)
 		*out_values++ = *val++;
 
-	वापस sz;
-पूर्ण
-EXPORT_SYMBOL_GPL(of_property_पढ़ो_variable_u8_array);
+	return sz;
+}
+EXPORT_SYMBOL_GPL(of_property_read_variable_u8_array);
 
 /**
- * of_property_पढ़ो_variable_u16_array - Find and पढ़ो an array of u16 from a
+ * of_property_read_variable_u16_array - Find and read an array of u16 from a
  * property, with bounds on the minimum and maximum array size.
  *
- * @np:		device node from which the property value is to be पढ़ो.
+ * @np:		device node from which the property value is to be read.
  * @propname:	name of the property to be searched.
- * @out_values:	poपूर्णांकer to found values.
- * @sz_min:	minimum number of array elements to पढ़ो
- * @sz_max:	maximum number of array elements to पढ़ो, अगर zero there is no
+ * @out_values:	pointer to found values.
+ * @sz_min:	minimum number of array elements to read
+ * @sz_max:	maximum number of array elements to read, if zero there is no
  *		upper limit on the number of elements in the dts entry but only
- *		sz_min will be पढ़ो.
+ *		sz_min will be read.
  *
- * Search क्रम a property in a device node and पढ़ो 16-bit value(s) from
+ * Search for a property in a device node and read 16-bit value(s) from
  * it.
  *
  * dts entry of array should be like:
  *  ``property = /bits/ 16 <0x5000 0x6000 0x7000>;``
  *
- * Return: The number of elements पढ़ो on success, -EINVAL अगर the property
- * करोes not exist, -ENODATA अगर property करोes not have a value, and -EOVERFLOW
- * अगर the property data is smaller than sz_min or दीर्घer than sz_max.
+ * Return: The number of elements read on success, -EINVAL if the property
+ * does not exist, -ENODATA if property does not have a value, and -EOVERFLOW
+ * if the property data is smaller than sz_min or longer than sz_max.
  *
- * The out_values is modअगरied only अगर a valid u16 value can be decoded.
+ * The out_values is modified only if a valid u16 value can be decoded.
  */
-पूर्णांक of_property_पढ़ो_variable_u16_array(स्थिर काष्ठा device_node *np,
-					स्थिर अक्षर *propname, u16 *out_values,
-					माप_प्रकार sz_min, माप_प्रकार sz_max)
-अणु
-	माप_प्रकार sz, count;
-	स्थिर __be16 *val = of_find_property_value_of_size(np, propname,
-						(sz_min * माप(*out_values)),
-						(sz_max * माप(*out_values)),
+int of_property_read_variable_u16_array(const struct device_node *np,
+					const char *propname, u16 *out_values,
+					size_t sz_min, size_t sz_max)
+{
+	size_t sz, count;
+	const __be16 *val = of_find_property_value_of_size(np, propname,
+						(sz_min * sizeof(*out_values)),
+						(sz_max * sizeof(*out_values)),
 						&sz);
 
-	अगर (IS_ERR(val))
-		वापस PTR_ERR(val);
+	if (IS_ERR(val))
+		return PTR_ERR(val);
 
-	अगर (!sz_max)
+	if (!sz_max)
 		sz = sz_min;
-	अन्यथा
-		sz /= माप(*out_values);
+	else
+		sz /= sizeof(*out_values);
 
 	count = sz;
-	जबतक (count--)
+	while (count--)
 		*out_values++ = be16_to_cpup(val++);
 
-	वापस sz;
-पूर्ण
-EXPORT_SYMBOL_GPL(of_property_पढ़ो_variable_u16_array);
+	return sz;
+}
+EXPORT_SYMBOL_GPL(of_property_read_variable_u16_array);
 
 /**
- * of_property_पढ़ो_variable_u32_array - Find and पढ़ो an array of 32 bit
- * पूर्णांकegers from a property, with bounds on the minimum and maximum array size.
+ * of_property_read_variable_u32_array - Find and read an array of 32 bit
+ * integers from a property, with bounds on the minimum and maximum array size.
  *
- * @np:		device node from which the property value is to be पढ़ो.
+ * @np:		device node from which the property value is to be read.
  * @propname:	name of the property to be searched.
- * @out_values:	poपूर्णांकer to वापस found values.
- * @sz_min:	minimum number of array elements to पढ़ो
- * @sz_max:	maximum number of array elements to पढ़ो, अगर zero there is no
+ * @out_values:	pointer to return found values.
+ * @sz_min:	minimum number of array elements to read
+ * @sz_max:	maximum number of array elements to read, if zero there is no
  *		upper limit on the number of elements in the dts entry but only
- *		sz_min will be पढ़ो.
+ *		sz_min will be read.
  *
- * Search क्रम a property in a device node and पढ़ो 32-bit value(s) from
+ * Search for a property in a device node and read 32-bit value(s) from
  * it.
  *
- * Return: The number of elements पढ़ो on success, -EINVAL अगर the property
- * करोes not exist, -ENODATA अगर property करोes not have a value, and -EOVERFLOW
- * अगर the property data is smaller than sz_min or दीर्घer than sz_max.
+ * Return: The number of elements read on success, -EINVAL if the property
+ * does not exist, -ENODATA if property does not have a value, and -EOVERFLOW
+ * if the property data is smaller than sz_min or longer than sz_max.
  *
- * The out_values is modअगरied only अगर a valid u32 value can be decoded.
+ * The out_values is modified only if a valid u32 value can be decoded.
  */
-पूर्णांक of_property_पढ़ो_variable_u32_array(स्थिर काष्ठा device_node *np,
-			       स्थिर अक्षर *propname, u32 *out_values,
-			       माप_प्रकार sz_min, माप_प्रकार sz_max)
-अणु
-	माप_प्रकार sz, count;
-	स्थिर __be32 *val = of_find_property_value_of_size(np, propname,
-						(sz_min * माप(*out_values)),
-						(sz_max * माप(*out_values)),
+int of_property_read_variable_u32_array(const struct device_node *np,
+			       const char *propname, u32 *out_values,
+			       size_t sz_min, size_t sz_max)
+{
+	size_t sz, count;
+	const __be32 *val = of_find_property_value_of_size(np, propname,
+						(sz_min * sizeof(*out_values)),
+						(sz_max * sizeof(*out_values)),
 						&sz);
 
-	अगर (IS_ERR(val))
-		वापस PTR_ERR(val);
+	if (IS_ERR(val))
+		return PTR_ERR(val);
 
-	अगर (!sz_max)
+	if (!sz_max)
 		sz = sz_min;
-	अन्यथा
-		sz /= माप(*out_values);
+	else
+		sz /= sizeof(*out_values);
 
 	count = sz;
-	जबतक (count--)
+	while (count--)
 		*out_values++ = be32_to_cpup(val++);
 
-	वापस sz;
-पूर्ण
-EXPORT_SYMBOL_GPL(of_property_पढ़ो_variable_u32_array);
+	return sz;
+}
+EXPORT_SYMBOL_GPL(of_property_read_variable_u32_array);
 
 /**
- * of_property_पढ़ो_u64 - Find and पढ़ो a 64 bit पूर्णांकeger from a property
- * @np:		device node from which the property value is to be पढ़ो.
+ * of_property_read_u64 - Find and read a 64 bit integer from a property
+ * @np:		device node from which the property value is to be read.
  * @propname:	name of the property to be searched.
- * @out_value:	poपूर्णांकer to वापस value, modअगरied only अगर वापस value is 0.
+ * @out_value:	pointer to return value, modified only if return value is 0.
  *
- * Search क्रम a property in a device node and पढ़ो a 64-bit value from
+ * Search for a property in a device node and read a 64-bit value from
  * it.
  *
- * Return: 0 on success, -EINVAL अगर the property करोes not exist,
- * -ENODATA अगर property करोes not have a value, and -EOVERFLOW अगर the
+ * Return: 0 on success, -EINVAL if the property does not exist,
+ * -ENODATA if property does not have a value, and -EOVERFLOW if the
  * property data isn't large enough.
  *
- * The out_value is modअगरied only अगर a valid u64 value can be decoded.
+ * The out_value is modified only if a valid u64 value can be decoded.
  */
-पूर्णांक of_property_पढ़ो_u64(स्थिर काष्ठा device_node *np, स्थिर अक्षर *propname,
+int of_property_read_u64(const struct device_node *np, const char *propname,
 			 u64 *out_value)
-अणु
-	स्थिर __be32 *val = of_find_property_value_of_size(np, propname,
-						माप(*out_value),
+{
+	const __be32 *val = of_find_property_value_of_size(np, propname,
+						sizeof(*out_value),
 						0,
-						शून्य);
+						NULL);
 
-	अगर (IS_ERR(val))
-		वापस PTR_ERR(val);
+	if (IS_ERR(val))
+		return PTR_ERR(val);
 
-	*out_value = of_पढ़ो_number(val, 2);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(of_property_पढ़ो_u64);
+	*out_value = of_read_number(val, 2);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(of_property_read_u64);
 
 /**
- * of_property_पढ़ो_variable_u64_array - Find and पढ़ो an array of 64 bit
- * पूर्णांकegers from a property, with bounds on the minimum and maximum array size.
+ * of_property_read_variable_u64_array - Find and read an array of 64 bit
+ * integers from a property, with bounds on the minimum and maximum array size.
  *
- * @np:		device node from which the property value is to be पढ़ो.
+ * @np:		device node from which the property value is to be read.
  * @propname:	name of the property to be searched.
- * @out_values:	poपूर्णांकer to found values.
- * @sz_min:	minimum number of array elements to पढ़ो
- * @sz_max:	maximum number of array elements to पढ़ो, अगर zero there is no
+ * @out_values:	pointer to found values.
+ * @sz_min:	minimum number of array elements to read
+ * @sz_max:	maximum number of array elements to read, if zero there is no
  *		upper limit on the number of elements in the dts entry but only
- *		sz_min will be पढ़ो.
+ *		sz_min will be read.
  *
- * Search क्रम a property in a device node and पढ़ो 64-bit value(s) from
+ * Search for a property in a device node and read 64-bit value(s) from
  * it.
  *
- * Return: The number of elements पढ़ो on success, -EINVAL अगर the property
- * करोes not exist, -ENODATA अगर property करोes not have a value, and -EOVERFLOW
- * अगर the property data is smaller than sz_min or दीर्घer than sz_max.
+ * Return: The number of elements read on success, -EINVAL if the property
+ * does not exist, -ENODATA if property does not have a value, and -EOVERFLOW
+ * if the property data is smaller than sz_min or longer than sz_max.
  *
- * The out_values is modअगरied only अगर a valid u64 value can be decoded.
+ * The out_values is modified only if a valid u64 value can be decoded.
  */
-पूर्णांक of_property_पढ़ो_variable_u64_array(स्थिर काष्ठा device_node *np,
-			       स्थिर अक्षर *propname, u64 *out_values,
-			       माप_प्रकार sz_min, माप_प्रकार sz_max)
-अणु
-	माप_प्रकार sz, count;
-	स्थिर __be32 *val = of_find_property_value_of_size(np, propname,
-						(sz_min * माप(*out_values)),
-						(sz_max * माप(*out_values)),
+int of_property_read_variable_u64_array(const struct device_node *np,
+			       const char *propname, u64 *out_values,
+			       size_t sz_min, size_t sz_max)
+{
+	size_t sz, count;
+	const __be32 *val = of_find_property_value_of_size(np, propname,
+						(sz_min * sizeof(*out_values)),
+						(sz_max * sizeof(*out_values)),
 						&sz);
 
-	अगर (IS_ERR(val))
-		वापस PTR_ERR(val);
+	if (IS_ERR(val))
+		return PTR_ERR(val);
 
-	अगर (!sz_max)
+	if (!sz_max)
 		sz = sz_min;
-	अन्यथा
-		sz /= माप(*out_values);
+	else
+		sz /= sizeof(*out_values);
 
 	count = sz;
-	जबतक (count--) अणु
-		*out_values++ = of_पढ़ो_number(val, 2);
+	while (count--) {
+		*out_values++ = of_read_number(val, 2);
 		val += 2;
-	पूर्ण
+	}
 
-	वापस sz;
-पूर्ण
-EXPORT_SYMBOL_GPL(of_property_पढ़ो_variable_u64_array);
+	return sz;
+}
+EXPORT_SYMBOL_GPL(of_property_read_variable_u64_array);
 
 /**
- * of_property_पढ़ो_string - Find and पढ़ो a string from a property
- * @np:		device node from which the property value is to be पढ़ो.
+ * of_property_read_string - Find and read a string from a property
+ * @np:		device node from which the property value is to be read.
  * @propname:	name of the property to be searched.
- * @out_string:	poपूर्णांकer to null terminated वापस string, modअगरied only अगर
- *		वापस value is 0.
+ * @out_string:	pointer to null terminated return string, modified only if
+ *		return value is 0.
  *
- * Search क्रम a property in a device tree node and retrieve a null
- * terminated string value (poपूर्णांकer to data, not a copy).
+ * Search for a property in a device tree node and retrieve a null
+ * terminated string value (pointer to data, not a copy).
  *
- * Return: 0 on success, -EINVAL अगर the property करोes not exist, -ENODATA अगर
- * property करोes not have a value, and -EILSEQ अगर the string is not
+ * Return: 0 on success, -EINVAL if the property does not exist, -ENODATA if
+ * property does not have a value, and -EILSEQ if the string is not
  * null-terminated within the length of the property data.
  *
- * The out_string poपूर्णांकer is modअगरied only अगर a valid string can be decoded.
+ * The out_string pointer is modified only if a valid string can be decoded.
  */
-पूर्णांक of_property_पढ़ो_string(स्थिर काष्ठा device_node *np, स्थिर अक्षर *propname,
-				स्थिर अक्षर **out_string)
-अणु
-	स्थिर काष्ठा property *prop = of_find_property(np, propname, शून्य);
-	अगर (!prop)
-		वापस -EINVAL;
-	अगर (!prop->value)
-		वापस -ENODATA;
-	अगर (strnlen(prop->value, prop->length) >= prop->length)
-		वापस -EILSEQ;
+int of_property_read_string(const struct device_node *np, const char *propname,
+				const char **out_string)
+{
+	const struct property *prop = of_find_property(np, propname, NULL);
+	if (!prop)
+		return -EINVAL;
+	if (!prop->value)
+		return -ENODATA;
+	if (strnlen(prop->value, prop->length) >= prop->length)
+		return -EILSEQ;
 	*out_string = prop->value;
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(of_property_पढ़ो_string);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(of_property_read_string);
 
 /**
- * of_property_match_string() - Find string in a list and वापस index
- * @np: poपूर्णांकer to node containing string list property
+ * of_property_match_string() - Find string in a list and return index
+ * @np: pointer to node containing string list property
  * @propname: string list property name
- * @string: poपूर्णांकer to string to search क्रम in string list
+ * @string: pointer to string to search for in string list
  *
- * This function searches a string list property and वापसs the index
- * of a specअगरic string value.
+ * This function searches a string list property and returns the index
+ * of a specific string value.
  */
-पूर्णांक of_property_match_string(स्थिर काष्ठा device_node *np, स्थिर अक्षर *propname,
-			     स्थिर अक्षर *string)
-अणु
-	स्थिर काष्ठा property *prop = of_find_property(np, propname, शून्य);
-	माप_प्रकार l;
-	पूर्णांक i;
-	स्थिर अक्षर *p, *end;
+int of_property_match_string(const struct device_node *np, const char *propname,
+			     const char *string)
+{
+	const struct property *prop = of_find_property(np, propname, NULL);
+	size_t l;
+	int i;
+	const char *p, *end;
 
-	अगर (!prop)
-		वापस -EINVAL;
-	अगर (!prop->value)
-		वापस -ENODATA;
+	if (!prop)
+		return -EINVAL;
+	if (!prop->value)
+		return -ENODATA;
 
 	p = prop->value;
 	end = p + prop->length;
 
-	क्रम (i = 0; p < end; i++, p += l) अणु
+	for (i = 0; p < end; i++, p += l) {
 		l = strnlen(p, end - p) + 1;
-		अगर (p + l > end)
-			वापस -EILSEQ;
+		if (p + l > end)
+			return -EILSEQ;
 		pr_debug("comparing %s with %s\n", string, p);
-		अगर (म_भेद(string, p) == 0)
-			वापस i; /* Found it; वापस index */
-	पूर्ण
-	वापस -ENODATA;
-पूर्ण
+		if (strcmp(string, p) == 0)
+			return i; /* Found it; return index */
+	}
+	return -ENODATA;
+}
 EXPORT_SYMBOL_GPL(of_property_match_string);
 
 /**
- * of_property_पढ़ो_string_helper() - Utility helper क्रम parsing string properties
- * @np:		device node from which the property value is to be पढ़ो.
+ * of_property_read_string_helper() - Utility helper for parsing string properties
+ * @np:		device node from which the property value is to be read.
  * @propname:	name of the property to be searched.
- * @out_strs:	output array of string poपूर्णांकers.
- * @sz:		number of array elements to पढ़ो.
+ * @out_strs:	output array of string pointers.
+ * @sz:		number of array elements to read.
  * @skip:	Number of strings to skip over at beginning of list.
  *
- * Don't call this function directly. It is a utility helper क्रम the
- * of_property_पढ़ो_string*() family of functions.
+ * Don't call this function directly. It is a utility helper for the
+ * of_property_read_string*() family of functions.
  */
-पूर्णांक of_property_पढ़ो_string_helper(स्थिर काष्ठा device_node *np,
-				   स्थिर अक्षर *propname, स्थिर अक्षर **out_strs,
-				   माप_प्रकार sz, पूर्णांक skip)
-अणु
-	स्थिर काष्ठा property *prop = of_find_property(np, propname, शून्य);
-	पूर्णांक l = 0, i = 0;
-	स्थिर अक्षर *p, *end;
+int of_property_read_string_helper(const struct device_node *np,
+				   const char *propname, const char **out_strs,
+				   size_t sz, int skip)
+{
+	const struct property *prop = of_find_property(np, propname, NULL);
+	int l = 0, i = 0;
+	const char *p, *end;
 
-	अगर (!prop)
-		वापस -EINVAL;
-	अगर (!prop->value)
-		वापस -ENODATA;
+	if (!prop)
+		return -EINVAL;
+	if (!prop->value)
+		return -ENODATA;
 	p = prop->value;
 	end = p + prop->length;
 
-	क्रम (i = 0; p < end && (!out_strs || i < skip + sz); i++, p += l) अणु
+	for (i = 0; p < end && (!out_strs || i < skip + sz); i++, p += l) {
 		l = strnlen(p, end - p) + 1;
-		अगर (p + l > end)
-			वापस -EILSEQ;
-		अगर (out_strs && i >= skip)
+		if (p + l > end)
+			return -EILSEQ;
+		if (out_strs && i >= skip)
 			*out_strs++ = p;
-	पूर्ण
+	}
 	i -= skip;
-	वापस i <= 0 ? -ENODATA : i;
-पूर्ण
-EXPORT_SYMBOL_GPL(of_property_पढ़ो_string_helper);
+	return i <= 0 ? -ENODATA : i;
+}
+EXPORT_SYMBOL_GPL(of_property_read_string_helper);
 
-स्थिर __be32 *of_prop_next_u32(काष्ठा property *prop, स्थिर __be32 *cur,
+const __be32 *of_prop_next_u32(struct property *prop, const __be32 *cur,
 			       u32 *pu)
-अणु
-	स्थिर व्योम *curv = cur;
+{
+	const void *curv = cur;
 
-	अगर (!prop)
-		वापस शून्य;
+	if (!prop)
+		return NULL;
 
-	अगर (!cur) अणु
+	if (!cur) {
 		curv = prop->value;
-		जाओ out_val;
-	पूर्ण
+		goto out_val;
+	}
 
-	curv += माप(*cur);
-	अगर (curv >= prop->value + prop->length)
-		वापस शून्य;
+	curv += sizeof(*cur);
+	if (curv >= prop->value + prop->length)
+		return NULL;
 
 out_val:
 	*pu = be32_to_cpup(curv);
-	वापस curv;
-पूर्ण
+	return curv;
+}
 EXPORT_SYMBOL_GPL(of_prop_next_u32);
 
-स्थिर अक्षर *of_prop_next_string(काष्ठा property *prop, स्थिर अक्षर *cur)
-अणु
-	स्थिर व्योम *curv = cur;
+const char *of_prop_next_string(struct property *prop, const char *cur)
+{
+	const void *curv = cur;
 
-	अगर (!prop)
-		वापस शून्य;
+	if (!prop)
+		return NULL;
 
-	अगर (!cur)
-		वापस prop->value;
+	if (!cur)
+		return prop->value;
 
-	curv += म_माप(cur) + 1;
-	अगर (curv >= prop->value + prop->length)
-		वापस शून्य;
+	curv += strlen(cur) + 1;
+	if (curv >= prop->value + prop->length)
+		return NULL;
 
-	वापस curv;
-पूर्ण
+	return curv;
+}
 EXPORT_SYMBOL_GPL(of_prop_next_string);
 
 /**
- * of_graph_parse_endpoपूर्णांक() - parse common endpoपूर्णांक node properties
- * @node: poपूर्णांकer to endpoपूर्णांक device_node
- * @endpoपूर्णांक: poपूर्णांकer to the OF endpoपूर्णांक data काष्ठाure
+ * of_graph_parse_endpoint() - parse common endpoint node properties
+ * @node: pointer to endpoint device_node
+ * @endpoint: pointer to the OF endpoint data structure
  *
  * The caller should hold a reference to @node.
  */
-पूर्णांक of_graph_parse_endpoपूर्णांक(स्थिर काष्ठा device_node *node,
-			    काष्ठा of_endpoपूर्णांक *endpoपूर्णांक)
-अणु
-	काष्ठा device_node *port_node = of_get_parent(node);
+int of_graph_parse_endpoint(const struct device_node *node,
+			    struct of_endpoint *endpoint)
+{
+	struct device_node *port_node = of_get_parent(node);
 
 	WARN_ONCE(!port_node, "%s(): endpoint %pOF has no parent node\n",
 		  __func__, node);
 
-	स_रखो(endpoपूर्णांक, 0, माप(*endpoपूर्णांक));
+	memset(endpoint, 0, sizeof(*endpoint));
 
-	endpoपूर्णांक->local_node = node;
+	endpoint->local_node = node;
 	/*
-	 * It करोesn't matter whether the two calls below succeed.
-	 * If they करोn't then the शेष value 0 is used.
+	 * It doesn't matter whether the two calls below succeed.
+	 * If they don't then the default value 0 is used.
 	 */
-	of_property_पढ़ो_u32(port_node, "reg", &endpoपूर्णांक->port);
-	of_property_पढ़ो_u32(node, "reg", &endpoपूर्णांक->id);
+	of_property_read_u32(port_node, "reg", &endpoint->port);
+	of_property_read_u32(node, "reg", &endpoint->id);
 
 	of_node_put(port_node);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(of_graph_parse_endpoपूर्णांक);
+	return 0;
+}
+EXPORT_SYMBOL(of_graph_parse_endpoint);
 
 /**
  * of_graph_get_port_by_id() - get the port matching a given id
- * @parent: poपूर्णांकer to the parent device node
+ * @parent: pointer to the parent device node
  * @id: id of the port
  *
- * Return: A 'port' node poपूर्णांकer with refcount incremented. The caller
- * has to use of_node_put() on it when करोne.
+ * Return: A 'port' node pointer with refcount incremented. The caller
+ * has to use of_node_put() on it when done.
  */
-काष्ठा device_node *of_graph_get_port_by_id(काष्ठा device_node *parent, u32 id)
-अणु
-	काष्ठा device_node *node, *port;
+struct device_node *of_graph_get_port_by_id(struct device_node *parent, u32 id)
+{
+	struct device_node *node, *port;
 
 	node = of_get_child_by_name(parent, "ports");
-	अगर (node)
+	if (node)
 		parent = node;
 
-	क्रम_each_child_of_node(parent, port) अणु
+	for_each_child_of_node(parent, port) {
 		u32 port_id = 0;
 
-		अगर (!of_node_name_eq(port, "port"))
-			जारी;
-		of_property_पढ़ो_u32(port, "reg", &port_id);
-		अगर (id == port_id)
-			अवरोध;
-	पूर्ण
+		if (!of_node_name_eq(port, "port"))
+			continue;
+		of_property_read_u32(port, "reg", &port_id);
+		if (id == port_id)
+			break;
+	}
 
 	of_node_put(node);
 
-	वापस port;
-पूर्ण
+	return port;
+}
 EXPORT_SYMBOL(of_graph_get_port_by_id);
 
 /**
- * of_graph_get_next_endpoपूर्णांक() - get next endpoपूर्णांक node
- * @parent: poपूर्णांकer to the parent device node
- * @prev: previous endpoपूर्णांक node, or शून्य to get first
+ * of_graph_get_next_endpoint() - get next endpoint node
+ * @parent: pointer to the parent device node
+ * @prev: previous endpoint node, or NULL to get first
  *
- * Return: An 'endpoint' node poपूर्णांकer with refcount incremented. Refcount
+ * Return: An 'endpoint' node pointer with refcount incremented. Refcount
  * of the passed @prev node is decremented.
  */
-काष्ठा device_node *of_graph_get_next_endpoपूर्णांक(स्थिर काष्ठा device_node *parent,
-					काष्ठा device_node *prev)
-अणु
-	काष्ठा device_node *endpoपूर्णांक;
-	काष्ठा device_node *port;
+struct device_node *of_graph_get_next_endpoint(const struct device_node *parent,
+					struct device_node *prev)
+{
+	struct device_node *endpoint;
+	struct device_node *port;
 
-	अगर (!parent)
-		वापस शून्य;
+	if (!parent)
+		return NULL;
 
 	/*
-	 * Start by locating the port node. If no previous endpoपूर्णांक is specअगरied
-	 * search क्रम the first port node, otherwise get the previous endpoपूर्णांक
+	 * Start by locating the port node. If no previous endpoint is specified
+	 * search for the first port node, otherwise get the previous endpoint
 	 * parent port node.
 	 */
-	अगर (!prev) अणु
-		काष्ठा device_node *node;
+	if (!prev) {
+		struct device_node *node;
 
 		node = of_get_child_by_name(parent, "ports");
-		अगर (node)
+		if (node)
 			parent = node;
 
 		port = of_get_child_by_name(parent, "port");
 		of_node_put(node);
 
-		अगर (!port) अणु
+		if (!port) {
 			pr_err("graph: no port node found in %pOF\n", parent);
-			वापस शून्य;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			return NULL;
+		}
+	} else {
 		port = of_get_parent(prev);
-		अगर (WARN_ONCE(!port, "%s(): endpoint %pOF has no parent node\n",
+		if (WARN_ONCE(!port, "%s(): endpoint %pOF has no parent node\n",
 			      __func__, prev))
-			वापस शून्य;
-	पूर्ण
+			return NULL;
+	}
 
-	जबतक (1) अणु
+	while (1) {
 		/*
-		 * Now that we have a port node, get the next endpoपूर्णांक by
-		 * getting the next child. If the previous endpoपूर्णांक is शून्य this
-		 * will वापस the first child.
+		 * Now that we have a port node, get the next endpoint by
+		 * getting the next child. If the previous endpoint is NULL this
+		 * will return the first child.
 		 */
-		endpoपूर्णांक = of_get_next_child(port, prev);
-		अगर (endpoपूर्णांक) अणु
+		endpoint = of_get_next_child(port, prev);
+		if (endpoint) {
 			of_node_put(port);
-			वापस endpoपूर्णांक;
-		पूर्ण
+			return endpoint;
+		}
 
-		/* No more endpoपूर्णांकs under this port, try the next one. */
-		prev = शून्य;
+		/* No more endpoints under this port, try the next one. */
+		prev = NULL;
 
-		करो अणु
+		do {
 			port = of_get_next_child(parent, port);
-			अगर (!port)
-				वापस शून्य;
-		पूर्ण जबतक (!of_node_name_eq(port, "port"));
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL(of_graph_get_next_endpoपूर्णांक);
+			if (!port)
+				return NULL;
+		} while (!of_node_name_eq(port, "port"));
+	}
+}
+EXPORT_SYMBOL(of_graph_get_next_endpoint);
 
 /**
- * of_graph_get_endpoपूर्णांक_by_regs() - get endpoपूर्णांक node of specअगरic identअगरiers
- * @parent: poपूर्णांकer to the parent device node
- * @port_reg: identअगरier (value of reg property) of the parent port node
- * @reg: identअगरier (value of reg property) of the endpoपूर्णांक node
+ * of_graph_get_endpoint_by_regs() - get endpoint node of specific identifiers
+ * @parent: pointer to the parent device node
+ * @port_reg: identifier (value of reg property) of the parent port node
+ * @reg: identifier (value of reg property) of the endpoint node
  *
- * Return: An 'endpoint' node poपूर्णांकer which is identअगरied by reg and at the same
- * is the child of a port node identअगरied by port_reg. reg and port_reg are
- * ignored when they are -1. Use of_node_put() on the poपूर्णांकer when करोne.
+ * Return: An 'endpoint' node pointer which is identified by reg and at the same
+ * is the child of a port node identified by port_reg. reg and port_reg are
+ * ignored when they are -1. Use of_node_put() on the pointer when done.
  */
-काष्ठा device_node *of_graph_get_endpoपूर्णांक_by_regs(
-	स्थिर काष्ठा device_node *parent, पूर्णांक port_reg, पूर्णांक reg)
-अणु
-	काष्ठा of_endpoपूर्णांक endpoपूर्णांक;
-	काष्ठा device_node *node = शून्य;
+struct device_node *of_graph_get_endpoint_by_regs(
+	const struct device_node *parent, int port_reg, int reg)
+{
+	struct of_endpoint endpoint;
+	struct device_node *node = NULL;
 
-	क्रम_each_endpoपूर्णांक_of_node(parent, node) अणु
-		of_graph_parse_endpoपूर्णांक(node, &endpoपूर्णांक);
-		अगर (((port_reg == -1) || (endpoपूर्णांक.port == port_reg)) &&
-			((reg == -1) || (endpoपूर्णांक.id == reg)))
-			वापस node;
-	पूर्ण
+	for_each_endpoint_of_node(parent, node) {
+		of_graph_parse_endpoint(node, &endpoint);
+		if (((port_reg == -1) || (endpoint.port == port_reg)) &&
+			((reg == -1) || (endpoint.id == reg)))
+			return node;
+	}
 
-	वापस शून्य;
-पूर्ण
-EXPORT_SYMBOL(of_graph_get_endpoपूर्णांक_by_regs);
+	return NULL;
+}
+EXPORT_SYMBOL(of_graph_get_endpoint_by_regs);
 
 /**
- * of_graph_get_remote_endpoपूर्णांक() - get remote endpoपूर्णांक node
- * @node: poपूर्णांकer to a local endpoपूर्णांक device_node
+ * of_graph_get_remote_endpoint() - get remote endpoint node
+ * @node: pointer to a local endpoint device_node
  *
- * Return: Remote endpoपूर्णांक node associated with remote endpoपूर्णांक node linked
- *	   to @node. Use of_node_put() on it when करोne.
+ * Return: Remote endpoint node associated with remote endpoint node linked
+ *	   to @node. Use of_node_put() on it when done.
  */
-काष्ठा device_node *of_graph_get_remote_endpoपूर्णांक(स्थिर काष्ठा device_node *node)
-अणु
-	/* Get remote endpoपूर्णांक node. */
-	वापस of_parse_phandle(node, "remote-endpoint", 0);
-पूर्ण
-EXPORT_SYMBOL(of_graph_get_remote_endpoपूर्णांक);
+struct device_node *of_graph_get_remote_endpoint(const struct device_node *node)
+{
+	/* Get remote endpoint node. */
+	return of_parse_phandle(node, "remote-endpoint", 0);
+}
+EXPORT_SYMBOL(of_graph_get_remote_endpoint);
 
 /**
  * of_graph_get_port_parent() - get port's parent node
- * @node: poपूर्णांकer to a local endpoपूर्णांक device_node
+ * @node: pointer to a local endpoint device_node
  *
- * Return: device node associated with endpoपूर्णांक node linked
- *	   to @node. Use of_node_put() on it when करोne.
+ * Return: device node associated with endpoint node linked
+ *	   to @node. Use of_node_put() on it when done.
  */
-काष्ठा device_node *of_graph_get_port_parent(काष्ठा device_node *node)
-अणु
-	अचिन्हित पूर्णांक depth;
+struct device_node *of_graph_get_port_parent(struct device_node *node)
+{
+	unsigned int depth;
 
-	अगर (!node)
-		वापस शून्य;
+	if (!node)
+		return NULL;
 
 	/*
-	 * Preserve usecount क्रम passed in node as of_get_next_parent()
-	 * will करो of_node_put() on it.
+	 * Preserve usecount for passed in node as of_get_next_parent()
+	 * will do of_node_put() on it.
 	 */
 	of_node_get(node);
 
-	/* Walk 3 levels up only अगर there is 'ports' node. */
-	क्रम (depth = 3; depth && node; depth--) अणु
+	/* Walk 3 levels up only if there is 'ports' node. */
+	for (depth = 3; depth && node; depth--) {
 		node = of_get_next_parent(node);
-		अगर (depth == 2 && !of_node_name_eq(node, "ports"))
-			अवरोध;
-	पूर्ण
-	वापस node;
-पूर्ण
+		if (depth == 2 && !of_node_name_eq(node, "ports"))
+			break;
+	}
+	return node;
+}
 EXPORT_SYMBOL(of_graph_get_port_parent);
 
 /**
  * of_graph_get_remote_port_parent() - get remote port's parent node
- * @node: poपूर्णांकer to a local endpoपूर्णांक device_node
+ * @node: pointer to a local endpoint device_node
  *
- * Return: Remote device node associated with remote endpoपूर्णांक node linked
- *	   to @node. Use of_node_put() on it when करोne.
+ * Return: Remote device node associated with remote endpoint node linked
+ *	   to @node. Use of_node_put() on it when done.
  */
-काष्ठा device_node *of_graph_get_remote_port_parent(
-			       स्थिर काष्ठा device_node *node)
-अणु
-	काष्ठा device_node *np, *pp;
+struct device_node *of_graph_get_remote_port_parent(
+			       const struct device_node *node)
+{
+	struct device_node *np, *pp;
 
-	/* Get remote endpoपूर्णांक node. */
-	np = of_graph_get_remote_endpoपूर्णांक(node);
+	/* Get remote endpoint node. */
+	np = of_graph_get_remote_endpoint(node);
 
 	pp = of_graph_get_port_parent(np);
 
 	of_node_put(np);
 
-	वापस pp;
-पूर्ण
+	return pp;
+}
 EXPORT_SYMBOL(of_graph_get_remote_port_parent);
 
 /**
  * of_graph_get_remote_port() - get remote port node
- * @node: poपूर्णांकer to a local endpoपूर्णांक device_node
+ * @node: pointer to a local endpoint device_node
  *
- * Return: Remote port node associated with remote endpoपूर्णांक node linked
- * to @node. Use of_node_put() on it when करोne.
+ * Return: Remote port node associated with remote endpoint node linked
+ * to @node. Use of_node_put() on it when done.
  */
-काष्ठा device_node *of_graph_get_remote_port(स्थिर काष्ठा device_node *node)
-अणु
-	काष्ठा device_node *np;
+struct device_node *of_graph_get_remote_port(const struct device_node *node)
+{
+	struct device_node *np;
 
-	/* Get remote endpoपूर्णांक node. */
-	np = of_graph_get_remote_endpoपूर्णांक(node);
-	अगर (!np)
-		वापस शून्य;
-	वापस of_get_next_parent(np);
-पूर्ण
+	/* Get remote endpoint node. */
+	np = of_graph_get_remote_endpoint(node);
+	if (!np)
+		return NULL;
+	return of_get_next_parent(np);
+}
 EXPORT_SYMBOL(of_graph_get_remote_port);
 
-पूर्णांक of_graph_get_endpoपूर्णांक_count(स्थिर काष्ठा device_node *np)
-अणु
-	काष्ठा device_node *endpoपूर्णांक;
-	पूर्णांक num = 0;
+int of_graph_get_endpoint_count(const struct device_node *np)
+{
+	struct device_node *endpoint;
+	int num = 0;
 
-	क्रम_each_endpoपूर्णांक_of_node(np, endpoपूर्णांक)
+	for_each_endpoint_of_node(np, endpoint)
 		num++;
 
-	वापस num;
-पूर्ण
-EXPORT_SYMBOL(of_graph_get_endpoपूर्णांक_count);
+	return num;
+}
+EXPORT_SYMBOL(of_graph_get_endpoint_count);
 
 /**
- * of_graph_get_remote_node() - get remote parent device_node क्रम given port/endpoपूर्णांक
- * @node: poपूर्णांकer to parent device_node containing graph port/endpoपूर्णांक
- * @port: identअगरier (value of reg property) of the parent port node
- * @endpoपूर्णांक: identअगरier (value of reg property) of the endpoपूर्णांक node
+ * of_graph_get_remote_node() - get remote parent device_node for given port/endpoint
+ * @node: pointer to parent device_node containing graph port/endpoint
+ * @port: identifier (value of reg property) of the parent port node
+ * @endpoint: identifier (value of reg property) of the endpoint node
  *
- * Return: Remote device node associated with remote endpoपूर्णांक node linked
- * to @node. Use of_node_put() on it when करोne.
+ * Return: Remote device node associated with remote endpoint node linked
+ * to @node. Use of_node_put() on it when done.
  */
-काष्ठा device_node *of_graph_get_remote_node(स्थिर काष्ठा device_node *node,
-					     u32 port, u32 endpoपूर्णांक)
-अणु
-	काष्ठा device_node *endpoपूर्णांक_node, *remote;
+struct device_node *of_graph_get_remote_node(const struct device_node *node,
+					     u32 port, u32 endpoint)
+{
+	struct device_node *endpoint_node, *remote;
 
-	endpoपूर्णांक_node = of_graph_get_endpoपूर्णांक_by_regs(node, port, endpoपूर्णांक);
-	अगर (!endpoपूर्णांक_node) अणु
+	endpoint_node = of_graph_get_endpoint_by_regs(node, port, endpoint);
+	if (!endpoint_node) {
 		pr_debug("no valid endpoint (%d, %d) for node %pOF\n",
-			 port, endpoपूर्णांक, node);
-		वापस शून्य;
-	पूर्ण
+			 port, endpoint, node);
+		return NULL;
+	}
 
-	remote = of_graph_get_remote_port_parent(endpoपूर्णांक_node);
-	of_node_put(endpoपूर्णांक_node);
-	अगर (!remote) अणु
+	remote = of_graph_get_remote_port_parent(endpoint_node);
+	of_node_put(endpoint_node);
+	if (!remote) {
 		pr_debug("no valid remote node\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	अगर (!of_device_is_available(remote)) अणु
+	if (!of_device_is_available(remote)) {
 		pr_debug("not available for remote node\n");
 		of_node_put(remote);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	वापस remote;
-पूर्ण
+	return remote;
+}
 EXPORT_SYMBOL(of_graph_get_remote_node);
 
-अटल काष्ठा fwnode_handle *of_fwnode_get(काष्ठा fwnode_handle *fwnode)
-अणु
-	वापस of_fwnode_handle(of_node_get(to_of_node(fwnode)));
-पूर्ण
+static struct fwnode_handle *of_fwnode_get(struct fwnode_handle *fwnode)
+{
+	return of_fwnode_handle(of_node_get(to_of_node(fwnode)));
+}
 
-अटल व्योम of_fwnode_put(काष्ठा fwnode_handle *fwnode)
-अणु
+static void of_fwnode_put(struct fwnode_handle *fwnode)
+{
 	of_node_put(to_of_node(fwnode));
-पूर्ण
+}
 
-अटल bool of_fwnode_device_is_available(स्थिर काष्ठा fwnode_handle *fwnode)
-अणु
-	वापस of_device_is_available(to_of_node(fwnode));
-पूर्ण
+static bool of_fwnode_device_is_available(const struct fwnode_handle *fwnode)
+{
+	return of_device_is_available(to_of_node(fwnode));
+}
 
-अटल bool of_fwnode_property_present(स्थिर काष्ठा fwnode_handle *fwnode,
-				       स्थिर अक्षर *propname)
-अणु
-	वापस of_property_पढ़ो_bool(to_of_node(fwnode), propname);
-पूर्ण
+static bool of_fwnode_property_present(const struct fwnode_handle *fwnode,
+				       const char *propname)
+{
+	return of_property_read_bool(to_of_node(fwnode), propname);
+}
 
-अटल पूर्णांक of_fwnode_property_पढ़ो_पूर्णांक_array(स्थिर काष्ठा fwnode_handle *fwnode,
-					     स्थिर अक्षर *propname,
-					     अचिन्हित पूर्णांक elem_size, व्योम *val,
-					     माप_प्रकार nval)
-अणु
-	स्थिर काष्ठा device_node *node = to_of_node(fwnode);
+static int of_fwnode_property_read_int_array(const struct fwnode_handle *fwnode,
+					     const char *propname,
+					     unsigned int elem_size, void *val,
+					     size_t nval)
+{
+	const struct device_node *node = to_of_node(fwnode);
 
-	अगर (!val)
-		वापस of_property_count_elems_of_size(node, propname,
+	if (!val)
+		return of_property_count_elems_of_size(node, propname,
 						       elem_size);
 
-	चयन (elem_size) अणु
-	हाल माप(u8):
-		वापस of_property_पढ़ो_u8_array(node, propname, val, nval);
-	हाल माप(u16):
-		वापस of_property_पढ़ो_u16_array(node, propname, val, nval);
-	हाल माप(u32):
-		वापस of_property_पढ़ो_u32_array(node, propname, val, nval);
-	हाल माप(u64):
-		वापस of_property_पढ़ो_u64_array(node, propname, val, nval);
-	पूर्ण
+	switch (elem_size) {
+	case sizeof(u8):
+		return of_property_read_u8_array(node, propname, val, nval);
+	case sizeof(u16):
+		return of_property_read_u16_array(node, propname, val, nval);
+	case sizeof(u32):
+		return of_property_read_u32_array(node, propname, val, nval);
+	case sizeof(u64):
+		return of_property_read_u64_array(node, propname, val, nval);
+	}
 
-	वापस -ENXIO;
-पूर्ण
+	return -ENXIO;
+}
 
-अटल पूर्णांक
-of_fwnode_property_पढ़ो_string_array(स्थिर काष्ठा fwnode_handle *fwnode,
-				     स्थिर अक्षर *propname, स्थिर अक्षर **val,
-				     माप_प्रकार nval)
-अणु
-	स्थिर काष्ठा device_node *node = to_of_node(fwnode);
+static int
+of_fwnode_property_read_string_array(const struct fwnode_handle *fwnode,
+				     const char *propname, const char **val,
+				     size_t nval)
+{
+	const struct device_node *node = to_of_node(fwnode);
 
-	वापस val ?
-		of_property_पढ़ो_string_array(node, propname, val, nval) :
+	return val ?
+		of_property_read_string_array(node, propname, val, nval) :
 		of_property_count_strings(node, propname);
-पूर्ण
+}
 
-अटल स्थिर अक्षर *of_fwnode_get_name(स्थिर काष्ठा fwnode_handle *fwnode)
-अणु
-	वापस kbasename(to_of_node(fwnode)->full_name);
-पूर्ण
+static const char *of_fwnode_get_name(const struct fwnode_handle *fwnode)
+{
+	return kbasename(to_of_node(fwnode)->full_name);
+}
 
-अटल स्थिर अक्षर *of_fwnode_get_name_prefix(स्थिर काष्ठा fwnode_handle *fwnode)
-अणु
+static const char *of_fwnode_get_name_prefix(const struct fwnode_handle *fwnode)
+{
 	/* Root needs no prefix here (its name is "/"). */
-	अगर (!to_of_node(fwnode)->parent)
-		वापस "";
+	if (!to_of_node(fwnode)->parent)
+		return "";
 
-	वापस "/";
-पूर्ण
+	return "/";
+}
 
-अटल काष्ठा fwnode_handle *
-of_fwnode_get_parent(स्थिर काष्ठा fwnode_handle *fwnode)
-अणु
-	वापस of_fwnode_handle(of_get_parent(to_of_node(fwnode)));
-पूर्ण
+static struct fwnode_handle *
+of_fwnode_get_parent(const struct fwnode_handle *fwnode)
+{
+	return of_fwnode_handle(of_get_parent(to_of_node(fwnode)));
+}
 
-अटल काष्ठा fwnode_handle *
-of_fwnode_get_next_child_node(स्थिर काष्ठा fwnode_handle *fwnode,
-			      काष्ठा fwnode_handle *child)
-अणु
-	वापस of_fwnode_handle(of_get_next_available_child(to_of_node(fwnode),
+static struct fwnode_handle *
+of_fwnode_get_next_child_node(const struct fwnode_handle *fwnode,
+			      struct fwnode_handle *child)
+{
+	return of_fwnode_handle(of_get_next_available_child(to_of_node(fwnode),
 							    to_of_node(child)));
-पूर्ण
+}
 
-अटल काष्ठा fwnode_handle *
-of_fwnode_get_named_child_node(स्थिर काष्ठा fwnode_handle *fwnode,
-			       स्थिर अक्षर *childname)
-अणु
-	स्थिर काष्ठा device_node *node = to_of_node(fwnode);
-	काष्ठा device_node *child;
+static struct fwnode_handle *
+of_fwnode_get_named_child_node(const struct fwnode_handle *fwnode,
+			       const char *childname)
+{
+	const struct device_node *node = to_of_node(fwnode);
+	struct device_node *child;
 
-	क्रम_each_available_child_of_node(node, child)
-		अगर (of_node_name_eq(child, childname))
-			वापस of_fwnode_handle(child);
+	for_each_available_child_of_node(node, child)
+		if (of_node_name_eq(child, childname))
+			return of_fwnode_handle(child);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक
-of_fwnode_get_reference_args(स्थिर काष्ठा fwnode_handle *fwnode,
-			     स्थिर अक्षर *prop, स्थिर अक्षर *nargs_prop,
-			     अचिन्हित पूर्णांक nargs, अचिन्हित पूर्णांक index,
-			     काष्ठा fwnode_reference_args *args)
-अणु
-	काष्ठा of_phandle_args of_args;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक ret;
+static int
+of_fwnode_get_reference_args(const struct fwnode_handle *fwnode,
+			     const char *prop, const char *nargs_prop,
+			     unsigned int nargs, unsigned int index,
+			     struct fwnode_reference_args *args)
+{
+	struct of_phandle_args of_args;
+	unsigned int i;
+	int ret;
 
-	अगर (nargs_prop)
+	if (nargs_prop)
 		ret = of_parse_phandle_with_args(to_of_node(fwnode), prop,
 						 nargs_prop, index, &of_args);
-	अन्यथा
+	else
 		ret = of_parse_phandle_with_fixed_args(to_of_node(fwnode), prop,
 						       nargs, index, &of_args);
-	अगर (ret < 0)
-		वापस ret;
-	अगर (!args)
-		वापस 0;
+	if (ret < 0)
+		return ret;
+	if (!args)
+		return 0;
 
 	args->nargs = of_args.args_count;
 	args->fwnode = of_fwnode_handle(of_args.np);
 
-	क्रम (i = 0; i < NR_FWNODE_REFERENCE_ARGS; i++)
+	for (i = 0; i < NR_FWNODE_REFERENCE_ARGS; i++)
 		args->args[i] = i < of_args.args_count ? of_args.args[i] : 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा fwnode_handle *
-of_fwnode_graph_get_next_endpoपूर्णांक(स्थिर काष्ठा fwnode_handle *fwnode,
-				  काष्ठा fwnode_handle *prev)
-अणु
-	वापस of_fwnode_handle(of_graph_get_next_endpoपूर्णांक(to_of_node(fwnode),
+static struct fwnode_handle *
+of_fwnode_graph_get_next_endpoint(const struct fwnode_handle *fwnode,
+				  struct fwnode_handle *prev)
+{
+	return of_fwnode_handle(of_graph_get_next_endpoint(to_of_node(fwnode),
 							   to_of_node(prev)));
-पूर्ण
+}
 
-अटल काष्ठा fwnode_handle *
-of_fwnode_graph_get_remote_endpoपूर्णांक(स्थिर काष्ठा fwnode_handle *fwnode)
-अणु
-	वापस of_fwnode_handle(
-		of_graph_get_remote_endpoपूर्णांक(to_of_node(fwnode)));
-पूर्ण
+static struct fwnode_handle *
+of_fwnode_graph_get_remote_endpoint(const struct fwnode_handle *fwnode)
+{
+	return of_fwnode_handle(
+		of_graph_get_remote_endpoint(to_of_node(fwnode)));
+}
 
-अटल काष्ठा fwnode_handle *
-of_fwnode_graph_get_port_parent(काष्ठा fwnode_handle *fwnode)
-अणु
-	काष्ठा device_node *np;
+static struct fwnode_handle *
+of_fwnode_graph_get_port_parent(struct fwnode_handle *fwnode)
+{
+	struct device_node *np;
 
 	/* Get the parent of the port */
 	np = of_get_parent(to_of_node(fwnode));
-	अगर (!np)
-		वापस शून्य;
+	if (!np)
+		return NULL;
 
 	/* Is this the "ports" node? If not, it's the port parent. */
-	अगर (!of_node_name_eq(np, "ports"))
-		वापस of_fwnode_handle(np);
+	if (!of_node_name_eq(np, "ports"))
+		return of_fwnode_handle(np);
 
-	वापस of_fwnode_handle(of_get_next_parent(np));
-पूर्ण
+	return of_fwnode_handle(of_get_next_parent(np));
+}
 
-अटल पूर्णांक of_fwnode_graph_parse_endpoपूर्णांक(स्थिर काष्ठा fwnode_handle *fwnode,
-					  काष्ठा fwnode_endpoपूर्णांक *endpoपूर्णांक)
-अणु
-	स्थिर काष्ठा device_node *node = to_of_node(fwnode);
-	काष्ठा device_node *port_node = of_get_parent(node);
+static int of_fwnode_graph_parse_endpoint(const struct fwnode_handle *fwnode,
+					  struct fwnode_endpoint *endpoint)
+{
+	const struct device_node *node = to_of_node(fwnode);
+	struct device_node *port_node = of_get_parent(node);
 
-	endpoपूर्णांक->local_fwnode = fwnode;
+	endpoint->local_fwnode = fwnode;
 
-	of_property_पढ़ो_u32(port_node, "reg", &endpoपूर्णांक->port);
-	of_property_पढ़ो_u32(node, "reg", &endpoपूर्णांक->id);
+	of_property_read_u32(port_node, "reg", &endpoint->port);
+	of_property_read_u32(node, "reg", &endpoint->id);
 
 	of_node_put(port_node);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर व्योम *
-of_fwnode_device_get_match_data(स्थिर काष्ठा fwnode_handle *fwnode,
-				स्थिर काष्ठा device *dev)
-अणु
-	वापस of_device_get_match_data(dev);
-पूर्ण
+static const void *
+of_fwnode_device_get_match_data(const struct fwnode_handle *fwnode,
+				const struct device *dev)
+{
+	return of_device_get_match_data(dev);
+}
 
-अटल bool of_is_ancestor_of(काष्ठा device_node *test_ancestor,
-			      काष्ठा device_node *child)
-अणु
+static bool of_is_ancestor_of(struct device_node *test_ancestor,
+			      struct device_node *child)
+{
 	of_node_get(child);
-	जबतक (child) अणु
-		अगर (child == test_ancestor) अणु
+	while (child) {
+		if (child == test_ancestor) {
 			of_node_put(child);
-			वापस true;
-		पूर्ण
+			return true;
+		}
 		child = of_get_next_parent(child);
-	पूर्ण
-	वापस false;
-पूर्ण
+	}
+	return false;
+}
 
-अटल काष्ठा device_node *of_get_compat_node(काष्ठा device_node *np)
-अणु
+static struct device_node *of_get_compat_node(struct device_node *np)
+{
 	of_node_get(np);
 
-	जबतक (np) अणु
-		अगर (!of_device_is_available(np)) अणु
+	while (np) {
+		if (!of_device_is_available(np)) {
 			of_node_put(np);
-			np = शून्य;
-		पूर्ण
+			np = NULL;
+		}
 
-		अगर (of_find_property(np, "compatible", शून्य))
-			अवरोध;
+		if (of_find_property(np, "compatible", NULL))
+			break;
 
 		np = of_get_next_parent(np);
-	पूर्ण
+	}
 
-	वापस np;
-पूर्ण
+	return np;
+}
 
 /**
  * of_link_to_phandle - Add fwnode link to supplier from supplier phandle
@@ -1084,337 +1083,337 @@ of_fwnode_device_get_match_data(स्थिर काष्ठा fwnode_handle
  * Given a phandle to a supplier device tree node (@sup_np), this function
  * finds the device that owns the supplier device tree node and creates a
  * device link from @dev consumer device to the supplier device. This function
- * करोesn't create device links क्रम invalid scenarios such as trying to create a
+ * doesn't create device links for invalid scenarios such as trying to create a
  * link with a parent device as the consumer of its child device. In such
- * हालs, it वापसs an error.
+ * cases, it returns an error.
  *
  * Returns:
- * - 0 अगर fwnode link successfully created to supplier
- * - -EINVAL अगर the supplier link is invalid and should not be created
- * - -ENODEV अगर काष्ठा device will never be create क्रम supplier
+ * - 0 if fwnode link successfully created to supplier
+ * - -EINVAL if the supplier link is invalid and should not be created
+ * - -ENODEV if struct device will never be create for supplier
  */
-अटल पूर्णांक of_link_to_phandle(काष्ठा device_node *con_np,
-			      काष्ठा device_node *sup_np)
-अणु
-	काष्ठा device *sup_dev;
-	काष्ठा device_node *पंचांगp_np = sup_np;
+static int of_link_to_phandle(struct device_node *con_np,
+			      struct device_node *sup_np)
+{
+	struct device *sup_dev;
+	struct device_node *tmp_np = sup_np;
 
 	/*
 	 * Find the device node that contains the supplier phandle.  It may be
 	 * @sup_np or it may be an ancestor of @sup_np.
 	 */
 	sup_np = of_get_compat_node(sup_np);
-	अगर (!sup_np) अणु
+	if (!sup_np) {
 		pr_debug("Not linking %pOFP to %pOFP - No device\n",
-			 con_np, पंचांगp_np);
-		वापस -ENODEV;
-	पूर्ण
+			 con_np, tmp_np);
+		return -ENODEV;
+	}
 
 	/*
 	 * Don't allow linking a device node as a consumer of one of its
 	 * descendant nodes. By definition, a child node can't be a functional
-	 * dependency क्रम the parent node.
+	 * dependency for the parent node.
 	 */
-	अगर (of_is_ancestor_of(con_np, sup_np)) अणु
+	if (of_is_ancestor_of(con_np, sup_np)) {
 		pr_debug("Not linking %pOFP to %pOFP - is descendant\n",
 			 con_np, sup_np);
 		of_node_put(sup_np);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/*
-	 * Don't create links to "early devices" that won't have काष्ठा devices
-	 * created क्रम them.
+	 * Don't create links to "early devices" that won't have struct devices
+	 * created for them.
 	 */
 	sup_dev = get_dev_from_fwnode(&sup_np->fwnode);
-	अगर (!sup_dev &&
+	if (!sup_dev &&
 	    (of_node_check_flag(sup_np, OF_POPULATED) ||
-	     sup_np->fwnode.flags & FWNODE_FLAG_NOT_DEVICE)) अणु
+	     sup_np->fwnode.flags & FWNODE_FLAG_NOT_DEVICE)) {
 		pr_debug("Not linking %pOFP to %pOFP - No struct device\n",
 			 con_np, sup_np);
 		of_node_put(sup_np);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 	put_device(sup_dev);
 
 	fwnode_link_add(of_fwnode_handle(con_np), of_fwnode_handle(sup_np));
 	of_node_put(sup_np);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * parse_prop_cells - Property parsing function क्रम suppliers
+ * parse_prop_cells - Property parsing function for suppliers
  *
- * @np:		Poपूर्णांकer to device tree node containing a list
+ * @np:		Pointer to device tree node containing a list
  * @prop_name:	Name of property to be parsed. Expected to hold phandle values
  * @index:	For properties holding a list of phandles, this is the index
- *		पूर्णांकo the list.
+ *		into the list.
  * @list_name:	Property name that is known to contain list of phandle(s) to
  *		supplier(s)
- * @cells_name:	property name that specअगरies phandles' arguments count
+ * @cells_name:	property name that specifies phandles' arguments count
  *
  * This is a helper function to parse properties that have a known fixed name
  * and are a list of phandles and phandle arguments.
  *
  * Returns:
- * - phandle node poपूर्णांकer with refcount incremented. Caller must of_node_put()
- *   on it when करोne.
- * - शून्य अगर no phandle found at index
+ * - phandle node pointer with refcount incremented. Caller must of_node_put()
+ *   on it when done.
+ * - NULL if no phandle found at index
  */
-अटल काष्ठा device_node *parse_prop_cells(काष्ठा device_node *np,
-					    स्थिर अक्षर *prop_name, पूर्णांक index,
-					    स्थिर अक्षर *list_name,
-					    स्थिर अक्षर *cells_name)
-अणु
-	काष्ठा of_phandle_args sup_args;
+static struct device_node *parse_prop_cells(struct device_node *np,
+					    const char *prop_name, int index,
+					    const char *list_name,
+					    const char *cells_name)
+{
+	struct of_phandle_args sup_args;
 
-	अगर (म_भेद(prop_name, list_name))
-		वापस शून्य;
+	if (strcmp(prop_name, list_name))
+		return NULL;
 
-	अगर (of_parse_phandle_with_args(np, list_name, cells_name, index,
+	if (of_parse_phandle_with_args(np, list_name, cells_name, index,
 				       &sup_args))
-		वापस शून्य;
+		return NULL;
 
-	वापस sup_args.np;
-पूर्ण
+	return sup_args.np;
+}
 
-#घोषणा DEFINE_SIMPLE_PROP(fname, name, cells)				  \
-अटल काष्ठा device_node *parse_##fname(काष्ठा device_node *np,	  \
-					स्थिर अक्षर *prop_name, पूर्णांक index) \
-अणु									  \
-	वापस parse_prop_cells(np, prop_name, index, name, cells);	  \
-पूर्ण
+#define DEFINE_SIMPLE_PROP(fname, name, cells)				  \
+static struct device_node *parse_##fname(struct device_node *np,	  \
+					const char *prop_name, int index) \
+{									  \
+	return parse_prop_cells(np, prop_name, index, name, cells);	  \
+}
 
-अटल पूर्णांक म_भेद_suffix(स्थिर अक्षर *str, स्थिर अक्षर *suffix)
-अणु
-	अचिन्हित पूर्णांक len, suffix_len;
+static int strcmp_suffix(const char *str, const char *suffix)
+{
+	unsigned int len, suffix_len;
 
-	len = म_माप(str);
-	suffix_len = म_माप(suffix);
-	अगर (len <= suffix_len)
-		वापस -1;
-	वापस म_भेद(str + len - suffix_len, suffix);
-पूर्ण
+	len = strlen(str);
+	suffix_len = strlen(suffix);
+	if (len <= suffix_len)
+		return -1;
+	return strcmp(str + len - suffix_len, suffix);
+}
 
 /**
- * parse_suffix_prop_cells - Suffix property parsing function क्रम suppliers
+ * parse_suffix_prop_cells - Suffix property parsing function for suppliers
  *
- * @np:		Poपूर्णांकer to device tree node containing a list
+ * @np:		Pointer to device tree node containing a list
  * @prop_name:	Name of property to be parsed. Expected to hold phandle values
  * @index:	For properties holding a list of phandles, this is the index
- *		पूर्णांकo the list.
+ *		into the list.
  * @suffix:	Property suffix that is known to contain list of phandle(s) to
  *		supplier(s)
- * @cells_name:	property name that specअगरies phandles' arguments count
+ * @cells_name:	property name that specifies phandles' arguments count
  *
  * This is a helper function to parse properties that have a known fixed suffix
  * and are a list of phandles and phandle arguments.
  *
  * Returns:
- * - phandle node poपूर्णांकer with refcount incremented. Caller must of_node_put()
- *   on it when करोne.
- * - शून्य अगर no phandle found at index
+ * - phandle node pointer with refcount incremented. Caller must of_node_put()
+ *   on it when done.
+ * - NULL if no phandle found at index
  */
-अटल काष्ठा device_node *parse_suffix_prop_cells(काष्ठा device_node *np,
-					    स्थिर अक्षर *prop_name, पूर्णांक index,
-					    स्थिर अक्षर *suffix,
-					    स्थिर अक्षर *cells_name)
-अणु
-	काष्ठा of_phandle_args sup_args;
+static struct device_node *parse_suffix_prop_cells(struct device_node *np,
+					    const char *prop_name, int index,
+					    const char *suffix,
+					    const char *cells_name)
+{
+	struct of_phandle_args sup_args;
 
-	अगर (म_भेद_suffix(prop_name, suffix))
-		वापस शून्य;
+	if (strcmp_suffix(prop_name, suffix))
+		return NULL;
 
-	अगर (of_parse_phandle_with_args(np, prop_name, cells_name, index,
+	if (of_parse_phandle_with_args(np, prop_name, cells_name, index,
 				       &sup_args))
-		वापस शून्य;
+		return NULL;
 
-	वापस sup_args.np;
-पूर्ण
+	return sup_args.np;
+}
 
-#घोषणा DEFINE_SUFFIX_PROP(fname, suffix, cells)			     \
-अटल काष्ठा device_node *parse_##fname(काष्ठा device_node *np,	     \
-					स्थिर अक्षर *prop_name, पूर्णांक index)    \
-अणु									     \
-	वापस parse_suffix_prop_cells(np, prop_name, index, suffix, cells); \
-पूर्ण
+#define DEFINE_SUFFIX_PROP(fname, suffix, cells)			     \
+static struct device_node *parse_##fname(struct device_node *np,	     \
+					const char *prop_name, int index)    \
+{									     \
+	return parse_suffix_prop_cells(np, prop_name, index, suffix, cells); \
+}
 
 /**
- * काष्ठा supplier_bindings - Property parsing functions क्रम suppliers
+ * struct supplier_bindings - Property parsing functions for suppliers
  *
  * @parse_prop: function name
  *	parse_prop() finds the node corresponding to a supplier phandle
- * @parse_prop.np: Poपूर्णांकer to device node holding supplier phandle property
+ * @parse_prop.np: Pointer to device node holding supplier phandle property
  * @parse_prop.prop_name: Name of property holding a phandle value
  * @parse_prop.index: For properties holding a list of phandles, this is the
- *		      index पूर्णांकo the list
+ *		      index into the list
  * @optional: Describes whether a supplier is mandatory or not
  * @node_not_dev: The consumer node containing the property is never a device.
  *
  * Returns:
- * parse_prop() वापस values are
- * - phandle node poपूर्णांकer with refcount incremented. Caller must of_node_put()
- *   on it when करोne.
- * - शून्य अगर no phandle found at index
+ * parse_prop() return values are
+ * - phandle node pointer with refcount incremented. Caller must of_node_put()
+ *   on it when done.
+ * - NULL if no phandle found at index
  */
-काष्ठा supplier_bindings अणु
-	काष्ठा device_node *(*parse_prop)(काष्ठा device_node *np,
-					  स्थिर अक्षर *prop_name, पूर्णांक index);
+struct supplier_bindings {
+	struct device_node *(*parse_prop)(struct device_node *np,
+					  const char *prop_name, int index);
 	bool optional;
 	bool node_not_dev;
-पूर्ण;
+};
 
-DEFINE_SIMPLE_PROP(घड़ीs, "clocks", "#clock-cells")
-DEFINE_SIMPLE_PROP(पूर्णांकerconnects, "interconnects", "#interconnect-cells")
+DEFINE_SIMPLE_PROP(clocks, "clocks", "#clock-cells")
+DEFINE_SIMPLE_PROP(interconnects, "interconnects", "#interconnect-cells")
 DEFINE_SIMPLE_PROP(iommus, "iommus", "#iommu-cells")
 DEFINE_SIMPLE_PROP(mboxes, "mboxes", "#mbox-cells")
 DEFINE_SIMPLE_PROP(io_channels, "io-channel", "#io-channel-cells")
-DEFINE_SIMPLE_PROP(पूर्णांकerrupt_parent, "interrupt-parent", शून्य)
+DEFINE_SIMPLE_PROP(interrupt_parent, "interrupt-parent", NULL)
 DEFINE_SIMPLE_PROP(dmas, "dmas", "#dma-cells")
-DEFINE_SIMPLE_PROP(घातer_करोमुख्यs, "power-domains", "#power-domain-cells")
+DEFINE_SIMPLE_PROP(power_domains, "power-domains", "#power-domain-cells")
 DEFINE_SIMPLE_PROP(hwlocks, "hwlocks", "#hwlock-cells")
-DEFINE_SIMPLE_PROP(extcon, "extcon", शून्य)
-DEFINE_SIMPLE_PROP(nvmem_cells, "nvmem-cells", शून्य)
+DEFINE_SIMPLE_PROP(extcon, "extcon", NULL)
+DEFINE_SIMPLE_PROP(nvmem_cells, "nvmem-cells", NULL)
 DEFINE_SIMPLE_PROP(phys, "phys", "#phy-cells")
-DEFINE_SIMPLE_PROP(wakeup_parent, "wakeup-parent", शून्य)
-DEFINE_SIMPLE_PROP(pinctrl0, "pinctrl-0", शून्य)
-DEFINE_SIMPLE_PROP(pinctrl1, "pinctrl-1", शून्य)
-DEFINE_SIMPLE_PROP(pinctrl2, "pinctrl-2", शून्य)
-DEFINE_SIMPLE_PROP(pinctrl3, "pinctrl-3", शून्य)
-DEFINE_SIMPLE_PROP(pinctrl4, "pinctrl-4", शून्य)
-DEFINE_SIMPLE_PROP(pinctrl5, "pinctrl-5", शून्य)
-DEFINE_SIMPLE_PROP(pinctrl6, "pinctrl-6", शून्य)
-DEFINE_SIMPLE_PROP(pinctrl7, "pinctrl-7", शून्य)
-DEFINE_SIMPLE_PROP(pinctrl8, "pinctrl-8", शून्य)
-DEFINE_SIMPLE_PROP(remote_endpoपूर्णांक, "remote-endpoint", शून्य)
-DEFINE_SUFFIX_PROP(regulators, "-supply", शून्य)
+DEFINE_SIMPLE_PROP(wakeup_parent, "wakeup-parent", NULL)
+DEFINE_SIMPLE_PROP(pinctrl0, "pinctrl-0", NULL)
+DEFINE_SIMPLE_PROP(pinctrl1, "pinctrl-1", NULL)
+DEFINE_SIMPLE_PROP(pinctrl2, "pinctrl-2", NULL)
+DEFINE_SIMPLE_PROP(pinctrl3, "pinctrl-3", NULL)
+DEFINE_SIMPLE_PROP(pinctrl4, "pinctrl-4", NULL)
+DEFINE_SIMPLE_PROP(pinctrl5, "pinctrl-5", NULL)
+DEFINE_SIMPLE_PROP(pinctrl6, "pinctrl-6", NULL)
+DEFINE_SIMPLE_PROP(pinctrl7, "pinctrl-7", NULL)
+DEFINE_SIMPLE_PROP(pinctrl8, "pinctrl-8", NULL)
+DEFINE_SIMPLE_PROP(remote_endpoint, "remote-endpoint", NULL)
+DEFINE_SUFFIX_PROP(regulators, "-supply", NULL)
 DEFINE_SUFFIX_PROP(gpio, "-gpio", "#gpio-cells")
 
-अटल काष्ठा device_node *parse_gpios(काष्ठा device_node *np,
-				       स्थिर अक्षर *prop_name, पूर्णांक index)
-अणु
-	अगर (!म_भेद_suffix(prop_name, ",nr-gpios"))
-		वापस शून्य;
+static struct device_node *parse_gpios(struct device_node *np,
+				       const char *prop_name, int index)
+{
+	if (!strcmp_suffix(prop_name, ",nr-gpios"))
+		return NULL;
 
-	वापस parse_suffix_prop_cells(np, prop_name, index, "-gpios",
+	return parse_suffix_prop_cells(np, prop_name, index, "-gpios",
 				       "#gpio-cells");
-पूर्ण
+}
 
-अटल काष्ठा device_node *parse_iommu_maps(काष्ठा device_node *np,
-					    स्थिर अक्षर *prop_name, पूर्णांक index)
-अणु
-	अगर (म_भेद(prop_name, "iommu-map"))
-		वापस शून्य;
+static struct device_node *parse_iommu_maps(struct device_node *np,
+					    const char *prop_name, int index)
+{
+	if (strcmp(prop_name, "iommu-map"))
+		return NULL;
 
-	वापस of_parse_phandle(np, prop_name, (index * 4) + 1);
-पूर्ण
+	return of_parse_phandle(np, prop_name, (index * 4) + 1);
+}
 
-अटल काष्ठा device_node *parse_gpio_compat(काष्ठा device_node *np,
-					     स्थिर अक्षर *prop_name, पूर्णांक index)
-अणु
-	काष्ठा of_phandle_args sup_args;
+static struct device_node *parse_gpio_compat(struct device_node *np,
+					     const char *prop_name, int index)
+{
+	struct of_phandle_args sup_args;
 
-	अगर (म_भेद(prop_name, "gpio") && म_भेद(prop_name, "gpios"))
-		वापस शून्य;
+	if (strcmp(prop_name, "gpio") && strcmp(prop_name, "gpios"))
+		return NULL;
 
 	/*
 	 * Ignore node with gpio-hog property since its gpios are all provided
 	 * by its parent.
 	 */
-	अगर (of_find_property(np, "gpio-hog", शून्य))
-		वापस शून्य;
+	if (of_find_property(np, "gpio-hog", NULL))
+		return NULL;
 
-	अगर (of_parse_phandle_with_args(np, prop_name, "#gpio-cells", index,
+	if (of_parse_phandle_with_args(np, prop_name, "#gpio-cells", index,
 				       &sup_args))
-		वापस शून्य;
+		return NULL;
 
-	वापस sup_args.np;
-पूर्ण
+	return sup_args.np;
+}
 
-अटल काष्ठा device_node *parse_पूर्णांकerrupts(काष्ठा device_node *np,
-					    स्थिर अक्षर *prop_name, पूर्णांक index)
-अणु
-	काष्ठा of_phandle_args sup_args;
+static struct device_node *parse_interrupts(struct device_node *np,
+					    const char *prop_name, int index)
+{
+	struct of_phandle_args sup_args;
 
-	अगर (!IS_ENABLED(CONFIG_OF_IRQ) || IS_ENABLED(CONFIG_PPC))
-		वापस शून्य;
+	if (!IS_ENABLED(CONFIG_OF_IRQ) || IS_ENABLED(CONFIG_PPC))
+		return NULL;
 
-	अगर (म_भेद(prop_name, "interrupts") &&
-	    म_भेद(prop_name, "interrupts-extended"))
-		वापस शून्य;
+	if (strcmp(prop_name, "interrupts") &&
+	    strcmp(prop_name, "interrupts-extended"))
+		return NULL;
 
-	वापस of_irq_parse_one(np, index, &sup_args) ? शून्य : sup_args.np;
-पूर्ण
+	return of_irq_parse_one(np, index, &sup_args) ? NULL : sup_args.np;
+}
 
-अटल स्थिर काष्ठा supplier_bindings of_supplier_bindings[] = अणु
-	अणु .parse_prop = parse_घड़ीs, पूर्ण,
-	अणु .parse_prop = parse_पूर्णांकerconnects, पूर्ण,
-	अणु .parse_prop = parse_iommus, .optional = true, पूर्ण,
-	अणु .parse_prop = parse_iommu_maps, .optional = true, पूर्ण,
-	अणु .parse_prop = parse_mboxes, पूर्ण,
-	अणु .parse_prop = parse_io_channels, पूर्ण,
-	अणु .parse_prop = parse_पूर्णांकerrupt_parent, पूर्ण,
-	अणु .parse_prop = parse_dmas, .optional = true, पूर्ण,
-	अणु .parse_prop = parse_घातer_करोमुख्यs, पूर्ण,
-	अणु .parse_prop = parse_hwlocks, पूर्ण,
-	अणु .parse_prop = parse_extcon, पूर्ण,
-	अणु .parse_prop = parse_nvmem_cells, पूर्ण,
-	अणु .parse_prop = parse_phys, पूर्ण,
-	अणु .parse_prop = parse_wakeup_parent, पूर्ण,
-	अणु .parse_prop = parse_pinctrl0, पूर्ण,
-	अणु .parse_prop = parse_pinctrl1, पूर्ण,
-	अणु .parse_prop = parse_pinctrl2, पूर्ण,
-	अणु .parse_prop = parse_pinctrl3, पूर्ण,
-	अणु .parse_prop = parse_pinctrl4, पूर्ण,
-	अणु .parse_prop = parse_pinctrl5, पूर्ण,
-	अणु .parse_prop = parse_pinctrl6, पूर्ण,
-	अणु .parse_prop = parse_pinctrl7, पूर्ण,
-	अणु .parse_prop = parse_pinctrl8, पूर्ण,
-	अणु .parse_prop = parse_remote_endpoपूर्णांक, .node_not_dev = true, पूर्ण,
-	अणु .parse_prop = parse_gpio_compat, पूर्ण,
-	अणु .parse_prop = parse_पूर्णांकerrupts, पूर्ण,
-	अणु .parse_prop = parse_regulators, पूर्ण,
-	अणु .parse_prop = parse_gpio, पूर्ण,
-	अणु .parse_prop = parse_gpios, पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct supplier_bindings of_supplier_bindings[] = {
+	{ .parse_prop = parse_clocks, },
+	{ .parse_prop = parse_interconnects, },
+	{ .parse_prop = parse_iommus, .optional = true, },
+	{ .parse_prop = parse_iommu_maps, .optional = true, },
+	{ .parse_prop = parse_mboxes, },
+	{ .parse_prop = parse_io_channels, },
+	{ .parse_prop = parse_interrupt_parent, },
+	{ .parse_prop = parse_dmas, .optional = true, },
+	{ .parse_prop = parse_power_domains, },
+	{ .parse_prop = parse_hwlocks, },
+	{ .parse_prop = parse_extcon, },
+	{ .parse_prop = parse_nvmem_cells, },
+	{ .parse_prop = parse_phys, },
+	{ .parse_prop = parse_wakeup_parent, },
+	{ .parse_prop = parse_pinctrl0, },
+	{ .parse_prop = parse_pinctrl1, },
+	{ .parse_prop = parse_pinctrl2, },
+	{ .parse_prop = parse_pinctrl3, },
+	{ .parse_prop = parse_pinctrl4, },
+	{ .parse_prop = parse_pinctrl5, },
+	{ .parse_prop = parse_pinctrl6, },
+	{ .parse_prop = parse_pinctrl7, },
+	{ .parse_prop = parse_pinctrl8, },
+	{ .parse_prop = parse_remote_endpoint, .node_not_dev = true, },
+	{ .parse_prop = parse_gpio_compat, },
+	{ .parse_prop = parse_interrupts, },
+	{ .parse_prop = parse_regulators, },
+	{ .parse_prop = parse_gpio, },
+	{ .parse_prop = parse_gpios, },
+	{}
+};
 
 /**
  * of_link_property - Create device links to suppliers listed in a property
  * @con_np: The consumer device tree node which contains the property
  * @prop_name: Name of property to be parsed
  *
- * This function checks अगर the property @prop_name that is present in the
+ * This function checks if the property @prop_name that is present in the
  * @con_np device tree node is one of the known common device tree bindings
  * that list phandles to suppliers. If @prop_name isn't one, this function
- * करोesn't करो anything.
+ * doesn't do anything.
  *
  * If @prop_name is one, this function attempts to create fwnode links from the
  * consumer device tree node @con_np to all the suppliers device tree nodes
  * listed in @prop_name.
  *
  * Any failed attempt to create a fwnode link will NOT result in an immediate
- * वापस.  of_link_property() must create links to all the available supplier
+ * return.  of_link_property() must create links to all the available supplier
  * device tree nodes even when attempts to create a link to one or more
  * suppliers fail.
  */
-अटल पूर्णांक of_link_property(काष्ठा device_node *con_np, स्थिर अक्षर *prop_name)
-अणु
-	काष्ठा device_node *phandle;
-	स्थिर काष्ठा supplier_bindings *s = of_supplier_bindings;
-	अचिन्हित पूर्णांक i = 0;
+static int of_link_property(struct device_node *con_np, const char *prop_name)
+{
+	struct device_node *phandle;
+	const struct supplier_bindings *s = of_supplier_bindings;
+	unsigned int i = 0;
 	bool matched = false;
 
 	/* Do not stop at first failed link, link all available suppliers. */
-	जबतक (!matched && s->parse_prop) अणु
-		अगर (s->optional && !fw_devlink_is_strict()) अणु
+	while (!matched && s->parse_prop) {
+		if (s->optional && !fw_devlink_is_strict()) {
 			s++;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		जबतक ((phandle = s->parse_prop(con_np, prop_name, i))) अणु
-			काष्ठा device_node *con_dev_np;
+		while ((phandle = s->parse_prop(con_np, prop_name, i))) {
+			struct device_node *con_dev_np;
 
 			con_dev_np = s->node_not_dev
 					? of_get_compat_node(con_np)
@@ -1424,44 +1423,44 @@ DEFINE_SUFFIX_PROP(gpio, "-gpio", "#gpio-cells")
 			of_link_to_phandle(con_dev_np, phandle);
 			of_node_put(phandle);
 			of_node_put(con_dev_np);
-		पूर्ण
+		}
 		s++;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक of_fwnode_add_links(काष्ठा fwnode_handle *fwnode)
-अणु
-	काष्ठा property *p;
-	काष्ठा device_node *con_np = to_of_node(fwnode);
+static int of_fwnode_add_links(struct fwnode_handle *fwnode)
+{
+	struct property *p;
+	struct device_node *con_np = to_of_node(fwnode);
 
-	अगर (!con_np)
-		वापस -EINVAL;
+	if (!con_np)
+		return -EINVAL;
 
-	क्रम_each_property_of_node(con_np, p)
+	for_each_property_of_node(con_np, p)
 		of_link_property(con_np, p->name);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-स्थिर काष्ठा fwnode_operations of_fwnode_ops = अणु
+const struct fwnode_operations of_fwnode_ops = {
 	.get = of_fwnode_get,
 	.put = of_fwnode_put,
 	.device_is_available = of_fwnode_device_is_available,
 	.device_get_match_data = of_fwnode_device_get_match_data,
 	.property_present = of_fwnode_property_present,
-	.property_पढ़ो_पूर्णांक_array = of_fwnode_property_पढ़ो_पूर्णांक_array,
-	.property_पढ़ो_string_array = of_fwnode_property_पढ़ो_string_array,
+	.property_read_int_array = of_fwnode_property_read_int_array,
+	.property_read_string_array = of_fwnode_property_read_string_array,
 	.get_name = of_fwnode_get_name,
 	.get_name_prefix = of_fwnode_get_name_prefix,
 	.get_parent = of_fwnode_get_parent,
 	.get_next_child_node = of_fwnode_get_next_child_node,
 	.get_named_child_node = of_fwnode_get_named_child_node,
 	.get_reference_args = of_fwnode_get_reference_args,
-	.graph_get_next_endpoपूर्णांक = of_fwnode_graph_get_next_endpoपूर्णांक,
-	.graph_get_remote_endpoपूर्णांक = of_fwnode_graph_get_remote_endpoपूर्णांक,
+	.graph_get_next_endpoint = of_fwnode_graph_get_next_endpoint,
+	.graph_get_remote_endpoint = of_fwnode_graph_get_remote_endpoint,
 	.graph_get_port_parent = of_fwnode_graph_get_port_parent,
-	.graph_parse_endpoपूर्णांक = of_fwnode_graph_parse_endpoपूर्णांक,
+	.graph_parse_endpoint = of_fwnode_graph_parse_endpoint,
 	.add_links = of_fwnode_add_links,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(of_fwnode_ops);

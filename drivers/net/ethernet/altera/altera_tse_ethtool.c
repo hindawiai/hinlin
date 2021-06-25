@@ -1,6 +1,5 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-/* Ethtool support क्रम Altera Triple-Speed Ethernet MAC driver
+// SPDX-License-Identifier: GPL-2.0-only
+/* Ethtool support for Altera Triple-Speed Ethernet MAC driver
  * Copyright (C) 2008-2014 Altera Corporation. All rights reserved
  *
  * Contributors:
@@ -17,17 +16,17 @@
  * Major updates contributed by GlobalLogic
  */
 
-#समावेश <linux/ethtool.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/phy.h>
+#include <linux/ethtool.h>
+#include <linux/kernel.h>
+#include <linux/netdevice.h>
+#include <linux/phy.h>
 
-#समावेश "altera_tse.h"
+#include "altera_tse.h"
 
-#घोषणा TSE_STATS_LEN	31
-#घोषणा TSE_NUM_REGS	128
+#define TSE_STATS_LEN	31
+#define TSE_NUM_REGS	128
 
-अटल अक्षर स्थिर stat_gstrings[][ETH_GSTRING_LEN] = अणु
+static char const stat_gstrings[][ETH_GSTRING_LEN] = {
 	"tx_packets",
 	"rx_packets",
 	"rx_crc_errors",
@@ -59,32 +58,32 @@
 	"rx_gte_1519_bytes",
 	"rx_jabbers",
 	"rx_runts",
-पूर्ण;
+};
 
-अटल व्योम tse_get_drvinfo(काष्ठा net_device *dev,
-			    काष्ठा ethtool_drvinfo *info)
-अणु
-	काष्ठा altera_tse_निजी *priv = netdev_priv(dev);
-	u32 rev = ioपढ़ो32(&priv->mac_dev->megacore_revision);
+static void tse_get_drvinfo(struct net_device *dev,
+			    struct ethtool_drvinfo *info)
+{
+	struct altera_tse_private *priv = netdev_priv(dev);
+	u32 rev = ioread32(&priv->mac_dev->megacore_revision);
 
-	म_नकल(info->driver, "altera_tse");
-	snम_लिखो(info->fw_version, ETHTOOL_FWVERS_LEN, "v%d.%d",
+	strcpy(info->driver, "altera_tse");
+	snprintf(info->fw_version, ETHTOOL_FWVERS_LEN, "v%d.%d",
 		 rev & 0xFFFF, (rev & 0xFFFF0000) >> 16);
-	प्र_लिखो(info->bus_info, "platform");
-पूर्ण
+	sprintf(info->bus_info, "platform");
+}
 
 /* Fill in a buffer with the strings which correspond to the
  * stats
  */
-अटल व्योम tse_gstrings(काष्ठा net_device *dev, u32 stringset, u8 *buf)
-अणु
-	स_नकल(buf, stat_gstrings, TSE_STATS_LEN * ETH_GSTRING_LEN);
-पूर्ण
+static void tse_gstrings(struct net_device *dev, u32 stringset, u8 *buf)
+{
+	memcpy(buf, stat_gstrings, TSE_STATS_LEN * ETH_GSTRING_LEN);
+}
 
-अटल व्योम tse_fill_stats(काष्ठा net_device *dev, काष्ठा ethtool_stats *dummy,
+static void tse_fill_stats(struct net_device *dev, struct ethtool_stats *dummy,
 			   u64 *buf)
-अणु
-	काष्ठा altera_tse_निजी *priv = netdev_priv(dev);
+{
+	struct altera_tse_private *priv = netdev_priv(dev);
 	u64 ext;
 
 	buf[0] = csrrd32(priv->mac_dev,
@@ -113,27 +112,27 @@
 	buf[5] = ext;
 
 	buf[6] = csrrd32(priv->mac_dev,
-			 tse_csroffs(tx_छोड़ो_mac_ctrl_frames));
+			 tse_csroffs(tx_pause_mac_ctrl_frames));
 	buf[7] = csrrd32(priv->mac_dev,
-			 tse_csroffs(rx_छोड़ो_mac_ctrl_frames));
+			 tse_csroffs(rx_pause_mac_ctrl_frames));
 	buf[8] = csrrd32(priv->mac_dev,
-			 tse_csroffs(अगर_in_errors));
+			 tse_csroffs(if_in_errors));
 	buf[9] = csrrd32(priv->mac_dev,
-			 tse_csroffs(अगर_out_errors));
+			 tse_csroffs(if_out_errors));
 	buf[10] = csrrd32(priv->mac_dev,
-			  tse_csroffs(अगर_in_ucast_pkts));
+			  tse_csroffs(if_in_ucast_pkts));
 	buf[11] = csrrd32(priv->mac_dev,
-			  tse_csroffs(अगर_in_multicast_pkts));
+			  tse_csroffs(if_in_multicast_pkts));
 	buf[12] = csrrd32(priv->mac_dev,
-			  tse_csroffs(अगर_in_broadcast_pkts));
+			  tse_csroffs(if_in_broadcast_pkts));
 	buf[13] = csrrd32(priv->mac_dev,
-			  tse_csroffs(अगर_out_discards));
+			  tse_csroffs(if_out_discards));
 	buf[14] = csrrd32(priv->mac_dev,
-			  tse_csroffs(अगर_out_ucast_pkts));
+			  tse_csroffs(if_out_ucast_pkts));
 	buf[15] = csrrd32(priv->mac_dev,
-			  tse_csroffs(अगर_out_multicast_pkts));
+			  tse_csroffs(if_out_multicast_pkts));
 	buf[16] = csrrd32(priv->mac_dev,
-			  tse_csroffs(अगर_out_broadcast_pkts));
+			  tse_csroffs(if_out_broadcast_pkts));
 	buf[17] = csrrd32(priv->mac_dev,
 			  tse_csroffs(ether_stats_drop_events));
 
@@ -168,61 +167,61 @@
 			  tse_csroffs(ether_stats_jabbers));
 	buf[30] = csrrd32(priv->mac_dev,
 			  tse_csroffs(ether_stats_fragments));
-पूर्ण
+}
 
-अटल पूर्णांक tse_sset_count(काष्ठा net_device *dev, पूर्णांक sset)
-अणु
-	चयन (sset) अणु
-	हाल ETH_SS_STATS:
-		वापस TSE_STATS_LEN;
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+static int tse_sset_count(struct net_device *dev, int sset)
+{
+	switch (sset) {
+	case ETH_SS_STATS:
+		return TSE_STATS_LEN;
+	default:
+		return -EOPNOTSUPP;
+	}
+}
 
-अटल u32 tse_get_msglevel(काष्ठा net_device *dev)
-अणु
-	काष्ठा altera_tse_निजी *priv = netdev_priv(dev);
-	वापस priv->msg_enable;
-पूर्ण
+static u32 tse_get_msglevel(struct net_device *dev)
+{
+	struct altera_tse_private *priv = netdev_priv(dev);
+	return priv->msg_enable;
+}
 
-अटल व्योम tse_set_msglevel(काष्ठा net_device *dev, uपूर्णांक32_t data)
-अणु
-	काष्ठा altera_tse_निजी *priv = netdev_priv(dev);
+static void tse_set_msglevel(struct net_device *dev, uint32_t data)
+{
+	struct altera_tse_private *priv = netdev_priv(dev);
 	priv->msg_enable = data;
-पूर्ण
+}
 
-अटल पूर्णांक tse_reglen(काष्ठा net_device *dev)
-अणु
-	वापस TSE_NUM_REGS * माप(u32);
-पूर्ण
+static int tse_reglen(struct net_device *dev)
+{
+	return TSE_NUM_REGS * sizeof(u32);
+}
 
-अटल व्योम tse_get_regs(काष्ठा net_device *dev, काष्ठा ethtool_regs *regs,
-			 व्योम *regbuf)
-अणु
-	पूर्णांक i;
-	काष्ठा altera_tse_निजी *priv = netdev_priv(dev);
+static void tse_get_regs(struct net_device *dev, struct ethtool_regs *regs,
+			 void *regbuf)
+{
+	int i;
+	struct altera_tse_private *priv = netdev_priv(dev);
 	u32 *buf = regbuf;
 
 	/* Set version to a known value, so ethtool knows
-	 * how to करो any special क्रमmatting of this data.
-	 * This version number will need to change अगर and
-	 * when this रेजिस्टर table is changed.
+	 * how to do any special formatting of this data.
+	 * This version number will need to change if and
+	 * when this register table is changed.
 	 *
 	 * version[31:0] = 1: Dump the first 128 TSE Registers
-	 *      Upper bits are all 0 by शेष
+	 *      Upper bits are all 0 by default
 	 *
-	 * Upper 16-bits will indicate feature presence क्रम
-	 * Ethtool रेजिस्टर decoding in future version.
+	 * Upper 16-bits will indicate feature presence for
+	 * Ethtool register decoding in future version.
 	 */
 
 	regs->version = 1;
 
-	क्रम (i = 0; i < TSE_NUM_REGS; i++)
+	for (i = 0; i < TSE_NUM_REGS; i++)
 		buf[i] = csrrd32(priv->mac_dev, i * 4);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा ethtool_ops tse_ethtool_ops = अणु
+static const struct ethtool_ops tse_ethtool_ops = {
 	.get_drvinfo = tse_get_drvinfo,
 	.get_regs_len = tse_reglen,
 	.get_regs = tse_get_regs,
@@ -234,9 +233,9 @@
 	.set_msglevel = tse_set_msglevel,
 	.get_link_ksettings = phy_ethtool_get_link_ksettings,
 	.set_link_ksettings = phy_ethtool_set_link_ksettings,
-पूर्ण;
+};
 
-व्योम altera_tse_set_ethtool_ops(काष्ठा net_device *netdev)
-अणु
+void altera_tse_set_ethtool_ops(struct net_device *netdev)
+{
 	netdev->ethtool_ops = &tse_ethtool_ops;
-पूर्ण
+}

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  Kernel Probes (KProbes)
  *
@@ -8,60 +7,60 @@
  * 2002-Oct	Created by Vamsi Krishna S <vamsi_krishna@in.ibm.com> Kernel
  *		Probes initial implementation ( includes contributions from
  *		Rusty Russell).
- * 2004-July	Suparna Bhattaअक्षरya <suparna@in.ibm.com> added jumper probes
- *		पूर्णांकerface to access function arguments.
+ * 2004-July	Suparna Bhattacharya <suparna@in.ibm.com> added jumper probes
+ *		interface to access function arguments.
  * 2004-Oct	Jim Keniston <jkenisto@us.ibm.com> and Prasanna S Panchamukhi
- *		<prasanna@in.ibm.com> adapted क्रम x86_64 from i386.
+ *		<prasanna@in.ibm.com> adapted for x86_64 from i386.
  * 2005-Mar	Roland McGrath <roland@redhat.com>
  *		Fixed to handle %rip-relative addressing mode correctly.
  * 2005-May	Hien Nguyen <hien@us.ibm.com>, Jim Keniston
  *		<jkenisto@us.ibm.com> and Prasanna S Panchamukhi
- *		<prasanna@in.ibm.com> added function-वापस probes.
- * 2005-May	Rusty Lynch <rusty.lynch@पूर्णांकel.com>
- *		Added function वापस probes functionality
+ *		<prasanna@in.ibm.com> added function-return probes.
+ * 2005-May	Rusty Lynch <rusty.lynch@intel.com>
+ *		Added function return probes functionality
  * 2006-Feb	Masami Hiramatsu <hiramatu@sdl.hitachi.co.jp> added
- *		kprobe-booster and kretprobe-booster क्रम i386.
+ *		kprobe-booster and kretprobe-booster for i386.
  * 2007-Dec	Masami Hiramatsu <mhiramat@redhat.com> added kprobe-booster
- *		and kretprobe-booster क्रम x86-64
+ *		and kretprobe-booster for x86-64
  * 2007-Dec	Masami Hiramatsu <mhiramat@redhat.com>, Arjan van de Ven
  *		<arjan@infradead.org> and Jim Keniston <jkenisto@us.ibm.com>
- *		unअगरied x86 kprobes code.
+ *		unified x86 kprobes code.
  */
-#समावेश <linux/kprobes.h>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/hardirq.h>
-#समावेश <linux/preempt.h>
-#समावेश <linux/sched/debug.h>
-#समावेश <linux/perf_event.h>
-#समावेश <linux/extable.h>
-#समावेश <linux/kdebug.h>
-#समावेश <linux/kallsyms.h>
-#समावेश <linux/ftrace.h>
-#समावेश <linux/kasan.h>
-#समावेश <linux/moduleloader.h>
-#समावेश <linux/objtool.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/pgtable.h>
+#include <linux/kprobes.h>
+#include <linux/ptrace.h>
+#include <linux/string.h>
+#include <linux/slab.h>
+#include <linux/hardirq.h>
+#include <linux/preempt.h>
+#include <linux/sched/debug.h>
+#include <linux/perf_event.h>
+#include <linux/extable.h>
+#include <linux/kdebug.h>
+#include <linux/kallsyms.h>
+#include <linux/ftrace.h>
+#include <linux/kasan.h>
+#include <linux/moduleloader.h>
+#include <linux/objtool.h>
+#include <linux/vmalloc.h>
+#include <linux/pgtable.h>
 
-#समावेश <यंत्र/text-patching.h>
-#समावेश <यंत्र/cacheflush.h>
-#समावेश <यंत्र/desc.h>
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/alternative.h>
-#समावेश <यंत्र/insn.h>
-#समावेश <यंत्र/debugreg.h>
-#समावेश <यंत्र/set_memory.h>
+#include <asm/text-patching.h>
+#include <asm/cacheflush.h>
+#include <asm/desc.h>
+#include <linux/uaccess.h>
+#include <asm/alternative.h>
+#include <asm/insn.h>
+#include <asm/debugreg.h>
+#include <asm/set_memory.h>
 
-#समावेश "common.h"
+#include "common.h"
 
-DEFINE_PER_CPU(काष्ठा kprobe *, current_kprobe) = शून्य;
-DEFINE_PER_CPU(काष्ठा kprobe_ctlblk, kprobe_ctlblk);
+DEFINE_PER_CPU(struct kprobe *, current_kprobe) = NULL;
+DEFINE_PER_CPU(struct kprobe_ctlblk, kprobe_ctlblk);
 
-#घोषणा stack_addr(regs) ((अचिन्हित दीर्घ *)regs->sp)
+#define stack_addr(regs) ((unsigned long *)regs->sp)
 
-#घोषणा W(row, b0, b1, b2, b3, b4, b5, b6, b7, b8, b9, ba, bb, bc, bd, be, bf)\
+#define W(row, b0, b1, b2, b3, b4, b5, b6, b7, b8, b9, ba, bb, bc, bd, be, bf)\
 	(((b0##UL << 0x0)|(b1##UL << 0x1)|(b2##UL << 0x2)|(b3##UL << 0x3) |   \
 	  (b4##UL << 0x4)|(b5##UL << 0x5)|(b6##UL << 0x6)|(b7##UL << 0x7) |   \
 	  (b8##UL << 0x8)|(b9##UL << 0x9)|(ba##UL << 0xa)|(bb##UL << 0xb) |   \
@@ -70,11 +69,11 @@ DEFINE_PER_CPU(काष्ठा kprobe_ctlblk, kprobe_ctlblk);
 	/*
 	 * Undefined/reserved opcodes, conditional jump, Opcode Extension
 	 * Groups, and some special opcodes can not boost.
-	 * This is non-स्थिर and अस्थिर to keep gcc from अटलally
+	 * This is non-const and volatile to keep gcc from statically
 	 * optimizing it out, as variable_test_bit makes gcc think only
-	 * *(अचिन्हित दीर्घ*) is used.
+	 * *(unsigned long*) is used.
 	 */
-अटल अस्थिर u32 twobyte_is_boostable[256 / 32] = अणु
+static volatile u32 twobyte_is_boostable[256 / 32] = {
 	/*      0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f          */
 	/*      ----------------------------------------------          */
 	W(0x00, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0) | /* 00 */
@@ -95,962 +94,962 @@ DEFINE_PER_CPU(काष्ठा kprobe_ctlblk, kprobe_ctlblk);
 	W(0xf0, 0, 1, 1, 1, 0, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 0)   /* f0 */
 	/*      -----------------------------------------------         */
 	/*      0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f          */
-पूर्ण;
-#अघोषित W
+};
+#undef W
 
-काष्ठा kretprobe_blackpoपूर्णांक kretprobe_blacklist[] = अणु
-	अणु"__switch_to", पूर्ण, /* This function चयनes only current task, but
-			      करोesn't चयन kernel stack.*/
-	अणुशून्य, शून्यपूर्ण	/* Terminator */
-पूर्ण;
+struct kretprobe_blackpoint kretprobe_blacklist[] = {
+	{"__switch_to", }, /* This function switches only current task, but
+			      doesn't switch kernel stack.*/
+	{NULL, NULL}	/* Terminator */
+};
 
-स्थिर पूर्णांक kretprobe_blacklist_size = ARRAY_SIZE(kretprobe_blacklist);
+const int kretprobe_blacklist_size = ARRAY_SIZE(kretprobe_blacklist);
 
-अटल nokprobe_अंतरभूत व्योम
-__synthesize_relative_insn(व्योम *dest, व्योम *from, व्योम *to, u8 op)
-अणु
-	काष्ठा __arch_relative_insn अणु
+static nokprobe_inline void
+__synthesize_relative_insn(void *dest, void *from, void *to, u8 op)
+{
+	struct __arch_relative_insn {
 		u8 op;
 		s32 raddr;
-	पूर्ण __packed *insn;
+	} __packed *insn;
 
-	insn = (काष्ठा __arch_relative_insn *)dest;
-	insn->raddr = (s32)((दीर्घ)(to) - ((दीर्घ)(from) + 5));
+	insn = (struct __arch_relative_insn *)dest;
+	insn->raddr = (s32)((long)(to) - ((long)(from) + 5));
 	insn->op = op;
-पूर्ण
+}
 
-/* Insert a jump inकाष्ठाion at address 'from', which jumps to address 'to'.*/
-व्योम synthesize_reljump(व्योम *dest, व्योम *from, व्योम *to)
-अणु
+/* Insert a jump instruction at address 'from', which jumps to address 'to'.*/
+void synthesize_reljump(void *dest, void *from, void *to)
+{
 	__synthesize_relative_insn(dest, from, to, JMP32_INSN_OPCODE);
-पूर्ण
+}
 NOKPROBE_SYMBOL(synthesize_reljump);
 
-/* Insert a call inकाष्ठाion at address 'from', which calls address 'to'.*/
-व्योम synthesize_relcall(व्योम *dest, व्योम *from, व्योम *to)
-अणु
+/* Insert a call instruction at address 'from', which calls address 'to'.*/
+void synthesize_relcall(void *dest, void *from, void *to)
+{
 	__synthesize_relative_insn(dest, from, to, CALL_INSN_OPCODE);
-पूर्ण
+}
 NOKPROBE_SYMBOL(synthesize_relcall);
 
 /*
- * Returns non-zero अगर INSN is boostable.
- * RIP relative inकाष्ठाions are adjusted at copying समय in 64 bits mode
+ * Returns non-zero if INSN is boostable.
+ * RIP relative instructions are adjusted at copying time in 64 bits mode
  */
-पूर्णांक can_boost(काष्ठा insn *insn, व्योम *addr)
-अणु
+int can_boost(struct insn *insn, void *addr)
+{
 	kprobe_opcode_t opcode;
 	insn_byte_t prefix;
-	पूर्णांक i;
+	int i;
 
-	अगर (search_exception_tables((अचिन्हित दीर्घ)addr))
-		वापस 0;	/* Page fault may occur on this address. */
+	if (search_exception_tables((unsigned long)addr))
+		return 0;	/* Page fault may occur on this address. */
 
 	/* 2nd-byte opcode */
-	अगर (insn->opcode.nbytes == 2)
-		वापस test_bit(insn->opcode.bytes[1],
-				(अचिन्हित दीर्घ *)twobyte_is_boostable);
+	if (insn->opcode.nbytes == 2)
+		return test_bit(insn->opcode.bytes[1],
+				(unsigned long *)twobyte_is_boostable);
 
-	अगर (insn->opcode.nbytes != 1)
-		वापस 0;
+	if (insn->opcode.nbytes != 1)
+		return 0;
 
-	क्रम_each_insn_prefix(insn, i, prefix) अणु
+	for_each_insn_prefix(insn, i, prefix) {
 		insn_attr_t attr;
 
 		attr = inat_get_opcode_attribute(prefix);
 		/* Can't boost Address-size override prefix and CS override prefix */
-		अगर (prefix == 0x2e || inat_is_address_size_prefix(attr))
-			वापस 0;
-	पूर्ण
+		if (prefix == 0x2e || inat_is_address_size_prefix(attr))
+			return 0;
+	}
 
 	opcode = insn->opcode.bytes[0];
 
-	चयन (opcode) अणु
-	हाल 0x62:		/* bound */
-	हाल 0x70 ... 0x7f:	/* Conditional jumps */
-	हाल 0x9a:		/* Call far */
-	हाल 0xc0 ... 0xc1:	/* Grp2 */
-	हाल 0xcc ... 0xce:	/* software exceptions */
-	हाल 0xd0 ... 0xd3:	/* Grp2 */
-	हाल 0xd6:		/* (UD) */
-	हाल 0xd8 ... 0xdf:	/* ESC */
-	हाल 0xe0 ... 0xe3:	/* LOOP*, JCXZ */
-	हाल 0xe8 ... 0xe9:	/* near Call, JMP */
-	हाल 0xeb:		/* Short JMP */
-	हाल 0xf0 ... 0xf4:	/* LOCK/REP, HLT */
-	हाल 0xf6 ... 0xf7:	/* Grp3 */
-	हाल 0xfe:		/* Grp4 */
+	switch (opcode) {
+	case 0x62:		/* bound */
+	case 0x70 ... 0x7f:	/* Conditional jumps */
+	case 0x9a:		/* Call far */
+	case 0xc0 ... 0xc1:	/* Grp2 */
+	case 0xcc ... 0xce:	/* software exceptions */
+	case 0xd0 ... 0xd3:	/* Grp2 */
+	case 0xd6:		/* (UD) */
+	case 0xd8 ... 0xdf:	/* ESC */
+	case 0xe0 ... 0xe3:	/* LOOP*, JCXZ */
+	case 0xe8 ... 0xe9:	/* near Call, JMP */
+	case 0xeb:		/* Short JMP */
+	case 0xf0 ... 0xf4:	/* LOCK/REP, HLT */
+	case 0xf6 ... 0xf7:	/* Grp3 */
+	case 0xfe:		/* Grp4 */
 		/* ... are not boostable */
-		वापस 0;
-	हाल 0xff:		/* Grp5 */
+		return 0;
+	case 0xff:		/* Grp5 */
 		/* Only indirect jmp is boostable */
-		वापस X86_MODRM_REG(insn->modrm.bytes[0]) == 4;
-	शेष:
-		वापस 1;
-	पूर्ण
-पूर्ण
+		return X86_MODRM_REG(insn->modrm.bytes[0]) == 4;
+	default:
+		return 1;
+	}
+}
 
-अटल अचिन्हित दीर्घ
-__recover_probed_insn(kprobe_opcode_t *buf, अचिन्हित दीर्घ addr)
-अणु
-	काष्ठा kprobe *kp;
-	अचिन्हित दीर्घ faddr;
+static unsigned long
+__recover_probed_insn(kprobe_opcode_t *buf, unsigned long addr)
+{
+	struct kprobe *kp;
+	unsigned long faddr;
 
-	kp = get_kprobe((व्योम *)addr);
+	kp = get_kprobe((void *)addr);
 	faddr = ftrace_location(addr);
 	/*
 	 * Addresses inside the ftrace location are refused by
 	 * arch_check_ftrace_location(). Something went terribly wrong
-	 * अगर such an address is checked here.
+	 * if such an address is checked here.
 	 */
-	अगर (WARN_ON(faddr && faddr != addr))
-		वापस 0UL;
+	if (WARN_ON(faddr && faddr != addr))
+		return 0UL;
 	/*
-	 * Use the current code अगर it is not modअगरied by Kprobe
-	 * and it cannot be modअगरied by ftrace.
+	 * Use the current code if it is not modified by Kprobe
+	 * and it cannot be modified by ftrace.
 	 */
-	अगर (!kp && !faddr)
-		वापस addr;
+	if (!kp && !faddr)
+		return addr;
 
 	/*
-	 * Basically, kp->ainsn.insn has an original inकाष्ठाion.
-	 * However, RIP-relative inकाष्ठाion can not करो single-stepping
-	 * at dअगरferent place, __copy_inकाष्ठाion() tweaks the displacement of
-	 * that inकाष्ठाion. In that हाल, we can't recover the inकाष्ठाion
+	 * Basically, kp->ainsn.insn has an original instruction.
+	 * However, RIP-relative instruction can not do single-stepping
+	 * at different place, __copy_instruction() tweaks the displacement of
+	 * that instruction. In that case, we can't recover the instruction
 	 * from the kp->ainsn.insn.
 	 *
-	 * On the other hand, in हाल on normal Kprobe, kp->opcode has a copy
-	 * of the first byte of the probed inकाष्ठाion, which is overwritten
-	 * by पूर्णांक3. And the inकाष्ठाion at kp->addr is not modअगरied by kprobes
-	 * except क्रम the first byte, we can recover the original inकाष्ठाion
+	 * On the other hand, in case on normal Kprobe, kp->opcode has a copy
+	 * of the first byte of the probed instruction, which is overwritten
+	 * by int3. And the instruction at kp->addr is not modified by kprobes
+	 * except for the first byte, we can recover the original instruction
 	 * from it and kp->opcode.
 	 *
-	 * In हाल of Kprobes using ftrace, we करो not have a copy of
-	 * the original inकाष्ठाion. In fact, the ftrace location might
-	 * be modअगरied at anyसमय and even could be in an inconsistent state.
+	 * In case of Kprobes using ftrace, we do not have a copy of
+	 * the original instruction. In fact, the ftrace location might
+	 * be modified at anytime and even could be in an inconsistent state.
 	 * Fortunately, we know that the original code is the ideal 5-byte
-	 * दीर्घ NOP.
+	 * long NOP.
 	 */
-	अगर (copy_from_kernel_nofault(buf, (व्योम *)addr,
-		MAX_INSN_SIZE * माप(kprobe_opcode_t)))
-		वापस 0UL;
+	if (copy_from_kernel_nofault(buf, (void *)addr,
+		MAX_INSN_SIZE * sizeof(kprobe_opcode_t)))
+		return 0UL;
 
-	अगर (faddr)
-		स_नकल(buf, x86_nops[5], 5);
-	अन्यथा
+	if (faddr)
+		memcpy(buf, x86_nops[5], 5);
+	else
 		buf[0] = kp->opcode;
-	वापस (अचिन्हित दीर्घ)buf;
-पूर्ण
+	return (unsigned long)buf;
+}
 
 /*
- * Recover the probed inकाष्ठाion at addr क्रम further analysis.
+ * Recover the probed instruction at addr for further analysis.
  * Caller must lock kprobes by kprobe_mutex, or disable preemption
- * क्रम preventing to release referencing kprobes.
- * Returns zero अगर the inकाष्ठाion can not get recovered (or access failed).
+ * for preventing to release referencing kprobes.
+ * Returns zero if the instruction can not get recovered (or access failed).
  */
-अचिन्हित दीर्घ recover_probed_inकाष्ठाion(kprobe_opcode_t *buf, अचिन्हित दीर्घ addr)
-अणु
-	अचिन्हित दीर्घ __addr;
+unsigned long recover_probed_instruction(kprobe_opcode_t *buf, unsigned long addr)
+{
+	unsigned long __addr;
 
 	__addr = __recover_optprobed_insn(buf, addr);
-	अगर (__addr != addr)
-		वापस __addr;
+	if (__addr != addr)
+		return __addr;
 
-	वापस __recover_probed_insn(buf, addr);
-पूर्ण
+	return __recover_probed_insn(buf, addr);
+}
 
-/* Check अगर paddr is at an inकाष्ठाion boundary */
-अटल पूर्णांक can_probe(अचिन्हित दीर्घ paddr)
-अणु
-	अचिन्हित दीर्घ addr, __addr, offset = 0;
-	काष्ठा insn insn;
+/* Check if paddr is at an instruction boundary */
+static int can_probe(unsigned long paddr)
+{
+	unsigned long addr, __addr, offset = 0;
+	struct insn insn;
 	kprobe_opcode_t buf[MAX_INSN_SIZE];
 
-	अगर (!kallsyms_lookup_size_offset(paddr, शून्य, &offset))
-		वापस 0;
+	if (!kallsyms_lookup_size_offset(paddr, NULL, &offset))
+		return 0;
 
-	/* Decode inकाष्ठाions */
+	/* Decode instructions */
 	addr = paddr - offset;
-	जबतक (addr < paddr) अणु
-		पूर्णांक ret;
+	while (addr < paddr) {
+		int ret;
 
 		/*
-		 * Check अगर the inकाष्ठाion has been modअगरied by another
-		 * kprobe, in which हाल we replace the अवरोधpoपूर्णांक by the
-		 * original inकाष्ठाion in our buffer.
-		 * Also, jump optimization will change the अवरोधpoपूर्णांक to
+		 * Check if the instruction has been modified by another
+		 * kprobe, in which case we replace the breakpoint by the
+		 * original instruction in our buffer.
+		 * Also, jump optimization will change the breakpoint to
 		 * relative-jump. Since the relative-jump itself is
-		 * normally used, we just go through अगर there is no kprobe.
+		 * normally used, we just go through if there is no kprobe.
 		 */
-		__addr = recover_probed_inकाष्ठाion(buf, addr);
-		अगर (!__addr)
-			वापस 0;
+		__addr = recover_probed_instruction(buf, addr);
+		if (!__addr)
+			return 0;
 
-		ret = insn_decode_kernel(&insn, (व्योम *)__addr);
-		अगर (ret < 0)
-			वापस 0;
+		ret = insn_decode_kernel(&insn, (void *)__addr);
+		if (ret < 0)
+			return 0;
 
 		/*
-		 * Another debugging subप्रणाली might insert this अवरोधpoपूर्णांक.
-		 * In that हाल, we can't recover it.
+		 * Another debugging subsystem might insert this breakpoint.
+		 * In that case, we can't recover it.
 		 */
-		अगर (insn.opcode.bytes[0] == INT3_INSN_OPCODE)
-			वापस 0;
+		if (insn.opcode.bytes[0] == INT3_INSN_OPCODE)
+			return 0;
 		addr += insn.length;
-	पूर्ण
+	}
 
-	वापस (addr == paddr);
-पूर्ण
+	return (addr == paddr);
+}
 
 /*
- * Copy an inकाष्ठाion with recovering modअगरied inकाष्ठाion by kprobes
- * and adjust the displacement अगर the inकाष्ठाion uses the %rip-relative
+ * Copy an instruction with recovering modified instruction by kprobes
+ * and adjust the displacement if the instruction uses the %rip-relative
  * addressing mode. Note that since @real will be the final place of copied
- * inकाष्ठाion, displacement must be adjust by @real, not @dest.
- * This वापसs the length of copied inकाष्ठाion, or 0 अगर it has an error.
+ * instruction, displacement must be adjust by @real, not @dest.
+ * This returns the length of copied instruction, or 0 if it has an error.
  */
-पूर्णांक __copy_inकाष्ठाion(u8 *dest, u8 *src, u8 *real, काष्ठा insn *insn)
-अणु
+int __copy_instruction(u8 *dest, u8 *src, u8 *real, struct insn *insn)
+{
 	kprobe_opcode_t buf[MAX_INSN_SIZE];
-	अचिन्हित दीर्घ recovered_insn = recover_probed_inकाष्ठाion(buf, (अचिन्हित दीर्घ)src);
-	पूर्णांक ret;
+	unsigned long recovered_insn = recover_probed_instruction(buf, (unsigned long)src);
+	int ret;
 
-	अगर (!recovered_insn || !insn)
-		वापस 0;
+	if (!recovered_insn || !insn)
+		return 0;
 
-	/* This can access kernel text अगर given address is not recovered */
-	अगर (copy_from_kernel_nofault(dest, (व्योम *)recovered_insn,
+	/* This can access kernel text if given address is not recovered */
+	if (copy_from_kernel_nofault(dest, (void *)recovered_insn,
 			MAX_INSN_SIZE))
-		वापस 0;
+		return 0;
 
 	ret = insn_decode_kernel(insn, dest);
-	अगर (ret < 0)
-		वापस 0;
+	if (ret < 0)
+		return 0;
 
-	/* We can not probe क्रमce emulate prefixed inकाष्ठाion */
-	अगर (insn_has_emulate_prefix(insn))
-		वापस 0;
+	/* We can not probe force emulate prefixed instruction */
+	if (insn_has_emulate_prefix(insn))
+		return 0;
 
-	/* Another subप्रणाली माला_दो a अवरोधpoपूर्णांक, failed to recover */
-	अगर (insn->opcode.bytes[0] == INT3_INSN_OPCODE)
-		वापस 0;
+	/* Another subsystem puts a breakpoint, failed to recover */
+	if (insn->opcode.bytes[0] == INT3_INSN_OPCODE)
+		return 0;
 
-	/* We should not singlestep on the exception masking inकाष्ठाions */
-	अगर (insn_masking_exception(insn))
-		वापस 0;
+	/* We should not singlestep on the exception masking instructions */
+	if (insn_masking_exception(insn))
+		return 0;
 
-#अगर_घोषित CONFIG_X86_64
-	/* Only x86_64 has RIP relative inकाष्ठाions */
-	अगर (insn_rip_relative(insn)) अणु
+#ifdef CONFIG_X86_64
+	/* Only x86_64 has RIP relative instructions */
+	if (insn_rip_relative(insn)) {
 		s64 newdisp;
 		u8 *disp;
 		/*
-		 * The copied inकाष्ठाion uses the %rip-relative addressing
-		 * mode.  Adjust the displacement क्रम the dअगरference between
-		 * the original location of this inकाष्ठाion and the location
+		 * The copied instruction uses the %rip-relative addressing
+		 * mode.  Adjust the displacement for the difference between
+		 * the original location of this instruction and the location
 		 * of the copy that will actually be run.  The tricky bit here
 		 * is making sure that the sign extension happens correctly in
-		 * this calculation, since we need a चिन्हित 32-bit result to
+		 * this calculation, since we need a signed 32-bit result to
 		 * be sign-extended to 64 bits when it's added to the %rip
 		 * value and yield the same 64-bit result that the sign-
-		 * extension of the original चिन्हित 32-bit displacement would
+		 * extension of the original signed 32-bit displacement would
 		 * have given.
 		 */
 		newdisp = (u8 *) src + (s64) insn->displacement.value
 			  - (u8 *) real;
-		अगर ((s64) (s32) newdisp != newdisp) अणु
+		if ((s64) (s32) newdisp != newdisp) {
 			pr_err("Kprobes error: new displacement does not fit into s32 (%llx)\n", newdisp);
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 		disp = (u8 *) dest + insn_offset_displacement(insn);
 		*(s32 *) disp = (s32) newdisp;
-	पूर्ण
-#पूर्ण_अगर
-	वापस insn->length;
-पूर्ण
+	}
+#endif
+	return insn->length;
+}
 
-/* Prepare reljump or पूर्णांक3 right after inकाष्ठाion */
-अटल पूर्णांक prepare_singlestep(kprobe_opcode_t *buf, काष्ठा kprobe *p,
-			      काष्ठा insn *insn)
-अणु
-	पूर्णांक len = insn->length;
+/* Prepare reljump or int3 right after instruction */
+static int prepare_singlestep(kprobe_opcode_t *buf, struct kprobe *p,
+			      struct insn *insn)
+{
+	int len = insn->length;
 
-	अगर (!IS_ENABLED(CONFIG_PREEMPTION) &&
+	if (!IS_ENABLED(CONFIG_PREEMPTION) &&
 	    !p->post_handler && can_boost(insn, p->addr) &&
-	    MAX_INSN_SIZE - len >= JMP32_INSN_SIZE) अणु
+	    MAX_INSN_SIZE - len >= JMP32_INSN_SIZE) {
 		/*
-		 * These inकाष्ठाions can be executed directly अगर it
+		 * These instructions can be executed directly if it
 		 * jumps back to correct address.
 		 */
 		synthesize_reljump(buf + len, p->ainsn.insn + len,
 				   p->addr + insn->length);
 		len += JMP32_INSN_SIZE;
 		p->ainsn.boostable = 1;
-	पूर्ण अन्यथा अणु
-		/* Otherwise, put an पूर्णांक3 क्रम trapping singlestep */
-		अगर (MAX_INSN_SIZE - len < INT3_INSN_SIZE)
-			वापस -ENOSPC;
+	} else {
+		/* Otherwise, put an int3 for trapping singlestep */
+		if (MAX_INSN_SIZE - len < INT3_INSN_SIZE)
+			return -ENOSPC;
 
 		buf[len] = INT3_INSN_OPCODE;
 		len += INT3_INSN_SIZE;
-	पूर्ण
+	}
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
 /* Make page to RO mode when allocate it */
-व्योम *alloc_insn_page(व्योम)
-अणु
-	व्योम *page;
+void *alloc_insn_page(void)
+{
+	void *page;
 
 	page = module_alloc(PAGE_SIZE);
-	अगर (!page)
-		वापस शून्य;
+	if (!page)
+		return NULL;
 
 	set_vm_flush_reset_perms(page);
 	/*
-	 * First make the page पढ़ो-only, and only then make it executable to
+	 * First make the page read-only, and only then make it executable to
 	 * prevent it from being W+X in between.
 	 */
-	set_memory_ro((अचिन्हित दीर्घ)page, 1);
+	set_memory_ro((unsigned long)page, 1);
 
 	/*
 	 * TODO: Once additional kernel code protection mechanisms are set, ensure
 	 * that the page was not maliciously altered and it is still zeroed.
 	 */
-	set_memory_x((अचिन्हित दीर्घ)page, 1);
+	set_memory_x((unsigned long)page, 1);
 
-	वापस page;
-पूर्ण
+	return page;
+}
 
-/* Recover page to RW mode beक्रमe releasing it */
-व्योम मुक्त_insn_page(व्योम *page)
-अणु
-	module_memमुक्त(page);
-पूर्ण
+/* Recover page to RW mode before releasing it */
+void free_insn_page(void *page)
+{
+	module_memfree(page);
+}
 
-/* Kprobe x86 inकाष्ठाion emulation - only regs->ip or IF flag modअगरiers */
+/* Kprobe x86 instruction emulation - only regs->ip or IF flag modifiers */
 
-अटल व्योम kprobe_emulate_अगरmodअगरiers(काष्ठा kprobe *p, काष्ठा pt_regs *regs)
-अणु
-	चयन (p->ainsn.opcode) अणु
-	हाल 0xfa:	/* cli */
+static void kprobe_emulate_ifmodifiers(struct kprobe *p, struct pt_regs *regs)
+{
+	switch (p->ainsn.opcode) {
+	case 0xfa:	/* cli */
 		regs->flags &= ~(X86_EFLAGS_IF);
-		अवरोध;
-	हाल 0xfb:	/* sti */
+		break;
+	case 0xfb:	/* sti */
 		regs->flags |= X86_EFLAGS_IF;
-		अवरोध;
-	हाल 0x9c:	/* pushf */
-		पूर्णांक3_emulate_push(regs, regs->flags);
-		अवरोध;
-	हाल 0x9d:	/* popf */
-		regs->flags = पूर्णांक3_emulate_pop(regs);
-		अवरोध;
-	पूर्ण
+		break;
+	case 0x9c:	/* pushf */
+		int3_emulate_push(regs, regs->flags);
+		break;
+	case 0x9d:	/* popf */
+		regs->flags = int3_emulate_pop(regs);
+		break;
+	}
 	regs->ip = regs->ip - INT3_INSN_SIZE + p->ainsn.size;
-पूर्ण
-NOKPROBE_SYMBOL(kprobe_emulate_अगरmodअगरiers);
+}
+NOKPROBE_SYMBOL(kprobe_emulate_ifmodifiers);
 
-अटल व्योम kprobe_emulate_ret(काष्ठा kprobe *p, काष्ठा pt_regs *regs)
-अणु
-	पूर्णांक3_emulate_ret(regs);
-पूर्ण
+static void kprobe_emulate_ret(struct kprobe *p, struct pt_regs *regs)
+{
+	int3_emulate_ret(regs);
+}
 NOKPROBE_SYMBOL(kprobe_emulate_ret);
 
-अटल व्योम kprobe_emulate_call(काष्ठा kprobe *p, काष्ठा pt_regs *regs)
-अणु
-	अचिन्हित दीर्घ func = regs->ip - INT3_INSN_SIZE + p->ainsn.size;
+static void kprobe_emulate_call(struct kprobe *p, struct pt_regs *regs)
+{
+	unsigned long func = regs->ip - INT3_INSN_SIZE + p->ainsn.size;
 
 	func += p->ainsn.rel32;
-	पूर्णांक3_emulate_call(regs, func);
-पूर्ण
+	int3_emulate_call(regs, func);
+}
 NOKPROBE_SYMBOL(kprobe_emulate_call);
 
-अटल nokprobe_अंतरभूत
-व्योम __kprobe_emulate_jmp(काष्ठा kprobe *p, काष्ठा pt_regs *regs, bool cond)
-अणु
-	अचिन्हित दीर्घ ip = regs->ip - INT3_INSN_SIZE + p->ainsn.size;
+static nokprobe_inline
+void __kprobe_emulate_jmp(struct kprobe *p, struct pt_regs *regs, bool cond)
+{
+	unsigned long ip = regs->ip - INT3_INSN_SIZE + p->ainsn.size;
 
-	अगर (cond)
+	if (cond)
 		ip += p->ainsn.rel32;
-	पूर्णांक3_emulate_jmp(regs, ip);
-पूर्ण
+	int3_emulate_jmp(regs, ip);
+}
 
-अटल व्योम kprobe_emulate_jmp(काष्ठा kprobe *p, काष्ठा pt_regs *regs)
-अणु
+static void kprobe_emulate_jmp(struct kprobe *p, struct pt_regs *regs)
+{
 	__kprobe_emulate_jmp(p, regs, true);
-पूर्ण
+}
 NOKPROBE_SYMBOL(kprobe_emulate_jmp);
 
-अटल स्थिर अचिन्हित दीर्घ jcc_mask[6] = अणु
+static const unsigned long jcc_mask[6] = {
 	[0] = X86_EFLAGS_OF,
 	[1] = X86_EFLAGS_CF,
 	[2] = X86_EFLAGS_ZF,
 	[3] = X86_EFLAGS_CF | X86_EFLAGS_ZF,
 	[4] = X86_EFLAGS_SF,
 	[5] = X86_EFLAGS_PF,
-पूर्ण;
+};
 
-अटल व्योम kprobe_emulate_jcc(काष्ठा kprobe *p, काष्ठा pt_regs *regs)
-अणु
+static void kprobe_emulate_jcc(struct kprobe *p, struct pt_regs *regs)
+{
 	bool invert = p->ainsn.jcc.type & 1;
 	bool match;
 
-	अगर (p->ainsn.jcc.type < 0xc) अणु
+	if (p->ainsn.jcc.type < 0xc) {
 		match = regs->flags & jcc_mask[p->ainsn.jcc.type >> 1];
-	पूर्ण अन्यथा अणु
+	} else {
 		match = ((regs->flags & X86_EFLAGS_SF) >> X86_EFLAGS_SF_BIT) ^
 			((regs->flags & X86_EFLAGS_OF) >> X86_EFLAGS_OF_BIT);
-		अगर (p->ainsn.jcc.type >= 0xe)
+		if (p->ainsn.jcc.type >= 0xe)
 			match = match && (regs->flags & X86_EFLAGS_ZF);
-	पूर्ण
+	}
 	__kprobe_emulate_jmp(p, regs, (match && !invert) || (!match && invert));
-पूर्ण
+}
 NOKPROBE_SYMBOL(kprobe_emulate_jcc);
 
-अटल व्योम kprobe_emulate_loop(काष्ठा kprobe *p, काष्ठा pt_regs *regs)
-अणु
+static void kprobe_emulate_loop(struct kprobe *p, struct pt_regs *regs)
+{
 	bool match;
 
-	अगर (p->ainsn.loop.type != 3) अणु	/* LOOP* */
-		अगर (p->ainsn.loop.asize == 32)
+	if (p->ainsn.loop.type != 3) {	/* LOOP* */
+		if (p->ainsn.loop.asize == 32)
 			match = ((*(u32 *)&regs->cx)--) != 0;
-#अगर_घोषित CONFIG_X86_64
-		अन्यथा अगर (p->ainsn.loop.asize == 64)
+#ifdef CONFIG_X86_64
+		else if (p->ainsn.loop.asize == 64)
 			match = ((*(u64 *)&regs->cx)--) != 0;
-#पूर्ण_अगर
-		अन्यथा
+#endif
+		else
 			match = ((*(u16 *)&regs->cx)--) != 0;
-	पूर्ण अन्यथा अणु			/* JCXZ */
-		अगर (p->ainsn.loop.asize == 32)
+	} else {			/* JCXZ */
+		if (p->ainsn.loop.asize == 32)
 			match = *(u32 *)(&regs->cx) == 0;
-#अगर_घोषित CONFIG_X86_64
-		अन्यथा अगर (p->ainsn.loop.asize == 64)
+#ifdef CONFIG_X86_64
+		else if (p->ainsn.loop.asize == 64)
 			match = *(u64 *)(&regs->cx) == 0;
-#पूर्ण_अगर
-		अन्यथा
+#endif
+		else
 			match = *(u16 *)(&regs->cx) == 0;
-	पूर्ण
+	}
 
-	अगर (p->ainsn.loop.type == 0)	/* LOOPNE */
+	if (p->ainsn.loop.type == 0)	/* LOOPNE */
 		match = match && !(regs->flags & X86_EFLAGS_ZF);
-	अन्यथा अगर (p->ainsn.loop.type == 1)	/* LOOPE */
+	else if (p->ainsn.loop.type == 1)	/* LOOPE */
 		match = match && (regs->flags & X86_EFLAGS_ZF);
 
 	__kprobe_emulate_jmp(p, regs, match);
-पूर्ण
+}
 NOKPROBE_SYMBOL(kprobe_emulate_loop);
 
-अटल स्थिर पूर्णांक addrmode_regoffs[] = अणु
-	दुरत्व(काष्ठा pt_regs, ax),
-	दुरत्व(काष्ठा pt_regs, cx),
-	दुरत्व(काष्ठा pt_regs, dx),
-	दुरत्व(काष्ठा pt_regs, bx),
-	दुरत्व(काष्ठा pt_regs, sp),
-	दुरत्व(काष्ठा pt_regs, bp),
-	दुरत्व(काष्ठा pt_regs, si),
-	दुरत्व(काष्ठा pt_regs, di),
-#अगर_घोषित CONFIG_X86_64
-	दुरत्व(काष्ठा pt_regs, r8),
-	दुरत्व(काष्ठा pt_regs, r9),
-	दुरत्व(काष्ठा pt_regs, r10),
-	दुरत्व(काष्ठा pt_regs, r11),
-	दुरत्व(काष्ठा pt_regs, r12),
-	दुरत्व(काष्ठा pt_regs, r13),
-	दुरत्व(काष्ठा pt_regs, r14),
-	दुरत्व(काष्ठा pt_regs, r15),
-#पूर्ण_अगर
-पूर्ण;
+static const int addrmode_regoffs[] = {
+	offsetof(struct pt_regs, ax),
+	offsetof(struct pt_regs, cx),
+	offsetof(struct pt_regs, dx),
+	offsetof(struct pt_regs, bx),
+	offsetof(struct pt_regs, sp),
+	offsetof(struct pt_regs, bp),
+	offsetof(struct pt_regs, si),
+	offsetof(struct pt_regs, di),
+#ifdef CONFIG_X86_64
+	offsetof(struct pt_regs, r8),
+	offsetof(struct pt_regs, r9),
+	offsetof(struct pt_regs, r10),
+	offsetof(struct pt_regs, r11),
+	offsetof(struct pt_regs, r12),
+	offsetof(struct pt_regs, r13),
+	offsetof(struct pt_regs, r14),
+	offsetof(struct pt_regs, r15),
+#endif
+};
 
-अटल व्योम kprobe_emulate_call_indirect(काष्ठा kprobe *p, काष्ठा pt_regs *regs)
-अणु
-	अचिन्हित दीर्घ offs = addrmode_regoffs[p->ainsn.indirect.reg];
+static void kprobe_emulate_call_indirect(struct kprobe *p, struct pt_regs *regs)
+{
+	unsigned long offs = addrmode_regoffs[p->ainsn.indirect.reg];
 
-	पूर्णांक3_emulate_call(regs, regs_get_रेजिस्टर(regs, offs));
-पूर्ण
+	int3_emulate_call(regs, regs_get_register(regs, offs));
+}
 NOKPROBE_SYMBOL(kprobe_emulate_call_indirect);
 
-अटल व्योम kprobe_emulate_jmp_indirect(काष्ठा kprobe *p, काष्ठा pt_regs *regs)
-अणु
-	अचिन्हित दीर्घ offs = addrmode_regoffs[p->ainsn.indirect.reg];
+static void kprobe_emulate_jmp_indirect(struct kprobe *p, struct pt_regs *regs)
+{
+	unsigned long offs = addrmode_regoffs[p->ainsn.indirect.reg];
 
-	पूर्णांक3_emulate_jmp(regs, regs_get_रेजिस्टर(regs, offs));
-पूर्ण
+	int3_emulate_jmp(regs, regs_get_register(regs, offs));
+}
 NOKPROBE_SYMBOL(kprobe_emulate_jmp_indirect);
 
-अटल पूर्णांक prepare_emulation(काष्ठा kprobe *p, काष्ठा insn *insn)
-अणु
+static int prepare_emulation(struct kprobe *p, struct insn *insn)
+{
 	insn_byte_t opcode = insn->opcode.bytes[0];
 
-	चयन (opcode) अणु
-	हाल 0xfa:		/* cli */
-	हाल 0xfb:		/* sti */
-	हाल 0x9c:		/* pushfl */
-	हाल 0x9d:		/* popf/popfd */
+	switch (opcode) {
+	case 0xfa:		/* cli */
+	case 0xfb:		/* sti */
+	case 0x9c:		/* pushfl */
+	case 0x9d:		/* popf/popfd */
 		/*
-		 * IF modअगरiers must be emulated since it will enable पूर्णांकerrupt जबतक
-		 * पूर्णांक3 single stepping.
+		 * IF modifiers must be emulated since it will enable interrupt while
+		 * int3 single stepping.
 		 */
-		p->ainsn.emulate_op = kprobe_emulate_अगरmodअगरiers;
+		p->ainsn.emulate_op = kprobe_emulate_ifmodifiers;
 		p->ainsn.opcode = opcode;
-		अवरोध;
-	हाल 0xc2:	/* ret/lret */
-	हाल 0xc3:
-	हाल 0xca:
-	हाल 0xcb:
+		break;
+	case 0xc2:	/* ret/lret */
+	case 0xc3:
+	case 0xca:
+	case 0xcb:
 		p->ainsn.emulate_op = kprobe_emulate_ret;
-		अवरोध;
-	हाल 0x9a:	/* far call असलolute -- segment is not supported */
-	हाल 0xea:	/* far jmp असलolute -- segment is not supported */
-	हाल 0xcc:	/* पूर्णांक3 */
-	हाल 0xcf:	/* iret -- in-kernel IRET is not supported */
-		वापस -EOPNOTSUPP;
-		अवरोध;
-	हाल 0xe8:	/* near call relative */
+		break;
+	case 0x9a:	/* far call absolute -- segment is not supported */
+	case 0xea:	/* far jmp absolute -- segment is not supported */
+	case 0xcc:	/* int3 */
+	case 0xcf:	/* iret -- in-kernel IRET is not supported */
+		return -EOPNOTSUPP;
+		break;
+	case 0xe8:	/* near call relative */
 		p->ainsn.emulate_op = kprobe_emulate_call;
-		अगर (insn->immediate.nbytes == 2)
+		if (insn->immediate.nbytes == 2)
 			p->ainsn.rel32 = *(s16 *)&insn->immediate.value;
-		अन्यथा
+		else
 			p->ainsn.rel32 = *(s32 *)&insn->immediate.value;
-		अवरोध;
-	हाल 0xeb:	/* लघु jump relative */
-	हाल 0xe9:	/* near jump relative */
+		break;
+	case 0xeb:	/* short jump relative */
+	case 0xe9:	/* near jump relative */
 		p->ainsn.emulate_op = kprobe_emulate_jmp;
-		अगर (insn->immediate.nbytes == 1)
+		if (insn->immediate.nbytes == 1)
 			p->ainsn.rel32 = *(s8 *)&insn->immediate.value;
-		अन्यथा अगर (insn->immediate.nbytes == 2)
+		else if (insn->immediate.nbytes == 2)
 			p->ainsn.rel32 = *(s16 *)&insn->immediate.value;
-		अन्यथा
+		else
 			p->ainsn.rel32 = *(s32 *)&insn->immediate.value;
-		अवरोध;
-	हाल 0x70 ... 0x7f:
+		break;
+	case 0x70 ... 0x7f:
 		/* 1 byte conditional jump */
 		p->ainsn.emulate_op = kprobe_emulate_jcc;
 		p->ainsn.jcc.type = opcode & 0xf;
-		p->ainsn.rel32 = *(अक्षर *)insn->immediate.bytes;
-		अवरोध;
-	हाल 0x0f:
+		p->ainsn.rel32 = *(char *)insn->immediate.bytes;
+		break;
+	case 0x0f:
 		opcode = insn->opcode.bytes[1];
-		अगर ((opcode & 0xf0) == 0x80) अणु
+		if ((opcode & 0xf0) == 0x80) {
 			/* 2 bytes Conditional Jump */
 			p->ainsn.emulate_op = kprobe_emulate_jcc;
 			p->ainsn.jcc.type = opcode & 0xf;
-			अगर (insn->immediate.nbytes == 2)
+			if (insn->immediate.nbytes == 2)
 				p->ainsn.rel32 = *(s16 *)&insn->immediate.value;
-			अन्यथा
+			else
 				p->ainsn.rel32 = *(s32 *)&insn->immediate.value;
-		पूर्ण अन्यथा अगर (opcode == 0x01 &&
+		} else if (opcode == 0x01 &&
 			   X86_MODRM_REG(insn->modrm.bytes[0]) == 0 &&
-			   X86_MODRM_MOD(insn->modrm.bytes[0]) == 3) अणु
+			   X86_MODRM_MOD(insn->modrm.bytes[0]) == 3) {
 			/* VM extensions - not supported */
-			वापस -EOPNOTSUPP;
-		पूर्ण
-		अवरोध;
-	हाल 0xe0:	/* Loop NZ */
-	हाल 0xe1:	/* Loop */
-	हाल 0xe2:	/* Loop */
-	हाल 0xe3:	/* J*CXZ */
+			return -EOPNOTSUPP;
+		}
+		break;
+	case 0xe0:	/* Loop NZ */
+	case 0xe1:	/* Loop */
+	case 0xe2:	/* Loop */
+	case 0xe3:	/* J*CXZ */
 		p->ainsn.emulate_op = kprobe_emulate_loop;
 		p->ainsn.loop.type = opcode & 0x3;
 		p->ainsn.loop.asize = insn->addr_bytes * 8;
 		p->ainsn.rel32 = *(s8 *)&insn->immediate.value;
-		अवरोध;
-	हाल 0xff:
+		break;
+	case 0xff:
 		/*
-		 * Since the 0xff is an extended group opcode, the inकाष्ठाion
+		 * Since the 0xff is an extended group opcode, the instruction
 		 * is determined by the MOD/RM byte.
 		 */
 		opcode = insn->modrm.bytes[0];
-		अगर ((opcode & 0x30) == 0x10) अणु
-			अगर ((opcode & 0x8) == 0x8)
-				वापस -EOPNOTSUPP;	/* far call */
-			/* call असलolute, indirect */
+		if ((opcode & 0x30) == 0x10) {
+			if ((opcode & 0x8) == 0x8)
+				return -EOPNOTSUPP;	/* far call */
+			/* call absolute, indirect */
 			p->ainsn.emulate_op = kprobe_emulate_call_indirect;
-		पूर्ण अन्यथा अगर ((opcode & 0x30) == 0x20) अणु
-			अगर ((opcode & 0x8) == 0x8)
-				वापस -EOPNOTSUPP;	/* far jmp */
-			/* jmp near असलolute indirect */
+		} else if ((opcode & 0x30) == 0x20) {
+			if ((opcode & 0x8) == 0x8)
+				return -EOPNOTSUPP;	/* far jmp */
+			/* jmp near absolute indirect */
 			p->ainsn.emulate_op = kprobe_emulate_jmp_indirect;
-		पूर्ण अन्यथा
-			अवरोध;
+		} else
+			break;
 
-		अगर (insn->addr_bytes != माप(अचिन्हित दीर्घ))
-			वापस -EOPNOTSUPP;	/* Don't support dअगरfernt size */
-		अगर (X86_MODRM_MOD(opcode) != 3)
-			वापस -EOPNOTSUPP;	/* TODO: support memory addressing */
+		if (insn->addr_bytes != sizeof(unsigned long))
+			return -EOPNOTSUPP;	/* Don't support differnt size */
+		if (X86_MODRM_MOD(opcode) != 3)
+			return -EOPNOTSUPP;	/* TODO: support memory addressing */
 
 		p->ainsn.indirect.reg = X86_MODRM_RM(opcode);
-#अगर_घोषित CONFIG_X86_64
-		अगर (X86_REX_B(insn->rex_prefix.value))
+#ifdef CONFIG_X86_64
+		if (X86_REX_B(insn->rex_prefix.value))
 			p->ainsn.indirect.reg += 8;
-#पूर्ण_अगर
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+#endif
+		break;
+	default:
+		break;
+	}
 	p->ainsn.size = insn->length;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक arch_copy_kprobe(काष्ठा kprobe *p)
-अणु
-	काष्ठा insn insn;
+static int arch_copy_kprobe(struct kprobe *p)
+{
+	struct insn insn;
 	kprobe_opcode_t buf[MAX_INSN_SIZE];
-	पूर्णांक ret, len;
+	int ret, len;
 
-	/* Copy an inकाष्ठाion with recovering अगर other optprobe modअगरies it.*/
-	len = __copy_inकाष्ठाion(buf, p->addr, p->ainsn.insn, &insn);
-	अगर (!len)
-		वापस -EINVAL;
+	/* Copy an instruction with recovering if other optprobe modifies it.*/
+	len = __copy_instruction(buf, p->addr, p->ainsn.insn, &insn);
+	if (!len)
+		return -EINVAL;
 
 	/* Analyze the opcode and setup emulate functions */
 	ret = prepare_emulation(p, &insn);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	/* Add पूर्णांक3 क्रम single-step or booster jmp */
+	/* Add int3 for single-step or booster jmp */
 	len = prepare_singlestep(buf, p, &insn);
-	अगर (len < 0)
-		वापस len;
+	if (len < 0)
+		return len;
 
-	/* Also, displacement change करोesn't affect the first byte */
+	/* Also, displacement change doesn't affect the first byte */
 	p->opcode = buf[0];
 
 	p->ainsn.tp_len = len;
-	perf_event_text_poke(p->ainsn.insn, शून्य, 0, buf, len);
+	perf_event_text_poke(p->ainsn.insn, NULL, 0, buf, len);
 
-	/* OK, ग_लिखो back the inकाष्ठाion(s) पूर्णांकo ROX insn buffer */
+	/* OK, write back the instruction(s) into ROX insn buffer */
 	text_poke(p->ainsn.insn, buf, len);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक arch_prepare_kprobe(काष्ठा kprobe *p)
-अणु
-	पूर्णांक ret;
+int arch_prepare_kprobe(struct kprobe *p)
+{
+	int ret;
 
-	अगर (alternatives_text_reserved(p->addr, p->addr))
-		वापस -EINVAL;
+	if (alternatives_text_reserved(p->addr, p->addr))
+		return -EINVAL;
 
-	अगर (!can_probe((अचिन्हित दीर्घ)p->addr))
-		वापस -EILSEQ;
+	if (!can_probe((unsigned long)p->addr))
+		return -EILSEQ;
 
-	स_रखो(&p->ainsn, 0, माप(p->ainsn));
+	memset(&p->ainsn, 0, sizeof(p->ainsn));
 
 	/* insn: must be on special executable page on x86. */
 	p->ainsn.insn = get_insn_slot();
-	अगर (!p->ainsn.insn)
-		वापस -ENOMEM;
+	if (!p->ainsn.insn)
+		return -ENOMEM;
 
 	ret = arch_copy_kprobe(p);
-	अगर (ret) अणु
-		मुक्त_insn_slot(p->ainsn.insn, 0);
-		p->ainsn.insn = शून्य;
-	पूर्ण
+	if (ret) {
+		free_insn_slot(p->ainsn.insn, 0);
+		p->ainsn.insn = NULL;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम arch_arm_kprobe(काष्ठा kprobe *p)
-अणु
-	u8 पूर्णांक3 = INT3_INSN_OPCODE;
+void arch_arm_kprobe(struct kprobe *p)
+{
+	u8 int3 = INT3_INSN_OPCODE;
 
-	text_poke(p->addr, &पूर्णांक3, 1);
+	text_poke(p->addr, &int3, 1);
 	text_poke_sync();
-	perf_event_text_poke(p->addr, &p->opcode, 1, &पूर्णांक3, 1);
-पूर्ण
+	perf_event_text_poke(p->addr, &p->opcode, 1, &int3, 1);
+}
 
-व्योम arch_disarm_kprobe(काष्ठा kprobe *p)
-अणु
-	u8 पूर्णांक3 = INT3_INSN_OPCODE;
+void arch_disarm_kprobe(struct kprobe *p)
+{
+	u8 int3 = INT3_INSN_OPCODE;
 
-	perf_event_text_poke(p->addr, &पूर्णांक3, 1, &p->opcode, 1);
+	perf_event_text_poke(p->addr, &int3, 1, &p->opcode, 1);
 	text_poke(p->addr, &p->opcode, 1);
 	text_poke_sync();
-पूर्ण
+}
 
-व्योम arch_हटाओ_kprobe(काष्ठा kprobe *p)
-अणु
-	अगर (p->ainsn.insn) अणु
-		/* Record the perf event beक्रमe मुक्तing the slot */
+void arch_remove_kprobe(struct kprobe *p)
+{
+	if (p->ainsn.insn) {
+		/* Record the perf event before freeing the slot */
 		perf_event_text_poke(p->ainsn.insn, p->ainsn.insn,
-				     p->ainsn.tp_len, शून्य, 0);
-		मुक्त_insn_slot(p->ainsn.insn, p->ainsn.boostable);
-		p->ainsn.insn = शून्य;
-	पूर्ण
-पूर्ण
+				     p->ainsn.tp_len, NULL, 0);
+		free_insn_slot(p->ainsn.insn, p->ainsn.boostable);
+		p->ainsn.insn = NULL;
+	}
+}
 
-अटल nokprobe_अंतरभूत व्योम
-save_previous_kprobe(काष्ठा kprobe_ctlblk *kcb)
-अणु
+static nokprobe_inline void
+save_previous_kprobe(struct kprobe_ctlblk *kcb)
+{
 	kcb->prev_kprobe.kp = kprobe_running();
 	kcb->prev_kprobe.status = kcb->kprobe_status;
 	kcb->prev_kprobe.old_flags = kcb->kprobe_old_flags;
 	kcb->prev_kprobe.saved_flags = kcb->kprobe_saved_flags;
-पूर्ण
+}
 
-अटल nokprobe_अंतरभूत व्योम
-restore_previous_kprobe(काष्ठा kprobe_ctlblk *kcb)
-अणु
-	__this_cpu_ग_लिखो(current_kprobe, kcb->prev_kprobe.kp);
+static nokprobe_inline void
+restore_previous_kprobe(struct kprobe_ctlblk *kcb)
+{
+	__this_cpu_write(current_kprobe, kcb->prev_kprobe.kp);
 	kcb->kprobe_status = kcb->prev_kprobe.status;
 	kcb->kprobe_old_flags = kcb->prev_kprobe.old_flags;
 	kcb->kprobe_saved_flags = kcb->prev_kprobe.saved_flags;
-पूर्ण
+}
 
-अटल nokprobe_अंतरभूत व्योम
-set_current_kprobe(काष्ठा kprobe *p, काष्ठा pt_regs *regs,
-		   काष्ठा kprobe_ctlblk *kcb)
-अणु
-	__this_cpu_ग_लिखो(current_kprobe, p);
+static nokprobe_inline void
+set_current_kprobe(struct kprobe *p, struct pt_regs *regs,
+		   struct kprobe_ctlblk *kcb)
+{
+	__this_cpu_write(current_kprobe, p);
 	kcb->kprobe_saved_flags = kcb->kprobe_old_flags
 		= (regs->flags & X86_EFLAGS_IF);
-पूर्ण
+}
 
-व्योम arch_prepare_kretprobe(काष्ठा kretprobe_instance *ri, काष्ठा pt_regs *regs)
-अणु
-	अचिन्हित दीर्घ *sara = stack_addr(regs);
+void arch_prepare_kretprobe(struct kretprobe_instance *ri, struct pt_regs *regs)
+{
+	unsigned long *sara = stack_addr(regs);
 
 	ri->ret_addr = (kprobe_opcode_t *) *sara;
 	ri->fp = sara;
 
-	/* Replace the वापस addr with trampoline addr */
-	*sara = (अचिन्हित दीर्घ) &kretprobe_trampoline;
-पूर्ण
+	/* Replace the return addr with trampoline addr */
+	*sara = (unsigned long) &kretprobe_trampoline;
+}
 NOKPROBE_SYMBOL(arch_prepare_kretprobe);
 
-अटल व्योम kprobe_post_process(काष्ठा kprobe *cur, काष्ठा pt_regs *regs,
-			       काष्ठा kprobe_ctlblk *kcb)
-अणु
-	अगर ((kcb->kprobe_status != KPROBE_REENTER) && cur->post_handler) अणु
+static void kprobe_post_process(struct kprobe *cur, struct pt_regs *regs,
+			       struct kprobe_ctlblk *kcb)
+{
+	if ((kcb->kprobe_status != KPROBE_REENTER) && cur->post_handler) {
 		kcb->kprobe_status = KPROBE_HIT_SSDONE;
 		cur->post_handler(cur, regs, 0);
-	पूर्ण
+	}
 
-	/* Restore back the original saved kprobes variables and जारी. */
-	अगर (kcb->kprobe_status == KPROBE_REENTER)
+	/* Restore back the original saved kprobes variables and continue. */
+	if (kcb->kprobe_status == KPROBE_REENTER)
 		restore_previous_kprobe(kcb);
-	अन्यथा
+	else
 		reset_current_kprobe();
-पूर्ण
+}
 NOKPROBE_SYMBOL(kprobe_post_process);
 
-अटल व्योम setup_singlestep(काष्ठा kprobe *p, काष्ठा pt_regs *regs,
-			     काष्ठा kprobe_ctlblk *kcb, पूर्णांक reenter)
-अणु
-	अगर (setup_detour_execution(p, regs, reenter))
-		वापस;
+static void setup_singlestep(struct kprobe *p, struct pt_regs *regs,
+			     struct kprobe_ctlblk *kcb, int reenter)
+{
+	if (setup_detour_execution(p, regs, reenter))
+		return;
 
-#अगर !defined(CONFIG_PREEMPTION)
-	अगर (p->ainsn.boostable) अणु
-		/* Boost up -- we can execute copied inकाष्ठाions directly */
-		अगर (!reenter)
+#if !defined(CONFIG_PREEMPTION)
+	if (p->ainsn.boostable) {
+		/* Boost up -- we can execute copied instructions directly */
+		if (!reenter)
 			reset_current_kprobe();
 		/*
-		 * Reentering boosted probe करोesn't reset current_kprobe,
-		 * nor set current_kprobe, because it करोesn't use single
+		 * Reentering boosted probe doesn't reset current_kprobe,
+		 * nor set current_kprobe, because it doesn't use single
 		 * stepping.
 		 */
-		regs->ip = (अचिन्हित दीर्घ)p->ainsn.insn;
-		वापस;
-	पूर्ण
-#पूर्ण_अगर
-	अगर (reenter) अणु
+		regs->ip = (unsigned long)p->ainsn.insn;
+		return;
+	}
+#endif
+	if (reenter) {
 		save_previous_kprobe(kcb);
 		set_current_kprobe(p, regs, kcb);
 		kcb->kprobe_status = KPROBE_REENTER;
-	पूर्ण अन्यथा
+	} else
 		kcb->kprobe_status = KPROBE_HIT_SS;
 
-	अगर (p->ainsn.emulate_op) अणु
+	if (p->ainsn.emulate_op) {
 		p->ainsn.emulate_op(p, regs);
 		kprobe_post_process(p, regs, kcb);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* Disable पूर्णांकerrupt, and set ip रेजिस्टर on trampoline */
+	/* Disable interrupt, and set ip register on trampoline */
 	regs->flags &= ~X86_EFLAGS_IF;
-	regs->ip = (अचिन्हित दीर्घ)p->ainsn.insn;
-पूर्ण
+	regs->ip = (unsigned long)p->ainsn.insn;
+}
 NOKPROBE_SYMBOL(setup_singlestep);
 
 /*
  * Called after single-stepping.  p->addr is the address of the
- * inकाष्ठाion whose first byte has been replaced by the "int3"
- * inकाष्ठाion.  To aव्योम the SMP problems that can occur when we
+ * instruction whose first byte has been replaced by the "int3"
+ * instruction.  To avoid the SMP problems that can occur when we
  * temporarily put back the original opcode to single-step, we
- * single-stepped a copy of the inकाष्ठाion.  The address of this
- * copy is p->ainsn.insn. We also करोesn't use trap, but "int3" again
- * right after the copied inकाष्ठाion.
- * Dअगरferent from the trap single-step, "int3" single-step can not
- * handle the inकाष्ठाion which changes the ip रेजिस्टर, e.g. jmp,
- * call, conditional jmp, and the inकाष्ठाions which changes the IF
- * flags because पूर्णांकerrupt must be disabled around the single-stepping.
- * Such inकाष्ठाions are software emulated, but others are single-stepped
+ * single-stepped a copy of the instruction.  The address of this
+ * copy is p->ainsn.insn. We also doesn't use trap, but "int3" again
+ * right after the copied instruction.
+ * Different from the trap single-step, "int3" single-step can not
+ * handle the instruction which changes the ip register, e.g. jmp,
+ * call, conditional jmp, and the instructions which changes the IF
+ * flags because interrupt must be disabled around the single-stepping.
+ * Such instructions are software emulated, but others are single-stepped
  * using "int3".
  *
  * When the 2nd "int3" handled, the regs->ip and regs->flags needs to
  * be adjusted, so that we can resume execution on correct code.
  */
-अटल व्योम resume_singlestep(काष्ठा kprobe *p, काष्ठा pt_regs *regs,
-			      काष्ठा kprobe_ctlblk *kcb)
-अणु
-	अचिन्हित दीर्घ copy_ip = (अचिन्हित दीर्घ)p->ainsn.insn;
-	अचिन्हित दीर्घ orig_ip = (अचिन्हित दीर्घ)p->addr;
+static void resume_singlestep(struct kprobe *p, struct pt_regs *regs,
+			      struct kprobe_ctlblk *kcb)
+{
+	unsigned long copy_ip = (unsigned long)p->ainsn.insn;
+	unsigned long orig_ip = (unsigned long)p->addr;
 
-	/* Restore saved पूर्णांकerrupt flag and ip रेजिस्टर */
+	/* Restore saved interrupt flag and ip register */
 	regs->flags |= kcb->kprobe_saved_flags;
-	/* Note that regs->ip is executed पूर्णांक3 so must be a step back */
+	/* Note that regs->ip is executed int3 so must be a step back */
 	regs->ip += (orig_ip - copy_ip) - INT3_INSN_SIZE;
-पूर्ण
+}
 NOKPROBE_SYMBOL(resume_singlestep);
 
 /*
- * We have reentered the kprobe_handler(), since another probe was hit जबतक
+ * We have reentered the kprobe_handler(), since another probe was hit while
  * within the handler. We save the original kprobes variables and just single
- * step on the inकाष्ठाion of the new probe without calling any user handlers.
+ * step on the instruction of the new probe without calling any user handlers.
  */
-अटल पूर्णांक reenter_kprobe(काष्ठा kprobe *p, काष्ठा pt_regs *regs,
-			  काष्ठा kprobe_ctlblk *kcb)
-अणु
-	चयन (kcb->kprobe_status) अणु
-	हाल KPROBE_HIT_SSDONE:
-	हाल KPROBE_HIT_ACTIVE:
-	हाल KPROBE_HIT_SS:
+static int reenter_kprobe(struct kprobe *p, struct pt_regs *regs,
+			  struct kprobe_ctlblk *kcb)
+{
+	switch (kcb->kprobe_status) {
+	case KPROBE_HIT_SSDONE:
+	case KPROBE_HIT_ACTIVE:
+	case KPROBE_HIT_SS:
 		kprobes_inc_nmissed_count(p);
 		setup_singlestep(p, regs, kcb, 1);
-		अवरोध;
-	हाल KPROBE_REENTER:
+		break;
+	case KPROBE_REENTER:
 		/* A probe has been hit in the codepath leading up to, or just
-		 * after, single-stepping of a probed inकाष्ठाion. This entire
+		 * after, single-stepping of a probed instruction. This entire
 		 * codepath should strictly reside in .kprobes.text section.
-		 * Raise a BUG or we'll जारी in an endless reentering loop
+		 * Raise a BUG or we'll continue in an endless reentering loop
 		 * and eventually a stack overflow.
 		 */
 		pr_err("Unrecoverable kprobe detected.\n");
 		dump_kprobe(p);
 		BUG();
-	शेष:
-		/* impossible हालs */
+	default:
+		/* impossible cases */
 		WARN_ON(1);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 NOKPROBE_SYMBOL(reenter_kprobe);
 
-अटल nokprobe_अंतरभूत पूर्णांक kprobe_is_ss(काष्ठा kprobe_ctlblk *kcb)
-अणु
-	वापस (kcb->kprobe_status == KPROBE_HIT_SS ||
+static nokprobe_inline int kprobe_is_ss(struct kprobe_ctlblk *kcb)
+{
+	return (kcb->kprobe_status == KPROBE_HIT_SS ||
 		kcb->kprobe_status == KPROBE_REENTER);
-पूर्ण
+}
 
 /*
- * Interrupts are disabled on entry as trap3 is an पूर्णांकerrupt gate and they
- * reमुख्य disabled throughout this function.
+ * Interrupts are disabled on entry as trap3 is an interrupt gate and they
+ * remain disabled throughout this function.
  */
-पूर्णांक kprobe_पूर्णांक3_handler(काष्ठा pt_regs *regs)
-अणु
+int kprobe_int3_handler(struct pt_regs *regs)
+{
 	kprobe_opcode_t *addr;
-	काष्ठा kprobe *p;
-	काष्ठा kprobe_ctlblk *kcb;
+	struct kprobe *p;
+	struct kprobe_ctlblk *kcb;
 
-	अगर (user_mode(regs))
-		वापस 0;
+	if (user_mode(regs))
+		return 0;
 
-	addr = (kprobe_opcode_t *)(regs->ip - माप(kprobe_opcode_t));
+	addr = (kprobe_opcode_t *)(regs->ip - sizeof(kprobe_opcode_t));
 	/*
-	 * We करोn't want to be preempted क्रम the entire duration of kprobe
-	 * processing. Since पूर्णांक3 and debug trap disables irqs and we clear
-	 * IF जबतक singlestepping, it must be no preemptible.
+	 * We don't want to be preempted for the entire duration of kprobe
+	 * processing. Since int3 and debug trap disables irqs and we clear
+	 * IF while singlestepping, it must be no preemptible.
 	 */
 
 	kcb = get_kprobe_ctlblk();
 	p = get_kprobe(addr);
 
-	अगर (p) अणु
-		अगर (kprobe_running()) अणु
-			अगर (reenter_kprobe(p, regs, kcb))
-				वापस 1;
-		पूर्ण अन्यथा अणु
+	if (p) {
+		if (kprobe_running()) {
+			if (reenter_kprobe(p, regs, kcb))
+				return 1;
+		} else {
 			set_current_kprobe(p, regs, kcb);
 			kcb->kprobe_status = KPROBE_HIT_ACTIVE;
 
 			/*
-			 * If we have no pre-handler or it वापसed 0, we
-			 * जारी with normal processing.  If we have a
-			 * pre-handler and it वापसed non-zero, that means
-			 * user handler setup रेजिस्टरs to निकास to another
-			 * inकाष्ठाion, we must skip the single stepping.
+			 * If we have no pre-handler or it returned 0, we
+			 * continue with normal processing.  If we have a
+			 * pre-handler and it returned non-zero, that means
+			 * user handler setup registers to exit to another
+			 * instruction, we must skip the single stepping.
 			 */
-			अगर (!p->pre_handler || !p->pre_handler(p, regs))
+			if (!p->pre_handler || !p->pre_handler(p, regs))
 				setup_singlestep(p, regs, kcb, 0);
-			अन्यथा
+			else
 				reset_current_kprobe();
-			वापस 1;
-		पूर्ण
-	पूर्ण अन्यथा अगर (kprobe_is_ss(kcb)) अणु
+			return 1;
+		}
+	} else if (kprobe_is_ss(kcb)) {
 		p = kprobe_running();
-		अगर ((अचिन्हित दीर्घ)p->ainsn.insn < regs->ip &&
-		    (अचिन्हित दीर्घ)p->ainsn.insn + MAX_INSN_SIZE > regs->ip) अणु
-			/* Most provably this is the second पूर्णांक3 क्रम singlestep */
+		if ((unsigned long)p->ainsn.insn < regs->ip &&
+		    (unsigned long)p->ainsn.insn + MAX_INSN_SIZE > regs->ip) {
+			/* Most provably this is the second int3 for singlestep */
 			resume_singlestep(p, regs, kcb);
 			kprobe_post_process(p, regs, kcb);
-			वापस 1;
-		पूर्ण
-	पूर्ण
+			return 1;
+		}
+	}
 
-	अगर (*addr != INT3_INSN_OPCODE) अणु
+	if (*addr != INT3_INSN_OPCODE) {
 		/*
-		 * The अवरोधpoपूर्णांक inकाष्ठाion was हटाओd right
-		 * after we hit it.  Another cpu has हटाओd
-		 * either a probepoपूर्णांक or a debugger अवरोधpoपूर्णांक
-		 * at this address.  In either हाल, no further
-		 * handling of this पूर्णांकerrupt is appropriate.
-		 * Back up over the (now missing) पूर्णांक3 and run
-		 * the original inकाष्ठाion.
+		 * The breakpoint instruction was removed right
+		 * after we hit it.  Another cpu has removed
+		 * either a probepoint or a debugger breakpoint
+		 * at this address.  In either case, no further
+		 * handling of this interrupt is appropriate.
+		 * Back up over the (now missing) int3 and run
+		 * the original instruction.
 		 */
-		regs->ip = (अचिन्हित दीर्घ)addr;
-		वापस 1;
-	पूर्ण /* अन्यथा: not a kprobe fault; let the kernel handle it */
+		regs->ip = (unsigned long)addr;
+		return 1;
+	} /* else: not a kprobe fault; let the kernel handle it */
 
-	वापस 0;
-पूर्ण
-NOKPROBE_SYMBOL(kprobe_पूर्णांक3_handler);
+	return 0;
+}
+NOKPROBE_SYMBOL(kprobe_int3_handler);
 
 /*
- * When a retprobed function वापसs, this code saves रेजिस्टरs and
+ * When a retprobed function returns, this code saves registers and
  * calls trampoline_handler() runs, which calls the kretprobe's handler.
  */
-यंत्र(
+asm(
 	".text\n"
 	".global kretprobe_trampoline\n"
 	".type kretprobe_trampoline, @function\n"
 	"kretprobe_trampoline:\n"
-	/* We करोn't bother saving the ss रेजिस्टर */
-#अगर_घोषित CONFIG_X86_64
+	/* We don't bother saving the ss register */
+#ifdef CONFIG_X86_64
 	"	pushq %rsp\n"
 	"	pushfq\n"
 	SAVE_REGS_STRING
 	"	movq %rsp, %rdi\n"
 	"	call trampoline_handler\n"
-	/* Replace saved sp with true वापस address. */
+	/* Replace saved sp with true return address. */
 	"	movq %rax, 19*8(%rsp)\n"
 	RESTORE_REGS_STRING
 	"	popfq\n"
-#अन्यथा
+#else
 	"	pushl %esp\n"
 	"	pushfl\n"
 	SAVE_REGS_STRING
 	"	movl %esp, %eax\n"
 	"	call trampoline_handler\n"
-	/* Replace saved sp with true वापस address. */
+	/* Replace saved sp with true return address. */
 	"	movl %eax, 15*4(%esp)\n"
 	RESTORE_REGS_STRING
 	"	popfl\n"
-#पूर्ण_अगर
+#endif
 	"	ret\n"
 	".size kretprobe_trampoline, .-kretprobe_trampoline\n"
 );
@@ -1061,84 +1060,84 @@ STACK_FRAME_NON_STANDARD(kretprobe_trampoline);
 /*
  * Called from kretprobe_trampoline
  */
-__used __visible व्योम *trampoline_handler(काष्ठा pt_regs *regs)
-अणु
-	/* fixup रेजिस्टरs */
+__used __visible void *trampoline_handler(struct pt_regs *regs)
+{
+	/* fixup registers */
 	regs->cs = __KERNEL_CS;
-#अगर_घोषित CONFIG_X86_32
+#ifdef CONFIG_X86_32
 	regs->gs = 0;
-#पूर्ण_अगर
-	regs->ip = (अचिन्हित दीर्घ)&kretprobe_trampoline;
+#endif
+	regs->ip = (unsigned long)&kretprobe_trampoline;
 	regs->orig_ax = ~0UL;
 
-	वापस (व्योम *)kretprobe_trampoline_handler(regs, &kretprobe_trampoline, &regs->sp);
-पूर्ण
+	return (void *)kretprobe_trampoline_handler(regs, &kretprobe_trampoline, &regs->sp);
+}
 NOKPROBE_SYMBOL(trampoline_handler);
 
-पूर्णांक kprobe_fault_handler(काष्ठा pt_regs *regs, पूर्णांक trapnr)
-अणु
-	काष्ठा kprobe *cur = kprobe_running();
-	काष्ठा kprobe_ctlblk *kcb = get_kprobe_ctlblk();
+int kprobe_fault_handler(struct pt_regs *regs, int trapnr)
+{
+	struct kprobe *cur = kprobe_running();
+	struct kprobe_ctlblk *kcb = get_kprobe_ctlblk();
 
-	अगर (unlikely(regs->ip == (अचिन्हित दीर्घ)cur->ainsn.insn)) अणु
+	if (unlikely(regs->ip == (unsigned long)cur->ainsn.insn)) {
 		/* This must happen on single-stepping */
 		WARN_ON(kcb->kprobe_status != KPROBE_HIT_SS &&
 			kcb->kprobe_status != KPROBE_REENTER);
 		/*
-		 * We are here because the inकाष्ठाion being single
+		 * We are here because the instruction being single
 		 * stepped caused a page fault. We reset the current
-		 * kprobe and the ip poपूर्णांकs back to the probe address
-		 * and allow the page fault handler to जारी as a
+		 * kprobe and the ip points back to the probe address
+		 * and allow the page fault handler to continue as a
 		 * normal page fault.
 		 */
-		regs->ip = (अचिन्हित दीर्घ)cur->addr;
+		regs->ip = (unsigned long)cur->addr;
 
 		/*
-		 * If the IF flag was set beक्रमe the kprobe hit,
-		 * करोn't touch it:
+		 * If the IF flag was set before the kprobe hit,
+		 * don't touch it:
 		 */
 		regs->flags |= kcb->kprobe_old_flags;
 
-		अगर (kcb->kprobe_status == KPROBE_REENTER)
+		if (kcb->kprobe_status == KPROBE_REENTER)
 			restore_previous_kprobe(kcb);
-		अन्यथा
+		else
 			reset_current_kprobe();
-	पूर्ण अन्यथा अगर (kcb->kprobe_status == KPROBE_HIT_ACTIVE ||
-		   kcb->kprobe_status == KPROBE_HIT_SSDONE) अणु
+	} else if (kcb->kprobe_status == KPROBE_HIT_ACTIVE ||
+		   kcb->kprobe_status == KPROBE_HIT_SSDONE) {
 		/*
-		 * We increment the nmissed count क्रम accounting,
-		 * we can also use npre/npostfault count क्रम accounting
-		 * these specअगरic fault हालs.
+		 * We increment the nmissed count for accounting,
+		 * we can also use npre/npostfault count for accounting
+		 * these specific fault cases.
 		 */
 		kprobes_inc_nmissed_count(cur);
 
 		/*
-		 * We come here because inकाष्ठाions in the pre/post
+		 * We come here because instructions in the pre/post
 		 * handler caused the page_fault, this could happen
-		 * अगर handler tries to access user space by
+		 * if handler tries to access user space by
 		 * copy_from_user(), get_user() etc. Let the
-		 * user-specअगरied handler try to fix it first.
+		 * user-specified handler try to fix it first.
 		 */
-		अगर (cur->fault_handler && cur->fault_handler(cur, regs, trapnr))
-			वापस 1;
-	पूर्ण
+		if (cur->fault_handler && cur->fault_handler(cur, regs, trapnr))
+			return 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 NOKPROBE_SYMBOL(kprobe_fault_handler);
 
-पूर्णांक __init arch_populate_kprobe_blacklist(व्योम)
-अणु
-	वापस kprobe_add_area_blacklist((अचिन्हित दीर्घ)__entry_text_start,
-					 (अचिन्हित दीर्घ)__entry_text_end);
-पूर्ण
+int __init arch_populate_kprobe_blacklist(void)
+{
+	return kprobe_add_area_blacklist((unsigned long)__entry_text_start,
+					 (unsigned long)__entry_text_end);
+}
 
-पूर्णांक __init arch_init_kprobes(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+int __init arch_init_kprobes(void)
+{
+	return 0;
+}
 
-पूर्णांक arch_trampoline_kprobe(काष्ठा kprobe *p)
-अणु
-	वापस 0;
-पूर्ण
+int arch_trampoline_kprobe(struct kprobe *p)
+{
+	return 0;
+}

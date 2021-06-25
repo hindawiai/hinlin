@@ -1,3 +1,2 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश "../../../lib/ctype.c"
+// SPDX-License-Identifier: GPL-2.0
+#include "../../../lib/ctype.c"

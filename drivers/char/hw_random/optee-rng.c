@@ -1,21 +1,20 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2018-2019 Linaro Ltd.
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/of.h>
-#समावेश <linux/hw_अक्रमom.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/tee_drv.h>
-#समावेश <linux/uuid.h>
+#include <linux/delay.h>
+#include <linux/of.h>
+#include <linux/hw_random.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/tee_drv.h>
+#include <linux/uuid.h>
 
-#घोषणा DRIVER_NAME "optee-rng"
+#define DRIVER_NAME "optee-rng"
 
-#घोषणा TEE_ERROR_HEALTH_TEST_FAIL	0x00000001
+#define TEE_ERROR_HEALTH_TEST_FAIL	0x00000001
 
 /*
  * TA_CMD_GET_ENTROPY - Get Entropy from RNG
@@ -31,10 +30,10 @@
  * TEE_ERROR_NOT_SUPPORTED - Requested entropy size greater than size of pool
  * TEE_ERROR_HEALTH_TEST_FAIL - Continuous health testing failed
  */
-#घोषणा TA_CMD_GET_ENTROPY		0x0
+#define TA_CMD_GET_ENTROPY		0x0
 
 /*
- * TA_CMD_GET_RNG_INFO - Get RNG inक्रमmation
+ * TA_CMD_GET_RNG_INFO - Get RNG information
  *
  * param[0] (out value) - value.a: RNG data-rate in bytes per second
  *                        value.b: Quality/Entropy per 1024 bit of data
@@ -46,42 +45,42 @@
  * TEE_SUCCESS - Invoke command success
  * TEE_ERROR_BAD_PARAMETERS - Incorrect input param
  */
-#घोषणा TA_CMD_GET_RNG_INFO		0x1
+#define TA_CMD_GET_RNG_INFO		0x1
 
-#घोषणा MAX_ENTROPY_REQ_SZ		(4 * 1024)
+#define MAX_ENTROPY_REQ_SZ		(4 * 1024)
 
 /**
- * काष्ठा optee_rng_निजी - OP-TEE Ranकरोm Number Generator निजी data
+ * struct optee_rng_private - OP-TEE Random Number Generator private data
  * @dev:		OP-TEE based RNG device.
  * @ctx:		OP-TEE context handler.
- * @session_id:		RNG TA session identअगरier.
+ * @session_id:		RNG TA session identifier.
  * @data_rate:		RNG data rate.
  * @entropy_shm_pool:	Memory pool shared with RNG device.
- * @optee_rng:		OP-TEE RNG driver काष्ठाure.
+ * @optee_rng:		OP-TEE RNG driver structure.
  */
-काष्ठा optee_rng_निजी अणु
-	काष्ठा device *dev;
-	काष्ठा tee_context *ctx;
+struct optee_rng_private {
+	struct device *dev;
+	struct tee_context *ctx;
 	u32 session_id;
 	u32 data_rate;
-	काष्ठा tee_shm *entropy_shm_pool;
-	काष्ठा hwrng optee_rng;
-पूर्ण;
+	struct tee_shm *entropy_shm_pool;
+	struct hwrng optee_rng;
+};
 
-#घोषणा to_optee_rng_निजी(r) \
-		container_of(r, काष्ठा optee_rng_निजी, optee_rng)
+#define to_optee_rng_private(r) \
+		container_of(r, struct optee_rng_private, optee_rng)
 
-अटल माप_प्रकार get_optee_rng_data(काष्ठा optee_rng_निजी *pvt_data,
-				 व्योम *buf, माप_प्रकार req_size)
-अणु
-	पूर्णांक ret = 0;
-	u8 *rng_data = शून्य;
-	माप_प्रकार rng_size = 0;
-	काष्ठा tee_ioctl_invoke_arg inv_arg;
-	काष्ठा tee_param param[4];
+static size_t get_optee_rng_data(struct optee_rng_private *pvt_data,
+				 void *buf, size_t req_size)
+{
+	int ret = 0;
+	u8 *rng_data = NULL;
+	size_t rng_size = 0;
+	struct tee_ioctl_invoke_arg inv_arg;
+	struct tee_param param[4];
 
-	स_रखो(&inv_arg, 0, माप(inv_arg));
-	स_रखो(&param, 0, माप(param));
+	memset(&inv_arg, 0, sizeof(inv_arg));
+	memset(&param, 0, sizeof(param));
 
 	/* Invoke TA_CMD_GET_ENTROPY function of Trusted App */
 	inv_arg.func = TA_CMD_GET_ENTROPY;
@@ -95,93 +94,93 @@
 	param[0].u.memref.shm_offs = 0;
 
 	ret = tee_client_invoke_func(pvt_data->ctx, &inv_arg, param);
-	अगर ((ret < 0) || (inv_arg.ret != 0)) अणु
+	if ((ret < 0) || (inv_arg.ret != 0)) {
 		dev_err(pvt_data->dev, "TA_CMD_GET_ENTROPY invoke err: %x\n",
 			inv_arg.ret);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	rng_data = tee_shm_get_va(pvt_data->entropy_shm_pool, 0);
-	अगर (IS_ERR(rng_data)) अणु
+	if (IS_ERR(rng_data)) {
 		dev_err(pvt_data->dev, "tee_shm_get_va failed\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	rng_size = param[0].u.memref.size;
-	स_नकल(buf, rng_data, rng_size);
+	memcpy(buf, rng_data, rng_size);
 
-	वापस rng_size;
-पूर्ण
+	return rng_size;
+}
 
-अटल पूर्णांक optee_rng_पढ़ो(काष्ठा hwrng *rng, व्योम *buf, माप_प्रकार max, bool रुको)
-अणु
-	काष्ठा optee_rng_निजी *pvt_data = to_optee_rng_निजी(rng);
-	माप_प्रकार पढ़ो = 0, rng_size = 0;
-	पूर्णांक समयout = 1;
+static int optee_rng_read(struct hwrng *rng, void *buf, size_t max, bool wait)
+{
+	struct optee_rng_private *pvt_data = to_optee_rng_private(rng);
+	size_t read = 0, rng_size = 0;
+	int timeout = 1;
 	u8 *data = buf;
 
-	अगर (max > MAX_ENTROPY_REQ_SZ)
+	if (max > MAX_ENTROPY_REQ_SZ)
 		max = MAX_ENTROPY_REQ_SZ;
 
-	जबतक (पढ़ो < max) अणु
-		rng_size = get_optee_rng_data(pvt_data, data, (max - पढ़ो));
+	while (read < max) {
+		rng_size = get_optee_rng_data(pvt_data, data, (max - read));
 
 		data += rng_size;
-		पढ़ो += rng_size;
+		read += rng_size;
 
-		अगर (रुको && pvt_data->data_rate) अणु
-			अगर ((समयout-- == 0) || (पढ़ो == max))
-				वापस पढ़ो;
-			msleep((1000 * (max - पढ़ो)) / pvt_data->data_rate);
-		पूर्ण अन्यथा अणु
-			वापस पढ़ो;
-		पूर्ण
-	पूर्ण
+		if (wait && pvt_data->data_rate) {
+			if ((timeout-- == 0) || (read == max))
+				return read;
+			msleep((1000 * (max - read)) / pvt_data->data_rate);
+		} else {
+			return read;
+		}
+	}
 
-	वापस पढ़ो;
-पूर्ण
+	return read;
+}
 
-अटल पूर्णांक optee_rng_init(काष्ठा hwrng *rng)
-अणु
-	काष्ठा optee_rng_निजी *pvt_data = to_optee_rng_निजी(rng);
-	काष्ठा tee_shm *entropy_shm_pool = शून्य;
+static int optee_rng_init(struct hwrng *rng)
+{
+	struct optee_rng_private *pvt_data = to_optee_rng_private(rng);
+	struct tee_shm *entropy_shm_pool = NULL;
 
 	entropy_shm_pool = tee_shm_alloc(pvt_data->ctx, MAX_ENTROPY_REQ_SZ,
 					 TEE_SHM_MAPPED | TEE_SHM_DMA_BUF);
-	अगर (IS_ERR(entropy_shm_pool)) अणु
+	if (IS_ERR(entropy_shm_pool)) {
 		dev_err(pvt_data->dev, "tee_shm_alloc failed\n");
-		वापस PTR_ERR(entropy_shm_pool);
-	पूर्ण
+		return PTR_ERR(entropy_shm_pool);
+	}
 
 	pvt_data->entropy_shm_pool = entropy_shm_pool;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम optee_rng_cleanup(काष्ठा hwrng *rng)
-अणु
-	काष्ठा optee_rng_निजी *pvt_data = to_optee_rng_निजी(rng);
+static void optee_rng_cleanup(struct hwrng *rng)
+{
+	struct optee_rng_private *pvt_data = to_optee_rng_private(rng);
 
-	tee_shm_मुक्त(pvt_data->entropy_shm_pool);
-पूर्ण
+	tee_shm_free(pvt_data->entropy_shm_pool);
+}
 
-अटल काष्ठा optee_rng_निजी pvt_data = अणु
-	.optee_rng = अणु
+static struct optee_rng_private pvt_data = {
+	.optee_rng = {
 		.name		= DRIVER_NAME,
 		.init		= optee_rng_init,
 		.cleanup	= optee_rng_cleanup,
-		.पढ़ो		= optee_rng_पढ़ो,
-	पूर्ण
-पूर्ण;
+		.read		= optee_rng_read,
+	}
+};
 
-अटल पूर्णांक get_optee_rng_info(काष्ठा device *dev)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा tee_ioctl_invoke_arg inv_arg;
-	काष्ठा tee_param param[4];
+static int get_optee_rng_info(struct device *dev)
+{
+	int ret = 0;
+	struct tee_ioctl_invoke_arg inv_arg;
+	struct tee_param param[4];
 
-	स_रखो(&inv_arg, 0, माप(inv_arg));
-	स_रखो(&param, 0, माप(param));
+	memset(&inv_arg, 0, sizeof(inv_arg));
+	memset(&param, 0, sizeof(param));
 
 	/* Invoke TA_CMD_GET_RNG_INFO function of Trusted App */
 	inv_arg.func = TA_CMD_GET_RNG_INFO;
@@ -192,114 +191,114 @@
 	param[0].attr = TEE_IOCTL_PARAM_ATTR_TYPE_VALUE_OUTPUT;
 
 	ret = tee_client_invoke_func(pvt_data.ctx, &inv_arg, param);
-	अगर ((ret < 0) || (inv_arg.ret != 0)) अणु
+	if ((ret < 0) || (inv_arg.ret != 0)) {
 		dev_err(dev, "TA_CMD_GET_RNG_INFO invoke err: %x\n",
 			inv_arg.ret);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	pvt_data.data_rate = param[0].u.value.a;
 	pvt_data.optee_rng.quality = param[0].u.value.b;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक optee_ctx_match(काष्ठा tee_ioctl_version_data *ver, स्थिर व्योम *data)
-अणु
-	अगर (ver->impl_id == TEE_IMPL_ID_OPTEE)
-		वापस 1;
-	अन्यथा
-		वापस 0;
-पूर्ण
+static int optee_ctx_match(struct tee_ioctl_version_data *ver, const void *data)
+{
+	if (ver->impl_id == TEE_IMPL_ID_OPTEE)
+		return 1;
+	else
+		return 0;
+}
 
-अटल पूर्णांक optee_rng_probe(काष्ठा device *dev)
-अणु
-	काष्ठा tee_client_device *rng_device = to_tee_client_device(dev);
-	पूर्णांक ret = 0, err = -ENODEV;
-	काष्ठा tee_ioctl_खोलो_session_arg sess_arg;
+static int optee_rng_probe(struct device *dev)
+{
+	struct tee_client_device *rng_device = to_tee_client_device(dev);
+	int ret = 0, err = -ENODEV;
+	struct tee_ioctl_open_session_arg sess_arg;
 
-	स_रखो(&sess_arg, 0, माप(sess_arg));
+	memset(&sess_arg, 0, sizeof(sess_arg));
 
 	/* Open context with TEE driver */
-	pvt_data.ctx = tee_client_खोलो_context(शून्य, optee_ctx_match, शून्य,
-					       शून्य);
-	अगर (IS_ERR(pvt_data.ctx))
-		वापस -ENODEV;
+	pvt_data.ctx = tee_client_open_context(NULL, optee_ctx_match, NULL,
+					       NULL);
+	if (IS_ERR(pvt_data.ctx))
+		return -ENODEV;
 
 	/* Open session with hwrng Trusted App */
 	export_uuid(sess_arg.uuid, &rng_device->id.uuid);
 	sess_arg.clnt_login = TEE_IOCTL_LOGIN_PUBLIC;
 	sess_arg.num_params = 0;
 
-	ret = tee_client_खोलो_session(pvt_data.ctx, &sess_arg, शून्य);
-	अगर ((ret < 0) || (sess_arg.ret != 0)) अणु
+	ret = tee_client_open_session(pvt_data.ctx, &sess_arg, NULL);
+	if ((ret < 0) || (sess_arg.ret != 0)) {
 		dev_err(dev, "tee_client_open_session failed, err: %x\n",
 			sess_arg.ret);
 		err = -EINVAL;
-		जाओ out_ctx;
-	पूर्ण
+		goto out_ctx;
+	}
 	pvt_data.session_id = sess_arg.session;
 
 	err = get_optee_rng_info(dev);
-	अगर (err)
-		जाओ out_sess;
+	if (err)
+		goto out_sess;
 
-	err = devm_hwrng_रेजिस्टर(dev, &pvt_data.optee_rng);
-	अगर (err) अणु
+	err = devm_hwrng_register(dev, &pvt_data.optee_rng);
+	if (err) {
 		dev_err(dev, "hwrng registration failed (%d)\n", err);
-		जाओ out_sess;
-	पूर्ण
+		goto out_sess;
+	}
 
 	pvt_data.dev = dev;
 
-	वापस 0;
+	return 0;
 
 out_sess:
-	tee_client_बंद_session(pvt_data.ctx, pvt_data.session_id);
+	tee_client_close_session(pvt_data.ctx, pvt_data.session_id);
 out_ctx:
-	tee_client_बंद_context(pvt_data.ctx);
+	tee_client_close_context(pvt_data.ctx);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक optee_rng_हटाओ(काष्ठा device *dev)
-अणु
-	tee_client_बंद_session(pvt_data.ctx, pvt_data.session_id);
-	tee_client_बंद_context(pvt_data.ctx);
+static int optee_rng_remove(struct device *dev)
+{
+	tee_client_close_session(pvt_data.ctx, pvt_data.session_id);
+	tee_client_close_context(pvt_data.ctx);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा tee_client_device_id optee_rng_id_table[] = अणु
-	अणुUUID_INIT(0xab7a617c, 0xb8e7, 0x4d8f,
-		   0x83, 0x01, 0xd0, 0x9b, 0x61, 0x03, 0x6b, 0x64)पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct tee_client_device_id optee_rng_id_table[] = {
+	{UUID_INIT(0xab7a617c, 0xb8e7, 0x4d8f,
+		   0x83, 0x01, 0xd0, 0x9b, 0x61, 0x03, 0x6b, 0x64)},
+	{}
+};
 
 MODULE_DEVICE_TABLE(tee, optee_rng_id_table);
 
-अटल काष्ठा tee_client_driver optee_rng_driver = अणु
+static struct tee_client_driver optee_rng_driver = {
 	.id_table	= optee_rng_id_table,
-	.driver		= अणु
+	.driver		= {
 		.name		= DRIVER_NAME,
 		.bus		= &tee_bus_type,
 		.probe		= optee_rng_probe,
-		.हटाओ		= optee_rng_हटाओ,
-	पूर्ण,
-पूर्ण;
+		.remove		= optee_rng_remove,
+	},
+};
 
-अटल पूर्णांक __init optee_rng_mod_init(व्योम)
-अणु
-	वापस driver_रेजिस्टर(&optee_rng_driver.driver);
-पूर्ण
+static int __init optee_rng_mod_init(void)
+{
+	return driver_register(&optee_rng_driver.driver);
+}
 
-अटल व्योम __निकास optee_rng_mod_निकास(व्योम)
-अणु
-	driver_unरेजिस्टर(&optee_rng_driver.driver);
-पूर्ण
+static void __exit optee_rng_mod_exit(void)
+{
+	driver_unregister(&optee_rng_driver.driver);
+}
 
 module_init(optee_rng_mod_init);
-module_निकास(optee_rng_mod_निकास);
+module_exit(optee_rng_mod_exit);
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Sumit Garg <sumit.garg@linaro.org>");

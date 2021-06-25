@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * This file supports the /sys/firmware/sgi_uv topology tree on HPE UV.
  *
@@ -7,253 +6,253 @@
  *  Copyright (c) Justin Ernst
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/device.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/kobject.h>
-#समावेश <यंत्र/uv/मूलप्रण.स>
-#समावेश <यंत्र/uv/uv.h>
-#समावेश <यंत्र/uv/uv_hub.h>
-#समावेश <यंत्र/uv/uv_geo.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/device.h>
+#include <linux/slab.h>
+#include <linux/kobject.h>
+#include <asm/uv/bios.h>
+#include <asm/uv/uv.h>
+#include <asm/uv/uv_hub.h>
+#include <asm/uv/uv_geo.h>
 
-#घोषणा INVALID_CNODE -1
+#define INVALID_CNODE -1
 
-काष्ठा kobject *sgi_uv_kobj;
-अटल काष्ठा kset *uv_pcibus_kset;
-अटल काष्ठा kset *uv_hubs_kset;
-अटल काष्ठा uv_bios_hub_info *hub_buf;
-अटल काष्ठा uv_bios_port_info **port_buf;
-अटल काष्ठा uv_hub **uv_hubs;
-अटल काष्ठा uv_pci_top_obj **uv_pci_objs;
-अटल पूर्णांक num_pci_lines;
-अटल पूर्णांक num_cnodes;
-अटल पूर्णांक *prev_obj_to_cnode;
-अटल पूर्णांक uv_bios_obj_cnt;
-अटल चिन्हित लघु uv_master_nasid = -1;
-अटल व्योम *uv_biosheap;
+struct kobject *sgi_uv_kobj;
+static struct kset *uv_pcibus_kset;
+static struct kset *uv_hubs_kset;
+static struct uv_bios_hub_info *hub_buf;
+static struct uv_bios_port_info **port_buf;
+static struct uv_hub **uv_hubs;
+static struct uv_pci_top_obj **uv_pci_objs;
+static int num_pci_lines;
+static int num_cnodes;
+static int *prev_obj_to_cnode;
+static int uv_bios_obj_cnt;
+static signed short uv_master_nasid = -1;
+static void *uv_biosheap;
 
-अटल स्थिर अक्षर *uv_type_string(व्योम)
-अणु
-	अगर (is_uv5_hub())
-		वापस "9.0";
-	अन्यथा अगर (is_uv4a_hub())
-		वापस "7.1";
-	अन्यथा अगर (is_uv4_hub())
-		वापस "7.0";
-	अन्यथा अगर (is_uv3_hub())
-		वापस "5.0";
-	अन्यथा अगर (is_uv2_hub())
-		वापस "3.0";
-	अन्यथा अगर (uv_get_hubless_प्रणाली())
-		वापस "0.1";
-	अन्यथा
-		वापस "unknown";
-पूर्ण
+static const char *uv_type_string(void)
+{
+	if (is_uv5_hub())
+		return "9.0";
+	else if (is_uv4a_hub())
+		return "7.1";
+	else if (is_uv4_hub())
+		return "7.0";
+	else if (is_uv3_hub())
+		return "5.0";
+	else if (is_uv2_hub())
+		return "3.0";
+	else if (uv_get_hubless_system())
+		return "0.1";
+	else
+		return "unknown";
+}
 
-अटल पूर्णांक ordinal_to_nasid(पूर्णांक ordinal)
-अणु
-	अगर (ordinal < num_cnodes && ordinal >= 0)
-		वापस UV_PNODE_TO_NASID(uv_blade_to_pnode(ordinal));
-	अन्यथा
-		वापस -1;
-पूर्ण
+static int ordinal_to_nasid(int ordinal)
+{
+	if (ordinal < num_cnodes && ordinal >= 0)
+		return UV_PNODE_TO_NASID(uv_blade_to_pnode(ordinal));
+	else
+		return -1;
+}
 
-अटल जोड़ geoid_u cnode_to_geoid(पूर्णांक cnode)
-अणु
-	जोड़ geoid_u geoid;
+static union geoid_u cnode_to_geoid(int cnode)
+{
+	union geoid_u geoid;
 
-	uv_bios_get_geoinfo(ordinal_to_nasid(cnode), (u64)माप(जोड़ geoid_u), (u64 *)&geoid);
-	वापस geoid;
-पूर्ण
+	uv_bios_get_geoinfo(ordinal_to_nasid(cnode), (u64)sizeof(union geoid_u), (u64 *)&geoid);
+	return geoid;
+}
 
-अटल पूर्णांक location_to_bpos(अक्षर *location, पूर्णांक *rack, पूर्णांक *slot, पूर्णांक *blade)
-अणु
-	अक्षर type, r, b, h;
-	पूर्णांक idb, idh;
+static int location_to_bpos(char *location, int *rack, int *slot, int *blade)
+{
+	char type, r, b, h;
+	int idb, idh;
 
-	अगर (माला_पूछो(location, "%c%03d%c%02d%c%2d%c%d",
+	if (sscanf(location, "%c%03d%c%02d%c%2d%c%d",
 			 &r, rack, &type, slot, &b, &idb, &h, &idh) != 8)
-		वापस -1;
+		return -1;
 	*blade = idb * 2 + idh;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cache_obj_to_cnode(काष्ठा uv_bios_hub_info *obj)
-अणु
-	पूर्णांक cnode;
-	जोड़ geoid_u geoid;
-	पूर्णांक obj_rack, obj_slot, obj_blade;
-	पूर्णांक rack, slot, blade;
+static int cache_obj_to_cnode(struct uv_bios_hub_info *obj)
+{
+	int cnode;
+	union geoid_u geoid;
+	int obj_rack, obj_slot, obj_blade;
+	int rack, slot, blade;
 
-	अगर (!obj->f.fields.this_part && !obj->f.fields.is_shared)
-		वापस 0;
+	if (!obj->f.fields.this_part && !obj->f.fields.is_shared)
+		return 0;
 
-	अगर (location_to_bpos(obj->location, &obj_rack, &obj_slot, &obj_blade))
-		वापस -1;
+	if (location_to_bpos(obj->location, &obj_rack, &obj_slot, &obj_blade))
+		return -1;
 
-	क्रम (cnode = 0; cnode < num_cnodes; cnode++) अणु
+	for (cnode = 0; cnode < num_cnodes; cnode++) {
 		geoid = cnode_to_geoid(cnode);
 		rack = geo_rack(geoid);
 		slot = geo_slot(geoid);
 		blade = geo_blade(geoid);
-		अगर (obj_rack == rack && obj_slot == slot && obj_blade == blade)
+		if (obj_rack == rack && obj_slot == slot && obj_blade == blade)
 			prev_obj_to_cnode[obj->id] = cnode;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक get_obj_to_cnode(पूर्णांक obj_id)
-अणु
-	वापस prev_obj_to_cnode[obj_id];
-पूर्ण
+static int get_obj_to_cnode(int obj_id)
+{
+	return prev_obj_to_cnode[obj_id];
+}
 
-काष्ठा uv_hub अणु
-	काष्ठा kobject kobj;
-	काष्ठा uv_bios_hub_info *hub_info;
-	काष्ठा uv_port **ports;
-पूर्ण;
+struct uv_hub {
+	struct kobject kobj;
+	struct uv_bios_hub_info *hub_info;
+	struct uv_port **ports;
+};
 
-#घोषणा to_uv_hub(kobj_ptr) container_of(kobj_ptr, काष्ठा uv_hub, kobj)
+#define to_uv_hub(kobj_ptr) container_of(kobj_ptr, struct uv_hub, kobj)
 
-अटल sमाप_प्रकार hub_name_show(काष्ठा uv_bios_hub_info *hub_info, अक्षर *buf)
-अणु
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%s\n", hub_info->name);
-पूर्ण
+static ssize_t hub_name_show(struct uv_bios_hub_info *hub_info, char *buf)
+{
+	return scnprintf(buf, PAGE_SIZE, "%s\n", hub_info->name);
+}
 
-अटल sमाप_प्रकार hub_location_show(काष्ठा uv_bios_hub_info *hub_info, अक्षर *buf)
-अणु
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%s\n", hub_info->location);
-पूर्ण
+static ssize_t hub_location_show(struct uv_bios_hub_info *hub_info, char *buf)
+{
+	return scnprintf(buf, PAGE_SIZE, "%s\n", hub_info->location);
+}
 
-अटल sमाप_प्रकार hub_partition_show(काष्ठा uv_bios_hub_info *hub_info, अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "%d\n", hub_info->f.fields.this_part);
-पूर्ण
+static ssize_t hub_partition_show(struct uv_bios_hub_info *hub_info, char *buf)
+{
+	return sprintf(buf, "%d\n", hub_info->f.fields.this_part);
+}
 
-अटल sमाप_प्रकार hub_shared_show(काष्ठा uv_bios_hub_info *hub_info, अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "%d\n", hub_info->f.fields.is_shared);
-पूर्ण
-अटल sमाप_प्रकार hub_nasid_show(काष्ठा uv_bios_hub_info *hub_info, अक्षर *buf)
-अणु
-	पूर्णांक cnode = get_obj_to_cnode(hub_info->id);
+static ssize_t hub_shared_show(struct uv_bios_hub_info *hub_info, char *buf)
+{
+	return sprintf(buf, "%d\n", hub_info->f.fields.is_shared);
+}
+static ssize_t hub_nasid_show(struct uv_bios_hub_info *hub_info, char *buf)
+{
+	int cnode = get_obj_to_cnode(hub_info->id);
 
-	वापस प्र_लिखो(buf, "%d\n", ordinal_to_nasid(cnode));
-पूर्ण
-अटल sमाप_प्रकार hub_cnode_show(काष्ठा uv_bios_hub_info *hub_info, अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "%d\n", get_obj_to_cnode(hub_info->id));
-पूर्ण
+	return sprintf(buf, "%d\n", ordinal_to_nasid(cnode));
+}
+static ssize_t hub_cnode_show(struct uv_bios_hub_info *hub_info, char *buf)
+{
+	return sprintf(buf, "%d\n", get_obj_to_cnode(hub_info->id));
+}
 
-काष्ठा hub_sysfs_entry अणु
-	काष्ठा attribute attr;
-	sमाप_प्रकार (*show)(काष्ठा uv_bios_hub_info *hub_info, अक्षर *buf);
-	sमाप_प्रकार (*store)(काष्ठा uv_bios_hub_info *hub_info, स्थिर अक्षर *buf, माप_प्रकार sz);
-पूर्ण;
+struct hub_sysfs_entry {
+	struct attribute attr;
+	ssize_t (*show)(struct uv_bios_hub_info *hub_info, char *buf);
+	ssize_t (*store)(struct uv_bios_hub_info *hub_info, const char *buf, size_t sz);
+};
 
-अटल काष्ठा hub_sysfs_entry name_attribute =
-	__ATTR(name, 0444, hub_name_show, शून्य);
-अटल काष्ठा hub_sysfs_entry location_attribute =
-	__ATTR(location, 0444, hub_location_show, शून्य);
-अटल काष्ठा hub_sysfs_entry partition_attribute =
-	__ATTR(this_partition, 0444, hub_partition_show, शून्य);
-अटल काष्ठा hub_sysfs_entry shared_attribute =
-	__ATTR(shared, 0444, hub_shared_show, शून्य);
-अटल काष्ठा hub_sysfs_entry nasid_attribute =
-	__ATTR(nasid, 0444, hub_nasid_show, शून्य);
-अटल काष्ठा hub_sysfs_entry cnode_attribute =
-	__ATTR(cnode, 0444, hub_cnode_show, शून्य);
+static struct hub_sysfs_entry name_attribute =
+	__ATTR(name, 0444, hub_name_show, NULL);
+static struct hub_sysfs_entry location_attribute =
+	__ATTR(location, 0444, hub_location_show, NULL);
+static struct hub_sysfs_entry partition_attribute =
+	__ATTR(this_partition, 0444, hub_partition_show, NULL);
+static struct hub_sysfs_entry shared_attribute =
+	__ATTR(shared, 0444, hub_shared_show, NULL);
+static struct hub_sysfs_entry nasid_attribute =
+	__ATTR(nasid, 0444, hub_nasid_show, NULL);
+static struct hub_sysfs_entry cnode_attribute =
+	__ATTR(cnode, 0444, hub_cnode_show, NULL);
 
-अटल काष्ठा attribute *uv_hub_attrs[] = अणु
+static struct attribute *uv_hub_attrs[] = {
 	&name_attribute.attr,
 	&location_attribute.attr,
 	&partition_attribute.attr,
 	&shared_attribute.attr,
 	&nasid_attribute.attr,
 	&cnode_attribute.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल व्योम hub_release(काष्ठा kobject *kobj)
-अणु
-	काष्ठा uv_hub *hub = to_uv_hub(kobj);
+static void hub_release(struct kobject *kobj)
+{
+	struct uv_hub *hub = to_uv_hub(kobj);
 
-	kमुक्त(hub);
-पूर्ण
+	kfree(hub);
+}
 
-अटल sमाप_प्रकार hub_type_show(काष्ठा kobject *kobj, काष्ठा attribute *attr,
-				अक्षर *buf)
-अणु
-	काष्ठा uv_hub *hub = to_uv_hub(kobj);
-	काष्ठा uv_bios_hub_info *bios_hub_info = hub->hub_info;
-	काष्ठा hub_sysfs_entry *entry;
+static ssize_t hub_type_show(struct kobject *kobj, struct attribute *attr,
+				char *buf)
+{
+	struct uv_hub *hub = to_uv_hub(kobj);
+	struct uv_bios_hub_info *bios_hub_info = hub->hub_info;
+	struct hub_sysfs_entry *entry;
 
-	entry = container_of(attr, काष्ठा hub_sysfs_entry, attr);
+	entry = container_of(attr, struct hub_sysfs_entry, attr);
 
-	अगर (!entry->show)
-		वापस -EIO;
+	if (!entry->show)
+		return -EIO;
 
-	वापस entry->show(bios_hub_info, buf);
-पूर्ण
+	return entry->show(bios_hub_info, buf);
+}
 
-अटल स्थिर काष्ठा sysfs_ops hub_sysfs_ops = अणु
+static const struct sysfs_ops hub_sysfs_ops = {
 	.show = hub_type_show,
-पूर्ण;
+};
 
-अटल काष्ठा kobj_type hub_attr_type = अणु
+static struct kobj_type hub_attr_type = {
 	.release	= hub_release,
 	.sysfs_ops	= &hub_sysfs_ops,
-	.शेष_attrs	= uv_hub_attrs,
-पूर्ण;
+	.default_attrs	= uv_hub_attrs,
+};
 
-अटल पूर्णांक uv_hubs_init(व्योम)
-अणु
+static int uv_hubs_init(void)
+{
 	s64 biosr;
 	u64 sz;
-	पूर्णांक i, ret;
+	int i, ret;
 
-	prev_obj_to_cnode = kदो_स्मृति_array(uv_bios_obj_cnt, माप(*prev_obj_to_cnode),
+	prev_obj_to_cnode = kmalloc_array(uv_bios_obj_cnt, sizeof(*prev_obj_to_cnode),
 					 GFP_KERNEL);
-	अगर (!prev_obj_to_cnode)
-		वापस -ENOMEM;
+	if (!prev_obj_to_cnode)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < uv_bios_obj_cnt; i++)
+	for (i = 0; i < uv_bios_obj_cnt; i++)
 		prev_obj_to_cnode[i] = INVALID_CNODE;
 
-	uv_hubs_kset = kset_create_and_add("hubs", शून्य, sgi_uv_kobj);
-	अगर (!uv_hubs_kset) अणु
+	uv_hubs_kset = kset_create_and_add("hubs", NULL, sgi_uv_kobj);
+	if (!uv_hubs_kset) {
 		ret = -ENOMEM;
-		जाओ err_hubs_kset;
-	पूर्ण
-	sz = uv_bios_obj_cnt * माप(*hub_buf);
+		goto err_hubs_kset;
+	}
+	sz = uv_bios_obj_cnt * sizeof(*hub_buf);
 	hub_buf = kzalloc(sz, GFP_KERNEL);
-	अगर (!hub_buf) अणु
+	if (!hub_buf) {
 		ret = -ENOMEM;
-		जाओ err_hub_buf;
-	पूर्ण
+		goto err_hub_buf;
+	}
 
-	biosr = uv_bios_क्रमागत_objs((u64)uv_master_nasid, sz, (u64 *)hub_buf);
-	अगर (biosr) अणु
+	biosr = uv_bios_enum_objs((u64)uv_master_nasid, sz, (u64 *)hub_buf);
+	if (biosr) {
 		ret = -EINVAL;
-		जाओ err_क्रमागत_objs;
-	पूर्ण
+		goto err_enum_objs;
+	}
 
-	uv_hubs = kसुस्मृति(uv_bios_obj_cnt, माप(*uv_hubs), GFP_KERNEL);
-	अगर (!uv_hubs) अणु
+	uv_hubs = kcalloc(uv_bios_obj_cnt, sizeof(*uv_hubs), GFP_KERNEL);
+	if (!uv_hubs) {
 		ret = -ENOMEM;
-		जाओ err_क्रमागत_objs;
-	पूर्ण
+		goto err_enum_objs;
+	}
 
-	क्रम (i = 0; i < uv_bios_obj_cnt; i++) अणु
-		uv_hubs[i] = kzalloc(माप(*uv_hubs[i]), GFP_KERNEL);
-		अगर (!uv_hubs[i]) अणु
+	for (i = 0; i < uv_bios_obj_cnt; i++) {
+		uv_hubs[i] = kzalloc(sizeof(*uv_hubs[i]), GFP_KERNEL);
+		if (!uv_hubs[i]) {
 			i--;
 			ret = -ENOMEM;
-			जाओ err_hubs;
-		पूर्ण
+			goto err_hubs;
+		}
 
 		uv_hubs[i]->hub_info = &hub_buf[i];
 		cache_obj_to_cnode(uv_hubs[i]->hub_info);
@@ -261,292 +260,292 @@
 		uv_hubs[i]->kobj.kset = uv_hubs_kset;
 
 		ret = kobject_init_and_add(&uv_hubs[i]->kobj, &hub_attr_type,
-					  शून्य, "hub_%u", hub_buf[i].id);
-		अगर (ret)
-			जाओ err_hubs;
+					  NULL, "hub_%u", hub_buf[i].id);
+		if (ret)
+			goto err_hubs;
 		kobject_uevent(&uv_hubs[i]->kobj, KOBJ_ADD);
-	पूर्ण
-	वापस 0;
+	}
+	return 0;
 
 err_hubs:
-	क्रम (; i >= 0; i--)
+	for (; i >= 0; i--)
 		kobject_put(&uv_hubs[i]->kobj);
-	kमुक्त(uv_hubs);
-err_क्रमागत_objs:
-	kमुक्त(hub_buf);
+	kfree(uv_hubs);
+err_enum_objs:
+	kfree(hub_buf);
 err_hub_buf:
-	kset_unरेजिस्टर(uv_hubs_kset);
+	kset_unregister(uv_hubs_kset);
 err_hubs_kset:
-	kमुक्त(prev_obj_to_cnode);
-	वापस ret;
+	kfree(prev_obj_to_cnode);
+	return ret;
 
-पूर्ण
+}
 
-अटल व्योम uv_hubs_निकास(व्योम)
-अणु
-	पूर्णांक i;
+static void uv_hubs_exit(void)
+{
+	int i;
 
-	क्रम (i = 0; i < uv_bios_obj_cnt; i++)
+	for (i = 0; i < uv_bios_obj_cnt; i++)
 		kobject_put(&uv_hubs[i]->kobj);
 
-	kमुक्त(uv_hubs);
-	kमुक्त(hub_buf);
-	kset_unरेजिस्टर(uv_hubs_kset);
-	kमुक्त(prev_obj_to_cnode);
-पूर्ण
+	kfree(uv_hubs);
+	kfree(hub_buf);
+	kset_unregister(uv_hubs_kset);
+	kfree(prev_obj_to_cnode);
+}
 
-काष्ठा uv_port अणु
-	काष्ठा kobject kobj;
-	काष्ठा uv_bios_port_info *port_info;
-पूर्ण;
+struct uv_port {
+	struct kobject kobj;
+	struct uv_bios_port_info *port_info;
+};
 
-#घोषणा to_uv_port(kobj_ptr) container_of(kobj_ptr, काष्ठा uv_port, kobj)
+#define to_uv_port(kobj_ptr) container_of(kobj_ptr, struct uv_port, kobj)
 
-अटल sमाप_प्रकार uv_port_conn_hub_show(काष्ठा uv_bios_port_info *port, अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "%d\n", port->conn_id);
-पूर्ण
+static ssize_t uv_port_conn_hub_show(struct uv_bios_port_info *port, char *buf)
+{
+	return sprintf(buf, "%d\n", port->conn_id);
+}
 
-अटल sमाप_प्रकार uv_port_conn_port_show(काष्ठा uv_bios_port_info *port, अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "%d\n", port->conn_port);
-पूर्ण
+static ssize_t uv_port_conn_port_show(struct uv_bios_port_info *port, char *buf)
+{
+	return sprintf(buf, "%d\n", port->conn_port);
+}
 
-काष्ठा uv_port_sysfs_entry अणु
-	काष्ठा attribute attr;
-	sमाप_प्रकार (*show)(काष्ठा uv_bios_port_info *port_info, अक्षर *buf);
-	sमाप_प्रकार (*store)(काष्ठा uv_bios_port_info *port_info, स्थिर अक्षर *buf, माप_प्रकार size);
-पूर्ण;
+struct uv_port_sysfs_entry {
+	struct attribute attr;
+	ssize_t (*show)(struct uv_bios_port_info *port_info, char *buf);
+	ssize_t (*store)(struct uv_bios_port_info *port_info, const char *buf, size_t size);
+};
 
-अटल काष्ठा uv_port_sysfs_entry uv_port_conn_hub_attribute =
-	__ATTR(conn_hub, 0444, uv_port_conn_hub_show, शून्य);
-अटल काष्ठा uv_port_sysfs_entry uv_port_conn_port_attribute =
-	__ATTR(conn_port, 0444, uv_port_conn_port_show, शून्य);
+static struct uv_port_sysfs_entry uv_port_conn_hub_attribute =
+	__ATTR(conn_hub, 0444, uv_port_conn_hub_show, NULL);
+static struct uv_port_sysfs_entry uv_port_conn_port_attribute =
+	__ATTR(conn_port, 0444, uv_port_conn_port_show, NULL);
 
-अटल काष्ठा attribute *uv_port_attrs[] = अणु
+static struct attribute *uv_port_attrs[] = {
 	&uv_port_conn_hub_attribute.attr,
 	&uv_port_conn_port_attribute.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल व्योम uv_port_release(काष्ठा kobject *kobj)
-अणु
-	काष्ठा uv_port *port = to_uv_port(kobj);
+static void uv_port_release(struct kobject *kobj)
+{
+	struct uv_port *port = to_uv_port(kobj);
 
-	kमुक्त(port);
-पूर्ण
+	kfree(port);
+}
 
-अटल sमाप_प्रकार uv_port_type_show(काष्ठा kobject *kobj, काष्ठा attribute *attr,
-				अक्षर *buf)
-अणु
-	काष्ठा uv_port *port = to_uv_port(kobj);
-	काष्ठा uv_bios_port_info *port_info = port->port_info;
-	काष्ठा uv_port_sysfs_entry *entry;
+static ssize_t uv_port_type_show(struct kobject *kobj, struct attribute *attr,
+				char *buf)
+{
+	struct uv_port *port = to_uv_port(kobj);
+	struct uv_bios_port_info *port_info = port->port_info;
+	struct uv_port_sysfs_entry *entry;
 
-	entry = container_of(attr, काष्ठा uv_port_sysfs_entry, attr);
+	entry = container_of(attr, struct uv_port_sysfs_entry, attr);
 
-	अगर (!entry->show)
-		वापस -EIO;
+	if (!entry->show)
+		return -EIO;
 
-	वापस entry->show(port_info, buf);
-पूर्ण
+	return entry->show(port_info, buf);
+}
 
-अटल स्थिर काष्ठा sysfs_ops uv_port_sysfs_ops = अणु
+static const struct sysfs_ops uv_port_sysfs_ops = {
 	.show = uv_port_type_show,
-पूर्ण;
+};
 
-अटल काष्ठा kobj_type uv_port_attr_type = अणु
+static struct kobj_type uv_port_attr_type = {
 	.release	= uv_port_release,
 	.sysfs_ops	= &uv_port_sysfs_ops,
-	.शेष_attrs	= uv_port_attrs,
-पूर्ण;
+	.default_attrs	= uv_port_attrs,
+};
 
-अटल पूर्णांक uv_ports_init(व्योम)
-अणु
+static int uv_ports_init(void)
+{
 	s64 biosr;
-	पूर्णांक j = 0, k = 0, ret, sz;
+	int j = 0, k = 0, ret, sz;
 
-	port_buf = kसुस्मृति(uv_bios_obj_cnt, माप(*port_buf), GFP_KERNEL);
-	अगर (!port_buf)
-		वापस -ENOMEM;
+	port_buf = kcalloc(uv_bios_obj_cnt, sizeof(*port_buf), GFP_KERNEL);
+	if (!port_buf)
+		return -ENOMEM;
 
-	क्रम (j = 0; j < uv_bios_obj_cnt; j++) अणु
-		sz = hub_buf[j].ports * माप(*port_buf[j]);
+	for (j = 0; j < uv_bios_obj_cnt; j++) {
+		sz = hub_buf[j].ports * sizeof(*port_buf[j]);
 		port_buf[j] = kzalloc(sz, GFP_KERNEL);
-		अगर (!port_buf[j]) अणु
+		if (!port_buf[j]) {
 			ret = -ENOMEM;
 			j--;
-			जाओ err_port_info;
-		पूर्ण
-		biosr = uv_bios_क्रमागत_ports((u64)uv_master_nasid, (u64)hub_buf[j].id, sz,
+			goto err_port_info;
+		}
+		biosr = uv_bios_enum_ports((u64)uv_master_nasid, (u64)hub_buf[j].id, sz,
 					(u64 *)port_buf[j]);
-		अगर (biosr) अणु
+		if (biosr) {
 			ret = -EINVAL;
-			जाओ err_port_info;
-		पूर्ण
-	पूर्ण
-	क्रम (j = 0; j < uv_bios_obj_cnt; j++) अणु
-		uv_hubs[j]->ports = kसुस्मृति(hub_buf[j].ports,
-					   माप(*uv_hubs[j]->ports), GFP_KERNEL);
-		अगर (!uv_hubs[j]->ports) अणु
+			goto err_port_info;
+		}
+	}
+	for (j = 0; j < uv_bios_obj_cnt; j++) {
+		uv_hubs[j]->ports = kcalloc(hub_buf[j].ports,
+					   sizeof(*uv_hubs[j]->ports), GFP_KERNEL);
+		if (!uv_hubs[j]->ports) {
 			ret = -ENOMEM;
 			j--;
-			जाओ err_ports;
-		पूर्ण
-	पूर्ण
-	क्रम (j = 0; j < uv_bios_obj_cnt; j++) अणु
-		क्रम (k = 0; k < hub_buf[j].ports; k++) अणु
-			uv_hubs[j]->ports[k] = kzalloc(माप(*uv_hubs[j]->ports[k]), GFP_KERNEL);
-			अगर (!uv_hubs[j]->ports[k]) अणु
+			goto err_ports;
+		}
+	}
+	for (j = 0; j < uv_bios_obj_cnt; j++) {
+		for (k = 0; k < hub_buf[j].ports; k++) {
+			uv_hubs[j]->ports[k] = kzalloc(sizeof(*uv_hubs[j]->ports[k]), GFP_KERNEL);
+			if (!uv_hubs[j]->ports[k]) {
 				ret = -ENOMEM;
 				k--;
-				जाओ err_kobj_ports;
-			पूर्ण
+				goto err_kobj_ports;
+			}
 			uv_hubs[j]->ports[k]->port_info = &port_buf[j][k];
 			ret = kobject_init_and_add(&uv_hubs[j]->ports[k]->kobj, &uv_port_attr_type,
 					&uv_hubs[j]->kobj, "port_%d", port_buf[j][k].port);
-			अगर (ret)
-				जाओ err_kobj_ports;
+			if (ret)
+				goto err_kobj_ports;
 			kobject_uevent(&uv_hubs[j]->ports[k]->kobj, KOBJ_ADD);
-		पूर्ण
-	पूर्ण
-	वापस 0;
+		}
+	}
+	return 0;
 
 err_kobj_ports:
-	क्रम (; j >= 0; j--) अणु
-		क्रम (; k >= 0; k--)
+	for (; j >= 0; j--) {
+		for (; k >= 0; k--)
 			kobject_put(&uv_hubs[j]->ports[k]->kobj);
-		अगर (j > 0)
+		if (j > 0)
 			k = hub_buf[j-1].ports - 1;
-	पूर्ण
+	}
 	j = uv_bios_obj_cnt - 1;
 err_ports:
-	क्रम (; j >= 0; j--)
-		kमुक्त(uv_hubs[j]->ports);
+	for (; j >= 0; j--)
+		kfree(uv_hubs[j]->ports);
 	j = uv_bios_obj_cnt - 1;
 err_port_info:
-	क्रम (; j >= 0; j--)
-		kमुक्त(port_buf[j]);
-	kमुक्त(port_buf);
-	वापस ret;
-पूर्ण
+	for (; j >= 0; j--)
+		kfree(port_buf[j]);
+	kfree(port_buf);
+	return ret;
+}
 
-अटल व्योम uv_ports_निकास(व्योम)
-अणु
-	पूर्णांक j, k;
+static void uv_ports_exit(void)
+{
+	int j, k;
 
-	क्रम (j = 0; j < uv_bios_obj_cnt; j++) अणु
-		क्रम (k = hub_buf[j].ports - 1; k >= 0; k--)
+	for (j = 0; j < uv_bios_obj_cnt; j++) {
+		for (k = hub_buf[j].ports - 1; k >= 0; k--)
 			kobject_put(&uv_hubs[j]->ports[k]->kobj);
-	पूर्ण
-	क्रम (j = 0; j < uv_bios_obj_cnt; j++) अणु
-		kमुक्त(uv_hubs[j]->ports);
-		kमुक्त(port_buf[j]);
-	पूर्ण
-	kमुक्त(port_buf);
-पूर्ण
+	}
+	for (j = 0; j < uv_bios_obj_cnt; j++) {
+		kfree(uv_hubs[j]->ports);
+		kfree(port_buf[j]);
+	}
+	kfree(port_buf);
+}
 
-काष्ठा uv_pci_top_obj अणु
-	काष्ठा kobject kobj;
-	अक्षर *type;
-	अक्षर *location;
-	पूर्णांक iio_stack;
-	अक्षर *ppb_addr;
-	पूर्णांक slot;
-पूर्ण;
+struct uv_pci_top_obj {
+	struct kobject kobj;
+	char *type;
+	char *location;
+	int iio_stack;
+	char *ppb_addr;
+	int slot;
+};
 
-#घोषणा to_uv_pci_top_obj(kobj_ptr) container_of(kobj_ptr, काष्ठा uv_pci_top_obj, kobj)
+#define to_uv_pci_top_obj(kobj_ptr) container_of(kobj_ptr, struct uv_pci_top_obj, kobj)
 
-अटल sमाप_प्रकार uv_pci_type_show(काष्ठा uv_pci_top_obj *top_obj, अक्षर *buf)
-अणु
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%s\n", top_obj->type);
-पूर्ण
+static ssize_t uv_pci_type_show(struct uv_pci_top_obj *top_obj, char *buf)
+{
+	return scnprintf(buf, PAGE_SIZE, "%s\n", top_obj->type);
+}
 
-अटल sमाप_प्रकार uv_pci_location_show(काष्ठा uv_pci_top_obj *top_obj, अक्षर *buf)
-अणु
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%s\n", top_obj->location);
-पूर्ण
+static ssize_t uv_pci_location_show(struct uv_pci_top_obj *top_obj, char *buf)
+{
+	return scnprintf(buf, PAGE_SIZE, "%s\n", top_obj->location);
+}
 
-अटल sमाप_प्रकार uv_pci_iio_stack_show(काष्ठा uv_pci_top_obj *top_obj, अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "%d\n", top_obj->iio_stack);
-पूर्ण
+static ssize_t uv_pci_iio_stack_show(struct uv_pci_top_obj *top_obj, char *buf)
+{
+	return sprintf(buf, "%d\n", top_obj->iio_stack);
+}
 
-अटल sमाप_प्रकार uv_pci_ppb_addr_show(काष्ठा uv_pci_top_obj *top_obj, अक्षर *buf)
-अणु
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%s\n", top_obj->ppb_addr);
-पूर्ण
+static ssize_t uv_pci_ppb_addr_show(struct uv_pci_top_obj *top_obj, char *buf)
+{
+	return scnprintf(buf, PAGE_SIZE, "%s\n", top_obj->ppb_addr);
+}
 
-अटल sमाप_प्रकार uv_pci_slot_show(काष्ठा uv_pci_top_obj *top_obj, अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "%d\n", top_obj->slot);
-पूर्ण
+static ssize_t uv_pci_slot_show(struct uv_pci_top_obj *top_obj, char *buf)
+{
+	return sprintf(buf, "%d\n", top_obj->slot);
+}
 
-काष्ठा uv_pci_top_sysfs_entry अणु
-	काष्ठा attribute attr;
-	sमाप_प्रकार (*show)(काष्ठा uv_pci_top_obj *top_obj, अक्षर *buf);
-	sमाप_प्रकार (*store)(काष्ठा uv_pci_top_obj *top_obj, स्थिर अक्षर *buf, माप_प्रकार size);
-पूर्ण;
+struct uv_pci_top_sysfs_entry {
+	struct attribute attr;
+	ssize_t (*show)(struct uv_pci_top_obj *top_obj, char *buf);
+	ssize_t (*store)(struct uv_pci_top_obj *top_obj, const char *buf, size_t size);
+};
 
-अटल काष्ठा uv_pci_top_sysfs_entry uv_pci_type_attribute =
-	__ATTR(type, 0444, uv_pci_type_show, शून्य);
-अटल काष्ठा uv_pci_top_sysfs_entry uv_pci_location_attribute =
-	__ATTR(location, 0444, uv_pci_location_show, शून्य);
-अटल काष्ठा uv_pci_top_sysfs_entry uv_pci_iio_stack_attribute =
-	__ATTR(iio_stack, 0444, uv_pci_iio_stack_show, शून्य);
-अटल काष्ठा uv_pci_top_sysfs_entry uv_pci_ppb_addr_attribute =
-	__ATTR(ppb_addr, 0444, uv_pci_ppb_addr_show, शून्य);
-अटल काष्ठा uv_pci_top_sysfs_entry uv_pci_slot_attribute =
-	__ATTR(slot, 0444, uv_pci_slot_show, शून्य);
+static struct uv_pci_top_sysfs_entry uv_pci_type_attribute =
+	__ATTR(type, 0444, uv_pci_type_show, NULL);
+static struct uv_pci_top_sysfs_entry uv_pci_location_attribute =
+	__ATTR(location, 0444, uv_pci_location_show, NULL);
+static struct uv_pci_top_sysfs_entry uv_pci_iio_stack_attribute =
+	__ATTR(iio_stack, 0444, uv_pci_iio_stack_show, NULL);
+static struct uv_pci_top_sysfs_entry uv_pci_ppb_addr_attribute =
+	__ATTR(ppb_addr, 0444, uv_pci_ppb_addr_show, NULL);
+static struct uv_pci_top_sysfs_entry uv_pci_slot_attribute =
+	__ATTR(slot, 0444, uv_pci_slot_show, NULL);
 
-अटल व्योम uv_pci_top_release(काष्ठा kobject *kobj)
-अणु
-	काष्ठा uv_pci_top_obj *top_obj = to_uv_pci_top_obj(kobj);
+static void uv_pci_top_release(struct kobject *kobj)
+{
+	struct uv_pci_top_obj *top_obj = to_uv_pci_top_obj(kobj);
 
-	kमुक्त(top_obj->type);
-	kमुक्त(top_obj->location);
-	kमुक्त(top_obj->ppb_addr);
-	kमुक्त(top_obj);
-पूर्ण
+	kfree(top_obj->type);
+	kfree(top_obj->location);
+	kfree(top_obj->ppb_addr);
+	kfree(top_obj);
+}
 
-अटल sमाप_प्रकार pci_top_type_show(काष्ठा kobject *kobj,
-			काष्ठा attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा uv_pci_top_obj *top_obj = to_uv_pci_top_obj(kobj);
-	काष्ठा uv_pci_top_sysfs_entry *entry;
+static ssize_t pci_top_type_show(struct kobject *kobj,
+			struct attribute *attr, char *buf)
+{
+	struct uv_pci_top_obj *top_obj = to_uv_pci_top_obj(kobj);
+	struct uv_pci_top_sysfs_entry *entry;
 
-	entry = container_of(attr, काष्ठा uv_pci_top_sysfs_entry, attr);
+	entry = container_of(attr, struct uv_pci_top_sysfs_entry, attr);
 
-	अगर (!entry->show)
-		वापस -EIO;
+	if (!entry->show)
+		return -EIO;
 
-	वापस entry->show(top_obj, buf);
-पूर्ण
+	return entry->show(top_obj, buf);
+}
 
-अटल स्थिर काष्ठा sysfs_ops uv_pci_top_sysfs_ops = अणु
+static const struct sysfs_ops uv_pci_top_sysfs_ops = {
 	.show = pci_top_type_show,
-पूर्ण;
+};
 
-अटल काष्ठा kobj_type uv_pci_top_attr_type = अणु
+static struct kobj_type uv_pci_top_attr_type = {
 	.release	= uv_pci_top_release,
 	.sysfs_ops	= &uv_pci_top_sysfs_ops,
-पूर्ण;
+};
 
-अटल पूर्णांक init_pci_top_obj(काष्ठा uv_pci_top_obj *top_obj, अक्षर *line)
-अणु
-	अक्षर *start;
-	अक्षर type[11], location[14], ppb_addr[15];
-	पूर्णांक str_cnt, ret;
-	अचिन्हित पूर्णांक पंचांगp_match[2];
+static int init_pci_top_obj(struct uv_pci_top_obj *top_obj, char *line)
+{
+	char *start;
+	char type[11], location[14], ppb_addr[15];
+	int str_cnt, ret;
+	unsigned int tmp_match[2];
 
 	// Minimum line length
-	अगर (म_माप(line) < 36)
-		वापस -EINVAL;
+	if (strlen(line) < 36)
+		return -EINVAL;
 
-	//Line must match क्रमmat "pcibus %4x:%2x" to be valid
-	str_cnt = माला_पूछो(line, "pcibus %4x:%2x", &पंचांगp_match[0], &पंचांगp_match[1]);
-	अगर (str_cnt < 2)
-		वापस -EINVAL;
+	//Line must match format "pcibus %4x:%2x" to be valid
+	str_cnt = sscanf(line, "pcibus %4x:%2x", &tmp_match[0], &tmp_match[1]);
+	if (str_cnt < 2)
+		return -EINVAL;
 
 	/* Connect pcibus to segment:bus number with '_'
 	 * to concatenate name tokens.
@@ -559,7 +558,7 @@ err_port_info:
 	 */
 	line[14] = '\0';
 
-	// Use start to index after name tokens string क्रम reमुख्यder of line info.
+	// Use start to index after name tokens string for remainder of line info.
 	start = &line[15];
 
 	top_obj->iio_stack = -1;
@@ -572,359 +571,359 @@ err_port_info:
 	 * r001i01b00h0 Riser
 	 * (IIO Stack #) may not be present.
 	 */
-	अगर (start[0] == 'r') अणु
-		str_cnt = माला_पूछो(start, "%13s %10[^(] %*s %*s %d)",
+	if (start[0] == 'r') {
+		str_cnt = sscanf(start, "%13s %10[^(] %*s %*s %d)",
 				location, type, &top_obj->iio_stack);
-		अगर (str_cnt < 2)
-			वापस -EINVAL;
+		if (str_cnt < 2)
+			return -EINVAL;
 		top_obj->type = kstrdup(type, GFP_KERNEL);
-		अगर (!top_obj->type)
-			वापस -ENOMEM;
+		if (!top_obj->type)
+			return -ENOMEM;
 		top_obj->location = kstrdup(location, GFP_KERNEL);
-		अगर (!top_obj->location) अणु
-			kमुक्त(top_obj->type);
-			वापस -ENOMEM;
-		पूर्ण
-	पूर्ण
+		if (!top_obj->location) {
+			kfree(top_obj->type);
+			return -ENOMEM;
+		}
+	}
 	/* PPB at 0000:80:00.00 (slot 3)
 	 * (slot #) may not be present.
 	 */
-	अन्यथा अगर (start[0] == 'P') अणु
-		str_cnt = माला_पूछो(start, "%10s %*s %14s %*s %d)",
+	else if (start[0] == 'P') {
+		str_cnt = sscanf(start, "%10s %*s %14s %*s %d)",
 				type, ppb_addr, &top_obj->slot);
-		अगर (str_cnt < 2)
-			वापस -EINVAL;
+		if (str_cnt < 2)
+			return -EINVAL;
 		top_obj->type = kstrdup(type, GFP_KERNEL);
-		अगर (!top_obj->type)
-			वापस -ENOMEM;
+		if (!top_obj->type)
+			return -ENOMEM;
 		top_obj->ppb_addr = kstrdup(ppb_addr, GFP_KERNEL);
-		अगर (!top_obj->ppb_addr) अणु
-			kमुक्त(top_obj->type);
-			वापस -ENOMEM;
-		पूर्ण
-	पूर्ण अन्यथा
-		वापस -EINVAL;
+		if (!top_obj->ppb_addr) {
+			kfree(top_obj->type);
+			return -ENOMEM;
+		}
+	} else
+		return -EINVAL;
 
 	top_obj->kobj.kset = uv_pcibus_kset;
 
-	ret = kobject_init_and_add(&top_obj->kobj, &uv_pci_top_attr_type, शून्य, "%s", line);
-	अगर (ret)
-		जाओ err_add_sysfs;
+	ret = kobject_init_and_add(&top_obj->kobj, &uv_pci_top_attr_type, NULL, "%s", line);
+	if (ret)
+		goto err_add_sysfs;
 
-	अगर (top_obj->type) अणु
+	if (top_obj->type) {
 		ret = sysfs_create_file(&top_obj->kobj, &uv_pci_type_attribute.attr);
-		अगर (ret)
-			जाओ err_add_sysfs;
-	पूर्ण
-	अगर (top_obj->location) अणु
+		if (ret)
+			goto err_add_sysfs;
+	}
+	if (top_obj->location) {
 		ret = sysfs_create_file(&top_obj->kobj, &uv_pci_location_attribute.attr);
-		अगर (ret)
-			जाओ err_add_sysfs;
-	पूर्ण
-	अगर (top_obj->iio_stack >= 0) अणु
+		if (ret)
+			goto err_add_sysfs;
+	}
+	if (top_obj->iio_stack >= 0) {
 		ret = sysfs_create_file(&top_obj->kobj, &uv_pci_iio_stack_attribute.attr);
-		अगर (ret)
-			जाओ err_add_sysfs;
-	पूर्ण
-	अगर (top_obj->ppb_addr) अणु
+		if (ret)
+			goto err_add_sysfs;
+	}
+	if (top_obj->ppb_addr) {
 		ret = sysfs_create_file(&top_obj->kobj, &uv_pci_ppb_addr_attribute.attr);
-		अगर (ret)
-			जाओ err_add_sysfs;
-	पूर्ण
-	अगर (top_obj->slot >= 0) अणु
+		if (ret)
+			goto err_add_sysfs;
+	}
+	if (top_obj->slot >= 0) {
 		ret = sysfs_create_file(&top_obj->kobj, &uv_pci_slot_attribute.attr);
-		अगर (ret)
-			जाओ err_add_sysfs;
-	पूर्ण
+		if (ret)
+			goto err_add_sysfs;
+	}
 
 	kobject_uevent(&top_obj->kobj, KOBJ_ADD);
-	वापस 0;
+	return 0;
 
 err_add_sysfs:
 	kobject_put(&top_obj->kobj);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक pci_topology_init(व्योम)
-अणु
-	अक्षर *pci_top_str, *start, *found, *count;
-	माप_प्रकार sz;
+static int pci_topology_init(void)
+{
+	char *pci_top_str, *start, *found, *count;
+	size_t sz;
 	s64 biosr;
-	पूर्णांक l = 0, k = 0;
-	पूर्णांक len, ret;
+	int l = 0, k = 0;
+	int len, ret;
 
-	uv_pcibus_kset = kset_create_and_add("pcibuses", शून्य, sgi_uv_kobj);
-	अगर (!uv_pcibus_kset)
-		वापस -ENOMEM;
+	uv_pcibus_kset = kset_create_and_add("pcibuses", NULL, sgi_uv_kobj);
+	if (!uv_pcibus_kset)
+		return -ENOMEM;
 
-	क्रम (sz = PAGE_SIZE; sz < 16 * PAGE_SIZE; sz += PAGE_SIZE) अणु
-		pci_top_str = kदो_स्मृति(sz, GFP_KERNEL);
-		अगर (!pci_top_str) अणु
+	for (sz = PAGE_SIZE; sz < 16 * PAGE_SIZE; sz += PAGE_SIZE) {
+		pci_top_str = kmalloc(sz, GFP_KERNEL);
+		if (!pci_top_str) {
 			ret = -ENOMEM;
-			जाओ err_pci_top_str;
-		पूर्ण
+			goto err_pci_top_str;
+		}
 		biosr = uv_bios_get_pci_topology((u64)sz, (u64 *)pci_top_str);
-		अगर (biosr == BIOS_STATUS_SUCCESS) अणु
+		if (biosr == BIOS_STATUS_SUCCESS) {
 			len = strnlen(pci_top_str, sz);
-			क्रम (count = pci_top_str; count < pci_top_str + len; count++) अणु
-				अगर (*count == '\n')
+			for (count = pci_top_str; count < pci_top_str + len; count++) {
+				if (*count == '\n')
 					l++;
-			पूर्ण
+			}
 			num_pci_lines = l;
 
-			uv_pci_objs = kसुस्मृति(num_pci_lines,
-					     माप(*uv_pci_objs), GFP_KERNEL);
-			अगर (!uv_pci_objs) अणु
-				kमुक्त(pci_top_str);
+			uv_pci_objs = kcalloc(num_pci_lines,
+					     sizeof(*uv_pci_objs), GFP_KERNEL);
+			if (!uv_pci_objs) {
+				kfree(pci_top_str);
 				ret = -ENOMEM;
-				जाओ err_pci_top_str;
-			पूर्ण
+				goto err_pci_top_str;
+			}
 			start = pci_top_str;
-			जबतक ((found = strsep(&start, "\n")) != शून्य) अणु
-				uv_pci_objs[k] = kzalloc(माप(*uv_pci_objs[k]), GFP_KERNEL);
-				अगर (!uv_pci_objs[k]) अणु
+			while ((found = strsep(&start, "\n")) != NULL) {
+				uv_pci_objs[k] = kzalloc(sizeof(*uv_pci_objs[k]), GFP_KERNEL);
+				if (!uv_pci_objs[k]) {
 					ret = -ENOMEM;
-					जाओ err_pci_obj;
-				पूर्ण
+					goto err_pci_obj;
+				}
 				ret = init_pci_top_obj(uv_pci_objs[k], found);
-				अगर (ret)
-					जाओ err_pci_obj;
+				if (ret)
+					goto err_pci_obj;
 				k++;
-				अगर (k == num_pci_lines)
-					अवरोध;
-			पूर्ण
-		पूर्ण
-		kमुक्त(pci_top_str);
-		अगर (biosr == BIOS_STATUS_SUCCESS || biosr == BIOS_STATUS_UNIMPLEMENTED)
-			अवरोध;
-	पूर्ण
+				if (k == num_pci_lines)
+					break;
+			}
+		}
+		kfree(pci_top_str);
+		if (biosr == BIOS_STATUS_SUCCESS || biosr == BIOS_STATUS_UNIMPLEMENTED)
+			break;
+	}
 
-	वापस 0;
+	return 0;
 err_pci_obj:
 	k--;
-	क्रम (; k >= 0; k--)
+	for (; k >= 0; k--)
 		kobject_put(&uv_pci_objs[k]->kobj);
-	kमुक्त(uv_pci_objs);
-	kमुक्त(pci_top_str);
+	kfree(uv_pci_objs);
+	kfree(pci_top_str);
 err_pci_top_str:
-	kset_unरेजिस्टर(uv_pcibus_kset);
-	वापस ret;
-पूर्ण
+	kset_unregister(uv_pcibus_kset);
+	return ret;
+}
 
-अटल व्योम pci_topology_निकास(व्योम)
-अणु
-	पूर्णांक k;
+static void pci_topology_exit(void)
+{
+	int k;
 
-	क्रम (k = 0; k < num_pci_lines; k++)
+	for (k = 0; k < num_pci_lines; k++)
 		kobject_put(&uv_pci_objs[k]->kobj);
-	kset_unरेजिस्टर(uv_pcibus_kset);
-	kमुक्त(uv_pci_objs);
-पूर्ण
+	kset_unregister(uv_pcibus_kset);
+	kfree(uv_pci_objs);
+}
 
-अटल sमाप_प्रकार partition_id_show(काष्ठा kobject *kobj,
-			काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "%ld\n", sn_partition_id);
-पूर्ण
+static ssize_t partition_id_show(struct kobject *kobj,
+			struct kobj_attribute *attr, char *buf)
+{
+	return sprintf(buf, "%ld\n", sn_partition_id);
+}
 
-अटल sमाप_प्रकार coherence_id_show(काष्ठा kobject *kobj,
-			काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "%ld\n", sn_coherency_id);
-पूर्ण
+static ssize_t coherence_id_show(struct kobject *kobj,
+			struct kobj_attribute *attr, char *buf)
+{
+	return sprintf(buf, "%ld\n", sn_coherency_id);
+}
 
-अटल sमाप_प्रकार uv_type_show(काष्ठा kobject *kobj,
-			काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%s\n", uv_type_string());
-पूर्ण
+static ssize_t uv_type_show(struct kobject *kobj,
+			struct kobj_attribute *attr, char *buf)
+{
+	return scnprintf(buf, PAGE_SIZE, "%s\n", uv_type_string());
+}
 
-अटल sमाप_प्रकार uv_archtype_show(काष्ठा kobject *kobj,
-			काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	वापस uv_get_archtype(buf, PAGE_SIZE);
-पूर्ण
+static ssize_t uv_archtype_show(struct kobject *kobj,
+			struct kobj_attribute *attr, char *buf)
+{
+	return uv_get_archtype(buf, PAGE_SIZE);
+}
 
-अटल sमाप_प्रकार uv_hub_type_show(काष्ठा kobject *kobj,
-			काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	वापस scnम_लिखो(buf, PAGE_SIZE, "0x%x\n", uv_hub_type());
-पूर्ण
+static ssize_t uv_hub_type_show(struct kobject *kobj,
+			struct kobj_attribute *attr, char *buf)
+{
+	return scnprintf(buf, PAGE_SIZE, "0x%x\n", uv_hub_type());
+}
 
-अटल sमाप_प्रकार uv_hubless_show(काष्ठा kobject *kobj,
-			काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	वापस scnम_लिखो(buf, PAGE_SIZE, "0x%x\n", uv_get_hubless_प्रणाली());
-पूर्ण
+static ssize_t uv_hubless_show(struct kobject *kobj,
+			struct kobj_attribute *attr, char *buf)
+{
+	return scnprintf(buf, PAGE_SIZE, "0x%x\n", uv_get_hubless_system());
+}
 
-अटल काष्ठा kobj_attribute partition_id_attr =
-	__ATTR(partition_id, 0444, partition_id_show, शून्य);
-अटल काष्ठा kobj_attribute coherence_id_attr =
-	__ATTR(coherence_id, 0444, coherence_id_show, शून्य);
-अटल काष्ठा kobj_attribute uv_type_attr =
-	__ATTR(uv_type, 0444, uv_type_show, शून्य);
-अटल काष्ठा kobj_attribute uv_archtype_attr =
-	__ATTR(archtype, 0444, uv_archtype_show, शून्य);
-अटल काष्ठा kobj_attribute uv_hub_type_attr =
-	__ATTR(hub_type, 0444, uv_hub_type_show, शून्य);
-अटल काष्ठा kobj_attribute uv_hubless_attr =
-	__ATTR(hubless, 0444, uv_hubless_show, शून्य);
+static struct kobj_attribute partition_id_attr =
+	__ATTR(partition_id, 0444, partition_id_show, NULL);
+static struct kobj_attribute coherence_id_attr =
+	__ATTR(coherence_id, 0444, coherence_id_show, NULL);
+static struct kobj_attribute uv_type_attr =
+	__ATTR(uv_type, 0444, uv_type_show, NULL);
+static struct kobj_attribute uv_archtype_attr =
+	__ATTR(archtype, 0444, uv_archtype_show, NULL);
+static struct kobj_attribute uv_hub_type_attr =
+	__ATTR(hub_type, 0444, uv_hub_type_show, NULL);
+static struct kobj_attribute uv_hubless_attr =
+	__ATTR(hubless, 0444, uv_hubless_show, NULL);
 
-अटल काष्ठा attribute *base_attrs[] = अणु
+static struct attribute *base_attrs[] = {
 	&partition_id_attr.attr,
 	&coherence_id_attr.attr,
 	&uv_type_attr.attr,
 	&uv_archtype_attr.attr,
 	&uv_hub_type_attr.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल काष्ठा attribute_group base_attr_group = अणु
+static struct attribute_group base_attr_group = {
 	.attrs = base_attrs
-पूर्ण;
+};
 
-अटल पूर्णांक initial_bios_setup(व्योम)
-अणु
+static int initial_bios_setup(void)
+{
 	u64 v;
 	s64 biosr;
 
-	biosr = uv_bios_get_master_nasid((u64)माप(uv_master_nasid), (u64 *)&uv_master_nasid);
-	अगर (biosr)
-		वापस -EINVAL;
+	biosr = uv_bios_get_master_nasid((u64)sizeof(uv_master_nasid), (u64 *)&uv_master_nasid);
+	if (biosr)
+		return -EINVAL;
 
-	biosr = uv_bios_get_heapsize((u64)uv_master_nasid, (u64)माप(u64), &v);
-	अगर (biosr)
-		वापस -EINVAL;
+	biosr = uv_bios_get_heapsize((u64)uv_master_nasid, (u64)sizeof(u64), &v);
+	if (biosr)
+		return -EINVAL;
 
-	uv_biosheap = vदो_स्मृति(v);
-	अगर (!uv_biosheap)
-		वापस -ENOMEM;
+	uv_biosheap = vmalloc(v);
+	if (!uv_biosheap)
+		return -ENOMEM;
 
 	biosr = uv_bios_install_heap((u64)uv_master_nasid, v, (u64 *)uv_biosheap);
-	अगर (biosr) अणु
-		vमुक्त(uv_biosheap);
-		वापस -EINVAL;
-	पूर्ण
+	if (biosr) {
+		vfree(uv_biosheap);
+		return -EINVAL;
+	}
 
-	biosr = uv_bios_obj_count((u64)uv_master_nasid, माप(u64), &v);
-	अगर (biosr) अणु
-		vमुक्त(uv_biosheap);
-		वापस -EINVAL;
-	पूर्ण
-	uv_bios_obj_cnt = (पूर्णांक)v;
+	biosr = uv_bios_obj_count((u64)uv_master_nasid, sizeof(u64), &v);
+	if (biosr) {
+		vfree(uv_biosheap);
+		return -EINVAL;
+	}
+	uv_bios_obj_cnt = (int)v;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा attribute *hubless_base_attrs[] = अणु
+static struct attribute *hubless_base_attrs[] = {
 	&partition_id_attr.attr,
 	&uv_type_attr.attr,
 	&uv_archtype_attr.attr,
 	&uv_hubless_attr.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल काष्ठा attribute_group hubless_base_attr_group = अणु
+static struct attribute_group hubless_base_attr_group = {
 	.attrs = hubless_base_attrs
-पूर्ण;
+};
 
 
-अटल पूर्णांक __init uv_sysfs_hubless_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init uv_sysfs_hubless_init(void)
+{
+	int ret;
 
 	ret = sysfs_create_group(sgi_uv_kobj, &hubless_base_attr_group);
-	अगर (ret) अणु
+	if (ret) {
 		pr_warn("sysfs_create_group hubless_base_attr_group failed\n");
 		kobject_put(sgi_uv_kobj);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल पूर्णांक __init uv_sysfs_init(व्योम)
-अणु
-	पूर्णांक ret = 0;
+static int __init uv_sysfs_init(void)
+{
+	int ret = 0;
 
-	अगर (!is_uv_प्रणाली() && !uv_get_hubless_प्रणाली())
-		वापस -ENODEV;
+	if (!is_uv_system() && !uv_get_hubless_system())
+		return -ENODEV;
 
 	num_cnodes = uv_num_possible_blades();
 
-	अगर (!sgi_uv_kobj)
+	if (!sgi_uv_kobj)
 		sgi_uv_kobj = kobject_create_and_add("sgi_uv", firmware_kobj);
-	अगर (!sgi_uv_kobj) अणु
+	if (!sgi_uv_kobj) {
 		pr_warn("kobject_create_and_add sgi_uv failed\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (uv_get_hubless_प्रणाली())
-		वापस uv_sysfs_hubless_init();
+	if (uv_get_hubless_system())
+		return uv_sysfs_hubless_init();
 
 	ret = sysfs_create_group(sgi_uv_kobj, &base_attr_group);
-	अगर (ret) अणु
+	if (ret) {
 		pr_warn("sysfs_create_group base_attr_group failed\n");
-		जाओ err_create_group;
-	पूर्ण
+		goto err_create_group;
+	}
 
 	ret = initial_bios_setup();
-	अगर (ret)
-		जाओ err_bios_setup;
+	if (ret)
+		goto err_bios_setup;
 
 	ret = uv_hubs_init();
-	अगर (ret)
-		जाओ err_hubs_init;
+	if (ret)
+		goto err_hubs_init;
 
 	ret = uv_ports_init();
-	अगर (ret)
-		जाओ err_ports_init;
+	if (ret)
+		goto err_ports_init;
 
 	ret = pci_topology_init();
-	अगर (ret)
-		जाओ err_pci_init;
+	if (ret)
+		goto err_pci_init;
 
-	वापस 0;
+	return 0;
 
 err_pci_init:
-	uv_ports_निकास();
+	uv_ports_exit();
 err_ports_init:
-	uv_hubs_निकास();
+	uv_hubs_exit();
 err_hubs_init:
-	vमुक्त(uv_biosheap);
+	vfree(uv_biosheap);
 err_bios_setup:
-	sysfs_हटाओ_group(sgi_uv_kobj, &base_attr_group);
+	sysfs_remove_group(sgi_uv_kobj, &base_attr_group);
 err_create_group:
 	kobject_put(sgi_uv_kobj);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम __निकास uv_sysfs_hubless_निकास(व्योम)
-अणु
-	sysfs_हटाओ_group(sgi_uv_kobj, &hubless_base_attr_group);
+static void __exit uv_sysfs_hubless_exit(void)
+{
+	sysfs_remove_group(sgi_uv_kobj, &hubless_base_attr_group);
 	kobject_put(sgi_uv_kobj);
-पूर्ण
+}
 
-अटल व्योम __निकास uv_sysfs_निकास(व्योम)
-अणु
-	अगर (!is_uv_प्रणाली()) अणु
-		अगर (uv_get_hubless_प्रणाली())
-			uv_sysfs_hubless_निकास();
-		वापस;
-	पूर्ण
+static void __exit uv_sysfs_exit(void)
+{
+	if (!is_uv_system()) {
+		if (uv_get_hubless_system())
+			uv_sysfs_hubless_exit();
+		return;
+	}
 
-	pci_topology_निकास();
-	uv_ports_निकास();
-	uv_hubs_निकास();
-	vमुक्त(uv_biosheap);
-	sysfs_हटाओ_group(sgi_uv_kobj, &base_attr_group);
+	pci_topology_exit();
+	uv_ports_exit();
+	uv_hubs_exit();
+	vfree(uv_biosheap);
+	sysfs_remove_group(sgi_uv_kobj, &base_attr_group);
 	kobject_put(sgi_uv_kobj);
-पूर्ण
+}
 
-#अगर_अघोषित MODULE
+#ifndef MODULE
 device_initcall(uv_sysfs_init);
-#अन्यथा
+#else
 module_init(uv_sysfs_init);
-#पूर्ण_अगर
-module_निकास(uv_sysfs_निकास);
+#endif
+module_exit(uv_sysfs_exit);
 
 MODULE_AUTHOR("Hewlett Packard Enterprise");
 MODULE_LICENSE("GPL");

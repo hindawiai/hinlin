@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Xilinx Zynq MPSoC Firmware layer
  *
@@ -11,57 +10,57 @@
  *  Rajan Vaja <rajanv@xilinx.com>
  */
 
-#अगर_अघोषित __FIRMWARE_ZYNQMP_H__
-#घोषणा __FIRMWARE_ZYNQMP_H__
+#ifndef __FIRMWARE_ZYNQMP_H__
+#define __FIRMWARE_ZYNQMP_H__
 
-#समावेश <linux/err.h>
+#include <linux/err.h>
 
-#घोषणा ZYNQMP_PM_VERSION_MAJOR	1
-#घोषणा ZYNQMP_PM_VERSION_MINOR	0
+#define ZYNQMP_PM_VERSION_MAJOR	1
+#define ZYNQMP_PM_VERSION_MINOR	0
 
-#घोषणा ZYNQMP_PM_VERSION	((ZYNQMP_PM_VERSION_MAJOR << 16) | \
+#define ZYNQMP_PM_VERSION	((ZYNQMP_PM_VERSION_MAJOR << 16) | \
 					ZYNQMP_PM_VERSION_MINOR)
 
-#घोषणा ZYNQMP_TZ_VERSION_MAJOR	1
-#घोषणा ZYNQMP_TZ_VERSION_MINOR	0
+#define ZYNQMP_TZ_VERSION_MAJOR	1
+#define ZYNQMP_TZ_VERSION_MINOR	0
 
-#घोषणा ZYNQMP_TZ_VERSION	((ZYNQMP_TZ_VERSION_MAJOR << 16) | \
+#define ZYNQMP_TZ_VERSION	((ZYNQMP_TZ_VERSION_MAJOR << 16) | \
 					ZYNQMP_TZ_VERSION_MINOR)
 
-/* SMC SIP service Call Function Identअगरier Prefix */
-#घोषणा PM_SIP_SVC			0xC2000000
-#घोषणा PM_GET_TRUSTZONE_VERSION	0xa03
-#घोषणा PM_SET_SUSPEND_MODE		0xa02
-#घोषणा GET_CALLBACK_DATA		0xa01
+/* SMC SIP service Call Function Identifier Prefix */
+#define PM_SIP_SVC			0xC2000000
+#define PM_GET_TRUSTZONE_VERSION	0xa03
+#define PM_SET_SUSPEND_MODE		0xa02
+#define GET_CALLBACK_DATA		0xa01
 
 /* Number of 32bits values in payload */
-#घोषणा PAYLOAD_ARG_CNT	4U
+#define PAYLOAD_ARG_CNT	4U
 
-/* Number of arguments क्रम a callback */
-#घोषणा CB_ARG_CNT     4
+/* Number of arguments for a callback */
+#define CB_ARG_CNT     4
 
 /* Payload size (consists of callback API ID + arguments) */
-#घोषणा CB_PAYLOAD_SIZE (CB_ARG_CNT + 1)
+#define CB_PAYLOAD_SIZE (CB_ARG_CNT + 1)
 
-#घोषणा ZYNQMP_PM_MAX_QOS		100U
+#define ZYNQMP_PM_MAX_QOS		100U
 
-#घोषणा GSS_NUM_REGS	(4)
+#define GSS_NUM_REGS	(4)
 
 /* Node capabilities */
-#घोषणा	ZYNQMP_PM_CAPABILITY_ACCESS	0x1U
-#घोषणा	ZYNQMP_PM_CAPABILITY_CONTEXT	0x2U
-#घोषणा	ZYNQMP_PM_CAPABILITY_WAKEUP	0x4U
-#घोषणा	ZYNQMP_PM_CAPABILITY_UNUSABLE	0x8U
+#define	ZYNQMP_PM_CAPABILITY_ACCESS	0x1U
+#define	ZYNQMP_PM_CAPABILITY_CONTEXT	0x2U
+#define	ZYNQMP_PM_CAPABILITY_WAKEUP	0x4U
+#define	ZYNQMP_PM_CAPABILITY_UNUSABLE	0x8U
 
 /*
  * Firmware FPGA Manager flags
  * XILINX_ZYNQMP_PM_FPGA_FULL:	FPGA full reconfiguration
  * XILINX_ZYNQMP_PM_FPGA_PARTIAL: FPGA partial reconfiguration
  */
-#घोषणा XILINX_ZYNQMP_PM_FPGA_FULL	0x0U
-#घोषणा XILINX_ZYNQMP_PM_FPGA_PARTIAL	BIT(0)
+#define XILINX_ZYNQMP_PM_FPGA_FULL	0x0U
+#define XILINX_ZYNQMP_PM_FPGA_PARTIAL	BIT(0)
 
-क्रमागत pm_api_id अणु
+enum pm_api_id {
 	PM_GET_API_VERSION = 1,
 	PM_SYSTEM_SHUTDOWN = 12,
 	PM_REQUEST_NODE = 13,
@@ -92,10 +91,10 @@
 	PM_CLOCK_GETPARENT = 44,
 	PM_SECURE_AES = 47,
 	PM_FEATURE_CHECK = 63,
-पूर्ण;
+};
 
-/* PMU-FW वापस status codes */
-क्रमागत pm_ret_status अणु
+/* PMU-FW return status codes */
+enum pm_ret_status {
 	XST_PM_SUCCESS = 0,
 	XST_PM_NO_FEATURE = 19,
 	XST_PM_INTERNAL = 2000,
@@ -105,9 +104,9 @@
 	XST_PM_DOUBLE_REQ = 2004,
 	XST_PM_ABORT_SUSPEND = 2005,
 	XST_PM_MULT_USER = 2008,
-पूर्ण;
+};
 
-क्रमागत pm_ioctl_id अणु
+enum pm_ioctl_id {
 	IOCTL_SD_DLL_RESET = 6,
 	IOCTL_SET_SD_TAPDELAY = 7,
 	IOCTL_SET_PLL_FRAC_MODE = 8,
@@ -120,9 +119,9 @@
 	IOCTL_READ_PGGS = 15,
 	/* Set healthy bit value */
 	IOCTL_SET_BOOT_HEALTH_STATUS = 17,
-पूर्ण;
+};
 
-क्रमागत pm_query_id अणु
+enum pm_query_id {
 	PM_QID_INVALID = 0,
 	PM_QID_CLOCK_GET_NAME = 1,
 	PM_QID_CLOCK_GET_TOPOLOGY = 2,
@@ -137,15 +136,15 @@
 	PM_QID_PINCTRL_GET_PIN_GROUPS = 11,
 	PM_QID_CLOCK_GET_NUM_CLOCKS = 12,
 	PM_QID_CLOCK_GET_MAX_DIVISOR = 13,
-पूर्ण;
+};
 
-क्रमागत zynqmp_pm_reset_action अणु
+enum zynqmp_pm_reset_action {
 	PM_RESET_ACTION_RELEASE = 0,
 	PM_RESET_ACTION_ASSERT = 1,
 	PM_RESET_ACTION_PULSE = 2,
-पूर्ण;
+};
 
-क्रमागत zynqmp_pm_reset अणु
+enum zynqmp_pm_reset {
 	ZYNQMP_PM_RESET_START = 1000,
 	ZYNQMP_PM_RESET_PCIE_CFG = ZYNQMP_PM_RESET_START,
 	ZYNQMP_PM_RESET_PCIE_BRIDGE = 1001,
@@ -196,7 +195,7 @@
 	ZYNQMP_PM_RESET_TTC2 = 1046,
 	ZYNQMP_PM_RESET_TTC3 = 1047,
 	ZYNQMP_PM_RESET_SWDT_CRL = 1048,
-	ZYNQMP_PM_RESET_न_अंकD = 1049,
+	ZYNQMP_PM_RESET_NAND = 1049,
 	ZYNQMP_PM_RESET_ADMA = 1050,
 	ZYNQMP_PM_RESET_GPIO = 1051,
 	ZYNQMP_PM_RESET_IOU_CC = 1052,
@@ -268,37 +267,37 @@
 	ZYNQMP_PM_RESET_PS_PL2 = 1118,
 	ZYNQMP_PM_RESET_PS_PL3 = 1119,
 	ZYNQMP_PM_RESET_END = ZYNQMP_PM_RESET_PS_PL3
-पूर्ण;
+};
 
-क्रमागत zynqmp_pm_suspend_reason अणु
+enum zynqmp_pm_suspend_reason {
 	SUSPEND_POWER_REQUEST = 201,
 	SUSPEND_ALERT = 202,
 	SUSPEND_SYSTEM_SHUTDOWN = 203,
-पूर्ण;
+};
 
-क्रमागत zynqmp_pm_request_ack अणु
+enum zynqmp_pm_request_ack {
 	ZYNQMP_PM_REQUEST_ACK_NO = 1,
 	ZYNQMP_PM_REQUEST_ACK_BLOCKING = 2,
 	ZYNQMP_PM_REQUEST_ACK_NON_BLOCKING = 3,
-पूर्ण;
+};
 
-क्रमागत pm_node_id अणु
+enum pm_node_id {
 	NODE_SD_0 = 39,
 	NODE_SD_1 = 40,
-पूर्ण;
+};
 
-क्रमागत tap_delay_type अणु
+enum tap_delay_type {
 	PM_TAPDELAY_INPUT = 0,
 	PM_TAPDELAY_OUTPUT = 1,
-पूर्ण;
+};
 
-क्रमागत dll_reset_type अणु
+enum dll_reset_type {
 	PM_DLL_RESET_ASSERT = 0,
 	PM_DLL_RESET_RELEASE = 1,
 	PM_DLL_RESET_PULSE = 2,
-पूर्ण;
+};
 
-क्रमागत pm_pinctrl_config_param अणु
+enum pm_pinctrl_config_param {
 	PM_PINCTRL_CONFIG_SLEW_RATE = 0,
 	PM_PINCTRL_CONFIG_BIAS_STATUS = 1,
 	PM_PINCTRL_CONFIG_PULL_CTRL = 2,
@@ -307,322 +306,322 @@
 	PM_PINCTRL_CONFIG_VOLTAGE_STATUS = 5,
 	PM_PINCTRL_CONFIG_TRI_STATE = 6,
 	PM_PINCTRL_CONFIG_MAX = 7,
-पूर्ण;
+};
 
-क्रमागत pm_pinctrl_slew_rate अणु
+enum pm_pinctrl_slew_rate {
 	PM_PINCTRL_SLEW_RATE_FAST = 0,
 	PM_PINCTRL_SLEW_RATE_SLOW = 1,
-पूर्ण;
+};
 
-क्रमागत pm_pinctrl_bias_status अणु
+enum pm_pinctrl_bias_status {
 	PM_PINCTRL_BIAS_DISABLE = 0,
 	PM_PINCTRL_BIAS_ENABLE = 1,
-पूर्ण;
+};
 
-क्रमागत pm_pinctrl_pull_ctrl अणु
+enum pm_pinctrl_pull_ctrl {
 	PM_PINCTRL_BIAS_PULL_DOWN = 0,
 	PM_PINCTRL_BIAS_PULL_UP = 1,
-पूर्ण;
+};
 
-क्रमागत pm_pinctrl_schmitt_cmos अणु
+enum pm_pinctrl_schmitt_cmos {
 	PM_PINCTRL_INPUT_TYPE_CMOS = 0,
 	PM_PINCTRL_INPUT_TYPE_SCHMITT = 1,
-पूर्ण;
+};
 
-क्रमागत pm_pinctrl_drive_strength अणु
+enum pm_pinctrl_drive_strength {
 	PM_PINCTRL_DRIVE_STRENGTH_2MA = 0,
 	PM_PINCTRL_DRIVE_STRENGTH_4MA = 1,
 	PM_PINCTRL_DRIVE_STRENGTH_8MA = 2,
 	PM_PINCTRL_DRIVE_STRENGTH_12MA = 3,
-पूर्ण;
+};
 
-क्रमागत zynqmp_pm_shutकरोwn_type अणु
+enum zynqmp_pm_shutdown_type {
 	ZYNQMP_PM_SHUTDOWN_TYPE_SHUTDOWN = 0,
 	ZYNQMP_PM_SHUTDOWN_TYPE_RESET = 1,
 	ZYNQMP_PM_SHUTDOWN_TYPE_SETSCOPE_ONLY = 2,
-पूर्ण;
+};
 
-क्रमागत zynqmp_pm_shutकरोwn_subtype अणु
+enum zynqmp_pm_shutdown_subtype {
 	ZYNQMP_PM_SHUTDOWN_SUBTYPE_SUBSYSTEM = 0,
 	ZYNQMP_PM_SHUTDOWN_SUBTYPE_PS_ONLY = 1,
 	ZYNQMP_PM_SHUTDOWN_SUBTYPE_SYSTEM = 2,
-पूर्ण;
+};
 
 /**
- * काष्ठा zynqmp_pm_query_data - PM query data
+ * struct zynqmp_pm_query_data - PM query data
  * @qid:	query ID
  * @arg1:	Argument 1 of query data
  * @arg2:	Argument 2 of query data
  * @arg3:	Argument 3 of query data
  */
-काष्ठा zynqmp_pm_query_data अणु
+struct zynqmp_pm_query_data {
 	u32 qid;
 	u32 arg1;
 	u32 arg2;
 	u32 arg3;
-पूर्ण;
+};
 
-पूर्णांक zynqmp_pm_invoke_fn(u32 pm_api_id, u32 arg0, u32 arg1,
+int zynqmp_pm_invoke_fn(u32 pm_api_id, u32 arg0, u32 arg1,
 			u32 arg2, u32 arg3, u32 *ret_payload);
 
-#अगर IS_REACHABLE(CONFIG_ZYNQMP_FIRMWARE)
-पूर्णांक zynqmp_pm_get_api_version(u32 *version);
-पूर्णांक zynqmp_pm_get_chipid(u32 *idcode, u32 *version);
-पूर्णांक zynqmp_pm_query_data(काष्ठा zynqmp_pm_query_data qdata, u32 *out);
-पूर्णांक zynqmp_pm_घड़ी_enable(u32 घड़ी_id);
-पूर्णांक zynqmp_pm_घड़ी_disable(u32 घड़ी_id);
-पूर्णांक zynqmp_pm_घड़ी_माला_लोtate(u32 घड़ी_id, u32 *state);
-पूर्णांक zynqmp_pm_घड़ी_setभागider(u32 घड़ी_id, u32 भागider);
-पूर्णांक zynqmp_pm_घड़ी_getभागider(u32 घड़ी_id, u32 *भागider);
-पूर्णांक zynqmp_pm_घड़ी_setrate(u32 घड़ी_id, u64 rate);
-पूर्णांक zynqmp_pm_घड़ी_getrate(u32 घड़ी_id, u64 *rate);
-पूर्णांक zynqmp_pm_घड़ी_setparent(u32 घड़ी_id, u32 parent_id);
-पूर्णांक zynqmp_pm_घड़ी_getparent(u32 घड़ी_id, u32 *parent_id);
-पूर्णांक zynqmp_pm_set_pll_frac_mode(u32 clk_id, u32 mode);
-पूर्णांक zynqmp_pm_get_pll_frac_mode(u32 clk_id, u32 *mode);
-पूर्णांक zynqmp_pm_set_pll_frac_data(u32 clk_id, u32 data);
-पूर्णांक zynqmp_pm_get_pll_frac_data(u32 clk_id, u32 *data);
-पूर्णांक zynqmp_pm_set_sd_tapdelay(u32 node_id, u32 type, u32 value);
-पूर्णांक zynqmp_pm_sd_dll_reset(u32 node_id, u32 type);
-पूर्णांक zynqmp_pm_reset_निश्चित(स्थिर क्रमागत zynqmp_pm_reset reset,
-			   स्थिर क्रमागत zynqmp_pm_reset_action निश्चित_flag);
-पूर्णांक zynqmp_pm_reset_get_status(स्थिर क्रमागत zynqmp_pm_reset reset, u32 *status);
-पूर्णांक zynqmp_pm_init_finalize(व्योम);
-पूर्णांक zynqmp_pm_set_suspend_mode(u32 mode);
-पूर्णांक zynqmp_pm_request_node(स्थिर u32 node, स्थिर u32 capabilities,
-			   स्थिर u32 qos, स्थिर क्रमागत zynqmp_pm_request_ack ack);
-पूर्णांक zynqmp_pm_release_node(स्थिर u32 node);
-पूर्णांक zynqmp_pm_set_requirement(स्थिर u32 node, स्थिर u32 capabilities,
-			      स्थिर u32 qos,
-			      स्थिर क्रमागत zynqmp_pm_request_ack ack);
-पूर्णांक zynqmp_pm_aes_engine(स्थिर u64 address, u32 *out);
-पूर्णांक zynqmp_pm_fpga_load(स्थिर u64 address, स्थिर u32 size, स्थिर u32 flags);
-पूर्णांक zynqmp_pm_fpga_get_status(u32 *value);
-पूर्णांक zynqmp_pm_ग_लिखो_ggs(u32 index, u32 value);
-पूर्णांक zynqmp_pm_पढ़ो_ggs(u32 index, u32 *value);
-पूर्णांक zynqmp_pm_ग_लिखो_pggs(u32 index, u32 value);
-पूर्णांक zynqmp_pm_पढ़ो_pggs(u32 index, u32 *value);
-पूर्णांक zynqmp_pm_प्रणाली_shutकरोwn(स्थिर u32 type, स्थिर u32 subtype);
-पूर्णांक zynqmp_pm_set_boot_health_status(u32 value);
-पूर्णांक zynqmp_pm_pinctrl_request(स्थिर u32 pin);
-पूर्णांक zynqmp_pm_pinctrl_release(स्थिर u32 pin);
-पूर्णांक zynqmp_pm_pinctrl_get_function(स्थिर u32 pin, u32 *id);
-पूर्णांक zynqmp_pm_pinctrl_set_function(स्थिर u32 pin, स्थिर u32 id);
-पूर्णांक zynqmp_pm_pinctrl_get_config(स्थिर u32 pin, स्थिर u32 param,
+#if IS_REACHABLE(CONFIG_ZYNQMP_FIRMWARE)
+int zynqmp_pm_get_api_version(u32 *version);
+int zynqmp_pm_get_chipid(u32 *idcode, u32 *version);
+int zynqmp_pm_query_data(struct zynqmp_pm_query_data qdata, u32 *out);
+int zynqmp_pm_clock_enable(u32 clock_id);
+int zynqmp_pm_clock_disable(u32 clock_id);
+int zynqmp_pm_clock_getstate(u32 clock_id, u32 *state);
+int zynqmp_pm_clock_setdivider(u32 clock_id, u32 divider);
+int zynqmp_pm_clock_getdivider(u32 clock_id, u32 *divider);
+int zynqmp_pm_clock_setrate(u32 clock_id, u64 rate);
+int zynqmp_pm_clock_getrate(u32 clock_id, u64 *rate);
+int zynqmp_pm_clock_setparent(u32 clock_id, u32 parent_id);
+int zynqmp_pm_clock_getparent(u32 clock_id, u32 *parent_id);
+int zynqmp_pm_set_pll_frac_mode(u32 clk_id, u32 mode);
+int zynqmp_pm_get_pll_frac_mode(u32 clk_id, u32 *mode);
+int zynqmp_pm_set_pll_frac_data(u32 clk_id, u32 data);
+int zynqmp_pm_get_pll_frac_data(u32 clk_id, u32 *data);
+int zynqmp_pm_set_sd_tapdelay(u32 node_id, u32 type, u32 value);
+int zynqmp_pm_sd_dll_reset(u32 node_id, u32 type);
+int zynqmp_pm_reset_assert(const enum zynqmp_pm_reset reset,
+			   const enum zynqmp_pm_reset_action assert_flag);
+int zynqmp_pm_reset_get_status(const enum zynqmp_pm_reset reset, u32 *status);
+int zynqmp_pm_init_finalize(void);
+int zynqmp_pm_set_suspend_mode(u32 mode);
+int zynqmp_pm_request_node(const u32 node, const u32 capabilities,
+			   const u32 qos, const enum zynqmp_pm_request_ack ack);
+int zynqmp_pm_release_node(const u32 node);
+int zynqmp_pm_set_requirement(const u32 node, const u32 capabilities,
+			      const u32 qos,
+			      const enum zynqmp_pm_request_ack ack);
+int zynqmp_pm_aes_engine(const u64 address, u32 *out);
+int zynqmp_pm_fpga_load(const u64 address, const u32 size, const u32 flags);
+int zynqmp_pm_fpga_get_status(u32 *value);
+int zynqmp_pm_write_ggs(u32 index, u32 value);
+int zynqmp_pm_read_ggs(u32 index, u32 *value);
+int zynqmp_pm_write_pggs(u32 index, u32 value);
+int zynqmp_pm_read_pggs(u32 index, u32 *value);
+int zynqmp_pm_system_shutdown(const u32 type, const u32 subtype);
+int zynqmp_pm_set_boot_health_status(u32 value);
+int zynqmp_pm_pinctrl_request(const u32 pin);
+int zynqmp_pm_pinctrl_release(const u32 pin);
+int zynqmp_pm_pinctrl_get_function(const u32 pin, u32 *id);
+int zynqmp_pm_pinctrl_set_function(const u32 pin, const u32 id);
+int zynqmp_pm_pinctrl_get_config(const u32 pin, const u32 param,
 				 u32 *value);
-पूर्णांक zynqmp_pm_pinctrl_set_config(स्थिर u32 pin, स्थिर u32 param,
+int zynqmp_pm_pinctrl_set_config(const u32 pin, const u32 param,
 				 u32 value);
-#अन्यथा
-अटल अंतरभूत पूर्णांक zynqmp_pm_get_api_version(u32 *version)
-अणु
-	वापस -ENODEV;
-पूर्ण
+#else
+static inline int zynqmp_pm_get_api_version(u32 *version)
+{
+	return -ENODEV;
+}
 
-अटल अंतरभूत पूर्णांक zynqmp_pm_get_chipid(u32 *idcode, u32 *version)
-अणु
-	वापस -ENODEV;
-पूर्ण
+static inline int zynqmp_pm_get_chipid(u32 *idcode, u32 *version)
+{
+	return -ENODEV;
+}
 
-अटल अंतरभूत पूर्णांक zynqmp_pm_query_data(काष्ठा zynqmp_pm_query_data qdata,
+static inline int zynqmp_pm_query_data(struct zynqmp_pm_query_data qdata,
 				       u32 *out)
-अणु
-	वापस -ENODEV;
-पूर्ण
+{
+	return -ENODEV;
+}
 
-अटल अंतरभूत पूर्णांक zynqmp_pm_घड़ी_enable(u32 घड़ी_id)
-अणु
-	वापस -ENODEV;
-पूर्ण
+static inline int zynqmp_pm_clock_enable(u32 clock_id)
+{
+	return -ENODEV;
+}
 
-अटल अंतरभूत पूर्णांक zynqmp_pm_घड़ी_disable(u32 घड़ी_id)
-अणु
-	वापस -ENODEV;
-पूर्ण
+static inline int zynqmp_pm_clock_disable(u32 clock_id)
+{
+	return -ENODEV;
+}
 
-अटल अंतरभूत पूर्णांक zynqmp_pm_घड़ी_माला_लोtate(u32 घड़ी_id, u32 *state)
-अणु
-	वापस -ENODEV;
-पूर्ण
+static inline int zynqmp_pm_clock_getstate(u32 clock_id, u32 *state)
+{
+	return -ENODEV;
+}
 
-अटल अंतरभूत पूर्णांक zynqmp_pm_घड़ी_setभागider(u32 घड़ी_id, u32 भागider)
-अणु
-	वापस -ENODEV;
-पूर्ण
+static inline int zynqmp_pm_clock_setdivider(u32 clock_id, u32 divider)
+{
+	return -ENODEV;
+}
 
-अटल अंतरभूत पूर्णांक zynqmp_pm_घड़ी_getभागider(u32 घड़ी_id, u32 *भागider)
-अणु
-	वापस -ENODEV;
-पूर्ण
+static inline int zynqmp_pm_clock_getdivider(u32 clock_id, u32 *divider)
+{
+	return -ENODEV;
+}
 
-अटल अंतरभूत पूर्णांक zynqmp_pm_घड़ी_setrate(u32 घड़ी_id, u64 rate)
-अणु
-	वापस -ENODEV;
-पूर्ण
+static inline int zynqmp_pm_clock_setrate(u32 clock_id, u64 rate)
+{
+	return -ENODEV;
+}
 
-अटल अंतरभूत पूर्णांक zynqmp_pm_घड़ी_getrate(u32 घड़ी_id, u64 *rate)
-अणु
-	वापस -ENODEV;
-पूर्ण
+static inline int zynqmp_pm_clock_getrate(u32 clock_id, u64 *rate)
+{
+	return -ENODEV;
+}
 
-अटल अंतरभूत पूर्णांक zynqmp_pm_घड़ी_setparent(u32 घड़ी_id, u32 parent_id)
-अणु
-	वापस -ENODEV;
-पूर्ण
+static inline int zynqmp_pm_clock_setparent(u32 clock_id, u32 parent_id)
+{
+	return -ENODEV;
+}
 
-अटल अंतरभूत पूर्णांक zynqmp_pm_घड़ी_getparent(u32 घड़ी_id, u32 *parent_id)
-अणु
-	वापस -ENODEV;
-पूर्ण
+static inline int zynqmp_pm_clock_getparent(u32 clock_id, u32 *parent_id)
+{
+	return -ENODEV;
+}
 
-अटल अंतरभूत पूर्णांक zynqmp_pm_set_pll_frac_mode(u32 clk_id, u32 mode)
-अणु
-	वापस -ENODEV;
-पूर्ण
+static inline int zynqmp_pm_set_pll_frac_mode(u32 clk_id, u32 mode)
+{
+	return -ENODEV;
+}
 
-अटल अंतरभूत पूर्णांक zynqmp_pm_get_pll_frac_mode(u32 clk_id, u32 *mode)
-अणु
-	वापस -ENODEV;
-पूर्ण
+static inline int zynqmp_pm_get_pll_frac_mode(u32 clk_id, u32 *mode)
+{
+	return -ENODEV;
+}
 
-अटल अंतरभूत पूर्णांक zynqmp_pm_set_pll_frac_data(u32 clk_id, u32 data)
-अणु
-	वापस -ENODEV;
-पूर्ण
+static inline int zynqmp_pm_set_pll_frac_data(u32 clk_id, u32 data)
+{
+	return -ENODEV;
+}
 
-अटल अंतरभूत पूर्णांक zynqmp_pm_get_pll_frac_data(u32 clk_id, u32 *data)
-अणु
-	वापस -ENODEV;
-पूर्ण
+static inline int zynqmp_pm_get_pll_frac_data(u32 clk_id, u32 *data)
+{
+	return -ENODEV;
+}
 
-अटल अंतरभूत पूर्णांक zynqmp_pm_set_sd_tapdelay(u32 node_id, u32 type, u32 value)
-अणु
-	वापस -ENODEV;
-पूर्ण
+static inline int zynqmp_pm_set_sd_tapdelay(u32 node_id, u32 type, u32 value)
+{
+	return -ENODEV;
+}
 
-अटल अंतरभूत पूर्णांक zynqmp_pm_sd_dll_reset(u32 node_id, u32 type)
-अणु
-	वापस -ENODEV;
-पूर्ण
+static inline int zynqmp_pm_sd_dll_reset(u32 node_id, u32 type)
+{
+	return -ENODEV;
+}
 
-अटल अंतरभूत पूर्णांक zynqmp_pm_reset_निश्चित(स्थिर क्रमागत zynqmp_pm_reset reset,
-					 स्थिर क्रमागत zynqmp_pm_reset_action निश्चित_flag)
-अणु
-	वापस -ENODEV;
-पूर्ण
+static inline int zynqmp_pm_reset_assert(const enum zynqmp_pm_reset reset,
+					 const enum zynqmp_pm_reset_action assert_flag)
+{
+	return -ENODEV;
+}
 
-अटल अंतरभूत पूर्णांक zynqmp_pm_reset_get_status(स्थिर क्रमागत zynqmp_pm_reset reset,
+static inline int zynqmp_pm_reset_get_status(const enum zynqmp_pm_reset reset,
 					     u32 *status)
-अणु
-	वापस -ENODEV;
-पूर्ण
+{
+	return -ENODEV;
+}
 
-अटल अंतरभूत पूर्णांक zynqmp_pm_init_finalize(व्योम)
-अणु
-	वापस -ENODEV;
-पूर्ण
+static inline int zynqmp_pm_init_finalize(void)
+{
+	return -ENODEV;
+}
 
-अटल अंतरभूत पूर्णांक zynqmp_pm_set_suspend_mode(u32 mode)
-अणु
-	वापस -ENODEV;
-पूर्ण
+static inline int zynqmp_pm_set_suspend_mode(u32 mode)
+{
+	return -ENODEV;
+}
 
-अटल अंतरभूत पूर्णांक zynqmp_pm_request_node(स्थिर u32 node, स्थिर u32 capabilities,
-					 स्थिर u32 qos,
-					 स्थिर क्रमागत zynqmp_pm_request_ack ack)
-अणु
-	वापस -ENODEV;
-पूर्ण
+static inline int zynqmp_pm_request_node(const u32 node, const u32 capabilities,
+					 const u32 qos,
+					 const enum zynqmp_pm_request_ack ack)
+{
+	return -ENODEV;
+}
 
-अटल अंतरभूत पूर्णांक zynqmp_pm_release_node(स्थिर u32 node)
-अणु
-	वापस -ENODEV;
-पूर्ण
+static inline int zynqmp_pm_release_node(const u32 node)
+{
+	return -ENODEV;
+}
 
-अटल अंतरभूत पूर्णांक zynqmp_pm_set_requirement(स्थिर u32 node,
-					    स्थिर u32 capabilities,
-					    स्थिर u32 qos,
-					    स्थिर क्रमागत zynqmp_pm_request_ack ack)
-अणु
-	वापस -ENODEV;
-पूर्ण
+static inline int zynqmp_pm_set_requirement(const u32 node,
+					    const u32 capabilities,
+					    const u32 qos,
+					    const enum zynqmp_pm_request_ack ack)
+{
+	return -ENODEV;
+}
 
-अटल अंतरभूत पूर्णांक zynqmp_pm_aes_engine(स्थिर u64 address, u32 *out)
-अणु
-	वापस -ENODEV;
-पूर्ण
+static inline int zynqmp_pm_aes_engine(const u64 address, u32 *out)
+{
+	return -ENODEV;
+}
 
-अटल अंतरभूत पूर्णांक zynqmp_pm_fpga_load(स्थिर u64 address, स्थिर u32 size,
-				      स्थिर u32 flags)
-अणु
-	वापस -ENODEV;
-पूर्ण
+static inline int zynqmp_pm_fpga_load(const u64 address, const u32 size,
+				      const u32 flags)
+{
+	return -ENODEV;
+}
 
-अटल अंतरभूत पूर्णांक zynqmp_pm_fpga_get_status(u32 *value)
-अणु
-	वापस -ENODEV;
-पूर्ण
+static inline int zynqmp_pm_fpga_get_status(u32 *value)
+{
+	return -ENODEV;
+}
 
-अटल अंतरभूत पूर्णांक zynqmp_pm_ग_लिखो_ggs(u32 index, u32 value)
-अणु
-	वापस -ENODEV;
-पूर्ण
+static inline int zynqmp_pm_write_ggs(u32 index, u32 value)
+{
+	return -ENODEV;
+}
 
-अटल अंतरभूत पूर्णांक zynqmp_pm_पढ़ो_ggs(u32 index, u32 *value)
-अणु
-	वापस -ENODEV;
-पूर्ण
+static inline int zynqmp_pm_read_ggs(u32 index, u32 *value)
+{
+	return -ENODEV;
+}
 
-अटल अंतरभूत पूर्णांक zynqmp_pm_ग_लिखो_pggs(u32 index, u32 value)
-अणु
-	वापस -ENODEV;
-पूर्ण
+static inline int zynqmp_pm_write_pggs(u32 index, u32 value)
+{
+	return -ENODEV;
+}
 
-अटल अंतरभूत पूर्णांक zynqmp_pm_पढ़ो_pggs(u32 index, u32 *value)
-अणु
-	वापस -ENODEV;
-पूर्ण
+static inline int zynqmp_pm_read_pggs(u32 index, u32 *value)
+{
+	return -ENODEV;
+}
 
-अटल अंतरभूत पूर्णांक zynqmp_pm_प्रणाली_shutकरोwn(स्थिर u32 type, स्थिर u32 subtype)
-अणु
-	वापस -ENODEV;
-पूर्ण
+static inline int zynqmp_pm_system_shutdown(const u32 type, const u32 subtype)
+{
+	return -ENODEV;
+}
 
-अटल अंतरभूत पूर्णांक zynqmp_pm_set_boot_health_status(u32 value)
-अणु
-	वापस -ENODEV;
-पूर्ण
+static inline int zynqmp_pm_set_boot_health_status(u32 value)
+{
+	return -ENODEV;
+}
 
-अटल अंतरभूत पूर्णांक zynqmp_pm_pinctrl_request(स्थिर u32 pin)
-अणु
-	वापस -ENODEV;
-पूर्ण
+static inline int zynqmp_pm_pinctrl_request(const u32 pin)
+{
+	return -ENODEV;
+}
 
-अटल अंतरभूत पूर्णांक zynqmp_pm_pinctrl_release(स्थिर u32 pin)
-अणु
-	वापस -ENODEV;
-पूर्ण
+static inline int zynqmp_pm_pinctrl_release(const u32 pin)
+{
+	return -ENODEV;
+}
 
-अटल अंतरभूत पूर्णांक zynqmp_pm_pinctrl_get_function(स्थिर u32 pin, u32 *id)
-अणु
-	वापस -ENODEV;
-पूर्ण
+static inline int zynqmp_pm_pinctrl_get_function(const u32 pin, u32 *id)
+{
+	return -ENODEV;
+}
 
-अटल अंतरभूत पूर्णांक zynqmp_pm_pinctrl_set_function(स्थिर u32 pin, स्थिर u32 id)
-अणु
-	वापस -ENODEV;
-पूर्ण
+static inline int zynqmp_pm_pinctrl_set_function(const u32 pin, const u32 id)
+{
+	return -ENODEV;
+}
 
-अटल अंतरभूत पूर्णांक zynqmp_pm_pinctrl_get_config(स्थिर u32 pin, स्थिर u32 param,
+static inline int zynqmp_pm_pinctrl_get_config(const u32 pin, const u32 param,
 					       u32 *value)
-अणु
-	वापस -ENODEV;
-पूर्ण
+{
+	return -ENODEV;
+}
 
-अटल अंतरभूत पूर्णांक zynqmp_pm_pinctrl_set_config(स्थिर u32 pin, स्थिर u32 param,
+static inline int zynqmp_pm_pinctrl_set_config(const u32 pin, const u32 param,
 					       u32 value)
-अणु
-	वापस -ENODEV;
-पूर्ण
-#पूर्ण_अगर
+{
+	return -ENODEV;
+}
+#endif
 
-#पूर्ण_अगर /* __FIRMWARE_ZYNQMP_H__ */
+#endif /* __FIRMWARE_ZYNQMP_H__ */

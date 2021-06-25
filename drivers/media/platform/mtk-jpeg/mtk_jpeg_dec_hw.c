@@ -1,20 +1,19 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2016 MediaTek Inc.
  * Author: Ming Hsiu Tsai <minghsiu.tsai@mediatek.com>
  *         Rick Chang <rick.chang@mediatek.com>
  */
 
-#समावेश <linux/पन.स>
-#समावेश <linux/kernel.h>
-#समावेश <media/videobuf2-core.h>
+#include <linux/io.h>
+#include <linux/kernel.h>
+#include <media/videobuf2-core.h>
 
-#समावेश "mtk_jpeg_dec_hw.h"
+#include "mtk_jpeg_dec_hw.h"
 
-#घोषणा MTK_JPEG_DUNUM_MASK(val)	(((val) - 1) & 0x3)
+#define MTK_JPEG_DUNUM_MASK(val)	(((val) - 1) & 0x3)
 
-क्रमागत mtk_jpeg_color अणु
+enum mtk_jpeg_color {
 	MTK_JPEG_COLOR_420		= 0x00221111,
 	MTK_JPEG_COLOR_422		= 0x00211111,
 	MTK_JPEG_COLOR_444		= 0x00111111,
@@ -22,20 +21,20 @@
 	MTK_JPEG_COLOR_422X2		= 0x00412121,
 	MTK_JPEG_COLOR_422VX2		= 0x00222121,
 	MTK_JPEG_COLOR_400		= 0x00110000
-पूर्ण;
+};
 
-अटल अंतरभूत पूर्णांक mtk_jpeg_verअगरy_align(u32 val, पूर्णांक align, u32 reg)
-अणु
-	अगर (val & (align - 1)) अणु
+static inline int mtk_jpeg_verify_align(u32 val, int align, u32 reg)
+{
+	if (val & (align - 1)) {
 		pr_err("mtk-jpeg: write reg %x without %d align\n", reg, align);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mtk_jpeg_decide_क्रमmat(काष्ठा mtk_jpeg_dec_param *param)
-अणु
+static int mtk_jpeg_decide_format(struct mtk_jpeg_dec_param *param)
+{
 	param->src_color = (param->sampling_w[0] << 20) |
 			   (param->sampling_h[0] << 16) |
 			   (param->sampling_w[1] << 12) |
@@ -44,36 +43,36 @@
 			   (param->sampling_h[2]);
 
 	param->uv_brz_w = 0;
-	चयन (param->src_color) अणु
-	हाल MTK_JPEG_COLOR_444:
+	switch (param->src_color) {
+	case MTK_JPEG_COLOR_444:
 		param->uv_brz_w = 1;
 		param->dst_fourcc = V4L2_PIX_FMT_YUV422M;
-		अवरोध;
-	हाल MTK_JPEG_COLOR_422X2:
-	हाल MTK_JPEG_COLOR_422:
+		break;
+	case MTK_JPEG_COLOR_422X2:
+	case MTK_JPEG_COLOR_422:
 		param->dst_fourcc = V4L2_PIX_FMT_YUV422M;
-		अवरोध;
-	हाल MTK_JPEG_COLOR_422V:
-	हाल MTK_JPEG_COLOR_422VX2:
+		break;
+	case MTK_JPEG_COLOR_422V:
+	case MTK_JPEG_COLOR_422VX2:
 		param->uv_brz_w = 1;
 		param->dst_fourcc = V4L2_PIX_FMT_YUV420M;
-		अवरोध;
-	हाल MTK_JPEG_COLOR_420:
+		break;
+	case MTK_JPEG_COLOR_420:
 		param->dst_fourcc = V4L2_PIX_FMT_YUV420M;
-		अवरोध;
-	हाल MTK_JPEG_COLOR_400:
+		break;
+	case MTK_JPEG_COLOR_400:
 		param->dst_fourcc = V4L2_PIX_FMT_GREY;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		param->dst_fourcc = 0;
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mtk_jpeg_calc_mcu(काष्ठा mtk_jpeg_dec_param *param)
-अणु
+static void mtk_jpeg_calc_mcu(struct mtk_jpeg_dec_param *param)
+{
 	u32 factor_w, factor_h;
 	u32 i, comp, blk;
 
@@ -84,60 +83,60 @@
 	param->total_mcu = param->mcu_w * param->mcu_h;
 	param->unit_num = ((param->pic_w + 7) >> 3) * ((param->pic_h + 7) >> 3);
 	param->blk_num = 0;
-	क्रम (i = 0; i < MTK_JPEG_COMP_MAX; i++) अणु
+	for (i = 0; i < MTK_JPEG_COMP_MAX; i++) {
 		param->blk_comp[i] = 0;
-		अगर (i >= param->comp_num)
-			जारी;
+		if (i >= param->comp_num)
+			continue;
 		param->blk_comp[i] = param->sampling_w[i] *
 				     param->sampling_h[i];
 		param->blk_num += param->blk_comp[i];
-	पूर्ण
+	}
 
 	param->membership = 0;
-	क्रम (i = 0, blk = 0, comp = 0; i < MTK_JPEG_BLOCK_MAX; i++) अणु
-		अगर (i < param->blk_num && comp < param->comp_num) अणु
-			u32 पंचांगp;
+	for (i = 0, blk = 0, comp = 0; i < MTK_JPEG_BLOCK_MAX; i++) {
+		if (i < param->blk_num && comp < param->comp_num) {
+			u32 tmp;
 
-			पंचांगp = (0x04 + (comp & 0x3));
-			param->membership |= पंचांगp << (i * 3);
-			अगर (++blk == param->blk_comp[comp]) अणु
+			tmp = (0x04 + (comp & 0x3));
+			param->membership |= tmp << (i * 3);
+			if (++blk == param->blk_comp[comp]) {
 				comp++;
 				blk = 0;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			param->membership |=  7 << (i * 3);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम mtk_jpeg_calc_dma_group(काष्ठा mtk_jpeg_dec_param *param)
-अणु
+static void mtk_jpeg_calc_dma_group(struct mtk_jpeg_dec_param *param)
+{
 	u32 factor_mcu = 3;
 
-	अगर (param->src_color == MTK_JPEG_COLOR_444 &&
+	if (param->src_color == MTK_JPEG_COLOR_444 &&
 	    param->dst_fourcc == V4L2_PIX_FMT_YUV422M)
 		factor_mcu = 4;
-	अन्यथा अगर (param->src_color == MTK_JPEG_COLOR_422V &&
+	else if (param->src_color == MTK_JPEG_COLOR_422V &&
 		 param->dst_fourcc == V4L2_PIX_FMT_YUV420M)
 		factor_mcu = 4;
-	अन्यथा अगर (param->src_color == MTK_JPEG_COLOR_422X2 &&
+	else if (param->src_color == MTK_JPEG_COLOR_422X2 &&
 		 param->dst_fourcc == V4L2_PIX_FMT_YUV422M)
 		factor_mcu = 2;
-	अन्यथा अगर (param->src_color == MTK_JPEG_COLOR_400 ||
+	else if (param->src_color == MTK_JPEG_COLOR_400 ||
 		 (param->src_color & 0x0FFFF) == 0)
 		factor_mcu = 4;
 
 	param->dma_mcu = 1 << factor_mcu;
 	param->dma_group = param->mcu_w / param->dma_mcu;
 	param->dma_last_mcu = param->mcu_w % param->dma_mcu;
-	अगर (param->dma_last_mcu)
+	if (param->dma_last_mcu)
 		param->dma_group++;
-	अन्यथा
+	else
 		param->dma_last_mcu = param->dma_mcu;
-पूर्ण
+}
 
-अटल पूर्णांक mtk_jpeg_calc_dst_size(काष्ठा mtk_jpeg_dec_param *param)
-अणु
+static int mtk_jpeg_calc_dst_size(struct mtk_jpeg_dec_param *param)
+{
 	u32 i, padding_w;
 	u32 ds_row_h[3];
 	u32 brz_w[3];
@@ -146,244 +145,244 @@
 	brz_w[1] = param->uv_brz_w;
 	brz_w[2] = brz_w[1];
 
-	क्रम (i = 0; i < param->comp_num; i++) अणु
-		अगर (brz_w[i] > 3)
-			वापस -1;
+	for (i = 0; i < param->comp_num; i++) {
+		if (brz_w[i] > 3)
+			return -1;
 
 		padding_w = param->mcu_w * MTK_JPEG_DCTSIZE *
 				param->sampling_w[i];
-		/* output क्रमmat is 420/422 */
+		/* output format is 420/422 */
 		param->comp_w[i] = padding_w >> brz_w[i];
 		param->comp_w[i] = round_up(param->comp_w[i],
 					    MTK_JPEG_DCTSIZE);
 		param->img_stride[i] = i ? round_up(param->comp_w[i], 16)
 					: round_up(param->comp_w[i], 32);
 		ds_row_h[i] = (MTK_JPEG_DCTSIZE * param->sampling_h[i]);
-	पूर्ण
+	}
 	param->dec_w = param->img_stride[0];
 	param->dec_h = ds_row_h[0] * param->mcu_h;
 
-	क्रम (i = 0; i < MTK_JPEG_COMP_MAX; i++) अणु
+	for (i = 0; i < MTK_JPEG_COMP_MAX; i++) {
 		/* They must be equal in frame mode. */
 		param->mem_stride[i] = param->img_stride[i];
 		param->comp_size[i] = param->mem_stride[i] * ds_row_h[i] *
 				      param->mcu_h;
-	पूर्ण
+	}
 
 	param->y_size = param->comp_size[0];
 	param->uv_size = param->comp_size[1];
 	param->dec_size = param->y_size + (param->uv_size << 1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक mtk_jpeg_dec_fill_param(काष्ठा mtk_jpeg_dec_param *param)
-अणु
-	अगर (mtk_jpeg_decide_क्रमmat(param))
-		वापस -1;
+int mtk_jpeg_dec_fill_param(struct mtk_jpeg_dec_param *param)
+{
+	if (mtk_jpeg_decide_format(param))
+		return -1;
 
 	mtk_jpeg_calc_mcu(param);
 	mtk_jpeg_calc_dma_group(param);
-	अगर (mtk_jpeg_calc_dst_size(param))
-		वापस -2;
+	if (mtk_jpeg_calc_dst_size(param))
+		return -2;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-u32 mtk_jpeg_dec_get_पूर्णांक_status(व्योम __iomem *base)
-अणु
+u32 mtk_jpeg_dec_get_int_status(void __iomem *base)
+{
 	u32 ret;
 
-	ret = पढ़ोl(base + JPGDEC_REG_INTERRUPT_STATUS) & BIT_INQST_MASK_ALLIRQ;
-	अगर (ret)
-		ग_लिखोl(ret, base + JPGDEC_REG_INTERRUPT_STATUS);
+	ret = readl(base + JPGDEC_REG_INTERRUPT_STATUS) & BIT_INQST_MASK_ALLIRQ;
+	if (ret)
+		writel(ret, base + JPGDEC_REG_INTERRUPT_STATUS);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-u32 mtk_jpeg_dec_क्रमागत_result(u32 irq_result)
-अणु
-	अगर (irq_result & BIT_INQST_MASK_खातापूर्ण)
-		वापस MTK_JPEG_DEC_RESULT_खातापूर्ण_DONE;
-	अगर (irq_result & BIT_INQST_MASK_PAUSE)
-		वापस MTK_JPEG_DEC_RESULT_PAUSE;
-	अगर (irq_result & BIT_INQST_MASK_UNDERFLOW)
-		वापस MTK_JPEG_DEC_RESULT_UNDERFLOW;
-	अगर (irq_result & BIT_INQST_MASK_OVERFLOW)
-		वापस MTK_JPEG_DEC_RESULT_OVERFLOW;
-	अगर (irq_result & BIT_INQST_MASK_ERROR_BS)
-		वापस MTK_JPEG_DEC_RESULT_ERROR_BS;
+u32 mtk_jpeg_dec_enum_result(u32 irq_result)
+{
+	if (irq_result & BIT_INQST_MASK_EOF)
+		return MTK_JPEG_DEC_RESULT_EOF_DONE;
+	if (irq_result & BIT_INQST_MASK_PAUSE)
+		return MTK_JPEG_DEC_RESULT_PAUSE;
+	if (irq_result & BIT_INQST_MASK_UNDERFLOW)
+		return MTK_JPEG_DEC_RESULT_UNDERFLOW;
+	if (irq_result & BIT_INQST_MASK_OVERFLOW)
+		return MTK_JPEG_DEC_RESULT_OVERFLOW;
+	if (irq_result & BIT_INQST_MASK_ERROR_BS)
+		return MTK_JPEG_DEC_RESULT_ERROR_BS;
 
-	वापस MTK_JPEG_DEC_RESULT_ERROR_UNKNOWN;
-पूर्ण
+	return MTK_JPEG_DEC_RESULT_ERROR_UNKNOWN;
+}
 
-व्योम mtk_jpeg_dec_start(व्योम __iomem *base)
-अणु
-	ग_लिखोl(0, base + JPGDEC_REG_TRIG);
-पूर्ण
+void mtk_jpeg_dec_start(void __iomem *base)
+{
+	writel(0, base + JPGDEC_REG_TRIG);
+}
 
-अटल व्योम mtk_jpeg_dec_soft_reset(व्योम __iomem *base)
-अणु
-	ग_लिखोl(0x0000FFFF, base + JPGDEC_REG_INTERRUPT_STATUS);
-	ग_लिखोl(0x00, base + JPGDEC_REG_RESET);
-	ग_लिखोl(0x01, base + JPGDEC_REG_RESET);
-पूर्ण
+static void mtk_jpeg_dec_soft_reset(void __iomem *base)
+{
+	writel(0x0000FFFF, base + JPGDEC_REG_INTERRUPT_STATUS);
+	writel(0x00, base + JPGDEC_REG_RESET);
+	writel(0x01, base + JPGDEC_REG_RESET);
+}
 
-अटल व्योम mtk_jpeg_dec_hard_reset(व्योम __iomem *base)
-अणु
-	ग_लिखोl(0x00, base + JPGDEC_REG_RESET);
-	ग_लिखोl(0x10, base + JPGDEC_REG_RESET);
-पूर्ण
+static void mtk_jpeg_dec_hard_reset(void __iomem *base)
+{
+	writel(0x00, base + JPGDEC_REG_RESET);
+	writel(0x10, base + JPGDEC_REG_RESET);
+}
 
-व्योम mtk_jpeg_dec_reset(व्योम __iomem *base)
-अणु
+void mtk_jpeg_dec_reset(void __iomem *base)
+{
 	mtk_jpeg_dec_soft_reset(base);
 	mtk_jpeg_dec_hard_reset(base);
-पूर्ण
+}
 
-अटल व्योम mtk_jpeg_dec_set_brz_factor(व्योम __iomem *base, u8 yscale_w,
+static void mtk_jpeg_dec_set_brz_factor(void __iomem *base, u8 yscale_w,
 					u8 yscale_h, u8 uvscale_w, u8 uvscale_h)
-अणु
+{
 	u32 val;
 
 	val = (uvscale_h << 12) | (uvscale_w << 8) |
 	      (yscale_h << 4) | yscale_w;
-	ग_लिखोl(val, base + JPGDEC_REG_BRZ_FACTOR);
-पूर्ण
+	writel(val, base + JPGDEC_REG_BRZ_FACTOR);
+}
 
-अटल व्योम mtk_jpeg_dec_set_dst_bank0(व्योम __iomem *base, u32 addr_y,
+static void mtk_jpeg_dec_set_dst_bank0(void __iomem *base, u32 addr_y,
 				       u32 addr_u, u32 addr_v)
-अणु
-	mtk_jpeg_verअगरy_align(addr_y, 16, JPGDEC_REG_DEST_ADDR0_Y);
-	ग_लिखोl(addr_y, base + JPGDEC_REG_DEST_ADDR0_Y);
-	mtk_jpeg_verअगरy_align(addr_u, 16, JPGDEC_REG_DEST_ADDR0_U);
-	ग_लिखोl(addr_u, base + JPGDEC_REG_DEST_ADDR0_U);
-	mtk_jpeg_verअगरy_align(addr_v, 16, JPGDEC_REG_DEST_ADDR0_V);
-	ग_लिखोl(addr_v, base + JPGDEC_REG_DEST_ADDR0_V);
-पूर्ण
+{
+	mtk_jpeg_verify_align(addr_y, 16, JPGDEC_REG_DEST_ADDR0_Y);
+	writel(addr_y, base + JPGDEC_REG_DEST_ADDR0_Y);
+	mtk_jpeg_verify_align(addr_u, 16, JPGDEC_REG_DEST_ADDR0_U);
+	writel(addr_u, base + JPGDEC_REG_DEST_ADDR0_U);
+	mtk_jpeg_verify_align(addr_v, 16, JPGDEC_REG_DEST_ADDR0_V);
+	writel(addr_v, base + JPGDEC_REG_DEST_ADDR0_V);
+}
 
-अटल व्योम mtk_jpeg_dec_set_dst_bank1(व्योम __iomem *base, u32 addr_y,
+static void mtk_jpeg_dec_set_dst_bank1(void __iomem *base, u32 addr_y,
 				       u32 addr_u, u32 addr_v)
-अणु
-	ग_लिखोl(addr_y, base + JPGDEC_REG_DEST_ADDR1_Y);
-	ग_लिखोl(addr_u, base + JPGDEC_REG_DEST_ADDR1_U);
-	ग_लिखोl(addr_v, base + JPGDEC_REG_DEST_ADDR1_V);
-पूर्ण
+{
+	writel(addr_y, base + JPGDEC_REG_DEST_ADDR1_Y);
+	writel(addr_u, base + JPGDEC_REG_DEST_ADDR1_U);
+	writel(addr_v, base + JPGDEC_REG_DEST_ADDR1_V);
+}
 
-अटल व्योम mtk_jpeg_dec_set_mem_stride(व्योम __iomem *base, u32 stride_y,
+static void mtk_jpeg_dec_set_mem_stride(void __iomem *base, u32 stride_y,
 					u32 stride_uv)
-अणु
-	ग_लिखोl((stride_y & 0xFFFF), base + JPGDEC_REG_STRIDE_Y);
-	ग_लिखोl((stride_uv & 0xFFFF), base + JPGDEC_REG_STRIDE_UV);
-पूर्ण
+{
+	writel((stride_y & 0xFFFF), base + JPGDEC_REG_STRIDE_Y);
+	writel((stride_uv & 0xFFFF), base + JPGDEC_REG_STRIDE_UV);
+}
 
-अटल व्योम mtk_jpeg_dec_set_img_stride(व्योम __iomem *base, u32 stride_y,
+static void mtk_jpeg_dec_set_img_stride(void __iomem *base, u32 stride_y,
 					u32 stride_uv)
-अणु
-	ग_लिखोl((stride_y & 0xFFFF), base + JPGDEC_REG_IMG_STRIDE_Y);
-	ग_लिखोl((stride_uv & 0xFFFF), base + JPGDEC_REG_IMG_STRIDE_UV);
-पूर्ण
+{
+	writel((stride_y & 0xFFFF), base + JPGDEC_REG_IMG_STRIDE_Y);
+	writel((stride_uv & 0xFFFF), base + JPGDEC_REG_IMG_STRIDE_UV);
+}
 
-अटल व्योम mtk_jpeg_dec_set_छोड़ो_mcu_idx(व्योम __iomem *base, u32 idx)
-अणु
-	ग_लिखोl(idx & 0x0003FFFFFF, base + JPGDEC_REG_PAUSE_MCU_NUM);
-पूर्ण
+static void mtk_jpeg_dec_set_pause_mcu_idx(void __iomem *base, u32 idx)
+{
+	writel(idx & 0x0003FFFFFF, base + JPGDEC_REG_PAUSE_MCU_NUM);
+}
 
-अटल व्योम mtk_jpeg_dec_set_dec_mode(व्योम __iomem *base, u32 mode)
-अणु
-	ग_लिखोl(mode & 0x03, base + JPGDEC_REG_OPERATION_MODE);
-पूर्ण
+static void mtk_jpeg_dec_set_dec_mode(void __iomem *base, u32 mode)
+{
+	writel(mode & 0x03, base + JPGDEC_REG_OPERATION_MODE);
+}
 
-अटल व्योम mtk_jpeg_dec_set_bs_ग_लिखो_ptr(व्योम __iomem *base, u32 ptr)
-अणु
-	mtk_jpeg_verअगरy_align(ptr, 16, JPGDEC_REG_खाता_BRP);
-	ग_लिखोl(ptr, base + JPGDEC_REG_खाता_BRP);
-पूर्ण
+static void mtk_jpeg_dec_set_bs_write_ptr(void __iomem *base, u32 ptr)
+{
+	mtk_jpeg_verify_align(ptr, 16, JPGDEC_REG_FILE_BRP);
+	writel(ptr, base + JPGDEC_REG_FILE_BRP);
+}
 
-अटल व्योम mtk_jpeg_dec_set_bs_info(व्योम __iomem *base, u32 addr, u32 size)
-अणु
-	mtk_jpeg_verअगरy_align(addr, 16, JPGDEC_REG_खाता_ADDR);
-	mtk_jpeg_verअगरy_align(size, 128, JPGDEC_REG_खाता_TOTAL_SIZE);
-	ग_लिखोl(addr, base + JPGDEC_REG_खाता_ADDR);
-	ग_लिखोl(size, base + JPGDEC_REG_खाता_TOTAL_SIZE);
-पूर्ण
+static void mtk_jpeg_dec_set_bs_info(void __iomem *base, u32 addr, u32 size)
+{
+	mtk_jpeg_verify_align(addr, 16, JPGDEC_REG_FILE_ADDR);
+	mtk_jpeg_verify_align(size, 128, JPGDEC_REG_FILE_TOTAL_SIZE);
+	writel(addr, base + JPGDEC_REG_FILE_ADDR);
+	writel(size, base + JPGDEC_REG_FILE_TOTAL_SIZE);
+}
 
-अटल व्योम mtk_jpeg_dec_set_comp_id(व्योम __iomem *base, u32 id_y, u32 id_u,
+static void mtk_jpeg_dec_set_comp_id(void __iomem *base, u32 id_y, u32 id_u,
 				     u32 id_v)
-अणु
+{
 	u32 val;
 
 	val = ((id_y & 0x00FF) << 24) | ((id_u & 0x00FF) << 16) |
 	      ((id_v & 0x00FF) << 8);
-	ग_लिखोl(val, base + JPGDEC_REG_COMP_ID);
-पूर्ण
+	writel(val, base + JPGDEC_REG_COMP_ID);
+}
 
-अटल व्योम mtk_jpeg_dec_set_total_mcu(व्योम __iomem *base, u32 num)
-अणु
-	ग_लिखोl(num - 1, base + JPGDEC_REG_TOTAL_MCU_NUM);
-पूर्ण
+static void mtk_jpeg_dec_set_total_mcu(void __iomem *base, u32 num)
+{
+	writel(num - 1, base + JPGDEC_REG_TOTAL_MCU_NUM);
+}
 
-अटल व्योम mtk_jpeg_dec_set_comp0_du(व्योम __iomem *base, u32 num)
-अणु
-	ग_लिखोl(num - 1, base + JPGDEC_REG_COMP0_DATA_UNIT_NUM);
-पूर्ण
+static void mtk_jpeg_dec_set_comp0_du(void __iomem *base, u32 num)
+{
+	writel(num - 1, base + JPGDEC_REG_COMP0_DATA_UNIT_NUM);
+}
 
-अटल व्योम mtk_jpeg_dec_set_du_membership(व्योम __iomem *base, u32 member,
+static void mtk_jpeg_dec_set_du_membership(void __iomem *base, u32 member,
 					   u32 gmc, u32 isgray)
-अणु
-	अगर (isgray)
+{
+	if (isgray)
 		member = 0x3FFFFFFC;
 	member |= (isgray << 31) | (gmc << 30);
-	ग_लिखोl(member, base + JPGDEC_REG_DU_CTRL);
-पूर्ण
+	writel(member, base + JPGDEC_REG_DU_CTRL);
+}
 
-अटल व्योम mtk_jpeg_dec_set_q_table(व्योम __iomem *base, u32 id0, u32 id1,
+static void mtk_jpeg_dec_set_q_table(void __iomem *base, u32 id0, u32 id1,
 				     u32 id2)
-अणु
+{
 	u32 val;
 
 	val = ((id0 & 0x0f) << 8) | ((id1 & 0x0f) << 4) | ((id2 & 0x0f) << 0);
-	ग_लिखोl(val, base + JPGDEC_REG_QT_ID);
-पूर्ण
+	writel(val, base + JPGDEC_REG_QT_ID);
+}
 
-अटल व्योम mtk_jpeg_dec_set_dma_group(व्योम __iomem *base, u32 mcu_group,
+static void mtk_jpeg_dec_set_dma_group(void __iomem *base, u32 mcu_group,
 				       u32 group_num, u32 last_mcu)
-अणु
+{
 	u32 val;
 
 	val = (((mcu_group - 1) & 0x00FF) << 16) |
 	      (((group_num - 1) & 0x007F) << 8) |
 	      ((last_mcu - 1) & 0x00FF);
-	ग_लिखोl(val, base + JPGDEC_REG_WDMA_CTRL);
-पूर्ण
+	writel(val, base + JPGDEC_REG_WDMA_CTRL);
+}
 
-अटल व्योम mtk_jpeg_dec_set_sampling_factor(व्योम __iomem *base, u32 comp_num,
+static void mtk_jpeg_dec_set_sampling_factor(void __iomem *base, u32 comp_num,
 					     u32 y_w, u32 y_h, u32 u_w,
 					     u32 u_h, u32 v_w, u32 v_h)
-अणु
+{
 	u32 val;
 	u32 y_wh = (MTK_JPEG_DUNUM_MASK(y_w) << 2) | MTK_JPEG_DUNUM_MASK(y_h);
 	u32 u_wh = (MTK_JPEG_DUNUM_MASK(u_w) << 2) | MTK_JPEG_DUNUM_MASK(u_h);
 	u32 v_wh = (MTK_JPEG_DUNUM_MASK(v_w) << 2) | MTK_JPEG_DUNUM_MASK(v_h);
 
-	अगर (comp_num == 1)
+	if (comp_num == 1)
 		val = 0;
-	अन्यथा
+	else
 		val = (y_wh << 8) | (u_wh << 4) | v_wh;
-	ग_लिखोl(val, base + JPGDEC_REG_DU_NUM);
-पूर्ण
+	writel(val, base + JPGDEC_REG_DU_NUM);
+}
 
-व्योम mtk_jpeg_dec_set_config(व्योम __iomem *base,
-			     काष्ठा mtk_jpeg_dec_param *config,
-			     काष्ठा mtk_jpeg_bs *bs,
-			     काष्ठा mtk_jpeg_fb *fb)
-अणु
+void mtk_jpeg_dec_set_config(void __iomem *base,
+			     struct mtk_jpeg_dec_param *config,
+			     struct mtk_jpeg_bs *bs,
+			     struct mtk_jpeg_fb *fb)
+{
 	mtk_jpeg_dec_set_brz_factor(base, 0, 0, config->uv_brz_w, 0);
 	mtk_jpeg_dec_set_dec_mode(base, 0);
 	mtk_jpeg_dec_set_comp0_du(base, config->unit_num);
 	mtk_jpeg_dec_set_total_mcu(base, config->total_mcu);
 	mtk_jpeg_dec_set_bs_info(base, bs->str_addr, bs->size);
-	mtk_jpeg_dec_set_bs_ग_लिखो_ptr(base, bs->end_addr);
+	mtk_jpeg_dec_set_bs_write_ptr(base, bs->end_addr);
 	mtk_jpeg_dec_set_du_membership(base, config->membership, 1,
 				       (config->comp_num == 1) ? 1 : 0);
 	mtk_jpeg_dec_set_comp_id(base, config->comp_id[0], config->comp_id[1],
@@ -406,5 +405,5 @@ u32 mtk_jpeg_dec_क्रमागत_result(u32 irq_result)
 	mtk_jpeg_dec_set_dst_bank1(base, 0, 0, 0);
 	mtk_jpeg_dec_set_dma_group(base, config->dma_mcu, config->dma_group,
 				   config->dma_last_mcu);
-	mtk_jpeg_dec_set_छोड़ो_mcu_idx(base, config->total_mcu);
-पूर्ण
+	mtk_jpeg_dec_set_pause_mcu_idx(base, config->total_mcu);
+}

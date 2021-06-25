@@ -1,134 +1,133 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright 2008  by Karsten Keil <kkeil@novell.com>
  */
 
-#समावेश <linux/slab.h>
-#समावेश <linux/types.h>
-#समावेश <linux/मानकघोष.स>
-#समावेश <linux/module.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/mISDNअगर.h>
-#समावेश "core.h"
+#include <linux/slab.h>
+#include <linux/types.h>
+#include <linux/stddef.h>
+#include <linux/module.h>
+#include <linux/spinlock.h>
+#include <linux/mISDNif.h>
+#include "core.h"
 
-अटल u_पूर्णांक debug;
+static u_int debug;
 
 MODULE_AUTHOR("Karsten Keil");
 MODULE_LICENSE("GPL");
-module_param(debug, uपूर्णांक, S_IRUGO | S_IWUSR);
+module_param(debug, uint, S_IRUGO | S_IWUSR);
 
-अटल u64		device_ids;
-#घोषणा MAX_DEVICE_ID	63
+static u64		device_ids;
+#define MAX_DEVICE_ID	63
 
-अटल LIST_HEAD(Bprotocols);
-अटल DEFINE_RWLOCK(bp_lock);
+static LIST_HEAD(Bprotocols);
+static DEFINE_RWLOCK(bp_lock);
 
-अटल व्योम mISDN_dev_release(काष्ठा device *dev)
-अणु
-	/* nothing to करो: the device is part of its parent's data काष्ठाure */
-पूर्ण
+static void mISDN_dev_release(struct device *dev)
+{
+	/* nothing to do: the device is part of its parent's data structure */
+}
 
-अटल sमाप_प्रकार id_show(काष्ठा device *dev,
-		       काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा mISDNdevice *mdev = dev_to_mISDN(dev);
+static ssize_t id_show(struct device *dev,
+		       struct device_attribute *attr, char *buf)
+{
+	struct mISDNdevice *mdev = dev_to_mISDN(dev);
 
-	अगर (!mdev)
-		वापस -ENODEV;
-	वापस प्र_लिखो(buf, "%d\n", mdev->id);
-पूर्ण
-अटल DEVICE_ATTR_RO(id);
+	if (!mdev)
+		return -ENODEV;
+	return sprintf(buf, "%d\n", mdev->id);
+}
+static DEVICE_ATTR_RO(id);
 
-अटल sमाप_प्रकार nrbchan_show(काष्ठा device *dev,
-			    काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा mISDNdevice *mdev = dev_to_mISDN(dev);
+static ssize_t nrbchan_show(struct device *dev,
+			    struct device_attribute *attr, char *buf)
+{
+	struct mISDNdevice *mdev = dev_to_mISDN(dev);
 
-	अगर (!mdev)
-		वापस -ENODEV;
-	वापस प्र_लिखो(buf, "%d\n", mdev->nrbchan);
-पूर्ण
-अटल DEVICE_ATTR_RO(nrbchan);
+	if (!mdev)
+		return -ENODEV;
+	return sprintf(buf, "%d\n", mdev->nrbchan);
+}
+static DEVICE_ATTR_RO(nrbchan);
 
-अटल sमाप_प्रकार d_protocols_show(काष्ठा device *dev,
-				काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा mISDNdevice *mdev = dev_to_mISDN(dev);
+static ssize_t d_protocols_show(struct device *dev,
+				struct device_attribute *attr, char *buf)
+{
+	struct mISDNdevice *mdev = dev_to_mISDN(dev);
 
-	अगर (!mdev)
-		वापस -ENODEV;
-	वापस प्र_लिखो(buf, "%d\n", mdev->Dprotocols);
-पूर्ण
-अटल DEVICE_ATTR_RO(d_protocols);
+	if (!mdev)
+		return -ENODEV;
+	return sprintf(buf, "%d\n", mdev->Dprotocols);
+}
+static DEVICE_ATTR_RO(d_protocols);
 
-अटल sमाप_प्रकार b_protocols_show(काष्ठा device *dev,
-				काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा mISDNdevice *mdev = dev_to_mISDN(dev);
+static ssize_t b_protocols_show(struct device *dev,
+				struct device_attribute *attr, char *buf)
+{
+	struct mISDNdevice *mdev = dev_to_mISDN(dev);
 
-	अगर (!mdev)
-		वापस -ENODEV;
-	वापस प्र_लिखो(buf, "%d\n", mdev->Bprotocols | get_all_Bprotocols());
-पूर्ण
-अटल DEVICE_ATTR_RO(b_protocols);
+	if (!mdev)
+		return -ENODEV;
+	return sprintf(buf, "%d\n", mdev->Bprotocols | get_all_Bprotocols());
+}
+static DEVICE_ATTR_RO(b_protocols);
 
-अटल sमाप_प्रकार protocol_show(काष्ठा device *dev,
-			     काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा mISDNdevice *mdev = dev_to_mISDN(dev);
+static ssize_t protocol_show(struct device *dev,
+			     struct device_attribute *attr, char *buf)
+{
+	struct mISDNdevice *mdev = dev_to_mISDN(dev);
 
-	अगर (!mdev)
-		वापस -ENODEV;
-	वापस प्र_लिखो(buf, "%d\n", mdev->D.protocol);
-पूर्ण
-अटल DEVICE_ATTR_RO(protocol);
+	if (!mdev)
+		return -ENODEV;
+	return sprintf(buf, "%d\n", mdev->D.protocol);
+}
+static DEVICE_ATTR_RO(protocol);
 
-अटल sमाप_प्रकार name_show(काष्ठा device *dev,
-			 काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	म_नकल(buf, dev_name(dev));
-	वापस म_माप(buf);
-पूर्ण
-अटल DEVICE_ATTR_RO(name);
+static ssize_t name_show(struct device *dev,
+			 struct device_attribute *attr, char *buf)
+{
+	strcpy(buf, dev_name(dev));
+	return strlen(buf);
+}
+static DEVICE_ATTR_RO(name);
 
-#अगर 0 /* hangs */
-अटल sमाप_प्रकार name_set(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	पूर्णांक err = 0;
-	अक्षर *out = kदो_स्मृति(count + 1, GFP_KERNEL);
+#if 0 /* hangs */
+static ssize_t name_set(struct device *dev, struct device_attribute *attr,
+			const char *buf, size_t count)
+{
+	int err = 0;
+	char *out = kmalloc(count + 1, GFP_KERNEL);
 
-	अगर (!out)
-		वापस -ENOMEM;
+	if (!out)
+		return -ENOMEM;
 
-	स_नकल(out, buf, count);
-	अगर (count && out[count - 1] == '\n')
+	memcpy(out, buf, count);
+	if (count && out[count - 1] == '\n')
 		out[--count] = 0;
-	अगर (count)
-		err = device_नाम(dev, out);
-	kमुक्त(out);
+	if (count)
+		err = device_rename(dev, out);
+	kfree(out);
 
-	वापस (err < 0) ? err : count;
-पूर्ण
-अटल DEVICE_ATTR_RW(name);
-#पूर्ण_अगर
+	return (err < 0) ? err : count;
+}
+static DEVICE_ATTR_RW(name);
+#endif
 
-अटल sमाप_प्रकार channelmap_show(काष्ठा device *dev,
-			       काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा mISDNdevice *mdev = dev_to_mISDN(dev);
-	अक्षर *bp = buf;
-	पूर्णांक i;
+static ssize_t channelmap_show(struct device *dev,
+			       struct device_attribute *attr, char *buf)
+{
+	struct mISDNdevice *mdev = dev_to_mISDN(dev);
+	char *bp = buf;
+	int i;
 
-	क्रम (i = 0; i <= mdev->nrbchan; i++)
+	for (i = 0; i <= mdev->nrbchan; i++)
 		*bp++ = test_channelmap(i, mdev->channelmap) ? '1' : '0';
 
-	वापस bp - buf;
-पूर्ण
-अटल DEVICE_ATTR_RO(channelmap);
+	return bp - buf;
+}
+static DEVICE_ATTR_RO(channelmap);
 
-अटल काष्ठा attribute *mISDN_attrs[] = अणु
+static struct attribute *mISDN_attrs[] = {
 	&dev_attr_id.attr,
 	&dev_attr_d_protocols.attr,
 	&dev_attr_b_protocols.attr,
@@ -136,285 +135,285 @@ module_param(debug, uपूर्णांक, S_IRUGO | S_IWUSR);
 	&dev_attr_channelmap.attr,
 	&dev_attr_nrbchan.attr,
 	&dev_attr_name.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 ATTRIBUTE_GROUPS(mISDN);
 
-अटल पूर्णांक mISDN_uevent(काष्ठा device *dev, काष्ठा kobj_uevent_env *env)
-अणु
-	काष्ठा mISDNdevice *mdev = dev_to_mISDN(dev);
+static int mISDN_uevent(struct device *dev, struct kobj_uevent_env *env)
+{
+	struct mISDNdevice *mdev = dev_to_mISDN(dev);
 
-	अगर (!mdev)
-		वापस 0;
+	if (!mdev)
+		return 0;
 
-	अगर (add_uevent_var(env, "nchans=%d", mdev->nrbchan))
-		वापस -ENOMEM;
+	if (add_uevent_var(env, "nchans=%d", mdev->nrbchan))
+		return -ENOMEM;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mISDN_class_release(काष्ठा class *cls)
-अणु
-	/* करो nothing, it's अटल */
-पूर्ण
+static void mISDN_class_release(struct class *cls)
+{
+	/* do nothing, it's static */
+}
 
-अटल काष्ठा class mISDN_class = अणु
+static struct class mISDN_class = {
 	.name = "mISDN",
 	.owner = THIS_MODULE,
 	.dev_uevent = mISDN_uevent,
 	.dev_groups = mISDN_groups,
 	.dev_release = mISDN_dev_release,
 	.class_release = mISDN_class_release,
-पूर्ण;
+};
 
-अटल पूर्णांक
-_get_mdevice(काष्ठा device *dev, स्थिर व्योम *id)
-अणु
-	काष्ठा mISDNdevice *mdev = dev_to_mISDN(dev);
+static int
+_get_mdevice(struct device *dev, const void *id)
+{
+	struct mISDNdevice *mdev = dev_to_mISDN(dev);
 
-	अगर (!mdev)
-		वापस 0;
-	अगर (mdev->id != *(स्थिर u_पूर्णांक *)id)
-		वापस 0;
-	वापस 1;
-पूर्ण
+	if (!mdev)
+		return 0;
+	if (mdev->id != *(const u_int *)id)
+		return 0;
+	return 1;
+}
 
-काष्ठा mISDNdevice
-*get_mdevice(u_पूर्णांक id)
-अणु
-	वापस dev_to_mISDN(class_find_device(&mISDN_class, शून्य, &id,
+struct mISDNdevice
+*get_mdevice(u_int id)
+{
+	return dev_to_mISDN(class_find_device(&mISDN_class, NULL, &id,
 					      _get_mdevice));
-पूर्ण
+}
 
-अटल पूर्णांक
-_get_mdevice_count(काष्ठा device *dev, व्योम *cnt)
-अणु
-	*(पूर्णांक *)cnt += 1;
-	वापस 0;
-पूर्ण
+static int
+_get_mdevice_count(struct device *dev, void *cnt)
+{
+	*(int *)cnt += 1;
+	return 0;
+}
 
-पूर्णांक
-get_mdevice_count(व्योम)
-अणु
-	पूर्णांक cnt = 0;
+int
+get_mdevice_count(void)
+{
+	int cnt = 0;
 
-	class_क्रम_each_device(&mISDN_class, शून्य, &cnt, _get_mdevice_count);
-	वापस cnt;
-पूर्ण
+	class_for_each_device(&mISDN_class, NULL, &cnt, _get_mdevice_count);
+	return cnt;
+}
 
-अटल पूर्णांक
-get_मुक्त_devid(व्योम)
-अणु
-	u_पूर्णांक	i;
+static int
+get_free_devid(void)
+{
+	u_int	i;
 
-	क्रम (i = 0; i <= MAX_DEVICE_ID; i++)
-		अगर (!test_and_set_bit(i, (u_दीर्घ *)&device_ids))
-			अवरोध;
-	अगर (i > MAX_DEVICE_ID)
-		वापस -EBUSY;
-	वापस i;
-पूर्ण
+	for (i = 0; i <= MAX_DEVICE_ID; i++)
+		if (!test_and_set_bit(i, (u_long *)&device_ids))
+			break;
+	if (i > MAX_DEVICE_ID)
+		return -EBUSY;
+	return i;
+}
 
-पूर्णांक
-mISDN_रेजिस्टर_device(काष्ठा mISDNdevice *dev,
-		      काष्ठा device *parent, अक्षर *name)
-अणु
-	पूर्णांक	err;
+int
+mISDN_register_device(struct mISDNdevice *dev,
+		      struct device *parent, char *name)
+{
+	int	err;
 
-	err = get_मुक्त_devid();
-	अगर (err < 0)
-		जाओ error1;
+	err = get_free_devid();
+	if (err < 0)
+		goto error1;
 	dev->id = err;
 
 	device_initialize(&dev->dev);
-	अगर (name && name[0])
+	if (name && name[0])
 		dev_set_name(&dev->dev, "%s", name);
-	अन्यथा
+	else
 		dev_set_name(&dev->dev, "mISDN%d", dev->id);
-	अगर (debug & DEBUG_CORE)
-		prपूर्णांकk(KERN_DEBUG "mISDN_register %s %d\n",
+	if (debug & DEBUG_CORE)
+		printk(KERN_DEBUG "mISDN_register %s %d\n",
 		       dev_name(&dev->dev), dev->id);
 	err = create_stack(dev);
-	अगर (err)
-		जाओ error1;
+	if (err)
+		goto error1;
 
 	dev->dev.class = &mISDN_class;
-	dev->dev.platक्रमm_data = dev;
+	dev->dev.platform_data = dev;
 	dev->dev.parent = parent;
 	dev_set_drvdata(&dev->dev, dev);
 
 	err = device_add(&dev->dev);
-	अगर (err)
-		जाओ error3;
-	वापस 0;
+	if (err)
+		goto error3;
+	return 0;
 
 error3:
 	delete_stack(dev);
-	वापस err;
+	return err;
 error1:
-	वापस err;
+	return err;
 
-पूर्ण
-EXPORT_SYMBOL(mISDN_रेजिस्टर_device);
+}
+EXPORT_SYMBOL(mISDN_register_device);
 
-व्योम
-mISDN_unरेजिस्टर_device(काष्ठा mISDNdevice *dev) अणु
-	अगर (debug & DEBUG_CORE)
-		prपूर्णांकk(KERN_DEBUG "mISDN_unregister %s %d\n",
+void
+mISDN_unregister_device(struct mISDNdevice *dev) {
+	if (debug & DEBUG_CORE)
+		printk(KERN_DEBUG "mISDN_unregister %s %d\n",
 		       dev_name(&dev->dev), dev->id);
-	/* sysfs_हटाओ_link(&dev->dev.kobj, "device"); */
+	/* sysfs_remove_link(&dev->dev.kobj, "device"); */
 	device_del(&dev->dev);
-	dev_set_drvdata(&dev->dev, शून्य);
+	dev_set_drvdata(&dev->dev, NULL);
 
-	test_and_clear_bit(dev->id, (u_दीर्घ *)&device_ids);
+	test_and_clear_bit(dev->id, (u_long *)&device_ids);
 	delete_stack(dev);
 	put_device(&dev->dev);
-पूर्ण
-EXPORT_SYMBOL(mISDN_unरेजिस्टर_device);
+}
+EXPORT_SYMBOL(mISDN_unregister_device);
 
-u_पूर्णांक
-get_all_Bprotocols(व्योम)
-अणु
-	काष्ठा Bprotocol	*bp;
-	u_पूर्णांक	m = 0;
+u_int
+get_all_Bprotocols(void)
+{
+	struct Bprotocol	*bp;
+	u_int	m = 0;
 
-	पढ़ो_lock(&bp_lock);
-	list_क्रम_each_entry(bp, &Bprotocols, list)
+	read_lock(&bp_lock);
+	list_for_each_entry(bp, &Bprotocols, list)
 		m |= bp->Bprotocols;
-	पढ़ो_unlock(&bp_lock);
-	वापस m;
-पूर्ण
+	read_unlock(&bp_lock);
+	return m;
+}
 
-काष्ठा Bprotocol *
-get_Bprotocol4mask(u_पूर्णांक m)
-अणु
-	काष्ठा Bprotocol	*bp;
+struct Bprotocol *
+get_Bprotocol4mask(u_int m)
+{
+	struct Bprotocol	*bp;
 
-	पढ़ो_lock(&bp_lock);
-	list_क्रम_each_entry(bp, &Bprotocols, list)
-		अगर (bp->Bprotocols & m) अणु
-			पढ़ो_unlock(&bp_lock);
-			वापस bp;
-		पूर्ण
-	पढ़ो_unlock(&bp_lock);
-	वापस शून्य;
-पूर्ण
+	read_lock(&bp_lock);
+	list_for_each_entry(bp, &Bprotocols, list)
+		if (bp->Bprotocols & m) {
+			read_unlock(&bp_lock);
+			return bp;
+		}
+	read_unlock(&bp_lock);
+	return NULL;
+}
 
-काष्ठा Bprotocol *
-get_Bprotocol4id(u_पूर्णांक id)
-अणु
-	u_पूर्णांक	m;
+struct Bprotocol *
+get_Bprotocol4id(u_int id)
+{
+	u_int	m;
 
-	अगर (id < ISDN_P_B_START || id > 63) अणु
-		prपूर्णांकk(KERN_WARNING "%s id not in range  %d\n",
+	if (id < ISDN_P_B_START || id > 63) {
+		printk(KERN_WARNING "%s id not in range  %d\n",
 		       __func__, id);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 	m = 1 << (id & ISDN_P_B_MASK);
-	वापस get_Bprotocol4mask(m);
-पूर्ण
+	return get_Bprotocol4mask(m);
+}
 
-पूर्णांक
-mISDN_रेजिस्टर_Bprotocol(काष्ठा Bprotocol *bp)
-अणु
-	u_दीर्घ			flags;
-	काष्ठा Bprotocol	*old;
+int
+mISDN_register_Bprotocol(struct Bprotocol *bp)
+{
+	u_long			flags;
+	struct Bprotocol	*old;
 
-	अगर (debug & DEBUG_CORE)
-		prपूर्णांकk(KERN_DEBUG "%s: %s/%x\n", __func__,
+	if (debug & DEBUG_CORE)
+		printk(KERN_DEBUG "%s: %s/%x\n", __func__,
 		       bp->name, bp->Bprotocols);
 	old = get_Bprotocol4mask(bp->Bprotocols);
-	अगर (old) अणु
-		prपूर्णांकk(KERN_WARNING
+	if (old) {
+		printk(KERN_WARNING
 		       "register duplicate protocol old %s/%x new %s/%x\n",
 		       old->name, old->Bprotocols, bp->name, bp->Bprotocols);
-		वापस -EBUSY;
-	पूर्ण
-	ग_लिखो_lock_irqsave(&bp_lock, flags);
+		return -EBUSY;
+	}
+	write_lock_irqsave(&bp_lock, flags);
 	list_add_tail(&bp->list, &Bprotocols);
-	ग_लिखो_unlock_irqrestore(&bp_lock, flags);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(mISDN_रेजिस्टर_Bprotocol);
+	write_unlock_irqrestore(&bp_lock, flags);
+	return 0;
+}
+EXPORT_SYMBOL(mISDN_register_Bprotocol);
 
-व्योम
-mISDN_unरेजिस्टर_Bprotocol(काष्ठा Bprotocol *bp)
-अणु
-	u_दीर्घ	flags;
+void
+mISDN_unregister_Bprotocol(struct Bprotocol *bp)
+{
+	u_long	flags;
 
-	अगर (debug & DEBUG_CORE)
-		prपूर्णांकk(KERN_DEBUG "%s: %s/%x\n", __func__, bp->name,
+	if (debug & DEBUG_CORE)
+		printk(KERN_DEBUG "%s: %s/%x\n", __func__, bp->name,
 		       bp->Bprotocols);
-	ग_लिखो_lock_irqsave(&bp_lock, flags);
+	write_lock_irqsave(&bp_lock, flags);
 	list_del(&bp->list);
-	ग_लिखो_unlock_irqrestore(&bp_lock, flags);
-पूर्ण
-EXPORT_SYMBOL(mISDN_unरेजिस्टर_Bprotocol);
+	write_unlock_irqrestore(&bp_lock, flags);
+}
+EXPORT_SYMBOL(mISDN_unregister_Bprotocol);
 
-अटल स्थिर अक्षर *msg_no_channel = "<no channel>";
-अटल स्थिर अक्षर *msg_no_stack = "<no stack>";
-अटल स्थिर अक्षर *msg_no_stackdev = "<no stack device>";
+static const char *msg_no_channel = "<no channel>";
+static const char *msg_no_stack = "<no stack>";
+static const char *msg_no_stackdev = "<no stack device>";
 
-स्थिर अक्षर *mISDNDevName4ch(काष्ठा mISDNchannel *ch)
-अणु
-	अगर (!ch)
-		वापस msg_no_channel;
-	अगर (!ch->st)
-		वापस msg_no_stack;
-	अगर (!ch->st->dev)
-		वापस msg_no_stackdev;
-	वापस dev_name(&ch->st->dev->dev);
-पूर्ण;
+const char *mISDNDevName4ch(struct mISDNchannel *ch)
+{
+	if (!ch)
+		return msg_no_channel;
+	if (!ch->st)
+		return msg_no_stack;
+	if (!ch->st->dev)
+		return msg_no_stackdev;
+	return dev_name(&ch->st->dev->dev);
+};
 EXPORT_SYMBOL(mISDNDevName4ch);
 
-अटल पूर्णांक
-mISDNInit(व्योम)
-अणु
-	पूर्णांक	err;
+static int
+mISDNInit(void)
+{
+	int	err;
 
-	prपूर्णांकk(KERN_INFO "Modular ISDN core version %d.%d.%d\n",
+	printk(KERN_INFO "Modular ISDN core version %d.%d.%d\n",
 	       MISDN_MAJOR_VERSION, MISDN_MINOR_VERSION, MISDN_RELEASE);
-	mISDN_init_घड़ी(&debug);
+	mISDN_init_clock(&debug);
 	mISDN_initstack(&debug);
-	err = class_रेजिस्टर(&mISDN_class);
-	अगर (err)
-		जाओ error1;
-	err = mISDN_initसमयr(&debug);
-	अगर (err)
-		जाओ error2;
+	err = class_register(&mISDN_class);
+	if (err)
+		goto error1;
+	err = mISDN_inittimer(&debug);
+	if (err)
+		goto error2;
 	err = l1_init(&debug);
-	अगर (err)
-		जाओ error3;
+	if (err)
+		goto error3;
 	err = Isdnl2_Init(&debug);
-	अगर (err)
-		जाओ error4;
+	if (err)
+		goto error4;
 	err = misdn_sock_init(&debug);
-	अगर (err)
-		जाओ error5;
-	वापस 0;
+	if (err)
+		goto error5;
+	return 0;
 
 error5:
 	Isdnl2_cleanup();
 error4:
 	l1_cleanup();
 error3:
-	mISDN_समयr_cleanup();
+	mISDN_timer_cleanup();
 error2:
-	class_unरेजिस्टर(&mISDN_class);
+	class_unregister(&mISDN_class);
 error1:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम mISDN_cleanup(व्योम)
-अणु
+static void mISDN_cleanup(void)
+{
 	misdn_sock_cleanup();
 	Isdnl2_cleanup();
 	l1_cleanup();
-	mISDN_समयr_cleanup();
-	class_unरेजिस्टर(&mISDN_class);
+	mISDN_timer_cleanup();
+	class_unregister(&mISDN_class);
 
-	prपूर्णांकk(KERN_DEBUG "mISDNcore unloaded\n");
-पूर्ण
+	printk(KERN_DEBUG "mISDNcore unloaded\n");
+}
 
 module_init(mISDNInit);
-module_निकास(mISDN_cleanup);
+module_exit(mISDN_cleanup);

@@ -1,8 +1,7 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित _UAPI_ASM_STHYI_H
-#घोषणा _UAPI_ASM_STHYI_H
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef _UAPI_ASM_STHYI_H
+#define _UAPI_ASM_STHYI_H
 
-#घोषणा STHYI_FC_CP_IFL_CAP	0
+#define STHYI_FC_CP_IFL_CAP	0
 
-#पूर्ण_अगर /* _UAPI_ASM_STHYI_H */
+#endif /* _UAPI_ASM_STHYI_H */

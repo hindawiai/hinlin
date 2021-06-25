@@ -1,380 +1,379 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- *  (C) 2004-2009  Dominik Broकरोwski <linux@करोminikbroकरोwski.de>
+ *  (C) 2004-2009  Dominik Brodowski <linux@dominikbrodowski.de>
  *  (C) 2011       Thomas Renninger <trenn@novell.com> Novell Inc.
  */
 
-#समावेश <मानकपन.स>
-#समावेश <त्रुटिसं.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <sys/types.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <fcntl.h>
-#समावेश <unistd.h>
+#include <stdio.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
 
-#समावेश "cpuidle.h"
-#समावेश "cpupower_intern.h"
+#include "cpuidle.h"
+#include "cpupower_intern.h"
 
 /*
  * helper function to check whether a file under "../cpuX/cpuidle/stateX/" dir
  * exists.
- * For example the functionality to disable c-states was पूर्णांकroduced in later
- * kernel versions, this function can be used to explicitly check क्रम this
+ * For example the functionality to disable c-states was introduced in later
+ * kernel versions, this function can be used to explicitly check for this
  * feature.
  *
- * वापसs 1 अगर the file exists, 0 otherwise.
+ * returns 1 if the file exists, 0 otherwise.
  */
-अटल
-अचिन्हित पूर्णांक cpuidle_state_file_exists(अचिन्हित पूर्णांक cpu,
-				       अचिन्हित पूर्णांक idlestate,
-				       स्थिर अक्षर *fname)
-अणु
-	अक्षर path[SYSFS_PATH_MAX];
-	काष्ठा stat statbuf;
+static
+unsigned int cpuidle_state_file_exists(unsigned int cpu,
+				       unsigned int idlestate,
+				       const char *fname)
+{
+	char path[SYSFS_PATH_MAX];
+	struct stat statbuf;
 
 
-	snम_लिखो(path, माप(path), PATH_TO_CPU "cpu%u/cpuidle/state%u/%s",
+	snprintf(path, sizeof(path), PATH_TO_CPU "cpu%u/cpuidle/state%u/%s",
 		 cpu, idlestate, fname);
-	अगर (stat(path, &statbuf) != 0)
-		वापस 0;
-	वापस 1;
-पूर्ण
+	if (stat(path, &statbuf) != 0)
+		return 0;
+	return 1;
+}
 
 /*
- * helper function to पढ़ो file from /sys पूर्णांकo given buffer
+ * helper function to read file from /sys into given buffer
  * fname is a relative path under "cpuX/cpuidle/stateX/" dir
  * cstates starting with 0, C0 is not counted as cstate.
- * This means अगर you want C1 info, pass 0 as idlestate param
+ * This means if you want C1 info, pass 0 as idlestate param
  */
-अटल
-अचिन्हित पूर्णांक cpuidle_state_पढ़ो_file(अचिन्हित पूर्णांक cpu,
-					    अचिन्हित पूर्णांक idlestate,
-					    स्थिर अक्षर *fname, अक्षर *buf,
-					    माप_प्रकार buflen)
-अणु
-	अक्षर path[SYSFS_PATH_MAX];
-	पूर्णांक fd;
-	sमाप_प्रकार numपढ़ो;
+static
+unsigned int cpuidle_state_read_file(unsigned int cpu,
+					    unsigned int idlestate,
+					    const char *fname, char *buf,
+					    size_t buflen)
+{
+	char path[SYSFS_PATH_MAX];
+	int fd;
+	ssize_t numread;
 
-	snम_लिखो(path, माप(path), PATH_TO_CPU "cpu%u/cpuidle/state%u/%s",
+	snprintf(path, sizeof(path), PATH_TO_CPU "cpu%u/cpuidle/state%u/%s",
 		 cpu, idlestate, fname);
 
-	fd = खोलो(path, O_RDONLY);
-	अगर (fd == -1)
-		वापस 0;
+	fd = open(path, O_RDONLY);
+	if (fd == -1)
+		return 0;
 
-	numपढ़ो = पढ़ो(fd, buf, buflen - 1);
-	अगर (numपढ़ो < 1) अणु
-		बंद(fd);
-		वापस 0;
-	पूर्ण
+	numread = read(fd, buf, buflen - 1);
+	if (numread < 1) {
+		close(fd);
+		return 0;
+	}
 
-	buf[numपढ़ो] = '\0';
-	बंद(fd);
+	buf[numread] = '\0';
+	close(fd);
 
-	वापस (अचिन्हित पूर्णांक) numपढ़ो;
-पूर्ण
+	return (unsigned int) numread;
+}
 
 /*
- * helper function to ग_लिखो a new value to a /sys file
+ * helper function to write a new value to a /sys file
  * fname is a relative path under "../cpuX/cpuidle/cstateY/" dir
  *
  * Returns the number of bytes written or 0 on error
  */
-अटल
-अचिन्हित पूर्णांक cpuidle_state_ग_लिखो_file(अचिन्हित पूर्णांक cpu,
-				      अचिन्हित पूर्णांक idlestate,
-				      स्थिर अक्षर *fname,
-				      स्थिर अक्षर *value, माप_प्रकार len)
-अणु
-	अक्षर path[SYSFS_PATH_MAX];
-	पूर्णांक fd;
-	sमाप_प्रकार numग_लिखो;
+static
+unsigned int cpuidle_state_write_file(unsigned int cpu,
+				      unsigned int idlestate,
+				      const char *fname,
+				      const char *value, size_t len)
+{
+	char path[SYSFS_PATH_MAX];
+	int fd;
+	ssize_t numwrite;
 
-	snम_लिखो(path, माप(path), PATH_TO_CPU "cpu%u/cpuidle/state%u/%s",
+	snprintf(path, sizeof(path), PATH_TO_CPU "cpu%u/cpuidle/state%u/%s",
 		 cpu, idlestate, fname);
 
-	fd = खोलो(path, O_WRONLY);
-	अगर (fd == -1)
-		वापस 0;
+	fd = open(path, O_WRONLY);
+	if (fd == -1)
+		return 0;
 
-	numग_लिखो = ग_लिखो(fd, value, len);
-	अगर (numग_लिखो < 1) अणु
-		बंद(fd);
-		वापस 0;
-	पूर्ण
+	numwrite = write(fd, value, len);
+	if (numwrite < 1) {
+		close(fd);
+		return 0;
+	}
 
-	बंद(fd);
+	close(fd);
 
-	वापस (अचिन्हित पूर्णांक) numग_लिखो;
-पूर्ण
+	return (unsigned int) numwrite;
+}
 
-/* पढ़ो access to files which contain one numeric value */
+/* read access to files which contain one numeric value */
 
-क्रमागत idlestate_value अणु
+enum idlestate_value {
 	IDLESTATE_USAGE,
 	IDLESTATE_POWER,
 	IDLESTATE_LATENCY,
 	IDLESTATE_TIME,
 	IDLESTATE_DISABLE,
-	MAX_IDLESTATE_VALUE_खाताS
-पूर्ण;
+	MAX_IDLESTATE_VALUE_FILES
+};
 
-अटल स्थिर अक्षर *idlestate_value_files[MAX_IDLESTATE_VALUE_खाताS] = अणु
+static const char *idlestate_value_files[MAX_IDLESTATE_VALUE_FILES] = {
 	[IDLESTATE_USAGE] = "usage",
 	[IDLESTATE_POWER] = "power",
 	[IDLESTATE_LATENCY] = "latency",
 	[IDLESTATE_TIME]  = "time",
 	[IDLESTATE_DISABLE]  = "disable",
-पूर्ण;
+};
 
-अटल
-अचिन्हित दीर्घ दीर्घ cpuidle_state_get_one_value(अचिन्हित पूर्णांक cpu,
-					       अचिन्हित पूर्णांक idlestate,
-					       क्रमागत idlestate_value which)
-अणु
-	अचिन्हित दीर्घ दीर्घ value;
-	अचिन्हित पूर्णांक len;
-	अक्षर linebuf[MAX_LINE_LEN];
-	अक्षर *endp;
+static
+unsigned long long cpuidle_state_get_one_value(unsigned int cpu,
+					       unsigned int idlestate,
+					       enum idlestate_value which)
+{
+	unsigned long long value;
+	unsigned int len;
+	char linebuf[MAX_LINE_LEN];
+	char *endp;
 
-	अगर (which >= MAX_IDLESTATE_VALUE_खाताS)
-		वापस 0;
+	if (which >= MAX_IDLESTATE_VALUE_FILES)
+		return 0;
 
-	len = cpuidle_state_पढ़ो_file(cpu, idlestate,
+	len = cpuidle_state_read_file(cpu, idlestate,
 				      idlestate_value_files[which],
-				      linebuf, माप(linebuf));
-	अगर (len == 0)
-		वापस 0;
+				      linebuf, sizeof(linebuf));
+	if (len == 0)
+		return 0;
 
-	value = म_से_अदीर्घl(linebuf, &endp, 0);
+	value = strtoull(linebuf, &endp, 0);
 
-	अगर (endp == linebuf || त्रुटि_सं == दुस्फल)
-		वापस 0;
+	if (endp == linebuf || errno == ERANGE)
+		return 0;
 
-	वापस value;
-पूर्ण
+	return value;
+}
 
-/* पढ़ो access to files which contain one string */
+/* read access to files which contain one string */
 
-क्रमागत idlestate_string अणु
+enum idlestate_string {
 	IDLESTATE_DESC,
 	IDLESTATE_NAME,
-	MAX_IDLESTATE_STRING_खाताS
-पूर्ण;
+	MAX_IDLESTATE_STRING_FILES
+};
 
-अटल स्थिर अक्षर *idlestate_string_files[MAX_IDLESTATE_STRING_खाताS] = अणु
+static const char *idlestate_string_files[MAX_IDLESTATE_STRING_FILES] = {
 	[IDLESTATE_DESC] = "desc",
 	[IDLESTATE_NAME] = "name",
-पूर्ण;
+};
 
 
-अटल अक्षर *cpuidle_state_get_one_string(अचिन्हित पूर्णांक cpu,
-					अचिन्हित पूर्णांक idlestate,
-					क्रमागत idlestate_string which)
-अणु
-	अक्षर linebuf[MAX_LINE_LEN];
-	अक्षर *result;
-	अचिन्हित पूर्णांक len;
+static char *cpuidle_state_get_one_string(unsigned int cpu,
+					unsigned int idlestate,
+					enum idlestate_string which)
+{
+	char linebuf[MAX_LINE_LEN];
+	char *result;
+	unsigned int len;
 
-	अगर (which >= MAX_IDLESTATE_STRING_खाताS)
-		वापस शून्य;
+	if (which >= MAX_IDLESTATE_STRING_FILES)
+		return NULL;
 
-	len = cpuidle_state_पढ़ो_file(cpu, idlestate,
+	len = cpuidle_state_read_file(cpu, idlestate,
 				      idlestate_string_files[which],
-				      linebuf, माप(linebuf));
-	अगर (len == 0)
-		वापस शून्य;
+				      linebuf, sizeof(linebuf));
+	if (len == 0)
+		return NULL;
 
 	result = strdup(linebuf);
-	अगर (result == शून्य)
-		वापस शून्य;
+	if (result == NULL)
+		return NULL;
 
-	अगर (result[म_माप(result) - 1] == '\n')
-		result[म_माप(result) - 1] = '\0';
+	if (result[strlen(result) - 1] == '\n')
+		result[strlen(result) - 1] = '\0';
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /*
  * Returns:
- *    1  अगर disabled
- *    0  अगर enabled
- *    -1 अगर idlestate is not available
- *    -2 अगर disabling is not supported by the kernel
+ *    1  if disabled
+ *    0  if enabled
+ *    -1 if idlestate is not available
+ *    -2 if disabling is not supported by the kernel
  */
-पूर्णांक cpuidle_is_state_disabled(अचिन्हित पूर्णांक cpu,
-				अचिन्हित पूर्णांक idlestate)
-अणु
-	अगर (cpuidle_state_count(cpu) <= idlestate)
-		वापस -1;
+int cpuidle_is_state_disabled(unsigned int cpu,
+				unsigned int idlestate)
+{
+	if (cpuidle_state_count(cpu) <= idlestate)
+		return -1;
 
-	अगर (!cpuidle_state_file_exists(cpu, idlestate,
+	if (!cpuidle_state_file_exists(cpu, idlestate,
 				 idlestate_value_files[IDLESTATE_DISABLE]))
-		वापस -2;
-	वापस cpuidle_state_get_one_value(cpu, idlestate, IDLESTATE_DISABLE);
-पूर्ण
+		return -2;
+	return cpuidle_state_get_one_value(cpu, idlestate, IDLESTATE_DISABLE);
+}
 
 /*
  * Pass 1 as last argument to disable or 0 to enable the state
  * Returns:
  *    0  on success
- *    negative values on error, क्रम example:
- *      -1 अगर idlestate is not available
- *      -2 अगर disabling is not supported by the kernel
- *      -3 No ग_लिखो access to disable/enable C-states
+ *    negative values on error, for example:
+ *      -1 if idlestate is not available
+ *      -2 if disabling is not supported by the kernel
+ *      -3 No write access to disable/enable C-states
  */
-पूर्णांक cpuidle_state_disable(अचिन्हित पूर्णांक cpu,
-			    अचिन्हित पूर्णांक idlestate,
-			    अचिन्हित पूर्णांक disable)
-अणु
-	अक्षर value[SYSFS_PATH_MAX];
-	पूर्णांक bytes_written;
+int cpuidle_state_disable(unsigned int cpu,
+			    unsigned int idlestate,
+			    unsigned int disable)
+{
+	char value[SYSFS_PATH_MAX];
+	int bytes_written;
 
-	अगर (cpuidle_state_count(cpu) <= idlestate)
-		वापस -1;
+	if (cpuidle_state_count(cpu) <= idlestate)
+		return -1;
 
-	अगर (!cpuidle_state_file_exists(cpu, idlestate,
+	if (!cpuidle_state_file_exists(cpu, idlestate,
 				 idlestate_value_files[IDLESTATE_DISABLE]))
-		वापस -2;
+		return -2;
 
-	snम_लिखो(value, SYSFS_PATH_MAX, "%u", disable);
+	snprintf(value, SYSFS_PATH_MAX, "%u", disable);
 
-	bytes_written = cpuidle_state_ग_लिखो_file(cpu, idlestate, "disable",
-						   value, माप(disable));
-	अगर (bytes_written)
-		वापस 0;
-	वापस -3;
-पूर्ण
+	bytes_written = cpuidle_state_write_file(cpu, idlestate, "disable",
+						   value, sizeof(disable));
+	if (bytes_written)
+		return 0;
+	return -3;
+}
 
-अचिन्हित दीर्घ cpuidle_state_latency(अचिन्हित पूर्णांक cpu,
-					  अचिन्हित पूर्णांक idlestate)
-अणु
-	वापस cpuidle_state_get_one_value(cpu, idlestate, IDLESTATE_LATENCY);
-पूर्ण
+unsigned long cpuidle_state_latency(unsigned int cpu,
+					  unsigned int idlestate)
+{
+	return cpuidle_state_get_one_value(cpu, idlestate, IDLESTATE_LATENCY);
+}
 
-अचिन्हित दीर्घ cpuidle_state_usage(अचिन्हित पूर्णांक cpu,
-					अचिन्हित पूर्णांक idlestate)
-अणु
-	वापस cpuidle_state_get_one_value(cpu, idlestate, IDLESTATE_USAGE);
-पूर्ण
+unsigned long cpuidle_state_usage(unsigned int cpu,
+					unsigned int idlestate)
+{
+	return cpuidle_state_get_one_value(cpu, idlestate, IDLESTATE_USAGE);
+}
 
-अचिन्हित दीर्घ दीर्घ cpuidle_state_समय(अचिन्हित पूर्णांक cpu,
-					अचिन्हित पूर्णांक idlestate)
-अणु
-	वापस cpuidle_state_get_one_value(cpu, idlestate, IDLESTATE_TIME);
-पूर्ण
+unsigned long long cpuidle_state_time(unsigned int cpu,
+					unsigned int idlestate)
+{
+	return cpuidle_state_get_one_value(cpu, idlestate, IDLESTATE_TIME);
+}
 
-अक्षर *cpuidle_state_name(अचिन्हित पूर्णांक cpu, अचिन्हित पूर्णांक idlestate)
-अणु
-	वापस cpuidle_state_get_one_string(cpu, idlestate, IDLESTATE_NAME);
-पूर्ण
+char *cpuidle_state_name(unsigned int cpu, unsigned int idlestate)
+{
+	return cpuidle_state_get_one_string(cpu, idlestate, IDLESTATE_NAME);
+}
 
-अक्षर *cpuidle_state_desc(अचिन्हित पूर्णांक cpu, अचिन्हित पूर्णांक idlestate)
-अणु
-	वापस cpuidle_state_get_one_string(cpu, idlestate, IDLESTATE_DESC);
-पूर्ण
+char *cpuidle_state_desc(unsigned int cpu, unsigned int idlestate)
+{
+	return cpuidle_state_get_one_string(cpu, idlestate, IDLESTATE_DESC);
+}
 
 /*
  * Returns number of supported C-states of CPU core cpu
- * Negativ in error हाल
- * Zero अगर cpuidle करोes not export any C-states
+ * Negativ in error case
+ * Zero if cpuidle does not export any C-states
  */
-अचिन्हित पूर्णांक cpuidle_state_count(अचिन्हित पूर्णांक cpu)
-अणु
-	अक्षर file[SYSFS_PATH_MAX];
-	काष्ठा stat statbuf;
-	पूर्णांक idlestates = 1;
+unsigned int cpuidle_state_count(unsigned int cpu)
+{
+	char file[SYSFS_PATH_MAX];
+	struct stat statbuf;
+	int idlestates = 1;
 
 
-	snम_लिखो(file, SYSFS_PATH_MAX, PATH_TO_CPU "cpuidle");
-	अगर (stat(file, &statbuf) != 0 || !S_ISसूची(statbuf.st_mode))
-		वापस 0;
+	snprintf(file, SYSFS_PATH_MAX, PATH_TO_CPU "cpuidle");
+	if (stat(file, &statbuf) != 0 || !S_ISDIR(statbuf.st_mode))
+		return 0;
 
-	snम_लिखो(file, SYSFS_PATH_MAX, PATH_TO_CPU "cpu%u/cpuidle/state0", cpu);
-	अगर (stat(file, &statbuf) != 0 || !S_ISसूची(statbuf.st_mode))
-		वापस 0;
+	snprintf(file, SYSFS_PATH_MAX, PATH_TO_CPU "cpu%u/cpuidle/state0", cpu);
+	if (stat(file, &statbuf) != 0 || !S_ISDIR(statbuf.st_mode))
+		return 0;
 
-	जबतक (stat(file, &statbuf) == 0 && S_ISसूची(statbuf.st_mode)) अणु
-		snम_लिखो(file, SYSFS_PATH_MAX, PATH_TO_CPU
+	while (stat(file, &statbuf) == 0 && S_ISDIR(statbuf.st_mode)) {
+		snprintf(file, SYSFS_PATH_MAX, PATH_TO_CPU
 			 "cpu%u/cpuidle/state%d", cpu, idlestates);
 		idlestates++;
-	पूर्ण
+	}
 	idlestates--;
-	वापस idlestates;
-पूर्ण
+	return idlestates;
+}
 
-/* CPUidle general /sys/devices/प्रणाली/cpu/cpuidle/ sysfs access ********/
+/* CPUidle general /sys/devices/system/cpu/cpuidle/ sysfs access ********/
 
 /*
- * helper function to पढ़ो file from /sys पूर्णांकo given buffer
+ * helper function to read file from /sys into given buffer
  * fname is a relative path under "cpu/cpuidle/" dir
  */
-अटल अचिन्हित पूर्णांक sysfs_cpuidle_पढ़ो_file(स्थिर अक्षर *fname, अक्षर *buf,
-					    माप_प्रकार buflen)
-अणु
-	अक्षर path[SYSFS_PATH_MAX];
+static unsigned int sysfs_cpuidle_read_file(const char *fname, char *buf,
+					    size_t buflen)
+{
+	char path[SYSFS_PATH_MAX];
 
-	snम_लिखो(path, माप(path), PATH_TO_CPU "cpuidle/%s", fname);
+	snprintf(path, sizeof(path), PATH_TO_CPU "cpuidle/%s", fname);
 
-	वापस cpuघातer_पढ़ो_sysfs(path, buf, buflen);
-पूर्ण
+	return cpupower_read_sysfs(path, buf, buflen);
+}
 
 
 
-/* पढ़ो access to files which contain one string */
+/* read access to files which contain one string */
 
-क्रमागत cpuidle_string अणु
+enum cpuidle_string {
 	CPUIDLE_GOVERNOR,
 	CPUIDLE_GOVERNOR_RO,
 	CPUIDLE_DRIVER,
-	MAX_CPUIDLE_STRING_खाताS
-पूर्ण;
+	MAX_CPUIDLE_STRING_FILES
+};
 
-अटल स्थिर अक्षर *cpuidle_string_files[MAX_CPUIDLE_STRING_खाताS] = अणु
+static const char *cpuidle_string_files[MAX_CPUIDLE_STRING_FILES] = {
 	[CPUIDLE_GOVERNOR]	= "current_governor",
 	[CPUIDLE_GOVERNOR_RO]	= "current_governor_ro",
 	[CPUIDLE_DRIVER]	= "current_driver",
-पूर्ण;
+};
 
 
-अटल अक्षर *sysfs_cpuidle_get_one_string(क्रमागत cpuidle_string which)
-अणु
-	अक्षर linebuf[MAX_LINE_LEN];
-	अक्षर *result;
-	अचिन्हित पूर्णांक len;
+static char *sysfs_cpuidle_get_one_string(enum cpuidle_string which)
+{
+	char linebuf[MAX_LINE_LEN];
+	char *result;
+	unsigned int len;
 
-	अगर (which >= MAX_CPUIDLE_STRING_खाताS)
-		वापस शून्य;
+	if (which >= MAX_CPUIDLE_STRING_FILES)
+		return NULL;
 
-	len = sysfs_cpuidle_पढ़ो_file(cpuidle_string_files[which],
-				linebuf, माप(linebuf));
-	अगर (len == 0)
-		वापस शून्य;
+	len = sysfs_cpuidle_read_file(cpuidle_string_files[which],
+				linebuf, sizeof(linebuf));
+	if (len == 0)
+		return NULL;
 
 	result = strdup(linebuf);
-	अगर (result == शून्य)
-		वापस शून्य;
+	if (result == NULL)
+		return NULL;
 
-	अगर (result[म_माप(result) - 1] == '\n')
-		result[म_माप(result) - 1] = '\0';
+	if (result[strlen(result) - 1] == '\n')
+		result[strlen(result) - 1] = '\0';
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अक्षर *cpuidle_get_governor(व्योम)
-अणु
-	अक्षर *पंचांगp = sysfs_cpuidle_get_one_string(CPUIDLE_GOVERNOR_RO);
-	अगर (!पंचांगp)
-		वापस sysfs_cpuidle_get_one_string(CPUIDLE_GOVERNOR);
-	अन्यथा
-		वापस पंचांगp;
-पूर्ण
+char *cpuidle_get_governor(void)
+{
+	char *tmp = sysfs_cpuidle_get_one_string(CPUIDLE_GOVERNOR_RO);
+	if (!tmp)
+		return sysfs_cpuidle_get_one_string(CPUIDLE_GOVERNOR);
+	else
+		return tmp;
+}
 
-अक्षर *cpuidle_get_driver(व्योम)
-अणु
-	वापस sysfs_cpuidle_get_one_string(CPUIDLE_DRIVER);
-पूर्ण
-/* CPUidle idlestate specअगरic /sys/devices/प्रणाली/cpu/cpuX/cpuidle/ access */
+char *cpuidle_get_driver(void)
+{
+	return sysfs_cpuidle_get_one_string(CPUIDLE_DRIVER);
+}
+/* CPUidle idlestate specific /sys/devices/system/cpu/cpuX/cpuidle/ access */

@@ -1,37 +1,36 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __QRTR_H_
-#घोषणा __QRTR_H_
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __QRTR_H_
+#define __QRTR_H_
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-काष्ठा sk_buff;
+struct sk_buff;
 
-/* endpoपूर्णांक node id स्वतः assignment */
-#घोषणा QRTR_EP_NID_AUTO (-1)
+/* endpoint node id auto assignment */
+#define QRTR_EP_NID_AUTO (-1)
 
 /**
- * काष्ठा qrtr_endpoपूर्णांक - endpoपूर्णांक handle
- * @xmit: Callback क्रम outgoing packets
+ * struct qrtr_endpoint - endpoint handle
+ * @xmit: Callback for outgoing packets
  *
- * The socket buffer passed to the xmit function becomes owned by the endpoपूर्णांक
- * driver.  As such, when the driver is करोne with the buffer, it should
- * call kमुक्त_skb() on failure, or consume_skb() on success.
+ * The socket buffer passed to the xmit function becomes owned by the endpoint
+ * driver.  As such, when the driver is done with the buffer, it should
+ * call kfree_skb() on failure, or consume_skb() on success.
  */
-काष्ठा qrtr_endpoपूर्णांक अणु
-	पूर्णांक (*xmit)(काष्ठा qrtr_endpoपूर्णांक *ep, काष्ठा sk_buff *skb);
-	/* निजी: not क्रम endpoपूर्णांक use */
-	काष्ठा qrtr_node *node;
-पूर्ण;
+struct qrtr_endpoint {
+	int (*xmit)(struct qrtr_endpoint *ep, struct sk_buff *skb);
+	/* private: not for endpoint use */
+	struct qrtr_node *node;
+};
 
-पूर्णांक qrtr_endpoपूर्णांक_रेजिस्टर(काष्ठा qrtr_endpoपूर्णांक *ep, अचिन्हित पूर्णांक nid);
+int qrtr_endpoint_register(struct qrtr_endpoint *ep, unsigned int nid);
 
-व्योम qrtr_endpoपूर्णांक_unरेजिस्टर(काष्ठा qrtr_endpoपूर्णांक *ep);
+void qrtr_endpoint_unregister(struct qrtr_endpoint *ep);
 
-पूर्णांक qrtr_endpoपूर्णांक_post(काष्ठा qrtr_endpoपूर्णांक *ep, स्थिर व्योम *data, माप_प्रकार len);
+int qrtr_endpoint_post(struct qrtr_endpoint *ep, const void *data, size_t len);
 
-पूर्णांक qrtr_ns_init(व्योम);
+int qrtr_ns_init(void);
 
-व्योम qrtr_ns_हटाओ(व्योम);
+void qrtr_ns_remove(void);
 
-#पूर्ण_अगर
+#endif

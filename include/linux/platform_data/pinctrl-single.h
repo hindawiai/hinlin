@@ -1,20 +1,19 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 
-#अगर_अघोषित _PINCTRL_SINGLE_H
-#घोषणा _PINCTRL_SINGLE_H
+#ifndef _PINCTRL_SINGLE_H
+#define _PINCTRL_SINGLE_H
 
 /**
- * irq:		optional wake-up पूर्णांकerrupt
- * rearm:	optional soc specअगरic rearm function
+ * irq:		optional wake-up interrupt
+ * rearm:	optional soc specific rearm function
  *
  * Note that the irq and rearm setup should come from device
- * tree except क्रम omap where there are still some dependencies
+ * tree except for omap where there are still some dependencies
  * to the legacy PRM code.
  */
-काष्ठा pcs_pdata अणु
-	पूर्णांक irq;
-	व्योम (*rearm)(व्योम);
-पूर्ण;
+struct pcs_pdata {
+	int irq;
+	void (*rearm)(void);
+};
 
-#पूर्ण_अगर /* _PINCTRL_SINGLE_H */
+#endif /* _PINCTRL_SINGLE_H */

@@ -1,101 +1,100 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 // Copyright(c) 2020 Intel Corporation.
 
-#समावेश <linux/device.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/module.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/soundwire/sdw.h>
-#समावेश <linux/soundwire/sdw_रेजिस्टरs.h>
-#समावेश "internal.h"
+#include <linux/device.h>
+#include <linux/errno.h>
+#include <linux/module.h>
+#include <linux/regmap.h>
+#include <linux/soundwire/sdw.h>
+#include <linux/soundwire/sdw_registers.h>
+#include "internal.h"
 
-अटल पूर्णांक regmap_sdw_mbq_ग_लिखो(व्योम *context, अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक val)
-अणु
-	काष्ठा device *dev = context;
-	काष्ठा sdw_slave *slave = dev_to_sdw_dev(dev);
-	पूर्णांक ret;
+static int regmap_sdw_mbq_write(void *context, unsigned int reg, unsigned int val)
+{
+	struct device *dev = context;
+	struct sdw_slave *slave = dev_to_sdw_dev(dev);
+	int ret;
 
-	ret = sdw_ग_लिखो_no_pm(slave, SDW_SDCA_MBQ_CTL(reg), (val >> 8) & 0xff);
-	अगर (ret < 0)
-		वापस ret;
+	ret = sdw_write_no_pm(slave, SDW_SDCA_MBQ_CTL(reg), (val >> 8) & 0xff);
+	if (ret < 0)
+		return ret;
 
-	वापस sdw_ग_लिखो_no_pm(slave, reg, val & 0xff);
-पूर्ण
+	return sdw_write_no_pm(slave, reg, val & 0xff);
+}
 
-अटल पूर्णांक regmap_sdw_mbq_पढ़ो(व्योम *context, अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक *val)
-अणु
-	काष्ठा device *dev = context;
-	काष्ठा sdw_slave *slave = dev_to_sdw_dev(dev);
-	पूर्णांक पढ़ो0;
-	पूर्णांक पढ़ो1;
+static int regmap_sdw_mbq_read(void *context, unsigned int reg, unsigned int *val)
+{
+	struct device *dev = context;
+	struct sdw_slave *slave = dev_to_sdw_dev(dev);
+	int read0;
+	int read1;
 
-	पढ़ो0 = sdw_पढ़ो_no_pm(slave, reg);
-	अगर (पढ़ो0 < 0)
-		वापस पढ़ो0;
+	read0 = sdw_read_no_pm(slave, reg);
+	if (read0 < 0)
+		return read0;
 
-	पढ़ो1 = sdw_पढ़ो_no_pm(slave, SDW_SDCA_MBQ_CTL(reg));
-	अगर (पढ़ो1 < 0)
-		वापस पढ़ो1;
+	read1 = sdw_read_no_pm(slave, SDW_SDCA_MBQ_CTL(reg));
+	if (read1 < 0)
+		return read1;
 
-	*val = (पढ़ो1 << 8) | पढ़ो0;
+	*val = (read1 << 8) | read0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा regmap_bus regmap_sdw_mbq = अणु
-	.reg_पढ़ो = regmap_sdw_mbq_पढ़ो,
-	.reg_ग_लिखो = regmap_sdw_mbq_ग_लिखो,
-	.reg_क्रमmat_endian_शेष = REGMAP_ENDIAN_LITTLE,
-	.val_क्रमmat_endian_शेष = REGMAP_ENDIAN_LITTLE,
-पूर्ण;
+static struct regmap_bus regmap_sdw_mbq = {
+	.reg_read = regmap_sdw_mbq_read,
+	.reg_write = regmap_sdw_mbq_write,
+	.reg_format_endian_default = REGMAP_ENDIAN_LITTLE,
+	.val_format_endian_default = REGMAP_ENDIAN_LITTLE,
+};
 
-अटल पूर्णांक regmap_sdw_mbq_config_check(स्थिर काष्ठा regmap_config *config)
-अणु
-	/* MBQ-based controls are only 16-bits क्रम now */
-	अगर (config->val_bits != 16)
-		वापस -ENOTSUPP;
+static int regmap_sdw_mbq_config_check(const struct regmap_config *config)
+{
+	/* MBQ-based controls are only 16-bits for now */
+	if (config->val_bits != 16)
+		return -ENOTSUPP;
 
 	/* Registers are 32 bits wide */
-	अगर (config->reg_bits != 32)
-		वापस -ENOTSUPP;
+	if (config->reg_bits != 32)
+		return -ENOTSUPP;
 
-	अगर (config->pad_bits != 0)
-		वापस -ENOTSUPP;
+	if (config->pad_bits != 0)
+		return -ENOTSUPP;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा regmap *__regmap_init_sdw_mbq(काष्ठा sdw_slave *sdw,
-				     स्थिर काष्ठा regmap_config *config,
-				     काष्ठा lock_class_key *lock_key,
-				     स्थिर अक्षर *lock_name)
-अणु
-	पूर्णांक ret;
+struct regmap *__regmap_init_sdw_mbq(struct sdw_slave *sdw,
+				     const struct regmap_config *config,
+				     struct lock_class_key *lock_key,
+				     const char *lock_name)
+{
+	int ret;
 
 	ret = regmap_sdw_mbq_config_check(config);
-	अगर (ret)
-		वापस ERR_PTR(ret);
+	if (ret)
+		return ERR_PTR(ret);
 
-	वापस __regmap_init(&sdw->dev, &regmap_sdw_mbq,
+	return __regmap_init(&sdw->dev, &regmap_sdw_mbq,
 			&sdw->dev, config, lock_key, lock_name);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(__regmap_init_sdw_mbq);
 
-काष्ठा regmap *__devm_regmap_init_sdw_mbq(काष्ठा sdw_slave *sdw,
-					  स्थिर काष्ठा regmap_config *config,
-					  काष्ठा lock_class_key *lock_key,
-					  स्थिर अक्षर *lock_name)
-अणु
-	पूर्णांक ret;
+struct regmap *__devm_regmap_init_sdw_mbq(struct sdw_slave *sdw,
+					  const struct regmap_config *config,
+					  struct lock_class_key *lock_key,
+					  const char *lock_name)
+{
+	int ret;
 
 	ret = regmap_sdw_mbq_config_check(config);
-	अगर (ret)
-		वापस ERR_PTR(ret);
+	if (ret)
+		return ERR_PTR(ret);
 
-	वापस __devm_regmap_init(&sdw->dev, &regmap_sdw_mbq,
+	return __devm_regmap_init(&sdw->dev, &regmap_sdw_mbq,
 			&sdw->dev, config, lock_key, lock_name);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(__devm_regmap_init_sdw_mbq);
 
 MODULE_DESCRIPTION("Regmap SoundWire MBQ Module");

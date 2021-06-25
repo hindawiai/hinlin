@@ -1,257 +1,256 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <पूर्णांकtypes.h>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <त्रुटिसं.स>
-#समावेश <linux/zभाग.स>
+// SPDX-License-Identifier: GPL-2.0
+#include <inttypes.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <linux/zalloc.h>
 
-#समावेश "values.h"
-#समावेश "debug.h"
+#include "values.h"
+#include "debug.h"
 
-पूर्णांक perf_पढ़ो_values_init(काष्ठा perf_पढ़ो_values *values)
-अणु
-	values->thपढ़ोs_max = 16;
-	values->pid = दो_स्मृति(values->thपढ़ोs_max * माप(*values->pid));
-	values->tid = दो_स्मृति(values->thपढ़ोs_max * माप(*values->tid));
-	values->value = zalloc(values->thपढ़ोs_max * माप(*values->value));
-	अगर (!values->pid || !values->tid || !values->value) अणु
+int perf_read_values_init(struct perf_read_values *values)
+{
+	values->threads_max = 16;
+	values->pid = malloc(values->threads_max * sizeof(*values->pid));
+	values->tid = malloc(values->threads_max * sizeof(*values->tid));
+	values->value = zalloc(values->threads_max * sizeof(*values->value));
+	if (!values->pid || !values->tid || !values->value) {
 		pr_debug("failed to allocate read_values threads arrays");
-		जाओ out_मुक्त_pid;
-	पूर्ण
-	values->thपढ़ोs = 0;
+		goto out_free_pid;
+	}
+	values->threads = 0;
 
 	values->counters_max = 16;
-	values->counterrawid = दो_स्मृति(values->counters_max
-				      * माप(*values->counterrawid));
-	values->countername = दो_स्मृति(values->counters_max
-				     * माप(*values->countername));
-	अगर (!values->counterrawid || !values->countername) अणु
+	values->counterrawid = malloc(values->counters_max
+				      * sizeof(*values->counterrawid));
+	values->countername = malloc(values->counters_max
+				     * sizeof(*values->countername));
+	if (!values->counterrawid || !values->countername) {
 		pr_debug("failed to allocate read_values counters arrays");
-		जाओ out_मुक्त_counter;
-	पूर्ण
+		goto out_free_counter;
+	}
 	values->counters = 0;
 
-	वापस 0;
+	return 0;
 
-out_मुक्त_counter:
-	zमुक्त(&values->counterrawid);
-	zमुक्त(&values->countername);
-out_मुक्त_pid:
-	zमुक्त(&values->pid);
-	zमुक्त(&values->tid);
-	zमुक्त(&values->value);
-	वापस -ENOMEM;
-पूर्ण
+out_free_counter:
+	zfree(&values->counterrawid);
+	zfree(&values->countername);
+out_free_pid:
+	zfree(&values->pid);
+	zfree(&values->tid);
+	zfree(&values->value);
+	return -ENOMEM;
+}
 
-व्योम perf_पढ़ो_values_destroy(काष्ठा perf_पढ़ो_values *values)
-अणु
-	पूर्णांक i;
+void perf_read_values_destroy(struct perf_read_values *values)
+{
+	int i;
 
-	अगर (!values->thपढ़ोs_max || !values->counters_max)
-		वापस;
+	if (!values->threads_max || !values->counters_max)
+		return;
 
-	क्रम (i = 0; i < values->thपढ़ोs; i++)
-		zमुक्त(&values->value[i]);
-	zमुक्त(&values->value);
-	zमुक्त(&values->pid);
-	zमुक्त(&values->tid);
-	zमुक्त(&values->counterrawid);
-	क्रम (i = 0; i < values->counters; i++)
-		zमुक्त(&values->countername[i]);
-	zमुक्त(&values->countername);
-पूर्ण
+	for (i = 0; i < values->threads; i++)
+		zfree(&values->value[i]);
+	zfree(&values->value);
+	zfree(&values->pid);
+	zfree(&values->tid);
+	zfree(&values->counterrawid);
+	for (i = 0; i < values->counters; i++)
+		zfree(&values->countername[i]);
+	zfree(&values->countername);
+}
 
-अटल पूर्णांक perf_पढ़ो_values__enlarge_thपढ़ोs(काष्ठा perf_पढ़ो_values *values)
-अणु
-	पूर्णांक nthपढ़ोs_max = values->thपढ़ोs_max * 2;
-	व्योम *npid = पुनः_स्मृति(values->pid, nthपढ़ोs_max * माप(*values->pid)),
-	     *ntid = पुनः_स्मृति(values->tid, nthपढ़ोs_max * माप(*values->tid)),
-	     *nvalue = पुनः_स्मृति(values->value, nthपढ़ोs_max * माप(*values->value));
+static int perf_read_values__enlarge_threads(struct perf_read_values *values)
+{
+	int nthreads_max = values->threads_max * 2;
+	void *npid = realloc(values->pid, nthreads_max * sizeof(*values->pid)),
+	     *ntid = realloc(values->tid, nthreads_max * sizeof(*values->tid)),
+	     *nvalue = realloc(values->value, nthreads_max * sizeof(*values->value));
 
-	अगर (!npid || !ntid || !nvalue)
-		जाओ out_err;
+	if (!npid || !ntid || !nvalue)
+		goto out_err;
 
-	values->thपढ़ोs_max = nthपढ़ोs_max;
+	values->threads_max = nthreads_max;
 	values->pid = npid;
 	values->tid = ntid;
 	values->value = nvalue;
-	वापस 0;
+	return 0;
 out_err:
-	मुक्त(npid);
-	मुक्त(ntid);
-	मुक्त(nvalue);
+	free(npid);
+	free(ntid);
+	free(nvalue);
 	pr_debug("failed to enlarge read_values threads arrays");
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-अटल पूर्णांक perf_पढ़ो_values__findnew_thपढ़ो(काष्ठा perf_पढ़ो_values *values,
+static int perf_read_values__findnew_thread(struct perf_read_values *values,
 					    u32 pid, u32 tid)
-अणु
-	पूर्णांक i;
+{
+	int i;
 
-	क्रम (i = 0; i < values->thपढ़ोs; i++)
-		अगर (values->pid[i] == pid && values->tid[i] == tid)
-			वापस i;
+	for (i = 0; i < values->threads; i++)
+		if (values->pid[i] == pid && values->tid[i] == tid)
+			return i;
 
-	अगर (values->thपढ़ोs == values->thपढ़ोs_max) अणु
-		i = perf_पढ़ो_values__enlarge_thपढ़ोs(values);
-		अगर (i < 0)
-			वापस i;
-	पूर्ण
+	if (values->threads == values->threads_max) {
+		i = perf_read_values__enlarge_threads(values);
+		if (i < 0)
+			return i;
+	}
 
-	i = values->thपढ़ोs;
+	i = values->threads;
 
-	values->value[i] = zalloc(values->counters_max * माप(**values->value));
-	अगर (!values->value[i]) अणु
+	values->value[i] = zalloc(values->counters_max * sizeof(**values->value));
+	if (!values->value[i]) {
 		pr_debug("failed to allocate read_values counters array");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	values->pid[i] = pid;
 	values->tid[i] = tid;
-	values->thपढ़ोs = i + 1;
+	values->threads = i + 1;
 
-	वापस i;
-पूर्ण
+	return i;
+}
 
-अटल पूर्णांक perf_पढ़ो_values__enlarge_counters(काष्ठा perf_पढ़ो_values *values)
-अणु
-	अक्षर **countername;
-	पूर्णांक i, counters_max = values->counters_max * 2;
-	u64 *counterrawid = पुनः_स्मृति(values->counterrawid, counters_max * माप(*values->counterrawid));
+static int perf_read_values__enlarge_counters(struct perf_read_values *values)
+{
+	char **countername;
+	int i, counters_max = values->counters_max * 2;
+	u64 *counterrawid = realloc(values->counterrawid, counters_max * sizeof(*values->counterrawid));
 
-	अगर (!counterrawid) अणु
+	if (!counterrawid) {
 		pr_debug("failed to enlarge read_values rawid array");
-		जाओ out_enomem;
-	पूर्ण
+		goto out_enomem;
+	}
 
-	countername = पुनः_स्मृति(values->countername, counters_max * माप(*values->countername));
-	अगर (!countername) अणु
+	countername = realloc(values->countername, counters_max * sizeof(*values->countername));
+	if (!countername) {
 		pr_debug("failed to enlarge read_values rawid array");
-		जाओ out_मुक्त_rawid;
-	पूर्ण
+		goto out_free_rawid;
+	}
 
-	क्रम (i = 0; i < values->thपढ़ोs; i++) अणु
-		u64 *value = पुनः_स्मृति(values->value[i], counters_max * माप(**values->value));
-		पूर्णांक j;
+	for (i = 0; i < values->threads; i++) {
+		u64 *value = realloc(values->value[i], counters_max * sizeof(**values->value));
+		int j;
 
-		अगर (!value) अणु
+		if (!value) {
 			pr_debug("failed to enlarge read_values ->values array");
-			जाओ out_मुक्त_name;
-		पूर्ण
+			goto out_free_name;
+		}
 
-		क्रम (j = values->counters_max; j < counters_max; j++)
+		for (j = values->counters_max; j < counters_max; j++)
 			value[j] = 0;
 
 		values->value[i] = value;
-	पूर्ण
+	}
 
 	values->counters_max = counters_max;
 	values->counterrawid = counterrawid;
 	values->countername  = countername;
 
-	वापस 0;
-out_मुक्त_name:
-	मुक्त(countername);
-out_मुक्त_rawid:
-	मुक्त(counterrawid);
+	return 0;
+out_free_name:
+	free(countername);
+out_free_rawid:
+	free(counterrawid);
 out_enomem:
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-अटल पूर्णांक perf_पढ़ो_values__findnew_counter(काष्ठा perf_पढ़ो_values *values,
-					     u64 rawid, स्थिर अक्षर *name)
-अणु
-	पूर्णांक i;
+static int perf_read_values__findnew_counter(struct perf_read_values *values,
+					     u64 rawid, const char *name)
+{
+	int i;
 
-	क्रम (i = 0; i < values->counters; i++)
-		अगर (values->counterrawid[i] == rawid)
-			वापस i;
+	for (i = 0; i < values->counters; i++)
+		if (values->counterrawid[i] == rawid)
+			return i;
 
-	अगर (values->counters == values->counters_max) अणु
-		i = perf_पढ़ो_values__enlarge_counters(values);
-		अगर (i)
-			वापस i;
-	पूर्ण
+	if (values->counters == values->counters_max) {
+		i = perf_read_values__enlarge_counters(values);
+		if (i)
+			return i;
+	}
 
 	i = values->counters++;
 	values->counterrawid[i] = rawid;
 	values->countername[i] = strdup(name);
 
-	वापस i;
-पूर्ण
+	return i;
+}
 
-पूर्णांक perf_पढ़ो_values_add_value(काष्ठा perf_पढ़ो_values *values,
+int perf_read_values_add_value(struct perf_read_values *values,
 				u32 pid, u32 tid,
-				u64 rawid, स्थिर अक्षर *name, u64 value)
-अणु
-	पूर्णांक tindex, cindex;
+				u64 rawid, const char *name, u64 value)
+{
+	int tindex, cindex;
 
-	tindex = perf_पढ़ो_values__findnew_thपढ़ो(values, pid, tid);
-	अगर (tindex < 0)
-		वापस tindex;
-	cindex = perf_पढ़ो_values__findnew_counter(values, rawid, name);
-	अगर (cindex < 0)
-		वापस cindex;
+	tindex = perf_read_values__findnew_thread(values, pid, tid);
+	if (tindex < 0)
+		return tindex;
+	cindex = perf_read_values__findnew_counter(values, rawid, name);
+	if (cindex < 0)
+		return cindex;
 
 	values->value[tindex][cindex] += value;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम perf_पढ़ो_values__display_pretty(खाता *fp,
-					     काष्ठा perf_पढ़ो_values *values)
-अणु
-	पूर्णांक i, j;
-	पूर्णांक pidwidth, tidwidth;
-	पूर्णांक *counterwidth;
+static void perf_read_values__display_pretty(FILE *fp,
+					     struct perf_read_values *values)
+{
+	int i, j;
+	int pidwidth, tidwidth;
+	int *counterwidth;
 
-	counterwidth = दो_स्मृति(values->counters * माप(*counterwidth));
-	अगर (!counterwidth) अणु
-		ख_लिखो(fp, "INTERNAL ERROR: Failed to allocate counterwidth array\n");
-		वापस;
-	पूर्ण
+	counterwidth = malloc(values->counters * sizeof(*counterwidth));
+	if (!counterwidth) {
+		fprintf(fp, "INTERNAL ERROR: Failed to allocate counterwidth array\n");
+		return;
+	}
 	tidwidth = 3;
 	pidwidth = 3;
-	क्रम (j = 0; j < values->counters; j++)
-		counterwidth[j] = म_माप(values->countername[j]);
-	क्रम (i = 0; i < values->thपढ़ोs; i++) अणु
-		पूर्णांक width;
+	for (j = 0; j < values->counters; j++)
+		counterwidth[j] = strlen(values->countername[j]);
+	for (i = 0; i < values->threads; i++) {
+		int width;
 
-		width = snम_लिखो(शून्य, 0, "%d", values->pid[i]);
-		अगर (width > pidwidth)
+		width = snprintf(NULL, 0, "%d", values->pid[i]);
+		if (width > pidwidth)
 			pidwidth = width;
-		width = snम_लिखो(शून्य, 0, "%d", values->tid[i]);
-		अगर (width > tidwidth)
+		width = snprintf(NULL, 0, "%d", values->tid[i]);
+		if (width > tidwidth)
 			tidwidth = width;
-		क्रम (j = 0; j < values->counters; j++) अणु
-			width = snम_लिखो(शून्य, 0, "%" PRIu64, values->value[i][j]);
-			अगर (width > counterwidth[j])
+		for (j = 0; j < values->counters; j++) {
+			width = snprintf(NULL, 0, "%" PRIu64, values->value[i][j]);
+			if (width > counterwidth[j])
 				counterwidth[j] = width;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	ख_लिखो(fp, "# %*s  %*s", pidwidth, "PID", tidwidth, "TID");
-	क्रम (j = 0; j < values->counters; j++)
-		ख_लिखो(fp, "  %*s", counterwidth[j], values->countername[j]);
-	ख_लिखो(fp, "\n");
+	fprintf(fp, "# %*s  %*s", pidwidth, "PID", tidwidth, "TID");
+	for (j = 0; j < values->counters; j++)
+		fprintf(fp, "  %*s", counterwidth[j], values->countername[j]);
+	fprintf(fp, "\n");
 
-	क्रम (i = 0; i < values->thपढ़ोs; i++) अणु
-		ख_लिखो(fp, "  %*d  %*d", pidwidth, values->pid[i],
+	for (i = 0; i < values->threads; i++) {
+		fprintf(fp, "  %*d  %*d", pidwidth, values->pid[i],
 			tidwidth, values->tid[i]);
-		क्रम (j = 0; j < values->counters; j++)
-			ख_लिखो(fp, "  %*" PRIu64,
+		for (j = 0; j < values->counters; j++)
+			fprintf(fp, "  %*" PRIu64,
 				counterwidth[j], values->value[i][j]);
-		ख_लिखो(fp, "\n");
-	पूर्ण
-	मुक्त(counterwidth);
-पूर्ण
+		fprintf(fp, "\n");
+	}
+	free(counterwidth);
+}
 
-अटल व्योम perf_पढ़ो_values__display_raw(खाता *fp,
-					  काष्ठा perf_पढ़ो_values *values)
-अणु
-	पूर्णांक width, pidwidth, tidwidth, namewidth, rawwidth, countwidth;
-	पूर्णांक i, j;
+static void perf_read_values__display_raw(FILE *fp,
+					  struct perf_read_values *values)
+{
+	int width, pidwidth, tidwidth, namewidth, rawwidth, countwidth;
+	int i, j;
 
 	tidwidth = 3; /* TID */
 	pidwidth = 3; /* PID */
@@ -259,48 +258,48 @@ out_enomem:
 	rawwidth = 3; /* "Raw" */
 	countwidth = 5; /* "Count" */
 
-	क्रम (i = 0; i < values->thपढ़ोs; i++) अणु
-		width = snम_लिखो(शून्य, 0, "%d", values->pid[i]);
-		अगर (width > pidwidth)
+	for (i = 0; i < values->threads; i++) {
+		width = snprintf(NULL, 0, "%d", values->pid[i]);
+		if (width > pidwidth)
 			pidwidth = width;
-		width = snम_लिखो(शून्य, 0, "%d", values->tid[i]);
-		अगर (width > tidwidth)
+		width = snprintf(NULL, 0, "%d", values->tid[i]);
+		if (width > tidwidth)
 			tidwidth = width;
-	पूर्ण
-	क्रम (j = 0; j < values->counters; j++) अणु
-		width = म_माप(values->countername[j]);
-		अगर (width > namewidth)
+	}
+	for (j = 0; j < values->counters; j++) {
+		width = strlen(values->countername[j]);
+		if (width > namewidth)
 			namewidth = width;
-		width = snम_लिखो(शून्य, 0, "%" PRIx64, values->counterrawid[j]);
-		अगर (width > rawwidth)
+		width = snprintf(NULL, 0, "%" PRIx64, values->counterrawid[j]);
+		if (width > rawwidth)
 			rawwidth = width;
-	पूर्ण
-	क्रम (i = 0; i < values->thपढ़ोs; i++) अणु
-		क्रम (j = 0; j < values->counters; j++) अणु
-			width = snम_लिखो(शून्य, 0, "%" PRIu64, values->value[i][j]);
-			अगर (width > countwidth)
+	}
+	for (i = 0; i < values->threads; i++) {
+		for (j = 0; j < values->counters; j++) {
+			width = snprintf(NULL, 0, "%" PRIu64, values->value[i][j]);
+			if (width > countwidth)
 				countwidth = width;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	ख_लिखो(fp, "# %*s  %*s  %*s  %*s  %*s\n",
+	fprintf(fp, "# %*s  %*s  %*s  %*s  %*s\n",
 		pidwidth, "PID", tidwidth, "TID",
 		namewidth, "Name", rawwidth, "Raw",
 		countwidth, "Count");
-	क्रम (i = 0; i < values->thपढ़ोs; i++)
-		क्रम (j = 0; j < values->counters; j++)
-			ख_लिखो(fp, "  %*d  %*d  %*s  %*" PRIx64 "  %*" PRIu64,
+	for (i = 0; i < values->threads; i++)
+		for (j = 0; j < values->counters; j++)
+			fprintf(fp, "  %*d  %*d  %*s  %*" PRIx64 "  %*" PRIu64,
 				pidwidth, values->pid[i],
 				tidwidth, values->tid[i],
 				namewidth, values->countername[j],
 				rawwidth, values->counterrawid[j],
 				countwidth, values->value[i][j]);
-पूर्ण
+}
 
-व्योम perf_पढ़ो_values_display(खाता *fp, काष्ठा perf_पढ़ो_values *values, पूर्णांक raw)
-अणु
-	अगर (raw)
-		perf_पढ़ो_values__display_raw(fp, values);
-	अन्यथा
-		perf_पढ़ो_values__display_pretty(fp, values);
-पूर्ण
+void perf_read_values_display(FILE *fp, struct perf_read_values *values, int raw)
+{
+	if (raw)
+		perf_read_values__display_raw(fp, values);
+	else
+		perf_read_values__display_pretty(fp, values);
+}

@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * OpenRISC Linux
  *
@@ -13,70 +12,70 @@
  * et al.
  */
 
-#अगर_अघोषित __ASM_OPENRISC_PROCESSOR_H
-#घोषणा __ASM_OPENRISC_PROCESSOR_H
+#ifndef __ASM_OPENRISC_PROCESSOR_H
+#define __ASM_OPENRISC_PROCESSOR_H
 
-#समावेश <यंत्र/spr_defs.h>
-#समावेश <यंत्र/page.h>
-#समावेश <यंत्र/ptrace.h>
+#include <asm/spr_defs.h>
+#include <asm/page.h>
+#include <asm/ptrace.h>
 
-#घोषणा STACK_TOP       TASK_SIZE
-#घोषणा STACK_TOP_MAX	STACK_TOP
-/* Kernel and user SR रेजिस्टर setting */
-#घोषणा KERNEL_SR (SPR_SR_DME | SPR_SR_IME | SPR_SR_ICE \
+#define STACK_TOP       TASK_SIZE
+#define STACK_TOP_MAX	STACK_TOP
+/* Kernel and user SR register setting */
+#define KERNEL_SR (SPR_SR_DME | SPR_SR_IME | SPR_SR_ICE \
 		   | SPR_SR_DCE | SPR_SR_SM)
-#घोषणा USER_SR   (SPR_SR_DME | SPR_SR_IME | SPR_SR_ICE \
+#define USER_SR   (SPR_SR_DME | SPR_SR_IME | SPR_SR_ICE \
 		   | SPR_SR_DCE | SPR_SR_IEE | SPR_SR_TEE)
 
 /*
- * User space process size. This is hardcoded पूर्णांकo a few places,
- * so करोn't change it unless you know what you are करोing.
+ * User space process size. This is hardcoded into a few places,
+ * so don't change it unless you know what you are doing.
  */
 
-#घोषणा TASK_SIZE       (0x80000000UL)
+#define TASK_SIZE       (0x80000000UL)
 
-/* This decides where the kernel will search क्रम a मुक्त chunk of vm
+/* This decides where the kernel will search for a free chunk of vm
  * space during mmap's.
  */
-#घोषणा TASK_UNMAPPED_BASE      (TASK_SIZE / 8 * 3)
+#define TASK_UNMAPPED_BASE      (TASK_SIZE / 8 * 3)
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-काष्ठा task_काष्ठा;
+struct task_struct;
 
-काष्ठा thपढ़ो_काष्ठा अणु
-पूर्ण;
-
-/*
- * At user->kernel entry, the pt_regs काष्ठा is stacked on the top of the
- * kernel-stack.  This macro allows us to find those regs क्रम a task.
- * Notice that subsequent pt_regs stackings, like recursive पूर्णांकerrupts
- * occurring जबतक we're in the kernel, won't affect this - only the first
- * user->kernel transition रेजिस्टरs are reached by this (i.e. not regs
- * क्रम running संकेत handler)
- */
-#घोषणा user_regs(thपढ़ो_info)  (((काष्ठा pt_regs *)((अचिन्हित दीर्घ)(thपढ़ो_info) + THREAD_SIZE - STACK_FRAME_OVERHEAD)) - 1)
+struct thread_struct {
+};
 
 /*
- * Dito but क्रम the currently running task
+ * At user->kernel entry, the pt_regs struct is stacked on the top of the
+ * kernel-stack.  This macro allows us to find those regs for a task.
+ * Notice that subsequent pt_regs stackings, like recursive interrupts
+ * occurring while we're in the kernel, won't affect this - only the first
+ * user->kernel transition registers are reached by this (i.e. not regs
+ * for running signal handler)
+ */
+#define user_regs(thread_info)  (((struct pt_regs *)((unsigned long)(thread_info) + THREAD_SIZE - STACK_FRAME_OVERHEAD)) - 1)
+
+/*
+ * Dito but for the currently running task
  */
 
-#घोषणा task_pt_regs(task) user_regs(task_thपढ़ो_info(task))
+#define task_pt_regs(task) user_regs(task_thread_info(task))
 
-#घोषणा INIT_SP         (माप(init_stack) + (अचिन्हित दीर्घ) &init_stack)
+#define INIT_SP         (sizeof(init_stack) + (unsigned long) &init_stack)
 
-#घोषणा INIT_THREAD  अणु पूर्ण
-
-
-#घोषणा KSTK_EIP(tsk)   (task_pt_regs(tsk)->pc)
-#घोषणा KSTK_ESP(tsk)   (task_pt_regs(tsk)->sp)
+#define INIT_THREAD  { }
 
 
-व्योम start_thपढ़ो(काष्ठा pt_regs *regs, अचिन्हित दीर्घ nip, अचिन्हित दीर्घ sp);
-व्योम release_thपढ़ो(काष्ठा task_काष्ठा *);
-अचिन्हित दीर्घ get_wchan(काष्ठा task_काष्ठा *p);
+#define KSTK_EIP(tsk)   (task_pt_regs(tsk)->pc)
+#define KSTK_ESP(tsk)   (task_pt_regs(tsk)->sp)
 
-#घोषणा cpu_relax()     barrier()
 
-#पूर्ण_अगर /* __ASSEMBLY__ */
-#पूर्ण_अगर /* __ASM_OPENRISC_PROCESSOR_H */
+void start_thread(struct pt_regs *regs, unsigned long nip, unsigned long sp);
+void release_thread(struct task_struct *);
+unsigned long get_wchan(struct task_struct *p);
+
+#define cpu_relax()     barrier()
+
+#endif /* __ASSEMBLY__ */
+#endif /* __ASM_OPENRISC_PROCESSOR_H */

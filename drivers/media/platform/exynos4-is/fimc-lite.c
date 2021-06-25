@@ -1,181 +1,180 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Samsung EXYNOS FIMC-LITE (camera host पूर्णांकerface) driver
+ * Samsung EXYNOS FIMC-LITE (camera host interface) driver
 *
  * Copyright (C) 2012 - 2013 Samsung Electronics Co., Ltd.
  * Author: Sylwester Nawrocki <s.nawrocki@samsung.com>
  */
-#घोषणा pr_fmt(fmt) "%s:%d " fmt, __func__, __LINE__
+#define pr_fmt(fmt) "%s:%d " fmt, __func__, __LINE__
 
-#समावेश <linux/bug.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/device.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/list.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/types.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/videodev2.h>
+#include <linux/bug.h>
+#include <linux/clk.h>
+#include <linux/device.h>
+#include <linux/errno.h>
+#include <linux/interrupt.h>
+#include <linux/kernel.h>
+#include <linux/list.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/types.h>
+#include <linux/platform_device.h>
+#include <linux/pm_runtime.h>
+#include <linux/slab.h>
+#include <linux/videodev2.h>
 
-#समावेश <media/v4l2-device.h>
-#समावेश <media/v4l2-ioctl.h>
-#समावेश <media/v4l2-mem2स्मृति.स>
-#समावेश <media/v4l2-rect.h>
-#समावेश <media/videobuf2-v4l2.h>
-#समावेश <media/videobuf2-dma-contig.h>
-#समावेश <media/drv-पूर्णांकf/exynos-fimc.h>
+#include <media/v4l2-device.h>
+#include <media/v4l2-ioctl.h>
+#include <media/v4l2-mem2mem.h>
+#include <media/v4l2-rect.h>
+#include <media/videobuf2-v4l2.h>
+#include <media/videobuf2-dma-contig.h>
+#include <media/drv-intf/exynos-fimc.h>
 
-#समावेश "common.h"
-#समावेश "fimc-core.h"
-#समावेश "fimc-lite.h"
-#समावेश "fimc-lite-reg.h"
+#include "common.h"
+#include "fimc-core.h"
+#include "fimc-lite.h"
+#include "fimc-lite-reg.h"
 
-अटल पूर्णांक debug;
-module_param(debug, पूर्णांक, 0644);
+static int debug;
+module_param(debug, int, 0644);
 
-अटल स्थिर काष्ठा fimc_fmt fimc_lite_क्रमmats[] = अणु
-	अणु
+static const struct fimc_fmt fimc_lite_formats[] = {
+	{
 		.fourcc		= V4L2_PIX_FMT_YUYV,
 		.colorspace	= V4L2_COLORSPACE_JPEG,
-		.depth		= अणु 16 पूर्ण,
+		.depth		= { 16 },
 		.color		= FIMC_FMT_YCBYCR422,
 		.memplanes	= 1,
 		.mbus_code	= MEDIA_BUS_FMT_YUYV8_2X8,
 		.flags		= FMT_FLAGS_YUV,
-	पूर्ण, अणु
+	}, {
 		.fourcc		= V4L2_PIX_FMT_UYVY,
 		.colorspace	= V4L2_COLORSPACE_JPEG,
-		.depth		= अणु 16 पूर्ण,
+		.depth		= { 16 },
 		.color		= FIMC_FMT_CBYCRY422,
 		.memplanes	= 1,
 		.mbus_code	= MEDIA_BUS_FMT_UYVY8_2X8,
 		.flags		= FMT_FLAGS_YUV,
-	पूर्ण, अणु
+	}, {
 		.fourcc		= V4L2_PIX_FMT_VYUY,
 		.colorspace	= V4L2_COLORSPACE_JPEG,
-		.depth		= अणु 16 पूर्ण,
+		.depth		= { 16 },
 		.color		= FIMC_FMT_CRYCBY422,
 		.memplanes	= 1,
 		.mbus_code	= MEDIA_BUS_FMT_VYUY8_2X8,
 		.flags		= FMT_FLAGS_YUV,
-	पूर्ण, अणु
+	}, {
 		.fourcc		= V4L2_PIX_FMT_YVYU,
 		.colorspace	= V4L2_COLORSPACE_JPEG,
-		.depth		= अणु 16 पूर्ण,
+		.depth		= { 16 },
 		.color		= FIMC_FMT_YCRYCB422,
 		.memplanes	= 1,
 		.mbus_code	= MEDIA_BUS_FMT_YVYU8_2X8,
 		.flags		= FMT_FLAGS_YUV,
-	पूर्ण, अणु
+	}, {
 		.fourcc		= V4L2_PIX_FMT_SGRBG8,
 		.colorspace	= V4L2_COLORSPACE_SRGB,
-		.depth		= अणु 8 पूर्ण,
+		.depth		= { 8 },
 		.color		= FIMC_FMT_RAW8,
 		.memplanes	= 1,
 		.mbus_code	= MEDIA_BUS_FMT_SGRBG8_1X8,
 		.flags		= FMT_FLAGS_RAW_BAYER,
-	पूर्ण, अणु
+	}, {
 		.fourcc		= V4L2_PIX_FMT_SGRBG10,
 		.colorspace	= V4L2_COLORSPACE_SRGB,
-		.depth		= अणु 16 पूर्ण,
+		.depth		= { 16 },
 		.color		= FIMC_FMT_RAW10,
 		.memplanes	= 1,
 		.mbus_code	= MEDIA_BUS_FMT_SGRBG10_1X10,
 		.flags		= FMT_FLAGS_RAW_BAYER,
-	पूर्ण, अणु
+	}, {
 		.fourcc		= V4L2_PIX_FMT_SGRBG12,
 		.colorspace	= V4L2_COLORSPACE_SRGB,
-		.depth		= अणु 16 पूर्ण,
+		.depth		= { 16 },
 		.color		= FIMC_FMT_RAW12,
 		.memplanes	= 1,
 		.mbus_code	= MEDIA_BUS_FMT_SGRBG12_1X12,
 		.flags		= FMT_FLAGS_RAW_BAYER,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /**
- * fimc_lite_find_क्रमmat - lookup fimc color क्रमmat by fourcc or media bus code
- * @pixelक्रमmat: fourcc to match, ignored अगर null
- * @mbus_code: media bus code to match, ignored अगर null
- * @mask: the color क्रमmat flags to match
- * @index: index to the fimc_lite_क्रमmats array, ignored अगर negative
+ * fimc_lite_find_format - lookup fimc color format by fourcc or media bus code
+ * @pixelformat: fourcc to match, ignored if null
+ * @mbus_code: media bus code to match, ignored if null
+ * @mask: the color format flags to match
+ * @index: index to the fimc_lite_formats array, ignored if negative
  */
-अटल स्थिर काष्ठा fimc_fmt *fimc_lite_find_क्रमmat(स्थिर u32 *pixelक्रमmat,
-			स्थिर u32 *mbus_code, अचिन्हित पूर्णांक mask, पूर्णांक index)
-अणु
-	स्थिर काष्ठा fimc_fmt *fmt, *def_fmt = शून्य;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक id = 0;
+static const struct fimc_fmt *fimc_lite_find_format(const u32 *pixelformat,
+			const u32 *mbus_code, unsigned int mask, int index)
+{
+	const struct fimc_fmt *fmt, *def_fmt = NULL;
+	unsigned int i;
+	int id = 0;
 
-	अगर (index >= (पूर्णांक)ARRAY_SIZE(fimc_lite_क्रमmats))
-		वापस शून्य;
+	if (index >= (int)ARRAY_SIZE(fimc_lite_formats))
+		return NULL;
 
-	क्रम (i = 0; i < ARRAY_SIZE(fimc_lite_क्रमmats); ++i) अणु
-		fmt = &fimc_lite_क्रमmats[i];
-		अगर (mask && !(fmt->flags & mask))
-			जारी;
-		अगर (pixelक्रमmat && fmt->fourcc == *pixelक्रमmat)
-			वापस fmt;
-		अगर (mbus_code && fmt->mbus_code == *mbus_code)
-			वापस fmt;
-		अगर (index == id)
+	for (i = 0; i < ARRAY_SIZE(fimc_lite_formats); ++i) {
+		fmt = &fimc_lite_formats[i];
+		if (mask && !(fmt->flags & mask))
+			continue;
+		if (pixelformat && fmt->fourcc == *pixelformat)
+			return fmt;
+		if (mbus_code && fmt->mbus_code == *mbus_code)
+			return fmt;
+		if (index == id)
 			def_fmt = fmt;
 		id++;
-	पूर्ण
-	वापस def_fmt;
-पूर्ण
+	}
+	return def_fmt;
+}
 
-अटल पूर्णांक fimc_lite_hw_init(काष्ठा fimc_lite *fimc, bool isp_output)
-अणु
-	काष्ठा fimc_source_info *si;
-	अचिन्हित दीर्घ flags;
+static int fimc_lite_hw_init(struct fimc_lite *fimc, bool isp_output)
+{
+	struct fimc_source_info *si;
+	unsigned long flags;
 
-	अगर (fimc->sensor == शून्य)
-		वापस -ENXIO;
+	if (fimc->sensor == NULL)
+		return -ENXIO;
 
-	अगर (fimc->inp_frame.fmt == शून्य || fimc->out_frame.fmt == शून्य)
-		वापस -EINVAL;
+	if (fimc->inp_frame.fmt == NULL || fimc->out_frame.fmt == NULL)
+		return -EINVAL;
 
 	/* Get sensor configuration data from the sensor subdev */
 	si = v4l2_get_subdev_hostdata(fimc->sensor);
-	अगर (!si)
-		वापस -EINVAL;
+	if (!si)
+		return -EINVAL;
 
 	spin_lock_irqsave(&fimc->slock, flags);
 
 	flite_hw_set_camera_bus(fimc, si);
-	flite_hw_set_source_क्रमmat(fimc, &fimc->inp_frame);
-	flite_hw_set_winकरोw_offset(fimc, &fimc->inp_frame);
+	flite_hw_set_source_format(fimc, &fimc->inp_frame);
+	flite_hw_set_window_offset(fimc, &fimc->inp_frame);
 	flite_hw_set_dma_buf_mask(fimc, 0);
 	flite_hw_set_output_dma(fimc, &fimc->out_frame, !isp_output);
-	flite_hw_set_पूर्णांकerrupt_mask(fimc);
+	flite_hw_set_interrupt_mask(fimc);
 	flite_hw_set_test_pattern(fimc, fimc->test_pattern->val);
 
-	अगर (debug > 0)
+	if (debug > 0)
 		flite_hw_dump_regs(fimc, __func__);
 
 	spin_unlock_irqrestore(&fimc->slock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Reinitialize the driver so it is पढ़ोy to start the streaming again.
- * Set fimc->state to indicate stream off and the hardware shut करोwn state.
- * If not suspending (@suspend is false), वापस any buffers to videobuf2.
+ * Reinitialize the driver so it is ready to start the streaming again.
+ * Set fimc->state to indicate stream off and the hardware shut down state.
+ * If not suspending (@suspend is false), return any buffers to videobuf2.
  * Otherwise put any owned buffers onto the pending buffers queue, so they
- * can be re-spun when the device is being resumed. Also perक्रमm FIMC
- * software reset and disable streaming on the whole pipeline अगर required.
+ * can be re-spun when the device is being resumed. Also perform FIMC
+ * software reset and disable streaming on the whole pipeline if required.
  */
-अटल पूर्णांक fimc_lite_reinit(काष्ठा fimc_lite *fimc, bool suspend)
-अणु
-	काष्ठा flite_buffer *buf;
-	अचिन्हित दीर्घ flags;
+static int fimc_lite_reinit(struct fimc_lite *fimc, bool suspend)
+{
+	struct flite_buffer *buf;
+	unsigned long flags;
 	bool streaming;
 
 	spin_lock_irqsave(&fimc->slock, flags);
@@ -183,131 +182,131 @@ module_param(debug, पूर्णांक, 0644);
 
 	fimc->state &= ~(1 << ST_FLITE_RUN | 1 << ST_FLITE_OFF |
 			 1 << ST_FLITE_STREAM | 1 << ST_SENSOR_STREAM);
-	अगर (suspend)
+	if (suspend)
 		fimc->state |= (1 << ST_FLITE_SUSPENDED);
-	अन्यथा
+	else
 		fimc->state &= ~(1 << ST_FLITE_PENDING |
 				 1 << ST_FLITE_SUSPENDED);
 
 	/* Release unused buffers */
-	जबतक (!suspend && !list_empty(&fimc->pending_buf_q)) अणु
+	while (!suspend && !list_empty(&fimc->pending_buf_q)) {
 		buf = fimc_lite_pending_queue_pop(fimc);
-		vb2_buffer_करोne(&buf->vb.vb2_buf, VB2_BUF_STATE_ERROR);
-	पूर्ण
+		vb2_buffer_done(&buf->vb.vb2_buf, VB2_BUF_STATE_ERROR);
+	}
 	/* If suspending put unused buffers onto pending queue */
-	जबतक (!list_empty(&fimc->active_buf_q)) अणु
+	while (!list_empty(&fimc->active_buf_q)) {
 		buf = fimc_lite_active_queue_pop(fimc);
-		अगर (suspend)
+		if (suspend)
 			fimc_lite_pending_queue_add(fimc, buf);
-		अन्यथा
-			vb2_buffer_करोne(&buf->vb.vb2_buf, VB2_BUF_STATE_ERROR);
-	पूर्ण
+		else
+			vb2_buffer_done(&buf->vb.vb2_buf, VB2_BUF_STATE_ERROR);
+	}
 
 	spin_unlock_irqrestore(&fimc->slock, flags);
 
 	flite_hw_reset(fimc);
 
-	अगर (!streaming)
-		वापस 0;
+	if (!streaming)
+		return 0;
 
-	वापस fimc_pipeline_call(&fimc->ve, set_stream, 0);
-पूर्ण
+	return fimc_pipeline_call(&fimc->ve, set_stream, 0);
+}
 
-अटल पूर्णांक fimc_lite_stop_capture(काष्ठा fimc_lite *fimc, bool suspend)
-अणु
-	अचिन्हित दीर्घ flags;
+static int fimc_lite_stop_capture(struct fimc_lite *fimc, bool suspend)
+{
+	unsigned long flags;
 
-	अगर (!fimc_lite_active(fimc))
-		वापस 0;
+	if (!fimc_lite_active(fimc))
+		return 0;
 
 	spin_lock_irqsave(&fimc->slock, flags);
 	set_bit(ST_FLITE_OFF, &fimc->state);
 	flite_hw_capture_stop(fimc);
 	spin_unlock_irqrestore(&fimc->slock, flags);
 
-	रुको_event_समयout(fimc->irq_queue,
+	wait_event_timeout(fimc->irq_queue,
 			   !test_bit(ST_FLITE_OFF, &fimc->state),
 			   (2*HZ/10)); /* 200 ms */
 
-	वापस fimc_lite_reinit(fimc, suspend);
-पूर्ण
+	return fimc_lite_reinit(fimc, suspend);
+}
 
 /* Must be called  with fimc.slock spinlock held. */
-अटल व्योम fimc_lite_config_update(काष्ठा fimc_lite *fimc)
-अणु
-	flite_hw_set_winकरोw_offset(fimc, &fimc->inp_frame);
-	flite_hw_set_dma_winकरोw(fimc, &fimc->out_frame);
+static void fimc_lite_config_update(struct fimc_lite *fimc)
+{
+	flite_hw_set_window_offset(fimc, &fimc->inp_frame);
+	flite_hw_set_dma_window(fimc, &fimc->out_frame);
 	flite_hw_set_test_pattern(fimc, fimc->test_pattern->val);
 	clear_bit(ST_FLITE_CONFIG, &fimc->state);
-पूर्ण
+}
 
-अटल irqवापस_t flite_irq_handler(पूर्णांक irq, व्योम *priv)
-अणु
-	काष्ठा fimc_lite *fimc = priv;
-	काष्ठा flite_buffer *vbuf;
-	अचिन्हित दीर्घ flags;
-	u32 पूर्णांकsrc;
+static irqreturn_t flite_irq_handler(int irq, void *priv)
+{
+	struct fimc_lite *fimc = priv;
+	struct flite_buffer *vbuf;
+	unsigned long flags;
+	u32 intsrc;
 
 	spin_lock_irqsave(&fimc->slock, flags);
 
-	पूर्णांकsrc = flite_hw_get_पूर्णांकerrupt_source(fimc);
+	intsrc = flite_hw_get_interrupt_source(fimc);
 	flite_hw_clear_pending_irq(fimc);
 
-	अगर (test_and_clear_bit(ST_FLITE_OFF, &fimc->state)) अणु
+	if (test_and_clear_bit(ST_FLITE_OFF, &fimc->state)) {
 		wake_up(&fimc->irq_queue);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	अगर (पूर्णांकsrc & FLITE_REG_CISTATUS_IRQ_SRC_OVERFLOW) अणु
+	if (intsrc & FLITE_REG_CISTATUS_IRQ_SRC_OVERFLOW) {
 		clear_bit(ST_FLITE_RUN, &fimc->state);
 		fimc->events.data_overflow++;
-	पूर्ण
+	}
 
-	अगर (पूर्णांकsrc & FLITE_REG_CISTATUS_IRQ_SRC_LASTCAPEND) अणु
+	if (intsrc & FLITE_REG_CISTATUS_IRQ_SRC_LASTCAPEND) {
 		flite_hw_clear_last_capture_end(fimc);
 		clear_bit(ST_FLITE_STREAM, &fimc->state);
 		wake_up(&fimc->irq_queue);
-	पूर्ण
+	}
 
-	अगर (atomic_पढ़ो(&fimc->out_path) != FIMC_IO_DMA)
-		जाओ करोne;
+	if (atomic_read(&fimc->out_path) != FIMC_IO_DMA)
+		goto done;
 
-	अगर ((पूर्णांकsrc & FLITE_REG_CISTATUS_IRQ_SRC_FRMSTART) &&
+	if ((intsrc & FLITE_REG_CISTATUS_IRQ_SRC_FRMSTART) &&
 	    test_bit(ST_FLITE_RUN, &fimc->state) &&
-	    !list_empty(&fimc->pending_buf_q)) अणु
+	    !list_empty(&fimc->pending_buf_q)) {
 		vbuf = fimc_lite_pending_queue_pop(fimc);
 		flite_hw_set_dma_buffer(fimc, vbuf);
 		fimc_lite_active_queue_add(fimc, vbuf);
-	पूर्ण
+	}
 
-	अगर ((पूर्णांकsrc & FLITE_REG_CISTATUS_IRQ_SRC_FRMEND) &&
+	if ((intsrc & FLITE_REG_CISTATUS_IRQ_SRC_FRMEND) &&
 	    test_bit(ST_FLITE_RUN, &fimc->state) &&
-	    !list_empty(&fimc->active_buf_q)) अणु
+	    !list_empty(&fimc->active_buf_q)) {
 		vbuf = fimc_lite_active_queue_pop(fimc);
-		vbuf->vb.vb2_buf.बारtamp = kसमय_get_ns();
+		vbuf->vb.vb2_buf.timestamp = ktime_get_ns();
 		vbuf->vb.sequence = fimc->frame_count++;
 		flite_hw_mask_dma_buffer(fimc, vbuf->index);
-		vb2_buffer_करोne(&vbuf->vb.vb2_buf, VB2_BUF_STATE_DONE);
-	पूर्ण
+		vb2_buffer_done(&vbuf->vb.vb2_buf, VB2_BUF_STATE_DONE);
+	}
 
-	अगर (test_bit(ST_FLITE_CONFIG, &fimc->state))
+	if (test_bit(ST_FLITE_CONFIG, &fimc->state))
 		fimc_lite_config_update(fimc);
 
-	अगर (list_empty(&fimc->pending_buf_q)) अणु
+	if (list_empty(&fimc->pending_buf_q)) {
 		flite_hw_capture_stop(fimc);
 		clear_bit(ST_FLITE_STREAM, &fimc->state);
-	पूर्ण
-करोne:
+	}
+done:
 	set_bit(ST_FLITE_RUN, &fimc->state);
 	spin_unlock_irqrestore(&fimc->slock, flags);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक start_streaming(काष्ठा vb2_queue *q, अचिन्हित पूर्णांक count)
-अणु
-	काष्ठा fimc_lite *fimc = q->drv_priv;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+static int start_streaming(struct vb2_queue *q, unsigned int count)
+{
+	struct fimc_lite *fimc = q->drv_priv;
+	unsigned long flags;
+	int ret;
 
 	spin_lock_irqsave(&fimc->slock, flags);
 
@@ -317,264 +316,264 @@ module_param(debug, पूर्णांक, 0644);
 	spin_unlock_irqrestore(&fimc->slock, flags);
 
 	ret = fimc_lite_hw_init(fimc, false);
-	अगर (ret) अणु
+	if (ret) {
 		fimc_lite_reinit(fimc, false);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	set_bit(ST_FLITE_PENDING, &fimc->state);
 
-	अगर (!list_empty(&fimc->active_buf_q) &&
-	    !test_and_set_bit(ST_FLITE_STREAM, &fimc->state)) अणु
+	if (!list_empty(&fimc->active_buf_q) &&
+	    !test_and_set_bit(ST_FLITE_STREAM, &fimc->state)) {
 		flite_hw_capture_start(fimc);
 
-		अगर (!test_and_set_bit(ST_SENSOR_STREAM, &fimc->state))
+		if (!test_and_set_bit(ST_SENSOR_STREAM, &fimc->state))
 			fimc_pipeline_call(&fimc->ve, set_stream, 1);
-	पूर्ण
-	अगर (debug > 0)
+	}
+	if (debug > 0)
 		flite_hw_dump_regs(fimc, __func__);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम stop_streaming(काष्ठा vb2_queue *q)
-अणु
-	काष्ठा fimc_lite *fimc = q->drv_priv;
+static void stop_streaming(struct vb2_queue *q)
+{
+	struct fimc_lite *fimc = q->drv_priv;
 
-	अगर (!fimc_lite_active(fimc))
-		वापस;
+	if (!fimc_lite_active(fimc))
+		return;
 
 	fimc_lite_stop_capture(fimc, false);
-पूर्ण
+}
 
-अटल पूर्णांक queue_setup(काष्ठा vb2_queue *vq,
-		       अचिन्हित पूर्णांक *num_buffers, अचिन्हित पूर्णांक *num_planes,
-		       अचिन्हित पूर्णांक sizes[], काष्ठा device *alloc_devs[])
-अणु
-	काष्ठा fimc_lite *fimc = vq->drv_priv;
-	काष्ठा flite_frame *frame = &fimc->out_frame;
-	स्थिर काष्ठा fimc_fmt *fmt = frame->fmt;
-	अचिन्हित दीर्घ wh = frame->f_width * frame->f_height;
-	पूर्णांक i;
+static int queue_setup(struct vb2_queue *vq,
+		       unsigned int *num_buffers, unsigned int *num_planes,
+		       unsigned int sizes[], struct device *alloc_devs[])
+{
+	struct fimc_lite *fimc = vq->drv_priv;
+	struct flite_frame *frame = &fimc->out_frame;
+	const struct fimc_fmt *fmt = frame->fmt;
+	unsigned long wh = frame->f_width * frame->f_height;
+	int i;
 
-	अगर (fmt == शून्य)
-		वापस -EINVAL;
+	if (fmt == NULL)
+		return -EINVAL;
 
-	अगर (*num_planes) अणु
-		अगर (*num_planes != fmt->memplanes)
-			वापस -EINVAL;
-		क्रम (i = 0; i < *num_planes; i++)
-			अगर (sizes[i] < (wh * fmt->depth[i]) / 8)
-				वापस -EINVAL;
-		वापस 0;
-	पूर्ण
+	if (*num_planes) {
+		if (*num_planes != fmt->memplanes)
+			return -EINVAL;
+		for (i = 0; i < *num_planes; i++)
+			if (sizes[i] < (wh * fmt->depth[i]) / 8)
+				return -EINVAL;
+		return 0;
+	}
 
 	*num_planes = fmt->memplanes;
 
-	क्रम (i = 0; i < fmt->memplanes; i++)
+	for (i = 0; i < fmt->memplanes; i++)
 		sizes[i] = (wh * fmt->depth[i]) / 8;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक buffer_prepare(काष्ठा vb2_buffer *vb)
-अणु
-	काष्ठा vb2_queue *vq = vb->vb2_queue;
-	काष्ठा fimc_lite *fimc = vq->drv_priv;
-	पूर्णांक i;
+static int buffer_prepare(struct vb2_buffer *vb)
+{
+	struct vb2_queue *vq = vb->vb2_queue;
+	struct fimc_lite *fimc = vq->drv_priv;
+	int i;
 
-	अगर (fimc->out_frame.fmt == शून्य)
-		वापस -EINVAL;
+	if (fimc->out_frame.fmt == NULL)
+		return -EINVAL;
 
-	क्रम (i = 0; i < fimc->out_frame.fmt->memplanes; i++) अणु
-		अचिन्हित दीर्घ size = fimc->payload[i];
+	for (i = 0; i < fimc->out_frame.fmt->memplanes; i++) {
+		unsigned long size = fimc->payload[i];
 
-		अगर (vb2_plane_size(vb, i) < size) अणु
+		if (vb2_plane_size(vb, i) < size) {
 			v4l2_err(&fimc->ve.vdev,
 				 "User buffer too small (%ld < %ld)\n",
 				 vb2_plane_size(vb, i), size);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		vb2_set_plane_payload(vb, i, size);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम buffer_queue(काष्ठा vb2_buffer *vb)
-अणु
-	काष्ठा vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
-	काष्ठा flite_buffer *buf
-		= container_of(vbuf, काष्ठा flite_buffer, vb);
-	काष्ठा fimc_lite *fimc = vb2_get_drv_priv(vb->vb2_queue);
-	अचिन्हित दीर्घ flags;
+static void buffer_queue(struct vb2_buffer *vb)
+{
+	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
+	struct flite_buffer *buf
+		= container_of(vbuf, struct flite_buffer, vb);
+	struct fimc_lite *fimc = vb2_get_drv_priv(vb->vb2_queue);
+	unsigned long flags;
 
 	spin_lock_irqsave(&fimc->slock, flags);
 	buf->addr = vb2_dma_contig_plane_dma_addr(vb, 0);
 
 	buf->index = fimc->buf_index++;
-	अगर (fimc->buf_index >= fimc->reqbufs_count)
+	if (fimc->buf_index >= fimc->reqbufs_count)
 		fimc->buf_index = 0;
 
-	अगर (!test_bit(ST_FLITE_SUSPENDED, &fimc->state) &&
+	if (!test_bit(ST_FLITE_SUSPENDED, &fimc->state) &&
 	    !test_bit(ST_FLITE_STREAM, &fimc->state) &&
-	    list_empty(&fimc->active_buf_q)) अणु
+	    list_empty(&fimc->active_buf_q)) {
 		flite_hw_set_dma_buffer(fimc, buf);
 		fimc_lite_active_queue_add(fimc, buf);
-	पूर्ण अन्यथा अणु
+	} else {
 		fimc_lite_pending_queue_add(fimc, buf);
-	पूर्ण
+	}
 
-	अगर (vb2_is_streaming(&fimc->vb_queue) &&
+	if (vb2_is_streaming(&fimc->vb_queue) &&
 	    !list_empty(&fimc->pending_buf_q) &&
-	    !test_and_set_bit(ST_FLITE_STREAM, &fimc->state)) अणु
+	    !test_and_set_bit(ST_FLITE_STREAM, &fimc->state)) {
 		flite_hw_capture_start(fimc);
 		spin_unlock_irqrestore(&fimc->slock, flags);
 
-		अगर (!test_and_set_bit(ST_SENSOR_STREAM, &fimc->state))
+		if (!test_and_set_bit(ST_SENSOR_STREAM, &fimc->state))
 			fimc_pipeline_call(&fimc->ve, set_stream, 1);
-		वापस;
-	पूर्ण
+		return;
+	}
 	spin_unlock_irqrestore(&fimc->slock, flags);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा vb2_ops fimc_lite_qops = अणु
+static const struct vb2_ops fimc_lite_qops = {
 	.queue_setup	 = queue_setup,
 	.buf_prepare	 = buffer_prepare,
 	.buf_queue	 = buffer_queue,
-	.रुको_prepare	 = vb2_ops_रुको_prepare,
-	.रुको_finish	 = vb2_ops_रुको_finish,
+	.wait_prepare	 = vb2_ops_wait_prepare,
+	.wait_finish	 = vb2_ops_wait_finish,
 	.start_streaming = start_streaming,
 	.stop_streaming	 = stop_streaming,
-पूर्ण;
+};
 
-अटल व्योम fimc_lite_clear_event_counters(काष्ठा fimc_lite *fimc)
-अणु
-	अचिन्हित दीर्घ flags;
+static void fimc_lite_clear_event_counters(struct fimc_lite *fimc)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&fimc->slock, flags);
-	स_रखो(&fimc->events, 0, माप(fimc->events));
+	memset(&fimc->events, 0, sizeof(fimc->events));
 	spin_unlock_irqrestore(&fimc->slock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक fimc_lite_खोलो(काष्ठा file *file)
-अणु
-	काष्ठा fimc_lite *fimc = video_drvdata(file);
-	काष्ठा media_entity *me = &fimc->ve.vdev.entity;
-	पूर्णांक ret;
+static int fimc_lite_open(struct file *file)
+{
+	struct fimc_lite *fimc = video_drvdata(file);
+	struct media_entity *me = &fimc->ve.vdev.entity;
+	int ret;
 
 	mutex_lock(&fimc->lock);
-	अगर (atomic_पढ़ो(&fimc->out_path) != FIMC_IO_DMA) अणु
+	if (atomic_read(&fimc->out_path) != FIMC_IO_DMA) {
 		ret = -EBUSY;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	set_bit(ST_FLITE_IN_USE, &fimc->state);
-	ret = pm_runसमय_get_sync(&fimc->pdev->dev);
-	अगर (ret < 0)
-		जाओ err_pm;
+	ret = pm_runtime_get_sync(&fimc->pdev->dev);
+	if (ret < 0)
+		goto err_pm;
 
-	ret = v4l2_fh_खोलो(file);
-	अगर (ret < 0)
-		जाओ err_pm;
+	ret = v4l2_fh_open(file);
+	if (ret < 0)
+		goto err_pm;
 
-	अगर (!v4l2_fh_is_singular_file(file) ||
-	    atomic_पढ़ो(&fimc->out_path) != FIMC_IO_DMA)
-		जाओ unlock;
+	if (!v4l2_fh_is_singular_file(file) ||
+	    atomic_read(&fimc->out_path) != FIMC_IO_DMA)
+		goto unlock;
 
 	mutex_lock(&me->graph_obj.mdev->graph_mutex);
 
-	ret = fimc_pipeline_call(&fimc->ve, खोलो, me, true);
+	ret = fimc_pipeline_call(&fimc->ve, open, me, true);
 
 	/* Mark video pipeline ending at this video node as in use. */
-	अगर (ret == 0)
+	if (ret == 0)
 		me->use_count++;
 
 	mutex_unlock(&me->graph_obj.mdev->graph_mutex);
 
-	अगर (!ret) अणु
+	if (!ret) {
 		fimc_lite_clear_event_counters(fimc);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	v4l2_fh_release(file);
 err_pm:
-	pm_runसमय_put_sync(&fimc->pdev->dev);
+	pm_runtime_put_sync(&fimc->pdev->dev);
 	clear_bit(ST_FLITE_IN_USE, &fimc->state);
 unlock:
 	mutex_unlock(&fimc->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक fimc_lite_release(काष्ठा file *file)
-अणु
-	काष्ठा fimc_lite *fimc = video_drvdata(file);
-	काष्ठा media_entity *entity = &fimc->ve.vdev.entity;
+static int fimc_lite_release(struct file *file)
+{
+	struct fimc_lite *fimc = video_drvdata(file);
+	struct media_entity *entity = &fimc->ve.vdev.entity;
 
 	mutex_lock(&fimc->lock);
 
-	अगर (v4l2_fh_is_singular_file(file) &&
-	    atomic_पढ़ो(&fimc->out_path) == FIMC_IO_DMA) अणु
-		अगर (fimc->streaming) अणु
+	if (v4l2_fh_is_singular_file(file) &&
+	    atomic_read(&fimc->out_path) == FIMC_IO_DMA) {
+		if (fimc->streaming) {
 			media_pipeline_stop(entity);
 			fimc->streaming = false;
-		पूर्ण
+		}
 		fimc_lite_stop_capture(fimc, false);
-		fimc_pipeline_call(&fimc->ve, बंद);
+		fimc_pipeline_call(&fimc->ve, close);
 		clear_bit(ST_FLITE_IN_USE, &fimc->state);
 
 		mutex_lock(&entity->graph_obj.mdev->graph_mutex);
 		entity->use_count--;
 		mutex_unlock(&entity->graph_obj.mdev->graph_mutex);
-	पूर्ण
+	}
 
-	_vb2_fop_release(file, शून्य);
-	pm_runसमय_put(&fimc->pdev->dev);
+	_vb2_fop_release(file, NULL);
+	pm_runtime_put(&fimc->pdev->dev);
 	clear_bit(ST_FLITE_SUSPENDED, &fimc->state);
 
 	mutex_unlock(&fimc->lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा v4l2_file_operations fimc_lite_fops = अणु
+static const struct v4l2_file_operations fimc_lite_fops = {
 	.owner		= THIS_MODULE,
-	.खोलो		= fimc_lite_खोलो,
+	.open		= fimc_lite_open,
 	.release	= fimc_lite_release,
 	.poll		= vb2_fop_poll,
 	.unlocked_ioctl	= video_ioctl2,
 	.mmap		= vb2_fop_mmap,
-पूर्ण;
+};
 
 /*
  * Format and crop negotiation helpers
  */
 
-अटल स्थिर काष्ठा fimc_fmt *fimc_lite_subdev_try_fmt(काष्ठा fimc_lite *fimc,
-					काष्ठा v4l2_subdev_pad_config *cfg,
-					काष्ठा v4l2_subdev_क्रमmat *क्रमmat)
-अणु
-	काष्ठा flite_drvdata *dd = fimc->dd;
-	काष्ठा v4l2_mbus_framefmt *mf = &क्रमmat->क्रमmat;
-	स्थिर काष्ठा fimc_fmt *fmt = शून्य;
+static const struct fimc_fmt *fimc_lite_subdev_try_fmt(struct fimc_lite *fimc,
+					struct v4l2_subdev_pad_config *cfg,
+					struct v4l2_subdev_format *format)
+{
+	struct flite_drvdata *dd = fimc->dd;
+	struct v4l2_mbus_framefmt *mf = &format->format;
+	const struct fimc_fmt *fmt = NULL;
 
-	अगर (क्रमmat->pad == FLITE_SD_PAD_SINK) अणु
+	if (format->pad == FLITE_SD_PAD_SINK) {
 		v4l_bound_align_image(&mf->width, 8, dd->max_width,
 				ffs(dd->out_width_align) - 1,
 				&mf->height, 0, dd->max_height, 0, 0);
 
-		fmt = fimc_lite_find_क्रमmat(शून्य, &mf->code, 0, 0);
-		अगर (WARN_ON(!fmt))
-			वापस शून्य;
+		fmt = fimc_lite_find_format(NULL, &mf->code, 0, 0);
+		if (WARN_ON(!fmt))
+			return NULL;
 
 		mf->colorspace = fmt->colorspace;
 		mf->code = fmt->mbus_code;
-	पूर्ण अन्यथा अणु
-		काष्ठा flite_frame *sink = &fimc->inp_frame;
-		काष्ठा v4l2_mbus_framefmt *sink_fmt;
-		काष्ठा v4l2_rect *rect;
+	} else {
+		struct flite_frame *sink = &fimc->inp_frame;
+		struct v4l2_mbus_framefmt *sink_fmt;
+		struct v4l2_rect *rect;
 
-		अगर (क्रमmat->which == V4L2_SUBDEV_FORMAT_TRY) अणु
-			sink_fmt = v4l2_subdev_get_try_क्रमmat(&fimc->subdev, cfg,
+		if (format->which == V4L2_SUBDEV_FORMAT_TRY) {
+			sink_fmt = v4l2_subdev_get_try_format(&fimc->subdev, cfg,
 						FLITE_SD_PAD_SINK);
 
 			mf->code = sink_fmt->code;
@@ -582,178 +581,178 @@ unlock:
 
 			rect = v4l2_subdev_get_try_crop(&fimc->subdev, cfg,
 						FLITE_SD_PAD_SINK);
-		पूर्ण अन्यथा अणु
+		} else {
 			mf->code = sink->fmt->mbus_code;
 			mf->colorspace = sink->fmt->colorspace;
 			rect = &sink->rect;
-		पूर्ण
+		}
 
-		/* Allow changing क्रमmat only on sink pad */
+		/* Allow changing format only on sink pad */
 		mf->width = rect->width;
 		mf->height = rect->height;
-	पूर्ण
+	}
 
 	mf->field = V4L2_FIELD_NONE;
 
 	v4l2_dbg(1, debug, &fimc->subdev, "code: %#x (%d), %dx%d\n",
 		 mf->code, mf->colorspace, mf->width, mf->height);
 
-	वापस fmt;
-पूर्ण
+	return fmt;
+}
 
-अटल व्योम fimc_lite_try_crop(काष्ठा fimc_lite *fimc, काष्ठा v4l2_rect *r)
-अणु
-	काष्ठा flite_frame *frame = &fimc->inp_frame;
+static void fimc_lite_try_crop(struct fimc_lite *fimc, struct v4l2_rect *r)
+{
+	struct flite_frame *frame = &fimc->inp_frame;
 
 	v4l_bound_align_image(&r->width, 0, frame->f_width, 0,
 			      &r->height, 0, frame->f_height, 0, 0);
 
-	/* Adjust left/top अगर cropping rectangle got out of bounds */
+	/* Adjust left/top if cropping rectangle got out of bounds */
 	r->left = clamp_t(u32, r->left, 0, frame->f_width - r->width);
-	r->left = round_करोwn(r->left, fimc->dd->win_hor_offs_align);
+	r->left = round_down(r->left, fimc->dd->win_hor_offs_align);
 	r->top  = clamp_t(u32, r->top, 0, frame->f_height - r->height);
 
 	v4l2_dbg(1, debug, &fimc->subdev, "(%d,%d)/%dx%d, sink fmt: %dx%d\n",
 		 r->left, r->top, r->width, r->height,
 		 frame->f_width, frame->f_height);
-पूर्ण
+}
 
-अटल व्योम fimc_lite_try_compose(काष्ठा fimc_lite *fimc, काष्ठा v4l2_rect *r)
-अणु
-	काष्ठा flite_frame *frame = &fimc->out_frame;
-	काष्ठा v4l2_rect *crop_rect = &fimc->inp_frame.rect;
+static void fimc_lite_try_compose(struct fimc_lite *fimc, struct v4l2_rect *r)
+{
+	struct flite_frame *frame = &fimc->out_frame;
+	struct v4l2_rect *crop_rect = &fimc->inp_frame.rect;
 
-	/* Scaling is not supported so we enक्रमce compose rectangle size
+	/* Scaling is not supported so we enforce compose rectangle size
 	   same as size of the sink crop rectangle. */
 	r->width = crop_rect->width;
 	r->height = crop_rect->height;
 
-	/* Adjust left/top अगर the composing rectangle got out of bounds */
+	/* Adjust left/top if the composing rectangle got out of bounds */
 	r->left = clamp_t(u32, r->left, 0, frame->f_width - r->width);
-	r->left = round_करोwn(r->left, fimc->dd->out_hor_offs_align);
+	r->left = round_down(r->left, fimc->dd->out_hor_offs_align);
 	r->top  = clamp_t(u32, r->top, 0, fimc->out_frame.f_height - r->height);
 
 	v4l2_dbg(1, debug, &fimc->subdev, "(%d,%d)/%dx%d, source fmt: %dx%d\n",
 		 r->left, r->top, r->width, r->height,
 		 frame->f_width, frame->f_height);
-पूर्ण
+}
 
 /*
  * Video node ioctl operations
  */
-अटल पूर्णांक fimc_lite_querycap(काष्ठा file *file, व्योम *priv,
-					काष्ठा v4l2_capability *cap)
-अणु
-	काष्ठा fimc_lite *fimc = video_drvdata(file);
+static int fimc_lite_querycap(struct file *file, void *priv,
+					struct v4l2_capability *cap)
+{
+	struct fimc_lite *fimc = video_drvdata(file);
 
-	strscpy(cap->driver, FIMC_LITE_DRV_NAME, माप(cap->driver));
-	strscpy(cap->card, FIMC_LITE_DRV_NAME, माप(cap->card));
-	snम_लिखो(cap->bus_info, माप(cap->bus_info), "platform:%s",
+	strscpy(cap->driver, FIMC_LITE_DRV_NAME, sizeof(cap->driver));
+	strscpy(cap->card, FIMC_LITE_DRV_NAME, sizeof(cap->card));
+	snprintf(cap->bus_info, sizeof(cap->bus_info), "platform:%s",
 					dev_name(&fimc->pdev->dev));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fimc_lite_क्रमागत_fmt(काष्ठा file *file, व्योम *priv,
-			      काष्ठा v4l2_fmtdesc *f)
-अणु
-	स्थिर काष्ठा fimc_fmt *fmt;
+static int fimc_lite_enum_fmt(struct file *file, void *priv,
+			      struct v4l2_fmtdesc *f)
+{
+	const struct fimc_fmt *fmt;
 
-	अगर (f->index >= ARRAY_SIZE(fimc_lite_क्रमmats))
-		वापस -EINVAL;
+	if (f->index >= ARRAY_SIZE(fimc_lite_formats))
+		return -EINVAL;
 
-	fmt = &fimc_lite_क्रमmats[f->index];
-	f->pixelक्रमmat = fmt->fourcc;
+	fmt = &fimc_lite_formats[f->index];
+	f->pixelformat = fmt->fourcc;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fimc_lite_g_fmt_mplane(काष्ठा file *file, व्योम *fh,
-				  काष्ठा v4l2_क्रमmat *f)
-अणु
-	काष्ठा fimc_lite *fimc = video_drvdata(file);
-	काष्ठा v4l2_pix_क्रमmat_mplane *pixm = &f->fmt.pix_mp;
-	काष्ठा v4l2_plane_pix_क्रमmat *plane_fmt = &pixm->plane_fmt[0];
-	काष्ठा flite_frame *frame = &fimc->out_frame;
-	स्थिर काष्ठा fimc_fmt *fmt = frame->fmt;
+static int fimc_lite_g_fmt_mplane(struct file *file, void *fh,
+				  struct v4l2_format *f)
+{
+	struct fimc_lite *fimc = video_drvdata(file);
+	struct v4l2_pix_format_mplane *pixm = &f->fmt.pix_mp;
+	struct v4l2_plane_pix_format *plane_fmt = &pixm->plane_fmt[0];
+	struct flite_frame *frame = &fimc->out_frame;
+	const struct fimc_fmt *fmt = frame->fmt;
 
 	plane_fmt->bytesperline = (frame->f_width * fmt->depth[0]) / 8;
 	plane_fmt->sizeimage = plane_fmt->bytesperline * frame->f_height;
 
 	pixm->num_planes = fmt->memplanes;
-	pixm->pixelक्रमmat = fmt->fourcc;
+	pixm->pixelformat = fmt->fourcc;
 	pixm->width = frame->f_width;
 	pixm->height = frame->f_height;
 	pixm->field = V4L2_FIELD_NONE;
 	pixm->colorspace = fmt->colorspace;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fimc_lite_try_fmt(काष्ठा fimc_lite *fimc,
-			     काष्ठा v4l2_pix_क्रमmat_mplane *pixm,
-			     स्थिर काष्ठा fimc_fmt **ffmt)
-अणु
+static int fimc_lite_try_fmt(struct fimc_lite *fimc,
+			     struct v4l2_pix_format_mplane *pixm,
+			     const struct fimc_fmt **ffmt)
+{
 	u32 bpl = pixm->plane_fmt[0].bytesperline;
-	काष्ठा flite_drvdata *dd = fimc->dd;
-	स्थिर काष्ठा fimc_fmt *inp_fmt = fimc->inp_frame.fmt;
-	स्थिर काष्ठा fimc_fmt *fmt;
+	struct flite_drvdata *dd = fimc->dd;
+	const struct fimc_fmt *inp_fmt = fimc->inp_frame.fmt;
+	const struct fimc_fmt *fmt;
 
-	अगर (WARN_ON(inp_fmt == शून्य))
-		वापस -EINVAL;
+	if (WARN_ON(inp_fmt == NULL))
+		return -EINVAL;
 	/*
-	 * We allow some flexibility only क्रम YUV क्रमmats. In हाल of raw
-	 * raw Bayer the FIMC-LITE's output क्रमmat must match its camera
-	 * पूर्णांकerface input क्रमmat.
+	 * We allow some flexibility only for YUV formats. In case of raw
+	 * raw Bayer the FIMC-LITE's output format must match its camera
+	 * interface input format.
 	 */
-	अगर (inp_fmt->flags & FMT_FLAGS_YUV)
-		fmt = fimc_lite_find_क्रमmat(&pixm->pixelक्रमmat, शून्य,
+	if (inp_fmt->flags & FMT_FLAGS_YUV)
+		fmt = fimc_lite_find_format(&pixm->pixelformat, NULL,
 						inp_fmt->flags, 0);
-	अन्यथा
+	else
 		fmt = inp_fmt;
 
-	अगर (WARN_ON(fmt == शून्य))
-		वापस -EINVAL;
-	अगर (ffmt)
+	if (WARN_ON(fmt == NULL))
+		return -EINVAL;
+	if (ffmt)
 		*ffmt = fmt;
 	v4l_bound_align_image(&pixm->width, 8, dd->max_width,
 			      ffs(dd->out_width_align) - 1,
 			      &pixm->height, 0, dd->max_height, 0, 0);
 
-	अगर ((bpl == 0 || ((bpl * 8) / fmt->depth[0]) < pixm->width))
+	if ((bpl == 0 || ((bpl * 8) / fmt->depth[0]) < pixm->width))
 		pixm->plane_fmt[0].bytesperline = (pixm->width *
 						   fmt->depth[0]) / 8;
 
-	अगर (pixm->plane_fmt[0].sizeimage == 0)
+	if (pixm->plane_fmt[0].sizeimage == 0)
 		pixm->plane_fmt[0].sizeimage = (pixm->width * pixm->height *
 						fmt->depth[0]) / 8;
 	pixm->num_planes = fmt->memplanes;
-	pixm->pixelक्रमmat = fmt->fourcc;
+	pixm->pixelformat = fmt->fourcc;
 	pixm->colorspace = fmt->colorspace;
 	pixm->field = V4L2_FIELD_NONE;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fimc_lite_try_fmt_mplane(काष्ठा file *file, व्योम *fh,
-				    काष्ठा v4l2_क्रमmat *f)
-अणु
-	काष्ठा fimc_lite *fimc = video_drvdata(file);
-	वापस fimc_lite_try_fmt(fimc, &f->fmt.pix_mp, शून्य);
-पूर्ण
+static int fimc_lite_try_fmt_mplane(struct file *file, void *fh,
+				    struct v4l2_format *f)
+{
+	struct fimc_lite *fimc = video_drvdata(file);
+	return fimc_lite_try_fmt(fimc, &f->fmt.pix_mp, NULL);
+}
 
-अटल पूर्णांक fimc_lite_s_fmt_mplane(काष्ठा file *file, व्योम *priv,
-				  काष्ठा v4l2_क्रमmat *f)
-अणु
-	काष्ठा v4l2_pix_क्रमmat_mplane *pixm = &f->fmt.pix_mp;
-	काष्ठा fimc_lite *fimc = video_drvdata(file);
-	काष्ठा flite_frame *frame = &fimc->out_frame;
-	स्थिर काष्ठा fimc_fmt *fmt = शून्य;
-	पूर्णांक ret;
+static int fimc_lite_s_fmt_mplane(struct file *file, void *priv,
+				  struct v4l2_format *f)
+{
+	struct v4l2_pix_format_mplane *pixm = &f->fmt.pix_mp;
+	struct fimc_lite *fimc = video_drvdata(file);
+	struct flite_frame *frame = &fimc->out_frame;
+	const struct fimc_fmt *fmt = NULL;
+	int ret;
 
-	अगर (vb2_is_busy(&fimc->vb_queue))
-		वापस -EBUSY;
+	if (vb2_is_busy(&fimc->vb_queue))
+		return -EBUSY;
 
 	ret = fimc_lite_try_fmt(fimc, &f->fmt.pix_mp, &fmt);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	frame->fmt = fmt;
 	fimc->payload[0] = max((pixm->width * pixm->height * fmt->depth[0]) / 8,
@@ -761,162 +760,162 @@ unlock:
 	frame->f_width = pixm->width;
 	frame->f_height = pixm->height;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fimc_pipeline_validate(काष्ठा fimc_lite *fimc)
-अणु
-	काष्ठा v4l2_subdev *sd = &fimc->subdev;
-	काष्ठा v4l2_subdev_क्रमmat sink_fmt, src_fmt;
-	काष्ठा media_pad *pad;
-	पूर्णांक ret;
+static int fimc_pipeline_validate(struct fimc_lite *fimc)
+{
+	struct v4l2_subdev *sd = &fimc->subdev;
+	struct v4l2_subdev_format sink_fmt, src_fmt;
+	struct media_pad *pad;
+	int ret;
 
-	जबतक (1) अणु
-		/* Retrieve क्रमmat at the sink pad */
+	while (1) {
+		/* Retrieve format at the sink pad */
 		pad = &sd->entity.pads[0];
-		अगर (!(pad->flags & MEDIA_PAD_FL_SINK))
-			अवरोध;
-		/* Don't call FIMC subdev operation to aव्योम nested locking */
-		अगर (sd == &fimc->subdev) अणु
-			काष्ठा flite_frame *ff = &fimc->out_frame;
-			sink_fmt.क्रमmat.width = ff->f_width;
-			sink_fmt.क्रमmat.height = ff->f_height;
-			sink_fmt.क्रमmat.code = fimc->inp_frame.fmt->mbus_code;
-		पूर्ण अन्यथा अणु
+		if (!(pad->flags & MEDIA_PAD_FL_SINK))
+			break;
+		/* Don't call FIMC subdev operation to avoid nested locking */
+		if (sd == &fimc->subdev) {
+			struct flite_frame *ff = &fimc->out_frame;
+			sink_fmt.format.width = ff->f_width;
+			sink_fmt.format.height = ff->f_height;
+			sink_fmt.format.code = fimc->inp_frame.fmt->mbus_code;
+		} else {
 			sink_fmt.pad = pad->index;
 			sink_fmt.which = V4L2_SUBDEV_FORMAT_ACTIVE;
-			ret = v4l2_subdev_call(sd, pad, get_fmt, शून्य,
+			ret = v4l2_subdev_call(sd, pad, get_fmt, NULL,
 					       &sink_fmt);
-			अगर (ret < 0 && ret != -ENOIOCTLCMD)
-				वापस -EPIPE;
-		पूर्ण
-		/* Retrieve क्रमmat at the source pad */
+			if (ret < 0 && ret != -ENOIOCTLCMD)
+				return -EPIPE;
+		}
+		/* Retrieve format at the source pad */
 		pad = media_entity_remote_pad(pad);
-		अगर (!pad || !is_media_entity_v4l2_subdev(pad->entity))
-			अवरोध;
+		if (!pad || !is_media_entity_v4l2_subdev(pad->entity))
+			break;
 
 		sd = media_entity_to_v4l2_subdev(pad->entity);
 		src_fmt.pad = pad->index;
 		src_fmt.which = V4L2_SUBDEV_FORMAT_ACTIVE;
-		ret = v4l2_subdev_call(sd, pad, get_fmt, शून्य, &src_fmt);
-		अगर (ret < 0 && ret != -ENOIOCTLCMD)
-			वापस -EPIPE;
+		ret = v4l2_subdev_call(sd, pad, get_fmt, NULL, &src_fmt);
+		if (ret < 0 && ret != -ENOIOCTLCMD)
+			return -EPIPE;
 
-		अगर (src_fmt.क्रमmat.width != sink_fmt.क्रमmat.width ||
-		    src_fmt.क्रमmat.height != sink_fmt.क्रमmat.height ||
-		    src_fmt.क्रमmat.code != sink_fmt.क्रमmat.code)
-			वापस -EPIPE;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (src_fmt.format.width != sink_fmt.format.width ||
+		    src_fmt.format.height != sink_fmt.format.height ||
+		    src_fmt.format.code != sink_fmt.format.code)
+			return -EPIPE;
+	}
+	return 0;
+}
 
-अटल पूर्णांक fimc_lite_streamon(काष्ठा file *file, व्योम *priv,
-			      क्रमागत v4l2_buf_type type)
-अणु
-	काष्ठा fimc_lite *fimc = video_drvdata(file);
-	काष्ठा media_entity *entity = &fimc->ve.vdev.entity;
-	पूर्णांक ret;
+static int fimc_lite_streamon(struct file *file, void *priv,
+			      enum v4l2_buf_type type)
+{
+	struct fimc_lite *fimc = video_drvdata(file);
+	struct media_entity *entity = &fimc->ve.vdev.entity;
+	int ret;
 
-	अगर (fimc_lite_active(fimc))
-		वापस -EBUSY;
+	if (fimc_lite_active(fimc))
+		return -EBUSY;
 
 	ret = media_pipeline_start(entity, &fimc->ve.pipe->mp);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	ret = fimc_pipeline_validate(fimc);
-	अगर (ret < 0)
-		जाओ err_p_stop;
+	if (ret < 0)
+		goto err_p_stop;
 
 	fimc->sensor = fimc_find_remote_sensor(&fimc->subdev.entity);
 
 	ret = vb2_ioctl_streamon(file, priv, type);
-	अगर (!ret) अणु
+	if (!ret) {
 		fimc->streaming = true;
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 err_p_stop:
 	media_pipeline_stop(entity);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fimc_lite_streamoff(काष्ठा file *file, व्योम *priv,
-			       क्रमागत v4l2_buf_type type)
-अणु
-	काष्ठा fimc_lite *fimc = video_drvdata(file);
-	पूर्णांक ret;
+static int fimc_lite_streamoff(struct file *file, void *priv,
+			       enum v4l2_buf_type type)
+{
+	struct fimc_lite *fimc = video_drvdata(file);
+	int ret;
 
 	ret = vb2_ioctl_streamoff(file, priv, type);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	media_pipeline_stop(&fimc->ve.vdev.entity);
 	fimc->streaming = false;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fimc_lite_reqbufs(काष्ठा file *file, व्योम *priv,
-			     काष्ठा v4l2_requestbuffers *reqbufs)
-अणु
-	काष्ठा fimc_lite *fimc = video_drvdata(file);
-	पूर्णांक ret;
+static int fimc_lite_reqbufs(struct file *file, void *priv,
+			     struct v4l2_requestbuffers *reqbufs)
+{
+	struct fimc_lite *fimc = video_drvdata(file);
+	int ret;
 
 	reqbufs->count = max_t(u32, FLITE_REQ_BUFS_MIN, reqbufs->count);
 	ret = vb2_ioctl_reqbufs(file, priv, reqbufs);
-	अगर (!ret)
+	if (!ret)
 		fimc->reqbufs_count = reqbufs->count;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक fimc_lite_g_selection(काष्ठा file *file, व्योम *fh,
-				 काष्ठा v4l2_selection *sel)
-अणु
-	काष्ठा fimc_lite *fimc = video_drvdata(file);
-	काष्ठा flite_frame *f = &fimc->out_frame;
+static int fimc_lite_g_selection(struct file *file, void *fh,
+				 struct v4l2_selection *sel)
+{
+	struct fimc_lite *fimc = video_drvdata(file);
+	struct flite_frame *f = &fimc->out_frame;
 
-	अगर (sel->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
-		वापस -EINVAL;
+	if (sel->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
+		return -EINVAL;
 
-	चयन (sel->target) अणु
-	हाल V4L2_SEL_TGT_COMPOSE_BOUNDS:
-	हाल V4L2_SEL_TGT_COMPOSE_DEFAULT:
+	switch (sel->target) {
+	case V4L2_SEL_TGT_COMPOSE_BOUNDS:
+	case V4L2_SEL_TGT_COMPOSE_DEFAULT:
 		sel->r.left = 0;
 		sel->r.top = 0;
 		sel->r.width = f->f_width;
 		sel->r.height = f->f_height;
-		वापस 0;
+		return 0;
 
-	हाल V4L2_SEL_TGT_COMPOSE:
+	case V4L2_SEL_TGT_COMPOSE:
 		sel->r = f->rect;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक fimc_lite_s_selection(काष्ठा file *file, व्योम *fh,
-				 काष्ठा v4l2_selection *sel)
-अणु
-	काष्ठा fimc_lite *fimc = video_drvdata(file);
-	काष्ठा flite_frame *f = &fimc->out_frame;
-	काष्ठा v4l2_rect rect = sel->r;
-	अचिन्हित दीर्घ flags;
+static int fimc_lite_s_selection(struct file *file, void *fh,
+				 struct v4l2_selection *sel)
+{
+	struct fimc_lite *fimc = video_drvdata(file);
+	struct flite_frame *f = &fimc->out_frame;
+	struct v4l2_rect rect = sel->r;
+	unsigned long flags;
 
-	अगर (sel->type != V4L2_BUF_TYPE_VIDEO_CAPTURE ||
+	if (sel->type != V4L2_BUF_TYPE_VIDEO_CAPTURE ||
 	    sel->target != V4L2_SEL_TGT_COMPOSE)
-		वापस -EINVAL;
+		return -EINVAL;
 
 	fimc_lite_try_compose(fimc, &rect);
 
-	अगर ((sel->flags & V4L2_SEL_FLAG_LE) &&
-	    !v4l2_rect_enबंदd(&rect, &sel->r))
-		वापस -दुस्फल;
+	if ((sel->flags & V4L2_SEL_FLAG_LE) &&
+	    !v4l2_rect_enclosed(&rect, &sel->r))
+		return -ERANGE;
 
-	अगर ((sel->flags & V4L2_SEL_FLAG_GE) &&
-	    !v4l2_rect_enबंदd(&sel->r, &rect))
-		वापस -दुस्फल;
+	if ((sel->flags & V4L2_SEL_FLAG_GE) &&
+	    !v4l2_rect_enclosed(&sel->r, &rect))
+		return -ERANGE;
 
 	sel->r = rect;
 	spin_lock_irqsave(&fimc->slock, flags);
@@ -924,12 +923,12 @@ err_p_stop:
 	set_bit(ST_FLITE_CONFIG, &fimc->state);
 	spin_unlock_irqrestore(&fimc->slock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा v4l2_ioctl_ops fimc_lite_ioctl_ops = अणु
+static const struct v4l2_ioctl_ops fimc_lite_ioctl_ops = {
 	.vidioc_querycap		= fimc_lite_querycap,
-	.vidioc_क्रमागत_fmt_vid_cap	= fimc_lite_क्रमागत_fmt,
+	.vidioc_enum_fmt_vid_cap	= fimc_lite_enum_fmt,
 	.vidioc_try_fmt_vid_cap_mplane	= fimc_lite_try_fmt_mplane,
 	.vidioc_s_fmt_vid_cap_mplane	= fimc_lite_s_fmt_mplane,
 	.vidioc_g_fmt_vid_cap_mplane	= fimc_lite_g_fmt_mplane,
@@ -943,160 +942,160 @@ err_p_stop:
 	.vidioc_dqbuf			= vb2_ioctl_dqbuf,
 	.vidioc_streamon		= fimc_lite_streamon,
 	.vidioc_streamoff		= fimc_lite_streamoff,
-पूर्ण;
+};
 
 /* Capture subdev media entity operations */
-अटल पूर्णांक fimc_lite_link_setup(काष्ठा media_entity *entity,
-				स्थिर काष्ठा media_pad *local,
-				स्थिर काष्ठा media_pad *remote, u32 flags)
-अणु
-	काष्ठा v4l2_subdev *sd = media_entity_to_v4l2_subdev(entity);
-	काष्ठा fimc_lite *fimc = v4l2_get_subdevdata(sd);
-	पूर्णांक ret = 0;
+static int fimc_lite_link_setup(struct media_entity *entity,
+				const struct media_pad *local,
+				const struct media_pad *remote, u32 flags)
+{
+	struct v4l2_subdev *sd = media_entity_to_v4l2_subdev(entity);
+	struct fimc_lite *fimc = v4l2_get_subdevdata(sd);
+	int ret = 0;
 
-	अगर (WARN_ON(fimc == शून्य))
-		वापस 0;
+	if (WARN_ON(fimc == NULL))
+		return 0;
 
 	v4l2_dbg(1, debug, sd, "%s: %s --> %s, flags: 0x%x. source_id: 0x%x\n",
 		 __func__, remote->entity->name, local->entity->name,
 		 flags, fimc->source_subdev_grp_id);
 
-	चयन (local->index) अणु
-	हाल FLITE_SD_PAD_SINK:
-		अगर (flags & MEDIA_LNK_FL_ENABLED) अणु
-			अगर (fimc->source_subdev_grp_id == 0)
+	switch (local->index) {
+	case FLITE_SD_PAD_SINK:
+		if (flags & MEDIA_LNK_FL_ENABLED) {
+			if (fimc->source_subdev_grp_id == 0)
 				fimc->source_subdev_grp_id = sd->grp_id;
-			अन्यथा
+			else
 				ret = -EBUSY;
-		पूर्ण अन्यथा अणु
+		} else {
 			fimc->source_subdev_grp_id = 0;
-			fimc->sensor = शून्य;
-		पूर्ण
-		अवरोध;
+			fimc->sensor = NULL;
+		}
+		break;
 
-	हाल FLITE_SD_PAD_SOURCE_DMA:
-		अगर (!(flags & MEDIA_LNK_FL_ENABLED))
+	case FLITE_SD_PAD_SOURCE_DMA:
+		if (!(flags & MEDIA_LNK_FL_ENABLED))
 			atomic_set(&fimc->out_path, FIMC_IO_NONE);
-		अन्यथा
+		else
 			atomic_set(&fimc->out_path, FIMC_IO_DMA);
-		अवरोध;
+		break;
 
-	हाल FLITE_SD_PAD_SOURCE_ISP:
-		अगर (!(flags & MEDIA_LNK_FL_ENABLED))
+	case FLITE_SD_PAD_SOURCE_ISP:
+		if (!(flags & MEDIA_LNK_FL_ENABLED))
 			atomic_set(&fimc->out_path, FIMC_IO_NONE);
-		अन्यथा
+		else
 			atomic_set(&fimc->out_path, FIMC_IO_ISP);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		v4l2_err(sd, "Invalid pad index\n");
 		ret = -EINVAL;
-	पूर्ण
+	}
 	mb();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा media_entity_operations fimc_lite_subdev_media_ops = अणु
+static const struct media_entity_operations fimc_lite_subdev_media_ops = {
 	.link_setup = fimc_lite_link_setup,
-पूर्ण;
+};
 
-अटल पूर्णांक fimc_lite_subdev_क्रमागत_mbus_code(काष्ठा v4l2_subdev *sd,
-					   काष्ठा v4l2_subdev_pad_config *cfg,
-					   काष्ठा v4l2_subdev_mbus_code_क्रमागत *code)
-अणु
-	स्थिर काष्ठा fimc_fmt *fmt;
+static int fimc_lite_subdev_enum_mbus_code(struct v4l2_subdev *sd,
+					   struct v4l2_subdev_pad_config *cfg,
+					   struct v4l2_subdev_mbus_code_enum *code)
+{
+	const struct fimc_fmt *fmt;
 
-	fmt = fimc_lite_find_क्रमmat(शून्य, शून्य, 0, code->index);
-	अगर (!fmt)
-		वापस -EINVAL;
+	fmt = fimc_lite_find_format(NULL, NULL, 0, code->index);
+	if (!fmt)
+		return -EINVAL;
 	code->code = fmt->mbus_code;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा v4l2_mbus_framefmt *__fimc_lite_subdev_get_try_fmt(
-		काष्ठा v4l2_subdev *sd,
-		काष्ठा v4l2_subdev_pad_config *cfg, अचिन्हित पूर्णांक pad)
-अणु
-	अगर (pad != FLITE_SD_PAD_SINK)
+static struct v4l2_mbus_framefmt *__fimc_lite_subdev_get_try_fmt(
+		struct v4l2_subdev *sd,
+		struct v4l2_subdev_pad_config *cfg, unsigned int pad)
+{
+	if (pad != FLITE_SD_PAD_SINK)
 		pad = FLITE_SD_PAD_SOURCE_DMA;
 
-	वापस v4l2_subdev_get_try_क्रमmat(sd, cfg, pad);
-पूर्ण
+	return v4l2_subdev_get_try_format(sd, cfg, pad);
+}
 
-अटल पूर्णांक fimc_lite_subdev_get_fmt(काष्ठा v4l2_subdev *sd,
-				    काष्ठा v4l2_subdev_pad_config *cfg,
-				    काष्ठा v4l2_subdev_क्रमmat *fmt)
-अणु
-	काष्ठा fimc_lite *fimc = v4l2_get_subdevdata(sd);
-	काष्ठा v4l2_mbus_framefmt *mf = &fmt->क्रमmat;
-	काष्ठा flite_frame *f = &fimc->inp_frame;
+static int fimc_lite_subdev_get_fmt(struct v4l2_subdev *sd,
+				    struct v4l2_subdev_pad_config *cfg,
+				    struct v4l2_subdev_format *fmt)
+{
+	struct fimc_lite *fimc = v4l2_get_subdevdata(sd);
+	struct v4l2_mbus_framefmt *mf = &fmt->format;
+	struct flite_frame *f = &fimc->inp_frame;
 
-	अगर (fmt->which == V4L2_SUBDEV_FORMAT_TRY) अणु
+	if (fmt->which == V4L2_SUBDEV_FORMAT_TRY) {
 		mf = __fimc_lite_subdev_get_try_fmt(sd, cfg, fmt->pad);
-		fmt->क्रमmat = *mf;
-		वापस 0;
-	पूर्ण
+		fmt->format = *mf;
+		return 0;
+	}
 
 	mutex_lock(&fimc->lock);
 	mf->colorspace = f->fmt->colorspace;
 	mf->code = f->fmt->mbus_code;
 
-	अगर (fmt->pad == FLITE_SD_PAD_SINK) अणु
+	if (fmt->pad == FLITE_SD_PAD_SINK) {
 		/* full camera input frame size */
 		mf->width = f->f_width;
 		mf->height = f->f_height;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* crop size */
 		mf->width = f->rect.width;
 		mf->height = f->rect.height;
-	पूर्ण
+	}
 	mutex_unlock(&fimc->lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fimc_lite_subdev_set_fmt(काष्ठा v4l2_subdev *sd,
-				    काष्ठा v4l2_subdev_pad_config *cfg,
-				    काष्ठा v4l2_subdev_क्रमmat *fmt)
-अणु
-	काष्ठा fimc_lite *fimc = v4l2_get_subdevdata(sd);
-	काष्ठा v4l2_mbus_framefmt *mf = &fmt->क्रमmat;
-	काष्ठा flite_frame *sink = &fimc->inp_frame;
-	काष्ठा flite_frame *source = &fimc->out_frame;
-	स्थिर काष्ठा fimc_fmt *ffmt;
+static int fimc_lite_subdev_set_fmt(struct v4l2_subdev *sd,
+				    struct v4l2_subdev_pad_config *cfg,
+				    struct v4l2_subdev_format *fmt)
+{
+	struct fimc_lite *fimc = v4l2_get_subdevdata(sd);
+	struct v4l2_mbus_framefmt *mf = &fmt->format;
+	struct flite_frame *sink = &fimc->inp_frame;
+	struct flite_frame *source = &fimc->out_frame;
+	const struct fimc_fmt *ffmt;
 
 	v4l2_dbg(1, debug, sd, "pad%d: code: 0x%x, %dx%d\n",
 		 fmt->pad, mf->code, mf->width, mf->height);
 
 	mutex_lock(&fimc->lock);
 
-	अगर ((atomic_पढ़ो(&fimc->out_path) == FIMC_IO_ISP &&
+	if ((atomic_read(&fimc->out_path) == FIMC_IO_ISP &&
 	    sd->entity.stream_count > 0) ||
-	    (atomic_पढ़ो(&fimc->out_path) == FIMC_IO_DMA &&
-	    vb2_is_busy(&fimc->vb_queue))) अणु
+	    (atomic_read(&fimc->out_path) == FIMC_IO_DMA &&
+	    vb2_is_busy(&fimc->vb_queue))) {
 		mutex_unlock(&fimc->lock);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	ffmt = fimc_lite_subdev_try_fmt(fimc, cfg, fmt);
 
-	अगर (fmt->which == V4L2_SUBDEV_FORMAT_TRY) अणु
-		काष्ठा v4l2_mbus_framefmt *src_fmt;
+	if (fmt->which == V4L2_SUBDEV_FORMAT_TRY) {
+		struct v4l2_mbus_framefmt *src_fmt;
 
 		mf = __fimc_lite_subdev_get_try_fmt(sd, cfg, fmt->pad);
-		*mf = fmt->क्रमmat;
+		*mf = fmt->format;
 
-		अगर (fmt->pad == FLITE_SD_PAD_SINK) अणु
-			अचिन्हित पूर्णांक pad = FLITE_SD_PAD_SOURCE_DMA;
+		if (fmt->pad == FLITE_SD_PAD_SINK) {
+			unsigned int pad = FLITE_SD_PAD_SOURCE_DMA;
 			src_fmt = __fimc_lite_subdev_get_try_fmt(sd, cfg, pad);
 			*src_fmt = *mf;
-		पूर्ण
+		}
 
 		mutex_unlock(&fimc->lock);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (fmt->pad == FLITE_SD_PAD_SINK) अणु
+	if (fmt->pad == FLITE_SD_PAD_SINK) {
 		sink->f_width = mf->width;
 		sink->f_height = mf->height;
 		sink->fmt = ffmt;
@@ -1105,150 +1104,150 @@ err_p_stop:
 		sink->rect.height = mf->height;
 		sink->rect.left = 0;
 		sink->rect.top = 0;
-		/* Reset source क्रमmat and crop rectangle */
+		/* Reset source format and crop rectangle */
 		source->rect = sink->rect;
 		source->f_width = mf->width;
 		source->f_height = mf->height;
-	पूर्ण
+	}
 
 	mutex_unlock(&fimc->lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fimc_lite_subdev_get_selection(काष्ठा v4l2_subdev *sd,
-					  काष्ठा v4l2_subdev_pad_config *cfg,
-					  काष्ठा v4l2_subdev_selection *sel)
-अणु
-	काष्ठा fimc_lite *fimc = v4l2_get_subdevdata(sd);
-	काष्ठा flite_frame *f = &fimc->inp_frame;
+static int fimc_lite_subdev_get_selection(struct v4l2_subdev *sd,
+					  struct v4l2_subdev_pad_config *cfg,
+					  struct v4l2_subdev_selection *sel)
+{
+	struct fimc_lite *fimc = v4l2_get_subdevdata(sd);
+	struct flite_frame *f = &fimc->inp_frame;
 
-	अगर ((sel->target != V4L2_SEL_TGT_CROP &&
+	if ((sel->target != V4L2_SEL_TGT_CROP &&
 	     sel->target != V4L2_SEL_TGT_CROP_BOUNDS) ||
 	     sel->pad != FLITE_SD_PAD_SINK)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर (sel->which == V4L2_SUBDEV_FORMAT_TRY) अणु
+	if (sel->which == V4L2_SUBDEV_FORMAT_TRY) {
 		sel->r = *v4l2_subdev_get_try_crop(sd, cfg, sel->pad);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	mutex_lock(&fimc->lock);
-	अगर (sel->target == V4L2_SEL_TGT_CROP) अणु
+	if (sel->target == V4L2_SEL_TGT_CROP) {
 		sel->r = f->rect;
-	पूर्ण अन्यथा अणु
+	} else {
 		sel->r.left = 0;
 		sel->r.top = 0;
 		sel->r.width = f->f_width;
 		sel->r.height = f->f_height;
-	पूर्ण
+	}
 	mutex_unlock(&fimc->lock);
 
 	v4l2_dbg(1, debug, sd, "%s: (%d,%d) %dx%d, f_w: %d, f_h: %d\n",
 		 __func__, f->rect.left, f->rect.top, f->rect.width,
 		 f->rect.height, f->f_width, f->f_height);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fimc_lite_subdev_set_selection(काष्ठा v4l2_subdev *sd,
-					  काष्ठा v4l2_subdev_pad_config *cfg,
-					  काष्ठा v4l2_subdev_selection *sel)
-अणु
-	काष्ठा fimc_lite *fimc = v4l2_get_subdevdata(sd);
-	काष्ठा flite_frame *f = &fimc->inp_frame;
-	पूर्णांक ret = 0;
+static int fimc_lite_subdev_set_selection(struct v4l2_subdev *sd,
+					  struct v4l2_subdev_pad_config *cfg,
+					  struct v4l2_subdev_selection *sel)
+{
+	struct fimc_lite *fimc = v4l2_get_subdevdata(sd);
+	struct flite_frame *f = &fimc->inp_frame;
+	int ret = 0;
 
-	अगर (sel->target != V4L2_SEL_TGT_CROP || sel->pad != FLITE_SD_PAD_SINK)
-		वापस -EINVAL;
+	if (sel->target != V4L2_SEL_TGT_CROP || sel->pad != FLITE_SD_PAD_SINK)
+		return -EINVAL;
 
 	mutex_lock(&fimc->lock);
 	fimc_lite_try_crop(fimc, &sel->r);
 
-	अगर (sel->which == V4L2_SUBDEV_FORMAT_TRY) अणु
+	if (sel->which == V4L2_SUBDEV_FORMAT_TRY) {
 		*v4l2_subdev_get_try_crop(sd, cfg, sel->pad) = sel->r;
-	पूर्ण अन्यथा अणु
-		अचिन्हित दीर्घ flags;
+	} else {
+		unsigned long flags;
 		spin_lock_irqsave(&fimc->slock, flags);
 		f->rect = sel->r;
 		/* Same crop rectangle on the source pad */
 		fimc->out_frame.rect = sel->r;
 		set_bit(ST_FLITE_CONFIG, &fimc->state);
 		spin_unlock_irqrestore(&fimc->slock, flags);
-	पूर्ण
+	}
 	mutex_unlock(&fimc->lock);
 
 	v4l2_dbg(1, debug, sd, "%s: (%d,%d) %dx%d, f_w: %d, f_h: %d\n",
 		 __func__, f->rect.left, f->rect.top, f->rect.width,
 		 f->rect.height, f->f_width, f->f_height);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक fimc_lite_subdev_s_stream(काष्ठा v4l2_subdev *sd, पूर्णांक on)
-अणु
-	काष्ठा fimc_lite *fimc = v4l2_get_subdevdata(sd);
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+static int fimc_lite_subdev_s_stream(struct v4l2_subdev *sd, int on)
+{
+	struct fimc_lite *fimc = v4l2_get_subdevdata(sd);
+	unsigned long flags;
+	int ret;
 
 	/*
 	 * Find sensor subdev linked to FIMC-LITE directly or through
-	 * MIPI-CSIS. This is required क्रम configuration where FIMC-LITE
-	 * is used as a subdev only and feeds data पूर्णांकernally to FIMC-IS.
-	 * The pipeline links are रक्षित through entity.stream_count
+	 * MIPI-CSIS. This is required for configuration where FIMC-LITE
+	 * is used as a subdev only and feeds data internally to FIMC-IS.
+	 * The pipeline links are protected through entity.stream_count
 	 * so there is no need to take the media graph mutex here.
 	 */
 	fimc->sensor = fimc_find_remote_sensor(&sd->entity);
 
-	अगर (atomic_पढ़ो(&fimc->out_path) != FIMC_IO_ISP)
-		वापस -ENOIOCTLCMD;
+	if (atomic_read(&fimc->out_path) != FIMC_IO_ISP)
+		return -ENOIOCTLCMD;
 
 	mutex_lock(&fimc->lock);
-	अगर (on) अणु
+	if (on) {
 		flite_hw_reset(fimc);
 		ret = fimc_lite_hw_init(fimc, true);
-		अगर (!ret) अणु
+		if (!ret) {
 			spin_lock_irqsave(&fimc->slock, flags);
 			flite_hw_capture_start(fimc);
 			spin_unlock_irqrestore(&fimc->slock, flags);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		set_bit(ST_FLITE_OFF, &fimc->state);
 
 		spin_lock_irqsave(&fimc->slock, flags);
 		flite_hw_capture_stop(fimc);
 		spin_unlock_irqrestore(&fimc->slock, flags);
 
-		ret = रुको_event_समयout(fimc->irq_queue,
+		ret = wait_event_timeout(fimc->irq_queue,
 				!test_bit(ST_FLITE_OFF, &fimc->state),
-				msecs_to_jअगरfies(200));
-		अगर (ret == 0)
+				msecs_to_jiffies(200));
+		if (ret == 0)
 			v4l2_err(sd, "s_stream(0) timeout\n");
 		clear_bit(ST_FLITE_RUN, &fimc->state);
-	पूर्ण
+	}
 
 	mutex_unlock(&fimc->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक fimc_lite_log_status(काष्ठा v4l2_subdev *sd)
-अणु
-	काष्ठा fimc_lite *fimc = v4l2_get_subdevdata(sd);
+static int fimc_lite_log_status(struct v4l2_subdev *sd)
+{
+	struct fimc_lite *fimc = v4l2_get_subdevdata(sd);
 
 	flite_hw_dump_regs(fimc, __func__);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fimc_lite_subdev_रेजिस्टरed(काष्ठा v4l2_subdev *sd)
-अणु
-	काष्ठा fimc_lite *fimc = v4l2_get_subdevdata(sd);
-	काष्ठा vb2_queue *q = &fimc->vb_queue;
-	काष्ठा video_device *vfd = &fimc->ve.vdev;
-	पूर्णांक ret;
+static int fimc_lite_subdev_registered(struct v4l2_subdev *sd)
+{
+	struct fimc_lite *fimc = v4l2_get_subdevdata(sd);
+	struct vb2_queue *q = &fimc->vb_queue;
+	struct video_device *vfd = &fimc->ve.vdev;
+	int ret;
 
-	स_रखो(vfd, 0, माप(*vfd));
+	memset(vfd, 0, sizeof(*vfd));
 	atomic_set(&fimc->out_path, FIMC_IO_DMA);
 
-	snम_लिखो(vfd->name, माप(vfd->name), "fimc-lite.%d.capture",
+	snprintf(vfd->name, sizeof(vfd->name), "fimc-lite.%d.capture",
 		 fimc->index);
 
 	vfd->fops = &fimc_lite_fops;
@@ -1263,112 +1262,112 @@ err_p_stop:
 	INIT_LIST_HEAD(&fimc->pending_buf_q);
 	INIT_LIST_HEAD(&fimc->active_buf_q);
 
-	स_रखो(q, 0, माप(*q));
+	memset(q, 0, sizeof(*q));
 	q->type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
 	q->io_modes = VB2_MMAP | VB2_USERPTR;
 	q->ops = &fimc_lite_qops;
 	q->mem_ops = &vb2_dma_contig_memops;
-	q->buf_काष्ठा_size = माप(काष्ठा flite_buffer);
+	q->buf_struct_size = sizeof(struct flite_buffer);
 	q->drv_priv = fimc;
-	q->बारtamp_flags = V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC;
+	q->timestamp_flags = V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC;
 	q->lock = &fimc->lock;
 	q->dev = &fimc->pdev->dev;
 
 	ret = vb2_queue_init(q);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	fimc->vd_pad.flags = MEDIA_PAD_FL_SINK;
 	ret = media_entity_pads_init(&vfd->entity, 1, &fimc->vd_pad);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	video_set_drvdata(vfd, fimc);
 	fimc->ve.pipe = v4l2_get_subdev_hostdata(sd);
 
-	ret = video_रेजिस्टर_device(vfd, VFL_TYPE_VIDEO, -1);
-	अगर (ret < 0) अणु
+	ret = video_register_device(vfd, VFL_TYPE_VIDEO, -1);
+	if (ret < 0) {
 		media_entity_cleanup(&vfd->entity);
-		fimc->ve.pipe = शून्य;
-		वापस ret;
-	पूर्ण
+		fimc->ve.pipe = NULL;
+		return ret;
+	}
 
 	v4l2_info(sd->v4l2_dev, "Registered %s as /dev/%s\n",
 		  vfd->name, video_device_node_name(vfd));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम fimc_lite_subdev_unरेजिस्टरed(काष्ठा v4l2_subdev *sd)
-अणु
-	काष्ठा fimc_lite *fimc = v4l2_get_subdevdata(sd);
+static void fimc_lite_subdev_unregistered(struct v4l2_subdev *sd)
+{
+	struct fimc_lite *fimc = v4l2_get_subdevdata(sd);
 
-	अगर (fimc == शून्य)
-		वापस;
+	if (fimc == NULL)
+		return;
 
 	mutex_lock(&fimc->lock);
 
-	अगर (video_is_रेजिस्टरed(&fimc->ve.vdev)) अणु
-		video_unरेजिस्टर_device(&fimc->ve.vdev);
+	if (video_is_registered(&fimc->ve.vdev)) {
+		video_unregister_device(&fimc->ve.vdev);
 		media_entity_cleanup(&fimc->ve.vdev.entity);
-		fimc->ve.pipe = शून्य;
-	पूर्ण
+		fimc->ve.pipe = NULL;
+	}
 
 	mutex_unlock(&fimc->lock);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा v4l2_subdev_पूर्णांकernal_ops fimc_lite_subdev_पूर्णांकernal_ops = अणु
-	.रेजिस्टरed = fimc_lite_subdev_रेजिस्टरed,
-	.unरेजिस्टरed = fimc_lite_subdev_unरेजिस्टरed,
-पूर्ण;
+static const struct v4l2_subdev_internal_ops fimc_lite_subdev_internal_ops = {
+	.registered = fimc_lite_subdev_registered,
+	.unregistered = fimc_lite_subdev_unregistered,
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_pad_ops fimc_lite_subdev_pad_ops = अणु
-	.क्रमागत_mbus_code = fimc_lite_subdev_क्रमागत_mbus_code,
+static const struct v4l2_subdev_pad_ops fimc_lite_subdev_pad_ops = {
+	.enum_mbus_code = fimc_lite_subdev_enum_mbus_code,
 	.get_selection = fimc_lite_subdev_get_selection,
 	.set_selection = fimc_lite_subdev_set_selection,
 	.get_fmt = fimc_lite_subdev_get_fmt,
 	.set_fmt = fimc_lite_subdev_set_fmt,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_video_ops fimc_lite_subdev_video_ops = अणु
+static const struct v4l2_subdev_video_ops fimc_lite_subdev_video_ops = {
 	.s_stream = fimc_lite_subdev_s_stream,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_core_ops fimc_lite_core_ops = अणु
+static const struct v4l2_subdev_core_ops fimc_lite_core_ops = {
 	.log_status = fimc_lite_log_status,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_ops fimc_lite_subdev_ops = अणु
+static const struct v4l2_subdev_ops fimc_lite_subdev_ops = {
 	.core = &fimc_lite_core_ops,
 	.video = &fimc_lite_subdev_video_ops,
 	.pad = &fimc_lite_subdev_pad_ops,
-पूर्ण;
+};
 
-अटल पूर्णांक fimc_lite_s_ctrl(काष्ठा v4l2_ctrl *ctrl)
-अणु
-	काष्ठा fimc_lite *fimc = container_of(ctrl->handler, काष्ठा fimc_lite,
+static int fimc_lite_s_ctrl(struct v4l2_ctrl *ctrl)
+{
+	struct fimc_lite *fimc = container_of(ctrl->handler, struct fimc_lite,
 					      ctrl_handler);
 	set_bit(ST_FLITE_CONFIG, &fimc->state);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा v4l2_ctrl_ops fimc_lite_ctrl_ops = अणु
+static const struct v4l2_ctrl_ops fimc_lite_ctrl_ops = {
 	.s_ctrl	= fimc_lite_s_ctrl,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_ctrl_config fimc_lite_ctrl = अणु
+static const struct v4l2_ctrl_config fimc_lite_ctrl = {
 	.ops	= &fimc_lite_ctrl_ops,
 	.id	= V4L2_CTRL_CLASS_USER | 0x1001,
 	.type	= V4L2_CTRL_TYPE_BOOLEAN,
 	.name	= "Test Pattern 640x480",
 	.step	= 1,
-पूर्ण;
+};
 
-अटल व्योम fimc_lite_set_शेष_config(काष्ठा fimc_lite *fimc)
-अणु
-	काष्ठा flite_frame *sink = &fimc->inp_frame;
-	काष्ठा flite_frame *source = &fimc->out_frame;
+static void fimc_lite_set_default_config(struct fimc_lite *fimc)
+{
+	struct flite_frame *sink = &fimc->inp_frame;
+	struct flite_frame *source = &fimc->out_frame;
 
-	sink->fmt = &fimc_lite_क्रमmats[0];
+	sink->fmt = &fimc_lite_formats[0];
 	sink->f_width = FLITE_DEFAULT_WIDTH;
 	sink->f_height = FLITE_DEFAULT_HEIGHT;
 
@@ -1378,252 +1377,252 @@ err_p_stop:
 	sink->rect.top = 0;
 
 	*source = *sink;
-पूर्ण
+}
 
-अटल पूर्णांक fimc_lite_create_capture_subdev(काष्ठा fimc_lite *fimc)
-अणु
-	काष्ठा v4l2_ctrl_handler *handler = &fimc->ctrl_handler;
-	काष्ठा v4l2_subdev *sd = &fimc->subdev;
-	पूर्णांक ret;
+static int fimc_lite_create_capture_subdev(struct fimc_lite *fimc)
+{
+	struct v4l2_ctrl_handler *handler = &fimc->ctrl_handler;
+	struct v4l2_subdev *sd = &fimc->subdev;
+	int ret;
 
 	v4l2_subdev_init(sd, &fimc_lite_subdev_ops);
 	sd->flags |= V4L2_SUBDEV_FL_HAS_DEVNODE;
-	snम_लिखो(sd->name, माप(sd->name), "FIMC-LITE.%d", fimc->index);
+	snprintf(sd->name, sizeof(sd->name), "FIMC-LITE.%d", fimc->index);
 
 	fimc->subdev_pads[FLITE_SD_PAD_SINK].flags = MEDIA_PAD_FL_SINK;
 	fimc->subdev_pads[FLITE_SD_PAD_SOURCE_DMA].flags = MEDIA_PAD_FL_SOURCE;
 	fimc->subdev_pads[FLITE_SD_PAD_SOURCE_ISP].flags = MEDIA_PAD_FL_SOURCE;
 	ret = media_entity_pads_init(&sd->entity, FLITE_SD_PADS_NUM,
 				fimc->subdev_pads);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	v4l2_ctrl_handler_init(handler, 1);
 	fimc->test_pattern = v4l2_ctrl_new_custom(handler, &fimc_lite_ctrl,
-						  शून्य);
-	अगर (handler->error) अणु
+						  NULL);
+	if (handler->error) {
 		media_entity_cleanup(&sd->entity);
-		वापस handler->error;
-	पूर्ण
+		return handler->error;
+	}
 
 	sd->ctrl_handler = handler;
-	sd->पूर्णांकernal_ops = &fimc_lite_subdev_पूर्णांकernal_ops;
+	sd->internal_ops = &fimc_lite_subdev_internal_ops;
 	sd->entity.function = MEDIA_ENT_F_PROC_VIDEO_SCALER;
 	sd->entity.ops = &fimc_lite_subdev_media_ops;
 	sd->owner = THIS_MODULE;
 	v4l2_set_subdevdata(sd, fimc);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम fimc_lite_unरेजिस्टर_capture_subdev(काष्ठा fimc_lite *fimc)
-अणु
-	काष्ठा v4l2_subdev *sd = &fimc->subdev;
+static void fimc_lite_unregister_capture_subdev(struct fimc_lite *fimc)
+{
+	struct v4l2_subdev *sd = &fimc->subdev;
 
-	v4l2_device_unरेजिस्टर_subdev(sd);
+	v4l2_device_unregister_subdev(sd);
 	media_entity_cleanup(&sd->entity);
-	v4l2_ctrl_handler_मुक्त(&fimc->ctrl_handler);
-	v4l2_set_subdevdata(sd, शून्य);
-पूर्ण
+	v4l2_ctrl_handler_free(&fimc->ctrl_handler);
+	v4l2_set_subdevdata(sd, NULL);
+}
 
-अटल व्योम fimc_lite_clk_put(काष्ठा fimc_lite *fimc)
-अणु
-	अगर (IS_ERR(fimc->घड़ी))
-		वापस;
+static void fimc_lite_clk_put(struct fimc_lite *fimc)
+{
+	if (IS_ERR(fimc->clock))
+		return;
 
-	clk_put(fimc->घड़ी);
-	fimc->घड़ी = ERR_PTR(-EINVAL);
-पूर्ण
+	clk_put(fimc->clock);
+	fimc->clock = ERR_PTR(-EINVAL);
+}
 
-अटल पूर्णांक fimc_lite_clk_get(काष्ठा fimc_lite *fimc)
-अणु
-	fimc->घड़ी = clk_get(&fimc->pdev->dev, FLITE_CLK_NAME);
-	वापस PTR_ERR_OR_ZERO(fimc->घड़ी);
-पूर्ण
+static int fimc_lite_clk_get(struct fimc_lite *fimc)
+{
+	fimc->clock = clk_get(&fimc->pdev->dev, FLITE_CLK_NAME);
+	return PTR_ERR_OR_ZERO(fimc->clock);
+}
 
-अटल स्थिर काष्ठा of_device_id flite_of_match[];
+static const struct of_device_id flite_of_match[];
 
-अटल पूर्णांक fimc_lite_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा flite_drvdata *drv_data = शून्य;
-	काष्ठा device *dev = &pdev->dev;
-	स्थिर काष्ठा of_device_id *of_id;
-	काष्ठा fimc_lite *fimc;
-	काष्ठा resource *res;
-	पूर्णांक ret;
+static int fimc_lite_probe(struct platform_device *pdev)
+{
+	struct flite_drvdata *drv_data = NULL;
+	struct device *dev = &pdev->dev;
+	const struct of_device_id *of_id;
+	struct fimc_lite *fimc;
+	struct resource *res;
+	int ret;
 
-	अगर (!dev->of_node)
-		वापस -ENODEV;
+	if (!dev->of_node)
+		return -ENODEV;
 
-	fimc = devm_kzalloc(dev, माप(*fimc), GFP_KERNEL);
-	अगर (!fimc)
-		वापस -ENOMEM;
+	fimc = devm_kzalloc(dev, sizeof(*fimc), GFP_KERNEL);
+	if (!fimc)
+		return -ENOMEM;
 
 	of_id = of_match_node(flite_of_match, dev->of_node);
-	अगर (of_id)
-		drv_data = (काष्ठा flite_drvdata *)of_id->data;
+	if (of_id)
+		drv_data = (struct flite_drvdata *)of_id->data;
 	fimc->index = of_alias_get_id(dev->of_node, "fimc-lite");
 
-	अगर (!drv_data || fimc->index >= drv_data->num_instances ||
-						fimc->index < 0) अणु
+	if (!drv_data || fimc->index >= drv_data->num_instances ||
+						fimc->index < 0) {
 		dev_err(dev, "Wrong %pOF node alias\n", dev->of_node);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	fimc->dd = drv_data;
 	fimc->pdev = pdev;
 
-	init_रुकोqueue_head(&fimc->irq_queue);
+	init_waitqueue_head(&fimc->irq_queue);
 	spin_lock_init(&fimc->slock);
 	mutex_init(&fimc->lock);
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	fimc->regs = devm_ioremap_resource(dev, res);
-	अगर (IS_ERR(fimc->regs))
-		वापस PTR_ERR(fimc->regs);
+	if (IS_ERR(fimc->regs))
+		return PTR_ERR(fimc->regs);
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_IRQ, 0);
-	अगर (res == शून्य) अणु
+	res = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
+	if (res == NULL) {
 		dev_err(dev, "Failed to get IRQ resource\n");
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
 	ret = fimc_lite_clk_get(fimc);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = devm_request_irq(dev, res->start, flite_irq_handler,
 			       0, dev_name(dev), fimc);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Failed to install irq (%d)\n", ret);
-		जाओ err_clk_put;
-	पूर्ण
+		goto err_clk_put;
+	}
 
-	/* The video node will be created within the subdev's रेजिस्टरed() op */
+	/* The video node will be created within the subdev's registered() op */
 	ret = fimc_lite_create_capture_subdev(fimc);
-	अगर (ret)
-		जाओ err_clk_put;
+	if (ret)
+		goto err_clk_put;
 
-	platक्रमm_set_drvdata(pdev, fimc);
-	pm_runसमय_enable(dev);
+	platform_set_drvdata(pdev, fimc);
+	pm_runtime_enable(dev);
 
-	अगर (!pm_runसमय_enabled(dev)) अणु
-		ret = clk_prepare_enable(fimc->घड़ी);
-		अगर (ret < 0)
-			जाओ err_sd;
-	पूर्ण
+	if (!pm_runtime_enabled(dev)) {
+		ret = clk_prepare_enable(fimc->clock);
+		if (ret < 0)
+			goto err_sd;
+	}
 
 	vb2_dma_contig_set_max_seg_size(dev, DMA_BIT_MASK(32));
 
-	fimc_lite_set_शेष_config(fimc);
+	fimc_lite_set_default_config(fimc);
 
 	dev_dbg(dev, "FIMC-LITE.%d registered successfully\n",
 		fimc->index);
-	वापस 0;
+	return 0;
 
 err_sd:
-	fimc_lite_unरेजिस्टर_capture_subdev(fimc);
+	fimc_lite_unregister_capture_subdev(fimc);
 err_clk_put:
 	fimc_lite_clk_put(fimc);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक fimc_lite_runसमय_resume(काष्ठा device *dev)
-अणु
-	काष्ठा fimc_lite *fimc = dev_get_drvdata(dev);
+#ifdef CONFIG_PM
+static int fimc_lite_runtime_resume(struct device *dev)
+{
+	struct fimc_lite *fimc = dev_get_drvdata(dev);
 
-	clk_prepare_enable(fimc->घड़ी);
-	वापस 0;
-पूर्ण
+	clk_prepare_enable(fimc->clock);
+	return 0;
+}
 
-अटल पूर्णांक fimc_lite_runसमय_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा fimc_lite *fimc = dev_get_drvdata(dev);
+static int fimc_lite_runtime_suspend(struct device *dev)
+{
+	struct fimc_lite *fimc = dev_get_drvdata(dev);
 
-	clk_disable_unprepare(fimc->घड़ी);
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	clk_disable_unprepare(fimc->clock);
+	return 0;
+}
+#endif
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक fimc_lite_resume(काष्ठा device *dev)
-अणु
-	काष्ठा fimc_lite *fimc = dev_get_drvdata(dev);
-	काष्ठा flite_buffer *buf;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक i;
+#ifdef CONFIG_PM_SLEEP
+static int fimc_lite_resume(struct device *dev)
+{
+	struct fimc_lite *fimc = dev_get_drvdata(dev);
+	struct flite_buffer *buf;
+	unsigned long flags;
+	int i;
 
 	spin_lock_irqsave(&fimc->slock, flags);
-	अगर (!test_and_clear_bit(ST_LPM, &fimc->state) ||
-	    !test_bit(ST_FLITE_IN_USE, &fimc->state)) अणु
+	if (!test_and_clear_bit(ST_LPM, &fimc->state) ||
+	    !test_bit(ST_FLITE_IN_USE, &fimc->state)) {
 		spin_unlock_irqrestore(&fimc->slock, flags);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	flite_hw_reset(fimc);
 	spin_unlock_irqrestore(&fimc->slock, flags);
 
-	अगर (!test_and_clear_bit(ST_FLITE_SUSPENDED, &fimc->state))
-		वापस 0;
+	if (!test_and_clear_bit(ST_FLITE_SUSPENDED, &fimc->state))
+		return 0;
 
 	INIT_LIST_HEAD(&fimc->active_buf_q);
-	fimc_pipeline_call(&fimc->ve, खोलो,
+	fimc_pipeline_call(&fimc->ve, open,
 			   &fimc->ve.vdev.entity, false);
-	fimc_lite_hw_init(fimc, atomic_पढ़ो(&fimc->out_path) == FIMC_IO_ISP);
+	fimc_lite_hw_init(fimc, atomic_read(&fimc->out_path) == FIMC_IO_ISP);
 	clear_bit(ST_FLITE_SUSPENDED, &fimc->state);
 
-	क्रम (i = 0; i < fimc->reqbufs_count; i++) अणु
-		अगर (list_empty(&fimc->pending_buf_q))
-			अवरोध;
+	for (i = 0; i < fimc->reqbufs_count; i++) {
+		if (list_empty(&fimc->pending_buf_q))
+			break;
 		buf = fimc_lite_pending_queue_pop(fimc);
 		buffer_queue(&buf->vb.vb2_buf);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक fimc_lite_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा fimc_lite *fimc = dev_get_drvdata(dev);
+static int fimc_lite_suspend(struct device *dev)
+{
+	struct fimc_lite *fimc = dev_get_drvdata(dev);
 	bool suspend = test_bit(ST_FLITE_IN_USE, &fimc->state);
-	पूर्णांक ret;
+	int ret;
 
-	अगर (test_and_set_bit(ST_LPM, &fimc->state))
-		वापस 0;
+	if (test_and_set_bit(ST_LPM, &fimc->state))
+		return 0;
 
 	ret = fimc_lite_stop_capture(fimc, suspend);
-	अगर (ret < 0 || !fimc_lite_active(fimc))
-		वापस ret;
+	if (ret < 0 || !fimc_lite_active(fimc))
+		return ret;
 
-	वापस fimc_pipeline_call(&fimc->ve, बंद);
-पूर्ण
-#पूर्ण_अगर /* CONFIG_PM_SLEEP */
+	return fimc_pipeline_call(&fimc->ve, close);
+}
+#endif /* CONFIG_PM_SLEEP */
 
-अटल पूर्णांक fimc_lite_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा fimc_lite *fimc = platक्रमm_get_drvdata(pdev);
-	काष्ठा device *dev = &pdev->dev;
+static int fimc_lite_remove(struct platform_device *pdev)
+{
+	struct fimc_lite *fimc = platform_get_drvdata(pdev);
+	struct device *dev = &pdev->dev;
 
-	अगर (!pm_runसमय_enabled(dev))
-		clk_disable_unprepare(fimc->घड़ी);
+	if (!pm_runtime_enabled(dev))
+		clk_disable_unprepare(fimc->clock);
 
-	pm_runसमय_disable(dev);
-	pm_runसमय_set_suspended(dev);
-	fimc_lite_unरेजिस्टर_capture_subdev(fimc);
+	pm_runtime_disable(dev);
+	pm_runtime_set_suspended(dev);
+	fimc_lite_unregister_capture_subdev(fimc);
 	vb2_dma_contig_clear_max_seg_size(dev);
 	fimc_lite_clk_put(fimc);
 
 	dev_info(dev, "Driver unloaded\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops fimc_lite_pm_ops = अणु
+static const struct dev_pm_ops fimc_lite_pm_ops = {
 	SET_SYSTEM_SLEEP_PM_OPS(fimc_lite_suspend, fimc_lite_resume)
-	SET_RUNTIME_PM_OPS(fimc_lite_runसमय_suspend, fimc_lite_runसमय_resume,
-			   शून्य)
-पूर्ण;
+	SET_RUNTIME_PM_OPS(fimc_lite_runtime_suspend, fimc_lite_runtime_resume,
+			   NULL)
+};
 
 /* EXYNOS4412 */
-अटल काष्ठा flite_drvdata fimc_lite_drvdata_exynos4 = अणु
+static struct flite_drvdata fimc_lite_drvdata_exynos4 = {
 	.max_width		= 8192,
 	.max_height		= 8192,
 	.out_width_align	= 8,
@@ -1631,10 +1630,10 @@ err_clk_put:
 	.out_hor_offs_align	= 8,
 	.max_dma_bufs		= 1,
 	.num_instances		= 2,
-पूर्ण;
+};
 
 /* EXYNOS5250 */
-अटल काष्ठा flite_drvdata fimc_lite_drvdata_exynos5 = अणु
+static struct flite_drvdata fimc_lite_drvdata_exynos5 = {
 	.max_width		= 8192,
 	.max_height		= 8192,
 	.out_width_align	= 8,
@@ -1642,30 +1641,30 @@ err_clk_put:
 	.out_hor_offs_align	= 8,
 	.max_dma_bufs		= 32,
 	.num_instances		= 3,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id flite_of_match[] = अणु
-	अणु
+static const struct of_device_id flite_of_match[] = {
+	{
 		.compatible = "samsung,exynos4212-fimc-lite",
 		.data = &fimc_lite_drvdata_exynos4,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "samsung,exynos5250-fimc-lite",
 		.data = &fimc_lite_drvdata_exynos5,
-	पूर्ण,
-	अणु /* sentinel */ पूर्ण,
-पूर्ण;
+	},
+	{ /* sentinel */ },
+};
 MODULE_DEVICE_TABLE(of, flite_of_match);
 
-अटल काष्ठा platक्रमm_driver fimc_lite_driver = अणु
+static struct platform_driver fimc_lite_driver = {
 	.probe		= fimc_lite_probe,
-	.हटाओ		= fimc_lite_हटाओ,
-	.driver = अणु
+	.remove		= fimc_lite_remove,
+	.driver = {
 		.of_match_table = flite_of_match,
 		.name		= FIMC_LITE_DRV_NAME,
 		.pm		= &fimc_lite_pm_ops,
-	पूर्ण
-पूर्ण;
-module_platक्रमm_driver(fimc_lite_driver);
+	}
+};
+module_platform_driver(fimc_lite_driver);
 MODULE_LICENSE("GPL");
 MODULE_ALIAS("platform:" FIMC_LITE_DRV_NAME);

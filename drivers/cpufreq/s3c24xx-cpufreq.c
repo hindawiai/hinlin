@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2006-2008 Simtec Electronics
  *	http://armlinux.simtec.co.uk/
@@ -8,161 +7,161 @@
  * S3C24XX CPU Frequency scaling
 */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/cpufreq.h>
-#समावेश <linux/cpu.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/err.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/device.h>
-#समावेश <linux/sysfs.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/soc/samsung/s3c-cpufreq-core.h>
-#समावेश <linux/soc/samsung/s3c-pm.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/interrupt.h>
+#include <linux/ioport.h>
+#include <linux/cpufreq.h>
+#include <linux/cpu.h>
+#include <linux/clk.h>
+#include <linux/err.h>
+#include <linux/io.h>
+#include <linux/device.h>
+#include <linux/sysfs.h>
+#include <linux/slab.h>
+#include <linux/soc/samsung/s3c-cpufreq-core.h>
+#include <linux/soc/samsung/s3c-pm.h>
 
-#समावेश <यंत्र/mach/arch.h>
-#समावेश <यंत्र/mach/map.h>
+#include <asm/mach/arch.h>
+#include <asm/mach/map.h>
 
 /* note, cpufreq support deals in kHz, no Hz */
-अटल काष्ठा cpufreq_driver s3c24xx_driver;
-अटल काष्ठा s3c_cpufreq_config cpu_cur;
-अटल काष्ठा s3c_iotimings s3c24xx_iotiming;
-अटल काष्ठा cpufreq_frequency_table *pll_reg;
-अटल अचिन्हित पूर्णांक last_target = ~0;
-अटल अचिन्हित पूर्णांक ftab_size;
-अटल काष्ठा cpufreq_frequency_table *ftab;
+static struct cpufreq_driver s3c24xx_driver;
+static struct s3c_cpufreq_config cpu_cur;
+static struct s3c_iotimings s3c24xx_iotiming;
+static struct cpufreq_frequency_table *pll_reg;
+static unsigned int last_target = ~0;
+static unsigned int ftab_size;
+static struct cpufreq_frequency_table *ftab;
 
-अटल काष्ठा clk *_clk_mpll;
-अटल काष्ठा clk *_clk_xtal;
-अटल काष्ठा clk *clk_fclk;
-अटल काष्ठा clk *clk_hclk;
-अटल काष्ठा clk *clk_pclk;
-अटल काष्ठा clk *clk_arm;
+static struct clk *_clk_mpll;
+static struct clk *_clk_xtal;
+static struct clk *clk_fclk;
+static struct clk *clk_hclk;
+static struct clk *clk_pclk;
+static struct clk *clk_arm;
 
-#अगर_घोषित CONFIG_ARM_S3C24XX_CPUFREQ_DEBUGFS
-काष्ठा s3c_cpufreq_config *s3c_cpufreq_अ_लोonfig(व्योम)
-अणु
-	वापस &cpu_cur;
-पूर्ण
+#ifdef CONFIG_ARM_S3C24XX_CPUFREQ_DEBUGFS
+struct s3c_cpufreq_config *s3c_cpufreq_getconfig(void)
+{
+	return &cpu_cur;
+}
 
-काष्ठा s3c_iotimings *s3c_cpufreq_getiotimings(व्योम)
-अणु
-	वापस &s3c24xx_iotiming;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_ARM_S3C24XX_CPUFREQ_DEBUGFS */
+struct s3c_iotimings *s3c_cpufreq_getiotimings(void)
+{
+	return &s3c24xx_iotiming;
+}
+#endif /* CONFIG_ARM_S3C24XX_CPUFREQ_DEBUGFS */
 
-अटल व्योम s3c_cpufreq_अ_लोur(काष्ठा s3c_cpufreq_config *cfg)
-अणु
-	अचिन्हित दीर्घ fclk, pclk, hclk, armclk;
+static void s3c_cpufreq_getcur(struct s3c_cpufreq_config *cfg)
+{
+	unsigned long fclk, pclk, hclk, armclk;
 
 	cfg->freq.fclk = fclk = clk_get_rate(clk_fclk);
 	cfg->freq.hclk = hclk = clk_get_rate(clk_hclk);
 	cfg->freq.pclk = pclk = clk_get_rate(clk_pclk);
 	cfg->freq.armclk = armclk = clk_get_rate(clk_arm);
 
-	cfg->pll.driver_data = s3c24xx_पढ़ो_mpllcon();
+	cfg->pll.driver_data = s3c24xx_read_mpllcon();
 	cfg->pll.frequency = fclk;
 
 	cfg->freq.hclk_tns = 1000000000 / (cfg->freq.hclk / 10);
 
-	cfg->भागs.h_भागisor = fclk / hclk;
-	cfg->भागs.p_भागisor = fclk / pclk;
-पूर्ण
+	cfg->divs.h_divisor = fclk / hclk;
+	cfg->divs.p_divisor = fclk / pclk;
+}
 
-अटल अंतरभूत व्योम s3c_cpufreq_calc(काष्ठा s3c_cpufreq_config *cfg)
-अणु
-	अचिन्हित दीर्घ pll = cfg->pll.frequency;
+static inline void s3c_cpufreq_calc(struct s3c_cpufreq_config *cfg)
+{
+	unsigned long pll = cfg->pll.frequency;
 
 	cfg->freq.fclk = pll;
-	cfg->freq.hclk = pll / cfg->भागs.h_भागisor;
-	cfg->freq.pclk = pll / cfg->भागs.p_भागisor;
+	cfg->freq.hclk = pll / cfg->divs.h_divisor;
+	cfg->freq.pclk = pll / cfg->divs.p_divisor;
 
-	/* convert hclk पूर्णांकo 10ths of nanoseconds क्रम io calcs */
+	/* convert hclk into 10ths of nanoseconds for io calcs */
 	cfg->freq.hclk_tns = 1000000000 / (cfg->freq.hclk / 10);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक बंदr(अचिन्हित पूर्णांक target, अचिन्हित पूर्णांक n, अचिन्हित पूर्णांक c)
-अणु
-	पूर्णांक dअगरf_cur = असल(target - c);
-	पूर्णांक dअगरf_new = असल(target - n);
+static inline int closer(unsigned int target, unsigned int n, unsigned int c)
+{
+	int diff_cur = abs(target - c);
+	int diff_new = abs(target - n);
 
-	वापस (dअगरf_new < dअगरf_cur);
-पूर्ण
+	return (diff_new < diff_cur);
+}
 
-अटल व्योम s3c_cpufreq_show(स्थिर अक्षर *pfx,
-				 काष्ठा s3c_cpufreq_config *cfg)
-अणु
+static void s3c_cpufreq_show(const char *pfx,
+				 struct s3c_cpufreq_config *cfg)
+{
 	s3c_freq_dbg("%s: Fvco=%u, F=%lu, A=%lu, H=%lu (%u), P=%lu (%u)\n",
 		     pfx, cfg->pll.frequency, cfg->freq.fclk, cfg->freq.armclk,
-		     cfg->freq.hclk, cfg->भागs.h_भागisor,
-		     cfg->freq.pclk, cfg->भागs.p_भागisor);
-पूर्ण
+		     cfg->freq.hclk, cfg->divs.h_divisor,
+		     cfg->freq.pclk, cfg->divs.p_divisor);
+}
 
-/* functions to wrapper the driver info calls to करो the cpu specअगरic work */
+/* functions to wrapper the driver info calls to do the cpu specific work */
 
-अटल व्योम s3c_cpufreq_setio(काष्ठा s3c_cpufreq_config *cfg)
-अणु
-	अगर (cfg->info->set_iotiming)
+static void s3c_cpufreq_setio(struct s3c_cpufreq_config *cfg)
+{
+	if (cfg->info->set_iotiming)
 		(cfg->info->set_iotiming)(cfg, &s3c24xx_iotiming);
-पूर्ण
+}
 
-अटल पूर्णांक s3c_cpufreq_calcio(काष्ठा s3c_cpufreq_config *cfg)
-अणु
-	अगर (cfg->info->calc_iotiming)
-		वापस (cfg->info->calc_iotiming)(cfg, &s3c24xx_iotiming);
+static int s3c_cpufreq_calcio(struct s3c_cpufreq_config *cfg)
+{
+	if (cfg->info->calc_iotiming)
+		return (cfg->info->calc_iotiming)(cfg, &s3c24xx_iotiming);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम s3c_cpufreq_setrefresh(काष्ठा s3c_cpufreq_config *cfg)
-अणु
+static void s3c_cpufreq_setrefresh(struct s3c_cpufreq_config *cfg)
+{
 	(cfg->info->set_refresh)(cfg);
-पूर्ण
+}
 
-अटल व्योम s3c_cpufreq_setभागs(काष्ठा s3c_cpufreq_config *cfg)
-अणु
-	(cfg->info->set_भागs)(cfg);
-पूर्ण
+static void s3c_cpufreq_setdivs(struct s3c_cpufreq_config *cfg)
+{
+	(cfg->info->set_divs)(cfg);
+}
 
-अटल पूर्णांक s3c_cpufreq_calcभागs(काष्ठा s3c_cpufreq_config *cfg)
-अणु
-	वापस (cfg->info->calc_भागs)(cfg);
-पूर्ण
+static int s3c_cpufreq_calcdivs(struct s3c_cpufreq_config *cfg)
+{
+	return (cfg->info->calc_divs)(cfg);
+}
 
-अटल व्योम s3c_cpufreq_setfvco(काष्ठा s3c_cpufreq_config *cfg)
-अणु
+static void s3c_cpufreq_setfvco(struct s3c_cpufreq_config *cfg)
+{
 	cfg->mpll = _clk_mpll;
 	(cfg->info->set_fvco)(cfg);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम s3c_cpufreq_updateclk(काष्ठा clk *clk,
-					 अचिन्हित पूर्णांक freq)
-अणु
+static inline void s3c_cpufreq_updateclk(struct clk *clk,
+					 unsigned int freq)
+{
 	clk_set_rate(clk, freq);
-पूर्ण
+}
 
-अटल पूर्णांक s3c_cpufreq_settarget(काष्ठा cpufreq_policy *policy,
-				 अचिन्हित पूर्णांक target_freq,
-				 काष्ठा cpufreq_frequency_table *pll)
-अणु
-	काष्ठा s3c_cpufreq_freqs freqs;
-	काष्ठा s3c_cpufreq_config cpu_new;
-	अचिन्हित दीर्घ flags;
+static int s3c_cpufreq_settarget(struct cpufreq_policy *policy,
+				 unsigned int target_freq,
+				 struct cpufreq_frequency_table *pll)
+{
+	struct s3c_cpufreq_freqs freqs;
+	struct s3c_cpufreq_config cpu_new;
+	unsigned long flags;
 
 	cpu_new = cpu_cur;  /* copy new from current */
 
 	s3c_cpufreq_show("cur", &cpu_cur);
 
-	/* TODO - check क्रम DMA currently outstanding */
+	/* TODO - check for DMA currently outstanding */
 
 	cpu_new.pll = pll ? *pll : cpu_cur.pll;
 
-	अगर (pll)
+	if (pll)
 		freqs.pll_changing = 1;
 
 	/* update our frequencies */
@@ -170,10 +169,10 @@
 	cpu_new.freq.armclk = target_freq;
 	cpu_new.freq.fclk = cpu_new.pll.frequency;
 
-	अगर (s3c_cpufreq_calcभागs(&cpu_new) < 0) अणु
+	if (s3c_cpufreq_calcdivs(&cpu_new) < 0) {
 		pr_err("no divisors for %d\n", target_freq);
-		जाओ err_notpossible;
-	पूर्ण
+		goto err_notpossible;
+	}
 
 	s3c_freq_dbg("%s: got divs\n", __func__);
 
@@ -181,12 +180,12 @@
 
 	s3c_freq_dbg("%s: calculated frequencies for new\n", __func__);
 
-	अगर (cpu_new.freq.hclk != cpu_cur.freq.hclk) अणु
-		अगर (s3c_cpufreq_calcio(&cpu_new) < 0) अणु
+	if (cpu_new.freq.hclk != cpu_cur.freq.hclk) {
+		if (s3c_cpufreq_calcio(&cpu_new) < 0) {
 			pr_err("%s: no IO timings\n", __func__);
-			जाओ err_notpossible;
-		पूर्ण
-	पूर्ण
+			goto err_notpossible;
+		}
+	}
 
 	s3c_cpufreq_show("new", &cpu_new);
 
@@ -198,9 +197,9 @@
 	freqs.freqs.old = cpu_cur.freq.armclk / 1000;
 	freqs.freqs.new = cpu_new.freq.armclk / 1000;
 
-	/* update f/h/p घड़ी settings beक्रमe we issue the change
-	 * notअगरication, so that drivers करो not need to करो anything
-	 * special अगर they want to recalculate on CPUFREQ_PRECHANGE. */
+	/* update f/h/p clock settings before we issue the change
+	 * notification, so that drivers do not need to do anything
+	 * special if they want to recalculate on CPUFREQ_PRECHANGE. */
 
 	s3c_cpufreq_updateclk(_clk_mpll, cpu_new.pll.frequency);
 	s3c_cpufreq_updateclk(clk_fclk, cpu_new.freq.fclk);
@@ -210,57 +209,57 @@
 	/* start the frequency change */
 	cpufreq_freq_transition_begin(policy, &freqs.freqs);
 
-	/* If hclk is staying the same, then we करो not need to
-	 * re-ग_लिखो the IO or the refresh timings whilst we are changing
+	/* If hclk is staying the same, then we do not need to
+	 * re-write the IO or the refresh timings whilst we are changing
 	 * speed. */
 
 	local_irq_save(flags);
 
-	/* is our memory घड़ी slowing करोwn? */
-	अगर (cpu_new.freq.hclk < cpu_cur.freq.hclk) अणु
+	/* is our memory clock slowing down? */
+	if (cpu_new.freq.hclk < cpu_cur.freq.hclk) {
 		s3c_cpufreq_setrefresh(&cpu_new);
 		s3c_cpufreq_setio(&cpu_new);
-	पूर्ण
+	}
 
-	अगर (cpu_new.freq.fclk == cpu_cur.freq.fclk) अणु
-		/* not changing PLL, just set the भागisors */
+	if (cpu_new.freq.fclk == cpu_cur.freq.fclk) {
+		/* not changing PLL, just set the divisors */
 
-		s3c_cpufreq_setभागs(&cpu_new);
-	पूर्ण अन्यथा अणु
-		अगर (cpu_new.freq.fclk < cpu_cur.freq.fclk) अणु
-			/* slow the cpu करोwn, then set भागisors */
+		s3c_cpufreq_setdivs(&cpu_new);
+	} else {
+		if (cpu_new.freq.fclk < cpu_cur.freq.fclk) {
+			/* slow the cpu down, then set divisors */
 
 			s3c_cpufreq_setfvco(&cpu_new);
-			s3c_cpufreq_setभागs(&cpu_new);
-		पूर्ण अन्यथा अणु
-			/* set the भागisors, then speed up */
+			s3c_cpufreq_setdivs(&cpu_new);
+		} else {
+			/* set the divisors, then speed up */
 
-			s3c_cpufreq_setभागs(&cpu_new);
+			s3c_cpufreq_setdivs(&cpu_new);
 			s3c_cpufreq_setfvco(&cpu_new);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* did our memory घड़ी speed up */
-	अगर (cpu_new.freq.hclk > cpu_cur.freq.hclk) अणु
+	/* did our memory clock speed up */
+	if (cpu_new.freq.hclk > cpu_cur.freq.hclk) {
 		s3c_cpufreq_setrefresh(&cpu_new);
 		s3c_cpufreq_setio(&cpu_new);
-	पूर्ण
+	}
 
 	/* update our current settings */
 	cpu_cur = cpu_new;
 
 	local_irq_restore(flags);
 
-	/* notअगरy everyone we've करोne this */
+	/* notify everyone we've done this */
 	cpufreq_freq_transition_end(policy, &freqs.freqs, 0);
 
 	s3c_freq_dbg("%s: finished\n", __func__);
-	वापस 0;
+	return 0;
 
  err_notpossible:
 	pr_err("no compatible settings for %d\n", target_freq);
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
 /* s3c_cpufreq_target
  *
@@ -268,57 +267,57 @@
  * is currently running at.
  */
 
-अटल पूर्णांक s3c_cpufreq_target(काष्ठा cpufreq_policy *policy,
-			      अचिन्हित पूर्णांक target_freq,
-			      अचिन्हित पूर्णांक relation)
-अणु
-	काष्ठा cpufreq_frequency_table *pll;
-	अचिन्हित पूर्णांक index;
+static int s3c_cpufreq_target(struct cpufreq_policy *policy,
+			      unsigned int target_freq,
+			      unsigned int relation)
+{
+	struct cpufreq_frequency_table *pll;
+	unsigned int index;
 
-	/* aव्योम repeated calls which cause a needless amout of duplicated
-	 * logging output (and CPU समय as the calculation process is
-	 * करोne) */
-	अगर (target_freq == last_target)
-		वापस 0;
+	/* avoid repeated calls which cause a needless amout of duplicated
+	 * logging output (and CPU time as the calculation process is
+	 * done) */
+	if (target_freq == last_target)
+		return 0;
 
 	last_target = target_freq;
 
 	s3c_freq_dbg("%s: policy %p, target %u, relation %u\n",
 		     __func__, policy, target_freq, relation);
 
-	अगर (ftab) अणु
+	if (ftab) {
 		index = cpufreq_frequency_table_target(policy, target_freq,
 						       relation);
 
 		s3c_freq_dbg("%s: adjust %d to entry %d (%u)\n", __func__,
 			     target_freq, index, ftab[index].frequency);
 		target_freq = ftab[index].frequency;
-	पूर्ण
+	}
 
 	target_freq *= 1000;  /* convert target to Hz */
 
-	/* find the settings क्रम our new frequency */
+	/* find the settings for our new frequency */
 
-	अगर (!pll_reg || cpu_cur.lock_pll) अणु
+	if (!pll_reg || cpu_cur.lock_pll) {
 		/* either we've not got any PLL values, or we've locked
 		 * to the current one. */
-		pll = शून्य;
-	पूर्ण अन्यथा अणु
-		काष्ठा cpufreq_policy पंचांगp_policy;
+		pll = NULL;
+	} else {
+		struct cpufreq_policy tmp_policy;
 
 		/* we keep the cpu pll table in Hz, to ensure we get an
-		 * accurate value क्रम the PLL output. */
+		 * accurate value for the PLL output. */
 
-		पंचांगp_policy.min = policy->min * 1000;
-		पंचांगp_policy.max = policy->max * 1000;
-		पंचांगp_policy.cpu = policy->cpu;
-		पंचांगp_policy.freq_table = pll_reg;
+		tmp_policy.min = policy->min * 1000;
+		tmp_policy.max = policy->max * 1000;
+		tmp_policy.cpu = policy->cpu;
+		tmp_policy.freq_table = pll_reg;
 
-		/* cpufreq_frequency_table_target वापसs the index
+		/* cpufreq_frequency_table_target returns the index
 		 * of the table entry, not the value of
 		 * the table entry's index field. */
 
-		index = cpufreq_frequency_table_target(&पंचांगp_policy, target_freq,
+		index = cpufreq_frequency_table_target(&tmp_policy, target_freq,
 						       relation);
 		pll = pll_reg + index;
 
@@ -326,45 +325,45 @@
 			     __func__, target_freq, pll->frequency);
 
 		target_freq = pll->frequency;
-	पूर्ण
+	}
 
-	वापस s3c_cpufreq_settarget(policy, target_freq, pll);
-पूर्ण
+	return s3c_cpufreq_settarget(policy, target_freq, pll);
+}
 
-काष्ठा clk *s3c_cpufreq_clk_get(काष्ठा device *dev, स्थिर अक्षर *name)
-अणु
-	काष्ठा clk *clk;
+struct clk *s3c_cpufreq_clk_get(struct device *dev, const char *name)
+{
+	struct clk *clk;
 
 	clk = clk_get(dev, name);
-	अगर (IS_ERR(clk))
+	if (IS_ERR(clk))
 		pr_err("failed to get clock '%s'\n", name);
 
-	वापस clk;
-पूर्ण
+	return clk;
+}
 
-अटल पूर्णांक s3c_cpufreq_init(काष्ठा cpufreq_policy *policy)
-अणु
+static int s3c_cpufreq_init(struct cpufreq_policy *policy)
+{
 	policy->clk = clk_arm;
 	policy->cpuinfo.transition_latency = cpu_cur.info->latency;
 	policy->freq_table = ftab;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __init s3c_cpufreq_initclks(व्योम)
-अणु
-	_clk_mpll = s3c_cpufreq_clk_get(शून्य, "mpll");
-	_clk_xtal = s3c_cpufreq_clk_get(शून्य, "xtal");
-	clk_fclk = s3c_cpufreq_clk_get(शून्य, "fclk");
-	clk_hclk = s3c_cpufreq_clk_get(शून्य, "hclk");
-	clk_pclk = s3c_cpufreq_clk_get(शून्य, "pclk");
-	clk_arm = s3c_cpufreq_clk_get(शून्य, "armclk");
+static int __init s3c_cpufreq_initclks(void)
+{
+	_clk_mpll = s3c_cpufreq_clk_get(NULL, "mpll");
+	_clk_xtal = s3c_cpufreq_clk_get(NULL, "xtal");
+	clk_fclk = s3c_cpufreq_clk_get(NULL, "fclk");
+	clk_hclk = s3c_cpufreq_clk_get(NULL, "hclk");
+	clk_pclk = s3c_cpufreq_clk_get(NULL, "pclk");
+	clk_arm = s3c_cpufreq_clk_get(NULL, "armclk");
 
-	अगर (IS_ERR(clk_fclk) || IS_ERR(clk_hclk) || IS_ERR(clk_pclk) ||
-	    IS_ERR(_clk_mpll) || IS_ERR(clk_arm) || IS_ERR(_clk_xtal)) अणु
+	if (IS_ERR(clk_fclk) || IS_ERR(clk_hclk) || IS_ERR(clk_pclk) ||
+	    IS_ERR(_clk_mpll) || IS_ERR(clk_arm) || IS_ERR(_clk_xtal)) {
 		pr_err("%s: could not get clock(s)\n", __func__);
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
 	pr_info("%s: clocks f=%lu,h=%lu,p=%lu,a=%lu\n",
 		__func__,
@@ -373,54 +372,54 @@
 		clk_get_rate(clk_pclk) / 1000,
 		clk_get_rate(clk_arm) / 1000);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM
-अटल काष्ठा cpufreq_frequency_table suspend_pll;
-अटल अचिन्हित पूर्णांक suspend_freq;
+#ifdef CONFIG_PM
+static struct cpufreq_frequency_table suspend_pll;
+static unsigned int suspend_freq;
 
-अटल पूर्णांक s3c_cpufreq_suspend(काष्ठा cpufreq_policy *policy)
-अणु
+static int s3c_cpufreq_suspend(struct cpufreq_policy *policy)
+{
 	suspend_pll.frequency = clk_get_rate(_clk_mpll);
-	suspend_pll.driver_data = s3c24xx_पढ़ो_mpllcon();
+	suspend_pll.driver_data = s3c24xx_read_mpllcon();
 	suspend_freq = clk_get_rate(clk_arm);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक s3c_cpufreq_resume(काष्ठा cpufreq_policy *policy)
-अणु
-	पूर्णांक ret;
+static int s3c_cpufreq_resume(struct cpufreq_policy *policy)
+{
+	int ret;
 
 	s3c_freq_dbg("%s: resuming with policy %p\n", __func__, policy);
 
 	last_target = ~0;	/* invalidate last_target setting */
 
 	/* whilst we will be called later on, we try and re-set the
-	 * cpu frequencies as soon as possible so that we करो not end
+	 * cpu frequencies as soon as possible so that we do not end
 	 * up resuming devices and then immediately having to re-set
 	 * a number of settings once these devices have restarted.
 	 *
 	 * as a note, it is expected devices are not used until they
-	 * have been un-suspended and at that समय they should have
-	 * used the updated घड़ी settings.
+	 * have been un-suspended and at that time they should have
+	 * used the updated clock settings.
 	 */
 
-	ret = s3c_cpufreq_settarget(शून्य, suspend_freq, &suspend_pll);
-	अगर (ret) अणु
+	ret = s3c_cpufreq_settarget(NULL, suspend_freq, &suspend_pll);
+	if (ret) {
 		pr_err("%s: failed to reset pll/freq\n", __func__);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
-#अन्यथा
-#घोषणा s3c_cpufreq_resume शून्य
-#घोषणा s3c_cpufreq_suspend शून्य
-#पूर्ण_अगर
+	return 0;
+}
+#else
+#define s3c_cpufreq_resume NULL
+#define s3c_cpufreq_suspend NULL
+#endif
 
-अटल काष्ठा cpufreq_driver s3c24xx_driver = अणु
+static struct cpufreq_driver s3c24xx_driver = {
 	.flags		= CPUFREQ_NEED_INITIAL_FREQ_CHECK,
 	.target		= s3c_cpufreq_target,
 	.get		= cpufreq_generic_get,
@@ -428,81 +427,81 @@
 	.suspend	= s3c_cpufreq_suspend,
 	.resume		= s3c_cpufreq_resume,
 	.name		= "s3c24xx",
-पूर्ण;
+};
 
 
-पूर्णांक s3c_cpufreq_रेजिस्टर(काष्ठा s3c_cpufreq_info *info)
-अणु
-	अगर (!info || !info->name) अणु
+int s3c_cpufreq_register(struct s3c_cpufreq_info *info)
+{
+	if (!info || !info->name) {
 		pr_err("%s: failed to pass valid information\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	pr_info("S3C24XX CPU Frequency driver, %s cpu support\n",
 		info->name);
 
 	/* check our driver info has valid data */
 
-	BUG_ON(info->set_refresh == शून्य);
-	BUG_ON(info->set_भागs == शून्य);
-	BUG_ON(info->calc_भागs == शून्य);
+	BUG_ON(info->set_refresh == NULL);
+	BUG_ON(info->set_divs == NULL);
+	BUG_ON(info->calc_divs == NULL);
 
 	/* info->set_fvco is optional, depending on whether there
-	 * is a need to set the घड़ी code. */
+	 * is a need to set the clock code. */
 
 	cpu_cur.info = info;
 
-	/* Note, driver रेजिस्टरing should probably update lockसमय */
+	/* Note, driver registering should probably update locktime */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक __init s3c_cpufreq_setboard(काष्ठा s3c_cpufreq_board *board)
-अणु
-	काष्ठा s3c_cpufreq_board *ours;
+int __init s3c_cpufreq_setboard(struct s3c_cpufreq_board *board)
+{
+	struct s3c_cpufreq_board *ours;
 
-	अगर (!board) अणु
+	if (!board) {
 		pr_info("%s: no board data\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* Copy the board inक्रमmation so that each board can make this
+	/* Copy the board information so that each board can make this
 	 * initdata. */
 
-	ours = kzalloc(माप(*ours), GFP_KERNEL);
-	अगर (!ours)
-		वापस -ENOMEM;
+	ours = kzalloc(sizeof(*ours), GFP_KERNEL);
+	if (!ours)
+		return -ENOMEM;
 
 	*ours = *board;
 	cpu_cur.board = ours;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __init s3c_cpufreq_स्वतः_io(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init s3c_cpufreq_auto_io(void)
+{
+	int ret;
 
-	अगर (!cpu_cur.info->get_iotiming) अणु
+	if (!cpu_cur.info->get_iotiming) {
 		pr_err("%s: get_iotiming undefined\n", __func__);
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
 	pr_info("%s: working out IO settings\n", __func__);
 
 	ret = (cpu_cur.info->get_iotiming)(&cpu_cur, &s3c24xx_iotiming);
-	अगर (ret)
+	if (ret)
 		pr_err("%s: failed to get timings\n", __func__);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* अगर one or is zero, then वापस the other, otherwise वापस the min */
-#घोषणा करो_min(_a, _b) ((_a) == 0 ? (_b) : (_b) == 0 ? (_a) : min(_a, _b))
+/* if one or is zero, then return the other, otherwise return the min */
+#define do_min(_a, _b) ((_a) == 0 ? (_b) : (_b) == 0 ? (_a) : min(_a, _b))
 
 /**
- * s3c_cpufreq_freq_min - find the minimum settings क्रम the given freq.
- * @dst: The destination काष्ठाure
+ * s3c_cpufreq_freq_min - find the minimum settings for the given freq.
+ * @dst: The destination structure
  * @a: One argument.
  * @b: The other argument.
  *
@@ -510,93 +509,93 @@
  * unless the entry is zero when it is ignored and the non-zero argument
  * used.
  */
-अटल व्योम s3c_cpufreq_freq_min(काष्ठा s3c_freq *dst,
-				 काष्ठा s3c_freq *a, काष्ठा s3c_freq *b)
-अणु
-	dst->fclk = करो_min(a->fclk, b->fclk);
-	dst->hclk = करो_min(a->hclk, b->hclk);
-	dst->pclk = करो_min(a->pclk, b->pclk);
-	dst->armclk = करो_min(a->armclk, b->armclk);
-पूर्ण
+static void s3c_cpufreq_freq_min(struct s3c_freq *dst,
+				 struct s3c_freq *a, struct s3c_freq *b)
+{
+	dst->fclk = do_min(a->fclk, b->fclk);
+	dst->hclk = do_min(a->hclk, b->hclk);
+	dst->pclk = do_min(a->pclk, b->pclk);
+	dst->armclk = do_min(a->armclk, b->armclk);
+}
 
-अटल अंतरभूत u32 calc_lockसमय(u32 freq, u32 समय_us)
-अणु
+static inline u32 calc_locktime(u32 freq, u32 time_us)
+{
 	u32 result;
 
-	result = freq * समय_us;
+	result = freq * time_us;
 	result = DIV_ROUND_UP(result, 1000 * 1000);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल व्योम s3c_cpufreq_update_loctkime(व्योम)
-अणु
-	अचिन्हित पूर्णांक bits = cpu_cur.info->lockसमय_bits;
+static void s3c_cpufreq_update_loctkime(void)
+{
+	unsigned int bits = cpu_cur.info->locktime_bits;
 	u32 rate = (u32)clk_get_rate(_clk_xtal);
 	u32 val;
 
-	अगर (bits == 0) अणु
+	if (bits == 0) {
 		WARN_ON(1);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	val = calc_lockसमय(rate, cpu_cur.info->lockसमय_u) << bits;
-	val |= calc_lockसमय(rate, cpu_cur.info->lockसमय_m);
+	val = calc_locktime(rate, cpu_cur.info->locktime_u) << bits;
+	val |= calc_locktime(rate, cpu_cur.info->locktime_m);
 
 	pr_info("%s: new locktime is 0x%08x\n", __func__, val);
-	s3c24xx_ग_लिखो_lockसमय(val);
-पूर्ण
+	s3c24xx_write_locktime(val);
+}
 
-अटल पूर्णांक s3c_cpufreq_build_freq(व्योम)
-अणु
-	पूर्णांक size, ret;
+static int s3c_cpufreq_build_freq(void)
+{
+	int size, ret;
 
-	kमुक्त(ftab);
+	kfree(ftab);
 
-	size = cpu_cur.info->calc_freqtable(&cpu_cur, शून्य, 0);
+	size = cpu_cur.info->calc_freqtable(&cpu_cur, NULL, 0);
 	size++;
 
-	ftab = kसुस्मृति(size, माप(*ftab), GFP_KERNEL);
-	अगर (!ftab)
-		वापस -ENOMEM;
+	ftab = kcalloc(size, sizeof(*ftab), GFP_KERNEL);
+	if (!ftab)
+		return -ENOMEM;
 
 	ftab_size = size;
 
 	ret = cpu_cur.info->calc_freqtable(&cpu_cur, ftab, size);
 	s3c_cpufreq_addfreq(ftab, ret, size, CPUFREQ_TABLE_END);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __init s3c_cpufreq_initcall(व्योम)
-अणु
-	पूर्णांक ret = 0;
+static int __init s3c_cpufreq_initcall(void)
+{
+	int ret = 0;
 
-	अगर (cpu_cur.info && cpu_cur.board) अणु
+	if (cpu_cur.info && cpu_cur.board) {
 		ret = s3c_cpufreq_initclks();
-		अगर (ret)
-			जाओ out;
+		if (ret)
+			goto out;
 
 		/* get current settings */
-		s3c_cpufreq_अ_लोur(&cpu_cur);
+		s3c_cpufreq_getcur(&cpu_cur);
 		s3c_cpufreq_show("cur", &cpu_cur);
 
-		अगर (cpu_cur.board->स्वतः_io) अणु
-			ret = s3c_cpufreq_स्वतः_io();
-			अगर (ret) अणु
+		if (cpu_cur.board->auto_io) {
+			ret = s3c_cpufreq_auto_io();
+			if (ret) {
 				pr_err("%s: failed to get io timing\n",
 				       __func__);
-				जाओ out;
-			पूर्ण
-		पूर्ण
+				goto out;
+			}
+		}
 
-		अगर (cpu_cur.board->need_io && !cpu_cur.info->set_iotiming) अणु
+		if (cpu_cur.board->need_io && !cpu_cur.info->set_iotiming) {
 			pr_err("%s: no IO support registered\n", __func__);
 			ret = -EINVAL;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		अगर (!cpu_cur.info->need_pll)
+		if (!cpu_cur.info->need_pll)
 			cpu_cur.lock_pll = 1;
 
 		s3c_cpufreq_update_loctkime();
@@ -604,46 +603,46 @@
 		s3c_cpufreq_freq_min(&cpu_cur.max, &cpu_cur.board->max,
 				     &cpu_cur.info->max);
 
-		अगर (cpu_cur.info->calc_freqtable)
+		if (cpu_cur.info->calc_freqtable)
 			s3c_cpufreq_build_freq();
 
-		ret = cpufreq_रेजिस्टर_driver(&s3c24xx_driver);
-	पूर्ण
+		ret = cpufreq_register_driver(&s3c24xx_driver);
+	}
 
  out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 late_initcall(s3c_cpufreq_initcall);
 
 /**
- * s3c_plltab_रेजिस्टर - रेजिस्टर CPU PLL table.
+ * s3c_plltab_register - register CPU PLL table.
  * @plls: The list of PLL entries.
  * @plls_no: The size of the PLL entries @plls.
  *
- * Register the given set of PLLs with the प्रणाली.
+ * Register the given set of PLLs with the system.
  */
-पूर्णांक s3c_plltab_रेजिस्टर(काष्ठा cpufreq_frequency_table *plls,
-			       अचिन्हित पूर्णांक plls_no)
-अणु
-	काष्ठा cpufreq_frequency_table *vals;
-	अचिन्हित पूर्णांक size;
+int s3c_plltab_register(struct cpufreq_frequency_table *plls,
+			       unsigned int plls_no)
+{
+	struct cpufreq_frequency_table *vals;
+	unsigned int size;
 
-	size = माप(*vals) * (plls_no + 1);
+	size = sizeof(*vals) * (plls_no + 1);
 
 	vals = kzalloc(size, GFP_KERNEL);
-	अगर (vals) अणु
-		स_नकल(vals, plls, size);
+	if (vals) {
+		memcpy(vals, plls, size);
 		pll_reg = vals;
 
-		/* ग_लिखो a terminating entry, we करोn't store it in the
+		/* write a terminating entry, we don't store it in the
 		 * table that is stored in the kernel */
 		vals += plls_no;
 		vals->frequency = CPUFREQ_TABLE_END;
 
 		pr_info("%d PLL entries\n", plls_no);
-	पूर्ण अन्यथा
+	} else
 		pr_err("no memory for PLL tables\n");
 
-	वापस vals ? 0 : -ENOMEM;
-पूर्ण
+	return vals ? 0 : -ENOMEM;
+}

@@ -1,95 +1,94 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /* Basic authentication token and access key management
  *
  * Copyright (C) 2004-2008 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#समावेश <linux/export.h>
-#समावेश <linux/init.h>
-#समावेश <linux/poison.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/security.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/अक्रमom.h>
-#समावेश <linux/ima.h>
-#समावेश <linux/err.h>
-#समावेश "internal.h"
+#include <linux/export.h>
+#include <linux/init.h>
+#include <linux/poison.h>
+#include <linux/sched.h>
+#include <linux/slab.h>
+#include <linux/security.h>
+#include <linux/workqueue.h>
+#include <linux/random.h>
+#include <linux/ima.h>
+#include <linux/err.h>
+#include "internal.h"
 
-काष्ठा kmem_cache *key_jar;
-काष्ठा rb_root		key_serial_tree; /* tree of keys indexed by serial */
+struct kmem_cache *key_jar;
+struct rb_root		key_serial_tree; /* tree of keys indexed by serial */
 DEFINE_SPINLOCK(key_serial_lock);
 
-काष्ठा rb_root	key_user_tree; /* tree of quota records indexed by UID */
+struct rb_root	key_user_tree; /* tree of quota records indexed by UID */
 DEFINE_SPINLOCK(key_user_lock);
 
-अचिन्हित पूर्णांक key_quota_root_maxkeys = 1000000;	/* root's key count quota */
-अचिन्हित पूर्णांक key_quota_root_maxbytes = 25000000; /* root's key space quota */
-अचिन्हित पूर्णांक key_quota_maxkeys = 200;		/* general key count quota */
-अचिन्हित पूर्णांक key_quota_maxbytes = 20000;	/* general key space quota */
+unsigned int key_quota_root_maxkeys = 1000000;	/* root's key count quota */
+unsigned int key_quota_root_maxbytes = 25000000; /* root's key space quota */
+unsigned int key_quota_maxkeys = 200;		/* general key count quota */
+unsigned int key_quota_maxbytes = 20000;	/* general key space quota */
 
-अटल LIST_HEAD(key_types_list);
-अटल DECLARE_RWSEM(key_types_sem);
+static LIST_HEAD(key_types_list);
+static DECLARE_RWSEM(key_types_sem);
 
 /* We serialise key instantiation and link */
-DEFINE_MUTEX(key_स्थिरruction_mutex);
+DEFINE_MUTEX(key_construction_mutex);
 
-#अगर_घोषित KEY_DEBUGGING
-व्योम __key_check(स्थिर काष्ठा key *key)
-अणु
-	prपूर्णांकk("__key_check: key %p {%08x} should be {%08x}\n",
+#ifdef KEY_DEBUGGING
+void __key_check(const struct key *key)
+{
+	printk("__key_check: key %p {%08x} should be {%08x}\n",
 	       key, key->magic, KEY_DEBUG_MAGIC);
 	BUG();
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
 /*
- * Get the key quota record क्रम a user, allocating a new record अगर one करोesn't
- * alपढ़ोy exist.
+ * Get the key quota record for a user, allocating a new record if one doesn't
+ * already exist.
  */
-काष्ठा key_user *key_user_lookup(kuid_t uid)
-अणु
-	काष्ठा key_user *candidate = शून्य, *user;
-	काष्ठा rb_node *parent, **p;
+struct key_user *key_user_lookup(kuid_t uid)
+{
+	struct key_user *candidate = NULL, *user;
+	struct rb_node *parent, **p;
 
 try_again:
-	parent = शून्य;
+	parent = NULL;
 	p = &key_user_tree.rb_node;
 	spin_lock(&key_user_lock);
 
-	/* search the tree क्रम a user record with a matching UID */
-	जबतक (*p) अणु
+	/* search the tree for a user record with a matching UID */
+	while (*p) {
 		parent = *p;
-		user = rb_entry(parent, काष्ठा key_user, node);
+		user = rb_entry(parent, struct key_user, node);
 
-		अगर (uid_lt(uid, user->uid))
+		if (uid_lt(uid, user->uid))
 			p = &(*p)->rb_left;
-		अन्यथा अगर (uid_gt(uid, user->uid))
+		else if (uid_gt(uid, user->uid))
 			p = &(*p)->rb_right;
-		अन्यथा
-			जाओ found;
-	पूर्ण
+		else
+			goto found;
+	}
 
-	/* अगर we get here, we failed to find a match in the tree */
-	अगर (!candidate) अणु
-		/* allocate a candidate user record अगर we करोn't alपढ़ोy have
+	/* if we get here, we failed to find a match in the tree */
+	if (!candidate) {
+		/* allocate a candidate user record if we don't already have
 		 * one */
 		spin_unlock(&key_user_lock);
 
-		user = शून्य;
-		candidate = kदो_स्मृति(माप(काष्ठा key_user), GFP_KERNEL);
-		अगर (unlikely(!candidate))
-			जाओ out;
+		user = NULL;
+		candidate = kmalloc(sizeof(struct key_user), GFP_KERNEL);
+		if (unlikely(!candidate))
+			goto out;
 
 		/* the allocation may have scheduled, so we need to repeat the
-		 * search lest someone अन्यथा added the record whilst we were
+		 * search lest someone else added the record whilst we were
 		 * asleep */
-		जाओ try_again;
-	पूर्ण
+		goto try_again;
+	}
 
-	/* अगर we get here, then the user record still hadn't appeared on the
+	/* if we get here, then the user record still hadn't appeared on the
 	 * second pass - so we use the candidate record */
 	refcount_set(&candidate->usage, 1);
 	atomic_set(&candidate->nkeys, 0);
@@ -104,185 +103,185 @@ try_again:
 	rb_insert_color(&candidate->node, &key_user_tree);
 	spin_unlock(&key_user_lock);
 	user = candidate;
-	जाओ out;
+	goto out;
 
-	/* okay - we found a user record क्रम this UID */
+	/* okay - we found a user record for this UID */
 found:
 	refcount_inc(&user->usage);
 	spin_unlock(&key_user_lock);
-	kमुक्त(candidate);
+	kfree(candidate);
 out:
-	वापस user;
-पूर्ण
+	return user;
+}
 
 /*
- * Dispose of a user काष्ठाure
+ * Dispose of a user structure
  */
-व्योम key_user_put(काष्ठा key_user *user)
-अणु
-	अगर (refcount_dec_and_lock(&user->usage, &key_user_lock)) अणु
+void key_user_put(struct key_user *user)
+{
+	if (refcount_dec_and_lock(&user->usage, &key_user_lock)) {
 		rb_erase(&user->node, &key_user_tree);
 		spin_unlock(&key_user_lock);
 
-		kमुक्त(user);
-	पूर्ण
-पूर्ण
+		kfree(user);
+	}
+}
 
 /*
- * Allocate a serial number क्रम a key.  These are asचिन्हित अक्रमomly to aव्योम
+ * Allocate a serial number for a key.  These are assigned randomly to avoid
  * security issues through covert channel problems.
  */
-अटल अंतरभूत व्योम key_alloc_serial(काष्ठा key *key)
-अणु
-	काष्ठा rb_node *parent, **p;
-	काष्ठा key *xkey;
+static inline void key_alloc_serial(struct key *key)
+{
+	struct rb_node *parent, **p;
+	struct key *xkey;
 
-	/* propose a अक्रमom serial number and look क्रम a hole क्रम it in the
+	/* propose a random serial number and look for a hole for it in the
 	 * serial number tree */
-	करो अणु
-		get_अक्रमom_bytes(&key->serial, माप(key->serial));
+	do {
+		get_random_bytes(&key->serial, sizeof(key->serial));
 
 		key->serial >>= 1; /* negative numbers are not permitted */
-	पूर्ण जबतक (key->serial < 3);
+	} while (key->serial < 3);
 
 	spin_lock(&key_serial_lock);
 
 attempt_insertion:
-	parent = शून्य;
+	parent = NULL;
 	p = &key_serial_tree.rb_node;
 
-	जबतक (*p) अणु
+	while (*p) {
 		parent = *p;
-		xkey = rb_entry(parent, काष्ठा key, serial_node);
+		xkey = rb_entry(parent, struct key, serial_node);
 
-		अगर (key->serial < xkey->serial)
+		if (key->serial < xkey->serial)
 			p = &(*p)->rb_left;
-		अन्यथा अगर (key->serial > xkey->serial)
+		else if (key->serial > xkey->serial)
 			p = &(*p)->rb_right;
-		अन्यथा
-			जाओ serial_exists;
-	पूर्ण
+		else
+			goto serial_exists;
+	}
 
-	/* we've found a suitable hole - arrange क्रम this key to occupy it */
+	/* we've found a suitable hole - arrange for this key to occupy it */
 	rb_link_node(&key->serial_node, parent, p);
 	rb_insert_color(&key->serial_node, &key_serial_tree);
 
 	spin_unlock(&key_serial_lock);
-	वापस;
+	return;
 
 	/* we found a key with the proposed serial number - walk the tree from
-	 * that poपूर्णांक looking क्रम the next unused serial number */
+	 * that point looking for the next unused serial number */
 serial_exists:
-	क्रम (;;) अणु
+	for (;;) {
 		key->serial++;
-		अगर (key->serial < 3) अणु
+		if (key->serial < 3) {
 			key->serial = 3;
-			जाओ attempt_insertion;
-		पूर्ण
+			goto attempt_insertion;
+		}
 
 		parent = rb_next(parent);
-		अगर (!parent)
-			जाओ attempt_insertion;
+		if (!parent)
+			goto attempt_insertion;
 
-		xkey = rb_entry(parent, काष्ठा key, serial_node);
-		अगर (key->serial < xkey->serial)
-			जाओ attempt_insertion;
-	पूर्ण
-पूर्ण
+		xkey = rb_entry(parent, struct key, serial_node);
+		if (key->serial < xkey->serial)
+			goto attempt_insertion;
+	}
+}
 
 /**
- * key_alloc - Allocate a key of the specअगरied type.
+ * key_alloc - Allocate a key of the specified type.
  * @type: The type of key to allocate.
  * @desc: The key description to allow the key to be searched out.
  * @uid: The owner of the new key.
- * @gid: The group ID क्रम the new key's group permissions.
- * @cred: The credentials specअगरying UID namespace.
+ * @gid: The group ID for the new key's group permissions.
+ * @cred: The credentials specifying UID namespace.
  * @perm: The permissions mask of the new key.
- * @flags: Flags specअगरying quota properties.
- * @restrict_link: Optional link restriction क्रम new keyrings.
+ * @flags: Flags specifying quota properties.
+ * @restrict_link: Optional link restriction for new keyrings.
  *
- * Allocate a key of the specअगरied type with the attributes given.  The key is
- * वापसed in an uninstantiated state and the caller needs to instantiate the
- * key beक्रमe वापसing.
+ * Allocate a key of the specified type with the attributes given.  The key is
+ * returned in an uninstantiated state and the caller needs to instantiate the
+ * key before returning.
  *
- * The restrict_link काष्ठाure (अगर not शून्य) will be मुक्तd when the
+ * The restrict_link structure (if not NULL) will be freed when the
  * keyring is destroyed, so it must be dynamically allocated.
  *
  * The user's key count quota is updated to reflect the creation of the key and
- * the user's key data quota has the शेष क्रम the key type reserved.  The
+ * the user's key data quota has the default for the key type reserved.  The
  * instantiation function should amend this as necessary.  If insufficient
- * quota is available, -EDQUOT will be वापसed.
+ * quota is available, -EDQUOT will be returned.
  *
- * The LSM security modules can prevent a key being created, in which हाल
- * -EACCES will be वापसed.
+ * The LSM security modules can prevent a key being created, in which case
+ * -EACCES will be returned.
  *
- * Returns a poपूर्णांकer to the new key अगर successful and an error code otherwise.
+ * Returns a pointer to the new key if successful and an error code otherwise.
  *
  * Note that the caller needs to ensure the key type isn't uninstantiated.
- * Internally this can be करोne by locking key_types_sem.  Externally, this can
- * be करोne by either never unरेजिस्टरing the key type, or making sure
- * key_alloc() calls करोn't race with module unloading.
+ * Internally this can be done by locking key_types_sem.  Externally, this can
+ * be done by either never unregistering the key type, or making sure
+ * key_alloc() calls don't race with module unloading.
  */
-काष्ठा key *key_alloc(काष्ठा key_type *type, स्थिर अक्षर *desc,
-		      kuid_t uid, kgid_t gid, स्थिर काष्ठा cred *cred,
-		      key_perm_t perm, अचिन्हित दीर्घ flags,
-		      काष्ठा key_restriction *restrict_link)
-अणु
-	काष्ठा key_user *user = शून्य;
-	काष्ठा key *key;
-	माप_प्रकार desclen, quotalen;
-	पूर्णांक ret;
+struct key *key_alloc(struct key_type *type, const char *desc,
+		      kuid_t uid, kgid_t gid, const struct cred *cred,
+		      key_perm_t perm, unsigned long flags,
+		      struct key_restriction *restrict_link)
+{
+	struct key_user *user = NULL;
+	struct key *key;
+	size_t desclen, quotalen;
+	int ret;
 
 	key = ERR_PTR(-EINVAL);
-	अगर (!desc || !*desc)
-		जाओ error;
+	if (!desc || !*desc)
+		goto error;
 
-	अगर (type->vet_description) अणु
+	if (type->vet_description) {
 		ret = type->vet_description(desc);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			key = ERR_PTR(ret);
-			जाओ error;
-		पूर्ण
-	पूर्ण
+			goto error;
+		}
+	}
 
-	desclen = म_माप(desc);
+	desclen = strlen(desc);
 	quotalen = desclen + 1 + type->def_datalen;
 
-	/* get hold of the key tracking क्रम this user */
+	/* get hold of the key tracking for this user */
 	user = key_user_lookup(uid);
-	अगर (!user)
-		जाओ no_memory_1;
+	if (!user)
+		goto no_memory_1;
 
 	/* check that the user's quota permits allocation of another key and
 	 * its description */
-	अगर (!(flags & KEY_ALLOC_NOT_IN_QUOTA)) अणु
-		अचिन्हित maxkeys = uid_eq(uid, GLOBAL_ROOT_UID) ?
+	if (!(flags & KEY_ALLOC_NOT_IN_QUOTA)) {
+		unsigned maxkeys = uid_eq(uid, GLOBAL_ROOT_UID) ?
 			key_quota_root_maxkeys : key_quota_maxkeys;
-		अचिन्हित maxbytes = uid_eq(uid, GLOBAL_ROOT_UID) ?
+		unsigned maxbytes = uid_eq(uid, GLOBAL_ROOT_UID) ?
 			key_quota_root_maxbytes : key_quota_maxbytes;
 
 		spin_lock(&user->lock);
-		अगर (!(flags & KEY_ALLOC_QUOTA_OVERRUN)) अणु
-			अगर (user->qnkeys + 1 > maxkeys ||
+		if (!(flags & KEY_ALLOC_QUOTA_OVERRUN)) {
+			if (user->qnkeys + 1 > maxkeys ||
 			    user->qnbytes + quotalen > maxbytes ||
 			    user->qnbytes + quotalen < user->qnbytes)
-				जाओ no_quota;
-		पूर्ण
+				goto no_quota;
+		}
 
 		user->qnkeys++;
 		user->qnbytes += quotalen;
 		spin_unlock(&user->lock);
-	पूर्ण
+	}
 
 	/* allocate and initialise the key and its description */
 	key = kmem_cache_zalloc(key_jar, GFP_KERNEL);
-	अगर (!key)
-		जाओ no_memory_2;
+	if (!key)
+		goto no_memory_2;
 
 	key->index_key.desc_len = desclen;
 	key->index_key.description = kmemdup(desc, desclen + 1, GFP_KERNEL);
-	अगर (!key->index_key.description)
-		जाओ no_memory_3;
+	if (!key->index_key.description)
+		goto no_memory_3;
 	key->index_key.type = type;
 	key_set_index_key(&key->index_key);
 
@@ -296,139 +295,139 @@ serial_exists:
 	key->gid = gid;
 	key->perm = perm;
 	key->restrict_link = restrict_link;
-	key->last_used_at = kसमय_get_real_seconds();
+	key->last_used_at = ktime_get_real_seconds();
 
-	अगर (!(flags & KEY_ALLOC_NOT_IN_QUOTA))
+	if (!(flags & KEY_ALLOC_NOT_IN_QUOTA))
 		key->flags |= 1 << KEY_FLAG_IN_QUOTA;
-	अगर (flags & KEY_ALLOC_BUILT_IN)
+	if (flags & KEY_ALLOC_BUILT_IN)
 		key->flags |= 1 << KEY_FLAG_BUILTIN;
-	अगर (flags & KEY_ALLOC_UID_KEYRING)
+	if (flags & KEY_ALLOC_UID_KEYRING)
 		key->flags |= 1 << KEY_FLAG_UID_KEYRING;
-	अगर (flags & KEY_ALLOC_SET_KEEP)
+	if (flags & KEY_ALLOC_SET_KEEP)
 		key->flags |= 1 << KEY_FLAG_KEEP;
 
-#अगर_घोषित KEY_DEBUGGING
+#ifdef KEY_DEBUGGING
 	key->magic = KEY_DEBUG_MAGIC;
-#पूर्ण_अगर
+#endif
 
 	/* let the security module know about the key */
 	ret = security_key_alloc(key, cred, flags);
-	अगर (ret < 0)
-		जाओ security_error;
+	if (ret < 0)
+		goto security_error;
 
 	/* publish the key by giving it a serial number */
-	refcount_inc(&key->करोमुख्य_tag->usage);
+	refcount_inc(&key->domain_tag->usage);
 	atomic_inc(&user->nkeys);
 	key_alloc_serial(key);
 
 error:
-	वापस key;
+	return key;
 
 security_error:
-	kमुक्त(key->description);
-	kmem_cache_मुक्त(key_jar, key);
-	अगर (!(flags & KEY_ALLOC_NOT_IN_QUOTA)) अणु
+	kfree(key->description);
+	kmem_cache_free(key_jar, key);
+	if (!(flags & KEY_ALLOC_NOT_IN_QUOTA)) {
 		spin_lock(&user->lock);
 		user->qnkeys--;
 		user->qnbytes -= quotalen;
 		spin_unlock(&user->lock);
-	पूर्ण
+	}
 	key_user_put(user);
 	key = ERR_PTR(ret);
-	जाओ error;
+	goto error;
 
 no_memory_3:
-	kmem_cache_मुक्त(key_jar, key);
+	kmem_cache_free(key_jar, key);
 no_memory_2:
-	अगर (!(flags & KEY_ALLOC_NOT_IN_QUOTA)) अणु
+	if (!(flags & KEY_ALLOC_NOT_IN_QUOTA)) {
 		spin_lock(&user->lock);
 		user->qnkeys--;
 		user->qnbytes -= quotalen;
 		spin_unlock(&user->lock);
-	पूर्ण
+	}
 	key_user_put(user);
 no_memory_1:
 	key = ERR_PTR(-ENOMEM);
-	जाओ error;
+	goto error;
 
 no_quota:
 	spin_unlock(&user->lock);
 	key_user_put(user);
 	key = ERR_PTR(-EDQUOT);
-	जाओ error;
-पूर्ण
+	goto error;
+}
 EXPORT_SYMBOL(key_alloc);
 
 /**
- * key_payload_reserve - Adjust data quota reservation क्रम the key's payload
- * @key: The key to make the reservation क्रम.
+ * key_payload_reserve - Adjust data quota reservation for the key's payload
+ * @key: The key to make the reservation for.
  * @datalen: The amount of data payload the caller now wants.
  *
  * Adjust the amount of the owning user's key data quota that a key reserves.
- * If the amount is increased, then -EDQUOT may be वापसed अगर there isn't
- * enough मुक्त quota available.
+ * If the amount is increased, then -EDQUOT may be returned if there isn't
+ * enough free quota available.
  *
- * If successful, 0 is वापसed.
+ * If successful, 0 is returned.
  */
-पूर्णांक key_payload_reserve(काष्ठा key *key, माप_प्रकार datalen)
-अणु
-	पूर्णांक delta = (पूर्णांक)datalen - key->datalen;
-	पूर्णांक ret = 0;
+int key_payload_reserve(struct key *key, size_t datalen)
+{
+	int delta = (int)datalen - key->datalen;
+	int ret = 0;
 
 	key_check(key);
 
-	/* conढाँचा the quota adjusपंचांगent */
-	अगर (delta != 0 && test_bit(KEY_FLAG_IN_QUOTA, &key->flags)) अणु
-		अचिन्हित maxbytes = uid_eq(key->user->uid, GLOBAL_ROOT_UID) ?
+	/* contemplate the quota adjustment */
+	if (delta != 0 && test_bit(KEY_FLAG_IN_QUOTA, &key->flags)) {
+		unsigned maxbytes = uid_eq(key->user->uid, GLOBAL_ROOT_UID) ?
 			key_quota_root_maxbytes : key_quota_maxbytes;
 
 		spin_lock(&key->user->lock);
 
-		अगर (delta > 0 &&
+		if (delta > 0 &&
 		    (key->user->qnbytes + delta > maxbytes ||
-		     key->user->qnbytes + delta < key->user->qnbytes)) अणु
+		     key->user->qnbytes + delta < key->user->qnbytes)) {
 			ret = -EDQUOT;
-		पूर्ण
-		अन्यथा अणु
+		}
+		else {
 			key->user->qnbytes += delta;
 			key->quotalen += delta;
-		पूर्ण
+		}
 		spin_unlock(&key->user->lock);
-	पूर्ण
+	}
 
-	/* change the recorded data length अगर that didn't generate an error */
-	अगर (ret == 0)
+	/* change the recorded data length if that didn't generate an error */
+	if (ret == 0)
 		key->datalen = datalen;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(key_payload_reserve);
 
 /*
  * Change the key state to being instantiated.
  */
-अटल व्योम mark_key_instantiated(काष्ठा key *key, पूर्णांक reject_error)
-अणु
-	/* Commit the payload beक्रमe setting the state; barrier versus
-	 * key_पढ़ो_state().
+static void mark_key_instantiated(struct key *key, int reject_error)
+{
+	/* Commit the payload before setting the state; barrier versus
+	 * key_read_state().
 	 */
 	smp_store_release(&key->state,
 			  (reject_error < 0) ? reject_error : KEY_IS_POSITIVE);
-पूर्ण
+}
 
 /*
- * Instantiate a key and link it पूर्णांकo the target keyring atomically.  Must be
+ * Instantiate a key and link it into the target keyring atomically.  Must be
  * called with the target keyring's semaphore writelocked.  The target key's
  * semaphore need not be locked as instantiation is serialised by
- * key_स्थिरruction_mutex.
+ * key_construction_mutex.
  */
-अटल पूर्णांक __key_instantiate_and_link(काष्ठा key *key,
-				      काष्ठा key_preparsed_payload *prep,
-				      काष्ठा key *keyring,
-				      काष्ठा key *authkey,
-				      काष्ठा assoc_array_edit **_edit)
-अणु
-	पूर्णांक ret, awaken;
+static int __key_instantiate_and_link(struct key *key,
+				      struct key_preparsed_payload *prep,
+				      struct key *keyring,
+				      struct key *authkey,
+				      struct assoc_array_edit **_edit)
+{
+	int ret, awaken;
 
 	key_check(key);
 	key_check(keyring);
@@ -436,150 +435,150 @@ EXPORT_SYMBOL(key_payload_reserve);
 	awaken = 0;
 	ret = -EBUSY;
 
-	mutex_lock(&key_स्थिरruction_mutex);
+	mutex_lock(&key_construction_mutex);
 
 	/* can't instantiate twice */
-	अगर (key->state == KEY_IS_UNINSTANTIATED) अणु
+	if (key->state == KEY_IS_UNINSTANTIATED) {
 		/* instantiate the key */
 		ret = key->type->instantiate(key, prep);
 
-		अगर (ret == 0) अणु
+		if (ret == 0) {
 			/* mark the key as being instantiated */
 			atomic_inc(&key->user->nikeys);
 			mark_key_instantiated(key, 0);
-			notअगरy_key(key, NOTIFY_KEY_INSTANTIATED, 0);
+			notify_key(key, NOTIFY_KEY_INSTANTIATED, 0);
 
-			अगर (test_and_clear_bit(KEY_FLAG_USER_CONSTRUCT, &key->flags))
+			if (test_and_clear_bit(KEY_FLAG_USER_CONSTRUCT, &key->flags))
 				awaken = 1;
 
-			/* and link it पूर्णांकo the destination keyring */
-			अगर (keyring) अणु
-				अगर (test_bit(KEY_FLAG_KEEP, &keyring->flags))
+			/* and link it into the destination keyring */
+			if (keyring) {
+				if (test_bit(KEY_FLAG_KEEP, &keyring->flags))
 					set_bit(KEY_FLAG_KEEP, &key->flags);
 
 				__key_link(keyring, key, _edit);
-			पूर्ण
+			}
 
 			/* disable the authorisation key */
-			अगर (authkey)
+			if (authkey)
 				key_invalidate(authkey);
 
-			अगर (prep->expiry != TIME64_MAX) अणु
+			if (prep->expiry != TIME64_MAX) {
 				key->expiry = prep->expiry;
 				key_schedule_gc(prep->expiry + key_gc_delay);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	mutex_unlock(&key_स्थिरruction_mutex);
+	mutex_unlock(&key_construction_mutex);
 
-	/* wake up anyone रुकोing क्रम a key to be स्थिरructed */
-	अगर (awaken)
+	/* wake up anyone waiting for a key to be constructed */
+	if (awaken)
 		wake_up_bit(&key->flags, KEY_FLAG_USER_CONSTRUCT);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * key_instantiate_and_link - Instantiate a key and link it पूर्णांकo the keyring.
+ * key_instantiate_and_link - Instantiate a key and link it into the keyring.
  * @key: The key to instantiate.
  * @data: The data to use to instantiate the keyring.
  * @datalen: The length of @data.
- * @keyring: Keyring to create a link in on success (or शून्य).
+ * @keyring: Keyring to create a link in on success (or NULL).
  * @authkey: The authorisation token permitting instantiation.
  *
  * Instantiate a key that's in the uninstantiated state using the provided data
- * and, अगर successful, link it in to the destination keyring अगर one is
+ * and, if successful, link it in to the destination keyring if one is
  * supplied.
  *
- * If successful, 0 is वापसed, the authorisation token is revoked and anyone
- * रुकोing क्रम the key is woken up.  If the key was alपढ़ोy instantiated,
- * -EBUSY will be वापसed.
+ * If successful, 0 is returned, the authorisation token is revoked and anyone
+ * waiting for the key is woken up.  If the key was already instantiated,
+ * -EBUSY will be returned.
  */
-पूर्णांक key_instantiate_and_link(काष्ठा key *key,
-			     स्थिर व्योम *data,
-			     माप_प्रकार datalen,
-			     काष्ठा key *keyring,
-			     काष्ठा key *authkey)
-अणु
-	काष्ठा key_preparsed_payload prep;
-	काष्ठा assoc_array_edit *edit = शून्य;
-	पूर्णांक ret;
+int key_instantiate_and_link(struct key *key,
+			     const void *data,
+			     size_t datalen,
+			     struct key *keyring,
+			     struct key *authkey)
+{
+	struct key_preparsed_payload prep;
+	struct assoc_array_edit *edit = NULL;
+	int ret;
 
-	स_रखो(&prep, 0, माप(prep));
+	memset(&prep, 0, sizeof(prep));
 	prep.orig_description = key->description;
 	prep.data = data;
 	prep.datalen = datalen;
 	prep.quotalen = key->type->def_datalen;
 	prep.expiry = TIME64_MAX;
-	अगर (key->type->preparse) अणु
+	if (key->type->preparse) {
 		ret = key->type->preparse(&prep);
-		अगर (ret < 0)
-			जाओ error;
-	पूर्ण
+		if (ret < 0)
+			goto error;
+	}
 
-	अगर (keyring) अणु
+	if (keyring) {
 		ret = __key_link_lock(keyring, &key->index_key);
-		अगर (ret < 0)
-			जाओ error;
+		if (ret < 0)
+			goto error;
 
 		ret = __key_link_begin(keyring, &key->index_key, &edit);
-		अगर (ret < 0)
-			जाओ error_link_end;
+		if (ret < 0)
+			goto error_link_end;
 
-		अगर (keyring->restrict_link && keyring->restrict_link->check) अणु
-			काष्ठा key_restriction *keyres = keyring->restrict_link;
+		if (keyring->restrict_link && keyring->restrict_link->check) {
+			struct key_restriction *keyres = keyring->restrict_link;
 
 			ret = keyres->check(keyring, key->type, &prep.payload,
 					    keyres->key);
-			अगर (ret < 0)
-				जाओ error_link_end;
-		पूर्ण
-	पूर्ण
+			if (ret < 0)
+				goto error_link_end;
+		}
+	}
 
 	ret = __key_instantiate_and_link(key, &prep, keyring, authkey, &edit);
 
 error_link_end:
-	अगर (keyring)
+	if (keyring)
 		__key_link_end(keyring, &key->index_key, edit);
 
 error:
-	अगर (key->type->preparse)
-		key->type->मुक्त_preparse(&prep);
-	वापस ret;
-पूर्ण
+	if (key->type->preparse)
+		key->type->free_preparse(&prep);
+	return ret;
+}
 
 EXPORT_SYMBOL(key_instantiate_and_link);
 
 /**
- * key_reject_and_link - Negatively instantiate a key and link it पूर्णांकo the keyring.
+ * key_reject_and_link - Negatively instantiate a key and link it into the keyring.
  * @key: The key to instantiate.
- * @समयout: The समयout on the negative key.
- * @error: The error to वापस when the key is hit.
- * @keyring: Keyring to create a link in on success (or शून्य).
+ * @timeout: The timeout on the negative key.
+ * @error: The error to return when the key is hit.
+ * @keyring: Keyring to create a link in on success (or NULL).
  * @authkey: The authorisation token permitting instantiation.
  *
- * Negatively instantiate a key that's in the uninstantiated state and, अगर
- * successful, set its समयout and stored error and link it in to the
- * destination keyring अगर one is supplied.  The key and any links to the key
- * will be स्वतःmatically garbage collected after the समयout expires.
+ * Negatively instantiate a key that's in the uninstantiated state and, if
+ * successful, set its timeout and stored error and link it in to the
+ * destination keyring if one is supplied.  The key and any links to the key
+ * will be automatically garbage collected after the timeout expires.
  *
  * Negative keys are used to rate limit repeated request_key() calls by causing
- * them to वापस the stored error code (typically ENOKEY) until the negative
+ * them to return the stored error code (typically ENOKEY) until the negative
  * key expires.
  *
- * If successful, 0 is वापसed, the authorisation token is revoked and anyone
- * रुकोing क्रम the key is woken up.  If the key was alपढ़ोy instantiated,
- * -EBUSY will be वापसed.
+ * If successful, 0 is returned, the authorisation token is revoked and anyone
+ * waiting for the key is woken up.  If the key was already instantiated,
+ * -EBUSY will be returned.
  */
-पूर्णांक key_reject_and_link(काष्ठा key *key,
-			अचिन्हित समयout,
-			अचिन्हित error,
-			काष्ठा key *keyring,
-			काष्ठा key *authkey)
-अणु
-	काष्ठा assoc_array_edit *edit = शून्य;
-	पूर्णांक ret, awaken, link_ret = 0;
+int key_reject_and_link(struct key *key,
+			unsigned timeout,
+			unsigned error,
+			struct key *keyring,
+			struct key *authkey)
+{
+	struct assoc_array_edit *edit = NULL;
+	int ret, awaken, link_ret = 0;
 
 	key_check(key);
 	key_check(keyring);
@@ -587,54 +586,54 @@ EXPORT_SYMBOL(key_instantiate_and_link);
 	awaken = 0;
 	ret = -EBUSY;
 
-	अगर (keyring) अणु
-		अगर (keyring->restrict_link)
-			वापस -EPERM;
+	if (keyring) {
+		if (keyring->restrict_link)
+			return -EPERM;
 
 		link_ret = __key_link_lock(keyring, &key->index_key);
-		अगर (link_ret == 0) अणु
+		if (link_ret == 0) {
 			link_ret = __key_link_begin(keyring, &key->index_key, &edit);
-			अगर (link_ret < 0)
+			if (link_ret < 0)
 				__key_link_end(keyring, &key->index_key, edit);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	mutex_lock(&key_स्थिरruction_mutex);
+	mutex_lock(&key_construction_mutex);
 
 	/* can't instantiate twice */
-	अगर (key->state == KEY_IS_UNINSTANTIATED) अणु
+	if (key->state == KEY_IS_UNINSTANTIATED) {
 		/* mark the key as being negatively instantiated */
 		atomic_inc(&key->user->nikeys);
 		mark_key_instantiated(key, -error);
-		notअगरy_key(key, NOTIFY_KEY_INSTANTIATED, -error);
-		key->expiry = kसमय_get_real_seconds() + समयout;
+		notify_key(key, NOTIFY_KEY_INSTANTIATED, -error);
+		key->expiry = ktime_get_real_seconds() + timeout;
 		key_schedule_gc(key->expiry + key_gc_delay);
 
-		अगर (test_and_clear_bit(KEY_FLAG_USER_CONSTRUCT, &key->flags))
+		if (test_and_clear_bit(KEY_FLAG_USER_CONSTRUCT, &key->flags))
 			awaken = 1;
 
 		ret = 0;
 
-		/* and link it पूर्णांकo the destination keyring */
-		अगर (keyring && link_ret == 0)
+		/* and link it into the destination keyring */
+		if (keyring && link_ret == 0)
 			__key_link(keyring, key, &edit);
 
 		/* disable the authorisation key */
-		अगर (authkey)
+		if (authkey)
 			key_invalidate(authkey);
-	पूर्ण
+	}
 
-	mutex_unlock(&key_स्थिरruction_mutex);
+	mutex_unlock(&key_construction_mutex);
 
-	अगर (keyring && link_ret == 0)
+	if (keyring && link_ret == 0)
 		__key_link_end(keyring, &key->index_key, edit);
 
-	/* wake up anyone रुकोing क्रम a key to be स्थिरructed */
-	अगर (awaken)
+	/* wake up anyone waiting for a key to be constructed */
+	if (awaken)
 		wake_up_bit(&key->flags, KEY_FLAG_USER_CONSTRUCT);
 
-	वापस ret == 0 ? link_ret : ret;
-पूर्ण
+	return ret == 0 ? link_ret : ret;
+}
 EXPORT_SYMBOL(key_reject_and_link);
 
 /**
@@ -643,308 +642,308 @@ EXPORT_SYMBOL(key_reject_and_link);
  *
  * Discard a reference to a key, and when all the references are gone, we
  * schedule the cleanup task to come and pull it out of the tree in process
- * context at some later समय.
+ * context at some later time.
  */
-व्योम key_put(काष्ठा key *key)
-अणु
-	अगर (key) अणु
+void key_put(struct key *key)
+{
+	if (key) {
 		key_check(key);
 
-		अगर (refcount_dec_and_test(&key->usage))
+		if (refcount_dec_and_test(&key->usage))
 			schedule_work(&key_gc_work);
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL(key_put);
 
 /*
  * Find a key by its serial number.
  */
-काष्ठा key *key_lookup(key_serial_t id)
-अणु
-	काष्ठा rb_node *n;
-	काष्ठा key *key;
+struct key *key_lookup(key_serial_t id)
+{
+	struct rb_node *n;
+	struct key *key;
 
 	spin_lock(&key_serial_lock);
 
-	/* search the tree क्रम the specअगरied key */
+	/* search the tree for the specified key */
 	n = key_serial_tree.rb_node;
-	जबतक (n) अणु
-		key = rb_entry(n, काष्ठा key, serial_node);
+	while (n) {
+		key = rb_entry(n, struct key, serial_node);
 
-		अगर (id < key->serial)
+		if (id < key->serial)
 			n = n->rb_left;
-		अन्यथा अगर (id > key->serial)
+		else if (id > key->serial)
 			n = n->rb_right;
-		अन्यथा
-			जाओ found;
-	पूर्ण
+		else
+			goto found;
+	}
 
 not_found:
 	key = ERR_PTR(-ENOKEY);
-	जाओ error;
+	goto error;
 
 found:
-	/* A key is allowed to be looked up only अगर someone still owns a
-	 * reference to it - otherwise it's aरुकोing the gc.
+	/* A key is allowed to be looked up only if someone still owns a
+	 * reference to it - otherwise it's awaiting the gc.
 	 */
-	अगर (!refcount_inc_not_zero(&key->usage))
-		जाओ not_found;
+	if (!refcount_inc_not_zero(&key->usage))
+		goto not_found;
 
 error:
 	spin_unlock(&key_serial_lock);
-	वापस key;
-पूर्ण
+	return key;
+}
 
 /*
- * Find and lock the specअगरied key type against removal.
+ * Find and lock the specified key type against removal.
  *
- * We वापस with the sem पढ़ो-locked अगर successful.  If the type wasn't
- * available -ENOKEY is वापसed instead.
+ * We return with the sem read-locked if successful.  If the type wasn't
+ * available -ENOKEY is returned instead.
  */
-काष्ठा key_type *key_type_lookup(स्थिर अक्षर *type)
-अणु
-	काष्ठा key_type *ktype;
+struct key_type *key_type_lookup(const char *type)
+{
+	struct key_type *ktype;
 
-	करोwn_पढ़ो(&key_types_sem);
+	down_read(&key_types_sem);
 
-	/* look up the key type to see अगर it's one of the रेजिस्टरed kernel
+	/* look up the key type to see if it's one of the registered kernel
 	 * types */
-	list_क्रम_each_entry(ktype, &key_types_list, link) अणु
-		अगर (म_भेद(ktype->name, type) == 0)
-			जाओ found_kernel_type;
-	पूर्ण
+	list_for_each_entry(ktype, &key_types_list, link) {
+		if (strcmp(ktype->name, type) == 0)
+			goto found_kernel_type;
+	}
 
-	up_पढ़ो(&key_types_sem);
+	up_read(&key_types_sem);
 	ktype = ERR_PTR(-ENOKEY);
 
 found_kernel_type:
-	वापस ktype;
-पूर्ण
+	return ktype;
+}
 
-व्योम key_set_समयout(काष्ठा key *key, अचिन्हित समयout)
-अणु
-	समय64_t expiry = 0;
+void key_set_timeout(struct key *key, unsigned timeout)
+{
+	time64_t expiry = 0;
 
 	/* make the changes with the locks held to prevent races */
-	करोwn_ग_लिखो(&key->sem);
+	down_write(&key->sem);
 
-	अगर (समयout > 0)
-		expiry = kसमय_get_real_seconds() + समयout;
+	if (timeout > 0)
+		expiry = ktime_get_real_seconds() + timeout;
 
 	key->expiry = expiry;
 	key_schedule_gc(key->expiry + key_gc_delay);
 
-	up_ग_लिखो(&key->sem);
-पूर्ण
-EXPORT_SYMBOL_GPL(key_set_समयout);
+	up_write(&key->sem);
+}
+EXPORT_SYMBOL_GPL(key_set_timeout);
 
 /*
  * Unlock a key type locked by key_type_lookup().
  */
-व्योम key_type_put(काष्ठा key_type *ktype)
-अणु
-	up_पढ़ो(&key_types_sem);
-पूर्ण
+void key_type_put(struct key_type *ktype)
+{
+	up_read(&key_types_sem);
+}
 
 /*
  * Attempt to update an existing key.
  *
  * The key is given to us with an incremented refcount that we need to discard
- * अगर we get an error.
+ * if we get an error.
  */
-अटल अंतरभूत key_ref_t __key_update(key_ref_t key_ref,
-				     काष्ठा key_preparsed_payload *prep)
-अणु
-	काष्ठा key *key = key_ref_to_ptr(key_ref);
-	पूर्णांक ret;
+static inline key_ref_t __key_update(key_ref_t key_ref,
+				     struct key_preparsed_payload *prep)
+{
+	struct key *key = key_ref_to_ptr(key_ref);
+	int ret;
 
-	/* need ग_लिखो permission on the key to update it */
+	/* need write permission on the key to update it */
 	ret = key_permission(key_ref, KEY_NEED_WRITE);
-	अगर (ret < 0)
-		जाओ error;
+	if (ret < 0)
+		goto error;
 
 	ret = -EEXIST;
-	अगर (!key->type->update)
-		जाओ error;
+	if (!key->type->update)
+		goto error;
 
-	करोwn_ग_लिखो(&key->sem);
+	down_write(&key->sem);
 
 	ret = key->type->update(key, prep);
-	अगर (ret == 0) अणु
+	if (ret == 0) {
 		/* Updating a negative key positively instantiates it */
 		mark_key_instantiated(key, 0);
-		notअगरy_key(key, NOTIFY_KEY_UPDATED, 0);
-	पूर्ण
+		notify_key(key, NOTIFY_KEY_UPDATED, 0);
+	}
 
-	up_ग_लिखो(&key->sem);
+	up_write(&key->sem);
 
-	अगर (ret < 0)
-		जाओ error;
+	if (ret < 0)
+		goto error;
 out:
-	वापस key_ref;
+	return key_ref;
 
 error:
 	key_put(key);
 	key_ref = ERR_PTR(ret);
-	जाओ out;
-पूर्ण
+	goto out;
+}
 
 /**
  * key_create_or_update - Update or create and instantiate a key.
- * @keyring_ref: A poपूर्णांकer to the destination keyring with possession flag.
+ * @keyring_ref: A pointer to the destination keyring with possession flag.
  * @type: The type of key.
- * @description: The searchable description क्रम the key.
+ * @description: The searchable description for the key.
  * @payload: The data to use to instantiate or update the key.
  * @plen: The length of @payload.
- * @perm: The permissions mask क्रम a new key.
- * @flags: The quota flags क्रम a new key.
+ * @perm: The permissions mask for a new key.
+ * @flags: The quota flags for a new key.
  *
- * Search the destination keyring क्रम a key of the same description and अगर one
+ * Search the destination keyring for a key of the same description and if one
  * is found, update it, otherwise create and instantiate a new one and create a
  * link to it from that keyring.
  *
  * If perm is KEY_PERM_UNDEF then an appropriate key permissions mask will be
  * concocted.
  *
- * Returns a poपूर्णांकer to the new key अगर successful, -ENODEV अगर the key type
- * wasn't available, -ENOTDIR if the keyring wasn't a keyring, -EACCES अगर the
- * caller isn't permitted to modअगरy the keyring or the LSM did not permit
+ * Returns a pointer to the new key if successful, -ENODEV if the key type
+ * wasn't available, -ENOTDIR if the keyring wasn't a keyring, -EACCES if the
+ * caller isn't permitted to modify the keyring or the LSM did not permit
  * creation of the key.
  *
  * On success, the possession flag from the keyring ref will be tacked on to
- * the key ref beक्रमe it is वापसed.
+ * the key ref before it is returned.
  */
 key_ref_t key_create_or_update(key_ref_t keyring_ref,
-			       स्थिर अक्षर *type,
-			       स्थिर अक्षर *description,
-			       स्थिर व्योम *payload,
-			       माप_प्रकार plen,
+			       const char *type,
+			       const char *description,
+			       const void *payload,
+			       size_t plen,
 			       key_perm_t perm,
-			       अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा keyring_index_key index_key = अणु
+			       unsigned long flags)
+{
+	struct keyring_index_key index_key = {
 		.description	= description,
-	पूर्ण;
-	काष्ठा key_preparsed_payload prep;
-	काष्ठा assoc_array_edit *edit = शून्य;
-	स्थिर काष्ठा cred *cred = current_cred();
-	काष्ठा key *keyring, *key = शून्य;
+	};
+	struct key_preparsed_payload prep;
+	struct assoc_array_edit *edit = NULL;
+	const struct cred *cred = current_cred();
+	struct key *keyring, *key = NULL;
 	key_ref_t key_ref;
-	पूर्णांक ret;
-	काष्ठा key_restriction *restrict_link = शून्य;
+	int ret;
+	struct key_restriction *restrict_link = NULL;
 
-	/* look up the key type to see अगर it's one of the रेजिस्टरed kernel
+	/* look up the key type to see if it's one of the registered kernel
 	 * types */
 	index_key.type = key_type_lookup(type);
-	अगर (IS_ERR(index_key.type)) अणु
+	if (IS_ERR(index_key.type)) {
 		key_ref = ERR_PTR(-ENODEV);
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	key_ref = ERR_PTR(-EINVAL);
-	अगर (!index_key.type->instantiate ||
+	if (!index_key.type->instantiate ||
 	    (!index_key.description && !index_key.type->preparse))
-		जाओ error_put_type;
+		goto error_put_type;
 
 	keyring = key_ref_to_ptr(keyring_ref);
 
 	key_check(keyring);
 
-	अगर (!(flags & KEY_ALLOC_BYPASS_RESTRICTION))
+	if (!(flags & KEY_ALLOC_BYPASS_RESTRICTION))
 		restrict_link = keyring->restrict_link;
 
-	key_ref = ERR_PTR(-ENOTसूची);
-	अगर (keyring->type != &key_type_keyring)
-		जाओ error_put_type;
+	key_ref = ERR_PTR(-ENOTDIR);
+	if (keyring->type != &key_type_keyring)
+		goto error_put_type;
 
-	स_रखो(&prep, 0, माप(prep));
+	memset(&prep, 0, sizeof(prep));
 	prep.orig_description = description;
 	prep.data = payload;
 	prep.datalen = plen;
 	prep.quotalen = index_key.type->def_datalen;
 	prep.expiry = TIME64_MAX;
-	अगर (index_key.type->preparse) अणु
+	if (index_key.type->preparse) {
 		ret = index_key.type->preparse(&prep);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			key_ref = ERR_PTR(ret);
-			जाओ error_मुक्त_prep;
-		पूर्ण
-		अगर (!index_key.description)
+			goto error_free_prep;
+		}
+		if (!index_key.description)
 			index_key.description = prep.description;
 		key_ref = ERR_PTR(-EINVAL);
-		अगर (!index_key.description)
-			जाओ error_मुक्त_prep;
-	पूर्ण
-	index_key.desc_len = म_माप(index_key.description);
+		if (!index_key.description)
+			goto error_free_prep;
+	}
+	index_key.desc_len = strlen(index_key.description);
 	key_set_index_key(&index_key);
 
 	ret = __key_link_lock(keyring, &index_key);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		key_ref = ERR_PTR(ret);
-		जाओ error_मुक्त_prep;
-	पूर्ण
+		goto error_free_prep;
+	}
 
 	ret = __key_link_begin(keyring, &index_key, &edit);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		key_ref = ERR_PTR(ret);
-		जाओ error_link_end;
-	पूर्ण
+		goto error_link_end;
+	}
 
-	अगर (restrict_link && restrict_link->check) अणु
+	if (restrict_link && restrict_link->check) {
 		ret = restrict_link->check(keyring, index_key.type,
 					   &prep.payload, restrict_link->key);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			key_ref = ERR_PTR(ret);
-			जाओ error_link_end;
-		पूर्ण
-	पूर्ण
+			goto error_link_end;
+		}
+	}
 
-	/* अगर we're going to allocate a new key, we're going to have
-	 * to modअगरy the keyring */
+	/* if we're going to allocate a new key, we're going to have
+	 * to modify the keyring */
 	ret = key_permission(keyring_ref, KEY_NEED_WRITE);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		key_ref = ERR_PTR(ret);
-		जाओ error_link_end;
-	पूर्ण
+		goto error_link_end;
+	}
 
-	/* अगर it's possible to update this type of key, search क्रम an existing
+	/* if it's possible to update this type of key, search for an existing
 	 * key of the same type and description in the destination keyring and
-	 * update that instead अगर possible
+	 * update that instead if possible
 	 */
-	अगर (index_key.type->update) अणु
+	if (index_key.type->update) {
 		key_ref = find_key_to_update(keyring_ref, &index_key);
-		अगर (key_ref)
-			जाओ found_matching_key;
-	पूर्ण
+		if (key_ref)
+			goto found_matching_key;
+	}
 
-	/* अगर the client करोesn't provide, decide on the permissions we want */
-	अगर (perm == KEY_PERM_UNDEF) अणु
+	/* if the client doesn't provide, decide on the permissions we want */
+	if (perm == KEY_PERM_UNDEF) {
 		perm = KEY_POS_VIEW | KEY_POS_SEARCH | KEY_POS_LINK | KEY_POS_SETATTR;
 		perm |= KEY_USR_VIEW;
 
-		अगर (index_key.type->पढ़ो)
+		if (index_key.type->read)
 			perm |= KEY_POS_READ;
 
-		अगर (index_key.type == &key_type_keyring ||
+		if (index_key.type == &key_type_keyring ||
 		    index_key.type->update)
 			perm |= KEY_POS_WRITE;
-	पूर्ण
+	}
 
 	/* allocate a new key */
 	key = key_alloc(index_key.type, index_key.description,
-			cred->fsuid, cred->fsgid, cred, perm, flags, शून्य);
-	अगर (IS_ERR(key)) अणु
+			cred->fsuid, cred->fsgid, cred, perm, flags, NULL);
+	if (IS_ERR(key)) {
 		key_ref = ERR_CAST(key);
-		जाओ error_link_end;
-	पूर्ण
+		goto error_link_end;
+	}
 
-	/* instantiate it and link it पूर्णांकo the target keyring */
-	ret = __key_instantiate_and_link(key, &prep, keyring, शून्य, &edit);
-	अगर (ret < 0) अणु
+	/* instantiate it and link it into the target keyring */
+	ret = __key_instantiate_and_link(key, &prep, keyring, NULL, &edit);
+	if (ret < 0) {
 		key_put(key);
 		key_ref = ERR_PTR(ret);
-		जाओ error_link_end;
-	पूर्ण
+		goto error_link_end;
+	}
 
 	ima_post_key_create_or_update(keyring, key, payload, plen,
 				      flags, true);
@@ -953,13 +952,13 @@ key_ref_t key_create_or_update(key_ref_t keyring_ref,
 
 error_link_end:
 	__key_link_end(keyring, &index_key, edit);
-error_मुक्त_prep:
-	अगर (index_key.type->preparse)
-		index_key.type->मुक्त_preparse(&prep);
+error_free_prep:
+	if (index_key.type->preparse)
+		index_key.type->free_preparse(&prep);
 error_put_type:
 	key_type_put(index_key.type);
 error:
-	वापस key_ref;
+	return key_ref;
 
  found_matching_key:
 	/* we found a matching key, so we're going to try to update it
@@ -968,29 +967,29 @@ error:
 	__key_link_end(keyring, &index_key, edit);
 
 	key = key_ref_to_ptr(key_ref);
-	अगर (test_bit(KEY_FLAG_USER_CONSTRUCT, &key->flags)) अणु
-		ret = रुको_क्रम_key_स्थिरruction(key, true);
-		अगर (ret < 0) अणु
+	if (test_bit(KEY_FLAG_USER_CONSTRUCT, &key->flags)) {
+		ret = wait_for_key_construction(key, true);
+		if (ret < 0) {
 			key_ref_put(key_ref);
 			key_ref = ERR_PTR(ret);
-			जाओ error_मुक्त_prep;
-		पूर्ण
-	पूर्ण
+			goto error_free_prep;
+		}
+	}
 
 	key_ref = __key_update(key_ref, &prep);
 
-	अगर (!IS_ERR(key_ref))
+	if (!IS_ERR(key_ref))
 		ima_post_key_create_or_update(keyring, key,
 					      payload, plen,
 					      flags, false);
 
-	जाओ error_मुक्त_prep;
-पूर्ण
+	goto error_free_prep;
+}
 EXPORT_SYMBOL(key_create_or_update);
 
 /**
  * key_update - Update a key's contents.
- * @key_ref: The poपूर्णांकer (plus possession flag) to the key.
+ * @key_ref: The pointer (plus possession flag) to the key.
  * @payload: The data to be used to update the key.
  * @plen: The length of @payload.
  *
@@ -998,67 +997,67 @@ EXPORT_SYMBOL(key_create_or_update);
  * caller must be granted Write permission on the key.  Negative keys can be
  * instantiated by this method.
  *
- * Returns 0 on success, -EACCES अगर not permitted and -EOPNOTSUPP अगर the key
- * type करोes not support updating.  The key type may वापस other errors.
+ * Returns 0 on success, -EACCES if not permitted and -EOPNOTSUPP if the key
+ * type does not support updating.  The key type may return other errors.
  */
-पूर्णांक key_update(key_ref_t key_ref, स्थिर व्योम *payload, माप_प्रकार plen)
-अणु
-	काष्ठा key_preparsed_payload prep;
-	काष्ठा key *key = key_ref_to_ptr(key_ref);
-	पूर्णांक ret;
+int key_update(key_ref_t key_ref, const void *payload, size_t plen)
+{
+	struct key_preparsed_payload prep;
+	struct key *key = key_ref_to_ptr(key_ref);
+	int ret;
 
 	key_check(key);
 
 	/* the key must be writable */
 	ret = key_permission(key_ref, KEY_NEED_WRITE);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	/* attempt to update it अगर supported */
-	अगर (!key->type->update)
-		वापस -EOPNOTSUPP;
+	/* attempt to update it if supported */
+	if (!key->type->update)
+		return -EOPNOTSUPP;
 
-	स_रखो(&prep, 0, माप(prep));
+	memset(&prep, 0, sizeof(prep));
 	prep.data = payload;
 	prep.datalen = plen;
 	prep.quotalen = key->type->def_datalen;
 	prep.expiry = TIME64_MAX;
-	अगर (key->type->preparse) अणु
+	if (key->type->preparse) {
 		ret = key->type->preparse(&prep);
-		अगर (ret < 0)
-			जाओ error;
-	पूर्ण
+		if (ret < 0)
+			goto error;
+	}
 
-	करोwn_ग_लिखो(&key->sem);
+	down_write(&key->sem);
 
 	ret = key->type->update(key, &prep);
-	अगर (ret == 0) अणु
+	if (ret == 0) {
 		/* Updating a negative key positively instantiates it */
 		mark_key_instantiated(key, 0);
-		notअगरy_key(key, NOTIFY_KEY_UPDATED, 0);
-	पूर्ण
+		notify_key(key, NOTIFY_KEY_UPDATED, 0);
+	}
 
-	up_ग_लिखो(&key->sem);
+	up_write(&key->sem);
 
 error:
-	अगर (key->type->preparse)
-		key->type->मुक्त_preparse(&prep);
-	वापस ret;
-पूर्ण
+	if (key->type->preparse)
+		key->type->free_preparse(&prep);
+	return ret;
+}
 EXPORT_SYMBOL(key_update);
 
 /**
  * key_revoke - Revoke a key.
  * @key: The key to be revoked.
  *
- * Mark a key as being revoked and ask the type to मुक्त up its resources.  The
- * revocation समयout is set and the key and all its links will be
- * स्वतःmatically garbage collected after key_gc_delay amount of समय अगर they
+ * Mark a key as being revoked and ask the type to free up its resources.  The
+ * revocation timeout is set and the key and all its links will be
+ * automatically garbage collected after key_gc_delay amount of time if they
  * are not manually dealt with first.
  */
-व्योम key_revoke(काष्ठा key *key)
-अणु
-	समय64_t समय;
+void key_revoke(struct key *key)
+{
+	time64_t time;
 
 	key_check(key);
 
@@ -1067,22 +1066,22 @@ EXPORT_SYMBOL(key_update);
 	 *   authorisation key whilst holding the sem on a key we've just
 	 *   instantiated
 	 */
-	करोwn_ग_लिखो_nested(&key->sem, 1);
-	अगर (!test_and_set_bit(KEY_FLAG_REVOKED, &key->flags)) अणु
-		notअगरy_key(key, NOTIFY_KEY_REVOKED, 0);
-		अगर (key->type->revoke)
+	down_write_nested(&key->sem, 1);
+	if (!test_and_set_bit(KEY_FLAG_REVOKED, &key->flags)) {
+		notify_key(key, NOTIFY_KEY_REVOKED, 0);
+		if (key->type->revoke)
 			key->type->revoke(key);
 
-		/* set the death समय to no more than the expiry समय */
-		समय = kसमय_get_real_seconds();
-		अगर (key->revoked_at == 0 || key->revoked_at > समय) अणु
-			key->revoked_at = समय;
+		/* set the death time to no more than the expiry time */
+		time = ktime_get_real_seconds();
+		if (key->revoked_at == 0 || key->revoked_at > time) {
+			key->revoked_at = time;
 			key_schedule_gc(key->revoked_at + key_gc_delay);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	up_ग_लिखो(&key->sem);
-पूर्ण
+	up_write(&key->sem);
+}
 EXPORT_SYMBOL(key_revoke);
 
 /**
@@ -1090,23 +1089,23 @@ EXPORT_SYMBOL(key_revoke);
  * @key: The key to be invalidated.
  *
  * Mark a key as being invalidated and have it cleaned up immediately.  The key
- * is ignored by all searches and other operations from this poपूर्णांक.
+ * is ignored by all searches and other operations from this point.
  */
-व्योम key_invalidate(काष्ठा key *key)
-अणु
+void key_invalidate(struct key *key)
+{
 	kenter("%d", key_serial(key));
 
 	key_check(key);
 
-	अगर (!test_bit(KEY_FLAG_INVALIDATED, &key->flags)) अणु
-		करोwn_ग_लिखो_nested(&key->sem, 1);
-		अगर (!test_and_set_bit(KEY_FLAG_INVALIDATED, &key->flags)) अणु
-			notअगरy_key(key, NOTIFY_KEY_INVALIDATED, 0);
+	if (!test_bit(KEY_FLAG_INVALIDATED, &key->flags)) {
+		down_write_nested(&key->sem, 1);
+		if (!test_and_set_bit(KEY_FLAG_INVALIDATED, &key->flags)) {
+			notify_key(key, NOTIFY_KEY_INVALIDATED, 0);
 			key_schedule_gc_links();
-		पूर्ण
-		up_ग_लिखो(&key->sem);
-	पूर्ण
-पूर्ण
+		}
+		up_write(&key->sem);
+	}
+}
 EXPORT_SYMBOL(key_invalidate);
 
 /**
@@ -1115,55 +1114,55 @@ EXPORT_SYMBOL(key_invalidate);
  * @prep: The preparsed data to load.
  *
  * Instantiate a key from preparsed data.  We assume we can just copy the data
- * in directly and clear the old poपूर्णांकers.
+ * in directly and clear the old pointers.
  *
- * This can be poपूर्णांकed to directly by the key type instantiate op poपूर्णांकer.
+ * This can be pointed to directly by the key type instantiate op pointer.
  */
-पूर्णांक generic_key_instantiate(काष्ठा key *key, काष्ठा key_preparsed_payload *prep)
-अणु
-	पूर्णांक ret;
+int generic_key_instantiate(struct key *key, struct key_preparsed_payload *prep)
+{
+	int ret;
 
 	pr_devel("==>%s()\n", __func__);
 
 	ret = key_payload_reserve(key, prep->quotalen);
-	अगर (ret == 0) अणु
-		rcu_assign_keypoपूर्णांकer(key, prep->payload.data[0]);
+	if (ret == 0) {
+		rcu_assign_keypointer(key, prep->payload.data[0]);
 		key->payload.data[1] = prep->payload.data[1];
 		key->payload.data[2] = prep->payload.data[2];
 		key->payload.data[3] = prep->payload.data[3];
-		prep->payload.data[0] = शून्य;
-		prep->payload.data[1] = शून्य;
-		prep->payload.data[2] = शून्य;
-		prep->payload.data[3] = शून्य;
-	पूर्ण
+		prep->payload.data[0] = NULL;
+		prep->payload.data[1] = NULL;
+		prep->payload.data[2] = NULL;
+		prep->payload.data[3] = NULL;
+	}
 	pr_devel("<==%s() = %d\n", __func__, ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(generic_key_instantiate);
 
 /**
- * रेजिस्टर_key_type - Register a type of key.
+ * register_key_type - Register a type of key.
  * @ktype: The new key type.
  *
  * Register a new key type.
  *
- * Returns 0 on success or -EEXIST अगर a type of this name alपढ़ोy exists.
+ * Returns 0 on success or -EEXIST if a type of this name already exists.
  */
-पूर्णांक रेजिस्टर_key_type(काष्ठा key_type *ktype)
-अणु
-	काष्ठा key_type *p;
-	पूर्णांक ret;
+int register_key_type(struct key_type *ktype)
+{
+	struct key_type *p;
+	int ret;
 
-	स_रखो(&ktype->lock_class, 0, माप(ktype->lock_class));
+	memset(&ktype->lock_class, 0, sizeof(ktype->lock_class));
 
 	ret = -EEXIST;
-	करोwn_ग_लिखो(&key_types_sem);
+	down_write(&key_types_sem);
 
 	/* disallow key types with the same name */
-	list_क्रम_each_entry(p, &key_types_list, link) अणु
-		अगर (म_भेद(p->name, ktype->name) == 0)
-			जाओ out;
-	पूर्ण
+	list_for_each_entry(p, &key_types_list, link) {
+		if (strcmp(p->name, ktype->name) == 0)
+			goto out;
+	}
 
 	/* store the type */
 	list_add(&ktype->link, &key_types_list);
@@ -1172,38 +1171,38 @@ EXPORT_SYMBOL(generic_key_instantiate);
 	ret = 0;
 
 out:
-	up_ग_लिखो(&key_types_sem);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(रेजिस्टर_key_type);
+	up_write(&key_types_sem);
+	return ret;
+}
+EXPORT_SYMBOL(register_key_type);
 
 /**
- * unरेजिस्टर_key_type - Unरेजिस्टर a type of key.
+ * unregister_key_type - Unregister a type of key.
  * @ktype: The key type.
  *
- * Unरेजिस्टर a key type and mark all the extant keys of this type as dead.
+ * Unregister a key type and mark all the extant keys of this type as dead.
  * Those keys of this type are then destroyed to get rid of their payloads and
  * they and their links will be garbage collected as soon as possible.
  */
-व्योम unरेजिस्टर_key_type(काष्ठा key_type *ktype)
-अणु
-	करोwn_ग_लिखो(&key_types_sem);
+void unregister_key_type(struct key_type *ktype)
+{
+	down_write(&key_types_sem);
 	list_del_init(&ktype->link);
-	करोwngrade_ग_लिखो(&key_types_sem);
+	downgrade_write(&key_types_sem);
 	key_gc_keytype(ktype);
 	pr_notice("Key type %s unregistered\n", ktype->name);
-	up_पढ़ो(&key_types_sem);
-पूर्ण
-EXPORT_SYMBOL(unरेजिस्टर_key_type);
+	up_read(&key_types_sem);
+}
+EXPORT_SYMBOL(unregister_key_type);
 
 /*
  * Initialise the key management state.
  */
-व्योम __init key_init(व्योम)
-अणु
+void __init key_init(void)
+{
 	/* allocate a slab in which we can store keys */
-	key_jar = kmem_cache_create("key_jar", माप(काष्ठा key),
-			0, SLAB_HWCACHE_ALIGN|SLAB_PANIC, शून्य);
+	key_jar = kmem_cache_create("key_jar", sizeof(struct key),
+			0, SLAB_HWCACHE_ALIGN|SLAB_PANIC, NULL);
 
 	/* add the special key types */
 	list_add_tail(&key_type_keyring.link, &key_types_list);
@@ -1213,9 +1212,9 @@ EXPORT_SYMBOL(unरेजिस्टर_key_type);
 
 	/* record the root user tracking */
 	rb_link_node(&root_key_user.node,
-		     शून्य,
+		     NULL,
 		     &key_user_tree.rb_node);
 
 	rb_insert_color(&root_key_user.node,
 			&key_user_tree);
-पूर्ण
+}

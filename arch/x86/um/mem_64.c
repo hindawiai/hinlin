@@ -1,12 +1,11 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/mm.h>
-#समावेश <यंत्र/elf.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/mm.h>
+#include <asm/elf.h>
 
-स्थिर अक्षर *arch_vma_name(काष्ठा vm_area_काष्ठा *vma)
-अणु
-	अगर (vma->vm_mm && vma->vm_start == um_vdso_addr)
-		वापस "[vdso]";
+const char *arch_vma_name(struct vm_area_struct *vma)
+{
+	if (vma->vm_mm && vma->vm_start == um_vdso_addr)
+		return "[vdso]";
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}

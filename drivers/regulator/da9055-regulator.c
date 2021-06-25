@@ -1,295 +1,294 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 //
-// Regulator driver क्रम DA9055 PMIC
+// Regulator driver for DA9055 PMIC
 //
 // Copyright(c) 2012 Dialog Semiconductor Ltd.
 //
 // Author: David Dajun Chen <dchen@diasemi.com>
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/err.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regulator/driver.h>
-#समावेश <linux/regulator/machine.h>
-#समावेश <linux/of.h>
-#समावेश <linux/regulator/of_regulator.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/err.h>
+#include <linux/gpio.h>
+#include <linux/gpio/consumer.h>
+#include <linux/platform_device.h>
+#include <linux/regulator/driver.h>
+#include <linux/regulator/machine.h>
+#include <linux/of.h>
+#include <linux/regulator/of_regulator.h>
 
-#समावेश <linux/mfd/da9055/core.h>
-#समावेश <linux/mfd/da9055/reg.h>
-#समावेश <linux/mfd/da9055/pdata.h>
+#include <linux/mfd/da9055/core.h>
+#include <linux/mfd/da9055/reg.h>
+#include <linux/mfd/da9055/pdata.h>
 
-#घोषणा DA9055_MIN_UA		0
-#घोषणा DA9055_MAX_UA		3
+#define DA9055_MIN_UA		0
+#define DA9055_MAX_UA		3
 
-#घोषणा DA9055_LDO_MODE_SYNC	0
-#घोषणा DA9055_LDO_MODE_SLEEP	1
+#define DA9055_LDO_MODE_SYNC	0
+#define DA9055_LDO_MODE_SLEEP	1
 
-#घोषणा DA9055_BUCK_MODE_SLEEP	1
-#घोषणा DA9055_BUCK_MODE_SYNC	2
-#घोषणा DA9055_BUCK_MODE_AUTO	3
+#define DA9055_BUCK_MODE_SLEEP	1
+#define DA9055_BUCK_MODE_SYNC	2
+#define DA9055_BUCK_MODE_AUTO	3
 
 /* DA9055 REGULATOR IDs */
-#घोषणा DA9055_ID_BUCK1	0
-#घोषणा DA9055_ID_BUCK2	1
-#घोषणा DA9055_ID_LDO1		2
-#घोषणा DA9055_ID_LDO2		3
-#घोषणा DA9055_ID_LDO3		4
-#घोषणा DA9055_ID_LDO4		5
-#घोषणा DA9055_ID_LDO5		6
-#घोषणा DA9055_ID_LDO6		7
+#define DA9055_ID_BUCK1	0
+#define DA9055_ID_BUCK2	1
+#define DA9055_ID_LDO1		2
+#define DA9055_ID_LDO2		3
+#define DA9055_ID_LDO3		4
+#define DA9055_ID_LDO4		5
+#define DA9055_ID_LDO5		6
+#define DA9055_ID_LDO6		7
 
 /* DA9055 BUCK current limit */
-अटल स्थिर अचिन्हित पूर्णांक da9055_current_limits[] = अणु
+static const unsigned int da9055_current_limits[] = {
 	500000, 600000, 700000, 800000
-पूर्ण;
+};
 
-काष्ठा da9055_conf_reg अणु
-	पूर्णांक reg;
-	पूर्णांक sel_mask;
-	पूर्णांक en_mask;
-पूर्ण;
+struct da9055_conf_reg {
+	int reg;
+	int sel_mask;
+	int en_mask;
+};
 
-काष्ठा da9055_volt_reg अणु
-	पूर्णांक reg_a;
-	पूर्णांक reg_b;
-	पूर्णांक sl_shअगरt;
-	पूर्णांक v_mask;
-पूर्ण;
+struct da9055_volt_reg {
+	int reg_a;
+	int reg_b;
+	int sl_shift;
+	int v_mask;
+};
 
-काष्ठा da9055_mode_reg अणु
-	पूर्णांक reg;
-	पूर्णांक mask;
-	पूर्णांक shअगरt;
-पूर्ण;
+struct da9055_mode_reg {
+	int reg;
+	int mask;
+	int shift;
+};
 
-काष्ठा da9055_regulator_info अणु
-	काष्ठा regulator_desc reg_desc;
-	काष्ठा da9055_conf_reg conf;
-	काष्ठा da9055_volt_reg volt;
-	काष्ठा da9055_mode_reg mode;
-पूर्ण;
+struct da9055_regulator_info {
+	struct regulator_desc reg_desc;
+	struct da9055_conf_reg conf;
+	struct da9055_volt_reg volt;
+	struct da9055_mode_reg mode;
+};
 
-काष्ठा da9055_regulator अणु
-	काष्ठा da9055 *da9055;
-	काष्ठा da9055_regulator_info *info;
-	काष्ठा regulator_dev *rdev;
-	क्रमागत gpio_select reg_rselect;
-पूर्ण;
+struct da9055_regulator {
+	struct da9055 *da9055;
+	struct da9055_regulator_info *info;
+	struct regulator_dev *rdev;
+	enum gpio_select reg_rselect;
+};
 
-अटल अचिन्हित पूर्णांक da9055_buck_get_mode(काष्ठा regulator_dev *rdev)
-अणु
-	काष्ठा da9055_regulator *regulator = rdev_get_drvdata(rdev);
-	काष्ठा da9055_regulator_info *info = regulator->info;
-	पूर्णांक ret, mode = 0;
+static unsigned int da9055_buck_get_mode(struct regulator_dev *rdev)
+{
+	struct da9055_regulator *regulator = rdev_get_drvdata(rdev);
+	struct da9055_regulator_info *info = regulator->info;
+	int ret, mode = 0;
 
-	ret = da9055_reg_पढ़ो(regulator->da9055, info->mode.reg);
-	अगर (ret < 0)
-		वापस ret;
+	ret = da9055_reg_read(regulator->da9055, info->mode.reg);
+	if (ret < 0)
+		return ret;
 
-	चयन ((ret & info->mode.mask) >> info->mode.shअगरt) अणु
-	हाल DA9055_BUCK_MODE_SYNC:
+	switch ((ret & info->mode.mask) >> info->mode.shift) {
+	case DA9055_BUCK_MODE_SYNC:
 		mode = REGULATOR_MODE_FAST;
-		अवरोध;
-	हाल DA9055_BUCK_MODE_AUTO:
+		break;
+	case DA9055_BUCK_MODE_AUTO:
 		mode = REGULATOR_MODE_NORMAL;
-		अवरोध;
-	हाल DA9055_BUCK_MODE_SLEEP:
+		break;
+	case DA9055_BUCK_MODE_SLEEP:
 		mode = REGULATOR_MODE_STANDBY;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस mode;
-पूर्ण
+	return mode;
+}
 
-अटल पूर्णांक da9055_buck_set_mode(काष्ठा regulator_dev *rdev,
-					अचिन्हित पूर्णांक mode)
-अणु
-	काष्ठा da9055_regulator *regulator = rdev_get_drvdata(rdev);
-	काष्ठा da9055_regulator_info *info = regulator->info;
-	पूर्णांक val = 0;
+static int da9055_buck_set_mode(struct regulator_dev *rdev,
+					unsigned int mode)
+{
+	struct da9055_regulator *regulator = rdev_get_drvdata(rdev);
+	struct da9055_regulator_info *info = regulator->info;
+	int val = 0;
 
-	चयन (mode) अणु
-	हाल REGULATOR_MODE_FAST:
-		val = DA9055_BUCK_MODE_SYNC << info->mode.shअगरt;
-		अवरोध;
-	हाल REGULATOR_MODE_NORMAL:
-		val = DA9055_BUCK_MODE_AUTO << info->mode.shअगरt;
-		अवरोध;
-	हाल REGULATOR_MODE_STANDBY:
-		val = DA9055_BUCK_MODE_SLEEP << info->mode.shअगरt;
-		अवरोध;
-	पूर्ण
+	switch (mode) {
+	case REGULATOR_MODE_FAST:
+		val = DA9055_BUCK_MODE_SYNC << info->mode.shift;
+		break;
+	case REGULATOR_MODE_NORMAL:
+		val = DA9055_BUCK_MODE_AUTO << info->mode.shift;
+		break;
+	case REGULATOR_MODE_STANDBY:
+		val = DA9055_BUCK_MODE_SLEEP << info->mode.shift;
+		break;
+	}
 
-	वापस da9055_reg_update(regulator->da9055, info->mode.reg,
+	return da9055_reg_update(regulator->da9055, info->mode.reg,
 				 info->mode.mask, val);
-पूर्ण
+}
 
-अटल अचिन्हित पूर्णांक da9055_lकरो_get_mode(काष्ठा regulator_dev *rdev)
-अणु
-	काष्ठा da9055_regulator *regulator = rdev_get_drvdata(rdev);
-	काष्ठा da9055_regulator_info *info = regulator->info;
-	पूर्णांक ret;
+static unsigned int da9055_ldo_get_mode(struct regulator_dev *rdev)
+{
+	struct da9055_regulator *regulator = rdev_get_drvdata(rdev);
+	struct da9055_regulator_info *info = regulator->info;
+	int ret;
 
-	ret = da9055_reg_पढ़ो(regulator->da9055, info->volt.reg_b);
-	अगर (ret < 0)
-		वापस ret;
+	ret = da9055_reg_read(regulator->da9055, info->volt.reg_b);
+	if (ret < 0)
+		return ret;
 
-	अगर (ret >> info->volt.sl_shअगरt)
-		वापस REGULATOR_MODE_STANDBY;
-	अन्यथा
-		वापस REGULATOR_MODE_NORMAL;
-पूर्ण
+	if (ret >> info->volt.sl_shift)
+		return REGULATOR_MODE_STANDBY;
+	else
+		return REGULATOR_MODE_NORMAL;
+}
 
-अटल पूर्णांक da9055_lकरो_set_mode(काष्ठा regulator_dev *rdev, अचिन्हित पूर्णांक mode)
-अणु
-	काष्ठा da9055_regulator *regulator = rdev_get_drvdata(rdev);
-	काष्ठा da9055_regulator_info *info = regulator->info;
-	काष्ठा da9055_volt_reg volt = info->volt;
-	पूर्णांक val = 0;
+static int da9055_ldo_set_mode(struct regulator_dev *rdev, unsigned int mode)
+{
+	struct da9055_regulator *regulator = rdev_get_drvdata(rdev);
+	struct da9055_regulator_info *info = regulator->info;
+	struct da9055_volt_reg volt = info->volt;
+	int val = 0;
 
-	चयन (mode) अणु
-	हाल REGULATOR_MODE_NORMAL:
-	हाल REGULATOR_MODE_FAST:
+	switch (mode) {
+	case REGULATOR_MODE_NORMAL:
+	case REGULATOR_MODE_FAST:
 		val = DA9055_LDO_MODE_SYNC;
-		अवरोध;
-	हाल REGULATOR_MODE_STANDBY:
+		break;
+	case REGULATOR_MODE_STANDBY:
 		val = DA9055_LDO_MODE_SLEEP;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस da9055_reg_update(regulator->da9055, volt.reg_b,
-				 1 << volt.sl_shअगरt,
-				 val << volt.sl_shअगरt);
-पूर्ण
+	return da9055_reg_update(regulator->da9055, volt.reg_b,
+				 1 << volt.sl_shift,
+				 val << volt.sl_shift);
+}
 
-अटल पूर्णांक da9055_regulator_get_voltage_sel(काष्ठा regulator_dev *rdev)
-अणु
-	काष्ठा da9055_regulator *regulator = rdev_get_drvdata(rdev);
-	काष्ठा da9055_regulator_info *info = regulator->info;
-	काष्ठा da9055_volt_reg volt = info->volt;
-	पूर्णांक ret, sel;
+static int da9055_regulator_get_voltage_sel(struct regulator_dev *rdev)
+{
+	struct da9055_regulator *regulator = rdev_get_drvdata(rdev);
+	struct da9055_regulator_info *info = regulator->info;
+	struct da9055_volt_reg volt = info->volt;
+	int ret, sel;
 
 	/*
-	 * There are two voltage रेजिस्टर set A & B क्रम voltage ramping but
-	 * either one of then can be active thereक्रमe we first determine
-	 * the active रेजिस्टर set.
+	 * There are two voltage register set A & B for voltage ramping but
+	 * either one of then can be active therefore we first determine
+	 * the active register set.
 	 */
-	ret = da9055_reg_पढ़ो(regulator->da9055, info->conf.reg);
-	अगर (ret < 0)
-		वापस ret;
+	ret = da9055_reg_read(regulator->da9055, info->conf.reg);
+	if (ret < 0)
+		return ret;
 
 	ret &= info->conf.sel_mask;
 
-	/* Get the voltage क्रम the active रेजिस्टर set A/B */
-	अगर (ret == DA9055_REGUALTOR_SET_A)
-		ret = da9055_reg_पढ़ो(regulator->da9055, volt.reg_a);
-	अन्यथा
-		ret = da9055_reg_पढ़ो(regulator->da9055, volt.reg_b);
+	/* Get the voltage for the active register set A/B */
+	if (ret == DA9055_REGUALTOR_SET_A)
+		ret = da9055_reg_read(regulator->da9055, volt.reg_a);
+	else
+		ret = da9055_reg_read(regulator->da9055, volt.reg_b);
 
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	sel = (ret & volt.v_mask);
-	वापस sel;
-पूर्ण
+	return sel;
+}
 
-अटल पूर्णांक da9055_regulator_set_voltage_sel(काष्ठा regulator_dev *rdev,
-					    अचिन्हित पूर्णांक selector)
-अणु
-	काष्ठा da9055_regulator *regulator = rdev_get_drvdata(rdev);
-	काष्ठा da9055_regulator_info *info = regulator->info;
-	पूर्णांक ret;
+static int da9055_regulator_set_voltage_sel(struct regulator_dev *rdev,
+					    unsigned int selector)
+{
+	struct da9055_regulator *regulator = rdev_get_drvdata(rdev);
+	struct da9055_regulator_info *info = regulator->info;
+	int ret;
 
 	/*
-	 * Regulator रेजिस्टर set A/B is not selected through GPIO thereक्रमe
-	 * we use शेष रेजिस्टर set A क्रम voltage ramping.
+	 * Regulator register set A/B is not selected through GPIO therefore
+	 * we use default register set A for voltage ramping.
 	 */
-	अगर (regulator->reg_rselect == NO_GPIO) अणु
-		/* Select रेजिस्टर set A */
+	if (regulator->reg_rselect == NO_GPIO) {
+		/* Select register set A */
 		ret = da9055_reg_update(regulator->da9055, info->conf.reg,
 					info->conf.sel_mask, DA9055_SEL_REG_A);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 
 		/* Set the voltage */
-		वापस da9055_reg_update(regulator->da9055, info->volt.reg_a,
+		return da9055_reg_update(regulator->da9055, info->volt.reg_a,
 					 info->volt.v_mask, selector);
-	पूर्ण
+	}
 
 	/*
-	 * Here regulator रेजिस्टर set A/B is selected through GPIO.
-	 * Thereक्रमe we first determine the selected रेजिस्टर set A/B and
-	 * then set the desired voltage क्रम that रेजिस्टर set A/B.
+	 * Here regulator register set A/B is selected through GPIO.
+	 * Therefore we first determine the selected register set A/B and
+	 * then set the desired voltage for that register set A/B.
 	 */
-	ret = da9055_reg_पढ़ो(regulator->da9055, info->conf.reg);
-	अगर (ret < 0)
-		वापस ret;
+	ret = da9055_reg_read(regulator->da9055, info->conf.reg);
+	if (ret < 0)
+		return ret;
 
 	ret &= info->conf.sel_mask;
 
 	/* Set the voltage */
-	अगर (ret == DA9055_REGUALTOR_SET_A)
-		वापस da9055_reg_update(regulator->da9055, info->volt.reg_a,
+	if (ret == DA9055_REGUALTOR_SET_A)
+		return da9055_reg_update(regulator->da9055, info->volt.reg_a,
 					 info->volt.v_mask, selector);
-	अन्यथा
-		वापस da9055_reg_update(regulator->da9055, info->volt.reg_b,
+	else
+		return da9055_reg_update(regulator->da9055, info->volt.reg_b,
 					 info->volt.v_mask, selector);
-पूर्ण
+}
 
-अटल पूर्णांक da9055_regulator_set_suspend_voltage(काष्ठा regulator_dev *rdev,
-						पूर्णांक uV)
-अणु
-	काष्ठा da9055_regulator *regulator = rdev_get_drvdata(rdev);
-	काष्ठा da9055_regulator_info *info = regulator->info;
-	पूर्णांक ret;
+static int da9055_regulator_set_suspend_voltage(struct regulator_dev *rdev,
+						int uV)
+{
+	struct da9055_regulator *regulator = rdev_get_drvdata(rdev);
+	struct da9055_regulator_info *info = regulator->info;
+	int ret;
 
-	/* Select रेजिस्टर set B क्रम suspend voltage ramping. */
-	अगर (regulator->reg_rselect == NO_GPIO) अणु
+	/* Select register set B for suspend voltage ramping. */
+	if (regulator->reg_rselect == NO_GPIO) {
 		ret = da9055_reg_update(regulator->da9055, info->conf.reg,
 					info->conf.sel_mask, DA9055_SEL_REG_B);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
+		if (ret < 0)
+			return ret;
+	}
 
 	ret = regulator_map_voltage_linear(rdev, uV, uV);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस da9055_reg_update(regulator->da9055, info->volt.reg_b,
+	return da9055_reg_update(regulator->da9055, info->volt.reg_b,
 				 info->volt.v_mask, ret);
-पूर्ण
+}
 
-अटल पूर्णांक da9055_suspend_enable(काष्ठा regulator_dev *rdev)
-अणु
-	काष्ठा da9055_regulator *regulator = rdev_get_drvdata(rdev);
-	काष्ठा da9055_regulator_info *info = regulator->info;
+static int da9055_suspend_enable(struct regulator_dev *rdev)
+{
+	struct da9055_regulator *regulator = rdev_get_drvdata(rdev);
+	struct da9055_regulator_info *info = regulator->info;
 
-	/* Select रेजिस्टर set B क्रम voltage ramping. */
-	अगर (regulator->reg_rselect == NO_GPIO)
-		वापस da9055_reg_update(regulator->da9055, info->conf.reg,
+	/* Select register set B for voltage ramping. */
+	if (regulator->reg_rselect == NO_GPIO)
+		return da9055_reg_update(regulator->da9055, info->conf.reg,
 					info->conf.sel_mask, DA9055_SEL_REG_B);
-	अन्यथा
-		वापस 0;
-पूर्ण
+	else
+		return 0;
+}
 
-अटल पूर्णांक da9055_suspend_disable(काष्ठा regulator_dev *rdev)
-अणु
-	काष्ठा da9055_regulator *regulator = rdev_get_drvdata(rdev);
-	काष्ठा da9055_regulator_info *info = regulator->info;
+static int da9055_suspend_disable(struct regulator_dev *rdev)
+{
+	struct da9055_regulator *regulator = rdev_get_drvdata(rdev);
+	struct da9055_regulator_info *info = regulator->info;
 
-	/* Diselect रेजिस्टर set B. */
-	अगर (regulator->reg_rselect == NO_GPIO)
-		वापस da9055_reg_update(regulator->da9055, info->conf.reg,
+	/* Diselect register set B. */
+	if (regulator->reg_rselect == NO_GPIO)
+		return da9055_reg_update(regulator->da9055, info->conf.reg,
 					info->conf.sel_mask, DA9055_SEL_REG_A);
-	अन्यथा
-		वापस 0;
-पूर्ण
+	else
+		return 0;
+}
 
-अटल स्थिर काष्ठा regulator_ops da9055_buck_ops = अणु
+static const struct regulator_ops da9055_buck_ops = {
 	.get_mode = da9055_buck_get_mode,
 	.set_mode = da9055_buck_set_mode,
 
@@ -308,11 +307,11 @@
 	.set_suspend_enable = da9055_suspend_enable,
 	.set_suspend_disable = da9055_suspend_disable,
 	.set_suspend_mode = da9055_buck_set_mode,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा regulator_ops da9055_lकरो_ops = अणु
-	.get_mode = da9055_lकरो_get_mode,
-	.set_mode = da9055_lकरो_set_mode,
+static const struct regulator_ops da9055_ldo_ops = {
+	.get_mode = da9055_ldo_get_mode,
+	.set_mode = da9055_ldo_set_mode,
 
 	.get_voltage_sel = da9055_regulator_get_voltage_sel,
 	.set_voltage_sel = da9055_regulator_set_voltage_sel,
@@ -325,17 +324,17 @@
 	.set_suspend_voltage = da9055_regulator_set_suspend_voltage,
 	.set_suspend_enable = da9055_suspend_enable,
 	.set_suspend_disable = da9055_suspend_disable,
-	.set_suspend_mode = da9055_lकरो_set_mode,
+	.set_suspend_mode = da9055_ldo_set_mode,
 
-पूर्ण;
+};
 
-#घोषणा DA9055_LDO(_id, step, min, max, vbits, voffset) \
-अणु\
-	.reg_desc = अणु\
+#define DA9055_LDO(_id, step, min, max, vbits, voffset) \
+{\
+	.reg_desc = {\
 		.name = #_id,\
 		.of_match = of_match_ptr(#_id),\
 		.regulators_node = of_match_ptr("regulators"),\
-		.ops = &da9055_lकरो_ops,\
+		.ops = &da9055_ldo_ops,\
 		.type = REGULATOR_VOLTAGE,\
 		.id = DA9055_ID_##_id,\
 		.n_voltages = (max - min) / step + 1 + (voffset), \
@@ -345,23 +344,23 @@
 		.uV_step = (step) * 1000,\
 		.linear_min_sel = (voffset),\
 		.owner = THIS_MODULE,\
-	पूर्ण,\
-	.conf = अणु\
+	},\
+	.conf = {\
 		.reg = DA9055_REG_BCORE_CONT + DA9055_ID_##_id, \
 		.sel_mask = (1 << 4),\
 		.en_mask = 1,\
-	पूर्ण,\
-	.volt = अणु\
+	},\
+	.volt = {\
 		.reg_a = DA9055_REG_VBCORE_A + DA9055_ID_##_id, \
 		.reg_b = DA9055_REG_VBCORE_B + DA9055_ID_##_id, \
-		.sl_shअगरt = 7,\
+		.sl_shift = 7,\
 		.v_mask = (1 << (vbits)) - 1,\
-	पूर्ण,\
-पूर्ण
+	},\
+}
 
-#घोषणा DA9055_BUCK(_id, step, min, max, vbits, voffset, mbits, sbits) \
-अणु\
-	.reg_desc = अणु\
+#define DA9055_BUCK(_id, step, min, max, vbits, voffset, mbits, sbits) \
+{\
+	.reg_desc = {\
 		.name = #_id,\
 		.of_match = of_match_ptr(#_id),\
 		.regulators_node = of_match_ptr("regulators"),\
@@ -379,26 +378,26 @@
 		.n_current_limits = ARRAY_SIZE(da9055_current_limits),\
 		.csel_reg = DA9055_REG_BUCK_LIM,\
 		.csel_mask = (mbits),\
-	पूर्ण,\
-	.conf = अणु\
+	},\
+	.conf = {\
 		.reg = DA9055_REG_BCORE_CONT + DA9055_ID_##_id, \
 		.sel_mask = (1 << 4),\
 		.en_mask = 1,\
-	पूर्ण,\
-	.volt = अणु\
+	},\
+	.volt = {\
 		.reg_a = DA9055_REG_VBCORE_A + DA9055_ID_##_id, \
 		.reg_b = DA9055_REG_VBCORE_B + DA9055_ID_##_id, \
-		.sl_shअगरt = 7,\
+		.sl_shift = 7,\
 		.v_mask = (1 << (vbits)) - 1,\
-	पूर्ण,\
-	.mode = अणु\
+	},\
+	.mode = {\
 		.reg = DA9055_REG_BCORE_MODE,\
 		.mask = (mbits),\
-		.shअगरt = (sbits),\
-	पूर्ण,\
-पूर्ण
+		.shift = (sbits),\
+	},\
+}
 
-अटल काष्ठा da9055_regulator_info da9055_regulator_info[] = अणु
+static struct da9055_regulator_info da9055_regulator_info[] = {
 	DA9055_BUCK(BUCK1, 25, 725, 2075, 6, 9, 0xc, 2),
 	DA9055_BUCK(BUCK2, 25, 925, 2500, 6, 0, 3, 0),
 	DA9055_LDO(LDO1, 50, 900, 3300, 6, 2),
@@ -407,26 +406,26 @@
 	DA9055_LDO(LDO4, 50, 900, 3300, 6, 2),
 	DA9055_LDO(LDO5, 50, 900, 2750, 6, 2),
 	DA9055_LDO(LDO6, 20, 900, 3300, 7, 0),
-पूर्ण;
+};
 
 /*
  * Configures regulator to be controlled either through GPIO 1 or 2.
- * GPIO can control regulator state and/or select the regulator रेजिस्टर
- * set A/B क्रम voltage ramping.
+ * GPIO can control regulator state and/or select the regulator register
+ * set A/B for voltage ramping.
  */
-अटल पूर्णांक da9055_gpio_init(काष्ठा da9055_regulator *regulator,
-			    काष्ठा regulator_config *config,
-			    काष्ठा da9055_pdata *pdata, पूर्णांक id)
-अणु
-	काष्ठा da9055_regulator_info *info = regulator->info;
-	पूर्णांक ret = 0;
+static int da9055_gpio_init(struct da9055_regulator *regulator,
+			    struct regulator_config *config,
+			    struct da9055_pdata *pdata, int id)
+{
+	struct da9055_regulator_info *info = regulator->info;
+	int ret = 0;
 
-	अगर (!pdata)
-		वापस 0;
+	if (!pdata)
+		return 0;
 
-	अगर (pdata->gpio_ren && pdata->gpio_ren[id]) अणु
-		अक्षर name[18];
-		पूर्णांक gpio_mux = pdata->gpio_ren[id];
+	if (pdata->gpio_ren && pdata->gpio_ren[id]) {
+		char name[18];
+		int gpio_mux = pdata->gpio_ren[id];
 
 		config->ena_gpiod = pdata->ena_gpiods[id];
 
@@ -434,11 +433,11 @@
 		 * GPI pin is muxed with regulator to control the
 		 * regulator state.
 		 */
-		प्र_लिखो(name, "DA9055 GPI %d", gpio_mux);
-		ret = devm_gpio_request_one(config->dev, gpio_mux, GPIOF_सूची_IN,
+		sprintf(name, "DA9055 GPI %d", gpio_mux);
+		ret = devm_gpio_request_one(config->dev, gpio_mux, GPIOF_DIR_IN,
 					    name);
-		अगर (ret < 0)
-			जाओ err;
+		if (ret < 0)
+			goto err;
 
 		/*
 		 * Let the regulator know that its state is controlled
@@ -448,149 +447,149 @@
 					DA9055_E_GPI_MASK,
 					pdata->reg_ren[id]
 					<< DA9055_E_GPI_SHIFT);
-		अगर (ret < 0)
-			जाओ err;
-	पूर्ण
+		if (ret < 0)
+			goto err;
+	}
 
-	अगर (pdata->gpio_rsel && pdata->gpio_rsel[id]) अणु
-		अक्षर name[18];
-		पूर्णांक gpio_mux = pdata->gpio_rsel[id];
+	if (pdata->gpio_rsel && pdata->gpio_rsel[id]) {
+		char name[18];
+		int gpio_mux = pdata->gpio_rsel[id];
 
 		regulator->reg_rselect = pdata->reg_rsel[id];
 
 		/*
 		 * GPI pin is muxed with regulator to select the
-		 * regulator रेजिस्टर set A/B क्रम voltage ramping.
+		 * regulator register set A/B for voltage ramping.
 		 */
-		प्र_लिखो(name, "DA9055 GPI %d", gpio_mux);
-		ret = devm_gpio_request_one(config->dev, gpio_mux, GPIOF_सूची_IN,
+		sprintf(name, "DA9055 GPI %d", gpio_mux);
+		ret = devm_gpio_request_one(config->dev, gpio_mux, GPIOF_DIR_IN,
 					    name);
-		अगर (ret < 0)
-			जाओ err;
+		if (ret < 0)
+			goto err;
 
 		/*
-		 * Let the regulator know that its रेजिस्टर set A/B
-		 * will be selected through GPI क्रम voltage ramping.
+		 * Let the regulator know that its register set A/B
+		 * will be selected through GPI for voltage ramping.
 		 */
 		ret = da9055_reg_update(regulator->da9055, info->conf.reg,
 					DA9055_V_GPI_MASK,
 					pdata->reg_rsel[id]
 					<< DA9055_V_GPI_SHIFT);
-	पूर्ण
+	}
 
 err:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल irqवापस_t da9055_lकरो5_6_oc_irq(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा da9055_regulator *regulator = data;
+static irqreturn_t da9055_ldo5_6_oc_irq(int irq, void *data)
+{
+	struct da9055_regulator *regulator = data;
 
-	regulator_notअगरier_call_chain(regulator->rdev,
-				      REGULATOR_EVENT_OVER_CURRENT, शून्य);
+	regulator_notifier_call_chain(regulator->rdev,
+				      REGULATOR_EVENT_OVER_CURRENT, NULL);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल अंतरभूत काष्ठा da9055_regulator_info *find_regulator_info(पूर्णांक id)
-अणु
-	काष्ठा da9055_regulator_info *info;
-	पूर्णांक i;
+static inline struct da9055_regulator_info *find_regulator_info(int id)
+{
+	struct da9055_regulator_info *info;
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(da9055_regulator_info); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(da9055_regulator_info); i++) {
 		info = &da9055_regulator_info[i];
-		अगर (info->reg_desc.id == id)
-			वापस info;
-	पूर्ण
+		if (info->reg_desc.id == id)
+			return info;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक da9055_regulator_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा regulator_config config = अणु पूर्ण;
-	काष्ठा da9055_regulator *regulator;
-	काष्ठा da9055 *da9055 = dev_get_drvdata(pdev->dev.parent);
-	काष्ठा da9055_pdata *pdata = dev_get_platdata(da9055->dev);
-	पूर्णांक ret, irq;
+static int da9055_regulator_probe(struct platform_device *pdev)
+{
+	struct regulator_config config = { };
+	struct da9055_regulator *regulator;
+	struct da9055 *da9055 = dev_get_drvdata(pdev->dev.parent);
+	struct da9055_pdata *pdata = dev_get_platdata(da9055->dev);
+	int ret, irq;
 
-	regulator = devm_kzalloc(&pdev->dev, माप(काष्ठा da9055_regulator),
+	regulator = devm_kzalloc(&pdev->dev, sizeof(struct da9055_regulator),
 				 GFP_KERNEL);
-	अगर (!regulator)
-		वापस -ENOMEM;
+	if (!regulator)
+		return -ENOMEM;
 
 	regulator->info = find_regulator_info(pdev->id);
-	अगर (regulator->info == शून्य) अणु
+	if (regulator->info == NULL) {
 		dev_err(&pdev->dev, "invalid regulator ID specified\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	regulator->da9055 = da9055;
 	config.dev = da9055->dev;
 	config.driver_data = regulator;
 	config.regmap = da9055->regmap;
 
-	अगर (pdata)
+	if (pdata)
 		config.init_data = pdata->regulators[pdev->id];
 
 	ret = da9055_gpio_init(regulator, &config, pdata, pdev->id);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	regulator->rdev = devm_regulator_रेजिस्टर(&pdev->dev,
+	regulator->rdev = devm_regulator_register(&pdev->dev,
 						  &regulator->info->reg_desc,
 						  &config);
-	अगर (IS_ERR(regulator->rdev)) अणु
+	if (IS_ERR(regulator->rdev)) {
 		dev_err(&pdev->dev, "Failed to register regulator %s\n",
 			regulator->info->reg_desc.name);
-		वापस PTR_ERR(regulator->rdev);
-	पूर्ण
+		return PTR_ERR(regulator->rdev);
+	}
 
-	/* Only LDO 5 and 6 has got the over current पूर्णांकerrupt */
-	अगर (pdev->id == DA9055_ID_LDO5 || pdev->id ==  DA9055_ID_LDO6) अणु
-		irq = platक्रमm_get_irq_byname(pdev, "REGULATOR");
-		अगर (irq < 0)
-			वापस irq;
+	/* Only LDO 5 and 6 has got the over current interrupt */
+	if (pdev->id == DA9055_ID_LDO5 || pdev->id ==  DA9055_ID_LDO6) {
+		irq = platform_get_irq_byname(pdev, "REGULATOR");
+		if (irq < 0)
+			return irq;
 
-		ret = devm_request_thपढ़ोed_irq(&pdev->dev, irq, शून्य,
-						da9055_lकरो5_6_oc_irq,
+		ret = devm_request_threaded_irq(&pdev->dev, irq, NULL,
+						da9055_ldo5_6_oc_irq,
 						IRQF_TRIGGER_HIGH |
 						IRQF_ONESHOT |
 						IRQF_PROBE_SHARED,
 						pdev->name, regulator);
-		अगर (ret != 0) अणु
-			अगर (ret != -EBUSY) अणु
+		if (ret != 0) {
+			if (ret != -EBUSY) {
 				dev_err(&pdev->dev,
 				"Failed to request Regulator IRQ %d: %d\n",
 				irq, ret);
-				वापस ret;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				return ret;
+			}
+		}
+	}
 
-	platक्रमm_set_drvdata(pdev, regulator);
+	platform_set_drvdata(pdev, regulator);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver da9055_regulator_driver = अणु
+static struct platform_driver da9055_regulator_driver = {
 	.probe = da9055_regulator_probe,
-	.driver = अणु
+	.driver = {
 		.name = "da9055-regulator",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init da9055_regulator_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&da9055_regulator_driver);
-पूर्ण
+static int __init da9055_regulator_init(void)
+{
+	return platform_driver_register(&da9055_regulator_driver);
+}
 subsys_initcall(da9055_regulator_init);
 
-अटल व्योम __निकास da9055_regulator_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&da9055_regulator_driver);
-पूर्ण
-module_निकास(da9055_regulator_निकास);
+static void __exit da9055_regulator_exit(void)
+{
+	platform_driver_unregister(&da9055_regulator_driver);
+}
+module_exit(da9055_regulator_exit);
 
 MODULE_AUTHOR("David Dajun Chen <dchen@diasemi.com>");
 MODULE_DESCRIPTION("Power Regulator driver for Dialog DA9055 PMIC");

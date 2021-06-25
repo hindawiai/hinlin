@@ -1,209 +1,208 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * arch/arm/mm/cache-xsc3l2.c - XScale3 L2 cache controller support
  *
  * Copyright (C) 2007 ARM Limited
  */
-#समावेश <linux/init.h>
-#समावेश <linux/highस्मृति.स>
-#समावेश <यंत्र/cp15.h>
-#समावेश <यंत्र/cputype.h>
-#समावेश <यंत्र/cacheflush.h>
+#include <linux/init.h>
+#include <linux/highmem.h>
+#include <asm/cp15.h>
+#include <asm/cputype.h>
+#include <asm/cacheflush.h>
 
-#घोषणा CR_L2	(1 << 26)
+#define CR_L2	(1 << 26)
 
-#घोषणा CACHE_LINE_SIZE		32
-#घोषणा CACHE_LINE_SHIFT	5
-#घोषणा CACHE_WAY_PER_SET	8
+#define CACHE_LINE_SIZE		32
+#define CACHE_LINE_SHIFT	5
+#define CACHE_WAY_PER_SET	8
 
-#घोषणा CACHE_WAY_SIZE(l2ctype)	(8192 << (((l2ctype) >> 8) & 0xf))
-#घोषणा CACHE_SET_SIZE(l2ctype)	(CACHE_WAY_SIZE(l2ctype) >> CACHE_LINE_SHIFT)
+#define CACHE_WAY_SIZE(l2ctype)	(8192 << (((l2ctype) >> 8) & 0xf))
+#define CACHE_SET_SIZE(l2ctype)	(CACHE_WAY_SIZE(l2ctype) >> CACHE_LINE_SHIFT)
 
-अटल अंतरभूत पूर्णांक xsc3_l2_present(व्योम)
-अणु
-	अचिन्हित दीर्घ l2ctype;
+static inline int xsc3_l2_present(void)
+{
+	unsigned long l2ctype;
 
-	__यंत्र__("mrc p15, 1, %0, c0, c0, 1" : "=r" (l2ctype));
+	__asm__("mrc p15, 1, %0, c0, c0, 1" : "=r" (l2ctype));
 
-	वापस !!(l2ctype & 0xf8);
-पूर्ण
+	return !!(l2ctype & 0xf8);
+}
 
-अटल अंतरभूत व्योम xsc3_l2_clean_mva(अचिन्हित दीर्घ addr)
-अणु
-	__यंत्र__("mcr p15, 1, %0, c7, c11, 1" : : "r" (addr));
-पूर्ण
+static inline void xsc3_l2_clean_mva(unsigned long addr)
+{
+	__asm__("mcr p15, 1, %0, c7, c11, 1" : : "r" (addr));
+}
 
-अटल अंतरभूत व्योम xsc3_l2_inv_mva(अचिन्हित दीर्घ addr)
-अणु
-	__यंत्र__("mcr p15, 1, %0, c7, c7, 1" : : "r" (addr));
-पूर्ण
+static inline void xsc3_l2_inv_mva(unsigned long addr)
+{
+	__asm__("mcr p15, 1, %0, c7, c7, 1" : : "r" (addr));
+}
 
-अटल अंतरभूत व्योम xsc3_l2_inv_all(व्योम)
-अणु
-	अचिन्हित दीर्घ l2ctype, set_way;
-	पूर्णांक set, way;
+static inline void xsc3_l2_inv_all(void)
+{
+	unsigned long l2ctype, set_way;
+	int set, way;
 
-	__यंत्र__("mrc p15, 1, %0, c0, c0, 1" : "=r" (l2ctype));
+	__asm__("mrc p15, 1, %0, c0, c0, 1" : "=r" (l2ctype));
 
-	क्रम (set = 0; set < CACHE_SET_SIZE(l2ctype); set++) अणु
-		क्रम (way = 0; way < CACHE_WAY_PER_SET; way++) अणु
+	for (set = 0; set < CACHE_SET_SIZE(l2ctype); set++) {
+		for (way = 0; way < CACHE_WAY_PER_SET; way++) {
 			set_way = (way << 29) | (set << 5);
-			__यंत्र__("mcr p15, 1, %0, c7, c11, 2" : : "r"(set_way));
-		पूर्ण
-	पूर्ण
+			__asm__("mcr p15, 1, %0, c7, c11, 2" : : "r"(set_way));
+		}
+	}
 
 	dsb();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम l2_unmap_va(अचिन्हित दीर्घ va)
-अणु
-#अगर_घोषित CONFIG_HIGHMEM
-	अगर (va != -1)
-		kunmap_atomic((व्योम *)va);
-#पूर्ण_अगर
-पूर्ण
+static inline void l2_unmap_va(unsigned long va)
+{
+#ifdef CONFIG_HIGHMEM
+	if (va != -1)
+		kunmap_atomic((void *)va);
+#endif
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ l2_map_va(अचिन्हित दीर्घ pa, अचिन्हित दीर्घ prev_va)
-अणु
-#अगर_घोषित CONFIG_HIGHMEM
-	अचिन्हित दीर्घ va = prev_va & PAGE_MASK;
-	अचिन्हित दीर्घ pa_offset = pa << (32 - PAGE_SHIFT);
-	अगर (unlikely(pa_offset < (prev_va << (32 - PAGE_SHIFT)))) अणु
+static inline unsigned long l2_map_va(unsigned long pa, unsigned long prev_va)
+{
+#ifdef CONFIG_HIGHMEM
+	unsigned long va = prev_va & PAGE_MASK;
+	unsigned long pa_offset = pa << (32 - PAGE_SHIFT);
+	if (unlikely(pa_offset < (prev_va << (32 - PAGE_SHIFT)))) {
 		/*
 		 * Switching to a new page.  Because cache ops are
-		 * using भव addresses only, we must put a mapping
-		 * in place क्रम it.
+		 * using virtual addresses only, we must put a mapping
+		 * in place for it.
 		 */
 		l2_unmap_va(prev_va);
-		va = (अचिन्हित दीर्घ)kmap_atomic_pfn(pa >> PAGE_SHIFT);
-	पूर्ण
-	वापस va + (pa_offset >> (32 - PAGE_SHIFT));
-#अन्यथा
-	वापस __phys_to_virt(pa);
-#पूर्ण_अगर
-पूर्ण
+		va = (unsigned long)kmap_atomic_pfn(pa >> PAGE_SHIFT);
+	}
+	return va + (pa_offset >> (32 - PAGE_SHIFT));
+#else
+	return __phys_to_virt(pa);
+#endif
+}
 
-अटल व्योम xsc3_l2_inv_range(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
-अणु
-	अचिन्हित दीर्घ vaddr;
+static void xsc3_l2_inv_range(unsigned long start, unsigned long end)
+{
+	unsigned long vaddr;
 
-	अगर (start == 0 && end == -1ul) अणु
+	if (start == 0 && end == -1ul) {
 		xsc3_l2_inv_all();
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	vaddr = -1;  /* to क्रमce the first mapping */
+	vaddr = -1;  /* to force the first mapping */
 
 	/*
 	 * Clean and invalidate partial first cache line.
 	 */
-	अगर (start & (CACHE_LINE_SIZE - 1)) अणु
+	if (start & (CACHE_LINE_SIZE - 1)) {
 		vaddr = l2_map_va(start & ~(CACHE_LINE_SIZE - 1), vaddr);
 		xsc3_l2_clean_mva(vaddr);
 		xsc3_l2_inv_mva(vaddr);
 		start = (start | (CACHE_LINE_SIZE - 1)) + 1;
-	पूर्ण
+	}
 
 	/*
 	 * Invalidate all full cache lines between 'start' and 'end'.
 	 */
-	जबतक (start < (end & ~(CACHE_LINE_SIZE - 1))) अणु
+	while (start < (end & ~(CACHE_LINE_SIZE - 1))) {
 		vaddr = l2_map_va(start, vaddr);
 		xsc3_l2_inv_mva(vaddr);
 		start += CACHE_LINE_SIZE;
-	पूर्ण
+	}
 
 	/*
 	 * Clean and invalidate partial last cache line.
 	 */
-	अगर (start < end) अणु
+	if (start < end) {
 		vaddr = l2_map_va(start, vaddr);
 		xsc3_l2_clean_mva(vaddr);
 		xsc3_l2_inv_mva(vaddr);
-	पूर्ण
+	}
 
 	l2_unmap_va(vaddr);
 
 	dsb();
-पूर्ण
+}
 
-अटल व्योम xsc3_l2_clean_range(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
-अणु
-	अचिन्हित दीर्घ vaddr;
+static void xsc3_l2_clean_range(unsigned long start, unsigned long end)
+{
+	unsigned long vaddr;
 
-	vaddr = -1;  /* to क्रमce the first mapping */
+	vaddr = -1;  /* to force the first mapping */
 
 	start &= ~(CACHE_LINE_SIZE - 1);
-	जबतक (start < end) अणु
+	while (start < end) {
 		vaddr = l2_map_va(start, vaddr);
 		xsc3_l2_clean_mva(vaddr);
 		start += CACHE_LINE_SIZE;
-	पूर्ण
+	}
 
 	l2_unmap_va(vaddr);
 
 	dsb();
-पूर्ण
+}
 
 /*
- * optimize L2 flush all operation by set/way क्रमmat
+ * optimize L2 flush all operation by set/way format
  */
-अटल अंतरभूत व्योम xsc3_l2_flush_all(व्योम)
-अणु
-	अचिन्हित दीर्घ l2ctype, set_way;
-	पूर्णांक set, way;
+static inline void xsc3_l2_flush_all(void)
+{
+	unsigned long l2ctype, set_way;
+	int set, way;
 
-	__यंत्र__("mrc p15, 1, %0, c0, c0, 1" : "=r" (l2ctype));
+	__asm__("mrc p15, 1, %0, c0, c0, 1" : "=r" (l2ctype));
 
-	क्रम (set = 0; set < CACHE_SET_SIZE(l2ctype); set++) अणु
-		क्रम (way = 0; way < CACHE_WAY_PER_SET; way++) अणु
+	for (set = 0; set < CACHE_SET_SIZE(l2ctype); set++) {
+		for (way = 0; way < CACHE_WAY_PER_SET; way++) {
 			set_way = (way << 29) | (set << 5);
-			__यंत्र__("mcr p15, 1, %0, c7, c15, 2" : : "r"(set_way));
-		पूर्ण
-	पूर्ण
+			__asm__("mcr p15, 1, %0, c7, c15, 2" : : "r"(set_way));
+		}
+	}
 
 	dsb();
-पूर्ण
+}
 
-अटल व्योम xsc3_l2_flush_range(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
-अणु
-	अचिन्हित दीर्घ vaddr;
+static void xsc3_l2_flush_range(unsigned long start, unsigned long end)
+{
+	unsigned long vaddr;
 
-	अगर (start == 0 && end == -1ul) अणु
+	if (start == 0 && end == -1ul) {
 		xsc3_l2_flush_all();
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	vaddr = -1;  /* to क्रमce the first mapping */
+	vaddr = -1;  /* to force the first mapping */
 
 	start &= ~(CACHE_LINE_SIZE - 1);
-	जबतक (start < end) अणु
+	while (start < end) {
 		vaddr = l2_map_va(start, vaddr);
 		xsc3_l2_clean_mva(vaddr);
 		xsc3_l2_inv_mva(vaddr);
 		start += CACHE_LINE_SIZE;
-	पूर्ण
+	}
 
 	l2_unmap_va(vaddr);
 
 	dsb();
-पूर्ण
+}
 
-अटल पूर्णांक __init xsc3_l2_init(व्योम)
-अणु
-	अगर (!cpu_is_xsc3() || !xsc3_l2_present())
-		वापस 0;
+static int __init xsc3_l2_init(void)
+{
+	if (!cpu_is_xsc3() || !xsc3_l2_present())
+		return 0;
 
-	अगर (get_cr() & CR_L2) अणु
+	if (get_cr() & CR_L2) {
 		pr_info("XScale3 L2 cache enabled.\n");
 		xsc3_l2_inv_all();
 
 		outer_cache.inv_range = xsc3_l2_inv_range;
 		outer_cache.clean_range = xsc3_l2_clean_range;
 		outer_cache.flush_range = xsc3_l2_flush_range;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 core_initcall(xsc3_l2_init);

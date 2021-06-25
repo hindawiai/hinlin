@@ -1,51 +1,50 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright(c) 2008 - 2010 Realtek Corporation. All rights reserved.
  *
- * Contact Inक्रमmation: wlanfae <wlanfae@realtek.com>
+ * Contact Information: wlanfae <wlanfae@realtek.com>
  */
-#समावेश "rtllib.h"
-#समावेश <linux/etherdevice.h>
-#समावेश "rtl819x_TS.h"
+#include "rtllib.h"
+#include <linux/etherdevice.h>
+#include "rtl819x_TS.h"
 
-अटल व्योम TsSetupTimeOut(काष्ठा समयr_list *unused)
-अणु
-पूर्ण
+static void TsSetupTimeOut(struct timer_list *unused)
+{
+}
 
-अटल व्योम TsInactTimeout(काष्ठा समयr_list *unused)
-अणु
-पूर्ण
+static void TsInactTimeout(struct timer_list *unused)
+{
+}
 
-अटल व्योम RxPktPendingTimeout(काष्ठा समयr_list *t)
-अणु
-	काष्ठा rx_ts_record *pRxTs = from_समयr(pRxTs, t,
-						     rx_pkt_pending_समयr);
-	काष्ठा rtllib_device *ieee = container_of(pRxTs, काष्ठा rtllib_device,
+static void RxPktPendingTimeout(struct timer_list *t)
+{
+	struct rx_ts_record *pRxTs = from_timer(pRxTs, t,
+						     rx_pkt_pending_timer);
+	struct rtllib_device *ieee = container_of(pRxTs, struct rtllib_device,
 						  RxTsRecord[pRxTs->num]);
 
-	काष्ठा rx_reorder_entry *pReorderEntry = शून्य;
+	struct rx_reorder_entry *pReorderEntry = NULL;
 
-	अचिन्हित दीर्घ flags = 0;
+	unsigned long flags = 0;
 	u8 index = 0;
 	bool bPktInBuf = false;
 
 	spin_lock_irqsave(&(ieee->reorder_spinlock), flags);
-	अगर (pRxTs->rx_समयout_indicate_seq != 0xffff) अणु
-		जबतक (!list_empty(&pRxTs->rx_pending_pkt_list)) अणु
-			pReorderEntry = (काष्ठा rx_reorder_entry *)
+	if (pRxTs->rx_timeout_indicate_seq != 0xffff) {
+		while (!list_empty(&pRxTs->rx_pending_pkt_list)) {
+			pReorderEntry = (struct rx_reorder_entry *)
 					list_entry(pRxTs->rx_pending_pkt_list.prev,
-					काष्ठा rx_reorder_entry, List);
-			अगर (index == 0)
+					struct rx_reorder_entry, List);
+			if (index == 0)
 				pRxTs->rx_indicate_seq = pReorderEntry->SeqNum;
 
-			अगर (SN_LESS(pReorderEntry->SeqNum,
+			if (SN_LESS(pReorderEntry->SeqNum,
 				    pRxTs->rx_indicate_seq) ||
 			    SN_EQUAL(pReorderEntry->SeqNum,
-				     pRxTs->rx_indicate_seq)) अणु
+				     pRxTs->rx_indicate_seq)) {
 				list_del_init(&pReorderEntry->List);
 
-				अगर (SN_EQUAL(pReorderEntry->SeqNum,
+				if (SN_EQUAL(pReorderEntry->SeqNum,
 				    pRxTs->rx_indicate_seq))
 					pRxTs->rx_indicate_seq =
 					      (pRxTs->rx_indicate_seq + 1) % 4096;
@@ -59,59 +58,59 @@
 
 				list_add_tail(&pReorderEntry->List,
 					      &ieee->RxReorder_Unused_List);
-			पूर्ण अन्यथा अणु
+			} else {
 				bPktInBuf = true;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				break;
+			}
+		}
+	}
 
-	अगर (index > 0) अणु
-		pRxTs->rx_समयout_indicate_seq = 0xffff;
+	if (index > 0) {
+		pRxTs->rx_timeout_indicate_seq = 0xffff;
 
-		अगर (index > REORDER_WIN_SIZE) अणु
+		if (index > REORDER_WIN_SIZE) {
 			netdev_warn(ieee->dev,
 				    "%s(): Rx Reorder struct buffer full\n",
 				    __func__);
 			spin_unlock_irqrestore(&(ieee->reorder_spinlock),
 					       flags);
-			वापस;
-		पूर्ण
+			return;
+		}
 		rtllib_indicate_packets(ieee, ieee->stats_IndicateArray, index);
 		bPktInBuf = false;
-	पूर्ण
+	}
 
-	अगर (bPktInBuf && (pRxTs->rx_समयout_indicate_seq == 0xffff)) अणु
-		pRxTs->rx_समयout_indicate_seq = pRxTs->rx_indicate_seq;
-		mod_समयr(&pRxTs->rx_pkt_pending_समयr,  jअगरfies +
-			  msecs_to_jअगरfies(ieee->pHTInfo->RxReorderPendingTime)
+	if (bPktInBuf && (pRxTs->rx_timeout_indicate_seq == 0xffff)) {
+		pRxTs->rx_timeout_indicate_seq = pRxTs->rx_indicate_seq;
+		mod_timer(&pRxTs->rx_pkt_pending_timer,  jiffies +
+			  msecs_to_jiffies(ieee->pHTInfo->RxReorderPendingTime)
 			  );
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&(ieee->reorder_spinlock), flags);
-पूर्ण
+}
 
-अटल व्योम TsAddBaProcess(काष्ठा समयr_list *t)
-अणु
-	काष्ठा tx_ts_record *pTxTs = from_समयr(pTxTs, t, TsAddBaTimer);
+static void TsAddBaProcess(struct timer_list *t)
+{
+	struct tx_ts_record *pTxTs = from_timer(pTxTs, t, TsAddBaTimer);
 	u8 num = pTxTs->num;
-	काष्ठा rtllib_device *ieee = container_of(pTxTs, काष्ठा rtllib_device,
+	struct rtllib_device *ieee = container_of(pTxTs, struct rtllib_device,
 				     TxTsRecord[num]);
 
 	TsInitAddBA(ieee, pTxTs, BA_POLICY_IMMEDIATE, false);
 	netdev_dbg(ieee->dev, "%s(): ADDBA Req is started\n", __func__);
-पूर्ण
+}
 
-अटल व्योम ResetTsCommonInfo(काष्ठा ts_common_info *pTsCommonInfo)
-अणु
+static void ResetTsCommonInfo(struct ts_common_info *pTsCommonInfo)
+{
 	eth_zero_addr(pTsCommonInfo->Addr);
-	स_रखो(&pTsCommonInfo->TSpec, 0, माप(जोड़ tspec_body));
-	स_रखो(&pTsCommonInfo->TClass, 0, माप(जोड़ qos_tclas) * TCLAS_NUM);
+	memset(&pTsCommonInfo->TSpec, 0, sizeof(union tspec_body));
+	memset(&pTsCommonInfo->TClass, 0, sizeof(union qos_tclas) * TCLAS_NUM);
 	pTsCommonInfo->TClasProc = 0;
 	pTsCommonInfo->TClasNum = 0;
-पूर्ण
+}
 
-अटल व्योम ResetTxTsEntry(काष्ठा tx_ts_record *pTS)
-अणु
+static void ResetTxTsEntry(struct tx_ts_record *pTS)
+{
 	ResetTsCommonInfo(&pTS->TsCommonInfo);
 	pTS->TxCurSeq = 0;
 	pTS->bAddBaReqInProgress = false;
@@ -120,251 +119,251 @@
 	pTS->bDisable_AddBa = false;
 	ResetBaEntry(&pTS->TxAdmittedBARecord);
 	ResetBaEntry(&pTS->TxPendingBARecord);
-पूर्ण
+}
 
-अटल व्योम ResetRxTsEntry(काष्ठा rx_ts_record *pTS)
-अणु
+static void ResetRxTsEntry(struct rx_ts_record *pTS)
+{
 	ResetTsCommonInfo(&pTS->ts_common_info);
 	pTS->rx_indicate_seq = 0xffff;
-	pTS->rx_समयout_indicate_seq = 0xffff;
+	pTS->rx_timeout_indicate_seq = 0xffff;
 	ResetBaEntry(&pTS->rx_admitted_ba_record);
-पूर्ण
+}
 
-व्योम TSInitialize(काष्ठा rtllib_device *ieee)
-अणु
-	काष्ठा tx_ts_record *pTxTS  = ieee->TxTsRecord;
-	काष्ठा rx_ts_record *pRxTS  = ieee->RxTsRecord;
-	काष्ठा rx_reorder_entry *pRxReorderEntry = ieee->RxReorderEntry;
+void TSInitialize(struct rtllib_device *ieee)
+{
+	struct tx_ts_record *pTxTS  = ieee->TxTsRecord;
+	struct rx_ts_record *pRxTS  = ieee->RxTsRecord;
+	struct rx_reorder_entry *pRxReorderEntry = ieee->RxReorderEntry;
 	u8				count = 0;
 
 	INIT_LIST_HEAD(&ieee->Tx_TS_Admit_List);
 	INIT_LIST_HEAD(&ieee->Tx_TS_Pending_List);
 	INIT_LIST_HEAD(&ieee->Tx_TS_Unused_List);
 
-	क्रम (count = 0; count < TOTAL_TS_NUM; count++) अणु
+	for (count = 0; count < TOTAL_TS_NUM; count++) {
 		pTxTS->num = count;
-		समयr_setup(&pTxTS->TsCommonInfo.SetupTimer, TsSetupTimeOut,
+		timer_setup(&pTxTS->TsCommonInfo.SetupTimer, TsSetupTimeOut,
 			    0);
 
-		समयr_setup(&pTxTS->TsCommonInfo.InactTimer, TsInactTimeout,
+		timer_setup(&pTxTS->TsCommonInfo.InactTimer, TsInactTimeout,
 			    0);
 
-		समयr_setup(&pTxTS->TsAddBaTimer, TsAddBaProcess, 0);
+		timer_setup(&pTxTS->TsAddBaTimer, TsAddBaProcess, 0);
 
-		समयr_setup(&pTxTS->TxPendingBARecord.समयr, BaSetupTimeOut,
+		timer_setup(&pTxTS->TxPendingBARecord.timer, BaSetupTimeOut,
 			    0);
-		समयr_setup(&pTxTS->TxAdmittedBARecord.समयr,
+		timer_setup(&pTxTS->TxAdmittedBARecord.timer,
 			    TxBaInactTimeout, 0);
 
 		ResetTxTsEntry(pTxTS);
 		list_add_tail(&pTxTS->TsCommonInfo.List,
 				&ieee->Tx_TS_Unused_List);
 		pTxTS++;
-	पूर्ण
+	}
 
 	INIT_LIST_HEAD(&ieee->Rx_TS_Admit_List);
 	INIT_LIST_HEAD(&ieee->Rx_TS_Pending_List);
 	INIT_LIST_HEAD(&ieee->Rx_TS_Unused_List);
-	क्रम (count = 0; count < TOTAL_TS_NUM; count++) अणु
+	for (count = 0; count < TOTAL_TS_NUM; count++) {
 		pRxTS->num = count;
 		INIT_LIST_HEAD(&pRxTS->rx_pending_pkt_list);
 
-		समयr_setup(&pRxTS->ts_common_info.SetupTimer, TsSetupTimeOut,
+		timer_setup(&pRxTS->ts_common_info.SetupTimer, TsSetupTimeOut,
 			    0);
 
-		समयr_setup(&pRxTS->ts_common_info.InactTimer, TsInactTimeout,
+		timer_setup(&pRxTS->ts_common_info.InactTimer, TsInactTimeout,
 			    0);
 
-		समयr_setup(&pRxTS->rx_admitted_ba_record.समयr,
+		timer_setup(&pRxTS->rx_admitted_ba_record.timer,
 			    RxBaInactTimeout, 0);
 
-		समयr_setup(&pRxTS->rx_pkt_pending_समयr, RxPktPendingTimeout, 0);
+		timer_setup(&pRxTS->rx_pkt_pending_timer, RxPktPendingTimeout, 0);
 
 		ResetRxTsEntry(pRxTS);
 		list_add_tail(&pRxTS->ts_common_info.List,
 			      &ieee->Rx_TS_Unused_List);
 		pRxTS++;
-	पूर्ण
+	}
 	INIT_LIST_HEAD(&ieee->RxReorder_Unused_List);
-	क्रम (count = 0; count < REORDER_ENTRY_NUM; count++) अणु
+	for (count = 0; count < REORDER_ENTRY_NUM; count++) {
 		list_add_tail(&pRxReorderEntry->List,
 			      &ieee->RxReorder_Unused_List);
-		अगर (count == (REORDER_ENTRY_NUM - 1))
-			अवरोध;
+		if (count == (REORDER_ENTRY_NUM - 1))
+			break;
 		pRxReorderEntry = &ieee->RxReorderEntry[count + 1];
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम AdmitTS(काष्ठा rtllib_device *ieee,
-		    काष्ठा ts_common_info *pTsCommonInfo, u32 InactTime)
-अणु
-	del_समयr_sync(&pTsCommonInfo->SetupTimer);
-	del_समयr_sync(&pTsCommonInfo->InactTimer);
+static void AdmitTS(struct rtllib_device *ieee,
+		    struct ts_common_info *pTsCommonInfo, u32 InactTime)
+{
+	del_timer_sync(&pTsCommonInfo->SetupTimer);
+	del_timer_sync(&pTsCommonInfo->InactTimer);
 
-	अगर (InactTime != 0)
-		mod_समयr(&pTsCommonInfo->InactTimer, jअगरfies +
-			  msecs_to_jअगरfies(InactTime));
-पूर्ण
+	if (InactTime != 0)
+		mod_timer(&pTsCommonInfo->InactTimer, jiffies +
+			  msecs_to_jiffies(InactTime));
+}
 
-अटल काष्ठा ts_common_info *SearchAdmitTRStream(काष्ठा rtllib_device *ieee,
+static struct ts_common_info *SearchAdmitTRStream(struct rtllib_device *ieee,
 						  u8 *Addr, u8 TID,
-						  क्रमागत tr_select TxRxSelect)
-अणु
+						  enum tr_select TxRxSelect)
+{
 	u8	dir;
-	bool	search_dir[4] = अणु0पूर्ण;
-	काष्ठा list_head *psearch_list;
-	काष्ठा ts_common_info *pRet = शून्य;
+	bool	search_dir[4] = {0};
+	struct list_head *psearch_list;
+	struct ts_common_info *pRet = NULL;
 
-	अगर (ieee->iw_mode == IW_MODE_MASTER) अणु
-		अगर (TxRxSelect == TX_सूची) अणु
-			search_dir[सूची_DOWN] = true;
-			search_dir[सूची_BI_सूची] = true;
-		पूर्ण अन्यथा अणु
-			search_dir[सूची_UP] = true;
-			search_dir[सूची_BI_सूची] = true;
-		पूर्ण
-	पूर्ण अन्यथा अगर (ieee->iw_mode == IW_MODE_ADHOC) अणु
-		अगर (TxRxSelect == TX_सूची)
-			search_dir[सूची_UP] = true;
-		अन्यथा
-			search_dir[सूची_DOWN] = true;
-	पूर्ण अन्यथा अणु
-		अगर (TxRxSelect == TX_सूची) अणु
-			search_dir[सूची_UP] = true;
-			search_dir[सूची_BI_सूची] = true;
-			search_dir[सूची_सूचीECT] = true;
-		पूर्ण अन्यथा अणु
-			search_dir[सूची_DOWN] = true;
-			search_dir[सूची_BI_सूची] = true;
-			search_dir[सूची_सूचीECT] = true;
-		पूर्ण
-	पूर्ण
+	if (ieee->iw_mode == IW_MODE_MASTER) {
+		if (TxRxSelect == TX_DIR) {
+			search_dir[DIR_DOWN] = true;
+			search_dir[DIR_BI_DIR] = true;
+		} else {
+			search_dir[DIR_UP] = true;
+			search_dir[DIR_BI_DIR] = true;
+		}
+	} else if (ieee->iw_mode == IW_MODE_ADHOC) {
+		if (TxRxSelect == TX_DIR)
+			search_dir[DIR_UP] = true;
+		else
+			search_dir[DIR_DOWN] = true;
+	} else {
+		if (TxRxSelect == TX_DIR) {
+			search_dir[DIR_UP] = true;
+			search_dir[DIR_BI_DIR] = true;
+			search_dir[DIR_DIRECT] = true;
+		} else {
+			search_dir[DIR_DOWN] = true;
+			search_dir[DIR_BI_DIR] = true;
+			search_dir[DIR_DIRECT] = true;
+		}
+	}
 
-	अगर (TxRxSelect == TX_सूची)
+	if (TxRxSelect == TX_DIR)
 		psearch_list = &ieee->Tx_TS_Admit_List;
-	अन्यथा
+	else
 		psearch_list = &ieee->Rx_TS_Admit_List;
 
-	क्रम (dir = 0; dir <= सूची_BI_सूची; dir++) अणु
-		अगर (!search_dir[dir])
-			जारी;
-		list_क्रम_each_entry(pRet, psearch_list, List) अणु
-			अगर (स_भेद(pRet->Addr, Addr, 6) == 0 &&
+	for (dir = 0; dir <= DIR_BI_DIR; dir++) {
+		if (!search_dir[dir])
+			continue;
+		list_for_each_entry(pRet, psearch_list, List) {
+			if (memcmp(pRet->Addr, Addr, 6) == 0 &&
 			    pRet->TSpec.f.TSInfo.field.ucTSID == TID &&
 			    pRet->TSpec.f.TSInfo.field.ucDirection == dir)
-				अवरोध;
-		पूर्ण
-		अगर (&pRet->List  != psearch_list)
-			अवरोध;
-	पूर्ण
+				break;
+		}
+		if (&pRet->List  != psearch_list)
+			break;
+	}
 
-	अगर (pRet && &pRet->List  != psearch_list)
-		वापस pRet;
-	वापस शून्य;
-पूर्ण
+	if (pRet && &pRet->List  != psearch_list)
+		return pRet;
+	return NULL;
+}
 
-अटल व्योम MakeTSEntry(काष्ठा ts_common_info *pTsCommonInfo, u8 *Addr,
-			जोड़ tspec_body *pTSPEC, जोड़ qos_tclas *pTCLAS,
+static void MakeTSEntry(struct ts_common_info *pTsCommonInfo, u8 *Addr,
+			union tspec_body *pTSPEC, union qos_tclas *pTCLAS,
 			u8 TCLAS_Num, u8 TCLAS_Proc)
-अणु
+{
 	u8	count;
 
-	अगर (!pTsCommonInfo)
-		वापस;
+	if (!pTsCommonInfo)
+		return;
 
-	स_नकल(pTsCommonInfo->Addr, Addr, 6);
+	memcpy(pTsCommonInfo->Addr, Addr, 6);
 
-	अगर (pTSPEC)
-		स_नकल((u8 *)(&(pTsCommonInfo->TSpec)), (u8 *)pTSPEC,
-			माप(जोड़ tspec_body));
+	if (pTSPEC)
+		memcpy((u8 *)(&(pTsCommonInfo->TSpec)), (u8 *)pTSPEC,
+			sizeof(union tspec_body));
 
-	क्रम (count = 0; count < TCLAS_Num; count++)
-		स_नकल((u8 *)(&(pTsCommonInfo->TClass[count])),
-		       (u8 *)pTCLAS, माप(जोड़ qos_tclas));
+	for (count = 0; count < TCLAS_Num; count++)
+		memcpy((u8 *)(&(pTsCommonInfo->TClass[count])),
+		       (u8 *)pTCLAS, sizeof(union qos_tclas));
 
 	pTsCommonInfo->TClasProc = TCLAS_Proc;
 	pTsCommonInfo->TClasNum = TCLAS_Num;
-पूर्ण
+}
 
-bool GetTs(काष्ठा rtllib_device *ieee, काष्ठा ts_common_info **ppTS,
-	   u8 *Addr, u8 TID, क्रमागत tr_select TxRxSelect, bool bAddNewTs)
-अणु
+bool GetTs(struct rtllib_device *ieee, struct ts_common_info **ppTS,
+	   u8 *Addr, u8 TID, enum tr_select TxRxSelect, bool bAddNewTs)
+{
 	u8	UP = 0;
-	जोड़ tspec_body TSpec;
-	जोड़ qos_tsinfo *pTSInfo = &TSpec.f.TSInfo;
-	काष्ठा list_head *pUnusedList;
-	काष्ठा list_head *pAddmitList;
-	क्रमागत direction_value Dir;
+	union tspec_body TSpec;
+	union qos_tsinfo *pTSInfo = &TSpec.f.TSInfo;
+	struct list_head *pUnusedList;
+	struct list_head *pAddmitList;
+	enum direction_value Dir;
 
-	अगर (is_multicast_ether_addr(Addr)) अणु
+	if (is_multicast_ether_addr(Addr)) {
 		netdev_warn(ieee->dev, "Get TS for Broadcast or Multicast\n");
-		वापस false;
-	पूर्ण
-	अगर (ieee->current_network.qos_data.supported == 0) अणु
+		return false;
+	}
+	if (ieee->current_network.qos_data.supported == 0) {
 		UP = 0;
-	पूर्ण अन्यथा अणु
-		चयन (TID) अणु
-		हाल 0:
-		हाल 3:
+	} else {
+		switch (TID) {
+		case 0:
+		case 3:
 			UP = 0;
-			अवरोध;
-		हाल 1:
-		हाल 2:
+			break;
+		case 1:
+		case 2:
 			UP = 2;
-			अवरोध;
-		हाल 4:
-		हाल 5:
+			break;
+		case 4:
+		case 5:
 			UP = 5;
-			अवरोध;
-		हाल 6:
-		हाल 7:
+			break;
+		case 6:
+		case 7:
 			UP = 7;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			netdev_warn(ieee->dev, "%s(): TID(%d) is not valid\n",
 				    __func__, TID);
-			वापस false;
-		पूर्ण
-	पूर्ण
+			return false;
+		}
+	}
 
 	*ppTS = SearchAdmitTRStream(ieee, Addr, UP, TxRxSelect);
-	अगर (*ppTS)
-		वापस true;
+	if (*ppTS)
+		return true;
 
-	अगर (!bAddNewTs) अणु
+	if (!bAddNewTs) {
 		netdev_dbg(ieee->dev, "add new TS failed(tid:%d)\n", UP);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	pUnusedList = (TxRxSelect == TX_सूची) ?
+	pUnusedList = (TxRxSelect == TX_DIR) ?
 				(&ieee->Tx_TS_Unused_List) :
 				(&ieee->Rx_TS_Unused_List);
 
-	pAddmitList = (TxRxSelect == TX_सूची) ?
+	pAddmitList = (TxRxSelect == TX_DIR) ?
 				(&ieee->Tx_TS_Admit_List) :
 				(&ieee->Rx_TS_Admit_List);
 
 	Dir = (ieee->iw_mode == IW_MODE_MASTER) ?
-				((TxRxSelect == TX_सूची) ? सूची_DOWN : सूची_UP) :
-				((TxRxSelect == TX_सूची) ? सूची_UP : सूची_DOWN);
+				((TxRxSelect == TX_DIR) ? DIR_DOWN : DIR_UP) :
+				((TxRxSelect == TX_DIR) ? DIR_UP : DIR_DOWN);
 
-	अगर (!list_empty(pUnusedList)) अणु
+	if (!list_empty(pUnusedList)) {
 		(*ppTS) = list_entry(pUnusedList->next,
-			  काष्ठा ts_common_info, List);
+			  struct ts_common_info, List);
 		list_del_init(&(*ppTS)->List);
-		अगर (TxRxSelect == TX_सूची) अणु
-			काष्ठा tx_ts_record *पंचांगp =
+		if (TxRxSelect == TX_DIR) {
+			struct tx_ts_record *tmp =
 				container_of(*ppTS,
-				काष्ठा tx_ts_record,
+				struct tx_ts_record,
 				TsCommonInfo);
-			ResetTxTsEntry(पंचांगp);
-		पूर्ण अन्यथा अणु
-			काष्ठा rx_ts_record *पंचांगp =
+			ResetTxTsEntry(tmp);
+		} else {
+			struct rx_ts_record *tmp =
 				 container_of(*ppTS,
-				 काष्ठा rx_ts_record,
+				 struct rx_ts_record,
 				 ts_common_info);
-			ResetRxTsEntry(पंचांगp);
-		पूर्ण
+			ResetRxTsEntry(tmp);
+		}
 
 		netdev_dbg(ieee->dev,
 			   "to init current TS, UP:%d, Dir:%d, addr: %pM ppTs=%p\n",
@@ -379,145 +378,145 @@ bool GetTs(काष्ठा rtllib_device *ieee, काष्ठा ts_common_
 		pTSInfo->field.ucTSInfoAckPolicy = 0;
 		pTSInfo->field.ucSchedule = 0;
 
-		MakeTSEntry(*ppTS, Addr, &TSpec, शून्य, 0, 0);
+		MakeTSEntry(*ppTS, Addr, &TSpec, NULL, 0, 0);
 		AdmitTS(ieee, *ppTS, 0);
 		list_add_tail(&((*ppTS)->List), pAddmitList);
 
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
 	netdev_warn(ieee->dev,
 		    "There is not enough dir=%d(0=up down=1) TS record to be used!",
 		    Dir);
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल व्योम RemoveTsEntry(काष्ठा rtllib_device *ieee,
-			  काष्ठा ts_common_info *pTs, क्रमागत tr_select TxRxSelect)
-अणु
-	del_समयr_sync(&pTs->SetupTimer);
-	del_समयr_sync(&pTs->InactTimer);
+static void RemoveTsEntry(struct rtllib_device *ieee,
+			  struct ts_common_info *pTs, enum tr_select TxRxSelect)
+{
+	del_timer_sync(&pTs->SetupTimer);
+	del_timer_sync(&pTs->InactTimer);
 	TsInitDelBA(ieee, pTs, TxRxSelect);
 
-	अगर (TxRxSelect == RX_सूची) अणु
-		काष्ठा rx_reorder_entry *pRxReorderEntry;
-		काष्ठा rx_ts_record *pRxTS = (काष्ठा rx_ts_record *)pTs;
+	if (TxRxSelect == RX_DIR) {
+		struct rx_reorder_entry *pRxReorderEntry;
+		struct rx_ts_record *pRxTS = (struct rx_ts_record *)pTs;
 
-		अगर (समयr_pending(&pRxTS->rx_pkt_pending_समयr))
-			del_समयr_sync(&pRxTS->rx_pkt_pending_समयr);
+		if (timer_pending(&pRxTS->rx_pkt_pending_timer))
+			del_timer_sync(&pRxTS->rx_pkt_pending_timer);
 
-		जबतक (!list_empty(&pRxTS->rx_pending_pkt_list)) अणु
-			pRxReorderEntry = (काष्ठा rx_reorder_entry *)
+		while (!list_empty(&pRxTS->rx_pending_pkt_list)) {
+			pRxReorderEntry = (struct rx_reorder_entry *)
 					list_entry(pRxTS->rx_pending_pkt_list.prev,
-					काष्ठा rx_reorder_entry, List);
+					struct rx_reorder_entry, List);
 			netdev_dbg(ieee->dev,  "%s(): Delete SeqNum %d!\n",
 				   __func__, pRxReorderEntry->SeqNum);
 			list_del_init(&pRxReorderEntry->List);
-			अणु
-				पूर्णांक i = 0;
-				काष्ठा rtllib_rxb *prxb = pRxReorderEntry->prxb;
+			{
+				int i = 0;
+				struct rtllib_rxb *prxb = pRxReorderEntry->prxb;
 
-				अगर (unlikely(!prxb))
-					वापस;
-				क्रम (i = 0; i < prxb->nr_subframes; i++)
-					dev_kमुक्त_skb(prxb->subframes[i]);
-				kमुक्त(prxb);
-				prxb = शून्य;
-			पूर्ण
+				if (unlikely(!prxb))
+					return;
+				for (i = 0; i < prxb->nr_subframes; i++)
+					dev_kfree_skb(prxb->subframes[i]);
+				kfree(prxb);
+				prxb = NULL;
+			}
 			list_add_tail(&pRxReorderEntry->List,
 				      &ieee->RxReorder_Unused_List);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		काष्ठा tx_ts_record *pTxTS = (काष्ठा tx_ts_record *)pTs;
+		}
+	} else {
+		struct tx_ts_record *pTxTS = (struct tx_ts_record *)pTs;
 
-		del_समयr_sync(&pTxTS->TsAddBaTimer);
-	पूर्ण
-पूर्ण
+		del_timer_sync(&pTxTS->TsAddBaTimer);
+	}
+}
 
-व्योम RemovePeerTS(काष्ठा rtllib_device *ieee, u8 *Addr)
-अणु
-	काष्ठा ts_common_info *pTS, *pTmpTS;
+void RemovePeerTS(struct rtllib_device *ieee, u8 *Addr)
+{
+	struct ts_common_info *pTS, *pTmpTS;
 
 	netdev_info(ieee->dev, "===========>%s, %pM\n", __func__, Addr);
 
-	list_क्रम_each_entry_safe(pTS, pTmpTS, &ieee->Tx_TS_Pending_List, List) अणु
-		अगर (स_भेद(pTS->Addr, Addr, 6) == 0) अणु
-			RemoveTsEntry(ieee, pTS, TX_सूची);
+	list_for_each_entry_safe(pTS, pTmpTS, &ieee->Tx_TS_Pending_List, List) {
+		if (memcmp(pTS->Addr, Addr, 6) == 0) {
+			RemoveTsEntry(ieee, pTS, TX_DIR);
 			list_del_init(&pTS->List);
 			list_add_tail(&pTS->List, &ieee->Tx_TS_Unused_List);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	list_क्रम_each_entry_safe(pTS, pTmpTS, &ieee->Tx_TS_Admit_List, List) अणु
-		अगर (स_भेद(pTS->Addr, Addr, 6) == 0) अणु
+	list_for_each_entry_safe(pTS, pTmpTS, &ieee->Tx_TS_Admit_List, List) {
+		if (memcmp(pTS->Addr, Addr, 6) == 0) {
 			netdev_info(ieee->dev,
 				    "====>remove Tx_TS_admin_list\n");
-			RemoveTsEntry(ieee, pTS, TX_सूची);
+			RemoveTsEntry(ieee, pTS, TX_DIR);
 			list_del_init(&pTS->List);
 			list_add_tail(&pTS->List, &ieee->Tx_TS_Unused_List);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	list_क्रम_each_entry_safe(pTS, pTmpTS, &ieee->Rx_TS_Pending_List, List) अणु
-		अगर (स_भेद(pTS->Addr, Addr, 6) == 0) अणु
-			RemoveTsEntry(ieee, pTS, RX_सूची);
+	list_for_each_entry_safe(pTS, pTmpTS, &ieee->Rx_TS_Pending_List, List) {
+		if (memcmp(pTS->Addr, Addr, 6) == 0) {
+			RemoveTsEntry(ieee, pTS, RX_DIR);
 			list_del_init(&pTS->List);
 			list_add_tail(&pTS->List, &ieee->Rx_TS_Unused_List);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	list_क्रम_each_entry_safe(pTS, pTmpTS, &ieee->Rx_TS_Admit_List, List) अणु
-		अगर (स_भेद(pTS->Addr, Addr, 6) == 0) अणु
-			RemoveTsEntry(ieee, pTS, RX_सूची);
+	list_for_each_entry_safe(pTS, pTmpTS, &ieee->Rx_TS_Admit_List, List) {
+		if (memcmp(pTS->Addr, Addr, 6) == 0) {
+			RemoveTsEntry(ieee, pTS, RX_DIR);
 			list_del_init(&pTS->List);
 			list_add_tail(&pTS->List, &ieee->Rx_TS_Unused_List);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 EXPORT_SYMBOL(RemovePeerTS);
 
-व्योम RemoveAllTS(काष्ठा rtllib_device *ieee)
-अणु
-	काष्ठा ts_common_info *pTS, *pTmpTS;
+void RemoveAllTS(struct rtllib_device *ieee)
+{
+	struct ts_common_info *pTS, *pTmpTS;
 
-	list_क्रम_each_entry_safe(pTS, pTmpTS, &ieee->Tx_TS_Pending_List, List) अणु
-		RemoveTsEntry(ieee, pTS, TX_सूची);
+	list_for_each_entry_safe(pTS, pTmpTS, &ieee->Tx_TS_Pending_List, List) {
+		RemoveTsEntry(ieee, pTS, TX_DIR);
 		list_del_init(&pTS->List);
 		list_add_tail(&pTS->List, &ieee->Tx_TS_Unused_List);
-	पूर्ण
+	}
 
-	list_क्रम_each_entry_safe(pTS, pTmpTS, &ieee->Tx_TS_Admit_List, List) अणु
-		RemoveTsEntry(ieee, pTS, TX_सूची);
+	list_for_each_entry_safe(pTS, pTmpTS, &ieee->Tx_TS_Admit_List, List) {
+		RemoveTsEntry(ieee, pTS, TX_DIR);
 		list_del_init(&pTS->List);
 		list_add_tail(&pTS->List, &ieee->Tx_TS_Unused_List);
-	पूर्ण
+	}
 
-	list_क्रम_each_entry_safe(pTS, pTmpTS, &ieee->Rx_TS_Pending_List, List) अणु
-		RemoveTsEntry(ieee, pTS, RX_सूची);
+	list_for_each_entry_safe(pTS, pTmpTS, &ieee->Rx_TS_Pending_List, List) {
+		RemoveTsEntry(ieee, pTS, RX_DIR);
 		list_del_init(&pTS->List);
 		list_add_tail(&pTS->List, &ieee->Rx_TS_Unused_List);
-	पूर्ण
+	}
 
-	list_क्रम_each_entry_safe(pTS, pTmpTS, &ieee->Rx_TS_Admit_List, List) अणु
-		RemoveTsEntry(ieee, pTS, RX_सूची);
+	list_for_each_entry_safe(pTS, pTmpTS, &ieee->Rx_TS_Admit_List, List) {
+		RemoveTsEntry(ieee, pTS, RX_DIR);
 		list_del_init(&pTS->List);
 		list_add_tail(&pTS->List, &ieee->Rx_TS_Unused_List);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम TsStartAddBaProcess(काष्ठा rtllib_device *ieee, काष्ठा tx_ts_record *pTxTS)
-अणु
-	अगर (pTxTS->bAddBaReqInProgress == false) अणु
+void TsStartAddBaProcess(struct rtllib_device *ieee, struct tx_ts_record *pTxTS)
+{
+	if (pTxTS->bAddBaReqInProgress == false) {
 		pTxTS->bAddBaReqInProgress = true;
 
-		अगर (pTxTS->bAddBaReqDelayed) अणु
+		if (pTxTS->bAddBaReqDelayed) {
 			netdev_dbg(ieee->dev, "Start ADDBA after 60 sec!!\n");
-			mod_समयr(&pTxTS->TsAddBaTimer, jअगरfies +
-				  msecs_to_jअगरfies(TS_ADDBA_DELAY));
-		पूर्ण अन्यथा अणु
+			mod_timer(&pTxTS->TsAddBaTimer, jiffies +
+				  msecs_to_jiffies(TS_ADDBA_DELAY));
+		} else {
 			netdev_dbg(ieee->dev, "Immediately Start ADDBA\n");
-			mod_समयr(&pTxTS->TsAddBaTimer, jअगरfies + 10);
-		पूर्ण
-	पूर्ण अन्यथा
+			mod_timer(&pTxTS->TsAddBaTimer, jiffies + 10);
+		}
+	} else
 		netdev_dbg(ieee->dev, "BA timer is already added\n");
-पूर्ण
+}

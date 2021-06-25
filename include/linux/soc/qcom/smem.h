@@ -1,15 +1,14 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __QCOM_SMEM_H__
-#घोषणा __QCOM_SMEM_H__
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __QCOM_SMEM_H__
+#define __QCOM_SMEM_H__
 
-#घोषणा QCOM_SMEM_HOST_ANY -1
+#define QCOM_SMEM_HOST_ANY -1
 
-पूर्णांक qcom_smem_alloc(अचिन्हित host, अचिन्हित item, माप_प्रकार size);
-व्योम *qcom_smem_get(अचिन्हित host, अचिन्हित item, माप_प्रकार *size);
+int qcom_smem_alloc(unsigned host, unsigned item, size_t size);
+void *qcom_smem_get(unsigned host, unsigned item, size_t *size);
 
-पूर्णांक qcom_smem_get_मुक्त_space(अचिन्हित host);
+int qcom_smem_get_free_space(unsigned host);
 
-phys_addr_t qcom_smem_virt_to_phys(व्योम *p);
+phys_addr_t qcom_smem_virt_to_phys(void *p);
 
-#पूर्ण_अगर
+#endif

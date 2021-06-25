@@ -1,59 +1,58 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _SOCK_REUSEPORT_H
-#घोषणा _SOCK_REUSEPORT_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _SOCK_REUSEPORT_H
+#define _SOCK_REUSEPORT_H
 
-#समावेश <linux/filter.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/types.h>
-#समावेश <linux/spinlock.h>
-#समावेश <net/sock.h>
+#include <linux/filter.h>
+#include <linux/skbuff.h>
+#include <linux/types.h>
+#include <linux/spinlock.h>
+#include <net/sock.h>
 
-बाह्य spinlock_t reuseport_lock;
+extern spinlock_t reuseport_lock;
 
-काष्ठा sock_reuseport अणु
-	काष्ठा rcu_head		rcu;
+struct sock_reuseport {
+	struct rcu_head		rcu;
 
 	u16			max_socks;	/* length of socks */
 	u16			num_socks;	/* elements in socks */
-	/* The last synq overflow event बारtamp of this
+	/* The last synq overflow event timestamp of this
 	 * reuse->socks[] group.
 	 */
-	अचिन्हित पूर्णांक		synq_overflow_ts;
+	unsigned int		synq_overflow_ts;
 	/* ID stays the same even after the size of socks[] grows. */
-	अचिन्हित पूर्णांक		reuseport_id;
-	अचिन्हित पूर्णांक		bind_inany:1;
-	अचिन्हित पूर्णांक		has_conns:1;
-	काष्ठा bpf_prog __rcu	*prog;		/* optional BPF sock selector */
-	काष्ठा sock		*socks[];	/* array of sock poपूर्णांकers */
-पूर्ण;
+	unsigned int		reuseport_id;
+	unsigned int		bind_inany:1;
+	unsigned int		has_conns:1;
+	struct bpf_prog __rcu	*prog;		/* optional BPF sock selector */
+	struct sock		*socks[];	/* array of sock pointers */
+};
 
-बाह्य पूर्णांक reuseport_alloc(काष्ठा sock *sk, bool bind_inany);
-बाह्य पूर्णांक reuseport_add_sock(काष्ठा sock *sk, काष्ठा sock *sk2,
+extern int reuseport_alloc(struct sock *sk, bool bind_inany);
+extern int reuseport_add_sock(struct sock *sk, struct sock *sk2,
 			      bool bind_inany);
-बाह्य व्योम reuseport_detach_sock(काष्ठा sock *sk);
-बाह्य काष्ठा sock *reuseport_select_sock(काष्ठा sock *sk,
+extern void reuseport_detach_sock(struct sock *sk);
+extern struct sock *reuseport_select_sock(struct sock *sk,
 					  u32 hash,
-					  काष्ठा sk_buff *skb,
-					  पूर्णांक hdr_len);
-बाह्य पूर्णांक reuseport_attach_prog(काष्ठा sock *sk, काष्ठा bpf_prog *prog);
-बाह्य पूर्णांक reuseport_detach_prog(काष्ठा sock *sk);
+					  struct sk_buff *skb,
+					  int hdr_len);
+extern int reuseport_attach_prog(struct sock *sk, struct bpf_prog *prog);
+extern int reuseport_detach_prog(struct sock *sk);
 
-अटल अंतरभूत bool reuseport_has_conns(काष्ठा sock *sk, bool set)
-अणु
-	काष्ठा sock_reuseport *reuse;
+static inline bool reuseport_has_conns(struct sock *sk, bool set)
+{
+	struct sock_reuseport *reuse;
 	bool ret = false;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	reuse = rcu_dereference(sk->sk_reuseport_cb);
-	अगर (reuse) अणु
-		अगर (set)
+	if (reuse) {
+		if (set)
 			reuse->has_conns = 1;
 		ret = reuse->has_conns;
-	पूर्ण
-	rcu_पढ़ो_unlock();
+	}
+	rcu_read_unlock();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#पूर्ण_अगर  /* _SOCK_REUSEPORT_H */
+#endif  /* _SOCK_REUSEPORT_H */

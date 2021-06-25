@@ -1,53 +1,52 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 1992, 1998-2006 Linus Torvalds, Ingo Molnar
  * Copyright (C) 2005-2006, Thomas Gleixner, Russell King
  *
- * This file contains the core पूर्णांकerrupt handling code, क्रम irq-chip based
- * architectures. Detailed inक्रमmation is available in
+ * This file contains the core interrupt handling code, for irq-chip based
+ * architectures. Detailed information is available in
  * Documentation/core-api/genericirq.rst
  */
 
-#समावेश <linux/irq.h>
-#समावेश <linux/msi.h>
-#समावेश <linux/module.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/kernel_स्थिति.स>
-#समावेश <linux/irqकरोमुख्य.h>
+#include <linux/irq.h>
+#include <linux/msi.h>
+#include <linux/module.h>
+#include <linux/interrupt.h>
+#include <linux/kernel_stat.h>
+#include <linux/irqdomain.h>
 
-#समावेश <trace/events/irq.h>
+#include <trace/events/irq.h>
 
-#समावेश "internals.h"
+#include "internals.h"
 
-अटल irqवापस_t bad_chained_irq(पूर्णांक irq, व्योम *dev_id)
-अणु
+static irqreturn_t bad_chained_irq(int irq, void *dev_id)
+{
 	WARN_ONCE(1, "Chained irq %d should not call an action\n", irq);
-	वापस IRQ_NONE;
-पूर्ण
+	return IRQ_NONE;
+}
 
 /*
- * Chained handlers should never call action on their IRQ. This शेष
- * action will emit warning अगर such thing happens.
+ * Chained handlers should never call action on their IRQ. This default
+ * action will emit warning if such thing happens.
  */
-काष्ठा irqaction chained_action = अणु
+struct irqaction chained_action = {
 	.handler = bad_chained_irq,
-पूर्ण;
+};
 
 /**
- *	irq_set_chip - set the irq chip क्रम an irq
+ *	irq_set_chip - set the irq chip for an irq
  *	@irq:	irq number
- *	@chip:	poपूर्णांकer to irq chip description काष्ठाure
+ *	@chip:	pointer to irq chip description structure
  */
-पूर्णांक irq_set_chip(अचिन्हित पूर्णांक irq, काष्ठा irq_chip *chip)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा irq_desc *desc = irq_get_desc_lock(irq, &flags, 0);
+int irq_set_chip(unsigned int irq, struct irq_chip *chip)
+{
+	unsigned long flags;
+	struct irq_desc *desc = irq_get_desc_lock(irq, &flags, 0);
 
-	अगर (!desc)
-		वापस -EINVAL;
+	if (!desc)
+		return -EINVAL;
 
-	अगर (!chip)
+	if (!chip)
 		chip = &no_irq_chip;
 
 	desc->irq_data.chip = chip;
@@ -57,410 +56,410 @@
 	 * allocated_irqs.
 	 */
 	irq_mark_irq(irq);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(irq_set_chip);
 
 /**
- *	irq_set_irq_type - set the irq trigger type क्रम an irq
+ *	irq_set_irq_type - set the irq trigger type for an irq
  *	@irq:	irq number
- *	@type:	IRQ_TYPE_अणुLEVEL,EDGEपूर्ण_* value - see include/linux/irq.h
+ *	@type:	IRQ_TYPE_{LEVEL,EDGE}_* value - see include/linux/irq.h
  */
-पूर्णांक irq_set_irq_type(अचिन्हित पूर्णांक irq, अचिन्हित पूर्णांक type)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा irq_desc *desc = irq_get_desc_buslock(irq, &flags, IRQ_GET_DESC_CHECK_GLOBAL);
-	पूर्णांक ret = 0;
+int irq_set_irq_type(unsigned int irq, unsigned int type)
+{
+	unsigned long flags;
+	struct irq_desc *desc = irq_get_desc_buslock(irq, &flags, IRQ_GET_DESC_CHECK_GLOBAL);
+	int ret = 0;
 
-	अगर (!desc)
-		वापस -EINVAL;
+	if (!desc)
+		return -EINVAL;
 
 	ret = __irq_set_trigger(desc, type);
 	irq_put_desc_busunlock(desc, flags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(irq_set_irq_type);
 
 /**
- *	irq_set_handler_data - set irq handler data क्रम an irq
+ *	irq_set_handler_data - set irq handler data for an irq
  *	@irq:	Interrupt number
- *	@data:	Poपूर्णांकer to पूर्णांकerrupt specअगरic data
+ *	@data:	Pointer to interrupt specific data
  *
- *	Set the hardware irq controller data क्रम an irq
+ *	Set the hardware irq controller data for an irq
  */
-पूर्णांक irq_set_handler_data(अचिन्हित पूर्णांक irq, व्योम *data)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा irq_desc *desc = irq_get_desc_lock(irq, &flags, 0);
+int irq_set_handler_data(unsigned int irq, void *data)
+{
+	unsigned long flags;
+	struct irq_desc *desc = irq_get_desc_lock(irq, &flags, 0);
 
-	अगर (!desc)
-		वापस -EINVAL;
+	if (!desc)
+		return -EINVAL;
 	desc->irq_common_data.handler_data = data;
 	irq_put_desc_unlock(desc, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(irq_set_handler_data);
 
 /**
- *	irq_set_msi_desc_off - set MSI descriptor data क्रम an irq at offset
+ *	irq_set_msi_desc_off - set MSI descriptor data for an irq at offset
  *	@irq_base:	Interrupt number base
  *	@irq_offset:	Interrupt number offset
- *	@entry:		Poपूर्णांकer to MSI descriptor data
+ *	@entry:		Pointer to MSI descriptor data
  *
- *	Set the MSI descriptor entry क्रम an irq at offset
+ *	Set the MSI descriptor entry for an irq at offset
  */
-पूर्णांक irq_set_msi_desc_off(अचिन्हित पूर्णांक irq_base, अचिन्हित पूर्णांक irq_offset,
-			 काष्ठा msi_desc *entry)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा irq_desc *desc = irq_get_desc_lock(irq_base + irq_offset, &flags, IRQ_GET_DESC_CHECK_GLOBAL);
+int irq_set_msi_desc_off(unsigned int irq_base, unsigned int irq_offset,
+			 struct msi_desc *entry)
+{
+	unsigned long flags;
+	struct irq_desc *desc = irq_get_desc_lock(irq_base + irq_offset, &flags, IRQ_GET_DESC_CHECK_GLOBAL);
 
-	अगर (!desc)
-		वापस -EINVAL;
+	if (!desc)
+		return -EINVAL;
 	desc->irq_common_data.msi_desc = entry;
-	अगर (entry && !irq_offset)
+	if (entry && !irq_offset)
 		entry->irq = irq_base;
 	irq_put_desc_unlock(desc, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- *	irq_set_msi_desc - set MSI descriptor data क्रम an irq
+ *	irq_set_msi_desc - set MSI descriptor data for an irq
  *	@irq:	Interrupt number
- *	@entry:	Poपूर्णांकer to MSI descriptor data
+ *	@entry:	Pointer to MSI descriptor data
  *
- *	Set the MSI descriptor entry क्रम an irq
+ *	Set the MSI descriptor entry for an irq
  */
-पूर्णांक irq_set_msi_desc(अचिन्हित पूर्णांक irq, काष्ठा msi_desc *entry)
-अणु
-	वापस irq_set_msi_desc_off(irq, 0, entry);
-पूर्ण
+int irq_set_msi_desc(unsigned int irq, struct msi_desc *entry)
+{
+	return irq_set_msi_desc_off(irq, 0, entry);
+}
 
 /**
- *	irq_set_chip_data - set irq chip data क्रम an irq
+ *	irq_set_chip_data - set irq chip data for an irq
  *	@irq:	Interrupt number
- *	@data:	Poपूर्णांकer to chip specअगरic data
+ *	@data:	Pointer to chip specific data
  *
- *	Set the hardware irq chip data क्रम an irq
+ *	Set the hardware irq chip data for an irq
  */
-पूर्णांक irq_set_chip_data(अचिन्हित पूर्णांक irq, व्योम *data)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा irq_desc *desc = irq_get_desc_lock(irq, &flags, 0);
+int irq_set_chip_data(unsigned int irq, void *data)
+{
+	unsigned long flags;
+	struct irq_desc *desc = irq_get_desc_lock(irq, &flags, 0);
 
-	अगर (!desc)
-		वापस -EINVAL;
+	if (!desc)
+		return -EINVAL;
 	desc->irq_data.chip_data = data;
 	irq_put_desc_unlock(desc, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(irq_set_chip_data);
 
-काष्ठा irq_data *irq_get_irq_data(अचिन्हित पूर्णांक irq)
-अणु
-	काष्ठा irq_desc *desc = irq_to_desc(irq);
+struct irq_data *irq_get_irq_data(unsigned int irq)
+{
+	struct irq_desc *desc = irq_to_desc(irq);
 
-	वापस desc ? &desc->irq_data : शून्य;
-पूर्ण
+	return desc ? &desc->irq_data : NULL;
+}
 EXPORT_SYMBOL_GPL(irq_get_irq_data);
 
-अटल व्योम irq_state_clr_disabled(काष्ठा irq_desc *desc)
-अणु
+static void irq_state_clr_disabled(struct irq_desc *desc)
+{
 	irqd_clear(&desc->irq_data, IRQD_IRQ_DISABLED);
-पूर्ण
+}
 
-अटल व्योम irq_state_clr_masked(काष्ठा irq_desc *desc)
-अणु
+static void irq_state_clr_masked(struct irq_desc *desc)
+{
 	irqd_clear(&desc->irq_data, IRQD_IRQ_MASKED);
-पूर्ण
+}
 
-अटल व्योम irq_state_clr_started(काष्ठा irq_desc *desc)
-अणु
+static void irq_state_clr_started(struct irq_desc *desc)
+{
 	irqd_clear(&desc->irq_data, IRQD_IRQ_STARTED);
-पूर्ण
+}
 
-अटल व्योम irq_state_set_started(काष्ठा irq_desc *desc)
-अणु
+static void irq_state_set_started(struct irq_desc *desc)
+{
 	irqd_set(&desc->irq_data, IRQD_IRQ_STARTED);
-पूर्ण
+}
 
-क्रमागत अणु
+enum {
 	IRQ_STARTUP_NORMAL,
 	IRQ_STARTUP_MANAGED,
 	IRQ_STARTUP_ABORT,
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_SMP
-अटल पूर्णांक
-__irq_startup_managed(काष्ठा irq_desc *desc, काष्ठा cpumask *aff, bool क्रमce)
-अणु
-	काष्ठा irq_data *d = irq_desc_get_irq_data(desc);
+#ifdef CONFIG_SMP
+static int
+__irq_startup_managed(struct irq_desc *desc, struct cpumask *aff, bool force)
+{
+	struct irq_data *d = irq_desc_get_irq_data(desc);
 
-	अगर (!irqd_affinity_is_managed(d))
-		वापस IRQ_STARTUP_NORMAL;
+	if (!irqd_affinity_is_managed(d))
+		return IRQ_STARTUP_NORMAL;
 
-	irqd_clr_managed_shutकरोwn(d);
+	irqd_clr_managed_shutdown(d);
 
-	अगर (cpumask_any_and(aff, cpu_online_mask) >= nr_cpu_ids) अणु
+	if (cpumask_any_and(aff, cpu_online_mask) >= nr_cpu_ids) {
 		/*
 		 * Catch code which fiddles with enable_irq() on a managed
-		 * and potentially shutकरोwn IRQ. Chained पूर्णांकerrupt
-		 * installment or irq स्वतः probing should not happen on
+		 * and potentially shutdown IRQ. Chained interrupt
+		 * installment or irq auto probing should not happen on
 		 * managed irqs either.
 		 */
-		अगर (WARN_ON_ONCE(क्रमce))
-			वापस IRQ_STARTUP_ABORT;
+		if (WARN_ON_ONCE(force))
+			return IRQ_STARTUP_ABORT;
 		/*
-		 * The पूर्णांकerrupt was requested, but there is no online CPU
-		 * in it's affinity mask. Put it पूर्णांकo managed shutकरोwn
+		 * The interrupt was requested, but there is no online CPU
+		 * in it's affinity mask. Put it into managed shutdown
 		 * state and let the cpu hotplug mechanism start it up once
 		 * a CPU in the mask becomes available.
 		 */
-		वापस IRQ_STARTUP_ABORT;
-	पूर्ण
+		return IRQ_STARTUP_ABORT;
+	}
 	/*
-	 * Managed पूर्णांकerrupts have reserved resources, so this should not
+	 * Managed interrupts have reserved resources, so this should not
 	 * happen.
 	 */
-	अगर (WARN_ON(irq_करोमुख्य_activate_irq(d, false)))
-		वापस IRQ_STARTUP_ABORT;
-	वापस IRQ_STARTUP_MANAGED;
-पूर्ण
-#अन्यथा
-अटल __always_अंतरभूत पूर्णांक
-__irq_startup_managed(काष्ठा irq_desc *desc, काष्ठा cpumask *aff, bool क्रमce)
-अणु
-	वापस IRQ_STARTUP_NORMAL;
-पूर्ण
-#पूर्ण_अगर
+	if (WARN_ON(irq_domain_activate_irq(d, false)))
+		return IRQ_STARTUP_ABORT;
+	return IRQ_STARTUP_MANAGED;
+}
+#else
+static __always_inline int
+__irq_startup_managed(struct irq_desc *desc, struct cpumask *aff, bool force)
+{
+	return IRQ_STARTUP_NORMAL;
+}
+#endif
 
-अटल पूर्णांक __irq_startup(काष्ठा irq_desc *desc)
-अणु
-	काष्ठा irq_data *d = irq_desc_get_irq_data(desc);
-	पूर्णांक ret = 0;
+static int __irq_startup(struct irq_desc *desc)
+{
+	struct irq_data *d = irq_desc_get_irq_data(desc);
+	int ret = 0;
 
-	/* Warn अगर this पूर्णांकerrupt is not activated but try nevertheless */
+	/* Warn if this interrupt is not activated but try nevertheless */
 	WARN_ON_ONCE(!irqd_is_activated(d));
 
-	अगर (d->chip->irq_startup) अणु
+	if (d->chip->irq_startup) {
 		ret = d->chip->irq_startup(d);
 		irq_state_clr_disabled(desc);
 		irq_state_clr_masked(desc);
-	पूर्ण अन्यथा अणु
+	} else {
 		irq_enable(desc);
-	पूर्ण
+	}
 	irq_state_set_started(desc);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक irq_startup(काष्ठा irq_desc *desc, bool resend, bool क्रमce)
-अणु
-	काष्ठा irq_data *d = irq_desc_get_irq_data(desc);
-	काष्ठा cpumask *aff = irq_data_get_affinity_mask(d);
-	पूर्णांक ret = 0;
+int irq_startup(struct irq_desc *desc, bool resend, bool force)
+{
+	struct irq_data *d = irq_desc_get_irq_data(desc);
+	struct cpumask *aff = irq_data_get_affinity_mask(d);
+	int ret = 0;
 
 	desc->depth = 0;
 
-	अगर (irqd_is_started(d)) अणु
+	if (irqd_is_started(d)) {
 		irq_enable(desc);
-	पूर्ण अन्यथा अणु
-		चयन (__irq_startup_managed(desc, aff, क्रमce)) अणु
-		हाल IRQ_STARTUP_NORMAL:
+	} else {
+		switch (__irq_startup_managed(desc, aff, force)) {
+		case IRQ_STARTUP_NORMAL:
 			ret = __irq_startup(desc);
 			irq_setup_affinity(desc);
-			अवरोध;
-		हाल IRQ_STARTUP_MANAGED:
-			irq_करो_set_affinity(d, aff, false);
+			break;
+		case IRQ_STARTUP_MANAGED:
+			irq_do_set_affinity(d, aff, false);
 			ret = __irq_startup(desc);
-			अवरोध;
-		हाल IRQ_STARTUP_ABORT:
-			irqd_set_managed_shutकरोwn(d);
-			वापस 0;
-		पूर्ण
-	पूर्ण
-	अगर (resend)
+			break;
+		case IRQ_STARTUP_ABORT:
+			irqd_set_managed_shutdown(d);
+			return 0;
+		}
+	}
+	if (resend)
 		check_irq_resend(desc, false);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक irq_activate(काष्ठा irq_desc *desc)
-अणु
-	काष्ठा irq_data *d = irq_desc_get_irq_data(desc);
+int irq_activate(struct irq_desc *desc)
+{
+	struct irq_data *d = irq_desc_get_irq_data(desc);
 
-	अगर (!irqd_affinity_is_managed(d))
-		वापस irq_करोमुख्य_activate_irq(d, false);
-	वापस 0;
-पूर्ण
+	if (!irqd_affinity_is_managed(d))
+		return irq_domain_activate_irq(d, false);
+	return 0;
+}
 
-पूर्णांक irq_activate_and_startup(काष्ठा irq_desc *desc, bool resend)
-अणु
-	अगर (WARN_ON(irq_activate(desc)))
-		वापस 0;
-	वापस irq_startup(desc, resend, IRQ_START_FORCE);
-पूर्ण
+int irq_activate_and_startup(struct irq_desc *desc, bool resend)
+{
+	if (WARN_ON(irq_activate(desc)))
+		return 0;
+	return irq_startup(desc, resend, IRQ_START_FORCE);
+}
 
-अटल व्योम __irq_disable(काष्ठा irq_desc *desc, bool mask);
+static void __irq_disable(struct irq_desc *desc, bool mask);
 
-व्योम irq_shutकरोwn(काष्ठा irq_desc *desc)
-अणु
-	अगर (irqd_is_started(&desc->irq_data)) अणु
+void irq_shutdown(struct irq_desc *desc)
+{
+	if (irqd_is_started(&desc->irq_data)) {
 		desc->depth = 1;
-		अगर (desc->irq_data.chip->irq_shutकरोwn) अणु
-			desc->irq_data.chip->irq_shutकरोwn(&desc->irq_data);
+		if (desc->irq_data.chip->irq_shutdown) {
+			desc->irq_data.chip->irq_shutdown(&desc->irq_data);
 			irq_state_set_disabled(desc);
 			irq_state_set_masked(desc);
-		पूर्ण अन्यथा अणु
+		} else {
 			__irq_disable(desc, true);
-		पूर्ण
+		}
 		irq_state_clr_started(desc);
-	पूर्ण
-पूर्ण
+	}
+}
 
 
-व्योम irq_shutकरोwn_and_deactivate(काष्ठा irq_desc *desc)
-अणु
-	irq_shutकरोwn(desc);
+void irq_shutdown_and_deactivate(struct irq_desc *desc)
+{
+	irq_shutdown(desc);
 	/*
-	 * This must be called even अगर the पूर्णांकerrupt was never started up,
-	 * because the activation can happen beक्रमe the पूर्णांकerrupt is
-	 * available क्रम request/startup. It has it's own state tracking so
+	 * This must be called even if the interrupt was never started up,
+	 * because the activation can happen before the interrupt is
+	 * available for request/startup. It has it's own state tracking so
 	 * it's safe to call it unconditionally.
 	 */
-	irq_करोमुख्य_deactivate_irq(&desc->irq_data);
-पूर्ण
+	irq_domain_deactivate_irq(&desc->irq_data);
+}
 
-व्योम irq_enable(काष्ठा irq_desc *desc)
-अणु
-	अगर (!irqd_irq_disabled(&desc->irq_data)) अणु
+void irq_enable(struct irq_desc *desc)
+{
+	if (!irqd_irq_disabled(&desc->irq_data)) {
 		unmask_irq(desc);
-	पूर्ण अन्यथा अणु
+	} else {
 		irq_state_clr_disabled(desc);
-		अगर (desc->irq_data.chip->irq_enable) अणु
+		if (desc->irq_data.chip->irq_enable) {
 			desc->irq_data.chip->irq_enable(&desc->irq_data);
 			irq_state_clr_masked(desc);
-		पूर्ण अन्यथा अणु
+		} else {
 			unmask_irq(desc);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम __irq_disable(काष्ठा irq_desc *desc, bool mask)
-अणु
-	अगर (irqd_irq_disabled(&desc->irq_data)) अणु
-		अगर (mask)
+static void __irq_disable(struct irq_desc *desc, bool mask)
+{
+	if (irqd_irq_disabled(&desc->irq_data)) {
+		if (mask)
 			mask_irq(desc);
-	पूर्ण अन्यथा अणु
+	} else {
 		irq_state_set_disabled(desc);
-		अगर (desc->irq_data.chip->irq_disable) अणु
+		if (desc->irq_data.chip->irq_disable) {
 			desc->irq_data.chip->irq_disable(&desc->irq_data);
 			irq_state_set_masked(desc);
-		पूर्ण अन्यथा अगर (mask) अणु
+		} else if (mask) {
 			mask_irq(desc);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /**
- * irq_disable - Mark पूर्णांकerrupt disabled
+ * irq_disable - Mark interrupt disabled
  * @desc:	irq descriptor which should be disabled
  *
- * If the chip करोes not implement the irq_disable callback, we
- * use a lazy disable approach. That means we mark the पूर्णांकerrupt
+ * If the chip does not implement the irq_disable callback, we
+ * use a lazy disable approach. That means we mark the interrupt
  * disabled, but leave the hardware unmasked. That's an
- * optimization because we aव्योम the hardware access क्रम the
- * common हाल where no पूर्णांकerrupt happens after we marked it
- * disabled. If an पूर्णांकerrupt happens, then the पूर्णांकerrupt flow
+ * optimization because we avoid the hardware access for the
+ * common case where no interrupt happens after we marked it
+ * disabled. If an interrupt happens, then the interrupt flow
  * handler masks the line at the hardware level and marks it
  * pending.
  *
- * If the पूर्णांकerrupt chip करोes not implement the irq_disable callback,
- * a driver can disable the lazy approach क्रम a particular irq line by
+ * If the interrupt chip does not implement the irq_disable callback,
+ * a driver can disable the lazy approach for a particular irq line by
  * calling 'irq_set_status_flags(irq, IRQ_DISABLE_UNLAZY)'. This can
- * be used क्रम devices which cannot disable the पूर्णांकerrupt at the
+ * be used for devices which cannot disable the interrupt at the
  * device level under certain circumstances and have to use
  * disable_irq[_nosync] instead.
  */
-व्योम irq_disable(काष्ठा irq_desc *desc)
-अणु
+void irq_disable(struct irq_desc *desc)
+{
 	__irq_disable(desc, irq_settings_disable_unlazy(desc));
-पूर्ण
+}
 
-व्योम irq_percpu_enable(काष्ठा irq_desc *desc, अचिन्हित पूर्णांक cpu)
-अणु
-	अगर (desc->irq_data.chip->irq_enable)
+void irq_percpu_enable(struct irq_desc *desc, unsigned int cpu)
+{
+	if (desc->irq_data.chip->irq_enable)
 		desc->irq_data.chip->irq_enable(&desc->irq_data);
-	अन्यथा
+	else
 		desc->irq_data.chip->irq_unmask(&desc->irq_data);
 	cpumask_set_cpu(cpu, desc->percpu_enabled);
-पूर्ण
+}
 
-व्योम irq_percpu_disable(काष्ठा irq_desc *desc, अचिन्हित पूर्णांक cpu)
-अणु
-	अगर (desc->irq_data.chip->irq_disable)
+void irq_percpu_disable(struct irq_desc *desc, unsigned int cpu)
+{
+	if (desc->irq_data.chip->irq_disable)
 		desc->irq_data.chip->irq_disable(&desc->irq_data);
-	अन्यथा
+	else
 		desc->irq_data.chip->irq_mask(&desc->irq_data);
 	cpumask_clear_cpu(cpu, desc->percpu_enabled);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम mask_ack_irq(काष्ठा irq_desc *desc)
-अणु
-	अगर (desc->irq_data.chip->irq_mask_ack) अणु
+static inline void mask_ack_irq(struct irq_desc *desc)
+{
+	if (desc->irq_data.chip->irq_mask_ack) {
 		desc->irq_data.chip->irq_mask_ack(&desc->irq_data);
 		irq_state_set_masked(desc);
-	पूर्ण अन्यथा अणु
+	} else {
 		mask_irq(desc);
-		अगर (desc->irq_data.chip->irq_ack)
+		if (desc->irq_data.chip->irq_ack)
 			desc->irq_data.chip->irq_ack(&desc->irq_data);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम mask_irq(काष्ठा irq_desc *desc)
-अणु
-	अगर (irqd_irq_masked(&desc->irq_data))
-		वापस;
+void mask_irq(struct irq_desc *desc)
+{
+	if (irqd_irq_masked(&desc->irq_data))
+		return;
 
-	अगर (desc->irq_data.chip->irq_mask) अणु
+	if (desc->irq_data.chip->irq_mask) {
 		desc->irq_data.chip->irq_mask(&desc->irq_data);
 		irq_state_set_masked(desc);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम unmask_irq(काष्ठा irq_desc *desc)
-अणु
-	अगर (!irqd_irq_masked(&desc->irq_data))
-		वापस;
+void unmask_irq(struct irq_desc *desc)
+{
+	if (!irqd_irq_masked(&desc->irq_data))
+		return;
 
-	अगर (desc->irq_data.chip->irq_unmask) अणु
+	if (desc->irq_data.chip->irq_unmask) {
 		desc->irq_data.chip->irq_unmask(&desc->irq_data);
 		irq_state_clr_masked(desc);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम unmask_thपढ़ोed_irq(काष्ठा irq_desc *desc)
-अणु
-	काष्ठा irq_chip *chip = desc->irq_data.chip;
+void unmask_threaded_irq(struct irq_desc *desc)
+{
+	struct irq_chip *chip = desc->irq_data.chip;
 
-	अगर (chip->flags & IRQCHIP_EOI_THREADED)
+	if (chip->flags & IRQCHIP_EOI_THREADED)
 		chip->irq_eoi(&desc->irq_data);
 
 	unmask_irq(desc);
-पूर्ण
+}
 
 /*
- *	handle_nested_irq - Handle a nested irq from a irq thपढ़ो
- *	@irq:	the पूर्णांकerrupt number
+ *	handle_nested_irq - Handle a nested irq from a irq thread
+ *	@irq:	the interrupt number
  *
- *	Handle पूर्णांकerrupts which are nested पूर्णांकo a thपढ़ोed पूर्णांकerrupt
+ *	Handle interrupts which are nested into a threaded interrupt
  *	handler. The handler function is called inside the calling
- *	thपढ़ोs context.
+ *	threads context.
  */
-व्योम handle_nested_irq(अचिन्हित पूर्णांक irq)
-अणु
-	काष्ठा irq_desc *desc = irq_to_desc(irq);
-	काष्ठा irqaction *action;
-	irqवापस_t action_ret;
+void handle_nested_irq(unsigned int irq)
+{
+	struct irq_desc *desc = irq_to_desc(irq);
+	struct irqaction *action;
+	irqreturn_t action_ret;
 
 	might_sleep();
 
@@ -469,123 +468,123 @@ __irq_startup_managed(काष्ठा irq_desc *desc, काष्ठा cpum
 	desc->istate &= ~(IRQS_REPLAY | IRQS_WAITING);
 
 	action = desc->action;
-	अगर (unlikely(!action || irqd_irq_disabled(&desc->irq_data))) अणु
+	if (unlikely(!action || irqd_irq_disabled(&desc->irq_data))) {
 		desc->istate |= IRQS_PENDING;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 	kstat_incr_irqs_this_cpu(desc);
 	irqd_set(&desc->irq_data, IRQD_IRQ_INPROGRESS);
 	raw_spin_unlock_irq(&desc->lock);
 
 	action_ret = IRQ_NONE;
-	क्रम_each_action_of_desc(desc, action)
-		action_ret |= action->thपढ़ो_fn(action->irq, action->dev_id);
+	for_each_action_of_desc(desc, action)
+		action_ret |= action->thread_fn(action->irq, action->dev_id);
 
-	अगर (!noirqdebug)
-		note_पूर्णांकerrupt(desc, action_ret);
+	if (!noirqdebug)
+		note_interrupt(desc, action_ret);
 
 	raw_spin_lock_irq(&desc->lock);
 	irqd_clear(&desc->irq_data, IRQD_IRQ_INPROGRESS);
 
 out_unlock:
 	raw_spin_unlock_irq(&desc->lock);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(handle_nested_irq);
 
-अटल bool irq_check_poll(काष्ठा irq_desc *desc)
-अणु
-	अगर (!(desc->istate & IRQS_POLL_INPROGRESS))
-		वापस false;
-	वापस irq_रुको_क्रम_poll(desc);
-पूर्ण
+static bool irq_check_poll(struct irq_desc *desc)
+{
+	if (!(desc->istate & IRQS_POLL_INPROGRESS))
+		return false;
+	return irq_wait_for_poll(desc);
+}
 
-अटल bool irq_may_run(काष्ठा irq_desc *desc)
-अणु
-	अचिन्हित पूर्णांक mask = IRQD_IRQ_INPROGRESS | IRQD_WAKEUP_ARMED;
+static bool irq_may_run(struct irq_desc *desc)
+{
+	unsigned int mask = IRQD_IRQ_INPROGRESS | IRQD_WAKEUP_ARMED;
 
 	/*
-	 * If the पूर्णांकerrupt is not in progress and is not an armed
-	 * wakeup पूर्णांकerrupt, proceed.
+	 * If the interrupt is not in progress and is not an armed
+	 * wakeup interrupt, proceed.
 	 */
-	अगर (!irqd_has_set(&desc->irq_data, mask))
-		वापस true;
+	if (!irqd_has_set(&desc->irq_data, mask))
+		return true;
 
 	/*
-	 * If the पूर्णांकerrupt is an armed wakeup source, mark it pending
-	 * and suspended, disable it and notअगरy the pm core about the
+	 * If the interrupt is an armed wakeup source, mark it pending
+	 * and suspended, disable it and notify the pm core about the
 	 * event.
 	 */
-	अगर (irq_pm_check_wakeup(desc))
-		वापस false;
+	if (irq_pm_check_wakeup(desc))
+		return false;
 
 	/*
-	 * Handle a potential concurrent poll on a dअगरferent core.
+	 * Handle a potential concurrent poll on a different core.
 	 */
-	वापस irq_check_poll(desc);
-पूर्ण
+	return irq_check_poll(desc);
+}
 
 /**
  *	handle_simple_irq - Simple and software-decoded IRQs.
- *	@desc:	the पूर्णांकerrupt description काष्ठाure क्रम this irq
+ *	@desc:	the interrupt description structure for this irq
  *
- *	Simple पूर्णांकerrupts are either sent from a demultiplexing पूर्णांकerrupt
- *	handler or come from hardware, where no पूर्णांकerrupt hardware control
+ *	Simple interrupts are either sent from a demultiplexing interrupt
+ *	handler or come from hardware, where no interrupt hardware control
  *	is necessary.
  *
  *	Note: The caller is expected to handle the ack, clear, mask and
- *	unmask issues अगर necessary.
+ *	unmask issues if necessary.
  */
-व्योम handle_simple_irq(काष्ठा irq_desc *desc)
-अणु
+void handle_simple_irq(struct irq_desc *desc)
+{
 	raw_spin_lock(&desc->lock);
 
-	अगर (!irq_may_run(desc))
-		जाओ out_unlock;
+	if (!irq_may_run(desc))
+		goto out_unlock;
 
 	desc->istate &= ~(IRQS_REPLAY | IRQS_WAITING);
 
-	अगर (unlikely(!desc->action || irqd_irq_disabled(&desc->irq_data))) अणु
+	if (unlikely(!desc->action || irqd_irq_disabled(&desc->irq_data))) {
 		desc->istate |= IRQS_PENDING;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 	kstat_incr_irqs_this_cpu(desc);
 	handle_irq_event(desc);
 
 out_unlock:
 	raw_spin_unlock(&desc->lock);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(handle_simple_irq);
 
 /**
  *	handle_untracked_irq - Simple and software-decoded IRQs.
- *	@desc:	the पूर्णांकerrupt description काष्ठाure क्रम this irq
+ *	@desc:	the interrupt description structure for this irq
  *
- *	Untracked पूर्णांकerrupts are sent from a demultiplexing पूर्णांकerrupt
- *	handler when the demultiplexer करोes not know which device it its
- *	multiplexed irq करोमुख्य generated the पूर्णांकerrupt. IRQ's handled
- *	through here are not subjected to stats tracking, अक्रमomness, or
- *	spurious पूर्णांकerrupt detection.
+ *	Untracked interrupts are sent from a demultiplexing interrupt
+ *	handler when the demultiplexer does not know which device it its
+ *	multiplexed irq domain generated the interrupt. IRQ's handled
+ *	through here are not subjected to stats tracking, randomness, or
+ *	spurious interrupt detection.
  *
  *	Note: Like handle_simple_irq, the caller is expected to handle
- *	the ack, clear, mask and unmask issues अगर necessary.
+ *	the ack, clear, mask and unmask issues if necessary.
  */
-व्योम handle_untracked_irq(काष्ठा irq_desc *desc)
-अणु
-	अचिन्हित पूर्णांक flags = 0;
+void handle_untracked_irq(struct irq_desc *desc)
+{
+	unsigned int flags = 0;
 
 	raw_spin_lock(&desc->lock);
 
-	अगर (!irq_may_run(desc))
-		जाओ out_unlock;
+	if (!irq_may_run(desc))
+		goto out_unlock;
 
 	desc->istate &= ~(IRQS_REPLAY | IRQS_WAITING);
 
-	अगर (unlikely(!desc->action || irqd_irq_disabled(&desc->irq_data))) अणु
+	if (unlikely(!desc->action || irqd_irq_disabled(&desc->irq_data))) {
 		desc->istate |= IRQS_PENDING;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 	desc->istate &= ~IRQS_PENDING;
 	irqd_set(&desc->irq_data, IRQD_IRQ_INPROGRESS);
@@ -598,43 +597,43 @@ EXPORT_SYMBOL_GPL(handle_simple_irq);
 
 out_unlock:
 	raw_spin_unlock(&desc->lock);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(handle_untracked_irq);
 
 /*
- * Called unconditionally from handle_level_irq() and only क्रम oneshot
- * पूर्णांकerrupts from handle_fasteoi_irq()
+ * Called unconditionally from handle_level_irq() and only for oneshot
+ * interrupts from handle_fasteoi_irq()
  */
-अटल व्योम cond_unmask_irq(काष्ठा irq_desc *desc)
-अणु
+static void cond_unmask_irq(struct irq_desc *desc)
+{
 	/*
-	 * We need to unmask in the following हालs:
+	 * We need to unmask in the following cases:
 	 * - Standard level irq (IRQF_ONESHOT is not set)
-	 * - Oneshot irq which did not wake the thपढ़ो (caused by a
-	 *   spurious पूर्णांकerrupt or a primary handler handling it
+	 * - Oneshot irq which did not wake the thread (caused by a
+	 *   spurious interrupt or a primary handler handling it
 	 *   completely).
 	 */
-	अगर (!irqd_irq_disabled(&desc->irq_data) &&
-	    irqd_irq_masked(&desc->irq_data) && !desc->thपढ़ोs_oneshot)
+	if (!irqd_irq_disabled(&desc->irq_data) &&
+	    irqd_irq_masked(&desc->irq_data) && !desc->threads_oneshot)
 		unmask_irq(desc);
-पूर्ण
+}
 
 /**
  *	handle_level_irq - Level type irq handler
- *	@desc:	the पूर्णांकerrupt description काष्ठाure क्रम this irq
+ *	@desc:	the interrupt description structure for this irq
  *
- *	Level type पूर्णांकerrupts are active as दीर्घ as the hardware line has
- *	the active level. This may require to mask the पूर्णांकerrupt and unmask
+ *	Level type interrupts are active as long as the hardware line has
+ *	the active level. This may require to mask the interrupt and unmask
  *	it after the associated handler has acknowledged the device, so the
- *	पूर्णांकerrupt line is back to inactive.
+ *	interrupt line is back to inactive.
  */
-व्योम handle_level_irq(काष्ठा irq_desc *desc)
-अणु
+void handle_level_irq(struct irq_desc *desc)
+{
 	raw_spin_lock(&desc->lock);
 	mask_ack_irq(desc);
 
-	अगर (!irq_may_run(desc))
-		जाओ out_unlock;
+	if (!irq_may_run(desc))
+		goto out_unlock;
 
 	desc->istate &= ~(IRQS_REPLAY | IRQS_WAITING);
 
@@ -642,10 +641,10 @@ EXPORT_SYMBOL_GPL(handle_untracked_irq);
 	 * If its disabled or no action available
 	 * keep it masked and get out of here
 	 */
-	अगर (unlikely(!desc->action || irqd_irq_disabled(&desc->irq_data))) अणु
+	if (unlikely(!desc->action || irqd_irq_disabled(&desc->irq_data))) {
 		desc->istate |= IRQS_PENDING;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 	kstat_incr_irqs_this_cpu(desc);
 	handle_irq_event(desc);
@@ -654,47 +653,47 @@ EXPORT_SYMBOL_GPL(handle_untracked_irq);
 
 out_unlock:
 	raw_spin_unlock(&desc->lock);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(handle_level_irq);
 
-अटल व्योम cond_unmask_eoi_irq(काष्ठा irq_desc *desc, काष्ठा irq_chip *chip)
-अणु
-	अगर (!(desc->istate & IRQS_ONESHOT)) अणु
+static void cond_unmask_eoi_irq(struct irq_desc *desc, struct irq_chip *chip)
+{
+	if (!(desc->istate & IRQS_ONESHOT)) {
 		chip->irq_eoi(&desc->irq_data);
-		वापस;
-	पूर्ण
+		return;
+	}
 	/*
-	 * We need to unmask in the following हालs:
-	 * - Oneshot irq which did not wake the thपढ़ो (caused by a
-	 *   spurious पूर्णांकerrupt or a primary handler handling it
+	 * We need to unmask in the following cases:
+	 * - Oneshot irq which did not wake the thread (caused by a
+	 *   spurious interrupt or a primary handler handling it
 	 *   completely).
 	 */
-	अगर (!irqd_irq_disabled(&desc->irq_data) &&
-	    irqd_irq_masked(&desc->irq_data) && !desc->thपढ़ोs_oneshot) अणु
+	if (!irqd_irq_disabled(&desc->irq_data) &&
+	    irqd_irq_masked(&desc->irq_data) && !desc->threads_oneshot) {
 		chip->irq_eoi(&desc->irq_data);
 		unmask_irq(desc);
-	पूर्ण अन्यथा अगर (!(chip->flags & IRQCHIP_EOI_THREADED)) अणु
+	} else if (!(chip->flags & IRQCHIP_EOI_THREADED)) {
 		chip->irq_eoi(&desc->irq_data);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- *	handle_fasteoi_irq - irq handler क्रम transparent controllers
- *	@desc:	the पूर्णांकerrupt description काष्ठाure क्रम this irq
+ *	handle_fasteoi_irq - irq handler for transparent controllers
+ *	@desc:	the interrupt description structure for this irq
  *
  *	Only a single callback will be issued to the chip: an ->eoi()
- *	call when the पूर्णांकerrupt has been serviced. This enables support
- *	क्रम modern क्रमms of पूर्णांकerrupt handlers, which handle the flow
+ *	call when the interrupt has been serviced. This enables support
+ *	for modern forms of interrupt handlers, which handle the flow
  *	details in hardware, transparently.
  */
-व्योम handle_fasteoi_irq(काष्ठा irq_desc *desc)
-अणु
-	काष्ठा irq_chip *chip = desc->irq_data.chip;
+void handle_fasteoi_irq(struct irq_desc *desc)
+{
+	struct irq_chip *chip = desc->irq_data.chip;
 
 	raw_spin_lock(&desc->lock);
 
-	अगर (!irq_may_run(desc))
-		जाओ out;
+	if (!irq_may_run(desc))
+		goto out;
 
 	desc->istate &= ~(IRQS_REPLAY | IRQS_WAITING);
 
@@ -702,14 +701,14 @@ EXPORT_SYMBOL_GPL(handle_level_irq);
 	 * If its disabled or no action available
 	 * then mask it and get out of here:
 	 */
-	अगर (unlikely(!desc->action || irqd_irq_disabled(&desc->irq_data))) अणु
+	if (unlikely(!desc->action || irqd_irq_disabled(&desc->irq_data))) {
 		desc->istate |= IRQS_PENDING;
 		mask_irq(desc);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	kstat_incr_irqs_this_cpu(desc);
-	अगर (desc->istate & IRQS_ONESHOT)
+	if (desc->istate & IRQS_ONESHOT)
 		mask_irq(desc);
 
 	handle_irq_event(desc);
@@ -717,32 +716,32 @@ EXPORT_SYMBOL_GPL(handle_level_irq);
 	cond_unmask_eoi_irq(desc, chip);
 
 	raw_spin_unlock(&desc->lock);
-	वापस;
+	return;
 out:
-	अगर (!(chip->flags & IRQCHIP_EOI_IF_HANDLED))
+	if (!(chip->flags & IRQCHIP_EOI_IF_HANDLED))
 		chip->irq_eoi(&desc->irq_data);
 	raw_spin_unlock(&desc->lock);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(handle_fasteoi_irq);
 
 /**
- *	handle_fasteoi_nmi - irq handler क्रम NMI पूर्णांकerrupt lines
- *	@desc:	the पूर्णांकerrupt description काष्ठाure क्रम this irq
+ *	handle_fasteoi_nmi - irq handler for NMI interrupt lines
+ *	@desc:	the interrupt description structure for this irq
  *
  *	A simple NMI-safe handler, considering the restrictions
  *	from request_nmi.
  *
  *	Only a single callback will be issued to the chip: an ->eoi()
- *	call when the पूर्णांकerrupt has been serviced. This enables support
- *	क्रम modern क्रमms of पूर्णांकerrupt handlers, which handle the flow
+ *	call when the interrupt has been serviced. This enables support
+ *	for modern forms of interrupt handlers, which handle the flow
  *	details in hardware, transparently.
  */
-व्योम handle_fasteoi_nmi(काष्ठा irq_desc *desc)
-अणु
-	काष्ठा irq_chip *chip = irq_desc_get_chip(desc);
-	काष्ठा irqaction *action = desc->action;
-	अचिन्हित पूर्णांक irq = irq_desc_get_irq(desc);
-	irqवापस_t res;
+void handle_fasteoi_nmi(struct irq_desc *desc)
+{
+	struct irq_chip *chip = irq_desc_get_chip(desc);
+	struct irqaction *action = desc->action;
+	unsigned int irq = irq_desc_get_irq(desc);
+	irqreturn_t res;
 
 	__kstat_incr_irqs_this_cpu(desc);
 
@@ -751,347 +750,347 @@ EXPORT_SYMBOL_GPL(handle_fasteoi_irq);
 	 * NMIs cannot be shared, there is only one action.
 	 */
 	res = action->handler(irq, action->dev_id);
-	trace_irq_handler_निकास(irq, action, res);
+	trace_irq_handler_exit(irq, action, res);
 
-	अगर (chip->irq_eoi)
+	if (chip->irq_eoi)
 		chip->irq_eoi(&desc->irq_data);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(handle_fasteoi_nmi);
 
 /**
  *	handle_edge_irq - edge type IRQ handler
- *	@desc:	the पूर्णांकerrupt description काष्ठाure क्रम this irq
+ *	@desc:	the interrupt description structure for this irq
  *
  *	Interrupt occurs on the falling and/or rising edge of a hardware
- *	संकेत. The occurrence is latched पूर्णांकo the irq controller hardware
+ *	signal. The occurrence is latched into the irq controller hardware
  *	and must be acked in order to be reenabled. After the ack another
- *	पूर्णांकerrupt can happen on the same source even beक्रमe the first one
+ *	interrupt can happen on the same source even before the first one
  *	is handled by the associated event handler. If this happens it
- *	might be necessary to disable (mask) the पूर्णांकerrupt depending on the
- *	controller hardware. This requires to reenable the पूर्णांकerrupt inside
- *	of the loop which handles the पूर्णांकerrupts which have arrived जबतक
- *	the handler was running. If all pending पूर्णांकerrupts are handled, the
+ *	might be necessary to disable (mask) the interrupt depending on the
+ *	controller hardware. This requires to reenable the interrupt inside
+ *	of the loop which handles the interrupts which have arrived while
+ *	the handler was running. If all pending interrupts are handled, the
  *	loop is left.
  */
-व्योम handle_edge_irq(काष्ठा irq_desc *desc)
-अणु
+void handle_edge_irq(struct irq_desc *desc)
+{
 	raw_spin_lock(&desc->lock);
 
 	desc->istate &= ~(IRQS_REPLAY | IRQS_WAITING);
 
-	अगर (!irq_may_run(desc)) अणु
+	if (!irq_may_run(desc)) {
 		desc->istate |= IRQS_PENDING;
 		mask_ack_irq(desc);
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 	/*
 	 * If its disabled or no action available then mask it and get
 	 * out of here.
 	 */
-	अगर (irqd_irq_disabled(&desc->irq_data) || !desc->action) अणु
+	if (irqd_irq_disabled(&desc->irq_data) || !desc->action) {
 		desc->istate |= IRQS_PENDING;
 		mask_ack_irq(desc);
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 	kstat_incr_irqs_this_cpu(desc);
 
 	/* Start handling the irq */
 	desc->irq_data.chip->irq_ack(&desc->irq_data);
 
-	करो अणु
-		अगर (unlikely(!desc->action)) अणु
+	do {
+		if (unlikely(!desc->action)) {
 			mask_irq(desc);
-			जाओ out_unlock;
-		पूर्ण
+			goto out_unlock;
+		}
 
 		/*
-		 * When another irq arrived जबतक we were handling
+		 * When another irq arrived while we were handling
 		 * one, we could have masked the irq.
-		 * Reenable it, अगर it was not disabled in meanसमय.
+		 * Reenable it, if it was not disabled in meantime.
 		 */
-		अगर (unlikely(desc->istate & IRQS_PENDING)) अणु
-			अगर (!irqd_irq_disabled(&desc->irq_data) &&
+		if (unlikely(desc->istate & IRQS_PENDING)) {
+			if (!irqd_irq_disabled(&desc->irq_data) &&
 			    irqd_irq_masked(&desc->irq_data))
 				unmask_irq(desc);
-		पूर्ण
+		}
 
 		handle_irq_event(desc);
 
-	पूर्ण जबतक ((desc->istate & IRQS_PENDING) &&
+	} while ((desc->istate & IRQS_PENDING) &&
 		 !irqd_irq_disabled(&desc->irq_data));
 
 out_unlock:
 	raw_spin_unlock(&desc->lock);
-पूर्ण
+}
 EXPORT_SYMBOL(handle_edge_irq);
 
-#अगर_घोषित CONFIG_IRQ_EDGE_EOI_HANDLER
+#ifdef CONFIG_IRQ_EDGE_EOI_HANDLER
 /**
  *	handle_edge_eoi_irq - edge eoi type IRQ handler
- *	@desc:	the पूर्णांकerrupt description काष्ठाure क्रम this irq
+ *	@desc:	the interrupt description structure for this irq
  *
  * Similar as the above handle_edge_irq, but using eoi and w/o the
  * mask/unmask logic.
  */
-व्योम handle_edge_eoi_irq(काष्ठा irq_desc *desc)
-अणु
-	काष्ठा irq_chip *chip = irq_desc_get_chip(desc);
+void handle_edge_eoi_irq(struct irq_desc *desc)
+{
+	struct irq_chip *chip = irq_desc_get_chip(desc);
 
 	raw_spin_lock(&desc->lock);
 
 	desc->istate &= ~(IRQS_REPLAY | IRQS_WAITING);
 
-	अगर (!irq_may_run(desc)) अणु
+	if (!irq_may_run(desc)) {
 		desc->istate |= IRQS_PENDING;
-		जाओ out_eoi;
-	पूर्ण
+		goto out_eoi;
+	}
 
 	/*
 	 * If its disabled or no action available then mask it and get
 	 * out of here.
 	 */
-	अगर (irqd_irq_disabled(&desc->irq_data) || !desc->action) अणु
+	if (irqd_irq_disabled(&desc->irq_data) || !desc->action) {
 		desc->istate |= IRQS_PENDING;
-		जाओ out_eoi;
-	पूर्ण
+		goto out_eoi;
+	}
 
 	kstat_incr_irqs_this_cpu(desc);
 
-	करो अणु
-		अगर (unlikely(!desc->action))
-			जाओ out_eoi;
+	do {
+		if (unlikely(!desc->action))
+			goto out_eoi;
 
 		handle_irq_event(desc);
 
-	पूर्ण जबतक ((desc->istate & IRQS_PENDING) &&
+	} while ((desc->istate & IRQS_PENDING) &&
 		 !irqd_irq_disabled(&desc->irq_data));
 
 out_eoi:
 	chip->irq_eoi(&desc->irq_data);
 	raw_spin_unlock(&desc->lock);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
 /**
  *	handle_percpu_irq - Per CPU local irq handler
- *	@desc:	the पूर्णांकerrupt description काष्ठाure क्रम this irq
+ *	@desc:	the interrupt description structure for this irq
  *
- *	Per CPU पूर्णांकerrupts on SMP machines without locking requirements
+ *	Per CPU interrupts on SMP machines without locking requirements
  */
-व्योम handle_percpu_irq(काष्ठा irq_desc *desc)
-अणु
-	काष्ठा irq_chip *chip = irq_desc_get_chip(desc);
+void handle_percpu_irq(struct irq_desc *desc)
+{
+	struct irq_chip *chip = irq_desc_get_chip(desc);
 
 	/*
-	 * PER CPU पूर्णांकerrupts are not serialized. Do not touch
+	 * PER CPU interrupts are not serialized. Do not touch
 	 * desc->tot_count.
 	 */
 	__kstat_incr_irqs_this_cpu(desc);
 
-	अगर (chip->irq_ack)
+	if (chip->irq_ack)
 		chip->irq_ack(&desc->irq_data);
 
 	handle_irq_event_percpu(desc);
 
-	अगर (chip->irq_eoi)
+	if (chip->irq_eoi)
 		chip->irq_eoi(&desc->irq_data);
-पूर्ण
+}
 
 /**
  * handle_percpu_devid_irq - Per CPU local irq handler with per cpu dev ids
- * @desc:	the पूर्णांकerrupt description काष्ठाure क्रम this irq
+ * @desc:	the interrupt description structure for this irq
  *
- * Per CPU पूर्णांकerrupts on SMP machines without locking requirements. Same as
+ * Per CPU interrupts on SMP machines without locking requirements. Same as
  * handle_percpu_irq() above but with the following extras:
  *
- * action->percpu_dev_id is a poपूर्णांकer to percpu variables which
- * contain the real device id क्रम the cpu on which this handler is
+ * action->percpu_dev_id is a pointer to percpu variables which
+ * contain the real device id for the cpu on which this handler is
  * called
  */
-व्योम handle_percpu_devid_irq(काष्ठा irq_desc *desc)
-अणु
-	काष्ठा irq_chip *chip = irq_desc_get_chip(desc);
-	काष्ठा irqaction *action = desc->action;
-	अचिन्हित पूर्णांक irq = irq_desc_get_irq(desc);
-	irqवापस_t res;
+void handle_percpu_devid_irq(struct irq_desc *desc)
+{
+	struct irq_chip *chip = irq_desc_get_chip(desc);
+	struct irqaction *action = desc->action;
+	unsigned int irq = irq_desc_get_irq(desc);
+	irqreturn_t res;
 
 	/*
-	 * PER CPU पूर्णांकerrupts are not serialized. Do not touch
+	 * PER CPU interrupts are not serialized. Do not touch
 	 * desc->tot_count.
 	 */
 	__kstat_incr_irqs_this_cpu(desc);
 
-	अगर (chip->irq_ack)
+	if (chip->irq_ack)
 		chip->irq_ack(&desc->irq_data);
 
-	अगर (likely(action)) अणु
+	if (likely(action)) {
 		trace_irq_handler_entry(irq, action);
 		res = action->handler(irq, raw_cpu_ptr(action->percpu_dev_id));
-		trace_irq_handler_निकास(irq, action, res);
-	पूर्ण अन्यथा अणु
-		अचिन्हित पूर्णांक cpu = smp_processor_id();
+		trace_irq_handler_exit(irq, action, res);
+	} else {
+		unsigned int cpu = smp_processor_id();
 		bool enabled = cpumask_test_cpu(cpu, desc->percpu_enabled);
 
-		अगर (enabled)
+		if (enabled)
 			irq_percpu_disable(desc, cpu);
 
 		pr_err_once("Spurious%s percpu IRQ%u on CPU%u\n",
 			    enabled ? " and unmasked" : "", irq, cpu);
-	पूर्ण
+	}
 
-	अगर (chip->irq_eoi)
+	if (chip->irq_eoi)
 		chip->irq_eoi(&desc->irq_data);
-पूर्ण
+}
 
 /**
  * handle_percpu_devid_fasteoi_nmi - Per CPU local NMI handler with per cpu
  *				     dev ids
- * @desc:	the पूर्णांकerrupt description काष्ठाure क्रम this irq
+ * @desc:	the interrupt description structure for this irq
  *
  * Similar to handle_fasteoi_nmi, but handling the dev_id cookie
- * as a percpu poपूर्णांकer.
+ * as a percpu pointer.
  */
-व्योम handle_percpu_devid_fasteoi_nmi(काष्ठा irq_desc *desc)
-अणु
-	काष्ठा irq_chip *chip = irq_desc_get_chip(desc);
-	काष्ठा irqaction *action = desc->action;
-	अचिन्हित पूर्णांक irq = irq_desc_get_irq(desc);
-	irqवापस_t res;
+void handle_percpu_devid_fasteoi_nmi(struct irq_desc *desc)
+{
+	struct irq_chip *chip = irq_desc_get_chip(desc);
+	struct irqaction *action = desc->action;
+	unsigned int irq = irq_desc_get_irq(desc);
+	irqreturn_t res;
 
 	__kstat_incr_irqs_this_cpu(desc);
 
 	trace_irq_handler_entry(irq, action);
 	res = action->handler(irq, raw_cpu_ptr(action->percpu_dev_id));
-	trace_irq_handler_निकास(irq, action, res);
+	trace_irq_handler_exit(irq, action, res);
 
-	अगर (chip->irq_eoi)
+	if (chip->irq_eoi)
 		chip->irq_eoi(&desc->irq_data);
-पूर्ण
+}
 
-अटल व्योम
-__irq_करो_set_handler(काष्ठा irq_desc *desc, irq_flow_handler_t handle,
-		     पूर्णांक is_chained, स्थिर अक्षर *name)
-अणु
-	अगर (!handle) अणु
+static void
+__irq_do_set_handler(struct irq_desc *desc, irq_flow_handler_t handle,
+		     int is_chained, const char *name)
+{
+	if (!handle) {
 		handle = handle_bad_irq;
-	पूर्ण अन्यथा अणु
-		काष्ठा irq_data *irq_data = &desc->irq_data;
-#अगर_घोषित CONFIG_IRQ_DOMAIN_HIERARCHY
+	} else {
+		struct irq_data *irq_data = &desc->irq_data;
+#ifdef CONFIG_IRQ_DOMAIN_HIERARCHY
 		/*
-		 * With hierarchical करोमुख्यs we might run पूर्णांकo a
+		 * With hierarchical domains we might run into a
 		 * situation where the outermost chip is not yet set
 		 * up, but the inner chips are there.  Instead of
 		 * bailing we install the handler, but obviously we
-		 * cannot enable/startup the पूर्णांकerrupt at this poपूर्णांक.
+		 * cannot enable/startup the interrupt at this point.
 		 */
-		जबतक (irq_data) अणु
-			अगर (irq_data->chip != &no_irq_chip)
-				अवरोध;
+		while (irq_data) {
+			if (irq_data->chip != &no_irq_chip)
+				break;
 			/*
-			 * Bail out अगर the outer chip is not set up
-			 * and the पूर्णांकerrupt supposed to be started
+			 * Bail out if the outer chip is not set up
+			 * and the interrupt supposed to be started
 			 * right away.
 			 */
-			अगर (WARN_ON(is_chained))
-				वापस;
+			if (WARN_ON(is_chained))
+				return;
 			/* Try the parent */
 			irq_data = irq_data->parent_data;
-		पूर्ण
-#पूर्ण_अगर
-		अगर (WARN_ON(!irq_data || irq_data->chip == &no_irq_chip))
-			वापस;
-	पूर्ण
+		}
+#endif
+		if (WARN_ON(!irq_data || irq_data->chip == &no_irq_chip))
+			return;
+	}
 
 	/* Uninstall? */
-	अगर (handle == handle_bad_irq) अणु
-		अगर (desc->irq_data.chip != &no_irq_chip)
+	if (handle == handle_bad_irq) {
+		if (desc->irq_data.chip != &no_irq_chip)
 			mask_ack_irq(desc);
 		irq_state_set_disabled(desc);
-		अगर (is_chained)
-			desc->action = शून्य;
+		if (is_chained)
+			desc->action = NULL;
 		desc->depth = 1;
-	पूर्ण
+	}
 	desc->handle_irq = handle;
 	desc->name = name;
 
-	अगर (handle != handle_bad_irq && is_chained) अणु
-		अचिन्हित पूर्णांक type = irqd_get_trigger_type(&desc->irq_data);
+	if (handle != handle_bad_irq && is_chained) {
+		unsigned int type = irqd_get_trigger_type(&desc->irq_data);
 
 		/*
-		 * We're about to start this पूर्णांकerrupt immediately,
+		 * We're about to start this interrupt immediately,
 		 * hence the need to set the trigger configuration.
 		 * But the .set_type callback may have overridden the
 		 * flow handler, ignoring that we're dealing with a
-		 * chained पूर्णांकerrupt. Reset it immediately because we
-		 * करो know better.
+		 * chained interrupt. Reset it immediately because we
+		 * do know better.
 		 */
-		अगर (type != IRQ_TYPE_NONE) अणु
+		if (type != IRQ_TYPE_NONE) {
 			__irq_set_trigger(desc, type);
 			desc->handle_irq = handle;
-		पूर्ण
+		}
 
 		irq_settings_set_noprobe(desc);
 		irq_settings_set_norequest(desc);
-		irq_settings_set_nothपढ़ो(desc);
+		irq_settings_set_nothread(desc);
 		desc->action = &chained_action;
 		irq_activate_and_startup(desc, IRQ_RESEND);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम
-__irq_set_handler(अचिन्हित पूर्णांक irq, irq_flow_handler_t handle, पूर्णांक is_chained,
-		  स्थिर अक्षर *name)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा irq_desc *desc = irq_get_desc_buslock(irq, &flags, 0);
+void
+__irq_set_handler(unsigned int irq, irq_flow_handler_t handle, int is_chained,
+		  const char *name)
+{
+	unsigned long flags;
+	struct irq_desc *desc = irq_get_desc_buslock(irq, &flags, 0);
 
-	अगर (!desc)
-		वापस;
+	if (!desc)
+		return;
 
-	__irq_करो_set_handler(desc, handle, is_chained, name);
+	__irq_do_set_handler(desc, handle, is_chained, name);
 	irq_put_desc_busunlock(desc, flags);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(__irq_set_handler);
 
-व्योम
-irq_set_chained_handler_and_data(अचिन्हित पूर्णांक irq, irq_flow_handler_t handle,
-				 व्योम *data)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा irq_desc *desc = irq_get_desc_buslock(irq, &flags, 0);
+void
+irq_set_chained_handler_and_data(unsigned int irq, irq_flow_handler_t handle,
+				 void *data)
+{
+	unsigned long flags;
+	struct irq_desc *desc = irq_get_desc_buslock(irq, &flags, 0);
 
-	अगर (!desc)
-		वापस;
+	if (!desc)
+		return;
 
 	desc->irq_common_data.handler_data = data;
-	__irq_करो_set_handler(desc, handle, 1, शून्य);
+	__irq_do_set_handler(desc, handle, 1, NULL);
 
 	irq_put_desc_busunlock(desc, flags);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(irq_set_chained_handler_and_data);
 
-व्योम
-irq_set_chip_and_handler_name(अचिन्हित पूर्णांक irq, काष्ठा irq_chip *chip,
-			      irq_flow_handler_t handle, स्थिर अक्षर *name)
-अणु
+void
+irq_set_chip_and_handler_name(unsigned int irq, struct irq_chip *chip,
+			      irq_flow_handler_t handle, const char *name)
+{
 	irq_set_chip(irq, chip);
 	__irq_set_handler(irq, handle, 0, name);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(irq_set_chip_and_handler_name);
 
-व्योम irq_modअगरy_status(अचिन्हित पूर्णांक irq, अचिन्हित दीर्घ clr, अचिन्हित दीर्घ set)
-अणु
-	अचिन्हित दीर्घ flags, trigger, पंचांगp;
-	काष्ठा irq_desc *desc = irq_get_desc_lock(irq, &flags, 0);
+void irq_modify_status(unsigned int irq, unsigned long clr, unsigned long set)
+{
+	unsigned long flags, trigger, tmp;
+	struct irq_desc *desc = irq_get_desc_lock(irq, &flags, 0);
 
-	अगर (!desc)
-		वापस;
+	if (!desc)
+		return;
 
 	/*
-	 * Warn when a driver sets the no स्वतःenable flag on an alपढ़ोy
-	 * active पूर्णांकerrupt.
+	 * Warn when a driver sets the no autoenable flag on an already
+	 * active interrupt.
 	 */
 	WARN_ON_ONCE(!desc->depth && (set & _IRQ_NOAUTOEN));
 
@@ -1101,106 +1100,106 @@ EXPORT_SYMBOL_GPL(irq_set_chip_and_handler_name);
 
 	irqd_clear(&desc->irq_data, IRQD_NO_BALANCING | IRQD_PER_CPU |
 		   IRQD_TRIGGER_MASK | IRQD_LEVEL | IRQD_MOVE_PCNTXT);
-	अगर (irq_settings_has_no_balance_set(desc))
+	if (irq_settings_has_no_balance_set(desc))
 		irqd_set(&desc->irq_data, IRQD_NO_BALANCING);
-	अगर (irq_settings_is_per_cpu(desc))
+	if (irq_settings_is_per_cpu(desc))
 		irqd_set(&desc->irq_data, IRQD_PER_CPU);
-	अगर (irq_settings_can_move_pcntxt(desc))
+	if (irq_settings_can_move_pcntxt(desc))
 		irqd_set(&desc->irq_data, IRQD_MOVE_PCNTXT);
-	अगर (irq_settings_is_level(desc))
+	if (irq_settings_is_level(desc))
 		irqd_set(&desc->irq_data, IRQD_LEVEL);
 
-	पंचांगp = irq_settings_get_trigger_mask(desc);
-	अगर (पंचांगp != IRQ_TYPE_NONE)
-		trigger = पंचांगp;
+	tmp = irq_settings_get_trigger_mask(desc);
+	if (tmp != IRQ_TYPE_NONE)
+		trigger = tmp;
 
 	irqd_set(&desc->irq_data, trigger);
 
 	irq_put_desc_unlock(desc, flags);
-पूर्ण
-EXPORT_SYMBOL_GPL(irq_modअगरy_status);
+}
+EXPORT_SYMBOL_GPL(irq_modify_status);
 
 /**
  *	irq_cpu_online - Invoke all irq_cpu_online functions.
  *
  *	Iterate through all irqs and invoke the chip.irq_cpu_online()
- *	क्रम each.
+ *	for each.
  */
-व्योम irq_cpu_online(व्योम)
-अणु
-	काष्ठा irq_desc *desc;
-	काष्ठा irq_chip *chip;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक irq;
+void irq_cpu_online(void)
+{
+	struct irq_desc *desc;
+	struct irq_chip *chip;
+	unsigned long flags;
+	unsigned int irq;
 
-	क्रम_each_active_irq(irq) अणु
+	for_each_active_irq(irq) {
 		desc = irq_to_desc(irq);
-		अगर (!desc)
-			जारी;
+		if (!desc)
+			continue;
 
 		raw_spin_lock_irqsave(&desc->lock, flags);
 
 		chip = irq_data_get_irq_chip(&desc->irq_data);
-		अगर (chip && chip->irq_cpu_online &&
+		if (chip && chip->irq_cpu_online &&
 		    (!(chip->flags & IRQCHIP_ONOFFLINE_ENABLED) ||
 		     !irqd_irq_disabled(&desc->irq_data)))
 			chip->irq_cpu_online(&desc->irq_data);
 
 		raw_spin_unlock_irqrestore(&desc->lock, flags);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  *	irq_cpu_offline - Invoke all irq_cpu_offline functions.
  *
  *	Iterate through all irqs and invoke the chip.irq_cpu_offline()
- *	क्रम each.
+ *	for each.
  */
-व्योम irq_cpu_offline(व्योम)
-अणु
-	काष्ठा irq_desc *desc;
-	काष्ठा irq_chip *chip;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक irq;
+void irq_cpu_offline(void)
+{
+	struct irq_desc *desc;
+	struct irq_chip *chip;
+	unsigned long flags;
+	unsigned int irq;
 
-	क्रम_each_active_irq(irq) अणु
+	for_each_active_irq(irq) {
 		desc = irq_to_desc(irq);
-		अगर (!desc)
-			जारी;
+		if (!desc)
+			continue;
 
 		raw_spin_lock_irqsave(&desc->lock, flags);
 
 		chip = irq_data_get_irq_chip(&desc->irq_data);
-		अगर (chip && chip->irq_cpu_offline &&
+		if (chip && chip->irq_cpu_offline &&
 		    (!(chip->flags & IRQCHIP_ONOFFLINE_ENABLED) ||
 		     !irqd_irq_disabled(&desc->irq_data)))
 			chip->irq_cpu_offline(&desc->irq_data);
 
 		raw_spin_unlock_irqrestore(&desc->lock, flags);
-	पूर्ण
-पूर्ण
+	}
+}
 
-#अगर_घोषित	CONFIG_IRQ_DOMAIN_HIERARCHY
+#ifdef	CONFIG_IRQ_DOMAIN_HIERARCHY
 
-#अगर_घोषित CONFIG_IRQ_FASTEOI_HIERARCHY_HANDLERS
+#ifdef CONFIG_IRQ_FASTEOI_HIERARCHY_HANDLERS
 /**
- *	handle_fasteoi_ack_irq - irq handler क्रम edge hierarchy
+ *	handle_fasteoi_ack_irq - irq handler for edge hierarchy
  *	stacked on transparent controllers
  *
- *	@desc:	the पूर्णांकerrupt description काष्ठाure क्रम this irq
+ *	@desc:	the interrupt description structure for this irq
  *
- *	Like handle_fasteoi_irq(), but क्रम use with hierarchy where
+ *	Like handle_fasteoi_irq(), but for use with hierarchy where
  *	the irq_chip also needs to have its ->irq_ack() function
  *	called.
  */
-व्योम handle_fasteoi_ack_irq(काष्ठा irq_desc *desc)
-अणु
-	काष्ठा irq_chip *chip = desc->irq_data.chip;
+void handle_fasteoi_ack_irq(struct irq_desc *desc)
+{
+	struct irq_chip *chip = desc->irq_data.chip;
 
 	raw_spin_lock(&desc->lock);
 
-	अगर (!irq_may_run(desc))
-		जाओ out;
+	if (!irq_may_run(desc))
+		goto out;
 
 	desc->istate &= ~(IRQS_REPLAY | IRQS_WAITING);
 
@@ -1208,14 +1207,14 @@ EXPORT_SYMBOL_GPL(irq_modअगरy_status);
 	 * If its disabled or no action available
 	 * then mask it and get out of here:
 	 */
-	अगर (unlikely(!desc->action || irqd_irq_disabled(&desc->irq_data))) अणु
+	if (unlikely(!desc->action || irqd_irq_disabled(&desc->irq_data))) {
 		desc->istate |= IRQS_PENDING;
 		mask_irq(desc);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	kstat_incr_irqs_this_cpu(desc);
-	अगर (desc->istate & IRQS_ONESHOT)
+	if (desc->istate & IRQS_ONESHOT)
 		mask_irq(desc);
 
 	/* Start handling the irq */
@@ -1226,33 +1225,33 @@ EXPORT_SYMBOL_GPL(irq_modअगरy_status);
 	cond_unmask_eoi_irq(desc, chip);
 
 	raw_spin_unlock(&desc->lock);
-	वापस;
+	return;
 out:
-	अगर (!(chip->flags & IRQCHIP_EOI_IF_HANDLED))
+	if (!(chip->flags & IRQCHIP_EOI_IF_HANDLED))
 		chip->irq_eoi(&desc->irq_data);
 	raw_spin_unlock(&desc->lock);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(handle_fasteoi_ack_irq);
 
 /**
- *	handle_fasteoi_mask_irq - irq handler क्रम level hierarchy
+ *	handle_fasteoi_mask_irq - irq handler for level hierarchy
  *	stacked on transparent controllers
  *
- *	@desc:	the पूर्णांकerrupt description काष्ठाure क्रम this irq
+ *	@desc:	the interrupt description structure for this irq
  *
- *	Like handle_fasteoi_irq(), but क्रम use with hierarchy where
+ *	Like handle_fasteoi_irq(), but for use with hierarchy where
  *	the irq_chip also needs to have its ->irq_mask_ack() function
  *	called.
  */
-व्योम handle_fasteoi_mask_irq(काष्ठा irq_desc *desc)
-अणु
-	काष्ठा irq_chip *chip = desc->irq_data.chip;
+void handle_fasteoi_mask_irq(struct irq_desc *desc)
+{
+	struct irq_chip *chip = desc->irq_data.chip;
 
 	raw_spin_lock(&desc->lock);
 	mask_ack_irq(desc);
 
-	अगर (!irq_may_run(desc))
-		जाओ out;
+	if (!irq_may_run(desc))
+		goto out;
 
 	desc->istate &= ~(IRQS_REPLAY | IRQS_WAITING);
 
@@ -1260,14 +1259,14 @@ EXPORT_SYMBOL_GPL(handle_fasteoi_ack_irq);
 	 * If its disabled or no action available
 	 * then mask it and get out of here:
 	 */
-	अगर (unlikely(!desc->action || irqd_irq_disabled(&desc->irq_data))) अणु
+	if (unlikely(!desc->action || irqd_irq_disabled(&desc->irq_data))) {
 		desc->istate |= IRQS_PENDING;
 		mask_irq(desc);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	kstat_incr_irqs_this_cpu(desc);
-	अगर (desc->istate & IRQS_ONESHOT)
+	if (desc->istate & IRQS_ONESHOT)
 		mask_irq(desc);
 
 	handle_irq_event(desc);
@@ -1275,323 +1274,323 @@ EXPORT_SYMBOL_GPL(handle_fasteoi_ack_irq);
 	cond_unmask_eoi_irq(desc, chip);
 
 	raw_spin_unlock(&desc->lock);
-	वापस;
+	return;
 out:
-	अगर (!(chip->flags & IRQCHIP_EOI_IF_HANDLED))
+	if (!(chip->flags & IRQCHIP_EOI_IF_HANDLED))
 		chip->irq_eoi(&desc->irq_data);
 	raw_spin_unlock(&desc->lock);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(handle_fasteoi_mask_irq);
 
-#पूर्ण_अगर /* CONFIG_IRQ_FASTEOI_HIERARCHY_HANDLERS */
+#endif /* CONFIG_IRQ_FASTEOI_HIERARCHY_HANDLERS */
 
 /**
- * irq_chip_set_parent_state - set the state of a parent पूर्णांकerrupt.
+ * irq_chip_set_parent_state - set the state of a parent interrupt.
  *
- * @data: Poपूर्णांकer to पूर्णांकerrupt specअगरic data
+ * @data: Pointer to interrupt specific data
  * @which: State to be restored (one of IRQCHIP_STATE_*)
  * @val: Value corresponding to @which
  *
- * Conditional success, अगर the underlying irqchip करोes not implement it.
+ * Conditional success, if the underlying irqchip does not implement it.
  */
-पूर्णांक irq_chip_set_parent_state(काष्ठा irq_data *data,
-			      क्रमागत irqchip_irq_state which,
+int irq_chip_set_parent_state(struct irq_data *data,
+			      enum irqchip_irq_state which,
 			      bool val)
-अणु
+{
 	data = data->parent_data;
 
-	अगर (!data || !data->chip->irq_set_irqchip_state)
-		वापस 0;
+	if (!data || !data->chip->irq_set_irqchip_state)
+		return 0;
 
-	वापस data->chip->irq_set_irqchip_state(data, which, val);
-पूर्ण
+	return data->chip->irq_set_irqchip_state(data, which, val);
+}
 EXPORT_SYMBOL_GPL(irq_chip_set_parent_state);
 
 /**
- * irq_chip_get_parent_state - get the state of a parent पूर्णांकerrupt.
+ * irq_chip_get_parent_state - get the state of a parent interrupt.
  *
- * @data: Poपूर्णांकer to पूर्णांकerrupt specअगरic data
+ * @data: Pointer to interrupt specific data
  * @which: one of IRQCHIP_STATE_* the caller wants to know
- * @state: a poपूर्णांकer to a boolean where the state is to be stored
+ * @state: a pointer to a boolean where the state is to be stored
  *
- * Conditional success, अगर the underlying irqchip करोes not implement it.
+ * Conditional success, if the underlying irqchip does not implement it.
  */
-पूर्णांक irq_chip_get_parent_state(काष्ठा irq_data *data,
-			      क्रमागत irqchip_irq_state which,
+int irq_chip_get_parent_state(struct irq_data *data,
+			      enum irqchip_irq_state which,
 			      bool *state)
-अणु
+{
 	data = data->parent_data;
 
-	अगर (!data || !data->chip->irq_get_irqchip_state)
-		वापस 0;
+	if (!data || !data->chip->irq_get_irqchip_state)
+		return 0;
 
-	वापस data->chip->irq_get_irqchip_state(data, which, state);
-पूर्ण
+	return data->chip->irq_get_irqchip_state(data, which, state);
+}
 EXPORT_SYMBOL_GPL(irq_chip_get_parent_state);
 
 /**
- * irq_chip_enable_parent - Enable the parent पूर्णांकerrupt (शेषs to unmask अगर
- * शून्य)
- * @data:	Poपूर्णांकer to पूर्णांकerrupt specअगरic data
+ * irq_chip_enable_parent - Enable the parent interrupt (defaults to unmask if
+ * NULL)
+ * @data:	Pointer to interrupt specific data
  */
-व्योम irq_chip_enable_parent(काष्ठा irq_data *data)
-अणु
+void irq_chip_enable_parent(struct irq_data *data)
+{
 	data = data->parent_data;
-	अगर (data->chip->irq_enable)
+	if (data->chip->irq_enable)
 		data->chip->irq_enable(data);
-	अन्यथा
+	else
 		data->chip->irq_unmask(data);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(irq_chip_enable_parent);
 
 /**
- * irq_chip_disable_parent - Disable the parent पूर्णांकerrupt (शेषs to mask अगर
- * शून्य)
- * @data:	Poपूर्णांकer to पूर्णांकerrupt specअगरic data
+ * irq_chip_disable_parent - Disable the parent interrupt (defaults to mask if
+ * NULL)
+ * @data:	Pointer to interrupt specific data
  */
-व्योम irq_chip_disable_parent(काष्ठा irq_data *data)
-अणु
+void irq_chip_disable_parent(struct irq_data *data)
+{
 	data = data->parent_data;
-	अगर (data->chip->irq_disable)
+	if (data->chip->irq_disable)
 		data->chip->irq_disable(data);
-	अन्यथा
+	else
 		data->chip->irq_mask(data);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(irq_chip_disable_parent);
 
 /**
- * irq_chip_ack_parent - Acknowledge the parent पूर्णांकerrupt
- * @data:	Poपूर्णांकer to पूर्णांकerrupt specअगरic data
+ * irq_chip_ack_parent - Acknowledge the parent interrupt
+ * @data:	Pointer to interrupt specific data
  */
-व्योम irq_chip_ack_parent(काष्ठा irq_data *data)
-अणु
+void irq_chip_ack_parent(struct irq_data *data)
+{
 	data = data->parent_data;
 	data->chip->irq_ack(data);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(irq_chip_ack_parent);
 
 /**
- * irq_chip_mask_parent - Mask the parent पूर्णांकerrupt
- * @data:	Poपूर्णांकer to पूर्णांकerrupt specअगरic data
+ * irq_chip_mask_parent - Mask the parent interrupt
+ * @data:	Pointer to interrupt specific data
  */
-व्योम irq_chip_mask_parent(काष्ठा irq_data *data)
-अणु
+void irq_chip_mask_parent(struct irq_data *data)
+{
 	data = data->parent_data;
 	data->chip->irq_mask(data);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(irq_chip_mask_parent);
 
 /**
- * irq_chip_mask_ack_parent - Mask and acknowledge the parent पूर्णांकerrupt
- * @data:	Poपूर्णांकer to पूर्णांकerrupt specअगरic data
+ * irq_chip_mask_ack_parent - Mask and acknowledge the parent interrupt
+ * @data:	Pointer to interrupt specific data
  */
-व्योम irq_chip_mask_ack_parent(काष्ठा irq_data *data)
-अणु
+void irq_chip_mask_ack_parent(struct irq_data *data)
+{
 	data = data->parent_data;
 	data->chip->irq_mask_ack(data);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(irq_chip_mask_ack_parent);
 
 /**
- * irq_chip_unmask_parent - Unmask the parent पूर्णांकerrupt
- * @data:	Poपूर्णांकer to पूर्णांकerrupt specअगरic data
+ * irq_chip_unmask_parent - Unmask the parent interrupt
+ * @data:	Pointer to interrupt specific data
  */
-व्योम irq_chip_unmask_parent(काष्ठा irq_data *data)
-अणु
+void irq_chip_unmask_parent(struct irq_data *data)
+{
 	data = data->parent_data;
 	data->chip->irq_unmask(data);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(irq_chip_unmask_parent);
 
 /**
- * irq_chip_eoi_parent - Invoke EOI on the parent पूर्णांकerrupt
- * @data:	Poपूर्णांकer to पूर्णांकerrupt specअगरic data
+ * irq_chip_eoi_parent - Invoke EOI on the parent interrupt
+ * @data:	Pointer to interrupt specific data
  */
-व्योम irq_chip_eoi_parent(काष्ठा irq_data *data)
-अणु
+void irq_chip_eoi_parent(struct irq_data *data)
+{
 	data = data->parent_data;
 	data->chip->irq_eoi(data);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(irq_chip_eoi_parent);
 
 /**
- * irq_chip_set_affinity_parent - Set affinity on the parent पूर्णांकerrupt
- * @data:	Poपूर्णांकer to पूर्णांकerrupt specअगरic data
+ * irq_chip_set_affinity_parent - Set affinity on the parent interrupt
+ * @data:	Pointer to interrupt specific data
  * @dest:	The affinity mask to set
- * @क्रमce:	Flag to enक्रमce setting (disable online checks)
+ * @force:	Flag to enforce setting (disable online checks)
  *
  * Conditional, as the underlying parent chip might not implement it.
  */
-पूर्णांक irq_chip_set_affinity_parent(काष्ठा irq_data *data,
-				 स्थिर काष्ठा cpumask *dest, bool क्रमce)
-अणु
+int irq_chip_set_affinity_parent(struct irq_data *data,
+				 const struct cpumask *dest, bool force)
+{
 	data = data->parent_data;
-	अगर (data->chip->irq_set_affinity)
-		वापस data->chip->irq_set_affinity(data, dest, क्रमce);
+	if (data->chip->irq_set_affinity)
+		return data->chip->irq_set_affinity(data, dest, force);
 
-	वापस -ENOSYS;
-पूर्ण
+	return -ENOSYS;
+}
 EXPORT_SYMBOL_GPL(irq_chip_set_affinity_parent);
 
 /**
- * irq_chip_set_type_parent - Set IRQ type on the parent पूर्णांकerrupt
- * @data:	Poपूर्णांकer to पूर्णांकerrupt specअगरic data
- * @type:	IRQ_TYPE_अणुLEVEL,EDGEपूर्ण_* value - see include/linux/irq.h
+ * irq_chip_set_type_parent - Set IRQ type on the parent interrupt
+ * @data:	Pointer to interrupt specific data
+ * @type:	IRQ_TYPE_{LEVEL,EDGE}_* value - see include/linux/irq.h
  *
  * Conditional, as the underlying parent chip might not implement it.
  */
-पूर्णांक irq_chip_set_type_parent(काष्ठा irq_data *data, अचिन्हित पूर्णांक type)
-अणु
+int irq_chip_set_type_parent(struct irq_data *data, unsigned int type)
+{
 	data = data->parent_data;
 
-	अगर (data->chip->irq_set_type)
-		वापस data->chip->irq_set_type(data, type);
+	if (data->chip->irq_set_type)
+		return data->chip->irq_set_type(data, type);
 
-	वापस -ENOSYS;
-पूर्ण
+	return -ENOSYS;
+}
 EXPORT_SYMBOL_GPL(irq_chip_set_type_parent);
 
 /**
- * irq_chip_retrigger_hierarchy - Retrigger an पूर्णांकerrupt in hardware
- * @data:	Poपूर्णांकer to पूर्णांकerrupt specअगरic data
+ * irq_chip_retrigger_hierarchy - Retrigger an interrupt in hardware
+ * @data:	Pointer to interrupt specific data
  *
- * Iterate through the करोमुख्य hierarchy of the पूर्णांकerrupt and check
+ * Iterate through the domain hierarchy of the interrupt and check
  * whether a hw retrigger function exists. If yes, invoke it.
  */
-पूर्णांक irq_chip_retrigger_hierarchy(काष्ठा irq_data *data)
-अणु
-	क्रम (data = data->parent_data; data; data = data->parent_data)
-		अगर (data->chip && data->chip->irq_retrigger)
-			वापस data->chip->irq_retrigger(data);
+int irq_chip_retrigger_hierarchy(struct irq_data *data)
+{
+	for (data = data->parent_data; data; data = data->parent_data)
+		if (data->chip && data->chip->irq_retrigger)
+			return data->chip->irq_retrigger(data);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(irq_chip_retrigger_hierarchy);
 
 /**
- * irq_chip_set_vcpu_affinity_parent - Set vcpu affinity on the parent पूर्णांकerrupt
- * @data:	Poपूर्णांकer to पूर्णांकerrupt specअगरic data
- * @vcpu_info:	The vcpu affinity inक्रमmation
+ * irq_chip_set_vcpu_affinity_parent - Set vcpu affinity on the parent interrupt
+ * @data:	Pointer to interrupt specific data
+ * @vcpu_info:	The vcpu affinity information
  */
-पूर्णांक irq_chip_set_vcpu_affinity_parent(काष्ठा irq_data *data, व्योम *vcpu_info)
-अणु
+int irq_chip_set_vcpu_affinity_parent(struct irq_data *data, void *vcpu_info)
+{
 	data = data->parent_data;
-	अगर (data->chip->irq_set_vcpu_affinity)
-		वापस data->chip->irq_set_vcpu_affinity(data, vcpu_info);
+	if (data->chip->irq_set_vcpu_affinity)
+		return data->chip->irq_set_vcpu_affinity(data, vcpu_info);
 
-	वापस -ENOSYS;
-पूर्ण
+	return -ENOSYS;
+}
 EXPORT_SYMBOL_GPL(irq_chip_set_vcpu_affinity_parent);
 /**
- * irq_chip_set_wake_parent - Set/reset wake-up on the parent पूर्णांकerrupt
- * @data:	Poपूर्णांकer to पूर्णांकerrupt specअगरic data
+ * irq_chip_set_wake_parent - Set/reset wake-up on the parent interrupt
+ * @data:	Pointer to interrupt specific data
  * @on:		Whether to set or reset the wake-up capability of this irq
  *
  * Conditional, as the underlying parent chip might not implement it.
  */
-पूर्णांक irq_chip_set_wake_parent(काष्ठा irq_data *data, अचिन्हित पूर्णांक on)
-अणु
+int irq_chip_set_wake_parent(struct irq_data *data, unsigned int on)
+{
 	data = data->parent_data;
 
-	अगर (data->chip->flags & IRQCHIP_SKIP_SET_WAKE)
-		वापस 0;
+	if (data->chip->flags & IRQCHIP_SKIP_SET_WAKE)
+		return 0;
 
-	अगर (data->chip->irq_set_wake)
-		वापस data->chip->irq_set_wake(data, on);
+	if (data->chip->irq_set_wake)
+		return data->chip->irq_set_wake(data, on);
 
-	वापस -ENOSYS;
-पूर्ण
+	return -ENOSYS;
+}
 EXPORT_SYMBOL_GPL(irq_chip_set_wake_parent);
 
 /**
- * irq_chip_request_resources_parent - Request resources on the parent पूर्णांकerrupt
- * @data:	Poपूर्णांकer to पूर्णांकerrupt specअगरic data
+ * irq_chip_request_resources_parent - Request resources on the parent interrupt
+ * @data:	Pointer to interrupt specific data
  */
-पूर्णांक irq_chip_request_resources_parent(काष्ठा irq_data *data)
-अणु
+int irq_chip_request_resources_parent(struct irq_data *data)
+{
 	data = data->parent_data;
 
-	अगर (data->chip->irq_request_resources)
-		वापस data->chip->irq_request_resources(data);
+	if (data->chip->irq_request_resources)
+		return data->chip->irq_request_resources(data);
 
-	वापस -ENOSYS;
-पूर्ण
+	return -ENOSYS;
+}
 EXPORT_SYMBOL_GPL(irq_chip_request_resources_parent);
 
 /**
- * irq_chip_release_resources_parent - Release resources on the parent पूर्णांकerrupt
- * @data:	Poपूर्णांकer to पूर्णांकerrupt specअगरic data
+ * irq_chip_release_resources_parent - Release resources on the parent interrupt
+ * @data:	Pointer to interrupt specific data
  */
-व्योम irq_chip_release_resources_parent(काष्ठा irq_data *data)
-अणु
+void irq_chip_release_resources_parent(struct irq_data *data)
+{
 	data = data->parent_data;
-	अगर (data->chip->irq_release_resources)
+	if (data->chip->irq_release_resources)
 		data->chip->irq_release_resources(data);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(irq_chip_release_resources_parent);
-#पूर्ण_अगर
+#endif
 
 /**
- * irq_chip_compose_msi_msg - Compose msi message क्रम a irq chip
- * @data:	Poपूर्णांकer to पूर्णांकerrupt specअगरic data
- * @msg:	Poपूर्णांकer to the MSI message
+ * irq_chip_compose_msi_msg - Compose msi message for a irq chip
+ * @data:	Pointer to interrupt specific data
+ * @msg:	Pointer to the MSI message
  *
- * For hierarchical करोमुख्यs we find the first chip in the hierarchy
+ * For hierarchical domains we find the first chip in the hierarchy
  * which implements the irq_compose_msi_msg callback. For non
  * hierarchical we use the top level chip.
  */
-पूर्णांक irq_chip_compose_msi_msg(काष्ठा irq_data *data, काष्ठा msi_msg *msg)
-अणु
-	काष्ठा irq_data *pos;
+int irq_chip_compose_msi_msg(struct irq_data *data, struct msi_msg *msg)
+{
+	struct irq_data *pos;
 
-	क्रम (pos = शून्य; !pos && data; data = irqd_get_parent_data(data)) अणु
-		अगर (data->chip && data->chip->irq_compose_msi_msg)
+	for (pos = NULL; !pos && data; data = irqd_get_parent_data(data)) {
+		if (data->chip && data->chip->irq_compose_msi_msg)
 			pos = data;
-	पूर्ण
+	}
 
-	अगर (!pos)
-		वापस -ENOSYS;
+	if (!pos)
+		return -ENOSYS;
 
 	pos->chip->irq_compose_msi_msg(pos, msg);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * irq_chip_pm_get - Enable घातer क्रम an IRQ chip
- * @data:	Poपूर्णांकer to पूर्णांकerrupt specअगरic data
+ * irq_chip_pm_get - Enable power for an IRQ chip
+ * @data:	Pointer to interrupt specific data
  *
- * Enable the घातer to the IRQ chip referenced by the पूर्णांकerrupt data
- * काष्ठाure.
+ * Enable the power to the IRQ chip referenced by the interrupt data
+ * structure.
  */
-पूर्णांक irq_chip_pm_get(काष्ठा irq_data *data)
-अणु
-	पूर्णांक retval;
+int irq_chip_pm_get(struct irq_data *data)
+{
+	int retval;
 
-	अगर (IS_ENABLED(CONFIG_PM) && data->chip->parent_device) अणु
-		retval = pm_runसमय_get_sync(data->chip->parent_device);
-		अगर (retval < 0) अणु
-			pm_runसमय_put_noidle(data->chip->parent_device);
-			वापस retval;
-		पूर्ण
-	पूर्ण
+	if (IS_ENABLED(CONFIG_PM) && data->chip->parent_device) {
+		retval = pm_runtime_get_sync(data->chip->parent_device);
+		if (retval < 0) {
+			pm_runtime_put_noidle(data->chip->parent_device);
+			return retval;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * irq_chip_pm_put - Disable घातer क्रम an IRQ chip
- * @data:	Poपूर्णांकer to पूर्णांकerrupt specअगरic data
+ * irq_chip_pm_put - Disable power for an IRQ chip
+ * @data:	Pointer to interrupt specific data
  *
- * Disable the घातer to the IRQ chip referenced by the पूर्णांकerrupt data
- * काष्ठाure, beदीर्घs. Note that घातer will only be disabled, once this
- * function has been called क्रम all IRQs that have called irq_chip_pm_get().
+ * Disable the power to the IRQ chip referenced by the interrupt data
+ * structure, belongs. Note that power will only be disabled, once this
+ * function has been called for all IRQs that have called irq_chip_pm_get().
  */
-पूर्णांक irq_chip_pm_put(काष्ठा irq_data *data)
-अणु
-	पूर्णांक retval = 0;
+int irq_chip_pm_put(struct irq_data *data)
+{
+	int retval = 0;
 
-	अगर (IS_ENABLED(CONFIG_PM) && data->chip->parent_device)
-		retval = pm_runसमय_put(data->chip->parent_device);
+	if (IS_ENABLED(CONFIG_PM) && data->chip->parent_device)
+		retval = pm_runtime_put(data->chip->parent_device);
 
-	वापस (retval < 0) ? retval : 0;
-पूर्ण
+	return (retval < 0) ? retval : 0;
+}

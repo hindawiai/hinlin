@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * OMAP3 thermal driver.
  *
@@ -14,20 +13,20 @@
  * Just be careful when you try to make thermal policy like decisions
  * based on this sensor. Placement of the sensor w.r.t the actual logic
  * generating heat has to be a factor as well. If you are just looking
- * क्रम an approximation temperature (thermometerish kind), you might be
+ * for an approximation temperature (thermometerish kind), you might be
  * ok with this. I am not sure we'd find any TI data around this.. just a
  * heads up.
  */
 
-#समावेश "ti-thermal.h"
-#समावेश "ti-bandgap.h"
+#include "ti-thermal.h"
+#include "ti-bandgap.h"
 
 /*
- * OMAP34XX has one instance of thermal sensor क्रम MPU
- * need to describe the inभागidual bit fields
+ * OMAP34XX has one instance of thermal sensor for MPU
+ * need to describe the individual bit fields
  */
-अटल काष्ठा temp_sensor_रेजिस्टरs
-omap34xx_mpu_temp_sensor_रेजिस्टरs = अणु
+static struct temp_sensor_registers
+omap34xx_mpu_temp_sensor_registers = {
 	.temp_sensor_ctrl = 0,
 	.bgap_soc_mask = BIT(8),
 	.bgap_eocz_mask = BIT(7),
@@ -35,19 +34,19 @@ omap34xx_mpu_temp_sensor_रेजिस्टरs = अणु
 
 	.bgap_mode_ctrl = 0,
 	.mode_ctrl_mask = BIT(9),
-पूर्ण;
+};
 
-/* Thresholds and limits क्रम OMAP34XX MPU temperature sensor */
-अटल काष्ठा temp_sensor_data omap34xx_mpu_temp_sensor_data = अणु
+/* Thresholds and limits for OMAP34XX MPU temperature sensor */
+static struct temp_sensor_data omap34xx_mpu_temp_sensor_data = {
 	.min_freq = 32768,
 	.max_freq = 32768,
-पूर्ण;
+};
 
 /*
  * Temperature values in milli degree celsius
  */
-अटल स्थिर पूर्णांक
-omap34xx_adc_to_temp[128] = अणु
+static const int
+omap34xx_adc_to_temp[128] = {
 	-40000, -40000, -40000, -40000, -40000, -39000, -38000, -36000,
 	-34000, -32000, -31000,	-29000, -28000, -26000, -25000, -24000,
 	-22000, -21000, -19000, -18000, -17000, -15000,	-14000, -12000,
@@ -63,39 +62,39 @@ omap34xx_adc_to_temp[128] = अणु
 	102000, 103000, 105000, 106000, 107000, 109000, 110000, 111000,
 	113000, 114000, 116000, 117000, 118000, 120000, 121000, 122000,
 	124000, 124000, 125000, 125000, 125000, 125000,	125000
-पूर्ण;
+};
 
 /* OMAP34XX data */
-स्थिर काष्ठा ti_bandgap_data omap34xx_data = अणु
+const struct ti_bandgap_data omap34xx_data = {
 	.features = TI_BANDGAP_FEATURE_CLK_CTRL | TI_BANDGAP_FEATURE_UNRELIABLE,
-	.fघड़ी_name = "ts_fck",
-	.भाग_ck_name = "ts_fck",
+	.fclock_name = "ts_fck",
+	.div_ck_name = "ts_fck",
 	.conv_table = omap34xx_adc_to_temp,
 	.adc_start_val = 0,
 	.adc_end_val = 127,
 	.expose_sensor = ti_thermal_expose_sensor,
-	.हटाओ_sensor = ti_thermal_हटाओ_sensor,
+	.remove_sensor = ti_thermal_remove_sensor,
 
-	.sensors = अणु
-		अणु
-		.रेजिस्टरs = &omap34xx_mpu_temp_sensor_रेजिस्टरs,
+	.sensors = {
+		{
+		.registers = &omap34xx_mpu_temp_sensor_registers,
 		.ts_data = &omap34xx_mpu_temp_sensor_data,
-		.करोमुख्य = "cpu",
+		.domain = "cpu",
 		.slope_pcb = 0,
-		.स्थिरant_pcb = 20000,
-		.रेजिस्टर_cooling = शून्य,
-		.unरेजिस्टर_cooling = शून्य,
-		पूर्ण,
-	पूर्ण,
+		.constant_pcb = 20000,
+		.register_cooling = NULL,
+		.unregister_cooling = NULL,
+		},
+	},
 	.sensor_count = 1,
-पूर्ण;
+};
 
 /*
- * OMAP36XX has one instance of thermal sensor क्रम MPU
- * need to describe the inभागidual bit fields
+ * OMAP36XX has one instance of thermal sensor for MPU
+ * need to describe the individual bit fields
  */
-अटल काष्ठा temp_sensor_रेजिस्टरs
-omap36xx_mpu_temp_sensor_रेजिस्टरs = अणु
+static struct temp_sensor_registers
+omap36xx_mpu_temp_sensor_registers = {
 	.temp_sensor_ctrl = 0,
 	.bgap_soc_mask = BIT(9),
 	.bgap_eocz_mask = BIT(8),
@@ -103,19 +102,19 @@ omap36xx_mpu_temp_sensor_रेजिस्टरs = अणु
 
 	.bgap_mode_ctrl = 0,
 	.mode_ctrl_mask = BIT(10),
-पूर्ण;
+};
 
-/* Thresholds and limits क्रम OMAP36XX MPU temperature sensor */
-अटल काष्ठा temp_sensor_data omap36xx_mpu_temp_sensor_data = अणु
+/* Thresholds and limits for OMAP36XX MPU temperature sensor */
+static struct temp_sensor_data omap36xx_mpu_temp_sensor_data = {
 	.min_freq = 32768,
 	.max_freq = 32768,
-पूर्ण;
+};
 
 /*
  * Temperature values in milli degree celsius
  */
-अटल स्थिर पूर्णांक
-omap36xx_adc_to_temp[128] = अणु
+static const int
+omap36xx_adc_to_temp[128] = {
 	-40000, -40000, -40000, -40000, -40000, -40000, -40000, -40000,
 	-40000, -40000, -40000,	-40000, -40000, -38000, -35000, -34000,
 	-32000, -30000, -28000, -26000, -24000, -22000,	-20000, -18500,
@@ -131,29 +130,29 @@ omap36xx_adc_to_temp[128] = अणु
 	123500, 125000, 125000, 125000, 125000, 125000, 125000, 125000,
 	125000, 125000, 125000, 125000, 125000, 125000, 125000, 125000,
 	125000, 125000, 125000, 125000, 125000, 125000,	125000
-पूर्ण;
+};
 
 /* OMAP36XX data */
-स्थिर काष्ठा ti_bandgap_data omap36xx_data = अणु
+const struct ti_bandgap_data omap36xx_data = {
 	.features = TI_BANDGAP_FEATURE_CLK_CTRL | TI_BANDGAP_FEATURE_UNRELIABLE,
-	.fघड़ी_name = "ts_fck",
-	.भाग_ck_name = "ts_fck",
+	.fclock_name = "ts_fck",
+	.div_ck_name = "ts_fck",
 	.conv_table = omap36xx_adc_to_temp,
 	.adc_start_val = 0,
 	.adc_end_val = 127,
 	.expose_sensor = ti_thermal_expose_sensor,
-	.हटाओ_sensor = ti_thermal_हटाओ_sensor,
+	.remove_sensor = ti_thermal_remove_sensor,
 
-	.sensors = अणु
-		अणु
-		.रेजिस्टरs = &omap36xx_mpu_temp_sensor_रेजिस्टरs,
+	.sensors = {
+		{
+		.registers = &omap36xx_mpu_temp_sensor_registers,
 		.ts_data = &omap36xx_mpu_temp_sensor_data,
-		.करोमुख्य = "cpu",
+		.domain = "cpu",
 		.slope_pcb = 0,
-		.स्थिरant_pcb = 20000,
-		.रेजिस्टर_cooling = शून्य,
-		.unरेजिस्टर_cooling = शून्य,
-		पूर्ण,
-	पूर्ण,
+		.constant_pcb = 20000,
+		.register_cooling = NULL,
+		.unregister_cooling = NULL,
+		},
+	},
 	.sensor_count = 1,
-पूर्ण;
+};

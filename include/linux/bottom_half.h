@@ -1,42 +1,41 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_BH_H
-#घोषणा _LINUX_BH_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_BH_H
+#define _LINUX_BH_H
 
-#समावेश <linux/preempt.h>
+#include <linux/preempt.h>
 
-#अगर defined(CONFIG_PREEMPT_RT) || defined(CONFIG_TRACE_IRQFLAGS)
-बाह्य व्योम __local_bh_disable_ip(अचिन्हित दीर्घ ip, अचिन्हित पूर्णांक cnt);
-#अन्यथा
-अटल __always_अंतरभूत व्योम __local_bh_disable_ip(अचिन्हित दीर्घ ip, अचिन्हित पूर्णांक cnt)
-अणु
+#if defined(CONFIG_PREEMPT_RT) || defined(CONFIG_TRACE_IRQFLAGS)
+extern void __local_bh_disable_ip(unsigned long ip, unsigned int cnt);
+#else
+static __always_inline void __local_bh_disable_ip(unsigned long ip, unsigned int cnt)
+{
 	preempt_count_add(cnt);
 	barrier();
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-अटल अंतरभूत व्योम local_bh_disable(व्योम)
-अणु
+static inline void local_bh_disable(void)
+{
 	__local_bh_disable_ip(_THIS_IP_, SOFTIRQ_DISABLE_OFFSET);
-पूर्ण
+}
 
-बाह्य व्योम _local_bh_enable(व्योम);
-बाह्य व्योम __local_bh_enable_ip(अचिन्हित दीर्घ ip, अचिन्हित पूर्णांक cnt);
+extern void _local_bh_enable(void);
+extern void __local_bh_enable_ip(unsigned long ip, unsigned int cnt);
 
-अटल अंतरभूत व्योम local_bh_enable_ip(अचिन्हित दीर्घ ip)
-अणु
+static inline void local_bh_enable_ip(unsigned long ip)
+{
 	__local_bh_enable_ip(ip, SOFTIRQ_DISABLE_OFFSET);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम local_bh_enable(व्योम)
-अणु
+static inline void local_bh_enable(void)
+{
 	__local_bh_enable_ip(_THIS_IP_, SOFTIRQ_DISABLE_OFFSET);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_PREEMPT_RT
-बाह्य bool local_bh_blocked(व्योम);
-#अन्यथा
-अटल अंतरभूत bool local_bh_blocked(व्योम) अणु वापस false; पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_PREEMPT_RT
+extern bool local_bh_blocked(void);
+#else
+static inline bool local_bh_blocked(void) { return false; }
+#endif
 
-#पूर्ण_अगर /* _LINUX_BH_H */
+#endif /* _LINUX_BH_H */

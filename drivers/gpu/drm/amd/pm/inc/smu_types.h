@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,10 +20,10 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#अगर_अघोषित __SMU_TYPES_H__
-#घोषणा __SMU_TYPES_H__
+#ifndef __SMU_TYPES_H__
+#define __SMU_TYPES_H__
 
-#घोषणा SMU_MESSAGE_TYPES			      \
+#define SMU_MESSAGE_TYPES			      \
        __SMU_DUMMY_MAP(TestMessage),		      \
        __SMU_DUMMY_MAP(GetSmuVersion),                \
        __SMU_DUMMY_MAP(GetDriverIfVersion),           \
@@ -75,7 +74,7 @@
        __SMU_DUMMY_MAP(OverDriveSetPercentage),       \
        __SMU_DUMMY_MAP(SetMinDeepSleepDcefclk),       \
        __SMU_DUMMY_MAP(ReenableAcDcInterrupt),        \
-       __SMU_DUMMY_MAP(NotअगरyPowerSource),            \
+       __SMU_DUMMY_MAP(NotifyPowerSource),            \
        __SMU_DUMMY_MAP(SetUclkFastSwitch),            \
        __SMU_DUMMY_MAP(SetUclkDownHyst),              \
        __SMU_DUMMY_MAP(GfxDeviceDriverReset),         \
@@ -107,7 +106,7 @@
        __SMU_DUMMY_MAP(RunAfllBtc),                   \
        __SMU_DUMMY_MAP(ExitBaco),                     \
        __SMU_DUMMY_MAP(PrepareMp1ForReset),           \
-       __SMU_DUMMY_MAP(PrepareMp1ForShutकरोwn),        \
+       __SMU_DUMMY_MAP(PrepareMp1ForShutdown),        \
        __SMU_DUMMY_MAP(SetMGpuFanBoostLimitRpm),      \
        __SMU_DUMMY_MAP(GetAVFSVoltageByDpm),          \
        __SMU_DUMMY_MAP(PowerUpVcn),                   \
@@ -136,7 +135,7 @@
 	__SMU_DUMMY_MAP(SetHardMinVcn),               \
 	__SMU_DUMMY_MAP(SetAllowFclkSwitch),          \
 	__SMU_DUMMY_MAP(SetMinVideoGfxclkFreq),       \
-	__SMU_DUMMY_MAP(ActiveProcessNotअगरy),         \
+	__SMU_DUMMY_MAP(ActiveProcessNotify),         \
 	__SMU_DUMMY_MAP(SetCustomPolicy),             \
 	__SMU_DUMMY_MAP(QueryPowerLimit),             \
 	__SMU_DUMMY_MAP(SetGfxclkOverdriveByFreqVid), \
@@ -184,7 +183,7 @@
 	__SMU_DUMMY_MAP(SET_DRIVER_DUMMY_TABLE_DRAM_ADDR_LOW), \
 	__SMU_DUMMY_MAP(GET_UMC_FW_WA), \
 	__SMU_DUMMY_MAP(Mode1Reset), \
-	__SMU_DUMMY_MAP(RlcPowerNotअगरy),                 \
+	__SMU_DUMMY_MAP(RlcPowerNotify),                 \
 	__SMU_DUMMY_MAP(SetHardMinIspiclkByFreq),        \
 	__SMU_DUMMY_MAP(SetHardMinIspxclkByFreq),        \
 	__SMU_DUMMY_MAP(SetSoftMinSocclkByFreq),         \
@@ -228,14 +227,14 @@
 	__SMU_DUMMY_MAP(LightSBR),			\
 	__SMU_DUMMY_MAP(GfxDriverResetRecovery),
 
-#अघोषित __SMU_DUMMY_MAP
-#घोषणा __SMU_DUMMY_MAP(type)	SMU_MSG_##type
-क्रमागत smu_message_type अणु
+#undef __SMU_DUMMY_MAP
+#define __SMU_DUMMY_MAP(type)	SMU_MSG_##type
+enum smu_message_type {
 	SMU_MESSAGE_TYPES
 	SMU_MSG_MAX_COUNT,
-पूर्ण;
+};
 
-क्रमागत smu_clk_type अणु
+enum smu_clk_type {
 	SMU_GFXCLK,
 	SMU_VCLK,
 	SMU_DCLK,
@@ -260,9 +259,9 @@
 	SMU_OD_RANGE,
 	SMU_OD_VDDGFX_OFFSET,
 	SMU_CLK_COUNT,
-पूर्ण;
+};
 
-#घोषणा SMU_FEATURE_MASKS				\
+#define SMU_FEATURE_MASKS				\
        __SMU_DUMMY_MAP(DPM_PREFETCHER),			\
        __SMU_DUMMY_MAP(DPM_GFXCLK),                    	\
        __SMU_DUMMY_MAP(DPM_UCLK),                      	\
@@ -359,11 +358,11 @@
        __SMU_DUMMY_MAP(THM_CG),				\
        __SMU_DUMMY_MAP(CLK_CG),				\
 
-#अघोषित __SMU_DUMMY_MAP
-#घोषणा __SMU_DUMMY_MAP(feature)	SMU_FEATURE_##feature##_BIT
-क्रमागत smu_feature_mask अणु
+#undef __SMU_DUMMY_MAP
+#define __SMU_DUMMY_MAP(feature)	SMU_FEATURE_##feature##_BIT
+enum smu_feature_mask {
 	SMU_FEATURE_MASKS
 	SMU_FEATURE_COUNT,
-पूर्ण;
+};
 
-#पूर्ण_अगर
+#endif

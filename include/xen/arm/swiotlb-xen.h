@@ -1,21 +1,20 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_ARM_SWIOTLB_XEN_H
-#घोषणा _ASM_ARM_SWIOTLB_XEN_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_ARM_SWIOTLB_XEN_H
+#define _ASM_ARM_SWIOTLB_XEN_H
 
-#समावेश <xen/features.h>
-#समावेश <xen/xen.h>
+#include <xen/features.h>
+#include <xen/xen.h>
 
-अटल अंतरभूत पूर्णांक xen_swiotlb_detect(व्योम)
-अणु
-	अगर (!xen_करोमुख्य())
-		वापस 0;
-	अगर (xen_feature(XENFEAT_direct_mapped))
-		वापस 1;
-	/* legacy हाल */
-	अगर (!xen_feature(XENFEAT_not_direct_mapped) && xen_initial_करोमुख्य())
-		वापस 1;
-	वापस 0;
-पूर्ण
+static inline int xen_swiotlb_detect(void)
+{
+	if (!xen_domain())
+		return 0;
+	if (xen_feature(XENFEAT_direct_mapped))
+		return 1;
+	/* legacy case */
+	if (!xen_feature(XENFEAT_not_direct_mapped) && xen_initial_domain())
+		return 1;
+	return 0;
+}
 
-#पूर्ण_अगर /* _ASM_ARM_SWIOTLB_XEN_H */
+#endif /* _ASM_ARM_SWIOTLB_XEN_H */

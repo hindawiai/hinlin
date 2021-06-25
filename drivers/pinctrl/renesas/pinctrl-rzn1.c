@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2014-2018 Renesas Electronics Europe Limited
  *
@@ -7,54 +6,54 @@
  * Based on a driver originally written by Michel Pollet at Renesas.
  */
 
-#समावेश <dt-bindings/pinctrl/rzn1-pinctrl.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/device.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/pinctrl/pinconf-generic.h>
-#समावेश <linux/pinctrl/pinctrl.h>
-#समावेश <linux/pinctrl/pinmux.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
-#समावेश "../core.h"
-#समावेश "../pinconf.h"
-#समावेश "../pinctrl-utils.h"
+#include <dt-bindings/pinctrl/rzn1-pinctrl.h>
+#include <linux/clk.h>
+#include <linux/device.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/pinctrl/pinconf-generic.h>
+#include <linux/pinctrl/pinctrl.h>
+#include <linux/pinctrl/pinmux.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
+#include "../core.h"
+#include "../pinconf.h"
+#include "../pinctrl-utils.h"
 
-/* Field positions and masks in the pinmux रेजिस्टरs */
-#घोषणा RZN1_L1_PIN_DRIVE_STRENGTH	10
-#घोषणा RZN1_L1_PIN_DRIVE_STRENGTH_4MA	0
-#घोषणा RZN1_L1_PIN_DRIVE_STRENGTH_6MA	1
-#घोषणा RZN1_L1_PIN_DRIVE_STRENGTH_8MA	2
-#घोषणा RZN1_L1_PIN_DRIVE_STRENGTH_12MA	3
-#घोषणा RZN1_L1_PIN_PULL		8
-#घोषणा RZN1_L1_PIN_PULL_NONE		0
-#घोषणा RZN1_L1_PIN_PULL_UP		1
-#घोषणा RZN1_L1_PIN_PULL_DOWN		3
-#घोषणा RZN1_L1_FUNCTION		0
-#घोषणा RZN1_L1_FUNC_MASK		0xf
-#घोषणा RZN1_L1_FUNCTION_L2		0xf
+/* Field positions and masks in the pinmux registers */
+#define RZN1_L1_PIN_DRIVE_STRENGTH	10
+#define RZN1_L1_PIN_DRIVE_STRENGTH_4MA	0
+#define RZN1_L1_PIN_DRIVE_STRENGTH_6MA	1
+#define RZN1_L1_PIN_DRIVE_STRENGTH_8MA	2
+#define RZN1_L1_PIN_DRIVE_STRENGTH_12MA	3
+#define RZN1_L1_PIN_PULL		8
+#define RZN1_L1_PIN_PULL_NONE		0
+#define RZN1_L1_PIN_PULL_UP		1
+#define RZN1_L1_PIN_PULL_DOWN		3
+#define RZN1_L1_FUNCTION		0
+#define RZN1_L1_FUNC_MASK		0xf
+#define RZN1_L1_FUNCTION_L2		0xf
 
 /*
  * The hardware manual describes two levels of multiplexing, but it's more
  * logical to think of the hardware as three levels, with level 3 consisting of
- * the multiplexing क्रम Ethernet MDIO संकेतs.
+ * the multiplexing for Ethernet MDIO signals.
  *
- * Level 1 functions go from 0 to 9, with level 1 function '15' (0xf) specअगरying
+ * Level 1 functions go from 0 to 9, with level 1 function '15' (0xf) specifying
  * that level 2 functions are used instead. Level 2 has a lot more options,
  * going from 0 to 61. Level 3 allows selection of MDIO functions which can be
- * भग्नing, or one of seven पूर्णांकernal peripherals. Unक्रमtunately, there are two
+ * floating, or one of seven internal peripherals. Unfortunately, there are two
  * level 2 functions that can select MDIO, and two MDIO channels so we have four
  * sets of level 3 functions.
  *
  * For this driver, we've compounded the numbers together, so:
  *    0 to   9 is level 1
  *   10 to  71 is 10 + level 2 number
- *   72 to  79 is 72 + MDIO0 source क्रम level 2 MDIO function.
- *   80 to  87 is 80 + MDIO0 source क्रम level 2 MDIO_E1 function.
- *   88 to  95 is 88 + MDIO1 source क्रम level 2 MDIO function.
- *   96 to 103 is 96 + MDIO1 source क्रम level 2 MDIO_E1 function.
+ *   72 to  79 is 72 + MDIO0 source for level 2 MDIO function.
+ *   80 to  87 is 80 + MDIO0 source for level 2 MDIO_E1 function.
+ *   88 to  95 is 88 + MDIO1 source for level 2 MDIO function.
+ *   96 to 103 is 96 + MDIO1 source for level 2 MDIO_E1 function.
  * Examples:
  *  Function 28 corresponds UART0
  *  Function 73 corresponds to MDIO0 to GMAC0
@@ -63,70 +62,70 @@
  */
 
 /*
- * Structure detailing the HW रेजिस्टरs on the RZ/N1 devices.
- * Both the Level 1 mux रेजिस्टरs and Level 2 mux रेजिस्टरs have the same
- * काष्ठाure. The only dअगरference is that Level 2 has additional MDIO रेजिस्टरs
+ * Structure detailing the HW registers on the RZ/N1 devices.
+ * Both the Level 1 mux registers and Level 2 mux registers have the same
+ * structure. The only difference is that Level 2 has additional MDIO registers
  * at the end.
  */
-काष्ठा rzn1_pinctrl_regs अणु
+struct rzn1_pinctrl_regs {
 	u32	conf[170];
 	u32	pad0[86];
 	u32	status_protect;	/* 0x400 */
-	/* MDIO mux रेजिस्टरs, level2 only */
+	/* MDIO mux registers, level2 only */
 	u32	l2_mdio[2];
-पूर्ण;
+};
 
 /**
- * काष्ठा rzn1_pmx_func - describes rzn1 pinmux functions
- * @name: the name of this specअगरic function
+ * struct rzn1_pmx_func - describes rzn1 pinmux functions
+ * @name: the name of this specific function
  * @groups: corresponding pin groups
  * @num_groups: the number of groups
  */
-काष्ठा rzn1_pmx_func अणु
-	स्थिर अक्षर *name;
-	स्थिर अक्षर **groups;
-	अचिन्हित पूर्णांक num_groups;
-पूर्ण;
+struct rzn1_pmx_func {
+	const char *name;
+	const char **groups;
+	unsigned int num_groups;
+};
 
 /**
- * काष्ठा rzn1_pin_group - describes an rzn1 pin group
- * @name: the name of this specअगरic pin group
+ * struct rzn1_pin_group - describes an rzn1 pin group
+ * @name: the name of this specific pin group
  * @func: the name of the function selected by this group
  * @npins: the number of pins in this group array, i.e. the number of
  *	elements in .pins so we can iterate over that array
  * @pins: array of pins. Needed due to pinctrl_ops.get_group_pins()
  * @pin_ids: array of pin_ids, i.e. the value used to select the mux
  */
-काष्ठा rzn1_pin_group अणु
-	स्थिर अक्षर *name;
-	स्थिर अक्षर *func;
-	अचिन्हित पूर्णांक npins;
-	अचिन्हित पूर्णांक *pins;
+struct rzn1_pin_group {
+	const char *name;
+	const char *func;
+	unsigned int npins;
+	unsigned int *pins;
 	u8 *pin_ids;
-पूर्ण;
+};
 
-काष्ठा rzn1_pinctrl अणु
-	काष्ठा device *dev;
-	काष्ठा clk *clk;
-	काष्ठा pinctrl_dev *pctl;
-	काष्ठा rzn1_pinctrl_regs __iomem *lev1;
-	काष्ठा rzn1_pinctrl_regs __iomem *lev2;
+struct rzn1_pinctrl {
+	struct device *dev;
+	struct clk *clk;
+	struct pinctrl_dev *pctl;
+	struct rzn1_pinctrl_regs __iomem *lev1;
+	struct rzn1_pinctrl_regs __iomem *lev2;
 	u32 lev1_protect_phys;
 	u32 lev2_protect_phys;
-	पूर्णांक mdio_func[2];
+	int mdio_func[2];
 
-	काष्ठा rzn1_pin_group *groups;
-	अचिन्हित पूर्णांक ngroups;
+	struct rzn1_pin_group *groups;
+	unsigned int ngroups;
 
-	काष्ठा rzn1_pmx_func *functions;
-	अचिन्हित पूर्णांक nfunctions;
-पूर्ण;
+	struct rzn1_pmx_func *functions;
+	unsigned int nfunctions;
+};
 
-#घोषणा RZN1_PINS_PROP "pinmux"
+#define RZN1_PINS_PROP "pinmux"
 
-#घोषणा RZN1_PIN(pin) PINCTRL_PIN(pin, "pl_gpio"#pin)
+#define RZN1_PIN(pin) PINCTRL_PIN(pin, "pl_gpio"#pin)
 
-अटल स्थिर काष्ठा pinctrl_pin_desc rzn1_pins[] = अणु
+static const struct pinctrl_pin_desc rzn1_pins[] = {
 	RZN1_PIN(0), RZN1_PIN(1), RZN1_PIN(2), RZN1_PIN(3), RZN1_PIN(4),
 	RZN1_PIN(5), RZN1_PIN(6), RZN1_PIN(7), RZN1_PIN(8), RZN1_PIN(9),
 	RZN1_PIN(10), RZN1_PIN(11), RZN1_PIN(12), RZN1_PIN(13), RZN1_PIN(14),
@@ -165,530 +164,530 @@
 	RZN1_PIN(160), RZN1_PIN(161), RZN1_PIN(162), RZN1_PIN(163),
 	RZN1_PIN(164), RZN1_PIN(165), RZN1_PIN(166), RZN1_PIN(167),
 	RZN1_PIN(168), RZN1_PIN(169),
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	LOCK_LEVEL1 = 0x1,
 	LOCK_LEVEL2 = 0x2,
 	LOCK_ALL = LOCK_LEVEL1 | LOCK_LEVEL2,
-पूर्ण;
+};
 
-अटल व्योम rzn1_hw_set_lock(काष्ठा rzn1_pinctrl *ipctl, u8 lock, u8 value)
-अणु
+static void rzn1_hw_set_lock(struct rzn1_pinctrl *ipctl, u8 lock, u8 value)
+{
 	/*
 	 * The pinmux configuration is locked by writing the physical address of
-	 * the status_protect रेजिस्टर to itself. It is unlocked by writing the
+	 * the status_protect register to itself. It is unlocked by writing the
 	 * address | 1.
 	 */
-	अगर (lock & LOCK_LEVEL1) अणु
+	if (lock & LOCK_LEVEL1) {
 		u32 val = ipctl->lev1_protect_phys | !(value & LOCK_LEVEL1);
 
-		ग_लिखोl(val, &ipctl->lev1->status_protect);
-	पूर्ण
+		writel(val, &ipctl->lev1->status_protect);
+	}
 
-	अगर (lock & LOCK_LEVEL2) अणु
+	if (lock & LOCK_LEVEL2) {
 		u32 val = ipctl->lev2_protect_phys | !(value & LOCK_LEVEL2);
 
-		ग_लिखोl(val, &ipctl->lev2->status_protect);
-	पूर्ण
-पूर्ण
+		writel(val, &ipctl->lev2->status_protect);
+	}
+}
 
-अटल व्योम rzn1_pinctrl_mdio_select(काष्ठा rzn1_pinctrl *ipctl, पूर्णांक mdio,
+static void rzn1_pinctrl_mdio_select(struct rzn1_pinctrl *ipctl, int mdio,
 				     u32 func)
-अणु
-	अगर (ipctl->mdio_func[mdio] >= 0 && ipctl->mdio_func[mdio] != func)
+{
+	if (ipctl->mdio_func[mdio] >= 0 && ipctl->mdio_func[mdio] != func)
 		dev_warn(ipctl->dev, "conflicting setting for mdio%d!\n", mdio);
 	ipctl->mdio_func[mdio] = func;
 
 	dev_dbg(ipctl->dev, "setting mdio%d to %u\n", mdio, func);
 
-	ग_लिखोl(func, &ipctl->lev2->l2_mdio[mdio]);
-पूर्ण
+	writel(func, &ipctl->lev2->l2_mdio[mdio]);
+}
 
 /*
- * Using a composite pin description, set the hardware pinmux रेजिस्टरs
+ * Using a composite pin description, set the hardware pinmux registers
  * with the corresponding values.
- * Make sure to unlock ग_लिखो protection and reset it afterward.
+ * Make sure to unlock write protection and reset it afterward.
  *
- * NOTE: There is no protection क्रम potential concurrency, it is assumed these
- * calls are serialized alपढ़ोy.
+ * NOTE: There is no protection for potential concurrency, it is assumed these
+ * calls are serialized already.
  */
-अटल पूर्णांक rzn1_set_hw_pin_func(काष्ठा rzn1_pinctrl *ipctl, अचिन्हित पूर्णांक pin,
+static int rzn1_set_hw_pin_func(struct rzn1_pinctrl *ipctl, unsigned int pin,
 				u32 pin_config, u8 use_locks)
-अणु
+{
 	u32 l1_cache;
 	u32 l2_cache;
 	u32 l1;
 	u32 l2;
 
 	/* Level 3 MDIO multiplexing */
-	अगर (pin_config >= RZN1_FUNC_MDIO0_HIGHZ &&
-	    pin_config <= RZN1_FUNC_MDIO1_E1_SWITCH) अणु
-		पूर्णांक mdio_channel;
+	if (pin_config >= RZN1_FUNC_MDIO0_HIGHZ &&
+	    pin_config <= RZN1_FUNC_MDIO1_E1_SWITCH) {
+		int mdio_channel;
 		u32 mdio_func;
 
-		अगर (pin_config <= RZN1_FUNC_MDIO1_HIGHZ)
+		if (pin_config <= RZN1_FUNC_MDIO1_HIGHZ)
 			mdio_channel = 0;
-		अन्यथा
+		else
 			mdio_channel = 1;
 
 		/* Get MDIO func, and convert the func to the level 2 number */
-		अगर (pin_config <= RZN1_FUNC_MDIO0_SWITCH) अणु
+		if (pin_config <= RZN1_FUNC_MDIO0_SWITCH) {
 			mdio_func = pin_config - RZN1_FUNC_MDIO0_HIGHZ;
 			pin_config = RZN1_FUNC_ETH_MDIO;
-		पूर्ण अन्यथा अगर (pin_config <= RZN1_FUNC_MDIO0_E1_SWITCH) अणु
+		} else if (pin_config <= RZN1_FUNC_MDIO0_E1_SWITCH) {
 			mdio_func = pin_config - RZN1_FUNC_MDIO0_E1_HIGHZ;
 			pin_config = RZN1_FUNC_ETH_MDIO_E1;
-		पूर्ण अन्यथा अगर (pin_config <= RZN1_FUNC_MDIO1_SWITCH) अणु
+		} else if (pin_config <= RZN1_FUNC_MDIO1_SWITCH) {
 			mdio_func = pin_config - RZN1_FUNC_MDIO1_HIGHZ;
 			pin_config = RZN1_FUNC_ETH_MDIO;
-		पूर्ण अन्यथा अणु
+		} else {
 			mdio_func = pin_config - RZN1_FUNC_MDIO1_E1_HIGHZ;
 			pin_config = RZN1_FUNC_ETH_MDIO_E1;
-		पूर्ण
+		}
 		rzn1_pinctrl_mdio_select(ipctl, mdio_channel, mdio_func);
-	पूर्ण
+	}
 
-	/* Note here, we करो not allow anything past the MDIO Mux values */
-	अगर (pin >= ARRAY_SIZE(ipctl->lev1->conf) ||
+	/* Note here, we do not allow anything past the MDIO Mux values */
+	if (pin >= ARRAY_SIZE(ipctl->lev1->conf) ||
 	    pin_config >= RZN1_FUNC_MDIO0_HIGHZ)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	l1 = पढ़ोl(&ipctl->lev1->conf[pin]);
+	l1 = readl(&ipctl->lev1->conf[pin]);
 	l1_cache = l1;
-	l2 = पढ़ोl(&ipctl->lev2->conf[pin]);
+	l2 = readl(&ipctl->lev2->conf[pin]);
 	l2_cache = l2;
 
 	dev_dbg(ipctl->dev, "setting func for pin %u to %u\n", pin, pin_config);
 
 	l1 &= ~(RZN1_L1_FUNC_MASK << RZN1_L1_FUNCTION);
 
-	अगर (pin_config < RZN1_FUNC_L2_OFFSET) अणु
+	if (pin_config < RZN1_FUNC_L2_OFFSET) {
 		l1 |= (pin_config << RZN1_L1_FUNCTION);
-	पूर्ण अन्यथा अणु
+	} else {
 		l1 |= (RZN1_L1_FUNCTION_L2 << RZN1_L1_FUNCTION);
 
 		l2 = pin_config - RZN1_FUNC_L2_OFFSET;
-	पूर्ण
+	}
 
 	/* If either configuration changes, we update both anyway */
-	अगर (l1 != l1_cache || l2 != l2_cache) अणु
-		ग_लिखोl(l1, &ipctl->lev1->conf[pin]);
-		ग_लिखोl(l2, &ipctl->lev2->conf[pin]);
-	पूर्ण
+	if (l1 != l1_cache || l2 != l2_cache) {
+		writel(l1, &ipctl->lev1->conf[pin]);
+		writel(l2, &ipctl->lev2->conf[pin]);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा rzn1_pin_group *rzn1_pinctrl_find_group_by_name(
-	स्थिर काष्ठा rzn1_pinctrl *ipctl, स्थिर अक्षर *name)
-अणु
-	अचिन्हित पूर्णांक i;
+static const struct rzn1_pin_group *rzn1_pinctrl_find_group_by_name(
+	const struct rzn1_pinctrl *ipctl, const char *name)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < ipctl->ngroups; i++) अणु
-		अगर (!म_भेद(ipctl->groups[i].name, name))
-			वापस &ipctl->groups[i];
-	पूर्ण
+	for (i = 0; i < ipctl->ngroups; i++) {
+		if (!strcmp(ipctl->groups[i].name, name))
+			return &ipctl->groups[i];
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक rzn1_get_groups_count(काष्ठा pinctrl_dev *pctldev)
-अणु
-	काष्ठा rzn1_pinctrl *ipctl = pinctrl_dev_get_drvdata(pctldev);
+static int rzn1_get_groups_count(struct pinctrl_dev *pctldev)
+{
+	struct rzn1_pinctrl *ipctl = pinctrl_dev_get_drvdata(pctldev);
 
-	वापस ipctl->ngroups;
-पूर्ण
+	return ipctl->ngroups;
+}
 
-अटल स्थिर अक्षर *rzn1_get_group_name(काष्ठा pinctrl_dev *pctldev,
-				       अचिन्हित पूर्णांक selector)
-अणु
-	काष्ठा rzn1_pinctrl *ipctl = pinctrl_dev_get_drvdata(pctldev);
+static const char *rzn1_get_group_name(struct pinctrl_dev *pctldev,
+				       unsigned int selector)
+{
+	struct rzn1_pinctrl *ipctl = pinctrl_dev_get_drvdata(pctldev);
 
-	वापस ipctl->groups[selector].name;
-पूर्ण
+	return ipctl->groups[selector].name;
+}
 
-अटल पूर्णांक rzn1_get_group_pins(काष्ठा pinctrl_dev *pctldev,
-			       अचिन्हित पूर्णांक selector, स्थिर अचिन्हित पूर्णांक **pins,
-			       अचिन्हित पूर्णांक *npins)
-अणु
-	काष्ठा rzn1_pinctrl *ipctl = pinctrl_dev_get_drvdata(pctldev);
+static int rzn1_get_group_pins(struct pinctrl_dev *pctldev,
+			       unsigned int selector, const unsigned int **pins,
+			       unsigned int *npins)
+{
+	struct rzn1_pinctrl *ipctl = pinctrl_dev_get_drvdata(pctldev);
 
-	अगर (selector >= ipctl->ngroups)
-		वापस -EINVAL;
+	if (selector >= ipctl->ngroups)
+		return -EINVAL;
 
 	*pins = ipctl->groups[selector].pins;
 	*npins = ipctl->groups[selector].npins;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * This function is called क्रम each pinctl 'Function' node.
+ * This function is called for each pinctl 'Function' node.
  * Sub-nodes can be used to describe multiple 'Groups' for the 'Function'
  * If there aren't any sub-nodes, the 'Group' is essentially the 'Function'.
  * Each 'Group' uses pinmux = <...> to detail the pins and data used to select
  * the functionality. Each 'Group' has optional pin configurations that apply
  * to all pins in the 'Group'.
  */
-अटल पूर्णांक rzn1_dt_node_to_map_one(काष्ठा pinctrl_dev *pctldev,
-				   काष्ठा device_node *np,
-				   काष्ठा pinctrl_map **map,
-				   अचिन्हित पूर्णांक *num_maps)
-अणु
-	काष्ठा rzn1_pinctrl *ipctl = pinctrl_dev_get_drvdata(pctldev);
-	स्थिर काष्ठा rzn1_pin_group *grp;
-	अचिन्हित दीर्घ *configs = शून्य;
-	अचिन्हित पूर्णांक reserved_maps = *num_maps;
-	अचिन्हित पूर्णांक num_configs = 0;
-	अचिन्हित पूर्णांक reserve = 1;
-	पूर्णांक ret;
+static int rzn1_dt_node_to_map_one(struct pinctrl_dev *pctldev,
+				   struct device_node *np,
+				   struct pinctrl_map **map,
+				   unsigned int *num_maps)
+{
+	struct rzn1_pinctrl *ipctl = pinctrl_dev_get_drvdata(pctldev);
+	const struct rzn1_pin_group *grp;
+	unsigned long *configs = NULL;
+	unsigned int reserved_maps = *num_maps;
+	unsigned int num_configs = 0;
+	unsigned int reserve = 1;
+	int ret;
 
 	dev_dbg(ipctl->dev, "processing node %pOF\n", np);
 
 	grp = rzn1_pinctrl_find_group_by_name(ipctl, np->name);
-	अगर (!grp) अणु
+	if (!grp) {
 		dev_err(ipctl->dev, "unable to find group for node %pOF\n", np);
 
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* Get the group's pin configuration */
 	ret = pinconf_generic_parse_dt_config(np, pctldev, &configs,
 					      &num_configs);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(ipctl->dev, "%pOF: could not parse property\n", np);
 
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (num_configs)
+	if (num_configs)
 		reserve++;
 
 	/* Increase the number of maps to cover this group */
 	ret = pinctrl_utils_reserve_map(pctldev, map, &reserved_maps, num_maps,
 					reserve);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 
 	/* Associate the group with the function */
 	ret = pinctrl_utils_add_map_mux(pctldev, map, &reserved_maps, num_maps,
 					grp->name, grp->func);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 
-	अगर (num_configs) अणु
+	if (num_configs) {
 		/* Associate the group's pin configuration with the group */
 		ret = pinctrl_utils_add_map_configs(pctldev, map,
 				&reserved_maps, num_maps, grp->name,
 				configs, num_configs,
 				PIN_MAP_TYPE_CONFIGS_GROUP);
-		अगर (ret < 0)
-			जाओ out;
-	पूर्ण
+		if (ret < 0)
+			goto out;
+	}
 
 	dev_dbg(pctldev->dev, "maps: function %s group %s (%d pins)\n",
 		grp->func, grp->name, grp->npins);
 
 out:
-	kमुक्त(configs);
+	kfree(configs);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक rzn1_dt_node_to_map(काष्ठा pinctrl_dev *pctldev,
-			       काष्ठा device_node *np,
-			       काष्ठा pinctrl_map **map,
-			       अचिन्हित पूर्णांक *num_maps)
-अणु
-	काष्ठा device_node *child;
-	पूर्णांक ret;
+static int rzn1_dt_node_to_map(struct pinctrl_dev *pctldev,
+			       struct device_node *np,
+			       struct pinctrl_map **map,
+			       unsigned int *num_maps)
+{
+	struct device_node *child;
+	int ret;
 
-	*map = शून्य;
+	*map = NULL;
 	*num_maps = 0;
 
 	ret = rzn1_dt_node_to_map_one(pctldev, np, map, num_maps);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	क्रम_each_child_of_node(np, child) अणु
+	for_each_child_of_node(np, child) {
 		ret = rzn1_dt_node_to_map_one(pctldev, child, map, num_maps);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			of_node_put(child);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा pinctrl_ops rzn1_pctrl_ops = अणु
+static const struct pinctrl_ops rzn1_pctrl_ops = {
 	.get_groups_count = rzn1_get_groups_count,
 	.get_group_name = rzn1_get_group_name,
 	.get_group_pins = rzn1_get_group_pins,
 	.dt_node_to_map = rzn1_dt_node_to_map,
-	.dt_मुक्त_map = pinctrl_utils_मुक्त_map,
-पूर्ण;
+	.dt_free_map = pinctrl_utils_free_map,
+};
 
-अटल पूर्णांक rzn1_pmx_get_funcs_count(काष्ठा pinctrl_dev *pctldev)
-अणु
-	काष्ठा rzn1_pinctrl *ipctl = pinctrl_dev_get_drvdata(pctldev);
+static int rzn1_pmx_get_funcs_count(struct pinctrl_dev *pctldev)
+{
+	struct rzn1_pinctrl *ipctl = pinctrl_dev_get_drvdata(pctldev);
 
-	वापस ipctl->nfunctions;
-पूर्ण
+	return ipctl->nfunctions;
+}
 
-अटल स्थिर अक्षर *rzn1_pmx_get_func_name(काष्ठा pinctrl_dev *pctldev,
-					  अचिन्हित पूर्णांक selector)
-अणु
-	काष्ठा rzn1_pinctrl *ipctl = pinctrl_dev_get_drvdata(pctldev);
+static const char *rzn1_pmx_get_func_name(struct pinctrl_dev *pctldev,
+					  unsigned int selector)
+{
+	struct rzn1_pinctrl *ipctl = pinctrl_dev_get_drvdata(pctldev);
 
-	वापस ipctl->functions[selector].name;
-पूर्ण
+	return ipctl->functions[selector].name;
+}
 
-अटल पूर्णांक rzn1_pmx_get_groups(काष्ठा pinctrl_dev *pctldev,
-			       अचिन्हित पूर्णांक selector,
-			       स्थिर अक्षर * स्थिर **groups,
-			       अचिन्हित पूर्णांक * स्थिर num_groups)
-अणु
-	काष्ठा rzn1_pinctrl *ipctl = pinctrl_dev_get_drvdata(pctldev);
+static int rzn1_pmx_get_groups(struct pinctrl_dev *pctldev,
+			       unsigned int selector,
+			       const char * const **groups,
+			       unsigned int * const num_groups)
+{
+	struct rzn1_pinctrl *ipctl = pinctrl_dev_get_drvdata(pctldev);
 
 	*groups = ipctl->functions[selector].groups;
 	*num_groups = ipctl->functions[selector].num_groups;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rzn1_set_mux(काष्ठा pinctrl_dev *pctldev, अचिन्हित पूर्णांक selector,
-			अचिन्हित पूर्णांक group)
-अणु
-	काष्ठा rzn1_pinctrl *ipctl = pinctrl_dev_get_drvdata(pctldev);
-	काष्ठा rzn1_pin_group *grp = &ipctl->groups[group];
-	अचिन्हित पूर्णांक i, grp_pins = grp->npins;
+static int rzn1_set_mux(struct pinctrl_dev *pctldev, unsigned int selector,
+			unsigned int group)
+{
+	struct rzn1_pinctrl *ipctl = pinctrl_dev_get_drvdata(pctldev);
+	struct rzn1_pin_group *grp = &ipctl->groups[group];
+	unsigned int i, grp_pins = grp->npins;
 
 	dev_dbg(ipctl->dev, "set mux %s(%d) group %s(%d)\n",
 		ipctl->functions[selector].name, selector, grp->name, group);
 
 	rzn1_hw_set_lock(ipctl, LOCK_ALL, LOCK_ALL);
-	क्रम (i = 0; i < grp_pins; i++)
+	for (i = 0; i < grp_pins; i++)
 		rzn1_set_hw_pin_func(ipctl, grp->pins[i], grp->pin_ids[i], 0);
 	rzn1_hw_set_lock(ipctl, LOCK_ALL, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा pinmux_ops rzn1_pmx_ops = अणु
+static const struct pinmux_ops rzn1_pmx_ops = {
 	.get_functions_count = rzn1_pmx_get_funcs_count,
 	.get_function_name = rzn1_pmx_get_func_name,
 	.get_function_groups = rzn1_pmx_get_groups,
 	.set_mux = rzn1_set_mux,
-पूर्ण;
+};
 
-अटल पूर्णांक rzn1_pinconf_get(काष्ठा pinctrl_dev *pctldev, अचिन्हित पूर्णांक pin,
-			    अचिन्हित दीर्घ *config)
-अणु
-	काष्ठा rzn1_pinctrl *ipctl = pinctrl_dev_get_drvdata(pctldev);
-	क्रमागत pin_config_param param = pinconf_to_config_param(*config);
-	अटल स्थिर u32 reg_drive[4] = अणु 4, 6, 8, 12 पूर्ण;
+static int rzn1_pinconf_get(struct pinctrl_dev *pctldev, unsigned int pin,
+			    unsigned long *config)
+{
+	struct rzn1_pinctrl *ipctl = pinctrl_dev_get_drvdata(pctldev);
+	enum pin_config_param param = pinconf_to_config_param(*config);
+	static const u32 reg_drive[4] = { 4, 6, 8, 12 };
 	u32 pull, drive, l1mux;
 	u32 l1, l2, arg = 0;
 
-	अगर (pin >= ARRAY_SIZE(ipctl->lev1->conf))
-		वापस -EINVAL;
+	if (pin >= ARRAY_SIZE(ipctl->lev1->conf))
+		return -EINVAL;
 
-	l1 = पढ़ोl(&ipctl->lev1->conf[pin]);
+	l1 = readl(&ipctl->lev1->conf[pin]);
 
 	l1mux = l1 & RZN1_L1_FUNC_MASK;
 	pull = (l1 >> RZN1_L1_PIN_PULL) & 0x3;
 	drive = (l1 >> RZN1_L1_PIN_DRIVE_STRENGTH) & 0x3;
 
-	चयन (param) अणु
-	हाल PIN_CONFIG_BIAS_PULL_UP:
-		अगर (pull != RZN1_L1_PIN_PULL_UP)
-			वापस -EINVAL;
-		अवरोध;
-	हाल PIN_CONFIG_BIAS_PULL_DOWN:
-		अगर (pull != RZN1_L1_PIN_PULL_DOWN)
-			वापस -EINVAL;
-		अवरोध;
-	हाल PIN_CONFIG_BIAS_DISABLE:
-		अगर (pull != RZN1_L1_PIN_PULL_NONE)
-			वापस -EINVAL;
-		अवरोध;
-	हाल PIN_CONFIG_DRIVE_STRENGTH:
+	switch (param) {
+	case PIN_CONFIG_BIAS_PULL_UP:
+		if (pull != RZN1_L1_PIN_PULL_UP)
+			return -EINVAL;
+		break;
+	case PIN_CONFIG_BIAS_PULL_DOWN:
+		if (pull != RZN1_L1_PIN_PULL_DOWN)
+			return -EINVAL;
+		break;
+	case PIN_CONFIG_BIAS_DISABLE:
+		if (pull != RZN1_L1_PIN_PULL_NONE)
+			return -EINVAL;
+		break;
+	case PIN_CONFIG_DRIVE_STRENGTH:
 		arg = reg_drive[drive];
-		अवरोध;
-	हाल PIN_CONFIG_BIAS_HIGH_IMPEDANCE:
-		l2 = पढ़ोl(&ipctl->lev2->conf[pin]);
-		अगर (l1mux == RZN1_L1_FUNCTION_L2) अणु
-			अगर (l2 != 0)
-				वापस -EINVAL;
-		पूर्ण अन्यथा अगर (l1mux != RZN1_FUNC_HIGHZ) अणु
-			वापस -EINVAL;
-		पूर्ण
-		अवरोध;
-	शेष:
-		वापस -ENOTSUPP;
-	पूर्ण
+		break;
+	case PIN_CONFIG_BIAS_HIGH_IMPEDANCE:
+		l2 = readl(&ipctl->lev2->conf[pin]);
+		if (l1mux == RZN1_L1_FUNCTION_L2) {
+			if (l2 != 0)
+				return -EINVAL;
+		} else if (l1mux != RZN1_FUNC_HIGHZ) {
+			return -EINVAL;
+		}
+		break;
+	default:
+		return -ENOTSUPP;
+	}
 
 	*config = pinconf_to_config_packed(param, arg);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rzn1_pinconf_set(काष्ठा pinctrl_dev *pctldev, अचिन्हित पूर्णांक pin,
-			    अचिन्हित दीर्घ *configs, अचिन्हित पूर्णांक num_configs)
-अणु
-	काष्ठा rzn1_pinctrl *ipctl = pinctrl_dev_get_drvdata(pctldev);
-	क्रमागत pin_config_param param;
-	अचिन्हित पूर्णांक i;
+static int rzn1_pinconf_set(struct pinctrl_dev *pctldev, unsigned int pin,
+			    unsigned long *configs, unsigned int num_configs)
+{
+	struct rzn1_pinctrl *ipctl = pinctrl_dev_get_drvdata(pctldev);
+	enum pin_config_param param;
+	unsigned int i;
 	u32 l1, l1_cache;
 	u32 drv;
 	u32 arg;
 
-	अगर (pin >= ARRAY_SIZE(ipctl->lev1->conf))
-		वापस -EINVAL;
+	if (pin >= ARRAY_SIZE(ipctl->lev1->conf))
+		return -EINVAL;
 
-	l1 = पढ़ोl(&ipctl->lev1->conf[pin]);
+	l1 = readl(&ipctl->lev1->conf[pin]);
 	l1_cache = l1;
 
-	क्रम (i = 0; i < num_configs; i++) अणु
+	for (i = 0; i < num_configs; i++) {
 		param = pinconf_to_config_param(configs[i]);
 		arg = pinconf_to_config_argument(configs[i]);
 
-		चयन (param) अणु
-		हाल PIN_CONFIG_BIAS_PULL_UP:
+		switch (param) {
+		case PIN_CONFIG_BIAS_PULL_UP:
 			dev_dbg(ipctl->dev, "set pin %d pull up\n", pin);
 			l1 &= ~(0x3 << RZN1_L1_PIN_PULL);
 			l1 |= (RZN1_L1_PIN_PULL_UP << RZN1_L1_PIN_PULL);
-			अवरोध;
-		हाल PIN_CONFIG_BIAS_PULL_DOWN:
+			break;
+		case PIN_CONFIG_BIAS_PULL_DOWN:
 			dev_dbg(ipctl->dev, "set pin %d pull down\n", pin);
 			l1 &= ~(0x3 << RZN1_L1_PIN_PULL);
 			l1 |= (RZN1_L1_PIN_PULL_DOWN << RZN1_L1_PIN_PULL);
-			अवरोध;
-		हाल PIN_CONFIG_BIAS_DISABLE:
+			break;
+		case PIN_CONFIG_BIAS_DISABLE:
 			dev_dbg(ipctl->dev, "set pin %d bias off\n", pin);
 			l1 &= ~(0x3 << RZN1_L1_PIN_PULL);
 			l1 |= (RZN1_L1_PIN_PULL_NONE << RZN1_L1_PIN_PULL);
-			अवरोध;
-		हाल PIN_CONFIG_DRIVE_STRENGTH:
+			break;
+		case PIN_CONFIG_DRIVE_STRENGTH:
 			dev_dbg(ipctl->dev, "set pin %d drv %umA\n", pin, arg);
-			चयन (arg) अणु
-			हाल 4:
+			switch (arg) {
+			case 4:
 				drv = RZN1_L1_PIN_DRIVE_STRENGTH_4MA;
-				अवरोध;
-			हाल 6:
+				break;
+			case 6:
 				drv = RZN1_L1_PIN_DRIVE_STRENGTH_6MA;
-				अवरोध;
-			हाल 8:
+				break;
+			case 8:
 				drv = RZN1_L1_PIN_DRIVE_STRENGTH_8MA;
-				अवरोध;
-			हाल 12:
+				break;
+			case 12:
 				drv = RZN1_L1_PIN_DRIVE_STRENGTH_12MA;
-				अवरोध;
-			शेष:
+				break;
+			default:
 				dev_err(ipctl->dev,
 					"Drive strength %umA not supported\n",
 					arg);
 
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 
 			l1 &= ~(0x3 << RZN1_L1_PIN_DRIVE_STRENGTH);
 			l1 |= (drv << RZN1_L1_PIN_DRIVE_STRENGTH);
-			अवरोध;
+			break;
 
-		हाल PIN_CONFIG_BIAS_HIGH_IMPEDANCE:
+		case PIN_CONFIG_BIAS_HIGH_IMPEDANCE:
 			dev_dbg(ipctl->dev, "set pin %d High-Z\n", pin);
 			l1 &= ~RZN1_L1_FUNC_MASK;
 			l1 |= RZN1_FUNC_HIGHZ;
-			अवरोध;
-		शेष:
-			वापस -ENOTSUPP;
-		पूर्ण
-	पूर्ण
+			break;
+		default:
+			return -ENOTSUPP;
+		}
+	}
 
-	अगर (l1 != l1_cache) अणु
+	if (l1 != l1_cache) {
 		rzn1_hw_set_lock(ipctl, LOCK_LEVEL1, LOCK_LEVEL1);
-		ग_लिखोl(l1, &ipctl->lev1->conf[pin]);
+		writel(l1, &ipctl->lev1->conf[pin]);
 		rzn1_hw_set_lock(ipctl, LOCK_LEVEL1, 0);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rzn1_pinconf_group_get(काष्ठा pinctrl_dev *pctldev,
-				  अचिन्हित पूर्णांक selector,
-				  अचिन्हित दीर्घ *config)
-अणु
-	काष्ठा rzn1_pinctrl *ipctl = pinctrl_dev_get_drvdata(pctldev);
-	काष्ठा rzn1_pin_group *grp = &ipctl->groups[selector];
-	अचिन्हित दीर्घ old = 0;
-	अचिन्हित पूर्णांक i;
+static int rzn1_pinconf_group_get(struct pinctrl_dev *pctldev,
+				  unsigned int selector,
+				  unsigned long *config)
+{
+	struct rzn1_pinctrl *ipctl = pinctrl_dev_get_drvdata(pctldev);
+	struct rzn1_pin_group *grp = &ipctl->groups[selector];
+	unsigned long old = 0;
+	unsigned int i;
 
 	dev_dbg(ipctl->dev, "group get %s selector:%u\n", grp->name, selector);
 
-	क्रम (i = 0; i < grp->npins; i++) अणु
-		अगर (rzn1_pinconf_get(pctldev, grp->pins[i], config))
-			वापस -ENOTSUPP;
+	for (i = 0; i < grp->npins; i++) {
+		if (rzn1_pinconf_get(pctldev, grp->pins[i], config))
+			return -ENOTSUPP;
 
-		/* configs करो not match between two pins */
-		अगर (i && (old != *config))
-			वापस -ENOTSUPP;
+		/* configs do not match between two pins */
+		if (i && (old != *config))
+			return -ENOTSUPP;
 
 		old = *config;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rzn1_pinconf_group_set(काष्ठा pinctrl_dev *pctldev,
-				  अचिन्हित पूर्णांक selector,
-				  अचिन्हित दीर्घ *configs,
-				  अचिन्हित पूर्णांक num_configs)
-अणु
-	काष्ठा rzn1_pinctrl *ipctl = pinctrl_dev_get_drvdata(pctldev);
-	काष्ठा rzn1_pin_group *grp = &ipctl->groups[selector];
-	अचिन्हित पूर्णांक i;
-	पूर्णांक ret;
+static int rzn1_pinconf_group_set(struct pinctrl_dev *pctldev,
+				  unsigned int selector,
+				  unsigned long *configs,
+				  unsigned int num_configs)
+{
+	struct rzn1_pinctrl *ipctl = pinctrl_dev_get_drvdata(pctldev);
+	struct rzn1_pin_group *grp = &ipctl->groups[selector];
+	unsigned int i;
+	int ret;
 
 	dev_dbg(ipctl->dev, "group set %s selector:%u configs:%p/%d\n",
 		grp->name, selector, configs, num_configs);
 
-	क्रम (i = 0; i < grp->npins; i++) अणु
-		अचिन्हित पूर्णांक pin = grp->pins[i];
+	for (i = 0; i < grp->npins; i++) {
+		unsigned int pin = grp->pins[i];
 
 		ret = rzn1_pinconf_set(pctldev, pin, configs, num_configs);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा pinconf_ops rzn1_pinconf_ops = अणु
+static const struct pinconf_ops rzn1_pinconf_ops = {
 	.is_generic = true,
 	.pin_config_get = rzn1_pinconf_get,
 	.pin_config_set = rzn1_pinconf_set,
 	.pin_config_group_get = rzn1_pinconf_group_get,
 	.pin_config_group_set = rzn1_pinconf_group_set,
 	.pin_config_config_dbg_show = pinconf_generic_dump_config,
-पूर्ण;
+};
 
-अटल काष्ठा pinctrl_desc rzn1_pinctrl_desc = अणु
+static struct pinctrl_desc rzn1_pinctrl_desc = {
 	.pctlops = &rzn1_pctrl_ops,
 	.pmxops = &rzn1_pmx_ops,
 	.confops = &rzn1_pinconf_ops,
 	.owner = THIS_MODULE,
-पूर्ण;
+};
 
-अटल पूर्णांक rzn1_pinctrl_parse_groups(काष्ठा device_node *np,
-				     काष्ठा rzn1_pin_group *grp,
-				     काष्ठा rzn1_pinctrl *ipctl)
-अणु
-	स्थिर __be32 *list;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक size;
+static int rzn1_pinctrl_parse_groups(struct device_node *np,
+				     struct rzn1_pin_group *grp,
+				     struct rzn1_pinctrl *ipctl)
+{
+	const __be32 *list;
+	unsigned int i;
+	int size;
 
 	dev_dbg(ipctl->dev, "%s: %s\n", __func__, np->name);
 
@@ -696,194 +695,194 @@ out:
 	grp->name = np->name;
 
 	/*
-	 * The binding क्रमmat is
+	 * The binding format is
 	 *	pinmux = <PIN_FUNC_ID CONFIG ...>,
-	 * करो sanity check and calculate pins number
+	 * do sanity check and calculate pins number
 	 */
 	list = of_get_property(np, RZN1_PINS_PROP, &size);
-	अगर (!list) अणु
+	if (!list) {
 		dev_err(ipctl->dev,
 			"no " RZN1_PINS_PROP " property in node %pOF\n", np);
 
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!size) अणु
+	if (!size) {
 		dev_err(ipctl->dev, "Invalid " RZN1_PINS_PROP " in node %pOF\n",
 			np);
 
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	grp->npins = size / माप(list[0]);
-	grp->pin_ids = devm_kदो_स्मृति_array(ipctl->dev,
-					  grp->npins, माप(grp->pin_ids[0]),
+	grp->npins = size / sizeof(list[0]);
+	grp->pin_ids = devm_kmalloc_array(ipctl->dev,
+					  grp->npins, sizeof(grp->pin_ids[0]),
 					  GFP_KERNEL);
-	grp->pins = devm_kदो_स्मृति_array(ipctl->dev,
-				       grp->npins, माप(grp->pins[0]),
+	grp->pins = devm_kmalloc_array(ipctl->dev,
+				       grp->npins, sizeof(grp->pins[0]),
 				       GFP_KERNEL);
-	अगर (!grp->pin_ids || !grp->pins)
-		वापस -ENOMEM;
+	if (!grp->pin_ids || !grp->pins)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < grp->npins; i++) अणु
+	for (i = 0; i < grp->npins; i++) {
 		u32 pin_id = be32_to_cpu(*list++);
 
 		grp->pins[i] = pin_id & 0xff;
 		grp->pin_ids[i] = (pin_id >> 8) & 0x7f;
-	पूर्ण
+	}
 
-	वापस grp->npins;
-पूर्ण
+	return grp->npins;
+}
 
-अटल पूर्णांक rzn1_pinctrl_count_function_groups(काष्ठा device_node *np)
-अणु
-	काष्ठा device_node *child;
-	पूर्णांक count = 0;
+static int rzn1_pinctrl_count_function_groups(struct device_node *np)
+{
+	struct device_node *child;
+	int count = 0;
 
-	अगर (of_property_count_u32_elems(np, RZN1_PINS_PROP) > 0)
+	if (of_property_count_u32_elems(np, RZN1_PINS_PROP) > 0)
 		count++;
 
-	क्रम_each_child_of_node(np, child) अणु
-		अगर (of_property_count_u32_elems(child, RZN1_PINS_PROP) > 0)
+	for_each_child_of_node(np, child) {
+		if (of_property_count_u32_elems(child, RZN1_PINS_PROP) > 0)
 			count++;
-	पूर्ण
+	}
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल पूर्णांक rzn1_pinctrl_parse_functions(काष्ठा device_node *np,
-					काष्ठा rzn1_pinctrl *ipctl,
-					अचिन्हित पूर्णांक index)
-अणु
-	काष्ठा rzn1_pmx_func *func;
-	काष्ठा rzn1_pin_group *grp;
-	काष्ठा device_node *child;
-	अचिन्हित पूर्णांक i = 0;
-	पूर्णांक ret;
+static int rzn1_pinctrl_parse_functions(struct device_node *np,
+					struct rzn1_pinctrl *ipctl,
+					unsigned int index)
+{
+	struct rzn1_pmx_func *func;
+	struct rzn1_pin_group *grp;
+	struct device_node *child;
+	unsigned int i = 0;
+	int ret;
 
 	func = &ipctl->functions[index];
 
 	/* Initialise function */
 	func->name = np->name;
 	func->num_groups = rzn1_pinctrl_count_function_groups(np);
-	अगर (func->num_groups == 0) अणु
+	if (func->num_groups == 0) {
 		dev_err(ipctl->dev, "no groups defined in %pOF\n", np);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	dev_dbg(ipctl->dev, "function %s has %d groups\n",
 		np->name, func->num_groups);
 
-	func->groups = devm_kदो_स्मृति_array(ipctl->dev,
-					  func->num_groups, माप(अक्षर *),
+	func->groups = devm_kmalloc_array(ipctl->dev,
+					  func->num_groups, sizeof(char *),
 					  GFP_KERNEL);
-	अगर (!func->groups)
-		वापस -ENOMEM;
+	if (!func->groups)
+		return -ENOMEM;
 
-	अगर (of_property_count_u32_elems(np, RZN1_PINS_PROP) > 0) अणु
+	if (of_property_count_u32_elems(np, RZN1_PINS_PROP) > 0) {
 		func->groups[i] = np->name;
 		grp = &ipctl->groups[ipctl->ngroups];
 		grp->func = func->name;
 		ret = rzn1_pinctrl_parse_groups(np, grp, ipctl);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 		i++;
 		ipctl->ngroups++;
-	पूर्ण
+	}
 
-	क्रम_each_child_of_node(np, child) अणु
+	for_each_child_of_node(np, child) {
 		func->groups[i] = child->name;
 		grp = &ipctl->groups[ipctl->ngroups];
 		grp->func = func->name;
 		ret = rzn1_pinctrl_parse_groups(child, grp, ipctl);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			of_node_put(child);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		i++;
 		ipctl->ngroups++;
-	पूर्ण
+	}
 
 	dev_dbg(ipctl->dev, "function %s parsed %u/%u groups\n",
 		np->name, i, func->num_groups);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rzn1_pinctrl_probe_dt(काष्ठा platक्रमm_device *pdev,
-				 काष्ठा rzn1_pinctrl *ipctl)
-अणु
-	काष्ठा device_node *np = pdev->dev.of_node;
-	काष्ठा device_node *child;
-	अचिन्हित पूर्णांक maxgroups = 0;
-	अचिन्हित पूर्णांक i = 0;
-	पूर्णांक nfuncs = 0;
-	पूर्णांक ret;
+static int rzn1_pinctrl_probe_dt(struct platform_device *pdev,
+				 struct rzn1_pinctrl *ipctl)
+{
+	struct device_node *np = pdev->dev.of_node;
+	struct device_node *child;
+	unsigned int maxgroups = 0;
+	unsigned int i = 0;
+	int nfuncs = 0;
+	int ret;
 
 	nfuncs = of_get_child_count(np);
-	अगर (nfuncs <= 0)
-		वापस 0;
+	if (nfuncs <= 0)
+		return 0;
 
 	ipctl->nfunctions = nfuncs;
-	ipctl->functions = devm_kदो_स्मृति_array(&pdev->dev, nfuncs,
-					      माप(*ipctl->functions),
+	ipctl->functions = devm_kmalloc_array(&pdev->dev, nfuncs,
+					      sizeof(*ipctl->functions),
 					      GFP_KERNEL);
-	अगर (!ipctl->functions)
-		वापस -ENOMEM;
+	if (!ipctl->functions)
+		return -ENOMEM;
 
 	ipctl->ngroups = 0;
-	क्रम_each_child_of_node(np, child)
+	for_each_child_of_node(np, child)
 		maxgroups += rzn1_pinctrl_count_function_groups(child);
 
-	ipctl->groups = devm_kदो_स्मृति_array(&pdev->dev,
+	ipctl->groups = devm_kmalloc_array(&pdev->dev,
 					   maxgroups,
-					   माप(*ipctl->groups),
+					   sizeof(*ipctl->groups),
 					   GFP_KERNEL);
-	अगर (!ipctl->groups)
-		वापस -ENOMEM;
+	if (!ipctl->groups)
+		return -ENOMEM;
 
-	क्रम_each_child_of_node(np, child) अणु
+	for_each_child_of_node(np, child) {
 		ret = rzn1_pinctrl_parse_functions(child, ipctl, i++);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			of_node_put(child);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rzn1_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा rzn1_pinctrl *ipctl;
-	काष्ठा resource *res;
-	पूर्णांक ret;
+static int rzn1_pinctrl_probe(struct platform_device *pdev)
+{
+	struct rzn1_pinctrl *ipctl;
+	struct resource *res;
+	int ret;
 
-	/* Create state holders etc क्रम this driver */
-	ipctl = devm_kzalloc(&pdev->dev, माप(*ipctl), GFP_KERNEL);
-	अगर (!ipctl)
-		वापस -ENOMEM;
+	/* Create state holders etc for this driver */
+	ipctl = devm_kzalloc(&pdev->dev, sizeof(*ipctl), GFP_KERNEL);
+	if (!ipctl)
+		return -ENOMEM;
 
 	ipctl->mdio_func[0] = -1;
 	ipctl->mdio_func[1] = -1;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	ipctl->lev1_protect_phys = (u32)res->start + 0x400;
 	ipctl->lev1 = devm_ioremap_resource(&pdev->dev, res);
-	अगर (IS_ERR(ipctl->lev1))
-		वापस PTR_ERR(ipctl->lev1);
+	if (IS_ERR(ipctl->lev1))
+		return PTR_ERR(ipctl->lev1);
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 1);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 1);
 	ipctl->lev2_protect_phys = (u32)res->start + 0x400;
 	ipctl->lev2 = devm_ioremap_resource(&pdev->dev, res);
-	अगर (IS_ERR(ipctl->lev2))
-		वापस PTR_ERR(ipctl->lev2);
+	if (IS_ERR(ipctl->lev2))
+		return PTR_ERR(ipctl->lev2);
 
-	ipctl->clk = devm_clk_get(&pdev->dev, शून्य);
-	अगर (IS_ERR(ipctl->clk))
-		वापस PTR_ERR(ipctl->clk);
+	ipctl->clk = devm_clk_get(&pdev->dev, NULL);
+	if (IS_ERR(ipctl->clk))
+		return PTR_ERR(ipctl->clk);
 	ret = clk_prepare_enable(ipctl->clk);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ipctl->dev = &pdev->dev;
 	rzn1_pinctrl_desc.name = dev_name(&pdev->dev);
@@ -891,63 +890,63 @@ out:
 	rzn1_pinctrl_desc.npins = ARRAY_SIZE(rzn1_pins);
 
 	ret = rzn1_pinctrl_probe_dt(pdev, ipctl);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "fail to probe dt properties\n");
-		जाओ err_clk;
-	पूर्ण
+		goto err_clk;
+	}
 
-	platक्रमm_set_drvdata(pdev, ipctl);
+	platform_set_drvdata(pdev, ipctl);
 
-	ret = devm_pinctrl_रेजिस्टर_and_init(&pdev->dev, &rzn1_pinctrl_desc,
+	ret = devm_pinctrl_register_and_init(&pdev->dev, &rzn1_pinctrl_desc,
 					     ipctl, &ipctl->pctl);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "could not register rzn1 pinctrl driver\n");
-		जाओ err_clk;
-	पूर्ण
+		goto err_clk;
+	}
 
 	ret = pinctrl_enable(ipctl->pctl);
-	अगर (ret)
-		जाओ err_clk;
+	if (ret)
+		goto err_clk;
 
 	dev_info(&pdev->dev, "probed\n");
 
-	वापस 0;
+	return 0;
 
 err_clk:
 	clk_disable_unprepare(ipctl->clk);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक rzn1_pinctrl_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा rzn1_pinctrl *ipctl = platक्रमm_get_drvdata(pdev);
+static int rzn1_pinctrl_remove(struct platform_device *pdev)
+{
+	struct rzn1_pinctrl *ipctl = platform_get_drvdata(pdev);
 
 	clk_disable_unprepare(ipctl->clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id rzn1_pinctrl_match[] = अणु
-	अणु .compatible = "renesas,rzn1-pinctrl", पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id rzn1_pinctrl_match[] = {
+	{ .compatible = "renesas,rzn1-pinctrl", },
+	{}
+};
 MODULE_DEVICE_TABLE(of, rzn1_pinctrl_match);
 
-अटल काष्ठा platक्रमm_driver rzn1_pinctrl_driver = अणु
+static struct platform_driver rzn1_pinctrl_driver = {
 	.probe	= rzn1_pinctrl_probe,
-	.हटाओ = rzn1_pinctrl_हटाओ,
-	.driver	= अणु
+	.remove = rzn1_pinctrl_remove,
+	.driver	= {
 		.name		= "rzn1-pinctrl",
 		.of_match_table	= rzn1_pinctrl_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init _pinctrl_drv_रेजिस्टर(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&rzn1_pinctrl_driver);
-पूर्ण
-subsys_initcall(_pinctrl_drv_रेजिस्टर);
+static int __init _pinctrl_drv_register(void)
+{
+	return platform_driver_register(&rzn1_pinctrl_driver);
+}
+subsys_initcall(_pinctrl_drv_register);
 
 MODULE_AUTHOR("Phil Edworthy <phil.edworthy@renesas.com>");
 MODULE_DESCRIPTION("Renesas RZ/N1 pinctrl driver");

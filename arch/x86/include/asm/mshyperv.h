@@ -1,78 +1,77 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_X86_MSHYPER_H
-#घोषणा _ASM_X86_MSHYPER_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_X86_MSHYPER_H
+#define _ASM_X86_MSHYPER_H
 
-#समावेश <linux/types.h>
-#समावेश <linux/nmi.h>
-#समावेश <linux/msi.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/hyperv-tlfs.h>
-#समावेश <यंत्र/nospec-branch.h>
-#समावेश <यंत्र/paravirt.h>
-#समावेश <यंत्र/mshyperv.h>
+#include <linux/types.h>
+#include <linux/nmi.h>
+#include <linux/msi.h>
+#include <asm/io.h>
+#include <asm/hyperv-tlfs.h>
+#include <asm/nospec-branch.h>
+#include <asm/paravirt.h>
+#include <asm/mshyperv.h>
 
-प्रकार पूर्णांक (*hyperv_fill_flush_list_func)(
-		काष्ठा hv_guest_mapping_flush_list *flush,
-		व्योम *data);
+typedef int (*hyperv_fill_flush_list_func)(
+		struct hv_guest_mapping_flush_list *flush,
+		void *data);
 
-अटल अंतरभूत व्योम hv_set_रेजिस्टर(अचिन्हित पूर्णांक reg, u64 value)
-अणु
+static inline void hv_set_register(unsigned int reg, u64 value)
+{
 	wrmsrl(reg, value);
-पूर्ण
+}
 
-अटल अंतरभूत u64 hv_get_रेजिस्टर(अचिन्हित पूर्णांक reg)
-अणु
+static inline u64 hv_get_register(unsigned int reg)
+{
 	u64 value;
 
 	rdmsrl(reg, value);
-	वापस value;
-पूर्ण
+	return value;
+}
 
-#घोषणा hv_get_raw_समयr() rdtsc_ordered()
+#define hv_get_raw_timer() rdtsc_ordered()
 
-व्योम hyperv_vector_handler(काष्ठा pt_regs *regs);
+void hyperv_vector_handler(struct pt_regs *regs);
 
-#अगर IS_ENABLED(CONFIG_HYPERV)
-बाह्य पूर्णांक hyperv_init_cpuhp;
+#if IS_ENABLED(CONFIG_HYPERV)
+extern int hyperv_init_cpuhp;
 
-बाह्य व्योम *hv_hypercall_pg;
-बाह्य व्योम  __percpu  **hyperv_pcpu_input_arg;
-बाह्य व्योम  __percpu  **hyperv_pcpu_output_arg;
+extern void *hv_hypercall_pg;
+extern void  __percpu  **hyperv_pcpu_input_arg;
+extern void  __percpu  **hyperv_pcpu_output_arg;
 
-बाह्य u64 hv_current_partition_id;
+extern u64 hv_current_partition_id;
 
-पूर्णांक hv_call_deposit_pages(पूर्णांक node, u64 partition_id, u32 num_pages);
-पूर्णांक hv_call_add_logical_proc(पूर्णांक node, u32 lp_index, u32 acpi_id);
-पूर्णांक hv_call_create_vp(पूर्णांक node, u64 partition_id, u32 vp_index, u32 flags);
+int hv_call_deposit_pages(int node, u64 partition_id, u32 num_pages);
+int hv_call_add_logical_proc(int node, u32 lp_index, u32 acpi_id);
+int hv_call_create_vp(int node, u64 partition_id, u32 vp_index, u32 flags);
 
-अटल अंतरभूत u64 hv_करो_hypercall(u64 control, व्योम *input, व्योम *output)
-अणु
+static inline u64 hv_do_hypercall(u64 control, void *input, void *output)
+{
 	u64 input_address = input ? virt_to_phys(input) : 0;
 	u64 output_address = output ? virt_to_phys(output) : 0;
 	u64 hv_status;
 
-#अगर_घोषित CONFIG_X86_64
-	अगर (!hv_hypercall_pg)
-		वापस U64_MAX;
+#ifdef CONFIG_X86_64
+	if (!hv_hypercall_pg)
+		return U64_MAX;
 
-	__यंत्र__ __अस्थिर__("mov %4, %%r8\n"
+	__asm__ __volatile__("mov %4, %%r8\n"
 			     CALL_NOSPEC
 			     : "=a" (hv_status), ASM_CALL_CONSTRAINT,
 			       "+c" (control), "+d" (input_address)
 			     :  "r" (output_address),
 				THUNK_TARGET(hv_hypercall_pg)
 			     : "cc", "memory", "r8", "r9", "r10", "r11");
-#अन्यथा
+#else
 	u32 input_address_hi = upper_32_bits(input_address);
 	u32 input_address_lo = lower_32_bits(input_address);
 	u32 output_address_hi = upper_32_bits(output_address);
 	u32 output_address_lo = lower_32_bits(output_address);
 
-	अगर (!hv_hypercall_pg)
-		वापस U64_MAX;
+	if (!hv_hypercall_pg)
+		return U64_MAX;
 
-	__यंत्र__ __अस्थिर__(CALL_NOSPEC
+	__asm__ __volatile__(CALL_NOSPEC
 			     : "=A" (hv_status),
 			       "+c" (input_address_lo), ASM_CALL_CONSTRAINT
 			     : "A" (control),
@@ -80,29 +79,29 @@
 			       "D"(output_address_hi), "S"(output_address_lo),
 			       THUNK_TARGET(hv_hypercall_pg)
 			     : "cc", "memory");
-#पूर्ण_अगर /* !x86_64 */
-	वापस hv_status;
-पूर्ण
+#endif /* !x86_64 */
+	return hv_status;
+}
 
 /* Fast hypercall with 8 bytes of input and no output */
-अटल अंतरभूत u64 hv_करो_fast_hypercall8(u16 code, u64 input1)
-अणु
+static inline u64 hv_do_fast_hypercall8(u16 code, u64 input1)
+{
 	u64 hv_status, control = (u64)code | HV_HYPERCALL_FAST_BIT;
 
-#अगर_घोषित CONFIG_X86_64
-	अणु
-		__यंत्र__ __अस्थिर__(CALL_NOSPEC
+#ifdef CONFIG_X86_64
+	{
+		__asm__ __volatile__(CALL_NOSPEC
 				     : "=a" (hv_status), ASM_CALL_CONSTRAINT,
 				       "+c" (control), "+d" (input1)
 				     : THUNK_TARGET(hv_hypercall_pg)
 				     : "cc", "r8", "r9", "r10", "r11");
-	पूर्ण
-#अन्यथा
-	अणु
+	}
+#else
+	{
 		u32 input1_hi = upper_32_bits(input1);
 		u32 input1_lo = lower_32_bits(input1);
 
-		__यंत्र__ __अस्थिर__ (CALL_NOSPEC
+		__asm__ __volatile__ (CALL_NOSPEC
 				      : "=A"(hv_status),
 					"+c"(input1_lo),
 					ASM_CALL_CONSTRAINT
@@ -110,109 +109,109 @@
 					"b" (input1_hi),
 					THUNK_TARGET(hv_hypercall_pg)
 				      : "cc", "edi", "esi");
-	पूर्ण
-#पूर्ण_अगर
-		वापस hv_status;
-पूर्ण
+	}
+#endif
+		return hv_status;
+}
 
 /* Fast hypercall with 16 bytes of input */
-अटल अंतरभूत u64 hv_करो_fast_hypercall16(u16 code, u64 input1, u64 input2)
-अणु
+static inline u64 hv_do_fast_hypercall16(u16 code, u64 input1, u64 input2)
+{
 	u64 hv_status, control = (u64)code | HV_HYPERCALL_FAST_BIT;
 
-#अगर_घोषित CONFIG_X86_64
-	अणु
-		__यंत्र__ __अस्थिर__("mov %4, %%r8\n"
+#ifdef CONFIG_X86_64
+	{
+		__asm__ __volatile__("mov %4, %%r8\n"
 				     CALL_NOSPEC
 				     : "=a" (hv_status), ASM_CALL_CONSTRAINT,
 				       "+c" (control), "+d" (input1)
 				     : "r" (input2),
 				       THUNK_TARGET(hv_hypercall_pg)
 				     : "cc", "r8", "r9", "r10", "r11");
-	पूर्ण
-#अन्यथा
-	अणु
+	}
+#else
+	{
 		u32 input1_hi = upper_32_bits(input1);
 		u32 input1_lo = lower_32_bits(input1);
 		u32 input2_hi = upper_32_bits(input2);
 		u32 input2_lo = lower_32_bits(input2);
 
-		__यंत्र__ __अस्थिर__ (CALL_NOSPEC
+		__asm__ __volatile__ (CALL_NOSPEC
 				      : "=A"(hv_status),
 					"+c"(input1_lo), ASM_CALL_CONSTRAINT
 				      :	"A" (control), "b" (input1_hi),
 					"D"(input2_hi), "S"(input2_lo),
 					THUNK_TARGET(hv_hypercall_pg)
 				      : "cc");
-	पूर्ण
-#पूर्ण_अगर
-	वापस hv_status;
-पूर्ण
+	}
+#endif
+	return hv_status;
+}
 
-बाह्य काष्ठा hv_vp_assist_page **hv_vp_assist_page;
+extern struct hv_vp_assist_page **hv_vp_assist_page;
 
-अटल अंतरभूत काष्ठा hv_vp_assist_page *hv_get_vp_assist_page(अचिन्हित पूर्णांक cpu)
-अणु
-	अगर (!hv_vp_assist_page)
-		वापस शून्य;
+static inline struct hv_vp_assist_page *hv_get_vp_assist_page(unsigned int cpu)
+{
+	if (!hv_vp_assist_page)
+		return NULL;
 
-	वापस hv_vp_assist_page[cpu];
-पूर्ण
+	return hv_vp_assist_page[cpu];
+}
 
-व्योम __init hyperv_init(व्योम);
-व्योम hyperv_setup_mmu_ops(व्योम);
-व्योम set_hv_tscchange_cb(व्योम (*cb)(व्योम));
-व्योम clear_hv_tscchange_cb(व्योम);
-व्योम hyperv_stop_tsc_emulation(व्योम);
-पूर्णांक hyperv_flush_guest_mapping(u64 as);
-पूर्णांक hyperv_flush_guest_mapping_range(u64 as,
-		hyperv_fill_flush_list_func fill_func, व्योम *data);
-पूर्णांक hyperv_fill_flush_guest_mapping_list(
-		काष्ठा hv_guest_mapping_flush_list *flush,
+void __init hyperv_init(void);
+void hyperv_setup_mmu_ops(void);
+void set_hv_tscchange_cb(void (*cb)(void));
+void clear_hv_tscchange_cb(void);
+void hyperv_stop_tsc_emulation(void);
+int hyperv_flush_guest_mapping(u64 as);
+int hyperv_flush_guest_mapping_range(u64 as,
+		hyperv_fill_flush_list_func fill_func, void *data);
+int hyperv_fill_flush_guest_mapping_list(
+		struct hv_guest_mapping_flush_list *flush,
 		u64 start_gfn, u64 end_gfn);
 
-बाह्य bool hv_root_partition;
+extern bool hv_root_partition;
 
-#अगर_घोषित CONFIG_X86_64
-व्योम hv_apic_init(व्योम);
-व्योम __init hv_init_spinlocks(व्योम);
-bool hv_vcpu_is_preempted(पूर्णांक vcpu);
-#अन्यथा
-अटल अंतरभूत व्योम hv_apic_init(व्योम) अणुपूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_X86_64
+void hv_apic_init(void);
+void __init hv_init_spinlocks(void);
+bool hv_vcpu_is_preempted(int vcpu);
+#else
+static inline void hv_apic_init(void) {}
+#endif
 
-अटल अंतरभूत व्योम hv_set_msi_entry_from_desc(जोड़ hv_msi_entry *msi_entry,
-					      काष्ठा msi_desc *msi_desc)
-अणु
-	msi_entry->address.as_uपूर्णांक32 = msi_desc->msg.address_lo;
-	msi_entry->data.as_uपूर्णांक32 = msi_desc->msg.data;
-पूर्ण
+static inline void hv_set_msi_entry_from_desc(union hv_msi_entry *msi_entry,
+					      struct msi_desc *msi_desc)
+{
+	msi_entry->address.as_uint32 = msi_desc->msg.address_lo;
+	msi_entry->data.as_uint32 = msi_desc->msg.data;
+}
 
-काष्ठा irq_करोमुख्य *hv_create_pci_msi_करोमुख्य(व्योम);
+struct irq_domain *hv_create_pci_msi_domain(void);
 
-पूर्णांक hv_map_ioapic_पूर्णांकerrupt(पूर्णांक ioapic_id, bool level, पूर्णांक vcpu, पूर्णांक vector,
-		काष्ठा hv_पूर्णांकerrupt_entry *entry);
-पूर्णांक hv_unmap_ioapic_पूर्णांकerrupt(पूर्णांक ioapic_id, काष्ठा hv_पूर्णांकerrupt_entry *entry);
+int hv_map_ioapic_interrupt(int ioapic_id, bool level, int vcpu, int vector,
+		struct hv_interrupt_entry *entry);
+int hv_unmap_ioapic_interrupt(int ioapic_id, struct hv_interrupt_entry *entry);
 
-#अन्यथा /* CONFIG_HYPERV */
-अटल अंतरभूत व्योम hyperv_init(व्योम) अणुपूर्ण
-अटल अंतरभूत व्योम hyperv_setup_mmu_ops(व्योम) अणुपूर्ण
-अटल अंतरभूत व्योम set_hv_tscchange_cb(व्योम (*cb)(व्योम)) अणुपूर्ण
-अटल अंतरभूत व्योम clear_hv_tscchange_cb(व्योम) अणुपूर्ण
-अटल अंतरभूत व्योम hyperv_stop_tsc_emulation(व्योम) अणुपूर्ण;
-अटल अंतरभूत काष्ठा hv_vp_assist_page *hv_get_vp_assist_page(अचिन्हित पूर्णांक cpu)
-अणु
-	वापस शून्य;
-पूर्ण
-अटल अंतरभूत पूर्णांक hyperv_flush_guest_mapping(u64 as) अणु वापस -1; पूर्ण
-अटल अंतरभूत पूर्णांक hyperv_flush_guest_mapping_range(u64 as,
-		hyperv_fill_flush_list_func fill_func, व्योम *data)
-अणु
-	वापस -1;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_HYPERV */
+#else /* CONFIG_HYPERV */
+static inline void hyperv_init(void) {}
+static inline void hyperv_setup_mmu_ops(void) {}
+static inline void set_hv_tscchange_cb(void (*cb)(void)) {}
+static inline void clear_hv_tscchange_cb(void) {}
+static inline void hyperv_stop_tsc_emulation(void) {};
+static inline struct hv_vp_assist_page *hv_get_vp_assist_page(unsigned int cpu)
+{
+	return NULL;
+}
+static inline int hyperv_flush_guest_mapping(u64 as) { return -1; }
+static inline int hyperv_flush_guest_mapping_range(u64 as,
+		hyperv_fill_flush_list_func fill_func, void *data)
+{
+	return -1;
+}
+#endif /* CONFIG_HYPERV */
 
 
-#समावेश <यंत्र-generic/mshyperv.h>
+#include <asm-generic/mshyperv.h>
 
-#पूर्ण_अगर
+#endif

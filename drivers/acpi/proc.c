@@ -1,60 +1,59 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/export.h>
-#समावेश <linux/suspend.h>
-#समावेश <linux/bcd.h>
-#समावेश <linux/acpi.h>
-#समावेश <linux/uaccess.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/proc_fs.h>
+#include <linux/seq_file.h>
+#include <linux/export.h>
+#include <linux/suspend.h>
+#include <linux/bcd.h>
+#include <linux/acpi.h>
+#include <linux/uaccess.h>
 
-#समावेश "sleep.h"
-#समावेश "internal.h"
+#include "sleep.h"
+#include "internal.h"
 
 /*
- * this file provides support क्रम:
+ * this file provides support for:
  * /proc/acpi/wakeup
  */
 
-अटल पूर्णांक
-acpi_प्रणाली_wakeup_device_seq_show(काष्ठा seq_file *seq, व्योम *offset)
-अणु
-	काष्ठा acpi_device *dev, *पंचांगp;
+static int
+acpi_system_wakeup_device_seq_show(struct seq_file *seq, void *offset)
+{
+	struct acpi_device *dev, *tmp;
 
-	seq_म_लिखो(seq, "Device\tS-state\t  Status   Sysfs node\n");
+	seq_printf(seq, "Device\tS-state\t  Status   Sysfs node\n");
 
 	mutex_lock(&acpi_device_lock);
-	list_क्रम_each_entry_safe(dev, पंचांगp, &acpi_wakeup_device_list,
-				 wakeup_list) अणु
-		काष्ठा acpi_device_physical_node *entry;
+	list_for_each_entry_safe(dev, tmp, &acpi_wakeup_device_list,
+				 wakeup_list) {
+		struct acpi_device_physical_node *entry;
 
-		अगर (!dev->wakeup.flags.valid)
-			जारी;
+		if (!dev->wakeup.flags.valid)
+			continue;
 
-		seq_म_लिखो(seq, "%s\t  S%d\t",
+		seq_printf(seq, "%s\t  S%d\t",
 			   dev->pnp.bus_id,
 			   (u32) dev->wakeup.sleep_state);
 
 		mutex_lock(&dev->physical_node_lock);
 
-		अगर (!dev->physical_node_count) अणु
-			seq_म_लिखो(seq, "%c%-8s\n",
+		if (!dev->physical_node_count) {
+			seq_printf(seq, "%c%-8s\n",
 				dev->wakeup.flags.valid ? '*' : ' ',
 				device_may_wakeup(&dev->dev) ?
 					"enabled" : "disabled");
-		पूर्ण अन्यथा अणु
-			काष्ठा device *ldev;
-			list_क्रम_each_entry(entry, &dev->physical_node_list,
-					node) अणु
+		} else {
+			struct device *ldev;
+			list_for_each_entry(entry, &dev->physical_node_list,
+					node) {
 				ldev = get_device(entry->dev);
-				अगर (!ldev)
-					जारी;
+				if (!ldev)
+					continue;
 
-				अगर (&entry->node !=
+				if (&entry->node !=
 						dev->physical_node_list.next)
-					seq_म_लिखो(seq, "\t\t");
+					seq_printf(seq, "\t\t");
 
-				seq_म_लिखो(seq, "%c%-8s  %s:%s\n",
+				seq_printf(seq, "%c%-8s  %s:%s\n",
 					dev->wakeup.flags.valid ? '*' : ' ',
 					(device_may_wakeup(&dev->dev) ||
 					device_may_wakeup(ldev)) ?
@@ -62,86 +61,86 @@ acpi_प्रणाली_wakeup_device_seq_show(काष्ठा seq_file *s
 					ldev->bus ? ldev->bus->name :
 					"no-bus", dev_name(ldev));
 				put_device(ldev);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		mutex_unlock(&dev->physical_node_lock);
-	पूर्ण
+	}
 	mutex_unlock(&acpi_device_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम physical_device_enable_wakeup(काष्ठा acpi_device *adev)
-अणु
-	काष्ठा acpi_device_physical_node *entry;
+static void physical_device_enable_wakeup(struct acpi_device *adev)
+{
+	struct acpi_device_physical_node *entry;
 
 	mutex_lock(&adev->physical_node_lock);
 
-	list_क्रम_each_entry(entry,
+	list_for_each_entry(entry,
 		&adev->physical_node_list, node)
-		अगर (entry->dev && device_can_wakeup(entry->dev)) अणु
+		if (entry->dev && device_can_wakeup(entry->dev)) {
 			bool enable = !device_may_wakeup(entry->dev);
 			device_set_wakeup_enable(entry->dev, enable);
-		पूर्ण
+		}
 
 	mutex_unlock(&adev->physical_node_lock);
-पूर्ण
+}
 
-अटल sमाप_प्रकार
-acpi_प्रणाली_ग_लिखो_wakeup_device(काष्ठा file *file,
-				स्थिर अक्षर __user * buffer,
-				माप_प्रकार count, loff_t * ppos)
-अणु
-	काष्ठा acpi_device *dev, *पंचांगp;
-	अक्षर strbuf[5];
-	अक्षर str[5] = "";
+static ssize_t
+acpi_system_write_wakeup_device(struct file *file,
+				const char __user * buffer,
+				size_t count, loff_t * ppos)
+{
+	struct acpi_device *dev, *tmp;
+	char strbuf[5];
+	char str[5] = "";
 
-	अगर (count > 4)
+	if (count > 4)
 		count = 4;
 
-	अगर (copy_from_user(strbuf, buffer, count))
-		वापस -EFAULT;
+	if (copy_from_user(strbuf, buffer, count))
+		return -EFAULT;
 	strbuf[count] = '\0';
-	माला_पूछो(strbuf, "%s", str);
+	sscanf(strbuf, "%s", str);
 
 	mutex_lock(&acpi_device_lock);
-	list_क्रम_each_entry_safe(dev, पंचांगp, &acpi_wakeup_device_list,
-				 wakeup_list) अणु
-		अगर (!dev->wakeup.flags.valid)
-			जारी;
+	list_for_each_entry_safe(dev, tmp, &acpi_wakeup_device_list,
+				 wakeup_list) {
+		if (!dev->wakeup.flags.valid)
+			continue;
 
-		अगर (!म_भेदन(dev->pnp.bus_id, str, 4)) अणु
-			अगर (device_can_wakeup(&dev->dev)) अणु
+		if (!strncmp(dev->pnp.bus_id, str, 4)) {
+			if (device_can_wakeup(&dev->dev)) {
 				bool enable = !device_may_wakeup(&dev->dev);
 				device_set_wakeup_enable(&dev->dev, enable);
-			पूर्ण अन्यथा अणु
+			} else {
 				physical_device_enable_wakeup(dev);
-			पूर्ण
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			}
+			break;
+		}
+	}
 	mutex_unlock(&acpi_device_lock);
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल पूर्णांक
-acpi_प्रणाली_wakeup_device_खोलो_fs(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस single_खोलो(file, acpi_प्रणाली_wakeup_device_seq_show,
+static int
+acpi_system_wakeup_device_open_fs(struct inode *inode, struct file *file)
+{
+	return single_open(file, acpi_system_wakeup_device_seq_show,
 			   PDE_DATA(inode));
-पूर्ण
+}
 
-अटल स्थिर काष्ठा proc_ops acpi_प्रणाली_wakeup_device_proc_ops = अणु
-	.proc_खोलो	= acpi_प्रणाली_wakeup_device_खोलो_fs,
-	.proc_पढ़ो	= seq_पढ़ो,
-	.proc_ग_लिखो	= acpi_प्रणाली_ग_लिखो_wakeup_device,
+static const struct proc_ops acpi_system_wakeup_device_proc_ops = {
+	.proc_open	= acpi_system_wakeup_device_open_fs,
+	.proc_read	= seq_read,
+	.proc_write	= acpi_system_write_wakeup_device,
 	.proc_lseek	= seq_lseek,
 	.proc_release	= single_release,
-पूर्ण;
+};
 
-व्योम __init acpi_sleep_proc_init(व्योम)
-अणु
+void __init acpi_sleep_proc_init(void)
+{
 	/* 'wakeup device' [R/W] */
 	proc_create("wakeup", S_IFREG | S_IRUGO | S_IWUSR,
-		    acpi_root_dir, &acpi_प्रणाली_wakeup_device_proc_ops);
-पूर्ण
+		    acpi_root_dir, &acpi_system_wakeup_device_proc_ops);
+}

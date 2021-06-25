@@ -1,59 +1,58 @@
-<शैली गुरु>
 /*
- * Architecture specअगरic parts of the Floppy driver
+ * Architecture specific parts of the Floppy driver
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 1995
  */
-#अगर_अघोषित __ASM_ALPHA_FLOPPY_H
-#घोषणा __ASM_ALPHA_FLOPPY_H
+#ifndef __ASM_ALPHA_FLOPPY_H
+#define __ASM_ALPHA_FLOPPY_H
 
 
-#घोषणा fd_inb(base, reg)		inb_p((base) + (reg))
-#घोषणा fd_outb(value, base, reg)	outb_p(value, (base) + (reg))
+#define fd_inb(base, reg)		inb_p((base) + (reg))
+#define fd_outb(value, base, reg)	outb_p(value, (base) + (reg))
 
-#घोषणा fd_enable_dma()         enable_dma(FLOPPY_DMA)
-#घोषणा fd_disable_dma()        disable_dma(FLOPPY_DMA)
-#घोषणा fd_request_dma()        request_dma(FLOPPY_DMA,"floppy")
-#घोषणा fd_मुक्त_dma()           मुक्त_dma(FLOPPY_DMA)
-#घोषणा fd_clear_dma_ff()       clear_dma_ff(FLOPPY_DMA)
-#घोषणा fd_set_dma_mode(mode)   set_dma_mode(FLOPPY_DMA,mode)
-#घोषणा fd_set_dma_addr(addr)   set_dma_addr(FLOPPY_DMA,virt_to_bus(addr))
-#घोषणा fd_set_dma_count(count) set_dma_count(FLOPPY_DMA,count)
-#घोषणा fd_enable_irq()         enable_irq(FLOPPY_IRQ)
-#घोषणा fd_disable_irq()        disable_irq(FLOPPY_IRQ)
-#घोषणा fd_request_irq()        request_irq(FLOPPY_IRQ, floppy_पूर्णांकerrupt,\
-					    0, "floppy", शून्य)
-#घोषणा fd_मुक्त_irq()           मुक्त_irq(FLOPPY_IRQ, शून्य)
+#define fd_enable_dma()         enable_dma(FLOPPY_DMA)
+#define fd_disable_dma()        disable_dma(FLOPPY_DMA)
+#define fd_request_dma()        request_dma(FLOPPY_DMA,"floppy")
+#define fd_free_dma()           free_dma(FLOPPY_DMA)
+#define fd_clear_dma_ff()       clear_dma_ff(FLOPPY_DMA)
+#define fd_set_dma_mode(mode)   set_dma_mode(FLOPPY_DMA,mode)
+#define fd_set_dma_addr(addr)   set_dma_addr(FLOPPY_DMA,virt_to_bus(addr))
+#define fd_set_dma_count(count) set_dma_count(FLOPPY_DMA,count)
+#define fd_enable_irq()         enable_irq(FLOPPY_IRQ)
+#define fd_disable_irq()        disable_irq(FLOPPY_IRQ)
+#define fd_request_irq()        request_irq(FLOPPY_IRQ, floppy_interrupt,\
+					    0, "floppy", NULL)
+#define fd_free_irq()           free_irq(FLOPPY_IRQ, NULL)
 
-#अगर_घोषित CONFIG_PCI
+#ifdef CONFIG_PCI
 
-#समावेश <linux/pci.h>
+#include <linux/pci.h>
 
-#घोषणा fd_dma_setup(addr,size,mode,io) alpha_fd_dma_setup(addr,size,mode,io)
+#define fd_dma_setup(addr,size,mode,io) alpha_fd_dma_setup(addr,size,mode,io)
 
-अटल __अंतरभूत__ पूर्णांक 
-alpha_fd_dma_setup(अक्षर *addr, अचिन्हित दीर्घ size, पूर्णांक mode, पूर्णांक io)
-अणु
-	अटल अचिन्हित दीर्घ prev_size;
-	अटल dma_addr_t bus_addr = 0;
-	अटल अक्षर *prev_addr;
-	अटल पूर्णांक prev_dir;
-	पूर्णांक dir;
+static __inline__ int 
+alpha_fd_dma_setup(char *addr, unsigned long size, int mode, int io)
+{
+	static unsigned long prev_size;
+	static dma_addr_t bus_addr = 0;
+	static char *prev_addr;
+	static int prev_dir;
+	int dir;
 
 	dir = (mode != DMA_MODE_READ) ? PCI_DMA_FROMDEVICE : PCI_DMA_TODEVICE;
 
-	अगर (bus_addr 
-	    && (addr != prev_addr || size != prev_size || dir != prev_dir)) अणु
-		/* dअगरferent from last समय -- unmap prev */
+	if (bus_addr 
+	    && (addr != prev_addr || size != prev_size || dir != prev_dir)) {
+		/* different from last time -- unmap prev */
 		pci_unmap_single(isa_bridge, bus_addr, prev_size, prev_dir);
 		bus_addr = 0;
-	पूर्ण
+	}
 
-	अगर (!bus_addr)	/* need to map it */
+	if (!bus_addr)	/* need to map it */
 		bus_addr = pci_map_single(isa_bridge, addr, size, dir);
 
 	/* remember this one as prev */
@@ -65,50 +64,50 @@ alpha_fd_dma_setup(अक्षर *addr, अचिन्हित दीर्�
 	fd_set_dma_mode(mode);
 	set_dma_addr(FLOPPY_DMA, bus_addr);
 	fd_set_dma_count(size);
-	भव_dma_port = io;
+	virtual_dma_port = io;
 	fd_enable_dma();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#पूर्ण_अगर /* CONFIG_PCI */
+#endif /* CONFIG_PCI */
 
-__अंतरभूत__ व्योम भव_dma_init(व्योम)
-अणु
-	/* Nothing to करो on an Alpha */
-पूर्ण
+__inline__ void virtual_dma_init(void)
+{
+	/* Nothing to do on an Alpha */
+}
 
-अटल पूर्णांक FDC1 = 0x3f0;
-अटल पूर्णांक FDC2 = -1;
+static int FDC1 = 0x3f0;
+static int FDC2 = -1;
 
 /*
- * Again, the CMOS inक्रमmation करोesn't work on the alpha..
+ * Again, the CMOS information doesn't work on the alpha..
  */
-#घोषणा FLOPPY0_TYPE 6
-#घोषणा FLOPPY1_TYPE 0
+#define FLOPPY0_TYPE 6
+#define FLOPPY1_TYPE 0
 
-#घोषणा N_FDC 2
-#घोषणा N_DRIVE 8
+#define N_FDC 2
+#define N_DRIVE 8
 
 /*
  * Most Alphas have no problems with floppy DMA crossing 64k borders,
- * except क्रम certain ones, like XL and RUFFIAN.
+ * except for certain ones, like XL and RUFFIAN.
  *
  * However, the test is simple and fast, and this *is* floppy, after all,
- * so we करो it क्रम all platक्रमms, just to make sure.
+ * so we do it for all platforms, just to make sure.
  *
  * This is advantageous in other circumstances as well, as in moving
- * about the PCI DMA winकरोws and क्रमcing the floppy to start करोing
- * scatter-gather when it never had beक्रमe, and there *is* a problem
- * on that platक्रमm... ;-पूर्ण
+ * about the PCI DMA windows and forcing the floppy to start doing
+ * scatter-gather when it never had before, and there *is* a problem
+ * on that platform... ;-}
  */
 
-अटल अंतरभूत अचिन्हित दीर्घ CROSS_64KB(व्योम *a, अचिन्हित दीर्घ s)
-अणु
-	अचिन्हित दीर्घ p = (अचिन्हित दीर्घ)a;
-	वापस ((p + s - 1) ^ p) & ~0xffffUL;
-पूर्ण
+static inline unsigned long CROSS_64KB(void *a, unsigned long s)
+{
+	unsigned long p = (unsigned long)a;
+	return ((p + s - 1) ^ p) & ~0xffffUL;
+}
 
-#घोषणा EXTRA_FLOPPY_PARAMS
+#define EXTRA_FLOPPY_PARAMS
 
-#पूर्ण_अगर /* __ASM_ALPHA_FLOPPY_H */
+#endif /* __ASM_ALPHA_FLOPPY_H */

@@ -1,43 +1,42 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __IDE_FLOPPY_H
-#घोषणा __IDE_FLOPPY_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __IDE_FLOPPY_H
+#define __IDE_FLOPPY_H
 
-#समावेश "ide-gd.h"
+#include "ide-gd.h"
 
-#अगर_घोषित CONFIG_IDE_GD_ATAPI
+#ifdef CONFIG_IDE_GD_ATAPI
 /*
  * Pages of the SELECT SENSE / MODE SENSE packet commands.
  * See SFF-8070i spec.
  */
-#घोषणा	IDEFLOPPY_CAPABILITIES_PAGE	0x1b
-#घोषणा IDEFLOPPY_FLEXIBLE_DISK_PAGE	0x05
+#define	IDEFLOPPY_CAPABILITIES_PAGE	0x1b
+#define IDEFLOPPY_FLEXIBLE_DISK_PAGE	0x05
 
-/* IOCTLs used in low-level क्रमmatting. */
-#घोषणा	IDEFLOPPY_IOCTL_FORMAT_SUPPORTED	0x4600
-#घोषणा	IDEFLOPPY_IOCTL_FORMAT_GET_CAPACITY	0x4601
-#घोषणा	IDEFLOPPY_IOCTL_FORMAT_START		0x4602
-#घोषणा IDEFLOPPY_IOCTL_FORMAT_GET_PROGRESS	0x4603
+/* IOCTLs used in low-level formatting. */
+#define	IDEFLOPPY_IOCTL_FORMAT_SUPPORTED	0x4600
+#define	IDEFLOPPY_IOCTL_FORMAT_GET_CAPACITY	0x4601
+#define	IDEFLOPPY_IOCTL_FORMAT_START		0x4602
+#define IDEFLOPPY_IOCTL_FORMAT_GET_PROGRESS	0x4603
 
 /* ide-floppy.c */
-बाह्य स्थिर काष्ठा ide_disk_ops ide_atapi_disk_ops;
-व्योम ide_floppy_create_mode_sense_cmd(काष्ठा ide_atapi_pc *, u8);
-व्योम ide_floppy_create_पढ़ो_capacity_cmd(काष्ठा ide_atapi_pc *);
+extern const struct ide_disk_ops ide_atapi_disk_ops;
+void ide_floppy_create_mode_sense_cmd(struct ide_atapi_pc *, u8);
+void ide_floppy_create_read_capacity_cmd(struct ide_atapi_pc *);
 
 /* ide-floppy_ioctl.c */
-पूर्णांक ide_floppy_ioctl(ide_drive_t *, काष्ठा block_device *, भ_शेषe_t,
-		     अचिन्हित पूर्णांक, अचिन्हित दीर्घ);
-पूर्णांक ide_floppy_compat_ioctl(ide_drive_t *, काष्ठा block_device *, भ_शेषe_t,
-			    अचिन्हित पूर्णांक, अचिन्हित दीर्घ);
+int ide_floppy_ioctl(ide_drive_t *, struct block_device *, fmode_t,
+		     unsigned int, unsigned long);
+int ide_floppy_compat_ioctl(ide_drive_t *, struct block_device *, fmode_t,
+			    unsigned int, unsigned long);
 
-#अगर_घोषित CONFIG_IDE_PROC_FS
+#ifdef CONFIG_IDE_PROC_FS
 /* ide-floppy_proc.c */
-बाह्य ide_proc_entry_t ide_floppy_proc[];
-बाह्य स्थिर काष्ठा ide_proc_devset ide_floppy_settings[];
-#पूर्ण_अगर
-#अन्यथा
-#घोषणा ide_floppy_proc		शून्य
-#घोषणा ide_floppy_settings	शून्य
-#पूर्ण_अगर
+extern ide_proc_entry_t ide_floppy_proc[];
+extern const struct ide_proc_devset ide_floppy_settings[];
+#endif
+#else
+#define ide_floppy_proc		NULL
+#define ide_floppy_settings	NULL
+#endif
 
-#पूर्ण_अगर /*__IDE_FLOPPY_H */
+#endif /*__IDE_FLOPPY_H */

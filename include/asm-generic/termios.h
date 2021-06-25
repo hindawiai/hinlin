@@ -1,109 +1,108 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_GENERIC_TERMIOS_H
-#घोषणा _ASM_GENERIC_TERMIOS_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_GENERIC_TERMIOS_H
+#define _ASM_GENERIC_TERMIOS_H
 
 
-#समावेश <linux/uaccess.h>
-#समावेश <uapi/यंत्र-generic/termios.h>
+#include <linux/uaccess.h>
+#include <uapi/asm-generic/termios.h>
 
-/*	पूर्णांकr=^C		quit=^\		erase=del	समाप्त=^U
-	eof=^D		vसमय=\0	vmin=\1		sxtc=\0
+/*	intr=^C		quit=^\		erase=del	kill=^U
+	eof=^D		vtime=\0	vmin=\1		sxtc=\0
 	start=^Q	stop=^S		susp=^Z		eol=\0
-	reprपूर्णांक=^R	discard=^U	werase=^W	lnext=^V
+	reprint=^R	discard=^U	werase=^W	lnext=^V
 	eol2=\0
 */
-#घोषणा INIT_C_CC "\003\034\177\025\004\0\1\0\021\023\032\0\022\017\027\026\0"
+#define INIT_C_CC "\003\034\177\025\004\0\1\0\021\023\032\0\022\017\027\026\0"
 
 /*
- * Translate a "termio" काष्ठाure पूर्णांकo a "termios". Ugh.
+ * Translate a "termio" structure into a "termios". Ugh.
  */
-अटल अंतरभूत पूर्णांक user_termio_to_kernel_termios(काष्ठा ktermios *termios,
-						स्थिर काष्ठा termio __user *termio)
-अणु
-	अचिन्हित लघु पंचांगp;
+static inline int user_termio_to_kernel_termios(struct ktermios *termios,
+						const struct termio __user *termio)
+{
+	unsigned short tmp;
 
-	अगर (get_user(पंचांगp, &termio->c_अगरlag) < 0)
-		जाओ fault;
-	termios->c_अगरlag = (0xffff0000 & termios->c_अगरlag) | पंचांगp;
+	if (get_user(tmp, &termio->c_iflag) < 0)
+		goto fault;
+	termios->c_iflag = (0xffff0000 & termios->c_iflag) | tmp;
 
-	अगर (get_user(पंचांगp, &termio->c_oflag) < 0)
-		जाओ fault;
-	termios->c_oflag = (0xffff0000 & termios->c_oflag) | पंचांगp;
+	if (get_user(tmp, &termio->c_oflag) < 0)
+		goto fault;
+	termios->c_oflag = (0xffff0000 & termios->c_oflag) | tmp;
 
-	अगर (get_user(पंचांगp, &termio->c_cflag) < 0)
-		जाओ fault;
-	termios->c_cflag = (0xffff0000 & termios->c_cflag) | पंचांगp;
+	if (get_user(tmp, &termio->c_cflag) < 0)
+		goto fault;
+	termios->c_cflag = (0xffff0000 & termios->c_cflag) | tmp;
 
-	अगर (get_user(पंचांगp, &termio->c_lflag) < 0)
-		जाओ fault;
-	termios->c_lflag = (0xffff0000 & termios->c_lflag) | पंचांगp;
+	if (get_user(tmp, &termio->c_lflag) < 0)
+		goto fault;
+	termios->c_lflag = (0xffff0000 & termios->c_lflag) | tmp;
 
-	अगर (get_user(termios->c_line, &termio->c_line) < 0)
-		जाओ fault;
+	if (get_user(termios->c_line, &termio->c_line) < 0)
+		goto fault;
 
-	अगर (copy_from_user(termios->c_cc, termio->c_cc, NCC) != 0)
-		जाओ fault;
+	if (copy_from_user(termios->c_cc, termio->c_cc, NCC) != 0)
+		goto fault;
 
-	वापस 0;
+	return 0;
 
  fault:
-	वापस -EFAULT;
-पूर्ण
+	return -EFAULT;
+}
 
 /*
- * Translate a "termios" काष्ठाure पूर्णांकo a "termio". Ugh.
+ * Translate a "termios" structure into a "termio". Ugh.
  */
-अटल अंतरभूत पूर्णांक kernel_termios_to_user_termio(काष्ठा termio __user *termio,
-						काष्ठा ktermios *termios)
-अणु
-	अगर (put_user(termios->c_अगरlag, &termio->c_अगरlag) < 0 ||
+static inline int kernel_termios_to_user_termio(struct termio __user *termio,
+						struct ktermios *termios)
+{
+	if (put_user(termios->c_iflag, &termio->c_iflag) < 0 ||
 	    put_user(termios->c_oflag, &termio->c_oflag) < 0 ||
 	    put_user(termios->c_cflag, &termio->c_cflag) < 0 ||
 	    put_user(termios->c_lflag, &termio->c_lflag) < 0 ||
 	    put_user(termios->c_line,  &termio->c_line) < 0 ||
 	    copy_to_user(termio->c_cc, termios->c_cc, NCC) != 0)
-		वापस -EFAULT;
+		return -EFAULT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित TCGETS2
-अटल अंतरभूत पूर्णांक user_termios_to_kernel_termios(काष्ठा ktermios *k,
-						 काष्ठा termios2 __user *u)
-अणु
-	वापस copy_from_user(k, u, माप(काष्ठा termios2));
-पूर्ण
+#ifdef TCGETS2
+static inline int user_termios_to_kernel_termios(struct ktermios *k,
+						 struct termios2 __user *u)
+{
+	return copy_from_user(k, u, sizeof(struct termios2));
+}
 
-अटल अंतरभूत पूर्णांक kernel_termios_to_user_termios(काष्ठा termios2 __user *u,
-						 काष्ठा ktermios *k)
-अणु
-	वापस copy_to_user(u, k, माप(काष्ठा termios2));
-पूर्ण
+static inline int kernel_termios_to_user_termios(struct termios2 __user *u,
+						 struct ktermios *k)
+{
+	return copy_to_user(u, k, sizeof(struct termios2));
+}
 
-अटल अंतरभूत पूर्णांक user_termios_to_kernel_termios_1(काष्ठा ktermios *k,
-						   काष्ठा termios __user *u)
-अणु
-	वापस copy_from_user(k, u, माप(काष्ठा termios));
-पूर्ण
+static inline int user_termios_to_kernel_termios_1(struct ktermios *k,
+						   struct termios __user *u)
+{
+	return copy_from_user(k, u, sizeof(struct termios));
+}
 
-अटल अंतरभूत पूर्णांक kernel_termios_to_user_termios_1(काष्ठा termios __user *u,
-						   काष्ठा ktermios *k)
-अणु
-	वापस copy_to_user(u, k, माप(काष्ठा termios));
-पूर्ण
-#अन्यथा /* TCGETS2 */
-अटल अंतरभूत पूर्णांक user_termios_to_kernel_termios(काष्ठा ktermios *k,
-						 काष्ठा termios __user *u)
-अणु
-	वापस copy_from_user(k, u, माप(काष्ठा termios));
-पूर्ण
+static inline int kernel_termios_to_user_termios_1(struct termios __user *u,
+						   struct ktermios *k)
+{
+	return copy_to_user(u, k, sizeof(struct termios));
+}
+#else /* TCGETS2 */
+static inline int user_termios_to_kernel_termios(struct ktermios *k,
+						 struct termios __user *u)
+{
+	return copy_from_user(k, u, sizeof(struct termios));
+}
 
-अटल अंतरभूत पूर्णांक kernel_termios_to_user_termios(काष्ठा termios __user *u,
-						 काष्ठा ktermios *k)
-अणु
-	वापस copy_to_user(u, k, माप(काष्ठा termios));
-पूर्ण
-#पूर्ण_अगर /* TCGETS2 */
+static inline int kernel_termios_to_user_termios(struct termios __user *u,
+						 struct ktermios *k)
+{
+	return copy_to_user(u, k, sizeof(struct termios));
+}
+#endif /* TCGETS2 */
 
-#पूर्ण_अगर /* _ASM_GENERIC_TERMIOS_H */
+#endif /* _ASM_GENERIC_TERMIOS_H */

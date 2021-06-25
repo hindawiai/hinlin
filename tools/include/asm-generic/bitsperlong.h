@@ -1,25 +1,24 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ASM_GENERIC_BITS_PER_LONG
-#घोषणा __ASM_GENERIC_BITS_PER_LONG
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ASM_GENERIC_BITS_PER_LONG
+#define __ASM_GENERIC_BITS_PER_LONG
 
-#समावेश <uapi/यंत्र-generic/bitsperदीर्घ.h>
+#include <uapi/asm-generic/bitsperlong.h>
 
-#अगर_घोषित __SIZखातापूर्ण_LONG__
-#घोषणा BITS_PER_LONG (__अक्षर_बिट__ * __SIZखातापूर्ण_LONG__)
-#अन्यथा
-#घोषणा BITS_PER_LONG __WORDSIZE
-#पूर्ण_अगर
+#ifdef __SIZEOF_LONG__
+#define BITS_PER_LONG (__CHAR_BIT__ * __SIZEOF_LONG__)
+#else
+#define BITS_PER_LONG __WORDSIZE
+#endif
 
-#अगर BITS_PER_LONG != __BITS_PER_LONG
-#त्रुटि Inconsistent word size. Check यंत्र/bitsperदीर्घ.h
-#पूर्ण_अगर
+#if BITS_PER_LONG != __BITS_PER_LONG
+#error Inconsistent word size. Check asm/bitsperlong.h
+#endif
 
-#अगर_अघोषित BITS_PER_LONG_LONG
-#घोषणा BITS_PER_LONG_LONG 64
-#पूर्ण_अगर
+#ifndef BITS_PER_LONG_LONG
+#define BITS_PER_LONG_LONG 64
+#endif
 
-#घोषणा small_स्थिर_nbits(nbits) \
-	(__builtin_स्थिरant_p(nbits) && (nbits) <= BITS_PER_LONG && (nbits) > 0)
+#define small_const_nbits(nbits) \
+	(__builtin_constant_p(nbits) && (nbits) <= BITS_PER_LONG && (nbits) > 0)
 
-#पूर्ण_अगर /* __ASM_GENERIC_BITS_PER_LONG */
+#endif /* __ASM_GENERIC_BITS_PER_LONG */

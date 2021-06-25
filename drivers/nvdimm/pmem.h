@@ -1,44 +1,43 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __NVDIMM_PMEM_H__
-#घोषणा __NVDIMM_PMEM_H__
-#समावेश <linux/page-flags.h>
-#समावेश <linux/badblocks.h>
-#समावेश <linux/types.h>
-#समावेश <linux/pfn_t.h>
-#समावेश <linux/fs.h>
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __NVDIMM_PMEM_H__
+#define __NVDIMM_PMEM_H__
+#include <linux/page-flags.h>
+#include <linux/badblocks.h>
+#include <linux/types.h>
+#include <linux/pfn_t.h>
+#include <linux/fs.h>
 
-/* this definition is in it's own header क्रम tools/testing/nvdimm to consume */
-काष्ठा pmem_device अणु
+/* this definition is in it's own header for tools/testing/nvdimm to consume */
+struct pmem_device {
 	/* One contiguous memory region per device */
 	phys_addr_t		phys_addr;
 	/* when non-zero this device is hosting a 'pfn' instance */
 	phys_addr_t		data_offset;
 	u64			pfn_flags;
-	व्योम			*virt_addr;
+	void			*virt_addr;
 	/* immutable base size of the namespace */
-	माप_प्रकार			size;
+	size_t			size;
 	/* trim size when namespace capacity has been section aligned */
 	u32			pfn_pad;
-	काष्ठा kernfs_node	*bb_state;
-	काष्ठा badblocks	bb;
-	काष्ठा dax_device	*dax_dev;
-	काष्ठा gendisk		*disk;
-	काष्ठा dev_pagemap	pgmap;
-पूर्ण;
+	struct kernfs_node	*bb_state;
+	struct badblocks	bb;
+	struct dax_device	*dax_dev;
+	struct gendisk		*disk;
+	struct dev_pagemap	pgmap;
+};
 
-दीर्घ __pmem_direct_access(काष्ठा pmem_device *pmem, pgoff_t pgoff,
-		दीर्घ nr_pages, व्योम **kaddr, pfn_t *pfn);
+long __pmem_direct_access(struct pmem_device *pmem, pgoff_t pgoff,
+		long nr_pages, void **kaddr, pfn_t *pfn);
 
-#अगर_घोषित CONFIG_MEMORY_FAILURE
-अटल अंतरभूत bool test_and_clear_pmem_poison(काष्ठा page *page)
-अणु
-	वापस TestClearPageHWPoison(page);
-पूर्ण
-#अन्यथा
-अटल अंतरभूत bool test_and_clear_pmem_poison(काष्ठा page *page)
-अणु
-	वापस false;
-पूर्ण
-#पूर्ण_अगर
-#पूर्ण_अगर /* __NVDIMM_PMEM_H__ */
+#ifdef CONFIG_MEMORY_FAILURE
+static inline bool test_and_clear_pmem_poison(struct page *page)
+{
+	return TestClearPageHWPoison(page);
+}
+#else
+static inline bool test_and_clear_pmem_poison(struct page *page)
+{
+	return false;
+}
+#endif
+#endif /* __NVDIMM_PMEM_H__ */

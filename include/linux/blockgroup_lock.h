@@ -1,42 +1,41 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_BLOCKGROUP_LOCK_H
-#घोषणा _LINUX_BLOCKGROUP_LOCK_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_BLOCKGROUP_LOCK_H
+#define _LINUX_BLOCKGROUP_LOCK_H
 /*
- * Per-blockgroup locking क्रम ext2 and ext3.
+ * Per-blockgroup locking for ext2 and ext3.
  *
  * Simple hashed spinlocking.
  */
 
-#समावेश <linux/spinlock.h>
-#समावेश <linux/cache.h>
+#include <linux/spinlock.h>
+#include <linux/cache.h>
 
-#अगर_घोषित CONFIG_SMP
-#घोषणा NR_BG_LOCKS	(4 << ilog2(NR_CPUS < 32 ? NR_CPUS : 32))
-#अन्यथा
-#घोषणा NR_BG_LOCKS	1
-#पूर्ण_अगर
+#ifdef CONFIG_SMP
+#define NR_BG_LOCKS	(4 << ilog2(NR_CPUS < 32 ? NR_CPUS : 32))
+#else
+#define NR_BG_LOCKS	1
+#endif
 
-काष्ठा bgl_lock अणु
+struct bgl_lock {
 	spinlock_t lock;
-पूर्ण ____cacheline_aligned_in_smp;
+} ____cacheline_aligned_in_smp;
 
-काष्ठा blockgroup_lock अणु
-	काष्ठा bgl_lock locks[NR_BG_LOCKS];
-पूर्ण;
+struct blockgroup_lock {
+	struct bgl_lock locks[NR_BG_LOCKS];
+};
 
-अटल अंतरभूत व्योम bgl_lock_init(काष्ठा blockgroup_lock *bgl)
-अणु
-	पूर्णांक i;
+static inline void bgl_lock_init(struct blockgroup_lock *bgl)
+{
+	int i;
 
-	क्रम (i = 0; i < NR_BG_LOCKS; i++)
+	for (i = 0; i < NR_BG_LOCKS; i++)
 		spin_lock_init(&bgl->locks[i].lock);
-पूर्ण
+}
 
-अटल अंतरभूत spinlock_t *
-bgl_lock_ptr(काष्ठा blockgroup_lock *bgl, अचिन्हित पूर्णांक block_group)
-अणु
-	वापस &bgl->locks[block_group & (NR_BG_LOCKS-1)].lock;
-पूर्ण
+static inline spinlock_t *
+bgl_lock_ptr(struct blockgroup_lock *bgl, unsigned int block_group)
+{
+	return &bgl->locks[block_group & (NR_BG_LOCKS-1)].lock;
+}
 
-#पूर्ण_अगर
+#endif

@@ -1,40 +1,39 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * Driver क्रम Digigram pcxhr soundcards
+ * Driver for Digigram pcxhr soundcards
  *
- * मुख्य header file
+ * main header file
  *
  * Copyright (c) 2004 by Digigram <alsa@digigram.com>
  */
 
-#अगर_अघोषित __SOUND_PCXHR_H
-#घोषणा __SOUND_PCXHR_H
+#ifndef __SOUND_PCXHR_H
+#define __SOUND_PCXHR_H
 
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/mutex.h>
-#समावेश <sound/pcm.h>
+#include <linux/interrupt.h>
+#include <linux/mutex.h>
+#include <sound/pcm.h>
 
-#घोषणा PCXHR_DRIVER_VERSION		0x000906	/* 0.9.6 */
-#घोषणा PCXHR_DRIVER_VERSION_STRING	"0.9.6"		/* 0.9.6 */
+#define PCXHR_DRIVER_VERSION		0x000906	/* 0.9.6 */
+#define PCXHR_DRIVER_VERSION_STRING	"0.9.6"		/* 0.9.6 */
 
 
-#घोषणा PCXHR_MAX_CARDS		6
-#घोषणा PCXHR_PLAYBACK_STREAMS	4
+#define PCXHR_MAX_CARDS		6
+#define PCXHR_PLAYBACK_STREAMS	4
 
-#घोषणा PCXHR_GRANULARITY	96	/* min 96 and multiple of 48 */
-/* transfer granularity of pipes and the dsp समय (MBOX4) */
-#घोषणा PCXHR_GRANULARITY_MIN	96
+#define PCXHR_GRANULARITY	96	/* min 96 and multiple of 48 */
+/* transfer granularity of pipes and the dsp time (MBOX4) */
+#define PCXHR_GRANULARITY_MIN	96
 /* TODO : granularity could be 64 or 128 */
-#घोषणा PCXHR_GRANULARITY_HR22	192	/* granularity क्रम stereo cards */
+#define PCXHR_GRANULARITY_HR22	192	/* granularity for stereo cards */
 
-काष्ठा snd_pcxhr;
-काष्ठा pcxhr_mgr;
+struct snd_pcxhr;
+struct pcxhr_mgr;
 
-काष्ठा pcxhr_stream;
-काष्ठा pcxhr_pipe;
+struct pcxhr_stream;
+struct pcxhr_pipe;
 
-क्रमागत pcxhr_घड़ी_प्रकारype अणु
+enum pcxhr_clock_type {
 	PCXHR_CLOCK_TYPE_INTERNAL = 0,
 	PCXHR_CLOCK_TYPE_WORD_CLOCK,
 	PCXHR_CLOCK_TYPE_AES_SYNC,
@@ -47,72 +46,72 @@
 	HR22_CLOCK_TYPE_AES_SYNC,
 	HR22_CLOCK_TYPE_AES_1,
 	HR22_CLOCK_TYPE_MAX = HR22_CLOCK_TYPE_AES_1,
-पूर्ण;
+};
 
-काष्ठा pcxhr_mgr अणु
-	अचिन्हित पूर्णांक num_cards;
-	काष्ठा snd_pcxhr *chip[PCXHR_MAX_CARDS];
+struct pcxhr_mgr {
+	unsigned int num_cards;
+	struct snd_pcxhr *chip[PCXHR_MAX_CARDS];
 
-	काष्ठा pci_dev *pci;
+	struct pci_dev *pci;
 
-	पूर्णांक irq;
+	int irq;
 
-	पूर्णांक granularity;
+	int granularity;
 
 	/* card access with 1 mem bar and 2 io bar's */
-	अचिन्हित दीर्घ port[3];
+	unsigned long port[3];
 
 	/* share the name */
-	अक्षर name[40];			/* name of this soundcard */
+	char name[40];			/* name of this soundcard */
 
-	काष्ठा pcxhr_rmh *prmh;
+	struct pcxhr_rmh *prmh;
 
-	काष्ठा mutex lock;		/* पूर्णांकerrupt lock */
-	काष्ठा mutex msg_lock;		/* message lock */
+	struct mutex lock;		/* interrupt lock */
+	struct mutex msg_lock;		/* message lock */
 
-	काष्ठा mutex setup_mutex;	/* mutex used in hw_params, खोलो and बंद */
-	काष्ठा mutex mixer_mutex;	/* mutex क्रम mixer */
+	struct mutex setup_mutex;	/* mutex used in hw_params, open and close */
+	struct mutex mixer_mutex;	/* mutex for mixer */
 
-	/* hardware पूर्णांकerface */
-	अचिन्हित पूर्णांक dsp_loaded;	/* bit flags of loaded dsp indices */
-	अचिन्हित पूर्णांक dsp_version;	/* पढ़ो from embedded once firmware is loaded */
-	पूर्णांक playback_chips;
-	पूर्णांक capture_chips;
-	पूर्णांक fw_file_set;
-	पूर्णांक firmware_num;
-	अचिन्हित पूर्णांक is_hr_stereo:1;
-	अचिन्हित पूर्णांक board_has_aes1:1;	/* अगर 1 board has AES1 plug and SRC */
-	अचिन्हित पूर्णांक board_has_analog:1; /* अगर 0 the board is digital only */
-	अचिन्हित पूर्णांक board_has_mic:1; /* अगर 1 the board has microphone input */
-	अचिन्हित पूर्णांक board_aes_in_192k:1;/* अगर 1 the aes input plugs करो support 192kHz */
-	अचिन्हित पूर्णांक mono_capture:1; /* अगर 1 the board करोes mono capture */
-	अचिन्हित पूर्णांक capture_ltc:1; /* अगर 1 the board captures LTC input */
+	/* hardware interface */
+	unsigned int dsp_loaded;	/* bit flags of loaded dsp indices */
+	unsigned int dsp_version;	/* read from embedded once firmware is loaded */
+	int playback_chips;
+	int capture_chips;
+	int fw_file_set;
+	int firmware_num;
+	unsigned int is_hr_stereo:1;
+	unsigned int board_has_aes1:1;	/* if 1 board has AES1 plug and SRC */
+	unsigned int board_has_analog:1; /* if 0 the board is digital only */
+	unsigned int board_has_mic:1; /* if 1 the board has microphone input */
+	unsigned int board_aes_in_192k:1;/* if 1 the aes input plugs do support 192kHz */
+	unsigned int mono_capture:1; /* if 1 the board does mono capture */
+	unsigned int capture_ltc:1; /* if 1 the board captures LTC input */
 
-	काष्ठा snd_dma_buffer hostport;
+	struct snd_dma_buffer hostport;
 
-	क्रमागत pcxhr_घड़ी_प्रकारype use_घड़ी_प्रकारype;	/* घड़ी type selected by mixer */
-	क्रमागत pcxhr_घड़ी_प्रकारype cur_घड़ी_प्रकारype;	/* current घड़ी type synced */
-	पूर्णांक sample_rate;
-	पूर्णांक ref_count_rate;
-	पूर्णांक समयr_toggle;		/* समयr पूर्णांकerrupt toggles between the two values 0x200 and 0x300 */
-	पूर्णांक dsp_समय_last;		/* the last dsp समय (पढ़ो by पूर्णांकerrupt) */
-	पूर्णांक dsp_समय_err;		/* dsp समय errors */
-	अचिन्हित पूर्णांक src_it_dsp;	/* dsp पूर्णांकerrupt source */
-	अचिन्हित पूर्णांक io_num_reg_cont;	/* backup of IO_NUM_REG_CONT */
-	अचिन्हित पूर्णांक codec_speed;	/* speed mode of the codecs */
-	अचिन्हित पूर्णांक sample_rate_real;	/* current real sample rate */
-	पूर्णांक last_reg_stat;
-	पूर्णांक async_err_stream_xrun;
-	पूर्णांक async_err_pipe_xrun;
-	पूर्णांक async_err_other_last;
+	enum pcxhr_clock_type use_clock_type;	/* clock type selected by mixer */
+	enum pcxhr_clock_type cur_clock_type;	/* current clock type synced */
+	int sample_rate;
+	int ref_count_rate;
+	int timer_toggle;		/* timer interrupt toggles between the two values 0x200 and 0x300 */
+	int dsp_time_last;		/* the last dsp time (read by interrupt) */
+	int dsp_time_err;		/* dsp time errors */
+	unsigned int src_it_dsp;	/* dsp interrupt source */
+	unsigned int io_num_reg_cont;	/* backup of IO_NUM_REG_CONT */
+	unsigned int codec_speed;	/* speed mode of the codecs */
+	unsigned int sample_rate_real;	/* current real sample rate */
+	int last_reg_stat;
+	int async_err_stream_xrun;
+	int async_err_pipe_xrun;
+	int async_err_other_last;
 
-	अचिन्हित अक्षर xlx_cfg;		/* copy of PCXHR_XLX_CFG रेजिस्टर */
-	अचिन्हित अक्षर xlx_selmic;	/* copy of PCXHR_XLX_SELMIC रेजिस्टर */
-	अचिन्हित अक्षर dsp_reset;	/* copy of PCXHR_DSP_RESET रेजिस्टर */
-पूर्ण;
+	unsigned char xlx_cfg;		/* copy of PCXHR_XLX_CFG register */
+	unsigned char xlx_selmic;	/* copy of PCXHR_XLX_SELMIC register */
+	unsigned char dsp_reset;	/* copy of PCXHR_DSP_RESET register */
+};
 
 
-क्रमागत pcxhr_stream_status अणु
+enum pcxhr_stream_status {
 	PCXHR_STREAM_STATUS_FREE,
 	PCXHR_STREAM_STATUS_OPEN,
 	PCXHR_STREAM_STATUS_SCHEDULE_RUN,
@@ -121,80 +120,80 @@
 	PCXHR_STREAM_STATUS_SCHEDULE_STOP,
 	PCXHR_STREAM_STATUS_STOPPED,
 	PCXHR_STREAM_STATUS_PAUSED
-पूर्ण;
+};
 
-काष्ठा pcxhr_stream अणु
-	काष्ठा snd_pcm_substream *substream;
-	snd_pcm_क्रमmat_t क्रमmat;
-	काष्ठा pcxhr_pipe *pipe;
+struct pcxhr_stream {
+	struct snd_pcm_substream *substream;
+	snd_pcm_format_t format;
+	struct pcxhr_pipe *pipe;
 
-	क्रमागत pcxhr_stream_status status;	/* मुक्त, खोलो, running, draining, छोड़ो */
+	enum pcxhr_stream_status status;	/* free, open, running, draining, pause */
 
-	u_पूर्णांक64_t समयr_असल_periods;	/* समयr: samples elapsed since TRIGGER_START (multiple of period_size) */
-	u_पूर्णांक32_t समयr_period_frag;	/* समयr: samples elapsed since last call to snd_pcm_period_elapsed (0..period_size) */
-	u_पूर्णांक32_t समयr_buf_periods;	/* nb of periods in the buffer that have alपढ़ोy elapsed */
-	पूर्णांक समयr_is_synced;		/* अगर(0) : समयr needs to be resynced with real hardware poपूर्णांकer */
+	u_int64_t timer_abs_periods;	/* timer: samples elapsed since TRIGGER_START (multiple of period_size) */
+	u_int32_t timer_period_frag;	/* timer: samples elapsed since last call to snd_pcm_period_elapsed (0..period_size) */
+	u_int32_t timer_buf_periods;	/* nb of periods in the buffer that have already elapsed */
+	int timer_is_synced;		/* if(0) : timer needs to be resynced with real hardware pointer */
 
-	पूर्णांक channels;
-पूर्ण;
+	int channels;
+};
 
 
-क्रमागत pcxhr_pipe_status अणु
+enum pcxhr_pipe_status {
 	PCXHR_PIPE_UNDEFINED,
 	PCXHR_PIPE_DEFINED
-पूर्ण;
+};
 
-काष्ठा pcxhr_pipe अणु
-	क्रमागत pcxhr_pipe_status status;
-	पूर्णांक is_capture;		/* this is a capture pipe */
-	पूर्णांक first_audio;	/* first audio num */
-पूर्ण;
+struct pcxhr_pipe {
+	enum pcxhr_pipe_status status;
+	int is_capture;		/* this is a capture pipe */
+	int first_audio;	/* first audio num */
+};
 
 
-काष्ठा snd_pcxhr अणु
-	काष्ठा snd_card *card;
-	काष्ठा pcxhr_mgr *mgr;
-	पूर्णांक chip_idx;		/* zero based */
+struct snd_pcxhr {
+	struct snd_card *card;
+	struct pcxhr_mgr *mgr;
+	int chip_idx;		/* zero based */
 
-	काष्ठा snd_pcm *pcm;		/* PCM */
+	struct snd_pcm *pcm;		/* PCM */
 
-	काष्ठा pcxhr_pipe playback_pipe;	/* 1 stereo pipe only */
-	काष्ठा pcxhr_pipe capture_pipe[2];	/* 1 stereo or 2 mono pipes */
+	struct pcxhr_pipe playback_pipe;	/* 1 stereo pipe only */
+	struct pcxhr_pipe capture_pipe[2];	/* 1 stereo or 2 mono pipes */
 
-	काष्ठा pcxhr_stream playback_stream[PCXHR_PLAYBACK_STREAMS];
-	काष्ठा pcxhr_stream capture_stream[2];	/* 1 stereo or 2 mono streams */
-	पूर्णांक nb_streams_play;
-	पूर्णांक nb_streams_capt;
+	struct pcxhr_stream playback_stream[PCXHR_PLAYBACK_STREAMS];
+	struct pcxhr_stream capture_stream[2];	/* 1 stereo or 2 mono streams */
+	int nb_streams_play;
+	int nb_streams_capt;
 
-	पूर्णांक analog_playback_active[2];	/* Mixer : Master Playback !mute */
-	पूर्णांक analog_playback_volume[2];	/* Mixer : Master Playback Volume */
-	पूर्णांक analog_capture_volume[2];	/* Mixer : Master Capture Volume */
-	पूर्णांक digital_playback_active[PCXHR_PLAYBACK_STREAMS][2];
-	पूर्णांक digital_playback_volume[PCXHR_PLAYBACK_STREAMS][2];
-	पूर्णांक digital_capture_volume[2];	/* Mixer : Digital Capture Volume */
-	पूर्णांक monitoring_active[2];	/* Mixer : Monitoring Active */
-	पूर्णांक monitoring_volume[2];	/* Mixer : Monitoring Volume */
-	पूर्णांक audio_capture_source;	/* Mixer : Audio Capture Source */
-	पूर्णांक mic_volume;			/* used by cards with MIC only */
-	पूर्णांक mic_boost;			/* used by cards with MIC only */
-	पूर्णांक mic_active;			/* used by cards with MIC only */
-	पूर्णांक analog_capture_active;	/* used by cards with MIC only */
-	पूर्णांक phantom_घातer;		/* used by cards with MIC only */
+	int analog_playback_active[2];	/* Mixer : Master Playback !mute */
+	int analog_playback_volume[2];	/* Mixer : Master Playback Volume */
+	int analog_capture_volume[2];	/* Mixer : Master Capture Volume */
+	int digital_playback_active[PCXHR_PLAYBACK_STREAMS][2];
+	int digital_playback_volume[PCXHR_PLAYBACK_STREAMS][2];
+	int digital_capture_volume[2];	/* Mixer : Digital Capture Volume */
+	int monitoring_active[2];	/* Mixer : Monitoring Active */
+	int monitoring_volume[2];	/* Mixer : Monitoring Volume */
+	int audio_capture_source;	/* Mixer : Audio Capture Source */
+	int mic_volume;			/* used by cards with MIC only */
+	int mic_boost;			/* used by cards with MIC only */
+	int mic_active;			/* used by cards with MIC only */
+	int analog_capture_active;	/* used by cards with MIC only */
+	int phantom_power;		/* used by cards with MIC only */
 
-	अचिन्हित अक्षर aes_bits[5];	/* Mixer : IEC958_AES bits */
-पूर्ण;
+	unsigned char aes_bits[5];	/* Mixer : IEC958_AES bits */
+};
 
-काष्ठा pcxhr_hostport
-अणु
-	अक्षर purgebuffer[6];
-	अक्षर reserved[2];
-पूर्ण;
+struct pcxhr_hostport
+{
+	char purgebuffer[6];
+	char reserved[2];
+};
 
 /* exported */
-पूर्णांक pcxhr_create_pcm(काष्ठा snd_pcxhr *chip);
-पूर्णांक pcxhr_set_घड़ी(काष्ठा pcxhr_mgr *mgr, अचिन्हित पूर्णांक rate);
-पूर्णांक pcxhr_get_बाह्यal_घड़ी(काष्ठा pcxhr_mgr *mgr,
-			     क्रमागत pcxhr_घड़ी_प्रकारype घड़ी_प्रकारype,
-			     पूर्णांक *sample_rate);
+int pcxhr_create_pcm(struct snd_pcxhr *chip);
+int pcxhr_set_clock(struct pcxhr_mgr *mgr, unsigned int rate);
+int pcxhr_get_external_clock(struct pcxhr_mgr *mgr,
+			     enum pcxhr_clock_type clock_type,
+			     int *sample_rate);
 
-#पूर्ण_अगर /* __SOUND_PCXHR_H */
+#endif /* __SOUND_PCXHR_H */

@@ -1,26 +1,25 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Copyright (C) 2001 - 2007 Jeff Dike (jdike@अणुaddtoit,linux.पूर्णांकelपूर्ण.com)
+ * Copyright (C) 2001 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
  */
 
-#अगर_अघोषित __IRQ_USER_H__
-#घोषणा __IRQ_USER_H__
+#ifndef __IRQ_USER_H__
+#define __IRQ_USER_H__
 
-#समावेश <sysdep/ptrace.h>
-#समावेश <stdbool.h>
+#include <sysdep/ptrace.h>
+#include <stdbool.h>
 
-क्रमागत um_irq_type अणु
+enum um_irq_type {
 	IRQ_READ,
 	IRQ_WRITE,
 	NUM_IRQ_TYPES,
-पूर्ण;
+};
 
-काष्ठा siginfo;
-बाह्य व्योम sigio_handler(पूर्णांक sig, काष्ठा siginfo *unused_si, काष्ठा uml_pt_regs *regs);
-बाह्य व्योम मुक्त_irq_by_fd(पूर्णांक fd);
-बाह्य व्योम deactivate_fd(पूर्णांक fd, पूर्णांक irqnum);
-बाह्य पूर्णांक deactivate_all_fds(व्योम);
-बाह्य पूर्णांक activate_ipi(पूर्णांक fd, पूर्णांक pid);
+struct siginfo;
+extern void sigio_handler(int sig, struct siginfo *unused_si, struct uml_pt_regs *regs);
+extern void free_irq_by_fd(int fd);
+extern void deactivate_fd(int fd, int irqnum);
+extern int deactivate_all_fds(void);
+extern int activate_ipi(int fd, int pid);
 
-#पूर्ण_अगर
+#endif

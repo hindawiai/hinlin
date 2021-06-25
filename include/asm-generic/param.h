@@ -1,12 +1,11 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ASM_GENERIC_PARAM_H
-#घोषणा __ASM_GENERIC_PARAM_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ASM_GENERIC_PARAM_H
+#define __ASM_GENERIC_PARAM_H
 
-#समावेश <uapi/यंत्र-generic/param.h>
+#include <uapi/asm-generic/param.h>
 
 # undef HZ
-# define HZ		CONFIG_HZ	/* Internal kernel समयr frequency */
-# define USER_HZ	100		/* some user पूर्णांकerfaces are */
-# define CLOCKS_PER_SEC	(USER_HZ)       /* in "ticks" like बार() */
-#पूर्ण_अगर /* __ASM_GENERIC_PARAM_H */
+# define HZ		CONFIG_HZ	/* Internal kernel timer frequency */
+# define USER_HZ	100		/* some user interfaces are */
+# define CLOCKS_PER_SEC	(USER_HZ)       /* in "ticks" like times() */
+#endif /* __ASM_GENERIC_PARAM_H */

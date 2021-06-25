@@ -1,66 +1,65 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Support क्रम Intel Camera Imaging ISP subप्रणाली.
+ * Support for Intel Camera Imaging ISP subsystem.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  */
 
-#समावेश <निश्चित_support.h>
-#समावेश <ia_css_frame_खुला.h>
-#समावेश <ia_css_frame.h>
-#समावेश <ia_css_binary.h>
-#घोषणा IA_CSS_INCLUDE_CONFIGURATIONS
-#समावेश "ia_css_isp_configs.h"
-#समावेश "isp.h"
-#समावेश "ia_css_crop.host.h"
+#include <assert_support.h>
+#include <ia_css_frame_public.h>
+#include <ia_css_frame.h>
+#include <ia_css_binary.h>
+#define IA_CSS_INCLUDE_CONFIGURATIONS
+#include "ia_css_isp_configs.h"
+#include "isp.h"
+#include "ia_css_crop.host.h"
 
-अटल स्थिर काष्ठा ia_css_crop_configuration शेष_config = अणु
-	.info = (काष्ठा ia_css_frame_info *)शून्य,
-पूर्ण;
+static const struct ia_css_crop_configuration default_config = {
+	.info = (struct ia_css_frame_info *)NULL,
+};
 
-व्योम
+void
 ia_css_crop_encode(
-    काष्ठा sh_css_isp_crop_isp_params *to,
-    स्थिर काष्ठा ia_css_crop_config *from,
-    अचिन्हित पूर्णांक size)
-अणु
-	(व्योम)size;
+    struct sh_css_isp_crop_isp_params *to,
+    const struct ia_css_crop_config *from,
+    unsigned int size)
+{
+	(void)size;
 	to->crop_pos = from->crop_pos;
-पूर्ण
+}
 
-व्योम
+void
 ia_css_crop_config(
-    काष्ठा sh_css_isp_crop_isp_config *to,
-    स्थिर काष्ठा ia_css_crop_configuration  *from,
-    अचिन्हित पूर्णांक size)
-अणु
-	अचिन्हित पूर्णांक elems_a = ISP_VEC_NELEMS;
+    struct sh_css_isp_crop_isp_config *to,
+    const struct ia_css_crop_configuration  *from,
+    unsigned int size)
+{
+	unsigned int elems_a = ISP_VEC_NELEMS;
 
-	(व्योम)size;
+	(void)size;
 	ia_css_dma_configure_from_info(&to->port_b, from->info);
 	to->width_a_over_b = elems_a / to->port_b.elems;
 
-	/* Assume भागisiblity here, may need to generalize to fixed poपूर्णांक. */
-	निश्चित(elems_a % to->port_b.elems == 0);
-पूर्ण
+	/* Assume divisiblity here, may need to generalize to fixed point. */
+	assert(elems_a % to->port_b.elems == 0);
+}
 
-व्योम
+void
 ia_css_crop_configure(
-    स्थिर काष्ठा ia_css_binary     *binary,
-    स्थिर काष्ठा ia_css_frame_info *info)
-अणु
-	काष्ठा ia_css_crop_configuration config = शेष_config;
+    const struct ia_css_binary     *binary,
+    const struct ia_css_frame_info *info)
+{
+	struct ia_css_crop_configuration config = default_config;
 
 	config.info = info;
 
 	ia_css_configure_crop(binary, &config);
-पूर्ण
+}

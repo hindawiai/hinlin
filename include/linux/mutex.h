@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Mutexes: blocking mutual exclusion locks
  *
@@ -7,101 +6,101 @@
  *
  *  Copyright (C) 2004, 2005, 2006 Red Hat, Inc., Ingo Molnar <mingo@redhat.com>
  *
- * This file contains the मुख्य data काष्ठाure and API definitions.
+ * This file contains the main data structure and API definitions.
  */
-#अगर_अघोषित __LINUX_MUTEX_H
-#घोषणा __LINUX_MUTEX_H
+#ifndef __LINUX_MUTEX_H
+#define __LINUX_MUTEX_H
 
-#समावेश <यंत्र/current.h>
-#समावेश <linux/list.h>
-#समावेश <linux/spinlock_types.h>
-#समावेश <linux/lockdep.h>
-#समावेश <linux/atomic.h>
-#समावेश <यंत्र/processor.h>
-#समावेश <linux/osq_lock.h>
-#समावेश <linux/debug_locks.h>
+#include <asm/current.h>
+#include <linux/list.h>
+#include <linux/spinlock_types.h>
+#include <linux/lockdep.h>
+#include <linux/atomic.h>
+#include <asm/processor.h>
+#include <linux/osq_lock.h>
+#include <linux/debug_locks.h>
 
-काष्ठा ww_class;
-काष्ठा ww_acquire_ctx;
+struct ww_class;
+struct ww_acquire_ctx;
 
 /*
- * Simple, straightक्रमward mutexes with strict semantics:
+ * Simple, straightforward mutexes with strict semantics:
  *
- * - only one task can hold the mutex at a समय
+ * - only one task can hold the mutex at a time
  * - only the owner can unlock the mutex
  * - multiple unlocks are not permitted
  * - recursive locking is not permitted
  * - a mutex object must be initialized via the API
- * - a mutex object must not be initialized via स_रखो or copying
- * - task may not निकास with mutex held
- * - memory areas where held locks reside must not be मुक्तd
+ * - a mutex object must not be initialized via memset or copying
+ * - task may not exit with mutex held
+ * - memory areas where held locks reside must not be freed
  * - held mutexes must not be reinitialized
- * - mutexes may not be used in hardware or software पूर्णांकerrupt
- *   contexts such as tasklets and समयrs
+ * - mutexes may not be used in hardware or software interrupt
+ *   contexts such as tasklets and timers
  *
- * These semantics are fully enक्रमced when DEBUG_MUTEXES is
- * enabled. Furthermore, besides enक्रमcing the above rules, the mutex
+ * These semantics are fully enforced when DEBUG_MUTEXES is
+ * enabled. Furthermore, besides enforcing the above rules, the mutex
  * debugging code also implements a number of additional features
  * that make lock debugging easier and faster:
  *
- * - uses symbolic names of mutexes, whenever they are prपूर्णांकed in debug output
- * - poपूर्णांक-of-acquire tracking, symbolic lookup of function names
- * - list of all locks held in the प्रणाली, prपूर्णांकout of them
+ * - uses symbolic names of mutexes, whenever they are printed in debug output
+ * - point-of-acquire tracking, symbolic lookup of function names
+ * - list of all locks held in the system, printout of them
  * - owner tracking
- * - detects self-recursing locks and prपूर्णांकs out all relevant info
- * - detects multi-task circular deadlocks and prपूर्णांकs out all affected
+ * - detects self-recursing locks and prints out all relevant info
+ * - detects multi-task circular deadlocks and prints out all affected
  *   locks and tasks (and only those tasks)
  */
-काष्ठा mutex अणु
-	atomic_दीर्घ_t		owner;
-	spinlock_t		रुको_lock;
-#अगर_घोषित CONFIG_MUTEX_SPIN_ON_OWNER
-	काष्ठा optimistic_spin_queue osq; /* Spinner MCS lock */
-#पूर्ण_अगर
-	काष्ठा list_head	रुको_list;
-#अगर_घोषित CONFIG_DEBUG_MUTEXES
-	व्योम			*magic;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_DEBUG_LOCK_ALLOC
-	काष्ठा lockdep_map	dep_map;
-#पूर्ण_अगर
-पूर्ण;
+struct mutex {
+	atomic_long_t		owner;
+	spinlock_t		wait_lock;
+#ifdef CONFIG_MUTEX_SPIN_ON_OWNER
+	struct optimistic_spin_queue osq; /* Spinner MCS lock */
+#endif
+	struct list_head	wait_list;
+#ifdef CONFIG_DEBUG_MUTEXES
+	void			*magic;
+#endif
+#ifdef CONFIG_DEBUG_LOCK_ALLOC
+	struct lockdep_map	dep_map;
+#endif
+};
 
-काष्ठा ww_mutex अणु
-	काष्ठा mutex base;
-	काष्ठा ww_acquire_ctx *ctx;
-#अगर_घोषित CONFIG_DEBUG_MUTEXES
-	काष्ठा ww_class *ww_class;
-#पूर्ण_अगर
-पूर्ण;
+struct ww_mutex {
+	struct mutex base;
+	struct ww_acquire_ctx *ctx;
+#ifdef CONFIG_DEBUG_MUTEXES
+	struct ww_class *ww_class;
+#endif
+};
 
 /*
- * This is the control काष्ठाure क्रम tasks blocked on mutex,
+ * This is the control structure for tasks blocked on mutex,
  * which resides on the blocked task's kernel stack:
  */
-काष्ठा mutex_रुकोer अणु
-	काष्ठा list_head	list;
-	काष्ठा task_काष्ठा	*task;
-	काष्ठा ww_acquire_ctx	*ww_ctx;
-#अगर_घोषित CONFIG_DEBUG_MUTEXES
-	व्योम			*magic;
-#पूर्ण_अगर
-पूर्ण;
+struct mutex_waiter {
+	struct list_head	list;
+	struct task_struct	*task;
+	struct ww_acquire_ctx	*ww_ctx;
+#ifdef CONFIG_DEBUG_MUTEXES
+	void			*magic;
+#endif
+};
 
-#अगर_घोषित CONFIG_DEBUG_MUTEXES
+#ifdef CONFIG_DEBUG_MUTEXES
 
-#घोषणा __DEBUG_MUTEX_INITIALIZER(lockname)				\
+#define __DEBUG_MUTEX_INITIALIZER(lockname)				\
 	, .magic = &lockname
 
-बाह्य व्योम mutex_destroy(काष्ठा mutex *lock);
+extern void mutex_destroy(struct mutex *lock);
 
-#अन्यथा
+#else
 
 # define __DEBUG_MUTEX_INITIALIZER(lockname)
 
-अटल अंतरभूत व्योम mutex_destroy(काष्ठा mutex *lock) अणुपूर्ण
+static inline void mutex_destroy(struct mutex *lock) {}
 
-#पूर्ण_अगर
+#endif
 
 /**
  * mutex_init - initialize the mutex
@@ -109,93 +108,93 @@
  *
  * Initialize the mutex to unlocked state.
  *
- * It is not allowed to initialize an alपढ़ोy locked mutex.
+ * It is not allowed to initialize an already locked mutex.
  */
-#घोषणा mutex_init(mutex)						\
-करो अणु									\
-	अटल काष्ठा lock_class_key __key;				\
+#define mutex_init(mutex)						\
+do {									\
+	static struct lock_class_key __key;				\
 									\
 	__mutex_init((mutex), #mutex, &__key);				\
-पूर्ण जबतक (0)
+} while (0)
 
-#अगर_घोषित CONFIG_DEBUG_LOCK_ALLOC
+#ifdef CONFIG_DEBUG_LOCK_ALLOC
 # define __DEP_MAP_MUTEX_INITIALIZER(lockname)			\
-		, .dep_map = अणु					\
+		, .dep_map = {					\
 			.name = #lockname,			\
-			.रुको_type_inner = LD_WAIT_SLEEP,	\
-		पूर्ण
-#अन्यथा
+			.wait_type_inner = LD_WAIT_SLEEP,	\
+		}
+#else
 # define __DEP_MAP_MUTEX_INITIALIZER(lockname)
-#पूर्ण_अगर
+#endif
 
-#घोषणा __MUTEX_INITIALIZER(lockname) \
-		अणु .owner = ATOMIC_LONG_INIT(0) \
-		, .रुको_lock = __SPIN_LOCK_UNLOCKED(lockname.रुको_lock) \
-		, .रुको_list = LIST_HEAD_INIT(lockname.रुको_list) \
+#define __MUTEX_INITIALIZER(lockname) \
+		{ .owner = ATOMIC_LONG_INIT(0) \
+		, .wait_lock = __SPIN_LOCK_UNLOCKED(lockname.wait_lock) \
+		, .wait_list = LIST_HEAD_INIT(lockname.wait_list) \
 		__DEBUG_MUTEX_INITIALIZER(lockname) \
-		__DEP_MAP_MUTEX_INITIALIZER(lockname) पूर्ण
+		__DEP_MAP_MUTEX_INITIALIZER(lockname) }
 
-#घोषणा DEFINE_MUTEX(mutexname) \
-	काष्ठा mutex mutexname = __MUTEX_INITIALIZER(mutexname)
+#define DEFINE_MUTEX(mutexname) \
+	struct mutex mutexname = __MUTEX_INITIALIZER(mutexname)
 
-बाह्य व्योम __mutex_init(काष्ठा mutex *lock, स्थिर अक्षर *name,
-			 काष्ठा lock_class_key *key);
+extern void __mutex_init(struct mutex *lock, const char *name,
+			 struct lock_class_key *key);
 
 /**
  * mutex_is_locked - is the mutex locked
  * @lock: the mutex to be queried
  *
- * Returns true अगर the mutex is locked, false अगर unlocked.
+ * Returns true if the mutex is locked, false if unlocked.
  */
-बाह्य bool mutex_is_locked(काष्ठा mutex *lock);
+extern bool mutex_is_locked(struct mutex *lock);
 
 /*
- * See kernel/locking/mutex.c क्रम detailed करोcumentation of these APIs.
+ * See kernel/locking/mutex.c for detailed documentation of these APIs.
  * Also see Documentation/locking/mutex-design.rst.
  */
-#अगर_घोषित CONFIG_DEBUG_LOCK_ALLOC
-बाह्य व्योम mutex_lock_nested(काष्ठा mutex *lock, अचिन्हित पूर्णांक subclass);
-बाह्य व्योम _mutex_lock_nest_lock(काष्ठा mutex *lock, काष्ठा lockdep_map *nest_lock);
+#ifdef CONFIG_DEBUG_LOCK_ALLOC
+extern void mutex_lock_nested(struct mutex *lock, unsigned int subclass);
+extern void _mutex_lock_nest_lock(struct mutex *lock, struct lockdep_map *nest_lock);
 
-बाह्य पूर्णांक __must_check mutex_lock_पूर्णांकerruptible_nested(काष्ठा mutex *lock,
-					अचिन्हित पूर्णांक subclass);
-बाह्य पूर्णांक __must_check mutex_lock_समाप्तable_nested(काष्ठा mutex *lock,
-					अचिन्हित पूर्णांक subclass);
-बाह्य व्योम mutex_lock_io_nested(काष्ठा mutex *lock, अचिन्हित पूर्णांक subclass);
+extern int __must_check mutex_lock_interruptible_nested(struct mutex *lock,
+					unsigned int subclass);
+extern int __must_check mutex_lock_killable_nested(struct mutex *lock,
+					unsigned int subclass);
+extern void mutex_lock_io_nested(struct mutex *lock, unsigned int subclass);
 
-#घोषणा mutex_lock(lock) mutex_lock_nested(lock, 0)
-#घोषणा mutex_lock_पूर्णांकerruptible(lock) mutex_lock_पूर्णांकerruptible_nested(lock, 0)
-#घोषणा mutex_lock_समाप्तable(lock) mutex_lock_समाप्तable_nested(lock, 0)
-#घोषणा mutex_lock_io(lock) mutex_lock_io_nested(lock, 0)
+#define mutex_lock(lock) mutex_lock_nested(lock, 0)
+#define mutex_lock_interruptible(lock) mutex_lock_interruptible_nested(lock, 0)
+#define mutex_lock_killable(lock) mutex_lock_killable_nested(lock, 0)
+#define mutex_lock_io(lock) mutex_lock_io_nested(lock, 0)
 
-#घोषणा mutex_lock_nest_lock(lock, nest_lock)				\
-करो अणु									\
-	typecheck(काष्ठा lockdep_map *, &(nest_lock)->dep_map);	\
+#define mutex_lock_nest_lock(lock, nest_lock)				\
+do {									\
+	typecheck(struct lockdep_map *, &(nest_lock)->dep_map);	\
 	_mutex_lock_nest_lock(lock, &(nest_lock)->dep_map);		\
-पूर्ण जबतक (0)
+} while (0)
 
-#अन्यथा
-बाह्य व्योम mutex_lock(काष्ठा mutex *lock);
-बाह्य पूर्णांक __must_check mutex_lock_पूर्णांकerruptible(काष्ठा mutex *lock);
-बाह्य पूर्णांक __must_check mutex_lock_समाप्तable(काष्ठा mutex *lock);
-बाह्य व्योम mutex_lock_io(काष्ठा mutex *lock);
+#else
+extern void mutex_lock(struct mutex *lock);
+extern int __must_check mutex_lock_interruptible(struct mutex *lock);
+extern int __must_check mutex_lock_killable(struct mutex *lock);
+extern void mutex_lock_io(struct mutex *lock);
 
 # define mutex_lock_nested(lock, subclass) mutex_lock(lock)
-# define mutex_lock_पूर्णांकerruptible_nested(lock, subclass) mutex_lock_पूर्णांकerruptible(lock)
-# define mutex_lock_समाप्तable_nested(lock, subclass) mutex_lock_समाप्तable(lock)
+# define mutex_lock_interruptible_nested(lock, subclass) mutex_lock_interruptible(lock)
+# define mutex_lock_killable_nested(lock, subclass) mutex_lock_killable(lock)
 # define mutex_lock_nest_lock(lock, nest_lock) mutex_lock(lock)
 # define mutex_lock_io_nested(lock, subclass) mutex_lock_io(lock)
-#पूर्ण_अगर
+#endif
 
 /*
  * NOTE: mutex_trylock() follows the spin_trylock() convention,
- *       not the करोwn_trylock() convention!
+ *       not the down_trylock() convention!
  *
- * Returns 1 अगर the mutex has been acquired successfully, and 0 on contention.
+ * Returns 1 if the mutex has been acquired successfully, and 0 on contention.
  */
-बाह्य पूर्णांक mutex_trylock(काष्ठा mutex *lock);
-बाह्य व्योम mutex_unlock(काष्ठा mutex *lock);
+extern int mutex_trylock(struct mutex *lock);
+extern void mutex_unlock(struct mutex *lock);
 
-बाह्य पूर्णांक atomic_dec_and_mutex_lock(atomic_t *cnt, काष्ठा mutex *lock);
+extern int atomic_dec_and_mutex_lock(atomic_t *cnt, struct mutex *lock);
 
-#पूर्ण_अगर /* __LINUX_MUTEX_H */
+#endif /* __LINUX_MUTEX_H */

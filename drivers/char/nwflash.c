@@ -1,301 +1,300 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Flash memory पूर्णांकerface rev.5 driver क्रम the Intel
+ * Flash memory interface rev.5 driver for the Intel
  * Flash chips used on the NetWinder.
  *
- * 20/08/2000	RMK	use __ioremap to map flash पूर्णांकo भव memory
+ * 20/08/2000	RMK	use __ioremap to map flash into virtual memory
  *			make a few more places use "volatile"
- * 22/05/2001	RMK	- Lock पढ़ो against ग_लिखो
- *			- merge prपूर्णांकk level changes (with mods) from Alan Cox.
+ * 22/05/2001	RMK	- Lock read against write
+ *			- merge printk level changes (with mods) from Alan Cox.
  *			- use *ppos as the file position, not file->f_pos.
- *			- fix check क्रम out of range pos and r/w size
+ *			- fix check for out of range pos and r/w size
  *
  * Please note that we are tampering with the only flash chip in the
- * machine, which contains the bootup code.  We thereक्रमe have the
- * घातer to convert these machines पूर्णांकo करोorstops...
+ * machine, which contains the bootup code.  We therefore have the
+ * power to convert these machines into doorstops...
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/mm.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/rwsem.h>
-#समावेश <linux/init.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/jअगरfies.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/fs.h>
+#include <linux/errno.h>
+#include <linux/mm.h>
+#include <linux/delay.h>
+#include <linux/proc_fs.h>
+#include <linux/miscdevice.h>
+#include <linux/spinlock.h>
+#include <linux/rwsem.h>
+#include <linux/init.h>
+#include <linux/mutex.h>
+#include <linux/jiffies.h>
 
-#समावेश <यंत्र/hardware/dec21285.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/mach-types.h>
-#समावेश <linux/uaccess.h>
+#include <asm/hardware/dec21285.h>
+#include <asm/io.h>
+#include <asm/mach-types.h>
+#include <linux/uaccess.h>
 
 /*****************************************************************************/
-#समावेश <यंत्र/nwflash.h>
+#include <asm/nwflash.h>
 
-#घोषणा	NWFLASH_VERSION "6.4"
+#define	NWFLASH_VERSION "6.4"
 
-अटल DEFINE_MUTEX(flash_mutex);
-अटल व्योम kick_खोलो(व्योम);
-अटल पूर्णांक get_flash_id(व्योम);
-अटल पूर्णांक erase_block(पूर्णांक nBlock);
-अटल पूर्णांक ग_लिखो_block(अचिन्हित दीर्घ p, स्थिर अक्षर __user *buf, पूर्णांक count);
+static DEFINE_MUTEX(flash_mutex);
+static void kick_open(void);
+static int get_flash_id(void);
+static int erase_block(int nBlock);
+static int write_block(unsigned long p, const char __user *buf, int count);
 
-#घोषणा KFLASH_SIZE	1024*1024	//1 Meg
-#घोषणा KFLASH_SIZE4	4*1024*1024	//4 Meg
-#घोषणा KFLASH_ID	0x89A6		//Intel flash
-#घोषणा KFLASH_ID4	0xB0D4		//Intel flash 4Meg
+#define KFLASH_SIZE	1024*1024	//1 Meg
+#define KFLASH_SIZE4	4*1024*1024	//4 Meg
+#define KFLASH_ID	0x89A6		//Intel flash
+#define KFLASH_ID4	0xB0D4		//Intel flash 4Meg
 
-अटल bool flashdebug;		//अगर set - we will display progress msgs
+static bool flashdebug;		//if set - we will display progress msgs
 
-अटल पूर्णांक gbWriteEnable;
-अटल पूर्णांक gbWriteBase64Enable;
-अटल अस्थिर अचिन्हित अक्षर *FLASH_BASE;
-अटल पूर्णांक gbFlashSize = KFLASH_SIZE;
-अटल DEFINE_MUTEX(nwflash_mutex);
+static int gbWriteEnable;
+static int gbWriteBase64Enable;
+static volatile unsigned char *FLASH_BASE;
+static int gbFlashSize = KFLASH_SIZE;
+static DEFINE_MUTEX(nwflash_mutex);
 
-अटल पूर्णांक get_flash_id(व्योम)
-अणु
-	अस्थिर अचिन्हित पूर्णांक c1, c2;
+static int get_flash_id(void)
+{
+	volatile unsigned int c1, c2;
 
 	/*
 	 * try to get flash chip ID
 	 */
-	kick_खोलो();
+	kick_open();
 	c2 = inb(0x80);
-	*(अस्थिर अचिन्हित अक्षर *) (FLASH_BASE + 0x8000) = 0x90;
+	*(volatile unsigned char *) (FLASH_BASE + 0x8000) = 0x90;
 	udelay(15);
-	c1 = *(अस्थिर अचिन्हित अक्षर *) FLASH_BASE;
+	c1 = *(volatile unsigned char *) FLASH_BASE;
 	c2 = inb(0x80);
 
 	/*
 	 * on 4 Meg flash the second byte is actually at offset 2...
 	 */
-	अगर (c1 == 0xB0)
-		c2 = *(अस्थिर अचिन्हित अक्षर *) (FLASH_BASE + 2);
-	अन्यथा
-		c2 = *(अस्थिर अचिन्हित अक्षर *) (FLASH_BASE + 1);
+	if (c1 == 0xB0)
+		c2 = *(volatile unsigned char *) (FLASH_BASE + 2);
+	else
+		c2 = *(volatile unsigned char *) (FLASH_BASE + 1);
 
 	c2 += (c1 << 8);
 
 	/*
-	 * set it back to पढ़ो mode
+	 * set it back to read mode
 	 */
-	*(अस्थिर अचिन्हित अक्षर *) (FLASH_BASE + 0x8000) = 0xFF;
+	*(volatile unsigned char *) (FLASH_BASE + 0x8000) = 0xFF;
 
-	अगर (c2 == KFLASH_ID4)
+	if (c2 == KFLASH_ID4)
 		gbFlashSize = KFLASH_SIZE4;
 
-	वापस c2;
-पूर्ण
+	return c2;
+}
 
-अटल दीर्घ flash_ioctl(काष्ठा file *filep, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
+static long flash_ioctl(struct file *filep, unsigned int cmd, unsigned long arg)
+{
 	mutex_lock(&flash_mutex);
-	चयन (cmd) अणु
-	हाल CMD_WRITE_DISABLE:
+	switch (cmd) {
+	case CMD_WRITE_DISABLE:
 		gbWriteBase64Enable = 0;
 		gbWriteEnable = 0;
-		अवरोध;
+		break;
 
-	हाल CMD_WRITE_ENABLE:
+	case CMD_WRITE_ENABLE:
 		gbWriteEnable = 1;
-		अवरोध;
+		break;
 
-	हाल CMD_WRITE_BASE64K_ENABLE:
+	case CMD_WRITE_BASE64K_ENABLE:
 		gbWriteBase64Enable = 1;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		gbWriteBase64Enable = 0;
 		gbWriteEnable = 0;
 		mutex_unlock(&flash_mutex);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	mutex_unlock(&flash_mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार flash_पढ़ो(काष्ठा file *file, अक्षर __user *buf, माप_प्रकार size,
+static ssize_t flash_read(struct file *file, char __user *buf, size_t size,
 			  loff_t *ppos)
-अणु
-	sमाप_प्रकार ret;
+{
+	ssize_t ret;
 
-	अगर (flashdebug)
-		prपूर्णांकk(KERN_DEBUG "flash_read: flash_read: offset=0x%llx, "
+	if (flashdebug)
+		printk(KERN_DEBUG "flash_read: flash_read: offset=0x%llx, "
 		       "buffer=%p, count=0x%zx.\n", *ppos, buf, size);
 	/*
-	 * We now lock against पढ़ोs and ग_लिखोs. --rmk
+	 * We now lock against reads and writes. --rmk
 	 */
-	अगर (mutex_lock_पूर्णांकerruptible(&nwflash_mutex))
-		वापस -ERESTARTSYS;
+	if (mutex_lock_interruptible(&nwflash_mutex))
+		return -ERESTARTSYS;
 
-	ret = simple_पढ़ो_from_buffer(buf, size, ppos, (व्योम *)FLASH_BASE, gbFlashSize);
+	ret = simple_read_from_buffer(buf, size, ppos, (void *)FLASH_BASE, gbFlashSize);
 	mutex_unlock(&nwflash_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार flash_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
-			   माप_प्रकार size, loff_t * ppos)
-अणु
-	अचिन्हित दीर्घ p = *ppos;
-	अचिन्हित पूर्णांक count = size;
-	पूर्णांक written;
-	पूर्णांक nBlock, temp, rc;
-	पूर्णांक i, j;
+static ssize_t flash_write(struct file *file, const char __user *buf,
+			   size_t size, loff_t * ppos)
+{
+	unsigned long p = *ppos;
+	unsigned int count = size;
+	int written;
+	int nBlock, temp, rc;
+	int i, j;
 
-	अगर (flashdebug)
-		prपूर्णांकk("flash_write: offset=0x%lX, buffer=0x%p, count=0x%X.\n",
+	if (flashdebug)
+		printk("flash_write: offset=0x%lX, buffer=0x%p, count=0x%X.\n",
 		       p, buf, count);
 
-	अगर (!gbWriteEnable)
-		वापस -EINVAL;
+	if (!gbWriteEnable)
+		return -EINVAL;
 
-	अगर (p < 64 * 1024 && (!gbWriteBase64Enable))
-		वापस -EINVAL;
+	if (p < 64 * 1024 && (!gbWriteBase64Enable))
+		return -EINVAL;
 
 	/*
-	 * check क्रम out of range pos or count
+	 * check for out of range pos or count
 	 */
-	अगर (p >= gbFlashSize)
-		वापस count ? -ENXIO : 0;
+	if (p >= gbFlashSize)
+		return count ? -ENXIO : 0;
 
-	अगर (count > gbFlashSize - p)
+	if (count > gbFlashSize - p)
 		count = gbFlashSize - p;
 			
-	अगर (!access_ok(buf, count))
-		वापस -EFAULT;
+	if (!access_ok(buf, count))
+		return -EFAULT;
 
 	/*
-	 * We now lock against पढ़ोs and ग_लिखोs. --rmk
+	 * We now lock against reads and writes. --rmk
 	 */
-	अगर (mutex_lock_पूर्णांकerruptible(&nwflash_mutex))
-		वापस -ERESTARTSYS;
+	if (mutex_lock_interruptible(&nwflash_mutex))
+		return -ERESTARTSYS;
 
 	written = 0;
 
-	nBlock = (पूर्णांक) p >> 16;	//block # of 64K bytes
+	nBlock = (int) p >> 16;	//block # of 64K bytes
 
 	/*
-	 * # of 64K blocks to erase and ग_लिखो
+	 * # of 64K blocks to erase and write
 	 */
-	temp = ((पूर्णांक) (p + count) >> 16) - nBlock + 1;
+	temp = ((int) (p + count) >> 16) - nBlock + 1;
 
 	/*
-	 * ग_लिखो ends at exactly 64k boundary?
+	 * write ends at exactly 64k boundary?
 	 */
-	अगर (((पूर्णांक) (p + count) & 0xFFFF) == 0)
+	if (((int) (p + count) & 0xFFFF) == 0)
 		temp -= 1;
 
-	अगर (flashdebug)
-		prपूर्णांकk(KERN_DEBUG "flash_write: writing %d block(s) "
+	if (flashdebug)
+		printk(KERN_DEBUG "flash_write: writing %d block(s) "
 			"starting at %d.\n", temp, nBlock);
 
-	क्रम (; temp; temp--, nBlock++) अणु
-		अगर (flashdebug)
-			prपूर्णांकk(KERN_DEBUG "flash_write: erasing block %d.\n", nBlock);
+	for (; temp; temp--, nBlock++) {
+		if (flashdebug)
+			printk(KERN_DEBUG "flash_write: erasing block %d.\n", nBlock);
 
 		/*
-		 * first we have to erase the block(s), where we will ग_लिखो...
+		 * first we have to erase the block(s), where we will write...
 		 */
 		i = 0;
 		j = 0;
 	  RetryBlock:
-		करो अणु
+		do {
 			rc = erase_block(nBlock);
 			i++;
-		पूर्ण जबतक (rc && i < 10);
+		} while (rc && i < 10);
 
-		अगर (rc) अणु
-			prपूर्णांकk(KERN_ERR "flash_write: erase error %x\n", rc);
-			अवरोध;
-		पूर्ण
-		अगर (flashdebug)
-			prपूर्णांकk(KERN_DEBUG "flash_write: writing offset %lX, "
+		if (rc) {
+			printk(KERN_ERR "flash_write: erase error %x\n", rc);
+			break;
+		}
+		if (flashdebug)
+			printk(KERN_DEBUG "flash_write: writing offset %lX, "
 			       "from buf %p, bytes left %X.\n", p, buf,
 			       count - written);
 
 		/*
-		 * ग_लिखो_block will limit ग_लिखो to space left in this block
+		 * write_block will limit write to space left in this block
 		 */
-		rc = ग_लिखो_block(p, buf, count - written);
+		rc = write_block(p, buf, count - written);
 		j++;
 
 		/*
-		 * अगर somehow ग_लिखो verअगरy failed? Can't happen??
+		 * if somehow write verify failed? Can't happen??
 		 */
-		अगर (!rc) अणु
+		if (!rc) {
 			/*
-			 * retry up to 10 बार
+			 * retry up to 10 times
 			 */
-			अगर (j < 10)
-				जाओ RetryBlock;
-			अन्यथा
+			if (j < 10)
+				goto RetryBlock;
+			else
 				/*
-				 * अन्यथा quit with error...
+				 * else quit with error...
 				 */
 				rc = -1;
 
-		पूर्ण
-		अगर (rc < 0) अणु
-			prपूर्णांकk(KERN_ERR "flash_write: write error %X\n", rc);
-			अवरोध;
-		पूर्ण
+		}
+		if (rc < 0) {
+			printk(KERN_ERR "flash_write: write error %X\n", rc);
+			break;
+		}
 		p += rc;
 		buf += rc;
 		written += rc;
 		*ppos += rc;
 
-		अगर (flashdebug)
-			prपूर्णांकk(KERN_DEBUG "flash_write: written 0x%X bytes OK.\n", written);
-	पूर्ण
+		if (flashdebug)
+			printk(KERN_DEBUG "flash_write: written 0x%X bytes OK.\n", written);
+	}
 
 	mutex_unlock(&nwflash_mutex);
 
-	वापस written;
-पूर्ण
+	return written;
+}
 
 
 /*
  * The memory devices use the full 32/64 bits of the offset, and so we cannot
- * check against negative addresses: they are ok. The वापस value is weird,
- * though, in that हाल (0).
+ * check against negative addresses: they are ok. The return value is weird,
+ * though, in that case (0).
  *
  * also note that seeking relative to the "end of file" isn't supported:
- * it has no meaning, so it वापसs -EINVAL.
+ * it has no meaning, so it returns -EINVAL.
  */
-अटल loff_t flash_llseek(काष्ठा file *file, loff_t offset, पूर्णांक orig)
-अणु
+static loff_t flash_llseek(struct file *file, loff_t offset, int orig)
+{
 	loff_t ret;
 
 	mutex_lock(&flash_mutex);
-	अगर (flashdebug)
-		prपूर्णांकk(KERN_DEBUG "flash_llseek: offset=0x%X, orig=0x%X.\n",
-		       (अचिन्हित पूर्णांक) offset, orig);
+	if (flashdebug)
+		printk(KERN_DEBUG "flash_llseek: offset=0x%X, orig=0x%X.\n",
+		       (unsigned int) offset, orig);
 
 	ret = no_seek_end_llseek_size(file, offset, orig, gbFlashSize);
 	mutex_unlock(&flash_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
 /*
- * assume that मुख्य Write routine did the parameter checking...
+ * assume that main Write routine did the parameter checking...
  * so just go ahead and erase, what requested!
  */
 
-अटल पूर्णांक erase_block(पूर्णांक nBlock)
-अणु
-	अस्थिर अचिन्हित पूर्णांक c1;
-	अस्थिर अचिन्हित अक्षर *pWritePtr;
-	अचिन्हित दीर्घ समयout;
-	पूर्णांक temp, temp1;
+static int erase_block(int nBlock)
+{
+	volatile unsigned int c1;
+	volatile unsigned char *pWritePtr;
+	unsigned long timeout;
+	int temp, temp1;
 
 	/*
 	 * reset footbridge to the correct offset 0 (...0..3)
@@ -303,325 +302,325 @@
 	*CSR_ROMWRITEREG = 0;
 
 	/*
-	 * dummy ROM पढ़ो
+	 * dummy ROM read
 	 */
-	c1 = *(अस्थिर अचिन्हित अक्षर *) (FLASH_BASE + 0x8000);
+	c1 = *(volatile unsigned char *) (FLASH_BASE + 0x8000);
 
-	kick_खोलो();
+	kick_open();
 	/*
-	 * reset status अगर old errors
+	 * reset status if old errors
 	 */
-	*(अस्थिर अचिन्हित अक्षर *) (FLASH_BASE + 0x8000) = 0x50;
+	*(volatile unsigned char *) (FLASH_BASE + 0x8000) = 0x50;
 
 	/*
 	 * erase a block...
 	 * aim at the middle of a current block...
 	 */
-	pWritePtr = (अचिन्हित अक्षर *) ((अचिन्हित पूर्णांक) (FLASH_BASE + 0x8000 + (nBlock << 16)));
+	pWritePtr = (unsigned char *) ((unsigned int) (FLASH_BASE + 0x8000 + (nBlock << 16)));
 	/*
-	 * dummy पढ़ो
+	 * dummy read
 	 */
 	c1 = *pWritePtr;
 
-	kick_खोलो();
+	kick_open();
 	/*
 	 * erase
 	 */
-	*(अस्थिर अचिन्हित अक्षर *) pWritePtr = 0x20;
+	*(volatile unsigned char *) pWritePtr = 0x20;
 
 	/*
 	 * confirm
 	 */
-	*(अस्थिर अचिन्हित अक्षर *) pWritePtr = 0xD0;
+	*(volatile unsigned char *) pWritePtr = 0xD0;
 
 	/*
-	 * रुको 10 ms
+	 * wait 10 ms
 	 */
 	msleep(10);
 
 	/*
-	 * रुको जबतक erasing in process (up to 10 sec)
+	 * wait while erasing in process (up to 10 sec)
 	 */
-	समयout = jअगरfies + 10 * HZ;
+	timeout = jiffies + 10 * HZ;
 	c1 = 0;
-	जबतक (!(c1 & 0x80) && समय_beक्रमe(jअगरfies, समयout)) अणु
+	while (!(c1 & 0x80) && time_before(jiffies, timeout)) {
 		msleep(10);
 		/*
-		 * पढ़ो any address
+		 * read any address
 		 */
-		c1 = *(अस्थिर अचिन्हित अक्षर *) (pWritePtr);
-		//              prपूर्णांकk("Flash_erase: status=%X.\n",c1);
-	पूर्ण
+		c1 = *(volatile unsigned char *) (pWritePtr);
+		//              printk("Flash_erase: status=%X.\n",c1);
+	}
 
 	/*
-	 * set flash क्रम normal पढ़ो access
+	 * set flash for normal read access
 	 */
-	kick_खोलो();
-//      *(अस्थिर अचिन्हित अक्षर*)(FLASH_BASE+0x8000) = 0xFF;
-	*(अस्थिर अचिन्हित अक्षर *) pWritePtr = 0xFF;	//back to normal operation
+	kick_open();
+//      *(volatile unsigned char*)(FLASH_BASE+0x8000) = 0xFF;
+	*(volatile unsigned char *) pWritePtr = 0xFF;	//back to normal operation
 
 	/*
-	 * check अगर erase errors were reported
+	 * check if erase errors were reported
 	 */
-	अगर (c1 & 0x20) अणु
-		prपूर्णांकk(KERN_ERR "flash_erase: err at %p\n", pWritePtr);
+	if (c1 & 0x20) {
+		printk(KERN_ERR "flash_erase: err at %p\n", pWritePtr);
 
 		/*
 		 * reset error
 		 */
-		*(अस्थिर अचिन्हित अक्षर *) (FLASH_BASE + 0x8000) = 0x50;
-		वापस -2;
-	पूर्ण
+		*(volatile unsigned char *) (FLASH_BASE + 0x8000) = 0x50;
+		return -2;
+	}
 
 	/*
-	 * just to make sure - verअगरy अगर erased OK...
+	 * just to make sure - verify if erased OK...
 	 */
 	msleep(10);
 
-	pWritePtr = (अचिन्हित अक्षर *) ((अचिन्हित पूर्णांक) (FLASH_BASE + (nBlock << 16)));
+	pWritePtr = (unsigned char *) ((unsigned int) (FLASH_BASE + (nBlock << 16)));
 
-	क्रम (temp = 0; temp < 16 * 1024; temp++, pWritePtr += 4) अणु
-		अगर ((temp1 = *(अस्थिर अचिन्हित पूर्णांक *) pWritePtr) != 0xFFFFFFFF) अणु
-			prपूर्णांकk(KERN_ERR "flash_erase: verify err at %p = %X\n",
+	for (temp = 0; temp < 16 * 1024; temp++, pWritePtr += 4) {
+		if ((temp1 = *(volatile unsigned int *) pWritePtr) != 0xFFFFFFFF) {
+			printk(KERN_ERR "flash_erase: verify err at %p = %X\n",
 			       pWritePtr, temp1);
-			वापस -1;
-		पूर्ण
-	पूर्ण
+			return -1;
+		}
+	}
 
-	वापस 0;
+	return 0;
 
-पूर्ण
+}
 
 /*
- * ग_लिखो_block will limit number of bytes written to the space in this block
+ * write_block will limit number of bytes written to the space in this block
  */
-अटल पूर्णांक ग_लिखो_block(अचिन्हित दीर्घ p, स्थिर अक्षर __user *buf, पूर्णांक count)
-अणु
-	अस्थिर अचिन्हित पूर्णांक c1;
-	अस्थिर अचिन्हित पूर्णांक c2;
-	अचिन्हित अक्षर *pWritePtr;
-	अचिन्हित पूर्णांक uAddress;
-	अचिन्हित पूर्णांक offset;
-	अचिन्हित दीर्घ समयout;
-	अचिन्हित दीर्घ समयout1;
+static int write_block(unsigned long p, const char __user *buf, int count)
+{
+	volatile unsigned int c1;
+	volatile unsigned int c2;
+	unsigned char *pWritePtr;
+	unsigned int uAddress;
+	unsigned int offset;
+	unsigned long timeout;
+	unsigned long timeout1;
 
-	pWritePtr = (अचिन्हित अक्षर *) ((अचिन्हित पूर्णांक) (FLASH_BASE + p));
+	pWritePtr = (unsigned char *) ((unsigned int) (FLASH_BASE + p));
 
 	/*
-	 * check अगर ग_लिखो will end in this block....
+	 * check if write will end in this block....
 	 */
 	offset = p & 0xFFFF;
 
-	अगर (offset + count > 0x10000)
+	if (offset + count > 0x10000)
 		count = 0x10000 - offset;
 
 	/*
-	 * रुको up to 30 sec क्रम this block
+	 * wait up to 30 sec for this block
 	 */
-	समयout = jअगरfies + 30 * HZ;
+	timeout = jiffies + 30 * HZ;
 
-	क्रम (offset = 0; offset < count; offset++, pWritePtr++) अणु
-		uAddress = (अचिन्हित पूर्णांक) pWritePtr;
+	for (offset = 0; offset < count; offset++, pWritePtr++) {
+		uAddress = (unsigned int) pWritePtr;
 		uAddress &= 0xFFFFFFFC;
-		अगर (__get_user(c2, buf + offset))
-			वापस -EFAULT;
+		if (__get_user(c2, buf + offset))
+			return -EFAULT;
 
 	  WriteRetry:
 	  	/*
-	  	 * dummy पढ़ो
+	  	 * dummy read
 	  	 */
-		c1 = *(अस्थिर अचिन्हित अक्षर *) (FLASH_BASE + 0x8000);
+		c1 = *(volatile unsigned char *) (FLASH_BASE + 0x8000);
 
 		/*
-		 * kick खोलो the ग_लिखो gate
+		 * kick open the write gate
 		 */
-		kick_खोलो();
+		kick_open();
 
 		/*
 		 * program footbridge to the correct offset...0..3
 		 */
-		*CSR_ROMWRITEREG = (अचिन्हित पूर्णांक) pWritePtr & 3;
+		*CSR_ROMWRITEREG = (unsigned int) pWritePtr & 3;
 
 		/*
-		 * ग_लिखो cmd
+		 * write cmd
 		 */
-		*(अस्थिर अचिन्हित अक्षर *) (uAddress) = 0x40;
+		*(volatile unsigned char *) (uAddress) = 0x40;
 
 		/*
-		 * data to ग_लिखो
+		 * data to write
 		 */
-		*(अस्थिर अचिन्हित अक्षर *) (uAddress) = c2;
+		*(volatile unsigned char *) (uAddress) = c2;
 
 		/*
 		 * get status
 		 */
-		*(अस्थिर अचिन्हित अक्षर *) (FLASH_BASE + 0x10000) = 0x70;
+		*(volatile unsigned char *) (FLASH_BASE + 0x10000) = 0x70;
 
 		c1 = 0;
 
 		/*
-		 * रुको up to 1 sec क्रम this byte
+		 * wait up to 1 sec for this byte
 		 */
-		समयout1 = jअगरfies + 1 * HZ;
+		timeout1 = jiffies + 1 * HZ;
 
 		/*
-		 * जबतक not पढ़ोy...
+		 * while not ready...
 		 */
-		जबतक (!(c1 & 0x80) && समय_beक्रमe(jअगरfies, समयout1))
-			c1 = *(अस्थिर अचिन्हित अक्षर *) (FLASH_BASE + 0x8000);
+		while (!(c1 & 0x80) && time_before(jiffies, timeout1))
+			c1 = *(volatile unsigned char *) (FLASH_BASE + 0x8000);
 
 		/*
-		 * अगर समयout getting status
+		 * if timeout getting status
 		 */
-		अगर (समय_after_eq(jअगरfies, समयout1)) अणु
-			kick_खोलो();
+		if (time_after_eq(jiffies, timeout1)) {
+			kick_open();
 			/*
 			 * reset err
 			 */
-			*(अस्थिर अचिन्हित अक्षर *) (FLASH_BASE + 0x8000) = 0x50;
+			*(volatile unsigned char *) (FLASH_BASE + 0x8000) = 0x50;
 
-			जाओ WriteRetry;
-		पूर्ण
+			goto WriteRetry;
+		}
 		/*
-		 * चयन on पढ़ो access, as a शेष flash operation mode
+		 * switch on read access, as a default flash operation mode
 		 */
-		kick_खोलो();
+		kick_open();
 		/*
-		 * पढ़ो access
+		 * read access
 		 */
-		*(अस्थिर अचिन्हित अक्षर *) (FLASH_BASE + 0x8000) = 0xFF;
+		*(volatile unsigned char *) (FLASH_BASE + 0x8000) = 0xFF;
 
 		/*
-		 * अगर hardware reports an error writing, and not समयout - 
+		 * if hardware reports an error writing, and not timeout - 
 		 * reset the chip and retry
 		 */
-		अगर (c1 & 0x10) अणु
-			kick_खोलो();
+		if (c1 & 0x10) {
+			kick_open();
 			/*
 			 * reset err
 			 */
-			*(अस्थिर अचिन्हित अक्षर *) (FLASH_BASE + 0x8000) = 0x50;
+			*(volatile unsigned char *) (FLASH_BASE + 0x8000) = 0x50;
 
 			/*
-			 * beक्रमe समयout?
+			 * before timeout?
 			 */
-			अगर (समय_beक्रमe(jअगरfies, समयout)) अणु
-				अगर (flashdebug)
-					prपूर्णांकk(KERN_DEBUG "write_block: Retrying write at 0x%X)n",
+			if (time_before(jiffies, timeout)) {
+				if (flashdebug)
+					printk(KERN_DEBUG "write_block: Retrying write at 0x%X)n",
 					       pWritePtr - FLASH_BASE);
 
 				/*
-				 * रुको couple ms
+				 * wait couple ms
 				 */
 				msleep(10);
 
-				जाओ WriteRetry;
-			पूर्ण अन्यथा अणु
-				prपूर्णांकk(KERN_ERR "write_block: timeout at 0x%X\n",
+				goto WriteRetry;
+			} else {
+				printk(KERN_ERR "write_block: timeout at 0x%X\n",
 				       pWritePtr - FLASH_BASE);
 				/*
-				 * वापस error -2
+				 * return error -2
 				 */
-				वापस -2;
+				return -2;
 
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 	msleep(10);
 
-	pWritePtr = (अचिन्हित अक्षर *) ((अचिन्हित पूर्णांक) (FLASH_BASE + p));
+	pWritePtr = (unsigned char *) ((unsigned int) (FLASH_BASE + p));
 
-	क्रम (offset = 0; offset < count; offset++) अणु
-		अक्षर c, c1;
-		अगर (__get_user(c, buf))
-			वापस -EFAULT;
+	for (offset = 0; offset < count; offset++) {
+		char c, c1;
+		if (__get_user(c, buf))
+			return -EFAULT;
 		buf++;
-		अगर ((c1 = *pWritePtr++) != c) अणु
-			prपूर्णांकk(KERN_ERR "write_block: verify error at 0x%X (%02X!=%02X)\n",
+		if ((c1 = *pWritePtr++) != c) {
+			printk(KERN_ERR "write_block: verify error at 0x%X (%02X!=%02X)\n",
 			       pWritePtr - FLASH_BASE, c1, c);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
 
-अटल व्योम kick_खोलो(व्योम)
-अणु
-	अचिन्हित दीर्घ flags;
+static void kick_open(void)
+{
+	unsigned long flags;
 
 	/*
-	 * we want to ग_लिखो a bit pattern XXX1 to Xilinx to enable
-	 * the ग_लिखो gate, which will be खोलो क्रम about the next 2ms.
+	 * we want to write a bit pattern XXX1 to Xilinx to enable
+	 * the write gate, which will be open for about the next 2ms.
 	 */
 	raw_spin_lock_irqsave(&nw_gpio_lock, flags);
-	nw_cpld_modअगरy(CPLD_FLASH_WR_ENABLE, CPLD_FLASH_WR_ENABLE);
+	nw_cpld_modify(CPLD_FLASH_WR_ENABLE, CPLD_FLASH_WR_ENABLE);
 	raw_spin_unlock_irqrestore(&nw_gpio_lock, flags);
 
 	/*
 	 * let the ISA bus to catch on...
 	 */
 	udelay(25);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा file_operations flash_fops =
-अणु
+static const struct file_operations flash_fops =
+{
 	.owner		= THIS_MODULE,
 	.llseek		= flash_llseek,
-	.पढ़ो		= flash_पढ़ो,
-	.ग_लिखो		= flash_ग_लिखो,
+	.read		= flash_read,
+	.write		= flash_write,
 	.unlocked_ioctl	= flash_ioctl,
-पूर्ण;
+};
 
-अटल काष्ठा miscdevice flash_miscdev =
-अणु
+static struct miscdevice flash_miscdev =
+{
 	NWFLASH_MINOR,
 	"nwflash",
 	&flash_fops
-पूर्ण;
+};
 
-अटल पूर्णांक __init nwflash_init(व्योम)
-अणु
-	पूर्णांक ret = -ENODEV;
+static int __init nwflash_init(void)
+{
+	int ret = -ENODEV;
 
-	अगर (machine_is_netwinder()) अणु
-		पूर्णांक id;
+	if (machine_is_netwinder()) {
+		int id;
 
 		FLASH_BASE = ioremap(DC21285_FLASH, KFLASH_SIZE4);
-		अगर (!FLASH_BASE)
-			जाओ out;
+		if (!FLASH_BASE)
+			goto out;
 
 		id = get_flash_id();
-		अगर ((id != KFLASH_ID) && (id != KFLASH_ID4)) अणु
+		if ((id != KFLASH_ID) && (id != KFLASH_ID4)) {
 			ret = -ENXIO;
-			iounmap((व्योम *)FLASH_BASE);
-			prपूर्णांकk("Flash: incorrect ID 0x%04X.\n", id);
-			जाओ out;
-		पूर्ण
+			iounmap((void *)FLASH_BASE);
+			printk("Flash: incorrect ID 0x%04X.\n", id);
+			goto out;
+		}
 
-		prपूर्णांकk("Flash ROM driver v.%s, flash device ID 0x%04X, size %d Mb.\n",
+		printk("Flash ROM driver v.%s, flash device ID 0x%04X, size %d Mb.\n",
 		       NWFLASH_VERSION, id, gbFlashSize / (1024 * 1024));
 
-		ret = misc_रेजिस्टर(&flash_miscdev);
-		अगर (ret < 0) अणु
-			iounmap((व्योम *)FLASH_BASE);
-		पूर्ण
-	पूर्ण
+		ret = misc_register(&flash_miscdev);
+		if (ret < 0) {
+			iounmap((void *)FLASH_BASE);
+		}
+	}
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम __निकास nwflash_निकास(व्योम)
-अणु
-	misc_deरेजिस्टर(&flash_miscdev);
-	iounmap((व्योम *)FLASH_BASE);
-पूर्ण
+static void __exit nwflash_exit(void)
+{
+	misc_deregister(&flash_miscdev);
+	iounmap((void *)FLASH_BASE);
+}
 
 MODULE_LICENSE("GPL");
 
 module_param(flashdebug, bool, 0644);
 
 module_init(nwflash_init);
-module_निकास(nwflash_निकास);
+module_exit(nwflash_exit);

@@ -1,712 +1,711 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <त्रुटिसं.स>
-#समावेश <पूर्णांकtypes.h>
-#समावेश "builtin.h"
-#समावेश "perf.h"
+// SPDX-License-Identifier: GPL-2.0
+#include <errno.h>
+#include <inttypes.h>
+#include "builtin.h"
+#include "perf.h"
 
-#समावेश "util/evlist.h" // क्रम काष्ठा evsel_str_handler
-#समावेश "util/evsel.h"
-#समावेश "util/symbol.h"
-#समावेश "util/thread.h"
-#समावेश "util/header.h"
+#include "util/evlist.h" // for struct evsel_str_handler
+#include "util/evsel.h"
+#include "util/symbol.h"
+#include "util/thread.h"
+#include "util/header.h"
 
-#समावेश <subcmd/pager.h>
-#समावेश <subcmd/parse-options.h>
-#समावेश "util/trace-event.h"
+#include <subcmd/pager.h>
+#include <subcmd/parse-options.h>
+#include "util/trace-event.h"
 
-#समावेश "util/debug.h"
-#समावेश "util/session.h"
-#समावेश "util/tool.h"
-#समावेश "util/data.h"
+#include "util/debug.h"
+#include "util/session.h"
+#include "util/tool.h"
+#include "util/data.h"
 
-#समावेश <sys/types.h>
-#समावेश <sys/prctl.h>
-#समावेश <semaphore.h>
-#समावेश <pthपढ़ो.h>
-#समावेश <गणित.स>
-#समावेश <सीमा.स>
+#include <sys/types.h>
+#include <sys/prctl.h>
+#include <semaphore.h>
+#include <pthread.h>
+#include <math.h>
+#include <limits.h>
 
-#समावेश <linux/list.h>
-#समावेश <linux/hash.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/zभाग.स>
-#समावेश <linux/err.h>
+#include <linux/list.h>
+#include <linux/hash.h>
+#include <linux/kernel.h>
+#include <linux/zalloc.h>
+#include <linux/err.h>
 
-अटल काष्ठा perf_session *session;
+static struct perf_session *session;
 
 /* based on kernel/lockdep.c */
-#घोषणा LOCKHASH_BITS		12
-#घोषणा LOCKHASH_SIZE		(1UL << LOCKHASH_BITS)
+#define LOCKHASH_BITS		12
+#define LOCKHASH_SIZE		(1UL << LOCKHASH_BITS)
 
-अटल काष्ठा list_head lockhash_table[LOCKHASH_SIZE];
+static struct list_head lockhash_table[LOCKHASH_SIZE];
 
-#घोषणा __lockhashfn(key)	hash_दीर्घ((अचिन्हित दीर्घ)key, LOCKHASH_BITS)
-#घोषणा lockhashentry(key)	(lockhash_table + __lockhashfn((key)))
+#define __lockhashfn(key)	hash_long((unsigned long)key, LOCKHASH_BITS)
+#define lockhashentry(key)	(lockhash_table + __lockhashfn((key)))
 
-काष्ठा lock_stat अणु
-	काष्ठा list_head	hash_entry;
-	काष्ठा rb_node		rb;		/* used क्रम sorting */
+struct lock_stat {
+	struct list_head	hash_entry;
+	struct rb_node		rb;		/* used for sorting */
 
 	/*
-	 * FIXME: evsel__पूर्णांकval() वापसs u64,
+	 * FIXME: evsel__intval() returns u64,
 	 * so address of lockdep_map should be treated as 64bit.
 	 * Is there more better solution?
 	 */
-	व्योम			*addr;		/* address of lockdep_map, used as ID */
-	अक्षर			*name;		/* क्रम म_नकल(), we cannot use स्थिर */
+	void			*addr;		/* address of lockdep_map, used as ID */
+	char			*name;		/* for strcpy(), we cannot use const */
 
-	अचिन्हित पूर्णांक		nr_acquire;
-	अचिन्हित पूर्णांक		nr_acquired;
-	अचिन्हित पूर्णांक		nr_contended;
-	अचिन्हित पूर्णांक		nr_release;
+	unsigned int		nr_acquire;
+	unsigned int		nr_acquired;
+	unsigned int		nr_contended;
+	unsigned int		nr_release;
 
-	अचिन्हित पूर्णांक		nr_पढ़ोlock;
-	अचिन्हित पूर्णांक		nr_trylock;
+	unsigned int		nr_readlock;
+	unsigned int		nr_trylock;
 
-	/* these बार are in nano sec. */
-	u64                     avg_रुको_समय;
-	u64			रुको_समय_प्रकारotal;
-	u64			रुको_समय_min;
-	u64			रुको_समय_max;
+	/* these times are in nano sec. */
+	u64                     avg_wait_time;
+	u64			wait_time_total;
+	u64			wait_time_min;
+	u64			wait_time_max;
 
-	पूर्णांक			discard; /* flag of blacklist */
-पूर्ण;
+	int			discard; /* flag of blacklist */
+};
 
 /*
  * States of lock_seq_stat
  *
- * UNINITIALIZED is required क्रम detecting first event of acquire.
+ * UNINITIALIZED is required for detecting first event of acquire.
  * As the nature of lock events, there is no guarantee
- * that the first event क्रम the locks are acquire,
+ * that the first event for the locks are acquire,
  * it can be acquired, contended or release.
  */
-#घोषणा SEQ_STATE_UNINITIALIZED      0	       /* initial state */
-#घोषणा SEQ_STATE_RELEASED	1
-#घोषणा SEQ_STATE_ACQUIRING	2
-#घोषणा SEQ_STATE_ACQUIRED	3
-#घोषणा SEQ_STATE_READ_ACQUIRED	4
-#घोषणा SEQ_STATE_CONTENDED	5
+#define SEQ_STATE_UNINITIALIZED      0	       /* initial state */
+#define SEQ_STATE_RELEASED	1
+#define SEQ_STATE_ACQUIRING	2
+#define SEQ_STATE_ACQUIRED	3
+#define SEQ_STATE_READ_ACQUIRED	4
+#define SEQ_STATE_CONTENDED	5
 
 /*
  * MAX_LOCK_DEPTH
  * Imported from include/linux/sched.h.
  * Should this be synchronized?
  */
-#घोषणा MAX_LOCK_DEPTH 48
+#define MAX_LOCK_DEPTH 48
 
 /*
- * काष्ठा lock_seq_stat:
+ * struct lock_seq_stat:
  * Place to put on state of one lock sequence
  * 1) acquire -> acquired -> release
  * 2) acquire -> contended -> acquired -> release
- * 3) acquire (with पढ़ो or try) -> release
+ * 3) acquire (with read or try) -> release
  * 4) Are there other patterns?
  */
-काष्ठा lock_seq_stat अणु
-	काष्ठा list_head        list;
-	पूर्णांक			state;
-	u64			prev_event_समय;
-	व्योम                    *addr;
+struct lock_seq_stat {
+	struct list_head        list;
+	int			state;
+	u64			prev_event_time;
+	void                    *addr;
 
-	पूर्णांक                     पढ़ो_count;
-पूर्ण;
+	int                     read_count;
+};
 
-काष्ठा thपढ़ो_stat अणु
-	काष्ठा rb_node		rb;
+struct thread_stat {
+	struct rb_node		rb;
 
 	u32                     tid;
-	काष्ठा list_head        seq_list;
-पूर्ण;
+	struct list_head        seq_list;
+};
 
-अटल काष्ठा rb_root		thपढ़ो_stats;
+static struct rb_root		thread_stats;
 
-अटल काष्ठा thपढ़ो_stat *thपढ़ो_stat_find(u32 tid)
-अणु
-	काष्ठा rb_node *node;
-	काष्ठा thपढ़ो_stat *st;
+static struct thread_stat *thread_stat_find(u32 tid)
+{
+	struct rb_node *node;
+	struct thread_stat *st;
 
-	node = thपढ़ो_stats.rb_node;
-	जबतक (node) अणु
-		st = container_of(node, काष्ठा thपढ़ो_stat, rb);
-		अगर (st->tid == tid)
-			वापस st;
-		अन्यथा अगर (tid < st->tid)
+	node = thread_stats.rb_node;
+	while (node) {
+		st = container_of(node, struct thread_stat, rb);
+		if (st->tid == tid)
+			return st;
+		else if (tid < st->tid)
 			node = node->rb_left;
-		अन्यथा
+		else
 			node = node->rb_right;
-	पूर्ण
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम thपढ़ो_stat_insert(काष्ठा thपढ़ो_stat *new)
-अणु
-	काष्ठा rb_node **rb = &thपढ़ो_stats.rb_node;
-	काष्ठा rb_node *parent = शून्य;
-	काष्ठा thपढ़ो_stat *p;
+static void thread_stat_insert(struct thread_stat *new)
+{
+	struct rb_node **rb = &thread_stats.rb_node;
+	struct rb_node *parent = NULL;
+	struct thread_stat *p;
 
-	जबतक (*rb) अणु
-		p = container_of(*rb, काष्ठा thपढ़ो_stat, rb);
+	while (*rb) {
+		p = container_of(*rb, struct thread_stat, rb);
 		parent = *rb;
 
-		अगर (new->tid < p->tid)
+		if (new->tid < p->tid)
 			rb = &(*rb)->rb_left;
-		अन्यथा अगर (new->tid > p->tid)
+		else if (new->tid > p->tid)
 			rb = &(*rb)->rb_right;
-		अन्यथा
+		else
 			BUG_ON("inserting invalid thread_stat\n");
-	पूर्ण
+	}
 
 	rb_link_node(&new->rb, parent, rb);
-	rb_insert_color(&new->rb, &thपढ़ो_stats);
-पूर्ण
+	rb_insert_color(&new->rb, &thread_stats);
+}
 
-अटल काष्ठा thपढ़ो_stat *thपढ़ो_stat_findnew_after_first(u32 tid)
-अणु
-	काष्ठा thपढ़ो_stat *st;
+static struct thread_stat *thread_stat_findnew_after_first(u32 tid)
+{
+	struct thread_stat *st;
 
-	st = thपढ़ो_stat_find(tid);
-	अगर (st)
-		वापस st;
+	st = thread_stat_find(tid);
+	if (st)
+		return st;
 
-	st = zalloc(माप(काष्ठा thपढ़ो_stat));
-	अगर (!st) अणु
+	st = zalloc(sizeof(struct thread_stat));
+	if (!st) {
 		pr_err("memory allocation failed\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	st->tid = tid;
 	INIT_LIST_HEAD(&st->seq_list);
 
-	thपढ़ो_stat_insert(st);
+	thread_stat_insert(st);
 
-	वापस st;
-पूर्ण
+	return st;
+}
 
-अटल काष्ठा thपढ़ो_stat *thपढ़ो_stat_findnew_first(u32 tid);
-अटल काष्ठा thपढ़ो_stat *(*thपढ़ो_stat_findnew)(u32 tid) =
-	thपढ़ो_stat_findnew_first;
+static struct thread_stat *thread_stat_findnew_first(u32 tid);
+static struct thread_stat *(*thread_stat_findnew)(u32 tid) =
+	thread_stat_findnew_first;
 
-अटल काष्ठा thपढ़ो_stat *thपढ़ो_stat_findnew_first(u32 tid)
-अणु
-	काष्ठा thपढ़ो_stat *st;
+static struct thread_stat *thread_stat_findnew_first(u32 tid)
+{
+	struct thread_stat *st;
 
-	st = zalloc(माप(काष्ठा thपढ़ो_stat));
-	अगर (!st) अणु
+	st = zalloc(sizeof(struct thread_stat));
+	if (!st) {
 		pr_err("memory allocation failed\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 	st->tid = tid;
 	INIT_LIST_HEAD(&st->seq_list);
 
-	rb_link_node(&st->rb, शून्य, &thपढ़ो_stats.rb_node);
-	rb_insert_color(&st->rb, &thपढ़ो_stats);
+	rb_link_node(&st->rb, NULL, &thread_stats.rb_node);
+	rb_insert_color(&st->rb, &thread_stats);
 
-	thपढ़ो_stat_findnew = thपढ़ो_stat_findnew_after_first;
-	वापस st;
-पूर्ण
+	thread_stat_findnew = thread_stat_findnew_after_first;
+	return st;
+}
 
 /* build simple key function one is bigger than two */
-#घोषणा SINGLE_KEY(member)						\
-	अटल पूर्णांक lock_stat_key_ ## member(काष्ठा lock_stat *one,	\
-					 काष्ठा lock_stat *two)		\
-	अणु								\
-		वापस one->member > two->member;			\
-	पूर्ण
+#define SINGLE_KEY(member)						\
+	static int lock_stat_key_ ## member(struct lock_stat *one,	\
+					 struct lock_stat *two)		\
+	{								\
+		return one->member > two->member;			\
+	}
 
 SINGLE_KEY(nr_acquired)
 SINGLE_KEY(nr_contended)
-SINGLE_KEY(avg_रुको_समय)
-SINGLE_KEY(रुको_समय_प्रकारotal)
-SINGLE_KEY(रुको_समय_max)
+SINGLE_KEY(avg_wait_time)
+SINGLE_KEY(wait_time_total)
+SINGLE_KEY(wait_time_max)
 
-अटल पूर्णांक lock_stat_key_रुको_समय_min(काष्ठा lock_stat *one,
-					काष्ठा lock_stat *two)
-अणु
-	u64 s1 = one->रुको_समय_min;
-	u64 s2 = two->रुको_समय_min;
-	अगर (s1 == ULदीर्घ_उच्च)
+static int lock_stat_key_wait_time_min(struct lock_stat *one,
+					struct lock_stat *two)
+{
+	u64 s1 = one->wait_time_min;
+	u64 s2 = two->wait_time_min;
+	if (s1 == ULLONG_MAX)
 		s1 = 0;
-	अगर (s2 == ULदीर्घ_उच्च)
+	if (s2 == ULLONG_MAX)
 		s2 = 0;
-	वापस s1 > s2;
-पूर्ण
+	return s1 > s2;
+}
 
-काष्ठा lock_key अणु
+struct lock_key {
 	/*
-	 * name: the value क्रम specअगरy by user
+	 * name: the value for specify by user
 	 * this should be simpler than raw name of member
-	 * e.g. nr_acquired -> acquired, रुको_समय_प्रकारotal -> रुको_total
+	 * e.g. nr_acquired -> acquired, wait_time_total -> wait_total
 	 */
-	स्थिर अक्षर		*name;
-	पूर्णांक			(*key)(काष्ठा lock_stat*, काष्ठा lock_stat*);
-पूर्ण;
+	const char		*name;
+	int			(*key)(struct lock_stat*, struct lock_stat*);
+};
 
-अटल स्थिर अक्षर		*sort_key = "acquired";
+static const char		*sort_key = "acquired";
 
-अटल पूर्णांक			(*compare)(काष्ठा lock_stat *, काष्ठा lock_stat *);
+static int			(*compare)(struct lock_stat *, struct lock_stat *);
 
-अटल काष्ठा rb_root		result;	/* place to store sorted data */
+static struct rb_root		result;	/* place to store sorted data */
 
-#घोषणा DEF_KEY_LOCK(name, fn_suffix)	\
-	अणु #name, lock_stat_key_ ## fn_suffix पूर्ण
-काष्ठा lock_key keys[] = अणु
+#define DEF_KEY_LOCK(name, fn_suffix)	\
+	{ #name, lock_stat_key_ ## fn_suffix }
+struct lock_key keys[] = {
 	DEF_KEY_LOCK(acquired, nr_acquired),
 	DEF_KEY_LOCK(contended, nr_contended),
-	DEF_KEY_LOCK(avg_रुको, avg_रुको_समय),
-	DEF_KEY_LOCK(रुको_total, रुको_समय_प्रकारotal),
-	DEF_KEY_LOCK(रुको_min, रुको_समय_min),
-	DEF_KEY_LOCK(रुको_max, रुको_समय_max),
+	DEF_KEY_LOCK(avg_wait, avg_wait_time),
+	DEF_KEY_LOCK(wait_total, wait_time_total),
+	DEF_KEY_LOCK(wait_min, wait_time_min),
+	DEF_KEY_LOCK(wait_max, wait_time_max),
 
 	/* extra comparisons much complicated should be here */
 
-	अणु शून्य, शून्य पूर्ण
-पूर्ण;
+	{ NULL, NULL }
+};
 
-अटल पूर्णांक select_key(व्योम)
-अणु
-	पूर्णांक i;
+static int select_key(void)
+{
+	int i;
 
-	क्रम (i = 0; keys[i].name; i++) अणु
-		अगर (!म_भेद(keys[i].name, sort_key)) अणु
+	for (i = 0; keys[i].name; i++) {
+		if (!strcmp(keys[i].name, sort_key)) {
 			compare = keys[i].key;
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
 	pr_err("Unknown compare key: %s\n", sort_key);
 
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल व्योम insert_to_result(काष्ठा lock_stat *st,
-			     पूर्णांक (*bigger)(काष्ठा lock_stat *, काष्ठा lock_stat *))
-अणु
-	काष्ठा rb_node **rb = &result.rb_node;
-	काष्ठा rb_node *parent = शून्य;
-	काष्ठा lock_stat *p;
+static void insert_to_result(struct lock_stat *st,
+			     int (*bigger)(struct lock_stat *, struct lock_stat *))
+{
+	struct rb_node **rb = &result.rb_node;
+	struct rb_node *parent = NULL;
+	struct lock_stat *p;
 
-	जबतक (*rb) अणु
-		p = container_of(*rb, काष्ठा lock_stat, rb);
+	while (*rb) {
+		p = container_of(*rb, struct lock_stat, rb);
 		parent = *rb;
 
-		अगर (bigger(st, p))
+		if (bigger(st, p))
 			rb = &(*rb)->rb_left;
-		अन्यथा
+		else
 			rb = &(*rb)->rb_right;
-	पूर्ण
+	}
 
 	rb_link_node(&st->rb, parent, rb);
 	rb_insert_color(&st->rb, &result);
-पूर्ण
+}
 
-/* वापसs left most element of result, and erase it */
-अटल काष्ठा lock_stat *pop_from_result(व्योम)
-अणु
-	काष्ठा rb_node *node = result.rb_node;
+/* returns left most element of result, and erase it */
+static struct lock_stat *pop_from_result(void)
+{
+	struct rb_node *node = result.rb_node;
 
-	अगर (!node)
-		वापस शून्य;
+	if (!node)
+		return NULL;
 
-	जबतक (node->rb_left)
+	while (node->rb_left)
 		node = node->rb_left;
 
 	rb_erase(node, &result);
-	वापस container_of(node, काष्ठा lock_stat, rb);
-पूर्ण
+	return container_of(node, struct lock_stat, rb);
+}
 
-अटल काष्ठा lock_stat *lock_stat_findnew(व्योम *addr, स्थिर अक्षर *name)
-अणु
-	काष्ठा list_head *entry = lockhashentry(addr);
-	काष्ठा lock_stat *ret, *new;
+static struct lock_stat *lock_stat_findnew(void *addr, const char *name)
+{
+	struct list_head *entry = lockhashentry(addr);
+	struct lock_stat *ret, *new;
 
-	list_क्रम_each_entry(ret, entry, hash_entry) अणु
-		अगर (ret->addr == addr)
-			वापस ret;
-	पूर्ण
+	list_for_each_entry(ret, entry, hash_entry) {
+		if (ret->addr == addr)
+			return ret;
+	}
 
-	new = zalloc(माप(काष्ठा lock_stat));
-	अगर (!new)
-		जाओ alloc_failed;
+	new = zalloc(sizeof(struct lock_stat));
+	if (!new)
+		goto alloc_failed;
 
 	new->addr = addr;
-	new->name = zalloc(माप(अक्षर) * म_माप(name) + 1);
-	अगर (!new->name) अणु
-		मुक्त(new);
-		जाओ alloc_failed;
-	पूर्ण
+	new->name = zalloc(sizeof(char) * strlen(name) + 1);
+	if (!new->name) {
+		free(new);
+		goto alloc_failed;
+	}
 
-	म_नकल(new->name, name);
-	new->रुको_समय_min = ULदीर्घ_उच्च;
+	strcpy(new->name, name);
+	new->wait_time_min = ULLONG_MAX;
 
 	list_add(&new->hash_entry, entry);
-	वापस new;
+	return new;
 
 alloc_failed:
 	pr_err("memory allocation failed\n");
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-काष्ठा trace_lock_handler अणु
-	पूर्णांक (*acquire_event)(काष्ठा evsel *evsel,
-			     काष्ठा perf_sample *sample);
+struct trace_lock_handler {
+	int (*acquire_event)(struct evsel *evsel,
+			     struct perf_sample *sample);
 
-	पूर्णांक (*acquired_event)(काष्ठा evsel *evsel,
-			      काष्ठा perf_sample *sample);
+	int (*acquired_event)(struct evsel *evsel,
+			      struct perf_sample *sample);
 
-	पूर्णांक (*contended_event)(काष्ठा evsel *evsel,
-			       काष्ठा perf_sample *sample);
+	int (*contended_event)(struct evsel *evsel,
+			       struct perf_sample *sample);
 
-	पूर्णांक (*release_event)(काष्ठा evsel *evsel,
-			     काष्ठा perf_sample *sample);
-पूर्ण;
+	int (*release_event)(struct evsel *evsel,
+			     struct perf_sample *sample);
+};
 
-अटल काष्ठा lock_seq_stat *get_seq(काष्ठा thपढ़ो_stat *ts, व्योम *addr)
-अणु
-	काष्ठा lock_seq_stat *seq;
+static struct lock_seq_stat *get_seq(struct thread_stat *ts, void *addr)
+{
+	struct lock_seq_stat *seq;
 
-	list_क्रम_each_entry(seq, &ts->seq_list, list) अणु
-		अगर (seq->addr == addr)
-			वापस seq;
-	पूर्ण
+	list_for_each_entry(seq, &ts->seq_list, list) {
+		if (seq->addr == addr)
+			return seq;
+	}
 
-	seq = zalloc(माप(काष्ठा lock_seq_stat));
-	अगर (!seq) अणु
+	seq = zalloc(sizeof(struct lock_seq_stat));
+	if (!seq) {
 		pr_err("memory allocation failed\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 	seq->state = SEQ_STATE_UNINITIALIZED;
 	seq->addr = addr;
 
 	list_add(&seq->list, &ts->seq_list);
-	वापस seq;
-पूर्ण
+	return seq;
+}
 
-क्रमागत broken_state अणु
+enum broken_state {
 	BROKEN_ACQUIRE,
 	BROKEN_ACQUIRED,
 	BROKEN_CONTENDED,
 	BROKEN_RELEASE,
 	BROKEN_MAX,
-पूर्ण;
+};
 
-अटल पूर्णांक bad_hist[BROKEN_MAX];
+static int bad_hist[BROKEN_MAX];
 
-क्रमागत acquire_flags अणु
+enum acquire_flags {
 	TRY_LOCK = 1,
 	READ_LOCK = 2,
-पूर्ण;
+};
 
-अटल पूर्णांक report_lock_acquire_event(काष्ठा evsel *evsel,
-				     काष्ठा perf_sample *sample)
-अणु
-	व्योम *addr;
-	काष्ठा lock_stat *ls;
-	काष्ठा thपढ़ो_stat *ts;
-	काष्ठा lock_seq_stat *seq;
-	स्थिर अक्षर *name = evsel__strval(evsel, sample, "name");
-	u64 पंचांगp	 = evsel__पूर्णांकval(evsel, sample, "lockdep_addr");
-	पूर्णांक flag = evsel__पूर्णांकval(evsel, sample, "flags");
+static int report_lock_acquire_event(struct evsel *evsel,
+				     struct perf_sample *sample)
+{
+	void *addr;
+	struct lock_stat *ls;
+	struct thread_stat *ts;
+	struct lock_seq_stat *seq;
+	const char *name = evsel__strval(evsel, sample, "name");
+	u64 tmp	 = evsel__intval(evsel, sample, "lockdep_addr");
+	int flag = evsel__intval(evsel, sample, "flags");
 
-	स_नकल(&addr, &पंचांगp, माप(व्योम *));
+	memcpy(&addr, &tmp, sizeof(void *));
 
 	ls = lock_stat_findnew(addr, name);
-	अगर (!ls)
-		वापस -ENOMEM;
-	अगर (ls->discard)
-		वापस 0;
+	if (!ls)
+		return -ENOMEM;
+	if (ls->discard)
+		return 0;
 
-	ts = thपढ़ो_stat_findnew(sample->tid);
-	अगर (!ts)
-		वापस -ENOMEM;
+	ts = thread_stat_findnew(sample->tid);
+	if (!ts)
+		return -ENOMEM;
 
 	seq = get_seq(ts, addr);
-	अगर (!seq)
-		वापस -ENOMEM;
+	if (!seq)
+		return -ENOMEM;
 
-	चयन (seq->state) अणु
-	हाल SEQ_STATE_UNINITIALIZED:
-	हाल SEQ_STATE_RELEASED:
-		अगर (!flag) अणु
+	switch (seq->state) {
+	case SEQ_STATE_UNINITIALIZED:
+	case SEQ_STATE_RELEASED:
+		if (!flag) {
 			seq->state = SEQ_STATE_ACQUIRING;
-		पूर्ण अन्यथा अणु
-			अगर (flag & TRY_LOCK)
+		} else {
+			if (flag & TRY_LOCK)
 				ls->nr_trylock++;
-			अगर (flag & READ_LOCK)
-				ls->nr_पढ़ोlock++;
+			if (flag & READ_LOCK)
+				ls->nr_readlock++;
 			seq->state = SEQ_STATE_READ_ACQUIRED;
-			seq->पढ़ो_count = 1;
+			seq->read_count = 1;
 			ls->nr_acquired++;
-		पूर्ण
-		अवरोध;
-	हाल SEQ_STATE_READ_ACQUIRED:
-		अगर (flag & READ_LOCK) अणु
-			seq->पढ़ो_count++;
+		}
+		break;
+	case SEQ_STATE_READ_ACQUIRED:
+		if (flag & READ_LOCK) {
+			seq->read_count++;
 			ls->nr_acquired++;
-			जाओ end;
-		पूर्ण अन्यथा अणु
-			जाओ broken;
-		पूर्ण
-		अवरोध;
-	हाल SEQ_STATE_ACQUIRED:
-	हाल SEQ_STATE_ACQUIRING:
-	हाल SEQ_STATE_CONTENDED:
+			goto end;
+		} else {
+			goto broken;
+		}
+		break;
+	case SEQ_STATE_ACQUIRED:
+	case SEQ_STATE_ACQUIRING:
+	case SEQ_STATE_CONTENDED:
 broken:
 		/* broken lock sequence, discard it */
 		ls->discard = 1;
 		bad_hist[BROKEN_ACQUIRE]++;
 		list_del_init(&seq->list);
-		मुक्त(seq);
-		जाओ end;
-	शेष:
+		free(seq);
+		goto end;
+	default:
 		BUG_ON("Unknown state of lock sequence found!\n");
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	ls->nr_acquire++;
-	seq->prev_event_समय = sample->समय;
+	seq->prev_event_time = sample->time;
 end:
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक report_lock_acquired_event(काष्ठा evsel *evsel,
-				      काष्ठा perf_sample *sample)
-अणु
-	व्योम *addr;
-	काष्ठा lock_stat *ls;
-	काष्ठा thपढ़ो_stat *ts;
-	काष्ठा lock_seq_stat *seq;
+static int report_lock_acquired_event(struct evsel *evsel,
+				      struct perf_sample *sample)
+{
+	void *addr;
+	struct lock_stat *ls;
+	struct thread_stat *ts;
+	struct lock_seq_stat *seq;
 	u64 contended_term;
-	स्थिर अक्षर *name = evsel__strval(evsel, sample, "name");
-	u64 पंचांगp = evsel__पूर्णांकval(evsel, sample, "lockdep_addr");
+	const char *name = evsel__strval(evsel, sample, "name");
+	u64 tmp = evsel__intval(evsel, sample, "lockdep_addr");
 
-	स_नकल(&addr, &पंचांगp, माप(व्योम *));
+	memcpy(&addr, &tmp, sizeof(void *));
 
 	ls = lock_stat_findnew(addr, name);
-	अगर (!ls)
-		वापस -ENOMEM;
-	अगर (ls->discard)
-		वापस 0;
+	if (!ls)
+		return -ENOMEM;
+	if (ls->discard)
+		return 0;
 
-	ts = thपढ़ो_stat_findnew(sample->tid);
-	अगर (!ts)
-		वापस -ENOMEM;
+	ts = thread_stat_findnew(sample->tid);
+	if (!ts)
+		return -ENOMEM;
 
 	seq = get_seq(ts, addr);
-	अगर (!seq)
-		वापस -ENOMEM;
+	if (!seq)
+		return -ENOMEM;
 
-	चयन (seq->state) अणु
-	हाल SEQ_STATE_UNINITIALIZED:
-		/* orphan event, करो nothing */
-		वापस 0;
-	हाल SEQ_STATE_ACQUIRING:
-		अवरोध;
-	हाल SEQ_STATE_CONTENDED:
-		contended_term = sample->समय - seq->prev_event_समय;
-		ls->रुको_समय_प्रकारotal += contended_term;
-		अगर (contended_term < ls->रुको_समय_min)
-			ls->रुको_समय_min = contended_term;
-		अगर (ls->रुको_समय_max < contended_term)
-			ls->रुको_समय_max = contended_term;
-		अवरोध;
-	हाल SEQ_STATE_RELEASED:
-	हाल SEQ_STATE_ACQUIRED:
-	हाल SEQ_STATE_READ_ACQUIRED:
+	switch (seq->state) {
+	case SEQ_STATE_UNINITIALIZED:
+		/* orphan event, do nothing */
+		return 0;
+	case SEQ_STATE_ACQUIRING:
+		break;
+	case SEQ_STATE_CONTENDED:
+		contended_term = sample->time - seq->prev_event_time;
+		ls->wait_time_total += contended_term;
+		if (contended_term < ls->wait_time_min)
+			ls->wait_time_min = contended_term;
+		if (ls->wait_time_max < contended_term)
+			ls->wait_time_max = contended_term;
+		break;
+	case SEQ_STATE_RELEASED:
+	case SEQ_STATE_ACQUIRED:
+	case SEQ_STATE_READ_ACQUIRED:
 		/* broken lock sequence, discard it */
 		ls->discard = 1;
 		bad_hist[BROKEN_ACQUIRED]++;
 		list_del_init(&seq->list);
-		मुक्त(seq);
-		जाओ end;
-	शेष:
+		free(seq);
+		goto end;
+	default:
 		BUG_ON("Unknown state of lock sequence found!\n");
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	seq->state = SEQ_STATE_ACQUIRED;
 	ls->nr_acquired++;
-	ls->avg_रुको_समय = ls->nr_contended ? ls->रुको_समय_प्रकारotal/ls->nr_contended : 0;
-	seq->prev_event_समय = sample->समय;
+	ls->avg_wait_time = ls->nr_contended ? ls->wait_time_total/ls->nr_contended : 0;
+	seq->prev_event_time = sample->time;
 end:
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक report_lock_contended_event(काष्ठा evsel *evsel,
-				       काष्ठा perf_sample *sample)
-अणु
-	व्योम *addr;
-	काष्ठा lock_stat *ls;
-	काष्ठा thपढ़ो_stat *ts;
-	काष्ठा lock_seq_stat *seq;
-	स्थिर अक्षर *name = evsel__strval(evsel, sample, "name");
-	u64 पंचांगp = evsel__पूर्णांकval(evsel, sample, "lockdep_addr");
+static int report_lock_contended_event(struct evsel *evsel,
+				       struct perf_sample *sample)
+{
+	void *addr;
+	struct lock_stat *ls;
+	struct thread_stat *ts;
+	struct lock_seq_stat *seq;
+	const char *name = evsel__strval(evsel, sample, "name");
+	u64 tmp = evsel__intval(evsel, sample, "lockdep_addr");
 
-	स_नकल(&addr, &पंचांगp, माप(व्योम *));
+	memcpy(&addr, &tmp, sizeof(void *));
 
 	ls = lock_stat_findnew(addr, name);
-	अगर (!ls)
-		वापस -ENOMEM;
-	अगर (ls->discard)
-		वापस 0;
+	if (!ls)
+		return -ENOMEM;
+	if (ls->discard)
+		return 0;
 
-	ts = thपढ़ो_stat_findnew(sample->tid);
-	अगर (!ts)
-		वापस -ENOMEM;
+	ts = thread_stat_findnew(sample->tid);
+	if (!ts)
+		return -ENOMEM;
 
 	seq = get_seq(ts, addr);
-	अगर (!seq)
-		वापस -ENOMEM;
+	if (!seq)
+		return -ENOMEM;
 
-	चयन (seq->state) अणु
-	हाल SEQ_STATE_UNINITIALIZED:
-		/* orphan event, करो nothing */
-		वापस 0;
-	हाल SEQ_STATE_ACQUIRING:
-		अवरोध;
-	हाल SEQ_STATE_RELEASED:
-	हाल SEQ_STATE_ACQUIRED:
-	हाल SEQ_STATE_READ_ACQUIRED:
-	हाल SEQ_STATE_CONTENDED:
+	switch (seq->state) {
+	case SEQ_STATE_UNINITIALIZED:
+		/* orphan event, do nothing */
+		return 0;
+	case SEQ_STATE_ACQUIRING:
+		break;
+	case SEQ_STATE_RELEASED:
+	case SEQ_STATE_ACQUIRED:
+	case SEQ_STATE_READ_ACQUIRED:
+	case SEQ_STATE_CONTENDED:
 		/* broken lock sequence, discard it */
 		ls->discard = 1;
 		bad_hist[BROKEN_CONTENDED]++;
 		list_del_init(&seq->list);
-		मुक्त(seq);
-		जाओ end;
-	शेष:
+		free(seq);
+		goto end;
+	default:
 		BUG_ON("Unknown state of lock sequence found!\n");
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	seq->state = SEQ_STATE_CONTENDED;
 	ls->nr_contended++;
-	ls->avg_रुको_समय = ls->रुको_समय_प्रकारotal/ls->nr_contended;
-	seq->prev_event_समय = sample->समय;
+	ls->avg_wait_time = ls->wait_time_total/ls->nr_contended;
+	seq->prev_event_time = sample->time;
 end:
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक report_lock_release_event(काष्ठा evsel *evsel,
-				     काष्ठा perf_sample *sample)
-अणु
-	व्योम *addr;
-	काष्ठा lock_stat *ls;
-	काष्ठा thपढ़ो_stat *ts;
-	काष्ठा lock_seq_stat *seq;
-	स्थिर अक्षर *name = evsel__strval(evsel, sample, "name");
-	u64 पंचांगp = evsel__पूर्णांकval(evsel, sample, "lockdep_addr");
+static int report_lock_release_event(struct evsel *evsel,
+				     struct perf_sample *sample)
+{
+	void *addr;
+	struct lock_stat *ls;
+	struct thread_stat *ts;
+	struct lock_seq_stat *seq;
+	const char *name = evsel__strval(evsel, sample, "name");
+	u64 tmp = evsel__intval(evsel, sample, "lockdep_addr");
 
-	स_नकल(&addr, &पंचांगp, माप(व्योम *));
+	memcpy(&addr, &tmp, sizeof(void *));
 
 	ls = lock_stat_findnew(addr, name);
-	अगर (!ls)
-		वापस -ENOMEM;
-	अगर (ls->discard)
-		वापस 0;
+	if (!ls)
+		return -ENOMEM;
+	if (ls->discard)
+		return 0;
 
-	ts = thपढ़ो_stat_findnew(sample->tid);
-	अगर (!ts)
-		वापस -ENOMEM;
+	ts = thread_stat_findnew(sample->tid);
+	if (!ts)
+		return -ENOMEM;
 
 	seq = get_seq(ts, addr);
-	अगर (!seq)
-		वापस -ENOMEM;
+	if (!seq)
+		return -ENOMEM;
 
-	चयन (seq->state) अणु
-	हाल SEQ_STATE_UNINITIALIZED:
-		जाओ end;
-	हाल SEQ_STATE_ACQUIRED:
-		अवरोध;
-	हाल SEQ_STATE_READ_ACQUIRED:
-		seq->पढ़ो_count--;
-		BUG_ON(seq->पढ़ो_count < 0);
-		अगर (seq->पढ़ो_count) अणु
+	switch (seq->state) {
+	case SEQ_STATE_UNINITIALIZED:
+		goto end;
+	case SEQ_STATE_ACQUIRED:
+		break;
+	case SEQ_STATE_READ_ACQUIRED:
+		seq->read_count--;
+		BUG_ON(seq->read_count < 0);
+		if (seq->read_count) {
 			ls->nr_release++;
-			जाओ end;
-		पूर्ण
-		अवरोध;
-	हाल SEQ_STATE_ACQUIRING:
-	हाल SEQ_STATE_CONTENDED:
-	हाल SEQ_STATE_RELEASED:
+			goto end;
+		}
+		break;
+	case SEQ_STATE_ACQUIRING:
+	case SEQ_STATE_CONTENDED:
+	case SEQ_STATE_RELEASED:
 		/* broken lock sequence, discard it */
 		ls->discard = 1;
 		bad_hist[BROKEN_RELEASE]++;
-		जाओ मुक्त_seq;
-	शेष:
+		goto free_seq;
+	default:
 		BUG_ON("Unknown state of lock sequence found!\n");
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	ls->nr_release++;
-मुक्त_seq:
+free_seq:
 	list_del_init(&seq->list);
-	मुक्त(seq);
+	free(seq);
 end:
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* lock oriented handlers */
-/* TODO: handlers क्रम CPU oriented, thपढ़ो oriented */
-अटल काष्ठा trace_lock_handler report_lock_ops  = अणु
+/* TODO: handlers for CPU oriented, thread oriented */
+static struct trace_lock_handler report_lock_ops  = {
 	.acquire_event		= report_lock_acquire_event,
 	.acquired_event		= report_lock_acquired_event,
 	.contended_event	= report_lock_contended_event,
 	.release_event		= report_lock_release_event,
-पूर्ण;
+};
 
-अटल काष्ठा trace_lock_handler *trace_handler;
+static struct trace_lock_handler *trace_handler;
 
-अटल पूर्णांक evsel__process_lock_acquire(काष्ठा evsel *evsel, काष्ठा perf_sample *sample)
-अणु
-	अगर (trace_handler->acquire_event)
-		वापस trace_handler->acquire_event(evsel, sample);
-	वापस 0;
-पूर्ण
+static int evsel__process_lock_acquire(struct evsel *evsel, struct perf_sample *sample)
+{
+	if (trace_handler->acquire_event)
+		return trace_handler->acquire_event(evsel, sample);
+	return 0;
+}
 
-अटल पूर्णांक evsel__process_lock_acquired(काष्ठा evsel *evsel, काष्ठा perf_sample *sample)
-अणु
-	अगर (trace_handler->acquired_event)
-		वापस trace_handler->acquired_event(evsel, sample);
-	वापस 0;
-पूर्ण
+static int evsel__process_lock_acquired(struct evsel *evsel, struct perf_sample *sample)
+{
+	if (trace_handler->acquired_event)
+		return trace_handler->acquired_event(evsel, sample);
+	return 0;
+}
 
-अटल पूर्णांक evsel__process_lock_contended(काष्ठा evsel *evsel, काष्ठा perf_sample *sample)
-अणु
-	अगर (trace_handler->contended_event)
-		वापस trace_handler->contended_event(evsel, sample);
-	वापस 0;
-पूर्ण
+static int evsel__process_lock_contended(struct evsel *evsel, struct perf_sample *sample)
+{
+	if (trace_handler->contended_event)
+		return trace_handler->contended_event(evsel, sample);
+	return 0;
+}
 
-अटल पूर्णांक evsel__process_lock_release(काष्ठा evsel *evsel, काष्ठा perf_sample *sample)
-अणु
-	अगर (trace_handler->release_event)
-		वापस trace_handler->release_event(evsel, sample);
-	वापस 0;
-पूर्ण
+static int evsel__process_lock_release(struct evsel *evsel, struct perf_sample *sample)
+{
+	if (trace_handler->release_event)
+		return trace_handler->release_event(evsel, sample);
+	return 0;
+}
 
-अटल व्योम prपूर्णांक_bad_events(पूर्णांक bad, पूर्णांक total)
-अणु
-	/* Output क्रम debug, this have to be हटाओd */
-	पूर्णांक i;
-	स्थिर अक्षर *name[4] =
-		अणु "acquire", "acquired", "contended", "release" पूर्ण;
+static void print_bad_events(int bad, int total)
+{
+	/* Output for debug, this have to be removed */
+	int i;
+	const char *name[4] =
+		{ "acquire", "acquired", "contended", "release" };
 
 	pr_info("\n=== output for debug===\n\n");
 	pr_info("bad: %d, total: %d\n", bad, total);
-	pr_info("bad rate: %.2f %%\n", (द्विगुन)bad / (द्विगुन)total * 100);
+	pr_info("bad rate: %.2f %%\n", (double)bad / (double)total * 100);
 	pr_info("histogram of events caused bad sequence\n");
-	क्रम (i = 0; i < BROKEN_MAX; i++)
+	for (i = 0; i < BROKEN_MAX; i++)
 		pr_info(" %10s: %d\n", name[i], bad_hist[i]);
-पूर्ण
+}
 
-/* TODO: various way to prपूर्णांक, coloring, nano or milli sec */
-अटल व्योम prपूर्णांक_result(व्योम)
-अणु
-	काष्ठा lock_stat *st;
-	अक्षर cut_name[20];
-	पूर्णांक bad, total;
+/* TODO: various way to print, coloring, nano or milli sec */
+static void print_result(void)
+{
+	struct lock_stat *st;
+	char cut_name[20];
+	int bad, total;
 
 	pr_info("%20s ", "Name");
 	pr_info("%10s ", "acquired");
@@ -720,311 +719,311 @@ end:
 	pr_info("\n\n");
 
 	bad = total = 0;
-	जबतक ((st = pop_from_result())) अणु
+	while ((st = pop_from_result())) {
 		total++;
-		अगर (st->discard) अणु
+		if (st->discard) {
 			bad++;
-			जारी;
-		पूर्ण
+			continue;
+		}
 		bzero(cut_name, 20);
 
-		अगर (म_माप(st->name) < 16) अणु
+		if (strlen(st->name) < 16) {
 			/* output raw name */
 			pr_info("%20s ", st->name);
-		पूर्ण अन्यथा अणु
-			म_नकलन(cut_name, st->name, 16);
+		} else {
+			strncpy(cut_name, st->name, 16);
 			cut_name[16] = '.';
 			cut_name[17] = '.';
 			cut_name[18] = '.';
 			cut_name[19] = '\0';
-			/* cut off name क्रम saving output style */
+			/* cut off name for saving output style */
 			pr_info("%20s ", cut_name);
-		पूर्ण
+		}
 
 		pr_info("%10u ", st->nr_acquired);
 		pr_info("%10u ", st->nr_contended);
 
-		pr_info("%15" PRIu64 " ", st->avg_रुको_समय);
-		pr_info("%15" PRIu64 " ", st->रुको_समय_प्रकारotal);
-		pr_info("%15" PRIu64 " ", st->रुको_समय_max);
-		pr_info("%15" PRIu64 " ", st->रुको_समय_min == ULदीर्घ_उच्च ?
-		       0 : st->रुको_समय_min);
+		pr_info("%15" PRIu64 " ", st->avg_wait_time);
+		pr_info("%15" PRIu64 " ", st->wait_time_total);
+		pr_info("%15" PRIu64 " ", st->wait_time_max);
+		pr_info("%15" PRIu64 " ", st->wait_time_min == ULLONG_MAX ?
+		       0 : st->wait_time_min);
 		pr_info("\n");
-	पूर्ण
+	}
 
-	prपूर्णांक_bad_events(bad, total);
-पूर्ण
+	print_bad_events(bad, total);
+}
 
-अटल bool info_thपढ़ोs, info_map;
+static bool info_threads, info_map;
 
-अटल व्योम dump_thपढ़ोs(व्योम)
-अणु
-	काष्ठा thपढ़ो_stat *st;
-	काष्ठा rb_node *node;
-	काष्ठा thपढ़ो *t;
+static void dump_threads(void)
+{
+	struct thread_stat *st;
+	struct rb_node *node;
+	struct thread *t;
 
 	pr_info("%10s: comm\n", "Thread ID");
 
-	node = rb_first(&thपढ़ो_stats);
-	जबतक (node) अणु
-		st = container_of(node, काष्ठा thपढ़ो_stat, rb);
+	node = rb_first(&thread_stats);
+	while (node) {
+		st = container_of(node, struct thread_stat, rb);
 		t = perf_session__findnew(session, st->tid);
-		pr_info("%10d: %s\n", st->tid, thपढ़ो__comm_str(t));
+		pr_info("%10d: %s\n", st->tid, thread__comm_str(t));
 		node = rb_next(node);
-		thपढ़ो__put(t);
-	पूर्ण
-पूर्ण
+		thread__put(t);
+	}
+}
 
-अटल व्योम dump_map(व्योम)
-अणु
-	अचिन्हित पूर्णांक i;
-	काष्ठा lock_stat *st;
+static void dump_map(void)
+{
+	unsigned int i;
+	struct lock_stat *st;
 
 	pr_info("Address of instance: name of class\n");
-	क्रम (i = 0; i < LOCKHASH_SIZE; i++) अणु
-		list_क्रम_each_entry(st, &lockhash_table[i], hash_entry) अणु
+	for (i = 0; i < LOCKHASH_SIZE; i++) {
+		list_for_each_entry(st, &lockhash_table[i], hash_entry) {
 			pr_info(" %p: %s\n", st->addr, st->name);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल पूर्णांक dump_info(व्योम)
-अणु
-	पूर्णांक rc = 0;
+static int dump_info(void)
+{
+	int rc = 0;
 
-	अगर (info_thपढ़ोs)
-		dump_thपढ़ोs();
-	अन्यथा अगर (info_map)
+	if (info_threads)
+		dump_threads();
+	else if (info_map)
 		dump_map();
-	अन्यथा अणु
+	else {
 		rc = -1;
 		pr_err("Unknown type of information\n");
-	पूर्ण
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-प्रकार पूर्णांक (*tracepoपूर्णांक_handler)(काष्ठा evsel *evsel,
-				  काष्ठा perf_sample *sample);
+typedef int (*tracepoint_handler)(struct evsel *evsel,
+				  struct perf_sample *sample);
 
-अटल पूर्णांक process_sample_event(काष्ठा perf_tool *tool __maybe_unused,
-				जोड़ perf_event *event,
-				काष्ठा perf_sample *sample,
-				काष्ठा evsel *evsel,
-				काष्ठा machine *machine)
-अणु
-	पूर्णांक err = 0;
-	काष्ठा thपढ़ो *thपढ़ो = machine__findnew_thपढ़ो(machine, sample->pid,
+static int process_sample_event(struct perf_tool *tool __maybe_unused,
+				union perf_event *event,
+				struct perf_sample *sample,
+				struct evsel *evsel,
+				struct machine *machine)
+{
+	int err = 0;
+	struct thread *thread = machine__findnew_thread(machine, sample->pid,
 							sample->tid);
 
-	अगर (thपढ़ो == शून्य) अणु
+	if (thread == NULL) {
 		pr_debug("problem processing %d event, skipping it.\n",
 			event->header.type);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	अगर (evsel->handler != शून्य) अणु
-		tracepoपूर्णांक_handler f = evsel->handler;
+	if (evsel->handler != NULL) {
+		tracepoint_handler f = evsel->handler;
 		err = f(evsel, sample);
-	पूर्ण
+	}
 
-	thपढ़ो__put(thपढ़ो);
+	thread__put(thread);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम sort_result(व्योम)
-अणु
-	अचिन्हित पूर्णांक i;
-	काष्ठा lock_stat *st;
+static void sort_result(void)
+{
+	unsigned int i;
+	struct lock_stat *st;
 
-	क्रम (i = 0; i < LOCKHASH_SIZE; i++) अणु
-		list_क्रम_each_entry(st, &lockhash_table[i], hash_entry) अणु
+	for (i = 0; i < LOCKHASH_SIZE; i++) {
+		list_for_each_entry(st, &lockhash_table[i], hash_entry) {
 			insert_to_result(st, compare);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल स्थिर काष्ठा evsel_str_handler lock_tracepoपूर्णांकs[] = अणु
-	अणु "lock:lock_acquire",	 evsel__process_lock_acquire,   पूर्ण, /* CONFIG_LOCKDEP */
-	अणु "lock:lock_acquired",	 evsel__process_lock_acquired,  पूर्ण, /* CONFIG_LOCKDEP, CONFIG_LOCK_STAT */
-	अणु "lock:lock_contended", evsel__process_lock_contended, पूर्ण, /* CONFIG_LOCKDEP, CONFIG_LOCK_STAT */
-	अणु "lock:lock_release",	 evsel__process_lock_release,   पूर्ण, /* CONFIG_LOCKDEP */
-पूर्ण;
+static const struct evsel_str_handler lock_tracepoints[] = {
+	{ "lock:lock_acquire",	 evsel__process_lock_acquire,   }, /* CONFIG_LOCKDEP */
+	{ "lock:lock_acquired",	 evsel__process_lock_acquired,  }, /* CONFIG_LOCKDEP, CONFIG_LOCK_STAT */
+	{ "lock:lock_contended", evsel__process_lock_contended, }, /* CONFIG_LOCKDEP, CONFIG_LOCK_STAT */
+	{ "lock:lock_release",	 evsel__process_lock_release,   }, /* CONFIG_LOCKDEP */
+};
 
-अटल bool क्रमce;
+static bool force;
 
-अटल पूर्णांक __cmd_report(bool display_info)
-अणु
-	पूर्णांक err = -EINVAL;
-	काष्ठा perf_tool eops = अणु
+static int __cmd_report(bool display_info)
+{
+	int err = -EINVAL;
+	struct perf_tool eops = {
 		.sample		 = process_sample_event,
 		.comm		 = perf_event__process_comm,
 		.namespaces	 = perf_event__process_namespaces,
 		.ordered_events	 = true,
-	पूर्ण;
-	काष्ठा perf_data data = अणु
+	};
+	struct perf_data data = {
 		.path  = input_name,
 		.mode  = PERF_DATA_MODE_READ,
-		.क्रमce = क्रमce,
-	पूर्ण;
+		.force = force,
+	};
 
 	session = perf_session__new(&data, false, &eops);
-	अगर (IS_ERR(session)) अणु
+	if (IS_ERR(session)) {
 		pr_err("Initializing perf session failed\n");
-		वापस PTR_ERR(session);
-	पूर्ण
+		return PTR_ERR(session);
+	}
 
 	symbol__init(&session->header.env);
 
-	अगर (!perf_session__has_traces(session, "lock record"))
-		जाओ out_delete;
+	if (!perf_session__has_traces(session, "lock record"))
+		goto out_delete;
 
-	अगर (perf_session__set_tracepoपूर्णांकs_handlers(session, lock_tracepoपूर्णांकs)) अणु
+	if (perf_session__set_tracepoints_handlers(session, lock_tracepoints)) {
 		pr_err("Initializing perf session tracepoint handlers failed\n");
-		जाओ out_delete;
-	पूर्ण
+		goto out_delete;
+	}
 
-	अगर (select_key())
-		जाओ out_delete;
+	if (select_key())
+		goto out_delete;
 
 	err = perf_session__process_events(session);
-	अगर (err)
-		जाओ out_delete;
+	if (err)
+		goto out_delete;
 
 	setup_pager();
-	अगर (display_info) /* used क्रम info subcommand */
+	if (display_info) /* used for info subcommand */
 		err = dump_info();
-	अन्यथा अणु
+	else {
 		sort_result();
-		prपूर्णांक_result();
-	पूर्ण
+		print_result();
+	}
 
 out_delete:
 	perf_session__delete(session);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक __cmd_record(पूर्णांक argc, स्थिर अक्षर **argv)
-अणु
-	स्थिर अक्षर *record_args[] = अणु
+static int __cmd_record(int argc, const char **argv)
+{
+	const char *record_args[] = {
 		"record", "-R", "-m", "1024", "-c", "1",
-	पूर्ण;
-	अचिन्हित पूर्णांक rec_argc, i, j, ret;
-	स्थिर अक्षर **rec_argv;
+	};
+	unsigned int rec_argc, i, j, ret;
+	const char **rec_argv;
 
-	क्रम (i = 0; i < ARRAY_SIZE(lock_tracepoपूर्णांकs); i++) अणु
-		अगर (!is_valid_tracepoपूर्णांक(lock_tracepoपूर्णांकs[i].name)) अणु
+	for (i = 0; i < ARRAY_SIZE(lock_tracepoints); i++) {
+		if (!is_valid_tracepoint(lock_tracepoints[i].name)) {
 				pr_err("tracepoint %s is not enabled. "
 				       "Are CONFIG_LOCKDEP and CONFIG_LOCK_STAT enabled?\n",
-				       lock_tracepoपूर्णांकs[i].name);
-				वापस 1;
-		पूर्ण
-	पूर्ण
+				       lock_tracepoints[i].name);
+				return 1;
+		}
+	}
 
 	rec_argc = ARRAY_SIZE(record_args) + argc - 1;
-	/* factor of 2 is क्रम -e in front of each tracepoपूर्णांक */
-	rec_argc += 2 * ARRAY_SIZE(lock_tracepoपूर्णांकs);
+	/* factor of 2 is for -e in front of each tracepoint */
+	rec_argc += 2 * ARRAY_SIZE(lock_tracepoints);
 
-	rec_argv = सुस्मृति(rec_argc + 1, माप(अक्षर *));
-	अगर (!rec_argv)
-		वापस -ENOMEM;
+	rec_argv = calloc(rec_argc + 1, sizeof(char *));
+	if (!rec_argv)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < ARRAY_SIZE(record_args); i++)
+	for (i = 0; i < ARRAY_SIZE(record_args); i++)
 		rec_argv[i] = strdup(record_args[i]);
 
-	क्रम (j = 0; j < ARRAY_SIZE(lock_tracepoपूर्णांकs); j++) अणु
+	for (j = 0; j < ARRAY_SIZE(lock_tracepoints); j++) {
 		rec_argv[i++] = "-e";
-		rec_argv[i++] = strdup(lock_tracepoपूर्णांकs[j].name);
-	पूर्ण
+		rec_argv[i++] = strdup(lock_tracepoints[j].name);
+	}
 
-	क्रम (j = 1; j < (अचिन्हित पूर्णांक)argc; j++, i++)
+	for (j = 1; j < (unsigned int)argc; j++, i++)
 		rec_argv[i] = argv[j];
 
 	BUG_ON(i != rec_argc);
 
 	ret = cmd_record(i, rec_argv);
-	मुक्त(rec_argv);
-	वापस ret;
-पूर्ण
+	free(rec_argv);
+	return ret;
+}
 
-पूर्णांक cmd_lock(पूर्णांक argc, स्थिर अक्षर **argv)
-अणु
-	स्थिर काष्ठा option lock_options[] = अणु
+int cmd_lock(int argc, const char **argv)
+{
+	const struct option lock_options[] = {
 	OPT_STRING('i', "input", &input_name, "file", "input file name"),
 	OPT_INCR('v', "verbose", &verbose, "be more verbose (show symbol address, etc)"),
 	OPT_BOOLEAN('D', "dump-raw-trace", &dump_trace, "dump raw trace in ASCII"),
-	OPT_BOOLEAN('f', "force", &force, "don't complain, करो it"),
+	OPT_BOOLEAN('f', "force", &force, "don't complain, do it"),
 	OPT_END()
-	पूर्ण;
+	};
 
-	स्थिर काष्ठा option info_options[] = अणु
-	OPT_BOOLEAN('t', "threads", &info_thपढ़ोs,
+	const struct option info_options[] = {
+	OPT_BOOLEAN('t', "threads", &info_threads,
 		    "dump thread list in perf.data"),
 	OPT_BOOLEAN('m', "map", &info_map,
 		    "map of lock instances (address:name table)"),
 	OPT_PARENT(lock_options)
-	पूर्ण;
+	};
 
-	स्थिर काष्ठा option report_options[] = अणु
+	const struct option report_options[] = {
 	OPT_STRING('k', "key", &sort_key, "acquired",
 		    "key for sorting (acquired / contended / avg_wait / wait_total / wait_max / wait_min)"),
 	/* TODO: type */
 	OPT_PARENT(lock_options)
-	पूर्ण;
+	};
 
-	स्थिर अक्षर * स्थिर info_usage[] = अणु
+	const char * const info_usage[] = {
 		"perf lock info [<options>]",
-		शून्य
-	पूर्ण;
-	स्थिर अक्षर *स्थिर lock_subcommands[] = अणु "record", "report", "script",
-						 "info", शून्य पूर्ण;
-	स्थिर अक्षर *lock_usage[] = अणु
-		शून्य,
-		शून्य
-	पूर्ण;
-	स्थिर अक्षर * स्थिर report_usage[] = अणु
+		NULL
+	};
+	const char *const lock_subcommands[] = { "record", "report", "script",
+						 "info", NULL };
+	const char *lock_usage[] = {
+		NULL,
+		NULL
+	};
+	const char * const report_usage[] = {
 		"perf lock report [<options>]",
-		शून्य
-	पूर्ण;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक rc = 0;
+		NULL
+	};
+	unsigned int i;
+	int rc = 0;
 
-	क्रम (i = 0; i < LOCKHASH_SIZE; i++)
+	for (i = 0; i < LOCKHASH_SIZE; i++)
 		INIT_LIST_HEAD(lockhash_table + i);
 
 	argc = parse_options_subcommand(argc, argv, lock_options, lock_subcommands,
 					lock_usage, PARSE_OPT_STOP_AT_NON_OPTION);
-	अगर (!argc)
+	if (!argc)
 		usage_with_options(lock_usage, lock_options);
 
-	अगर (!म_भेदन(argv[0], "rec", 3)) अणु
-		वापस __cmd_record(argc, argv);
-	पूर्ण अन्यथा अगर (!म_भेदन(argv[0], "report", 6)) अणु
+	if (!strncmp(argv[0], "rec", 3)) {
+		return __cmd_record(argc, argv);
+	} else if (!strncmp(argv[0], "report", 6)) {
 		trace_handler = &report_lock_ops;
-		अगर (argc) अणु
+		if (argc) {
 			argc = parse_options(argc, argv,
 					     report_options, report_usage, 0);
-			अगर (argc)
+			if (argc)
 				usage_with_options(report_usage, report_options);
-		पूर्ण
+		}
 		rc = __cmd_report(false);
-	पूर्ण अन्यथा अगर (!म_भेद(argv[0], "script")) अणु
+	} else if (!strcmp(argv[0], "script")) {
 		/* Aliased to 'perf script' */
-		वापस cmd_script(argc, argv);
-	पूर्ण अन्यथा अगर (!म_भेद(argv[0], "info")) अणु
-		अगर (argc) अणु
+		return cmd_script(argc, argv);
+	} else if (!strcmp(argv[0], "info")) {
+		if (argc) {
 			argc = parse_options(argc, argv,
 					     info_options, info_usage, 0);
-			अगर (argc)
+			if (argc)
 				usage_with_options(info_usage, info_options);
-		पूर्ण
+		}
 		/* recycling report_lock_ops */
 		trace_handler = &report_lock_ops;
 		rc = __cmd_report(true);
-	पूर्ण अन्यथा अणु
+	} else {
 		usage_with_options(lock_usage, lock_options);
-	पूर्ण
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}

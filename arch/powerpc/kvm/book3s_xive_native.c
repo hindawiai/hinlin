@@ -1,107 +1,106 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2017-2019, IBM Corporation.
  */
 
-#घोषणा pr_fmt(fmt) "xive-kvm: " fmt
+#define pr_fmt(fmt) "xive-kvm: " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/kvm_host.h>
-#समावेश <linux/err.h>
-#समावेश <linux/gfp.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/file.h>
-#समावेश <यंत्र/uaccess.h>
-#समावेश <यंत्र/kvm_book3s.h>
-#समावेश <यंत्र/kvm_ppc.h>
-#समावेश <यंत्र/hvcall.h>
-#समावेश <यंत्र/xive.h>
-#समावेश <यंत्र/xive-regs.h>
-#समावेश <यंत्र/debug.h>
-#समावेश <यंत्र/debugfs.h>
-#समावेश <यंत्र/opal.h>
+#include <linux/kernel.h>
+#include <linux/kvm_host.h>
+#include <linux/err.h>
+#include <linux/gfp.h>
+#include <linux/spinlock.h>
+#include <linux/delay.h>
+#include <linux/file.h>
+#include <asm/uaccess.h>
+#include <asm/kvm_book3s.h>
+#include <asm/kvm_ppc.h>
+#include <asm/hvcall.h>
+#include <asm/xive.h>
+#include <asm/xive-regs.h>
+#include <asm/debug.h>
+#include <asm/debugfs.h>
+#include <asm/opal.h>
 
-#समावेश <linux/debugfs.h>
-#समावेश <linux/seq_file.h>
+#include <linux/debugfs.h>
+#include <linux/seq_file.h>
 
-#समावेश "book3s_xive.h"
+#include "book3s_xive.h"
 
-अटल u8 xive_vm_esb_load(काष्ठा xive_irq_data *xd, u32 offset)
-अणु
+static u8 xive_vm_esb_load(struct xive_irq_data *xd, u32 offset)
+{
 	u64 val;
 
 	/*
-	 * The KVM XIVE native device करोes not use the XIVE_ESB_SET_PQ_10
-	 * load operation, so there is no need to enक्रमce load-after-store
+	 * The KVM XIVE native device does not use the XIVE_ESB_SET_PQ_10
+	 * load operation, so there is no need to enforce load-after-store
 	 * ordering.
 	 */
 
 	val = in_be64(xd->eoi_mmio + offset);
-	वापस (u8)val;
-पूर्ण
+	return (u8)val;
+}
 
-अटल व्योम kvmppc_xive_native_cleanup_queue(काष्ठा kvm_vcpu *vcpu, पूर्णांक prio)
-अणु
-	काष्ठा kvmppc_xive_vcpu *xc = vcpu->arch.xive_vcpu;
-	काष्ठा xive_q *q = &xc->queues[prio];
+static void kvmppc_xive_native_cleanup_queue(struct kvm_vcpu *vcpu, int prio)
+{
+	struct kvmppc_xive_vcpu *xc = vcpu->arch.xive_vcpu;
+	struct xive_q *q = &xc->queues[prio];
 
 	xive_native_disable_queue(xc->vp_id, q, prio);
-	अगर (q->qpage) अणु
+	if (q->qpage) {
 		put_page(virt_to_page(q->qpage));
-		q->qpage = शून्य;
-	पूर्ण
-पूर्ण
+		q->qpage = NULL;
+	}
+}
 
-अटल पूर्णांक kvmppc_xive_native_configure_queue(u32 vp_id, काष्ठा xive_q *q,
+static int kvmppc_xive_native_configure_queue(u32 vp_id, struct xive_q *q,
 					      u8 prio, __be32 *qpage,
 					      u32 order, bool can_escalate)
-अणु
-	पूर्णांक rc;
+{
+	int rc;
 	__be32 *qpage_prev = q->qpage;
 
 	rc = xive_native_configure_queue(vp_id, q, prio, qpage, order,
 					 can_escalate);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	अगर (qpage_prev)
+	if (qpage_prev)
 		put_page(virt_to_page(qpage_prev));
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-व्योम kvmppc_xive_native_cleanup_vcpu(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा kvmppc_xive_vcpu *xc = vcpu->arch.xive_vcpu;
-	पूर्णांक i;
+void kvmppc_xive_native_cleanup_vcpu(struct kvm_vcpu *vcpu)
+{
+	struct kvmppc_xive_vcpu *xc = vcpu->arch.xive_vcpu;
+	int i;
 
-	अगर (!kvmppc_xive_enabled(vcpu))
-		वापस;
+	if (!kvmppc_xive_enabled(vcpu))
+		return;
 
-	अगर (!xc)
-		वापस;
+	if (!xc)
+		return;
 
 	pr_devel("native_cleanup_vcpu(cpu=%d)\n", xc->server_num);
 
-	/* Ensure no पूर्णांकerrupt is still routed to that VP */
+	/* Ensure no interrupt is still routed to that VP */
 	xc->valid = false;
-	kvmppc_xive_disable_vcpu_पूर्णांकerrupts(vcpu);
+	kvmppc_xive_disable_vcpu_interrupts(vcpu);
 
 	/* Free escalations */
-	क्रम (i = 0; i < KVMPPC_XIVE_Q_COUNT; i++) अणु
+	for (i = 0; i < KVMPPC_XIVE_Q_COUNT; i++) {
 		/* Free the escalation irq */
-		अगर (xc->esc_virq[i]) अणु
-			अगर (xc->xive->single_escalation)
+		if (xc->esc_virq[i]) {
+			if (xc->xive->single_escalation)
 				xive_cleanup_single_escalation(vcpu, xc,
 							xc->esc_virq[i]);
-			मुक्त_irq(xc->esc_virq[i], vcpu);
+			free_irq(xc->esc_virq[i], vcpu);
 			irq_dispose_mapping(xc->esc_virq[i]);
-			kमुक्त(xc->esc_virq_names[i]);
+			kfree(xc->esc_virq_names[i]);
 			xc->esc_virq[i] = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Disable the VP */
 	xive_native_disable_vp(xc->vp_id);
@@ -110,48 +109,48 @@
 	vcpu->arch.xive_cam_word = 0;
 
 	/* Free the queues */
-	क्रम (i = 0; i < KVMPPC_XIVE_Q_COUNT; i++) अणु
+	for (i = 0; i < KVMPPC_XIVE_Q_COUNT; i++) {
 		kvmppc_xive_native_cleanup_queue(vcpu, i);
-	पूर्ण
+	}
 
 	/* Free the VP */
-	kमुक्त(xc);
+	kfree(xc);
 
 	/* Cleanup the vcpu */
 	vcpu->arch.irq_type = KVMPPC_IRQ_DEFAULT;
-	vcpu->arch.xive_vcpu = शून्य;
-पूर्ण
+	vcpu->arch.xive_vcpu = NULL;
+}
 
-पूर्णांक kvmppc_xive_native_connect_vcpu(काष्ठा kvm_device *dev,
-				    काष्ठा kvm_vcpu *vcpu, u32 server_num)
-अणु
-	काष्ठा kvmppc_xive *xive = dev->निजी;
-	काष्ठा kvmppc_xive_vcpu *xc = शून्य;
-	पूर्णांक rc;
+int kvmppc_xive_native_connect_vcpu(struct kvm_device *dev,
+				    struct kvm_vcpu *vcpu, u32 server_num)
+{
+	struct kvmppc_xive *xive = dev->private;
+	struct kvmppc_xive_vcpu *xc = NULL;
+	int rc;
 	u32 vp_id;
 
 	pr_devel("native_connect_vcpu(server=%d)\n", server_num);
 
-	अगर (dev->ops != &kvm_xive_native_ops) अणु
+	if (dev->ops != &kvm_xive_native_ops) {
 		pr_devel("Wrong ops !\n");
-		वापस -EPERM;
-	पूर्ण
-	अगर (xive->kvm != vcpu->kvm)
-		वापस -EPERM;
-	अगर (vcpu->arch.irq_type != KVMPPC_IRQ_DEFAULT)
-		वापस -EBUSY;
+		return -EPERM;
+	}
+	if (xive->kvm != vcpu->kvm)
+		return -EPERM;
+	if (vcpu->arch.irq_type != KVMPPC_IRQ_DEFAULT)
+		return -EBUSY;
 
 	mutex_lock(&xive->lock);
 
 	rc = kvmppc_xive_compute_vp_id(xive, server_num, &vp_id);
-	अगर (rc)
-		जाओ bail;
+	if (rc)
+		goto bail;
 
-	xc = kzalloc(माप(*xc), GFP_KERNEL);
-	अगर (!xc) अणु
+	xc = kzalloc(sizeof(*xc), GFP_KERNEL);
+	if (!xc) {
 		rc = -ENOMEM;
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 
 	vcpu->arch.xive_vcpu = xc;
 	xc->xive = xive;
@@ -163,232 +162,232 @@
 	vcpu->arch.irq_type = KVMPPC_IRQ_XIVE;
 
 	rc = xive_native_get_vp_info(xc->vp_id, &xc->vp_cam, &xc->vp_chip_id);
-	अगर (rc) अणु
+	if (rc) {
 		pr_err("Failed to get VP info from OPAL: %d\n", rc);
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 
 	/*
 	 * Enable the VP first as the single escalation mode will
-	 * affect escalation पूर्णांकerrupts numbering
+	 * affect escalation interrupts numbering
 	 */
 	rc = xive_native_enable_vp(xc->vp_id, xive->single_escalation);
-	अगर (rc) अणु
+	if (rc) {
 		pr_err("Failed to enable VP in OPAL: %d\n", rc);
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 
-	/* Configure VCPU fields क्रम use by assembly push/pull */
+	/* Configure VCPU fields for use by assembly push/pull */
 	vcpu->arch.xive_saved_state.w01 = cpu_to_be64(0xff000000);
 	vcpu->arch.xive_cam_word = cpu_to_be32(xc->vp_cam | TM_QW1W2_VO);
 
 	/* TODO: reset all queues to a clean state ? */
 bail:
 	mutex_unlock(&xive->lock);
-	अगर (rc)
+	if (rc)
 		kvmppc_xive_native_cleanup_vcpu(vcpu);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
  * Device passthrough support
  */
-अटल पूर्णांक kvmppc_xive_native_reset_mapped(काष्ठा kvm *kvm, अचिन्हित दीर्घ irq)
-अणु
-	काष्ठा kvmppc_xive *xive = kvm->arch.xive;
+static int kvmppc_xive_native_reset_mapped(struct kvm *kvm, unsigned long irq)
+{
+	struct kvmppc_xive *xive = kvm->arch.xive;
 	pgoff_t esb_pgoff = KVM_XIVE_ESB_PAGE_OFFSET + irq * 2;
 
-	अगर (irq >= KVMPPC_XIVE_NR_IRQS)
-		वापस -EINVAL;
+	if (irq >= KVMPPC_XIVE_NR_IRQS)
+		return -EINVAL;
 
 	/*
 	 * Clear the ESB pages of the IRQ number being mapped (or
-	 * unmapped) पूर्णांकo the guest and let the the VM fault handler
+	 * unmapped) into the guest and let the the VM fault handler
 	 * repopulate with the appropriate ESB pages (device or IC)
 	 */
 	pr_debug("clearing esb pages for girq 0x%lx\n", irq);
 	mutex_lock(&xive->mapping_lock);
-	अगर (xive->mapping)
+	if (xive->mapping)
 		unmap_mapping_range(xive->mapping,
 				    esb_pgoff << PAGE_SHIFT,
 				    2ull << PAGE_SHIFT, 1);
 	mutex_unlock(&xive->mapping_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा kvmppc_xive_ops kvmppc_xive_native_ops =  अणु
+static struct kvmppc_xive_ops kvmppc_xive_native_ops =  {
 	.reset_mapped = kvmppc_xive_native_reset_mapped,
-पूर्ण;
+};
 
-अटल vm_fault_t xive_native_esb_fault(काष्ठा vm_fault *vmf)
-अणु
-	काष्ठा vm_area_काष्ठा *vma = vmf->vma;
-	काष्ठा kvm_device *dev = vma->vm_file->निजी_data;
-	काष्ठा kvmppc_xive *xive = dev->निजी;
-	काष्ठा kvmppc_xive_src_block *sb;
-	काष्ठा kvmppc_xive_irq_state *state;
-	काष्ठा xive_irq_data *xd;
+static vm_fault_t xive_native_esb_fault(struct vm_fault *vmf)
+{
+	struct vm_area_struct *vma = vmf->vma;
+	struct kvm_device *dev = vma->vm_file->private_data;
+	struct kvmppc_xive *xive = dev->private;
+	struct kvmppc_xive_src_block *sb;
+	struct kvmppc_xive_irq_state *state;
+	struct xive_irq_data *xd;
 	u32 hw_num;
 	u16 src;
 	u64 page;
-	अचिन्हित दीर्घ irq;
+	unsigned long irq;
 	u64 page_offset;
 
 	/*
-	 * Linux/KVM uses a two pages ESB setting, one क्रम trigger and
-	 * one क्रम EOI
+	 * Linux/KVM uses a two pages ESB setting, one for trigger and
+	 * one for EOI
 	 */
 	page_offset = vmf->pgoff - vma->vm_pgoff;
 	irq = page_offset / 2;
 
 	sb = kvmppc_xive_find_source(xive, irq, &src);
-	अगर (!sb) अणु
+	if (!sb) {
 		pr_devel("%s: source %lx not found !\n", __func__, irq);
-		वापस VM_FAULT_SIGBUS;
-	पूर्ण
+		return VM_FAULT_SIGBUS;
+	}
 
 	state = &sb->irq_state[src];
 
 	/* Some sanity checking */
-	अगर (!state->valid) अणु
+	if (!state->valid) {
 		pr_devel("%s: source %lx invalid !\n", __func__, irq);
-		वापस VM_FAULT_SIGBUS;
-	पूर्ण
+		return VM_FAULT_SIGBUS;
+	}
 
 	kvmppc_xive_select_irq(state, &hw_num, &xd);
 
 	arch_spin_lock(&sb->lock);
 
 	/*
-	 * first/even page is क्रम trigger
-	 * second/odd page is क्रम EOI and management.
+	 * first/even page is for trigger
+	 * second/odd page is for EOI and management.
 	 */
 	page = page_offset % 2 ? xd->eoi_page : xd->trig_page;
 	arch_spin_unlock(&sb->lock);
 
-	अगर (WARN_ON(!page)) अणु
+	if (WARN_ON(!page)) {
 		pr_err("%s: accessing invalid ESB page for source %lx !\n",
 		       __func__, irq);
-		वापस VM_FAULT_SIGBUS;
-	पूर्ण
+		return VM_FAULT_SIGBUS;
+	}
 
 	vmf_insert_pfn(vma, vmf->address, page >> PAGE_SHIFT);
-	वापस VM_FAULT_NOPAGE;
-पूर्ण
+	return VM_FAULT_NOPAGE;
+}
 
-अटल स्थिर काष्ठा vm_operations_काष्ठा xive_native_esb_vmops = अणु
+static const struct vm_operations_struct xive_native_esb_vmops = {
 	.fault = xive_native_esb_fault,
-पूर्ण;
+};
 
-अटल vm_fault_t xive_native_tima_fault(काष्ठा vm_fault *vmf)
-अणु
-	काष्ठा vm_area_काष्ठा *vma = vmf->vma;
+static vm_fault_t xive_native_tima_fault(struct vm_fault *vmf)
+{
+	struct vm_area_struct *vma = vmf->vma;
 
-	चयन (vmf->pgoff - vma->vm_pgoff) अणु
-	हाल 0: /* HW - क्रमbid access */
-	हाल 1: /* HV - क्रमbid access */
-		वापस VM_FAULT_SIGBUS;
-	हाल 2: /* OS */
+	switch (vmf->pgoff - vma->vm_pgoff) {
+	case 0: /* HW - forbid access */
+	case 1: /* HV - forbid access */
+		return VM_FAULT_SIGBUS;
+	case 2: /* OS */
 		vmf_insert_pfn(vma, vmf->address, xive_tima_os >> PAGE_SHIFT);
-		वापस VM_FAULT_NOPAGE;
-	हाल 3: /* USER - TODO */
-	शेष:
-		वापस VM_FAULT_SIGBUS;
-	पूर्ण
-पूर्ण
+		return VM_FAULT_NOPAGE;
+	case 3: /* USER - TODO */
+	default:
+		return VM_FAULT_SIGBUS;
+	}
+}
 
-अटल स्थिर काष्ठा vm_operations_काष्ठा xive_native_tima_vmops = अणु
+static const struct vm_operations_struct xive_native_tima_vmops = {
 	.fault = xive_native_tima_fault,
-पूर्ण;
+};
 
-अटल पूर्णांक kvmppc_xive_native_mmap(काष्ठा kvm_device *dev,
-				   काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा kvmppc_xive *xive = dev->निजी;
+static int kvmppc_xive_native_mmap(struct kvm_device *dev,
+				   struct vm_area_struct *vma)
+{
+	struct kvmppc_xive *xive = dev->private;
 
-	/* We only allow mappings at fixed offset क्रम now */
-	अगर (vma->vm_pgoff == KVM_XIVE_TIMA_PAGE_OFFSET) अणु
-		अगर (vma_pages(vma) > 4)
-			वापस -EINVAL;
+	/* We only allow mappings at fixed offset for now */
+	if (vma->vm_pgoff == KVM_XIVE_TIMA_PAGE_OFFSET) {
+		if (vma_pages(vma) > 4)
+			return -EINVAL;
 		vma->vm_ops = &xive_native_tima_vmops;
-	पूर्ण अन्यथा अगर (vma->vm_pgoff == KVM_XIVE_ESB_PAGE_OFFSET) अणु
-		अगर (vma_pages(vma) > KVMPPC_XIVE_NR_IRQS * 2)
-			वापस -EINVAL;
+	} else if (vma->vm_pgoff == KVM_XIVE_ESB_PAGE_OFFSET) {
+		if (vma_pages(vma) > KVMPPC_XIVE_NR_IRQS * 2)
+			return -EINVAL;
 		vma->vm_ops = &xive_native_esb_vmops;
-	पूर्ण अन्यथा अणु
-		वापस -EINVAL;
-	पूर्ण
+	} else {
+		return -EINVAL;
+	}
 
 	vma->vm_flags |= VM_IO | VM_PFNMAP;
 	vma->vm_page_prot = pgprot_noncached_wc(vma->vm_page_prot);
 
 	/*
 	 * Grab the KVM device file address_space to be able to clear
-	 * the ESB pages mapping when a device is passed-through पूर्णांकo
+	 * the ESB pages mapping when a device is passed-through into
 	 * the guest.
 	 */
 	xive->mapping = vma->vm_file->f_mapping;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक kvmppc_xive_native_set_source(काष्ठा kvmppc_xive *xive, दीर्घ irq,
+static int kvmppc_xive_native_set_source(struct kvmppc_xive *xive, long irq,
 					 u64 addr)
-अणु
-	काष्ठा kvmppc_xive_src_block *sb;
-	काष्ठा kvmppc_xive_irq_state *state;
+{
+	struct kvmppc_xive_src_block *sb;
+	struct kvmppc_xive_irq_state *state;
 	u64 __user *ubufp = (u64 __user *) addr;
 	u64 val;
 	u16 idx;
-	पूर्णांक rc;
+	int rc;
 
 	pr_devel("%s irq=0x%lx\n", __func__, irq);
 
-	अगर (irq < KVMPPC_XIVE_FIRST_IRQ || irq >= KVMPPC_XIVE_NR_IRQS)
-		वापस -E2BIG;
+	if (irq < KVMPPC_XIVE_FIRST_IRQ || irq >= KVMPPC_XIVE_NR_IRQS)
+		return -E2BIG;
 
 	sb = kvmppc_xive_find_source(xive, irq, &idx);
-	अगर (!sb) अणु
+	if (!sb) {
 		pr_debug("No source, creating source block...\n");
 		sb = kvmppc_xive_create_src_block(xive, irq);
-		अगर (!sb) अणु
+		if (!sb) {
 			pr_err("Failed to create block...\n");
-			वापस -ENOMEM;
-		पूर्ण
-	पूर्ण
+			return -ENOMEM;
+		}
+	}
 	state = &sb->irq_state[idx];
 
-	अगर (get_user(val, ubufp)) अणु
+	if (get_user(val, ubufp)) {
 		pr_err("fault getting user info !\n");
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
 	arch_spin_lock(&sb->lock);
 
 	/*
-	 * If the source करोesn't alपढ़ोy have an IPI, allocate
+	 * If the source doesn't already have an IPI, allocate
 	 * one and get the corresponding data
 	 */
-	अगर (!state->ipi_number) अणु
+	if (!state->ipi_number) {
 		state->ipi_number = xive_native_alloc_irq();
-		अगर (state->ipi_number == 0) अणु
+		if (state->ipi_number == 0) {
 			pr_err("Failed to allocate IRQ !\n");
 			rc = -ENXIO;
-			जाओ unlock;
-		पूर्ण
+			goto unlock;
+		}
 		xive_native_populate_irq_data(state->ipi_number,
 					      &state->ipi_data);
 		pr_debug("%s allocated hw_irq=0x%x for irq=0x%lx\n", __func__,
 			 state->ipi_number, irq);
-	पूर्ण
+	}
 
 	/* Restore LSI state */
-	अगर (val & KVM_XIVE_LEVEL_SENSITIVE) अणु
+	if (val & KVM_XIVE_LEVEL_SENSITIVE) {
 		state->lsi = true;
-		अगर (val & KVM_XIVE_LEVEL_ASSERTED)
-			state->निश्चितed = true;
-		pr_devel("  LSI ! Asserted=%d\n", state->निश्चितed);
-	पूर्ण
+		if (val & KVM_XIVE_LEVEL_ASSERTED)
+			state->asserted = true;
+		pr_devel("  LSI ! Asserted=%d\n", state->asserted);
+	}
 
 	/* Mask IRQ to start with */
 	state->act_server = 0;
@@ -397,7 +396,7 @@ bail:
 	xive_native_configure_irq(state->ipi_number, 0, MASKED, 0);
 
 	/* Increment the number of valid sources and mark this one valid */
-	अगर (!state->valid)
+	if (!state->valid)
 		xive->src_count++;
 	state->valid = true;
 
@@ -406,35 +405,35 @@ bail:
 unlock:
 	arch_spin_unlock(&sb->lock);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक kvmppc_xive_native_update_source_config(काष्ठा kvmppc_xive *xive,
-					काष्ठा kvmppc_xive_src_block *sb,
-					काष्ठा kvmppc_xive_irq_state *state,
+static int kvmppc_xive_native_update_source_config(struct kvmppc_xive *xive,
+					struct kvmppc_xive_src_block *sb,
+					struct kvmppc_xive_irq_state *state,
 					u32 server, u8 priority, bool masked,
 					u32 eisn)
-अणु
-	काष्ठा kvm *kvm = xive->kvm;
+{
+	struct kvm *kvm = xive->kvm;
 	u32 hw_num;
-	पूर्णांक rc = 0;
+	int rc = 0;
 
 	arch_spin_lock(&sb->lock);
 
-	अगर (state->act_server == server && state->act_priority == priority &&
+	if (state->act_server == server && state->act_priority == priority &&
 	    state->eisn == eisn)
-		जाओ unlock;
+		goto unlock;
 
 	pr_devel("new_act_prio=%d new_act_server=%d mask=%d act_server=%d act_prio=%d\n",
 		 priority, server, masked, state->act_server,
 		 state->act_priority);
 
-	kvmppc_xive_select_irq(state, &hw_num, शून्य);
+	kvmppc_xive_select_irq(state, &hw_num, NULL);
 
-	अगर (priority != MASKED && !masked) अणु
+	if (priority != MASKED && !masked) {
 		rc = kvmppc_xive_select_target(kvm, &server, priority);
-		अगर (rc)
-			जाओ unlock;
+		if (rc)
+			goto unlock;
 
 		state->act_priority = priority;
 		state->act_server = server;
@@ -443,24 +442,24 @@ unlock:
 		rc = xive_native_configure_irq(hw_num,
 					       kvmppc_xive_vp(xive, server),
 					       priority, eisn);
-	पूर्ण अन्यथा अणु
+	} else {
 		state->act_priority = MASKED;
 		state->act_server = 0;
 		state->eisn = 0;
 
 		rc = xive_native_configure_irq(hw_num, 0, MASKED, 0);
-	पूर्ण
+	}
 
 unlock:
 	arch_spin_unlock(&sb->lock);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक kvmppc_xive_native_set_source_config(काष्ठा kvmppc_xive *xive,
-						दीर्घ irq, u64 addr)
-अणु
-	काष्ठा kvmppc_xive_src_block *sb;
-	काष्ठा kvmppc_xive_irq_state *state;
+static int kvmppc_xive_native_set_source_config(struct kvmppc_xive *xive,
+						long irq, u64 addr)
+{
+	struct kvmppc_xive_src_block *sb;
+	struct kvmppc_xive_irq_state *state;
 	u64 __user *ubufp = (u64 __user *) addr;
 	u16 src;
 	u64 kvm_cfg;
@@ -470,16 +469,16 @@ unlock:
 	u32 eisn;
 
 	sb = kvmppc_xive_find_source(xive, irq, &src);
-	अगर (!sb)
-		वापस -ENOENT;
+	if (!sb)
+		return -ENOENT;
 
 	state = &sb->irq_state[src];
 
-	अगर (!state->valid)
-		वापस -EINVAL;
+	if (!state->valid)
+		return -EINVAL;
 
-	अगर (get_user(kvm_cfg, ubufp))
-		वापस -EFAULT;
+	if (get_user(kvm_cfg, ubufp))
+		return -EFAULT;
 
 	pr_devel("%s irq=0x%lx cfg=%016llx\n", __func__, irq, kvm_cfg);
 
@@ -492,31 +491,31 @@ unlock:
 	eisn = (kvm_cfg & KVM_XIVE_SOURCE_EISN_MASK) >>
 		KVM_XIVE_SOURCE_EISN_SHIFT;
 
-	अगर (priority != xive_prio_from_guest(priority)) अणु
+	if (priority != xive_prio_from_guest(priority)) {
 		pr_err("invalid priority for queue %d for VCPU %d\n",
 		       priority, server);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस kvmppc_xive_native_update_source_config(xive, sb, state, server,
+	return kvmppc_xive_native_update_source_config(xive, sb, state, server,
 						       priority, masked, eisn);
-पूर्ण
+}
 
-अटल पूर्णांक kvmppc_xive_native_sync_source(काष्ठा kvmppc_xive *xive,
-					  दीर्घ irq, u64 addr)
-अणु
-	काष्ठा kvmppc_xive_src_block *sb;
-	काष्ठा kvmppc_xive_irq_state *state;
-	काष्ठा xive_irq_data *xd;
+static int kvmppc_xive_native_sync_source(struct kvmppc_xive *xive,
+					  long irq, u64 addr)
+{
+	struct kvmppc_xive_src_block *sb;
+	struct kvmppc_xive_irq_state *state;
+	struct xive_irq_data *xd;
 	u32 hw_num;
 	u16 src;
-	पूर्णांक rc = 0;
+	int rc = 0;
 
 	pr_devel("%s irq=0x%lx", __func__, irq);
 
 	sb = kvmppc_xive_find_source(xive, irq, &src);
-	अगर (!sb)
-		वापस -ENOENT;
+	if (!sb)
+		return -ENOENT;
 
 	state = &sb->irq_state[src];
 
@@ -524,202 +523,202 @@ unlock:
 
 	arch_spin_lock(&sb->lock);
 
-	अगर (state->valid) अणु
+	if (state->valid) {
 		kvmppc_xive_select_irq(state, &hw_num, &xd);
 		xive_native_sync_source(hw_num);
 		rc = 0;
-	पूर्ण
+	}
 
 	arch_spin_unlock(&sb->lock);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक xive_native_validate_queue_size(u32 qshअगरt)
-अणु
+static int xive_native_validate_queue_size(u32 qshift)
+{
 	/*
-	 * We only support 64K pages क्रम the moment. This is also
+	 * We only support 64K pages for the moment. This is also
 	 * advertised in the DT property "ibm,xive-eq-sizes"
 	 */
-	चयन (qshअगरt) अणु
-	हाल 0: /* EQ reset */
-	हाल 16:
-		वापस 0;
-	हाल 12:
-	हाल 21:
-	हाल 24:
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+	switch (qshift) {
+	case 0: /* EQ reset */
+	case 16:
+		return 0;
+	case 12:
+	case 21:
+	case 24:
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल पूर्णांक kvmppc_xive_native_set_queue_config(काष्ठा kvmppc_xive *xive,
-					       दीर्घ eq_idx, u64 addr)
-अणु
-	काष्ठा kvm *kvm = xive->kvm;
-	काष्ठा kvm_vcpu *vcpu;
-	काष्ठा kvmppc_xive_vcpu *xc;
-	व्योम __user *ubufp = (व्योम __user *) addr;
+static int kvmppc_xive_native_set_queue_config(struct kvmppc_xive *xive,
+					       long eq_idx, u64 addr)
+{
+	struct kvm *kvm = xive->kvm;
+	struct kvm_vcpu *vcpu;
+	struct kvmppc_xive_vcpu *xc;
+	void __user *ubufp = (void __user *) addr;
 	u32 server;
 	u8 priority;
-	काष्ठा kvm_ppc_xive_eq kvm_eq;
-	पूर्णांक rc;
+	struct kvm_ppc_xive_eq kvm_eq;
+	int rc;
 	__be32 *qaddr = 0;
-	काष्ठा page *page;
-	काष्ठा xive_q *q;
+	struct page *page;
+	struct xive_q *q;
 	gfn_t gfn;
-	अचिन्हित दीर्घ page_size;
-	पूर्णांक srcu_idx;
+	unsigned long page_size;
+	int srcu_idx;
 
 	/*
-	 * Demangle priority/server tuple from the EQ identअगरier
+	 * Demangle priority/server tuple from the EQ identifier
 	 */
 	priority = (eq_idx & KVM_XIVE_EQ_PRIORITY_MASK) >>
 		KVM_XIVE_EQ_PRIORITY_SHIFT;
 	server = (eq_idx & KVM_XIVE_EQ_SERVER_MASK) >>
 		KVM_XIVE_EQ_SERVER_SHIFT;
 
-	अगर (copy_from_user(&kvm_eq, ubufp, माप(kvm_eq)))
-		वापस -EFAULT;
+	if (copy_from_user(&kvm_eq, ubufp, sizeof(kvm_eq)))
+		return -EFAULT;
 
 	vcpu = kvmppc_xive_find_server(kvm, server);
-	अगर (!vcpu) अणु
+	if (!vcpu) {
 		pr_err("Can't find server %d\n", server);
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 	xc = vcpu->arch.xive_vcpu;
 
-	अगर (priority != xive_prio_from_guest(priority)) अणु
+	if (priority != xive_prio_from_guest(priority)) {
 		pr_err("Trying to restore invalid queue %d for VCPU %d\n",
 		       priority, server);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	q = &xc->queues[priority];
 
 	pr_devel("%s VCPU %d priority %d fl:%x shift:%d addr:%llx g:%d idx:%d\n",
 		 __func__, server, priority, kvm_eq.flags,
-		 kvm_eq.qshअगरt, kvm_eq.qaddr, kvm_eq.qtoggle, kvm_eq.qindex);
+		 kvm_eq.qshift, kvm_eq.qaddr, kvm_eq.qtoggle, kvm_eq.qindex);
 
 	/* reset queue and disable queueing */
-	अगर (!kvm_eq.qshअगरt) अणु
+	if (!kvm_eq.qshift) {
 		q->guest_qaddr  = 0;
-		q->guest_qshअगरt = 0;
+		q->guest_qshift = 0;
 
 		rc = kvmppc_xive_native_configure_queue(xc->vp_id, q, priority,
-							शून्य, 0, true);
-		अगर (rc) अणु
+							NULL, 0, true);
+		if (rc) {
 			pr_err("Failed to reset queue %d for VCPU %d: %d\n",
 			       priority, xc->server_num, rc);
-			वापस rc;
-		पूर्ण
+			return rc;
+		}
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/*
-	 * sPAPR specअगरies a "Unconditional Notify (n) flag" क्रम the
-	 * H_INT_SET_QUEUE_CONFIG hcall which क्रमces notअगरication
+	 * sPAPR specifies a "Unconditional Notify (n) flag" for the
+	 * H_INT_SET_QUEUE_CONFIG hcall which forces notification
 	 * without using the coalescing mechanisms provided by the
-	 * XIVE END ESBs. This is required on KVM as notअगरication
+	 * XIVE END ESBs. This is required on KVM as notification
 	 * using the END ESBs is not supported.
 	 */
-	अगर (kvm_eq.flags != KVM_XIVE_EQ_ALWAYS_NOTIFY) अणु
+	if (kvm_eq.flags != KVM_XIVE_EQ_ALWAYS_NOTIFY) {
 		pr_err("invalid flags %d\n", kvm_eq.flags);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	rc = xive_native_validate_queue_size(kvm_eq.qshअगरt);
-	अगर (rc) अणु
-		pr_err("invalid queue size %d\n", kvm_eq.qshअगरt);
-		वापस rc;
-	पूर्ण
+	rc = xive_native_validate_queue_size(kvm_eq.qshift);
+	if (rc) {
+		pr_err("invalid queue size %d\n", kvm_eq.qshift);
+		return rc;
+	}
 
-	अगर (kvm_eq.qaddr & ((1ull << kvm_eq.qshअगरt) - 1)) अणु
+	if (kvm_eq.qaddr & ((1ull << kvm_eq.qshift) - 1)) {
 		pr_err("queue page is not aligned %llx/%llx\n", kvm_eq.qaddr,
-		       1ull << kvm_eq.qshअगरt);
-		वापस -EINVAL;
-	पूर्ण
+		       1ull << kvm_eq.qshift);
+		return -EINVAL;
+	}
 
-	srcu_idx = srcu_पढ़ो_lock(&kvm->srcu);
+	srcu_idx = srcu_read_lock(&kvm->srcu);
 	gfn = gpa_to_gfn(kvm_eq.qaddr);
 
 	page_size = kvm_host_page_size(vcpu, gfn);
-	अगर (1ull << kvm_eq.qshअगरt > page_size) अणु
-		srcu_पढ़ो_unlock(&kvm->srcu, srcu_idx);
+	if (1ull << kvm_eq.qshift > page_size) {
+		srcu_read_unlock(&kvm->srcu, srcu_idx);
 		pr_warn("Incompatible host page size %lx!\n", page_size);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	page = gfn_to_page(kvm, gfn);
-	अगर (is_error_page(page)) अणु
-		srcu_पढ़ो_unlock(&kvm->srcu, srcu_idx);
+	if (is_error_page(page)) {
+		srcu_read_unlock(&kvm->srcu, srcu_idx);
 		pr_err("Couldn't get queue page %llx!\n", kvm_eq.qaddr);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	qaddr = page_to_virt(page) + (kvm_eq.qaddr & ~PAGE_MASK);
-	srcu_पढ़ो_unlock(&kvm->srcu, srcu_idx);
+	srcu_read_unlock(&kvm->srcu, srcu_idx);
 
 	/*
 	 * Backup the queue page guest address to the mark EQ page
-	 * dirty क्रम migration.
+	 * dirty for migration.
 	 */
 	q->guest_qaddr  = kvm_eq.qaddr;
-	q->guest_qshअगरt = kvm_eq.qshअगरt;
+	q->guest_qshift = kvm_eq.qshift;
 
 	 /*
-	  * Unconditional Notअगरication is क्रमced by शेष at the
+	  * Unconditional Notification is forced by default at the
 	  * OPAL level because the use of END ESBs is not supported by
 	  * Linux.
 	  */
 	rc = kvmppc_xive_native_configure_queue(xc->vp_id, q, priority,
-					(__be32 *) qaddr, kvm_eq.qshअगरt, true);
-	अगर (rc) अणु
+					(__be32 *) qaddr, kvm_eq.qshift, true);
+	if (rc) {
 		pr_err("Failed to configure queue %d for VCPU %d: %d\n",
 		       priority, xc->server_num, rc);
 		put_page(page);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
 	/*
-	 * Only restore the queue state when needed. When करोing the
+	 * Only restore the queue state when needed. When doing the
 	 * H_INT_SET_SOURCE_CONFIG hcall, it should not.
 	 */
-	अगर (kvm_eq.qtoggle != 1 || kvm_eq.qindex != 0) अणु
+	if (kvm_eq.qtoggle != 1 || kvm_eq.qindex != 0) {
 		rc = xive_native_set_queue_state(xc->vp_id, priority,
 						 kvm_eq.qtoggle,
 						 kvm_eq.qindex);
-		अगर (rc)
-			जाओ error;
-	पूर्ण
+		if (rc)
+			goto error;
+	}
 
 	rc = kvmppc_xive_attach_escalation(vcpu, priority,
 					   xive->single_escalation);
 error:
-	अगर (rc)
+	if (rc)
 		kvmppc_xive_native_cleanup_queue(vcpu, priority);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक kvmppc_xive_native_get_queue_config(काष्ठा kvmppc_xive *xive,
-					       दीर्घ eq_idx, u64 addr)
-अणु
-	काष्ठा kvm *kvm = xive->kvm;
-	काष्ठा kvm_vcpu *vcpu;
-	काष्ठा kvmppc_xive_vcpu *xc;
-	काष्ठा xive_q *q;
-	व्योम __user *ubufp = (u64 __user *) addr;
+static int kvmppc_xive_native_get_queue_config(struct kvmppc_xive *xive,
+					       long eq_idx, u64 addr)
+{
+	struct kvm *kvm = xive->kvm;
+	struct kvm_vcpu *vcpu;
+	struct kvmppc_xive_vcpu *xc;
+	struct xive_q *q;
+	void __user *ubufp = (u64 __user *) addr;
 	u32 server;
 	u8 priority;
-	काष्ठा kvm_ppc_xive_eq kvm_eq;
+	struct kvm_ppc_xive_eq kvm_eq;
 	u64 qaddr;
-	u64 qshअगरt;
+	u64 qshift;
 	u64 qeoi_page;
 	u32 escalate_irq;
 	u64 qflags;
-	पूर्णांक rc;
+	int rc;
 
 	/*
-	 * Demangle priority/server tuple from the EQ identअगरier
+	 * Demangle priority/server tuple from the EQ identifier
 	 */
 	priority = (eq_idx & KVM_XIVE_EQ_PRIORITY_MASK) >>
 		KVM_XIVE_EQ_PRIORITY_SHIFT;
@@ -727,292 +726,292 @@ error:
 		KVM_XIVE_EQ_SERVER_SHIFT;
 
 	vcpu = kvmppc_xive_find_server(kvm, server);
-	अगर (!vcpu) अणु
+	if (!vcpu) {
 		pr_err("Can't find server %d\n", server);
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 	xc = vcpu->arch.xive_vcpu;
 
-	अगर (priority != xive_prio_from_guest(priority)) अणु
+	if (priority != xive_prio_from_guest(priority)) {
 		pr_err("invalid priority for queue %d for VCPU %d\n",
 		       priority, server);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	q = &xc->queues[priority];
 
-	स_रखो(&kvm_eq, 0, माप(kvm_eq));
+	memset(&kvm_eq, 0, sizeof(kvm_eq));
 
-	अगर (!q->qpage)
-		वापस 0;
+	if (!q->qpage)
+		return 0;
 
-	rc = xive_native_get_queue_info(xc->vp_id, priority, &qaddr, &qshअगरt,
+	rc = xive_native_get_queue_info(xc->vp_id, priority, &qaddr, &qshift,
 					&qeoi_page, &escalate_irq, &qflags);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	kvm_eq.flags = 0;
-	अगर (qflags & OPAL_XIVE_EQ_ALWAYS_NOTIFY)
+	if (qflags & OPAL_XIVE_EQ_ALWAYS_NOTIFY)
 		kvm_eq.flags |= KVM_XIVE_EQ_ALWAYS_NOTIFY;
 
-	kvm_eq.qshअगरt = q->guest_qshअगरt;
+	kvm_eq.qshift = q->guest_qshift;
 	kvm_eq.qaddr  = q->guest_qaddr;
 
 	rc = xive_native_get_queue_state(xc->vp_id, priority, &kvm_eq.qtoggle,
 					 &kvm_eq.qindex);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	pr_devel("%s VCPU %d priority %d fl:%x shift:%d addr:%llx g:%d idx:%d\n",
 		 __func__, server, priority, kvm_eq.flags,
-		 kvm_eq.qshअगरt, kvm_eq.qaddr, kvm_eq.qtoggle, kvm_eq.qindex);
+		 kvm_eq.qshift, kvm_eq.qaddr, kvm_eq.qtoggle, kvm_eq.qindex);
 
-	अगर (copy_to_user(ubufp, &kvm_eq, माप(kvm_eq)))
-		वापस -EFAULT;
+	if (copy_to_user(ubufp, &kvm_eq, sizeof(kvm_eq)))
+		return -EFAULT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम kvmppc_xive_reset_sources(काष्ठा kvmppc_xive_src_block *sb)
-अणु
-	पूर्णांक i;
+static void kvmppc_xive_reset_sources(struct kvmppc_xive_src_block *sb)
+{
+	int i;
 
-	क्रम (i = 0; i < KVMPPC_XICS_IRQ_PER_ICS; i++) अणु
-		काष्ठा kvmppc_xive_irq_state *state = &sb->irq_state[i];
+	for (i = 0; i < KVMPPC_XICS_IRQ_PER_ICS; i++) {
+		struct kvmppc_xive_irq_state *state = &sb->irq_state[i];
 
-		अगर (!state->valid)
-			जारी;
+		if (!state->valid)
+			continue;
 
-		अगर (state->act_priority == MASKED)
-			जारी;
+		if (state->act_priority == MASKED)
+			continue;
 
 		state->eisn = 0;
 		state->act_server = 0;
 		state->act_priority = MASKED;
 		xive_vm_esb_load(&state->ipi_data, XIVE_ESB_SET_PQ_01);
 		xive_native_configure_irq(state->ipi_number, 0, MASKED, 0);
-		अगर (state->pt_number) अणु
+		if (state->pt_number) {
 			xive_vm_esb_load(state->pt_data, XIVE_ESB_SET_PQ_01);
 			xive_native_configure_irq(state->pt_number,
 						  0, MASKED, 0);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल पूर्णांक kvmppc_xive_reset(काष्ठा kvmppc_xive *xive)
-अणु
-	काष्ठा kvm *kvm = xive->kvm;
-	काष्ठा kvm_vcpu *vcpu;
-	अचिन्हित पूर्णांक i;
+static int kvmppc_xive_reset(struct kvmppc_xive *xive)
+{
+	struct kvm *kvm = xive->kvm;
+	struct kvm_vcpu *vcpu;
+	unsigned int i;
 
 	pr_devel("%s\n", __func__);
 
 	mutex_lock(&xive->lock);
 
-	kvm_क्रम_each_vcpu(i, vcpu, kvm) अणु
-		काष्ठा kvmppc_xive_vcpu *xc = vcpu->arch.xive_vcpu;
-		अचिन्हित पूर्णांक prio;
+	kvm_for_each_vcpu(i, vcpu, kvm) {
+		struct kvmppc_xive_vcpu *xc = vcpu->arch.xive_vcpu;
+		unsigned int prio;
 
-		अगर (!xc)
-			जारी;
+		if (!xc)
+			continue;
 
-		kvmppc_xive_disable_vcpu_पूर्णांकerrupts(vcpu);
+		kvmppc_xive_disable_vcpu_interrupts(vcpu);
 
-		क्रम (prio = 0; prio < KVMPPC_XIVE_Q_COUNT; prio++) अणु
+		for (prio = 0; prio < KVMPPC_XIVE_Q_COUNT; prio++) {
 
 			/* Single escalation, no queue 7 */
-			अगर (prio == 7 && xive->single_escalation)
-				अवरोध;
+			if (prio == 7 && xive->single_escalation)
+				break;
 
-			अगर (xc->esc_virq[prio]) अणु
-				मुक्त_irq(xc->esc_virq[prio], vcpu);
+			if (xc->esc_virq[prio]) {
+				free_irq(xc->esc_virq[prio], vcpu);
 				irq_dispose_mapping(xc->esc_virq[prio]);
-				kमुक्त(xc->esc_virq_names[prio]);
+				kfree(xc->esc_virq_names[prio]);
 				xc->esc_virq[prio] = 0;
-			पूर्ण
+			}
 
 			kvmppc_xive_native_cleanup_queue(vcpu, prio);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	क्रम (i = 0; i <= xive->max_sbid; i++) अणु
-		काष्ठा kvmppc_xive_src_block *sb = xive->src_blocks[i];
+	for (i = 0; i <= xive->max_sbid; i++) {
+		struct kvmppc_xive_src_block *sb = xive->src_blocks[i];
 
-		अगर (sb) अणु
+		if (sb) {
 			arch_spin_lock(&sb->lock);
 			kvmppc_xive_reset_sources(sb);
 			arch_spin_unlock(&sb->lock);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	mutex_unlock(&xive->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम kvmppc_xive_native_sync_sources(काष्ठा kvmppc_xive_src_block *sb)
-अणु
-	पूर्णांक j;
+static void kvmppc_xive_native_sync_sources(struct kvmppc_xive_src_block *sb)
+{
+	int j;
 
-	क्रम (j = 0; j < KVMPPC_XICS_IRQ_PER_ICS; j++) अणु
-		काष्ठा kvmppc_xive_irq_state *state = &sb->irq_state[j];
-		काष्ठा xive_irq_data *xd;
+	for (j = 0; j < KVMPPC_XICS_IRQ_PER_ICS; j++) {
+		struct kvmppc_xive_irq_state *state = &sb->irq_state[j];
+		struct xive_irq_data *xd;
 		u32 hw_num;
 
-		अगर (!state->valid)
-			जारी;
+		if (!state->valid)
+			continue;
 
 		/*
-		 * The काष्ठा kvmppc_xive_irq_state reflects the state
+		 * The struct kvmppc_xive_irq_state reflects the state
 		 * of the EAS configuration and not the state of the
 		 * source. The source is masked setting the PQ bits to
-		 * '-Q', which is what is being करोne beक्रमe calling
+		 * '-Q', which is what is being done before calling
 		 * the KVM_DEV_XIVE_EQ_SYNC control.
 		 *
 		 * If a source EAS is configured, OPAL syncs the XIVE
 		 * IC of the source and the XIVE IC of the previous
-		 * target अगर any.
+		 * target if any.
 		 *
 		 * So it should be fine ignoring MASKED sources as
-		 * they have been synced alपढ़ोy.
+		 * they have been synced already.
 		 */
-		अगर (state->act_priority == MASKED)
-			जारी;
+		if (state->act_priority == MASKED)
+			continue;
 
 		kvmppc_xive_select_irq(state, &hw_num, &xd);
 		xive_native_sync_source(hw_num);
 		xive_native_sync_queue(hw_num);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक kvmppc_xive_native_vcpu_eq_sync(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा kvmppc_xive_vcpu *xc = vcpu->arch.xive_vcpu;
-	अचिन्हित पूर्णांक prio;
-	पूर्णांक srcu_idx;
+static int kvmppc_xive_native_vcpu_eq_sync(struct kvm_vcpu *vcpu)
+{
+	struct kvmppc_xive_vcpu *xc = vcpu->arch.xive_vcpu;
+	unsigned int prio;
+	int srcu_idx;
 
-	अगर (!xc)
-		वापस -ENOENT;
+	if (!xc)
+		return -ENOENT;
 
-	क्रम (prio = 0; prio < KVMPPC_XIVE_Q_COUNT; prio++) अणु
-		काष्ठा xive_q *q = &xc->queues[prio];
+	for (prio = 0; prio < KVMPPC_XIVE_Q_COUNT; prio++) {
+		struct xive_q *q = &xc->queues[prio];
 
-		अगर (!q->qpage)
-			जारी;
+		if (!q->qpage)
+			continue;
 
-		/* Mark EQ page dirty क्रम migration */
-		srcu_idx = srcu_पढ़ो_lock(&vcpu->kvm->srcu);
+		/* Mark EQ page dirty for migration */
+		srcu_idx = srcu_read_lock(&vcpu->kvm->srcu);
 		mark_page_dirty(vcpu->kvm, gpa_to_gfn(q->guest_qaddr));
-		srcu_पढ़ो_unlock(&vcpu->kvm->srcu, srcu_idx);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		srcu_read_unlock(&vcpu->kvm->srcu, srcu_idx);
+	}
+	return 0;
+}
 
-अटल पूर्णांक kvmppc_xive_native_eq_sync(काष्ठा kvmppc_xive *xive)
-अणु
-	काष्ठा kvm *kvm = xive->kvm;
-	काष्ठा kvm_vcpu *vcpu;
-	अचिन्हित पूर्णांक i;
+static int kvmppc_xive_native_eq_sync(struct kvmppc_xive *xive)
+{
+	struct kvm *kvm = xive->kvm;
+	struct kvm_vcpu *vcpu;
+	unsigned int i;
 
 	pr_devel("%s\n", __func__);
 
 	mutex_lock(&xive->lock);
-	क्रम (i = 0; i <= xive->max_sbid; i++) अणु
-		काष्ठा kvmppc_xive_src_block *sb = xive->src_blocks[i];
+	for (i = 0; i <= xive->max_sbid; i++) {
+		struct kvmppc_xive_src_block *sb = xive->src_blocks[i];
 
-		अगर (sb) अणु
+		if (sb) {
 			arch_spin_lock(&sb->lock);
 			kvmppc_xive_native_sync_sources(sb);
 			arch_spin_unlock(&sb->lock);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	kvm_क्रम_each_vcpu(i, vcpu, kvm) अणु
+	kvm_for_each_vcpu(i, vcpu, kvm) {
 		kvmppc_xive_native_vcpu_eq_sync(vcpu);
-	पूर्ण
+	}
 	mutex_unlock(&xive->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक kvmppc_xive_native_set_attr(काष्ठा kvm_device *dev,
-				       काष्ठा kvm_device_attr *attr)
-अणु
-	काष्ठा kvmppc_xive *xive = dev->निजी;
+static int kvmppc_xive_native_set_attr(struct kvm_device *dev,
+				       struct kvm_device_attr *attr)
+{
+	struct kvmppc_xive *xive = dev->private;
 
-	चयन (attr->group) अणु
-	हाल KVM_DEV_XIVE_GRP_CTRL:
-		चयन (attr->attr) अणु
-		हाल KVM_DEV_XIVE_RESET:
-			वापस kvmppc_xive_reset(xive);
-		हाल KVM_DEV_XIVE_EQ_SYNC:
-			वापस kvmppc_xive_native_eq_sync(xive);
-		हाल KVM_DEV_XIVE_NR_SERVERS:
-			वापस kvmppc_xive_set_nr_servers(xive, attr->addr);
-		पूर्ण
-		अवरोध;
-	हाल KVM_DEV_XIVE_GRP_SOURCE:
-		वापस kvmppc_xive_native_set_source(xive, attr->attr,
+	switch (attr->group) {
+	case KVM_DEV_XIVE_GRP_CTRL:
+		switch (attr->attr) {
+		case KVM_DEV_XIVE_RESET:
+			return kvmppc_xive_reset(xive);
+		case KVM_DEV_XIVE_EQ_SYNC:
+			return kvmppc_xive_native_eq_sync(xive);
+		case KVM_DEV_XIVE_NR_SERVERS:
+			return kvmppc_xive_set_nr_servers(xive, attr->addr);
+		}
+		break;
+	case KVM_DEV_XIVE_GRP_SOURCE:
+		return kvmppc_xive_native_set_source(xive, attr->attr,
 						     attr->addr);
-	हाल KVM_DEV_XIVE_GRP_SOURCE_CONFIG:
-		वापस kvmppc_xive_native_set_source_config(xive, attr->attr,
+	case KVM_DEV_XIVE_GRP_SOURCE_CONFIG:
+		return kvmppc_xive_native_set_source_config(xive, attr->attr,
 							    attr->addr);
-	हाल KVM_DEV_XIVE_GRP_EQ_CONFIG:
-		वापस kvmppc_xive_native_set_queue_config(xive, attr->attr,
+	case KVM_DEV_XIVE_GRP_EQ_CONFIG:
+		return kvmppc_xive_native_set_queue_config(xive, attr->attr,
 							   attr->addr);
-	हाल KVM_DEV_XIVE_GRP_SOURCE_SYNC:
-		वापस kvmppc_xive_native_sync_source(xive, attr->attr,
+	case KVM_DEV_XIVE_GRP_SOURCE_SYNC:
+		return kvmppc_xive_native_sync_source(xive, attr->attr,
 						      attr->addr);
-	पूर्ण
-	वापस -ENXIO;
-पूर्ण
+	}
+	return -ENXIO;
+}
 
-अटल पूर्णांक kvmppc_xive_native_get_attr(काष्ठा kvm_device *dev,
-				       काष्ठा kvm_device_attr *attr)
-अणु
-	काष्ठा kvmppc_xive *xive = dev->निजी;
+static int kvmppc_xive_native_get_attr(struct kvm_device *dev,
+				       struct kvm_device_attr *attr)
+{
+	struct kvmppc_xive *xive = dev->private;
 
-	चयन (attr->group) अणु
-	हाल KVM_DEV_XIVE_GRP_EQ_CONFIG:
-		वापस kvmppc_xive_native_get_queue_config(xive, attr->attr,
+	switch (attr->group) {
+	case KVM_DEV_XIVE_GRP_EQ_CONFIG:
+		return kvmppc_xive_native_get_queue_config(xive, attr->attr,
 							   attr->addr);
-	पूर्ण
-	वापस -ENXIO;
-पूर्ण
+	}
+	return -ENXIO;
+}
 
-अटल पूर्णांक kvmppc_xive_native_has_attr(काष्ठा kvm_device *dev,
-				       काष्ठा kvm_device_attr *attr)
-अणु
-	चयन (attr->group) अणु
-	हाल KVM_DEV_XIVE_GRP_CTRL:
-		चयन (attr->attr) अणु
-		हाल KVM_DEV_XIVE_RESET:
-		हाल KVM_DEV_XIVE_EQ_SYNC:
-		हाल KVM_DEV_XIVE_NR_SERVERS:
-			वापस 0;
-		पूर्ण
-		अवरोध;
-	हाल KVM_DEV_XIVE_GRP_SOURCE:
-	हाल KVM_DEV_XIVE_GRP_SOURCE_CONFIG:
-	हाल KVM_DEV_XIVE_GRP_SOURCE_SYNC:
-		अगर (attr->attr >= KVMPPC_XIVE_FIRST_IRQ &&
+static int kvmppc_xive_native_has_attr(struct kvm_device *dev,
+				       struct kvm_device_attr *attr)
+{
+	switch (attr->group) {
+	case KVM_DEV_XIVE_GRP_CTRL:
+		switch (attr->attr) {
+		case KVM_DEV_XIVE_RESET:
+		case KVM_DEV_XIVE_EQ_SYNC:
+		case KVM_DEV_XIVE_NR_SERVERS:
+			return 0;
+		}
+		break;
+	case KVM_DEV_XIVE_GRP_SOURCE:
+	case KVM_DEV_XIVE_GRP_SOURCE_CONFIG:
+	case KVM_DEV_XIVE_GRP_SOURCE_SYNC:
+		if (attr->attr >= KVMPPC_XIVE_FIRST_IRQ &&
 		    attr->attr < KVMPPC_XIVE_NR_IRQS)
-			वापस 0;
-		अवरोध;
-	हाल KVM_DEV_XIVE_GRP_EQ_CONFIG:
-		वापस 0;
-	पूर्ण
-	वापस -ENXIO;
-पूर्ण
+			return 0;
+		break;
+	case KVM_DEV_XIVE_GRP_EQ_CONFIG:
+		return 0;
+	}
+	return -ENXIO;
+}
 
 /*
- * Called when device fd is बंदd.  kvm->lock is held.
+ * Called when device fd is closed.  kvm->lock is held.
  */
-अटल व्योम kvmppc_xive_native_release(काष्ठा kvm_device *dev)
-अणु
-	काष्ठा kvmppc_xive *xive = dev->निजी;
-	काष्ठा kvm *kvm = xive->kvm;
-	काष्ठा kvm_vcpu *vcpu;
-	पूर्णांक i;
+static void kvmppc_xive_native_release(struct kvm_device *dev)
+{
+	struct kvmppc_xive *xive = dev->private;
+	struct kvm *kvm = xive->kvm;
+	struct kvm_vcpu *vcpu;
+	int i;
 
 	pr_devel("Releasing xive native device\n");
 
@@ -1021,37 +1020,37 @@ error:
 	 * unmap the ESB pages when a device is passed-through.
 	 */
 	mutex_lock(&xive->mapping_lock);
-	xive->mapping = शून्य;
+	xive->mapping = NULL;
 	mutex_unlock(&xive->mapping_lock);
 
 	/*
 	 * Since this is the device release function, we know that
-	 * userspace करोes not have any खोलो fd or mmap referring to
-	 * the device.  Thereक्रमe there can not be any of the
+	 * userspace does not have any open fd or mmap referring to
+	 * the device.  Therefore there can not be any of the
 	 * device attribute set/get, mmap, or page fault functions
 	 * being executed concurrently, and similarly, the
 	 * connect_vcpu and set/clr_mapped functions also cannot
 	 * be being executed.
 	 */
 
-	debugfs_हटाओ(xive->dentry);
+	debugfs_remove(xive->dentry);
 
 	/*
-	 * We should clean up the vCPU पूर्णांकerrupt presenters first.
+	 * We should clean up the vCPU interrupt presenters first.
 	 */
-	kvm_क्रम_each_vcpu(i, vcpu, kvm) अणु
+	kvm_for_each_vcpu(i, vcpu, kvm) {
 		/*
 		 * Take vcpu->mutex to ensure that no one_reg get/set ioctl
-		 * (i.e. kvmppc_xive_native_[gs]et_vp) can be being करोne.
+		 * (i.e. kvmppc_xive_native_[gs]et_vp) can be being done.
 		 * Holding the vcpu->mutex also means that the vcpu cannot
-		 * be executing the KVM_RUN ioctl, and thereक्रमe it cannot
+		 * be executing the KVM_RUN ioctl, and therefore it cannot
 		 * be executing the XIVE push or pull code or accessing
 		 * the XIVE MMIO regions.
 		 */
 		mutex_lock(&vcpu->mutex);
 		kvmppc_xive_native_cleanup_vcpu(vcpu);
 		mutex_unlock(&vcpu->mutex);
-	पूर्ण
+	}
 
 	/*
 	 * Now that we have cleared vcpu->arch.xive_vcpu, vcpu->arch.irq_type
@@ -1059,46 +1058,46 @@ error:
 	 * against xive code getting called during vcpu execution or
 	 * set/get one_reg operations.
 	 */
-	kvm->arch.xive = शून्य;
+	kvm->arch.xive = NULL;
 
-	क्रम (i = 0; i <= xive->max_sbid; i++) अणु
-		अगर (xive->src_blocks[i])
-			kvmppc_xive_मुक्त_sources(xive->src_blocks[i]);
-		kमुक्त(xive->src_blocks[i]);
-		xive->src_blocks[i] = शून्य;
-	पूर्ण
+	for (i = 0; i <= xive->max_sbid; i++) {
+		if (xive->src_blocks[i])
+			kvmppc_xive_free_sources(xive->src_blocks[i]);
+		kfree(xive->src_blocks[i]);
+		xive->src_blocks[i] = NULL;
+	}
 
-	अगर (xive->vp_base != XIVE_INVALID_VP)
-		xive_native_मुक्त_vp_block(xive->vp_base);
+	if (xive->vp_base != XIVE_INVALID_VP)
+		xive_native_free_vp_block(xive->vp_base);
 
 	/*
-	 * A reference of the kvmppc_xive poपूर्णांकer is now kept under
-	 * the xive_devices काष्ठा of the machine क्रम reuse. It is
-	 * मुक्तd when the VM is destroyed क्रम now until we fix all the
+	 * A reference of the kvmppc_xive pointer is now kept under
+	 * the xive_devices struct of the machine for reuse. It is
+	 * freed when the VM is destroyed for now until we fix all the
 	 * execution paths.
 	 */
 
-	kमुक्त(dev);
-पूर्ण
+	kfree(dev);
+}
 
 /*
  * Create a XIVE device.  kvm->lock is held.
  */
-अटल पूर्णांक kvmppc_xive_native_create(काष्ठा kvm_device *dev, u32 type)
-अणु
-	काष्ठा kvmppc_xive *xive;
-	काष्ठा kvm *kvm = dev->kvm;
+static int kvmppc_xive_native_create(struct kvm_device *dev, u32 type)
+{
+	struct kvmppc_xive *xive;
+	struct kvm *kvm = dev->kvm;
 
 	pr_devel("Creating xive native device\n");
 
-	अगर (kvm->arch.xive)
-		वापस -EEXIST;
+	if (kvm->arch.xive)
+		return -EEXIST;
 
 	xive = kvmppc_xive_get_device(kvm, type);
-	अगर (!xive)
-		वापस -ENOMEM;
+	if (!xive)
+		return -ENOMEM;
 
-	dev->निजी = xive;
+	dev->private = xive;
 	xive->dev = dev;
 	xive->kvm = kvm;
 	mutex_init(&xive->mapping_lock);
@@ -1107,7 +1106,7 @@ error:
 	/* VP allocation is delayed to the first call to connect_vcpu */
 	xive->vp_base = XIVE_INVALID_VP;
 	/* KVM_MAX_VCPUS limits the number of VMs to roughly 64 per sockets
-	 * on a POWER9 प्रणाली.
+	 * on a POWER9 system.
 	 */
 	xive->nr_servers = KVM_MAX_VCPUS;
 
@@ -1115,37 +1114,37 @@ error:
 	xive->ops = &kvmppc_xive_native_ops;
 
 	kvm->arch.xive = xive;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Interrupt Pending Buffer (IPB) offset
  */
-#घोषणा TM_IPB_SHIFT 40
-#घोषणा TM_IPB_MASK  (((u64) 0xFF) << TM_IPB_SHIFT)
+#define TM_IPB_SHIFT 40
+#define TM_IPB_MASK  (((u64) 0xFF) << TM_IPB_SHIFT)
 
-पूर्णांक kvmppc_xive_native_get_vp(काष्ठा kvm_vcpu *vcpu, जोड़ kvmppc_one_reg *val)
-अणु
-	काष्ठा kvmppc_xive_vcpu *xc = vcpu->arch.xive_vcpu;
+int kvmppc_xive_native_get_vp(struct kvm_vcpu *vcpu, union kvmppc_one_reg *val)
+{
+	struct kvmppc_xive_vcpu *xc = vcpu->arch.xive_vcpu;
 	u64 opal_state;
-	पूर्णांक rc;
+	int rc;
 
-	अगर (!kvmppc_xive_enabled(vcpu))
-		वापस -EPERM;
+	if (!kvmppc_xive_enabled(vcpu))
+		return -EPERM;
 
-	अगर (!xc)
-		वापस -ENOENT;
+	if (!xc)
+		return -ENOENT;
 
-	/* Thपढ़ो context रेजिस्टरs. We only care about IPB and CPPR */
+	/* Thread context registers. We only care about IPB and CPPR */
 	val->xive_timaval[0] = vcpu->arch.xive_saved_state.w01;
 
 	/* Get the VP state from OPAL */
 	rc = xive_native_get_vp_state(xc->vp_id, &opal_state);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	/*
-	 * Capture the backup of IPB रेजिस्टर in the NVT काष्ठाure and
+	 * Capture the backup of IPB register in the NVT structure and
 	 * merge it in our KVM VP state.
 	 */
 	val->xive_timaval[0] |= cpu_to_be64(opal_state & TM_IPB_MASK);
@@ -1159,65 +1158,65 @@ error:
 		 vcpu->arch.xive_saved_state.w01,
 		 (u32) vcpu->arch.xive_cam_word, opal_state);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक kvmppc_xive_native_set_vp(काष्ठा kvm_vcpu *vcpu, जोड़ kvmppc_one_reg *val)
-अणु
-	काष्ठा kvmppc_xive_vcpu *xc = vcpu->arch.xive_vcpu;
-	काष्ठा kvmppc_xive *xive = vcpu->kvm->arch.xive;
+int kvmppc_xive_native_set_vp(struct kvm_vcpu *vcpu, union kvmppc_one_reg *val)
+{
+	struct kvmppc_xive_vcpu *xc = vcpu->arch.xive_vcpu;
+	struct kvmppc_xive *xive = vcpu->kvm->arch.xive;
 
 	pr_devel("%s w01=%016llx vp=%016llx\n", __func__,
 		 val->xive_timaval[0], val->xive_timaval[1]);
 
-	अगर (!kvmppc_xive_enabled(vcpu))
-		वापस -EPERM;
+	if (!kvmppc_xive_enabled(vcpu))
+		return -EPERM;
 
-	अगर (!xc || !xive)
-		वापस -ENOENT;
+	if (!xc || !xive)
+		return -ENOENT;
 
 	/* We can't update the state of a "pushed" VCPU	 */
-	अगर (WARN_ON(vcpu->arch.xive_pushed))
-		वापस -EBUSY;
+	if (WARN_ON(vcpu->arch.xive_pushed))
+		return -EBUSY;
 
 	/*
-	 * Restore the thपढ़ो context रेजिस्टरs. IPB and CPPR should
+	 * Restore the thread context registers. IPB and CPPR should
 	 * be the only ones that matter.
 	 */
 	vcpu->arch.xive_saved_state.w01 = val->xive_timaval[0];
 
 	/*
-	 * There is no need to restore the XIVE पूर्णांकernal state (IPB
-	 * stored in the NVT) as the IPB रेजिस्टर was merged in KVM VP
+	 * There is no need to restore the XIVE internal state (IPB
+	 * stored in the NVT) as the IPB register was merged in KVM VP
 	 * state when captured.
 	 */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-bool kvmppc_xive_native_supported(व्योम)
-अणु
-	वापस xive_native_has_queue_state_support();
-पूर्ण
+bool kvmppc_xive_native_supported(void)
+{
+	return xive_native_has_queue_state_support();
+}
 
-अटल पूर्णांक xive_native_debug_show(काष्ठा seq_file *m, व्योम *निजी)
-अणु
-	काष्ठा kvmppc_xive *xive = m->निजी;
-	काष्ठा kvm *kvm = xive->kvm;
-	काष्ठा kvm_vcpu *vcpu;
-	अचिन्हित पूर्णांक i;
+static int xive_native_debug_show(struct seq_file *m, void *private)
+{
+	struct kvmppc_xive *xive = m->private;
+	struct kvm *kvm = xive->kvm;
+	struct kvm_vcpu *vcpu;
+	unsigned int i;
 
-	अगर (!kvm)
-		वापस 0;
+	if (!kvm)
+		return 0;
 
-	seq_माला_दो(m, "=========\nVCPU state\n=========\n");
+	seq_puts(m, "=========\nVCPU state\n=========\n");
 
-	kvm_क्रम_each_vcpu(i, vcpu, kvm) अणु
-		काष्ठा kvmppc_xive_vcpu *xc = vcpu->arch.xive_vcpu;
+	kvm_for_each_vcpu(i, vcpu, kvm) {
+		struct kvmppc_xive_vcpu *xc = vcpu->arch.xive_vcpu;
 
-		अगर (!xc)
-			जारी;
+		if (!xc)
+			continue;
 
-		seq_म_लिखो(m, "VCPU %d: VP=%#x/%02x\n"
+		seq_printf(m, "VCPU %d: VP=%#x/%02x\n"
 			   "    NSR=%02x CPPR=%02x IBP=%02x PIPR=%02x w01=%016llx w2=%08x\n",
 			   xc->server_num, xc->vp_id, xc->vp_chip_id,
 			   vcpu->arch.xive_saved_state.nsr,
@@ -1228,51 +1227,51 @@ bool kvmppc_xive_native_supported(व्योम)
 			   be32_to_cpu(vcpu->arch.xive_cam_word));
 
 		kvmppc_xive_debug_show_queues(m, vcpu);
-	पूर्ण
+	}
 
-	seq_माला_दो(m, "=========\nSources\n=========\n");
+	seq_puts(m, "=========\nSources\n=========\n");
 
-	क्रम (i = 0; i <= xive->max_sbid; i++) अणु
-		काष्ठा kvmppc_xive_src_block *sb = xive->src_blocks[i];
+	for (i = 0; i <= xive->max_sbid; i++) {
+		struct kvmppc_xive_src_block *sb = xive->src_blocks[i];
 
-		अगर (sb) अणु
+		if (sb) {
 			arch_spin_lock(&sb->lock);
 			kvmppc_xive_debug_show_sources(m, sb);
 			arch_spin_unlock(&sb->lock);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 DEFINE_SHOW_ATTRIBUTE(xive_native_debug);
 
-अटल व्योम xive_native_debugfs_init(काष्ठा kvmppc_xive *xive)
-अणु
-	अक्षर *name;
+static void xive_native_debugfs_init(struct kvmppc_xive *xive)
+{
+	char *name;
 
-	name = kaप्र_लिखो(GFP_KERNEL, "kvm-xive-%p", xive);
-	अगर (!name) अणु
+	name = kasprintf(GFP_KERNEL, "kvm-xive-%p", xive);
+	if (!name) {
 		pr_err("%s: no memory for name\n", __func__);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	xive->dentry = debugfs_create_file(name, 0444, घातerpc_debugfs_root,
+	xive->dentry = debugfs_create_file(name, 0444, powerpc_debugfs_root,
 					   xive, &xive_native_debug_fops);
 
 	pr_debug("%s: created %s\n", __func__, name);
-	kमुक्त(name);
-पूर्ण
+	kfree(name);
+}
 
-अटल व्योम kvmppc_xive_native_init(काष्ठा kvm_device *dev)
-अणु
-	काष्ठा kvmppc_xive *xive = (काष्ठा kvmppc_xive *)dev->निजी;
+static void kvmppc_xive_native_init(struct kvm_device *dev)
+{
+	struct kvmppc_xive *xive = (struct kvmppc_xive *)dev->private;
 
-	/* Register some debug पूर्णांकerfaces */
+	/* Register some debug interfaces */
 	xive_native_debugfs_init(xive);
-पूर्ण
+}
 
-काष्ठा kvm_device_ops kvm_xive_native_ops = अणु
+struct kvm_device_ops kvm_xive_native_ops = {
 	.name = "kvm-xive-native",
 	.create = kvmppc_xive_native_create,
 	.init = kvmppc_xive_native_init,
@@ -1281,14 +1280,14 @@ DEFINE_SHOW_ATTRIBUTE(xive_native_debug);
 	.get_attr = kvmppc_xive_native_get_attr,
 	.has_attr = kvmppc_xive_native_has_attr,
 	.mmap = kvmppc_xive_native_mmap,
-पूर्ण;
+};
 
-व्योम kvmppc_xive_native_init_module(व्योम)
-अणु
+void kvmppc_xive_native_init_module(void)
+{
 	;
-पूर्ण
+}
 
-व्योम kvmppc_xive_native_निकास_module(व्योम)
-अणु
+void kvmppc_xive_native_exit_module(void)
+{
 	;
-पूर्ण
+}

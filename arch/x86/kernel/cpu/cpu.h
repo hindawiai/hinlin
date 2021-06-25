@@ -1,85 +1,84 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित ARCH_X86_CPU_H
-#घोषणा ARCH_X86_CPU_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef ARCH_X86_CPU_H
+#define ARCH_X86_CPU_H
 
 /* attempt to consolidate cpu attributes */
-काष्ठा cpu_dev अणु
-	स्थिर अक्षर	*c_venकरोr;
+struct cpu_dev {
+	const char	*c_vendor;
 
-	/* some have two possibilities क्रम cpuid string */
-	स्थिर अक्षर	*c_ident[2];
+	/* some have two possibilities for cpuid string */
+	const char	*c_ident[2];
 
-	व्योम            (*c_early_init)(काष्ठा cpuinfo_x86 *);
-	व्योम		(*c_bsp_init)(काष्ठा cpuinfo_x86 *);
-	व्योम		(*c_init)(काष्ठा cpuinfo_x86 *);
-	व्योम		(*c_identअगरy)(काष्ठा cpuinfo_x86 *);
-	व्योम		(*c_detect_tlb)(काष्ठा cpuinfo_x86 *);
-	पूर्णांक		c_x86_venकरोr;
-#अगर_घोषित CONFIG_X86_32
-	/* Optional venकरोr specअगरic routine to obtain the cache size. */
-	अचिन्हित पूर्णांक	(*legacy_cache_size)(काष्ठा cpuinfo_x86 *,
-					     अचिन्हित पूर्णांक);
+	void            (*c_early_init)(struct cpuinfo_x86 *);
+	void		(*c_bsp_init)(struct cpuinfo_x86 *);
+	void		(*c_init)(struct cpuinfo_x86 *);
+	void		(*c_identify)(struct cpuinfo_x86 *);
+	void		(*c_detect_tlb)(struct cpuinfo_x86 *);
+	int		c_x86_vendor;
+#ifdef CONFIG_X86_32
+	/* Optional vendor specific routine to obtain the cache size. */
+	unsigned int	(*legacy_cache_size)(struct cpuinfo_x86 *,
+					     unsigned int);
 
-	/* Family/stepping-based lookup table क्रम model names. */
-	काष्ठा legacy_cpu_model_info अणु
-		पूर्णांक		family;
-		स्थिर अक्षर	*model_names[16];
-	पूर्ण		legacy_models[5];
-#पूर्ण_अगर
-पूर्ण;
+	/* Family/stepping-based lookup table for model names. */
+	struct legacy_cpu_model_info {
+		int		family;
+		const char	*model_names[16];
+	}		legacy_models[5];
+#endif
+};
 
-काष्ठा _tlb_table अणु
-	अचिन्हित अक्षर descriptor;
-	अक्षर tlb_type;
-	अचिन्हित पूर्णांक entries;
-	/* अचिन्हित पूर्णांक ways; */
-	अक्षर info[128];
-पूर्ण;
+struct _tlb_table {
+	unsigned char descriptor;
+	char tlb_type;
+	unsigned int entries;
+	/* unsigned int ways; */
+	char info[128];
+};
 
-#घोषणा cpu_dev_रेजिस्टर(cpu_devX) \
-	अटल स्थिर काष्ठा cpu_dev *स्थिर __cpu_dev_##cpu_devX __used \
+#define cpu_dev_register(cpu_devX) \
+	static const struct cpu_dev *const __cpu_dev_##cpu_devX __used \
 	__section(".x86_cpu_dev.init") = \
 	&cpu_devX;
 
-बाह्य स्थिर काष्ठा cpu_dev *स्थिर __x86_cpu_dev_start[],
-			    *स्थिर __x86_cpu_dev_end[];
+extern const struct cpu_dev *const __x86_cpu_dev_start[],
+			    *const __x86_cpu_dev_end[];
 
-#अगर_घोषित CONFIG_CPU_SUP_INTEL
-क्रमागत tsx_ctrl_states अणु
+#ifdef CONFIG_CPU_SUP_INTEL
+enum tsx_ctrl_states {
 	TSX_CTRL_ENABLE,
 	TSX_CTRL_DISABLE,
 	TSX_CTRL_NOT_SUPPORTED,
-पूर्ण;
+};
 
-बाह्य __ro_after_init क्रमागत tsx_ctrl_states tsx_ctrl_state;
+extern __ro_after_init enum tsx_ctrl_states tsx_ctrl_state;
 
-बाह्य व्योम __init tsx_init(व्योम);
-बाह्य व्योम tsx_enable(व्योम);
-बाह्य व्योम tsx_disable(व्योम);
-#अन्यथा
-अटल अंतरभूत व्योम tsx_init(व्योम) अणु पूर्ण
-#पूर्ण_अगर /* CONFIG_CPU_SUP_INTEL */
+extern void __init tsx_init(void);
+extern void tsx_enable(void);
+extern void tsx_disable(void);
+#else
+static inline void tsx_init(void) { }
+#endif /* CONFIG_CPU_SUP_INTEL */
 
-बाह्य व्योम get_cpu_cap(काष्ठा cpuinfo_x86 *c);
-बाह्य व्योम get_cpu_address_sizes(काष्ठा cpuinfo_x86 *c);
-बाह्य व्योम cpu_detect_cache_sizes(काष्ठा cpuinfo_x86 *c);
-बाह्य व्योम init_scattered_cpuid_features(काष्ठा cpuinfo_x86 *c);
-बाह्य व्योम init_पूर्णांकel_cacheinfo(काष्ठा cpuinfo_x86 *c);
-बाह्य व्योम init_amd_cacheinfo(काष्ठा cpuinfo_x86 *c);
-बाह्य व्योम init_hygon_cacheinfo(काष्ठा cpuinfo_x86 *c);
+extern void get_cpu_cap(struct cpuinfo_x86 *c);
+extern void get_cpu_address_sizes(struct cpuinfo_x86 *c);
+extern void cpu_detect_cache_sizes(struct cpuinfo_x86 *c);
+extern void init_scattered_cpuid_features(struct cpuinfo_x86 *c);
+extern void init_intel_cacheinfo(struct cpuinfo_x86 *c);
+extern void init_amd_cacheinfo(struct cpuinfo_x86 *c);
+extern void init_hygon_cacheinfo(struct cpuinfo_x86 *c);
 
-बाह्य व्योम detect_num_cpu_cores(काष्ठा cpuinfo_x86 *c);
-बाह्य पूर्णांक detect_extended_topology_early(काष्ठा cpuinfo_x86 *c);
-बाह्य पूर्णांक detect_extended_topology(काष्ठा cpuinfo_x86 *c);
-बाह्य पूर्णांक detect_ht_early(काष्ठा cpuinfo_x86 *c);
-बाह्य व्योम detect_ht(काष्ठा cpuinfo_x86 *c);
+extern void detect_num_cpu_cores(struct cpuinfo_x86 *c);
+extern int detect_extended_topology_early(struct cpuinfo_x86 *c);
+extern int detect_extended_topology(struct cpuinfo_x86 *c);
+extern int detect_ht_early(struct cpuinfo_x86 *c);
+extern void detect_ht(struct cpuinfo_x86 *c);
 
-अचिन्हित पूर्णांक aperfmperf_get_khz(पूर्णांक cpu);
+unsigned int aperfmperf_get_khz(int cpu);
 
-बाह्य व्योम x86_spec_ctrl_setup_ap(व्योम);
-बाह्य व्योम update_srbds_msr(व्योम);
+extern void x86_spec_ctrl_setup_ap(void);
+extern void update_srbds_msr(void);
 
-बाह्य u64 x86_पढ़ो_arch_cap_msr(व्योम);
+extern u64 x86_read_arch_cap_msr(void);
 
-#पूर्ण_अगर /* ARCH_X86_CPU_H */
+#endif /* ARCH_X86_CPU_H */

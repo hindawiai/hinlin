@@ -1,47 +1,46 @@
-<शैली गुरु>
 /*
  * Copyright (C) 2017 Red Hat. All rights reserved.
  *
  * This file is released under the GPL.
  */
 
-#समावेश "dm-cache-background-tracker.h"
+#include "dm-cache-background-tracker.h"
 
 /*----------------------------------------------------------------*/
 
-#घोषणा DM_MSG_PREFIX "dm-background-tracker"
+#define DM_MSG_PREFIX "dm-background-tracker"
 
-काष्ठा bt_work अणु
-	काष्ठा list_head list;
-	काष्ठा rb_node node;
-	काष्ठा policy_work work;
-पूर्ण;
+struct bt_work {
+	struct list_head list;
+	struct rb_node node;
+	struct policy_work work;
+};
 
-काष्ठा background_tracker अणु
-	अचिन्हित max_work;
+struct background_tracker {
+	unsigned max_work;
 	atomic_t pending_promotes;
-	atomic_t pending_ग_लिखोbacks;
+	atomic_t pending_writebacks;
 	atomic_t pending_demotes;
 
-	काष्ठा list_head issued;
-	काष्ठा list_head queued;
-	काष्ठा rb_root pending;
+	struct list_head issued;
+	struct list_head queued;
+	struct rb_root pending;
 
-	काष्ठा kmem_cache *work_cache;
-पूर्ण;
+	struct kmem_cache *work_cache;
+};
 
-काष्ठा background_tracker *btracker_create(अचिन्हित max_work)
-अणु
-	काष्ठा background_tracker *b = kदो_स्मृति(माप(*b), GFP_KERNEL);
+struct background_tracker *btracker_create(unsigned max_work)
+{
+	struct background_tracker *b = kmalloc(sizeof(*b), GFP_KERNEL);
 
-	अगर (!b) अणु
+	if (!b) {
 		DMERR("couldn't create background_tracker");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	b->max_work = max_work;
 	atomic_set(&b->pending_promotes, 0);
-	atomic_set(&b->pending_ग_लिखोbacks, 0);
+	atomic_set(&b->pending_writebacks, 0);
 	atomic_set(&b->pending_demotes, 0);
 
 	INIT_LIST_HEAD(&b->issued);
@@ -49,202 +48,202 @@
 
 	b->pending = RB_ROOT;
 	b->work_cache = KMEM_CACHE(bt_work, 0);
-	अगर (!b->work_cache) अणु
+	if (!b->work_cache) {
 		DMERR("couldn't create mempool for background work items");
-		kमुक्त(b);
-		b = शून्य;
-	पूर्ण
+		kfree(b);
+		b = NULL;
+	}
 
-	वापस b;
-पूर्ण
+	return b;
+}
 EXPORT_SYMBOL_GPL(btracker_create);
 
-व्योम btracker_destroy(काष्ठा background_tracker *b)
-अणु
+void btracker_destroy(struct background_tracker *b)
+{
 	kmem_cache_destroy(b->work_cache);
-	kमुक्त(b);
-पूर्ण
+	kfree(b);
+}
 EXPORT_SYMBOL_GPL(btracker_destroy);
 
-अटल पूर्णांक cmp_oblock(dm_oblock_t lhs, dm_oblock_t rhs)
-अणु
-	अगर (from_oblock(lhs) < from_oblock(rhs))
-		वापस -1;
+static int cmp_oblock(dm_oblock_t lhs, dm_oblock_t rhs)
+{
+	if (from_oblock(lhs) < from_oblock(rhs))
+		return -1;
 
-	अगर (from_oblock(rhs) < from_oblock(lhs))
-		वापस 1;
+	if (from_oblock(rhs) < from_oblock(lhs))
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool __insert_pending(काष्ठा background_tracker *b,
-			     काष्ठा bt_work *nw)
-अणु
-	पूर्णांक cmp;
-	काष्ठा bt_work *w;
-	काष्ठा rb_node **new = &b->pending.rb_node, *parent = शून्य;
+static bool __insert_pending(struct background_tracker *b,
+			     struct bt_work *nw)
+{
+	int cmp;
+	struct bt_work *w;
+	struct rb_node **new = &b->pending.rb_node, *parent = NULL;
 
-	जबतक (*new) अणु
-		w = container_of(*new, काष्ठा bt_work, node);
+	while (*new) {
+		w = container_of(*new, struct bt_work, node);
 
 		parent = *new;
 		cmp = cmp_oblock(w->work.oblock, nw->work.oblock);
-		अगर (cmp < 0)
+		if (cmp < 0)
 			new = &((*new)->rb_left);
 
-		अन्यथा अगर (cmp > 0)
+		else if (cmp > 0)
 			new = &((*new)->rb_right);
 
-		अन्यथा
-			/* alपढ़ोy present */
-			वापस false;
-	पूर्ण
+		else
+			/* already present */
+			return false;
+	}
 
 	rb_link_node(&nw->node, parent, new);
 	rb_insert_color(&nw->node, &b->pending);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल काष्ठा bt_work *__find_pending(काष्ठा background_tracker *b,
+static struct bt_work *__find_pending(struct background_tracker *b,
 				      dm_oblock_t oblock)
-अणु
-	पूर्णांक cmp;
-	काष्ठा bt_work *w;
-	काष्ठा rb_node **new = &b->pending.rb_node;
+{
+	int cmp;
+	struct bt_work *w;
+	struct rb_node **new = &b->pending.rb_node;
 
-	जबतक (*new) अणु
-		w = container_of(*new, काष्ठा bt_work, node);
+	while (*new) {
+		w = container_of(*new, struct bt_work, node);
 
 		cmp = cmp_oblock(w->work.oblock, oblock);
-		अगर (cmp < 0)
+		if (cmp < 0)
 			new = &((*new)->rb_left);
 
-		अन्यथा अगर (cmp > 0)
+		else if (cmp > 0)
 			new = &((*new)->rb_right);
 
-		अन्यथा
-			अवरोध;
-	पूर्ण
+		else
+			break;
+	}
 
-	वापस *new ? w : शून्य;
-पूर्ण
+	return *new ? w : NULL;
+}
 
 
-अटल व्योम update_stats(काष्ठा background_tracker *b, काष्ठा policy_work *w, पूर्णांक delta)
-अणु
-	चयन (w->op) अणु
-	हाल POLICY_PROMOTE:
+static void update_stats(struct background_tracker *b, struct policy_work *w, int delta)
+{
+	switch (w->op) {
+	case POLICY_PROMOTE:
 		atomic_add(delta, &b->pending_promotes);
-		अवरोध;
+		break;
 
-	हाल POLICY_DEMOTE:
+	case POLICY_DEMOTE:
 		atomic_add(delta, &b->pending_demotes);
-		अवरोध;
+		break;
 
-	हाल POLICY_WRITEBACK:
-		atomic_add(delta, &b->pending_ग_लिखोbacks);
-		अवरोध;
-	पूर्ण
-पूर्ण
+	case POLICY_WRITEBACK:
+		atomic_add(delta, &b->pending_writebacks);
+		break;
+	}
+}
 
-अचिन्हित btracker_nr_ग_लिखोbacks_queued(काष्ठा background_tracker *b)
-अणु
-	वापस atomic_पढ़ो(&b->pending_ग_लिखोbacks);
-पूर्ण
-EXPORT_SYMBOL_GPL(btracker_nr_ग_लिखोbacks_queued);
+unsigned btracker_nr_writebacks_queued(struct background_tracker *b)
+{
+	return atomic_read(&b->pending_writebacks);
+}
+EXPORT_SYMBOL_GPL(btracker_nr_writebacks_queued);
 
-अचिन्हित btracker_nr_demotions_queued(काष्ठा background_tracker *b)
-अणु
-	वापस atomic_पढ़ो(&b->pending_demotes);
-पूर्ण
+unsigned btracker_nr_demotions_queued(struct background_tracker *b)
+{
+	return atomic_read(&b->pending_demotes);
+}
 EXPORT_SYMBOL_GPL(btracker_nr_demotions_queued);
 
-अटल bool max_work_reached(काष्ठा background_tracker *b)
-अणु
-	वापस atomic_पढ़ो(&b->pending_promotes) +
-		atomic_पढ़ो(&b->pending_ग_लिखोbacks) +
-		atomic_पढ़ो(&b->pending_demotes) >= b->max_work;
-पूर्ण
+static bool max_work_reached(struct background_tracker *b)
+{
+	return atomic_read(&b->pending_promotes) +
+		atomic_read(&b->pending_writebacks) +
+		atomic_read(&b->pending_demotes) >= b->max_work;
+}
 
-अटल काष्ठा bt_work *alloc_work(काष्ठा background_tracker *b)
-अणु
-	अगर (max_work_reached(b))
-		वापस शून्य;
+static struct bt_work *alloc_work(struct background_tracker *b)
+{
+	if (max_work_reached(b))
+		return NULL;
 
-	वापस kmem_cache_alloc(b->work_cache, GFP_NOWAIT);
-पूर्ण
+	return kmem_cache_alloc(b->work_cache, GFP_NOWAIT);
+}
 
-पूर्णांक btracker_queue(काष्ठा background_tracker *b,
-		   काष्ठा policy_work *work,
-		   काष्ठा policy_work **pwork)
-अणु
-	काष्ठा bt_work *w;
+int btracker_queue(struct background_tracker *b,
+		   struct policy_work *work,
+		   struct policy_work **pwork)
+{
+	struct bt_work *w;
 
-	अगर (pwork)
-		*pwork = शून्य;
+	if (pwork)
+		*pwork = NULL;
 
 	w = alloc_work(b);
-	अगर (!w)
-		वापस -ENOMEM;
+	if (!w)
+		return -ENOMEM;
 
-	स_नकल(&w->work, work, माप(*work));
+	memcpy(&w->work, work, sizeof(*work));
 
-	अगर (!__insert_pending(b, w)) अणु
+	if (!__insert_pending(b, w)) {
 		/*
 		 * There was a race, we'll just ignore this second
-		 * bit of work क्रम the same oblock.
+		 * bit of work for the same oblock.
 		 */
-		kmem_cache_मुक्त(b->work_cache, w);
-		वापस -EINVAL;
-	पूर्ण
+		kmem_cache_free(b->work_cache, w);
+		return -EINVAL;
+	}
 
-	अगर (pwork) अणु
+	if (pwork) {
 		*pwork = &w->work;
 		list_add(&w->list, &b->issued);
-	पूर्ण अन्यथा
+	} else
 		list_add(&w->list, &b->queued);
 	update_stats(b, &w->work, 1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(btracker_queue);
 
 /*
- * Returns -ENODATA अगर there's no work.
+ * Returns -ENODATA if there's no work.
  */
-पूर्णांक btracker_issue(काष्ठा background_tracker *b, काष्ठा policy_work **work)
-अणु
-	काष्ठा bt_work *w;
+int btracker_issue(struct background_tracker *b, struct policy_work **work)
+{
+	struct bt_work *w;
 
-	अगर (list_empty(&b->queued))
-		वापस -ENODATA;
+	if (list_empty(&b->queued))
+		return -ENODATA;
 
-	w = list_first_entry(&b->queued, काष्ठा bt_work, list);
+	w = list_first_entry(&b->queued, struct bt_work, list);
 	list_move(&w->list, &b->issued);
 	*work = &w->work;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(btracker_issue);
 
-व्योम btracker_complete(काष्ठा background_tracker *b,
-		       काष्ठा policy_work *op)
-अणु
-	काष्ठा bt_work *w = container_of(op, काष्ठा bt_work, work);
+void btracker_complete(struct background_tracker *b,
+		       struct policy_work *op)
+{
+	struct bt_work *w = container_of(op, struct bt_work, work);
 
 	update_stats(b, &w->work, -1);
 	rb_erase(&w->node, &b->pending);
 	list_del(&w->list);
-	kmem_cache_मुक्त(b->work_cache, w);
-पूर्ण
+	kmem_cache_free(b->work_cache, w);
+}
 EXPORT_SYMBOL_GPL(btracker_complete);
 
-bool btracker_promotion_alपढ़ोy_present(काष्ठा background_tracker *b,
+bool btracker_promotion_already_present(struct background_tracker *b,
 					dm_oblock_t oblock)
-अणु
-	वापस __find_pending(b, oblock) != शून्य;
-पूर्ण
-EXPORT_SYMBOL_GPL(btracker_promotion_alपढ़ोy_present);
+{
+	return __find_pending(b, oblock) != NULL;
+}
+EXPORT_SYMBOL_GPL(btracker_promotion_already_present);
 
 /*----------------------------------------------------------------*/

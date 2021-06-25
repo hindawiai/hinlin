@@ -1,578 +1,577 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-#समावेश <linux/types.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/module.h>
-#समावेश <linux/sunrpc/types.h>
-#समावेश <linux/sunrpc/xdr.h>
-#समावेश <linux/sunrpc/svcsock.h>
-#समावेश <linux/sunrpc/svcauth.h>
-#समावेश <linux/sunrpc/gss_api.h>
-#समावेश <linux/sunrpc/addr.h>
-#समावेश <linux/err.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/hash.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/slab.h>
-#समावेश <net/sock.h>
-#समावेश <net/ipv6.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/user_namespace.h>
-#घोषणा RPCDBG_FACILITY	RPCDBG_AUTH
+// SPDX-License-Identifier: GPL-2.0-only
+#include <linux/types.h>
+#include <linux/sched.h>
+#include <linux/module.h>
+#include <linux/sunrpc/types.h>
+#include <linux/sunrpc/xdr.h>
+#include <linux/sunrpc/svcsock.h>
+#include <linux/sunrpc/svcauth.h>
+#include <linux/sunrpc/gss_api.h>
+#include <linux/sunrpc/addr.h>
+#include <linux/err.h>
+#include <linux/seq_file.h>
+#include <linux/hash.h>
+#include <linux/string.h>
+#include <linux/slab.h>
+#include <net/sock.h>
+#include <net/ipv6.h>
+#include <linux/kernel.h>
+#include <linux/user_namespace.h>
+#define RPCDBG_FACILITY	RPCDBG_AUTH
 
 
-#समावेश "netns.h"
+#include "netns.h"
 
 /*
- * AUTHUNIX and AUTHशून्य credentials are both handled here.
- * AUTHशून्य is treated just like AUTHUNIX except that the uid/gid
- * are always nobody (-2).  i.e. we करो the same IP address checks क्रम
- * AUTHशून्य as क्रम AUTHUNIX, and that is करोne here.
+ * AUTHUNIX and AUTHNULL credentials are both handled here.
+ * AUTHNULL is treated just like AUTHUNIX except that the uid/gid
+ * are always nobody (-2).  i.e. we do the same IP address checks for
+ * AUTHNULL as for AUTHUNIX, and that is done here.
  */
 
 
-काष्ठा unix_करोमुख्य अणु
-	काष्ठा auth_करोमुख्य	h;
+struct unix_domain {
+	struct auth_domain	h;
 	/* other stuff later */
-पूर्ण;
+};
 
-बाह्य काष्ठा auth_ops svcauth_null;
-बाह्य काष्ठा auth_ops svcauth_unix;
+extern struct auth_ops svcauth_null;
+extern struct auth_ops svcauth_unix;
 
-अटल व्योम svcauth_unix_करोमुख्य_release_rcu(काष्ठा rcu_head *head)
-अणु
-	काष्ठा auth_करोमुख्य *करोm = container_of(head, काष्ठा auth_करोमुख्य, rcu_head);
-	काष्ठा unix_करोमुख्य *ud = container_of(करोm, काष्ठा unix_करोमुख्य, h);
+static void svcauth_unix_domain_release_rcu(struct rcu_head *head)
+{
+	struct auth_domain *dom = container_of(head, struct auth_domain, rcu_head);
+	struct unix_domain *ud = container_of(dom, struct unix_domain, h);
 
-	kमुक्त(करोm->name);
-	kमुक्त(ud);
-पूर्ण
+	kfree(dom->name);
+	kfree(ud);
+}
 
-अटल व्योम svcauth_unix_करोमुख्य_release(काष्ठा auth_करोमुख्य *करोm)
-अणु
-	call_rcu(&करोm->rcu_head, svcauth_unix_करोमुख्य_release_rcu);
-पूर्ण
+static void svcauth_unix_domain_release(struct auth_domain *dom)
+{
+	call_rcu(&dom->rcu_head, svcauth_unix_domain_release_rcu);
+}
 
-काष्ठा auth_करोमुख्य *unix_करोमुख्य_find(अक्षर *name)
-अणु
-	काष्ठा auth_करोमुख्य *rv;
-	काष्ठा unix_करोमुख्य *new = शून्य;
+struct auth_domain *unix_domain_find(char *name)
+{
+	struct auth_domain *rv;
+	struct unix_domain *new = NULL;
 
-	rv = auth_करोमुख्य_find(name);
-	जबतक(1) अणु
-		अगर (rv) अणु
-			अगर (new && rv != &new->h)
-				svcauth_unix_करोमुख्य_release(&new->h);
+	rv = auth_domain_find(name);
+	while(1) {
+		if (rv) {
+			if (new && rv != &new->h)
+				svcauth_unix_domain_release(&new->h);
 
-			अगर (rv->flavour != &svcauth_unix) अणु
-				auth_करोमुख्य_put(rv);
-				वापस शून्य;
-			पूर्ण
-			वापस rv;
-		पूर्ण
+			if (rv->flavour != &svcauth_unix) {
+				auth_domain_put(rv);
+				return NULL;
+			}
+			return rv;
+		}
 
-		new = kदो_स्मृति(माप(*new), GFP_KERNEL);
-		अगर (new == शून्य)
-			वापस शून्य;
+		new = kmalloc(sizeof(*new), GFP_KERNEL);
+		if (new == NULL)
+			return NULL;
 		kref_init(&new->h.ref);
 		new->h.name = kstrdup(name, GFP_KERNEL);
-		अगर (new->h.name == शून्य) अणु
-			kमुक्त(new);
-			वापस शून्य;
-		पूर्ण
+		if (new->h.name == NULL) {
+			kfree(new);
+			return NULL;
+		}
 		new->h.flavour = &svcauth_unix;
-		rv = auth_करोमुख्य_lookup(name, &new->h);
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL_GPL(unix_करोमुख्य_find);
+		rv = auth_domain_lookup(name, &new->h);
+	}
+}
+EXPORT_SYMBOL_GPL(unix_domain_find);
 
 
 /**************************************************
- * cache क्रम IP address to unix_करोमुख्य
+ * cache for IP address to unix_domain
  * as needed by AUTH_UNIX
  */
-#घोषणा	IP_HASHBITS	8
-#घोषणा	IP_HASHMAX	(1<<IP_HASHBITS)
+#define	IP_HASHBITS	8
+#define	IP_HASHMAX	(1<<IP_HASHBITS)
 
-काष्ठा ip_map अणु
-	काष्ठा cache_head	h;
-	अक्षर			m_class[8]; /* e.g. "nfsd" */
-	काष्ठा in6_addr		m_addr;
-	काष्ठा unix_करोमुख्य	*m_client;
-	काष्ठा rcu_head		m_rcu;
-पूर्ण;
+struct ip_map {
+	struct cache_head	h;
+	char			m_class[8]; /* e.g. "nfsd" */
+	struct in6_addr		m_addr;
+	struct unix_domain	*m_client;
+	struct rcu_head		m_rcu;
+};
 
-अटल व्योम ip_map_put(काष्ठा kref *kref)
-अणु
-	काष्ठा cache_head *item = container_of(kref, काष्ठा cache_head, ref);
-	काष्ठा ip_map *im = container_of(item, काष्ठा ip_map,h);
+static void ip_map_put(struct kref *kref)
+{
+	struct cache_head *item = container_of(kref, struct cache_head, ref);
+	struct ip_map *im = container_of(item, struct ip_map,h);
 
-	अगर (test_bit(CACHE_VALID, &item->flags) &&
+	if (test_bit(CACHE_VALID, &item->flags) &&
 	    !test_bit(CACHE_NEGATIVE, &item->flags))
-		auth_करोमुख्य_put(&im->m_client->h);
-	kमुक्त_rcu(im, m_rcu);
-पूर्ण
+		auth_domain_put(&im->m_client->h);
+	kfree_rcu(im, m_rcu);
+}
 
-अटल अंतरभूत पूर्णांक hash_ip6(स्थिर काष्ठा in6_addr *ip)
-अणु
-	वापस hash_32(ipv6_addr_hash(ip), IP_HASHBITS);
-पूर्ण
-अटल पूर्णांक ip_map_match(काष्ठा cache_head *corig, काष्ठा cache_head *cnew)
-अणु
-	काष्ठा ip_map *orig = container_of(corig, काष्ठा ip_map, h);
-	काष्ठा ip_map *new = container_of(cnew, काष्ठा ip_map, h);
-	वापस म_भेद(orig->m_class, new->m_class) == 0 &&
+static inline int hash_ip6(const struct in6_addr *ip)
+{
+	return hash_32(ipv6_addr_hash(ip), IP_HASHBITS);
+}
+static int ip_map_match(struct cache_head *corig, struct cache_head *cnew)
+{
+	struct ip_map *orig = container_of(corig, struct ip_map, h);
+	struct ip_map *new = container_of(cnew, struct ip_map, h);
+	return strcmp(orig->m_class, new->m_class) == 0 &&
 	       ipv6_addr_equal(&orig->m_addr, &new->m_addr);
-पूर्ण
-अटल व्योम ip_map_init(काष्ठा cache_head *cnew, काष्ठा cache_head *citem)
-अणु
-	काष्ठा ip_map *new = container_of(cnew, काष्ठा ip_map, h);
-	काष्ठा ip_map *item = container_of(citem, काष्ठा ip_map, h);
+}
+static void ip_map_init(struct cache_head *cnew, struct cache_head *citem)
+{
+	struct ip_map *new = container_of(cnew, struct ip_map, h);
+	struct ip_map *item = container_of(citem, struct ip_map, h);
 
-	म_नकल(new->m_class, item->m_class);
+	strcpy(new->m_class, item->m_class);
 	new->m_addr = item->m_addr;
-पूर्ण
-अटल व्योम update(काष्ठा cache_head *cnew, काष्ठा cache_head *citem)
-अणु
-	काष्ठा ip_map *new = container_of(cnew, काष्ठा ip_map, h);
-	काष्ठा ip_map *item = container_of(citem, काष्ठा ip_map, h);
+}
+static void update(struct cache_head *cnew, struct cache_head *citem)
+{
+	struct ip_map *new = container_of(cnew, struct ip_map, h);
+	struct ip_map *item = container_of(citem, struct ip_map, h);
 
 	kref_get(&item->m_client->h.ref);
 	new->m_client = item->m_client;
-पूर्ण
-अटल काष्ठा cache_head *ip_map_alloc(व्योम)
-अणु
-	काष्ठा ip_map *i = kदो_स्मृति(माप(*i), GFP_KERNEL);
-	अगर (i)
-		वापस &i->h;
-	अन्यथा
-		वापस शून्य;
-पूर्ण
+}
+static struct cache_head *ip_map_alloc(void)
+{
+	struct ip_map *i = kmalloc(sizeof(*i), GFP_KERNEL);
+	if (i)
+		return &i->h;
+	else
+		return NULL;
+}
 
-अटल पूर्णांक ip_map_upcall(काष्ठा cache_detail *cd, काष्ठा cache_head *h)
-अणु
-	वापस sunrpc_cache_pipe_upcall(cd, h);
-पूर्ण
+static int ip_map_upcall(struct cache_detail *cd, struct cache_head *h)
+{
+	return sunrpc_cache_pipe_upcall(cd, h);
+}
 
-अटल व्योम ip_map_request(काष्ठा cache_detail *cd,
-				  काष्ठा cache_head *h,
-				  अक्षर **bpp, पूर्णांक *blen)
-अणु
-	अक्षर text_addr[40];
-	काष्ठा ip_map *im = container_of(h, काष्ठा ip_map, h);
+static void ip_map_request(struct cache_detail *cd,
+				  struct cache_head *h,
+				  char **bpp, int *blen)
+{
+	char text_addr[40];
+	struct ip_map *im = container_of(h, struct ip_map, h);
 
-	अगर (ipv6_addr_v4mapped(&(im->m_addr))) अणु
-		snम_लिखो(text_addr, 20, "%pI4", &im->m_addr.s6_addr32[3]);
-	पूर्ण अन्यथा अणु
-		snम_लिखो(text_addr, 40, "%pI6", &im->m_addr);
-	पूर्ण
+	if (ipv6_addr_v4mapped(&(im->m_addr))) {
+		snprintf(text_addr, 20, "%pI4", &im->m_addr.s6_addr32[3]);
+	} else {
+		snprintf(text_addr, 40, "%pI6", &im->m_addr);
+	}
 	qword_add(bpp, blen, im->m_class);
 	qword_add(bpp, blen, text_addr);
 	(*bpp)[-1] = '\n';
-पूर्ण
+}
 
-अटल काष्ठा ip_map *__ip_map_lookup(काष्ठा cache_detail *cd, अक्षर *class, काष्ठा in6_addr *addr);
-अटल पूर्णांक __ip_map_update(काष्ठा cache_detail *cd, काष्ठा ip_map *ipm, काष्ठा unix_करोमुख्य *uकरोm, समय64_t expiry);
+static struct ip_map *__ip_map_lookup(struct cache_detail *cd, char *class, struct in6_addr *addr);
+static int __ip_map_update(struct cache_detail *cd, struct ip_map *ipm, struct unix_domain *udom, time64_t expiry);
 
-अटल पूर्णांक ip_map_parse(काष्ठा cache_detail *cd,
-			  अक्षर *mesg, पूर्णांक mlen)
-अणु
-	/* class ipaddress [करोमुख्यname] */
+static int ip_map_parse(struct cache_detail *cd,
+			  char *mesg, int mlen)
+{
+	/* class ipaddress [domainname] */
 	/* should be safe just to use the start of the input buffer
-	 * क्रम scratch: */
-	अक्षर *buf = mesg;
-	पूर्णांक len;
-	अक्षर class[8];
-	जोड़ अणु
-		काष्ठा sockaddr		sa;
-		काष्ठा sockaddr_in	s4;
-		काष्ठा sockaddr_in6	s6;
-	पूर्ण address;
-	काष्ठा sockaddr_in6 sin6;
-	पूर्णांक err;
+	 * for scratch: */
+	char *buf = mesg;
+	int len;
+	char class[8];
+	union {
+		struct sockaddr		sa;
+		struct sockaddr_in	s4;
+		struct sockaddr_in6	s6;
+	} address;
+	struct sockaddr_in6 sin6;
+	int err;
 
-	काष्ठा ip_map *ipmp;
-	काष्ठा auth_करोमुख्य *करोm;
-	समय64_t expiry;
+	struct ip_map *ipmp;
+	struct auth_domain *dom;
+	time64_t expiry;
 
-	अगर (mesg[mlen-1] != '\n')
-		वापस -EINVAL;
+	if (mesg[mlen-1] != '\n')
+		return -EINVAL;
 	mesg[mlen-1] = 0;
 
 	/* class */
-	len = qword_get(&mesg, class, माप(class));
-	अगर (len <= 0) वापस -EINVAL;
+	len = qword_get(&mesg, class, sizeof(class));
+	if (len <= 0) return -EINVAL;
 
 	/* ip address */
 	len = qword_get(&mesg, buf, mlen);
-	अगर (len <= 0) वापस -EINVAL;
+	if (len <= 0) return -EINVAL;
 
-	अगर (rpc_pton(cd->net, buf, len, &address.sa, माप(address)) == 0)
-		वापस -EINVAL;
-	चयन (address.sa.sa_family) अणु
-	हाल AF_INET:
+	if (rpc_pton(cd->net, buf, len, &address.sa, sizeof(address)) == 0)
+		return -EINVAL;
+	switch (address.sa.sa_family) {
+	case AF_INET:
 		/* Form a mapped IPv4 address in sin6 */
 		sin6.sin6_family = AF_INET6;
 		ipv6_addr_set_v4mapped(address.s4.sin_addr.s_addr,
 				&sin6.sin6_addr);
-		अवरोध;
-#अगर IS_ENABLED(CONFIG_IPV6)
-	हाल AF_INET6:
-		स_नकल(&sin6, &address.s6, माप(sin6));
-		अवरोध;
-#पूर्ण_अगर
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+#if IS_ENABLED(CONFIG_IPV6)
+	case AF_INET6:
+		memcpy(&sin6, &address.s6, sizeof(sin6));
+		break;
+#endif
+	default:
+		return -EINVAL;
+	}
 
 	expiry = get_expiry(&mesg);
-	अगर (expiry ==0)
-		वापस -EINVAL;
+	if (expiry ==0)
+		return -EINVAL;
 
-	/* करोमुख्यname, or empty क्रम NEGATIVE */
+	/* domainname, or empty for NEGATIVE */
 	len = qword_get(&mesg, buf, mlen);
-	अगर (len < 0) वापस -EINVAL;
+	if (len < 0) return -EINVAL;
 
-	अगर (len) अणु
-		करोm = unix_करोमुख्य_find(buf);
-		अगर (करोm == शून्य)
-			वापस -ENOENT;
-	पूर्ण अन्यथा
-		करोm = शून्य;
+	if (len) {
+		dom = unix_domain_find(buf);
+		if (dom == NULL)
+			return -ENOENT;
+	} else
+		dom = NULL;
 
-	/* IPv6 scope IDs are ignored क्रम now */
+	/* IPv6 scope IDs are ignored for now */
 	ipmp = __ip_map_lookup(cd, class, &sin6.sin6_addr);
-	अगर (ipmp) अणु
+	if (ipmp) {
 		err = __ip_map_update(cd, ipmp,
-			     container_of(करोm, काष्ठा unix_करोमुख्य, h),
+			     container_of(dom, struct unix_domain, h),
 			     expiry);
-	पूर्ण अन्यथा
+	} else
 		err = -ENOMEM;
 
-	अगर (करोm)
-		auth_करोमुख्य_put(करोm);
+	if (dom)
+		auth_domain_put(dom);
 
 	cache_flush();
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक ip_map_show(काष्ठा seq_file *m,
-		       काष्ठा cache_detail *cd,
-		       काष्ठा cache_head *h)
-अणु
-	काष्ठा ip_map *im;
-	काष्ठा in6_addr addr;
-	अक्षर *करोm = "-no-domain-";
+static int ip_map_show(struct seq_file *m,
+		       struct cache_detail *cd,
+		       struct cache_head *h)
+{
+	struct ip_map *im;
+	struct in6_addr addr;
+	char *dom = "-no-domain-";
 
-	अगर (h == शून्य) अणु
-		seq_माला_दो(m, "#class IP domain\n");
-		वापस 0;
-	पूर्ण
-	im = container_of(h, काष्ठा ip_map, h);
-	/* class addr करोमुख्य */
+	if (h == NULL) {
+		seq_puts(m, "#class IP domain\n");
+		return 0;
+	}
+	im = container_of(h, struct ip_map, h);
+	/* class addr domain */
 	addr = im->m_addr;
 
-	अगर (test_bit(CACHE_VALID, &h->flags) &&
+	if (test_bit(CACHE_VALID, &h->flags) &&
 	    !test_bit(CACHE_NEGATIVE, &h->flags))
-		करोm = im->m_client->h.name;
+		dom = im->m_client->h.name;
 
-	अगर (ipv6_addr_v4mapped(&addr)) अणु
-		seq_म_लिखो(m, "%s %pI4 %s\n",
-			im->m_class, &addr.s6_addr32[3], करोm);
-	पूर्ण अन्यथा अणु
-		seq_म_लिखो(m, "%s %pI6 %s\n", im->m_class, &addr, करोm);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	if (ipv6_addr_v4mapped(&addr)) {
+		seq_printf(m, "%s %pI4 %s\n",
+			im->m_class, &addr.s6_addr32[3], dom);
+	} else {
+		seq_printf(m, "%s %pI6 %s\n", im->m_class, &addr, dom);
+	}
+	return 0;
+}
 
 
-अटल काष्ठा ip_map *__ip_map_lookup(काष्ठा cache_detail *cd, अक्षर *class,
-		काष्ठा in6_addr *addr)
-अणु
-	काष्ठा ip_map ip;
-	काष्ठा cache_head *ch;
+static struct ip_map *__ip_map_lookup(struct cache_detail *cd, char *class,
+		struct in6_addr *addr)
+{
+	struct ip_map ip;
+	struct cache_head *ch;
 
-	म_नकल(ip.m_class, class);
+	strcpy(ip.m_class, class);
 	ip.m_addr = *addr;
 	ch = sunrpc_cache_lookup_rcu(cd, &ip.h,
 				     hash_str(class, IP_HASHBITS) ^
 				     hash_ip6(addr));
 
-	अगर (ch)
-		वापस container_of(ch, काष्ठा ip_map, h);
-	अन्यथा
-		वापस शून्य;
-पूर्ण
+	if (ch)
+		return container_of(ch, struct ip_map, h);
+	else
+		return NULL;
+}
 
-अटल पूर्णांक __ip_map_update(काष्ठा cache_detail *cd, काष्ठा ip_map *ipm,
-		काष्ठा unix_करोमुख्य *uकरोm, समय64_t expiry)
-अणु
-	काष्ठा ip_map ip;
-	काष्ठा cache_head *ch;
+static int __ip_map_update(struct cache_detail *cd, struct ip_map *ipm,
+		struct unix_domain *udom, time64_t expiry)
+{
+	struct ip_map ip;
+	struct cache_head *ch;
 
-	ip.m_client = uकरोm;
+	ip.m_client = udom;
 	ip.h.flags = 0;
-	अगर (!uकरोm)
+	if (!udom)
 		set_bit(CACHE_NEGATIVE, &ip.h.flags);
-	ip.h.expiry_समय = expiry;
+	ip.h.expiry_time = expiry;
 	ch = sunrpc_cache_update(cd, &ip.h, &ipm->h,
 				 hash_str(ipm->m_class, IP_HASHBITS) ^
 				 hash_ip6(&ipm->m_addr));
-	अगर (!ch)
-		वापस -ENOMEM;
+	if (!ch)
+		return -ENOMEM;
 	cache_put(ch, cd);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम svcauth_unix_purge(काष्ठा net *net)
-अणु
-	काष्ठा sunrpc_net *sn;
+void svcauth_unix_purge(struct net *net)
+{
+	struct sunrpc_net *sn;
 
 	sn = net_generic(net, sunrpc_net_id);
 	cache_purge(sn->ip_map_cache);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(svcauth_unix_purge);
 
-अटल अंतरभूत काष्ठा ip_map *
-ip_map_cached_get(काष्ठा svc_xprt *xprt)
-अणु
-	काष्ठा ip_map *ipm = शून्य;
-	काष्ठा sunrpc_net *sn;
+static inline struct ip_map *
+ip_map_cached_get(struct svc_xprt *xprt)
+{
+	struct ip_map *ipm = NULL;
+	struct sunrpc_net *sn;
 
-	अगर (test_bit(XPT_CACHE_AUTH, &xprt->xpt_flags)) अणु
+	if (test_bit(XPT_CACHE_AUTH, &xprt->xpt_flags)) {
 		spin_lock(&xprt->xpt_lock);
 		ipm = xprt->xpt_auth_cache;
-		अगर (ipm != शून्य) अणु
+		if (ipm != NULL) {
 			sn = net_generic(xprt->xpt_net, sunrpc_net_id);
-			अगर (cache_is_expired(sn->ip_map_cache, &ipm->h)) अणु
+			if (cache_is_expired(sn->ip_map_cache, &ipm->h)) {
 				/*
 				 * The entry has been invalidated since it was
 				 * remembered, e.g. by a second mount from the
 				 * same IP address.
 				 */
-				xprt->xpt_auth_cache = शून्य;
+				xprt->xpt_auth_cache = NULL;
 				spin_unlock(&xprt->xpt_lock);
 				cache_put(&ipm->h, sn->ip_map_cache);
-				वापस शून्य;
-			पूर्ण
+				return NULL;
+			}
 			cache_get(&ipm->h);
-		पूर्ण
+		}
 		spin_unlock(&xprt->xpt_lock);
-	पूर्ण
-	वापस ipm;
-पूर्ण
+	}
+	return ipm;
+}
 
-अटल अंतरभूत व्योम
-ip_map_cached_put(काष्ठा svc_xprt *xprt, काष्ठा ip_map *ipm)
-अणु
-	अगर (test_bit(XPT_CACHE_AUTH, &xprt->xpt_flags)) अणु
+static inline void
+ip_map_cached_put(struct svc_xprt *xprt, struct ip_map *ipm)
+{
+	if (test_bit(XPT_CACHE_AUTH, &xprt->xpt_flags)) {
 		spin_lock(&xprt->xpt_lock);
-		अगर (xprt->xpt_auth_cache == शून्य) अणु
+		if (xprt->xpt_auth_cache == NULL) {
 			/* newly cached, keep the reference */
 			xprt->xpt_auth_cache = ipm;
-			ipm = शून्य;
-		पूर्ण
+			ipm = NULL;
+		}
 		spin_unlock(&xprt->xpt_lock);
-	पूर्ण
-	अगर (ipm) अणु
-		काष्ठा sunrpc_net *sn;
+	}
+	if (ipm) {
+		struct sunrpc_net *sn;
 
 		sn = net_generic(xprt->xpt_net, sunrpc_net_id);
 		cache_put(&ipm->h, sn->ip_map_cache);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम
-svcauth_unix_info_release(काष्ठा svc_xprt *xpt)
-अणु
-	काष्ठा ip_map *ipm;
+void
+svcauth_unix_info_release(struct svc_xprt *xpt)
+{
+	struct ip_map *ipm;
 
 	ipm = xpt->xpt_auth_cache;
-	अगर (ipm != शून्य) अणु
-		काष्ठा sunrpc_net *sn;
+	if (ipm != NULL) {
+		struct sunrpc_net *sn;
 
 		sn = net_generic(xpt->xpt_net, sunrpc_net_id);
 		cache_put(&ipm->h, sn->ip_map_cache);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /****************************************************************************
  * auth.unix.gid cache
  * simple cache to map a UID to a list of GIDs
  * because AUTH_UNIX aka AUTH_SYS has a max of UNX_NGROUPS
  */
-#घोषणा	GID_HASHBITS	8
-#घोषणा	GID_HASHMAX	(1<<GID_HASHBITS)
+#define	GID_HASHBITS	8
+#define	GID_HASHMAX	(1<<GID_HASHBITS)
 
-काष्ठा unix_gid अणु
-	काष्ठा cache_head	h;
+struct unix_gid {
+	struct cache_head	h;
 	kuid_t			uid;
-	काष्ठा group_info	*gi;
-	काष्ठा rcu_head		rcu;
-पूर्ण;
+	struct group_info	*gi;
+	struct rcu_head		rcu;
+};
 
-अटल पूर्णांक unix_gid_hash(kuid_t uid)
-अणु
-	वापस hash_दीर्घ(from_kuid(&init_user_ns, uid), GID_HASHBITS);
-पूर्ण
+static int unix_gid_hash(kuid_t uid)
+{
+	return hash_long(from_kuid(&init_user_ns, uid), GID_HASHBITS);
+}
 
-अटल व्योम unix_gid_put(काष्ठा kref *kref)
-अणु
-	काष्ठा cache_head *item = container_of(kref, काष्ठा cache_head, ref);
-	काष्ठा unix_gid *ug = container_of(item, काष्ठा unix_gid, h);
-	अगर (test_bit(CACHE_VALID, &item->flags) &&
+static void unix_gid_put(struct kref *kref)
+{
+	struct cache_head *item = container_of(kref, struct cache_head, ref);
+	struct unix_gid *ug = container_of(item, struct unix_gid, h);
+	if (test_bit(CACHE_VALID, &item->flags) &&
 	    !test_bit(CACHE_NEGATIVE, &item->flags))
 		put_group_info(ug->gi);
-	kमुक्त_rcu(ug, rcu);
-पूर्ण
+	kfree_rcu(ug, rcu);
+}
 
-अटल पूर्णांक unix_gid_match(काष्ठा cache_head *corig, काष्ठा cache_head *cnew)
-अणु
-	काष्ठा unix_gid *orig = container_of(corig, काष्ठा unix_gid, h);
-	काष्ठा unix_gid *new = container_of(cnew, काष्ठा unix_gid, h);
-	वापस uid_eq(orig->uid, new->uid);
-पूर्ण
-अटल व्योम unix_gid_init(काष्ठा cache_head *cnew, काष्ठा cache_head *citem)
-अणु
-	काष्ठा unix_gid *new = container_of(cnew, काष्ठा unix_gid, h);
-	काष्ठा unix_gid *item = container_of(citem, काष्ठा unix_gid, h);
+static int unix_gid_match(struct cache_head *corig, struct cache_head *cnew)
+{
+	struct unix_gid *orig = container_of(corig, struct unix_gid, h);
+	struct unix_gid *new = container_of(cnew, struct unix_gid, h);
+	return uid_eq(orig->uid, new->uid);
+}
+static void unix_gid_init(struct cache_head *cnew, struct cache_head *citem)
+{
+	struct unix_gid *new = container_of(cnew, struct unix_gid, h);
+	struct unix_gid *item = container_of(citem, struct unix_gid, h);
 	new->uid = item->uid;
-पूर्ण
-अटल व्योम unix_gid_update(काष्ठा cache_head *cnew, काष्ठा cache_head *citem)
-अणु
-	काष्ठा unix_gid *new = container_of(cnew, काष्ठा unix_gid, h);
-	काष्ठा unix_gid *item = container_of(citem, काष्ठा unix_gid, h);
+}
+static void unix_gid_update(struct cache_head *cnew, struct cache_head *citem)
+{
+	struct unix_gid *new = container_of(cnew, struct unix_gid, h);
+	struct unix_gid *item = container_of(citem, struct unix_gid, h);
 
 	get_group_info(item->gi);
 	new->gi = item->gi;
-पूर्ण
-अटल काष्ठा cache_head *unix_gid_alloc(व्योम)
-अणु
-	काष्ठा unix_gid *g = kदो_स्मृति(माप(*g), GFP_KERNEL);
-	अगर (g)
-		वापस &g->h;
-	अन्यथा
-		वापस शून्य;
-पूर्ण
+}
+static struct cache_head *unix_gid_alloc(void)
+{
+	struct unix_gid *g = kmalloc(sizeof(*g), GFP_KERNEL);
+	if (g)
+		return &g->h;
+	else
+		return NULL;
+}
 
-अटल पूर्णांक unix_gid_upcall(काष्ठा cache_detail *cd, काष्ठा cache_head *h)
-अणु
-	वापस sunrpc_cache_pipe_upcall_समयout(cd, h);
-पूर्ण
+static int unix_gid_upcall(struct cache_detail *cd, struct cache_head *h)
+{
+	return sunrpc_cache_pipe_upcall_timeout(cd, h);
+}
 
-अटल व्योम unix_gid_request(काष्ठा cache_detail *cd,
-			     काष्ठा cache_head *h,
-			     अक्षर **bpp, पूर्णांक *blen)
-अणु
-	अक्षर tuid[20];
-	काष्ठा unix_gid *ug = container_of(h, काष्ठा unix_gid, h);
+static void unix_gid_request(struct cache_detail *cd,
+			     struct cache_head *h,
+			     char **bpp, int *blen)
+{
+	char tuid[20];
+	struct unix_gid *ug = container_of(h, struct unix_gid, h);
 
-	snम_लिखो(tuid, 20, "%u", from_kuid(&init_user_ns, ug->uid));
+	snprintf(tuid, 20, "%u", from_kuid(&init_user_ns, ug->uid));
 	qword_add(bpp, blen, tuid);
 	(*bpp)[-1] = '\n';
-पूर्ण
+}
 
-अटल काष्ठा unix_gid *unix_gid_lookup(काष्ठा cache_detail *cd, kuid_t uid);
+static struct unix_gid *unix_gid_lookup(struct cache_detail *cd, kuid_t uid);
 
-अटल पूर्णांक unix_gid_parse(काष्ठा cache_detail *cd,
-			अक्षर *mesg, पूर्णांक mlen)
-अणु
+static int unix_gid_parse(struct cache_detail *cd,
+			char *mesg, int mlen)
+{
 	/* uid expiry Ngid gid0 gid1 ... gidN-1 */
-	पूर्णांक id;
+	int id;
 	kuid_t uid;
-	पूर्णांक gids;
-	पूर्णांक rv;
-	पूर्णांक i;
-	पूर्णांक err;
-	समय64_t expiry;
-	काष्ठा unix_gid ug, *ugp;
+	int gids;
+	int rv;
+	int i;
+	int err;
+	time64_t expiry;
+	struct unix_gid ug, *ugp;
 
-	अगर (mesg[mlen - 1] != '\n')
-		वापस -EINVAL;
+	if (mesg[mlen - 1] != '\n')
+		return -EINVAL;
 	mesg[mlen-1] = 0;
 
-	rv = get_पूर्णांक(&mesg, &id);
-	अगर (rv)
-		वापस -EINVAL;
+	rv = get_int(&mesg, &id);
+	if (rv)
+		return -EINVAL;
 	uid = make_kuid(current_user_ns(), id);
 	ug.uid = uid;
 
 	expiry = get_expiry(&mesg);
-	अगर (expiry == 0)
-		वापस -EINVAL;
+	if (expiry == 0)
+		return -EINVAL;
 
-	rv = get_पूर्णांक(&mesg, &gids);
-	अगर (rv || gids < 0 || gids > 8192)
-		वापस -EINVAL;
+	rv = get_int(&mesg, &gids);
+	if (rv || gids < 0 || gids > 8192)
+		return -EINVAL;
 
 	ug.gi = groups_alloc(gids);
-	अगर (!ug.gi)
-		वापस -ENOMEM;
+	if (!ug.gi)
+		return -ENOMEM;
 
-	क्रम (i = 0 ; i < gids ; i++) अणु
-		पूर्णांक gid;
+	for (i = 0 ; i < gids ; i++) {
+		int gid;
 		kgid_t kgid;
-		rv = get_पूर्णांक(&mesg, &gid);
+		rv = get_int(&mesg, &gid);
 		err = -EINVAL;
-		अगर (rv)
-			जाओ out;
+		if (rv)
+			goto out;
 		kgid = make_kgid(current_user_ns(), gid);
-		अगर (!gid_valid(kgid))
-			जाओ out;
+		if (!gid_valid(kgid))
+			goto out;
 		ug.gi->gid[i] = kgid;
-	पूर्ण
+	}
 
 	groups_sort(ug.gi);
 	ugp = unix_gid_lookup(cd, uid);
-	अगर (ugp) अणु
-		काष्ठा cache_head *ch;
+	if (ugp) {
+		struct cache_head *ch;
 		ug.h.flags = 0;
-		ug.h.expiry_समय = expiry;
+		ug.h.expiry_time = expiry;
 		ch = sunrpc_cache_update(cd,
 					 &ug.h, &ugp->h,
 					 unix_gid_hash(uid));
-		अगर (!ch)
+		if (!ch)
 			err = -ENOMEM;
-		अन्यथा अणु
+		else {
 			err = 0;
 			cache_put(ch, cd);
-		पूर्ण
-	पूर्ण अन्यथा
+		}
+	} else
 		err = -ENOMEM;
  out:
-	अगर (ug.gi)
+	if (ug.gi)
 		put_group_info(ug.gi);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक unix_gid_show(काष्ठा seq_file *m,
-			 काष्ठा cache_detail *cd,
-			 काष्ठा cache_head *h)
-अणु
-	काष्ठा user_namespace *user_ns = m->file->f_cred->user_ns;
-	काष्ठा unix_gid *ug;
-	पूर्णांक i;
-	पूर्णांक glen;
+static int unix_gid_show(struct seq_file *m,
+			 struct cache_detail *cd,
+			 struct cache_head *h)
+{
+	struct user_namespace *user_ns = m->file->f_cred->user_ns;
+	struct unix_gid *ug;
+	int i;
+	int glen;
 
-	अगर (h == शून्य) अणु
-		seq_माला_दो(m, "#uid cnt: gids...\n");
-		वापस 0;
-	पूर्ण
-	ug = container_of(h, काष्ठा unix_gid, h);
-	अगर (test_bit(CACHE_VALID, &h->flags) &&
+	if (h == NULL) {
+		seq_puts(m, "#uid cnt: gids...\n");
+		return 0;
+	}
+	ug = container_of(h, struct unix_gid, h);
+	if (test_bit(CACHE_VALID, &h->flags) &&
 	    !test_bit(CACHE_NEGATIVE, &h->flags))
 		glen = ug->gi->ngroups;
-	अन्यथा
+	else
 		glen = 0;
 
-	seq_म_लिखो(m, "%u %d:", from_kuid_munged(user_ns, ug->uid), glen);
-	क्रम (i = 0; i < glen; i++)
-		seq_म_लिखो(m, " %d", from_kgid_munged(user_ns, ug->gi->gid[i]));
-	seq_म_लिखो(m, "\n");
-	वापस 0;
-पूर्ण
+	seq_printf(m, "%u %d:", from_kuid_munged(user_ns, ug->uid), glen);
+	for (i = 0; i < glen; i++)
+		seq_printf(m, " %d", from_kgid_munged(user_ns, ug->gi->gid[i]));
+	seq_printf(m, "\n");
+	return 0;
+}
 
-अटल स्थिर काष्ठा cache_detail unix_gid_cache_ढाँचा = अणु
+static const struct cache_detail unix_gid_cache_template = {
 	.owner		= THIS_MODULE,
 	.hash_size	= GID_HASHMAX,
 	.name		= "auth.unix.gid",
@@ -585,231 +584,231 @@ svcauth_unix_info_release(काष्ठा svc_xprt *xpt)
 	.init		= unix_gid_init,
 	.update		= unix_gid_update,
 	.alloc		= unix_gid_alloc,
-पूर्ण;
+};
 
-पूर्णांक unix_gid_cache_create(काष्ठा net *net)
-अणु
-	काष्ठा sunrpc_net *sn = net_generic(net, sunrpc_net_id);
-	काष्ठा cache_detail *cd;
-	पूर्णांक err;
+int unix_gid_cache_create(struct net *net)
+{
+	struct sunrpc_net *sn = net_generic(net, sunrpc_net_id);
+	struct cache_detail *cd;
+	int err;
 
-	cd = cache_create_net(&unix_gid_cache_ढाँचा, net);
-	अगर (IS_ERR(cd))
-		वापस PTR_ERR(cd);
-	err = cache_रेजिस्टर_net(cd, net);
-	अगर (err) अणु
+	cd = cache_create_net(&unix_gid_cache_template, net);
+	if (IS_ERR(cd))
+		return PTR_ERR(cd);
+	err = cache_register_net(cd, net);
+	if (err) {
 		cache_destroy_net(cd, net);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 	sn->unix_gid_cache = cd;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम unix_gid_cache_destroy(काष्ठा net *net)
-अणु
-	काष्ठा sunrpc_net *sn = net_generic(net, sunrpc_net_id);
-	काष्ठा cache_detail *cd = sn->unix_gid_cache;
+void unix_gid_cache_destroy(struct net *net)
+{
+	struct sunrpc_net *sn = net_generic(net, sunrpc_net_id);
+	struct cache_detail *cd = sn->unix_gid_cache;
 
-	sn->unix_gid_cache = शून्य;
+	sn->unix_gid_cache = NULL;
 	cache_purge(cd);
-	cache_unरेजिस्टर_net(cd, net);
+	cache_unregister_net(cd, net);
 	cache_destroy_net(cd, net);
-पूर्ण
+}
 
-अटल काष्ठा unix_gid *unix_gid_lookup(काष्ठा cache_detail *cd, kuid_t uid)
-अणु
-	काष्ठा unix_gid ug;
-	काष्ठा cache_head *ch;
+static struct unix_gid *unix_gid_lookup(struct cache_detail *cd, kuid_t uid)
+{
+	struct unix_gid ug;
+	struct cache_head *ch;
 
 	ug.uid = uid;
 	ch = sunrpc_cache_lookup_rcu(cd, &ug.h, unix_gid_hash(uid));
-	अगर (ch)
-		वापस container_of(ch, काष्ठा unix_gid, h);
-	अन्यथा
-		वापस शून्य;
-पूर्ण
+	if (ch)
+		return container_of(ch, struct unix_gid, h);
+	else
+		return NULL;
+}
 
-अटल काष्ठा group_info *unix_gid_find(kuid_t uid, काष्ठा svc_rqst *rqstp)
-अणु
-	काष्ठा unix_gid *ug;
-	काष्ठा group_info *gi;
-	पूर्णांक ret;
-	काष्ठा sunrpc_net *sn = net_generic(rqstp->rq_xprt->xpt_net,
+static struct group_info *unix_gid_find(kuid_t uid, struct svc_rqst *rqstp)
+{
+	struct unix_gid *ug;
+	struct group_info *gi;
+	int ret;
+	struct sunrpc_net *sn = net_generic(rqstp->rq_xprt->xpt_net,
 					    sunrpc_net_id);
 
 	ug = unix_gid_lookup(sn->unix_gid_cache, uid);
-	अगर (!ug)
-		वापस ERR_PTR(-EAGAIN);
+	if (!ug)
+		return ERR_PTR(-EAGAIN);
 	ret = cache_check(sn->unix_gid_cache, &ug->h, &rqstp->rq_chandle);
-	चयन (ret) अणु
-	हाल -ENOENT:
-		वापस ERR_PTR(-ENOENT);
-	हाल -ETIMEDOUT:
-		वापस ERR_PTR(-ESHUTDOWN);
-	हाल 0:
+	switch (ret) {
+	case -ENOENT:
+		return ERR_PTR(-ENOENT);
+	case -ETIMEDOUT:
+		return ERR_PTR(-ESHUTDOWN);
+	case 0:
 		gi = get_group_info(ug->gi);
 		cache_put(&ug->h, sn->unix_gid_cache);
-		वापस gi;
-	शेष:
-		वापस ERR_PTR(-EAGAIN);
-	पूर्ण
-पूर्ण
+		return gi;
+	default:
+		return ERR_PTR(-EAGAIN);
+	}
+}
 
-पूर्णांक
-svcauth_unix_set_client(काष्ठा svc_rqst *rqstp)
-अणु
-	काष्ठा sockaddr_in *sin;
-	काष्ठा sockaddr_in6 *sin6, sin6_storage;
-	काष्ठा ip_map *ipm;
-	काष्ठा group_info *gi;
-	काष्ठा svc_cred *cred = &rqstp->rq_cred;
-	काष्ठा svc_xprt *xprt = rqstp->rq_xprt;
-	काष्ठा net *net = xprt->xpt_net;
-	काष्ठा sunrpc_net *sn = net_generic(net, sunrpc_net_id);
+int
+svcauth_unix_set_client(struct svc_rqst *rqstp)
+{
+	struct sockaddr_in *sin;
+	struct sockaddr_in6 *sin6, sin6_storage;
+	struct ip_map *ipm;
+	struct group_info *gi;
+	struct svc_cred *cred = &rqstp->rq_cred;
+	struct svc_xprt *xprt = rqstp->rq_xprt;
+	struct net *net = xprt->xpt_net;
+	struct sunrpc_net *sn = net_generic(net, sunrpc_net_id);
 
-	चयन (rqstp->rq_addr.ss_family) अणु
-	हाल AF_INET:
+	switch (rqstp->rq_addr.ss_family) {
+	case AF_INET:
 		sin = svc_addr_in(rqstp);
 		sin6 = &sin6_storage;
 		ipv6_addr_set_v4mapped(sin->sin_addr.s_addr, &sin6->sin6_addr);
-		अवरोध;
-	हाल AF_INET6:
+		break;
+	case AF_INET6:
 		sin6 = svc_addr_in6(rqstp);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		BUG();
-	पूर्ण
+	}
 
-	rqstp->rq_client = शून्य;
-	अगर (rqstp->rq_proc == 0)
-		वापस SVC_OK;
+	rqstp->rq_client = NULL;
+	if (rqstp->rq_proc == 0)
+		return SVC_OK;
 
 	ipm = ip_map_cached_get(xprt);
-	अगर (ipm == शून्य)
+	if (ipm == NULL)
 		ipm = __ip_map_lookup(sn->ip_map_cache, rqstp->rq_server->sv_program->pg_class,
 				    &sin6->sin6_addr);
 
-	अगर (ipm == शून्य)
-		वापस SVC_DENIED;
+	if (ipm == NULL)
+		return SVC_DENIED;
 
-	चयन (cache_check(sn->ip_map_cache, &ipm->h, &rqstp->rq_chandle)) अणु
-		शेष:
+	switch (cache_check(sn->ip_map_cache, &ipm->h, &rqstp->rq_chandle)) {
+		default:
 			BUG();
-		हाल -ETIMEDOUT:
-			वापस SVC_CLOSE;
-		हाल -EAGAIN:
-			वापस SVC_DROP;
-		हाल -ENOENT:
-			वापस SVC_DENIED;
-		हाल 0:
+		case -ETIMEDOUT:
+			return SVC_CLOSE;
+		case -EAGAIN:
+			return SVC_DROP;
+		case -ENOENT:
+			return SVC_DENIED;
+		case 0:
 			rqstp->rq_client = &ipm->m_client->h;
 			kref_get(&rqstp->rq_client->ref);
 			ip_map_cached_put(xprt, ipm);
-			अवरोध;
-	पूर्ण
+			break;
+	}
 
 	gi = unix_gid_find(cred->cr_uid, rqstp);
-	चयन (PTR_ERR(gi)) अणु
-	हाल -EAGAIN:
-		वापस SVC_DROP;
-	हाल -ESHUTDOWN:
-		वापस SVC_CLOSE;
-	हाल -ENOENT:
-		अवरोध;
-	शेष:
+	switch (PTR_ERR(gi)) {
+	case -EAGAIN:
+		return SVC_DROP;
+	case -ESHUTDOWN:
+		return SVC_CLOSE;
+	case -ENOENT:
+		break;
+	default:
 		put_group_info(cred->cr_group_info);
 		cred->cr_group_info = gi;
-	पूर्ण
-	वापस SVC_OK;
-पूर्ण
+	}
+	return SVC_OK;
+}
 
 EXPORT_SYMBOL_GPL(svcauth_unix_set_client);
 
-अटल पूर्णांक
-svcauth_null_accept(काष्ठा svc_rqst *rqstp, __be32 *authp)
-अणु
-	काष्ठा kvec	*argv = &rqstp->rq_arg.head[0];
-	काष्ठा kvec	*resv = &rqstp->rq_res.head[0];
-	काष्ठा svc_cred	*cred = &rqstp->rq_cred;
+static int
+svcauth_null_accept(struct svc_rqst *rqstp, __be32 *authp)
+{
+	struct kvec	*argv = &rqstp->rq_arg.head[0];
+	struct kvec	*resv = &rqstp->rq_res.head[0];
+	struct svc_cred	*cred = &rqstp->rq_cred;
 
-	अगर (argv->iov_len < 3*4)
-		वापस SVC_GARBAGE;
+	if (argv->iov_len < 3*4)
+		return SVC_GARBAGE;
 
-	अगर (svc_getu32(argv) != 0) अणु
-		dprपूर्णांकk("svc: bad null cred\n");
+	if (svc_getu32(argv) != 0) {
+		dprintk("svc: bad null cred\n");
 		*authp = rpc_autherr_badcred;
-		वापस SVC_DENIED;
-	पूर्ण
-	अगर (svc_getu32(argv) != htonl(RPC_AUTH_शून्य) || svc_getu32(argv) != 0) अणु
-		dprपूर्णांकk("svc: bad null verf\n");
+		return SVC_DENIED;
+	}
+	if (svc_getu32(argv) != htonl(RPC_AUTH_NULL) || svc_getu32(argv) != 0) {
+		dprintk("svc: bad null verf\n");
 		*authp = rpc_autherr_badverf;
-		वापस SVC_DENIED;
-	पूर्ण
+		return SVC_DENIED;
+	}
 
 	/* Signal that mapping to nobody uid/gid is required */
 	cred->cr_uid = INVALID_UID;
 	cred->cr_gid = INVALID_GID;
 	cred->cr_group_info = groups_alloc(0);
-	अगर (cred->cr_group_info == शून्य)
-		वापस SVC_CLOSE; /* kदो_स्मृति failure - client must retry */
+	if (cred->cr_group_info == NULL)
+		return SVC_CLOSE; /* kmalloc failure - client must retry */
 
-	/* Put शून्य verअगरier */
-	svc_putnl(resv, RPC_AUTH_शून्य);
+	/* Put NULL verifier */
+	svc_putnl(resv, RPC_AUTH_NULL);
 	svc_putnl(resv, 0);
 
-	rqstp->rq_cred.cr_flavor = RPC_AUTH_शून्य;
-	वापस SVC_OK;
-पूर्ण
+	rqstp->rq_cred.cr_flavor = RPC_AUTH_NULL;
+	return SVC_OK;
+}
 
-अटल पूर्णांक
-svcauth_null_release(काष्ठा svc_rqst *rqstp)
-अणु
-	अगर (rqstp->rq_client)
-		auth_करोमुख्य_put(rqstp->rq_client);
-	rqstp->rq_client = शून्य;
-	अगर (rqstp->rq_cred.cr_group_info)
+static int
+svcauth_null_release(struct svc_rqst *rqstp)
+{
+	if (rqstp->rq_client)
+		auth_domain_put(rqstp->rq_client);
+	rqstp->rq_client = NULL;
+	if (rqstp->rq_cred.cr_group_info)
 		put_group_info(rqstp->rq_cred.cr_group_info);
-	rqstp->rq_cred.cr_group_info = शून्य;
+	rqstp->rq_cred.cr_group_info = NULL;
 
-	वापस 0; /* करोn't drop */
-पूर्ण
+	return 0; /* don't drop */
+}
 
 
-काष्ठा auth_ops svcauth_null = अणु
+struct auth_ops svcauth_null = {
 	.name		= "null",
 	.owner		= THIS_MODULE,
-	.flavour	= RPC_AUTH_शून्य,
+	.flavour	= RPC_AUTH_NULL,
 	.accept 	= svcauth_null_accept,
 	.release	= svcauth_null_release,
 	.set_client	= svcauth_unix_set_client,
-पूर्ण;
+};
 
 
-अटल पूर्णांक
-svcauth_unix_accept(काष्ठा svc_rqst *rqstp, __be32 *authp)
-अणु
-	काष्ठा kvec	*argv = &rqstp->rq_arg.head[0];
-	काष्ठा kvec	*resv = &rqstp->rq_res.head[0];
-	काष्ठा svc_cred	*cred = &rqstp->rq_cred;
-	काष्ठा user_namespace *userns;
+static int
+svcauth_unix_accept(struct svc_rqst *rqstp, __be32 *authp)
+{
+	struct kvec	*argv = &rqstp->rq_arg.head[0];
+	struct kvec	*resv = &rqstp->rq_res.head[0];
+	struct svc_cred	*cred = &rqstp->rq_cred;
+	struct user_namespace *userns;
 	u32		slen, i;
-	पूर्णांक		len   = argv->iov_len;
+	int		len   = argv->iov_len;
 
-	अगर ((len -= 3*4) < 0)
-		वापस SVC_GARBAGE;
+	if ((len -= 3*4) < 0)
+		return SVC_GARBAGE;
 
 	svc_getu32(argv);			/* length */
-	svc_getu32(argv);			/* समय stamp */
+	svc_getu32(argv);			/* time stamp */
 	slen = XDR_QUADLEN(svc_getnl(argv));	/* machname length */
-	अगर (slen > 64 || (len -= (slen + 3)*4) < 0)
-		जाओ badcred;
-	argv->iov_base = (व्योम*)((__be32*)argv->iov_base + slen);	/* skip machname */
+	if (slen > 64 || (len -= (slen + 3)*4) < 0)
+		goto badcred;
+	argv->iov_base = (void*)((__be32*)argv->iov_base + slen);	/* skip machname */
 	argv->iov_len -= slen*4;
 	/*
-	 * Note: we skip uid_valid()/gid_valid() checks here क्रम
+	 * Note: we skip uid_valid()/gid_valid() checks here for
 	 * backwards compatibility with clients that use -1 id's.
 	 * Instead, -1 uid or gid is later mapped to the
-	 * (export-specअगरic) anonymous id by nfsd_setuser.
+	 * (export-specific) anonymous id by nfsd_setuser.
 	 * Supplementary gid's will be left alone.
 	 */
 	userns = (rqstp->rq_xprt && rqstp->rq_xprt->xpt_cred) ?
@@ -817,60 +816,60 @@ svcauth_unix_accept(काष्ठा svc_rqst *rqstp, __be32 *authp)
 	cred->cr_uid = make_kuid(userns, svc_getnl(argv)); /* uid */
 	cred->cr_gid = make_kgid(userns, svc_getnl(argv)); /* gid */
 	slen = svc_getnl(argv);			/* gids length */
-	अगर (slen > UNX_NGROUPS || (len -= (slen + 2)*4) < 0)
-		जाओ badcred;
+	if (slen > UNX_NGROUPS || (len -= (slen + 2)*4) < 0)
+		goto badcred;
 	cred->cr_group_info = groups_alloc(slen);
-	अगर (cred->cr_group_info == शून्य)
-		वापस SVC_CLOSE;
-	क्रम (i = 0; i < slen; i++) अणु
+	if (cred->cr_group_info == NULL)
+		return SVC_CLOSE;
+	for (i = 0; i < slen; i++) {
 		kgid_t kgid = make_kgid(userns, svc_getnl(argv));
 		cred->cr_group_info->gid[i] = kgid;
-	पूर्ण
+	}
 	groups_sort(cred->cr_group_info);
-	अगर (svc_getu32(argv) != htonl(RPC_AUTH_शून्य) || svc_getu32(argv) != 0) अणु
+	if (svc_getu32(argv) != htonl(RPC_AUTH_NULL) || svc_getu32(argv) != 0) {
 		*authp = rpc_autherr_badverf;
-		वापस SVC_DENIED;
-	पूर्ण
+		return SVC_DENIED;
+	}
 
-	/* Put शून्य verअगरier */
-	svc_putnl(resv, RPC_AUTH_शून्य);
+	/* Put NULL verifier */
+	svc_putnl(resv, RPC_AUTH_NULL);
 	svc_putnl(resv, 0);
 
 	rqstp->rq_cred.cr_flavor = RPC_AUTH_UNIX;
-	वापस SVC_OK;
+	return SVC_OK;
 
 badcred:
 	*authp = rpc_autherr_badcred;
-	वापस SVC_DENIED;
-पूर्ण
+	return SVC_DENIED;
+}
 
-अटल पूर्णांक
-svcauth_unix_release(काष्ठा svc_rqst *rqstp)
-अणु
-	/* Verअगरier (such as it is) is alपढ़ोy in place.
+static int
+svcauth_unix_release(struct svc_rqst *rqstp)
+{
+	/* Verifier (such as it is) is already in place.
 	 */
-	अगर (rqstp->rq_client)
-		auth_करोमुख्य_put(rqstp->rq_client);
-	rqstp->rq_client = शून्य;
-	अगर (rqstp->rq_cred.cr_group_info)
+	if (rqstp->rq_client)
+		auth_domain_put(rqstp->rq_client);
+	rqstp->rq_client = NULL;
+	if (rqstp->rq_cred.cr_group_info)
 		put_group_info(rqstp->rq_cred.cr_group_info);
-	rqstp->rq_cred.cr_group_info = शून्य;
+	rqstp->rq_cred.cr_group_info = NULL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-काष्ठा auth_ops svcauth_unix = अणु
+struct auth_ops svcauth_unix = {
 	.name		= "unix",
 	.owner		= THIS_MODULE,
 	.flavour	= RPC_AUTH_UNIX,
 	.accept 	= svcauth_unix_accept,
 	.release	= svcauth_unix_release,
-	.करोमुख्य_release	= svcauth_unix_करोमुख्य_release,
+	.domain_release	= svcauth_unix_domain_release,
 	.set_client	= svcauth_unix_set_client,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा cache_detail ip_map_cache_ढाँचा = अणु
+static const struct cache_detail ip_map_cache_template = {
 	.owner		= THIS_MODULE,
 	.hash_size	= IP_HASHMAX,
 	.name		= "auth.unix.ip",
@@ -883,33 +882,33 @@ svcauth_unix_release(काष्ठा svc_rqst *rqstp)
 	.init		= ip_map_init,
 	.update		= update,
 	.alloc		= ip_map_alloc,
-पूर्ण;
+};
 
-पूर्णांक ip_map_cache_create(काष्ठा net *net)
-अणु
-	काष्ठा sunrpc_net *sn = net_generic(net, sunrpc_net_id);
-	काष्ठा cache_detail *cd;
-	पूर्णांक err;
+int ip_map_cache_create(struct net *net)
+{
+	struct sunrpc_net *sn = net_generic(net, sunrpc_net_id);
+	struct cache_detail *cd;
+	int err;
 
-	cd = cache_create_net(&ip_map_cache_ढाँचा, net);
-	अगर (IS_ERR(cd))
-		वापस PTR_ERR(cd);
-	err = cache_रेजिस्टर_net(cd, net);
-	अगर (err) अणु
+	cd = cache_create_net(&ip_map_cache_template, net);
+	if (IS_ERR(cd))
+		return PTR_ERR(cd);
+	err = cache_register_net(cd, net);
+	if (err) {
 		cache_destroy_net(cd, net);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 	sn->ip_map_cache = cd;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम ip_map_cache_destroy(काष्ठा net *net)
-अणु
-	काष्ठा sunrpc_net *sn = net_generic(net, sunrpc_net_id);
-	काष्ठा cache_detail *cd = sn->ip_map_cache;
+void ip_map_cache_destroy(struct net *net)
+{
+	struct sunrpc_net *sn = net_generic(net, sunrpc_net_id);
+	struct cache_detail *cd = sn->ip_map_cache;
 
-	sn->ip_map_cache = शून्य;
+	sn->ip_map_cache = NULL;
 	cache_purge(cd);
-	cache_unरेजिस्टर_net(cd, net);
+	cache_unregister_net(cd, net);
 	cache_destroy_net(cd, net);
-पूर्ण
+}

@@ -1,14 +1,13 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#घोषणा खातापूर्ण	(-1)
+/* SPDX-License-Identifier: GPL-2.0 */
+#define EOF	(-1)
 
-बाह्य व्योम xmon_set_pagination_lpp(अचिन्हित दीर्घ lpp);
-बाह्य व्योम xmon_start_pagination(व्योम);
-बाह्य व्योम xmon_end_pagination(व्योम);
-बाह्य पूर्णांक xmon_अक्षर_दो(पूर्णांक c);
-बाह्य व्योम xmon_माला_दो(स्थिर अक्षर *);
-बाह्य अक्षर *xmon_माला_लो(अक्षर *, पूर्णांक);
-बाह्य __म_लिखो(1, 2) व्योम xmon_म_लिखो(स्थिर अक्षर *fmt, ...);
+extern void xmon_set_pagination_lpp(unsigned long lpp);
+extern void xmon_start_pagination(void);
+extern void xmon_end_pagination(void);
+extern int xmon_putchar(int c);
+extern void xmon_puts(const char *);
+extern char *xmon_gets(char *, int);
+extern __printf(1, 2) void xmon_printf(const char *fmt, ...);
 
-#घोषणा म_लिखो	xmon_म_लिखो
-#घोषणा अक्षर_दो	xmon_अक्षर_दो
+#define printf	xmon_printf
+#define putchar	xmon_putchar

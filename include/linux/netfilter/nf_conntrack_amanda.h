@@ -1,17 +1,16 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _NF_CONNTRACK_AMANDA_H
-#घोषणा _NF_CONNTRACK_AMANDA_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _NF_CONNTRACK_AMANDA_H
+#define _NF_CONNTRACK_AMANDA_H
 /* AMANDA tracking. */
 
-#समावेश <linux/netfilter.h>
-#समावेश <linux/skbuff.h>
-#समावेश <net/netfilter/nf_conntrack_expect.h>
+#include <linux/netfilter.h>
+#include <linux/skbuff.h>
+#include <net/netfilter/nf_conntrack_expect.h>
 
-बाह्य अचिन्हित पूर्णांक (*nf_nat_amanda_hook)(काष्ठा sk_buff *skb,
-					  क्रमागत ip_conntrack_info ctinfo,
-					  अचिन्हित पूर्णांक protoff,
-					  अचिन्हित पूर्णांक matchoff,
-					  अचिन्हित पूर्णांक matchlen,
-					  काष्ठा nf_conntrack_expect *exp);
-#पूर्ण_अगर /* _NF_CONNTRACK_AMANDA_H */
+extern unsigned int (*nf_nat_amanda_hook)(struct sk_buff *skb,
+					  enum ip_conntrack_info ctinfo,
+					  unsigned int protoff,
+					  unsigned int matchoff,
+					  unsigned int matchlen,
+					  struct nf_conntrack_expect *exp);
+#endif /* _NF_CONNTRACK_AMANDA_H */

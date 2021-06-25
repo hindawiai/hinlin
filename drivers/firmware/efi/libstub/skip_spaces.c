@@ -1,13 +1,12 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/माला.स>
-#समावेश <linux/types.h>
+#include <linux/ctype.h>
+#include <linux/string.h>
+#include <linux/types.h>
 
-अक्षर *skip_spaces(स्थिर अक्षर *str)
-अणु
-	जबतक (है_खाली(*str))
+char *skip_spaces(const char *str)
+{
+	while (isspace(*str))
 		++str;
-	वापस (अक्षर *)str;
-पूर्ण
+	return (char *)str;
+}

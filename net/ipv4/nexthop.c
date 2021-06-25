@@ -1,707 +1,706 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Generic nexthop implementation
  *
  * Copyright (c) 2017-19 Cumulus Networks
  * Copyright (c) 2017-19 David Ahern <dsa@cumulusnetworks.com>
  */
 
-#समावेश <linux/nexthop.h>
-#समावेश <linux/rtnetlink.h>
-#समावेश <linux/slab.h>
-#समावेश <net/arp.h>
-#समावेश <net/ipv6_stubs.h>
-#समावेश <net/lwtunnel.h>
-#समावेश <net/ndisc.h>
-#समावेश <net/nexthop.h>
-#समावेश <net/route.h>
-#समावेश <net/sock.h>
+#include <linux/nexthop.h>
+#include <linux/rtnetlink.h>
+#include <linux/slab.h>
+#include <net/arp.h>
+#include <net/ipv6_stubs.h>
+#include <net/lwtunnel.h>
+#include <net/ndisc.h>
+#include <net/nexthop.h>
+#include <net/route.h>
+#include <net/sock.h>
 
-#घोषणा NH_RES_DEFAULT_IDLE_TIMER	(120 * HZ)
-#घोषणा NH_RES_DEFAULT_UNBALANCED_TIMER	0	/* No क्रमced rebalancing. */
+#define NH_RES_DEFAULT_IDLE_TIMER	(120 * HZ)
+#define NH_RES_DEFAULT_UNBALANCED_TIMER	0	/* No forced rebalancing. */
 
-अटल व्योम हटाओ_nexthop(काष्ठा net *net, काष्ठा nexthop *nh,
-			   काष्ठा nl_info *nlinfo);
+static void remove_nexthop(struct net *net, struct nexthop *nh,
+			   struct nl_info *nlinfo);
 
-#घोषणा NH_DEV_HASHBITS  8
-#घोषणा NH_DEV_HASHSIZE (1U << NH_DEV_HASHBITS)
+#define NH_DEV_HASHBITS  8
+#define NH_DEV_HASHSIZE (1U << NH_DEV_HASHBITS)
 
-अटल स्थिर काष्ठा nla_policy rपंचांग_nh_policy_new[] = अणु
-	[NHA_ID]		= अणु .type = NLA_U32 पूर्ण,
-	[NHA_GROUP]		= अणु .type = NLA_BINARY पूर्ण,
-	[NHA_GROUP_TYPE]	= अणु .type = NLA_U16 पूर्ण,
-	[NHA_BLACKHOLE]		= अणु .type = NLA_FLAG पूर्ण,
-	[NHA_OIF]		= अणु .type = NLA_U32 पूर्ण,
-	[NHA_GATEWAY]		= अणु .type = NLA_BINARY पूर्ण,
-	[NHA_ENCAP_TYPE]	= अणु .type = NLA_U16 पूर्ण,
-	[NHA_ENCAP]		= अणु .type = NLA_NESTED पूर्ण,
-	[NHA_FDB]		= अणु .type = NLA_FLAG पूर्ण,
-	[NHA_RES_GROUP]		= अणु .type = NLA_NESTED पूर्ण,
-पूर्ण;
+static const struct nla_policy rtm_nh_policy_new[] = {
+	[NHA_ID]		= { .type = NLA_U32 },
+	[NHA_GROUP]		= { .type = NLA_BINARY },
+	[NHA_GROUP_TYPE]	= { .type = NLA_U16 },
+	[NHA_BLACKHOLE]		= { .type = NLA_FLAG },
+	[NHA_OIF]		= { .type = NLA_U32 },
+	[NHA_GATEWAY]		= { .type = NLA_BINARY },
+	[NHA_ENCAP_TYPE]	= { .type = NLA_U16 },
+	[NHA_ENCAP]		= { .type = NLA_NESTED },
+	[NHA_FDB]		= { .type = NLA_FLAG },
+	[NHA_RES_GROUP]		= { .type = NLA_NESTED },
+};
 
-अटल स्थिर काष्ठा nla_policy rपंचांग_nh_policy_get[] = अणु
-	[NHA_ID]		= अणु .type = NLA_U32 पूर्ण,
-पूर्ण;
+static const struct nla_policy rtm_nh_policy_get[] = {
+	[NHA_ID]		= { .type = NLA_U32 },
+};
 
-अटल स्थिर काष्ठा nla_policy rपंचांग_nh_policy_dump[] = अणु
-	[NHA_OIF]		= अणु .type = NLA_U32 पूर्ण,
-	[NHA_GROUPS]		= अणु .type = NLA_FLAG पूर्ण,
-	[NHA_MASTER]		= अणु .type = NLA_U32 पूर्ण,
-	[NHA_FDB]		= अणु .type = NLA_FLAG पूर्ण,
-पूर्ण;
+static const struct nla_policy rtm_nh_policy_dump[] = {
+	[NHA_OIF]		= { .type = NLA_U32 },
+	[NHA_GROUPS]		= { .type = NLA_FLAG },
+	[NHA_MASTER]		= { .type = NLA_U32 },
+	[NHA_FDB]		= { .type = NLA_FLAG },
+};
 
-अटल स्थिर काष्ठा nla_policy rपंचांग_nh_res_policy_new[] = अणु
-	[NHA_RES_GROUP_BUCKETS]			= अणु .type = NLA_U16 पूर्ण,
-	[NHA_RES_GROUP_IDLE_TIMER]		= अणु .type = NLA_U32 पूर्ण,
-	[NHA_RES_GROUP_UNBALANCED_TIMER]	= अणु .type = NLA_U32 पूर्ण,
-पूर्ण;
+static const struct nla_policy rtm_nh_res_policy_new[] = {
+	[NHA_RES_GROUP_BUCKETS]			= { .type = NLA_U16 },
+	[NHA_RES_GROUP_IDLE_TIMER]		= { .type = NLA_U32 },
+	[NHA_RES_GROUP_UNBALANCED_TIMER]	= { .type = NLA_U32 },
+};
 
-अटल स्थिर काष्ठा nla_policy rपंचांग_nh_policy_dump_bucket[] = अणु
-	[NHA_ID]		= अणु .type = NLA_U32 पूर्ण,
-	[NHA_OIF]		= अणु .type = NLA_U32 पूर्ण,
-	[NHA_MASTER]		= अणु .type = NLA_U32 पूर्ण,
-	[NHA_RES_BUCKET]	= अणु .type = NLA_NESTED पूर्ण,
-पूर्ण;
+static const struct nla_policy rtm_nh_policy_dump_bucket[] = {
+	[NHA_ID]		= { .type = NLA_U32 },
+	[NHA_OIF]		= { .type = NLA_U32 },
+	[NHA_MASTER]		= { .type = NLA_U32 },
+	[NHA_RES_BUCKET]	= { .type = NLA_NESTED },
+};
 
-अटल स्थिर काष्ठा nla_policy rपंचांग_nh_res_bucket_policy_dump[] = अणु
-	[NHA_RES_BUCKET_NH_ID]	= अणु .type = NLA_U32 पूर्ण,
-पूर्ण;
+static const struct nla_policy rtm_nh_res_bucket_policy_dump[] = {
+	[NHA_RES_BUCKET_NH_ID]	= { .type = NLA_U32 },
+};
 
-अटल स्थिर काष्ठा nla_policy rपंचांग_nh_policy_get_bucket[] = अणु
-	[NHA_ID]		= अणु .type = NLA_U32 पूर्ण,
-	[NHA_RES_BUCKET]	= अणु .type = NLA_NESTED पूर्ण,
-पूर्ण;
+static const struct nla_policy rtm_nh_policy_get_bucket[] = {
+	[NHA_ID]		= { .type = NLA_U32 },
+	[NHA_RES_BUCKET]	= { .type = NLA_NESTED },
+};
 
-अटल स्थिर काष्ठा nla_policy rपंचांग_nh_res_bucket_policy_get[] = अणु
-	[NHA_RES_BUCKET_INDEX]	= अणु .type = NLA_U16 पूर्ण,
-पूर्ण;
+static const struct nla_policy rtm_nh_res_bucket_policy_get[] = {
+	[NHA_RES_BUCKET_INDEX]	= { .type = NLA_U16 },
+};
 
-अटल bool nexthop_notअगरiers_is_empty(काष्ठा net *net)
-अणु
-	वापस !net->nexthop.notअगरier_chain.head;
-पूर्ण
+static bool nexthop_notifiers_is_empty(struct net *net)
+{
+	return !net->nexthop.notifier_chain.head;
+}
 
-अटल व्योम
-__nh_notअगरier_single_info_init(काष्ठा nh_notअगरier_single_info *nh_info,
-			       स्थिर काष्ठा nh_info *nhi)
-अणु
+static void
+__nh_notifier_single_info_init(struct nh_notifier_single_info *nh_info,
+			       const struct nh_info *nhi)
+{
 	nh_info->dev = nhi->fib_nhc.nhc_dev;
 	nh_info->gw_family = nhi->fib_nhc.nhc_gw_family;
-	अगर (nh_info->gw_family == AF_INET)
+	if (nh_info->gw_family == AF_INET)
 		nh_info->ipv4 = nhi->fib_nhc.nhc_gw.ipv4;
-	अन्यथा अगर (nh_info->gw_family == AF_INET6)
+	else if (nh_info->gw_family == AF_INET6)
 		nh_info->ipv6 = nhi->fib_nhc.nhc_gw.ipv6;
 
 	nh_info->is_reject = nhi->reject_nh;
 	nh_info->is_fdb = nhi->fdb_nh;
 	nh_info->has_encap = !!nhi->fib_nhc.nhc_lwtstate;
-पूर्ण
+}
 
-अटल पूर्णांक nh_notअगरier_single_info_init(काष्ठा nh_notअगरier_info *info,
-					स्थिर काष्ठा nexthop *nh)
-अणु
-	काष्ठा nh_info *nhi = rtnl_dereference(nh->nh_info);
+static int nh_notifier_single_info_init(struct nh_notifier_info *info,
+					const struct nexthop *nh)
+{
+	struct nh_info *nhi = rtnl_dereference(nh->nh_info);
 
 	info->type = NH_NOTIFIER_INFO_TYPE_SINGLE;
-	info->nh = kzalloc(माप(*info->nh), GFP_KERNEL);
-	अगर (!info->nh)
-		वापस -ENOMEM;
+	info->nh = kzalloc(sizeof(*info->nh), GFP_KERNEL);
+	if (!info->nh)
+		return -ENOMEM;
 
-	__nh_notअगरier_single_info_init(info->nh, nhi);
+	__nh_notifier_single_info_init(info->nh, nhi);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम nh_notअगरier_single_info_fini(काष्ठा nh_notअगरier_info *info)
-अणु
-	kमुक्त(info->nh);
-पूर्ण
+static void nh_notifier_single_info_fini(struct nh_notifier_info *info)
+{
+	kfree(info->nh);
+}
 
-अटल पूर्णांक nh_notअगरier_mpath_info_init(काष्ठा nh_notअगरier_info *info,
-				       काष्ठा nh_group *nhg)
-अणु
+static int nh_notifier_mpath_info_init(struct nh_notifier_info *info,
+				       struct nh_group *nhg)
+{
 	u16 num_nh = nhg->num_nh;
-	पूर्णांक i;
+	int i;
 
 	info->type = NH_NOTIFIER_INFO_TYPE_GRP;
-	info->nh_grp = kzalloc(काष्ठा_size(info->nh_grp, nh_entries, num_nh),
+	info->nh_grp = kzalloc(struct_size(info->nh_grp, nh_entries, num_nh),
 			       GFP_KERNEL);
-	अगर (!info->nh_grp)
-		वापस -ENOMEM;
+	if (!info->nh_grp)
+		return -ENOMEM;
 
 	info->nh_grp->num_nh = num_nh;
 	info->nh_grp->is_fdb = nhg->fdb_nh;
 
-	क्रम (i = 0; i < num_nh; i++) अणु
-		काष्ठा nh_grp_entry *nhge = &nhg->nh_entries[i];
-		काष्ठा nh_info *nhi;
+	for (i = 0; i < num_nh; i++) {
+		struct nh_grp_entry *nhge = &nhg->nh_entries[i];
+		struct nh_info *nhi;
 
 		nhi = rtnl_dereference(nhge->nh->nh_info);
 		info->nh_grp->nh_entries[i].id = nhge->nh->id;
 		info->nh_grp->nh_entries[i].weight = nhge->weight;
-		__nh_notअगरier_single_info_init(&info->nh_grp->nh_entries[i].nh,
+		__nh_notifier_single_info_init(&info->nh_grp->nh_entries[i].nh,
 					       nhi);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nh_notअगरier_res_table_info_init(काष्ठा nh_notअगरier_info *info,
-					   काष्ठा nh_group *nhg)
-अणु
-	काष्ठा nh_res_table *res_table = rtnl_dereference(nhg->res_table);
+static int nh_notifier_res_table_info_init(struct nh_notifier_info *info,
+					   struct nh_group *nhg)
+{
+	struct nh_res_table *res_table = rtnl_dereference(nhg->res_table);
 	u16 num_nh_buckets = res_table->num_nh_buckets;
-	अचिन्हित दीर्घ size;
+	unsigned long size;
 	u16 i;
 
 	info->type = NH_NOTIFIER_INFO_TYPE_RES_TABLE;
-	size = काष्ठा_size(info->nh_res_table, nhs, num_nh_buckets);
-	info->nh_res_table = __vदो_स्मृति(size, GFP_KERNEL | __GFP_ZERO |
+	size = struct_size(info->nh_res_table, nhs, num_nh_buckets);
+	info->nh_res_table = __vmalloc(size, GFP_KERNEL | __GFP_ZERO |
 				       __GFP_NOWARN);
-	अगर (!info->nh_res_table)
-		वापस -ENOMEM;
+	if (!info->nh_res_table)
+		return -ENOMEM;
 
 	info->nh_res_table->num_nh_buckets = num_nh_buckets;
 
-	क्रम (i = 0; i < num_nh_buckets; i++) अणु
-		काष्ठा nh_res_bucket *bucket = &res_table->nh_buckets[i];
-		काष्ठा nh_grp_entry *nhge;
-		काष्ठा nh_info *nhi;
+	for (i = 0; i < num_nh_buckets; i++) {
+		struct nh_res_bucket *bucket = &res_table->nh_buckets[i];
+		struct nh_grp_entry *nhge;
+		struct nh_info *nhi;
 
 		nhge = rtnl_dereference(bucket->nh_entry);
 		nhi = rtnl_dereference(nhge->nh->nh_info);
-		__nh_notअगरier_single_info_init(&info->nh_res_table->nhs[i],
+		__nh_notifier_single_info_init(&info->nh_res_table->nhs[i],
 					       nhi);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nh_notअगरier_grp_info_init(काष्ठा nh_notअगरier_info *info,
-				     स्थिर काष्ठा nexthop *nh)
-अणु
-	काष्ठा nh_group *nhg = rtnl_dereference(nh->nh_grp);
+static int nh_notifier_grp_info_init(struct nh_notifier_info *info,
+				     const struct nexthop *nh)
+{
+	struct nh_group *nhg = rtnl_dereference(nh->nh_grp);
 
-	अगर (nhg->hash_threshold)
-		वापस nh_notअगरier_mpath_info_init(info, nhg);
-	अन्यथा अगर (nhg->resilient)
-		वापस nh_notअगरier_res_table_info_init(info, nhg);
-	वापस -EINVAL;
-पूर्ण
+	if (nhg->hash_threshold)
+		return nh_notifier_mpath_info_init(info, nhg);
+	else if (nhg->resilient)
+		return nh_notifier_res_table_info_init(info, nhg);
+	return -EINVAL;
+}
 
-अटल व्योम nh_notअगरier_grp_info_fini(काष्ठा nh_notअगरier_info *info,
-				      स्थिर काष्ठा nexthop *nh)
-अणु
-	काष्ठा nh_group *nhg = rtnl_dereference(nh->nh_grp);
+static void nh_notifier_grp_info_fini(struct nh_notifier_info *info,
+				      const struct nexthop *nh)
+{
+	struct nh_group *nhg = rtnl_dereference(nh->nh_grp);
 
-	अगर (nhg->hash_threshold)
-		kमुक्त(info->nh_grp);
-	अन्यथा अगर (nhg->resilient)
-		vमुक्त(info->nh_res_table);
-पूर्ण
+	if (nhg->hash_threshold)
+		kfree(info->nh_grp);
+	else if (nhg->resilient)
+		vfree(info->nh_res_table);
+}
 
-अटल पूर्णांक nh_notअगरier_info_init(काष्ठा nh_notअगरier_info *info,
-				 स्थिर काष्ठा nexthop *nh)
-अणु
+static int nh_notifier_info_init(struct nh_notifier_info *info,
+				 const struct nexthop *nh)
+{
 	info->id = nh->id;
 
-	अगर (nh->is_group)
-		वापस nh_notअगरier_grp_info_init(info, nh);
-	अन्यथा
-		वापस nh_notअगरier_single_info_init(info, nh);
-पूर्ण
+	if (nh->is_group)
+		return nh_notifier_grp_info_init(info, nh);
+	else
+		return nh_notifier_single_info_init(info, nh);
+}
 
-अटल व्योम nh_notअगरier_info_fini(काष्ठा nh_notअगरier_info *info,
-				  स्थिर काष्ठा nexthop *nh)
-अणु
-	अगर (nh->is_group)
-		nh_notअगरier_grp_info_fini(info, nh);
-	अन्यथा
-		nh_notअगरier_single_info_fini(info);
-पूर्ण
+static void nh_notifier_info_fini(struct nh_notifier_info *info,
+				  const struct nexthop *nh)
+{
+	if (nh->is_group)
+		nh_notifier_grp_info_fini(info, nh);
+	else
+		nh_notifier_single_info_fini(info);
+}
 
-अटल पूर्णांक call_nexthop_notअगरiers(काष्ठा net *net,
-				  क्रमागत nexthop_event_type event_type,
-				  काष्ठा nexthop *nh,
-				  काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा nh_notअगरier_info info = अणु
+static int call_nexthop_notifiers(struct net *net,
+				  enum nexthop_event_type event_type,
+				  struct nexthop *nh,
+				  struct netlink_ext_ack *extack)
+{
+	struct nh_notifier_info info = {
 		.net = net,
 		.extack = extack,
-	पूर्ण;
-	पूर्णांक err;
+	};
+	int err;
 
 	ASSERT_RTNL();
 
-	अगर (nexthop_notअगरiers_is_empty(net))
-		वापस 0;
+	if (nexthop_notifiers_is_empty(net))
+		return 0;
 
-	err = nh_notअगरier_info_init(&info, nh);
-	अगर (err) अणु
+	err = nh_notifier_info_init(&info, nh);
+	if (err) {
 		NL_SET_ERR_MSG(extack, "Failed to initialize nexthop notifier info");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	err = blocking_notअगरier_call_chain(&net->nexthop.notअगरier_chain,
+	err = blocking_notifier_call_chain(&net->nexthop.notifier_chain,
 					   event_type, &info);
-	nh_notअगरier_info_fini(&info, nh);
+	nh_notifier_info_fini(&info, nh);
 
-	वापस notअगरier_to_त्रुटि_सं(err);
-पूर्ण
+	return notifier_to_errno(err);
+}
 
-अटल पूर्णांक
-nh_notअगरier_res_bucket_idle_समयr_get(स्थिर काष्ठा nh_notअगरier_info *info,
-				      bool क्रमce, अचिन्हित पूर्णांक *p_idle_समयr_ms)
-अणु
-	काष्ठा nh_res_table *res_table;
-	काष्ठा nh_group *nhg;
-	काष्ठा nexthop *nh;
-	पूर्णांक err = 0;
+static int
+nh_notifier_res_bucket_idle_timer_get(const struct nh_notifier_info *info,
+				      bool force, unsigned int *p_idle_timer_ms)
+{
+	struct nh_res_table *res_table;
+	struct nh_group *nhg;
+	struct nexthop *nh;
+	int err = 0;
 
-	/* When 'force' is false, nexthop bucket replacement is perक्रमmed
-	 * because the bucket was deemed to be idle. In this हाल, capable
-	 * listeners can choose to perक्रमm an atomic replacement: The bucket is
-	 * only replaced अगर it is inactive. However, अगर the idle समयr पूर्णांकerval
-	 * is smaller than the पूर्णांकerval in which a listener is querying
+	/* When 'force' is false, nexthop bucket replacement is performed
+	 * because the bucket was deemed to be idle. In this case, capable
+	 * listeners can choose to perform an atomic replacement: The bucket is
+	 * only replaced if it is inactive. However, if the idle timer interval
+	 * is smaller than the interval in which a listener is querying
 	 * buckets' activity from the device, then atomic replacement should
-	 * not be tried. Pass the idle समयr value to listeners, so that they
-	 * could determine which type of replacement to perक्रमm.
+	 * not be tried. Pass the idle timer value to listeners, so that they
+	 * could determine which type of replacement to perform.
 	 */
-	अगर (क्रमce) अणु
-		*p_idle_समयr_ms = 0;
-		वापस 0;
-	पूर्ण
+	if (force) {
+		*p_idle_timer_ms = 0;
+		return 0;
+	}
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 
 	nh = nexthop_find_by_id(info->net, info->id);
-	अगर (!nh) अणु
+	if (!nh) {
 		err = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	nhg = rcu_dereference(nh->nh_grp);
 	res_table = rcu_dereference(nhg->res_table);
-	*p_idle_समयr_ms = jअगरfies_to_msecs(res_table->idle_समयr);
+	*p_idle_timer_ms = jiffies_to_msecs(res_table->idle_timer);
 
 out:
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक nh_notअगरier_res_bucket_info_init(काष्ठा nh_notअगरier_info *info,
-					    u16 bucket_index, bool क्रमce,
-					    काष्ठा nh_info *oldi,
-					    काष्ठा nh_info *newi)
-अणु
-	अचिन्हित पूर्णांक idle_समयr_ms;
-	पूर्णांक err;
+static int nh_notifier_res_bucket_info_init(struct nh_notifier_info *info,
+					    u16 bucket_index, bool force,
+					    struct nh_info *oldi,
+					    struct nh_info *newi)
+{
+	unsigned int idle_timer_ms;
+	int err;
 
-	err = nh_notअगरier_res_bucket_idle_समयr_get(info, क्रमce,
-						    &idle_समयr_ms);
-	अगर (err)
-		वापस err;
+	err = nh_notifier_res_bucket_idle_timer_get(info, force,
+						    &idle_timer_ms);
+	if (err)
+		return err;
 
 	info->type = NH_NOTIFIER_INFO_TYPE_RES_BUCKET;
-	info->nh_res_bucket = kzalloc(माप(*info->nh_res_bucket),
+	info->nh_res_bucket = kzalloc(sizeof(*info->nh_res_bucket),
 				      GFP_KERNEL);
-	अगर (!info->nh_res_bucket)
-		वापस -ENOMEM;
+	if (!info->nh_res_bucket)
+		return -ENOMEM;
 
 	info->nh_res_bucket->bucket_index = bucket_index;
-	info->nh_res_bucket->idle_समयr_ms = idle_समयr_ms;
-	info->nh_res_bucket->क्रमce = क्रमce;
-	__nh_notअगरier_single_info_init(&info->nh_res_bucket->old_nh, oldi);
-	__nh_notअगरier_single_info_init(&info->nh_res_bucket->new_nh, newi);
-	वापस 0;
-पूर्ण
+	info->nh_res_bucket->idle_timer_ms = idle_timer_ms;
+	info->nh_res_bucket->force = force;
+	__nh_notifier_single_info_init(&info->nh_res_bucket->old_nh, oldi);
+	__nh_notifier_single_info_init(&info->nh_res_bucket->new_nh, newi);
+	return 0;
+}
 
-अटल व्योम nh_notअगरier_res_bucket_info_fini(काष्ठा nh_notअगरier_info *info)
-अणु
-	kमुक्त(info->nh_res_bucket);
-पूर्ण
+static void nh_notifier_res_bucket_info_fini(struct nh_notifier_info *info)
+{
+	kfree(info->nh_res_bucket);
+}
 
-अटल पूर्णांक __call_nexthop_res_bucket_notअगरiers(काष्ठा net *net, u32 nhg_id,
-					       u16 bucket_index, bool क्रमce,
-					       काष्ठा nh_info *oldi,
-					       काष्ठा nh_info *newi,
-					       काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा nh_notअगरier_info info = अणु
+static int __call_nexthop_res_bucket_notifiers(struct net *net, u32 nhg_id,
+					       u16 bucket_index, bool force,
+					       struct nh_info *oldi,
+					       struct nh_info *newi,
+					       struct netlink_ext_ack *extack)
+{
+	struct nh_notifier_info info = {
 		.net = net,
 		.extack = extack,
 		.id = nhg_id,
-	पूर्ण;
-	पूर्णांक err;
+	};
+	int err;
 
-	अगर (nexthop_notअगरiers_is_empty(net))
-		वापस 0;
+	if (nexthop_notifiers_is_empty(net))
+		return 0;
 
-	err = nh_notअगरier_res_bucket_info_init(&info, bucket_index, क्रमce,
+	err = nh_notifier_res_bucket_info_init(&info, bucket_index, force,
 					       oldi, newi);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	err = blocking_notअगरier_call_chain(&net->nexthop.notअगरier_chain,
+	err = blocking_notifier_call_chain(&net->nexthop.notifier_chain,
 					   NEXTHOP_EVENT_BUCKET_REPLACE, &info);
-	nh_notअगरier_res_bucket_info_fini(&info);
+	nh_notifier_res_bucket_info_fini(&info);
 
-	वापस notअगरier_to_त्रुटि_सं(err);
-पूर्ण
+	return notifier_to_errno(err);
+}
 
 /* There are three users of RES_TABLE, and NHs etc. referenced from there:
  *
- * 1) a collection of callbacks क्रम NH मुख्यtenance. This operates under
+ * 1) a collection of callbacks for NH maintenance. This operates under
  *    RTNL,
  * 2) the delayed work that gradually balances the resilient table,
  * 3) and nexthop_select_path(), operating under RCU.
  *
- * Both the delayed work and the RTNL block are ग_लिखोrs, and need to
- * मुख्यtain mutual exclusion. Since there are only two and well-known
- * ग_लिखोrs क्रम each table, the RTNL code can make sure it has exclusive
+ * Both the delayed work and the RTNL block are writers, and need to
+ * maintain mutual exclusion. Since there are only two and well-known
+ * writers for each table, the RTNL code can make sure it has exclusive
  * access thus:
  *
  * - Have the DW operate without locking;
  * - synchronously cancel the DW;
- * - करो the writing;
- * - अगर the ग_लिखो was not actually a delete, call upkeep, which schedules
- *   DW again अगर necessary.
+ * - do the writing;
+ * - if the write was not actually a delete, call upkeep, which schedules
+ *   DW again if necessary.
  *
  * The functions that are always called from the RTNL context use
- * rtnl_dereference(). The functions that can also be called from the DW करो
+ * rtnl_dereference(). The functions that can also be called from the DW do
  * a raw dereference and rely on the above mutual exclusion scheme.
  */
-#घोषणा nh_res_dereference(p) (rcu_dereference_raw(p))
+#define nh_res_dereference(p) (rcu_dereference_raw(p))
 
-अटल पूर्णांक call_nexthop_res_bucket_notअगरiers(काष्ठा net *net, u32 nhg_id,
-					     u16 bucket_index, bool क्रमce,
-					     काष्ठा nexthop *old_nh,
-					     काष्ठा nexthop *new_nh,
-					     काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा nh_info *oldi = nh_res_dereference(old_nh->nh_info);
-	काष्ठा nh_info *newi = nh_res_dereference(new_nh->nh_info);
+static int call_nexthop_res_bucket_notifiers(struct net *net, u32 nhg_id,
+					     u16 bucket_index, bool force,
+					     struct nexthop *old_nh,
+					     struct nexthop *new_nh,
+					     struct netlink_ext_ack *extack)
+{
+	struct nh_info *oldi = nh_res_dereference(old_nh->nh_info);
+	struct nh_info *newi = nh_res_dereference(new_nh->nh_info);
 
-	वापस __call_nexthop_res_bucket_notअगरiers(net, nhg_id, bucket_index,
-						   क्रमce, oldi, newi, extack);
-पूर्ण
+	return __call_nexthop_res_bucket_notifiers(net, nhg_id, bucket_index,
+						   force, oldi, newi, extack);
+}
 
-अटल पूर्णांक call_nexthop_res_table_notअगरiers(काष्ठा net *net, काष्ठा nexthop *nh,
-					    काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा nh_notअगरier_info info = अणु
+static int call_nexthop_res_table_notifiers(struct net *net, struct nexthop *nh,
+					    struct netlink_ext_ack *extack)
+{
+	struct nh_notifier_info info = {
 		.net = net,
 		.extack = extack,
-	पूर्ण;
-	काष्ठा nh_group *nhg;
-	पूर्णांक err;
+	};
+	struct nh_group *nhg;
+	int err;
 
 	ASSERT_RTNL();
 
-	अगर (nexthop_notअगरiers_is_empty(net))
-		वापस 0;
+	if (nexthop_notifiers_is_empty(net))
+		return 0;
 
-	/* At this poपूर्णांक, the nexthop buckets are still not populated. Only
-	 * emit a notअगरication with the logical nexthops, so that a listener
-	 * could potentially veto it in हाल of unsupported configuration.
+	/* At this point, the nexthop buckets are still not populated. Only
+	 * emit a notification with the logical nexthops, so that a listener
+	 * could potentially veto it in case of unsupported configuration.
 	 */
 	nhg = rtnl_dereference(nh->nh_grp);
-	err = nh_notअगरier_mpath_info_init(&info, nhg);
-	अगर (err) अणु
+	err = nh_notifier_mpath_info_init(&info, nhg);
+	if (err) {
 		NL_SET_ERR_MSG(extack, "Failed to initialize nexthop notifier info");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	err = blocking_notअगरier_call_chain(&net->nexthop.notअगरier_chain,
+	err = blocking_notifier_call_chain(&net->nexthop.notifier_chain,
 					   NEXTHOP_EVENT_RES_TABLE_PRE_REPLACE,
 					   &info);
-	kमुक्त(info.nh_grp);
+	kfree(info.nh_grp);
 
-	वापस notअगरier_to_त्रुटि_सं(err);
-पूर्ण
+	return notifier_to_errno(err);
+}
 
-अटल पूर्णांक call_nexthop_notअगरier(काष्ठा notअगरier_block *nb, काष्ठा net *net,
-				 क्रमागत nexthop_event_type event_type,
-				 काष्ठा nexthop *nh,
-				 काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा nh_notअगरier_info info = अणु
+static int call_nexthop_notifier(struct notifier_block *nb, struct net *net,
+				 enum nexthop_event_type event_type,
+				 struct nexthop *nh,
+				 struct netlink_ext_ack *extack)
+{
+	struct nh_notifier_info info = {
 		.net = net,
 		.extack = extack,
-	पूर्ण;
-	पूर्णांक err;
+	};
+	int err;
 
-	err = nh_notअगरier_info_init(&info, nh);
-	अगर (err)
-		वापस err;
+	err = nh_notifier_info_init(&info, nh);
+	if (err)
+		return err;
 
-	err = nb->notअगरier_call(nb, event_type, &info);
-	nh_notअगरier_info_fini(&info, nh);
+	err = nb->notifier_call(nb, event_type, &info);
+	nh_notifier_info_fini(&info, nh);
 
-	वापस notअगरier_to_त्रुटि_सं(err);
-पूर्ण
+	return notifier_to_errno(err);
+}
 
-अटल अचिन्हित पूर्णांक nh_dev_hashfn(अचिन्हित पूर्णांक val)
-अणु
-	अचिन्हित पूर्णांक mask = NH_DEV_HASHSIZE - 1;
+static unsigned int nh_dev_hashfn(unsigned int val)
+{
+	unsigned int mask = NH_DEV_HASHSIZE - 1;
 
-	वापस (val ^
+	return (val ^
 		(val >> NH_DEV_HASHBITS) ^
 		(val >> (NH_DEV_HASHBITS * 2))) & mask;
-पूर्ण
+}
 
-अटल व्योम nexthop_devhash_add(काष्ठा net *net, काष्ठा nh_info *nhi)
-अणु
-	काष्ठा net_device *dev = nhi->fib_nhc.nhc_dev;
-	काष्ठा hlist_head *head;
-	अचिन्हित पूर्णांक hash;
+static void nexthop_devhash_add(struct net *net, struct nh_info *nhi)
+{
+	struct net_device *dev = nhi->fib_nhc.nhc_dev;
+	struct hlist_head *head;
+	unsigned int hash;
 
 	WARN_ON(!dev);
 
-	hash = nh_dev_hashfn(dev->अगरindex);
+	hash = nh_dev_hashfn(dev->ifindex);
 	head = &net->nexthop.devhash[hash];
 	hlist_add_head(&nhi->dev_hash, head);
-पूर्ण
+}
 
-अटल व्योम nexthop_मुक्त_group(काष्ठा nexthop *nh)
-अणु
-	काष्ठा nh_group *nhg;
-	पूर्णांक i;
+static void nexthop_free_group(struct nexthop *nh)
+{
+	struct nh_group *nhg;
+	int i;
 
 	nhg = rcu_dereference_raw(nh->nh_grp);
-	क्रम (i = 0; i < nhg->num_nh; ++i) अणु
-		काष्ठा nh_grp_entry *nhge = &nhg->nh_entries[i];
+	for (i = 0; i < nhg->num_nh; ++i) {
+		struct nh_grp_entry *nhge = &nhg->nh_entries[i];
 
 		WARN_ON(!list_empty(&nhge->nh_list));
 		nexthop_put(nhge->nh);
-	पूर्ण
+	}
 
 	WARN_ON(nhg->spare == nhg);
 
-	अगर (nhg->resilient)
-		vमुक्त(rcu_dereference_raw(nhg->res_table));
+	if (nhg->resilient)
+		vfree(rcu_dereference_raw(nhg->res_table));
 
-	kमुक्त(nhg->spare);
-	kमुक्त(nhg);
-पूर्ण
+	kfree(nhg->spare);
+	kfree(nhg);
+}
 
-अटल व्योम nexthop_मुक्त_single(काष्ठा nexthop *nh)
-अणु
-	काष्ठा nh_info *nhi;
+static void nexthop_free_single(struct nexthop *nh)
+{
+	struct nh_info *nhi;
 
 	nhi = rcu_dereference_raw(nh->nh_info);
-	चयन (nhi->family) अणु
-	हाल AF_INET:
+	switch (nhi->family) {
+	case AF_INET:
 		fib_nh_release(nh->net, &nhi->fib_nh);
-		अवरोध;
-	हाल AF_INET6:
+		break;
+	case AF_INET6:
 		ipv6_stub->fib6_nh_release(&nhi->fib6_nh);
-		अवरोध;
-	पूर्ण
-	kमुक्त(nhi);
-पूर्ण
+		break;
+	}
+	kfree(nhi);
+}
 
-व्योम nexthop_मुक्त_rcu(काष्ठा rcu_head *head)
-अणु
-	काष्ठा nexthop *nh = container_of(head, काष्ठा nexthop, rcu);
+void nexthop_free_rcu(struct rcu_head *head)
+{
+	struct nexthop *nh = container_of(head, struct nexthop, rcu);
 
-	अगर (nh->is_group)
-		nexthop_मुक्त_group(nh);
-	अन्यथा
-		nexthop_मुक्त_single(nh);
+	if (nh->is_group)
+		nexthop_free_group(nh);
+	else
+		nexthop_free_single(nh);
 
-	kमुक्त(nh);
-पूर्ण
-EXPORT_SYMBOL_GPL(nexthop_मुक्त_rcu);
+	kfree(nh);
+}
+EXPORT_SYMBOL_GPL(nexthop_free_rcu);
 
-अटल काष्ठा nexthop *nexthop_alloc(व्योम)
-अणु
-	काष्ठा nexthop *nh;
+static struct nexthop *nexthop_alloc(void)
+{
+	struct nexthop *nh;
 
-	nh = kzalloc(माप(काष्ठा nexthop), GFP_KERNEL);
-	अगर (nh) अणु
+	nh = kzalloc(sizeof(struct nexthop), GFP_KERNEL);
+	if (nh) {
 		INIT_LIST_HEAD(&nh->fi_list);
 		INIT_LIST_HEAD(&nh->f6i_list);
 		INIT_LIST_HEAD(&nh->grp_list);
 		INIT_LIST_HEAD(&nh->fdb_list);
-	पूर्ण
-	वापस nh;
-पूर्ण
+	}
+	return nh;
+}
 
-अटल काष्ठा nh_group *nexthop_grp_alloc(u16 num_nh)
-अणु
-	काष्ठा nh_group *nhg;
+static struct nh_group *nexthop_grp_alloc(u16 num_nh)
+{
+	struct nh_group *nhg;
 
-	nhg = kzalloc(काष्ठा_size(nhg, nh_entries, num_nh), GFP_KERNEL);
-	अगर (nhg)
+	nhg = kzalloc(struct_size(nhg, nh_entries, num_nh), GFP_KERNEL);
+	if (nhg)
 		nhg->num_nh = num_nh;
 
-	वापस nhg;
-पूर्ण
+	return nhg;
+}
 
-अटल व्योम nh_res_table_upkeep_dw(काष्ठा work_काष्ठा *work);
+static void nh_res_table_upkeep_dw(struct work_struct *work);
 
-अटल काष्ठा nh_res_table *
-nexthop_res_table_alloc(काष्ठा net *net, u32 nhg_id, काष्ठा nh_config *cfg)
-अणु
-	स्थिर u16 num_nh_buckets = cfg->nh_grp_res_num_buckets;
-	काष्ठा nh_res_table *res_table;
-	अचिन्हित दीर्घ size;
+static struct nh_res_table *
+nexthop_res_table_alloc(struct net *net, u32 nhg_id, struct nh_config *cfg)
+{
+	const u16 num_nh_buckets = cfg->nh_grp_res_num_buckets;
+	struct nh_res_table *res_table;
+	unsigned long size;
 
-	size = काष्ठा_size(res_table, nh_buckets, num_nh_buckets);
-	res_table = __vदो_स्मृति(size, GFP_KERNEL | __GFP_ZERO | __GFP_NOWARN);
-	अगर (!res_table)
-		वापस शून्य;
+	size = struct_size(res_table, nh_buckets, num_nh_buckets);
+	res_table = __vmalloc(size, GFP_KERNEL | __GFP_ZERO | __GFP_NOWARN);
+	if (!res_table)
+		return NULL;
 
 	res_table->net = net;
 	res_table->nhg_id = nhg_id;
 	INIT_DELAYED_WORK(&res_table->upkeep_dw, &nh_res_table_upkeep_dw);
 	INIT_LIST_HEAD(&res_table->uw_nh_entries);
-	res_table->idle_समयr = cfg->nh_grp_res_idle_समयr;
-	res_table->unbalanced_समयr = cfg->nh_grp_res_unbalanced_समयr;
+	res_table->idle_timer = cfg->nh_grp_res_idle_timer;
+	res_table->unbalanced_timer = cfg->nh_grp_res_unbalanced_timer;
 	res_table->num_nh_buckets = num_nh_buckets;
-	वापस res_table;
-पूर्ण
+	return res_table;
+}
 
-अटल व्योम nh_base_seq_inc(काष्ठा net *net)
-अणु
-	जबतक (++net->nexthop.seq == 0)
+static void nh_base_seq_inc(struct net *net)
+{
+	while (++net->nexthop.seq == 0)
 		;
-पूर्ण
+}
 
 /* no reference taken; rcu lock or rtnl must be held */
-काष्ठा nexthop *nexthop_find_by_id(काष्ठा net *net, u32 id)
-अणु
-	काष्ठा rb_node **pp, *parent = शून्य, *next;
+struct nexthop *nexthop_find_by_id(struct net *net, u32 id)
+{
+	struct rb_node **pp, *parent = NULL, *next;
 
 	pp = &net->nexthop.rb_root.rb_node;
-	जबतक (1) अणु
-		काष्ठा nexthop *nh;
+	while (1) {
+		struct nexthop *nh;
 
 		next = rcu_dereference_raw(*pp);
-		अगर (!next)
-			अवरोध;
+		if (!next)
+			break;
 		parent = next;
 
-		nh = rb_entry(parent, काष्ठा nexthop, rb_node);
-		अगर (id < nh->id)
+		nh = rb_entry(parent, struct nexthop, rb_node);
+		if (id < nh->id)
 			pp = &next->rb_left;
-		अन्यथा अगर (id > nh->id)
+		else if (id > nh->id)
 			pp = &next->rb_right;
-		अन्यथा
-			वापस nh;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+		else
+			return nh;
+	}
+	return NULL;
+}
 EXPORT_SYMBOL_GPL(nexthop_find_by_id);
 
-/* used क्रम स्वतः id allocation; called with rtnl held */
-अटल u32 nh_find_unused_id(काष्ठा net *net)
-अणु
+/* used for auto id allocation; called with rtnl held */
+static u32 nh_find_unused_id(struct net *net)
+{
 	u32 id_start = net->nexthop.last_id_allocated;
 
-	जबतक (1) अणु
+	while (1) {
 		net->nexthop.last_id_allocated++;
-		अगर (net->nexthop.last_id_allocated == id_start)
-			अवरोध;
+		if (net->nexthop.last_id_allocated == id_start)
+			break;
 
-		अगर (!nexthop_find_by_id(net, net->nexthop.last_id_allocated))
-			वापस net->nexthop.last_id_allocated;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (!nexthop_find_by_id(net, net->nexthop.last_id_allocated))
+			return net->nexthop.last_id_allocated;
+	}
+	return 0;
+}
 
-अटल व्योम nh_res_समय_set_deadline(अचिन्हित दीर्घ next_समय,
-				     अचिन्हित दीर्घ *deadline)
-अणु
-	अगर (समय_beक्रमe(next_समय, *deadline))
-		*deadline = next_समय;
-पूर्ण
+static void nh_res_time_set_deadline(unsigned long next_time,
+				     unsigned long *deadline)
+{
+	if (time_before(next_time, *deadline))
+		*deadline = next_time;
+}
 
-अटल घड़ी_प्रकार nh_res_table_unbalanced_समय(काष्ठा nh_res_table *res_table)
-अणु
-	अगर (list_empty(&res_table->uw_nh_entries))
-		वापस 0;
-	वापस jअगरfies_delta_to_घड़ी_प्रकार(jअगरfies - res_table->unbalanced_since);
-पूर्ण
+static clock_t nh_res_table_unbalanced_time(struct nh_res_table *res_table)
+{
+	if (list_empty(&res_table->uw_nh_entries))
+		return 0;
+	return jiffies_delta_to_clock_t(jiffies - res_table->unbalanced_since);
+}
 
-अटल पूर्णांक nla_put_nh_group_res(काष्ठा sk_buff *skb, काष्ठा nh_group *nhg)
-अणु
-	काष्ठा nh_res_table *res_table = rtnl_dereference(nhg->res_table);
-	काष्ठा nlattr *nest;
+static int nla_put_nh_group_res(struct sk_buff *skb, struct nh_group *nhg)
+{
+	struct nh_res_table *res_table = rtnl_dereference(nhg->res_table);
+	struct nlattr *nest;
 
 	nest = nla_nest_start(skb, NHA_RES_GROUP);
-	अगर (!nest)
-		वापस -EMSGSIZE;
+	if (!nest)
+		return -EMSGSIZE;
 
-	अगर (nla_put_u16(skb, NHA_RES_GROUP_BUCKETS,
+	if (nla_put_u16(skb, NHA_RES_GROUP_BUCKETS,
 			res_table->num_nh_buckets) ||
 	    nla_put_u32(skb, NHA_RES_GROUP_IDLE_TIMER,
-			jअगरfies_to_घड़ी_प्रकार(res_table->idle_समयr)) ||
+			jiffies_to_clock_t(res_table->idle_timer)) ||
 	    nla_put_u32(skb, NHA_RES_GROUP_UNBALANCED_TIMER,
-			jअगरfies_to_घड़ी_प्रकार(res_table->unbalanced_समयr)) ||
+			jiffies_to_clock_t(res_table->unbalanced_timer)) ||
 	    nla_put_u64_64bit(skb, NHA_RES_GROUP_UNBALANCED_TIME,
-			      nh_res_table_unbalanced_समय(res_table),
+			      nh_res_table_unbalanced_time(res_table),
 			      NHA_RES_GROUP_PAD))
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
 	nla_nest_end(skb, nest);
-	वापस 0;
+	return 0;
 
 nla_put_failure:
 	nla_nest_cancel(skb, nest);
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-अटल पूर्णांक nla_put_nh_group(काष्ठा sk_buff *skb, काष्ठा nh_group *nhg)
-अणु
-	काष्ठा nexthop_grp *p;
-	माप_प्रकार len = nhg->num_nh * माप(*p);
-	काष्ठा nlattr *nla;
+static int nla_put_nh_group(struct sk_buff *skb, struct nh_group *nhg)
+{
+	struct nexthop_grp *p;
+	size_t len = nhg->num_nh * sizeof(*p);
+	struct nlattr *nla;
 	u16 group_type = 0;
-	पूर्णांक i;
+	int i;
 
-	अगर (nhg->hash_threshold)
+	if (nhg->hash_threshold)
 		group_type = NEXTHOP_GRP_TYPE_MPATH;
-	अन्यथा अगर (nhg->resilient)
+	else if (nhg->resilient)
 		group_type = NEXTHOP_GRP_TYPE_RES;
 
-	अगर (nla_put_u16(skb, NHA_GROUP_TYPE, group_type))
-		जाओ nla_put_failure;
+	if (nla_put_u16(skb, NHA_GROUP_TYPE, group_type))
+		goto nla_put_failure;
 
 	nla = nla_reserve(skb, NHA_GROUP, len);
-	अगर (!nla)
-		जाओ nla_put_failure;
+	if (!nla)
+		goto nla_put_failure;
 
 	p = nla_data(nla);
-	क्रम (i = 0; i < nhg->num_nh; ++i) अणु
+	for (i = 0; i < nhg->num_nh; ++i) {
 		p->id = nhg->nh_entries[i].nh->id;
 		p->weight = nhg->nh_entries[i].weight - 1;
 		p += 1;
-	पूर्ण
+	}
 
-	अगर (nhg->resilient && nla_put_nh_group_res(skb, nhg))
-		जाओ nla_put_failure;
+	if (nhg->resilient && nla_put_nh_group_res(skb, nhg))
+		goto nla_put_failure;
 
-	वापस 0;
+	return 0;
 
 nla_put_failure:
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-अटल पूर्णांक nh_fill_node(काष्ठा sk_buff *skb, काष्ठा nexthop *nh,
-			पूर्णांक event, u32 portid, u32 seq, अचिन्हित पूर्णांक nlflags)
-अणु
-	काष्ठा fib6_nh *fib6_nh;
-	काष्ठा fib_nh *fib_nh;
-	काष्ठा nlmsghdr *nlh;
-	काष्ठा nh_info *nhi;
-	काष्ठा nhmsg *nhm;
+static int nh_fill_node(struct sk_buff *skb, struct nexthop *nh,
+			int event, u32 portid, u32 seq, unsigned int nlflags)
+{
+	struct fib6_nh *fib6_nh;
+	struct fib_nh *fib_nh;
+	struct nlmsghdr *nlh;
+	struct nh_info *nhi;
+	struct nhmsg *nhm;
 
-	nlh = nlmsg_put(skb, portid, seq, event, माप(*nhm), nlflags);
-	अगर (!nlh)
-		वापस -EMSGSIZE;
+	nlh = nlmsg_put(skb, portid, seq, event, sizeof(*nhm), nlflags);
+	if (!nlh)
+		return -EMSGSIZE;
 
 	nhm = nlmsg_data(nlh);
 	nhm->nh_family = AF_UNSPEC;
@@ -710,221 +709,221 @@ nla_put_failure:
 	nhm->nh_scope = 0;
 	nhm->resvd = 0;
 
-	अगर (nla_put_u32(skb, NHA_ID, nh->id))
-		जाओ nla_put_failure;
+	if (nla_put_u32(skb, NHA_ID, nh->id))
+		goto nla_put_failure;
 
-	अगर (nh->is_group) अणु
-		काष्ठा nh_group *nhg = rtnl_dereference(nh->nh_grp);
+	if (nh->is_group) {
+		struct nh_group *nhg = rtnl_dereference(nh->nh_grp);
 
-		अगर (nhg->fdb_nh && nla_put_flag(skb, NHA_FDB))
-			जाओ nla_put_failure;
-		अगर (nla_put_nh_group(skb, nhg))
-			जाओ nla_put_failure;
-		जाओ out;
-	पूर्ण
+		if (nhg->fdb_nh && nla_put_flag(skb, NHA_FDB))
+			goto nla_put_failure;
+		if (nla_put_nh_group(skb, nhg))
+			goto nla_put_failure;
+		goto out;
+	}
 
 	nhi = rtnl_dereference(nh->nh_info);
 	nhm->nh_family = nhi->family;
-	अगर (nhi->reject_nh) अणु
-		अगर (nla_put_flag(skb, NHA_BLACKHOLE))
-			जाओ nla_put_failure;
-		जाओ out;
-	पूर्ण अन्यथा अगर (nhi->fdb_nh) अणु
-		अगर (nla_put_flag(skb, NHA_FDB))
-			जाओ nla_put_failure;
-	पूर्ण अन्यथा अणु
-		स्थिर काष्ठा net_device *dev;
+	if (nhi->reject_nh) {
+		if (nla_put_flag(skb, NHA_BLACKHOLE))
+			goto nla_put_failure;
+		goto out;
+	} else if (nhi->fdb_nh) {
+		if (nla_put_flag(skb, NHA_FDB))
+			goto nla_put_failure;
+	} else {
+		const struct net_device *dev;
 
 		dev = nhi->fib_nhc.nhc_dev;
-		अगर (dev && nla_put_u32(skb, NHA_OIF, dev->अगरindex))
-			जाओ nla_put_failure;
-	पूर्ण
+		if (dev && nla_put_u32(skb, NHA_OIF, dev->ifindex))
+			goto nla_put_failure;
+	}
 
 	nhm->nh_scope = nhi->fib_nhc.nhc_scope;
-	चयन (nhi->family) अणु
-	हाल AF_INET:
+	switch (nhi->family) {
+	case AF_INET:
 		fib_nh = &nhi->fib_nh;
-		अगर (fib_nh->fib_nh_gw_family &&
+		if (fib_nh->fib_nh_gw_family &&
 		    nla_put_be32(skb, NHA_GATEWAY, fib_nh->fib_nh_gw4))
-			जाओ nla_put_failure;
-		अवरोध;
+			goto nla_put_failure;
+		break;
 
-	हाल AF_INET6:
+	case AF_INET6:
 		fib6_nh = &nhi->fib6_nh;
-		अगर (fib6_nh->fib_nh_gw_family &&
+		if (fib6_nh->fib_nh_gw_family &&
 		    nla_put_in6_addr(skb, NHA_GATEWAY, &fib6_nh->fib_nh_gw6))
-			जाओ nla_put_failure;
-		अवरोध;
-	पूर्ण
+			goto nla_put_failure;
+		break;
+	}
 
-	अगर (nhi->fib_nhc.nhc_lwtstate &&
+	if (nhi->fib_nhc.nhc_lwtstate &&
 	    lwtunnel_fill_encap(skb, nhi->fib_nhc.nhc_lwtstate,
 				NHA_ENCAP, NHA_ENCAP_TYPE) < 0)
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
 out:
 	nlmsg_end(skb, nlh);
-	वापस 0;
+	return 0;
 
 nla_put_failure:
 	nlmsg_cancel(skb, nlh);
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-अटल माप_प्रकार nh_nlmsg_size_grp_res(काष्ठा nh_group *nhg)
-अणु
-	वापस nla_total_size(0) +	/* NHA_RES_GROUP */
+static size_t nh_nlmsg_size_grp_res(struct nh_group *nhg)
+{
+	return nla_total_size(0) +	/* NHA_RES_GROUP */
 		nla_total_size(2) +	/* NHA_RES_GROUP_BUCKETS */
 		nla_total_size(4) +	/* NHA_RES_GROUP_IDLE_TIMER */
 		nla_total_size(4) +	/* NHA_RES_GROUP_UNBALANCED_TIMER */
 		nla_total_size_64bit(8);/* NHA_RES_GROUP_UNBALANCED_TIME */
-पूर्ण
+}
 
-अटल माप_प्रकार nh_nlmsg_size_grp(काष्ठा nexthop *nh)
-अणु
-	काष्ठा nh_group *nhg = rtnl_dereference(nh->nh_grp);
-	माप_प्रकार sz = माप(काष्ठा nexthop_grp) * nhg->num_nh;
-	माप_प्रकार tot = nla_total_size(sz) +
+static size_t nh_nlmsg_size_grp(struct nexthop *nh)
+{
+	struct nh_group *nhg = rtnl_dereference(nh->nh_grp);
+	size_t sz = sizeof(struct nexthop_grp) * nhg->num_nh;
+	size_t tot = nla_total_size(sz) +
 		nla_total_size(2); /* NHA_GROUP_TYPE */
 
-	अगर (nhg->resilient)
+	if (nhg->resilient)
 		tot += nh_nlmsg_size_grp_res(nhg);
 
-	वापस tot;
-पूर्ण
+	return tot;
+}
 
-अटल माप_प्रकार nh_nlmsg_size_single(काष्ठा nexthop *nh)
-अणु
-	काष्ठा nh_info *nhi = rtnl_dereference(nh->nh_info);
-	माप_प्रकार sz;
+static size_t nh_nlmsg_size_single(struct nexthop *nh)
+{
+	struct nh_info *nhi = rtnl_dereference(nh->nh_info);
+	size_t sz;
 
 	/* covers NHA_BLACKHOLE since NHA_OIF and BLACKHOLE
 	 * are mutually exclusive
 	 */
 	sz = nla_total_size(4);  /* NHA_OIF */
 
-	चयन (nhi->family) अणु
-	हाल AF_INET:
-		अगर (nhi->fib_nh.fib_nh_gw_family)
+	switch (nhi->family) {
+	case AF_INET:
+		if (nhi->fib_nh.fib_nh_gw_family)
 			sz += nla_total_size(4);  /* NHA_GATEWAY */
-		अवरोध;
+		break;
 
-	हाल AF_INET6:
+	case AF_INET6:
 		/* NHA_GATEWAY */
-		अगर (nhi->fib6_nh.fib_nh_gw_family)
-			sz += nla_total_size(माप(स्थिर काष्ठा in6_addr));
-		अवरोध;
-	पूर्ण
+		if (nhi->fib6_nh.fib_nh_gw_family)
+			sz += nla_total_size(sizeof(const struct in6_addr));
+		break;
+	}
 
-	अगर (nhi->fib_nhc.nhc_lwtstate) अणु
+	if (nhi->fib_nhc.nhc_lwtstate) {
 		sz += lwtunnel_get_encap_size(nhi->fib_nhc.nhc_lwtstate);
 		sz += nla_total_size(2);  /* NHA_ENCAP_TYPE */
-	पूर्ण
+	}
 
-	वापस sz;
-पूर्ण
+	return sz;
+}
 
-अटल माप_प्रकार nh_nlmsg_size(काष्ठा nexthop *nh)
-अणु
-	माप_प्रकार sz = NLMSG_ALIGN(माप(काष्ठा nhmsg));
+static size_t nh_nlmsg_size(struct nexthop *nh)
+{
+	size_t sz = NLMSG_ALIGN(sizeof(struct nhmsg));
 
 	sz += nla_total_size(4); /* NHA_ID */
 
-	अगर (nh->is_group)
+	if (nh->is_group)
 		sz += nh_nlmsg_size_grp(nh);
-	अन्यथा
+	else
 		sz += nh_nlmsg_size_single(nh);
 
-	वापस sz;
-पूर्ण
+	return sz;
+}
 
-अटल व्योम nexthop_notअगरy(पूर्णांक event, काष्ठा nexthop *nh, काष्ठा nl_info *info)
-अणु
-	अचिन्हित पूर्णांक nlflags = info->nlh ? info->nlh->nlmsg_flags : 0;
+static void nexthop_notify(int event, struct nexthop *nh, struct nl_info *info)
+{
+	unsigned int nlflags = info->nlh ? info->nlh->nlmsg_flags : 0;
 	u32 seq = info->nlh ? info->nlh->nlmsg_seq : 0;
-	काष्ठा sk_buff *skb;
-	पूर्णांक err = -ENOBUFS;
+	struct sk_buff *skb;
+	int err = -ENOBUFS;
 
 	skb = nlmsg_new(nh_nlmsg_size(nh), gfp_any());
-	अगर (!skb)
-		जाओ errout;
+	if (!skb)
+		goto errout;
 
 	err = nh_fill_node(skb, nh, event, info->portid, seq, nlflags);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		/* -EMSGSIZE implies BUG in nh_nlmsg_size() */
 		WARN_ON(err == -EMSGSIZE);
-		kमुक्त_skb(skb);
-		जाओ errout;
-	पूर्ण
+		kfree_skb(skb);
+		goto errout;
+	}
 
-	rtnl_notअगरy(skb, info->nl_net, info->portid, RTNLGRP_NEXTHOP,
+	rtnl_notify(skb, info->nl_net, info->portid, RTNLGRP_NEXTHOP,
 		    info->nlh, gfp_any());
-	वापस;
+	return;
 errout:
-	अगर (err < 0)
+	if (err < 0)
 		rtnl_set_sk_err(info->nl_net, RTNLGRP_NEXTHOP, err);
-पूर्ण
+}
 
-अटल अचिन्हित दीर्घ nh_res_bucket_used_समय(स्थिर काष्ठा nh_res_bucket *bucket)
-अणु
-	वापस (अचिन्हित दीर्घ)atomic_दीर्घ_पढ़ो(&bucket->used_समय);
-पूर्ण
+static unsigned long nh_res_bucket_used_time(const struct nh_res_bucket *bucket)
+{
+	return (unsigned long)atomic_long_read(&bucket->used_time);
+}
 
-अटल अचिन्हित दीर्घ
-nh_res_bucket_idle_poपूर्णांक(स्थिर काष्ठा nh_res_table *res_table,
-			 स्थिर काष्ठा nh_res_bucket *bucket,
-			 अचिन्हित दीर्घ now)
-अणु
-	अचिन्हित दीर्घ समय = nh_res_bucket_used_समय(bucket);
+static unsigned long
+nh_res_bucket_idle_point(const struct nh_res_table *res_table,
+			 const struct nh_res_bucket *bucket,
+			 unsigned long now)
+{
+	unsigned long time = nh_res_bucket_used_time(bucket);
 
-	/* Bucket was not used since it was migrated. The idle समय is now. */
-	अगर (समय == bucket->migrated_समय)
-		वापस now;
+	/* Bucket was not used since it was migrated. The idle time is now. */
+	if (time == bucket->migrated_time)
+		return now;
 
-	वापस समय + res_table->idle_समयr;
-पूर्ण
+	return time + res_table->idle_timer;
+}
 
-अटल अचिन्हित दीर्घ
-nh_res_table_unb_poपूर्णांक(स्थिर काष्ठा nh_res_table *res_table)
-अणु
-	वापस res_table->unbalanced_since + res_table->unbalanced_समयr;
-पूर्ण
+static unsigned long
+nh_res_table_unb_point(const struct nh_res_table *res_table)
+{
+	return res_table->unbalanced_since + res_table->unbalanced_timer;
+}
 
-अटल व्योम nh_res_bucket_set_idle(स्थिर काष्ठा nh_res_table *res_table,
-				   काष्ठा nh_res_bucket *bucket)
-अणु
-	अचिन्हित दीर्घ now = jअगरfies;
+static void nh_res_bucket_set_idle(const struct nh_res_table *res_table,
+				   struct nh_res_bucket *bucket)
+{
+	unsigned long now = jiffies;
 
-	atomic_दीर्घ_set(&bucket->used_समय, (दीर्घ)now);
-	bucket->migrated_समय = now;
-पूर्ण
+	atomic_long_set(&bucket->used_time, (long)now);
+	bucket->migrated_time = now;
+}
 
-अटल व्योम nh_res_bucket_set_busy(काष्ठा nh_res_bucket *bucket)
-अणु
-	atomic_दीर्घ_set(&bucket->used_समय, (दीर्घ)jअगरfies);
-पूर्ण
+static void nh_res_bucket_set_busy(struct nh_res_bucket *bucket)
+{
+	atomic_long_set(&bucket->used_time, (long)jiffies);
+}
 
-अटल घड़ी_प्रकार nh_res_bucket_idle_समय(स्थिर काष्ठा nh_res_bucket *bucket)
-अणु
-	अचिन्हित दीर्घ used_समय = nh_res_bucket_used_समय(bucket);
+static clock_t nh_res_bucket_idle_time(const struct nh_res_bucket *bucket)
+{
+	unsigned long used_time = nh_res_bucket_used_time(bucket);
 
-	वापस jअगरfies_delta_to_घड़ी_प्रकार(jअगरfies - used_समय);
-पूर्ण
+	return jiffies_delta_to_clock_t(jiffies - used_time);
+}
 
-अटल पूर्णांक nh_fill_res_bucket(काष्ठा sk_buff *skb, काष्ठा nexthop *nh,
-			      काष्ठा nh_res_bucket *bucket, u16 bucket_index,
-			      पूर्णांक event, u32 portid, u32 seq,
-			      अचिन्हित पूर्णांक nlflags,
-			      काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा nh_grp_entry *nhge = nh_res_dereference(bucket->nh_entry);
-	काष्ठा nlmsghdr *nlh;
-	काष्ठा nlattr *nest;
-	काष्ठा nhmsg *nhm;
+static int nh_fill_res_bucket(struct sk_buff *skb, struct nexthop *nh,
+			      struct nh_res_bucket *bucket, u16 bucket_index,
+			      int event, u32 portid, u32 seq,
+			      unsigned int nlflags,
+			      struct netlink_ext_ack *extack)
+{
+	struct nh_grp_entry *nhge = nh_res_dereference(bucket->nh_entry);
+	struct nlmsghdr *nlh;
+	struct nlattr *nest;
+	struct nhmsg *nhm;
 
-	nlh = nlmsg_put(skb, portid, seq, event, माप(*nhm), nlflags);
-	अगर (!nlh)
-		वापस -EMSGSIZE;
+	nlh = nlmsg_put(skb, portid, seq, event, sizeof(*nhm), nlflags);
+	if (!nlh)
+		return -EMSGSIZE;
 
 	nhm = nlmsg_data(nlh);
 	nhm->nh_family = AF_UNSPEC;
@@ -933,717 +932,717 @@ nh_res_table_unb_poपूर्णांक(स्थिर काष्ठा n
 	nhm->nh_scope = 0;
 	nhm->resvd = 0;
 
-	अगर (nla_put_u32(skb, NHA_ID, nh->id))
-		जाओ nla_put_failure;
+	if (nla_put_u32(skb, NHA_ID, nh->id))
+		goto nla_put_failure;
 
 	nest = nla_nest_start(skb, NHA_RES_BUCKET);
-	अगर (!nest)
-		जाओ nla_put_failure;
+	if (!nest)
+		goto nla_put_failure;
 
-	अगर (nla_put_u16(skb, NHA_RES_BUCKET_INDEX, bucket_index) ||
+	if (nla_put_u16(skb, NHA_RES_BUCKET_INDEX, bucket_index) ||
 	    nla_put_u32(skb, NHA_RES_BUCKET_NH_ID, nhge->nh->id) ||
 	    nla_put_u64_64bit(skb, NHA_RES_BUCKET_IDLE_TIME,
-			      nh_res_bucket_idle_समय(bucket),
+			      nh_res_bucket_idle_time(bucket),
 			      NHA_RES_BUCKET_PAD))
-		जाओ nla_put_failure_nest;
+		goto nla_put_failure_nest;
 
 	nla_nest_end(skb, nest);
 	nlmsg_end(skb, nlh);
-	वापस 0;
+	return 0;
 
 nla_put_failure_nest:
 	nla_nest_cancel(skb, nest);
 nla_put_failure:
 	nlmsg_cancel(skb, nlh);
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-अटल व्योम nexthop_bucket_notअगरy(काष्ठा nh_res_table *res_table,
+static void nexthop_bucket_notify(struct nh_res_table *res_table,
 				  u16 bucket_index)
-अणु
-	काष्ठा nh_res_bucket *bucket = &res_table->nh_buckets[bucket_index];
-	काष्ठा nh_grp_entry *nhge = nh_res_dereference(bucket->nh_entry);
-	काष्ठा nexthop *nh = nhge->nh_parent;
-	काष्ठा sk_buff *skb;
-	पूर्णांक err = -ENOBUFS;
+{
+	struct nh_res_bucket *bucket = &res_table->nh_buckets[bucket_index];
+	struct nh_grp_entry *nhge = nh_res_dereference(bucket->nh_entry);
+	struct nexthop *nh = nhge->nh_parent;
+	struct sk_buff *skb;
+	int err = -ENOBUFS;
 
 	skb = alloc_skb(NLMSG_GOODSIZE, GFP_KERNEL);
-	अगर (!skb)
-		जाओ errout;
+	if (!skb)
+		goto errout;
 
 	err = nh_fill_res_bucket(skb, nh, bucket, bucket_index,
 				 RTM_NEWNEXTHOPBUCKET, 0, 0, NLM_F_REPLACE,
-				 शून्य);
-	अगर (err < 0) अणु
-		kमुक्त_skb(skb);
-		जाओ errout;
-	पूर्ण
+				 NULL);
+	if (err < 0) {
+		kfree_skb(skb);
+		goto errout;
+	}
 
-	rtnl_notअगरy(skb, nh->net, 0, RTNLGRP_NEXTHOP, शून्य, GFP_KERNEL);
-	वापस;
+	rtnl_notify(skb, nh->net, 0, RTNLGRP_NEXTHOP, NULL, GFP_KERNEL);
+	return;
 errout:
-	अगर (err < 0)
+	if (err < 0)
 		rtnl_set_sk_err(nh->net, RTNLGRP_NEXTHOP, err);
-पूर्ण
+}
 
-अटल bool valid_group_nh(काष्ठा nexthop *nh, अचिन्हित पूर्णांक npaths,
-			   bool *is_fdb, काष्ठा netlink_ext_ack *extack)
-अणु
-	अगर (nh->is_group) अणु
-		काष्ठा nh_group *nhg = rtnl_dereference(nh->nh_grp);
+static bool valid_group_nh(struct nexthop *nh, unsigned int npaths,
+			   bool *is_fdb, struct netlink_ext_ack *extack)
+{
+	if (nh->is_group) {
+		struct nh_group *nhg = rtnl_dereference(nh->nh_grp);
 
 		/* Nesting groups within groups is not supported. */
-		अगर (nhg->hash_threshold) अणु
+		if (nhg->hash_threshold) {
 			NL_SET_ERR_MSG(extack,
 				       "Hash-threshold group can not be a nexthop within a group");
-			वापस false;
-		पूर्ण
-		अगर (nhg->resilient) अणु
+			return false;
+		}
+		if (nhg->resilient) {
 			NL_SET_ERR_MSG(extack,
 				       "Resilient group can not be a nexthop within a group");
-			वापस false;
-		पूर्ण
+			return false;
+		}
 		*is_fdb = nhg->fdb_nh;
-	पूर्ण अन्यथा अणु
-		काष्ठा nh_info *nhi = rtnl_dereference(nh->nh_info);
+	} else {
+		struct nh_info *nhi = rtnl_dereference(nh->nh_info);
 
-		अगर (nhi->reject_nh && npaths > 1) अणु
+		if (nhi->reject_nh && npaths > 1) {
 			NL_SET_ERR_MSG(extack,
 				       "Blackhole nexthop can not be used in a group with more than 1 path");
-			वापस false;
-		पूर्ण
+			return false;
+		}
 		*is_fdb = nhi->fdb_nh;
-	पूर्ण
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक nh_check_attr_fdb_group(काष्ठा nexthop *nh, u8 *nh_family,
-				   काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा nh_info *nhi;
+static int nh_check_attr_fdb_group(struct nexthop *nh, u8 *nh_family,
+				   struct netlink_ext_ack *extack)
+{
+	struct nh_info *nhi;
 
 	nhi = rtnl_dereference(nh->nh_info);
 
-	अगर (!nhi->fdb_nh) अणु
+	if (!nhi->fdb_nh) {
 		NL_SET_ERR_MSG(extack, "FDB nexthop group can only have fdb nexthops");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (*nh_family == AF_UNSPEC) अणु
+	if (*nh_family == AF_UNSPEC) {
 		*nh_family = nhi->family;
-	पूर्ण अन्यथा अगर (*nh_family != nhi->family) अणु
+	} else if (*nh_family != nhi->family) {
 		NL_SET_ERR_MSG(extack, "FDB nexthop group cannot have mixed family nexthops");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nh_check_attr_group(काष्ठा net *net,
-			       काष्ठा nlattr *tb[], माप_प्रकार tb_size,
-			       u16 nh_grp_type, काष्ठा netlink_ext_ack *extack)
-अणु
-	अचिन्हित पूर्णांक len = nla_len(tb[NHA_GROUP]);
+static int nh_check_attr_group(struct net *net,
+			       struct nlattr *tb[], size_t tb_size,
+			       u16 nh_grp_type, struct netlink_ext_ack *extack)
+{
+	unsigned int len = nla_len(tb[NHA_GROUP]);
 	u8 nh_family = AF_UNSPEC;
-	काष्ठा nexthop_grp *nhg;
-	अचिन्हित पूर्णांक i, j;
+	struct nexthop_grp *nhg;
+	unsigned int i, j;
 	u8 nhg_fdb = 0;
 
-	अगर (!len || len & (माप(काष्ठा nexthop_grp) - 1)) अणु
+	if (!len || len & (sizeof(struct nexthop_grp) - 1)) {
 		NL_SET_ERR_MSG(extack,
 			       "Invalid length for nexthop group attribute");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* convert len to number of nexthop ids */
-	len /= माप(*nhg);
+	len /= sizeof(*nhg);
 
 	nhg = nla_data(tb[NHA_GROUP]);
-	क्रम (i = 0; i < len; ++i) अणु
-		अगर (nhg[i].resvd1 || nhg[i].resvd2) अणु
+	for (i = 0; i < len; ++i) {
+		if (nhg[i].resvd1 || nhg[i].resvd2) {
 			NL_SET_ERR_MSG(extack, "Reserved fields in nexthop_grp must be 0");
-			वापस -EINVAL;
-		पूर्ण
-		अगर (nhg[i].weight > 254) अणु
+			return -EINVAL;
+		}
+		if (nhg[i].weight > 254) {
 			NL_SET_ERR_MSG(extack, "Invalid value for weight");
-			वापस -EINVAL;
-		पूर्ण
-		क्रम (j = i + 1; j < len; ++j) अणु
-			अगर (nhg[i].id == nhg[j].id) अणु
+			return -EINVAL;
+		}
+		for (j = i + 1; j < len; ++j) {
+			if (nhg[i].id == nhg[j].id) {
 				NL_SET_ERR_MSG(extack, "Nexthop id can not be used twice in a group");
-				वापस -EINVAL;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				return -EINVAL;
+			}
+		}
+	}
 
-	अगर (tb[NHA_FDB])
+	if (tb[NHA_FDB])
 		nhg_fdb = 1;
 	nhg = nla_data(tb[NHA_GROUP]);
-	क्रम (i = 0; i < len; ++i) अणु
-		काष्ठा nexthop *nh;
+	for (i = 0; i < len; ++i) {
+		struct nexthop *nh;
 		bool is_fdb_nh;
 
 		nh = nexthop_find_by_id(net, nhg[i].id);
-		अगर (!nh) अणु
+		if (!nh) {
 			NL_SET_ERR_MSG(extack, "Invalid nexthop id");
-			वापस -EINVAL;
-		पूर्ण
-		अगर (!valid_group_nh(nh, len, &is_fdb_nh, extack))
-			वापस -EINVAL;
+			return -EINVAL;
+		}
+		if (!valid_group_nh(nh, len, &is_fdb_nh, extack))
+			return -EINVAL;
 
-		अगर (nhg_fdb && nh_check_attr_fdb_group(nh, &nh_family, extack))
-			वापस -EINVAL;
+		if (nhg_fdb && nh_check_attr_fdb_group(nh, &nh_family, extack))
+			return -EINVAL;
 
-		अगर (!nhg_fdb && is_fdb_nh) अणु
+		if (!nhg_fdb && is_fdb_nh) {
 			NL_SET_ERR_MSG(extack, "Non FDB nexthop group cannot have fdb nexthops");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
-	क्रम (i = NHA_GROUP_TYPE + 1; i < tb_size; ++i) अणु
-		अगर (!tb[i])
-			जारी;
-		चयन (i) अणु
-		हाल NHA_FDB:
-			जारी;
-		हाल NHA_RES_GROUP:
-			अगर (nh_grp_type == NEXTHOP_GRP_TYPE_RES)
-				जारी;
-			अवरोध;
-		पूर्ण
+			return -EINVAL;
+		}
+	}
+	for (i = NHA_GROUP_TYPE + 1; i < tb_size; ++i) {
+		if (!tb[i])
+			continue;
+		switch (i) {
+		case NHA_FDB:
+			continue;
+		case NHA_RES_GROUP:
+			if (nh_grp_type == NEXTHOP_GRP_TYPE_RES)
+				continue;
+			break;
+		}
 		NL_SET_ERR_MSG(extack,
 			       "No other attributes can be set in nexthop groups");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool ipv6_good_nh(स्थिर काष्ठा fib6_nh *nh)
-अणु
-	पूर्णांक state = NUD_REACHABLE;
-	काष्ठा neighbour *n;
+static bool ipv6_good_nh(const struct fib6_nh *nh)
+{
+	int state = NUD_REACHABLE;
+	struct neighbour *n;
 
-	rcu_पढ़ो_lock_bh();
+	rcu_read_lock_bh();
 
 	n = __ipv6_neigh_lookup_noref_stub(nh->fib_nh_dev, &nh->fib_nh_gw6);
-	अगर (n)
+	if (n)
 		state = n->nud_state;
 
-	rcu_पढ़ो_unlock_bh();
+	rcu_read_unlock_bh();
 
-	वापस !!(state & NUD_VALID);
-पूर्ण
+	return !!(state & NUD_VALID);
+}
 
-अटल bool ipv4_good_nh(स्थिर काष्ठा fib_nh *nh)
-अणु
-	पूर्णांक state = NUD_REACHABLE;
-	काष्ठा neighbour *n;
+static bool ipv4_good_nh(const struct fib_nh *nh)
+{
+	int state = NUD_REACHABLE;
+	struct neighbour *n;
 
-	rcu_पढ़ो_lock_bh();
+	rcu_read_lock_bh();
 
 	n = __ipv4_neigh_lookup_noref(nh->fib_nh_dev,
-				      (__क्रमce u32)nh->fib_nh_gw4);
-	अगर (n)
+				      (__force u32)nh->fib_nh_gw4);
+	if (n)
 		state = n->nud_state;
 
-	rcu_पढ़ो_unlock_bh();
+	rcu_read_unlock_bh();
 
-	वापस !!(state & NUD_VALID);
-पूर्ण
+	return !!(state & NUD_VALID);
+}
 
-अटल काष्ठा nexthop *nexthop_select_path_hthr(काष्ठा nh_group *nhg, पूर्णांक hash)
-अणु
-	काष्ठा nexthop *rc = शून्य;
-	पूर्णांक i;
+static struct nexthop *nexthop_select_path_hthr(struct nh_group *nhg, int hash)
+{
+	struct nexthop *rc = NULL;
+	int i;
 
-	क्रम (i = 0; i < nhg->num_nh; ++i) अणु
-		काष्ठा nh_grp_entry *nhge = &nhg->nh_entries[i];
-		काष्ठा nh_info *nhi;
+	for (i = 0; i < nhg->num_nh; ++i) {
+		struct nh_grp_entry *nhge = &nhg->nh_entries[i];
+		struct nh_info *nhi;
 
-		अगर (hash > atomic_पढ़ो(&nhge->hthr.upper_bound))
-			जारी;
+		if (hash > atomic_read(&nhge->hthr.upper_bound))
+			continue;
 
 		nhi = rcu_dereference(nhge->nh->nh_info);
-		अगर (nhi->fdb_nh)
-			वापस nhge->nh;
+		if (nhi->fdb_nh)
+			return nhge->nh;
 
-		/* nexthops always check अगर it is good and करोes
-		 * not rely on a sysctl क्रम this behavior
+		/* nexthops always check if it is good and does
+		 * not rely on a sysctl for this behavior
 		 */
-		चयन (nhi->family) अणु
-		हाल AF_INET:
-			अगर (ipv4_good_nh(&nhi->fib_nh))
-				वापस nhge->nh;
-			अवरोध;
-		हाल AF_INET6:
-			अगर (ipv6_good_nh(&nhi->fib6_nh))
-				वापस nhge->nh;
-			अवरोध;
-		पूर्ण
+		switch (nhi->family) {
+		case AF_INET:
+			if (ipv4_good_nh(&nhi->fib_nh))
+				return nhge->nh;
+			break;
+		case AF_INET6:
+			if (ipv6_good_nh(&nhi->fib6_nh))
+				return nhge->nh;
+			break;
+		}
 
-		अगर (!rc)
+		if (!rc)
 			rc = nhge->nh;
-	पूर्ण
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल काष्ठा nexthop *nexthop_select_path_res(काष्ठा nh_group *nhg, पूर्णांक hash)
-अणु
-	काष्ठा nh_res_table *res_table = rcu_dereference(nhg->res_table);
+static struct nexthop *nexthop_select_path_res(struct nh_group *nhg, int hash)
+{
+	struct nh_res_table *res_table = rcu_dereference(nhg->res_table);
 	u16 bucket_index = hash % res_table->num_nh_buckets;
-	काष्ठा nh_res_bucket *bucket;
-	काष्ठा nh_grp_entry *nhge;
+	struct nh_res_bucket *bucket;
+	struct nh_grp_entry *nhge;
 
-	/* nexthop_select_path() is expected to वापस a non-शून्य value, so
+	/* nexthop_select_path() is expected to return a non-NULL value, so
 	 * skip protocol validation and just hand out whatever there is.
 	 */
 	bucket = &res_table->nh_buckets[bucket_index];
 	nh_res_bucket_set_busy(bucket);
 	nhge = rcu_dereference(bucket->nh_entry);
-	वापस nhge->nh;
-पूर्ण
+	return nhge->nh;
+}
 
-काष्ठा nexthop *nexthop_select_path(काष्ठा nexthop *nh, पूर्णांक hash)
-अणु
-	काष्ठा nh_group *nhg;
+struct nexthop *nexthop_select_path(struct nexthop *nh, int hash)
+{
+	struct nh_group *nhg;
 
-	अगर (!nh->is_group)
-		वापस nh;
+	if (!nh->is_group)
+		return nh;
 
 	nhg = rcu_dereference(nh->nh_grp);
-	अगर (nhg->hash_threshold)
-		वापस nexthop_select_path_hthr(nhg, hash);
-	अन्यथा अगर (nhg->resilient)
-		वापस nexthop_select_path_res(nhg, hash);
+	if (nhg->hash_threshold)
+		return nexthop_select_path_hthr(nhg, hash);
+	else if (nhg->resilient)
+		return nexthop_select_path_res(nhg, hash);
 
 	/* Unreachable. */
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 EXPORT_SYMBOL_GPL(nexthop_select_path);
 
-पूर्णांक nexthop_क्रम_each_fib6_nh(काष्ठा nexthop *nh,
-			     पूर्णांक (*cb)(काष्ठा fib6_nh *nh, व्योम *arg),
-			     व्योम *arg)
-अणु
-	काष्ठा nh_info *nhi;
-	पूर्णांक err;
+int nexthop_for_each_fib6_nh(struct nexthop *nh,
+			     int (*cb)(struct fib6_nh *nh, void *arg),
+			     void *arg)
+{
+	struct nh_info *nhi;
+	int err;
 
-	अगर (nh->is_group) अणु
-		काष्ठा nh_group *nhg;
-		पूर्णांक i;
+	if (nh->is_group) {
+		struct nh_group *nhg;
+		int i;
 
 		nhg = rcu_dereference_rtnl(nh->nh_grp);
-		क्रम (i = 0; i < nhg->num_nh; i++) अणु
-			काष्ठा nh_grp_entry *nhge = &nhg->nh_entries[i];
+		for (i = 0; i < nhg->num_nh; i++) {
+			struct nh_grp_entry *nhge = &nhg->nh_entries[i];
 
 			nhi = rcu_dereference_rtnl(nhge->nh->nh_info);
 			err = cb(&nhi->fib6_nh, arg);
-			अगर (err)
-				वापस err;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			if (err)
+				return err;
+		}
+	} else {
 		nhi = rcu_dereference_rtnl(nh->nh_info);
 		err = cb(&nhi->fib6_nh, arg);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(nexthop_क्रम_each_fib6_nh);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(nexthop_for_each_fib6_nh);
 
-अटल पूर्णांक check_src_addr(स्थिर काष्ठा in6_addr *saddr,
-			  काष्ठा netlink_ext_ack *extack)
-अणु
-	अगर (!ipv6_addr_any(saddr)) अणु
+static int check_src_addr(const struct in6_addr *saddr,
+			  struct netlink_ext_ack *extack)
+{
+	if (!ipv6_addr_any(saddr)) {
 		NL_SET_ERR_MSG(extack, "IPv6 routes using source address can not use nexthop objects");
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EINVAL;
+	}
+	return 0;
+}
 
-पूर्णांक fib6_check_nexthop(काष्ठा nexthop *nh, काष्ठा fib6_config *cfg,
-		       काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा nh_info *nhi;
+int fib6_check_nexthop(struct nexthop *nh, struct fib6_config *cfg,
+		       struct netlink_ext_ack *extack)
+{
+	struct nh_info *nhi;
 	bool is_fdb_nh;
 
 	/* fib6_src is unique to a fib6_info and limits the ability to cache
 	 * routes in fib6_nh within a nexthop that is potentially shared
 	 * across multiple fib entries. If the config wants to use source
-	 * routing it can not use nexthop objects. mlxsw also करोes not allow
+	 * routing it can not use nexthop objects. mlxsw also does not allow
 	 * fib6_src on routes.
 	 */
-	अगर (cfg && check_src_addr(&cfg->fc_src, extack) < 0)
-		वापस -EINVAL;
+	if (cfg && check_src_addr(&cfg->fc_src, extack) < 0)
+		return -EINVAL;
 
-	अगर (nh->is_group) अणु
-		काष्ठा nh_group *nhg;
+	if (nh->is_group) {
+		struct nh_group *nhg;
 
 		nhg = rtnl_dereference(nh->nh_grp);
-		अगर (nhg->has_v4)
-			जाओ no_v4_nh;
+		if (nhg->has_v4)
+			goto no_v4_nh;
 		is_fdb_nh = nhg->fdb_nh;
-	पूर्ण अन्यथा अणु
+	} else {
 		nhi = rtnl_dereference(nh->nh_info);
-		अगर (nhi->family == AF_INET)
-			जाओ no_v4_nh;
+		if (nhi->family == AF_INET)
+			goto no_v4_nh;
 		is_fdb_nh = nhi->fdb_nh;
-	पूर्ण
+	}
 
-	अगर (is_fdb_nh) अणु
+	if (is_fdb_nh) {
 		NL_SET_ERR_MSG(extack, "Route cannot point to a fdb nexthop");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
+	return 0;
 no_v4_nh:
 	NL_SET_ERR_MSG(extack, "IPv6 routes can not use an IPv4 nexthop");
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 EXPORT_SYMBOL_GPL(fib6_check_nexthop);
 
-/* अगर existing nexthop has ipv6 routes linked to it, need
- * to verअगरy this new spec works with ipv6
+/* if existing nexthop has ipv6 routes linked to it, need
+ * to verify this new spec works with ipv6
  */
-अटल पूर्णांक fib6_check_nh_list(काष्ठा nexthop *old, काष्ठा nexthop *new,
-			      काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा fib6_info *f6i;
+static int fib6_check_nh_list(struct nexthop *old, struct nexthop *new,
+			      struct netlink_ext_ack *extack)
+{
+	struct fib6_info *f6i;
 
-	अगर (list_empty(&old->f6i_list))
-		वापस 0;
+	if (list_empty(&old->f6i_list))
+		return 0;
 
-	list_क्रम_each_entry(f6i, &old->f6i_list, nh_list) अणु
-		अगर (check_src_addr(&f6i->fib6_src.addr, extack) < 0)
-			वापस -EINVAL;
-	पूर्ण
+	list_for_each_entry(f6i, &old->f6i_list, nh_list) {
+		if (check_src_addr(&f6i->fib6_src.addr, extack) < 0)
+			return -EINVAL;
+	}
 
-	वापस fib6_check_nexthop(new, शून्य, extack);
-पूर्ण
+	return fib6_check_nexthop(new, NULL, extack);
+}
 
-अटल पूर्णांक nexthop_check_scope(काष्ठा nh_info *nhi, u8 scope,
-			       काष्ठा netlink_ext_ack *extack)
-अणु
-	अगर (scope == RT_SCOPE_HOST && nhi->fib_nhc.nhc_gw_family) अणु
+static int nexthop_check_scope(struct nh_info *nhi, u8 scope,
+			       struct netlink_ext_ack *extack)
+{
+	if (scope == RT_SCOPE_HOST && nhi->fib_nhc.nhc_gw_family) {
 		NL_SET_ERR_MSG(extack,
 			       "Route with host scope can not have a gateway");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (nhi->fib_nhc.nhc_flags & RTNH_F_ONLINK && scope >= RT_SCOPE_LINK) अणु
+	if (nhi->fib_nhc.nhc_flags & RTNH_F_ONLINK && scope >= RT_SCOPE_LINK) {
 		NL_SET_ERR_MSG(extack, "Scope mismatch with nexthop");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Invoked by fib add code to verअगरy nexthop by id is ok with
- * config क्रम prefix; parts of fib_check_nh not करोne when nexthop
+/* Invoked by fib add code to verify nexthop by id is ok with
+ * config for prefix; parts of fib_check_nh not done when nexthop
  * object is used.
  */
-पूर्णांक fib_check_nexthop(काष्ठा nexthop *nh, u8 scope,
-		      काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा nh_info *nhi;
-	पूर्णांक err = 0;
+int fib_check_nexthop(struct nexthop *nh, u8 scope,
+		      struct netlink_ext_ack *extack)
+{
+	struct nh_info *nhi;
+	int err = 0;
 
-	अगर (nh->is_group) अणु
-		काष्ठा nh_group *nhg;
+	if (nh->is_group) {
+		struct nh_group *nhg;
 
 		nhg = rtnl_dereference(nh->nh_grp);
-		अगर (nhg->fdb_nh) अणु
+		if (nhg->fdb_nh) {
 			NL_SET_ERR_MSG(extack, "Route cannot point to a fdb nexthop");
 			err = -EINVAL;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		अगर (scope == RT_SCOPE_HOST) अणु
+		if (scope == RT_SCOPE_HOST) {
 			NL_SET_ERR_MSG(extack, "Route with host scope can not have multiple nexthops");
 			err = -EINVAL;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		/* all nexthops in a group have the same scope */
 		nhi = rtnl_dereference(nhg->nh_entries[0].nh->nh_info);
 		err = nexthop_check_scope(nhi, scope, extack);
-	पूर्ण अन्यथा अणु
+	} else {
 		nhi = rtnl_dereference(nh->nh_info);
-		अगर (nhi->fdb_nh) अणु
+		if (nhi->fdb_nh) {
 			NL_SET_ERR_MSG(extack, "Route cannot point to a fdb nexthop");
 			err = -EINVAL;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		err = nexthop_check_scope(nhi, scope, extack);
-	पूर्ण
+	}
 
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक fib_check_nh_list(काष्ठा nexthop *old, काष्ठा nexthop *new,
-			     काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा fib_info *fi;
+static int fib_check_nh_list(struct nexthop *old, struct nexthop *new,
+			     struct netlink_ext_ack *extack)
+{
+	struct fib_info *fi;
 
-	list_क्रम_each_entry(fi, &old->fi_list, nh_list) अणु
-		पूर्णांक err;
+	list_for_each_entry(fi, &old->fi_list, nh_list) {
+		int err;
 
 		err = fib_check_nexthop(new, fi->fib_scope, extack);
-		अगर (err)
-			वापस err;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (err)
+			return err;
+	}
+	return 0;
+}
 
-अटल bool nh_res_nhge_is_balanced(स्थिर काष्ठा nh_grp_entry *nhge)
-अणु
-	वापस nhge->res.count_buckets == nhge->res.wants_buckets;
-पूर्ण
+static bool nh_res_nhge_is_balanced(const struct nh_grp_entry *nhge)
+{
+	return nhge->res.count_buckets == nhge->res.wants_buckets;
+}
 
-अटल bool nh_res_nhge_is_ow(स्थिर काष्ठा nh_grp_entry *nhge)
-अणु
-	वापस nhge->res.count_buckets > nhge->res.wants_buckets;
-पूर्ण
+static bool nh_res_nhge_is_ow(const struct nh_grp_entry *nhge)
+{
+	return nhge->res.count_buckets > nhge->res.wants_buckets;
+}
 
-अटल bool nh_res_nhge_is_uw(स्थिर काष्ठा nh_grp_entry *nhge)
-अणु
-	वापस nhge->res.count_buckets < nhge->res.wants_buckets;
-पूर्ण
+static bool nh_res_nhge_is_uw(const struct nh_grp_entry *nhge)
+{
+	return nhge->res.count_buckets < nhge->res.wants_buckets;
+}
 
-अटल bool nh_res_table_is_balanced(स्थिर काष्ठा nh_res_table *res_table)
-अणु
-	वापस list_empty(&res_table->uw_nh_entries);
-पूर्ण
+static bool nh_res_table_is_balanced(const struct nh_res_table *res_table)
+{
+	return list_empty(&res_table->uw_nh_entries);
+}
 
-अटल व्योम nh_res_bucket_unset_nh(काष्ठा nh_res_bucket *bucket)
-अणु
-	काष्ठा nh_grp_entry *nhge;
+static void nh_res_bucket_unset_nh(struct nh_res_bucket *bucket)
+{
+	struct nh_grp_entry *nhge;
 
-	अगर (bucket->occupied) अणु
+	if (bucket->occupied) {
 		nhge = nh_res_dereference(bucket->nh_entry);
 		nhge->res.count_buckets--;
 		bucket->occupied = false;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम nh_res_bucket_set_nh(काष्ठा nh_res_bucket *bucket,
-				 काष्ठा nh_grp_entry *nhge)
-अणु
+static void nh_res_bucket_set_nh(struct nh_res_bucket *bucket,
+				 struct nh_grp_entry *nhge)
+{
 	nh_res_bucket_unset_nh(bucket);
 
 	bucket->occupied = true;
-	rcu_assign_poपूर्णांकer(bucket->nh_entry, nhge);
+	rcu_assign_pointer(bucket->nh_entry, nhge);
 	nhge->res.count_buckets++;
-पूर्ण
+}
 
-अटल bool nh_res_bucket_should_migrate(काष्ठा nh_res_table *res_table,
-					 काष्ठा nh_res_bucket *bucket,
-					 अचिन्हित दीर्घ *deadline, bool *क्रमce)
-अणु
-	अचिन्हित दीर्घ now = jअगरfies;
-	काष्ठा nh_grp_entry *nhge;
-	अचिन्हित दीर्घ idle_poपूर्णांक;
+static bool nh_res_bucket_should_migrate(struct nh_res_table *res_table,
+					 struct nh_res_bucket *bucket,
+					 unsigned long *deadline, bool *force)
+{
+	unsigned long now = jiffies;
+	struct nh_grp_entry *nhge;
+	unsigned long idle_point;
 
-	अगर (!bucket->occupied) अणु
-		/* The bucket is not occupied, its NHGE poपूर्णांकer is either
-		 * शून्य or obsolete. We _have to_ migrate: set क्रमce.
+	if (!bucket->occupied) {
+		/* The bucket is not occupied, its NHGE pointer is either
+		 * NULL or obsolete. We _have to_ migrate: set force.
 		 */
-		*क्रमce = true;
-		वापस true;
-	पूर्ण
+		*force = true;
+		return true;
+	}
 
 	nhge = nh_res_dereference(bucket->nh_entry);
 
 	/* If the bucket is populated by an underweight or balanced
-	 * nexthop, करो not migrate.
+	 * nexthop, do not migrate.
 	 */
-	अगर (!nh_res_nhge_is_ow(nhge))
-		वापस false;
+	if (!nh_res_nhge_is_ow(nhge))
+		return false;
 
-	/* At this poपूर्णांक we know that the bucket is populated with an
-	 * overweight nexthop. It needs to be migrated to a new nexthop अगर
-	 * the idle समयr of unbalanced समयr expired.
+	/* At this point we know that the bucket is populated with an
+	 * overweight nexthop. It needs to be migrated to a new nexthop if
+	 * the idle timer of unbalanced timer expired.
 	 */
 
-	idle_poपूर्णांक = nh_res_bucket_idle_poपूर्णांक(res_table, bucket, now);
-	अगर (समय_after_eq(now, idle_poपूर्णांक)) अणु
-		/* The bucket is idle. We _can_ migrate: unset क्रमce. */
-		*क्रमce = false;
-		वापस true;
-	पूर्ण
+	idle_point = nh_res_bucket_idle_point(res_table, bucket, now);
+	if (time_after_eq(now, idle_point)) {
+		/* The bucket is idle. We _can_ migrate: unset force. */
+		*force = false;
+		return true;
+	}
 
-	/* Unbalanced समयr of 0 means "never force". */
-	अगर (res_table->unbalanced_समयr) अणु
-		अचिन्हित दीर्घ unb_poपूर्णांक;
+	/* Unbalanced timer of 0 means "never force". */
+	if (res_table->unbalanced_timer) {
+		unsigned long unb_point;
 
-		unb_poपूर्णांक = nh_res_table_unb_poपूर्णांक(res_table);
-		अगर (समय_after(now, unb_poपूर्णांक)) अणु
-			/* The bucket is not idle, but the unbalanced समयr
-			 * expired. We _can_ migrate, but set क्रमce anyway,
+		unb_point = nh_res_table_unb_point(res_table);
+		if (time_after(now, unb_point)) {
+			/* The bucket is not idle, but the unbalanced timer
+			 * expired. We _can_ migrate, but set force anyway,
 			 * so that drivers know to ignore activity reports
 			 * from the HW.
 			 */
-			*क्रमce = true;
-			वापस true;
-		पूर्ण
+			*force = true;
+			return true;
+		}
 
-		nh_res_समय_set_deadline(unb_poपूर्णांक, deadline);
-	पूर्ण
+		nh_res_time_set_deadline(unb_point, deadline);
+	}
 
-	nh_res_समय_set_deadline(idle_poपूर्णांक, deadline);
-	वापस false;
-पूर्ण
+	nh_res_time_set_deadline(idle_point, deadline);
+	return false;
+}
 
-अटल bool nh_res_bucket_migrate(काष्ठा nh_res_table *res_table,
-				  u16 bucket_index, bool notअगरy,
-				  bool notअगरy_nl, bool क्रमce)
-अणु
-	काष्ठा nh_res_bucket *bucket = &res_table->nh_buckets[bucket_index];
-	काष्ठा nh_grp_entry *new_nhge;
-	काष्ठा netlink_ext_ack extack;
-	पूर्णांक err;
+static bool nh_res_bucket_migrate(struct nh_res_table *res_table,
+				  u16 bucket_index, bool notify,
+				  bool notify_nl, bool force)
+{
+	struct nh_res_bucket *bucket = &res_table->nh_buckets[bucket_index];
+	struct nh_grp_entry *new_nhge;
+	struct netlink_ext_ack extack;
+	int err;
 
 	new_nhge = list_first_entry_or_null(&res_table->uw_nh_entries,
-					    काष्ठा nh_grp_entry,
+					    struct nh_grp_entry,
 					    res.uw_nh_entry);
-	अगर (WARN_ON_ONCE(!new_nhge))
+	if (WARN_ON_ONCE(!new_nhge))
 		/* If this function is called, "bucket" is either not
-		 * occupied, or it beदीर्घs to a next hop that is
-		 * overweight. In either हाल, there ought to be a
+		 * occupied, or it belongs to a next hop that is
+		 * overweight. In either case, there ought to be a
 		 * corresponding underweight next hop.
 		 */
-		वापस false;
+		return false;
 
-	अगर (notअगरy) अणु
-		काष्ठा nh_grp_entry *old_nhge;
+	if (notify) {
+		struct nh_grp_entry *old_nhge;
 
 		old_nhge = nh_res_dereference(bucket->nh_entry);
-		err = call_nexthop_res_bucket_notअगरiers(res_table->net,
+		err = call_nexthop_res_bucket_notifiers(res_table->net,
 							res_table->nhg_id,
-							bucket_index, क्रमce,
+							bucket_index, force,
 							old_nhge->nh,
 							new_nhge->nh, &extack);
-		अगर (err) अणु
+		if (err) {
 			pr_err_ratelimited("%s\n", extack._msg);
-			अगर (!क्रमce)
-				वापस false;
-			/* It is not possible to veto a क्रमced replacement, so
+			if (!force)
+				return false;
+			/* It is not possible to veto a forced replacement, so
 			 * just clear the hardware flags from the nexthop
 			 * bucket to indicate to user space that this bucket is
 			 * not correctly populated in hardware.
 			 */
 			bucket->nh_flags &= ~(RTNH_F_OFFLOAD | RTNH_F_TRAP);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	nh_res_bucket_set_nh(bucket, new_nhge);
 	nh_res_bucket_set_idle(res_table, bucket);
 
-	अगर (notअगरy_nl)
-		nexthop_bucket_notअगरy(res_table, bucket_index);
+	if (notify_nl)
+		nexthop_bucket_notify(res_table, bucket_index);
 
-	अगर (nh_res_nhge_is_balanced(new_nhge))
+	if (nh_res_nhge_is_balanced(new_nhge))
 		list_del(&new_nhge->res.uw_nh_entry);
-	वापस true;
-पूर्ण
+	return true;
+}
 
-#घोषणा NH_RES_UPKEEP_DW_MINIMUM_INTERVAL (HZ / 2)
+#define NH_RES_UPKEEP_DW_MINIMUM_INTERVAL (HZ / 2)
 
-अटल व्योम nh_res_table_upkeep(काष्ठा nh_res_table *res_table,
-				bool notअगरy, bool notअगरy_nl)
-अणु
-	अचिन्हित दीर्घ now = jअगरfies;
-	अचिन्हित दीर्घ deadline;
+static void nh_res_table_upkeep(struct nh_res_table *res_table,
+				bool notify, bool notify_nl)
+{
+	unsigned long now = jiffies;
+	unsigned long deadline;
 	u16 i;
 
-	/* Deadline is the next समय that upkeep should be run. It is the
-	 * earliest समय at which one of the buckets might be migrated.
-	 * Start at the most pessimistic estimate: either unbalanced_समयr
-	 * from now, or अगर there is none, idle_समयr from now. For each
-	 * encountered समय poपूर्णांक, call nh_res_समय_set_deadline() to
+	/* Deadline is the next time that upkeep should be run. It is the
+	 * earliest time at which one of the buckets might be migrated.
+	 * Start at the most pessimistic estimate: either unbalanced_timer
+	 * from now, or if there is none, idle_timer from now. For each
+	 * encountered time point, call nh_res_time_set_deadline() to
 	 * refine the estimate.
 	 */
-	अगर (res_table->unbalanced_समयr)
-		deadline = now + res_table->unbalanced_समयr;
-	अन्यथा
-		deadline = now + res_table->idle_समयr;
+	if (res_table->unbalanced_timer)
+		deadline = now + res_table->unbalanced_timer;
+	else
+		deadline = now + res_table->idle_timer;
 
-	क्रम (i = 0; i < res_table->num_nh_buckets; i++) अणु
-		काष्ठा nh_res_bucket *bucket = &res_table->nh_buckets[i];
-		bool क्रमce;
+	for (i = 0; i < res_table->num_nh_buckets; i++) {
+		struct nh_res_bucket *bucket = &res_table->nh_buckets[i];
+		bool force;
 
-		अगर (nh_res_bucket_should_migrate(res_table, bucket,
-						 &deadline, &क्रमce)) अणु
-			अगर (!nh_res_bucket_migrate(res_table, i, notअगरy,
-						   notअगरy_nl, क्रमce)) अणु
-				अचिन्हित दीर्घ idle_poपूर्णांक;
+		if (nh_res_bucket_should_migrate(res_table, bucket,
+						 &deadline, &force)) {
+			if (!nh_res_bucket_migrate(res_table, i, notify,
+						   notify_nl, force)) {
+				unsigned long idle_point;
 
 				/* A driver can override the migration
-				 * decision अगर the HW reports that the
-				 * bucket is actually not idle. Thereक्रमe
+				 * decision if the HW reports that the
+				 * bucket is actually not idle. Therefore
 				 * remark the bucket as busy again and
 				 * update the deadline.
 				 */
 				nh_res_bucket_set_busy(bucket);
-				idle_poपूर्णांक = nh_res_bucket_idle_poपूर्णांक(res_table,
+				idle_point = nh_res_bucket_idle_point(res_table,
 								      bucket,
 								      now);
-				nh_res_समय_set_deadline(idle_poपूर्णांक, &deadline);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				nh_res_time_set_deadline(idle_point, &deadline);
+			}
+		}
+	}
 
 	/* If the group is still unbalanced, schedule the next upkeep to
 	 * either the deadline computed above, or the minimum deadline,
 	 * whichever comes later.
 	 */
-	अगर (!nh_res_table_is_balanced(res_table)) अणु
-		अचिन्हित दीर्घ now = jअगरfies;
-		अचिन्हित दीर्घ min_deadline;
+	if (!nh_res_table_is_balanced(res_table)) {
+		unsigned long now = jiffies;
+		unsigned long min_deadline;
 
 		min_deadline = now + NH_RES_UPKEEP_DW_MINIMUM_INTERVAL;
-		अगर (समय_beक्रमe(deadline, min_deadline))
+		if (time_before(deadline, min_deadline))
 			deadline = min_deadline;
 
-		queue_delayed_work(प्रणाली_घातer_efficient_wq,
+		queue_delayed_work(system_power_efficient_wq,
 				   &res_table->upkeep_dw, deadline - now);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम nh_res_table_upkeep_dw(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा delayed_work *dw = to_delayed_work(work);
-	काष्ठा nh_res_table *res_table;
+static void nh_res_table_upkeep_dw(struct work_struct *work)
+{
+	struct delayed_work *dw = to_delayed_work(work);
+	struct nh_res_table *res_table;
 
-	res_table = container_of(dw, काष्ठा nh_res_table, upkeep_dw);
+	res_table = container_of(dw, struct nh_res_table, upkeep_dw);
 	nh_res_table_upkeep(res_table, true, true);
-पूर्ण
+}
 
-अटल व्योम nh_res_table_cancel_upkeep(काष्ठा nh_res_table *res_table)
-अणु
+static void nh_res_table_cancel_upkeep(struct nh_res_table *res_table)
+{
 	cancel_delayed_work_sync(&res_table->upkeep_dw);
-पूर्ण
+}
 
-अटल व्योम nh_res_group_rebalance(काष्ठा nh_group *nhg,
-				   काष्ठा nh_res_table *res_table)
-अणु
-	पूर्णांक prev_upper_bound = 0;
-	पूर्णांक total = 0;
-	पूर्णांक w = 0;
-	पूर्णांक i;
+static void nh_res_group_rebalance(struct nh_group *nhg,
+				   struct nh_res_table *res_table)
+{
+	int prev_upper_bound = 0;
+	int total = 0;
+	int w = 0;
+	int i;
 
 	INIT_LIST_HEAD(&res_table->uw_nh_entries);
 
-	क्रम (i = 0; i < nhg->num_nh; ++i)
+	for (i = 0; i < nhg->num_nh; ++i)
 		total += nhg->nh_entries[i].weight;
 
-	क्रम (i = 0; i < nhg->num_nh; ++i) अणु
-		काष्ठा nh_grp_entry *nhge = &nhg->nh_entries[i];
-		पूर्णांक upper_bound;
+	for (i = 0; i < nhg->num_nh; ++i) {
+		struct nh_grp_entry *nhge = &nhg->nh_entries[i];
+		int upper_bound;
 
 		w += nhge->weight;
 		upper_bound = DIV_ROUND_CLOSEST(res_table->num_nh_buckets * w,
@@ -1651,105 +1650,105 @@ out:
 		nhge->res.wants_buckets = upper_bound - prev_upper_bound;
 		prev_upper_bound = upper_bound;
 
-		अगर (nh_res_nhge_is_uw(nhge)) अणु
-			अगर (list_empty(&res_table->uw_nh_entries))
-				res_table->unbalanced_since = jअगरfies;
+		if (nh_res_nhge_is_uw(nhge)) {
+			if (list_empty(&res_table->uw_nh_entries))
+				res_table->unbalanced_since = jiffies;
 			list_add(&nhge->res.uw_nh_entry,
 				 &res_table->uw_nh_entries);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /* Migrate buckets in res_table so that they reference NHGE's from NHG with
- * the right NH ID. Set those buckets that करो not have a corresponding NHGE
+ * the right NH ID. Set those buckets that do not have a corresponding NHGE
  * entry in NHG as not occupied.
  */
-अटल व्योम nh_res_table_migrate_buckets(काष्ठा nh_res_table *res_table,
-					 काष्ठा nh_group *nhg)
-अणु
+static void nh_res_table_migrate_buckets(struct nh_res_table *res_table,
+					 struct nh_group *nhg)
+{
 	u16 i;
 
-	क्रम (i = 0; i < res_table->num_nh_buckets; i++) अणु
-		काष्ठा nh_res_bucket *bucket = &res_table->nh_buckets[i];
+	for (i = 0; i < res_table->num_nh_buckets; i++) {
+		struct nh_res_bucket *bucket = &res_table->nh_buckets[i];
 		u32 id = rtnl_dereference(bucket->nh_entry)->nh->id;
 		bool found = false;
-		पूर्णांक j;
+		int j;
 
-		क्रम (j = 0; j < nhg->num_nh; j++) अणु
-			काष्ठा nh_grp_entry *nhge = &nhg->nh_entries[j];
+		for (j = 0; j < nhg->num_nh; j++) {
+			struct nh_grp_entry *nhge = &nhg->nh_entries[j];
 
-			अगर (nhge->nh->id == id) अणु
+			if (nhge->nh->id == id) {
 				nh_res_bucket_set_nh(bucket, nhge);
 				found = true;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 
-		अगर (!found)
+		if (!found)
 			nh_res_bucket_unset_nh(bucket);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम replace_nexthop_grp_res(काष्ठा nh_group *oldg,
-				    काष्ठा nh_group *newg)
-अणु
+static void replace_nexthop_grp_res(struct nh_group *oldg,
+				    struct nh_group *newg)
+{
 	/* For NH group replacement, the new NHG might only have a stub
 	 * hash table with 0 buckets, because the number of buckets was not
-	 * specअगरied. For NH removal, oldg and newg both reference the same
-	 * res_table. So in any हाल, in the following, we want to work
+	 * specified. For NH removal, oldg and newg both reference the same
+	 * res_table. So in any case, in the following, we want to work
 	 * with oldg->res_table.
 	 */
-	काष्ठा nh_res_table *old_res_table = rtnl_dereference(oldg->res_table);
-	अचिन्हित दीर्घ prev_unbalanced_since = old_res_table->unbalanced_since;
+	struct nh_res_table *old_res_table = rtnl_dereference(oldg->res_table);
+	unsigned long prev_unbalanced_since = old_res_table->unbalanced_since;
 	bool prev_has_uw = !list_empty(&old_res_table->uw_nh_entries);
 
 	nh_res_table_cancel_upkeep(old_res_table);
 	nh_res_table_migrate_buckets(old_res_table, newg);
 	nh_res_group_rebalance(newg, old_res_table);
-	अगर (prev_has_uw && !list_empty(&old_res_table->uw_nh_entries))
+	if (prev_has_uw && !list_empty(&old_res_table->uw_nh_entries))
 		old_res_table->unbalanced_since = prev_unbalanced_since;
 	nh_res_table_upkeep(old_res_table, true, false);
-पूर्ण
+}
 
-अटल व्योम nh_hthr_group_rebalance(काष्ठा nh_group *nhg)
-अणु
-	पूर्णांक total = 0;
-	पूर्णांक w = 0;
-	पूर्णांक i;
+static void nh_hthr_group_rebalance(struct nh_group *nhg)
+{
+	int total = 0;
+	int w = 0;
+	int i;
 
-	क्रम (i = 0; i < nhg->num_nh; ++i)
+	for (i = 0; i < nhg->num_nh; ++i)
 		total += nhg->nh_entries[i].weight;
 
-	क्रम (i = 0; i < nhg->num_nh; ++i) अणु
-		काष्ठा nh_grp_entry *nhge = &nhg->nh_entries[i];
-		पूर्णांक upper_bound;
+	for (i = 0; i < nhg->num_nh; ++i) {
+		struct nh_grp_entry *nhge = &nhg->nh_entries[i];
+		int upper_bound;
 
 		w += nhge->weight;
 		upper_bound = DIV_ROUND_CLOSEST_ULL((u64)w << 31, total) - 1;
 		atomic_set(&nhge->hthr.upper_bound, upper_bound);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम हटाओ_nh_grp_entry(काष्ठा net *net, काष्ठा nh_grp_entry *nhge,
-				काष्ठा nl_info *nlinfo)
-अणु
-	काष्ठा nh_grp_entry *nhges, *new_nhges;
-	काष्ठा nexthop *nhp = nhge->nh_parent;
-	काष्ठा netlink_ext_ack extack;
-	काष्ठा nexthop *nh = nhge->nh;
-	काष्ठा nh_group *nhg, *newg;
-	पूर्णांक i, j, err;
+static void remove_nh_grp_entry(struct net *net, struct nh_grp_entry *nhge,
+				struct nl_info *nlinfo)
+{
+	struct nh_grp_entry *nhges, *new_nhges;
+	struct nexthop *nhp = nhge->nh_parent;
+	struct netlink_ext_ack extack;
+	struct nexthop *nh = nhge->nh;
+	struct nh_group *nhg, *newg;
+	int i, j, err;
 
 	WARN_ON(!nh);
 
 	nhg = rtnl_dereference(nhp->nh_grp);
 	newg = nhg->spare;
 
-	/* last entry, keep it visible and हटाओ the parent */
-	अगर (nhg->num_nh == 1) अणु
-		हटाओ_nexthop(net, nhp, nlinfo);
-		वापस;
-	पूर्ण
+	/* last entry, keep it visible and remove the parent */
+	if (nhg->num_nh == 1) {
+		remove_nexthop(net, nhp, nlinfo);
+		return;
+	}
 
 	newg->has_v4 = false;
 	newg->is_multipath = nhg->is_multipath;
@@ -1758,20 +1757,20 @@ out:
 	newg->fdb_nh = nhg->fdb_nh;
 	newg->num_nh = nhg->num_nh;
 
-	/* copy old entries to new except the one getting हटाओd */
+	/* copy old entries to new except the one getting removed */
 	nhges = nhg->nh_entries;
 	new_nhges = newg->nh_entries;
-	क्रम (i = 0, j = 0; i < nhg->num_nh; ++i) अणु
-		काष्ठा nh_info *nhi;
+	for (i = 0, j = 0; i < nhg->num_nh; ++i) {
+		struct nh_info *nhi;
 
-		/* current nexthop getting हटाओd */
-		अगर (nhg->nh_entries[i].nh == nh) अणु
+		/* current nexthop getting removed */
+		if (nhg->nh_entries[i].nh == nh) {
 			newg->num_nh--;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		nhi = rtnl_dereference(nhges[i].nh->nh_info);
-		अगर (nhi->family == AF_INET)
+		if (nhi->family == AF_INET)
 			newg->has_v4 = true;
 
 		list_del(&nhges[i].nh_list);
@@ -1780,323 +1779,323 @@ out:
 		new_nhges[j].weight = nhges[i].weight;
 		list_add(&new_nhges[j].nh_list, &new_nhges[j].nh->grp_list);
 		j++;
-	पूर्ण
+	}
 
-	अगर (newg->hash_threshold)
+	if (newg->hash_threshold)
 		nh_hthr_group_rebalance(newg);
-	अन्यथा अगर (newg->resilient)
+	else if (newg->resilient)
 		replace_nexthop_grp_res(nhg, newg);
 
-	rcu_assign_poपूर्णांकer(nhp->nh_grp, newg);
+	rcu_assign_pointer(nhp->nh_grp, newg);
 
 	list_del(&nhge->nh_list);
 	nexthop_put(nhge->nh);
 
-	/* Removal of a NH from a resilient group is notअगरied through
-	 * bucket notअगरications.
+	/* Removal of a NH from a resilient group is notified through
+	 * bucket notifications.
 	 */
-	अगर (newg->hash_threshold) अणु
-		err = call_nexthop_notअगरiers(net, NEXTHOP_EVENT_REPLACE, nhp,
+	if (newg->hash_threshold) {
+		err = call_nexthop_notifiers(net, NEXTHOP_EVENT_REPLACE, nhp,
 					     &extack);
-		अगर (err)
+		if (err)
 			pr_err("%s\n", extack._msg);
-	पूर्ण
+	}
 
-	अगर (nlinfo)
-		nexthop_notअगरy(RTM_NEWNEXTHOP, nhp, nlinfo);
-पूर्ण
+	if (nlinfo)
+		nexthop_notify(RTM_NEWNEXTHOP, nhp, nlinfo);
+}
 
-अटल व्योम हटाओ_nexthop_from_groups(काष्ठा net *net, काष्ठा nexthop *nh,
-				       काष्ठा nl_info *nlinfo)
-अणु
-	काष्ठा nh_grp_entry *nhge, *पंचांगp;
+static void remove_nexthop_from_groups(struct net *net, struct nexthop *nh,
+				       struct nl_info *nlinfo)
+{
+	struct nh_grp_entry *nhge, *tmp;
 
-	list_क्रम_each_entry_safe(nhge, पंचांगp, &nh->grp_list, nh_list)
-		हटाओ_nh_grp_entry(net, nhge, nlinfo);
+	list_for_each_entry_safe(nhge, tmp, &nh->grp_list, nh_list)
+		remove_nh_grp_entry(net, nhge, nlinfo);
 
-	/* make sure all see the newly published array beक्रमe releasing rtnl */
+	/* make sure all see the newly published array before releasing rtnl */
 	synchronize_net();
-पूर्ण
+}
 
-अटल व्योम हटाओ_nexthop_group(काष्ठा nexthop *nh, काष्ठा nl_info *nlinfo)
-अणु
-	काष्ठा nh_group *nhg = rcu_dereference_rtnl(nh->nh_grp);
-	काष्ठा nh_res_table *res_table;
-	पूर्णांक i, num_nh = nhg->num_nh;
+static void remove_nexthop_group(struct nexthop *nh, struct nl_info *nlinfo)
+{
+	struct nh_group *nhg = rcu_dereference_rtnl(nh->nh_grp);
+	struct nh_res_table *res_table;
+	int i, num_nh = nhg->num_nh;
 
-	क्रम (i = 0; i < num_nh; ++i) अणु
-		काष्ठा nh_grp_entry *nhge = &nhg->nh_entries[i];
+	for (i = 0; i < num_nh; ++i) {
+		struct nh_grp_entry *nhge = &nhg->nh_entries[i];
 
-		अगर (WARN_ON(!nhge->nh))
-			जारी;
+		if (WARN_ON(!nhge->nh))
+			continue;
 
 		list_del_init(&nhge->nh_list);
-	पूर्ण
+	}
 
-	अगर (nhg->resilient) अणु
+	if (nhg->resilient) {
 		res_table = rtnl_dereference(nhg->res_table);
 		nh_res_table_cancel_upkeep(res_table);
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* not called क्रम nexthop replace */
-अटल व्योम __हटाओ_nexthop_fib(काष्ठा net *net, काष्ठा nexthop *nh)
-अणु
-	काष्ठा fib6_info *f6i, *पंचांगp;
-	bool करो_flush = false;
-	काष्ठा fib_info *fi;
+/* not called for nexthop replace */
+static void __remove_nexthop_fib(struct net *net, struct nexthop *nh)
+{
+	struct fib6_info *f6i, *tmp;
+	bool do_flush = false;
+	struct fib_info *fi;
 
-	list_क्रम_each_entry(fi, &nh->fi_list, nh_list) अणु
+	list_for_each_entry(fi, &nh->fi_list, nh_list) {
 		fi->fib_flags |= RTNH_F_DEAD;
-		करो_flush = true;
-	पूर्ण
-	अगर (करो_flush)
+		do_flush = true;
+	}
+	if (do_flush)
 		fib_flush(net);
 
-	/* ip6_del_rt हटाओs the entry from this list hence the _safe */
-	list_क्रम_each_entry_safe(f6i, पंचांगp, &nh->f6i_list, nh_list) अणु
-		/* __ip6_del_rt करोes a release, so करो a hold here */
+	/* ip6_del_rt removes the entry from this list hence the _safe */
+	list_for_each_entry_safe(f6i, tmp, &nh->f6i_list, nh_list) {
+		/* __ip6_del_rt does a release, so do a hold here */
 		fib6_info_hold(f6i);
 		ipv6_stub->ip6_del_rt(net, f6i,
 				      !net->ipv4.sysctl_nexthop_compat_mode);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम __हटाओ_nexthop(काष्ठा net *net, काष्ठा nexthop *nh,
-			     काष्ठा nl_info *nlinfo)
-अणु
-	__हटाओ_nexthop_fib(net, nh);
+static void __remove_nexthop(struct net *net, struct nexthop *nh,
+			     struct nl_info *nlinfo)
+{
+	__remove_nexthop_fib(net, nh);
 
-	अगर (nh->is_group) अणु
-		हटाओ_nexthop_group(nh, nlinfo);
-	पूर्ण अन्यथा अणु
-		काष्ठा nh_info *nhi;
+	if (nh->is_group) {
+		remove_nexthop_group(nh, nlinfo);
+	} else {
+		struct nh_info *nhi;
 
 		nhi = rtnl_dereference(nh->nh_info);
-		अगर (nhi->fib_nhc.nhc_dev)
+		if (nhi->fib_nhc.nhc_dev)
 			hlist_del(&nhi->dev_hash);
 
-		हटाओ_nexthop_from_groups(net, nh, nlinfo);
-	पूर्ण
-पूर्ण
+		remove_nexthop_from_groups(net, nh, nlinfo);
+	}
+}
 
-अटल व्योम हटाओ_nexthop(काष्ठा net *net, काष्ठा nexthop *nh,
-			   काष्ठा nl_info *nlinfo)
-अणु
-	call_nexthop_notअगरiers(net, NEXTHOP_EVENT_DEL, nh, शून्य);
+static void remove_nexthop(struct net *net, struct nexthop *nh,
+			   struct nl_info *nlinfo)
+{
+	call_nexthop_notifiers(net, NEXTHOP_EVENT_DEL, nh, NULL);
 
-	/* हटाओ from the tree */
+	/* remove from the tree */
 	rb_erase(&nh->rb_node, &net->nexthop.rb_root);
 
-	अगर (nlinfo)
-		nexthop_notअगरy(RTM_DELNEXTHOP, nh, nlinfo);
+	if (nlinfo)
+		nexthop_notify(RTM_DELNEXTHOP, nh, nlinfo);
 
-	__हटाओ_nexthop(net, nh, nlinfo);
+	__remove_nexthop(net, nh, nlinfo);
 	nh_base_seq_inc(net);
 
 	nexthop_put(nh);
-पूर्ण
+}
 
-/* अगर any FIB entries reference this nexthop, any dst entries
+/* if any FIB entries reference this nexthop, any dst entries
  * need to be regenerated
  */
-अटल व्योम nh_rt_cache_flush(काष्ठा net *net, काष्ठा nexthop *nh)
-अणु
-	काष्ठा fib6_info *f6i;
+static void nh_rt_cache_flush(struct net *net, struct nexthop *nh)
+{
+	struct fib6_info *f6i;
 
-	अगर (!list_empty(&nh->fi_list))
+	if (!list_empty(&nh->fi_list))
 		rt_cache_flush(net);
 
-	list_क्रम_each_entry(f6i, &nh->f6i_list, nh_list)
+	list_for_each_entry(f6i, &nh->f6i_list, nh_list)
 		ipv6_stub->fib6_update_sernum(net, f6i);
-पूर्ण
+}
 
-अटल पूर्णांक replace_nexthop_grp(काष्ठा net *net, काष्ठा nexthop *old,
-			       काष्ठा nexthop *new, स्थिर काष्ठा nh_config *cfg,
-			       काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा nh_res_table *पंचांगp_table = शून्य;
-	काष्ठा nh_res_table *new_res_table;
-	काष्ठा nh_res_table *old_res_table;
-	काष्ठा nh_group *oldg, *newg;
-	पूर्णांक i, err;
+static int replace_nexthop_grp(struct net *net, struct nexthop *old,
+			       struct nexthop *new, const struct nh_config *cfg,
+			       struct netlink_ext_ack *extack)
+{
+	struct nh_res_table *tmp_table = NULL;
+	struct nh_res_table *new_res_table;
+	struct nh_res_table *old_res_table;
+	struct nh_group *oldg, *newg;
+	int i, err;
 
-	अगर (!new->is_group) अणु
+	if (!new->is_group) {
 		NL_SET_ERR_MSG(extack, "Can not replace a nexthop group with a nexthop.");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	oldg = rtnl_dereference(old->nh_grp);
 	newg = rtnl_dereference(new->nh_grp);
 
-	अगर (newg->hash_threshold != oldg->hash_threshold) अणु
+	if (newg->hash_threshold != oldg->hash_threshold) {
 		NL_SET_ERR_MSG(extack, "Can not replace a nexthop group with one of a different type.");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (newg->hash_threshold) अणु
-		err = call_nexthop_notअगरiers(net, NEXTHOP_EVENT_REPLACE, new,
+	if (newg->hash_threshold) {
+		err = call_nexthop_notifiers(net, NEXTHOP_EVENT_REPLACE, new,
 					     extack);
-		अगर (err)
-			वापस err;
-	पूर्ण अन्यथा अगर (newg->resilient) अणु
+		if (err)
+			return err;
+	} else if (newg->resilient) {
 		new_res_table = rtnl_dereference(newg->res_table);
 		old_res_table = rtnl_dereference(oldg->res_table);
 
-		/* Accept अगर num_nh_buckets was not given, but अगर it was
+		/* Accept if num_nh_buckets was not given, but if it was
 		 * given, demand that the value be correct.
 		 */
-		अगर (cfg->nh_grp_res_has_num_buckets &&
+		if (cfg->nh_grp_res_has_num_buckets &&
 		    cfg->nh_grp_res_num_buckets !=
-		    old_res_table->num_nh_buckets) अणु
+		    old_res_table->num_nh_buckets) {
 			NL_SET_ERR_MSG(extack, "Can not change number of buckets of a resilient nexthop group.");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		/* Emit a pre-replace notअगरication so that listeners could veto
+		/* Emit a pre-replace notification so that listeners could veto
 		 * a potentially unsupported configuration. Otherwise,
-		 * inभागidual bucket replacement notअगरications would need to be
-		 * vetoed, which is something that should only happen अगर the
+		 * individual bucket replacement notifications would need to be
+		 * vetoed, which is something that should only happen if the
 		 * bucket is currently active.
 		 */
-		err = call_nexthop_res_table_notअगरiers(net, new, extack);
-		अगर (err)
-			वापस err;
+		err = call_nexthop_res_table_notifiers(net, new, extack);
+		if (err)
+			return err;
 
-		अगर (cfg->nh_grp_res_has_idle_समयr)
-			old_res_table->idle_समयr = cfg->nh_grp_res_idle_समयr;
-		अगर (cfg->nh_grp_res_has_unbalanced_समयr)
-			old_res_table->unbalanced_समयr =
-				cfg->nh_grp_res_unbalanced_समयr;
+		if (cfg->nh_grp_res_has_idle_timer)
+			old_res_table->idle_timer = cfg->nh_grp_res_idle_timer;
+		if (cfg->nh_grp_res_has_unbalanced_timer)
+			old_res_table->unbalanced_timer =
+				cfg->nh_grp_res_unbalanced_timer;
 
 		replace_nexthop_grp_res(oldg, newg);
 
-		पंचांगp_table = new_res_table;
-		rcu_assign_poपूर्णांकer(newg->res_table, old_res_table);
-		rcu_assign_poपूर्णांकer(newg->spare->res_table, old_res_table);
-	पूर्ण
+		tmp_table = new_res_table;
+		rcu_assign_pointer(newg->res_table, old_res_table);
+		rcu_assign_pointer(newg->spare->res_table, old_res_table);
+	}
 
-	/* update parents - used by nexthop code क्रम cleanup */
-	क्रम (i = 0; i < newg->num_nh; i++)
+	/* update parents - used by nexthop code for cleanup */
+	for (i = 0; i < newg->num_nh; i++)
 		newg->nh_entries[i].nh_parent = old;
 
-	rcu_assign_poपूर्णांकer(old->nh_grp, newg);
+	rcu_assign_pointer(old->nh_grp, newg);
 
-	अगर (newg->resilient) अणु
-		rcu_assign_poपूर्णांकer(oldg->res_table, पंचांगp_table);
-		rcu_assign_poपूर्णांकer(oldg->spare->res_table, पंचांगp_table);
-	पूर्ण
+	if (newg->resilient) {
+		rcu_assign_pointer(oldg->res_table, tmp_table);
+		rcu_assign_pointer(oldg->spare->res_table, tmp_table);
+	}
 
-	क्रम (i = 0; i < oldg->num_nh; i++)
+	for (i = 0; i < oldg->num_nh; i++)
 		oldg->nh_entries[i].nh_parent = new;
 
-	rcu_assign_poपूर्णांकer(new->nh_grp, oldg);
+	rcu_assign_pointer(new->nh_grp, oldg);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम nh_group_v4_update(काष्ठा nh_group *nhg)
-अणु
-	काष्ठा nh_grp_entry *nhges;
+static void nh_group_v4_update(struct nh_group *nhg)
+{
+	struct nh_grp_entry *nhges;
 	bool has_v4 = false;
-	पूर्णांक i;
+	int i;
 
 	nhges = nhg->nh_entries;
-	क्रम (i = 0; i < nhg->num_nh; i++) अणु
-		काष्ठा nh_info *nhi;
+	for (i = 0; i < nhg->num_nh; i++) {
+		struct nh_info *nhi;
 
 		nhi = rtnl_dereference(nhges[i].nh->nh_info);
-		अगर (nhi->family == AF_INET)
+		if (nhi->family == AF_INET)
 			has_v4 = true;
-	पूर्ण
+	}
 	nhg->has_v4 = has_v4;
-पूर्ण
+}
 
-अटल पूर्णांक replace_nexthop_single_notअगरy_res(काष्ठा net *net,
-					     काष्ठा nh_res_table *res_table,
-					     काष्ठा nexthop *old,
-					     काष्ठा nh_info *oldi,
-					     काष्ठा nh_info *newi,
-					     काष्ठा netlink_ext_ack *extack)
-अणु
+static int replace_nexthop_single_notify_res(struct net *net,
+					     struct nh_res_table *res_table,
+					     struct nexthop *old,
+					     struct nh_info *oldi,
+					     struct nh_info *newi,
+					     struct netlink_ext_ack *extack)
+{
 	u32 nhg_id = res_table->nhg_id;
-	पूर्णांक err;
+	int err;
 	u16 i;
 
-	क्रम (i = 0; i < res_table->num_nh_buckets; i++) अणु
-		काष्ठा nh_res_bucket *bucket = &res_table->nh_buckets[i];
-		काष्ठा nh_grp_entry *nhge;
+	for (i = 0; i < res_table->num_nh_buckets; i++) {
+		struct nh_res_bucket *bucket = &res_table->nh_buckets[i];
+		struct nh_grp_entry *nhge;
 
 		nhge = rtnl_dereference(bucket->nh_entry);
-		अगर (nhge->nh == old) अणु
-			err = __call_nexthop_res_bucket_notअगरiers(net, nhg_id,
+		if (nhge->nh == old) {
+			err = __call_nexthop_res_bucket_notifiers(net, nhg_id,
 								  i, true,
 								  oldi, newi,
 								  extack);
-			अगर (err)
-				जाओ err_notअगरy;
-		पूर्ण
-	पूर्ण
+			if (err)
+				goto err_notify;
+		}
+	}
 
-	वापस 0;
+	return 0;
 
-err_notअगरy:
-	जबतक (i-- > 0) अणु
-		काष्ठा nh_res_bucket *bucket = &res_table->nh_buckets[i];
-		काष्ठा nh_grp_entry *nhge;
+err_notify:
+	while (i-- > 0) {
+		struct nh_res_bucket *bucket = &res_table->nh_buckets[i];
+		struct nh_grp_entry *nhge;
 
 		nhge = rtnl_dereference(bucket->nh_entry);
-		अगर (nhge->nh == old)
-			__call_nexthop_res_bucket_notअगरiers(net, nhg_id, i,
+		if (nhge->nh == old)
+			__call_nexthop_res_bucket_notifiers(net, nhg_id, i,
 							    true, newi, oldi,
 							    extack);
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
-अटल पूर्णांक replace_nexthop_single_notअगरy(काष्ठा net *net,
-					 काष्ठा nexthop *group_nh,
-					 काष्ठा nexthop *old,
-					 काष्ठा nh_info *oldi,
-					 काष्ठा nh_info *newi,
-					 काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा nh_group *nhg = rtnl_dereference(group_nh->nh_grp);
-	काष्ठा nh_res_table *res_table;
+static int replace_nexthop_single_notify(struct net *net,
+					 struct nexthop *group_nh,
+					 struct nexthop *old,
+					 struct nh_info *oldi,
+					 struct nh_info *newi,
+					 struct netlink_ext_ack *extack)
+{
+	struct nh_group *nhg = rtnl_dereference(group_nh->nh_grp);
+	struct nh_res_table *res_table;
 
-	अगर (nhg->hash_threshold) अणु
-		वापस call_nexthop_notअगरiers(net, NEXTHOP_EVENT_REPLACE,
+	if (nhg->hash_threshold) {
+		return call_nexthop_notifiers(net, NEXTHOP_EVENT_REPLACE,
 					      group_nh, extack);
-	पूर्ण अन्यथा अगर (nhg->resilient) अणु
+	} else if (nhg->resilient) {
 		res_table = rtnl_dereference(nhg->res_table);
-		वापस replace_nexthop_single_notअगरy_res(net, res_table,
+		return replace_nexthop_single_notify_res(net, res_table,
 							 old, oldi, newi,
 							 extack);
-	पूर्ण
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक replace_nexthop_single(काष्ठा net *net, काष्ठा nexthop *old,
-				  काष्ठा nexthop *new,
-				  काष्ठा netlink_ext_ack *extack)
-अणु
+static int replace_nexthop_single(struct net *net, struct nexthop *old,
+				  struct nexthop *new,
+				  struct netlink_ext_ack *extack)
+{
 	u8 old_protocol, old_nh_flags;
-	काष्ठा nh_info *oldi, *newi;
-	काष्ठा nh_grp_entry *nhge;
-	पूर्णांक err;
+	struct nh_info *oldi, *newi;
+	struct nh_grp_entry *nhge;
+	int err;
 
-	अगर (new->is_group) अणु
+	if (new->is_group) {
 		NL_SET_ERR_MSG(extack, "Can not replace a nexthop with a nexthop group.");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	err = call_nexthop_notअगरiers(net, NEXTHOP_EVENT_REPLACE, new, extack);
-	अगर (err)
-		वापस err;
+	err = call_nexthop_notifiers(net, NEXTHOP_EVENT_REPLACE, new, extack);
+	if (err)
+		return err;
 
 	/* Hardware flags were set on 'old' as 'new' is not in the red-black
-	 * tree. Thereक्रमe, inherit the flags from 'old' to 'new'.
+	 * tree. Therefore, inherit the flags from 'old' to 'new'.
 	 */
 	new->nh_flags |= old->nh_flags & (RTNH_F_OFFLOAD | RTNH_F_TRAP);
 
@@ -2112,459 +2111,459 @@ err_notअगरy:
 	old->protocol = new->protocol;
 	old->nh_flags = new->nh_flags;
 
-	rcu_assign_poपूर्णांकer(old->nh_info, newi);
-	rcu_assign_poपूर्णांकer(new->nh_info, oldi);
+	rcu_assign_pointer(old->nh_info, newi);
+	rcu_assign_pointer(new->nh_info, oldi);
 
-	/* Send a replace notअगरication क्रम all the groups using the nexthop. */
-	list_क्रम_each_entry(nhge, &old->grp_list, nh_list) अणु
-		काष्ठा nexthop *nhp = nhge->nh_parent;
+	/* Send a replace notification for all the groups using the nexthop. */
+	list_for_each_entry(nhge, &old->grp_list, nh_list) {
+		struct nexthop *nhp = nhge->nh_parent;
 
-		err = replace_nexthop_single_notअगरy(net, nhp, old, oldi, newi,
+		err = replace_nexthop_single_notify(net, nhp, old, oldi, newi,
 						    extack);
-		अगर (err)
-			जाओ err_notअगरy;
-	पूर्ण
+		if (err)
+			goto err_notify;
+	}
 
 	/* When replacing an IPv4 nexthop with an IPv6 nexthop, potentially
 	 * update IPv4 indication in all the groups using the nexthop.
 	 */
-	अगर (oldi->family == AF_INET && newi->family == AF_INET6) अणु
-		list_क्रम_each_entry(nhge, &old->grp_list, nh_list) अणु
-			काष्ठा nexthop *nhp = nhge->nh_parent;
-			काष्ठा nh_group *nhg;
+	if (oldi->family == AF_INET && newi->family == AF_INET6) {
+		list_for_each_entry(nhge, &old->grp_list, nh_list) {
+			struct nexthop *nhp = nhge->nh_parent;
+			struct nh_group *nhg;
 
 			nhg = rtnl_dereference(nhp->nh_grp);
 			nh_group_v4_update(nhg);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
+	return 0;
 
-err_notअगरy:
-	rcu_assign_poपूर्णांकer(new->nh_info, newi);
-	rcu_assign_poपूर्णांकer(old->nh_info, oldi);
+err_notify:
+	rcu_assign_pointer(new->nh_info, newi);
+	rcu_assign_pointer(old->nh_info, oldi);
 	old->nh_flags = old_nh_flags;
 	old->protocol = old_protocol;
 	oldi->nh_parent = old;
 	newi->nh_parent = new;
-	list_क्रम_each_entry_जारी_reverse(nhge, &old->grp_list, nh_list) अणु
-		काष्ठा nexthop *nhp = nhge->nh_parent;
+	list_for_each_entry_continue_reverse(nhge, &old->grp_list, nh_list) {
+		struct nexthop *nhp = nhge->nh_parent;
 
-		replace_nexthop_single_notअगरy(net, nhp, old, newi, oldi, शून्य);
-	पूर्ण
-	call_nexthop_notअगरiers(net, NEXTHOP_EVENT_REPLACE, old, extack);
-	वापस err;
-पूर्ण
+		replace_nexthop_single_notify(net, nhp, old, newi, oldi, NULL);
+	}
+	call_nexthop_notifiers(net, NEXTHOP_EVENT_REPLACE, old, extack);
+	return err;
+}
 
-अटल व्योम __nexthop_replace_notअगरy(काष्ठा net *net, काष्ठा nexthop *nh,
-				     काष्ठा nl_info *info)
-अणु
-	काष्ठा fib6_info *f6i;
+static void __nexthop_replace_notify(struct net *net, struct nexthop *nh,
+				     struct nl_info *info)
+{
+	struct fib6_info *f6i;
 
-	अगर (!list_empty(&nh->fi_list)) अणु
-		काष्ठा fib_info *fi;
+	if (!list_empty(&nh->fi_list)) {
+		struct fib_info *fi;
 
 		/* expectation is a few fib_info per nexthop and then
 		 * a lot of routes per fib_info. So mark the fib_info
 		 * and then walk the fib tables once
 		 */
-		list_क्रम_each_entry(fi, &nh->fi_list, nh_list)
+		list_for_each_entry(fi, &nh->fi_list, nh_list)
 			fi->nh_updated = true;
 
-		fib_info_notअगरy_update(net, info);
+		fib_info_notify_update(net, info);
 
-		list_क्रम_each_entry(fi, &nh->fi_list, nh_list)
+		list_for_each_entry(fi, &nh->fi_list, nh_list)
 			fi->nh_updated = false;
-	पूर्ण
+	}
 
-	list_क्रम_each_entry(f6i, &nh->f6i_list, nh_list)
+	list_for_each_entry(f6i, &nh->f6i_list, nh_list)
 		ipv6_stub->fib6_rt_update(net, f6i, info);
-पूर्ण
+}
 
-/* send RTM_NEWROUTE with REPLACE flag set क्रम all FIB entries
- * linked to this nexthop and क्रम all groups that the nexthop
+/* send RTM_NEWROUTE with REPLACE flag set for all FIB entries
+ * linked to this nexthop and for all groups that the nexthop
  * is a member of
  */
-अटल व्योम nexthop_replace_notअगरy(काष्ठा net *net, काष्ठा nexthop *nh,
-				   काष्ठा nl_info *info)
-अणु
-	काष्ठा nh_grp_entry *nhge;
+static void nexthop_replace_notify(struct net *net, struct nexthop *nh,
+				   struct nl_info *info)
+{
+	struct nh_grp_entry *nhge;
 
-	__nexthop_replace_notअगरy(net, nh, info);
+	__nexthop_replace_notify(net, nh, info);
 
-	list_क्रम_each_entry(nhge, &nh->grp_list, nh_list)
-		__nexthop_replace_notअगरy(net, nhge->nh_parent, info);
-पूर्ण
+	list_for_each_entry(nhge, &nh->grp_list, nh_list)
+		__nexthop_replace_notify(net, nhge->nh_parent, info);
+}
 
-अटल पूर्णांक replace_nexthop(काष्ठा net *net, काष्ठा nexthop *old,
-			   काष्ठा nexthop *new, स्थिर काष्ठा nh_config *cfg,
-			   काष्ठा netlink_ext_ack *extack)
-अणु
+static int replace_nexthop(struct net *net, struct nexthop *old,
+			   struct nexthop *new, const struct nh_config *cfg,
+			   struct netlink_ext_ack *extack)
+{
 	bool new_is_reject = false;
-	काष्ठा nh_grp_entry *nhge;
-	पूर्णांक err;
+	struct nh_grp_entry *nhge;
+	int err;
 
 	/* check that existing FIB entries are ok with the
 	 * new nexthop definition
 	 */
 	err = fib_check_nh_list(old, new, extack);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = fib6_check_nh_list(old, new, extack);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (!new->is_group) अणु
-		काष्ठा nh_info *nhi = rtnl_dereference(new->nh_info);
+	if (!new->is_group) {
+		struct nh_info *nhi = rtnl_dereference(new->nh_info);
 
 		new_is_reject = nhi->reject_nh;
-	पूर्ण
+	}
 
-	list_क्रम_each_entry(nhge, &old->grp_list, nh_list) अणु
-		/* अगर new nexthop is a blackhole, any groups using this
+	list_for_each_entry(nhge, &old->grp_list, nh_list) {
+		/* if new nexthop is a blackhole, any groups using this
 		 * nexthop cannot have more than 1 path
 		 */
-		अगर (new_is_reject &&
-		    nexthop_num_path(nhge->nh_parent) > 1) अणु
+		if (new_is_reject &&
+		    nexthop_num_path(nhge->nh_parent) > 1) {
 			NL_SET_ERR_MSG(extack, "Blackhole nexthop can not be a member of a group with more than one path");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		err = fib_check_nh_list(nhge->nh_parent, new, extack);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
 		err = fib6_check_nh_list(nhge->nh_parent, new, extack);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	अगर (old->is_group)
+	if (old->is_group)
 		err = replace_nexthop_grp(net, old, new, cfg, extack);
-	अन्यथा
+	else
 		err = replace_nexthop_single(net, old, new, extack);
 
-	अगर (!err) अणु
+	if (!err) {
 		nh_rt_cache_flush(net, old);
 
-		__हटाओ_nexthop(net, new, शून्य);
+		__remove_nexthop(net, new, NULL);
 		nexthop_put(new);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /* called with rtnl_lock held */
-अटल पूर्णांक insert_nexthop(काष्ठा net *net, काष्ठा nexthop *new_nh,
-			  काष्ठा nh_config *cfg, काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा rb_node **pp, *parent = शून्य, *next;
-	काष्ठा rb_root *root = &net->nexthop.rb_root;
+static int insert_nexthop(struct net *net, struct nexthop *new_nh,
+			  struct nh_config *cfg, struct netlink_ext_ack *extack)
+{
+	struct rb_node **pp, *parent = NULL, *next;
+	struct rb_root *root = &net->nexthop.rb_root;
 	bool replace = !!(cfg->nlflags & NLM_F_REPLACE);
 	bool create = !!(cfg->nlflags & NLM_F_CREATE);
 	u32 new_id = new_nh->id;
-	पूर्णांक replace_notअगरy = 0;
-	पूर्णांक rc = -EEXIST;
+	int replace_notify = 0;
+	int rc = -EEXIST;
 
 	pp = &root->rb_node;
-	जबतक (1) अणु
-		काष्ठा nexthop *nh;
+	while (1) {
+		struct nexthop *nh;
 
 		next = *pp;
-		अगर (!next)
-			अवरोध;
+		if (!next)
+			break;
 
 		parent = next;
 
-		nh = rb_entry(parent, काष्ठा nexthop, rb_node);
-		अगर (new_id < nh->id) अणु
+		nh = rb_entry(parent, struct nexthop, rb_node);
+		if (new_id < nh->id) {
 			pp = &next->rb_left;
-		पूर्ण अन्यथा अगर (new_id > nh->id) अणु
+		} else if (new_id > nh->id) {
 			pp = &next->rb_right;
-		पूर्ण अन्यथा अगर (replace) अणु
+		} else if (replace) {
 			rc = replace_nexthop(net, nh, new_nh, cfg, extack);
-			अगर (!rc) अणु
-				new_nh = nh; /* send notअगरication with old nh */
-				replace_notअगरy = 1;
-			पूर्ण
-			जाओ out;
-		पूर्ण अन्यथा अणु
-			/* id alपढ़ोy exists and not a replace */
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			if (!rc) {
+				new_nh = nh; /* send notification with old nh */
+				replace_notify = 1;
+			}
+			goto out;
+		} else {
+			/* id already exists and not a replace */
+			goto out;
+		}
+	}
 
-	अगर (replace && !create) अणु
+	if (replace && !create) {
 		NL_SET_ERR_MSG(extack, "Replace specified without create and no entry exists");
 		rc = -ENOENT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (new_nh->is_group) अणु
-		काष्ठा nh_group *nhg = rtnl_dereference(new_nh->nh_grp);
-		काष्ठा nh_res_table *res_table;
+	if (new_nh->is_group) {
+		struct nh_group *nhg = rtnl_dereference(new_nh->nh_grp);
+		struct nh_res_table *res_table;
 
-		अगर (nhg->resilient) अणु
+		if (nhg->resilient) {
 			res_table = rtnl_dereference(nhg->res_table);
 
 			/* Not passing the number of buckets is OK when
 			 * replacing, but not when creating a new group.
 			 */
-			अगर (!cfg->nh_grp_res_has_num_buckets) अणु
+			if (!cfg->nh_grp_res_has_num_buckets) {
 				NL_SET_ERR_MSG(extack, "Number of buckets not specified for nexthop group insertion");
 				rc = -EINVAL;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 
 			nh_res_group_rebalance(nhg, res_table);
 
-			/* Do not send bucket notअगरications, we करो full
-			 * notअगरication below.
+			/* Do not send bucket notifications, we do full
+			 * notification below.
 			 */
 			nh_res_table_upkeep(res_table, false, false);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	rb_link_node_rcu(&new_nh->rb_node, parent, pp);
 	rb_insert_color(&new_nh->rb_node, root);
 
-	/* The initial insertion is a full notअगरication क्रम hash-threshold as
+	/* The initial insertion is a full notification for hash-threshold as
 	 * well as resilient groups.
 	 */
-	rc = call_nexthop_notअगरiers(net, NEXTHOP_EVENT_REPLACE, new_nh, extack);
-	अगर (rc)
+	rc = call_nexthop_notifiers(net, NEXTHOP_EVENT_REPLACE, new_nh, extack);
+	if (rc)
 		rb_erase(&new_nh->rb_node, &net->nexthop.rb_root);
 
 out:
-	अगर (!rc) अणु
+	if (!rc) {
 		nh_base_seq_inc(net);
-		nexthop_notअगरy(RTM_NEWNEXTHOP, new_nh, &cfg->nlinfo);
-		अगर (replace_notअगरy && net->ipv4.sysctl_nexthop_compat_mode)
-			nexthop_replace_notअगरy(net, new_nh, &cfg->nlinfo);
-	पूर्ण
+		nexthop_notify(RTM_NEWNEXTHOP, new_nh, &cfg->nlinfo);
+		if (replace_notify && net->ipv4.sysctl_nexthop_compat_mode)
+			nexthop_replace_notify(net, new_nh, &cfg->nlinfo);
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /* rtnl */
-/* हटाओ all nexthops tied to a device being deleted */
-अटल व्योम nexthop_flush_dev(काष्ठा net_device *dev, अचिन्हित दीर्घ event)
-अणु
-	अचिन्हित पूर्णांक hash = nh_dev_hashfn(dev->अगरindex);
-	काष्ठा net *net = dev_net(dev);
-	काष्ठा hlist_head *head = &net->nexthop.devhash[hash];
-	काष्ठा hlist_node *n;
-	काष्ठा nh_info *nhi;
+/* remove all nexthops tied to a device being deleted */
+static void nexthop_flush_dev(struct net_device *dev, unsigned long event)
+{
+	unsigned int hash = nh_dev_hashfn(dev->ifindex);
+	struct net *net = dev_net(dev);
+	struct hlist_head *head = &net->nexthop.devhash[hash];
+	struct hlist_node *n;
+	struct nh_info *nhi;
 
-	hlist_क्रम_each_entry_safe(nhi, n, head, dev_hash) अणु
-		अगर (nhi->fib_nhc.nhc_dev != dev)
-			जारी;
+	hlist_for_each_entry_safe(nhi, n, head, dev_hash) {
+		if (nhi->fib_nhc.nhc_dev != dev)
+			continue;
 
-		अगर (nhi->reject_nh &&
+		if (nhi->reject_nh &&
 		    (event == NETDEV_DOWN || event == NETDEV_CHANGE))
-			जारी;
+			continue;
 
-		हटाओ_nexthop(net, nhi->nh_parent, शून्य);
-	पूर्ण
-पूर्ण
+		remove_nexthop(net, nhi->nh_parent, NULL);
+	}
+}
 
 /* rtnl; called when net namespace is deleted */
-अटल व्योम flush_all_nexthops(काष्ठा net *net)
-अणु
-	काष्ठा rb_root *root = &net->nexthop.rb_root;
-	काष्ठा rb_node *node;
-	काष्ठा nexthop *nh;
+static void flush_all_nexthops(struct net *net)
+{
+	struct rb_root *root = &net->nexthop.rb_root;
+	struct rb_node *node;
+	struct nexthop *nh;
 
-	जबतक ((node = rb_first(root))) अणु
-		nh = rb_entry(node, काष्ठा nexthop, rb_node);
-		हटाओ_nexthop(net, nh, शून्य);
+	while ((node = rb_first(root))) {
+		nh = rb_entry(node, struct nexthop, rb_node);
+		remove_nexthop(net, nh, NULL);
 		cond_resched();
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल काष्ठा nexthop *nexthop_create_group(काष्ठा net *net,
-					    काष्ठा nh_config *cfg)
-अणु
-	काष्ठा nlattr *grps_attr = cfg->nh_grp;
-	काष्ठा nexthop_grp *entry = nla_data(grps_attr);
-	u16 num_nh = nla_len(grps_attr) / माप(*entry);
-	काष्ठा nh_group *nhg;
-	काष्ठा nexthop *nh;
-	पूर्णांक err;
-	पूर्णांक i;
+static struct nexthop *nexthop_create_group(struct net *net,
+					    struct nh_config *cfg)
+{
+	struct nlattr *grps_attr = cfg->nh_grp;
+	struct nexthop_grp *entry = nla_data(grps_attr);
+	u16 num_nh = nla_len(grps_attr) / sizeof(*entry);
+	struct nh_group *nhg;
+	struct nexthop *nh;
+	int err;
+	int i;
 
-	अगर (WARN_ON(!num_nh))
-		वापस ERR_PTR(-EINVAL);
+	if (WARN_ON(!num_nh))
+		return ERR_PTR(-EINVAL);
 
 	nh = nexthop_alloc();
-	अगर (!nh)
-		वापस ERR_PTR(-ENOMEM);
+	if (!nh)
+		return ERR_PTR(-ENOMEM);
 
 	nh->is_group = 1;
 
 	nhg = nexthop_grp_alloc(num_nh);
-	अगर (!nhg) अणु
-		kमुक्त(nh);
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+	if (!nhg) {
+		kfree(nh);
+		return ERR_PTR(-ENOMEM);
+	}
 
-	/* spare group used क्रम removals */
+	/* spare group used for removals */
 	nhg->spare = nexthop_grp_alloc(num_nh);
-	अगर (!nhg->spare) अणु
-		kमुक्त(nhg);
-		kमुक्त(nh);
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+	if (!nhg->spare) {
+		kfree(nhg);
+		kfree(nh);
+		return ERR_PTR(-ENOMEM);
+	}
 	nhg->spare->spare = nhg;
 
-	क्रम (i = 0; i < nhg->num_nh; ++i) अणु
-		काष्ठा nexthop *nhe;
-		काष्ठा nh_info *nhi;
+	for (i = 0; i < nhg->num_nh; ++i) {
+		struct nexthop *nhe;
+		struct nh_info *nhi;
 
 		nhe = nexthop_find_by_id(net, entry[i].id);
-		अगर (!nexthop_get(nhe)) अणु
+		if (!nexthop_get(nhe)) {
 			err = -ENOENT;
-			जाओ out_no_nh;
-		पूर्ण
+			goto out_no_nh;
+		}
 
 		nhi = rtnl_dereference(nhe->nh_info);
-		अगर (nhi->family == AF_INET)
+		if (nhi->family == AF_INET)
 			nhg->has_v4 = true;
 
 		nhg->nh_entries[i].nh = nhe;
 		nhg->nh_entries[i].weight = entry[i].weight + 1;
 		list_add(&nhg->nh_entries[i].nh_list, &nhe->grp_list);
 		nhg->nh_entries[i].nh_parent = nh;
-	पूर्ण
+	}
 
-	अगर (cfg->nh_grp_type == NEXTHOP_GRP_TYPE_MPATH) अणु
+	if (cfg->nh_grp_type == NEXTHOP_GRP_TYPE_MPATH) {
 		nhg->hash_threshold = 1;
 		nhg->is_multipath = true;
-	पूर्ण अन्यथा अगर (cfg->nh_grp_type == NEXTHOP_GRP_TYPE_RES) अणु
-		काष्ठा nh_res_table *res_table;
+	} else if (cfg->nh_grp_type == NEXTHOP_GRP_TYPE_RES) {
+		struct nh_res_table *res_table;
 
 		res_table = nexthop_res_table_alloc(net, cfg->nh_id, cfg);
-		अगर (!res_table) अणु
+		if (!res_table) {
 			err = -ENOMEM;
-			जाओ out_no_nh;
-		पूर्ण
+			goto out_no_nh;
+		}
 
-		rcu_assign_poपूर्णांकer(nhg->spare->res_table, res_table);
-		rcu_assign_poपूर्णांकer(nhg->res_table, res_table);
+		rcu_assign_pointer(nhg->spare->res_table, res_table);
+		rcu_assign_pointer(nhg->res_table, res_table);
 		nhg->resilient = true;
 		nhg->is_multipath = true;
-	पूर्ण
+	}
 
 	WARN_ON_ONCE(nhg->hash_threshold + nhg->resilient != 1);
 
-	अगर (nhg->hash_threshold)
+	if (nhg->hash_threshold)
 		nh_hthr_group_rebalance(nhg);
 
-	अगर (cfg->nh_fdb)
+	if (cfg->nh_fdb)
 		nhg->fdb_nh = 1;
 
-	rcu_assign_poपूर्णांकer(nh->nh_grp, nhg);
+	rcu_assign_pointer(nh->nh_grp, nhg);
 
-	वापस nh;
+	return nh;
 
 out_no_nh:
-	क्रम (i--; i >= 0; --i) अणु
+	for (i--; i >= 0; --i) {
 		list_del(&nhg->nh_entries[i].nh_list);
 		nexthop_put(nhg->nh_entries[i].nh);
-	पूर्ण
+	}
 
-	kमुक्त(nhg->spare);
-	kमुक्त(nhg);
-	kमुक्त(nh);
+	kfree(nhg->spare);
+	kfree(nhg);
+	kfree(nh);
 
-	वापस ERR_PTR(err);
-पूर्ण
+	return ERR_PTR(err);
+}
 
-अटल पूर्णांक nh_create_ipv4(काष्ठा net *net, काष्ठा nexthop *nh,
-			  काष्ठा nh_info *nhi, काष्ठा nh_config *cfg,
-			  काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा fib_nh *fib_nh = &nhi->fib_nh;
-	काष्ठा fib_config fib_cfg = अणु
-		.fc_oअगर   = cfg->nh_अगरindex,
+static int nh_create_ipv4(struct net *net, struct nexthop *nh,
+			  struct nh_info *nhi, struct nh_config *cfg,
+			  struct netlink_ext_ack *extack)
+{
+	struct fib_nh *fib_nh = &nhi->fib_nh;
+	struct fib_config fib_cfg = {
+		.fc_oif   = cfg->nh_ifindex,
 		.fc_gw4   = cfg->gw.ipv4,
 		.fc_gw_family = cfg->gw.ipv4 ? AF_INET : 0,
 		.fc_flags = cfg->nh_flags,
 		.fc_encap = cfg->nh_encap,
 		.fc_encap_type = cfg->nh_encap_type,
-	पूर्ण;
+	};
 	u32 tb_id = (cfg->dev ? l3mdev_fib_table(cfg->dev) : RT_TABLE_MAIN);
-	पूर्णांक err;
+	int err;
 
 	err = fib_nh_init(net, fib_nh, &fib_cfg, 1, extack);
-	अगर (err) अणु
+	if (err) {
 		fib_nh_release(net, fib_nh);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (nhi->fdb_nh)
-		जाओ out;
+	if (nhi->fdb_nh)
+		goto out;
 
-	/* sets nh_dev अगर successful */
+	/* sets nh_dev if successful */
 	err = fib_check_nh(net, fib_nh, tb_id, 0, extack);
-	अगर (!err) अणु
+	if (!err) {
 		nh->nh_flags = fib_nh->fib_nh_flags;
 		fib_info_update_nhc_saddr(net, &fib_nh->nh_common,
 					  fib_nh->fib_nh_scope);
-	पूर्ण अन्यथा अणु
+	} else {
 		fib_nh_release(net, fib_nh);
-	पूर्ण
+	}
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक nh_create_ipv6(काष्ठा net *net,  काष्ठा nexthop *nh,
-			  काष्ठा nh_info *nhi, काष्ठा nh_config *cfg,
-			  काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा fib6_nh *fib6_nh = &nhi->fib6_nh;
-	काष्ठा fib6_config fib6_cfg = अणु
+static int nh_create_ipv6(struct net *net,  struct nexthop *nh,
+			  struct nh_info *nhi, struct nh_config *cfg,
+			  struct netlink_ext_ack *extack)
+{
+	struct fib6_nh *fib6_nh = &nhi->fib6_nh;
+	struct fib6_config fib6_cfg = {
 		.fc_table = l3mdev_fib_table(cfg->dev),
-		.fc_अगरindex = cfg->nh_अगरindex,
+		.fc_ifindex = cfg->nh_ifindex,
 		.fc_gateway = cfg->gw.ipv6,
 		.fc_flags = cfg->nh_flags,
 		.fc_encap = cfg->nh_encap,
 		.fc_encap_type = cfg->nh_encap_type,
 		.fc_is_fdb = cfg->nh_fdb,
-	पूर्ण;
-	पूर्णांक err;
+	};
+	int err;
 
-	अगर (!ipv6_addr_any(&cfg->gw.ipv6))
+	if (!ipv6_addr_any(&cfg->gw.ipv6))
 		fib6_cfg.fc_flags |= RTF_GATEWAY;
 
-	/* sets nh_dev अगर successful */
+	/* sets nh_dev if successful */
 	err = ipv6_stub->fib6_nh_init(net, fib6_nh, &fib6_cfg, GFP_KERNEL,
 				      extack);
-	अगर (err)
+	if (err)
 		ipv6_stub->fib6_nh_release(fib6_nh);
-	अन्यथा
+	else
 		nh->nh_flags = fib6_nh->fib_nh_flags;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल काष्ठा nexthop *nexthop_create(काष्ठा net *net, काष्ठा nh_config *cfg,
-				      काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा nh_info *nhi;
-	काष्ठा nexthop *nh;
-	पूर्णांक err = 0;
+static struct nexthop *nexthop_create(struct net *net, struct nh_config *cfg,
+				      struct netlink_ext_ack *extack)
+{
+	struct nh_info *nhi;
+	struct nexthop *nh;
+	int err = 0;
 
 	nh = nexthop_alloc();
-	अगर (!nh)
-		वापस ERR_PTR(-ENOMEM);
+	if (!nh)
+		return ERR_PTR(-ENOMEM);
 
-	nhi = kzalloc(माप(*nhi), GFP_KERNEL);
-	अगर (!nhi) अणु
-		kमुक्त(nh);
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+	nhi = kzalloc(sizeof(*nhi), GFP_KERNEL);
+	if (!nhi) {
+		kfree(nh);
+		return ERR_PTR(-ENOMEM);
+	}
 
 	nh->nh_flags = cfg->nh_flags;
 	nh->net = net;
@@ -2573,65 +2572,65 @@ out:
 	nhi->family = cfg->nh_family;
 	nhi->fib_nhc.nhc_scope = RT_SCOPE_LINK;
 
-	अगर (cfg->nh_fdb)
+	if (cfg->nh_fdb)
 		nhi->fdb_nh = 1;
 
-	अगर (cfg->nh_blackhole) अणु
+	if (cfg->nh_blackhole) {
 		nhi->reject_nh = 1;
-		cfg->nh_अगरindex = net->loopback_dev->अगरindex;
-	पूर्ण
+		cfg->nh_ifindex = net->loopback_dev->ifindex;
+	}
 
-	चयन (cfg->nh_family) अणु
-	हाल AF_INET:
+	switch (cfg->nh_family) {
+	case AF_INET:
 		err = nh_create_ipv4(net, nh, nhi, cfg, extack);
-		अवरोध;
-	हाल AF_INET6:
+		break;
+	case AF_INET6:
 		err = nh_create_ipv6(net, nh, nhi, cfg, extack);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (err) अणु
-		kमुक्त(nhi);
-		kमुक्त(nh);
-		वापस ERR_PTR(err);
-	पूर्ण
+	if (err) {
+		kfree(nhi);
+		kfree(nh);
+		return ERR_PTR(err);
+	}
 
 	/* add the entry to the device based hash */
-	अगर (!nhi->fdb_nh)
+	if (!nhi->fdb_nh)
 		nexthop_devhash_add(net, nhi);
 
-	rcu_assign_poपूर्णांकer(nh->nh_info, nhi);
+	rcu_assign_pointer(nh->nh_info, nhi);
 
-	वापस nh;
-पूर्ण
+	return nh;
+}
 
 /* called with rtnl lock held */
-अटल काष्ठा nexthop *nexthop_add(काष्ठा net *net, काष्ठा nh_config *cfg,
-				   काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा nexthop *nh;
-	पूर्णांक err;
+static struct nexthop *nexthop_add(struct net *net, struct nh_config *cfg,
+				   struct netlink_ext_ack *extack)
+{
+	struct nexthop *nh;
+	int err;
 
-	अगर (cfg->nlflags & NLM_F_REPLACE && !cfg->nh_id) अणु
+	if (cfg->nlflags & NLM_F_REPLACE && !cfg->nh_id) {
 		NL_SET_ERR_MSG(extack, "Replace requires nexthop id");
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	अगर (!cfg->nh_id) अणु
+	if (!cfg->nh_id) {
 		cfg->nh_id = nh_find_unused_id(net);
-		अगर (!cfg->nh_id) अणु
+		if (!cfg->nh_id) {
 			NL_SET_ERR_MSG(extack, "No unused id");
-			वापस ERR_PTR(-EINVAL);
-		पूर्ण
-	पूर्ण
+			return ERR_PTR(-EINVAL);
+		}
+	}
 
-	अगर (cfg->nh_grp)
+	if (cfg->nh_grp)
 		nh = nexthop_create_group(net, cfg);
-	अन्यथा
+	else
 		nh = nexthop_create(net, cfg, extack);
 
-	अगर (IS_ERR(nh))
-		वापस nh;
+	if (IS_ERR(nh))
+		return nh;
 
 	refcount_set(&nh->refcnt, 1);
 	nh->id = cfg->nh_id;
@@ -2639,117 +2638,117 @@ out:
 	nh->net = net;
 
 	err = insert_nexthop(net, nh, cfg, extack);
-	अगर (err) अणु
-		__हटाओ_nexthop(net, nh, शून्य);
+	if (err) {
+		__remove_nexthop(net, nh, NULL);
 		nexthop_put(nh);
 		nh = ERR_PTR(err);
-	पूर्ण
+	}
 
-	वापस nh;
-पूर्ण
+	return nh;
+}
 
-अटल पूर्णांक rपंचांग_nh_get_समयr(काष्ठा nlattr *attr, अचिन्हित दीर्घ fallback,
-			    अचिन्हित दीर्घ *समयr_p, bool *has_p,
-			    काष्ठा netlink_ext_ack *extack)
-अणु
-	अचिन्हित दीर्घ समयr;
+static int rtm_nh_get_timer(struct nlattr *attr, unsigned long fallback,
+			    unsigned long *timer_p, bool *has_p,
+			    struct netlink_ext_ack *extack)
+{
+	unsigned long timer;
 	u32 value;
 
-	अगर (!attr) अणु
-		*समयr_p = fallback;
+	if (!attr) {
+		*timer_p = fallback;
 		*has_p = false;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	value = nla_get_u32(attr);
-	समयr = घड़ी_प्रकार_to_jअगरfies(value);
-	अगर (समयr == ~0UL) अणु
+	timer = clock_t_to_jiffies(value);
+	if (timer == ~0UL) {
 		NL_SET_ERR_MSG(extack, "Timer value too large");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	*समयr_p = समयr;
+	*timer_p = timer;
 	*has_p = true;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rपंचांग_to_nh_config_grp_res(काष्ठा nlattr *res, काष्ठा nh_config *cfg,
-				    काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा nlattr *tb[ARRAY_SIZE(rपंचांग_nh_res_policy_new)] = अणुपूर्ण;
-	पूर्णांक err;
+static int rtm_to_nh_config_grp_res(struct nlattr *res, struct nh_config *cfg,
+				    struct netlink_ext_ack *extack)
+{
+	struct nlattr *tb[ARRAY_SIZE(rtm_nh_res_policy_new)] = {};
+	int err;
 
-	अगर (res) अणु
+	if (res) {
 		err = nla_parse_nested(tb,
-				       ARRAY_SIZE(rपंचांग_nh_res_policy_new) - 1,
-				       res, rपंचांग_nh_res_policy_new, extack);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+				       ARRAY_SIZE(rtm_nh_res_policy_new) - 1,
+				       res, rtm_nh_res_policy_new, extack);
+		if (err < 0)
+			return err;
+	}
 
-	अगर (tb[NHA_RES_GROUP_BUCKETS]) अणु
+	if (tb[NHA_RES_GROUP_BUCKETS]) {
 		cfg->nh_grp_res_num_buckets =
 			nla_get_u16(tb[NHA_RES_GROUP_BUCKETS]);
 		cfg->nh_grp_res_has_num_buckets = true;
-		अगर (!cfg->nh_grp_res_num_buckets) अणु
+		if (!cfg->nh_grp_res_num_buckets) {
 			NL_SET_ERR_MSG(extack, "Number of buckets needs to be non-0");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	err = rपंचांग_nh_get_समयr(tb[NHA_RES_GROUP_IDLE_TIMER],
+	err = rtm_nh_get_timer(tb[NHA_RES_GROUP_IDLE_TIMER],
 			       NH_RES_DEFAULT_IDLE_TIMER,
-			       &cfg->nh_grp_res_idle_समयr,
-			       &cfg->nh_grp_res_has_idle_समयr,
+			       &cfg->nh_grp_res_idle_timer,
+			       &cfg->nh_grp_res_has_idle_timer,
 			       extack);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	वापस rपंचांग_nh_get_समयr(tb[NHA_RES_GROUP_UNBALANCED_TIMER],
+	return rtm_nh_get_timer(tb[NHA_RES_GROUP_UNBALANCED_TIMER],
 				NH_RES_DEFAULT_UNBALANCED_TIMER,
-				&cfg->nh_grp_res_unbalanced_समयr,
-				&cfg->nh_grp_res_has_unbalanced_समयr,
+				&cfg->nh_grp_res_unbalanced_timer,
+				&cfg->nh_grp_res_has_unbalanced_timer,
 				extack);
-पूर्ण
+}
 
-अटल पूर्णांक rपंचांग_to_nh_config(काष्ठा net *net, काष्ठा sk_buff *skb,
-			    काष्ठा nlmsghdr *nlh, काष्ठा nh_config *cfg,
-			    काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा nhmsg *nhm = nlmsg_data(nlh);
-	काष्ठा nlattr *tb[ARRAY_SIZE(rपंचांग_nh_policy_new)];
-	पूर्णांक err;
+static int rtm_to_nh_config(struct net *net, struct sk_buff *skb,
+			    struct nlmsghdr *nlh, struct nh_config *cfg,
+			    struct netlink_ext_ack *extack)
+{
+	struct nhmsg *nhm = nlmsg_data(nlh);
+	struct nlattr *tb[ARRAY_SIZE(rtm_nh_policy_new)];
+	int err;
 
-	err = nlmsg_parse(nlh, माप(*nhm), tb,
-			  ARRAY_SIZE(rपंचांग_nh_policy_new) - 1,
-			  rपंचांग_nh_policy_new, extack);
-	अगर (err < 0)
-		वापस err;
+	err = nlmsg_parse(nlh, sizeof(*nhm), tb,
+			  ARRAY_SIZE(rtm_nh_policy_new) - 1,
+			  rtm_nh_policy_new, extack);
+	if (err < 0)
+		return err;
 
 	err = -EINVAL;
-	अगर (nhm->resvd || nhm->nh_scope) अणु
+	if (nhm->resvd || nhm->nh_scope) {
 		NL_SET_ERR_MSG(extack, "Invalid values in ancillary header");
-		जाओ out;
-	पूर्ण
-	अगर (nhm->nh_flags & ~NEXTHOP_VALID_USER_FLAGS) अणु
+		goto out;
+	}
+	if (nhm->nh_flags & ~NEXTHOP_VALID_USER_FLAGS) {
 		NL_SET_ERR_MSG(extack, "Invalid nexthop flags in ancillary header");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	चयन (nhm->nh_family) अणु
-	हाल AF_INET:
-	हाल AF_INET6:
-		अवरोध;
-	हाल AF_UNSPEC:
-		अगर (tb[NHA_GROUP])
-			अवरोध;
+	switch (nhm->nh_family) {
+	case AF_INET:
+	case AF_INET6:
+		break;
+	case AF_UNSPEC:
+		if (tb[NHA_GROUP])
+			break;
 		fallthrough;
-	शेष:
+	default:
 		NL_SET_ERR_MSG(extack, "Invalid address family");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	स_रखो(cfg, 0, माप(*cfg));
+	memset(cfg, 0, sizeof(*cfg));
 	cfg->nlflags = nlh->nlmsg_flags;
 	cfg->nlinfo.portid = NETLINK_CB(skb).portid;
 	cfg->nlinfo.nlh = nlh;
@@ -2759,990 +2758,990 @@ out:
 	cfg->nh_protocol = nhm->nh_protocol;
 	cfg->nh_flags = nhm->nh_flags;
 
-	अगर (tb[NHA_ID])
+	if (tb[NHA_ID])
 		cfg->nh_id = nla_get_u32(tb[NHA_ID]);
 
-	अगर (tb[NHA_FDB]) अणु
-		अगर (tb[NHA_OIF] || tb[NHA_BLACKHOLE] ||
-		    tb[NHA_ENCAP]   || tb[NHA_ENCAP_TYPE]) अणु
+	if (tb[NHA_FDB]) {
+		if (tb[NHA_OIF] || tb[NHA_BLACKHOLE] ||
+		    tb[NHA_ENCAP]   || tb[NHA_ENCAP_TYPE]) {
 			NL_SET_ERR_MSG(extack, "Fdb attribute can not be used with encap, oif or blackhole");
-			जाओ out;
-		पूर्ण
-		अगर (nhm->nh_flags) अणु
+			goto out;
+		}
+		if (nhm->nh_flags) {
 			NL_SET_ERR_MSG(extack, "Unsupported nexthop flags in ancillary header");
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		cfg->nh_fdb = nla_get_flag(tb[NHA_FDB]);
-	पूर्ण
+	}
 
-	अगर (tb[NHA_GROUP]) अणु
-		अगर (nhm->nh_family != AF_UNSPEC) अणु
+	if (tb[NHA_GROUP]) {
+		if (nhm->nh_family != AF_UNSPEC) {
 			NL_SET_ERR_MSG(extack, "Invalid family for group");
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		cfg->nh_grp = tb[NHA_GROUP];
 
 		cfg->nh_grp_type = NEXTHOP_GRP_TYPE_MPATH;
-		अगर (tb[NHA_GROUP_TYPE])
+		if (tb[NHA_GROUP_TYPE])
 			cfg->nh_grp_type = nla_get_u16(tb[NHA_GROUP_TYPE]);
 
-		अगर (cfg->nh_grp_type > NEXTHOP_GRP_TYPE_MAX) अणु
+		if (cfg->nh_grp_type > NEXTHOP_GRP_TYPE_MAX) {
 			NL_SET_ERR_MSG(extack, "Invalid group type");
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		err = nh_check_attr_group(net, tb, ARRAY_SIZE(tb),
 					  cfg->nh_grp_type, extack);
-		अगर (err)
-			जाओ out;
+		if (err)
+			goto out;
 
-		अगर (cfg->nh_grp_type == NEXTHOP_GRP_TYPE_RES)
-			err = rपंचांग_to_nh_config_grp_res(tb[NHA_RES_GROUP],
+		if (cfg->nh_grp_type == NEXTHOP_GRP_TYPE_RES)
+			err = rtm_to_nh_config_grp_res(tb[NHA_RES_GROUP],
 						       cfg, extack);
 
 		/* no other attributes should be set */
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (tb[NHA_BLACKHOLE]) अणु
-		अगर (tb[NHA_GATEWAY] || tb[NHA_OIF] ||
-		    tb[NHA_ENCAP]   || tb[NHA_ENCAP_TYPE] || tb[NHA_FDB]) अणु
+	if (tb[NHA_BLACKHOLE]) {
+		if (tb[NHA_GATEWAY] || tb[NHA_OIF] ||
+		    tb[NHA_ENCAP]   || tb[NHA_ENCAP_TYPE] || tb[NHA_FDB]) {
 			NL_SET_ERR_MSG(extack, "Blackhole attribute can not be used with gateway, oif, encap or fdb");
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		cfg->nh_blackhole = 1;
 		err = 0;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (!cfg->nh_fdb && !tb[NHA_OIF]) अणु
+	if (!cfg->nh_fdb && !tb[NHA_OIF]) {
 		NL_SET_ERR_MSG(extack, "Device attribute required for non-blackhole and non-fdb nexthops");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (!cfg->nh_fdb && tb[NHA_OIF]) अणु
-		cfg->nh_अगरindex = nla_get_u32(tb[NHA_OIF]);
-		अगर (cfg->nh_अगरindex)
-			cfg->dev = __dev_get_by_index(net, cfg->nh_अगरindex);
+	if (!cfg->nh_fdb && tb[NHA_OIF]) {
+		cfg->nh_ifindex = nla_get_u32(tb[NHA_OIF]);
+		if (cfg->nh_ifindex)
+			cfg->dev = __dev_get_by_index(net, cfg->nh_ifindex);
 
-		अगर (!cfg->dev) अणु
+		if (!cfg->dev) {
 			NL_SET_ERR_MSG(extack, "Invalid device index");
-			जाओ out;
-		पूर्ण अन्यथा अगर (!(cfg->dev->flags & IFF_UP)) अणु
+			goto out;
+		} else if (!(cfg->dev->flags & IFF_UP)) {
 			NL_SET_ERR_MSG(extack, "Nexthop device is not up");
 			err = -ENETDOWN;
-			जाओ out;
-		पूर्ण अन्यथा अगर (!netअगर_carrier_ok(cfg->dev)) अणु
+			goto out;
+		} else if (!netif_carrier_ok(cfg->dev)) {
 			NL_SET_ERR_MSG(extack, "Carrier for nexthop device is down");
 			err = -ENETDOWN;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 	err = -EINVAL;
-	अगर (tb[NHA_GATEWAY]) अणु
-		काष्ठा nlattr *gwa = tb[NHA_GATEWAY];
+	if (tb[NHA_GATEWAY]) {
+		struct nlattr *gwa = tb[NHA_GATEWAY];
 
-		चयन (cfg->nh_family) अणु
-		हाल AF_INET:
-			अगर (nla_len(gwa) != माप(u32)) अणु
+		switch (cfg->nh_family) {
+		case AF_INET:
+			if (nla_len(gwa) != sizeof(u32)) {
 				NL_SET_ERR_MSG(extack, "Invalid gateway");
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 			cfg->gw.ipv4 = nla_get_be32(gwa);
-			अवरोध;
-		हाल AF_INET6:
-			अगर (nla_len(gwa) != माप(काष्ठा in6_addr)) अणु
+			break;
+		case AF_INET6:
+			if (nla_len(gwa) != sizeof(struct in6_addr)) {
 				NL_SET_ERR_MSG(extack, "Invalid gateway");
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 			cfg->gw.ipv6 = nla_get_in6_addr(gwa);
-			अवरोध;
-		शेष:
+			break;
+		default:
 			NL_SET_ERR_MSG(extack,
 				       "Unknown address family for gateway");
-			जाओ out;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			goto out;
+		}
+	} else {
 		/* device only nexthop (no gateway) */
-		अगर (cfg->nh_flags & RTNH_F_ONLINK) अणु
+		if (cfg->nh_flags & RTNH_F_ONLINK) {
 			NL_SET_ERR_MSG(extack,
 				       "ONLINK flag can not be set for nexthop without a gateway");
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
-	अगर (tb[NHA_ENCAP]) अणु
+	if (tb[NHA_ENCAP]) {
 		cfg->nh_encap = tb[NHA_ENCAP];
 
-		अगर (!tb[NHA_ENCAP_TYPE]) अणु
+		if (!tb[NHA_ENCAP_TYPE]) {
 			NL_SET_ERR_MSG(extack, "LWT encapsulation type is missing");
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		cfg->nh_encap_type = nla_get_u16(tb[NHA_ENCAP_TYPE]);
 		err = lwtunnel_valid_encap_type(cfg->nh_encap_type, extack);
-		अगर (err < 0)
-			जाओ out;
+		if (err < 0)
+			goto out;
 
-	पूर्ण अन्यथा अगर (tb[NHA_ENCAP_TYPE]) अणु
+	} else if (tb[NHA_ENCAP_TYPE]) {
 		NL_SET_ERR_MSG(extack, "LWT encapsulation attribute is missing");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 
 	err = 0;
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /* rtnl */
-अटल पूर्णांक rपंचांग_new_nexthop(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh,
-			   काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा net *net = sock_net(skb->sk);
-	काष्ठा nh_config cfg;
-	काष्ठा nexthop *nh;
-	पूर्णांक err;
+static int rtm_new_nexthop(struct sk_buff *skb, struct nlmsghdr *nlh,
+			   struct netlink_ext_ack *extack)
+{
+	struct net *net = sock_net(skb->sk);
+	struct nh_config cfg;
+	struct nexthop *nh;
+	int err;
 
-	err = rपंचांग_to_nh_config(net, skb, nlh, &cfg, extack);
-	अगर (!err) अणु
+	err = rtm_to_nh_config(net, skb, nlh, &cfg, extack);
+	if (!err) {
 		nh = nexthop_add(net, &cfg, extack);
-		अगर (IS_ERR(nh))
+		if (IS_ERR(nh))
 			err = PTR_ERR(nh);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक __nh_valid_get_del_req(स्थिर काष्ठा nlmsghdr *nlh,
-				  काष्ठा nlattr **tb, u32 *id,
-				  काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा nhmsg *nhm = nlmsg_data(nlh);
+static int __nh_valid_get_del_req(const struct nlmsghdr *nlh,
+				  struct nlattr **tb, u32 *id,
+				  struct netlink_ext_ack *extack)
+{
+	struct nhmsg *nhm = nlmsg_data(nlh);
 
-	अगर (nhm->nh_protocol || nhm->resvd || nhm->nh_scope || nhm->nh_flags) अणु
+	if (nhm->nh_protocol || nhm->resvd || nhm->nh_scope || nhm->nh_flags) {
 		NL_SET_ERR_MSG(extack, "Invalid values in header");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!tb[NHA_ID]) अणु
+	if (!tb[NHA_ID]) {
 		NL_SET_ERR_MSG(extack, "Nexthop id is missing");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	*id = nla_get_u32(tb[NHA_ID]);
-	अगर (!(*id)) अणु
+	if (!(*id)) {
 		NL_SET_ERR_MSG(extack, "Invalid nexthop id");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nh_valid_get_del_req(स्थिर काष्ठा nlmsghdr *nlh, u32 *id,
-				काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा nlattr *tb[ARRAY_SIZE(rपंचांग_nh_policy_get)];
-	पूर्णांक err;
+static int nh_valid_get_del_req(const struct nlmsghdr *nlh, u32 *id,
+				struct netlink_ext_ack *extack)
+{
+	struct nlattr *tb[ARRAY_SIZE(rtm_nh_policy_get)];
+	int err;
 
-	err = nlmsg_parse(nlh, माप(काष्ठा nhmsg), tb,
-			  ARRAY_SIZE(rपंचांग_nh_policy_get) - 1,
-			  rपंचांग_nh_policy_get, extack);
-	अगर (err < 0)
-		वापस err;
+	err = nlmsg_parse(nlh, sizeof(struct nhmsg), tb,
+			  ARRAY_SIZE(rtm_nh_policy_get) - 1,
+			  rtm_nh_policy_get, extack);
+	if (err < 0)
+		return err;
 
-	वापस __nh_valid_get_del_req(nlh, tb, id, extack);
-पूर्ण
+	return __nh_valid_get_del_req(nlh, tb, id, extack);
+}
 
 /* rtnl */
-अटल पूर्णांक rपंचांग_del_nexthop(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh,
-			   काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा net *net = sock_net(skb->sk);
-	काष्ठा nl_info nlinfo = अणु
+static int rtm_del_nexthop(struct sk_buff *skb, struct nlmsghdr *nlh,
+			   struct netlink_ext_ack *extack)
+{
+	struct net *net = sock_net(skb->sk);
+	struct nl_info nlinfo = {
 		.nlh = nlh,
 		.nl_net = net,
 		.portid = NETLINK_CB(skb).portid,
-	पूर्ण;
-	काष्ठा nexthop *nh;
-	पूर्णांक err;
+	};
+	struct nexthop *nh;
+	int err;
 	u32 id;
 
 	err = nh_valid_get_del_req(nlh, &id, extack);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	nh = nexthop_find_by_id(net, id);
-	अगर (!nh)
-		वापस -ENOENT;
+	if (!nh)
+		return -ENOENT;
 
-	हटाओ_nexthop(net, nh, &nlinfo);
+	remove_nexthop(net, nh, &nlinfo);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* rtnl */
-अटल पूर्णांक rपंचांग_get_nexthop(काष्ठा sk_buff *in_skb, काष्ठा nlmsghdr *nlh,
-			   काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा net *net = sock_net(in_skb->sk);
-	काष्ठा sk_buff *skb = शून्य;
-	काष्ठा nexthop *nh;
-	पूर्णांक err;
+static int rtm_get_nexthop(struct sk_buff *in_skb, struct nlmsghdr *nlh,
+			   struct netlink_ext_ack *extack)
+{
+	struct net *net = sock_net(in_skb->sk);
+	struct sk_buff *skb = NULL;
+	struct nexthop *nh;
+	int err;
 	u32 id;
 
 	err = nh_valid_get_del_req(nlh, &id, extack);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = -ENOBUFS;
 	skb = alloc_skb(NLMSG_GOODSIZE, GFP_KERNEL);
-	अगर (!skb)
-		जाओ out;
+	if (!skb)
+		goto out;
 
 	err = -ENOENT;
 	nh = nexthop_find_by_id(net, id);
-	अगर (!nh)
-		जाओ errout_मुक्त;
+	if (!nh)
+		goto errout_free;
 
 	err = nh_fill_node(skb, nh, RTM_NEWNEXTHOP, NETLINK_CB(in_skb).portid,
 			   nlh->nlmsg_seq, 0);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		WARN_ON(err == -EMSGSIZE);
-		जाओ errout_मुक्त;
-	पूर्ण
+		goto errout_free;
+	}
 
 	err = rtnl_unicast(skb, net, NETLINK_CB(in_skb).portid);
 out:
-	वापस err;
-errout_मुक्त:
-	kमुक्त_skb(skb);
-	जाओ out;
-पूर्ण
+	return err;
+errout_free:
+	kfree_skb(skb);
+	goto out;
+}
 
-काष्ठा nh_dump_filter अणु
+struct nh_dump_filter {
 	u32 nh_id;
-	पूर्णांक dev_idx;
-	पूर्णांक master_idx;
+	int dev_idx;
+	int master_idx;
 	bool group_filter;
 	bool fdb_filter;
 	u32 res_bucket_nh_id;
-पूर्ण;
+};
 
-अटल bool nh_dump_filtered(काष्ठा nexthop *nh,
-			     काष्ठा nh_dump_filter *filter, u8 family)
-अणु
-	स्थिर काष्ठा net_device *dev;
-	स्थिर काष्ठा nh_info *nhi;
+static bool nh_dump_filtered(struct nexthop *nh,
+			     struct nh_dump_filter *filter, u8 family)
+{
+	const struct net_device *dev;
+	const struct nh_info *nhi;
 
-	अगर (filter->group_filter && !nh->is_group)
-		वापस true;
+	if (filter->group_filter && !nh->is_group)
+		return true;
 
-	अगर (!filter->dev_idx && !filter->master_idx && !family)
-		वापस false;
+	if (!filter->dev_idx && !filter->master_idx && !family)
+		return false;
 
-	अगर (nh->is_group)
-		वापस true;
+	if (nh->is_group)
+		return true;
 
 	nhi = rtnl_dereference(nh->nh_info);
-	अगर (family && nhi->family != family)
-		वापस true;
+	if (family && nhi->family != family)
+		return true;
 
 	dev = nhi->fib_nhc.nhc_dev;
-	अगर (filter->dev_idx && (!dev || dev->अगरindex != filter->dev_idx))
-		वापस true;
+	if (filter->dev_idx && (!dev || dev->ifindex != filter->dev_idx))
+		return true;
 
-	अगर (filter->master_idx) अणु
-		काष्ठा net_device *master;
+	if (filter->master_idx) {
+		struct net_device *master;
 
-		अगर (!dev)
-			वापस true;
+		if (!dev)
+			return true;
 
-		master = netdev_master_upper_dev_get((काष्ठा net_device *)dev);
-		अगर (!master || master->अगरindex != filter->master_idx)
-			वापस true;
-	पूर्ण
+		master = netdev_master_upper_dev_get((struct net_device *)dev);
+		if (!master || master->ifindex != filter->master_idx)
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल पूर्णांक __nh_valid_dump_req(स्थिर काष्ठा nlmsghdr *nlh, काष्ठा nlattr **tb,
-			       काष्ठा nh_dump_filter *filter,
-			       काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा nhmsg *nhm;
+static int __nh_valid_dump_req(const struct nlmsghdr *nlh, struct nlattr **tb,
+			       struct nh_dump_filter *filter,
+			       struct netlink_ext_ack *extack)
+{
+	struct nhmsg *nhm;
 	u32 idx;
 
-	अगर (tb[NHA_OIF]) अणु
+	if (tb[NHA_OIF]) {
 		idx = nla_get_u32(tb[NHA_OIF]);
-		अगर (idx > पूर्णांक_उच्च) अणु
+		if (idx > INT_MAX) {
 			NL_SET_ERR_MSG(extack, "Invalid device index");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		filter->dev_idx = idx;
-	पूर्ण
-	अगर (tb[NHA_MASTER]) अणु
+	}
+	if (tb[NHA_MASTER]) {
 		idx = nla_get_u32(tb[NHA_MASTER]);
-		अगर (idx > पूर्णांक_उच्च) अणु
+		if (idx > INT_MAX) {
 			NL_SET_ERR_MSG(extack, "Invalid master device index");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		filter->master_idx = idx;
-	पूर्ण
+	}
 	filter->group_filter = nla_get_flag(tb[NHA_GROUPS]);
 	filter->fdb_filter = nla_get_flag(tb[NHA_FDB]);
 
 	nhm = nlmsg_data(nlh);
-	अगर (nhm->nh_protocol || nhm->resvd || nhm->nh_scope || nhm->nh_flags) अणु
+	if (nhm->nh_protocol || nhm->resvd || nhm->nh_scope || nhm->nh_flags) {
 		NL_SET_ERR_MSG(extack, "Invalid values in header for nexthop dump request");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nh_valid_dump_req(स्थिर काष्ठा nlmsghdr *nlh,
-			     काष्ठा nh_dump_filter *filter,
-			     काष्ठा netlink_callback *cb)
-अणु
-	काष्ठा nlattr *tb[ARRAY_SIZE(rपंचांग_nh_policy_dump)];
-	पूर्णांक err;
+static int nh_valid_dump_req(const struct nlmsghdr *nlh,
+			     struct nh_dump_filter *filter,
+			     struct netlink_callback *cb)
+{
+	struct nlattr *tb[ARRAY_SIZE(rtm_nh_policy_dump)];
+	int err;
 
-	err = nlmsg_parse(nlh, माप(काष्ठा nhmsg), tb,
-			  ARRAY_SIZE(rपंचांग_nh_policy_dump) - 1,
-			  rपंचांग_nh_policy_dump, cb->extack);
-	अगर (err < 0)
-		वापस err;
+	err = nlmsg_parse(nlh, sizeof(struct nhmsg), tb,
+			  ARRAY_SIZE(rtm_nh_policy_dump) - 1,
+			  rtm_nh_policy_dump, cb->extack);
+	if (err < 0)
+		return err;
 
-	वापस __nh_valid_dump_req(nlh, tb, filter, cb->extack);
-पूर्ण
+	return __nh_valid_dump_req(nlh, tb, filter, cb->extack);
+}
 
-काष्ठा rपंचांग_dump_nh_ctx अणु
+struct rtm_dump_nh_ctx {
 	u32 idx;
-पूर्ण;
+};
 
-अटल काष्ठा rपंचांग_dump_nh_ctx *
-rपंचांग_dump_nh_ctx(काष्ठा netlink_callback *cb)
-अणु
-	काष्ठा rपंचांग_dump_nh_ctx *ctx = (व्योम *)cb->ctx;
+static struct rtm_dump_nh_ctx *
+rtm_dump_nh_ctx(struct netlink_callback *cb)
+{
+	struct rtm_dump_nh_ctx *ctx = (void *)cb->ctx;
 
-	BUILD_BUG_ON(माप(*ctx) > माप(cb->ctx));
-	वापस ctx;
-पूर्ण
+	BUILD_BUG_ON(sizeof(*ctx) > sizeof(cb->ctx));
+	return ctx;
+}
 
-अटल पूर्णांक rपंचांग_dump_walk_nexthops(काष्ठा sk_buff *skb,
-				  काष्ठा netlink_callback *cb,
-				  काष्ठा rb_root *root,
-				  काष्ठा rपंचांग_dump_nh_ctx *ctx,
-				  पूर्णांक (*nh_cb)(काष्ठा sk_buff *skb,
-					       काष्ठा netlink_callback *cb,
-					       काष्ठा nexthop *nh, व्योम *data),
-				  व्योम *data)
-अणु
-	काष्ठा rb_node *node;
-	पूर्णांक s_idx;
-	पूर्णांक err;
+static int rtm_dump_walk_nexthops(struct sk_buff *skb,
+				  struct netlink_callback *cb,
+				  struct rb_root *root,
+				  struct rtm_dump_nh_ctx *ctx,
+				  int (*nh_cb)(struct sk_buff *skb,
+					       struct netlink_callback *cb,
+					       struct nexthop *nh, void *data),
+				  void *data)
+{
+	struct rb_node *node;
+	int s_idx;
+	int err;
 
 	s_idx = ctx->idx;
-	क्रम (node = rb_first(root); node; node = rb_next(node)) अणु
-		काष्ठा nexthop *nh;
+	for (node = rb_first(root); node; node = rb_next(node)) {
+		struct nexthop *nh;
 
-		nh = rb_entry(node, काष्ठा nexthop, rb_node);
-		अगर (nh->id < s_idx)
-			जारी;
+		nh = rb_entry(node, struct nexthop, rb_node);
+		if (nh->id < s_idx)
+			continue;
 
 		ctx->idx = nh->id;
 		err = nh_cb(skb, cb, nh, data);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
 	ctx->idx++;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rपंचांग_dump_nexthop_cb(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb,
-			       काष्ठा nexthop *nh, व्योम *data)
-अणु
-	काष्ठा nhmsg *nhm = nlmsg_data(cb->nlh);
-	काष्ठा nh_dump_filter *filter = data;
+static int rtm_dump_nexthop_cb(struct sk_buff *skb, struct netlink_callback *cb,
+			       struct nexthop *nh, void *data)
+{
+	struct nhmsg *nhm = nlmsg_data(cb->nlh);
+	struct nh_dump_filter *filter = data;
 
-	अगर (nh_dump_filtered(nh, filter, nhm->nh_family))
-		वापस 0;
+	if (nh_dump_filtered(nh, filter, nhm->nh_family))
+		return 0;
 
-	वापस nh_fill_node(skb, nh, RTM_NEWNEXTHOP,
+	return nh_fill_node(skb, nh, RTM_NEWNEXTHOP,
 			    NETLINK_CB(cb->skb).portid,
 			    cb->nlh->nlmsg_seq, NLM_F_MULTI);
-पूर्ण
+}
 
 /* rtnl */
-अटल पूर्णांक rपंचांग_dump_nexthop(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb)
-अणु
-	काष्ठा rपंचांग_dump_nh_ctx *ctx = rपंचांग_dump_nh_ctx(cb);
-	काष्ठा net *net = sock_net(skb->sk);
-	काष्ठा rb_root *root = &net->nexthop.rb_root;
-	काष्ठा nh_dump_filter filter = अणुपूर्ण;
-	पूर्णांक err;
+static int rtm_dump_nexthop(struct sk_buff *skb, struct netlink_callback *cb)
+{
+	struct rtm_dump_nh_ctx *ctx = rtm_dump_nh_ctx(cb);
+	struct net *net = sock_net(skb->sk);
+	struct rb_root *root = &net->nexthop.rb_root;
+	struct nh_dump_filter filter = {};
+	int err;
 
 	err = nh_valid_dump_req(cb->nlh, &filter, cb);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	err = rपंचांग_dump_walk_nexthops(skb, cb, root, ctx,
-				     &rपंचांग_dump_nexthop_cb, &filter);
-	अगर (err < 0) अणु
-		अगर (likely(skb->len))
-			जाओ out;
-		जाओ out_err;
-	पूर्ण
+	err = rtm_dump_walk_nexthops(skb, cb, root, ctx,
+				     &rtm_dump_nexthop_cb, &filter);
+	if (err < 0) {
+		if (likely(skb->len))
+			goto out;
+		goto out_err;
+	}
 
 out:
 	err = skb->len;
 out_err:
 	cb->seq = net->nexthop.seq;
 	nl_dump_check_consistent(cb, nlmsg_hdr(skb));
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल काष्ठा nexthop *
-nexthop_find_group_resilient(काष्ठा net *net, u32 id,
-			     काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा nh_group *nhg;
-	काष्ठा nexthop *nh;
+static struct nexthop *
+nexthop_find_group_resilient(struct net *net, u32 id,
+			     struct netlink_ext_ack *extack)
+{
+	struct nh_group *nhg;
+	struct nexthop *nh;
 
 	nh = nexthop_find_by_id(net, id);
-	अगर (!nh)
-		वापस ERR_PTR(-ENOENT);
+	if (!nh)
+		return ERR_PTR(-ENOENT);
 
-	अगर (!nh->is_group) अणु
+	if (!nh->is_group) {
 		NL_SET_ERR_MSG(extack, "Not a nexthop group");
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
 	nhg = rtnl_dereference(nh->nh_grp);
-	अगर (!nhg->resilient) अणु
+	if (!nhg->resilient) {
 		NL_SET_ERR_MSG(extack, "Nexthop group not of type resilient");
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	वापस nh;
-पूर्ण
+	return nh;
+}
 
-अटल पूर्णांक nh_valid_dump_nhid(काष्ठा nlattr *attr, u32 *nh_id_p,
-			      काष्ठा netlink_ext_ack *extack)
-अणु
+static int nh_valid_dump_nhid(struct nlattr *attr, u32 *nh_id_p,
+			      struct netlink_ext_ack *extack)
+{
 	u32 idx;
 
-	अगर (attr) अणु
+	if (attr) {
 		idx = nla_get_u32(attr);
-		अगर (!idx) अणु
+		if (!idx) {
 			NL_SET_ERR_MSG(extack, "Invalid nexthop id");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		*nh_id_p = idx;
-	पूर्ण अन्यथा अणु
+	} else {
 		*nh_id_p = 0;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nh_valid_dump_bucket_req(स्थिर काष्ठा nlmsghdr *nlh,
-				    काष्ठा nh_dump_filter *filter,
-				    काष्ठा netlink_callback *cb)
-अणु
-	काष्ठा nlattr *res_tb[ARRAY_SIZE(rपंचांग_nh_res_bucket_policy_dump)];
-	काष्ठा nlattr *tb[ARRAY_SIZE(rपंचांग_nh_policy_dump_bucket)];
-	पूर्णांक err;
+static int nh_valid_dump_bucket_req(const struct nlmsghdr *nlh,
+				    struct nh_dump_filter *filter,
+				    struct netlink_callback *cb)
+{
+	struct nlattr *res_tb[ARRAY_SIZE(rtm_nh_res_bucket_policy_dump)];
+	struct nlattr *tb[ARRAY_SIZE(rtm_nh_policy_dump_bucket)];
+	int err;
 
-	err = nlmsg_parse(nlh, माप(काष्ठा nhmsg), tb,
-			  ARRAY_SIZE(rपंचांग_nh_policy_dump_bucket) - 1,
-			  rपंचांग_nh_policy_dump_bucket, शून्य);
-	अगर (err < 0)
-		वापस err;
+	err = nlmsg_parse(nlh, sizeof(struct nhmsg), tb,
+			  ARRAY_SIZE(rtm_nh_policy_dump_bucket) - 1,
+			  rtm_nh_policy_dump_bucket, NULL);
+	if (err < 0)
+		return err;
 
 	err = nh_valid_dump_nhid(tb[NHA_ID], &filter->nh_id, cb->extack);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (tb[NHA_RES_BUCKET]) अणु
-		माप_प्रकार max = ARRAY_SIZE(rपंचांग_nh_res_bucket_policy_dump) - 1;
+	if (tb[NHA_RES_BUCKET]) {
+		size_t max = ARRAY_SIZE(rtm_nh_res_bucket_policy_dump) - 1;
 
 		err = nla_parse_nested(res_tb, max,
 				       tb[NHA_RES_BUCKET],
-				       rपंचांग_nh_res_bucket_policy_dump,
+				       rtm_nh_res_bucket_policy_dump,
 				       cb->extack);
-		अगर (err < 0)
-			वापस err;
+		if (err < 0)
+			return err;
 
 		err = nh_valid_dump_nhid(res_tb[NHA_RES_BUCKET_NH_ID],
 					 &filter->res_bucket_nh_id,
 					 cb->extack);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	वापस __nh_valid_dump_req(nlh, tb, filter, cb->extack);
-पूर्ण
+	return __nh_valid_dump_req(nlh, tb, filter, cb->extack);
+}
 
-काष्ठा rपंचांग_dump_res_bucket_ctx अणु
-	काष्ठा rपंचांग_dump_nh_ctx nh;
+struct rtm_dump_res_bucket_ctx {
+	struct rtm_dump_nh_ctx nh;
 	u16 bucket_index;
-	u32 करोne_nh_idx; /* 1 + the index of the last fully processed NH. */
-पूर्ण;
+	u32 done_nh_idx; /* 1 + the index of the last fully processed NH. */
+};
 
-अटल काष्ठा rपंचांग_dump_res_bucket_ctx *
-rपंचांग_dump_res_bucket_ctx(काष्ठा netlink_callback *cb)
-अणु
-	काष्ठा rपंचांग_dump_res_bucket_ctx *ctx = (व्योम *)cb->ctx;
+static struct rtm_dump_res_bucket_ctx *
+rtm_dump_res_bucket_ctx(struct netlink_callback *cb)
+{
+	struct rtm_dump_res_bucket_ctx *ctx = (void *)cb->ctx;
 
-	BUILD_BUG_ON(माप(*ctx) > माप(cb->ctx));
-	वापस ctx;
-पूर्ण
+	BUILD_BUG_ON(sizeof(*ctx) > sizeof(cb->ctx));
+	return ctx;
+}
 
-काष्ठा rपंचांग_dump_nexthop_bucket_data अणु
-	काष्ठा rपंचांग_dump_res_bucket_ctx *ctx;
-	काष्ठा nh_dump_filter filter;
-पूर्ण;
+struct rtm_dump_nexthop_bucket_data {
+	struct rtm_dump_res_bucket_ctx *ctx;
+	struct nh_dump_filter filter;
+};
 
-अटल पूर्णांक rपंचांग_dump_nexthop_bucket_nh(काष्ठा sk_buff *skb,
-				      काष्ठा netlink_callback *cb,
-				      काष्ठा nexthop *nh,
-				      काष्ठा rपंचांग_dump_nexthop_bucket_data *dd)
-अणु
+static int rtm_dump_nexthop_bucket_nh(struct sk_buff *skb,
+				      struct netlink_callback *cb,
+				      struct nexthop *nh,
+				      struct rtm_dump_nexthop_bucket_data *dd)
+{
 	u32 portid = NETLINK_CB(cb->skb).portid;
-	काष्ठा nhmsg *nhm = nlmsg_data(cb->nlh);
-	काष्ठा nh_res_table *res_table;
-	काष्ठा nh_group *nhg;
+	struct nhmsg *nhm = nlmsg_data(cb->nlh);
+	struct nh_res_table *res_table;
+	struct nh_group *nhg;
 	u16 bucket_index;
-	पूर्णांक err;
+	int err;
 
-	अगर (dd->ctx->nh.idx < dd->ctx->करोne_nh_idx)
-		वापस 0;
+	if (dd->ctx->nh.idx < dd->ctx->done_nh_idx)
+		return 0;
 
 	nhg = rtnl_dereference(nh->nh_grp);
 	res_table = rtnl_dereference(nhg->res_table);
-	क्रम (bucket_index = dd->ctx->bucket_index;
+	for (bucket_index = dd->ctx->bucket_index;
 	     bucket_index < res_table->num_nh_buckets;
-	     bucket_index++) अणु
-		काष्ठा nh_res_bucket *bucket;
-		काष्ठा nh_grp_entry *nhge;
+	     bucket_index++) {
+		struct nh_res_bucket *bucket;
+		struct nh_grp_entry *nhge;
 
 		bucket = &res_table->nh_buckets[bucket_index];
 		nhge = rtnl_dereference(bucket->nh_entry);
-		अगर (nh_dump_filtered(nhge->nh, &dd->filter, nhm->nh_family))
-			जारी;
+		if (nh_dump_filtered(nhge->nh, &dd->filter, nhm->nh_family))
+			continue;
 
-		अगर (dd->filter.res_bucket_nh_id &&
+		if (dd->filter.res_bucket_nh_id &&
 		    dd->filter.res_bucket_nh_id != nhge->nh->id)
-			जारी;
+			continue;
 
 		err = nh_fill_res_bucket(skb, nh, bucket, bucket_index,
 					 RTM_NEWNEXTHOPBUCKET, portid,
 					 cb->nlh->nlmsg_seq, NLM_F_MULTI,
 					 cb->extack);
-		अगर (err < 0) अणु
-			अगर (likely(skb->len))
-				जाओ out;
-			जाओ out_err;
-		पूर्ण
-	पूर्ण
+		if (err < 0) {
+			if (likely(skb->len))
+				goto out;
+			goto out_err;
+		}
+	}
 
-	dd->ctx->करोne_nh_idx = dd->ctx->nh.idx + 1;
+	dd->ctx->done_nh_idx = dd->ctx->nh.idx + 1;
 	bucket_index = 0;
 
 out:
 	err = skb->len;
 out_err:
 	dd->ctx->bucket_index = bucket_index;
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक rपंचांग_dump_nexthop_bucket_cb(काष्ठा sk_buff *skb,
-				      काष्ठा netlink_callback *cb,
-				      काष्ठा nexthop *nh, व्योम *data)
-अणु
-	काष्ठा rपंचांग_dump_nexthop_bucket_data *dd = data;
-	काष्ठा nh_group *nhg;
+static int rtm_dump_nexthop_bucket_cb(struct sk_buff *skb,
+				      struct netlink_callback *cb,
+				      struct nexthop *nh, void *data)
+{
+	struct rtm_dump_nexthop_bucket_data *dd = data;
+	struct nh_group *nhg;
 
-	अगर (!nh->is_group)
-		वापस 0;
+	if (!nh->is_group)
+		return 0;
 
 	nhg = rtnl_dereference(nh->nh_grp);
-	अगर (!nhg->resilient)
-		वापस 0;
+	if (!nhg->resilient)
+		return 0;
 
-	वापस rपंचांग_dump_nexthop_bucket_nh(skb, cb, nh, dd);
-पूर्ण
+	return rtm_dump_nexthop_bucket_nh(skb, cb, nh, dd);
+}
 
 /* rtnl */
-अटल पूर्णांक rपंचांग_dump_nexthop_bucket(काष्ठा sk_buff *skb,
-				   काष्ठा netlink_callback *cb)
-अणु
-	काष्ठा rपंचांग_dump_res_bucket_ctx *ctx = rपंचांग_dump_res_bucket_ctx(cb);
-	काष्ठा rपंचांग_dump_nexthop_bucket_data dd = अणु .ctx = ctx पूर्ण;
-	काष्ठा net *net = sock_net(skb->sk);
-	काष्ठा nexthop *nh;
-	पूर्णांक err;
+static int rtm_dump_nexthop_bucket(struct sk_buff *skb,
+				   struct netlink_callback *cb)
+{
+	struct rtm_dump_res_bucket_ctx *ctx = rtm_dump_res_bucket_ctx(cb);
+	struct rtm_dump_nexthop_bucket_data dd = { .ctx = ctx };
+	struct net *net = sock_net(skb->sk);
+	struct nexthop *nh;
+	int err;
 
 	err = nh_valid_dump_bucket_req(cb->nlh, &dd.filter, cb);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (dd.filter.nh_id) अणु
+	if (dd.filter.nh_id) {
 		nh = nexthop_find_group_resilient(net, dd.filter.nh_id,
 						  cb->extack);
-		अगर (IS_ERR(nh))
-			वापस PTR_ERR(nh);
-		err = rपंचांग_dump_nexthop_bucket_nh(skb, cb, nh, &dd);
-	पूर्ण अन्यथा अणु
-		काष्ठा rb_root *root = &net->nexthop.rb_root;
+		if (IS_ERR(nh))
+			return PTR_ERR(nh);
+		err = rtm_dump_nexthop_bucket_nh(skb, cb, nh, &dd);
+	} else {
+		struct rb_root *root = &net->nexthop.rb_root;
 
-		err = rपंचांग_dump_walk_nexthops(skb, cb, root, &ctx->nh,
-					     &rपंचांग_dump_nexthop_bucket_cb, &dd);
-	पूर्ण
+		err = rtm_dump_walk_nexthops(skb, cb, root, &ctx->nh,
+					     &rtm_dump_nexthop_bucket_cb, &dd);
+	}
 
-	अगर (err < 0) अणु
-		अगर (likely(skb->len))
-			जाओ out;
-		जाओ out_err;
-	पूर्ण
+	if (err < 0) {
+		if (likely(skb->len))
+			goto out;
+		goto out_err;
+	}
 
 out:
 	err = skb->len;
 out_err:
 	cb->seq = net->nexthop.seq;
 	nl_dump_check_consistent(cb, nlmsg_hdr(skb));
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक nh_valid_get_bucket_req_res_bucket(काष्ठा nlattr *res,
+static int nh_valid_get_bucket_req_res_bucket(struct nlattr *res,
 					      u16 *bucket_index,
-					      काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा nlattr *tb[ARRAY_SIZE(rपंचांग_nh_res_bucket_policy_get)];
-	पूर्णांक err;
+					      struct netlink_ext_ack *extack)
+{
+	struct nlattr *tb[ARRAY_SIZE(rtm_nh_res_bucket_policy_get)];
+	int err;
 
-	err = nla_parse_nested(tb, ARRAY_SIZE(rपंचांग_nh_res_bucket_policy_get) - 1,
-			       res, rपंचांग_nh_res_bucket_policy_get, extack);
-	अगर (err < 0)
-		वापस err;
+	err = nla_parse_nested(tb, ARRAY_SIZE(rtm_nh_res_bucket_policy_get) - 1,
+			       res, rtm_nh_res_bucket_policy_get, extack);
+	if (err < 0)
+		return err;
 
-	अगर (!tb[NHA_RES_BUCKET_INDEX]) अणु
+	if (!tb[NHA_RES_BUCKET_INDEX]) {
 		NL_SET_ERR_MSG(extack, "Bucket index is missing");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	*bucket_index = nla_get_u16(tb[NHA_RES_BUCKET_INDEX]);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nh_valid_get_bucket_req(स्थिर काष्ठा nlmsghdr *nlh,
+static int nh_valid_get_bucket_req(const struct nlmsghdr *nlh,
 				   u32 *id, u16 *bucket_index,
-				   काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा nlattr *tb[ARRAY_SIZE(rपंचांग_nh_policy_get_bucket)];
-	पूर्णांक err;
+				   struct netlink_ext_ack *extack)
+{
+	struct nlattr *tb[ARRAY_SIZE(rtm_nh_policy_get_bucket)];
+	int err;
 
-	err = nlmsg_parse(nlh, माप(काष्ठा nhmsg), tb,
-			  ARRAY_SIZE(rपंचांग_nh_policy_get_bucket) - 1,
-			  rपंचांग_nh_policy_get_bucket, extack);
-	अगर (err < 0)
-		वापस err;
+	err = nlmsg_parse(nlh, sizeof(struct nhmsg), tb,
+			  ARRAY_SIZE(rtm_nh_policy_get_bucket) - 1,
+			  rtm_nh_policy_get_bucket, extack);
+	if (err < 0)
+		return err;
 
 	err = __nh_valid_get_del_req(nlh, tb, id, extack);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (!tb[NHA_RES_BUCKET]) अणु
+	if (!tb[NHA_RES_BUCKET]) {
 		NL_SET_ERR_MSG(extack, "Bucket information is missing");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	err = nh_valid_get_bucket_req_res_bucket(tb[NHA_RES_BUCKET],
 						 bucket_index, extack);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* rtnl */
-अटल पूर्णांक rपंचांग_get_nexthop_bucket(काष्ठा sk_buff *in_skb, काष्ठा nlmsghdr *nlh,
-				  काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा net *net = sock_net(in_skb->sk);
-	काष्ठा nh_res_table *res_table;
-	काष्ठा sk_buff *skb = शून्य;
-	काष्ठा nh_group *nhg;
-	काष्ठा nexthop *nh;
+static int rtm_get_nexthop_bucket(struct sk_buff *in_skb, struct nlmsghdr *nlh,
+				  struct netlink_ext_ack *extack)
+{
+	struct net *net = sock_net(in_skb->sk);
+	struct nh_res_table *res_table;
+	struct sk_buff *skb = NULL;
+	struct nh_group *nhg;
+	struct nexthop *nh;
 	u16 bucket_index;
-	पूर्णांक err;
+	int err;
 	u32 id;
 
 	err = nh_valid_get_bucket_req(nlh, &id, &bucket_index, extack);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	nh = nexthop_find_group_resilient(net, id, extack);
-	अगर (IS_ERR(nh))
-		वापस PTR_ERR(nh);
+	if (IS_ERR(nh))
+		return PTR_ERR(nh);
 
 	nhg = rtnl_dereference(nh->nh_grp);
 	res_table = rtnl_dereference(nhg->res_table);
-	अगर (bucket_index >= res_table->num_nh_buckets) अणु
+	if (bucket_index >= res_table->num_nh_buckets) {
 		NL_SET_ERR_MSG(extack, "Bucket index out of bounds");
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
 	skb = alloc_skb(NLMSG_GOODSIZE, GFP_KERNEL);
-	अगर (!skb)
-		वापस -ENOBUFS;
+	if (!skb)
+		return -ENOBUFS;
 
 	err = nh_fill_res_bucket(skb, nh, &res_table->nh_buckets[bucket_index],
 				 bucket_index, RTM_NEWNEXTHOPBUCKET,
 				 NETLINK_CB(in_skb).portid, nlh->nlmsg_seq,
 				 0, extack);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		WARN_ON(err == -EMSGSIZE);
-		जाओ errout_मुक्त;
-	पूर्ण
+		goto errout_free;
+	}
 
-	वापस rtnl_unicast(skb, net, NETLINK_CB(in_skb).portid);
+	return rtnl_unicast(skb, net, NETLINK_CB(in_skb).portid);
 
-errout_मुक्त:
-	kमुक्त_skb(skb);
-	वापस err;
-पूर्ण
+errout_free:
+	kfree_skb(skb);
+	return err;
+}
 
-अटल व्योम nexthop_sync_mtu(काष्ठा net_device *dev, u32 orig_mtu)
-अणु
-	अचिन्हित पूर्णांक hash = nh_dev_hashfn(dev->अगरindex);
-	काष्ठा net *net = dev_net(dev);
-	काष्ठा hlist_head *head = &net->nexthop.devhash[hash];
-	काष्ठा hlist_node *n;
-	काष्ठा nh_info *nhi;
+static void nexthop_sync_mtu(struct net_device *dev, u32 orig_mtu)
+{
+	unsigned int hash = nh_dev_hashfn(dev->ifindex);
+	struct net *net = dev_net(dev);
+	struct hlist_head *head = &net->nexthop.devhash[hash];
+	struct hlist_node *n;
+	struct nh_info *nhi;
 
-	hlist_क्रम_each_entry_safe(nhi, n, head, dev_hash) अणु
-		अगर (nhi->fib_nhc.nhc_dev == dev) अणु
-			अगर (nhi->family == AF_INET)
+	hlist_for_each_entry_safe(nhi, n, head, dev_hash) {
+		if (nhi->fib_nhc.nhc_dev == dev) {
+			if (nhi->family == AF_INET)
 				fib_nhc_update_mtu(&nhi->fib_nhc, dev->mtu,
 						   orig_mtu);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /* rtnl */
-अटल पूर्णांक nh_netdev_event(काष्ठा notअगरier_block *this,
-			   अचिन्हित दीर्घ event, व्योम *ptr)
-अणु
-	काष्ठा net_device *dev = netdev_notअगरier_info_to_dev(ptr);
-	काष्ठा netdev_notअगरier_info_ext *info_ext;
+static int nh_netdev_event(struct notifier_block *this,
+			   unsigned long event, void *ptr)
+{
+	struct net_device *dev = netdev_notifier_info_to_dev(ptr);
+	struct netdev_notifier_info_ext *info_ext;
 
-	चयन (event) अणु
-	हाल NETDEV_DOWN:
-	हाल NETDEV_UNREGISTER:
+	switch (event) {
+	case NETDEV_DOWN:
+	case NETDEV_UNREGISTER:
 		nexthop_flush_dev(dev, event);
-		अवरोध;
-	हाल NETDEV_CHANGE:
-		अगर (!(dev_get_flags(dev) & (IFF_RUNNING | IFF_LOWER_UP)))
+		break;
+	case NETDEV_CHANGE:
+		if (!(dev_get_flags(dev) & (IFF_RUNNING | IFF_LOWER_UP)))
 			nexthop_flush_dev(dev, event);
-		अवरोध;
-	हाल NETDEV_CHANGEMTU:
+		break;
+	case NETDEV_CHANGEMTU:
 		info_ext = ptr;
 		nexthop_sync_mtu(dev, info_ext->ext.mtu);
 		rt_cache_flush(dev_net(dev));
-		अवरोध;
-	पूर्ण
-	वापस NOTIFY_DONE;
-पूर्ण
+		break;
+	}
+	return NOTIFY_DONE;
+}
 
-अटल काष्ठा notअगरier_block nh_netdev_notअगरier = अणु
-	.notअगरier_call = nh_netdev_event,
-पूर्ण;
+static struct notifier_block nh_netdev_notifier = {
+	.notifier_call = nh_netdev_event,
+};
 
-अटल पूर्णांक nexthops_dump(काष्ठा net *net, काष्ठा notअगरier_block *nb,
-			 काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा rb_root *root = &net->nexthop.rb_root;
-	काष्ठा rb_node *node;
-	पूर्णांक err = 0;
+static int nexthops_dump(struct net *net, struct notifier_block *nb,
+			 struct netlink_ext_ack *extack)
+{
+	struct rb_root *root = &net->nexthop.rb_root;
+	struct rb_node *node;
+	int err = 0;
 
-	क्रम (node = rb_first(root); node; node = rb_next(node)) अणु
-		काष्ठा nexthop *nh;
+	for (node = rb_first(root); node; node = rb_next(node)) {
+		struct nexthop *nh;
 
-		nh = rb_entry(node, काष्ठा nexthop, rb_node);
-		err = call_nexthop_notअगरier(nb, net, NEXTHOP_EVENT_REPLACE, nh,
+		nh = rb_entry(node, struct nexthop, rb_node);
+		err = call_nexthop_notifier(nb, net, NEXTHOP_EVENT_REPLACE, nh,
 					    extack);
-		अगर (err)
-			अवरोध;
-	पूर्ण
+		if (err)
+			break;
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक रेजिस्टर_nexthop_notअगरier(काष्ठा net *net, काष्ठा notअगरier_block *nb,
-			      काष्ठा netlink_ext_ack *extack)
-अणु
-	पूर्णांक err;
+int register_nexthop_notifier(struct net *net, struct notifier_block *nb,
+			      struct netlink_ext_ack *extack)
+{
+	int err;
 
 	rtnl_lock();
 	err = nexthops_dump(net, nb, extack);
-	अगर (err)
-		जाओ unlock;
-	err = blocking_notअगरier_chain_रेजिस्टर(&net->nexthop.notअगरier_chain,
+	if (err)
+		goto unlock;
+	err = blocking_notifier_chain_register(&net->nexthop.notifier_chain,
 					       nb);
 unlock:
 	rtnl_unlock();
-	वापस err;
-पूर्ण
-EXPORT_SYMBOL(रेजिस्टर_nexthop_notअगरier);
+	return err;
+}
+EXPORT_SYMBOL(register_nexthop_notifier);
 
-पूर्णांक unरेजिस्टर_nexthop_notअगरier(काष्ठा net *net, काष्ठा notअगरier_block *nb)
-अणु
-	वापस blocking_notअगरier_chain_unरेजिस्टर(&net->nexthop.notअगरier_chain,
+int unregister_nexthop_notifier(struct net *net, struct notifier_block *nb)
+{
+	return blocking_notifier_chain_unregister(&net->nexthop.notifier_chain,
 						  nb);
-पूर्ण
-EXPORT_SYMBOL(unरेजिस्टर_nexthop_notअगरier);
+}
+EXPORT_SYMBOL(unregister_nexthop_notifier);
 
-व्योम nexthop_set_hw_flags(काष्ठा net *net, u32 id, bool offload, bool trap)
-अणु
-	काष्ठा nexthop *nexthop;
+void nexthop_set_hw_flags(struct net *net, u32 id, bool offload, bool trap)
+{
+	struct nexthop *nexthop;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 
 	nexthop = nexthop_find_by_id(net, id);
-	अगर (!nexthop)
-		जाओ out;
+	if (!nexthop)
+		goto out;
 
 	nexthop->nh_flags &= ~(RTNH_F_OFFLOAD | RTNH_F_TRAP);
-	अगर (offload)
+	if (offload)
 		nexthop->nh_flags |= RTNH_F_OFFLOAD;
-	अगर (trap)
+	if (trap)
 		nexthop->nh_flags |= RTNH_F_TRAP;
 
 out:
-	rcu_पढ़ो_unlock();
-पूर्ण
+	rcu_read_unlock();
+}
 EXPORT_SYMBOL(nexthop_set_hw_flags);
 
-व्योम nexthop_bucket_set_hw_flags(काष्ठा net *net, u32 id, u16 bucket_index,
+void nexthop_bucket_set_hw_flags(struct net *net, u32 id, u16 bucket_index,
 				 bool offload, bool trap)
-अणु
-	काष्ठा nh_res_table *res_table;
-	काष्ठा nh_res_bucket *bucket;
-	काष्ठा nexthop *nexthop;
-	काष्ठा nh_group *nhg;
+{
+	struct nh_res_table *res_table;
+	struct nh_res_bucket *bucket;
+	struct nexthop *nexthop;
+	struct nh_group *nhg;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 
 	nexthop = nexthop_find_by_id(net, id);
-	अगर (!nexthop || !nexthop->is_group)
-		जाओ out;
+	if (!nexthop || !nexthop->is_group)
+		goto out;
 
 	nhg = rcu_dereference(nexthop->nh_grp);
-	अगर (!nhg->resilient)
-		जाओ out;
+	if (!nhg->resilient)
+		goto out;
 
-	अगर (bucket_index >= nhg->res_table->num_nh_buckets)
-		जाओ out;
+	if (bucket_index >= nhg->res_table->num_nh_buckets)
+		goto out;
 
 	res_table = rcu_dereference(nhg->res_table);
 	bucket = &res_table->nh_buckets[bucket_index];
 	bucket->nh_flags &= ~(RTNH_F_OFFLOAD | RTNH_F_TRAP);
-	अगर (offload)
+	if (offload)
 		bucket->nh_flags |= RTNH_F_OFFLOAD;
-	अगर (trap)
+	if (trap)
 		bucket->nh_flags |= RTNH_F_TRAP;
 
 out:
-	rcu_पढ़ो_unlock();
-पूर्ण
+	rcu_read_unlock();
+}
 EXPORT_SYMBOL(nexthop_bucket_set_hw_flags);
 
-व्योम nexthop_res_grp_activity_update(काष्ठा net *net, u32 id, u16 num_buckets,
-				     अचिन्हित दीर्घ *activity)
-अणु
-	काष्ठा nh_res_table *res_table;
-	काष्ठा nexthop *nexthop;
-	काष्ठा nh_group *nhg;
+void nexthop_res_grp_activity_update(struct net *net, u32 id, u16 num_buckets,
+				     unsigned long *activity)
+{
+	struct nh_res_table *res_table;
+	struct nexthop *nexthop;
+	struct nh_group *nhg;
 	u16 i;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 
 	nexthop = nexthop_find_by_id(net, id);
-	अगर (!nexthop || !nexthop->is_group)
-		जाओ out;
+	if (!nexthop || !nexthop->is_group)
+		goto out;
 
 	nhg = rcu_dereference(nexthop->nh_grp);
-	अगर (!nhg->resilient)
-		जाओ out;
+	if (!nhg->resilient)
+		goto out;
 
 	/* Instead of silently ignoring some buckets, demand that the sizes
 	 * be the same.
 	 */
 	res_table = rcu_dereference(nhg->res_table);
-	अगर (num_buckets != res_table->num_nh_buckets)
-		जाओ out;
+	if (num_buckets != res_table->num_nh_buckets)
+		goto out;
 
-	क्रम (i = 0; i < num_buckets; i++) अणु
-		अगर (test_bit(i, activity))
+	for (i = 0; i < num_buckets; i++) {
+		if (test_bit(i, activity))
 			nh_res_bucket_set_busy(&res_table->nh_buckets[i]);
-	पूर्ण
+	}
 
 out:
-	rcu_पढ़ो_unlock();
-पूर्ण
+	rcu_read_unlock();
+}
 EXPORT_SYMBOL(nexthop_res_grp_activity_update);
 
-अटल व्योम __net_निकास nexthop_net_निकास(काष्ठा net *net)
-अणु
+static void __net_exit nexthop_net_exit(struct net *net)
+{
 	rtnl_lock();
 	flush_all_nexthops(net);
 	rtnl_unlock();
-	kमुक्त(net->nexthop.devhash);
-पूर्ण
+	kfree(net->nexthop.devhash);
+}
 
-अटल पूर्णांक __net_init nexthop_net_init(काष्ठा net *net)
-अणु
-	माप_प्रकार sz = माप(काष्ठा hlist_head) * NH_DEV_HASHSIZE;
+static int __net_init nexthop_net_init(struct net *net)
+{
+	size_t sz = sizeof(struct hlist_head) * NH_DEV_HASHSIZE;
 
 	net->nexthop.rb_root = RB_ROOT;
 	net->nexthop.devhash = kzalloc(sz, GFP_KERNEL);
-	अगर (!net->nexthop.devhash)
-		वापस -ENOMEM;
-	BLOCKING_INIT_NOTIFIER_HEAD(&net->nexthop.notअगरier_chain);
+	if (!net->nexthop.devhash)
+		return -ENOMEM;
+	BLOCKING_INIT_NOTIFIER_HEAD(&net->nexthop.notifier_chain);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा pernet_operations nexthop_net_ops = अणु
+static struct pernet_operations nexthop_net_ops = {
 	.init = nexthop_net_init,
-	.निकास = nexthop_net_निकास,
-पूर्ण;
+	.exit = nexthop_net_exit,
+};
 
-अटल पूर्णांक __init nexthop_init(व्योम)
-अणु
-	रेजिस्टर_pernet_subsys(&nexthop_net_ops);
+static int __init nexthop_init(void)
+{
+	register_pernet_subsys(&nexthop_net_ops);
 
-	रेजिस्टर_netdevice_notअगरier(&nh_netdev_notअगरier);
+	register_netdevice_notifier(&nh_netdev_notifier);
 
-	rtnl_रेजिस्टर(PF_UNSPEC, RTM_NEWNEXTHOP, rपंचांग_new_nexthop, शून्य, 0);
-	rtnl_रेजिस्टर(PF_UNSPEC, RTM_DELNEXTHOP, rपंचांग_del_nexthop, शून्य, 0);
-	rtnl_रेजिस्टर(PF_UNSPEC, RTM_GETNEXTHOP, rपंचांग_get_nexthop,
-		      rपंचांग_dump_nexthop, 0);
+	rtnl_register(PF_UNSPEC, RTM_NEWNEXTHOP, rtm_new_nexthop, NULL, 0);
+	rtnl_register(PF_UNSPEC, RTM_DELNEXTHOP, rtm_del_nexthop, NULL, 0);
+	rtnl_register(PF_UNSPEC, RTM_GETNEXTHOP, rtm_get_nexthop,
+		      rtm_dump_nexthop, 0);
 
-	rtnl_रेजिस्टर(PF_INET, RTM_NEWNEXTHOP, rपंचांग_new_nexthop, शून्य, 0);
-	rtnl_रेजिस्टर(PF_INET, RTM_GETNEXTHOP, शून्य, rपंचांग_dump_nexthop, 0);
+	rtnl_register(PF_INET, RTM_NEWNEXTHOP, rtm_new_nexthop, NULL, 0);
+	rtnl_register(PF_INET, RTM_GETNEXTHOP, NULL, rtm_dump_nexthop, 0);
 
-	rtnl_रेजिस्टर(PF_INET6, RTM_NEWNEXTHOP, rपंचांग_new_nexthop, शून्य, 0);
-	rtnl_रेजिस्टर(PF_INET6, RTM_GETNEXTHOP, शून्य, rपंचांग_dump_nexthop, 0);
+	rtnl_register(PF_INET6, RTM_NEWNEXTHOP, rtm_new_nexthop, NULL, 0);
+	rtnl_register(PF_INET6, RTM_GETNEXTHOP, NULL, rtm_dump_nexthop, 0);
 
-	rtnl_रेजिस्टर(PF_UNSPEC, RTM_GETNEXTHOPBUCKET, rपंचांग_get_nexthop_bucket,
-		      rपंचांग_dump_nexthop_bucket, 0);
+	rtnl_register(PF_UNSPEC, RTM_GETNEXTHOPBUCKET, rtm_get_nexthop_bucket,
+		      rtm_dump_nexthop_bucket, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 subsys_initcall(nexthop_init);

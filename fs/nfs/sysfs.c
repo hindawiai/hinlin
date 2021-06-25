@@ -1,192 +1,191 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2019 Hammerspace Inc
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kobject.h>
-#समावेश <linux/sysfs.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/nfs_fs.h>
-#समावेश <linux/rcupdate.h>
+#include <linux/module.h>
+#include <linux/kobject.h>
+#include <linux/sysfs.h>
+#include <linux/fs.h>
+#include <linux/slab.h>
+#include <linux/netdevice.h>
+#include <linux/string.h>
+#include <linux/nfs_fs.h>
+#include <linux/rcupdate.h>
 
-#समावेश "nfs4_fs.h"
-#समावेश "netns.h"
-#समावेश "sysfs.h"
+#include "nfs4_fs.h"
+#include "netns.h"
+#include "sysfs.h"
 
-काष्ठा kobject *nfs_client_kobj;
-अटल काष्ठा kset *nfs_client_kset;
+struct kobject *nfs_client_kobj;
+static struct kset *nfs_client_kset;
 
-अटल व्योम nfs_netns_object_release(काष्ठा kobject *kobj)
-अणु
-	kमुक्त(kobj);
-पूर्ण
+static void nfs_netns_object_release(struct kobject *kobj)
+{
+	kfree(kobj);
+}
 
-अटल स्थिर काष्ठा kobj_ns_type_operations *nfs_netns_object_child_ns_type(
-		काष्ठा kobject *kobj)
-अणु
-	वापस &net_ns_type_operations;
-पूर्ण
+static const struct kobj_ns_type_operations *nfs_netns_object_child_ns_type(
+		struct kobject *kobj)
+{
+	return &net_ns_type_operations;
+}
 
-अटल काष्ठा kobj_type nfs_netns_object_type = अणु
+static struct kobj_type nfs_netns_object_type = {
 	.release = nfs_netns_object_release,
 	.sysfs_ops = &kobj_sysfs_ops,
 	.child_ns_type = nfs_netns_object_child_ns_type,
-पूर्ण;
+};
 
-अटल काष्ठा kobject *nfs_netns_object_alloc(स्थिर अक्षर *name,
-		काष्ठा kset *kset, काष्ठा kobject *parent)
-अणु
-	काष्ठा kobject *kobj;
+static struct kobject *nfs_netns_object_alloc(const char *name,
+		struct kset *kset, struct kobject *parent)
+{
+	struct kobject *kobj;
 
-	kobj = kzalloc(माप(*kobj), GFP_KERNEL);
-	अगर (kobj) अणु
+	kobj = kzalloc(sizeof(*kobj), GFP_KERNEL);
+	if (kobj) {
 		kobj->kset = kset;
-		अगर (kobject_init_and_add(kobj, &nfs_netns_object_type,
+		if (kobject_init_and_add(kobj, &nfs_netns_object_type,
 					parent, "%s", name) == 0)
-			वापस kobj;
+			return kobj;
 		kobject_put(kobj);
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	}
+	return NULL;
+}
 
-पूर्णांक nfs_sysfs_init(व्योम)
-अणु
-	nfs_client_kset = kset_create_and_add("nfs", शून्य, fs_kobj);
-	अगर (!nfs_client_kset)
-		वापस -ENOMEM;
-	nfs_client_kobj = nfs_netns_object_alloc("net", nfs_client_kset, शून्य);
-	अगर  (!nfs_client_kobj) अणु
-		kset_unरेजिस्टर(nfs_client_kset);
-		nfs_client_kset = शून्य;
-		वापस -ENOMEM;
-	पूर्ण
-	वापस 0;
-पूर्ण
+int nfs_sysfs_init(void)
+{
+	nfs_client_kset = kset_create_and_add("nfs", NULL, fs_kobj);
+	if (!nfs_client_kset)
+		return -ENOMEM;
+	nfs_client_kobj = nfs_netns_object_alloc("net", nfs_client_kset, NULL);
+	if  (!nfs_client_kobj) {
+		kset_unregister(nfs_client_kset);
+		nfs_client_kset = NULL;
+		return -ENOMEM;
+	}
+	return 0;
+}
 
-व्योम nfs_sysfs_निकास(व्योम)
-अणु
+void nfs_sysfs_exit(void)
+{
 	kobject_put(nfs_client_kobj);
-	kset_unरेजिस्टर(nfs_client_kset);
-पूर्ण
+	kset_unregister(nfs_client_kset);
+}
 
-अटल sमाप_प्रकार nfs_netns_identअगरier_show(काष्ठा kobject *kobj,
-		काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा nfs_netns_client *c = container_of(kobj,
-			काष्ठा nfs_netns_client,
+static ssize_t nfs_netns_identifier_show(struct kobject *kobj,
+		struct kobj_attribute *attr, char *buf)
+{
+	struct nfs_netns_client *c = container_of(kobj,
+			struct nfs_netns_client,
 			kobject);
-	sमाप_प्रकार ret;
+	ssize_t ret;
 
-	rcu_पढ़ो_lock();
-	ret = scnम_लिखो(buf, PAGE_SIZE, "%s\n", rcu_dereference(c->identअगरier));
-	rcu_पढ़ो_unlock();
-	वापस ret;
-पूर्ण
+	rcu_read_lock();
+	ret = scnprintf(buf, PAGE_SIZE, "%s\n", rcu_dereference(c->identifier));
+	rcu_read_unlock();
+	return ret;
+}
 
 /* Strip trailing '\n' */
-अटल माप_प्रकार nfs_string_strip(स्थिर अक्षर *c, माप_प्रकार len)
-अणु
-	जबतक (len > 0 && c[len-1] == '\n')
+static size_t nfs_string_strip(const char *c, size_t len)
+{
+	while (len > 0 && c[len-1] == '\n')
 		--len;
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल sमाप_प्रकार nfs_netns_identअगरier_store(काष्ठा kobject *kobj,
-		काष्ठा kobj_attribute *attr,
-		स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा nfs_netns_client *c = container_of(kobj,
-			काष्ठा nfs_netns_client,
+static ssize_t nfs_netns_identifier_store(struct kobject *kobj,
+		struct kobj_attribute *attr,
+		const char *buf, size_t count)
+{
+	struct nfs_netns_client *c = container_of(kobj,
+			struct nfs_netns_client,
 			kobject);
-	स्थिर अक्षर *old;
-	अक्षर *p;
-	माप_प्रकार len;
+	const char *old;
+	char *p;
+	size_t len;
 
-	len = nfs_string_strip(buf, min_t(माप_प्रकार, count, CONTAINER_ID_MAXLEN));
-	अगर (!len)
-		वापस 0;
+	len = nfs_string_strip(buf, min_t(size_t, count, CONTAINER_ID_MAXLEN));
+	if (!len)
+		return 0;
 	p = kmemdup_nul(buf, len, GFP_KERNEL);
-	अगर (!p)
-		वापस -ENOMEM;
-	old = rcu_dereference_रक्षित(xchg(&c->identअगरier, (अक्षर __rcu *)p), 1);
-	अगर (old) अणु
+	if (!p)
+		return -ENOMEM;
+	old = rcu_dereference_protected(xchg(&c->identifier, (char __rcu *)p), 1);
+	if (old) {
 		synchronize_rcu();
-		kमुक्त(old);
-	पूर्ण
-	वापस count;
-पूर्ण
+		kfree(old);
+	}
+	return count;
+}
 
-अटल व्योम nfs_netns_client_release(काष्ठा kobject *kobj)
-अणु
-	काष्ठा nfs_netns_client *c = container_of(kobj,
-			काष्ठा nfs_netns_client,
+static void nfs_netns_client_release(struct kobject *kobj)
+{
+	struct nfs_netns_client *c = container_of(kobj,
+			struct nfs_netns_client,
 			kobject);
 
-	kमुक्त(rcu_dereference_raw(c->identअगरier));
-	kमुक्त(c);
-पूर्ण
+	kfree(rcu_dereference_raw(c->identifier));
+	kfree(c);
+}
 
-अटल स्थिर व्योम *nfs_netns_client_namespace(काष्ठा kobject *kobj)
-अणु
-	वापस container_of(kobj, काष्ठा nfs_netns_client, kobject)->net;
-पूर्ण
+static const void *nfs_netns_client_namespace(struct kobject *kobj)
+{
+	return container_of(kobj, struct nfs_netns_client, kobject)->net;
+}
 
-अटल काष्ठा kobj_attribute nfs_netns_client_id = __ATTR(identअगरier,
-		0644, nfs_netns_identअगरier_show, nfs_netns_identअगरier_store);
+static struct kobj_attribute nfs_netns_client_id = __ATTR(identifier,
+		0644, nfs_netns_identifier_show, nfs_netns_identifier_store);
 
-अटल काष्ठा attribute *nfs_netns_client_attrs[] = अणु
+static struct attribute *nfs_netns_client_attrs[] = {
 	&nfs_netns_client_id.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल काष्ठा kobj_type nfs_netns_client_type = अणु
+static struct kobj_type nfs_netns_client_type = {
 	.release = nfs_netns_client_release,
-	.शेष_attrs = nfs_netns_client_attrs,
+	.default_attrs = nfs_netns_client_attrs,
 	.sysfs_ops = &kobj_sysfs_ops,
 	.namespace = nfs_netns_client_namespace,
-पूर्ण;
+};
 
-अटल काष्ठा nfs_netns_client *nfs_netns_client_alloc(काष्ठा kobject *parent,
-		काष्ठा net *net)
-अणु
-	काष्ठा nfs_netns_client *p;
+static struct nfs_netns_client *nfs_netns_client_alloc(struct kobject *parent,
+		struct net *net)
+{
+	struct nfs_netns_client *p;
 
-	p = kzalloc(माप(*p), GFP_KERNEL);
-	अगर (p) अणु
+	p = kzalloc(sizeof(*p), GFP_KERNEL);
+	if (p) {
 		p->net = net;
 		p->kobject.kset = nfs_client_kset;
-		अगर (kobject_init_and_add(&p->kobject, &nfs_netns_client_type,
+		if (kobject_init_and_add(&p->kobject, &nfs_netns_client_type,
 					parent, "nfs_client") == 0)
-			वापस p;
+			return p;
 		kobject_put(&p->kobject);
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	}
+	return NULL;
+}
 
-व्योम nfs_netns_sysfs_setup(काष्ठा nfs_net *netns, काष्ठा net *net)
-अणु
-	काष्ठा nfs_netns_client *clp;
+void nfs_netns_sysfs_setup(struct nfs_net *netns, struct net *net)
+{
+	struct nfs_netns_client *clp;
 
 	clp = nfs_netns_client_alloc(nfs_client_kobj, net);
-	अगर (clp) अणु
+	if (clp) {
 		netns->nfs_client = clp;
 		kobject_uevent(&clp->kobject, KOBJ_ADD);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम nfs_netns_sysfs_destroy(काष्ठा nfs_net *netns)
-अणु
-	काष्ठा nfs_netns_client *clp = netns->nfs_client;
+void nfs_netns_sysfs_destroy(struct nfs_net *netns)
+{
+	struct nfs_netns_client *clp = netns->nfs_client;
 
-	अगर (clp) अणु
+	if (clp) {
 		kobject_uevent(&clp->kobject, KOBJ_REMOVE);
 		kobject_del(&clp->kobject);
 		kobject_put(&clp->kobject);
-		netns->nfs_client = शून्य;
-	पूर्ण
-पूर्ण
+		netns->nfs_client = NULL;
+	}
+}

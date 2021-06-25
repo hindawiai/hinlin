@@ -1,215 +1,214 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright 2015 Maxime Ripard
  *
- * Maxime Ripard <maxime.ripard@मुक्त-electrons.com>
+ * Maxime Ripard <maxime.ripard@free-electrons.com>
  */
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
+#include <linux/clk-provider.h>
+#include <linux/io.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
 
-#घोषणा TCON_CH1_SCLK2_PARENTS		4
+#define TCON_CH1_SCLK2_PARENTS		4
 
-#घोषणा TCON_CH1_SCLK2_GATE_BIT		BIT(31)
-#घोषणा TCON_CH1_SCLK2_MUX_MASK		3
-#घोषणा TCON_CH1_SCLK2_MUX_SHIFT	24
-#घोषणा TCON_CH1_SCLK2_DIV_MASK		0xf
-#घोषणा TCON_CH1_SCLK2_DIV_SHIFT	0
+#define TCON_CH1_SCLK2_GATE_BIT		BIT(31)
+#define TCON_CH1_SCLK2_MUX_MASK		3
+#define TCON_CH1_SCLK2_MUX_SHIFT	24
+#define TCON_CH1_SCLK2_DIV_MASK		0xf
+#define TCON_CH1_SCLK2_DIV_SHIFT	0
 
-#घोषणा TCON_CH1_SCLK1_GATE_BIT		BIT(15)
-#घोषणा TCON_CH1_SCLK1_HALF_BIT		BIT(11)
+#define TCON_CH1_SCLK1_GATE_BIT		BIT(15)
+#define TCON_CH1_SCLK1_HALF_BIT		BIT(11)
 
-काष्ठा tcon_ch1_clk अणु
-	काष्ठा clk_hw	hw;
+struct tcon_ch1_clk {
+	struct clk_hw	hw;
 	spinlock_t	lock;
-	व्योम __iomem	*reg;
-पूर्ण;
+	void __iomem	*reg;
+};
 
-#घोषणा hw_to_tclk(hw)	container_of(hw, काष्ठा tcon_ch1_clk, hw)
+#define hw_to_tclk(hw)	container_of(hw, struct tcon_ch1_clk, hw)
 
-अटल व्योम tcon_ch1_disable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा tcon_ch1_clk *tclk = hw_to_tclk(hw);
-	अचिन्हित दीर्घ flags;
+static void tcon_ch1_disable(struct clk_hw *hw)
+{
+	struct tcon_ch1_clk *tclk = hw_to_tclk(hw);
+	unsigned long flags;
 	u32 reg;
 
 	spin_lock_irqsave(&tclk->lock, flags);
-	reg = पढ़ोl(tclk->reg);
+	reg = readl(tclk->reg);
 	reg &= ~(TCON_CH1_SCLK2_GATE_BIT | TCON_CH1_SCLK1_GATE_BIT);
-	ग_लिखोl(reg, tclk->reg);
+	writel(reg, tclk->reg);
 	spin_unlock_irqrestore(&tclk->lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक tcon_ch1_enable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा tcon_ch1_clk *tclk = hw_to_tclk(hw);
-	अचिन्हित दीर्घ flags;
+static int tcon_ch1_enable(struct clk_hw *hw)
+{
+	struct tcon_ch1_clk *tclk = hw_to_tclk(hw);
+	unsigned long flags;
 	u32 reg;
 
 	spin_lock_irqsave(&tclk->lock, flags);
-	reg = पढ़ोl(tclk->reg);
+	reg = readl(tclk->reg);
 	reg |= TCON_CH1_SCLK2_GATE_BIT | TCON_CH1_SCLK1_GATE_BIT;
-	ग_लिखोl(reg, tclk->reg);
+	writel(reg, tclk->reg);
 	spin_unlock_irqrestore(&tclk->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tcon_ch1_is_enabled(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा tcon_ch1_clk *tclk = hw_to_tclk(hw);
+static int tcon_ch1_is_enabled(struct clk_hw *hw)
+{
+	struct tcon_ch1_clk *tclk = hw_to_tclk(hw);
 	u32 reg;
 
-	reg = पढ़ोl(tclk->reg);
-	वापस reg & (TCON_CH1_SCLK2_GATE_BIT | TCON_CH1_SCLK1_GATE_BIT);
-पूर्ण
+	reg = readl(tclk->reg);
+	return reg & (TCON_CH1_SCLK2_GATE_BIT | TCON_CH1_SCLK1_GATE_BIT);
+}
 
-अटल u8 tcon_ch1_get_parent(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा tcon_ch1_clk *tclk = hw_to_tclk(hw);
+static u8 tcon_ch1_get_parent(struct clk_hw *hw)
+{
+	struct tcon_ch1_clk *tclk = hw_to_tclk(hw);
 	u32 reg;
 
-	reg = पढ़ोl(tclk->reg) >> TCON_CH1_SCLK2_MUX_SHIFT;
+	reg = readl(tclk->reg) >> TCON_CH1_SCLK2_MUX_SHIFT;
 	reg &= reg >> TCON_CH1_SCLK2_MUX_MASK;
 
-	वापस reg;
-पूर्ण
+	return reg;
+}
 
-अटल पूर्णांक tcon_ch1_set_parent(काष्ठा clk_hw *hw, u8 index)
-अणु
-	काष्ठा tcon_ch1_clk *tclk = hw_to_tclk(hw);
-	अचिन्हित दीर्घ flags;
+static int tcon_ch1_set_parent(struct clk_hw *hw, u8 index)
+{
+	struct tcon_ch1_clk *tclk = hw_to_tclk(hw);
+	unsigned long flags;
 	u32 reg;
 
 	spin_lock_irqsave(&tclk->lock, flags);
-	reg = पढ़ोl(tclk->reg);
+	reg = readl(tclk->reg);
 	reg &= ~(TCON_CH1_SCLK2_MUX_MASK << TCON_CH1_SCLK2_MUX_SHIFT);
 	reg |= index << TCON_CH1_SCLK2_MUX_SHIFT;
-	ग_लिखोl(reg, tclk->reg);
+	writel(reg, tclk->reg);
 	spin_unlock_irqrestore(&tclk->lock, flags);
 
-	वापस 0;
-पूर्ण;
+	return 0;
+};
 
-अटल अचिन्हित दीर्घ tcon_ch1_calc_भागider(अचिन्हित दीर्घ rate,
-					   अचिन्हित दीर्घ parent_rate,
-					   u8 *भाग,
+static unsigned long tcon_ch1_calc_divider(unsigned long rate,
+					   unsigned long parent_rate,
+					   u8 *div,
 					   bool *half)
-अणु
-	अचिन्हित दीर्घ best_rate = 0;
+{
+	unsigned long best_rate = 0;
 	u8 best_m = 0, m;
-	bool is_द्विगुन;
+	bool is_double;
 
-	क्रम (m = 1; m < 16; m++) अणु
+	for (m = 1; m < 16; m++) {
 		u8 d;
 
-		क्रम (d = 1; d < 3; d++) अणु
-			अचिन्हित दीर्घ पंचांगp_rate;
+		for (d = 1; d < 3; d++) {
+			unsigned long tmp_rate;
 
-			पंचांगp_rate = parent_rate / m / d;
+			tmp_rate = parent_rate / m / d;
 
-			अगर (पंचांगp_rate > rate)
-				जारी;
+			if (tmp_rate > rate)
+				continue;
 
-			अगर (!best_rate ||
-			    (rate - पंचांगp_rate) < (rate - best_rate)) अणु
-				best_rate = पंचांगp_rate;
+			if (!best_rate ||
+			    (rate - tmp_rate) < (rate - best_rate)) {
+				best_rate = tmp_rate;
 				best_m = m;
-				is_द्विगुन = d;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				is_double = d;
+			}
+		}
+	}
 
-	अगर (भाग && half) अणु
-		*भाग = best_m;
-		*half = is_द्विगुन;
-	पूर्ण
+	if (div && half) {
+		*div = best_m;
+		*half = is_double;
+	}
 
-	वापस best_rate;
-पूर्ण
+	return best_rate;
+}
 
-अटल पूर्णांक tcon_ch1_determine_rate(काष्ठा clk_hw *hw,
-				   काष्ठा clk_rate_request *req)
-अणु
-	दीर्घ best_rate = -EINVAL;
-	पूर्णांक i;
+static int tcon_ch1_determine_rate(struct clk_hw *hw,
+				   struct clk_rate_request *req)
+{
+	long best_rate = -EINVAL;
+	int i;
 
-	क्रम (i = 0; i < clk_hw_get_num_parents(hw); i++) अणु
-		अचिन्हित दीर्घ parent_rate;
-		अचिन्हित दीर्घ पंचांगp_rate;
-		काष्ठा clk_hw *parent;
+	for (i = 0; i < clk_hw_get_num_parents(hw); i++) {
+		unsigned long parent_rate;
+		unsigned long tmp_rate;
+		struct clk_hw *parent;
 
 		parent = clk_hw_get_parent_by_index(hw, i);
-		अगर (!parent)
-			जारी;
+		if (!parent)
+			continue;
 
 		parent_rate = clk_hw_get_rate(parent);
 
-		पंचांगp_rate = tcon_ch1_calc_भागider(req->rate, parent_rate,
-						 शून्य, शून्य);
+		tmp_rate = tcon_ch1_calc_divider(req->rate, parent_rate,
+						 NULL, NULL);
 
-		अगर (best_rate < 0 ||
-		    (req->rate - पंचांगp_rate) < (req->rate - best_rate)) अणु
-			best_rate = पंचांगp_rate;
+		if (best_rate < 0 ||
+		    (req->rate - tmp_rate) < (req->rate - best_rate)) {
+			best_rate = tmp_rate;
 			req->best_parent_rate = parent_rate;
 			req->best_parent_hw = parent;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (best_rate < 0)
-		वापस best_rate;
+	if (best_rate < 0)
+		return best_rate;
 
 	req->rate = best_rate;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अचिन्हित दीर्घ tcon_ch1_recalc_rate(काष्ठा clk_hw *hw,
-					  अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा tcon_ch1_clk *tclk = hw_to_tclk(hw);
+static unsigned long tcon_ch1_recalc_rate(struct clk_hw *hw,
+					  unsigned long parent_rate)
+{
+	struct tcon_ch1_clk *tclk = hw_to_tclk(hw);
 	u32 reg;
 
-	reg = पढ़ोl(tclk->reg);
+	reg = readl(tclk->reg);
 
 	parent_rate /= (reg & TCON_CH1_SCLK2_DIV_MASK) + 1;
 
-	अगर (reg & TCON_CH1_SCLK1_HALF_BIT)
+	if (reg & TCON_CH1_SCLK1_HALF_BIT)
 		parent_rate /= 2;
 
-	वापस parent_rate;
-पूर्ण
+	return parent_rate;
+}
 
-अटल पूर्णांक tcon_ch1_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-			     अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा tcon_ch1_clk *tclk = hw_to_tclk(hw);
-	अचिन्हित दीर्घ flags;
+static int tcon_ch1_set_rate(struct clk_hw *hw, unsigned long rate,
+			     unsigned long parent_rate)
+{
+	struct tcon_ch1_clk *tclk = hw_to_tclk(hw);
+	unsigned long flags;
 	bool half;
-	u8 भाग_m;
+	u8 div_m;
 	u32 reg;
 
-	tcon_ch1_calc_भागider(rate, parent_rate, &भाग_m, &half);
+	tcon_ch1_calc_divider(rate, parent_rate, &div_m, &half);
 
 	spin_lock_irqsave(&tclk->lock, flags);
-	reg = पढ़ोl(tclk->reg);
+	reg = readl(tclk->reg);
 	reg &= ~(TCON_CH1_SCLK2_DIV_MASK | TCON_CH1_SCLK1_HALF_BIT);
-	reg |= (भाग_m - 1) & TCON_CH1_SCLK2_DIV_MASK;
+	reg |= (div_m - 1) & TCON_CH1_SCLK2_DIV_MASK;
 
-	अगर (half)
+	if (half)
 		reg |= TCON_CH1_SCLK1_HALF_BIT;
 
-	ग_लिखोl(reg, tclk->reg);
+	writel(reg, tclk->reg);
 	spin_unlock_irqrestore(&tclk->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा clk_ops tcon_ch1_ops = अणु
+static const struct clk_ops tcon_ch1_ops = {
 	.disable	= tcon_ch1_disable,
 	.enable		= tcon_ch1_enable,
 	.is_enabled	= tcon_ch1_is_enabled,
@@ -220,36 +219,36 @@
 	.determine_rate	= tcon_ch1_determine_rate,
 	.recalc_rate	= tcon_ch1_recalc_rate,
 	.set_rate	= tcon_ch1_set_rate,
-पूर्ण;
+};
 
-अटल व्योम __init tcon_ch1_setup(काष्ठा device_node *node)
-अणु
-	स्थिर अक्षर *parents[TCON_CH1_SCLK2_PARENTS];
-	स्थिर अक्षर *clk_name = node->name;
-	काष्ठा clk_init_data init;
-	काष्ठा tcon_ch1_clk *tclk;
-	काष्ठा resource res;
-	काष्ठा clk *clk;
-	व्योम __iomem *reg;
-	पूर्णांक ret;
+static void __init tcon_ch1_setup(struct device_node *node)
+{
+	const char *parents[TCON_CH1_SCLK2_PARENTS];
+	const char *clk_name = node->name;
+	struct clk_init_data init;
+	struct tcon_ch1_clk *tclk;
+	struct resource res;
+	struct clk *clk;
+	void __iomem *reg;
+	int ret;
 
-	of_property_पढ़ो_string(node, "clock-output-names", &clk_name);
+	of_property_read_string(node, "clock-output-names", &clk_name);
 
 	reg = of_io_request_and_map(node, 0, of_node_full_name(node));
-	अगर (IS_ERR(reg)) अणु
+	if (IS_ERR(reg)) {
 		pr_err("%s: Could not map the clock registers\n", clk_name);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	ret = of_clk_parent_fill(node, parents, TCON_CH1_SCLK2_PARENTS);
-	अगर (ret != TCON_CH1_SCLK2_PARENTS) अणु
+	if (ret != TCON_CH1_SCLK2_PARENTS) {
 		pr_err("%s Could not retrieve the parents\n", clk_name);
-		जाओ err_unmap;
-	पूर्ण
+		goto err_unmap;
+	}
 
-	tclk = kzalloc(माप(*tclk), GFP_KERNEL);
-	अगर (!tclk)
-		जाओ err_unmap;
+	tclk = kzalloc(sizeof(*tclk), GFP_KERNEL);
+	if (!tclk)
+		goto err_unmap;
 
 	init.name = clk_name;
 	init.ops = &tcon_ch1_ops;
@@ -261,29 +260,29 @@
 	tclk->hw.init = &init;
 	spin_lock_init(&tclk->lock);
 
-	clk = clk_रेजिस्टर(शून्य, &tclk->hw);
-	अगर (IS_ERR(clk)) अणु
+	clk = clk_register(NULL, &tclk->hw);
+	if (IS_ERR(clk)) {
 		pr_err("%s: Couldn't register the clock\n", clk_name);
-		जाओ err_मुक्त_data;
-	पूर्ण
+		goto err_free_data;
+	}
 
 	ret = of_clk_add_provider(node, of_clk_src_simple_get, clk);
-	अगर (ret) अणु
+	if (ret) {
 		pr_err("%s: Couldn't register our clock provider\n", clk_name);
-		जाओ err_unरेजिस्टर_clk;
-	पूर्ण
+		goto err_unregister_clk;
+	}
 
-	वापस;
+	return;
 
-err_unरेजिस्टर_clk:
-	clk_unरेजिस्टर(clk);
-err_मुक्त_data:
-	kमुक्त(tclk);
+err_unregister_clk:
+	clk_unregister(clk);
+err_free_data:
+	kfree(tclk);
 err_unmap:
 	iounmap(reg);
 	of_address_to_resource(node, 0, &res);
 	release_mem_region(res.start, resource_size(&res));
-पूर्ण
+}
 
 CLK_OF_DECLARE(tcon_ch1, "allwinner,sun4i-a10-tcon-ch1-clk",
 	       tcon_ch1_setup);

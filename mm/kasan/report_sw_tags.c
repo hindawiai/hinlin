@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * This file contains software tag-based KASAN specअगरic error reporting code.
+ * This file contains software tag-based KASAN specific error reporting code.
  *
  * Copyright (c) 2014 Samsung Electronics Co., Ltd.
  * Author: Andrey Ryabinin <ryabinin.a.a@gmail.com>
@@ -10,88 +9,88 @@
  *        Andrey Konovalov <andreyknvl@gmail.com>
  */
 
-#समावेश <linux/bitops.h>
-#समावेश <linux/ftrace.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/prपूर्णांकk.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/stackdepot.h>
-#समावेश <linux/stacktrace.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/types.h>
-#समावेश <linux/kasan.h>
-#समावेश <linux/module.h>
+#include <linux/bitops.h>
+#include <linux/ftrace.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/mm.h>
+#include <linux/printk.h>
+#include <linux/sched.h>
+#include <linux/slab.h>
+#include <linux/stackdepot.h>
+#include <linux/stacktrace.h>
+#include <linux/string.h>
+#include <linux/types.h>
+#include <linux/kasan.h>
+#include <linux/module.h>
 
-#समावेश <यंत्र/sections.h>
+#include <asm/sections.h>
 
-#समावेश "kasan.h"
-#समावेश "../slab.h"
+#include "kasan.h"
+#include "../slab.h"
 
-स्थिर अक्षर *kasan_get_bug_type(काष्ठा kasan_access_info *info)
-अणु
-#अगर_घोषित CONFIG_KASAN_SW_TAGS_IDENTIFY
-	काष्ठा kasan_alloc_meta *alloc_meta;
-	काष्ठा kmem_cache *cache;
-	काष्ठा page *page;
-	स्थिर व्योम *addr;
-	व्योम *object;
+const char *kasan_get_bug_type(struct kasan_access_info *info)
+{
+#ifdef CONFIG_KASAN_SW_TAGS_IDENTIFY
+	struct kasan_alloc_meta *alloc_meta;
+	struct kmem_cache *cache;
+	struct page *page;
+	const void *addr;
+	void *object;
 	u8 tag;
-	पूर्णांक i;
+	int i;
 
 	tag = get_tag(info->access_addr);
 	addr = kasan_reset_tag(info->access_addr);
 	page = kasan_addr_to_page(addr);
-	अगर (page && PageSlab(page)) अणु
+	if (page && PageSlab(page)) {
 		cache = page->slab_cache;
-		object = nearest_obj(cache, page, (व्योम *)addr);
+		object = nearest_obj(cache, page, (void *)addr);
 		alloc_meta = kasan_get_alloc_meta(cache, object);
 
-		अगर (alloc_meta) अणु
-			क्रम (i = 0; i < KASAN_NR_FREE_STACKS; i++) अणु
-				अगर (alloc_meta->मुक्त_poपूर्णांकer_tag[i] == tag)
-					वापस "use-after-free";
-			पूर्ण
-		पूर्ण
-		वापस "out-of-bounds";
-	पूर्ण
+		if (alloc_meta) {
+			for (i = 0; i < KASAN_NR_FREE_STACKS; i++) {
+				if (alloc_meta->free_pointer_tag[i] == tag)
+					return "use-after-free";
+			}
+		}
+		return "out-of-bounds";
+	}
 
-#पूर्ण_अगर
+#endif
 	/*
 	 * If access_size is a negative number, then it has reason to be
 	 * defined as out-of-bounds bug type.
 	 *
-	 * Casting negative numbers to माप_प्रकार would indeed turn up as
-	 * a large माप_प्रकार and its value will be larger than अच_दीर्घ_उच्च/2,
-	 * so that this can qualअगरy as out-of-bounds.
+	 * Casting negative numbers to size_t would indeed turn up as
+	 * a large size_t and its value will be larger than ULONG_MAX/2,
+	 * so that this can qualify as out-of-bounds.
 	 */
-	अगर (info->access_addr + info->access_size < info->access_addr)
-		वापस "out-of-bounds";
+	if (info->access_addr + info->access_size < info->access_addr)
+		return "out-of-bounds";
 
-	वापस "invalid-access";
-पूर्ण
+	return "invalid-access";
+}
 
-व्योम *kasan_find_first_bad_addr(व्योम *addr, माप_प्रकार size)
-अणु
+void *kasan_find_first_bad_addr(void *addr, size_t size)
+{
 	u8 tag = get_tag(addr);
-	व्योम *p = kasan_reset_tag(addr);
-	व्योम *end = p + size;
+	void *p = kasan_reset_tag(addr);
+	void *end = p + size;
 
-	जबतक (p < end && tag == *(u8 *)kasan_mem_to_shaकरोw(p))
+	while (p < end && tag == *(u8 *)kasan_mem_to_shadow(p))
 		p += KASAN_GRANULE_SIZE;
-	वापस p;
-पूर्ण
+	return p;
+}
 
-व्योम kasan_metadata_fetch_row(अक्षर *buffer, व्योम *row)
-अणु
-	स_नकल(buffer, kasan_mem_to_shaकरोw(row), META_BYTES_PER_ROW);
-पूर्ण
+void kasan_metadata_fetch_row(char *buffer, void *row)
+{
+	memcpy(buffer, kasan_mem_to_shadow(row), META_BYTES_PER_ROW);
+}
 
-व्योम kasan_prपूर्णांक_tags(u8 addr_tag, स्थिर व्योम *addr)
-अणु
-	u8 *shaकरोw = (u8 *)kasan_mem_to_shaकरोw(addr);
+void kasan_print_tags(u8 addr_tag, const void *addr)
+{
+	u8 *shadow = (u8 *)kasan_mem_to_shadow(addr);
 
-	pr_err("Pointer tag: [%02x], memory tag: [%02x]\n", addr_tag, *shaकरोw);
-पूर्ण
+	pr_err("Pointer tag: [%02x], memory tag: [%02x]\n", addr_tag, *shadow);
+}

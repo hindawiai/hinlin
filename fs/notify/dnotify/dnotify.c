@@ -1,230 +1,229 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Directory notअगरications क्रम Linux.
+ * Directory notifications for Linux.
  *
  * Copyright (C) 2000,2001,2002 Stephen Rothwell
  *
  * Copyright (C) 2009 Eric Paris <Red Hat Inc>
- * dnotअगरy was largly rewritten to use the new fsnotअगरy infraकाष्ठाure
+ * dnotify was largly rewritten to use the new fsnotify infrastructure
  */
-#समावेश <linux/fs.h>
-#समावेश <linux/module.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/dnotअगरy.h>
-#समावेश <linux/init.h>
-#समावेश <linux/security.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/fdtable.h>
-#समावेश <linux/fsnotअगरy_backend.h>
+#include <linux/fs.h>
+#include <linux/module.h>
+#include <linux/sched.h>
+#include <linux/sched/signal.h>
+#include <linux/dnotify.h>
+#include <linux/init.h>
+#include <linux/security.h>
+#include <linux/spinlock.h>
+#include <linux/slab.h>
+#include <linux/fdtable.h>
+#include <linux/fsnotify_backend.h>
 
-पूर्णांक dir_notअगरy_enable __पढ़ो_mostly = 1;
+int dir_notify_enable __read_mostly = 1;
 
-अटल काष्ठा kmem_cache *dnotअगरy_काष्ठा_cache __पढ़ो_mostly;
-अटल काष्ठा kmem_cache *dnotअगरy_mark_cache __पढ़ो_mostly;
-अटल काष्ठा fsnotअगरy_group *dnotअगरy_group __पढ़ो_mostly;
+static struct kmem_cache *dnotify_struct_cache __read_mostly;
+static struct kmem_cache *dnotify_mark_cache __read_mostly;
+static struct fsnotify_group *dnotify_group __read_mostly;
 
 /*
- * dnotअगरy will attach one of these to each inode (i_fsnotअगरy_marks) which
- * is being watched by dnotअगरy.  If multiple userspace applications are watching
- * the same directory with dnotअगरy their inक्रमmation is chained in dn
+ * dnotify will attach one of these to each inode (i_fsnotify_marks) which
+ * is being watched by dnotify.  If multiple userspace applications are watching
+ * the same directory with dnotify their information is chained in dn
  */
-काष्ठा dnotअगरy_mark अणु
-	काष्ठा fsnotअगरy_mark fsn_mark;
-	काष्ठा dnotअगरy_काष्ठा *dn;
-पूर्ण;
+struct dnotify_mark {
+	struct fsnotify_mark fsn_mark;
+	struct dnotify_struct *dn;
+};
 
 /*
  * When a process starts or stops watching an inode the set of events which
- * dnotअगरy cares about क्रम that inode may change.  This function runs the
- * list of everything receiving dnotअगरy events about this directory and calculates
- * the set of all those events.  After it updates what dnotअगरy is पूर्णांकerested in
- * it calls the fsnotअगरy function so it can update the set of all events relevant
+ * dnotify cares about for that inode may change.  This function runs the
+ * list of everything receiving dnotify events about this directory and calculates
+ * the set of all those events.  After it updates what dnotify is interested in
+ * it calls the fsnotify function so it can update the set of all events relevant
  * to this inode.
  */
-अटल व्योम dnotअगरy_recalc_inode_mask(काष्ठा fsnotअगरy_mark *fsn_mark)
-अणु
+static void dnotify_recalc_inode_mask(struct fsnotify_mark *fsn_mark)
+{
 	__u32 new_mask = 0;
-	काष्ठा dnotअगरy_काष्ठा *dn;
-	काष्ठा dnotअगरy_mark *dn_mark  = container_of(fsn_mark,
-						     काष्ठा dnotअगरy_mark,
+	struct dnotify_struct *dn;
+	struct dnotify_mark *dn_mark  = container_of(fsn_mark,
+						     struct dnotify_mark,
 						     fsn_mark);
 
-	निश्चित_spin_locked(&fsn_mark->lock);
+	assert_spin_locked(&fsn_mark->lock);
 
-	क्रम (dn = dn_mark->dn; dn != शून्य; dn = dn->dn_next)
+	for (dn = dn_mark->dn; dn != NULL; dn = dn->dn_next)
 		new_mask |= (dn->dn_mask & ~FS_DN_MULTISHOT);
-	अगर (fsn_mark->mask == new_mask)
-		वापस;
+	if (fsn_mark->mask == new_mask)
+		return;
 	fsn_mark->mask = new_mask;
 
-	fsnotअगरy_recalc_mask(fsn_mark->connector);
-पूर्ण
+	fsnotify_recalc_mask(fsn_mark->connector);
+}
 
 /*
- * Mains fsnotअगरy call where events are delivered to dnotअगरy.
- * Find the dnotअगरy mark on the relevant inode, run the list of dnotअगरy काष्ठाs
- * on that mark and determine which of them has expressed पूर्णांकerest in receiving
- * events of this type.  When found send the correct process and संकेत and
- * destroy the dnotअगरy काष्ठा अगर it was not रेजिस्टरed to receive multiple
+ * Mains fsnotify call where events are delivered to dnotify.
+ * Find the dnotify mark on the relevant inode, run the list of dnotify structs
+ * on that mark and determine which of them has expressed interest in receiving
+ * events of this type.  When found send the correct process and signal and
+ * destroy the dnotify struct if it was not registered to receive multiple
  * events.
  */
-अटल पूर्णांक dnotअगरy_handle_event(काष्ठा fsnotअगरy_mark *inode_mark, u32 mask,
-				काष्ठा inode *inode, काष्ठा inode *dir,
-				स्थिर काष्ठा qstr *name, u32 cookie)
-अणु
-	काष्ठा dnotअगरy_mark *dn_mark;
-	काष्ठा dnotअगरy_काष्ठा *dn;
-	काष्ठा dnotअगरy_काष्ठा **prev;
-	काष्ठा fown_काष्ठा *fown;
+static int dnotify_handle_event(struct fsnotify_mark *inode_mark, u32 mask,
+				struct inode *inode, struct inode *dir,
+				const struct qstr *name, u32 cookie)
+{
+	struct dnotify_mark *dn_mark;
+	struct dnotify_struct *dn;
+	struct dnotify_struct **prev;
+	struct fown_struct *fown;
 	__u32 test_mask = mask & ~FS_EVENT_ON_CHILD;
 
-	/* not a dir, dnotअगरy करोesn't care */
-	अगर (!dir && !(mask & FS_ISसूची))
-		वापस 0;
+	/* not a dir, dnotify doesn't care */
+	if (!dir && !(mask & FS_ISDIR))
+		return 0;
 
-	dn_mark = container_of(inode_mark, काष्ठा dnotअगरy_mark, fsn_mark);
+	dn_mark = container_of(inode_mark, struct dnotify_mark, fsn_mark);
 
 	spin_lock(&inode_mark->lock);
 	prev = &dn_mark->dn;
-	जबतक ((dn = *prev) != शून्य) अणु
-		अगर ((dn->dn_mask & test_mask) == 0) अणु
+	while ((dn = *prev) != NULL) {
+		if ((dn->dn_mask & test_mask) == 0) {
 			prev = &dn->dn_next;
-			जारी;
-		पूर्ण
+			continue;
+		}
 		fown = &dn->dn_filp->f_owner;
 		send_sigio(fown, dn->dn_fd, POLL_MSG);
-		अगर (dn->dn_mask & FS_DN_MULTISHOT)
+		if (dn->dn_mask & FS_DN_MULTISHOT)
 			prev = &dn->dn_next;
-		अन्यथा अणु
+		else {
 			*prev = dn->dn_next;
-			kmem_cache_मुक्त(dnotअगरy_काष्ठा_cache, dn);
-			dnotअगरy_recalc_inode_mask(inode_mark);
-		पूर्ण
-	पूर्ण
+			kmem_cache_free(dnotify_struct_cache, dn);
+			dnotify_recalc_inode_mask(inode_mark);
+		}
+	}
 
 	spin_unlock(&inode_mark->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम dnotअगरy_मुक्त_mark(काष्ठा fsnotअगरy_mark *fsn_mark)
-अणु
-	काष्ठा dnotअगरy_mark *dn_mark = container_of(fsn_mark,
-						    काष्ठा dnotअगरy_mark,
+static void dnotify_free_mark(struct fsnotify_mark *fsn_mark)
+{
+	struct dnotify_mark *dn_mark = container_of(fsn_mark,
+						    struct dnotify_mark,
 						    fsn_mark);
 
 	BUG_ON(dn_mark->dn);
 
-	kmem_cache_मुक्त(dnotअगरy_mark_cache, dn_mark);
-पूर्ण
+	kmem_cache_free(dnotify_mark_cache, dn_mark);
+}
 
-अटल स्थिर काष्ठा fsnotअगरy_ops dnotअगरy_fsnotअगरy_ops = अणु
-	.handle_inode_event = dnotअगरy_handle_event,
-	.मुक्त_mark = dnotअगरy_मुक्त_mark,
-पूर्ण;
+static const struct fsnotify_ops dnotify_fsnotify_ops = {
+	.handle_inode_event = dnotify_handle_event,
+	.free_mark = dnotify_free_mark,
+};
 
 /*
- * Called every समय a file is बंदd.  Looks first क्रम a dnotअगरy mark on the
- * inode.  If one is found run all of the ->dn काष्ठाures attached to that
- * mark क्रम one relevant to this process closing the file and हटाओ that
- * dnotअगरy_काष्ठा.  If that was the last dnotअगरy_काष्ठा also हटाओ the
- * fsnotअगरy_mark.
+ * Called every time a file is closed.  Looks first for a dnotify mark on the
+ * inode.  If one is found run all of the ->dn structures attached to that
+ * mark for one relevant to this process closing the file and remove that
+ * dnotify_struct.  If that was the last dnotify_struct also remove the
+ * fsnotify_mark.
  */
-व्योम dnotअगरy_flush(काष्ठा file *filp, fl_owner_t id)
-अणु
-	काष्ठा fsnotअगरy_mark *fsn_mark;
-	काष्ठा dnotअगरy_mark *dn_mark;
-	काष्ठा dnotअगरy_काष्ठा *dn;
-	काष्ठा dnotअगरy_काष्ठा **prev;
-	काष्ठा inode *inode;
-	bool मुक्त = false;
+void dnotify_flush(struct file *filp, fl_owner_t id)
+{
+	struct fsnotify_mark *fsn_mark;
+	struct dnotify_mark *dn_mark;
+	struct dnotify_struct *dn;
+	struct dnotify_struct **prev;
+	struct inode *inode;
+	bool free = false;
 
 	inode = file_inode(filp);
-	अगर (!S_ISसूची(inode->i_mode))
-		वापस;
+	if (!S_ISDIR(inode->i_mode))
+		return;
 
-	fsn_mark = fsnotअगरy_find_mark(&inode->i_fsnotअगरy_marks, dnotअगरy_group);
-	अगर (!fsn_mark)
-		वापस;
-	dn_mark = container_of(fsn_mark, काष्ठा dnotअगरy_mark, fsn_mark);
+	fsn_mark = fsnotify_find_mark(&inode->i_fsnotify_marks, dnotify_group);
+	if (!fsn_mark)
+		return;
+	dn_mark = container_of(fsn_mark, struct dnotify_mark, fsn_mark);
 
-	mutex_lock(&dnotअगरy_group->mark_mutex);
+	mutex_lock(&dnotify_group->mark_mutex);
 
 	spin_lock(&fsn_mark->lock);
 	prev = &dn_mark->dn;
-	जबतक ((dn = *prev) != शून्य) अणु
-		अगर ((dn->dn_owner == id) && (dn->dn_filp == filp)) अणु
+	while ((dn = *prev) != NULL) {
+		if ((dn->dn_owner == id) && (dn->dn_filp == filp)) {
 			*prev = dn->dn_next;
-			kmem_cache_मुक्त(dnotअगरy_काष्ठा_cache, dn);
-			dnotअगरy_recalc_inode_mask(fsn_mark);
-			अवरोध;
-		पूर्ण
+			kmem_cache_free(dnotify_struct_cache, dn);
+			dnotify_recalc_inode_mask(fsn_mark);
+			break;
+		}
 		prev = &dn->dn_next;
-	पूर्ण
+	}
 
 	spin_unlock(&fsn_mark->lock);
 
-	/* nothing अन्यथा could have found us thanks to the dnotअगरy_groups
+	/* nothing else could have found us thanks to the dnotify_groups
 	   mark_mutex */
-	अगर (dn_mark->dn == शून्य) अणु
-		fsnotअगरy_detach_mark(fsn_mark);
-		मुक्त = true;
-	पूर्ण
+	if (dn_mark->dn == NULL) {
+		fsnotify_detach_mark(fsn_mark);
+		free = true;
+	}
 
-	mutex_unlock(&dnotअगरy_group->mark_mutex);
+	mutex_unlock(&dnotify_group->mark_mutex);
 
-	अगर (मुक्त)
-		fsnotअगरy_मुक्त_mark(fsn_mark);
-	fsnotअगरy_put_mark(fsn_mark);
-पूर्ण
+	if (free)
+		fsnotify_free_mark(fsn_mark);
+	fsnotify_put_mark(fsn_mark);
+}
 
-/* this conversion is करोne only at watch creation */
-अटल __u32 convert_arg(अचिन्हित दीर्घ arg)
-अणु
+/* this conversion is done only at watch creation */
+static __u32 convert_arg(unsigned long arg)
+{
 	__u32 new_mask = FS_EVENT_ON_CHILD;
 
-	अगर (arg & DN_MULTISHOT)
+	if (arg & DN_MULTISHOT)
 		new_mask |= FS_DN_MULTISHOT;
-	अगर (arg & DN_DELETE)
+	if (arg & DN_DELETE)
 		new_mask |= (FS_DELETE | FS_MOVED_FROM);
-	अगर (arg & DN_MODIFY)
+	if (arg & DN_MODIFY)
 		new_mask |= FS_MODIFY;
-	अगर (arg & DN_ACCESS)
+	if (arg & DN_ACCESS)
 		new_mask |= FS_ACCESS;
-	अगर (arg & DN_ATTRIB)
+	if (arg & DN_ATTRIB)
 		new_mask |= FS_ATTRIB;
-	अगर (arg & DN_RENAME)
+	if (arg & DN_RENAME)
 		new_mask |= FS_DN_RENAME;
-	अगर (arg & DN_CREATE)
+	if (arg & DN_CREATE)
 		new_mask |= (FS_CREATE | FS_MOVED_TO);
 
-	वापस new_mask;
-पूर्ण
+	return new_mask;
+}
 
 /*
- * If multiple processes watch the same inode with dnotअगरy there is only one
- * dnotअगरy mark in inode->i_fsnotअगरy_marks but we chain a dnotअगरy_काष्ठा
- * onto that mark.  This function either attaches the new dnotअगरy_काष्ठा onto
- * that list, or it |= the mask onto an existing dnofiy_काष्ठा.
+ * If multiple processes watch the same inode with dnotify there is only one
+ * dnotify mark in inode->i_fsnotify_marks but we chain a dnotify_struct
+ * onto that mark.  This function either attaches the new dnotify_struct onto
+ * that list, or it |= the mask onto an existing dnofiy_struct.
  */
-अटल पूर्णांक attach_dn(काष्ठा dnotअगरy_काष्ठा *dn, काष्ठा dnotअगरy_mark *dn_mark,
-		     fl_owner_t id, पूर्णांक fd, काष्ठा file *filp, __u32 mask)
-अणु
-	काष्ठा dnotअगरy_काष्ठा *odn;
+static int attach_dn(struct dnotify_struct *dn, struct dnotify_mark *dn_mark,
+		     fl_owner_t id, int fd, struct file *filp, __u32 mask)
+{
+	struct dnotify_struct *odn;
 
 	odn = dn_mark->dn;
-	जबतक (odn != शून्य) अणु
-		/* adding more events to existing dnofiy_काष्ठा? */
-		अगर ((odn->dn_owner == id) && (odn->dn_filp == filp)) अणु
+	while (odn != NULL) {
+		/* adding more events to existing dnofiy_struct? */
+		if ((odn->dn_owner == id) && (odn->dn_filp == filp)) {
 			odn->dn_fd = fd;
 			odn->dn_mask |= mask;
-			वापस -EEXIST;
-		पूर्ण
+			return -EEXIST;
+		}
 		odn = odn->dn_next;
-	पूर्ण
+	}
 
 	dn->dn_mask = mask;
 	dn->dn_fd = fd;
@@ -233,161 +232,161 @@
 	dn->dn_next = dn_mark->dn;
 	dn_mark->dn = dn;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * When a process calls fcntl to attach a dnotअगरy watch to a directory it ends
- * up here.  Allocate both a mark क्रम fsnotअगरy to add and a dnotअगरy_काष्ठा to be
- * attached to the fsnotअगरy_mark.
+ * When a process calls fcntl to attach a dnotify watch to a directory it ends
+ * up here.  Allocate both a mark for fsnotify to add and a dnotify_struct to be
+ * attached to the fsnotify_mark.
  */
-पूर्णांक fcntl_dirnotअगरy(पूर्णांक fd, काष्ठा file *filp, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा dnotअगरy_mark *new_dn_mark, *dn_mark;
-	काष्ठा fsnotअगरy_mark *new_fsn_mark, *fsn_mark;
-	काष्ठा dnotअगरy_काष्ठा *dn;
-	काष्ठा inode *inode;
+int fcntl_dirnotify(int fd, struct file *filp, unsigned long arg)
+{
+	struct dnotify_mark *new_dn_mark, *dn_mark;
+	struct fsnotify_mark *new_fsn_mark, *fsn_mark;
+	struct dnotify_struct *dn;
+	struct inode *inode;
 	fl_owner_t id = current->files;
-	काष्ठा file *f;
-	पूर्णांक destroy = 0, error = 0;
+	struct file *f;
+	int destroy = 0, error = 0;
 	__u32 mask;
 
-	/* we use these to tell अगर we need to kमुक्त */
-	new_fsn_mark = शून्य;
-	dn = शून्य;
+	/* we use these to tell if we need to kfree */
+	new_fsn_mark = NULL;
+	dn = NULL;
 
-	अगर (!dir_notअगरy_enable) अणु
+	if (!dir_notify_enable) {
 		error = -EINVAL;
-		जाओ out_err;
-	पूर्ण
+		goto out_err;
+	}
 
 	/* a 0 mask means we are explicitly removing the watch */
-	अगर ((arg & ~DN_MULTISHOT) == 0) अणु
-		dnotअगरy_flush(filp, id);
+	if ((arg & ~DN_MULTISHOT) == 0) {
+		dnotify_flush(filp, id);
 		error = 0;
-		जाओ out_err;
-	पूर्ण
+		goto out_err;
+	}
 
-	/* dnotअगरy only works on directories */
+	/* dnotify only works on directories */
 	inode = file_inode(filp);
-	अगर (!S_ISसूची(inode->i_mode)) अणु
-		error = -ENOTसूची;
-		जाओ out_err;
-	पूर्ण
+	if (!S_ISDIR(inode->i_mode)) {
+		error = -ENOTDIR;
+		goto out_err;
+	}
 
 	/*
-	 * convert the userspace DN_* "arg" to the पूर्णांकernal FS_*
-	 * defined in fsnotअगरy
+	 * convert the userspace DN_* "arg" to the internal FS_*
+	 * defined in fsnotify
 	 */
 	mask = convert_arg(arg);
 
-	error = security_path_notअगरy(&filp->f_path, mask,
+	error = security_path_notify(&filp->f_path, mask,
 			FSNOTIFY_OBJ_TYPE_INODE);
-	अगर (error)
-		जाओ out_err;
+	if (error)
+		goto out_err;
 
 	/* expect most fcntl to add new rather than augment old */
-	dn = kmem_cache_alloc(dnotअगरy_काष्ठा_cache, GFP_KERNEL);
-	अगर (!dn) अणु
+	dn = kmem_cache_alloc(dnotify_struct_cache, GFP_KERNEL);
+	if (!dn) {
 		error = -ENOMEM;
-		जाओ out_err;
-	पूर्ण
+		goto out_err;
+	}
 
-	/* new fsnotअगरy mark, we expect most fcntl calls to add a new mark */
-	new_dn_mark = kmem_cache_alloc(dnotअगरy_mark_cache, GFP_KERNEL);
-	अगर (!new_dn_mark) अणु
+	/* new fsnotify mark, we expect most fcntl calls to add a new mark */
+	new_dn_mark = kmem_cache_alloc(dnotify_mark_cache, GFP_KERNEL);
+	if (!new_dn_mark) {
 		error = -ENOMEM;
-		जाओ out_err;
-	पूर्ण
+		goto out_err;
+	}
 
 	/* set up the new_fsn_mark and new_dn_mark */
 	new_fsn_mark = &new_dn_mark->fsn_mark;
-	fsnotअगरy_init_mark(new_fsn_mark, dnotअगरy_group);
+	fsnotify_init_mark(new_fsn_mark, dnotify_group);
 	new_fsn_mark->mask = mask;
-	new_dn_mark->dn = शून्य;
+	new_dn_mark->dn = NULL;
 
-	/* this is needed to prevent the fcntl/बंद race described below */
-	mutex_lock(&dnotअगरy_group->mark_mutex);
+	/* this is needed to prevent the fcntl/close race described below */
+	mutex_lock(&dnotify_group->mark_mutex);
 
 	/* add the new_fsn_mark or find an old one. */
-	fsn_mark = fsnotअगरy_find_mark(&inode->i_fsnotअगरy_marks, dnotअगरy_group);
-	अगर (fsn_mark) अणु
-		dn_mark = container_of(fsn_mark, काष्ठा dnotअगरy_mark, fsn_mark);
+	fsn_mark = fsnotify_find_mark(&inode->i_fsnotify_marks, dnotify_group);
+	if (fsn_mark) {
+		dn_mark = container_of(fsn_mark, struct dnotify_mark, fsn_mark);
 		spin_lock(&fsn_mark->lock);
-	पूर्ण अन्यथा अणु
-		error = fsnotअगरy_add_inode_mark_locked(new_fsn_mark, inode, 0);
-		अगर (error) अणु
-			mutex_unlock(&dnotअगरy_group->mark_mutex);
-			जाओ out_err;
-		पूर्ण
+	} else {
+		error = fsnotify_add_inode_mark_locked(new_fsn_mark, inode, 0);
+		if (error) {
+			mutex_unlock(&dnotify_group->mark_mutex);
+			goto out_err;
+		}
 		spin_lock(&new_fsn_mark->lock);
 		fsn_mark = new_fsn_mark;
 		dn_mark = new_dn_mark;
-		/* we used new_fsn_mark, so करोn't मुक्त it */
-		new_fsn_mark = शून्य;
-	पूर्ण
+		/* we used new_fsn_mark, so don't free it */
+		new_fsn_mark = NULL;
+	}
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	f = lookup_fd_rcu(fd);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	/* अगर (f != filp) means that we lost a race and another task/thपढ़ो
-	 * actually बंदd the fd we are still playing with beक्रमe we grabbed
-	 * the dnotअगरy_groups mark_mutex and fsn_mark->lock.  Since closing the
-	 * fd is the only समय we clean up the marks we need to get our mark
+	/* if (f != filp) means that we lost a race and another task/thread
+	 * actually closed the fd we are still playing with before we grabbed
+	 * the dnotify_groups mark_mutex and fsn_mark->lock.  Since closing the
+	 * fd is the only time we clean up the marks we need to get our mark
 	 * off the list. */
-	अगर (f != filp) अणु
-		/* अगर we added ourselves, shoot ourselves, it's possible that
+	if (f != filp) {
+		/* if we added ourselves, shoot ourselves, it's possible that
 		 * the flush actually did shoot this fsn_mark.  That's fine too
-		 * since multiple calls to destroy_mark is perfectly safe, अगर
-		 * we found a dn_mark alपढ़ोy attached to the inode, just sod
-		 * off silently as the flush at बंद समय dealt with it.
+		 * since multiple calls to destroy_mark is perfectly safe, if
+		 * we found a dn_mark already attached to the inode, just sod
+		 * off silently as the flush at close time dealt with it.
 		 */
-		अगर (dn_mark == new_dn_mark)
+		if (dn_mark == new_dn_mark)
 			destroy = 1;
 		error = 0;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	__f_setown(filp, task_pid(current), PIDTYPE_TGID, 0);
 
 	error = attach_dn(dn, dn_mark, id, fd, filp, mask);
-	/* !error means that we attached the dn to the dn_mark, so करोn't मुक्त it */
-	अगर (!error)
-		dn = शून्य;
+	/* !error means that we attached the dn to the dn_mark, so don't free it */
+	if (!error)
+		dn = NULL;
 	/* -EEXIST means that we didn't add this new dn and used an old one.
-	 * that isn't an error (and the unused dn should be मुक्तd) */
-	अन्यथा अगर (error == -EEXIST)
+	 * that isn't an error (and the unused dn should be freed) */
+	else if (error == -EEXIST)
 		error = 0;
 
-	dnotअगरy_recalc_inode_mask(fsn_mark);
+	dnotify_recalc_inode_mask(fsn_mark);
 out:
 	spin_unlock(&fsn_mark->lock);
 
-	अगर (destroy)
-		fsnotअगरy_detach_mark(fsn_mark);
-	mutex_unlock(&dnotअगरy_group->mark_mutex);
-	अगर (destroy)
-		fsnotअगरy_मुक्त_mark(fsn_mark);
-	fsnotअगरy_put_mark(fsn_mark);
+	if (destroy)
+		fsnotify_detach_mark(fsn_mark);
+	mutex_unlock(&dnotify_group->mark_mutex);
+	if (destroy)
+		fsnotify_free_mark(fsn_mark);
+	fsnotify_put_mark(fsn_mark);
 out_err:
-	अगर (new_fsn_mark)
-		fsnotअगरy_put_mark(new_fsn_mark);
-	अगर (dn)
-		kmem_cache_मुक्त(dnotअगरy_काष्ठा_cache, dn);
-	वापस error;
-पूर्ण
+	if (new_fsn_mark)
+		fsnotify_put_mark(new_fsn_mark);
+	if (dn)
+		kmem_cache_free(dnotify_struct_cache, dn);
+	return error;
+}
 
-अटल पूर्णांक __init dnotअगरy_init(व्योम)
-अणु
-	dnotअगरy_काष्ठा_cache = KMEM_CACHE(dnotअगरy_काष्ठा,
+static int __init dnotify_init(void)
+{
+	dnotify_struct_cache = KMEM_CACHE(dnotify_struct,
 					  SLAB_PANIC|SLAB_ACCOUNT);
-	dnotअगरy_mark_cache = KMEM_CACHE(dnotअगरy_mark, SLAB_PANIC|SLAB_ACCOUNT);
+	dnotify_mark_cache = KMEM_CACHE(dnotify_mark, SLAB_PANIC|SLAB_ACCOUNT);
 
-	dnotअगरy_group = fsnotअगरy_alloc_group(&dnotअगरy_fsnotअगरy_ops);
-	अगर (IS_ERR(dnotअगरy_group))
+	dnotify_group = fsnotify_alloc_group(&dnotify_fsnotify_ops);
+	if (IS_ERR(dnotify_group))
 		panic("unable to allocate fsnotify group for dnotify\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-module_init(dnotअगरy_init)
+module_init(dnotify_init)

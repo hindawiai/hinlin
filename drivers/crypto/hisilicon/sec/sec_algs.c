@@ -1,136 +1,135 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2016-2017 HiSilicon Limited. */
-#समावेश <linux/crypto.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/dmapool.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/slab.h>
+#include <linux/crypto.h>
+#include <linux/dma-mapping.h>
+#include <linux/dmapool.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <linux/slab.h>
 
-#समावेश <crypto/aes.h>
-#समावेश <crypto/algapi.h>
-#समावेश <crypto/पूर्णांकernal/des.h>
-#समावेश <crypto/skcipher.h>
-#समावेश <crypto/xts.h>
-#समावेश <crypto/पूर्णांकernal/skcipher.h>
+#include <crypto/aes.h>
+#include <crypto/algapi.h>
+#include <crypto/internal/des.h>
+#include <crypto/skcipher.h>
+#include <crypto/xts.h>
+#include <crypto/internal/skcipher.h>
 
-#समावेश "sec_drv.h"
+#include "sec_drv.h"
 
-#घोषणा SEC_MAX_CIPHER_KEY		64
-#घोषणा SEC_REQ_LIMIT SZ_32M
+#define SEC_MAX_CIPHER_KEY		64
+#define SEC_REQ_LIMIT SZ_32M
 
-काष्ठा sec_c_alg_cfg अणु
-	अचिन्हित c_alg		: 3;
-	अचिन्हित c_mode		: 3;
-	अचिन्हित key_len	: 2;
-	अचिन्हित c_width	: 2;
-पूर्ण;
+struct sec_c_alg_cfg {
+	unsigned c_alg		: 3;
+	unsigned c_mode		: 3;
+	unsigned key_len	: 2;
+	unsigned c_width	: 2;
+};
 
-अटल स्थिर काष्ठा sec_c_alg_cfg sec_c_alg_cfgs[] =  अणु
-	[SEC_C_DES_ECB_64] = अणु
+static const struct sec_c_alg_cfg sec_c_alg_cfgs[] =  {
+	[SEC_C_DES_ECB_64] = {
 		.c_alg = SEC_C_ALG_DES,
 		.c_mode = SEC_C_MODE_ECB,
 		.key_len = SEC_KEY_LEN_DES,
-	पूर्ण,
-	[SEC_C_DES_CBC_64] = अणु
+	},
+	[SEC_C_DES_CBC_64] = {
 		.c_alg = SEC_C_ALG_DES,
 		.c_mode = SEC_C_MODE_CBC,
 		.key_len = SEC_KEY_LEN_DES,
-	पूर्ण,
-	[SEC_C_3DES_ECB_192_3KEY] = अणु
+	},
+	[SEC_C_3DES_ECB_192_3KEY] = {
 		.c_alg = SEC_C_ALG_3DES,
 		.c_mode = SEC_C_MODE_ECB,
 		.key_len = SEC_KEY_LEN_3DES_3_KEY,
-	पूर्ण,
-	[SEC_C_3DES_ECB_192_2KEY] = अणु
+	},
+	[SEC_C_3DES_ECB_192_2KEY] = {
 		.c_alg = SEC_C_ALG_3DES,
 		.c_mode = SEC_C_MODE_ECB,
 		.key_len = SEC_KEY_LEN_3DES_2_KEY,
-	पूर्ण,
-	[SEC_C_3DES_CBC_192_3KEY] = अणु
+	},
+	[SEC_C_3DES_CBC_192_3KEY] = {
 		.c_alg = SEC_C_ALG_3DES,
 		.c_mode = SEC_C_MODE_CBC,
 		.key_len = SEC_KEY_LEN_3DES_3_KEY,
-	पूर्ण,
-	[SEC_C_3DES_CBC_192_2KEY] = अणु
+	},
+	[SEC_C_3DES_CBC_192_2KEY] = {
 		.c_alg = SEC_C_ALG_3DES,
 		.c_mode = SEC_C_MODE_CBC,
 		.key_len = SEC_KEY_LEN_3DES_2_KEY,
-	पूर्ण,
-	[SEC_C_AES_ECB_128] = अणु
+	},
+	[SEC_C_AES_ECB_128] = {
 		.c_alg = SEC_C_ALG_AES,
 		.c_mode = SEC_C_MODE_ECB,
 		.key_len = SEC_KEY_LEN_AES_128,
-	पूर्ण,
-	[SEC_C_AES_ECB_192] = अणु
+	},
+	[SEC_C_AES_ECB_192] = {
 		.c_alg = SEC_C_ALG_AES,
 		.c_mode = SEC_C_MODE_ECB,
 		.key_len = SEC_KEY_LEN_AES_192,
-	पूर्ण,
-	[SEC_C_AES_ECB_256] = अणु
+	},
+	[SEC_C_AES_ECB_256] = {
 		.c_alg = SEC_C_ALG_AES,
 		.c_mode = SEC_C_MODE_ECB,
 		.key_len = SEC_KEY_LEN_AES_256,
-	पूर्ण,
-	[SEC_C_AES_CBC_128] = अणु
+	},
+	[SEC_C_AES_CBC_128] = {
 		.c_alg = SEC_C_ALG_AES,
 		.c_mode = SEC_C_MODE_CBC,
 		.key_len = SEC_KEY_LEN_AES_128,
-	पूर्ण,
-	[SEC_C_AES_CBC_192] = अणु
+	},
+	[SEC_C_AES_CBC_192] = {
 		.c_alg = SEC_C_ALG_AES,
 		.c_mode = SEC_C_MODE_CBC,
 		.key_len = SEC_KEY_LEN_AES_192,
-	पूर्ण,
-	[SEC_C_AES_CBC_256] = अणु
+	},
+	[SEC_C_AES_CBC_256] = {
 		.c_alg = SEC_C_ALG_AES,
 		.c_mode = SEC_C_MODE_CBC,
 		.key_len = SEC_KEY_LEN_AES_256,
-	पूर्ण,
-	[SEC_C_AES_CTR_128] = अणु
+	},
+	[SEC_C_AES_CTR_128] = {
 		.c_alg = SEC_C_ALG_AES,
 		.c_mode = SEC_C_MODE_CTR,
 		.key_len = SEC_KEY_LEN_AES_128,
-	पूर्ण,
-	[SEC_C_AES_CTR_192] = अणु
+	},
+	[SEC_C_AES_CTR_192] = {
 		.c_alg = SEC_C_ALG_AES,
 		.c_mode = SEC_C_MODE_CTR,
 		.key_len = SEC_KEY_LEN_AES_192,
-	पूर्ण,
-	[SEC_C_AES_CTR_256] = अणु
+	},
+	[SEC_C_AES_CTR_256] = {
 		.c_alg = SEC_C_ALG_AES,
 		.c_mode = SEC_C_MODE_CTR,
 		.key_len = SEC_KEY_LEN_AES_256,
-	पूर्ण,
-	[SEC_C_AES_XTS_128] = अणु
+	},
+	[SEC_C_AES_XTS_128] = {
 		.c_alg = SEC_C_ALG_AES,
 		.c_mode = SEC_C_MODE_XTS,
 		.key_len = SEC_KEY_LEN_AES_128,
-	पूर्ण,
-	[SEC_C_AES_XTS_256] = अणु
+	},
+	[SEC_C_AES_XTS_256] = {
 		.c_alg = SEC_C_ALG_AES,
 		.c_mode = SEC_C_MODE_XTS,
 		.key_len = SEC_KEY_LEN_AES_256,
-	पूर्ण,
-	[SEC_C_शून्य] = अणु
-	पूर्ण,
-पूर्ण;
+	},
+	[SEC_C_NULL] = {
+	},
+};
 
 /*
  * Mutex used to ensure safe operation of reference count of
  * alg providers
  */
-अटल DEFINE_MUTEX(algs_lock);
-अटल अचिन्हित पूर्णांक active_devs;
+static DEFINE_MUTEX(algs_lock);
+static unsigned int active_devs;
 
-अटल व्योम sec_alg_skcipher_init_ढाँचा(काष्ठा sec_alg_tfm_ctx *ctx,
-					   काष्ठा sec_bd_info *req,
-					   क्रमागत sec_cipher_alg alg)
-अणु
-	स्थिर काष्ठा sec_c_alg_cfg *cfg = &sec_c_alg_cfgs[alg];
+static void sec_alg_skcipher_init_template(struct sec_alg_tfm_ctx *ctx,
+					   struct sec_bd_info *req,
+					   enum sec_cipher_alg alg)
+{
+	const struct sec_c_alg_cfg *cfg = &sec_c_alg_cfgs[alg];
 
-	स_रखो(req, 0, माप(*req));
+	memset(req, 0, sizeof(*req));
 	req->w0 |= cfg->c_mode << SEC_BD_W0_C_MODE_S;
 	req->w1 |= cfg->c_alg << SEC_BD_W1_C_ALG_S;
 	req->w3 |= cfg->key_len << SEC_BD_W3_C_KEY_LEN_S;
@@ -138,332 +137,332 @@
 
 	req->cipher_key_addr_lo = lower_32_bits(ctx->pkey);
 	req->cipher_key_addr_hi = upper_32_bits(ctx->pkey);
-पूर्ण
+}
 
-अटल व्योम sec_alg_skcipher_init_context(काष्ठा crypto_skcipher *atfm,
-					  स्थिर u8 *key,
-					  अचिन्हित पूर्णांक keylen,
-					  क्रमागत sec_cipher_alg alg)
-अणु
-	काष्ठा crypto_tfm *tfm = crypto_skcipher_tfm(atfm);
-	काष्ठा sec_alg_tfm_ctx *ctx = crypto_tfm_ctx(tfm);
+static void sec_alg_skcipher_init_context(struct crypto_skcipher *atfm,
+					  const u8 *key,
+					  unsigned int keylen,
+					  enum sec_cipher_alg alg)
+{
+	struct crypto_tfm *tfm = crypto_skcipher_tfm(atfm);
+	struct sec_alg_tfm_ctx *ctx = crypto_tfm_ctx(tfm);
 
 	ctx->cipher_alg = alg;
-	स_नकल(ctx->key, key, keylen);
-	sec_alg_skcipher_init_ढाँचा(ctx, &ctx->req_ढाँचा,
+	memcpy(ctx->key, key, keylen);
+	sec_alg_skcipher_init_template(ctx, &ctx->req_template,
 				       ctx->cipher_alg);
-पूर्ण
+}
 
-अटल व्योम sec_मुक्त_hw_sgl(काष्ठा sec_hw_sgl *hw_sgl,
-			    dma_addr_t psec_sgl, काष्ठा sec_dev_info *info)
-अणु
-	काष्ठा sec_hw_sgl *sgl_current, *sgl_next;
+static void sec_free_hw_sgl(struct sec_hw_sgl *hw_sgl,
+			    dma_addr_t psec_sgl, struct sec_dev_info *info)
+{
+	struct sec_hw_sgl *sgl_current, *sgl_next;
 	dma_addr_t sgl_next_dma;
 
 	sgl_current = hw_sgl;
-	जबतक (sgl_current) अणु
+	while (sgl_current) {
 		sgl_next = sgl_current->next;
 		sgl_next_dma = sgl_current->next_sgl;
 
-		dma_pool_मुक्त(info->hw_sgl_pool, sgl_current, psec_sgl);
+		dma_pool_free(info->hw_sgl_pool, sgl_current, psec_sgl);
 
 		sgl_current = sgl_next;
 		psec_sgl = sgl_next_dma;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक sec_alloc_and_fill_hw_sgl(काष्ठा sec_hw_sgl **sec_sgl,
+static int sec_alloc_and_fill_hw_sgl(struct sec_hw_sgl **sec_sgl,
 				     dma_addr_t *psec_sgl,
-				     काष्ठा scatterlist *sgl,
-				     पूर्णांक count,
-				     काष्ठा sec_dev_info *info,
+				     struct scatterlist *sgl,
+				     int count,
+				     struct sec_dev_info *info,
 				     gfp_t gfp)
-अणु
-	काष्ठा sec_hw_sgl *sgl_current = शून्य;
-	काष्ठा sec_hw_sgl *sgl_next;
+{
+	struct sec_hw_sgl *sgl_current = NULL;
+	struct sec_hw_sgl *sgl_next;
 	dma_addr_t sgl_next_dma;
-	काष्ठा scatterlist *sg;
-	पूर्णांक ret, sge_index, i;
+	struct scatterlist *sg;
+	int ret, sge_index, i;
 
-	अगर (!count)
-		वापस -EINVAL;
+	if (!count)
+		return -EINVAL;
 
-	क्रम_each_sg(sgl, sg, count, i) अणु
+	for_each_sg(sgl, sg, count, i) {
 		sge_index = i % SEC_MAX_SGE_NUM;
-		अगर (sge_index == 0) अणु
+		if (sge_index == 0) {
 			sgl_next = dma_pool_zalloc(info->hw_sgl_pool,
 						   gfp, &sgl_next_dma);
-			अगर (!sgl_next) अणु
+			if (!sgl_next) {
 				ret = -ENOMEM;
-				जाओ err_मुक्त_hw_sgls;
-			पूर्ण
+				goto err_free_hw_sgls;
+			}
 
-			अगर (!sgl_current) अणु /* First one */
+			if (!sgl_current) { /* First one */
 				*psec_sgl = sgl_next_dma;
 				*sec_sgl = sgl_next;
-			पूर्ण अन्यथा अणु /* Chained */
+			} else { /* Chained */
 				sgl_current->entry_sum_in_sgl = SEC_MAX_SGE_NUM;
 				sgl_current->next_sgl = sgl_next_dma;
 				sgl_current->next = sgl_next;
-			पूर्ण
+			}
 			sgl_current = sgl_next;
-		पूर्ण
+		}
 		sgl_current->sge_entries[sge_index].buf = sg_dma_address(sg);
 		sgl_current->sge_entries[sge_index].len = sg_dma_len(sg);
 		sgl_current->data_bytes_in_sgl += sg_dma_len(sg);
-	पूर्ण
+	}
 	sgl_current->entry_sum_in_sgl = count % SEC_MAX_SGE_NUM;
 	sgl_current->next_sgl = 0;
 	(*sec_sgl)->entry_sum_in_chain = count;
 
-	वापस 0;
+	return 0;
 
-err_मुक्त_hw_sgls:
-	sec_मुक्त_hw_sgl(*sec_sgl, *psec_sgl, info);
+err_free_hw_sgls:
+	sec_free_hw_sgl(*sec_sgl, *psec_sgl, info);
 	*psec_sgl = 0;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक sec_alg_skcipher_setkey(काष्ठा crypto_skcipher *tfm,
-				   स्थिर u8 *key, अचिन्हित पूर्णांक keylen,
-				   क्रमागत sec_cipher_alg alg)
-अणु
-	काष्ठा sec_alg_tfm_ctx *ctx = crypto_skcipher_ctx(tfm);
-	काष्ठा device *dev = ctx->queue->dev_info->dev;
+static int sec_alg_skcipher_setkey(struct crypto_skcipher *tfm,
+				   const u8 *key, unsigned int keylen,
+				   enum sec_cipher_alg alg)
+{
+	struct sec_alg_tfm_ctx *ctx = crypto_skcipher_ctx(tfm);
+	struct device *dev = ctx->queue->dev_info->dev;
 
 	mutex_lock(&ctx->lock);
-	अगर (ctx->key) अणु
+	if (ctx->key) {
 		/* rekeying */
-		स_रखो(ctx->key, 0, SEC_MAX_CIPHER_KEY);
-	पूर्ण अन्यथा अणु
+		memset(ctx->key, 0, SEC_MAX_CIPHER_KEY);
+	} else {
 		/* new key */
 		ctx->key = dma_alloc_coherent(dev, SEC_MAX_CIPHER_KEY,
 					      &ctx->pkey, GFP_KERNEL);
-		अगर (!ctx->key) अणु
+		if (!ctx->key) {
 			mutex_unlock(&ctx->lock);
-			वापस -ENOMEM;
-		पूर्ण
-	पूर्ण
+			return -ENOMEM;
+		}
+	}
 	mutex_unlock(&ctx->lock);
 	sec_alg_skcipher_init_context(tfm, key, keylen, alg);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sec_alg_skcipher_setkey_aes_ecb(काष्ठा crypto_skcipher *tfm,
-					   स्थिर u8 *key, अचिन्हित पूर्णांक keylen)
-अणु
-	क्रमागत sec_cipher_alg alg;
+static int sec_alg_skcipher_setkey_aes_ecb(struct crypto_skcipher *tfm,
+					   const u8 *key, unsigned int keylen)
+{
+	enum sec_cipher_alg alg;
 
-	चयन (keylen) अणु
-	हाल AES_KEYSIZE_128:
+	switch (keylen) {
+	case AES_KEYSIZE_128:
 		alg = SEC_C_AES_ECB_128;
-		अवरोध;
-	हाल AES_KEYSIZE_192:
+		break;
+	case AES_KEYSIZE_192:
 		alg = SEC_C_AES_ECB_192;
-		अवरोध;
-	हाल AES_KEYSIZE_256:
+		break;
+	case AES_KEYSIZE_256:
 		alg = SEC_C_AES_ECB_256;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस sec_alg_skcipher_setkey(tfm, key, keylen, alg);
-पूर्ण
+	return sec_alg_skcipher_setkey(tfm, key, keylen, alg);
+}
 
-अटल पूर्णांक sec_alg_skcipher_setkey_aes_cbc(काष्ठा crypto_skcipher *tfm,
-					   स्थिर u8 *key, अचिन्हित पूर्णांक keylen)
-अणु
-	क्रमागत sec_cipher_alg alg;
+static int sec_alg_skcipher_setkey_aes_cbc(struct crypto_skcipher *tfm,
+					   const u8 *key, unsigned int keylen)
+{
+	enum sec_cipher_alg alg;
 
-	चयन (keylen) अणु
-	हाल AES_KEYSIZE_128:
+	switch (keylen) {
+	case AES_KEYSIZE_128:
 		alg = SEC_C_AES_CBC_128;
-		अवरोध;
-	हाल AES_KEYSIZE_192:
+		break;
+	case AES_KEYSIZE_192:
 		alg = SEC_C_AES_CBC_192;
-		अवरोध;
-	हाल AES_KEYSIZE_256:
+		break;
+	case AES_KEYSIZE_256:
 		alg = SEC_C_AES_CBC_256;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस sec_alg_skcipher_setkey(tfm, key, keylen, alg);
-पूर्ण
+	return sec_alg_skcipher_setkey(tfm, key, keylen, alg);
+}
 
-अटल पूर्णांक sec_alg_skcipher_setkey_aes_ctr(काष्ठा crypto_skcipher *tfm,
-					   स्थिर u8 *key, अचिन्हित पूर्णांक keylen)
-अणु
-	क्रमागत sec_cipher_alg alg;
+static int sec_alg_skcipher_setkey_aes_ctr(struct crypto_skcipher *tfm,
+					   const u8 *key, unsigned int keylen)
+{
+	enum sec_cipher_alg alg;
 
-	चयन (keylen) अणु
-	हाल AES_KEYSIZE_128:
+	switch (keylen) {
+	case AES_KEYSIZE_128:
 		alg = SEC_C_AES_CTR_128;
-		अवरोध;
-	हाल AES_KEYSIZE_192:
+		break;
+	case AES_KEYSIZE_192:
 		alg = SEC_C_AES_CTR_192;
-		अवरोध;
-	हाल AES_KEYSIZE_256:
+		break;
+	case AES_KEYSIZE_256:
 		alg = SEC_C_AES_CTR_256;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस sec_alg_skcipher_setkey(tfm, key, keylen, alg);
-पूर्ण
+	return sec_alg_skcipher_setkey(tfm, key, keylen, alg);
+}
 
-अटल पूर्णांक sec_alg_skcipher_setkey_aes_xts(काष्ठा crypto_skcipher *tfm,
-					   स्थिर u8 *key, अचिन्हित पूर्णांक keylen)
-अणु
-	क्रमागत sec_cipher_alg alg;
-	पूर्णांक ret;
+static int sec_alg_skcipher_setkey_aes_xts(struct crypto_skcipher *tfm,
+					   const u8 *key, unsigned int keylen)
+{
+	enum sec_cipher_alg alg;
+	int ret;
 
-	ret = xts_verअगरy_key(tfm, key, keylen);
-	अगर (ret)
-		वापस ret;
+	ret = xts_verify_key(tfm, key, keylen);
+	if (ret)
+		return ret;
 
-	चयन (keylen) अणु
-	हाल AES_KEYSIZE_128 * 2:
+	switch (keylen) {
+	case AES_KEYSIZE_128 * 2:
 		alg = SEC_C_AES_XTS_128;
-		अवरोध;
-	हाल AES_KEYSIZE_256 * 2:
+		break;
+	case AES_KEYSIZE_256 * 2:
 		alg = SEC_C_AES_XTS_256;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस sec_alg_skcipher_setkey(tfm, key, keylen, alg);
-पूर्ण
+	return sec_alg_skcipher_setkey(tfm, key, keylen, alg);
+}
 
-अटल पूर्णांक sec_alg_skcipher_setkey_des_ecb(काष्ठा crypto_skcipher *tfm,
-					   स्थिर u8 *key, अचिन्हित पूर्णांक keylen)
-अणु
-	वापस verअगरy_skcipher_des_key(tfm, key) ?:
+static int sec_alg_skcipher_setkey_des_ecb(struct crypto_skcipher *tfm,
+					   const u8 *key, unsigned int keylen)
+{
+	return verify_skcipher_des_key(tfm, key) ?:
 	       sec_alg_skcipher_setkey(tfm, key, keylen, SEC_C_DES_ECB_64);
-पूर्ण
+}
 
-अटल पूर्णांक sec_alg_skcipher_setkey_des_cbc(काष्ठा crypto_skcipher *tfm,
-					   स्थिर u8 *key, अचिन्हित पूर्णांक keylen)
-अणु
-	वापस verअगरy_skcipher_des_key(tfm, key) ?:
+static int sec_alg_skcipher_setkey_des_cbc(struct crypto_skcipher *tfm,
+					   const u8 *key, unsigned int keylen)
+{
+	return verify_skcipher_des_key(tfm, key) ?:
 	       sec_alg_skcipher_setkey(tfm, key, keylen, SEC_C_DES_CBC_64);
-पूर्ण
+}
 
-अटल पूर्णांक sec_alg_skcipher_setkey_3des_ecb(काष्ठा crypto_skcipher *tfm,
-					    स्थिर u8 *key, अचिन्हित पूर्णांक keylen)
-अणु
-	वापस verअगरy_skcipher_des3_key(tfm, key) ?:
+static int sec_alg_skcipher_setkey_3des_ecb(struct crypto_skcipher *tfm,
+					    const u8 *key, unsigned int keylen)
+{
+	return verify_skcipher_des3_key(tfm, key) ?:
 	       sec_alg_skcipher_setkey(tfm, key, keylen,
 				       SEC_C_3DES_ECB_192_3KEY);
-पूर्ण
+}
 
-अटल पूर्णांक sec_alg_skcipher_setkey_3des_cbc(काष्ठा crypto_skcipher *tfm,
-					    स्थिर u8 *key, अचिन्हित पूर्णांक keylen)
-अणु
-	वापस verअगरy_skcipher_des3_key(tfm, key) ?:
+static int sec_alg_skcipher_setkey_3des_cbc(struct crypto_skcipher *tfm,
+					    const u8 *key, unsigned int keylen)
+{
+	return verify_skcipher_des3_key(tfm, key) ?:
 	       sec_alg_skcipher_setkey(tfm, key, keylen,
 				       SEC_C_3DES_CBC_192_3KEY);
-पूर्ण
+}
 
-अटल व्योम sec_alg_मुक्त_el(काष्ठा sec_request_el *el,
-			    काष्ठा sec_dev_info *info)
-अणु
-	sec_मुक्त_hw_sgl(el->out, el->dma_out, info);
-	sec_मुक्त_hw_sgl(el->in, el->dma_in, info);
-	kमुक्त(el->sgl_in);
-	kमुक्त(el->sgl_out);
-	kमुक्त(el);
-पूर्ण
+static void sec_alg_free_el(struct sec_request_el *el,
+			    struct sec_dev_info *info)
+{
+	sec_free_hw_sgl(el->out, el->dma_out, info);
+	sec_free_hw_sgl(el->in, el->dma_in, info);
+	kfree(el->sgl_in);
+	kfree(el->sgl_out);
+	kfree(el);
+}
 
 /* queuelock must be held */
-अटल पूर्णांक sec_send_request(काष्ठा sec_request *sec_req, काष्ठा sec_queue *queue)
-अणु
-	काष्ठा sec_request_el *el, *temp;
-	पूर्णांक ret = 0;
+static int sec_send_request(struct sec_request *sec_req, struct sec_queue *queue)
+{
+	struct sec_request_el *el, *temp;
+	int ret = 0;
 
 	mutex_lock(&sec_req->lock);
-	list_क्रम_each_entry_safe(el, temp, &sec_req->elements, head) अणु
+	list_for_each_entry_safe(el, temp, &sec_req->elements, head) {
 		/*
 		 * Add to hardware queue only under following circumstances
 		 * 1) Software and hardware queue empty so no chain dependencies
 		 * 2) No dependencies as new IV - (check software queue empty
-		 *    to मुख्यtain order)
-		 * 3) No dependencies because the mode करोes no chaining.
+		 *    to maintain order)
+		 * 3) No dependencies because the mode does no chaining.
 		 *
-		 * In other हालs first insert onto the software queue which
+		 * In other cases first insert onto the software queue which
 		 * is then emptied as requests complete
 		 */
-		अगर (!queue->havesoftqueue ||
-		    (kfअगरo_is_empty(&queue->softqueue) &&
-		     sec_queue_empty(queue))) अणु
+		if (!queue->havesoftqueue ||
+		    (kfifo_is_empty(&queue->softqueue) &&
+		     sec_queue_empty(queue))) {
 			ret = sec_queue_send(queue, &el->req, sec_req);
-			अगर (ret == -EAGAIN) अणु
+			if (ret == -EAGAIN) {
 				/* Wait unti we can send then try again */
-				/* DEAD अगर here - should not happen */
+				/* DEAD if here - should not happen */
 				ret = -EBUSY;
-				जाओ err_unlock;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			kfअगरo_put(&queue->softqueue, el);
-		पूर्ण
-	पूर्ण
+				goto err_unlock;
+			}
+		} else {
+			kfifo_put(&queue->softqueue, el);
+		}
+	}
 err_unlock:
 	mutex_unlock(&sec_req->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम sec_skcipher_alg_callback(काष्ठा sec_bd_info *sec_resp,
-				      काष्ठा crypto_async_request *req_base)
-अणु
-	काष्ठा skcipher_request *skreq = container_of(req_base,
-						      काष्ठा skcipher_request,
+static void sec_skcipher_alg_callback(struct sec_bd_info *sec_resp,
+				      struct crypto_async_request *req_base)
+{
+	struct skcipher_request *skreq = container_of(req_base,
+						      struct skcipher_request,
 						      base);
-	काष्ठा sec_request *sec_req = skcipher_request_ctx(skreq);
-	काष्ठा sec_request *backlog_req;
-	काष्ठा sec_request_el *sec_req_el, *nextrequest;
-	काष्ठा sec_alg_tfm_ctx *ctx = sec_req->tfm_ctx;
-	काष्ठा crypto_skcipher *atfm = crypto_skcipher_reqtfm(skreq);
-	काष्ठा device *dev = ctx->queue->dev_info->dev;
-	पूर्णांक icv_or_skey_en, ret;
-	bool करोne;
+	struct sec_request *sec_req = skcipher_request_ctx(skreq);
+	struct sec_request *backlog_req;
+	struct sec_request_el *sec_req_el, *nextrequest;
+	struct sec_alg_tfm_ctx *ctx = sec_req->tfm_ctx;
+	struct crypto_skcipher *atfm = crypto_skcipher_reqtfm(skreq);
+	struct device *dev = ctx->queue->dev_info->dev;
+	int icv_or_skey_en, ret;
+	bool done;
 
-	sec_req_el = list_first_entry(&sec_req->elements, काष्ठा sec_request_el,
+	sec_req_el = list_first_entry(&sec_req->elements, struct sec_request_el,
 				      head);
 	icv_or_skey_en = (sec_resp->w0 & SEC_BD_W0_ICV_OR_SKEY_EN_M) >>
 		SEC_BD_W0_ICV_OR_SKEY_EN_S;
-	अगर (sec_resp->w1 & SEC_BD_W1_BD_INVALID || icv_or_skey_en == 3) अणु
+	if (sec_resp->w1 & SEC_BD_W1_BD_INVALID || icv_or_skey_en == 3) {
 		dev_err(dev, "Got an invalid answer %lu %d\n",
 			sec_resp->w1 & SEC_BD_W1_BD_INVALID,
 			icv_or_skey_en);
 		sec_req->err = -EINVAL;
 		/*
-		 * We need to muddle on to aव्योम getting stuck with elements
+		 * We need to muddle on to avoid getting stuck with elements
 		 * on the queue. Error will be reported so requester so
 		 * it should be able to handle appropriately.
 		 */
-	पूर्ण
+	}
 
 	mutex_lock(&ctx->queue->queuelock);
-	/* Put the IV in place क्रम chained हालs */
-	चयन (ctx->cipher_alg) अणु
-	हाल SEC_C_AES_CBC_128:
-	हाल SEC_C_AES_CBC_192:
-	हाल SEC_C_AES_CBC_256:
-		अगर (sec_req_el->req.w0 & SEC_BD_W0_DE)
+	/* Put the IV in place for chained cases */
+	switch (ctx->cipher_alg) {
+	case SEC_C_AES_CBC_128:
+	case SEC_C_AES_CBC_192:
+	case SEC_C_AES_CBC_256:
+		if (sec_req_el->req.w0 & SEC_BD_W0_DE)
 			sg_pcopy_to_buffer(sec_req_el->sgl_out,
 					   sg_nents(sec_req_el->sgl_out),
 					   skreq->iv,
 					   crypto_skcipher_ivsize(atfm),
 					   sec_req_el->el_length -
 					   crypto_skcipher_ivsize(atfm));
-		अन्यथा
+		else
 			sg_pcopy_to_buffer(sec_req_el->sgl_in,
 					   sg_nents(sec_req_el->sgl_in),
 					   skreq->iv,
@@ -471,184 +470,184 @@ err_unlock:
 					   sec_req_el->el_length -
 					   crypto_skcipher_ivsize(atfm));
 		/* No need to sync to the device as coherent DMA */
-		अवरोध;
-	हाल SEC_C_AES_CTR_128:
-	हाल SEC_C_AES_CTR_192:
-	हाल SEC_C_AES_CTR_256:
+		break;
+	case SEC_C_AES_CTR_128:
+	case SEC_C_AES_CTR_192:
+	case SEC_C_AES_CTR_256:
 		crypto_inc(skreq->iv, 16);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		/* Do not update */
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (ctx->queue->havesoftqueue &&
-	    !kfअगरo_is_empty(&ctx->queue->softqueue) &&
-	    sec_queue_empty(ctx->queue)) अणु
-		ret = kfअगरo_get(&ctx->queue->softqueue, &nextrequest);
-		अगर (ret <= 0)
+	if (ctx->queue->havesoftqueue &&
+	    !kfifo_is_empty(&ctx->queue->softqueue) &&
+	    sec_queue_empty(ctx->queue)) {
+		ret = kfifo_get(&ctx->queue->softqueue, &nextrequest);
+		if (ret <= 0)
 			dev_err(dev,
 				"Error getting next element from kfifo %d\n",
 				ret);
-		अन्यथा
+		else
 			/* We know there is space so this cannot fail */
 			sec_queue_send(ctx->queue, &nextrequest->req,
 				       nextrequest->sec_req);
-	पूर्ण अन्यथा अगर (!list_empty(&ctx->backlog)) अणु
-		/* Need to verअगरy there is room first */
+	} else if (!list_empty(&ctx->backlog)) {
+		/* Need to verify there is room first */
 		backlog_req = list_first_entry(&ctx->backlog,
 					       typeof(*backlog_req),
 					       backlog_head);
-		अगर (sec_queue_can_enqueue(ctx->queue,
+		if (sec_queue_can_enqueue(ctx->queue,
 		    backlog_req->num_elements) ||
 		    (ctx->queue->havesoftqueue &&
-		     kfअगरo_avail(&ctx->queue->softqueue) >
-		     backlog_req->num_elements)) अणु
+		     kfifo_avail(&ctx->queue->softqueue) >
+		     backlog_req->num_elements)) {
 			sec_send_request(backlog_req, ctx->queue);
 			backlog_req->req_base->complete(backlog_req->req_base,
 							-EINPROGRESS);
 			list_del(&backlog_req->backlog_head);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	mutex_unlock(&ctx->queue->queuelock);
 
 	mutex_lock(&sec_req->lock);
 	list_del(&sec_req_el->head);
 	mutex_unlock(&sec_req->lock);
-	sec_alg_मुक्त_el(sec_req_el, ctx->queue->dev_info);
+	sec_alg_free_el(sec_req_el, ctx->queue->dev_info);
 
 	/*
-	 * Request is करोne.
-	 * The dance is needed as the lock is मुक्तd in the completion
+	 * Request is done.
+	 * The dance is needed as the lock is freed in the completion
 	 */
 	mutex_lock(&sec_req->lock);
-	करोne = list_empty(&sec_req->elements);
+	done = list_empty(&sec_req->elements);
 	mutex_unlock(&sec_req->lock);
-	अगर (करोne) अणु
-		अगर (crypto_skcipher_ivsize(atfm)) अणु
+	if (done) {
+		if (crypto_skcipher_ivsize(atfm)) {
 			dma_unmap_single(dev, sec_req->dma_iv,
 					 crypto_skcipher_ivsize(atfm),
 					 DMA_TO_DEVICE);
-		पूर्ण
+		}
 		dma_unmap_sg(dev, skreq->src, sec_req->len_in,
-			     DMA_BIसूचीECTIONAL);
-		अगर (skreq->src != skreq->dst)
+			     DMA_BIDIRECTIONAL);
+		if (skreq->src != skreq->dst)
 			dma_unmap_sg(dev, skreq->dst, sec_req->len_out,
-				     DMA_BIसूचीECTIONAL);
+				     DMA_BIDIRECTIONAL);
 		skreq->base.complete(&skreq->base, sec_req->err);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम sec_alg_callback(काष्ठा sec_bd_info *resp, व्योम *shaकरोw)
-अणु
-	काष्ठा sec_request *sec_req = shaकरोw;
+void sec_alg_callback(struct sec_bd_info *resp, void *shadow)
+{
+	struct sec_request *sec_req = shadow;
 
 	sec_req->cb(resp, sec_req->req_base);
-पूर्ण
+}
 
-अटल पूर्णांक sec_alg_alloc_and_calc_split_sizes(पूर्णांक length, माप_प्रकार **split_sizes,
-					      पूर्णांक *steps, gfp_t gfp)
-अणु
-	माप_प्रकार *sizes;
-	पूर्णांक i;
+static int sec_alg_alloc_and_calc_split_sizes(int length, size_t **split_sizes,
+					      int *steps, gfp_t gfp)
+{
+	size_t *sizes;
+	int i;
 
-	/* Split पूर्णांकo suitable sized blocks */
+	/* Split into suitable sized blocks */
 	*steps = roundup(length, SEC_REQ_LIMIT) / SEC_REQ_LIMIT;
-	sizes = kसुस्मृति(*steps, माप(*sizes), gfp);
-	अगर (!sizes)
-		वापस -ENOMEM;
+	sizes = kcalloc(*steps, sizeof(*sizes), gfp);
+	if (!sizes)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < *steps - 1; i++)
+	for (i = 0; i < *steps - 1; i++)
 		sizes[i] = SEC_REQ_LIMIT;
 	sizes[*steps - 1] = length - SEC_REQ_LIMIT * (*steps - 1);
 	*split_sizes = sizes;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sec_map_and_split_sg(काष्ठा scatterlist *sgl, माप_प्रकार *split_sizes,
-				पूर्णांक steps, काष्ठा scatterlist ***splits,
-				पूर्णांक **splits_nents,
-				पूर्णांक sgl_len_in,
-				काष्ठा device *dev, gfp_t gfp)
-अणु
-	पूर्णांक ret, count;
+static int sec_map_and_split_sg(struct scatterlist *sgl, size_t *split_sizes,
+				int steps, struct scatterlist ***splits,
+				int **splits_nents,
+				int sgl_len_in,
+				struct device *dev, gfp_t gfp)
+{
+	int ret, count;
 
-	count = dma_map_sg(dev, sgl, sgl_len_in, DMA_BIसूचीECTIONAL);
-	अगर (!count)
-		वापस -EINVAL;
+	count = dma_map_sg(dev, sgl, sgl_len_in, DMA_BIDIRECTIONAL);
+	if (!count)
+		return -EINVAL;
 
-	*splits = kसुस्मृति(steps, माप(काष्ठा scatterlist *), gfp);
-	अगर (!*splits) अणु
+	*splits = kcalloc(steps, sizeof(struct scatterlist *), gfp);
+	if (!*splits) {
 		ret = -ENOMEM;
-		जाओ err_unmap_sg;
-	पूर्ण
-	*splits_nents = kसुस्मृति(steps, माप(पूर्णांक), gfp);
-	अगर (!*splits_nents) अणु
+		goto err_unmap_sg;
+	}
+	*splits_nents = kcalloc(steps, sizeof(int), gfp);
+	if (!*splits_nents) {
 		ret = -ENOMEM;
-		जाओ err_मुक्त_splits;
-	पूर्ण
+		goto err_free_splits;
+	}
 
-	/* output the scatter list beक्रमe and after this */
+	/* output the scatter list before and after this */
 	ret = sg_split(sgl, count, 0, steps, split_sizes,
 		       *splits, *splits_nents, gfp);
-	अगर (ret) अणु
+	if (ret) {
 		ret = -ENOMEM;
-		जाओ err_मुक्त_splits_nents;
-	पूर्ण
+		goto err_free_splits_nents;
+	}
 
-	वापस 0;
+	return 0;
 
-err_मुक्त_splits_nents:
-	kमुक्त(*splits_nents);
-err_मुक्त_splits:
-	kमुक्त(*splits);
+err_free_splits_nents:
+	kfree(*splits_nents);
+err_free_splits:
+	kfree(*splits);
 err_unmap_sg:
-	dma_unmap_sg(dev, sgl, sgl_len_in, DMA_BIसूचीECTIONAL);
+	dma_unmap_sg(dev, sgl, sgl_len_in, DMA_BIDIRECTIONAL);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Reverses the sec_map_and_split_sg call क्रम messages not yet added to
+ * Reverses the sec_map_and_split_sg call for messages not yet added to
  * the queues.
  */
-अटल व्योम sec_unmap_sg_on_err(काष्ठा scatterlist *sgl, पूर्णांक steps,
-				काष्ठा scatterlist **splits, पूर्णांक *splits_nents,
-				पूर्णांक sgl_len_in, काष्ठा device *dev)
-अणु
-	पूर्णांक i;
+static void sec_unmap_sg_on_err(struct scatterlist *sgl, int steps,
+				struct scatterlist **splits, int *splits_nents,
+				int sgl_len_in, struct device *dev)
+{
+	int i;
 
-	क्रम (i = 0; i < steps; i++)
-		kमुक्त(splits[i]);
-	kमुक्त(splits_nents);
-	kमुक्त(splits);
+	for (i = 0; i < steps; i++)
+		kfree(splits[i]);
+	kfree(splits_nents);
+	kfree(splits);
 
-	dma_unmap_sg(dev, sgl, sgl_len_in, DMA_BIसूचीECTIONAL);
-पूर्ण
+	dma_unmap_sg(dev, sgl, sgl_len_in, DMA_BIDIRECTIONAL);
+}
 
-अटल काष्ठा sec_request_el
-*sec_alg_alloc_and_fill_el(काष्ठा sec_bd_info *ढाँचा, पूर्णांक encrypt,
-			   पूर्णांक el_size, bool dअगरferent_dest,
-			   काष्ठा scatterlist *sgl_in, पूर्णांक n_ents_in,
-			   काष्ठा scatterlist *sgl_out, पूर्णांक n_ents_out,
-			   काष्ठा sec_dev_info *info, gfp_t gfp)
-अणु
-	काष्ठा sec_request_el *el;
-	काष्ठा sec_bd_info *req;
-	पूर्णांक ret;
+static struct sec_request_el
+*sec_alg_alloc_and_fill_el(struct sec_bd_info *template, int encrypt,
+			   int el_size, bool different_dest,
+			   struct scatterlist *sgl_in, int n_ents_in,
+			   struct scatterlist *sgl_out, int n_ents_out,
+			   struct sec_dev_info *info, gfp_t gfp)
+{
+	struct sec_request_el *el;
+	struct sec_bd_info *req;
+	int ret;
 
-	el = kzalloc(माप(*el), gfp);
-	अगर (!el)
-		वापस ERR_PTR(-ENOMEM);
+	el = kzalloc(sizeof(*el), gfp);
+	if (!el)
+		return ERR_PTR(-ENOMEM);
 	el->el_length = el_size;
 	req = &el->req;
-	स_नकल(req, ढाँचा, माप(*req));
+	memcpy(req, template, sizeof(*req));
 
 	req->w0 &= ~SEC_BD_W0_CIPHER_M;
-	अगर (encrypt)
+	if (encrypt)
 		req->w0 |= SEC_CIPHER_ENCRYPT << SEC_BD_W0_CIPHER_S;
-	अन्यथा
+	else
 		req->w0 |= SEC_CIPHER_DECRYPT << SEC_BD_W0_CIPHER_S;
 
 	req->w0 &= ~SEC_BD_W0_C_GRAN_SIZE_19_16_M;
@@ -671,84 +670,84 @@ err_unmap_sg:
 
 	ret = sec_alloc_and_fill_hw_sgl(&el->in, &el->dma_in, el->sgl_in,
 					n_ents_in, info, gfp);
-	अगर (ret)
-		जाओ err_मुक्त_el;
+	if (ret)
+		goto err_free_el;
 
 	req->data_addr_lo = lower_32_bits(el->dma_in);
 	req->data_addr_hi = upper_32_bits(el->dma_in);
 
-	अगर (dअगरferent_dest) अणु
+	if (different_dest) {
 		el->sgl_out = sgl_out;
 		ret = sec_alloc_and_fill_hw_sgl(&el->out, &el->dma_out,
 						el->sgl_out,
 						n_ents_out, info, gfp);
-		अगर (ret)
-			जाओ err_मुक्त_hw_sgl_in;
+		if (ret)
+			goto err_free_hw_sgl_in;
 
 		req->w0 |= SEC_BD_W0_DE;
 		req->cipher_destin_addr_lo = lower_32_bits(el->dma_out);
 		req->cipher_destin_addr_hi = upper_32_bits(el->dma_out);
 
-	पूर्ण अन्यथा अणु
+	} else {
 		req->w0 &= ~SEC_BD_W0_DE;
 		req->cipher_destin_addr_lo = lower_32_bits(el->dma_in);
 		req->cipher_destin_addr_hi = upper_32_bits(el->dma_in);
-	पूर्ण
+	}
 
-	वापस el;
+	return el;
 
-err_मुक्त_hw_sgl_in:
-	sec_मुक्त_hw_sgl(el->in, el->dma_in, info);
-err_मुक्त_el:
-	kमुक्त(el);
+err_free_hw_sgl_in:
+	sec_free_hw_sgl(el->in, el->dma_in, info);
+err_free_el:
+	kfree(el);
 
-	वापस ERR_PTR(ret);
-पूर्ण
+	return ERR_PTR(ret);
+}
 
-अटल पूर्णांक sec_alg_skcipher_crypto(काष्ठा skcipher_request *skreq,
+static int sec_alg_skcipher_crypto(struct skcipher_request *skreq,
 				   bool encrypt)
-अणु
-	काष्ठा crypto_skcipher *atfm = crypto_skcipher_reqtfm(skreq);
-	काष्ठा crypto_tfm *tfm = crypto_skcipher_tfm(atfm);
-	काष्ठा sec_alg_tfm_ctx *ctx = crypto_tfm_ctx(tfm);
-	काष्ठा sec_queue *queue = ctx->queue;
-	काष्ठा sec_request *sec_req = skcipher_request_ctx(skreq);
-	काष्ठा sec_dev_info *info = queue->dev_info;
-	पूर्णांक i, ret, steps;
-	माप_प्रकार *split_sizes;
-	काष्ठा scatterlist **splits_in;
-	काष्ठा scatterlist **splits_out = शून्य;
-	पूर्णांक *splits_in_nents;
-	पूर्णांक *splits_out_nents = शून्य;
-	काष्ठा sec_request_el *el, *temp;
+{
+	struct crypto_skcipher *atfm = crypto_skcipher_reqtfm(skreq);
+	struct crypto_tfm *tfm = crypto_skcipher_tfm(atfm);
+	struct sec_alg_tfm_ctx *ctx = crypto_tfm_ctx(tfm);
+	struct sec_queue *queue = ctx->queue;
+	struct sec_request *sec_req = skcipher_request_ctx(skreq);
+	struct sec_dev_info *info = queue->dev_info;
+	int i, ret, steps;
+	size_t *split_sizes;
+	struct scatterlist **splits_in;
+	struct scatterlist **splits_out = NULL;
+	int *splits_in_nents;
+	int *splits_out_nents = NULL;
+	struct sec_request_el *el, *temp;
 	bool split = skreq->src != skreq->dst;
 	gfp_t gfp = skreq->base.flags & CRYPTO_TFM_REQ_MAY_SLEEP ? GFP_KERNEL : GFP_ATOMIC;
 
 	mutex_init(&sec_req->lock);
 	sec_req->req_base = &skreq->base;
 	sec_req->err = 0;
-	/* SGL mapping out here to allow us to अवरोध it up as necessary */
+	/* SGL mapping out here to allow us to break it up as necessary */
 	sec_req->len_in = sg_nents(skreq->src);
 
 	ret = sec_alg_alloc_and_calc_split_sizes(skreq->cryptlen, &split_sizes,
 						 &steps, gfp);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	sec_req->num_elements = steps;
 	ret = sec_map_and_split_sg(skreq->src, split_sizes, steps, &splits_in,
 				   &splits_in_nents, sec_req->len_in,
 				   info->dev, gfp);
-	अगर (ret)
-		जाओ err_मुक्त_split_sizes;
+	if (ret)
+		goto err_free_split_sizes;
 
-	अगर (split) अणु
+	if (split) {
 		sec_req->len_out = sg_nents(skreq->dst);
 		ret = sec_map_and_split_sg(skreq->dst, split_sizes, steps,
 					   &splits_out, &splits_out_nents,
 					   sec_req->len_out, info->dev, gfp);
-		अगर (ret)
-			जाओ err_unmap_in_sg;
-	पूर्ण
+		if (ret)
+			goto err_unmap_in_sg;
+	}
 	/* Shared info stored in seq_req - applies to all BDs */
 	sec_req->tfm_ctx = ctx;
 	sec_req->cb = sec_skcipher_alg_callback;
@@ -756,41 +755,41 @@ err_मुक्त_el:
 
 	/*
 	 * Future optimization.
-	 * In the chaining हाल we can't use a dma pool bounce buffer
-	 * but in the हाल where we know there is no chaining we can
+	 * In the chaining case we can't use a dma pool bounce buffer
+	 * but in the case where we know there is no chaining we can
 	 */
-	अगर (crypto_skcipher_ivsize(atfm)) अणु
+	if (crypto_skcipher_ivsize(atfm)) {
 		sec_req->dma_iv = dma_map_single(info->dev, skreq->iv,
 						 crypto_skcipher_ivsize(atfm),
 						 DMA_TO_DEVICE);
-		अगर (dma_mapping_error(info->dev, sec_req->dma_iv)) अणु
+		if (dma_mapping_error(info->dev, sec_req->dma_iv)) {
 			ret = -ENOMEM;
-			जाओ err_unmap_out_sg;
-		पूर्ण
-	पूर्ण
+			goto err_unmap_out_sg;
+		}
+	}
 
 	/* Set them all up then queue - cleaner error handling. */
-	क्रम (i = 0; i < steps; i++) अणु
-		el = sec_alg_alloc_and_fill_el(&ctx->req_ढाँचा,
+	for (i = 0; i < steps; i++) {
+		el = sec_alg_alloc_and_fill_el(&ctx->req_template,
 					       encrypt ? 1 : 0,
 					       split_sizes[i],
 					       skreq->src != skreq->dst,
 					       splits_in[i], splits_in_nents[i],
-					       split ? splits_out[i] : शून्य,
+					       split ? splits_out[i] : NULL,
 					       split ? splits_out_nents[i] : 0,
 					       info, gfp);
-		अगर (IS_ERR(el)) अणु
+		if (IS_ERR(el)) {
 			ret = PTR_ERR(el);
-			जाओ err_मुक्त_elements;
-		पूर्ण
+			goto err_free_elements;
+		}
 		el->req.cipher_iv_addr_lo = lower_32_bits(sec_req->dma_iv);
 		el->req.cipher_iv_addr_hi = upper_32_bits(sec_req->dma_iv);
 		el->sec_req = sec_req;
 		list_add_tail(&el->head, &sec_req->elements);
-	पूर्ण
+	}
 
 	/*
-	 * Only attempt to queue अगर the whole lot can fit in the queue -
+	 * Only attempt to queue if the whole lot can fit in the queue -
 	 * we can't successfully cleanup after a partial queing so this
 	 * must succeed or fail atomically.
 	 *
@@ -798,326 +797,326 @@ err_मुक्त_el:
 	 * more refined but this is unlikely to happen so no need.
 	 */
 
-	/* Grab a big lock क्रम a दीर्घ समय to aव्योम concurrency issues */
+	/* Grab a big lock for a long time to avoid concurrency issues */
 	mutex_lock(&queue->queuelock);
 
 	/*
-	 * Can go on to queue अगर we have space in either:
+	 * Can go on to queue if we have space in either:
 	 * 1) The hardware queue and no software queue
 	 * 2) The software queue
 	 * AND there is nothing in the backlog.  If there is backlog we
-	 * have to only queue to the backlog queue and वापस busy.
+	 * have to only queue to the backlog queue and return busy.
 	 */
-	अगर ((!sec_queue_can_enqueue(queue, steps) &&
+	if ((!sec_queue_can_enqueue(queue, steps) &&
 	     (!queue->havesoftqueue ||
-	      kfअगरo_avail(&queue->softqueue) > steps)) ||
-	    !list_empty(&ctx->backlog)) अणु
+	      kfifo_avail(&queue->softqueue) > steps)) ||
+	    !list_empty(&ctx->backlog)) {
 		ret = -EBUSY;
-		अगर ((skreq->base.flags & CRYPTO_TFM_REQ_MAY_BACKLOG)) अणु
+		if ((skreq->base.flags & CRYPTO_TFM_REQ_MAY_BACKLOG)) {
 			list_add_tail(&sec_req->backlog_head, &ctx->backlog);
 			mutex_unlock(&queue->queuelock);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		mutex_unlock(&queue->queuelock);
-		जाओ err_मुक्त_elements;
-	पूर्ण
+		goto err_free_elements;
+	}
 	ret = sec_send_request(sec_req, queue);
 	mutex_unlock(&queue->queuelock);
-	अगर (ret)
-		जाओ err_मुक्त_elements;
+	if (ret)
+		goto err_free_elements;
 
 	ret = -EINPROGRESS;
 out:
-	/* Cleanup - all elements in poपूर्णांकer arrays have been copied */
-	kमुक्त(splits_in_nents);
-	kमुक्त(splits_in);
-	kमुक्त(splits_out_nents);
-	kमुक्त(splits_out);
-	kमुक्त(split_sizes);
-	वापस ret;
+	/* Cleanup - all elements in pointer arrays have been copied */
+	kfree(splits_in_nents);
+	kfree(splits_in);
+	kfree(splits_out_nents);
+	kfree(splits_out);
+	kfree(split_sizes);
+	return ret;
 
-err_मुक्त_elements:
-	list_क्रम_each_entry_safe(el, temp, &sec_req->elements, head) अणु
+err_free_elements:
+	list_for_each_entry_safe(el, temp, &sec_req->elements, head) {
 		list_del(&el->head);
-		sec_alg_मुक्त_el(el, info);
-	पूर्ण
-	अगर (crypto_skcipher_ivsize(atfm))
+		sec_alg_free_el(el, info);
+	}
+	if (crypto_skcipher_ivsize(atfm))
 		dma_unmap_single(info->dev, sec_req->dma_iv,
 				 crypto_skcipher_ivsize(atfm),
-				 DMA_BIसूचीECTIONAL);
+				 DMA_BIDIRECTIONAL);
 err_unmap_out_sg:
-	अगर (split)
+	if (split)
 		sec_unmap_sg_on_err(skreq->dst, steps, splits_out,
 				    splits_out_nents, sec_req->len_out,
 				    info->dev);
 err_unmap_in_sg:
 	sec_unmap_sg_on_err(skreq->src, steps, splits_in, splits_in_nents,
 			    sec_req->len_in, info->dev);
-err_मुक्त_split_sizes:
-	kमुक्त(split_sizes);
+err_free_split_sizes:
+	kfree(split_sizes);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक sec_alg_skcipher_encrypt(काष्ठा skcipher_request *req)
-अणु
-	वापस sec_alg_skcipher_crypto(req, true);
-पूर्ण
+static int sec_alg_skcipher_encrypt(struct skcipher_request *req)
+{
+	return sec_alg_skcipher_crypto(req, true);
+}
 
-अटल पूर्णांक sec_alg_skcipher_decrypt(काष्ठा skcipher_request *req)
-अणु
-	वापस sec_alg_skcipher_crypto(req, false);
-पूर्ण
+static int sec_alg_skcipher_decrypt(struct skcipher_request *req)
+{
+	return sec_alg_skcipher_crypto(req, false);
+}
 
-अटल पूर्णांक sec_alg_skcipher_init(काष्ठा crypto_skcipher *tfm)
-अणु
-	काष्ठा sec_alg_tfm_ctx *ctx = crypto_skcipher_ctx(tfm);
+static int sec_alg_skcipher_init(struct crypto_skcipher *tfm)
+{
+	struct sec_alg_tfm_ctx *ctx = crypto_skcipher_ctx(tfm);
 
 	mutex_init(&ctx->lock);
 	INIT_LIST_HEAD(&ctx->backlog);
-	crypto_skcipher_set_reqsize(tfm, माप(काष्ठा sec_request));
+	crypto_skcipher_set_reqsize(tfm, sizeof(struct sec_request));
 
 	ctx->queue = sec_queue_alloc_start_safe();
-	अगर (IS_ERR(ctx->queue))
-		वापस PTR_ERR(ctx->queue);
+	if (IS_ERR(ctx->queue))
+		return PTR_ERR(ctx->queue);
 
 	mutex_init(&ctx->queue->queuelock);
 	ctx->queue->havesoftqueue = false;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम sec_alg_skcipher_निकास(काष्ठा crypto_skcipher *tfm)
-अणु
-	काष्ठा sec_alg_tfm_ctx *ctx = crypto_skcipher_ctx(tfm);
-	काष्ठा device *dev = ctx->queue->dev_info->dev;
+static void sec_alg_skcipher_exit(struct crypto_skcipher *tfm)
+{
+	struct sec_alg_tfm_ctx *ctx = crypto_skcipher_ctx(tfm);
+	struct device *dev = ctx->queue->dev_info->dev;
 
-	अगर (ctx->key) अणु
+	if (ctx->key) {
 		memzero_explicit(ctx->key, SEC_MAX_CIPHER_KEY);
-		dma_मुक्त_coherent(dev, SEC_MAX_CIPHER_KEY, ctx->key,
+		dma_free_coherent(dev, SEC_MAX_CIPHER_KEY, ctx->key,
 				  ctx->pkey);
-	पूर्ण
+	}
 	sec_queue_stop_release(ctx->queue);
-पूर्ण
+}
 
-अटल पूर्णांक sec_alg_skcipher_init_with_queue(काष्ठा crypto_skcipher *tfm)
-अणु
-	काष्ठा sec_alg_tfm_ctx *ctx = crypto_skcipher_ctx(tfm);
-	पूर्णांक ret;
+static int sec_alg_skcipher_init_with_queue(struct crypto_skcipher *tfm)
+{
+	struct sec_alg_tfm_ctx *ctx = crypto_skcipher_ctx(tfm);
+	int ret;
 
 	ret = sec_alg_skcipher_init(tfm);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	INIT_KFIFO(ctx->queue->softqueue);
-	ret = kfअगरo_alloc(&ctx->queue->softqueue, 512, GFP_KERNEL);
-	अगर (ret) अणु
-		sec_alg_skcipher_निकास(tfm);
-		वापस ret;
-	पूर्ण
+	ret = kfifo_alloc(&ctx->queue->softqueue, 512, GFP_KERNEL);
+	if (ret) {
+		sec_alg_skcipher_exit(tfm);
+		return ret;
+	}
 	ctx->queue->havesoftqueue = true;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम sec_alg_skcipher_निकास_with_queue(काष्ठा crypto_skcipher *tfm)
-अणु
-	काष्ठा sec_alg_tfm_ctx *ctx = crypto_skcipher_ctx(tfm);
+static void sec_alg_skcipher_exit_with_queue(struct crypto_skcipher *tfm)
+{
+	struct sec_alg_tfm_ctx *ctx = crypto_skcipher_ctx(tfm);
 
-	kfअगरo_मुक्त(&ctx->queue->softqueue);
-	sec_alg_skcipher_निकास(tfm);
-पूर्ण
+	kfifo_free(&ctx->queue->softqueue);
+	sec_alg_skcipher_exit(tfm);
+}
 
-अटल काष्ठा skcipher_alg sec_algs[] = अणु
-	अणु
-		.base = अणु
+static struct skcipher_alg sec_algs[] = {
+	{
+		.base = {
 			.cra_name = "ecb(aes)",
 			.cra_driver_name = "hisi_sec_aes_ecb",
 			.cra_priority = 4001,
 			.cra_flags = CRYPTO_ALG_ASYNC |
 				     CRYPTO_ALG_ALLOCATES_MEMORY,
 			.cra_blocksize = AES_BLOCK_SIZE,
-			.cra_ctxsize = माप(काष्ठा sec_alg_tfm_ctx),
+			.cra_ctxsize = sizeof(struct sec_alg_tfm_ctx),
 			.cra_alignmask = 0,
 			.cra_module = THIS_MODULE,
-		पूर्ण,
+		},
 		.init = sec_alg_skcipher_init,
-		.निकास = sec_alg_skcipher_निकास,
+		.exit = sec_alg_skcipher_exit,
 		.setkey = sec_alg_skcipher_setkey_aes_ecb,
 		.decrypt = sec_alg_skcipher_decrypt,
 		.encrypt = sec_alg_skcipher_encrypt,
 		.min_keysize = AES_MIN_KEY_SIZE,
 		.max_keysize = AES_MAX_KEY_SIZE,
 		.ivsize = 0,
-	पूर्ण, अणु
-		.base = अणु
+	}, {
+		.base = {
 			.cra_name = "cbc(aes)",
 			.cra_driver_name = "hisi_sec_aes_cbc",
 			.cra_priority = 4001,
 			.cra_flags = CRYPTO_ALG_ASYNC |
 				     CRYPTO_ALG_ALLOCATES_MEMORY,
 			.cra_blocksize = AES_BLOCK_SIZE,
-			.cra_ctxsize = माप(काष्ठा sec_alg_tfm_ctx),
+			.cra_ctxsize = sizeof(struct sec_alg_tfm_ctx),
 			.cra_alignmask = 0,
 			.cra_module = THIS_MODULE,
-		पूर्ण,
+		},
 		.init = sec_alg_skcipher_init_with_queue,
-		.निकास = sec_alg_skcipher_निकास_with_queue,
+		.exit = sec_alg_skcipher_exit_with_queue,
 		.setkey = sec_alg_skcipher_setkey_aes_cbc,
 		.decrypt = sec_alg_skcipher_decrypt,
 		.encrypt = sec_alg_skcipher_encrypt,
 		.min_keysize = AES_MIN_KEY_SIZE,
 		.max_keysize = AES_MAX_KEY_SIZE,
 		.ivsize = AES_BLOCK_SIZE,
-	पूर्ण, अणु
-		.base = अणु
+	}, {
+		.base = {
 			.cra_name = "ctr(aes)",
 			.cra_driver_name = "hisi_sec_aes_ctr",
 			.cra_priority = 4001,
 			.cra_flags = CRYPTO_ALG_ASYNC |
 				     CRYPTO_ALG_ALLOCATES_MEMORY,
 			.cra_blocksize = AES_BLOCK_SIZE,
-			.cra_ctxsize = माप(काष्ठा sec_alg_tfm_ctx),
+			.cra_ctxsize = sizeof(struct sec_alg_tfm_ctx),
 			.cra_alignmask = 0,
 			.cra_module = THIS_MODULE,
-		पूर्ण,
+		},
 		.init = sec_alg_skcipher_init_with_queue,
-		.निकास = sec_alg_skcipher_निकास_with_queue,
+		.exit = sec_alg_skcipher_exit_with_queue,
 		.setkey = sec_alg_skcipher_setkey_aes_ctr,
 		.decrypt = sec_alg_skcipher_decrypt,
 		.encrypt = sec_alg_skcipher_encrypt,
 		.min_keysize = AES_MIN_KEY_SIZE,
 		.max_keysize = AES_MAX_KEY_SIZE,
 		.ivsize = AES_BLOCK_SIZE,
-	पूर्ण, अणु
-		.base = अणु
+	}, {
+		.base = {
 			.cra_name = "xts(aes)",
 			.cra_driver_name = "hisi_sec_aes_xts",
 			.cra_priority = 4001,
 			.cra_flags = CRYPTO_ALG_ASYNC |
 				     CRYPTO_ALG_ALLOCATES_MEMORY,
 			.cra_blocksize = AES_BLOCK_SIZE,
-			.cra_ctxsize = माप(काष्ठा sec_alg_tfm_ctx),
+			.cra_ctxsize = sizeof(struct sec_alg_tfm_ctx),
 			.cra_alignmask = 0,
 			.cra_module = THIS_MODULE,
-		पूर्ण,
+		},
 		.init = sec_alg_skcipher_init,
-		.निकास = sec_alg_skcipher_निकास,
+		.exit = sec_alg_skcipher_exit,
 		.setkey = sec_alg_skcipher_setkey_aes_xts,
 		.decrypt = sec_alg_skcipher_decrypt,
 		.encrypt = sec_alg_skcipher_encrypt,
 		.min_keysize = 2 * AES_MIN_KEY_SIZE,
 		.max_keysize = 2 * AES_MAX_KEY_SIZE,
 		.ivsize = AES_BLOCK_SIZE,
-	पूर्ण, अणु
+	}, {
 	/* Unable to find any test vectors so untested */
-		.base = अणु
+		.base = {
 			.cra_name = "ecb(des)",
 			.cra_driver_name = "hisi_sec_des_ecb",
 			.cra_priority = 4001,
 			.cra_flags = CRYPTO_ALG_ASYNC |
 				     CRYPTO_ALG_ALLOCATES_MEMORY,
 			.cra_blocksize = DES_BLOCK_SIZE,
-			.cra_ctxsize = माप(काष्ठा sec_alg_tfm_ctx),
+			.cra_ctxsize = sizeof(struct sec_alg_tfm_ctx),
 			.cra_alignmask = 0,
 			.cra_module = THIS_MODULE,
-		पूर्ण,
+		},
 		.init = sec_alg_skcipher_init,
-		.निकास = sec_alg_skcipher_निकास,
+		.exit = sec_alg_skcipher_exit,
 		.setkey = sec_alg_skcipher_setkey_des_ecb,
 		.decrypt = sec_alg_skcipher_decrypt,
 		.encrypt = sec_alg_skcipher_encrypt,
 		.min_keysize = DES_KEY_SIZE,
 		.max_keysize = DES_KEY_SIZE,
 		.ivsize = 0,
-	पूर्ण, अणु
-		.base = अणु
+	}, {
+		.base = {
 			.cra_name = "cbc(des)",
 			.cra_driver_name = "hisi_sec_des_cbc",
 			.cra_priority = 4001,
 			.cra_flags = CRYPTO_ALG_ASYNC |
 				     CRYPTO_ALG_ALLOCATES_MEMORY,
 			.cra_blocksize = DES_BLOCK_SIZE,
-			.cra_ctxsize = माप(काष्ठा sec_alg_tfm_ctx),
+			.cra_ctxsize = sizeof(struct sec_alg_tfm_ctx),
 			.cra_alignmask = 0,
 			.cra_module = THIS_MODULE,
-		पूर्ण,
+		},
 		.init = sec_alg_skcipher_init_with_queue,
-		.निकास = sec_alg_skcipher_निकास_with_queue,
+		.exit = sec_alg_skcipher_exit_with_queue,
 		.setkey = sec_alg_skcipher_setkey_des_cbc,
 		.decrypt = sec_alg_skcipher_decrypt,
 		.encrypt = sec_alg_skcipher_encrypt,
 		.min_keysize = DES_KEY_SIZE,
 		.max_keysize = DES_KEY_SIZE,
 		.ivsize = DES_BLOCK_SIZE,
-	पूर्ण, अणु
-		.base = अणु
+	}, {
+		.base = {
 			.cra_name = "cbc(des3_ede)",
 			.cra_driver_name = "hisi_sec_3des_cbc",
 			.cra_priority = 4001,
 			.cra_flags = CRYPTO_ALG_ASYNC |
 				     CRYPTO_ALG_ALLOCATES_MEMORY,
 			.cra_blocksize = DES3_EDE_BLOCK_SIZE,
-			.cra_ctxsize = माप(काष्ठा sec_alg_tfm_ctx),
+			.cra_ctxsize = sizeof(struct sec_alg_tfm_ctx),
 			.cra_alignmask = 0,
 			.cra_module = THIS_MODULE,
-		पूर्ण,
+		},
 		.init = sec_alg_skcipher_init_with_queue,
-		.निकास = sec_alg_skcipher_निकास_with_queue,
+		.exit = sec_alg_skcipher_exit_with_queue,
 		.setkey = sec_alg_skcipher_setkey_3des_cbc,
 		.decrypt = sec_alg_skcipher_decrypt,
 		.encrypt = sec_alg_skcipher_encrypt,
 		.min_keysize = DES3_EDE_KEY_SIZE,
 		.max_keysize = DES3_EDE_KEY_SIZE,
 		.ivsize = DES3_EDE_BLOCK_SIZE,
-	पूर्ण, अणु
-		.base = अणु
+	}, {
+		.base = {
 			.cra_name = "ecb(des3_ede)",
 			.cra_driver_name = "hisi_sec_3des_ecb",
 			.cra_priority = 4001,
 			.cra_flags = CRYPTO_ALG_ASYNC |
 				     CRYPTO_ALG_ALLOCATES_MEMORY,
 			.cra_blocksize = DES3_EDE_BLOCK_SIZE,
-			.cra_ctxsize = माप(काष्ठा sec_alg_tfm_ctx),
+			.cra_ctxsize = sizeof(struct sec_alg_tfm_ctx),
 			.cra_alignmask = 0,
 			.cra_module = THIS_MODULE,
-		पूर्ण,
+		},
 		.init = sec_alg_skcipher_init,
-		.निकास = sec_alg_skcipher_निकास,
+		.exit = sec_alg_skcipher_exit,
 		.setkey = sec_alg_skcipher_setkey_3des_ecb,
 		.decrypt = sec_alg_skcipher_decrypt,
 		.encrypt = sec_alg_skcipher_encrypt,
 		.min_keysize = DES3_EDE_KEY_SIZE,
 		.max_keysize = DES3_EDE_KEY_SIZE,
 		.ivsize = 0,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-पूर्णांक sec_algs_रेजिस्टर(व्योम)
-अणु
-	पूर्णांक ret = 0;
+int sec_algs_register(void)
+{
+	int ret = 0;
 
 	mutex_lock(&algs_lock);
-	अगर (++active_devs != 1)
-		जाओ unlock;
+	if (++active_devs != 1)
+		goto unlock;
 
-	ret = crypto_रेजिस्टर_skciphers(sec_algs, ARRAY_SIZE(sec_algs));
-	अगर (ret)
+	ret = crypto_register_skciphers(sec_algs, ARRAY_SIZE(sec_algs));
+	if (ret)
 		--active_devs;
 unlock:
 	mutex_unlock(&algs_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम sec_algs_unरेजिस्टर(व्योम)
-अणु
+void sec_algs_unregister(void)
+{
 	mutex_lock(&algs_lock);
-	अगर (--active_devs != 0)
-		जाओ unlock;
-	crypto_unरेजिस्टर_skciphers(sec_algs, ARRAY_SIZE(sec_algs));
+	if (--active_devs != 0)
+		goto unlock;
+	crypto_unregister_skciphers(sec_algs, ARRAY_SIZE(sec_algs));
 
 unlock:
 	mutex_unlock(&algs_lock);
-पूर्ण
+}

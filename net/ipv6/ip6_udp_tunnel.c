@@ -1,90 +1,89 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-#समावेश <linux/module.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/socket.h>
-#समावेश <linux/udp.h>
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/in6.h>
-#समावेश <net/udp.h>
-#समावेश <net/udp_tunnel.h>
-#समावेश <net/net_namespace.h>
-#समावेश <net/netns/generic.h>
-#समावेश <net/ip6_tunnel.h>
-#समावेश <net/ip6_checksum.h>
+// SPDX-License-Identifier: GPL-2.0-only
+#include <linux/module.h>
+#include <linux/errno.h>
+#include <linux/socket.h>
+#include <linux/udp.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/in6.h>
+#include <net/udp.h>
+#include <net/udp_tunnel.h>
+#include <net/net_namespace.h>
+#include <net/netns/generic.h>
+#include <net/ip6_tunnel.h>
+#include <net/ip6_checksum.h>
 
-पूर्णांक udp_sock_create6(काष्ठा net *net, काष्ठा udp_port_cfg *cfg,
-		     काष्ठा socket **sockp)
-अणु
-	काष्ठा sockaddr_in6 udp6_addr = अणुपूर्ण;
-	पूर्णांक err;
-	काष्ठा socket *sock = शून्य;
+int udp_sock_create6(struct net *net, struct udp_port_cfg *cfg,
+		     struct socket **sockp)
+{
+	struct sockaddr_in6 udp6_addr = {};
+	int err;
+	struct socket *sock = NULL;
 
 	err = sock_create_kern(net, AF_INET6, SOCK_DGRAM, 0, &sock);
-	अगर (err < 0)
-		जाओ error;
+	if (err < 0)
+		goto error;
 
-	अगर (cfg->ipv6_v6only) अणु
+	if (cfg->ipv6_v6only) {
 		err = ip6_sock_set_v6only(sock->sk);
-		अगर (err < 0)
-			जाओ error;
-	पूर्ण
-	अगर (cfg->bind_अगरindex) अणु
-		err = sock_bindtoindex(sock->sk, cfg->bind_अगरindex, true);
-		अगर (err < 0)
-			जाओ error;
-	पूर्ण
+		if (err < 0)
+			goto error;
+	}
+	if (cfg->bind_ifindex) {
+		err = sock_bindtoindex(sock->sk, cfg->bind_ifindex, true);
+		if (err < 0)
+			goto error;
+	}
 
 	udp6_addr.sin6_family = AF_INET6;
-	स_नकल(&udp6_addr.sin6_addr, &cfg->local_ip6,
-	       माप(udp6_addr.sin6_addr));
+	memcpy(&udp6_addr.sin6_addr, &cfg->local_ip6,
+	       sizeof(udp6_addr.sin6_addr));
 	udp6_addr.sin6_port = cfg->local_udp_port;
-	err = kernel_bind(sock, (काष्ठा sockaddr *)&udp6_addr,
-			  माप(udp6_addr));
-	अगर (err < 0)
-		जाओ error;
+	err = kernel_bind(sock, (struct sockaddr *)&udp6_addr,
+			  sizeof(udp6_addr));
+	if (err < 0)
+		goto error;
 
-	अगर (cfg->peer_udp_port) अणु
-		स_रखो(&udp6_addr, 0, माप(udp6_addr));
+	if (cfg->peer_udp_port) {
+		memset(&udp6_addr, 0, sizeof(udp6_addr));
 		udp6_addr.sin6_family = AF_INET6;
-		स_नकल(&udp6_addr.sin6_addr, &cfg->peer_ip6,
-		       माप(udp6_addr.sin6_addr));
+		memcpy(&udp6_addr.sin6_addr, &cfg->peer_ip6,
+		       sizeof(udp6_addr.sin6_addr));
 		udp6_addr.sin6_port = cfg->peer_udp_port;
 		err = kernel_connect(sock,
-				     (काष्ठा sockaddr *)&udp6_addr,
-				     माप(udp6_addr), 0);
-	पूर्ण
-	अगर (err < 0)
-		जाओ error;
+				     (struct sockaddr *)&udp6_addr,
+				     sizeof(udp6_addr), 0);
+	}
+	if (err < 0)
+		goto error;
 
 	udp_set_no_check6_tx(sock->sk, !cfg->use_udp6_tx_checksums);
 	udp_set_no_check6_rx(sock->sk, !cfg->use_udp6_rx_checksums);
 
 	*sockp = sock;
-	वापस 0;
+	return 0;
 
 error:
-	अगर (sock) अणु
-		kernel_sock_shutकरोwn(sock, SHUT_RDWR);
+	if (sock) {
+		kernel_sock_shutdown(sock, SHUT_RDWR);
 		sock_release(sock);
-	पूर्ण
-	*sockp = शून्य;
-	वापस err;
-पूर्ण
+	}
+	*sockp = NULL;
+	return err;
+}
 EXPORT_SYMBOL_GPL(udp_sock_create6);
 
-पूर्णांक udp_tunnel6_xmit_skb(काष्ठा dst_entry *dst, काष्ठा sock *sk,
-			 काष्ठा sk_buff *skb,
-			 काष्ठा net_device *dev, काष्ठा in6_addr *saddr,
-			 काष्ठा in6_addr *daddr,
+int udp_tunnel6_xmit_skb(struct dst_entry *dst, struct sock *sk,
+			 struct sk_buff *skb,
+			 struct net_device *dev, struct in6_addr *saddr,
+			 struct in6_addr *daddr,
 			 __u8 prio, __u8 ttl, __be32 label,
 			 __be16 src_port, __be16 dst_port, bool nocheck)
-अणु
-	काष्ठा udphdr *uh;
-	काष्ठा ipv6hdr *ip6h;
+{
+	struct udphdr *uh;
+	struct ipv6hdr *ip6h;
 
-	__skb_push(skb, माप(*uh));
+	__skb_push(skb, sizeof(*uh));
 	skb_reset_transport_header(skb);
 	uh = udp_hdr(skb);
 
@@ -97,7 +96,7 @@ EXPORT_SYMBOL_GPL(udp_sock_create6);
 
 	udp6_set_csum(nocheck, skb, saddr, daddr, skb->len);
 
-	__skb_push(skb, माप(*ip6h));
+	__skb_push(skb, sizeof(*ip6h));
 	skb_reset_network_header(skb);
 	ip6h		  = ipv6_hdr(skb);
 	ip6_flow_hdr(ip6h, prio, label);
@@ -108,8 +107,8 @@ EXPORT_SYMBOL_GPL(udp_sock_create6);
 	ip6h->saddr	  = *saddr;
 
 	ip6tunnel_xmit(sk, skb, dev);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(udp_tunnel6_xmit_skb);
 
 MODULE_LICENSE("GPL");

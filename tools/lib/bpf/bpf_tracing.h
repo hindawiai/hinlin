@@ -1,469 +1,468 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: (LGPL-2.1 OR BSD-2-Clause) */
-#अगर_अघोषित __BPF_TRACING_H__
-#घोषणा __BPF_TRACING_H__
+/* SPDX-License-Identifier: (LGPL-2.1 OR BSD-2-Clause) */
+#ifndef __BPF_TRACING_H__
+#define __BPF_TRACING_H__
 
 /* Scan the ARCH passed in from ARCH env variable (see Makefile) */
-#अगर defined(__TARGET_ARCH_x86)
-	#घोषणा bpf_target_x86
-	#घोषणा bpf_target_defined
-#या_अगर defined(__TARGET_ARCH_s390)
-	#घोषणा bpf_target_s390
-	#घोषणा bpf_target_defined
-#या_अगर defined(__TARGET_ARCH_arm)
-	#घोषणा bpf_target_arm
-	#घोषणा bpf_target_defined
-#या_अगर defined(__TARGET_ARCH_arm64)
-	#घोषणा bpf_target_arm64
-	#घोषणा bpf_target_defined
-#या_अगर defined(__TARGET_ARCH_mips)
-	#घोषणा bpf_target_mips
-	#घोषणा bpf_target_defined
-#या_अगर defined(__TARGET_ARCH_घातerpc)
-	#घोषणा bpf_target_घातerpc
-	#घोषणा bpf_target_defined
-#या_अगर defined(__TARGET_ARCH_sparc)
-	#घोषणा bpf_target_sparc
-	#घोषणा bpf_target_defined
-#अन्यथा
-	#अघोषित bpf_target_defined
-#पूर्ण_अगर
+#if defined(__TARGET_ARCH_x86)
+	#define bpf_target_x86
+	#define bpf_target_defined
+#elif defined(__TARGET_ARCH_s390)
+	#define bpf_target_s390
+	#define bpf_target_defined
+#elif defined(__TARGET_ARCH_arm)
+	#define bpf_target_arm
+	#define bpf_target_defined
+#elif defined(__TARGET_ARCH_arm64)
+	#define bpf_target_arm64
+	#define bpf_target_defined
+#elif defined(__TARGET_ARCH_mips)
+	#define bpf_target_mips
+	#define bpf_target_defined
+#elif defined(__TARGET_ARCH_powerpc)
+	#define bpf_target_powerpc
+	#define bpf_target_defined
+#elif defined(__TARGET_ARCH_sparc)
+	#define bpf_target_sparc
+	#define bpf_target_defined
+#else
+	#undef bpf_target_defined
+#endif
 
 /* Fall back to what the compiler says */
-#अगर_अघोषित bpf_target_defined
-#अगर defined(__x86_64__)
-	#घोषणा bpf_target_x86
-#या_अगर defined(__s390__)
-	#घोषणा bpf_target_s390
-#या_अगर defined(__arm__)
-	#घोषणा bpf_target_arm
-#या_अगर defined(__aarch64__)
-	#घोषणा bpf_target_arm64
-#या_अगर defined(__mips__)
-	#घोषणा bpf_target_mips
-#या_अगर defined(__घातerpc__)
-	#घोषणा bpf_target_घातerpc
-#या_अगर defined(__sparc__)
-	#घोषणा bpf_target_sparc
-#पूर्ण_अगर
-#पूर्ण_अगर
+#ifndef bpf_target_defined
+#if defined(__x86_64__)
+	#define bpf_target_x86
+#elif defined(__s390__)
+	#define bpf_target_s390
+#elif defined(__arm__)
+	#define bpf_target_arm
+#elif defined(__aarch64__)
+	#define bpf_target_arm64
+#elif defined(__mips__)
+	#define bpf_target_mips
+#elif defined(__powerpc__)
+	#define bpf_target_powerpc
+#elif defined(__sparc__)
+	#define bpf_target_sparc
+#endif
+#endif
 
-#अगर defined(bpf_target_x86)
+#if defined(bpf_target_x86)
 
-#अगर defined(__KERNEL__) || defined(__VMLINUX_H__)
+#if defined(__KERNEL__) || defined(__VMLINUX_H__)
 
-#घोषणा PT_REGS_PARM1(x) ((x)->di)
-#घोषणा PT_REGS_PARM2(x) ((x)->si)
-#घोषणा PT_REGS_PARM3(x) ((x)->dx)
-#घोषणा PT_REGS_PARM4(x) ((x)->cx)
-#घोषणा PT_REGS_PARM5(x) ((x)->r8)
-#घोषणा PT_REGS_RET(x) ((x)->sp)
-#घोषणा PT_REGS_FP(x) ((x)->bp)
-#घोषणा PT_REGS_RC(x) ((x)->ax)
-#घोषणा PT_REGS_SP(x) ((x)->sp)
-#घोषणा PT_REGS_IP(x) ((x)->ip)
+#define PT_REGS_PARM1(x) ((x)->di)
+#define PT_REGS_PARM2(x) ((x)->si)
+#define PT_REGS_PARM3(x) ((x)->dx)
+#define PT_REGS_PARM4(x) ((x)->cx)
+#define PT_REGS_PARM5(x) ((x)->r8)
+#define PT_REGS_RET(x) ((x)->sp)
+#define PT_REGS_FP(x) ((x)->bp)
+#define PT_REGS_RC(x) ((x)->ax)
+#define PT_REGS_SP(x) ((x)->sp)
+#define PT_REGS_IP(x) ((x)->ip)
 
-#घोषणा PT_REGS_PARM1_CORE(x) BPF_CORE_READ((x), di)
-#घोषणा PT_REGS_PARM2_CORE(x) BPF_CORE_READ((x), si)
-#घोषणा PT_REGS_PARM3_CORE(x) BPF_CORE_READ((x), dx)
-#घोषणा PT_REGS_PARM4_CORE(x) BPF_CORE_READ((x), cx)
-#घोषणा PT_REGS_PARM5_CORE(x) BPF_CORE_READ((x), r8)
-#घोषणा PT_REGS_RET_CORE(x) BPF_CORE_READ((x), sp)
-#घोषणा PT_REGS_FP_CORE(x) BPF_CORE_READ((x), bp)
-#घोषणा PT_REGS_RC_CORE(x) BPF_CORE_READ((x), ax)
-#घोषणा PT_REGS_SP_CORE(x) BPF_CORE_READ((x), sp)
-#घोषणा PT_REGS_IP_CORE(x) BPF_CORE_READ((x), ip)
+#define PT_REGS_PARM1_CORE(x) BPF_CORE_READ((x), di)
+#define PT_REGS_PARM2_CORE(x) BPF_CORE_READ((x), si)
+#define PT_REGS_PARM3_CORE(x) BPF_CORE_READ((x), dx)
+#define PT_REGS_PARM4_CORE(x) BPF_CORE_READ((x), cx)
+#define PT_REGS_PARM5_CORE(x) BPF_CORE_READ((x), r8)
+#define PT_REGS_RET_CORE(x) BPF_CORE_READ((x), sp)
+#define PT_REGS_FP_CORE(x) BPF_CORE_READ((x), bp)
+#define PT_REGS_RC_CORE(x) BPF_CORE_READ((x), ax)
+#define PT_REGS_SP_CORE(x) BPF_CORE_READ((x), sp)
+#define PT_REGS_IP_CORE(x) BPF_CORE_READ((x), ip)
 
-#अन्यथा
+#else
 
-#अगर_घोषित __i386__
+#ifdef __i386__
 /* i386 kernel is built with -mregparm=3 */
-#घोषणा PT_REGS_PARM1(x) ((x)->eax)
-#घोषणा PT_REGS_PARM2(x) ((x)->edx)
-#घोषणा PT_REGS_PARM3(x) ((x)->ecx)
-#घोषणा PT_REGS_PARM4(x) 0
-#घोषणा PT_REGS_PARM5(x) 0
-#घोषणा PT_REGS_RET(x) ((x)->esp)
-#घोषणा PT_REGS_FP(x) ((x)->ebp)
-#घोषणा PT_REGS_RC(x) ((x)->eax)
-#घोषणा PT_REGS_SP(x) ((x)->esp)
-#घोषणा PT_REGS_IP(x) ((x)->eip)
+#define PT_REGS_PARM1(x) ((x)->eax)
+#define PT_REGS_PARM2(x) ((x)->edx)
+#define PT_REGS_PARM3(x) ((x)->ecx)
+#define PT_REGS_PARM4(x) 0
+#define PT_REGS_PARM5(x) 0
+#define PT_REGS_RET(x) ((x)->esp)
+#define PT_REGS_FP(x) ((x)->ebp)
+#define PT_REGS_RC(x) ((x)->eax)
+#define PT_REGS_SP(x) ((x)->esp)
+#define PT_REGS_IP(x) ((x)->eip)
 
-#घोषणा PT_REGS_PARM1_CORE(x) BPF_CORE_READ((x), eax)
-#घोषणा PT_REGS_PARM2_CORE(x) BPF_CORE_READ((x), edx)
-#घोषणा PT_REGS_PARM3_CORE(x) BPF_CORE_READ((x), ecx)
-#घोषणा PT_REGS_PARM4_CORE(x) 0
-#घोषणा PT_REGS_PARM5_CORE(x) 0
-#घोषणा PT_REGS_RET_CORE(x) BPF_CORE_READ((x), esp)
-#घोषणा PT_REGS_FP_CORE(x) BPF_CORE_READ((x), ebp)
-#घोषणा PT_REGS_RC_CORE(x) BPF_CORE_READ((x), eax)
-#घोषणा PT_REGS_SP_CORE(x) BPF_CORE_READ((x), esp)
-#घोषणा PT_REGS_IP_CORE(x) BPF_CORE_READ((x), eip)
+#define PT_REGS_PARM1_CORE(x) BPF_CORE_READ((x), eax)
+#define PT_REGS_PARM2_CORE(x) BPF_CORE_READ((x), edx)
+#define PT_REGS_PARM3_CORE(x) BPF_CORE_READ((x), ecx)
+#define PT_REGS_PARM4_CORE(x) 0
+#define PT_REGS_PARM5_CORE(x) 0
+#define PT_REGS_RET_CORE(x) BPF_CORE_READ((x), esp)
+#define PT_REGS_FP_CORE(x) BPF_CORE_READ((x), ebp)
+#define PT_REGS_RC_CORE(x) BPF_CORE_READ((x), eax)
+#define PT_REGS_SP_CORE(x) BPF_CORE_READ((x), esp)
+#define PT_REGS_IP_CORE(x) BPF_CORE_READ((x), eip)
 
-#अन्यथा
+#else
 
-#घोषणा PT_REGS_PARM1(x) ((x)->rdi)
-#घोषणा PT_REGS_PARM2(x) ((x)->rsi)
-#घोषणा PT_REGS_PARM3(x) ((x)->rdx)
-#घोषणा PT_REGS_PARM4(x) ((x)->rcx)
-#घोषणा PT_REGS_PARM5(x) ((x)->r8)
-#घोषणा PT_REGS_RET(x) ((x)->rsp)
-#घोषणा PT_REGS_FP(x) ((x)->rbp)
-#घोषणा PT_REGS_RC(x) ((x)->rax)
-#घोषणा PT_REGS_SP(x) ((x)->rsp)
-#घोषणा PT_REGS_IP(x) ((x)->rip)
+#define PT_REGS_PARM1(x) ((x)->rdi)
+#define PT_REGS_PARM2(x) ((x)->rsi)
+#define PT_REGS_PARM3(x) ((x)->rdx)
+#define PT_REGS_PARM4(x) ((x)->rcx)
+#define PT_REGS_PARM5(x) ((x)->r8)
+#define PT_REGS_RET(x) ((x)->rsp)
+#define PT_REGS_FP(x) ((x)->rbp)
+#define PT_REGS_RC(x) ((x)->rax)
+#define PT_REGS_SP(x) ((x)->rsp)
+#define PT_REGS_IP(x) ((x)->rip)
 
-#घोषणा PT_REGS_PARM1_CORE(x) BPF_CORE_READ((x), rdi)
-#घोषणा PT_REGS_PARM2_CORE(x) BPF_CORE_READ((x), rsi)
-#घोषणा PT_REGS_PARM3_CORE(x) BPF_CORE_READ((x), rdx)
-#घोषणा PT_REGS_PARM4_CORE(x) BPF_CORE_READ((x), rcx)
-#घोषणा PT_REGS_PARM5_CORE(x) BPF_CORE_READ((x), r8)
-#घोषणा PT_REGS_RET_CORE(x) BPF_CORE_READ((x), rsp)
-#घोषणा PT_REGS_FP_CORE(x) BPF_CORE_READ((x), rbp)
-#घोषणा PT_REGS_RC_CORE(x) BPF_CORE_READ((x), rax)
-#घोषणा PT_REGS_SP_CORE(x) BPF_CORE_READ((x), rsp)
-#घोषणा PT_REGS_IP_CORE(x) BPF_CORE_READ((x), rip)
+#define PT_REGS_PARM1_CORE(x) BPF_CORE_READ((x), rdi)
+#define PT_REGS_PARM2_CORE(x) BPF_CORE_READ((x), rsi)
+#define PT_REGS_PARM3_CORE(x) BPF_CORE_READ((x), rdx)
+#define PT_REGS_PARM4_CORE(x) BPF_CORE_READ((x), rcx)
+#define PT_REGS_PARM5_CORE(x) BPF_CORE_READ((x), r8)
+#define PT_REGS_RET_CORE(x) BPF_CORE_READ((x), rsp)
+#define PT_REGS_FP_CORE(x) BPF_CORE_READ((x), rbp)
+#define PT_REGS_RC_CORE(x) BPF_CORE_READ((x), rax)
+#define PT_REGS_SP_CORE(x) BPF_CORE_READ((x), rsp)
+#define PT_REGS_IP_CORE(x) BPF_CORE_READ((x), rip)
 
-#पूर्ण_अगर
-#पूर्ण_अगर
+#endif
+#endif
 
-#या_अगर defined(bpf_target_s390)
+#elif defined(bpf_target_s390)
 
-/* s390 provides user_pt_regs instead of काष्ठा pt_regs to userspace */
-काष्ठा pt_regs;
-#घोषणा PT_REGS_S390 स्थिर अस्थिर user_pt_regs
-#घोषणा PT_REGS_PARM1(x) (((PT_REGS_S390 *)(x))->gprs[2])
-#घोषणा PT_REGS_PARM2(x) (((PT_REGS_S390 *)(x))->gprs[3])
-#घोषणा PT_REGS_PARM3(x) (((PT_REGS_S390 *)(x))->gprs[4])
-#घोषणा PT_REGS_PARM4(x) (((PT_REGS_S390 *)(x))->gprs[5])
-#घोषणा PT_REGS_PARM5(x) (((PT_REGS_S390 *)(x))->gprs[6])
-#घोषणा PT_REGS_RET(x) (((PT_REGS_S390 *)(x))->gprs[14])
+/* s390 provides user_pt_regs instead of struct pt_regs to userspace */
+struct pt_regs;
+#define PT_REGS_S390 const volatile user_pt_regs
+#define PT_REGS_PARM1(x) (((PT_REGS_S390 *)(x))->gprs[2])
+#define PT_REGS_PARM2(x) (((PT_REGS_S390 *)(x))->gprs[3])
+#define PT_REGS_PARM3(x) (((PT_REGS_S390 *)(x))->gprs[4])
+#define PT_REGS_PARM4(x) (((PT_REGS_S390 *)(x))->gprs[5])
+#define PT_REGS_PARM5(x) (((PT_REGS_S390 *)(x))->gprs[6])
+#define PT_REGS_RET(x) (((PT_REGS_S390 *)(x))->gprs[14])
 /* Works only with CONFIG_FRAME_POINTER */
-#घोषणा PT_REGS_FP(x) (((PT_REGS_S390 *)(x))->gprs[11])
-#घोषणा PT_REGS_RC(x) (((PT_REGS_S390 *)(x))->gprs[2])
-#घोषणा PT_REGS_SP(x) (((PT_REGS_S390 *)(x))->gprs[15])
-#घोषणा PT_REGS_IP(x) (((PT_REGS_S390 *)(x))->psw.addr)
+#define PT_REGS_FP(x) (((PT_REGS_S390 *)(x))->gprs[11])
+#define PT_REGS_RC(x) (((PT_REGS_S390 *)(x))->gprs[2])
+#define PT_REGS_SP(x) (((PT_REGS_S390 *)(x))->gprs[15])
+#define PT_REGS_IP(x) (((PT_REGS_S390 *)(x))->psw.addr)
 
-#घोषणा PT_REGS_PARM1_CORE(x) BPF_CORE_READ((PT_REGS_S390 *)(x), gprs[2])
-#घोषणा PT_REGS_PARM2_CORE(x) BPF_CORE_READ((PT_REGS_S390 *)(x), gprs[3])
-#घोषणा PT_REGS_PARM3_CORE(x) BPF_CORE_READ((PT_REGS_S390 *)(x), gprs[4])
-#घोषणा PT_REGS_PARM4_CORE(x) BPF_CORE_READ((PT_REGS_S390 *)(x), gprs[5])
-#घोषणा PT_REGS_PARM5_CORE(x) BPF_CORE_READ((PT_REGS_S390 *)(x), gprs[6])
-#घोषणा PT_REGS_RET_CORE(x) BPF_CORE_READ((PT_REGS_S390 *)(x), gprs[14])
-#घोषणा PT_REGS_FP_CORE(x) BPF_CORE_READ((PT_REGS_S390 *)(x), gprs[11])
-#घोषणा PT_REGS_RC_CORE(x) BPF_CORE_READ((PT_REGS_S390 *)(x), gprs[2])
-#घोषणा PT_REGS_SP_CORE(x) BPF_CORE_READ((PT_REGS_S390 *)(x), gprs[15])
-#घोषणा PT_REGS_IP_CORE(x) BPF_CORE_READ((PT_REGS_S390 *)(x), psw.addr)
+#define PT_REGS_PARM1_CORE(x) BPF_CORE_READ((PT_REGS_S390 *)(x), gprs[2])
+#define PT_REGS_PARM2_CORE(x) BPF_CORE_READ((PT_REGS_S390 *)(x), gprs[3])
+#define PT_REGS_PARM3_CORE(x) BPF_CORE_READ((PT_REGS_S390 *)(x), gprs[4])
+#define PT_REGS_PARM4_CORE(x) BPF_CORE_READ((PT_REGS_S390 *)(x), gprs[5])
+#define PT_REGS_PARM5_CORE(x) BPF_CORE_READ((PT_REGS_S390 *)(x), gprs[6])
+#define PT_REGS_RET_CORE(x) BPF_CORE_READ((PT_REGS_S390 *)(x), gprs[14])
+#define PT_REGS_FP_CORE(x) BPF_CORE_READ((PT_REGS_S390 *)(x), gprs[11])
+#define PT_REGS_RC_CORE(x) BPF_CORE_READ((PT_REGS_S390 *)(x), gprs[2])
+#define PT_REGS_SP_CORE(x) BPF_CORE_READ((PT_REGS_S390 *)(x), gprs[15])
+#define PT_REGS_IP_CORE(x) BPF_CORE_READ((PT_REGS_S390 *)(x), psw.addr)
 
-#या_अगर defined(bpf_target_arm)
+#elif defined(bpf_target_arm)
 
-#घोषणा PT_REGS_PARM1(x) ((x)->uregs[0])
-#घोषणा PT_REGS_PARM2(x) ((x)->uregs[1])
-#घोषणा PT_REGS_PARM3(x) ((x)->uregs[2])
-#घोषणा PT_REGS_PARM4(x) ((x)->uregs[3])
-#घोषणा PT_REGS_PARM5(x) ((x)->uregs[4])
-#घोषणा PT_REGS_RET(x) ((x)->uregs[14])
-#घोषणा PT_REGS_FP(x) ((x)->uregs[11]) /* Works only with CONFIG_FRAME_POINTER */
-#घोषणा PT_REGS_RC(x) ((x)->uregs[0])
-#घोषणा PT_REGS_SP(x) ((x)->uregs[13])
-#घोषणा PT_REGS_IP(x) ((x)->uregs[12])
+#define PT_REGS_PARM1(x) ((x)->uregs[0])
+#define PT_REGS_PARM2(x) ((x)->uregs[1])
+#define PT_REGS_PARM3(x) ((x)->uregs[2])
+#define PT_REGS_PARM4(x) ((x)->uregs[3])
+#define PT_REGS_PARM5(x) ((x)->uregs[4])
+#define PT_REGS_RET(x) ((x)->uregs[14])
+#define PT_REGS_FP(x) ((x)->uregs[11]) /* Works only with CONFIG_FRAME_POINTER */
+#define PT_REGS_RC(x) ((x)->uregs[0])
+#define PT_REGS_SP(x) ((x)->uregs[13])
+#define PT_REGS_IP(x) ((x)->uregs[12])
 
-#घोषणा PT_REGS_PARM1_CORE(x) BPF_CORE_READ((x), uregs[0])
-#घोषणा PT_REGS_PARM2_CORE(x) BPF_CORE_READ((x), uregs[1])
-#घोषणा PT_REGS_PARM3_CORE(x) BPF_CORE_READ((x), uregs[2])
-#घोषणा PT_REGS_PARM4_CORE(x) BPF_CORE_READ((x), uregs[3])
-#घोषणा PT_REGS_PARM5_CORE(x) BPF_CORE_READ((x), uregs[4])
-#घोषणा PT_REGS_RET_CORE(x) BPF_CORE_READ((x), uregs[14])
-#घोषणा PT_REGS_FP_CORE(x) BPF_CORE_READ((x), uregs[11])
-#घोषणा PT_REGS_RC_CORE(x) BPF_CORE_READ((x), uregs[0])
-#घोषणा PT_REGS_SP_CORE(x) BPF_CORE_READ((x), uregs[13])
-#घोषणा PT_REGS_IP_CORE(x) BPF_CORE_READ((x), uregs[12])
+#define PT_REGS_PARM1_CORE(x) BPF_CORE_READ((x), uregs[0])
+#define PT_REGS_PARM2_CORE(x) BPF_CORE_READ((x), uregs[1])
+#define PT_REGS_PARM3_CORE(x) BPF_CORE_READ((x), uregs[2])
+#define PT_REGS_PARM4_CORE(x) BPF_CORE_READ((x), uregs[3])
+#define PT_REGS_PARM5_CORE(x) BPF_CORE_READ((x), uregs[4])
+#define PT_REGS_RET_CORE(x) BPF_CORE_READ((x), uregs[14])
+#define PT_REGS_FP_CORE(x) BPF_CORE_READ((x), uregs[11])
+#define PT_REGS_RC_CORE(x) BPF_CORE_READ((x), uregs[0])
+#define PT_REGS_SP_CORE(x) BPF_CORE_READ((x), uregs[13])
+#define PT_REGS_IP_CORE(x) BPF_CORE_READ((x), uregs[12])
 
-#या_अगर defined(bpf_target_arm64)
+#elif defined(bpf_target_arm64)
 
-/* arm64 provides काष्ठा user_pt_regs instead of काष्ठा pt_regs to userspace */
-काष्ठा pt_regs;
-#घोषणा PT_REGS_ARM64 स्थिर अस्थिर काष्ठा user_pt_regs
-#घोषणा PT_REGS_PARM1(x) (((PT_REGS_ARM64 *)(x))->regs[0])
-#घोषणा PT_REGS_PARM2(x) (((PT_REGS_ARM64 *)(x))->regs[1])
-#घोषणा PT_REGS_PARM3(x) (((PT_REGS_ARM64 *)(x))->regs[2])
-#घोषणा PT_REGS_PARM4(x) (((PT_REGS_ARM64 *)(x))->regs[3])
-#घोषणा PT_REGS_PARM5(x) (((PT_REGS_ARM64 *)(x))->regs[4])
-#घोषणा PT_REGS_RET(x) (((PT_REGS_ARM64 *)(x))->regs[30])
+/* arm64 provides struct user_pt_regs instead of struct pt_regs to userspace */
+struct pt_regs;
+#define PT_REGS_ARM64 const volatile struct user_pt_regs
+#define PT_REGS_PARM1(x) (((PT_REGS_ARM64 *)(x))->regs[0])
+#define PT_REGS_PARM2(x) (((PT_REGS_ARM64 *)(x))->regs[1])
+#define PT_REGS_PARM3(x) (((PT_REGS_ARM64 *)(x))->regs[2])
+#define PT_REGS_PARM4(x) (((PT_REGS_ARM64 *)(x))->regs[3])
+#define PT_REGS_PARM5(x) (((PT_REGS_ARM64 *)(x))->regs[4])
+#define PT_REGS_RET(x) (((PT_REGS_ARM64 *)(x))->regs[30])
 /* Works only with CONFIG_FRAME_POINTER */
-#घोषणा PT_REGS_FP(x) (((PT_REGS_ARM64 *)(x))->regs[29])
-#घोषणा PT_REGS_RC(x) (((PT_REGS_ARM64 *)(x))->regs[0])
-#घोषणा PT_REGS_SP(x) (((PT_REGS_ARM64 *)(x))->sp)
-#घोषणा PT_REGS_IP(x) (((PT_REGS_ARM64 *)(x))->pc)
+#define PT_REGS_FP(x) (((PT_REGS_ARM64 *)(x))->regs[29])
+#define PT_REGS_RC(x) (((PT_REGS_ARM64 *)(x))->regs[0])
+#define PT_REGS_SP(x) (((PT_REGS_ARM64 *)(x))->sp)
+#define PT_REGS_IP(x) (((PT_REGS_ARM64 *)(x))->pc)
 
-#घोषणा PT_REGS_PARM1_CORE(x) BPF_CORE_READ((PT_REGS_ARM64 *)(x), regs[0])
-#घोषणा PT_REGS_PARM2_CORE(x) BPF_CORE_READ((PT_REGS_ARM64 *)(x), regs[1])
-#घोषणा PT_REGS_PARM3_CORE(x) BPF_CORE_READ((PT_REGS_ARM64 *)(x), regs[2])
-#घोषणा PT_REGS_PARM4_CORE(x) BPF_CORE_READ((PT_REGS_ARM64 *)(x), regs[3])
-#घोषणा PT_REGS_PARM5_CORE(x) BPF_CORE_READ((PT_REGS_ARM64 *)(x), regs[4])
-#घोषणा PT_REGS_RET_CORE(x) BPF_CORE_READ((PT_REGS_ARM64 *)(x), regs[30])
-#घोषणा PT_REGS_FP_CORE(x) BPF_CORE_READ((PT_REGS_ARM64 *)(x), regs[29])
-#घोषणा PT_REGS_RC_CORE(x) BPF_CORE_READ((PT_REGS_ARM64 *)(x), regs[0])
-#घोषणा PT_REGS_SP_CORE(x) BPF_CORE_READ((PT_REGS_ARM64 *)(x), sp)
-#घोषणा PT_REGS_IP_CORE(x) BPF_CORE_READ((PT_REGS_ARM64 *)(x), pc)
+#define PT_REGS_PARM1_CORE(x) BPF_CORE_READ((PT_REGS_ARM64 *)(x), regs[0])
+#define PT_REGS_PARM2_CORE(x) BPF_CORE_READ((PT_REGS_ARM64 *)(x), regs[1])
+#define PT_REGS_PARM3_CORE(x) BPF_CORE_READ((PT_REGS_ARM64 *)(x), regs[2])
+#define PT_REGS_PARM4_CORE(x) BPF_CORE_READ((PT_REGS_ARM64 *)(x), regs[3])
+#define PT_REGS_PARM5_CORE(x) BPF_CORE_READ((PT_REGS_ARM64 *)(x), regs[4])
+#define PT_REGS_RET_CORE(x) BPF_CORE_READ((PT_REGS_ARM64 *)(x), regs[30])
+#define PT_REGS_FP_CORE(x) BPF_CORE_READ((PT_REGS_ARM64 *)(x), regs[29])
+#define PT_REGS_RC_CORE(x) BPF_CORE_READ((PT_REGS_ARM64 *)(x), regs[0])
+#define PT_REGS_SP_CORE(x) BPF_CORE_READ((PT_REGS_ARM64 *)(x), sp)
+#define PT_REGS_IP_CORE(x) BPF_CORE_READ((PT_REGS_ARM64 *)(x), pc)
 
-#या_अगर defined(bpf_target_mips)
+#elif defined(bpf_target_mips)
 
-#घोषणा PT_REGS_PARM1(x) ((x)->regs[4])
-#घोषणा PT_REGS_PARM2(x) ((x)->regs[5])
-#घोषणा PT_REGS_PARM3(x) ((x)->regs[6])
-#घोषणा PT_REGS_PARM4(x) ((x)->regs[7])
-#घोषणा PT_REGS_PARM5(x) ((x)->regs[8])
-#घोषणा PT_REGS_RET(x) ((x)->regs[31])
-#घोषणा PT_REGS_FP(x) ((x)->regs[30]) /* Works only with CONFIG_FRAME_POINTER */
-#घोषणा PT_REGS_RC(x) ((x)->regs[2])
-#घोषणा PT_REGS_SP(x) ((x)->regs[29])
-#घोषणा PT_REGS_IP(x) ((x)->cp0_epc)
+#define PT_REGS_PARM1(x) ((x)->regs[4])
+#define PT_REGS_PARM2(x) ((x)->regs[5])
+#define PT_REGS_PARM3(x) ((x)->regs[6])
+#define PT_REGS_PARM4(x) ((x)->regs[7])
+#define PT_REGS_PARM5(x) ((x)->regs[8])
+#define PT_REGS_RET(x) ((x)->regs[31])
+#define PT_REGS_FP(x) ((x)->regs[30]) /* Works only with CONFIG_FRAME_POINTER */
+#define PT_REGS_RC(x) ((x)->regs[2])
+#define PT_REGS_SP(x) ((x)->regs[29])
+#define PT_REGS_IP(x) ((x)->cp0_epc)
 
-#घोषणा PT_REGS_PARM1_CORE(x) BPF_CORE_READ((x), regs[4])
-#घोषणा PT_REGS_PARM2_CORE(x) BPF_CORE_READ((x), regs[5])
-#घोषणा PT_REGS_PARM3_CORE(x) BPF_CORE_READ((x), regs[6])
-#घोषणा PT_REGS_PARM4_CORE(x) BPF_CORE_READ((x), regs[7])
-#घोषणा PT_REGS_PARM5_CORE(x) BPF_CORE_READ((x), regs[8])
-#घोषणा PT_REGS_RET_CORE(x) BPF_CORE_READ((x), regs[31])
-#घोषणा PT_REGS_FP_CORE(x) BPF_CORE_READ((x), regs[30])
-#घोषणा PT_REGS_RC_CORE(x) BPF_CORE_READ((x), regs[2])
-#घोषणा PT_REGS_SP_CORE(x) BPF_CORE_READ((x), regs[29])
-#घोषणा PT_REGS_IP_CORE(x) BPF_CORE_READ((x), cp0_epc)
+#define PT_REGS_PARM1_CORE(x) BPF_CORE_READ((x), regs[4])
+#define PT_REGS_PARM2_CORE(x) BPF_CORE_READ((x), regs[5])
+#define PT_REGS_PARM3_CORE(x) BPF_CORE_READ((x), regs[6])
+#define PT_REGS_PARM4_CORE(x) BPF_CORE_READ((x), regs[7])
+#define PT_REGS_PARM5_CORE(x) BPF_CORE_READ((x), regs[8])
+#define PT_REGS_RET_CORE(x) BPF_CORE_READ((x), regs[31])
+#define PT_REGS_FP_CORE(x) BPF_CORE_READ((x), regs[30])
+#define PT_REGS_RC_CORE(x) BPF_CORE_READ((x), regs[2])
+#define PT_REGS_SP_CORE(x) BPF_CORE_READ((x), regs[29])
+#define PT_REGS_IP_CORE(x) BPF_CORE_READ((x), cp0_epc)
 
-#या_अगर defined(bpf_target_घातerpc)
+#elif defined(bpf_target_powerpc)
 
-#घोषणा PT_REGS_PARM1(x) ((x)->gpr[3])
-#घोषणा PT_REGS_PARM2(x) ((x)->gpr[4])
-#घोषणा PT_REGS_PARM3(x) ((x)->gpr[5])
-#घोषणा PT_REGS_PARM4(x) ((x)->gpr[6])
-#घोषणा PT_REGS_PARM5(x) ((x)->gpr[7])
-#घोषणा PT_REGS_RC(x) ((x)->gpr[3])
-#घोषणा PT_REGS_SP(x) ((x)->sp)
-#घोषणा PT_REGS_IP(x) ((x)->nip)
+#define PT_REGS_PARM1(x) ((x)->gpr[3])
+#define PT_REGS_PARM2(x) ((x)->gpr[4])
+#define PT_REGS_PARM3(x) ((x)->gpr[5])
+#define PT_REGS_PARM4(x) ((x)->gpr[6])
+#define PT_REGS_PARM5(x) ((x)->gpr[7])
+#define PT_REGS_RC(x) ((x)->gpr[3])
+#define PT_REGS_SP(x) ((x)->sp)
+#define PT_REGS_IP(x) ((x)->nip)
 
-#घोषणा PT_REGS_PARM1_CORE(x) BPF_CORE_READ((x), gpr[3])
-#घोषणा PT_REGS_PARM2_CORE(x) BPF_CORE_READ((x), gpr[4])
-#घोषणा PT_REGS_PARM3_CORE(x) BPF_CORE_READ((x), gpr[5])
-#घोषणा PT_REGS_PARM4_CORE(x) BPF_CORE_READ((x), gpr[6])
-#घोषणा PT_REGS_PARM5_CORE(x) BPF_CORE_READ((x), gpr[7])
-#घोषणा PT_REGS_RC_CORE(x) BPF_CORE_READ((x), gpr[3])
-#घोषणा PT_REGS_SP_CORE(x) BPF_CORE_READ((x), sp)
-#घोषणा PT_REGS_IP_CORE(x) BPF_CORE_READ((x), nip)
+#define PT_REGS_PARM1_CORE(x) BPF_CORE_READ((x), gpr[3])
+#define PT_REGS_PARM2_CORE(x) BPF_CORE_READ((x), gpr[4])
+#define PT_REGS_PARM3_CORE(x) BPF_CORE_READ((x), gpr[5])
+#define PT_REGS_PARM4_CORE(x) BPF_CORE_READ((x), gpr[6])
+#define PT_REGS_PARM5_CORE(x) BPF_CORE_READ((x), gpr[7])
+#define PT_REGS_RC_CORE(x) BPF_CORE_READ((x), gpr[3])
+#define PT_REGS_SP_CORE(x) BPF_CORE_READ((x), sp)
+#define PT_REGS_IP_CORE(x) BPF_CORE_READ((x), nip)
 
-#या_अगर defined(bpf_target_sparc)
+#elif defined(bpf_target_sparc)
 
-#घोषणा PT_REGS_PARM1(x) ((x)->u_regs[UREG_I0])
-#घोषणा PT_REGS_PARM2(x) ((x)->u_regs[UREG_I1])
-#घोषणा PT_REGS_PARM3(x) ((x)->u_regs[UREG_I2])
-#घोषणा PT_REGS_PARM4(x) ((x)->u_regs[UREG_I3])
-#घोषणा PT_REGS_PARM5(x) ((x)->u_regs[UREG_I4])
-#घोषणा PT_REGS_RET(x) ((x)->u_regs[UREG_I7])
-#घोषणा PT_REGS_RC(x) ((x)->u_regs[UREG_I0])
-#घोषणा PT_REGS_SP(x) ((x)->u_regs[UREG_FP])
+#define PT_REGS_PARM1(x) ((x)->u_regs[UREG_I0])
+#define PT_REGS_PARM2(x) ((x)->u_regs[UREG_I1])
+#define PT_REGS_PARM3(x) ((x)->u_regs[UREG_I2])
+#define PT_REGS_PARM4(x) ((x)->u_regs[UREG_I3])
+#define PT_REGS_PARM5(x) ((x)->u_regs[UREG_I4])
+#define PT_REGS_RET(x) ((x)->u_regs[UREG_I7])
+#define PT_REGS_RC(x) ((x)->u_regs[UREG_I0])
+#define PT_REGS_SP(x) ((x)->u_regs[UREG_FP])
 
-#घोषणा PT_REGS_PARM1_CORE(x) BPF_CORE_READ((x), u_regs[UREG_I0])
-#घोषणा PT_REGS_PARM2_CORE(x) BPF_CORE_READ((x), u_regs[UREG_I1])
-#घोषणा PT_REGS_PARM3_CORE(x) BPF_CORE_READ((x), u_regs[UREG_I2])
-#घोषणा PT_REGS_PARM4_CORE(x) BPF_CORE_READ((x), u_regs[UREG_I3])
-#घोषणा PT_REGS_PARM5_CORE(x) BPF_CORE_READ((x), u_regs[UREG_I4])
-#घोषणा PT_REGS_RET_CORE(x) BPF_CORE_READ((x), u_regs[UREG_I7])
-#घोषणा PT_REGS_RC_CORE(x) BPF_CORE_READ((x), u_regs[UREG_I0])
-#घोषणा PT_REGS_SP_CORE(x) BPF_CORE_READ((x), u_regs[UREG_FP])
+#define PT_REGS_PARM1_CORE(x) BPF_CORE_READ((x), u_regs[UREG_I0])
+#define PT_REGS_PARM2_CORE(x) BPF_CORE_READ((x), u_regs[UREG_I1])
+#define PT_REGS_PARM3_CORE(x) BPF_CORE_READ((x), u_regs[UREG_I2])
+#define PT_REGS_PARM4_CORE(x) BPF_CORE_READ((x), u_regs[UREG_I3])
+#define PT_REGS_PARM5_CORE(x) BPF_CORE_READ((x), u_regs[UREG_I4])
+#define PT_REGS_RET_CORE(x) BPF_CORE_READ((x), u_regs[UREG_I7])
+#define PT_REGS_RC_CORE(x) BPF_CORE_READ((x), u_regs[UREG_I0])
+#define PT_REGS_SP_CORE(x) BPF_CORE_READ((x), u_regs[UREG_FP])
 
-/* Should this also be a bpf_target check क्रम the sparc हाल? */
-#अगर defined(__arch64__)
-#घोषणा PT_REGS_IP(x) ((x)->tpc)
-#घोषणा PT_REGS_IP_CORE(x) BPF_CORE_READ((x), tpc)
-#अन्यथा
-#घोषणा PT_REGS_IP(x) ((x)->pc)
-#घोषणा PT_REGS_IP_CORE(x) BPF_CORE_READ((x), pc)
-#पूर्ण_अगर
+/* Should this also be a bpf_target check for the sparc case? */
+#if defined(__arch64__)
+#define PT_REGS_IP(x) ((x)->tpc)
+#define PT_REGS_IP_CORE(x) BPF_CORE_READ((x), tpc)
+#else
+#define PT_REGS_IP(x) ((x)->pc)
+#define PT_REGS_IP_CORE(x) BPF_CORE_READ((x), pc)
+#endif
 
-#पूर्ण_अगर
+#endif
 
-#अगर defined(bpf_target_घातerpc)
-#घोषणा BPF_KPROBE_READ_RET_IP(ip, ctx)		(अणु (ip) = (ctx)->link; पूर्ण)
-#घोषणा BPF_KRETPROBE_READ_RET_IP		BPF_KPROBE_READ_RET_IP
-#या_अगर defined(bpf_target_sparc)
-#घोषणा BPF_KPROBE_READ_RET_IP(ip, ctx)		(अणु (ip) = PT_REGS_RET(ctx); पूर्ण)
-#घोषणा BPF_KRETPROBE_READ_RET_IP		BPF_KPROBE_READ_RET_IP
-#अन्यथा
-#घोषणा BPF_KPROBE_READ_RET_IP(ip, ctx)					    \
-	(अणु bpf_probe_पढ़ो_kernel(&(ip), माप(ip), (व्योम *)PT_REGS_RET(ctx)); पूर्ण)
-#घोषणा BPF_KRETPROBE_READ_RET_IP(ip, ctx)				    \
-	(अणु bpf_probe_पढ़ो_kernel(&(ip), माप(ip),			    \
-			  (व्योम *)(PT_REGS_FP(ctx) + माप(ip))); पूर्ण)
-#पूर्ण_अगर
+#if defined(bpf_target_powerpc)
+#define BPF_KPROBE_READ_RET_IP(ip, ctx)		({ (ip) = (ctx)->link; })
+#define BPF_KRETPROBE_READ_RET_IP		BPF_KPROBE_READ_RET_IP
+#elif defined(bpf_target_sparc)
+#define BPF_KPROBE_READ_RET_IP(ip, ctx)		({ (ip) = PT_REGS_RET(ctx); })
+#define BPF_KRETPROBE_READ_RET_IP		BPF_KPROBE_READ_RET_IP
+#else
+#define BPF_KPROBE_READ_RET_IP(ip, ctx)					    \
+	({ bpf_probe_read_kernel(&(ip), sizeof(ip), (void *)PT_REGS_RET(ctx)); })
+#define BPF_KRETPROBE_READ_RET_IP(ip, ctx)				    \
+	({ bpf_probe_read_kernel(&(ip), sizeof(ip),			    \
+			  (void *)(PT_REGS_FP(ctx) + sizeof(ip))); })
+#endif
 
-#घोषणा ___bpf_concat(a, b) a ## b
-#घोषणा ___bpf_apply(fn, n) ___bpf_concat(fn, n)
-#घोषणा ___bpf_nth(_, _1, _2, _3, _4, _5, _6, _7, _8, _9, _a, _b, _c, N, ...) N
-#घोषणा ___bpf_narg(...) \
+#define ___bpf_concat(a, b) a ## b
+#define ___bpf_apply(fn, n) ___bpf_concat(fn, n)
+#define ___bpf_nth(_, _1, _2, _3, _4, _5, _6, _7, _8, _9, _a, _b, _c, N, ...) N
+#define ___bpf_narg(...) \
 	___bpf_nth(_, ##__VA_ARGS__, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0)
-#घोषणा ___bpf_empty(...) \
+#define ___bpf_empty(...) \
 	___bpf_nth(_, ##__VA_ARGS__, N, N, N, N, N, N, N, N, N, N, 0)
 
-#घोषणा ___bpf_ctx_cast0() ctx
-#घोषणा ___bpf_ctx_cast1(x) ___bpf_ctx_cast0(), (व्योम *)ctx[0]
-#घोषणा ___bpf_ctx_cast2(x, args...) ___bpf_ctx_cast1(args), (व्योम *)ctx[1]
-#घोषणा ___bpf_ctx_cast3(x, args...) ___bpf_ctx_cast2(args), (व्योम *)ctx[2]
-#घोषणा ___bpf_ctx_cast4(x, args...) ___bpf_ctx_cast3(args), (व्योम *)ctx[3]
-#घोषणा ___bpf_ctx_cast5(x, args...) ___bpf_ctx_cast4(args), (व्योम *)ctx[4]
-#घोषणा ___bpf_ctx_cast6(x, args...) ___bpf_ctx_cast5(args), (व्योम *)ctx[5]
-#घोषणा ___bpf_ctx_cast7(x, args...) ___bpf_ctx_cast6(args), (व्योम *)ctx[6]
-#घोषणा ___bpf_ctx_cast8(x, args...) ___bpf_ctx_cast7(args), (व्योम *)ctx[7]
-#घोषणा ___bpf_ctx_cast9(x, args...) ___bpf_ctx_cast8(args), (व्योम *)ctx[8]
-#घोषणा ___bpf_ctx_cast10(x, args...) ___bpf_ctx_cast9(args), (व्योम *)ctx[9]
-#घोषणा ___bpf_ctx_cast11(x, args...) ___bpf_ctx_cast10(args), (व्योम *)ctx[10]
-#घोषणा ___bpf_ctx_cast12(x, args...) ___bpf_ctx_cast11(args), (व्योम *)ctx[11]
-#घोषणा ___bpf_ctx_cast(args...) \
+#define ___bpf_ctx_cast0() ctx
+#define ___bpf_ctx_cast1(x) ___bpf_ctx_cast0(), (void *)ctx[0]
+#define ___bpf_ctx_cast2(x, args...) ___bpf_ctx_cast1(args), (void *)ctx[1]
+#define ___bpf_ctx_cast3(x, args...) ___bpf_ctx_cast2(args), (void *)ctx[2]
+#define ___bpf_ctx_cast4(x, args...) ___bpf_ctx_cast3(args), (void *)ctx[3]
+#define ___bpf_ctx_cast5(x, args...) ___bpf_ctx_cast4(args), (void *)ctx[4]
+#define ___bpf_ctx_cast6(x, args...) ___bpf_ctx_cast5(args), (void *)ctx[5]
+#define ___bpf_ctx_cast7(x, args...) ___bpf_ctx_cast6(args), (void *)ctx[6]
+#define ___bpf_ctx_cast8(x, args...) ___bpf_ctx_cast7(args), (void *)ctx[7]
+#define ___bpf_ctx_cast9(x, args...) ___bpf_ctx_cast8(args), (void *)ctx[8]
+#define ___bpf_ctx_cast10(x, args...) ___bpf_ctx_cast9(args), (void *)ctx[9]
+#define ___bpf_ctx_cast11(x, args...) ___bpf_ctx_cast10(args), (void *)ctx[10]
+#define ___bpf_ctx_cast12(x, args...) ___bpf_ctx_cast11(args), (void *)ctx[11]
+#define ___bpf_ctx_cast(args...) \
 	___bpf_apply(___bpf_ctx_cast, ___bpf_narg(args))(args)
 
 /*
- * BPF_PROG is a convenience wrapper क्रम generic tp_btf/fentry/fनिकास and
+ * BPF_PROG is a convenience wrapper for generic tp_btf/fentry/fexit and
  * similar kinds of BPF programs, that accept input arguments as a single
- * poपूर्णांकer to untyped u64 array, where each u64 can actually be a typed
- * poपूर्णांकer or पूर्णांकeger of dअगरferent size. Instead of requring user to ग_लिखो
+ * pointer to untyped u64 array, where each u64 can actually be a typed
+ * pointer or integer of different size. Instead of requring user to write
  * manual casts and work with array elements by index, BPF_PROG macro
  * allows user to declare a list of named and typed input arguments in the
- * same syntax as क्रम normal C function. All the casting is hidden and
- * perक्रमmed transparently, जबतक user code can just assume working with
- * function arguments of specअगरied type and name.
+ * same syntax as for normal C function. All the casting is hidden and
+ * performed transparently, while user code can just assume working with
+ * function arguments of specified type and name.
  *
  * Original raw context argument is preserved as well as 'ctx' argument.
  * This is useful when using BPF helpers that expect original context
- * as one of the parameters (e.g., क्रम bpf_perf_event_output()).
+ * as one of the parameters (e.g., for bpf_perf_event_output()).
  */
-#घोषणा BPF_PROG(name, args...)						    \
-name(अचिन्हित दीर्घ दीर्घ *ctx);						    \
-अटल __attribute__((always_अंतरभूत)) typeof(name(0))			    \
-____##name(अचिन्हित दीर्घ दीर्घ *ctx, ##args);				    \
-typeof(name(0)) name(अचिन्हित दीर्घ दीर्घ *ctx)				    \
-अणु									    \
+#define BPF_PROG(name, args...)						    \
+name(unsigned long long *ctx);						    \
+static __attribute__((always_inline)) typeof(name(0))			    \
+____##name(unsigned long long *ctx, ##args);				    \
+typeof(name(0)) name(unsigned long long *ctx)				    \
+{									    \
 	_Pragma("GCC diagnostic push")					    \
 	_Pragma("GCC diagnostic ignored \"-Wint-conversion\"")		    \
-	वापस ____##name(___bpf_ctx_cast(args));			    \
+	return ____##name(___bpf_ctx_cast(args));			    \
 	_Pragma("GCC diagnostic pop")					    \
-पूर्ण									    \
-अटल __attribute__((always_अंतरभूत)) typeof(name(0))			    \
-____##name(अचिन्हित दीर्घ दीर्घ *ctx, ##args)
+}									    \
+static __attribute__((always_inline)) typeof(name(0))			    \
+____##name(unsigned long long *ctx, ##args)
 
-काष्ठा pt_regs;
+struct pt_regs;
 
-#घोषणा ___bpf_kprobe_args0() ctx
-#घोषणा ___bpf_kprobe_args1(x) \
-	___bpf_kprobe_args0(), (व्योम *)PT_REGS_PARM1(ctx)
-#घोषणा ___bpf_kprobe_args2(x, args...) \
-	___bpf_kprobe_args1(args), (व्योम *)PT_REGS_PARM2(ctx)
-#घोषणा ___bpf_kprobe_args3(x, args...) \
-	___bpf_kprobe_args2(args), (व्योम *)PT_REGS_PARM3(ctx)
-#घोषणा ___bpf_kprobe_args4(x, args...) \
-	___bpf_kprobe_args3(args), (व्योम *)PT_REGS_PARM4(ctx)
-#घोषणा ___bpf_kprobe_args5(x, args...) \
-	___bpf_kprobe_args4(args), (व्योम *)PT_REGS_PARM5(ctx)
-#घोषणा ___bpf_kprobe_args(args...) \
+#define ___bpf_kprobe_args0() ctx
+#define ___bpf_kprobe_args1(x) \
+	___bpf_kprobe_args0(), (void *)PT_REGS_PARM1(ctx)
+#define ___bpf_kprobe_args2(x, args...) \
+	___bpf_kprobe_args1(args), (void *)PT_REGS_PARM2(ctx)
+#define ___bpf_kprobe_args3(x, args...) \
+	___bpf_kprobe_args2(args), (void *)PT_REGS_PARM3(ctx)
+#define ___bpf_kprobe_args4(x, args...) \
+	___bpf_kprobe_args3(args), (void *)PT_REGS_PARM4(ctx)
+#define ___bpf_kprobe_args5(x, args...) \
+	___bpf_kprobe_args4(args), (void *)PT_REGS_PARM5(ctx)
+#define ___bpf_kprobe_args(args...) \
 	___bpf_apply(___bpf_kprobe_args, ___bpf_narg(args))(args)
 
 /*
- * BPF_KPROBE serves the same purpose क्रम kprobes as BPF_PROG क्रम
- * tp_btf/fentry/fनिकास BPF programs. It hides the underlying platक्रमm-specअगरic
- * low-level way of getting kprobe input arguments from काष्ठा pt_regs, and
+ * BPF_KPROBE serves the same purpose for kprobes as BPF_PROG for
+ * tp_btf/fentry/fexit BPF programs. It hides the underlying platform-specific
+ * low-level way of getting kprobe input arguments from struct pt_regs, and
  * provides a familiar typed and named function arguments syntax and
  * semantics of accessing kprobe input paremeters.
  *
- * Original काष्ठा pt_regs* context is preserved as 'ctx' argument. This might
+ * Original struct pt_regs* context is preserved as 'ctx' argument. This might
  * be necessary when using BPF helpers like bpf_perf_event_output().
  */
-#घोषणा BPF_KPROBE(name, args...)					    \
-name(काष्ठा pt_regs *ctx);						    \
-अटल __attribute__((always_अंतरभूत)) typeof(name(0))			    \
-____##name(काष्ठा pt_regs *ctx, ##args);				    \
-typeof(name(0)) name(काष्ठा pt_regs *ctx)				    \
-अणु									    \
+#define BPF_KPROBE(name, args...)					    \
+name(struct pt_regs *ctx);						    \
+static __attribute__((always_inline)) typeof(name(0))			    \
+____##name(struct pt_regs *ctx, ##args);				    \
+typeof(name(0)) name(struct pt_regs *ctx)				    \
+{									    \
 	_Pragma("GCC diagnostic push")					    \
 	_Pragma("GCC diagnostic ignored \"-Wint-conversion\"")		    \
-	वापस ____##name(___bpf_kprobe_args(args));			    \
+	return ____##name(___bpf_kprobe_args(args));			    \
 	_Pragma("GCC diagnostic pop")					    \
-पूर्ण									    \
-अटल __attribute__((always_अंतरभूत)) typeof(name(0))			    \
-____##name(काष्ठा pt_regs *ctx, ##args)
+}									    \
+static __attribute__((always_inline)) typeof(name(0))			    \
+____##name(struct pt_regs *ctx, ##args)
 
-#घोषणा ___bpf_kretprobe_args0() ctx
-#घोषणा ___bpf_kretprobe_args1(x) \
-	___bpf_kretprobe_args0(), (व्योम *)PT_REGS_RC(ctx)
-#घोषणा ___bpf_kretprobe_args(args...) \
+#define ___bpf_kretprobe_args0() ctx
+#define ___bpf_kretprobe_args1(x) \
+	___bpf_kretprobe_args0(), (void *)PT_REGS_RC(ctx)
+#define ___bpf_kretprobe_args(args...) \
 	___bpf_apply(___bpf_kretprobe_args, ___bpf_narg(args))(args)
 
 /*
  * BPF_KRETPROBE is similar to BPF_KPROBE, except, it only provides optional
- * वापस value (in addition to `काष्ठा pt_regs *ctx`), but no input
- * arguments, because they will be clobbered by the समय probed function
- * वापसs.
+ * return value (in addition to `struct pt_regs *ctx`), but no input
+ * arguments, because they will be clobbered by the time probed function
+ * returns.
  */
-#घोषणा BPF_KRETPROBE(name, args...)					    \
-name(काष्ठा pt_regs *ctx);						    \
-अटल __attribute__((always_अंतरभूत)) typeof(name(0))			    \
-____##name(काष्ठा pt_regs *ctx, ##args);				    \
-typeof(name(0)) name(काष्ठा pt_regs *ctx)				    \
-अणु									    \
+#define BPF_KRETPROBE(name, args...)					    \
+name(struct pt_regs *ctx);						    \
+static __attribute__((always_inline)) typeof(name(0))			    \
+____##name(struct pt_regs *ctx, ##args);				    \
+typeof(name(0)) name(struct pt_regs *ctx)				    \
+{									    \
 	_Pragma("GCC diagnostic push")					    \
 	_Pragma("GCC diagnostic ignored \"-Wint-conversion\"")		    \
-	वापस ____##name(___bpf_kretprobe_args(args));			    \
+	return ____##name(___bpf_kretprobe_args(args));			    \
 	_Pragma("GCC diagnostic pop")					    \
-पूर्ण									    \
-अटल __always_अंतरभूत typeof(name(0)) ____##name(काष्ठा pt_regs *ctx, ##args)
+}									    \
+static __always_inline typeof(name(0)) ____##name(struct pt_regs *ctx, ##args)
 
-#घोषणा ___bpf_fill0(arr, p, x) करो अणुपूर्ण जबतक (0)
-#घोषणा ___bpf_fill1(arr, p, x) arr[p] = x
-#घोषणा ___bpf_fill2(arr, p, x, args...) arr[p] = x; ___bpf_fill1(arr, p + 1, args)
-#घोषणा ___bpf_fill3(arr, p, x, args...) arr[p] = x; ___bpf_fill2(arr, p + 1, args)
-#घोषणा ___bpf_fill4(arr, p, x, args...) arr[p] = x; ___bpf_fill3(arr, p + 1, args)
-#घोषणा ___bpf_fill5(arr, p, x, args...) arr[p] = x; ___bpf_fill4(arr, p + 1, args)
-#घोषणा ___bpf_fill6(arr, p, x, args...) arr[p] = x; ___bpf_fill5(arr, p + 1, args)
-#घोषणा ___bpf_fill7(arr, p, x, args...) arr[p] = x; ___bpf_fill6(arr, p + 1, args)
-#घोषणा ___bpf_fill8(arr, p, x, args...) arr[p] = x; ___bpf_fill7(arr, p + 1, args)
-#घोषणा ___bpf_fill9(arr, p, x, args...) arr[p] = x; ___bpf_fill8(arr, p + 1, args)
-#घोषणा ___bpf_fill10(arr, p, x, args...) arr[p] = x; ___bpf_fill9(arr, p + 1, args)
-#घोषणा ___bpf_fill11(arr, p, x, args...) arr[p] = x; ___bpf_fill10(arr, p + 1, args)
-#घोषणा ___bpf_fill12(arr, p, x, args...) arr[p] = x; ___bpf_fill11(arr, p + 1, args)
-#घोषणा ___bpf_fill(arr, args...) \
+#define ___bpf_fill0(arr, p, x) do {} while (0)
+#define ___bpf_fill1(arr, p, x) arr[p] = x
+#define ___bpf_fill2(arr, p, x, args...) arr[p] = x; ___bpf_fill1(arr, p + 1, args)
+#define ___bpf_fill3(arr, p, x, args...) arr[p] = x; ___bpf_fill2(arr, p + 1, args)
+#define ___bpf_fill4(arr, p, x, args...) arr[p] = x; ___bpf_fill3(arr, p + 1, args)
+#define ___bpf_fill5(arr, p, x, args...) arr[p] = x; ___bpf_fill4(arr, p + 1, args)
+#define ___bpf_fill6(arr, p, x, args...) arr[p] = x; ___bpf_fill5(arr, p + 1, args)
+#define ___bpf_fill7(arr, p, x, args...) arr[p] = x; ___bpf_fill6(arr, p + 1, args)
+#define ___bpf_fill8(arr, p, x, args...) arr[p] = x; ___bpf_fill7(arr, p + 1, args)
+#define ___bpf_fill9(arr, p, x, args...) arr[p] = x; ___bpf_fill8(arr, p + 1, args)
+#define ___bpf_fill10(arr, p, x, args...) arr[p] = x; ___bpf_fill9(arr, p + 1, args)
+#define ___bpf_fill11(arr, p, x, args...) arr[p] = x; ___bpf_fill10(arr, p + 1, args)
+#define ___bpf_fill12(arr, p, x, args...) arr[p] = x; ___bpf_fill11(arr, p + 1, args)
+#define ___bpf_fill(arr, args...) \
 	___bpf_apply(___bpf_fill, ___bpf_narg(args))(arr, 0, args)
 
 /*
- * BPF_SEQ_PRINTF to wrap bpf_seq_म_लिखो to-be-prपूर्णांकed values
- * in a काष्ठाure.
+ * BPF_SEQ_PRINTF to wrap bpf_seq_printf to-be-printed values
+ * in a structure.
  */
-#घोषणा BPF_SEQ_PRINTF(seq, fmt, args...)			\
-(अणु								\
-	अटल स्थिर अक्षर ___fmt[] = fmt;			\
-	अचिन्हित दीर्घ दीर्घ ___param[___bpf_narg(args)];		\
+#define BPF_SEQ_PRINTF(seq, fmt, args...)			\
+({								\
+	static const char ___fmt[] = fmt;			\
+	unsigned long long ___param[___bpf_narg(args)];		\
 								\
 	_Pragma("GCC diagnostic push")				\
 	_Pragma("GCC diagnostic ignored \"-Wint-conversion\"")	\
 	___bpf_fill(___param, args);				\
 	_Pragma("GCC diagnostic pop")				\
 								\
-	bpf_seq_म_लिखो(seq, ___fmt, माप(___fmt),		\
-		       ___param, माप(___param));		\
-पूर्ण)
+	bpf_seq_printf(seq, ___fmt, sizeof(___fmt),		\
+		       ___param, sizeof(___param));		\
+})
 
 /*
- * BPF_SNPRINTF wraps the bpf_snम_लिखो helper with variadic arguments instead of
+ * BPF_SNPRINTF wraps the bpf_snprintf helper with variadic arguments instead of
  * an array of u64.
  */
-#घोषणा BPF_SNPRINTF(out, out_size, fmt, args...)		\
-(अणु								\
-	अटल स्थिर अक्षर ___fmt[] = fmt;			\
-	अचिन्हित दीर्घ दीर्घ ___param[___bpf_narg(args)];		\
+#define BPF_SNPRINTF(out, out_size, fmt, args...)		\
+({								\
+	static const char ___fmt[] = fmt;			\
+	unsigned long long ___param[___bpf_narg(args)];		\
 								\
 	_Pragma("GCC diagnostic push")				\
 	_Pragma("GCC diagnostic ignored \"-Wint-conversion\"")	\
 	___bpf_fill(___param, args);				\
 	_Pragma("GCC diagnostic pop")				\
 								\
-	bpf_snम_लिखो(out, out_size, ___fmt,			\
-		     ___param, माप(___param));		\
-पूर्ण)
+	bpf_snprintf(out, out_size, ___fmt,			\
+		     ___param, sizeof(___param));		\
+})
 
-#पूर्ण_अगर
+#endif

@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* Write the contents of the <certfile> पूर्णांकo kernel symbol प्रणाली_extra_cert
+/* Write the contents of the <certfile> into kernel symbol system_extra_cert
  *
  * Copyright (C) IBM Corporation, 2015
  *
@@ -11,394 +10,394 @@
  * Usage: insert-sys-cert [-s <System.map> -b <vmlinux> -c <certfile>
  */
 
-#घोषणा _GNU_SOURCE
-#समावेश <मानकपन.स>
-#समावेश <प्रकार.स>
-#समावेश <माला.स>
-#समावेश <सीमा.स>
-#समावेश <stdbool.h>
-#समावेश <त्रुटिसं.स>
-#समावेश <मानककोष.स>
-#समावेश <मानकतर्क.स>
-#समावेश <sys/types.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <sys/mman.h>
-#समावेश <fcntl.h>
-#समावेश <unistd.h>
-#समावेश <elf.h>
+#define _GNU_SOURCE
+#include <stdio.h>
+#include <ctype.h>
+#include <string.h>
+#include <limits.h>
+#include <stdbool.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <stdarg.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <elf.h>
 
-#घोषणा CERT_SYM  "system_extra_cert"
-#घोषणा USED_SYM  "system_extra_cert_used"
-#घोषणा LSIZE_SYM "system_certificate_list_size"
+#define CERT_SYM  "system_extra_cert"
+#define USED_SYM  "system_extra_cert_used"
+#define LSIZE_SYM "system_certificate_list_size"
 
-#घोषणा info(क्रमmat, args...) ख_लिखो(मानक_त्रुटि, "INFO:    " क्रमmat, ## args)
-#घोषणा warn(क्रमmat, args...) ख_लिखो(मानक_निकास, "WARNING: " क्रमmat, ## args)
-#घोषणा  err(क्रमmat, args...) ख_लिखो(मानक_त्रुटि, "ERROR:   " क्रमmat, ## args)
+#define info(format, args...) fprintf(stderr, "INFO:    " format, ## args)
+#define warn(format, args...) fprintf(stdout, "WARNING: " format, ## args)
+#define  err(format, args...) fprintf(stderr, "ERROR:   " format, ## args)
 
-#अगर UINTPTR_MAX == 0xffffffff
-#घोषणा CURRENT_ELFCLASS ELFCLASS32
-#घोषणा Elf_Ehdr	Elf32_Ehdr
-#घोषणा Elf_Shdr	Elf32_Shdr
-#घोषणा Elf_Sym		Elf32_Sym
-#अन्यथा
-#घोषणा CURRENT_ELFCLASS ELFCLASS64
-#घोषणा Elf_Ehdr	Elf64_Ehdr
-#घोषणा Elf_Shdr	Elf64_Shdr
-#घोषणा Elf_Sym		Elf64_Sym
-#पूर्ण_अगर
+#if UINTPTR_MAX == 0xffffffff
+#define CURRENT_ELFCLASS ELFCLASS32
+#define Elf_Ehdr	Elf32_Ehdr
+#define Elf_Shdr	Elf32_Shdr
+#define Elf_Sym		Elf32_Sym
+#else
+#define CURRENT_ELFCLASS ELFCLASS64
+#define Elf_Ehdr	Elf64_Ehdr
+#define Elf_Shdr	Elf64_Shdr
+#define Elf_Sym		Elf64_Sym
+#endif
 
-अटल अचिन्हित अक्षर endianness(व्योम)
-अणु
-	uपूर्णांक16_t two_byte = 0x00FF;
-	uपूर्णांक8_t low_address = *((uपूर्णांक8_t *)&two_byte);
+static unsigned char endianness(void)
+{
+	uint16_t two_byte = 0x00FF;
+	uint8_t low_address = *((uint8_t *)&two_byte);
 
-	अगर (low_address == 0)
-		वापस ELFDATA2MSB;
-	अन्यथा
-		वापस ELFDATA2LSB;
-पूर्ण
+	if (low_address == 0)
+		return ELFDATA2MSB;
+	else
+		return ELFDATA2LSB;
+}
 
-काष्ठा sym अणु
-	अक्षर *name;
-	अचिन्हित दीर्घ address;
-	अचिन्हित दीर्घ offset;
-	व्योम *content;
-	पूर्णांक size;
-पूर्ण;
+struct sym {
+	char *name;
+	unsigned long address;
+	unsigned long offset;
+	void *content;
+	int size;
+};
 
-अटल अचिन्हित दीर्घ get_offset_from_address(Elf_Ehdr *hdr, अचिन्हित दीर्घ addr)
-अणु
+static unsigned long get_offset_from_address(Elf_Ehdr *hdr, unsigned long addr)
+{
 	Elf_Shdr *x;
-	अचिन्हित पूर्णांक i, num_sections;
+	unsigned int i, num_sections;
 
-	x = (व्योम *)hdr + hdr->e_shoff;
-	अगर (hdr->e_shnum == SHN_UNDEF)
+	x = (void *)hdr + hdr->e_shoff;
+	if (hdr->e_shnum == SHN_UNDEF)
 		num_sections = x[0].sh_size;
-	अन्यथा
+	else
 		num_sections = hdr->e_shnum;
 
-	क्रम (i = 1; i < num_sections; i++) अणु
-		अचिन्हित दीर्घ start = x[i].sh_addr;
-		अचिन्हित दीर्घ end = start + x[i].sh_size;
-		अचिन्हित दीर्घ offset = x[i].sh_offset;
+	for (i = 1; i < num_sections; i++) {
+		unsigned long start = x[i].sh_addr;
+		unsigned long end = start + x[i].sh_size;
+		unsigned long offset = x[i].sh_offset;
 
-		अगर (addr >= start && addr <= end)
-			वापस addr - start + offset;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (addr >= start && addr <= end)
+			return addr - start + offset;
+	}
+	return 0;
+}
 
 
-#घोषणा LINE_SIZE 100
+#define LINE_SIZE 100
 
-अटल व्योम get_symbol_from_map(Elf_Ehdr *hdr, खाता *f, अक्षर *name,
-				काष्ठा sym *s)
-अणु
-	अक्षर l[LINE_SIZE];
-	अक्षर *w, *p, *n;
+static void get_symbol_from_map(Elf_Ehdr *hdr, FILE *f, char *name,
+				struct sym *s)
+{
+	char l[LINE_SIZE];
+	char *w, *p, *n;
 
 	s->size = 0;
 	s->address = 0;
 	s->offset = 0;
-	अगर (ख_जाओ(f, 0, शुरू_से) != 0) अणु
-		लिखो_त्रुटि("File seek failed");
-		निकास(निकास_त्रुटि);
-	पूर्ण
-	जबतक (ख_माला_लो(l, LINE_SIZE, f)) अणु
-		p = म_अक्षर(l, '\n');
-		अगर (!p) अणु
+	if (fseek(f, 0, SEEK_SET) != 0) {
+		perror("File seek failed");
+		exit(EXIT_FAILURE);
+	}
+	while (fgets(l, LINE_SIZE, f)) {
+		p = strchr(l, '\n');
+		if (!p) {
 			err("Missing line ending.\n");
-			वापस;
-		पूर्ण
-		n = म_माला(l, name);
-		अगर (n)
-			अवरोध;
-	पूर्ण
-	अगर (!n) अणु
+			return;
+		}
+		n = strstr(l, name);
+		if (n)
+			break;
+	}
+	if (!n) {
 		err("Unable to find symbol: %s\n", name);
-		वापस;
-	पूर्ण
-	w = म_अक्षर(l, ' ');
-	अगर (!w)
-		वापस;
+		return;
+	}
+	w = strchr(l, ' ');
+	if (!w)
+		return;
 
 	*w = '\0';
-	s->address = म_से_अदीर्घ(l, शून्य, 16);
-	अगर (s->address == 0)
-		वापस;
+	s->address = strtoul(l, NULL, 16);
+	if (s->address == 0)
+		return;
 	s->offset = get_offset_from_address(hdr, s->address);
 	s->name = name;
-	s->content = (व्योम *)hdr + s->offset;
-पूर्ण
+	s->content = (void *)hdr + s->offset;
+}
 
-अटल Elf_Sym *find_elf_symbol(Elf_Ehdr *hdr, Elf_Shdr *symtab, अक्षर *name)
-अणु
+static Elf_Sym *find_elf_symbol(Elf_Ehdr *hdr, Elf_Shdr *symtab, char *name)
+{
 	Elf_Sym *sym, *symtab_start;
-	अक्षर *strtab, *symname;
-	अचिन्हित पूर्णांक link;
+	char *strtab, *symname;
+	unsigned int link;
 	Elf_Shdr *x;
-	पूर्णांक i, n;
+	int i, n;
 
-	x = (व्योम *)hdr + hdr->e_shoff;
+	x = (void *)hdr + hdr->e_shoff;
 	link = symtab->sh_link;
-	symtab_start = (व्योम *)hdr + symtab->sh_offset;
+	symtab_start = (void *)hdr + symtab->sh_offset;
 	n = symtab->sh_size / symtab->sh_entsize;
-	strtab = (व्योम *)hdr + x[link].sh_offset;
+	strtab = (void *)hdr + x[link].sh_offset;
 
-	क्रम (i = 0; i < n; i++) अणु
+	for (i = 0; i < n; i++) {
 		sym = &symtab_start[i];
 		symname = strtab + sym->st_name;
-		अगर (म_भेद(symname, name) == 0)
-			वापस sym;
-	पूर्ण
+		if (strcmp(symname, name) == 0)
+			return sym;
+	}
 	err("Unable to find symbol: %s\n", name);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम get_symbol_from_table(Elf_Ehdr *hdr, Elf_Shdr *symtab,
-				  अक्षर *name, काष्ठा sym *s)
-अणु
+static void get_symbol_from_table(Elf_Ehdr *hdr, Elf_Shdr *symtab,
+				  char *name, struct sym *s)
+{
 	Elf_Shdr *sec;
-	पूर्णांक secndx;
+	int secndx;
 	Elf_Sym *elf_sym;
 	Elf_Shdr *x;
 
-	x = (व्योम *)hdr + hdr->e_shoff;
+	x = (void *)hdr + hdr->e_shoff;
 	s->size = 0;
 	s->address = 0;
 	s->offset = 0;
 	elf_sym = find_elf_symbol(hdr, symtab, name);
-	अगर (!elf_sym)
-		वापस;
+	if (!elf_sym)
+		return;
 	secndx = elf_sym->st_shndx;
-	अगर (!secndx)
-		वापस;
+	if (!secndx)
+		return;
 	sec = &x[secndx];
 	s->size = elf_sym->st_size;
 	s->address = elf_sym->st_value;
 	s->offset = s->address - sec->sh_addr
 			       + sec->sh_offset;
 	s->name = name;
-	s->content = (व्योम *)hdr + s->offset;
-पूर्ण
+	s->content = (void *)hdr + s->offset;
+}
 
-अटल Elf_Shdr *get_symbol_table(Elf_Ehdr *hdr)
-अणु
+static Elf_Shdr *get_symbol_table(Elf_Ehdr *hdr)
+{
 	Elf_Shdr *x;
-	अचिन्हित पूर्णांक i, num_sections;
+	unsigned int i, num_sections;
 
-	x = (व्योम *)hdr + hdr->e_shoff;
-	अगर (hdr->e_shnum == SHN_UNDEF)
+	x = (void *)hdr + hdr->e_shoff;
+	if (hdr->e_shnum == SHN_UNDEF)
 		num_sections = x[0].sh_size;
-	अन्यथा
+	else
 		num_sections = hdr->e_shnum;
 
-	क्रम (i = 1; i < num_sections; i++)
-		अगर (x[i].sh_type == SHT_SYMTAB)
-			वापस &x[i];
-	वापस शून्य;
-पूर्ण
+	for (i = 1; i < num_sections; i++)
+		if (x[i].sh_type == SHT_SYMTAB)
+			return &x[i];
+	return NULL;
+}
 
-अटल व्योम *map_file(अक्षर *file_name, पूर्णांक *size)
-अणु
-	काष्ठा stat st;
-	व्योम *map;
-	पूर्णांक fd;
+static void *map_file(char *file_name, int *size)
+{
+	struct stat st;
+	void *map;
+	int fd;
 
-	fd = खोलो(file_name, O_RDWR);
-	अगर (fd < 0) अणु
-		लिखो_त्रुटि(file_name);
-		वापस शून्य;
-	पूर्ण
-	अगर (ख_स्थिति(fd, &st)) अणु
-		लिखो_त्रुटि("Could not determine file size");
-		बंद(fd);
-		वापस शून्य;
-	पूर्ण
+	fd = open(file_name, O_RDWR);
+	if (fd < 0) {
+		perror(file_name);
+		return NULL;
+	}
+	if (fstat(fd, &st)) {
+		perror("Could not determine file size");
+		close(fd);
+		return NULL;
+	}
 	*size = st.st_size;
-	map = mmap(शून्य, *size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
-	अगर (map == MAP_FAILED) अणु
-		लिखो_त्रुटि("Mapping to memory failed");
-		बंद(fd);
-		वापस शून्य;
-	पूर्ण
-	बंद(fd);
-	वापस map;
-पूर्ण
+	map = mmap(NULL, *size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
+	if (map == MAP_FAILED) {
+		perror("Mapping to memory failed");
+		close(fd);
+		return NULL;
+	}
+	close(fd);
+	return map;
+}
 
-अटल अक्षर *पढ़ो_file(अक्षर *file_name, पूर्णांक *size)
-अणु
-	काष्ठा stat st;
-	अक्षर *buf;
-	पूर्णांक fd;
+static char *read_file(char *file_name, int *size)
+{
+	struct stat st;
+	char *buf;
+	int fd;
 
-	fd = खोलो(file_name, O_RDONLY);
-	अगर (fd < 0) अणु
-		लिखो_त्रुटि(file_name);
-		वापस शून्य;
-	पूर्ण
-	अगर (ख_स्थिति(fd, &st)) अणु
-		लिखो_त्रुटि("Could not determine file size");
-		बंद(fd);
-		वापस शून्य;
-	पूर्ण
+	fd = open(file_name, O_RDONLY);
+	if (fd < 0) {
+		perror(file_name);
+		return NULL;
+	}
+	if (fstat(fd, &st)) {
+		perror("Could not determine file size");
+		close(fd);
+		return NULL;
+	}
 	*size = st.st_size;
-	buf = दो_स्मृति(*size);
-	अगर (!buf) अणु
-		लिखो_त्रुटि("Allocating memory failed");
-		बंद(fd);
-		वापस शून्य;
-	पूर्ण
-	अगर (पढ़ो(fd, buf, *size) != *size) अणु
-		लिखो_त्रुटि("File read failed");
-		बंद(fd);
-		वापस शून्य;
-	पूर्ण
-	बंद(fd);
-	वापस buf;
-पूर्ण
+	buf = malloc(*size);
+	if (!buf) {
+		perror("Allocating memory failed");
+		close(fd);
+		return NULL;
+	}
+	if (read(fd, buf, *size) != *size) {
+		perror("File read failed");
+		close(fd);
+		return NULL;
+	}
+	close(fd);
+	return buf;
+}
 
-अटल व्योम prपूर्णांक_sym(Elf_Ehdr *hdr, काष्ठा sym *s)
-अणु
+static void print_sym(Elf_Ehdr *hdr, struct sym *s)
+{
 	info("sym:    %s\n", s->name);
 	info("addr:   0x%lx\n", s->address);
 	info("size:   %d\n", s->size);
-	info("offset: 0x%lx\n", (अचिन्हित दीर्घ)s->offset);
-पूर्ण
+	info("offset: 0x%lx\n", (unsigned long)s->offset);
+}
 
-अटल व्योम prपूर्णांक_usage(अक्षर *e)
-अणु
-	म_लिखो("Usage %s [-s <System.map>] -b <vmlinux> -c <certfile>\n", e);
-पूर्ण
+static void print_usage(char *e)
+{
+	printf("Usage %s [-s <System.map>] -b <vmlinux> -c <certfile>\n", e);
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
-अणु
-	अक्षर *प्रणाली_map_file = शून्य;
-	अक्षर *vmlinux_file = शून्य;
-	अक्षर *cert_file = शून्य;
-	पूर्णांक vmlinux_size;
-	पूर्णांक cert_size;
+int main(int argc, char **argv)
+{
+	char *system_map_file = NULL;
+	char *vmlinux_file = NULL;
+	char *cert_file = NULL;
+	int vmlinux_size;
+	int cert_size;
 	Elf_Ehdr *hdr;
-	अक्षर *cert;
-	खाता *प्रणाली_map;
-	अचिन्हित दीर्घ *lsize;
-	पूर्णांक *used;
-	पूर्णांक opt;
-	Elf_Shdr *symtab = शून्य;
-	काष्ठा sym cert_sym, lsize_sym, used_sym;
+	char *cert;
+	FILE *system_map;
+	unsigned long *lsize;
+	int *used;
+	int opt;
+	Elf_Shdr *symtab = NULL;
+	struct sym cert_sym, lsize_sym, used_sym;
 
-	जबतक ((opt = getopt(argc, argv, "b:c:s:")) != -1) अणु
-		चयन (opt) अणु
-		हाल 's':
-			प्रणाली_map_file = optarg;
-			अवरोध;
-		हाल 'b':
+	while ((opt = getopt(argc, argv, "b:c:s:")) != -1) {
+		switch (opt) {
+		case 's':
+			system_map_file = optarg;
+			break;
+		case 'b':
 			vmlinux_file = optarg;
-			अवरोध;
-		हाल 'c':
+			break;
+		case 'c':
 			cert_file = optarg;
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		default:
+			break;
+		}
+	}
 
-	अगर (!vmlinux_file || !cert_file) अणु
-		prपूर्णांक_usage(argv[0]);
-		निकास(निकास_त्रुटि);
-	पूर्ण
+	if (!vmlinux_file || !cert_file) {
+		print_usage(argv[0]);
+		exit(EXIT_FAILURE);
+	}
 
-	cert = पढ़ो_file(cert_file, &cert_size);
-	अगर (!cert)
-		निकास(निकास_त्रुटि);
+	cert = read_file(cert_file, &cert_size);
+	if (!cert)
+		exit(EXIT_FAILURE);
 
 	hdr = map_file(vmlinux_file, &vmlinux_size);
-	अगर (!hdr)
-		निकास(निकास_त्रुटि);
+	if (!hdr)
+		exit(EXIT_FAILURE);
 
-	अगर (vmlinux_size < माप(*hdr)) अणु
+	if (vmlinux_size < sizeof(*hdr)) {
 		err("Invalid ELF file.\n");
-		निकास(निकास_त्रुटि);
-	पूर्ण
+		exit(EXIT_FAILURE);
+	}
 
-	अगर ((hdr->e_ident[EI_MAG0] != ELFMAG0) ||
+	if ((hdr->e_ident[EI_MAG0] != ELFMAG0) ||
 	    (hdr->e_ident[EI_MAG1] != ELFMAG1) ||
 	    (hdr->e_ident[EI_MAG2] != ELFMAG2) ||
-	    (hdr->e_ident[EI_MAG3] != ELFMAG3)) अणु
+	    (hdr->e_ident[EI_MAG3] != ELFMAG3)) {
 		err("Invalid ELF magic.\n");
-		निकास(निकास_त्रुटि);
-	पूर्ण
+		exit(EXIT_FAILURE);
+	}
 
-	अगर (hdr->e_ident[EI_CLASS] != CURRENT_ELFCLASS) अणु
+	if (hdr->e_ident[EI_CLASS] != CURRENT_ELFCLASS) {
 		err("ELF class mismatch.\n");
-		निकास(निकास_त्रुटि);
-	पूर्ण
+		exit(EXIT_FAILURE);
+	}
 
-	अगर (hdr->e_ident[EI_DATA] != endianness()) अणु
+	if (hdr->e_ident[EI_DATA] != endianness()) {
 		err("ELF endian mismatch.\n");
-		निकास(निकास_त्रुटि);
-	पूर्ण
+		exit(EXIT_FAILURE);
+	}
 
-	अगर (hdr->e_shoff > vmlinux_size) अणु
+	if (hdr->e_shoff > vmlinux_size) {
 		err("Could not find section header.\n");
-		निकास(निकास_त्रुटि);
-	पूर्ण
+		exit(EXIT_FAILURE);
+	}
 
 	symtab = get_symbol_table(hdr);
-	अगर (!symtab) अणु
+	if (!symtab) {
 		warn("Could not find the symbol table.\n");
-		अगर (!प्रणाली_map_file) अणु
+		if (!system_map_file) {
 			err("Please provide a System.map file.\n");
-			prपूर्णांक_usage(argv[0]);
-			निकास(निकास_त्रुटि);
-		पूर्ण
+			print_usage(argv[0]);
+			exit(EXIT_FAILURE);
+		}
 
-		प्रणाली_map = ख_खोलो(प्रणाली_map_file, "r");
-		अगर (!प्रणाली_map) अणु
-			लिखो_त्रुटि(प्रणाली_map_file);
-			निकास(निकास_त्रुटि);
-		पूर्ण
-		get_symbol_from_map(hdr, प्रणाली_map, CERT_SYM, &cert_sym);
-		get_symbol_from_map(hdr, प्रणाली_map, USED_SYM, &used_sym);
-		get_symbol_from_map(hdr, प्रणाली_map, LSIZE_SYM, &lsize_sym);
+		system_map = fopen(system_map_file, "r");
+		if (!system_map) {
+			perror(system_map_file);
+			exit(EXIT_FAILURE);
+		}
+		get_symbol_from_map(hdr, system_map, CERT_SYM, &cert_sym);
+		get_symbol_from_map(hdr, system_map, USED_SYM, &used_sym);
+		get_symbol_from_map(hdr, system_map, LSIZE_SYM, &lsize_sym);
 		cert_sym.size = used_sym.address - cert_sym.address;
-	पूर्ण अन्यथा अणु
+	} else {
 		info("Symbol table found.\n");
-		अगर (प्रणाली_map_file)
+		if (system_map_file)
 			warn("System.map is ignored.\n");
 		get_symbol_from_table(hdr, symtab, CERT_SYM, &cert_sym);
 		get_symbol_from_table(hdr, symtab, USED_SYM, &used_sym);
 		get_symbol_from_table(hdr, symtab, LSIZE_SYM, &lsize_sym);
-	पूर्ण
+	}
 
-	अगर (!cert_sym.offset || !lsize_sym.offset || !used_sym.offset)
-		निकास(निकास_त्रुटि);
+	if (!cert_sym.offset || !lsize_sym.offset || !used_sym.offset)
+		exit(EXIT_FAILURE);
 
-	prपूर्णांक_sym(hdr, &cert_sym);
-	prपूर्णांक_sym(hdr, &used_sym);
-	prपूर्णांक_sym(hdr, &lsize_sym);
+	print_sym(hdr, &cert_sym);
+	print_sym(hdr, &used_sym);
+	print_sym(hdr, &lsize_sym);
 
-	lsize = (अचिन्हित दीर्घ *)lsize_sym.content;
-	used = (पूर्णांक *)used_sym.content;
+	lsize = (unsigned long *)lsize_sym.content;
+	used = (int *)used_sym.content;
 
-	अगर (cert_sym.size < cert_size) अणु
+	if (cert_sym.size < cert_size) {
 		err("Certificate is larger than the reserved area!\n");
-		निकास(निकास_त्रुटि);
-	पूर्ण
+		exit(EXIT_FAILURE);
+	}
 
-	/* If the existing cert is the same, करोn't overग_लिखो */
-	अगर (cert_size == *used &&
-	    म_भेदन(cert_sym.content, cert, cert_size) == 0) अणु
+	/* If the existing cert is the same, don't overwrite */
+	if (cert_size == *used &&
+	    strncmp(cert_sym.content, cert, cert_size) == 0) {
 		warn("Certificate was already inserted.\n");
-		निकास(निकास_सफल);
-	पूर्ण
+		exit(EXIT_SUCCESS);
+	}
 
-	अगर (*used > 0)
+	if (*used > 0)
 		warn("Replacing previously inserted certificate.\n");
 
-	स_नकल(cert_sym.content, cert, cert_size);
-	अगर (cert_size < cert_sym.size)
-		स_रखो(cert_sym.content + cert_size,
+	memcpy(cert_sym.content, cert, cert_size);
+	if (cert_size < cert_sym.size)
+		memset(cert_sym.content + cert_size,
 			0, cert_sym.size - cert_size);
 
 	*lsize = *lsize + cert_size - *used;
@@ -407,5 +406,5 @@
 						cert_sym.address);
 	info("Used %d bytes out of %d bytes reserved.\n", *used,
 						 cert_sym.size);
-	निकास(निकास_सफल);
-पूर्ण
+	exit(EXIT_SUCCESS);
+}

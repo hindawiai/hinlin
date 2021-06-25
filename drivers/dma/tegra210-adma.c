@@ -1,883 +1,882 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * ADMA driver क्रम Nvidia's Tegra210 ADMA controller.
+ * ADMA driver for Nvidia's Tegra210 ADMA controller.
  *
  * Copyright (c) 2016, NVIDIA CORPORATION.  All rights reserved.
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/iopoll.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/of_dma.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/slab.h>
+#include <linux/clk.h>
+#include <linux/iopoll.h>
+#include <linux/module.h>
+#include <linux/of_device.h>
+#include <linux/of_dma.h>
+#include <linux/of_irq.h>
+#include <linux/pm_runtime.h>
+#include <linux/slab.h>
 
-#समावेश "virt-dma.h"
+#include "virt-dma.h"
 
-#घोषणा ADMA_CH_CMD					0x00
-#घोषणा ADMA_CH_STATUS					0x0c
-#घोषणा ADMA_CH_STATUS_XFER_EN				BIT(0)
-#घोषणा ADMA_CH_STATUS_XFER_PAUSED			BIT(1)
+#define ADMA_CH_CMD					0x00
+#define ADMA_CH_STATUS					0x0c
+#define ADMA_CH_STATUS_XFER_EN				BIT(0)
+#define ADMA_CH_STATUS_XFER_PAUSED			BIT(1)
 
-#घोषणा ADMA_CH_INT_STATUS				0x10
-#घोषणा ADMA_CH_INT_STATUS_XFER_DONE			BIT(0)
+#define ADMA_CH_INT_STATUS				0x10
+#define ADMA_CH_INT_STATUS_XFER_DONE			BIT(0)
 
-#घोषणा ADMA_CH_INT_CLEAR				0x1c
-#घोषणा ADMA_CH_CTRL					0x24
-#घोषणा ADMA_CH_CTRL_सूची(val)				(((val) & 0xf) << 12)
-#घोषणा ADMA_CH_CTRL_सूची_AHUB2MEM			2
-#घोषणा ADMA_CH_CTRL_सूची_MEM2AHUB			4
-#घोषणा ADMA_CH_CTRL_MODE_CONTINUOUS			(2 << 8)
-#घोषणा ADMA_CH_CTRL_FLOWCTRL_EN			BIT(1)
-#घोषणा ADMA_CH_CTRL_XFER_PAUSE_SHIFT			0
+#define ADMA_CH_INT_CLEAR				0x1c
+#define ADMA_CH_CTRL					0x24
+#define ADMA_CH_CTRL_DIR(val)				(((val) & 0xf) << 12)
+#define ADMA_CH_CTRL_DIR_AHUB2MEM			2
+#define ADMA_CH_CTRL_DIR_MEM2AHUB			4
+#define ADMA_CH_CTRL_MODE_CONTINUOUS			(2 << 8)
+#define ADMA_CH_CTRL_FLOWCTRL_EN			BIT(1)
+#define ADMA_CH_CTRL_XFER_PAUSE_SHIFT			0
 
-#घोषणा ADMA_CH_CONFIG					0x28
-#घोषणा ADMA_CH_CONFIG_SRC_BUF(val)			(((val) & 0x7) << 28)
-#घोषणा ADMA_CH_CONFIG_TRG_BUF(val)			(((val) & 0x7) << 24)
-#घोषणा ADMA_CH_CONFIG_BURST_SIZE_SHIFT			20
-#घोषणा ADMA_CH_CONFIG_MAX_BURST_SIZE                   16
-#घोषणा ADMA_CH_CONFIG_WEIGHT_FOR_WRR(val)		((val) & 0xf)
-#घोषणा ADMA_CH_CONFIG_MAX_BUFS				8
-#घोषणा TEGRA186_ADMA_CH_CONFIG_OUTSTANDING_REQS(reqs)	(reqs << 4)
+#define ADMA_CH_CONFIG					0x28
+#define ADMA_CH_CONFIG_SRC_BUF(val)			(((val) & 0x7) << 28)
+#define ADMA_CH_CONFIG_TRG_BUF(val)			(((val) & 0x7) << 24)
+#define ADMA_CH_CONFIG_BURST_SIZE_SHIFT			20
+#define ADMA_CH_CONFIG_MAX_BURST_SIZE                   16
+#define ADMA_CH_CONFIG_WEIGHT_FOR_WRR(val)		((val) & 0xf)
+#define ADMA_CH_CONFIG_MAX_BUFS				8
+#define TEGRA186_ADMA_CH_CONFIG_OUTSTANDING_REQS(reqs)	(reqs << 4)
 
-#घोषणा ADMA_CH_FIFO_CTRL				0x2c
-#घोषणा TEGRA210_ADMA_CH_FIFO_CTRL_TXSIZE(val)		(((val) & 0xf) << 8)
-#घोषणा TEGRA210_ADMA_CH_FIFO_CTRL_RXSIZE(val)		((val) & 0xf)
-#घोषणा TEGRA186_ADMA_CH_FIFO_CTRL_TXSIZE(val)		(((val) & 0x1f) << 8)
-#घोषणा TEGRA186_ADMA_CH_FIFO_CTRL_RXSIZE(val)		((val) & 0x1f)
+#define ADMA_CH_FIFO_CTRL				0x2c
+#define TEGRA210_ADMA_CH_FIFO_CTRL_TXSIZE(val)		(((val) & 0xf) << 8)
+#define TEGRA210_ADMA_CH_FIFO_CTRL_RXSIZE(val)		((val) & 0xf)
+#define TEGRA186_ADMA_CH_FIFO_CTRL_TXSIZE(val)		(((val) & 0x1f) << 8)
+#define TEGRA186_ADMA_CH_FIFO_CTRL_RXSIZE(val)		((val) & 0x1f)
 
-#घोषणा ADMA_CH_LOWER_SRC_ADDR				0x34
-#घोषणा ADMA_CH_LOWER_TRG_ADDR				0x3c
-#घोषणा ADMA_CH_TC					0x44
-#घोषणा ADMA_CH_TC_COUNT_MASK				0x3ffffffc
+#define ADMA_CH_LOWER_SRC_ADDR				0x34
+#define ADMA_CH_LOWER_TRG_ADDR				0x3c
+#define ADMA_CH_TC					0x44
+#define ADMA_CH_TC_COUNT_MASK				0x3ffffffc
 
-#घोषणा ADMA_CH_XFER_STATUS				0x54
-#घोषणा ADMA_CH_XFER_STATUS_COUNT_MASK			0xffff
+#define ADMA_CH_XFER_STATUS				0x54
+#define ADMA_CH_XFER_STATUS_COUNT_MASK			0xffff
 
-#घोषणा ADMA_GLOBAL_CMD					0x00
-#घोषणा ADMA_GLOBAL_SOFT_RESET				0x04
+#define ADMA_GLOBAL_CMD					0x00
+#define ADMA_GLOBAL_SOFT_RESET				0x04
 
-#घोषणा TEGRA_ADMA_BURST_COMPLETE_TIME			20
+#define TEGRA_ADMA_BURST_COMPLETE_TIME			20
 
-#घोषणा TEGRA210_FIFO_CTRL_DEFAULT (TEGRA210_ADMA_CH_FIFO_CTRL_TXSIZE(3) | \
+#define TEGRA210_FIFO_CTRL_DEFAULT (TEGRA210_ADMA_CH_FIFO_CTRL_TXSIZE(3) | \
 				    TEGRA210_ADMA_CH_FIFO_CTRL_RXSIZE(3))
 
-#घोषणा TEGRA186_FIFO_CTRL_DEFAULT (TEGRA186_ADMA_CH_FIFO_CTRL_TXSIZE(3) | \
+#define TEGRA186_FIFO_CTRL_DEFAULT (TEGRA186_ADMA_CH_FIFO_CTRL_TXSIZE(3) | \
 				    TEGRA186_ADMA_CH_FIFO_CTRL_RXSIZE(3))
 
-#घोषणा ADMA_CH_REG_FIELD_VAL(val, mask, shअगरt)	(((val) & mask) << shअगरt)
+#define ADMA_CH_REG_FIELD_VAL(val, mask, shift)	(((val) & mask) << shift)
 
-काष्ठा tegra_adma;
+struct tegra_adma;
 
 /*
- * काष्ठा tegra_adma_chip_data - Tegra chip specअगरic data
- * @global_reg_offset: Register offset of DMA global रेजिस्टर.
- * @global_पूर्णांक_clear: Register offset of DMA global पूर्णांकerrupt clear.
- * @ch_req_tx_shअगरt: Register offset क्रम AHUB transmit channel select.
- * @ch_req_rx_shअगरt: Register offset क्रम AHUB receive channel select.
- * @ch_base_offset: Register offset of DMA channel रेजिस्टरs.
+ * struct tegra_adma_chip_data - Tegra chip specific data
+ * @global_reg_offset: Register offset of DMA global register.
+ * @global_int_clear: Register offset of DMA global interrupt clear.
+ * @ch_req_tx_shift: Register offset for AHUB transmit channel select.
+ * @ch_req_rx_shift: Register offset for AHUB receive channel select.
+ * @ch_base_offset: Register offset of DMA channel registers.
  * @has_outstanding_reqs: If DMA channel can have outstanding requests.
- * @ch_fअगरo_ctrl: Default value क्रम channel FIFO CTRL रेजिस्टर.
- * @ch_req_mask: Mask क्रम Tx or Rx channel select.
+ * @ch_fifo_ctrl: Default value for channel FIFO CTRL register.
+ * @ch_req_mask: Mask for Tx or Rx channel select.
  * @ch_req_max: Maximum number of Tx or Rx channels available.
- * @ch_reg_size: Size of DMA channel रेजिस्टर space.
+ * @ch_reg_size: Size of DMA channel register space.
  * @nr_channels: Number of DMA channels available.
  */
-काष्ठा tegra_adma_chip_data अणु
-	अचिन्हित पूर्णांक (*adma_get_burst_config)(अचिन्हित पूर्णांक burst_size);
-	अचिन्हित पूर्णांक global_reg_offset;
-	अचिन्हित पूर्णांक global_पूर्णांक_clear;
-	अचिन्हित पूर्णांक ch_req_tx_shअगरt;
-	अचिन्हित पूर्णांक ch_req_rx_shअगरt;
-	अचिन्हित पूर्णांक ch_base_offset;
-	अचिन्हित पूर्णांक ch_fअगरo_ctrl;
-	अचिन्हित पूर्णांक ch_req_mask;
-	अचिन्हित पूर्णांक ch_req_max;
-	अचिन्हित पूर्णांक ch_reg_size;
-	अचिन्हित पूर्णांक nr_channels;
+struct tegra_adma_chip_data {
+	unsigned int (*adma_get_burst_config)(unsigned int burst_size);
+	unsigned int global_reg_offset;
+	unsigned int global_int_clear;
+	unsigned int ch_req_tx_shift;
+	unsigned int ch_req_rx_shift;
+	unsigned int ch_base_offset;
+	unsigned int ch_fifo_ctrl;
+	unsigned int ch_req_mask;
+	unsigned int ch_req_max;
+	unsigned int ch_reg_size;
+	unsigned int nr_channels;
 	bool has_outstanding_reqs;
-पूर्ण;
+};
 
 /*
- * काष्ठा tegra_adma_chan_regs - Tegra ADMA channel रेजिस्टरs
+ * struct tegra_adma_chan_regs - Tegra ADMA channel registers
  */
-काष्ठा tegra_adma_chan_regs अणु
-	अचिन्हित पूर्णांक ctrl;
-	अचिन्हित पूर्णांक config;
-	अचिन्हित पूर्णांक src_addr;
-	अचिन्हित पूर्णांक trg_addr;
-	अचिन्हित पूर्णांक fअगरo_ctrl;
-	अचिन्हित पूर्णांक cmd;
-	अचिन्हित पूर्णांक tc;
-पूर्ण;
+struct tegra_adma_chan_regs {
+	unsigned int ctrl;
+	unsigned int config;
+	unsigned int src_addr;
+	unsigned int trg_addr;
+	unsigned int fifo_ctrl;
+	unsigned int cmd;
+	unsigned int tc;
+};
 
 /*
- * काष्ठा tegra_adma_desc - Tegra ADMA descriptor to manage transfer requests.
+ * struct tegra_adma_desc - Tegra ADMA descriptor to manage transfer requests.
  */
-काष्ठा tegra_adma_desc अणु
-	काष्ठा virt_dma_desc		vd;
-	काष्ठा tegra_adma_chan_regs	ch_regs;
-	माप_प्रकार				buf_len;
-	माप_प्रकार				period_len;
-	माप_प्रकार				num_periods;
-पूर्ण;
+struct tegra_adma_desc {
+	struct virt_dma_desc		vd;
+	struct tegra_adma_chan_regs	ch_regs;
+	size_t				buf_len;
+	size_t				period_len;
+	size_t				num_periods;
+};
 
 /*
- * काष्ठा tegra_adma_chan - Tegra ADMA channel inक्रमmation
+ * struct tegra_adma_chan - Tegra ADMA channel information
  */
-काष्ठा tegra_adma_chan अणु
-	काष्ठा virt_dma_chan		vc;
-	काष्ठा tegra_adma_desc		*desc;
-	काष्ठा tegra_adma		*tdma;
-	पूर्णांक				irq;
-	व्योम __iomem			*chan_addr;
+struct tegra_adma_chan {
+	struct virt_dma_chan		vc;
+	struct tegra_adma_desc		*desc;
+	struct tegra_adma		*tdma;
+	int				irq;
+	void __iomem			*chan_addr;
 
 	/* Slave channel configuration info */
-	काष्ठा dma_slave_config		sconfig;
-	क्रमागत dma_transfer_direction	sreq_dir;
-	अचिन्हित पूर्णांक			sreq_index;
+	struct dma_slave_config		sconfig;
+	enum dma_transfer_direction	sreq_dir;
+	unsigned int			sreq_index;
 	bool				sreq_reserved;
-	काष्ठा tegra_adma_chan_regs	ch_regs;
+	struct tegra_adma_chan_regs	ch_regs;
 
 	/* Transfer count and position info */
-	अचिन्हित पूर्णांक			tx_buf_count;
-	अचिन्हित पूर्णांक			tx_buf_pos;
-पूर्ण;
+	unsigned int			tx_buf_count;
+	unsigned int			tx_buf_pos;
+};
 
 /*
- * काष्ठा tegra_adma - Tegra ADMA controller inक्रमmation
+ * struct tegra_adma - Tegra ADMA controller information
  */
-काष्ठा tegra_adma अणु
-	काष्ठा dma_device		dma_dev;
-	काष्ठा device			*dev;
-	व्योम __iomem			*base_addr;
-	काष्ठा clk			*ahub_clk;
-	अचिन्हित पूर्णांक			nr_channels;
-	अचिन्हित दीर्घ			rx_requests_reserved;
-	अचिन्हित दीर्घ			tx_requests_reserved;
+struct tegra_adma {
+	struct dma_device		dma_dev;
+	struct device			*dev;
+	void __iomem			*base_addr;
+	struct clk			*ahub_clk;
+	unsigned int			nr_channels;
+	unsigned long			rx_requests_reserved;
+	unsigned long			tx_requests_reserved;
 
-	/* Used to store global command रेजिस्टर state when suspending */
-	अचिन्हित पूर्णांक			global_cmd;
+	/* Used to store global command register state when suspending */
+	unsigned int			global_cmd;
 
-	स्थिर काष्ठा tegra_adma_chip_data *cdata;
+	const struct tegra_adma_chip_data *cdata;
 
-	/* Last member of the काष्ठाure */
-	काष्ठा tegra_adma_chan		channels[];
-पूर्ण;
+	/* Last member of the structure */
+	struct tegra_adma_chan		channels[];
+};
 
-अटल अंतरभूत व्योम tdma_ग_लिखो(काष्ठा tegra_adma *tdma, u32 reg, u32 val)
-अणु
-	ग_लिखोl(val, tdma->base_addr + tdma->cdata->global_reg_offset + reg);
-पूर्ण
+static inline void tdma_write(struct tegra_adma *tdma, u32 reg, u32 val)
+{
+	writel(val, tdma->base_addr + tdma->cdata->global_reg_offset + reg);
+}
 
-अटल अंतरभूत u32 tdma_पढ़ो(काष्ठा tegra_adma *tdma, u32 reg)
-अणु
-	वापस पढ़ोl(tdma->base_addr + tdma->cdata->global_reg_offset + reg);
-पूर्ण
+static inline u32 tdma_read(struct tegra_adma *tdma, u32 reg)
+{
+	return readl(tdma->base_addr + tdma->cdata->global_reg_offset + reg);
+}
 
-अटल अंतरभूत व्योम tdma_ch_ग_लिखो(काष्ठा tegra_adma_chan *tdc, u32 reg, u32 val)
-अणु
-	ग_लिखोl(val, tdc->chan_addr + reg);
-पूर्ण
+static inline void tdma_ch_write(struct tegra_adma_chan *tdc, u32 reg, u32 val)
+{
+	writel(val, tdc->chan_addr + reg);
+}
 
-अटल अंतरभूत u32 tdma_ch_पढ़ो(काष्ठा tegra_adma_chan *tdc, u32 reg)
-अणु
-	वापस पढ़ोl(tdc->chan_addr + reg);
-पूर्ण
+static inline u32 tdma_ch_read(struct tegra_adma_chan *tdc, u32 reg)
+{
+	return readl(tdc->chan_addr + reg);
+}
 
-अटल अंतरभूत काष्ठा tegra_adma_chan *to_tegra_adma_chan(काष्ठा dma_chan *dc)
-अणु
-	वापस container_of(dc, काष्ठा tegra_adma_chan, vc.chan);
-पूर्ण
+static inline struct tegra_adma_chan *to_tegra_adma_chan(struct dma_chan *dc)
+{
+	return container_of(dc, struct tegra_adma_chan, vc.chan);
+}
 
-अटल अंतरभूत काष्ठा tegra_adma_desc *to_tegra_adma_desc(
-		काष्ठा dma_async_tx_descriptor *td)
-अणु
-	वापस container_of(td, काष्ठा tegra_adma_desc, vd.tx);
-पूर्ण
+static inline struct tegra_adma_desc *to_tegra_adma_desc(
+		struct dma_async_tx_descriptor *td)
+{
+	return container_of(td, struct tegra_adma_desc, vd.tx);
+}
 
-अटल अंतरभूत काष्ठा device *tdc2dev(काष्ठा tegra_adma_chan *tdc)
-अणु
-	वापस tdc->tdma->dev;
-पूर्ण
+static inline struct device *tdc2dev(struct tegra_adma_chan *tdc)
+{
+	return tdc->tdma->dev;
+}
 
-अटल व्योम tegra_adma_desc_मुक्त(काष्ठा virt_dma_desc *vd)
-अणु
-	kमुक्त(container_of(vd, काष्ठा tegra_adma_desc, vd));
-पूर्ण
+static void tegra_adma_desc_free(struct virt_dma_desc *vd)
+{
+	kfree(container_of(vd, struct tegra_adma_desc, vd));
+}
 
-अटल पूर्णांक tegra_adma_slave_config(काष्ठा dma_chan *dc,
-				   काष्ठा dma_slave_config *sconfig)
-अणु
-	काष्ठा tegra_adma_chan *tdc = to_tegra_adma_chan(dc);
+static int tegra_adma_slave_config(struct dma_chan *dc,
+				   struct dma_slave_config *sconfig)
+{
+	struct tegra_adma_chan *tdc = to_tegra_adma_chan(dc);
 
-	स_नकल(&tdc->sconfig, sconfig, माप(*sconfig));
+	memcpy(&tdc->sconfig, sconfig, sizeof(*sconfig));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tegra_adma_init(काष्ठा tegra_adma *tdma)
-अणु
+static int tegra_adma_init(struct tegra_adma *tdma)
+{
 	u32 status;
-	पूर्णांक ret;
+	int ret;
 
-	/* Clear any पूर्णांकerrupts */
-	tdma_ग_लिखो(tdma, tdma->cdata->global_पूर्णांक_clear, 0x1);
+	/* Clear any interrupts */
+	tdma_write(tdma, tdma->cdata->global_int_clear, 0x1);
 
 	/* Assert soft reset */
-	tdma_ग_लिखो(tdma, ADMA_GLOBAL_SOFT_RESET, 0x1);
+	tdma_write(tdma, ADMA_GLOBAL_SOFT_RESET, 0x1);
 
-	/* Wait क्रम reset to clear */
-	ret = पढ़ोx_poll_समयout(पढ़ोl,
+	/* Wait for reset to clear */
+	ret = readx_poll_timeout(readl,
 				 tdma->base_addr +
 				 tdma->cdata->global_reg_offset +
 				 ADMA_GLOBAL_SOFT_RESET,
 				 status, status == 0, 20, 10000);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* Enable global ADMA रेजिस्टरs */
-	tdma_ग_लिखो(tdma, ADMA_GLOBAL_CMD, 1);
+	/* Enable global ADMA registers */
+	tdma_write(tdma, ADMA_GLOBAL_CMD, 1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tegra_adma_request_alloc(काष्ठा tegra_adma_chan *tdc,
-				    क्रमागत dma_transfer_direction direction)
-अणु
-	काष्ठा tegra_adma *tdma = tdc->tdma;
-	अचिन्हित पूर्णांक sreq_index = tdc->sreq_index;
+static int tegra_adma_request_alloc(struct tegra_adma_chan *tdc,
+				    enum dma_transfer_direction direction)
+{
+	struct tegra_adma *tdma = tdc->tdma;
+	unsigned int sreq_index = tdc->sreq_index;
 
-	अगर (tdc->sreq_reserved)
-		वापस tdc->sreq_dir == direction ? 0 : -EINVAL;
+	if (tdc->sreq_reserved)
+		return tdc->sreq_dir == direction ? 0 : -EINVAL;
 
-	अगर (sreq_index > tdma->cdata->ch_req_max) अणु
+	if (sreq_index > tdma->cdata->ch_req_max) {
 		dev_err(tdma->dev, "invalid DMA request\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	चयन (direction) अणु
-	हाल DMA_MEM_TO_DEV:
-		अगर (test_and_set_bit(sreq_index, &tdma->tx_requests_reserved)) अणु
+	switch (direction) {
+	case DMA_MEM_TO_DEV:
+		if (test_and_set_bit(sreq_index, &tdma->tx_requests_reserved)) {
 			dev_err(tdma->dev, "DMA request reserved\n");
-			वापस -EINVAL;
-		पूर्ण
-		अवरोध;
+			return -EINVAL;
+		}
+		break;
 
-	हाल DMA_DEV_TO_MEM:
-		अगर (test_and_set_bit(sreq_index, &tdma->rx_requests_reserved)) अणु
+	case DMA_DEV_TO_MEM:
+		if (test_and_set_bit(sreq_index, &tdma->rx_requests_reserved)) {
 			dev_err(tdma->dev, "DMA request reserved\n");
-			वापस -EINVAL;
-		पूर्ण
-		अवरोध;
+			return -EINVAL;
+		}
+		break;
 
-	शेष:
+	default:
 		dev_WARN(tdma->dev, "channel %s has invalid transfer type\n",
 			 dma_chan_name(&tdc->vc.chan));
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	tdc->sreq_dir = direction;
 	tdc->sreq_reserved = true;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tegra_adma_request_मुक्त(काष्ठा tegra_adma_chan *tdc)
-अणु
-	काष्ठा tegra_adma *tdma = tdc->tdma;
+static void tegra_adma_request_free(struct tegra_adma_chan *tdc)
+{
+	struct tegra_adma *tdma = tdc->tdma;
 
-	अगर (!tdc->sreq_reserved)
-		वापस;
+	if (!tdc->sreq_reserved)
+		return;
 
-	चयन (tdc->sreq_dir) अणु
-	हाल DMA_MEM_TO_DEV:
+	switch (tdc->sreq_dir) {
+	case DMA_MEM_TO_DEV:
 		clear_bit(tdc->sreq_index, &tdma->tx_requests_reserved);
-		अवरोध;
+		break;
 
-	हाल DMA_DEV_TO_MEM:
+	case DMA_DEV_TO_MEM:
 		clear_bit(tdc->sreq_index, &tdma->rx_requests_reserved);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		dev_WARN(tdma->dev, "channel %s has invalid transfer type\n",
 			 dma_chan_name(&tdc->vc.chan));
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	tdc->sreq_reserved = false;
-पूर्ण
+}
 
-अटल u32 tegra_adma_irq_status(काष्ठा tegra_adma_chan *tdc)
-अणु
-	u32 status = tdma_ch_पढ़ो(tdc, ADMA_CH_INT_STATUS);
+static u32 tegra_adma_irq_status(struct tegra_adma_chan *tdc)
+{
+	u32 status = tdma_ch_read(tdc, ADMA_CH_INT_STATUS);
 
-	वापस status & ADMA_CH_INT_STATUS_XFER_DONE;
-पूर्ण
+	return status & ADMA_CH_INT_STATUS_XFER_DONE;
+}
 
-अटल u32 tegra_adma_irq_clear(काष्ठा tegra_adma_chan *tdc)
-अणु
+static u32 tegra_adma_irq_clear(struct tegra_adma_chan *tdc)
+{
 	u32 status = tegra_adma_irq_status(tdc);
 
-	अगर (status)
-		tdma_ch_ग_लिखो(tdc, ADMA_CH_INT_CLEAR, status);
+	if (status)
+		tdma_ch_write(tdc, ADMA_CH_INT_CLEAR, status);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल व्योम tegra_adma_stop(काष्ठा tegra_adma_chan *tdc)
-अणु
-	अचिन्हित पूर्णांक status;
+static void tegra_adma_stop(struct tegra_adma_chan *tdc)
+{
+	unsigned int status;
 
 	/* Disable ADMA */
-	tdma_ch_ग_लिखो(tdc, ADMA_CH_CMD, 0);
+	tdma_ch_write(tdc, ADMA_CH_CMD, 0);
 
-	/* Clear पूर्णांकerrupt status */
+	/* Clear interrupt status */
 	tegra_adma_irq_clear(tdc);
 
-	अगर (पढ़ोx_poll_समयout_atomic(पढ़ोl, tdc->chan_addr + ADMA_CH_STATUS,
+	if (readx_poll_timeout_atomic(readl, tdc->chan_addr + ADMA_CH_STATUS,
 			status, !(status & ADMA_CH_STATUS_XFER_EN),
-			20, 10000)) अणु
+			20, 10000)) {
 		dev_err(tdc2dev(tdc), "unable to stop DMA channel\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	kमुक्त(tdc->desc);
-	tdc->desc = शून्य;
-पूर्ण
+	kfree(tdc->desc);
+	tdc->desc = NULL;
+}
 
-अटल व्योम tegra_adma_start(काष्ठा tegra_adma_chan *tdc)
-अणु
-	काष्ठा virt_dma_desc *vd = vchan_next_desc(&tdc->vc);
-	काष्ठा tegra_adma_chan_regs *ch_regs;
-	काष्ठा tegra_adma_desc *desc;
+static void tegra_adma_start(struct tegra_adma_chan *tdc)
+{
+	struct virt_dma_desc *vd = vchan_next_desc(&tdc->vc);
+	struct tegra_adma_chan_regs *ch_regs;
+	struct tegra_adma_desc *desc;
 
-	अगर (!vd)
-		वापस;
+	if (!vd)
+		return;
 
 	list_del(&vd->node);
 
 	desc = to_tegra_adma_desc(&vd->tx);
 
-	अगर (!desc) अणु
+	if (!desc) {
 		dev_warn(tdc2dev(tdc), "unable to start DMA, no descriptor\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	ch_regs = &desc->ch_regs;
 
 	tdc->tx_buf_pos = 0;
 	tdc->tx_buf_count = 0;
-	tdma_ch_ग_लिखो(tdc, ADMA_CH_TC, ch_regs->tc);
-	tdma_ch_ग_लिखो(tdc, ADMA_CH_CTRL, ch_regs->ctrl);
-	tdma_ch_ग_लिखो(tdc, ADMA_CH_LOWER_SRC_ADDR, ch_regs->src_addr);
-	tdma_ch_ग_लिखो(tdc, ADMA_CH_LOWER_TRG_ADDR, ch_regs->trg_addr);
-	tdma_ch_ग_लिखो(tdc, ADMA_CH_FIFO_CTRL, ch_regs->fअगरo_ctrl);
-	tdma_ch_ग_लिखो(tdc, ADMA_CH_CONFIG, ch_regs->config);
+	tdma_ch_write(tdc, ADMA_CH_TC, ch_regs->tc);
+	tdma_ch_write(tdc, ADMA_CH_CTRL, ch_regs->ctrl);
+	tdma_ch_write(tdc, ADMA_CH_LOWER_SRC_ADDR, ch_regs->src_addr);
+	tdma_ch_write(tdc, ADMA_CH_LOWER_TRG_ADDR, ch_regs->trg_addr);
+	tdma_ch_write(tdc, ADMA_CH_FIFO_CTRL, ch_regs->fifo_ctrl);
+	tdma_ch_write(tdc, ADMA_CH_CONFIG, ch_regs->config);
 
 	/* Start ADMA */
-	tdma_ch_ग_लिखो(tdc, ADMA_CH_CMD, 1);
+	tdma_ch_write(tdc, ADMA_CH_CMD, 1);
 
 	tdc->desc = desc;
-पूर्ण
+}
 
-अटल अचिन्हित पूर्णांक tegra_adma_get_residue(काष्ठा tegra_adma_chan *tdc)
-अणु
-	काष्ठा tegra_adma_desc *desc = tdc->desc;
-	अचिन्हित पूर्णांक max = ADMA_CH_XFER_STATUS_COUNT_MASK + 1;
-	अचिन्हित पूर्णांक pos = tdma_ch_पढ़ो(tdc, ADMA_CH_XFER_STATUS);
-	अचिन्हित पूर्णांक periods_reमुख्यing;
+static unsigned int tegra_adma_get_residue(struct tegra_adma_chan *tdc)
+{
+	struct tegra_adma_desc *desc = tdc->desc;
+	unsigned int max = ADMA_CH_XFER_STATUS_COUNT_MASK + 1;
+	unsigned int pos = tdma_ch_read(tdc, ADMA_CH_XFER_STATUS);
+	unsigned int periods_remaining;
 
 	/*
-	 * Handle wrap around of buffer count रेजिस्टर
+	 * Handle wrap around of buffer count register
 	 */
-	अगर (pos < tdc->tx_buf_pos)
+	if (pos < tdc->tx_buf_pos)
 		tdc->tx_buf_count += pos + (max - tdc->tx_buf_pos);
-	अन्यथा
+	else
 		tdc->tx_buf_count += pos - tdc->tx_buf_pos;
 
-	periods_reमुख्यing = tdc->tx_buf_count % desc->num_periods;
+	periods_remaining = tdc->tx_buf_count % desc->num_periods;
 	tdc->tx_buf_pos = pos;
 
-	वापस desc->buf_len - (periods_reमुख्यing * desc->period_len);
-पूर्ण
+	return desc->buf_len - (periods_remaining * desc->period_len);
+}
 
-अटल irqवापस_t tegra_adma_isr(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा tegra_adma_chan *tdc = dev_id;
-	अचिन्हित दीर्घ status;
+static irqreturn_t tegra_adma_isr(int irq, void *dev_id)
+{
+	struct tegra_adma_chan *tdc = dev_id;
+	unsigned long status;
 
 	spin_lock(&tdc->vc.lock);
 
 	status = tegra_adma_irq_clear(tdc);
-	अगर (status == 0 || !tdc->desc) अणु
+	if (status == 0 || !tdc->desc) {
 		spin_unlock(&tdc->vc.lock);
-		वापस IRQ_NONE;
-	पूर्ण
+		return IRQ_NONE;
+	}
 
 	vchan_cyclic_callback(&tdc->desc->vd);
 
 	spin_unlock(&tdc->vc.lock);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम tegra_adma_issue_pending(काष्ठा dma_chan *dc)
-अणु
-	काष्ठा tegra_adma_chan *tdc = to_tegra_adma_chan(dc);
-	अचिन्हित दीर्घ flags;
+static void tegra_adma_issue_pending(struct dma_chan *dc)
+{
+	struct tegra_adma_chan *tdc = to_tegra_adma_chan(dc);
+	unsigned long flags;
 
 	spin_lock_irqsave(&tdc->vc.lock, flags);
 
-	अगर (vchan_issue_pending(&tdc->vc)) अणु
-		अगर (!tdc->desc)
+	if (vchan_issue_pending(&tdc->vc)) {
+		if (!tdc->desc)
 			tegra_adma_start(tdc);
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&tdc->vc.lock, flags);
-पूर्ण
+}
 
-अटल bool tegra_adma_is_छोड़ोd(काष्ठा tegra_adma_chan *tdc)
-अणु
+static bool tegra_adma_is_paused(struct tegra_adma_chan *tdc)
+{
 	u32 csts;
 
-	csts = tdma_ch_पढ़ो(tdc, ADMA_CH_STATUS);
+	csts = tdma_ch_read(tdc, ADMA_CH_STATUS);
 	csts &= ADMA_CH_STATUS_XFER_PAUSED;
 
-	वापस csts ? true : false;
-पूर्ण
+	return csts ? true : false;
+}
 
-अटल पूर्णांक tegra_adma_छोड़ो(काष्ठा dma_chan *dc)
-अणु
-	काष्ठा tegra_adma_chan *tdc = to_tegra_adma_chan(dc);
-	काष्ठा tegra_adma_desc *desc = tdc->desc;
-	काष्ठा tegra_adma_chan_regs *ch_regs = &desc->ch_regs;
-	पूर्णांक dcnt = 10;
+static int tegra_adma_pause(struct dma_chan *dc)
+{
+	struct tegra_adma_chan *tdc = to_tegra_adma_chan(dc);
+	struct tegra_adma_desc *desc = tdc->desc;
+	struct tegra_adma_chan_regs *ch_regs = &desc->ch_regs;
+	int dcnt = 10;
 
-	ch_regs->ctrl = tdma_ch_पढ़ो(tdc, ADMA_CH_CTRL);
+	ch_regs->ctrl = tdma_ch_read(tdc, ADMA_CH_CTRL);
 	ch_regs->ctrl |= (1 << ADMA_CH_CTRL_XFER_PAUSE_SHIFT);
-	tdma_ch_ग_लिखो(tdc, ADMA_CH_CTRL, ch_regs->ctrl);
+	tdma_ch_write(tdc, ADMA_CH_CTRL, ch_regs->ctrl);
 
-	जबतक (dcnt-- && !tegra_adma_is_छोड़ोd(tdc))
+	while (dcnt-- && !tegra_adma_is_paused(tdc))
 		udelay(TEGRA_ADMA_BURST_COMPLETE_TIME);
 
-	अगर (dcnt < 0) अणु
+	if (dcnt < 0) {
 		dev_err(tdc2dev(tdc), "unable to pause DMA channel\n");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tegra_adma_resume(काष्ठा dma_chan *dc)
-अणु
-	काष्ठा tegra_adma_chan *tdc = to_tegra_adma_chan(dc);
-	काष्ठा tegra_adma_desc *desc = tdc->desc;
-	काष्ठा tegra_adma_chan_regs *ch_regs = &desc->ch_regs;
+static int tegra_adma_resume(struct dma_chan *dc)
+{
+	struct tegra_adma_chan *tdc = to_tegra_adma_chan(dc);
+	struct tegra_adma_desc *desc = tdc->desc;
+	struct tegra_adma_chan_regs *ch_regs = &desc->ch_regs;
 
-	ch_regs->ctrl = tdma_ch_पढ़ो(tdc, ADMA_CH_CTRL);
+	ch_regs->ctrl = tdma_ch_read(tdc, ADMA_CH_CTRL);
 	ch_regs->ctrl &= ~(1 << ADMA_CH_CTRL_XFER_PAUSE_SHIFT);
-	tdma_ch_ग_लिखो(tdc, ADMA_CH_CTRL, ch_regs->ctrl);
+	tdma_ch_write(tdc, ADMA_CH_CTRL, ch_regs->ctrl);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tegra_adma_terminate_all(काष्ठा dma_chan *dc)
-अणु
-	काष्ठा tegra_adma_chan *tdc = to_tegra_adma_chan(dc);
-	अचिन्हित दीर्घ flags;
+static int tegra_adma_terminate_all(struct dma_chan *dc)
+{
+	struct tegra_adma_chan *tdc = to_tegra_adma_chan(dc);
+	unsigned long flags;
 	LIST_HEAD(head);
 
 	spin_lock_irqsave(&tdc->vc.lock, flags);
 
-	अगर (tdc->desc)
+	if (tdc->desc)
 		tegra_adma_stop(tdc);
 
-	tegra_adma_request_मुक्त(tdc);
+	tegra_adma_request_free(tdc);
 	vchan_get_all_descriptors(&tdc->vc, &head);
 	spin_unlock_irqrestore(&tdc->vc.lock, flags);
-	vchan_dma_desc_मुक्त_list(&tdc->vc, &head);
+	vchan_dma_desc_free_list(&tdc->vc, &head);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल क्रमागत dma_status tegra_adma_tx_status(काष्ठा dma_chan *dc,
+static enum dma_status tegra_adma_tx_status(struct dma_chan *dc,
 					    dma_cookie_t cookie,
-					    काष्ठा dma_tx_state *txstate)
-अणु
-	काष्ठा tegra_adma_chan *tdc = to_tegra_adma_chan(dc);
-	काष्ठा tegra_adma_desc *desc;
-	काष्ठा virt_dma_desc *vd;
-	क्रमागत dma_status ret;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक residual;
+					    struct dma_tx_state *txstate)
+{
+	struct tegra_adma_chan *tdc = to_tegra_adma_chan(dc);
+	struct tegra_adma_desc *desc;
+	struct virt_dma_desc *vd;
+	enum dma_status ret;
+	unsigned long flags;
+	unsigned int residual;
 
 	ret = dma_cookie_status(dc, cookie, txstate);
-	अगर (ret == DMA_COMPLETE || !txstate)
-		वापस ret;
+	if (ret == DMA_COMPLETE || !txstate)
+		return ret;
 
 	spin_lock_irqsave(&tdc->vc.lock, flags);
 
 	vd = vchan_find_desc(&tdc->vc, cookie);
-	अगर (vd) अणु
+	if (vd) {
 		desc = to_tegra_adma_desc(&vd->tx);
 		residual = desc->ch_regs.tc;
-	पूर्ण अन्यथा अगर (tdc->desc && tdc->desc->vd.tx.cookie == cookie) अणु
+	} else if (tdc->desc && tdc->desc->vd.tx.cookie == cookie) {
 		residual = tegra_adma_get_residue(tdc);
-	पूर्ण अन्यथा अणु
+	} else {
 		residual = 0;
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&tdc->vc.lock, flags);
 
 	dma_set_residue(txstate, residual);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अचिन्हित पूर्णांक tegra210_adma_get_burst_config(अचिन्हित पूर्णांक burst_size)
-अणु
-	अगर (!burst_size || burst_size > ADMA_CH_CONFIG_MAX_BURST_SIZE)
+static unsigned int tegra210_adma_get_burst_config(unsigned int burst_size)
+{
+	if (!burst_size || burst_size > ADMA_CH_CONFIG_MAX_BURST_SIZE)
 		burst_size = ADMA_CH_CONFIG_MAX_BURST_SIZE;
 
-	वापस fls(burst_size) << ADMA_CH_CONFIG_BURST_SIZE_SHIFT;
-पूर्ण
+	return fls(burst_size) << ADMA_CH_CONFIG_BURST_SIZE_SHIFT;
+}
 
-अटल अचिन्हित पूर्णांक tegra186_adma_get_burst_config(अचिन्हित पूर्णांक burst_size)
-अणु
-	अगर (!burst_size || burst_size > ADMA_CH_CONFIG_MAX_BURST_SIZE)
+static unsigned int tegra186_adma_get_burst_config(unsigned int burst_size)
+{
+	if (!burst_size || burst_size > ADMA_CH_CONFIG_MAX_BURST_SIZE)
 		burst_size = ADMA_CH_CONFIG_MAX_BURST_SIZE;
 
-	वापस (burst_size - 1) << ADMA_CH_CONFIG_BURST_SIZE_SHIFT;
-पूर्ण
+	return (burst_size - 1) << ADMA_CH_CONFIG_BURST_SIZE_SHIFT;
+}
 
-अटल पूर्णांक tegra_adma_set_xfer_params(काष्ठा tegra_adma_chan *tdc,
-				      काष्ठा tegra_adma_desc *desc,
+static int tegra_adma_set_xfer_params(struct tegra_adma_chan *tdc,
+				      struct tegra_adma_desc *desc,
 				      dma_addr_t buf_addr,
-				      क्रमागत dma_transfer_direction direction)
-अणु
-	काष्ठा tegra_adma_chan_regs *ch_regs = &desc->ch_regs;
-	स्थिर काष्ठा tegra_adma_chip_data *cdata = tdc->tdma->cdata;
-	अचिन्हित पूर्णांक burst_size, adma_dir;
+				      enum dma_transfer_direction direction)
+{
+	struct tegra_adma_chan_regs *ch_regs = &desc->ch_regs;
+	const struct tegra_adma_chip_data *cdata = tdc->tdma->cdata;
+	unsigned int burst_size, adma_dir;
 
-	अगर (desc->num_periods > ADMA_CH_CONFIG_MAX_BUFS)
-		वापस -EINVAL;
+	if (desc->num_periods > ADMA_CH_CONFIG_MAX_BUFS)
+		return -EINVAL;
 
-	चयन (direction) अणु
-	हाल DMA_MEM_TO_DEV:
-		adma_dir = ADMA_CH_CTRL_सूची_MEM2AHUB;
+	switch (direction) {
+	case DMA_MEM_TO_DEV:
+		adma_dir = ADMA_CH_CTRL_DIR_MEM2AHUB;
 		burst_size = tdc->sconfig.dst_maxburst;
 		ch_regs->config = ADMA_CH_CONFIG_SRC_BUF(desc->num_periods - 1);
 		ch_regs->ctrl = ADMA_CH_REG_FIELD_VAL(tdc->sreq_index,
 						      cdata->ch_req_mask,
-						      cdata->ch_req_tx_shअगरt);
+						      cdata->ch_req_tx_shift);
 		ch_regs->src_addr = buf_addr;
-		अवरोध;
+		break;
 
-	हाल DMA_DEV_TO_MEM:
-		adma_dir = ADMA_CH_CTRL_सूची_AHUB2MEM;
+	case DMA_DEV_TO_MEM:
+		adma_dir = ADMA_CH_CTRL_DIR_AHUB2MEM;
 		burst_size = tdc->sconfig.src_maxburst;
 		ch_regs->config = ADMA_CH_CONFIG_TRG_BUF(desc->num_periods - 1);
 		ch_regs->ctrl = ADMA_CH_REG_FIELD_VAL(tdc->sreq_index,
 						      cdata->ch_req_mask,
-						      cdata->ch_req_rx_shअगरt);
+						      cdata->ch_req_rx_shift);
 		ch_regs->trg_addr = buf_addr;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		dev_err(tdc2dev(tdc), "DMA direction is not supported\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ch_regs->ctrl |= ADMA_CH_CTRL_सूची(adma_dir) |
+	ch_regs->ctrl |= ADMA_CH_CTRL_DIR(adma_dir) |
 			 ADMA_CH_CTRL_MODE_CONTINUOUS |
 			 ADMA_CH_CTRL_FLOWCTRL_EN;
 	ch_regs->config |= cdata->adma_get_burst_config(burst_size);
 	ch_regs->config |= ADMA_CH_CONFIG_WEIGHT_FOR_WRR(1);
-	अगर (cdata->has_outstanding_reqs)
+	if (cdata->has_outstanding_reqs)
 		ch_regs->config |= TEGRA186_ADMA_CH_CONFIG_OUTSTANDING_REQS(8);
-	ch_regs->fअगरo_ctrl = cdata->ch_fअगरo_ctrl;
+	ch_regs->fifo_ctrl = cdata->ch_fifo_ctrl;
 	ch_regs->tc = desc->period_len & ADMA_CH_TC_COUNT_MASK;
 
-	वापस tegra_adma_request_alloc(tdc, direction);
-पूर्ण
+	return tegra_adma_request_alloc(tdc, direction);
+}
 
-अटल काष्ठा dma_async_tx_descriptor *tegra_adma_prep_dma_cyclic(
-	काष्ठा dma_chan *dc, dma_addr_t buf_addr, माप_प्रकार buf_len,
-	माप_प्रकार period_len, क्रमागत dma_transfer_direction direction,
-	अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा tegra_adma_chan *tdc = to_tegra_adma_chan(dc);
-	काष्ठा tegra_adma_desc *desc = शून्य;
+static struct dma_async_tx_descriptor *tegra_adma_prep_dma_cyclic(
+	struct dma_chan *dc, dma_addr_t buf_addr, size_t buf_len,
+	size_t period_len, enum dma_transfer_direction direction,
+	unsigned long flags)
+{
+	struct tegra_adma_chan *tdc = to_tegra_adma_chan(dc);
+	struct tegra_adma_desc *desc = NULL;
 
-	अगर (!buf_len || !period_len || period_len > ADMA_CH_TC_COUNT_MASK) अणु
+	if (!buf_len || !period_len || period_len > ADMA_CH_TC_COUNT_MASK) {
 		dev_err(tdc2dev(tdc), "invalid buffer/period len\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	अगर (buf_len % period_len) अणु
+	if (buf_len % period_len) {
 		dev_err(tdc2dev(tdc), "buf_len not a multiple of period_len\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	अगर (!IS_ALIGNED(buf_addr, 4)) अणु
+	if (!IS_ALIGNED(buf_addr, 4)) {
 		dev_err(tdc2dev(tdc), "invalid buffer alignment\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	desc = kzalloc(माप(*desc), GFP_NOWAIT);
-	अगर (!desc)
-		वापस शून्य;
+	desc = kzalloc(sizeof(*desc), GFP_NOWAIT);
+	if (!desc)
+		return NULL;
 
 	desc->buf_len = buf_len;
 	desc->period_len = period_len;
 	desc->num_periods = buf_len / period_len;
 
-	अगर (tegra_adma_set_xfer_params(tdc, desc, buf_addr, direction)) अणु
-		kमुक्त(desc);
-		वापस शून्य;
-	पूर्ण
+	if (tegra_adma_set_xfer_params(tdc, desc, buf_addr, direction)) {
+		kfree(desc);
+		return NULL;
+	}
 
-	वापस vchan_tx_prep(&tdc->vc, &desc->vd, flags);
-पूर्ण
+	return vchan_tx_prep(&tdc->vc, &desc->vd, flags);
+}
 
-अटल पूर्णांक tegra_adma_alloc_chan_resources(काष्ठा dma_chan *dc)
-अणु
-	काष्ठा tegra_adma_chan *tdc = to_tegra_adma_chan(dc);
-	पूर्णांक ret;
+static int tegra_adma_alloc_chan_resources(struct dma_chan *dc)
+{
+	struct tegra_adma_chan *tdc = to_tegra_adma_chan(dc);
+	int ret;
 
 	ret = request_irq(tdc->irq, tegra_adma_isr, 0, dma_chan_name(dc), tdc);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(tdc2dev(tdc), "failed to get interrupt for %s\n",
 			dma_chan_name(dc));
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = pm_runसमय_get_sync(tdc2dev(tdc));
-	अगर (ret < 0) अणु
-		pm_runसमय_put_noidle(tdc2dev(tdc));
-		मुक्त_irq(tdc->irq, tdc);
-		वापस ret;
-	पूर्ण
+	ret = pm_runtime_get_sync(tdc2dev(tdc));
+	if (ret < 0) {
+		pm_runtime_put_noidle(tdc2dev(tdc));
+		free_irq(tdc->irq, tdc);
+		return ret;
+	}
 
 	dma_cookie_init(&tdc->vc.chan);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tegra_adma_मुक्त_chan_resources(काष्ठा dma_chan *dc)
-अणु
-	काष्ठा tegra_adma_chan *tdc = to_tegra_adma_chan(dc);
+static void tegra_adma_free_chan_resources(struct dma_chan *dc)
+{
+	struct tegra_adma_chan *tdc = to_tegra_adma_chan(dc);
 
 	tegra_adma_terminate_all(dc);
-	vchan_मुक्त_chan_resources(&tdc->vc);
-	tasklet_समाप्त(&tdc->vc.task);
-	मुक्त_irq(tdc->irq, tdc);
-	pm_runसमय_put(tdc2dev(tdc));
+	vchan_free_chan_resources(&tdc->vc);
+	tasklet_kill(&tdc->vc.task);
+	free_irq(tdc->irq, tdc);
+	pm_runtime_put(tdc2dev(tdc));
 
 	tdc->sreq_index = 0;
 	tdc->sreq_dir = DMA_TRANS_NONE;
-पूर्ण
+}
 
-अटल काष्ठा dma_chan *tegra_dma_of_xlate(काष्ठा of_phandle_args *dma_spec,
-					   काष्ठा of_dma *ofdma)
-अणु
-	काष्ठा tegra_adma *tdma = ofdma->of_dma_data;
-	काष्ठा tegra_adma_chan *tdc;
-	काष्ठा dma_chan *chan;
-	अचिन्हित पूर्णांक sreq_index;
+static struct dma_chan *tegra_dma_of_xlate(struct of_phandle_args *dma_spec,
+					   struct of_dma *ofdma)
+{
+	struct tegra_adma *tdma = ofdma->of_dma_data;
+	struct tegra_adma_chan *tdc;
+	struct dma_chan *chan;
+	unsigned int sreq_index;
 
-	अगर (dma_spec->args_count != 1)
-		वापस शून्य;
+	if (dma_spec->args_count != 1)
+		return NULL;
 
 	sreq_index = dma_spec->args[0];
 
-	अगर (sreq_index == 0) अणु
+	if (sreq_index == 0) {
 		dev_err(tdma->dev, "DMA request must not be 0\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	chan = dma_get_any_slave_channel(&tdma->dma_dev);
-	अगर (!chan)
-		वापस शून्य;
+	if (!chan)
+		return NULL;
 
 	tdc = to_tegra_adma_chan(chan);
 	tdc->sreq_index = sreq_index;
 
-	वापस chan;
-पूर्ण
+	return chan;
+}
 
-अटल पूर्णांक __maybe_unused tegra_adma_runसमय_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा tegra_adma *tdma = dev_get_drvdata(dev);
-	काष्ठा tegra_adma_chan_regs *ch_reg;
-	काष्ठा tegra_adma_chan *tdc;
-	पूर्णांक i;
+static int __maybe_unused tegra_adma_runtime_suspend(struct device *dev)
+{
+	struct tegra_adma *tdma = dev_get_drvdata(dev);
+	struct tegra_adma_chan_regs *ch_reg;
+	struct tegra_adma_chan *tdc;
+	int i;
 
-	tdma->global_cmd = tdma_पढ़ो(tdma, ADMA_GLOBAL_CMD);
-	अगर (!tdma->global_cmd)
-		जाओ clk_disable;
+	tdma->global_cmd = tdma_read(tdma, ADMA_GLOBAL_CMD);
+	if (!tdma->global_cmd)
+		goto clk_disable;
 
-	क्रम (i = 0; i < tdma->nr_channels; i++) अणु
+	for (i = 0; i < tdma->nr_channels; i++) {
 		tdc = &tdma->channels[i];
 		ch_reg = &tdc->ch_regs;
-		ch_reg->cmd = tdma_ch_पढ़ो(tdc, ADMA_CH_CMD);
-		/* skip अगर channel is not active */
-		अगर (!ch_reg->cmd)
-			जारी;
-		ch_reg->tc = tdma_ch_पढ़ो(tdc, ADMA_CH_TC);
-		ch_reg->src_addr = tdma_ch_पढ़ो(tdc, ADMA_CH_LOWER_SRC_ADDR);
-		ch_reg->trg_addr = tdma_ch_पढ़ो(tdc, ADMA_CH_LOWER_TRG_ADDR);
-		ch_reg->ctrl = tdma_ch_पढ़ो(tdc, ADMA_CH_CTRL);
-		ch_reg->fअगरo_ctrl = tdma_ch_पढ़ो(tdc, ADMA_CH_FIFO_CTRL);
-		ch_reg->config = tdma_ch_पढ़ो(tdc, ADMA_CH_CONFIG);
-	पूर्ण
+		ch_reg->cmd = tdma_ch_read(tdc, ADMA_CH_CMD);
+		/* skip if channel is not active */
+		if (!ch_reg->cmd)
+			continue;
+		ch_reg->tc = tdma_ch_read(tdc, ADMA_CH_TC);
+		ch_reg->src_addr = tdma_ch_read(tdc, ADMA_CH_LOWER_SRC_ADDR);
+		ch_reg->trg_addr = tdma_ch_read(tdc, ADMA_CH_LOWER_TRG_ADDR);
+		ch_reg->ctrl = tdma_ch_read(tdc, ADMA_CH_CTRL);
+		ch_reg->fifo_ctrl = tdma_ch_read(tdc, ADMA_CH_FIFO_CTRL);
+		ch_reg->config = tdma_ch_read(tdc, ADMA_CH_CONFIG);
+	}
 
 clk_disable:
 	clk_disable_unprepare(tdma->ahub_clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused tegra_adma_runसमय_resume(काष्ठा device *dev)
-अणु
-	काष्ठा tegra_adma *tdma = dev_get_drvdata(dev);
-	काष्ठा tegra_adma_chan_regs *ch_reg;
-	काष्ठा tegra_adma_chan *tdc;
-	पूर्णांक ret, i;
+static int __maybe_unused tegra_adma_runtime_resume(struct device *dev)
+{
+	struct tegra_adma *tdma = dev_get_drvdata(dev);
+	struct tegra_adma_chan_regs *ch_reg;
+	struct tegra_adma_chan *tdc;
+	int ret, i;
 
 	ret = clk_prepare_enable(tdma->ahub_clk);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "ahub clk_enable failed: %d\n", ret);
-		वापस ret;
-	पूर्ण
-	tdma_ग_लिखो(tdma, ADMA_GLOBAL_CMD, tdma->global_cmd);
+		return ret;
+	}
+	tdma_write(tdma, ADMA_GLOBAL_CMD, tdma->global_cmd);
 
-	अगर (!tdma->global_cmd)
-		वापस 0;
+	if (!tdma->global_cmd)
+		return 0;
 
-	क्रम (i = 0; i < tdma->nr_channels; i++) अणु
+	for (i = 0; i < tdma->nr_channels; i++) {
 		tdc = &tdma->channels[i];
 		ch_reg = &tdc->ch_regs;
-		/* skip अगर channel was not active earlier */
-		अगर (!ch_reg->cmd)
-			जारी;
-		tdma_ch_ग_लिखो(tdc, ADMA_CH_TC, ch_reg->tc);
-		tdma_ch_ग_लिखो(tdc, ADMA_CH_LOWER_SRC_ADDR, ch_reg->src_addr);
-		tdma_ch_ग_लिखो(tdc, ADMA_CH_LOWER_TRG_ADDR, ch_reg->trg_addr);
-		tdma_ch_ग_लिखो(tdc, ADMA_CH_CTRL, ch_reg->ctrl);
-		tdma_ch_ग_लिखो(tdc, ADMA_CH_FIFO_CTRL, ch_reg->fअगरo_ctrl);
-		tdma_ch_ग_लिखो(tdc, ADMA_CH_CONFIG, ch_reg->config);
-		tdma_ch_ग_लिखो(tdc, ADMA_CH_CMD, ch_reg->cmd);
-	पूर्ण
+		/* skip if channel was not active earlier */
+		if (!ch_reg->cmd)
+			continue;
+		tdma_ch_write(tdc, ADMA_CH_TC, ch_reg->tc);
+		tdma_ch_write(tdc, ADMA_CH_LOWER_SRC_ADDR, ch_reg->src_addr);
+		tdma_ch_write(tdc, ADMA_CH_LOWER_TRG_ADDR, ch_reg->trg_addr);
+		tdma_ch_write(tdc, ADMA_CH_CTRL, ch_reg->ctrl);
+		tdma_ch_write(tdc, ADMA_CH_FIFO_CTRL, ch_reg->fifo_ctrl);
+		tdma_ch_write(tdc, ADMA_CH_CONFIG, ch_reg->config);
+		tdma_ch_write(tdc, ADMA_CH_CMD, ch_reg->cmd);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा tegra_adma_chip_data tegra210_chip_data = अणु
+static const struct tegra_adma_chip_data tegra210_chip_data = {
 	.adma_get_burst_config  = tegra210_adma_get_burst_config,
 	.global_reg_offset	= 0xc00,
-	.global_पूर्णांक_clear	= 0x20,
-	.ch_req_tx_shअगरt	= 28,
-	.ch_req_rx_shअगरt	= 24,
+	.global_int_clear	= 0x20,
+	.ch_req_tx_shift	= 28,
+	.ch_req_rx_shift	= 24,
 	.ch_base_offset		= 0,
 	.has_outstanding_reqs	= false,
-	.ch_fअगरo_ctrl		= TEGRA210_FIFO_CTRL_DEFAULT,
+	.ch_fifo_ctrl		= TEGRA210_FIFO_CTRL_DEFAULT,
 	.ch_req_mask		= 0xf,
 	.ch_req_max		= 10,
 	.ch_reg_size		= 0x80,
 	.nr_channels		= 22,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा tegra_adma_chip_data tegra186_chip_data = अणु
+static const struct tegra_adma_chip_data tegra186_chip_data = {
 	.adma_get_burst_config  = tegra186_adma_get_burst_config,
 	.global_reg_offset	= 0,
-	.global_पूर्णांक_clear	= 0x402c,
-	.ch_req_tx_shअगरt	= 27,
-	.ch_req_rx_shअगरt	= 22,
+	.global_int_clear	= 0x402c,
+	.ch_req_tx_shift	= 27,
+	.ch_req_rx_shift	= 22,
 	.ch_base_offset		= 0x10000,
 	.has_outstanding_reqs	= true,
-	.ch_fअगरo_ctrl		= TEGRA186_FIFO_CTRL_DEFAULT,
+	.ch_fifo_ctrl		= TEGRA186_FIFO_CTRL_DEFAULT,
 	.ch_req_mask		= 0x1f,
 	.ch_req_max		= 20,
 	.ch_reg_size		= 0x100,
 	.nr_channels		= 32,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id tegra_adma_of_match[] = अणु
-	अणु .compatible = "nvidia,tegra210-adma", .data = &tegra210_chip_data पूर्ण,
-	अणु .compatible = "nvidia,tegra186-adma", .data = &tegra186_chip_data पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct of_device_id tegra_adma_of_match[] = {
+	{ .compatible = "nvidia,tegra210-adma", .data = &tegra210_chip_data },
+	{ .compatible = "nvidia,tegra186-adma", .data = &tegra186_chip_data },
+	{ },
+};
 MODULE_DEVICE_TABLE(of, tegra_adma_of_match);
 
-अटल पूर्णांक tegra_adma_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	स्थिर काष्ठा tegra_adma_chip_data *cdata;
-	काष्ठा tegra_adma *tdma;
-	काष्ठा resource	*res;
-	पूर्णांक ret, i;
+static int tegra_adma_probe(struct platform_device *pdev)
+{
+	const struct tegra_adma_chip_data *cdata;
+	struct tegra_adma *tdma;
+	struct resource	*res;
+	int ret, i;
 
 	cdata = of_device_get_match_data(&pdev->dev);
-	अगर (!cdata) अणु
+	if (!cdata) {
 		dev_err(&pdev->dev, "device match data not found\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	tdma = devm_kzalloc(&pdev->dev,
-			    काष्ठा_size(tdma, channels, cdata->nr_channels),
+			    struct_size(tdma, channels, cdata->nr_channels),
 			    GFP_KERNEL);
-	अगर (!tdma)
-		वापस -ENOMEM;
+	if (!tdma)
+		return -ENOMEM;
 
 	tdma->dev = &pdev->dev;
 	tdma->cdata = cdata;
 	tdma->nr_channels = cdata->nr_channels;
-	platक्रमm_set_drvdata(pdev, tdma);
+	platform_set_drvdata(pdev, tdma);
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	tdma->base_addr = devm_ioremap_resource(&pdev->dev, res);
-	अगर (IS_ERR(tdma->base_addr))
-		वापस PTR_ERR(tdma->base_addr);
+	if (IS_ERR(tdma->base_addr))
+		return PTR_ERR(tdma->base_addr);
 
 	tdma->ahub_clk = devm_clk_get(&pdev->dev, "d_audio");
-	अगर (IS_ERR(tdma->ahub_clk)) अणु
+	if (IS_ERR(tdma->ahub_clk)) {
 		dev_err(&pdev->dev, "Error: Missing ahub controller clock\n");
-		वापस PTR_ERR(tdma->ahub_clk);
-	पूर्ण
+		return PTR_ERR(tdma->ahub_clk);
+	}
 
 	INIT_LIST_HEAD(&tdma->dma_dev.channels);
-	क्रम (i = 0; i < tdma->nr_channels; i++) अणु
-		काष्ठा tegra_adma_chan *tdc = &tdma->channels[i];
+	for (i = 0; i < tdma->nr_channels; i++) {
+		struct tegra_adma_chan *tdc = &tdma->channels[i];
 
 		tdc->chan_addr = tdma->base_addr + cdata->ch_base_offset
 				 + (cdata->ch_reg_size * i);
 
 		tdc->irq = of_irq_get(pdev->dev.of_node, i);
-		अगर (tdc->irq <= 0) अणु
+		if (tdc->irq <= 0) {
 			ret = tdc->irq ?: -ENXIO;
-			जाओ irq_dispose;
-		पूर्ण
+			goto irq_dispose;
+		}
 
 		vchan_init(&tdc->vc, &tdma->dma_dev);
-		tdc->vc.desc_मुक्त = tegra_adma_desc_मुक्त;
+		tdc->vc.desc_free = tegra_adma_desc_free;
 		tdc->tdma = tdma;
-	पूर्ण
+	}
 
-	pm_runसमय_enable(&pdev->dev);
+	pm_runtime_enable(&pdev->dev);
 
-	ret = pm_runसमय_get_sync(&pdev->dev);
-	अगर (ret < 0) अणु
-		pm_runसमय_put_noidle(&pdev->dev);
-		जाओ rpm_disable;
-	पूर्ण
+	ret = pm_runtime_get_sync(&pdev->dev);
+	if (ret < 0) {
+		pm_runtime_put_noidle(&pdev->dev);
+		goto rpm_disable;
+	}
 
 	ret = tegra_adma_init(tdma);
-	अगर (ret)
-		जाओ rpm_put;
+	if (ret)
+		goto rpm_put;
 
 	dma_cap_set(DMA_SLAVE, tdma->dma_dev.cap_mask);
 	dma_cap_set(DMA_PRIVATE, tdma->dma_dev.cap_mask);
@@ -886,8 +885,8 @@ MODULE_DEVICE_TABLE(of, tegra_adma_of_match);
 	tdma->dma_dev.dev = &pdev->dev;
 	tdma->dma_dev.device_alloc_chan_resources =
 					tegra_adma_alloc_chan_resources;
-	tdma->dma_dev.device_मुक्त_chan_resources =
-					tegra_adma_मुक्त_chan_resources;
+	tdma->dma_dev.device_free_chan_resources =
+					tegra_adma_free_chan_resources;
 	tdma->dma_dev.device_issue_pending = tegra_adma_issue_pending;
 	tdma->dma_dev.device_prep_dma_cyclic = tegra_adma_prep_dma_cyclic;
 	tdma->dma_dev.device_config = tegra_adma_slave_config;
@@ -897,77 +896,77 @@ MODULE_DEVICE_TABLE(of, tegra_adma_of_match);
 	tdma->dma_dev.dst_addr_widths = BIT(DMA_SLAVE_BUSWIDTH_4_BYTES);
 	tdma->dma_dev.directions = BIT(DMA_DEV_TO_MEM) | BIT(DMA_MEM_TO_DEV);
 	tdma->dma_dev.residue_granularity = DMA_RESIDUE_GRANULARITY_SEGMENT;
-	tdma->dma_dev.device_छोड़ो = tegra_adma_छोड़ो;
+	tdma->dma_dev.device_pause = tegra_adma_pause;
 	tdma->dma_dev.device_resume = tegra_adma_resume;
 
-	ret = dma_async_device_रेजिस्टर(&tdma->dma_dev);
-	अगर (ret < 0) अणु
+	ret = dma_async_device_register(&tdma->dma_dev);
+	if (ret < 0) {
 		dev_err(&pdev->dev, "ADMA registration failed: %d\n", ret);
-		जाओ rpm_put;
-	पूर्ण
+		goto rpm_put;
+	}
 
-	ret = of_dma_controller_रेजिस्टर(pdev->dev.of_node,
+	ret = of_dma_controller_register(pdev->dev.of_node,
 					 tegra_dma_of_xlate, tdma);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&pdev->dev, "ADMA OF registration failed %d\n", ret);
-		जाओ dma_हटाओ;
-	पूर्ण
+		goto dma_remove;
+	}
 
-	pm_runसमय_put(&pdev->dev);
+	pm_runtime_put(&pdev->dev);
 
 	dev_info(&pdev->dev, "Tegra210 ADMA driver registered %d channels\n",
 		 tdma->nr_channels);
 
-	वापस 0;
+	return 0;
 
-dma_हटाओ:
-	dma_async_device_unरेजिस्टर(&tdma->dma_dev);
+dma_remove:
+	dma_async_device_unregister(&tdma->dma_dev);
 rpm_put:
-	pm_runसमय_put_sync(&pdev->dev);
+	pm_runtime_put_sync(&pdev->dev);
 rpm_disable:
-	pm_runसमय_disable(&pdev->dev);
+	pm_runtime_disable(&pdev->dev);
 irq_dispose:
-	जबतक (--i >= 0)
+	while (--i >= 0)
 		irq_dispose_mapping(tdma->channels[i].irq);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक tegra_adma_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा tegra_adma *tdma = platक्रमm_get_drvdata(pdev);
-	पूर्णांक i;
+static int tegra_adma_remove(struct platform_device *pdev)
+{
+	struct tegra_adma *tdma = platform_get_drvdata(pdev);
+	int i;
 
-	of_dma_controller_मुक्त(pdev->dev.of_node);
-	dma_async_device_unरेजिस्टर(&tdma->dma_dev);
+	of_dma_controller_free(pdev->dev.of_node);
+	dma_async_device_unregister(&tdma->dma_dev);
 
-	क्रम (i = 0; i < tdma->nr_channels; ++i)
+	for (i = 0; i < tdma->nr_channels; ++i)
 		irq_dispose_mapping(tdma->channels[i].irq);
 
-	pm_runसमय_put_sync(&pdev->dev);
-	pm_runसमय_disable(&pdev->dev);
+	pm_runtime_put_sync(&pdev->dev);
+	pm_runtime_disable(&pdev->dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops tegra_adma_dev_pm_ops = अणु
-	SET_RUNTIME_PM_OPS(tegra_adma_runसमय_suspend,
-			   tegra_adma_runसमय_resume, शून्य)
-	SET_LATE_SYSTEM_SLEEP_PM_OPS(pm_runसमय_क्रमce_suspend,
-				     pm_runसमय_क्रमce_resume)
-पूर्ण;
+static const struct dev_pm_ops tegra_adma_dev_pm_ops = {
+	SET_RUNTIME_PM_OPS(tegra_adma_runtime_suspend,
+			   tegra_adma_runtime_resume, NULL)
+	SET_LATE_SYSTEM_SLEEP_PM_OPS(pm_runtime_force_suspend,
+				     pm_runtime_force_resume)
+};
 
-अटल काष्ठा platक्रमm_driver tegra_admac_driver = अणु
-	.driver = अणु
+static struct platform_driver tegra_admac_driver = {
+	.driver = {
 		.name	= "tegra-adma",
 		.pm	= &tegra_adma_dev_pm_ops,
 		.of_match_table = tegra_adma_of_match,
-	पूर्ण,
+	},
 	.probe		= tegra_adma_probe,
-	.हटाओ		= tegra_adma_हटाओ,
-पूर्ण;
+	.remove		= tegra_adma_remove,
+};
 
-module_platक्रमm_driver(tegra_admac_driver);
+module_platform_driver(tegra_admac_driver);
 
 MODULE_ALIAS("platform:tegra210-adma");
 MODULE_DESCRIPTION("NVIDIA Tegra ADMA driver");

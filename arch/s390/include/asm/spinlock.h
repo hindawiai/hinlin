@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  *  S390 version
  *    Copyright IBM Corp. 1999
@@ -8,149 +7,149 @@
  *  Derived from "include/asm-i386/spinlock.h"
  */
 
-#अगर_अघोषित __ASM_SPINLOCK_H
-#घोषणा __ASM_SPINLOCK_H
+#ifndef __ASM_SPINLOCK_H
+#define __ASM_SPINLOCK_H
 
-#समावेश <linux/smp.h>
-#समावेश <यंत्र/atomic_ops.h>
-#समावेश <यंत्र/barrier.h>
-#समावेश <यंत्र/processor.h>
-#समावेश <यंत्र/alternative.h>
+#include <linux/smp.h>
+#include <asm/atomic_ops.h>
+#include <asm/barrier.h>
+#include <asm/processor.h>
+#include <asm/alternative.h>
 
-#घोषणा SPINLOCK_LOCKVAL (S390_lowcore.spinlock_lockval)
+#define SPINLOCK_LOCKVAL (S390_lowcore.spinlock_lockval)
 
-बाह्य पूर्णांक spin_retry;
+extern int spin_retry;
 
-bool arch_vcpu_is_preempted(पूर्णांक cpu);
+bool arch_vcpu_is_preempted(int cpu);
 
-#घोषणा vcpu_is_preempted arch_vcpu_is_preempted
+#define vcpu_is_preempted arch_vcpu_is_preempted
 
 /*
  * Simple spin lock operations.  There are two variants, one clears IRQ's
- * on the local processor, one करोes not.
+ * on the local processor, one does not.
  *
  * We make no fairness assumptions. They have a cost.
  *
- * (the type definitions are in यंत्र/spinlock_types.h)
+ * (the type definitions are in asm/spinlock_types.h)
  */
 
-व्योम arch_spin_relax(arch_spinlock_t *lock);
-#घोषणा arch_spin_relax	arch_spin_relax
+void arch_spin_relax(arch_spinlock_t *lock);
+#define arch_spin_relax	arch_spin_relax
 
-व्योम arch_spin_lock_रुको(arch_spinlock_t *);
-पूर्णांक arch_spin_trylock_retry(arch_spinlock_t *);
-व्योम arch_spin_lock_setup(पूर्णांक cpu);
+void arch_spin_lock_wait(arch_spinlock_t *);
+int arch_spin_trylock_retry(arch_spinlock_t *);
+void arch_spin_lock_setup(int cpu);
 
-अटल अंतरभूत u32 arch_spin_lockval(पूर्णांक cpu)
-अणु
-	वापस cpu + 1;
-पूर्ण
+static inline u32 arch_spin_lockval(int cpu)
+{
+	return cpu + 1;
+}
 
-अटल अंतरभूत पूर्णांक arch_spin_value_unlocked(arch_spinlock_t lock)
-अणु
-	वापस lock.lock == 0;
-पूर्ण
+static inline int arch_spin_value_unlocked(arch_spinlock_t lock)
+{
+	return lock.lock == 0;
+}
 
-अटल अंतरभूत पूर्णांक arch_spin_is_locked(arch_spinlock_t *lp)
-अणु
-	वापस READ_ONCE(lp->lock) != 0;
-पूर्ण
+static inline int arch_spin_is_locked(arch_spinlock_t *lp)
+{
+	return READ_ONCE(lp->lock) != 0;
+}
 
-अटल अंतरभूत पूर्णांक arch_spin_trylock_once(arch_spinlock_t *lp)
-अणु
+static inline int arch_spin_trylock_once(arch_spinlock_t *lp)
+{
 	barrier();
-	वापस likely(__atomic_cmpxchg_bool(&lp->lock, 0, SPINLOCK_LOCKVAL));
-पूर्ण
+	return likely(__atomic_cmpxchg_bool(&lp->lock, 0, SPINLOCK_LOCKVAL));
+}
 
-अटल अंतरभूत व्योम arch_spin_lock(arch_spinlock_t *lp)
-अणु
-	अगर (!arch_spin_trylock_once(lp))
-		arch_spin_lock_रुको(lp);
-पूर्ण
+static inline void arch_spin_lock(arch_spinlock_t *lp)
+{
+	if (!arch_spin_trylock_once(lp))
+		arch_spin_lock_wait(lp);
+}
 
-अटल अंतरभूत व्योम arch_spin_lock_flags(arch_spinlock_t *lp,
-					अचिन्हित दीर्घ flags)
-अणु
-	अगर (!arch_spin_trylock_once(lp))
-		arch_spin_lock_रुको(lp);
-पूर्ण
-#घोषणा arch_spin_lock_flags	arch_spin_lock_flags
+static inline void arch_spin_lock_flags(arch_spinlock_t *lp,
+					unsigned long flags)
+{
+	if (!arch_spin_trylock_once(lp))
+		arch_spin_lock_wait(lp);
+}
+#define arch_spin_lock_flags	arch_spin_lock_flags
 
-अटल अंतरभूत पूर्णांक arch_spin_trylock(arch_spinlock_t *lp)
-अणु
-	अगर (!arch_spin_trylock_once(lp))
-		वापस arch_spin_trylock_retry(lp);
-	वापस 1;
-पूर्ण
+static inline int arch_spin_trylock(arch_spinlock_t *lp)
+{
+	if (!arch_spin_trylock_once(lp))
+		return arch_spin_trylock_retry(lp);
+	return 1;
+}
 
-अटल अंतरभूत व्योम arch_spin_unlock(arch_spinlock_t *lp)
-अणु
-	typecheck(पूर्णांक, lp->lock);
-	यंत्र_अंतरभूत अस्थिर(
+static inline void arch_spin_unlock(arch_spinlock_t *lp)
+{
+	typecheck(int, lp->lock);
+	asm_inline volatile(
 		ALTERNATIVE("", ".long 0xb2fa0070", 49)	/* NIAI 7 */
 		"	sth	%1,%0\n"
-		: "=R" (((अचिन्हित लघु *) &lp->lock)[1])
+		: "=R" (((unsigned short *) &lp->lock)[1])
 		: "d" (0) : "cc", "memory");
-पूर्ण
+}
 
 /*
- * Read-ग_लिखो spinlocks, allowing multiple पढ़ोers
- * but only one ग_लिखोr.
+ * Read-write spinlocks, allowing multiple readers
+ * but only one writer.
  *
- * NOTE! it is quite common to have पढ़ोers in पूर्णांकerrupts
- * but no पूर्णांकerrupt ग_लिखोrs. For those circumstances we
- * can "mix" irq-safe locks - any ग_लिखोr needs to get a
- * irq-safe ग_लिखो-lock, but पढ़ोers can get non-irqsafe
- * पढ़ो-locks.
+ * NOTE! it is quite common to have readers in interrupts
+ * but no interrupt writers. For those circumstances we
+ * can "mix" irq-safe locks - any writer needs to get a
+ * irq-safe write-lock, but readers can get non-irqsafe
+ * read-locks.
  */
 
-#घोषणा arch_पढ़ो_relax(rw) barrier()
-#घोषणा arch_ग_लिखो_relax(rw) barrier()
+#define arch_read_relax(rw) barrier()
+#define arch_write_relax(rw) barrier()
 
-व्योम arch_पढ़ो_lock_रुको(arch_rwlock_t *lp);
-व्योम arch_ग_लिखो_lock_रुको(arch_rwlock_t *lp);
+void arch_read_lock_wait(arch_rwlock_t *lp);
+void arch_write_lock_wait(arch_rwlock_t *lp);
 
-अटल अंतरभूत व्योम arch_पढ़ो_lock(arch_rwlock_t *rw)
-अणु
-	पूर्णांक old;
+static inline void arch_read_lock(arch_rwlock_t *rw)
+{
+	int old;
 
 	old = __atomic_add(1, &rw->cnts);
-	अगर (old & 0xffff0000)
-		arch_पढ़ो_lock_रुको(rw);
-पूर्ण
+	if (old & 0xffff0000)
+		arch_read_lock_wait(rw);
+}
 
-अटल अंतरभूत व्योम arch_पढ़ो_unlock(arch_rwlock_t *rw)
-अणु
-	__atomic_add_स्थिर_barrier(-1, &rw->cnts);
-पूर्ण
+static inline void arch_read_unlock(arch_rwlock_t *rw)
+{
+	__atomic_add_const_barrier(-1, &rw->cnts);
+}
 
-अटल अंतरभूत व्योम arch_ग_लिखो_lock(arch_rwlock_t *rw)
-अणु
-	अगर (!__atomic_cmpxchg_bool(&rw->cnts, 0, 0x30000))
-		arch_ग_लिखो_lock_रुको(rw);
-पूर्ण
+static inline void arch_write_lock(arch_rwlock_t *rw)
+{
+	if (!__atomic_cmpxchg_bool(&rw->cnts, 0, 0x30000))
+		arch_write_lock_wait(rw);
+}
 
-अटल अंतरभूत व्योम arch_ग_लिखो_unlock(arch_rwlock_t *rw)
-अणु
+static inline void arch_write_unlock(arch_rwlock_t *rw)
+{
 	__atomic_add_barrier(-0x30000, &rw->cnts);
-पूर्ण
+}
 
 
-अटल अंतरभूत पूर्णांक arch_पढ़ो_trylock(arch_rwlock_t *rw)
-अणु
-	पूर्णांक old;
+static inline int arch_read_trylock(arch_rwlock_t *rw)
+{
+	int old;
 
 	old = READ_ONCE(rw->cnts);
-	वापस (!(old & 0xffff0000) &&
+	return (!(old & 0xffff0000) &&
 		__atomic_cmpxchg_bool(&rw->cnts, old, old + 1));
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक arch_ग_लिखो_trylock(arch_rwlock_t *rw)
-अणु
-	पूर्णांक old;
+static inline int arch_write_trylock(arch_rwlock_t *rw)
+{
+	int old;
 
 	old = READ_ONCE(rw->cnts);
-	वापस !old && __atomic_cmpxchg_bool(&rw->cnts, 0, 0x30000);
-पूर्ण
+	return !old && __atomic_cmpxchg_bool(&rw->cnts, 0, 0x30000);
+}
 
-#पूर्ण_अगर /* __ASM_SPINLOCK_H */
+#endif /* __ASM_SPINLOCK_H */

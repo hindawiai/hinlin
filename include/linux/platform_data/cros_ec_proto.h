@@ -1,62 +1,61 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * ChromeOS Embedded Controller protocol पूर्णांकerface.
+ * ChromeOS Embedded Controller protocol interface.
  *
  * Copyright (C) 2012 Google, Inc
  */
 
-#अगर_अघोषित __LINUX_CROS_EC_PROTO_H
-#घोषणा __LINUX_CROS_EC_PROTO_H
+#ifndef __LINUX_CROS_EC_PROTO_H
+#define __LINUX_CROS_EC_PROTO_H
 
-#समावेश <linux/device.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/notअगरier.h>
+#include <linux/device.h>
+#include <linux/mutex.h>
+#include <linux/notifier.h>
 
-#समावेश <linux/platक्रमm_data/cros_ec_commands.h>
+#include <linux/platform_data/cros_ec_commands.h>
 
-#घोषणा CROS_EC_DEV_NAME	"cros_ec"
-#घोषणा CROS_EC_DEV_FP_NAME	"cros_fp"
-#घोषणा CROS_EC_DEV_ISH_NAME	"cros_ish"
-#घोषणा CROS_EC_DEV_PD_NAME	"cros_pd"
-#घोषणा CROS_EC_DEV_SCP_NAME	"cros_scp"
-#घोषणा CROS_EC_DEV_TP_NAME	"cros_tp"
+#define CROS_EC_DEV_NAME	"cros_ec"
+#define CROS_EC_DEV_FP_NAME	"cros_fp"
+#define CROS_EC_DEV_ISH_NAME	"cros_ish"
+#define CROS_EC_DEV_PD_NAME	"cros_pd"
+#define CROS_EC_DEV_SCP_NAME	"cros_scp"
+#define CROS_EC_DEV_TP_NAME	"cros_tp"
 
 /*
- * The EC is unresponsive क्रम a समय after a reboot command.  Add a
+ * The EC is unresponsive for a time after a reboot command.  Add a
  * simple delay to make sure that the bus stays locked.
  */
-#घोषणा EC_REBOOT_DELAY_MS		50
+#define EC_REBOOT_DELAY_MS		50
 
 /*
- * Max bus-specअगरic overhead incurred by request/responses.
- * I2C requires 1 additional byte क्रम requests.
- * I2C requires 2 additional bytes क्रम responses.
- * SPI requires up to 32 additional bytes क्रम responses.
+ * Max bus-specific overhead incurred by request/responses.
+ * I2C requires 1 additional byte for requests.
+ * I2C requires 2 additional bytes for responses.
+ * SPI requires up to 32 additional bytes for responses.
  */
-#घोषणा EC_PROTO_VERSION_UNKNOWN	0
-#घोषणा EC_MAX_REQUEST_OVERHEAD		1
-#घोषणा EC_MAX_RESPONSE_OVERHEAD	32
+#define EC_PROTO_VERSION_UNKNOWN	0
+#define EC_MAX_REQUEST_OVERHEAD		1
+#define EC_MAX_RESPONSE_OVERHEAD	32
 
 /*
- * Command पूर्णांकerface between EC and AP, क्रम LPC, I2C and SPI पूर्णांकerfaces.
+ * Command interface between EC and AP, for LPC, I2C and SPI interfaces.
  */
-क्रमागत अणु
+enum {
 	EC_MSG_TX_HEADER_BYTES	= 3,
 	EC_MSG_TX_TRAILER_BYTES	= 1,
 	EC_MSG_TX_PROTO_BYTES	= EC_MSG_TX_HEADER_BYTES +
 				  EC_MSG_TX_TRAILER_BYTES,
 	EC_MSG_RX_PROTO_BYTES	= 3,
 
-	/* Max length of messages क्रम proto 2*/
+	/* Max length of messages for proto 2*/
 	EC_PROTO2_MSG_BYTES	= EC_PROTO2_MAX_PARAM_SIZE +
 				  EC_MSG_TX_PROTO_BYTES,
 
 	EC_MAX_MSG_BYTES	= 64 * 1024,
-पूर्ण;
+};
 
 /**
- * काष्ठा cros_ec_command - Inक्रमmation about a ChromeOS EC command.
+ * struct cros_ec_command - Information about a ChromeOS EC command.
  * @version: Command version number (often 0).
  * @command: Command to send (EC_CMD_...).
  * @outsize: Outgoing length in bytes.
@@ -64,185 +63,185 @@
  * @result: EC's response to the command (separate from communication failure).
  * @data: Where to put the incoming data from EC and outgoing data to EC.
  */
-काष्ठा cros_ec_command अणु
-	uपूर्णांक32_t version;
-	uपूर्णांक32_t command;
-	uपूर्णांक32_t outsize;
-	uपूर्णांक32_t insize;
-	uपूर्णांक32_t result;
-	uपूर्णांक8_t data[];
-पूर्ण;
+struct cros_ec_command {
+	uint32_t version;
+	uint32_t command;
+	uint32_t outsize;
+	uint32_t insize;
+	uint32_t result;
+	uint8_t data[];
+};
 
 /**
- * काष्ठा cros_ec_device - Inक्रमmation about a ChromeOS EC device.
+ * struct cros_ec_device - Information about a ChromeOS EC device.
  * @phys_name: Name of physical comms layer (e.g. 'i2c-4').
- * @dev: Device poपूर्णांकer क्रम physical comms device
- * @was_wake_device: True अगर this device was set to wake the प्रणाली from
+ * @dev: Device pointer for physical comms device
+ * @was_wake_device: True if this device was set to wake the system from
  *                   sleep at the last suspend.
- * @cros_class: The class काष्ठाure क्रम this device.
- * @cmd_पढ़ोmem: Direct पढ़ो of the EC memory-mapped region, अगर supported.
+ * @cros_class: The class structure for this device.
+ * @cmd_readmem: Direct read of the EC memory-mapped region, if supported.
  *     @offset: Is within EC_LPC_ADDR_MEMMAP region.
- *     @bytes: Number of bytes to पढ़ो. zero means "read a string" (including
+ *     @bytes: Number of bytes to read. zero means "read a string" (including
  *             the trailing '\0'). At most only EC_MEMMAP_SIZE bytes can be
- *             पढ़ो. Caller must ensure that the buffer is large enough क्रम the
- *             result when पढ़ोing a string.
+ *             read. Caller must ensure that the buffer is large enough for the
+ *             result when reading a string.
  * @max_request: Max size of message requested.
  * @max_response: Max size of message response.
  * @max_passthru: Max sice of passthru message.
- * @proto_version: The protocol version used क्रम this device.
+ * @proto_version: The protocol version used for this device.
  * @priv: Private data.
  * @irq: Interrupt to use.
  * @id: Device id.
- * @din: Input buffer (क्रम data from EC). This buffer will always be
- *       dword-aligned and include enough space क्रम up to 7 word-alignment
+ * @din: Input buffer (for data from EC). This buffer will always be
+ *       dword-aligned and include enough space for up to 7 word-alignment
  *       bytes also, so we can ensure that the body of the message is always
  *       dword-aligned (64-bit). We use this alignment to keep ARM and x86
  *       happy. Probably word alignment would be OK, there might be a small
- *       perक्रमmance advantage to using dword.
- * @करोut: Output buffer (क्रम data to EC). This buffer will always be
- *        dword-aligned and include enough space क्रम up to 7 word-alignment
+ *       performance advantage to using dword.
+ * @dout: Output buffer (for data to EC). This buffer will always be
+ *        dword-aligned and include enough space for up to 7 word-alignment
  *        bytes also, so we can ensure that the body of the message is always
  *        dword-aligned (64-bit). We use this alignment to keep ARM and x86
  *        happy. Probably word alignment would be OK, there might be a small
- *        perक्रमmance advantage to using dword.
- * @din_size: Size of din buffer to allocate (zero to use अटल din).
- * @करोut_size: Size of करोut buffer to allocate (zero to use अटल करोut).
- * @wake_enabled: True अगर this device can wake the प्रणाली from sleep.
- * @suspended: True अगर this device had been suspended.
+ *        performance advantage to using dword.
+ * @din_size: Size of din buffer to allocate (zero to use static din).
+ * @dout_size: Size of dout buffer to allocate (zero to use static dout).
+ * @wake_enabled: True if this device can wake the system from sleep.
+ * @suspended: True if this device had been suspended.
  * @cmd_xfer: Send command to EC and get response.
- *            Returns the number of bytes received अगर the communication
- *            succeeded, but that करोesn't mean the EC was happy with the
- *            command. The caller should check msg.result क्रम the EC's result
+ *            Returns the number of bytes received if the communication
+ *            succeeded, but that doesn't mean the EC was happy with the
+ *            command. The caller should check msg.result for the EC's result
  *            code.
  * @pkt_xfer: Send packet to EC and get response.
- * @lock: One transaction at a समय.
- * @mkbp_event_supported: 0 अगर MKBP not supported. Otherwise its value is
+ * @lock: One transaction at a time.
+ * @mkbp_event_supported: 0 if MKBP not supported. Otherwise its value is
  *                        the maximum supported version of the MKBP host event
  *                        command + 1.
- * @host_sleep_v1: True अगर this EC supports the sleep v1 command.
- * @event_notअगरier: Interrupt event notअगरier क्रम transport devices.
+ * @host_sleep_v1: True if this EC supports the sleep v1 command.
+ * @event_notifier: Interrupt event notifier for transport devices.
  * @event_data: Raw payload transferred with the MKBP event.
  * @event_size: Size in bytes of the event data.
  * @host_event_wake_mask: Mask of host events that cause wake from suspend.
- * @last_event_समय: exact समय from the hard irq when we got notअगरied of
+ * @last_event_time: exact time from the hard irq when we got notified of
  *     a new event.
- * @notअगरier_पढ़ोy: The notअगरier_block to let the kernel re-query EC
+ * @notifier_ready: The notifier_block to let the kernel re-query EC
  *		    communication protocol when the EC sends
  *		    EC_HOST_EVENT_INTERFACE_READY.
- * @ec: The platक्रमm_device used by the mfd driver to पूर्णांकerface with the
- *      मुख्य EC.
- * @pd: The platक्रमm_device used by the mfd driver to पूर्णांकerface with the
+ * @ec: The platform_device used by the mfd driver to interface with the
+ *      main EC.
+ * @pd: The platform_device used by the mfd driver to interface with the
  *      PD behind an EC.
  */
-काष्ठा cros_ec_device अणु
+struct cros_ec_device {
 	/* These are used by other drivers that want to talk to the EC */
-	स्थिर अक्षर *phys_name;
-	काष्ठा device *dev;
+	const char *phys_name;
+	struct device *dev;
 	bool was_wake_device;
-	काष्ठा class *cros_class;
-	पूर्णांक (*cmd_पढ़ोmem)(काष्ठा cros_ec_device *ec, अचिन्हित पूर्णांक offset,
-			   अचिन्हित पूर्णांक bytes, व्योम *dest);
+	struct class *cros_class;
+	int (*cmd_readmem)(struct cros_ec_device *ec, unsigned int offset,
+			   unsigned int bytes, void *dest);
 
-	/* These are used to implement the platक्रमm-specअगरic पूर्णांकerface */
+	/* These are used to implement the platform-specific interface */
 	u16 max_request;
 	u16 max_response;
 	u16 max_passthru;
 	u16 proto_version;
-	व्योम *priv;
-	पूर्णांक irq;
+	void *priv;
+	int irq;
 	u8 *din;
-	u8 *करोut;
-	पूर्णांक din_size;
-	पूर्णांक करोut_size;
+	u8 *dout;
+	int din_size;
+	int dout_size;
 	bool wake_enabled;
 	bool suspended;
-	पूर्णांक (*cmd_xfer)(काष्ठा cros_ec_device *ec,
-			काष्ठा cros_ec_command *msg);
-	पूर्णांक (*pkt_xfer)(काष्ठा cros_ec_device *ec,
-			काष्ठा cros_ec_command *msg);
-	काष्ठा mutex lock;
+	int (*cmd_xfer)(struct cros_ec_device *ec,
+			struct cros_ec_command *msg);
+	int (*pkt_xfer)(struct cros_ec_device *ec,
+			struct cros_ec_command *msg);
+	struct mutex lock;
 	u8 mkbp_event_supported;
 	bool host_sleep_v1;
-	काष्ठा blocking_notअगरier_head event_notअगरier;
+	struct blocking_notifier_head event_notifier;
 
-	काष्ठा ec_response_get_next_event_v1 event_data;
-	पूर्णांक event_size;
+	struct ec_response_get_next_event_v1 event_data;
+	int event_size;
 	u32 host_event_wake_mask;
 	u32 last_resume_result;
-	kसमय_प्रकार last_event_समय;
-	काष्ठा notअगरier_block notअगरier_पढ़ोy;
+	ktime_t last_event_time;
+	struct notifier_block notifier_ready;
 
-	/* The platक्रमm devices used by the mfd driver */
-	काष्ठा platक्रमm_device *ec;
-	काष्ठा platक्रमm_device *pd;
-पूर्ण;
+	/* The platform devices used by the mfd driver */
+	struct platform_device *ec;
+	struct platform_device *pd;
+};
 
 /**
- * काष्ठा cros_ec_platक्रमm - ChromeOS EC platक्रमm inक्रमmation.
+ * struct cros_ec_platform - ChromeOS EC platform information.
  * @ec_name: Name of EC device (e.g. 'cros-ec', 'cros-pd', ...)
  *           used in /dev/ and sysfs.
- * @cmd_offset: Offset to apply क्रम each command. Set when
- *              रेजिस्टरing a device behind another one.
+ * @cmd_offset: Offset to apply for each command. Set when
+ *              registering a device behind another one.
  */
-काष्ठा cros_ec_platक्रमm अणु
-	स्थिर अक्षर *ec_name;
+struct cros_ec_platform {
+	const char *ec_name;
 	u16 cmd_offset;
-पूर्ण;
+};
 
 /**
- * काष्ठा cros_ec_dev - ChromeOS EC device entry poपूर्णांक.
- * @class_dev: Device काष्ठाure used in sysfs.
- * @ec_dev: cros_ec_device काष्ठाure to talk to the physical device.
- * @dev: Poपूर्णांकer to the platक्रमm device.
- * @debug_info: cros_ec_debugfs काष्ठाure क्रम debugging inक्रमmation.
- * @has_kb_wake_angle: True अगर at least 2 accelerometer are connected to the EC.
- * @cmd_offset: Offset to apply क्रम each command.
+ * struct cros_ec_dev - ChromeOS EC device entry point.
+ * @class_dev: Device structure used in sysfs.
+ * @ec_dev: cros_ec_device structure to talk to the physical device.
+ * @dev: Pointer to the platform device.
+ * @debug_info: cros_ec_debugfs structure for debugging information.
+ * @has_kb_wake_angle: True if at least 2 accelerometer are connected to the EC.
+ * @cmd_offset: Offset to apply for each command.
  * @features: Features supported by the EC.
  */
-काष्ठा cros_ec_dev अणु
-	काष्ठा device class_dev;
-	काष्ठा cros_ec_device *ec_dev;
-	काष्ठा device *dev;
-	काष्ठा cros_ec_debugfs *debug_info;
+struct cros_ec_dev {
+	struct device class_dev;
+	struct cros_ec_device *ec_dev;
+	struct device *dev;
+	struct cros_ec_debugfs *debug_info;
 	bool has_kb_wake_angle;
 	u16 cmd_offset;
 	u32 features[2];
-पूर्ण;
+};
 
-#घोषणा to_cros_ec_dev(dev)  container_of(dev, काष्ठा cros_ec_dev, class_dev)
+#define to_cros_ec_dev(dev)  container_of(dev, struct cros_ec_dev, class_dev)
 
-पूर्णांक cros_ec_prepare_tx(काष्ठा cros_ec_device *ec_dev,
-		       काष्ठा cros_ec_command *msg);
+int cros_ec_prepare_tx(struct cros_ec_device *ec_dev,
+		       struct cros_ec_command *msg);
 
-पूर्णांक cros_ec_check_result(काष्ठा cros_ec_device *ec_dev,
-			 काष्ठा cros_ec_command *msg);
+int cros_ec_check_result(struct cros_ec_device *ec_dev,
+			 struct cros_ec_command *msg);
 
-पूर्णांक cros_ec_cmd_xfer_status(काष्ठा cros_ec_device *ec_dev,
-			    काष्ठा cros_ec_command *msg);
+int cros_ec_cmd_xfer_status(struct cros_ec_device *ec_dev,
+			    struct cros_ec_command *msg);
 
-पूर्णांक cros_ec_query_all(काष्ठा cros_ec_device *ec_dev);
+int cros_ec_query_all(struct cros_ec_device *ec_dev);
 
-पूर्णांक cros_ec_get_next_event(काष्ठा cros_ec_device *ec_dev,
+int cros_ec_get_next_event(struct cros_ec_device *ec_dev,
 			   bool *wake_event,
 			   bool *has_more_events);
 
-u32 cros_ec_get_host_event(काष्ठा cros_ec_device *ec_dev);
+u32 cros_ec_get_host_event(struct cros_ec_device *ec_dev);
 
-पूर्णांक cros_ec_check_features(काष्ठा cros_ec_dev *ec, पूर्णांक feature);
+int cros_ec_check_features(struct cros_ec_dev *ec, int feature);
 
-पूर्णांक cros_ec_get_sensor_count(काष्ठा cros_ec_dev *ec);
+int cros_ec_get_sensor_count(struct cros_ec_dev *ec);
 
 /**
- * cros_ec_get_समय_ns() - Return समय in ns.
+ * cros_ec_get_time_ns() - Return time in ns.
  *
- * This is the function used to record the समय क्रम last_event_समय in काष्ठा
+ * This is the function used to record the time for last_event_time in struct
  * cros_ec_device during the hard irq.
  *
- * Return: kसमय_प्रकार क्रमmat since boot.
+ * Return: ktime_t format since boot.
  */
-अटल अंतरभूत kसमय_प्रकार cros_ec_get_समय_ns(व्योम)
-अणु
-	वापस kसमय_get_bootसमय_ns();
-पूर्ण
+static inline ktime_t cros_ec_get_time_ns(void)
+{
+	return ktime_get_boottime_ns();
+}
 
-#पूर्ण_अगर /* __LINUX_CROS_EC_PROTO_H */
+#endif /* __LINUX_CROS_EC_PROTO_H */

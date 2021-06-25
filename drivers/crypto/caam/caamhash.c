@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * caam - Freescale FSL CAAM support क्रम ahash functions of crypto API
+ * caam - Freescale FSL CAAM support for ahash functions of crypto API
  *
  * Copyright 2011 Freescale Semiconductor, Inc.
  * Copyright 2018-2019 NXP
@@ -36,8 +35,8 @@
  * | *(packet 4) |
  * ---------------
  *
- * The SharedDesc never changes क्रम a connection unless rekeyed, but
- * each packet will likely be in a dअगरferent place. So all we need
+ * The SharedDesc never changes for a connection unless rekeyed, but
+ * each packet will likely be in a different place. So all we need
  * to know to process the packet is where the input is, where the
  * output goes, and what context we want to process with. Context is
  * in the SharedDesc, packet references in the JobDesc.
@@ -46,7 +45,7 @@
  *
  * ---------------------
  * | Header            |
- * | ShareDesc Poपूर्णांकer |
+ * | ShareDesc Pointer |
  * | SEQ_OUT_PTR       |
  * | (output buffer)   |
  * | (output length)   |
@@ -56,39 +55,39 @@
  * ---------------------
  */
 
-#समावेश "compat.h"
+#include "compat.h"
 
-#समावेश "regs.h"
-#समावेश "intern.h"
-#समावेश "desc_constr.h"
-#समावेश "jr.h"
-#समावेश "error.h"
-#समावेश "sg_sw_sec4.h"
-#समावेश "key_gen.h"
-#समावेश "caamhash_desc.h"
-#समावेश <crypto/engine.h>
+#include "regs.h"
+#include "intern.h"
+#include "desc_constr.h"
+#include "jr.h"
+#include "error.h"
+#include "sg_sw_sec4.h"
+#include "key_gen.h"
+#include "caamhash_desc.h"
+#include <crypto/engine.h>
 
-#घोषणा CAAM_CRA_PRIORITY		3000
+#define CAAM_CRA_PRIORITY		3000
 
 /* max hash key is max split key size */
-#घोषणा CAAM_MAX_HASH_KEY_SIZE		(SHA512_DIGEST_SIZE * 2)
+#define CAAM_MAX_HASH_KEY_SIZE		(SHA512_DIGEST_SIZE * 2)
 
-#घोषणा CAAM_MAX_HASH_BLOCK_SIZE	SHA512_BLOCK_SIZE
-#घोषणा CAAM_MAX_HASH_DIGEST_SIZE	SHA512_DIGEST_SIZE
+#define CAAM_MAX_HASH_BLOCK_SIZE	SHA512_BLOCK_SIZE
+#define CAAM_MAX_HASH_DIGEST_SIZE	SHA512_DIGEST_SIZE
 
-#घोषणा DESC_HASH_MAX_USED_BYTES	(DESC_AHASH_FINAL_LEN + \
+#define DESC_HASH_MAX_USED_BYTES	(DESC_AHASH_FINAL_LEN + \
 					 CAAM_MAX_HASH_KEY_SIZE)
-#घोषणा DESC_HASH_MAX_USED_LEN		(DESC_HASH_MAX_USED_BYTES / CAAM_CMD_SZ)
+#define DESC_HASH_MAX_USED_LEN		(DESC_HASH_MAX_USED_BYTES / CAAM_CMD_SZ)
 
-/* caam context sizes क्रम hashes: running digest + 8 */
-#घोषणा HASH_MSG_LEN			8
-#घोषणा MAX_CTX_LEN			(HASH_MSG_LEN + SHA512_DIGEST_SIZE)
+/* caam context sizes for hashes: running digest + 8 */
+#define HASH_MSG_LEN			8
+#define MAX_CTX_LEN			(HASH_MSG_LEN + SHA512_DIGEST_SIZE)
 
-अटल काष्ठा list_head hash_list;
+static struct list_head hash_list;
 
 /* ahash per-session context */
-काष्ठा caam_hash_ctx अणु
-	काष्ठा crypto_engine_ctx enginectx;
+struct caam_hash_ctx {
+	struct crypto_engine_ctx enginectx;
 	u32 sh_desc_update[DESC_HASH_MAX_USED_LEN] ____cacheline_aligned;
 	u32 sh_desc_update_first[DESC_HASH_MAX_USED_LEN] ____cacheline_aligned;
 	u32 sh_desc_fin[DESC_HASH_MAX_USED_LEN] ____cacheline_aligned;
@@ -98,112 +97,112 @@
 	dma_addr_t sh_desc_update_first_dma;
 	dma_addr_t sh_desc_fin_dma;
 	dma_addr_t sh_desc_digest_dma;
-	क्रमागत dma_data_direction dir;
-	क्रमागत dma_data_direction key_dir;
-	काष्ठा device *jrdev;
-	पूर्णांक ctx_len;
-	काष्ठा alginfo adata;
-पूर्ण;
+	enum dma_data_direction dir;
+	enum dma_data_direction key_dir;
+	struct device *jrdev;
+	int ctx_len;
+	struct alginfo adata;
+};
 
 /* ahash state */
-काष्ठा caam_hash_state अणु
+struct caam_hash_state {
 	dma_addr_t buf_dma;
 	dma_addr_t ctx_dma;
-	पूर्णांक ctx_dma_len;
+	int ctx_dma_len;
 	u8 buf[CAAM_MAX_HASH_BLOCK_SIZE] ____cacheline_aligned;
-	पूर्णांक buflen;
-	पूर्णांक next_buflen;
+	int buflen;
+	int next_buflen;
 	u8 caam_ctx[MAX_CTX_LEN] ____cacheline_aligned;
-	पूर्णांक (*update)(काष्ठा ahash_request *req) ____cacheline_aligned;
-	पूर्णांक (*final)(काष्ठा ahash_request *req);
-	पूर्णांक (*finup)(काष्ठा ahash_request *req);
-	काष्ठा ahash_edesc *edesc;
-	व्योम (*ahash_op_करोne)(काष्ठा device *jrdev, u32 *desc, u32 err,
-			      व्योम *context);
-पूर्ण;
+	int (*update)(struct ahash_request *req) ____cacheline_aligned;
+	int (*final)(struct ahash_request *req);
+	int (*finup)(struct ahash_request *req);
+	struct ahash_edesc *edesc;
+	void (*ahash_op_done)(struct device *jrdev, u32 *desc, u32 err,
+			      void *context);
+};
 
-काष्ठा caam_export_state अणु
+struct caam_export_state {
 	u8 buf[CAAM_MAX_HASH_BLOCK_SIZE];
 	u8 caam_ctx[MAX_CTX_LEN];
-	पूर्णांक buflen;
-	पूर्णांक (*update)(काष्ठा ahash_request *req);
-	पूर्णांक (*final)(काष्ठा ahash_request *req);
-	पूर्णांक (*finup)(काष्ठा ahash_request *req);
-पूर्ण;
+	int buflen;
+	int (*update)(struct ahash_request *req);
+	int (*final)(struct ahash_request *req);
+	int (*finup)(struct ahash_request *req);
+};
 
-अटल अंतरभूत bool is_cmac_aes(u32 algtype)
-अणु
-	वापस (algtype & (OP_ALG_ALGSEL_MASK | OP_ALG_AAI_MASK)) ==
+static inline bool is_cmac_aes(u32 algtype)
+{
+	return (algtype & (OP_ALG_ALGSEL_MASK | OP_ALG_AAI_MASK)) ==
 	       (OP_ALG_ALGSEL_AES | OP_ALG_AAI_CMAC);
-पूर्ण
+}
 /* Common job descriptor seq in/out ptr routines */
 
-/* Map state->caam_ctx, and append seq_out_ptr command that poपूर्णांकs to it */
-अटल अंतरभूत पूर्णांक map_seq_out_ptr_ctx(u32 *desc, काष्ठा device *jrdev,
-				      काष्ठा caam_hash_state *state,
-				      पूर्णांक ctx_len)
-अणु
+/* Map state->caam_ctx, and append seq_out_ptr command that points to it */
+static inline int map_seq_out_ptr_ctx(u32 *desc, struct device *jrdev,
+				      struct caam_hash_state *state,
+				      int ctx_len)
+{
 	state->ctx_dma_len = ctx_len;
 	state->ctx_dma = dma_map_single(jrdev, state->caam_ctx,
 					ctx_len, DMA_FROM_DEVICE);
-	अगर (dma_mapping_error(jrdev, state->ctx_dma)) अणु
+	if (dma_mapping_error(jrdev, state->ctx_dma)) {
 		dev_err(jrdev, "unable to map ctx\n");
 		state->ctx_dma = 0;
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	append_seq_out_ptr(desc, state->ctx_dma, ctx_len, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Map current buffer in state (अगर length > 0) and put it in link table */
-अटल अंतरभूत पूर्णांक buf_map_to_sec4_sg(काष्ठा device *jrdev,
-				     काष्ठा sec4_sg_entry *sec4_sg,
-				     काष्ठा caam_hash_state *state)
-अणु
-	पूर्णांक buflen = state->buflen;
+/* Map current buffer in state (if length > 0) and put it in link table */
+static inline int buf_map_to_sec4_sg(struct device *jrdev,
+				     struct sec4_sg_entry *sec4_sg,
+				     struct caam_hash_state *state)
+{
+	int buflen = state->buflen;
 
-	अगर (!buflen)
-		वापस 0;
+	if (!buflen)
+		return 0;
 
 	state->buf_dma = dma_map_single(jrdev, state->buf, buflen,
 					DMA_TO_DEVICE);
-	अगर (dma_mapping_error(jrdev, state->buf_dma)) अणु
+	if (dma_mapping_error(jrdev, state->buf_dma)) {
 		dev_err(jrdev, "unable to map buf\n");
 		state->buf_dma = 0;
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	dma_to_sec4_sg_one(sec4_sg, state->buf_dma, buflen, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Map state->caam_ctx, and add it to link table */
-अटल अंतरभूत पूर्णांक ctx_map_to_sec4_sg(काष्ठा device *jrdev,
-				     काष्ठा caam_hash_state *state, पूर्णांक ctx_len,
-				     काष्ठा sec4_sg_entry *sec4_sg, u32 flag)
-अणु
+static inline int ctx_map_to_sec4_sg(struct device *jrdev,
+				     struct caam_hash_state *state, int ctx_len,
+				     struct sec4_sg_entry *sec4_sg, u32 flag)
+{
 	state->ctx_dma_len = ctx_len;
 	state->ctx_dma = dma_map_single(jrdev, state->caam_ctx, ctx_len, flag);
-	अगर (dma_mapping_error(jrdev, state->ctx_dma)) अणु
+	if (dma_mapping_error(jrdev, state->ctx_dma)) {
 		dev_err(jrdev, "unable to map ctx\n");
 		state->ctx_dma = 0;
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	dma_to_sec4_sg_one(sec4_sg, state->ctx_dma, ctx_len, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ahash_set_sh_desc(काष्ठा crypto_ahash *ahash)
-अणु
-	काष्ठा caam_hash_ctx *ctx = crypto_ahash_ctx(ahash);
-	पूर्णांक digestsize = crypto_ahash_digestsize(ahash);
-	काष्ठा device *jrdev = ctx->jrdev;
-	काष्ठा caam_drv_निजी *ctrlpriv = dev_get_drvdata(jrdev->parent);
+static int ahash_set_sh_desc(struct crypto_ahash *ahash)
+{
+	struct caam_hash_ctx *ctx = crypto_ahash_ctx(ahash);
+	int digestsize = crypto_ahash_digestsize(ahash);
+	struct device *jrdev = ctx->jrdev;
+	struct caam_drv_private *ctrlpriv = dev_get_drvdata(jrdev->parent);
 	u32 *desc;
 
 	ctx->adata.key_virt = ctx->key;
@@ -212,10 +211,10 @@
 	desc = ctx->sh_desc_update;
 	cnstr_shdsc_ahash(desc, &ctx->adata, OP_ALG_AS_UPDATE, ctx->ctx_len,
 			  ctx->ctx_len, true, ctrlpriv->era);
-	dma_sync_single_क्रम_device(jrdev, ctx->sh_desc_update_dma,
+	dma_sync_single_for_device(jrdev, ctx->sh_desc_update_dma,
 				   desc_bytes(desc), ctx->dir);
 
-	prपूर्णांक_hex_dump_debug("ahash update shdesc@"__stringअगरy(__LINE__)": ",
+	print_hex_dump_debug("ahash update shdesc@"__stringify(__LINE__)": ",
 			     DUMP_PREFIX_ADDRESS, 16, 4, desc, desc_bytes(desc),
 			     1);
 
@@ -223,9 +222,9 @@
 	desc = ctx->sh_desc_update_first;
 	cnstr_shdsc_ahash(desc, &ctx->adata, OP_ALG_AS_INIT, ctx->ctx_len,
 			  ctx->ctx_len, false, ctrlpriv->era);
-	dma_sync_single_क्रम_device(jrdev, ctx->sh_desc_update_first_dma,
+	dma_sync_single_for_device(jrdev, ctx->sh_desc_update_first_dma,
 				   desc_bytes(desc), ctx->dir);
-	prपूर्णांक_hex_dump_debug("ahash update first shdesc@"__stringअगरy(__LINE__)
+	print_hex_dump_debug("ahash update first shdesc@"__stringify(__LINE__)
 			     ": ", DUMP_PREFIX_ADDRESS, 16, 4, desc,
 			     desc_bytes(desc), 1);
 
@@ -233,10 +232,10 @@
 	desc = ctx->sh_desc_fin;
 	cnstr_shdsc_ahash(desc, &ctx->adata, OP_ALG_AS_FINALIZE, digestsize,
 			  ctx->ctx_len, true, ctrlpriv->era);
-	dma_sync_single_क्रम_device(jrdev, ctx->sh_desc_fin_dma,
+	dma_sync_single_for_device(jrdev, ctx->sh_desc_fin_dma,
 				   desc_bytes(desc), ctx->dir);
 
-	prपूर्णांक_hex_dump_debug("ahash final shdesc@"__stringअगरy(__LINE__)": ",
+	print_hex_dump_debug("ahash final shdesc@"__stringify(__LINE__)": ",
 			     DUMP_PREFIX_ADDRESS, 16, 4, desc,
 			     desc_bytes(desc), 1);
 
@@ -244,346 +243,346 @@
 	desc = ctx->sh_desc_digest;
 	cnstr_shdsc_ahash(desc, &ctx->adata, OP_ALG_AS_INITFINAL, digestsize,
 			  ctx->ctx_len, false, ctrlpriv->era);
-	dma_sync_single_क्रम_device(jrdev, ctx->sh_desc_digest_dma,
+	dma_sync_single_for_device(jrdev, ctx->sh_desc_digest_dma,
 				   desc_bytes(desc), ctx->dir);
 
-	prपूर्णांक_hex_dump_debug("ahash digest shdesc@"__stringअगरy(__LINE__)": ",
+	print_hex_dump_debug("ahash digest shdesc@"__stringify(__LINE__)": ",
 			     DUMP_PREFIX_ADDRESS, 16, 4, desc,
 			     desc_bytes(desc), 1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक axcbc_set_sh_desc(काष्ठा crypto_ahash *ahash)
-अणु
-	काष्ठा caam_hash_ctx *ctx = crypto_ahash_ctx(ahash);
-	पूर्णांक digestsize = crypto_ahash_digestsize(ahash);
-	काष्ठा device *jrdev = ctx->jrdev;
+static int axcbc_set_sh_desc(struct crypto_ahash *ahash)
+{
+	struct caam_hash_ctx *ctx = crypto_ahash_ctx(ahash);
+	int digestsize = crypto_ahash_digestsize(ahash);
+	struct device *jrdev = ctx->jrdev;
 	u32 *desc;
 
-	/* shared descriptor क्रम ahash_update */
+	/* shared descriptor for ahash_update */
 	desc = ctx->sh_desc_update;
 	cnstr_shdsc_sk_hash(desc, &ctx->adata, OP_ALG_AS_UPDATE,
 			    ctx->ctx_len, ctx->ctx_len);
-	dma_sync_single_क्रम_device(jrdev, ctx->sh_desc_update_dma,
+	dma_sync_single_for_device(jrdev, ctx->sh_desc_update_dma,
 				   desc_bytes(desc), ctx->dir);
-	prपूर्णांक_hex_dump_debug("axcbc update shdesc@" __stringअगरy(__LINE__)" : ",
+	print_hex_dump_debug("axcbc update shdesc@" __stringify(__LINE__)" : ",
 			     DUMP_PREFIX_ADDRESS, 16, 4, desc, desc_bytes(desc),
 			     1);
 
-	/* shared descriptor क्रम ahash_अणुfinal,finupपूर्ण */
+	/* shared descriptor for ahash_{final,finup} */
 	desc = ctx->sh_desc_fin;
 	cnstr_shdsc_sk_hash(desc, &ctx->adata, OP_ALG_AS_FINALIZE,
 			    digestsize, ctx->ctx_len);
-	dma_sync_single_क्रम_device(jrdev, ctx->sh_desc_fin_dma,
+	dma_sync_single_for_device(jrdev, ctx->sh_desc_fin_dma,
 				   desc_bytes(desc), ctx->dir);
-	prपूर्णांक_hex_dump_debug("axcbc finup shdesc@" __stringअगरy(__LINE__)" : ",
+	print_hex_dump_debug("axcbc finup shdesc@" __stringify(__LINE__)" : ",
 			     DUMP_PREFIX_ADDRESS, 16, 4, desc, desc_bytes(desc),
 			     1);
 
-	/* key is immediate data क्रम INIT and INITFINAL states */
+	/* key is immediate data for INIT and INITFINAL states */
 	ctx->adata.key_virt = ctx->key;
 
-	/* shared descriptor क्रम first invocation of ahash_update */
+	/* shared descriptor for first invocation of ahash_update */
 	desc = ctx->sh_desc_update_first;
 	cnstr_shdsc_sk_hash(desc, &ctx->adata, OP_ALG_AS_INIT, ctx->ctx_len,
 			    ctx->ctx_len);
-	dma_sync_single_क्रम_device(jrdev, ctx->sh_desc_update_first_dma,
+	dma_sync_single_for_device(jrdev, ctx->sh_desc_update_first_dma,
 				   desc_bytes(desc), ctx->dir);
-	prपूर्णांक_hex_dump_debug("axcbc update first shdesc@" __stringअगरy(__LINE__)
+	print_hex_dump_debug("axcbc update first shdesc@" __stringify(__LINE__)
 			     " : ", DUMP_PREFIX_ADDRESS, 16, 4, desc,
 			     desc_bytes(desc), 1);
 
-	/* shared descriptor क्रम ahash_digest */
+	/* shared descriptor for ahash_digest */
 	desc = ctx->sh_desc_digest;
 	cnstr_shdsc_sk_hash(desc, &ctx->adata, OP_ALG_AS_INITFINAL,
 			    digestsize, ctx->ctx_len);
-	dma_sync_single_क्रम_device(jrdev, ctx->sh_desc_digest_dma,
+	dma_sync_single_for_device(jrdev, ctx->sh_desc_digest_dma,
 				   desc_bytes(desc), ctx->dir);
-	prपूर्णांक_hex_dump_debug("axcbc digest shdesc@" __stringअगरy(__LINE__)" : ",
+	print_hex_dump_debug("axcbc digest shdesc@" __stringify(__LINE__)" : ",
 			     DUMP_PREFIX_ADDRESS, 16, 4, desc, desc_bytes(desc),
 			     1);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक acmac_set_sh_desc(काष्ठा crypto_ahash *ahash)
-अणु
-	काष्ठा caam_hash_ctx *ctx = crypto_ahash_ctx(ahash);
-	पूर्णांक digestsize = crypto_ahash_digestsize(ahash);
-	काष्ठा device *jrdev = ctx->jrdev;
+static int acmac_set_sh_desc(struct crypto_ahash *ahash)
+{
+	struct caam_hash_ctx *ctx = crypto_ahash_ctx(ahash);
+	int digestsize = crypto_ahash_digestsize(ahash);
+	struct device *jrdev = ctx->jrdev;
 	u32 *desc;
 
-	/* shared descriptor क्रम ahash_update */
+	/* shared descriptor for ahash_update */
 	desc = ctx->sh_desc_update;
 	cnstr_shdsc_sk_hash(desc, &ctx->adata, OP_ALG_AS_UPDATE,
 			    ctx->ctx_len, ctx->ctx_len);
-	dma_sync_single_क्रम_device(jrdev, ctx->sh_desc_update_dma,
+	dma_sync_single_for_device(jrdev, ctx->sh_desc_update_dma,
 				   desc_bytes(desc), ctx->dir);
-	prपूर्णांक_hex_dump_debug("acmac update shdesc@" __stringअगरy(__LINE__)" : ",
+	print_hex_dump_debug("acmac update shdesc@" __stringify(__LINE__)" : ",
 			     DUMP_PREFIX_ADDRESS, 16, 4, desc,
 			     desc_bytes(desc), 1);
 
-	/* shared descriptor क्रम ahash_अणुfinal,finupपूर्ण */
+	/* shared descriptor for ahash_{final,finup} */
 	desc = ctx->sh_desc_fin;
 	cnstr_shdsc_sk_hash(desc, &ctx->adata, OP_ALG_AS_FINALIZE,
 			    digestsize, ctx->ctx_len);
-	dma_sync_single_क्रम_device(jrdev, ctx->sh_desc_fin_dma,
+	dma_sync_single_for_device(jrdev, ctx->sh_desc_fin_dma,
 				   desc_bytes(desc), ctx->dir);
-	prपूर्णांक_hex_dump_debug("acmac finup shdesc@" __stringअगरy(__LINE__)" : ",
+	print_hex_dump_debug("acmac finup shdesc@" __stringify(__LINE__)" : ",
 			     DUMP_PREFIX_ADDRESS, 16, 4, desc,
 			     desc_bytes(desc), 1);
 
-	/* shared descriptor क्रम first invocation of ahash_update */
+	/* shared descriptor for first invocation of ahash_update */
 	desc = ctx->sh_desc_update_first;
 	cnstr_shdsc_sk_hash(desc, &ctx->adata, OP_ALG_AS_INIT, ctx->ctx_len,
 			    ctx->ctx_len);
-	dma_sync_single_क्रम_device(jrdev, ctx->sh_desc_update_first_dma,
+	dma_sync_single_for_device(jrdev, ctx->sh_desc_update_first_dma,
 				   desc_bytes(desc), ctx->dir);
-	prपूर्णांक_hex_dump_debug("acmac update first shdesc@" __stringअगरy(__LINE__)
+	print_hex_dump_debug("acmac update first shdesc@" __stringify(__LINE__)
 			     " : ", DUMP_PREFIX_ADDRESS, 16, 4, desc,
 			     desc_bytes(desc), 1);
 
-	/* shared descriptor क्रम ahash_digest */
+	/* shared descriptor for ahash_digest */
 	desc = ctx->sh_desc_digest;
 	cnstr_shdsc_sk_hash(desc, &ctx->adata, OP_ALG_AS_INITFINAL,
 			    digestsize, ctx->ctx_len);
-	dma_sync_single_क्रम_device(jrdev, ctx->sh_desc_digest_dma,
+	dma_sync_single_for_device(jrdev, ctx->sh_desc_digest_dma,
 				   desc_bytes(desc), ctx->dir);
-	prपूर्णांक_hex_dump_debug("acmac digest shdesc@" __stringअगरy(__LINE__)" : ",
+	print_hex_dump_debug("acmac digest shdesc@" __stringify(__LINE__)" : ",
 			     DUMP_PREFIX_ADDRESS, 16, 4, desc,
 			     desc_bytes(desc), 1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Digest hash size अगर it is too large */
-अटल पूर्णांक hash_digest_key(काष्ठा caam_hash_ctx *ctx, u32 *keylen, u8 *key,
+/* Digest hash size if it is too large */
+static int hash_digest_key(struct caam_hash_ctx *ctx, u32 *keylen, u8 *key,
 			   u32 digestsize)
-अणु
-	काष्ठा device *jrdev = ctx->jrdev;
+{
+	struct device *jrdev = ctx->jrdev;
 	u32 *desc;
-	काष्ठा split_key_result result;
+	struct split_key_result result;
 	dma_addr_t key_dma;
-	पूर्णांक ret;
+	int ret;
 
-	desc = kदो_स्मृति(CAAM_CMD_SZ * 8 + CAAM_PTR_SZ * 2, GFP_KERNEL | GFP_DMA);
-	अगर (!desc) अणु
+	desc = kmalloc(CAAM_CMD_SZ * 8 + CAAM_PTR_SZ * 2, GFP_KERNEL | GFP_DMA);
+	if (!desc) {
 		dev_err(jrdev, "unable to allocate key input memory\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	init_job_desc(desc, 0);
 
-	key_dma = dma_map_single(jrdev, key, *keylen, DMA_BIसूचीECTIONAL);
-	अगर (dma_mapping_error(jrdev, key_dma)) अणु
+	key_dma = dma_map_single(jrdev, key, *keylen, DMA_BIDIRECTIONAL);
+	if (dma_mapping_error(jrdev, key_dma)) {
 		dev_err(jrdev, "unable to map key memory\n");
-		kमुक्त(desc);
-		वापस -ENOMEM;
-	पूर्ण
+		kfree(desc);
+		return -ENOMEM;
+	}
 
-	/* Job descriptor to perक्रमm unkeyed hash on key_in */
+	/* Job descriptor to perform unkeyed hash on key_in */
 	append_operation(desc, ctx->adata.algtype | OP_ALG_ENCRYPT |
 			 OP_ALG_AS_INITFINAL);
 	append_seq_in_ptr(desc, key_dma, *keylen, 0);
-	append_seq_fअगरo_load(desc, *keylen, FIFOLD_CLASS_CLASS2 |
+	append_seq_fifo_load(desc, *keylen, FIFOLD_CLASS_CLASS2 |
 			     FIFOLD_TYPE_LAST2 | FIFOLD_TYPE_MSG);
 	append_seq_out_ptr(desc, key_dma, digestsize, 0);
 	append_seq_store(desc, digestsize, LDST_CLASS_2_CCB |
 			 LDST_SRCDST_BYTE_CONTEXT);
 
-	prपूर्णांक_hex_dump_debug("key_in@"__stringअगरy(__LINE__)": ",
+	print_hex_dump_debug("key_in@"__stringify(__LINE__)": ",
 			     DUMP_PREFIX_ADDRESS, 16, 4, key, *keylen, 1);
-	prपूर्णांक_hex_dump_debug("jobdesc@"__stringअगरy(__LINE__)": ",
+	print_hex_dump_debug("jobdesc@"__stringify(__LINE__)": ",
 			     DUMP_PREFIX_ADDRESS, 16, 4, desc, desc_bytes(desc),
 			     1);
 
 	result.err = 0;
 	init_completion(&result.completion);
 
-	ret = caam_jr_enqueue(jrdev, desc, split_key_करोne, &result);
-	अगर (ret == -EINPROGRESS) अणु
+	ret = caam_jr_enqueue(jrdev, desc, split_key_done, &result);
+	if (ret == -EINPROGRESS) {
 		/* in progress */
-		रुको_क्रम_completion(&result.completion);
+		wait_for_completion(&result.completion);
 		ret = result.err;
 
-		prपूर्णांक_hex_dump_debug("digested key@"__stringअगरy(__LINE__)": ",
+		print_hex_dump_debug("digested key@"__stringify(__LINE__)": ",
 				     DUMP_PREFIX_ADDRESS, 16, 4, key,
 				     digestsize, 1);
-	पूर्ण
-	dma_unmap_single(jrdev, key_dma, *keylen, DMA_BIसूचीECTIONAL);
+	}
+	dma_unmap_single(jrdev, key_dma, *keylen, DMA_BIDIRECTIONAL);
 
 	*keylen = digestsize;
 
-	kमुक्त(desc);
+	kfree(desc);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ahash_setkey(काष्ठा crypto_ahash *ahash,
-			स्थिर u8 *key, अचिन्हित पूर्णांक keylen)
-अणु
-	काष्ठा caam_hash_ctx *ctx = crypto_ahash_ctx(ahash);
-	काष्ठा device *jrdev = ctx->jrdev;
-	पूर्णांक blocksize = crypto_tfm_alg_blocksize(&ahash->base);
-	पूर्णांक digestsize = crypto_ahash_digestsize(ahash);
-	काष्ठा caam_drv_निजी *ctrlpriv = dev_get_drvdata(ctx->jrdev->parent);
-	पूर्णांक ret;
-	u8 *hashed_key = शून्य;
+static int ahash_setkey(struct crypto_ahash *ahash,
+			const u8 *key, unsigned int keylen)
+{
+	struct caam_hash_ctx *ctx = crypto_ahash_ctx(ahash);
+	struct device *jrdev = ctx->jrdev;
+	int blocksize = crypto_tfm_alg_blocksize(&ahash->base);
+	int digestsize = crypto_ahash_digestsize(ahash);
+	struct caam_drv_private *ctrlpriv = dev_get_drvdata(ctx->jrdev->parent);
+	int ret;
+	u8 *hashed_key = NULL;
 
 	dev_dbg(jrdev, "keylen %d\n", keylen);
 
-	अगर (keylen > blocksize) अणु
+	if (keylen > blocksize) {
 		hashed_key = kmemdup(key, keylen, GFP_KERNEL | GFP_DMA);
-		अगर (!hashed_key)
-			वापस -ENOMEM;
+		if (!hashed_key)
+			return -ENOMEM;
 		ret = hash_digest_key(ctx, &keylen, hashed_key, digestsize);
-		अगर (ret)
-			जाओ bad_मुक्त_key;
+		if (ret)
+			goto bad_free_key;
 		key = hashed_key;
-	पूर्ण
+	}
 
 	/*
 	 * If DKP is supported, use it in the shared descriptor to generate
 	 * the split key.
 	 */
-	अगर (ctrlpriv->era >= 6) अणु
-		ctx->adata.key_अंतरभूत = true;
+	if (ctrlpriv->era >= 6) {
+		ctx->adata.key_inline = true;
 		ctx->adata.keylen = keylen;
 		ctx->adata.keylen_pad = split_key_len(ctx->adata.algtype &
 						      OP_ALG_ALGSEL_MASK);
 
-		अगर (ctx->adata.keylen_pad > CAAM_MAX_HASH_KEY_SIZE)
-			जाओ bad_मुक्त_key;
+		if (ctx->adata.keylen_pad > CAAM_MAX_HASH_KEY_SIZE)
+			goto bad_free_key;
 
-		स_नकल(ctx->key, key, keylen);
+		memcpy(ctx->key, key, keylen);
 
 		/*
-		 * In हाल |user key| > |derived key|, using DKP<imm,imm>
+		 * In case |user key| > |derived key|, using DKP<imm,imm>
 		 * would result in invalid opcodes (last bytes of user key) in
 		 * the resulting descriptor. Use DKP<ptr,imm> instead => both
-		 * भव and dma key addresses are needed.
+		 * virtual and dma key addresses are needed.
 		 */
-		अगर (keylen > ctx->adata.keylen_pad)
-			dma_sync_single_क्रम_device(ctx->jrdev,
+		if (keylen > ctx->adata.keylen_pad)
+			dma_sync_single_for_device(ctx->jrdev,
 						   ctx->adata.key_dma,
 						   ctx->adata.keylen_pad,
 						   DMA_TO_DEVICE);
-	पूर्ण अन्यथा अणु
+	} else {
 		ret = gen_split_key(ctx->jrdev, ctx->key, &ctx->adata, key,
 				    keylen, CAAM_MAX_HASH_KEY_SIZE);
-		अगर (ret)
-			जाओ bad_मुक्त_key;
-	पूर्ण
+		if (ret)
+			goto bad_free_key;
+	}
 
-	kमुक्त(hashed_key);
-	वापस ahash_set_sh_desc(ahash);
- bad_मुक्त_key:
-	kमुक्त(hashed_key);
-	वापस -EINVAL;
-पूर्ण
+	kfree(hashed_key);
+	return ahash_set_sh_desc(ahash);
+ bad_free_key:
+	kfree(hashed_key);
+	return -EINVAL;
+}
 
-अटल पूर्णांक axcbc_setkey(काष्ठा crypto_ahash *ahash, स्थिर u8 *key,
-			अचिन्हित पूर्णांक keylen)
-अणु
-	काष्ठा caam_hash_ctx *ctx = crypto_ahash_ctx(ahash);
-	काष्ठा device *jrdev = ctx->jrdev;
+static int axcbc_setkey(struct crypto_ahash *ahash, const u8 *key,
+			unsigned int keylen)
+{
+	struct caam_hash_ctx *ctx = crypto_ahash_ctx(ahash);
+	struct device *jrdev = ctx->jrdev;
 
-	अगर (keylen != AES_KEYSIZE_128)
-		वापस -EINVAL;
+	if (keylen != AES_KEYSIZE_128)
+		return -EINVAL;
 
-	स_नकल(ctx->key, key, keylen);
-	dma_sync_single_क्रम_device(jrdev, ctx->adata.key_dma, keylen,
+	memcpy(ctx->key, key, keylen);
+	dma_sync_single_for_device(jrdev, ctx->adata.key_dma, keylen,
 				   DMA_TO_DEVICE);
 	ctx->adata.keylen = keylen;
 
-	prपूर्णांक_hex_dump_debug("axcbc ctx.key@" __stringअगरy(__LINE__)" : ",
+	print_hex_dump_debug("axcbc ctx.key@" __stringify(__LINE__)" : ",
 			     DUMP_PREFIX_ADDRESS, 16, 4, ctx->key, keylen, 1);
 
-	वापस axcbc_set_sh_desc(ahash);
-पूर्ण
+	return axcbc_set_sh_desc(ahash);
+}
 
-अटल पूर्णांक acmac_setkey(काष्ठा crypto_ahash *ahash, स्थिर u8 *key,
-			अचिन्हित पूर्णांक keylen)
-अणु
-	काष्ठा caam_hash_ctx *ctx = crypto_ahash_ctx(ahash);
-	पूर्णांक err;
+static int acmac_setkey(struct crypto_ahash *ahash, const u8 *key,
+			unsigned int keylen)
+{
+	struct caam_hash_ctx *ctx = crypto_ahash_ctx(ahash);
+	int err;
 
 	err = aes_check_keylen(keylen);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	/* key is immediate data क्रम all cmac shared descriptors */
+	/* key is immediate data for all cmac shared descriptors */
 	ctx->adata.key_virt = key;
 	ctx->adata.keylen = keylen;
 
-	prपूर्णांक_hex_dump_debug("acmac ctx.key@" __stringअगरy(__LINE__)" : ",
+	print_hex_dump_debug("acmac ctx.key@" __stringify(__LINE__)" : ",
 			     DUMP_PREFIX_ADDRESS, 16, 4, key, keylen, 1);
 
-	वापस acmac_set_sh_desc(ahash);
-पूर्ण
+	return acmac_set_sh_desc(ahash);
+}
 
 /*
  * ahash_edesc - s/w-extended ahash descriptor
  * @sec4_sg_dma: physical mapped address of h/w link table
  * @src_nents: number of segments in input scatterlist
  * @sec4_sg_bytes: length of dma mapped sec4_sg space
- * @bklog: stored to determine अगर the request needs backlog
+ * @bklog: stored to determine if the request needs backlog
  * @hw_desc: the h/w job descriptor followed by any referenced link tables
  * @sec4_sg: h/w link table
  */
-काष्ठा ahash_edesc अणु
+struct ahash_edesc {
 	dma_addr_t sec4_sg_dma;
-	पूर्णांक src_nents;
-	पूर्णांक sec4_sg_bytes;
+	int src_nents;
+	int sec4_sg_bytes;
 	bool bklog;
-	u32 hw_desc[DESC_JOB_IO_LEN_MAX / माप(u32)] ____cacheline_aligned;
-	काष्ठा sec4_sg_entry sec4_sg[];
-पूर्ण;
+	u32 hw_desc[DESC_JOB_IO_LEN_MAX / sizeof(u32)] ____cacheline_aligned;
+	struct sec4_sg_entry sec4_sg[];
+};
 
-अटल अंतरभूत व्योम ahash_unmap(काष्ठा device *dev,
-			काष्ठा ahash_edesc *edesc,
-			काष्ठा ahash_request *req, पूर्णांक dst_len)
-अणु
-	काष्ठा caam_hash_state *state = ahash_request_ctx(req);
+static inline void ahash_unmap(struct device *dev,
+			struct ahash_edesc *edesc,
+			struct ahash_request *req, int dst_len)
+{
+	struct caam_hash_state *state = ahash_request_ctx(req);
 
-	अगर (edesc->src_nents)
+	if (edesc->src_nents)
 		dma_unmap_sg(dev, req->src, edesc->src_nents, DMA_TO_DEVICE);
 
-	अगर (edesc->sec4_sg_bytes)
+	if (edesc->sec4_sg_bytes)
 		dma_unmap_single(dev, edesc->sec4_sg_dma,
 				 edesc->sec4_sg_bytes, DMA_TO_DEVICE);
 
-	अगर (state->buf_dma) अणु
+	if (state->buf_dma) {
 		dma_unmap_single(dev, state->buf_dma, state->buflen,
 				 DMA_TO_DEVICE);
 		state->buf_dma = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम ahash_unmap_ctx(काष्ठा device *dev,
-			काष्ठा ahash_edesc *edesc,
-			काष्ठा ahash_request *req, पूर्णांक dst_len, u32 flag)
-अणु
-	काष्ठा caam_hash_state *state = ahash_request_ctx(req);
+static inline void ahash_unmap_ctx(struct device *dev,
+			struct ahash_edesc *edesc,
+			struct ahash_request *req, int dst_len, u32 flag)
+{
+	struct caam_hash_state *state = ahash_request_ctx(req);
 
-	अगर (state->ctx_dma) अणु
+	if (state->ctx_dma) {
 		dma_unmap_single(dev, state->ctx_dma, state->ctx_dma_len, flag);
 		state->ctx_dma = 0;
-	पूर्ण
+	}
 	ahash_unmap(dev, edesc, req, dst_len);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम ahash_करोne_cpy(काष्ठा device *jrdev, u32 *desc, u32 err,
-				  व्योम *context, क्रमागत dma_data_direction dir)
-अणु
-	काष्ठा ahash_request *req = context;
-	काष्ठा caam_drv_निजी_jr *jrp = dev_get_drvdata(jrdev);
-	काष्ठा ahash_edesc *edesc;
-	काष्ठा crypto_ahash *ahash = crypto_ahash_reqtfm(req);
-	पूर्णांक digestsize = crypto_ahash_digestsize(ahash);
-	काष्ठा caam_hash_state *state = ahash_request_ctx(req);
-	काष्ठा caam_hash_ctx *ctx = crypto_ahash_ctx(ahash);
-	पूर्णांक ecode = 0;
+static inline void ahash_done_cpy(struct device *jrdev, u32 *desc, u32 err,
+				  void *context, enum dma_data_direction dir)
+{
+	struct ahash_request *req = context;
+	struct caam_drv_private_jr *jrp = dev_get_drvdata(jrdev);
+	struct ahash_edesc *edesc;
+	struct crypto_ahash *ahash = crypto_ahash_reqtfm(req);
+	int digestsize = crypto_ahash_digestsize(ahash);
+	struct caam_hash_state *state = ahash_request_ctx(req);
+	struct caam_hash_ctx *ctx = crypto_ahash_ctx(ahash);
+	int ecode = 0;
 	bool has_bklog;
 
 	dev_dbg(jrdev, "%s %d: err 0x%x\n", __func__, __LINE__, err);
@@ -591,308 +590,308 @@
 	edesc = state->edesc;
 	has_bklog = edesc->bklog;
 
-	अगर (err)
+	if (err)
 		ecode = caam_jr_strstatus(jrdev, err);
 
 	ahash_unmap_ctx(jrdev, edesc, req, digestsize, dir);
-	स_नकल(req->result, state->caam_ctx, digestsize);
-	kमुक्त(edesc);
+	memcpy(req->result, state->caam_ctx, digestsize);
+	kfree(edesc);
 
-	prपूर्णांक_hex_dump_debug("ctx@"__stringअगरy(__LINE__)": ",
+	print_hex_dump_debug("ctx@"__stringify(__LINE__)": ",
 			     DUMP_PREFIX_ADDRESS, 16, 4, state->caam_ctx,
 			     ctx->ctx_len, 1);
 
 	/*
-	 * If no backlog flag, the completion of the request is करोne
+	 * If no backlog flag, the completion of the request is done
 	 * by CAAM, not crypto engine.
 	 */
-	अगर (!has_bklog)
+	if (!has_bklog)
 		req->base.complete(&req->base, ecode);
-	अन्यथा
+	else
 		crypto_finalize_hash_request(jrp->engine, req, ecode);
-पूर्ण
+}
 
-अटल व्योम ahash_करोne(काष्ठा device *jrdev, u32 *desc, u32 err,
-		       व्योम *context)
-अणु
-	ahash_करोne_cpy(jrdev, desc, err, context, DMA_FROM_DEVICE);
-पूर्ण
+static void ahash_done(struct device *jrdev, u32 *desc, u32 err,
+		       void *context)
+{
+	ahash_done_cpy(jrdev, desc, err, context, DMA_FROM_DEVICE);
+}
 
-अटल व्योम ahash_करोne_ctx_src(काष्ठा device *jrdev, u32 *desc, u32 err,
-			       व्योम *context)
-अणु
-	ahash_करोne_cpy(jrdev, desc, err, context, DMA_BIसूचीECTIONAL);
-पूर्ण
+static void ahash_done_ctx_src(struct device *jrdev, u32 *desc, u32 err,
+			       void *context)
+{
+	ahash_done_cpy(jrdev, desc, err, context, DMA_BIDIRECTIONAL);
+}
 
-अटल अंतरभूत व्योम ahash_करोne_चयन(काष्ठा device *jrdev, u32 *desc, u32 err,
-				     व्योम *context, क्रमागत dma_data_direction dir)
-अणु
-	काष्ठा ahash_request *req = context;
-	काष्ठा caam_drv_निजी_jr *jrp = dev_get_drvdata(jrdev);
-	काष्ठा ahash_edesc *edesc;
-	काष्ठा crypto_ahash *ahash = crypto_ahash_reqtfm(req);
-	काष्ठा caam_hash_ctx *ctx = crypto_ahash_ctx(ahash);
-	काष्ठा caam_hash_state *state = ahash_request_ctx(req);
-	पूर्णांक digestsize = crypto_ahash_digestsize(ahash);
-	पूर्णांक ecode = 0;
+static inline void ahash_done_switch(struct device *jrdev, u32 *desc, u32 err,
+				     void *context, enum dma_data_direction dir)
+{
+	struct ahash_request *req = context;
+	struct caam_drv_private_jr *jrp = dev_get_drvdata(jrdev);
+	struct ahash_edesc *edesc;
+	struct crypto_ahash *ahash = crypto_ahash_reqtfm(req);
+	struct caam_hash_ctx *ctx = crypto_ahash_ctx(ahash);
+	struct caam_hash_state *state = ahash_request_ctx(req);
+	int digestsize = crypto_ahash_digestsize(ahash);
+	int ecode = 0;
 	bool has_bklog;
 
 	dev_dbg(jrdev, "%s %d: err 0x%x\n", __func__, __LINE__, err);
 
 	edesc = state->edesc;
 	has_bklog = edesc->bklog;
-	अगर (err)
+	if (err)
 		ecode = caam_jr_strstatus(jrdev, err);
 
 	ahash_unmap_ctx(jrdev, edesc, req, ctx->ctx_len, dir);
-	kमुक्त(edesc);
+	kfree(edesc);
 
 	scatterwalk_map_and_copy(state->buf, req->src,
 				 req->nbytes - state->next_buflen,
 				 state->next_buflen, 0);
 	state->buflen = state->next_buflen;
 
-	prपूर्णांक_hex_dump_debug("buf@" __stringअगरy(__LINE__)": ",
+	print_hex_dump_debug("buf@" __stringify(__LINE__)": ",
 			     DUMP_PREFIX_ADDRESS, 16, 4, state->buf,
 			     state->buflen, 1);
 
-	prपूर्णांक_hex_dump_debug("ctx@"__stringअगरy(__LINE__)": ",
+	print_hex_dump_debug("ctx@"__stringify(__LINE__)": ",
 			     DUMP_PREFIX_ADDRESS, 16, 4, state->caam_ctx,
 			     ctx->ctx_len, 1);
-	अगर (req->result)
-		prपूर्णांक_hex_dump_debug("result@"__stringअगरy(__LINE__)": ",
+	if (req->result)
+		print_hex_dump_debug("result@"__stringify(__LINE__)": ",
 				     DUMP_PREFIX_ADDRESS, 16, 4, req->result,
 				     digestsize, 1);
 
 	/*
-	 * If no backlog flag, the completion of the request is करोne
+	 * If no backlog flag, the completion of the request is done
 	 * by CAAM, not crypto engine.
 	 */
-	अगर (!has_bklog)
+	if (!has_bklog)
 		req->base.complete(&req->base, ecode);
-	अन्यथा
+	else
 		crypto_finalize_hash_request(jrp->engine, req, ecode);
 
-पूर्ण
+}
 
-अटल व्योम ahash_करोne_bi(काष्ठा device *jrdev, u32 *desc, u32 err,
-			  व्योम *context)
-अणु
-	ahash_करोne_चयन(jrdev, desc, err, context, DMA_BIसूचीECTIONAL);
-पूर्ण
+static void ahash_done_bi(struct device *jrdev, u32 *desc, u32 err,
+			  void *context)
+{
+	ahash_done_switch(jrdev, desc, err, context, DMA_BIDIRECTIONAL);
+}
 
-अटल व्योम ahash_करोne_ctx_dst(काष्ठा device *jrdev, u32 *desc, u32 err,
-			       व्योम *context)
-अणु
-	ahash_करोne_चयन(jrdev, desc, err, context, DMA_FROM_DEVICE);
-पूर्ण
+static void ahash_done_ctx_dst(struct device *jrdev, u32 *desc, u32 err,
+			       void *context)
+{
+	ahash_done_switch(jrdev, desc, err, context, DMA_FROM_DEVICE);
+}
 
 /*
  * Allocate an enhanced descriptor, which contains the hardware descriptor
- * and space क्रम hardware scatter table containing sg_num entries.
+ * and space for hardware scatter table containing sg_num entries.
  */
-अटल काष्ठा ahash_edesc *ahash_edesc_alloc(काष्ठा ahash_request *req,
-					     पूर्णांक sg_num, u32 *sh_desc,
+static struct ahash_edesc *ahash_edesc_alloc(struct ahash_request *req,
+					     int sg_num, u32 *sh_desc,
 					     dma_addr_t sh_desc_dma)
-अणु
-	काष्ठा crypto_ahash *ahash = crypto_ahash_reqtfm(req);
-	काष्ठा caam_hash_ctx *ctx = crypto_ahash_ctx(ahash);
-	काष्ठा caam_hash_state *state = ahash_request_ctx(req);
+{
+	struct crypto_ahash *ahash = crypto_ahash_reqtfm(req);
+	struct caam_hash_ctx *ctx = crypto_ahash_ctx(ahash);
+	struct caam_hash_state *state = ahash_request_ctx(req);
 	gfp_t flags = (req->base.flags & CRYPTO_TFM_REQ_MAY_SLEEP) ?
 		       GFP_KERNEL : GFP_ATOMIC;
-	काष्ठा ahash_edesc *edesc;
-	अचिन्हित पूर्णांक sg_size = sg_num * माप(काष्ठा sec4_sg_entry);
+	struct ahash_edesc *edesc;
+	unsigned int sg_size = sg_num * sizeof(struct sec4_sg_entry);
 
-	edesc = kzalloc(माप(*edesc) + sg_size, GFP_DMA | flags);
-	अगर (!edesc) अणु
+	edesc = kzalloc(sizeof(*edesc) + sg_size, GFP_DMA | flags);
+	if (!edesc) {
 		dev_err(ctx->jrdev, "could not allocate extended descriptor\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	state->edesc = edesc;
 
 	init_job_desc_shared(edesc->hw_desc, sh_desc_dma, desc_len(sh_desc),
 			     HDR_SHARE_DEFER | HDR_REVERSE);
 
-	वापस edesc;
-पूर्ण
+	return edesc;
+}
 
-अटल पूर्णांक ahash_edesc_add_src(काष्ठा caam_hash_ctx *ctx,
-			       काष्ठा ahash_edesc *edesc,
-			       काष्ठा ahash_request *req, पूर्णांक nents,
-			       अचिन्हित पूर्णांक first_sg,
-			       अचिन्हित पूर्णांक first_bytes, माप_प्रकार to_hash)
-अणु
+static int ahash_edesc_add_src(struct caam_hash_ctx *ctx,
+			       struct ahash_edesc *edesc,
+			       struct ahash_request *req, int nents,
+			       unsigned int first_sg,
+			       unsigned int first_bytes, size_t to_hash)
+{
 	dma_addr_t src_dma;
 	u32 options;
 
-	अगर (nents > 1 || first_sg) अणु
-		काष्ठा sec4_sg_entry *sg = edesc->sec4_sg;
-		अचिन्हित पूर्णांक sgsize = माप(*sg) *
+	if (nents > 1 || first_sg) {
+		struct sec4_sg_entry *sg = edesc->sec4_sg;
+		unsigned int sgsize = sizeof(*sg) *
 				      pad_sg_nents(first_sg + nents);
 
 		sg_to_sec4_sg_last(req->src, to_hash, sg + first_sg, 0);
 
 		src_dma = dma_map_single(ctx->jrdev, sg, sgsize, DMA_TO_DEVICE);
-		अगर (dma_mapping_error(ctx->jrdev, src_dma)) अणु
+		if (dma_mapping_error(ctx->jrdev, src_dma)) {
 			dev_err(ctx->jrdev, "unable to map S/G table\n");
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 
 		edesc->sec4_sg_bytes = sgsize;
 		edesc->sec4_sg_dma = src_dma;
 		options = LDST_SGF;
-	पूर्ण अन्यथा अणु
+	} else {
 		src_dma = sg_dma_address(req->src);
 		options = 0;
-	पूर्ण
+	}
 
 	append_seq_in_ptr(edesc->hw_desc, src_dma, first_bytes + to_hash,
 			  options);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ahash_करो_one_req(काष्ठा crypto_engine *engine, व्योम *areq)
-अणु
-	काष्ठा ahash_request *req = ahash_request_cast(areq);
-	काष्ठा caam_hash_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(req));
-	काष्ठा caam_hash_state *state = ahash_request_ctx(req);
-	काष्ठा device *jrdev = ctx->jrdev;
+static int ahash_do_one_req(struct crypto_engine *engine, void *areq)
+{
+	struct ahash_request *req = ahash_request_cast(areq);
+	struct caam_hash_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(req));
+	struct caam_hash_state *state = ahash_request_ctx(req);
+	struct device *jrdev = ctx->jrdev;
 	u32 *desc = state->edesc->hw_desc;
-	पूर्णांक ret;
+	int ret;
 
 	state->edesc->bklog = true;
 
-	ret = caam_jr_enqueue(jrdev, desc, state->ahash_op_करोne, req);
+	ret = caam_jr_enqueue(jrdev, desc, state->ahash_op_done, req);
 
-	अगर (ret != -EINPROGRESS) अणु
+	if (ret != -EINPROGRESS) {
 		ahash_unmap(jrdev, state->edesc, req, 0);
-		kमुक्त(state->edesc);
-	पूर्ण अन्यथा अणु
+		kfree(state->edesc);
+	} else {
 		ret = 0;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ahash_enqueue_req(काष्ठा device *jrdev,
-			     व्योम (*cbk)(काष्ठा device *jrdev, u32 *desc,
-					 u32 err, व्योम *context),
-			     काष्ठा ahash_request *req,
-			     पूर्णांक dst_len, क्रमागत dma_data_direction dir)
-अणु
-	काष्ठा caam_drv_निजी_jr *jrpriv = dev_get_drvdata(jrdev);
-	काष्ठा caam_hash_state *state = ahash_request_ctx(req);
-	काष्ठा ahash_edesc *edesc = state->edesc;
+static int ahash_enqueue_req(struct device *jrdev,
+			     void (*cbk)(struct device *jrdev, u32 *desc,
+					 u32 err, void *context),
+			     struct ahash_request *req,
+			     int dst_len, enum dma_data_direction dir)
+{
+	struct caam_drv_private_jr *jrpriv = dev_get_drvdata(jrdev);
+	struct caam_hash_state *state = ahash_request_ctx(req);
+	struct ahash_edesc *edesc = state->edesc;
 	u32 *desc = edesc->hw_desc;
-	पूर्णांक ret;
+	int ret;
 
-	state->ahash_op_करोne = cbk;
+	state->ahash_op_done = cbk;
 
 	/*
 	 * Only the backlog request are sent to crypto-engine since the others
-	 * can be handled by CAAM, अगर मुक्त, especially since JR has up to 1024
+	 * can be handled by CAAM, if free, especially since JR has up to 1024
 	 * entries (more than the 10 entries from crypto-engine).
 	 */
-	अगर (req->base.flags & CRYPTO_TFM_REQ_MAY_BACKLOG)
+	if (req->base.flags & CRYPTO_TFM_REQ_MAY_BACKLOG)
 		ret = crypto_transfer_hash_request_to_engine(jrpriv->engine,
 							     req);
-	अन्यथा
+	else
 		ret = caam_jr_enqueue(jrdev, desc, cbk, req);
 
-	अगर ((ret != -EINPROGRESS) && (ret != -EBUSY)) अणु
+	if ((ret != -EINPROGRESS) && (ret != -EBUSY)) {
 		ahash_unmap_ctx(jrdev, edesc, req, dst_len, dir);
-		kमुक्त(edesc);
-	पूर्ण
+		kfree(edesc);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* submit update job descriptor */
-अटल पूर्णांक ahash_update_ctx(काष्ठा ahash_request *req)
-अणु
-	काष्ठा crypto_ahash *ahash = crypto_ahash_reqtfm(req);
-	काष्ठा caam_hash_ctx *ctx = crypto_ahash_ctx(ahash);
-	काष्ठा caam_hash_state *state = ahash_request_ctx(req);
-	काष्ठा device *jrdev = ctx->jrdev;
+static int ahash_update_ctx(struct ahash_request *req)
+{
+	struct crypto_ahash *ahash = crypto_ahash_reqtfm(req);
+	struct caam_hash_ctx *ctx = crypto_ahash_ctx(ahash);
+	struct caam_hash_state *state = ahash_request_ctx(req);
+	struct device *jrdev = ctx->jrdev;
 	u8 *buf = state->buf;
-	पूर्णांक *buflen = &state->buflen;
-	पूर्णांक *next_buflen = &state->next_buflen;
-	पूर्णांक blocksize = crypto_ahash_blocksize(ahash);
-	पूर्णांक in_len = *buflen + req->nbytes, to_hash;
+	int *buflen = &state->buflen;
+	int *next_buflen = &state->next_buflen;
+	int blocksize = crypto_ahash_blocksize(ahash);
+	int in_len = *buflen + req->nbytes, to_hash;
 	u32 *desc;
-	पूर्णांक src_nents, mapped_nents, sec4_sg_bytes, sec4_sg_src_index;
-	काष्ठा ahash_edesc *edesc;
-	पूर्णांक ret = 0;
+	int src_nents, mapped_nents, sec4_sg_bytes, sec4_sg_src_index;
+	struct ahash_edesc *edesc;
+	int ret = 0;
 
 	*next_buflen = in_len & (blocksize - 1);
 	to_hash = in_len - *next_buflen;
 
 	/*
-	 * For XCBC and CMAC, अगर to_hash is multiple of block size,
-	 * keep last block in पूर्णांकernal buffer
+	 * For XCBC and CMAC, if to_hash is multiple of block size,
+	 * keep last block in internal buffer
 	 */
-	अगर ((is_xcbc_aes(ctx->adata.algtype) ||
+	if ((is_xcbc_aes(ctx->adata.algtype) ||
 	     is_cmac_aes(ctx->adata.algtype)) && to_hash >= blocksize &&
-	     (*next_buflen == 0)) अणु
+	     (*next_buflen == 0)) {
 		*next_buflen = blocksize;
 		to_hash -= blocksize;
-	पूर्ण
+	}
 
-	अगर (to_hash) अणु
-		पूर्णांक pad_nents;
-		पूर्णांक src_len = req->nbytes - *next_buflen;
+	if (to_hash) {
+		int pad_nents;
+		int src_len = req->nbytes - *next_buflen;
 
-		src_nents = sg_nents_क्रम_len(req->src, src_len);
-		अगर (src_nents < 0) अणु
+		src_nents = sg_nents_for_len(req->src, src_len);
+		if (src_nents < 0) {
 			dev_err(jrdev, "Invalid number of src SG.\n");
-			वापस src_nents;
-		पूर्ण
+			return src_nents;
+		}
 
-		अगर (src_nents) अणु
+		if (src_nents) {
 			mapped_nents = dma_map_sg(jrdev, req->src, src_nents,
 						  DMA_TO_DEVICE);
-			अगर (!mapped_nents) अणु
+			if (!mapped_nents) {
 				dev_err(jrdev, "unable to DMA map source\n");
-				वापस -ENOMEM;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				return -ENOMEM;
+			}
+		} else {
 			mapped_nents = 0;
-		पूर्ण
+		}
 
 		sec4_sg_src_index = 1 + (*buflen ? 1 : 0);
 		pad_nents = pad_sg_nents(sec4_sg_src_index + mapped_nents);
-		sec4_sg_bytes = pad_nents * माप(काष्ठा sec4_sg_entry);
+		sec4_sg_bytes = pad_nents * sizeof(struct sec4_sg_entry);
 
 		/*
-		 * allocate space क्रम base edesc and hw desc commands,
+		 * allocate space for base edesc and hw desc commands,
 		 * link tables
 		 */
 		edesc = ahash_edesc_alloc(req, pad_nents, ctx->sh_desc_update,
 					  ctx->sh_desc_update_dma);
-		अगर (!edesc) अणु
+		if (!edesc) {
 			dma_unmap_sg(jrdev, req->src, src_nents, DMA_TO_DEVICE);
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 
 		edesc->src_nents = src_nents;
 		edesc->sec4_sg_bytes = sec4_sg_bytes;
 
 		ret = ctx_map_to_sec4_sg(jrdev, state, ctx->ctx_len,
-					 edesc->sec4_sg, DMA_BIसूचीECTIONAL);
-		अगर (ret)
-			जाओ unmap_ctx;
+					 edesc->sec4_sg, DMA_BIDIRECTIONAL);
+		if (ret)
+			goto unmap_ctx;
 
 		ret = buf_map_to_sec4_sg(jrdev, edesc->sec4_sg + 1, state);
-		अगर (ret)
-			जाओ unmap_ctx;
+		if (ret)
+			goto unmap_ctx;
 
-		अगर (mapped_nents)
+		if (mapped_nents)
 			sg_to_sec4_sg_last(req->src, src_len,
 					   edesc->sec4_sg + sec4_sg_src_index,
 					   0);
-		अन्यथा
+		else
 			sg_to_sec4_set_last(edesc->sec4_sg + sec4_sg_src_index -
 					    1);
 
@@ -901,363 +900,363 @@
 		edesc->sec4_sg_dma = dma_map_single(jrdev, edesc->sec4_sg,
 						     sec4_sg_bytes,
 						     DMA_TO_DEVICE);
-		अगर (dma_mapping_error(jrdev, edesc->sec4_sg_dma)) अणु
+		if (dma_mapping_error(jrdev, edesc->sec4_sg_dma)) {
 			dev_err(jrdev, "unable to map S/G table\n");
 			ret = -ENOMEM;
-			जाओ unmap_ctx;
-		पूर्ण
+			goto unmap_ctx;
+		}
 
 		append_seq_in_ptr(desc, edesc->sec4_sg_dma, ctx->ctx_len +
 				       to_hash, LDST_SGF);
 
 		append_seq_out_ptr(desc, state->ctx_dma, ctx->ctx_len, 0);
 
-		prपूर्णांक_hex_dump_debug("jobdesc@"__stringअगरy(__LINE__)": ",
+		print_hex_dump_debug("jobdesc@"__stringify(__LINE__)": ",
 				     DUMP_PREFIX_ADDRESS, 16, 4, desc,
 				     desc_bytes(desc), 1);
 
-		ret = ahash_enqueue_req(jrdev, ahash_करोne_bi, req,
-					ctx->ctx_len, DMA_BIसूचीECTIONAL);
-	पूर्ण अन्यथा अगर (*next_buflen) अणु
+		ret = ahash_enqueue_req(jrdev, ahash_done_bi, req,
+					ctx->ctx_len, DMA_BIDIRECTIONAL);
+	} else if (*next_buflen) {
 		scatterwalk_map_and_copy(buf + *buflen, req->src, 0,
 					 req->nbytes, 0);
 		*buflen = *next_buflen;
 
-		prपूर्णांक_hex_dump_debug("buf@" __stringअगरy(__LINE__)": ",
+		print_hex_dump_debug("buf@" __stringify(__LINE__)": ",
 				     DUMP_PREFIX_ADDRESS, 16, 4, buf,
 				     *buflen, 1);
-	पूर्ण
+	}
 
-	वापस ret;
+	return ret;
 unmap_ctx:
-	ahash_unmap_ctx(jrdev, edesc, req, ctx->ctx_len, DMA_BIसूचीECTIONAL);
-	kमुक्त(edesc);
-	वापस ret;
-पूर्ण
+	ahash_unmap_ctx(jrdev, edesc, req, ctx->ctx_len, DMA_BIDIRECTIONAL);
+	kfree(edesc);
+	return ret;
+}
 
-अटल पूर्णांक ahash_final_ctx(काष्ठा ahash_request *req)
-अणु
-	काष्ठा crypto_ahash *ahash = crypto_ahash_reqtfm(req);
-	काष्ठा caam_hash_ctx *ctx = crypto_ahash_ctx(ahash);
-	काष्ठा caam_hash_state *state = ahash_request_ctx(req);
-	काष्ठा device *jrdev = ctx->jrdev;
-	पूर्णांक buflen = state->buflen;
+static int ahash_final_ctx(struct ahash_request *req)
+{
+	struct crypto_ahash *ahash = crypto_ahash_reqtfm(req);
+	struct caam_hash_ctx *ctx = crypto_ahash_ctx(ahash);
+	struct caam_hash_state *state = ahash_request_ctx(req);
+	struct device *jrdev = ctx->jrdev;
+	int buflen = state->buflen;
 	u32 *desc;
-	पूर्णांक sec4_sg_bytes;
-	पूर्णांक digestsize = crypto_ahash_digestsize(ahash);
-	काष्ठा ahash_edesc *edesc;
-	पूर्णांक ret;
+	int sec4_sg_bytes;
+	int digestsize = crypto_ahash_digestsize(ahash);
+	struct ahash_edesc *edesc;
+	int ret;
 
 	sec4_sg_bytes = pad_sg_nents(1 + (buflen ? 1 : 0)) *
-			माप(काष्ठा sec4_sg_entry);
+			sizeof(struct sec4_sg_entry);
 
-	/* allocate space क्रम base edesc and hw desc commands, link tables */
+	/* allocate space for base edesc and hw desc commands, link tables */
 	edesc = ahash_edesc_alloc(req, 4, ctx->sh_desc_fin,
 				  ctx->sh_desc_fin_dma);
-	अगर (!edesc)
-		वापस -ENOMEM;
+	if (!edesc)
+		return -ENOMEM;
 
 	desc = edesc->hw_desc;
 
 	edesc->sec4_sg_bytes = sec4_sg_bytes;
 
 	ret = ctx_map_to_sec4_sg(jrdev, state, ctx->ctx_len,
-				 edesc->sec4_sg, DMA_BIसूचीECTIONAL);
-	अगर (ret)
-		जाओ unmap_ctx;
+				 edesc->sec4_sg, DMA_BIDIRECTIONAL);
+	if (ret)
+		goto unmap_ctx;
 
 	ret = buf_map_to_sec4_sg(jrdev, edesc->sec4_sg + 1, state);
-	अगर (ret)
-		जाओ unmap_ctx;
+	if (ret)
+		goto unmap_ctx;
 
 	sg_to_sec4_set_last(edesc->sec4_sg + (buflen ? 1 : 0));
 
 	edesc->sec4_sg_dma = dma_map_single(jrdev, edesc->sec4_sg,
 					    sec4_sg_bytes, DMA_TO_DEVICE);
-	अगर (dma_mapping_error(jrdev, edesc->sec4_sg_dma)) अणु
+	if (dma_mapping_error(jrdev, edesc->sec4_sg_dma)) {
 		dev_err(jrdev, "unable to map S/G table\n");
 		ret = -ENOMEM;
-		जाओ unmap_ctx;
-	पूर्ण
+		goto unmap_ctx;
+	}
 
 	append_seq_in_ptr(desc, edesc->sec4_sg_dma, ctx->ctx_len + buflen,
 			  LDST_SGF);
 	append_seq_out_ptr(desc, state->ctx_dma, digestsize, 0);
 
-	prपूर्णांक_hex_dump_debug("jobdesc@"__stringअगरy(__LINE__)": ",
+	print_hex_dump_debug("jobdesc@"__stringify(__LINE__)": ",
 			     DUMP_PREFIX_ADDRESS, 16, 4, desc, desc_bytes(desc),
 			     1);
 
-	वापस ahash_enqueue_req(jrdev, ahash_करोne_ctx_src, req,
-				 digestsize, DMA_BIसूचीECTIONAL);
+	return ahash_enqueue_req(jrdev, ahash_done_ctx_src, req,
+				 digestsize, DMA_BIDIRECTIONAL);
  unmap_ctx:
-	ahash_unmap_ctx(jrdev, edesc, req, digestsize, DMA_BIसूचीECTIONAL);
-	kमुक्त(edesc);
-	वापस ret;
-पूर्ण
+	ahash_unmap_ctx(jrdev, edesc, req, digestsize, DMA_BIDIRECTIONAL);
+	kfree(edesc);
+	return ret;
+}
 
-अटल पूर्णांक ahash_finup_ctx(काष्ठा ahash_request *req)
-अणु
-	काष्ठा crypto_ahash *ahash = crypto_ahash_reqtfm(req);
-	काष्ठा caam_hash_ctx *ctx = crypto_ahash_ctx(ahash);
-	काष्ठा caam_hash_state *state = ahash_request_ctx(req);
-	काष्ठा device *jrdev = ctx->jrdev;
-	पूर्णांक buflen = state->buflen;
+static int ahash_finup_ctx(struct ahash_request *req)
+{
+	struct crypto_ahash *ahash = crypto_ahash_reqtfm(req);
+	struct caam_hash_ctx *ctx = crypto_ahash_ctx(ahash);
+	struct caam_hash_state *state = ahash_request_ctx(req);
+	struct device *jrdev = ctx->jrdev;
+	int buflen = state->buflen;
 	u32 *desc;
-	पूर्णांक sec4_sg_src_index;
-	पूर्णांक src_nents, mapped_nents;
-	पूर्णांक digestsize = crypto_ahash_digestsize(ahash);
-	काष्ठा ahash_edesc *edesc;
-	पूर्णांक ret;
+	int sec4_sg_src_index;
+	int src_nents, mapped_nents;
+	int digestsize = crypto_ahash_digestsize(ahash);
+	struct ahash_edesc *edesc;
+	int ret;
 
-	src_nents = sg_nents_क्रम_len(req->src, req->nbytes);
-	अगर (src_nents < 0) अणु
+	src_nents = sg_nents_for_len(req->src, req->nbytes);
+	if (src_nents < 0) {
 		dev_err(jrdev, "Invalid number of src SG.\n");
-		वापस src_nents;
-	पूर्ण
+		return src_nents;
+	}
 
-	अगर (src_nents) अणु
+	if (src_nents) {
 		mapped_nents = dma_map_sg(jrdev, req->src, src_nents,
 					  DMA_TO_DEVICE);
-		अगर (!mapped_nents) अणु
+		if (!mapped_nents) {
 			dev_err(jrdev, "unable to DMA map source\n");
-			वापस -ENOMEM;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			return -ENOMEM;
+		}
+	} else {
 		mapped_nents = 0;
-	पूर्ण
+	}
 
 	sec4_sg_src_index = 1 + (buflen ? 1 : 0);
 
-	/* allocate space क्रम base edesc and hw desc commands, link tables */
+	/* allocate space for base edesc and hw desc commands, link tables */
 	edesc = ahash_edesc_alloc(req, sec4_sg_src_index + mapped_nents,
 				  ctx->sh_desc_fin, ctx->sh_desc_fin_dma);
-	अगर (!edesc) अणु
+	if (!edesc) {
 		dma_unmap_sg(jrdev, req->src, src_nents, DMA_TO_DEVICE);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	desc = edesc->hw_desc;
 
 	edesc->src_nents = src_nents;
 
 	ret = ctx_map_to_sec4_sg(jrdev, state, ctx->ctx_len,
-				 edesc->sec4_sg, DMA_BIसूचीECTIONAL);
-	अगर (ret)
-		जाओ unmap_ctx;
+				 edesc->sec4_sg, DMA_BIDIRECTIONAL);
+	if (ret)
+		goto unmap_ctx;
 
 	ret = buf_map_to_sec4_sg(jrdev, edesc->sec4_sg + 1, state);
-	अगर (ret)
-		जाओ unmap_ctx;
+	if (ret)
+		goto unmap_ctx;
 
 	ret = ahash_edesc_add_src(ctx, edesc, req, mapped_nents,
 				  sec4_sg_src_index, ctx->ctx_len + buflen,
 				  req->nbytes);
-	अगर (ret)
-		जाओ unmap_ctx;
+	if (ret)
+		goto unmap_ctx;
 
 	append_seq_out_ptr(desc, state->ctx_dma, digestsize, 0);
 
-	prपूर्णांक_hex_dump_debug("jobdesc@"__stringअगरy(__LINE__)": ",
+	print_hex_dump_debug("jobdesc@"__stringify(__LINE__)": ",
 			     DUMP_PREFIX_ADDRESS, 16, 4, desc, desc_bytes(desc),
 			     1);
 
-	वापस ahash_enqueue_req(jrdev, ahash_करोne_ctx_src, req,
-				 digestsize, DMA_BIसूचीECTIONAL);
+	return ahash_enqueue_req(jrdev, ahash_done_ctx_src, req,
+				 digestsize, DMA_BIDIRECTIONAL);
  unmap_ctx:
-	ahash_unmap_ctx(jrdev, edesc, req, digestsize, DMA_BIसूचीECTIONAL);
-	kमुक्त(edesc);
-	वापस ret;
-पूर्ण
+	ahash_unmap_ctx(jrdev, edesc, req, digestsize, DMA_BIDIRECTIONAL);
+	kfree(edesc);
+	return ret;
+}
 
-अटल पूर्णांक ahash_digest(काष्ठा ahash_request *req)
-अणु
-	काष्ठा crypto_ahash *ahash = crypto_ahash_reqtfm(req);
-	काष्ठा caam_hash_ctx *ctx = crypto_ahash_ctx(ahash);
-	काष्ठा caam_hash_state *state = ahash_request_ctx(req);
-	काष्ठा device *jrdev = ctx->jrdev;
+static int ahash_digest(struct ahash_request *req)
+{
+	struct crypto_ahash *ahash = crypto_ahash_reqtfm(req);
+	struct caam_hash_ctx *ctx = crypto_ahash_ctx(ahash);
+	struct caam_hash_state *state = ahash_request_ctx(req);
+	struct device *jrdev = ctx->jrdev;
 	u32 *desc;
-	पूर्णांक digestsize = crypto_ahash_digestsize(ahash);
-	पूर्णांक src_nents, mapped_nents;
-	काष्ठा ahash_edesc *edesc;
-	पूर्णांक ret;
+	int digestsize = crypto_ahash_digestsize(ahash);
+	int src_nents, mapped_nents;
+	struct ahash_edesc *edesc;
+	int ret;
 
 	state->buf_dma = 0;
 
-	src_nents = sg_nents_क्रम_len(req->src, req->nbytes);
-	अगर (src_nents < 0) अणु
+	src_nents = sg_nents_for_len(req->src, req->nbytes);
+	if (src_nents < 0) {
 		dev_err(jrdev, "Invalid number of src SG.\n");
-		वापस src_nents;
-	पूर्ण
+		return src_nents;
+	}
 
-	अगर (src_nents) अणु
+	if (src_nents) {
 		mapped_nents = dma_map_sg(jrdev, req->src, src_nents,
 					  DMA_TO_DEVICE);
-		अगर (!mapped_nents) अणु
+		if (!mapped_nents) {
 			dev_err(jrdev, "unable to map source for DMA\n");
-			वापस -ENOMEM;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			return -ENOMEM;
+		}
+	} else {
 		mapped_nents = 0;
-	पूर्ण
+	}
 
-	/* allocate space क्रम base edesc and hw desc commands, link tables */
+	/* allocate space for base edesc and hw desc commands, link tables */
 	edesc = ahash_edesc_alloc(req, mapped_nents > 1 ? mapped_nents : 0,
 				  ctx->sh_desc_digest, ctx->sh_desc_digest_dma);
-	अगर (!edesc) अणु
+	if (!edesc) {
 		dma_unmap_sg(jrdev, req->src, src_nents, DMA_TO_DEVICE);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	edesc->src_nents = src_nents;
 
 	ret = ahash_edesc_add_src(ctx, edesc, req, mapped_nents, 0, 0,
 				  req->nbytes);
-	अगर (ret) अणु
+	if (ret) {
 		ahash_unmap(jrdev, edesc, req, digestsize);
-		kमुक्त(edesc);
-		वापस ret;
-	पूर्ण
+		kfree(edesc);
+		return ret;
+	}
 
 	desc = edesc->hw_desc;
 
 	ret = map_seq_out_ptr_ctx(desc, jrdev, state, digestsize);
-	अगर (ret) अणु
+	if (ret) {
 		ahash_unmap(jrdev, edesc, req, digestsize);
-		kमुक्त(edesc);
-		वापस -ENOMEM;
-	पूर्ण
+		kfree(edesc);
+		return -ENOMEM;
+	}
 
-	prपूर्णांक_hex_dump_debug("jobdesc@"__stringअगरy(__LINE__)": ",
+	print_hex_dump_debug("jobdesc@"__stringify(__LINE__)": ",
 			     DUMP_PREFIX_ADDRESS, 16, 4, desc, desc_bytes(desc),
 			     1);
 
-	वापस ahash_enqueue_req(jrdev, ahash_करोne, req, digestsize,
+	return ahash_enqueue_req(jrdev, ahash_done, req, digestsize,
 				 DMA_FROM_DEVICE);
-पूर्ण
+}
 
-/* submit ahash final अगर it the first job descriptor */
-अटल पूर्णांक ahash_final_no_ctx(काष्ठा ahash_request *req)
-अणु
-	काष्ठा crypto_ahash *ahash = crypto_ahash_reqtfm(req);
-	काष्ठा caam_hash_ctx *ctx = crypto_ahash_ctx(ahash);
-	काष्ठा caam_hash_state *state = ahash_request_ctx(req);
-	काष्ठा device *jrdev = ctx->jrdev;
+/* submit ahash final if it the first job descriptor */
+static int ahash_final_no_ctx(struct ahash_request *req)
+{
+	struct crypto_ahash *ahash = crypto_ahash_reqtfm(req);
+	struct caam_hash_ctx *ctx = crypto_ahash_ctx(ahash);
+	struct caam_hash_state *state = ahash_request_ctx(req);
+	struct device *jrdev = ctx->jrdev;
 	u8 *buf = state->buf;
-	पूर्णांक buflen = state->buflen;
+	int buflen = state->buflen;
 	u32 *desc;
-	पूर्णांक digestsize = crypto_ahash_digestsize(ahash);
-	काष्ठा ahash_edesc *edesc;
-	पूर्णांक ret;
+	int digestsize = crypto_ahash_digestsize(ahash);
+	struct ahash_edesc *edesc;
+	int ret;
 
-	/* allocate space क्रम base edesc and hw desc commands, link tables */
+	/* allocate space for base edesc and hw desc commands, link tables */
 	edesc = ahash_edesc_alloc(req, 0, ctx->sh_desc_digest,
 				  ctx->sh_desc_digest_dma);
-	अगर (!edesc)
-		वापस -ENOMEM;
+	if (!edesc)
+		return -ENOMEM;
 
 	desc = edesc->hw_desc;
 
-	अगर (buflen) अणु
+	if (buflen) {
 		state->buf_dma = dma_map_single(jrdev, buf, buflen,
 						DMA_TO_DEVICE);
-		अगर (dma_mapping_error(jrdev, state->buf_dma)) अणु
+		if (dma_mapping_error(jrdev, state->buf_dma)) {
 			dev_err(jrdev, "unable to map src\n");
-			जाओ unmap;
-		पूर्ण
+			goto unmap;
+		}
 
 		append_seq_in_ptr(desc, state->buf_dma, buflen, 0);
-	पूर्ण
+	}
 
 	ret = map_seq_out_ptr_ctx(desc, jrdev, state, digestsize);
-	अगर (ret)
-		जाओ unmap;
+	if (ret)
+		goto unmap;
 
-	prपूर्णांक_hex_dump_debug("jobdesc@"__stringअगरy(__LINE__)": ",
+	print_hex_dump_debug("jobdesc@"__stringify(__LINE__)": ",
 			     DUMP_PREFIX_ADDRESS, 16, 4, desc, desc_bytes(desc),
 			     1);
 
-	वापस ahash_enqueue_req(jrdev, ahash_करोne, req,
+	return ahash_enqueue_req(jrdev, ahash_done, req,
 				 digestsize, DMA_FROM_DEVICE);
  unmap:
 	ahash_unmap(jrdev, edesc, req, digestsize);
-	kमुक्त(edesc);
-	वापस -ENOMEM;
-पूर्ण
+	kfree(edesc);
+	return -ENOMEM;
+}
 
-/* submit ahash update अगर it the first job descriptor after update */
-अटल पूर्णांक ahash_update_no_ctx(काष्ठा ahash_request *req)
-अणु
-	काष्ठा crypto_ahash *ahash = crypto_ahash_reqtfm(req);
-	काष्ठा caam_hash_ctx *ctx = crypto_ahash_ctx(ahash);
-	काष्ठा caam_hash_state *state = ahash_request_ctx(req);
-	काष्ठा device *jrdev = ctx->jrdev;
+/* submit ahash update if it the first job descriptor after update */
+static int ahash_update_no_ctx(struct ahash_request *req)
+{
+	struct crypto_ahash *ahash = crypto_ahash_reqtfm(req);
+	struct caam_hash_ctx *ctx = crypto_ahash_ctx(ahash);
+	struct caam_hash_state *state = ahash_request_ctx(req);
+	struct device *jrdev = ctx->jrdev;
 	u8 *buf = state->buf;
-	पूर्णांक *buflen = &state->buflen;
-	पूर्णांक *next_buflen = &state->next_buflen;
-	पूर्णांक blocksize = crypto_ahash_blocksize(ahash);
-	पूर्णांक in_len = *buflen + req->nbytes, to_hash;
-	पूर्णांक sec4_sg_bytes, src_nents, mapped_nents;
-	काष्ठा ahash_edesc *edesc;
+	int *buflen = &state->buflen;
+	int *next_buflen = &state->next_buflen;
+	int blocksize = crypto_ahash_blocksize(ahash);
+	int in_len = *buflen + req->nbytes, to_hash;
+	int sec4_sg_bytes, src_nents, mapped_nents;
+	struct ahash_edesc *edesc;
 	u32 *desc;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	*next_buflen = in_len & (blocksize - 1);
 	to_hash = in_len - *next_buflen;
 
 	/*
-	 * For XCBC and CMAC, अगर to_hash is multiple of block size,
-	 * keep last block in पूर्णांकernal buffer
+	 * For XCBC and CMAC, if to_hash is multiple of block size,
+	 * keep last block in internal buffer
 	 */
-	अगर ((is_xcbc_aes(ctx->adata.algtype) ||
+	if ((is_xcbc_aes(ctx->adata.algtype) ||
 	     is_cmac_aes(ctx->adata.algtype)) && to_hash >= blocksize &&
-	     (*next_buflen == 0)) अणु
+	     (*next_buflen == 0)) {
 		*next_buflen = blocksize;
 		to_hash -= blocksize;
-	पूर्ण
+	}
 
-	अगर (to_hash) अणु
-		पूर्णांक pad_nents;
-		पूर्णांक src_len = req->nbytes - *next_buflen;
+	if (to_hash) {
+		int pad_nents;
+		int src_len = req->nbytes - *next_buflen;
 
-		src_nents = sg_nents_क्रम_len(req->src, src_len);
-		अगर (src_nents < 0) अणु
+		src_nents = sg_nents_for_len(req->src, src_len);
+		if (src_nents < 0) {
 			dev_err(jrdev, "Invalid number of src SG.\n");
-			वापस src_nents;
-		पूर्ण
+			return src_nents;
+		}
 
-		अगर (src_nents) अणु
+		if (src_nents) {
 			mapped_nents = dma_map_sg(jrdev, req->src, src_nents,
 						  DMA_TO_DEVICE);
-			अगर (!mapped_nents) अणु
+			if (!mapped_nents) {
 				dev_err(jrdev, "unable to DMA map source\n");
-				वापस -ENOMEM;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				return -ENOMEM;
+			}
+		} else {
 			mapped_nents = 0;
-		पूर्ण
+		}
 
 		pad_nents = pad_sg_nents(1 + mapped_nents);
-		sec4_sg_bytes = pad_nents * माप(काष्ठा sec4_sg_entry);
+		sec4_sg_bytes = pad_nents * sizeof(struct sec4_sg_entry);
 
 		/*
-		 * allocate space क्रम base edesc and hw desc commands,
+		 * allocate space for base edesc and hw desc commands,
 		 * link tables
 		 */
 		edesc = ahash_edesc_alloc(req, pad_nents,
 					  ctx->sh_desc_update_first,
 					  ctx->sh_desc_update_first_dma);
-		अगर (!edesc) अणु
+		if (!edesc) {
 			dma_unmap_sg(jrdev, req->src, src_nents, DMA_TO_DEVICE);
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 
 		edesc->src_nents = src_nents;
 		edesc->sec4_sg_bytes = sec4_sg_bytes;
 
 		ret = buf_map_to_sec4_sg(jrdev, edesc->sec4_sg, state);
-		अगर (ret)
-			जाओ unmap_ctx;
+		if (ret)
+			goto unmap_ctx;
 
 		sg_to_sec4_sg_last(req->src, src_len, edesc->sec4_sg + 1, 0);
 
@@ -1266,88 +1265,88 @@ unmap_ctx:
 		edesc->sec4_sg_dma = dma_map_single(jrdev, edesc->sec4_sg,
 						    sec4_sg_bytes,
 						    DMA_TO_DEVICE);
-		अगर (dma_mapping_error(jrdev, edesc->sec4_sg_dma)) अणु
+		if (dma_mapping_error(jrdev, edesc->sec4_sg_dma)) {
 			dev_err(jrdev, "unable to map S/G table\n");
 			ret = -ENOMEM;
-			जाओ unmap_ctx;
-		पूर्ण
+			goto unmap_ctx;
+		}
 
 		append_seq_in_ptr(desc, edesc->sec4_sg_dma, to_hash, LDST_SGF);
 
 		ret = map_seq_out_ptr_ctx(desc, jrdev, state, ctx->ctx_len);
-		अगर (ret)
-			जाओ unmap_ctx;
+		if (ret)
+			goto unmap_ctx;
 
-		prपूर्णांक_hex_dump_debug("jobdesc@"__stringअगरy(__LINE__)": ",
+		print_hex_dump_debug("jobdesc@"__stringify(__LINE__)": ",
 				     DUMP_PREFIX_ADDRESS, 16, 4, desc,
 				     desc_bytes(desc), 1);
 
-		ret = ahash_enqueue_req(jrdev, ahash_करोne_ctx_dst, req,
+		ret = ahash_enqueue_req(jrdev, ahash_done_ctx_dst, req,
 					ctx->ctx_len, DMA_TO_DEVICE);
-		अगर ((ret != -EINPROGRESS) && (ret != -EBUSY))
-			वापस ret;
+		if ((ret != -EINPROGRESS) && (ret != -EBUSY))
+			return ret;
 		state->update = ahash_update_ctx;
 		state->finup = ahash_finup_ctx;
 		state->final = ahash_final_ctx;
-	पूर्ण अन्यथा अगर (*next_buflen) अणु
+	} else if (*next_buflen) {
 		scatterwalk_map_and_copy(buf + *buflen, req->src, 0,
 					 req->nbytes, 0);
 		*buflen = *next_buflen;
 
-		prपूर्णांक_hex_dump_debug("buf@" __stringअगरy(__LINE__)": ",
+		print_hex_dump_debug("buf@" __stringify(__LINE__)": ",
 				     DUMP_PREFIX_ADDRESS, 16, 4, buf,
 				     *buflen, 1);
-	पूर्ण
+	}
 
-	वापस ret;
+	return ret;
  unmap_ctx:
 	ahash_unmap_ctx(jrdev, edesc, req, ctx->ctx_len, DMA_TO_DEVICE);
-	kमुक्त(edesc);
-	वापस ret;
-पूर्ण
+	kfree(edesc);
+	return ret;
+}
 
-/* submit ahash finup अगर it the first job descriptor after update */
-अटल पूर्णांक ahash_finup_no_ctx(काष्ठा ahash_request *req)
-अणु
-	काष्ठा crypto_ahash *ahash = crypto_ahash_reqtfm(req);
-	काष्ठा caam_hash_ctx *ctx = crypto_ahash_ctx(ahash);
-	काष्ठा caam_hash_state *state = ahash_request_ctx(req);
-	काष्ठा device *jrdev = ctx->jrdev;
-	पूर्णांक buflen = state->buflen;
+/* submit ahash finup if it the first job descriptor after update */
+static int ahash_finup_no_ctx(struct ahash_request *req)
+{
+	struct crypto_ahash *ahash = crypto_ahash_reqtfm(req);
+	struct caam_hash_ctx *ctx = crypto_ahash_ctx(ahash);
+	struct caam_hash_state *state = ahash_request_ctx(req);
+	struct device *jrdev = ctx->jrdev;
+	int buflen = state->buflen;
 	u32 *desc;
-	पूर्णांक sec4_sg_bytes, sec4_sg_src_index, src_nents, mapped_nents;
-	पूर्णांक digestsize = crypto_ahash_digestsize(ahash);
-	काष्ठा ahash_edesc *edesc;
-	पूर्णांक ret;
+	int sec4_sg_bytes, sec4_sg_src_index, src_nents, mapped_nents;
+	int digestsize = crypto_ahash_digestsize(ahash);
+	struct ahash_edesc *edesc;
+	int ret;
 
-	src_nents = sg_nents_क्रम_len(req->src, req->nbytes);
-	अगर (src_nents < 0) अणु
+	src_nents = sg_nents_for_len(req->src, req->nbytes);
+	if (src_nents < 0) {
 		dev_err(jrdev, "Invalid number of src SG.\n");
-		वापस src_nents;
-	पूर्ण
+		return src_nents;
+	}
 
-	अगर (src_nents) अणु
+	if (src_nents) {
 		mapped_nents = dma_map_sg(jrdev, req->src, src_nents,
 					  DMA_TO_DEVICE);
-		अगर (!mapped_nents) अणु
+		if (!mapped_nents) {
 			dev_err(jrdev, "unable to DMA map source\n");
-			वापस -ENOMEM;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			return -ENOMEM;
+		}
+	} else {
 		mapped_nents = 0;
-	पूर्ण
+	}
 
 	sec4_sg_src_index = 2;
 	sec4_sg_bytes = (sec4_sg_src_index + mapped_nents) *
-			 माप(काष्ठा sec4_sg_entry);
+			 sizeof(struct sec4_sg_entry);
 
-	/* allocate space क्रम base edesc and hw desc commands, link tables */
+	/* allocate space for base edesc and hw desc commands, link tables */
 	edesc = ahash_edesc_alloc(req, sec4_sg_src_index + mapped_nents,
 				  ctx->sh_desc_digest, ctx->sh_desc_digest_dma);
-	अगर (!edesc) अणु
+	if (!edesc) {
 		dma_unmap_sg(jrdev, req->src, src_nents, DMA_TO_DEVICE);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	desc = edesc->hw_desc;
 
@@ -1355,121 +1354,121 @@ unmap_ctx:
 	edesc->sec4_sg_bytes = sec4_sg_bytes;
 
 	ret = buf_map_to_sec4_sg(jrdev, edesc->sec4_sg, state);
-	अगर (ret)
-		जाओ unmap;
+	if (ret)
+		goto unmap;
 
 	ret = ahash_edesc_add_src(ctx, edesc, req, mapped_nents, 1, buflen,
 				  req->nbytes);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(jrdev, "unable to map S/G table\n");
-		जाओ unmap;
-	पूर्ण
+		goto unmap;
+	}
 
 	ret = map_seq_out_ptr_ctx(desc, jrdev, state, digestsize);
-	अगर (ret)
-		जाओ unmap;
+	if (ret)
+		goto unmap;
 
-	prपूर्णांक_hex_dump_debug("jobdesc@"__stringअगरy(__LINE__)": ",
+	print_hex_dump_debug("jobdesc@"__stringify(__LINE__)": ",
 			     DUMP_PREFIX_ADDRESS, 16, 4, desc, desc_bytes(desc),
 			     1);
 
-	वापस ahash_enqueue_req(jrdev, ahash_करोne, req,
+	return ahash_enqueue_req(jrdev, ahash_done, req,
 				 digestsize, DMA_FROM_DEVICE);
  unmap:
 	ahash_unmap(jrdev, edesc, req, digestsize);
-	kमुक्त(edesc);
-	वापस -ENOMEM;
+	kfree(edesc);
+	return -ENOMEM;
 
-पूर्ण
+}
 
 /* submit first update job descriptor after init */
-अटल पूर्णांक ahash_update_first(काष्ठा ahash_request *req)
-अणु
-	काष्ठा crypto_ahash *ahash = crypto_ahash_reqtfm(req);
-	काष्ठा caam_hash_ctx *ctx = crypto_ahash_ctx(ahash);
-	काष्ठा caam_hash_state *state = ahash_request_ctx(req);
-	काष्ठा device *jrdev = ctx->jrdev;
+static int ahash_update_first(struct ahash_request *req)
+{
+	struct crypto_ahash *ahash = crypto_ahash_reqtfm(req);
+	struct caam_hash_ctx *ctx = crypto_ahash_ctx(ahash);
+	struct caam_hash_state *state = ahash_request_ctx(req);
+	struct device *jrdev = ctx->jrdev;
 	u8 *buf = state->buf;
-	पूर्णांक *buflen = &state->buflen;
-	पूर्णांक *next_buflen = &state->next_buflen;
-	पूर्णांक to_hash;
-	पूर्णांक blocksize = crypto_ahash_blocksize(ahash);
+	int *buflen = &state->buflen;
+	int *next_buflen = &state->next_buflen;
+	int to_hash;
+	int blocksize = crypto_ahash_blocksize(ahash);
 	u32 *desc;
-	पूर्णांक src_nents, mapped_nents;
-	काष्ठा ahash_edesc *edesc;
-	पूर्णांक ret = 0;
+	int src_nents, mapped_nents;
+	struct ahash_edesc *edesc;
+	int ret = 0;
 
 	*next_buflen = req->nbytes & (blocksize - 1);
 	to_hash = req->nbytes - *next_buflen;
 
 	/*
-	 * For XCBC and CMAC, अगर to_hash is multiple of block size,
-	 * keep last block in पूर्णांकernal buffer
+	 * For XCBC and CMAC, if to_hash is multiple of block size,
+	 * keep last block in internal buffer
 	 */
-	अगर ((is_xcbc_aes(ctx->adata.algtype) ||
+	if ((is_xcbc_aes(ctx->adata.algtype) ||
 	     is_cmac_aes(ctx->adata.algtype)) && to_hash >= blocksize &&
-	     (*next_buflen == 0)) अणु
+	     (*next_buflen == 0)) {
 		*next_buflen = blocksize;
 		to_hash -= blocksize;
-	पूर्ण
+	}
 
-	अगर (to_hash) अणु
-		src_nents = sg_nents_क्रम_len(req->src,
+	if (to_hash) {
+		src_nents = sg_nents_for_len(req->src,
 					     req->nbytes - *next_buflen);
-		अगर (src_nents < 0) अणु
+		if (src_nents < 0) {
 			dev_err(jrdev, "Invalid number of src SG.\n");
-			वापस src_nents;
-		पूर्ण
+			return src_nents;
+		}
 
-		अगर (src_nents) अणु
+		if (src_nents) {
 			mapped_nents = dma_map_sg(jrdev, req->src, src_nents,
 						  DMA_TO_DEVICE);
-			अगर (!mapped_nents) अणु
+			if (!mapped_nents) {
 				dev_err(jrdev, "unable to map source for DMA\n");
-				वापस -ENOMEM;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				return -ENOMEM;
+			}
+		} else {
 			mapped_nents = 0;
-		पूर्ण
+		}
 
 		/*
-		 * allocate space क्रम base edesc and hw desc commands,
+		 * allocate space for base edesc and hw desc commands,
 		 * link tables
 		 */
 		edesc = ahash_edesc_alloc(req, mapped_nents > 1 ?
 					  mapped_nents : 0,
 					  ctx->sh_desc_update_first,
 					  ctx->sh_desc_update_first_dma);
-		अगर (!edesc) अणु
+		if (!edesc) {
 			dma_unmap_sg(jrdev, req->src, src_nents, DMA_TO_DEVICE);
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 
 		edesc->src_nents = src_nents;
 
 		ret = ahash_edesc_add_src(ctx, edesc, req, mapped_nents, 0, 0,
 					  to_hash);
-		अगर (ret)
-			जाओ unmap_ctx;
+		if (ret)
+			goto unmap_ctx;
 
 		desc = edesc->hw_desc;
 
 		ret = map_seq_out_ptr_ctx(desc, jrdev, state, ctx->ctx_len);
-		अगर (ret)
-			जाओ unmap_ctx;
+		if (ret)
+			goto unmap_ctx;
 
-		prपूर्णांक_hex_dump_debug("jobdesc@"__stringअगरy(__LINE__)": ",
+		print_hex_dump_debug("jobdesc@"__stringify(__LINE__)": ",
 				     DUMP_PREFIX_ADDRESS, 16, 4, desc,
 				     desc_bytes(desc), 1);
 
-		ret = ahash_enqueue_req(jrdev, ahash_करोne_ctx_dst, req,
+		ret = ahash_enqueue_req(jrdev, ahash_done_ctx_dst, req,
 					ctx->ctx_len, DMA_TO_DEVICE);
-		अगर ((ret != -EINPROGRESS) && (ret != -EBUSY))
-			वापस ret;
+		if ((ret != -EINPROGRESS) && (ret != -EBUSY))
+			return ret;
 		state->update = ahash_update_ctx;
 		state->finup = ahash_finup_ctx;
 		state->final = ahash_final_ctx;
-	पूर्ण अन्यथा अगर (*next_buflen) अणु
+	} else if (*next_buflen) {
 		state->update = ahash_update_no_ctx;
 		state->finup = ahash_finup_no_ctx;
 		state->final = ahash_final_no_ctx;
@@ -1477,26 +1476,26 @@ unmap_ctx:
 					 req->nbytes, 0);
 		*buflen = *next_buflen;
 
-		prपूर्णांक_hex_dump_debug("buf@" __stringअगरy(__LINE__)": ",
+		print_hex_dump_debug("buf@" __stringify(__LINE__)": ",
 				     DUMP_PREFIX_ADDRESS, 16, 4, buf,
 				     *buflen, 1);
-	पूर्ण
+	}
 
-	वापस ret;
+	return ret;
  unmap_ctx:
 	ahash_unmap_ctx(jrdev, edesc, req, ctx->ctx_len, DMA_TO_DEVICE);
-	kमुक्त(edesc);
-	वापस ret;
-पूर्ण
+	kfree(edesc);
+	return ret;
+}
 
-अटल पूर्णांक ahash_finup_first(काष्ठा ahash_request *req)
-अणु
-	वापस ahash_digest(req);
-पूर्ण
+static int ahash_finup_first(struct ahash_request *req)
+{
+	return ahash_digest(req);
+}
 
-अटल पूर्णांक ahash_init(काष्ठा ahash_request *req)
-अणु
-	काष्ठा caam_hash_state *state = ahash_request_ctx(req);
+static int ahash_init(struct ahash_request *req)
+{
+	struct caam_hash_state *state = ahash_request_ctx(req);
 
 	state->update = ahash_update_first;
 	state->finup = ahash_finup_first;
@@ -1508,82 +1507,82 @@ unmap_ctx:
 	state->buflen = 0;
 	state->next_buflen = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ahash_update(काष्ठा ahash_request *req)
-अणु
-	काष्ठा caam_hash_state *state = ahash_request_ctx(req);
+static int ahash_update(struct ahash_request *req)
+{
+	struct caam_hash_state *state = ahash_request_ctx(req);
 
-	वापस state->update(req);
-पूर्ण
+	return state->update(req);
+}
 
-अटल पूर्णांक ahash_finup(काष्ठा ahash_request *req)
-अणु
-	काष्ठा caam_hash_state *state = ahash_request_ctx(req);
+static int ahash_finup(struct ahash_request *req)
+{
+	struct caam_hash_state *state = ahash_request_ctx(req);
 
-	वापस state->finup(req);
-पूर्ण
+	return state->finup(req);
+}
 
-अटल पूर्णांक ahash_final(काष्ठा ahash_request *req)
-अणु
-	काष्ठा caam_hash_state *state = ahash_request_ctx(req);
+static int ahash_final(struct ahash_request *req)
+{
+	struct caam_hash_state *state = ahash_request_ctx(req);
 
-	वापस state->final(req);
-पूर्ण
+	return state->final(req);
+}
 
-अटल पूर्णांक ahash_export(काष्ठा ahash_request *req, व्योम *out)
-अणु
-	काष्ठा caam_hash_state *state = ahash_request_ctx(req);
-	काष्ठा caam_export_state *export = out;
+static int ahash_export(struct ahash_request *req, void *out)
+{
+	struct caam_hash_state *state = ahash_request_ctx(req);
+	struct caam_export_state *export = out;
 	u8 *buf = state->buf;
-	पूर्णांक len = state->buflen;
+	int len = state->buflen;
 
-	स_नकल(export->buf, buf, len);
-	स_नकल(export->caam_ctx, state->caam_ctx, माप(export->caam_ctx));
+	memcpy(export->buf, buf, len);
+	memcpy(export->caam_ctx, state->caam_ctx, sizeof(export->caam_ctx));
 	export->buflen = len;
 	export->update = state->update;
 	export->final = state->final;
 	export->finup = state->finup;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ahash_import(काष्ठा ahash_request *req, स्थिर व्योम *in)
-अणु
-	काष्ठा caam_hash_state *state = ahash_request_ctx(req);
-	स्थिर काष्ठा caam_export_state *export = in;
+static int ahash_import(struct ahash_request *req, const void *in)
+{
+	struct caam_hash_state *state = ahash_request_ctx(req);
+	const struct caam_export_state *export = in;
 
-	स_रखो(state, 0, माप(*state));
-	स_नकल(state->buf, export->buf, export->buflen);
-	स_नकल(state->caam_ctx, export->caam_ctx, माप(state->caam_ctx));
+	memset(state, 0, sizeof(*state));
+	memcpy(state->buf, export->buf, export->buflen);
+	memcpy(state->caam_ctx, export->caam_ctx, sizeof(state->caam_ctx));
 	state->buflen = export->buflen;
 	state->update = export->update;
 	state->final = export->final;
 	state->finup = export->finup;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा caam_hash_ढाँचा अणु
-	अक्षर name[CRYPTO_MAX_ALG_NAME];
-	अक्षर driver_name[CRYPTO_MAX_ALG_NAME];
-	अक्षर hmac_name[CRYPTO_MAX_ALG_NAME];
-	अक्षर hmac_driver_name[CRYPTO_MAX_ALG_NAME];
-	अचिन्हित पूर्णांक blocksize;
-	काष्ठा ahash_alg ढाँचा_ahash;
+struct caam_hash_template {
+	char name[CRYPTO_MAX_ALG_NAME];
+	char driver_name[CRYPTO_MAX_ALG_NAME];
+	char hmac_name[CRYPTO_MAX_ALG_NAME];
+	char hmac_driver_name[CRYPTO_MAX_ALG_NAME];
+	unsigned int blocksize;
+	struct ahash_alg template_ahash;
 	u32 alg_type;
-पूर्ण;
+};
 
 /* ahash descriptors */
-अटल काष्ठा caam_hash_ढाँचा driver_hash[] = अणु
-	अणु
+static struct caam_hash_template driver_hash[] = {
+	{
 		.name = "sha1",
 		.driver_name = "sha1-caam",
 		.hmac_name = "hmac(sha1)",
 		.hmac_driver_name = "hmac-sha1-caam",
 		.blocksize = SHA1_BLOCK_SIZE,
-		.ढाँचा_ahash = अणु
+		.template_ahash = {
 			.init = ahash_init,
 			.update = ahash_update,
 			.final = ahash_final,
@@ -1592,19 +1591,19 @@ unmap_ctx:
 			.export = ahash_export,
 			.import = ahash_import,
 			.setkey = ahash_setkey,
-			.halg = अणु
+			.halg = {
 				.digestsize = SHA1_DIGEST_SIZE,
-				.statesize = माप(काष्ठा caam_export_state),
-			पूर्ण,
-		पूर्ण,
+				.statesize = sizeof(struct caam_export_state),
+			},
+		},
 		.alg_type = OP_ALG_ALGSEL_SHA1,
-	पूर्ण, अणु
+	}, {
 		.name = "sha224",
 		.driver_name = "sha224-caam",
 		.hmac_name = "hmac(sha224)",
 		.hmac_driver_name = "hmac-sha224-caam",
 		.blocksize = SHA224_BLOCK_SIZE,
-		.ढाँचा_ahash = अणु
+		.template_ahash = {
 			.init = ahash_init,
 			.update = ahash_update,
 			.final = ahash_final,
@@ -1613,19 +1612,19 @@ unmap_ctx:
 			.export = ahash_export,
 			.import = ahash_import,
 			.setkey = ahash_setkey,
-			.halg = अणु
+			.halg = {
 				.digestsize = SHA224_DIGEST_SIZE,
-				.statesize = माप(काष्ठा caam_export_state),
-			पूर्ण,
-		पूर्ण,
+				.statesize = sizeof(struct caam_export_state),
+			},
+		},
 		.alg_type = OP_ALG_ALGSEL_SHA224,
-	पूर्ण, अणु
+	}, {
 		.name = "sha256",
 		.driver_name = "sha256-caam",
 		.hmac_name = "hmac(sha256)",
 		.hmac_driver_name = "hmac-sha256-caam",
 		.blocksize = SHA256_BLOCK_SIZE,
-		.ढाँचा_ahash = अणु
+		.template_ahash = {
 			.init = ahash_init,
 			.update = ahash_update,
 			.final = ahash_final,
@@ -1634,19 +1633,19 @@ unmap_ctx:
 			.export = ahash_export,
 			.import = ahash_import,
 			.setkey = ahash_setkey,
-			.halg = अणु
+			.halg = {
 				.digestsize = SHA256_DIGEST_SIZE,
-				.statesize = माप(काष्ठा caam_export_state),
-			पूर्ण,
-		पूर्ण,
+				.statesize = sizeof(struct caam_export_state),
+			},
+		},
 		.alg_type = OP_ALG_ALGSEL_SHA256,
-	पूर्ण, अणु
+	}, {
 		.name = "sha384",
 		.driver_name = "sha384-caam",
 		.hmac_name = "hmac(sha384)",
 		.hmac_driver_name = "hmac-sha384-caam",
 		.blocksize = SHA384_BLOCK_SIZE,
-		.ढाँचा_ahash = अणु
+		.template_ahash = {
 			.init = ahash_init,
 			.update = ahash_update,
 			.final = ahash_final,
@@ -1655,19 +1654,19 @@ unmap_ctx:
 			.export = ahash_export,
 			.import = ahash_import,
 			.setkey = ahash_setkey,
-			.halg = अणु
+			.halg = {
 				.digestsize = SHA384_DIGEST_SIZE,
-				.statesize = माप(काष्ठा caam_export_state),
-			पूर्ण,
-		पूर्ण,
+				.statesize = sizeof(struct caam_export_state),
+			},
+		},
 		.alg_type = OP_ALG_ALGSEL_SHA384,
-	पूर्ण, अणु
+	}, {
 		.name = "sha512",
 		.driver_name = "sha512-caam",
 		.hmac_name = "hmac(sha512)",
 		.hmac_driver_name = "hmac-sha512-caam",
 		.blocksize = SHA512_BLOCK_SIZE,
-		.ढाँचा_ahash = अणु
+		.template_ahash = {
 			.init = ahash_init,
 			.update = ahash_update,
 			.final = ahash_final,
@@ -1676,19 +1675,19 @@ unmap_ctx:
 			.export = ahash_export,
 			.import = ahash_import,
 			.setkey = ahash_setkey,
-			.halg = अणु
+			.halg = {
 				.digestsize = SHA512_DIGEST_SIZE,
-				.statesize = माप(काष्ठा caam_export_state),
-			पूर्ण,
-		पूर्ण,
+				.statesize = sizeof(struct caam_export_state),
+			},
+		},
 		.alg_type = OP_ALG_ALGSEL_SHA512,
-	पूर्ण, अणु
+	}, {
 		.name = "md5",
 		.driver_name = "md5-caam",
 		.hmac_name = "hmac(md5)",
 		.hmac_driver_name = "hmac-md5-caam",
 		.blocksize = MD5_BLOCK_WORDS * 4,
-		.ढाँचा_ahash = अणु
+		.template_ahash = {
 			.init = ahash_init,
 			.update = ahash_update,
 			.final = ahash_final,
@@ -1697,17 +1696,17 @@ unmap_ctx:
 			.export = ahash_export,
 			.import = ahash_import,
 			.setkey = ahash_setkey,
-			.halg = अणु
+			.halg = {
 				.digestsize = MD5_DIGEST_SIZE,
-				.statesize = माप(काष्ठा caam_export_state),
-			पूर्ण,
-		पूर्ण,
+				.statesize = sizeof(struct caam_export_state),
+			},
+		},
 		.alg_type = OP_ALG_ALGSEL_MD5,
-	पूर्ण, अणु
+	}, {
 		.hmac_name = "xcbc(aes)",
 		.hmac_driver_name = "xcbc-aes-caam",
 		.blocksize = AES_BLOCK_SIZE,
-		.ढाँचा_ahash = अणु
+		.template_ahash = {
 			.init = ahash_init,
 			.update = ahash_update,
 			.final = ahash_final,
@@ -1716,17 +1715,17 @@ unmap_ctx:
 			.export = ahash_export,
 			.import = ahash_import,
 			.setkey = axcbc_setkey,
-			.halg = अणु
+			.halg = {
 				.digestsize = AES_BLOCK_SIZE,
-				.statesize = माप(काष्ठा caam_export_state),
-			पूर्ण,
-		 पूर्ण,
+				.statesize = sizeof(struct caam_export_state),
+			},
+		 },
 		.alg_type = OP_ALG_ALGSEL_AES | OP_ALG_AAI_XCBC_MAC,
-	पूर्ण, अणु
+	}, {
 		.hmac_name = "cmac(aes)",
 		.hmac_driver_name = "cmac-aes-caam",
 		.blocksize = AES_BLOCK_SIZE,
-		.ढाँचा_ahash = अणु
+		.template_ahash = {
 			.init = ahash_init,
 			.update = ahash_update,
 			.final = ahash_final,
@@ -1735,290 +1734,290 @@ unmap_ctx:
 			.export = ahash_export,
 			.import = ahash_import,
 			.setkey = acmac_setkey,
-			.halg = अणु
+			.halg = {
 				.digestsize = AES_BLOCK_SIZE,
-				.statesize = माप(काष्ठा caam_export_state),
-			पूर्ण,
-		 पूर्ण,
+				.statesize = sizeof(struct caam_export_state),
+			},
+		 },
 		.alg_type = OP_ALG_ALGSEL_AES | OP_ALG_AAI_CMAC,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-काष्ठा caam_hash_alg अणु
-	काष्ठा list_head entry;
-	पूर्णांक alg_type;
-	काष्ठा ahash_alg ahash_alg;
-पूर्ण;
+struct caam_hash_alg {
+	struct list_head entry;
+	int alg_type;
+	struct ahash_alg ahash_alg;
+};
 
-अटल पूर्णांक caam_hash_cra_init(काष्ठा crypto_tfm *tfm)
-अणु
-	काष्ठा crypto_ahash *ahash = __crypto_ahash_cast(tfm);
-	काष्ठा crypto_alg *base = tfm->__crt_alg;
-	काष्ठा hash_alg_common *halg =
-		 container_of(base, काष्ठा hash_alg_common, base);
-	काष्ठा ahash_alg *alg =
-		 container_of(halg, काष्ठा ahash_alg, halg);
-	काष्ठा caam_hash_alg *caam_hash =
-		 container_of(alg, काष्ठा caam_hash_alg, ahash_alg);
-	काष्ठा caam_hash_ctx *ctx = crypto_tfm_ctx(tfm);
-	/* Sizes क्रम MDHA running digests: MD5, SHA1, 224, 256, 384, 512 */
-	अटल स्थिर u8 runninglen[] = अणु HASH_MSG_LEN + MD5_DIGEST_SIZE,
+static int caam_hash_cra_init(struct crypto_tfm *tfm)
+{
+	struct crypto_ahash *ahash = __crypto_ahash_cast(tfm);
+	struct crypto_alg *base = tfm->__crt_alg;
+	struct hash_alg_common *halg =
+		 container_of(base, struct hash_alg_common, base);
+	struct ahash_alg *alg =
+		 container_of(halg, struct ahash_alg, halg);
+	struct caam_hash_alg *caam_hash =
+		 container_of(alg, struct caam_hash_alg, ahash_alg);
+	struct caam_hash_ctx *ctx = crypto_tfm_ctx(tfm);
+	/* Sizes for MDHA running digests: MD5, SHA1, 224, 256, 384, 512 */
+	static const u8 runninglen[] = { HASH_MSG_LEN + MD5_DIGEST_SIZE,
 					 HASH_MSG_LEN + SHA1_DIGEST_SIZE,
 					 HASH_MSG_LEN + 32,
 					 HASH_MSG_LEN + SHA256_DIGEST_SIZE,
 					 HASH_MSG_LEN + 64,
-					 HASH_MSG_LEN + SHA512_DIGEST_SIZE पूर्ण;
-	स्थिर माप_प्रकार sh_desc_update_offset = दुरत्व(काष्ठा caam_hash_ctx,
+					 HASH_MSG_LEN + SHA512_DIGEST_SIZE };
+	const size_t sh_desc_update_offset = offsetof(struct caam_hash_ctx,
 						      sh_desc_update);
 	dma_addr_t dma_addr;
-	काष्ठा caam_drv_निजी *priv;
+	struct caam_drv_private *priv;
 
 	/*
 	 * Get a Job ring from Job Ring driver to ensure in-order
 	 * crypto request processing per tfm
 	 */
 	ctx->jrdev = caam_jr_alloc();
-	अगर (IS_ERR(ctx->jrdev)) अणु
+	if (IS_ERR(ctx->jrdev)) {
 		pr_err("Job Ring Device allocation for transform failed\n");
-		वापस PTR_ERR(ctx->jrdev);
-	पूर्ण
+		return PTR_ERR(ctx->jrdev);
+	}
 
 	priv = dev_get_drvdata(ctx->jrdev->parent);
 
-	अगर (is_xcbc_aes(caam_hash->alg_type)) अणु
+	if (is_xcbc_aes(caam_hash->alg_type)) {
 		ctx->dir = DMA_TO_DEVICE;
-		ctx->key_dir = DMA_BIसूचीECTIONAL;
+		ctx->key_dir = DMA_BIDIRECTIONAL;
 		ctx->adata.algtype = OP_TYPE_CLASS1_ALG | caam_hash->alg_type;
 		ctx->ctx_len = 48;
-	पूर्ण अन्यथा अगर (is_cmac_aes(caam_hash->alg_type)) अणु
+	} else if (is_cmac_aes(caam_hash->alg_type)) {
 		ctx->dir = DMA_TO_DEVICE;
 		ctx->key_dir = DMA_NONE;
 		ctx->adata.algtype = OP_TYPE_CLASS1_ALG | caam_hash->alg_type;
 		ctx->ctx_len = 32;
-	पूर्ण अन्यथा अणु
-		अगर (priv->era >= 6) अणु
-			ctx->dir = DMA_BIसूचीECTIONAL;
+	} else {
+		if (priv->era >= 6) {
+			ctx->dir = DMA_BIDIRECTIONAL;
 			ctx->key_dir = alg->setkey ? DMA_TO_DEVICE : DMA_NONE;
-		पूर्ण अन्यथा अणु
+		} else {
 			ctx->dir = DMA_TO_DEVICE;
 			ctx->key_dir = DMA_NONE;
-		पूर्ण
+		}
 		ctx->adata.algtype = OP_TYPE_CLASS2_ALG | caam_hash->alg_type;
 		ctx->ctx_len = runninglen[(ctx->adata.algtype &
 					   OP_ALG_ALGSEL_SUBMASK) >>
 					  OP_ALG_ALGSEL_SHIFT];
-	पूर्ण
+	}
 
-	अगर (ctx->key_dir != DMA_NONE) अणु
+	if (ctx->key_dir != DMA_NONE) {
 		ctx->adata.key_dma = dma_map_single_attrs(ctx->jrdev, ctx->key,
 							  ARRAY_SIZE(ctx->key),
 							  ctx->key_dir,
 							  DMA_ATTR_SKIP_CPU_SYNC);
-		अगर (dma_mapping_error(ctx->jrdev, ctx->adata.key_dma)) अणु
+		if (dma_mapping_error(ctx->jrdev, ctx->adata.key_dma)) {
 			dev_err(ctx->jrdev, "unable to map key\n");
-			caam_jr_मुक्त(ctx->jrdev);
-			वापस -ENOMEM;
-		पूर्ण
-	पूर्ण
+			caam_jr_free(ctx->jrdev);
+			return -ENOMEM;
+		}
+	}
 
 	dma_addr = dma_map_single_attrs(ctx->jrdev, ctx->sh_desc_update,
-					दुरत्व(काष्ठा caam_hash_ctx, key) -
+					offsetof(struct caam_hash_ctx, key) -
 					sh_desc_update_offset,
 					ctx->dir, DMA_ATTR_SKIP_CPU_SYNC);
-	अगर (dma_mapping_error(ctx->jrdev, dma_addr)) अणु
+	if (dma_mapping_error(ctx->jrdev, dma_addr)) {
 		dev_err(ctx->jrdev, "unable to map shared descriptors\n");
 
-		अगर (ctx->key_dir != DMA_NONE)
+		if (ctx->key_dir != DMA_NONE)
 			dma_unmap_single_attrs(ctx->jrdev, ctx->adata.key_dma,
 					       ARRAY_SIZE(ctx->key),
 					       ctx->key_dir,
 					       DMA_ATTR_SKIP_CPU_SYNC);
 
-		caam_jr_मुक्त(ctx->jrdev);
-		वापस -ENOMEM;
-	पूर्ण
+		caam_jr_free(ctx->jrdev);
+		return -ENOMEM;
+	}
 
 	ctx->sh_desc_update_dma = dma_addr;
 	ctx->sh_desc_update_first_dma = dma_addr +
-					दुरत्व(काष्ठा caam_hash_ctx,
+					offsetof(struct caam_hash_ctx,
 						 sh_desc_update_first) -
 					sh_desc_update_offset;
-	ctx->sh_desc_fin_dma = dma_addr + दुरत्व(काष्ठा caam_hash_ctx,
+	ctx->sh_desc_fin_dma = dma_addr + offsetof(struct caam_hash_ctx,
 						   sh_desc_fin) -
 					sh_desc_update_offset;
-	ctx->sh_desc_digest_dma = dma_addr + दुरत्व(काष्ठा caam_hash_ctx,
+	ctx->sh_desc_digest_dma = dma_addr + offsetof(struct caam_hash_ctx,
 						      sh_desc_digest) -
 					sh_desc_update_offset;
 
-	ctx->enginectx.op.करो_one_request = ahash_करो_one_req;
+	ctx->enginectx.op.do_one_request = ahash_do_one_req;
 
 	crypto_ahash_set_reqsize(__crypto_ahash_cast(tfm),
-				 माप(काष्ठा caam_hash_state));
+				 sizeof(struct caam_hash_state));
 
 	/*
 	 * For keyed hash algorithms shared descriptors
 	 * will be created later in setkey() callback
 	 */
-	वापस alg->setkey ? 0 : ahash_set_sh_desc(ahash);
-पूर्ण
+	return alg->setkey ? 0 : ahash_set_sh_desc(ahash);
+}
 
-अटल व्योम caam_hash_cra_निकास(काष्ठा crypto_tfm *tfm)
-अणु
-	काष्ठा caam_hash_ctx *ctx = crypto_tfm_ctx(tfm);
+static void caam_hash_cra_exit(struct crypto_tfm *tfm)
+{
+	struct caam_hash_ctx *ctx = crypto_tfm_ctx(tfm);
 
 	dma_unmap_single_attrs(ctx->jrdev, ctx->sh_desc_update_dma,
-			       दुरत्व(काष्ठा caam_hash_ctx, key) -
-			       दुरत्व(काष्ठा caam_hash_ctx, sh_desc_update),
+			       offsetof(struct caam_hash_ctx, key) -
+			       offsetof(struct caam_hash_ctx, sh_desc_update),
 			       ctx->dir, DMA_ATTR_SKIP_CPU_SYNC);
-	अगर (ctx->key_dir != DMA_NONE)
+	if (ctx->key_dir != DMA_NONE)
 		dma_unmap_single_attrs(ctx->jrdev, ctx->adata.key_dma,
 				       ARRAY_SIZE(ctx->key), ctx->key_dir,
 				       DMA_ATTR_SKIP_CPU_SYNC);
-	caam_jr_मुक्त(ctx->jrdev);
-पूर्ण
+	caam_jr_free(ctx->jrdev);
+}
 
-व्योम caam_algapi_hash_निकास(व्योम)
-अणु
-	काष्ठा caam_hash_alg *t_alg, *n;
+void caam_algapi_hash_exit(void)
+{
+	struct caam_hash_alg *t_alg, *n;
 
-	अगर (!hash_list.next)
-		वापस;
+	if (!hash_list.next)
+		return;
 
-	list_क्रम_each_entry_safe(t_alg, n, &hash_list, entry) अणु
-		crypto_unरेजिस्टर_ahash(&t_alg->ahash_alg);
+	list_for_each_entry_safe(t_alg, n, &hash_list, entry) {
+		crypto_unregister_ahash(&t_alg->ahash_alg);
 		list_del(&t_alg->entry);
-		kमुक्त(t_alg);
-	पूर्ण
-पूर्ण
+		kfree(t_alg);
+	}
+}
 
-अटल काष्ठा caam_hash_alg *
-caam_hash_alloc(काष्ठा caam_hash_ढाँचा *ढाँचा,
+static struct caam_hash_alg *
+caam_hash_alloc(struct caam_hash_template *template,
 		bool keyed)
-अणु
-	काष्ठा caam_hash_alg *t_alg;
-	काष्ठा ahash_alg *halg;
-	काष्ठा crypto_alg *alg;
+{
+	struct caam_hash_alg *t_alg;
+	struct ahash_alg *halg;
+	struct crypto_alg *alg;
 
-	t_alg = kzalloc(माप(*t_alg), GFP_KERNEL);
-	अगर (!t_alg) अणु
+	t_alg = kzalloc(sizeof(*t_alg), GFP_KERNEL);
+	if (!t_alg) {
 		pr_err("failed to allocate t_alg\n");
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+		return ERR_PTR(-ENOMEM);
+	}
 
-	t_alg->ahash_alg = ढाँचा->ढाँचा_ahash;
+	t_alg->ahash_alg = template->template_ahash;
 	halg = &t_alg->ahash_alg;
 	alg = &halg->halg.base;
 
-	अगर (keyed) अणु
-		snम_लिखो(alg->cra_name, CRYPTO_MAX_ALG_NAME, "%s",
-			 ढाँचा->hmac_name);
-		snम_लिखो(alg->cra_driver_name, CRYPTO_MAX_ALG_NAME, "%s",
-			 ढाँचा->hmac_driver_name);
-	पूर्ण अन्यथा अणु
-		snम_लिखो(alg->cra_name, CRYPTO_MAX_ALG_NAME, "%s",
-			 ढाँचा->name);
-		snम_लिखो(alg->cra_driver_name, CRYPTO_MAX_ALG_NAME, "%s",
-			 ढाँचा->driver_name);
-		t_alg->ahash_alg.setkey = शून्य;
-	पूर्ण
+	if (keyed) {
+		snprintf(alg->cra_name, CRYPTO_MAX_ALG_NAME, "%s",
+			 template->hmac_name);
+		snprintf(alg->cra_driver_name, CRYPTO_MAX_ALG_NAME, "%s",
+			 template->hmac_driver_name);
+	} else {
+		snprintf(alg->cra_name, CRYPTO_MAX_ALG_NAME, "%s",
+			 template->name);
+		snprintf(alg->cra_driver_name, CRYPTO_MAX_ALG_NAME, "%s",
+			 template->driver_name);
+		t_alg->ahash_alg.setkey = NULL;
+	}
 	alg->cra_module = THIS_MODULE;
 	alg->cra_init = caam_hash_cra_init;
-	alg->cra_निकास = caam_hash_cra_निकास;
-	alg->cra_ctxsize = माप(काष्ठा caam_hash_ctx);
+	alg->cra_exit = caam_hash_cra_exit;
+	alg->cra_ctxsize = sizeof(struct caam_hash_ctx);
 	alg->cra_priority = CAAM_CRA_PRIORITY;
-	alg->cra_blocksize = ढाँचा->blocksize;
+	alg->cra_blocksize = template->blocksize;
 	alg->cra_alignmask = 0;
 	alg->cra_flags = CRYPTO_ALG_ASYNC | CRYPTO_ALG_ALLOCATES_MEMORY;
 
-	t_alg->alg_type = ढाँचा->alg_type;
+	t_alg->alg_type = template->alg_type;
 
-	वापस t_alg;
-पूर्ण
+	return t_alg;
+}
 
-पूर्णांक caam_algapi_hash_init(काष्ठा device *ctrldev)
-अणु
-	पूर्णांक i = 0, err = 0;
-	काष्ठा caam_drv_निजी *priv = dev_get_drvdata(ctrldev);
-	अचिन्हित पूर्णांक md_limit = SHA512_DIGEST_SIZE;
+int caam_algapi_hash_init(struct device *ctrldev)
+{
+	int i = 0, err = 0;
+	struct caam_drv_private *priv = dev_get_drvdata(ctrldev);
+	unsigned int md_limit = SHA512_DIGEST_SIZE;
 	u32 md_inst, md_vid;
 
 	/*
-	 * Register crypto algorithms the device supports.  First, identअगरy
+	 * Register crypto algorithms the device supports.  First, identify
 	 * presence and attributes of MD block.
 	 */
-	अगर (priv->era < 10) अणु
+	if (priv->era < 10) {
 		md_vid = (rd_reg32(&priv->ctrl->perfmon.cha_id_ls) &
 			  CHA_ID_LS_MD_MASK) >> CHA_ID_LS_MD_SHIFT;
 		md_inst = (rd_reg32(&priv->ctrl->perfmon.cha_num_ls) &
 			   CHA_ID_LS_MD_MASK) >> CHA_ID_LS_MD_SHIFT;
-	पूर्ण अन्यथा अणु
+	} else {
 		u32 mdha = rd_reg32(&priv->ctrl->vreg.mdha);
 
 		md_vid = (mdha & CHA_VER_VID_MASK) >> CHA_VER_VID_SHIFT;
 		md_inst = mdha & CHA_VER_NUM_MASK;
-	पूर्ण
+	}
 
 	/*
-	 * Skip registration of any hashing algorithms अगर MD block
+	 * Skip registration of any hashing algorithms if MD block
 	 * is not present.
 	 */
-	अगर (!md_inst)
-		वापस 0;
+	if (!md_inst)
+		return 0;
 
 	/* Limit digest size based on LP256 */
-	अगर (md_vid == CHA_VER_VID_MD_LP256)
+	if (md_vid == CHA_VER_VID_MD_LP256)
 		md_limit = SHA256_DIGEST_SIZE;
 
 	INIT_LIST_HEAD(&hash_list);
 
-	/* रेजिस्टर crypto algorithms the device supports */
-	क्रम (i = 0; i < ARRAY_SIZE(driver_hash); i++) अणु
-		काष्ठा caam_hash_alg *t_alg;
-		काष्ठा caam_hash_ढाँचा *alg = driver_hash + i;
+	/* register crypto algorithms the device supports */
+	for (i = 0; i < ARRAY_SIZE(driver_hash); i++) {
+		struct caam_hash_alg *t_alg;
+		struct caam_hash_template *alg = driver_hash + i;
 
 		/* If MD size is not supported by device, skip registration */
-		अगर (is_mdha(alg->alg_type) &&
-		    alg->ढाँचा_ahash.halg.digestsize > md_limit)
-			जारी;
+		if (is_mdha(alg->alg_type) &&
+		    alg->template_ahash.halg.digestsize > md_limit)
+			continue;
 
-		/* रेजिस्टर hmac version */
+		/* register hmac version */
 		t_alg = caam_hash_alloc(alg, true);
-		अगर (IS_ERR(t_alg)) अणु
+		if (IS_ERR(t_alg)) {
 			err = PTR_ERR(t_alg);
 			pr_warn("%s alg allocation failed\n",
 				alg->hmac_driver_name);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		err = crypto_रेजिस्टर_ahash(&t_alg->ahash_alg);
-		अगर (err) अणु
+		err = crypto_register_ahash(&t_alg->ahash_alg);
+		if (err) {
 			pr_warn("%s alg registration failed: %d\n",
 				t_alg->ahash_alg.halg.base.cra_driver_name,
 				err);
-			kमुक्त(t_alg);
-		पूर्ण अन्यथा
+			kfree(t_alg);
+		} else
 			list_add_tail(&t_alg->entry, &hash_list);
 
-		अगर ((alg->alg_type & OP_ALG_ALGSEL_MASK) == OP_ALG_ALGSEL_AES)
-			जारी;
+		if ((alg->alg_type & OP_ALG_ALGSEL_MASK) == OP_ALG_ALGSEL_AES)
+			continue;
 
-		/* रेजिस्टर unkeyed version */
+		/* register unkeyed version */
 		t_alg = caam_hash_alloc(alg, false);
-		अगर (IS_ERR(t_alg)) अणु
+		if (IS_ERR(t_alg)) {
 			err = PTR_ERR(t_alg);
 			pr_warn("%s alg allocation failed\n", alg->driver_name);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		err = crypto_रेजिस्टर_ahash(&t_alg->ahash_alg);
-		अगर (err) अणु
+		err = crypto_register_ahash(&t_alg->ahash_alg);
+		if (err) {
 			pr_warn("%s alg registration failed: %d\n",
 				t_alg->ahash_alg.halg.base.cra_driver_name,
 				err);
-			kमुक्त(t_alg);
-		पूर्ण अन्यथा
+			kfree(t_alg);
+		} else
 			list_add_tail(&t_alg->entry, &hash_list);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}

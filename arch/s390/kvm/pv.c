@@ -1,25 +1,24 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Hosting Protected Virtual Machines
  *
  * Copyright IBM Corp. 2019, 2020
  *    Author(s): Janosch Frank <frankja@linux.ibm.com>
  */
-#समावेश <linux/kvm.h>
-#समावेश <linux/kvm_host.h>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <यंत्र/gmap.h>
-#समावेश <यंत्र/uv.h>
-#समावेश <यंत्र/mman.h>
-#समावेश "kvm-s390.h"
+#include <linux/kvm.h>
+#include <linux/kvm_host.h>
+#include <linux/pagemap.h>
+#include <linux/sched/signal.h>
+#include <asm/gmap.h>
+#include <asm/uv.h>
+#include <asm/mman.h>
+#include "kvm-s390.h"
 
-पूर्णांक kvm_s390_pv_destroy_cpu(काष्ठा kvm_vcpu *vcpu, u16 *rc, u16 *rrc)
-अणु
-	पूर्णांक cc = 0;
+int kvm_s390_pv_destroy_cpu(struct kvm_vcpu *vcpu, u16 *rc, u16 *rrc)
+{
+	int cc = 0;
 
-	अगर (kvm_s390_pv_cpu_get_handle(vcpu)) अणु
+	if (kvm_s390_pv_cpu_get_handle(vcpu)) {
 		cc = uv_cmd_nodata(kvm_s390_pv_cpu_get_handle(vcpu),
 				   UVC_CMD_DESTROY_SEC_CPU, rc, rrc);
 
@@ -28,43 +27,43 @@
 			     vcpu->vcpu_id, *rc, *rrc);
 		WARN_ONCE(cc, "protvirt destroy cpu failed rc %x rrc %x",
 			  *rc, *rrc);
-	पूर्ण
-	/* Intended memory leak क्रम something that should never happen. */
-	अगर (!cc)
-		मुक्त_pages(vcpu->arch.pv.stor_base,
+	}
+	/* Intended memory leak for something that should never happen. */
+	if (!cc)
+		free_pages(vcpu->arch.pv.stor_base,
 			   get_order(uv_info.guest_cpu_stor_len));
 
-	मुक्त_page(sida_origin(vcpu->arch.sie_block));
+	free_page(sida_origin(vcpu->arch.sie_block));
 	vcpu->arch.sie_block->pv_handle_cpu = 0;
 	vcpu->arch.sie_block->pv_handle_config = 0;
-	स_रखो(&vcpu->arch.pv, 0, माप(vcpu->arch.pv));
+	memset(&vcpu->arch.pv, 0, sizeof(vcpu->arch.pv));
 	vcpu->arch.sie_block->sdf = 0;
 	/*
-	 * The sidad field (क्रम sdf == 2) is now the gbea field (क्रम sdf == 0).
-	 * Use the reset value of gbea to aव्योम leaking the kernel poपूर्णांकer of
-	 * the just मुक्तd sida.
+	 * The sidad field (for sdf == 2) is now the gbea field (for sdf == 0).
+	 * Use the reset value of gbea to avoid leaking the kernel pointer of
+	 * the just freed sida.
 	 */
 	vcpu->arch.sie_block->gbea = 1;
 	kvm_make_request(KVM_REQ_TLB_FLUSH, vcpu);
 
-	वापस cc ? EIO : 0;
-पूर्ण
+	return cc ? EIO : 0;
+}
 
-पूर्णांक kvm_s390_pv_create_cpu(काष्ठा kvm_vcpu *vcpu, u16 *rc, u16 *rrc)
-अणु
-	काष्ठा uv_cb_csc uvcb = अणु
+int kvm_s390_pv_create_cpu(struct kvm_vcpu *vcpu, u16 *rc, u16 *rrc)
+{
+	struct uv_cb_csc uvcb = {
 		.header.cmd = UVC_CMD_CREATE_SEC_CPU,
-		.header.len = माप(uvcb),
-	पूर्ण;
-	पूर्णांक cc;
+		.header.len = sizeof(uvcb),
+	};
+	int cc;
 
-	अगर (kvm_s390_pv_cpu_get_handle(vcpu))
-		वापस -EINVAL;
+	if (kvm_s390_pv_cpu_get_handle(vcpu))
+		return -EINVAL;
 
-	vcpu->arch.pv.stor_base = __get_मुक्त_pages(GFP_KERNEL_ACCOUNT,
+	vcpu->arch.pv.stor_base = __get_free_pages(GFP_KERNEL_ACCOUNT,
 						   get_order(uv_info.guest_cpu_stor_len));
-	अगर (!vcpu->arch.pv.stor_base)
-		वापस -ENOMEM;
+	if (!vcpu->arch.pv.stor_base)
+		return -ENOMEM;
 
 	/* Input */
 	uvcb.guest_handle = kvm_s390_pv_get_handle(vcpu->kvm);
@@ -72,13 +71,13 @@
 	uvcb.state_origin = (u64)vcpu->arch.sie_block;
 	uvcb.stor_origin = (u64)vcpu->arch.pv.stor_base;
 
-	/* Alloc Secure Inकाष्ठाion Data Area Designation */
-	vcpu->arch.sie_block->sidad = __get_मुक्त_page(GFP_KERNEL_ACCOUNT | __GFP_ZERO);
-	अगर (!vcpu->arch.sie_block->sidad) अणु
-		मुक्त_pages(vcpu->arch.pv.stor_base,
+	/* Alloc Secure Instruction Data Area Designation */
+	vcpu->arch.sie_block->sidad = __get_free_page(GFP_KERNEL_ACCOUNT | __GFP_ZERO);
+	if (!vcpu->arch.sie_block->sidad) {
+		free_pages(vcpu->arch.pv.stor_base,
 			   get_order(uv_info.guest_cpu_stor_len));
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	cc = uv_call(0, (u64)&uvcb);
 	*rc = uvcb.header.rc;
@@ -88,12 +87,12 @@
 		     vcpu->vcpu_id, uvcb.cpu_handle, uvcb.header.rc,
 		     uvcb.header.rrc);
 
-	अगर (cc) अणु
+	if (cc) {
 		u16 dummy;
 
 		kvm_s390_pv_destroy_cpu(vcpu, &dummy, &dummy);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	/* Output */
 	vcpu->arch.pv.handle = uvcb.cpu_handle;
@@ -101,32 +100,32 @@
 	vcpu->arch.sie_block->pv_handle_config = kvm_s390_pv_get_handle(vcpu->kvm);
 	vcpu->arch.sie_block->sdf = 2;
 	kvm_make_request(KVM_REQ_TLB_FLUSH, vcpu);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* only मुक्त resources when the destroy was successful */
-अटल व्योम kvm_s390_pv_dealloc_vm(काष्ठा kvm *kvm)
-अणु
-	vमुक्त(kvm->arch.pv.stor_var);
-	मुक्त_pages(kvm->arch.pv.stor_base,
+/* only free resources when the destroy was successful */
+static void kvm_s390_pv_dealloc_vm(struct kvm *kvm)
+{
+	vfree(kvm->arch.pv.stor_var);
+	free_pages(kvm->arch.pv.stor_base,
 		   get_order(uv_info.guest_base_stor_len));
-	स_रखो(&kvm->arch.pv, 0, माप(kvm->arch.pv));
-पूर्ण
+	memset(&kvm->arch.pv, 0, sizeof(kvm->arch.pv));
+}
 
-अटल पूर्णांक kvm_s390_pv_alloc_vm(काष्ठा kvm *kvm)
-अणु
-	अचिन्हित दीर्घ base = uv_info.guest_base_stor_len;
-	अचिन्हित दीर्घ virt = uv_info.guest_virt_var_stor_len;
-	अचिन्हित दीर्घ npages = 0, vlen = 0;
-	काष्ठा kvm_memory_slot *memslot;
+static int kvm_s390_pv_alloc_vm(struct kvm *kvm)
+{
+	unsigned long base = uv_info.guest_base_stor_len;
+	unsigned long virt = uv_info.guest_virt_var_stor_len;
+	unsigned long npages = 0, vlen = 0;
+	struct kvm_memory_slot *memslot;
 
-	kvm->arch.pv.stor_var = शून्य;
-	kvm->arch.pv.stor_base = __get_मुक्त_pages(GFP_KERNEL_ACCOUNT, get_order(base));
-	अगर (!kvm->arch.pv.stor_base)
-		वापस -ENOMEM;
+	kvm->arch.pv.stor_var = NULL;
+	kvm->arch.pv.stor_base = __get_free_pages(GFP_KERNEL_ACCOUNT, get_order(base));
+	if (!kvm->arch.pv.stor_base)
+		return -ENOMEM;
 
 	/*
-	 * Calculate current guest storage क्रम allocation of the
+	 * Calculate current guest storage for allocation of the
 	 * variable storage, which is based on the length in MB.
 	 *
 	 * Slots are sorted by GFN
@@ -142,53 +141,53 @@
 	vlen = ALIGN(virt * ((npages * PAGE_SIZE) / HPAGE_SIZE), PAGE_SIZE);
 	vlen += uv_info.guest_virt_base_stor_len;
 	kvm->arch.pv.stor_var = vzalloc(vlen);
-	अगर (!kvm->arch.pv.stor_var)
-		जाओ out_err;
-	वापस 0;
+	if (!kvm->arch.pv.stor_var)
+		goto out_err;
+	return 0;
 
 out_err:
 	kvm_s390_pv_dealloc_vm(kvm);
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-/* this should not fail, but अगर it करोes, we must not मुक्त the करोnated memory */
-पूर्णांक kvm_s390_pv_deinit_vm(काष्ठा kvm *kvm, u16 *rc, u16 *rrc)
-अणु
-	पूर्णांक cc;
+/* this should not fail, but if it does, we must not free the donated memory */
+int kvm_s390_pv_deinit_vm(struct kvm *kvm, u16 *rc, u16 *rrc)
+{
+	int cc;
 
-	/* make all pages accessible beक्रमe destroying the guest */
+	/* make all pages accessible before destroying the guest */
 	s390_reset_acc(kvm->mm);
 
 	cc = uv_cmd_nodata(kvm_s390_pv_get_handle(kvm),
 			   UVC_CMD_DESTROY_SEC_CONF, rc, rrc);
 	WRITE_ONCE(kvm->arch.gmap->guest_handle, 0);
-	atomic_set(&kvm->mm->context.is_रक्षित, 0);
+	atomic_set(&kvm->mm->context.is_protected, 0);
 	KVM_UV_EVENT(kvm, 3, "PROTVIRT DESTROY VM: rc %x rrc %x", *rc, *rrc);
 	WARN_ONCE(cc, "protvirt destroy vm failed rc %x rrc %x", *rc, *rrc);
 	/* Inteded memory leak on "impossible" error */
-	अगर (!cc)
+	if (!cc)
 		kvm_s390_pv_dealloc_vm(kvm);
-	वापस cc ? -EIO : 0;
-पूर्ण
+	return cc ? -EIO : 0;
+}
 
-पूर्णांक kvm_s390_pv_init_vm(काष्ठा kvm *kvm, u16 *rc, u16 *rrc)
-अणु
-	काष्ठा uv_cb_cgc uvcb = अणु
+int kvm_s390_pv_init_vm(struct kvm *kvm, u16 *rc, u16 *rrc)
+{
+	struct uv_cb_cgc uvcb = {
 		.header.cmd = UVC_CMD_CREATE_SEC_CONF,
-		.header.len = माप(uvcb)
-	पूर्ण;
-	पूर्णांक cc, ret;
+		.header.len = sizeof(uvcb)
+	};
+	int cc, ret;
 	u16 dummy;
 
 	ret = kvm_s390_pv_alloc_vm(kvm);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* Inमाला_दो */
-	uvcb.guest_stor_origin = 0; /* MSO is 0 क्रम KVM */
+	/* Inputs */
+	uvcb.guest_stor_origin = 0; /* MSO is 0 for KVM */
 	uvcb.guest_stor_len = kvm->arch.pv.guest_len;
 	uvcb.guest_asce = kvm->arch.gmap->asce;
-	uvcb.guest_sca = (अचिन्हित दीर्घ)kvm->arch.sca;
+	uvcb.guest_sca = (unsigned long)kvm->arch.sca;
 	uvcb.conf_base_stor_origin = (u64)kvm->arch.pv.stor_base;
 	uvcb.conf_virt_stor_origin = (u64)kvm->arch.pv.stor_var;
 
@@ -198,107 +197,107 @@ out_err:
 	KVM_UV_EVENT(kvm, 3, "PROTVIRT CREATE VM: handle %llx len %llx rc %x rrc %x",
 		     uvcb.guest_handle, uvcb.guest_stor_len, *rc, *rrc);
 
-	/* Outमाला_दो */
+	/* Outputs */
 	kvm->arch.pv.handle = uvcb.guest_handle;
 
-	अगर (cc) अणु
-		अगर (uvcb.header.rc & UVC_RC_NEED_DESTROY)
+	if (cc) {
+		if (uvcb.header.rc & UVC_RC_NEED_DESTROY)
 			kvm_s390_pv_deinit_vm(kvm, &dummy, &dummy);
-		अन्यथा
+		else
 			kvm_s390_pv_dealloc_vm(kvm);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 	kvm->arch.gmap->guest_handle = uvcb.guest_handle;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक kvm_s390_pv_set_sec_parms(काष्ठा kvm *kvm, व्योम *hdr, u64 length, u16 *rc,
+int kvm_s390_pv_set_sec_parms(struct kvm *kvm, void *hdr, u64 length, u16 *rc,
 			      u16 *rrc)
-अणु
-	काष्ठा uv_cb_ssc uvcb = अणु
+{
+	struct uv_cb_ssc uvcb = {
 		.header.cmd = UVC_CMD_SET_SEC_CONF_PARAMS,
-		.header.len = माप(uvcb),
+		.header.len = sizeof(uvcb),
 		.sec_header_origin = (u64)hdr,
 		.sec_header_len = length,
 		.guest_handle = kvm_s390_pv_get_handle(kvm),
-	पूर्ण;
-	पूर्णांक cc = uv_call(0, (u64)&uvcb);
+	};
+	int cc = uv_call(0, (u64)&uvcb);
 
 	*rc = uvcb.header.rc;
 	*rrc = uvcb.header.rrc;
 	KVM_UV_EVENT(kvm, 3, "PROTVIRT VM SET PARMS: rc %x rrc %x",
 		     *rc, *rrc);
-	अगर (!cc)
-		atomic_set(&kvm->mm->context.is_रक्षित, 1);
-	वापस cc ? -EINVAL : 0;
-पूर्ण
+	if (!cc)
+		atomic_set(&kvm->mm->context.is_protected, 1);
+	return cc ? -EINVAL : 0;
+}
 
-अटल पूर्णांक unpack_one(काष्ठा kvm *kvm, अचिन्हित दीर्घ addr, u64 tweak,
+static int unpack_one(struct kvm *kvm, unsigned long addr, u64 tweak,
 		      u64 offset, u16 *rc, u16 *rrc)
-अणु
-	काष्ठा uv_cb_unp uvcb = अणु
+{
+	struct uv_cb_unp uvcb = {
 		.header.cmd = UVC_CMD_UNPACK_IMG,
-		.header.len = माप(uvcb),
+		.header.len = sizeof(uvcb),
 		.guest_handle = kvm_s390_pv_get_handle(kvm),
 		.gaddr = addr,
 		.tweak[0] = tweak,
 		.tweak[1] = offset,
-	पूर्ण;
-	पूर्णांक ret = gmap_make_secure(kvm->arch.gmap, addr, &uvcb);
+	};
+	int ret = gmap_make_secure(kvm->arch.gmap, addr, &uvcb);
 
 	*rc = uvcb.header.rc;
 	*rrc = uvcb.header.rrc;
 
-	अगर (ret && ret != -EAGAIN)
+	if (ret && ret != -EAGAIN)
 		KVM_UV_EVENT(kvm, 3, "PROTVIRT VM UNPACK: failed addr %llx with rc %x rrc %x",
 			     uvcb.gaddr, *rc, *rrc);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक kvm_s390_pv_unpack(काष्ठा kvm *kvm, अचिन्हित दीर्घ addr, अचिन्हित दीर्घ size,
-		       अचिन्हित दीर्घ tweak, u16 *rc, u16 *rrc)
-अणु
+int kvm_s390_pv_unpack(struct kvm *kvm, unsigned long addr, unsigned long size,
+		       unsigned long tweak, u16 *rc, u16 *rrc)
+{
 	u64 offset = 0;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	अगर (addr & ~PAGE_MASK || !size || size & ~PAGE_MASK)
-		वापस -EINVAL;
+	if (addr & ~PAGE_MASK || !size || size & ~PAGE_MASK)
+		return -EINVAL;
 
 	KVM_UV_EVENT(kvm, 3, "PROTVIRT VM UNPACK: start addr %lx size %lx",
 		     addr, size);
 
-	जबतक (offset < size) अणु
+	while (offset < size) {
 		ret = unpack_one(kvm, addr, tweak, offset, rc, rrc);
-		अगर (ret == -EAGAIN) अणु
+		if (ret == -EAGAIN) {
 			cond_resched();
-			अगर (fatal_संकेत_pending(current))
-				अवरोध;
-			जारी;
-		पूर्ण
-		अगर (ret)
-			अवरोध;
+			if (fatal_signal_pending(current))
+				break;
+			continue;
+		}
+		if (ret)
+			break;
 		addr += PAGE_SIZE;
 		offset += PAGE_SIZE;
-	पूर्ण
-	अगर (!ret)
+	}
+	if (!ret)
 		KVM_UV_EVENT(kvm, 3, "%s", "PROTVIRT VM UNPACK: successful");
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक kvm_s390_pv_set_cpu_state(काष्ठा kvm_vcpu *vcpu, u8 state)
-अणु
-	काष्ठा uv_cb_cpu_set_state uvcb = अणु
+int kvm_s390_pv_set_cpu_state(struct kvm_vcpu *vcpu, u8 state)
+{
+	struct uv_cb_cpu_set_state uvcb = {
 		.header.cmd	= UVC_CMD_CPU_SET_STATE,
-		.header.len	= माप(uvcb),
+		.header.len	= sizeof(uvcb),
 		.cpu_handle	= kvm_s390_pv_cpu_get_handle(vcpu),
 		.state		= state,
-	पूर्ण;
-	पूर्णांक cc;
+	};
+	int cc;
 
 	cc = uv_call(0, (u64)&uvcb);
 	KVM_UV_EVENT(vcpu->kvm, 3, "PROTVIRT SET CPU %d STATE %d rc %x rrc %x",
 		     vcpu->vcpu_id, state, uvcb.header.rc, uvcb.header.rrc);
-	अगर (cc)
-		वापस -EINVAL;
-	वापस 0;
-पूर्ण
+	if (cc)
+		return -EINVAL;
+	return 0;
+}

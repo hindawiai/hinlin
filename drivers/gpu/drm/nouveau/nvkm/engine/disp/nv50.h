@@ -1,103 +1,102 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
-#अगर_अघोषित __NV50_DISP_H__
-#घोषणा __NV50_DISP_H__
-#घोषणा nv50_disp(p) container_of((p), काष्ठा nv50_disp, base)
-#समावेश "priv.h"
-काष्ठा nvkm_head;
+/* SPDX-License-Identifier: MIT */
+#ifndef __NV50_DISP_H__
+#define __NV50_DISP_H__
+#define nv50_disp(p) container_of((p), struct nv50_disp, base)
+#include "priv.h"
+struct nvkm_head;
 
-#समावेश <core/क्रमागत.h>
+#include <core/enum.h>
 
-काष्ठा nv50_disp अणु
-	स्थिर काष्ठा nv50_disp_func *func;
-	काष्ठा nvkm_disp base;
+struct nv50_disp {
+	const struct nv50_disp_func *func;
+	struct nvkm_disp base;
 
-	काष्ठा workqueue_काष्ठा *wq;
-	काष्ठा work_काष्ठा supervisor;
+	struct workqueue_struct *wq;
+	struct work_struct supervisor;
 	u32 super;
 
-	काष्ठा nvkm_event uevent;
+	struct nvkm_event uevent;
 
-	काष्ठा अणु
-		अचिन्हित दीर्घ mask;
-		पूर्णांक nr;
-	पूर्ण wndw, head, dac;
+	struct {
+		unsigned long mask;
+		int nr;
+	} wndw, head, dac;
 
-	काष्ठा अणु
-		अचिन्हित दीर्घ mask;
-		पूर्णांक nr;
+	struct {
+		unsigned long mask;
+		int nr;
 		u32 lvdsconf;
-	पूर्ण sor;
+	} sor;
 
-	काष्ठा अणु
-		अचिन्हित दीर्घ mask;
-		पूर्णांक nr;
+	struct {
+		unsigned long mask;
+		int nr;
 		u8 type[3];
-	पूर्ण pior;
+	} pior;
 
-	काष्ठा nvkm_gpuobj *inst;
-	काष्ठा nvkm_ramht *ramht;
+	struct nvkm_gpuobj *inst;
+	struct nvkm_ramht *ramht;
 
-	काष्ठा nv50_disp_chan *chan[81];
-पूर्ण;
+	struct nv50_disp_chan *chan[81];
+};
 
-व्योम nv50_disp_super_1(काष्ठा nv50_disp *);
-व्योम nv50_disp_super_1_0(काष्ठा nv50_disp *, काष्ठा nvkm_head *);
-व्योम nv50_disp_super_2_0(काष्ठा nv50_disp *, काष्ठा nvkm_head *);
-व्योम nv50_disp_super_2_1(काष्ठा nv50_disp *, काष्ठा nvkm_head *);
-व्योम nv50_disp_super_2_2(काष्ठा nv50_disp *, काष्ठा nvkm_head *);
-व्योम nv50_disp_super_3_0(काष्ठा nv50_disp *, काष्ठा nvkm_head *);
+void nv50_disp_super_1(struct nv50_disp *);
+void nv50_disp_super_1_0(struct nv50_disp *, struct nvkm_head *);
+void nv50_disp_super_2_0(struct nv50_disp *, struct nvkm_head *);
+void nv50_disp_super_2_1(struct nv50_disp *, struct nvkm_head *);
+void nv50_disp_super_2_2(struct nv50_disp *, struct nvkm_head *);
+void nv50_disp_super_3_0(struct nv50_disp *, struct nvkm_head *);
 
-पूर्णांक nv50_disp_new_(स्थिर काष्ठा nv50_disp_func *, काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक,
-		   काष्ठा nvkm_disp **);
+int nv50_disp_new_(const struct nv50_disp_func *, struct nvkm_device *, enum nvkm_subdev_type, int,
+		   struct nvkm_disp **);
 
-काष्ठा nv50_disp_func अणु
-	पूर्णांक (*init)(काष्ठा nv50_disp *);
-	व्योम (*fini)(काष्ठा nv50_disp *);
-	व्योम (*पूर्णांकr)(काष्ठा nv50_disp *);
-	व्योम (*पूर्णांकr_error)(काष्ठा nv50_disp *, पूर्णांक chid);
+struct nv50_disp_func {
+	int (*init)(struct nv50_disp *);
+	void (*fini)(struct nv50_disp *);
+	void (*intr)(struct nv50_disp *);
+	void (*intr_error)(struct nv50_disp *, int chid);
 
-	स्थिर काष्ठा nvkm_event_func *uevent;
-	व्योम (*super)(काष्ठा work_काष्ठा *);
+	const struct nvkm_event_func *uevent;
+	void (*super)(struct work_struct *);
 
-	स्थिर काष्ठा nvkm_disp_oclass *root;
+	const struct nvkm_disp_oclass *root;
 
-	काष्ठा अणु
-		पूर्णांक (*cnt)(काष्ठा nvkm_disp *, अचिन्हित दीर्घ *mask);
-		पूर्णांक (*new)(काष्ठा nvkm_disp *, पूर्णांक id);
-	पूर्ण wndw, head, dac, sor, pior;
+	struct {
+		int (*cnt)(struct nvkm_disp *, unsigned long *mask);
+		int (*new)(struct nvkm_disp *, int id);
+	} wndw, head, dac, sor, pior;
 
 	u16 ramht_size;
-पूर्ण;
+};
 
-पूर्णांक nv50_disp_init(काष्ठा nv50_disp *);
-व्योम nv50_disp_fini(काष्ठा nv50_disp *);
-व्योम nv50_disp_पूर्णांकr(काष्ठा nv50_disp *);
-व्योम nv50_disp_super(काष्ठा work_काष्ठा *);
-बाह्य स्थिर काष्ठा nvkm_क्रमागत nv50_disp_पूर्णांकr_error_type[];
+int nv50_disp_init(struct nv50_disp *);
+void nv50_disp_fini(struct nv50_disp *);
+void nv50_disp_intr(struct nv50_disp *);
+void nv50_disp_super(struct work_struct *);
+extern const struct nvkm_enum nv50_disp_intr_error_type[];
 
-पूर्णांक gf119_disp_init(काष्ठा nv50_disp *);
-व्योम gf119_disp_fini(काष्ठा nv50_disp *);
-व्योम gf119_disp_पूर्णांकr(काष्ठा nv50_disp *);
-व्योम gf119_disp_super(काष्ठा work_काष्ठा *);
-व्योम gf119_disp_पूर्णांकr_error(काष्ठा nv50_disp *, पूर्णांक);
+int gf119_disp_init(struct nv50_disp *);
+void gf119_disp_fini(struct nv50_disp *);
+void gf119_disp_intr(struct nv50_disp *);
+void gf119_disp_super(struct work_struct *);
+void gf119_disp_intr_error(struct nv50_disp *, int);
 
-व्योम gv100_disp_fini(काष्ठा nv50_disp *);
-व्योम gv100_disp_पूर्णांकr(काष्ठा nv50_disp *);
-व्योम gv100_disp_super(काष्ठा work_काष्ठा *);
-पूर्णांक gv100_disp_wndw_cnt(काष्ठा nvkm_disp *, अचिन्हित दीर्घ *);
+void gv100_disp_fini(struct nv50_disp *);
+void gv100_disp_intr(struct nv50_disp *);
+void gv100_disp_super(struct work_struct *);
+int gv100_disp_wndw_cnt(struct nvkm_disp *, unsigned long *);
 
-पूर्णांक tu102_disp_init(काष्ठा nv50_disp *);
+int tu102_disp_init(struct nv50_disp *);
 
-व्योम nv50_disp_dpपंचांगds_war_2(काष्ठा nv50_disp *, काष्ठा dcb_output *);
-व्योम nv50_disp_dpपंचांगds_war_3(काष्ठा nv50_disp *, काष्ठा dcb_output *);
-व्योम nv50_disp_update_sppll1(काष्ठा nv50_disp *);
+void nv50_disp_dptmds_war_2(struct nv50_disp *, struct dcb_output *);
+void nv50_disp_dptmds_war_3(struct nv50_disp *, struct dcb_output *);
+void nv50_disp_update_sppll1(struct nv50_disp *);
 
-बाह्य स्थिर काष्ठा nvkm_event_func nv50_disp_chan_uevent;
-पूर्णांक  nv50_disp_chan_uevent_ctor(काष्ठा nvkm_object *, व्योम *, u32,
-				काष्ठा nvkm_notअगरy *);
-व्योम nv50_disp_chan_uevent_send(काष्ठा nv50_disp *, पूर्णांक);
+extern const struct nvkm_event_func nv50_disp_chan_uevent;
+int  nv50_disp_chan_uevent_ctor(struct nvkm_object *, void *, u32,
+				struct nvkm_notify *);
+void nv50_disp_chan_uevent_send(struct nv50_disp *, int);
 
-बाह्य स्थिर काष्ठा nvkm_event_func gf119_disp_chan_uevent;
-बाह्य स्थिर काष्ठा nvkm_event_func gv100_disp_chan_uevent;
-#पूर्ण_अगर
+extern const struct nvkm_event_func gf119_disp_chan_uevent;
+extern const struct nvkm_event_func gv100_disp_chan_uevent;
+#endif

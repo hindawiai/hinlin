@@ -1,35 +1,34 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- *  The driver क्रम the Cirrus Logic's Sound Fusion CS46XX based soundcards
+ *  The driver for the Cirrus Logic's Sound Fusion CS46XX based soundcards
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  */
 
 /*
- * 2002-07 Benny Sjostअक्रम benny@hosपंचांगobility.com
+ * 2002-07 Benny Sjostrand benny@hostmobility.com
  */
 
-#अगर_घोषित  CONFIG_SND_CS46XX_NEW_DSP /* hack ... */
-#अगर_अघोषित __DSP_SPOS_H__
-#घोषणा __DSP_SPOS_H__
+#ifdef  CONFIG_SND_CS46XX_NEW_DSP /* hack ... */
+#ifndef __DSP_SPOS_H__
+#define __DSP_SPOS_H__
 
-#घोषणा DSP_MAX_SYMBOLS 1024
-#घोषणा DSP_MAX_MODULES 64
+#define DSP_MAX_SYMBOLS 1024
+#define DSP_MAX_MODULES 64
 
-#घोषणा DSP_CODE_BYTE_SIZE             0x00007000UL
-#घोषणा DSP_PARAMETER_BYTE_SIZE        0x00003000UL
-#घोषणा DSP_SAMPLE_BYTE_SIZE           0x00003800UL
-#घोषणा DSP_PARAMETER_BYTE_OFFSET      0x00000000UL
-#घोषणा DSP_SAMPLE_BYTE_OFFSET         0x00010000UL
-#घोषणा DSP_CODE_BYTE_OFFSET           0x00020000UL
+#define DSP_CODE_BYTE_SIZE             0x00007000UL
+#define DSP_PARAMETER_BYTE_SIZE        0x00003000UL
+#define DSP_SAMPLE_BYTE_SIZE           0x00003800UL
+#define DSP_PARAMETER_BYTE_OFFSET      0x00000000UL
+#define DSP_SAMPLE_BYTE_OFFSET         0x00010000UL
+#define DSP_CODE_BYTE_OFFSET           0x00020000UL
 
-#घोषणा WIDE_INSTR_MASK       0x0040
-#घोषणा WIDE_LADD_INSTR_MASK  0x0380
+#define WIDE_INSTR_MASK       0x0040
+#define WIDE_LADD_INSTR_MASK  0x0380
 
-/* this inकाष्ठाion types
-   needs to be पुनः_स्मृतिated when load
-   code पूर्णांकo DSP */
-क्रमागत wide_opcode अणु
+/* this instruction types
+   needs to be reallocated when load
+   code into DSP */
+enum wide_opcode {
 	WIDE_FOR_BEGIN_LOOP = 0x20,
 	WIDE_FOR_BEGIN_LOOP2,
 
@@ -44,136 +43,136 @@
 	WIDE_TBEQ_COND_CALL1_ADDR,
 	WIDE_TBEQ_NCOND_GOTOI_ADDR,
 	WIDE_TBEQ_NCOND_CALL1_ADDR,
-पूर्ण;
+};
 
 /* SAMPLE segment */
-#घोषणा VARI_DECIMATE_BUF1       0x0000
-#घोषणा WRITE_BACK_BUF1          0x0400
-#घोषणा CODEC_INPUT_BUF1         0x0500
-#घोषणा PCM_READER_BUF1          0x0600
-#घोषणा SRC_DELAY_BUF1           0x0680
-#घोषणा VARI_DECIMATE_BUF0       0x0780
-#घोषणा SRC_OUTPUT_BUF1          0x07A0
-#घोषणा ASYNC_IP_OUTPUT_BUFFER1  0x0A00
-#घोषणा OUTPUT_SNOOP_BUFFER      0x0B00
-#घोषणा SPDIFI_IP_OUTPUT_BUFFER1 0x0E00
-#घोषणा SPDIFO_IP_OUTPUT_BUFFER1 0x1000
-#घोषणा MIX_SAMPLE_BUF1          0x1400
-#घोषणा MIX_SAMPLE_BUF2          0x2E80
-#घोषणा MIX_SAMPLE_BUF3          0x2F00
-#घोषणा MIX_SAMPLE_BUF4          0x2F80
-#घोषणा MIX_SAMPLE_BUF5          0x3000
+#define VARI_DECIMATE_BUF1       0x0000
+#define WRITE_BACK_BUF1          0x0400
+#define CODEC_INPUT_BUF1         0x0500
+#define PCM_READER_BUF1          0x0600
+#define SRC_DELAY_BUF1           0x0680
+#define VARI_DECIMATE_BUF0       0x0780
+#define SRC_OUTPUT_BUF1          0x07A0
+#define ASYNC_IP_OUTPUT_BUFFER1  0x0A00
+#define OUTPUT_SNOOP_BUFFER      0x0B00
+#define SPDIFI_IP_OUTPUT_BUFFER1 0x0E00
+#define SPDIFO_IP_OUTPUT_BUFFER1 0x1000
+#define MIX_SAMPLE_BUF1          0x1400
+#define MIX_SAMPLE_BUF2          0x2E80
+#define MIX_SAMPLE_BUF3          0x2F00
+#define MIX_SAMPLE_BUF4          0x2F80
+#define MIX_SAMPLE_BUF5          0x3000
 
 /* Task stack address */
-#घोषणा HFG_STACK                0x066A
-#घोषणा FG_STACK                 0x066E
-#घोषणा BG_STACK                 0x068E
+#define HFG_STACK                0x066A
+#define FG_STACK                 0x066E
+#define BG_STACK                 0x068E
 
 /* SCB's addresses */
-#घोषणा SPOSCB_ADDR              0x070
-#घोषणा BG_TREE_SCB_ADDR         0x635
-#घोषणा शून्य_SCB_ADDR            0x000
-#घोषणा TIMINGMASTER_SCB_ADDR    0x010
-#घोषणा CODECOUT_SCB_ADDR        0x020
-#घोषणा PCMREADER_SCB_ADDR       0x030
-#घोषणा WRITEBACK_SCB_ADDR       0x040
-#घोषणा CODECIN_SCB_ADDR         0x080
-#घोषणा MASTERMIX_SCB_ADDR       0x090
-#घोषणा SRCTASK_SCB_ADDR         0x0A0
-#घोषणा VARIDECIMATE_SCB_ADDR    0x0B0
-#घोषणा PCMSERIALIN_SCB_ADDR     0x0C0
-#घोषणा FG_TASK_HEADER_ADDR      0x600
-#घोषणा ASYNCTX_SCB_ADDR         0x0E0
-#घोषणा ASYNCRX_SCB_ADDR         0x0F0
-#घोषणा SRCTASKII_SCB_ADDR       0x100
-#घोषणा OUTPUTSNOOP_SCB_ADDR     0x110
-#घोषणा PCMSERIALINII_SCB_ADDR   0x120
-#घोषणा SPIOWRITE_SCB_ADDR       0x130
-#घोषणा REAR_CODECOUT_SCB_ADDR   0x140
-#घोषणा OUTPUTSNOOPII_SCB_ADDR   0x150
-#घोषणा PCMSERIALIN_PCM_SCB_ADDR 0x160
-#घोषणा RECORD_MIXER_SCB_ADDR    0x170
-#घोषणा REAR_MIXER_SCB_ADDR      0x180
-#घोषणा CLFE_MIXER_SCB_ADDR      0x190
-#घोषणा CLFE_CODEC_SCB_ADDR      0x1A0
+#define SPOSCB_ADDR              0x070
+#define BG_TREE_SCB_ADDR         0x635
+#define NULL_SCB_ADDR            0x000
+#define TIMINGMASTER_SCB_ADDR    0x010
+#define CODECOUT_SCB_ADDR        0x020
+#define PCMREADER_SCB_ADDR       0x030
+#define WRITEBACK_SCB_ADDR       0x040
+#define CODECIN_SCB_ADDR         0x080
+#define MASTERMIX_SCB_ADDR       0x090
+#define SRCTASK_SCB_ADDR         0x0A0
+#define VARIDECIMATE_SCB_ADDR    0x0B0
+#define PCMSERIALIN_SCB_ADDR     0x0C0
+#define FG_TASK_HEADER_ADDR      0x600
+#define ASYNCTX_SCB_ADDR         0x0E0
+#define ASYNCRX_SCB_ADDR         0x0F0
+#define SRCTASKII_SCB_ADDR       0x100
+#define OUTPUTSNOOP_SCB_ADDR     0x110
+#define PCMSERIALINII_SCB_ADDR   0x120
+#define SPIOWRITE_SCB_ADDR       0x130
+#define REAR_CODECOUT_SCB_ADDR   0x140
+#define OUTPUTSNOOPII_SCB_ADDR   0x150
+#define PCMSERIALIN_PCM_SCB_ADDR 0x160
+#define RECORD_MIXER_SCB_ADDR    0x170
+#define REAR_MIXER_SCB_ADDR      0x180
+#define CLFE_MIXER_SCB_ADDR      0x190
+#define CLFE_CODEC_SCB_ADDR      0x1A0
 
-/* hyperक्रमground SCB's*/
-#घोषणा HFG_TREE_SCB             0xBA0
-#घोषणा SPDIFI_SCB_INST          0xBB0
-#घोषणा SPDIFO_SCB_INST          0xBC0
-#घोषणा WRITE_BACK_SPB           0x0D0
+/* hyperforground SCB's*/
+#define HFG_TREE_SCB             0xBA0
+#define SPDIFI_SCB_INST          0xBB0
+#define SPDIFO_SCB_INST          0xBC0
+#define WRITE_BACK_SPB           0x0D0
 
 /* offsets */
-#घोषणा AsyncCIOFIFOPoपूर्णांकer  0xd
-#घोषणा SPDIFOFIFOPoपूर्णांकer    0xd
-#घोषणा SPDIFIFIFOPoपूर्णांकer    0xd
-#घोषणा TCBData              0xb
-#घोषणा HFGFlags             0xa
-#घोषणा TCBContextBlk        0x10
-#घोषणा AFGTxAccumPhi        0x4
-#घोषणा SCBsubListPtr        0x9
-#घोषणा SCBfuncEntryPtr      0xA
-#घोषणा SRCCorPerGof         0x2
-#घोषणा SRCPhiIncr6Int26Frac 0xd
-#घोषणा SCBVolumeCtrl        0xe
+#define AsyncCIOFIFOPointer  0xd
+#define SPDIFOFIFOPointer    0xd
+#define SPDIFIFIFOPointer    0xd
+#define TCBData              0xb
+#define HFGFlags             0xa
+#define TCBContextBlk        0x10
+#define AFGTxAccumPhi        0x4
+#define SCBsubListPtr        0x9
+#define SCBfuncEntryPtr      0xA
+#define SRCCorPerGof         0x2
+#define SRCPhiIncr6Int26Frac 0xd
+#define SCBVolumeCtrl        0xe
 
 /* conf */
-#घोषणा UseASER1Input 1
+#define UseASER1Input 1
 
 
 
 /*
- * The following defines are क्रम the flags in the rsConfig01/23 रेजिस्टरs of
+ * The following defines are for the flags in the rsConfig01/23 registers of
  * the SP.
  */
 
-#घोषणा RSCONFIG_MODULO_SIZE_MASK               0x0000000FL
-#घोषणा RSCONFIG_MODULO_16                      0x00000001L
-#घोषणा RSCONFIG_MODULO_32                      0x00000002L
-#घोषणा RSCONFIG_MODULO_64                      0x00000003L
-#घोषणा RSCONFIG_MODULO_128                     0x00000004L
-#घोषणा RSCONFIG_MODULO_256                     0x00000005L
-#घोषणा RSCONFIG_MODULO_512                     0x00000006L
-#घोषणा RSCONFIG_MODULO_1024                    0x00000007L
-#घोषणा RSCONFIG_MODULO_4                       0x00000008L
-#घोषणा RSCONFIG_MODULO_8                       0x00000009L
-#घोषणा RSCONFIG_SAMPLE_SIZE_MASK               0x000000C0L
-#घोषणा RSCONFIG_SAMPLE_8MONO                   0x00000000L
-#घोषणा RSCONFIG_SAMPLE_8STEREO                 0x00000040L
-#घोषणा RSCONFIG_SAMPLE_16MONO                  0x00000080L
-#घोषणा RSCONFIG_SAMPLE_16STEREO                0x000000C0L
-#घोषणा RSCONFIG_UNDERRUN_ZERO                  0x00004000L
-#घोषणा RSCONFIG_DMA_TO_HOST                    0x00008000L
-#घोषणा RSCONFIG_STREAM_NUM_MASK                0x00FF0000L
-#घोषणा RSCONFIG_MAX_DMA_SIZE_MASK              0x1F000000L
-#घोषणा RSCONFIG_DMA_ENABLE                     0x20000000L
-#घोषणा RSCONFIG_PRIORITY_MASK                  0xC0000000L
-#घोषणा RSCONFIG_PRIORITY_HIGH                  0x00000000L
-#घोषणा RSCONFIG_PRIORITY_MEDIUM_HIGH           0x40000000L
-#घोषणा RSCONFIG_PRIORITY_MEDIUM_LOW            0x80000000L
-#घोषणा RSCONFIG_PRIORITY_LOW                   0xC0000000L
-#घोषणा RSCONFIG_STREAM_NUM_SHIFT               16L
-#घोषणा RSCONFIG_MAX_DMA_SIZE_SHIFT             24L
+#define RSCONFIG_MODULO_SIZE_MASK               0x0000000FL
+#define RSCONFIG_MODULO_16                      0x00000001L
+#define RSCONFIG_MODULO_32                      0x00000002L
+#define RSCONFIG_MODULO_64                      0x00000003L
+#define RSCONFIG_MODULO_128                     0x00000004L
+#define RSCONFIG_MODULO_256                     0x00000005L
+#define RSCONFIG_MODULO_512                     0x00000006L
+#define RSCONFIG_MODULO_1024                    0x00000007L
+#define RSCONFIG_MODULO_4                       0x00000008L
+#define RSCONFIG_MODULO_8                       0x00000009L
+#define RSCONFIG_SAMPLE_SIZE_MASK               0x000000C0L
+#define RSCONFIG_SAMPLE_8MONO                   0x00000000L
+#define RSCONFIG_SAMPLE_8STEREO                 0x00000040L
+#define RSCONFIG_SAMPLE_16MONO                  0x00000080L
+#define RSCONFIG_SAMPLE_16STEREO                0x000000C0L
+#define RSCONFIG_UNDERRUN_ZERO                  0x00004000L
+#define RSCONFIG_DMA_TO_HOST                    0x00008000L
+#define RSCONFIG_STREAM_NUM_MASK                0x00FF0000L
+#define RSCONFIG_MAX_DMA_SIZE_MASK              0x1F000000L
+#define RSCONFIG_DMA_ENABLE                     0x20000000L
+#define RSCONFIG_PRIORITY_MASK                  0xC0000000L
+#define RSCONFIG_PRIORITY_HIGH                  0x00000000L
+#define RSCONFIG_PRIORITY_MEDIUM_HIGH           0x40000000L
+#define RSCONFIG_PRIORITY_MEDIUM_LOW            0x80000000L
+#define RSCONFIG_PRIORITY_LOW                   0xC0000000L
+#define RSCONFIG_STREAM_NUM_SHIFT               16L
+#define RSCONFIG_MAX_DMA_SIZE_SHIFT             24L
 
-/* SP स्थिरants */
-#घोषणा FG_INTERVAL_TIMER_PERIOD                0x0051
-#घोषणा BG_INTERVAL_TIMER_PERIOD                0x0100
+/* SP constants */
+#define FG_INTERVAL_TIMER_PERIOD                0x0051
+#define BG_INTERVAL_TIMER_PERIOD                0x0100
 
 
-/* Only SP accessible रेजिस्टरs */
-#घोषणा SP_ASER_COUNTDOWN 0x8040
-#घोषणा SP_SPDOUT_FIFO    0x0108
-#घोषणा SP_SPDIN_MI_FIFO  0x01E0
-#घोषणा SP_SPDIN_D_FIFO   0x01F0
-#घोषणा SP_SPDIN_STATUS   0x8048
-#घोषणा SP_SPDIN_CONTROL  0x8049
-#घोषणा SP_SPDIN_FIFOPTR  0x804A
-#घोषणा SP_SPDOUT_STATUS  0x804C
-#घोषणा SP_SPDOUT_CONTROL 0x804D
-#घोषणा SP_SPDOUT_CSUV    0x808E
+/* Only SP accessible registers */
+#define SP_ASER_COUNTDOWN 0x8040
+#define SP_SPDOUT_FIFO    0x0108
+#define SP_SPDIN_MI_FIFO  0x01E0
+#define SP_SPDIN_D_FIFO   0x01F0
+#define SP_SPDIN_STATUS   0x8048
+#define SP_SPDIN_CONTROL  0x8049
+#define SP_SPDIN_FIFOPTR  0x804A
+#define SP_SPDOUT_STATUS  0x804C
+#define SP_SPDOUT_CONTROL 0x804D
+#define SP_SPDOUT_CSUV    0x808E
 
-अटल अंतरभूत u8 _wrap_all_bits (u8 val)
-अणु
+static inline u8 _wrap_all_bits (u8 val)
+{
 	u8 wrapped;
 	
 	/* wrap all 8 bits */
@@ -187,31 +186,31 @@
 		((val & 0x40) >> 5) |
 		((val & 0x80) >> 7);
 
-	वापस wrapped;
-पूर्ण
+	return wrapped;
+}
 
-अटल अंतरभूत व्योम cs46xx_dsp_spos_update_scb (काष्ठा snd_cs46xx * chip,
-					       काष्ठा dsp_scb_descriptor * scb) 
-अणु
+static inline void cs46xx_dsp_spos_update_scb (struct snd_cs46xx * chip,
+					       struct dsp_scb_descriptor * scb) 
+{
 	/* update nextSCB and subListPtr in SCB */
 	snd_cs46xx_poke(chip,
 			(scb->address + SCBsubListPtr) << 2,
 			(scb->sub_list_ptr->address << 0x10) |
 			(scb->next_scb_ptr->address));	
 	scb->updated = 1;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम cs46xx_dsp_scb_set_volume (काष्ठा snd_cs46xx * chip,
-					      काष्ठा dsp_scb_descriptor * scb,
+static inline void cs46xx_dsp_scb_set_volume (struct snd_cs46xx * chip,
+					      struct dsp_scb_descriptor * scb,
 					      u16 left, u16 right)
-अणु
-	अचिन्हित पूर्णांक val = ((0xffff - left) << 16 | (0xffff - right));
+{
+	unsigned int val = ((0xffff - left) << 16 | (0xffff - right));
 
 	snd_cs46xx_poke(chip, (scb->address + SCBVolumeCtrl) << 2, val);
 	snd_cs46xx_poke(chip, (scb->address + SCBVolumeCtrl + 1) << 2, val);
 	scb->volume_set = 1;
 	scb->volume[0] = left;
 	scb->volume[1] = right;
-पूर्ण
-#पूर्ण_अगर /* __DSP_SPOS_H__ */
-#पूर्ण_अगर /* CONFIG_SND_CS46XX_NEW_DSP  */
+}
+#endif /* __DSP_SPOS_H__ */
+#endif /* CONFIG_SND_CS46XX_NEW_DSP  */

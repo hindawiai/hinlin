@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * CAIF Framing Layer.
  *
@@ -7,192 +6,192 @@
  * Author:	Sjur Brendeland
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ":%s(): " fmt, __func__
+#define pr_fmt(fmt) KBUILD_MODNAME ":%s(): " fmt, __func__
 
-#समावेश <linux/मानकघोष.स>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/crc-ccitt.h>
-#समावेश <linux/netdevice.h>
-#समावेश <net/caअगर/caअगर_layer.h>
-#समावेश <net/caअगर/cfpkt.h>
-#समावेश <net/caअगर/cffrml.h>
+#include <linux/stddef.h>
+#include <linux/spinlock.h>
+#include <linux/slab.h>
+#include <linux/crc-ccitt.h>
+#include <linux/netdevice.h>
+#include <net/caif/caif_layer.h>
+#include <net/caif/cfpkt.h>
+#include <net/caif/cffrml.h>
 
-#घोषणा container_obj(layr) container_of(layr, काष्ठा cffrml, layer)
+#define container_obj(layr) container_of(layr, struct cffrml, layer)
 
-काष्ठा cffrml अणु
-	काष्ठा cflayer layer;
-	bool करोfcs;		/* !< FCS active */
-	पूर्णांक __percpu		*pcpu_refcnt;
-पूर्ण;
+struct cffrml {
+	struct cflayer layer;
+	bool dofcs;		/* !< FCS active */
+	int __percpu		*pcpu_refcnt;
+};
 
-अटल पूर्णांक cffrml_receive(काष्ठा cflayer *layr, काष्ठा cfpkt *pkt);
-अटल पूर्णांक cffrml_transmit(काष्ठा cflayer *layr, काष्ठा cfpkt *pkt);
-अटल व्योम cffrml_ctrlcmd(काष्ठा cflayer *layr, क्रमागत caअगर_ctrlcmd ctrl,
-			   पूर्णांक phyid);
+static int cffrml_receive(struct cflayer *layr, struct cfpkt *pkt);
+static int cffrml_transmit(struct cflayer *layr, struct cfpkt *pkt);
+static void cffrml_ctrlcmd(struct cflayer *layr, enum caif_ctrlcmd ctrl,
+			   int phyid);
 
-अटल u32 cffrml_rcv_error;
-अटल u32 cffrml_rcv_checsum_error;
-काष्ठा cflayer *cffrml_create(u16 phyid, bool use_fcs)
-अणु
-	काष्ठा cffrml *this = kzalloc(माप(काष्ठा cffrml), GFP_ATOMIC);
-	अगर (!this)
-		वापस शून्य;
-	this->pcpu_refcnt = alloc_percpu(पूर्णांक);
-	अगर (this->pcpu_refcnt == शून्य) अणु
-		kमुक्त(this);
-		वापस शून्य;
-	पूर्ण
+static u32 cffrml_rcv_error;
+static u32 cffrml_rcv_checsum_error;
+struct cflayer *cffrml_create(u16 phyid, bool use_fcs)
+{
+	struct cffrml *this = kzalloc(sizeof(struct cffrml), GFP_ATOMIC);
+	if (!this)
+		return NULL;
+	this->pcpu_refcnt = alloc_percpu(int);
+	if (this->pcpu_refcnt == NULL) {
+		kfree(this);
+		return NULL;
+	}
 
-	caअगर_निश्चित(दुरत्व(काष्ठा cffrml, layer) == 0);
+	caif_assert(offsetof(struct cffrml, layer) == 0);
 
 	this->layer.receive = cffrml_receive;
 	this->layer.transmit = cffrml_transmit;
 	this->layer.ctrlcmd = cffrml_ctrlcmd;
-	snम_लिखो(this->layer.name, CAIF_LAYER_NAME_SZ, "frm%d", phyid);
-	this->करोfcs = use_fcs;
+	snprintf(this->layer.name, CAIF_LAYER_NAME_SZ, "frm%d", phyid);
+	this->dofcs = use_fcs;
 	this->layer.id = phyid;
-	वापस (काष्ठा cflayer *) this;
-पूर्ण
+	return (struct cflayer *) this;
+}
 
-व्योम cffrml_मुक्त(काष्ठा cflayer *layer)
-अणु
-	काष्ठा cffrml *this = container_obj(layer);
-	मुक्त_percpu(this->pcpu_refcnt);
-	kमुक्त(layer);
-पूर्ण
+void cffrml_free(struct cflayer *layer)
+{
+	struct cffrml *this = container_obj(layer);
+	free_percpu(this->pcpu_refcnt);
+	kfree(layer);
+}
 
-व्योम cffrml_set_uplayer(काष्ठा cflayer *this, काष्ठा cflayer *up)
-अणु
+void cffrml_set_uplayer(struct cflayer *this, struct cflayer *up)
+{
 	this->up = up;
-पूर्ण
+}
 
-व्योम cffrml_set_dnlayer(काष्ठा cflayer *this, काष्ठा cflayer *dn)
-अणु
+void cffrml_set_dnlayer(struct cflayer *this, struct cflayer *dn)
+{
 	this->dn = dn;
-पूर्ण
+}
 
-अटल u16 cffrml_checksum(u16 chks, व्योम *buf, u16 len)
-अणु
-	/* FIXME: FCS should be moved to glue in order to use OS-Specअगरic
+static u16 cffrml_checksum(u16 chks, void *buf, u16 len)
+{
+	/* FIXME: FCS should be moved to glue in order to use OS-Specific
 	 * solutions
 	 */
-	वापस crc_ccitt(chks, buf, len);
-पूर्ण
+	return crc_ccitt(chks, buf, len);
+}
 
-अटल पूर्णांक cffrml_receive(काष्ठा cflayer *layr, काष्ठा cfpkt *pkt)
-अणु
-	u16 पंचांगp;
+static int cffrml_receive(struct cflayer *layr, struct cfpkt *pkt)
+{
+	u16 tmp;
 	u16 len;
 	u16 hdrchks;
-	पूर्णांक pktchks;
-	काष्ठा cffrml *this;
+	int pktchks;
+	struct cffrml *this;
 	this = container_obj(layr);
 
-	cfpkt_extr_head(pkt, &पंचांगp, 2);
-	len = le16_to_cpu(पंचांगp);
+	cfpkt_extr_head(pkt, &tmp, 2);
+	len = le16_to_cpu(tmp);
 
-	/* Subtract क्रम FCS on length अगर FCS is not used. */
-	अगर (!this->करोfcs)
+	/* Subtract for FCS on length if FCS is not used. */
+	if (!this->dofcs)
 		len -= 2;
 
-	अगर (cfpkt_setlen(pkt, len) < 0) अणु
+	if (cfpkt_setlen(pkt, len) < 0) {
 		++cffrml_rcv_error;
 		pr_err("Framing length error (%d)\n", len);
 		cfpkt_destroy(pkt);
-		वापस -EPROTO;
-	पूर्ण
+		return -EPROTO;
+	}
 	/*
 	 * Don't do extract if FCS is false, rather do setlen - then we don't
 	 * get a cache-miss.
 	 */
-	अगर (this->करोfcs) अणु
-		cfpkt_extr_trail(pkt, &पंचांगp, 2);
-		hdrchks = le16_to_cpu(पंचांगp);
+	if (this->dofcs) {
+		cfpkt_extr_trail(pkt, &tmp, 2);
+		hdrchks = le16_to_cpu(tmp);
 		pktchks = cfpkt_iterate(pkt, cffrml_checksum, 0xffff);
-		अगर (pktchks != hdrchks) अणु
-			cfpkt_add_trail(pkt, &पंचांगp, 2);
+		if (pktchks != hdrchks) {
+			cfpkt_add_trail(pkt, &tmp, 2);
 			++cffrml_rcv_error;
 			++cffrml_rcv_checsum_error;
 			pr_info("Frame checksum error (0x%x != 0x%x)\n",
 				hdrchks, pktchks);
-			वापस -EILSEQ;
-		पूर्ण
-	पूर्ण
-	अगर (cfpkt_erroneous(pkt)) अणु
+			return -EILSEQ;
+		}
+	}
+	if (cfpkt_erroneous(pkt)) {
 		++cffrml_rcv_error;
 		pr_err("Packet is erroneous!\n");
 		cfpkt_destroy(pkt);
-		वापस -EPROTO;
-	पूर्ण
+		return -EPROTO;
+	}
 
-	अगर (layr->up == शून्य) अणु
+	if (layr->up == NULL) {
 		pr_err("Layr up is missing!\n");
 		cfpkt_destroy(pkt);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस layr->up->receive(layr->up, pkt);
-पूर्ण
+	return layr->up->receive(layr->up, pkt);
+}
 
-अटल पूर्णांक cffrml_transmit(काष्ठा cflayer *layr, काष्ठा cfpkt *pkt)
-अणु
+static int cffrml_transmit(struct cflayer *layr, struct cfpkt *pkt)
+{
 	u16 chks;
 	u16 len;
 	__le16 data;
 
-	काष्ठा cffrml *this = container_obj(layr);
-	अगर (this->करोfcs) अणु
+	struct cffrml *this = container_obj(layr);
+	if (this->dofcs) {
 		chks = cfpkt_iterate(pkt, cffrml_checksum, 0xffff);
 		data = cpu_to_le16(chks);
 		cfpkt_add_trail(pkt, &data, 2);
-	पूर्ण अन्यथा अणु
+	} else {
 		cfpkt_pad_trail(pkt, 2);
-	पूर्ण
+	}
 	len = cfpkt_getlen(pkt);
 	data = cpu_to_le16(len);
 	cfpkt_add_head(pkt, &data, 2);
 	cfpkt_info(pkt)->hdr_len += 2;
-	अगर (cfpkt_erroneous(pkt)) अणु
+	if (cfpkt_erroneous(pkt)) {
 		pr_err("Packet is erroneous!\n");
 		cfpkt_destroy(pkt);
-		वापस -EPROTO;
-	पूर्ण
+		return -EPROTO;
+	}
 
-	अगर (layr->dn == शून्य) अणु
+	if (layr->dn == NULL) {
 		cfpkt_destroy(pkt);
-		वापस -ENODEV;
+		return -ENODEV;
 
-	पूर्ण
-	वापस layr->dn->transmit(layr->dn, pkt);
-पूर्ण
+	}
+	return layr->dn->transmit(layr->dn, pkt);
+}
 
-अटल व्योम cffrml_ctrlcmd(काष्ठा cflayer *layr, क्रमागत caअगर_ctrlcmd ctrl,
-			   पूर्णांक phyid)
-अणु
-	अगर (layr->up && layr->up->ctrlcmd)
+static void cffrml_ctrlcmd(struct cflayer *layr, enum caif_ctrlcmd ctrl,
+			   int phyid)
+{
+	if (layr->up && layr->up->ctrlcmd)
 		layr->up->ctrlcmd(layr->up, ctrl, layr->id);
-पूर्ण
+}
 
-व्योम cffrml_put(काष्ठा cflayer *layr)
-अणु
-	काष्ठा cffrml *this = container_obj(layr);
-	अगर (layr != शून्य && this->pcpu_refcnt != शून्य)
+void cffrml_put(struct cflayer *layr)
+{
+	struct cffrml *this = container_obj(layr);
+	if (layr != NULL && this->pcpu_refcnt != NULL)
 		this_cpu_dec(*this->pcpu_refcnt);
-पूर्ण
+}
 
-व्योम cffrml_hold(काष्ठा cflayer *layr)
-अणु
-	काष्ठा cffrml *this = container_obj(layr);
-	अगर (layr != शून्य && this->pcpu_refcnt != शून्य)
+void cffrml_hold(struct cflayer *layr)
+{
+	struct cffrml *this = container_obj(layr);
+	if (layr != NULL && this->pcpu_refcnt != NULL)
 		this_cpu_inc(*this->pcpu_refcnt);
-पूर्ण
+}
 
-पूर्णांक cffrml_refcnt_पढ़ो(काष्ठा cflayer *layr)
-अणु
-	पूर्णांक i, refcnt = 0;
-	काष्ठा cffrml *this = container_obj(layr);
-	क्रम_each_possible_cpu(i)
+int cffrml_refcnt_read(struct cflayer *layr)
+{
+	int i, refcnt = 0;
+	struct cffrml *this = container_obj(layr);
+	for_each_possible_cpu(i)
 		refcnt += *per_cpu_ptr(this->pcpu_refcnt, i);
-	वापस refcnt;
-पूर्ण
+	return refcnt;
+}

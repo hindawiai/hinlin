@@ -1,34 +1,33 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /* Copyright(c) 2009-2012  Realtek Corporation.*/
 
-#अगर_अघोषित __RTL92C_DEF_H__
-#घोषणा __RTL92C_DEF_H__
+#ifndef __RTL92C_DEF_H__
+#define __RTL92C_DEF_H__
 
-#घोषणा	PHY_RSSI_SLID_WIN_MAX				100
-#घोषणा	PHY_LINKQUALITY_SLID_WIN_MAX			20
-#घोषणा	PHY_BEACON_RSSI_SLID_WIN_MAX			10
+#define	PHY_RSSI_SLID_WIN_MAX				100
+#define	PHY_LINKQUALITY_SLID_WIN_MAX			20
+#define	PHY_BEACON_RSSI_SLID_WIN_MAX			10
 
-#घोषणा RX_SMOOTH_FACTOR				20
+#define RX_SMOOTH_FACTOR				20
 
-#घोषणा HAL_PRIME_CHNL_OFFSET_DONT_CARE			0
-#घोषणा HAL_PRIME_CHNL_OFFSET_LOWER			1
-#घोषणा HAL_PRIME_CHNL_OFFSET_UPPER			2
+#define HAL_PRIME_CHNL_OFFSET_DONT_CARE			0
+#define HAL_PRIME_CHNL_OFFSET_LOWER			1
+#define HAL_PRIME_CHNL_OFFSET_UPPER			2
 
-#घोषणा RX_MPDU_QUEUE					0
-#घोषणा RX_CMD_QUEUE					1
+#define RX_MPDU_QUEUE					0
+#define RX_CMD_QUEUE					1
 
-#घोषणा CHIP_VER_B			BIT(4)
-#घोषणा CHIP_BONDING_IDENTIFIER(_value) (((_value) >> 22) & 0x3)
-#घोषणा CHIP_BONDING_92C_1T2R		0x1
-#घोषणा RF_TYPE_1T2R			BIT(1)
-#घोषणा CHIP_92C_BITMASK		BIT(0)
-#घोषणा CHIP_UNKNOWN			BIT(7)
-#घोषणा CHIP_92C_1T2R			0x03
-#घोषणा CHIP_92C			0x01
-#घोषणा CHIP_88C			0x00
+#define CHIP_VER_B			BIT(4)
+#define CHIP_BONDING_IDENTIFIER(_value) (((_value) >> 22) & 0x3)
+#define CHIP_BONDING_92C_1T2R		0x1
+#define RF_TYPE_1T2R			BIT(1)
+#define CHIP_92C_BITMASK		BIT(0)
+#define CHIP_UNKNOWN			BIT(7)
+#define CHIP_92C_1T2R			0x03
+#define CHIP_92C			0x01
+#define CHIP_88C			0x00
 
-क्रमागत version_8192c अणु
+enum version_8192c {
 	VERSION_A_CHIP_92C = 0x01,
 	VERSION_A_CHIP_88C = 0x00,
 	VERSION_B_CHIP_92C = 0x11,
@@ -47,48 +46,48 @@
 	VERSION_NORMAL_UMC_CHIP_92C_B_CUT = 0x71,
 	VERSION_NORMAL_UMC_CHIP_92C_1T2R_B_CUT = 0x73,
 	VERSION_UNKNOWN = 0x88,
-पूर्ण;
+};
 
-क्रमागत rtl819x_loopback_e अणु
+enum rtl819x_loopback_e {
 	RTL819X_NO_LOOPBACK = 0,
 	RTL819X_MAC_LOOPBACK = 1,
 	RTL819X_DMA_LOOPBACK = 2,
 	RTL819X_CCK_LOOPBACK = 3,
-पूर्ण;
+};
 
-क्रमागत rf_optype अणु
+enum rf_optype {
 	RF_OP_BY_SW_3WIRE = 0,
 	RF_OP_BY_FW,
 	RF_OP_MAX
-पूर्ण;
+};
 
-क्रमागत rf_घातer_state अणु
+enum rf_power_state {
 	RF_ON,
 	RF_OFF,
 	RF_SLEEP,
 	RF_SHUT_DOWN,
-पूर्ण;
+};
 
-क्रमागत घातer_save_mode अणु
+enum power_save_mode {
 	POWER_SAVE_MODE_ACTIVE,
 	POWER_SAVE_MODE_SAVE,
-पूर्ण;
+};
 
-क्रमागत घातer_polocy_config अणु
+enum power_polocy_config {
 	POWERCFG_MAX_POWER_SAVINGS,
 	POWERCFG_GLOBAL_POWER_SAVINGS,
 	POWERCFG_LOCAL_POWER_SAVINGS,
 	POWERCFG_LENOVO,
-पूर्ण;
+};
 
-क्रमागत पूर्णांकerface_select_pci अणु
+enum interface_select_pci {
 	INTF_SEL1_MINICARD = 0,
 	INTF_SEL0_PCIE = 1,
 	INTF_SEL2_RSV = 2,
 	INTF_SEL3_RSV = 3,
-पूर्ण;
+};
 
-क्रमागत rtl_desc_qsel अणु
+enum rtl_desc_qsel {
 	QSLT_BK = 0x2,
 	QSLT_BE = 0x0,
 	QSLT_VI = 0x5,
@@ -97,18 +96,18 @@
 	QSLT_HIGH = 0x11,
 	QSLT_MGNT = 0x12,
 	QSLT_CMD = 0x13,
-पूर्ण;
+};
 
-काष्ठा phy_sts_cck_8192s_t अणु
+struct phy_sts_cck_8192s_t {
 	u8 adc_pwdb_X[4];
 	u8 sq_rpt;
 	u8 cck_agc_rpt;
-पूर्ण;
+};
 
-काष्ठा h2c_cmd_8192c अणु
+struct h2c_cmd_8192c {
 	u8 element_id;
 	u32 cmd_len;
 	u8 *p_cmdbuffer;
-पूर्ण;
+};
 
-#पूर्ण_अगर
+#endif

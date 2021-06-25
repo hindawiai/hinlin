@@ -1,23 +1,22 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * linux/ipc/msgutil.c
  * Copyright (C) 1999, 2004 Manfred Spraul
  */
 
-#समावेश <linux/spinlock.h>
-#समावेश <linux/init.h>
-#समावेश <linux/security.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/ipc.h>
-#समावेश <linux/msg.h>
-#समावेश <linux/ipc_namespace.h>
-#समावेश <linux/utsname.h>
-#समावेश <linux/proc_ns.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/sched.h>
+#include <linux/spinlock.h>
+#include <linux/init.h>
+#include <linux/security.h>
+#include <linux/slab.h>
+#include <linux/ipc.h>
+#include <linux/msg.h>
+#include <linux/ipc_namespace.h>
+#include <linux/utsname.h>
+#include <linux/proc_ns.h>
+#include <linux/uaccess.h>
+#include <linux/sched.h>
 
-#समावेश "util.h"
+#include "util.h"
 
 DEFINE_SPINLOCK(mq_lock);
 
@@ -26,160 +25,160 @@ DEFINE_SPINLOCK(mq_lock);
  * compiled when either CONFIG_SYSVIPC and CONFIG_POSIX_MQUEUE
  * and not CONFIG_IPC_NS.
  */
-काष्ठा ipc_namespace init_ipc_ns = अणु
+struct ipc_namespace init_ipc_ns = {
 	.ns.count = REFCOUNT_INIT(1),
 	.user_ns = &init_user_ns,
 	.ns.inum = PROC_IPC_INIT_INO,
-#अगर_घोषित CONFIG_IPC_NS
+#ifdef CONFIG_IPC_NS
 	.ns.ops = &ipcns_operations,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-काष्ठा msg_msgseg अणु
-	काष्ठा msg_msgseg *next;
+struct msg_msgseg {
+	struct msg_msgseg *next;
 	/* the next part of the message follows immediately */
-पूर्ण;
+};
 
-#घोषणा DATALEN_MSG	((माप_प्रकार)PAGE_SIZE-माप(काष्ठा msg_msg))
-#घोषणा DATALEN_SEG	((माप_प्रकार)PAGE_SIZE-माप(काष्ठा msg_msgseg))
+#define DATALEN_MSG	((size_t)PAGE_SIZE-sizeof(struct msg_msg))
+#define DATALEN_SEG	((size_t)PAGE_SIZE-sizeof(struct msg_msgseg))
 
 
-अटल काष्ठा msg_msg *alloc_msg(माप_प्रकार len)
-अणु
-	काष्ठा msg_msg *msg;
-	काष्ठा msg_msgseg **pseg;
-	माप_प्रकार alen;
+static struct msg_msg *alloc_msg(size_t len)
+{
+	struct msg_msg *msg;
+	struct msg_msgseg **pseg;
+	size_t alen;
 
 	alen = min(len, DATALEN_MSG);
-	msg = kदो_स्मृति(माप(*msg) + alen, GFP_KERNEL_ACCOUNT);
-	अगर (msg == शून्य)
-		वापस शून्य;
+	msg = kmalloc(sizeof(*msg) + alen, GFP_KERNEL_ACCOUNT);
+	if (msg == NULL)
+		return NULL;
 
-	msg->next = शून्य;
-	msg->security = शून्य;
+	msg->next = NULL;
+	msg->security = NULL;
 
 	len -= alen;
 	pseg = &msg->next;
-	जबतक (len > 0) अणु
-		काष्ठा msg_msgseg *seg;
+	while (len > 0) {
+		struct msg_msgseg *seg;
 
 		cond_resched();
 
 		alen = min(len, DATALEN_SEG);
-		seg = kदो_स्मृति(माप(*seg) + alen, GFP_KERNEL_ACCOUNT);
-		अगर (seg == शून्य)
-			जाओ out_err;
+		seg = kmalloc(sizeof(*seg) + alen, GFP_KERNEL_ACCOUNT);
+		if (seg == NULL)
+			goto out_err;
 		*pseg = seg;
-		seg->next = शून्य;
+		seg->next = NULL;
 		pseg = &seg->next;
 		len -= alen;
-	पूर्ण
+	}
 
-	वापस msg;
+	return msg;
 
 out_err:
-	मुक्त_msg(msg);
-	वापस शून्य;
-पूर्ण
+	free_msg(msg);
+	return NULL;
+}
 
-काष्ठा msg_msg *load_msg(स्थिर व्योम __user *src, माप_प्रकार len)
-अणु
-	काष्ठा msg_msg *msg;
-	काष्ठा msg_msgseg *seg;
-	पूर्णांक err = -EFAULT;
-	माप_प्रकार alen;
+struct msg_msg *load_msg(const void __user *src, size_t len)
+{
+	struct msg_msg *msg;
+	struct msg_msgseg *seg;
+	int err = -EFAULT;
+	size_t alen;
 
 	msg = alloc_msg(len);
-	अगर (msg == शून्य)
-		वापस ERR_PTR(-ENOMEM);
+	if (msg == NULL)
+		return ERR_PTR(-ENOMEM);
 
 	alen = min(len, DATALEN_MSG);
-	अगर (copy_from_user(msg + 1, src, alen))
-		जाओ out_err;
+	if (copy_from_user(msg + 1, src, alen))
+		goto out_err;
 
-	क्रम (seg = msg->next; seg != शून्य; seg = seg->next) अणु
+	for (seg = msg->next; seg != NULL; seg = seg->next) {
 		len -= alen;
-		src = (अक्षर __user *)src + alen;
+		src = (char __user *)src + alen;
 		alen = min(len, DATALEN_SEG);
-		अगर (copy_from_user(seg + 1, src, alen))
-			जाओ out_err;
-	पूर्ण
+		if (copy_from_user(seg + 1, src, alen))
+			goto out_err;
+	}
 
 	err = security_msg_msg_alloc(msg);
-	अगर (err)
-		जाओ out_err;
+	if (err)
+		goto out_err;
 
-	वापस msg;
+	return msg;
 
 out_err:
-	मुक्त_msg(msg);
-	वापस ERR_PTR(err);
-पूर्ण
-#अगर_घोषित CONFIG_CHECKPOINT_RESTORE
-काष्ठा msg_msg *copy_msg(काष्ठा msg_msg *src, काष्ठा msg_msg *dst)
-अणु
-	काष्ठा msg_msgseg *dst_pseg, *src_pseg;
-	माप_प्रकार len = src->m_ts;
-	माप_प्रकार alen;
+	free_msg(msg);
+	return ERR_PTR(err);
+}
+#ifdef CONFIG_CHECKPOINT_RESTORE
+struct msg_msg *copy_msg(struct msg_msg *src, struct msg_msg *dst)
+{
+	struct msg_msgseg *dst_pseg, *src_pseg;
+	size_t len = src->m_ts;
+	size_t alen;
 
-	अगर (src->m_ts > dst->m_ts)
-		वापस ERR_PTR(-EINVAL);
+	if (src->m_ts > dst->m_ts)
+		return ERR_PTR(-EINVAL);
 
 	alen = min(len, DATALEN_MSG);
-	स_नकल(dst + 1, src + 1, alen);
+	memcpy(dst + 1, src + 1, alen);
 
-	क्रम (dst_pseg = dst->next, src_pseg = src->next;
-	     src_pseg != शून्य;
-	     dst_pseg = dst_pseg->next, src_pseg = src_pseg->next) अणु
+	for (dst_pseg = dst->next, src_pseg = src->next;
+	     src_pseg != NULL;
+	     dst_pseg = dst_pseg->next, src_pseg = src_pseg->next) {
 
 		len -= alen;
 		alen = min(len, DATALEN_SEG);
-		स_नकल(dst_pseg + 1, src_pseg + 1, alen);
-	पूर्ण
+		memcpy(dst_pseg + 1, src_pseg + 1, alen);
+	}
 
 	dst->m_type = src->m_type;
 	dst->m_ts = src->m_ts;
 
-	वापस dst;
-पूर्ण
-#अन्यथा
-काष्ठा msg_msg *copy_msg(काष्ठा msg_msg *src, काष्ठा msg_msg *dst)
-अणु
-	वापस ERR_PTR(-ENOSYS);
-पूर्ण
-#पूर्ण_अगर
-पूर्णांक store_msg(व्योम __user *dest, काष्ठा msg_msg *msg, माप_प्रकार len)
-अणु
-	माप_प्रकार alen;
-	काष्ठा msg_msgseg *seg;
+	return dst;
+}
+#else
+struct msg_msg *copy_msg(struct msg_msg *src, struct msg_msg *dst)
+{
+	return ERR_PTR(-ENOSYS);
+}
+#endif
+int store_msg(void __user *dest, struct msg_msg *msg, size_t len)
+{
+	size_t alen;
+	struct msg_msgseg *seg;
 
 	alen = min(len, DATALEN_MSG);
-	अगर (copy_to_user(dest, msg + 1, alen))
-		वापस -1;
+	if (copy_to_user(dest, msg + 1, alen))
+		return -1;
 
-	क्रम (seg = msg->next; seg != शून्य; seg = seg->next) अणु
+	for (seg = msg->next; seg != NULL; seg = seg->next) {
 		len -= alen;
-		dest = (अक्षर __user *)dest + alen;
+		dest = (char __user *)dest + alen;
 		alen = min(len, DATALEN_SEG);
-		अगर (copy_to_user(dest, seg + 1, alen))
-			वापस -1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (copy_to_user(dest, seg + 1, alen))
+			return -1;
+	}
+	return 0;
+}
 
-व्योम मुक्त_msg(काष्ठा msg_msg *msg)
-अणु
-	काष्ठा msg_msgseg *seg;
+void free_msg(struct msg_msg *msg)
+{
+	struct msg_msgseg *seg;
 
-	security_msg_msg_मुक्त(msg);
+	security_msg_msg_free(msg);
 
 	seg = msg->next;
-	kमुक्त(msg);
-	जबतक (seg != शून्य) अणु
-		काष्ठा msg_msgseg *पंचांगp = seg->next;
+	kfree(msg);
+	while (seg != NULL) {
+		struct msg_msgseg *tmp = seg->next;
 
 		cond_resched();
-		kमुक्त(seg);
-		seg = पंचांगp;
-	पूर्ण
-पूर्ण
+		kfree(seg);
+		seg = tmp;
+	}
+}

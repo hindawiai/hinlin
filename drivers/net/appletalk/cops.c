@@ -1,5 +1,4 @@
-<शैली गुरु>
-/*      cops.c: LocalTalk driver क्रम Linux.
+/*      cops.c: LocalTalk driver for Linux.
  *
  *	Authors:
  *      - Jay Schulist <jschlst@samba.org>
@@ -8,10 +7,10 @@
  *	- Alan Cox <alan@lxorguk.ukuu.org.uk>
  *
  *      Derived from:
- *      - skeleton.c: A network driver outline क्रम linux.
+ *      - skeleton.c: A network driver outline for linux.
  *        Written 1993-94 by Donald Becker.
- *	- ltpc.c: A driver क्रम the LocalTalk PC card.
- *	  Written by Bradक्रमd W. Johnson.
+ *	- ltpc.c: A driver for the LocalTalk PC card.
+ *	  Written by Bradford W. Johnson.
  *
  *      Copyright 1993 United States Government as represented by the
  *      Director, National Security Agency.
@@ -22,96 +21,96 @@
  *	Changes:
  *	19970608	Alan Cox	Allowed dual card type support
  *					Can set board type in insmod
- *					Hooks क्रम cops_setup routine
+ *					Hooks for cops_setup routine
  *					(not yet implemented).
- *	19971101	Jay Schulist	Fixes क्रम multiple lt* devices.
+ *	19971101	Jay Schulist	Fixes for multiple lt* devices.
  *	19980607	Steven Hirsch	Fixed the badly broken support
- *					क्रम Tangent type cards. Only
+ *					for Tangent type cards. Only
  *                                      tested on Daystar LT200. Some
- *                                      cleanup of क्रमmatting and program
+ *                                      cleanup of formatting and program
  *                                      logic.  Added emacs 'local-vars'
- *                                      setup क्रम Jay's brace style.
- *	20000211	Alan Cox	Cleaned up क्रम softnet
+ *                                      setup for Jay's brace style.
+ *	20000211	Alan Cox	Cleaned up for softnet
  */
 
-अटल स्थिर अक्षर *version =
+static const char *version =
 "cops.c:v0.04 6/7/98 Jay Schulist <jschlst@samba.org>\n";
 /*
  *  Sources:
- *      COPS Localtalk SDK. This provides almost all of the inक्रमmation
+ *      COPS Localtalk SDK. This provides almost all of the information
  *      needed.
  */
 
 /*
  * insmod/modprobe configurable stuff.
- *	- IO Port, choose one your card supports or 0 अगर you dare.
+ *	- IO Port, choose one your card supports or 0 if you dare.
  *	- IRQ, also choose one your card supports or nothing and let
  *	  the driver figure it out.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/types.h>
-#समावेश <linux/fcntl.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/in.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/init.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/अगर_arp.h>
-#समावेश <linux/अगर_ltalk.h>
-#समावेश <linux/delay.h>	/* For udelay() */
-#समावेश <linux/atalk.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/jअगरfies.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/fcntl.h>
+#include <linux/interrupt.h>
+#include <linux/ptrace.h>
+#include <linux/ioport.h>
+#include <linux/in.h>
+#include <linux/string.h>
+#include <linux/errno.h>
+#include <linux/init.h>
+#include <linux/netdevice.h>
+#include <linux/etherdevice.h>
+#include <linux/skbuff.h>
+#include <linux/if_arp.h>
+#include <linux/if_ltalk.h>
+#include <linux/delay.h>	/* For udelay() */
+#include <linux/atalk.h>
+#include <linux/spinlock.h>
+#include <linux/bitops.h>
+#include <linux/jiffies.h>
 
-#समावेश <net/Space.h>
+#include <net/Space.h>
 
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/dma.h>
+#include <asm/io.h>
+#include <asm/dma.h>
 
-#समावेश "cops.h"		/* Our Stuff */
-#समावेश "cops_ltdrv.h"		/* Firmware code क्रम Tangent type cards. */
-#समावेश "cops_ffdrv.h"		/* Firmware code क्रम Dayna type cards. */
+#include "cops.h"		/* Our Stuff */
+#include "cops_ltdrv.h"		/* Firmware code for Tangent type cards. */
+#include "cops_ffdrv.h"		/* Firmware code for Dayna type cards. */
 
 /*
- *      The name of the card. Is used क्रम messages and in the requests क्रम
+ *      The name of the card. Is used for messages and in the requests for
  *      io regions, irqs and dma channels
  */
 
-अटल स्थिर अक्षर *cardname = "cops";
+static const char *cardname = "cops";
 
-#अगर_घोषित CONFIG_COPS_DAYNA
-अटल पूर्णांक board_type = DAYNA;	/* Module exported */
-#अन्यथा
-अटल पूर्णांक board_type = TANGENT;
-#पूर्ण_अगर
+#ifdef CONFIG_COPS_DAYNA
+static int board_type = DAYNA;	/* Module exported */
+#else
+static int board_type = TANGENT;
+#endif
 
-अटल पूर्णांक io = 0x240;		/* Default IO क्रम Dayna */
-अटल पूर्णांक irq = 5;		/* Default IRQ */
+static int io = 0x240;		/* Default IO for Dayna */
+static int irq = 5;		/* Default IRQ */
 
 /*
- *	COPS Autoprobe inक्रमmation.
- *	Right now अगर port address is right but IRQ is not 5 this will
- *      वापस a 5 no matter what since we will still get a status response.
- *      Need one more additional check to narrow करोwn after we have gotten
+ *	COPS Autoprobe information.
+ *	Right now if port address is right but IRQ is not 5 this will
+ *      return a 5 no matter what since we will still get a status response.
+ *      Need one more additional check to narrow down after we have gotten
  *      the ioaddr. But since only other possible IRQs is 3 and 4 so no real
- *	hurry on this. I *STRONGLY* recommend using IRQ 5 क्रम your card with
+ *	hurry on this. I *STRONGLY* recommend using IRQ 5 for your card with
  *	this driver.
  * 
  *	This driver has 2 modes and they are: Dayna mode and Tangent mode.
  *	Each mode corresponds with the type of card. It has been found
- *	that there are 2 मुख्य types of cards and all other cards are
- *	the same and just have dअगरferent names or only have minor dअगरferences
+ *	that there are 2 main types of cards and all other cards are
+ *	the same and just have different names or only have minor differences
  *	such as more IO ports. As this driver is tested it will
  *	become more clear on exactly what cards are supported. The driver
- *	शेषs to using Dayna mode. To change the drivers mode, simply
+ *	defaults to using Dayna mode. To change the drivers mode, simply
  *	select Dayna or Tangent mode when configuring the kernel.
  *
  *      This driver should support:
@@ -125,17 +124,17 @@
  *		Dayna DL2000 (Full length), COPS LT/M (Micro-Channel)
  *
  *	Cards NOT supported by this driver but supported by the ltpc.c
- *	driver written by Bradक्रमd W. Johnson <johns393@maroon.tc.umn.edu>
+ *	driver written by Bradford W. Johnson <johns393@maroon.tc.umn.edu>
  *		Farallon PhoneNET PC
  *		Original Apple LocalTalk PC card
  * 
  *      N.B.
  *
- *      The Daystar Digital LT200 boards करो not support पूर्णांकerrupt-driven
- *      IO.  You must specअगरy 'irq=0xff' as a module parameter to invoke
+ *      The Daystar Digital LT200 boards do not support interrupt-driven
+ *      IO.  You must specify 'irq=0xff' as a module parameter to invoke
  *      polled mode.  I also believe that the port probing logic is quite
- *      dangerous at best and certainly hopeless क्रम a polled card.  Best to 
- *      specअगरy both. - Steve H.
+ *      dangerous at best and certainly hopeless for a polled card.  Best to 
+ *      specify both. - Steve H.
  *
  */
 
@@ -143,641 +142,641 @@
  * Zero terminated list of IO ports to probe.
  */
 
-अटल अचिन्हित पूर्णांक ports[] = अणु 
+static unsigned int ports[] = { 
 	0x240, 0x340, 0x200, 0x210, 0x220, 0x230, 0x260, 
 	0x2A0, 0x300, 0x310, 0x320, 0x330, 0x350, 0x360,
 	0
-पूर्ण;
+};
 
 /*
  * Zero terminated list of IRQ ports to probe.
  */
 
-अटल पूर्णांक cops_irqlist[] = अणु
+static int cops_irqlist[] = {
 	5, 4, 3, 0 
-पूर्ण;
+};
 
-अटल काष्ठा समयr_list cops_समयr;
-अटल काष्ठा net_device *cops_समयr_dev;
+static struct timer_list cops_timer;
+static struct net_device *cops_timer_dev;
 
-/* use 0 क्रम production, 1 क्रम verअगरication, 2 क्रम debug, 3 क्रम verbose debug */
-#अगर_अघोषित COPS_DEBUG
-#घोषणा COPS_DEBUG 1 
-#पूर्ण_अगर
-अटल अचिन्हित पूर्णांक cops_debug = COPS_DEBUG;
+/* use 0 for production, 1 for verification, 2 for debug, 3 for verbose debug */
+#ifndef COPS_DEBUG
+#define COPS_DEBUG 1 
+#endif
+static unsigned int cops_debug = COPS_DEBUG;
 
 /* The number of low I/O ports used by the card. */
-#घोषणा COPS_IO_EXTENT       8
+#define COPS_IO_EXTENT       8
 
-/* Inक्रमmation that needs to be kept क्रम each board. */
+/* Information that needs to be kept for each board. */
 
-काष्ठा cops_local
-अणु
-        पूर्णांक board;			/* Holds what board type is. */
-	पूर्णांक nodeid;			/* Set to 1 once have nodeid. */
-        अचिन्हित अक्षर node_acquire;	/* Node ID when acquired. */
-        काष्ठा atalk_addr node_addr;	/* Full node address */
+struct cops_local
+{
+        int board;			/* Holds what board type is. */
+	int nodeid;			/* Set to 1 once have nodeid. */
+        unsigned char node_acquire;	/* Node ID when acquired. */
+        struct atalk_addr node_addr;	/* Full node address */
 	spinlock_t lock;		/* RX/TX lock */
-पूर्ण;
+};
 
 /* Index to functions, as function prototypes. */
-अटल पूर्णांक  cops_probe1 (काष्ठा net_device *dev, पूर्णांक ioaddr);
-अटल पूर्णांक  cops_irq (पूर्णांक ioaddr, पूर्णांक board);
+static int  cops_probe1 (struct net_device *dev, int ioaddr);
+static int  cops_irq (int ioaddr, int board);
 
-अटल पूर्णांक  cops_खोलो (काष्ठा net_device *dev);
-अटल पूर्णांक  cops_jumpstart (काष्ठा net_device *dev);
-अटल व्योम cops_reset (काष्ठा net_device *dev, पूर्णांक sleep);
-अटल व्योम cops_load (काष्ठा net_device *dev);
-अटल पूर्णांक  cops_nodeid (काष्ठा net_device *dev, पूर्णांक nodeid);
+static int  cops_open (struct net_device *dev);
+static int  cops_jumpstart (struct net_device *dev);
+static void cops_reset (struct net_device *dev, int sleep);
+static void cops_load (struct net_device *dev);
+static int  cops_nodeid (struct net_device *dev, int nodeid);
 
-अटल irqवापस_t cops_पूर्णांकerrupt (पूर्णांक irq, व्योम *dev_id);
-अटल व्योम cops_poll(काष्ठा समयr_list *t);
-अटल व्योम cops_समयout(काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue);
-अटल व्योम cops_rx (काष्ठा net_device *dev);
-अटल netdev_tx_t  cops_send_packet (काष्ठा sk_buff *skb,
-					    काष्ठा net_device *dev);
-अटल व्योम set_multicast_list (काष्ठा net_device *dev);
-अटल पूर्णांक  cops_ioctl (काष्ठा net_device *dev, काष्ठा अगरreq *rq, पूर्णांक cmd);
-अटल पूर्णांक  cops_बंद (काष्ठा net_device *dev);
+static irqreturn_t cops_interrupt (int irq, void *dev_id);
+static void cops_poll(struct timer_list *t);
+static void cops_timeout(struct net_device *dev, unsigned int txqueue);
+static void cops_rx (struct net_device *dev);
+static netdev_tx_t  cops_send_packet (struct sk_buff *skb,
+					    struct net_device *dev);
+static void set_multicast_list (struct net_device *dev);
+static int  cops_ioctl (struct net_device *dev, struct ifreq *rq, int cmd);
+static int  cops_close (struct net_device *dev);
 
-अटल व्योम cleanup_card(काष्ठा net_device *dev)
-अणु
-	अगर (dev->irq)
-		मुक्त_irq(dev->irq, dev);
+static void cleanup_card(struct net_device *dev)
+{
+	if (dev->irq)
+		free_irq(dev->irq, dev);
 	release_region(dev->base_addr, COPS_IO_EXTENT);
-पूर्ण
+}
 
 /*
- *      Check क्रम a network adaptor of this type, and वापस '0' अगरf one exists.
+ *      Check for a network adaptor of this type, and return '0' iff one exists.
  *      If dev->base_addr == 0, probe all likely locations.
- *      If dev->base_addr in [1..0x1ff], always वापस failure.
+ *      If dev->base_addr in [1..0x1ff], always return failure.
  *        otherwise go with what we pass in.
  */
-काष्ठा net_device * __init cops_probe(पूर्णांक unit)
-अणु
-	काष्ठा net_device *dev;
-	अचिन्हित *port;
-	पूर्णांक base_addr;
-	पूर्णांक err = 0;
+struct net_device * __init cops_probe(int unit)
+{
+	struct net_device *dev;
+	unsigned *port;
+	int base_addr;
+	int err = 0;
 
-	dev = alloc_ltalkdev(माप(काष्ठा cops_local));
-	अगर (!dev)
-		वापस ERR_PTR(-ENOMEM);
+	dev = alloc_ltalkdev(sizeof(struct cops_local));
+	if (!dev)
+		return ERR_PTR(-ENOMEM);
 
-	अगर (unit >= 0) अणु
-		प्र_लिखो(dev->name, "lt%d", unit);
+	if (unit >= 0) {
+		sprintf(dev->name, "lt%d", unit);
 		netdev_boot_setup_check(dev);
 		irq = dev->irq;
 		base_addr = dev->base_addr;
-	पूर्ण अन्यथा अणु
+	} else {
 		base_addr = dev->base_addr = io;
-	पूर्ण
+	}
 
-	अगर (base_addr > 0x1ff) अणु    /* Check a single specअगरied location. */
+	if (base_addr > 0x1ff) {    /* Check a single specified location. */
 		err = cops_probe1(dev, base_addr);
-	पूर्ण अन्यथा अगर (base_addr != 0) अणु /* Don't probe at all. */
+	} else if (base_addr != 0) { /* Don't probe at all. */
 		err = -ENXIO;
-	पूर्ण अन्यथा अणु
-		/* FIXME  Does this really work क्रम cards which generate irq?
-		 * It's definitely N.G. क्रम polled Tangent. sh
-		 * Dayna cards करोn't स्वतःprobe well at all, but अगर your card is
-		 * at IRQ 5 & IO 0x240 we find it every समय. ;) JS
+	} else {
+		/* FIXME  Does this really work for cards which generate irq?
+		 * It's definitely N.G. for polled Tangent. sh
+		 * Dayna cards don't autoprobe well at all, but if your card is
+		 * at IRQ 5 & IO 0x240 we find it every time. ;) JS
 		 */
-		क्रम (port = ports; *port && cops_probe1(dev, *port) < 0; port++)
+		for (port = ports; *port && cops_probe1(dev, *port) < 0; port++)
 			;
-		अगर (!*port)
+		if (!*port)
 			err = -ENODEV;
-	पूर्ण
-	अगर (err)
-		जाओ out;
-	err = रेजिस्टर_netdev(dev);
-	अगर (err)
-		जाओ out1;
-	वापस dev;
+	}
+	if (err)
+		goto out;
+	err = register_netdev(dev);
+	if (err)
+		goto out1;
+	return dev;
 out1:
 	cleanup_card(dev);
 out:
-	मुक्त_netdev(dev);
-	वापस ERR_PTR(err);
-पूर्ण
+	free_netdev(dev);
+	return ERR_PTR(err);
+}
 
-अटल स्थिर काष्ठा net_device_ops cops_netdev_ops = अणु
-	.nकरो_खोलो               = cops_खोलो,
-        .nकरो_stop               = cops_बंद,
-	.nकरो_start_xmit   	= cops_send_packet,
-	.nकरो_tx_समयout		= cops_समयout,
-        .nकरो_करो_ioctl           = cops_ioctl,
-	.nकरो_set_rx_mode	= set_multicast_list,
-पूर्ण;
+static const struct net_device_ops cops_netdev_ops = {
+	.ndo_open               = cops_open,
+        .ndo_stop               = cops_close,
+	.ndo_start_xmit   	= cops_send_packet,
+	.ndo_tx_timeout		= cops_timeout,
+        .ndo_do_ioctl           = cops_ioctl,
+	.ndo_set_rx_mode	= set_multicast_list,
+};
 
 /*
- *      This is the real probe routine. Linux has a history of मित्रly device
- *      probes on the ISA bus. A good device probes aव्योमs करोing ग_लिखोs, and
- *      verअगरies that the correct device exists and functions.
+ *      This is the real probe routine. Linux has a history of friendly device
+ *      probes on the ISA bus. A good device probes avoids doing writes, and
+ *      verifies that the correct device exists and functions.
  */
-अटल पूर्णांक __init cops_probe1(काष्ठा net_device *dev, पूर्णांक ioaddr)
-अणु
-        काष्ठा cops_local *lp;
-	अटल अचिन्हित version_prपूर्णांकed;
-	पूर्णांक board = board_type;
-	पूर्णांक retval;
+static int __init cops_probe1(struct net_device *dev, int ioaddr)
+{
+        struct cops_local *lp;
+	static unsigned version_printed;
+	int board = board_type;
+	int retval;
 	
-        अगर(cops_debug && version_prपूर्णांकed++ == 0)
-		prपूर्णांकk("%s", version);
+        if(cops_debug && version_printed++ == 0)
+		printk("%s", version);
 
-	/* Grab the region so no one अन्यथा tries to probe our ioports. */
-	अगर (!request_region(ioaddr, COPS_IO_EXTENT, dev->name))
-		वापस -EBUSY;
+	/* Grab the region so no one else tries to probe our ioports. */
+	if (!request_region(ioaddr, COPS_IO_EXTENT, dev->name))
+		return -EBUSY;
 
         /*
-         * Since this board has jumpered पूर्णांकerrupts, allocate the पूर्णांकerrupt
-         * vector now. There is no poपूर्णांक in रुकोing since no other device
-         * can use the पूर्णांकerrupt, and this marks the irq as busy. Jumpered
-         * पूर्णांकerrupts are typically not reported by the boards, and we must
+         * Since this board has jumpered interrupts, allocate the interrupt
+         * vector now. There is no point in waiting since no other device
+         * can use the interrupt, and this marks the irq as busy. Jumpered
+         * interrupts are typically not reported by the boards, and we must
          * used AutoIRQ to find them.
 	 */
 	dev->irq = irq;
-	चयन (dev->irq)
-	अणु
-		हाल 0:
+	switch (dev->irq)
+	{
+		case 0:
 			/* COPS AutoIRQ routine */
 			dev->irq = cops_irq(ioaddr, board);
-			अगर (dev->irq)
-				अवरोध;
+			if (dev->irq)
+				break;
 			fallthrough;	/* Once no IRQ found on this port */
-		हाल 1:
+		case 1:
 			retval = -EINVAL;
-			जाओ err_out;
+			goto err_out;
 
-		/* Fixup क्रम users that करोn't know that IRQ 2 is really
-		 * IRQ 9, or करोn't know which one to set.
+		/* Fixup for users that don't know that IRQ 2 is really
+		 * IRQ 9, or don't know which one to set.
 		 */
-		हाल 2:
+		case 2:
 			dev->irq = 9;
-			अवरोध;
+			break;
 
 		/* Polled operation requested. Although irq of zero passed as
 		 * a parameter tells the init routines to probe, we'll
-		 * overload it to denote polled operation at runसमय.
+		 * overload it to denote polled operation at runtime.
 		 */
-		हाल 0xff:
+		case 0xff:
 			dev->irq = 0;
-			अवरोध;
+			break;
 
-		शेष:
-			अवरोध;
-	पूर्ण
+		default:
+			break;
+	}
 
 	dev->base_addr = ioaddr;
 
-	/* Reserve any actual पूर्णांकerrupt. */
-	अगर (dev->irq) अणु
-		retval = request_irq(dev->irq, cops_पूर्णांकerrupt, 0, dev->name, dev);
-		अगर (retval)
-			जाओ err_out;
-	पूर्ण
+	/* Reserve any actual interrupt. */
+	if (dev->irq) {
+		retval = request_irq(dev->irq, cops_interrupt, 0, dev->name, dev);
+		if (retval)
+			goto err_out;
+	}
 
         lp = netdev_priv(dev);
         spin_lock_init(&lp->lock);
 
-	/* Copy local board variable to lp काष्ठा. */
+	/* Copy local board variable to lp struct. */
 	lp->board               = board;
 
 	dev->netdev_ops 	= &cops_netdev_ops;
-	dev->watchकरोg_समयo	= HZ * 2;
+	dev->watchdog_timeo	= HZ * 2;
 
 
 	/* Tell the user where the card is and what mode we're in. */
-	अगर(board==DAYNA)
-		prपूर्णांकk("%s: %s at %#3x, using IRQ %d, in Dayna mode.\n", 
+	if(board==DAYNA)
+		printk("%s: %s at %#3x, using IRQ %d, in Dayna mode.\n", 
 			dev->name, cardname, ioaddr, dev->irq);
-	अगर(board==TANGENT) अणु
-		अगर(dev->irq)
-			prपूर्णांकk("%s: %s at %#3x, IRQ %d, in Tangent mode\n", 
+	if(board==TANGENT) {
+		if(dev->irq)
+			printk("%s: %s at %#3x, IRQ %d, in Tangent mode\n", 
 				dev->name, cardname, ioaddr, dev->irq);
-		अन्यथा
-			prपूर्णांकk("%s: %s at %#3x, using polled IO, in Tangent mode.\n", 
+		else
+			printk("%s: %s at %#3x, using polled IO, in Tangent mode.\n", 
 				dev->name, cardname, ioaddr);
 
-	पूर्ण
-        वापस 0;
+	}
+        return 0;
 
 err_out:
 	release_region(ioaddr, COPS_IO_EXTENT);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल पूर्णांक __init cops_irq (पूर्णांक ioaddr, पूर्णांक board)
-अणु       /*
-         * This करोes not use the IRQ to determine where the IRQ is. We just
+static int __init cops_irq (int ioaddr, int board)
+{       /*
+         * This does not use the IRQ to determine where the IRQ is. We just
          * assume that when we get a correct status response that it's the IRQ.
-         * This really just verअगरies the IO port but since we only have access
+         * This really just verifies the IO port but since we only have access
          * to such a small number of IRQs (5, 4, 3) this is not bad.
-         * This will probably not work क्रम more than one card.
+         * This will probably not work for more than one card.
          */
-        पूर्णांक irqaddr=0;
-        पूर्णांक i, x, status;
+        int irqaddr=0;
+        int i, x, status;
 
-        अगर(board==DAYNA)
-        अणु
+        if(board==DAYNA)
+        {
                 outb(0, ioaddr+DAYNA_RESET);
                 inb(ioaddr+DAYNA_RESET);
                 mdelay(333);
-        पूर्ण
-        अगर(board==TANGENT)
-        अणु
+        }
+        if(board==TANGENT)
+        {
                 inb(ioaddr);
                 outb(0, ioaddr);
                 outb(0, ioaddr+TANG_RESET);
-        पूर्ण
+        }
 
-        क्रम(i=0; cops_irqlist[i] !=0; i++)
-        अणु
+        for(i=0; cops_irqlist[i] !=0; i++)
+        {
                 irqaddr = cops_irqlist[i];
-                क्रम(x = 0xFFFF; x>0; x --)    /* रुको क्रम response */
-                अणु
-                        अगर(board==DAYNA)
-                        अणु
+                for(x = 0xFFFF; x>0; x --)    /* wait for response */
+                {
+                        if(board==DAYNA)
+                        {
                                 status = (inb(ioaddr+DAYNA_CARD_STATUS)&3);
-                                अगर(status == 1)
-                                        वापस irqaddr;
-                        पूर्ण
-                        अगर(board==TANGENT)
-                        अणु
-                                अगर((inb(ioaddr+TANG_CARD_STATUS)& TANG_TX_READY) !=0)
-                                        वापस irqaddr;
-                        पूर्ण
-                पूर्ण
-        पूर्ण
-        वापस 0;       /* no IRQ found */
-पूर्ण
+                                if(status == 1)
+                                        return irqaddr;
+                        }
+                        if(board==TANGENT)
+                        {
+                                if((inb(ioaddr+TANG_CARD_STATUS)& TANG_TX_READY) !=0)
+                                        return irqaddr;
+                        }
+                }
+        }
+        return 0;       /* no IRQ found */
+}
 
 /*
  * Open/initialize the board. This is called (in the current kernel)
- * someसमय after booting when the 'ifconfig' program is run.
+ * sometime after booting when the 'ifconfig' program is run.
  */
-अटल पूर्णांक cops_खोलो(काष्ठा net_device *dev)
-अणु
-    काष्ठा cops_local *lp = netdev_priv(dev);
+static int cops_open(struct net_device *dev)
+{
+    struct cops_local *lp = netdev_priv(dev);
 
-	अगर(dev->irq==0)
-	अणु
+	if(dev->irq==0)
+	{
 		/*
-		 * I करोn't know अगर the Dayna-style boards support polled 
-		 * operation.  For now, only allow it क्रम Tangent.
+		 * I don't know if the Dayna-style boards support polled 
+		 * operation.  For now, only allow it for Tangent.
 		 */
-		अगर(lp->board==TANGENT)	/* Poll 20 बार per second */
-		अणु
-		    cops_समयr_dev = dev;
-		    समयr_setup(&cops_समयr, cops_poll, 0);
-		    cops_समयr.expires 	= jअगरfies + HZ/20;
-		    add_समयr(&cops_समयr);
-		पूर्ण 
-		अन्यथा 
-		अणु
-			prपूर्णांकk(KERN_WARNING "%s: No irq line set\n", dev->name);
-			वापस -EAGAIN;
-		पूर्ण
-	पूर्ण
+		if(lp->board==TANGENT)	/* Poll 20 times per second */
+		{
+		    cops_timer_dev = dev;
+		    timer_setup(&cops_timer, cops_poll, 0);
+		    cops_timer.expires 	= jiffies + HZ/20;
+		    add_timer(&cops_timer);
+		} 
+		else 
+		{
+			printk(KERN_WARNING "%s: No irq line set\n", dev->name);
+			return -EAGAIN;
+		}
+	}
 
 	cops_jumpstart(dev);	/* Start the card up. */
 
-	netअगर_start_queue(dev);
-        वापस 0;
-पूर्ण
+	netif_start_queue(dev);
+        return 0;
+}
 
 /*
- *	This allows क्रम a dynamic start/restart of the entire card.
+ *	This allows for a dynamic start/restart of the entire card.
  */
-अटल पूर्णांक cops_jumpstart(काष्ठा net_device *dev)
-अणु
-	काष्ठा cops_local *lp = netdev_priv(dev);
+static int cops_jumpstart(struct net_device *dev)
+{
+	struct cops_local *lp = netdev_priv(dev);
 
 	/*
          *      Once the card has the firmware loaded and has acquired
-         *      the nodeid, अगर it is reset it will lose it all.
+         *      the nodeid, if it is reset it will lose it all.
          */
-        cops_reset(dev,1);	/* Need to reset card beक्रमe load firmware. */
+        cops_reset(dev,1);	/* Need to reset card before load firmware. */
         cops_load(dev);		/* Load the firmware. */
 
 	/*
-	 *	If atalkd alपढ़ोy gave us a nodeid we will use that
-	 *	one again, अन्यथा we रुको क्रम atalkd to give us a nodeid
-	 *	in cops_ioctl. This may cause a problem अगर someone steals
-	 *	our nodeid जबतक we are resetting.
+	 *	If atalkd already gave us a nodeid we will use that
+	 *	one again, else we wait for atalkd to give us a nodeid
+	 *	in cops_ioctl. This may cause a problem if someone steals
+	 *	our nodeid while we are resetting.
 	 */	
-	अगर(lp->nodeid == 1)
+	if(lp->nodeid == 1)
 		cops_nodeid(dev,lp->node_acquire);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tangent_रुको_reset(पूर्णांक ioaddr)
-अणु
-	पूर्णांक समयout=0;
+static void tangent_wait_reset(int ioaddr)
+{
+	int timeout=0;
 
-	जबतक(समयout++ < 5 && (inb(ioaddr+TANG_CARD_STATUS)&TANG_TX_READY)==0)
+	while(timeout++ < 5 && (inb(ioaddr+TANG_CARD_STATUS)&TANG_TX_READY)==0)
 		mdelay(1);   /* Wait 1 second */
-पूर्ण
+}
 
 /*
  *      Reset the LocalTalk board.
  */
-अटल व्योम cops_reset(काष्ठा net_device *dev, पूर्णांक sleep)
-अणु
-        काष्ठा cops_local *lp = netdev_priv(dev);
-        पूर्णांक ioaddr=dev->base_addr;
+static void cops_reset(struct net_device *dev, int sleep)
+{
+        struct cops_local *lp = netdev_priv(dev);
+        int ioaddr=dev->base_addr;
 
-        अगर(lp->board==TANGENT)
-        अणु
+        if(lp->board==TANGENT)
+        {
                 inb(ioaddr);		/* Clear request latch. */
                 outb(0,ioaddr);		/* Clear the TANG_TX_READY flop. */
                 outb(0, ioaddr+TANG_RESET);	/* Reset the adapter. */
 
-		tangent_रुको_reset(ioaddr);
+		tangent_wait_reset(ioaddr);
                 outb(0, ioaddr+TANG_CLEAR_INT);
-        पूर्ण
-        अगर(lp->board==DAYNA)
-        अणु
+        }
+        if(lp->board==DAYNA)
+        {
                 outb(0, ioaddr+DAYNA_RESET);	/* Assert the reset port */
                 inb(ioaddr+DAYNA_RESET);	/* Clear the reset */
-		अगर (sleep)
+		if (sleep)
 			msleep(333);
-		अन्यथा
+		else
 			mdelay(333);
-        पूर्ण
+        }
 
-	netअगर_wake_queue(dev);
-पूर्ण
+	netif_wake_queue(dev);
+}
 
-अटल व्योम cops_load (काष्ठा net_device *dev)
-अणु
-        काष्ठा अगरreq अगरr;
-        काष्ठा ltfirmware *ltf= (काष्ठा ltfirmware *)&अगरr.अगरr_अगरru;
-        काष्ठा cops_local *lp = netdev_priv(dev);
-        पूर्णांक ioaddr=dev->base_addr;
-	पूर्णांक length, i = 0;
+static void cops_load (struct net_device *dev)
+{
+        struct ifreq ifr;
+        struct ltfirmware *ltf= (struct ltfirmware *)&ifr.ifr_ifru;
+        struct cops_local *lp = netdev_priv(dev);
+        int ioaddr=dev->base_addr;
+	int length, i = 0;
 
-        म_नकल(अगरr.अगरr_name,"lt0");
+        strcpy(ifr.ifr_name,"lt0");
 
-        /* Get card's firmware code and करो some checks on it. */
-#अगर_घोषित CONFIG_COPS_DAYNA        
-        अगर(lp->board==DAYNA)
-        अणु
-                ltf->length=माप(ffdrv_code);
+        /* Get card's firmware code and do some checks on it. */
+#ifdef CONFIG_COPS_DAYNA        
+        if(lp->board==DAYNA)
+        {
+                ltf->length=sizeof(ffdrv_code);
                 ltf->data=ffdrv_code;
-        पूर्ण
-        अन्यथा
-#पूर्ण_अगर        
-#अगर_घोषित CONFIG_COPS_TANGENT
-        अगर(lp->board==TANGENT)
-        अणु
-                ltf->length=माप(ltdrv_code);
+        }
+        else
+#endif        
+#ifdef CONFIG_COPS_TANGENT
+        if(lp->board==TANGENT)
+        {
+                ltf->length=sizeof(ltdrv_code);
                 ltf->data=ltdrv_code;
-        पूर्ण
-        अन्यथा
-#पूर्ण_अगर
-	अणु
-		prपूर्णांकk(KERN_INFO "%s; unsupported board type.\n", dev->name);
-		वापस;
-	पूर्ण
+        }
+        else
+#endif
+	{
+		printk(KERN_INFO "%s; unsupported board type.\n", dev->name);
+		return;
+	}
 	
         /* Check to make sure firmware is correct length. */
-        अगर(lp->board==DAYNA && ltf->length!=5983)
-        अणु
-                prपूर्णांकk(KERN_WARNING "%s: Firmware is not length of FFDRV.BIN.\n", dev->name);
-                वापस;
-        पूर्ण
-        अगर(lp->board==TANGENT && ltf->length!=2501)
-        अणु
-                prपूर्णांकk(KERN_WARNING "%s: Firmware is not length of DRVCODE.BIN.\n", dev->name);
-                वापस;
-        पूर्ण
+        if(lp->board==DAYNA && ltf->length!=5983)
+        {
+                printk(KERN_WARNING "%s: Firmware is not length of FFDRV.BIN.\n", dev->name);
+                return;
+        }
+        if(lp->board==TANGENT && ltf->length!=2501)
+        {
+                printk(KERN_WARNING "%s: Firmware is not length of DRVCODE.BIN.\n", dev->name);
+                return;
+        }
 
-        अगर(lp->board==DAYNA)
-        अणु
+        if(lp->board==DAYNA)
+        {
                 /*
-                 *      We must रुको क्रम a status response
+                 *      We must wait for a status response
                  *      with the DAYNA board.
                  */
-                जबतक(++i<65536)
-                अणु
-                       अगर((inb(ioaddr+DAYNA_CARD_STATUS)&3)==1)
-                                अवरोध;
-                पूर्ण
+                while(++i<65536)
+                {
+                       if((inb(ioaddr+DAYNA_CARD_STATUS)&3)==1)
+                                break;
+                }
 
-                अगर(i==65536)
-                        वापस;
-        पूर्ण
+                if(i==65536)
+                        return;
+        }
 
         /*
          *      Upload the firmware and kick. Byte-by-byte works nicely here.
          */
 	i=0;
         length = ltf->length;
-        जबतक(length--)
-        अणु
+        while(length--)
+        {
                 outb(ltf->data[i], ioaddr);
                 i++;
-        पूर्ण
+        }
 
-	अगर(cops_debug > 1)
-		prपूर्णांकk("%s: Uploaded firmware - %d bytes of %d bytes.\n", 
+	if(cops_debug > 1)
+		printk("%s: Uploaded firmware - %d bytes of %d bytes.\n", 
 			dev->name, i, ltf->length);
 
-        अगर(lp->board==DAYNA) 	/* Tell Dayna to run the firmware code. */
+        if(lp->board==DAYNA) 	/* Tell Dayna to run the firmware code. */
                 outb(1, ioaddr+DAYNA_INT_CARD);
-	अन्यथा			/* Tell Tang to run the firmware code. */
+	else			/* Tell Tang to run the firmware code. */
 		inb(ioaddr);
 
-        अगर(lp->board==TANGENT)
-        अणु
-                tangent_रुको_reset(ioaddr);
-                inb(ioaddr);	/* Clear initial पढ़ोy संकेत. */
-        पूर्ण
-पूर्ण
+        if(lp->board==TANGENT)
+        {
+                tangent_wait_reset(ioaddr);
+                inb(ioaddr);	/* Clear initial ready signal. */
+        }
+}
 
 /*
  * 	Get the LocalTalk Nodeid from the card. We can suggest
  *	any nodeid 1-254. The card will try and get that exact
- *	address अन्यथा we can specअगरy 0 as the nodeid and the card
- *	will स्वतःprobe क्रम a nodeid.
+ *	address else we can specify 0 as the nodeid and the card
+ *	will autoprobe for a nodeid.
  */
-अटल पूर्णांक cops_nodeid (काष्ठा net_device *dev, पूर्णांक nodeid)
-अणु
-	काष्ठा cops_local *lp = netdev_priv(dev);
-	पूर्णांक ioaddr = dev->base_addr;
+static int cops_nodeid (struct net_device *dev, int nodeid)
+{
+	struct cops_local *lp = netdev_priv(dev);
+	int ioaddr = dev->base_addr;
 
-	अगर(lp->board == DAYNA)
-        अणु
+	if(lp->board == DAYNA)
+        {
         	/* Empty any pending adapter responses. */
-                जबतक((inb(ioaddr+DAYNA_CARD_STATUS)&DAYNA_TX_READY)==0)
-                अणु
-			outb(0, ioaddr+COPS_CLEAR_INT);	/* Clear पूर्णांकerrupts. */
-        		अगर((inb(ioaddr+DAYNA_CARD_STATUS)&0x03)==DAYNA_RX_REQUEST)
-                		cops_rx(dev);	/* Kick any packets रुकोing. */
+                while((inb(ioaddr+DAYNA_CARD_STATUS)&DAYNA_TX_READY)==0)
+                {
+			outb(0, ioaddr+COPS_CLEAR_INT);	/* Clear interrupts. */
+        		if((inb(ioaddr+DAYNA_CARD_STATUS)&0x03)==DAYNA_RX_REQUEST)
+                		cops_rx(dev);	/* Kick any packets waiting. */
 			schedule();
-                पूर्ण
+                }
 
                 outb(2, ioaddr);       	/* Output command packet length as 2. */
                 outb(0, ioaddr);
                 outb(LAP_INIT, ioaddr);	/* Send LAP_INIT command byte. */
                 outb(nodeid, ioaddr);  	/* Suggest node address. */
-        पूर्ण
+        }
 
-	अगर(lp->board == TANGENT)
-        अणु
+	if(lp->board == TANGENT)
+        {
                 /* Empty any pending adapter responses. */
-                जबतक(inb(ioaddr+TANG_CARD_STATUS)&TANG_RX_READY)
-                अणु
-			outb(0, ioaddr+COPS_CLEAR_INT);	/* Clear पूर्णांकerrupt. */
-                	cops_rx(dev);          	/* Kick out packets रुकोing. */
+                while(inb(ioaddr+TANG_CARD_STATUS)&TANG_RX_READY)
+                {
+			outb(0, ioaddr+COPS_CLEAR_INT);	/* Clear interrupt. */
+                	cops_rx(dev);          	/* Kick out packets waiting. */
 			schedule();
-                पूर्ण
+                }
 
-		/* Not sure what Tangent करोes अगर nodeid picked is used. */
-                अगर(nodeid == 0)	         		/* Seed. */
-                	nodeid = jअगरfies&0xFF;		/* Get a अक्रमom try */
+		/* Not sure what Tangent does if nodeid picked is used. */
+                if(nodeid == 0)	         		/* Seed. */
+                	nodeid = jiffies&0xFF;		/* Get a random try */
                 outb(2, ioaddr);        		/* Command length LSB */
                 outb(0, ioaddr);       			/* Command length MSB */
                 outb(LAP_INIT, ioaddr); 		/* Send LAP_INIT byte */
-                outb(nodeid, ioaddr); 		  	/* LAP address hपूर्णांक. */
+                outb(nodeid, ioaddr); 		  	/* LAP address hint. */
                 outb(0xFF, ioaddr);     		/* Int. level to use */
-        पूर्ण
+        }
 
 	lp->node_acquire=0;		/* Set nodeid holder to 0. */
-        जबतक(lp->node_acquire==0)	/* Get *True* nodeid finally. */
-	अणु
-		outb(0, ioaddr+COPS_CLEAR_INT);	/* Clear any पूर्णांकerrupt. */
+        while(lp->node_acquire==0)	/* Get *True* nodeid finally. */
+	{
+		outb(0, ioaddr+COPS_CLEAR_INT);	/* Clear any interrupt. */
 
-		अगर(lp->board == DAYNA)
-		अणु
-                	अगर((inb(ioaddr+DAYNA_CARD_STATUS)&0x03)==DAYNA_RX_REQUEST)
+		if(lp->board == DAYNA)
+		{
+                	if((inb(ioaddr+DAYNA_CARD_STATUS)&0x03)==DAYNA_RX_REQUEST)
                 		cops_rx(dev);	/* Grab the nodeid put in lp->node_acquire. */
-		पूर्ण
-		अगर(lp->board == TANGENT)
-		अणु	
-			अगर(inb(ioaddr+TANG_CARD_STATUS)&TANG_RX_READY)
+		}
+		if(lp->board == TANGENT)
+		{	
+			if(inb(ioaddr+TANG_CARD_STATUS)&TANG_RX_READY)
                                 cops_rx(dev);   /* Grab the nodeid put in lp->node_acquire. */
-		पूर्ण
+		}
 		schedule();
-	पूर्ण
+	}
 
-	अगर(cops_debug > 1)
-		prपूर्णांकk(KERN_DEBUG "%s: Node ID %d has been acquired.\n", 
+	if(cops_debug > 1)
+		printk(KERN_DEBUG "%s: Node ID %d has been acquired.\n", 
 			dev->name, lp->node_acquire);
 
 	lp->nodeid=1;	/* Set got nodeid to 1. */
 
-        वापस 0;
-पूर्ण
+        return 0;
+}
 
 /*
- *	Poll the Tangent type cards to see अगर we have work.
+ *	Poll the Tangent type cards to see if we have work.
  */
  
-अटल व्योम cops_poll(काष्ठा समयr_list *unused)
-अणु
-	पूर्णांक ioaddr, status;
-	पूर्णांक boguscount = 0;
-	काष्ठा net_device *dev = cops_समयr_dev;
+static void cops_poll(struct timer_list *unused)
+{
+	int ioaddr, status;
+	int boguscount = 0;
+	struct net_device *dev = cops_timer_dev;
 
-	del_समयr(&cops_समयr);
+	del_timer(&cops_timer);
 
-	अगर(dev == शून्य)
-		वापस;	/* We've been करोwned */
+	if(dev == NULL)
+		return;	/* We've been downed */
 
 	ioaddr = dev->base_addr;
-	करो अणु
+	do {
 		status=inb(ioaddr+TANG_CARD_STATUS);
-		अगर(status & TANG_RX_READY)
+		if(status & TANG_RX_READY)
 			cops_rx(dev);
-		अगर(status & TANG_TX_READY)
-			netअगर_wake_queue(dev);
+		if(status & TANG_TX_READY)
+			netif_wake_queue(dev);
 		status = inb(ioaddr+TANG_CARD_STATUS);
-	पूर्ण जबतक((++boguscount < 20) && (status&(TANG_RX_READY|TANG_TX_READY)));
+	} while((++boguscount < 20) && (status&(TANG_RX_READY|TANG_TX_READY)));
 
-	/* poll 20 बार per second */
-	cops_समयr.expires = jअगरfies + HZ/20;
-	add_समयr(&cops_समयr);
-पूर्ण
+	/* poll 20 times per second */
+	cops_timer.expires = jiffies + HZ/20;
+	add_timer(&cops_timer);
+}
 
 /*
  *      The typical workload of the driver:
- *      Handle the network पूर्णांकerface पूर्णांकerrupts.
+ *      Handle the network interface interrupts.
  */
-अटल irqवापस_t cops_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-        काष्ठा net_device *dev = dev_id;
-        काष्ठा cops_local *lp;
-        पूर्णांक ioaddr, status;
-        पूर्णांक boguscount = 0;
+static irqreturn_t cops_interrupt(int irq, void *dev_id)
+{
+        struct net_device *dev = dev_id;
+        struct cops_local *lp;
+        int ioaddr, status;
+        int boguscount = 0;
 
         ioaddr = dev->base_addr;
         lp = netdev_priv(dev);
 
-	अगर(lp->board==DAYNA)
-	अणु
-		करो अणु
+	if(lp->board==DAYNA)
+	{
+		do {
 			outb(0, ioaddr + COPS_CLEAR_INT);
                        	status=inb(ioaddr+DAYNA_CARD_STATUS);
-                       	अगर((status&0x03)==DAYNA_RX_REQUEST)
+                       	if((status&0x03)==DAYNA_RX_REQUEST)
                        	        cops_rx(dev);
-                	netअगर_wake_queue(dev);
-		पूर्ण जबतक(++boguscount < 20);
-	पूर्ण
-	अन्यथा
-	अणु
-		करो अणु
+                	netif_wake_queue(dev);
+		} while(++boguscount < 20);
+	}
+	else
+	{
+		do {
                        	status=inb(ioaddr+TANG_CARD_STATUS);
-			अगर(status & TANG_RX_READY)
+			if(status & TANG_RX_READY)
 				cops_rx(dev);
-			अगर(status & TANG_TX_READY)
-				netअगर_wake_queue(dev);
+			if(status & TANG_TX_READY)
+				netif_wake_queue(dev);
 			status=inb(ioaddr+TANG_CARD_STATUS);
-		पूर्ण जबतक((++boguscount < 20) && (status&(TANG_RX_READY|TANG_TX_READY)));
-	पूर्ण
+		} while((++boguscount < 20) && (status&(TANG_RX_READY|TANG_TX_READY)));
+	}
 
-        वापस IRQ_HANDLED;
-पूर्ण
+        return IRQ_HANDLED;
+}
 
 /*
  *      We have a good packet(s), get it/them out of the buffers.
  */
-अटल व्योम cops_rx(काष्ठा net_device *dev)
-अणु
-        पूर्णांक pkt_len = 0;
-        पूर्णांक rsp_type = 0;
-        काष्ठा sk_buff *skb = शून्य;
-        काष्ठा cops_local *lp = netdev_priv(dev);
-        पूर्णांक ioaddr = dev->base_addr;
-        पूर्णांक boguscount = 0;
-        अचिन्हित दीर्घ flags;
+static void cops_rx(struct net_device *dev)
+{
+        int pkt_len = 0;
+        int rsp_type = 0;
+        struct sk_buff *skb = NULL;
+        struct cops_local *lp = netdev_priv(dev);
+        int ioaddr = dev->base_addr;
+        int boguscount = 0;
+        unsigned long flags;
 
 
 	spin_lock_irqsave(&lp->lock, flags);
 	
-        अगर(lp->board==DAYNA)
-        अणु
+        if(lp->board==DAYNA)
+        {
                 outb(0, ioaddr);                /* Send out Zero length. */
                 outb(0, ioaddr);
-                outb(DATA_READ, ioaddr);        /* Send पढ़ो command out. */
+                outb(DATA_READ, ioaddr);        /* Send read command out. */
 
-                /* Wait क्रम DMA to turn around. */
-                जबतक(++boguscount<1000000)
-                अणु
+                /* Wait for DMA to turn around. */
+                while(++boguscount<1000000)
+                {
 			barrier();
-                        अगर((inb(ioaddr+DAYNA_CARD_STATUS)&0x03)==DAYNA_RX_READY)
-                                अवरोध;
-                पूर्ण
+                        if((inb(ioaddr+DAYNA_CARD_STATUS)&0x03)==DAYNA_RX_READY)
+                                break;
+                }
 
-                अगर(boguscount==1000000)
-                अणु
-                        prपूर्णांकk(KERN_WARNING "%s: DMA timed out.\n",dev->name);
+                if(boguscount==1000000)
+                {
+                        printk(KERN_WARNING "%s: DMA timed out.\n",dev->name);
 			spin_unlock_irqrestore(&lp->lock, flags);
-                        वापस;
-                पूर्ण
-        पूर्ण
+                        return;
+                }
+        }
 
         /* Get response length. */
 	pkt_len = inb(ioaddr);
@@ -787,107 +786,107 @@ err_out:
 
         /* Malloc up new buffer. */
         skb = dev_alloc_skb(pkt_len);
-        अगर(skb == शून्य)
-        अणु
-                prपूर्णांकk(KERN_WARNING "%s: Memory squeeze, dropping packet.\n",
+        if(skb == NULL)
+        {
+                printk(KERN_WARNING "%s: Memory squeeze, dropping packet.\n",
 			dev->name);
                 dev->stats.rx_dropped++;
-                जबतक(pkt_len--)        /* Discard packet */
+                while(pkt_len--)        /* Discard packet */
                         inb(ioaddr);
                 spin_unlock_irqrestore(&lp->lock, flags);
-                वापस;
-        पूर्ण
+                return;
+        }
         skb->dev = dev;
         skb_put(skb, pkt_len);
         skb->protocol = htons(ETH_P_LOCALTALK);
 
         insb(ioaddr, skb->data, pkt_len);               /* Eat the Data */
 
-        अगर(lp->board==DAYNA)
+        if(lp->board==DAYNA)
                 outb(1, ioaddr+DAYNA_INT_CARD);         /* Interrupt the card */
 
-        spin_unlock_irqrestore(&lp->lock, flags);  /* Restore पूर्णांकerrupts. */
+        spin_unlock_irqrestore(&lp->lock, flags);  /* Restore interrupts. */
 
-        /* Check क्रम bad response length */
-        अगर(pkt_len < 0 || pkt_len > MAX_LLAP_SIZE)
-        अणु
-		prपूर्णांकk(KERN_WARNING "%s: Bad packet length of %d bytes.\n", 
+        /* Check for bad response length */
+        if(pkt_len < 0 || pkt_len > MAX_LLAP_SIZE)
+        {
+		printk(KERN_WARNING "%s: Bad packet length of %d bytes.\n", 
 			dev->name, pkt_len);
                 dev->stats.tx_errors++;
-                dev_kमुक्त_skb_any(skb);
-                वापस;
-        पूर्ण
+                dev_kfree_skb_any(skb);
+                return;
+        }
 
         /* Set nodeid and then get out. */
-        अगर(rsp_type == LAP_INIT_RSP)
-        अणु	/* Nodeid taken from received packet. */
+        if(rsp_type == LAP_INIT_RSP)
+        {	/* Nodeid taken from received packet. */
                 lp->node_acquire = skb->data[0];
-                dev_kमुक्त_skb_any(skb);
-                वापस;
-        पूर्ण
+                dev_kfree_skb_any(skb);
+                return;
+        }
 
         /* One last check to make sure we have a good packet. */
-        अगर(rsp_type != LAP_RESPONSE)
-        अणु
-                prपूर्णांकk(KERN_WARNING "%s: Bad packet type %d.\n", dev->name, rsp_type);
+        if(rsp_type != LAP_RESPONSE)
+        {
+                printk(KERN_WARNING "%s: Bad packet type %d.\n", dev->name, rsp_type);
                 dev->stats.tx_errors++;
-                dev_kमुक्त_skb_any(skb);
-                वापस;
-        पूर्ण
+                dev_kfree_skb_any(skb);
+                return;
+        }
 
-        skb_reset_mac_header(skb);    /* Poपूर्णांक to entire packet. */
+        skb_reset_mac_header(skb);    /* Point to entire packet. */
         skb_pull(skb,3);
-        skb_reset_transport_header(skb);    /* Poपूर्णांक to data (Skip header). */
+        skb_reset_transport_header(skb);    /* Point to data (Skip header). */
 
         /* Update the counters. */
         dev->stats.rx_packets++;
         dev->stats.rx_bytes += skb->len;
 
         /* Send packet to a higher place. */
-        netअगर_rx(skb);
-पूर्ण
+        netif_rx(skb);
+}
 
-अटल व्योम cops_समयout(काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue)
-अणु
-        काष्ठा cops_local *lp = netdev_priv(dev);
-        पूर्णांक ioaddr = dev->base_addr;
+static void cops_timeout(struct net_device *dev, unsigned int txqueue)
+{
+        struct cops_local *lp = netdev_priv(dev);
+        int ioaddr = dev->base_addr;
 
 	dev->stats.tx_errors++;
-        अगर(lp->board==TANGENT)
-        अणु
-		अगर((inb(ioaddr+TANG_CARD_STATUS)&TANG_TX_READY)==0)
-               		prपूर्णांकk(KERN_WARNING "%s: No TX complete interrupt.\n", dev->name);
-	पूर्ण
-	prपूर्णांकk(KERN_WARNING "%s: Transmit timed out.\n", dev->name);
+        if(lp->board==TANGENT)
+        {
+		if((inb(ioaddr+TANG_CARD_STATUS)&TANG_TX_READY)==0)
+               		printk(KERN_WARNING "%s: No TX complete interrupt.\n", dev->name);
+	}
+	printk(KERN_WARNING "%s: Transmit timed out.\n", dev->name);
 	cops_jumpstart(dev);	/* Restart the card. */
-	netअगर_trans_update(dev); /* prevent tx समयout */
-	netअगर_wake_queue(dev);
-पूर्ण
+	netif_trans_update(dev); /* prevent tx timeout */
+	netif_wake_queue(dev);
+}
 
 
 /*
  *	Make the card transmit a LocalTalk packet.
  */
 
-अटल netdev_tx_t cops_send_packet(काष्ठा sk_buff *skb,
-					  काष्ठा net_device *dev)
-अणु
-        काष्ठा cops_local *lp = netdev_priv(dev);
-        पूर्णांक ioaddr = dev->base_addr;
-        अचिन्हित दीर्घ flags;
+static netdev_tx_t cops_send_packet(struct sk_buff *skb,
+					  struct net_device *dev)
+{
+        struct cops_local *lp = netdev_priv(dev);
+        int ioaddr = dev->base_addr;
+        unsigned long flags;
 
         /*
-         * Block a समयr-based transmit from overlapping. 
+         * Block a timer-based transmit from overlapping. 
 	 */
 	 
-	netअगर_stop_queue(dev);
+	netif_stop_queue(dev);
 
 	spin_lock_irqsave(&lp->lock, flags);
-	अगर(lp->board == DAYNA)	 /* Wait क्रम adapter transmit buffer. */
-		जबतक((inb(ioaddr+DAYNA_CARD_STATUS)&DAYNA_TX_READY)==0)
+	if(lp->board == DAYNA)	 /* Wait for adapter transmit buffer. */
+		while((inb(ioaddr+DAYNA_CARD_STATUS)&DAYNA_TX_READY)==0)
 			cpu_relax();
-	अगर(lp->board == TANGENT) /* Wait क्रम adapter transmit buffer. */
-		जबतक((inb(ioaddr+TANG_CARD_STATUS)&TANG_TX_READY)==0)
+	if(lp->board == TANGENT) /* Wait for adapter transmit buffer. */
+		while((inb(ioaddr+TANG_CARD_STATUS)&TANG_TX_READY)==0)
 			cpu_relax();
 
 	/* Output IO length. */
@@ -897,46 +896,46 @@ err_out:
 	/* Output IO code. */
 	outb(LAP_WRITE, ioaddr);
 
-	अगर(lp->board == DAYNA)	/* Check the transmit buffer again. */
-        	जबतक((inb(ioaddr+DAYNA_CARD_STATUS)&DAYNA_TX_READY)==0);
+	if(lp->board == DAYNA)	/* Check the transmit buffer again. */
+        	while((inb(ioaddr+DAYNA_CARD_STATUS)&DAYNA_TX_READY)==0);
 
 	outsb(ioaddr, skb->data, skb->len);	/* Send out the data. */
 
-	अगर(lp->board==DAYNA)	/* Dayna requires you kick the card */
+	if(lp->board==DAYNA)	/* Dayna requires you kick the card */
 		outb(1, ioaddr+DAYNA_INT_CARD);
 
-	spin_unlock_irqrestore(&lp->lock, flags);	/* Restore पूर्णांकerrupts. */
+	spin_unlock_irqrestore(&lp->lock, flags);	/* Restore interrupts. */
 
 	/* Done sending packet, update counters and cleanup. */
 	dev->stats.tx_packets++;
 	dev->stats.tx_bytes += skb->len;
-	dev_kमुक्त_skb (skb);
-	वापस NETDEV_TX_OK;
-पूर्ण
+	dev_kfree_skb (skb);
+	return NETDEV_TX_OK;
+}
 
 /*
  *	Dummy function to keep the Appletalk layer happy.
  */
  
-अटल व्योम set_multicast_list(काष्ठा net_device *dev)
-अणु
-        अगर(cops_debug >= 3)
-		prपूर्णांकk("%s: set_multicast_list executed\n", dev->name);
-पूर्ण
+static void set_multicast_list(struct net_device *dev)
+{
+        if(cops_debug >= 3)
+		printk("%s: set_multicast_list executed\n", dev->name);
+}
 
 /*
- *      System ioctls क्रम the COPS LocalTalk card.
+ *      System ioctls for the COPS LocalTalk card.
  */
  
-अटल पूर्णांक cops_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *अगरr, पूर्णांक cmd)
-अणु
-        काष्ठा cops_local *lp = netdev_priv(dev);
-        काष्ठा sockaddr_at *sa = (काष्ठा sockaddr_at *)&अगरr->अगरr_addr;
-        काष्ठा atalk_addr *aa = &lp->node_addr;
+static int cops_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
+{
+        struct cops_local *lp = netdev_priv(dev);
+        struct sockaddr_at *sa = (struct sockaddr_at *)&ifr->ifr_addr;
+        struct atalk_addr *aa = &lp->node_addr;
 
-        चयन(cmd)
-        अणु
-                हाल SIOCSIFADDR:
+        switch(cmd)
+        {
+                case SIOCSIFADDR:
 			/* Get and set the nodeid and network # atalkd wants. */
 			cops_nodeid(dev, sa->sat_addr.s_node);
 			aa->s_net               = sa->sat_addr.s_net;
@@ -948,59 +947,59 @@ err_out:
 			/* Set hardware address. */
                         dev->dev_addr[0]        = aa->s_node;
                         dev->addr_len           = 1;
-                        वापस 0;
+                        return 0;
 
-                हाल SIOCGIFADDR:
+                case SIOCGIFADDR:
                         sa->sat_addr.s_net      = aa->s_net;
                         sa->sat_addr.s_node     = aa->s_node;
-                        वापस 0;
+                        return 0;
 
-                शेष:
-                        वापस -EOPNOTSUPP;
-        पूर्ण
-पूर्ण
+                default:
+                        return -EOPNOTSUPP;
+        }
+}
 
 /*
- *	The inverse routine to cops_खोलो().
+ *	The inverse routine to cops_open().
  */
  
-अटल पूर्णांक cops_बंद(काष्ठा net_device *dev)
-अणु
-	काष्ठा cops_local *lp = netdev_priv(dev);
+static int cops_close(struct net_device *dev)
+{
+	struct cops_local *lp = netdev_priv(dev);
 
-	/* If we were running polled, yank the समयr.
+	/* If we were running polled, yank the timer.
 	 */
-	अगर(lp->board==TANGENT && dev->irq==0)
-		del_समयr(&cops_समयr);
+	if(lp->board==TANGENT && dev->irq==0)
+		del_timer(&cops_timer);
 
-	netअगर_stop_queue(dev);
-        वापस 0;
-पूर्ण
+	netif_stop_queue(dev);
+        return 0;
+}
 
 
-#अगर_घोषित MODULE
-अटल काष्ठा net_device *cops_dev;
+#ifdef MODULE
+static struct net_device *cops_dev;
 
 MODULE_LICENSE("GPL");
-module_param_hw(io, पूर्णांक, ioport, 0);
-module_param_hw(irq, पूर्णांक, irq, 0);
-module_param_hw(board_type, पूर्णांक, other, 0);
+module_param_hw(io, int, ioport, 0);
+module_param_hw(irq, int, irq, 0);
+module_param_hw(board_type, int, other, 0);
 
-अटल पूर्णांक __init cops_module_init(व्योम)
-अणु
-	अगर (io == 0)
-		prपूर्णांकk(KERN_WARNING "%s: You shouldn't autoprobe with insmod\n",
+static int __init cops_module_init(void)
+{
+	if (io == 0)
+		printk(KERN_WARNING "%s: You shouldn't autoprobe with insmod\n",
 			cardname);
 	cops_dev = cops_probe(-1);
-	वापस PTR_ERR_OR_ZERO(cops_dev);
-पूर्ण
+	return PTR_ERR_OR_ZERO(cops_dev);
+}
 
-अटल व्योम __निकास cops_module_निकास(व्योम)
-अणु
-	unरेजिस्टर_netdev(cops_dev);
+static void __exit cops_module_exit(void)
+{
+	unregister_netdev(cops_dev);
 	cleanup_card(cops_dev);
-	मुक्त_netdev(cops_dev);
-पूर्ण
+	free_netdev(cops_dev);
+}
 module_init(cops_module_init);
-module_निकास(cops_module_निकास);
-#पूर्ण_अगर /* MODULE */
+module_exit(cops_module_exit);
+#endif /* MODULE */

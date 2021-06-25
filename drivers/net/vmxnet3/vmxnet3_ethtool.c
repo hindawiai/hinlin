@@ -1,139 +1,138 @@
-<शैली गुरु>
 /*
- * Linux driver क्रम VMware's vmxnet3 ethernet NIC.
+ * Linux driver for VMware's vmxnet3 ethernet NIC.
  *
  * Copyright (C) 2008-2020, VMware, Inc. All Rights Reserved.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; version 2 of the License and no later version.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, GOOD TITLE or
- * NON INFRINGEMENT.  See the GNU General Public License क्रम more
+ * NON INFRINGEMENT.  See the GNU General Public License for more
  * details.
  *
  * You should have received a copy of the GNU General Public License
- * aदीर्घ with this program; अगर not, ग_लिखो to the Free Software
- * Foundation, Inc., 51 Franklin St, Fअगरth Floor, Boston, MA 02110-1301 USA.
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
  * The full GNU General Public License is included in this distribution in
  * the file called "COPYING".
  *
- * Maपूर्णांकained by: pv-drivers@vmware.com
+ * Maintained by: pv-drivers@vmware.com
  *
  */
 
 
-#समावेश "vmxnet3_int.h"
+#include "vmxnet3_int.h"
 
-काष्ठा vmxnet3_stat_desc अणु
-	अक्षर desc[ETH_GSTRING_LEN];
-	पूर्णांक  offset;
-पूर्ण;
+struct vmxnet3_stat_desc {
+	char desc[ETH_GSTRING_LEN];
+	int  offset;
+};
 
 
-/* per tq stats मुख्यtained by the device */
-अटल स्थिर काष्ठा vmxnet3_stat_desc
-vmxnet3_tq_dev_stats[] = अणु
+/* per tq stats maintained by the device */
+static const struct vmxnet3_stat_desc
+vmxnet3_tq_dev_stats[] = {
 	/* description,         offset */
-	अणु "Tx Queue#",        0 पूर्ण,
-	अणु "  TSO pkts tx",	दुरत्व(काष्ठा UPT1_TxStats, TSOPktsTxOK) पूर्ण,
-	अणु "  TSO bytes tx",	दुरत्व(काष्ठा UPT1_TxStats, TSOBytesTxOK) पूर्ण,
-	अणु "  ucast pkts tx",	दुरत्व(काष्ठा UPT1_TxStats, ucastPktsTxOK) पूर्ण,
-	अणु "  ucast bytes tx",	दुरत्व(काष्ठा UPT1_TxStats, ucastBytesTxOK) पूर्ण,
-	अणु "  mcast pkts tx",	दुरत्व(काष्ठा UPT1_TxStats, mcastPktsTxOK) पूर्ण,
-	अणु "  mcast bytes tx",	दुरत्व(काष्ठा UPT1_TxStats, mcastBytesTxOK) पूर्ण,
-	अणु "  bcast pkts tx",	दुरत्व(काष्ठा UPT1_TxStats, bcastPktsTxOK) पूर्ण,
-	अणु "  bcast bytes tx",	दुरत्व(काष्ठा UPT1_TxStats, bcastBytesTxOK) पूर्ण,
-	अणु "  pkts tx err",	दुरत्व(काष्ठा UPT1_TxStats, pktsTxError) पूर्ण,
-	अणु "  pkts tx discard",	दुरत्व(काष्ठा UPT1_TxStats, pktsTxDiscard) पूर्ण,
-पूर्ण;
+	{ "Tx Queue#",        0 },
+	{ "  TSO pkts tx",	offsetof(struct UPT1_TxStats, TSOPktsTxOK) },
+	{ "  TSO bytes tx",	offsetof(struct UPT1_TxStats, TSOBytesTxOK) },
+	{ "  ucast pkts tx",	offsetof(struct UPT1_TxStats, ucastPktsTxOK) },
+	{ "  ucast bytes tx",	offsetof(struct UPT1_TxStats, ucastBytesTxOK) },
+	{ "  mcast pkts tx",	offsetof(struct UPT1_TxStats, mcastPktsTxOK) },
+	{ "  mcast bytes tx",	offsetof(struct UPT1_TxStats, mcastBytesTxOK) },
+	{ "  bcast pkts tx",	offsetof(struct UPT1_TxStats, bcastPktsTxOK) },
+	{ "  bcast bytes tx",	offsetof(struct UPT1_TxStats, bcastBytesTxOK) },
+	{ "  pkts tx err",	offsetof(struct UPT1_TxStats, pktsTxError) },
+	{ "  pkts tx discard",	offsetof(struct UPT1_TxStats, pktsTxDiscard) },
+};
 
-/* per tq stats मुख्यtained by the driver */
-अटल स्थिर काष्ठा vmxnet3_stat_desc
-vmxnet3_tq_driver_stats[] = अणु
+/* per tq stats maintained by the driver */
+static const struct vmxnet3_stat_desc
+vmxnet3_tq_driver_stats[] = {
 	/* description,         offset */
-	अणु"  drv dropped tx total",	दुरत्व(काष्ठा vmxnet3_tq_driver_stats,
-						 drop_total) पूर्ण,
-	अणु "     too many frags", दुरत्व(काष्ठा vmxnet3_tq_driver_stats,
-					  drop_too_many_frags) पूर्ण,
-	अणु "     giant hdr",	दुरत्व(काष्ठा vmxnet3_tq_driver_stats,
-					 drop_oversized_hdr) पूर्ण,
-	अणु "     hdr err",	दुरत्व(काष्ठा vmxnet3_tq_driver_stats,
-					 drop_hdr_inspect_err) पूर्ण,
-	अणु "     tso",		दुरत्व(काष्ठा vmxnet3_tq_driver_stats,
-					 drop_tso) पूर्ण,
-	अणु "  ring full",	दुरत्व(काष्ठा vmxnet3_tq_driver_stats,
-					 tx_ring_full) पूर्ण,
-	अणु "  pkts linearized",	दुरत्व(काष्ठा vmxnet3_tq_driver_stats,
-					 linearized) पूर्ण,
-	अणु "  hdr cloned",	दुरत्व(काष्ठा vmxnet3_tq_driver_stats,
-					 copy_skb_header) पूर्ण,
-	अणु "  giant hdr",	दुरत्व(काष्ठा vmxnet3_tq_driver_stats,
-					 oversized_hdr) पूर्ण,
-पूर्ण;
+	{"  drv dropped tx total",	offsetof(struct vmxnet3_tq_driver_stats,
+						 drop_total) },
+	{ "     too many frags", offsetof(struct vmxnet3_tq_driver_stats,
+					  drop_too_many_frags) },
+	{ "     giant hdr",	offsetof(struct vmxnet3_tq_driver_stats,
+					 drop_oversized_hdr) },
+	{ "     hdr err",	offsetof(struct vmxnet3_tq_driver_stats,
+					 drop_hdr_inspect_err) },
+	{ "     tso",		offsetof(struct vmxnet3_tq_driver_stats,
+					 drop_tso) },
+	{ "  ring full",	offsetof(struct vmxnet3_tq_driver_stats,
+					 tx_ring_full) },
+	{ "  pkts linearized",	offsetof(struct vmxnet3_tq_driver_stats,
+					 linearized) },
+	{ "  hdr cloned",	offsetof(struct vmxnet3_tq_driver_stats,
+					 copy_skb_header) },
+	{ "  giant hdr",	offsetof(struct vmxnet3_tq_driver_stats,
+					 oversized_hdr) },
+};
 
-/* per rq stats मुख्यtained by the device */
-अटल स्थिर काष्ठा vmxnet3_stat_desc
-vmxnet3_rq_dev_stats[] = अणु
-	अणु "Rx Queue#",        0 पूर्ण,
-	अणु "  LRO pkts rx",	दुरत्व(काष्ठा UPT1_RxStats, LROPktsRxOK) पूर्ण,
-	अणु "  LRO byte rx",	दुरत्व(काष्ठा UPT1_RxStats, LROBytesRxOK) पूर्ण,
-	अणु "  ucast pkts rx",	दुरत्व(काष्ठा UPT1_RxStats, ucastPktsRxOK) पूर्ण,
-	अणु "  ucast bytes rx",	दुरत्व(काष्ठा UPT1_RxStats, ucastBytesRxOK) पूर्ण,
-	अणु "  mcast pkts rx",	दुरत्व(काष्ठा UPT1_RxStats, mcastPktsRxOK) पूर्ण,
-	अणु "  mcast bytes rx",	दुरत्व(काष्ठा UPT1_RxStats, mcastBytesRxOK) पूर्ण,
-	अणु "  bcast pkts rx",	दुरत्व(काष्ठा UPT1_RxStats, bcastPktsRxOK) पूर्ण,
-	अणु "  bcast bytes rx",	दुरत्व(काष्ठा UPT1_RxStats, bcastBytesRxOK) पूर्ण,
-	अणु "  pkts rx OOB",	दुरत्व(काष्ठा UPT1_RxStats, pktsRxOutOfBuf) पूर्ण,
-	अणु "  pkts rx err",	दुरत्व(काष्ठा UPT1_RxStats, pktsRxError) पूर्ण,
-पूर्ण;
+/* per rq stats maintained by the device */
+static const struct vmxnet3_stat_desc
+vmxnet3_rq_dev_stats[] = {
+	{ "Rx Queue#",        0 },
+	{ "  LRO pkts rx",	offsetof(struct UPT1_RxStats, LROPktsRxOK) },
+	{ "  LRO byte rx",	offsetof(struct UPT1_RxStats, LROBytesRxOK) },
+	{ "  ucast pkts rx",	offsetof(struct UPT1_RxStats, ucastPktsRxOK) },
+	{ "  ucast bytes rx",	offsetof(struct UPT1_RxStats, ucastBytesRxOK) },
+	{ "  mcast pkts rx",	offsetof(struct UPT1_RxStats, mcastPktsRxOK) },
+	{ "  mcast bytes rx",	offsetof(struct UPT1_RxStats, mcastBytesRxOK) },
+	{ "  bcast pkts rx",	offsetof(struct UPT1_RxStats, bcastPktsRxOK) },
+	{ "  bcast bytes rx",	offsetof(struct UPT1_RxStats, bcastBytesRxOK) },
+	{ "  pkts rx OOB",	offsetof(struct UPT1_RxStats, pktsRxOutOfBuf) },
+	{ "  pkts rx err",	offsetof(struct UPT1_RxStats, pktsRxError) },
+};
 
-/* per rq stats मुख्यtained by the driver */
-अटल स्थिर काष्ठा vmxnet3_stat_desc
-vmxnet3_rq_driver_stats[] = अणु
+/* per rq stats maintained by the driver */
+static const struct vmxnet3_stat_desc
+vmxnet3_rq_driver_stats[] = {
 	/* description,         offset */
-	अणु "  drv dropped rx total", दुरत्व(काष्ठा vmxnet3_rq_driver_stats,
-					     drop_total) पूर्ण,
-	अणु "     err",		दुरत्व(काष्ठा vmxnet3_rq_driver_stats,
-					 drop_err) पूर्ण,
-	अणु "     fcs",		दुरत्व(काष्ठा vmxnet3_rq_driver_stats,
-					 drop_fcs) पूर्ण,
-	अणु "  rx buf alloc fail", दुरत्व(काष्ठा vmxnet3_rq_driver_stats,
-					  rx_buf_alloc_failure) पूर्ण,
-पूर्ण;
+	{ "  drv dropped rx total", offsetof(struct vmxnet3_rq_driver_stats,
+					     drop_total) },
+	{ "     err",		offsetof(struct vmxnet3_rq_driver_stats,
+					 drop_err) },
+	{ "     fcs",		offsetof(struct vmxnet3_rq_driver_stats,
+					 drop_fcs) },
+	{ "  rx buf alloc fail", offsetof(struct vmxnet3_rq_driver_stats,
+					  rx_buf_alloc_failure) },
+};
 
-/* global stats मुख्यtained by the driver */
-अटल स्थिर काष्ठा vmxnet3_stat_desc
-vmxnet3_global_stats[] = अणु
+/* global stats maintained by the driver */
+static const struct vmxnet3_stat_desc
+vmxnet3_global_stats[] = {
 	/* description,         offset */
-	अणु "tx timeout count",	दुरत्व(काष्ठा vmxnet3_adapter,
-					 tx_समयout_count) पूर्ण
-पूर्ण;
+	{ "tx timeout count",	offsetof(struct vmxnet3_adapter,
+					 tx_timeout_count) }
+};
 
 
-व्योम
-vmxnet3_get_stats64(काष्ठा net_device *netdev,
-		   काष्ठा rtnl_link_stats64 *stats)
-अणु
-	काष्ठा vmxnet3_adapter *adapter;
-	काष्ठा vmxnet3_tq_driver_stats *drvTxStats;
-	काष्ठा vmxnet3_rq_driver_stats *drvRxStats;
-	काष्ठा UPT1_TxStats *devTxStats;
-	काष्ठा UPT1_RxStats *devRxStats;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक i;
+void
+vmxnet3_get_stats64(struct net_device *netdev,
+		   struct rtnl_link_stats64 *stats)
+{
+	struct vmxnet3_adapter *adapter;
+	struct vmxnet3_tq_driver_stats *drvTxStats;
+	struct vmxnet3_rq_driver_stats *drvRxStats;
+	struct UPT1_TxStats *devTxStats;
+	struct UPT1_RxStats *devRxStats;
+	unsigned long flags;
+	int i;
 
 	adapter = netdev_priv(netdev);
 
-	/* Collect the dev stats पूर्णांकo the shared area */
+	/* Collect the dev stats into the shared area */
 	spin_lock_irqsave(&adapter->cmd_lock, flags);
 	VMXNET3_WRITE_BAR1_REG(adapter, VMXNET3_REG_CMD, VMXNET3_CMD_GET_STATS);
 	spin_unlock_irqrestore(&adapter->cmd_lock, flags);
 
-	क्रम (i = 0; i < adapter->num_tx_queues; i++) अणु
+	for (i = 0; i < adapter->num_tx_queues; i++) {
 		devTxStats = &adapter->tqd_start[i].stats;
 		drvTxStats = &adapter->tx_queue[i].stats;
 		stats->tx_packets += devTxStats->ucastPktsTxOK +
@@ -144,9 +143,9 @@ vmxnet3_get_stats64(काष्ठा net_device *netdev,
 				   devTxStats->bcastBytesTxOK;
 		stats->tx_errors += devTxStats->pktsTxError;
 		stats->tx_dropped += drvTxStats->drop_total;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < adapter->num_rx_queues; i++) अणु
+	for (i = 0; i < adapter->num_rx_queues; i++) {
 		devRxStats = &adapter->rqd_start[i].stats;
 		drvRxStats = &adapter->rx_queue[i].stats;
 		stats->rx_packets += devRxStats->ucastPktsRxOK +
@@ -160,270 +159,270 @@ vmxnet3_get_stats64(काष्ठा net_device *netdev,
 		stats->rx_errors += devRxStats->pktsRxError;
 		stats->rx_dropped += drvRxStats->drop_total;
 		stats->multicast +=  devRxStats->mcastPktsRxOK;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक
-vmxnet3_get_sset_count(काष्ठा net_device *netdev, पूर्णांक sset)
-अणु
-	काष्ठा vmxnet3_adapter *adapter = netdev_priv(netdev);
-	चयन (sset) अणु
-	हाल ETH_SS_STATS:
-		वापस (ARRAY_SIZE(vmxnet3_tq_dev_stats) +
+static int
+vmxnet3_get_sset_count(struct net_device *netdev, int sset)
+{
+	struct vmxnet3_adapter *adapter = netdev_priv(netdev);
+	switch (sset) {
+	case ETH_SS_STATS:
+		return (ARRAY_SIZE(vmxnet3_tq_dev_stats) +
 			ARRAY_SIZE(vmxnet3_tq_driver_stats)) *
 		       adapter->num_tx_queues +
 		       (ARRAY_SIZE(vmxnet3_rq_dev_stats) +
 			ARRAY_SIZE(vmxnet3_rq_driver_stats)) *
 		       adapter->num_rx_queues +
 			ARRAY_SIZE(vmxnet3_global_stats);
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+	default:
+		return -EOPNOTSUPP;
+	}
+}
 
 
 /* This is a version 2 of the vmxnet3 ethtool_regs which goes hand in hand with
- * the version 2 of the vmxnet3 support क्रम ethtool(8) --रेजिस्टर-dump.
- * Thereक्रमe, अगर any रेजिस्टरs are added, हटाओd or modअगरied, then a version
- * bump and a corresponding change in the vmxnet3 support क्रम ethtool(8)
- * --रेजिस्टर-dump would be required.
+ * the version 2 of the vmxnet3 support for ethtool(8) --register-dump.
+ * Therefore, if any registers are added, removed or modified, then a version
+ * bump and a corresponding change in the vmxnet3 support for ethtool(8)
+ * --register-dump would be required.
  */
-अटल पूर्णांक
-vmxnet3_get_regs_len(काष्ठा net_device *netdev)
-अणु
-	काष्ठा vmxnet3_adapter *adapter = netdev_priv(netdev);
+static int
+vmxnet3_get_regs_len(struct net_device *netdev)
+{
+	struct vmxnet3_adapter *adapter = netdev_priv(netdev);
 
-	वापस ((9 /* BAR1 रेजिस्टरs */ +
-		(1 + adapter->पूर्णांकr.num_पूर्णांकrs) +
-		(1 + adapter->num_tx_queues * 17 /* Tx queue रेजिस्टरs */) +
-		(1 + adapter->num_rx_queues * 23 /* Rx queue रेजिस्टरs */)) *
-		माप(u32));
-पूर्ण
+	return ((9 /* BAR1 registers */ +
+		(1 + adapter->intr.num_intrs) +
+		(1 + adapter->num_tx_queues * 17 /* Tx queue registers */) +
+		(1 + adapter->num_rx_queues * 23 /* Rx queue registers */)) *
+		sizeof(u32));
+}
 
 
-अटल व्योम
-vmxnet3_get_drvinfo(काष्ठा net_device *netdev, काष्ठा ethtool_drvinfo *drvinfo)
-अणु
-	काष्ठा vmxnet3_adapter *adapter = netdev_priv(netdev);
+static void
+vmxnet3_get_drvinfo(struct net_device *netdev, struct ethtool_drvinfo *drvinfo)
+{
+	struct vmxnet3_adapter *adapter = netdev_priv(netdev);
 
-	strlcpy(drvinfo->driver, vmxnet3_driver_name, माप(drvinfo->driver));
+	strlcpy(drvinfo->driver, vmxnet3_driver_name, sizeof(drvinfo->driver));
 
 	strlcpy(drvinfo->version, VMXNET3_DRIVER_VERSION_REPORT,
-		माप(drvinfo->version));
+		sizeof(drvinfo->version));
 
 	strlcpy(drvinfo->bus_info, pci_name(adapter->pdev),
-		माप(drvinfo->bus_info));
-पूर्ण
+		sizeof(drvinfo->bus_info));
+}
 
 
-अटल व्योम
-vmxnet3_get_strings(काष्ठा net_device *netdev, u32 stringset, u8 *buf)
-अणु
-	काष्ठा vmxnet3_adapter *adapter = netdev_priv(netdev);
-	पूर्णांक i, j;
+static void
+vmxnet3_get_strings(struct net_device *netdev, u32 stringset, u8 *buf)
+{
+	struct vmxnet3_adapter *adapter = netdev_priv(netdev);
+	int i, j;
 
-	अगर (stringset != ETH_SS_STATS)
-		वापस;
+	if (stringset != ETH_SS_STATS)
+		return;
 
-	क्रम (j = 0; j < adapter->num_tx_queues; j++) अणु
-		क्रम (i = 0; i < ARRAY_SIZE(vmxnet3_tq_dev_stats); i++)
-			ethtool_प्र_लिखो(&buf, vmxnet3_tq_dev_stats[i].desc);
-		क्रम (i = 0; i < ARRAY_SIZE(vmxnet3_tq_driver_stats); i++)
-			ethtool_प्र_लिखो(&buf, vmxnet3_tq_driver_stats[i].desc);
-	पूर्ण
+	for (j = 0; j < adapter->num_tx_queues; j++) {
+		for (i = 0; i < ARRAY_SIZE(vmxnet3_tq_dev_stats); i++)
+			ethtool_sprintf(&buf, vmxnet3_tq_dev_stats[i].desc);
+		for (i = 0; i < ARRAY_SIZE(vmxnet3_tq_driver_stats); i++)
+			ethtool_sprintf(&buf, vmxnet3_tq_driver_stats[i].desc);
+	}
 
-	क्रम (j = 0; j < adapter->num_rx_queues; j++) अणु
-		क्रम (i = 0; i < ARRAY_SIZE(vmxnet3_rq_dev_stats); i++)
-			ethtool_प्र_लिखो(&buf, vmxnet3_rq_dev_stats[i].desc);
-		क्रम (i = 0; i < ARRAY_SIZE(vmxnet3_rq_driver_stats); i++)
-			ethtool_प्र_लिखो(&buf, vmxnet3_rq_driver_stats[i].desc);
-	पूर्ण
+	for (j = 0; j < adapter->num_rx_queues; j++) {
+		for (i = 0; i < ARRAY_SIZE(vmxnet3_rq_dev_stats); i++)
+			ethtool_sprintf(&buf, vmxnet3_rq_dev_stats[i].desc);
+		for (i = 0; i < ARRAY_SIZE(vmxnet3_rq_driver_stats); i++)
+			ethtool_sprintf(&buf, vmxnet3_rq_driver_stats[i].desc);
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(vmxnet3_global_stats); i++)
-		ethtool_प्र_लिखो(&buf, vmxnet3_global_stats[i].desc);
-पूर्ण
+	for (i = 0; i < ARRAY_SIZE(vmxnet3_global_stats); i++)
+		ethtool_sprintf(&buf, vmxnet3_global_stats[i].desc);
+}
 
-netdev_features_t vmxnet3_fix_features(काष्ठा net_device *netdev,
+netdev_features_t vmxnet3_fix_features(struct net_device *netdev,
 				       netdev_features_t features)
-अणु
+{
 	/* If Rx checksum is disabled, then LRO should also be disabled */
-	अगर (!(features & NETIF_F_RXCSUM))
+	if (!(features & NETIF_F_RXCSUM))
 		features &= ~NETIF_F_LRO;
 
-	वापस features;
-पूर्ण
+	return features;
+}
 
-netdev_features_t vmxnet3_features_check(काष्ठा sk_buff *skb,
-					 काष्ठा net_device *netdev,
+netdev_features_t vmxnet3_features_check(struct sk_buff *skb,
+					 struct net_device *netdev,
 					 netdev_features_t features)
-अणु
-	काष्ठा vmxnet3_adapter *adapter = netdev_priv(netdev);
+{
+	struct vmxnet3_adapter *adapter = netdev_priv(netdev);
 
-	/* Validate अगर the tunneled packet is being offloaded by the device */
-	अगर (VMXNET3_VERSION_GE_4(adapter) &&
-	    skb->encapsulation && skb->ip_summed == CHECKSUM_PARTIAL) अणु
+	/* Validate if the tunneled packet is being offloaded by the device */
+	if (VMXNET3_VERSION_GE_4(adapter) &&
+	    skb->encapsulation && skb->ip_summed == CHECKSUM_PARTIAL) {
 		u8 l4_proto = 0;
 
-		चयन (vlan_get_protocol(skb)) अणु
-		हाल htons(ETH_P_IP):
+		switch (vlan_get_protocol(skb)) {
+		case htons(ETH_P_IP):
 			l4_proto = ip_hdr(skb)->protocol;
-			अवरोध;
-		हाल htons(ETH_P_IPV6):
+			break;
+		case htons(ETH_P_IPV6):
 			l4_proto = ipv6_hdr(skb)->nexthdr;
-			अवरोध;
-		शेष:
-			वापस features & ~(NETIF_F_CSUM_MASK | NETIF_F_GSO_MASK);
-		पूर्ण
+			break;
+		default:
+			return features & ~(NETIF_F_CSUM_MASK | NETIF_F_GSO_MASK);
+		}
 
-		अगर (l4_proto != IPPROTO_UDP)
-			वापस features & ~(NETIF_F_CSUM_MASK | NETIF_F_GSO_MASK);
-	पूर्ण
-	वापस features;
-पूर्ण
+		if (l4_proto != IPPROTO_UDP)
+			return features & ~(NETIF_F_CSUM_MASK | NETIF_F_GSO_MASK);
+	}
+	return features;
+}
 
-अटल व्योम vmxnet3_enable_encap_offloads(काष्ठा net_device *netdev)
-अणु
-	काष्ठा vmxnet3_adapter *adapter = netdev_priv(netdev);
+static void vmxnet3_enable_encap_offloads(struct net_device *netdev)
+{
+	struct vmxnet3_adapter *adapter = netdev_priv(netdev);
 
-	अगर (VMXNET3_VERSION_GE_4(adapter)) अणु
+	if (VMXNET3_VERSION_GE_4(adapter)) {
 		netdev->hw_enc_features |= NETIF_F_SG | NETIF_F_RXCSUM |
 			NETIF_F_HW_CSUM | NETIF_F_HW_VLAN_CTAG_TX |
 			NETIF_F_HW_VLAN_CTAG_RX | NETIF_F_TSO | NETIF_F_TSO6 |
 			NETIF_F_LRO | NETIF_F_GSO_UDP_TUNNEL |
 			NETIF_F_GSO_UDP_TUNNEL_CSUM;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम vmxnet3_disable_encap_offloads(काष्ठा net_device *netdev)
-अणु
-	काष्ठा vmxnet3_adapter *adapter = netdev_priv(netdev);
+static void vmxnet3_disable_encap_offloads(struct net_device *netdev)
+{
+	struct vmxnet3_adapter *adapter = netdev_priv(netdev);
 
-	अगर (VMXNET3_VERSION_GE_4(adapter)) अणु
+	if (VMXNET3_VERSION_GE_4(adapter)) {
 		netdev->hw_enc_features &= ~(NETIF_F_SG | NETIF_F_RXCSUM |
 			NETIF_F_HW_CSUM | NETIF_F_HW_VLAN_CTAG_TX |
 			NETIF_F_HW_VLAN_CTAG_RX | NETIF_F_TSO | NETIF_F_TSO6 |
 			NETIF_F_LRO | NETIF_F_GSO_UDP_TUNNEL |
 			NETIF_F_GSO_UDP_TUNNEL_CSUM);
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक vmxnet3_set_features(काष्ठा net_device *netdev, netdev_features_t features)
-अणु
-	काष्ठा vmxnet3_adapter *adapter = netdev_priv(netdev);
-	अचिन्हित दीर्घ flags;
+int vmxnet3_set_features(struct net_device *netdev, netdev_features_t features)
+{
+	struct vmxnet3_adapter *adapter = netdev_priv(netdev);
+	unsigned long flags;
 	netdev_features_t changed = features ^ netdev->features;
 	netdev_features_t tun_offload_mask = NETIF_F_GSO_UDP_TUNNEL |
 					     NETIF_F_GSO_UDP_TUNNEL_CSUM;
 	u8 udp_tun_enabled = (netdev->features & tun_offload_mask) != 0;
 
-	अगर (changed & (NETIF_F_RXCSUM | NETIF_F_LRO |
-		       NETIF_F_HW_VLAN_CTAG_RX | tun_offload_mask)) अणु
-		अगर (features & NETIF_F_RXCSUM)
+	if (changed & (NETIF_F_RXCSUM | NETIF_F_LRO |
+		       NETIF_F_HW_VLAN_CTAG_RX | tun_offload_mask)) {
+		if (features & NETIF_F_RXCSUM)
 			adapter->shared->devRead.misc.uptFeatures |=
 			UPT1_F_RXCSUM;
-		अन्यथा
+		else
 			adapter->shared->devRead.misc.uptFeatures &=
 			~UPT1_F_RXCSUM;
 
 		/* update hardware LRO capability accordingly */
-		अगर (features & NETIF_F_LRO)
+		if (features & NETIF_F_LRO)
 			adapter->shared->devRead.misc.uptFeatures |=
 							UPT1_F_LRO;
-		अन्यथा
+		else
 			adapter->shared->devRead.misc.uptFeatures &=
 							~UPT1_F_LRO;
 
-		अगर (features & NETIF_F_HW_VLAN_CTAG_RX)
+		if (features & NETIF_F_HW_VLAN_CTAG_RX)
 			adapter->shared->devRead.misc.uptFeatures |=
 			UPT1_F_RXVLAN;
-		अन्यथा
+		else
 			adapter->shared->devRead.misc.uptFeatures &=
 			~UPT1_F_RXVLAN;
 
-		अगर ((features & tun_offload_mask) != 0 && !udp_tun_enabled) अणु
+		if ((features & tun_offload_mask) != 0 && !udp_tun_enabled) {
 			vmxnet3_enable_encap_offloads(netdev);
 			adapter->shared->devRead.misc.uptFeatures |=
 			UPT1_F_RXINNEROFLD;
-		पूर्ण अन्यथा अगर ((features & tun_offload_mask) == 0 &&
-			   udp_tun_enabled) अणु
+		} else if ((features & tun_offload_mask) == 0 &&
+			   udp_tun_enabled) {
 			vmxnet3_disable_encap_offloads(netdev);
 			adapter->shared->devRead.misc.uptFeatures &=
 			~UPT1_F_RXINNEROFLD;
-		पूर्ण
+		}
 
 		spin_lock_irqsave(&adapter->cmd_lock, flags);
 		VMXNET3_WRITE_BAR1_REG(adapter, VMXNET3_REG_CMD,
 				       VMXNET3_CMD_UPDATE_FEATURE);
 		spin_unlock_irqrestore(&adapter->cmd_lock, flags);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल व्योम
-vmxnet3_get_ethtool_stats(काष्ठा net_device *netdev,
-			  काष्ठा ethtool_stats *stats, u64  *buf)
-अणु
-	काष्ठा vmxnet3_adapter *adapter = netdev_priv(netdev);
-	अचिन्हित दीर्घ flags;
+static void
+vmxnet3_get_ethtool_stats(struct net_device *netdev,
+			  struct ethtool_stats *stats, u64  *buf)
+{
+	struct vmxnet3_adapter *adapter = netdev_priv(netdev);
+	unsigned long flags;
 	u8 *base;
-	पूर्णांक i;
-	पूर्णांक j = 0;
+	int i;
+	int j = 0;
 
 	spin_lock_irqsave(&adapter->cmd_lock, flags);
 	VMXNET3_WRITE_BAR1_REG(adapter, VMXNET3_REG_CMD, VMXNET3_CMD_GET_STATS);
 	spin_unlock_irqrestore(&adapter->cmd_lock, flags);
 
-	/* this करोes assume each counter is 64-bit wide */
-	क्रम (j = 0; j < adapter->num_tx_queues; j++) अणु
+	/* this does assume each counter is 64-bit wide */
+	for (j = 0; j < adapter->num_tx_queues; j++) {
 		base = (u8 *)&adapter->tqd_start[j].stats;
 		*buf++ = (u64)j;
-		क्रम (i = 1; i < ARRAY_SIZE(vmxnet3_tq_dev_stats); i++)
+		for (i = 1; i < ARRAY_SIZE(vmxnet3_tq_dev_stats); i++)
 			*buf++ = *(u64 *)(base +
 					  vmxnet3_tq_dev_stats[i].offset);
 
 		base = (u8 *)&adapter->tx_queue[j].stats;
-		क्रम (i = 0; i < ARRAY_SIZE(vmxnet3_tq_driver_stats); i++)
+		for (i = 0; i < ARRAY_SIZE(vmxnet3_tq_driver_stats); i++)
 			*buf++ = *(u64 *)(base +
 					  vmxnet3_tq_driver_stats[i].offset);
-	पूर्ण
+	}
 
-	क्रम (j = 0; j < adapter->num_rx_queues; j++) अणु
+	for (j = 0; j < adapter->num_rx_queues; j++) {
 		base = (u8 *)&adapter->rqd_start[j].stats;
 		*buf++ = (u64) j;
-		क्रम (i = 1; i < ARRAY_SIZE(vmxnet3_rq_dev_stats); i++)
+		for (i = 1; i < ARRAY_SIZE(vmxnet3_rq_dev_stats); i++)
 			*buf++ = *(u64 *)(base +
 					  vmxnet3_rq_dev_stats[i].offset);
 
 		base = (u8 *)&adapter->rx_queue[j].stats;
-		क्रम (i = 0; i < ARRAY_SIZE(vmxnet3_rq_driver_stats); i++)
+		for (i = 0; i < ARRAY_SIZE(vmxnet3_rq_driver_stats); i++)
 			*buf++ = *(u64 *)(base +
 					  vmxnet3_rq_driver_stats[i].offset);
-	पूर्ण
+	}
 
 	base = (u8 *)adapter;
-	क्रम (i = 0; i < ARRAY_SIZE(vmxnet3_global_stats); i++)
+	for (i = 0; i < ARRAY_SIZE(vmxnet3_global_stats); i++)
 		*buf++ = *(u64 *)(base + vmxnet3_global_stats[i].offset);
-पूर्ण
+}
 
 
 /* This is a version 2 of the vmxnet3 ethtool_regs which goes hand in hand with
- * the version 2 of the vmxnet3 support क्रम ethtool(8) --रेजिस्टर-dump.
- * Thereक्रमe, अगर any रेजिस्टरs are added, हटाओd or modअगरied, then a version
- * bump and a corresponding change in the vmxnet3 support क्रम ethtool(8)
- * --रेजिस्टर-dump would be required.
+ * the version 2 of the vmxnet3 support for ethtool(8) --register-dump.
+ * Therefore, if any registers are added, removed or modified, then a version
+ * bump and a corresponding change in the vmxnet3 support for ethtool(8)
+ * --register-dump would be required.
  */
-अटल व्योम
-vmxnet3_get_regs(काष्ठा net_device *netdev, काष्ठा ethtool_regs *regs, व्योम *p)
-अणु
-	काष्ठा vmxnet3_adapter *adapter = netdev_priv(netdev);
+static void
+vmxnet3_get_regs(struct net_device *netdev, struct ethtool_regs *regs, void *p)
+{
+	struct vmxnet3_adapter *adapter = netdev_priv(netdev);
 	u32 *buf = p;
-	पूर्णांक i = 0, j = 0;
+	int i = 0, j = 0;
 
-	स_रखो(p, 0, vmxnet3_get_regs_len(netdev));
+	memset(p, 0, vmxnet3_get_regs_len(netdev));
 
 	regs->version = 2;
 
-	/* Update vmxnet3_get_regs_len अगर we want to dump more रेजिस्टरs */
+	/* Update vmxnet3_get_regs_len if we want to dump more registers */
 
 	buf[j++] = VMXNET3_READ_BAR1_REG(adapter, VMXNET3_REG_VRRS);
 	buf[j++] = VMXNET3_READ_BAR1_REG(adapter, VMXNET3_REG_UVRS);
@@ -435,15 +434,15 @@ vmxnet3_get_regs(काष्ठा net_device *netdev, काष्ठा ethto
 	buf[j++] = VMXNET3_READ_BAR1_REG(adapter, VMXNET3_REG_ICR);
 	buf[j++] = VMXNET3_READ_BAR1_REG(adapter, VMXNET3_REG_ECR);
 
-	buf[j++] = adapter->पूर्णांकr.num_पूर्णांकrs;
-	क्रम (i = 0; i < adapter->पूर्णांकr.num_पूर्णांकrs; i++) अणु
+	buf[j++] = adapter->intr.num_intrs;
+	for (i = 0; i < adapter->intr.num_intrs; i++) {
 		buf[j++] = VMXNET3_READ_BAR0_REG(adapter, VMXNET3_REG_IMR
 						 + i * VMXNET3_REG_ALIGN);
-	पूर्ण
+	}
 
 	buf[j++] = adapter->num_tx_queues;
-	क्रम (i = 0; i < adapter->num_tx_queues; i++) अणु
-		काष्ठा vmxnet3_tx_queue *tq = &adapter->tx_queue[i];
+	for (i = 0; i < adapter->num_tx_queues; i++) {
+		struct vmxnet3_tx_queue *tq = &adapter->tx_queue[i];
 
 		buf[j++] = VMXNET3_READ_BAR0_REG(adapter, VMXNET3_REG_TXPROD +
 						 i * VMXNET3_REG_ALIGN);
@@ -467,11 +466,11 @@ vmxnet3_get_regs(काष्ठा net_device *netdev, काष्ठा ethto
 		buf[j++] = tq->comp_ring.gen;
 
 		buf[j++] = tq->stopped;
-	पूर्ण
+	}
 
 	buf[j++] = adapter->num_rx_queues;
-	क्रम (i = 0; i < adapter->num_rx_queues; i++) अणु
-		काष्ठा vmxnet3_rx_queue *rq = &adapter->rx_queue[i];
+	for (i = 0; i < adapter->num_rx_queues; i++) {
+		struct vmxnet3_rx_queue *rq = &adapter->rx_queue[i];
 
 		buf[j++] =  VMXNET3_READ_BAR0_REG(adapter, VMXNET3_REG_RXPROD +
 						  i * VMXNET3_REG_ALIGN);
@@ -502,43 +501,43 @@ vmxnet3_get_regs(काष्ठा net_device *netdev, काष्ठा ethto
 		buf[j++] = rq->comp_ring.size;
 		buf[j++] = rq->comp_ring.next2proc;
 		buf[j++] = rq->comp_ring.gen;
-	पूर्ण
-पूर्ण
+	}
+}
 
 
-अटल व्योम
-vmxnet3_get_wol(काष्ठा net_device *netdev, काष्ठा ethtool_wolinfo *wol)
-अणु
-	काष्ठा vmxnet3_adapter *adapter = netdev_priv(netdev);
+static void
+vmxnet3_get_wol(struct net_device *netdev, struct ethtool_wolinfo *wol)
+{
+	struct vmxnet3_adapter *adapter = netdev_priv(netdev);
 
 	wol->supported = WAKE_UCAST | WAKE_ARP | WAKE_MAGIC;
 	wol->wolopts = adapter->wol;
-पूर्ण
+}
 
 
-अटल पूर्णांक
-vmxnet3_set_wol(काष्ठा net_device *netdev, काष्ठा ethtool_wolinfo *wol)
-अणु
-	काष्ठा vmxnet3_adapter *adapter = netdev_priv(netdev);
+static int
+vmxnet3_set_wol(struct net_device *netdev, struct ethtool_wolinfo *wol)
+{
+	struct vmxnet3_adapter *adapter = netdev_priv(netdev);
 
-	अगर (wol->wolopts & (WAKE_PHY | WAKE_MCAST | WAKE_BCAST |
-			    WAKE_MAGICSECURE)) अणु
-		वापस -EOPNOTSUPP;
-	पूर्ण
+	if (wol->wolopts & (WAKE_PHY | WAKE_MCAST | WAKE_BCAST |
+			    WAKE_MAGICSECURE)) {
+		return -EOPNOTSUPP;
+	}
 
 	adapter->wol = wol->wolopts;
 
 	device_set_wakeup_enable(&adapter->pdev->dev, adapter->wol);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक
-vmxnet3_get_link_ksettings(काष्ठा net_device *netdev,
-			   काष्ठा ethtool_link_ksettings *ecmd)
-अणु
-	काष्ठा vmxnet3_adapter *adapter = netdev_priv(netdev);
+static int
+vmxnet3_get_link_ksettings(struct net_device *netdev,
+			   struct ethtool_link_ksettings *ecmd)
+{
+	struct vmxnet3_adapter *adapter = netdev_priv(netdev);
 
 	ethtool_link_ksettings_zero_link_mode(ecmd, supported);
 	ethtool_link_ksettings_add_link_mode(ecmd, supported, 10000baseT_Full);
@@ -548,22 +547,22 @@ vmxnet3_get_link_ksettings(काष्ठा net_device *netdev,
 	ethtool_link_ksettings_add_link_mode(ecmd, advertising, TP);
 	ecmd->base.port = PORT_TP;
 
-	अगर (adapter->link_speed) अणु
+	if (adapter->link_speed) {
 		ecmd->base.speed = adapter->link_speed;
 		ecmd->base.duplex = DUPLEX_FULL;
-	पूर्ण अन्यथा अणु
+	} else {
 		ecmd->base.speed = SPEED_UNKNOWN;
 		ecmd->base.duplex = DUPLEX_UNKNOWN;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 
-अटल व्योम
-vmxnet3_get_ringparam(काष्ठा net_device *netdev,
-		      काष्ठा ethtool_ringparam *param)
-अणु
-	काष्ठा vmxnet3_adapter *adapter = netdev_priv(netdev);
+static void
+vmxnet3_get_ringparam(struct net_device *netdev,
+		      struct ethtool_ringparam *param)
+{
+	struct vmxnet3_adapter *adapter = netdev_priv(netdev);
 
 	param->rx_max_pending = VMXNET3_RX_RING_MAX_SIZE;
 	param->tx_max_pending = VMXNET3_TX_RING_MAX_SIZE;
@@ -576,53 +575,53 @@ vmxnet3_get_ringparam(काष्ठा net_device *netdev,
 	param->rx_mini_pending = VMXNET3_VERSION_GE_3(adapter) ?
 		adapter->rxdata_desc_size : 0;
 	param->rx_jumbo_pending = adapter->rx_ring2_size;
-पूर्ण
+}
 
 
-अटल पूर्णांक
-vmxnet3_set_ringparam(काष्ठा net_device *netdev,
-		      काष्ठा ethtool_ringparam *param)
-अणु
-	काष्ठा vmxnet3_adapter *adapter = netdev_priv(netdev);
+static int
+vmxnet3_set_ringparam(struct net_device *netdev,
+		      struct ethtool_ringparam *param)
+{
+	struct vmxnet3_adapter *adapter = netdev_priv(netdev);
 	u32 new_tx_ring_size, new_rx_ring_size, new_rx_ring2_size;
 	u16 new_rxdata_desc_size;
 	u32 sz;
-	पूर्णांक err = 0;
+	int err = 0;
 
-	अगर (param->tx_pending == 0 || param->tx_pending >
+	if (param->tx_pending == 0 || param->tx_pending >
 						VMXNET3_TX_RING_MAX_SIZE)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर (param->rx_pending == 0 || param->rx_pending >
+	if (param->rx_pending == 0 || param->rx_pending >
 						VMXNET3_RX_RING_MAX_SIZE)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर (param->rx_jumbo_pending == 0 ||
+	if (param->rx_jumbo_pending == 0 ||
 	    param->rx_jumbo_pending > VMXNET3_RX_RING2_MAX_SIZE)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	/* अगर adapter not yet initialized, करो nothing */
-	अगर (adapter->rx_buf_per_pkt == 0) अणु
+	/* if adapter not yet initialized, do nothing */
+	if (adapter->rx_buf_per_pkt == 0) {
 		netdev_err(netdev, "adapter not completely initialized, "
 			   "ring size cannot be changed yet\n");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	अगर (VMXNET3_VERSION_GE_3(adapter)) अणु
-		अगर (param->rx_mini_pending > VMXNET3_RXDATA_DESC_MAX_SIZE)
-			वापस -EINVAL;
-	पूर्ण अन्यथा अगर (param->rx_mini_pending != 0) अणु
-		वापस -EINVAL;
-	पूर्ण
+	if (VMXNET3_VERSION_GE_3(adapter)) {
+		if (param->rx_mini_pending > VMXNET3_RXDATA_DESC_MAX_SIZE)
+			return -EINVAL;
+	} else if (param->rx_mini_pending != 0) {
+		return -EINVAL;
+	}
 
 	/* round it up to a multiple of VMXNET3_RING_SIZE_ALIGN */
 	new_tx_ring_size = (param->tx_pending + VMXNET3_RING_SIZE_MASK) &
 							~VMXNET3_RING_SIZE_MASK;
 	new_tx_ring_size = min_t(u32, new_tx_ring_size,
 				 VMXNET3_TX_RING_MAX_SIZE);
-	अगर (new_tx_ring_size > VMXNET3_TX_RING_MAX_SIZE || (new_tx_ring_size %
+	if (new_tx_ring_size > VMXNET3_TX_RING_MAX_SIZE || (new_tx_ring_size %
 						VMXNET3_RING_SIZE_ALIGN) != 0)
-		वापस -EINVAL;
+		return -EINVAL;
 
 	/* ring0 has to be a multiple of
 	 * rx_buf_per_pkt * VMXNET3_RING_SIZE_ALIGN
@@ -631,9 +630,9 @@ vmxnet3_set_ringparam(काष्ठा net_device *netdev,
 	new_rx_ring_size = (param->rx_pending + sz - 1) / sz * sz;
 	new_rx_ring_size = min_t(u32, new_rx_ring_size,
 				 VMXNET3_RX_RING_MAX_SIZE / sz * sz);
-	अगर (new_rx_ring_size > VMXNET3_RX_RING_MAX_SIZE || (new_rx_ring_size %
+	if (new_rx_ring_size > VMXNET3_RX_RING_MAX_SIZE || (new_rx_ring_size %
 							   sz) != 0)
-		वापस -EINVAL;
+		return -EINVAL;
 
 	/* ring2 has to be a multiple of VMXNET3_RING_SIZE_ALIGN */
 	new_rx_ring2_size = (param->rx_jumbo_pending + VMXNET3_RING_SIZE_MASK) &
@@ -650,21 +649,21 @@ vmxnet3_set_ringparam(काष्ठा net_device *netdev,
 	new_rxdata_desc_size = min_t(u16, new_rxdata_desc_size,
 				     VMXNET3_RXDATA_DESC_MAX_SIZE);
 
-	अगर (new_tx_ring_size == adapter->tx_ring_size &&
+	if (new_tx_ring_size == adapter->tx_ring_size &&
 	    new_rx_ring_size == adapter->rx_ring_size &&
 	    new_rx_ring2_size == adapter->rx_ring2_size &&
-	    new_rxdata_desc_size == adapter->rxdata_desc_size) अणु
-		वापस 0;
-	पूर्ण
+	    new_rxdata_desc_size == adapter->rxdata_desc_size) {
+		return 0;
+	}
 
 	/*
-	 * Reset_work may be in the middle of resetting the device, रुको क्रम its
+	 * Reset_work may be in the middle of resetting the device, wait for its
 	 * completion.
 	 */
-	जबतक (test_and_set_bit(VMXNET3_STATE_BIT_RESETTING, &adapter->state))
+	while (test_and_set_bit(VMXNET3_STATE_BIT_RESETTING, &adapter->state))
 		usleep_range(1000, 2000);
 
-	अगर (netअगर_running(netdev)) अणु
+	if (netif_running(netdev)) {
 		vmxnet3_quiesce_dev(adapter);
 		vmxnet3_reset_dev(adapter);
 
@@ -677,8 +676,8 @@ vmxnet3_set_ringparam(काष्ठा net_device *netdev,
 					    new_rx_ring_size, new_rx_ring2_size,
 					    adapter->txdata_desc_size,
 					    new_rxdata_desc_size);
-		अगर (err) अणु
-			/* failed, most likely because of OOM, try शेष
+		if (err) {
+			/* failed, most likely because of OOM, try default
 			 * size */
 			netdev_err(netdev, "failed to apply new sizes, "
 				   "try the default ones\n");
@@ -694,18 +693,18 @@ vmxnet3_set_ringparam(काष्ठा net_device *netdev,
 						    new_rx_ring2_size,
 						    adapter->txdata_desc_size,
 						    new_rxdata_desc_size);
-			अगर (err) अणु
+			if (err) {
 				netdev_err(netdev, "failed to create queues "
 					   "with default sizes. Closing it\n");
-				जाओ out;
-			पूर्ण
-		पूर्ण
+				goto out;
+			}
+		}
 
 		err = vmxnet3_activate_dev(adapter);
-		अगर (err)
+		if (err)
 			netdev_err(netdev, "failed to re-activate, error %d."
 				   " Closing it\n", err);
-	पूर्ण
+	}
 	adapter->tx_ring_size = new_tx_ring_size;
 	adapter->rx_ring_size = new_rx_ring_size;
 	adapter->rx_ring2_size = new_rx_ring2_size;
@@ -713,20 +712,20 @@ vmxnet3_set_ringparam(काष्ठा net_device *netdev,
 
 out:
 	clear_bit(VMXNET3_STATE_BIT_RESETTING, &adapter->state);
-	अगर (err)
-		vmxnet3_क्रमce_बंद(adapter);
+	if (err)
+		vmxnet3_force_close(adapter);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक
-vmxnet3_get_rss_hash_opts(काष्ठा vmxnet3_adapter *adapter,
-			  काष्ठा ethtool_rxnfc *info)
-अणु
-	क्रमागत Vmxnet3_RSSField rss_fields;
+static int
+vmxnet3_get_rss_hash_opts(struct vmxnet3_adapter *adapter,
+			  struct ethtool_rxnfc *info)
+{
+	enum Vmxnet3_RSSField rss_fields;
 
-	अगर (netअगर_running(adapter->netdev)) अणु
-		अचिन्हित दीर्घ flags;
+	if (netif_running(adapter->netdev)) {
+		unsigned long flags;
 
 		spin_lock_irqsave(&adapter->cmd_lock, flags);
 
@@ -734,145 +733,145 @@ vmxnet3_get_rss_hash_opts(काष्ठा vmxnet3_adapter *adapter,
 				       VMXNET3_CMD_GET_RSS_FIELDS);
 		rss_fields = VMXNET3_READ_BAR1_REG(adapter, VMXNET3_REG_CMD);
 		spin_unlock_irqrestore(&adapter->cmd_lock, flags);
-	पूर्ण अन्यथा अणु
+	} else {
 		rss_fields = adapter->rss_fields;
-	पूर्ण
+	}
 
 	info->data = 0;
 
-	/* Report शेष options क्रम RSS on vmxnet3 */
-	चयन (info->flow_type) अणु
-	हाल TCP_V4_FLOW:
-	हाल TCP_V6_FLOW:
+	/* Report default options for RSS on vmxnet3 */
+	switch (info->flow_type) {
+	case TCP_V4_FLOW:
+	case TCP_V6_FLOW:
 		info->data |= RXH_L4_B_0_1 | RXH_L4_B_2_3 |
 			      RXH_IP_SRC | RXH_IP_DST;
-		अवरोध;
-	हाल UDP_V4_FLOW:
-		अगर (rss_fields & VMXNET3_RSS_FIELDS_UDPIP4)
+		break;
+	case UDP_V4_FLOW:
+		if (rss_fields & VMXNET3_RSS_FIELDS_UDPIP4)
 			info->data |= RXH_L4_B_0_1 | RXH_L4_B_2_3;
 		info->data |= RXH_IP_SRC | RXH_IP_DST;
-		अवरोध;
-	हाल AH_ESP_V4_FLOW:
-	हाल AH_V4_FLOW:
-	हाल ESP_V4_FLOW:
-		अगर (rss_fields & VMXNET3_RSS_FIELDS_ESPIP4)
+		break;
+	case AH_ESP_V4_FLOW:
+	case AH_V4_FLOW:
+	case ESP_V4_FLOW:
+		if (rss_fields & VMXNET3_RSS_FIELDS_ESPIP4)
 			info->data |= RXH_L4_B_0_1 | RXH_L4_B_2_3;
 		fallthrough;
-	हाल SCTP_V4_FLOW:
-	हाल IPV4_FLOW:
+	case SCTP_V4_FLOW:
+	case IPV4_FLOW:
 		info->data |= RXH_IP_SRC | RXH_IP_DST;
-		अवरोध;
-	हाल UDP_V6_FLOW:
-		अगर (rss_fields & VMXNET3_RSS_FIELDS_UDPIP6)
+		break;
+	case UDP_V6_FLOW:
+		if (rss_fields & VMXNET3_RSS_FIELDS_UDPIP6)
 			info->data |= RXH_L4_B_0_1 | RXH_L4_B_2_3;
 		info->data |= RXH_IP_SRC | RXH_IP_DST;
-		अवरोध;
-	हाल AH_ESP_V6_FLOW:
-	हाल AH_V6_FLOW:
-	हाल ESP_V6_FLOW:
-	हाल SCTP_V6_FLOW:
-	हाल IPV6_FLOW:
+		break;
+	case AH_ESP_V6_FLOW:
+	case AH_V6_FLOW:
+	case ESP_V6_FLOW:
+	case SCTP_V6_FLOW:
+	case IPV6_FLOW:
 		info->data |= RXH_IP_SRC | RXH_IP_DST;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-vmxnet3_set_rss_hash_opt(काष्ठा net_device *netdev,
-			 काष्ठा vmxnet3_adapter *adapter,
-			 काष्ठा ethtool_rxnfc *nfc)
-अणु
-	क्रमागत Vmxnet3_RSSField rss_fields = adapter->rss_fields;
+static int
+vmxnet3_set_rss_hash_opt(struct net_device *netdev,
+			 struct vmxnet3_adapter *adapter,
+			 struct ethtool_rxnfc *nfc)
+{
+	enum Vmxnet3_RSSField rss_fields = adapter->rss_fields;
 
-	/* RSS करोes not support anything other than hashing
+	/* RSS does not support anything other than hashing
 	 * to queues on src and dst IPs and ports
 	 */
-	अगर (nfc->data & ~(RXH_IP_SRC | RXH_IP_DST |
+	if (nfc->data & ~(RXH_IP_SRC | RXH_IP_DST |
 			  RXH_L4_B_0_1 | RXH_L4_B_2_3))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	चयन (nfc->flow_type) अणु
-	हाल TCP_V4_FLOW:
-	हाल TCP_V6_FLOW:
-		अगर (!(nfc->data & RXH_IP_SRC) ||
+	switch (nfc->flow_type) {
+	case TCP_V4_FLOW:
+	case TCP_V6_FLOW:
+		if (!(nfc->data & RXH_IP_SRC) ||
 		    !(nfc->data & RXH_IP_DST) ||
 		    !(nfc->data & RXH_L4_B_0_1) ||
 		    !(nfc->data & RXH_L4_B_2_3))
-			वापस -EINVAL;
-		अवरोध;
-	हाल UDP_V4_FLOW:
-		अगर (!(nfc->data & RXH_IP_SRC) ||
+			return -EINVAL;
+		break;
+	case UDP_V4_FLOW:
+		if (!(nfc->data & RXH_IP_SRC) ||
 		    !(nfc->data & RXH_IP_DST))
-			वापस -EINVAL;
-		चयन (nfc->data & (RXH_L4_B_0_1 | RXH_L4_B_2_3)) अणु
-		हाल 0:
+			return -EINVAL;
+		switch (nfc->data & (RXH_L4_B_0_1 | RXH_L4_B_2_3)) {
+		case 0:
 			rss_fields &= ~VMXNET3_RSS_FIELDS_UDPIP4;
-			अवरोध;
-		हाल (RXH_L4_B_0_1 | RXH_L4_B_2_3):
+			break;
+		case (RXH_L4_B_0_1 | RXH_L4_B_2_3):
 			rss_fields |= VMXNET3_RSS_FIELDS_UDPIP4;
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-		अवरोध;
-	हाल UDP_V6_FLOW:
-		अगर (!(nfc->data & RXH_IP_SRC) ||
+			break;
+		default:
+			return -EINVAL;
+		}
+		break;
+	case UDP_V6_FLOW:
+		if (!(nfc->data & RXH_IP_SRC) ||
 		    !(nfc->data & RXH_IP_DST))
-			वापस -EINVAL;
-		चयन (nfc->data & (RXH_L4_B_0_1 | RXH_L4_B_2_3)) अणु
-		हाल 0:
+			return -EINVAL;
+		switch (nfc->data & (RXH_L4_B_0_1 | RXH_L4_B_2_3)) {
+		case 0:
 			rss_fields &= ~VMXNET3_RSS_FIELDS_UDPIP6;
-			अवरोध;
-		हाल (RXH_L4_B_0_1 | RXH_L4_B_2_3):
+			break;
+		case (RXH_L4_B_0_1 | RXH_L4_B_2_3):
 			rss_fields |= VMXNET3_RSS_FIELDS_UDPIP6;
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-		अवरोध;
-	हाल ESP_V4_FLOW:
-	हाल AH_V4_FLOW:
-	हाल AH_ESP_V4_FLOW:
-		अगर (!(nfc->data & RXH_IP_SRC) ||
+			break;
+		default:
+			return -EINVAL;
+		}
+		break;
+	case ESP_V4_FLOW:
+	case AH_V4_FLOW:
+	case AH_ESP_V4_FLOW:
+		if (!(nfc->data & RXH_IP_SRC) ||
 		    !(nfc->data & RXH_IP_DST))
-			वापस -EINVAL;
-		चयन (nfc->data & (RXH_L4_B_0_1 | RXH_L4_B_2_3)) अणु
-		हाल 0:
+			return -EINVAL;
+		switch (nfc->data & (RXH_L4_B_0_1 | RXH_L4_B_2_3)) {
+		case 0:
 			rss_fields &= ~VMXNET3_RSS_FIELDS_ESPIP4;
-			अवरोध;
-		हाल (RXH_L4_B_0_1 | RXH_L4_B_2_3):
+			break;
+		case (RXH_L4_B_0_1 | RXH_L4_B_2_3):
 			rss_fields |= VMXNET3_RSS_FIELDS_ESPIP4;
-		अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-		अवरोध;
-	हाल ESP_V6_FLOW:
-	हाल AH_V6_FLOW:
-	हाल AH_ESP_V6_FLOW:
-	हाल SCTP_V4_FLOW:
-	हाल SCTP_V6_FLOW:
-		अगर (!(nfc->data & RXH_IP_SRC) ||
+		break;
+		default:
+			return -EINVAL;
+		}
+		break;
+	case ESP_V6_FLOW:
+	case AH_V6_FLOW:
+	case AH_ESP_V6_FLOW:
+	case SCTP_V4_FLOW:
+	case SCTP_V6_FLOW:
+		if (!(nfc->data & RXH_IP_SRC) ||
 		    !(nfc->data & RXH_IP_DST) ||
 		    (nfc->data & RXH_L4_B_0_1) ||
 		    (nfc->data & RXH_L4_B_2_3))
-			वापस -EINVAL;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+			return -EINVAL;
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	/* अगर we changed something we need to update flags */
-	अगर (rss_fields != adapter->rss_fields) अणु
-		adapter->शेष_rss_fields = false;
-		अगर (netअगर_running(netdev)) अणु
-			काष्ठा Vmxnet3_DriverShared *shared = adapter->shared;
-			जोड़ Vmxnet3_CmdInfo *cmdInfo = &shared->cu.cmdInfo;
-			अचिन्हित दीर्घ flags;
+	/* if we changed something we need to update flags */
+	if (rss_fields != adapter->rss_fields) {
+		adapter->default_rss_fields = false;
+		if (netif_running(netdev)) {
+			struct Vmxnet3_DriverShared *shared = adapter->shared;
+			union Vmxnet3_CmdInfo *cmdInfo = &shared->cu.cmdInfo;
+			unsigned long flags;
 
 			spin_lock_irqsave(&adapter->cmd_lock, flags);
 			cmdInfo->setRssFields = rss_fields;
@@ -887,123 +886,123 @@ vmxnet3_set_rss_hash_opt(काष्ठा net_device *netdev,
 			adapter->rss_fields =
 				VMXNET3_READ_BAR1_REG(adapter, VMXNET3_REG_CMD);
 			spin_unlock_irqrestore(&adapter->cmd_lock, flags);
-		पूर्ण अन्यथा अणु
+		} else {
 			/* When the device is activated, we will try to apply
 			 * these rules and cache the applied value later.
 			 */
 			adapter->rss_fields = rss_fields;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+	}
+	return 0;
+}
 
-अटल पूर्णांक
-vmxnet3_get_rxnfc(काष्ठा net_device *netdev, काष्ठा ethtool_rxnfc *info,
+static int
+vmxnet3_get_rxnfc(struct net_device *netdev, struct ethtool_rxnfc *info,
 		  u32 *rules)
-अणु
-	काष्ठा vmxnet3_adapter *adapter = netdev_priv(netdev);
-	पूर्णांक err = 0;
+{
+	struct vmxnet3_adapter *adapter = netdev_priv(netdev);
+	int err = 0;
 
-	चयन (info->cmd) अणु
-	हाल ETHTOOL_GRXRINGS:
+	switch (info->cmd) {
+	case ETHTOOL_GRXRINGS:
 		info->data = adapter->num_rx_queues;
-		अवरोध;
-	हाल ETHTOOL_GRXFH:
-		अगर (!VMXNET3_VERSION_GE_4(adapter)) अणु
+		break;
+	case ETHTOOL_GRXFH:
+		if (!VMXNET3_VERSION_GE_4(adapter)) {
 			err = -EOPNOTSUPP;
-			अवरोध;
-		पूर्ण
-#अगर_घोषित VMXNET3_RSS
-		अगर (!adapter->rss) अणु
+			break;
+		}
+#ifdef VMXNET3_RSS
+		if (!adapter->rss) {
 			err = -EOPNOTSUPP;
-			अवरोध;
-		पूर्ण
-#पूर्ण_अगर
+			break;
+		}
+#endif
 		err = vmxnet3_get_rss_hash_opts(adapter, info);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		err = -EOPNOTSUPP;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक
-vmxnet3_set_rxnfc(काष्ठा net_device *netdev, काष्ठा ethtool_rxnfc *info)
-अणु
-	काष्ठा vmxnet3_adapter *adapter = netdev_priv(netdev);
-	पूर्णांक err = 0;
+static int
+vmxnet3_set_rxnfc(struct net_device *netdev, struct ethtool_rxnfc *info)
+{
+	struct vmxnet3_adapter *adapter = netdev_priv(netdev);
+	int err = 0;
 
-	अगर (!VMXNET3_VERSION_GE_4(adapter)) अणु
+	if (!VMXNET3_VERSION_GE_4(adapter)) {
 		err = -EOPNOTSUPP;
-		जाओ करोne;
-	पूर्ण
-#अगर_घोषित VMXNET3_RSS
-	अगर (!adapter->rss) अणु
+		goto done;
+	}
+#ifdef VMXNET3_RSS
+	if (!adapter->rss) {
 		err = -EOPNOTSUPP;
-		जाओ करोne;
-	पूर्ण
-#पूर्ण_अगर
+		goto done;
+	}
+#endif
 
-	चयन (info->cmd) अणु
-	हाल ETHTOOL_SRXFH:
+	switch (info->cmd) {
+	case ETHTOOL_SRXFH:
 		err = vmxnet3_set_rss_hash_opt(netdev, adapter, info);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		err = -EOPNOTSUPP;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-करोne:
-	वापस err;
-पूर्ण
+done:
+	return err;
+}
 
-#अगर_घोषित VMXNET3_RSS
-अटल u32
-vmxnet3_get_rss_indir_size(काष्ठा net_device *netdev)
-अणु
-	काष्ठा vmxnet3_adapter *adapter = netdev_priv(netdev);
-	काष्ठा UPT1_RSSConf *rssConf = adapter->rss_conf;
+#ifdef VMXNET3_RSS
+static u32
+vmxnet3_get_rss_indir_size(struct net_device *netdev)
+{
+	struct vmxnet3_adapter *adapter = netdev_priv(netdev);
+	struct UPT1_RSSConf *rssConf = adapter->rss_conf;
 
-	वापस rssConf->indTableSize;
-पूर्ण
+	return rssConf->indTableSize;
+}
 
-अटल पूर्णांक
-vmxnet3_get_rss(काष्ठा net_device *netdev, u32 *p, u8 *key, u8 *hfunc)
-अणु
-	काष्ठा vmxnet3_adapter *adapter = netdev_priv(netdev);
-	काष्ठा UPT1_RSSConf *rssConf = adapter->rss_conf;
-	अचिन्हित पूर्णांक n = rssConf->indTableSize;
+static int
+vmxnet3_get_rss(struct net_device *netdev, u32 *p, u8 *key, u8 *hfunc)
+{
+	struct vmxnet3_adapter *adapter = netdev_priv(netdev);
+	struct UPT1_RSSConf *rssConf = adapter->rss_conf;
+	unsigned int n = rssConf->indTableSize;
 
-	अगर (hfunc)
+	if (hfunc)
 		*hfunc = ETH_RSS_HASH_TOP;
-	अगर (!p)
-		वापस 0;
-	अगर (n > UPT1_RSS_MAX_IND_TABLE_SIZE)
-		वापस 0;
-	जबतक (n--)
+	if (!p)
+		return 0;
+	if (n > UPT1_RSS_MAX_IND_TABLE_SIZE)
+		return 0;
+	while (n--)
 		p[n] = rssConf->indTable[n];
-	वापस 0;
+	return 0;
 
-पूर्ण
+}
 
-अटल पूर्णांक
-vmxnet3_set_rss(काष्ठा net_device *netdev, स्थिर u32 *p, स्थिर u8 *key,
-		स्थिर u8 hfunc)
-अणु
-	अचिन्हित पूर्णांक i;
-	अचिन्हित दीर्घ flags;
-	काष्ठा vmxnet3_adapter *adapter = netdev_priv(netdev);
-	काष्ठा UPT1_RSSConf *rssConf = adapter->rss_conf;
+static int
+vmxnet3_set_rss(struct net_device *netdev, const u32 *p, const u8 *key,
+		const u8 hfunc)
+{
+	unsigned int i;
+	unsigned long flags;
+	struct vmxnet3_adapter *adapter = netdev_priv(netdev);
+	struct UPT1_RSSConf *rssConf = adapter->rss_conf;
 
-	/* We करो not allow change in unsupported parameters */
-	अगर (key ||
+	/* We do not allow change in unsupported parameters */
+	if (key ||
 	    (hfunc != ETH_RSS_HASH_NO_CHANGE && hfunc != ETH_RSS_HASH_TOP))
-		वापस -EOPNOTSUPP;
-	अगर (!p)
-		वापस 0;
-	क्रम (i = 0; i < rssConf->indTableSize; i++)
+		return -EOPNOTSUPP;
+	if (!p)
+		return 0;
+	for (i = 0; i < rssConf->indTableSize; i++)
 		rssConf->indTable[i] = p[i];
 
 	spin_lock_irqsave(&adapter->cmd_lock, flags);
@@ -1011,113 +1010,113 @@ vmxnet3_set_rss(काष्ठा net_device *netdev, स्थिर u32 *p, �
 			       VMXNET3_CMD_UPDATE_RSSIDT);
 	spin_unlock_irqrestore(&adapter->cmd_lock, flags);
 
-	वापस 0;
+	return 0;
 
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-अटल पूर्णांक
-vmxnet3_get_coalesce(काष्ठा net_device *netdev, काष्ठा ethtool_coalesce *ec)
-अणु
-	काष्ठा vmxnet3_adapter *adapter = netdev_priv(netdev);
+static int
+vmxnet3_get_coalesce(struct net_device *netdev, struct ethtool_coalesce *ec)
+{
+	struct vmxnet3_adapter *adapter = netdev_priv(netdev);
 
-	अगर (!VMXNET3_VERSION_GE_3(adapter))
-		वापस -EOPNOTSUPP;
+	if (!VMXNET3_VERSION_GE_3(adapter))
+		return -EOPNOTSUPP;
 
-	चयन (adapter->coal_conf->coalMode) अणु
-	हाल VMXNET3_COALESCE_DISABLED:
-		/* काष्ठा ethtool_coalesce is alपढ़ोy initialized to 0 */
-		अवरोध;
-	हाल VMXNET3_COALESCE_ADAPT:
+	switch (adapter->coal_conf->coalMode) {
+	case VMXNET3_COALESCE_DISABLED:
+		/* struct ethtool_coalesce is already initialized to 0 */
+		break;
+	case VMXNET3_COALESCE_ADAPT:
 		ec->use_adaptive_rx_coalesce = true;
-		अवरोध;
-	हाल VMXNET3_COALESCE_STATIC:
+		break;
+	case VMXNET3_COALESCE_STATIC:
 		ec->tx_max_coalesced_frames =
 			adapter->coal_conf->coalPara.coalStatic.tx_comp_depth;
 		ec->rx_max_coalesced_frames =
 			adapter->coal_conf->coalPara.coalStatic.rx_depth;
-		अवरोध;
-	हाल VMXNET3_COALESCE_RBC: अणु
+		break;
+	case VMXNET3_COALESCE_RBC: {
 		u32 rbc_rate;
 
 		rbc_rate = adapter->coal_conf->coalPara.coalRbc.rbc_rate;
 		ec->rx_coalesce_usecs = VMXNET3_COAL_RBC_USECS(rbc_rate);
-	पूर्ण
-		अवरोध;
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
+	}
+		break;
+	default:
+		return -EOPNOTSUPP;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-vmxnet3_set_coalesce(काष्ठा net_device *netdev, काष्ठा ethtool_coalesce *ec)
-अणु
-	काष्ठा vmxnet3_adapter *adapter = netdev_priv(netdev);
-	काष्ठा Vmxnet3_DriverShared *shared = adapter->shared;
-	जोड़ Vmxnet3_CmdInfo *cmdInfo = &shared->cu.cmdInfo;
-	अचिन्हित दीर्घ flags;
+static int
+vmxnet3_set_coalesce(struct net_device *netdev, struct ethtool_coalesce *ec)
+{
+	struct vmxnet3_adapter *adapter = netdev_priv(netdev);
+	struct Vmxnet3_DriverShared *shared = adapter->shared;
+	union Vmxnet3_CmdInfo *cmdInfo = &shared->cu.cmdInfo;
+	unsigned long flags;
 
-	अगर (!VMXNET3_VERSION_GE_3(adapter))
-		वापस -EOPNOTSUPP;
+	if (!VMXNET3_VERSION_GE_3(adapter))
+		return -EOPNOTSUPP;
 
-	अगर ((ec->rx_coalesce_usecs == 0) &&
+	if ((ec->rx_coalesce_usecs == 0) &&
 	    (ec->use_adaptive_rx_coalesce == 0) &&
 	    (ec->tx_max_coalesced_frames == 0) &&
-	    (ec->rx_max_coalesced_frames == 0)) अणु
-		स_रखो(adapter->coal_conf, 0, माप(*adapter->coal_conf));
+	    (ec->rx_max_coalesced_frames == 0)) {
+		memset(adapter->coal_conf, 0, sizeof(*adapter->coal_conf));
 		adapter->coal_conf->coalMode = VMXNET3_COALESCE_DISABLED;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	अगर (ec->rx_coalesce_usecs != 0) अणु
+	if (ec->rx_coalesce_usecs != 0) {
 		u32 rbc_rate;
 
-		अगर ((ec->use_adaptive_rx_coalesce != 0) ||
+		if ((ec->use_adaptive_rx_coalesce != 0) ||
 		    (ec->tx_max_coalesced_frames != 0) ||
-		    (ec->rx_max_coalesced_frames != 0)) अणु
-			वापस -EINVAL;
-		पूर्ण
+		    (ec->rx_max_coalesced_frames != 0)) {
+			return -EINVAL;
+		}
 
 		rbc_rate = VMXNET3_COAL_RBC_RATE(ec->rx_coalesce_usecs);
-		अगर (rbc_rate < VMXNET3_COAL_RBC_MIN_RATE ||
-		    rbc_rate > VMXNET3_COAL_RBC_MAX_RATE) अणु
-			वापस -EINVAL;
-		पूर्ण
+		if (rbc_rate < VMXNET3_COAL_RBC_MIN_RATE ||
+		    rbc_rate > VMXNET3_COAL_RBC_MAX_RATE) {
+			return -EINVAL;
+		}
 
-		स_रखो(adapter->coal_conf, 0, माप(*adapter->coal_conf));
+		memset(adapter->coal_conf, 0, sizeof(*adapter->coal_conf));
 		adapter->coal_conf->coalMode = VMXNET3_COALESCE_RBC;
 		adapter->coal_conf->coalPara.coalRbc.rbc_rate = rbc_rate;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	अगर (ec->use_adaptive_rx_coalesce != 0) अणु
-		अगर ((ec->rx_coalesce_usecs != 0) ||
+	if (ec->use_adaptive_rx_coalesce != 0) {
+		if ((ec->rx_coalesce_usecs != 0) ||
 		    (ec->tx_max_coalesced_frames != 0) ||
-		    (ec->rx_max_coalesced_frames != 0)) अणु
-			वापस -EINVAL;
-		पूर्ण
-		स_रखो(adapter->coal_conf, 0, माप(*adapter->coal_conf));
+		    (ec->rx_max_coalesced_frames != 0)) {
+			return -EINVAL;
+		}
+		memset(adapter->coal_conf, 0, sizeof(*adapter->coal_conf));
 		adapter->coal_conf->coalMode = VMXNET3_COALESCE_ADAPT;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	अगर ((ec->tx_max_coalesced_frames != 0) ||
-	    (ec->rx_max_coalesced_frames != 0)) अणु
-		अगर ((ec->rx_coalesce_usecs != 0) ||
-		    (ec->use_adaptive_rx_coalesce != 0)) अणु
-			वापस -EINVAL;
-		पूर्ण
+	if ((ec->tx_max_coalesced_frames != 0) ||
+	    (ec->rx_max_coalesced_frames != 0)) {
+		if ((ec->rx_coalesce_usecs != 0) ||
+		    (ec->use_adaptive_rx_coalesce != 0)) {
+			return -EINVAL;
+		}
 
-		अगर ((ec->tx_max_coalesced_frames >
+		if ((ec->tx_max_coalesced_frames >
 		    VMXNET3_COAL_STATIC_MAX_DEPTH) ||
 		    (ec->rx_max_coalesced_frames >
-		     VMXNET3_COAL_STATIC_MAX_DEPTH)) अणु
-			वापस -EINVAL;
-		पूर्ण
+		     VMXNET3_COAL_STATIC_MAX_DEPTH)) {
+			return -EINVAL;
+		}
 
-		स_रखो(adapter->coal_conf, 0, माप(*adapter->coal_conf));
+		memset(adapter->coal_conf, 0, sizeof(*adapter->coal_conf));
 		adapter->coal_conf->coalMode = VMXNET3_COALESCE_STATIC;
 
 		adapter->coal_conf->coalPara.coalStatic.tx_comp_depth =
@@ -1132,26 +1131,26 @@ vmxnet3_set_coalesce(काष्ठा net_device *netdev, काष्ठा e
 
 		adapter->coal_conf->coalPara.coalStatic.tx_depth =
 			 VMXNET3_COAL_STATIC_DEFAULT_DEPTH;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-करोne:
-	adapter->शेष_coal_mode = false;
-	अगर (netअगर_running(netdev)) अणु
+done:
+	adapter->default_coal_mode = false;
+	if (netif_running(netdev)) {
 		spin_lock_irqsave(&adapter->cmd_lock, flags);
 		cmdInfo->varConf.confVer = 1;
 		cmdInfo->varConf.confLen =
-			cpu_to_le32(माप(*adapter->coal_conf));
+			cpu_to_le32(sizeof(*adapter->coal_conf));
 		cmdInfo->varConf.confPA  = cpu_to_le64(adapter->coal_conf_pa);
 		VMXNET3_WRITE_BAR1_REG(adapter, VMXNET3_REG_CMD,
 				       VMXNET3_CMD_SET_COALESCE);
 		spin_unlock_irqrestore(&adapter->cmd_lock, flags);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा ethtool_ops vmxnet3_ethtool_ops = अणु
+static const struct ethtool_ops vmxnet3_ethtool_ops = {
 	.supported_coalesce_params = ETHTOOL_COALESCE_RX_USECS |
 				     ETHTOOL_COALESCE_MAX_FRAMES |
 				     ETHTOOL_COALESCE_USE_ADAPTIVE_RX,
@@ -1170,15 +1169,15 @@ vmxnet3_set_coalesce(काष्ठा net_device *netdev, काष्ठा e
 	.set_ringparam     = vmxnet3_set_ringparam,
 	.get_rxnfc         = vmxnet3_get_rxnfc,
 	.set_rxnfc         = vmxnet3_set_rxnfc,
-#अगर_घोषित VMXNET3_RSS
+#ifdef VMXNET3_RSS
 	.get_rxfh_indir_size = vmxnet3_get_rss_indir_size,
 	.get_rxfh          = vmxnet3_get_rss,
 	.set_rxfh          = vmxnet3_set_rss,
-#पूर्ण_अगर
+#endif
 	.get_link_ksettings = vmxnet3_get_link_ksettings,
-पूर्ण;
+};
 
-व्योम vmxnet3_set_ethtool_ops(काष्ठा net_device *netdev)
-अणु
+void vmxnet3_set_ethtool_ops(struct net_device *netdev)
+{
 	netdev->ethtool_ops = &vmxnet3_ethtool_ops;
-पूर्ण
+}

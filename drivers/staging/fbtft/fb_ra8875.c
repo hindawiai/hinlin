@@ -1,45 +1,44 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * FBTFT driver क्रम the RA8875 LCD Controller
+ * FBTFT driver for the RA8875 LCD Controller
  * Copyright by Pf@nne & NOTRO
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/delay.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/delay.h>
 
-#समावेश <linux/gpio/consumer.h>
-#समावेश "fbtft.h"
+#include <linux/gpio/consumer.h>
+#include "fbtft.h"
 
-#घोषणा DRVNAME "fb_ra8875"
+#define DRVNAME "fb_ra8875"
 
-अटल पूर्णांक ग_लिखो_spi(काष्ठा fbtft_par *par, व्योम *buf, माप_प्रकार len)
-अणु
-	काष्ठा spi_transfer t = अणु
+static int write_spi(struct fbtft_par *par, void *buf, size_t len)
+{
+	struct spi_transfer t = {
 		.tx_buf = buf,
 		.len = len,
 		.speed_hz = 1000000,
-	पूर्ण;
-	काष्ठा spi_message m;
+	};
+	struct spi_message m;
 
 	fbtft_par_dbg_hex(DEBUG_WRITE, par, par->info->device, u8, buf, len,
 			  "%s(len=%zu): ", __func__, len);
 
-	अगर (!par->spi) अणु
+	if (!par->spi) {
 		dev_err(par->info->device,
 			"%s: par->spi is unexpectedly NULL\n", __func__);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	spi_message_init(&m);
 	spi_message_add_tail(&t, &m);
-	वापस spi_sync(par->spi, &m);
-पूर्ण
+	return spi_sync(par->spi, &m);
+}
 
-अटल पूर्णांक init_display(काष्ठा fbtft_par *par)
-अणु
+static int init_display(struct fbtft_par *par)
+{
 	gpiod_set_value(par->gpio.dc, 1);
 
 	fbtft_par_dbg(DEBUG_INIT_DISPLAY, par,
@@ -51,212 +50,212 @@
 
 	par->fbtftops.reset(par);
 
-	अगर ((par->info->var.xres == 320) && (par->info->var.yres == 240)) अणु
-		/* PLL घड़ी frequency */
-		ग_लिखो_reg(par, 0x88, 0x0A);
-		ग_लिखो_reg(par, 0x89, 0x02);
+	if ((par->info->var.xres == 320) && (par->info->var.yres == 240)) {
+		/* PLL clock frequency */
+		write_reg(par, 0x88, 0x0A);
+		write_reg(par, 0x89, 0x02);
 		mdelay(10);
 		/* color deep / MCU Interface */
-		ग_लिखो_reg(par, 0x10, 0x0C);
-		/* pixel घड़ी period  */
-		ग_लिखो_reg(par, 0x04, 0x03);
+		write_reg(par, 0x10, 0x0C);
+		/* pixel clock period  */
+		write_reg(par, 0x04, 0x03);
 		mdelay(1);
 		/* horizontal settings */
-		ग_लिखो_reg(par, 0x14, 0x27);
-		ग_लिखो_reg(par, 0x15, 0x00);
-		ग_लिखो_reg(par, 0x16, 0x05);
-		ग_लिखो_reg(par, 0x17, 0x04);
-		ग_लिखो_reg(par, 0x18, 0x03);
+		write_reg(par, 0x14, 0x27);
+		write_reg(par, 0x15, 0x00);
+		write_reg(par, 0x16, 0x05);
+		write_reg(par, 0x17, 0x04);
+		write_reg(par, 0x18, 0x03);
 		/* vertical settings */
-		ग_लिखो_reg(par, 0x19, 0xEF);
-		ग_लिखो_reg(par, 0x1A, 0x00);
-		ग_लिखो_reg(par, 0x1B, 0x05);
-		ग_लिखो_reg(par, 0x1C, 0x00);
-		ग_लिखो_reg(par, 0x1D, 0x0E);
-		ग_लिखो_reg(par, 0x1E, 0x00);
-		ग_लिखो_reg(par, 0x1F, 0x02);
-	पूर्ण अन्यथा अगर ((par->info->var.xres == 480) &&
-		   (par->info->var.yres == 272)) अणु
-		/* PLL घड़ी frequency  */
-		ग_लिखो_reg(par, 0x88, 0x0A);
-		ग_लिखो_reg(par, 0x89, 0x02);
+		write_reg(par, 0x19, 0xEF);
+		write_reg(par, 0x1A, 0x00);
+		write_reg(par, 0x1B, 0x05);
+		write_reg(par, 0x1C, 0x00);
+		write_reg(par, 0x1D, 0x0E);
+		write_reg(par, 0x1E, 0x00);
+		write_reg(par, 0x1F, 0x02);
+	} else if ((par->info->var.xres == 480) &&
+		   (par->info->var.yres == 272)) {
+		/* PLL clock frequency  */
+		write_reg(par, 0x88, 0x0A);
+		write_reg(par, 0x89, 0x02);
 		mdelay(10);
 		/* color deep / MCU Interface */
-		ग_लिखो_reg(par, 0x10, 0x0C);
-		/* pixel घड़ी period  */
-		ग_लिखो_reg(par, 0x04, 0x82);
+		write_reg(par, 0x10, 0x0C);
+		/* pixel clock period  */
+		write_reg(par, 0x04, 0x82);
 		mdelay(1);
 		/* horizontal settings */
-		ग_लिखो_reg(par, 0x14, 0x3B);
-		ग_लिखो_reg(par, 0x15, 0x00);
-		ग_लिखो_reg(par, 0x16, 0x01);
-		ग_लिखो_reg(par, 0x17, 0x00);
-		ग_लिखो_reg(par, 0x18, 0x05);
+		write_reg(par, 0x14, 0x3B);
+		write_reg(par, 0x15, 0x00);
+		write_reg(par, 0x16, 0x01);
+		write_reg(par, 0x17, 0x00);
+		write_reg(par, 0x18, 0x05);
 		/* vertical settings */
-		ग_लिखो_reg(par, 0x19, 0x0F);
-		ग_लिखो_reg(par, 0x1A, 0x01);
-		ग_लिखो_reg(par, 0x1B, 0x02);
-		ग_लिखो_reg(par, 0x1C, 0x00);
-		ग_लिखो_reg(par, 0x1D, 0x07);
-		ग_लिखो_reg(par, 0x1E, 0x00);
-		ग_लिखो_reg(par, 0x1F, 0x09);
-	पूर्ण अन्यथा अगर ((par->info->var.xres == 640) &&
-		   (par->info->var.yres == 480)) अणु
-		/* PLL घड़ी frequency */
-		ग_लिखो_reg(par, 0x88, 0x0B);
-		ग_लिखो_reg(par, 0x89, 0x02);
+		write_reg(par, 0x19, 0x0F);
+		write_reg(par, 0x1A, 0x01);
+		write_reg(par, 0x1B, 0x02);
+		write_reg(par, 0x1C, 0x00);
+		write_reg(par, 0x1D, 0x07);
+		write_reg(par, 0x1E, 0x00);
+		write_reg(par, 0x1F, 0x09);
+	} else if ((par->info->var.xres == 640) &&
+		   (par->info->var.yres == 480)) {
+		/* PLL clock frequency */
+		write_reg(par, 0x88, 0x0B);
+		write_reg(par, 0x89, 0x02);
 		mdelay(10);
 		/* color deep / MCU Interface */
-		ग_लिखो_reg(par, 0x10, 0x0C);
-		/* pixel घड़ी period */
-		ग_लिखो_reg(par, 0x04, 0x01);
+		write_reg(par, 0x10, 0x0C);
+		/* pixel clock period */
+		write_reg(par, 0x04, 0x01);
 		mdelay(1);
 		/* horizontal settings */
-		ग_लिखो_reg(par, 0x14, 0x4F);
-		ग_लिखो_reg(par, 0x15, 0x05);
-		ग_लिखो_reg(par, 0x16, 0x0F);
-		ग_लिखो_reg(par, 0x17, 0x01);
-		ग_लिखो_reg(par, 0x18, 0x00);
+		write_reg(par, 0x14, 0x4F);
+		write_reg(par, 0x15, 0x05);
+		write_reg(par, 0x16, 0x0F);
+		write_reg(par, 0x17, 0x01);
+		write_reg(par, 0x18, 0x00);
 		/* vertical settings */
-		ग_लिखो_reg(par, 0x19, 0xDF);
-		ग_लिखो_reg(par, 0x1A, 0x01);
-		ग_लिखो_reg(par, 0x1B, 0x0A);
-		ग_लिखो_reg(par, 0x1C, 0x00);
-		ग_लिखो_reg(par, 0x1D, 0x0E);
-		ग_लिखो_reg(par, 0x1E, 0x00);
-		ग_लिखो_reg(par, 0x1F, 0x01);
-	पूर्ण अन्यथा अगर ((par->info->var.xres == 800) &&
-		   (par->info->var.yres == 480)) अणु
-		/* PLL घड़ी frequency */
-		ग_लिखो_reg(par, 0x88, 0x0B);
-		ग_लिखो_reg(par, 0x89, 0x02);
+		write_reg(par, 0x19, 0xDF);
+		write_reg(par, 0x1A, 0x01);
+		write_reg(par, 0x1B, 0x0A);
+		write_reg(par, 0x1C, 0x00);
+		write_reg(par, 0x1D, 0x0E);
+		write_reg(par, 0x1E, 0x00);
+		write_reg(par, 0x1F, 0x01);
+	} else if ((par->info->var.xres == 800) &&
+		   (par->info->var.yres == 480)) {
+		/* PLL clock frequency */
+		write_reg(par, 0x88, 0x0B);
+		write_reg(par, 0x89, 0x02);
 		mdelay(10);
 		/* color deep / MCU Interface */
-		ग_लिखो_reg(par, 0x10, 0x0C);
-		/* pixel घड़ी period */
-		ग_लिखो_reg(par, 0x04, 0x81);
+		write_reg(par, 0x10, 0x0C);
+		/* pixel clock period */
+		write_reg(par, 0x04, 0x81);
 		mdelay(1);
 		/* horizontal settings */
-		ग_लिखो_reg(par, 0x14, 0x63);
-		ग_लिखो_reg(par, 0x15, 0x03);
-		ग_लिखो_reg(par, 0x16, 0x03);
-		ग_लिखो_reg(par, 0x17, 0x02);
-		ग_लिखो_reg(par, 0x18, 0x00);
+		write_reg(par, 0x14, 0x63);
+		write_reg(par, 0x15, 0x03);
+		write_reg(par, 0x16, 0x03);
+		write_reg(par, 0x17, 0x02);
+		write_reg(par, 0x18, 0x00);
 		/* vertical settings */
-		ग_लिखो_reg(par, 0x19, 0xDF);
-		ग_लिखो_reg(par, 0x1A, 0x01);
-		ग_लिखो_reg(par, 0x1B, 0x14);
-		ग_लिखो_reg(par, 0x1C, 0x00);
-		ग_लिखो_reg(par, 0x1D, 0x06);
-		ग_लिखो_reg(par, 0x1E, 0x00);
-		ग_लिखो_reg(par, 0x1F, 0x01);
-	पूर्ण अन्यथा अणु
+		write_reg(par, 0x19, 0xDF);
+		write_reg(par, 0x1A, 0x01);
+		write_reg(par, 0x1B, 0x14);
+		write_reg(par, 0x1C, 0x00);
+		write_reg(par, 0x1D, 0x06);
+		write_reg(par, 0x1E, 0x00);
+		write_reg(par, 0x1F, 0x01);
+	} else {
 		dev_err(par->info->device, "display size is not supported!!");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	/* PWM घड़ी */
-	ग_लिखो_reg(par, 0x8a, 0x81);
-	ग_लिखो_reg(par, 0x8b, 0xFF);
+	/* PWM clock */
+	write_reg(par, 0x8a, 0x81);
+	write_reg(par, 0x8b, 0xFF);
 	mdelay(10);
 
 	/* Display ON */
-	ग_लिखो_reg(par, 0x01, 0x80);
+	write_reg(par, 0x01, 0x80);
 	mdelay(10);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम set_addr_win(काष्ठा fbtft_par *par, पूर्णांक xs, पूर्णांक ys, पूर्णांक xe, पूर्णांक ye)
-अणु
-	/* Set_Active_Winकरोw */
-	ग_लिखो_reg(par, 0x30, xs & 0x00FF);
-	ग_लिखो_reg(par, 0x31, (xs & 0xFF00) >> 8);
-	ग_लिखो_reg(par, 0x32, ys & 0x00FF);
-	ग_लिखो_reg(par, 0x33, (ys & 0xFF00) >> 8);
-	ग_लिखो_reg(par, 0x34, (xs + xe) & 0x00FF);
-	ग_लिखो_reg(par, 0x35, ((xs + xe) & 0xFF00) >> 8);
-	ग_लिखो_reg(par, 0x36, (ys + ye) & 0x00FF);
-	ग_लिखो_reg(par, 0x37, ((ys + ye) & 0xFF00) >> 8);
+static void set_addr_win(struct fbtft_par *par, int xs, int ys, int xe, int ye)
+{
+	/* Set_Active_Window */
+	write_reg(par, 0x30, xs & 0x00FF);
+	write_reg(par, 0x31, (xs & 0xFF00) >> 8);
+	write_reg(par, 0x32, ys & 0x00FF);
+	write_reg(par, 0x33, (ys & 0xFF00) >> 8);
+	write_reg(par, 0x34, (xs + xe) & 0x00FF);
+	write_reg(par, 0x35, ((xs + xe) & 0xFF00) >> 8);
+	write_reg(par, 0x36, (ys + ye) & 0x00FF);
+	write_reg(par, 0x37, ((ys + ye) & 0xFF00) >> 8);
 
 	/* Set_Memory_Write_Cursor */
-	ग_लिखो_reg(par, 0x46,  xs & 0xff);
-	ग_लिखो_reg(par, 0x47, (xs >> 8) & 0x03);
-	ग_लिखो_reg(par, 0x48,  ys & 0xff);
-	ग_लिखो_reg(par, 0x49, (ys >> 8) & 0x01);
+	write_reg(par, 0x46,  xs & 0xff);
+	write_reg(par, 0x47, (xs >> 8) & 0x03);
+	write_reg(par, 0x48,  ys & 0xff);
+	write_reg(par, 0x49, (ys >> 8) & 0x01);
 
-	ग_लिखो_reg(par, 0x02);
-पूर्ण
+	write_reg(par, 0x02);
+}
 
-अटल व्योम ग_लिखो_reg8_bus8(काष्ठा fbtft_par *par, पूर्णांक len, ...)
-अणु
-	बहु_सूची args;
-	पूर्णांक i, ret;
+static void write_reg8_bus8(struct fbtft_par *par, int len, ...)
+{
+	va_list args;
+	int i, ret;
 	u8 *buf = par->buf;
 
-	/* slow करोwn spi-speed क्रम writing रेजिस्टरs */
-	par->fbtftops.ग_लिखो = ग_लिखो_spi;
+	/* slow down spi-speed for writing registers */
+	par->fbtftops.write = write_spi;
 
-	अगर (unlikely(par->debug & DEBUG_WRITE_REGISTER)) अणु
-		बहु_शुरू(args, len);
-		क्रम (i = 0; i < len; i++)
-			buf[i] = (u8)बहु_तर्क(args, अचिन्हित पूर्णांक);
-		बहु_पूर्ण(args);
+	if (unlikely(par->debug & DEBUG_WRITE_REGISTER)) {
+		va_start(args, len);
+		for (i = 0; i < len; i++)
+			buf[i] = (u8)va_arg(args, unsigned int);
+		va_end(args);
 		fbtft_par_dbg_hex(DEBUG_WRITE_REGISTER, par, par->info->device,
 				  u8, buf, len, "%s: ", __func__);
-	पूर्ण
+	}
 
-	बहु_शुरू(args, len);
+	va_start(args, len);
 	*buf++ = 0x80;
-	*buf = (u8)बहु_तर्क(args, अचिन्हित पूर्णांक);
-	ret = par->fbtftops.ग_लिखो(par, par->buf, 2);
-	अगर (ret < 0) अणु
-		बहु_पूर्ण(args);
+	*buf = (u8)va_arg(args, unsigned int);
+	ret = par->fbtftops.write(par, par->buf, 2);
+	if (ret < 0) {
+		va_end(args);
 		dev_err(par->info->device, "write() failed and returned %dn",
 			ret);
-		वापस;
-	पूर्ण
+		return;
+	}
 	len--;
 
 	udelay(100);
 
-	अगर (len) अणु
+	if (len) {
 		buf = (u8 *)par->buf;
 		*buf++ = 0x00;
 		i = len;
-		जबतक (i--)
-			*buf++ = (u8)बहु_तर्क(args, अचिन्हित पूर्णांक);
+		while (i--)
+			*buf++ = (u8)va_arg(args, unsigned int);
 
-		ret = par->fbtftops.ग_लिखो(par, par->buf, len + 1);
-		अगर (ret < 0) अणु
-			बहु_पूर्ण(args);
+		ret = par->fbtftops.write(par, par->buf, len + 1);
+		if (ret < 0) {
+			va_end(args);
 			dev_err(par->info->device,
 				"write() failed and returned %dn", ret);
-			वापस;
-		पूर्ण
-	पूर्ण
-	बहु_पूर्ण(args);
+			return;
+		}
+	}
+	va_end(args);
 
 	/* restore user spi-speed */
-	par->fbtftops.ग_लिखो = fbtft_ग_लिखो_spi;
+	par->fbtftops.write = fbtft_write_spi;
 	udelay(100);
-पूर्ण
+}
 
-अटल पूर्णांक ग_लिखो_vmem16_bus8(काष्ठा fbtft_par *par, माप_प्रकार offset, माप_प्रकार len)
-अणु
+static int write_vmem16_bus8(struct fbtft_par *par, size_t offset, size_t len)
+{
 	u16 *vmem16;
 	__be16 *txbuf16;
-	माप_प्रकार reमुख्य;
-	माप_प्रकार to_copy;
-	माप_प्रकार tx_array_size;
-	पूर्णांक i;
-	पूर्णांक ret = 0;
-	माप_प्रकार startbyte_size = 0;
+	size_t remain;
+	size_t to_copy;
+	size_t tx_array_size;
+	int i;
+	int ret = 0;
+	size_t startbyte_size = 0;
 
 	fbtft_par_dbg(DEBUG_WRITE_VMEM, par, "%s(offset=%zu, len=%zu)\n",
 		      __func__, offset, len);
 
-	reमुख्य = len / 2;
+	remain = len / 2;
 	vmem16 = (u16 *)(par->info->screen_buffer + offset);
 	tx_array_size = par->txbuf.len / 2;
 	txbuf16 = par->txbuf.buf + 1;
@@ -264,35 +263,35 @@
 	*(u8 *)(par->txbuf.buf) = 0x00;
 	startbyte_size = 1;
 
-	जबतक (reमुख्य) अणु
-		to_copy = min(tx_array_size, reमुख्य);
+	while (remain) {
+		to_copy = min(tx_array_size, remain);
 		dev_dbg(par->info->device, "    to_copy=%zu, remain=%zu\n",
-			to_copy, reमुख्य - to_copy);
+			to_copy, remain - to_copy);
 
-		क्रम (i = 0; i < to_copy; i++)
+		for (i = 0; i < to_copy; i++)
 			txbuf16[i] = cpu_to_be16(vmem16[i]);
 
 		vmem16 = vmem16 + to_copy;
-		ret = par->fbtftops.ग_लिखो(par, par->txbuf.buf,
+		ret = par->fbtftops.write(par, par->txbuf.buf,
 			startbyte_size + to_copy * 2);
-		अगर (ret < 0)
-			वापस ret;
-		reमुख्य -= to_copy;
-	पूर्ण
+		if (ret < 0)
+			return ret;
+		remain -= to_copy;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा fbtft_display display = अणु
+static struct fbtft_display display = {
 	.regwidth = 8,
-	.fbtftops = अणु
+	.fbtftops = {
 		.init_display = init_display,
 		.set_addr_win = set_addr_win,
-		.ग_लिखो_रेजिस्टर = ग_लिखो_reg8_bus8,
-		.ग_लिखो_vmem = ग_लिखो_vmem16_bus8,
-		.ग_लिखो = ग_लिखो_spi,
-	पूर्ण,
-पूर्ण;
+		.write_register = write_reg8_bus8,
+		.write_vmem = write_vmem16_bus8,
+		.write = write_spi,
+	},
+};
 
 FBTFT_REGISTER_DRIVER(DRVNAME, "raio,ra8875", &display);
 

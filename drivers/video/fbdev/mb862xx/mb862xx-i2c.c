@@ -1,169 +1,168 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Coral-P(A)/Lime I2C adapter driver
  *
- * (C) 2011 DENX Software Engineering, Anम_से_दij Gustschin <agust@denx.de>
+ * (C) 2011 DENX Software Engineering, Anatolij Gustschin <agust@denx.de>
  */
 
-#समावेश <linux/fb.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/delay.h>
-#समावेश <linux/export.h>
+#include <linux/fb.h>
+#include <linux/i2c.h>
+#include <linux/io.h>
+#include <linux/delay.h>
+#include <linux/export.h>
 
-#समावेश "mb862xxfb.h"
-#समावेश "mb862xx_reg.h"
+#include "mb862xxfb.h"
+#include "mb862xx_reg.h"
 
-अटल पूर्णांक mb862xx_i2c_रुको_event(काष्ठा i2c_adapter *adap)
-अणु
-	काष्ठा mb862xxfb_par *par = adap->algo_data;
+static int mb862xx_i2c_wait_event(struct i2c_adapter *adap)
+{
+	struct mb862xxfb_par *par = adap->algo_data;
 	u32 reg;
 
-	करो अणु
+	do {
 		udelay(10);
 		reg = inreg(i2c, GC_I2C_BCR);
-		अगर (reg & (I2C_INT | I2C_BER))
-			अवरोध;
-	पूर्ण जबतक (1);
+		if (reg & (I2C_INT | I2C_BER))
+			break;
+	} while (1);
 
-	वापस (reg & I2C_BER) ? 0 : 1;
-पूर्ण
+	return (reg & I2C_BER) ? 0 : 1;
+}
 
-अटल पूर्णांक mb862xx_i2c_करो_address(काष्ठा i2c_adapter *adap, पूर्णांक addr)
-अणु
-	काष्ठा mb862xxfb_par *par = adap->algo_data;
+static int mb862xx_i2c_do_address(struct i2c_adapter *adap, int addr)
+{
+	struct mb862xxfb_par *par = adap->algo_data;
 
 	outreg(i2c, GC_I2C_DAR, addr);
 	outreg(i2c, GC_I2C_CCR, I2C_CLOCK_AND_ENABLE);
 	outreg(i2c, GC_I2C_BCR, par->i2c_rs ? I2C_REPEATED_START : I2C_START);
-	अगर (!mb862xx_i2c_रुको_event(adap))
-		वापस -EIO;
+	if (!mb862xx_i2c_wait_event(adap))
+		return -EIO;
 	par->i2c_rs = !(inreg(i2c, GC_I2C_BSR) & I2C_LRB);
-	वापस par->i2c_rs;
-पूर्ण
+	return par->i2c_rs;
+}
 
-अटल पूर्णांक mb862xx_i2c_ग_लिखो_byte(काष्ठा i2c_adapter *adap, u8 byte)
-अणु
-	काष्ठा mb862xxfb_par *par = adap->algo_data;
+static int mb862xx_i2c_write_byte(struct i2c_adapter *adap, u8 byte)
+{
+	struct mb862xxfb_par *par = adap->algo_data;
 
 	outreg(i2c, GC_I2C_DAR, byte);
 	outreg(i2c, GC_I2C_BCR, I2C_START);
-	अगर (!mb862xx_i2c_रुको_event(adap))
-		वापस -EIO;
-	वापस !(inreg(i2c, GC_I2C_BSR) & I2C_LRB);
-पूर्ण
+	if (!mb862xx_i2c_wait_event(adap))
+		return -EIO;
+	return !(inreg(i2c, GC_I2C_BSR) & I2C_LRB);
+}
 
-अटल पूर्णांक mb862xx_i2c_पढ़ो_byte(काष्ठा i2c_adapter *adap, u8 *byte, पूर्णांक last)
-अणु
-	काष्ठा mb862xxfb_par *par = adap->algo_data;
+static int mb862xx_i2c_read_byte(struct i2c_adapter *adap, u8 *byte, int last)
+{
+	struct mb862xxfb_par *par = adap->algo_data;
 
 	outreg(i2c, GC_I2C_BCR, I2C_START | (last ? 0 : I2C_ACK));
-	अगर (!mb862xx_i2c_रुको_event(adap))
-		वापस 0;
+	if (!mb862xx_i2c_wait_event(adap))
+		return 0;
 	*byte = inreg(i2c, GC_I2C_DAR);
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल व्योम mb862xx_i2c_stop(काष्ठा i2c_adapter *adap)
-अणु
-	काष्ठा mb862xxfb_par *par = adap->algo_data;
+static void mb862xx_i2c_stop(struct i2c_adapter *adap)
+{
+	struct mb862xxfb_par *par = adap->algo_data;
 
 	outreg(i2c, GC_I2C_BCR, I2C_STOP);
 	outreg(i2c, GC_I2C_CCR, I2C_DISABLE);
 	par->i2c_rs = 0;
-पूर्ण
+}
 
-अटल पूर्णांक mb862xx_i2c_पढ़ो(काष्ठा i2c_adapter *adap, काष्ठा i2c_msg *m)
-अणु
-	पूर्णांक i, ret = 0;
-	पूर्णांक last = m->len - 1;
+static int mb862xx_i2c_read(struct i2c_adapter *adap, struct i2c_msg *m)
+{
+	int i, ret = 0;
+	int last = m->len - 1;
 
-	क्रम (i = 0; i < m->len; i++) अणु
-		अगर (!mb862xx_i2c_पढ़ो_byte(adap, &m->buf[i], i == last)) अणु
+	for (i = 0; i < m->len; i++) {
+		if (!mb862xx_i2c_read_byte(adap, &m->buf[i], i == last)) {
 			ret = -EIO;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	वापस ret;
-पूर्ण
+			break;
+		}
+	}
+	return ret;
+}
 
-अटल पूर्णांक mb862xx_i2c_ग_लिखो(काष्ठा i2c_adapter *adap, काष्ठा i2c_msg *m)
-अणु
-	पूर्णांक i, ret = 0;
+static int mb862xx_i2c_write(struct i2c_adapter *adap, struct i2c_msg *m)
+{
+	int i, ret = 0;
 
-	क्रम (i = 0; i < m->len; i++) अणु
-		अगर (!mb862xx_i2c_ग_लिखो_byte(adap, m->buf[i])) अणु
+	for (i = 0; i < m->len; i++) {
+		if (!mb862xx_i2c_write_byte(adap, m->buf[i])) {
 			ret = -EIO;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	वापस ret;
-पूर्ण
+			break;
+		}
+	}
+	return ret;
+}
 
-अटल पूर्णांक mb862xx_xfer(काष्ठा i2c_adapter *adap, काष्ठा i2c_msg *msgs,
-			पूर्णांक num)
-अणु
-	काष्ठा mb862xxfb_par *par = adap->algo_data;
-	काष्ठा i2c_msg *m;
-	पूर्णांक addr;
-	पूर्णांक i = 0, err = 0;
+static int mb862xx_xfer(struct i2c_adapter *adap, struct i2c_msg *msgs,
+			int num)
+{
+	struct mb862xxfb_par *par = adap->algo_data;
+	struct i2c_msg *m;
+	int addr;
+	int i = 0, err = 0;
 
 	dev_dbg(par->dev, "%s: %d msgs\n", __func__, num);
 
-	क्रम (i = 0; i < num; i++) अणु
+	for (i = 0; i < num; i++) {
 		m = &msgs[i];
-		अगर (!m->len) अणु
+		if (!m->len) {
 			dev_dbg(par->dev, "%s: null msgs\n", __func__);
-			जारी;
-		पूर्ण
+			continue;
+		}
 		addr = m->addr;
-		अगर (m->flags & I2C_M_RD)
+		if (m->flags & I2C_M_RD)
 			addr |= 1;
 
-		err = mb862xx_i2c_करो_address(adap, addr);
-		अगर (err < 0)
-			अवरोध;
-		अगर (m->flags & I2C_M_RD)
-			err = mb862xx_i2c_पढ़ो(adap, m);
-		अन्यथा
-			err = mb862xx_i2c_ग_लिखो(adap, m);
-	पूर्ण
+		err = mb862xx_i2c_do_address(adap, addr);
+		if (err < 0)
+			break;
+		if (m->flags & I2C_M_RD)
+			err = mb862xx_i2c_read(adap, m);
+		else
+			err = mb862xx_i2c_write(adap, m);
+	}
 
-	अगर (i)
+	if (i)
 		mb862xx_i2c_stop(adap);
 
-	वापस (err < 0) ? err : i;
-पूर्ण
+	return (err < 0) ? err : i;
+}
 
-अटल u32 mb862xx_func(काष्ठा i2c_adapter *adap)
-अणु
-	वापस I2C_FUNC_SMBUS_BYTE_DATA;
-पूर्ण
+static u32 mb862xx_func(struct i2c_adapter *adap)
+{
+	return I2C_FUNC_SMBUS_BYTE_DATA;
+}
 
-अटल स्थिर काष्ठा i2c_algorithm mb862xx_algo = अणु
+static const struct i2c_algorithm mb862xx_algo = {
 	.master_xfer	= mb862xx_xfer,
 	.functionality	= mb862xx_func,
-पूर्ण;
+};
 
-अटल काष्ठा i2c_adapter mb862xx_i2c_adapter = अणु
+static struct i2c_adapter mb862xx_i2c_adapter = {
 	.name		= "MB862xx I2C adapter",
 	.algo		= &mb862xx_algo,
 	.owner		= THIS_MODULE,
-पूर्ण;
+};
 
-पूर्णांक mb862xx_i2c_init(काष्ठा mb862xxfb_par *par)
-अणु
+int mb862xx_i2c_init(struct mb862xxfb_par *par)
+{
 	mb862xx_i2c_adapter.algo_data = par;
 	par->adap = &mb862xx_i2c_adapter;
 
-	वापस i2c_add_adapter(par->adap);
-पूर्ण
+	return i2c_add_adapter(par->adap);
+}
 
-व्योम mb862xx_i2c_निकास(काष्ठा mb862xxfb_par *par)
-अणु
-	अगर (par->adap) अणु
+void mb862xx_i2c_exit(struct mb862xxfb_par *par)
+{
+	if (par->adap) {
 		i2c_del_adapter(par->adap);
-		par->adap = शून्य;
-	पूर्ण
-पूर्ण
+		par->adap = NULL;
+	}
+}

@@ -1,12 +1,11 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __PINCTRL_MTK_MT8127_H
-#घोषणा __PINCTRL_MTK_MT8127_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __PINCTRL_MTK_MT8127_H
+#define __PINCTRL_MTK_MT8127_H
 
-#समावेश <linux/pinctrl/pinctrl.h>
-#समावेश "pinctrl-mtk-common.h"
+#include <linux/pinctrl/pinctrl.h>
+#include "pinctrl-mtk-common.h"
 
-अटल स्थिर काष्ठा mtk_desc_pin mtk_pins_mt8127[] = अणु
+static const struct mtk_desc_pin mtk_pins_mt8127[] = {
 	MTK_PIN(PINCTRL_PIN(0, "PWRAP_SPI0_MI"),
 		"P22", "mt8127",
 		MTK_EINT_FUNCTION(0, 22),
@@ -1172,6 +1171,6 @@
 		MTK_FUNCTION(2, "ANT_SEL0"),
 		MTK_FUNCTION(7, "DBG_MON_B[32]")
 	),
-पूर्ण;
+};
 
-#पूर्ण_अगर /* __PINCTRL_MTK_MT8127_H */
+#endif /* __PINCTRL_MTK_MT8127_H */

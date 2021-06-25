@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Serial Attached SCSI (SAS) Expander discovery and configuration
  *
@@ -9,244 +8,244 @@
  * This file is licensed under GPLv2.
  */
 
-#समावेश <linux/scatterlist.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/slab.h>
-#समावेश <यंत्र/unaligned.h>
+#include <linux/scatterlist.h>
+#include <linux/blkdev.h>
+#include <linux/slab.h>
+#include <asm/unaligned.h>
 
-#समावेश "sas_internal.h"
+#include "sas_internal.h"
 
-#समावेश <scsi/sas_ata.h>
-#समावेश <scsi/scsi_transport.h>
-#समावेश <scsi/scsi_transport_sas.h>
-#समावेश "../scsi_sas_internal.h"
+#include <scsi/sas_ata.h>
+#include <scsi/scsi_transport.h>
+#include <scsi/scsi_transport_sas.h>
+#include "../scsi_sas_internal.h"
 
-अटल पूर्णांक sas_discover_expander(काष्ठा करोमुख्य_device *dev);
-अटल पूर्णांक sas_configure_routing(काष्ठा करोमुख्य_device *dev, u8 *sas_addr);
-अटल पूर्णांक sas_configure_phy(काष्ठा करोमुख्य_device *dev, पूर्णांक phy_id,
-			     u8 *sas_addr, पूर्णांक include);
-अटल पूर्णांक sas_disable_routing(काष्ठा करोमुख्य_device *dev,  u8 *sas_addr);
+static int sas_discover_expander(struct domain_device *dev);
+static int sas_configure_routing(struct domain_device *dev, u8 *sas_addr);
+static int sas_configure_phy(struct domain_device *dev, int phy_id,
+			     u8 *sas_addr, int include);
+static int sas_disable_routing(struct domain_device *dev,  u8 *sas_addr);
 
 /* ---------- SMP task management ---------- */
 
-अटल व्योम smp_task_समयकरोut(काष्ठा समयr_list *t)
-अणु
-	काष्ठा sas_task_slow *slow = from_समयr(slow, t, समयr);
-	काष्ठा sas_task *task = slow->task;
-	अचिन्हित दीर्घ flags;
+static void smp_task_timedout(struct timer_list *t)
+{
+	struct sas_task_slow *slow = from_timer(slow, t, timer);
+	struct sas_task *task = slow->task;
+	unsigned long flags;
 
 	spin_lock_irqsave(&task->task_state_lock, flags);
-	अगर (!(task->task_state_flags & SAS_TASK_STATE_DONE)) अणु
+	if (!(task->task_state_flags & SAS_TASK_STATE_DONE)) {
 		task->task_state_flags |= SAS_TASK_STATE_ABORTED;
 		complete(&task->slow_task->completion);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&task->task_state_lock, flags);
-पूर्ण
+}
 
-अटल व्योम smp_task_करोne(काष्ठा sas_task *task)
-अणु
-	del_समयr(&task->slow_task->समयr);
+static void smp_task_done(struct sas_task *task)
+{
+	del_timer(&task->slow_task->timer);
 	complete(&task->slow_task->completion);
-पूर्ण
+}
 
-/* Give it some दीर्घ enough समयout. In seconds. */
-#घोषणा SMP_TIMEOUT 10
+/* Give it some long enough timeout. In seconds. */
+#define SMP_TIMEOUT 10
 
-अटल पूर्णांक smp_execute_task_sg(काष्ठा करोमुख्य_device *dev,
-		काष्ठा scatterlist *req, काष्ठा scatterlist *resp)
-अणु
-	पूर्णांक res, retry;
-	काष्ठा sas_task *task = शून्य;
-	काष्ठा sas_पूर्णांकernal *i =
-		to_sas_पूर्णांकernal(dev->port->ha->core.shost->transportt);
+static int smp_execute_task_sg(struct domain_device *dev,
+		struct scatterlist *req, struct scatterlist *resp)
+{
+	int res, retry;
+	struct sas_task *task = NULL;
+	struct sas_internal *i =
+		to_sas_internal(dev->port->ha->core.shost->transportt);
 
 	mutex_lock(&dev->ex_dev.cmd_mutex);
-	क्रम (retry = 0; retry < 3; retry++) अणु
-		अगर (test_bit(SAS_DEV_GONE, &dev->state)) अणु
+	for (retry = 0; retry < 3; retry++) {
+		if (test_bit(SAS_DEV_GONE, &dev->state)) {
 			res = -ECOMM;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		task = sas_alloc_slow_task(GFP_KERNEL);
-		अगर (!task) अणु
+		if (!task) {
 			res = -ENOMEM;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		task->dev = dev;
 		task->task_proto = dev->tproto;
 		task->smp_task.smp_req = *req;
 		task->smp_task.smp_resp = *resp;
 
-		task->task_करोne = smp_task_करोne;
+		task->task_done = smp_task_done;
 
-		task->slow_task->समयr.function = smp_task_समयकरोut;
-		task->slow_task->समयr.expires = jअगरfies + SMP_TIMEOUT*HZ;
-		add_समयr(&task->slow_task->समयr);
+		task->slow_task->timer.function = smp_task_timedout;
+		task->slow_task->timer.expires = jiffies + SMP_TIMEOUT*HZ;
+		add_timer(&task->slow_task->timer);
 
 		res = i->dft->lldd_execute_task(task, GFP_KERNEL);
 
-		अगर (res) अणु
-			del_समयr(&task->slow_task->समयr);
+		if (res) {
+			del_timer(&task->slow_task->timer);
 			pr_notice("executing SMP task failed:%d\n", res);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		रुको_क्रम_completion(&task->slow_task->completion);
+		wait_for_completion(&task->slow_task->completion);
 		res = -ECOMM;
-		अगर ((task->task_state_flags & SAS_TASK_STATE_ABORTED)) अणु
+		if ((task->task_state_flags & SAS_TASK_STATE_ABORTED)) {
 			pr_notice("smp task timed out or aborted\n");
-			i->dft->lldd_पात_task(task);
-			अगर (!(task->task_state_flags & SAS_TASK_STATE_DONE)) अणु
+			i->dft->lldd_abort_task(task);
+			if (!(task->task_state_flags & SAS_TASK_STATE_DONE)) {
 				pr_notice("SMP task aborted and not done\n");
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		अगर (task->task_status.resp == SAS_TASK_COMPLETE &&
-		    task->task_status.stat == SAM_STAT_GOOD) अणु
+				break;
+			}
+		}
+		if (task->task_status.resp == SAS_TASK_COMPLETE &&
+		    task->task_status.stat == SAM_STAT_GOOD) {
 			res = 0;
-			अवरोध;
-		पूर्ण
-		अगर (task->task_status.resp == SAS_TASK_COMPLETE &&
-		    task->task_status.stat == SAS_DATA_UNDERRUN) अणु
-			/* no error, but वापस the number of bytes of
+			break;
+		}
+		if (task->task_status.resp == SAS_TASK_COMPLETE &&
+		    task->task_status.stat == SAS_DATA_UNDERRUN) {
+			/* no error, but return the number of bytes of
 			 * underrun */
 			res = task->task_status.residual;
-			अवरोध;
-		पूर्ण
-		अगर (task->task_status.resp == SAS_TASK_COMPLETE &&
-		    task->task_status.stat == SAS_DATA_OVERRUN) अणु
+			break;
+		}
+		if (task->task_status.resp == SAS_TASK_COMPLETE &&
+		    task->task_status.stat == SAS_DATA_OVERRUN) {
 			res = -EMSGSIZE;
-			अवरोध;
-		पूर्ण
-		अगर (task->task_status.resp == SAS_TASK_UNDELIVERED &&
+			break;
+		}
+		if (task->task_status.resp == SAS_TASK_UNDELIVERED &&
 		    task->task_status.stat == SAS_DEVICE_UNKNOWN)
-			अवरोध;
-		अन्यथा अणु
+			break;
+		else {
 			pr_notice("%s: task to dev %016llx response: 0x%x status 0x%x\n",
 				  __func__,
 				  SAS_ADDR(dev->sas_addr),
 				  task->task_status.resp,
 				  task->task_status.stat);
-			sas_मुक्त_task(task);
-			task = शून्य;
-		पूर्ण
-	पूर्ण
+			sas_free_task(task);
+			task = NULL;
+		}
+	}
 	mutex_unlock(&dev->ex_dev.cmd_mutex);
 
-	BUG_ON(retry == 3 && task != शून्य);
-	sas_मुक्त_task(task);
-	वापस res;
-पूर्ण
+	BUG_ON(retry == 3 && task != NULL);
+	sas_free_task(task);
+	return res;
+}
 
-अटल पूर्णांक smp_execute_task(काष्ठा करोमुख्य_device *dev, व्योम *req, पूर्णांक req_size,
-			    व्योम *resp, पूर्णांक resp_size)
-अणु
-	काष्ठा scatterlist req_sg;
-	काष्ठा scatterlist resp_sg;
+static int smp_execute_task(struct domain_device *dev, void *req, int req_size,
+			    void *resp, int resp_size)
+{
+	struct scatterlist req_sg;
+	struct scatterlist resp_sg;
 
 	sg_init_one(&req_sg, req, req_size);
 	sg_init_one(&resp_sg, resp, resp_size);
-	वापस smp_execute_task_sg(dev, &req_sg, &resp_sg);
-पूर्ण
+	return smp_execute_task_sg(dev, &req_sg, &resp_sg);
+}
 
 /* ---------- Allocations ---------- */
 
-अटल अंतरभूत व्योम *alloc_smp_req(पूर्णांक size)
-अणु
+static inline void *alloc_smp_req(int size)
+{
 	u8 *p = kzalloc(size, GFP_KERNEL);
-	अगर (p)
+	if (p)
 		p[0] = SMP_REQUEST;
-	वापस p;
-पूर्ण
+	return p;
+}
 
-अटल अंतरभूत व्योम *alloc_smp_resp(पूर्णांक size)
-अणु
-	वापस kzalloc(size, GFP_KERNEL);
-पूर्ण
+static inline void *alloc_smp_resp(int size)
+{
+	return kzalloc(size, GFP_KERNEL);
+}
 
-अटल अक्षर sas_route_अक्षर(काष्ठा करोमुख्य_device *dev, काष्ठा ex_phy *phy)
-अणु
-	चयन (phy->routing_attr) अणु
-	हाल TABLE_ROUTING:
-		अगर (dev->ex_dev.t2t_supp)
-			वापस 'U';
-		अन्यथा
-			वापस 'T';
-	हाल सूचीECT_ROUTING:
-		वापस 'D';
-	हाल SUBTRACTIVE_ROUTING:
-		वापस 'S';
-	शेष:
-		वापस '?';
-	पूर्ण
-पूर्ण
+static char sas_route_char(struct domain_device *dev, struct ex_phy *phy)
+{
+	switch (phy->routing_attr) {
+	case TABLE_ROUTING:
+		if (dev->ex_dev.t2t_supp)
+			return 'U';
+		else
+			return 'T';
+	case DIRECT_ROUTING:
+		return 'D';
+	case SUBTRACTIVE_ROUTING:
+		return 'S';
+	default:
+		return '?';
+	}
+}
 
-अटल क्रमागत sas_device_type to_dev_type(काष्ठा discover_resp *dr)
-अणु
+static enum sas_device_type to_dev_type(struct discover_resp *dr)
+{
 	/* This is detecting a failure to transmit initial dev to host
 	 * FIS as described in section J.5 of sas-2 r16
 	 */
-	अगर (dr->attached_dev_type == SAS_PHY_UNUSED && dr->attached_sata_dev &&
+	if (dr->attached_dev_type == SAS_PHY_UNUSED && dr->attached_sata_dev &&
 	    dr->linkrate >= SAS_LINK_RATE_1_5_GBPS)
-		वापस SAS_SATA_PENDING;
-	अन्यथा
-		वापस dr->attached_dev_type;
-पूर्ण
+		return SAS_SATA_PENDING;
+	else
+		return dr->attached_dev_type;
+}
 
-अटल व्योम sas_set_ex_phy(काष्ठा करोमुख्य_device *dev, पूर्णांक phy_id, व्योम *rsp)
-अणु
-	क्रमागत sas_device_type dev_type;
-	क्रमागत sas_linkrate linkrate;
+static void sas_set_ex_phy(struct domain_device *dev, int phy_id, void *rsp)
+{
+	enum sas_device_type dev_type;
+	enum sas_linkrate linkrate;
 	u8 sas_addr[SAS_ADDR_SIZE];
-	काष्ठा smp_resp *resp = rsp;
-	काष्ठा discover_resp *dr = &resp->disc;
-	काष्ठा sas_ha_काष्ठा *ha = dev->port->ha;
-	काष्ठा expander_device *ex = &dev->ex_dev;
-	काष्ठा ex_phy *phy = &ex->ex_phy[phy_id];
-	काष्ठा sas_rphy *rphy = dev->rphy;
+	struct smp_resp *resp = rsp;
+	struct discover_resp *dr = &resp->disc;
+	struct sas_ha_struct *ha = dev->port->ha;
+	struct expander_device *ex = &dev->ex_dev;
+	struct ex_phy *phy = &ex->ex_phy[phy_id];
+	struct sas_rphy *rphy = dev->rphy;
 	bool new_phy = !phy->phy;
-	अक्षर *type;
+	char *type;
 
-	अगर (new_phy) अणु
-		अगर (WARN_ON_ONCE(test_bit(SAS_HA_ATA_EH_ACTIVE, &ha->state)))
-			वापस;
+	if (new_phy) {
+		if (WARN_ON_ONCE(test_bit(SAS_HA_ATA_EH_ACTIVE, &ha->state)))
+			return;
 		phy->phy = sas_phy_alloc(&rphy->dev, phy_id);
 
 		/* FIXME: error_handling */
 		BUG_ON(!phy->phy);
-	पूर्ण
+	}
 
-	चयन (resp->result) अणु
-	हाल SMP_RESP_PHY_VACANT:
+	switch (resp->result) {
+	case SMP_RESP_PHY_VACANT:
 		phy->phy_state = PHY_VACANT;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		phy->phy_state = PHY_NOT_PRESENT;
-		अवरोध;
-	हाल SMP_RESP_FUNC_ACC:
-		phy->phy_state = PHY_EMPTY; /* करो not know yet */
-		अवरोध;
-	पूर्ण
+		break;
+	case SMP_RESP_FUNC_ACC:
+		phy->phy_state = PHY_EMPTY; /* do not know yet */
+		break;
+	}
 
-	/* check अगर anything important changed to squelch debug */
+	/* check if anything important changed to squelch debug */
 	dev_type = phy->attached_dev_type;
 	linkrate  = phy->linkrate;
-	स_नकल(sas_addr, phy->attached_sas_addr, SAS_ADDR_SIZE);
+	memcpy(sas_addr, phy->attached_sas_addr, SAS_ADDR_SIZE);
 
 	/* Handle vacant phy - rest of dr data is not valid so skip it */
-	अगर (phy->phy_state == PHY_VACANT) अणु
-		स_रखो(phy->attached_sas_addr, 0, SAS_ADDR_SIZE);
+	if (phy->phy_state == PHY_VACANT) {
+		memset(phy->attached_sas_addr, 0, SAS_ADDR_SIZE);
 		phy->attached_dev_type = SAS_PHY_UNUSED;
-		अगर (!test_bit(SAS_HA_ATA_EH_ACTIVE, &ha->state)) अणु
+		if (!test_bit(SAS_HA_ATA_EH_ACTIVE, &ha->state)) {
 			phy->phy_id = phy_id;
-			जाओ skip;
-		पूर्ण अन्यथा
-			जाओ out;
-	पूर्ण
+			goto skip;
+		} else
+			goto out;
+	}
 
 	phy->attached_dev_type = to_dev_type(dr);
-	अगर (test_bit(SAS_HA_ATA_EH_ACTIVE, &ha->state))
-		जाओ out;
+	if (test_bit(SAS_HA_ATA_EH_ACTIVE, &ha->state))
+		goto out;
 	phy->phy_id = phy_id;
 	phy->linkrate = dr->linkrate;
 	phy->attached_sata_host = dr->attached_sata_host;
@@ -255,26 +254,26 @@
 	phy->attached_iproto = dr->iproto << 1;
 	phy->attached_tproto = dr->tproto << 1;
 	/* help some expanders that fail to zero sas_address in the 'no
-	 * device' हाल
+	 * device' case
 	 */
-	अगर (phy->attached_dev_type == SAS_PHY_UNUSED ||
+	if (phy->attached_dev_type == SAS_PHY_UNUSED ||
 	    phy->linkrate < SAS_LINK_RATE_1_5_GBPS)
-		स_रखो(phy->attached_sas_addr, 0, SAS_ADDR_SIZE);
-	अन्यथा
-		स_नकल(phy->attached_sas_addr, dr->attached_sas_addr, SAS_ADDR_SIZE);
+		memset(phy->attached_sas_addr, 0, SAS_ADDR_SIZE);
+	else
+		memcpy(phy->attached_sas_addr, dr->attached_sas_addr, SAS_ADDR_SIZE);
 	phy->attached_phy_id = dr->attached_phy_id;
 	phy->phy_change_count = dr->change_count;
 	phy->routing_attr = dr->routing_attr;
-	phy->भव = dr->भव;
+	phy->virtual = dr->virtual;
 	phy->last_da_index = -1;
 
-	phy->phy->identअगरy.sas_address = SAS_ADDR(phy->attached_sas_addr);
-	phy->phy->identअगरy.device_type = dr->attached_dev_type;
-	phy->phy->identअगरy.initiator_port_protocols = phy->attached_iproto;
-	phy->phy->identअगरy.target_port_protocols = phy->attached_tproto;
-	अगर (!phy->attached_tproto && dr->attached_sata_dev)
-		phy->phy->identअगरy.target_port_protocols = SAS_PROTOCOL_SATA;
-	phy->phy->identअगरy.phy_identअगरier = phy_id;
+	phy->phy->identify.sas_address = SAS_ADDR(phy->attached_sas_addr);
+	phy->phy->identify.device_type = dr->attached_dev_type;
+	phy->phy->identify.initiator_port_protocols = phy->attached_iproto;
+	phy->phy->identify.target_port_protocols = phy->attached_tproto;
+	if (!phy->attached_tproto && dr->attached_sata_dev)
+		phy->phy->identify.target_port_protocols = SAS_PROTOCOL_SATA;
+	phy->phy->identify.phy_identifier = phy_id;
 	phy->phy->minimum_linkrate_hw = dr->hmin_linkrate;
 	phy->phy->maximum_linkrate_hw = dr->hmax_linkrate;
 	phy->phy->minimum_linkrate = dr->pmin_linkrate;
@@ -283,174 +282,174 @@
 	phy->phy->enabled = (phy->linkrate != SAS_PHY_DISABLED);
 
  skip:
-	अगर (new_phy)
-		अगर (sas_phy_add(phy->phy)) अणु
-			sas_phy_मुक्त(phy->phy);
-			वापस;
-		पूर्ण
+	if (new_phy)
+		if (sas_phy_add(phy->phy)) {
+			sas_phy_free(phy->phy);
+			return;
+		}
 
  out:
-	चयन (phy->attached_dev_type) अणु
-	हाल SAS_SATA_PENDING:
+	switch (phy->attached_dev_type) {
+	case SAS_SATA_PENDING:
 		type = "stp pending";
-		अवरोध;
-	हाल SAS_PHY_UNUSED:
+		break;
+	case SAS_PHY_UNUSED:
 		type = "no device";
-		अवरोध;
-	हाल SAS_END_DEVICE:
-		अगर (phy->attached_iproto) अणु
-			अगर (phy->attached_tproto)
+		break;
+	case SAS_END_DEVICE:
+		if (phy->attached_iproto) {
+			if (phy->attached_tproto)
 				type = "host+target";
-			अन्यथा
+			else
 				type = "host";
-		पूर्ण अन्यथा अणु
-			अगर (dr->attached_sata_dev)
+		} else {
+			if (dr->attached_sata_dev)
 				type = "stp";
-			अन्यथा
+			else
 				type = "ssp";
-		पूर्ण
-		अवरोध;
-	हाल SAS_EDGE_EXPANDER_DEVICE:
-	हाल SAS_FANOUT_EXPANDER_DEVICE:
+		}
+		break;
+	case SAS_EDGE_EXPANDER_DEVICE:
+	case SAS_FANOUT_EXPANDER_DEVICE:
 		type = "smp";
-		अवरोध;
-	शेष:
+		break;
+	default:
 		type = "unknown";
-	पूर्ण
+	}
 
 	/* this routine is polled by libata error recovery so filter
 	 * unimportant messages
 	 */
-	अगर (new_phy || phy->attached_dev_type != dev_type ||
+	if (new_phy || phy->attached_dev_type != dev_type ||
 	    phy->linkrate != linkrate ||
 	    SAS_ADDR(phy->attached_sas_addr) != SAS_ADDR(sas_addr))
 		/* pass */;
-	अन्यथा
-		वापस;
+	else
+		return;
 
-	/* अगर the attached device type changed and ata_eh is active,
+	/* if the attached device type changed and ata_eh is active,
 	 * make sure we run revalidation when eh completes (see:
 	 * sas_enable_revalidation)
 	 */
-	अगर (test_bit(SAS_HA_ATA_EH_ACTIVE, &ha->state))
+	if (test_bit(SAS_HA_ATA_EH_ACTIVE, &ha->state))
 		set_bit(DISCE_REVALIDATE_DOMAIN, &dev->port->disc.pending);
 
 	pr_debug("%sex %016llx phy%02d:%c:%X attached: %016llx (%s)\n",
 		 test_bit(SAS_HA_ATA_EH_ACTIVE, &ha->state) ? "ata: " : "",
 		 SAS_ADDR(dev->sas_addr), phy->phy_id,
-		 sas_route_अक्षर(dev, phy), phy->linkrate,
+		 sas_route_char(dev, phy), phy->linkrate,
 		 SAS_ADDR(phy->attached_sas_addr), type);
-पूर्ण
+}
 
-/* check अगर we have an existing attached ata device on this expander phy */
-काष्ठा करोमुख्य_device *sas_ex_to_ata(काष्ठा करोमुख्य_device *ex_dev, पूर्णांक phy_id)
-अणु
-	काष्ठा ex_phy *ex_phy = &ex_dev->ex_dev.ex_phy[phy_id];
-	काष्ठा करोमुख्य_device *dev;
-	काष्ठा sas_rphy *rphy;
+/* check if we have an existing attached ata device on this expander phy */
+struct domain_device *sas_ex_to_ata(struct domain_device *ex_dev, int phy_id)
+{
+	struct ex_phy *ex_phy = &ex_dev->ex_dev.ex_phy[phy_id];
+	struct domain_device *dev;
+	struct sas_rphy *rphy;
 
-	अगर (!ex_phy->port)
-		वापस शून्य;
+	if (!ex_phy->port)
+		return NULL;
 
 	rphy = ex_phy->port->rphy;
-	अगर (!rphy)
-		वापस शून्य;
+	if (!rphy)
+		return NULL;
 
 	dev = sas_find_dev_by_rphy(rphy);
 
-	अगर (dev && dev_is_sata(dev))
-		वापस dev;
+	if (dev && dev_is_sata(dev))
+		return dev;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-#घोषणा DISCOVER_REQ_SIZE  16
-#घोषणा DISCOVER_RESP_SIZE 56
+#define DISCOVER_REQ_SIZE  16
+#define DISCOVER_RESP_SIZE 56
 
-अटल पूर्णांक sas_ex_phy_discover_helper(काष्ठा करोमुख्य_device *dev, u8 *disc_req,
-				      u8 *disc_resp, पूर्णांक single)
-अणु
-	काष्ठा discover_resp *dr;
-	पूर्णांक res;
+static int sas_ex_phy_discover_helper(struct domain_device *dev, u8 *disc_req,
+				      u8 *disc_resp, int single)
+{
+	struct discover_resp *dr;
+	int res;
 
 	disc_req[9] = single;
 
 	res = smp_execute_task(dev, disc_req, DISCOVER_REQ_SIZE,
 			       disc_resp, DISCOVER_RESP_SIZE);
-	अगर (res)
-		वापस res;
-	dr = &((काष्ठा smp_resp *)disc_resp)->disc;
-	अगर (स_भेद(dev->sas_addr, dr->attached_sas_addr, SAS_ADDR_SIZE) == 0) अणु
+	if (res)
+		return res;
+	dr = &((struct smp_resp *)disc_resp)->disc;
+	if (memcmp(dev->sas_addr, dr->attached_sas_addr, SAS_ADDR_SIZE) == 0) {
 		pr_notice("Found loopback topology, just ignore it!\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	sas_set_ex_phy(dev, single, disc_resp);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक sas_ex_phy_discover(काष्ठा करोमुख्य_device *dev, पूर्णांक single)
-अणु
-	काष्ठा expander_device *ex = &dev->ex_dev;
-	पूर्णांक  res = 0;
+int sas_ex_phy_discover(struct domain_device *dev, int single)
+{
+	struct expander_device *ex = &dev->ex_dev;
+	int  res = 0;
 	u8   *disc_req;
 	u8   *disc_resp;
 
 	disc_req = alloc_smp_req(DISCOVER_REQ_SIZE);
-	अगर (!disc_req)
-		वापस -ENOMEM;
+	if (!disc_req)
+		return -ENOMEM;
 
 	disc_resp = alloc_smp_resp(DISCOVER_RESP_SIZE);
-	अगर (!disc_resp) अणु
-		kमुक्त(disc_req);
-		वापस -ENOMEM;
-	पूर्ण
+	if (!disc_resp) {
+		kfree(disc_req);
+		return -ENOMEM;
+	}
 
 	disc_req[1] = SMP_DISCOVER;
 
-	अगर (0 <= single && single < ex->num_phys) अणु
+	if (0 <= single && single < ex->num_phys) {
 		res = sas_ex_phy_discover_helper(dev, disc_req, disc_resp, single);
-	पूर्ण अन्यथा अणु
-		पूर्णांक i;
+	} else {
+		int i;
 
-		क्रम (i = 0; i < ex->num_phys; i++) अणु
+		for (i = 0; i < ex->num_phys; i++) {
 			res = sas_ex_phy_discover_helper(dev, disc_req,
 							 disc_resp, i);
-			अगर (res)
-				जाओ out_err;
-		पूर्ण
-	पूर्ण
+			if (res)
+				goto out_err;
+		}
+	}
 out_err:
-	kमुक्त(disc_resp);
-	kमुक्त(disc_req);
-	वापस res;
-पूर्ण
+	kfree(disc_resp);
+	kfree(disc_req);
+	return res;
+}
 
-अटल पूर्णांक sas_expander_discover(काष्ठा करोमुख्य_device *dev)
-अणु
-	काष्ठा expander_device *ex = &dev->ex_dev;
-	पूर्णांक res;
+static int sas_expander_discover(struct domain_device *dev)
+{
+	struct expander_device *ex = &dev->ex_dev;
+	int res;
 
-	ex->ex_phy = kसुस्मृति(ex->num_phys, माप(*ex->ex_phy), GFP_KERNEL);
-	अगर (!ex->ex_phy)
-		वापस -ENOMEM;
+	ex->ex_phy = kcalloc(ex->num_phys, sizeof(*ex->ex_phy), GFP_KERNEL);
+	if (!ex->ex_phy)
+		return -ENOMEM;
 
 	res = sas_ex_phy_discover(dev, -1);
-	अगर (res)
-		जाओ out_err;
+	if (res)
+		goto out_err;
 
-	वापस 0;
+	return 0;
  out_err:
-	kमुक्त(ex->ex_phy);
-	ex->ex_phy = शून्य;
-	वापस res;
-पूर्ण
+	kfree(ex->ex_phy);
+	ex->ex_phy = NULL;
+	return res;
+}
 
-#घोषणा MAX_EXPANDER_PHYS 128
+#define MAX_EXPANDER_PHYS 128
 
-अटल व्योम ex_assign_report_general(काष्ठा करोमुख्य_device *dev,
-					    काष्ठा smp_resp *resp)
-अणु
-	काष्ठा report_general_resp *rg = &resp->rg;
+static void ex_assign_report_general(struct domain_device *dev,
+					    struct smp_resp *resp)
+{
+	struct report_general_resp *rg = &resp->rg;
 
 	dev->ex_dev.ex_change_count = be16_to_cpu(rg->change_count);
 	dev->ex_dev.max_route_indexes = be16_to_cpu(rg->route_indexes);
@@ -458,222 +457,222 @@ out_err:
 	dev->ex_dev.t2t_supp = rg->t2t_supp;
 	dev->ex_dev.conf_route_table = rg->conf_route_table;
 	dev->ex_dev.configuring = rg->configuring;
-	स_नकल(dev->ex_dev.enclosure_logical_id, rg->enclosure_logical_id, 8);
-पूर्ण
+	memcpy(dev->ex_dev.enclosure_logical_id, rg->enclosure_logical_id, 8);
+}
 
-#घोषणा RG_REQ_SIZE   8
-#घोषणा RG_RESP_SIZE 32
+#define RG_REQ_SIZE   8
+#define RG_RESP_SIZE 32
 
-अटल पूर्णांक sas_ex_general(काष्ठा करोमुख्य_device *dev)
-अणु
+static int sas_ex_general(struct domain_device *dev)
+{
 	u8 *rg_req;
-	काष्ठा smp_resp *rg_resp;
-	पूर्णांक res;
-	पूर्णांक i;
+	struct smp_resp *rg_resp;
+	int res;
+	int i;
 
 	rg_req = alloc_smp_req(RG_REQ_SIZE);
-	अगर (!rg_req)
-		वापस -ENOMEM;
+	if (!rg_req)
+		return -ENOMEM;
 
 	rg_resp = alloc_smp_resp(RG_RESP_SIZE);
-	अगर (!rg_resp) अणु
-		kमुक्त(rg_req);
-		वापस -ENOMEM;
-	पूर्ण
+	if (!rg_resp) {
+		kfree(rg_req);
+		return -ENOMEM;
+	}
 
 	rg_req[1] = SMP_REPORT_GENERAL;
 
-	क्रम (i = 0; i < 5; i++) अणु
+	for (i = 0; i < 5; i++) {
 		res = smp_execute_task(dev, rg_req, RG_REQ_SIZE, rg_resp,
 				       RG_RESP_SIZE);
 
-		अगर (res) अणु
+		if (res) {
 			pr_notice("RG to ex %016llx failed:0x%x\n",
 				  SAS_ADDR(dev->sas_addr), res);
-			जाओ out;
-		पूर्ण अन्यथा अगर (rg_resp->result != SMP_RESP_FUNC_ACC) अणु
+			goto out;
+		} else if (rg_resp->result != SMP_RESP_FUNC_ACC) {
 			pr_debug("RG:ex %016llx returned SMP result:0x%x\n",
 				 SAS_ADDR(dev->sas_addr), rg_resp->result);
 			res = rg_resp->result;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		ex_assign_report_general(dev, rg_resp);
 
-		अगर (dev->ex_dev.configuring) अणु
+		if (dev->ex_dev.configuring) {
 			pr_debug("RG: ex %016llx self-configuring...\n",
 				 SAS_ADDR(dev->sas_addr));
-			schedule_समयout_पूर्णांकerruptible(5*HZ);
-		पूर्ण अन्यथा
-			अवरोध;
-	पूर्ण
+			schedule_timeout_interruptible(5*HZ);
+		} else
+			break;
+	}
 out:
-	kमुक्त(rg_req);
-	kमुक्त(rg_resp);
-	वापस res;
-पूर्ण
+	kfree(rg_req);
+	kfree(rg_resp);
+	return res;
+}
 
-अटल व्योम ex_assign_manuf_info(काष्ठा करोमुख्य_device *dev, व्योम
+static void ex_assign_manuf_info(struct domain_device *dev, void
 					*_mi_resp)
-अणु
+{
 	u8 *mi_resp = _mi_resp;
-	काष्ठा sas_rphy *rphy = dev->rphy;
-	काष्ठा sas_expander_device *edev = rphy_to_expander_device(rphy);
+	struct sas_rphy *rphy = dev->rphy;
+	struct sas_expander_device *edev = rphy_to_expander_device(rphy);
 
-	स_नकल(edev->venकरोr_id, mi_resp + 12, SAS_EXPANDER_VENDOR_ID_LEN);
-	स_नकल(edev->product_id, mi_resp + 20, SAS_EXPANDER_PRODUCT_ID_LEN);
-	स_नकल(edev->product_rev, mi_resp + 36,
+	memcpy(edev->vendor_id, mi_resp + 12, SAS_EXPANDER_VENDOR_ID_LEN);
+	memcpy(edev->product_id, mi_resp + 20, SAS_EXPANDER_PRODUCT_ID_LEN);
+	memcpy(edev->product_rev, mi_resp + 36,
 	       SAS_EXPANDER_PRODUCT_REV_LEN);
 
-	अगर (mi_resp[8] & 1) अणु
-		स_नकल(edev->component_venकरोr_id, mi_resp + 40,
+	if (mi_resp[8] & 1) {
+		memcpy(edev->component_vendor_id, mi_resp + 40,
 		       SAS_EXPANDER_COMPONENT_VENDOR_ID_LEN);
 		edev->component_id = mi_resp[48] << 8 | mi_resp[49];
 		edev->component_revision_id = mi_resp[50];
-	पूर्ण
-पूर्ण
+	}
+}
 
-#घोषणा MI_REQ_SIZE   8
-#घोषणा MI_RESP_SIZE 64
+#define MI_REQ_SIZE   8
+#define MI_RESP_SIZE 64
 
-अटल पूर्णांक sas_ex_manuf_info(काष्ठा करोमुख्य_device *dev)
-अणु
+static int sas_ex_manuf_info(struct domain_device *dev)
+{
 	u8 *mi_req;
 	u8 *mi_resp;
-	पूर्णांक res;
+	int res;
 
 	mi_req = alloc_smp_req(MI_REQ_SIZE);
-	अगर (!mi_req)
-		वापस -ENOMEM;
+	if (!mi_req)
+		return -ENOMEM;
 
 	mi_resp = alloc_smp_resp(MI_RESP_SIZE);
-	अगर (!mi_resp) अणु
-		kमुक्त(mi_req);
-		वापस -ENOMEM;
-	पूर्ण
+	if (!mi_resp) {
+		kfree(mi_req);
+		return -ENOMEM;
+	}
 
 	mi_req[1] = SMP_REPORT_MANUF_INFO;
 
 	res = smp_execute_task(dev, mi_req, MI_REQ_SIZE, mi_resp, MI_RESP_SIZE);
-	अगर (res) अणु
+	if (res) {
 		pr_notice("MI: ex %016llx failed:0x%x\n",
 			  SAS_ADDR(dev->sas_addr), res);
-		जाओ out;
-	पूर्ण अन्यथा अगर (mi_resp[2] != SMP_RESP_FUNC_ACC) अणु
+		goto out;
+	} else if (mi_resp[2] != SMP_RESP_FUNC_ACC) {
 		pr_debug("MI ex %016llx returned SMP result:0x%x\n",
 			 SAS_ADDR(dev->sas_addr), mi_resp[2]);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ex_assign_manuf_info(dev, mi_resp);
 out:
-	kमुक्त(mi_req);
-	kमुक्त(mi_resp);
-	वापस res;
-पूर्ण
+	kfree(mi_req);
+	kfree(mi_resp);
+	return res;
+}
 
-#घोषणा PC_REQ_SIZE  44
-#घोषणा PC_RESP_SIZE 8
+#define PC_REQ_SIZE  44
+#define PC_RESP_SIZE 8
 
-पूर्णांक sas_smp_phy_control(काष्ठा करोमुख्य_device *dev, पूर्णांक phy_id,
-			क्रमागत phy_func phy_func,
-			काष्ठा sas_phy_linkrates *rates)
-अणु
+int sas_smp_phy_control(struct domain_device *dev, int phy_id,
+			enum phy_func phy_func,
+			struct sas_phy_linkrates *rates)
+{
 	u8 *pc_req;
 	u8 *pc_resp;
-	पूर्णांक res;
+	int res;
 
 	pc_req = alloc_smp_req(PC_REQ_SIZE);
-	अगर (!pc_req)
-		वापस -ENOMEM;
+	if (!pc_req)
+		return -ENOMEM;
 
 	pc_resp = alloc_smp_resp(PC_RESP_SIZE);
-	अगर (!pc_resp) अणु
-		kमुक्त(pc_req);
-		वापस -ENOMEM;
-	पूर्ण
+	if (!pc_resp) {
+		kfree(pc_req);
+		return -ENOMEM;
+	}
 
 	pc_req[1] = SMP_PHY_CONTROL;
 	pc_req[9] = phy_id;
 	pc_req[10] = phy_func;
-	अगर (rates) अणु
+	if (rates) {
 		pc_req[32] = rates->minimum_linkrate << 4;
 		pc_req[33] = rates->maximum_linkrate << 4;
-	पूर्ण
+	}
 
 	res = smp_execute_task(dev, pc_req, PC_REQ_SIZE, pc_resp, PC_RESP_SIZE);
-	अगर (res) अणु
+	if (res) {
 		pr_err("ex %016llx phy%02d PHY control failed: %d\n",
 		       SAS_ADDR(dev->sas_addr), phy_id, res);
-	पूर्ण अन्यथा अगर (pc_resp[2] != SMP_RESP_FUNC_ACC) अणु
+	} else if (pc_resp[2] != SMP_RESP_FUNC_ACC) {
 		pr_err("ex %016llx phy%02d PHY control failed: function result 0x%x\n",
 		       SAS_ADDR(dev->sas_addr), phy_id, pc_resp[2]);
 		res = pc_resp[2];
-	पूर्ण
-	kमुक्त(pc_resp);
-	kमुक्त(pc_req);
-	वापस res;
-पूर्ण
+	}
+	kfree(pc_resp);
+	kfree(pc_req);
+	return res;
+}
 
-अटल व्योम sas_ex_disable_phy(काष्ठा करोमुख्य_device *dev, पूर्णांक phy_id)
-अणु
-	काष्ठा expander_device *ex = &dev->ex_dev;
-	काष्ठा ex_phy *phy = &ex->ex_phy[phy_id];
+static void sas_ex_disable_phy(struct domain_device *dev, int phy_id)
+{
+	struct expander_device *ex = &dev->ex_dev;
+	struct ex_phy *phy = &ex->ex_phy[phy_id];
 
-	sas_smp_phy_control(dev, phy_id, PHY_FUNC_DISABLE, शून्य);
+	sas_smp_phy_control(dev, phy_id, PHY_FUNC_DISABLE, NULL);
 	phy->linkrate = SAS_PHY_DISABLED;
-पूर्ण
+}
 
-अटल व्योम sas_ex_disable_port(काष्ठा करोमुख्य_device *dev, u8 *sas_addr)
-अणु
-	काष्ठा expander_device *ex = &dev->ex_dev;
-	पूर्णांक i;
+static void sas_ex_disable_port(struct domain_device *dev, u8 *sas_addr)
+{
+	struct expander_device *ex = &dev->ex_dev;
+	int i;
 
-	क्रम (i = 0; i < ex->num_phys; i++) अणु
-		काष्ठा ex_phy *phy = &ex->ex_phy[i];
+	for (i = 0; i < ex->num_phys; i++) {
+		struct ex_phy *phy = &ex->ex_phy[i];
 
-		अगर (phy->phy_state == PHY_VACANT ||
+		if (phy->phy_state == PHY_VACANT ||
 		    phy->phy_state == PHY_NOT_PRESENT)
-			जारी;
+			continue;
 
-		अगर (SAS_ADDR(phy->attached_sas_addr) == SAS_ADDR(sas_addr))
+		if (SAS_ADDR(phy->attached_sas_addr) == SAS_ADDR(sas_addr))
 			sas_ex_disable_phy(dev, i);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक sas_dev_present_in_करोमुख्य(काष्ठा asd_sas_port *port,
+static int sas_dev_present_in_domain(struct asd_sas_port *port,
 					    u8 *sas_addr)
-अणु
-	काष्ठा करोमुख्य_device *dev;
+{
+	struct domain_device *dev;
 
-	अगर (SAS_ADDR(port->sas_addr) == SAS_ADDR(sas_addr))
-		वापस 1;
-	list_क्रम_each_entry(dev, &port->dev_list, dev_list_node) अणु
-		अगर (SAS_ADDR(dev->sas_addr) == SAS_ADDR(sas_addr))
-			वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	if (SAS_ADDR(port->sas_addr) == SAS_ADDR(sas_addr))
+		return 1;
+	list_for_each_entry(dev, &port->dev_list, dev_list_node) {
+		if (SAS_ADDR(dev->sas_addr) == SAS_ADDR(sas_addr))
+			return 1;
+	}
+	return 0;
+}
 
-#घोषणा RPEL_REQ_SIZE	16
-#घोषणा RPEL_RESP_SIZE	32
-पूर्णांक sas_smp_get_phy_events(काष्ठा sas_phy *phy)
-अणु
-	पूर्णांक res;
+#define RPEL_REQ_SIZE	16
+#define RPEL_RESP_SIZE	32
+int sas_smp_get_phy_events(struct sas_phy *phy)
+{
+	int res;
 	u8 *req;
 	u8 *resp;
-	काष्ठा sas_rphy *rphy = dev_to_rphy(phy->dev.parent);
-	काष्ठा करोमुख्य_device *dev = sas_find_dev_by_rphy(rphy);
+	struct sas_rphy *rphy = dev_to_rphy(phy->dev.parent);
+	struct domain_device *dev = sas_find_dev_by_rphy(rphy);
 
 	req = alloc_smp_req(RPEL_REQ_SIZE);
-	अगर (!req)
-		वापस -ENOMEM;
+	if (!req)
+		return -ENOMEM;
 
 	resp = alloc_smp_resp(RPEL_RESP_SIZE);
-	अगर (!resp) अणु
-		kमुक्त(req);
-		वापस -ENOMEM;
-	पूर्ण
+	if (!resp) {
+		kfree(req);
+		return -ENOMEM;
+	}
 
 	req[1] = SMP_REPORT_PHY_ERR_LOG;
 	req[9] = phy->number;
@@ -681,8 +680,8 @@ out:
 	res = smp_execute_task(dev, req, RPEL_REQ_SIZE,
 			       resp, RPEL_RESP_SIZE);
 
-	अगर (res)
-		जाओ out;
+	if (res)
+		goto out;
 
 	phy->invalid_dword_count = get_unaligned_be32(&resp[12]);
 	phy->running_disparity_error_count = get_unaligned_be32(&resp[16]);
@@ -690,26 +689,26 @@ out:
 	phy->phy_reset_problem_count = get_unaligned_be32(&resp[24]);
 
  out:
-	kमुक्त(req);
-	kमुक्त(resp);
-	वापस res;
+	kfree(req);
+	kfree(resp);
+	return res;
 
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_SCSI_SAS_ATA
+#ifdef CONFIG_SCSI_SAS_ATA
 
-#घोषणा RPS_REQ_SIZE  16
-#घोषणा RPS_RESP_SIZE 60
+#define RPS_REQ_SIZE  16
+#define RPS_RESP_SIZE 60
 
-पूर्णांक sas_get_report_phy_sata(काष्ठा करोमुख्य_device *dev, पूर्णांक phy_id,
-			    काष्ठा smp_resp *rps_resp)
-अणु
-	पूर्णांक res;
+int sas_get_report_phy_sata(struct domain_device *dev, int phy_id,
+			    struct smp_resp *rps_resp)
+{
+	int res;
 	u8 *rps_req = alloc_smp_req(RPS_REQ_SIZE);
 	u8 *resp = (u8 *)rps_resp;
 
-	अगर (!rps_req)
-		वापस -ENOMEM;
+	if (!rps_req)
+		return -ENOMEM;
 
 	rps_req[1] = SMP_REPORT_PHY_SATA;
 	rps_req[9] = phy_id;
@@ -717,16 +716,16 @@ out:
 	res = smp_execute_task(dev, rps_req, RPS_REQ_SIZE,
 			       rps_resp, RPS_RESP_SIZE);
 
-	/* 0x34 is the FIS type क्रम the D2H fis.  There's a potential
-	 * standards cockup here.  sas-2 explicitly specअगरies the FIS
+	/* 0x34 is the FIS type for the D2H fis.  There's a potential
+	 * standards cockup here.  sas-2 explicitly specifies the FIS
 	 * should be encoded so that FIS type is in resp[24].
-	 * However, some expanders endian reverse this.  Unकरो the
+	 * However, some expanders endian reverse this.  Undo the
 	 * reversal here */
-	अगर (!res && resp[27] == 0x34 && resp[24] != 0x34) अणु
-		पूर्णांक i;
+	if (!res && resp[27] == 0x34 && resp[24] != 0x34) {
+		int i;
 
-		क्रम (i = 0; i < 5; i++) अणु
-			पूर्णांक j = 24 + (i*4);
+		for (i = 0; i < 5; i++) {
+			int j = 24 + (i*4);
 			u8 a, b;
 			a = resp[j + 0];
 			b = resp[j + 1];
@@ -734,35 +733,35 @@ out:
 			resp[j + 1] = resp[j + 2];
 			resp[j + 2] = b;
 			resp[j + 3] = a;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	kमुक्त(rps_req);
-	वापस res;
-पूर्ण
-#पूर्ण_अगर
+	kfree(rps_req);
+	return res;
+}
+#endif
 
-अटल व्योम sas_ex_get_linkrate(काष्ठा करोमुख्य_device *parent,
-				       काष्ठा करोमुख्य_device *child,
-				       काष्ठा ex_phy *parent_phy)
-अणु
-	काष्ठा expander_device *parent_ex = &parent->ex_dev;
-	काष्ठा sas_port *port;
-	पूर्णांक i;
+static void sas_ex_get_linkrate(struct domain_device *parent,
+				       struct domain_device *child,
+				       struct ex_phy *parent_phy)
+{
+	struct expander_device *parent_ex = &parent->ex_dev;
+	struct sas_port *port;
+	int i;
 
 	child->pathways = 0;
 
 	port = parent_phy->port;
 
-	क्रम (i = 0; i < parent_ex->num_phys; i++) अणु
-		काष्ठा ex_phy *phy = &parent_ex->ex_phy[i];
+	for (i = 0; i < parent_ex->num_phys; i++) {
+		struct ex_phy *phy = &parent_ex->ex_phy[i];
 
-		अगर (phy->phy_state == PHY_VACANT ||
+		if (phy->phy_state == PHY_VACANT ||
 		    phy->phy_state == PHY_NOT_PRESENT)
-			जारी;
+			continue;
 
-		अगर (SAS_ADDR(phy->attached_sas_addr) ==
-		    SAS_ADDR(child->sas_addr)) अणु
+		if (SAS_ADDR(phy->attached_sas_addr) ==
+		    SAS_ADDR(child->sas_addr)) {
 
 			child->min_linkrate = min(parent->min_linkrate,
 						  phy->linkrate);
@@ -770,85 +769,85 @@ out:
 						  phy->linkrate);
 			child->pathways++;
 			sas_port_add_phy(port, phy->phy);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	child->linkrate = min(parent_phy->linkrate, child->max_linkrate);
 	child->pathways = min(child->pathways, parent->pathways);
-पूर्ण
+}
 
-अटल काष्ठा करोमुख्य_device *sas_ex_discover_end_dev(
-	काष्ठा करोमुख्य_device *parent, पूर्णांक phy_id)
-अणु
-	काष्ठा expander_device *parent_ex = &parent->ex_dev;
-	काष्ठा ex_phy *phy = &parent_ex->ex_phy[phy_id];
-	काष्ठा करोमुख्य_device *child = शून्य;
-	काष्ठा sas_rphy *rphy;
-	पूर्णांक res;
+static struct domain_device *sas_ex_discover_end_dev(
+	struct domain_device *parent, int phy_id)
+{
+	struct expander_device *parent_ex = &parent->ex_dev;
+	struct ex_phy *phy = &parent_ex->ex_phy[phy_id];
+	struct domain_device *child = NULL;
+	struct sas_rphy *rphy;
+	int res;
 
-	अगर (phy->attached_sata_host || phy->attached_sata_ps)
-		वापस शून्य;
+	if (phy->attached_sata_host || phy->attached_sata_ps)
+		return NULL;
 
 	child = sas_alloc_device();
-	अगर (!child)
-		वापस शून्य;
+	if (!child)
+		return NULL;
 
 	kref_get(&parent->kref);
 	child->parent = parent;
 	child->port   = parent->port;
 	child->iproto = phy->attached_iproto;
-	स_नकल(child->sas_addr, phy->attached_sas_addr, SAS_ADDR_SIZE);
+	memcpy(child->sas_addr, phy->attached_sas_addr, SAS_ADDR_SIZE);
 	sas_hash_addr(child->hashed_sas_addr, child->sas_addr);
-	अगर (!phy->port) अणु
+	if (!phy->port) {
 		phy->port = sas_port_alloc(&parent->rphy->dev, phy_id);
-		अगर (unlikely(!phy->port))
-			जाओ out_err;
-		अगर (unlikely(sas_port_add(phy->port) != 0)) अणु
-			sas_port_मुक्त(phy->port);
-			जाओ out_err;
-		पूर्ण
-	पूर्ण
+		if (unlikely(!phy->port))
+			goto out_err;
+		if (unlikely(sas_port_add(phy->port) != 0)) {
+			sas_port_free(phy->port);
+			goto out_err;
+		}
+	}
 	sas_ex_get_linkrate(parent, child, phy);
 	sas_device_set_phy(child, phy->port);
 
-#अगर_घोषित CONFIG_SCSI_SAS_ATA
-	अगर ((phy->attached_tproto & SAS_PROTOCOL_STP) || phy->attached_sata_dev) अणु
-		अगर (child->linkrate > parent->min_linkrate) अणु
-			काष्ठा sas_phy *cphy = child->phy;
-			क्रमागत sas_linkrate min_prate = cphy->minimum_linkrate,
+#ifdef CONFIG_SCSI_SAS_ATA
+	if ((phy->attached_tproto & SAS_PROTOCOL_STP) || phy->attached_sata_dev) {
+		if (child->linkrate > parent->min_linkrate) {
+			struct sas_phy *cphy = child->phy;
+			enum sas_linkrate min_prate = cphy->minimum_linkrate,
 				parent_min_lrate = parent->min_linkrate,
 				min_linkrate = (min_prate > parent_min_lrate) ?
 					       parent_min_lrate : 0;
-			काष्ठा sas_phy_linkrates rates = अणु
+			struct sas_phy_linkrates rates = {
 				.maximum_linkrate = parent->min_linkrate,
 				.minimum_linkrate = min_linkrate,
-			पूर्ण;
-			पूर्णांक ret;
+			};
+			int ret;
 
 			pr_notice("ex %016llx phy%02d SATA device linkrate > min pathway connection rate, attempting to lower device linkrate\n",
 				   SAS_ADDR(child->sas_addr), phy_id);
 			ret = sas_smp_phy_control(parent, phy_id,
 						  PHY_FUNC_LINK_RESET, &rates);
-			अगर (ret) अणु
+			if (ret) {
 				pr_err("ex %016llx phy%02d SATA device could not set linkrate (%d)\n",
 				       SAS_ADDR(child->sas_addr), phy_id, ret);
-				जाओ out_मुक्त;
-			पूर्ण
+				goto out_free;
+			}
 			pr_notice("ex %016llx phy%02d SATA device set linkrate successfully\n",
 				  SAS_ADDR(child->sas_addr), phy_id);
 			child->linkrate = child->min_linkrate;
-		पूर्ण
+		}
 		res = sas_get_ata_info(child, phy);
-		अगर (res)
-			जाओ out_मुक्त;
+		if (res)
+			goto out_free;
 
 		sas_init_dev(child);
 		res = sas_ata_init(child);
-		अगर (res)
-			जाओ out_मुक्त;
+		if (res)
+			goto out_free;
 		rphy = sas_end_device_alloc(phy->port);
-		अगर (!rphy)
-			जाओ out_मुक्त;
-		rphy->identअगरy.phy_identअगरier = phy_id;
+		if (!rphy)
+			goto out_free;
+		rphy->identify.phy_identifier = phy_id;
 
 		child->rphy = rphy;
 		get_device(&rphy->dev);
@@ -856,125 +855,125 @@ out:
 		list_add_tail(&child->disco_list_node, &parent->port->disco_list);
 
 		res = sas_discover_sata(child);
-		अगर (res) अणु
+		if (res) {
 			pr_notice("sas_discover_sata() for device %16llx at %016llx:%02d returned 0x%x\n",
 				  SAS_ADDR(child->sas_addr),
 				  SAS_ADDR(parent->sas_addr), phy_id, res);
-			जाओ out_list_del;
-		पूर्ण
-	पूर्ण अन्यथा
-#पूर्ण_अगर
-	  अगर (phy->attached_tproto & SAS_PROTOCOL_SSP) अणु
+			goto out_list_del;
+		}
+	} else
+#endif
+	  if (phy->attached_tproto & SAS_PROTOCOL_SSP) {
 		child->dev_type = SAS_END_DEVICE;
 		rphy = sas_end_device_alloc(phy->port);
 		/* FIXME: error handling */
-		अगर (unlikely(!rphy))
-			जाओ out_मुक्त;
+		if (unlikely(!rphy))
+			goto out_free;
 		child->tproto = phy->attached_tproto;
 		sas_init_dev(child);
 
 		child->rphy = rphy;
 		get_device(&rphy->dev);
-		rphy->identअगरy.phy_identअगरier = phy_id;
+		rphy->identify.phy_identifier = phy_id;
 		sas_fill_in_rphy(child, rphy);
 
 		list_add_tail(&child->disco_list_node, &parent->port->disco_list);
 
 		res = sas_discover_end_dev(child);
-		अगर (res) अणु
+		if (res) {
 			pr_notice("sas_discover_end_dev() for device %016llx at %016llx:%02d returned 0x%x\n",
 				  SAS_ADDR(child->sas_addr),
 				  SAS_ADDR(parent->sas_addr), phy_id, res);
-			जाओ out_list_del;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			goto out_list_del;
+		}
+	} else {
 		pr_notice("target proto 0x%x at %016llx:0x%x not handled\n",
 			  phy->attached_tproto, SAS_ADDR(parent->sas_addr),
 			  phy_id);
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
 	list_add_tail(&child->siblings, &parent_ex->children);
-	वापस child;
+	return child;
 
  out_list_del:
-	sas_rphy_मुक्त(child->rphy);
+	sas_rphy_free(child->rphy);
 	list_del(&child->disco_list_node);
 	spin_lock_irq(&parent->port->dev_list_lock);
 	list_del(&child->dev_list_node);
 	spin_unlock_irq(&parent->port->dev_list_lock);
- out_मुक्त:
+ out_free:
 	sas_port_delete(phy->port);
  out_err:
-	phy->port = शून्य;
+	phy->port = NULL;
 	sas_put_device(child);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-/* See अगर this phy is part of a wide port */
-अटल bool sas_ex_join_wide_port(काष्ठा करोमुख्य_device *parent, पूर्णांक phy_id)
-अणु
-	काष्ठा ex_phy *phy = &parent->ex_dev.ex_phy[phy_id];
-	पूर्णांक i;
+/* See if this phy is part of a wide port */
+static bool sas_ex_join_wide_port(struct domain_device *parent, int phy_id)
+{
+	struct ex_phy *phy = &parent->ex_dev.ex_phy[phy_id];
+	int i;
 
-	क्रम (i = 0; i < parent->ex_dev.num_phys; i++) अणु
-		काष्ठा ex_phy *ephy = &parent->ex_dev.ex_phy[i];
+	for (i = 0; i < parent->ex_dev.num_phys; i++) {
+		struct ex_phy *ephy = &parent->ex_dev.ex_phy[i];
 
-		अगर (ephy == phy)
-			जारी;
+		if (ephy == phy)
+			continue;
 
-		अगर (!स_भेद(phy->attached_sas_addr, ephy->attached_sas_addr,
-			    SAS_ADDR_SIZE) && ephy->port) अणु
+		if (!memcmp(phy->attached_sas_addr, ephy->attached_sas_addr,
+			    SAS_ADDR_SIZE) && ephy->port) {
 			sas_port_add_phy(ephy->port, phy->phy);
 			phy->port = ephy->port;
 			phy->phy_state = PHY_DEVICE_DISCOVERED;
-			वापस true;
-		पूर्ण
-	पूर्ण
+			return true;
+		}
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल काष्ठा करोमुख्य_device *sas_ex_discover_expander(
-	काष्ठा करोमुख्य_device *parent, पूर्णांक phy_id)
-अणु
-	काष्ठा sas_expander_device *parent_ex = rphy_to_expander_device(parent->rphy);
-	काष्ठा ex_phy *phy = &parent->ex_dev.ex_phy[phy_id];
-	काष्ठा करोमुख्य_device *child = शून्य;
-	काष्ठा sas_rphy *rphy;
-	काष्ठा sas_expander_device *edev;
-	काष्ठा asd_sas_port *port;
-	पूर्णांक res;
+static struct domain_device *sas_ex_discover_expander(
+	struct domain_device *parent, int phy_id)
+{
+	struct sas_expander_device *parent_ex = rphy_to_expander_device(parent->rphy);
+	struct ex_phy *phy = &parent->ex_dev.ex_phy[phy_id];
+	struct domain_device *child = NULL;
+	struct sas_rphy *rphy;
+	struct sas_expander_device *edev;
+	struct asd_sas_port *port;
+	int res;
 
-	अगर (phy->routing_attr == सूचीECT_ROUTING) अणु
+	if (phy->routing_attr == DIRECT_ROUTING) {
 		pr_warn("ex %016llx:%02d:D <--> ex %016llx:0x%x is not allowed\n",
 			SAS_ADDR(parent->sas_addr), phy_id,
 			SAS_ADDR(phy->attached_sas_addr),
 			phy->attached_phy_id);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 	child = sas_alloc_device();
-	अगर (!child)
-		वापस शून्य;
+	if (!child)
+		return NULL;
 
 	phy->port = sas_port_alloc(&parent->rphy->dev, phy_id);
 	/* FIXME: better error handling */
 	BUG_ON(sas_port_add(phy->port) != 0);
 
 
-	चयन (phy->attached_dev_type) अणु
-	हाल SAS_EDGE_EXPANDER_DEVICE:
+	switch (phy->attached_dev_type) {
+	case SAS_EDGE_EXPANDER_DEVICE:
 		rphy = sas_expander_alloc(phy->port,
 					  SAS_EDGE_EXPANDER_DEVICE);
-		अवरोध;
-	हाल SAS_FANOUT_EXPANDER_DEVICE:
+		break;
+	case SAS_FANOUT_EXPANDER_DEVICE:
 		rphy = sas_expander_alloc(phy->port,
 					  SAS_FANOUT_EXPANDER_DEVICE);
-		अवरोध;
-	शेष:
-		rphy = शून्य;	/* shut gcc up */
+		break;
+	default:
+		rphy = NULL;	/* shut gcc up */
 		BUG();
-	पूर्ण
+	}
 	port = parent->port;
 	child->rphy = rphy;
 	get_device(&rphy->dev);
@@ -985,7 +984,7 @@ out:
 	child->port = port;
 	child->iproto = phy->attached_iproto;
 	child->tproto = phy->attached_tproto;
-	स_नकल(child->sas_addr, phy->attached_sas_addr, SAS_ADDR_SIZE);
+	memcpy(child->sas_addr, phy->attached_sas_addr, SAS_ADDR_SIZE);
 	sas_hash_addr(child->hashed_sas_addr, child->sas_addr);
 	sas_ex_get_linkrate(parent, child, phy);
 	edev->level = parent_ex->level + 1;
@@ -1000,157 +999,157 @@ out:
 	spin_unlock_irq(&parent->port->dev_list_lock);
 
 	res = sas_discover_expander(child);
-	अगर (res) अणु
+	if (res) {
 		sas_rphy_delete(rphy);
 		spin_lock_irq(&parent->port->dev_list_lock);
 		list_del(&child->dev_list_node);
 		spin_unlock_irq(&parent->port->dev_list_lock);
 		sas_put_device(child);
 		sas_port_delete(phy->port);
-		phy->port = शून्य;
-		वापस शून्य;
-	पूर्ण
+		phy->port = NULL;
+		return NULL;
+	}
 	list_add_tail(&child->siblings, &parent->ex_dev.children);
-	वापस child;
-पूर्ण
+	return child;
+}
 
-अटल पूर्णांक sas_ex_discover_dev(काष्ठा करोमुख्य_device *dev, पूर्णांक phy_id)
-अणु
-	काष्ठा expander_device *ex = &dev->ex_dev;
-	काष्ठा ex_phy *ex_phy = &ex->ex_phy[phy_id];
-	काष्ठा करोमुख्य_device *child = शून्य;
-	पूर्णांक res = 0;
+static int sas_ex_discover_dev(struct domain_device *dev, int phy_id)
+{
+	struct expander_device *ex = &dev->ex_dev;
+	struct ex_phy *ex_phy = &ex->ex_phy[phy_id];
+	struct domain_device *child = NULL;
+	int res = 0;
 
 	/* Phy state */
-	अगर (ex_phy->linkrate == SAS_SATA_SPINUP_HOLD) अणु
-		अगर (!sas_smp_phy_control(dev, phy_id, PHY_FUNC_LINK_RESET, शून्य))
+	if (ex_phy->linkrate == SAS_SATA_SPINUP_HOLD) {
+		if (!sas_smp_phy_control(dev, phy_id, PHY_FUNC_LINK_RESET, NULL))
 			res = sas_ex_phy_discover(dev, phy_id);
-		अगर (res)
-			वापस res;
-	पूर्ण
+		if (res)
+			return res;
+	}
 
-	/* Parent and करोमुख्य coherency */
-	अगर (!dev->parent && (SAS_ADDR(ex_phy->attached_sas_addr) ==
-			     SAS_ADDR(dev->port->sas_addr))) अणु
+	/* Parent and domain coherency */
+	if (!dev->parent && (SAS_ADDR(ex_phy->attached_sas_addr) ==
+			     SAS_ADDR(dev->port->sas_addr))) {
 		sas_add_parent_port(dev, phy_id);
-		वापस 0;
-	पूर्ण
-	अगर (dev->parent && (SAS_ADDR(ex_phy->attached_sas_addr) ==
-			    SAS_ADDR(dev->parent->sas_addr))) अणु
+		return 0;
+	}
+	if (dev->parent && (SAS_ADDR(ex_phy->attached_sas_addr) ==
+			    SAS_ADDR(dev->parent->sas_addr))) {
 		sas_add_parent_port(dev, phy_id);
-		अगर (ex_phy->routing_attr == TABLE_ROUTING)
+		if (ex_phy->routing_attr == TABLE_ROUTING)
 			sas_configure_phy(dev, phy_id, dev->port->sas_addr, 1);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (sas_dev_present_in_करोमुख्य(dev->port, ex_phy->attached_sas_addr))
+	if (sas_dev_present_in_domain(dev->port, ex_phy->attached_sas_addr))
 		sas_ex_disable_port(dev, ex_phy->attached_sas_addr);
 
-	अगर (ex_phy->attached_dev_type == SAS_PHY_UNUSED) अणु
-		अगर (ex_phy->routing_attr == सूचीECT_ROUTING) अणु
-			स_रखो(ex_phy->attached_sas_addr, 0, SAS_ADDR_SIZE);
+	if (ex_phy->attached_dev_type == SAS_PHY_UNUSED) {
+		if (ex_phy->routing_attr == DIRECT_ROUTING) {
+			memset(ex_phy->attached_sas_addr, 0, SAS_ADDR_SIZE);
 			sas_configure_routing(dev, ex_phy->attached_sas_addr);
-		पूर्ण
-		वापस 0;
-	पूर्ण अन्यथा अगर (ex_phy->linkrate == SAS_LINK_RATE_UNKNOWN)
-		वापस 0;
+		}
+		return 0;
+	} else if (ex_phy->linkrate == SAS_LINK_RATE_UNKNOWN)
+		return 0;
 
-	अगर (ex_phy->attached_dev_type != SAS_END_DEVICE &&
+	if (ex_phy->attached_dev_type != SAS_END_DEVICE &&
 	    ex_phy->attached_dev_type != SAS_FANOUT_EXPANDER_DEVICE &&
 	    ex_phy->attached_dev_type != SAS_EDGE_EXPANDER_DEVICE &&
-	    ex_phy->attached_dev_type != SAS_SATA_PENDING) अणु
+	    ex_phy->attached_dev_type != SAS_SATA_PENDING) {
 		pr_warn("unknown device type(0x%x) attached to ex %016llx phy%02d\n",
 			ex_phy->attached_dev_type,
 			SAS_ADDR(dev->sas_addr),
 			phy_id);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	res = sas_configure_routing(dev, ex_phy->attached_sas_addr);
-	अगर (res) अणु
+	if (res) {
 		pr_notice("configure routing for dev %016llx reported 0x%x. Forgotten\n",
 			  SAS_ADDR(ex_phy->attached_sas_addr), res);
 		sas_disable_routing(dev, ex_phy->attached_sas_addr);
-		वापस res;
-	पूर्ण
+		return res;
+	}
 
-	अगर (sas_ex_join_wide_port(dev, phy_id)) अणु
+	if (sas_ex_join_wide_port(dev, phy_id)) {
 		pr_debug("Attaching ex phy%02d to wide port %016llx\n",
 			 phy_id, SAS_ADDR(ex_phy->attached_sas_addr));
-		वापस res;
-	पूर्ण
+		return res;
+	}
 
-	चयन (ex_phy->attached_dev_type) अणु
-	हाल SAS_END_DEVICE:
-	हाल SAS_SATA_PENDING:
+	switch (ex_phy->attached_dev_type) {
+	case SAS_END_DEVICE:
+	case SAS_SATA_PENDING:
 		child = sas_ex_discover_end_dev(dev, phy_id);
-		अवरोध;
-	हाल SAS_FANOUT_EXPANDER_DEVICE:
-		अगर (SAS_ADDR(dev->port->disc.fanout_sas_addr)) अणु
+		break;
+	case SAS_FANOUT_EXPANDER_DEVICE:
+		if (SAS_ADDR(dev->port->disc.fanout_sas_addr)) {
 			pr_debug("second fanout expander %016llx phy%02d attached to ex %016llx phy%02d\n",
 				 SAS_ADDR(ex_phy->attached_sas_addr),
 				 ex_phy->attached_phy_id,
 				 SAS_ADDR(dev->sas_addr),
 				 phy_id);
 			sas_ex_disable_phy(dev, phy_id);
-			वापस res;
-		पूर्ण अन्यथा
-			स_नकल(dev->port->disc.fanout_sas_addr,
+			return res;
+		} else
+			memcpy(dev->port->disc.fanout_sas_addr,
 			       ex_phy->attached_sas_addr, SAS_ADDR_SIZE);
 		fallthrough;
-	हाल SAS_EDGE_EXPANDER_DEVICE:
+	case SAS_EDGE_EXPANDER_DEVICE:
 		child = sas_ex_discover_expander(dev, phy_id);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	अगर (!child)
+	if (!child)
 		pr_notice("ex %016llx phy%02d failed to discover\n",
 			  SAS_ADDR(dev->sas_addr), phy_id);
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल पूर्णांक sas_find_sub_addr(काष्ठा करोमुख्य_device *dev, u8 *sub_addr)
-अणु
-	काष्ठा expander_device *ex = &dev->ex_dev;
-	पूर्णांक i;
+static int sas_find_sub_addr(struct domain_device *dev, u8 *sub_addr)
+{
+	struct expander_device *ex = &dev->ex_dev;
+	int i;
 
-	क्रम (i = 0; i < ex->num_phys; i++) अणु
-		काष्ठा ex_phy *phy = &ex->ex_phy[i];
+	for (i = 0; i < ex->num_phys; i++) {
+		struct ex_phy *phy = &ex->ex_phy[i];
 
-		अगर (phy->phy_state == PHY_VACANT ||
+		if (phy->phy_state == PHY_VACANT ||
 		    phy->phy_state == PHY_NOT_PRESENT)
-			जारी;
+			continue;
 
-		अगर (dev_is_expander(phy->attached_dev_type) &&
-		    phy->routing_attr == SUBTRACTIVE_ROUTING) अणु
+		if (dev_is_expander(phy->attached_dev_type) &&
+		    phy->routing_attr == SUBTRACTIVE_ROUTING) {
 
-			स_नकल(sub_addr, phy->attached_sas_addr, SAS_ADDR_SIZE);
+			memcpy(sub_addr, phy->attached_sas_addr, SAS_ADDR_SIZE);
 
-			वापस 1;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return 1;
+		}
+	}
+	return 0;
+}
 
-अटल पूर्णांक sas_check_level_subtractive_boundary(काष्ठा करोमुख्य_device *dev)
-अणु
-	काष्ठा expander_device *ex = &dev->ex_dev;
-	काष्ठा करोमुख्य_device *child;
-	u8 sub_addr[SAS_ADDR_SIZE] = अणु0, पूर्ण;
+static int sas_check_level_subtractive_boundary(struct domain_device *dev)
+{
+	struct expander_device *ex = &dev->ex_dev;
+	struct domain_device *child;
+	u8 sub_addr[SAS_ADDR_SIZE] = {0, };
 
-	list_क्रम_each_entry(child, &ex->children, siblings) अणु
-		अगर (!dev_is_expander(child->dev_type))
-			जारी;
-		अगर (sub_addr[0] == 0) अणु
+	list_for_each_entry(child, &ex->children, siblings) {
+		if (!dev_is_expander(child->dev_type))
+			continue;
+		if (sub_addr[0] == 0) {
 			sas_find_sub_addr(child, sub_addr);
-			जारी;
-		पूर्ण अन्यथा अणु
+			continue;
+		} else {
 			u8 s2[SAS_ADDR_SIZE];
 
-			अगर (sas_find_sub_addr(child, s2) &&
-			    (SAS_ADDR(sub_addr) != SAS_ADDR(s2))) अणु
+			if (sas_find_sub_addr(child, s2) &&
+			    (SAS_ADDR(sub_addr) != SAS_ADDR(s2))) {
 
 				pr_notice("ex %016llx->%016llx-?->%016llx diverges from subtractive boundary %016llx\n",
 					  SAS_ADDR(dev->sas_addr),
@@ -1159,101 +1158,101 @@ out:
 					  SAS_ADDR(sub_addr));
 
 				sas_ex_disable_port(child, s2);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			}
+		}
+	}
+	return 0;
+}
 /**
  * sas_ex_discover_devices - discover devices attached to this expander
- * @dev: poपूर्णांकer to the expander करोमुख्य device
- * @single: अगर you want to करो a single phy, अन्यथा set to -1;
+ * @dev: pointer to the expander domain device
+ * @single: if you want to do a single phy, else set to -1;
  *
- * Configure this expander क्रम use with its devices and रेजिस्टर the
+ * Configure this expander for use with its devices and register the
  * devices of this expander.
  */
-अटल पूर्णांक sas_ex_discover_devices(काष्ठा करोमुख्य_device *dev, पूर्णांक single)
-अणु
-	काष्ठा expander_device *ex = &dev->ex_dev;
-	पूर्णांक i = 0, end = ex->num_phys;
-	पूर्णांक res = 0;
+static int sas_ex_discover_devices(struct domain_device *dev, int single)
+{
+	struct expander_device *ex = &dev->ex_dev;
+	int i = 0, end = ex->num_phys;
+	int res = 0;
 
-	अगर (0 <= single && single < end) अणु
+	if (0 <= single && single < end) {
 		i = single;
 		end = i+1;
-	पूर्ण
+	}
 
-	क्रम ( ; i < end; i++) अणु
-		काष्ठा ex_phy *ex_phy = &ex->ex_phy[i];
+	for ( ; i < end; i++) {
+		struct ex_phy *ex_phy = &ex->ex_phy[i];
 
-		अगर (ex_phy->phy_state == PHY_VACANT ||
+		if (ex_phy->phy_state == PHY_VACANT ||
 		    ex_phy->phy_state == PHY_NOT_PRESENT ||
 		    ex_phy->phy_state == PHY_DEVICE_DISCOVERED)
-			जारी;
+			continue;
 
-		चयन (ex_phy->linkrate) अणु
-		हाल SAS_PHY_DISABLED:
-		हाल SAS_PHY_RESET_PROBLEM:
-		हाल SAS_SATA_PORT_SELECTOR:
-			जारी;
-		शेष:
+		switch (ex_phy->linkrate) {
+		case SAS_PHY_DISABLED:
+		case SAS_PHY_RESET_PROBLEM:
+		case SAS_SATA_PORT_SELECTOR:
+			continue;
+		default:
 			res = sas_ex_discover_dev(dev, i);
-			अगर (res)
-				अवरोध;
-			जारी;
-		पूर्ण
-	पूर्ण
+			if (res)
+				break;
+			continue;
+		}
+	}
 
-	अगर (!res)
+	if (!res)
 		sas_check_level_subtractive_boundary(dev);
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल पूर्णांक sas_check_ex_subtractive_boundary(काष्ठा करोमुख्य_device *dev)
-अणु
-	काष्ठा expander_device *ex = &dev->ex_dev;
-	पूर्णांक i;
-	u8  *sub_sas_addr = शून्य;
+static int sas_check_ex_subtractive_boundary(struct domain_device *dev)
+{
+	struct expander_device *ex = &dev->ex_dev;
+	int i;
+	u8  *sub_sas_addr = NULL;
 
-	अगर (dev->dev_type != SAS_EDGE_EXPANDER_DEVICE)
-		वापस 0;
+	if (dev->dev_type != SAS_EDGE_EXPANDER_DEVICE)
+		return 0;
 
-	क्रम (i = 0; i < ex->num_phys; i++) अणु
-		काष्ठा ex_phy *phy = &ex->ex_phy[i];
+	for (i = 0; i < ex->num_phys; i++) {
+		struct ex_phy *phy = &ex->ex_phy[i];
 
-		अगर (phy->phy_state == PHY_VACANT ||
+		if (phy->phy_state == PHY_VACANT ||
 		    phy->phy_state == PHY_NOT_PRESENT)
-			जारी;
+			continue;
 
-		अगर (dev_is_expander(phy->attached_dev_type) &&
-		    phy->routing_attr == SUBTRACTIVE_ROUTING) अणु
+		if (dev_is_expander(phy->attached_dev_type) &&
+		    phy->routing_attr == SUBTRACTIVE_ROUTING) {
 
-			अगर (!sub_sas_addr)
+			if (!sub_sas_addr)
 				sub_sas_addr = &phy->attached_sas_addr[0];
-			अन्यथा अगर (SAS_ADDR(sub_sas_addr) !=
-				 SAS_ADDR(phy->attached_sas_addr)) अणु
+			else if (SAS_ADDR(sub_sas_addr) !=
+				 SAS_ADDR(phy->attached_sas_addr)) {
 
 				pr_notice("ex %016llx phy%02d diverges(%016llx) on subtractive boundary(%016llx). Disabled\n",
 					  SAS_ADDR(dev->sas_addr), i,
 					  SAS_ADDR(phy->attached_sas_addr),
 					  SAS_ADDR(sub_sas_addr));
 				sas_ex_disable_phy(dev, i);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			}
+		}
+	}
+	return 0;
+}
 
-अटल व्योम sas_prपूर्णांक_parent_topology_bug(काष्ठा करोमुख्य_device *child,
-						 काष्ठा ex_phy *parent_phy,
-						 काष्ठा ex_phy *child_phy)
-अणु
-	अटल स्थिर अक्षर *ex_type[] = अणु
+static void sas_print_parent_topology_bug(struct domain_device *child,
+						 struct ex_phy *parent_phy,
+						 struct ex_phy *child_phy)
+{
+	static const char *ex_type[] = {
 		[SAS_EDGE_EXPANDER_DEVICE] = "edge",
 		[SAS_FANOUT_EXPANDER_DEVICE] = "fanout",
-	पूर्ण;
-	काष्ठा करोमुख्य_device *parent = child->parent;
+	};
+	struct domain_device *parent = child->parent;
 
 	pr_notice("%s ex %016llx phy%02d <--> %s ex %016llx phy%02d has %c:%c routing link!\n",
 		  ex_type[parent->dev_type],
@@ -1264,18 +1263,18 @@ out:
 		  SAS_ADDR(child->sas_addr),
 		  child_phy->phy_id,
 
-		  sas_route_अक्षर(parent, parent_phy),
-		  sas_route_अक्षर(child, child_phy));
-पूर्ण
+		  sas_route_char(parent, parent_phy),
+		  sas_route_char(child, child_phy));
+}
 
-अटल पूर्णांक sas_check_eeds(काष्ठा करोमुख्य_device *child,
-				 काष्ठा ex_phy *parent_phy,
-				 काष्ठा ex_phy *child_phy)
-अणु
-	पूर्णांक res = 0;
-	काष्ठा करोमुख्य_device *parent = child->parent;
+static int sas_check_eeds(struct domain_device *child,
+				 struct ex_phy *parent_phy,
+				 struct ex_phy *child_phy)
+{
+	int res = 0;
+	struct domain_device *parent = child->parent;
 
-	अगर (SAS_ADDR(parent->port->disc.fanout_sas_addr) != 0) अणु
+	if (SAS_ADDR(parent->port->disc.fanout_sas_addr) != 0) {
 		res = -ENODEV;
 		pr_warn("edge ex %016llx phy S:%02d <--> edge ex %016llx phy S:%02d, while there is a fanout ex %016llx\n",
 			SAS_ADDR(parent->sas_addr),
@@ -1283,12 +1282,12 @@ out:
 			SAS_ADDR(child->sas_addr),
 			child_phy->phy_id,
 			SAS_ADDR(parent->port->disc.fanout_sas_addr));
-	पूर्ण अन्यथा अगर (SAS_ADDR(parent->port->disc.eeds_a) == 0) अणु
-		स_नकल(parent->port->disc.eeds_a, parent->sas_addr,
+	} else if (SAS_ADDR(parent->port->disc.eeds_a) == 0) {
+		memcpy(parent->port->disc.eeds_a, parent->sas_addr,
 		       SAS_ADDR_SIZE);
-		स_नकल(parent->port->disc.eeds_b, child->sas_addr,
+		memcpy(parent->port->disc.eeds_b, child->sas_addr,
 		       SAS_ADDR_SIZE);
-	पूर्ण अन्यथा अगर (((SAS_ADDR(parent->port->disc.eeds_a) ==
+	} else if (((SAS_ADDR(parent->port->disc.eeds_a) ==
 		    SAS_ADDR(parent->sas_addr)) ||
 		   (SAS_ADDR(parent->port->disc.eeds_a) ==
 		    SAS_ADDR(child->sas_addr)))
@@ -1298,98 +1297,98 @@ out:
 		    (SAS_ADDR(parent->port->disc.eeds_b) ==
 		     SAS_ADDR(child->sas_addr))))
 		;
-	अन्यथा अणु
+	else {
 		res = -ENODEV;
 		pr_warn("edge ex %016llx phy%02d <--> edge ex %016llx phy%02d link forms a third EEDS!\n",
 			SAS_ADDR(parent->sas_addr),
 			parent_phy->phy_id,
 			SAS_ADDR(child->sas_addr),
 			child_phy->phy_id);
-	पूर्ण
+	}
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
-/* Here we spill over 80 columns.  It is पूर्णांकentional.
+/* Here we spill over 80 columns.  It is intentional.
  */
-अटल पूर्णांक sas_check_parent_topology(काष्ठा करोमुख्य_device *child)
-अणु
-	काष्ठा expander_device *child_ex = &child->ex_dev;
-	काष्ठा expander_device *parent_ex;
-	पूर्णांक i;
-	पूर्णांक res = 0;
+static int sas_check_parent_topology(struct domain_device *child)
+{
+	struct expander_device *child_ex = &child->ex_dev;
+	struct expander_device *parent_ex;
+	int i;
+	int res = 0;
 
-	अगर (!child->parent)
-		वापस 0;
+	if (!child->parent)
+		return 0;
 
-	अगर (!dev_is_expander(child->parent->dev_type))
-		वापस 0;
+	if (!dev_is_expander(child->parent->dev_type))
+		return 0;
 
 	parent_ex = &child->parent->ex_dev;
 
-	क्रम (i = 0; i < parent_ex->num_phys; i++) अणु
-		काष्ठा ex_phy *parent_phy = &parent_ex->ex_phy[i];
-		काष्ठा ex_phy *child_phy;
+	for (i = 0; i < parent_ex->num_phys; i++) {
+		struct ex_phy *parent_phy = &parent_ex->ex_phy[i];
+		struct ex_phy *child_phy;
 
-		अगर (parent_phy->phy_state == PHY_VACANT ||
+		if (parent_phy->phy_state == PHY_VACANT ||
 		    parent_phy->phy_state == PHY_NOT_PRESENT)
-			जारी;
+			continue;
 
-		अगर (SAS_ADDR(parent_phy->attached_sas_addr) != SAS_ADDR(child->sas_addr))
-			जारी;
+		if (SAS_ADDR(parent_phy->attached_sas_addr) != SAS_ADDR(child->sas_addr))
+			continue;
 
 		child_phy = &child_ex->ex_phy[parent_phy->attached_phy_id];
 
-		चयन (child->parent->dev_type) अणु
-		हाल SAS_EDGE_EXPANDER_DEVICE:
-			अगर (child->dev_type == SAS_FANOUT_EXPANDER_DEVICE) अणु
-				अगर (parent_phy->routing_attr != SUBTRACTIVE_ROUTING ||
-				    child_phy->routing_attr != TABLE_ROUTING) अणु
-					sas_prपूर्णांक_parent_topology_bug(child, parent_phy, child_phy);
+		switch (child->parent->dev_type) {
+		case SAS_EDGE_EXPANDER_DEVICE:
+			if (child->dev_type == SAS_FANOUT_EXPANDER_DEVICE) {
+				if (parent_phy->routing_attr != SUBTRACTIVE_ROUTING ||
+				    child_phy->routing_attr != TABLE_ROUTING) {
+					sas_print_parent_topology_bug(child, parent_phy, child_phy);
 					res = -ENODEV;
-				पूर्ण
-			पूर्ण अन्यथा अगर (parent_phy->routing_attr == SUBTRACTIVE_ROUTING) अणु
-				अगर (child_phy->routing_attr == SUBTRACTIVE_ROUTING) अणु
+				}
+			} else if (parent_phy->routing_attr == SUBTRACTIVE_ROUTING) {
+				if (child_phy->routing_attr == SUBTRACTIVE_ROUTING) {
 					res = sas_check_eeds(child, parent_phy, child_phy);
-				पूर्ण अन्यथा अगर (child_phy->routing_attr != TABLE_ROUTING) अणु
-					sas_prपूर्णांक_parent_topology_bug(child, parent_phy, child_phy);
+				} else if (child_phy->routing_attr != TABLE_ROUTING) {
+					sas_print_parent_topology_bug(child, parent_phy, child_phy);
 					res = -ENODEV;
-				पूर्ण
-			पूर्ण अन्यथा अगर (parent_phy->routing_attr == TABLE_ROUTING) अणु
-				अगर (child_phy->routing_attr == SUBTRACTIVE_ROUTING ||
+				}
+			} else if (parent_phy->routing_attr == TABLE_ROUTING) {
+				if (child_phy->routing_attr == SUBTRACTIVE_ROUTING ||
 				    (child_phy->routing_attr == TABLE_ROUTING &&
-				     child_ex->t2t_supp && parent_ex->t2t_supp)) अणु
+				     child_ex->t2t_supp && parent_ex->t2t_supp)) {
 					/* All good */;
-				पूर्ण अन्यथा अणु
-					sas_prपूर्णांक_parent_topology_bug(child, parent_phy, child_phy);
+				} else {
+					sas_print_parent_topology_bug(child, parent_phy, child_phy);
 					res = -ENODEV;
-				पूर्ण
-			पूर्ण
-			अवरोध;
-		हाल SAS_FANOUT_EXPANDER_DEVICE:
-			अगर (parent_phy->routing_attr != TABLE_ROUTING ||
-			    child_phy->routing_attr != SUBTRACTIVE_ROUTING) अणु
-				sas_prपूर्णांक_parent_topology_bug(child, parent_phy, child_phy);
+				}
+			}
+			break;
+		case SAS_FANOUT_EXPANDER_DEVICE:
+			if (parent_phy->routing_attr != TABLE_ROUTING ||
+			    child_phy->routing_attr != SUBTRACTIVE_ROUTING) {
+				sas_print_parent_topology_bug(child, parent_phy, child_phy);
 				res = -ENODEV;
-			पूर्ण
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			}
+			break;
+		default:
+			break;
+		}
+	}
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
-#घोषणा RRI_REQ_SIZE  16
-#घोषणा RRI_RESP_SIZE 44
+#define RRI_REQ_SIZE  16
+#define RRI_RESP_SIZE 44
 
-अटल पूर्णांक sas_configure_present(काष्ठा करोमुख्य_device *dev, पूर्णांक phy_id,
-				 u8 *sas_addr, पूर्णांक *index, पूर्णांक *present)
-अणु
-	पूर्णांक i, res = 0;
-	काष्ठा expander_device *ex = &dev->ex_dev;
-	काष्ठा ex_phy *phy = &ex->ex_phy[phy_id];
+static int sas_configure_present(struct domain_device *dev, int phy_id,
+				 u8 *sas_addr, int *index, int *present)
+{
+	int i, res = 0;
+	struct expander_device *ex = &dev->ex_dev;
+	struct ex_phy *phy = &ex->ex_phy[phy_id];
 	u8 *rri_req;
 	u8 *rri_resp;
 
@@ -1397,787 +1396,787 @@ out:
 	*index = 0;
 
 	rri_req = alloc_smp_req(RRI_REQ_SIZE);
-	अगर (!rri_req)
-		वापस -ENOMEM;
+	if (!rri_req)
+		return -ENOMEM;
 
 	rri_resp = alloc_smp_resp(RRI_RESP_SIZE);
-	अगर (!rri_resp) अणु
-		kमुक्त(rri_req);
-		वापस -ENOMEM;
-	पूर्ण
+	if (!rri_resp) {
+		kfree(rri_req);
+		return -ENOMEM;
+	}
 
 	rri_req[1] = SMP_REPORT_ROUTE_INFO;
 	rri_req[9] = phy_id;
 
-	क्रम (i = 0; i < ex->max_route_indexes ; i++) अणु
+	for (i = 0; i < ex->max_route_indexes ; i++) {
 		*(__be16 *)(rri_req+6) = cpu_to_be16(i);
 		res = smp_execute_task(dev, rri_req, RRI_REQ_SIZE, rri_resp,
 				       RRI_RESP_SIZE);
-		अगर (res)
-			जाओ out;
+		if (res)
+			goto out;
 		res = rri_resp[2];
-		अगर (res == SMP_RESP_NO_INDEX) अणु
+		if (res == SMP_RESP_NO_INDEX) {
 			pr_warn("overflow of indexes: dev %016llx phy%02d index 0x%x\n",
 				SAS_ADDR(dev->sas_addr), phy_id, i);
-			जाओ out;
-		पूर्ण अन्यथा अगर (res != SMP_RESP_FUNC_ACC) अणु
+			goto out;
+		} else if (res != SMP_RESP_FUNC_ACC) {
 			pr_notice("%s: dev %016llx phy%02d index 0x%x result 0x%x\n",
 				  __func__, SAS_ADDR(dev->sas_addr), phy_id,
 				  i, res);
-			जाओ out;
-		पूर्ण
-		अगर (SAS_ADDR(sas_addr) != 0) अणु
-			अगर (SAS_ADDR(rri_resp+16) == SAS_ADDR(sas_addr)) अणु
+			goto out;
+		}
+		if (SAS_ADDR(sas_addr) != 0) {
+			if (SAS_ADDR(rri_resp+16) == SAS_ADDR(sas_addr)) {
 				*index = i;
-				अगर ((rri_resp[12] & 0x80) == 0x80)
+				if ((rri_resp[12] & 0x80) == 0x80)
 					*present = 0;
-				अन्यथा
+				else
 					*present = 1;
-				जाओ out;
-			पूर्ण अन्यथा अगर (SAS_ADDR(rri_resp+16) == 0) अणु
+				goto out;
+			} else if (SAS_ADDR(rri_resp+16) == 0) {
 				*index = i;
 				*present = 0;
-				जाओ out;
-			पूर्ण
-		पूर्ण अन्यथा अगर (SAS_ADDR(rri_resp+16) == 0 &&
-			   phy->last_da_index < i) अणु
+				goto out;
+			}
+		} else if (SAS_ADDR(rri_resp+16) == 0 &&
+			   phy->last_da_index < i) {
 			phy->last_da_index = i;
 			*index = i;
 			*present = 0;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 	res = -1;
 out:
-	kमुक्त(rri_req);
-	kमुक्त(rri_resp);
-	वापस res;
-पूर्ण
+	kfree(rri_req);
+	kfree(rri_resp);
+	return res;
+}
 
-#घोषणा CRI_REQ_SIZE  44
-#घोषणा CRI_RESP_SIZE  8
+#define CRI_REQ_SIZE  44
+#define CRI_RESP_SIZE  8
 
-अटल पूर्णांक sas_configure_set(काष्ठा करोमुख्य_device *dev, पूर्णांक phy_id,
-			     u8 *sas_addr, पूर्णांक index, पूर्णांक include)
-अणु
-	पूर्णांक res;
+static int sas_configure_set(struct domain_device *dev, int phy_id,
+			     u8 *sas_addr, int index, int include)
+{
+	int res;
 	u8 *cri_req;
 	u8 *cri_resp;
 
 	cri_req = alloc_smp_req(CRI_REQ_SIZE);
-	अगर (!cri_req)
-		वापस -ENOMEM;
+	if (!cri_req)
+		return -ENOMEM;
 
 	cri_resp = alloc_smp_resp(CRI_RESP_SIZE);
-	अगर (!cri_resp) अणु
-		kमुक्त(cri_req);
-		वापस -ENOMEM;
-	पूर्ण
+	if (!cri_resp) {
+		kfree(cri_req);
+		return -ENOMEM;
+	}
 
 	cri_req[1] = SMP_CONF_ROUTE_INFO;
 	*(__be16 *)(cri_req+6) = cpu_to_be16(index);
 	cri_req[9] = phy_id;
-	अगर (SAS_ADDR(sas_addr) == 0 || !include)
+	if (SAS_ADDR(sas_addr) == 0 || !include)
 		cri_req[12] |= 0x80;
-	स_नकल(cri_req+16, sas_addr, SAS_ADDR_SIZE);
+	memcpy(cri_req+16, sas_addr, SAS_ADDR_SIZE);
 
 	res = smp_execute_task(dev, cri_req, CRI_REQ_SIZE, cri_resp,
 			       CRI_RESP_SIZE);
-	अगर (res)
-		जाओ out;
+	if (res)
+		goto out;
 	res = cri_resp[2];
-	अगर (res == SMP_RESP_NO_INDEX) अणु
+	if (res == SMP_RESP_NO_INDEX) {
 		pr_warn("overflow of indexes: dev %016llx phy%02d index 0x%x\n",
 			SAS_ADDR(dev->sas_addr), phy_id, index);
-	पूर्ण
+	}
 out:
-	kमुक्त(cri_req);
-	kमुक्त(cri_resp);
-	वापस res;
-पूर्ण
+	kfree(cri_req);
+	kfree(cri_resp);
+	return res;
+}
 
-अटल पूर्णांक sas_configure_phy(काष्ठा करोमुख्य_device *dev, पूर्णांक phy_id,
-				    u8 *sas_addr, पूर्णांक include)
-अणु
-	पूर्णांक index;
-	पूर्णांक present;
-	पूर्णांक res;
+static int sas_configure_phy(struct domain_device *dev, int phy_id,
+				    u8 *sas_addr, int include)
+{
+	int index;
+	int present;
+	int res;
 
 	res = sas_configure_present(dev, phy_id, sas_addr, &index, &present);
-	अगर (res)
-		वापस res;
-	अगर (include ^ present)
-		वापस sas_configure_set(dev, phy_id, sas_addr, index,
+	if (res)
+		return res;
+	if (include ^ present)
+		return sas_configure_set(dev, phy_id, sas_addr, index,
 					 include);
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
 /**
  * sas_configure_parent - configure routing table of parent
  * @parent: parent expander
  * @child: child expander
- * @sas_addr: SAS port identअगरier of device directly attached to child
+ * @sas_addr: SAS port identifier of device directly attached to child
  * @include: whether or not to include @child in the expander routing table
  */
-अटल पूर्णांक sas_configure_parent(काष्ठा करोमुख्य_device *parent,
-				काष्ठा करोमुख्य_device *child,
-				u8 *sas_addr, पूर्णांक include)
-अणु
-	काष्ठा expander_device *ex_parent = &parent->ex_dev;
-	पूर्णांक res = 0;
-	पूर्णांक i;
+static int sas_configure_parent(struct domain_device *parent,
+				struct domain_device *child,
+				u8 *sas_addr, int include)
+{
+	struct expander_device *ex_parent = &parent->ex_dev;
+	int res = 0;
+	int i;
 
-	अगर (parent->parent) अणु
+	if (parent->parent) {
 		res = sas_configure_parent(parent->parent, parent, sas_addr,
 					   include);
-		अगर (res)
-			वापस res;
-	पूर्ण
+		if (res)
+			return res;
+	}
 
-	अगर (ex_parent->conf_route_table == 0) अणु
+	if (ex_parent->conf_route_table == 0) {
 		pr_debug("ex %016llx has self-configuring routing table\n",
 			 SAS_ADDR(parent->sas_addr));
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	क्रम (i = 0; i < ex_parent->num_phys; i++) अणु
-		काष्ठा ex_phy *phy = &ex_parent->ex_phy[i];
+	for (i = 0; i < ex_parent->num_phys; i++) {
+		struct ex_phy *phy = &ex_parent->ex_phy[i];
 
-		अगर ((phy->routing_attr == TABLE_ROUTING) &&
+		if ((phy->routing_attr == TABLE_ROUTING) &&
 		    (SAS_ADDR(phy->attached_sas_addr) ==
-		     SAS_ADDR(child->sas_addr))) अणु
+		     SAS_ADDR(child->sas_addr))) {
 			res = sas_configure_phy(parent, i, sas_addr, include);
-			अगर (res)
-				वापस res;
-		पूर्ण
-	पूर्ण
+			if (res)
+				return res;
+		}
+	}
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
 /**
  * sas_configure_routing - configure routing
  * @dev: expander device
- * @sas_addr: port identअगरier of device directly attached to the expander device
+ * @sas_addr: port identifier of device directly attached to the expander device
  */
-अटल पूर्णांक sas_configure_routing(काष्ठा करोमुख्य_device *dev, u8 *sas_addr)
-अणु
-	अगर (dev->parent)
-		वापस sas_configure_parent(dev->parent, dev, sas_addr, 1);
-	वापस 0;
-पूर्ण
+static int sas_configure_routing(struct domain_device *dev, u8 *sas_addr)
+{
+	if (dev->parent)
+		return sas_configure_parent(dev->parent, dev, sas_addr, 1);
+	return 0;
+}
 
-अटल पूर्णांक sas_disable_routing(काष्ठा करोमुख्य_device *dev,  u8 *sas_addr)
-अणु
-	अगर (dev->parent)
-		वापस sas_configure_parent(dev->parent, dev, sas_addr, 0);
-	वापस 0;
-पूर्ण
+static int sas_disable_routing(struct domain_device *dev,  u8 *sas_addr)
+{
+	if (dev->parent)
+		return sas_configure_parent(dev->parent, dev, sas_addr, 0);
+	return 0;
+}
 
 /**
  * sas_discover_expander - expander discovery
- * @dev: poपूर्णांकer to expander करोमुख्य device
+ * @dev: pointer to expander domain device
  *
  * See comment in sas_discover_sata().
  */
-अटल पूर्णांक sas_discover_expander(काष्ठा करोमुख्य_device *dev)
-अणु
-	पूर्णांक res;
+static int sas_discover_expander(struct domain_device *dev)
+{
+	int res;
 
-	res = sas_notअगरy_lldd_dev_found(dev);
-	अगर (res)
-		वापस res;
+	res = sas_notify_lldd_dev_found(dev);
+	if (res)
+		return res;
 
 	res = sas_ex_general(dev);
-	अगर (res)
-		जाओ out_err;
+	if (res)
+		goto out_err;
 	res = sas_ex_manuf_info(dev);
-	अगर (res)
-		जाओ out_err;
+	if (res)
+		goto out_err;
 
 	res = sas_expander_discover(dev);
-	अगर (res) अणु
+	if (res) {
 		pr_warn("expander %016llx discovery failed(0x%x)\n",
 			SAS_ADDR(dev->sas_addr), res);
-		जाओ out_err;
-	पूर्ण
+		goto out_err;
+	}
 
 	sas_check_ex_subtractive_boundary(dev);
 	res = sas_check_parent_topology(dev);
-	अगर (res)
-		जाओ out_err;
-	वापस 0;
+	if (res)
+		goto out_err;
+	return 0;
 out_err:
-	sas_notअगरy_lldd_dev_gone(dev);
-	वापस res;
-पूर्ण
+	sas_notify_lldd_dev_gone(dev);
+	return res;
+}
 
-अटल पूर्णांक sas_ex_level_discovery(काष्ठा asd_sas_port *port, स्थिर पूर्णांक level)
-अणु
-	पूर्णांक res = 0;
-	काष्ठा करोमुख्य_device *dev;
+static int sas_ex_level_discovery(struct asd_sas_port *port, const int level)
+{
+	int res = 0;
+	struct domain_device *dev;
 
-	list_क्रम_each_entry(dev, &port->dev_list, dev_list_node) अणु
-		अगर (dev_is_expander(dev->dev_type)) अणु
-			काष्ठा sas_expander_device *ex =
+	list_for_each_entry(dev, &port->dev_list, dev_list_node) {
+		if (dev_is_expander(dev->dev_type)) {
+			struct sas_expander_device *ex =
 				rphy_to_expander_device(dev->rphy);
 
-			अगर (level == ex->level)
+			if (level == ex->level)
 				res = sas_ex_discover_devices(dev, -1);
-			अन्यथा अगर (level > 0)
+			else if (level > 0)
 				res = sas_ex_discover_devices(port->port_dev, -1);
 
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल पूर्णांक sas_ex_bfs_disc(काष्ठा asd_sas_port *port)
-अणु
-	पूर्णांक res;
-	पूर्णांक level;
+static int sas_ex_bfs_disc(struct asd_sas_port *port)
+{
+	int res;
+	int level;
 
-	करो अणु
+	do {
 		level = port->disc.max_level;
 		res = sas_ex_level_discovery(port, level);
 		mb();
-	पूर्ण जबतक (level < port->disc.max_level);
+	} while (level < port->disc.max_level);
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
-पूर्णांक sas_discover_root_expander(काष्ठा करोमुख्य_device *dev)
-अणु
-	पूर्णांक res;
-	काष्ठा sas_expander_device *ex = rphy_to_expander_device(dev->rphy);
+int sas_discover_root_expander(struct domain_device *dev)
+{
+	int res;
+	struct sas_expander_device *ex = rphy_to_expander_device(dev->rphy);
 
 	res = sas_rphy_add(dev->rphy);
-	अगर (res)
-		जाओ out_err;
+	if (res)
+		goto out_err;
 
 	ex->level = dev->port->disc.max_level; /* 0 */
 	res = sas_discover_expander(dev);
-	अगर (res)
-		जाओ out_err2;
+	if (res)
+		goto out_err2;
 
 	sas_ex_bfs_disc(dev->port);
 
-	वापस res;
+	return res;
 
 out_err2:
-	sas_rphy_हटाओ(dev->rphy);
+	sas_rphy_remove(dev->rphy);
 out_err:
-	वापस res;
-पूर्ण
+	return res;
+}
 
-/* ---------- Doमुख्य revalidation ---------- */
+/* ---------- Domain revalidation ---------- */
 
-अटल पूर्णांक sas_get_phy_discover(काष्ठा करोमुख्य_device *dev,
-				पूर्णांक phy_id, काष्ठा smp_resp *disc_resp)
-अणु
-	पूर्णांक res;
+static int sas_get_phy_discover(struct domain_device *dev,
+				int phy_id, struct smp_resp *disc_resp)
+{
+	int res;
 	u8 *disc_req;
 
 	disc_req = alloc_smp_req(DISCOVER_REQ_SIZE);
-	अगर (!disc_req)
-		वापस -ENOMEM;
+	if (!disc_req)
+		return -ENOMEM;
 
 	disc_req[1] = SMP_DISCOVER;
 	disc_req[9] = phy_id;
 
 	res = smp_execute_task(dev, disc_req, DISCOVER_REQ_SIZE,
 			       disc_resp, DISCOVER_RESP_SIZE);
-	अगर (res)
-		जाओ out;
-	अन्यथा अगर (disc_resp->result != SMP_RESP_FUNC_ACC) अणु
+	if (res)
+		goto out;
+	else if (disc_resp->result != SMP_RESP_FUNC_ACC) {
 		res = disc_resp->result;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 out:
-	kमुक्त(disc_req);
-	वापस res;
-पूर्ण
+	kfree(disc_req);
+	return res;
+}
 
-अटल पूर्णांक sas_get_phy_change_count(काष्ठा करोमुख्य_device *dev,
-				    पूर्णांक phy_id, पूर्णांक *pcc)
-अणु
-	पूर्णांक res;
-	काष्ठा smp_resp *disc_resp;
+static int sas_get_phy_change_count(struct domain_device *dev,
+				    int phy_id, int *pcc)
+{
+	int res;
+	struct smp_resp *disc_resp;
 
 	disc_resp = alloc_smp_resp(DISCOVER_RESP_SIZE);
-	अगर (!disc_resp)
-		वापस -ENOMEM;
+	if (!disc_resp)
+		return -ENOMEM;
 
 	res = sas_get_phy_discover(dev, phy_id, disc_resp);
-	अगर (!res)
+	if (!res)
 		*pcc = disc_resp->disc.change_count;
 
-	kमुक्त(disc_resp);
-	वापस res;
-पूर्ण
+	kfree(disc_resp);
+	return res;
+}
 
-अटल पूर्णांक sas_get_phy_attached_dev(काष्ठा करोमुख्य_device *dev, पूर्णांक phy_id,
-				    u8 *sas_addr, क्रमागत sas_device_type *type)
-अणु
-	पूर्णांक res;
-	काष्ठा smp_resp *disc_resp;
-	काष्ठा discover_resp *dr;
+static int sas_get_phy_attached_dev(struct domain_device *dev, int phy_id,
+				    u8 *sas_addr, enum sas_device_type *type)
+{
+	int res;
+	struct smp_resp *disc_resp;
+	struct discover_resp *dr;
 
 	disc_resp = alloc_smp_resp(DISCOVER_RESP_SIZE);
-	अगर (!disc_resp)
-		वापस -ENOMEM;
+	if (!disc_resp)
+		return -ENOMEM;
 	dr = &disc_resp->disc;
 
 	res = sas_get_phy_discover(dev, phy_id, disc_resp);
-	अगर (res == 0) अणु
-		स_नकल(sas_addr, disc_resp->disc.attached_sas_addr,
+	if (res == 0) {
+		memcpy(sas_addr, disc_resp->disc.attached_sas_addr,
 		       SAS_ADDR_SIZE);
 		*type = to_dev_type(dr);
-		अगर (*type == 0)
-			स_रखो(sas_addr, 0, SAS_ADDR_SIZE);
-	पूर्ण
-	kमुक्त(disc_resp);
-	वापस res;
-पूर्ण
+		if (*type == 0)
+			memset(sas_addr, 0, SAS_ADDR_SIZE);
+	}
+	kfree(disc_resp);
+	return res;
+}
 
-अटल पूर्णांक sas_find_bcast_phy(काष्ठा करोमुख्य_device *dev, पूर्णांक *phy_id,
-			      पूर्णांक from_phy, bool update)
-अणु
-	काष्ठा expander_device *ex = &dev->ex_dev;
-	पूर्णांक res = 0;
-	पूर्णांक i;
+static int sas_find_bcast_phy(struct domain_device *dev, int *phy_id,
+			      int from_phy, bool update)
+{
+	struct expander_device *ex = &dev->ex_dev;
+	int res = 0;
+	int i;
 
-	क्रम (i = from_phy; i < ex->num_phys; i++) अणु
-		पूर्णांक phy_change_count = 0;
+	for (i = from_phy; i < ex->num_phys; i++) {
+		int phy_change_count = 0;
 
 		res = sas_get_phy_change_count(dev, i, &phy_change_count);
-		चयन (res) अणु
-		हाल SMP_RESP_PHY_VACANT:
-		हाल SMP_RESP_NO_PHY:
-			जारी;
-		हाल SMP_RESP_FUNC_ACC:
-			अवरोध;
-		शेष:
-			वापस res;
-		पूर्ण
+		switch (res) {
+		case SMP_RESP_PHY_VACANT:
+		case SMP_RESP_NO_PHY:
+			continue;
+		case SMP_RESP_FUNC_ACC:
+			break;
+		default:
+			return res;
+		}
 
-		अगर (phy_change_count != ex->ex_phy[i].phy_change_count) अणु
-			अगर (update)
+		if (phy_change_count != ex->ex_phy[i].phy_change_count) {
+			if (update)
 				ex->ex_phy[i].phy_change_count =
 					phy_change_count;
 			*phy_id = i;
-			वापस 0;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return 0;
+		}
+	}
+	return 0;
+}
 
-अटल पूर्णांक sas_get_ex_change_count(काष्ठा करोमुख्य_device *dev, पूर्णांक *ecc)
-अणु
-	पूर्णांक res;
+static int sas_get_ex_change_count(struct domain_device *dev, int *ecc)
+{
+	int res;
 	u8  *rg_req;
-	काष्ठा smp_resp  *rg_resp;
+	struct smp_resp  *rg_resp;
 
 	rg_req = alloc_smp_req(RG_REQ_SIZE);
-	अगर (!rg_req)
-		वापस -ENOMEM;
+	if (!rg_req)
+		return -ENOMEM;
 
 	rg_resp = alloc_smp_resp(RG_RESP_SIZE);
-	अगर (!rg_resp) अणु
-		kमुक्त(rg_req);
-		वापस -ENOMEM;
-	पूर्ण
+	if (!rg_resp) {
+		kfree(rg_req);
+		return -ENOMEM;
+	}
 
 	rg_req[1] = SMP_REPORT_GENERAL;
 
 	res = smp_execute_task(dev, rg_req, RG_REQ_SIZE, rg_resp,
 			       RG_RESP_SIZE);
-	अगर (res)
-		जाओ out;
-	अगर (rg_resp->result != SMP_RESP_FUNC_ACC) अणु
+	if (res)
+		goto out;
+	if (rg_resp->result != SMP_RESP_FUNC_ACC) {
 		res = rg_resp->result;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	*ecc = be16_to_cpu(rg_resp->rg.change_count);
 out:
-	kमुक्त(rg_resp);
-	kमुक्त(rg_req);
-	वापस res;
-पूर्ण
+	kfree(rg_resp);
+	kfree(rg_req);
+	return res;
+}
 /**
  * sas_find_bcast_dev -  find the device issue BROADCAST(CHANGE).
- * @dev:करोमुख्य device to be detect.
+ * @dev:domain device to be detect.
  * @src_dev: the device which originated BROADCAST(CHANGE).
  *
  * Add self-configuration expander support. Suppose two expander cascading,
  * when the first level expander is self-configuring, hotplug the disks in
  * second level expander, BROADCAST(CHANGE) will not only be originated
  * in the second level expander, but also be originated in the first level
- * expander (see SAS protocol SAS 2r-14, 7.11 क्रम detail), it is to say,
+ * expander (see SAS protocol SAS 2r-14, 7.11 for detail), it is to say,
  * expander changed count in two level expanders will all increment at least
  * once, but the phy which chang count has changed is the source device which
  * we concerned.
  */
 
-अटल पूर्णांक sas_find_bcast_dev(काष्ठा करोमुख्य_device *dev,
-			      काष्ठा करोमुख्य_device **src_dev)
-अणु
-	काष्ठा expander_device *ex = &dev->ex_dev;
-	पूर्णांक ex_change_count = -1;
-	पूर्णांक phy_id = -1;
-	पूर्णांक res;
-	काष्ठा करोमुख्य_device *ch;
+static int sas_find_bcast_dev(struct domain_device *dev,
+			      struct domain_device **src_dev)
+{
+	struct expander_device *ex = &dev->ex_dev;
+	int ex_change_count = -1;
+	int phy_id = -1;
+	int res;
+	struct domain_device *ch;
 
 	res = sas_get_ex_change_count(dev, &ex_change_count);
-	अगर (res)
-		जाओ out;
-	अगर (ex_change_count != -1 && ex_change_count != ex->ex_change_count) अणु
-		/* Just detect अगर this expander phys phy change count changed,
-		* in order to determine अगर this expander originate BROADCAST,
-		* and करो not update phy change count field in our काष्ठाure.
+	if (res)
+		goto out;
+	if (ex_change_count != -1 && ex_change_count != ex->ex_change_count) {
+		/* Just detect if this expander phys phy change count changed,
+		* in order to determine if this expander originate BROADCAST,
+		* and do not update phy change count field in our structure.
 		*/
 		res = sas_find_bcast_phy(dev, &phy_id, 0, false);
-		अगर (phy_id != -1) अणु
+		if (phy_id != -1) {
 			*src_dev = dev;
 			ex->ex_change_count = ex_change_count;
 			pr_info("ex %016llx phy%02d change count has changed\n",
 				SAS_ADDR(dev->sas_addr), phy_id);
-			वापस res;
-		पूर्ण अन्यथा
+			return res;
+		} else
 			pr_info("ex %016llx phys DID NOT change\n",
 				SAS_ADDR(dev->sas_addr));
-	पूर्ण
-	list_क्रम_each_entry(ch, &ex->children, siblings) अणु
-		अगर (dev_is_expander(ch->dev_type)) अणु
+	}
+	list_for_each_entry(ch, &ex->children, siblings) {
+		if (dev_is_expander(ch->dev_type)) {
 			res = sas_find_bcast_dev(ch, src_dev);
-			अगर (*src_dev)
-				वापस res;
-		पूर्ण
-	पूर्ण
+			if (*src_dev)
+				return res;
+		}
+	}
 out:
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल व्योम sas_unरेजिस्टर_ex_tree(काष्ठा asd_sas_port *port, काष्ठा करोमुख्य_device *dev)
-अणु
-	काष्ठा expander_device *ex = &dev->ex_dev;
-	काष्ठा करोमुख्य_device *child, *n;
+static void sas_unregister_ex_tree(struct asd_sas_port *port, struct domain_device *dev)
+{
+	struct expander_device *ex = &dev->ex_dev;
+	struct domain_device *child, *n;
 
-	list_क्रम_each_entry_safe(child, n, &ex->children, siblings) अणु
+	list_for_each_entry_safe(child, n, &ex->children, siblings) {
 		set_bit(SAS_DEV_GONE, &child->state);
-		अगर (dev_is_expander(child->dev_type))
-			sas_unरेजिस्टर_ex_tree(port, child);
-		अन्यथा
-			sas_unरेजिस्टर_dev(port, child);
-	पूर्ण
-	sas_unरेजिस्टर_dev(port, dev);
-पूर्ण
+		if (dev_is_expander(child->dev_type))
+			sas_unregister_ex_tree(port, child);
+		else
+			sas_unregister_dev(port, child);
+	}
+	sas_unregister_dev(port, dev);
+}
 
-अटल व्योम sas_unरेजिस्टर_devs_sas_addr(काष्ठा करोमुख्य_device *parent,
-					 पूर्णांक phy_id, bool last)
-अणु
-	काष्ठा expander_device *ex_dev = &parent->ex_dev;
-	काष्ठा ex_phy *phy = &ex_dev->ex_phy[phy_id];
-	काष्ठा करोमुख्य_device *child, *n, *found = शून्य;
-	अगर (last) अणु
-		list_क्रम_each_entry_safe(child, n,
-			&ex_dev->children, siblings) अणु
-			अगर (SAS_ADDR(child->sas_addr) ==
-			    SAS_ADDR(phy->attached_sas_addr)) अणु
+static void sas_unregister_devs_sas_addr(struct domain_device *parent,
+					 int phy_id, bool last)
+{
+	struct expander_device *ex_dev = &parent->ex_dev;
+	struct ex_phy *phy = &ex_dev->ex_phy[phy_id];
+	struct domain_device *child, *n, *found = NULL;
+	if (last) {
+		list_for_each_entry_safe(child, n,
+			&ex_dev->children, siblings) {
+			if (SAS_ADDR(child->sas_addr) ==
+			    SAS_ADDR(phy->attached_sas_addr)) {
 				set_bit(SAS_DEV_GONE, &child->state);
-				अगर (dev_is_expander(child->dev_type))
-					sas_unरेजिस्टर_ex_tree(parent->port, child);
-				अन्यथा
-					sas_unरेजिस्टर_dev(parent->port, child);
+				if (dev_is_expander(child->dev_type))
+					sas_unregister_ex_tree(parent->port, child);
+				else
+					sas_unregister_dev(parent->port, child);
 				found = child;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 		sas_disable_routing(parent, phy->attached_sas_addr);
-	पूर्ण
-	स_रखो(phy->attached_sas_addr, 0, SAS_ADDR_SIZE);
-	अगर (phy->port) अणु
+	}
+	memset(phy->attached_sas_addr, 0, SAS_ADDR_SIZE);
+	if (phy->port) {
 		sas_port_delete_phy(phy->port, phy->phy);
 		sas_device_set_phy(found, phy->port);
-		अगर (phy->port->num_phys == 0)
+		if (phy->port->num_phys == 0)
 			list_add_tail(&phy->port->del_list,
 				&parent->port->sas_port_del_list);
-		phy->port = शून्य;
-	पूर्ण
-पूर्ण
+		phy->port = NULL;
+	}
+}
 
-अटल पूर्णांक sas_discover_bfs_by_root_level(काष्ठा करोमुख्य_device *root,
-					  स्थिर पूर्णांक level)
-अणु
-	काष्ठा expander_device *ex_root = &root->ex_dev;
-	काष्ठा करोमुख्य_device *child;
-	पूर्णांक res = 0;
+static int sas_discover_bfs_by_root_level(struct domain_device *root,
+					  const int level)
+{
+	struct expander_device *ex_root = &root->ex_dev;
+	struct domain_device *child;
+	int res = 0;
 
-	list_क्रम_each_entry(child, &ex_root->children, siblings) अणु
-		अगर (dev_is_expander(child->dev_type)) अणु
-			काष्ठा sas_expander_device *ex =
+	list_for_each_entry(child, &ex_root->children, siblings) {
+		if (dev_is_expander(child->dev_type)) {
+			struct sas_expander_device *ex =
 				rphy_to_expander_device(child->rphy);
 
-			अगर (level > ex->level)
+			if (level > ex->level)
 				res = sas_discover_bfs_by_root_level(child,
 								     level);
-			अन्यथा अगर (level == ex->level)
+			else if (level == ex->level)
 				res = sas_ex_discover_devices(child, -1);
-		पूर्ण
-	पूर्ण
-	वापस res;
-पूर्ण
+		}
+	}
+	return res;
+}
 
-अटल पूर्णांक sas_discover_bfs_by_root(काष्ठा करोमुख्य_device *dev)
-अणु
-	पूर्णांक res;
-	काष्ठा sas_expander_device *ex = rphy_to_expander_device(dev->rphy);
-	पूर्णांक level = ex->level+1;
+static int sas_discover_bfs_by_root(struct domain_device *dev)
+{
+	int res;
+	struct sas_expander_device *ex = rphy_to_expander_device(dev->rphy);
+	int level = ex->level+1;
 
 	res = sas_ex_discover_devices(dev, -1);
-	अगर (res)
-		जाओ out;
-	करो अणु
+	if (res)
+		goto out;
+	do {
 		res = sas_discover_bfs_by_root_level(dev, level);
 		mb();
 		level += 1;
-	पूर्ण जबतक (level <= dev->port->disc.max_level);
+	} while (level <= dev->port->disc.max_level);
 out:
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल पूर्णांक sas_discover_new(काष्ठा करोमुख्य_device *dev, पूर्णांक phy_id)
-अणु
-	काष्ठा ex_phy *ex_phy = &dev->ex_dev.ex_phy[phy_id];
-	काष्ठा करोमुख्य_device *child;
-	पूर्णांक res;
+static int sas_discover_new(struct domain_device *dev, int phy_id)
+{
+	struct ex_phy *ex_phy = &dev->ex_dev.ex_phy[phy_id];
+	struct domain_device *child;
+	int res;
 
 	pr_debug("ex %016llx phy%02d new device attached\n",
 		 SAS_ADDR(dev->sas_addr), phy_id);
 	res = sas_ex_phy_discover(dev, phy_id);
-	अगर (res)
-		वापस res;
+	if (res)
+		return res;
 
-	अगर (sas_ex_join_wide_port(dev, phy_id))
-		वापस 0;
+	if (sas_ex_join_wide_port(dev, phy_id))
+		return 0;
 
 	res = sas_ex_discover_devices(dev, phy_id);
-	अगर (res)
-		वापस res;
-	list_क्रम_each_entry(child, &dev->ex_dev.children, siblings) अणु
-		अगर (SAS_ADDR(child->sas_addr) ==
-		    SAS_ADDR(ex_phy->attached_sas_addr)) अणु
-			अगर (dev_is_expander(child->dev_type))
+	if (res)
+		return res;
+	list_for_each_entry(child, &dev->ex_dev.children, siblings) {
+		if (SAS_ADDR(child->sas_addr) ==
+		    SAS_ADDR(ex_phy->attached_sas_addr)) {
+			if (dev_is_expander(child->dev_type))
 				res = sas_discover_bfs_by_root(child);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	वापस res;
-पूर्ण
+			break;
+		}
+	}
+	return res;
+}
 
-अटल bool dev_type_flutter(क्रमागत sas_device_type new, क्रमागत sas_device_type old)
-अणु
-	अगर (old == new)
-		वापस true;
+static bool dev_type_flutter(enum sas_device_type new, enum sas_device_type old)
+{
+	if (old == new)
+		return true;
 
-	/* treat device directed resets as flutter, अगर we went
+	/* treat device directed resets as flutter, if we went
 	 * SAS_END_DEVICE to SAS_SATA_PENDING the link needs recovery
 	 */
-	अगर ((old == SAS_SATA_PENDING && new == SAS_END_DEVICE) ||
+	if ((old == SAS_SATA_PENDING && new == SAS_END_DEVICE) ||
 	    (old == SAS_END_DEVICE && new == SAS_SATA_PENDING))
-		वापस true;
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल पूर्णांक sas_rediscover_dev(काष्ठा करोमुख्य_device *dev, पूर्णांक phy_id,
-			      bool last, पूर्णांक sibling)
-अणु
-	काष्ठा expander_device *ex = &dev->ex_dev;
-	काष्ठा ex_phy *phy = &ex->ex_phy[phy_id];
-	क्रमागत sas_device_type type = SAS_PHY_UNUSED;
+static int sas_rediscover_dev(struct domain_device *dev, int phy_id,
+			      bool last, int sibling)
+{
+	struct expander_device *ex = &dev->ex_dev;
+	struct ex_phy *phy = &ex->ex_phy[phy_id];
+	enum sas_device_type type = SAS_PHY_UNUSED;
 	u8 sas_addr[SAS_ADDR_SIZE];
-	अक्षर msg[80] = "";
-	पूर्णांक res;
+	char msg[80] = "";
+	int res;
 
-	अगर (!last)
-		प्र_लिखो(msg, ", part of a wide port with phy%02d", sibling);
+	if (!last)
+		sprintf(msg, ", part of a wide port with phy%02d", sibling);
 
 	pr_debug("ex %016llx rediscovering phy%02d%s\n",
 		 SAS_ADDR(dev->sas_addr), phy_id, msg);
 
-	स_रखो(sas_addr, 0, SAS_ADDR_SIZE);
+	memset(sas_addr, 0, SAS_ADDR_SIZE);
 	res = sas_get_phy_attached_dev(dev, phy_id, sas_addr, &type);
-	चयन (res) अणु
-	हाल SMP_RESP_NO_PHY:
+	switch (res) {
+	case SMP_RESP_NO_PHY:
 		phy->phy_state = PHY_NOT_PRESENT;
-		sas_unरेजिस्टर_devs_sas_addr(dev, phy_id, last);
-		वापस res;
-	हाल SMP_RESP_PHY_VACANT:
+		sas_unregister_devs_sas_addr(dev, phy_id, last);
+		return res;
+	case SMP_RESP_PHY_VACANT:
 		phy->phy_state = PHY_VACANT;
-		sas_unरेजिस्टर_devs_sas_addr(dev, phy_id, last);
-		वापस res;
-	हाल SMP_RESP_FUNC_ACC:
-		अवरोध;
-	हाल -ECOMM:
-		अवरोध;
-	शेष:
-		वापस res;
-	पूर्ण
+		sas_unregister_devs_sas_addr(dev, phy_id, last);
+		return res;
+	case SMP_RESP_FUNC_ACC:
+		break;
+	case -ECOMM:
+		break;
+	default:
+		return res;
+	}
 
-	अगर ((SAS_ADDR(sas_addr) == 0) || (res == -ECOMM)) अणु
+	if ((SAS_ADDR(sas_addr) == 0) || (res == -ECOMM)) {
 		phy->phy_state = PHY_EMPTY;
-		sas_unरेजिस्टर_devs_sas_addr(dev, phy_id, last);
+		sas_unregister_devs_sas_addr(dev, phy_id, last);
 		/*
-		 * Even though the PHY is empty, क्रम convenience we discover
+		 * Even though the PHY is empty, for convenience we discover
 		 * the PHY to update the PHY info, like negotiated linkrate.
 		 */
 		sas_ex_phy_discover(dev, phy_id);
-		वापस res;
-	पूर्ण अन्यथा अगर (SAS_ADDR(sas_addr) == SAS_ADDR(phy->attached_sas_addr) &&
-		   dev_type_flutter(type, phy->attached_dev_type)) अणु
-		काष्ठा करोमुख्य_device *ata_dev = sas_ex_to_ata(dev, phy_id);
-		अक्षर *action = "";
+		return res;
+	} else if (SAS_ADDR(sas_addr) == SAS_ADDR(phy->attached_sas_addr) &&
+		   dev_type_flutter(type, phy->attached_dev_type)) {
+		struct domain_device *ata_dev = sas_ex_to_ata(dev, phy_id);
+		char *action = "";
 
 		sas_ex_phy_discover(dev, phy_id);
 
-		अगर (ata_dev && phy->attached_dev_type == SAS_SATA_PENDING)
+		if (ata_dev && phy->attached_dev_type == SAS_SATA_PENDING)
 			action = ", needs recovery";
 		pr_debug("ex %016llx phy%02d broadcast flutter%s\n",
 			 SAS_ADDR(dev->sas_addr), phy_id, action);
-		वापस res;
-	पूर्ण
+		return res;
+	}
 
 	/* we always have to delete the old device when we went here */
 	pr_info("ex %016llx phy%02d replace %016llx\n",
 		SAS_ADDR(dev->sas_addr), phy_id,
 		SAS_ADDR(phy->attached_sas_addr));
-	sas_unरेजिस्टर_devs_sas_addr(dev, phy_id, last);
+	sas_unregister_devs_sas_addr(dev, phy_id, last);
 
-	वापस sas_discover_new(dev, phy_id);
-पूर्ण
+	return sas_discover_new(dev, phy_id);
+}
 
 /**
- * sas_rediscover - revalidate the करोमुख्य.
- * @dev:करोमुख्य device to be detect.
+ * sas_rediscover - revalidate the domain.
+ * @dev:domain device to be detect.
  * @phy_id: the phy id will be detected.
  *
- * NOTE: this process _must_ quit (वापस) as soon as any connection
- * errors are encountered.  Connection recovery is करोne अन्यथाwhere.
- * Discover process only पूर्णांकerrogates devices in order to discover the
- * करोमुख्य.For plugging out, we un-रेजिस्टर the device only when it is
- * the last phy in the port, क्रम other phys in this port, we just delete it
- * from the port.For inserting, we करो discovery when it is the
- * first phy,क्रम other phys in this port, we add it to the port to
- * क्रमming the wide-port.
+ * NOTE: this process _must_ quit (return) as soon as any connection
+ * errors are encountered.  Connection recovery is done elsewhere.
+ * Discover process only interrogates devices in order to discover the
+ * domain.For plugging out, we un-register the device only when it is
+ * the last phy in the port, for other phys in this port, we just delete it
+ * from the port.For inserting, we do discovery when it is the
+ * first phy,for other phys in this port, we add it to the port to
+ * forming the wide-port.
  */
-अटल पूर्णांक sas_rediscover(काष्ठा करोमुख्य_device *dev, स्थिर पूर्णांक phy_id)
-अणु
-	काष्ठा expander_device *ex = &dev->ex_dev;
-	काष्ठा ex_phy *changed_phy = &ex->ex_phy[phy_id];
-	पूर्णांक res = 0;
-	पूर्णांक i;
+static int sas_rediscover(struct domain_device *dev, const int phy_id)
+{
+	struct expander_device *ex = &dev->ex_dev;
+	struct ex_phy *changed_phy = &ex->ex_phy[phy_id];
+	int res = 0;
+	int i;
 	bool last = true;	/* is this the last phy of the port */
 
 	pr_debug("ex %016llx phy%02d originated BROADCAST(CHANGE)\n",
 		 SAS_ADDR(dev->sas_addr), phy_id);
 
-	अगर (SAS_ADDR(changed_phy->attached_sas_addr) != 0) अणु
-		क्रम (i = 0; i < ex->num_phys; i++) अणु
-			काष्ठा ex_phy *phy = &ex->ex_phy[i];
+	if (SAS_ADDR(changed_phy->attached_sas_addr) != 0) {
+		for (i = 0; i < ex->num_phys; i++) {
+			struct ex_phy *phy = &ex->ex_phy[i];
 
-			अगर (i == phy_id)
-				जारी;
-			अगर (SAS_ADDR(phy->attached_sas_addr) ==
-			    SAS_ADDR(changed_phy->attached_sas_addr)) अणु
+			if (i == phy_id)
+				continue;
+			if (SAS_ADDR(phy->attached_sas_addr) ==
+			    SAS_ADDR(changed_phy->attached_sas_addr)) {
 				last = false;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 		res = sas_rediscover_dev(dev, phy_id, last, i);
-	पूर्ण अन्यथा
+	} else
 		res = sas_discover_new(dev, phy_id);
-	वापस res;
-पूर्ण
+	return res;
+}
 
 /**
- * sas_ex_revalidate_करोमुख्य - revalidate the करोमुख्य
- * @port_dev: port करोमुख्य device.
+ * sas_ex_revalidate_domain - revalidate the domain
+ * @port_dev: port domain device.
  *
- * NOTE: this process _must_ quit (वापस) as soon as any connection
- * errors are encountered.  Connection recovery is करोne अन्यथाwhere.
- * Discover process only पूर्णांकerrogates devices in order to discover the
- * करोमुख्य.
+ * NOTE: this process _must_ quit (return) as soon as any connection
+ * errors are encountered.  Connection recovery is done elsewhere.
+ * Discover process only interrogates devices in order to discover the
+ * domain.
  */
-पूर्णांक sas_ex_revalidate_करोमुख्य(काष्ठा करोमुख्य_device *port_dev)
-अणु
-	पूर्णांक res;
-	काष्ठा करोमुख्य_device *dev = शून्य;
+int sas_ex_revalidate_domain(struct domain_device *port_dev)
+{
+	int res;
+	struct domain_device *dev = NULL;
 
 	res = sas_find_bcast_dev(port_dev, &dev);
-	अगर (res == 0 && dev) अणु
-		काष्ठा expander_device *ex = &dev->ex_dev;
-		पूर्णांक i = 0, phy_id;
+	if (res == 0 && dev) {
+		struct expander_device *ex = &dev->ex_dev;
+		int i = 0, phy_id;
 
-		करो अणु
+		do {
 			phy_id = -1;
 			res = sas_find_bcast_phy(dev, &phy_id, i, true);
-			अगर (phy_id == -1)
-				अवरोध;
+			if (phy_id == -1)
+				break;
 			res = sas_rediscover(dev, phy_id);
 			i = phy_id + 1;
-		पूर्ण जबतक (i < ex->num_phys);
-	पूर्ण
-	वापस res;
-पूर्ण
+		} while (i < ex->num_phys);
+	}
+	return res;
+}
 
-व्योम sas_smp_handler(काष्ठा bsg_job *job, काष्ठा Scsi_Host *shost,
-		काष्ठा sas_rphy *rphy)
-अणु
-	काष्ठा करोमुख्य_device *dev;
-	अचिन्हित पूर्णांक rcvlen = 0;
-	पूर्णांक ret = -EINVAL;
+void sas_smp_handler(struct bsg_job *job, struct Scsi_Host *shost,
+		struct sas_rphy *rphy)
+{
+	struct domain_device *dev;
+	unsigned int rcvlen = 0;
+	int ret = -EINVAL;
 
 	/* no rphy means no smp target support (ie aic94xx host) */
-	अगर (!rphy)
-		वापस sas_smp_host_handler(job, shost);
+	if (!rphy)
+		return sas_smp_host_handler(job, shost);
 
-	चयन (rphy->identअगरy.device_type) अणु
-	हाल SAS_EDGE_EXPANDER_DEVICE:
-	हाल SAS_FANOUT_EXPANDER_DEVICE:
-		अवरोध;
-	शेष:
+	switch (rphy->identify.device_type) {
+	case SAS_EDGE_EXPANDER_DEVICE:
+	case SAS_FANOUT_EXPANDER_DEVICE:
+		break;
+	default:
 		pr_err("%s: can we send a smp request to a device?\n",
 		       __func__);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	dev = sas_find_dev_by_rphy(rphy);
-	अगर (!dev) अणु
+	if (!dev) {
 		pr_err("%s: fail to find a domain_device?\n", __func__);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* करो we need to support multiple segments? */
-	अगर (job->request_payload.sg_cnt > 1 ||
-	    job->reply_payload.sg_cnt > 1) अणु
+	/* do we need to support multiple segments? */
+	if (job->request_payload.sg_cnt > 1 ||
+	    job->reply_payload.sg_cnt > 1) {
 		pr_info("%s: multiple segments req %u, rsp %u\n",
 			__func__, job->request_payload.payload_len,
 			job->reply_payload.payload_len);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = smp_execute_task_sg(dev, job->request_payload.sg_list,
 			job->reply_payload.sg_list);
-	अगर (ret >= 0) अणु
-		/* bsg_job_करोne() requires the length received  */
+	if (ret >= 0) {
+		/* bsg_job_done() requires the length received  */
 		rcvlen = job->reply_payload.payload_len - ret;
 		ret = 0;
-	पूर्ण
+	}
 
 out:
-	bsg_job_करोne(job, ret, rcvlen);
-पूर्ण
+	bsg_job_done(job, ret, rcvlen);
+}

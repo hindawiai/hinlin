@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_FUTEX_H
-#घोषणा _ASM_FUTEX_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_FUTEX_H
+#define _ASM_FUTEX_H
 
-#समावेश <linux/futex.h>
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/त्रुटिसं.स>
+#include <linux/futex.h>
+#include <linux/uaccess.h>
+#include <asm/errno.h>
 
-#घोषणा __futex_atomic_op1(insn, ret, oldval, uaddr, oparg) \
-करो अणु									\
-	रेजिस्टर अचिन्हित दीर्घ r8 __यंत्र ("r8") = 0;			\
-	__यंत्र__ __अस्थिर__(						\
+#define __futex_atomic_op1(insn, ret, oldval, uaddr, oparg) \
+do {									\
+	register unsigned long r8 __asm ("r8") = 0;			\
+	__asm__ __volatile__(						\
 		"	mf;;					\n"	\
 		"[1:] "	insn ";;				\n"	\
 		"	.xdata4 \"__ex_table\", 1b-., 2f-.	\n"	\
@@ -19,14 +18,14 @@
 		: "r" (uaddr), "r" (oparg)				\
 		: "memory");						\
 	ret = r8;							\
-पूर्ण जबतक (0)
+} while (0)
 
-#घोषणा __futex_atomic_op2(insn, ret, oldval, uaddr, oparg) \
-करो अणु									\
-	रेजिस्टर अचिन्हित दीर्घ r8 __यंत्र ("r8") = 0;			\
-	पूर्णांक val, newval;						\
-	करो अणु								\
-		__यंत्र__ __अस्थिर__(					\
+#define __futex_atomic_op2(insn, ret, oldval, uaddr, oparg) \
+do {									\
+	register unsigned long r8 __asm ("r8") = 0;			\
+	int val, newval;						\
+	do {								\
+		__asm__ __volatile__(					\
 			"	mf;;				  \n"	\
 			"[1:]	ld4 %3=[%4];;			  \n"	\
 			"	mov %2=%3			  \n"	\
@@ -40,59 +39,59 @@
 			   "=&r" (newval)				\
 			: "r" (uaddr), "r" (oparg)			\
 			: "memory");					\
-		अगर (unlikely (r8))					\
-			अवरोध;						\
-	पूर्ण जबतक (unlikely (val != oldval));				\
+		if (unlikely (r8))					\
+			break;						\
+	} while (unlikely (val != oldval));				\
 	ret = r8;							\
-पूर्ण जबतक (0)
+} while (0)
 
-अटल अंतरभूत पूर्णांक
-arch_futex_atomic_op_inuser(पूर्णांक op, पूर्णांक oparg, पूर्णांक *oval, u32 __user *uaddr)
-अणु
-	पूर्णांक oldval = 0, ret;
+static inline int
+arch_futex_atomic_op_inuser(int op, int oparg, int *oval, u32 __user *uaddr)
+{
+	int oldval = 0, ret;
 
-	अगर (!access_ok(uaddr, माप(u32)))
-		वापस -EFAULT;
+	if (!access_ok(uaddr, sizeof(u32)))
+		return -EFAULT;
 
-	चयन (op) अणु
-	हाल FUTEX_OP_SET:
+	switch (op) {
+	case FUTEX_OP_SET:
 		__futex_atomic_op1("xchg4 %1=[%2],%3", ret, oldval, uaddr,
 				   oparg);
-		अवरोध;
-	हाल FUTEX_OP_ADD:
+		break;
+	case FUTEX_OP_ADD:
 		__futex_atomic_op2("add %3=%3,%5", ret, oldval, uaddr, oparg);
-		अवरोध;
-	हाल FUTEX_OP_OR:
+		break;
+	case FUTEX_OP_OR:
 		__futex_atomic_op2("or %3=%3,%5", ret, oldval, uaddr, oparg);
-		अवरोध;
-	हाल FUTEX_OP_ANDN:
+		break;
+	case FUTEX_OP_ANDN:
 		__futex_atomic_op2("and %3=%3,%5", ret, oldval, uaddr,
 				   ~oparg);
-		अवरोध;
-	हाल FUTEX_OP_XOR:
+		break;
+	case FUTEX_OP_XOR:
 		__futex_atomic_op2("xor %3=%3,%5", ret, oldval, uaddr, oparg);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -ENOSYS;
-	पूर्ण
+	}
 
-	अगर (!ret)
+	if (!ret)
 		*oval = oldval;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत पूर्णांक
+static inline int
 futex_atomic_cmpxchg_inatomic(u32 *uval, u32 __user *uaddr,
 			      u32 oldval, u32 newval)
-अणु
-	अगर (!access_ok(uaddr, माप(u32)))
-		वापस -EFAULT;
+{
+	if (!access_ok(uaddr, sizeof(u32)))
+		return -EFAULT;
 
-	अणु
-		रेजिस्टर अचिन्हित दीर्घ r8 __यंत्र ("r8") = 0;
-		अचिन्हित दीर्घ prev;
-		__यंत्र__ __अस्थिर__(
+	{
+		register unsigned long r8 __asm ("r8") = 0;
+		unsigned long prev;
+		__asm__ __volatile__(
 			"	mf;;					\n"
 			"	mov ar.ccv=%4;;				\n"
 			"[1:]	cmpxchg4.acq %1=[%2],%3,ar.ccv		\n"
@@ -100,11 +99,11 @@ futex_atomic_cmpxchg_inatomic(u32 *uval, u32 __user *uaddr,
 			"[2:]"
 			: "+r" (r8), "=&r" (prev)
 			: "r" (uaddr), "r" (newval),
-			  "rO" ((दीर्घ) (अचिन्हित) oldval)
+			  "rO" ((long) (unsigned) oldval)
 			: "memory");
 		*uval = prev;
-		वापस r8;
-	पूर्ण
-पूर्ण
+		return r8;
+	}
+}
 
-#पूर्ण_अगर /* _ASM_FUTEX_H */
+#endif /* _ASM_FUTEX_H */

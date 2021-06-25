@@ -1,26 +1,25 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2010 Realtek Corporation. All rights reserved.
  *
- * Modअगरications क्रम inclusion पूर्णांकo the Linux staging tree are
+ * Modifications for inclusion into the Linux staging tree are
  * Copyright(c) 2010 Larry Finger. All rights reserved.
  *
- * Contact inक्रमmation:
+ * Contact information:
  * WLAN FAE <wlanfae@realtek.com>
  * Larry Finger <Larry.Finger@lwfinger.net>
  *
  ******************************************************************************/
-#अगर_अघोषित __RTL871X_PWRCTRL_H_
-#घोषणा __RTL871X_PWRCTRL_H_
+#ifndef __RTL871X_PWRCTRL_H_
+#define __RTL871X_PWRCTRL_H_
 
-#समावेश "osdep_service.h"
-#समावेश "drv_types.h"
+#include "osdep_service.h"
+#include "drv_types.h"
 
-#घोषणा CMD_ALIVE	BIT(2)
+#define CMD_ALIVE	BIT(2)
 
-क्रमागत Power_Mgnt अणु
+enum Power_Mgnt {
 	PS_MODE_ACTIVE	= 0,
 	PS_MODE_MIN,
 	PS_MODE_MAX,
@@ -33,81 +32,81 @@
 	PM_Radio_Off,
 	PM_Card_Disable,
 	PS_MODE_NUM
-पूर्ण;
+};
 
 /*
  * BIT[2:0] = HW state
- * BIT[3] = Protocol PS state, 0: रेजिस्टर active state,
- *				1: रेजिस्टर sleep state
+ * BIT[3] = Protocol PS state, 0: register active state,
+ *				1: register sleep state
  * BIT[4] = sub-state
  */
 
-#घोषणा		PS_DPS				BIT(0)
-#घोषणा		PS_LCLK				(PS_DPS)
-#घोषणा	PS_RF_OFF			BIT(1)
-#घोषणा	PS_ALL_ON			BIT(2)
-#घोषणा	PS_ST_ACTIVE		BIT(3)
-#घोषणा	PS_LP				BIT(4)	/* low perक्रमmance */
+#define		PS_DPS				BIT(0)
+#define		PS_LCLK				(PS_DPS)
+#define	PS_RF_OFF			BIT(1)
+#define	PS_ALL_ON			BIT(2)
+#define	PS_ST_ACTIVE		BIT(3)
+#define	PS_LP				BIT(4)	/* low performance */
 
-#घोषणा	PS_STATE_MASK		(0x0F)
-#घोषणा	PS_STATE_HW_MASK	(0x07)
-#घोषणा		PS_SEQ_MASK		(0xc0)
+#define	PS_STATE_MASK		(0x0F)
+#define	PS_STATE_HW_MASK	(0x07)
+#define		PS_SEQ_MASK		(0xc0)
 
-#घोषणा	PS_STATE(x)			(PS_STATE_MASK & (x))
-#घोषणा	PS_STATE_HW(x)	(PS_STATE_HW_MASK & (x))
-#घोषणा	PS_SEQ(x)			(PS_SEQ_MASK & (x))
+#define	PS_STATE(x)			(PS_STATE_MASK & (x))
+#define	PS_STATE_HW(x)	(PS_STATE_HW_MASK & (x))
+#define	PS_SEQ(x)			(PS_SEQ_MASK & (x))
 
-#घोषणा	PS_STATE_S0		(PS_DPS)
-#घोषणा		PS_STATE_S1		(PS_LCLK)
-#घोषणा	PS_STATE_S2		(PS_RF_OFF)
-#घोषणा		PS_STATE_S3		(PS_ALL_ON)
-#घोषणा	PS_STATE_S4		((PS_ST_ACTIVE) | (PS_ALL_ON))
+#define	PS_STATE_S0		(PS_DPS)
+#define		PS_STATE_S1		(PS_LCLK)
+#define	PS_STATE_S2		(PS_RF_OFF)
+#define		PS_STATE_S3		(PS_ALL_ON)
+#define	PS_STATE_S4		((PS_ST_ACTIVE) | (PS_ALL_ON))
 
-#घोषणा		PS_IS_RF_ON(x)		((x) & (PS_ALL_ON))
-#घोषणा		PS_IS_ACTIVE(x)		((x) & (PS_ST_ACTIVE))
-#घोषणा		CLR_PS_STATE(x)	((x) = ((x) & (0xF0)))
+#define		PS_IS_RF_ON(x)		((x) & (PS_ALL_ON))
+#define		PS_IS_ACTIVE(x)		((x) & (PS_ST_ACTIVE))
+#define		CLR_PS_STATE(x)	((x) = ((x) & (0xF0)))
 
-काष्ठा reportpwrstate_parm अणु
-	अचिन्हित अक्षर mode;
-	अचिन्हित अक्षर state; /* the CPWM value */
-	अचिन्हित लघु rsvd;
-पूर्ण;
+struct reportpwrstate_parm {
+	unsigned char mode;
+	unsigned char state; /* the CPWM value */
+	unsigned short rsvd;
+};
 
-काष्ठा	pwrctrl_priv अणु
-	काष्ठा mutex mutex_lock;
-	/*अस्थिर*/ u8 rpwm; /* requested घातer state क्रम fw */
-	/* fw current घातer state. updated when 1. पढ़ो from HCPWM or
-	 * 2. driver lowers घातer level
+struct	pwrctrl_priv {
+	struct mutex mutex_lock;
+	/*volatile*/ u8 rpwm; /* requested power state for fw */
+	/* fw current power state. updated when 1. read from HCPWM or
+	 * 2. driver lowers power level
 	 */
-	/*अस्थिर*/ u8 cpwm;
-	/*अस्थिर*/ u8 tog; /* toggling */
-	/*अस्थिर*/ u8 cpwm_tog; /* toggling */
-	/*अस्थिर*/ u8 tgt_rpwm; /* wanted घातer state */
-	uपूर्णांक pwr_mode;
-	uपूर्णांक smart_ps;
-	uपूर्णांक alives;
-	uपूर्णांक ImrContent;	/* used to store original imr. */
-	uपूर्णांक bSleep; /* sleep -> active is dअगरferent from active -> sleep. */
+	/*volatile*/ u8 cpwm;
+	/*volatile*/ u8 tog; /* toggling */
+	/*volatile*/ u8 cpwm_tog; /* toggling */
+	/*volatile*/ u8 tgt_rpwm; /* wanted power state */
+	uint pwr_mode;
+	uint smart_ps;
+	uint alives;
+	uint ImrContent;	/* used to store original imr. */
+	uint bSleep; /* sleep -> active is different from active -> sleep. */
 
-	काष्ठा work_काष्ठा SetPSModeWorkItem;
-	काष्ठा work_काष्ठा rpwm_workitem;
-	काष्ठा समयr_list rpwm_check_समयr;
+	struct work_struct SetPSModeWorkItem;
+	struct work_struct rpwm_workitem;
+	struct timer_list rpwm_check_timer;
 	u8	rpwm_retry;
-	uपूर्णांक	bSetPSModeWorkItemInProgress;
+	uint	bSetPSModeWorkItemInProgress;
 
 	spinlock_t pnp_pwr_mgnt_lock;
 	s32	pnp_current_pwr_state;
 	u8	pnp_bstop_trx;
 	u8	pnp_wwirp_pending;
-पूर्ण;
+};
 
-व्योम r8712_init_pwrctrl_priv(काष्ठा _adapter *adapter);
-पूर्णांक r8712_रेजिस्टर_cmd_alive(काष्ठा _adapter *padapter);
-व्योम r8712_unरेजिस्टर_cmd_alive(काष्ठा _adapter *padapter);
-व्योम r8712_cpwm_पूर्णांक_hdl(काष्ठा _adapter *padapter,
-			काष्ठा reportpwrstate_parm *preportpwrstate);
-व्योम r8712_set_ps_mode(काष्ठा _adapter *padapter, uपूर्णांक ps_mode,
-			uपूर्णांक smart_ps);
-व्योम r8712_set_rpwm(काष्ठा _adapter *padapter, u8 val8);
+void r8712_init_pwrctrl_priv(struct _adapter *adapter);
+int r8712_register_cmd_alive(struct _adapter *padapter);
+void r8712_unregister_cmd_alive(struct _adapter *padapter);
+void r8712_cpwm_int_hdl(struct _adapter *padapter,
+			struct reportpwrstate_parm *preportpwrstate);
+void r8712_set_ps_mode(struct _adapter *padapter, uint ps_mode,
+			uint smart_ps);
+void r8712_set_rpwm(struct _adapter *padapter, u8 val8);
 
-#पूर्ण_अगर  /* __RTL871X_PWRCTRL_H_ */
+#endif  /* __RTL871X_PWRCTRL_H_ */

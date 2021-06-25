@@ -1,187 +1,186 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Net1080 based USB host-to-host cables
  * Copyright (C) 2000-2005 by David Brownell
  */
 
-// #घोषणा	DEBUG			// error path messages, extra info
-// #घोषणा	VERBOSE			// more; success messages
+// #define	DEBUG			// error path messages, extra info
+// #define	VERBOSE			// more; success messages
 
-#समावेश <linux/module.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/ethtool.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/mii.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/usb/usbnet.h>
-#समावेश <linux/slab.h>
+#include <linux/module.h>
+#include <linux/netdevice.h>
+#include <linux/etherdevice.h>
+#include <linux/ethtool.h>
+#include <linux/workqueue.h>
+#include <linux/mii.h>
+#include <linux/usb.h>
+#include <linux/usb/usbnet.h>
+#include <linux/slab.h>
 
-#समावेश <यंत्र/unaligned.h>
+#include <asm/unaligned.h>
 
 
 /*
  * Netchip 1080 driver ... http://www.netchip.com
- * (Sept 2004:  End-of-lअगरe announcement has been sent.)
+ * (Sept 2004:  End-of-life announcement has been sent.)
  * Used in (some) LapLink cables
  */
 
-#घोषणा frame_errors	data[1]
+#define frame_errors	data[1]
 
 /*
  * NetChip framing of ethernet packets, supporting additional error
- * checks क्रम links that may drop bulk packets from inside messages.
- * Odd USB length == always लघु पढ़ो क्रम last usb packet.
+ * checks for links that may drop bulk packets from inside messages.
+ * Odd USB length == always short read for last usb packet.
  *	- nc_header
  *	- Ethernet header (14 bytes)
  *	- payload
- *	- (optional padding byte, अगर needed so length becomes odd)
+ *	- (optional padding byte, if needed so length becomes odd)
  *	- nc_trailer
  *
- * This framing is to be aव्योमed क्रम non-NetChip devices.
+ * This framing is to be avoided for non-NetChip devices.
  */
 
-काष्ठा nc_header अणु		// packed:
-	__le16	hdr_len;		// माप nc_header (LE, all)
+struct nc_header {		// packed:
+	__le16	hdr_len;		// sizeof nc_header (LE, all)
 	__le16	packet_len;		// payload size (including ethhdr)
 	__le16	packet_id;		// detects dropped packets
-#घोषणा MIN_HEADER	6
+#define MIN_HEADER	6
 
-	// all अन्यथा is optional, and must start with:
-	// __le16	venकरोrId;	// from usb-अगर
+	// all else is optional, and must start with:
+	// __le16	vendorId;	// from usb-if
 	// __le16	productId;
-पूर्ण __packed;
+} __packed;
 
-#घोषणा	PAD_BYTE	((अचिन्हित अक्षर)0xAC)
+#define	PAD_BYTE	((unsigned char)0xAC)
 
-काष्ठा nc_trailer अणु
+struct nc_trailer {
 	__le16	packet_id;
-पूर्ण __packed;
+} __packed;
 
 // packets may use FLAG_FRAMING_NC and optional pad
-#घोषणा FRAMED_SIZE(mtu) (माप (काष्ठा nc_header) \
-				+ माप (काष्ठा ethhdr) \
+#define FRAMED_SIZE(mtu) (sizeof (struct nc_header) \
+				+ sizeof (struct ethhdr) \
 				+ (mtu) \
 				+ 1 \
-				+ माप (काष्ठा nc_trailer))
+				+ sizeof (struct nc_trailer))
 
-#घोषणा MIN_FRAMED	FRAMED_SIZE(0)
+#define MIN_FRAMED	FRAMED_SIZE(0)
 
 /* packets _could_ be up to 64KB... */
-#घोषणा NC_MAX_PACKET	32767
+#define NC_MAX_PACKET	32767
 
 
 /*
- * Zero means no समयout; अन्यथा, how दीर्घ a 64 byte bulk packet may be queued
- * beक्रमe the hardware drops it.  If that's करोne, the driver will need to
+ * Zero means no timeout; else, how long a 64 byte bulk packet may be queued
+ * before the hardware drops it.  If that's done, the driver will need to
  * frame network packets to guard against the dropped USB packets.  The win32
- * driver sets this क्रम both sides of the link.
+ * driver sets this for both sides of the link.
  */
-#घोषणा	NC_READ_TTL_MS	((u8)255)	// ms
+#define	NC_READ_TTL_MS	((u8)255)	// ms
 
 /*
- * We ignore most रेजिस्टरs and EEPROM contents.
+ * We ignore most registers and EEPROM contents.
  */
-#घोषणा	REG_USBCTL	((u8)0x04)
-#घोषणा REG_TTL		((u8)0x10)
-#घोषणा REG_STATUS	((u8)0x11)
+#define	REG_USBCTL	((u8)0x04)
+#define REG_TTL		((u8)0x10)
+#define REG_STATUS	((u8)0x11)
 
 /*
- * Venकरोr specअगरic requests to पढ़ो/ग_लिखो data
+ * Vendor specific requests to read/write data
  */
-#घोषणा	REQUEST_REGISTER	((u8)0x10)
-#घोषणा	REQUEST_EEPROM		((u8)0x11)
+#define	REQUEST_REGISTER	((u8)0x10)
+#define	REQUEST_EEPROM		((u8)0x11)
 
-अटल पूर्णांक
-nc_venकरोr_पढ़ो(काष्ठा usbnet *dev, u8 req, u8 regnum, u16 *retval_ptr)
-अणु
-	पूर्णांक status = usbnet_पढ़ो_cmd(dev, req,
-				     USB_सूची_IN | USB_TYPE_VENDOR |
+static int
+nc_vendor_read(struct usbnet *dev, u8 req, u8 regnum, u16 *retval_ptr)
+{
+	int status = usbnet_read_cmd(dev, req,
+				     USB_DIR_IN | USB_TYPE_VENDOR |
 				     USB_RECIP_DEVICE,
 				     0, regnum, retval_ptr,
-				     माप *retval_ptr);
-	अगर (status > 0)
+				     sizeof *retval_ptr);
+	if (status > 0)
 		status = 0;
-	अगर (!status)
+	if (!status)
 		le16_to_cpus(retval_ptr);
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल अंतरभूत पूर्णांक
-nc_रेजिस्टर_पढ़ो(काष्ठा usbnet *dev, u8 regnum, u16 *retval_ptr)
-अणु
-	वापस nc_venकरोr_पढ़ो(dev, REQUEST_REGISTER, regnum, retval_ptr);
-पूर्ण
+static inline int
+nc_register_read(struct usbnet *dev, u8 regnum, u16 *retval_ptr)
+{
+	return nc_vendor_read(dev, REQUEST_REGISTER, regnum, retval_ptr);
+}
 
-अटल व्योम
-nc_venकरोr_ग_लिखो(काष्ठा usbnet *dev, u8 req, u8 regnum, u16 value)
-अणु
-	usbnet_ग_लिखो_cmd(dev, req,
-			 USB_सूची_OUT | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
-			 value, regnum, शून्य, 0);
-पूर्ण
+static void
+nc_vendor_write(struct usbnet *dev, u8 req, u8 regnum, u16 value)
+{
+	usbnet_write_cmd(dev, req,
+			 USB_DIR_OUT | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
+			 value, regnum, NULL, 0);
+}
 
-अटल अंतरभूत व्योम
-nc_रेजिस्टर_ग_लिखो(काष्ठा usbnet *dev, u8 regnum, u16 value)
-अणु
-	nc_venकरोr_ग_लिखो(dev, REQUEST_REGISTER, regnum, value);
-पूर्ण
+static inline void
+nc_register_write(struct usbnet *dev, u8 regnum, u16 value)
+{
+	nc_vendor_write(dev, REQUEST_REGISTER, regnum, value);
+}
 
 
-#अगर 0
-अटल व्योम nc_dump_रेजिस्टरs(काष्ठा usbnet *dev)
-अणु
+#if 0
+static void nc_dump_registers(struct usbnet *dev)
+{
 	u8	reg;
-	u16	*vp = kदो_स्मृति(माप (u16));
+	u16	*vp = kmalloc(sizeof (u16));
 
-	अगर (!vp)
-		वापस;
+	if (!vp)
+		return;
 
 	netdev_dbg(dev->net, "registers:\n");
-	क्रम (reg = 0; reg < 0x20; reg++) अणु
-		पूर्णांक retval;
+	for (reg = 0; reg < 0x20; reg++) {
+		int retval;
 
-		// पढ़ोing some रेजिस्टरs is trouble
-		अगर (reg >= 0x08 && reg <= 0xf)
-			जारी;
-		अगर (reg >= 0x12 && reg <= 0x1e)
-			जारी;
+		// reading some registers is trouble
+		if (reg >= 0x08 && reg <= 0xf)
+			continue;
+		if (reg >= 0x12 && reg <= 0x1e)
+			continue;
 
-		retval = nc_रेजिस्टर_पढ़ो(dev, reg, vp);
-		अगर (retval < 0)
+		retval = nc_register_read(dev, reg, vp);
+		if (retval < 0)
 			netdev_dbg(dev->net, "reg [0x%x] ==> error %d\n",
 				   reg, retval);
-		अन्यथा
+		else
 			netdev_dbg(dev->net, "reg [0x%x] = 0x%x\n", reg, *vp);
-	पूर्ण
-	kमुक्त(vp);
-पूर्ण
-#पूर्ण_अगर
+	}
+	kfree(vp);
+}
+#endif
 
 
 /*-------------------------------------------------------------------------*/
 
 /*
- * Control रेजिस्टर
+ * Control register
  */
 
-#घोषणा	USBCTL_WRITABLE_MASK	0x1f0f
+#define	USBCTL_WRITABLE_MASK	0x1f0f
 // bits 15-13 reserved, r/o
-#घोषणा	USBCTL_ENABLE_LANG	(1 << 12)
-#घोषणा	USBCTL_ENABLE_MFGR	(1 << 11)
-#घोषणा	USBCTL_ENABLE_PROD	(1 << 10)
-#घोषणा	USBCTL_ENABLE_SERIAL	(1 << 9)
-#घोषणा	USBCTL_ENABLE_DEFAULTS	(1 << 8)
+#define	USBCTL_ENABLE_LANG	(1 << 12)
+#define	USBCTL_ENABLE_MFGR	(1 << 11)
+#define	USBCTL_ENABLE_PROD	(1 << 10)
+#define	USBCTL_ENABLE_SERIAL	(1 << 9)
+#define	USBCTL_ENABLE_DEFAULTS	(1 << 8)
 // bits 7-4 reserved, r/o
-#घोषणा	USBCTL_FLUSH_OTHER	(1 << 3)
-#घोषणा	USBCTL_FLUSH_THIS	(1 << 2)
-#घोषणा	USBCTL_DISCONN_OTHER	(1 << 1)
-#घोषणा	USBCTL_DISCONN_THIS	(1 << 0)
+#define	USBCTL_FLUSH_OTHER	(1 << 3)
+#define	USBCTL_FLUSH_THIS	(1 << 2)
+#define	USBCTL_DISCONN_OTHER	(1 << 1)
+#define	USBCTL_DISCONN_THIS	(1 << 0)
 
-अटल अंतरभूत व्योम nc_dump_usbctl(काष्ठा usbnet *dev, u16 usbctl)
-अणु
-	netअगर_dbg(dev, link, dev->net,
+static inline void nc_dump_usbctl(struct usbnet *dev, u16 usbctl)
+{
+	netif_dbg(dev, link, dev->net,
 		  "net1080 %s-%s usbctl 0x%x:%s%s%s%s%s; this%s%s; other%s%s; r/o 0x%x\n",
 		  dev->udev->bus->bus_name, dev->udev->devpath,
 		  usbctl,
@@ -198,38 +197,38 @@ nc_रेजिस्टर_ग_लिखो(काष्ठा usbnet *dev, u8 
 		  (usbctl & USBCTL_DISCONN_OTHER) ? " DIS" : "",
 
 		  usbctl & ~USBCTL_WRITABLE_MASK);
-पूर्ण
+}
 
 /*-------------------------------------------------------------------------*/
 
 /*
- * Status रेजिस्टर
+ * Status register
  */
 
-#घोषणा	STATUS_PORT_A		(1 << 15)
+#define	STATUS_PORT_A		(1 << 15)
 
-#घोषणा	STATUS_CONN_OTHER	(1 << 14)
-#घोषणा	STATUS_SUSPEND_OTHER	(1 << 13)
-#घोषणा	STATUS_MAILBOX_OTHER	(1 << 12)
-#घोषणा	STATUS_PACKETS_OTHER(n)	(((n) >> 8) & 0x03)
+#define	STATUS_CONN_OTHER	(1 << 14)
+#define	STATUS_SUSPEND_OTHER	(1 << 13)
+#define	STATUS_MAILBOX_OTHER	(1 << 12)
+#define	STATUS_PACKETS_OTHER(n)	(((n) >> 8) & 0x03)
 
-#घोषणा	STATUS_CONN_THIS	(1 << 6)
-#घोषणा	STATUS_SUSPEND_THIS	(1 << 5)
-#घोषणा	STATUS_MAILBOX_THIS	(1 << 4)
-#घोषणा	STATUS_PACKETS_THIS(n)	(((n) >> 0) & 0x03)
+#define	STATUS_CONN_THIS	(1 << 6)
+#define	STATUS_SUSPEND_THIS	(1 << 5)
+#define	STATUS_MAILBOX_THIS	(1 << 4)
+#define	STATUS_PACKETS_THIS(n)	(((n) >> 0) & 0x03)
 
-#घोषणा	STATUS_UNSPEC_MASK	0x0c8c
-#घोषणा	STATUS_NOISE_MASK 	((u16)~(0x0303|STATUS_UNSPEC_MASK))
+#define	STATUS_UNSPEC_MASK	0x0c8c
+#define	STATUS_NOISE_MASK 	((u16)~(0x0303|STATUS_UNSPEC_MASK))
 
 
-अटल अंतरभूत व्योम nc_dump_status(काष्ठा usbnet *dev, u16 status)
-अणु
-	netअगर_dbg(dev, link, dev->net,
+static inline void nc_dump_status(struct usbnet *dev, u16 status)
+{
+	netif_dbg(dev, link, dev->net,
 		  "net1080 %s-%s status 0x%x: this (%c) PKT=%d%s%s%s; other PKT=%d%s%s%s; unspec 0x%x\n",
 		  dev->udev->bus->bus_name, dev->udev->devpath,
 		  status,
 
-		  // XXX the packet counts करोn't seem right
+		  // XXX the packet counts don't seem right
 		  // (1 at reset, not 0); maybe UNSPEC too
 
 		  (status & STATUS_PORT_A) ? 'A' : 'B',
@@ -244,247 +243,247 @@ nc_रेजिस्टर_ग_लिखो(काष्ठा usbnet *dev, u8 
 		  (status & STATUS_MAILBOX_OTHER) ? " MBOX" : "",
 
 		  status & STATUS_UNSPEC_MASK);
-पूर्ण
+}
 
 /*-------------------------------------------------------------------------*/
 
 /*
- * TTL रेजिस्टर
+ * TTL register
  */
 
-#घोषणा	TTL_OTHER(ttl)	(0x00ff & (ttl >> 8))
-#घोषणा MK_TTL(this,other)	((u16)(((other)<<8)|(0x00ff&(this))))
+#define	TTL_OTHER(ttl)	(0x00ff & (ttl >> 8))
+#define MK_TTL(this,other)	((u16)(((other)<<8)|(0x00ff&(this))))
 
 /*-------------------------------------------------------------------------*/
 
-अटल पूर्णांक net1080_reset(काष्ठा usbnet *dev)
-अणु
+static int net1080_reset(struct usbnet *dev)
+{
 	u16		usbctl, status, ttl;
 	u16		vp;
-	पूर्णांक		retval;
+	int		retval;
 
-	// nc_dump_रेजिस्टरs(dev);
+	// nc_dump_registers(dev);
 
-	अगर ((retval = nc_रेजिस्टर_पढ़ो(dev, REG_STATUS, &vp)) < 0) अणु
+	if ((retval = nc_register_read(dev, REG_STATUS, &vp)) < 0) {
 		netdev_dbg(dev->net, "can't read %s-%s status: %d\n",
 			   dev->udev->bus->bus_name, dev->udev->devpath, retval);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 	status = vp;
 	nc_dump_status(dev, status);
 
-	अगर ((retval = nc_रेजिस्टर_पढ़ो(dev, REG_USBCTL, &vp)) < 0) अणु
+	if ((retval = nc_register_read(dev, REG_USBCTL, &vp)) < 0) {
 		netdev_dbg(dev->net, "can't read USBCTL, %d\n", retval);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 	usbctl = vp;
 	nc_dump_usbctl(dev, usbctl);
 
-	nc_रेजिस्टर_ग_लिखो(dev, REG_USBCTL,
+	nc_register_write(dev, REG_USBCTL,
 			USBCTL_FLUSH_THIS | USBCTL_FLUSH_OTHER);
 
-	अगर ((retval = nc_रेजिस्टर_पढ़ो(dev, REG_TTL, &vp)) < 0) अणु
+	if ((retval = nc_register_read(dev, REG_TTL, &vp)) < 0) {
 		netdev_dbg(dev->net, "can't read TTL, %d\n", retval);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 	ttl = vp;
 
-	nc_रेजिस्टर_ग_लिखो(dev, REG_TTL,
+	nc_register_write(dev, REG_TTL,
 			MK_TTL(NC_READ_TTL_MS, TTL_OTHER(ttl)) );
 	netdev_dbg(dev->net, "assigned TTL, %d ms\n", NC_READ_TTL_MS);
 
-	netअगर_info(dev, link, dev->net, "port %c, peer %sconnected\n",
+	netif_info(dev, link, dev->net, "port %c, peer %sconnected\n",
 		   (status & STATUS_PORT_A) ? 'A' : 'B',
 		   (status & STATUS_CONN_OTHER) ? "" : "dis");
 	retval = 0;
 
-करोne:
-	वापस retval;
-पूर्ण
+done:
+	return retval;
+}
 
-अटल पूर्णांक net1080_check_connect(काष्ठा usbnet *dev)
-अणु
-	पूर्णांक			retval;
+static int net1080_check_connect(struct usbnet *dev)
+{
+	int			retval;
 	u16			status;
 	u16			vp;
 
-	retval = nc_रेजिस्टर_पढ़ो(dev, REG_STATUS, &vp);
+	retval = nc_register_read(dev, REG_STATUS, &vp);
 	status = vp;
-	अगर (retval != 0) अणु
+	if (retval != 0) {
 		netdev_dbg(dev->net, "net1080_check_conn read - %d\n", retval);
-		वापस retval;
-	पूर्ण
-	अगर ((status & STATUS_CONN_OTHER) != STATUS_CONN_OTHER)
-		वापस -ENOLINK;
-	वापस 0;
-पूर्ण
+		return retval;
+	}
+	if ((status & STATUS_CONN_OTHER) != STATUS_CONN_OTHER)
+		return -ENOLINK;
+	return 0;
+}
 
-अटल व्योम nc_ensure_sync(काष्ठा usbnet *dev)
-अणु
-	अगर (++dev->frame_errors <= 5)
-		वापस;
+static void nc_ensure_sync(struct usbnet *dev)
+{
+	if (++dev->frame_errors <= 5)
+		return;
 
-	अगर (usbnet_ग_लिखो_cmd_async(dev, REQUEST_REGISTER,
-					USB_सूची_OUT | USB_TYPE_VENDOR |
+	if (usbnet_write_cmd_async(dev, REQUEST_REGISTER,
+					USB_DIR_OUT | USB_TYPE_VENDOR |
 					USB_RECIP_DEVICE,
 					USBCTL_FLUSH_THIS |
 					USBCTL_FLUSH_OTHER,
-					REG_USBCTL, शून्य, 0))
-		वापस;
+					REG_USBCTL, NULL, 0))
+		return;
 
-	netअगर_dbg(dev, rx_err, dev->net,
+	netif_dbg(dev, rx_err, dev->net,
 		  "flush net1080; too many framing errors\n");
 	dev->frame_errors = 0;
-पूर्ण
+}
 
-अटल पूर्णांक net1080_rx_fixup(काष्ठा usbnet *dev, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा nc_header	*header;
-	काष्ठा nc_trailer	*trailer;
+static int net1080_rx_fixup(struct usbnet *dev, struct sk_buff *skb)
+{
+	struct nc_header	*header;
+	struct nc_trailer	*trailer;
 	u16			hdr_len, packet_len;
 
-	/* This check is no दीर्घer करोne by usbnet */
-	अगर (skb->len < dev->net->hard_header_len)
-		वापस 0;
+	/* This check is no longer done by usbnet */
+	if (skb->len < dev->net->hard_header_len)
+		return 0;
 
-	अगर (!(skb->len & 0x01)) अणु
+	if (!(skb->len & 0x01)) {
 		netdev_dbg(dev->net, "rx framesize %d range %d..%d mtu %d\n",
 			   skb->len, dev->net->hard_header_len, dev->hard_mtu,
 			   dev->net->mtu);
 		dev->net->stats.rx_frame_errors++;
 		nc_ensure_sync(dev);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	header = (काष्ठा nc_header *) skb->data;
+	header = (struct nc_header *) skb->data;
 	hdr_len = le16_to_cpup(&header->hdr_len);
 	packet_len = le16_to_cpup(&header->packet_len);
-	अगर (FRAMED_SIZE(packet_len) > NC_MAX_PACKET) अणु
+	if (FRAMED_SIZE(packet_len) > NC_MAX_PACKET) {
 		dev->net->stats.rx_frame_errors++;
 		netdev_dbg(dev->net, "packet too big, %d\n", packet_len);
 		nc_ensure_sync(dev);
-		वापस 0;
-	पूर्ण अन्यथा अगर (hdr_len < MIN_HEADER) अणु
+		return 0;
+	} else if (hdr_len < MIN_HEADER) {
 		dev->net->stats.rx_frame_errors++;
 		netdev_dbg(dev->net, "header too short, %d\n", hdr_len);
 		nc_ensure_sync(dev);
-		वापस 0;
-	पूर्ण अन्यथा अगर (hdr_len > MIN_HEADER) अणु
-		// out of band data क्रम us?
+		return 0;
+	} else if (hdr_len > MIN_HEADER) {
+		// out of band data for us?
 		netdev_dbg(dev->net, "header OOB, %d bytes\n", hdr_len - MIN_HEADER);
 		nc_ensure_sync(dev);
-		// चयन (venकरोr/product ids) अणु ... पूर्ण
-	पूर्ण
+		// switch (vendor/product ids) { ... }
+	}
 	skb_pull(skb, hdr_len);
 
-	trailer = (काष्ठा nc_trailer *)
-		(skb->data + skb->len - माप *trailer);
-	skb_trim(skb, skb->len - माप *trailer);
+	trailer = (struct nc_trailer *)
+		(skb->data + skb->len - sizeof *trailer);
+	skb_trim(skb, skb->len - sizeof *trailer);
 
-	अगर ((packet_len & 0x01) == 0) अणु
-		अगर (skb->data [packet_len] != PAD_BYTE) अणु
+	if ((packet_len & 0x01) == 0) {
+		if (skb->data [packet_len] != PAD_BYTE) {
 			dev->net->stats.rx_frame_errors++;
 			netdev_dbg(dev->net, "bad pad\n");
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 		skb_trim(skb, skb->len - 1);
-	पूर्ण
-	अगर (skb->len != packet_len) अणु
+	}
+	if (skb->len != packet_len) {
 		dev->net->stats.rx_frame_errors++;
 		netdev_dbg(dev->net, "bad packet len %d (expected %d)\n",
 			   skb->len, packet_len);
 		nc_ensure_sync(dev);
-		वापस 0;
-	पूर्ण
-	अगर (header->packet_id != get_unaligned(&trailer->packet_id)) अणु
-		dev->net->stats.rx_fअगरo_errors++;
+		return 0;
+	}
+	if (header->packet_id != get_unaligned(&trailer->packet_id)) {
+		dev->net->stats.rx_fifo_errors++;
 		netdev_dbg(dev->net, "(2+ dropped) rx packet_id mismatch 0x%x 0x%x\n",
 			   le16_to_cpu(header->packet_id),
 			   le16_to_cpu(trailer->packet_id));
-		वापस 0;
-	पूर्ण
-#अगर 0
+		return 0;
+	}
+#if 0
 	netdev_dbg(dev->net, "frame <rx h %d p %d id %d\n", header->hdr_len,
 		   header->packet_len, header->packet_id);
-#पूर्ण_अगर
+#endif
 	dev->frame_errors = 0;
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल काष्ठा sk_buff *
-net1080_tx_fixup(काष्ठा usbnet *dev, काष्ठा sk_buff *skb, gfp_t flags)
-अणु
-	काष्ठा sk_buff		*skb2;
-	काष्ठा nc_header	*header = शून्य;
-	काष्ठा nc_trailer	*trailer = शून्य;
-	पूर्णांक			padlen = माप (काष्ठा nc_trailer);
-	पूर्णांक			len = skb->len;
+static struct sk_buff *
+net1080_tx_fixup(struct usbnet *dev, struct sk_buff *skb, gfp_t flags)
+{
+	struct sk_buff		*skb2;
+	struct nc_header	*header = NULL;
+	struct nc_trailer	*trailer = NULL;
+	int			padlen = sizeof (struct nc_trailer);
+	int			len = skb->len;
 
-	अगर (!((len + padlen + माप (काष्ठा nc_header)) & 0x01))
+	if (!((len + padlen + sizeof (struct nc_header)) & 0x01))
 		padlen++;
-	अगर (!skb_cloned(skb)) अणु
-		पूर्णांक	headroom = skb_headroom(skb);
-		पूर्णांक	tailroom = skb_tailroom(skb);
+	if (!skb_cloned(skb)) {
+		int	headroom = skb_headroom(skb);
+		int	tailroom = skb_tailroom(skb);
 
-		अगर (padlen <= tailroom &&
-		    माप(काष्ठा nc_header) <= headroom)
+		if (padlen <= tailroom &&
+		    sizeof(struct nc_header) <= headroom)
 			/* There's enough head and tail room */
-			जाओ encapsulate;
+			goto encapsulate;
 
-		अगर ((माप (काष्ठा nc_header) + padlen) <
-				(headroom + tailroom)) अणु
-			/* There's enough total room, so just पढ़ोjust */
-			skb->data = स_हटाओ(skb->head
-						+ माप (काष्ठा nc_header),
+		if ((sizeof (struct nc_header) + padlen) <
+				(headroom + tailroom)) {
+			/* There's enough total room, so just readjust */
+			skb->data = memmove(skb->head
+						+ sizeof (struct nc_header),
 					    skb->data, skb->len);
-			skb_set_tail_poपूर्णांकer(skb, len);
-			जाओ encapsulate;
-		पूर्ण
-	पूर्ण
+			skb_set_tail_pointer(skb, len);
+			goto encapsulate;
+		}
+	}
 
 	/* Create a new skb to use with the correct size */
 	skb2 = skb_copy_expand(skb,
-				माप (काष्ठा nc_header),
+				sizeof (struct nc_header),
 				padlen,
 				flags);
-	dev_kमुक्त_skb_any(skb);
-	अगर (!skb2)
-		वापस skb2;
+	dev_kfree_skb_any(skb);
+	if (!skb2)
+		return skb2;
 	skb = skb2;
 
 encapsulate:
 	/* header first */
-	header = skb_push(skb, माप *header);
-	header->hdr_len = cpu_to_le16(माप (*header));
+	header = skb_push(skb, sizeof *header);
+	header->hdr_len = cpu_to_le16(sizeof (*header));
 	header->packet_len = cpu_to_le16(len);
 	header->packet_id = cpu_to_le16((u16)dev->xid++);
 
 	/* maybe pad; then trailer */
-	अगर (!((skb->len + माप *trailer) & 0x01))
+	if (!((skb->len + sizeof *trailer) & 0x01))
 		skb_put_u8(skb, PAD_BYTE);
-	trailer = skb_put(skb, माप *trailer);
+	trailer = skb_put(skb, sizeof *trailer);
 	put_unaligned(header->packet_id, &trailer->packet_id);
-#अगर 0
+#if 0
 	netdev_dbg(dev->net, "frame >tx h %d p %d id %d\n",
 		   header->hdr_len, header->packet_len,
 		   header->packet_id);
-#पूर्ण_अगर
-	वापस skb;
-पूर्ण
+#endif
+	return skb;
+}
 
-अटल पूर्णांक net1080_bind(काष्ठा usbnet *dev, काष्ठा usb_पूर्णांकerface *पूर्णांकf)
-अणु
-	अचिन्हित	extra = माप (काष्ठा nc_header)
+static int net1080_bind(struct usbnet *dev, struct usb_interface *intf)
+{
+	unsigned	extra = sizeof (struct nc_header)
 				+ 1
-				+ माप (काष्ठा nc_trailer);
+				+ sizeof (struct nc_trailer);
 
 	dev->net->hard_header_len += extra;
 	dev->rx_urb_size = dev->net->hard_header_len + dev->net->mtu;
 	dev->hard_mtu = NC_MAX_PACKET;
-	वापस usbnet_get_endpoपूर्णांकs (dev, पूर्णांकf);
-पूर्ण
+	return usbnet_get_endpoints (dev, intf);
+}
 
-अटल स्थिर काष्ठा driver_info	net1080_info = अणु
+static const struct driver_info	net1080_info = {
 	.description =	"NetChip TurboCONNECT",
 	.flags =	FLAG_POINTTOPOINT | FLAG_FRAMING_NC,
 	.bind =		net1080_bind,
@@ -492,21 +491,21 @@ encapsulate:
 	.check_connect = net1080_check_connect,
 	.rx_fixup =	net1080_rx_fixup,
 	.tx_fixup =	net1080_tx_fixup,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा usb_device_id	products [] = अणु
-अणु
+static const struct usb_device_id	products [] = {
+{
 	USB_DEVICE(0x0525, 0x1080),	// NetChip ref design
-	.driver_info =	(अचिन्हित दीर्घ) &net1080_info,
-पूर्ण, अणु
+	.driver_info =	(unsigned long) &net1080_info,
+}, {
 	USB_DEVICE(0x06D0, 0x0622),	// Laplink Gold
-	.driver_info =	(अचिन्हित दीर्घ) &net1080_info,
-पूर्ण,
-	अणु पूर्ण,		// END
-पूर्ण;
+	.driver_info =	(unsigned long) &net1080_info,
+},
+	{ },		// END
+};
 MODULE_DEVICE_TABLE(usb, products);
 
-अटल काष्ठा usb_driver net1080_driver = अणु
+static struct usb_driver net1080_driver = {
 	.name =		"net1080",
 	.id_table =	products,
 	.probe =	usbnet_probe,
@@ -514,7 +513,7 @@ MODULE_DEVICE_TABLE(usb, products);
 	.suspend =	usbnet_suspend,
 	.resume =	usbnet_resume,
 	.disable_hub_initiated_lpm = 1,
-पूर्ण;
+};
 
 module_usb_driver(net1080_driver);
 

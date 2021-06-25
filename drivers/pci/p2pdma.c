@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * PCI Peer 2 Peer DMA support.
  *
@@ -9,181 +8,181 @@
  * Copyright (c) 2018, Eideticom Inc.
  */
 
-#घोषणा pr_fmt(fmt) "pci-p2pdma: " fmt
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/pci-p2pdma.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/genभाग.स>
-#समावेश <linux/memremap.h>
-#समावेश <linux/percpu-refcount.h>
-#समावेश <linux/अक्रमom.h>
-#समावेश <linux/seq_buf.h>
-#समावेश <linux/xarray.h>
+#define pr_fmt(fmt) "pci-p2pdma: " fmt
+#include <linux/ctype.h>
+#include <linux/pci-p2pdma.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/genalloc.h>
+#include <linux/memremap.h>
+#include <linux/percpu-refcount.h>
+#include <linux/random.h>
+#include <linux/seq_buf.h>
+#include <linux/xarray.h>
 
-क्रमागत pci_p2pdma_map_type अणु
+enum pci_p2pdma_map_type {
 	PCI_P2PDMA_MAP_UNKNOWN = 0,
 	PCI_P2PDMA_MAP_NOT_SUPPORTED,
 	PCI_P2PDMA_MAP_BUS_ADDR,
 	PCI_P2PDMA_MAP_THRU_HOST_BRIDGE,
-पूर्ण;
+};
 
-काष्ठा pci_p2pdma अणु
-	काष्ठा gen_pool *pool;
+struct pci_p2pdma {
+	struct gen_pool *pool;
 	bool p2pmem_published;
-	काष्ठा xarray map_types;
-पूर्ण;
+	struct xarray map_types;
+};
 
-काष्ठा pci_p2pdma_pagemap अणु
-	काष्ठा dev_pagemap pgmap;
-	काष्ठा pci_dev *provider;
+struct pci_p2pdma_pagemap {
+	struct dev_pagemap pgmap;
+	struct pci_dev *provider;
 	u64 bus_offset;
-पूर्ण;
+};
 
-अटल काष्ठा pci_p2pdma_pagemap *to_p2p_pgmap(काष्ठा dev_pagemap *pgmap)
-अणु
-	वापस container_of(pgmap, काष्ठा pci_p2pdma_pagemap, pgmap);
-पूर्ण
+static struct pci_p2pdma_pagemap *to_p2p_pgmap(struct dev_pagemap *pgmap)
+{
+	return container_of(pgmap, struct pci_p2pdma_pagemap, pgmap);
+}
 
-अटल sमाप_प्रकार size_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			 अक्षर *buf)
-अणु
-	काष्ठा pci_dev *pdev = to_pci_dev(dev);
-	माप_प्रकार size = 0;
+static ssize_t size_show(struct device *dev, struct device_attribute *attr,
+			 char *buf)
+{
+	struct pci_dev *pdev = to_pci_dev(dev);
+	size_t size = 0;
 
-	अगर (pdev->p2pdma->pool)
+	if (pdev->p2pdma->pool)
 		size = gen_pool_size(pdev->p2pdma->pool);
 
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%zd\n", size);
-पूर्ण
-अटल DEVICE_ATTR_RO(size);
+	return scnprintf(buf, PAGE_SIZE, "%zd\n", size);
+}
+static DEVICE_ATTR_RO(size);
 
-अटल sमाप_प्रकार available_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			      अक्षर *buf)
-अणु
-	काष्ठा pci_dev *pdev = to_pci_dev(dev);
-	माप_प्रकार avail = 0;
+static ssize_t available_show(struct device *dev, struct device_attribute *attr,
+			      char *buf)
+{
+	struct pci_dev *pdev = to_pci_dev(dev);
+	size_t avail = 0;
 
-	अगर (pdev->p2pdma->pool)
+	if (pdev->p2pdma->pool)
 		avail = gen_pool_avail(pdev->p2pdma->pool);
 
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%zd\n", avail);
-पूर्ण
-अटल DEVICE_ATTR_RO(available);
+	return scnprintf(buf, PAGE_SIZE, "%zd\n", avail);
+}
+static DEVICE_ATTR_RO(available);
 
-अटल sमाप_प्रकार published_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			      अक्षर *buf)
-अणु
-	काष्ठा pci_dev *pdev = to_pci_dev(dev);
+static ssize_t published_show(struct device *dev, struct device_attribute *attr,
+			      char *buf)
+{
+	struct pci_dev *pdev = to_pci_dev(dev);
 
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%d\n",
+	return scnprintf(buf, PAGE_SIZE, "%d\n",
 			 pdev->p2pdma->p2pmem_published);
-पूर्ण
-अटल DEVICE_ATTR_RO(published);
+}
+static DEVICE_ATTR_RO(published);
 
-अटल काष्ठा attribute *p2pmem_attrs[] = अणु
+static struct attribute *p2pmem_attrs[] = {
 	&dev_attr_size.attr,
 	&dev_attr_available.attr,
 	&dev_attr_published.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group p2pmem_group = अणु
+static const struct attribute_group p2pmem_group = {
 	.attrs = p2pmem_attrs,
 	.name = "p2pmem",
-पूर्ण;
+};
 
-अटल व्योम pci_p2pdma_release(व्योम *data)
-अणु
-	काष्ठा pci_dev *pdev = data;
-	काष्ठा pci_p2pdma *p2pdma = pdev->p2pdma;
+static void pci_p2pdma_release(void *data)
+{
+	struct pci_dev *pdev = data;
+	struct pci_p2pdma *p2pdma = pdev->p2pdma;
 
-	अगर (!p2pdma)
-		वापस;
+	if (!p2pdma)
+		return;
 
 	/* Flush and disable pci_alloc_p2p_mem() */
-	pdev->p2pdma = शून्य;
+	pdev->p2pdma = NULL;
 	synchronize_rcu();
 
 	gen_pool_destroy(p2pdma->pool);
-	sysfs_हटाओ_group(&pdev->dev.kobj, &p2pmem_group);
+	sysfs_remove_group(&pdev->dev.kobj, &p2pmem_group);
 	xa_destroy(&p2pdma->map_types);
-पूर्ण
+}
 
-अटल पूर्णांक pci_p2pdma_setup(काष्ठा pci_dev *pdev)
-अणु
-	पूर्णांक error = -ENOMEM;
-	काष्ठा pci_p2pdma *p2p;
+static int pci_p2pdma_setup(struct pci_dev *pdev)
+{
+	int error = -ENOMEM;
+	struct pci_p2pdma *p2p;
 
-	p2p = devm_kzalloc(&pdev->dev, माप(*p2p), GFP_KERNEL);
-	अगर (!p2p)
-		वापस -ENOMEM;
+	p2p = devm_kzalloc(&pdev->dev, sizeof(*p2p), GFP_KERNEL);
+	if (!p2p)
+		return -ENOMEM;
 
 	xa_init(&p2p->map_types);
 
 	p2p->pool = gen_pool_create(PAGE_SHIFT, dev_to_node(&pdev->dev));
-	अगर (!p2p->pool)
-		जाओ out;
+	if (!p2p->pool)
+		goto out;
 
 	error = devm_add_action_or_reset(&pdev->dev, pci_p2pdma_release, pdev);
-	अगर (error)
-		जाओ out_pool_destroy;
+	if (error)
+		goto out_pool_destroy;
 
 	pdev->p2pdma = p2p;
 
 	error = sysfs_create_group(&pdev->dev.kobj, &p2pmem_group);
-	अगर (error)
-		जाओ out_pool_destroy;
+	if (error)
+		goto out_pool_destroy;
 
-	वापस 0;
+	return 0;
 
 out_pool_destroy:
-	pdev->p2pdma = शून्य;
+	pdev->p2pdma = NULL;
 	gen_pool_destroy(p2p->pool);
 out:
-	devm_kमुक्त(&pdev->dev, p2p);
-	वापस error;
-पूर्ण
+	devm_kfree(&pdev->dev, p2p);
+	return error;
+}
 
 /**
- * pci_p2pdma_add_resource - add memory क्रम use as p2p memory
+ * pci_p2pdma_add_resource - add memory for use as p2p memory
  * @pdev: the device to add the memory to
  * @bar: PCI BAR to add
  * @size: size of the memory to add, may be zero to use the whole BAR
- * @offset: offset पूर्णांकo the PCI BAR
+ * @offset: offset into the PCI BAR
  *
- * The memory will be given ZONE_DEVICE काष्ठा pages so that it may
+ * The memory will be given ZONE_DEVICE struct pages so that it may
  * be used with any DMA request.
  */
-पूर्णांक pci_p2pdma_add_resource(काष्ठा pci_dev *pdev, पूर्णांक bar, माप_प्रकार size,
+int pci_p2pdma_add_resource(struct pci_dev *pdev, int bar, size_t size,
 			    u64 offset)
-अणु
-	काष्ठा pci_p2pdma_pagemap *p2p_pgmap;
-	काष्ठा dev_pagemap *pgmap;
-	व्योम *addr;
-	पूर्णांक error;
+{
+	struct pci_p2pdma_pagemap *p2p_pgmap;
+	struct dev_pagemap *pgmap;
+	void *addr;
+	int error;
 
-	अगर (!(pci_resource_flags(pdev, bar) & IORESOURCE_MEM))
-		वापस -EINVAL;
+	if (!(pci_resource_flags(pdev, bar) & IORESOURCE_MEM))
+		return -EINVAL;
 
-	अगर (offset >= pci_resource_len(pdev, bar))
-		वापस -EINVAL;
+	if (offset >= pci_resource_len(pdev, bar))
+		return -EINVAL;
 
-	अगर (!size)
+	if (!size)
 		size = pci_resource_len(pdev, bar) - offset;
 
-	अगर (size + offset > pci_resource_len(pdev, bar))
-		वापस -EINVAL;
+	if (size + offset > pci_resource_len(pdev, bar))
+		return -EINVAL;
 
-	अगर (!pdev->p2pdma) अणु
+	if (!pdev->p2pdma) {
 		error = pci_p2pdma_setup(pdev);
-		अगर (error)
-			वापस error;
-	पूर्ण
+		if (error)
+			return error;
+	}
 
-	p2p_pgmap = devm_kzalloc(&pdev->dev, माप(*p2p_pgmap), GFP_KERNEL);
-	अगर (!p2p_pgmap)
-		वापस -ENOMEM;
+	p2p_pgmap = devm_kzalloc(&pdev->dev, sizeof(*p2p_pgmap), GFP_KERNEL);
+	if (!p2p_pgmap)
+		return -ENOMEM;
 
 	pgmap = &p2p_pgmap->pgmap;
 	pgmap->range.start = pci_resource_start(pdev, bar) + offset;
@@ -196,255 +195,255 @@ out:
 		pci_resource_start(pdev, bar);
 
 	addr = devm_memremap_pages(&pdev->dev, pgmap);
-	अगर (IS_ERR(addr)) अणु
+	if (IS_ERR(addr)) {
 		error = PTR_ERR(addr);
-		जाओ pgmap_मुक्त;
-	पूर्ण
+		goto pgmap_free;
+	}
 
-	error = gen_pool_add_owner(pdev->p2pdma->pool, (अचिन्हित दीर्घ)addr,
+	error = gen_pool_add_owner(pdev->p2pdma->pool, (unsigned long)addr,
 			pci_bus_address(pdev, bar) + offset,
 			range_len(&pgmap->range), dev_to_node(&pdev->dev),
 			pgmap->ref);
-	अगर (error)
-		जाओ pages_मुक्त;
+	if (error)
+		goto pages_free;
 
 	pci_info(pdev, "added peer-to-peer DMA memory %#llx-%#llx\n",
 		 pgmap->range.start, pgmap->range.end);
 
-	वापस 0;
+	return 0;
 
-pages_मुक्त:
+pages_free:
 	devm_memunmap_pages(&pdev->dev, pgmap);
-pgmap_मुक्त:
-	devm_kमुक्त(&pdev->dev, pgmap);
-	वापस error;
-पूर्ण
+pgmap_free:
+	devm_kfree(&pdev->dev, pgmap);
+	return error;
+}
 EXPORT_SYMBOL_GPL(pci_p2pdma_add_resource);
 
 /*
- * Note this function वापसs the parent PCI device with a
+ * Note this function returns the parent PCI device with a
  * reference taken. It is the caller's responsibility to drop
  * the reference.
  */
-अटल काष्ठा pci_dev *find_parent_pci_dev(काष्ठा device *dev)
-अणु
-	काष्ठा device *parent;
+static struct pci_dev *find_parent_pci_dev(struct device *dev)
+{
+	struct device *parent;
 
 	dev = get_device(dev);
 
-	जबतक (dev) अणु
-		अगर (dev_is_pci(dev))
-			वापस to_pci_dev(dev);
+	while (dev) {
+		if (dev_is_pci(dev))
+			return to_pci_dev(dev);
 
 		parent = get_device(dev->parent);
 		put_device(dev);
 		dev = parent;
-	पूर्ण
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /*
- * Check अगर a PCI bridge has its ACS redirection bits set to redirect P2P
- * TLPs upstream via ACS. Returns 1 अगर the packets will be redirected
+ * Check if a PCI bridge has its ACS redirection bits set to redirect P2P
+ * TLPs upstream via ACS. Returns 1 if the packets will be redirected
  * upstream, 0 otherwise.
  */
-अटल पूर्णांक pci_bridge_has_acs_redir(काष्ठा pci_dev *pdev)
-अणु
-	पूर्णांक pos;
+static int pci_bridge_has_acs_redir(struct pci_dev *pdev)
+{
+	int pos;
 	u16 ctrl;
 
 	pos = pdev->acs_cap;
-	अगर (!pos)
-		वापस 0;
+	if (!pos)
+		return 0;
 
-	pci_पढ़ो_config_word(pdev, pos + PCI_ACS_CTRL, &ctrl);
+	pci_read_config_word(pdev, pos + PCI_ACS_CTRL, &ctrl);
 
-	अगर (ctrl & (PCI_ACS_RR | PCI_ACS_CR | PCI_ACS_EC))
-		वापस 1;
+	if (ctrl & (PCI_ACS_RR | PCI_ACS_CR | PCI_ACS_EC))
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम seq_buf_prपूर्णांक_bus_devfn(काष्ठा seq_buf *buf, काष्ठा pci_dev *pdev)
-अणु
-	अगर (!buf)
-		वापस;
+static void seq_buf_print_bus_devfn(struct seq_buf *buf, struct pci_dev *pdev)
+{
+	if (!buf)
+		return;
 
-	seq_buf_म_लिखो(buf, "%s;", pci_name(pdev));
-पूर्ण
+	seq_buf_printf(buf, "%s;", pci_name(pdev));
+}
 
-अटल bool cpu_supports_p2pdma(व्योम)
-अणु
-#अगर_घोषित CONFIG_X86
-	काष्ठा cpuinfo_x86 *c = &cpu_data(0);
+static bool cpu_supports_p2pdma(void)
+{
+#ifdef CONFIG_X86
+	struct cpuinfo_x86 *c = &cpu_data(0);
 
 	/* Any AMD CPU whose family ID is Zen or newer supports p2pdma */
-	अगर (c->x86_venकरोr == X86_VENDOR_AMD && c->x86 >= 0x17)
-		वापस true;
-#पूर्ण_अगर
+	if (c->x86_vendor == X86_VENDOR_AMD && c->x86 >= 0x17)
+		return true;
+#endif
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल स्थिर काष्ठा pci_p2pdma_whitelist_entry अणु
-	अचिन्हित लघु venकरोr;
-	अचिन्हित लघु device;
-	क्रमागत अणु
+static const struct pci_p2pdma_whitelist_entry {
+	unsigned short vendor;
+	unsigned short device;
+	enum {
 		REQ_SAME_HOST_BRIDGE	= 1 << 0,
-	पूर्ण flags;
-पूर्ण pci_p2pdma_whitelist[] = अणु
+	} flags;
+} pci_p2pdma_whitelist[] = {
 	/* Intel Xeon E5/Core i7 */
-	अणुPCI_VENDOR_ID_INTEL,	0x3c00, REQ_SAME_HOST_BRIDGEपूर्ण,
-	अणुPCI_VENDOR_ID_INTEL,	0x3c01, REQ_SAME_HOST_BRIDGEपूर्ण,
+	{PCI_VENDOR_ID_INTEL,	0x3c00, REQ_SAME_HOST_BRIDGE},
+	{PCI_VENDOR_ID_INTEL,	0x3c01, REQ_SAME_HOST_BRIDGE},
 	/* Intel Xeon E7 v3/Xeon E5 v3/Core i7 */
-	अणुPCI_VENDOR_ID_INTEL,	0x2f00, REQ_SAME_HOST_BRIDGEपूर्ण,
-	अणुPCI_VENDOR_ID_INTEL,	0x2f01, REQ_SAME_HOST_BRIDGEपूर्ण,
+	{PCI_VENDOR_ID_INTEL,	0x2f00, REQ_SAME_HOST_BRIDGE},
+	{PCI_VENDOR_ID_INTEL,	0x2f01, REQ_SAME_HOST_BRIDGE},
 	/* Intel SkyLake-E */
-	अणुPCI_VENDOR_ID_INTEL,	0x2030, 0पूर्ण,
-	अणुPCI_VENDOR_ID_INTEL,	0x2031, 0पूर्ण,
-	अणुPCI_VENDOR_ID_INTEL,	0x2032, 0पूर्ण,
-	अणुPCI_VENDOR_ID_INTEL,	0x2033, 0पूर्ण,
-	अणुPCI_VENDOR_ID_INTEL,	0x2020, 0पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+	{PCI_VENDOR_ID_INTEL,	0x2030, 0},
+	{PCI_VENDOR_ID_INTEL,	0x2031, 0},
+	{PCI_VENDOR_ID_INTEL,	0x2032, 0},
+	{PCI_VENDOR_ID_INTEL,	0x2033, 0},
+	{PCI_VENDOR_ID_INTEL,	0x2020, 0},
+	{}
+};
 
-अटल bool __host_bridge_whitelist(काष्ठा pci_host_bridge *host,
+static bool __host_bridge_whitelist(struct pci_host_bridge *host,
 				    bool same_host_bridge)
-अणु
-	काष्ठा pci_dev *root = pci_get_slot(host->bus, PCI_DEVFN(0, 0));
-	स्थिर काष्ठा pci_p2pdma_whitelist_entry *entry;
-	अचिन्हित लघु venकरोr, device;
+{
+	struct pci_dev *root = pci_get_slot(host->bus, PCI_DEVFN(0, 0));
+	const struct pci_p2pdma_whitelist_entry *entry;
+	unsigned short vendor, device;
 
-	अगर (!root)
-		वापस false;
+	if (!root)
+		return false;
 
-	venकरोr = root->venकरोr;
+	vendor = root->vendor;
 	device = root->device;
 	pci_dev_put(root);
 
-	क्रम (entry = pci_p2pdma_whitelist; entry->venकरोr; entry++) अणु
-		अगर (venकरोr != entry->venकरोr || device != entry->device)
-			जारी;
-		अगर (entry->flags & REQ_SAME_HOST_BRIDGE && !same_host_bridge)
-			वापस false;
+	for (entry = pci_p2pdma_whitelist; entry->vendor; entry++) {
+		if (vendor != entry->vendor || device != entry->device)
+			continue;
+		if (entry->flags & REQ_SAME_HOST_BRIDGE && !same_host_bridge)
+			return false;
 
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /*
  * If we can't find a common upstream bridge take a look at the root
  * complex and compare it to a whitelist of known good hardware.
  */
-अटल bool host_bridge_whitelist(काष्ठा pci_dev *a, काष्ठा pci_dev *b)
-अणु
-	काष्ठा pci_host_bridge *host_a = pci_find_host_bridge(a->bus);
-	काष्ठा pci_host_bridge *host_b = pci_find_host_bridge(b->bus);
+static bool host_bridge_whitelist(struct pci_dev *a, struct pci_dev *b)
+{
+	struct pci_host_bridge *host_a = pci_find_host_bridge(a->bus);
+	struct pci_host_bridge *host_b = pci_find_host_bridge(b->bus);
 
-	अगर (host_a == host_b)
-		वापस __host_bridge_whitelist(host_a, true);
+	if (host_a == host_b)
+		return __host_bridge_whitelist(host_a, true);
 
-	अगर (__host_bridge_whitelist(host_a, false) &&
+	if (__host_bridge_whitelist(host_a, false) &&
 	    __host_bridge_whitelist(host_b, false))
-		वापस true;
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल क्रमागत pci_p2pdma_map_type
-__upstream_bridge_distance(काष्ठा pci_dev *provider, काष्ठा pci_dev *client,
-		पूर्णांक *dist, bool *acs_redirects, काष्ठा seq_buf *acs_list)
-अणु
-	काष्ठा pci_dev *a = provider, *b = client, *bb;
-	पूर्णांक dist_a = 0;
-	पूर्णांक dist_b = 0;
-	पूर्णांक acs_cnt = 0;
+static enum pci_p2pdma_map_type
+__upstream_bridge_distance(struct pci_dev *provider, struct pci_dev *client,
+		int *dist, bool *acs_redirects, struct seq_buf *acs_list)
+{
+	struct pci_dev *a = provider, *b = client, *bb;
+	int dist_a = 0;
+	int dist_b = 0;
+	int acs_cnt = 0;
 
-	अगर (acs_redirects)
+	if (acs_redirects)
 		*acs_redirects = false;
 
 	/*
-	 * Note, we करोn't need to take references to devices वापसed by
+	 * Note, we don't need to take references to devices returned by
 	 * pci_upstream_bridge() seeing we hold a reference to a child
-	 * device which will alपढ़ोy hold a reference to the upstream bridge.
+	 * device which will already hold a reference to the upstream bridge.
 	 */
 
-	जबतक (a) अणु
+	while (a) {
 		dist_b = 0;
 
-		अगर (pci_bridge_has_acs_redir(a)) अणु
-			seq_buf_prपूर्णांक_bus_devfn(acs_list, a);
+		if (pci_bridge_has_acs_redir(a)) {
+			seq_buf_print_bus_devfn(acs_list, a);
 			acs_cnt++;
-		पूर्ण
+		}
 
 		bb = b;
 
-		जबतक (bb) अणु
-			अगर (a == bb)
-				जाओ check_b_path_acs;
+		while (bb) {
+			if (a == bb)
+				goto check_b_path_acs;
 
 			bb = pci_upstream_bridge(bb);
 			dist_b++;
-		पूर्ण
+		}
 
 		a = pci_upstream_bridge(a);
 		dist_a++;
-	पूर्ण
+	}
 
-	अगर (dist)
+	if (dist)
 		*dist = dist_a + dist_b;
 
-	वापस PCI_P2PDMA_MAP_THRU_HOST_BRIDGE;
+	return PCI_P2PDMA_MAP_THRU_HOST_BRIDGE;
 
 check_b_path_acs:
 	bb = b;
 
-	जबतक (bb) अणु
-		अगर (a == bb)
-			अवरोध;
+	while (bb) {
+		if (a == bb)
+			break;
 
-		अगर (pci_bridge_has_acs_redir(bb)) अणु
-			seq_buf_prपूर्णांक_bus_devfn(acs_list, bb);
+		if (pci_bridge_has_acs_redir(bb)) {
+			seq_buf_print_bus_devfn(acs_list, bb);
 			acs_cnt++;
-		पूर्ण
+		}
 
 		bb = pci_upstream_bridge(bb);
-	पूर्ण
+	}
 
-	अगर (dist)
+	if (dist)
 		*dist = dist_a + dist_b;
 
-	अगर (acs_cnt) अणु
-		अगर (acs_redirects)
+	if (acs_cnt) {
+		if (acs_redirects)
 			*acs_redirects = true;
 
-		वापस PCI_P2PDMA_MAP_THRU_HOST_BRIDGE;
-	पूर्ण
+		return PCI_P2PDMA_MAP_THRU_HOST_BRIDGE;
+	}
 
-	वापस PCI_P2PDMA_MAP_BUS_ADDR;
-पूर्ण
+	return PCI_P2PDMA_MAP_BUS_ADDR;
+}
 
-अटल अचिन्हित दीर्घ map_types_idx(काष्ठा pci_dev *client)
-अणु
-	वापस (pci_करोमुख्य_nr(client->bus) << 16) |
+static unsigned long map_types_idx(struct pci_dev *client)
+{
+	return (pci_domain_nr(client->bus) << 16) |
 		(client->bus->number << 8) | client->devfn;
-पूर्ण
+}
 
 /*
  * Find the distance through the nearest common upstream bridge between
  * two PCI devices.
  *
- * If the two devices are the same device then 0 will be वापसed.
+ * If the two devices are the same device then 0 will be returned.
  *
- * If there are two भव functions of the same device behind the same
- * bridge port then 2 will be वापसed (one step करोwn to the PCIe चयन,
+ * If there are two virtual functions of the same device behind the same
+ * bridge port then 2 will be returned (one step down to the PCIe switch,
  * then one step back to the same device).
  *
- * In the हाल where two devices are connected to the same PCIe चयन, the
- * value 4 will be वापसed. This corresponds to the following PCI tree:
+ * In the case where two devices are connected to the same PCIe switch, the
+ * value 4 will be returned. This corresponds to the following PCI tree:
  *
  *     -+  Root Port
  *      \+ Switch Upstream Port
@@ -453,216 +452,216 @@ check_b_path_acs:
  *       \-+ Switch Downstream Port
  *         \- Device B
  *
- * The distance is 4 because we traverse from Device A through the करोwnstream
- * port of the चयन, to the common upstream port, back up to the second
- * करोwnstream port and then to Device B.
+ * The distance is 4 because we traverse from Device A through the downstream
+ * port of the switch, to the common upstream port, back up to the second
+ * downstream port and then to Device B.
  *
- * Any two devices that cannot communicate using p2pdma will वापस
+ * Any two devices that cannot communicate using p2pdma will return
  * PCI_P2PDMA_MAP_NOT_SUPPORTED.
  *
  * Any two devices that have a data path that goes through the host bridge
  * will consult a whitelist. If the host bridges are on the whitelist,
- * this function will वापस PCI_P2PDMA_MAP_THRU_HOST_BRIDGE.
+ * this function will return PCI_P2PDMA_MAP_THRU_HOST_BRIDGE.
  *
- * If either bridge is not on the whitelist this function वापसs
+ * If either bridge is not on the whitelist this function returns
  * PCI_P2PDMA_MAP_NOT_SUPPORTED.
  *
  * If a bridge which has any ACS redirection bits set is in the path,
- * acs_redirects will be set to true. In this हाल, a list of all infringing
+ * acs_redirects will be set to true. In this case, a list of all infringing
  * bridge addresses will be populated in acs_list (assuming it's non-null)
- * क्रम prपूर्णांकk purposes.
+ * for printk purposes.
  */
-अटल क्रमागत pci_p2pdma_map_type
-upstream_bridge_distance(काष्ठा pci_dev *provider, काष्ठा pci_dev *client,
-		पूर्णांक *dist, bool *acs_redirects, काष्ठा seq_buf *acs_list)
-अणु
-	क्रमागत pci_p2pdma_map_type map_type;
+static enum pci_p2pdma_map_type
+upstream_bridge_distance(struct pci_dev *provider, struct pci_dev *client,
+		int *dist, bool *acs_redirects, struct seq_buf *acs_list)
+{
+	enum pci_p2pdma_map_type map_type;
 
 	map_type = __upstream_bridge_distance(provider, client, dist,
 					      acs_redirects, acs_list);
 
-	अगर (map_type == PCI_P2PDMA_MAP_THRU_HOST_BRIDGE) अणु
-		अगर (!cpu_supports_p2pdma() &&
+	if (map_type == PCI_P2PDMA_MAP_THRU_HOST_BRIDGE) {
+		if (!cpu_supports_p2pdma() &&
 		    !host_bridge_whitelist(provider, client))
 			map_type = PCI_P2PDMA_MAP_NOT_SUPPORTED;
-	पूर्ण
+	}
 
-	अगर (provider->p2pdma)
+	if (provider->p2pdma)
 		xa_store(&provider->p2pdma->map_types, map_types_idx(client),
 			 xa_mk_value(map_type), GFP_KERNEL);
 
-	वापस map_type;
-पूर्ण
+	return map_type;
+}
 
-अटल क्रमागत pci_p2pdma_map_type
-upstream_bridge_distance_warn(काष्ठा pci_dev *provider, काष्ठा pci_dev *client,
-			      पूर्णांक *dist)
-अणु
-	काष्ठा seq_buf acs_list;
+static enum pci_p2pdma_map_type
+upstream_bridge_distance_warn(struct pci_dev *provider, struct pci_dev *client,
+			      int *dist)
+{
+	struct seq_buf acs_list;
 	bool acs_redirects;
-	पूर्णांक ret;
+	int ret;
 
-	seq_buf_init(&acs_list, kदो_स्मृति(PAGE_SIZE, GFP_KERNEL), PAGE_SIZE);
-	अगर (!acs_list.buffer)
-		वापस -ENOMEM;
+	seq_buf_init(&acs_list, kmalloc(PAGE_SIZE, GFP_KERNEL), PAGE_SIZE);
+	if (!acs_list.buffer)
+		return -ENOMEM;
 
 	ret = upstream_bridge_distance(provider, client, dist, &acs_redirects,
 				       &acs_list);
-	अगर (acs_redirects) अणु
+	if (acs_redirects) {
 		pci_warn(client, "ACS redirect is set between the client and provider (%s)\n",
 			 pci_name(provider));
 		/* Drop final semicolon */
 		acs_list.buffer[acs_list.len-1] = 0;
 		pci_warn(client, "to disable ACS redirect for this path, add the kernel parameter: pci=disable_acs_redir=%s\n",
 			 acs_list.buffer);
-	पूर्ण
+	}
 
-	अगर (ret == PCI_P2PDMA_MAP_NOT_SUPPORTED) अणु
+	if (ret == PCI_P2PDMA_MAP_NOT_SUPPORTED) {
 		pci_warn(client, "cannot be used for peer-to-peer DMA as the client and provider (%s) do not share an upstream bridge or whitelisted host bridge\n",
 			 pci_name(provider));
-	पूर्ण
+	}
 
-	kमुक्त(acs_list.buffer);
+	kfree(acs_list.buffer);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * pci_p2pdma_distance_many - Determine the cumulative distance between
  *	a p2pdma provider and the clients in use.
  * @provider: p2pdma provider to check against the client list
- * @clients: array of devices to check (शून्य-terminated)
+ * @clients: array of devices to check (NULL-terminated)
  * @num_clients: number of clients in the array
- * @verbose: अगर true, prपूर्णांक warnings क्रम devices when we वापस -1
+ * @verbose: if true, print warnings for devices when we return -1
  *
- * Returns -1 अगर any of the clients are not compatible, otherwise वापसs a
+ * Returns -1 if any of the clients are not compatible, otherwise returns a
  * positive number where a lower number is the preferable choice. (If there's
- * one client that's the same as the provider it will वापस 0, which is best
+ * one client that's the same as the provider it will return 0, which is best
  * choice).
  *
  * "compatible" means the provider and the clients are either all behind
  * the same PCI root port or the host bridges connected to each of the devices
  * are listed in the 'pci_p2pdma_whitelist'.
  */
-पूर्णांक pci_p2pdma_distance_many(काष्ठा pci_dev *provider, काष्ठा device **clients,
-			     पूर्णांक num_clients, bool verbose)
-अणु
+int pci_p2pdma_distance_many(struct pci_dev *provider, struct device **clients,
+			     int num_clients, bool verbose)
+{
 	bool not_supported = false;
-	काष्ठा pci_dev *pci_client;
-	पूर्णांक total_dist = 0;
-	पूर्णांक distance;
-	पूर्णांक i, ret;
+	struct pci_dev *pci_client;
+	int total_dist = 0;
+	int distance;
+	int i, ret;
 
-	अगर (num_clients == 0)
-		वापस -1;
+	if (num_clients == 0)
+		return -1;
 
-	क्रम (i = 0; i < num_clients; i++) अणु
+	for (i = 0; i < num_clients; i++) {
 		pci_client = find_parent_pci_dev(clients[i]);
-		अगर (!pci_client) अणु
-			अगर (verbose)
+		if (!pci_client) {
+			if (verbose)
 				dev_warn(clients[i],
 					 "cannot be used for peer-to-peer DMA as it is not a PCI device\n");
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 
-		अगर (verbose)
+		if (verbose)
 			ret = upstream_bridge_distance_warn(provider,
 					pci_client, &distance);
-		अन्यथा
+		else
 			ret = upstream_bridge_distance(provider, pci_client,
-						       &distance, शून्य, शून्य);
+						       &distance, NULL, NULL);
 
 		pci_dev_put(pci_client);
 
-		अगर (ret == PCI_P2PDMA_MAP_NOT_SUPPORTED)
+		if (ret == PCI_P2PDMA_MAP_NOT_SUPPORTED)
 			not_supported = true;
 
-		अगर (not_supported && !verbose)
-			अवरोध;
+		if (not_supported && !verbose)
+			break;
 
 		total_dist += distance;
-	पूर्ण
+	}
 
-	अगर (not_supported)
-		वापस -1;
+	if (not_supported)
+		return -1;
 
-	वापस total_dist;
-पूर्ण
+	return total_dist;
+}
 EXPORT_SYMBOL_GPL(pci_p2pdma_distance_many);
 
 /**
- * pci_has_p2pmem - check अगर a given PCI device has published any p2pmem
+ * pci_has_p2pmem - check if a given PCI device has published any p2pmem
  * @pdev: PCI device to check
  */
-bool pci_has_p2pmem(काष्ठा pci_dev *pdev)
-अणु
-	वापस pdev->p2pdma && pdev->p2pdma->p2pmem_published;
-पूर्ण
+bool pci_has_p2pmem(struct pci_dev *pdev)
+{
+	return pdev->p2pdma && pdev->p2pdma->p2pmem_published;
+}
 EXPORT_SYMBOL_GPL(pci_has_p2pmem);
 
 /**
  * pci_p2pmem_find_many - find a peer-to-peer DMA memory device compatible with
- *	the specअगरied list of clients and लघुest distance (as determined
+ *	the specified list of clients and shortest distance (as determined
  *	by pci_p2pmem_dma())
- * @clients: array of devices to check (शून्य-terminated)
+ * @clients: array of devices to check (NULL-terminated)
  * @num_clients: number of client devices in the list
  *
- * If multiple devices are behind the same चयन, the one "closest" to the
- * client devices in use will be chosen first. (So अगर one of the providers is
+ * If multiple devices are behind the same switch, the one "closest" to the
+ * client devices in use will be chosen first. (So if one of the providers is
  * the same as one of the clients, that provider will be used ahead of any
  * other providers that are unrelated). If multiple providers are an equal
- * distance away, one will be chosen at अक्रमom.
+ * distance away, one will be chosen at random.
  *
- * Returns a poपूर्णांकer to the PCI device with a reference taken (use pci_dev_put
- * to वापस the reference) or शून्य अगर no compatible device is found. The
- * found provider will also be asचिन्हित to the client list.
+ * Returns a pointer to the PCI device with a reference taken (use pci_dev_put
+ * to return the reference) or NULL if no compatible device is found. The
+ * found provider will also be assigned to the client list.
  */
-काष्ठा pci_dev *pci_p2pmem_find_many(काष्ठा device **clients, पूर्णांक num_clients)
-अणु
-	काष्ठा pci_dev *pdev = शून्य;
-	पूर्णांक distance;
-	पूर्णांक बंदst_distance = पूर्णांक_उच्च;
-	काष्ठा pci_dev **बंदst_pdevs;
-	पूर्णांक dev_cnt = 0;
-	स्थिर पूर्णांक max_devs = PAGE_SIZE / माप(*बंदst_pdevs);
-	पूर्णांक i;
+struct pci_dev *pci_p2pmem_find_many(struct device **clients, int num_clients)
+{
+	struct pci_dev *pdev = NULL;
+	int distance;
+	int closest_distance = INT_MAX;
+	struct pci_dev **closest_pdevs;
+	int dev_cnt = 0;
+	const int max_devs = PAGE_SIZE / sizeof(*closest_pdevs);
+	int i;
 
-	बंदst_pdevs = kदो_स्मृति(PAGE_SIZE, GFP_KERNEL);
-	अगर (!बंदst_pdevs)
-		वापस शून्य;
+	closest_pdevs = kmalloc(PAGE_SIZE, GFP_KERNEL);
+	if (!closest_pdevs)
+		return NULL;
 
-	जबतक ((pdev = pci_get_device(PCI_ANY_ID, PCI_ANY_ID, pdev))) अणु
-		अगर (!pci_has_p2pmem(pdev))
-			जारी;
+	while ((pdev = pci_get_device(PCI_ANY_ID, PCI_ANY_ID, pdev))) {
+		if (!pci_has_p2pmem(pdev))
+			continue;
 
 		distance = pci_p2pdma_distance_many(pdev, clients,
 						    num_clients, false);
-		अगर (distance < 0 || distance > बंदst_distance)
-			जारी;
+		if (distance < 0 || distance > closest_distance)
+			continue;
 
-		अगर (distance == बंदst_distance && dev_cnt >= max_devs)
-			जारी;
+		if (distance == closest_distance && dev_cnt >= max_devs)
+			continue;
 
-		अगर (distance < बंदst_distance) अणु
-			क्रम (i = 0; i < dev_cnt; i++)
-				pci_dev_put(बंदst_pdevs[i]);
+		if (distance < closest_distance) {
+			for (i = 0; i < dev_cnt; i++)
+				pci_dev_put(closest_pdevs[i]);
 
 			dev_cnt = 0;
-			बंदst_distance = distance;
-		पूर्ण
+			closest_distance = distance;
+		}
 
-		बंदst_pdevs[dev_cnt++] = pci_dev_get(pdev);
-	पूर्ण
+		closest_pdevs[dev_cnt++] = pci_dev_get(pdev);
+	}
 
-	अगर (dev_cnt)
-		pdev = pci_dev_get(बंदst_pdevs[pअक्रमom_u32_max(dev_cnt)]);
+	if (dev_cnt)
+		pdev = pci_dev_get(closest_pdevs[prandom_u32_max(dev_cnt)]);
 
-	क्रम (i = 0; i < dev_cnt; i++)
-		pci_dev_put(बंदst_pdevs[i]);
+	for (i = 0; i < dev_cnt; i++)
+		pci_dev_put(closest_pdevs[i]);
 
-	kमुक्त(बंदst_pdevs);
-	वापस pdev;
-पूर्ण
+	kfree(closest_pdevs);
+	return pdev;
+}
 EXPORT_SYMBOL_GPL(pci_p2pmem_find_many);
 
 /**
@@ -670,74 +669,74 @@ EXPORT_SYMBOL_GPL(pci_p2pmem_find_many);
  * @pdev: the device to allocate memory from
  * @size: number of bytes to allocate
  *
- * Returns the allocated memory or शून्य on error.
+ * Returns the allocated memory or NULL on error.
  */
-व्योम *pci_alloc_p2pmem(काष्ठा pci_dev *pdev, माप_प्रकार size)
-अणु
-	व्योम *ret = शून्य;
-	काष्ठा percpu_ref *ref;
+void *pci_alloc_p2pmem(struct pci_dev *pdev, size_t size)
+{
+	void *ret = NULL;
+	struct percpu_ref *ref;
 
 	/*
 	 * Pairs with synchronize_rcu() in pci_p2pdma_release() to
-	 * ensure pdev->p2pdma is non-शून्य क्रम the duration of the
-	 * पढ़ो-lock.
+	 * ensure pdev->p2pdma is non-NULL for the duration of the
+	 * read-lock.
 	 */
-	rcu_पढ़ो_lock();
-	अगर (unlikely(!pdev->p2pdma))
-		जाओ out;
+	rcu_read_lock();
+	if (unlikely(!pdev->p2pdma))
+		goto out;
 
-	ret = (व्योम *)gen_pool_alloc_owner(pdev->p2pdma->pool, size,
-			(व्योम **) &ref);
-	अगर (!ret)
-		जाओ out;
+	ret = (void *)gen_pool_alloc_owner(pdev->p2pdma->pool, size,
+			(void **) &ref);
+	if (!ret)
+		goto out;
 
-	अगर (unlikely(!percpu_ref_tryget_live(ref))) अणु
-		gen_pool_मुक्त(pdev->p2pdma->pool, (अचिन्हित दीर्घ) ret, size);
-		ret = शून्य;
-		जाओ out;
-	पूर्ण
+	if (unlikely(!percpu_ref_tryget_live(ref))) {
+		gen_pool_free(pdev->p2pdma->pool, (unsigned long) ret, size);
+		ret = NULL;
+		goto out;
+	}
 out:
-	rcu_पढ़ो_unlock();
-	वापस ret;
-पूर्ण
+	rcu_read_unlock();
+	return ret;
+}
 EXPORT_SYMBOL_GPL(pci_alloc_p2pmem);
 
 /**
- * pci_मुक्त_p2pmem - मुक्त peer-to-peer DMA memory
+ * pci_free_p2pmem - free peer-to-peer DMA memory
  * @pdev: the device the memory was allocated from
  * @addr: address of the memory that was allocated
  * @size: number of bytes that were allocated
  */
-व्योम pci_मुक्त_p2pmem(काष्ठा pci_dev *pdev, व्योम *addr, माप_प्रकार size)
-अणु
-	काष्ठा percpu_ref *ref;
+void pci_free_p2pmem(struct pci_dev *pdev, void *addr, size_t size)
+{
+	struct percpu_ref *ref;
 
-	gen_pool_मुक्त_owner(pdev->p2pdma->pool, (uपूर्णांकptr_t)addr, size,
-			(व्योम **) &ref);
+	gen_pool_free_owner(pdev->p2pdma->pool, (uintptr_t)addr, size,
+			(void **) &ref);
 	percpu_ref_put(ref);
-पूर्ण
-EXPORT_SYMBOL_GPL(pci_मुक्त_p2pmem);
+}
+EXPORT_SYMBOL_GPL(pci_free_p2pmem);
 
 /**
- * pci_p2pmem_virt_to_bus - वापस the PCI bus address क्रम a given भव
+ * pci_p2pmem_virt_to_bus - return the PCI bus address for a given virtual
  *	address obtained with pci_alloc_p2pmem()
  * @pdev: the device the memory was allocated from
  * @addr: address of the memory that was allocated
  */
-pci_bus_addr_t pci_p2pmem_virt_to_bus(काष्ठा pci_dev *pdev, व्योम *addr)
-अणु
-	अगर (!addr)
-		वापस 0;
-	अगर (!pdev->p2pdma)
-		वापस 0;
+pci_bus_addr_t pci_p2pmem_virt_to_bus(struct pci_dev *pdev, void *addr)
+{
+	if (!addr)
+		return 0;
+	if (!pdev->p2pdma)
+		return 0;
 
 	/*
 	 * Note: when we added the memory to the pool we used the PCI
 	 * bus address as the physical address. So gen_pool_virt_to_phys()
-	 * actually वापसs the bus address despite the misleading name.
+	 * actually returns the bus address despite the misleading name.
 	 */
-	वापस gen_pool_virt_to_phys(pdev->p2pdma->pool, (अचिन्हित दीर्घ)addr);
-पूर्ण
+	return gen_pool_virt_to_phys(pdev->p2pdma->pool, (unsigned long)addr);
+}
 EXPORT_SYMBOL_GPL(pci_p2pmem_virt_to_bus);
 
 /**
@@ -746,222 +745,222 @@ EXPORT_SYMBOL_GPL(pci_p2pmem_virt_to_bus);
  * @nents: the number of SG entries in the list
  * @length: number of bytes to allocate
  *
- * Return: %शून्य on error or &काष्ठा scatterlist poपूर्णांकer and @nents on success
+ * Return: %NULL on error or &struct scatterlist pointer and @nents on success
  */
-काष्ठा scatterlist *pci_p2pmem_alloc_sgl(काष्ठा pci_dev *pdev,
-					 अचिन्हित पूर्णांक *nents, u32 length)
-अणु
-	काष्ठा scatterlist *sg;
-	व्योम *addr;
+struct scatterlist *pci_p2pmem_alloc_sgl(struct pci_dev *pdev,
+					 unsigned int *nents, u32 length)
+{
+	struct scatterlist *sg;
+	void *addr;
 
-	sg = kदो_स्मृति(माप(*sg), GFP_KERNEL);
-	अगर (!sg)
-		वापस शून्य;
+	sg = kmalloc(sizeof(*sg), GFP_KERNEL);
+	if (!sg)
+		return NULL;
 
 	sg_init_table(sg, 1);
 
 	addr = pci_alloc_p2pmem(pdev, length);
-	अगर (!addr)
-		जाओ out_मुक्त_sg;
+	if (!addr)
+		goto out_free_sg;
 
 	sg_set_buf(sg, addr, length);
 	*nents = 1;
-	वापस sg;
+	return sg;
 
-out_मुक्त_sg:
-	kमुक्त(sg);
-	वापस शून्य;
-पूर्ण
+out_free_sg:
+	kfree(sg);
+	return NULL;
+}
 EXPORT_SYMBOL_GPL(pci_p2pmem_alloc_sgl);
 
 /**
- * pci_p2pmem_मुक्त_sgl - मुक्त a scatterlist allocated by pci_p2pmem_alloc_sgl()
+ * pci_p2pmem_free_sgl - free a scatterlist allocated by pci_p2pmem_alloc_sgl()
  * @pdev: the device to allocate memory from
  * @sgl: the allocated scatterlist
  */
-व्योम pci_p2pmem_मुक्त_sgl(काष्ठा pci_dev *pdev, काष्ठा scatterlist *sgl)
-अणु
-	काष्ठा scatterlist *sg;
-	पूर्णांक count;
+void pci_p2pmem_free_sgl(struct pci_dev *pdev, struct scatterlist *sgl)
+{
+	struct scatterlist *sg;
+	int count;
 
-	क्रम_each_sg(sgl, sg, पूर्णांक_उच्च, count) अणु
-		अगर (!sg)
-			अवरोध;
+	for_each_sg(sgl, sg, INT_MAX, count) {
+		if (!sg)
+			break;
 
-		pci_मुक्त_p2pmem(pdev, sg_virt(sg), sg->length);
-	पूर्ण
-	kमुक्त(sgl);
-पूर्ण
-EXPORT_SYMBOL_GPL(pci_p2pmem_मुक्त_sgl);
+		pci_free_p2pmem(pdev, sg_virt(sg), sg->length);
+	}
+	kfree(sgl);
+}
+EXPORT_SYMBOL_GPL(pci_p2pmem_free_sgl);
 
 /**
- * pci_p2pmem_publish - publish the peer-to-peer DMA memory क्रम use by
+ * pci_p2pmem_publish - publish the peer-to-peer DMA memory for use by
  *	other devices with pci_p2pmem_find()
  * @pdev: the device with peer-to-peer DMA memory to publish
  * @publish: set to true to publish the memory, false to unpublish it
  *
- * Published memory can be used by other PCI device drivers क्रम
- * peer-2-peer DMA operations. Non-published memory is reserved क्रम
- * exclusive use of the device driver that रेजिस्टरs the peer-to-peer
+ * Published memory can be used by other PCI device drivers for
+ * peer-2-peer DMA operations. Non-published memory is reserved for
+ * exclusive use of the device driver that registers the peer-to-peer
  * memory.
  */
-व्योम pci_p2pmem_publish(काष्ठा pci_dev *pdev, bool publish)
-अणु
-	अगर (pdev->p2pdma)
+void pci_p2pmem_publish(struct pci_dev *pdev, bool publish)
+{
+	if (pdev->p2pdma)
 		pdev->p2pdma->p2pmem_published = publish;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(pci_p2pmem_publish);
 
-अटल क्रमागत pci_p2pdma_map_type pci_p2pdma_map_type(काष्ठा pci_dev *provider,
-						    काष्ठा pci_dev *client)
-अणु
-	अगर (!provider->p2pdma)
-		वापस PCI_P2PDMA_MAP_NOT_SUPPORTED;
+static enum pci_p2pdma_map_type pci_p2pdma_map_type(struct pci_dev *provider,
+						    struct pci_dev *client)
+{
+	if (!provider->p2pdma)
+		return PCI_P2PDMA_MAP_NOT_SUPPORTED;
 
-	वापस xa_to_value(xa_load(&provider->p2pdma->map_types,
+	return xa_to_value(xa_load(&provider->p2pdma->map_types,
 				   map_types_idx(client)));
-पूर्ण
+}
 
-अटल पूर्णांक __pci_p2pdma_map_sg(काष्ठा pci_p2pdma_pagemap *p2p_pgmap,
-		काष्ठा device *dev, काष्ठा scatterlist *sg, पूर्णांक nents)
-अणु
-	काष्ठा scatterlist *s;
-	पूर्णांक i;
+static int __pci_p2pdma_map_sg(struct pci_p2pdma_pagemap *p2p_pgmap,
+		struct device *dev, struct scatterlist *sg, int nents)
+{
+	struct scatterlist *s;
+	int i;
 
-	क्रम_each_sg(sg, s, nents, i) अणु
+	for_each_sg(sg, s, nents, i) {
 		s->dma_address = sg_phys(s) - p2p_pgmap->bus_offset;
 		sg_dma_len(s) = s->length;
-	पूर्ण
+	}
 
-	वापस nents;
-पूर्ण
+	return nents;
+}
 
 /**
- * pci_p2pdma_map_sg_attrs - map a PCI peer-to-peer scatterlist क्रम DMA
- * @dev: device करोing the DMA request
+ * pci_p2pdma_map_sg_attrs - map a PCI peer-to-peer scatterlist for DMA
+ * @dev: device doing the DMA request
  * @sg: scatter list to map
  * @nents: elements in the scatterlist
  * @dir: DMA direction
- * @attrs: DMA attributes passed to dma_map_sg() (अगर called)
+ * @attrs: DMA attributes passed to dma_map_sg() (if called)
  *
  * Scatterlists mapped with this function should be unmapped using
  * pci_p2pdma_unmap_sg_attrs().
  *
  * Returns the number of SG entries mapped or 0 on error.
  */
-पूर्णांक pci_p2pdma_map_sg_attrs(काष्ठा device *dev, काष्ठा scatterlist *sg,
-		पूर्णांक nents, क्रमागत dma_data_direction dir, अचिन्हित दीर्घ attrs)
-अणु
-	काष्ठा pci_p2pdma_pagemap *p2p_pgmap =
+int pci_p2pdma_map_sg_attrs(struct device *dev, struct scatterlist *sg,
+		int nents, enum dma_data_direction dir, unsigned long attrs)
+{
+	struct pci_p2pdma_pagemap *p2p_pgmap =
 		to_p2p_pgmap(sg_page(sg)->pgmap);
-	काष्ठा pci_dev *client;
+	struct pci_dev *client;
 
-	अगर (WARN_ON_ONCE(!dev_is_pci(dev)))
-		वापस 0;
+	if (WARN_ON_ONCE(!dev_is_pci(dev)))
+		return 0;
 
 	client = to_pci_dev(dev);
 
-	चयन (pci_p2pdma_map_type(p2p_pgmap->provider, client)) अणु
-	हाल PCI_P2PDMA_MAP_THRU_HOST_BRIDGE:
-		वापस dma_map_sg_attrs(dev, sg, nents, dir, attrs);
-	हाल PCI_P2PDMA_MAP_BUS_ADDR:
-		वापस __pci_p2pdma_map_sg(p2p_pgmap, dev, sg, nents);
-	शेष:
+	switch (pci_p2pdma_map_type(p2p_pgmap->provider, client)) {
+	case PCI_P2PDMA_MAP_THRU_HOST_BRIDGE:
+		return dma_map_sg_attrs(dev, sg, nents, dir, attrs);
+	case PCI_P2PDMA_MAP_BUS_ADDR:
+		return __pci_p2pdma_map_sg(p2p_pgmap, dev, sg, nents);
+	default:
 		WARN_ON_ONCE(1);
-		वापस 0;
-	पूर्ण
-पूर्ण
+		return 0;
+	}
+}
 EXPORT_SYMBOL_GPL(pci_p2pdma_map_sg_attrs);
 
 /**
  * pci_p2pdma_unmap_sg_attrs - unmap a PCI peer-to-peer scatterlist that was
  *	mapped with pci_p2pdma_map_sg()
- * @dev: device करोing the DMA request
+ * @dev: device doing the DMA request
  * @sg: scatter list to map
- * @nents: number of elements वापसed by pci_p2pdma_map_sg()
+ * @nents: number of elements returned by pci_p2pdma_map_sg()
  * @dir: DMA direction
- * @attrs: DMA attributes passed to dma_unmap_sg() (अगर called)
+ * @attrs: DMA attributes passed to dma_unmap_sg() (if called)
  */
-व्योम pci_p2pdma_unmap_sg_attrs(काष्ठा device *dev, काष्ठा scatterlist *sg,
-		पूर्णांक nents, क्रमागत dma_data_direction dir, अचिन्हित दीर्घ attrs)
-अणु
-	काष्ठा pci_p2pdma_pagemap *p2p_pgmap =
+void pci_p2pdma_unmap_sg_attrs(struct device *dev, struct scatterlist *sg,
+		int nents, enum dma_data_direction dir, unsigned long attrs)
+{
+	struct pci_p2pdma_pagemap *p2p_pgmap =
 		to_p2p_pgmap(sg_page(sg)->pgmap);
-	क्रमागत pci_p2pdma_map_type map_type;
-	काष्ठा pci_dev *client;
+	enum pci_p2pdma_map_type map_type;
+	struct pci_dev *client;
 
-	अगर (WARN_ON_ONCE(!dev_is_pci(dev)))
-		वापस;
+	if (WARN_ON_ONCE(!dev_is_pci(dev)))
+		return;
 
 	client = to_pci_dev(dev);
 
 	map_type = pci_p2pdma_map_type(p2p_pgmap->provider, client);
 
-	अगर (map_type == PCI_P2PDMA_MAP_THRU_HOST_BRIDGE)
+	if (map_type == PCI_P2PDMA_MAP_THRU_HOST_BRIDGE)
 		dma_unmap_sg_attrs(dev, sg, nents, dir, attrs);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(pci_p2pdma_unmap_sg_attrs);
 
 /**
  * pci_p2pdma_enable_store - parse a configfs/sysfs attribute store
  *		to enable p2pdma
  * @page: contents of the value to be stored
- * @p2p_dev: वापसs the PCI device that was selected to be used
- *		(अगर one was specअगरied in the stored value)
- * @use_p2pdma: वापसs whether to enable p2pdma or not
+ * @p2p_dev: returns the PCI device that was selected to be used
+ *		(if one was specified in the stored value)
+ * @use_p2pdma: returns whether to enable p2pdma or not
  *
  * Parses an attribute value to decide whether to enable p2pdma.
  * The value can select a PCI device (using its full BDF device
- * name) or a boolean (in any क्रमmat strtobool() accepts). A false
+ * name) or a boolean (in any format strtobool() accepts). A false
  * value disables p2pdma, a true value expects the caller
- * to स्वतःmatically find a compatible device and specअगरying a PCI device
- * expects the caller to use the specअगरic provider.
+ * to automatically find a compatible device and specifying a PCI device
+ * expects the caller to use the specific provider.
  *
- * pci_p2pdma_enable_show() should be used as the show operation क्रम
+ * pci_p2pdma_enable_show() should be used as the show operation for
  * the attribute.
  *
  * Returns 0 on success
  */
-पूर्णांक pci_p2pdma_enable_store(स्थिर अक्षर *page, काष्ठा pci_dev **p2p_dev,
+int pci_p2pdma_enable_store(const char *page, struct pci_dev **p2p_dev,
 			    bool *use_p2pdma)
-अणु
-	काष्ठा device *dev;
+{
+	struct device *dev;
 
-	dev = bus_find_device_by_name(&pci_bus_type, शून्य, page);
-	अगर (dev) अणु
+	dev = bus_find_device_by_name(&pci_bus_type, NULL, page);
+	if (dev) {
 		*use_p2pdma = true;
 		*p2p_dev = to_pci_dev(dev);
 
-		अगर (!pci_has_p2pmem(*p2p_dev)) अणु
+		if (!pci_has_p2pmem(*p2p_dev)) {
 			pci_err(*p2p_dev,
 				"PCI device has no peer-to-peer memory: %s\n",
 				page);
 			pci_dev_put(*p2p_dev);
-			वापस -ENODEV;
-		पूर्ण
+			return -ENODEV;
+		}
 
-		वापस 0;
-	पूर्ण अन्यथा अगर ((page[0] == '0' || page[0] == '1') && !है_नियंत्रण(page[1])) अणु
+		return 0;
+	} else if ((page[0] == '0' || page[0] == '1') && !iscntrl(page[1])) {
 		/*
-		 * If the user enters a PCI device that  करोesn't exist
-		 * like "0000:01:00.1", we करोn't want strtobool to think
+		 * If the user enters a PCI device that  doesn't exist
+		 * like "0000:01:00.1", we don't want strtobool to think
 		 * it's a '0' when it's clearly not what the user wanted.
-		 * So we require 0's and 1's to be exactly one अक्षरacter.
+		 * So we require 0's and 1's to be exactly one character.
 		 */
-	पूर्ण अन्यथा अगर (!strtobool(page, use_p2pdma)) अणु
-		वापस 0;
-	पूर्ण
+	} else if (!strtobool(page, use_p2pdma)) {
+		return 0;
+	}
 
-	pr_err("No such PCI device: %.*s\n", (पूर्णांक)म_खोज(page, "\n"), page);
-	वापस -ENODEV;
-पूर्ण
+	pr_err("No such PCI device: %.*s\n", (int)strcspn(page, "\n"), page);
+	return -ENODEV;
+}
 EXPORT_SYMBOL_GPL(pci_p2pdma_enable_store);
 
 /**
  * pci_p2pdma_enable_show - show a configfs/sysfs attribute indicating
  *		whether p2pdma is enabled
  * @page: contents of the stored value
- * @p2p_dev: the selected p2p device (शून्य अगर no device is selected)
+ * @p2p_dev: the selected p2p device (NULL if no device is selected)
  * @use_p2pdma: whether p2pdma has been enabled
  *
  * Attributes that use pci_p2pdma_enable_store() should use this function
@@ -969,15 +968,15 @@ EXPORT_SYMBOL_GPL(pci_p2pdma_enable_store);
  *
  * Returns 0 on success
  */
-sमाप_प्रकार pci_p2pdma_enable_show(अक्षर *page, काष्ठा pci_dev *p2p_dev,
+ssize_t pci_p2pdma_enable_show(char *page, struct pci_dev *p2p_dev,
 			       bool use_p2pdma)
-अणु
-	अगर (!use_p2pdma)
-		वापस प्र_लिखो(page, "0\n");
+{
+	if (!use_p2pdma)
+		return sprintf(page, "0\n");
 
-	अगर (!p2p_dev)
-		वापस प्र_लिखो(page, "1\n");
+	if (!p2p_dev)
+		return sprintf(page, "1\n");
 
-	वापस प्र_लिखो(page, "%s\n", pci_name(p2p_dev));
-पूर्ण
+	return sprintf(page, "%s\n", pci_name(p2p_dev));
+}
 EXPORT_SYMBOL_GPL(pci_p2pdma_enable_show);

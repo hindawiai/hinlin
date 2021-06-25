@@ -1,227 +1,226 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-/* Control socket क्रम client/server test execution
+// SPDX-License-Identifier: GPL-2.0-only
+/* Control socket for client/server test execution
  *
  * Copyright (C) 2017 Red Hat, Inc.
  *
  * Author: Stefan Hajnoczi <stefanha@redhat.com>
  */
 
-/* The client and server may need to coordinate to aव्योम race conditions like
+/* The client and server may need to coordinate to avoid race conditions like
  * the client attempting to connect to a socket that the server is not
- * listening on yet.  The control socket offers a communications channel क्रम
+ * listening on yet.  The control socket offers a communications channel for
  * such coordination tasks.
  *
  * If the client calls control_expectln("LISTENING"), then it will block until
- * the server calls control_ग_लिखोln("LISTENING").  This provides a simple
- * mechanism क्रम coordinating between the client and the server.
+ * the server calls control_writeln("LISTENING").  This provides a simple
+ * mechanism for coordinating between the client and the server.
  */
 
-#समावेश <त्रुटिसं.स>
-#समावेश <netdb.h>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <unistd.h>
-#समावेश <sys/types.h>
-#समावेश <sys/socket.h>
+#include <errno.h>
+#include <netdb.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 
-#समावेश "timeout.h"
-#समावेश "control.h"
+#include "timeout.h"
+#include "control.h"
 
-अटल पूर्णांक control_fd = -1;
+static int control_fd = -1;
 
 /* Open the control socket, either in server or client mode */
-व्योम control_init(स्थिर अक्षर *control_host,
-		  स्थिर अक्षर *control_port,
+void control_init(const char *control_host,
+		  const char *control_port,
 		  bool server)
-अणु
-	काष्ठा addrinfo hपूर्णांकs = अणु
+{
+	struct addrinfo hints = {
 		.ai_socktype = SOCK_STREAM,
-	पूर्ण;
-	काष्ठा addrinfo *result = शून्य;
-	काष्ठा addrinfo *ai;
-	पूर्णांक ret;
+	};
+	struct addrinfo *result = NULL;
+	struct addrinfo *ai;
+	int ret;
 
-	ret = getaddrinfo(control_host, control_port, &hपूर्णांकs, &result);
-	अगर (ret != 0) अणु
-		ख_लिखो(मानक_त्रुटि, "%s\n", gai_म_त्रुटि(ret));
-		निकास(निकास_त्रुटि);
-	पूर्ण
+	ret = getaddrinfo(control_host, control_port, &hints, &result);
+	if (ret != 0) {
+		fprintf(stderr, "%s\n", gai_strerror(ret));
+		exit(EXIT_FAILURE);
+	}
 
-	क्रम (ai = result; ai; ai = ai->ai_next) अणु
-		पूर्णांक fd;
-		पूर्णांक val = 1;
+	for (ai = result; ai; ai = ai->ai_next) {
+		int fd;
+		int val = 1;
 
 		fd = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
-		अगर (fd < 0)
-			जारी;
+		if (fd < 0)
+			continue;
 
-		अगर (!server) अणु
-			अगर (connect(fd, ai->ai_addr, ai->ai_addrlen) < 0)
-				जाओ next;
+		if (!server) {
+			if (connect(fd, ai->ai_addr, ai->ai_addrlen) < 0)
+				goto next;
 			control_fd = fd;
-			म_लिखो("Control socket connected to %s:%s.\n",
+			printf("Control socket connected to %s:%s.\n",
 			       control_host, control_port);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR,
-			       &val, माप(val)) < 0) अणु
-			लिखो_त्रुटि("setsockopt");
-			निकास(निकास_त्रुटि);
-		पूर्ण
+		if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR,
+			       &val, sizeof(val)) < 0) {
+			perror("setsockopt");
+			exit(EXIT_FAILURE);
+		}
 
-		अगर (bind(fd, ai->ai_addr, ai->ai_addrlen) < 0)
-			जाओ next;
-		अगर (listen(fd, 1) < 0)
-			जाओ next;
+		if (bind(fd, ai->ai_addr, ai->ai_addrlen) < 0)
+			goto next;
+		if (listen(fd, 1) < 0)
+			goto next;
 
-		म_लिखो("Control socket listening on %s:%s\n",
+		printf("Control socket listening on %s:%s\n",
 		       control_host, control_port);
-		ख_साफ(मानक_निकास);
+		fflush(stdout);
 
-		control_fd = accept(fd, शून्य, 0);
-		बंद(fd);
+		control_fd = accept(fd, NULL, 0);
+		close(fd);
 
-		अगर (control_fd < 0) अणु
-			लिखो_त्रुटि("accept");
-			निकास(निकास_त्रुटि);
-		पूर्ण
-		म_लिखो("Control socket connection accepted...\n");
-		अवरोध;
+		if (control_fd < 0) {
+			perror("accept");
+			exit(EXIT_FAILURE);
+		}
+		printf("Control socket connection accepted...\n");
+		break;
 
 next:
-		बंद(fd);
-	पूर्ण
+		close(fd);
+	}
 
-	अगर (control_fd < 0) अणु
-		ख_लिखो(मानक_त्रुटि, "Control socket initialization failed.  Invalid address %s:%s?\n",
+	if (control_fd < 0) {
+		fprintf(stderr, "Control socket initialization failed.  Invalid address %s:%s?\n",
 			control_host, control_port);
-		निकास(निकास_त्रुटि);
-	पूर्ण
+		exit(EXIT_FAILURE);
+	}
 
-	मुक्तaddrinfo(result);
-पूर्ण
+	freeaddrinfo(result);
+}
 
 /* Free resources */
-व्योम control_cleanup(व्योम)
-अणु
-	बंद(control_fd);
+void control_cleanup(void)
+{
+	close(control_fd);
 	control_fd = -1;
-पूर्ण
+}
 
 /* Write a line to the control socket */
-व्योम control_ग_लिखोln(स्थिर अक्षर *str)
-अणु
-	sमाप_प्रकार len = म_माप(str);
-	sमाप_प्रकार ret;
+void control_writeln(const char *str)
+{
+	ssize_t len = strlen(str);
+	ssize_t ret;
 
-	समयout_begin(TIMEOUT);
+	timeout_begin(TIMEOUT);
 
-	करो अणु
+	do {
 		ret = send(control_fd, str, len, MSG_MORE);
-		समयout_check("send");
-	पूर्ण जबतक (ret < 0 && त्रुटि_सं == EINTR);
+		timeout_check("send");
+	} while (ret < 0 && errno == EINTR);
 
-	अगर (ret != len) अणु
-		लिखो_त्रुटि("send");
-		निकास(निकास_त्रुटि);
-	पूर्ण
+	if (ret != len) {
+		perror("send");
+		exit(EXIT_FAILURE);
+	}
 
-	करो अणु
+	do {
 		ret = send(control_fd, "\n", 1, 0);
-		समयout_check("send");
-	पूर्ण जबतक (ret < 0 && त्रुटि_सं == EINTR);
+		timeout_check("send");
+	} while (ret < 0 && errno == EINTR);
 
-	अगर (ret != 1) अणु
-		लिखो_त्रुटि("send");
-		निकास(निकास_त्रुटि);
-	पूर्ण
+	if (ret != 1) {
+		perror("send");
+		exit(EXIT_FAILURE);
+	}
 
-	समयout_end();
-पूर्ण
+	timeout_end();
+}
 
 /* Return the next line from the control socket (without the trailing newline).
  *
- * The program terminates अगर a समयout occurs.
+ * The program terminates if a timeout occurs.
  *
- * The caller must मुक्त() the वापसed string.
+ * The caller must free() the returned string.
  */
-अक्षर *control_पढ़ोln(व्योम)
-अणु
-	अक्षर *buf = शून्य;
-	माप_प्रकार idx = 0;
-	माप_प्रकार buflen = 0;
+char *control_readln(void)
+{
+	char *buf = NULL;
+	size_t idx = 0;
+	size_t buflen = 0;
 
-	समयout_begin(TIMEOUT);
+	timeout_begin(TIMEOUT);
 
-	क्रम (;;) अणु
-		sमाप_प्रकार ret;
+	for (;;) {
+		ssize_t ret;
 
-		अगर (idx >= buflen) अणु
-			अक्षर *new_buf;
+		if (idx >= buflen) {
+			char *new_buf;
 
-			new_buf = पुनः_स्मृति(buf, buflen + 80);
-			अगर (!new_buf) अणु
-				लिखो_त्रुटि("realloc");
-				निकास(निकास_त्रुटि);
-			पूर्ण
+			new_buf = realloc(buf, buflen + 80);
+			if (!new_buf) {
+				perror("realloc");
+				exit(EXIT_FAILURE);
+			}
 
 			buf = new_buf;
 			buflen += 80;
-		पूर्ण
+		}
 
-		करो अणु
+		do {
 			ret = recv(control_fd, &buf[idx], 1, 0);
-			समयout_check("recv");
-		पूर्ण जबतक (ret < 0 && त्रुटि_सं == EINTR);
+			timeout_check("recv");
+		} while (ret < 0 && errno == EINTR);
 
-		अगर (ret == 0) अणु
-			ख_लिखो(मानक_त्रुटि, "unexpected EOF on control socket\n");
-			निकास(निकास_त्रुटि);
-		पूर्ण
+		if (ret == 0) {
+			fprintf(stderr, "unexpected EOF on control socket\n");
+			exit(EXIT_FAILURE);
+		}
 
-		अगर (ret != 1) अणु
-			लिखो_त्रुटि("recv");
-			निकास(निकास_त्रुटि);
-		पूर्ण
+		if (ret != 1) {
+			perror("recv");
+			exit(EXIT_FAILURE);
+		}
 
-		अगर (buf[idx] == '\n') अणु
+		if (buf[idx] == '\n') {
 			buf[idx] = '\0';
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		idx++;
-	पूर्ण
+	}
 
-	समयout_end();
+	timeout_end();
 
-	वापस buf;
-पूर्ण
+	return buf;
+}
 
-/* Wait until a given line is received or a समयout occurs */
-व्योम control_expectln(स्थिर अक्षर *str)
-अणु
-	अक्षर *line;
+/* Wait until a given line is received or a timeout occurs */
+void control_expectln(const char *str)
+{
+	char *line;
 
-	line = control_पढ़ोln();
+	line = control_readln();
 
 	control_cmpln(line, str, true);
 
-	मुक्त(line);
-पूर्ण
+	free(line);
+}
 
-bool control_cmpln(अक्षर *line, स्थिर अक्षर *str, bool fail)
-अणु
-	अगर (म_भेद(str, line) == 0)
-		वापस true;
+bool control_cmpln(char *line, const char *str, bool fail)
+{
+	if (strcmp(str, line) == 0)
+		return true;
 
-	अगर (fail) अणु
-		ख_लिखो(मानक_त्रुटि, "expected \"%s\" on control socket, got \"%s\"\n",
+	if (fail) {
+		fprintf(stderr, "expected \"%s\" on control socket, got \"%s\"\n",
 			str, line);
-		निकास(निकास_त्रुटि);
-	पूर्ण
+		exit(EXIT_FAILURE);
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}

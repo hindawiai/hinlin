@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Crypto user configuration API.
  *
@@ -7,313 +6,313 @@
  *
  */
 
-#समावेश <linux/crypto.h>
-#समावेश <linux/cryptouser.h>
-#समावेश <linux/sched.h>
-#समावेश <net/netlink.h>
-#समावेश <net/sock.h>
-#समावेश <crypto/पूर्णांकernal/skcipher.h>
-#समावेश <crypto/पूर्णांकernal/rng.h>
-#समावेश <crypto/akcipher.h>
-#समावेश <crypto/kpp.h>
-#समावेश <crypto/पूर्णांकernal/cryptouser.h>
+#include <linux/crypto.h>
+#include <linux/cryptouser.h>
+#include <linux/sched.h>
+#include <net/netlink.h>
+#include <net/sock.h>
+#include <crypto/internal/skcipher.h>
+#include <crypto/internal/rng.h>
+#include <crypto/akcipher.h>
+#include <crypto/kpp.h>
+#include <crypto/internal/cryptouser.h>
 
-#समावेश "internal.h"
+#include "internal.h"
 
-#घोषणा null_terminated(x)	(strnlen(x, माप(x)) < माप(x))
+#define null_terminated(x)	(strnlen(x, sizeof(x)) < sizeof(x))
 
-काष्ठा crypto_dump_info अणु
-	काष्ठा sk_buff *in_skb;
-	काष्ठा sk_buff *out_skb;
+struct crypto_dump_info {
+	struct sk_buff *in_skb;
+	struct sk_buff *out_skb;
 	u32 nlmsg_seq;
 	u16 nlmsg_flags;
-पूर्ण;
+};
 
-अटल पूर्णांक crypto_report_aead(काष्ठा sk_buff *skb, काष्ठा crypto_alg *alg)
-अणु
-	काष्ठा crypto_stat_aead raead;
+static int crypto_report_aead(struct sk_buff *skb, struct crypto_alg *alg)
+{
+	struct crypto_stat_aead raead;
 
-	स_रखो(&raead, 0, माप(raead));
+	memset(&raead, 0, sizeof(raead));
 
-	strscpy(raead.type, "aead", माप(raead.type));
+	strscpy(raead.type, "aead", sizeof(raead.type));
 
-	raead.stat_encrypt_cnt = atomic64_पढ़ो(&alg->stats.aead.encrypt_cnt);
-	raead.stat_encrypt_tlen = atomic64_पढ़ो(&alg->stats.aead.encrypt_tlen);
-	raead.stat_decrypt_cnt = atomic64_पढ़ो(&alg->stats.aead.decrypt_cnt);
-	raead.stat_decrypt_tlen = atomic64_पढ़ो(&alg->stats.aead.decrypt_tlen);
-	raead.stat_err_cnt = atomic64_पढ़ो(&alg->stats.aead.err_cnt);
+	raead.stat_encrypt_cnt = atomic64_read(&alg->stats.aead.encrypt_cnt);
+	raead.stat_encrypt_tlen = atomic64_read(&alg->stats.aead.encrypt_tlen);
+	raead.stat_decrypt_cnt = atomic64_read(&alg->stats.aead.decrypt_cnt);
+	raead.stat_decrypt_tlen = atomic64_read(&alg->stats.aead.decrypt_tlen);
+	raead.stat_err_cnt = atomic64_read(&alg->stats.aead.err_cnt);
 
-	वापस nla_put(skb, CRYPTOCFGA_STAT_AEAD, माप(raead), &raead);
-पूर्ण
+	return nla_put(skb, CRYPTOCFGA_STAT_AEAD, sizeof(raead), &raead);
+}
 
-अटल पूर्णांक crypto_report_cipher(काष्ठा sk_buff *skb, काष्ठा crypto_alg *alg)
-अणु
-	काष्ठा crypto_stat_cipher rcipher;
+static int crypto_report_cipher(struct sk_buff *skb, struct crypto_alg *alg)
+{
+	struct crypto_stat_cipher rcipher;
 
-	स_रखो(&rcipher, 0, माप(rcipher));
+	memset(&rcipher, 0, sizeof(rcipher));
 
-	strscpy(rcipher.type, "cipher", माप(rcipher.type));
+	strscpy(rcipher.type, "cipher", sizeof(rcipher.type));
 
-	rcipher.stat_encrypt_cnt = atomic64_पढ़ो(&alg->stats.cipher.encrypt_cnt);
-	rcipher.stat_encrypt_tlen = atomic64_पढ़ो(&alg->stats.cipher.encrypt_tlen);
-	rcipher.stat_decrypt_cnt =  atomic64_पढ़ो(&alg->stats.cipher.decrypt_cnt);
-	rcipher.stat_decrypt_tlen = atomic64_पढ़ो(&alg->stats.cipher.decrypt_tlen);
-	rcipher.stat_err_cnt =  atomic64_पढ़ो(&alg->stats.cipher.err_cnt);
+	rcipher.stat_encrypt_cnt = atomic64_read(&alg->stats.cipher.encrypt_cnt);
+	rcipher.stat_encrypt_tlen = atomic64_read(&alg->stats.cipher.encrypt_tlen);
+	rcipher.stat_decrypt_cnt =  atomic64_read(&alg->stats.cipher.decrypt_cnt);
+	rcipher.stat_decrypt_tlen = atomic64_read(&alg->stats.cipher.decrypt_tlen);
+	rcipher.stat_err_cnt =  atomic64_read(&alg->stats.cipher.err_cnt);
 
-	वापस nla_put(skb, CRYPTOCFGA_STAT_CIPHER, माप(rcipher), &rcipher);
-पूर्ण
+	return nla_put(skb, CRYPTOCFGA_STAT_CIPHER, sizeof(rcipher), &rcipher);
+}
 
-अटल पूर्णांक crypto_report_comp(काष्ठा sk_buff *skb, काष्ठा crypto_alg *alg)
-अणु
-	काष्ठा crypto_stat_compress rcomp;
+static int crypto_report_comp(struct sk_buff *skb, struct crypto_alg *alg)
+{
+	struct crypto_stat_compress rcomp;
 
-	स_रखो(&rcomp, 0, माप(rcomp));
+	memset(&rcomp, 0, sizeof(rcomp));
 
-	strscpy(rcomp.type, "compression", माप(rcomp.type));
-	rcomp.stat_compress_cnt = atomic64_पढ़ो(&alg->stats.compress.compress_cnt);
-	rcomp.stat_compress_tlen = atomic64_पढ़ो(&alg->stats.compress.compress_tlen);
-	rcomp.stat_decompress_cnt = atomic64_पढ़ो(&alg->stats.compress.decompress_cnt);
-	rcomp.stat_decompress_tlen = atomic64_पढ़ो(&alg->stats.compress.decompress_tlen);
-	rcomp.stat_err_cnt = atomic64_पढ़ो(&alg->stats.compress.err_cnt);
+	strscpy(rcomp.type, "compression", sizeof(rcomp.type));
+	rcomp.stat_compress_cnt = atomic64_read(&alg->stats.compress.compress_cnt);
+	rcomp.stat_compress_tlen = atomic64_read(&alg->stats.compress.compress_tlen);
+	rcomp.stat_decompress_cnt = atomic64_read(&alg->stats.compress.decompress_cnt);
+	rcomp.stat_decompress_tlen = atomic64_read(&alg->stats.compress.decompress_tlen);
+	rcomp.stat_err_cnt = atomic64_read(&alg->stats.compress.err_cnt);
 
-	वापस nla_put(skb, CRYPTOCFGA_STAT_COMPRESS, माप(rcomp), &rcomp);
-पूर्ण
+	return nla_put(skb, CRYPTOCFGA_STAT_COMPRESS, sizeof(rcomp), &rcomp);
+}
 
-अटल पूर्णांक crypto_report_acomp(काष्ठा sk_buff *skb, काष्ठा crypto_alg *alg)
-अणु
-	काष्ठा crypto_stat_compress racomp;
+static int crypto_report_acomp(struct sk_buff *skb, struct crypto_alg *alg)
+{
+	struct crypto_stat_compress racomp;
 
-	स_रखो(&racomp, 0, माप(racomp));
+	memset(&racomp, 0, sizeof(racomp));
 
-	strscpy(racomp.type, "acomp", माप(racomp.type));
-	racomp.stat_compress_cnt = atomic64_पढ़ो(&alg->stats.compress.compress_cnt);
-	racomp.stat_compress_tlen = atomic64_पढ़ो(&alg->stats.compress.compress_tlen);
-	racomp.stat_decompress_cnt =  atomic64_पढ़ो(&alg->stats.compress.decompress_cnt);
-	racomp.stat_decompress_tlen = atomic64_पढ़ो(&alg->stats.compress.decompress_tlen);
-	racomp.stat_err_cnt = atomic64_पढ़ो(&alg->stats.compress.err_cnt);
+	strscpy(racomp.type, "acomp", sizeof(racomp.type));
+	racomp.stat_compress_cnt = atomic64_read(&alg->stats.compress.compress_cnt);
+	racomp.stat_compress_tlen = atomic64_read(&alg->stats.compress.compress_tlen);
+	racomp.stat_decompress_cnt =  atomic64_read(&alg->stats.compress.decompress_cnt);
+	racomp.stat_decompress_tlen = atomic64_read(&alg->stats.compress.decompress_tlen);
+	racomp.stat_err_cnt = atomic64_read(&alg->stats.compress.err_cnt);
 
-	वापस nla_put(skb, CRYPTOCFGA_STAT_ACOMP, माप(racomp), &racomp);
-पूर्ण
+	return nla_put(skb, CRYPTOCFGA_STAT_ACOMP, sizeof(racomp), &racomp);
+}
 
-अटल पूर्णांक crypto_report_akcipher(काष्ठा sk_buff *skb, काष्ठा crypto_alg *alg)
-अणु
-	काष्ठा crypto_stat_akcipher rakcipher;
+static int crypto_report_akcipher(struct sk_buff *skb, struct crypto_alg *alg)
+{
+	struct crypto_stat_akcipher rakcipher;
 
-	स_रखो(&rakcipher, 0, माप(rakcipher));
+	memset(&rakcipher, 0, sizeof(rakcipher));
 
-	strscpy(rakcipher.type, "akcipher", माप(rakcipher.type));
-	rakcipher.stat_encrypt_cnt = atomic64_पढ़ो(&alg->stats.akcipher.encrypt_cnt);
-	rakcipher.stat_encrypt_tlen = atomic64_पढ़ो(&alg->stats.akcipher.encrypt_tlen);
-	rakcipher.stat_decrypt_cnt = atomic64_पढ़ो(&alg->stats.akcipher.decrypt_cnt);
-	rakcipher.stat_decrypt_tlen = atomic64_पढ़ो(&alg->stats.akcipher.decrypt_tlen);
-	rakcipher.stat_sign_cnt = atomic64_पढ़ो(&alg->stats.akcipher.sign_cnt);
-	rakcipher.stat_verअगरy_cnt = atomic64_पढ़ो(&alg->stats.akcipher.verअगरy_cnt);
-	rakcipher.stat_err_cnt = atomic64_पढ़ो(&alg->stats.akcipher.err_cnt);
+	strscpy(rakcipher.type, "akcipher", sizeof(rakcipher.type));
+	rakcipher.stat_encrypt_cnt = atomic64_read(&alg->stats.akcipher.encrypt_cnt);
+	rakcipher.stat_encrypt_tlen = atomic64_read(&alg->stats.akcipher.encrypt_tlen);
+	rakcipher.stat_decrypt_cnt = atomic64_read(&alg->stats.akcipher.decrypt_cnt);
+	rakcipher.stat_decrypt_tlen = atomic64_read(&alg->stats.akcipher.decrypt_tlen);
+	rakcipher.stat_sign_cnt = atomic64_read(&alg->stats.akcipher.sign_cnt);
+	rakcipher.stat_verify_cnt = atomic64_read(&alg->stats.akcipher.verify_cnt);
+	rakcipher.stat_err_cnt = atomic64_read(&alg->stats.akcipher.err_cnt);
 
-	वापस nla_put(skb, CRYPTOCFGA_STAT_AKCIPHER,
-		       माप(rakcipher), &rakcipher);
-पूर्ण
+	return nla_put(skb, CRYPTOCFGA_STAT_AKCIPHER,
+		       sizeof(rakcipher), &rakcipher);
+}
 
-अटल पूर्णांक crypto_report_kpp(काष्ठा sk_buff *skb, काष्ठा crypto_alg *alg)
-अणु
-	काष्ठा crypto_stat_kpp rkpp;
+static int crypto_report_kpp(struct sk_buff *skb, struct crypto_alg *alg)
+{
+	struct crypto_stat_kpp rkpp;
 
-	स_रखो(&rkpp, 0, माप(rkpp));
+	memset(&rkpp, 0, sizeof(rkpp));
 
-	strscpy(rkpp.type, "kpp", माप(rkpp.type));
+	strscpy(rkpp.type, "kpp", sizeof(rkpp.type));
 
-	rkpp.stat_setsecret_cnt = atomic64_पढ़ो(&alg->stats.kpp.setsecret_cnt);
-	rkpp.stat_generate_खुला_key_cnt = atomic64_पढ़ो(&alg->stats.kpp.generate_खुला_key_cnt);
-	rkpp.stat_compute_shared_secret_cnt = atomic64_पढ़ो(&alg->stats.kpp.compute_shared_secret_cnt);
-	rkpp.stat_err_cnt = atomic64_पढ़ो(&alg->stats.kpp.err_cnt);
+	rkpp.stat_setsecret_cnt = atomic64_read(&alg->stats.kpp.setsecret_cnt);
+	rkpp.stat_generate_public_key_cnt = atomic64_read(&alg->stats.kpp.generate_public_key_cnt);
+	rkpp.stat_compute_shared_secret_cnt = atomic64_read(&alg->stats.kpp.compute_shared_secret_cnt);
+	rkpp.stat_err_cnt = atomic64_read(&alg->stats.kpp.err_cnt);
 
-	वापस nla_put(skb, CRYPTOCFGA_STAT_KPP, माप(rkpp), &rkpp);
-पूर्ण
+	return nla_put(skb, CRYPTOCFGA_STAT_KPP, sizeof(rkpp), &rkpp);
+}
 
-अटल पूर्णांक crypto_report_ahash(काष्ठा sk_buff *skb, काष्ठा crypto_alg *alg)
-अणु
-	काष्ठा crypto_stat_hash rhash;
+static int crypto_report_ahash(struct sk_buff *skb, struct crypto_alg *alg)
+{
+	struct crypto_stat_hash rhash;
 
-	स_रखो(&rhash, 0, माप(rhash));
+	memset(&rhash, 0, sizeof(rhash));
 
-	strscpy(rhash.type, "ahash", माप(rhash.type));
+	strscpy(rhash.type, "ahash", sizeof(rhash.type));
 
-	rhash.stat_hash_cnt = atomic64_पढ़ो(&alg->stats.hash.hash_cnt);
-	rhash.stat_hash_tlen = atomic64_पढ़ो(&alg->stats.hash.hash_tlen);
-	rhash.stat_err_cnt = atomic64_पढ़ो(&alg->stats.hash.err_cnt);
+	rhash.stat_hash_cnt = atomic64_read(&alg->stats.hash.hash_cnt);
+	rhash.stat_hash_tlen = atomic64_read(&alg->stats.hash.hash_tlen);
+	rhash.stat_err_cnt = atomic64_read(&alg->stats.hash.err_cnt);
 
-	वापस nla_put(skb, CRYPTOCFGA_STAT_HASH, माप(rhash), &rhash);
-पूर्ण
+	return nla_put(skb, CRYPTOCFGA_STAT_HASH, sizeof(rhash), &rhash);
+}
 
-अटल पूर्णांक crypto_report_shash(काष्ठा sk_buff *skb, काष्ठा crypto_alg *alg)
-अणु
-	काष्ठा crypto_stat_hash rhash;
+static int crypto_report_shash(struct sk_buff *skb, struct crypto_alg *alg)
+{
+	struct crypto_stat_hash rhash;
 
-	स_रखो(&rhash, 0, माप(rhash));
+	memset(&rhash, 0, sizeof(rhash));
 
-	strscpy(rhash.type, "shash", माप(rhash.type));
+	strscpy(rhash.type, "shash", sizeof(rhash.type));
 
-	rhash.stat_hash_cnt =  atomic64_पढ़ो(&alg->stats.hash.hash_cnt);
-	rhash.stat_hash_tlen = atomic64_पढ़ो(&alg->stats.hash.hash_tlen);
-	rhash.stat_err_cnt = atomic64_पढ़ो(&alg->stats.hash.err_cnt);
+	rhash.stat_hash_cnt =  atomic64_read(&alg->stats.hash.hash_cnt);
+	rhash.stat_hash_tlen = atomic64_read(&alg->stats.hash.hash_tlen);
+	rhash.stat_err_cnt = atomic64_read(&alg->stats.hash.err_cnt);
 
-	वापस nla_put(skb, CRYPTOCFGA_STAT_HASH, माप(rhash), &rhash);
-पूर्ण
+	return nla_put(skb, CRYPTOCFGA_STAT_HASH, sizeof(rhash), &rhash);
+}
 
-अटल पूर्णांक crypto_report_rng(काष्ठा sk_buff *skb, काष्ठा crypto_alg *alg)
-अणु
-	काष्ठा crypto_stat_rng rrng;
+static int crypto_report_rng(struct sk_buff *skb, struct crypto_alg *alg)
+{
+	struct crypto_stat_rng rrng;
 
-	स_रखो(&rrng, 0, माप(rrng));
+	memset(&rrng, 0, sizeof(rrng));
 
-	strscpy(rrng.type, "rng", माप(rrng.type));
+	strscpy(rrng.type, "rng", sizeof(rrng.type));
 
-	rrng.stat_generate_cnt = atomic64_पढ़ो(&alg->stats.rng.generate_cnt);
-	rrng.stat_generate_tlen = atomic64_पढ़ो(&alg->stats.rng.generate_tlen);
-	rrng.stat_seed_cnt = atomic64_पढ़ो(&alg->stats.rng.seed_cnt);
-	rrng.stat_err_cnt = atomic64_पढ़ो(&alg->stats.rng.err_cnt);
+	rrng.stat_generate_cnt = atomic64_read(&alg->stats.rng.generate_cnt);
+	rrng.stat_generate_tlen = atomic64_read(&alg->stats.rng.generate_tlen);
+	rrng.stat_seed_cnt = atomic64_read(&alg->stats.rng.seed_cnt);
+	rrng.stat_err_cnt = atomic64_read(&alg->stats.rng.err_cnt);
 
-	वापस nla_put(skb, CRYPTOCFGA_STAT_RNG, माप(rrng), &rrng);
-पूर्ण
+	return nla_put(skb, CRYPTOCFGA_STAT_RNG, sizeof(rrng), &rrng);
+}
 
-अटल पूर्णांक crypto_reportstat_one(काष्ठा crypto_alg *alg,
-				 काष्ठा crypto_user_alg *ualg,
-				 काष्ठा sk_buff *skb)
-अणु
-	स_रखो(ualg, 0, माप(*ualg));
+static int crypto_reportstat_one(struct crypto_alg *alg,
+				 struct crypto_user_alg *ualg,
+				 struct sk_buff *skb)
+{
+	memset(ualg, 0, sizeof(*ualg));
 
-	strscpy(ualg->cru_name, alg->cra_name, माप(ualg->cru_name));
+	strscpy(ualg->cru_name, alg->cra_name, sizeof(ualg->cru_name));
 	strscpy(ualg->cru_driver_name, alg->cra_driver_name,
-		माप(ualg->cru_driver_name));
+		sizeof(ualg->cru_driver_name));
 	strscpy(ualg->cru_module_name, module_name(alg->cra_module),
-		माप(ualg->cru_module_name));
+		sizeof(ualg->cru_module_name));
 
 	ualg->cru_type = 0;
 	ualg->cru_mask = 0;
 	ualg->cru_flags = alg->cra_flags;
-	ualg->cru_refcnt = refcount_पढ़ो(&alg->cra_refcnt);
+	ualg->cru_refcnt = refcount_read(&alg->cra_refcnt);
 
-	अगर (nla_put_u32(skb, CRYPTOCFGA_PRIORITY_VAL, alg->cra_priority))
-		जाओ nla_put_failure;
-	अगर (alg->cra_flags & CRYPTO_ALG_LARVAL) अणु
-		काष्ठा crypto_stat_larval rl;
+	if (nla_put_u32(skb, CRYPTOCFGA_PRIORITY_VAL, alg->cra_priority))
+		goto nla_put_failure;
+	if (alg->cra_flags & CRYPTO_ALG_LARVAL) {
+		struct crypto_stat_larval rl;
 
-		स_रखो(&rl, 0, माप(rl));
-		strscpy(rl.type, "larval", माप(rl.type));
-		अगर (nla_put(skb, CRYPTOCFGA_STAT_LARVAL, माप(rl), &rl))
-			जाओ nla_put_failure;
-		जाओ out;
-	पूर्ण
+		memset(&rl, 0, sizeof(rl));
+		strscpy(rl.type, "larval", sizeof(rl.type));
+		if (nla_put(skb, CRYPTOCFGA_STAT_LARVAL, sizeof(rl), &rl))
+			goto nla_put_failure;
+		goto out;
+	}
 
-	चयन (alg->cra_flags & (CRYPTO_ALG_TYPE_MASK | CRYPTO_ALG_LARVAL)) अणु
-	हाल CRYPTO_ALG_TYPE_AEAD:
-		अगर (crypto_report_aead(skb, alg))
-			जाओ nla_put_failure;
-		अवरोध;
-	हाल CRYPTO_ALG_TYPE_SKCIPHER:
-		अगर (crypto_report_cipher(skb, alg))
-			जाओ nla_put_failure;
-		अवरोध;
-	हाल CRYPTO_ALG_TYPE_CIPHER:
-		अगर (crypto_report_cipher(skb, alg))
-			जाओ nla_put_failure;
-		अवरोध;
-	हाल CRYPTO_ALG_TYPE_COMPRESS:
-		अगर (crypto_report_comp(skb, alg))
-			जाओ nla_put_failure;
-		अवरोध;
-	हाल CRYPTO_ALG_TYPE_ACOMPRESS:
-		अगर (crypto_report_acomp(skb, alg))
-			जाओ nla_put_failure;
-		अवरोध;
-	हाल CRYPTO_ALG_TYPE_SCOMPRESS:
-		अगर (crypto_report_acomp(skb, alg))
-			जाओ nla_put_failure;
-		अवरोध;
-	हाल CRYPTO_ALG_TYPE_AKCIPHER:
-		अगर (crypto_report_akcipher(skb, alg))
-			जाओ nla_put_failure;
-		अवरोध;
-	हाल CRYPTO_ALG_TYPE_KPP:
-		अगर (crypto_report_kpp(skb, alg))
-			जाओ nla_put_failure;
-		अवरोध;
-	हाल CRYPTO_ALG_TYPE_AHASH:
-		अगर (crypto_report_ahash(skb, alg))
-			जाओ nla_put_failure;
-		अवरोध;
-	हाल CRYPTO_ALG_TYPE_HASH:
-		अगर (crypto_report_shash(skb, alg))
-			जाओ nla_put_failure;
-		अवरोध;
-	हाल CRYPTO_ALG_TYPE_RNG:
-		अगर (crypto_report_rng(skb, alg))
-			जाओ nla_put_failure;
-		अवरोध;
-	शेष:
+	switch (alg->cra_flags & (CRYPTO_ALG_TYPE_MASK | CRYPTO_ALG_LARVAL)) {
+	case CRYPTO_ALG_TYPE_AEAD:
+		if (crypto_report_aead(skb, alg))
+			goto nla_put_failure;
+		break;
+	case CRYPTO_ALG_TYPE_SKCIPHER:
+		if (crypto_report_cipher(skb, alg))
+			goto nla_put_failure;
+		break;
+	case CRYPTO_ALG_TYPE_CIPHER:
+		if (crypto_report_cipher(skb, alg))
+			goto nla_put_failure;
+		break;
+	case CRYPTO_ALG_TYPE_COMPRESS:
+		if (crypto_report_comp(skb, alg))
+			goto nla_put_failure;
+		break;
+	case CRYPTO_ALG_TYPE_ACOMPRESS:
+		if (crypto_report_acomp(skb, alg))
+			goto nla_put_failure;
+		break;
+	case CRYPTO_ALG_TYPE_SCOMPRESS:
+		if (crypto_report_acomp(skb, alg))
+			goto nla_put_failure;
+		break;
+	case CRYPTO_ALG_TYPE_AKCIPHER:
+		if (crypto_report_akcipher(skb, alg))
+			goto nla_put_failure;
+		break;
+	case CRYPTO_ALG_TYPE_KPP:
+		if (crypto_report_kpp(skb, alg))
+			goto nla_put_failure;
+		break;
+	case CRYPTO_ALG_TYPE_AHASH:
+		if (crypto_report_ahash(skb, alg))
+			goto nla_put_failure;
+		break;
+	case CRYPTO_ALG_TYPE_HASH:
+		if (crypto_report_shash(skb, alg))
+			goto nla_put_failure;
+		break;
+	case CRYPTO_ALG_TYPE_RNG:
+		if (crypto_report_rng(skb, alg))
+			goto nla_put_failure;
+		break;
+	default:
 		pr_err("ERROR: Unhandled alg %d in %s\n",
 		       alg->cra_flags & (CRYPTO_ALG_TYPE_MASK | CRYPTO_ALG_LARVAL),
 		       __func__);
-	पूर्ण
+	}
 
 out:
-	वापस 0;
+	return 0;
 
 nla_put_failure:
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-अटल पूर्णांक crypto_reportstat_alg(काष्ठा crypto_alg *alg,
-				 काष्ठा crypto_dump_info *info)
-अणु
-	काष्ठा sk_buff *in_skb = info->in_skb;
-	काष्ठा sk_buff *skb = info->out_skb;
-	काष्ठा nlmsghdr *nlh;
-	काष्ठा crypto_user_alg *ualg;
-	पूर्णांक err = 0;
+static int crypto_reportstat_alg(struct crypto_alg *alg,
+				 struct crypto_dump_info *info)
+{
+	struct sk_buff *in_skb = info->in_skb;
+	struct sk_buff *skb = info->out_skb;
+	struct nlmsghdr *nlh;
+	struct crypto_user_alg *ualg;
+	int err = 0;
 
 	nlh = nlmsg_put(skb, NETLINK_CB(in_skb).portid, info->nlmsg_seq,
-			CRYPTO_MSG_GETSTAT, माप(*ualg), info->nlmsg_flags);
-	अगर (!nlh) अणु
+			CRYPTO_MSG_GETSTAT, sizeof(*ualg), info->nlmsg_flags);
+	if (!nlh) {
 		err = -EMSGSIZE;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ualg = nlmsg_data(nlh);
 
 	err = crypto_reportstat_one(alg, ualg, skb);
-	अगर (err) अणु
+	if (err) {
 		nlmsg_cancel(skb, nlh);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	nlmsg_end(skb, nlh);
 
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक crypto_reportstat(काष्ठा sk_buff *in_skb, काष्ठा nlmsghdr *in_nlh,
-		      काष्ठा nlattr **attrs)
-अणु
-	काष्ठा net *net = sock_net(in_skb->sk);
-	काष्ठा crypto_user_alg *p = nlmsg_data(in_nlh);
-	काष्ठा crypto_alg *alg;
-	काष्ठा sk_buff *skb;
-	काष्ठा crypto_dump_info info;
-	पूर्णांक err;
+int crypto_reportstat(struct sk_buff *in_skb, struct nlmsghdr *in_nlh,
+		      struct nlattr **attrs)
+{
+	struct net *net = sock_net(in_skb->sk);
+	struct crypto_user_alg *p = nlmsg_data(in_nlh);
+	struct crypto_alg *alg;
+	struct sk_buff *skb;
+	struct crypto_dump_info info;
+	int err;
 
-	अगर (!null_terminated(p->cru_name) || !null_terminated(p->cru_driver_name))
-		वापस -EINVAL;
+	if (!null_terminated(p->cru_name) || !null_terminated(p->cru_driver_name))
+		return -EINVAL;
 
 	alg = crypto_alg_match(p, 0);
-	अगर (!alg)
-		वापस -ENOENT;
+	if (!alg)
+		return -ENOENT;
 
 	err = -ENOMEM;
 	skb = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_ATOMIC);
-	अगर (!skb)
-		जाओ drop_alg;
+	if (!skb)
+		goto drop_alg;
 
 	info.in_skb = in_skb;
 	info.out_skb = skb;
@@ -325,12 +324,12 @@ out:
 drop_alg:
 	crypto_mod_put(alg);
 
-	अगर (err) अणु
-		kमुक्त_skb(skb);
-		वापस err;
-	पूर्ण
+	if (err) {
+		kfree_skb(skb);
+		return err;
+	}
 
-	वापस nlmsg_unicast(net->crypto_nlsk, skb, NETLINK_CB(in_skb).portid);
-पूर्ण
+	return nlmsg_unicast(net->crypto_nlsk, skb, NETLINK_CB(in_skb).portid);
+}
 
 MODULE_LICENSE("GPL");

@@ -1,54 +1,53 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2016 Parav Pandit <pandit.parav@gmail.com>
  */
 
-#समावेश "core_priv.h"
+#include "core_priv.h"
 
 /**
- * ib_device_रेजिस्टर_rdmacg - रेजिस्टर with rdma cgroup.
- * @device: device to रेजिस्टर to participate in resource
+ * ib_device_register_rdmacg - register with rdma cgroup.
+ * @device: device to register to participate in resource
  *          accounting by rdma cgroup.
  *
- * Register with the rdma cgroup. Should be called beक्रमe
- * exposing rdma device to user space applications to aव्योम
+ * Register with the rdma cgroup. Should be called before
+ * exposing rdma device to user space applications to avoid
  * resource accounting leak.
  */
-व्योम ib_device_रेजिस्टर_rdmacg(काष्ठा ib_device *device)
-अणु
+void ib_device_register_rdmacg(struct ib_device *device)
+{
 	device->cg_device.name = device->name;
-	rdmacg_रेजिस्टर_device(&device->cg_device);
-पूर्ण
+	rdmacg_register_device(&device->cg_device);
+}
 
 /**
- * ib_device_unरेजिस्टर_rdmacg - unरेजिस्टर with rdma cgroup.
- * @device: device to unरेजिस्टर.
+ * ib_device_unregister_rdmacg - unregister with rdma cgroup.
+ * @device: device to unregister.
  *
- * Unरेजिस्टर with the rdma cgroup. Should be called after
+ * Unregister with the rdma cgroup. Should be called after
  * all the resources are deallocated, and after a stage when any
- * other resource allocation by user application cannot be करोne
- * क्रम this device to aव्योम any leak in accounting.
+ * other resource allocation by user application cannot be done
+ * for this device to avoid any leak in accounting.
  */
-व्योम ib_device_unरेजिस्टर_rdmacg(काष्ठा ib_device *device)
-अणु
-	rdmacg_unरेजिस्टर_device(&device->cg_device);
-पूर्ण
+void ib_device_unregister_rdmacg(struct ib_device *device)
+{
+	rdmacg_unregister_device(&device->cg_device);
+}
 
-पूर्णांक ib_rdmacg_try_अक्षरge(काष्ठा ib_rdmacg_object *cg_obj,
-			 काष्ठा ib_device *device,
-			 क्रमागत rdmacg_resource_type resource_index)
-अणु
-	वापस rdmacg_try_अक्षरge(&cg_obj->cg, &device->cg_device,
+int ib_rdmacg_try_charge(struct ib_rdmacg_object *cg_obj,
+			 struct ib_device *device,
+			 enum rdmacg_resource_type resource_index)
+{
+	return rdmacg_try_charge(&cg_obj->cg, &device->cg_device,
 				 resource_index);
-पूर्ण
-EXPORT_SYMBOL(ib_rdmacg_try_अक्षरge);
+}
+EXPORT_SYMBOL(ib_rdmacg_try_charge);
 
-व्योम ib_rdmacg_unअक्षरge(काष्ठा ib_rdmacg_object *cg_obj,
-			काष्ठा ib_device *device,
-			क्रमागत rdmacg_resource_type resource_index)
-अणु
-	rdmacg_unअक्षरge(cg_obj->cg, &device->cg_device,
+void ib_rdmacg_uncharge(struct ib_rdmacg_object *cg_obj,
+			struct ib_device *device,
+			enum rdmacg_resource_type resource_index)
+{
+	rdmacg_uncharge(cg_obj->cg, &device->cg_device,
 			resource_index);
-पूर्ण
-EXPORT_SYMBOL(ib_rdmacg_unअक्षरge);
+}
+EXPORT_SYMBOL(ib_rdmacg_uncharge);

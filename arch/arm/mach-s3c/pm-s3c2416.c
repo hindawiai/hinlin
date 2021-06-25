@@ -1,82 +1,81 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 //
 // Copyright (c) 2010 Samsung Electronics Co., Ltd.
 //		http://www.samsung.com
 //
 // S3C2416 - PM support (Based on Ben Dooks' S3C2412 PM support)
 
-#समावेश <linux/device.h>
-#समावेश <linux/syscore_ops.h>
-#समावेश <linux/पन.स>
+#include <linux/device.h>
+#include <linux/syscore_ops.h>
+#include <linux/io.h>
 
-#समावेश <यंत्र/cacheflush.h>
+#include <asm/cacheflush.h>
 
-#समावेश "regs-s3c2443-clock.h"
+#include "regs-s3c2443-clock.h"
 
-#समावेश "cpu.h"
-#समावेश "pm.h"
+#include "cpu.h"
+#include "pm.h"
 
-#समावेश "s3c2412-power.h"
+#include "s3c2412-power.h"
 
-#अगर_घोषित CONFIG_PM_SLEEP
-बाह्य व्योम s3c2412_sleep_enter(व्योम);
+#ifdef CONFIG_PM_SLEEP
+extern void s3c2412_sleep_enter(void);
 
-अटल पूर्णांक s3c2416_cpu_suspend(अचिन्हित दीर्घ arg)
-अणु
+static int s3c2416_cpu_suspend(unsigned long arg)
+{
 	/* enable wakeup sources regardless of battery state */
-	__raw_ग_लिखोl(S3C2443_PWRCFG_SLEEP, S3C2443_PWRCFG);
+	__raw_writel(S3C2443_PWRCFG_SLEEP, S3C2443_PWRCFG);
 
 	/* set the mode as sleep, 2BED represents "Go to BED" */
-	__raw_ग_लिखोl(0x2BED, S3C2443_PWRMODE);
+	__raw_writel(0x2BED, S3C2443_PWRMODE);
 
 	s3c2412_sleep_enter();
 
 	pr_info("Failed to suspend the system\n");
-	वापस 1; /* Aborting suspend */
-पूर्ण
+	return 1; /* Aborting suspend */
+}
 
-अटल व्योम s3c2416_pm_prepare(व्योम)
-अणु
+static void s3c2416_pm_prepare(void)
+{
 	/*
-	 * ग_लिखो the magic value u-boot uses to check क्रम resume पूर्णांकo
-	 * the INFORM0 रेजिस्टर, and ensure INFORM1 is set to the
+	 * write the magic value u-boot uses to check for resume into
+	 * the INFORM0 register, and ensure INFORM1 is set to the
 	 * correct address to resume from.
 	 */
-	__raw_ग_लिखोl(0x2BED, S3C2412_INFORM0);
-	__raw_ग_लिखोl(__pa_symbol(s3c_cpu_resume), S3C2412_INFORM1);
-पूर्ण
+	__raw_writel(0x2BED, S3C2412_INFORM0);
+	__raw_writel(__pa_symbol(s3c_cpu_resume), S3C2412_INFORM1);
+}
 
-अटल पूर्णांक s3c2416_pm_add(काष्ठा device *dev, काष्ठा subsys_पूर्णांकerface *sअगर)
-अणु
+static int s3c2416_pm_add(struct device *dev, struct subsys_interface *sif)
+{
 	pm_cpu_prep = s3c2416_pm_prepare;
 	pm_cpu_sleep = s3c2416_cpu_suspend;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा subsys_पूर्णांकerface s3c2416_pm_पूर्णांकerface = अणु
+static struct subsys_interface s3c2416_pm_interface = {
 	.name		= "s3c2416_pm",
 	.subsys		= &s3c2416_subsys,
 	.add_dev	= s3c2416_pm_add,
-पूर्ण;
+};
 
-अटल __init पूर्णांक s3c2416_pm_init(व्योम)
-अणु
-	वापस subsys_पूर्णांकerface_रेजिस्टर(&s3c2416_pm_पूर्णांकerface);
-पूर्ण
+static __init int s3c2416_pm_init(void)
+{
+	return subsys_interface_register(&s3c2416_pm_interface);
+}
 
 arch_initcall(s3c2416_pm_init);
-#पूर्ण_अगर
+#endif
 
-अटल व्योम s3c2416_pm_resume(व्योम)
-अणु
-	/* unset the वापस-from-sleep amd inक्रमm flags */
-	__raw_ग_लिखोl(0x0, S3C2443_PWRMODE);
-	__raw_ग_लिखोl(0x0, S3C2412_INFORM0);
-	__raw_ग_लिखोl(0x0, S3C2412_INFORM1);
-पूर्ण
+static void s3c2416_pm_resume(void)
+{
+	/* unset the return-from-sleep amd inform flags */
+	__raw_writel(0x0, S3C2443_PWRMODE);
+	__raw_writel(0x0, S3C2412_INFORM0);
+	__raw_writel(0x0, S3C2412_INFORM1);
+}
 
-काष्ठा syscore_ops s3c2416_pm_syscore_ops = अणु
+struct syscore_ops s3c2416_pm_syscore_ops = {
 	.resume		= s3c2416_pm_resume,
-पूर्ण;
+};

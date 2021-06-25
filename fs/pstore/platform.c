@@ -1,55 +1,54 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Persistent Storage - platक्रमm driver पूर्णांकerface parts.
+ * Persistent Storage - platform driver interface parts.
  *
  * Copyright (C) 2007-2008 Google, Inc.
- * Copyright (C) 2010 Intel Corporation <tony.luck@पूर्णांकel.com>
+ * Copyright (C) 2010 Intel Corporation <tony.luck@intel.com>
  */
 
-#घोषणा pr_fmt(fmt) "pstore: " fmt
+#define pr_fmt(fmt) "pstore: " fmt
 
-#समावेश <linux/atomic.h>
-#समावेश <linux/types.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/init.h>
-#समावेश <linux/kmsg_dump.h>
-#समावेश <linux/console.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pstore.h>
-#अगर IS_ENABLED(CONFIG_PSTORE_LZO_COMPRESS)
-#समावेश <linux/lzo.h>
-#पूर्ण_अगर
-#अगर IS_ENABLED(CONFIG_PSTORE_LZ4_COMPRESS) || IS_ENABLED(CONFIG_PSTORE_LZ4HC_COMPRESS)
-#समावेश <linux/lz4.h>
-#पूर्ण_अगर
-#अगर IS_ENABLED(CONFIG_PSTORE_ZSTD_COMPRESS)
-#समावेश <linux/zstd.h>
-#पूर्ण_अगर
-#समावेश <linux/crypto.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/समयr.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/workqueue.h>
+#include <linux/atomic.h>
+#include <linux/types.h>
+#include <linux/errno.h>
+#include <linux/init.h>
+#include <linux/kmsg_dump.h>
+#include <linux/console.h>
+#include <linux/module.h>
+#include <linux/pstore.h>
+#if IS_ENABLED(CONFIG_PSTORE_LZO_COMPRESS)
+#include <linux/lzo.h>
+#endif
+#if IS_ENABLED(CONFIG_PSTORE_LZ4_COMPRESS) || IS_ENABLED(CONFIG_PSTORE_LZ4HC_COMPRESS)
+#include <linux/lz4.h>
+#endif
+#if IS_ENABLED(CONFIG_PSTORE_ZSTD_COMPRESS)
+#include <linux/zstd.h>
+#endif
+#include <linux/crypto.h>
+#include <linux/string.h>
+#include <linux/timer.h>
+#include <linux/slab.h>
+#include <linux/uaccess.h>
+#include <linux/jiffies.h>
+#include <linux/workqueue.h>
 
-#समावेश "internal.h"
+#include "internal.h"
 
 /*
  * We defer making "oops" entries appear in pstore - see
- * whether the प्रणाली is actually still running well enough
+ * whether the system is actually still running well enough
  * to let someone see the entry
  */
-अटल पूर्णांक pstore_update_ms = -1;
-module_param_named(update_ms, pstore_update_ms, पूर्णांक, 0600);
+static int pstore_update_ms = -1;
+module_param_named(update_ms, pstore_update_ms, int, 0600);
 MODULE_PARM_DESC(update_ms, "milliseconds before pstore updates its content "
 		 "(default is -1, which means runtime updates are disabled; "
 		 "enabling this option may not be safe; it may lead to further "
 		 "corruption on Oopses)");
 
-/* Names should be in the same order as the क्रमागत pstore_type_id */
-अटल स्थिर अक्षर * स्थिर pstore_type_names[] = अणु
+/* Names should be in the same order as the enum pstore_type_id */
+static const char * const pstore_type_names[] = {
 	"dmesg",
 	"mce",
 	"console",
@@ -59,364 +58,364 @@ MODULE_PARM_DESC(update_ms, "milliseconds before pstore updates its content "
 	"powerpc-common",
 	"pmsg",
 	"powerpc-opal",
-पूर्ण;
+};
 
-अटल पूर्णांक pstore_new_entry;
+static int pstore_new_entry;
 
-अटल व्योम pstore_समयfunc(काष्ठा समयr_list *);
-अटल DEFINE_TIMER(pstore_समयr, pstore_समयfunc);
+static void pstore_timefunc(struct timer_list *);
+static DEFINE_TIMER(pstore_timer, pstore_timefunc);
 
-अटल व्योम pstore_करोwork(काष्ठा work_काष्ठा *);
-अटल DECLARE_WORK(pstore_work, pstore_करोwork);
+static void pstore_dowork(struct work_struct *);
+static DECLARE_WORK(pstore_work, pstore_dowork);
 
 /*
  * psinfo_lock protects "psinfo" during calls to
- * pstore_रेजिस्टर(), pstore_unरेजिस्टर(), and
- * the fileप्रणाली mount/unmount routines.
+ * pstore_register(), pstore_unregister(), and
+ * the filesystem mount/unmount routines.
  */
-अटल DEFINE_MUTEX(psinfo_lock);
-काष्ठा pstore_info *psinfo;
+static DEFINE_MUTEX(psinfo_lock);
+struct pstore_info *psinfo;
 
-अटल अक्षर *backend;
-module_param(backend, अक्षरp, 0444);
+static char *backend;
+module_param(backend, charp, 0444);
 MODULE_PARM_DESC(backend, "specific backend to use");
 
-अटल अक्षर *compress =
-#अगर_घोषित CONFIG_PSTORE_COMPRESS_DEFAULT
+static char *compress =
+#ifdef CONFIG_PSTORE_COMPRESS_DEFAULT
 		CONFIG_PSTORE_COMPRESS_DEFAULT;
-#अन्यथा
-		शून्य;
-#पूर्ण_अगर
-module_param(compress, अक्षरp, 0444);
+#else
+		NULL;
+#endif
+module_param(compress, charp, 0444);
 MODULE_PARM_DESC(compress, "compression to use");
 
 /* Compression parameters */
-अटल काष्ठा crypto_comp *tfm;
+static struct crypto_comp *tfm;
 
-काष्ठा pstore_zbackend अणु
-	पूर्णांक (*zbufsize)(माप_प्रकार size);
-	स्थिर अक्षर *name;
-पूर्ण;
+struct pstore_zbackend {
+	int (*zbufsize)(size_t size);
+	const char *name;
+};
 
-अटल अक्षर *big_oops_buf;
-अटल माप_प्रकार big_oops_buf_sz;
+static char *big_oops_buf;
+static size_t big_oops_buf_sz;
 
 /* How much of the console log to snapshot */
-अचिन्हित दीर्घ kmsg_bytes = CONFIG_PSTORE_DEFAULT_KMSG_BYTES;
+unsigned long kmsg_bytes = CONFIG_PSTORE_DEFAULT_KMSG_BYTES;
 
-व्योम pstore_set_kmsg_bytes(पूर्णांक bytes)
-अणु
+void pstore_set_kmsg_bytes(int bytes)
+{
 	kmsg_bytes = bytes;
-पूर्ण
+}
 
 /* Tag each group of saved records with a sequence number */
-अटल पूर्णांक	oopscount;
+static int	oopscount;
 
-स्थिर अक्षर *pstore_type_to_name(क्रमागत pstore_type_id type)
-अणु
+const char *pstore_type_to_name(enum pstore_type_id type)
+{
 	BUILD_BUG_ON(ARRAY_SIZE(pstore_type_names) != PSTORE_TYPE_MAX);
 
-	अगर (WARN_ON_ONCE(type >= PSTORE_TYPE_MAX))
-		वापस "unknown";
+	if (WARN_ON_ONCE(type >= PSTORE_TYPE_MAX))
+		return "unknown";
 
-	वापस pstore_type_names[type];
-पूर्ण
+	return pstore_type_names[type];
+}
 EXPORT_SYMBOL_GPL(pstore_type_to_name);
 
-क्रमागत pstore_type_id pstore_name_to_type(स्थिर अक्षर *name)
-अणु
-	पूर्णांक i;
+enum pstore_type_id pstore_name_to_type(const char *name)
+{
+	int i;
 
-	क्रम (i = 0; i < PSTORE_TYPE_MAX; i++) अणु
-		अगर (!म_भेद(pstore_type_names[i], name))
-			वापस i;
-	पूर्ण
+	for (i = 0; i < PSTORE_TYPE_MAX; i++) {
+		if (!strcmp(pstore_type_names[i], name))
+			return i;
+	}
 
-	वापस PSTORE_TYPE_MAX;
-पूर्ण
+	return PSTORE_TYPE_MAX;
+}
 EXPORT_SYMBOL_GPL(pstore_name_to_type);
 
-अटल व्योम pstore_समयr_kick(व्योम)
-अणु
-	अगर (pstore_update_ms < 0)
-		वापस;
+static void pstore_timer_kick(void)
+{
+	if (pstore_update_ms < 0)
+		return;
 
-	mod_समयr(&pstore_समयr, jअगरfies + msecs_to_jअगरfies(pstore_update_ms));
-पूर्ण
+	mod_timer(&pstore_timer, jiffies + msecs_to_jiffies(pstore_update_ms));
+}
 
 /*
- * Should pstore_dump() रुको क्रम a concurrent pstore_dump()? If
+ * Should pstore_dump() wait for a concurrent pstore_dump()? If
  * not, the current pstore_dump() will report a failure to dump
- * and वापस.
+ * and return.
  */
-अटल bool pstore_cannot_रुको(क्रमागत kmsg_dump_reason reason)
-अणु
+static bool pstore_cannot_wait(enum kmsg_dump_reason reason)
+{
 	/* In NMI path, pstore shouldn't block regardless of reason. */
-	अगर (in_nmi())
-		वापस true;
+	if (in_nmi())
+		return true;
 
-	चयन (reason) अणु
-	/* In panic हाल, other cpus are stopped by smp_send_stop(). */
-	हाल KMSG_DUMP_PANIC:
+	switch (reason) {
+	/* In panic case, other cpus are stopped by smp_send_stop(). */
+	case KMSG_DUMP_PANIC:
 	/* Emergency restart shouldn't be blocked. */
-	हाल KMSG_DUMP_EMERG:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+	case KMSG_DUMP_EMERG:
+		return true;
+	default:
+		return false;
+	}
+}
 
-#अगर IS_ENABLED(CONFIG_PSTORE_DEFLATE_COMPRESS)
-अटल पूर्णांक zbufsize_deflate(माप_प्रकार size)
-अणु
-	माप_प्रकार cmpr;
+#if IS_ENABLED(CONFIG_PSTORE_DEFLATE_COMPRESS)
+static int zbufsize_deflate(size_t size)
+{
+	size_t cmpr;
 
-	चयन (size) अणु
-	/* buffer range क्रम efivars */
-	हाल 1000 ... 2000:
+	switch (size) {
+	/* buffer range for efivars */
+	case 1000 ... 2000:
 		cmpr = 56;
-		अवरोध;
-	हाल 2001 ... 3000:
+		break;
+	case 2001 ... 3000:
 		cmpr = 54;
-		अवरोध;
-	हाल 3001 ... 3999:
+		break;
+	case 3001 ... 3999:
 		cmpr = 52;
-		अवरोध;
-	/* buffer range क्रम nvram, erst */
-	हाल 4000 ... 10000:
+		break;
+	/* buffer range for nvram, erst */
+	case 4000 ... 10000:
 		cmpr = 45;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		cmpr = 60;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस (size * 100) / cmpr;
-पूर्ण
-#पूर्ण_अगर
+	return (size * 100) / cmpr;
+}
+#endif
 
-#अगर IS_ENABLED(CONFIG_PSTORE_LZO_COMPRESS)
-अटल पूर्णांक zbufsize_lzo(माप_प्रकार size)
-अणु
-	वापस lzo1x_worst_compress(size);
-पूर्ण
-#पूर्ण_अगर
+#if IS_ENABLED(CONFIG_PSTORE_LZO_COMPRESS)
+static int zbufsize_lzo(size_t size)
+{
+	return lzo1x_worst_compress(size);
+}
+#endif
 
-#अगर IS_ENABLED(CONFIG_PSTORE_LZ4_COMPRESS) || IS_ENABLED(CONFIG_PSTORE_LZ4HC_COMPRESS)
-अटल पूर्णांक zbufsize_lz4(माप_प्रकार size)
-अणु
-	वापस LZ4_compressBound(size);
-पूर्ण
-#पूर्ण_अगर
+#if IS_ENABLED(CONFIG_PSTORE_LZ4_COMPRESS) || IS_ENABLED(CONFIG_PSTORE_LZ4HC_COMPRESS)
+static int zbufsize_lz4(size_t size)
+{
+	return LZ4_compressBound(size);
+}
+#endif
 
-#अगर IS_ENABLED(CONFIG_PSTORE_842_COMPRESS)
-अटल पूर्णांक zbufsize_842(माप_प्रकार size)
-अणु
-	वापस size;
-पूर्ण
-#पूर्ण_अगर
+#if IS_ENABLED(CONFIG_PSTORE_842_COMPRESS)
+static int zbufsize_842(size_t size)
+{
+	return size;
+}
+#endif
 
-#अगर IS_ENABLED(CONFIG_PSTORE_ZSTD_COMPRESS)
-अटल पूर्णांक zbufsize_zstd(माप_प्रकार size)
-अणु
-	वापस ZSTD_compressBound(size);
-पूर्ण
-#पूर्ण_अगर
+#if IS_ENABLED(CONFIG_PSTORE_ZSTD_COMPRESS)
+static int zbufsize_zstd(size_t size)
+{
+	return ZSTD_compressBound(size);
+}
+#endif
 
-अटल स्थिर काष्ठा pstore_zbackend *zbackend __ro_after_init;
+static const struct pstore_zbackend *zbackend __ro_after_init;
 
-अटल स्थिर काष्ठा pstore_zbackend zbackends[] = अणु
-#अगर IS_ENABLED(CONFIG_PSTORE_DEFLATE_COMPRESS)
-	अणु
+static const struct pstore_zbackend zbackends[] = {
+#if IS_ENABLED(CONFIG_PSTORE_DEFLATE_COMPRESS)
+	{
 		.zbufsize	= zbufsize_deflate,
 		.name		= "deflate",
-	पूर्ण,
-#पूर्ण_अगर
-#अगर IS_ENABLED(CONFIG_PSTORE_LZO_COMPRESS)
-	अणु
+	},
+#endif
+#if IS_ENABLED(CONFIG_PSTORE_LZO_COMPRESS)
+	{
 		.zbufsize	= zbufsize_lzo,
 		.name		= "lzo",
-	पूर्ण,
-#पूर्ण_अगर
-#अगर IS_ENABLED(CONFIG_PSTORE_LZ4_COMPRESS)
-	अणु
+	},
+#endif
+#if IS_ENABLED(CONFIG_PSTORE_LZ4_COMPRESS)
+	{
 		.zbufsize	= zbufsize_lz4,
 		.name		= "lz4",
-	पूर्ण,
-#पूर्ण_अगर
-#अगर IS_ENABLED(CONFIG_PSTORE_LZ4HC_COMPRESS)
-	अणु
+	},
+#endif
+#if IS_ENABLED(CONFIG_PSTORE_LZ4HC_COMPRESS)
+	{
 		.zbufsize	= zbufsize_lz4,
 		.name		= "lz4hc",
-	पूर्ण,
-#पूर्ण_अगर
-#अगर IS_ENABLED(CONFIG_PSTORE_842_COMPRESS)
-	अणु
+	},
+#endif
+#if IS_ENABLED(CONFIG_PSTORE_842_COMPRESS)
+	{
 		.zbufsize	= zbufsize_842,
 		.name		= "842",
-	पूर्ण,
-#पूर्ण_अगर
-#अगर IS_ENABLED(CONFIG_PSTORE_ZSTD_COMPRESS)
-	अणु
+	},
+#endif
+#if IS_ENABLED(CONFIG_PSTORE_ZSTD_COMPRESS)
+	{
 		.zbufsize	= zbufsize_zstd,
 		.name		= "zstd",
-	पूर्ण,
-#पूर्ण_अगर
-	अणु पूर्ण
-पूर्ण;
+	},
+#endif
+	{ }
+};
 
-अटल पूर्णांक pstore_compress(स्थिर व्योम *in, व्योम *out,
-			   अचिन्हित पूर्णांक inlen, अचिन्हित पूर्णांक outlen)
-अणु
-	पूर्णांक ret;
+static int pstore_compress(const void *in, void *out,
+			   unsigned int inlen, unsigned int outlen)
+{
+	int ret;
 
-	अगर (!IS_ENABLED(CONFIG_PSTORE_COMPRESS))
-		वापस -EINVAL;
+	if (!IS_ENABLED(CONFIG_PSTORE_COMPRESS))
+		return -EINVAL;
 
 	ret = crypto_comp_compress(tfm, in, inlen, out, &outlen);
-	अगर (ret) अणु
+	if (ret) {
 		pr_err("crypto_comp_compress failed, ret = %d!\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस outlen;
-पूर्ण
+	return outlen;
+}
 
-अटल व्योम allocate_buf_क्रम_compression(व्योम)
-अणु
-	काष्ठा crypto_comp *ctx;
-	पूर्णांक size;
-	अक्षर *buf;
+static void allocate_buf_for_compression(void)
+{
+	struct crypto_comp *ctx;
+	int size;
+	char *buf;
 
-	/* Skip अगर not built-in or compression backend not selected yet. */
-	अगर (!IS_ENABLED(CONFIG_PSTORE_COMPRESS) || !zbackend)
-		वापस;
+	/* Skip if not built-in or compression backend not selected yet. */
+	if (!IS_ENABLED(CONFIG_PSTORE_COMPRESS) || !zbackend)
+		return;
 
-	/* Skip अगर no pstore backend yet or compression init alपढ़ोy करोne. */
-	अगर (!psinfo || tfm)
-		वापस;
+	/* Skip if no pstore backend yet or compression init already done. */
+	if (!psinfo || tfm)
+		return;
 
-	अगर (!crypto_has_comp(zbackend->name, 0, 0)) अणु
+	if (!crypto_has_comp(zbackend->name, 0, 0)) {
 		pr_err("Unknown compression: %s\n", zbackend->name);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	size = zbackend->zbufsize(psinfo->bufsize);
-	अगर (size <= 0) अणु
+	if (size <= 0) {
 		pr_err("Invalid compression size for %s: %d\n",
 		       zbackend->name, size);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	buf = kदो_स्मृति(size, GFP_KERNEL);
-	अगर (!buf) अणु
+	buf = kmalloc(size, GFP_KERNEL);
+	if (!buf) {
 		pr_err("Failed %d byte compression buffer allocation for: %s\n",
 		       size, zbackend->name);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	ctx = crypto_alloc_comp(zbackend->name, 0, 0);
-	अगर (IS_ERR_OR_शून्य(ctx)) अणु
-		kमुक्त(buf);
+	if (IS_ERR_OR_NULL(ctx)) {
+		kfree(buf);
 		pr_err("crypto_alloc_comp('%s') failed: %ld\n", zbackend->name,
 		       PTR_ERR(ctx));
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* A non-शून्य big_oops_buf indicates compression is available. */
+	/* A non-NULL big_oops_buf indicates compression is available. */
 	tfm = ctx;
 	big_oops_buf_sz = size;
 	big_oops_buf = buf;
 
 	pr_info("Using crash dump compression: %s\n", zbackend->name);
-पूर्ण
+}
 
-अटल व्योम मुक्त_buf_क्रम_compression(व्योम)
-अणु
-	अगर (IS_ENABLED(CONFIG_PSTORE_COMPRESS) && tfm) अणु
-		crypto_मुक्त_comp(tfm);
-		tfm = शून्य;
-	पूर्ण
-	kमुक्त(big_oops_buf);
-	big_oops_buf = शून्य;
+static void free_buf_for_compression(void)
+{
+	if (IS_ENABLED(CONFIG_PSTORE_COMPRESS) && tfm) {
+		crypto_free_comp(tfm);
+		tfm = NULL;
+	}
+	kfree(big_oops_buf);
+	big_oops_buf = NULL;
 	big_oops_buf_sz = 0;
-पूर्ण
+}
 
 /*
- * Called when compression fails, since the prपूर्णांकk buffer
- * would be fetched क्रम compression calling it again when
+ * Called when compression fails, since the printk buffer
+ * would be fetched for compression calling it again when
  * compression fails would have moved the iterator of
- * prपूर्णांकk buffer which results in fetching old contents.
+ * printk buffer which results in fetching old contents.
  * Copy the recent messages from big_oops_buf to psinfo->buf
  */
-अटल माप_प्रकार copy_kmsg_to_buffer(पूर्णांक hsize, माप_प्रकार len)
-अणु
-	माप_प्रकार total_len;
-	माप_प्रकार dअगरf;
+static size_t copy_kmsg_to_buffer(int hsize, size_t len)
+{
+	size_t total_len;
+	size_t diff;
 
 	total_len = hsize + len;
 
-	अगर (total_len > psinfo->bufsize) अणु
-		dअगरf = total_len - psinfo->bufsize + hsize;
-		स_नकल(psinfo->buf, big_oops_buf, hsize);
-		स_नकल(psinfo->buf + hsize, big_oops_buf + dअगरf,
+	if (total_len > psinfo->bufsize) {
+		diff = total_len - psinfo->bufsize + hsize;
+		memcpy(psinfo->buf, big_oops_buf, hsize);
+		memcpy(psinfo->buf + hsize, big_oops_buf + diff,
 					psinfo->bufsize - hsize);
 		total_len = psinfo->bufsize;
-	पूर्ण अन्यथा
-		स_नकल(psinfo->buf, big_oops_buf, total_len);
+	} else
+		memcpy(psinfo->buf, big_oops_buf, total_len);
 
-	वापस total_len;
-पूर्ण
+	return total_len;
+}
 
-व्योम pstore_record_init(काष्ठा pstore_record *record,
-			काष्ठा pstore_info *psinfo)
-अणु
-	स_रखो(record, 0, माप(*record));
+void pstore_record_init(struct pstore_record *record,
+			struct pstore_info *psinfo)
+{
+	memset(record, 0, sizeof(*record));
 
 	record->psi = psinfo;
 
-	/* Report zeroed बारtamp अगर called beक्रमe समयkeeping has resumed. */
-	record->समय = ns_to_बारpec64(kसमय_get_real_fast_ns());
-पूर्ण
+	/* Report zeroed timestamp if called before timekeeping has resumed. */
+	record->time = ns_to_timespec64(ktime_get_real_fast_ns());
+}
 
 /*
  * callback from kmsg_dump. Save as much as we can (up to kmsg_bytes) from the
  * end of the buffer.
  */
-अटल व्योम pstore_dump(काष्ठा kmsg_dumper *dumper,
-			क्रमागत kmsg_dump_reason reason)
-अणु
-	काष्ठा kmsg_dump_iter iter;
-	अचिन्हित दीर्घ	total = 0;
-	स्थिर अक्षर	*why;
-	अचिन्हित पूर्णांक	part = 1;
-	पूर्णांक		ret;
+static void pstore_dump(struct kmsg_dumper *dumper,
+			enum kmsg_dump_reason reason)
+{
+	struct kmsg_dump_iter iter;
+	unsigned long	total = 0;
+	const char	*why;
+	unsigned int	part = 1;
+	int		ret;
 
 	why = kmsg_dump_reason_str(reason);
 
-	अगर (करोwn_trylock(&psinfo->buf_lock)) अणु
-		/* Failed to acquire lock: give up अगर we cannot रुको. */
-		अगर (pstore_cannot_रुको(reason)) अणु
+	if (down_trylock(&psinfo->buf_lock)) {
+		/* Failed to acquire lock: give up if we cannot wait. */
+		if (pstore_cannot_wait(reason)) {
 			pr_err("dump skipped in %s path: may corrupt error record\n",
 				in_nmi() ? "NMI" : why);
-			वापस;
-		पूर्ण
-		अगर (करोwn_पूर्णांकerruptible(&psinfo->buf_lock)) अणु
+			return;
+		}
+		if (down_interruptible(&psinfo->buf_lock)) {
 			pr_err("could not grab semaphore?!\n");
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 
-	kmsg_dump_शुरुआत(&iter);
+	kmsg_dump_rewind(&iter);
 
 	oopscount++;
-	जबतक (total < kmsg_bytes) अणु
-		अक्षर *dst;
-		माप_प्रकार dst_size;
-		पूर्णांक header_size;
-		पूर्णांक zipped_len = -1;
-		माप_प्रकार dump_size;
-		काष्ठा pstore_record record;
+	while (total < kmsg_bytes) {
+		char *dst;
+		size_t dst_size;
+		int header_size;
+		int zipped_len = -1;
+		size_t dump_size;
+		struct pstore_record record;
 
 		pstore_record_init(&record, psinfo);
 		record.type = PSTORE_TYPE_DMESG;
@@ -425,196 +424,196 @@ EXPORT_SYMBOL_GPL(pstore_name_to_type);
 		record.part = part;
 		record.buf = psinfo->buf;
 
-		अगर (big_oops_buf) अणु
+		if (big_oops_buf) {
 			dst = big_oops_buf;
 			dst_size = big_oops_buf_sz;
-		पूर्ण अन्यथा अणु
+		} else {
 			dst = psinfo->buf;
 			dst_size = psinfo->bufsize;
-		पूर्ण
+		}
 
 		/* Write dump header. */
-		header_size = snम_लिखो(dst, dst_size, "%s#%d Part%u\n", why,
+		header_size = snprintf(dst, dst_size, "%s#%d Part%u\n", why,
 				 oopscount, part);
 		dst_size -= header_size;
 
 		/* Write dump contents. */
-		अगर (!kmsg_dump_get_buffer(&iter, true, dst + header_size,
+		if (!kmsg_dump_get_buffer(&iter, true, dst + header_size,
 					  dst_size, &dump_size))
-			अवरोध;
+			break;
 
-		अगर (big_oops_buf) अणु
+		if (big_oops_buf) {
 			zipped_len = pstore_compress(dst, psinfo->buf,
 						header_size + dump_size,
 						psinfo->bufsize);
 
-			अगर (zipped_len > 0) अणु
+			if (zipped_len > 0) {
 				record.compressed = true;
 				record.size = zipped_len;
-			पूर्ण अन्यथा अणु
+			} else {
 				record.size = copy_kmsg_to_buffer(header_size,
 								  dump_size);
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			record.size = header_size + dump_size;
-		पूर्ण
+		}
 
-		ret = psinfo->ग_लिखो(&record);
-		अगर (ret == 0 && reason == KMSG_DUMP_OOPS) अणु
+		ret = psinfo->write(&record);
+		if (ret == 0 && reason == KMSG_DUMP_OOPS) {
 			pstore_new_entry = 1;
-			pstore_समयr_kick();
-		पूर्ण
+			pstore_timer_kick();
+		}
 
 		total += record.size;
 		part++;
-	पूर्ण
+	}
 
 	up(&psinfo->buf_lock);
-पूर्ण
+}
 
-अटल काष्ठा kmsg_dumper pstore_dumper = अणु
+static struct kmsg_dumper pstore_dumper = {
 	.dump = pstore_dump,
-पूर्ण;
+};
 
 /*
  * Register with kmsg_dump to save last part of console log on panic.
  */
-अटल व्योम pstore_रेजिस्टर_kmsg(व्योम)
-अणु
-	kmsg_dump_रेजिस्टर(&pstore_dumper);
-पूर्ण
+static void pstore_register_kmsg(void)
+{
+	kmsg_dump_register(&pstore_dumper);
+}
 
-अटल व्योम pstore_unरेजिस्टर_kmsg(व्योम)
-अणु
-	kmsg_dump_unरेजिस्टर(&pstore_dumper);
-पूर्ण
+static void pstore_unregister_kmsg(void)
+{
+	kmsg_dump_unregister(&pstore_dumper);
+}
 
-#अगर_घोषित CONFIG_PSTORE_CONSOLE
-अटल व्योम pstore_console_ग_लिखो(काष्ठा console *con, स्थिर अक्षर *s, अचिन्हित c)
-अणु
-	काष्ठा pstore_record record;
+#ifdef CONFIG_PSTORE_CONSOLE
+static void pstore_console_write(struct console *con, const char *s, unsigned c)
+{
+	struct pstore_record record;
 
-	अगर (!c)
-		वापस;
+	if (!c)
+		return;
 
 	pstore_record_init(&record, psinfo);
 	record.type = PSTORE_TYPE_CONSOLE;
 
-	record.buf = (अक्षर *)s;
+	record.buf = (char *)s;
 	record.size = c;
-	psinfo->ग_लिखो(&record);
-पूर्ण
+	psinfo->write(&record);
+}
 
-अटल काष्ठा console pstore_console = अणु
-	.ग_लिखो	= pstore_console_ग_लिखो,
+static struct console pstore_console = {
+	.write	= pstore_console_write,
 	.index	= -1,
-पूर्ण;
+};
 
-अटल व्योम pstore_रेजिस्टर_console(व्योम)
-अणु
-	/* Show which backend is going to get console ग_लिखोs. */
+static void pstore_register_console(void)
+{
+	/* Show which backend is going to get console writes. */
 	strscpy(pstore_console.name, psinfo->name,
-		माप(pstore_console.name));
+		sizeof(pstore_console.name));
 	/*
-	 * Always initialize flags here since prior unरेजिस्टर_console()
-	 * calls may have changed settings (specअगरically CON_ENABLED).
+	 * Always initialize flags here since prior unregister_console()
+	 * calls may have changed settings (specifically CON_ENABLED).
 	 */
 	pstore_console.flags = CON_PRINTBUFFER | CON_ENABLED | CON_ANYTIME;
-	रेजिस्टर_console(&pstore_console);
-पूर्ण
+	register_console(&pstore_console);
+}
 
-अटल व्योम pstore_unरेजिस्टर_console(व्योम)
-अणु
-	unरेजिस्टर_console(&pstore_console);
-पूर्ण
-#अन्यथा
-अटल व्योम pstore_रेजिस्टर_console(व्योम) अणुपूर्ण
-अटल व्योम pstore_unरेजिस्टर_console(व्योम) अणुपूर्ण
-#पूर्ण_अगर
+static void pstore_unregister_console(void)
+{
+	unregister_console(&pstore_console);
+}
+#else
+static void pstore_register_console(void) {}
+static void pstore_unregister_console(void) {}
+#endif
 
-अटल पूर्णांक pstore_ग_लिखो_user_compat(काष्ठा pstore_record *record,
-				    स्थिर अक्षर __user *buf)
-अणु
-	पूर्णांक ret = 0;
+static int pstore_write_user_compat(struct pstore_record *record,
+				    const char __user *buf)
+{
+	int ret = 0;
 
-	अगर (record->buf)
-		वापस -EINVAL;
+	if (record->buf)
+		return -EINVAL;
 
 	record->buf = memdup_user(buf, record->size);
-	अगर (IS_ERR(record->buf)) अणु
+	if (IS_ERR(record->buf)) {
 		ret = PTR_ERR(record->buf);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	ret = record->psi->ग_लिखो(record);
+	ret = record->psi->write(record);
 
-	kमुक्त(record->buf);
+	kfree(record->buf);
 out:
-	record->buf = शून्य;
+	record->buf = NULL;
 
-	वापस unlikely(ret < 0) ? ret : record->size;
-पूर्ण
+	return unlikely(ret < 0) ? ret : record->size;
+}
 
 /*
- * platक्रमm specअगरic persistent storage driver रेजिस्टरs with
- * us here. If pstore is alपढ़ोy mounted, call the platक्रमm
- * पढ़ो function right away to populate the file प्रणाली. If not
+ * platform specific persistent storage driver registers with
+ * us here. If pstore is already mounted, call the platform
+ * read function right away to populate the file system. If not
  * then the pstore mount code will call us later to fill out
- * the file प्रणाली.
+ * the file system.
  */
-पूर्णांक pstore_रेजिस्टर(काष्ठा pstore_info *psi)
-अणु
-	अगर (backend && म_भेद(backend, psi->name)) अणु
+int pstore_register(struct pstore_info *psi)
+{
+	if (backend && strcmp(backend, psi->name)) {
 		pr_warn("ignoring unexpected backend '%s'\n", psi->name);
-		वापस -EPERM;
-	पूर्ण
+		return -EPERM;
+	}
 
 	/* Sanity check flags. */
-	अगर (!psi->flags) अणु
+	if (!psi->flags) {
 		pr_warn("backend '%s' must support at least one frontend\n",
 			psi->name);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* Check क्रम required functions. */
-	अगर (!psi->पढ़ो || !psi->ग_लिखो) अणु
+	/* Check for required functions. */
+	if (!psi->read || !psi->write) {
 		pr_warn("backend '%s' must implement read() and write()\n",
 			psi->name);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	mutex_lock(&psinfo_lock);
-	अगर (psinfo) अणु
+	if (psinfo) {
 		pr_warn("backend '%s' already loaded: ignoring '%s'\n",
 			psinfo->name, psi->name);
 		mutex_unlock(&psinfo_lock);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	अगर (!psi->ग_लिखो_user)
-		psi->ग_लिखो_user = pstore_ग_लिखो_user_compat;
+	if (!psi->write_user)
+		psi->write_user = pstore_write_user_compat;
 	psinfo = psi;
-	mutex_init(&psinfo->पढ़ो_mutex);
+	mutex_init(&psinfo->read_mutex);
 	sema_init(&psinfo->buf_lock, 1);
 
-	अगर (psi->flags & PSTORE_FLAGS_DMESG)
-		allocate_buf_क्रम_compression();
+	if (psi->flags & PSTORE_FLAGS_DMESG)
+		allocate_buf_for_compression();
 
 	pstore_get_records(0);
 
-	अगर (psi->flags & PSTORE_FLAGS_DMESG) अणु
+	if (psi->flags & PSTORE_FLAGS_DMESG) {
 		pstore_dumper.max_reason = psinfo->max_reason;
-		pstore_रेजिस्टर_kmsg();
-	पूर्ण
-	अगर (psi->flags & PSTORE_FLAGS_CONSOLE)
-		pstore_रेजिस्टर_console();
-	अगर (psi->flags & PSTORE_FLAGS_FTRACE)
-		pstore_रेजिस्टर_ftrace();
-	अगर (psi->flags & PSTORE_FLAGS_PMSG)
-		pstore_रेजिस्टर_pmsg();
+		pstore_register_kmsg();
+	}
+	if (psi->flags & PSTORE_FLAGS_CONSOLE)
+		pstore_register_console();
+	if (psi->flags & PSTORE_FLAGS_FTRACE)
+		pstore_register_ftrace();
+	if (psi->flags & PSTORE_FLAGS_PMSG)
+		pstore_register_pmsg();
 
-	/* Start watching क्रम new records, अगर desired. */
-	pstore_समयr_kick();
+	/* Start watching for new records, if desired. */
+	pstore_timer_kick();
 
 	/*
 	 * Update the module parameter backend, so it is visible
@@ -625,227 +624,227 @@ out:
 	pr_info("Registered %s as persistent store backend\n", psi->name);
 
 	mutex_unlock(&psinfo_lock);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(pstore_रेजिस्टर);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(pstore_register);
 
-व्योम pstore_unरेजिस्टर(काष्ठा pstore_info *psi)
-अणु
-	/* It's okay to unरेजिस्टर nothing. */
-	अगर (!psi)
-		वापस;
+void pstore_unregister(struct pstore_info *psi)
+{
+	/* It's okay to unregister nothing. */
+	if (!psi)
+		return;
 
 	mutex_lock(&psinfo_lock);
 
-	/* Only one backend can be रेजिस्टरed at a समय. */
-	अगर (WARN_ON(psi != psinfo)) अणु
+	/* Only one backend can be registered at a time. */
+	if (WARN_ON(psi != psinfo)) {
 		mutex_unlock(&psinfo_lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* Unरेजिस्टर all callbacks. */
-	अगर (psi->flags & PSTORE_FLAGS_PMSG)
-		pstore_unरेजिस्टर_pmsg();
-	अगर (psi->flags & PSTORE_FLAGS_FTRACE)
-		pstore_unरेजिस्टर_ftrace();
-	अगर (psi->flags & PSTORE_FLAGS_CONSOLE)
-		pstore_unरेजिस्टर_console();
-	अगर (psi->flags & PSTORE_FLAGS_DMESG)
-		pstore_unरेजिस्टर_kmsg();
+	/* Unregister all callbacks. */
+	if (psi->flags & PSTORE_FLAGS_PMSG)
+		pstore_unregister_pmsg();
+	if (psi->flags & PSTORE_FLAGS_FTRACE)
+		pstore_unregister_ftrace();
+	if (psi->flags & PSTORE_FLAGS_CONSOLE)
+		pstore_unregister_console();
+	if (psi->flags & PSTORE_FLAGS_DMESG)
+		pstore_unregister_kmsg();
 
-	/* Stop समयr and make sure all work has finished. */
-	del_समयr_sync(&pstore_समयr);
+	/* Stop timer and make sure all work has finished. */
+	del_timer_sync(&pstore_timer);
 	flush_work(&pstore_work);
 
-	/* Remove all backend records from fileप्रणाली tree. */
+	/* Remove all backend records from filesystem tree. */
 	pstore_put_backend_records(psi);
 
-	मुक्त_buf_क्रम_compression();
+	free_buf_for_compression();
 
-	psinfo = शून्य;
-	kमुक्त(backend);
-	backend = शून्य;
+	psinfo = NULL;
+	kfree(backend);
+	backend = NULL;
 	mutex_unlock(&psinfo_lock);
-पूर्ण
-EXPORT_SYMBOL_GPL(pstore_unरेजिस्टर);
+}
+EXPORT_SYMBOL_GPL(pstore_unregister);
 
-अटल व्योम decompress_record(काष्ठा pstore_record *record)
-अणु
-	पूर्णांक ret;
-	पूर्णांक unzipped_len;
-	अक्षर *unzipped, *workspace;
+static void decompress_record(struct pstore_record *record)
+{
+	int ret;
+	int unzipped_len;
+	char *unzipped, *workspace;
 
-	अगर (!IS_ENABLED(CONFIG_PSTORE_COMPRESS) || !record->compressed)
-		वापस;
+	if (!IS_ENABLED(CONFIG_PSTORE_COMPRESS) || !record->compressed)
+		return;
 
 	/* Only PSTORE_TYPE_DMESG support compression. */
-	अगर (record->type != PSTORE_TYPE_DMESG) अणु
+	if (record->type != PSTORE_TYPE_DMESG) {
 		pr_warn("ignored compressed record type %d\n", record->type);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* Missing compression buffer means compression was not initialized. */
-	अगर (!big_oops_buf) अणु
+	if (!big_oops_buf) {
 		pr_warn("no decompression method initialized!\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* Allocate enough space to hold max decompression and ECC. */
 	unzipped_len = big_oops_buf_sz;
-	workspace = kदो_स्मृति(unzipped_len + record->ecc_notice_size,
+	workspace = kmalloc(unzipped_len + record->ecc_notice_size,
 			    GFP_KERNEL);
-	अगर (!workspace)
-		वापस;
+	if (!workspace)
+		return;
 
 	/* After decompression "unzipped_len" is almost certainly smaller. */
 	ret = crypto_comp_decompress(tfm, record->buf, record->size,
 					  workspace, &unzipped_len);
-	अगर (ret) अणु
+	if (ret) {
 		pr_err("crypto_comp_decompress failed, ret = %d!\n", ret);
-		kमुक्त(workspace);
-		वापस;
-	पूर्ण
+		kfree(workspace);
+		return;
+	}
 
 	/* Append ECC notice to decompressed buffer. */
-	स_नकल(workspace + unzipped_len, record->buf + record->size,
+	memcpy(workspace + unzipped_len, record->buf + record->size,
 	       record->ecc_notice_size);
 
-	/* Copy decompressed contents पूर्णांकo an minimum-sized allocation. */
+	/* Copy decompressed contents into an minimum-sized allocation. */
 	unzipped = kmemdup(workspace, unzipped_len + record->ecc_notice_size,
 			   GFP_KERNEL);
-	kमुक्त(workspace);
-	अगर (!unzipped)
-		वापस;
+	kfree(workspace);
+	if (!unzipped)
+		return;
 
 	/* Swap out compressed contents with decompressed contents. */
-	kमुक्त(record->buf);
+	kfree(record->buf);
 	record->buf = unzipped;
 	record->size = unzipped_len;
 	record->compressed = false;
-पूर्ण
+}
 
 /*
  * Read all the records from one persistent store backend. Create
- * files in our fileप्रणाली.  Don't warn about -EEXIST errors
+ * files in our filesystem.  Don't warn about -EEXIST errors
  * when we are re-scanning the backing store looking to add new
  * error records.
  */
-व्योम pstore_get_backend_records(काष्ठा pstore_info *psi,
-				काष्ठा dentry *root, पूर्णांक quiet)
-अणु
-	पूर्णांक failed = 0;
-	अचिन्हित पूर्णांक stop_loop = 65536;
+void pstore_get_backend_records(struct pstore_info *psi,
+				struct dentry *root, int quiet)
+{
+	int failed = 0;
+	unsigned int stop_loop = 65536;
 
-	अगर (!psi || !root)
-		वापस;
+	if (!psi || !root)
+		return;
 
-	mutex_lock(&psi->पढ़ो_mutex);
-	अगर (psi->खोलो && psi->खोलो(psi))
-		जाओ out;
+	mutex_lock(&psi->read_mutex);
+	if (psi->open && psi->open(psi))
+		goto out;
 
 	/*
-	 * Backend callback पढ़ो() allocates record.buf. decompress_record()
-	 * may पुनः_स्मृतिate record.buf. On success, pstore_mkfile() will keep
-	 * the record.buf, so मुक्त it only on failure.
+	 * Backend callback read() allocates record.buf. decompress_record()
+	 * may reallocate record.buf. On success, pstore_mkfile() will keep
+	 * the record.buf, so free it only on failure.
 	 */
-	क्रम (; stop_loop; stop_loop--) अणु
-		काष्ठा pstore_record *record;
-		पूर्णांक rc;
+	for (; stop_loop; stop_loop--) {
+		struct pstore_record *record;
+		int rc;
 
-		record = kzalloc(माप(*record), GFP_KERNEL);
-		अगर (!record) अणु
+		record = kzalloc(sizeof(*record), GFP_KERNEL);
+		if (!record) {
 			pr_err("out of memory creating record\n");
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		pstore_record_init(record, psi);
 
-		record->size = psi->पढ़ो(record);
+		record->size = psi->read(record);
 
 		/* No more records left in backend? */
-		अगर (record->size <= 0) अणु
-			kमुक्त(record);
-			अवरोध;
-		पूर्ण
+		if (record->size <= 0) {
+			kfree(record);
+			break;
+		}
 
 		decompress_record(record);
 		rc = pstore_mkfile(root, record);
-		अगर (rc) अणु
-			/* pstore_mkfile() did not take record, so मुक्त it. */
-			kमुक्त(record->buf);
-			kमुक्त(record);
-			अगर (rc != -EEXIST || !quiet)
+		if (rc) {
+			/* pstore_mkfile() did not take record, so free it. */
+			kfree(record->buf);
+			kfree(record);
+			if (rc != -EEXIST || !quiet)
 				failed++;
-		पूर्ण
-	पूर्ण
-	अगर (psi->बंद)
-		psi->बंद(psi);
+		}
+	}
+	if (psi->close)
+		psi->close(psi);
 out:
-	mutex_unlock(&psi->पढ़ो_mutex);
+	mutex_unlock(&psi->read_mutex);
 
-	अगर (failed)
+	if (failed)
 		pr_warn("failed to create %d record(s) from '%s'\n",
 			failed, psi->name);
-	अगर (!stop_loop)
+	if (!stop_loop)
 		pr_err("looping? Too many records seen from '%s'\n",
 			psi->name);
-पूर्ण
+}
 
-अटल व्योम pstore_करोwork(काष्ठा work_काष्ठा *work)
-अणु
+static void pstore_dowork(struct work_struct *work)
+{
 	pstore_get_records(1);
-पूर्ण
+}
 
-अटल व्योम pstore_समयfunc(काष्ठा समयr_list *unused)
-अणु
-	अगर (pstore_new_entry) अणु
+static void pstore_timefunc(struct timer_list *unused)
+{
+	if (pstore_new_entry) {
 		pstore_new_entry = 0;
 		schedule_work(&pstore_work);
-	पूर्ण
+	}
 
-	pstore_समयr_kick();
-पूर्ण
+	pstore_timer_kick();
+}
 
-अटल व्योम __init pstore_choose_compression(व्योम)
-अणु
-	स्थिर काष्ठा pstore_zbackend *step;
+static void __init pstore_choose_compression(void)
+{
+	const struct pstore_zbackend *step;
 
-	अगर (!compress)
-		वापस;
+	if (!compress)
+		return;
 
-	क्रम (step = zbackends; step->name; step++) अणु
-		अगर (!म_भेद(compress, step->name)) अणु
+	for (step = zbackends; step->name; step++) {
+		if (!strcmp(compress, step->name)) {
 			zbackend = step;
-			वापस;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			return;
+		}
+	}
+}
 
-अटल पूर्णांक __init pstore_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init pstore_init(void)
+{
+	int ret;
 
 	pstore_choose_compression();
 
 	/*
-	 * Check अगर any pstore backends रेजिस्टरed earlier but did not
-	 * initialize compression because crypto was not पढ़ोy. If so,
+	 * Check if any pstore backends registered earlier but did not
+	 * initialize compression because crypto was not ready. If so,
 	 * initialize compression now.
 	 */
-	allocate_buf_क्रम_compression();
+	allocate_buf_for_compression();
 
 	ret = pstore_init_fs();
-	अगर (ret)
-		मुक्त_buf_क्रम_compression();
+	if (ret)
+		free_buf_for_compression();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 late_initcall(pstore_init);
 
-अटल व्योम __निकास pstore_निकास(व्योम)
-अणु
-	pstore_निकास_fs();
-पूर्ण
-module_निकास(pstore_निकास)
+static void __exit pstore_exit(void)
+{
+	pstore_exit_fs();
+}
+module_exit(pstore_exit)
 
 MODULE_AUTHOR("Tony Luck <tony.luck@intel.com>");
 MODULE_LICENSE("GPL");

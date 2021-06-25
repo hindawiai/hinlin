@@ -1,78 +1,77 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * ACPI Hardware Error Device (PNP0C33) Driver
  *
  * Copyright (C) 2010, Intel Corp.
- *	Author: Huang Ying <ying.huang@पूर्णांकel.com>
+ *	Author: Huang Ying <ying.huang@intel.com>
  *
  * ACPI Hardware Error Device is used to report some hardware errors
- * notअगरied via SCI, मुख्यly the corrected errors.
+ * notified via SCI, mainly the corrected errors.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/acpi.h>
-#समावेश <acpi/hed.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/acpi.h>
+#include <acpi/hed.h>
 
-अटल स्थिर काष्ठा acpi_device_id acpi_hed_ids[] = अणु
-	अणु"PNP0C33", 0पूर्ण,
-	अणु"", 0पूर्ण,
-पूर्ण;
+static const struct acpi_device_id acpi_hed_ids[] = {
+	{"PNP0C33", 0},
+	{"", 0},
+};
 MODULE_DEVICE_TABLE(acpi, acpi_hed_ids);
 
-अटल acpi_handle hed_handle;
+static acpi_handle hed_handle;
 
-अटल BLOCKING_NOTIFIER_HEAD(acpi_hed_notअगरy_list);
+static BLOCKING_NOTIFIER_HEAD(acpi_hed_notify_list);
 
-पूर्णांक रेजिस्टर_acpi_hed_notअगरier(काष्ठा notअगरier_block *nb)
-अणु
-	वापस blocking_notअगरier_chain_रेजिस्टर(&acpi_hed_notअगरy_list, nb);
-पूर्ण
-EXPORT_SYMBOL_GPL(रेजिस्टर_acpi_hed_notअगरier);
+int register_acpi_hed_notifier(struct notifier_block *nb)
+{
+	return blocking_notifier_chain_register(&acpi_hed_notify_list, nb);
+}
+EXPORT_SYMBOL_GPL(register_acpi_hed_notifier);
 
-व्योम unरेजिस्टर_acpi_hed_notअगरier(काष्ठा notअगरier_block *nb)
-अणु
-	blocking_notअगरier_chain_unरेजिस्टर(&acpi_hed_notअगरy_list, nb);
-पूर्ण
-EXPORT_SYMBOL_GPL(unरेजिस्टर_acpi_hed_notअगरier);
+void unregister_acpi_hed_notifier(struct notifier_block *nb)
+{
+	blocking_notifier_chain_unregister(&acpi_hed_notify_list, nb);
+}
+EXPORT_SYMBOL_GPL(unregister_acpi_hed_notifier);
 
 /*
- * SCI to report hardware error is क्रमwarded to the listeners of HED,
- * it is used by HEST Generic Hardware Error Source with notअगरy type
+ * SCI to report hardware error is forwarded to the listeners of HED,
+ * it is used by HEST Generic Hardware Error Source with notify type
  * SCI.
  */
-अटल व्योम acpi_hed_notअगरy(काष्ठा acpi_device *device, u32 event)
-अणु
-	blocking_notअगरier_call_chain(&acpi_hed_notअगरy_list, 0, शून्य);
-पूर्ण
+static void acpi_hed_notify(struct acpi_device *device, u32 event)
+{
+	blocking_notifier_call_chain(&acpi_hed_notify_list, 0, NULL);
+}
 
-अटल पूर्णांक acpi_hed_add(काष्ठा acpi_device *device)
-अणु
+static int acpi_hed_add(struct acpi_device *device)
+{
 	/* Only one hardware error device */
-	अगर (hed_handle)
-		वापस -EINVAL;
+	if (hed_handle)
+		return -EINVAL;
 	hed_handle = device->handle;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक acpi_hed_हटाओ(काष्ठा acpi_device *device)
-अणु
-	hed_handle = शून्य;
-	वापस 0;
-पूर्ण
+static int acpi_hed_remove(struct acpi_device *device)
+{
+	hed_handle = NULL;
+	return 0;
+}
 
-अटल काष्ठा acpi_driver acpi_hed_driver = अणु
+static struct acpi_driver acpi_hed_driver = {
 	.name = "hardware_error_device",
 	.class = "hardware_error",
 	.ids = acpi_hed_ids,
-	.ops = अणु
+	.ops = {
 		.add = acpi_hed_add,
-		.हटाओ = acpi_hed_हटाओ,
-		.notअगरy = acpi_hed_notअगरy,
-	पूर्ण,
-पूर्ण;
+		.remove = acpi_hed_remove,
+		.notify = acpi_hed_notify,
+	},
+};
 module_acpi_driver(acpi_hed_driver);
 
 MODULE_AUTHOR("Huang Ying");

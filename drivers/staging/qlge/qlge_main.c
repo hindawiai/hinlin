@@ -1,59 +1,58 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * QLogic qlge NIC HBA Driver
  * Copyright (c)  2003-2008 QLogic Corporation
  * Author:     Linux qlge network device driver by
  *                      Ron Mercer <ron.mercer@qlogic.com>
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/types.h>
-#समावेश <linux/module.h>
-#समावेश <linux/list.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/dmapool.h>
-#समावेश <linux/mempool.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/ioport.h>
-#समावेश <linux/in.h>
-#समावेश <linux/ip.h>
-#समावेश <linux/ipv6.h>
-#समावेश <net/ipv6.h>
-#समावेश <linux/tcp.h>
-#समावेश <linux/udp.h>
-#समावेश <linux/अगर_arp.h>
-#समावेश <linux/अगर_ether.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/ethtool.h>
-#समावेश <linux/अगर_vlan.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/prefetch.h>
-#समावेश <net/ip6_checksum.h>
+#include <linux/kernel.h>
+#include <linux/bitops.h>
+#include <linux/types.h>
+#include <linux/module.h>
+#include <linux/list.h>
+#include <linux/pci.h>
+#include <linux/dma-mapping.h>
+#include <linux/pagemap.h>
+#include <linux/sched.h>
+#include <linux/slab.h>
+#include <linux/dmapool.h>
+#include <linux/mempool.h>
+#include <linux/spinlock.h>
+#include <linux/kthread.h>
+#include <linux/interrupt.h>
+#include <linux/errno.h>
+#include <linux/ioport.h>
+#include <linux/in.h>
+#include <linux/ip.h>
+#include <linux/ipv6.h>
+#include <net/ipv6.h>
+#include <linux/tcp.h>
+#include <linux/udp.h>
+#include <linux/if_arp.h>
+#include <linux/if_ether.h>
+#include <linux/netdevice.h>
+#include <linux/etherdevice.h>
+#include <linux/ethtool.h>
+#include <linux/if_vlan.h>
+#include <linux/skbuff.h>
+#include <linux/delay.h>
+#include <linux/mm.h>
+#include <linux/vmalloc.h>
+#include <linux/prefetch.h>
+#include <net/ip6_checksum.h>
 
-#समावेश "qlge.h"
-#समावेश "qlge_devlink.h"
+#include "qlge.h"
+#include "qlge_devlink.h"
 
-अक्षर qlge_driver_name[] = DRV_NAME;
-स्थिर अक्षर qlge_driver_version[] = DRV_VERSION;
+char qlge_driver_name[] = DRV_NAME;
+const char qlge_driver_version[] = DRV_VERSION;
 
 MODULE_AUTHOR("Ron Mercer <ron.mercer@qlogic.com>");
 MODULE_DESCRIPTION(DRV_STRING " ");
 MODULE_LICENSE("GPL");
 MODULE_VERSION(DRV_VERSION);
 
-अटल स्थिर u32 शेष_msg =
+static const u32 default_msg =
 	NETIF_MSG_DRV | NETIF_MSG_PROBE | NETIF_MSG_LINK |
 	NETIF_MSG_IFDOWN |
 	NETIF_MSG_IFUP |
@@ -61,322 +60,322 @@ MODULE_VERSION(DRV_VERSION);
 	NETIF_MSG_TX_ERR |
 	NETIF_MSG_HW | NETIF_MSG_WOL | 0;
 
-अटल पूर्णांक debug = -1;	/* शेषs above */
-module_param(debug, पूर्णांक, 0664);
+static int debug = -1;	/* defaults above */
+module_param(debug, int, 0664);
 MODULE_PARM_DESC(debug, "Debug level (0=none,...,16=all)");
 
-#घोषणा MSIX_IRQ 0
-#घोषणा MSI_IRQ 1
-#घोषणा LEG_IRQ 2
-अटल पूर्णांक qlge_irq_type = MSIX_IRQ;
-module_param(qlge_irq_type, पूर्णांक, 0664);
+#define MSIX_IRQ 0
+#define MSI_IRQ 1
+#define LEG_IRQ 2
+static int qlge_irq_type = MSIX_IRQ;
+module_param(qlge_irq_type, int, 0664);
 MODULE_PARM_DESC(qlge_irq_type, "0 = MSI-X, 1 = MSI, 2 = Legacy.");
 
-अटल पूर्णांक qlge_mpi_coredump;
-module_param(qlge_mpi_coredump, पूर्णांक, 0);
+static int qlge_mpi_coredump;
+module_param(qlge_mpi_coredump, int, 0);
 MODULE_PARM_DESC(qlge_mpi_coredump,
 		 "Option to enable MPI firmware dump. Default is OFF - Do Not allocate memory. ");
 
-अटल पूर्णांक qlge_क्रमce_coredump;
-module_param(qlge_क्रमce_coredump, पूर्णांक, 0);
-MODULE_PARM_DESC(qlge_क्रमce_coredump,
+static int qlge_force_coredump;
+module_param(qlge_force_coredump, int, 0);
+MODULE_PARM_DESC(qlge_force_coredump,
 		 "Option to allow force of firmware core dump. Default is OFF - Do not allow.");
 
-अटल स्थिर काष्ठा pci_device_id qlge_pci_tbl[] = अणु
-	अणुPCI_DEVICE(PCI_VENDOR_ID_QLOGIC, QLGE_DEVICE_ID_8012)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_QLOGIC, QLGE_DEVICE_ID_8000)पूर्ण,
+static const struct pci_device_id qlge_pci_tbl[] = {
+	{PCI_DEVICE(PCI_VENDOR_ID_QLOGIC, QLGE_DEVICE_ID_8012)},
+	{PCI_DEVICE(PCI_VENDOR_ID_QLOGIC, QLGE_DEVICE_ID_8000)},
 	/* required last entry */
-	अणु0,पूर्ण
-पूर्ण;
+	{0,}
+};
 
 MODULE_DEVICE_TABLE(pci, qlge_pci_tbl);
 
-अटल पूर्णांक qlge_wol(काष्ठा qlge_adapter *);
-अटल व्योम qlge_set_multicast_list(काष्ठा net_device *);
-अटल पूर्णांक qlge_adapter_करोwn(काष्ठा qlge_adapter *);
-अटल पूर्णांक qlge_adapter_up(काष्ठा qlge_adapter *);
+static int qlge_wol(struct qlge_adapter *);
+static void qlge_set_multicast_list(struct net_device *);
+static int qlge_adapter_down(struct qlge_adapter *);
+static int qlge_adapter_up(struct qlge_adapter *);
 
 /* This hardware semaphore causes exclusive access to
  * resources shared between the NIC driver, MPI firmware,
  * FCOE firmware and the FC driver.
  */
-अटल पूर्णांक qlge_sem_trylock(काष्ठा qlge_adapter *qdev, u32 sem_mask)
-अणु
+static int qlge_sem_trylock(struct qlge_adapter *qdev, u32 sem_mask)
+{
 	u32 sem_bits = 0;
 
-	चयन (sem_mask) अणु
-	हाल SEM_XGMAC0_MASK:
+	switch (sem_mask) {
+	case SEM_XGMAC0_MASK:
 		sem_bits = SEM_SET << SEM_XGMAC0_SHIFT;
-		अवरोध;
-	हाल SEM_XGMAC1_MASK:
+		break;
+	case SEM_XGMAC1_MASK:
 		sem_bits = SEM_SET << SEM_XGMAC1_SHIFT;
-		अवरोध;
-	हाल SEM_ICB_MASK:
+		break;
+	case SEM_ICB_MASK:
 		sem_bits = SEM_SET << SEM_ICB_SHIFT;
-		अवरोध;
-	हाल SEM_MAC_ADDR_MASK:
+		break;
+	case SEM_MAC_ADDR_MASK:
 		sem_bits = SEM_SET << SEM_MAC_ADDR_SHIFT;
-		अवरोध;
-	हाल SEM_FLASH_MASK:
+		break;
+	case SEM_FLASH_MASK:
 		sem_bits = SEM_SET << SEM_FLASH_SHIFT;
-		अवरोध;
-	हाल SEM_PROBE_MASK:
+		break;
+	case SEM_PROBE_MASK:
 		sem_bits = SEM_SET << SEM_PROBE_SHIFT;
-		अवरोध;
-	हाल SEM_RT_IDX_MASK:
+		break;
+	case SEM_RT_IDX_MASK:
 		sem_bits = SEM_SET << SEM_RT_IDX_SHIFT;
-		अवरोध;
-	हाल SEM_PROC_REG_MASK:
+		break;
+	case SEM_PROC_REG_MASK:
 		sem_bits = SEM_SET << SEM_PROC_REG_SHIFT;
-		अवरोध;
-	शेष:
-		netअगर_alert(qdev, probe, qdev->ndev, "bad Semaphore mask!.\n");
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		netif_alert(qdev, probe, qdev->ndev, "bad Semaphore mask!.\n");
+		return -EINVAL;
+	}
 
-	qlge_ग_लिखो32(qdev, SEM, sem_bits | sem_mask);
-	वापस !(qlge_पढ़ो32(qdev, SEM) & sem_bits);
-पूर्ण
+	qlge_write32(qdev, SEM, sem_bits | sem_mask);
+	return !(qlge_read32(qdev, SEM) & sem_bits);
+}
 
-पूर्णांक qlge_sem_spinlock(काष्ठा qlge_adapter *qdev, u32 sem_mask)
-अणु
-	अचिन्हित पूर्णांक रुको_count = 30;
+int qlge_sem_spinlock(struct qlge_adapter *qdev, u32 sem_mask)
+{
+	unsigned int wait_count = 30;
 
-	करो अणु
-		अगर (!qlge_sem_trylock(qdev, sem_mask))
-			वापस 0;
+	do {
+		if (!qlge_sem_trylock(qdev, sem_mask))
+			return 0;
 		udelay(100);
-	पूर्ण जबतक (--रुको_count);
-	वापस -ETIMEDOUT;
-पूर्ण
+	} while (--wait_count);
+	return -ETIMEDOUT;
+}
 
-व्योम qlge_sem_unlock(काष्ठा qlge_adapter *qdev, u32 sem_mask)
-अणु
-	qlge_ग_लिखो32(qdev, SEM, sem_mask);
-	qlge_पढ़ो32(qdev, SEM);	/* flush */
-पूर्ण
+void qlge_sem_unlock(struct qlge_adapter *qdev, u32 sem_mask)
+{
+	qlge_write32(qdev, SEM, sem_mask);
+	qlge_read32(qdev, SEM);	/* flush */
+}
 
-/* This function रुकोs क्रम a specअगरic bit to come पढ़ोy
- * in a given रेजिस्टर.  It is used mostly by the initialize
- * process, but is also used in kernel thपढ़ो API such as
+/* This function waits for a specific bit to come ready
+ * in a given register.  It is used mostly by the initialize
+ * process, but is also used in kernel thread API such as
  * netdev->set_multi, netdev->set_mac_address, netdev->vlan_rx_add_vid.
  */
-पूर्णांक qlge_रुको_reg_rdy(काष्ठा qlge_adapter *qdev, u32 reg, u32 bit, u32 err_bit)
-अणु
+int qlge_wait_reg_rdy(struct qlge_adapter *qdev, u32 reg, u32 bit, u32 err_bit)
+{
 	u32 temp;
-	पूर्णांक count;
+	int count;
 
-	क्रम (count = 0; count < UDELAY_COUNT; count++) अणु
-		temp = qlge_पढ़ो32(qdev, reg);
+	for (count = 0; count < UDELAY_COUNT; count++) {
+		temp = qlge_read32(qdev, reg);
 
-		/* check क्रम errors */
-		अगर (temp & err_bit) अणु
-			netअगर_alert(qdev, probe, qdev->ndev,
+		/* check for errors */
+		if (temp & err_bit) {
+			netif_alert(qdev, probe, qdev->ndev,
 				    "register 0x%.08x access error, value = 0x%.08x!.\n",
 				    reg, temp);
-			वापस -EIO;
-		पूर्ण अन्यथा अगर (temp & bit) अणु
-			वापस 0;
-		पूर्ण
+			return -EIO;
+		} else if (temp & bit) {
+			return 0;
+		}
 		udelay(UDELAY_DELAY);
-	पूर्ण
-	netअगर_alert(qdev, probe, qdev->ndev,
+	}
+	netif_alert(qdev, probe, qdev->ndev,
 		    "Timed out waiting for reg %x to come ready.\n", reg);
-	वापस -ETIMEDOUT;
-पूर्ण
+	return -ETIMEDOUT;
+}
 
-/* The CFG रेजिस्टर is used to करोwnload TX and RX control blocks
- * to the chip. This function रुकोs क्रम an operation to complete.
+/* The CFG register is used to download TX and RX control blocks
+ * to the chip. This function waits for an operation to complete.
  */
-अटल पूर्णांक qlge_रुको_cfg(काष्ठा qlge_adapter *qdev, u32 bit)
-अणु
-	पूर्णांक count;
+static int qlge_wait_cfg(struct qlge_adapter *qdev, u32 bit)
+{
+	int count;
 	u32 temp;
 
-	क्रम (count = 0; count < UDELAY_COUNT; count++) अणु
-		temp = qlge_पढ़ो32(qdev, CFG);
-		अगर (temp & CFG_LE)
-			वापस -EIO;
-		अगर (!(temp & bit))
-			वापस 0;
+	for (count = 0; count < UDELAY_COUNT; count++) {
+		temp = qlge_read32(qdev, CFG);
+		if (temp & CFG_LE)
+			return -EIO;
+		if (!(temp & bit))
+			return 0;
 		udelay(UDELAY_DELAY);
-	पूर्ण
-	वापस -ETIMEDOUT;
-पूर्ण
+	}
+	return -ETIMEDOUT;
+}
 
 /* Used to issue init control blocks to hw. Maps control block,
- * sets address, triggers करोwnload, रुकोs क्रम completion.
+ * sets address, triggers download, waits for completion.
  */
-पूर्णांक qlge_ग_लिखो_cfg(काष्ठा qlge_adapter *qdev, व्योम *ptr, पूर्णांक size, u32 bit,
+int qlge_write_cfg(struct qlge_adapter *qdev, void *ptr, int size, u32 bit,
 		   u16 q_id)
-अणु
+{
 	u64 map;
-	पूर्णांक status = 0;
-	पूर्णांक direction;
+	int status = 0;
+	int direction;
 	u32 mask;
 	u32 value;
 
-	अगर (bit & (CFG_LRQ | CFG_LR | CFG_LCQ))
+	if (bit & (CFG_LRQ | CFG_LR | CFG_LCQ))
 		direction = DMA_TO_DEVICE;
-	अन्यथा
+	else
 		direction = DMA_FROM_DEVICE;
 
 	map = dma_map_single(&qdev->pdev->dev, ptr, size, direction);
-	अगर (dma_mapping_error(&qdev->pdev->dev, map)) अणु
-		netअगर_err(qdev, अगरup, qdev->ndev, "Couldn't map DMA area.\n");
-		वापस -ENOMEM;
-	पूर्ण
+	if (dma_mapping_error(&qdev->pdev->dev, map)) {
+		netif_err(qdev, ifup, qdev->ndev, "Couldn't map DMA area.\n");
+		return -ENOMEM;
+	}
 
 	status = qlge_sem_spinlock(qdev, SEM_ICB_MASK);
-	अगर (status)
-		जाओ lock_failed;
+	if (status)
+		goto lock_failed;
 
-	status = qlge_रुको_cfg(qdev, bit);
-	अगर (status) अणु
-		netअगर_err(qdev, अगरup, qdev->ndev,
+	status = qlge_wait_cfg(qdev, bit);
+	if (status) {
+		netif_err(qdev, ifup, qdev->ndev,
 			  "Timed out waiting for CFG to come ready.\n");
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	qlge_ग_लिखो32(qdev, ICB_L, (u32)map);
-	qlge_ग_लिखो32(qdev, ICB_H, (u32)(map >> 32));
+	qlge_write32(qdev, ICB_L, (u32)map);
+	qlge_write32(qdev, ICB_H, (u32)(map >> 32));
 
 	mask = CFG_Q_MASK | (bit << 16);
 	value = bit | (q_id << CFG_Q_SHIFT);
-	qlge_ग_लिखो32(qdev, CFG, (mask | value));
+	qlge_write32(qdev, CFG, (mask | value));
 
 	/*
-	 * Wait क्रम the bit to clear after संकेतing hw.
+	 * Wait for the bit to clear after signaling hw.
 	 */
-	status = qlge_रुको_cfg(qdev, bit);
-निकास:
-	qlge_sem_unlock(qdev, SEM_ICB_MASK);	/* करोes flush too */
+	status = qlge_wait_cfg(qdev, bit);
+exit:
+	qlge_sem_unlock(qdev, SEM_ICB_MASK);	/* does flush too */
 lock_failed:
 	dma_unmap_single(&qdev->pdev->dev, map, size, direction);
-	वापस status;
-पूर्ण
+	return status;
+}
 
-/* Get a specअगरic MAC address from the CAM.  Used क्रम debug and reg dump. */
-पूर्णांक qlge_get_mac_addr_reg(काष्ठा qlge_adapter *qdev, u32 type, u16 index,
+/* Get a specific MAC address from the CAM.  Used for debug and reg dump. */
+int qlge_get_mac_addr_reg(struct qlge_adapter *qdev, u32 type, u16 index,
 			  u32 *value)
-अणु
+{
 	u32 offset = 0;
-	पूर्णांक status;
+	int status;
 
-	चयन (type) अणु
-	हाल MAC_ADDR_TYPE_MULTI_MAC:
-	हाल MAC_ADDR_TYPE_CAM_MAC: अणु
-		status = qlge_रुको_reg_rdy(qdev, MAC_ADDR_IDX, MAC_ADDR_MW, 0);
-		अगर (status)
-			अवरोध;
-		qlge_ग_लिखो32(qdev, MAC_ADDR_IDX,
+	switch (type) {
+	case MAC_ADDR_TYPE_MULTI_MAC:
+	case MAC_ADDR_TYPE_CAM_MAC: {
+		status = qlge_wait_reg_rdy(qdev, MAC_ADDR_IDX, MAC_ADDR_MW, 0);
+		if (status)
+			break;
+		qlge_write32(qdev, MAC_ADDR_IDX,
 			     (offset++) | /* offset */
 				   (index << MAC_ADDR_IDX_SHIFT) | /* index */
 				   MAC_ADDR_ADR | MAC_ADDR_RS |
 				   type); /* type */
-		status = qlge_रुको_reg_rdy(qdev, MAC_ADDR_IDX, MAC_ADDR_MR, 0);
-		अगर (status)
-			अवरोध;
-		*value++ = qlge_पढ़ो32(qdev, MAC_ADDR_DATA);
-		status = qlge_रुको_reg_rdy(qdev, MAC_ADDR_IDX, MAC_ADDR_MW, 0);
-		अगर (status)
-			अवरोध;
-		qlge_ग_लिखो32(qdev, MAC_ADDR_IDX,
+		status = qlge_wait_reg_rdy(qdev, MAC_ADDR_IDX, MAC_ADDR_MR, 0);
+		if (status)
+			break;
+		*value++ = qlge_read32(qdev, MAC_ADDR_DATA);
+		status = qlge_wait_reg_rdy(qdev, MAC_ADDR_IDX, MAC_ADDR_MW, 0);
+		if (status)
+			break;
+		qlge_write32(qdev, MAC_ADDR_IDX,
 			     (offset++) | /* offset */
 				   (index << MAC_ADDR_IDX_SHIFT) | /* index */
 				   MAC_ADDR_ADR | MAC_ADDR_RS |
 				   type); /* type */
-		status = qlge_रुको_reg_rdy(qdev, MAC_ADDR_IDX, MAC_ADDR_MR, 0);
-		अगर (status)
-			अवरोध;
-		*value++ = qlge_पढ़ो32(qdev, MAC_ADDR_DATA);
-		अगर (type == MAC_ADDR_TYPE_CAM_MAC) अणु
-			status = qlge_रुको_reg_rdy(qdev, MAC_ADDR_IDX,
+		status = qlge_wait_reg_rdy(qdev, MAC_ADDR_IDX, MAC_ADDR_MR, 0);
+		if (status)
+			break;
+		*value++ = qlge_read32(qdev, MAC_ADDR_DATA);
+		if (type == MAC_ADDR_TYPE_CAM_MAC) {
+			status = qlge_wait_reg_rdy(qdev, MAC_ADDR_IDX,
 						   MAC_ADDR_MW, 0);
-			अगर (status)
-				अवरोध;
-			qlge_ग_लिखो32(qdev, MAC_ADDR_IDX,
+			if (status)
+				break;
+			qlge_write32(qdev, MAC_ADDR_IDX,
 				     (offset++) | /* offset */
 					   (index
 					    << MAC_ADDR_IDX_SHIFT) | /* index */
 					   MAC_ADDR_ADR |
 					   MAC_ADDR_RS | type); /* type */
-			status = qlge_रुको_reg_rdy(qdev, MAC_ADDR_IDX,
+			status = qlge_wait_reg_rdy(qdev, MAC_ADDR_IDX,
 						   MAC_ADDR_MR, 0);
-			अगर (status)
-				अवरोध;
-			*value++ = qlge_पढ़ो32(qdev, MAC_ADDR_DATA);
-		पूर्ण
-		अवरोध;
-	पूर्ण
-	हाल MAC_ADDR_TYPE_VLAN:
-	हाल MAC_ADDR_TYPE_MULTI_FLTR:
-	शेष:
-		netअगर_crit(qdev, अगरup, qdev->ndev,
+			if (status)
+				break;
+			*value++ = qlge_read32(qdev, MAC_ADDR_DATA);
+		}
+		break;
+	}
+	case MAC_ADDR_TYPE_VLAN:
+	case MAC_ADDR_TYPE_MULTI_FLTR:
+	default:
+		netif_crit(qdev, ifup, qdev->ndev,
 			   "Address type %d not yet supported.\n", type);
 		status = -EPERM;
-	पूर्ण
-	वापस status;
-पूर्ण
+	}
+	return status;
+}
 
-/* Set up a MAC, multicast or VLAN address क्रम the
+/* Set up a MAC, multicast or VLAN address for the
  * inbound frame matching.
  */
-अटल पूर्णांक qlge_set_mac_addr_reg(काष्ठा qlge_adapter *qdev, u8 *addr, u32 type,
+static int qlge_set_mac_addr_reg(struct qlge_adapter *qdev, u8 *addr, u32 type,
 				 u16 index)
-अणु
+{
 	u32 offset = 0;
-	पूर्णांक status = 0;
+	int status = 0;
 
-	चयन (type) अणु
-	हाल MAC_ADDR_TYPE_MULTI_MAC: अणु
+	switch (type) {
+	case MAC_ADDR_TYPE_MULTI_MAC: {
 		u32 upper = (addr[0] << 8) | addr[1];
 		u32 lower = (addr[2] << 24) | (addr[3] << 16) | (addr[4] << 8) |
 			    (addr[5]);
 
-		status = qlge_रुको_reg_rdy(qdev, MAC_ADDR_IDX, MAC_ADDR_MW, 0);
-		अगर (status)
-			अवरोध;
-		qlge_ग_लिखो32(qdev, MAC_ADDR_IDX,
+		status = qlge_wait_reg_rdy(qdev, MAC_ADDR_IDX, MAC_ADDR_MW, 0);
+		if (status)
+			break;
+		qlge_write32(qdev, MAC_ADDR_IDX,
 			     (offset++) | (index << MAC_ADDR_IDX_SHIFT) | type |
 				   MAC_ADDR_E);
-		qlge_ग_लिखो32(qdev, MAC_ADDR_DATA, lower);
-		status = qlge_रुको_reg_rdy(qdev, MAC_ADDR_IDX, MAC_ADDR_MW, 0);
-		अगर (status)
-			अवरोध;
-		qlge_ग_लिखो32(qdev, MAC_ADDR_IDX,
+		qlge_write32(qdev, MAC_ADDR_DATA, lower);
+		status = qlge_wait_reg_rdy(qdev, MAC_ADDR_IDX, MAC_ADDR_MW, 0);
+		if (status)
+			break;
+		qlge_write32(qdev, MAC_ADDR_IDX,
 			     (offset++) | (index << MAC_ADDR_IDX_SHIFT) | type |
 				   MAC_ADDR_E);
 
-		qlge_ग_लिखो32(qdev, MAC_ADDR_DATA, upper);
-		status = qlge_रुको_reg_rdy(qdev, MAC_ADDR_IDX, MAC_ADDR_MW, 0);
-		अवरोध;
-	पूर्ण
-	हाल MAC_ADDR_TYPE_CAM_MAC: अणु
+		qlge_write32(qdev, MAC_ADDR_DATA, upper);
+		status = qlge_wait_reg_rdy(qdev, MAC_ADDR_IDX, MAC_ADDR_MW, 0);
+		break;
+	}
+	case MAC_ADDR_TYPE_CAM_MAC: {
 		u32 cam_output;
 		u32 upper = (addr[0] << 8) | addr[1];
 		u32 lower = (addr[2] << 24) | (addr[3] << 16) | (addr[4] << 8) |
 			    (addr[5]);
-		status = qlge_रुको_reg_rdy(qdev, MAC_ADDR_IDX, MAC_ADDR_MW, 0);
-		अगर (status)
-			अवरोध;
-		qlge_ग_लिखो32(qdev, MAC_ADDR_IDX,
+		status = qlge_wait_reg_rdy(qdev, MAC_ADDR_IDX, MAC_ADDR_MW, 0);
+		if (status)
+			break;
+		qlge_write32(qdev, MAC_ADDR_IDX,
 			     (offset++) | /* offset */
 				   (index << MAC_ADDR_IDX_SHIFT) | /* index */
 				   type); /* type */
-		qlge_ग_लिखो32(qdev, MAC_ADDR_DATA, lower);
-		status = qlge_रुको_reg_rdy(qdev, MAC_ADDR_IDX, MAC_ADDR_MW, 0);
-		अगर (status)
-			अवरोध;
-		qlge_ग_लिखो32(qdev, MAC_ADDR_IDX,
+		qlge_write32(qdev, MAC_ADDR_DATA, lower);
+		status = qlge_wait_reg_rdy(qdev, MAC_ADDR_IDX, MAC_ADDR_MW, 0);
+		if (status)
+			break;
+		qlge_write32(qdev, MAC_ADDR_IDX,
 			     (offset++) | /* offset */
 				   (index << MAC_ADDR_IDX_SHIFT) | /* index */
 				   type); /* type */
-		qlge_ग_लिखो32(qdev, MAC_ADDR_DATA, upper);
-		status = qlge_रुको_reg_rdy(qdev, MAC_ADDR_IDX, MAC_ADDR_MW, 0);
-		अगर (status)
-			अवरोध;
-		qlge_ग_लिखो32(qdev, MAC_ADDR_IDX,
+		qlge_write32(qdev, MAC_ADDR_DATA, upper);
+		status = qlge_wait_reg_rdy(qdev, MAC_ADDR_IDX, MAC_ADDR_MW, 0);
+		if (status)
+			break;
+		qlge_write32(qdev, MAC_ADDR_IDX,
 			     (offset) | /* offset */
 				   (index << MAC_ADDR_IDX_SHIFT) | /* index */
 				   type); /* type */
@@ -387,791 +386,791 @@ lock_failed:
 		cam_output = (CAM_OUT_ROUTE_NIC |
 			      (qdev->func << CAM_OUT_FUNC_SHIFT) |
 			      (0 << CAM_OUT_CQ_ID_SHIFT));
-		अगर (qdev->ndev->features & NETIF_F_HW_VLAN_CTAG_RX)
+		if (qdev->ndev->features & NETIF_F_HW_VLAN_CTAG_RX)
 			cam_output |= CAM_OUT_RV;
 		/* route to NIC core */
-		qlge_ग_लिखो32(qdev, MAC_ADDR_DATA, cam_output);
-		अवरोध;
-	पूर्ण
-	हाल MAC_ADDR_TYPE_VLAN: अणु
+		qlge_write32(qdev, MAC_ADDR_DATA, cam_output);
+		break;
+	}
+	case MAC_ADDR_TYPE_VLAN: {
 		u32 enable_bit = *((u32 *)&addr[0]);
 		/* For VLAN, the addr actually holds a bit that
 		 * either enables or disables the vlan id we are
 		 * addressing. It's either MAC_ADDR_E on or off.
 		 * That's bit-27 we're talking about.
 		 */
-		status = qlge_रुको_reg_rdy(qdev, MAC_ADDR_IDX, MAC_ADDR_MW, 0);
-		अगर (status)
-			अवरोध;
-		qlge_ग_लिखो32(qdev, MAC_ADDR_IDX,
+		status = qlge_wait_reg_rdy(qdev, MAC_ADDR_IDX, MAC_ADDR_MW, 0);
+		if (status)
+			break;
+		qlge_write32(qdev, MAC_ADDR_IDX,
 			     offset | /* offset */
 				   (index << MAC_ADDR_IDX_SHIFT) | /* index */
 				   type | /* type */
 				   enable_bit); /* enable/disable */
-		अवरोध;
-	पूर्ण
-	हाल MAC_ADDR_TYPE_MULTI_FLTR:
-	शेष:
-		netअगर_crit(qdev, अगरup, qdev->ndev,
+		break;
+	}
+	case MAC_ADDR_TYPE_MULTI_FLTR:
+	default:
+		netif_crit(qdev, ifup, qdev->ndev,
 			   "Address type %d not yet supported.\n", type);
 		status = -EPERM;
-	पूर्ण
-	वापस status;
-पूर्ण
+	}
+	return status;
+}
 
-/* Set or clear MAC address in hardware. We someबार
+/* Set or clear MAC address in hardware. We sometimes
  * have to clear it to prevent wrong frame routing
  * especially in a bonding environment.
  */
-अटल पूर्णांक qlge_set_mac_addr(काष्ठा qlge_adapter *qdev, पूर्णांक set)
-अणु
-	पूर्णांक status;
-	अक्षर zero_mac_addr[ETH_ALEN];
-	अक्षर *addr;
+static int qlge_set_mac_addr(struct qlge_adapter *qdev, int set)
+{
+	int status;
+	char zero_mac_addr[ETH_ALEN];
+	char *addr;
 
-	अगर (set) अणु
+	if (set) {
 		addr = &qdev->current_mac_addr[0];
-		netअगर_prपूर्णांकk(qdev, अगरup, KERN_DEBUG, qdev->ndev,
+		netif_printk(qdev, ifup, KERN_DEBUG, qdev->ndev,
 			     "Set Mac addr %pM\n", addr);
-	पूर्ण अन्यथा अणु
+	} else {
 		eth_zero_addr(zero_mac_addr);
 		addr = &zero_mac_addr[0];
-		netअगर_prपूर्णांकk(qdev, अगरup, KERN_DEBUG, qdev->ndev,
+		netif_printk(qdev, ifup, KERN_DEBUG, qdev->ndev,
 			     "Clearing MAC address\n");
-	पूर्ण
+	}
 	status = qlge_sem_spinlock(qdev, SEM_MAC_ADDR_MASK);
-	अगर (status)
-		वापस status;
+	if (status)
+		return status;
 	status = qlge_set_mac_addr_reg(qdev, (u8 *)addr,
 				       MAC_ADDR_TYPE_CAM_MAC,
 				       qdev->func * MAX_CQ);
 	qlge_sem_unlock(qdev, SEM_MAC_ADDR_MASK);
-	अगर (status)
-		netअगर_err(qdev, अगरup, qdev->ndev,
+	if (status)
+		netif_err(qdev, ifup, qdev->ndev,
 			  "Failed to init mac address.\n");
-	वापस status;
-पूर्ण
+	return status;
+}
 
-व्योम qlge_link_on(काष्ठा qlge_adapter *qdev)
-अणु
-	netअगर_err(qdev, link, qdev->ndev, "Link is up.\n");
-	netअगर_carrier_on(qdev->ndev);
+void qlge_link_on(struct qlge_adapter *qdev)
+{
+	netif_err(qdev, link, qdev->ndev, "Link is up.\n");
+	netif_carrier_on(qdev->ndev);
 	qlge_set_mac_addr(qdev, 1);
-पूर्ण
+}
 
-व्योम qlge_link_off(काष्ठा qlge_adapter *qdev)
-अणु
-	netअगर_err(qdev, link, qdev->ndev, "Link is down.\n");
-	netअगर_carrier_off(qdev->ndev);
+void qlge_link_off(struct qlge_adapter *qdev)
+{
+	netif_err(qdev, link, qdev->ndev, "Link is down.\n");
+	netif_carrier_off(qdev->ndev);
 	qlge_set_mac_addr(qdev, 0);
-पूर्ण
+}
 
-/* Get a specअगरic frame routing value from the CAM.
- * Used क्रम debug and reg dump.
+/* Get a specific frame routing value from the CAM.
+ * Used for debug and reg dump.
  */
-पूर्णांक qlge_get_routing_reg(काष्ठा qlge_adapter *qdev, u32 index, u32 *value)
-अणु
-	पूर्णांक status = 0;
+int qlge_get_routing_reg(struct qlge_adapter *qdev, u32 index, u32 *value)
+{
+	int status = 0;
 
-	status = qlge_रुको_reg_rdy(qdev, RT_IDX, RT_IDX_MW, 0);
-	अगर (status)
-		जाओ निकास;
+	status = qlge_wait_reg_rdy(qdev, RT_IDX, RT_IDX_MW, 0);
+	if (status)
+		goto exit;
 
-	qlge_ग_लिखो32(qdev, RT_IDX,
+	qlge_write32(qdev, RT_IDX,
 		     RT_IDX_TYPE_NICQ | RT_IDX_RS | (index << RT_IDX_IDX_SHIFT));
-	status = qlge_रुको_reg_rdy(qdev, RT_IDX, RT_IDX_MR, 0);
-	अगर (status)
-		जाओ निकास;
-	*value = qlge_पढ़ो32(qdev, RT_DATA);
-निकास:
-	वापस status;
-पूर्ण
+	status = qlge_wait_reg_rdy(qdev, RT_IDX, RT_IDX_MR, 0);
+	if (status)
+		goto exit;
+	*value = qlge_read32(qdev, RT_DATA);
+exit:
+	return status;
+}
 
-/* The NIC function क्रम this chip has 16 routing indexes.  Each one can be used
- * to route dअगरferent frame types to various inbound queues.  We send broadcast/
- * multicast/error frames to the शेष queue क्रम slow handling,
+/* The NIC function for this chip has 16 routing indexes.  Each one can be used
+ * to route different frame types to various inbound queues.  We send broadcast/
+ * multicast/error frames to the default queue for slow handling,
  * and CAM hit/RSS frames to the fast handling queues.
  */
-अटल पूर्णांक qlge_set_routing_reg(काष्ठा qlge_adapter *qdev, u32 index, u32 mask,
-				पूर्णांक enable)
-अणु
-	पूर्णांक status = -EINVAL; /* Return error अगर no mask match. */
+static int qlge_set_routing_reg(struct qlge_adapter *qdev, u32 index, u32 mask,
+				int enable)
+{
+	int status = -EINVAL; /* Return error if no mask match. */
 	u32 value = 0;
 
-	चयन (mask) अणु
-	हाल RT_IDX_CAM_HIT:
-		अणु
+	switch (mask) {
+	case RT_IDX_CAM_HIT:
+		{
 			value = RT_IDX_DST_CAM_Q |	/* dest */
 			    RT_IDX_TYPE_NICQ |	/* type */
 			    (RT_IDX_CAM_HIT_SLOT << RT_IDX_IDX_SHIFT);/* index */
-			अवरोध;
-		पूर्ण
-	हाल RT_IDX_VALID:	/* Promiscuous Mode frames. */
-		अणु
+			break;
+		}
+	case RT_IDX_VALID:	/* Promiscuous Mode frames. */
+		{
 			value = RT_IDX_DST_DFLT_Q |	/* dest */
 			    RT_IDX_TYPE_NICQ |	/* type */
 			    (RT_IDX_PROMISCUOUS_SLOT << RT_IDX_IDX_SHIFT);/* index */
-			अवरोध;
-		पूर्ण
-	हाल RT_IDX_ERR:	/* Pass up MAC,IP,TCP/UDP error frames. */
-		अणु
+			break;
+		}
+	case RT_IDX_ERR:	/* Pass up MAC,IP,TCP/UDP error frames. */
+		{
 			value = RT_IDX_DST_DFLT_Q |	/* dest */
 			    RT_IDX_TYPE_NICQ |	/* type */
 			    (RT_IDX_ALL_ERR_SLOT << RT_IDX_IDX_SHIFT);/* index */
-			अवरोध;
-		पूर्ण
-	हाल RT_IDX_IP_CSUM_ERR: /* Pass up IP CSUM error frames. */
-		अणु
+			break;
+		}
+	case RT_IDX_IP_CSUM_ERR: /* Pass up IP CSUM error frames. */
+		{
 			value = RT_IDX_DST_DFLT_Q | /* dest */
 				RT_IDX_TYPE_NICQ | /* type */
 				(RT_IDX_IP_CSUM_ERR_SLOT <<
 				RT_IDX_IDX_SHIFT); /* index */
-			अवरोध;
-		पूर्ण
-	हाल RT_IDX_TU_CSUM_ERR: /* Pass up TCP/UDP CSUM error frames. */
-		अणु
+			break;
+		}
+	case RT_IDX_TU_CSUM_ERR: /* Pass up TCP/UDP CSUM error frames. */
+		{
 			value = RT_IDX_DST_DFLT_Q | /* dest */
 				RT_IDX_TYPE_NICQ | /* type */
 				(RT_IDX_TCP_UDP_CSUM_ERR_SLOT <<
 				RT_IDX_IDX_SHIFT); /* index */
-			अवरोध;
-		पूर्ण
-	हाल RT_IDX_BCAST:	/* Pass up Broadcast frames to शेष Q. */
-		अणु
+			break;
+		}
+	case RT_IDX_BCAST:	/* Pass up Broadcast frames to default Q. */
+		{
 			value = RT_IDX_DST_DFLT_Q |	/* dest */
 			    RT_IDX_TYPE_NICQ |	/* type */
 			    (RT_IDX_BCAST_SLOT << RT_IDX_IDX_SHIFT);/* index */
-			अवरोध;
-		पूर्ण
-	हाल RT_IDX_MCAST:	/* Pass up All Multicast frames. */
-		अणु
+			break;
+		}
+	case RT_IDX_MCAST:	/* Pass up All Multicast frames. */
+		{
 			value = RT_IDX_DST_DFLT_Q |	/* dest */
 			    RT_IDX_TYPE_NICQ |	/* type */
 			    (RT_IDX_ALLMULTI_SLOT << RT_IDX_IDX_SHIFT);/* index */
-			अवरोध;
-		पूर्ण
-	हाल RT_IDX_MCAST_MATCH:	/* Pass up matched Multicast frames. */
-		अणु
+			break;
+		}
+	case RT_IDX_MCAST_MATCH:	/* Pass up matched Multicast frames. */
+		{
 			value = RT_IDX_DST_DFLT_Q |	/* dest */
 			    RT_IDX_TYPE_NICQ |	/* type */
 			    (RT_IDX_MCAST_MATCH_SLOT << RT_IDX_IDX_SHIFT);/* index */
-			अवरोध;
-		पूर्ण
-	हाल RT_IDX_RSS_MATCH:	/* Pass up matched RSS frames. */
-		अणु
+			break;
+		}
+	case RT_IDX_RSS_MATCH:	/* Pass up matched RSS frames. */
+		{
 			value = RT_IDX_DST_RSS |	/* dest */
 			    RT_IDX_TYPE_NICQ |	/* type */
 			    (RT_IDX_RSS_MATCH_SLOT << RT_IDX_IDX_SHIFT);/* index */
-			अवरोध;
-		पूर्ण
-	हाल 0:		/* Clear the E-bit on an entry. */
-		अणु
+			break;
+		}
+	case 0:		/* Clear the E-bit on an entry. */
+		{
 			value = RT_IDX_DST_DFLT_Q |	/* dest */
 			    RT_IDX_TYPE_NICQ |	/* type */
 			    (index << RT_IDX_IDX_SHIFT);/* index */
-			अवरोध;
-		पूर्ण
-	शेष:
-		netअगर_err(qdev, अगरup, qdev->ndev,
+			break;
+		}
+	default:
+		netif_err(qdev, ifup, qdev->ndev,
 			  "Mask type %d not yet supported.\n", mask);
 		status = -EPERM;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	अगर (value) अणु
-		status = qlge_रुको_reg_rdy(qdev, RT_IDX, RT_IDX_MW, 0);
-		अगर (status)
-			जाओ निकास;
+	if (value) {
+		status = qlge_wait_reg_rdy(qdev, RT_IDX, RT_IDX_MW, 0);
+		if (status)
+			goto exit;
 		value |= (enable ? RT_IDX_E : 0);
-		qlge_ग_लिखो32(qdev, RT_IDX, value);
-		qlge_ग_लिखो32(qdev, RT_DATA, enable ? mask : 0);
-	पूर्ण
-निकास:
-	वापस status;
-पूर्ण
+		qlge_write32(qdev, RT_IDX, value);
+		qlge_write32(qdev, RT_DATA, enable ? mask : 0);
+	}
+exit:
+	return status;
+}
 
-अटल व्योम qlge_enable_पूर्णांकerrupts(काष्ठा qlge_adapter *qdev)
-अणु
-	qlge_ग_लिखो32(qdev, INTR_EN, (INTR_EN_EI << 16) | INTR_EN_EI);
-पूर्ण
+static void qlge_enable_interrupts(struct qlge_adapter *qdev)
+{
+	qlge_write32(qdev, INTR_EN, (INTR_EN_EI << 16) | INTR_EN_EI);
+}
 
-अटल व्योम qlge_disable_पूर्णांकerrupts(काष्ठा qlge_adapter *qdev)
-अणु
-	qlge_ग_लिखो32(qdev, INTR_EN, (INTR_EN_EI << 16));
-पूर्ण
+static void qlge_disable_interrupts(struct qlge_adapter *qdev)
+{
+	qlge_write32(qdev, INTR_EN, (INTR_EN_EI << 16));
+}
 
-अटल व्योम qlge_enable_completion_पूर्णांकerrupt(काष्ठा qlge_adapter *qdev, u32 पूर्णांकr)
-अणु
-	काष्ठा पूर्णांकr_context *ctx = &qdev->पूर्णांकr_context[पूर्णांकr];
+static void qlge_enable_completion_interrupt(struct qlge_adapter *qdev, u32 intr)
+{
+	struct intr_context *ctx = &qdev->intr_context[intr];
 
-	qlge_ग_लिखो32(qdev, INTR_EN, ctx->पूर्णांकr_en_mask);
-पूर्ण
+	qlge_write32(qdev, INTR_EN, ctx->intr_en_mask);
+}
 
-अटल व्योम qlge_disable_completion_पूर्णांकerrupt(काष्ठा qlge_adapter *qdev, u32 पूर्णांकr)
-अणु
-	काष्ठा पूर्णांकr_context *ctx = &qdev->पूर्णांकr_context[पूर्णांकr];
+static void qlge_disable_completion_interrupt(struct qlge_adapter *qdev, u32 intr)
+{
+	struct intr_context *ctx = &qdev->intr_context[intr];
 
-	qlge_ग_लिखो32(qdev, INTR_EN, ctx->पूर्णांकr_dis_mask);
-पूर्ण
+	qlge_write32(qdev, INTR_EN, ctx->intr_dis_mask);
+}
 
-अटल व्योम qlge_enable_all_completion_पूर्णांकerrupts(काष्ठा qlge_adapter *qdev)
-अणु
-	पूर्णांक i;
+static void qlge_enable_all_completion_interrupts(struct qlge_adapter *qdev)
+{
+	int i;
 
-	क्रम (i = 0; i < qdev->पूर्णांकr_count; i++)
-		qlge_enable_completion_पूर्णांकerrupt(qdev, i);
-पूर्ण
+	for (i = 0; i < qdev->intr_count; i++)
+		qlge_enable_completion_interrupt(qdev, i);
+}
 
-अटल पूर्णांक qlge_validate_flash(काष्ठा qlge_adapter *qdev, u32 size, स्थिर अक्षर *str)
-अणु
-	पूर्णांक status, i;
+static int qlge_validate_flash(struct qlge_adapter *qdev, u32 size, const char *str)
+{
+	int status, i;
 	u16 csum = 0;
 	__le16 *flash = (__le16 *)&qdev->flash;
 
-	status = म_भेदन((अक्षर *)&qdev->flash, str, 4);
-	अगर (status) अणु
-		netअगर_err(qdev, अगरup, qdev->ndev, "Invalid flash signature.\n");
-		वापस	status;
-	पूर्ण
+	status = strncmp((char *)&qdev->flash, str, 4);
+	if (status) {
+		netif_err(qdev, ifup, qdev->ndev, "Invalid flash signature.\n");
+		return	status;
+	}
 
-	क्रम (i = 0; i < size; i++)
+	for (i = 0; i < size; i++)
 		csum += le16_to_cpu(*flash++);
 
-	अगर (csum)
-		netअगर_err(qdev, अगरup, qdev->ndev,
+	if (csum)
+		netif_err(qdev, ifup, qdev->ndev,
 			  "Invalid flash checksum, csum = 0x%.04x.\n", csum);
 
-	वापस csum;
-पूर्ण
+	return csum;
+}
 
-अटल पूर्णांक qlge_पढ़ो_flash_word(काष्ठा qlge_adapter *qdev, पूर्णांक offset, __le32 *data)
-अणु
-	पूर्णांक status = 0;
-	/* रुको क्रम reg to come पढ़ोy */
-	status = qlge_रुको_reg_rdy(qdev,
+static int qlge_read_flash_word(struct qlge_adapter *qdev, int offset, __le32 *data)
+{
+	int status = 0;
+	/* wait for reg to come ready */
+	status = qlge_wait_reg_rdy(qdev,
 				   FLASH_ADDR, FLASH_ADDR_RDY, FLASH_ADDR_ERR);
-	अगर (status)
-		जाओ निकास;
-	/* set up क्रम reg पढ़ो */
-	qlge_ग_लिखो32(qdev, FLASH_ADDR, FLASH_ADDR_R | offset);
-	/* रुको क्रम reg to come पढ़ोy */
-	status = qlge_रुको_reg_rdy(qdev,
+	if (status)
+		goto exit;
+	/* set up for reg read */
+	qlge_write32(qdev, FLASH_ADDR, FLASH_ADDR_R | offset);
+	/* wait for reg to come ready */
+	status = qlge_wait_reg_rdy(qdev,
 				   FLASH_ADDR, FLASH_ADDR_RDY, FLASH_ADDR_ERR);
-	अगर (status)
-		जाओ निकास;
+	if (status)
+		goto exit;
 	/* This data is stored on flash as an array of
-	 * __le32.  Since qlge_पढ़ो32() वापसs cpu endian
+	 * __le32.  Since qlge_read32() returns cpu endian
 	 * we need to swap it back.
 	 */
-	*data = cpu_to_le32(qlge_पढ़ो32(qdev, FLASH_DATA));
-निकास:
-	वापस status;
-पूर्ण
+	*data = cpu_to_le32(qlge_read32(qdev, FLASH_DATA));
+exit:
+	return status;
+}
 
-अटल पूर्णांक qlge_get_8000_flash_params(काष्ठा qlge_adapter *qdev)
-अणु
+static int qlge_get_8000_flash_params(struct qlge_adapter *qdev)
+{
 	u32 i, size;
-	पूर्णांक status;
+	int status;
 	__le32 *p = (__le32 *)&qdev->flash;
 	u32 offset;
 	u8 mac_addr[6];
 
-	/* Get flash offset क्रम function and adjust
-	 * क्रम dword access.
+	/* Get flash offset for function and adjust
+	 * for dword access.
 	 */
-	अगर (!qdev->port)
-		offset = FUNC0_FLASH_OFFSET / माप(u32);
-	अन्यथा
-		offset = FUNC1_FLASH_OFFSET / माप(u32);
+	if (!qdev->port)
+		offset = FUNC0_FLASH_OFFSET / sizeof(u32);
+	else
+		offset = FUNC1_FLASH_OFFSET / sizeof(u32);
 
-	अगर (qlge_sem_spinlock(qdev, SEM_FLASH_MASK))
-		वापस -ETIMEDOUT;
+	if (qlge_sem_spinlock(qdev, SEM_FLASH_MASK))
+		return -ETIMEDOUT;
 
-	size = माप(काष्ठा flash_params_8000) / माप(u32);
-	क्रम (i = 0; i < size; i++, p++) अणु
-		status = qlge_पढ़ो_flash_word(qdev, i + offset, p);
-		अगर (status) अणु
-			netअगर_err(qdev, अगरup, qdev->ndev,
+	size = sizeof(struct flash_params_8000) / sizeof(u32);
+	for (i = 0; i < size; i++, p++) {
+		status = qlge_read_flash_word(qdev, i + offset, p);
+		if (status) {
+			netif_err(qdev, ifup, qdev->ndev,
 				  "Error reading flash.\n");
-			जाओ निकास;
-		पूर्ण
-	पूर्ण
+			goto exit;
+		}
+	}
 
 	status = qlge_validate_flash(qdev,
-				     माप(काष्ठा flash_params_8000) /
-				   माप(u16),
+				     sizeof(struct flash_params_8000) /
+				   sizeof(u16),
 				   "8000");
-	अगर (status) अणु
-		netअगर_err(qdev, अगरup, qdev->ndev, "Invalid flash.\n");
+	if (status) {
+		netif_err(qdev, ifup, qdev->ndev, "Invalid flash.\n");
 		status = -EINVAL;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	/* Extract either manufacturer or BOFM modअगरied
+	/* Extract either manufacturer or BOFM modified
 	 * MAC address.
 	 */
-	अगर (qdev->flash.flash_params_8000.data_type1 == 2)
-		स_नकल(mac_addr,
+	if (qdev->flash.flash_params_8000.data_type1 == 2)
+		memcpy(mac_addr,
 		       qdev->flash.flash_params_8000.mac_addr1,
 		       qdev->ndev->addr_len);
-	अन्यथा
-		स_नकल(mac_addr,
+	else
+		memcpy(mac_addr,
 		       qdev->flash.flash_params_8000.mac_addr,
 		       qdev->ndev->addr_len);
 
-	अगर (!is_valid_ether_addr(mac_addr)) अणु
-		netअगर_err(qdev, अगरup, qdev->ndev, "Invalid MAC address.\n");
+	if (!is_valid_ether_addr(mac_addr)) {
+		netif_err(qdev, ifup, qdev->ndev, "Invalid MAC address.\n");
 		status = -EINVAL;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	स_नकल(qdev->ndev->dev_addr,
+	memcpy(qdev->ndev->dev_addr,
 	       mac_addr,
 	       qdev->ndev->addr_len);
 
-निकास:
+exit:
 	qlge_sem_unlock(qdev, SEM_FLASH_MASK);
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक qlge_get_8012_flash_params(काष्ठा qlge_adapter *qdev)
-अणु
-	पूर्णांक i;
-	पूर्णांक status;
+static int qlge_get_8012_flash_params(struct qlge_adapter *qdev)
+{
+	int i;
+	int status;
 	__le32 *p = (__le32 *)&qdev->flash;
 	u32 offset = 0;
-	u32 size = माप(काष्ठा flash_params_8012) / माप(u32);
+	u32 size = sizeof(struct flash_params_8012) / sizeof(u32);
 
 	/* Second function's parameters follow the first
 	 * function's.
 	 */
-	अगर (qdev->port)
+	if (qdev->port)
 		offset = size;
 
-	अगर (qlge_sem_spinlock(qdev, SEM_FLASH_MASK))
-		वापस -ETIMEDOUT;
+	if (qlge_sem_spinlock(qdev, SEM_FLASH_MASK))
+		return -ETIMEDOUT;
 
-	क्रम (i = 0; i < size; i++, p++) अणु
-		status = qlge_पढ़ो_flash_word(qdev, i + offset, p);
-		अगर (status) अणु
-			netअगर_err(qdev, अगरup, qdev->ndev,
+	for (i = 0; i < size; i++, p++) {
+		status = qlge_read_flash_word(qdev, i + offset, p);
+		if (status) {
+			netif_err(qdev, ifup, qdev->ndev,
 				  "Error reading flash.\n");
-			जाओ निकास;
-		पूर्ण
-	पूर्ण
+			goto exit;
+		}
+	}
 
 	status = qlge_validate_flash(qdev,
-				     माप(काष्ठा flash_params_8012) /
-				       माप(u16),
+				     sizeof(struct flash_params_8012) /
+				       sizeof(u16),
 				     "8012");
-	अगर (status) अणु
-		netअगर_err(qdev, अगरup, qdev->ndev, "Invalid flash.\n");
+	if (status) {
+		netif_err(qdev, ifup, qdev->ndev, "Invalid flash.\n");
 		status = -EINVAL;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	अगर (!is_valid_ether_addr(qdev->flash.flash_params_8012.mac_addr)) अणु
+	if (!is_valid_ether_addr(qdev->flash.flash_params_8012.mac_addr)) {
 		status = -EINVAL;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	स_नकल(qdev->ndev->dev_addr,
+	memcpy(qdev->ndev->dev_addr,
 	       qdev->flash.flash_params_8012.mac_addr,
 	       qdev->ndev->addr_len);
 
-निकास:
+exit:
 	qlge_sem_unlock(qdev, SEM_FLASH_MASK);
-	वापस status;
-पूर्ण
+	return status;
+}
 
-/* xgmac रेजिस्टर are located behind the xgmac_addr and xgmac_data
- * रेजिस्टर pair.  Each पढ़ो/ग_लिखो requires us to रुको क्रम the पढ़ोy
- * bit beक्रमe पढ़ोing/writing the data.
+/* xgmac register are located behind the xgmac_addr and xgmac_data
+ * register pair.  Each read/write requires us to wait for the ready
+ * bit before reading/writing the data.
  */
-अटल पूर्णांक qlge_ग_लिखो_xgmac_reg(काष्ठा qlge_adapter *qdev, u32 reg, u32 data)
-अणु
-	पूर्णांक status;
-	/* रुको क्रम reg to come पढ़ोy */
-	status = qlge_रुको_reg_rdy(qdev,
+static int qlge_write_xgmac_reg(struct qlge_adapter *qdev, u32 reg, u32 data)
+{
+	int status;
+	/* wait for reg to come ready */
+	status = qlge_wait_reg_rdy(qdev,
 				   XGMAC_ADDR, XGMAC_ADDR_RDY, XGMAC_ADDR_XME);
-	अगर (status)
-		वापस status;
-	/* ग_लिखो the data to the data reg */
-	qlge_ग_लिखो32(qdev, XGMAC_DATA, data);
-	/* trigger the ग_लिखो */
-	qlge_ग_लिखो32(qdev, XGMAC_ADDR, reg);
-	वापस status;
-पूर्ण
+	if (status)
+		return status;
+	/* write the data to the data reg */
+	qlge_write32(qdev, XGMAC_DATA, data);
+	/* trigger the write */
+	qlge_write32(qdev, XGMAC_ADDR, reg);
+	return status;
+}
 
-/* xgmac रेजिस्टर are located behind the xgmac_addr and xgmac_data
- * रेजिस्टर pair.  Each पढ़ो/ग_लिखो requires us to रुको क्रम the पढ़ोy
- * bit beक्रमe पढ़ोing/writing the data.
+/* xgmac register are located behind the xgmac_addr and xgmac_data
+ * register pair.  Each read/write requires us to wait for the ready
+ * bit before reading/writing the data.
  */
-पूर्णांक qlge_पढ़ो_xgmac_reg(काष्ठा qlge_adapter *qdev, u32 reg, u32 *data)
-अणु
-	पूर्णांक status = 0;
-	/* रुको क्रम reg to come पढ़ोy */
-	status = qlge_रुको_reg_rdy(qdev,
+int qlge_read_xgmac_reg(struct qlge_adapter *qdev, u32 reg, u32 *data)
+{
+	int status = 0;
+	/* wait for reg to come ready */
+	status = qlge_wait_reg_rdy(qdev,
 				   XGMAC_ADDR, XGMAC_ADDR_RDY, XGMAC_ADDR_XME);
-	अगर (status)
-		जाओ निकास;
-	/* set up क्रम reg पढ़ो */
-	qlge_ग_लिखो32(qdev, XGMAC_ADDR, reg | XGMAC_ADDR_R);
-	/* रुको क्रम reg to come पढ़ोy */
-	status = qlge_रुको_reg_rdy(qdev,
+	if (status)
+		goto exit;
+	/* set up for reg read */
+	qlge_write32(qdev, XGMAC_ADDR, reg | XGMAC_ADDR_R);
+	/* wait for reg to come ready */
+	status = qlge_wait_reg_rdy(qdev,
 				   XGMAC_ADDR, XGMAC_ADDR_RDY, XGMAC_ADDR_XME);
-	अगर (status)
-		जाओ निकास;
+	if (status)
+		goto exit;
 	/* get the data */
-	*data = qlge_पढ़ो32(qdev, XGMAC_DATA);
-निकास:
-	वापस status;
-पूर्ण
+	*data = qlge_read32(qdev, XGMAC_DATA);
+exit:
+	return status;
+}
 
-/* This is used क्रम पढ़ोing the 64-bit statistics regs. */
-पूर्णांक qlge_पढ़ो_xgmac_reg64(काष्ठा qlge_adapter *qdev, u32 reg, u64 *data)
-अणु
-	पूर्णांक status = 0;
+/* This is used for reading the 64-bit statistics regs. */
+int qlge_read_xgmac_reg64(struct qlge_adapter *qdev, u32 reg, u64 *data)
+{
+	int status = 0;
 	u32 hi = 0;
 	u32 lo = 0;
 
-	status = qlge_पढ़ो_xgmac_reg(qdev, reg, &lo);
-	अगर (status)
-		जाओ निकास;
+	status = qlge_read_xgmac_reg(qdev, reg, &lo);
+	if (status)
+		goto exit;
 
-	status = qlge_पढ़ो_xgmac_reg(qdev, reg + 4, &hi);
-	अगर (status)
-		जाओ निकास;
+	status = qlge_read_xgmac_reg(qdev, reg + 4, &hi);
+	if (status)
+		goto exit;
 
 	*data = (u64)lo | ((u64)hi << 32);
 
-निकास:
-	वापस status;
-पूर्ण
+exit:
+	return status;
+}
 
-अटल पूर्णांक qlge_8000_port_initialize(काष्ठा qlge_adapter *qdev)
-अणु
-	पूर्णांक status;
+static int qlge_8000_port_initialize(struct qlge_adapter *qdev)
+{
+	int status;
 	/*
-	 * Get MPI firmware version क्रम driver banner
+	 * Get MPI firmware version for driver banner
 	 * and ethool info.
 	 */
 	status = qlge_mb_about_fw(qdev);
-	अगर (status)
-		जाओ निकास;
+	if (status)
+		goto exit;
 	status = qlge_mb_get_fw_state(qdev);
-	अगर (status)
-		जाओ निकास;
+	if (status)
+		goto exit;
 	/* Wake up a worker to get/set the TX/RX frame sizes. */
 	queue_delayed_work(qdev->workqueue, &qdev->mpi_port_cfg_work, 0);
-निकास:
-	वापस status;
-पूर्ण
+exit:
+	return status;
+}
 
 /* Take the MAC Core out of reset.
  * Enable statistics counting.
  * Take the transmitter/receiver out of reset.
- * This functionality may be करोne in the MPI firmware at a
+ * This functionality may be done in the MPI firmware at a
  * later date.
  */
-अटल पूर्णांक qlge_8012_port_initialize(काष्ठा qlge_adapter *qdev)
-अणु
-	पूर्णांक status = 0;
+static int qlge_8012_port_initialize(struct qlge_adapter *qdev)
+{
+	int status = 0;
 	u32 data;
 
-	अगर (qlge_sem_trylock(qdev, qdev->xg_sem_mask)) अणु
+	if (qlge_sem_trylock(qdev, qdev->xg_sem_mask)) {
 		/* Another function has the semaphore, so
-		 * रुको क्रम the port init bit to come पढ़ोy.
+		 * wait for the port init bit to come ready.
 		 */
-		netअगर_info(qdev, link, qdev->ndev,
+		netif_info(qdev, link, qdev->ndev,
 			   "Another function has the semaphore, so wait for the port init bit to come ready.\n");
-		status = qlge_रुको_reg_rdy(qdev, STS, qdev->port_init, 0);
-		अगर (status) अणु
-			netअगर_crit(qdev, link, qdev->ndev,
+		status = qlge_wait_reg_rdy(qdev, STS, qdev->port_init, 0);
+		if (status) {
+			netif_crit(qdev, link, qdev->ndev,
 				   "Port initialize timed out.\n");
-		पूर्ण
-		वापस status;
-	पूर्ण
+		}
+		return status;
+	}
 
-	netअगर_info(qdev, link, qdev->ndev, "Got xgmac semaphore!.\n");
+	netif_info(qdev, link, qdev->ndev, "Got xgmac semaphore!.\n");
 	/* Set the core reset. */
-	status = qlge_पढ़ो_xgmac_reg(qdev, GLOBAL_CFG, &data);
-	अगर (status)
-		जाओ end;
+	status = qlge_read_xgmac_reg(qdev, GLOBAL_CFG, &data);
+	if (status)
+		goto end;
 	data |= GLOBAL_CFG_RESET;
-	status = qlge_ग_लिखो_xgmac_reg(qdev, GLOBAL_CFG, data);
-	अगर (status)
-		जाओ end;
+	status = qlge_write_xgmac_reg(qdev, GLOBAL_CFG, data);
+	if (status)
+		goto end;
 
-	/* Clear the core reset and turn on jumbo क्रम receiver. */
+	/* Clear the core reset and turn on jumbo for receiver. */
 	data &= ~GLOBAL_CFG_RESET;	/* Clear core reset. */
 	data |= GLOBAL_CFG_JUMBO;	/* Turn on jumbo. */
 	data |= GLOBAL_CFG_TX_STAT_EN;
 	data |= GLOBAL_CFG_RX_STAT_EN;
-	status = qlge_ग_लिखो_xgmac_reg(qdev, GLOBAL_CFG, data);
-	अगर (status)
-		जाओ end;
+	status = qlge_write_xgmac_reg(qdev, GLOBAL_CFG, data);
+	if (status)
+		goto end;
 
 	/* Enable transmitter, and clear it's reset. */
-	status = qlge_पढ़ो_xgmac_reg(qdev, TX_CFG, &data);
-	अगर (status)
-		जाओ end;
+	status = qlge_read_xgmac_reg(qdev, TX_CFG, &data);
+	if (status)
+		goto end;
 	data &= ~TX_CFG_RESET;	/* Clear the TX MAC reset. */
 	data |= TX_CFG_EN;	/* Enable the transmitter. */
-	status = qlge_ग_लिखो_xgmac_reg(qdev, TX_CFG, data);
-	अगर (status)
-		जाओ end;
+	status = qlge_write_xgmac_reg(qdev, TX_CFG, data);
+	if (status)
+		goto end;
 
 	/* Enable receiver and clear it's reset. */
-	status = qlge_पढ़ो_xgmac_reg(qdev, RX_CFG, &data);
-	अगर (status)
-		जाओ end;
+	status = qlge_read_xgmac_reg(qdev, RX_CFG, &data);
+	if (status)
+		goto end;
 	data &= ~RX_CFG_RESET;	/* Clear the RX MAC reset. */
 	data |= RX_CFG_EN;	/* Enable the receiver. */
-	status = qlge_ग_लिखो_xgmac_reg(qdev, RX_CFG, data);
-	अगर (status)
-		जाओ end;
+	status = qlge_write_xgmac_reg(qdev, RX_CFG, data);
+	if (status)
+		goto end;
 
 	/* Turn on jumbo. */
 	status =
-	    qlge_ग_लिखो_xgmac_reg(qdev, MAC_TX_PARAMS, MAC_TX_PARAMS_JUMBO | (0x2580 << 16));
-	अगर (status)
-		जाओ end;
+	    qlge_write_xgmac_reg(qdev, MAC_TX_PARAMS, MAC_TX_PARAMS_JUMBO | (0x2580 << 16));
+	if (status)
+		goto end;
 	status =
-	    qlge_ग_लिखो_xgmac_reg(qdev, MAC_RX_PARAMS, 0x2580);
-	अगर (status)
-		जाओ end;
+	    qlge_write_xgmac_reg(qdev, MAC_RX_PARAMS, 0x2580);
+	if (status)
+		goto end;
 
 	/* Signal to the world that the port is enabled.        */
-	qlge_ग_लिखो32(qdev, STS, ((qdev->port_init << 16) | qdev->port_init));
+	qlge_write32(qdev, STS, ((qdev->port_init << 16) | qdev->port_init));
 end:
 	qlge_sem_unlock(qdev, qdev->xg_sem_mask);
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक qlge_lbq_block_size(काष्ठा qlge_adapter *qdev)
-अणु
-	वापस PAGE_SIZE << qdev->lbq_buf_order;
-पूर्ण
+static inline unsigned int qlge_lbq_block_size(struct qlge_adapter *qdev)
+{
+	return PAGE_SIZE << qdev->lbq_buf_order;
+}
 
-अटल काष्ठा qlge_bq_desc *qlge_get_curr_buf(काष्ठा qlge_bq *bq)
-अणु
-	काष्ठा qlge_bq_desc *bq_desc;
+static struct qlge_bq_desc *qlge_get_curr_buf(struct qlge_bq *bq)
+{
+	struct qlge_bq_desc *bq_desc;
 
 	bq_desc = &bq->queue[bq->next_to_clean];
 	bq->next_to_clean = QLGE_BQ_WRAP(bq->next_to_clean + 1);
 
-	वापस bq_desc;
-पूर्ण
+	return bq_desc;
+}
 
-अटल काष्ठा qlge_bq_desc *qlge_get_curr_lchunk(काष्ठा qlge_adapter *qdev,
-						 काष्ठा rx_ring *rx_ring)
-अणु
-	काष्ठा qlge_bq_desc *lbq_desc = qlge_get_curr_buf(&rx_ring->lbq);
+static struct qlge_bq_desc *qlge_get_curr_lchunk(struct qlge_adapter *qdev,
+						 struct rx_ring *rx_ring)
+{
+	struct qlge_bq_desc *lbq_desc = qlge_get_curr_buf(&rx_ring->lbq);
 
-	dma_sync_single_क्रम_cpu(&qdev->pdev->dev, lbq_desc->dma_addr,
+	dma_sync_single_for_cpu(&qdev->pdev->dev, lbq_desc->dma_addr,
 				qdev->lbq_buf_size, DMA_FROM_DEVICE);
 
-	अगर ((lbq_desc->p.pg_chunk.offset + qdev->lbq_buf_size) ==
-	    qlge_lbq_block_size(qdev)) अणु
+	if ((lbq_desc->p.pg_chunk.offset + qdev->lbq_buf_size) ==
+	    qlge_lbq_block_size(qdev)) {
 		/* last chunk of the master page */
 		dma_unmap_page(&qdev->pdev->dev, lbq_desc->dma_addr,
 			       qlge_lbq_block_size(qdev), DMA_FROM_DEVICE);
-	पूर्ण
+	}
 
-	वापस lbq_desc;
-पूर्ण
+	return lbq_desc;
+}
 
 /* Update an rx ring index. */
-अटल व्योम qlge_update_cq(काष्ठा rx_ring *rx_ring)
-अणु
+static void qlge_update_cq(struct rx_ring *rx_ring)
+{
 	rx_ring->cnsmr_idx++;
 	rx_ring->curr_entry++;
-	अगर (unlikely(rx_ring->cnsmr_idx == rx_ring->cq_len)) अणु
+	if (unlikely(rx_ring->cnsmr_idx == rx_ring->cq_len)) {
 		rx_ring->cnsmr_idx = 0;
 		rx_ring->curr_entry = rx_ring->cq_base;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम qlge_ग_लिखो_cq_idx(काष्ठा rx_ring *rx_ring)
-अणु
-	qlge_ग_लिखो_db_reg(rx_ring->cnsmr_idx, rx_ring->cnsmr_idx_db_reg);
-पूर्ण
+static void qlge_write_cq_idx(struct rx_ring *rx_ring)
+{
+	qlge_write_db_reg(rx_ring->cnsmr_idx, rx_ring->cnsmr_idx_db_reg);
+}
 
-अटल स्थिर अक्षर * स्थिर bq_type_name[] = अणु
+static const char * const bq_type_name[] = {
 	[QLGE_SB] = "sbq",
 	[QLGE_LB] = "lbq",
-पूर्ण;
+};
 
-/* वापस 0 or negative error */
-अटल पूर्णांक qlge_refill_sb(काष्ठा rx_ring *rx_ring,
-			  काष्ठा qlge_bq_desc *sbq_desc, gfp_t gfp)
-अणु
-	काष्ठा qlge_adapter *qdev = rx_ring->qdev;
-	काष्ठा sk_buff *skb;
+/* return 0 or negative error */
+static int qlge_refill_sb(struct rx_ring *rx_ring,
+			  struct qlge_bq_desc *sbq_desc, gfp_t gfp)
+{
+	struct qlge_adapter *qdev = rx_ring->qdev;
+	struct sk_buff *skb;
 
-	अगर (sbq_desc->p.skb)
-		वापस 0;
+	if (sbq_desc->p.skb)
+		return 0;
 
-	netअगर_prपूर्णांकk(qdev, rx_status, KERN_DEBUG, qdev->ndev,
+	netif_printk(qdev, rx_status, KERN_DEBUG, qdev->ndev,
 		     "ring %u sbq: getting new skb for index %d.\n",
 		     rx_ring->cq_id, sbq_desc->index);
 
 	skb = __netdev_alloc_skb(qdev->ndev, SMALL_BUFFER_SIZE, gfp);
-	अगर (!skb)
-		वापस -ENOMEM;
+	if (!skb)
+		return -ENOMEM;
 	skb_reserve(skb, QLGE_SB_PAD);
 
 	sbq_desc->dma_addr = dma_map_single(&qdev->pdev->dev, skb->data,
 					    SMALL_BUF_MAP_SIZE,
 					    DMA_FROM_DEVICE);
-	अगर (dma_mapping_error(&qdev->pdev->dev, sbq_desc->dma_addr)) अणु
-		netअगर_err(qdev, अगरup, qdev->ndev, "PCI mapping failed.\n");
-		dev_kमुक्त_skb_any(skb);
-		वापस -EIO;
-	पूर्ण
+	if (dma_mapping_error(&qdev->pdev->dev, sbq_desc->dma_addr)) {
+		netif_err(qdev, ifup, qdev->ndev, "PCI mapping failed.\n");
+		dev_kfree_skb_any(skb);
+		return -EIO;
+	}
 	*sbq_desc->buf_ptr = cpu_to_le64(sbq_desc->dma_addr);
 
 	sbq_desc->p.skb = skb;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* वापस 0 or negative error */
-अटल पूर्णांक qlge_refill_lb(काष्ठा rx_ring *rx_ring,
-			  काष्ठा qlge_bq_desc *lbq_desc, gfp_t gfp)
-अणु
-	काष्ठा qlge_adapter *qdev = rx_ring->qdev;
-	काष्ठा qlge_page_chunk *master_chunk = &rx_ring->master_chunk;
+/* return 0 or negative error */
+static int qlge_refill_lb(struct rx_ring *rx_ring,
+			  struct qlge_bq_desc *lbq_desc, gfp_t gfp)
+{
+	struct qlge_adapter *qdev = rx_ring->qdev;
+	struct qlge_page_chunk *master_chunk = &rx_ring->master_chunk;
 
-	अगर (!master_chunk->page) अणु
-		काष्ठा page *page;
+	if (!master_chunk->page) {
+		struct page *page;
 		dma_addr_t dma_addr;
 
 		page = alloc_pages(gfp | __GFP_COMP, qdev->lbq_buf_order);
-		अगर (unlikely(!page))
-			वापस -ENOMEM;
+		if (unlikely(!page))
+			return -ENOMEM;
 		dma_addr = dma_map_page(&qdev->pdev->dev, page, 0,
 					qlge_lbq_block_size(qdev),
 					DMA_FROM_DEVICE);
-		अगर (dma_mapping_error(&qdev->pdev->dev, dma_addr)) अणु
-			__मुक्त_pages(page, qdev->lbq_buf_order);
-			netअगर_err(qdev, drv, qdev->ndev,
+		if (dma_mapping_error(&qdev->pdev->dev, dma_addr)) {
+			__free_pages(page, qdev->lbq_buf_order);
+			netif_err(qdev, drv, qdev->ndev,
 				  "PCI mapping failed.\n");
-			वापस -EIO;
-		पूर्ण
+			return -EIO;
+		}
 		master_chunk->page = page;
 		master_chunk->va = page_address(page);
 		master_chunk->offset = 0;
 		rx_ring->chunk_dma_addr = dma_addr;
-	पूर्ण
+	}
 
 	lbq_desc->p.pg_chunk = *master_chunk;
 	lbq_desc->dma_addr = rx_ring->chunk_dma_addr;
 	*lbq_desc->buf_ptr = cpu_to_le64(lbq_desc->dma_addr +
 					 lbq_desc->p.pg_chunk.offset);
 
-	/* Adjust the master page chunk क्रम next
+	/* Adjust the master page chunk for next
 	 * buffer get.
 	 */
 	master_chunk->offset += qdev->lbq_buf_size;
-	अगर (master_chunk->offset == qlge_lbq_block_size(qdev)) अणु
-		master_chunk->page = शून्य;
-	पूर्ण अन्यथा अणु
+	if (master_chunk->offset == qlge_lbq_block_size(qdev)) {
+		master_chunk->page = NULL;
+	} else {
 		master_chunk->va += qdev->lbq_buf_size;
 		get_page(master_chunk->page);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* वापस 0 or negative error */
-अटल पूर्णांक qlge_refill_bq(काष्ठा qlge_bq *bq, gfp_t gfp)
-अणु
-	काष्ठा rx_ring *rx_ring = QLGE_BQ_CONTAINER(bq);
-	काष्ठा qlge_adapter *qdev = rx_ring->qdev;
-	काष्ठा qlge_bq_desc *bq_desc;
-	पूर्णांक refill_count;
-	पूर्णांक retval;
-	पूर्णांक i;
+/* return 0 or negative error */
+static int qlge_refill_bq(struct qlge_bq *bq, gfp_t gfp)
+{
+	struct rx_ring *rx_ring = QLGE_BQ_CONTAINER(bq);
+	struct qlge_adapter *qdev = rx_ring->qdev;
+	struct qlge_bq_desc *bq_desc;
+	int refill_count;
+	int retval;
+	int i;
 
 	refill_count = QLGE_BQ_WRAP(QLGE_BQ_ALIGN(bq->next_to_clean - 1) -
 				    bq->next_to_use);
-	अगर (!refill_count)
-		वापस 0;
+	if (!refill_count)
+		return 0;
 
 	i = bq->next_to_use;
 	bq_desc = &bq->queue[i];
 	i -= QLGE_BQ_LEN;
-	करो अणु
-		netअगर_prपूर्णांकk(qdev, rx_status, KERN_DEBUG, qdev->ndev,
+	do {
+		netif_printk(qdev, rx_status, KERN_DEBUG, qdev->ndev,
 			     "ring %u %s: try cleaning idx %d\n",
 			     rx_ring->cq_id, bq_type_name[bq->type], i);
 
-		अगर (bq->type == QLGE_SB)
+		if (bq->type == QLGE_SB)
 			retval = qlge_refill_sb(rx_ring, bq_desc, gfp);
-		अन्यथा
+		else
 			retval = qlge_refill_lb(rx_ring, bq_desc, gfp);
-		अगर (retval < 0) अणु
-			netअगर_err(qdev, अगरup, qdev->ndev,
+		if (retval < 0) {
+			netif_err(qdev, ifup, qdev->ndev,
 				  "ring %u %s: Could not get a page chunk, idx %d\n",
 				  rx_ring->cq_id, bq_type_name[bq->type], i);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		bq_desc++;
 		i++;
-		अगर (unlikely(!i)) अणु
+		if (unlikely(!i)) {
 			bq_desc = &bq->queue[0];
 			i -= QLGE_BQ_LEN;
-		पूर्ण
+		}
 		refill_count--;
-	पूर्ण जबतक (refill_count);
+	} while (refill_count);
 	i += QLGE_BQ_LEN;
 
-	अगर (bq->next_to_use != i) अणु
-		अगर (QLGE_BQ_ALIGN(bq->next_to_use) != QLGE_BQ_ALIGN(i)) अणु
-			netअगर_prपूर्णांकk(qdev, rx_status, KERN_DEBUG, qdev->ndev,
+	if (bq->next_to_use != i) {
+		if (QLGE_BQ_ALIGN(bq->next_to_use) != QLGE_BQ_ALIGN(i)) {
+			netif_printk(qdev, rx_status, KERN_DEBUG, qdev->ndev,
 				     "ring %u %s: updating prod idx = %d.\n",
 				     rx_ring->cq_id, bq_type_name[bq->type],
 				     i);
-			qlge_ग_लिखो_db_reg(i, bq->prod_idx_db_reg);
-		पूर्ण
+			qlge_write_db_reg(i, bq->prod_idx_db_reg);
+		}
 		bq->next_to_use = i;
-	पूर्ण
+	}
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल व्योम qlge_update_buffer_queues(काष्ठा rx_ring *rx_ring, gfp_t gfp,
-				      अचिन्हित दीर्घ delay)
-अणु
+static void qlge_update_buffer_queues(struct rx_ring *rx_ring, gfp_t gfp,
+				      unsigned long delay)
+{
 	bool sbq_fail, lbq_fail;
 
 	sbq_fail = !!qlge_refill_bq(&rx_ring->sbq, gfp);
 	lbq_fail = !!qlge_refill_bq(&rx_ring->lbq, gfp);
 
 	/* Minimum number of buffers needed to be able to receive at least one
-	 * frame of any क्रमmat:
-	 * sbq: 1 क्रम header + 1 क्रम data
+	 * frame of any format:
+	 * sbq: 1 for header + 1 for data
 	 * lbq: mtu 9000 / lb size
 	 * Below this, the queue might stall.
 	 */
-	अगर ((sbq_fail && QLGE_BQ_HW_OWNED(&rx_ring->sbq) < 2) ||
+	if ((sbq_fail && QLGE_BQ_HW_OWNED(&rx_ring->sbq) < 2) ||
 	    (lbq_fail && QLGE_BQ_HW_OWNED(&rx_ring->lbq) <
 	     DIV_ROUND_UP(9000, LARGE_BUFFER_MAX_SIZE)))
-		/* Allocations can take a दीर्घ समय in certain हालs (ex.
-		 * reclaim). Thereक्रमe, use a workqueue क्रम दीर्घ-running
+		/* Allocations can take a long time in certain cases (ex.
+		 * reclaim). Therefore, use a workqueue for long-running
 		 * work items.
 		 */
-		queue_delayed_work_on(smp_processor_id(), प्रणाली_दीर्घ_wq,
+		queue_delayed_work_on(smp_processor_id(), system_long_wq,
 				      &rx_ring->refill_work, delay);
-पूर्ण
+}
 
-अटल व्योम qlge_slow_refill(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा rx_ring *rx_ring = container_of(work, काष्ठा rx_ring,
+static void qlge_slow_refill(struct work_struct *work)
+{
+	struct rx_ring *rx_ring = container_of(work, struct rx_ring,
 					       refill_work.work);
-	काष्ठा napi_काष्ठा *napi = &rx_ring->napi;
+	struct napi_struct *napi = &rx_ring->napi;
 
 	napi_disable(napi);
 	qlge_update_buffer_queues(rx_ring, GFP_KERNEL, HZ / 2);
@@ -1184,79 +1183,79 @@ end:
 	napi_schedule(napi);
 	/* trigger softirq processing */
 	local_bh_enable();
-पूर्ण
+}
 
-/* Unmaps tx buffers.  Can be called from send() अगर a pci mapping
- * fails at some stage, or from the पूर्णांकerrupt when a tx completes.
+/* Unmaps tx buffers.  Can be called from send() if a pci mapping
+ * fails at some stage, or from the interrupt when a tx completes.
  */
-अटल व्योम qlge_unmap_send(काष्ठा qlge_adapter *qdev,
-			    काष्ठा tx_ring_desc *tx_ring_desc, पूर्णांक mapped)
-अणु
-	पूर्णांक i;
+static void qlge_unmap_send(struct qlge_adapter *qdev,
+			    struct tx_ring_desc *tx_ring_desc, int mapped)
+{
+	int i;
 
-	क्रम (i = 0; i < mapped; i++) अणु
-		अगर (i == 0 || (i == 7 && mapped > 7)) अणु
+	for (i = 0; i < mapped; i++) {
+		if (i == 0 || (i == 7 && mapped > 7)) {
 			/*
 			 * Unmap the skb->data area, or the
-			 * बाह्यal sglist (AKA the Outbound
+			 * external sglist (AKA the Outbound
 			 * Address List (OAL)).
 			 * If its the zeroeth element, then it's
 			 * the skb->data area.  If it's the 7th
 			 * element and there is more than 6 frags,
 			 * then its an OAL.
 			 */
-			अगर (i == 7) अणु
-				netअगर_prपूर्णांकk(qdev, tx_करोne, KERN_DEBUG,
+			if (i == 7) {
+				netif_printk(qdev, tx_done, KERN_DEBUG,
 					     qdev->ndev,
 					     "unmapping OAL area.\n");
-			पूर्ण
+			}
 			dma_unmap_single(&qdev->pdev->dev,
 					 dma_unmap_addr(&tx_ring_desc->map[i],
 							mapaddr),
 					 dma_unmap_len(&tx_ring_desc->map[i],
 						       maplen),
 					 DMA_TO_DEVICE);
-		पूर्ण अन्यथा अणु
-			netअगर_prपूर्णांकk(qdev, tx_करोne, KERN_DEBUG, qdev->ndev,
+		} else {
+			netif_printk(qdev, tx_done, KERN_DEBUG, qdev->ndev,
 				     "unmapping frag %d.\n", i);
 			dma_unmap_page(&qdev->pdev->dev,
 				       dma_unmap_addr(&tx_ring_desc->map[i],
 						      mapaddr),
 				       dma_unmap_len(&tx_ring_desc->map[i],
 						     maplen), DMA_TO_DEVICE);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-/* Map the buffers क्रम this transmit.  This will वापस
+/* Map the buffers for this transmit.  This will return
  * NETDEV_TX_BUSY or NETDEV_TX_OK based on success.
  */
-अटल पूर्णांक qlge_map_send(काष्ठा qlge_adapter *qdev,
-			 काष्ठा qlge_ob_mac_iocb_req *mac_iocb_ptr,
-			 काष्ठा sk_buff *skb, काष्ठा tx_ring_desc *tx_ring_desc)
-अणु
-	पूर्णांक len = skb_headlen(skb);
+static int qlge_map_send(struct qlge_adapter *qdev,
+			 struct qlge_ob_mac_iocb_req *mac_iocb_ptr,
+			 struct sk_buff *skb, struct tx_ring_desc *tx_ring_desc)
+{
+	int len = skb_headlen(skb);
 	dma_addr_t map;
-	पूर्णांक frag_idx, err, map_idx = 0;
-	काष्ठा tx_buf_desc *tbd = mac_iocb_ptr->tbd;
-	पूर्णांक frag_cnt = skb_shinfo(skb)->nr_frags;
+	int frag_idx, err, map_idx = 0;
+	struct tx_buf_desc *tbd = mac_iocb_ptr->tbd;
+	int frag_cnt = skb_shinfo(skb)->nr_frags;
 
-	अगर (frag_cnt) अणु
-		netअगर_prपूर्णांकk(qdev, tx_queued, KERN_DEBUG, qdev->ndev,
+	if (frag_cnt) {
+		netif_printk(qdev, tx_queued, KERN_DEBUG, qdev->ndev,
 			     "frag_cnt = %d.\n", frag_cnt);
-	पूर्ण
+	}
 	/*
 	 * Map the skb buffer first.
 	 */
 	map = dma_map_single(&qdev->pdev->dev, skb->data, len, DMA_TO_DEVICE);
 
 	err = dma_mapping_error(&qdev->pdev->dev, map);
-	अगर (err) अणु
-		netअगर_err(qdev, tx_queued, qdev->ndev,
+	if (err) {
+		netif_err(qdev, tx_queued, qdev->ndev,
 			  "PCI mapping failed with error: %d\n", err);
 
-		वापस NETDEV_TX_BUSY;
-	पूर्ण
+		return NETDEV_TX_BUSY;
+	}
 
 	tbd->len = cpu_to_le32(len);
 	tbd->addr = cpu_to_le64(map);
@@ -1265,17 +1264,17 @@ end:
 	map_idx++;
 
 	/*
-	 * This loop fills the reमुख्यder of the 8 address descriptors
+	 * This loop fills the remainder of the 8 address descriptors
 	 * in the IOCB.  If there are more than 7 fragments, then the
-	 * eighth address desc will poपूर्णांक to an बाह्यal list (OAL).
-	 * When this happens, the reमुख्यder of the frags will be stored
+	 * eighth address desc will point to an external list (OAL).
+	 * When this happens, the remainder of the frags will be stored
 	 * in this list.
 	 */
-	क्रम (frag_idx = 0; frag_idx < frag_cnt; frag_idx++, map_idx++) अणु
+	for (frag_idx = 0; frag_idx < frag_cnt; frag_idx++, map_idx++) {
 		skb_frag_t *frag = &skb_shinfo(skb)->frags[frag_idx];
 
 		tbd++;
-		अगर (frag_idx == 6 && frag_cnt > 7) अणु
+		if (frag_idx == 6 && frag_cnt > 7) {
 			/* Let's tack on an sglist.
 			 * Our control block will now
 			 * look like this:
@@ -1286,7 +1285,7 @@ end:
 			 * iocb->seg[4] = frag[3]
 			 * iocb->seg[5] = frag[4]
 			 * iocb->seg[6] = frag[5]
-			 * iocb->seg[7] = ptr to OAL (बाह्यal sglist)
+			 * iocb->seg[7] = ptr to OAL (external sglist)
 			 * oal->seg[0] = frag[6]
 			 * oal->seg[1] = frag[7]
 			 * oal->seg[2] = frag[8]
@@ -1296,55 +1295,55 @@ end:
 			 */
 			/* Tack on the OAL in the eighth segment of IOCB. */
 			map = dma_map_single(&qdev->pdev->dev, &tx_ring_desc->oal,
-					     माप(काष्ठा qlge_oal),
+					     sizeof(struct qlge_oal),
 					     DMA_TO_DEVICE);
 			err = dma_mapping_error(&qdev->pdev->dev, map);
-			अगर (err) अणु
-				netअगर_err(qdev, tx_queued, qdev->ndev,
+			if (err) {
+				netif_err(qdev, tx_queued, qdev->ndev,
 					  "PCI mapping outbound address list with error: %d\n",
 					  err);
-				जाओ map_error;
-			पूर्ण
+				goto map_error;
+			}
 
 			tbd->addr = cpu_to_le64(map);
 			/*
 			 * The length is the number of fragments
-			 * that reमुख्य to be mapped बार the length
+			 * that remain to be mapped times the length
 			 * of our sglist (OAL).
 			 */
 			tbd->len =
-			    cpu_to_le32((माप(काष्ठा tx_buf_desc) *
+			    cpu_to_le32((sizeof(struct tx_buf_desc) *
 					 (frag_cnt - frag_idx)) | TX_DESC_C);
 			dma_unmap_addr_set(&tx_ring_desc->map[map_idx], mapaddr,
 					   map);
 			dma_unmap_len_set(&tx_ring_desc->map[map_idx], maplen,
-					  माप(काष्ठा qlge_oal));
-			tbd = (काष्ठा tx_buf_desc *)&tx_ring_desc->oal;
+					  sizeof(struct qlge_oal));
+			tbd = (struct tx_buf_desc *)&tx_ring_desc->oal;
 			map_idx++;
-		पूर्ण
+		}
 
 		map = skb_frag_dma_map(&qdev->pdev->dev, frag, 0, skb_frag_size(frag),
 				       DMA_TO_DEVICE);
 
 		err = dma_mapping_error(&qdev->pdev->dev, map);
-		अगर (err) अणु
-			netअगर_err(qdev, tx_queued, qdev->ndev,
+		if (err) {
+			netif_err(qdev, tx_queued, qdev->ndev,
 				  "PCI mapping frags failed with error: %d.\n",
 				  err);
-			जाओ map_error;
-		पूर्ण
+			goto map_error;
+		}
 
 		tbd->addr = cpu_to_le64(map);
 		tbd->len = cpu_to_le32(skb_frag_size(frag));
 		dma_unmap_addr_set(&tx_ring_desc->map[map_idx], mapaddr, map);
 		dma_unmap_len_set(&tx_ring_desc->map[map_idx], maplen,
 				  skb_frag_size(frag));
-	पूर्ण
+	}
 	/* Save the number of segments we've mapped. */
 	tx_ring_desc->map_cnt = map_idx;
 	/* Terminate the last segment. */
 	tbd->len = cpu_to_le32(le32_to_cpu(tbd->len) | TX_DESC_E);
-	वापस NETDEV_TX_OK;
+	return NETDEV_TX_OK;
 
 map_error:
 	/*
@@ -1354,91 +1353,91 @@ map_error:
 	 * so they can be umapped.
 	 */
 	qlge_unmap_send(qdev, tx_ring_desc, map_idx);
-	वापस NETDEV_TX_BUSY;
-पूर्ण
+	return NETDEV_TX_BUSY;
+}
 
 /* Categorizing receive firmware frame errors */
-अटल व्योम qlge_categorize_rx_err(काष्ठा qlge_adapter *qdev, u8 rx_err,
-				   काष्ठा rx_ring *rx_ring)
-अणु
-	काष्ठा nic_stats *stats = &qdev->nic_stats;
+static void qlge_categorize_rx_err(struct qlge_adapter *qdev, u8 rx_err,
+				   struct rx_ring *rx_ring)
+{
+	struct nic_stats *stats = &qdev->nic_stats;
 
 	stats->rx_err_count++;
 	rx_ring->rx_errors++;
 
-	चयन (rx_err & IB_MAC_IOCB_RSP_ERR_MASK) अणु
-	हाल IB_MAC_IOCB_RSP_ERR_CODE_ERR:
+	switch (rx_err & IB_MAC_IOCB_RSP_ERR_MASK) {
+	case IB_MAC_IOCB_RSP_ERR_CODE_ERR:
 		stats->rx_code_err++;
-		अवरोध;
-	हाल IB_MAC_IOCB_RSP_ERR_OVERSIZE:
+		break;
+	case IB_MAC_IOCB_RSP_ERR_OVERSIZE:
 		stats->rx_oversize_err++;
-		अवरोध;
-	हाल IB_MAC_IOCB_RSP_ERR_UNDERSIZE:
+		break;
+	case IB_MAC_IOCB_RSP_ERR_UNDERSIZE:
 		stats->rx_undersize_err++;
-		अवरोध;
-	हाल IB_MAC_IOCB_RSP_ERR_PREAMBLE:
+		break;
+	case IB_MAC_IOCB_RSP_ERR_PREAMBLE:
 		stats->rx_preamble_err++;
-		अवरोध;
-	हाल IB_MAC_IOCB_RSP_ERR_FRAME_LEN:
+		break;
+	case IB_MAC_IOCB_RSP_ERR_FRAME_LEN:
 		stats->rx_frame_len_err++;
-		अवरोध;
-	हाल IB_MAC_IOCB_RSP_ERR_CRC:
+		break;
+	case IB_MAC_IOCB_RSP_ERR_CRC:
 		stats->rx_crc_err++;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 
 /**
  * qlge_update_mac_hdr_len - helper routine to update the mac header length
- * based on vlan tags अगर present
+ * based on vlan tags if present
  */
-अटल व्योम qlge_update_mac_hdr_len(काष्ठा qlge_adapter *qdev,
-				    काष्ठा qlge_ib_mac_iocb_rsp *ib_mac_rsp,
-				    व्योम *page, माप_प्रकार *len)
-अणु
+static void qlge_update_mac_hdr_len(struct qlge_adapter *qdev,
+				    struct qlge_ib_mac_iocb_rsp *ib_mac_rsp,
+				    void *page, size_t *len)
+{
 	u16 *tags;
 
-	अगर (qdev->ndev->features & NETIF_F_HW_VLAN_CTAG_RX)
-		वापस;
-	अगर (ib_mac_rsp->flags2 & IB_MAC_IOCB_RSP_V) अणु
+	if (qdev->ndev->features & NETIF_F_HW_VLAN_CTAG_RX)
+		return;
+	if (ib_mac_rsp->flags2 & IB_MAC_IOCB_RSP_V) {
 		tags = (u16 *)page;
-		/* Look क्रम stacked vlan tags in ethertype field */
-		अगर (tags[6] == ETH_P_8021Q &&
+		/* Look for stacked vlan tags in ethertype field */
+		if (tags[6] == ETH_P_8021Q &&
 		    tags[8] == ETH_P_8021Q)
 			*len += 2 * VLAN_HLEN;
-		अन्यथा
+		else
 			*len += VLAN_HLEN;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* Process an inbound completion from an rx ring. */
-अटल व्योम qlge_process_mac_rx_gro_page(काष्ठा qlge_adapter *qdev,
-					 काष्ठा rx_ring *rx_ring,
-					 काष्ठा qlge_ib_mac_iocb_rsp *ib_mac_rsp,
+static void qlge_process_mac_rx_gro_page(struct qlge_adapter *qdev,
+					 struct rx_ring *rx_ring,
+					 struct qlge_ib_mac_iocb_rsp *ib_mac_rsp,
 					 u32 length, u16 vlan_id)
-अणु
-	काष्ठा sk_buff *skb;
-	काष्ठा qlge_bq_desc *lbq_desc = qlge_get_curr_lchunk(qdev, rx_ring);
-	काष्ठा napi_काष्ठा *napi = &rx_ring->napi;
+{
+	struct sk_buff *skb;
+	struct qlge_bq_desc *lbq_desc = qlge_get_curr_lchunk(qdev, rx_ring);
+	struct napi_struct *napi = &rx_ring->napi;
 
 	/* Frame error, so drop the packet. */
-	अगर (ib_mac_rsp->flags2 & IB_MAC_IOCB_RSP_ERR_MASK) अणु
+	if (ib_mac_rsp->flags2 & IB_MAC_IOCB_RSP_ERR_MASK) {
 		qlge_categorize_rx_err(qdev, ib_mac_rsp->flags2, rx_ring);
 		put_page(lbq_desc->p.pg_chunk.page);
-		वापस;
-	पूर्ण
+		return;
+	}
 	napi->dev = qdev->ndev;
 
 	skb = napi_get_frags(napi);
-	अगर (!skb) अणु
-		netअगर_err(qdev, drv, qdev->ndev,
+	if (!skb) {
+		netif_err(qdev, drv, qdev->ndev,
 			  "Couldn't get an skb, exiting.\n");
 		rx_ring->rx_dropped++;
 		put_page(lbq_desc->p.pg_chunk.page);
-		वापस;
-	पूर्ण
+		return;
+	}
 	prefetch(lbq_desc->p.pg_chunk.va);
 	__skb_fill_page_desc(skb, skb_shinfo(skb)->nr_frags,
 			     lbq_desc->p.pg_chunk.page,
@@ -1454,39 +1453,39 @@ map_error:
 	rx_ring->rx_bytes += length;
 	skb->ip_summed = CHECKSUM_UNNECESSARY;
 	skb_record_rx_queue(skb, rx_ring->cq_id);
-	अगर (vlan_id != 0xffff)
+	if (vlan_id != 0xffff)
 		__vlan_hwaccel_put_tag(skb, htons(ETH_P_8021Q), vlan_id);
 	napi_gro_frags(napi);
-पूर्ण
+}
 
 /* Process an inbound completion from an rx ring. */
-अटल व्योम qlge_process_mac_rx_page(काष्ठा qlge_adapter *qdev,
-				     काष्ठा rx_ring *rx_ring,
-				     काष्ठा qlge_ib_mac_iocb_rsp *ib_mac_rsp,
+static void qlge_process_mac_rx_page(struct qlge_adapter *qdev,
+				     struct rx_ring *rx_ring,
+				     struct qlge_ib_mac_iocb_rsp *ib_mac_rsp,
 				     u32 length, u16 vlan_id)
-अणु
-	काष्ठा net_device *ndev = qdev->ndev;
-	काष्ठा sk_buff *skb = शून्य;
-	व्योम *addr;
-	काष्ठा qlge_bq_desc *lbq_desc = qlge_get_curr_lchunk(qdev, rx_ring);
-	काष्ठा napi_काष्ठा *napi = &rx_ring->napi;
-	माप_प्रकार hlen = ETH_HLEN;
+{
+	struct net_device *ndev = qdev->ndev;
+	struct sk_buff *skb = NULL;
+	void *addr;
+	struct qlge_bq_desc *lbq_desc = qlge_get_curr_lchunk(qdev, rx_ring);
+	struct napi_struct *napi = &rx_ring->napi;
+	size_t hlen = ETH_HLEN;
 
 	skb = netdev_alloc_skb(ndev, length);
-	अगर (!skb) अणु
+	if (!skb) {
 		rx_ring->rx_dropped++;
 		put_page(lbq_desc->p.pg_chunk.page);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	addr = lbq_desc->p.pg_chunk.va;
 	prefetch(addr);
 
 	/* Frame error, so drop the packet. */
-	अगर (ib_mac_rsp->flags2 & IB_MAC_IOCB_RSP_ERR_MASK) अणु
+	if (ib_mac_rsp->flags2 & IB_MAC_IOCB_RSP_ERR_MASK) {
 		qlge_categorize_rx_err(qdev, ib_mac_rsp->flags2, rx_ring);
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 
 	/* Update the MAC header length*/
 	qlge_update_mac_hdr_len(qdev, ib_mac_rsp, addr, &hlen);
@@ -1494,14 +1493,14 @@ map_error:
 	/* The max framesize filter on this chip is set higher than
 	 * MTU since FCoE uses 2k frames.
 	 */
-	अगर (skb->len > ndev->mtu + hlen) अणु
-		netअगर_err(qdev, drv, qdev->ndev,
+	if (skb->len > ndev->mtu + hlen) {
+		netif_err(qdev, drv, qdev->ndev,
 			  "Segment too small, dropping.\n");
 		rx_ring->rx_dropped++;
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 	skb_put_data(skb, addr, hlen);
-	netअगर_prपूर्णांकk(qdev, rx_status, KERN_DEBUG, qdev->ndev,
+	netif_printk(qdev, rx_status, KERN_DEBUG, qdev->ndev,
 		     "%d bytes of headers and data in large. Chain page to new skb and pull tail.\n",
 		     length);
 	skb_fill_page_desc(skb, 0, lbq_desc->p.pg_chunk.page,
@@ -1513,63 +1512,63 @@ map_error:
 	rx_ring->rx_packets++;
 	rx_ring->rx_bytes += skb->len;
 	skb->protocol = eth_type_trans(skb, ndev);
-	skb_checksum_none_निश्चित(skb);
+	skb_checksum_none_assert(skb);
 
-	अगर ((ndev->features & NETIF_F_RXCSUM) &&
-	    !(ib_mac_rsp->flags1 & IB_MAC_CSUM_ERR_MASK)) अणु
+	if ((ndev->features & NETIF_F_RXCSUM) &&
+	    !(ib_mac_rsp->flags1 & IB_MAC_CSUM_ERR_MASK)) {
 		/* TCP frame. */
-		अगर (ib_mac_rsp->flags2 & IB_MAC_IOCB_RSP_T) अणु
-			netअगर_prपूर्णांकk(qdev, rx_status, KERN_DEBUG, qdev->ndev,
+		if (ib_mac_rsp->flags2 & IB_MAC_IOCB_RSP_T) {
+			netif_printk(qdev, rx_status, KERN_DEBUG, qdev->ndev,
 				     "TCP checksum done!\n");
 			skb->ip_summed = CHECKSUM_UNNECESSARY;
-		पूर्ण अन्यथा अगर ((ib_mac_rsp->flags2 & IB_MAC_IOCB_RSP_U) &&
-			   (ib_mac_rsp->flags3 & IB_MAC_IOCB_RSP_V4)) अणु
+		} else if ((ib_mac_rsp->flags2 & IB_MAC_IOCB_RSP_U) &&
+			   (ib_mac_rsp->flags3 & IB_MAC_IOCB_RSP_V4)) {
 			/* Unfragmented ipv4 UDP frame. */
-			काष्ठा iphdr *iph =
-				(काष्ठा iphdr *)((u8 *)addr + hlen);
-			अगर (!(iph->frag_off &
-			      htons(IP_MF | IP_OFFSET))) अणु
+			struct iphdr *iph =
+				(struct iphdr *)((u8 *)addr + hlen);
+			if (!(iph->frag_off &
+			      htons(IP_MF | IP_OFFSET))) {
 				skb->ip_summed = CHECKSUM_UNNECESSARY;
-				netअगर_prपूर्णांकk(qdev, rx_status, KERN_DEBUG,
+				netif_printk(qdev, rx_status, KERN_DEBUG,
 					     qdev->ndev,
 					     "UDP checksum done!\n");
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 	skb_record_rx_queue(skb, rx_ring->cq_id);
-	अगर (vlan_id != 0xffff)
+	if (vlan_id != 0xffff)
 		__vlan_hwaccel_put_tag(skb, htons(ETH_P_8021Q), vlan_id);
-	अगर (skb->ip_summed == CHECKSUM_UNNECESSARY)
+	if (skb->ip_summed == CHECKSUM_UNNECESSARY)
 		napi_gro_receive(napi, skb);
-	अन्यथा
-		netअगर_receive_skb(skb);
-	वापस;
+	else
+		netif_receive_skb(skb);
+	return;
 err_out:
-	dev_kमुक्त_skb_any(skb);
+	dev_kfree_skb_any(skb);
 	put_page(lbq_desc->p.pg_chunk.page);
-पूर्ण
+}
 
 /* Process an inbound completion from an rx ring. */
-अटल व्योम qlge_process_mac_rx_skb(काष्ठा qlge_adapter *qdev,
-				    काष्ठा rx_ring *rx_ring,
-				    काष्ठा qlge_ib_mac_iocb_rsp *ib_mac_rsp,
+static void qlge_process_mac_rx_skb(struct qlge_adapter *qdev,
+				    struct rx_ring *rx_ring,
+				    struct qlge_ib_mac_iocb_rsp *ib_mac_rsp,
 				    u32 length, u16 vlan_id)
-अणु
-	काष्ठा qlge_bq_desc *sbq_desc = qlge_get_curr_buf(&rx_ring->sbq);
-	काष्ठा net_device *ndev = qdev->ndev;
-	काष्ठा sk_buff *skb, *new_skb;
+{
+	struct qlge_bq_desc *sbq_desc = qlge_get_curr_buf(&rx_ring->sbq);
+	struct net_device *ndev = qdev->ndev;
+	struct sk_buff *skb, *new_skb;
 
 	skb = sbq_desc->p.skb;
 	/* Allocate new_skb and copy */
 	new_skb = netdev_alloc_skb(qdev->ndev, length + NET_IP_ALIGN);
-	अगर (!new_skb) अणु
+	if (!new_skb) {
 		rx_ring->rx_dropped++;
-		वापस;
-	पूर्ण
+		return;
+	}
 	skb_reserve(new_skb, NET_IP_ALIGN);
 
-	dma_sync_single_क्रम_cpu(&qdev->pdev->dev, sbq_desc->dma_addr,
+	dma_sync_single_for_cpu(&qdev->pdev->dev, sbq_desc->dma_addr,
 				SMALL_BUF_MAP_SIZE, DMA_FROM_DEVICE);
 
 	skb_put_data(new_skb, skb->data, length);
@@ -1577,31 +1576,31 @@ err_out:
 	skb = new_skb;
 
 	/* Frame error, so drop the packet. */
-	अगर (ib_mac_rsp->flags2 & IB_MAC_IOCB_RSP_ERR_MASK) अणु
+	if (ib_mac_rsp->flags2 & IB_MAC_IOCB_RSP_ERR_MASK) {
 		qlge_categorize_rx_err(qdev, ib_mac_rsp->flags2, rx_ring);
-		dev_kमुक्त_skb_any(skb);
-		वापस;
-	पूर्ण
+		dev_kfree_skb_any(skb);
+		return;
+	}
 
-	/* loopback self test क्रम ethtool */
-	अगर (test_bit(QL_SELFTEST, &qdev->flags)) अणु
+	/* loopback self test for ethtool */
+	if (test_bit(QL_SELFTEST, &qdev->flags)) {
 		qlge_check_lb_frame(qdev, skb);
-		dev_kमुक्त_skb_any(skb);
-		वापस;
-	पूर्ण
+		dev_kfree_skb_any(skb);
+		return;
+	}
 
 	/* The max framesize filter on this chip is set higher than
 	 * MTU since FCoE uses 2k frames.
 	 */
-	अगर (skb->len > ndev->mtu + ETH_HLEN) अणु
-		dev_kमुक्त_skb_any(skb);
+	if (skb->len > ndev->mtu + ETH_HLEN) {
+		dev_kfree_skb_any(skb);
 		rx_ring->rx_dropped++;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	prefetch(skb->data);
-	अगर (ib_mac_rsp->flags1 & IB_MAC_IOCB_RSP_M_MASK) अणु
-		netअगर_prपूर्णांकk(qdev, rx_status, KERN_DEBUG, qdev->ndev,
+	if (ib_mac_rsp->flags1 & IB_MAC_IOCB_RSP_M_MASK) {
+		netif_printk(qdev, rx_status, KERN_DEBUG, qdev->ndev,
 			     "%s Multicast.\n",
 			     (ib_mac_rsp->flags1 & IB_MAC_IOCB_RSP_M_MASK) ==
 			     IB_MAC_IOCB_RSP_M_HASH ? "Hash" :
@@ -1609,87 +1608,87 @@ err_out:
 			     IB_MAC_IOCB_RSP_M_REG ? "Registered" :
 			     (ib_mac_rsp->flags1 & IB_MAC_IOCB_RSP_M_MASK) ==
 			     IB_MAC_IOCB_RSP_M_PROM ? "Promiscuous" : "");
-	पूर्ण
-	अगर (ib_mac_rsp->flags2 & IB_MAC_IOCB_RSP_P)
-		netअगर_prपूर्णांकk(qdev, rx_status, KERN_DEBUG, qdev->ndev,
+	}
+	if (ib_mac_rsp->flags2 & IB_MAC_IOCB_RSP_P)
+		netif_printk(qdev, rx_status, KERN_DEBUG, qdev->ndev,
 			     "Promiscuous Packet.\n");
 
 	rx_ring->rx_packets++;
 	rx_ring->rx_bytes += skb->len;
 	skb->protocol = eth_type_trans(skb, ndev);
-	skb_checksum_none_निश्चित(skb);
+	skb_checksum_none_assert(skb);
 
 	/* If rx checksum is on, and there are no
 	 * csum or frame errors.
 	 */
-	अगर ((ndev->features & NETIF_F_RXCSUM) &&
-	    !(ib_mac_rsp->flags1 & IB_MAC_CSUM_ERR_MASK)) अणु
+	if ((ndev->features & NETIF_F_RXCSUM) &&
+	    !(ib_mac_rsp->flags1 & IB_MAC_CSUM_ERR_MASK)) {
 		/* TCP frame. */
-		अगर (ib_mac_rsp->flags2 & IB_MAC_IOCB_RSP_T) अणु
-			netअगर_prपूर्णांकk(qdev, rx_status, KERN_DEBUG, qdev->ndev,
+		if (ib_mac_rsp->flags2 & IB_MAC_IOCB_RSP_T) {
+			netif_printk(qdev, rx_status, KERN_DEBUG, qdev->ndev,
 				     "TCP checksum done!\n");
 			skb->ip_summed = CHECKSUM_UNNECESSARY;
-		पूर्ण अन्यथा अगर ((ib_mac_rsp->flags2 & IB_MAC_IOCB_RSP_U) &&
-			   (ib_mac_rsp->flags3 & IB_MAC_IOCB_RSP_V4)) अणु
+		} else if ((ib_mac_rsp->flags2 & IB_MAC_IOCB_RSP_U) &&
+			   (ib_mac_rsp->flags3 & IB_MAC_IOCB_RSP_V4)) {
 			/* Unfragmented ipv4 UDP frame. */
-			काष्ठा iphdr *iph = (काष्ठा iphdr *)skb->data;
+			struct iphdr *iph = (struct iphdr *)skb->data;
 
-			अगर (!(iph->frag_off &
-			      htons(IP_MF | IP_OFFSET))) अणु
+			if (!(iph->frag_off &
+			      htons(IP_MF | IP_OFFSET))) {
 				skb->ip_summed = CHECKSUM_UNNECESSARY;
-				netअगर_prपूर्णांकk(qdev, rx_status, KERN_DEBUG,
+				netif_printk(qdev, rx_status, KERN_DEBUG,
 					     qdev->ndev,
 					     "UDP checksum done!\n");
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 	skb_record_rx_queue(skb, rx_ring->cq_id);
-	अगर (vlan_id != 0xffff)
+	if (vlan_id != 0xffff)
 		__vlan_hwaccel_put_tag(skb, htons(ETH_P_8021Q), vlan_id);
-	अगर (skb->ip_summed == CHECKSUM_UNNECESSARY)
+	if (skb->ip_summed == CHECKSUM_UNNECESSARY)
 		napi_gro_receive(&rx_ring->napi, skb);
-	अन्यथा
-		netअगर_receive_skb(skb);
-पूर्ण
+	else
+		netif_receive_skb(skb);
+}
 
-अटल व्योम qlge_realign_skb(काष्ठा sk_buff *skb, पूर्णांक len)
-अणु
-	व्योम *temp_addr = skb->data;
+static void qlge_realign_skb(struct sk_buff *skb, int len)
+{
+	void *temp_addr = skb->data;
 
-	/* Unकरो the skb_reserve(skb,32) we did beक्रमe
+	/* Undo the skb_reserve(skb,32) we did before
 	 * giving to hardware, and realign data on
 	 * a 2-byte boundary.
 	 */
 	skb->data -= QLGE_SB_PAD - NET_IP_ALIGN;
 	skb->tail -= QLGE_SB_PAD - NET_IP_ALIGN;
-	स_हटाओ(skb->data, temp_addr, len);
-पूर्ण
+	memmove(skb->data, temp_addr, len);
+}
 
 /*
- * This function builds an skb क्रम the given inbound
- * completion.  It will be rewritten क्रम पढ़ोability in the near
- * future, but क्रम not it works well.
+ * This function builds an skb for the given inbound
+ * completion.  It will be rewritten for readability in the near
+ * future, but for not it works well.
  */
-अटल काष्ठा sk_buff *qlge_build_rx_skb(काष्ठा qlge_adapter *qdev,
-					 काष्ठा rx_ring *rx_ring,
-					 काष्ठा qlge_ib_mac_iocb_rsp *ib_mac_rsp)
-अणु
+static struct sk_buff *qlge_build_rx_skb(struct qlge_adapter *qdev,
+					 struct rx_ring *rx_ring,
+					 struct qlge_ib_mac_iocb_rsp *ib_mac_rsp)
+{
 	u32 length = le32_to_cpu(ib_mac_rsp->data_len);
 	u32 hdr_len = le32_to_cpu(ib_mac_rsp->hdr_len);
-	काष्ठा qlge_bq_desc *lbq_desc, *sbq_desc;
-	काष्ठा sk_buff *skb = शून्य;
-	माप_प्रकार hlen = ETH_HLEN;
+	struct qlge_bq_desc *lbq_desc, *sbq_desc;
+	struct sk_buff *skb = NULL;
+	size_t hlen = ETH_HLEN;
 
 	/*
-	 * Handle the header buffer अगर present.
+	 * Handle the header buffer if present.
 	 */
-	अगर (ib_mac_rsp->flags4 & IB_MAC_IOCB_RSP_HV &&
-	    ib_mac_rsp->flags4 & IB_MAC_IOCB_RSP_HS) अणु
-		netअगर_prपूर्णांकk(qdev, rx_status, KERN_DEBUG, qdev->ndev,
+	if (ib_mac_rsp->flags4 & IB_MAC_IOCB_RSP_HV &&
+	    ib_mac_rsp->flags4 & IB_MAC_IOCB_RSP_HS) {
+		netif_printk(qdev, rx_status, KERN_DEBUG, qdev->ndev,
 			     "Header of %d bytes in small buffer.\n", hdr_len);
 		/*
-		 * Headers fit nicely पूर्णांकo a small buffer.
+		 * Headers fit nicely into a small buffer.
 		 */
 		sbq_desc = qlge_get_curr_buf(&rx_ring->sbq);
 		dma_unmap_single(&qdev->pdev->dev, sbq_desc->dma_addr,
@@ -1697,38 +1696,38 @@ err_out:
 		skb = sbq_desc->p.skb;
 		qlge_realign_skb(skb, hdr_len);
 		skb_put(skb, hdr_len);
-		sbq_desc->p.skb = शून्य;
-	पूर्ण
+		sbq_desc->p.skb = NULL;
+	}
 
 	/*
 	 * Handle the data buffer(s).
 	 */
-	अगर (unlikely(!length)) अणु	/* Is there data too? */
-		netअगर_prपूर्णांकk(qdev, rx_status, KERN_DEBUG, qdev->ndev,
+	if (unlikely(!length)) {	/* Is there data too? */
+		netif_printk(qdev, rx_status, KERN_DEBUG, qdev->ndev,
 			     "No Data buffer in this packet.\n");
-		वापस skb;
-	पूर्ण
+		return skb;
+	}
 
-	अगर (ib_mac_rsp->flags3 & IB_MAC_IOCB_RSP_DS) अणु
-		अगर (ib_mac_rsp->flags4 & IB_MAC_IOCB_RSP_HS) अणु
-			netअगर_prपूर्णांकk(qdev, rx_status, KERN_DEBUG, qdev->ndev,
+	if (ib_mac_rsp->flags3 & IB_MAC_IOCB_RSP_DS) {
+		if (ib_mac_rsp->flags4 & IB_MAC_IOCB_RSP_HS) {
+			netif_printk(qdev, rx_status, KERN_DEBUG, qdev->ndev,
 				     "Headers in small, data of %d bytes in small, combine them.\n",
 				     length);
 			/*
 			 * Data is less than small buffer size so it's
 			 * stuffed in a small buffer.
-			 * For this हाल we append the data
+			 * For this case we append the data
 			 * from the "data" small buffer to the "header" small
 			 * buffer.
 			 */
 			sbq_desc = qlge_get_curr_buf(&rx_ring->sbq);
-			dma_sync_single_क्रम_cpu(&qdev->pdev->dev,
+			dma_sync_single_for_cpu(&qdev->pdev->dev,
 						sbq_desc->dma_addr,
 						SMALL_BUF_MAP_SIZE,
 						DMA_FROM_DEVICE);
 			skb_put_data(skb, sbq_desc->p.skb->data, length);
-		पूर्ण अन्यथा अणु
-			netअगर_prपूर्णांकk(qdev, rx_status, KERN_DEBUG, qdev->ndev,
+		} else {
+			netif_printk(qdev, rx_status, KERN_DEBUG, qdev->ndev,
 				     "%d bytes in a single small buffer.\n",
 				     length);
 			sbq_desc = qlge_get_curr_buf(&rx_ring->sbq);
@@ -1738,11 +1737,11 @@ err_out:
 			dma_unmap_single(&qdev->pdev->dev, sbq_desc->dma_addr,
 					 SMALL_BUF_MAP_SIZE,
 					 DMA_FROM_DEVICE);
-			sbq_desc->p.skb = शून्य;
-		पूर्ण
-	पूर्ण अन्यथा अगर (ib_mac_rsp->flags3 & IB_MAC_IOCB_RSP_DL) अणु
-		अगर (ib_mac_rsp->flags4 & IB_MAC_IOCB_RSP_HS) अणु
-			netअगर_prपूर्णांकk(qdev, rx_status, KERN_DEBUG, qdev->ndev,
+			sbq_desc->p.skb = NULL;
+		}
+	} else if (ib_mac_rsp->flags3 & IB_MAC_IOCB_RSP_DL) {
+		if (ib_mac_rsp->flags4 & IB_MAC_IOCB_RSP_HS) {
+			netif_printk(qdev, rx_status, KERN_DEBUG, qdev->ndev,
 				     "Header in small, %d bytes in large. Chain large to small!\n",
 				     length);
 			/*
@@ -1751,7 +1750,7 @@ err_out:
 			 * it rip.
 			 */
 			lbq_desc = qlge_get_curr_lchunk(qdev, rx_ring);
-			netअगर_prपूर्णांकk(qdev, rx_status, KERN_DEBUG, qdev->ndev,
+			netif_printk(qdev, rx_status, KERN_DEBUG, qdev->ndev,
 				     "Chaining page at offset = %d, for %d bytes  to skb.\n",
 				     lbq_desc->p.pg_chunk.offset, length);
 			skb_fill_page_desc(skb, 0, lbq_desc->p.pg_chunk.page,
@@ -1759,7 +1758,7 @@ err_out:
 			skb->len += length;
 			skb->data_len += length;
 			skb->truesize += length;
-		पूर्ण अन्यथा अणु
+		} else {
 			/*
 			 * The headers and data are in a single large buffer. We
 			 * copy it to a new skb and let it go. This can happen with
@@ -1767,16 +1766,16 @@ err_out:
 			 */
 			lbq_desc = qlge_get_curr_lchunk(qdev, rx_ring);
 			skb = netdev_alloc_skb(qdev->ndev, length);
-			अगर (!skb) अणु
-				netअगर_prपूर्णांकk(qdev, probe, KERN_DEBUG, qdev->ndev,
+			if (!skb) {
+				netif_printk(qdev, probe, KERN_DEBUG, qdev->ndev,
 					     "No skb available, drop the packet.\n");
-				वापस शून्य;
-			पूर्ण
+				return NULL;
+			}
 			dma_unmap_page(&qdev->pdev->dev, lbq_desc->dma_addr,
 				       qdev->lbq_buf_size,
 				       DMA_FROM_DEVICE);
 			skb_reserve(skb, NET_IP_ALIGN);
-			netअगर_prपूर्णांकk(qdev, rx_status, KERN_DEBUG, qdev->ndev,
+			netif_printk(qdev, rx_status, KERN_DEBUG, qdev->ndev,
 				     "%d bytes of headers and data in large. Chain page to new skb and pull tail.\n",
 				     length);
 			skb_fill_page_desc(skb, 0, lbq_desc->p.pg_chunk.page,
@@ -1789,46 +1788,46 @@ err_out:
 						lbq_desc->p.pg_chunk.va,
 						&hlen);
 			__pskb_pull_tail(skb, hlen);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		/*
 		 * The data is in a chain of large buffers
-		 * poपूर्णांकed to by a small buffer.  We loop
+		 * pointed to by a small buffer.  We loop
 		 * thru and chain them to the our small header
 		 * buffer's skb.
 		 * frags:  There are 18 max frags and our small
 		 *         buffer will hold 32 of them. The thing is,
-		 *         we'll use 3 max क्रम our 9000 byte jumbo
+		 *         we'll use 3 max for our 9000 byte jumbo
 		 *         frames.  If the MTU goes up we could
 		 *          eventually be in trouble.
 		 */
-		पूर्णांक size, i = 0;
+		int size, i = 0;
 
 		sbq_desc = qlge_get_curr_buf(&rx_ring->sbq);
 		dma_unmap_single(&qdev->pdev->dev, sbq_desc->dma_addr,
 				 SMALL_BUF_MAP_SIZE, DMA_FROM_DEVICE);
-		अगर (!(ib_mac_rsp->flags4 & IB_MAC_IOCB_RSP_HS)) अणु
+		if (!(ib_mac_rsp->flags4 & IB_MAC_IOCB_RSP_HS)) {
 			/*
 			 * This is an non TCP/UDP IP frame, so
-			 * the headers aren't split पूर्णांकo a small
+			 * the headers aren't split into a small
 			 * buffer.  We have to use the small buffer
 			 * that contains our sg list as our skb to
 			 * send upstairs. Copy the sg list here to
 			 * a local buffer and use it to find the
 			 * pages to chain.
 			 */
-			netअगर_prपूर्णांकk(qdev, rx_status, KERN_DEBUG, qdev->ndev,
+			netif_printk(qdev, rx_status, KERN_DEBUG, qdev->ndev,
 				     "%d bytes of headers & data in chain of large.\n",
 				     length);
 			skb = sbq_desc->p.skb;
-			sbq_desc->p.skb = शून्य;
+			sbq_desc->p.skb = NULL;
 			skb_reserve(skb, NET_IP_ALIGN);
-		पूर्ण
-		करो अणु
+		}
+		do {
 			lbq_desc = qlge_get_curr_lchunk(qdev, rx_ring);
 			size = min(length, qdev->lbq_buf_size);
 
-			netअगर_prपूर्णांकk(qdev, rx_status, KERN_DEBUG, qdev->ndev,
+			netif_printk(qdev, rx_status, KERN_DEBUG, qdev->ndev,
 				     "Adding page %d to skb for %d bytes.\n",
 				     i, size);
 			skb_fill_page_desc(skb, i,
@@ -1839,57 +1838,57 @@ err_out:
 			skb->truesize += size;
 			length -= size;
 			i++;
-		पूर्ण जबतक (length > 0);
+		} while (length > 0);
 		qlge_update_mac_hdr_len(qdev, ib_mac_rsp, lbq_desc->p.pg_chunk.va,
 					&hlen);
 		__pskb_pull_tail(skb, hlen);
-	पूर्ण
-	वापस skb;
-पूर्ण
+	}
+	return skb;
+}
 
 /* Process an inbound completion from an rx ring. */
-अटल व्योम qlge_process_mac_split_rx_पूर्णांकr(काष्ठा qlge_adapter *qdev,
-					   काष्ठा rx_ring *rx_ring,
-					   काष्ठा qlge_ib_mac_iocb_rsp *ib_mac_rsp,
+static void qlge_process_mac_split_rx_intr(struct qlge_adapter *qdev,
+					   struct rx_ring *rx_ring,
+					   struct qlge_ib_mac_iocb_rsp *ib_mac_rsp,
 					   u16 vlan_id)
-अणु
-	काष्ठा net_device *ndev = qdev->ndev;
-	काष्ठा sk_buff *skb = शून्य;
+{
+	struct net_device *ndev = qdev->ndev;
+	struct sk_buff *skb = NULL;
 
 	skb = qlge_build_rx_skb(qdev, rx_ring, ib_mac_rsp);
-	अगर (unlikely(!skb)) अणु
-		netअगर_prपूर्णांकk(qdev, rx_status, KERN_DEBUG, qdev->ndev,
+	if (unlikely(!skb)) {
+		netif_printk(qdev, rx_status, KERN_DEBUG, qdev->ndev,
 			     "No skb available, drop packet.\n");
 		rx_ring->rx_dropped++;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* Frame error, so drop the packet. */
-	अगर (ib_mac_rsp->flags2 & IB_MAC_IOCB_RSP_ERR_MASK) अणु
+	if (ib_mac_rsp->flags2 & IB_MAC_IOCB_RSP_ERR_MASK) {
 		qlge_categorize_rx_err(qdev, ib_mac_rsp->flags2, rx_ring);
-		dev_kमुक्त_skb_any(skb);
-		वापस;
-	पूर्ण
+		dev_kfree_skb_any(skb);
+		return;
+	}
 
 	/* The max framesize filter on this chip is set higher than
 	 * MTU since FCoE uses 2k frames.
 	 */
-	अगर (skb->len > ndev->mtu + ETH_HLEN) अणु
-		dev_kमुक्त_skb_any(skb);
+	if (skb->len > ndev->mtu + ETH_HLEN) {
+		dev_kfree_skb_any(skb);
 		rx_ring->rx_dropped++;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* loopback self test क्रम ethtool */
-	अगर (test_bit(QL_SELFTEST, &qdev->flags)) अणु
+	/* loopback self test for ethtool */
+	if (test_bit(QL_SELFTEST, &qdev->flags)) {
 		qlge_check_lb_frame(qdev, skb);
-		dev_kमुक्त_skb_any(skb);
-		वापस;
-	पूर्ण
+		dev_kfree_skb_any(skb);
+		return;
+	}
 
 	prefetch(skb->data);
-	अगर (ib_mac_rsp->flags1 & IB_MAC_IOCB_RSP_M_MASK) अणु
-		netअगर_prपूर्णांकk(qdev, rx_status, KERN_DEBUG, qdev->ndev, "%s Multicast.\n",
+	if (ib_mac_rsp->flags1 & IB_MAC_IOCB_RSP_M_MASK) {
+		netif_printk(qdev, rx_status, KERN_DEBUG, qdev->ndev, "%s Multicast.\n",
 			     (ib_mac_rsp->flags1 & IB_MAC_IOCB_RSP_M_MASK) ==
 			     IB_MAC_IOCB_RSP_M_HASH ? "Hash" :
 			     (ib_mac_rsp->flags1 & IB_MAC_IOCB_RSP_M_MASK) ==
@@ -1897,570 +1896,570 @@ err_out:
 			     (ib_mac_rsp->flags1 & IB_MAC_IOCB_RSP_M_MASK) ==
 			     IB_MAC_IOCB_RSP_M_PROM ? "Promiscuous" : "");
 		rx_ring->rx_multicast++;
-	पूर्ण
-	अगर (ib_mac_rsp->flags2 & IB_MAC_IOCB_RSP_P) अणु
-		netअगर_prपूर्णांकk(qdev, rx_status, KERN_DEBUG, qdev->ndev,
+	}
+	if (ib_mac_rsp->flags2 & IB_MAC_IOCB_RSP_P) {
+		netif_printk(qdev, rx_status, KERN_DEBUG, qdev->ndev,
 			     "Promiscuous Packet.\n");
-	पूर्ण
+	}
 
 	skb->protocol = eth_type_trans(skb, ndev);
-	skb_checksum_none_निश्चित(skb);
+	skb_checksum_none_assert(skb);
 
 	/* If rx checksum is on, and there are no
 	 * csum or frame errors.
 	 */
-	अगर ((ndev->features & NETIF_F_RXCSUM) &&
-	    !(ib_mac_rsp->flags1 & IB_MAC_CSUM_ERR_MASK)) अणु
+	if ((ndev->features & NETIF_F_RXCSUM) &&
+	    !(ib_mac_rsp->flags1 & IB_MAC_CSUM_ERR_MASK)) {
 		/* TCP frame. */
-		अगर (ib_mac_rsp->flags2 & IB_MAC_IOCB_RSP_T) अणु
-			netअगर_prपूर्णांकk(qdev, rx_status, KERN_DEBUG, qdev->ndev,
+		if (ib_mac_rsp->flags2 & IB_MAC_IOCB_RSP_T) {
+			netif_printk(qdev, rx_status, KERN_DEBUG, qdev->ndev,
 				     "TCP checksum done!\n");
 			skb->ip_summed = CHECKSUM_UNNECESSARY;
-		पूर्ण अन्यथा अगर ((ib_mac_rsp->flags2 & IB_MAC_IOCB_RSP_U) &&
-			   (ib_mac_rsp->flags3 & IB_MAC_IOCB_RSP_V4)) अणु
+		} else if ((ib_mac_rsp->flags2 & IB_MAC_IOCB_RSP_U) &&
+			   (ib_mac_rsp->flags3 & IB_MAC_IOCB_RSP_V4)) {
 			/* Unfragmented ipv4 UDP frame. */
-			काष्ठा iphdr *iph = (काष्ठा iphdr *)skb->data;
+			struct iphdr *iph = (struct iphdr *)skb->data;
 
-			अगर (!(iph->frag_off &
-			      htons(IP_MF | IP_OFFSET))) अणु
+			if (!(iph->frag_off &
+			      htons(IP_MF | IP_OFFSET))) {
 				skb->ip_summed = CHECKSUM_UNNECESSARY;
-				netअगर_prपूर्णांकk(qdev, rx_status, KERN_DEBUG, qdev->ndev,
+				netif_printk(qdev, rx_status, KERN_DEBUG, qdev->ndev,
 					     "TCP checksum done!\n");
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 	rx_ring->rx_packets++;
 	rx_ring->rx_bytes += skb->len;
 	skb_record_rx_queue(skb, rx_ring->cq_id);
-	अगर (vlan_id != 0xffff)
+	if (vlan_id != 0xffff)
 		__vlan_hwaccel_put_tag(skb, htons(ETH_P_8021Q), vlan_id);
-	अगर (skb->ip_summed == CHECKSUM_UNNECESSARY)
+	if (skb->ip_summed == CHECKSUM_UNNECESSARY)
 		napi_gro_receive(&rx_ring->napi, skb);
-	अन्यथा
-		netअगर_receive_skb(skb);
-पूर्ण
+	else
+		netif_receive_skb(skb);
+}
 
 /* Process an inbound completion from an rx ring. */
-अटल अचिन्हित दीर्घ qlge_process_mac_rx_पूर्णांकr(काष्ठा qlge_adapter *qdev,
-					      काष्ठा rx_ring *rx_ring,
-					      काष्ठा qlge_ib_mac_iocb_rsp *ib_mac_rsp)
-अणु
+static unsigned long qlge_process_mac_rx_intr(struct qlge_adapter *qdev,
+					      struct rx_ring *rx_ring,
+					      struct qlge_ib_mac_iocb_rsp *ib_mac_rsp)
+{
 	u32 length = le32_to_cpu(ib_mac_rsp->data_len);
 	u16 vlan_id = ((ib_mac_rsp->flags2 & IB_MAC_IOCB_RSP_V) &&
 		       (qdev->ndev->features & NETIF_F_HW_VLAN_CTAG_RX)) ?
 		((le16_to_cpu(ib_mac_rsp->vlan_id) &
 		  IB_MAC_IOCB_RSP_VLAN_MASK)) : 0xffff;
 
-	अगर (ib_mac_rsp->flags4 & IB_MAC_IOCB_RSP_HV) अणु
-		/* The data and headers are split पूर्णांकo
+	if (ib_mac_rsp->flags4 & IB_MAC_IOCB_RSP_HV) {
+		/* The data and headers are split into
 		 * separate buffers.
 		 */
-		qlge_process_mac_split_rx_पूर्णांकr(qdev, rx_ring, ib_mac_rsp,
+		qlge_process_mac_split_rx_intr(qdev, rx_ring, ib_mac_rsp,
 					       vlan_id);
-	पूर्ण अन्यथा अगर (ib_mac_rsp->flags3 & IB_MAC_IOCB_RSP_DS) अणु
+	} else if (ib_mac_rsp->flags3 & IB_MAC_IOCB_RSP_DS) {
 		/* The data fit in a single small buffer.
 		 * Allocate a new skb, copy the data and
-		 * वापस the buffer to the मुक्त pool.
+		 * return the buffer to the free pool.
 		 */
 		qlge_process_mac_rx_skb(qdev, rx_ring, ib_mac_rsp, length,
 					vlan_id);
-	पूर्ण अन्यथा अगर ((ib_mac_rsp->flags3 & IB_MAC_IOCB_RSP_DL) &&
+	} else if ((ib_mac_rsp->flags3 & IB_MAC_IOCB_RSP_DL) &&
 		   !(ib_mac_rsp->flags1 & IB_MAC_CSUM_ERR_MASK) &&
-		   (ib_mac_rsp->flags2 & IB_MAC_IOCB_RSP_T)) अणु
+		   (ib_mac_rsp->flags2 & IB_MAC_IOCB_RSP_T)) {
 		/* TCP packet in a page chunk that's been checksummed.
 		 * Tack it on to our GRO skb and let it go.
 		 */
 		qlge_process_mac_rx_gro_page(qdev, rx_ring, ib_mac_rsp, length,
 					     vlan_id);
-	पूर्ण अन्यथा अगर (ib_mac_rsp->flags3 & IB_MAC_IOCB_RSP_DL) अणु
+	} else if (ib_mac_rsp->flags3 & IB_MAC_IOCB_RSP_DL) {
 		/* Non-TCP packet in a page chunk. Allocate an
 		 * skb, tack it on frags, and send it up.
 		 */
 		qlge_process_mac_rx_page(qdev, rx_ring, ib_mac_rsp, length,
 					 vlan_id);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Non-TCP/UDP large frames that span multiple buffers
 		 * can be processed corrrectly by the split frame logic.
 		 */
-		qlge_process_mac_split_rx_पूर्णांकr(qdev, rx_ring, ib_mac_rsp,
+		qlge_process_mac_split_rx_intr(qdev, rx_ring, ib_mac_rsp,
 					       vlan_id);
-	पूर्ण
+	}
 
-	वापस (अचिन्हित दीर्घ)length;
-पूर्ण
+	return (unsigned long)length;
+}
 
 /* Process an outbound completion from an rx ring. */
-अटल व्योम qlge_process_mac_tx_पूर्णांकr(काष्ठा qlge_adapter *qdev,
-				     काष्ठा qlge_ob_mac_iocb_rsp *mac_rsp)
-अणु
-	काष्ठा tx_ring *tx_ring;
-	काष्ठा tx_ring_desc *tx_ring_desc;
+static void qlge_process_mac_tx_intr(struct qlge_adapter *qdev,
+				     struct qlge_ob_mac_iocb_rsp *mac_rsp)
+{
+	struct tx_ring *tx_ring;
+	struct tx_ring_desc *tx_ring_desc;
 
 	tx_ring = &qdev->tx_ring[mac_rsp->txq_idx];
 	tx_ring_desc = &tx_ring->q[mac_rsp->tid];
 	qlge_unmap_send(qdev, tx_ring_desc, tx_ring_desc->map_cnt);
 	tx_ring->tx_bytes += (tx_ring_desc->skb)->len;
 	tx_ring->tx_packets++;
-	dev_kमुक्त_skb(tx_ring_desc->skb);
-	tx_ring_desc->skb = शून्य;
+	dev_kfree_skb(tx_ring_desc->skb);
+	tx_ring_desc->skb = NULL;
 
-	अगर (unlikely(mac_rsp->flags1 & (OB_MAC_IOCB_RSP_E |
+	if (unlikely(mac_rsp->flags1 & (OB_MAC_IOCB_RSP_E |
 					OB_MAC_IOCB_RSP_S |
 					OB_MAC_IOCB_RSP_L |
-					OB_MAC_IOCB_RSP_P | OB_MAC_IOCB_RSP_B))) अणु
-		अगर (mac_rsp->flags1 & OB_MAC_IOCB_RSP_E) अणु
-			netअगर_warn(qdev, tx_करोne, qdev->ndev,
+					OB_MAC_IOCB_RSP_P | OB_MAC_IOCB_RSP_B))) {
+		if (mac_rsp->flags1 & OB_MAC_IOCB_RSP_E) {
+			netif_warn(qdev, tx_done, qdev->ndev,
 				   "Total descriptor length did not match transfer length.\n");
-		पूर्ण
-		अगर (mac_rsp->flags1 & OB_MAC_IOCB_RSP_S) अणु
-			netअगर_warn(qdev, tx_करोne, qdev->ndev,
+		}
+		if (mac_rsp->flags1 & OB_MAC_IOCB_RSP_S) {
+			netif_warn(qdev, tx_done, qdev->ndev,
 				   "Frame too short to be valid, not sent.\n");
-		पूर्ण
-		अगर (mac_rsp->flags1 & OB_MAC_IOCB_RSP_L) अणु
-			netअगर_warn(qdev, tx_करोne, qdev->ndev,
+		}
+		if (mac_rsp->flags1 & OB_MAC_IOCB_RSP_L) {
+			netif_warn(qdev, tx_done, qdev->ndev,
 				   "Frame too long, but sent anyway.\n");
-		पूर्ण
-		अगर (mac_rsp->flags1 & OB_MAC_IOCB_RSP_B) अणु
-			netअगर_warn(qdev, tx_करोne, qdev->ndev,
+		}
+		if (mac_rsp->flags1 & OB_MAC_IOCB_RSP_B) {
+			netif_warn(qdev, tx_done, qdev->ndev,
 				   "PCI backplane error. Frame not sent.\n");
-		पूर्ण
-	पूर्ण
+		}
+	}
 	atomic_inc(&tx_ring->tx_count);
-पूर्ण
+}
 
 /* Fire up a handler to reset the MPI processor. */
-व्योम qlge_queue_fw_error(काष्ठा qlge_adapter *qdev)
-अणु
+void qlge_queue_fw_error(struct qlge_adapter *qdev)
+{
 	qlge_link_off(qdev);
 	queue_delayed_work(qdev->workqueue, &qdev->mpi_reset_work, 0);
-पूर्ण
+}
 
-व्योम qlge_queue_asic_error(काष्ठा qlge_adapter *qdev)
-अणु
+void qlge_queue_asic_error(struct qlge_adapter *qdev)
+{
 	qlge_link_off(qdev);
-	qlge_disable_पूर्णांकerrupts(qdev);
-	/* Clear adapter up bit to संकेत the recovery
-	 * process that it shouldn't समाप्त the reset worker
-	 * thपढ़ो
+	qlge_disable_interrupts(qdev);
+	/* Clear adapter up bit to signal the recovery
+	 * process that it shouldn't kill the reset worker
+	 * thread
 	 */
 	clear_bit(QL_ADAPTER_UP, &qdev->flags);
 	/* Set asic recovery bit to indicate reset process that we are
-	 * in fatal error recovery process rather than normal बंद
+	 * in fatal error recovery process rather than normal close
 	 */
 	set_bit(QL_ASIC_RECOVERY, &qdev->flags);
 	queue_delayed_work(qdev->workqueue, &qdev->asic_reset_work, 0);
-पूर्ण
+}
 
-अटल व्योम qlge_process_chip_ae_पूर्णांकr(काष्ठा qlge_adapter *qdev,
-				      काष्ठा qlge_ib_ae_iocb_rsp *ib_ae_rsp)
-अणु
-	चयन (ib_ae_rsp->event) अणु
-	हाल MGMT_ERR_EVENT:
-		netअगर_err(qdev, rx_err, qdev->ndev,
+static void qlge_process_chip_ae_intr(struct qlge_adapter *qdev,
+				      struct qlge_ib_ae_iocb_rsp *ib_ae_rsp)
+{
+	switch (ib_ae_rsp->event) {
+	case MGMT_ERR_EVENT:
+		netif_err(qdev, rx_err, qdev->ndev,
 			  "Management Processor Fatal Error.\n");
 		qlge_queue_fw_error(qdev);
-		वापस;
+		return;
 
-	हाल CAM_LOOKUP_ERR_EVENT:
+	case CAM_LOOKUP_ERR_EVENT:
 		netdev_err(qdev->ndev, "Multiple CAM hits lookup occurred.\n");
 		netdev_err(qdev->ndev, "This event shouldn't occur.\n");
 		qlge_queue_asic_error(qdev);
-		वापस;
+		return;
 
-	हाल SOFT_ECC_ERROR_EVENT:
+	case SOFT_ECC_ERROR_EVENT:
 		netdev_err(qdev->ndev, "Soft ECC error detected.\n");
 		qlge_queue_asic_error(qdev);
-		अवरोध;
+		break;
 
-	हाल PCI_ERR_ANON_BUF_RD:
+	case PCI_ERR_ANON_BUF_RD:
 		netdev_err(qdev->ndev,
 			   "PCI error occurred when reading anonymous buffers from rx_ring %d.\n",
 			   ib_ae_rsp->q_id);
 		qlge_queue_asic_error(qdev);
-		अवरोध;
+		break;
 
-	शेष:
-		netअगर_err(qdev, drv, qdev->ndev, "Unexpected event %d.\n",
+	default:
+		netif_err(qdev, drv, qdev->ndev, "Unexpected event %d.\n",
 			  ib_ae_rsp->event);
 		qlge_queue_asic_error(qdev);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल पूर्णांक qlge_clean_outbound_rx_ring(काष्ठा rx_ring *rx_ring)
-अणु
-	काष्ठा qlge_adapter *qdev = rx_ring->qdev;
-	u32 prod = qlge_पढ़ो_sh_reg(rx_ring->prod_idx_sh_reg);
-	काष्ठा qlge_ob_mac_iocb_rsp *net_rsp = शून्य;
-	पूर्णांक count = 0;
+static int qlge_clean_outbound_rx_ring(struct rx_ring *rx_ring)
+{
+	struct qlge_adapter *qdev = rx_ring->qdev;
+	u32 prod = qlge_read_sh_reg(rx_ring->prod_idx_sh_reg);
+	struct qlge_ob_mac_iocb_rsp *net_rsp = NULL;
+	int count = 0;
 
-	काष्ठा tx_ring *tx_ring;
+	struct tx_ring *tx_ring;
 	/* While there are entries in the completion queue. */
-	जबतक (prod != rx_ring->cnsmr_idx) अणु
-		netअगर_prपूर्णांकk(qdev, rx_status, KERN_DEBUG, qdev->ndev,
+	while (prod != rx_ring->cnsmr_idx) {
+		netif_printk(qdev, rx_status, KERN_DEBUG, qdev->ndev,
 			     "cq_id = %d, prod = %d, cnsmr = %d\n",
 			     rx_ring->cq_id, prod, rx_ring->cnsmr_idx);
 
-		net_rsp = (काष्ठा qlge_ob_mac_iocb_rsp *)rx_ring->curr_entry;
+		net_rsp = (struct qlge_ob_mac_iocb_rsp *)rx_ring->curr_entry;
 		rmb();
-		चयन (net_rsp->opcode) अणु
-		हाल OPCODE_OB_MAC_TSO_IOCB:
-		हाल OPCODE_OB_MAC_IOCB:
-			qlge_process_mac_tx_पूर्णांकr(qdev, net_rsp);
-			अवरोध;
-		शेष:
-			netअगर_prपूर्णांकk(qdev, rx_status, KERN_DEBUG, qdev->ndev,
+		switch (net_rsp->opcode) {
+		case OPCODE_OB_MAC_TSO_IOCB:
+		case OPCODE_OB_MAC_IOCB:
+			qlge_process_mac_tx_intr(qdev, net_rsp);
+			break;
+		default:
+			netif_printk(qdev, rx_status, KERN_DEBUG, qdev->ndev,
 				     "Hit default case, not handled! dropping the packet, opcode = %x.\n",
 				     net_rsp->opcode);
-		पूर्ण
+		}
 		count++;
 		qlge_update_cq(rx_ring);
-		prod = qlge_पढ़ो_sh_reg(rx_ring->prod_idx_sh_reg);
-	पूर्ण
-	अगर (!net_rsp)
-		वापस 0;
-	qlge_ग_लिखो_cq_idx(rx_ring);
+		prod = qlge_read_sh_reg(rx_ring->prod_idx_sh_reg);
+	}
+	if (!net_rsp)
+		return 0;
+	qlge_write_cq_idx(rx_ring);
 	tx_ring = &qdev->tx_ring[net_rsp->txq_idx];
-	अगर (__netअगर_subqueue_stopped(qdev->ndev, tx_ring->wq_id)) अणु
-		अगर ((atomic_पढ़ो(&tx_ring->tx_count) > (tx_ring->wq_len / 4)))
+	if (__netif_subqueue_stopped(qdev->ndev, tx_ring->wq_id)) {
+		if ((atomic_read(&tx_ring->tx_count) > (tx_ring->wq_len / 4)))
 			/*
 			 * The queue got stopped because the tx_ring was full.
 			 * Wake it up, because it's now at least 25% empty.
 			 */
-			netअगर_wake_subqueue(qdev->ndev, tx_ring->wq_id);
-	पूर्ण
+			netif_wake_subqueue(qdev->ndev, tx_ring->wq_id);
+	}
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल पूर्णांक qlge_clean_inbound_rx_ring(काष्ठा rx_ring *rx_ring, पूर्णांक budget)
-अणु
-	काष्ठा qlge_adapter *qdev = rx_ring->qdev;
-	u32 prod = qlge_पढ़ो_sh_reg(rx_ring->prod_idx_sh_reg);
-	काष्ठा qlge_net_rsp_iocb *net_rsp;
-	पूर्णांक count = 0;
+static int qlge_clean_inbound_rx_ring(struct rx_ring *rx_ring, int budget)
+{
+	struct qlge_adapter *qdev = rx_ring->qdev;
+	u32 prod = qlge_read_sh_reg(rx_ring->prod_idx_sh_reg);
+	struct qlge_net_rsp_iocb *net_rsp;
+	int count = 0;
 
 	/* While there are entries in the completion queue. */
-	जबतक (prod != rx_ring->cnsmr_idx) अणु
-		netअगर_prपूर्णांकk(qdev, rx_status, KERN_DEBUG, qdev->ndev,
+	while (prod != rx_ring->cnsmr_idx) {
+		netif_printk(qdev, rx_status, KERN_DEBUG, qdev->ndev,
 			     "cq_id = %d, prod = %d, cnsmr = %d\n",
 			     rx_ring->cq_id, prod, rx_ring->cnsmr_idx);
 
 		net_rsp = rx_ring->curr_entry;
 		rmb();
-		चयन (net_rsp->opcode) अणु
-		हाल OPCODE_IB_MAC_IOCB:
-			qlge_process_mac_rx_पूर्णांकr(qdev, rx_ring,
-						 (काष्ठा qlge_ib_mac_iocb_rsp *)
+		switch (net_rsp->opcode) {
+		case OPCODE_IB_MAC_IOCB:
+			qlge_process_mac_rx_intr(qdev, rx_ring,
+						 (struct qlge_ib_mac_iocb_rsp *)
 						 net_rsp);
-			अवरोध;
+			break;
 
-		हाल OPCODE_IB_AE_IOCB:
-			qlge_process_chip_ae_पूर्णांकr(qdev, (काष्ठा qlge_ib_ae_iocb_rsp *)
+		case OPCODE_IB_AE_IOCB:
+			qlge_process_chip_ae_intr(qdev, (struct qlge_ib_ae_iocb_rsp *)
 						  net_rsp);
-			अवरोध;
-		शेष:
-			netअगर_prपूर्णांकk(qdev, rx_status, KERN_DEBUG, qdev->ndev,
+			break;
+		default:
+			netif_printk(qdev, rx_status, KERN_DEBUG, qdev->ndev,
 				     "Hit default case, not handled! dropping the packet, opcode = %x.\n",
 				     net_rsp->opcode);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		count++;
 		qlge_update_cq(rx_ring);
-		prod = qlge_पढ़ो_sh_reg(rx_ring->prod_idx_sh_reg);
-		अगर (count == budget)
-			अवरोध;
-	पूर्ण
+		prod = qlge_read_sh_reg(rx_ring->prod_idx_sh_reg);
+		if (count == budget)
+			break;
+	}
 	qlge_update_buffer_queues(rx_ring, GFP_ATOMIC, 0);
-	qlge_ग_लिखो_cq_idx(rx_ring);
-	वापस count;
-पूर्ण
+	qlge_write_cq_idx(rx_ring);
+	return count;
+}
 
-अटल पूर्णांक qlge_napi_poll_msix(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
-अणु
-	काष्ठा rx_ring *rx_ring = container_of(napi, काष्ठा rx_ring, napi);
-	काष्ठा qlge_adapter *qdev = rx_ring->qdev;
-	काष्ठा rx_ring *trx_ring;
-	पूर्णांक i, work_करोne = 0;
-	काष्ठा पूर्णांकr_context *ctx = &qdev->पूर्णांकr_context[rx_ring->cq_id];
+static int qlge_napi_poll_msix(struct napi_struct *napi, int budget)
+{
+	struct rx_ring *rx_ring = container_of(napi, struct rx_ring, napi);
+	struct qlge_adapter *qdev = rx_ring->qdev;
+	struct rx_ring *trx_ring;
+	int i, work_done = 0;
+	struct intr_context *ctx = &qdev->intr_context[rx_ring->cq_id];
 
-	netअगर_prपूर्णांकk(qdev, rx_status, KERN_DEBUG, qdev->ndev,
+	netif_printk(qdev, rx_status, KERN_DEBUG, qdev->ndev,
 		     "Enter, NAPI POLL cq_id = %d.\n", rx_ring->cq_id);
 
 	/* Service the TX rings first.  They start
 	 * right after the RSS rings.
 	 */
-	क्रम (i = qdev->rss_ring_count; i < qdev->rx_ring_count; i++) अणु
+	for (i = qdev->rss_ring_count; i < qdev->rx_ring_count; i++) {
 		trx_ring = &qdev->rx_ring[i];
-		/* If this TX completion ring beदीर्घs to this vector and
+		/* If this TX completion ring belongs to this vector and
 		 * it's not empty then service it.
 		 */
-		अगर ((ctx->irq_mask & (1 << trx_ring->cq_id)) &&
-		    (qlge_पढ़ो_sh_reg(trx_ring->prod_idx_sh_reg) !=
-		     trx_ring->cnsmr_idx)) अणु
-			netअगर_prपूर्णांकk(qdev, पूर्णांकr, KERN_DEBUG, qdev->ndev,
+		if ((ctx->irq_mask & (1 << trx_ring->cq_id)) &&
+		    (qlge_read_sh_reg(trx_ring->prod_idx_sh_reg) !=
+		     trx_ring->cnsmr_idx)) {
+			netif_printk(qdev, intr, KERN_DEBUG, qdev->ndev,
 				     "%s: Servicing TX completion ring %d.\n",
 				     __func__, trx_ring->cq_id);
 			qlge_clean_outbound_rx_ring(trx_ring);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/*
-	 * Now service the RSS ring अगर it's active.
+	 * Now service the RSS ring if it's active.
 	 */
-	अगर (qlge_पढ़ो_sh_reg(rx_ring->prod_idx_sh_reg) !=
-	    rx_ring->cnsmr_idx) अणु
-		netअगर_prपूर्णांकk(qdev, पूर्णांकr, KERN_DEBUG, qdev->ndev,
+	if (qlge_read_sh_reg(rx_ring->prod_idx_sh_reg) !=
+	    rx_ring->cnsmr_idx) {
+		netif_printk(qdev, intr, KERN_DEBUG, qdev->ndev,
 			     "%s: Servicing RX completion ring %d.\n",
 			     __func__, rx_ring->cq_id);
-		work_करोne = qlge_clean_inbound_rx_ring(rx_ring, budget);
-	पूर्ण
+		work_done = qlge_clean_inbound_rx_ring(rx_ring, budget);
+	}
 
-	अगर (work_करोne < budget) अणु
-		napi_complete_करोne(napi, work_करोne);
-		qlge_enable_completion_पूर्णांकerrupt(qdev, rx_ring->irq);
-	पूर्ण
-	वापस work_करोne;
-पूर्ण
+	if (work_done < budget) {
+		napi_complete_done(napi, work_done);
+		qlge_enable_completion_interrupt(qdev, rx_ring->irq);
+	}
+	return work_done;
+}
 
-अटल व्योम qlge_vlan_mode(काष्ठा net_device *ndev, netdev_features_t features)
-अणु
-	काष्ठा qlge_adapter *qdev = netdev_to_qdev(ndev);
+static void qlge_vlan_mode(struct net_device *ndev, netdev_features_t features)
+{
+	struct qlge_adapter *qdev = netdev_to_qdev(ndev);
 
-	अगर (features & NETIF_F_HW_VLAN_CTAG_RX) अणु
-		qlge_ग_लिखो32(qdev, NIC_RCV_CFG, NIC_RCV_CFG_VLAN_MASK |
+	if (features & NETIF_F_HW_VLAN_CTAG_RX) {
+		qlge_write32(qdev, NIC_RCV_CFG, NIC_RCV_CFG_VLAN_MASK |
 			     NIC_RCV_CFG_VLAN_MATCH_AND_NON);
-	पूर्ण अन्यथा अणु
-		qlge_ग_लिखो32(qdev, NIC_RCV_CFG, NIC_RCV_CFG_VLAN_MASK);
-	पूर्ण
-पूर्ण
+	} else {
+		qlge_write32(qdev, NIC_RCV_CFG, NIC_RCV_CFG_VLAN_MASK);
+	}
+}
 
 /**
  * qlge_update_hw_vlan_features - helper routine to reinitialize the adapter
  * based on the features to enable/disable hardware vlan accel
  */
-अटल पूर्णांक qlge_update_hw_vlan_features(काष्ठा net_device *ndev,
+static int qlge_update_hw_vlan_features(struct net_device *ndev,
 					netdev_features_t features)
-अणु
-	काष्ठा qlge_adapter *qdev = netdev_to_qdev(ndev);
-	bool need_restart = netअगर_running(ndev);
-	पूर्णांक status = 0;
+{
+	struct qlge_adapter *qdev = netdev_to_qdev(ndev);
+	bool need_restart = netif_running(ndev);
+	int status = 0;
 
-	अगर (need_restart) अणु
-		status = qlge_adapter_करोwn(qdev);
-		अगर (status) अणु
-			netअगर_err(qdev, link, qdev->ndev,
+	if (need_restart) {
+		status = qlge_adapter_down(qdev);
+		if (status) {
+			netif_err(qdev, link, qdev->ndev,
 				  "Failed to bring down the adapter\n");
-			वापस status;
-		पूर्ण
-	पूर्ण
+			return status;
+		}
+	}
 
 	/* update the features with resent change */
 	ndev->features = features;
 
-	अगर (need_restart) अणु
+	if (need_restart) {
 		status = qlge_adapter_up(qdev);
-		अगर (status) अणु
-			netअगर_err(qdev, link, qdev->ndev,
+		if (status) {
+			netif_err(qdev, link, qdev->ndev,
 				  "Failed to bring up the adapter\n");
-			वापस status;
-		पूर्ण
-	पूर्ण
+			return status;
+		}
+	}
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक qlge_set_features(काष्ठा net_device *ndev,
+static int qlge_set_features(struct net_device *ndev,
 			     netdev_features_t features)
-अणु
+{
 	netdev_features_t changed = ndev->features ^ features;
-	पूर्णांक err;
+	int err;
 
-	अगर (changed & NETIF_F_HW_VLAN_CTAG_RX) अणु
+	if (changed & NETIF_F_HW_VLAN_CTAG_RX) {
 		/* Update the behavior of vlan accel in the adapter */
 		err = qlge_update_hw_vlan_features(ndev, features);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
 		qlge_vlan_mode(ndev, features);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __qlge_vlan_rx_add_vid(काष्ठा qlge_adapter *qdev, u16 vid)
-अणु
+static int __qlge_vlan_rx_add_vid(struct qlge_adapter *qdev, u16 vid)
+{
 	u32 enable_bit = MAC_ADDR_E;
-	पूर्णांक err;
+	int err;
 
 	err = qlge_set_mac_addr_reg(qdev, (u8 *)&enable_bit,
 				    MAC_ADDR_TYPE_VLAN, vid);
-	अगर (err)
-		netअगर_err(qdev, अगरup, qdev->ndev,
+	if (err)
+		netif_err(qdev, ifup, qdev->ndev,
 			  "Failed to init vlan address.\n");
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक qlge_vlan_rx_add_vid(काष्ठा net_device *ndev, __be16 proto, u16 vid)
-अणु
-	काष्ठा qlge_adapter *qdev = netdev_to_qdev(ndev);
-	पूर्णांक status;
-	पूर्णांक err;
+static int qlge_vlan_rx_add_vid(struct net_device *ndev, __be16 proto, u16 vid)
+{
+	struct qlge_adapter *qdev = netdev_to_qdev(ndev);
+	int status;
+	int err;
 
 	status = qlge_sem_spinlock(qdev, SEM_MAC_ADDR_MASK);
-	अगर (status)
-		वापस status;
+	if (status)
+		return status;
 
 	err = __qlge_vlan_rx_add_vid(qdev, vid);
 	set_bit(vid, qdev->active_vlans);
 
 	qlge_sem_unlock(qdev, SEM_MAC_ADDR_MASK);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक __qlge_vlan_rx_समाप्त_vid(काष्ठा qlge_adapter *qdev, u16 vid)
-अणु
+static int __qlge_vlan_rx_kill_vid(struct qlge_adapter *qdev, u16 vid)
+{
 	u32 enable_bit = 0;
-	पूर्णांक err;
+	int err;
 
 	err = qlge_set_mac_addr_reg(qdev, (u8 *)&enable_bit,
 				    MAC_ADDR_TYPE_VLAN, vid);
-	अगर (err)
-		netअगर_err(qdev, अगरup, qdev->ndev,
+	if (err)
+		netif_err(qdev, ifup, qdev->ndev,
 			  "Failed to clear vlan address.\n");
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक qlge_vlan_rx_समाप्त_vid(काष्ठा net_device *ndev, __be16 proto, u16 vid)
-अणु
-	काष्ठा qlge_adapter *qdev = netdev_to_qdev(ndev);
-	पूर्णांक status;
-	पूर्णांक err;
+static int qlge_vlan_rx_kill_vid(struct net_device *ndev, __be16 proto, u16 vid)
+{
+	struct qlge_adapter *qdev = netdev_to_qdev(ndev);
+	int status;
+	int err;
 
 	status = qlge_sem_spinlock(qdev, SEM_MAC_ADDR_MASK);
-	अगर (status)
-		वापस status;
+	if (status)
+		return status;
 
-	err = __qlge_vlan_rx_समाप्त_vid(qdev, vid);
+	err = __qlge_vlan_rx_kill_vid(qdev, vid);
 	clear_bit(vid, qdev->active_vlans);
 
 	qlge_sem_unlock(qdev, SEM_MAC_ADDR_MASK);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम qlge_restore_vlan(काष्ठा qlge_adapter *qdev)
-अणु
-	पूर्णांक status;
+static void qlge_restore_vlan(struct qlge_adapter *qdev)
+{
+	int status;
 	u16 vid;
 
 	status = qlge_sem_spinlock(qdev, SEM_MAC_ADDR_MASK);
-	अगर (status)
-		वापस;
+	if (status)
+		return;
 
-	क्रम_each_set_bit(vid, qdev->active_vlans, VLAN_N_VID)
+	for_each_set_bit(vid, qdev->active_vlans, VLAN_N_VID)
 		__qlge_vlan_rx_add_vid(qdev, vid);
 
 	qlge_sem_unlock(qdev, SEM_MAC_ADDR_MASK);
-पूर्ण
+}
 
-/* MSI-X Multiple Vector Interrupt Handler क्रम inbound completions. */
-अटल irqवापस_t qlge_msix_rx_isr(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा rx_ring *rx_ring = dev_id;
+/* MSI-X Multiple Vector Interrupt Handler for inbound completions. */
+static irqreturn_t qlge_msix_rx_isr(int irq, void *dev_id)
+{
+	struct rx_ring *rx_ring = dev_id;
 
 	napi_schedule(&rx_ring->napi);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-/* This handles a fatal error, MPI activity, and the शेष
+/* This handles a fatal error, MPI activity, and the default
  * rx_ring in an MSI-X multiple vector environment.
  * In MSI/Legacy environment it also process the rest of
  * the rx_rings.
  */
-अटल irqवापस_t qlge_isr(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा rx_ring *rx_ring = dev_id;
-	काष्ठा qlge_adapter *qdev = rx_ring->qdev;
-	काष्ठा पूर्णांकr_context *पूर्णांकr_context = &qdev->पूर्णांकr_context[0];
+static irqreturn_t qlge_isr(int irq, void *dev_id)
+{
+	struct rx_ring *rx_ring = dev_id;
+	struct qlge_adapter *qdev = rx_ring->qdev;
+	struct intr_context *intr_context = &qdev->intr_context[0];
 	u32 var;
-	पूर्णांक work_करोne = 0;
+	int work_done = 0;
 
-	/* Experience shows that when using INTx पूर्णांकerrupts, पूर्णांकerrupts must
+	/* Experience shows that when using INTx interrupts, interrupts must
 	 * be masked manually.
 	 * When using MSI mode, INTR_EN_EN must be explicitly disabled
-	 * (even though it is स्वतः-masked), otherwise a later command to
+	 * (even though it is auto-masked), otherwise a later command to
 	 * enable it is not effective.
 	 */
-	अगर (!test_bit(QL_MSIX_ENABLED, &qdev->flags))
-		qlge_disable_completion_पूर्णांकerrupt(qdev, 0);
+	if (!test_bit(QL_MSIX_ENABLED, &qdev->flags))
+		qlge_disable_completion_interrupt(qdev, 0);
 
-	var = qlge_पढ़ो32(qdev, STS);
+	var = qlge_read32(qdev, STS);
 
 	/*
-	 * Check क्रम fatal error.
+	 * Check for fatal error.
 	 */
-	अगर (var & STS_FE) अणु
-		qlge_disable_completion_पूर्णांकerrupt(qdev, 0);
+	if (var & STS_FE) {
+		qlge_disable_completion_interrupt(qdev, 0);
 		qlge_queue_asic_error(qdev);
 		netdev_err(qdev->ndev, "Got fatal error, STS = %x.\n", var);
-		var = qlge_पढ़ो32(qdev, ERR_STS);
+		var = qlge_read32(qdev, ERR_STS);
 		netdev_err(qdev->ndev, "Resetting chip. Error Status Register = 0x%x\n", var);
-		वापस IRQ_HANDLED;
-	पूर्ण
+		return IRQ_HANDLED;
+	}
 
 	/*
 	 * Check MPI processor activity.
 	 */
-	अगर ((var & STS_PI) &&
-	    (qlge_पढ़ो32(qdev, INTR_MASK) & INTR_MASK_PI)) अणु
+	if ((var & STS_PI) &&
+	    (qlge_read32(qdev, INTR_MASK) & INTR_MASK_PI)) {
 		/*
 		 * We've got an async event or mailbox completion.
-		 * Handle it and clear the source of the पूर्णांकerrupt.
+		 * Handle it and clear the source of the interrupt.
 		 */
-		netअगर_err(qdev, पूर्णांकr, qdev->ndev,
+		netif_err(qdev, intr, qdev->ndev,
 			  "Got MPI processor interrupt.\n");
-		qlge_ग_लिखो32(qdev, INTR_MASK, (INTR_MASK_PI << 16));
+		qlge_write32(qdev, INTR_MASK, (INTR_MASK_PI << 16));
 		queue_delayed_work_on(smp_processor_id(),
 				      qdev->workqueue, &qdev->mpi_work, 0);
-		work_करोne++;
-	पूर्ण
+		work_done++;
+	}
 
 	/*
-	 * Get the bit-mask that shows the active queues क्रम this
+	 * Get the bit-mask that shows the active queues for this
 	 * pass.  Compare it to the queues that this irq services
-	 * and call napi अगर there's a match.
+	 * and call napi if there's a match.
 	 */
-	var = qlge_पढ़ो32(qdev, ISR1);
-	अगर (var & पूर्णांकr_context->irq_mask) अणु
-		netअगर_info(qdev, पूर्णांकr, qdev->ndev,
+	var = qlge_read32(qdev, ISR1);
+	if (var & intr_context->irq_mask) {
+		netif_info(qdev, intr, qdev->ndev,
 			   "Waking handler for rx_ring[0].\n");
 		napi_schedule(&rx_ring->napi);
-		work_करोne++;
-	पूर्ण अन्यथा अणु
-		/* Experience shows that the device someबार संकेतs an
-		 * पूर्णांकerrupt but no work is scheduled from this function.
-		 * Nevertheless, the पूर्णांकerrupt is स्वतः-masked. Thereक्रमe, we
-		 * प्रणालीatically re-enable the पूर्णांकerrupt अगर we didn't
+		work_done++;
+	} else {
+		/* Experience shows that the device sometimes signals an
+		 * interrupt but no work is scheduled from this function.
+		 * Nevertheless, the interrupt is auto-masked. Therefore, we
+		 * systematically re-enable the interrupt if we didn't
 		 * schedule napi.
 		 */
-		qlge_enable_completion_पूर्णांकerrupt(qdev, 0);
-	पूर्ण
+		qlge_enable_completion_interrupt(qdev, 0);
+	}
 
-	वापस work_करोne ? IRQ_HANDLED : IRQ_NONE;
-पूर्ण
+	return work_done ? IRQ_HANDLED : IRQ_NONE;
+}
 
-अटल पूर्णांक qlge_tso(काष्ठा sk_buff *skb, काष्ठा qlge_ob_mac_tso_iocb_req *mac_iocb_ptr)
-अणु
-	अगर (skb_is_gso(skb)) अणु
-		पूर्णांक err;
+static int qlge_tso(struct sk_buff *skb, struct qlge_ob_mac_tso_iocb_req *mac_iocb_ptr)
+{
+	if (skb_is_gso(skb)) {
+		int err;
 		__be16 l3_proto = vlan_get_protocol(skb);
 
 		err = skb_cow_head(skb, 0);
-		अगर (err < 0)
-			वापस err;
+		if (err < 0)
+			return err;
 
 		mac_iocb_ptr->opcode = OPCODE_OB_MAC_TSO_IOCB;
 		mac_iocb_ptr->flags3 |= OB_MAC_TSO_IOCB_IC;
@@ -2473,8 +2472,8 @@ err_out:
 				    << OB_MAC_TRANSPORT_HDR_SHIFT);
 		mac_iocb_ptr->mss = cpu_to_le16(skb_shinfo(skb)->gso_size);
 		mac_iocb_ptr->flags2 |= OB_MAC_TSO_IOCB_LSO;
-		अगर (likely(l3_proto == htons(ETH_P_IP))) अणु
-			काष्ठा iphdr *iph = ip_hdr(skb);
+		if (likely(l3_proto == htons(ETH_P_IP))) {
+			struct iphdr *iph = ip_hdr(skb);
 
 			iph->check = 0;
 			mac_iocb_ptr->flags1 |= OB_MAC_TSO_IOCB_IP4;
@@ -2482,23 +2481,23 @@ err_out:
 								 iph->daddr, 0,
 								 IPPROTO_TCP,
 								 0);
-		पूर्ण अन्यथा अगर (l3_proto == htons(ETH_P_IPV6)) अणु
+		} else if (l3_proto == htons(ETH_P_IPV6)) {
 			mac_iocb_ptr->flags1 |= OB_MAC_TSO_IOCB_IP6;
 			tcp_hdr(skb)->check =
 				~csum_ipv6_magic(&ipv6_hdr(skb)->saddr,
 						 &ipv6_hdr(skb)->daddr,
 						 0, IPPROTO_TCP, 0);
-		पूर्ण
-		वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+		return 1;
+	}
+	return 0;
+}
 
-अटल व्योम qlge_hw_csum_setup(काष्ठा sk_buff *skb,
-			       काष्ठा qlge_ob_mac_tso_iocb_req *mac_iocb_ptr)
-अणु
-	पूर्णांक len;
-	काष्ठा iphdr *iph = ip_hdr(skb);
+static void qlge_hw_csum_setup(struct sk_buff *skb,
+			       struct qlge_ob_mac_tso_iocb_req *mac_iocb_ptr)
+{
+	int len;
+	struct iphdr *iph = ip_hdr(skb);
 	__sum16 *check;
 
 	mac_iocb_ptr->opcode = OPCODE_OB_MAC_TSO_IOCB;
@@ -2509,52 +2508,52 @@ err_out:
 
 	mac_iocb_ptr->flags1 |= OB_MAC_TSO_IOCB_IP4;
 	len = (ntohs(iph->tot_len) - (iph->ihl << 2));
-	अगर (likely(iph->protocol == IPPROTO_TCP)) अणु
+	if (likely(iph->protocol == IPPROTO_TCP)) {
 		check = &(tcp_hdr(skb)->check);
 		mac_iocb_ptr->flags2 |= OB_MAC_TSO_IOCB_TC;
 		mac_iocb_ptr->total_hdrs_len =
 			cpu_to_le16(skb_transport_offset(skb) +
-				    (tcp_hdr(skb)->करोff << 2));
-	पूर्ण अन्यथा अणु
+				    (tcp_hdr(skb)->doff << 2));
+	} else {
 		check = &(udp_hdr(skb)->check);
 		mac_iocb_ptr->flags2 |= OB_MAC_TSO_IOCB_UC;
 		mac_iocb_ptr->total_hdrs_len =
 			cpu_to_le16(skb_transport_offset(skb) +
-				    माप(काष्ठा udphdr));
-	पूर्ण
+				    sizeof(struct udphdr));
+	}
 	*check = ~csum_tcpudp_magic(iph->saddr,
 				    iph->daddr, len, iph->protocol, 0);
-पूर्ण
+}
 
-अटल netdev_tx_t qlge_send(काष्ठा sk_buff *skb, काष्ठा net_device *ndev)
-अणु
-	काष्ठा qlge_adapter *qdev = netdev_to_qdev(ndev);
-	काष्ठा qlge_ob_mac_iocb_req *mac_iocb_ptr;
-	काष्ठा tx_ring_desc *tx_ring_desc;
-	पूर्णांक tso;
-	काष्ठा tx_ring *tx_ring;
+static netdev_tx_t qlge_send(struct sk_buff *skb, struct net_device *ndev)
+{
+	struct qlge_adapter *qdev = netdev_to_qdev(ndev);
+	struct qlge_ob_mac_iocb_req *mac_iocb_ptr;
+	struct tx_ring_desc *tx_ring_desc;
+	int tso;
+	struct tx_ring *tx_ring;
 	u32 tx_ring_idx = (u32)skb->queue_mapping;
 
 	tx_ring = &qdev->tx_ring[tx_ring_idx];
 
-	अगर (skb_padto(skb, ETH_ZLEN))
-		वापस NETDEV_TX_OK;
+	if (skb_padto(skb, ETH_ZLEN))
+		return NETDEV_TX_OK;
 
-	अगर (unlikely(atomic_पढ़ो(&tx_ring->tx_count) < 2)) अणु
-		netअगर_info(qdev, tx_queued, qdev->ndev,
+	if (unlikely(atomic_read(&tx_ring->tx_count) < 2)) {
+		netif_info(qdev, tx_queued, qdev->ndev,
 			   "%s: BUG! shutting down tx queue %d due to lack of resources.\n",
 			   __func__, tx_ring_idx);
-		netअगर_stop_subqueue(ndev, tx_ring->wq_id);
+		netif_stop_subqueue(ndev, tx_ring->wq_id);
 		tx_ring->tx_errors++;
-		वापस NETDEV_TX_BUSY;
-	पूर्ण
+		return NETDEV_TX_BUSY;
+	}
 	tx_ring_desc = &tx_ring->q[tx_ring->prod_idx];
 	mac_iocb_ptr = tx_ring_desc->queue_entry;
-	स_रखो((व्योम *)mac_iocb_ptr, 0, माप(*mac_iocb_ptr));
+	memset((void *)mac_iocb_ptr, 0, sizeof(*mac_iocb_ptr));
 
 	mac_iocb_ptr->opcode = OPCODE_OB_MAC_IOCB;
 	mac_iocb_ptr->tid = tx_ring_desc->index;
-	/* We use the upper 32-bits to store the tx queue क्रम this IO.
+	/* We use the upper 32-bits to store the tx queue for this IO.
 	 * When we get the completion we can use it to establish the context.
 	 */
 	mac_iocb_ptr->txq_idx = tx_ring_idx;
@@ -2562,440 +2561,440 @@ err_out:
 
 	mac_iocb_ptr->frame_len = cpu_to_le16((u16)skb->len);
 
-	अगर (skb_vlan_tag_present(skb)) अणु
-		netअगर_prपूर्णांकk(qdev, tx_queued, KERN_DEBUG, qdev->ndev,
+	if (skb_vlan_tag_present(skb)) {
+		netif_printk(qdev, tx_queued, KERN_DEBUG, qdev->ndev,
 			     "Adding a vlan tag %d.\n", skb_vlan_tag_get(skb));
 		mac_iocb_ptr->flags3 |= OB_MAC_IOCB_V;
 		mac_iocb_ptr->vlan_tci = cpu_to_le16(skb_vlan_tag_get(skb));
-	पूर्ण
-	tso = qlge_tso(skb, (काष्ठा qlge_ob_mac_tso_iocb_req *)mac_iocb_ptr);
-	अगर (tso < 0) अणु
-		dev_kमुक्त_skb_any(skb);
-		वापस NETDEV_TX_OK;
-	पूर्ण अन्यथा अगर (unlikely(!tso) && (skb->ip_summed == CHECKSUM_PARTIAL)) अणु
+	}
+	tso = qlge_tso(skb, (struct qlge_ob_mac_tso_iocb_req *)mac_iocb_ptr);
+	if (tso < 0) {
+		dev_kfree_skb_any(skb);
+		return NETDEV_TX_OK;
+	} else if (unlikely(!tso) && (skb->ip_summed == CHECKSUM_PARTIAL)) {
 		qlge_hw_csum_setup(skb,
-				   (काष्ठा qlge_ob_mac_tso_iocb_req *)mac_iocb_ptr);
-	पूर्ण
-	अगर (qlge_map_send(qdev, mac_iocb_ptr, skb, tx_ring_desc) !=
-	    NETDEV_TX_OK) अणु
-		netअगर_err(qdev, tx_queued, qdev->ndev,
+				   (struct qlge_ob_mac_tso_iocb_req *)mac_iocb_ptr);
+	}
+	if (qlge_map_send(qdev, mac_iocb_ptr, skb, tx_ring_desc) !=
+	    NETDEV_TX_OK) {
+		netif_err(qdev, tx_queued, qdev->ndev,
 			  "Could not map the segments.\n");
 		tx_ring->tx_errors++;
-		वापस NETDEV_TX_BUSY;
-	पूर्ण
+		return NETDEV_TX_BUSY;
+	}
 
 	tx_ring->prod_idx++;
-	अगर (tx_ring->prod_idx == tx_ring->wq_len)
+	if (tx_ring->prod_idx == tx_ring->wq_len)
 		tx_ring->prod_idx = 0;
 	wmb();
 
-	qlge_ग_लिखो_db_reg_relaxed(tx_ring->prod_idx, tx_ring->prod_idx_db_reg);
-	netअगर_prपूर्णांकk(qdev, tx_queued, KERN_DEBUG, qdev->ndev,
+	qlge_write_db_reg_relaxed(tx_ring->prod_idx, tx_ring->prod_idx_db_reg);
+	netif_printk(qdev, tx_queued, KERN_DEBUG, qdev->ndev,
 		     "tx queued, slot %d, len %d\n",
 		     tx_ring->prod_idx, skb->len);
 
 	atomic_dec(&tx_ring->tx_count);
 
-	अगर (unlikely(atomic_पढ़ो(&tx_ring->tx_count) < 2)) अणु
-		netअगर_stop_subqueue(ndev, tx_ring->wq_id);
-		अगर ((atomic_पढ़ो(&tx_ring->tx_count) > (tx_ring->wq_len / 4)))
+	if (unlikely(atomic_read(&tx_ring->tx_count) < 2)) {
+		netif_stop_subqueue(ndev, tx_ring->wq_id);
+		if ((atomic_read(&tx_ring->tx_count) > (tx_ring->wq_len / 4)))
 			/*
 			 * The queue got stopped because the tx_ring was full.
 			 * Wake it up, because it's now at least 25% empty.
 			 */
-			netअगर_wake_subqueue(qdev->ndev, tx_ring->wq_id);
-	पूर्ण
-	वापस NETDEV_TX_OK;
-पूर्ण
+			netif_wake_subqueue(qdev->ndev, tx_ring->wq_id);
+	}
+	return NETDEV_TX_OK;
+}
 
-अटल व्योम qlge_मुक्त_shaकरोw_space(काष्ठा qlge_adapter *qdev)
-अणु
-	अगर (qdev->rx_ring_shaकरोw_reg_area) अणु
-		dma_मुक्त_coherent(&qdev->pdev->dev,
+static void qlge_free_shadow_space(struct qlge_adapter *qdev)
+{
+	if (qdev->rx_ring_shadow_reg_area) {
+		dma_free_coherent(&qdev->pdev->dev,
 				  PAGE_SIZE,
-				  qdev->rx_ring_shaकरोw_reg_area,
-				  qdev->rx_ring_shaकरोw_reg_dma);
-		qdev->rx_ring_shaकरोw_reg_area = शून्य;
-	पूर्ण
-	अगर (qdev->tx_ring_shaकरोw_reg_area) अणु
-		dma_मुक्त_coherent(&qdev->pdev->dev,
+				  qdev->rx_ring_shadow_reg_area,
+				  qdev->rx_ring_shadow_reg_dma);
+		qdev->rx_ring_shadow_reg_area = NULL;
+	}
+	if (qdev->tx_ring_shadow_reg_area) {
+		dma_free_coherent(&qdev->pdev->dev,
 				  PAGE_SIZE,
-				  qdev->tx_ring_shaकरोw_reg_area,
-				  qdev->tx_ring_shaकरोw_reg_dma);
-		qdev->tx_ring_shaकरोw_reg_area = शून्य;
-	पूर्ण
-पूर्ण
+				  qdev->tx_ring_shadow_reg_area,
+				  qdev->tx_ring_shadow_reg_dma);
+		qdev->tx_ring_shadow_reg_area = NULL;
+	}
+}
 
-अटल पूर्णांक qlge_alloc_shaकरोw_space(काष्ठा qlge_adapter *qdev)
-अणु
-	qdev->rx_ring_shaकरोw_reg_area =
+static int qlge_alloc_shadow_space(struct qlge_adapter *qdev)
+{
+	qdev->rx_ring_shadow_reg_area =
 		dma_alloc_coherent(&qdev->pdev->dev, PAGE_SIZE,
-				   &qdev->rx_ring_shaकरोw_reg_dma, GFP_ATOMIC);
-	अगर (!qdev->rx_ring_shaकरोw_reg_area) अणु
-		netअगर_err(qdev, अगरup, qdev->ndev,
+				   &qdev->rx_ring_shadow_reg_dma, GFP_ATOMIC);
+	if (!qdev->rx_ring_shadow_reg_area) {
+		netif_err(qdev, ifup, qdev->ndev,
 			  "Allocation of RX shadow space failed.\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	qdev->tx_ring_shaकरोw_reg_area =
+	qdev->tx_ring_shadow_reg_area =
 		dma_alloc_coherent(&qdev->pdev->dev, PAGE_SIZE,
-				   &qdev->tx_ring_shaकरोw_reg_dma, GFP_ATOMIC);
-	अगर (!qdev->tx_ring_shaकरोw_reg_area) अणु
-		netअगर_err(qdev, अगरup, qdev->ndev,
+				   &qdev->tx_ring_shadow_reg_dma, GFP_ATOMIC);
+	if (!qdev->tx_ring_shadow_reg_area) {
+		netif_err(qdev, ifup, qdev->ndev,
 			  "Allocation of TX shadow space failed.\n");
-		जाओ err_wqp_sh_area;
-	पूर्ण
-	वापस 0;
+		goto err_wqp_sh_area;
+	}
+	return 0;
 
 err_wqp_sh_area:
-	dma_मुक्त_coherent(&qdev->pdev->dev,
+	dma_free_coherent(&qdev->pdev->dev,
 			  PAGE_SIZE,
-			  qdev->rx_ring_shaकरोw_reg_area,
-			  qdev->rx_ring_shaकरोw_reg_dma);
-	वापस -ENOMEM;
-पूर्ण
+			  qdev->rx_ring_shadow_reg_area,
+			  qdev->rx_ring_shadow_reg_dma);
+	return -ENOMEM;
+}
 
-अटल व्योम qlge_init_tx_ring(काष्ठा qlge_adapter *qdev, काष्ठा tx_ring *tx_ring)
-अणु
-	काष्ठा tx_ring_desc *tx_ring_desc;
-	पूर्णांक i;
-	काष्ठा qlge_ob_mac_iocb_req *mac_iocb_ptr;
+static void qlge_init_tx_ring(struct qlge_adapter *qdev, struct tx_ring *tx_ring)
+{
+	struct tx_ring_desc *tx_ring_desc;
+	int i;
+	struct qlge_ob_mac_iocb_req *mac_iocb_ptr;
 
 	mac_iocb_ptr = tx_ring->wq_base;
 	tx_ring_desc = tx_ring->q;
-	क्रम (i = 0; i < tx_ring->wq_len; i++) अणु
+	for (i = 0; i < tx_ring->wq_len; i++) {
 		tx_ring_desc->index = i;
-		tx_ring_desc->skb = शून्य;
+		tx_ring_desc->skb = NULL;
 		tx_ring_desc->queue_entry = mac_iocb_ptr;
 		mac_iocb_ptr++;
 		tx_ring_desc++;
-	पूर्ण
+	}
 	atomic_set(&tx_ring->tx_count, tx_ring->wq_len);
-पूर्ण
+}
 
-अटल व्योम qlge_मुक्त_tx_resources(काष्ठा qlge_adapter *qdev,
-				   काष्ठा tx_ring *tx_ring)
-अणु
-	अगर (tx_ring->wq_base) अणु
-		dma_मुक्त_coherent(&qdev->pdev->dev, tx_ring->wq_size,
+static void qlge_free_tx_resources(struct qlge_adapter *qdev,
+				   struct tx_ring *tx_ring)
+{
+	if (tx_ring->wq_base) {
+		dma_free_coherent(&qdev->pdev->dev, tx_ring->wq_size,
 				  tx_ring->wq_base, tx_ring->wq_base_dma);
-		tx_ring->wq_base = शून्य;
-	पूर्ण
-	kमुक्त(tx_ring->q);
-	tx_ring->q = शून्य;
-पूर्ण
+		tx_ring->wq_base = NULL;
+	}
+	kfree(tx_ring->q);
+	tx_ring->q = NULL;
+}
 
-अटल पूर्णांक qlge_alloc_tx_resources(काष्ठा qlge_adapter *qdev,
-				   काष्ठा tx_ring *tx_ring)
-अणु
+static int qlge_alloc_tx_resources(struct qlge_adapter *qdev,
+				   struct tx_ring *tx_ring)
+{
 	tx_ring->wq_base =
 		dma_alloc_coherent(&qdev->pdev->dev, tx_ring->wq_size,
 				   &tx_ring->wq_base_dma, GFP_ATOMIC);
 
-	अगर (!tx_ring->wq_base ||
+	if (!tx_ring->wq_base ||
 	    tx_ring->wq_base_dma & WQ_ADDR_ALIGN)
-		जाओ pci_alloc_err;
+		goto pci_alloc_err;
 
 	tx_ring->q =
-		kदो_स्मृति_array(tx_ring->wq_len, माप(काष्ठा tx_ring_desc),
+		kmalloc_array(tx_ring->wq_len, sizeof(struct tx_ring_desc),
 			      GFP_KERNEL);
-	अगर (!tx_ring->q)
-		जाओ err;
+	if (!tx_ring->q)
+		goto err;
 
-	वापस 0;
+	return 0;
 err:
-	dma_मुक्त_coherent(&qdev->pdev->dev, tx_ring->wq_size,
+	dma_free_coherent(&qdev->pdev->dev, tx_ring->wq_size,
 			  tx_ring->wq_base, tx_ring->wq_base_dma);
-	tx_ring->wq_base = शून्य;
+	tx_ring->wq_base = NULL;
 pci_alloc_err:
-	netअगर_err(qdev, अगरup, qdev->ndev, "tx_ring alloc failed.\n");
-	वापस -ENOMEM;
-पूर्ण
+	netif_err(qdev, ifup, qdev->ndev, "tx_ring alloc failed.\n");
+	return -ENOMEM;
+}
 
-अटल व्योम qlge_मुक्त_lbq_buffers(काष्ठा qlge_adapter *qdev, काष्ठा rx_ring *rx_ring)
-अणु
-	काष्ठा qlge_bq *lbq = &rx_ring->lbq;
-	अचिन्हित पूर्णांक last_offset;
+static void qlge_free_lbq_buffers(struct qlge_adapter *qdev, struct rx_ring *rx_ring)
+{
+	struct qlge_bq *lbq = &rx_ring->lbq;
+	unsigned int last_offset;
 
 	last_offset = qlge_lbq_block_size(qdev) - qdev->lbq_buf_size;
-	जबतक (lbq->next_to_clean != lbq->next_to_use) अणु
-		काष्ठा qlge_bq_desc *lbq_desc =
+	while (lbq->next_to_clean != lbq->next_to_use) {
+		struct qlge_bq_desc *lbq_desc =
 			&lbq->queue[lbq->next_to_clean];
 
-		अगर (lbq_desc->p.pg_chunk.offset == last_offset)
+		if (lbq_desc->p.pg_chunk.offset == last_offset)
 			dma_unmap_page(&qdev->pdev->dev, lbq_desc->dma_addr,
 				       qlge_lbq_block_size(qdev),
 				       DMA_FROM_DEVICE);
 		put_page(lbq_desc->p.pg_chunk.page);
 
 		lbq->next_to_clean = QLGE_BQ_WRAP(lbq->next_to_clean + 1);
-	पूर्ण
+	}
 
-	अगर (rx_ring->master_chunk.page) अणु
+	if (rx_ring->master_chunk.page) {
 		dma_unmap_page(&qdev->pdev->dev, rx_ring->chunk_dma_addr,
 			       qlge_lbq_block_size(qdev), DMA_FROM_DEVICE);
 		put_page(rx_ring->master_chunk.page);
-		rx_ring->master_chunk.page = शून्य;
-	पूर्ण
-पूर्ण
+		rx_ring->master_chunk.page = NULL;
+	}
+}
 
-अटल व्योम qlge_मुक्त_sbq_buffers(काष्ठा qlge_adapter *qdev, काष्ठा rx_ring *rx_ring)
-अणु
-	पूर्णांक i;
+static void qlge_free_sbq_buffers(struct qlge_adapter *qdev, struct rx_ring *rx_ring)
+{
+	int i;
 
-	क्रम (i = 0; i < QLGE_BQ_LEN; i++) अणु
-		काष्ठा qlge_bq_desc *sbq_desc = &rx_ring->sbq.queue[i];
+	for (i = 0; i < QLGE_BQ_LEN; i++) {
+		struct qlge_bq_desc *sbq_desc = &rx_ring->sbq.queue[i];
 
-		अगर (!sbq_desc) अणु
-			netअगर_err(qdev, अगरup, qdev->ndev,
+		if (!sbq_desc) {
+			netif_err(qdev, ifup, qdev->ndev,
 				  "sbq_desc %d is NULL.\n", i);
-			वापस;
-		पूर्ण
-		अगर (sbq_desc->p.skb) अणु
+			return;
+		}
+		if (sbq_desc->p.skb) {
 			dma_unmap_single(&qdev->pdev->dev, sbq_desc->dma_addr,
 					 SMALL_BUF_MAP_SIZE,
 					 DMA_FROM_DEVICE);
-			dev_kमुक्त_skb(sbq_desc->p.skb);
-			sbq_desc->p.skb = शून्य;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			dev_kfree_skb(sbq_desc->p.skb);
+			sbq_desc->p.skb = NULL;
+		}
+	}
+}
 
 /* Free all large and small rx buffers associated
- * with the completion queues क्रम this device.
+ * with the completion queues for this device.
  */
-अटल व्योम qlge_मुक्त_rx_buffers(काष्ठा qlge_adapter *qdev)
-अणु
-	पूर्णांक i;
+static void qlge_free_rx_buffers(struct qlge_adapter *qdev)
+{
+	int i;
 
-	क्रम (i = 0; i < qdev->rx_ring_count; i++) अणु
-		काष्ठा rx_ring *rx_ring = &qdev->rx_ring[i];
+	for (i = 0; i < qdev->rx_ring_count; i++) {
+		struct rx_ring *rx_ring = &qdev->rx_ring[i];
 
-		अगर (rx_ring->lbq.queue)
-			qlge_मुक्त_lbq_buffers(qdev, rx_ring);
-		अगर (rx_ring->sbq.queue)
-			qlge_मुक्त_sbq_buffers(qdev, rx_ring);
-	पूर्ण
-पूर्ण
+		if (rx_ring->lbq.queue)
+			qlge_free_lbq_buffers(qdev, rx_ring);
+		if (rx_ring->sbq.queue)
+			qlge_free_sbq_buffers(qdev, rx_ring);
+	}
+}
 
-अटल व्योम qlge_alloc_rx_buffers(काष्ठा qlge_adapter *qdev)
-अणु
-	पूर्णांक i;
+static void qlge_alloc_rx_buffers(struct qlge_adapter *qdev)
+{
+	int i;
 
-	क्रम (i = 0; i < qdev->rss_ring_count; i++)
+	for (i = 0; i < qdev->rss_ring_count; i++)
 		qlge_update_buffer_queues(&qdev->rx_ring[i], GFP_KERNEL,
 					  HZ / 2);
-पूर्ण
+}
 
-अटल पूर्णांक qlge_init_bq(काष्ठा qlge_bq *bq)
-अणु
-	काष्ठा rx_ring *rx_ring = QLGE_BQ_CONTAINER(bq);
-	काष्ठा qlge_adapter *qdev = rx_ring->qdev;
-	काष्ठा qlge_bq_desc *bq_desc;
+static int qlge_init_bq(struct qlge_bq *bq)
+{
+	struct rx_ring *rx_ring = QLGE_BQ_CONTAINER(bq);
+	struct qlge_adapter *qdev = rx_ring->qdev;
+	struct qlge_bq_desc *bq_desc;
 	__le64 *buf_ptr;
-	पूर्णांक i;
+	int i;
 
 	bq->base = dma_alloc_coherent(&qdev->pdev->dev, QLGE_BQ_SIZE,
 				      &bq->base_dma, GFP_ATOMIC);
-	अगर (!bq->base) अणु
-		netअगर_err(qdev, अगरup, qdev->ndev,
+	if (!bq->base) {
+		netif_err(qdev, ifup, qdev->ndev,
 			  "ring %u %s allocation failed.\n", rx_ring->cq_id,
 			  bq_type_name[bq->type]);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	bq->queue = kदो_स्मृति_array(QLGE_BQ_LEN, माप(काष्ठा qlge_bq_desc),
+	bq->queue = kmalloc_array(QLGE_BQ_LEN, sizeof(struct qlge_bq_desc),
 				  GFP_KERNEL);
-	अगर (!bq->queue)
-		वापस -ENOMEM;
+	if (!bq->queue)
+		return -ENOMEM;
 
 	buf_ptr = bq->base;
 	bq_desc = &bq->queue[0];
-	क्रम (i = 0; i < QLGE_BQ_LEN; i++, buf_ptr++, bq_desc++) अणु
-		bq_desc->p.skb = शून्य;
+	for (i = 0; i < QLGE_BQ_LEN; i++, buf_ptr++, bq_desc++) {
+		bq_desc->p.skb = NULL;
 		bq_desc->index = i;
 		bq_desc->buf_ptr = buf_ptr;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम qlge_मुक्त_rx_resources(काष्ठा qlge_adapter *qdev,
-				   काष्ठा rx_ring *rx_ring)
-अणु
+static void qlge_free_rx_resources(struct qlge_adapter *qdev,
+				   struct rx_ring *rx_ring)
+{
 	/* Free the small buffer queue. */
-	अगर (rx_ring->sbq.base) अणु
-		dma_मुक्त_coherent(&qdev->pdev->dev, QLGE_BQ_SIZE,
+	if (rx_ring->sbq.base) {
+		dma_free_coherent(&qdev->pdev->dev, QLGE_BQ_SIZE,
 				  rx_ring->sbq.base, rx_ring->sbq.base_dma);
-		rx_ring->sbq.base = शून्य;
-	पूर्ण
+		rx_ring->sbq.base = NULL;
+	}
 
 	/* Free the small buffer queue control blocks. */
-	kमुक्त(rx_ring->sbq.queue);
-	rx_ring->sbq.queue = शून्य;
+	kfree(rx_ring->sbq.queue);
+	rx_ring->sbq.queue = NULL;
 
 	/* Free the large buffer queue. */
-	अगर (rx_ring->lbq.base) अणु
-		dma_मुक्त_coherent(&qdev->pdev->dev, QLGE_BQ_SIZE,
+	if (rx_ring->lbq.base) {
+		dma_free_coherent(&qdev->pdev->dev, QLGE_BQ_SIZE,
 				  rx_ring->lbq.base, rx_ring->lbq.base_dma);
-		rx_ring->lbq.base = शून्य;
-	पूर्ण
+		rx_ring->lbq.base = NULL;
+	}
 
 	/* Free the large buffer queue control blocks. */
-	kमुक्त(rx_ring->lbq.queue);
-	rx_ring->lbq.queue = शून्य;
+	kfree(rx_ring->lbq.queue);
+	rx_ring->lbq.queue = NULL;
 
 	/* Free the rx queue. */
-	अगर (rx_ring->cq_base) अणु
-		dma_मुक्त_coherent(&qdev->pdev->dev,
+	if (rx_ring->cq_base) {
+		dma_free_coherent(&qdev->pdev->dev,
 				  rx_ring->cq_size,
 				  rx_ring->cq_base, rx_ring->cq_base_dma);
-		rx_ring->cq_base = शून्य;
-	पूर्ण
-पूर्ण
+		rx_ring->cq_base = NULL;
+	}
+}
 
-/* Allocate queues and buffers क्रम this completions queue based
- * on the values in the parameter काष्ठाure.
+/* Allocate queues and buffers for this completions queue based
+ * on the values in the parameter structure.
  */
-अटल पूर्णांक qlge_alloc_rx_resources(काष्ठा qlge_adapter *qdev,
-				   काष्ठा rx_ring *rx_ring)
-अणु
+static int qlge_alloc_rx_resources(struct qlge_adapter *qdev,
+				   struct rx_ring *rx_ring)
+{
 	/*
-	 * Allocate the completion queue क्रम this rx_ring.
+	 * Allocate the completion queue for this rx_ring.
 	 */
 	rx_ring->cq_base =
 		dma_alloc_coherent(&qdev->pdev->dev, rx_ring->cq_size,
 				   &rx_ring->cq_base_dma, GFP_ATOMIC);
 
-	अगर (!rx_ring->cq_base) अणु
-		netअगर_err(qdev, अगरup, qdev->ndev, "rx_ring alloc failed.\n");
-		वापस -ENOMEM;
-	पूर्ण
+	if (!rx_ring->cq_base) {
+		netif_err(qdev, ifup, qdev->ndev, "rx_ring alloc failed.\n");
+		return -ENOMEM;
+	}
 
-	अगर (rx_ring->cq_id < qdev->rss_ring_count &&
-	    (qlge_init_bq(&rx_ring->sbq) || qlge_init_bq(&rx_ring->lbq))) अणु
-		qlge_मुक्त_rx_resources(qdev, rx_ring);
-		वापस -ENOMEM;
-	पूर्ण
+	if (rx_ring->cq_id < qdev->rss_ring_count &&
+	    (qlge_init_bq(&rx_ring->sbq) || qlge_init_bq(&rx_ring->lbq))) {
+		qlge_free_rx_resources(qdev, rx_ring);
+		return -ENOMEM;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम qlge_tx_ring_clean(काष्ठा qlge_adapter *qdev)
-अणु
-	काष्ठा tx_ring *tx_ring;
-	काष्ठा tx_ring_desc *tx_ring_desc;
-	पूर्णांक i, j;
+static void qlge_tx_ring_clean(struct qlge_adapter *qdev)
+{
+	struct tx_ring *tx_ring;
+	struct tx_ring_desc *tx_ring_desc;
+	int i, j;
 
 	/*
-	 * Loop through all queues and मुक्त
+	 * Loop through all queues and free
 	 * any resources.
 	 */
-	क्रम (j = 0; j < qdev->tx_ring_count; j++) अणु
+	for (j = 0; j < qdev->tx_ring_count; j++) {
 		tx_ring = &qdev->tx_ring[j];
-		क्रम (i = 0; i < tx_ring->wq_len; i++) अणु
+		for (i = 0; i < tx_ring->wq_len; i++) {
 			tx_ring_desc = &tx_ring->q[i];
-			अगर (tx_ring_desc && tx_ring_desc->skb) अणु
-				netअगर_err(qdev, अगरकरोwn, qdev->ndev,
+			if (tx_ring_desc && tx_ring_desc->skb) {
+				netif_err(qdev, ifdown, qdev->ndev,
 					  "Freeing lost SKB %p, from queue %d, index %d.\n",
 					  tx_ring_desc->skb, j,
 					  tx_ring_desc->index);
 				qlge_unmap_send(qdev, tx_ring_desc,
 						tx_ring_desc->map_cnt);
-				dev_kमुक्त_skb(tx_ring_desc->skb);
-				tx_ring_desc->skb = शून्य;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+				dev_kfree_skb(tx_ring_desc->skb);
+				tx_ring_desc->skb = NULL;
+			}
+		}
+	}
+}
 
-अटल व्योम qlge_मुक्त_mem_resources(काष्ठा qlge_adapter *qdev)
-अणु
-	पूर्णांक i;
+static void qlge_free_mem_resources(struct qlge_adapter *qdev)
+{
+	int i;
 
-	क्रम (i = 0; i < qdev->tx_ring_count; i++)
-		qlge_मुक्त_tx_resources(qdev, &qdev->tx_ring[i]);
-	क्रम (i = 0; i < qdev->rx_ring_count; i++)
-		qlge_मुक्त_rx_resources(qdev, &qdev->rx_ring[i]);
-	qlge_मुक्त_shaकरोw_space(qdev);
-पूर्ण
+	for (i = 0; i < qdev->tx_ring_count; i++)
+		qlge_free_tx_resources(qdev, &qdev->tx_ring[i]);
+	for (i = 0; i < qdev->rx_ring_count; i++)
+		qlge_free_rx_resources(qdev, &qdev->rx_ring[i]);
+	qlge_free_shadow_space(qdev);
+}
 
-अटल पूर्णांक qlge_alloc_mem_resources(काष्ठा qlge_adapter *qdev)
-अणु
-	पूर्णांक i;
+static int qlge_alloc_mem_resources(struct qlge_adapter *qdev)
+{
+	int i;
 
-	/* Allocate space क्रम our shaकरोw रेजिस्टरs and such. */
-	अगर (qlge_alloc_shaकरोw_space(qdev))
-		वापस -ENOMEM;
+	/* Allocate space for our shadow registers and such. */
+	if (qlge_alloc_shadow_space(qdev))
+		return -ENOMEM;
 
-	क्रम (i = 0; i < qdev->rx_ring_count; i++) अणु
-		अगर (qlge_alloc_rx_resources(qdev, &qdev->rx_ring[i]) != 0) अणु
-			netअगर_err(qdev, अगरup, qdev->ndev,
+	for (i = 0; i < qdev->rx_ring_count; i++) {
+		if (qlge_alloc_rx_resources(qdev, &qdev->rx_ring[i]) != 0) {
+			netif_err(qdev, ifup, qdev->ndev,
 				  "RX resource allocation failed.\n");
-			जाओ err_mem;
-		पूर्ण
-	पूर्ण
+			goto err_mem;
+		}
+	}
 	/* Allocate tx queue resources */
-	क्रम (i = 0; i < qdev->tx_ring_count; i++) अणु
-		अगर (qlge_alloc_tx_resources(qdev, &qdev->tx_ring[i]) != 0) अणु
-			netअगर_err(qdev, अगरup, qdev->ndev,
+	for (i = 0; i < qdev->tx_ring_count; i++) {
+		if (qlge_alloc_tx_resources(qdev, &qdev->tx_ring[i]) != 0) {
+			netif_err(qdev, ifup, qdev->ndev,
 				  "TX resource allocation failed.\n");
-			जाओ err_mem;
-		पूर्ण
-	पूर्ण
-	वापस 0;
+			goto err_mem;
+		}
+	}
+	return 0;
 
 err_mem:
-	qlge_मुक्त_mem_resources(qdev);
-	वापस -ENOMEM;
-पूर्ण
+	qlge_free_mem_resources(qdev);
+	return -ENOMEM;
+}
 
 /* Set up the rx ring control block and pass it to the chip.
  * The control block is defined as
  * "Completion Queue Initialization Control Block", or cqicb.
  */
-अटल पूर्णांक qlge_start_rx_ring(काष्ठा qlge_adapter *qdev, काष्ठा rx_ring *rx_ring)
-अणु
-	काष्ठा cqicb *cqicb = &rx_ring->cqicb;
-	व्योम *shaकरोw_reg = qdev->rx_ring_shaकरोw_reg_area +
+static int qlge_start_rx_ring(struct qlge_adapter *qdev, struct rx_ring *rx_ring)
+{
+	struct cqicb *cqicb = &rx_ring->cqicb;
+	void *shadow_reg = qdev->rx_ring_shadow_reg_area +
 		(rx_ring->cq_id * RX_RING_SHADOW_SPACE);
-	u64 shaकरोw_reg_dma = qdev->rx_ring_shaकरोw_reg_dma +
+	u64 shadow_reg_dma = qdev->rx_ring_shadow_reg_dma +
 		(rx_ring->cq_id * RX_RING_SHADOW_SPACE);
-	व्योम __iomem *करोorbell_area =
-		qdev->करोorbell_area + (DB_PAGE_SIZE * (128 + rx_ring->cq_id));
-	पूर्णांक err = 0;
-	u64 पंचांगp;
+	void __iomem *doorbell_area =
+		qdev->doorbell_area + (DB_PAGE_SIZE * (128 + rx_ring->cq_id));
+	int err = 0;
+	u64 tmp;
 	__le64 *base_indirect_ptr;
-	पूर्णांक page_entries;
+	int page_entries;
 
-	/* Set up the shaकरोw रेजिस्टरs क्रम this ring. */
-	rx_ring->prod_idx_sh_reg = shaकरोw_reg;
-	rx_ring->prod_idx_sh_reg_dma = shaकरोw_reg_dma;
+	/* Set up the shadow registers for this ring. */
+	rx_ring->prod_idx_sh_reg = shadow_reg;
+	rx_ring->prod_idx_sh_reg_dma = shadow_reg_dma;
 	*rx_ring->prod_idx_sh_reg = 0;
-	shaकरोw_reg += माप(u64);
-	shaकरोw_reg_dma += माप(u64);
-	rx_ring->lbq.base_indirect = shaकरोw_reg;
-	rx_ring->lbq.base_indirect_dma = shaकरोw_reg_dma;
-	shaकरोw_reg += (माप(u64) * MAX_DB_PAGES_PER_BQ(QLGE_BQ_LEN));
-	shaकरोw_reg_dma += (माप(u64) * MAX_DB_PAGES_PER_BQ(QLGE_BQ_LEN));
-	rx_ring->sbq.base_indirect = shaकरोw_reg;
-	rx_ring->sbq.base_indirect_dma = shaकरोw_reg_dma;
+	shadow_reg += sizeof(u64);
+	shadow_reg_dma += sizeof(u64);
+	rx_ring->lbq.base_indirect = shadow_reg;
+	rx_ring->lbq.base_indirect_dma = shadow_reg_dma;
+	shadow_reg += (sizeof(u64) * MAX_DB_PAGES_PER_BQ(QLGE_BQ_LEN));
+	shadow_reg_dma += (sizeof(u64) * MAX_DB_PAGES_PER_BQ(QLGE_BQ_LEN));
+	rx_ring->sbq.base_indirect = shadow_reg;
+	rx_ring->sbq.base_indirect_dma = shadow_reg_dma;
 
-	/* PCI करोorbell mem area + 0x00 क्रम consumer index रेजिस्टर */
-	rx_ring->cnsmr_idx_db_reg = (u32 __iomem *)करोorbell_area;
+	/* PCI doorbell mem area + 0x00 for consumer index register */
+	rx_ring->cnsmr_idx_db_reg = (u32 __iomem *)doorbell_area;
 	rx_ring->cnsmr_idx = 0;
 	rx_ring->curr_entry = rx_ring->cq_base;
 
-	/* PCI करोorbell mem area + 0x04 क्रम valid रेजिस्टर */
-	rx_ring->valid_db_reg = करोorbell_area + 0x04;
+	/* PCI doorbell mem area + 0x04 for valid register */
+	rx_ring->valid_db_reg = doorbell_area + 0x04;
 
-	/* PCI करोorbell mem area + 0x18 क्रम large buffer consumer */
-	rx_ring->lbq.prod_idx_db_reg = (u32 __iomem *)(करोorbell_area + 0x18);
+	/* PCI doorbell mem area + 0x18 for large buffer consumer */
+	rx_ring->lbq.prod_idx_db_reg = (u32 __iomem *)(doorbell_area + 0x18);
 
-	/* PCI करोorbell mem area + 0x1c */
-	rx_ring->sbq.prod_idx_db_reg = (u32 __iomem *)(करोorbell_area + 0x1c);
+	/* PCI doorbell mem area + 0x1c */
+	rx_ring->sbq.prod_idx_db_reg = (u32 __iomem *)(doorbell_area + 0x1c);
 
-	स_रखो((व्योम *)cqicb, 0, माप(काष्ठा cqicb));
+	memset((void *)cqicb, 0, sizeof(struct cqicb));
 	cqicb->msix_vect = rx_ring->irq;
 
 	cqicb->len = cpu_to_le16(QLGE_FIT16(rx_ring->cq_len) | LEN_V |
@@ -3011,17 +3010,17 @@ err_mem:
 	cqicb->flags = FLAGS_LC |	/* Load queue base address */
 		FLAGS_LV |		/* Load MSI-X vector */
 		FLAGS_LI;		/* Load irq delay values */
-	अगर (rx_ring->cq_id < qdev->rss_ring_count) अणु
+	if (rx_ring->cq_id < qdev->rss_ring_count) {
 		cqicb->flags |= FLAGS_LL;	/* Load lbq values */
-		पंचांगp = (u64)rx_ring->lbq.base_dma;
+		tmp = (u64)rx_ring->lbq.base_dma;
 		base_indirect_ptr = rx_ring->lbq.base_indirect;
 		page_entries = 0;
-		करो अणु
-			*base_indirect_ptr = cpu_to_le64(पंचांगp);
-			पंचांगp += DB_PAGE_SIZE;
+		do {
+			*base_indirect_ptr = cpu_to_le64(tmp);
+			tmp += DB_PAGE_SIZE;
 			base_indirect_ptr++;
 			page_entries++;
-		पूर्ण जबतक (page_entries < MAX_DB_PAGES_PER_BQ(QLGE_BQ_LEN));
+		} while (page_entries < MAX_DB_PAGES_PER_BQ(QLGE_BQ_LEN));
 		cqicb->lbq_addr = cpu_to_le64(rx_ring->lbq.base_indirect_dma);
 		cqicb->lbq_buf_size =
 			cpu_to_le16(QLGE_FIT16(qdev->lbq_buf_size));
@@ -3030,68 +3029,68 @@ err_mem:
 		rx_ring->lbq.next_to_clean = 0;
 
 		cqicb->flags |= FLAGS_LS;	/* Load sbq values */
-		पंचांगp = (u64)rx_ring->sbq.base_dma;
+		tmp = (u64)rx_ring->sbq.base_dma;
 		base_indirect_ptr = rx_ring->sbq.base_indirect;
 		page_entries = 0;
-		करो अणु
-			*base_indirect_ptr = cpu_to_le64(पंचांगp);
-			पंचांगp += DB_PAGE_SIZE;
+		do {
+			*base_indirect_ptr = cpu_to_le64(tmp);
+			tmp += DB_PAGE_SIZE;
 			base_indirect_ptr++;
 			page_entries++;
-		पूर्ण जबतक (page_entries < MAX_DB_PAGES_PER_BQ(QLGE_BQ_LEN));
+		} while (page_entries < MAX_DB_PAGES_PER_BQ(QLGE_BQ_LEN));
 		cqicb->sbq_addr =
 			cpu_to_le64(rx_ring->sbq.base_indirect_dma);
 		cqicb->sbq_buf_size = cpu_to_le16(SMALL_BUFFER_SIZE);
 		cqicb->sbq_len = cpu_to_le16(QLGE_FIT16(QLGE_BQ_LEN));
 		rx_ring->sbq.next_to_use = 0;
 		rx_ring->sbq.next_to_clean = 0;
-	पूर्ण
-	अगर (rx_ring->cq_id < qdev->rss_ring_count) अणु
+	}
+	if (rx_ring->cq_id < qdev->rss_ring_count) {
 		/* Inbound completion handling rx_rings run in
 		 * separate NAPI contexts.
 		 */
-		netअगर_napi_add(qdev->ndev, &rx_ring->napi, qlge_napi_poll_msix,
+		netif_napi_add(qdev->ndev, &rx_ring->napi, qlge_napi_poll_msix,
 			       64);
 		cqicb->irq_delay = cpu_to_le16(qdev->rx_coalesce_usecs);
 		cqicb->pkt_delay = cpu_to_le16(qdev->rx_max_coalesced_frames);
-	पूर्ण अन्यथा अणु
+	} else {
 		cqicb->irq_delay = cpu_to_le16(qdev->tx_coalesce_usecs);
 		cqicb->pkt_delay = cpu_to_le16(qdev->tx_max_coalesced_frames);
-	पूर्ण
-	err = qlge_ग_लिखो_cfg(qdev, cqicb, माप(काष्ठा cqicb),
+	}
+	err = qlge_write_cfg(qdev, cqicb, sizeof(struct cqicb),
 			     CFG_LCQ, rx_ring->cq_id);
-	अगर (err) अणु
-		netअगर_err(qdev, अगरup, qdev->ndev, "Failed to load CQICB.\n");
-		वापस err;
-	पूर्ण
-	वापस err;
-पूर्ण
+	if (err) {
+		netif_err(qdev, ifup, qdev->ndev, "Failed to load CQICB.\n");
+		return err;
+	}
+	return err;
+}
 
-अटल पूर्णांक qlge_start_tx_ring(काष्ठा qlge_adapter *qdev, काष्ठा tx_ring *tx_ring)
-अणु
-	काष्ठा wqicb *wqicb = (काष्ठा wqicb *)tx_ring;
-	व्योम __iomem *करोorbell_area =
-		qdev->करोorbell_area + (DB_PAGE_SIZE * tx_ring->wq_id);
-	व्योम *shaकरोw_reg = qdev->tx_ring_shaकरोw_reg_area +
-		(tx_ring->wq_id * माप(u64));
-	u64 shaकरोw_reg_dma = qdev->tx_ring_shaकरोw_reg_dma +
-		(tx_ring->wq_id * माप(u64));
-	पूर्णांक err = 0;
+static int qlge_start_tx_ring(struct qlge_adapter *qdev, struct tx_ring *tx_ring)
+{
+	struct wqicb *wqicb = (struct wqicb *)tx_ring;
+	void __iomem *doorbell_area =
+		qdev->doorbell_area + (DB_PAGE_SIZE * tx_ring->wq_id);
+	void *shadow_reg = qdev->tx_ring_shadow_reg_area +
+		(tx_ring->wq_id * sizeof(u64));
+	u64 shadow_reg_dma = qdev->tx_ring_shadow_reg_dma +
+		(tx_ring->wq_id * sizeof(u64));
+	int err = 0;
 
 	/*
-	 * Assign करोorbell रेजिस्टरs क्रम this tx_ring.
+	 * Assign doorbell registers for this tx_ring.
 	 */
-	/* TX PCI करोorbell mem area क्रम tx producer index */
-	tx_ring->prod_idx_db_reg = (u32 __iomem *)करोorbell_area;
+	/* TX PCI doorbell mem area for tx producer index */
+	tx_ring->prod_idx_db_reg = (u32 __iomem *)doorbell_area;
 	tx_ring->prod_idx = 0;
-	/* TX PCI करोorbell mem area + 0x04 */
-	tx_ring->valid_db_reg = करोorbell_area + 0x04;
+	/* TX PCI doorbell mem area + 0x04 */
+	tx_ring->valid_db_reg = doorbell_area + 0x04;
 
 	/*
-	 * Assign shaकरोw रेजिस्टरs क्रम this tx_ring.
+	 * Assign shadow registers for this tx_ring.
 	 */
-	tx_ring->cnsmr_idx_sh_reg = shaकरोw_reg;
-	tx_ring->cnsmr_idx_sh_reg_dma = shaकरोw_reg_dma;
+	tx_ring->cnsmr_idx_sh_reg = shadow_reg;
+	tx_ring->cnsmr_idx_sh_reg_dma = shadow_reg_dma;
 
 	wqicb->len = cpu_to_le16(tx_ring->wq_len | Q_LEN_V | Q_LEN_CPP_CONT);
 	wqicb->flags = cpu_to_le16(Q_FLAGS_LC |
@@ -3104,130 +3103,130 @@ err_mem:
 
 	qlge_init_tx_ring(qdev, tx_ring);
 
-	err = qlge_ग_लिखो_cfg(qdev, wqicb, माप(*wqicb), CFG_LRQ,
+	err = qlge_write_cfg(qdev, wqicb, sizeof(*wqicb), CFG_LRQ,
 			     (u16)tx_ring->wq_id);
-	अगर (err) अणु
-		netअगर_err(qdev, अगरup, qdev->ndev, "Failed to load tx_ring.\n");
-		वापस err;
-	पूर्ण
-	वापस err;
-पूर्ण
+	if (err) {
+		netif_err(qdev, ifup, qdev->ndev, "Failed to load tx_ring.\n");
+		return err;
+	}
+	return err;
+}
 
-अटल व्योम qlge_disable_msix(काष्ठा qlge_adapter *qdev)
-अणु
-	अगर (test_bit(QL_MSIX_ENABLED, &qdev->flags)) अणु
+static void qlge_disable_msix(struct qlge_adapter *qdev)
+{
+	if (test_bit(QL_MSIX_ENABLED, &qdev->flags)) {
 		pci_disable_msix(qdev->pdev);
 		clear_bit(QL_MSIX_ENABLED, &qdev->flags);
-		kमुक्त(qdev->msi_x_entry);
-		qdev->msi_x_entry = शून्य;
-	पूर्ण अन्यथा अगर (test_bit(QL_MSI_ENABLED, &qdev->flags)) अणु
+		kfree(qdev->msi_x_entry);
+		qdev->msi_x_entry = NULL;
+	} else if (test_bit(QL_MSI_ENABLED, &qdev->flags)) {
 		pci_disable_msi(qdev->pdev);
 		clear_bit(QL_MSI_ENABLED, &qdev->flags);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* We start by trying to get the number of vectors
- * stored in qdev->पूर्णांकr_count. If we करोn't get that
+ * stored in qdev->intr_count. If we don't get that
  * many then we reduce the count and try again.
  */
-अटल व्योम qlge_enable_msix(काष्ठा qlge_adapter *qdev)
-अणु
-	पूर्णांक i, err;
+static void qlge_enable_msix(struct qlge_adapter *qdev)
+{
+	int i, err;
 
 	/* Get the MSIX vectors. */
-	अगर (qlge_irq_type == MSIX_IRQ) अणु
-		/* Try to alloc space क्रम the msix काष्ठा,
-		 * अगर it fails then go to MSI/legacy.
+	if (qlge_irq_type == MSIX_IRQ) {
+		/* Try to alloc space for the msix struct,
+		 * if it fails then go to MSI/legacy.
 		 */
-		qdev->msi_x_entry = kसुस्मृति(qdev->पूर्णांकr_count,
-					    माप(काष्ठा msix_entry),
+		qdev->msi_x_entry = kcalloc(qdev->intr_count,
+					    sizeof(struct msix_entry),
 					    GFP_KERNEL);
-		अगर (!qdev->msi_x_entry) अणु
+		if (!qdev->msi_x_entry) {
 			qlge_irq_type = MSI_IRQ;
-			जाओ msi;
-		पूर्ण
+			goto msi;
+		}
 
-		क्रम (i = 0; i < qdev->पूर्णांकr_count; i++)
+		for (i = 0; i < qdev->intr_count; i++)
 			qdev->msi_x_entry[i].entry = i;
 
 		err = pci_enable_msix_range(qdev->pdev, qdev->msi_x_entry,
-					    1, qdev->पूर्णांकr_count);
-		अगर (err < 0) अणु
-			kमुक्त(qdev->msi_x_entry);
-			qdev->msi_x_entry = शून्य;
-			netअगर_warn(qdev, अगरup, qdev->ndev,
+					    1, qdev->intr_count);
+		if (err < 0) {
+			kfree(qdev->msi_x_entry);
+			qdev->msi_x_entry = NULL;
+			netif_warn(qdev, ifup, qdev->ndev,
 				   "MSI-X Enable failed, trying MSI.\n");
 			qlge_irq_type = MSI_IRQ;
-		पूर्ण अन्यथा अणु
-			qdev->पूर्णांकr_count = err;
+		} else {
+			qdev->intr_count = err;
 			set_bit(QL_MSIX_ENABLED, &qdev->flags);
-			netअगर_info(qdev, अगरup, qdev->ndev,
+			netif_info(qdev, ifup, qdev->ndev,
 				   "MSI-X Enabled, got %d vectors.\n",
-				   qdev->पूर्णांकr_count);
-			वापस;
-		पूर्ण
-	पूर्ण
+				   qdev->intr_count);
+			return;
+		}
+	}
 msi:
-	qdev->पूर्णांकr_count = 1;
-	अगर (qlge_irq_type == MSI_IRQ) अणु
-		अगर (pci_alloc_irq_vectors(qdev->pdev, 1, 1, PCI_IRQ_MSI) >= 0) अणु
+	qdev->intr_count = 1;
+	if (qlge_irq_type == MSI_IRQ) {
+		if (pci_alloc_irq_vectors(qdev->pdev, 1, 1, PCI_IRQ_MSI) >= 0) {
 			set_bit(QL_MSI_ENABLED, &qdev->flags);
-			netअगर_info(qdev, अगरup, qdev->ndev,
+			netif_info(qdev, ifup, qdev->ndev,
 				   "Running with MSI interrupts.\n");
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 	qlge_irq_type = LEG_IRQ;
 	set_bit(QL_LEGACY_ENABLED, &qdev->flags);
-	netअगर_prपूर्णांकk(qdev, अगरup, KERN_DEBUG, qdev->ndev,
+	netif_printk(qdev, ifup, KERN_DEBUG, qdev->ndev,
 		     "Running with legacy interrupts.\n");
-पूर्ण
+}
 
 /* Each vector services 1 RSS ring and 1 or more
  * TX completion rings.  This function loops through
  * the TX completion rings and assigns the vector that
- * will service it.  An example would be अगर there are
+ * will service it.  An example would be if there are
  * 2 vectors (so 2 RSS rings) and 8 TX completion rings.
  * This would mean that vector 0 would service RSS ring 0
  * and TX completion rings 0,1,2 and 3.  Vector 1 would
  * service RSS ring 1 and TX completion rings 4,5,6 and 7.
  */
-अटल व्योम qlge_set_tx_vect(काष्ठा qlge_adapter *qdev)
-अणु
-	पूर्णांक i, j, vect;
-	u32 tx_rings_per_vector = qdev->tx_ring_count / qdev->पूर्णांकr_count;
+static void qlge_set_tx_vect(struct qlge_adapter *qdev)
+{
+	int i, j, vect;
+	u32 tx_rings_per_vector = qdev->tx_ring_count / qdev->intr_count;
 
-	अगर (likely(test_bit(QL_MSIX_ENABLED, &qdev->flags))) अणु
+	if (likely(test_bit(QL_MSIX_ENABLED, &qdev->flags))) {
 		/* Assign irq vectors to TX rx_rings.*/
-		क्रम (vect = 0, j = 0, i = qdev->rss_ring_count;
-		     i < qdev->rx_ring_count; i++) अणु
-			अगर (j == tx_rings_per_vector) अणु
+		for (vect = 0, j = 0, i = qdev->rss_ring_count;
+		     i < qdev->rx_ring_count; i++) {
+			if (j == tx_rings_per_vector) {
 				vect++;
 				j = 0;
-			पूर्ण
+			}
 			qdev->rx_ring[i].irq = vect;
 			j++;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		/* For single vector all rings have an irq
 		 * of zero.
 		 */
-		क्रम (i = 0; i < qdev->rx_ring_count; i++)
+		for (i = 0; i < qdev->rx_ring_count; i++)
 			qdev->rx_ring[i].irq = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* Set the पूर्णांकerrupt mask क्रम this vector.  Each vector
+/* Set the interrupt mask for this vector.  Each vector
  * will service 1 RSS ring and 1 or more TX completion
  * rings.  This function sets up a bit mask per vector
  * that indicates which rings it services.
  */
-अटल व्योम qlge_set_irq_mask(काष्ठा qlge_adapter *qdev, काष्ठा पूर्णांकr_context *ctx)
-अणु
-	पूर्णांक j, vect = ctx->पूर्णांकr;
-	u32 tx_rings_per_vector = qdev->tx_ring_count / qdev->पूर्णांकr_count;
+static void qlge_set_irq_mask(struct qlge_adapter *qdev, struct intr_context *ctx)
+{
+	int j, vect = ctx->intr;
+	u32 tx_rings_per_vector = qdev->tx_ring_count / qdev->intr_count;
 
-	अगर (likely(test_bit(QL_MSIX_ENABLED, &qdev->flags))) अणु
+	if (likely(test_bit(QL_MSIX_ENABLED, &qdev->flags))) {
 		/* Add the RSS ring serviced by this vector
 		 * to the mask.
 		 */
@@ -3235,173 +3234,173 @@ msi:
 		/* Add the TX ring(s) serviced by this vector
 		 * to the mask.
 		 */
-		क्रम (j = 0; j < tx_rings_per_vector; j++) अणु
+		for (j = 0; j < tx_rings_per_vector; j++) {
 			ctx->irq_mask |=
 				(1 << qdev->rx_ring[qdev->rss_ring_count +
 				 (vect * tx_rings_per_vector) + j].cq_id);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		/* For single vector we just shअगरt each queue's
-		 * ID पूर्णांकo the mask.
+		}
+	} else {
+		/* For single vector we just shift each queue's
+		 * ID into the mask.
 		 */
-		क्रम (j = 0; j < qdev->rx_ring_count; j++)
+		for (j = 0; j < qdev->rx_ring_count; j++)
 			ctx->irq_mask |= (1 << qdev->rx_ring[j].cq_id);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Here we build the पूर्णांकr_context काष्ठाures based on
- * our rx_ring count and पूर्णांकr vector count.
- * The पूर्णांकr_context काष्ठाure is used to hook each vector
- * to possibly dअगरferent handlers.
+ * Here we build the intr_context structures based on
+ * our rx_ring count and intr vector count.
+ * The intr_context structure is used to hook each vector
+ * to possibly different handlers.
  */
-अटल व्योम qlge_resolve_queues_to_irqs(काष्ठा qlge_adapter *qdev)
-अणु
-	पूर्णांक i = 0;
-	काष्ठा पूर्णांकr_context *पूर्णांकr_context = &qdev->पूर्णांकr_context[0];
+static void qlge_resolve_queues_to_irqs(struct qlge_adapter *qdev)
+{
+	int i = 0;
+	struct intr_context *intr_context = &qdev->intr_context[0];
 
-	अगर (likely(test_bit(QL_MSIX_ENABLED, &qdev->flags))) अणु
+	if (likely(test_bit(QL_MSIX_ENABLED, &qdev->flags))) {
 		/* Each rx_ring has it's
-		 * own पूर्णांकr_context since we have separate
-		 * vectors क्रम each queue.
+		 * own intr_context since we have separate
+		 * vectors for each queue.
 		 */
-		क्रम (i = 0; i < qdev->पूर्णांकr_count; i++, पूर्णांकr_context++) अणु
+		for (i = 0; i < qdev->intr_count; i++, intr_context++) {
 			qdev->rx_ring[i].irq = i;
-			पूर्णांकr_context->पूर्णांकr = i;
-			पूर्णांकr_context->qdev = qdev;
+			intr_context->intr = i;
+			intr_context->qdev = qdev;
 			/* Set up this vector's bit-mask that indicates
 			 * which queues it services.
 			 */
-			qlge_set_irq_mask(qdev, पूर्णांकr_context);
+			qlge_set_irq_mask(qdev, intr_context);
 			/*
-			 * We set up each vectors enable/disable/पढ़ो bits so
+			 * We set up each vectors enable/disable/read bits so
 			 * there's no bit/mask calculations in the critical path.
 			 */
-			पूर्णांकr_context->पूर्णांकr_en_mask =
+			intr_context->intr_en_mask =
 				INTR_EN_TYPE_MASK | INTR_EN_INTR_MASK |
 				INTR_EN_TYPE_ENABLE | INTR_EN_IHD_MASK | INTR_EN_IHD
 				| i;
-			पूर्णांकr_context->पूर्णांकr_dis_mask =
+			intr_context->intr_dis_mask =
 				INTR_EN_TYPE_MASK | INTR_EN_INTR_MASK |
 				INTR_EN_TYPE_DISABLE | INTR_EN_IHD_MASK |
 				INTR_EN_IHD | i;
-			पूर्णांकr_context->पूर्णांकr_पढ़ो_mask =
+			intr_context->intr_read_mask =
 				INTR_EN_TYPE_MASK | INTR_EN_INTR_MASK |
 				INTR_EN_TYPE_READ | INTR_EN_IHD_MASK | INTR_EN_IHD |
 				i;
-			अगर (i == 0) अणु
+			if (i == 0) {
 				/* The first vector/queue handles
 				 * broadcast/multicast, fatal errors,
 				 * and firmware events.  This in addition
 				 * to normal inbound NAPI processing.
 				 */
-				पूर्णांकr_context->handler = qlge_isr;
-				प्र_लिखो(पूर्णांकr_context->name, "%s-rx-%d",
+				intr_context->handler = qlge_isr;
+				sprintf(intr_context->name, "%s-rx-%d",
 					qdev->ndev->name, i);
-			पूर्ण अन्यथा अणु
+			} else {
 				/*
 				 * Inbound queues handle unicast frames only.
 				 */
-				पूर्णांकr_context->handler = qlge_msix_rx_isr;
-				प्र_लिखो(पूर्णांकr_context->name, "%s-rx-%d",
+				intr_context->handler = qlge_msix_rx_isr;
+				sprintf(intr_context->name, "%s-rx-%d",
 					qdev->ndev->name, i);
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			}
+		}
+	} else {
 		/*
-		 * All rx_rings use the same पूर्णांकr_context since
+		 * All rx_rings use the same intr_context since
 		 * there is only one vector.
 		 */
-		पूर्णांकr_context->पूर्णांकr = 0;
-		पूर्णांकr_context->qdev = qdev;
+		intr_context->intr = 0;
+		intr_context->qdev = qdev;
 		/*
-		 * We set up each vectors enable/disable/पढ़ो bits so
+		 * We set up each vectors enable/disable/read bits so
 		 * there's no bit/mask calculations in the critical path.
 		 */
-		पूर्णांकr_context->पूर्णांकr_en_mask =
+		intr_context->intr_en_mask =
 			INTR_EN_TYPE_MASK | INTR_EN_INTR_MASK | INTR_EN_TYPE_ENABLE;
-		पूर्णांकr_context->पूर्णांकr_dis_mask =
+		intr_context->intr_dis_mask =
 			INTR_EN_TYPE_MASK | INTR_EN_INTR_MASK |
 			INTR_EN_TYPE_DISABLE;
-		अगर (test_bit(QL_LEGACY_ENABLED, &qdev->flags)) अणु
-			/* Experience shows that when using INTx पूर्णांकerrupts,
-			 * the device करोes not always स्वतः-mask INTR_EN_EN.
-			 * Moreover, masking INTR_EN_EN manually करोes not
-			 * immediately prevent पूर्णांकerrupt generation.
+		if (test_bit(QL_LEGACY_ENABLED, &qdev->flags)) {
+			/* Experience shows that when using INTx interrupts,
+			 * the device does not always auto-mask INTR_EN_EN.
+			 * Moreover, masking INTR_EN_EN manually does not
+			 * immediately prevent interrupt generation.
 			 */
-			पूर्णांकr_context->पूर्णांकr_en_mask |= INTR_EN_EI << 16 |
+			intr_context->intr_en_mask |= INTR_EN_EI << 16 |
 				INTR_EN_EI;
-			पूर्णांकr_context->पूर्णांकr_dis_mask |= INTR_EN_EI << 16;
-		पूर्ण
-		पूर्णांकr_context->पूर्णांकr_पढ़ो_mask =
+			intr_context->intr_dis_mask |= INTR_EN_EI << 16;
+		}
+		intr_context->intr_read_mask =
 			INTR_EN_TYPE_MASK | INTR_EN_INTR_MASK | INTR_EN_TYPE_READ;
 		/*
-		 * Single पूर्णांकerrupt means one handler क्रम all rings.
+		 * Single interrupt means one handler for all rings.
 		 */
-		पूर्णांकr_context->handler = qlge_isr;
-		प्र_लिखो(पूर्णांकr_context->name, "%s-single_irq", qdev->ndev->name);
+		intr_context->handler = qlge_isr;
+		sprintf(intr_context->name, "%s-single_irq", qdev->ndev->name);
 		/* Set up this vector's bit-mask that indicates
-		 * which queues it services. In this हाल there is
+		 * which queues it services. In this case there is
 		 * a single vector so it will service all RSS and
 		 * TX completion rings.
 		 */
-		qlge_set_irq_mask(qdev, पूर्णांकr_context);
-	पूर्ण
+		qlge_set_irq_mask(qdev, intr_context);
+	}
 	/* Tell the TX completion rings which MSIx vector
 	 * they will be using.
 	 */
 	qlge_set_tx_vect(qdev);
-पूर्ण
+}
 
-अटल व्योम qlge_मुक्त_irq(काष्ठा qlge_adapter *qdev)
-अणु
-	पूर्णांक i;
-	काष्ठा पूर्णांकr_context *पूर्णांकr_context = &qdev->पूर्णांकr_context[0];
+static void qlge_free_irq(struct qlge_adapter *qdev)
+{
+	int i;
+	struct intr_context *intr_context = &qdev->intr_context[0];
 
-	क्रम (i = 0; i < qdev->पूर्णांकr_count; i++, पूर्णांकr_context++) अणु
-		अगर (पूर्णांकr_context->hooked) अणु
-			अगर (test_bit(QL_MSIX_ENABLED, &qdev->flags)) अणु
-				मुक्त_irq(qdev->msi_x_entry[i].vector,
+	for (i = 0; i < qdev->intr_count; i++, intr_context++) {
+		if (intr_context->hooked) {
+			if (test_bit(QL_MSIX_ENABLED, &qdev->flags)) {
+				free_irq(qdev->msi_x_entry[i].vector,
 					 &qdev->rx_ring[i]);
-			पूर्ण अन्यथा अणु
-				मुक्त_irq(qdev->pdev->irq, &qdev->rx_ring[0]);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			} else {
+				free_irq(qdev->pdev->irq, &qdev->rx_ring[0]);
+			}
+		}
+	}
 	qlge_disable_msix(qdev);
-पूर्ण
+}
 
-अटल पूर्णांक qlge_request_irq(काष्ठा qlge_adapter *qdev)
-अणु
-	पूर्णांक i;
-	पूर्णांक status = 0;
-	काष्ठा pci_dev *pdev = qdev->pdev;
-	काष्ठा पूर्णांकr_context *पूर्णांकr_context = &qdev->पूर्णांकr_context[0];
+static int qlge_request_irq(struct qlge_adapter *qdev)
+{
+	int i;
+	int status = 0;
+	struct pci_dev *pdev = qdev->pdev;
+	struct intr_context *intr_context = &qdev->intr_context[0];
 
 	qlge_resolve_queues_to_irqs(qdev);
 
-	क्रम (i = 0; i < qdev->पूर्णांकr_count; i++, पूर्णांकr_context++) अणु
-		अगर (test_bit(QL_MSIX_ENABLED, &qdev->flags)) अणु
+	for (i = 0; i < qdev->intr_count; i++, intr_context++) {
+		if (test_bit(QL_MSIX_ENABLED, &qdev->flags)) {
 			status = request_irq(qdev->msi_x_entry[i].vector,
-					     पूर्णांकr_context->handler,
+					     intr_context->handler,
 					     0,
-					     पूर्णांकr_context->name,
+					     intr_context->name,
 					     &qdev->rx_ring[i]);
-			अगर (status) अणु
-				netअगर_err(qdev, अगरup, qdev->ndev,
+			if (status) {
+				netif_err(qdev, ifup, qdev->ndev,
 					  "Failed request for MSIX interrupt %d.\n",
 					  i);
-				जाओ err_irq;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			netअगर_prपूर्णांकk(qdev, अगरup, KERN_DEBUG, qdev->ndev,
+				goto err_irq;
+			}
+		} else {
+			netif_printk(qdev, ifup, KERN_DEBUG, qdev->ndev,
 				     "trying msi or legacy interrupts.\n");
-			netअगर_prपूर्णांकk(qdev, अगरup, KERN_DEBUG, qdev->ndev,
+			netif_printk(qdev, ifup, KERN_DEBUG, qdev->ndev,
 				     "%s: irq = %d.\n", __func__, pdev->irq);
-			netअगर_prपूर्णांकk(qdev, अगरup, KERN_DEBUG, qdev->ndev,
+			netif_printk(qdev, ifup, KERN_DEBUG, qdev->ndev,
 				     "%s: context->name = %s.\n", __func__,
-				     पूर्णांकr_context->name);
-			netअगर_prपूर्णांकk(qdev, अगरup, KERN_DEBUG, qdev->ndev,
+				     intr_context->name);
+			netif_printk(qdev, ifup, KERN_DEBUG, qdev->ndev,
 				     "%s: dev_id = 0x%p.\n", __func__,
 				     &qdev->rx_ring[0]);
 			status =
@@ -3409,38 +3408,38 @@ msi:
 					    test_bit(QL_MSI_ENABLED, &qdev->flags)
 					    ? 0
 					    : IRQF_SHARED,
-					    पूर्णांकr_context->name, &qdev->rx_ring[0]);
-			अगर (status)
-				जाओ err_irq;
+					    intr_context->name, &qdev->rx_ring[0]);
+			if (status)
+				goto err_irq;
 
-			netअगर_err(qdev, अगरup, qdev->ndev,
+			netif_err(qdev, ifup, qdev->ndev,
 				  "Hooked intr 0, queue type RX_Q, with name %s.\n",
-				  पूर्णांकr_context->name);
-		पूर्ण
-		पूर्णांकr_context->hooked = 1;
-	पूर्ण
-	वापस status;
+				  intr_context->name);
+		}
+		intr_context->hooked = 1;
+	}
+	return status;
 err_irq:
-	netअगर_err(qdev, अगरup, qdev->ndev, "Failed to get the interrupts!!!\n");
-	qlge_मुक्त_irq(qdev);
-	वापस status;
-पूर्ण
+	netif_err(qdev, ifup, qdev->ndev, "Failed to get the interrupts!!!\n");
+	qlge_free_irq(qdev);
+	return status;
+}
 
-अटल पूर्णांक qlge_start_rss(काष्ठा qlge_adapter *qdev)
-अणु
-	अटल स्थिर u8 init_hash_seed[] = अणु
+static int qlge_start_rss(struct qlge_adapter *qdev)
+{
+	static const u8 init_hash_seed[] = {
 		0x6d, 0x5a, 0x56, 0xda, 0x25, 0x5b, 0x0e, 0xc2,
 		0x41, 0x67, 0x25, 0x3d, 0x43, 0xa3, 0x8f, 0xb0,
 		0xd0, 0xca, 0x2b, 0xcb, 0xae, 0x7b, 0x30, 0xb4,
 		0x77, 0xcb, 0x2d, 0xa3, 0x80, 0x30, 0xf2, 0x0c,
 		0x6a, 0x42, 0xb7, 0x3b, 0xbe, 0xac, 0x01, 0xfa
-	पूर्ण;
-	काष्ठा ricb *ricb = &qdev->ricb;
-	पूर्णांक status = 0;
-	पूर्णांक i;
+	};
+	struct ricb *ricb = &qdev->ricb;
+	int status = 0;
+	int i;
 	u8 *hash_id = (u8 *)ricb->hash_cq_id;
 
-	स_रखो((व्योम *)ricb, 0, माप(*ricb));
+	memset((void *)ricb, 0, sizeof(*ricb));
 
 	ricb->base_cq = RSS_L4K;
 	ricb->flags =
@@ -3450,144 +3449,144 @@ err_irq:
 	/*
 	 * Fill out the Indirection Table.
 	 */
-	क्रम (i = 0; i < 1024; i++)
+	for (i = 0; i < 1024; i++)
 		hash_id[i] = (i & (qdev->rss_ring_count - 1));
 
-	स_नकल((व्योम *)&ricb->ipv6_hash_key[0], init_hash_seed, 40);
-	स_नकल((व्योम *)&ricb->ipv4_hash_key[0], init_hash_seed, 16);
+	memcpy((void *)&ricb->ipv6_hash_key[0], init_hash_seed, 40);
+	memcpy((void *)&ricb->ipv4_hash_key[0], init_hash_seed, 16);
 
-	status = qlge_ग_लिखो_cfg(qdev, ricb, माप(*ricb), CFG_LR, 0);
-	अगर (status) अणु
-		netअगर_err(qdev, अगरup, qdev->ndev, "Failed to load RICB.\n");
-		वापस status;
-	पूर्ण
-	वापस status;
-पूर्ण
+	status = qlge_write_cfg(qdev, ricb, sizeof(*ricb), CFG_LR, 0);
+	if (status) {
+		netif_err(qdev, ifup, qdev->ndev, "Failed to load RICB.\n");
+		return status;
+	}
+	return status;
+}
 
-अटल पूर्णांक qlge_clear_routing_entries(काष्ठा qlge_adapter *qdev)
-अणु
-	पूर्णांक i, status = 0;
+static int qlge_clear_routing_entries(struct qlge_adapter *qdev)
+{
+	int i, status = 0;
 
 	status = qlge_sem_spinlock(qdev, SEM_RT_IDX_MASK);
-	अगर (status)
-		वापस status;
+	if (status)
+		return status;
 	/* Clear all the entries in the routing table. */
-	क्रम (i = 0; i < 16; i++) अणु
+	for (i = 0; i < 16; i++) {
 		status = qlge_set_routing_reg(qdev, i, 0, 0);
-		अगर (status) अणु
-			netअगर_err(qdev, अगरup, qdev->ndev,
+		if (status) {
+			netif_err(qdev, ifup, qdev->ndev,
 				  "Failed to init routing register for CAM packets.\n");
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	qlge_sem_unlock(qdev, SEM_RT_IDX_MASK);
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /* Initialize the frame-to-queue routing. */
-अटल पूर्णांक qlge_route_initialize(काष्ठा qlge_adapter *qdev)
-अणु
-	पूर्णांक status = 0;
+static int qlge_route_initialize(struct qlge_adapter *qdev)
+{
+	int status = 0;
 
 	/* Clear all the entries in the routing table. */
 	status = qlge_clear_routing_entries(qdev);
-	अगर (status)
-		वापस status;
+	if (status)
+		return status;
 
 	status = qlge_sem_spinlock(qdev, SEM_RT_IDX_MASK);
-	अगर (status)
-		वापस status;
+	if (status)
+		return status;
 
 	status = qlge_set_routing_reg(qdev, RT_IDX_IP_CSUM_ERR_SLOT,
 				      RT_IDX_IP_CSUM_ERR, 1);
-	अगर (status) अणु
-		netअगर_err(qdev, अगरup, qdev->ndev,
+	if (status) {
+		netif_err(qdev, ifup, qdev->ndev,
 			  "Failed to init routing register for IP CSUM error packets.\n");
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 	status = qlge_set_routing_reg(qdev, RT_IDX_TCP_UDP_CSUM_ERR_SLOT,
 				      RT_IDX_TU_CSUM_ERR, 1);
-	अगर (status) अणु
-		netअगर_err(qdev, अगरup, qdev->ndev,
+	if (status) {
+		netif_err(qdev, ifup, qdev->ndev,
 			  "Failed to init routing register for TCP/UDP CSUM error packets.\n");
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 	status = qlge_set_routing_reg(qdev, RT_IDX_BCAST_SLOT, RT_IDX_BCAST, 1);
-	अगर (status) अणु
-		netअगर_err(qdev, अगरup, qdev->ndev,
+	if (status) {
+		netif_err(qdev, ifup, qdev->ndev,
 			  "Failed to init routing register for broadcast packets.\n");
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 	/* If we have more than one inbound queue, then turn on RSS in the
 	 * routing block.
 	 */
-	अगर (qdev->rss_ring_count > 1) अणु
+	if (qdev->rss_ring_count > 1) {
 		status = qlge_set_routing_reg(qdev, RT_IDX_RSS_MATCH_SLOT,
 					      RT_IDX_RSS_MATCH, 1);
-		अगर (status) अणु
-			netअगर_err(qdev, अगरup, qdev->ndev,
+		if (status) {
+			netif_err(qdev, ifup, qdev->ndev,
 				  "Failed to init routing register for MATCH RSS packets.\n");
-			जाओ निकास;
-		पूर्ण
-	पूर्ण
+			goto exit;
+		}
+	}
 
 	status = qlge_set_routing_reg(qdev, RT_IDX_CAM_HIT_SLOT,
 				      RT_IDX_CAM_HIT, 1);
-	अगर (status)
-		netअगर_err(qdev, अगरup, qdev->ndev,
+	if (status)
+		netif_err(qdev, ifup, qdev->ndev,
 			  "Failed to init routing register for CAM packets.\n");
-निकास:
+exit:
 	qlge_sem_unlock(qdev, SEM_RT_IDX_MASK);
-	वापस status;
-पूर्ण
+	return status;
+}
 
-पूर्णांक qlge_cam_route_initialize(काष्ठा qlge_adapter *qdev)
-अणु
-	पूर्णांक status, set;
+int qlge_cam_route_initialize(struct qlge_adapter *qdev)
+{
+	int status, set;
 
-	/* If check अगर the link is up and use to
-	 * determine अगर we are setting or clearing
+	/* If check if the link is up and use to
+	 * determine if we are setting or clearing
 	 * the MAC address in the CAM.
 	 */
-	set = qlge_पढ़ो32(qdev, STS);
+	set = qlge_read32(qdev, STS);
 	set &= qdev->port_link_up;
 	status = qlge_set_mac_addr(qdev, set);
-	अगर (status) अणु
-		netअगर_err(qdev, अगरup, qdev->ndev, "Failed to init mac address.\n");
-		वापस status;
-	पूर्ण
+	if (status) {
+		netif_err(qdev, ifup, qdev->ndev, "Failed to init mac address.\n");
+		return status;
+	}
 
 	status = qlge_route_initialize(qdev);
-	अगर (status)
-		netअगर_err(qdev, अगरup, qdev->ndev, "Failed to init routing table.\n");
+	if (status)
+		netif_err(qdev, ifup, qdev->ndev, "Failed to init routing table.\n");
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक qlge_adapter_initialize(काष्ठा qlge_adapter *qdev)
-अणु
+static int qlge_adapter_initialize(struct qlge_adapter *qdev)
+{
 	u32 value, mask;
-	पूर्णांक i;
-	पूर्णांक status = 0;
+	int i;
+	int status = 0;
 
 	/*
-	 * Set up the System रेजिस्टर to halt on errors.
+	 * Set up the System register to halt on errors.
 	 */
 	value = SYS_EFE | SYS_FAE;
 	mask = value << 16;
-	qlge_ग_लिखो32(qdev, SYS, mask | value);
+	qlge_write32(qdev, SYS, mask | value);
 
-	/* Set the शेष queue, and VLAN behavior. */
+	/* Set the default queue, and VLAN behavior. */
 	value = NIC_RCV_CFG_DFQ;
 	mask = NIC_RCV_CFG_DFQ_MASK;
-	अगर (qdev->ndev->features & NETIF_F_HW_VLAN_CTAG_RX) अणु
+	if (qdev->ndev->features & NETIF_F_HW_VLAN_CTAG_RX) {
 		value |= NIC_RCV_CFG_RV;
 		mask |= (NIC_RCV_CFG_RV << 16);
-	पूर्ण
-	qlge_ग_लिखो32(qdev, NIC_RCV_CFG, (mask | value));
+	}
+	qlge_write32(qdev, NIC_RCV_CFG, (mask | value));
 
-	/* Set the MPI पूर्णांकerrupt to enabled. */
-	qlge_ग_लिखो32(qdev, INTR_MASK, (INTR_MASK_PI << 16) | INTR_MASK_PI);
+	/* Set the MPI interrupt to enabled. */
+	qlge_write32(qdev, INTR_MASK, (INTR_MASK_PI << 16) | INTR_MASK_PI);
 
 	/* Enable the function, set pagesize, enable error checking. */
 	value = FSC_FE | FSC_EPC_INBOUND | FSC_EPC_OUTBOUND |
@@ -3597,137 +3596,137 @@ err_irq:
 	/* Set/clear header splitting. */
 	mask = FSC_VM_PAGESIZE_MASK |
 		FSC_DBL_MASK | FSC_DBRST_MASK | (value << 16);
-	qlge_ग_लिखो32(qdev, FSC, mask | value);
+	qlge_write32(qdev, FSC, mask | value);
 
-	qlge_ग_लिखो32(qdev, SPLT_HDR, SPLT_LEN);
+	qlge_write32(qdev, SPLT_HDR, SPLT_LEN);
 
 	/* Set RX packet routing to use port/pci function on which the
 	 * packet arrived on in addition to usual frame routing.
-	 * This is helpful on bonding where both पूर्णांकerfaces can have
+	 * This is helpful on bonding where both interfaces can have
 	 * the same MAC address.
 	 */
-	qlge_ग_लिखो32(qdev, RST_FO, RST_FO_RR_MASK | RST_FO_RR_RCV_FUNC_CQ);
+	qlge_write32(qdev, RST_FO, RST_FO_RR_MASK | RST_FO_RR_RCV_FUNC_CQ);
 	/* Reroute all packets to our Interface.
 	 * They may have been routed to MPI firmware
 	 * due to WOL.
 	 */
-	value = qlge_पढ़ो32(qdev, MGMT_RCV_CFG);
+	value = qlge_read32(qdev, MGMT_RCV_CFG);
 	value &= ~MGMT_RCV_CFG_RM;
 	mask = 0xffff0000;
 
 	/* Sticky reg needs clearing due to WOL. */
-	qlge_ग_लिखो32(qdev, MGMT_RCV_CFG, mask);
-	qlge_ग_लिखो32(qdev, MGMT_RCV_CFG, mask | value);
+	qlge_write32(qdev, MGMT_RCV_CFG, mask);
+	qlge_write32(qdev, MGMT_RCV_CFG, mask | value);
 
 	/* Default WOL is enable on Mezz cards */
-	अगर (qdev->pdev->subप्रणाली_device == 0x0068 ||
-	    qdev->pdev->subप्रणाली_device == 0x0180)
+	if (qdev->pdev->subsystem_device == 0x0068 ||
+	    qdev->pdev->subsystem_device == 0x0180)
 		qdev->wol = WAKE_MAGIC;
 
 	/* Start up the rx queues. */
-	क्रम (i = 0; i < qdev->rx_ring_count; i++) अणु
+	for (i = 0; i < qdev->rx_ring_count; i++) {
 		status = qlge_start_rx_ring(qdev, &qdev->rx_ring[i]);
-		अगर (status) अणु
-			netअगर_err(qdev, अगरup, qdev->ndev,
+		if (status) {
+			netif_err(qdev, ifup, qdev->ndev,
 				  "Failed to start rx ring[%d].\n", i);
-			वापस status;
-		पूर्ण
-	पूर्ण
+			return status;
+		}
+	}
 
 	/* If there is more than one inbound completion queue
-	 * then करोwnload a RICB to configure RSS.
+	 * then download a RICB to configure RSS.
 	 */
-	अगर (qdev->rss_ring_count > 1) अणु
+	if (qdev->rss_ring_count > 1) {
 		status = qlge_start_rss(qdev);
-		अगर (status) अणु
-			netअगर_err(qdev, अगरup, qdev->ndev, "Failed to start RSS.\n");
-			वापस status;
-		पूर्ण
-	पूर्ण
+		if (status) {
+			netif_err(qdev, ifup, qdev->ndev, "Failed to start RSS.\n");
+			return status;
+		}
+	}
 
 	/* Start up the tx queues. */
-	क्रम (i = 0; i < qdev->tx_ring_count; i++) अणु
+	for (i = 0; i < qdev->tx_ring_count; i++) {
 		status = qlge_start_tx_ring(qdev, &qdev->tx_ring[i]);
-		अगर (status) अणु
-			netअगर_err(qdev, अगरup, qdev->ndev,
+		if (status) {
+			netif_err(qdev, ifup, qdev->ndev,
 				  "Failed to start tx ring[%d].\n", i);
-			वापस status;
-		पूर्ण
-	पूर्ण
+			return status;
+		}
+	}
 
 	/* Initialize the port and set the max framesize. */
 	status = qdev->nic_ops->port_initialize(qdev);
-	अगर (status)
-		netअगर_err(qdev, अगरup, qdev->ndev, "Failed to start port.\n");
+	if (status)
+		netif_err(qdev, ifup, qdev->ndev, "Failed to start port.\n");
 
 	/* Set up the MAC address and frame routing filter. */
 	status = qlge_cam_route_initialize(qdev);
-	अगर (status) अणु
-		netअगर_err(qdev, अगरup, qdev->ndev,
+	if (status) {
+		netif_err(qdev, ifup, qdev->ndev,
 			  "Failed to init CAM/Routing tables.\n");
-		वापस status;
-	पूर्ण
+		return status;
+	}
 
-	/* Start NAPI क्रम the RSS queues. */
-	क्रम (i = 0; i < qdev->rss_ring_count; i++)
+	/* Start NAPI for the RSS queues. */
+	for (i = 0; i < qdev->rss_ring_count; i++)
 		napi_enable(&qdev->rx_ring[i].napi);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /* Issue soft reset to chip. */
-अटल पूर्णांक qlge_adapter_reset(काष्ठा qlge_adapter *qdev)
-अणु
+static int qlge_adapter_reset(struct qlge_adapter *qdev)
+{
 	u32 value;
-	पूर्णांक status = 0;
-	अचिन्हित दीर्घ end_jअगरfies;
+	int status = 0;
+	unsigned long end_jiffies;
 
 	/* Clear all the entries in the routing table. */
 	status = qlge_clear_routing_entries(qdev);
-	अगर (status) अणु
-		netअगर_err(qdev, अगरup, qdev->ndev, "Failed to clear routing bits.\n");
-		वापस status;
-	पूर्ण
+	if (status) {
+		netif_err(qdev, ifup, qdev->ndev, "Failed to clear routing bits.\n");
+		return status;
+	}
 
-	/* Check अगर bit is set then skip the mailbox command and
-	 * clear the bit, अन्यथा we are in normal reset process.
+	/* Check if bit is set then skip the mailbox command and
+	 * clear the bit, else we are in normal reset process.
 	 */
-	अगर (!test_bit(QL_ASIC_RECOVERY, &qdev->flags)) अणु
+	if (!test_bit(QL_ASIC_RECOVERY, &qdev->flags)) {
 		/* Stop management traffic. */
 		qlge_mb_set_mgmnt_traffic_ctl(qdev, MB_SET_MPI_TFK_STOP);
 
-		/* Wait क्रम the NIC and MGMNT FIFOs to empty. */
-		qlge_रुको_fअगरo_empty(qdev);
-	पूर्ण अन्यथा अणु
+		/* Wait for the NIC and MGMNT FIFOs to empty. */
+		qlge_wait_fifo_empty(qdev);
+	} else {
 		clear_bit(QL_ASIC_RECOVERY, &qdev->flags);
-	पूर्ण
+	}
 
-	qlge_ग_लिखो32(qdev, RST_FO, (RST_FO_FR << 16) | RST_FO_FR);
+	qlge_write32(qdev, RST_FO, (RST_FO_FR << 16) | RST_FO_FR);
 
-	end_jअगरfies = jअगरfies + usecs_to_jअगरfies(30);
-	करो अणु
-		value = qlge_पढ़ो32(qdev, RST_FO);
-		अगर ((value & RST_FO_FR) == 0)
-			अवरोध;
+	end_jiffies = jiffies + usecs_to_jiffies(30);
+	do {
+		value = qlge_read32(qdev, RST_FO);
+		if ((value & RST_FO_FR) == 0)
+			break;
 		cpu_relax();
-	पूर्ण जबतक (समय_beक्रमe(jअगरfies, end_jअगरfies));
+	} while (time_before(jiffies, end_jiffies));
 
-	अगर (value & RST_FO_FR) अणु
-		netअगर_err(qdev, अगरकरोwn, qdev->ndev,
+	if (value & RST_FO_FR) {
+		netif_err(qdev, ifdown, qdev->ndev,
 			  "ETIMEDOUT!!! errored out of resetting the chip!\n");
 		status = -ETIMEDOUT;
-	पूर्ण
+	}
 
 	/* Resume management traffic. */
 	qlge_mb_set_mgmnt_traffic_ctl(qdev, MB_SET_MPI_TFK_RESUME);
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल व्योम qlge_display_dev_info(काष्ठा net_device *ndev)
-अणु
-	काष्ठा qlge_adapter *qdev = netdev_to_qdev(ndev);
+static void qlge_display_dev_info(struct net_device *ndev)
+{
+	struct qlge_adapter *qdev = netdev_to_qdev(ndev);
 
-	netअगर_info(qdev, probe, qdev->ndev,
+	netif_info(qdev, probe, qdev->ndev,
 		   "Function #%d, Port %d, NIC Roll %d, NIC Rev = %d, XG Roll = %d, XG Rev = %d.\n",
 		   qdev->func,
 		   qdev->port,
@@ -3735,116 +3734,116 @@ err_irq:
 		   qdev->chip_rev_id >> 4 & 0x0000000f,
 		   qdev->chip_rev_id >> 8 & 0x0000000f,
 		   qdev->chip_rev_id >> 12 & 0x0000000f);
-	netअगर_info(qdev, probe, qdev->ndev,
+	netif_info(qdev, probe, qdev->ndev,
 		   "MAC address %pM\n", ndev->dev_addr);
-पूर्ण
+}
 
-अटल पूर्णांक qlge_wol(काष्ठा qlge_adapter *qdev)
-अणु
-	पूर्णांक status = 0;
+static int qlge_wol(struct qlge_adapter *qdev)
+{
+	int status = 0;
 	u32 wol = MB_WOL_DISABLE;
 
-	/* The CAM is still पूर्णांकact after a reset, but अगर we
-	 * are करोing WOL, then we may need to program the
+	/* The CAM is still intact after a reset, but if we
+	 * are doing WOL, then we may need to program the
 	 * routing regs. We would also need to issue the mailbox
-	 * commands to inकाष्ठा the MPI what to करो per the ethtool
+	 * commands to instruct the MPI what to do per the ethtool
 	 * settings.
 	 */
 
-	अगर (qdev->wol & (WAKE_ARP | WAKE_MAGICSECURE | WAKE_PHY | WAKE_UCAST |
-			 WAKE_MCAST | WAKE_BCAST)) अणु
-		netअगर_err(qdev, अगरकरोwn, qdev->ndev,
+	if (qdev->wol & (WAKE_ARP | WAKE_MAGICSECURE | WAKE_PHY | WAKE_UCAST |
+			 WAKE_MCAST | WAKE_BCAST)) {
+		netif_err(qdev, ifdown, qdev->ndev,
 			  "Unsupported WOL parameter. qdev->wol = 0x%x.\n",
 			  qdev->wol);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (qdev->wol & WAKE_MAGIC) अणु
+	if (qdev->wol & WAKE_MAGIC) {
 		status = qlge_mb_wol_set_magic(qdev, 1);
-		अगर (status) अणु
-			netअगर_err(qdev, अगरकरोwn, qdev->ndev,
+		if (status) {
+			netif_err(qdev, ifdown, qdev->ndev,
 				  "Failed to set magic packet on %s.\n",
 				  qdev->ndev->name);
-			वापस status;
-		पूर्ण
-		netअगर_info(qdev, drv, qdev->ndev,
+			return status;
+		}
+		netif_info(qdev, drv, qdev->ndev,
 			   "Enabled magic packet successfully on %s.\n",
 			   qdev->ndev->name);
 
 		wol |= MB_WOL_MAGIC_PKT;
-	पूर्ण
+	}
 
-	अगर (qdev->wol) अणु
+	if (qdev->wol) {
 		wol |= MB_WOL_MODE_ON;
 		status = qlge_mb_wol_mode(qdev, wol);
-		netअगर_err(qdev, drv, qdev->ndev,
+		netif_err(qdev, drv, qdev->ndev,
 			  "WOL %s (wol code 0x%x) on %s\n",
 			  (status == 0) ? "Successfully set" : "Failed",
 			  wol, qdev->ndev->name);
-	पूर्ण
+	}
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल व्योम qlge_cancel_all_work_sync(काष्ठा qlge_adapter *qdev)
-अणु
-	/* Don't समाप्त the reset worker thपढ़ो अगर we
+static void qlge_cancel_all_work_sync(struct qlge_adapter *qdev)
+{
+	/* Don't kill the reset worker thread if we
 	 * are in the process of recovery.
 	 */
-	अगर (test_bit(QL_ADAPTER_UP, &qdev->flags))
+	if (test_bit(QL_ADAPTER_UP, &qdev->flags))
 		cancel_delayed_work_sync(&qdev->asic_reset_work);
 	cancel_delayed_work_sync(&qdev->mpi_reset_work);
 	cancel_delayed_work_sync(&qdev->mpi_work);
 	cancel_delayed_work_sync(&qdev->mpi_idc_work);
 	cancel_delayed_work_sync(&qdev->mpi_port_cfg_work);
-पूर्ण
+}
 
-अटल पूर्णांक qlge_adapter_करोwn(काष्ठा qlge_adapter *qdev)
-अणु
-	पूर्णांक i, status = 0;
+static int qlge_adapter_down(struct qlge_adapter *qdev)
+{
+	int i, status = 0;
 
 	qlge_link_off(qdev);
 
 	qlge_cancel_all_work_sync(qdev);
 
-	क्रम (i = 0; i < qdev->rss_ring_count; i++)
+	for (i = 0; i < qdev->rss_ring_count; i++)
 		napi_disable(&qdev->rx_ring[i].napi);
 
 	clear_bit(QL_ADAPTER_UP, &qdev->flags);
 
-	qlge_disable_पूर्णांकerrupts(qdev);
+	qlge_disable_interrupts(qdev);
 
 	qlge_tx_ring_clean(qdev);
 
-	/* Call netअगर_napi_del() from common poपूर्णांक. */
-	क्रम (i = 0; i < qdev->rss_ring_count; i++)
-		netअगर_napi_del(&qdev->rx_ring[i].napi);
+	/* Call netif_napi_del() from common point. */
+	for (i = 0; i < qdev->rss_ring_count; i++)
+		netif_napi_del(&qdev->rx_ring[i].napi);
 
 	status = qlge_adapter_reset(qdev);
-	अगर (status)
-		netअगर_err(qdev, अगरकरोwn, qdev->ndev, "reset(func #%d) FAILED!\n",
+	if (status)
+		netif_err(qdev, ifdown, qdev->ndev, "reset(func #%d) FAILED!\n",
 			  qdev->func);
-	qlge_मुक्त_rx_buffers(qdev);
+	qlge_free_rx_buffers(qdev);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक qlge_adapter_up(काष्ठा qlge_adapter *qdev)
-अणु
-	पूर्णांक err = 0;
+static int qlge_adapter_up(struct qlge_adapter *qdev)
+{
+	int err = 0;
 
 	err = qlge_adapter_initialize(qdev);
-	अगर (err) अणु
-		netअगर_info(qdev, अगरup, qdev->ndev, "Unable to initialize adapter.\n");
-		जाओ err_init;
-	पूर्ण
+	if (err) {
+		netif_info(qdev, ifup, qdev->ndev, "Unable to initialize adapter.\n");
+		goto err_init;
+	}
 	set_bit(QL_ADAPTER_UP, &qdev->flags);
 	qlge_alloc_rx_buffers(qdev);
 	/* If the port is initialized and the
 	 * link is up the turn on the carrier.
 	 */
-	अगर ((qlge_पढ़ो32(qdev, STS) & qdev->port_init) &&
-	    (qlge_पढ़ो32(qdev, STS) & qdev->port_link_up))
+	if ((qlge_read32(qdev, STS) & qdev->port_init) &&
+	    (qlge_read32(qdev, STS) & qdev->port_link_up))
 		qlge_link_on(qdev);
 	/* Restore rx mode. */
 	clear_bit(QL_ALLMULTI, &qdev->flags);
@@ -3854,254 +3853,254 @@ err_irq:
 	/* Restore vlan setting. */
 	qlge_restore_vlan(qdev);
 
-	qlge_enable_पूर्णांकerrupts(qdev);
-	qlge_enable_all_completion_पूर्णांकerrupts(qdev);
-	netअगर_tx_start_all_queues(qdev->ndev);
+	qlge_enable_interrupts(qdev);
+	qlge_enable_all_completion_interrupts(qdev);
+	netif_tx_start_all_queues(qdev->ndev);
 
-	वापस 0;
+	return 0;
 err_init:
 	qlge_adapter_reset(qdev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम qlge_release_adapter_resources(काष्ठा qlge_adapter *qdev)
-अणु
-	qlge_मुक्त_mem_resources(qdev);
-	qlge_मुक्त_irq(qdev);
-पूर्ण
+static void qlge_release_adapter_resources(struct qlge_adapter *qdev)
+{
+	qlge_free_mem_resources(qdev);
+	qlge_free_irq(qdev);
+}
 
-अटल पूर्णांक qlge_get_adapter_resources(काष्ठा qlge_adapter *qdev)
-अणु
-	अगर (qlge_alloc_mem_resources(qdev)) अणु
-		netअगर_err(qdev, अगरup, qdev->ndev, "Unable to  allocate memory.\n");
-		वापस -ENOMEM;
-	पूर्ण
-	वापस qlge_request_irq(qdev);
-पूर्ण
+static int qlge_get_adapter_resources(struct qlge_adapter *qdev)
+{
+	if (qlge_alloc_mem_resources(qdev)) {
+		netif_err(qdev, ifup, qdev->ndev, "Unable to  allocate memory.\n");
+		return -ENOMEM;
+	}
+	return qlge_request_irq(qdev);
+}
 
-अटल पूर्णांक qlge_बंद(काष्ठा net_device *ndev)
-अणु
-	काष्ठा qlge_adapter *qdev = netdev_to_qdev(ndev);
-	पूर्णांक i;
+static int qlge_close(struct net_device *ndev)
+{
+	struct qlge_adapter *qdev = netdev_to_qdev(ndev);
+	int i;
 
 	/* If we hit pci_channel_io_perm_failure
-	 * failure condition, then we alपढ़ोy
-	 * brought the adapter करोwn.
+	 * failure condition, then we already
+	 * brought the adapter down.
 	 */
-	अगर (test_bit(QL_EEH_FATAL, &qdev->flags)) अणु
-		netअगर_err(qdev, drv, qdev->ndev, "EEH fatal did unload.\n");
+	if (test_bit(QL_EEH_FATAL, &qdev->flags)) {
+		netif_err(qdev, drv, qdev->ndev, "EEH fatal did unload.\n");
 		clear_bit(QL_EEH_FATAL, &qdev->flags);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/*
-	 * Wait क्रम device to recover from a reset.
+	 * Wait for device to recover from a reset.
 	 * (Rarely happens, but possible.)
 	 */
-	जबतक (!test_bit(QL_ADAPTER_UP, &qdev->flags))
+	while (!test_bit(QL_ADAPTER_UP, &qdev->flags))
 		msleep(1);
 
-	/* Make sure refill_work करोesn't re-enable napi */
-	क्रम (i = 0; i < qdev->rss_ring_count; i++)
+	/* Make sure refill_work doesn't re-enable napi */
+	for (i = 0; i < qdev->rss_ring_count; i++)
 		cancel_delayed_work_sync(&qdev->rx_ring[i].refill_work);
 
-	qlge_adapter_करोwn(qdev);
+	qlge_adapter_down(qdev);
 	qlge_release_adapter_resources(qdev);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम qlge_set_lb_size(काष्ठा qlge_adapter *qdev)
-अणु
-	अगर (qdev->ndev->mtu <= 1500)
+static void qlge_set_lb_size(struct qlge_adapter *qdev)
+{
+	if (qdev->ndev->mtu <= 1500)
 		qdev->lbq_buf_size = LARGE_BUFFER_MIN_SIZE;
-	अन्यथा
+	else
 		qdev->lbq_buf_size = LARGE_BUFFER_MAX_SIZE;
 	qdev->lbq_buf_order = get_order(qdev->lbq_buf_size);
-पूर्ण
+}
 
-अटल पूर्णांक qlge_configure_rings(काष्ठा qlge_adapter *qdev)
-अणु
-	पूर्णांक i;
-	काष्ठा rx_ring *rx_ring;
-	काष्ठा tx_ring *tx_ring;
-	पूर्णांक cpu_cnt = min_t(पूर्णांक, MAX_CPUS, num_online_cpus());
+static int qlge_configure_rings(struct qlge_adapter *qdev)
+{
+	int i;
+	struct rx_ring *rx_ring;
+	struct tx_ring *tx_ring;
+	int cpu_cnt = min_t(int, MAX_CPUS, num_online_cpus());
 
-	/* In a perfect world we have one RSS ring क्रम each CPU
-	 * and each has it's own vector.  To करो that we ask क्रम
+	/* In a perfect world we have one RSS ring for each CPU
+	 * and each has it's own vector.  To do that we ask for
 	 * cpu_cnt vectors.  qlge_enable_msix() will adjust the
 	 * vector count to what we actually get.  We then
-	 * allocate an RSS ring क्रम each.
-	 * Essentially, we are करोing min(cpu_count, msix_vector_count).
+	 * allocate an RSS ring for each.
+	 * Essentially, we are doing min(cpu_count, msix_vector_count).
 	 */
-	qdev->पूर्णांकr_count = cpu_cnt;
+	qdev->intr_count = cpu_cnt;
 	qlge_enable_msix(qdev);
 	/* Adjust the RSS ring count to the actual vector count. */
-	qdev->rss_ring_count = qdev->पूर्णांकr_count;
+	qdev->rss_ring_count = qdev->intr_count;
 	qdev->tx_ring_count = cpu_cnt;
 	qdev->rx_ring_count = qdev->tx_ring_count + qdev->rss_ring_count;
 
-	क्रम (i = 0; i < qdev->tx_ring_count; i++) अणु
+	for (i = 0; i < qdev->tx_ring_count; i++) {
 		tx_ring = &qdev->tx_ring[i];
-		स_रखो((व्योम *)tx_ring, 0, माप(*tx_ring));
+		memset((void *)tx_ring, 0, sizeof(*tx_ring));
 		tx_ring->qdev = qdev;
 		tx_ring->wq_id = i;
 		tx_ring->wq_len = qdev->tx_ring_size;
 		tx_ring->wq_size =
-			tx_ring->wq_len * माप(काष्ठा qlge_ob_mac_iocb_req);
+			tx_ring->wq_len * sizeof(struct qlge_ob_mac_iocb_req);
 
 		/*
-		 * The completion queue ID क्रम the tx rings start
+		 * The completion queue ID for the tx rings start
 		 * immediately after the rss rings.
 		 */
 		tx_ring->cq_id = qdev->rss_ring_count + i;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < qdev->rx_ring_count; i++) अणु
+	for (i = 0; i < qdev->rx_ring_count; i++) {
 		rx_ring = &qdev->rx_ring[i];
-		स_रखो((व्योम *)rx_ring, 0, माप(*rx_ring));
+		memset((void *)rx_ring, 0, sizeof(*rx_ring));
 		rx_ring->qdev = qdev;
 		rx_ring->cq_id = i;
 		rx_ring->cpu = i % cpu_cnt;	/* CPU to run handler on. */
-		अगर (i < qdev->rss_ring_count) अणु
+		if (i < qdev->rss_ring_count) {
 			/*
 			 * Inbound (RSS) queues.
 			 */
 			rx_ring->cq_len = qdev->rx_ring_size;
 			rx_ring->cq_size =
-				rx_ring->cq_len * माप(काष्ठा qlge_net_rsp_iocb);
+				rx_ring->cq_len * sizeof(struct qlge_net_rsp_iocb);
 			rx_ring->lbq.type = QLGE_LB;
 			rx_ring->sbq.type = QLGE_SB;
 			INIT_DELAYED_WORK(&rx_ring->refill_work,
 					  &qlge_slow_refill);
-		पूर्ण अन्यथा अणु
+		} else {
 			/*
 			 * Outbound queue handles outbound completions only.
 			 */
 			/* outbound cq is same size as tx_ring it services. */
 			rx_ring->cq_len = qdev->tx_ring_size;
 			rx_ring->cq_size =
-				rx_ring->cq_len * माप(काष्ठा qlge_net_rsp_iocb);
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+				rx_ring->cq_len * sizeof(struct qlge_net_rsp_iocb);
+		}
+	}
+	return 0;
+}
 
-अटल पूर्णांक qlge_खोलो(काष्ठा net_device *ndev)
-अणु
-	काष्ठा qlge_adapter *qdev = netdev_to_qdev(ndev);
-	पूर्णांक err = 0;
+static int qlge_open(struct net_device *ndev)
+{
+	struct qlge_adapter *qdev = netdev_to_qdev(ndev);
+	int err = 0;
 
 	err = qlge_adapter_reset(qdev);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	qlge_set_lb_size(qdev);
 	err = qlge_configure_rings(qdev);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = qlge_get_adapter_resources(qdev);
-	अगर (err)
-		जाओ error_up;
+	if (err)
+		goto error_up;
 
 	err = qlge_adapter_up(qdev);
-	अगर (err)
-		जाओ error_up;
+	if (err)
+		goto error_up;
 
-	वापस err;
+	return err;
 
 error_up:
 	qlge_release_adapter_resources(qdev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक qlge_change_rx_buffers(काष्ठा qlge_adapter *qdev)
-अणु
-	पूर्णांक status;
+static int qlge_change_rx_buffers(struct qlge_adapter *qdev)
+{
+	int status;
 
-	/* Wait क्रम an outstanding reset to complete. */
-	अगर (!test_bit(QL_ADAPTER_UP, &qdev->flags)) अणु
-		पूर्णांक i = 4;
+	/* Wait for an outstanding reset to complete. */
+	if (!test_bit(QL_ADAPTER_UP, &qdev->flags)) {
+		int i = 4;
 
-		जबतक (--i && !test_bit(QL_ADAPTER_UP, &qdev->flags)) अणु
-			netअगर_err(qdev, अगरup, qdev->ndev,
+		while (--i && !test_bit(QL_ADAPTER_UP, &qdev->flags)) {
+			netif_err(qdev, ifup, qdev->ndev,
 				  "Waiting for adapter UP...\n");
 			ssleep(1);
-		पूर्ण
+		}
 
-		अगर (!i) अणु
-			netअगर_err(qdev, अगरup, qdev->ndev,
+		if (!i) {
+			netif_err(qdev, ifup, qdev->ndev,
 				  "Timed out waiting for adapter UP\n");
-			वापस -ETIMEDOUT;
-		पूर्ण
-	पूर्ण
+			return -ETIMEDOUT;
+		}
+	}
 
-	status = qlge_adapter_करोwn(qdev);
-	अगर (status)
-		जाओ error;
+	status = qlge_adapter_down(qdev);
+	if (status)
+		goto error;
 
 	qlge_set_lb_size(qdev);
 
 	status = qlge_adapter_up(qdev);
-	अगर (status)
-		जाओ error;
+	if (status)
+		goto error;
 
-	वापस status;
+	return status;
 error:
-	netअगर_alert(qdev, अगरup, qdev->ndev,
+	netif_alert(qdev, ifup, qdev->ndev,
 		    "Driver up/down cycle failed, closing device.\n");
 	set_bit(QL_ADAPTER_UP, &qdev->flags);
-	dev_बंद(qdev->ndev);
-	वापस status;
-पूर्ण
+	dev_close(qdev->ndev);
+	return status;
+}
 
-अटल पूर्णांक qlge_change_mtu(काष्ठा net_device *ndev, पूर्णांक new_mtu)
-अणु
-	काष्ठा qlge_adapter *qdev = netdev_to_qdev(ndev);
-	पूर्णांक status;
+static int qlge_change_mtu(struct net_device *ndev, int new_mtu)
+{
+	struct qlge_adapter *qdev = netdev_to_qdev(ndev);
+	int status;
 
-	अगर (ndev->mtu == 1500 && new_mtu == 9000)
-		netअगर_err(qdev, अगरup, qdev->ndev, "Changing to jumbo MTU.\n");
-	अन्यथा अगर (ndev->mtu == 9000 && new_mtu == 1500)
-		netअगर_err(qdev, अगरup, qdev->ndev, "Changing to normal MTU.\n");
-	अन्यथा
-		वापस -EINVAL;
+	if (ndev->mtu == 1500 && new_mtu == 9000)
+		netif_err(qdev, ifup, qdev->ndev, "Changing to jumbo MTU.\n");
+	else if (ndev->mtu == 9000 && new_mtu == 1500)
+		netif_err(qdev, ifup, qdev->ndev, "Changing to normal MTU.\n");
+	else
+		return -EINVAL;
 
 	queue_delayed_work(qdev->workqueue,
 			   &qdev->mpi_port_cfg_work, 3 * HZ);
 
 	ndev->mtu = new_mtu;
 
-	अगर (!netअगर_running(qdev->ndev))
-		वापस 0;
+	if (!netif_running(qdev->ndev))
+		return 0;
 
 	status = qlge_change_rx_buffers(qdev);
-	अगर (status) अणु
-		netअगर_err(qdev, अगरup, qdev->ndev,
+	if (status) {
+		netif_err(qdev, ifup, qdev->ndev,
 			  "Changing MTU failed.\n");
-	पूर्ण
+	}
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल काष्ठा net_device_stats *qlge_get_stats(काष्ठा net_device
+static struct net_device_stats *qlge_get_stats(struct net_device
 					       *ndev)
-अणु
-	काष्ठा qlge_adapter *qdev = netdev_to_qdev(ndev);
-	काष्ठा rx_ring *rx_ring = &qdev->rx_ring[0];
-	काष्ठा tx_ring *tx_ring = &qdev->tx_ring[0];
-	अचिन्हित दीर्घ pkts, mcast, dropped, errors, bytes;
-	पूर्णांक i;
+{
+	struct qlge_adapter *qdev = netdev_to_qdev(ndev);
+	struct rx_ring *rx_ring = &qdev->rx_ring[0];
+	struct tx_ring *tx_ring = &qdev->tx_ring[0];
+	unsigned long pkts, mcast, dropped, errors, bytes;
+	int i;
 
 	/* Get RX stats. */
 	pkts = mcast = dropped = errors = bytes = 0;
-	क्रम (i = 0; i < qdev->rss_ring_count; i++, rx_ring++) अणु
+	for (i = 0; i < qdev->rss_ring_count; i++, rx_ring++) {
 		pkts += rx_ring->rx_packets;
 		bytes += rx_ring->rx_bytes;
 		dropped += rx_ring->rx_dropped;
 		errors += rx_ring->rx_errors;
 		mcast += rx_ring->rx_multicast;
-	पूर्ण
+	}
 	ndev->stats.rx_packets = pkts;
 	ndev->stats.rx_bytes = bytes;
 	ndev->stats.rx_dropped = dropped;
@@ -4110,152 +4109,152 @@ error:
 
 	/* Get TX stats. */
 	pkts = errors = bytes = 0;
-	क्रम (i = 0; i < qdev->tx_ring_count; i++, tx_ring++) अणु
+	for (i = 0; i < qdev->tx_ring_count; i++, tx_ring++) {
 		pkts += tx_ring->tx_packets;
 		bytes += tx_ring->tx_bytes;
 		errors += tx_ring->tx_errors;
-	पूर्ण
+	}
 	ndev->stats.tx_packets = pkts;
 	ndev->stats.tx_bytes = bytes;
 	ndev->stats.tx_errors = errors;
-	वापस &ndev->stats;
-पूर्ण
+	return &ndev->stats;
+}
 
-अटल व्योम qlge_set_multicast_list(काष्ठा net_device *ndev)
-अणु
-	काष्ठा qlge_adapter *qdev = netdev_to_qdev(ndev);
-	काष्ठा netdev_hw_addr *ha;
-	पूर्णांक i, status;
+static void qlge_set_multicast_list(struct net_device *ndev)
+{
+	struct qlge_adapter *qdev = netdev_to_qdev(ndev);
+	struct netdev_hw_addr *ha;
+	int i, status;
 
 	status = qlge_sem_spinlock(qdev, SEM_RT_IDX_MASK);
-	अगर (status)
-		वापस;
+	if (status)
+		return;
 	/*
-	 * Set or clear promiscuous mode अगर a
+	 * Set or clear promiscuous mode if a
 	 * transition is taking place.
 	 */
-	अगर (ndev->flags & IFF_PROMISC) अणु
-		अगर (!test_bit(QL_PROMISCUOUS, &qdev->flags)) अणु
-			अगर (qlge_set_routing_reg
-			    (qdev, RT_IDX_PROMISCUOUS_SLOT, RT_IDX_VALID, 1)) अणु
-				netअगर_err(qdev, hw, qdev->ndev,
+	if (ndev->flags & IFF_PROMISC) {
+		if (!test_bit(QL_PROMISCUOUS, &qdev->flags)) {
+			if (qlge_set_routing_reg
+			    (qdev, RT_IDX_PROMISCUOUS_SLOT, RT_IDX_VALID, 1)) {
+				netif_err(qdev, hw, qdev->ndev,
 					  "Failed to set promiscuous mode.\n");
-			पूर्ण अन्यथा अणु
+			} else {
 				set_bit(QL_PROMISCUOUS, &qdev->flags);
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (test_bit(QL_PROMISCUOUS, &qdev->flags)) अणु
-			अगर (qlge_set_routing_reg
-			    (qdev, RT_IDX_PROMISCUOUS_SLOT, RT_IDX_VALID, 0)) अणु
-				netअगर_err(qdev, hw, qdev->ndev,
+			}
+		}
+	} else {
+		if (test_bit(QL_PROMISCUOUS, &qdev->flags)) {
+			if (qlge_set_routing_reg
+			    (qdev, RT_IDX_PROMISCUOUS_SLOT, RT_IDX_VALID, 0)) {
+				netif_err(qdev, hw, qdev->ndev,
 					  "Failed to clear promiscuous mode.\n");
-			पूर्ण अन्यथा अणु
+			} else {
 				clear_bit(QL_PROMISCUOUS, &qdev->flags);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 	/*
-	 * Set or clear all multicast mode अगर a
+	 * Set or clear all multicast mode if a
 	 * transition is taking place.
 	 */
-	अगर ((ndev->flags & IFF_ALLMULTI) ||
-	    (netdev_mc_count(ndev) > MAX_MULTICAST_ENTRIES)) अणु
-		अगर (!test_bit(QL_ALLMULTI, &qdev->flags)) अणु
-			अगर (qlge_set_routing_reg
-			    (qdev, RT_IDX_ALLMULTI_SLOT, RT_IDX_MCAST, 1)) अणु
-				netअगर_err(qdev, hw, qdev->ndev,
+	if ((ndev->flags & IFF_ALLMULTI) ||
+	    (netdev_mc_count(ndev) > MAX_MULTICAST_ENTRIES)) {
+		if (!test_bit(QL_ALLMULTI, &qdev->flags)) {
+			if (qlge_set_routing_reg
+			    (qdev, RT_IDX_ALLMULTI_SLOT, RT_IDX_MCAST, 1)) {
+				netif_err(qdev, hw, qdev->ndev,
 					  "Failed to set all-multi mode.\n");
-			पूर्ण अन्यथा अणु
+			} else {
 				set_bit(QL_ALLMULTI, &qdev->flags);
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (test_bit(QL_ALLMULTI, &qdev->flags)) अणु
-			अगर (qlge_set_routing_reg
-			    (qdev, RT_IDX_ALLMULTI_SLOT, RT_IDX_MCAST, 0)) अणु
-				netअगर_err(qdev, hw, qdev->ndev,
+			}
+		}
+	} else {
+		if (test_bit(QL_ALLMULTI, &qdev->flags)) {
+			if (qlge_set_routing_reg
+			    (qdev, RT_IDX_ALLMULTI_SLOT, RT_IDX_MCAST, 0)) {
+				netif_err(qdev, hw, qdev->ndev,
 					  "Failed to clear all-multi mode.\n");
-			पूर्ण अन्यथा अणु
+			} else {
 				clear_bit(QL_ALLMULTI, &qdev->flags);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	अगर (!netdev_mc_empty(ndev)) अणु
+	if (!netdev_mc_empty(ndev)) {
 		status = qlge_sem_spinlock(qdev, SEM_MAC_ADDR_MASK);
-		अगर (status)
-			जाओ निकास;
+		if (status)
+			goto exit;
 		i = 0;
-		netdev_क्रम_each_mc_addr(ha, ndev) अणु
-			अगर (qlge_set_mac_addr_reg(qdev, (u8 *)ha->addr,
-						  MAC_ADDR_TYPE_MULTI_MAC, i)) अणु
-				netअगर_err(qdev, hw, qdev->ndev,
+		netdev_for_each_mc_addr(ha, ndev) {
+			if (qlge_set_mac_addr_reg(qdev, (u8 *)ha->addr,
+						  MAC_ADDR_TYPE_MULTI_MAC, i)) {
+				netif_err(qdev, hw, qdev->ndev,
 					  "Failed to loadmulticast address.\n");
 				qlge_sem_unlock(qdev, SEM_MAC_ADDR_MASK);
-				जाओ निकास;
-			पूर्ण
+				goto exit;
+			}
 			i++;
-		पूर्ण
+		}
 		qlge_sem_unlock(qdev, SEM_MAC_ADDR_MASK);
-		अगर (qlge_set_routing_reg
-		    (qdev, RT_IDX_MCAST_MATCH_SLOT, RT_IDX_MCAST_MATCH, 1)) अणु
-			netअगर_err(qdev, hw, qdev->ndev,
+		if (qlge_set_routing_reg
+		    (qdev, RT_IDX_MCAST_MATCH_SLOT, RT_IDX_MCAST_MATCH, 1)) {
+			netif_err(qdev, hw, qdev->ndev,
 				  "Failed to set multicast match mode.\n");
-		पूर्ण अन्यथा अणु
+		} else {
 			set_bit(QL_ALLMULTI, &qdev->flags);
-		पूर्ण
-	पूर्ण
-निकास:
+		}
+	}
+exit:
 	qlge_sem_unlock(qdev, SEM_RT_IDX_MASK);
-पूर्ण
+}
 
-अटल पूर्णांक qlge_set_mac_address(काष्ठा net_device *ndev, व्योम *p)
-अणु
-	काष्ठा qlge_adapter *qdev = netdev_to_qdev(ndev);
-	काष्ठा sockaddr *addr = p;
-	पूर्णांक status;
+static int qlge_set_mac_address(struct net_device *ndev, void *p)
+{
+	struct qlge_adapter *qdev = netdev_to_qdev(ndev);
+	struct sockaddr *addr = p;
+	int status;
 
-	अगर (!is_valid_ether_addr(addr->sa_data))
-		वापस -EADDRNOTAVAIL;
-	स_नकल(ndev->dev_addr, addr->sa_data, ndev->addr_len);
+	if (!is_valid_ether_addr(addr->sa_data))
+		return -EADDRNOTAVAIL;
+	memcpy(ndev->dev_addr, addr->sa_data, ndev->addr_len);
 	/* Update local copy of current mac address. */
-	स_नकल(qdev->current_mac_addr, ndev->dev_addr, ndev->addr_len);
+	memcpy(qdev->current_mac_addr, ndev->dev_addr, ndev->addr_len);
 
 	status = qlge_sem_spinlock(qdev, SEM_MAC_ADDR_MASK);
-	अगर (status)
-		वापस status;
+	if (status)
+		return status;
 	status = qlge_set_mac_addr_reg(qdev, (u8 *)ndev->dev_addr,
 				       MAC_ADDR_TYPE_CAM_MAC,
 				       qdev->func * MAX_CQ);
-	अगर (status)
-		netअगर_err(qdev, hw, qdev->ndev, "Failed to load MAC address.\n");
+	if (status)
+		netif_err(qdev, hw, qdev->ndev, "Failed to load MAC address.\n");
 	qlge_sem_unlock(qdev, SEM_MAC_ADDR_MASK);
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल व्योम qlge_tx_समयout(काष्ठा net_device *ndev, अचिन्हित पूर्णांक txqueue)
-अणु
-	काष्ठा qlge_adapter *qdev = netdev_to_qdev(ndev);
+static void qlge_tx_timeout(struct net_device *ndev, unsigned int txqueue)
+{
+	struct qlge_adapter *qdev = netdev_to_qdev(ndev);
 
 	qlge_queue_asic_error(qdev);
-पूर्ण
+}
 
-अटल व्योम qlge_asic_reset_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा qlge_adapter *qdev =
-		container_of(work, काष्ठा qlge_adapter, asic_reset_work.work);
-	पूर्णांक status;
+static void qlge_asic_reset_work(struct work_struct *work)
+{
+	struct qlge_adapter *qdev =
+		container_of(work, struct qlge_adapter, asic_reset_work.work);
+	int status;
 
 	rtnl_lock();
-	status = qlge_adapter_करोwn(qdev);
-	अगर (status)
-		जाओ error;
+	status = qlge_adapter_down(qdev);
+	if (status)
+		goto error;
 
 	status = qlge_adapter_up(qdev);
-	अगर (status)
-		जाओ error;
+	if (status)
+		goto error;
 
 	/* Restore rx mode. */
 	clear_bit(QL_ALLMULTI, &qdev->flags);
@@ -4263,206 +4262,206 @@ error:
 	qlge_set_multicast_list(qdev->ndev);
 
 	rtnl_unlock();
-	वापस;
+	return;
 error:
-	netअगर_alert(qdev, अगरup, qdev->ndev,
+	netif_alert(qdev, ifup, qdev->ndev,
 		    "Driver up/down cycle failed, closing device\n");
 
 	set_bit(QL_ADAPTER_UP, &qdev->flags);
-	dev_बंद(qdev->ndev);
+	dev_close(qdev->ndev);
 	rtnl_unlock();
-पूर्ण
+}
 
-अटल स्थिर काष्ठा nic_operations qla8012_nic_ops = अणु
+static const struct nic_operations qla8012_nic_ops = {
 	.get_flash		= qlge_get_8012_flash_params,
 	.port_initialize	= qlge_8012_port_initialize,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा nic_operations qla8000_nic_ops = अणु
+static const struct nic_operations qla8000_nic_ops = {
 	.get_flash		= qlge_get_8000_flash_params,
 	.port_initialize	= qlge_8000_port_initialize,
-पूर्ण;
+};
 
-/* Find the pcie function number क्रम the other NIC
+/* Find the pcie function number for the other NIC
  * on this chip.  Since both NIC functions share a
  * common firmware we have the lowest enabled function
- * करो any common work.  Examples would be resetting
- * after a fatal firmware error, or करोing a firmware
+ * do any common work.  Examples would be resetting
+ * after a fatal firmware error, or doing a firmware
  * coredump.
  */
-अटल पूर्णांक qlge_get_alt_pcie_func(काष्ठा qlge_adapter *qdev)
-अणु
-	पूर्णांक status = 0;
+static int qlge_get_alt_pcie_func(struct qlge_adapter *qdev)
+{
+	int status = 0;
 	u32 temp;
 	u32 nic_func1, nic_func2;
 
-	status = qlge_पढ़ो_mpi_reg(qdev, MPI_TEST_FUNC_PORT_CFG,
+	status = qlge_read_mpi_reg(qdev, MPI_TEST_FUNC_PORT_CFG,
 				   &temp);
-	अगर (status)
-		वापस status;
+	if (status)
+		return status;
 
 	nic_func1 = ((temp >> MPI_TEST_NIC1_FUNC_SHIFT) &
 		     MPI_TEST_NIC_FUNC_MASK);
 	nic_func2 = ((temp >> MPI_TEST_NIC2_FUNC_SHIFT) &
 		     MPI_TEST_NIC_FUNC_MASK);
 
-	अगर (qdev->func == nic_func1)
+	if (qdev->func == nic_func1)
 		qdev->alt_func = nic_func2;
-	अन्यथा अगर (qdev->func == nic_func2)
+	else if (qdev->func == nic_func2)
 		qdev->alt_func = nic_func1;
-	अन्यथा
+	else
 		status = -EIO;
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक qlge_get_board_info(काष्ठा qlge_adapter *qdev)
-अणु
-	पूर्णांक status;
+static int qlge_get_board_info(struct qlge_adapter *qdev)
+{
+	int status;
 
 	qdev->func =
-		(qlge_पढ़ो32(qdev, STS) & STS_FUNC_ID_MASK) >> STS_FUNC_ID_SHIFT;
-	अगर (qdev->func > 3)
-		वापस -EIO;
+		(qlge_read32(qdev, STS) & STS_FUNC_ID_MASK) >> STS_FUNC_ID_SHIFT;
+	if (qdev->func > 3)
+		return -EIO;
 
 	status = qlge_get_alt_pcie_func(qdev);
-	अगर (status)
-		वापस status;
+	if (status)
+		return status;
 
 	qdev->port = (qdev->func < qdev->alt_func) ? 0 : 1;
-	अगर (qdev->port) अणु
+	if (qdev->port) {
 		qdev->xg_sem_mask = SEM_XGMAC1_MASK;
 		qdev->port_link_up = STS_PL1;
 		qdev->port_init = STS_PI1;
 		qdev->mailbox_in = PROC_ADDR_MPI_RISC | PROC_ADDR_FUNC2_MBI;
 		qdev->mailbox_out = PROC_ADDR_MPI_RISC | PROC_ADDR_FUNC2_MBO;
-	पूर्ण अन्यथा अणु
+	} else {
 		qdev->xg_sem_mask = SEM_XGMAC0_MASK;
 		qdev->port_link_up = STS_PL0;
 		qdev->port_init = STS_PI0;
 		qdev->mailbox_in = PROC_ADDR_MPI_RISC | PROC_ADDR_FUNC0_MBI;
 		qdev->mailbox_out = PROC_ADDR_MPI_RISC | PROC_ADDR_FUNC0_MBO;
-	पूर्ण
-	qdev->chip_rev_id = qlge_पढ़ो32(qdev, REV_ID);
+	}
+	qdev->chip_rev_id = qlge_read32(qdev, REV_ID);
 	qdev->device_id = qdev->pdev->device;
-	अगर (qdev->device_id == QLGE_DEVICE_ID_8012)
+	if (qdev->device_id == QLGE_DEVICE_ID_8012)
 		qdev->nic_ops = &qla8012_nic_ops;
-	अन्यथा अगर (qdev->device_id == QLGE_DEVICE_ID_8000)
+	else if (qdev->device_id == QLGE_DEVICE_ID_8000)
 		qdev->nic_ops = &qla8000_nic_ops;
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल व्योम qlge_release_all(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा qlge_adapter *qdev = pci_get_drvdata(pdev);
+static void qlge_release_all(struct pci_dev *pdev)
+{
+	struct qlge_adapter *qdev = pci_get_drvdata(pdev);
 
-	अगर (qdev->workqueue) अणु
+	if (qdev->workqueue) {
 		destroy_workqueue(qdev->workqueue);
-		qdev->workqueue = शून्य;
-	पूर्ण
+		qdev->workqueue = NULL;
+	}
 
-	अगर (qdev->reg_base)
+	if (qdev->reg_base)
 		iounmap(qdev->reg_base);
-	अगर (qdev->करोorbell_area)
-		iounmap(qdev->करोorbell_area);
-	vमुक्त(qdev->mpi_coredump);
+	if (qdev->doorbell_area)
+		iounmap(qdev->doorbell_area);
+	vfree(qdev->mpi_coredump);
 	pci_release_regions(pdev);
-पूर्ण
+}
 
-अटल पूर्णांक qlge_init_device(काष्ठा pci_dev *pdev, काष्ठा qlge_adapter *qdev,
-			    पूर्णांक cards_found)
-अणु
-	काष्ठा net_device *ndev = qdev->ndev;
-	पूर्णांक err = 0;
+static int qlge_init_device(struct pci_dev *pdev, struct qlge_adapter *qdev,
+			    int cards_found)
+{
+	struct net_device *ndev = qdev->ndev;
+	int err = 0;
 
 	err = pci_enable_device(pdev);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev, "PCI device enable failed.\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	qdev->pdev = pdev;
 	pci_set_drvdata(pdev, qdev);
 
-	/* Set PCIe पढ़ो request size */
-	err = pcie_set_पढ़ोrq(pdev, 4096);
-	अगर (err) अणु
+	/* Set PCIe read request size */
+	err = pcie_set_readrq(pdev, 4096);
+	if (err) {
 		dev_err(&pdev->dev, "Set readrq failed.\n");
-		जाओ err_disable_pci;
-	पूर्ण
+		goto err_disable_pci;
+	}
 
 	err = pci_request_regions(pdev, DRV_NAME);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev, "PCI region request failed.\n");
-		जाओ err_disable_pci;
-	पूर्ण
+		goto err_disable_pci;
+	}
 
 	pci_set_master(pdev);
-	अगर (!dma_set_mask(&pdev->dev, DMA_BIT_MASK(64))) अणु
+	if (!dma_set_mask(&pdev->dev, DMA_BIT_MASK(64))) {
 		set_bit(QL_DMA64, &qdev->flags);
 		err = dma_set_coherent_mask(&pdev->dev, DMA_BIT_MASK(64));
-	पूर्ण अन्यथा अणु
+	} else {
 		err = dma_set_mask(&pdev->dev, DMA_BIT_MASK(32));
-		अगर (!err)
+		if (!err)
 			err = dma_set_coherent_mask(&pdev->dev,
 						    DMA_BIT_MASK(32));
-	पूर्ण
+	}
 
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev, "No usable DMA configuration.\n");
-		जाओ err_release_pci;
-	पूर्ण
+		goto err_release_pci;
+	}
 
-	/* Set PCIe reset type क्रम EEH to fundamental. */
+	/* Set PCIe reset type for EEH to fundamental. */
 	pdev->needs_freset = 1;
 	pci_save_state(pdev);
 	qdev->reg_base =
 		ioremap(pci_resource_start(pdev, 1), pci_resource_len(pdev, 1));
-	अगर (!qdev->reg_base) अणु
+	if (!qdev->reg_base) {
 		dev_err(&pdev->dev, "Register mapping failed.\n");
 		err = -ENOMEM;
-		जाओ err_release_pci;
-	पूर्ण
+		goto err_release_pci;
+	}
 
-	qdev->करोorbell_area_size = pci_resource_len(pdev, 3);
-	qdev->करोorbell_area =
+	qdev->doorbell_area_size = pci_resource_len(pdev, 3);
+	qdev->doorbell_area =
 		ioremap(pci_resource_start(pdev, 3), pci_resource_len(pdev, 3));
-	अगर (!qdev->करोorbell_area) अणु
+	if (!qdev->doorbell_area) {
 		dev_err(&pdev->dev, "Doorbell register mapping failed.\n");
 		err = -ENOMEM;
-		जाओ err_iounmap_base;
-	पूर्ण
+		goto err_iounmap_base;
+	}
 
 	err = qlge_get_board_info(qdev);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev, "Register access failed.\n");
 		err = -EIO;
-		जाओ err_iounmap_करोorbell;
-	पूर्ण
-	qdev->msg_enable = netअगर_msg_init(debug, शेष_msg);
+		goto err_iounmap_doorbell;
+	}
+	qdev->msg_enable = netif_msg_init(debug, default_msg);
 	spin_lock_init(&qdev->stats_lock);
 
-	अगर (qlge_mpi_coredump) अणु
+	if (qlge_mpi_coredump) {
 		qdev->mpi_coredump =
-			vदो_स्मृति(माप(काष्ठा qlge_mpi_coredump));
-		अगर (!qdev->mpi_coredump) अणु
+			vmalloc(sizeof(struct qlge_mpi_coredump));
+		if (!qdev->mpi_coredump) {
 			err = -ENOMEM;
-			जाओ err_iounmap_करोorbell;
-		पूर्ण
-		अगर (qlge_क्रमce_coredump)
+			goto err_iounmap_doorbell;
+		}
+		if (qlge_force_coredump)
 			set_bit(QL_FRC_COREDUMP, &qdev->flags);
-	पूर्ण
+	}
 	/* make sure the EEPROM is good */
 	err = qdev->nic_ops->get_flash(qdev);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev, "Invalid FLASH.\n");
-		जाओ err_मुक्त_mpi_coredump;
-	पूर्ण
+		goto err_free_mpi_coredump;
+	}
 
 	/* Keep local copy of current mac address. */
-	स_नकल(qdev->current_mac_addr, ndev->dev_addr, ndev->addr_len);
+	memcpy(qdev->current_mac_addr, ndev->dev_addr, ndev->addr_len);
 
-	/* Set up the शेष ring sizes. */
+	/* Set up the default ring sizes. */
 	qdev->tx_ring_size = NUM_TX_RING_ENTRIES;
 	qdev->rx_ring_size = NUM_RX_RING_ENTRIES;
 
@@ -4477,10 +4476,10 @@ error:
 	 */
 	qdev->workqueue = alloc_ordered_workqueue("%s", WQ_MEM_RECLAIM,
 						  ndev->name);
-	अगर (!qdev->workqueue) अणु
+	if (!qdev->workqueue) {
 		err = -ENOMEM;
-		जाओ err_मुक्त_mpi_coredump;
-	पूर्ण
+		goto err_free_mpi_coredump;
+	}
 
 	INIT_DELAYED_WORK(&qdev->asic_reset_work, qlge_asic_reset_work);
 	INIT_DELAYED_WORK(&qdev->mpi_reset_work, qlge_mpi_reset_work);
@@ -4490,17 +4489,17 @@ error:
 	init_completion(&qdev->ide_completion);
 	mutex_init(&qdev->mpi_mutex);
 
-	अगर (!cards_found) अणु
+	if (!cards_found) {
 		dev_info(&pdev->dev, "%s\n", DRV_STRING);
 		dev_info(&pdev->dev, "Driver name: %s, Version: %s.\n",
 			 DRV_NAME, DRV_VERSION);
-	पूर्ण
-	वापस 0;
+	}
+	return 0;
 
-err_मुक्त_mpi_coredump:
-	vमुक्त(qdev->mpi_coredump);
-err_iounmap_करोorbell:
-	iounmap(qdev->करोorbell_area);
+err_free_mpi_coredump:
+	vfree(qdev->mpi_coredump);
+err_iounmap_doorbell:
+	iounmap(qdev->doorbell_area);
 err_iounmap_base:
 	iounmap(qdev->reg_base);
 err_release_pci:
@@ -4508,71 +4507,71 @@ err_release_pci:
 err_disable_pci:
 	pci_disable_device(pdev);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल स्थिर काष्ठा net_device_ops qlge_netdev_ops = अणु
-	.nकरो_खोलो		= qlge_खोलो,
-	.nकरो_stop		= qlge_बंद,
-	.nकरो_start_xmit		= qlge_send,
-	.nकरो_change_mtu		= qlge_change_mtu,
-	.nकरो_get_stats		= qlge_get_stats,
-	.nकरो_set_rx_mode	= qlge_set_multicast_list,
-	.nकरो_set_mac_address	= qlge_set_mac_address,
-	.nकरो_validate_addr	= eth_validate_addr,
-	.nकरो_tx_समयout		= qlge_tx_समयout,
-	.nकरो_set_features	= qlge_set_features,
-	.nकरो_vlan_rx_add_vid	= qlge_vlan_rx_add_vid,
-	.nकरो_vlan_rx_समाप्त_vid	= qlge_vlan_rx_समाप्त_vid,
-पूर्ण;
+static const struct net_device_ops qlge_netdev_ops = {
+	.ndo_open		= qlge_open,
+	.ndo_stop		= qlge_close,
+	.ndo_start_xmit		= qlge_send,
+	.ndo_change_mtu		= qlge_change_mtu,
+	.ndo_get_stats		= qlge_get_stats,
+	.ndo_set_rx_mode	= qlge_set_multicast_list,
+	.ndo_set_mac_address	= qlge_set_mac_address,
+	.ndo_validate_addr	= eth_validate_addr,
+	.ndo_tx_timeout		= qlge_tx_timeout,
+	.ndo_set_features	= qlge_set_features,
+	.ndo_vlan_rx_add_vid	= qlge_vlan_rx_add_vid,
+	.ndo_vlan_rx_kill_vid	= qlge_vlan_rx_kill_vid,
+};
 
-अटल व्योम qlge_समयr(काष्ठा समयr_list *t)
-अणु
-	काष्ठा qlge_adapter *qdev = from_समयr(qdev, t, समयr);
+static void qlge_timer(struct timer_list *t)
+{
+	struct qlge_adapter *qdev = from_timer(qdev, t, timer);
 	u32 var = 0;
 
-	var = qlge_पढ़ो32(qdev, STS);
-	अगर (pci_channel_offline(qdev->pdev)) अणु
-		netअगर_err(qdev, अगरup, qdev->ndev, "EEH STS = 0x%.08x.\n", var);
-		वापस;
-	पूर्ण
+	var = qlge_read32(qdev, STS);
+	if (pci_channel_offline(qdev->pdev)) {
+		netif_err(qdev, ifup, qdev->ndev, "EEH STS = 0x%.08x.\n", var);
+		return;
+	}
 
-	mod_समयr(&qdev->समयr, jअगरfies + (5 * HZ));
-पूर्ण
+	mod_timer(&qdev->timer, jiffies + (5 * HZ));
+}
 
-अटल स्थिर काष्ठा devlink_ops qlge_devlink_ops;
+static const struct devlink_ops qlge_devlink_ops;
 
-अटल पूर्णांक qlge_probe(काष्ठा pci_dev *pdev,
-		      स्थिर काष्ठा pci_device_id *pci_entry)
-अणु
-	काष्ठा qlge_netdev_priv *ndev_priv;
-	काष्ठा qlge_adapter *qdev = शून्य;
-	काष्ठा net_device *ndev = शून्य;
-	काष्ठा devlink *devlink;
-	अटल पूर्णांक cards_found;
-	पूर्णांक err;
+static int qlge_probe(struct pci_dev *pdev,
+		      const struct pci_device_id *pci_entry)
+{
+	struct qlge_netdev_priv *ndev_priv;
+	struct qlge_adapter *qdev = NULL;
+	struct net_device *ndev = NULL;
+	struct devlink *devlink;
+	static int cards_found;
+	int err;
 
-	devlink = devlink_alloc(&qlge_devlink_ops, माप(काष्ठा qlge_adapter));
-	अगर (!devlink)
-		वापस -ENOMEM;
+	devlink = devlink_alloc(&qlge_devlink_ops, sizeof(struct qlge_adapter));
+	if (!devlink)
+		return -ENOMEM;
 
 	qdev = devlink_priv(devlink);
 
-	ndev = alloc_etherdev_mq(माप(काष्ठा qlge_netdev_priv),
+	ndev = alloc_etherdev_mq(sizeof(struct qlge_netdev_priv),
 				 min(MAX_CPUS,
-				     netअगर_get_num_शेष_rss_queues()));
-	अगर (!ndev) अणु
+				     netif_get_num_default_rss_queues()));
+	if (!ndev) {
 		err = -ENOMEM;
-		जाओ devlink_मुक्त;
-	पूर्ण
+		goto devlink_free;
+	}
 
 	ndev_priv = netdev_priv(ndev);
 	ndev_priv->qdev = qdev;
 	ndev_priv->ndev = ndev;
 	qdev->ndev = ndev;
 	err = qlge_init_device(pdev, qdev, cards_found);
-	अगर (err < 0)
-		जाओ netdev_मुक्त;
+	if (err < 0)
+		goto netdev_free;
 
 	SET_NETDEV_DEV(ndev, &pdev->dev);
 	ndev->hw_features = NETIF_F_SG |
@@ -4585,23 +4584,23 @@ err_disable_pci:
 		NETIF_F_RXCSUM;
 	ndev->features = ndev->hw_features;
 	ndev->vlan_features = ndev->hw_features;
-	/* vlan माला_लो same features (except vlan filter) */
+	/* vlan gets same features (except vlan filter) */
 	ndev->vlan_features &= ~(NETIF_F_HW_VLAN_CTAG_FILTER |
 				 NETIF_F_HW_VLAN_CTAG_TX |
 				 NETIF_F_HW_VLAN_CTAG_RX);
 
-	अगर (test_bit(QL_DMA64, &qdev->flags))
+	if (test_bit(QL_DMA64, &qdev->flags))
 		ndev->features |= NETIF_F_HIGHDMA;
 
 	/*
-	 * Set up net_device काष्ठाure.
+	 * Set up net_device structure.
 	 */
 	ndev->tx_queue_len = qdev->tx_ring_size;
 	ndev->irq = pdev->irq;
 
 	ndev->netdev_ops = &qlge_netdev_ops;
 	ndev->ethtool_ops = &qlge_ethtool_ops;
-	ndev->watchकरोg_समयo = 10 * HZ;
+	ndev->watchdog_timeo = 10 * HZ;
 
 	/* MTU range: this driver only supports 1500 or 9000, so this only
 	 * filters out values above or below, and we'll rely on
@@ -4610,212 +4609,212 @@ err_disable_pci:
 	ndev->min_mtu = ETH_DATA_LEN;
 	ndev->max_mtu = 9000;
 
-	err = रेजिस्टर_netdev(ndev);
-	अगर (err) अणु
+	err = register_netdev(ndev);
+	if (err) {
 		dev_err(&pdev->dev, "net device registration failed.\n");
 		qlge_release_all(pdev);
 		pci_disable_device(pdev);
-		जाओ netdev_मुक्त;
-	पूर्ण
+		goto netdev_free;
+	}
 
-	err = devlink_रेजिस्टर(devlink, &pdev->dev);
-	अगर (err)
-		जाओ netdev_मुक्त;
+	err = devlink_register(devlink, &pdev->dev);
+	if (err)
+		goto netdev_free;
 
 	err = qlge_health_create_reporters(qdev);
 
-	अगर (err)
-		जाओ devlink_unरेजिस्टर;
+	if (err)
+		goto devlink_unregister;
 
-	/* Start up the समयr to trigger EEH अगर
+	/* Start up the timer to trigger EEH if
 	 * the bus goes dead
 	 */
-	समयr_setup(&qdev->समयr, qlge_समयr, TIMER_DEFERRABLE);
-	mod_समयr(&qdev->समयr, jअगरfies + (5 * HZ));
+	timer_setup(&qdev->timer, qlge_timer, TIMER_DEFERRABLE);
+	mod_timer(&qdev->timer, jiffies + (5 * HZ));
 	qlge_link_off(qdev);
 	qlge_display_dev_info(ndev);
 	atomic_set(&qdev->lb_count, 0);
 	cards_found++;
-	वापस 0;
+	return 0;
 
-devlink_unरेजिस्टर:
-	devlink_unरेजिस्टर(devlink);
-netdev_मुक्त:
-	मुक्त_netdev(ndev);
-devlink_मुक्त:
-	devlink_मुक्त(devlink);
+devlink_unregister:
+	devlink_unregister(devlink);
+netdev_free:
+	free_netdev(ndev);
+devlink_free:
+	devlink_free(devlink);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-netdev_tx_t qlge_lb_send(काष्ठा sk_buff *skb, काष्ठा net_device *ndev)
-अणु
-	वापस qlge_send(skb, ndev);
-पूर्ण
+netdev_tx_t qlge_lb_send(struct sk_buff *skb, struct net_device *ndev)
+{
+	return qlge_send(skb, ndev);
+}
 
-पूर्णांक qlge_clean_lb_rx_ring(काष्ठा rx_ring *rx_ring, पूर्णांक budget)
-अणु
-	वापस qlge_clean_inbound_rx_ring(rx_ring, budget);
-पूर्ण
+int qlge_clean_lb_rx_ring(struct rx_ring *rx_ring, int budget)
+{
+	return qlge_clean_inbound_rx_ring(rx_ring, budget);
+}
 
-अटल व्योम qlge_हटाओ(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा qlge_adapter *qdev = pci_get_drvdata(pdev);
-	काष्ठा net_device *ndev = qdev->ndev;
-	काष्ठा devlink *devlink = priv_to_devlink(qdev);
+static void qlge_remove(struct pci_dev *pdev)
+{
+	struct qlge_adapter *qdev = pci_get_drvdata(pdev);
+	struct net_device *ndev = qdev->ndev;
+	struct devlink *devlink = priv_to_devlink(qdev);
 
-	del_समयr_sync(&qdev->समयr);
+	del_timer_sync(&qdev->timer);
 	qlge_cancel_all_work_sync(qdev);
-	unरेजिस्टर_netdev(ndev);
+	unregister_netdev(ndev);
 	qlge_release_all(pdev);
 	pci_disable_device(pdev);
 	devlink_health_reporter_destroy(qdev->reporter);
-	devlink_unरेजिस्टर(devlink);
-	devlink_मुक्त(devlink);
-	मुक्त_netdev(ndev);
-पूर्ण
+	devlink_unregister(devlink);
+	devlink_free(devlink);
+	free_netdev(ndev);
+}
 
 /* Clean up resources without touching hardware. */
-अटल व्योम qlge_eeh_बंद(काष्ठा net_device *ndev)
-अणु
-	काष्ठा qlge_adapter *qdev = netdev_to_qdev(ndev);
-	पूर्णांक i;
+static void qlge_eeh_close(struct net_device *ndev)
+{
+	struct qlge_adapter *qdev = netdev_to_qdev(ndev);
+	int i;
 
-	अगर (netअगर_carrier_ok(ndev)) अणु
-		netअगर_carrier_off(ndev);
-		netअगर_stop_queue(ndev);
-	पूर्ण
+	if (netif_carrier_ok(ndev)) {
+		netif_carrier_off(ndev);
+		netif_stop_queue(ndev);
+	}
 
-	/* Disabling the समयr */
+	/* Disabling the timer */
 	qlge_cancel_all_work_sync(qdev);
 
-	क्रम (i = 0; i < qdev->rss_ring_count; i++)
-		netअगर_napi_del(&qdev->rx_ring[i].napi);
+	for (i = 0; i < qdev->rss_ring_count; i++)
+		netif_napi_del(&qdev->rx_ring[i].napi);
 
 	clear_bit(QL_ADAPTER_UP, &qdev->flags);
 	qlge_tx_ring_clean(qdev);
-	qlge_मुक्त_rx_buffers(qdev);
+	qlge_free_rx_buffers(qdev);
 	qlge_release_adapter_resources(qdev);
-पूर्ण
+}
 
 /*
- * This callback is called by the PCI subप्रणाली whenever
+ * This callback is called by the PCI subsystem whenever
  * a PCI bus error is detected.
  */
-अटल pci_ers_result_t qlge_io_error_detected(काष्ठा pci_dev *pdev,
+static pci_ers_result_t qlge_io_error_detected(struct pci_dev *pdev,
 					       pci_channel_state_t state)
-अणु
-	काष्ठा qlge_adapter *qdev = pci_get_drvdata(pdev);
-	काष्ठा net_device *ndev = qdev->ndev;
+{
+	struct qlge_adapter *qdev = pci_get_drvdata(pdev);
+	struct net_device *ndev = qdev->ndev;
 
-	चयन (state) अणु
-	हाल pci_channel_io_normal:
-		वापस PCI_ERS_RESULT_CAN_RECOVER;
-	हाल pci_channel_io_frozen:
-		netअगर_device_detach(ndev);
-		del_समयr_sync(&qdev->समयr);
-		अगर (netअगर_running(ndev))
-			qlge_eeh_बंद(ndev);
+	switch (state) {
+	case pci_channel_io_normal:
+		return PCI_ERS_RESULT_CAN_RECOVER;
+	case pci_channel_io_frozen:
+		netif_device_detach(ndev);
+		del_timer_sync(&qdev->timer);
+		if (netif_running(ndev))
+			qlge_eeh_close(ndev);
 		pci_disable_device(pdev);
-		वापस PCI_ERS_RESULT_NEED_RESET;
-	हाल pci_channel_io_perm_failure:
+		return PCI_ERS_RESULT_NEED_RESET;
+	case pci_channel_io_perm_failure:
 		dev_err(&pdev->dev,
 			"%s: pci_channel_io_perm_failure.\n", __func__);
-		del_समयr_sync(&qdev->समयr);
-		qlge_eeh_बंद(ndev);
+		del_timer_sync(&qdev->timer);
+		qlge_eeh_close(ndev);
 		set_bit(QL_EEH_FATAL, &qdev->flags);
-		वापस PCI_ERS_RESULT_DISCONNECT;
-	पूर्ण
+		return PCI_ERS_RESULT_DISCONNECT;
+	}
 
 	/* Request a slot reset. */
-	वापस PCI_ERS_RESULT_NEED_RESET;
-पूर्ण
+	return PCI_ERS_RESULT_NEED_RESET;
+}
 
 /*
  * This callback is called after the PCI buss has been reset.
  * Basically, this tries to restart the card from scratch.
- * This is a लघुened version of the device probe/discovery code,
+ * This is a shortened version of the device probe/discovery code,
  * it resembles the first-half of the () routine.
  */
-अटल pci_ers_result_t qlge_io_slot_reset(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा qlge_adapter *qdev = pci_get_drvdata(pdev);
+static pci_ers_result_t qlge_io_slot_reset(struct pci_dev *pdev)
+{
+	struct qlge_adapter *qdev = pci_get_drvdata(pdev);
 
 	pdev->error_state = pci_channel_io_normal;
 
 	pci_restore_state(pdev);
-	अगर (pci_enable_device(pdev)) अणु
-		netअगर_err(qdev, अगरup, qdev->ndev,
+	if (pci_enable_device(pdev)) {
+		netif_err(qdev, ifup, qdev->ndev,
 			  "Cannot re-enable PCI device after reset.\n");
-		वापस PCI_ERS_RESULT_DISCONNECT;
-	पूर्ण
+		return PCI_ERS_RESULT_DISCONNECT;
+	}
 	pci_set_master(pdev);
 
-	अगर (qlge_adapter_reset(qdev)) अणु
-		netअगर_err(qdev, drv, qdev->ndev, "reset FAILED!\n");
+	if (qlge_adapter_reset(qdev)) {
+		netif_err(qdev, drv, qdev->ndev, "reset FAILED!\n");
 		set_bit(QL_EEH_FATAL, &qdev->flags);
-		वापस PCI_ERS_RESULT_DISCONNECT;
-	पूर्ण
+		return PCI_ERS_RESULT_DISCONNECT;
+	}
 
-	वापस PCI_ERS_RESULT_RECOVERED;
-पूर्ण
+	return PCI_ERS_RESULT_RECOVERED;
+}
 
-अटल व्योम qlge_io_resume(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा qlge_adapter *qdev = pci_get_drvdata(pdev);
-	काष्ठा net_device *ndev = qdev->ndev;
-	पूर्णांक err = 0;
+static void qlge_io_resume(struct pci_dev *pdev)
+{
+	struct qlge_adapter *qdev = pci_get_drvdata(pdev);
+	struct net_device *ndev = qdev->ndev;
+	int err = 0;
 
-	अगर (netअगर_running(ndev)) अणु
-		err = qlge_खोलो(ndev);
-		अगर (err) अणु
-			netअगर_err(qdev, अगरup, qdev->ndev,
+	if (netif_running(ndev)) {
+		err = qlge_open(ndev);
+		if (err) {
+			netif_err(qdev, ifup, qdev->ndev,
 				  "Device initialization failed after reset.\n");
-			वापस;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		netअगर_err(qdev, अगरup, qdev->ndev,
+			return;
+		}
+	} else {
+		netif_err(qdev, ifup, qdev->ndev,
 			  "Device was not running prior to EEH.\n");
-	पूर्ण
-	mod_समयr(&qdev->समयr, jअगरfies + (5 * HZ));
-	netअगर_device_attach(ndev);
-पूर्ण
+	}
+	mod_timer(&qdev->timer, jiffies + (5 * HZ));
+	netif_device_attach(ndev);
+}
 
-अटल स्थिर काष्ठा pci_error_handlers qlge_err_handler = अणु
+static const struct pci_error_handlers qlge_err_handler = {
 	.error_detected = qlge_io_error_detected,
 	.slot_reset = qlge_io_slot_reset,
 	.resume = qlge_io_resume,
-पूर्ण;
+};
 
-अटल पूर्णांक __maybe_unused qlge_suspend(काष्ठा device *dev_d)
-अणु
-	काष्ठा pci_dev *pdev = to_pci_dev(dev_d);
-	काष्ठा qlge_adapter *qdev;
-	काष्ठा net_device *ndev;
-	पूर्णांक err;
+static int __maybe_unused qlge_suspend(struct device *dev_d)
+{
+	struct pci_dev *pdev = to_pci_dev(dev_d);
+	struct qlge_adapter *qdev;
+	struct net_device *ndev;
+	int err;
 
 	qdev = pci_get_drvdata(pdev);
 	ndev = qdev->ndev;
-	netअगर_device_detach(ndev);
-	del_समयr_sync(&qdev->समयr);
+	netif_device_detach(ndev);
+	del_timer_sync(&qdev->timer);
 
-	अगर (netअगर_running(ndev)) अणु
-		err = qlge_adapter_करोwn(qdev);
-		अगर (!err)
-			वापस err;
-	पूर्ण
+	if (netif_running(ndev)) {
+		err = qlge_adapter_down(qdev);
+		if (!err)
+			return err;
+	}
 
 	qlge_wol(qdev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused qlge_resume(काष्ठा device *dev_d)
-अणु
-	काष्ठा pci_dev *pdev = to_pci_dev(dev_d);
-	काष्ठा qlge_adapter *qdev;
-	काष्ठा net_device *ndev;
-	पूर्णांक err;
+static int __maybe_unused qlge_resume(struct device *dev_d)
+{
+	struct pci_dev *pdev = to_pci_dev(dev_d);
+	struct qlge_adapter *qdev;
+	struct net_device *ndev;
+	int err;
 
 	qdev = pci_get_drvdata(pdev);
 	ndev = qdev->ndev;
@@ -4824,33 +4823,33 @@ netdev_tx_t qlge_lb_send(काष्ठा sk_buff *skb, काष्ठा net
 
 	device_wakeup_disable(dev_d);
 
-	अगर (netअगर_running(ndev)) अणु
+	if (netif_running(ndev)) {
 		err = qlge_adapter_up(qdev);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	mod_समयr(&qdev->समयr, jअगरfies + (5 * HZ));
-	netअगर_device_attach(ndev);
+	mod_timer(&qdev->timer, jiffies + (5 * HZ));
+	netif_device_attach(ndev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम qlge_shutकरोwn(काष्ठा pci_dev *pdev)
-अणु
+static void qlge_shutdown(struct pci_dev *pdev)
+{
 	qlge_suspend(&pdev->dev);
-पूर्ण
+}
 
-अटल SIMPLE_DEV_PM_OPS(qlge_pm_ops, qlge_suspend, qlge_resume);
+static SIMPLE_DEV_PM_OPS(qlge_pm_ops, qlge_suspend, qlge_resume);
 
-अटल काष्ठा pci_driver qlge_driver = अणु
+static struct pci_driver qlge_driver = {
 	.name = DRV_NAME,
 	.id_table = qlge_pci_tbl,
 	.probe = qlge_probe,
-	.हटाओ = qlge_हटाओ,
+	.remove = qlge_remove,
 	.driver.pm = &qlge_pm_ops,
-	.shutकरोwn = qlge_shutकरोwn,
+	.shutdown = qlge_shutdown,
 	.err_handler = &qlge_err_handler
-पूर्ण;
+};
 
 module_pci_driver(qlge_driver);

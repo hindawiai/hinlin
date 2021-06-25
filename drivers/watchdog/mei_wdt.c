@@ -1,662 +1,661 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Intel Management Engine Interface (Intel MEI) Linux driver
  * Copyright (c) 2015, Intel Corporation.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/completion.h>
-#समावेश <linux/watchकरोg.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/interrupt.h>
+#include <linux/debugfs.h>
+#include <linux/completion.h>
+#include <linux/watchdog.h>
 
-#समावेश <linux/uuid.h>
-#समावेश <linux/mei_cl_bus.h>
+#include <linux/uuid.h>
+#include <linux/mei_cl_bus.h>
 
 /*
- * iAMT Watchकरोg Device
+ * iAMT Watchdog Device
  */
-#घोषणा INTEL_AMT_WATCHDOG_ID "iamt_wdt"
+#define INTEL_AMT_WATCHDOG_ID "iamt_wdt"
 
-#घोषणा MEI_WDT_DEFAULT_TIMEOUT   120  /* seconds */
-#घोषणा MEI_WDT_MIN_TIMEOUT       120  /* seconds */
-#घोषणा MEI_WDT_MAX_TIMEOUT     65535  /* seconds */
+#define MEI_WDT_DEFAULT_TIMEOUT   120  /* seconds */
+#define MEI_WDT_MIN_TIMEOUT       120  /* seconds */
+#define MEI_WDT_MAX_TIMEOUT     65535  /* seconds */
 
 /* Commands */
-#घोषणा MEI_MANAGEMENT_CONTROL 0x02
+#define MEI_MANAGEMENT_CONTROL 0x02
 
 /* MEI Management Control version number */
-#घोषणा MEI_MC_VERSION_NUMBER  0x10
+#define MEI_MC_VERSION_NUMBER  0x10
 
 /* Sub Commands */
-#घोषणा MEI_MC_START_WD_TIMER_REQ  0x13
-#घोषणा MEI_MC_START_WD_TIMER_RES  0x83
-#घोषणा   MEI_WDT_STATUS_SUCCESS 0
-#घोषणा   MEI_WDT_WDSTATE_NOT_REQUIRED 0x1
-#घोषणा MEI_MC_STOP_WD_TIMER_REQ   0x14
+#define MEI_MC_START_WD_TIMER_REQ  0x13
+#define MEI_MC_START_WD_TIMER_RES  0x83
+#define   MEI_WDT_STATUS_SUCCESS 0
+#define   MEI_WDT_WDSTATE_NOT_REQUIRED 0x1
+#define MEI_MC_STOP_WD_TIMER_REQ   0x14
 
 /**
- * क्रमागत mei_wdt_state - पूर्णांकernal watchकरोg state
+ * enum mei_wdt_state - internal watchdog state
  *
  * @MEI_WDT_PROBE: wd in probing stage
- * @MEI_WDT_IDLE: wd is idle and not खोलोed
- * @MEI_WDT_START: wd was खोलोed, start was called
+ * @MEI_WDT_IDLE: wd is idle and not opened
+ * @MEI_WDT_START: wd was opened, start was called
  * @MEI_WDT_RUNNING: wd is expecting keep alive pings
  * @MEI_WDT_STOPPING: wd is stopping and will move to IDLE
  * @MEI_WDT_NOT_REQUIRED: wd device is not required
  */
-क्रमागत mei_wdt_state अणु
+enum mei_wdt_state {
 	MEI_WDT_PROBE,
 	MEI_WDT_IDLE,
 	MEI_WDT_START,
 	MEI_WDT_RUNNING,
 	MEI_WDT_STOPPING,
 	MEI_WDT_NOT_REQUIRED,
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *mei_wdt_state_str(क्रमागत mei_wdt_state state)
-अणु
-	चयन (state) अणु
-	हाल MEI_WDT_PROBE:
-		वापस "PROBE";
-	हाल MEI_WDT_IDLE:
-		वापस "IDLE";
-	हाल MEI_WDT_START:
-		वापस "START";
-	हाल MEI_WDT_RUNNING:
-		वापस "RUNNING";
-	हाल MEI_WDT_STOPPING:
-		वापस "STOPPING";
-	हाल MEI_WDT_NOT_REQUIRED:
-		वापस "NOT_REQUIRED";
-	शेष:
-		वापस "unknown";
-	पूर्ण
-पूर्ण
+static const char *mei_wdt_state_str(enum mei_wdt_state state)
+{
+	switch (state) {
+	case MEI_WDT_PROBE:
+		return "PROBE";
+	case MEI_WDT_IDLE:
+		return "IDLE";
+	case MEI_WDT_START:
+		return "START";
+	case MEI_WDT_RUNNING:
+		return "RUNNING";
+	case MEI_WDT_STOPPING:
+		return "STOPPING";
+	case MEI_WDT_NOT_REQUIRED:
+		return "NOT_REQUIRED";
+	default:
+		return "unknown";
+	}
+}
 
 /**
- * काष्ठा mei_wdt - mei watchकरोg driver
- * @wdd: watchकरोg device
+ * struct mei_wdt - mei watchdog driver
+ * @wdd: watchdog device
  *
- * @cldev: mei watchकरोg client device
- * @state: watchकरोg पूर्णांकernal state
+ * @cldev: mei watchdog client device
+ * @state: watchdog internal state
  * @resp_required: ping required response
  * @response: ping response completion
- * @unरेजिस्टर: unरेजिस्टर worker
- * @reg_lock: watchकरोg device registration lock
- * @समयout: watchकरोg current समयout
+ * @unregister: unregister worker
+ * @reg_lock: watchdog device registration lock
+ * @timeout: watchdog current timeout
  *
  * @dbgfs_dir: debugfs dir entry
  */
-काष्ठा mei_wdt अणु
-	काष्ठा watchकरोg_device wdd;
+struct mei_wdt {
+	struct watchdog_device wdd;
 
-	काष्ठा mei_cl_device *cldev;
-	क्रमागत mei_wdt_state state;
+	struct mei_cl_device *cldev;
+	enum mei_wdt_state state;
 	bool resp_required;
-	काष्ठा completion response;
-	काष्ठा work_काष्ठा unरेजिस्टर;
-	काष्ठा mutex reg_lock;
-	u16 समयout;
+	struct completion response;
+	struct work_struct unregister;
+	struct mutex reg_lock;
+	u16 timeout;
 
-#अगर IS_ENABLED(CONFIG_DEBUG_FS)
-	काष्ठा dentry *dbgfs_dir;
-#पूर्ण_अगर /* CONFIG_DEBUG_FS */
-पूर्ण;
+#if IS_ENABLED(CONFIG_DEBUG_FS)
+	struct dentry *dbgfs_dir;
+#endif /* CONFIG_DEBUG_FS */
+};
 
 /*
- * काष्ठा mei_mc_hdr - Management Control Command Header
+ * struct mei_mc_hdr - Management Control Command Header
  *
  * @command: Management Control (0x2)
  * @bytecount: Number of bytes in the message beyond this byte
  * @subcommand: Management Control Subcommand
  * @versionnumber: Management Control Version (0x10)
  */
-काष्ठा mei_mc_hdr अणु
+struct mei_mc_hdr {
 	u8 command;
 	u8 bytecount;
 	u8 subcommand;
 	u8 versionnumber;
-पूर्ण;
+};
 
 /**
- * काष्ठा mei_wdt_start_request watchकरोg start/ping
+ * struct mei_wdt_start_request watchdog start/ping
  *
  * @hdr: Management Control Command Header
- * @समयout: समयout value
+ * @timeout: timeout value
  * @reserved: reserved (legacy)
  */
-काष्ठा mei_wdt_start_request अणु
-	काष्ठा mei_mc_hdr hdr;
-	u16 समयout;
+struct mei_wdt_start_request {
+	struct mei_mc_hdr hdr;
+	u16 timeout;
 	u8 reserved[17];
-पूर्ण __packed;
+} __packed;
 
 /**
- * काष्ठा mei_wdt_start_response watchकरोg start/ping response
+ * struct mei_wdt_start_response watchdog start/ping response
  *
  * @hdr: Management Control Command Header
  * @status: operation status
- * @wdstate: watchकरोg status bit mask
+ * @wdstate: watchdog status bit mask
  */
-काष्ठा mei_wdt_start_response अणु
-	काष्ठा mei_mc_hdr hdr;
+struct mei_wdt_start_response {
+	struct mei_mc_hdr hdr;
 	u8 status;
 	u8 wdstate;
-पूर्ण __packed;
+} __packed;
 
 /**
- * काष्ठा mei_wdt_stop_request - watchकरोg stop
+ * struct mei_wdt_stop_request - watchdog stop
  *
  * @hdr: Management Control Command Header
  */
-काष्ठा mei_wdt_stop_request अणु
-	काष्ठा mei_mc_hdr hdr;
-पूर्ण __packed;
+struct mei_wdt_stop_request {
+	struct mei_mc_hdr hdr;
+} __packed;
 
 /**
  * mei_wdt_ping - send wd start/ping command
  *
- * @wdt: mei watchकरोg device
+ * @wdt: mei watchdog device
  *
  * Return: 0 on success,
- *         negative त्रुटि_सं code on failure
+ *         negative errno code on failure
  */
-अटल पूर्णांक mei_wdt_ping(काष्ठा mei_wdt *wdt)
-अणु
-	काष्ठा mei_wdt_start_request req;
-	स्थिर माप_प्रकार req_len = माप(req);
-	पूर्णांक ret;
+static int mei_wdt_ping(struct mei_wdt *wdt)
+{
+	struct mei_wdt_start_request req;
+	const size_t req_len = sizeof(req);
+	int ret;
 
-	स_रखो(&req, 0, req_len);
+	memset(&req, 0, req_len);
 	req.hdr.command = MEI_MANAGEMENT_CONTROL;
-	req.hdr.bytecount = req_len - दुरत्व(काष्ठा mei_mc_hdr, subcommand);
+	req.hdr.bytecount = req_len - offsetof(struct mei_mc_hdr, subcommand);
 	req.hdr.subcommand = MEI_MC_START_WD_TIMER_REQ;
 	req.hdr.versionnumber = MEI_MC_VERSION_NUMBER;
-	req.समयout = wdt->समयout;
+	req.timeout = wdt->timeout;
 
 	ret = mei_cldev_send(wdt->cldev, (u8 *)&req, req_len);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * mei_wdt_stop - send wd stop command
  *
- * @wdt: mei watchकरोg device
+ * @wdt: mei watchdog device
  *
  * Return: 0 on success,
- *         negative त्रुटि_सं code on failure
+ *         negative errno code on failure
  */
-अटल पूर्णांक mei_wdt_stop(काष्ठा mei_wdt *wdt)
-अणु
-	काष्ठा mei_wdt_stop_request req;
-	स्थिर माप_प्रकार req_len = माप(req);
-	पूर्णांक ret;
+static int mei_wdt_stop(struct mei_wdt *wdt)
+{
+	struct mei_wdt_stop_request req;
+	const size_t req_len = sizeof(req);
+	int ret;
 
-	स_रखो(&req, 0, req_len);
+	memset(&req, 0, req_len);
 	req.hdr.command = MEI_MANAGEMENT_CONTROL;
-	req.hdr.bytecount = req_len - दुरत्व(काष्ठा mei_mc_hdr, subcommand);
+	req.hdr.bytecount = req_len - offsetof(struct mei_mc_hdr, subcommand);
 	req.hdr.subcommand = MEI_MC_STOP_WD_TIMER_REQ;
 	req.hdr.versionnumber = MEI_MC_VERSION_NUMBER;
 
 	ret = mei_cldev_send(wdt->cldev, (u8 *)&req, req_len);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * mei_wdt_ops_start - wd start command from the watchकरोg core.
+ * mei_wdt_ops_start - wd start command from the watchdog core.
  *
- * @wdd: watchकरोg device
+ * @wdd: watchdog device
  *
  * Return: 0 on success or -ENODEV;
  */
-अटल पूर्णांक mei_wdt_ops_start(काष्ठा watchकरोg_device *wdd)
-अणु
-	काष्ठा mei_wdt *wdt = watchकरोg_get_drvdata(wdd);
+static int mei_wdt_ops_start(struct watchdog_device *wdd)
+{
+	struct mei_wdt *wdt = watchdog_get_drvdata(wdd);
 
 	wdt->state = MEI_WDT_START;
-	wdd->समयout = wdt->समयout;
-	वापस 0;
-पूर्ण
+	wdd->timeout = wdt->timeout;
+	return 0;
+}
 
 /**
- * mei_wdt_ops_stop - wd stop command from the watchकरोg core.
+ * mei_wdt_ops_stop - wd stop command from the watchdog core.
  *
- * @wdd: watchकरोg device
+ * @wdd: watchdog device
  *
- * Return: 0 अगर success, negative त्रुटि_सं code क्रम failure
+ * Return: 0 if success, negative errno code for failure
  */
-अटल पूर्णांक mei_wdt_ops_stop(काष्ठा watchकरोg_device *wdd)
-अणु
-	काष्ठा mei_wdt *wdt = watchकरोg_get_drvdata(wdd);
-	पूर्णांक ret;
+static int mei_wdt_ops_stop(struct watchdog_device *wdd)
+{
+	struct mei_wdt *wdt = watchdog_get_drvdata(wdd);
+	int ret;
 
-	अगर (wdt->state != MEI_WDT_RUNNING)
-		वापस 0;
+	if (wdt->state != MEI_WDT_RUNNING)
+		return 0;
 
 	wdt->state = MEI_WDT_STOPPING;
 
 	ret = mei_wdt_stop(wdt);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	wdt->state = MEI_WDT_IDLE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * mei_wdt_ops_ping - wd ping command from the watchकरोg core.
+ * mei_wdt_ops_ping - wd ping command from the watchdog core.
  *
- * @wdd: watchकरोg device
+ * @wdd: watchdog device
  *
- * Return: 0 अगर success, negative त्रुटि_सं code on failure
+ * Return: 0 if success, negative errno code on failure
  */
-अटल पूर्णांक mei_wdt_ops_ping(काष्ठा watchकरोg_device *wdd)
-अणु
-	काष्ठा mei_wdt *wdt = watchकरोg_get_drvdata(wdd);
-	पूर्णांक ret;
+static int mei_wdt_ops_ping(struct watchdog_device *wdd)
+{
+	struct mei_wdt *wdt = watchdog_get_drvdata(wdd);
+	int ret;
 
-	अगर (wdt->state != MEI_WDT_START && wdt->state != MEI_WDT_RUNNING)
-		वापस 0;
+	if (wdt->state != MEI_WDT_START && wdt->state != MEI_WDT_RUNNING)
+		return 0;
 
-	अगर (wdt->resp_required)
+	if (wdt->resp_required)
 		init_completion(&wdt->response);
 
 	wdt->state = MEI_WDT_RUNNING;
 	ret = mei_wdt_ping(wdt);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (wdt->resp_required)
-		ret = रुको_क्रम_completion_समाप्तable(&wdt->response);
+	if (wdt->resp_required)
+		ret = wait_for_completion_killable(&wdt->response);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * mei_wdt_ops_set_समयout - wd set समयout command from the watchकरोg core.
+ * mei_wdt_ops_set_timeout - wd set timeout command from the watchdog core.
  *
- * @wdd: watchकरोg device
- * @समयout: समयout value to set
+ * @wdd: watchdog device
+ * @timeout: timeout value to set
  *
- * Return: 0 अगर success, negative त्रुटि_सं code क्रम failure
+ * Return: 0 if success, negative errno code for failure
  */
-अटल पूर्णांक mei_wdt_ops_set_समयout(काष्ठा watchकरोg_device *wdd,
-				   अचिन्हित पूर्णांक समयout)
-अणु
+static int mei_wdt_ops_set_timeout(struct watchdog_device *wdd,
+				   unsigned int timeout)
+{
 
-	काष्ठा mei_wdt *wdt = watchकरोg_get_drvdata(wdd);
+	struct mei_wdt *wdt = watchdog_get_drvdata(wdd);
 
-	/* valid value is alपढ़ोy checked by the caller */
-	wdt->समयout = समयout;
-	wdd->समयout = समयout;
+	/* valid value is already checked by the caller */
+	wdt->timeout = timeout;
+	wdd->timeout = timeout;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा watchकरोg_ops wd_ops = अणु
+static const struct watchdog_ops wd_ops = {
 	.owner       = THIS_MODULE,
 	.start       = mei_wdt_ops_start,
 	.stop        = mei_wdt_ops_stop,
 	.ping        = mei_wdt_ops_ping,
-	.set_समयout = mei_wdt_ops_set_समयout,
-पूर्ण;
+	.set_timeout = mei_wdt_ops_set_timeout,
+};
 
-/* not स्थिर as the firmware_version field need to be retrieved */
-अटल काष्ठा watchकरोg_info wd_info = अणु
+/* not const as the firmware_version field need to be retrieved */
+static struct watchdog_info wd_info = {
 	.identity = INTEL_AMT_WATCHDOG_ID,
 	.options  = WDIOF_KEEPALIVEPING |
 		    WDIOF_SETTIMEOUT |
 		    WDIOF_ALARMONLY,
-पूर्ण;
+};
 
 /**
- * __mei_wdt_is_रेजिस्टरed - check अगर wdt is रेजिस्टरed
+ * __mei_wdt_is_registered - check if wdt is registered
  *
- * @wdt: mei watchकरोg device
+ * @wdt: mei watchdog device
  *
- * Return: true अगर the wdt is रेजिस्टरed with the watchकरोg subप्रणाली
+ * Return: true if the wdt is registered with the watchdog subsystem
  * Locking: should be called under wdt->reg_lock
  */
-अटल अंतरभूत bool __mei_wdt_is_रेजिस्टरed(काष्ठा mei_wdt *wdt)
-अणु
-	वापस !!watchकरोg_get_drvdata(&wdt->wdd);
-पूर्ण
+static inline bool __mei_wdt_is_registered(struct mei_wdt *wdt)
+{
+	return !!watchdog_get_drvdata(&wdt->wdd);
+}
 
 /**
- * mei_wdt_unरेजिस्टर - unरेजिस्टर from the watchकरोg subप्रणाली
+ * mei_wdt_unregister - unregister from the watchdog subsystem
  *
- * @wdt: mei watchकरोg device
+ * @wdt: mei watchdog device
  */
-अटल व्योम mei_wdt_unरेजिस्टर(काष्ठा mei_wdt *wdt)
-अणु
+static void mei_wdt_unregister(struct mei_wdt *wdt)
+{
 	mutex_lock(&wdt->reg_lock);
 
-	अगर (__mei_wdt_is_रेजिस्टरed(wdt)) अणु
-		watchकरोg_unरेजिस्टर_device(&wdt->wdd);
-		watchकरोg_set_drvdata(&wdt->wdd, शून्य);
-		स_रखो(&wdt->wdd, 0, माप(wdt->wdd));
-	पूर्ण
+	if (__mei_wdt_is_registered(wdt)) {
+		watchdog_unregister_device(&wdt->wdd);
+		watchdog_set_drvdata(&wdt->wdd, NULL);
+		memset(&wdt->wdd, 0, sizeof(wdt->wdd));
+	}
 
 	mutex_unlock(&wdt->reg_lock);
-पूर्ण
+}
 
 /**
- * mei_wdt_रेजिस्टर - रेजिस्टर with the watchकरोg subप्रणाली
+ * mei_wdt_register - register with the watchdog subsystem
  *
- * @wdt: mei watchकरोg device
+ * @wdt: mei watchdog device
  *
- * Return: 0 अगर success, negative त्रुटि_सं code क्रम failure
+ * Return: 0 if success, negative errno code for failure
  */
-अटल पूर्णांक mei_wdt_रेजिस्टर(काष्ठा mei_wdt *wdt)
-अणु
-	काष्ठा device *dev;
-	पूर्णांक ret;
+static int mei_wdt_register(struct mei_wdt *wdt)
+{
+	struct device *dev;
+	int ret;
 
-	अगर (!wdt || !wdt->cldev)
-		वापस -EINVAL;
+	if (!wdt || !wdt->cldev)
+		return -EINVAL;
 
 	dev = &wdt->cldev->dev;
 
 	mutex_lock(&wdt->reg_lock);
 
-	अगर (__mei_wdt_is_रेजिस्टरed(wdt)) अणु
+	if (__mei_wdt_is_registered(wdt)) {
 		ret = 0;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	wdt->wdd.info = &wd_info;
 	wdt->wdd.ops = &wd_ops;
 	wdt->wdd.parent = dev;
-	wdt->wdd.समयout = MEI_WDT_DEFAULT_TIMEOUT;
-	wdt->wdd.min_समयout = MEI_WDT_MIN_TIMEOUT;
-	wdt->wdd.max_समयout = MEI_WDT_MAX_TIMEOUT;
+	wdt->wdd.timeout = MEI_WDT_DEFAULT_TIMEOUT;
+	wdt->wdd.min_timeout = MEI_WDT_MIN_TIMEOUT;
+	wdt->wdd.max_timeout = MEI_WDT_MAX_TIMEOUT;
 
-	watchकरोg_set_drvdata(&wdt->wdd, wdt);
-	watchकरोg_stop_on_reboot(&wdt->wdd);
-	watchकरोg_stop_on_unरेजिस्टर(&wdt->wdd);
+	watchdog_set_drvdata(&wdt->wdd, wdt);
+	watchdog_stop_on_reboot(&wdt->wdd);
+	watchdog_stop_on_unregister(&wdt->wdd);
 
-	ret = watchकरोg_रेजिस्टर_device(&wdt->wdd);
-	अगर (ret)
-		watchकरोg_set_drvdata(&wdt->wdd, शून्य);
+	ret = watchdog_register_device(&wdt->wdd);
+	if (ret)
+		watchdog_set_drvdata(&wdt->wdd, NULL);
 
 	wdt->state = MEI_WDT_IDLE;
 
 out:
 	mutex_unlock(&wdt->reg_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम mei_wdt_unरेजिस्टर_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा mei_wdt *wdt = container_of(work, काष्ठा mei_wdt, unरेजिस्टर);
+static void mei_wdt_unregister_work(struct work_struct *work)
+{
+	struct mei_wdt *wdt = container_of(work, struct mei_wdt, unregister);
 
-	mei_wdt_unरेजिस्टर(wdt);
-पूर्ण
+	mei_wdt_unregister(wdt);
+}
 
 /**
- * mei_wdt_rx - callback क्रम data receive
+ * mei_wdt_rx - callback for data receive
  *
  * @cldev: bus device
  */
-अटल व्योम mei_wdt_rx(काष्ठा mei_cl_device *cldev)
-अणु
-	काष्ठा mei_wdt *wdt = mei_cldev_get_drvdata(cldev);
-	काष्ठा mei_wdt_start_response res;
-	स्थिर माप_प्रकार res_len = माप(res);
-	पूर्णांक ret;
+static void mei_wdt_rx(struct mei_cl_device *cldev)
+{
+	struct mei_wdt *wdt = mei_cldev_get_drvdata(cldev);
+	struct mei_wdt_start_response res;
+	const size_t res_len = sizeof(res);
+	int ret;
 
 	ret = mei_cldev_recv(wdt->cldev, (u8 *)&res, res_len);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&cldev->dev, "failure in recv %d\n", ret);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* Empty response can be sent on stop */
-	अगर (ret == 0)
-		वापस;
+	if (ret == 0)
+		return;
 
-	अगर (ret < माप(काष्ठा mei_mc_hdr)) अणु
+	if (ret < sizeof(struct mei_mc_hdr)) {
 		dev_err(&cldev->dev, "recv small data %d\n", ret);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (res.hdr.command != MEI_MANAGEMENT_CONTROL ||
-	    res.hdr.versionnumber != MEI_MC_VERSION_NUMBER) अणु
+	if (res.hdr.command != MEI_MANAGEMENT_CONTROL ||
+	    res.hdr.versionnumber != MEI_MC_VERSION_NUMBER) {
 		dev_err(&cldev->dev, "wrong command received\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (res.hdr.subcommand != MEI_MC_START_WD_TIMER_RES) अणु
+	if (res.hdr.subcommand != MEI_MC_START_WD_TIMER_RES) {
 		dev_warn(&cldev->dev, "unsupported command %d :%s[%d]\n",
 			 res.hdr.subcommand,
 			 mei_wdt_state_str(wdt->state),
 			 wdt->state);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* Run the unregistration in a worker as this can be
 	 * run only after ping completion, otherwise the flow will
-	 * deadlock on watchकरोg core mutex.
+	 * deadlock on watchdog core mutex.
 	 */
-	अगर (wdt->state == MEI_WDT_RUNNING) अणु
-		अगर (res.wdstate & MEI_WDT_WDSTATE_NOT_REQUIRED) अणु
+	if (wdt->state == MEI_WDT_RUNNING) {
+		if (res.wdstate & MEI_WDT_WDSTATE_NOT_REQUIRED) {
 			wdt->state = MEI_WDT_NOT_REQUIRED;
-			schedule_work(&wdt->unरेजिस्टर);
-		पूर्ण
-		जाओ out;
-	पूर्ण
+			schedule_work(&wdt->unregister);
+		}
+		goto out;
+	}
 
-	अगर (wdt->state == MEI_WDT_PROBE) अणु
-		अगर (res.wdstate & MEI_WDT_WDSTATE_NOT_REQUIRED) अणु
+	if (wdt->state == MEI_WDT_PROBE) {
+		if (res.wdstate & MEI_WDT_WDSTATE_NOT_REQUIRED) {
 			wdt->state = MEI_WDT_NOT_REQUIRED;
-		पूर्ण अन्यथा अणु
-			/* stop the watchकरोg and रेजिस्टर watchकरोg device */
+		} else {
+			/* stop the watchdog and register watchdog device */
 			mei_wdt_stop(wdt);
-			mei_wdt_रेजिस्टर(wdt);
-		पूर्ण
-		वापस;
-	पूर्ण
+			mei_wdt_register(wdt);
+		}
+		return;
+	}
 
 	dev_warn(&cldev->dev, "not in correct state %s[%d]\n",
 			 mei_wdt_state_str(wdt->state), wdt->state);
 
 out:
-	अगर (!completion_करोne(&wdt->response))
+	if (!completion_done(&wdt->response))
 		complete(&wdt->response);
-पूर्ण
+}
 
 /*
- * mei_wdt_notअगर - callback क्रम event notअगरication
+ * mei_wdt_notif - callback for event notification
  *
  * @cldev: bus device
  */
-अटल व्योम mei_wdt_notअगर(काष्ठा mei_cl_device *cldev)
-अणु
-	काष्ठा mei_wdt *wdt = mei_cldev_get_drvdata(cldev);
+static void mei_wdt_notif(struct mei_cl_device *cldev)
+{
+	struct mei_wdt *wdt = mei_cldev_get_drvdata(cldev);
 
-	अगर (wdt->state != MEI_WDT_NOT_REQUIRED)
-		वापस;
+	if (wdt->state != MEI_WDT_NOT_REQUIRED)
+		return;
 
-	mei_wdt_रेजिस्टर(wdt);
-पूर्ण
+	mei_wdt_register(wdt);
+}
 
-#अगर IS_ENABLED(CONFIG_DEBUG_FS)
+#if IS_ENABLED(CONFIG_DEBUG_FS)
 
-अटल sमाप_प्रकार mei_dbgfs_पढ़ो_activation(काष्ठा file *file, अक्षर __user *ubuf,
-					माप_प्रकार cnt, loff_t *ppos)
-अणु
-	काष्ठा mei_wdt *wdt = file->निजी_data;
-	स्थिर माप_प्रकार bufsz = 32;
-	अक्षर buf[32];
-	sमाप_प्रकार pos;
+static ssize_t mei_dbgfs_read_activation(struct file *file, char __user *ubuf,
+					size_t cnt, loff_t *ppos)
+{
+	struct mei_wdt *wdt = file->private_data;
+	const size_t bufsz = 32;
+	char buf[32];
+	ssize_t pos;
 
 	mutex_lock(&wdt->reg_lock);
-	pos = scnम_लिखो(buf, bufsz, "%s\n",
-		__mei_wdt_is_रेजिस्टरed(wdt) ? "activated" : "deactivated");
+	pos = scnprintf(buf, bufsz, "%s\n",
+		__mei_wdt_is_registered(wdt) ? "activated" : "deactivated");
 	mutex_unlock(&wdt->reg_lock);
 
-	वापस simple_पढ़ो_from_buffer(ubuf, cnt, ppos, buf, pos);
-पूर्ण
+	return simple_read_from_buffer(ubuf, cnt, ppos, buf, pos);
+}
 
-अटल स्थिर काष्ठा file_operations dbgfs_fops_activation = अणु
-	.खोलो    = simple_खोलो,
-	.पढ़ो    = mei_dbgfs_पढ़ो_activation,
+static const struct file_operations dbgfs_fops_activation = {
+	.open    = simple_open,
+	.read    = mei_dbgfs_read_activation,
 	.llseek  = generic_file_llseek,
-पूर्ण;
+};
 
-अटल sमाप_प्रकार mei_dbgfs_पढ़ो_state(काष्ठा file *file, अक्षर __user *ubuf,
-				    माप_प्रकार cnt, loff_t *ppos)
-अणु
-	काष्ठा mei_wdt *wdt = file->निजी_data;
-	अक्षर buf[32];
-	sमाप_प्रकार pos;
+static ssize_t mei_dbgfs_read_state(struct file *file, char __user *ubuf,
+				    size_t cnt, loff_t *ppos)
+{
+	struct mei_wdt *wdt = file->private_data;
+	char buf[32];
+	ssize_t pos;
 
-	pos = scnम_लिखो(buf, माप(buf), "state: %s\n",
+	pos = scnprintf(buf, sizeof(buf), "state: %s\n",
 			mei_wdt_state_str(wdt->state));
 
-	वापस simple_पढ़ो_from_buffer(ubuf, cnt, ppos, buf, pos);
-पूर्ण
+	return simple_read_from_buffer(ubuf, cnt, ppos, buf, pos);
+}
 
-अटल स्थिर काष्ठा file_operations dbgfs_fops_state = अणु
-	.खोलो = simple_खोलो,
-	.पढ़ो = mei_dbgfs_पढ़ो_state,
+static const struct file_operations dbgfs_fops_state = {
+	.open = simple_open,
+	.read = mei_dbgfs_read_state,
 	.llseek = generic_file_llseek,
-पूर्ण;
+};
 
-अटल व्योम dbgfs_unरेजिस्टर(काष्ठा mei_wdt *wdt)
-अणु
-	debugfs_हटाओ_recursive(wdt->dbgfs_dir);
-	wdt->dbgfs_dir = शून्य;
-पूर्ण
+static void dbgfs_unregister(struct mei_wdt *wdt)
+{
+	debugfs_remove_recursive(wdt->dbgfs_dir);
+	wdt->dbgfs_dir = NULL;
+}
 
-अटल व्योम dbgfs_रेजिस्टर(काष्ठा mei_wdt *wdt)
-अणु
-	काष्ठा dentry *dir;
+static void dbgfs_register(struct mei_wdt *wdt)
+{
+	struct dentry *dir;
 
-	dir = debugfs_create_dir(KBUILD_MODNAME, शून्य);
+	dir = debugfs_create_dir(KBUILD_MODNAME, NULL);
 	wdt->dbgfs_dir = dir;
 
 	debugfs_create_file("state", S_IRUSR, dir, wdt, &dbgfs_fops_state);
 
 	debugfs_create_file("activation", S_IRUSR, dir, wdt,
 			    &dbgfs_fops_activation);
-पूर्ण
+}
 
-#अन्यथा
+#else
 
-अटल अंतरभूत व्योम dbgfs_unरेजिस्टर(काष्ठा mei_wdt *wdt) अणुपूर्ण
-अटल अंतरभूत व्योम dbgfs_रेजिस्टर(काष्ठा mei_wdt *wdt) अणुपूर्ण
-#पूर्ण_अगर /* CONFIG_DEBUG_FS */
+static inline void dbgfs_unregister(struct mei_wdt *wdt) {}
+static inline void dbgfs_register(struct mei_wdt *wdt) {}
+#endif /* CONFIG_DEBUG_FS */
 
-अटल पूर्णांक mei_wdt_probe(काष्ठा mei_cl_device *cldev,
-			 स्थिर काष्ठा mei_cl_device_id *id)
-अणु
-	काष्ठा mei_wdt *wdt;
-	पूर्णांक ret;
+static int mei_wdt_probe(struct mei_cl_device *cldev,
+			 const struct mei_cl_device_id *id)
+{
+	struct mei_wdt *wdt;
+	int ret;
 
-	wdt = kzalloc(माप(काष्ठा mei_wdt), GFP_KERNEL);
-	अगर (!wdt)
-		वापस -ENOMEM;
+	wdt = kzalloc(sizeof(struct mei_wdt), GFP_KERNEL);
+	if (!wdt)
+		return -ENOMEM;
 
-	wdt->समयout = MEI_WDT_DEFAULT_TIMEOUT;
+	wdt->timeout = MEI_WDT_DEFAULT_TIMEOUT;
 	wdt->state = MEI_WDT_PROBE;
 	wdt->cldev = cldev;
 	wdt->resp_required = mei_cldev_ver(cldev) > 0x1;
 	mutex_init(&wdt->reg_lock);
 	init_completion(&wdt->response);
-	INIT_WORK(&wdt->unरेजिस्टर, mei_wdt_unरेजिस्टर_work);
+	INIT_WORK(&wdt->unregister, mei_wdt_unregister_work);
 
 	mei_cldev_set_drvdata(cldev, wdt);
 
 	ret = mei_cldev_enable(cldev);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&cldev->dev, "Could not enable cl device\n");
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 
-	ret = mei_cldev_रेजिस्टर_rx_cb(wdt->cldev, mei_wdt_rx);
-	अगर (ret) अणु
+	ret = mei_cldev_register_rx_cb(wdt->cldev, mei_wdt_rx);
+	if (ret) {
 		dev_err(&cldev->dev, "Could not reg rx event ret=%d\n", ret);
-		जाओ err_disable;
-	पूर्ण
+		goto err_disable;
+	}
 
-	ret = mei_cldev_रेजिस्टर_notअगर_cb(wdt->cldev, mei_wdt_notअगर);
-	/* on legacy devices notअगरication is not supported
+	ret = mei_cldev_register_notif_cb(wdt->cldev, mei_wdt_notif);
+	/* on legacy devices notification is not supported
 	 */
-	अगर (ret && ret != -EOPNOTSUPP) अणु
+	if (ret && ret != -EOPNOTSUPP) {
 		dev_err(&cldev->dev, "Could not reg notif event ret=%d\n", ret);
-		जाओ err_disable;
-	पूर्ण
+		goto err_disable;
+	}
 
 	wd_info.firmware_version = mei_cldev_ver(cldev);
 
-	अगर (wdt->resp_required)
+	if (wdt->resp_required)
 		ret = mei_wdt_ping(wdt);
-	अन्यथा
-		ret = mei_wdt_रेजिस्टर(wdt);
+	else
+		ret = mei_wdt_register(wdt);
 
-	अगर (ret)
-		जाओ err_disable;
+	if (ret)
+		goto err_disable;
 
-	dbgfs_रेजिस्टर(wdt);
+	dbgfs_register(wdt);
 
-	वापस 0;
+	return 0;
 
 err_disable:
 	mei_cldev_disable(cldev);
 
 err_out:
-	kमुक्त(wdt);
+	kfree(wdt);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम mei_wdt_हटाओ(काष्ठा mei_cl_device *cldev)
-अणु
-	काष्ठा mei_wdt *wdt = mei_cldev_get_drvdata(cldev);
+static void mei_wdt_remove(struct mei_cl_device *cldev)
+{
+	struct mei_wdt *wdt = mei_cldev_get_drvdata(cldev);
 
-	/* Free the caller in हाल of fw initiated or unexpected reset */
-	अगर (!completion_करोne(&wdt->response))
+	/* Free the caller in case of fw initiated or unexpected reset */
+	if (!completion_done(&wdt->response))
 		complete(&wdt->response);
 
-	cancel_work_sync(&wdt->unरेजिस्टर);
+	cancel_work_sync(&wdt->unregister);
 
-	mei_wdt_unरेजिस्टर(wdt);
+	mei_wdt_unregister(wdt);
 
 	mei_cldev_disable(cldev);
 
-	dbgfs_unरेजिस्टर(wdt);
+	dbgfs_unregister(wdt);
 
-	kमुक्त(wdt);
-पूर्ण
+	kfree(wdt);
+}
 
-#घोषणा MEI_UUID_WD UUID_LE(0x05B79A6F, 0x4628, 0x4D7F, \
+#define MEI_UUID_WD UUID_LE(0x05B79A6F, 0x4628, 0x4D7F, \
 			    0x89, 0x9D, 0xA9, 0x15, 0x14, 0xCB, 0x32, 0xAB)
 
-अटल स्थिर काष्ठा mei_cl_device_id mei_wdt_tbl[] = अणु
-	अणु .uuid = MEI_UUID_WD, .version = MEI_CL_VERSION_ANY पूर्ण,
+static const struct mei_cl_device_id mei_wdt_tbl[] = {
+	{ .uuid = MEI_UUID_WD, .version = MEI_CL_VERSION_ANY },
 	/* required last entry */
-	अणु पूर्ण
-पूर्ण;
+	{ }
+};
 MODULE_DEVICE_TABLE(mei, mei_wdt_tbl);
 
-अटल काष्ठा mei_cl_driver mei_wdt_driver = अणु
+static struct mei_cl_driver mei_wdt_driver = {
 	.id_table = mei_wdt_tbl,
 	.name = KBUILD_MODNAME,
 
 	.probe = mei_wdt_probe,
-	.हटाओ = mei_wdt_हटाओ,
-पूर्ण;
+	.remove = mei_wdt_remove,
+};
 
 module_mei_cl_driver(mei_wdt_driver);
 

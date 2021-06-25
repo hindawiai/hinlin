@@ -1,95 +1,94 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright 2000-2020 Broadcom Inc. All rights reserved.
  *
  *
  *          Name:  mpi2_sas.h
- *         Title:  MPI Serial Attached SCSI काष्ठाures and definitions
+ *         Title:  MPI Serial Attached SCSI structures and definitions
  * Creation Date:  February 9, 2007
  *
  * mpi2_sas.h Version:  02.00.10
  *
- * NOTE: Names (प्रकारs, defines, etc.) beginning with an MPI25 or Mpi25
- *       prefix are क्रम use only on MPI v2.5 products, and must not be used
+ * NOTE: Names (typedefs, defines, etc.) beginning with an MPI25 or Mpi25
+ *       prefix are for use only on MPI v2.5 products, and must not be used
  *       with MPI v2.0 products. Unless otherwise noted, names beginning with
- *       MPI2 or Mpi2 are क्रम use with both MPI v2.0 and MPI v2.5 products.
+ *       MPI2 or Mpi2 are for use with both MPI v2.0 and MPI v2.5 products.
  *
  * Version History
  * ---------------
  *
  * Date      Version   Description
  * --------  --------  ------------------------------------------------------
- * 04-30-07  02.00.00  Corresponds to Fusion-MPT MPI Specअगरication Rev A.
+ * 04-30-07  02.00.00  Corresponds to Fusion-MPT MPI Specification Rev A.
  * 06-26-07  02.00.01  Added Clear All Persistent Operation to SAS IO Unit
  *                     Control Request.
  * 10-02-08  02.00.02  Added Set IOC Parameter Operation to SAS IO Unit Control
  *                     Request.
  * 10-28-09  02.00.03  Changed the type of SGL in MPI2_SATA_PASSTHROUGH_REQUEST
  *                     to MPI2_SGE_IO_UNION since it supports chained SGLs.
- * 05-12-10  02.00.04  Modअगरied some comments.
+ * 05-12-10  02.00.04  Modified some comments.
  * 08-11-10  02.00.05  Added NCQ operations to SAS IO Unit Control.
- * 11-18-11  02.00.06  Incorporating additions क्रम MPI v2.5.
- * 07-10-12  02.00.07  Added MPI2_SATA_PT_SGE_UNION क्रम use in the SATA
+ * 11-18-11  02.00.06  Incorporating additions for MPI v2.5.
+ * 07-10-12  02.00.07  Added MPI2_SATA_PT_SGE_UNION for use in the SATA
  *                     Passthrough Request message.
  * 08-19-13  02.00.08  Made MPI2_SAS_OP_TRANSMIT_PORT_SELECT_SIGNAL obsolete
- *			क्रम anything newer than MPI v2.0.
- * 11-18-14  02.00.09  Updated copyright inक्रमmation.
- * 03-16-15  02.00.10  Updated क्रम MPI v2.6.
+ *			for anything newer than MPI v2.0.
+ * 11-18-14  02.00.09  Updated copyright information.
+ * 03-16-15  02.00.10  Updated for MPI v2.6.
  *                     Added MPI2_SATA_PT_REQ_PT_FLAGS_FPDMA.
  * --------------------------------------------------------------------------
  */
 
-#अगर_अघोषित MPI2_SAS_H
-#घोषणा MPI2_SAS_H
+#ifndef MPI2_SAS_H
+#define MPI2_SAS_H
 
 /*
- *Values क्रम SASStatus.
+ *Values for SASStatus.
  */
-#घोषणा MPI2_SASSTATUS_SUCCESS                          (0x00)
-#घोषणा MPI2_SASSTATUS_UNKNOWN_ERROR                    (0x01)
-#घोषणा MPI2_SASSTATUS_INVALID_FRAME                    (0x02)
-#घोषणा MPI2_SASSTATUS_UTC_BAD_DEST                     (0x03)
-#घोषणा MPI2_SASSTATUS_UTC_BREAK_RECEIVED               (0x04)
-#घोषणा MPI2_SASSTATUS_UTC_CONNECT_RATE_NOT_SUPPORTED   (0x05)
-#घोषणा MPI2_SASSTATUS_UTC_PORT_LAYER_REQUEST           (0x06)
-#घोषणा MPI2_SASSTATUS_UTC_PROTOCOL_NOT_SUPPORTED       (0x07)
-#घोषणा MPI2_SASSTATUS_UTC_STP_RESOURCES_BUSY           (0x08)
-#घोषणा MPI2_SASSTATUS_UTC_WRONG_DESTINATION            (0x09)
-#घोषणा MPI2_SASSTATUS_SHORT_INFORMATION_UNIT           (0x0A)
-#घोषणा MPI2_SASSTATUS_LONG_INFORMATION_UNIT            (0x0B)
-#घोषणा MPI2_SASSTATUS_XFER_RDY_INCORRECT_WRITE_DATA    (0x0C)
-#घोषणा MPI2_SASSTATUS_XFER_RDY_REQUEST_OFFSET_ERROR    (0x0D)
-#घोषणा MPI2_SASSTATUS_XFER_RDY_NOT_EXPECTED            (0x0E)
-#घोषणा MPI2_SASSTATUS_DATA_INCORRECT_DATA_LENGTH       (0x0F)
-#घोषणा MPI2_SASSTATUS_DATA_TOO_MUCH_READ_DATA          (0x10)
-#घोषणा MPI2_SASSTATUS_DATA_OFFSET_ERROR                (0x11)
-#घोषणा MPI2_SASSTATUS_SDSF_NAK_RECEIVED                (0x12)
-#घोषणा MPI2_SASSTATUS_SDSF_CONNECTION_FAILED           (0x13)
-#घोषणा MPI2_SASSTATUS_INITIATOR_RESPONSE_TIMEOUT       (0x14)
+#define MPI2_SASSTATUS_SUCCESS                          (0x00)
+#define MPI2_SASSTATUS_UNKNOWN_ERROR                    (0x01)
+#define MPI2_SASSTATUS_INVALID_FRAME                    (0x02)
+#define MPI2_SASSTATUS_UTC_BAD_DEST                     (0x03)
+#define MPI2_SASSTATUS_UTC_BREAK_RECEIVED               (0x04)
+#define MPI2_SASSTATUS_UTC_CONNECT_RATE_NOT_SUPPORTED   (0x05)
+#define MPI2_SASSTATUS_UTC_PORT_LAYER_REQUEST           (0x06)
+#define MPI2_SASSTATUS_UTC_PROTOCOL_NOT_SUPPORTED       (0x07)
+#define MPI2_SASSTATUS_UTC_STP_RESOURCES_BUSY           (0x08)
+#define MPI2_SASSTATUS_UTC_WRONG_DESTINATION            (0x09)
+#define MPI2_SASSTATUS_SHORT_INFORMATION_UNIT           (0x0A)
+#define MPI2_SASSTATUS_LONG_INFORMATION_UNIT            (0x0B)
+#define MPI2_SASSTATUS_XFER_RDY_INCORRECT_WRITE_DATA    (0x0C)
+#define MPI2_SASSTATUS_XFER_RDY_REQUEST_OFFSET_ERROR    (0x0D)
+#define MPI2_SASSTATUS_XFER_RDY_NOT_EXPECTED            (0x0E)
+#define MPI2_SASSTATUS_DATA_INCORRECT_DATA_LENGTH       (0x0F)
+#define MPI2_SASSTATUS_DATA_TOO_MUCH_READ_DATA          (0x10)
+#define MPI2_SASSTATUS_DATA_OFFSET_ERROR                (0x11)
+#define MPI2_SASSTATUS_SDSF_NAK_RECEIVED                (0x12)
+#define MPI2_SASSTATUS_SDSF_CONNECTION_FAILED           (0x13)
+#define MPI2_SASSTATUS_INITIATOR_RESPONSE_TIMEOUT       (0x14)
 
 /*
- *Values क्रम the SAS DeviceInfo field used in SAS Device Status Change Event
+ *Values for the SAS DeviceInfo field used in SAS Device Status Change Event
  *data and SAS Configuration pages.
  */
-#घोषणा MPI2_SAS_DEVICE_INFO_SEP                (0x00004000)
-#घोषणा MPI2_SAS_DEVICE_INFO_ATAPI_DEVICE       (0x00002000)
-#घोषणा MPI2_SAS_DEVICE_INFO_LSI_DEVICE         (0x00001000)
-#घोषणा MPI2_SAS_DEVICE_INFO_सूचीECT_ATTACH      (0x00000800)
-#घोषणा MPI2_SAS_DEVICE_INFO_SSP_TARGET         (0x00000400)
-#घोषणा MPI2_SAS_DEVICE_INFO_STP_TARGET         (0x00000200)
-#घोषणा MPI2_SAS_DEVICE_INFO_SMP_TARGET         (0x00000100)
-#घोषणा MPI2_SAS_DEVICE_INFO_SATA_DEVICE        (0x00000080)
-#घोषणा MPI2_SAS_DEVICE_INFO_SSP_INITIATOR      (0x00000040)
-#घोषणा MPI2_SAS_DEVICE_INFO_STP_INITIATOR      (0x00000020)
-#घोषणा MPI2_SAS_DEVICE_INFO_SMP_INITIATOR      (0x00000010)
-#घोषणा MPI2_SAS_DEVICE_INFO_SATA_HOST          (0x00000008)
+#define MPI2_SAS_DEVICE_INFO_SEP                (0x00004000)
+#define MPI2_SAS_DEVICE_INFO_ATAPI_DEVICE       (0x00002000)
+#define MPI2_SAS_DEVICE_INFO_LSI_DEVICE         (0x00001000)
+#define MPI2_SAS_DEVICE_INFO_DIRECT_ATTACH      (0x00000800)
+#define MPI2_SAS_DEVICE_INFO_SSP_TARGET         (0x00000400)
+#define MPI2_SAS_DEVICE_INFO_STP_TARGET         (0x00000200)
+#define MPI2_SAS_DEVICE_INFO_SMP_TARGET         (0x00000100)
+#define MPI2_SAS_DEVICE_INFO_SATA_DEVICE        (0x00000080)
+#define MPI2_SAS_DEVICE_INFO_SSP_INITIATOR      (0x00000040)
+#define MPI2_SAS_DEVICE_INFO_STP_INITIATOR      (0x00000020)
+#define MPI2_SAS_DEVICE_INFO_SMP_INITIATOR      (0x00000010)
+#define MPI2_SAS_DEVICE_INFO_SATA_HOST          (0x00000008)
 
-#घोषणा MPI2_SAS_DEVICE_INFO_MASK_DEVICE_TYPE   (0x00000007)
-#घोषणा MPI2_SAS_DEVICE_INFO_NO_DEVICE          (0x00000000)
-#घोषणा MPI2_SAS_DEVICE_INFO_END_DEVICE         (0x00000001)
-#घोषणा MPI2_SAS_DEVICE_INFO_EDGE_EXPANDER      (0x00000002)
-#घोषणा MPI2_SAS_DEVICE_INFO_FANOUT_EXPANDER    (0x00000003)
+#define MPI2_SAS_DEVICE_INFO_MASK_DEVICE_TYPE   (0x00000007)
+#define MPI2_SAS_DEVICE_INFO_NO_DEVICE          (0x00000000)
+#define MPI2_SAS_DEVICE_INFO_END_DEVICE         (0x00000001)
+#define MPI2_SAS_DEVICE_INFO_EDGE_EXPANDER      (0x00000002)
+#define MPI2_SAS_DEVICE_INFO_FANOUT_EXPANDER    (0x00000003)
 
 /*****************************************************************************
 *
@@ -102,7 +101,7 @@
 ****************************************************************************/
 
 /*SMP Passthrough Request Message */
-प्रकार काष्ठा _MPI2_SMP_PASSTHROUGH_REQUEST अणु
+typedef struct _MPI2_SMP_PASSTHROUGH_REQUEST {
 	U8 PassthroughFlags;	/*0x00 */
 	U8 PhysicalPort;	/*0x01 */
 	U8 ChainOffset;		/*0x02 */
@@ -118,16 +117,16 @@
 	U32 Reserved3;		/*0x18 */
 	U32 Reserved4;		/*0x1C */
 	MPI2_SIMPLE_SGE_UNION SGL;/*0x20 */
-पूर्ण MPI2_SMP_PASSTHROUGH_REQUEST, *PTR_MPI2_SMP_PASSTHROUGH_REQUEST,
+} MPI2_SMP_PASSTHROUGH_REQUEST, *PTR_MPI2_SMP_PASSTHROUGH_REQUEST,
 	Mpi2SmpPassthroughRequest_t, *pMpi2SmpPassthroughRequest_t;
 
-/*values क्रम PassthroughFlags field */
-#घोषणा MPI2_SMP_PT_REQ_PT_FLAGS_IMMEDIATE      (0x80)
+/*values for PassthroughFlags field */
+#define MPI2_SMP_PT_REQ_PT_FLAGS_IMMEDIATE      (0x80)
 
-/*MPI v2.0: use MPI2_SGLFLAGS_ defines from mpi2.h क्रम the SGLFlags field */
+/*MPI v2.0: use MPI2_SGLFLAGS_ defines from mpi2.h for the SGLFlags field */
 
 /*SMP Passthrough Reply Message */
-प्रकार काष्ठा _MPI2_SMP_PASSTHROUGH_REPLY अणु
+typedef struct _MPI2_SMP_PASSTHROUGH_REPLY {
 	U8 PassthroughFlags;	/*0x00 */
 	U8 PhysicalPort;	/*0x01 */
 	U8 MsgLength;		/*0x02 */
@@ -144,29 +143,29 @@
 	U32 IOCLogInfo;		/*0x10 */
 	U32 Reserved3;		/*0x14 */
 	U8 ResponseData[4];	/*0x18 */
-पूर्ण MPI2_SMP_PASSTHROUGH_REPLY, *PTR_MPI2_SMP_PASSTHROUGH_REPLY,
+} MPI2_SMP_PASSTHROUGH_REPLY, *PTR_MPI2_SMP_PASSTHROUGH_REPLY,
 	Mpi2SmpPassthroughReply_t, *pMpi2SmpPassthroughReply_t;
 
-/*values क्रम PassthroughFlags field */
-#घोषणा MPI2_SMP_PT_REPLY_PT_FLAGS_IMMEDIATE    (0x80)
+/*values for PassthroughFlags field */
+#define MPI2_SMP_PT_REPLY_PT_FLAGS_IMMEDIATE    (0x80)
 
-/*values क्रम SASStatus field are at the top of this file */
+/*values for SASStatus field are at the top of this file */
 
 /****************************************************************************
 * SATA Passthrough messages
 ****************************************************************************/
 
-प्रकार जोड़ _MPI2_SATA_PT_SGE_UNION अणु
+typedef union _MPI2_SATA_PT_SGE_UNION {
 	MPI2_SGE_SIMPLE_UNION MpiSimple;	/*MPI v2.0 only */
 	MPI2_SGE_CHAIN_UNION MpiChain;	/*MPI v2.0 only */
 	MPI2_IEEE_SGE_SIMPLE_UNION IeeeSimple;
 	MPI2_IEEE_SGE_CHAIN_UNION IeeeChain;	/*MPI v2.0 only */
 	MPI25_IEEE_SGE_CHAIN64 IeeeChain64;	/*MPI v2.5 only */
-पूर्ण MPI2_SATA_PT_SGE_UNION, *PTR_MPI2_SATA_PT_SGE_UNION,
+} MPI2_SATA_PT_SGE_UNION, *PTR_MPI2_SATA_PT_SGE_UNION,
 	Mpi2SataPTSGEUnion_t, *pMpi2SataPTSGEUnion_t;
 
 /*SATA Passthrough Request Message */
-प्रकार काष्ठा _MPI2_SATA_PASSTHROUGH_REQUEST अणु
+typedef struct _MPI2_SATA_PASSTHROUGH_REQUEST {
 	U16 DevHandle;		/*0x00 */
 	U8 ChainOffset;		/*0x02 */
 	U8 Function;		/*0x03 */
@@ -182,23 +181,23 @@
 	U32 DataLength;		/*0x18 */
 	U8 CommandFIS[20];	/*0x1C */
 	MPI2_SATA_PT_SGE_UNION SGL;/*0x30*//*MPI v2.5: IEEE 64 elements only*/
-पूर्ण MPI2_SATA_PASSTHROUGH_REQUEST, *PTR_MPI2_SATA_PASSTHROUGH_REQUEST,
+} MPI2_SATA_PASSTHROUGH_REQUEST, *PTR_MPI2_SATA_PASSTHROUGH_REQUEST,
 	Mpi2SataPassthroughRequest_t,
 	*pMpi2SataPassthroughRequest_t;
 
-/*values क्रम PassthroughFlags field */
-#घोषणा MPI2_SATA_PT_REQ_PT_FLAGS_EXECUTE_DIAG      (0x0100)
-#घोषणा MPI2_SATA_PT_REQ_PT_FLAGS_FPDMA             (0x0040)
-#घोषणा MPI2_SATA_PT_REQ_PT_FLAGS_DMA               (0x0020)
-#घोषणा MPI2_SATA_PT_REQ_PT_FLAGS_PIO               (0x0010)
-#घोषणा MPI2_SATA_PT_REQ_PT_FLAGS_UNSPECIFIED_VU    (0x0004)
-#घोषणा MPI2_SATA_PT_REQ_PT_FLAGS_WRITE             (0x0002)
-#घोषणा MPI2_SATA_PT_REQ_PT_FLAGS_READ              (0x0001)
+/*values for PassthroughFlags field */
+#define MPI2_SATA_PT_REQ_PT_FLAGS_EXECUTE_DIAG      (0x0100)
+#define MPI2_SATA_PT_REQ_PT_FLAGS_FPDMA             (0x0040)
+#define MPI2_SATA_PT_REQ_PT_FLAGS_DMA               (0x0020)
+#define MPI2_SATA_PT_REQ_PT_FLAGS_PIO               (0x0010)
+#define MPI2_SATA_PT_REQ_PT_FLAGS_UNSPECIFIED_VU    (0x0004)
+#define MPI2_SATA_PT_REQ_PT_FLAGS_WRITE             (0x0002)
+#define MPI2_SATA_PT_REQ_PT_FLAGS_READ              (0x0001)
 
-/*MPI v2.0: use MPI2_SGLFLAGS_ defines from mpi2.h क्रम the SGLFlags field */
+/*MPI v2.0: use MPI2_SGLFLAGS_ defines from mpi2.h for the SGLFlags field */
 
 /*SATA Passthrough Reply Message */
-प्रकार काष्ठा _MPI2_SATA_PASSTHROUGH_REPLY अणु
+typedef struct _MPI2_SATA_PASSTHROUGH_REPLY {
 	U16 DevHandle;		/*0x00 */
 	U8 MsgLength;		/*0x02 */
 	U8 Function;		/*0x03 */
@@ -215,10 +214,10 @@
 	U8 StatusFIS[20];	/*0x14 */
 	U32 StatusControlRegisters;	/*0x28 */
 	U32 TransferCount;	/*0x2C */
-पूर्ण MPI2_SATA_PASSTHROUGH_REPLY, *PTR_MPI2_SATA_PASSTHROUGH_REPLY,
+} MPI2_SATA_PASSTHROUGH_REPLY, *PTR_MPI2_SATA_PASSTHROUGH_REPLY,
 	Mpi2SataPassthroughReply_t, *pMpi2SataPassthroughReply_t;
 
-/*values क्रम SASStatus field are at the top of this file */
+/*values for SASStatus field are at the top of this file */
 
 /****************************************************************************
 * SAS IO Unit Control messages
@@ -227,7 +226,7 @@
 ****************************************************************************/
 
 /*SAS IO Unit Control Request Message */
-प्रकार काष्ठा _MPI2_SAS_IOUNIT_CONTROL_REQUEST अणु
+typedef struct _MPI2_SAS_IOUNIT_CONTROL_REQUEST {
 	U8 Operation;		/*0x00 */
 	U8 Reserved1;		/*0x01 */
 	U8 ChainOffset;		/*0x02 */
@@ -249,42 +248,42 @@
 	U32 IOCParameterValue;	/*0x20 */
 	U32 Reserved7;		/*0x24 */
 	U32 Reserved8;		/*0x28 */
-पूर्ण MPI2_SAS_IOUNIT_CONTROL_REQUEST,
+} MPI2_SAS_IOUNIT_CONTROL_REQUEST,
 	*PTR_MPI2_SAS_IOUNIT_CONTROL_REQUEST,
 	Mpi2SasIoUnitControlRequest_t,
 	*pMpi2SasIoUnitControlRequest_t;
 
-/*values क्रम the Operation field */
-#घोषणा MPI2_SAS_OP_CLEAR_ALL_PERSISTENT        (0x02)
-#घोषणा MPI2_SAS_OP_PHY_LINK_RESET              (0x06)
-#घोषणा MPI2_SAS_OP_PHY_HARD_RESET              (0x07)
-#घोषणा MPI2_SAS_OP_PHY_CLEAR_ERROR_LOG         (0x08)
-#घोषणा MPI2_SAS_OP_SEND_PRIMITIVE              (0x0A)
-#घोषणा MPI2_SAS_OP_FORCE_FULL_DISCOVERY        (0x0B)
-#घोषणा MPI2_SAS_OP_TRANSMIT_PORT_SELECT_SIGNAL (0x0C) /* MPI v2.0 only */
-#घोषणा MPI2_SAS_OP_REMOVE_DEVICE               (0x0D)
-#घोषणा MPI2_SAS_OP_LOOKUP_MAPPING              (0x0E)
-#घोषणा MPI2_SAS_OP_SET_IOC_PARAMETER           (0x0F)
-#घोषणा MPI25_SAS_OP_ENABLE_FP_DEVICE           (0x10)
-#घोषणा MPI25_SAS_OP_DISABLE_FP_DEVICE          (0x11)
-#घोषणा MPI25_SAS_OP_ENABLE_FP_ALL              (0x12)
-#घोषणा MPI25_SAS_OP_DISABLE_FP_ALL             (0x13)
-#घोषणा MPI2_SAS_OP_DEV_ENABLE_NCQ              (0x14)
-#घोषणा MPI2_SAS_OP_DEV_DISABLE_NCQ             (0x15)
-#घोषणा MPI2_SAS_OP_PRODUCT_SPECIFIC_MIN        (0x80)
+/*values for the Operation field */
+#define MPI2_SAS_OP_CLEAR_ALL_PERSISTENT        (0x02)
+#define MPI2_SAS_OP_PHY_LINK_RESET              (0x06)
+#define MPI2_SAS_OP_PHY_HARD_RESET              (0x07)
+#define MPI2_SAS_OP_PHY_CLEAR_ERROR_LOG         (0x08)
+#define MPI2_SAS_OP_SEND_PRIMITIVE              (0x0A)
+#define MPI2_SAS_OP_FORCE_FULL_DISCOVERY        (0x0B)
+#define MPI2_SAS_OP_TRANSMIT_PORT_SELECT_SIGNAL (0x0C) /* MPI v2.0 only */
+#define MPI2_SAS_OP_REMOVE_DEVICE               (0x0D)
+#define MPI2_SAS_OP_LOOKUP_MAPPING              (0x0E)
+#define MPI2_SAS_OP_SET_IOC_PARAMETER           (0x0F)
+#define MPI25_SAS_OP_ENABLE_FP_DEVICE           (0x10)
+#define MPI25_SAS_OP_DISABLE_FP_DEVICE          (0x11)
+#define MPI25_SAS_OP_ENABLE_FP_ALL              (0x12)
+#define MPI25_SAS_OP_DISABLE_FP_ALL             (0x13)
+#define MPI2_SAS_OP_DEV_ENABLE_NCQ              (0x14)
+#define MPI2_SAS_OP_DEV_DISABLE_NCQ             (0x15)
+#define MPI2_SAS_OP_PRODUCT_SPECIFIC_MIN        (0x80)
 
-/*values क्रम the PrimFlags field */
-#घोषणा MPI2_SAS_PRIMFLAGS_SINGLE               (0x08)
-#घोषणा MPI2_SAS_PRIMFLAGS_TRIPLE               (0x02)
-#घोषणा MPI2_SAS_PRIMFLAGS_REDUNDANT            (0x01)
+/*values for the PrimFlags field */
+#define MPI2_SAS_PRIMFLAGS_SINGLE               (0x08)
+#define MPI2_SAS_PRIMFLAGS_TRIPLE               (0x02)
+#define MPI2_SAS_PRIMFLAGS_REDUNDANT            (0x01)
 
-/*values क्रम the LookupMethod field */
-#घोषणा MPI2_SAS_LOOKUP_METHOD_SAS_ADDRESS          (0x01)
-#घोषणा MPI2_SAS_LOOKUP_METHOD_SAS_ENCLOSURE_SLOT   (0x02)
-#घोषणा MPI2_SAS_LOOKUP_METHOD_SAS_DEVICE_NAME      (0x03)
+/*values for the LookupMethod field */
+#define MPI2_SAS_LOOKUP_METHOD_SAS_ADDRESS          (0x01)
+#define MPI2_SAS_LOOKUP_METHOD_SAS_ENCLOSURE_SLOT   (0x02)
+#define MPI2_SAS_LOOKUP_METHOD_SAS_DEVICE_NAME      (0x03)
 
 /*SAS IO Unit Control Reply Message */
-प्रकार काष्ठा _MPI2_SAS_IOUNIT_CONTROL_REPLY अणु
+typedef struct _MPI2_SAS_IOUNIT_CONTROL_REPLY {
 	U8 Operation;		/*0x00 */
 	U8 Reserved1;		/*0x01 */
 	U8 MsgLength;		/*0x02 */
@@ -298,8 +297,8 @@
 	U16 Reserved4;		/*0x0C */
 	U16 IOCStatus;		/*0x0E */
 	U32 IOCLogInfo;		/*0x10 */
-पूर्ण MPI2_SAS_IOUNIT_CONTROL_REPLY,
+} MPI2_SAS_IOUNIT_CONTROL_REPLY,
 	*PTR_MPI2_SAS_IOUNIT_CONTROL_REPLY,
 	Mpi2SasIoUnitControlReply_t, *pMpi2SasIoUnitControlReply_t;
 
-#पूर्ण_अगर
+#endif

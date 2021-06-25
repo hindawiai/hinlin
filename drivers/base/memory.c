@@ -1,618 +1,617 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Memory subप्रणाली support
+ * Memory subsystem support
  *
- * Written by Matt Tolentino <matthew.e.tolentino@पूर्णांकel.com>
+ * Written by Matt Tolentino <matthew.e.tolentino@intel.com>
  *            Dave Hansen <haveblue@us.ibm.com>
  *
- * This file provides the necessary infraकाष्ठाure to represent
- * a SPARSEMEM-memory-model प्रणाली's physical memory in /sysfs.
+ * This file provides the necessary infrastructure to represent
+ * a SPARSEMEM-memory-model system's physical memory in /sysfs.
  * All arch-independent code that assumes MEMORY_HOTPLUG requires
  * SPARSEMEM should be contained here, or in mm/memory_hotplug.c.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/topology.h>
-#समावेश <linux/capability.h>
-#समावेश <linux/device.h>
-#समावेश <linux/memory.h>
-#समावेश <linux/memory_hotplug.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/स्थिति.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/xarray.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/topology.h>
+#include <linux/capability.h>
+#include <linux/device.h>
+#include <linux/memory.h>
+#include <linux/memory_hotplug.h>
+#include <linux/mm.h>
+#include <linux/stat.h>
+#include <linux/slab.h>
+#include <linux/xarray.h>
 
-#समावेश <linux/atomic.h>
-#समावेश <linux/uaccess.h>
+#include <linux/atomic.h>
+#include <linux/uaccess.h>
 
-#घोषणा MEMORY_CLASS_NAME	"memory"
+#define MEMORY_CLASS_NAME	"memory"
 
-अटल स्थिर अक्षर *स्थिर online_type_to_str[] = अणु
+static const char *const online_type_to_str[] = {
 	[MMOP_OFFLINE] = "offline",
 	[MMOP_ONLINE] = "online",
 	[MMOP_ONLINE_KERNEL] = "online_kernel",
 	[MMOP_ONLINE_MOVABLE] = "online_movable",
-पूर्ण;
+};
 
-पूर्णांक mhp_online_type_from_str(स्थिर अक्षर *str)
-अणु
-	पूर्णांक i;
+int mhp_online_type_from_str(const char *str)
+{
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(online_type_to_str); i++) अणु
-		अगर (sysfs_streq(str, online_type_to_str[i]))
-			वापस i;
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+	for (i = 0; i < ARRAY_SIZE(online_type_to_str); i++) {
+		if (sysfs_streq(str, online_type_to_str[i]))
+			return i;
+	}
+	return -EINVAL;
+}
 
-#घोषणा to_memory_block(dev) container_of(dev, काष्ठा memory_block, dev)
+#define to_memory_block(dev) container_of(dev, struct memory_block, dev)
 
-अटल पूर्णांक sections_per_block;
+static int sections_per_block;
 
-अटल अंतरभूत अचिन्हित दीर्घ memory_block_id(अचिन्हित दीर्घ section_nr)
-अणु
-	वापस section_nr / sections_per_block;
-पूर्ण
+static inline unsigned long memory_block_id(unsigned long section_nr)
+{
+	return section_nr / sections_per_block;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ pfn_to_block_id(अचिन्हित दीर्घ pfn)
-अणु
-	वापस memory_block_id(pfn_to_section_nr(pfn));
-पूर्ण
+static inline unsigned long pfn_to_block_id(unsigned long pfn)
+{
+	return memory_block_id(pfn_to_section_nr(pfn));
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ phys_to_block_id(अचिन्हित दीर्घ phys)
-अणु
-	वापस pfn_to_block_id(PFN_DOWN(phys));
-पूर्ण
+static inline unsigned long phys_to_block_id(unsigned long phys)
+{
+	return pfn_to_block_id(PFN_DOWN(phys));
+}
 
-अटल पूर्णांक memory_subsys_online(काष्ठा device *dev);
-अटल पूर्णांक memory_subsys_offline(काष्ठा device *dev);
+static int memory_subsys_online(struct device *dev);
+static int memory_subsys_offline(struct device *dev);
 
-अटल काष्ठा bus_type memory_subsys = अणु
+static struct bus_type memory_subsys = {
 	.name = MEMORY_CLASS_NAME,
 	.dev_name = MEMORY_CLASS_NAME,
 	.online = memory_subsys_online,
 	.offline = memory_subsys_offline,
-पूर्ण;
+};
 
 /*
- * Memory blocks are cached in a local radix tree to aव्योम
- * a costly linear search क्रम the corresponding device on
- * the subप्रणाली bus.
+ * Memory blocks are cached in a local radix tree to avoid
+ * a costly linear search for the corresponding device on
+ * the subsystem bus.
  */
-अटल DEFINE_XARRAY(memory_blocks);
+static DEFINE_XARRAY(memory_blocks);
 
-अटल BLOCKING_NOTIFIER_HEAD(memory_chain);
+static BLOCKING_NOTIFIER_HEAD(memory_chain);
 
-पूर्णांक रेजिस्टर_memory_notअगरier(काष्ठा notअगरier_block *nb)
-अणु
-	वापस blocking_notअगरier_chain_रेजिस्टर(&memory_chain, nb);
-पूर्ण
-EXPORT_SYMBOL(रेजिस्टर_memory_notअगरier);
+int register_memory_notifier(struct notifier_block *nb)
+{
+	return blocking_notifier_chain_register(&memory_chain, nb);
+}
+EXPORT_SYMBOL(register_memory_notifier);
 
-व्योम unरेजिस्टर_memory_notअगरier(काष्ठा notअगरier_block *nb)
-अणु
-	blocking_notअगरier_chain_unरेजिस्टर(&memory_chain, nb);
-पूर्ण
-EXPORT_SYMBOL(unरेजिस्टर_memory_notअगरier);
+void unregister_memory_notifier(struct notifier_block *nb)
+{
+	blocking_notifier_chain_unregister(&memory_chain, nb);
+}
+EXPORT_SYMBOL(unregister_memory_notifier);
 
-अटल व्योम memory_block_release(काष्ठा device *dev)
-अणु
-	काष्ठा memory_block *mem = to_memory_block(dev);
+static void memory_block_release(struct device *dev)
+{
+	struct memory_block *mem = to_memory_block(dev);
 
-	kमुक्त(mem);
-पूर्ण
+	kfree(mem);
+}
 
-अचिन्हित दीर्घ __weak memory_block_size_bytes(व्योम)
-अणु
-	वापस MIN_MEMORY_BLOCK_SIZE;
-पूर्ण
+unsigned long __weak memory_block_size_bytes(void)
+{
+	return MIN_MEMORY_BLOCK_SIZE;
+}
 EXPORT_SYMBOL_GPL(memory_block_size_bytes);
 
 /*
  * Show the first physical section index (number) of this memory block.
  */
-अटल sमाप_प्रकार phys_index_show(काष्ठा device *dev,
-			       काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा memory_block *mem = to_memory_block(dev);
-	अचिन्हित दीर्घ phys_index;
+static ssize_t phys_index_show(struct device *dev,
+			       struct device_attribute *attr, char *buf)
+{
+	struct memory_block *mem = to_memory_block(dev);
+	unsigned long phys_index;
 
 	phys_index = mem->start_section_nr / sections_per_block;
 
-	वापस sysfs_emit(buf, "%08lx\n", phys_index);
-पूर्ण
+	return sysfs_emit(buf, "%08lx\n", phys_index);
+}
 
 /*
- * Legacy पूर्णांकerface that we cannot हटाओ. Always indicate "removable"
+ * Legacy interface that we cannot remove. Always indicate "removable"
  * with CONFIG_MEMORY_HOTREMOVE - bad heuristic.
  */
-अटल sमाप_प्रकार removable_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			      अक्षर *buf)
-अणु
-	वापस sysfs_emit(buf, "%d\n", (पूर्णांक)IS_ENABLED(CONFIG_MEMORY_HOTREMOVE));
-पूर्ण
+static ssize_t removable_show(struct device *dev, struct device_attribute *attr,
+			      char *buf)
+{
+	return sysfs_emit(buf, "%d\n", (int)IS_ENABLED(CONFIG_MEMORY_HOTREMOVE));
+}
 
 /*
  * online, offline, going offline, etc.
  */
-अटल sमाप_प्रकार state_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			  अक्षर *buf)
-अणु
-	काष्ठा memory_block *mem = to_memory_block(dev);
-	स्थिर अक्षर *output;
+static ssize_t state_show(struct device *dev, struct device_attribute *attr,
+			  char *buf)
+{
+	struct memory_block *mem = to_memory_block(dev);
+	const char *output;
 
 	/*
 	 * We can probably put these states in a nice little array
-	 * so that they're not खोलो-coded
+	 * so that they're not open-coded
 	 */
-	चयन (mem->state) अणु
-	हाल MEM_ONLINE:
+	switch (mem->state) {
+	case MEM_ONLINE:
 		output = "online";
-		अवरोध;
-	हाल MEM_OFFLINE:
+		break;
+	case MEM_OFFLINE:
 		output = "offline";
-		अवरोध;
-	हाल MEM_GOING_OFFLINE:
+		break;
+	case MEM_GOING_OFFLINE:
 		output = "going-offline";
-		अवरोध;
-	शेष:
+		break;
+	default:
 		WARN_ON(1);
-		वापस sysfs_emit(buf, "ERROR-UNKNOWN-%ld\n", mem->state);
-	पूर्ण
+		return sysfs_emit(buf, "ERROR-UNKNOWN-%ld\n", mem->state);
+	}
 
-	वापस sysfs_emit(buf, "%s\n", output);
-पूर्ण
+	return sysfs_emit(buf, "%s\n", output);
+}
 
-पूर्णांक memory_notअगरy(अचिन्हित दीर्घ val, व्योम *v)
-अणु
-	वापस blocking_notअगरier_call_chain(&memory_chain, val, v);
-पूर्ण
+int memory_notify(unsigned long val, void *v)
+{
+	return blocking_notifier_call_chain(&memory_chain, val, v);
+}
 
-अटल पूर्णांक memory_block_online(काष्ठा memory_block *mem)
-अणु
-	अचिन्हित दीर्घ start_pfn = section_nr_to_pfn(mem->start_section_nr);
-	अचिन्हित दीर्घ nr_pages = PAGES_PER_SECTION * sections_per_block;
-	अचिन्हित दीर्घ nr_vmemmap_pages = mem->nr_vmemmap_pages;
-	काष्ठा zone *zone;
-	पूर्णांक ret;
+static int memory_block_online(struct memory_block *mem)
+{
+	unsigned long start_pfn = section_nr_to_pfn(mem->start_section_nr);
+	unsigned long nr_pages = PAGES_PER_SECTION * sections_per_block;
+	unsigned long nr_vmemmap_pages = mem->nr_vmemmap_pages;
+	struct zone *zone;
+	int ret;
 
-	zone = zone_क्रम_pfn_range(mem->online_type, mem->nid, start_pfn, nr_pages);
+	zone = zone_for_pfn_range(mem->online_type, mem->nid, start_pfn, nr_pages);
 
 	/*
-	 * Although vmemmap pages have a dअगरferent lअगरecycle than the pages
-	 * they describe (they reमुख्य until the memory is unplugged), करोing
+	 * Although vmemmap pages have a different lifecycle than the pages
+	 * they describe (they remain until the memory is unplugged), doing
 	 * their initialization and accounting at memory onlining/offlining
 	 * stage helps to keep accounting easier to follow - e.g vmemmaps
-	 * beदीर्घ to the same zone as the memory they backed.
+	 * belong to the same zone as the memory they backed.
 	 */
-	अगर (nr_vmemmap_pages) अणु
+	if (nr_vmemmap_pages) {
 		ret = mhp_init_memmap_on_memory(start_pfn, nr_vmemmap_pages, zone);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	ret = online_pages(start_pfn + nr_vmemmap_pages,
 			   nr_pages - nr_vmemmap_pages, zone);
-	अगर (ret) अणु
-		अगर (nr_vmemmap_pages)
+	if (ret) {
+		if (nr_vmemmap_pages)
 			mhp_deinit_memmap_on_memory(start_pfn, nr_vmemmap_pages);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/*
 	 * Account once onlining succeeded. If the zone was unpopulated, it is
-	 * now alपढ़ोy properly populated.
+	 * now already properly populated.
 	 */
-	अगर (nr_vmemmap_pages)
+	if (nr_vmemmap_pages)
 		adjust_present_page_count(zone, nr_vmemmap_pages);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक memory_block_offline(काष्ठा memory_block *mem)
-अणु
-	अचिन्हित दीर्घ start_pfn = section_nr_to_pfn(mem->start_section_nr);
-	अचिन्हित दीर्घ nr_pages = PAGES_PER_SECTION * sections_per_block;
-	अचिन्हित दीर्घ nr_vmemmap_pages = mem->nr_vmemmap_pages;
-	काष्ठा zone *zone;
-	पूर्णांक ret;
+static int memory_block_offline(struct memory_block *mem)
+{
+	unsigned long start_pfn = section_nr_to_pfn(mem->start_section_nr);
+	unsigned long nr_pages = PAGES_PER_SECTION * sections_per_block;
+	unsigned long nr_vmemmap_pages = mem->nr_vmemmap_pages;
+	struct zone *zone;
+	int ret;
 
 	/*
-	 * Unaccount beक्रमe offlining, such that unpopulated zone and kthपढ़ोs
-	 * can properly be torn करोwn in offline_pages().
+	 * Unaccount before offlining, such that unpopulated zone and kthreads
+	 * can properly be torn down in offline_pages().
 	 */
-	अगर (nr_vmemmap_pages) अणु
+	if (nr_vmemmap_pages) {
 		zone = page_zone(pfn_to_page(start_pfn));
 		adjust_present_page_count(zone, -nr_vmemmap_pages);
-	पूर्ण
+	}
 
 	ret = offline_pages(start_pfn + nr_vmemmap_pages,
 			    nr_pages - nr_vmemmap_pages);
-	अगर (ret) अणु
+	if (ret) {
 		/* offline_pages() failed. Account back. */
-		अगर (nr_vmemmap_pages)
+		if (nr_vmemmap_pages)
 			adjust_present_page_count(zone, nr_vmemmap_pages);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (nr_vmemmap_pages)
+	if (nr_vmemmap_pages)
 		mhp_deinit_memmap_on_memory(start_pfn, nr_vmemmap_pages);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * MEMORY_HOTPLUG depends on SPARSEMEM in mm/Kconfig, so it is
  * OK to have direct references to sparsemem variables in here.
  */
-अटल पूर्णांक
-memory_block_action(काष्ठा memory_block *mem, अचिन्हित दीर्घ action)
-अणु
-	पूर्णांक ret;
+static int
+memory_block_action(struct memory_block *mem, unsigned long action)
+{
+	int ret;
 
-	चयन (action) अणु
-	हाल MEM_ONLINE:
+	switch (action) {
+	case MEM_ONLINE:
 		ret = memory_block_online(mem);
-		अवरोध;
-	हाल MEM_OFFLINE:
+		break;
+	case MEM_OFFLINE:
 		ret = memory_block_offline(mem);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		WARN(1, KERN_WARNING "%s(%ld, %ld) unknown action: "
 		     "%ld\n", __func__, mem->start_section_nr, action, action);
 		ret = -EINVAL;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक memory_block_change_state(काष्ठा memory_block *mem,
-		अचिन्हित दीर्घ to_state, अचिन्हित दीर्घ from_state_req)
-अणु
-	पूर्णांक ret = 0;
+static int memory_block_change_state(struct memory_block *mem,
+		unsigned long to_state, unsigned long from_state_req)
+{
+	int ret = 0;
 
-	अगर (mem->state != from_state_req)
-		वापस -EINVAL;
+	if (mem->state != from_state_req)
+		return -EINVAL;
 
-	अगर (to_state == MEM_OFFLINE)
+	if (to_state == MEM_OFFLINE)
 		mem->state = MEM_GOING_OFFLINE;
 
 	ret = memory_block_action(mem, to_state);
 	mem->state = ret ? from_state_req : to_state;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* The device lock serializes operations on memory_subsys_[online|offline] */
-अटल पूर्णांक memory_subsys_online(काष्ठा device *dev)
-अणु
-	काष्ठा memory_block *mem = to_memory_block(dev);
-	पूर्णांक ret;
+static int memory_subsys_online(struct device *dev)
+{
+	struct memory_block *mem = to_memory_block(dev);
+	int ret;
 
-	अगर (mem->state == MEM_ONLINE)
-		वापस 0;
+	if (mem->state == MEM_ONLINE)
+		return 0;
 
 	/*
 	 * When called via device_online() without configuring the online_type,
-	 * we want to शेष to MMOP_ONLINE.
+	 * we want to default to MMOP_ONLINE.
 	 */
-	अगर (mem->online_type == MMOP_OFFLINE)
+	if (mem->online_type == MMOP_OFFLINE)
 		mem->online_type = MMOP_ONLINE;
 
 	ret = memory_block_change_state(mem, MEM_ONLINE, MEM_OFFLINE);
 	mem->online_type = MMOP_OFFLINE;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक memory_subsys_offline(काष्ठा device *dev)
-अणु
-	काष्ठा memory_block *mem = to_memory_block(dev);
+static int memory_subsys_offline(struct device *dev)
+{
+	struct memory_block *mem = to_memory_block(dev);
 
-	अगर (mem->state == MEM_OFFLINE)
-		वापस 0;
+	if (mem->state == MEM_OFFLINE)
+		return 0;
 
-	वापस memory_block_change_state(mem, MEM_OFFLINE, MEM_ONLINE);
-पूर्ण
+	return memory_block_change_state(mem, MEM_OFFLINE, MEM_ONLINE);
+}
 
-अटल sमाप_प्रकार state_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			   स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	स्थिर पूर्णांक online_type = mhp_online_type_from_str(buf);
-	काष्ठा memory_block *mem = to_memory_block(dev);
-	पूर्णांक ret;
+static ssize_t state_store(struct device *dev, struct device_attribute *attr,
+			   const char *buf, size_t count)
+{
+	const int online_type = mhp_online_type_from_str(buf);
+	struct memory_block *mem = to_memory_block(dev);
+	int ret;
 
-	अगर (online_type < 0)
-		वापस -EINVAL;
+	if (online_type < 0)
+		return -EINVAL;
 
 	ret = lock_device_hotplug_sysfs();
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	चयन (online_type) अणु
-	हाल MMOP_ONLINE_KERNEL:
-	हाल MMOP_ONLINE_MOVABLE:
-	हाल MMOP_ONLINE:
-		/* mem->online_type is रक्षित by device_hotplug_lock */
+	switch (online_type) {
+	case MMOP_ONLINE_KERNEL:
+	case MMOP_ONLINE_MOVABLE:
+	case MMOP_ONLINE:
+		/* mem->online_type is protected by device_hotplug_lock */
 		mem->online_type = online_type;
 		ret = device_online(&mem->dev);
-		अवरोध;
-	हाल MMOP_OFFLINE:
+		break;
+	case MMOP_OFFLINE:
 		ret = device_offline(&mem->dev);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EINVAL; /* should never happen */
-	पूर्ण
+	}
 
 	unlock_device_hotplug();
 
-	अगर (ret < 0)
-		वापस ret;
-	अगर (ret)
-		वापस -EINVAL;
+	if (ret < 0)
+		return ret;
+	if (ret)
+		return -EINVAL;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
 /*
- * Legacy पूर्णांकerface that we cannot हटाओ: s390x exposes the storage increment
- * covered by a memory block, allowing क्रम identअगरying which memory blocks
+ * Legacy interface that we cannot remove: s390x exposes the storage increment
+ * covered by a memory block, allowing for identifying which memory blocks
  * comprise a storage increment. Since a memory block spans complete
- * storage increments nowadays, this पूर्णांकerface is basically unused. Other
+ * storage increments nowadays, this interface is basically unused. Other
  * archs never exposed != 0.
  */
-अटल sमाप_प्रकार phys_device_show(काष्ठा device *dev,
-				काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा memory_block *mem = to_memory_block(dev);
-	अचिन्हित दीर्घ start_pfn = section_nr_to_pfn(mem->start_section_nr);
+static ssize_t phys_device_show(struct device *dev,
+				struct device_attribute *attr, char *buf)
+{
+	struct memory_block *mem = to_memory_block(dev);
+	unsigned long start_pfn = section_nr_to_pfn(mem->start_section_nr);
 
-	वापस sysfs_emit(buf, "%d\n",
+	return sysfs_emit(buf, "%d\n",
 			  arch_get_memory_phys_device(start_pfn));
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_MEMORY_HOTREMOVE
-अटल पूर्णांक prपूर्णांक_allowed_zone(अक्षर *buf, पूर्णांक len, पूर्णांक nid,
-			      अचिन्हित दीर्घ start_pfn, अचिन्हित दीर्घ nr_pages,
-			      पूर्णांक online_type, काष्ठा zone *शेष_zone)
-अणु
-	काष्ठा zone *zone;
+#ifdef CONFIG_MEMORY_HOTREMOVE
+static int print_allowed_zone(char *buf, int len, int nid,
+			      unsigned long start_pfn, unsigned long nr_pages,
+			      int online_type, struct zone *default_zone)
+{
+	struct zone *zone;
 
-	zone = zone_क्रम_pfn_range(online_type, nid, start_pfn, nr_pages);
-	अगर (zone == शेष_zone)
-		वापस 0;
+	zone = zone_for_pfn_range(online_type, nid, start_pfn, nr_pages);
+	if (zone == default_zone)
+		return 0;
 
-	वापस sysfs_emit_at(buf, len, " %s", zone->name);
-पूर्ण
+	return sysfs_emit_at(buf, len, " %s", zone->name);
+}
 
-अटल sमाप_प्रकार valid_zones_show(काष्ठा device *dev,
-				काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा memory_block *mem = to_memory_block(dev);
-	अचिन्हित दीर्घ start_pfn = section_nr_to_pfn(mem->start_section_nr);
-	अचिन्हित दीर्घ nr_pages = PAGES_PER_SECTION * sections_per_block;
-	काष्ठा zone *शेष_zone;
-	पूर्णांक len = 0;
-	पूर्णांक nid;
+static ssize_t valid_zones_show(struct device *dev,
+				struct device_attribute *attr, char *buf)
+{
+	struct memory_block *mem = to_memory_block(dev);
+	unsigned long start_pfn = section_nr_to_pfn(mem->start_section_nr);
+	unsigned long nr_pages = PAGES_PER_SECTION * sections_per_block;
+	struct zone *default_zone;
+	int len = 0;
+	int nid;
 
 	/*
-	 * Check the existing zone. Make sure that we करो that only on the
+	 * Check the existing zone. Make sure that we do that only on the
 	 * online nodes otherwise the page_zone is not reliable
 	 */
-	अगर (mem->state == MEM_ONLINE) अणु
+	if (mem->state == MEM_ONLINE) {
 		/*
 		 * The block contains more than one zone can not be offlined.
-		 * This can happen e.g. क्रम ZONE_DMA and ZONE_DMA32
+		 * This can happen e.g. for ZONE_DMA and ZONE_DMA32
 		 */
-		शेष_zone = test_pages_in_a_zone(start_pfn,
+		default_zone = test_pages_in_a_zone(start_pfn,
 						    start_pfn + nr_pages);
-		अगर (!शेष_zone)
-			वापस sysfs_emit(buf, "%s\n", "none");
-		len += sysfs_emit_at(buf, len, "%s", शेष_zone->name);
-		जाओ out;
-	पूर्ण
+		if (!default_zone)
+			return sysfs_emit(buf, "%s\n", "none");
+		len += sysfs_emit_at(buf, len, "%s", default_zone->name);
+		goto out;
+	}
 
 	nid = mem->nid;
-	शेष_zone = zone_क्रम_pfn_range(MMOP_ONLINE, nid, start_pfn,
+	default_zone = zone_for_pfn_range(MMOP_ONLINE, nid, start_pfn,
 					  nr_pages);
 
-	len += sysfs_emit_at(buf, len, "%s", शेष_zone->name);
-	len += prपूर्णांक_allowed_zone(buf, len, nid, start_pfn, nr_pages,
-				  MMOP_ONLINE_KERNEL, शेष_zone);
-	len += prपूर्णांक_allowed_zone(buf, len, nid, start_pfn, nr_pages,
-				  MMOP_ONLINE_MOVABLE, शेष_zone);
+	len += sysfs_emit_at(buf, len, "%s", default_zone->name);
+	len += print_allowed_zone(buf, len, nid, start_pfn, nr_pages,
+				  MMOP_ONLINE_KERNEL, default_zone);
+	len += print_allowed_zone(buf, len, nid, start_pfn, nr_pages,
+				  MMOP_ONLINE_MOVABLE, default_zone);
 out:
 	len += sysfs_emit_at(buf, len, "\n");
-	वापस len;
-पूर्ण
-अटल DEVICE_ATTR_RO(valid_zones);
-#पूर्ण_अगर
+	return len;
+}
+static DEVICE_ATTR_RO(valid_zones);
+#endif
 
-अटल DEVICE_ATTR_RO(phys_index);
-अटल DEVICE_ATTR_RW(state);
-अटल DEVICE_ATTR_RO(phys_device);
-अटल DEVICE_ATTR_RO(removable);
+static DEVICE_ATTR_RO(phys_index);
+static DEVICE_ATTR_RW(state);
+static DEVICE_ATTR_RO(phys_device);
+static DEVICE_ATTR_RO(removable);
 
 /*
  * Show the memory block size (shared by all memory blocks).
  */
-अटल sमाप_प्रकार block_size_bytes_show(काष्ठा device *dev,
-				     काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	वापस sysfs_emit(buf, "%lx\n", memory_block_size_bytes());
-पूर्ण
+static ssize_t block_size_bytes_show(struct device *dev,
+				     struct device_attribute *attr, char *buf)
+{
+	return sysfs_emit(buf, "%lx\n", memory_block_size_bytes());
+}
 
-अटल DEVICE_ATTR_RO(block_size_bytes);
-
-/*
- * Memory स्वतः online policy.
- */
-
-अटल sमाप_प्रकार स्वतः_online_blocks_show(काष्ठा device *dev,
-				       काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	वापस sysfs_emit(buf, "%s\n",
-			  online_type_to_str[mhp_शेष_online_type]);
-पूर्ण
-
-अटल sमाप_प्रकार स्वतः_online_blocks_store(काष्ठा device *dev,
-					काष्ठा device_attribute *attr,
-					स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	स्थिर पूर्णांक online_type = mhp_online_type_from_str(buf);
-
-	अगर (online_type < 0)
-		वापस -EINVAL;
-
-	mhp_शेष_online_type = online_type;
-	वापस count;
-पूर्ण
-
-अटल DEVICE_ATTR_RW(स्वतः_online_blocks);
+static DEVICE_ATTR_RO(block_size_bytes);
 
 /*
- * Some architectures will have custom drivers to करो this, and
- * will not need to करो it from userspace.  The fake hot-add code
- * as well as ppc64 will करो all of their discovery in userspace
- * and will require this पूर्णांकerface.
+ * Memory auto online policy.
  */
-#अगर_घोषित CONFIG_ARCH_MEMORY_PROBE
-अटल sमाप_प्रकार probe_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			   स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
+
+static ssize_t auto_online_blocks_show(struct device *dev,
+				       struct device_attribute *attr, char *buf)
+{
+	return sysfs_emit(buf, "%s\n",
+			  online_type_to_str[mhp_default_online_type]);
+}
+
+static ssize_t auto_online_blocks_store(struct device *dev,
+					struct device_attribute *attr,
+					const char *buf, size_t count)
+{
+	const int online_type = mhp_online_type_from_str(buf);
+
+	if (online_type < 0)
+		return -EINVAL;
+
+	mhp_default_online_type = online_type;
+	return count;
+}
+
+static DEVICE_ATTR_RW(auto_online_blocks);
+
+/*
+ * Some architectures will have custom drivers to do this, and
+ * will not need to do it from userspace.  The fake hot-add code
+ * as well as ppc64 will do all of their discovery in userspace
+ * and will require this interface.
+ */
+#ifdef CONFIG_ARCH_MEMORY_PROBE
+static ssize_t probe_store(struct device *dev, struct device_attribute *attr,
+			   const char *buf, size_t count)
+{
 	u64 phys_addr;
-	पूर्णांक nid, ret;
-	अचिन्हित दीर्घ pages_per_block = PAGES_PER_SECTION * sections_per_block;
+	int nid, ret;
+	unsigned long pages_per_block = PAGES_PER_SECTION * sections_per_block;
 
-	ret = kम_से_अदीर्घl(buf, 0, &phys_addr);
-	अगर (ret)
-		वापस ret;
+	ret = kstrtoull(buf, 0, &phys_addr);
+	if (ret)
+		return ret;
 
-	अगर (phys_addr & ((pages_per_block << PAGE_SHIFT) - 1))
-		वापस -EINVAL;
+	if (phys_addr & ((pages_per_block << PAGE_SHIFT) - 1))
+		return -EINVAL;
 
 	ret = lock_device_hotplug_sysfs();
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	nid = memory_add_physaddr_to_nid(phys_addr);
 	ret = __add_memory(nid, phys_addr,
 			   MIN_MEMORY_BLOCK_SIZE * sections_per_block,
 			   MHP_NONE);
 
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	ret = count;
 out:
 	unlock_device_hotplug();
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल DEVICE_ATTR_WO(probe);
-#पूर्ण_अगर
+static DEVICE_ATTR_WO(probe);
+#endif
 
-#अगर_घोषित CONFIG_MEMORY_FAILURE
+#ifdef CONFIG_MEMORY_FAILURE
 /*
- * Support क्रम offlining pages of memory
+ * Support for offlining pages of memory
  */
 
 /* Soft offline a page */
-अटल sमाप_प्रकार soft_offline_page_store(काष्ठा device *dev,
-				       काष्ठा device_attribute *attr,
-				       स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	पूर्णांक ret;
+static ssize_t soft_offline_page_store(struct device *dev,
+				       struct device_attribute *attr,
+				       const char *buf, size_t count)
+{
+	int ret;
 	u64 pfn;
-	अगर (!capable(CAP_SYS_ADMIN))
-		वापस -EPERM;
-	अगर (kम_से_अदीर्घl(buf, 0, &pfn) < 0)
-		वापस -EINVAL;
+	if (!capable(CAP_SYS_ADMIN))
+		return -EPERM;
+	if (kstrtoull(buf, 0, &pfn) < 0)
+		return -EINVAL;
 	pfn >>= PAGE_SHIFT;
 	ret = soft_offline_page(pfn, 0);
-	वापस ret == 0 ? count : ret;
-पूर्ण
+	return ret == 0 ? count : ret;
+}
 
-/* Forcibly offline a page, including समाप्तing processes. */
-अटल sमाप_प्रकार hard_offline_page_store(काष्ठा device *dev,
-				       काष्ठा device_attribute *attr,
-				       स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	पूर्णांक ret;
+/* Forcibly offline a page, including killing processes. */
+static ssize_t hard_offline_page_store(struct device *dev,
+				       struct device_attribute *attr,
+				       const char *buf, size_t count)
+{
+	int ret;
 	u64 pfn;
-	अगर (!capable(CAP_SYS_ADMIN))
-		वापस -EPERM;
-	अगर (kम_से_अदीर्घl(buf, 0, &pfn) < 0)
-		वापस -EINVAL;
+	if (!capable(CAP_SYS_ADMIN))
+		return -EPERM;
+	if (kstrtoull(buf, 0, &pfn) < 0)
+		return -EINVAL;
 	pfn >>= PAGE_SHIFT;
 	ret = memory_failure(pfn, 0);
-	वापस ret ? ret : count;
-पूर्ण
+	return ret ? ret : count;
+}
 
-अटल DEVICE_ATTR_WO(soft_offline_page);
-अटल DEVICE_ATTR_WO(hard_offline_page);
-#पूर्ण_अगर
+static DEVICE_ATTR_WO(soft_offline_page);
+static DEVICE_ATTR_WO(hard_offline_page);
+#endif
 
 /* See phys_device_show(). */
-पूर्णांक __weak arch_get_memory_phys_device(अचिन्हित दीर्घ start_pfn)
-अणु
-	वापस 0;
-पूर्ण
+int __weak arch_get_memory_phys_device(unsigned long start_pfn)
+{
+	return 0;
+}
 
 /*
- * A reference क्रम the वापसed memory block device is acquired.
+ * A reference for the returned memory block device is acquired.
  *
  * Called under device_hotplug_lock.
  */
-अटल काष्ठा memory_block *find_memory_block_by_id(अचिन्हित दीर्घ block_id)
-अणु
-	काष्ठा memory_block *mem;
+static struct memory_block *find_memory_block_by_id(unsigned long block_id)
+{
+	struct memory_block *mem;
 
 	mem = xa_load(&memory_blocks, block_id);
-	अगर (mem)
+	if (mem)
 		get_device(&mem->dev);
-	वापस mem;
-पूर्ण
+	return mem;
+}
 
 /*
  * Called under device_hotplug_lock.
  */
-काष्ठा memory_block *find_memory_block(काष्ठा mem_section *section)
-अणु
-	अचिन्हित दीर्घ block_id = memory_block_id(__section_nr(section));
+struct memory_block *find_memory_block(struct mem_section *section)
+{
+	unsigned long block_id = memory_block_id(__section_nr(section));
 
-	वापस find_memory_block_by_id(block_id);
-पूर्ण
+	return find_memory_block_by_id(block_id);
+}
 
-अटल काष्ठा attribute *memory_memblk_attrs[] = अणु
+static struct attribute *memory_memblk_attrs[] = {
 	&dev_attr_phys_index.attr,
 	&dev_attr_state.attr,
 	&dev_attr_phys_device.attr,
 	&dev_attr_removable.attr,
-#अगर_घोषित CONFIG_MEMORY_HOTREMOVE
+#ifdef CONFIG_MEMORY_HOTREMOVE
 	&dev_attr_valid_zones.attr,
-#पूर्ण_अगर
-	शून्य
-पूर्ण;
+#endif
+	NULL
+};
 
-अटल काष्ठा attribute_group memory_memblk_attr_group = अणु
+static struct attribute_group memory_memblk_attr_group = {
 	.attrs = memory_memblk_attrs,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा attribute_group *memory_memblk_attr_groups[] = अणु
+static const struct attribute_group *memory_memblk_attr_groups[] = {
 	&memory_memblk_attr_group,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
 /*
- * रेजिस्टर_memory - Setup a sysfs device क्रम a memory block
+ * register_memory - Setup a sysfs device for a memory block
  */
-अटल
-पूर्णांक रेजिस्टर_memory(काष्ठा memory_block *memory)
-अणु
-	पूर्णांक ret;
+static
+int register_memory(struct memory_block *memory)
+{
+	int ret;
 
 	memory->dev.bus = &memory_subsys;
 	memory->dev.id = memory->start_section_nr / sections_per_block;
@@ -620,200 +619,200 @@ out:
 	memory->dev.groups = memory_memblk_attr_groups;
 	memory->dev.offline = memory->state == MEM_OFFLINE;
 
-	ret = device_रेजिस्टर(&memory->dev);
-	अगर (ret) अणु
+	ret = device_register(&memory->dev);
+	if (ret) {
 		put_device(&memory->dev);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	ret = xa_err(xa_store(&memory_blocks, memory->dev.id, memory,
 			      GFP_KERNEL));
-	अगर (ret) अणु
+	if (ret) {
 		put_device(&memory->dev);
-		device_unरेजिस्टर(&memory->dev);
-	पूर्ण
-	वापस ret;
-पूर्ण
+		device_unregister(&memory->dev);
+	}
+	return ret;
+}
 
-अटल पूर्णांक init_memory_block(अचिन्हित दीर्घ block_id, अचिन्हित दीर्घ state,
-			     अचिन्हित दीर्घ nr_vmemmap_pages)
-अणु
-	काष्ठा memory_block *mem;
-	पूर्णांक ret = 0;
+static int init_memory_block(unsigned long block_id, unsigned long state,
+			     unsigned long nr_vmemmap_pages)
+{
+	struct memory_block *mem;
+	int ret = 0;
 
 	mem = find_memory_block_by_id(block_id);
-	अगर (mem) अणु
+	if (mem) {
 		put_device(&mem->dev);
-		वापस -EEXIST;
-	पूर्ण
-	mem = kzalloc(माप(*mem), GFP_KERNEL);
-	अगर (!mem)
-		वापस -ENOMEM;
+		return -EEXIST;
+	}
+	mem = kzalloc(sizeof(*mem), GFP_KERNEL);
+	if (!mem)
+		return -ENOMEM;
 
 	mem->start_section_nr = block_id * sections_per_block;
 	mem->state = state;
 	mem->nid = NUMA_NO_NODE;
 	mem->nr_vmemmap_pages = nr_vmemmap_pages;
 
-	ret = रेजिस्टर_memory(mem);
+	ret = register_memory(mem);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक add_memory_block(अचिन्हित दीर्घ base_section_nr)
-अणु
-	पूर्णांक section_count = 0;
-	अचिन्हित दीर्घ nr;
+static int add_memory_block(unsigned long base_section_nr)
+{
+	int section_count = 0;
+	unsigned long nr;
 
-	क्रम (nr = base_section_nr; nr < base_section_nr + sections_per_block;
+	for (nr = base_section_nr; nr < base_section_nr + sections_per_block;
 	     nr++)
-		अगर (present_section_nr(nr))
+		if (present_section_nr(nr))
 			section_count++;
 
-	अगर (section_count == 0)
-		वापस 0;
-	वापस init_memory_block(memory_block_id(base_section_nr),
+	if (section_count == 0)
+		return 0;
+	return init_memory_block(memory_block_id(base_section_nr),
 				 MEM_ONLINE, 0);
-पूर्ण
+}
 
-अटल व्योम unरेजिस्टर_memory(काष्ठा memory_block *memory)
-अणु
-	अगर (WARN_ON_ONCE(memory->dev.bus != &memory_subsys))
-		वापस;
+static void unregister_memory(struct memory_block *memory)
+{
+	if (WARN_ON_ONCE(memory->dev.bus != &memory_subsys))
+		return;
 
-	WARN_ON(xa_erase(&memory_blocks, memory->dev.id) == शून्य);
+	WARN_ON(xa_erase(&memory_blocks, memory->dev.id) == NULL);
 
 	/* drop the ref. we got via find_memory_block() */
 	put_device(&memory->dev);
-	device_unरेजिस्टर(&memory->dev);
-पूर्ण
+	device_unregister(&memory->dev);
+}
 
 /*
- * Create memory block devices क्रम the given memory area. Start and size
+ * Create memory block devices for the given memory area. Start and size
  * have to be aligned to memory block granularity. Memory block devices
  * will be initialized as offline.
  *
  * Called under device_hotplug_lock.
  */
-पूर्णांक create_memory_block_devices(अचिन्हित दीर्घ start, अचिन्हित दीर्घ size,
-				अचिन्हित दीर्घ vmemmap_pages)
-अणु
-	स्थिर अचिन्हित दीर्घ start_block_id = pfn_to_block_id(PFN_DOWN(start));
-	अचिन्हित दीर्घ end_block_id = pfn_to_block_id(PFN_DOWN(start + size));
-	काष्ठा memory_block *mem;
-	अचिन्हित दीर्घ block_id;
-	पूर्णांक ret = 0;
+int create_memory_block_devices(unsigned long start, unsigned long size,
+				unsigned long vmemmap_pages)
+{
+	const unsigned long start_block_id = pfn_to_block_id(PFN_DOWN(start));
+	unsigned long end_block_id = pfn_to_block_id(PFN_DOWN(start + size));
+	struct memory_block *mem;
+	unsigned long block_id;
+	int ret = 0;
 
-	अगर (WARN_ON_ONCE(!IS_ALIGNED(start, memory_block_size_bytes()) ||
+	if (WARN_ON_ONCE(!IS_ALIGNED(start, memory_block_size_bytes()) ||
 			 !IS_ALIGNED(size, memory_block_size_bytes())))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	क्रम (block_id = start_block_id; block_id != end_block_id; block_id++) अणु
+	for (block_id = start_block_id; block_id != end_block_id; block_id++) {
 		ret = init_memory_block(block_id, MEM_OFFLINE, vmemmap_pages);
-		अगर (ret)
-			अवरोध;
-	पूर्ण
-	अगर (ret) अणु
+		if (ret)
+			break;
+	}
+	if (ret) {
 		end_block_id = block_id;
-		क्रम (block_id = start_block_id; block_id != end_block_id;
-		     block_id++) अणु
+		for (block_id = start_block_id; block_id != end_block_id;
+		     block_id++) {
 			mem = find_memory_block_by_id(block_id);
-			अगर (WARN_ON_ONCE(!mem))
-				जारी;
-			unरेजिस्टर_memory(mem);
-		पूर्ण
-	पूर्ण
-	वापस ret;
-पूर्ण
+			if (WARN_ON_ONCE(!mem))
+				continue;
+			unregister_memory(mem);
+		}
+	}
+	return ret;
+}
 
 /*
- * Remove memory block devices क्रम the given memory area. Start and size
+ * Remove memory block devices for the given memory area. Start and size
  * have to be aligned to memory block granularity. Memory block devices
  * have to be offline.
  *
  * Called under device_hotplug_lock.
  */
-व्योम हटाओ_memory_block_devices(अचिन्हित दीर्घ start, अचिन्हित दीर्घ size)
-अणु
-	स्थिर अचिन्हित दीर्घ start_block_id = pfn_to_block_id(PFN_DOWN(start));
-	स्थिर अचिन्हित दीर्घ end_block_id = pfn_to_block_id(PFN_DOWN(start + size));
-	काष्ठा memory_block *mem;
-	अचिन्हित दीर्घ block_id;
+void remove_memory_block_devices(unsigned long start, unsigned long size)
+{
+	const unsigned long start_block_id = pfn_to_block_id(PFN_DOWN(start));
+	const unsigned long end_block_id = pfn_to_block_id(PFN_DOWN(start + size));
+	struct memory_block *mem;
+	unsigned long block_id;
 
-	अगर (WARN_ON_ONCE(!IS_ALIGNED(start, memory_block_size_bytes()) ||
+	if (WARN_ON_ONCE(!IS_ALIGNED(start, memory_block_size_bytes()) ||
 			 !IS_ALIGNED(size, memory_block_size_bytes())))
-		वापस;
+		return;
 
-	क्रम (block_id = start_block_id; block_id != end_block_id; block_id++) अणु
+	for (block_id = start_block_id; block_id != end_block_id; block_id++) {
 		mem = find_memory_block_by_id(block_id);
-		अगर (WARN_ON_ONCE(!mem))
-			जारी;
-		unरेजिस्टर_memory_block_under_nodes(mem);
-		unरेजिस्टर_memory(mem);
-	पूर्ण
-पूर्ण
+		if (WARN_ON_ONCE(!mem))
+			continue;
+		unregister_memory_block_under_nodes(mem);
+		unregister_memory(mem);
+	}
+}
 
-/* वापस true अगर the memory block is offlined, otherwise, वापस false */
-bool is_memblock_offlined(काष्ठा memory_block *mem)
-अणु
-	वापस mem->state == MEM_OFFLINE;
-पूर्ण
+/* return true if the memory block is offlined, otherwise, return false */
+bool is_memblock_offlined(struct memory_block *mem)
+{
+	return mem->state == MEM_OFFLINE;
+}
 
-अटल काष्ठा attribute *memory_root_attrs[] = अणु
-#अगर_घोषित CONFIG_ARCH_MEMORY_PROBE
+static struct attribute *memory_root_attrs[] = {
+#ifdef CONFIG_ARCH_MEMORY_PROBE
 	&dev_attr_probe.attr,
-#पूर्ण_अगर
+#endif
 
-#अगर_घोषित CONFIG_MEMORY_FAILURE
+#ifdef CONFIG_MEMORY_FAILURE
 	&dev_attr_soft_offline_page.attr,
 	&dev_attr_hard_offline_page.attr,
-#पूर्ण_अगर
+#endif
 
 	&dev_attr_block_size_bytes.attr,
-	&dev_attr_स्वतः_online_blocks.attr,
-	शून्य
-पूर्ण;
+	&dev_attr_auto_online_blocks.attr,
+	NULL
+};
 
-अटल काष्ठा attribute_group memory_root_attr_group = अणु
+static struct attribute_group memory_root_attr_group = {
 	.attrs = memory_root_attrs,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा attribute_group *memory_root_attr_groups[] = अणु
+static const struct attribute_group *memory_root_attr_groups[] = {
 	&memory_root_attr_group,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
 /*
- * Initialize the sysfs support क्रम memory devices. At the समय this function
+ * Initialize the sysfs support for memory devices. At the time this function
  * is called, we cannot have concurrent creation/deletion of memory block
  * devices, the device_hotplug_lock is not needed.
  */
-व्योम __init memory_dev_init(व्योम)
-अणु
-	पूर्णांक ret;
-	अचिन्हित दीर्घ block_sz, nr;
+void __init memory_dev_init(void)
+{
+	int ret;
+	unsigned long block_sz, nr;
 
 	/* Validate the configured memory block size */
 	block_sz = memory_block_size_bytes();
-	अगर (!is_घातer_of_2(block_sz) || block_sz < MIN_MEMORY_BLOCK_SIZE)
+	if (!is_power_of_2(block_sz) || block_sz < MIN_MEMORY_BLOCK_SIZE)
 		panic("Memory block size not suitable: 0x%lx\n", block_sz);
 	sections_per_block = block_sz / MIN_MEMORY_BLOCK_SIZE;
 
-	ret = subsys_प्रणाली_रेजिस्टर(&memory_subsys, memory_root_attr_groups);
-	अगर (ret)
+	ret = subsys_system_register(&memory_subsys, memory_root_attr_groups);
+	if (ret)
 		panic("%s() failed to register subsystem: %d\n", __func__, ret);
 
 	/*
-	 * Create entries क्रम memory sections that were found
+	 * Create entries for memory sections that were found
 	 * during boot and have been initialized
 	 */
-	क्रम (nr = 0; nr <= __highest_present_section_nr;
-	     nr += sections_per_block) अणु
+	for (nr = 0; nr <= __highest_present_section_nr;
+	     nr += sections_per_block) {
 		ret = add_memory_block(nr);
-		अगर (ret)
+		if (ret)
 			panic("%s() failed to add memory block: %d\n", __func__,
 			      ret);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * walk_memory_blocks - walk through all present memory blocks overlapped
@@ -822,73 +821,73 @@ bool is_memblock_offlined(काष्ठा memory_block *mem)
  * @start: start address of the memory range
  * @size: size of the memory range
  * @arg: argument passed to func
- * @func: callback क्रम each memory section walked
+ * @func: callback for each memory section walked
  *
  * This function walks through all present memory blocks overlapped by the
  * range [start, start + size), calling func on each memory block.
  *
- * In हाल func() वापसs an error, walking is पातed and the error is
- * वापसed.
+ * In case func() returns an error, walking is aborted and the error is
+ * returned.
  *
  * Called under device_hotplug_lock.
  */
-पूर्णांक walk_memory_blocks(अचिन्हित दीर्घ start, अचिन्हित दीर्घ size,
-		       व्योम *arg, walk_memory_blocks_func_t func)
-अणु
-	स्थिर अचिन्हित दीर्घ start_block_id = phys_to_block_id(start);
-	स्थिर अचिन्हित दीर्घ end_block_id = phys_to_block_id(start + size - 1);
-	काष्ठा memory_block *mem;
-	अचिन्हित दीर्घ block_id;
-	पूर्णांक ret = 0;
+int walk_memory_blocks(unsigned long start, unsigned long size,
+		       void *arg, walk_memory_blocks_func_t func)
+{
+	const unsigned long start_block_id = phys_to_block_id(start);
+	const unsigned long end_block_id = phys_to_block_id(start + size - 1);
+	struct memory_block *mem;
+	unsigned long block_id;
+	int ret = 0;
 
-	अगर (!size)
-		वापस 0;
+	if (!size)
+		return 0;
 
-	क्रम (block_id = start_block_id; block_id <= end_block_id; block_id++) अणु
+	for (block_id = start_block_id; block_id <= end_block_id; block_id++) {
 		mem = find_memory_block_by_id(block_id);
-		अगर (!mem)
-			जारी;
+		if (!mem)
+			continue;
 
 		ret = func(mem, arg);
 		put_device(&mem->dev);
-		अगर (ret)
-			अवरोध;
-	पूर्ण
-	वापस ret;
-पूर्ण
+		if (ret)
+			break;
+	}
+	return ret;
+}
 
-काष्ठा क्रम_each_memory_block_cb_data अणु
+struct for_each_memory_block_cb_data {
 	walk_memory_blocks_func_t func;
-	व्योम *arg;
-पूर्ण;
+	void *arg;
+};
 
-अटल पूर्णांक क्रम_each_memory_block_cb(काष्ठा device *dev, व्योम *data)
-अणु
-	काष्ठा memory_block *mem = to_memory_block(dev);
-	काष्ठा क्रम_each_memory_block_cb_data *cb_data = data;
+static int for_each_memory_block_cb(struct device *dev, void *data)
+{
+	struct memory_block *mem = to_memory_block(dev);
+	struct for_each_memory_block_cb_data *cb_data = data;
 
-	वापस cb_data->func(mem, cb_data->arg);
-पूर्ण
+	return cb_data->func(mem, cb_data->arg);
+}
 
 /**
- * क्रम_each_memory_block - walk through all present memory blocks
+ * for_each_memory_block - walk through all present memory blocks
  *
  * @arg: argument passed to func
- * @func: callback क्रम each memory block walked
+ * @func: callback for each memory block walked
  *
  * This function walks through all present memory blocks, calling func on
  * each memory block.
  *
- * In हाल func() वापसs an error, walking is पातed and the error is
- * वापसed.
+ * In case func() returns an error, walking is aborted and the error is
+ * returned.
  */
-पूर्णांक क्रम_each_memory_block(व्योम *arg, walk_memory_blocks_func_t func)
-अणु
-	काष्ठा क्रम_each_memory_block_cb_data cb_data = अणु
+int for_each_memory_block(void *arg, walk_memory_blocks_func_t func)
+{
+	struct for_each_memory_block_cb_data cb_data = {
 		.func = func,
 		.arg = arg,
-	पूर्ण;
+	};
 
-	वापस bus_क्रम_each_dev(&memory_subsys, शून्य, &cb_data,
-				क्रम_each_memory_block_cb);
-पूर्ण
+	return bus_for_each_dev(&memory_subsys, NULL, &cb_data,
+				for_each_memory_block_cb);
+}

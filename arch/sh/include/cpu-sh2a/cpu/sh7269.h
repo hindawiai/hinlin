@@ -1,9 +1,8 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ASM_SH7269_H__
-#घोषणा __ASM_SH7269_H__
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ASM_SH7269_H__
+#define __ASM_SH7269_H__
 
-क्रमागत अणु
+enum {
 	/* Port A */
 	GPIO_PA1, GPIO_PA0,
 
@@ -47,7 +46,7 @@
 	GPIO_PG7, GPIO_PG6, GPIO_PG5, GPIO_PG4,
 	GPIO_PG3, GPIO_PG2, GPIO_PG1, GPIO_PG0,
 
-	/* Port H - Port H करोes not have a Data Register */
+	/* Port H - Port H does not have a Data Register */
 
 	/* Port I - not on device */
 
@@ -164,7 +163,7 @@
 	GPIO_FN_SPDIF_IN,
 	GPIO_FN_SPDIF_OUT,
 
-	/* न_अंकDFMC  */ /* NOTE Controller is not available in boot mode 0 */
+	/* NANDFMC  */ /* NOTE Controller is not available in boot mode 0 */
 	GPIO_FN_FCE,
 	GPIO_FN_FRB,
 
@@ -209,6 +208,6 @@
 	GPIO_FN_LCD_DATA3_PJ3, GPIO_FN_LCD_DATA2_PJ2,
 	GPIO_FN_LCD_DATA1_PJ1, GPIO_FN_LCD_DATA0_PJ0,
 	GPIO_FN_LCD_M_DISP,
-पूर्ण;
+};
 
-#पूर्ण_अगर /* __ASM_SH7269_H__ */
+#endif /* __ASM_SH7269_H__ */

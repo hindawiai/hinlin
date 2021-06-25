@@ -1,146 +1,145 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2012 Fusion-io  All rights reserved.
  * Copyright (C) 2012 Intel Corp. All rights reserved.
  */
 
-#समावेश <linux/sched.h>
-#समावेश <linux/bपन.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/raid/pq.h>
-#समावेश <linux/hash.h>
-#समावेश <linux/list_sort.h>
-#समावेश <linux/raid/xor.h>
-#समावेश <linux/mm.h>
-#समावेश "misc.h"
-#समावेश "ctree.h"
-#समावेश "disk-io.h"
-#समावेश "volumes.h"
-#समावेश "raid56.h"
-#समावेश "async-thread.h"
+#include <linux/sched.h>
+#include <linux/bio.h>
+#include <linux/slab.h>
+#include <linux/blkdev.h>
+#include <linux/raid/pq.h>
+#include <linux/hash.h>
+#include <linux/list_sort.h>
+#include <linux/raid/xor.h>
+#include <linux/mm.h>
+#include "misc.h"
+#include "ctree.h"
+#include "disk-io.h"
+#include "volumes.h"
+#include "raid56.h"
+#include "async-thread.h"
 
 /* set when additional merges to this rbio are not allowed */
-#घोषणा RBIO_RMW_LOCKED_BIT	1
+#define RBIO_RMW_LOCKED_BIT	1
 
 /*
  * set when this rbio is sitting in the hash, but it is just a cache
  * of past RMW
  */
-#घोषणा RBIO_CACHE_BIT		2
+#define RBIO_CACHE_BIT		2
 
 /*
- * set when it is safe to trust the stripe_pages क्रम caching
+ * set when it is safe to trust the stripe_pages for caching
  */
-#घोषणा RBIO_CACHE_READY_BIT	3
+#define RBIO_CACHE_READY_BIT	3
 
-#घोषणा RBIO_CACHE_SIZE 1024
+#define RBIO_CACHE_SIZE 1024
 
-#घोषणा BTRFS_STRIPE_HASH_TABLE_BITS				11
+#define BTRFS_STRIPE_HASH_TABLE_BITS				11
 
-/* Used by the raid56 code to lock stripes क्रम पढ़ो/modअगरy/ग_लिखो */
-काष्ठा btrfs_stripe_hash अणु
-	काष्ठा list_head hash_list;
+/* Used by the raid56 code to lock stripes for read/modify/write */
+struct btrfs_stripe_hash {
+	struct list_head hash_list;
 	spinlock_t lock;
-पूर्ण;
+};
 
-/* Used by the raid56 code to lock stripes क्रम पढ़ो/modअगरy/ग_लिखो */
-काष्ठा btrfs_stripe_hash_table अणु
-	काष्ठा list_head stripe_cache;
+/* Used by the raid56 code to lock stripes for read/modify/write */
+struct btrfs_stripe_hash_table {
+	struct list_head stripe_cache;
 	spinlock_t cache_lock;
-	पूर्णांक cache_size;
-	काष्ठा btrfs_stripe_hash table[];
-पूर्ण;
+	int cache_size;
+	struct btrfs_stripe_hash table[];
+};
 
-क्रमागत btrfs_rbio_ops अणु
+enum btrfs_rbio_ops {
 	BTRFS_RBIO_WRITE,
 	BTRFS_RBIO_READ_REBUILD,
 	BTRFS_RBIO_PARITY_SCRUB,
 	BTRFS_RBIO_REBUILD_MISSING,
-पूर्ण;
+};
 
-काष्ठा btrfs_raid_bio अणु
-	काष्ठा btrfs_fs_info *fs_info;
-	काष्ठा btrfs_bio *bbio;
+struct btrfs_raid_bio {
+	struct btrfs_fs_info *fs_info;
+	struct btrfs_bio *bbio;
 
-	/* जबतक we're करोing rmw on a stripe
-	 * we put it पूर्णांकo a hash table so we can
+	/* while we're doing rmw on a stripe
+	 * we put it into a hash table so we can
 	 * lock the stripe and merge more rbios
-	 * पूर्णांकo it.
+	 * into it.
 	 */
-	काष्ठा list_head hash_list;
+	struct list_head hash_list;
 
 	/*
-	 * LRU list क्रम the stripe cache
+	 * LRU list for the stripe cache
 	 */
-	काष्ठा list_head stripe_cache;
+	struct list_head stripe_cache;
 
 	/*
-	 * क्रम scheduling work in the helper thपढ़ोs
+	 * for scheduling work in the helper threads
 	 */
-	काष्ठा btrfs_work work;
+	struct btrfs_work work;
 
 	/*
 	 * bio list and bio_list_lock are used
-	 * to add more bios पूर्णांकo the stripe
-	 * in hopes of aव्योमing the full rmw
+	 * to add more bios into the stripe
+	 * in hopes of avoiding the full rmw
 	 */
-	काष्ठा bio_list bio_list;
+	struct bio_list bio_list;
 	spinlock_t bio_list_lock;
 
-	/* also रक्षित by the bio_list_lock, the
+	/* also protected by the bio_list_lock, the
 	 * plug list is used by the plugging code
-	 * to collect partial bios जबतक plugged.  The
+	 * to collect partial bios while plugged.  The
 	 * stripe locking code also uses it to hand off
 	 * the stripe lock to the next pending IO
 	 */
-	काष्ठा list_head plug_list;
+	struct list_head plug_list;
 
 	/*
-	 * flags that tell us अगर it is safe to
+	 * flags that tell us if it is safe to
 	 * merge with this bio
 	 */
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
-	/* size of each inभागidual stripe on disk */
-	पूर्णांक stripe_len;
+	/* size of each individual stripe on disk */
+	int stripe_len;
 
 	/* number of data stripes (no p/q) */
-	पूर्णांक nr_data;
+	int nr_data;
 
-	पूर्णांक real_stripes;
+	int real_stripes;
 
-	पूर्णांक stripe_npages;
+	int stripe_npages;
 	/*
-	 * set अगर we're करोing a parity rebuild
-	 * क्रम a पढ़ो from higher up, which is handled
-	 * dअगरferently from a parity rebuild as part of
+	 * set if we're doing a parity rebuild
+	 * for a read from higher up, which is handled
+	 * differently from a parity rebuild as part of
 	 * rmw
 	 */
-	क्रमागत btrfs_rbio_ops operation;
+	enum btrfs_rbio_ops operation;
 
 	/* first bad stripe */
-	पूर्णांक faila;
+	int faila;
 
-	/* second bad stripe (क्रम raid6 use) */
-	पूर्णांक failb;
+	/* second bad stripe (for raid6 use) */
+	int failb;
 
-	पूर्णांक scrubp;
+	int scrubp;
 	/*
 	 * number of pages needed to represent the full
 	 * stripe
 	 */
-	पूर्णांक nr_pages;
+	int nr_pages;
 
 	/*
 	 * size of all the bios in the bio_list.  This
-	 * helps us decide अगर the rbio maps to a full
+	 * helps us decide if the rbio maps to a full
 	 * stripe or not
 	 */
-	पूर्णांक bio_list_bytes;
+	int bio_list_bytes;
 
-	पूर्णांक generic_bio_cnt;
+	int generic_bio_cnt;
 
 	refcount_t refs;
 
@@ -148,542 +147,542 @@
 
 	atomic_t error;
 	/*
-	 * these are two arrays of poपूर्णांकers.  We allocate the
+	 * these are two arrays of pointers.  We allocate the
 	 * rbio big enough to hold them both and setup their
 	 * locations when the rbio is allocated
 	 */
 
-	/* poपूर्णांकers to pages that we allocated क्रम
-	 * पढ़ोing/writing stripes directly from the disk (including P/Q)
+	/* pointers to pages that we allocated for
+	 * reading/writing stripes directly from the disk (including P/Q)
 	 */
-	काष्ठा page **stripe_pages;
+	struct page **stripe_pages;
 
 	/*
-	 * poपूर्णांकers to the pages in the bio_list.  Stored
-	 * here क्रम faster lookup
+	 * pointers to the pages in the bio_list.  Stored
+	 * here for faster lookup
 	 */
-	काष्ठा page **bio_pages;
+	struct page **bio_pages;
 
 	/*
-	 * biपंचांगap to record which horizontal stripe has data
+	 * bitmap to record which horizontal stripe has data
 	 */
-	अचिन्हित दीर्घ *dbiपंचांगap;
+	unsigned long *dbitmap;
 
-	/* allocated with real_stripes-many poपूर्णांकers क्रम finish_*() calls */
-	व्योम **finish_poपूर्णांकers;
+	/* allocated with real_stripes-many pointers for finish_*() calls */
+	void **finish_pointers;
 
-	/* allocated with stripe_npages-many bits क्रम finish_*() calls */
-	अचिन्हित दीर्घ *finish_pbiपंचांगap;
-पूर्ण;
+	/* allocated with stripe_npages-many bits for finish_*() calls */
+	unsigned long *finish_pbitmap;
+};
 
-अटल पूर्णांक __raid56_parity_recover(काष्ठा btrfs_raid_bio *rbio);
-अटल noअंतरभूत व्योम finish_rmw(काष्ठा btrfs_raid_bio *rbio);
-अटल व्योम rmw_work(काष्ठा btrfs_work *work);
-अटल व्योम पढ़ो_rebuild_work(काष्ठा btrfs_work *work);
-अटल पूर्णांक fail_bio_stripe(काष्ठा btrfs_raid_bio *rbio, काष्ठा bio *bio);
-अटल पूर्णांक fail_rbio_index(काष्ठा btrfs_raid_bio *rbio, पूर्णांक failed);
-अटल व्योम __मुक्त_raid_bio(काष्ठा btrfs_raid_bio *rbio);
-अटल व्योम index_rbio_pages(काष्ठा btrfs_raid_bio *rbio);
-अटल पूर्णांक alloc_rbio_pages(काष्ठा btrfs_raid_bio *rbio);
+static int __raid56_parity_recover(struct btrfs_raid_bio *rbio);
+static noinline void finish_rmw(struct btrfs_raid_bio *rbio);
+static void rmw_work(struct btrfs_work *work);
+static void read_rebuild_work(struct btrfs_work *work);
+static int fail_bio_stripe(struct btrfs_raid_bio *rbio, struct bio *bio);
+static int fail_rbio_index(struct btrfs_raid_bio *rbio, int failed);
+static void __free_raid_bio(struct btrfs_raid_bio *rbio);
+static void index_rbio_pages(struct btrfs_raid_bio *rbio);
+static int alloc_rbio_pages(struct btrfs_raid_bio *rbio);
 
-अटल noअंतरभूत व्योम finish_parity_scrub(काष्ठा btrfs_raid_bio *rbio,
-					 पूर्णांक need_check);
-अटल व्योम scrub_parity_work(काष्ठा btrfs_work *work);
+static noinline void finish_parity_scrub(struct btrfs_raid_bio *rbio,
+					 int need_check);
+static void scrub_parity_work(struct btrfs_work *work);
 
-अटल व्योम start_async_work(काष्ठा btrfs_raid_bio *rbio, btrfs_func_t work_func)
-अणु
-	btrfs_init_work(&rbio->work, work_func, शून्य, शून्य);
+static void start_async_work(struct btrfs_raid_bio *rbio, btrfs_func_t work_func)
+{
+	btrfs_init_work(&rbio->work, work_func, NULL, NULL);
 	btrfs_queue_work(rbio->fs_info->rmw_workers, &rbio->work);
-पूर्ण
+}
 
 /*
- * the stripe hash table is used क्रम locking, and to collect
+ * the stripe hash table is used for locking, and to collect
  * bios in hopes of making a full stripe
  */
-पूर्णांक btrfs_alloc_stripe_hash_table(काष्ठा btrfs_fs_info *info)
-अणु
-	काष्ठा btrfs_stripe_hash_table *table;
-	काष्ठा btrfs_stripe_hash_table *x;
-	काष्ठा btrfs_stripe_hash *cur;
-	काष्ठा btrfs_stripe_hash *h;
-	पूर्णांक num_entries = 1 << BTRFS_STRIPE_HASH_TABLE_BITS;
-	पूर्णांक i;
+int btrfs_alloc_stripe_hash_table(struct btrfs_fs_info *info)
+{
+	struct btrfs_stripe_hash_table *table;
+	struct btrfs_stripe_hash_table *x;
+	struct btrfs_stripe_hash *cur;
+	struct btrfs_stripe_hash *h;
+	int num_entries = 1 << BTRFS_STRIPE_HASH_TABLE_BITS;
+	int i;
 
-	अगर (info->stripe_hash_table)
-		वापस 0;
+	if (info->stripe_hash_table)
+		return 0;
 
 	/*
 	 * The table is large, starting with order 4 and can go as high as
-	 * order 7 in हाल lock debugging is turned on.
+	 * order 7 in case lock debugging is turned on.
 	 *
-	 * Try harder to allocate and fallback to vदो_स्मृति to lower the chance
+	 * Try harder to allocate and fallback to vmalloc to lower the chance
 	 * of a failing mount.
 	 */
-	table = kvzalloc(काष्ठा_size(table, table, num_entries), GFP_KERNEL);
-	अगर (!table)
-		वापस -ENOMEM;
+	table = kvzalloc(struct_size(table, table, num_entries), GFP_KERNEL);
+	if (!table)
+		return -ENOMEM;
 
 	spin_lock_init(&table->cache_lock);
 	INIT_LIST_HEAD(&table->stripe_cache);
 
 	h = table->table;
 
-	क्रम (i = 0; i < num_entries; i++) अणु
+	for (i = 0; i < num_entries; i++) {
 		cur = h + i;
 		INIT_LIST_HEAD(&cur->hash_list);
 		spin_lock_init(&cur->lock);
-	पूर्ण
+	}
 
-	x = cmpxchg(&info->stripe_hash_table, शून्य, table);
-	kvमुक्त(x);
-	वापस 0;
-पूर्ण
+	x = cmpxchg(&info->stripe_hash_table, NULL, table);
+	kvfree(x);
+	return 0;
+}
 
 /*
  * caching an rbio means to copy anything from the
- * bio_pages array पूर्णांकo the stripe_pages array.  We
+ * bio_pages array into the stripe_pages array.  We
  * use the page uptodate bit in the stripe cache array
- * to indicate अगर it has valid data
+ * to indicate if it has valid data
  *
- * once the caching is करोne, we set the cache पढ़ोy
+ * once the caching is done, we set the cache ready
  * bit.
  */
-अटल व्योम cache_rbio_pages(काष्ठा btrfs_raid_bio *rbio)
-अणु
-	पूर्णांक i;
-	पूर्णांक ret;
+static void cache_rbio_pages(struct btrfs_raid_bio *rbio)
+{
+	int i;
+	int ret;
 
 	ret = alloc_rbio_pages(rbio);
-	अगर (ret)
-		वापस;
+	if (ret)
+		return;
 
-	क्रम (i = 0; i < rbio->nr_pages; i++) अणु
-		अगर (!rbio->bio_pages[i])
-			जारी;
+	for (i = 0; i < rbio->nr_pages; i++) {
+		if (!rbio->bio_pages[i])
+			continue;
 
 		copy_highpage(rbio->stripe_pages[i], rbio->bio_pages[i]);
 		SetPageUptodate(rbio->stripe_pages[i]);
-	पूर्ण
+	}
 	set_bit(RBIO_CACHE_READY_BIT, &rbio->flags);
-पूर्ण
+}
 
 /*
  * we hash on the first logical address of the stripe
  */
-अटल पूर्णांक rbio_bucket(काष्ठा btrfs_raid_bio *rbio)
-अणु
+static int rbio_bucket(struct btrfs_raid_bio *rbio)
+{
 	u64 num = rbio->bbio->raid_map[0];
 
 	/*
-	 * we shअगरt करोwn quite a bit.  We're using byte
+	 * we shift down quite a bit.  We're using byte
 	 * addressing, and most of the lower bits are zeros.
 	 * This tends to upset hash_64, and it consistently
-	 * वापसs just one or two dअगरferent values.
+	 * returns just one or two different values.
 	 *
-	 * shअगरting off the lower bits fixes things.
+	 * shifting off the lower bits fixes things.
 	 */
-	वापस hash_64(num >> 16, BTRFS_STRIPE_HASH_TABLE_BITS);
-पूर्ण
+	return hash_64(num >> 16, BTRFS_STRIPE_HASH_TABLE_BITS);
+}
 
 /*
  * stealing an rbio means taking all the uptodate pages from the stripe
- * array in the source rbio and putting them पूर्णांकo the destination rbio
+ * array in the source rbio and putting them into the destination rbio
  */
-अटल व्योम steal_rbio(काष्ठा btrfs_raid_bio *src, काष्ठा btrfs_raid_bio *dest)
-अणु
-	पूर्णांक i;
-	काष्ठा page *s;
-	काष्ठा page *d;
+static void steal_rbio(struct btrfs_raid_bio *src, struct btrfs_raid_bio *dest)
+{
+	int i;
+	struct page *s;
+	struct page *d;
 
-	अगर (!test_bit(RBIO_CACHE_READY_BIT, &src->flags))
-		वापस;
+	if (!test_bit(RBIO_CACHE_READY_BIT, &src->flags))
+		return;
 
-	क्रम (i = 0; i < dest->nr_pages; i++) अणु
+	for (i = 0; i < dest->nr_pages; i++) {
 		s = src->stripe_pages[i];
-		अगर (!s || !PageUptodate(s)) अणु
-			जारी;
-		पूर्ण
+		if (!s || !PageUptodate(s)) {
+			continue;
+		}
 
 		d = dest->stripe_pages[i];
-		अगर (d)
-			__मुक्त_page(d);
+		if (d)
+			__free_page(d);
 
 		dest->stripe_pages[i] = s;
-		src->stripe_pages[i] = शून्य;
-	पूर्ण
-पूर्ण
+		src->stripe_pages[i] = NULL;
+	}
+}
 
 /*
  * merging means we take the bio_list from the victim and
- * splice it पूर्णांकo the destination.  The victim should
+ * splice it into the destination.  The victim should
  * be discarded afterwards.
  *
  * must be called with dest->rbio_list_lock held
  */
-अटल व्योम merge_rbio(काष्ठा btrfs_raid_bio *dest,
-		       काष्ठा btrfs_raid_bio *victim)
-अणु
+static void merge_rbio(struct btrfs_raid_bio *dest,
+		       struct btrfs_raid_bio *victim)
+{
 	bio_list_merge(&dest->bio_list, &victim->bio_list);
 	dest->bio_list_bytes += victim->bio_list_bytes;
 	dest->generic_bio_cnt += victim->generic_bio_cnt;
 	bio_list_init(&victim->bio_list);
-पूर्ण
+}
 
 /*
  * used to prune items that are in the cache.  The caller
  * must hold the hash table lock.
  */
-अटल व्योम __हटाओ_rbio_from_cache(काष्ठा btrfs_raid_bio *rbio)
-अणु
-	पूर्णांक bucket = rbio_bucket(rbio);
-	काष्ठा btrfs_stripe_hash_table *table;
-	काष्ठा btrfs_stripe_hash *h;
-	पूर्णांक मुक्तit = 0;
+static void __remove_rbio_from_cache(struct btrfs_raid_bio *rbio)
+{
+	int bucket = rbio_bucket(rbio);
+	struct btrfs_stripe_hash_table *table;
+	struct btrfs_stripe_hash *h;
+	int freeit = 0;
 
 	/*
 	 * check the bit again under the hash table lock.
 	 */
-	अगर (!test_bit(RBIO_CACHE_BIT, &rbio->flags))
-		वापस;
+	if (!test_bit(RBIO_CACHE_BIT, &rbio->flags))
+		return;
 
 	table = rbio->fs_info->stripe_hash_table;
 	h = table->table + bucket;
 
-	/* hold the lock क्रम the bucket because we may be
+	/* hold the lock for the bucket because we may be
 	 * removing it from the hash table
 	 */
 	spin_lock(&h->lock);
 
 	/*
-	 * hold the lock क्रम the bio list because we need
+	 * hold the lock for the bio list because we need
 	 * to make sure the bio list is empty
 	 */
 	spin_lock(&rbio->bio_list_lock);
 
-	अगर (test_and_clear_bit(RBIO_CACHE_BIT, &rbio->flags)) अणु
+	if (test_and_clear_bit(RBIO_CACHE_BIT, &rbio->flags)) {
 		list_del_init(&rbio->stripe_cache);
 		table->cache_size -= 1;
-		मुक्तit = 1;
+		freeit = 1;
 
-		/* अगर the bio list isn't empty, this rbio is
+		/* if the bio list isn't empty, this rbio is
 		 * still involved in an IO.  We take it out
 		 * of the cache list, and drop the ref that
-		 * was held क्रम the list.
+		 * was held for the list.
 		 *
-		 * If the bio_list was empty, we also हटाओ
+		 * If the bio_list was empty, we also remove
 		 * the rbio from the hash_table, and drop
 		 * the corresponding ref
 		 */
-		अगर (bio_list_empty(&rbio->bio_list)) अणु
-			अगर (!list_empty(&rbio->hash_list)) अणु
+		if (bio_list_empty(&rbio->bio_list)) {
+			if (!list_empty(&rbio->hash_list)) {
 				list_del_init(&rbio->hash_list);
 				refcount_dec(&rbio->refs);
 				BUG_ON(!list_empty(&rbio->plug_list));
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 	spin_unlock(&rbio->bio_list_lock);
 	spin_unlock(&h->lock);
 
-	अगर (मुक्तit)
-		__मुक्त_raid_bio(rbio);
-पूर्ण
+	if (freeit)
+		__free_raid_bio(rbio);
+}
 
 /*
  * prune a given rbio from the cache
  */
-अटल व्योम हटाओ_rbio_from_cache(काष्ठा btrfs_raid_bio *rbio)
-अणु
-	काष्ठा btrfs_stripe_hash_table *table;
-	अचिन्हित दीर्घ flags;
+static void remove_rbio_from_cache(struct btrfs_raid_bio *rbio)
+{
+	struct btrfs_stripe_hash_table *table;
+	unsigned long flags;
 
-	अगर (!test_bit(RBIO_CACHE_BIT, &rbio->flags))
-		वापस;
+	if (!test_bit(RBIO_CACHE_BIT, &rbio->flags))
+		return;
 
 	table = rbio->fs_info->stripe_hash_table;
 
 	spin_lock_irqsave(&table->cache_lock, flags);
-	__हटाओ_rbio_from_cache(rbio);
+	__remove_rbio_from_cache(rbio);
 	spin_unlock_irqrestore(&table->cache_lock, flags);
-पूर्ण
+}
 
 /*
- * हटाओ everything in the cache
+ * remove everything in the cache
  */
-अटल व्योम btrfs_clear_rbio_cache(काष्ठा btrfs_fs_info *info)
-अणु
-	काष्ठा btrfs_stripe_hash_table *table;
-	अचिन्हित दीर्घ flags;
-	काष्ठा btrfs_raid_bio *rbio;
+static void btrfs_clear_rbio_cache(struct btrfs_fs_info *info)
+{
+	struct btrfs_stripe_hash_table *table;
+	unsigned long flags;
+	struct btrfs_raid_bio *rbio;
 
 	table = info->stripe_hash_table;
 
 	spin_lock_irqsave(&table->cache_lock, flags);
-	जबतक (!list_empty(&table->stripe_cache)) अणु
+	while (!list_empty(&table->stripe_cache)) {
 		rbio = list_entry(table->stripe_cache.next,
-				  काष्ठा btrfs_raid_bio,
+				  struct btrfs_raid_bio,
 				  stripe_cache);
-		__हटाओ_rbio_from_cache(rbio);
-	पूर्ण
+		__remove_rbio_from_cache(rbio);
+	}
 	spin_unlock_irqrestore(&table->cache_lock, flags);
-पूर्ण
+}
 
 /*
- * हटाओ all cached entries and मुक्त the hash table
+ * remove all cached entries and free the hash table
  * used by unmount
  */
-व्योम btrfs_मुक्त_stripe_hash_table(काष्ठा btrfs_fs_info *info)
-अणु
-	अगर (!info->stripe_hash_table)
-		वापस;
+void btrfs_free_stripe_hash_table(struct btrfs_fs_info *info)
+{
+	if (!info->stripe_hash_table)
+		return;
 	btrfs_clear_rbio_cache(info);
-	kvमुक्त(info->stripe_hash_table);
-	info->stripe_hash_table = शून्य;
-पूर्ण
+	kvfree(info->stripe_hash_table);
+	info->stripe_hash_table = NULL;
+}
 
 /*
- * insert an rbio पूर्णांकo the stripe cache.  It
- * must have alपढ़ोy been prepared by calling
+ * insert an rbio into the stripe cache.  It
+ * must have already been prepared by calling
  * cache_rbio_pages
  *
- * If this rbio was alपढ़ोy cached, it माला_लो
+ * If this rbio was already cached, it gets
  * moved to the front of the lru.
  *
  * If the size of the rbio cache is too big, we
  * prune an item.
  */
-अटल व्योम cache_rbio(काष्ठा btrfs_raid_bio *rbio)
-अणु
-	काष्ठा btrfs_stripe_hash_table *table;
-	अचिन्हित दीर्घ flags;
+static void cache_rbio(struct btrfs_raid_bio *rbio)
+{
+	struct btrfs_stripe_hash_table *table;
+	unsigned long flags;
 
-	अगर (!test_bit(RBIO_CACHE_READY_BIT, &rbio->flags))
-		वापस;
+	if (!test_bit(RBIO_CACHE_READY_BIT, &rbio->flags))
+		return;
 
 	table = rbio->fs_info->stripe_hash_table;
 
 	spin_lock_irqsave(&table->cache_lock, flags);
 	spin_lock(&rbio->bio_list_lock);
 
-	/* bump our ref अगर we were not in the list beक्रमe */
-	अगर (!test_and_set_bit(RBIO_CACHE_BIT, &rbio->flags))
+	/* bump our ref if we were not in the list before */
+	if (!test_and_set_bit(RBIO_CACHE_BIT, &rbio->flags))
 		refcount_inc(&rbio->refs);
 
-	अगर (!list_empty(&rbio->stripe_cache))अणु
+	if (!list_empty(&rbio->stripe_cache)){
 		list_move(&rbio->stripe_cache, &table->stripe_cache);
-	पूर्ण अन्यथा अणु
+	} else {
 		list_add(&rbio->stripe_cache, &table->stripe_cache);
 		table->cache_size += 1;
-	पूर्ण
+	}
 
 	spin_unlock(&rbio->bio_list_lock);
 
-	अगर (table->cache_size > RBIO_CACHE_SIZE) अणु
-		काष्ठा btrfs_raid_bio *found;
+	if (table->cache_size > RBIO_CACHE_SIZE) {
+		struct btrfs_raid_bio *found;
 
 		found = list_entry(table->stripe_cache.prev,
-				  काष्ठा btrfs_raid_bio,
+				  struct btrfs_raid_bio,
 				  stripe_cache);
 
-		अगर (found != rbio)
-			__हटाओ_rbio_from_cache(found);
-	पूर्ण
+		if (found != rbio)
+			__remove_rbio_from_cache(found);
+	}
 
 	spin_unlock_irqrestore(&table->cache_lock, flags);
-पूर्ण
+}
 
 /*
  * helper function to run the xor_blocks api.  It is only
- * able to करो MAX_XOR_BLOCKS at a समय, so we need to
+ * able to do MAX_XOR_BLOCKS at a time, so we need to
  * loop through.
  */
-अटल व्योम run_xor(व्योम **pages, पूर्णांक src_cnt, sमाप_प्रकार len)
-अणु
-	पूर्णांक src_off = 0;
-	पूर्णांक xor_src_cnt = 0;
-	व्योम *dest = pages[src_cnt];
+static void run_xor(void **pages, int src_cnt, ssize_t len)
+{
+	int src_off = 0;
+	int xor_src_cnt = 0;
+	void *dest = pages[src_cnt];
 
-	जबतक(src_cnt > 0) अणु
+	while(src_cnt > 0) {
 		xor_src_cnt = min(src_cnt, MAX_XOR_BLOCKS);
 		xor_blocks(xor_src_cnt, len, dest, pages + src_off);
 
 		src_cnt -= xor_src_cnt;
 		src_off += xor_src_cnt;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Returns true अगर the bio list inside this rbio covers an entire stripe (no
+ * Returns true if the bio list inside this rbio covers an entire stripe (no
  * rmw required).
  */
-अटल पूर्णांक rbio_is_full(काष्ठा btrfs_raid_bio *rbio)
-अणु
-	अचिन्हित दीर्घ flags;
-	अचिन्हित दीर्घ size = rbio->bio_list_bytes;
-	पूर्णांक ret = 1;
+static int rbio_is_full(struct btrfs_raid_bio *rbio)
+{
+	unsigned long flags;
+	unsigned long size = rbio->bio_list_bytes;
+	int ret = 1;
 
 	spin_lock_irqsave(&rbio->bio_list_lock, flags);
-	अगर (size != rbio->nr_data * rbio->stripe_len)
+	if (size != rbio->nr_data * rbio->stripe_len)
 		ret = 0;
 	BUG_ON(size > rbio->nr_data * rbio->stripe_len);
 	spin_unlock_irqrestore(&rbio->bio_list_lock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * वापसs 1 अगर it is safe to merge two rbios together.
- * The merging is safe अगर the two rbios correspond to
- * the same stripe and अगर they are both going in the same
- * direction (पढ़ो vs ग_लिखो), and अगर neither one is
- * locked क्रम final IO
+ * returns 1 if it is safe to merge two rbios together.
+ * The merging is safe if the two rbios correspond to
+ * the same stripe and if they are both going in the same
+ * direction (read vs write), and if neither one is
+ * locked for final IO
  *
- * The caller is responsible क्रम locking such that
+ * The caller is responsible for locking such that
  * rmw_locked is safe to test
  */
-अटल पूर्णांक rbio_can_merge(काष्ठा btrfs_raid_bio *last,
-			  काष्ठा btrfs_raid_bio *cur)
-अणु
-	अगर (test_bit(RBIO_RMW_LOCKED_BIT, &last->flags) ||
+static int rbio_can_merge(struct btrfs_raid_bio *last,
+			  struct btrfs_raid_bio *cur)
+{
+	if (test_bit(RBIO_RMW_LOCKED_BIT, &last->flags) ||
 	    test_bit(RBIO_RMW_LOCKED_BIT, &cur->flags))
-		वापस 0;
+		return 0;
 
 	/*
 	 * we can't merge with cached rbios, since the
 	 * idea is that when we merge the destination
-	 * rbio is going to run our IO क्रम us.  We can
+	 * rbio is going to run our IO for us.  We can
 	 * steal from cached rbios though, other functions
 	 * handle that.
 	 */
-	अगर (test_bit(RBIO_CACHE_BIT, &last->flags) ||
+	if (test_bit(RBIO_CACHE_BIT, &last->flags) ||
 	    test_bit(RBIO_CACHE_BIT, &cur->flags))
-		वापस 0;
+		return 0;
 
-	अगर (last->bbio->raid_map[0] !=
+	if (last->bbio->raid_map[0] !=
 	    cur->bbio->raid_map[0])
-		वापस 0;
+		return 0;
 
-	/* we can't merge with dअगरferent operations */
-	अगर (last->operation != cur->operation)
-		वापस 0;
+	/* we can't merge with different operations */
+	if (last->operation != cur->operation)
+		return 0;
 	/*
-	 * We've need पढ़ो the full stripe from the drive.
-	 * check and repair the parity and ग_लिखो the new results.
+	 * We've need read the full stripe from the drive.
+	 * check and repair the parity and write the new results.
 	 *
 	 * We're not allowed to add any new bios to the
-	 * bio list here, anyone अन्यथा that wants to
-	 * change this stripe needs to करो their own rmw.
+	 * bio list here, anyone else that wants to
+	 * change this stripe needs to do their own rmw.
 	 */
-	अगर (last->operation == BTRFS_RBIO_PARITY_SCRUB)
-		वापस 0;
+	if (last->operation == BTRFS_RBIO_PARITY_SCRUB)
+		return 0;
 
-	अगर (last->operation == BTRFS_RBIO_REBUILD_MISSING)
-		वापस 0;
+	if (last->operation == BTRFS_RBIO_REBUILD_MISSING)
+		return 0;
 
-	अगर (last->operation == BTRFS_RBIO_READ_REBUILD) अणु
-		पूर्णांक fa = last->faila;
-		पूर्णांक fb = last->failb;
-		पूर्णांक cur_fa = cur->faila;
-		पूर्णांक cur_fb = cur->failb;
+	if (last->operation == BTRFS_RBIO_READ_REBUILD) {
+		int fa = last->faila;
+		int fb = last->failb;
+		int cur_fa = cur->faila;
+		int cur_fb = cur->failb;
 
-		अगर (last->faila >= last->failb) अणु
+		if (last->faila >= last->failb) {
 			fa = last->failb;
 			fb = last->faila;
-		पूर्ण
+		}
 
-		अगर (cur->faila >= cur->failb) अणु
+		if (cur->faila >= cur->failb) {
 			cur_fa = cur->failb;
 			cur_fb = cur->faila;
-		पूर्ण
+		}
 
-		अगर (fa != cur_fa || fb != cur_fb)
-			वापस 0;
-	पूर्ण
-	वापस 1;
-पूर्ण
+		if (fa != cur_fa || fb != cur_fb)
+			return 0;
+	}
+	return 1;
+}
 
-अटल पूर्णांक rbio_stripe_page_index(काष्ठा btrfs_raid_bio *rbio, पूर्णांक stripe,
-				  पूर्णांक index)
-अणु
-	वापस stripe * rbio->stripe_npages + index;
-पूर्ण
+static int rbio_stripe_page_index(struct btrfs_raid_bio *rbio, int stripe,
+				  int index)
+{
+	return stripe * rbio->stripe_npages + index;
+}
 
 /*
  * these are just the pages from the rbio array, not from anything
- * the FS sent करोwn to us
+ * the FS sent down to us
  */
-अटल काष्ठा page *rbio_stripe_page(काष्ठा btrfs_raid_bio *rbio, पूर्णांक stripe,
-				     पूर्णांक index)
-अणु
-	वापस rbio->stripe_pages[rbio_stripe_page_index(rbio, stripe, index)];
-पूर्ण
+static struct page *rbio_stripe_page(struct btrfs_raid_bio *rbio, int stripe,
+				     int index)
+{
+	return rbio->stripe_pages[rbio_stripe_page_index(rbio, stripe, index)];
+}
 
 /*
- * helper to index पूर्णांकo the pstripe
+ * helper to index into the pstripe
  */
-अटल काष्ठा page *rbio_pstripe_page(काष्ठा btrfs_raid_bio *rbio, पूर्णांक index)
-अणु
-	वापस rbio_stripe_page(rbio, rbio->nr_data, index);
-पूर्ण
+static struct page *rbio_pstripe_page(struct btrfs_raid_bio *rbio, int index)
+{
+	return rbio_stripe_page(rbio, rbio->nr_data, index);
+}
 
 /*
- * helper to index पूर्णांकo the qstripe, वापसs null
- * अगर there is no qstripe
+ * helper to index into the qstripe, returns null
+ * if there is no qstripe
  */
-अटल काष्ठा page *rbio_qstripe_page(काष्ठा btrfs_raid_bio *rbio, पूर्णांक index)
-अणु
-	अगर (rbio->nr_data + 1 == rbio->real_stripes)
-		वापस शून्य;
-	वापस rbio_stripe_page(rbio, rbio->nr_data + 1, index);
-पूर्ण
+static struct page *rbio_qstripe_page(struct btrfs_raid_bio *rbio, int index)
+{
+	if (rbio->nr_data + 1 == rbio->real_stripes)
+		return NULL;
+	return rbio_stripe_page(rbio, rbio->nr_data + 1, index);
+}
 
 /*
- * The first stripe in the table क्रम a logical address
+ * The first stripe in the table for a logical address
  * has the lock.  rbios are added in one of three ways:
  *
  * 1) Nobody has the stripe locked yet.  The rbio is given
- * the lock and 0 is वापसed.  The caller must start the IO
+ * the lock and 0 is returned.  The caller must start the IO
  * themselves.
  *
  * 2) Someone has the stripe locked, but we're able to merge
- * with the lock owner.  The rbio is मुक्तd and the IO will
- * start स्वतःmatically aदीर्घ with the existing rbio.  1 is वापसed.
+ * with the lock owner.  The rbio is freed and the IO will
+ * start automatically along with the existing rbio.  1 is returned.
  *
  * 3) Someone has the stripe locked, but we're not able to merge.
- * The rbio is added to the lock owner's plug list, or merged पूर्णांकo
- * an rbio alपढ़ोy on the plug list.  When the lock owner unlocks,
- * the next rbio on the list is run and the IO is started स्वतःmatically.
- * 1 is वापसed
+ * The rbio is added to the lock owner's plug list, or merged into
+ * an rbio already on the plug list.  When the lock owner unlocks,
+ * the next rbio on the list is run and the IO is started automatically.
+ * 1 is returned
  *
- * If we वापस 0, the caller still owns the rbio and must जारी with
- * IO submission.  If we वापस 1, the caller must assume the rbio has
- * alपढ़ोy been मुक्तd.
+ * If we return 0, the caller still owns the rbio and must continue with
+ * IO submission.  If we return 1, the caller must assume the rbio has
+ * already been freed.
  */
-अटल noअंतरभूत पूर्णांक lock_stripe_add(काष्ठा btrfs_raid_bio *rbio)
-अणु
-	काष्ठा btrfs_stripe_hash *h;
-	काष्ठा btrfs_raid_bio *cur;
-	काष्ठा btrfs_raid_bio *pending;
-	अचिन्हित दीर्घ flags;
-	काष्ठा btrfs_raid_bio *मुक्तit = शून्य;
-	काष्ठा btrfs_raid_bio *cache_drop = शून्य;
-	पूर्णांक ret = 0;
+static noinline int lock_stripe_add(struct btrfs_raid_bio *rbio)
+{
+	struct btrfs_stripe_hash *h;
+	struct btrfs_raid_bio *cur;
+	struct btrfs_raid_bio *pending;
+	unsigned long flags;
+	struct btrfs_raid_bio *freeit = NULL;
+	struct btrfs_raid_bio *cache_drop = NULL;
+	int ret = 0;
 
 	h = rbio->fs_info->stripe_hash_table->table + rbio_bucket(rbio);
 
 	spin_lock_irqsave(&h->lock, flags);
-	list_क्रम_each_entry(cur, &h->hash_list, hash_list) अणु
-		अगर (cur->bbio->raid_map[0] != rbio->bbio->raid_map[0])
-			जारी;
+	list_for_each_entry(cur, &h->hash_list, hash_list) {
+		if (cur->bbio->raid_map[0] != rbio->bbio->raid_map[0])
+			continue;
 
 		spin_lock(&cur->bio_list_lock);
 
 		/* Can we steal this cached rbio's pages? */
-		अगर (bio_list_empty(&cur->bio_list) &&
+		if (bio_list_empty(&cur->bio_list) &&
 		    list_empty(&cur->plug_list) &&
 		    test_bit(RBIO_CACHE_BIT, &cur->flags) &&
-		    !test_bit(RBIO_RMW_LOCKED_BIT, &cur->flags)) अणु
+		    !test_bit(RBIO_RMW_LOCKED_BIT, &cur->flags)) {
 			list_del_init(&cur->hash_list);
 			refcount_dec(&cur->refs);
 
@@ -691,33 +690,33 @@
 			cache_drop = cur;
 			spin_unlock(&cur->bio_list_lock);
 
-			जाओ lockit;
-		पूर्ण
+			goto lockit;
+		}
 
-		/* Can we merge पूर्णांकo the lock owner? */
-		अगर (rbio_can_merge(cur, rbio)) अणु
+		/* Can we merge into the lock owner? */
+		if (rbio_can_merge(cur, rbio)) {
 			merge_rbio(cur, rbio);
 			spin_unlock(&cur->bio_list_lock);
-			मुक्तit = rbio;
+			freeit = rbio;
 			ret = 1;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 
 		/*
-		 * We couldn't merge with the running rbio, see अगर we can merge
-		 * with the pending ones.  We करोn't have to check क्रम rmw_locked
+		 * We couldn't merge with the running rbio, see if we can merge
+		 * with the pending ones.  We don't have to check for rmw_locked
 		 * because there is no way they are inside finish_rmw right now
 		 */
-		list_क्रम_each_entry(pending, &cur->plug_list, plug_list) अणु
-			अगर (rbio_can_merge(pending, rbio)) अणु
+		list_for_each_entry(pending, &cur->plug_list, plug_list) {
+			if (rbio_can_merge(pending, rbio)) {
 				merge_rbio(pending, rbio);
 				spin_unlock(&cur->bio_list_lock);
-				मुक्तit = rbio;
+				freeit = rbio;
 				ret = 1;
-				जाओ out;
-			पूर्ण
-		पूर्ण
+				goto out;
+			}
+		}
 
 		/*
 		 * No merging, put us on the tail of the plug list, our rbio
@@ -726,67 +725,67 @@
 		list_add_tail(&rbio->plug_list, &cur->plug_list);
 		spin_unlock(&cur->bio_list_lock);
 		ret = 1;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 lockit:
 	refcount_inc(&rbio->refs);
 	list_add(&rbio->hash_list, &h->hash_list);
 out:
 	spin_unlock_irqrestore(&h->lock, flags);
-	अगर (cache_drop)
-		हटाओ_rbio_from_cache(cache_drop);
-	अगर (मुक्तit)
-		__मुक्त_raid_bio(मुक्तit);
-	वापस ret;
-पूर्ण
+	if (cache_drop)
+		remove_rbio_from_cache(cache_drop);
+	if (freeit)
+		__free_raid_bio(freeit);
+	return ret;
+}
 
 /*
  * called as rmw or parity rebuild is completed.  If the plug list has more
- * rbios रुकोing क्रम this stripe, the next one on the list will be started
+ * rbios waiting for this stripe, the next one on the list will be started
  */
-अटल noअंतरभूत व्योम unlock_stripe(काष्ठा btrfs_raid_bio *rbio)
-अणु
-	पूर्णांक bucket;
-	काष्ठा btrfs_stripe_hash *h;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक keep_cache = 0;
+static noinline void unlock_stripe(struct btrfs_raid_bio *rbio)
+{
+	int bucket;
+	struct btrfs_stripe_hash *h;
+	unsigned long flags;
+	int keep_cache = 0;
 
 	bucket = rbio_bucket(rbio);
 	h = rbio->fs_info->stripe_hash_table->table + bucket;
 
-	अगर (list_empty(&rbio->plug_list))
+	if (list_empty(&rbio->plug_list))
 		cache_rbio(rbio);
 
 	spin_lock_irqsave(&h->lock, flags);
 	spin_lock(&rbio->bio_list_lock);
 
-	अगर (!list_empty(&rbio->hash_list)) अणु
+	if (!list_empty(&rbio->hash_list)) {
 		/*
-		 * अगर we're still cached and there is no other IO
-		 * to perक्रमm, just leave this rbio here क्रम others
+		 * if we're still cached and there is no other IO
+		 * to perform, just leave this rbio here for others
 		 * to steal from later
 		 */
-		अगर (list_empty(&rbio->plug_list) &&
-		    test_bit(RBIO_CACHE_BIT, &rbio->flags)) अणु
+		if (list_empty(&rbio->plug_list) &&
+		    test_bit(RBIO_CACHE_BIT, &rbio->flags)) {
 			keep_cache = 1;
 			clear_bit(RBIO_RMW_LOCKED_BIT, &rbio->flags);
 			BUG_ON(!bio_list_empty(&rbio->bio_list));
-			जाओ करोne;
-		पूर्ण
+			goto done;
+		}
 
 		list_del_init(&rbio->hash_list);
 		refcount_dec(&rbio->refs);
 
 		/*
 		 * we use the plug list to hold all the rbios
-		 * रुकोing क्रम the chance to lock this stripe.
+		 * waiting for the chance to lock this stripe.
 		 * hand the lock over to one of them.
 		 */
-		अगर (!list_empty(&rbio->plug_list)) अणु
-			काष्ठा btrfs_raid_bio *next;
-			काष्ठा list_head *head = rbio->plug_list.next;
+		if (!list_empty(&rbio->plug_list)) {
+			struct btrfs_raid_bio *next;
+			struct list_head *head = rbio->plug_list.next;
 
-			next = list_entry(head, काष्ठा btrfs_raid_bio,
+			next = list_entry(head, struct btrfs_raid_bio,
 					  plug_list);
 
 			list_del_init(&rbio->plug_list);
@@ -796,145 +795,145 @@ out:
 			spin_unlock(&rbio->bio_list_lock);
 			spin_unlock_irqrestore(&h->lock, flags);
 
-			अगर (next->operation == BTRFS_RBIO_READ_REBUILD)
-				start_async_work(next, पढ़ो_rebuild_work);
-			अन्यथा अगर (next->operation == BTRFS_RBIO_REBUILD_MISSING) अणु
+			if (next->operation == BTRFS_RBIO_READ_REBUILD)
+				start_async_work(next, read_rebuild_work);
+			else if (next->operation == BTRFS_RBIO_REBUILD_MISSING) {
 				steal_rbio(rbio, next);
-				start_async_work(next, पढ़ो_rebuild_work);
-			पूर्ण अन्यथा अगर (next->operation == BTRFS_RBIO_WRITE) अणु
+				start_async_work(next, read_rebuild_work);
+			} else if (next->operation == BTRFS_RBIO_WRITE) {
 				steal_rbio(rbio, next);
 				start_async_work(next, rmw_work);
-			पूर्ण अन्यथा अगर (next->operation == BTRFS_RBIO_PARITY_SCRUB) अणु
+			} else if (next->operation == BTRFS_RBIO_PARITY_SCRUB) {
 				steal_rbio(rbio, next);
 				start_async_work(next, scrub_parity_work);
-			पूर्ण
+			}
 
-			जाओ करोne_nolock;
-		पूर्ण
-	पूर्ण
-करोne:
+			goto done_nolock;
+		}
+	}
+done:
 	spin_unlock(&rbio->bio_list_lock);
 	spin_unlock_irqrestore(&h->lock, flags);
 
-करोne_nolock:
-	अगर (!keep_cache)
-		हटाओ_rbio_from_cache(rbio);
-पूर्ण
+done_nolock:
+	if (!keep_cache)
+		remove_rbio_from_cache(rbio);
+}
 
-अटल व्योम __मुक्त_raid_bio(काष्ठा btrfs_raid_bio *rbio)
-अणु
-	पूर्णांक i;
+static void __free_raid_bio(struct btrfs_raid_bio *rbio)
+{
+	int i;
 
-	अगर (!refcount_dec_and_test(&rbio->refs))
-		वापस;
+	if (!refcount_dec_and_test(&rbio->refs))
+		return;
 
 	WARN_ON(!list_empty(&rbio->stripe_cache));
 	WARN_ON(!list_empty(&rbio->hash_list));
 	WARN_ON(!bio_list_empty(&rbio->bio_list));
 
-	क्रम (i = 0; i < rbio->nr_pages; i++) अणु
-		अगर (rbio->stripe_pages[i]) अणु
-			__मुक्त_page(rbio->stripe_pages[i]);
-			rbio->stripe_pages[i] = शून्य;
-		पूर्ण
-	पूर्ण
+	for (i = 0; i < rbio->nr_pages; i++) {
+		if (rbio->stripe_pages[i]) {
+			__free_page(rbio->stripe_pages[i]);
+			rbio->stripe_pages[i] = NULL;
+		}
+	}
 
 	btrfs_put_bbio(rbio->bbio);
-	kमुक्त(rbio);
-पूर्ण
+	kfree(rbio);
+}
 
-अटल व्योम rbio_endio_bio_list(काष्ठा bio *cur, blk_status_t err)
-अणु
-	काष्ठा bio *next;
+static void rbio_endio_bio_list(struct bio *cur, blk_status_t err)
+{
+	struct bio *next;
 
-	जबतक (cur) अणु
+	while (cur) {
 		next = cur->bi_next;
-		cur->bi_next = शून्य;
+		cur->bi_next = NULL;
 		cur->bi_status = err;
 		bio_endio(cur);
 		cur = next;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * this मुक्तs the rbio and runs through all the bios in the
+ * this frees the rbio and runs through all the bios in the
  * bio_list and calls end_io on them
  */
-अटल व्योम rbio_orig_end_io(काष्ठा btrfs_raid_bio *rbio, blk_status_t err)
-अणु
-	काष्ठा bio *cur = bio_list_get(&rbio->bio_list);
-	काष्ठा bio *extra;
+static void rbio_orig_end_io(struct btrfs_raid_bio *rbio, blk_status_t err)
+{
+	struct bio *cur = bio_list_get(&rbio->bio_list);
+	struct bio *extra;
 
-	अगर (rbio->generic_bio_cnt)
+	if (rbio->generic_bio_cnt)
 		btrfs_bio_counter_sub(rbio->fs_info, rbio->generic_bio_cnt);
 
 	/*
-	 * At this moment, rbio->bio_list is empty, however since rbio करोes not
+	 * At this moment, rbio->bio_list is empty, however since rbio does not
 	 * always have RBIO_RMW_LOCKED_BIT set and rbio is still linked on the
 	 * hash list, rbio may be merged with others so that rbio->bio_list
 	 * becomes non-empty.
-	 * Once unlock_stripe() is करोne, rbio->bio_list will not be updated any
+	 * Once unlock_stripe() is done, rbio->bio_list will not be updated any
 	 * more and we can call bio_endio() on all queued bios.
 	 */
 	unlock_stripe(rbio);
 	extra = bio_list_get(&rbio->bio_list);
-	__मुक्त_raid_bio(rbio);
+	__free_raid_bio(rbio);
 
 	rbio_endio_bio_list(cur, err);
-	अगर (extra)
+	if (extra)
 		rbio_endio_bio_list(extra, err);
-पूर्ण
+}
 
 /*
  * end io function used by finish_rmw.  When we finally
  * get here, we've written a full stripe
  */
-अटल व्योम raid_ग_लिखो_end_io(काष्ठा bio *bio)
-अणु
-	काष्ठा btrfs_raid_bio *rbio = bio->bi_निजी;
+static void raid_write_end_io(struct bio *bio)
+{
+	struct btrfs_raid_bio *rbio = bio->bi_private;
 	blk_status_t err = bio->bi_status;
-	पूर्णांक max_errors;
+	int max_errors;
 
-	अगर (err)
+	if (err)
 		fail_bio_stripe(rbio, bio);
 
 	bio_put(bio);
 
-	अगर (!atomic_dec_and_test(&rbio->stripes_pending))
-		वापस;
+	if (!atomic_dec_and_test(&rbio->stripes_pending))
+		return;
 
 	err = BLK_STS_OK;
 
-	/* OK, we have पढ़ो all the stripes we need to. */
+	/* OK, we have read all the stripes we need to. */
 	max_errors = (rbio->operation == BTRFS_RBIO_PARITY_SCRUB) ?
 		     0 : rbio->bbio->max_errors;
-	अगर (atomic_पढ़ो(&rbio->error) > max_errors)
+	if (atomic_read(&rbio->error) > max_errors)
 		err = BLK_STS_IOERR;
 
 	rbio_orig_end_io(rbio, err);
-पूर्ण
+}
 
 /*
- * the पढ़ो/modअगरy/ग_लिखो code wants to use the original bio क्रम
- * any pages it included, and then use the rbio क्रम everything
- * अन्यथा.  This function decides अगर a given index (stripe number)
+ * the read/modify/write code wants to use the original bio for
+ * any pages it included, and then use the rbio for everything
+ * else.  This function decides if a given index (stripe number)
  * and page number in that stripe fall inside the original bio
  * or the rbio.
  *
- * अगर you set bio_list_only, you'll get a शून्य back क्रम any ranges
+ * if you set bio_list_only, you'll get a NULL back for any ranges
  * that are outside the bio_list
  *
- * This करोesn't take any refs on anything, you get a bare page poपूर्णांकer
+ * This doesn't take any refs on anything, you get a bare page pointer
  * and the caller must bump refs as required.
  *
- * You must call index_rbio_pages once beक्रमe you can trust
+ * You must call index_rbio_pages once before you can trust
  * the answers from this function.
  */
-अटल काष्ठा page *page_in_rbio(काष्ठा btrfs_raid_bio *rbio,
-				 पूर्णांक index, पूर्णांक pagenr, पूर्णांक bio_list_only)
-अणु
-	पूर्णांक chunk_page;
-	काष्ठा page *p = शून्य;
+static struct page *page_in_rbio(struct btrfs_raid_bio *rbio,
+				 int index, int pagenr, int bio_list_only)
+{
+	int chunk_page;
+	struct page *p = NULL;
 
 	chunk_page = index * (rbio->stripe_len >> PAGE_SHIFT) + pagenr;
 
@@ -942,46 +941,46 @@ out:
 	p = rbio->bio_pages[chunk_page];
 	spin_unlock_irq(&rbio->bio_list_lock);
 
-	अगर (p || bio_list_only)
-		वापस p;
+	if (p || bio_list_only)
+		return p;
 
-	वापस rbio->stripe_pages[chunk_page];
-पूर्ण
+	return rbio->stripe_pages[chunk_page];
+}
 
 /*
- * number of pages we need क्रम the entire stripe across all the
+ * number of pages we need for the entire stripe across all the
  * drives
  */
-अटल अचिन्हित दीर्घ rbio_nr_pages(अचिन्हित दीर्घ stripe_len, पूर्णांक nr_stripes)
-अणु
-	वापस DIV_ROUND_UP(stripe_len, PAGE_SIZE) * nr_stripes;
-पूर्ण
+static unsigned long rbio_nr_pages(unsigned long stripe_len, int nr_stripes)
+{
+	return DIV_ROUND_UP(stripe_len, PAGE_SIZE) * nr_stripes;
+}
 
 /*
- * allocation and initial setup क्रम the btrfs_raid_bio.  Not
- * this करोes not allocate any pages क्रम rbio->pages.
+ * allocation and initial setup for the btrfs_raid_bio.  Not
+ * this does not allocate any pages for rbio->pages.
  */
-अटल काष्ठा btrfs_raid_bio *alloc_rbio(काष्ठा btrfs_fs_info *fs_info,
-					 काष्ठा btrfs_bio *bbio,
+static struct btrfs_raid_bio *alloc_rbio(struct btrfs_fs_info *fs_info,
+					 struct btrfs_bio *bbio,
 					 u64 stripe_len)
-अणु
-	काष्ठा btrfs_raid_bio *rbio;
-	पूर्णांक nr_data = 0;
-	पूर्णांक real_stripes = bbio->num_stripes - bbio->num_tgtdevs;
-	पूर्णांक num_pages = rbio_nr_pages(stripe_len, real_stripes);
-	पूर्णांक stripe_npages = DIV_ROUND_UP(stripe_len, PAGE_SIZE);
-	व्योम *p;
+{
+	struct btrfs_raid_bio *rbio;
+	int nr_data = 0;
+	int real_stripes = bbio->num_stripes - bbio->num_tgtdevs;
+	int num_pages = rbio_nr_pages(stripe_len, real_stripes);
+	int stripe_npages = DIV_ROUND_UP(stripe_len, PAGE_SIZE);
+	void *p;
 
-	rbio = kzalloc(माप(*rbio) +
-		       माप(*rbio->stripe_pages) * num_pages +
-		       माप(*rbio->bio_pages) * num_pages +
-		       माप(*rbio->finish_poपूर्णांकers) * real_stripes +
-		       माप(*rbio->dbiपंचांगap) * BITS_TO_LONGS(stripe_npages) +
-		       माप(*rbio->finish_pbiपंचांगap) *
+	rbio = kzalloc(sizeof(*rbio) +
+		       sizeof(*rbio->stripe_pages) * num_pages +
+		       sizeof(*rbio->bio_pages) * num_pages +
+		       sizeof(*rbio->finish_pointers) * real_stripes +
+		       sizeof(*rbio->dbitmap) * BITS_TO_LONGS(stripe_npages) +
+		       sizeof(*rbio->finish_pbitmap) *
 				BITS_TO_LONGS(stripe_npages),
 		       GFP_NOFS);
-	अगर (!rbio)
-		वापस ERR_PTR(-ENOMEM);
+	if (!rbio)
+		return ERR_PTR(-ENOMEM);
 
 	bio_list_init(&rbio->bio_list);
 	INIT_LIST_HEAD(&rbio->plug_list);
@@ -1001,109 +1000,109 @@ out:
 	atomic_set(&rbio->stripes_pending, 0);
 
 	/*
-	 * the stripe_pages, bio_pages, etc arrays poपूर्णांक to the extra
+	 * the stripe_pages, bio_pages, etc arrays point to the extra
 	 * memory we allocated past the end of the rbio
 	 */
 	p = rbio + 1;
-#घोषणा CONSUME_ALLOC(ptr, count)	करो अणु				\
+#define CONSUME_ALLOC(ptr, count)	do {				\
 		ptr = p;						\
-		p = (अचिन्हित अक्षर *)p + माप(*(ptr)) * (count);	\
-	पूर्ण जबतक (0)
+		p = (unsigned char *)p + sizeof(*(ptr)) * (count);	\
+	} while (0)
 	CONSUME_ALLOC(rbio->stripe_pages, num_pages);
 	CONSUME_ALLOC(rbio->bio_pages, num_pages);
-	CONSUME_ALLOC(rbio->finish_poपूर्णांकers, real_stripes);
-	CONSUME_ALLOC(rbio->dbiपंचांगap, BITS_TO_LONGS(stripe_npages));
-	CONSUME_ALLOC(rbio->finish_pbiपंचांगap, BITS_TO_LONGS(stripe_npages));
-#अघोषित  CONSUME_ALLOC
+	CONSUME_ALLOC(rbio->finish_pointers, real_stripes);
+	CONSUME_ALLOC(rbio->dbitmap, BITS_TO_LONGS(stripe_npages));
+	CONSUME_ALLOC(rbio->finish_pbitmap, BITS_TO_LONGS(stripe_npages));
+#undef  CONSUME_ALLOC
 
-	अगर (bbio->map_type & BTRFS_BLOCK_GROUP_RAID5)
+	if (bbio->map_type & BTRFS_BLOCK_GROUP_RAID5)
 		nr_data = real_stripes - 1;
-	अन्यथा अगर (bbio->map_type & BTRFS_BLOCK_GROUP_RAID6)
+	else if (bbio->map_type & BTRFS_BLOCK_GROUP_RAID6)
 		nr_data = real_stripes - 2;
-	अन्यथा
+	else
 		BUG();
 
 	rbio->nr_data = nr_data;
-	वापस rbio;
-पूर्ण
+	return rbio;
+}
 
-/* allocate pages क्रम all the stripes in the bio, including parity */
-अटल पूर्णांक alloc_rbio_pages(काष्ठा btrfs_raid_bio *rbio)
-अणु
-	पूर्णांक i;
-	काष्ठा page *page;
+/* allocate pages for all the stripes in the bio, including parity */
+static int alloc_rbio_pages(struct btrfs_raid_bio *rbio)
+{
+	int i;
+	struct page *page;
 
-	क्रम (i = 0; i < rbio->nr_pages; i++) अणु
-		अगर (rbio->stripe_pages[i])
-			जारी;
+	for (i = 0; i < rbio->nr_pages; i++) {
+		if (rbio->stripe_pages[i])
+			continue;
 		page = alloc_page(GFP_NOFS | __GFP_HIGHMEM);
-		अगर (!page)
-			वापस -ENOMEM;
+		if (!page)
+			return -ENOMEM;
 		rbio->stripe_pages[i] = page;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-/* only allocate pages क्रम p/q stripes */
-अटल पूर्णांक alloc_rbio_parity_pages(काष्ठा btrfs_raid_bio *rbio)
-अणु
-	पूर्णांक i;
-	काष्ठा page *page;
+/* only allocate pages for p/q stripes */
+static int alloc_rbio_parity_pages(struct btrfs_raid_bio *rbio)
+{
+	int i;
+	struct page *page;
 
 	i = rbio_stripe_page_index(rbio, rbio->nr_data, 0);
 
-	क्रम (; i < rbio->nr_pages; i++) अणु
-		अगर (rbio->stripe_pages[i])
-			जारी;
+	for (; i < rbio->nr_pages; i++) {
+		if (rbio->stripe_pages[i])
+			continue;
 		page = alloc_page(GFP_NOFS | __GFP_HIGHMEM);
-		अगर (!page)
-			वापस -ENOMEM;
+		if (!page)
+			return -ENOMEM;
 		rbio->stripe_pages[i] = page;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 /*
- * add a single page from a specअगरic stripe पूर्णांकo our list of bios क्रम IO
- * this will try to merge पूर्णांकo existing bios अगर possible, and वापसs
- * zero अगर all went well.
+ * add a single page from a specific stripe into our list of bios for IO
+ * this will try to merge into existing bios if possible, and returns
+ * zero if all went well.
  */
-अटल पूर्णांक rbio_add_io_page(काष्ठा btrfs_raid_bio *rbio,
-			    काष्ठा bio_list *bio_list,
-			    काष्ठा page *page,
-			    पूर्णांक stripe_nr,
-			    अचिन्हित दीर्घ page_index,
-			    अचिन्हित दीर्घ bio_max_len)
-अणु
-	काष्ठा bio *last = bio_list->tail;
-	पूर्णांक ret;
-	काष्ठा bio *bio;
-	काष्ठा btrfs_bio_stripe *stripe;
+static int rbio_add_io_page(struct btrfs_raid_bio *rbio,
+			    struct bio_list *bio_list,
+			    struct page *page,
+			    int stripe_nr,
+			    unsigned long page_index,
+			    unsigned long bio_max_len)
+{
+	struct bio *last = bio_list->tail;
+	int ret;
+	struct bio *bio;
+	struct btrfs_bio_stripe *stripe;
 	u64 disk_start;
 
 	stripe = &rbio->bbio->stripes[stripe_nr];
 	disk_start = stripe->physical + (page_index << PAGE_SHIFT);
 
-	/* अगर the device is missing, just fail this stripe */
-	अगर (!stripe->dev->bdev)
-		वापस fail_rbio_index(rbio, stripe_nr);
+	/* if the device is missing, just fail this stripe */
+	if (!stripe->dev->bdev)
+		return fail_rbio_index(rbio, stripe_nr);
 
-	/* see अगर we can add this page onto our existing bio */
-	अगर (last) अणु
+	/* see if we can add this page onto our existing bio */
+	if (last) {
 		u64 last_end = last->bi_iter.bi_sector << 9;
 		last_end += last->bi_iter.bi_size;
 
 		/*
-		 * we can't merge these अगर they are from dअगरferent
-		 * devices or अगर they are not contiguous
+		 * we can't merge these if they are from different
+		 * devices or if they are not contiguous
 		 */
-		अगर (last_end == disk_start && !last->bi_status &&
-		    last->bi_bdev == stripe->dev->bdev) अणु
+		if (last_end == disk_start && !last->bi_status &&
+		    last->bi_bdev == stripe->dev->bdev) {
 			ret = bio_add_page(last, page, PAGE_SIZE, 0);
-			अगर (ret == PAGE_SIZE)
-				वापस 0;
-		पूर्ण
-	पूर्ण
+			if (ret == PAGE_SIZE)
+				return 0;
+		}
+	}
 
 	/* put a new bio on the list */
 	bio = btrfs_io_bio_alloc(bio_max_len >> PAGE_SHIFT ?: 1);
@@ -1114,98 +1113,98 @@ out:
 
 	bio_add_page(bio, page, PAGE_SIZE, 0);
 	bio_list_add(bio_list, bio);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * जबतक we're करोing the पढ़ो/modअगरy/ग_लिखो cycle, we could
- * have errors in पढ़ोing pages off the disk.  This checks
- * क्रम errors and अगर we're not able to read the page it'll
- * trigger parity reस्थिरruction.  The rmw will be finished
- * after we've reस्थिरructed the failed stripes
+ * while we're doing the read/modify/write cycle, we could
+ * have errors in reading pages off the disk.  This checks
+ * for errors and if we're not able to read the page it'll
+ * trigger parity reconstruction.  The rmw will be finished
+ * after we've reconstructed the failed stripes
  */
-अटल व्योम validate_rbio_क्रम_rmw(काष्ठा btrfs_raid_bio *rbio)
-अणु
-	अगर (rbio->faila >= 0 || rbio->failb >= 0) अणु
+static void validate_rbio_for_rmw(struct btrfs_raid_bio *rbio)
+{
+	if (rbio->faila >= 0 || rbio->failb >= 0) {
 		BUG_ON(rbio->faila == rbio->real_stripes - 1);
 		__raid56_parity_recover(rbio);
-	पूर्ण अन्यथा अणु
+	} else {
 		finish_rmw(rbio);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * helper function to walk our bio list and populate the bio_pages array with
- * the result.  This seems expensive, but it is faster than स्थिरantly
+ * the result.  This seems expensive, but it is faster than constantly
  * searching through the bio list as we setup the IO in finish_rmw or stripe
- * reस्थिरruction.
+ * reconstruction.
  *
- * This must be called beक्रमe you trust the answers from page_in_rbio
+ * This must be called before you trust the answers from page_in_rbio
  */
-अटल व्योम index_rbio_pages(काष्ठा btrfs_raid_bio *rbio)
-अणु
-	काष्ठा bio *bio;
+static void index_rbio_pages(struct btrfs_raid_bio *rbio)
+{
+	struct bio *bio;
 	u64 start;
-	अचिन्हित दीर्घ stripe_offset;
-	अचिन्हित दीर्घ page_index;
+	unsigned long stripe_offset;
+	unsigned long page_index;
 
 	spin_lock_irq(&rbio->bio_list_lock);
-	bio_list_क्रम_each(bio, &rbio->bio_list) अणु
-		काष्ठा bio_vec bvec;
-		काष्ठा bvec_iter iter;
-		पूर्णांक i = 0;
+	bio_list_for_each(bio, &rbio->bio_list) {
+		struct bio_vec bvec;
+		struct bvec_iter iter;
+		int i = 0;
 
 		start = bio->bi_iter.bi_sector << 9;
 		stripe_offset = start - rbio->bbio->raid_map[0];
 		page_index = stripe_offset >> PAGE_SHIFT;
 
-		अगर (bio_flagged(bio, BIO_CLONED))
+		if (bio_flagged(bio, BIO_CLONED))
 			bio->bi_iter = btrfs_io_bio(bio)->iter;
 
-		bio_क्रम_each_segment(bvec, bio, iter) अणु
+		bio_for_each_segment(bvec, bio, iter) {
 			rbio->bio_pages[page_index + i] = bvec.bv_page;
 			i++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	spin_unlock_irq(&rbio->bio_list_lock);
-पूर्ण
+}
 
 /*
  * this is called from one of two situations.  We either
- * have a full stripe from the higher layers, or we've पढ़ो all
+ * have a full stripe from the higher layers, or we've read all
  * the missing bits off disk.
  *
- * This will calculate the parity and then send करोwn any
+ * This will calculate the parity and then send down any
  * changed blocks.
  */
-अटल noअंतरभूत व्योम finish_rmw(काष्ठा btrfs_raid_bio *rbio)
-अणु
-	काष्ठा btrfs_bio *bbio = rbio->bbio;
-	व्योम **poपूर्णांकers = rbio->finish_poपूर्णांकers;
-	पूर्णांक nr_data = rbio->nr_data;
-	पूर्णांक stripe;
-	पूर्णांक pagenr;
+static noinline void finish_rmw(struct btrfs_raid_bio *rbio)
+{
+	struct btrfs_bio *bbio = rbio->bbio;
+	void **pointers = rbio->finish_pointers;
+	int nr_data = rbio->nr_data;
+	int stripe;
+	int pagenr;
 	bool has_qstripe;
-	काष्ठा bio_list bio_list;
-	काष्ठा bio *bio;
-	पूर्णांक ret;
+	struct bio_list bio_list;
+	struct bio *bio;
+	int ret;
 
 	bio_list_init(&bio_list);
 
-	अगर (rbio->real_stripes - rbio->nr_data == 1)
+	if (rbio->real_stripes - rbio->nr_data == 1)
 		has_qstripe = false;
-	अन्यथा अगर (rbio->real_stripes - rbio->nr_data == 2)
+	else if (rbio->real_stripes - rbio->nr_data == 2)
 		has_qstripe = true;
-	अन्यथा
+	else
 		BUG();
 
-	/* at this poपूर्णांक we either have a full stripe,
-	 * or we've पढ़ो the full stripe from the drive.
-	 * recalculate the parity and ग_लिखो the new results.
+	/* at this point we either have a full stripe,
+	 * or we've read the full stripe from the drive.
+	 * recalculate the parity and write the new results.
 	 *
 	 * We're not allowed to add any new bios to the
-	 * bio list here, anyone अन्यथा that wants to
-	 * change this stripe needs to करो their own rmw.
+	 * bio list here, anyone else that wants to
+	 * change this stripe needs to do their own rmw.
 	 */
 	spin_lock_irq(&rbio->bio_list_lock);
 	set_bit(RBIO_RMW_LOCKED_BIT, &rbio->flags);
@@ -1215,33 +1214,33 @@ out:
 
 	/*
 	 * now that we've set rmw_locked, run through the
-	 * bio list one last समय and map the page poपूर्णांकers
+	 * bio list one last time and map the page pointers
 	 *
-	 * We करोn't cache full rbios because we're assuming
+	 * We don't cache full rbios because we're assuming
 	 * the higher layers are unlikely to use this area of
-	 * the disk again soon.  If they करो use it again,
+	 * the disk again soon.  If they do use it again,
 	 * hopefully they will send another full bio.
 	 */
 	index_rbio_pages(rbio);
-	अगर (!rbio_is_full(rbio))
+	if (!rbio_is_full(rbio))
 		cache_rbio_pages(rbio);
-	अन्यथा
+	else
 		clear_bit(RBIO_CACHE_READY_BIT, &rbio->flags);
 
-	क्रम (pagenr = 0; pagenr < rbio->stripe_npages; pagenr++) अणु
-		काष्ठा page *p;
+	for (pagenr = 0; pagenr < rbio->stripe_npages; pagenr++) {
+		struct page *p;
 		/* first collect one page from each data stripe */
-		क्रम (stripe = 0; stripe < nr_data; stripe++) अणु
+		for (stripe = 0; stripe < nr_data; stripe++) {
 			p = page_in_rbio(rbio, stripe, pagenr, 0);
-			poपूर्णांकers[stripe] = kmap_local_page(p);
-		पूर्ण
+			pointers[stripe] = kmap_local_page(p);
+		}
 
 		/* then add the parity stripe */
 		p = rbio_pstripe_page(rbio, pagenr);
 		SetPageUptodate(p);
-		poपूर्णांकers[stripe++] = kmap_local_page(p);
+		pointers[stripe++] = kmap_local_page(p);
 
-		अगर (has_qstripe) अणु
+		if (has_qstripe) {
 
 			/*
 			 * raid6, add the qstripe and call the
@@ -1249,490 +1248,490 @@ out:
 			 */
 			p = rbio_qstripe_page(rbio, pagenr);
 			SetPageUptodate(p);
-			poपूर्णांकers[stripe++] = kmap_local_page(p);
+			pointers[stripe++] = kmap_local_page(p);
 
 			raid6_call.gen_syndrome(rbio->real_stripes, PAGE_SIZE,
-						poपूर्णांकers);
-		पूर्ण अन्यथा अणु
+						pointers);
+		} else {
 			/* raid5 */
-			copy_page(poपूर्णांकers[nr_data], poपूर्णांकers[0]);
-			run_xor(poपूर्णांकers + 1, nr_data - 1, PAGE_SIZE);
-		पूर्ण
-		क्रम (stripe = stripe - 1; stripe >= 0; stripe--)
-			kunmap_local(poपूर्णांकers[stripe]);
-	पूर्ण
+			copy_page(pointers[nr_data], pointers[0]);
+			run_xor(pointers + 1, nr_data - 1, PAGE_SIZE);
+		}
+		for (stripe = stripe - 1; stripe >= 0; stripe--)
+			kunmap_local(pointers[stripe]);
+	}
 
 	/*
-	 * समय to start writing.  Make bios क्रम everything from the
+	 * time to start writing.  Make bios for everything from the
 	 * higher layers (the bio_list in our rbio) and our p/q.  Ignore
-	 * everything अन्यथा.
+	 * everything else.
 	 */
-	क्रम (stripe = 0; stripe < rbio->real_stripes; stripe++) अणु
-		क्रम (pagenr = 0; pagenr < rbio->stripe_npages; pagenr++) अणु
-			काष्ठा page *page;
-			अगर (stripe < rbio->nr_data) अणु
+	for (stripe = 0; stripe < rbio->real_stripes; stripe++) {
+		for (pagenr = 0; pagenr < rbio->stripe_npages; pagenr++) {
+			struct page *page;
+			if (stripe < rbio->nr_data) {
 				page = page_in_rbio(rbio, stripe, pagenr, 1);
-				अगर (!page)
-					जारी;
-			पूर्ण अन्यथा अणु
+				if (!page)
+					continue;
+			} else {
 			       page = rbio_stripe_page(rbio, stripe, pagenr);
-			पूर्ण
+			}
 
 			ret = rbio_add_io_page(rbio, &bio_list,
 				       page, stripe, pagenr, rbio->stripe_len);
-			अगर (ret)
-				जाओ cleanup;
-		पूर्ण
-	पूर्ण
+			if (ret)
+				goto cleanup;
+		}
+	}
 
-	अगर (likely(!bbio->num_tgtdevs))
-		जाओ ग_लिखो_data;
+	if (likely(!bbio->num_tgtdevs))
+		goto write_data;
 
-	क्रम (stripe = 0; stripe < rbio->real_stripes; stripe++) अणु
-		अगर (!bbio->tgtdev_map[stripe])
-			जारी;
+	for (stripe = 0; stripe < rbio->real_stripes; stripe++) {
+		if (!bbio->tgtdev_map[stripe])
+			continue;
 
-		क्रम (pagenr = 0; pagenr < rbio->stripe_npages; pagenr++) अणु
-			काष्ठा page *page;
-			अगर (stripe < rbio->nr_data) अणु
+		for (pagenr = 0; pagenr < rbio->stripe_npages; pagenr++) {
+			struct page *page;
+			if (stripe < rbio->nr_data) {
 				page = page_in_rbio(rbio, stripe, pagenr, 1);
-				अगर (!page)
-					जारी;
-			पूर्ण अन्यथा अणु
+				if (!page)
+					continue;
+			} else {
 			       page = rbio_stripe_page(rbio, stripe, pagenr);
-			पूर्ण
+			}
 
 			ret = rbio_add_io_page(rbio, &bio_list, page,
 					       rbio->bbio->tgtdev_map[stripe],
 					       pagenr, rbio->stripe_len);
-			अगर (ret)
-				जाओ cleanup;
-		पूर्ण
-	पूर्ण
+			if (ret)
+				goto cleanup;
+		}
+	}
 
-ग_लिखो_data:
+write_data:
 	atomic_set(&rbio->stripes_pending, bio_list_size(&bio_list));
-	BUG_ON(atomic_पढ़ो(&rbio->stripes_pending) == 0);
+	BUG_ON(atomic_read(&rbio->stripes_pending) == 0);
 
-	जबतक ((bio = bio_list_pop(&bio_list))) अणु
-		bio->bi_निजी = rbio;
-		bio->bi_end_io = raid_ग_लिखो_end_io;
+	while ((bio = bio_list_pop(&bio_list))) {
+		bio->bi_private = rbio;
+		bio->bi_end_io = raid_write_end_io;
 		bio->bi_opf = REQ_OP_WRITE;
 
 		submit_bio(bio);
-	पूर्ण
-	वापस;
+	}
+	return;
 
 cleanup:
 	rbio_orig_end_io(rbio, BLK_STS_IOERR);
 
-	जबतक ((bio = bio_list_pop(&bio_list)))
+	while ((bio = bio_list_pop(&bio_list)))
 		bio_put(bio);
-पूर्ण
+}
 
 /*
- * helper to find the stripe number क्रम a given bio.  Used to figure out which
+ * helper to find the stripe number for a given bio.  Used to figure out which
  * stripe has failed.  This expects the bio to correspond to a physical disk,
  * so it looks up based on physical sector numbers.
  */
-अटल पूर्णांक find_bio_stripe(काष्ठा btrfs_raid_bio *rbio,
-			   काष्ठा bio *bio)
-अणु
+static int find_bio_stripe(struct btrfs_raid_bio *rbio,
+			   struct bio *bio)
+{
 	u64 physical = bio->bi_iter.bi_sector;
-	पूर्णांक i;
-	काष्ठा btrfs_bio_stripe *stripe;
+	int i;
+	struct btrfs_bio_stripe *stripe;
 
 	physical <<= 9;
 
-	क्रम (i = 0; i < rbio->bbio->num_stripes; i++) अणु
+	for (i = 0; i < rbio->bbio->num_stripes; i++) {
 		stripe = &rbio->bbio->stripes[i];
-		अगर (in_range(physical, stripe->physical, rbio->stripe_len) &&
-		    stripe->dev->bdev && bio->bi_bdev == stripe->dev->bdev) अणु
-			वापस i;
-		पूर्ण
-	पूर्ण
-	वापस -1;
-पूर्ण
+		if (in_range(physical, stripe->physical, rbio->stripe_len) &&
+		    stripe->dev->bdev && bio->bi_bdev == stripe->dev->bdev) {
+			return i;
+		}
+	}
+	return -1;
+}
 
 /*
- * helper to find the stripe number क्रम a given
- * bio (beक्रमe mapping).  Used to figure out which stripe has
+ * helper to find the stripe number for a given
+ * bio (before mapping).  Used to figure out which stripe has
  * failed.  This looks up based on logical block numbers.
  */
-अटल पूर्णांक find_logical_bio_stripe(काष्ठा btrfs_raid_bio *rbio,
-				   काष्ठा bio *bio)
-अणु
+static int find_logical_bio_stripe(struct btrfs_raid_bio *rbio,
+				   struct bio *bio)
+{
 	u64 logical = bio->bi_iter.bi_sector << 9;
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < rbio->nr_data; i++) अणु
+	for (i = 0; i < rbio->nr_data; i++) {
 		u64 stripe_start = rbio->bbio->raid_map[i];
 
-		अगर (in_range(logical, stripe_start, rbio->stripe_len))
-			वापस i;
-	पूर्ण
-	वापस -1;
-पूर्ण
+		if (in_range(logical, stripe_start, rbio->stripe_len))
+			return i;
+	}
+	return -1;
+}
 
 /*
- * वापसs -EIO अगर we had too many failures
+ * returns -EIO if we had too many failures
  */
-अटल पूर्णांक fail_rbio_index(काष्ठा btrfs_raid_bio *rbio, पूर्णांक failed)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret = 0;
+static int fail_rbio_index(struct btrfs_raid_bio *rbio, int failed)
+{
+	unsigned long flags;
+	int ret = 0;
 
 	spin_lock_irqsave(&rbio->bio_list_lock, flags);
 
-	/* we alपढ़ोy know this stripe is bad, move on */
-	अगर (rbio->faila == failed || rbio->failb == failed)
-		जाओ out;
+	/* we already know this stripe is bad, move on */
+	if (rbio->faila == failed || rbio->failb == failed)
+		goto out;
 
-	अगर (rbio->faila == -1) अणु
+	if (rbio->faila == -1) {
 		/* first failure on this rbio */
 		rbio->faila = failed;
 		atomic_inc(&rbio->error);
-	पूर्ण अन्यथा अगर (rbio->failb == -1) अणु
+	} else if (rbio->failb == -1) {
 		/* second failure on this rbio */
 		rbio->failb = failed;
 		atomic_inc(&rbio->error);
-	पूर्ण अन्यथा अणु
+	} else {
 		ret = -EIO;
-	पूर्ण
+	}
 out:
 	spin_unlock_irqrestore(&rbio->bio_list_lock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * helper to fail a stripe based on a physical disk
  * bio.
  */
-अटल पूर्णांक fail_bio_stripe(काष्ठा btrfs_raid_bio *rbio,
-			   काष्ठा bio *bio)
-अणु
-	पूर्णांक failed = find_bio_stripe(rbio, bio);
+static int fail_bio_stripe(struct btrfs_raid_bio *rbio,
+			   struct bio *bio)
+{
+	int failed = find_bio_stripe(rbio, bio);
 
-	अगर (failed < 0)
-		वापस -EIO;
+	if (failed < 0)
+		return -EIO;
 
-	वापस fail_rbio_index(rbio, failed);
-पूर्ण
+	return fail_rbio_index(rbio, failed);
+}
 
 /*
- * this sets each page in the bio uptodate.  It should only be used on निजी
+ * this sets each page in the bio uptodate.  It should only be used on private
  * rbio pages, nothing that comes in from the higher layers
  */
-अटल व्योम set_bio_pages_uptodate(काष्ठा bio *bio)
-अणु
-	काष्ठा bio_vec *bvec;
-	काष्ठा bvec_iter_all iter_all;
+static void set_bio_pages_uptodate(struct bio *bio)
+{
+	struct bio_vec *bvec;
+	struct bvec_iter_all iter_all;
 
 	ASSERT(!bio_flagged(bio, BIO_CLONED));
 
-	bio_क्रम_each_segment_all(bvec, bio, iter_all)
+	bio_for_each_segment_all(bvec, bio, iter_all)
 		SetPageUptodate(bvec->bv_page);
-पूर्ण
+}
 
 /*
- * end io क्रम the पढ़ो phase of the rmw cycle.  All the bios here are physical
- * stripe bios we've पढ़ो from the disk so we can recalculate the parity of the
+ * end io for the read phase of the rmw cycle.  All the bios here are physical
+ * stripe bios we've read from the disk so we can recalculate the parity of the
  * stripe.
  *
- * This will usually kick off finish_rmw once all the bios are पढ़ो in, but it
- * may trigger parity reस्थिरruction अगर we had any errors aदीर्घ the way
+ * This will usually kick off finish_rmw once all the bios are read in, but it
+ * may trigger parity reconstruction if we had any errors along the way
  */
-अटल व्योम raid_rmw_end_io(काष्ठा bio *bio)
-अणु
-	काष्ठा btrfs_raid_bio *rbio = bio->bi_निजी;
+static void raid_rmw_end_io(struct bio *bio)
+{
+	struct btrfs_raid_bio *rbio = bio->bi_private;
 
-	अगर (bio->bi_status)
+	if (bio->bi_status)
 		fail_bio_stripe(rbio, bio);
-	अन्यथा
+	else
 		set_bio_pages_uptodate(bio);
 
 	bio_put(bio);
 
-	अगर (!atomic_dec_and_test(&rbio->stripes_pending))
-		वापस;
+	if (!atomic_dec_and_test(&rbio->stripes_pending))
+		return;
 
-	अगर (atomic_पढ़ो(&rbio->error) > rbio->bbio->max_errors)
-		जाओ cleanup;
+	if (atomic_read(&rbio->error) > rbio->bbio->max_errors)
+		goto cleanup;
 
 	/*
-	 * this will normally call finish_rmw to start our ग_लिखो
-	 * but अगर there are any failed stripes we'll reस्थिरruct
+	 * this will normally call finish_rmw to start our write
+	 * but if there are any failed stripes we'll reconstruct
 	 * from parity first
 	 */
-	validate_rbio_क्रम_rmw(rbio);
-	वापस;
+	validate_rbio_for_rmw(rbio);
+	return;
 
 cleanup:
 
 	rbio_orig_end_io(rbio, BLK_STS_IOERR);
-पूर्ण
+}
 
 /*
  * the stripe must be locked by the caller.  It will
- * unlock after all the ग_लिखोs are करोne
+ * unlock after all the writes are done
  */
-अटल पूर्णांक raid56_rmw_stripe(काष्ठा btrfs_raid_bio *rbio)
-अणु
-	पूर्णांक bios_to_पढ़ो = 0;
-	काष्ठा bio_list bio_list;
-	पूर्णांक ret;
-	पूर्णांक pagenr;
-	पूर्णांक stripe;
-	काष्ठा bio *bio;
+static int raid56_rmw_stripe(struct btrfs_raid_bio *rbio)
+{
+	int bios_to_read = 0;
+	struct bio_list bio_list;
+	int ret;
+	int pagenr;
+	int stripe;
+	struct bio *bio;
 
 	bio_list_init(&bio_list);
 
 	ret = alloc_rbio_pages(rbio);
-	अगर (ret)
-		जाओ cleanup;
+	if (ret)
+		goto cleanup;
 
 	index_rbio_pages(rbio);
 
 	atomic_set(&rbio->error, 0);
 	/*
-	 * build a list of bios to पढ़ो all the missing parts of this
+	 * build a list of bios to read all the missing parts of this
 	 * stripe
 	 */
-	क्रम (stripe = 0; stripe < rbio->nr_data; stripe++) अणु
-		क्रम (pagenr = 0; pagenr < rbio->stripe_npages; pagenr++) अणु
-			काष्ठा page *page;
+	for (stripe = 0; stripe < rbio->nr_data; stripe++) {
+		for (pagenr = 0; pagenr < rbio->stripe_npages; pagenr++) {
+			struct page *page;
 			/*
 			 * we want to find all the pages missing from
-			 * the rbio and पढ़ो them from the disk.  If
+			 * the rbio and read them from the disk.  If
 			 * page_in_rbio finds a page in the bio list
-			 * we करोn't need to पढ़ो it off the stripe.
+			 * we don't need to read it off the stripe.
 			 */
 			page = page_in_rbio(rbio, stripe, pagenr, 1);
-			अगर (page)
-				जारी;
+			if (page)
+				continue;
 
 			page = rbio_stripe_page(rbio, stripe, pagenr);
 			/*
 			 * the bio cache may have handed us an uptodate
 			 * page.  If so, be happy and use it
 			 */
-			अगर (PageUptodate(page))
-				जारी;
+			if (PageUptodate(page))
+				continue;
 
 			ret = rbio_add_io_page(rbio, &bio_list, page,
 				       stripe, pagenr, rbio->stripe_len);
-			अगर (ret)
-				जाओ cleanup;
-		पूर्ण
-	पूर्ण
+			if (ret)
+				goto cleanup;
+		}
+	}
 
-	bios_to_पढ़ो = bio_list_size(&bio_list);
-	अगर (!bios_to_पढ़ो) अणु
+	bios_to_read = bio_list_size(&bio_list);
+	if (!bios_to_read) {
 		/*
-		 * this can happen अगर others have merged with
-		 * us, it means there is nothing left to पढ़ो.
-		 * But अगर there are missing devices it may not be
-		 * safe to करो the full stripe ग_लिखो yet.
+		 * this can happen if others have merged with
+		 * us, it means there is nothing left to read.
+		 * But if there are missing devices it may not be
+		 * safe to do the full stripe write yet.
 		 */
-		जाओ finish;
-	पूर्ण
+		goto finish;
+	}
 
 	/*
-	 * the bbio may be मुक्तd once we submit the last bio.  Make sure
+	 * the bbio may be freed once we submit the last bio.  Make sure
 	 * not to touch it after that
 	 */
-	atomic_set(&rbio->stripes_pending, bios_to_पढ़ो);
-	जबतक ((bio = bio_list_pop(&bio_list))) अणु
-		bio->bi_निजी = rbio;
+	atomic_set(&rbio->stripes_pending, bios_to_read);
+	while ((bio = bio_list_pop(&bio_list))) {
+		bio->bi_private = rbio;
 		bio->bi_end_io = raid_rmw_end_io;
 		bio->bi_opf = REQ_OP_READ;
 
 		btrfs_bio_wq_end_io(rbio->fs_info, bio, BTRFS_WQ_ENDIO_RAID56);
 
 		submit_bio(bio);
-	पूर्ण
-	/* the actual ग_लिखो will happen once the पढ़ोs are करोne */
-	वापस 0;
+	}
+	/* the actual write will happen once the reads are done */
+	return 0;
 
 cleanup:
 	rbio_orig_end_io(rbio, BLK_STS_IOERR);
 
-	जबतक ((bio = bio_list_pop(&bio_list)))
+	while ((bio = bio_list_pop(&bio_list)))
 		bio_put(bio);
 
-	वापस -EIO;
+	return -EIO;
 
 finish:
-	validate_rbio_क्रम_rmw(rbio);
-	वापस 0;
-पूर्ण
+	validate_rbio_for_rmw(rbio);
+	return 0;
+}
 
 /*
- * अगर the upper layers pass in a full stripe, we thank them by only allocating
- * enough pages to hold the parity, and sending it all करोwn quickly.
+ * if the upper layers pass in a full stripe, we thank them by only allocating
+ * enough pages to hold the parity, and sending it all down quickly.
  */
-अटल पूर्णांक full_stripe_ग_लिखो(काष्ठा btrfs_raid_bio *rbio)
-अणु
-	पूर्णांक ret;
+static int full_stripe_write(struct btrfs_raid_bio *rbio)
+{
+	int ret;
 
 	ret = alloc_rbio_parity_pages(rbio);
-	अगर (ret) अणु
-		__मुक्त_raid_bio(rbio);
-		वापस ret;
-	पूर्ण
+	if (ret) {
+		__free_raid_bio(rbio);
+		return ret;
+	}
 
 	ret = lock_stripe_add(rbio);
-	अगर (ret == 0)
+	if (ret == 0)
 		finish_rmw(rbio);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * partial stripe ग_लिखोs get handed over to async helpers.
- * We're really hoping to merge a few more ग_लिखोs पूर्णांकo this
- * rbio beक्रमe calculating new parity
+ * partial stripe writes get handed over to async helpers.
+ * We're really hoping to merge a few more writes into this
+ * rbio before calculating new parity
  */
-अटल पूर्णांक partial_stripe_ग_लिखो(काष्ठा btrfs_raid_bio *rbio)
-अणु
-	पूर्णांक ret;
+static int partial_stripe_write(struct btrfs_raid_bio *rbio)
+{
+	int ret;
 
 	ret = lock_stripe_add(rbio);
-	अगर (ret == 0)
+	if (ret == 0)
 		start_async_work(rbio, rmw_work);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * someबार जबतक we were पढ़ोing from the drive to
- * recalculate parity, enough new bios come पूर्णांकo create
- * a full stripe.  So we करो a check here to see अगर we can
+ * sometimes while we were reading from the drive to
+ * recalculate parity, enough new bios come into create
+ * a full stripe.  So we do a check here to see if we can
  * go directly to finish_rmw
  */
-अटल पूर्णांक __raid56_parity_ग_लिखो(काष्ठा btrfs_raid_bio *rbio)
-अणु
-	/* head off पूर्णांकo rmw land अगर we करोn't have a full stripe */
-	अगर (!rbio_is_full(rbio))
-		वापस partial_stripe_ग_लिखो(rbio);
-	वापस full_stripe_ग_लिखो(rbio);
-पूर्ण
+static int __raid56_parity_write(struct btrfs_raid_bio *rbio)
+{
+	/* head off into rmw land if we don't have a full stripe */
+	if (!rbio_is_full(rbio))
+		return partial_stripe_write(rbio);
+	return full_stripe_write(rbio);
+}
 
 /*
  * We use plugging call backs to collect full stripes.
- * Any समय we get a partial stripe ग_लिखो जबतक plugged
- * we collect it पूर्णांकo a list.  When the unplug comes करोwn,
+ * Any time we get a partial stripe write while plugged
+ * we collect it into a list.  When the unplug comes down,
  * we sort the list by logical block number and merge
- * everything we can पूर्णांकo the same rbios
+ * everything we can into the same rbios
  */
-काष्ठा btrfs_plug_cb अणु
-	काष्ठा blk_plug_cb cb;
-	काष्ठा btrfs_fs_info *info;
-	काष्ठा list_head rbio_list;
-	काष्ठा btrfs_work work;
-पूर्ण;
+struct btrfs_plug_cb {
+	struct blk_plug_cb cb;
+	struct btrfs_fs_info *info;
+	struct list_head rbio_list;
+	struct btrfs_work work;
+};
 
 /*
- * rbios on the plug list are sorted क्रम easier merging.
+ * rbios on the plug list are sorted for easier merging.
  */
-अटल पूर्णांक plug_cmp(व्योम *priv, स्थिर काष्ठा list_head *a,
-		    स्थिर काष्ठा list_head *b)
-अणु
-	काष्ठा btrfs_raid_bio *ra = container_of(a, काष्ठा btrfs_raid_bio,
+static int plug_cmp(void *priv, const struct list_head *a,
+		    const struct list_head *b)
+{
+	struct btrfs_raid_bio *ra = container_of(a, struct btrfs_raid_bio,
 						 plug_list);
-	काष्ठा btrfs_raid_bio *rb = container_of(b, काष्ठा btrfs_raid_bio,
+	struct btrfs_raid_bio *rb = container_of(b, struct btrfs_raid_bio,
 						 plug_list);
 	u64 a_sector = ra->bio_list.head->bi_iter.bi_sector;
 	u64 b_sector = rb->bio_list.head->bi_iter.bi_sector;
 
-	अगर (a_sector < b_sector)
-		वापस -1;
-	अगर (a_sector > b_sector)
-		वापस 1;
-	वापस 0;
-पूर्ण
+	if (a_sector < b_sector)
+		return -1;
+	if (a_sector > b_sector)
+		return 1;
+	return 0;
+}
 
-अटल व्योम run_plug(काष्ठा btrfs_plug_cb *plug)
-अणु
-	काष्ठा btrfs_raid_bio *cur;
-	काष्ठा btrfs_raid_bio *last = शून्य;
+static void run_plug(struct btrfs_plug_cb *plug)
+{
+	struct btrfs_raid_bio *cur;
+	struct btrfs_raid_bio *last = NULL;
 
 	/*
 	 * sort our plug list then try to merge
 	 * everything we can in hopes of creating full
 	 * stripes.
 	 */
-	list_sort(शून्य, &plug->rbio_list, plug_cmp);
-	जबतक (!list_empty(&plug->rbio_list)) अणु
+	list_sort(NULL, &plug->rbio_list, plug_cmp);
+	while (!list_empty(&plug->rbio_list)) {
 		cur = list_entry(plug->rbio_list.next,
-				 काष्ठा btrfs_raid_bio, plug_list);
+				 struct btrfs_raid_bio, plug_list);
 		list_del_init(&cur->plug_list);
 
-		अगर (rbio_is_full(cur)) अणु
-			पूर्णांक ret;
+		if (rbio_is_full(cur)) {
+			int ret;
 
-			/* we have a full stripe, send it करोwn */
-			ret = full_stripe_ग_लिखो(cur);
+			/* we have a full stripe, send it down */
+			ret = full_stripe_write(cur);
 			BUG_ON(ret);
-			जारी;
-		पूर्ण
-		अगर (last) अणु
-			अगर (rbio_can_merge(last, cur)) अणु
+			continue;
+		}
+		if (last) {
+			if (rbio_can_merge(last, cur)) {
 				merge_rbio(last, cur);
-				__मुक्त_raid_bio(cur);
-				जारी;
+				__free_raid_bio(cur);
+				continue;
 
-			पूर्ण
-			__raid56_parity_ग_लिखो(last);
-		पूर्ण
+			}
+			__raid56_parity_write(last);
+		}
 		last = cur;
-	पूर्ण
-	अगर (last) अणु
-		__raid56_parity_ग_लिखो(last);
-	पूर्ण
-	kमुक्त(plug);
-पूर्ण
+	}
+	if (last) {
+		__raid56_parity_write(last);
+	}
+	kfree(plug);
+}
 
 /*
- * अगर the unplug comes from schedule, we have to push the
- * work off to a helper thपढ़ो
+ * if the unplug comes from schedule, we have to push the
+ * work off to a helper thread
  */
-अटल व्योम unplug_work(काष्ठा btrfs_work *work)
-अणु
-	काष्ठा btrfs_plug_cb *plug;
-	plug = container_of(work, काष्ठा btrfs_plug_cb, work);
+static void unplug_work(struct btrfs_work *work)
+{
+	struct btrfs_plug_cb *plug;
+	plug = container_of(work, struct btrfs_plug_cb, work);
 	run_plug(plug);
-पूर्ण
+}
 
-अटल व्योम btrfs_raid_unplug(काष्ठा blk_plug_cb *cb, bool from_schedule)
-अणु
-	काष्ठा btrfs_plug_cb *plug;
-	plug = container_of(cb, काष्ठा btrfs_plug_cb, cb);
+static void btrfs_raid_unplug(struct blk_plug_cb *cb, bool from_schedule)
+{
+	struct btrfs_plug_cb *plug;
+	plug = container_of(cb, struct btrfs_plug_cb, cb);
 
-	अगर (from_schedule) अणु
-		btrfs_init_work(&plug->work, unplug_work, शून्य, शून्य);
+	if (from_schedule) {
+		btrfs_init_work(&plug->work, unplug_work, NULL, NULL);
 		btrfs_queue_work(plug->info->rmw_workers,
 				 &plug->work);
-		वापस;
-	पूर्ण
+		return;
+	}
 	run_plug(plug);
-पूर्ण
+}
 
 /*
- * our मुख्य entry poपूर्णांक क्रम ग_लिखोs from the rest of the FS.
+ * our main entry point for writes from the rest of the FS.
  */
-पूर्णांक raid56_parity_ग_लिखो(काष्ठा btrfs_fs_info *fs_info, काष्ठा bio *bio,
-			काष्ठा btrfs_bio *bbio, u64 stripe_len)
-अणु
-	काष्ठा btrfs_raid_bio *rbio;
-	काष्ठा btrfs_plug_cb *plug = शून्य;
-	काष्ठा blk_plug_cb *cb;
-	पूर्णांक ret;
+int raid56_parity_write(struct btrfs_fs_info *fs_info, struct bio *bio,
+			struct btrfs_bio *bbio, u64 stripe_len)
+{
+	struct btrfs_raid_bio *rbio;
+	struct btrfs_plug_cb *plug = NULL;
+	struct blk_plug_cb *cb;
+	int ret;
 
 	rbio = alloc_rbio(fs_info, bbio, stripe_len);
-	अगर (IS_ERR(rbio)) अणु
+	if (IS_ERR(rbio)) {
 		btrfs_put_bbio(bbio);
-		वापस PTR_ERR(rbio);
-	पूर्ण
+		return PTR_ERR(rbio);
+	}
 	bio_list_add(&rbio->bio_list, bio);
 	rbio->bio_list_bytes = bio->bi_iter.bi_size;
 	rbio->operation = BTRFS_RBIO_WRITE;
@@ -1741,499 +1740,499 @@ finish:
 	rbio->generic_bio_cnt = 1;
 
 	/*
-	 * करोn't plug on full rbios, just get them out the करोor
+	 * don't plug on full rbios, just get them out the door
 	 * as quickly as we can
 	 */
-	अगर (rbio_is_full(rbio)) अणु
-		ret = full_stripe_ग_लिखो(rbio);
-		अगर (ret)
+	if (rbio_is_full(rbio)) {
+		ret = full_stripe_write(rbio);
+		if (ret)
 			btrfs_bio_counter_dec(fs_info);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	cb = blk_check_plugged(btrfs_raid_unplug, fs_info, माप(*plug));
-	अगर (cb) अणु
-		plug = container_of(cb, काष्ठा btrfs_plug_cb, cb);
-		अगर (!plug->info) अणु
+	cb = blk_check_plugged(btrfs_raid_unplug, fs_info, sizeof(*plug));
+	if (cb) {
+		plug = container_of(cb, struct btrfs_plug_cb, cb);
+		if (!plug->info) {
 			plug->info = fs_info;
 			INIT_LIST_HEAD(&plug->rbio_list);
-		पूर्ण
+		}
 		list_add_tail(&rbio->plug_list, &plug->rbio_list);
 		ret = 0;
-	पूर्ण अन्यथा अणु
-		ret = __raid56_parity_ग_लिखो(rbio);
-		अगर (ret)
+	} else {
+		ret = __raid56_parity_write(rbio);
+		if (ret)
 			btrfs_bio_counter_dec(fs_info);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
 /*
- * all parity reस्थिरruction happens here.  We've पढ़ो in everything
- * we can find from the drives and this करोes the heavy lअगरting of
+ * all parity reconstruction happens here.  We've read in everything
+ * we can find from the drives and this does the heavy lifting of
  * sorting the good from the bad.
  */
-अटल व्योम __raid_recover_end_io(काष्ठा btrfs_raid_bio *rbio)
-अणु
-	पूर्णांक pagenr, stripe;
-	व्योम **poपूर्णांकers;
-	व्योम **unmap_array;
-	पूर्णांक faila = -1, failb = -1;
-	काष्ठा page *page;
+static void __raid_recover_end_io(struct btrfs_raid_bio *rbio)
+{
+	int pagenr, stripe;
+	void **pointers;
+	void **unmap_array;
+	int faila = -1, failb = -1;
+	struct page *page;
 	blk_status_t err;
-	पूर्णांक i;
+	int i;
 
-	poपूर्णांकers = kसुस्मृति(rbio->real_stripes, माप(व्योम *), GFP_NOFS);
-	अगर (!poपूर्णांकers) अणु
+	pointers = kcalloc(rbio->real_stripes, sizeof(void *), GFP_NOFS);
+	if (!pointers) {
 		err = BLK_STS_RESOURCE;
-		जाओ cleanup_io;
-	पूर्ण
+		goto cleanup_io;
+	}
 
 	/*
-	 * Store copy of poपूर्णांकers that करोes not get reordered during
-	 * reस्थिरruction so that kunmap_local works.
+	 * Store copy of pointers that does not get reordered during
+	 * reconstruction so that kunmap_local works.
 	 */
-	unmap_array = kसुस्मृति(rbio->real_stripes, माप(व्योम *), GFP_NOFS);
-	अगर (!unmap_array) अणु
+	unmap_array = kcalloc(rbio->real_stripes, sizeof(void *), GFP_NOFS);
+	if (!unmap_array) {
 		err = BLK_STS_RESOURCE;
-		जाओ cleanup_poपूर्णांकers;
-	पूर्ण
+		goto cleanup_pointers;
+	}
 
 	faila = rbio->faila;
 	failb = rbio->failb;
 
-	अगर (rbio->operation == BTRFS_RBIO_READ_REBUILD ||
-	    rbio->operation == BTRFS_RBIO_REBUILD_MISSING) अणु
+	if (rbio->operation == BTRFS_RBIO_READ_REBUILD ||
+	    rbio->operation == BTRFS_RBIO_REBUILD_MISSING) {
 		spin_lock_irq(&rbio->bio_list_lock);
 		set_bit(RBIO_RMW_LOCKED_BIT, &rbio->flags);
 		spin_unlock_irq(&rbio->bio_list_lock);
-	पूर्ण
+	}
 
 	index_rbio_pages(rbio);
 
-	क्रम (pagenr = 0; pagenr < rbio->stripe_npages; pagenr++) अणु
+	for (pagenr = 0; pagenr < rbio->stripe_npages; pagenr++) {
 		/*
-		 * Now we just use biपंचांगap to mark the horizontal stripes in
-		 * which we have data when करोing parity scrub.
+		 * Now we just use bitmap to mark the horizontal stripes in
+		 * which we have data when doing parity scrub.
 		 */
-		अगर (rbio->operation == BTRFS_RBIO_PARITY_SCRUB &&
-		    !test_bit(pagenr, rbio->dbiपंचांगap))
-			जारी;
+		if (rbio->operation == BTRFS_RBIO_PARITY_SCRUB &&
+		    !test_bit(pagenr, rbio->dbitmap))
+			continue;
 
 		/*
-		 * Setup our array of poपूर्णांकers with pages from each stripe
+		 * Setup our array of pointers with pages from each stripe
 		 *
-		 * NOTE: store a duplicate array of poपूर्णांकers to preserve the
-		 * poपूर्णांकer order
+		 * NOTE: store a duplicate array of pointers to preserve the
+		 * pointer order
 		 */
-		क्रम (stripe = 0; stripe < rbio->real_stripes; stripe++) अणु
+		for (stripe = 0; stripe < rbio->real_stripes; stripe++) {
 			/*
-			 * अगर we're rebuilding a पढ़ो, we have to use
+			 * if we're rebuilding a read, we have to use
 			 * pages from the bio list
 			 */
-			अगर ((rbio->operation == BTRFS_RBIO_READ_REBUILD ||
+			if ((rbio->operation == BTRFS_RBIO_READ_REBUILD ||
 			     rbio->operation == BTRFS_RBIO_REBUILD_MISSING) &&
-			    (stripe == faila || stripe == failb)) अणु
+			    (stripe == faila || stripe == failb)) {
 				page = page_in_rbio(rbio, stripe, pagenr, 0);
-			पूर्ण अन्यथा अणु
+			} else {
 				page = rbio_stripe_page(rbio, stripe, pagenr);
-			पूर्ण
-			poपूर्णांकers[stripe] = kmap_local_page(page);
-			unmap_array[stripe] = poपूर्णांकers[stripe];
-		पूर्ण
+			}
+			pointers[stripe] = kmap_local_page(page);
+			unmap_array[stripe] = pointers[stripe];
+		}
 
 		/* all raid6 handling here */
-		अगर (rbio->bbio->map_type & BTRFS_BLOCK_GROUP_RAID6) अणु
+		if (rbio->bbio->map_type & BTRFS_BLOCK_GROUP_RAID6) {
 			/*
 			 * single failure, rebuild from parity raid5
 			 * style
 			 */
-			अगर (failb < 0) अणु
-				अगर (faila == rbio->nr_data) अणु
+			if (failb < 0) {
+				if (faila == rbio->nr_data) {
 					/*
 					 * Just the P stripe has failed, without
 					 * a bad data or Q stripe.
-					 * TODO, we should reकरो the xor here.
+					 * TODO, we should redo the xor here.
 					 */
 					err = BLK_STS_IOERR;
-					जाओ cleanup;
-				पूर्ण
+					goto cleanup;
+				}
 				/*
 				 * a single failure in raid6 is rebuilt
 				 * in the pstripe code below
 				 */
-				जाओ pstripe;
-			पूर्ण
+				goto pstripe;
+			}
 
 			/* make sure our ps and qs are in order */
-			अगर (faila > failb)
+			if (faila > failb)
 				swap(faila, failb);
 
-			/* अगर the q stripe is failed, करो a pstripe reस्थिरruction
+			/* if the q stripe is failed, do a pstripe reconstruction
 			 * from the xors.
 			 * If both the q stripe and the P stripe are failed, we're
 			 * here due to a crc mismatch and we can't give them the
 			 * data they want
 			 */
-			अगर (rbio->bbio->raid_map[failb] == RAID6_Q_STRIPE) अणु
-				अगर (rbio->bbio->raid_map[faila] ==
-				    RAID5_P_STRIPE) अणु
+			if (rbio->bbio->raid_map[failb] == RAID6_Q_STRIPE) {
+				if (rbio->bbio->raid_map[faila] ==
+				    RAID5_P_STRIPE) {
 					err = BLK_STS_IOERR;
-					जाओ cleanup;
-				पूर्ण
+					goto cleanup;
+				}
 				/*
 				 * otherwise we have one bad data stripe and
 				 * a good P stripe.  raid5!
 				 */
-				जाओ pstripe;
-			पूर्ण
+				goto pstripe;
+			}
 
-			अगर (rbio->bbio->raid_map[failb] == RAID5_P_STRIPE) अणु
+			if (rbio->bbio->raid_map[failb] == RAID5_P_STRIPE) {
 				raid6_datap_recov(rbio->real_stripes,
-						  PAGE_SIZE, faila, poपूर्णांकers);
-			पूर्ण अन्यथा अणु
+						  PAGE_SIZE, faila, pointers);
+			} else {
 				raid6_2data_recov(rbio->real_stripes,
 						  PAGE_SIZE, faila, failb,
-						  poपूर्णांकers);
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			व्योम *p;
+						  pointers);
+			}
+		} else {
+			void *p;
 
 			/* rebuild from P stripe here (raid5 or raid6) */
 			BUG_ON(failb != -1);
 pstripe:
-			/* Copy parity block पूर्णांकo failed block to start with */
-			copy_page(poपूर्णांकers[faila], poपूर्णांकers[rbio->nr_data]);
+			/* Copy parity block into failed block to start with */
+			copy_page(pointers[faila], pointers[rbio->nr_data]);
 
-			/* rearrange the poपूर्णांकer array */
-			p = poपूर्णांकers[faila];
-			क्रम (stripe = faila; stripe < rbio->nr_data - 1; stripe++)
-				poपूर्णांकers[stripe] = poपूर्णांकers[stripe + 1];
-			poपूर्णांकers[rbio->nr_data - 1] = p;
+			/* rearrange the pointer array */
+			p = pointers[faila];
+			for (stripe = faila; stripe < rbio->nr_data - 1; stripe++)
+				pointers[stripe] = pointers[stripe + 1];
+			pointers[rbio->nr_data - 1] = p;
 
 			/* xor in the rest */
-			run_xor(poपूर्णांकers, rbio->nr_data - 1, PAGE_SIZE);
-		पूर्ण
-		/* अगर we're करोing this rebuild as part of an rmw, go through
-		 * and set all of our निजी rbio pages in the
+			run_xor(pointers, rbio->nr_data - 1, PAGE_SIZE);
+		}
+		/* if we're doing this rebuild as part of an rmw, go through
+		 * and set all of our private rbio pages in the
 		 * failed stripes as uptodate.  This way finish_rmw will
-		 * know they can be trusted.  If this was a पढ़ो reस्थिरruction,
+		 * know they can be trusted.  If this was a read reconstruction,
 		 * other endio functions will fiddle the uptodate bits
 		 */
-		अगर (rbio->operation == BTRFS_RBIO_WRITE) अणु
-			क्रम (i = 0;  i < rbio->stripe_npages; i++) अणु
-				अगर (faila != -1) अणु
+		if (rbio->operation == BTRFS_RBIO_WRITE) {
+			for (i = 0;  i < rbio->stripe_npages; i++) {
+				if (faila != -1) {
 					page = rbio_stripe_page(rbio, faila, i);
 					SetPageUptodate(page);
-				पूर्ण
-				अगर (failb != -1) अणु
+				}
+				if (failb != -1) {
 					page = rbio_stripe_page(rbio, failb, i);
 					SetPageUptodate(page);
-				पूर्ण
-			पूर्ण
-		पूर्ण
-		क्रम (stripe = rbio->real_stripes - 1; stripe >= 0; stripe--)
+				}
+			}
+		}
+		for (stripe = rbio->real_stripes - 1; stripe >= 0; stripe--)
 			kunmap_local(unmap_array[stripe]);
-	पूर्ण
+	}
 
 	err = BLK_STS_OK;
 cleanup:
-	kमुक्त(unmap_array);
-cleanup_poपूर्णांकers:
-	kमुक्त(poपूर्णांकers);
+	kfree(unmap_array);
+cleanup_pointers:
+	kfree(pointers);
 
 cleanup_io:
 	/*
-	 * Similar to READ_REBUILD, REBUILD_MISSING at this poपूर्णांक also has a
+	 * Similar to READ_REBUILD, REBUILD_MISSING at this point also has a
 	 * valid rbio which is consistent with ondisk content, thus such a
-	 * valid rbio can be cached to aव्योम further disk पढ़ोs.
+	 * valid rbio can be cached to avoid further disk reads.
 	 */
-	अगर (rbio->operation == BTRFS_RBIO_READ_REBUILD ||
-	    rbio->operation == BTRFS_RBIO_REBUILD_MISSING) अणु
+	if (rbio->operation == BTRFS_RBIO_READ_REBUILD ||
+	    rbio->operation == BTRFS_RBIO_REBUILD_MISSING) {
 		/*
-		 * - In हाल of two failures, where rbio->failb != -1:
+		 * - In case of two failures, where rbio->failb != -1:
 		 *
-		 *   Do not cache this rbio since the above पढ़ो reस्थिरruction
+		 *   Do not cache this rbio since the above read reconstruction
 		 *   (raid6_datap_recov() or raid6_2data_recov()) may have
 		 *   changed some content of stripes which are not identical to
-		 *   on-disk content any more, otherwise, a later ग_लिखो/recover
+		 *   on-disk content any more, otherwise, a later write/recover
 		 *   may steal stripe_pages from this rbio and end up with
 		 *   corruptions or rebuild failures.
 		 *
-		 * - In हाल of single failure, where rbio->failb == -1:
+		 * - In case of single failure, where rbio->failb == -1:
 		 *
-		 *   Cache this rbio अगरf the above पढ़ो reस्थिरruction is
+		 *   Cache this rbio iff the above read reconstruction is
 		 *   executed without problems.
 		 */
-		अगर (err == BLK_STS_OK && rbio->failb < 0)
+		if (err == BLK_STS_OK && rbio->failb < 0)
 			cache_rbio_pages(rbio);
-		अन्यथा
+		else
 			clear_bit(RBIO_CACHE_READY_BIT, &rbio->flags);
 
 		rbio_orig_end_io(rbio, err);
-	पूर्ण अन्यथा अगर (err == BLK_STS_OK) अणु
+	} else if (err == BLK_STS_OK) {
 		rbio->faila = -1;
 		rbio->failb = -1;
 
-		अगर (rbio->operation == BTRFS_RBIO_WRITE)
+		if (rbio->operation == BTRFS_RBIO_WRITE)
 			finish_rmw(rbio);
-		अन्यथा अगर (rbio->operation == BTRFS_RBIO_PARITY_SCRUB)
+		else if (rbio->operation == BTRFS_RBIO_PARITY_SCRUB)
 			finish_parity_scrub(rbio, 0);
-		अन्यथा
+		else
 			BUG();
-	पूर्ण अन्यथा अणु
+	} else {
 		rbio_orig_end_io(rbio, err);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * This is called only क्रम stripes we've पढ़ो from disk to
- * reस्थिरruct the parity.
+ * This is called only for stripes we've read from disk to
+ * reconstruct the parity.
  */
-अटल व्योम raid_recover_end_io(काष्ठा bio *bio)
-अणु
-	काष्ठा btrfs_raid_bio *rbio = bio->bi_निजी;
+static void raid_recover_end_io(struct bio *bio)
+{
+	struct btrfs_raid_bio *rbio = bio->bi_private;
 
 	/*
-	 * we only पढ़ो stripe pages off the disk, set them
-	 * up to date अगर there were no errors
+	 * we only read stripe pages off the disk, set them
+	 * up to date if there were no errors
 	 */
-	अगर (bio->bi_status)
+	if (bio->bi_status)
 		fail_bio_stripe(rbio, bio);
-	अन्यथा
+	else
 		set_bio_pages_uptodate(bio);
 	bio_put(bio);
 
-	अगर (!atomic_dec_and_test(&rbio->stripes_pending))
-		वापस;
+	if (!atomic_dec_and_test(&rbio->stripes_pending))
+		return;
 
-	अगर (atomic_पढ़ो(&rbio->error) > rbio->bbio->max_errors)
+	if (atomic_read(&rbio->error) > rbio->bbio->max_errors)
 		rbio_orig_end_io(rbio, BLK_STS_IOERR);
-	अन्यथा
+	else
 		__raid_recover_end_io(rbio);
-पूर्ण
+}
 
 /*
- * पढ़ोs everything we need off the disk to reस्थिरruct
- * the parity. endio handlers trigger final reस्थिरruction
- * when the IO is करोne.
+ * reads everything we need off the disk to reconstruct
+ * the parity. endio handlers trigger final reconstruction
+ * when the IO is done.
  *
- * This is used both क्रम पढ़ोs from the higher layers and क्रम
- * parity स्थिरruction required to finish a rmw cycle.
+ * This is used both for reads from the higher layers and for
+ * parity construction required to finish a rmw cycle.
  */
-अटल पूर्णांक __raid56_parity_recover(काष्ठा btrfs_raid_bio *rbio)
-अणु
-	पूर्णांक bios_to_पढ़ो = 0;
-	काष्ठा bio_list bio_list;
-	पूर्णांक ret;
-	पूर्णांक pagenr;
-	पूर्णांक stripe;
-	काष्ठा bio *bio;
+static int __raid56_parity_recover(struct btrfs_raid_bio *rbio)
+{
+	int bios_to_read = 0;
+	struct bio_list bio_list;
+	int ret;
+	int pagenr;
+	int stripe;
+	struct bio *bio;
 
 	bio_list_init(&bio_list);
 
 	ret = alloc_rbio_pages(rbio);
-	अगर (ret)
-		जाओ cleanup;
+	if (ret)
+		goto cleanup;
 
 	atomic_set(&rbio->error, 0);
 
 	/*
-	 * पढ़ो everything that hasn't failed.  Thanks to the
+	 * read everything that hasn't failed.  Thanks to the
 	 * stripe cache, it is possible that some or all of these
 	 * pages are going to be uptodate.
 	 */
-	क्रम (stripe = 0; stripe < rbio->real_stripes; stripe++) अणु
-		अगर (rbio->faila == stripe || rbio->failb == stripe) अणु
+	for (stripe = 0; stripe < rbio->real_stripes; stripe++) {
+		if (rbio->faila == stripe || rbio->failb == stripe) {
 			atomic_inc(&rbio->error);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		क्रम (pagenr = 0; pagenr < rbio->stripe_npages; pagenr++) अणु
-			काष्ठा page *p;
+		for (pagenr = 0; pagenr < rbio->stripe_npages; pagenr++) {
+			struct page *p;
 
 			/*
-			 * the rmw code may have alपढ़ोy पढ़ो this
+			 * the rmw code may have already read this
 			 * page in
 			 */
 			p = rbio_stripe_page(rbio, stripe, pagenr);
-			अगर (PageUptodate(p))
-				जारी;
+			if (PageUptodate(p))
+				continue;
 
 			ret = rbio_add_io_page(rbio, &bio_list,
 				       rbio_stripe_page(rbio, stripe, pagenr),
 				       stripe, pagenr, rbio->stripe_len);
-			अगर (ret < 0)
-				जाओ cleanup;
-		पूर्ण
-	पूर्ण
+			if (ret < 0)
+				goto cleanup;
+		}
+	}
 
-	bios_to_पढ़ो = bio_list_size(&bio_list);
-	अगर (!bios_to_पढ़ो) अणु
+	bios_to_read = bio_list_size(&bio_list);
+	if (!bios_to_read) {
 		/*
-		 * we might have no bios to पढ़ो just because the pages
-		 * were up to date, or we might have no bios to पढ़ो because
+		 * we might have no bios to read just because the pages
+		 * were up to date, or we might have no bios to read because
 		 * the devices were gone.
 		 */
-		अगर (atomic_पढ़ो(&rbio->error) <= rbio->bbio->max_errors) अणु
+		if (atomic_read(&rbio->error) <= rbio->bbio->max_errors) {
 			__raid_recover_end_io(rbio);
-			वापस 0;
-		पूर्ण अन्यथा अणु
-			जाओ cleanup;
-		पूर्ण
-	पूर्ण
+			return 0;
+		} else {
+			goto cleanup;
+		}
+	}
 
 	/*
-	 * the bbio may be मुक्तd once we submit the last bio.  Make sure
+	 * the bbio may be freed once we submit the last bio.  Make sure
 	 * not to touch it after that
 	 */
-	atomic_set(&rbio->stripes_pending, bios_to_पढ़ो);
-	जबतक ((bio = bio_list_pop(&bio_list))) अणु
-		bio->bi_निजी = rbio;
+	atomic_set(&rbio->stripes_pending, bios_to_read);
+	while ((bio = bio_list_pop(&bio_list))) {
+		bio->bi_private = rbio;
 		bio->bi_end_io = raid_recover_end_io;
 		bio->bi_opf = REQ_OP_READ;
 
 		btrfs_bio_wq_end_io(rbio->fs_info, bio, BTRFS_WQ_ENDIO_RAID56);
 
 		submit_bio(bio);
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 cleanup:
-	अगर (rbio->operation == BTRFS_RBIO_READ_REBUILD ||
+	if (rbio->operation == BTRFS_RBIO_READ_REBUILD ||
 	    rbio->operation == BTRFS_RBIO_REBUILD_MISSING)
 		rbio_orig_end_io(rbio, BLK_STS_IOERR);
 
-	जबतक ((bio = bio_list_pop(&bio_list)))
+	while ((bio = bio_list_pop(&bio_list)))
 		bio_put(bio);
 
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
 /*
- * the मुख्य entry poपूर्णांक क्रम पढ़ोs from the higher layers.  This
- * is really only called when the normal पढ़ो path had a failure,
- * so we assume the bio they send करोwn corresponds to a failed part
+ * the main entry point for reads from the higher layers.  This
+ * is really only called when the normal read path had a failure,
+ * so we assume the bio they send down corresponds to a failed part
  * of the drive.
  */
-पूर्णांक raid56_parity_recover(काष्ठा btrfs_fs_info *fs_info, काष्ठा bio *bio,
-			  काष्ठा btrfs_bio *bbio, u64 stripe_len,
-			  पूर्णांक mirror_num, पूर्णांक generic_io)
-अणु
-	काष्ठा btrfs_raid_bio *rbio;
-	पूर्णांक ret;
+int raid56_parity_recover(struct btrfs_fs_info *fs_info, struct bio *bio,
+			  struct btrfs_bio *bbio, u64 stripe_len,
+			  int mirror_num, int generic_io)
+{
+	struct btrfs_raid_bio *rbio;
+	int ret;
 
-	अगर (generic_io) अणु
+	if (generic_io) {
 		ASSERT(bbio->mirror_num == mirror_num);
 		btrfs_io_bio(bio)->mirror_num = mirror_num;
-	पूर्ण
+	}
 
 	rbio = alloc_rbio(fs_info, bbio, stripe_len);
-	अगर (IS_ERR(rbio)) अणु
-		अगर (generic_io)
+	if (IS_ERR(rbio)) {
+		if (generic_io)
 			btrfs_put_bbio(bbio);
-		वापस PTR_ERR(rbio);
-	पूर्ण
+		return PTR_ERR(rbio);
+	}
 
 	rbio->operation = BTRFS_RBIO_READ_REBUILD;
 	bio_list_add(&rbio->bio_list, bio);
 	rbio->bio_list_bytes = bio->bi_iter.bi_size;
 
 	rbio->faila = find_logical_bio_stripe(rbio, bio);
-	अगर (rbio->faila == -1) अणु
+	if (rbio->faila == -1) {
 		btrfs_warn(fs_info,
 	"%s could not find the bad stripe in raid56 so that we cannot recover any more (bio has logical %llu len %llu, bbio has map_type %llu)",
 			   __func__, bio->bi_iter.bi_sector << 9,
 			   (u64)bio->bi_iter.bi_size, bbio->map_type);
-		अगर (generic_io)
+		if (generic_io)
 			btrfs_put_bbio(bbio);
-		kमुक्त(rbio);
-		वापस -EIO;
-	पूर्ण
+		kfree(rbio);
+		return -EIO;
+	}
 
-	अगर (generic_io) अणु
+	if (generic_io) {
 		btrfs_bio_counter_inc_noblocked(fs_info);
 		rbio->generic_bio_cnt = 1;
-	पूर्ण अन्यथा अणु
+	} else {
 		btrfs_get_bbio(bbio);
-	पूर्ण
+	}
 
 	/*
 	 * Loop retry:
-	 * क्रम 'mirror == 2', reस्थिरruct from all other stripes.
-	 * क्रम 'mirror_num > 2', select a stripe to fail on every retry.
+	 * for 'mirror == 2', reconstruct from all other stripes.
+	 * for 'mirror_num > 2', select a stripe to fail on every retry.
 	 */
-	अगर (mirror_num > 2) अणु
+	if (mirror_num > 2) {
 		/*
 		 * 'mirror == 3' is to fail the p stripe and
-		 * reस्थिरruct from the q stripe.  'mirror > 3' is to
-		 * fail a data stripe and reस्थिरruct from p+q stripe.
+		 * reconstruct from the q stripe.  'mirror > 3' is to
+		 * fail a data stripe and reconstruct from p+q stripe.
 		 */
 		rbio->failb = rbio->real_stripes - (mirror_num - 1);
 		ASSERT(rbio->failb > 0);
-		अगर (rbio->failb <= rbio->faila)
+		if (rbio->failb <= rbio->faila)
 			rbio->failb--;
-	पूर्ण
+	}
 
 	ret = lock_stripe_add(rbio);
 
 	/*
 	 * __raid56_parity_recover will end the bio with
-	 * any errors it hits.  We करोn't want to वापस
+	 * any errors it hits.  We don't want to return
 	 * its error value up the stack because our caller
 	 * will end up calling bio_endio with any nonzero
-	 * वापस
+	 * return
 	 */
-	अगर (ret == 0)
+	if (ret == 0)
 		__raid56_parity_recover(rbio);
 	/*
 	 * our rbio has been added to the list of
 	 * rbios that will be handled after the
-	 * currently lock owner is करोne
+	 * currently lock owner is done
 	 */
-	वापस 0;
+	return 0;
 
-पूर्ण
+}
 
-अटल व्योम rmw_work(काष्ठा btrfs_work *work)
-अणु
-	काष्ठा btrfs_raid_bio *rbio;
+static void rmw_work(struct btrfs_work *work)
+{
+	struct btrfs_raid_bio *rbio;
 
-	rbio = container_of(work, काष्ठा btrfs_raid_bio, work);
+	rbio = container_of(work, struct btrfs_raid_bio, work);
 	raid56_rmw_stripe(rbio);
-पूर्ण
+}
 
-अटल व्योम पढ़ो_rebuild_work(काष्ठा btrfs_work *work)
-अणु
-	काष्ठा btrfs_raid_bio *rbio;
+static void read_rebuild_work(struct btrfs_work *work)
+{
+	struct btrfs_raid_bio *rbio;
 
-	rbio = container_of(work, काष्ठा btrfs_raid_bio, work);
+	rbio = container_of(work, struct btrfs_raid_bio, work);
 	__raid56_parity_recover(rbio);
-पूर्ण
+}
 
 /*
  * The following code is used to scrub/replace the parity stripe
  *
- * Caller must have alपढ़ोy increased bio_counter क्रम getting @bbio.
+ * Caller must have already increased bio_counter for getting @bbio.
  *
- * Note: We need make sure all the pages that add पूर्णांकo the scrub/replace
+ * Note: We need make sure all the pages that add into the scrub/replace
  * raid bio are correct and not be changed during the scrub/replace. That
  * is those pages just hold metadata or file data with checksum.
  */
 
-काष्ठा btrfs_raid_bio *
-raid56_parity_alloc_scrub_rbio(काष्ठा btrfs_fs_info *fs_info, काष्ठा bio *bio,
-			       काष्ठा btrfs_bio *bbio, u64 stripe_len,
-			       काष्ठा btrfs_device *scrub_dev,
-			       अचिन्हित दीर्घ *dbiपंचांगap, पूर्णांक stripe_nsectors)
-अणु
-	काष्ठा btrfs_raid_bio *rbio;
-	पूर्णांक i;
+struct btrfs_raid_bio *
+raid56_parity_alloc_scrub_rbio(struct btrfs_fs_info *fs_info, struct bio *bio,
+			       struct btrfs_bio *bbio, u64 stripe_len,
+			       struct btrfs_device *scrub_dev,
+			       unsigned long *dbitmap, int stripe_nsectors)
+{
+	struct btrfs_raid_bio *rbio;
+	int i;
 
 	rbio = alloc_rbio(fs_info, bbio, stripe_len);
-	अगर (IS_ERR(rbio))
-		वापस शून्य;
+	if (IS_ERR(rbio))
+		return NULL;
 	bio_list_add(&rbio->bio_list, bio);
 	/*
 	 * This is a special bio which is used to hold the completion handler
@@ -2247,438 +2246,438 @@ raid56_parity_alloc_scrub_rbio(काष्ठा btrfs_fs_info *fs_info, का
 	 * to the end position, so this search can start from the first parity
 	 * stripe.
 	 */
-	क्रम (i = rbio->nr_data; i < rbio->real_stripes; i++) अणु
-		अगर (bbio->stripes[i].dev == scrub_dev) अणु
+	for (i = rbio->nr_data; i < rbio->real_stripes; i++) {
+		if (bbio->stripes[i].dev == scrub_dev) {
 			rbio->scrubp = i;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	ASSERT(i < rbio->real_stripes);
 
 	/* Now we just support the sectorsize equals to page size */
 	ASSERT(fs_info->sectorsize == PAGE_SIZE);
 	ASSERT(rbio->stripe_npages == stripe_nsectors);
-	biपंचांगap_copy(rbio->dbiपंचांगap, dbiपंचांगap, stripe_nsectors);
+	bitmap_copy(rbio->dbitmap, dbitmap, stripe_nsectors);
 
 	/*
-	 * We have alपढ़ोy increased bio_counter when getting bbio, record it
-	 * so we can मुक्त it at rbio_orig_end_io().
+	 * We have already increased bio_counter when getting bbio, record it
+	 * so we can free it at rbio_orig_end_io().
 	 */
 	rbio->generic_bio_cnt = 1;
 
-	वापस rbio;
-पूर्ण
+	return rbio;
+}
 
-/* Used क्रम both parity scrub and missing. */
-व्योम raid56_add_scrub_pages(काष्ठा btrfs_raid_bio *rbio, काष्ठा page *page,
+/* Used for both parity scrub and missing. */
+void raid56_add_scrub_pages(struct btrfs_raid_bio *rbio, struct page *page,
 			    u64 logical)
-अणु
-	पूर्णांक stripe_offset;
-	पूर्णांक index;
+{
+	int stripe_offset;
+	int index;
 
 	ASSERT(logical >= rbio->bbio->raid_map[0]);
 	ASSERT(logical + PAGE_SIZE <= rbio->bbio->raid_map[0] +
 				rbio->stripe_len * rbio->nr_data);
-	stripe_offset = (पूर्णांक)(logical - rbio->bbio->raid_map[0]);
+	stripe_offset = (int)(logical - rbio->bbio->raid_map[0]);
 	index = stripe_offset >> PAGE_SHIFT;
 	rbio->bio_pages[index] = page;
-पूर्ण
+}
 
 /*
  * We just scrub the parity that we have correct data on the same horizontal,
- * so we needn't allocate all pages क्रम all the stripes.
+ * so we needn't allocate all pages for all the stripes.
  */
-अटल पूर्णांक alloc_rbio_essential_pages(काष्ठा btrfs_raid_bio *rbio)
-अणु
-	पूर्णांक i;
-	पूर्णांक bit;
-	पूर्णांक index;
-	काष्ठा page *page;
+static int alloc_rbio_essential_pages(struct btrfs_raid_bio *rbio)
+{
+	int i;
+	int bit;
+	int index;
+	struct page *page;
 
-	क्रम_each_set_bit(bit, rbio->dbiपंचांगap, rbio->stripe_npages) अणु
-		क्रम (i = 0; i < rbio->real_stripes; i++) अणु
+	for_each_set_bit(bit, rbio->dbitmap, rbio->stripe_npages) {
+		for (i = 0; i < rbio->real_stripes; i++) {
 			index = i * rbio->stripe_npages + bit;
-			अगर (rbio->stripe_pages[index])
-				जारी;
+			if (rbio->stripe_pages[index])
+				continue;
 
 			page = alloc_page(GFP_NOFS | __GFP_HIGHMEM);
-			अगर (!page)
-				वापस -ENOMEM;
+			if (!page)
+				return -ENOMEM;
 			rbio->stripe_pages[index] = page;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+	}
+	return 0;
+}
 
-अटल noअंतरभूत व्योम finish_parity_scrub(काष्ठा btrfs_raid_bio *rbio,
-					 पूर्णांक need_check)
-अणु
-	काष्ठा btrfs_bio *bbio = rbio->bbio;
-	व्योम **poपूर्णांकers = rbio->finish_poपूर्णांकers;
-	अचिन्हित दीर्घ *pbiपंचांगap = rbio->finish_pbiपंचांगap;
-	पूर्णांक nr_data = rbio->nr_data;
-	पूर्णांक stripe;
-	पूर्णांक pagenr;
+static noinline void finish_parity_scrub(struct btrfs_raid_bio *rbio,
+					 int need_check)
+{
+	struct btrfs_bio *bbio = rbio->bbio;
+	void **pointers = rbio->finish_pointers;
+	unsigned long *pbitmap = rbio->finish_pbitmap;
+	int nr_data = rbio->nr_data;
+	int stripe;
+	int pagenr;
 	bool has_qstripe;
-	काष्ठा page *p_page = शून्य;
-	काष्ठा page *q_page = शून्य;
-	काष्ठा bio_list bio_list;
-	काष्ठा bio *bio;
-	पूर्णांक is_replace = 0;
-	पूर्णांक ret;
+	struct page *p_page = NULL;
+	struct page *q_page = NULL;
+	struct bio_list bio_list;
+	struct bio *bio;
+	int is_replace = 0;
+	int ret;
 
 	bio_list_init(&bio_list);
 
-	अगर (rbio->real_stripes - rbio->nr_data == 1)
+	if (rbio->real_stripes - rbio->nr_data == 1)
 		has_qstripe = false;
-	अन्यथा अगर (rbio->real_stripes - rbio->nr_data == 2)
+	else if (rbio->real_stripes - rbio->nr_data == 2)
 		has_qstripe = true;
-	अन्यथा
+	else
 		BUG();
 
-	अगर (bbio->num_tgtdevs && bbio->tgtdev_map[rbio->scrubp]) अणु
+	if (bbio->num_tgtdevs && bbio->tgtdev_map[rbio->scrubp]) {
 		is_replace = 1;
-		biपंचांगap_copy(pbiपंचांगap, rbio->dbiपंचांगap, rbio->stripe_npages);
-	पूर्ण
+		bitmap_copy(pbitmap, rbio->dbitmap, rbio->stripe_npages);
+	}
 
 	/*
 	 * Because the higher layers(scrubber) are unlikely to
-	 * use this area of the disk again soon, so करोn't cache
+	 * use this area of the disk again soon, so don't cache
 	 * it.
 	 */
 	clear_bit(RBIO_CACHE_READY_BIT, &rbio->flags);
 
-	अगर (!need_check)
-		जाओ ग_लिखोback;
+	if (!need_check)
+		goto writeback;
 
 	p_page = alloc_page(GFP_NOFS | __GFP_HIGHMEM);
-	अगर (!p_page)
-		जाओ cleanup;
+	if (!p_page)
+		goto cleanup;
 	SetPageUptodate(p_page);
 
-	अगर (has_qstripe) अणु
-		/* RAID6, allocate and map temp space क्रम the Q stripe */
+	if (has_qstripe) {
+		/* RAID6, allocate and map temp space for the Q stripe */
 		q_page = alloc_page(GFP_NOFS | __GFP_HIGHMEM);
-		अगर (!q_page) अणु
-			__मुक्त_page(p_page);
-			जाओ cleanup;
-		पूर्ण
+		if (!q_page) {
+			__free_page(p_page);
+			goto cleanup;
+		}
 		SetPageUptodate(q_page);
-		poपूर्णांकers[rbio->real_stripes - 1] = kmap_local_page(q_page);
-	पूर्ण
+		pointers[rbio->real_stripes - 1] = kmap_local_page(q_page);
+	}
 
 	atomic_set(&rbio->error, 0);
 
 	/* Map the parity stripe just once */
-	poपूर्णांकers[nr_data] = kmap_local_page(p_page);
+	pointers[nr_data] = kmap_local_page(p_page);
 
-	क्रम_each_set_bit(pagenr, rbio->dbiपंचांगap, rbio->stripe_npages) अणु
-		काष्ठा page *p;
-		व्योम *parity;
+	for_each_set_bit(pagenr, rbio->dbitmap, rbio->stripe_npages) {
+		struct page *p;
+		void *parity;
 		/* first collect one page from each data stripe */
-		क्रम (stripe = 0; stripe < nr_data; stripe++) अणु
+		for (stripe = 0; stripe < nr_data; stripe++) {
 			p = page_in_rbio(rbio, stripe, pagenr, 0);
-			poपूर्णांकers[stripe] = kmap_local_page(p);
-		पूर्ण
+			pointers[stripe] = kmap_local_page(p);
+		}
 
-		अगर (has_qstripe) अणु
+		if (has_qstripe) {
 			/* RAID6, call the library function to fill in our P/Q */
 			raid6_call.gen_syndrome(rbio->real_stripes, PAGE_SIZE,
-						poपूर्णांकers);
-		पूर्ण अन्यथा अणु
+						pointers);
+		} else {
 			/* raid5 */
-			copy_page(poपूर्णांकers[nr_data], poपूर्णांकers[0]);
-			run_xor(poपूर्णांकers + 1, nr_data - 1, PAGE_SIZE);
-		पूर्ण
+			copy_page(pointers[nr_data], pointers[0]);
+			run_xor(pointers + 1, nr_data - 1, PAGE_SIZE);
+		}
 
 		/* Check scrubbing parity and repair it */
 		p = rbio_stripe_page(rbio, rbio->scrubp, pagenr);
 		parity = kmap_local_page(p);
-		अगर (स_भेद(parity, poपूर्णांकers[rbio->scrubp], PAGE_SIZE))
-			copy_page(parity, poपूर्णांकers[rbio->scrubp]);
-		अन्यथा
-			/* Parity is right, needn't ग_लिखोback */
-			biपंचांगap_clear(rbio->dbiपंचांगap, pagenr, 1);
+		if (memcmp(parity, pointers[rbio->scrubp], PAGE_SIZE))
+			copy_page(parity, pointers[rbio->scrubp]);
+		else
+			/* Parity is right, needn't writeback */
+			bitmap_clear(rbio->dbitmap, pagenr, 1);
 		kunmap_local(parity);
 
-		क्रम (stripe = nr_data - 1; stripe >= 0; stripe--)
-			kunmap_local(poपूर्णांकers[stripe]);
-	पूर्ण
+		for (stripe = nr_data - 1; stripe >= 0; stripe--)
+			kunmap_local(pointers[stripe]);
+	}
 
-	kunmap_local(poपूर्णांकers[nr_data]);
-	__मुक्त_page(p_page);
-	अगर (q_page) अणु
-		kunmap_local(poपूर्णांकers[rbio->real_stripes - 1]);
-		__मुक्त_page(q_page);
-	पूर्ण
+	kunmap_local(pointers[nr_data]);
+	__free_page(p_page);
+	if (q_page) {
+		kunmap_local(pointers[rbio->real_stripes - 1]);
+		__free_page(q_page);
+	}
 
-ग_लिखोback:
+writeback:
 	/*
-	 * समय to start writing.  Make bios क्रम everything from the
+	 * time to start writing.  Make bios for everything from the
 	 * higher layers (the bio_list in our rbio) and our p/q.  Ignore
-	 * everything अन्यथा.
+	 * everything else.
 	 */
-	क्रम_each_set_bit(pagenr, rbio->dbiपंचांगap, rbio->stripe_npages) अणु
-		काष्ठा page *page;
+	for_each_set_bit(pagenr, rbio->dbitmap, rbio->stripe_npages) {
+		struct page *page;
 
 		page = rbio_stripe_page(rbio, rbio->scrubp, pagenr);
 		ret = rbio_add_io_page(rbio, &bio_list,
 			       page, rbio->scrubp, pagenr, rbio->stripe_len);
-		अगर (ret)
-			जाओ cleanup;
-	पूर्ण
+		if (ret)
+			goto cleanup;
+	}
 
-	अगर (!is_replace)
-		जाओ submit_ग_लिखो;
+	if (!is_replace)
+		goto submit_write;
 
-	क्रम_each_set_bit(pagenr, pbiपंचांगap, rbio->stripe_npages) अणु
-		काष्ठा page *page;
+	for_each_set_bit(pagenr, pbitmap, rbio->stripe_npages) {
+		struct page *page;
 
 		page = rbio_stripe_page(rbio, rbio->scrubp, pagenr);
 		ret = rbio_add_io_page(rbio, &bio_list, page,
 				       bbio->tgtdev_map[rbio->scrubp],
 				       pagenr, rbio->stripe_len);
-		अगर (ret)
-			जाओ cleanup;
-	पूर्ण
+		if (ret)
+			goto cleanup;
+	}
 
-submit_ग_लिखो:
+submit_write:
 	nr_data = bio_list_size(&bio_list);
-	अगर (!nr_data) अणु
+	if (!nr_data) {
 		/* Every parity is right */
 		rbio_orig_end_io(rbio, BLK_STS_OK);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	atomic_set(&rbio->stripes_pending, nr_data);
 
-	जबतक ((bio = bio_list_pop(&bio_list))) अणु
-		bio->bi_निजी = rbio;
-		bio->bi_end_io = raid_ग_लिखो_end_io;
+	while ((bio = bio_list_pop(&bio_list))) {
+		bio->bi_private = rbio;
+		bio->bi_end_io = raid_write_end_io;
 		bio->bi_opf = REQ_OP_WRITE;
 
 		submit_bio(bio);
-	पूर्ण
-	वापस;
+	}
+	return;
 
 cleanup:
 	rbio_orig_end_io(rbio, BLK_STS_IOERR);
 
-	जबतक ((bio = bio_list_pop(&bio_list)))
+	while ((bio = bio_list_pop(&bio_list)))
 		bio_put(bio);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक is_data_stripe(काष्ठा btrfs_raid_bio *rbio, पूर्णांक stripe)
-अणु
-	अगर (stripe >= 0 && stripe < rbio->nr_data)
-		वापस 1;
-	वापस 0;
-पूर्ण
+static inline int is_data_stripe(struct btrfs_raid_bio *rbio, int stripe)
+{
+	if (stripe >= 0 && stripe < rbio->nr_data)
+		return 1;
+	return 0;
+}
 
 /*
- * While we're करोing the parity check and repair, we could have errors
- * in पढ़ोing pages off the disk.  This checks क्रम errors and अगर we're
- * not able to पढ़ो the page it'll trigger parity reस्थिरruction.  The
- * parity scrub will be finished after we've reस्थिरructed the failed
+ * While we're doing the parity check and repair, we could have errors
+ * in reading pages off the disk.  This checks for errors and if we're
+ * not able to read the page it'll trigger parity reconstruction.  The
+ * parity scrub will be finished after we've reconstructed the failed
  * stripes
  */
-अटल व्योम validate_rbio_क्रम_parity_scrub(काष्ठा btrfs_raid_bio *rbio)
-अणु
-	अगर (atomic_पढ़ो(&rbio->error) > rbio->bbio->max_errors)
-		जाओ cleanup;
+static void validate_rbio_for_parity_scrub(struct btrfs_raid_bio *rbio)
+{
+	if (atomic_read(&rbio->error) > rbio->bbio->max_errors)
+		goto cleanup;
 
-	अगर (rbio->faila >= 0 || rbio->failb >= 0) अणु
-		पूर्णांक dfail = 0, failp = -1;
+	if (rbio->faila >= 0 || rbio->failb >= 0) {
+		int dfail = 0, failp = -1;
 
-		अगर (is_data_stripe(rbio, rbio->faila))
+		if (is_data_stripe(rbio, rbio->faila))
 			dfail++;
-		अन्यथा अगर (is_parity_stripe(rbio->faila))
+		else if (is_parity_stripe(rbio->faila))
 			failp = rbio->faila;
 
-		अगर (is_data_stripe(rbio, rbio->failb))
+		if (is_data_stripe(rbio, rbio->failb))
 			dfail++;
-		अन्यथा अगर (is_parity_stripe(rbio->failb))
+		else if (is_parity_stripe(rbio->failb))
 			failp = rbio->failb;
 
 		/*
 		 * Because we can not use a scrubbing parity to repair
 		 * the data, so the capability of the repair is declined.
-		 * (In the हाल of RAID5, we can not repair anything)
+		 * (In the case of RAID5, we can not repair anything)
 		 */
-		अगर (dfail > rbio->bbio->max_errors - 1)
-			जाओ cleanup;
+		if (dfail > rbio->bbio->max_errors - 1)
+			goto cleanup;
 
 		/*
 		 * If all data is good, only parity is correctly, just
 		 * repair the parity.
 		 */
-		अगर (dfail == 0) अणु
+		if (dfail == 0) {
 			finish_parity_scrub(rbio, 0);
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		/*
 		 * Here means we got one corrupted data stripe and one
-		 * corrupted parity on RAID6, अगर the corrupted parity
+		 * corrupted parity on RAID6, if the corrupted parity
 		 * is scrubbing parity, luckily, use the other one to repair
 		 * the data, or we can not repair the data stripe.
 		 */
-		अगर (failp != rbio->scrubp)
-			जाओ cleanup;
+		if (failp != rbio->scrubp)
+			goto cleanup;
 
 		__raid_recover_end_io(rbio);
-	पूर्ण अन्यथा अणु
+	} else {
 		finish_parity_scrub(rbio, 1);
-	पूर्ण
-	वापस;
+	}
+	return;
 
 cleanup:
 	rbio_orig_end_io(rbio, BLK_STS_IOERR);
-पूर्ण
+}
 
 /*
- * end io क्रम the पढ़ो phase of the rmw cycle.  All the bios here are physical
- * stripe bios we've पढ़ो from the disk so we can recalculate the parity of the
+ * end io for the read phase of the rmw cycle.  All the bios here are physical
+ * stripe bios we've read from the disk so we can recalculate the parity of the
  * stripe.
  *
- * This will usually kick off finish_rmw once all the bios are पढ़ो in, but it
- * may trigger parity reस्थिरruction अगर we had any errors aदीर्घ the way
+ * This will usually kick off finish_rmw once all the bios are read in, but it
+ * may trigger parity reconstruction if we had any errors along the way
  */
-अटल व्योम raid56_parity_scrub_end_io(काष्ठा bio *bio)
-अणु
-	काष्ठा btrfs_raid_bio *rbio = bio->bi_निजी;
+static void raid56_parity_scrub_end_io(struct bio *bio)
+{
+	struct btrfs_raid_bio *rbio = bio->bi_private;
 
-	अगर (bio->bi_status)
+	if (bio->bi_status)
 		fail_bio_stripe(rbio, bio);
-	अन्यथा
+	else
 		set_bio_pages_uptodate(bio);
 
 	bio_put(bio);
 
-	अगर (!atomic_dec_and_test(&rbio->stripes_pending))
-		वापस;
+	if (!atomic_dec_and_test(&rbio->stripes_pending))
+		return;
 
 	/*
-	 * this will normally call finish_rmw to start our ग_लिखो
-	 * but अगर there are any failed stripes we'll reस्थिरruct
+	 * this will normally call finish_rmw to start our write
+	 * but if there are any failed stripes we'll reconstruct
 	 * from parity first
 	 */
-	validate_rbio_क्रम_parity_scrub(rbio);
-पूर्ण
+	validate_rbio_for_parity_scrub(rbio);
+}
 
-अटल व्योम raid56_parity_scrub_stripe(काष्ठा btrfs_raid_bio *rbio)
-अणु
-	पूर्णांक bios_to_पढ़ो = 0;
-	काष्ठा bio_list bio_list;
-	पूर्णांक ret;
-	पूर्णांक pagenr;
-	पूर्णांक stripe;
-	काष्ठा bio *bio;
+static void raid56_parity_scrub_stripe(struct btrfs_raid_bio *rbio)
+{
+	int bios_to_read = 0;
+	struct bio_list bio_list;
+	int ret;
+	int pagenr;
+	int stripe;
+	struct bio *bio;
 
 	bio_list_init(&bio_list);
 
 	ret = alloc_rbio_essential_pages(rbio);
-	अगर (ret)
-		जाओ cleanup;
+	if (ret)
+		goto cleanup;
 
 	atomic_set(&rbio->error, 0);
 	/*
-	 * build a list of bios to पढ़ो all the missing parts of this
+	 * build a list of bios to read all the missing parts of this
 	 * stripe
 	 */
-	क्रम (stripe = 0; stripe < rbio->real_stripes; stripe++) अणु
-		क्रम_each_set_bit(pagenr, rbio->dbiपंचांगap, rbio->stripe_npages) अणु
-			काष्ठा page *page;
+	for (stripe = 0; stripe < rbio->real_stripes; stripe++) {
+		for_each_set_bit(pagenr, rbio->dbitmap, rbio->stripe_npages) {
+			struct page *page;
 			/*
 			 * we want to find all the pages missing from
-			 * the rbio and पढ़ो them from the disk.  If
+			 * the rbio and read them from the disk.  If
 			 * page_in_rbio finds a page in the bio list
-			 * we करोn't need to पढ़ो it off the stripe.
+			 * we don't need to read it off the stripe.
 			 */
 			page = page_in_rbio(rbio, stripe, pagenr, 1);
-			अगर (page)
-				जारी;
+			if (page)
+				continue;
 
 			page = rbio_stripe_page(rbio, stripe, pagenr);
 			/*
 			 * the bio cache may have handed us an uptodate
 			 * page.  If so, be happy and use it
 			 */
-			अगर (PageUptodate(page))
-				जारी;
+			if (PageUptodate(page))
+				continue;
 
 			ret = rbio_add_io_page(rbio, &bio_list, page,
 				       stripe, pagenr, rbio->stripe_len);
-			अगर (ret)
-				जाओ cleanup;
-		पूर्ण
-	पूर्ण
+			if (ret)
+				goto cleanup;
+		}
+	}
 
-	bios_to_पढ़ो = bio_list_size(&bio_list);
-	अगर (!bios_to_पढ़ो) अणु
+	bios_to_read = bio_list_size(&bio_list);
+	if (!bios_to_read) {
 		/*
-		 * this can happen अगर others have merged with
-		 * us, it means there is nothing left to पढ़ो.
-		 * But अगर there are missing devices it may not be
-		 * safe to करो the full stripe ग_लिखो yet.
+		 * this can happen if others have merged with
+		 * us, it means there is nothing left to read.
+		 * But if there are missing devices it may not be
+		 * safe to do the full stripe write yet.
 		 */
-		जाओ finish;
-	पूर्ण
+		goto finish;
+	}
 
 	/*
-	 * the bbio may be मुक्तd once we submit the last bio.  Make sure
+	 * the bbio may be freed once we submit the last bio.  Make sure
 	 * not to touch it after that
 	 */
-	atomic_set(&rbio->stripes_pending, bios_to_पढ़ो);
-	जबतक ((bio = bio_list_pop(&bio_list))) अणु
-		bio->bi_निजी = rbio;
+	atomic_set(&rbio->stripes_pending, bios_to_read);
+	while ((bio = bio_list_pop(&bio_list))) {
+		bio->bi_private = rbio;
 		bio->bi_end_io = raid56_parity_scrub_end_io;
 		bio->bi_opf = REQ_OP_READ;
 
 		btrfs_bio_wq_end_io(rbio->fs_info, bio, BTRFS_WQ_ENDIO_RAID56);
 
 		submit_bio(bio);
-	पूर्ण
-	/* the actual ग_लिखो will happen once the पढ़ोs are करोne */
-	वापस;
+	}
+	/* the actual write will happen once the reads are done */
+	return;
 
 cleanup:
 	rbio_orig_end_io(rbio, BLK_STS_IOERR);
 
-	जबतक ((bio = bio_list_pop(&bio_list)))
+	while ((bio = bio_list_pop(&bio_list)))
 		bio_put(bio);
 
-	वापस;
+	return;
 
 finish:
-	validate_rbio_क्रम_parity_scrub(rbio);
-पूर्ण
+	validate_rbio_for_parity_scrub(rbio);
+}
 
-अटल व्योम scrub_parity_work(काष्ठा btrfs_work *work)
-अणु
-	काष्ठा btrfs_raid_bio *rbio;
+static void scrub_parity_work(struct btrfs_work *work)
+{
+	struct btrfs_raid_bio *rbio;
 
-	rbio = container_of(work, काष्ठा btrfs_raid_bio, work);
+	rbio = container_of(work, struct btrfs_raid_bio, work);
 	raid56_parity_scrub_stripe(rbio);
-पूर्ण
+}
 
-व्योम raid56_parity_submit_scrub_rbio(काष्ठा btrfs_raid_bio *rbio)
-अणु
-	अगर (!lock_stripe_add(rbio))
+void raid56_parity_submit_scrub_rbio(struct btrfs_raid_bio *rbio)
+{
+	if (!lock_stripe_add(rbio))
 		start_async_work(rbio, scrub_parity_work);
-पूर्ण
+}
 
-/* The following code is used क्रम dev replace of a missing RAID 5/6 device. */
+/* The following code is used for dev replace of a missing RAID 5/6 device. */
 
-काष्ठा btrfs_raid_bio *
-raid56_alloc_missing_rbio(काष्ठा btrfs_fs_info *fs_info, काष्ठा bio *bio,
-			  काष्ठा btrfs_bio *bbio, u64 length)
-अणु
-	काष्ठा btrfs_raid_bio *rbio;
+struct btrfs_raid_bio *
+raid56_alloc_missing_rbio(struct btrfs_fs_info *fs_info, struct bio *bio,
+			  struct btrfs_bio *bbio, u64 length)
+{
+	struct btrfs_raid_bio *rbio;
 
 	rbio = alloc_rbio(fs_info, bbio, length);
-	अगर (IS_ERR(rbio))
-		वापस शून्य;
+	if (IS_ERR(rbio))
+		return NULL;
 
 	rbio->operation = BTRFS_RBIO_REBUILD_MISSING;
 	bio_list_add(&rbio->bio_list, bio);
@@ -2689,23 +2688,23 @@ raid56_alloc_missing_rbio(काष्ठा btrfs_fs_info *fs_info, काष�
 	ASSERT(!bio->bi_iter.bi_size);
 
 	rbio->faila = find_logical_bio_stripe(rbio, bio);
-	अगर (rbio->faila == -1) अणु
+	if (rbio->faila == -1) {
 		BUG();
-		kमुक्त(rbio);
-		वापस शून्य;
-	पूर्ण
+		kfree(rbio);
+		return NULL;
+	}
 
 	/*
-	 * When we get bbio, we have alपढ़ोy increased bio_counter, record it
-	 * so we can मुक्त it at rbio_orig_end_io()
+	 * When we get bbio, we have already increased bio_counter, record it
+	 * so we can free it at rbio_orig_end_io()
 	 */
 	rbio->generic_bio_cnt = 1;
 
-	वापस rbio;
-पूर्ण
+	return rbio;
+}
 
-व्योम raid56_submit_missing_rbio(काष्ठा btrfs_raid_bio *rbio)
-अणु
-	अगर (!lock_stripe_add(rbio))
-		start_async_work(rbio, पढ़ो_rebuild_work);
-पूर्ण
+void raid56_submit_missing_rbio(struct btrfs_raid_bio *rbio)
+{
+	if (!lock_stripe_add(rbio))
+		start_async_work(rbio, read_rebuild_work);
+}

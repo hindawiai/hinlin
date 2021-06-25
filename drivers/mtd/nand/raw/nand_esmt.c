@@ -1,60 +1,59 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2018 Toradex AG
  *
  * Author: Marcel Ziswiler <marcel.ziswiler@toradex.com>
  */
 
-#समावेश <linux/mtd/rawnand.h>
-#समावेश "internals.h"
+#include <linux/mtd/rawnand.h>
+#include "internals.h"
 
-अटल व्योम esmt_nand_decode_id(काष्ठा nand_chip *chip)
-अणु
-	काष्ठा nand_device *base = &chip->base;
-	काष्ठा nand_ecc_props requirements = अणुपूर्ण;
+static void esmt_nand_decode_id(struct nand_chip *chip)
+{
+	struct nand_device *base = &chip->base;
+	struct nand_ecc_props requirements = {};
 
 	nand_decode_ext_id(chip);
 
 	/* Extract ECC requirements from 5th id byte. */
-	अगर (chip->id.len >= 5 && nand_is_slc(chip)) अणु
+	if (chip->id.len >= 5 && nand_is_slc(chip)) {
 		requirements.step_size = 512;
-		चयन (chip->id.data[4] & 0x3) अणु
-		हाल 0x0:
+		switch (chip->id.data[4] & 0x3) {
+		case 0x0:
 			requirements.strength = 4;
-			अवरोध;
-		हाल 0x1:
+			break;
+		case 0x1:
 			requirements.strength = 2;
-			अवरोध;
-		हाल 0x2:
+			break;
+		case 0x2:
 			requirements.strength = 1;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			WARN(1, "Could not get ECC info");
 			requirements.step_size = 0;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	nanddev_set_ecc_requirements(base, &requirements);
-पूर्ण
+}
 
-अटल पूर्णांक esmt_nand_init(काष्ठा nand_chip *chip)
-अणु
-	अगर (nand_is_slc(chip))
+static int esmt_nand_init(struct nand_chip *chip)
+{
+	if (nand_is_slc(chip))
 		/*
-		 * It is known that some ESMT SLC न_अंकDs have been shipped
+		 * It is known that some ESMT SLC NANDs have been shipped
 		 * with the factory bad block markers in the first or last page
 		 * of the block, instead of the first or second page. To be on
 		 * the safe side, let's check all three locations.
 		 */
-		chip->options |= न_अंकD_BBM_FIRSTPAGE | न_अंकD_BBM_SECONDPAGE |
-				 न_अंकD_BBM_LASTPAGE;
+		chip->options |= NAND_BBM_FIRSTPAGE | NAND_BBM_SECONDPAGE |
+				 NAND_BBM_LASTPAGE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-स्थिर काष्ठा nand_manufacturer_ops esmt_nand_manuf_ops = अणु
+const struct nand_manufacturer_ops esmt_nand_manuf_ops = {
 	.detect = esmt_nand_decode_id,
 	.init = esmt_nand_init,
-पूर्ण;
+};

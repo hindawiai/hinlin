@@ -1,114 +1,113 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * O(1) TX queue with built-in allocator क्रम ST-Ericsson CW1200 drivers
+ * O(1) TX queue with built-in allocator for ST-Ericsson CW1200 drivers
  *
  * Copyright (c) 2010, ST-Ericsson
  * Author: Dmitry Tarnyagin <dmitry.tarnyagin@lockless.no>
  */
 
-#अगर_अघोषित CW1200_QUEUE_H_INCLUDED
-#घोषणा CW1200_QUEUE_H_INCLUDED
+#ifndef CW1200_QUEUE_H_INCLUDED
+#define CW1200_QUEUE_H_INCLUDED
 
-/* निजी */ काष्ठा cw1200_queue_item;
+/* private */ struct cw1200_queue_item;
 
-/* बाह्य */ काष्ठा sk_buff;
-/* बाह्य */ काष्ठा wsm_tx;
-/* बाह्य */ काष्ठा cw1200_common;
-/* बाह्य */ काष्ठा ieee80211_tx_queue_stats;
-/* बाह्य */ काष्ठा cw1200_txpriv;
+/* extern */ struct sk_buff;
+/* extern */ struct wsm_tx;
+/* extern */ struct cw1200_common;
+/* extern */ struct ieee80211_tx_queue_stats;
+/* extern */ struct cw1200_txpriv;
 
-/* क्रमward */ काष्ठा cw1200_queue_stats;
+/* forward */ struct cw1200_queue_stats;
 
-प्रकार व्योम (*cw1200_queue_skb_dtor_t)(काष्ठा cw1200_common *priv,
-					काष्ठा sk_buff *skb,
-					स्थिर काष्ठा cw1200_txpriv *txpriv);
+typedef void (*cw1200_queue_skb_dtor_t)(struct cw1200_common *priv,
+					struct sk_buff *skb,
+					const struct cw1200_txpriv *txpriv);
 
-काष्ठा cw1200_queue अणु
-	काष्ठा cw1200_queue_stats *stats;
-	माप_प्रकार			capacity;
-	माप_प्रकार			num_queued;
-	माप_प्रकार			num_pending;
-	माप_प्रकार			num_sent;
-	काष्ठा cw1200_queue_item *pool;
-	काष्ठा list_head	queue;
-	काष्ठा list_head	मुक्त_pool;
-	काष्ठा list_head	pending;
-	पूर्णांक			tx_locked_cnt;
-	पूर्णांक			*link_map_cache;
+struct cw1200_queue {
+	struct cw1200_queue_stats *stats;
+	size_t			capacity;
+	size_t			num_queued;
+	size_t			num_pending;
+	size_t			num_sent;
+	struct cw1200_queue_item *pool;
+	struct list_head	queue;
+	struct list_head	free_pool;
+	struct list_head	pending;
+	int			tx_locked_cnt;
+	int			*link_map_cache;
 	bool			overfull;
 	spinlock_t		lock; /* Protect queue entry */
 	u8			queue_id;
 	u8			generation;
-	काष्ठा समयr_list	gc;
-	अचिन्हित दीर्घ		ttl;
-पूर्ण;
+	struct timer_list	gc;
+	unsigned long		ttl;
+};
 
-काष्ठा cw1200_queue_stats अणु
+struct cw1200_queue_stats {
 	spinlock_t		lock; /* Protect stats entry */
-	पूर्णांक			*link_map_cache;
-	पूर्णांक			num_queued;
-	माप_प्रकार			map_capacity;
-	रुको_queue_head_t	रुको_link_id_empty;
+	int			*link_map_cache;
+	int			num_queued;
+	size_t			map_capacity;
+	wait_queue_head_t	wait_link_id_empty;
 	cw1200_queue_skb_dtor_t	skb_dtor;
-	काष्ठा cw1200_common	*priv;
-पूर्ण;
+	struct cw1200_common	*priv;
+};
 
-काष्ठा cw1200_txpriv अणु
+struct cw1200_txpriv {
 	u8 link_id;
 	u8 raw_link_id;
 	u8 tid;
 	u8 rate_id;
 	u8 offset;
-पूर्ण;
+};
 
-पूर्णांक cw1200_queue_stats_init(काष्ठा cw1200_queue_stats *stats,
-			    माप_प्रकार map_capacity,
+int cw1200_queue_stats_init(struct cw1200_queue_stats *stats,
+			    size_t map_capacity,
 			    cw1200_queue_skb_dtor_t skb_dtor,
-			    काष्ठा cw1200_common *priv);
-पूर्णांक cw1200_queue_init(काष्ठा cw1200_queue *queue,
-		      काष्ठा cw1200_queue_stats *stats,
+			    struct cw1200_common *priv);
+int cw1200_queue_init(struct cw1200_queue *queue,
+		      struct cw1200_queue_stats *stats,
 		      u8 queue_id,
-		      माप_प्रकार capacity,
-		      अचिन्हित दीर्घ ttl);
-पूर्णांक cw1200_queue_clear(काष्ठा cw1200_queue *queue);
-व्योम cw1200_queue_stats_deinit(काष्ठा cw1200_queue_stats *stats);
-व्योम cw1200_queue_deinit(काष्ठा cw1200_queue *queue);
+		      size_t capacity,
+		      unsigned long ttl);
+int cw1200_queue_clear(struct cw1200_queue *queue);
+void cw1200_queue_stats_deinit(struct cw1200_queue_stats *stats);
+void cw1200_queue_deinit(struct cw1200_queue *queue);
 
-माप_प्रकार cw1200_queue_get_num_queued(काष्ठा cw1200_queue *queue,
+size_t cw1200_queue_get_num_queued(struct cw1200_queue *queue,
 				   u32 link_id_map);
-पूर्णांक cw1200_queue_put(काष्ठा cw1200_queue *queue,
-		     काष्ठा sk_buff *skb,
-		     काष्ठा cw1200_txpriv *txpriv);
-पूर्णांक cw1200_queue_get(काष्ठा cw1200_queue *queue,
+int cw1200_queue_put(struct cw1200_queue *queue,
+		     struct sk_buff *skb,
+		     struct cw1200_txpriv *txpriv);
+int cw1200_queue_get(struct cw1200_queue *queue,
 		     u32 link_id_map,
-		     काष्ठा wsm_tx **tx,
-		     काष्ठा ieee80211_tx_info **tx_info,
-		     स्थिर काष्ठा cw1200_txpriv **txpriv);
-पूर्णांक cw1200_queue_requeue(काष्ठा cw1200_queue *queue, u32 packet_id);
-पूर्णांक cw1200_queue_requeue_all(काष्ठा cw1200_queue *queue);
-पूर्णांक cw1200_queue_हटाओ(काष्ठा cw1200_queue *queue,
+		     struct wsm_tx **tx,
+		     struct ieee80211_tx_info **tx_info,
+		     const struct cw1200_txpriv **txpriv);
+int cw1200_queue_requeue(struct cw1200_queue *queue, u32 packet_id);
+int cw1200_queue_requeue_all(struct cw1200_queue *queue);
+int cw1200_queue_remove(struct cw1200_queue *queue,
 			u32 packet_id);
-पूर्णांक cw1200_queue_get_skb(काष्ठा cw1200_queue *queue, u32 packet_id,
-			 काष्ठा sk_buff **skb,
-			 स्थिर काष्ठा cw1200_txpriv **txpriv);
-व्योम cw1200_queue_lock(काष्ठा cw1200_queue *queue);
-व्योम cw1200_queue_unlock(काष्ठा cw1200_queue *queue);
-bool cw1200_queue_get_xmit_बारtamp(काष्ठा cw1200_queue *queue,
-				     अचिन्हित दीर्घ *बारtamp,
+int cw1200_queue_get_skb(struct cw1200_queue *queue, u32 packet_id,
+			 struct sk_buff **skb,
+			 const struct cw1200_txpriv **txpriv);
+void cw1200_queue_lock(struct cw1200_queue *queue);
+void cw1200_queue_unlock(struct cw1200_queue *queue);
+bool cw1200_queue_get_xmit_timestamp(struct cw1200_queue *queue,
+				     unsigned long *timestamp,
 				     u32 pending_frame_id);
 
-bool cw1200_queue_stats_is_empty(काष्ठा cw1200_queue_stats *stats,
+bool cw1200_queue_stats_is_empty(struct cw1200_queue_stats *stats,
 				 u32 link_id_map);
 
-अटल अंतरभूत u8 cw1200_queue_get_queue_id(u32 packet_id)
-अणु
-	वापस (packet_id >> 16) & 0xFF;
-पूर्ण
+static inline u8 cw1200_queue_get_queue_id(u32 packet_id)
+{
+	return (packet_id >> 16) & 0xFF;
+}
 
-अटल अंतरभूत u8 cw1200_queue_get_generation(u32 packet_id)
-अणु
-	वापस (packet_id >>  8) & 0xFF;
-पूर्ण
+static inline u8 cw1200_queue_get_generation(u32 packet_id)
+{
+	return (packet_id >>  8) & 0xFF;
+}
 
-#पूर्ण_अगर /* CW1200_QUEUE_H_INCLUDED */
+#endif /* CW1200_QUEUE_H_INCLUDED */

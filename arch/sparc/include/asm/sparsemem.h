@@ -1,15 +1,14 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _SPARC64_SPARSEMEM_H
-#घोषणा _SPARC64_SPARSEMEM_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _SPARC64_SPARSEMEM_H
+#define _SPARC64_SPARSEMEM_H
 
-#अगर_घोषित __KERNEL__
+#ifdef __KERNEL__
 
-#समावेश <यंत्र/page.h>
+#include <asm/page.h>
 
-#घोषणा SECTION_SIZE_BITS       30
-#घोषणा MAX_PHYSMEM_BITS        MAX_PHYS_ADDRESS_BITS
+#define SECTION_SIZE_BITS       30
+#define MAX_PHYSMEM_BITS        MAX_PHYS_ADDRESS_BITS
 
-#पूर्ण_अगर /* !(__KERNEL__) */
+#endif /* !(__KERNEL__) */
 
-#पूर्ण_अगर /* !(_SPARC64_SPARSEMEM_H) */
+#endif /* !(_SPARC64_SPARSEMEM_H) */

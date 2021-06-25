@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * em_canid.c  Ematch rule to match CAN frames according to their CAN IDs
  *
@@ -12,198 +11,198 @@
  * Funded by:  Volkswagen Group Research
  */
 
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/skbuff.h>
-#समावेश <net/pkt_cls.h>
-#समावेश <linux/can.h>
+#include <linux/slab.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/string.h>
+#include <linux/skbuff.h>
+#include <net/pkt_cls.h>
+#include <linux/can.h>
 
-#घोषणा EM_CAN_RULES_MAX 500
+#define EM_CAN_RULES_MAX 500
 
-काष्ठा canid_match अणु
+struct canid_match {
 	/* For each SFF CAN ID (11 bit) there is one record in this bitfield */
 	DECLARE_BITMAP(match_sff, (1 << CAN_SFF_ID_BITS));
 
-	पूर्णांक rules_count;
-	पूर्णांक sff_rules_count;
-	पूर्णांक eff_rules_count;
+	int rules_count;
+	int sff_rules_count;
+	int eff_rules_count;
 
 	/*
-	 * Raw rules copied from netlink message; Used क्रम sending
-	 * inक्रमmation to userspace (when 'tc filter show' is invoked)
+	 * Raw rules copied from netlink message; Used for sending
+	 * information to userspace (when 'tc filter show' is invoked)
 	 * AND when matching EFF frames
 	 */
-	काष्ठा can_filter rules_raw[];
-पूर्ण;
+	struct can_filter rules_raw[];
+};
 
 /**
- * em_canid_get_id() - Extracts Can ID out of the sk_buff काष्ठाure.
+ * em_canid_get_id() - Extracts Can ID out of the sk_buff structure.
  * @skb: buffer to extract Can ID from
  */
-अटल canid_t em_canid_get_id(काष्ठा sk_buff *skb)
-अणु
+static canid_t em_canid_get_id(struct sk_buff *skb)
+{
 	/* CAN ID is stored within the data field */
-	काष्ठा can_frame *cf = (काष्ठा can_frame *)skb->data;
+	struct can_frame *cf = (struct can_frame *)skb->data;
 
-	वापस cf->can_id;
-पूर्ण
+	return cf->can_id;
+}
 
-अटल व्योम em_canid_sff_match_add(काष्ठा canid_match *cm, u32 can_id,
+static void em_canid_sff_match_add(struct canid_match *cm, u32 can_id,
 					u32 can_mask)
-अणु
-	पूर्णांक i;
+{
+	int i;
 
 	/*
 	 * Limit can_mask and can_id to SFF range to
-	 * protect against ग_लिखो after end of array
+	 * protect against write after end of array
 	 */
 	can_mask &= CAN_SFF_MASK;
 	can_id &= can_mask;
 
 	/* Single frame */
-	अगर (can_mask == CAN_SFF_MASK) अणु
+	if (can_mask == CAN_SFF_MASK) {
 		set_bit(can_id, cm->match_sff);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* All frames */
-	अगर (can_mask == 0) अणु
-		biपंचांगap_fill(cm->match_sff, (1 << CAN_SFF_ID_BITS));
-		वापस;
-	पूर्ण
+	if (can_mask == 0) {
+		bitmap_fill(cm->match_sff, (1 << CAN_SFF_ID_BITS));
+		return;
+	}
 
 	/*
-	 * Inभागidual frame filter.
-	 * Add record (set bit to 1) क्रम each ID that
-	 * conक्रमms particular rule
+	 * Individual frame filter.
+	 * Add record (set bit to 1) for each ID that
+	 * conforms particular rule
 	 */
-	क्रम (i = 0; i < (1 << CAN_SFF_ID_BITS); i++) अणु
-		अगर ((i & can_mask) == can_id)
+	for (i = 0; i < (1 << CAN_SFF_ID_BITS); i++) {
+		if ((i & can_mask) == can_id)
 			set_bit(i, cm->match_sff);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत काष्ठा canid_match *em_canid_priv(काष्ठा tcf_ematch *m)
-अणु
-	वापस (काष्ठा canid_match *)m->data;
-पूर्ण
+static inline struct canid_match *em_canid_priv(struct tcf_ematch *m)
+{
+	return (struct canid_match *)m->data;
+}
 
-अटल पूर्णांक em_canid_match(काष्ठा sk_buff *skb, काष्ठा tcf_ematch *m,
-			 काष्ठा tcf_pkt_info *info)
-अणु
-	काष्ठा canid_match *cm = em_canid_priv(m);
+static int em_canid_match(struct sk_buff *skb, struct tcf_ematch *m,
+			 struct tcf_pkt_info *info)
+{
+	struct canid_match *cm = em_canid_priv(m);
 	canid_t can_id;
-	पूर्णांक match = 0;
-	पूर्णांक i;
-	स्थिर काष्ठा can_filter *lp;
+	int match = 0;
+	int i;
+	const struct can_filter *lp;
 
 	can_id = em_canid_get_id(skb);
 
-	अगर (can_id & CAN_EFF_FLAG) अणु
-		क्रम (i = 0, lp = cm->rules_raw;
-		     i < cm->eff_rules_count; i++, lp++) अणु
-			अगर (!(((lp->can_id ^ can_id) & lp->can_mask))) अणु
+	if (can_id & CAN_EFF_FLAG) {
+		for (i = 0, lp = cm->rules_raw;
+		     i < cm->eff_rules_count; i++, lp++) {
+			if (!(((lp->can_id ^ can_id) & lp->can_mask))) {
 				match = 1;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु /* SFF */
+				break;
+			}
+		}
+	} else { /* SFF */
 		can_id &= CAN_SFF_MASK;
 		match = (test_bit(can_id, cm->match_sff) ? 1 : 0);
-	पूर्ण
+	}
 
-	वापस match;
-पूर्ण
+	return match;
+}
 
-अटल पूर्णांक em_canid_change(काष्ठा net *net, व्योम *data, पूर्णांक len,
-			  काष्ठा tcf_ematch *m)
-अणु
-	काष्ठा can_filter *conf = data; /* Array with rules */
-	काष्ठा canid_match *cm;
-	पूर्णांक i;
+static int em_canid_change(struct net *net, void *data, int len,
+			  struct tcf_ematch *m)
+{
+	struct can_filter *conf = data; /* Array with rules */
+	struct canid_match *cm;
+	int i;
 
-	अगर (!len)
-		वापस -EINVAL;
+	if (!len)
+		return -EINVAL;
 
-	अगर (len % माप(काष्ठा can_filter))
-		वापस -EINVAL;
+	if (len % sizeof(struct can_filter))
+		return -EINVAL;
 
-	अगर (len > माप(काष्ठा can_filter) * EM_CAN_RULES_MAX)
-		वापस -EINVAL;
+	if (len > sizeof(struct can_filter) * EM_CAN_RULES_MAX)
+		return -EINVAL;
 
-	cm = kzalloc(माप(काष्ठा canid_match) + len, GFP_KERNEL);
-	अगर (!cm)
-		वापस -ENOMEM;
+	cm = kzalloc(sizeof(struct canid_match) + len, GFP_KERNEL);
+	if (!cm)
+		return -ENOMEM;
 
-	cm->rules_count = len / माप(काष्ठा can_filter);
+	cm->rules_count = len / sizeof(struct can_filter);
 
 	/*
-	 * We need two क्रम() loops क्रम copying rules पूर्णांकo two contiguous
+	 * We need two for() loops for copying rules into two contiguous
 	 * areas in rules_raw to process all eff rules with a simple loop.
-	 * NB: The configuration पूर्णांकerface supports sff and eff rules.
-	 * We करो not support filters here that match क्रम the same can_id
+	 * NB: The configuration interface supports sff and eff rules.
+	 * We do not support filters here that match for the same can_id
 	 * provided in a SFF and EFF frame (e.g. 0x123 / 0x80000123).
-	 * For this (unusual हाल) two filters have to be specअगरied. The
-	 * SFF/EFF separation is करोne with the CAN_EFF_FLAG in the can_id.
+	 * For this (unusual case) two filters have to be specified. The
+	 * SFF/EFF separation is done with the CAN_EFF_FLAG in the can_id.
 	 */
 
 	/* Fill rules_raw with EFF rules first */
-	क्रम (i = 0; i < cm->rules_count; i++) अणु
-		अगर (conf[i].can_id & CAN_EFF_FLAG) अणु
-			स_नकल(cm->rules_raw + cm->eff_rules_count,
+	for (i = 0; i < cm->rules_count; i++) {
+		if (conf[i].can_id & CAN_EFF_FLAG) {
+			memcpy(cm->rules_raw + cm->eff_rules_count,
 				&conf[i],
-				माप(काष्ठा can_filter));
+				sizeof(struct can_filter));
 
 			cm->eff_rules_count++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* append SFF frame rules */
-	क्रम (i = 0; i < cm->rules_count; i++) अणु
-		अगर (!(conf[i].can_id & CAN_EFF_FLAG)) अणु
-			स_नकल(cm->rules_raw
+	for (i = 0; i < cm->rules_count; i++) {
+		if (!(conf[i].can_id & CAN_EFF_FLAG)) {
+			memcpy(cm->rules_raw
 				+ cm->eff_rules_count
 				+ cm->sff_rules_count,
-				&conf[i], माप(काष्ठा can_filter));
+				&conf[i], sizeof(struct can_filter));
 
 			cm->sff_rules_count++;
 
 			em_canid_sff_match_add(cm,
 				conf[i].can_id, conf[i].can_mask);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	m->datalen = माप(काष्ठा canid_match) + len;
-	m->data = (अचिन्हित दीर्घ)cm;
-	वापस 0;
-पूर्ण
+	m->datalen = sizeof(struct canid_match) + len;
+	m->data = (unsigned long)cm;
+	return 0;
+}
 
-अटल व्योम em_canid_destroy(काष्ठा tcf_ematch *m)
-अणु
-	काष्ठा canid_match *cm = em_canid_priv(m);
+static void em_canid_destroy(struct tcf_ematch *m)
+{
+	struct canid_match *cm = em_canid_priv(m);
 
-	kमुक्त(cm);
-पूर्ण
+	kfree(cm);
+}
 
-अटल पूर्णांक em_canid_dump(काष्ठा sk_buff *skb, काष्ठा tcf_ematch *m)
-अणु
-	काष्ठा canid_match *cm = em_canid_priv(m);
+static int em_canid_dump(struct sk_buff *skb, struct tcf_ematch *m)
+{
+	struct canid_match *cm = em_canid_priv(m);
 
 	/*
 	 * When configuring this ematch 'rules_count' is set not to exceed
 	 * 'rules_raw' array size
 	 */
-	अगर (nla_put_nohdr(skb, माप(काष्ठा can_filter) * cm->rules_count,
+	if (nla_put_nohdr(skb, sizeof(struct can_filter) * cm->rules_count,
 	    &cm->rules_raw) < 0)
-		वापस -EMSGSIZE;
+		return -EMSGSIZE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा tcf_ematch_ops em_canid_ops = अणु
+static struct tcf_ematch_ops em_canid_ops = {
 	.kind	  = TCF_EM_CANID,
 	.change	  = em_canid_change,
 	.match	  = em_canid_match,
@@ -211,21 +210,21 @@
 	.dump	  = em_canid_dump,
 	.owner	  = THIS_MODULE,
 	.link	  = LIST_HEAD_INIT(em_canid_ops.link)
-पूर्ण;
+};
 
-अटल पूर्णांक __init init_em_canid(व्योम)
-अणु
-	वापस tcf_em_रेजिस्टर(&em_canid_ops);
-पूर्ण
+static int __init init_em_canid(void)
+{
+	return tcf_em_register(&em_canid_ops);
+}
 
-अटल व्योम __निकास निकास_em_canid(व्योम)
-अणु
-	tcf_em_unरेजिस्टर(&em_canid_ops);
-पूर्ण
+static void __exit exit_em_canid(void)
+{
+	tcf_em_unregister(&em_canid_ops);
+}
 
 MODULE_LICENSE("GPL");
 
 module_init(init_em_canid);
-module_निकास(निकास_em_canid);
+module_exit(exit_em_canid);
 
 MODULE_ALIAS_TCF_EMATCH(TCF_EM_CANID);

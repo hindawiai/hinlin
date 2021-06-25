@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अघोषित TRACE_SYSTEM
-#घोषणा TRACE_SYSTEM initcall
+/* SPDX-License-Identifier: GPL-2.0 */
+#undef TRACE_SYSTEM
+#define TRACE_SYSTEM initcall
 
-#अगर !defined(_TRACE_INITCALL_H) || defined(TRACE_HEADER_MULTI_READ)
-#घोषणा _TRACE_INITCALL_H
+#if !defined(_TRACE_INITCALL_H) || defined(TRACE_HEADER_MULTI_READ)
+#define _TRACE_INITCALL_H
 
-#समावेश <linux/tracepoपूर्णांक.h>
+#include <linux/tracepoint.h>
 
 TRACE_EVENT(initcall_level,
 
-	TP_PROTO(स्थिर अक्षर *level),
+	TP_PROTO(const char *level),
 
 	TP_ARGS(level),
 
@@ -22,7 +21,7 @@ TRACE_EVENT(initcall_level,
 		__assign_str(level, level);
 	),
 
-	TP_prपूर्णांकk("level=%s", __get_str(level))
+	TP_printk("level=%s", __get_str(level))
 );
 
 TRACE_EVENT(initcall_start,
@@ -33,32 +32,32 @@ TRACE_EVENT(initcall_start,
 
 	TP_STRUCT__entry(
 		/*
-		 * Use field_काष्ठा to aव्योम is_चिन्हित_type()
-		 * comparison of a function poपूर्णांकer
+		 * Use field_struct to avoid is_signed_type()
+		 * comparison of a function pointer
 		 */
-		__field_काष्ठा(initcall_t, func)
+		__field_struct(initcall_t, func)
 	),
 
 	TP_fast_assign(
 		__entry->func = func;
 	),
 
-	TP_prपूर्णांकk("func=%pS", __entry->func)
+	TP_printk("func=%pS", __entry->func)
 );
 
 TRACE_EVENT(initcall_finish,
 
-	TP_PROTO(initcall_t func, पूर्णांक ret),
+	TP_PROTO(initcall_t func, int ret),
 
 	TP_ARGS(func, ret),
 
 	TP_STRUCT__entry(
 		/*
-		 * Use field_काष्ठा to aव्योम is_चिन्हित_type()
-		 * comparison of a function poपूर्णांकer
+		 * Use field_struct to avoid is_signed_type()
+		 * comparison of a function pointer
 		 */
-		__field_काष्ठा(initcall_t,	func)
-		__field(पूर्णांक,			ret)
+		__field_struct(initcall_t,	func)
+		__field(int,			ret)
 	),
 
 	TP_fast_assign(
@@ -66,10 +65,10 @@ TRACE_EVENT(initcall_finish,
 		__entry->ret = ret;
 	),
 
-	TP_prपूर्णांकk("func=%pS ret=%d", __entry->func, __entry->ret)
+	TP_printk("func=%pS ret=%d", __entry->func, __entry->ret)
 );
 
-#पूर्ण_अगर /* अगर !defined(_TRACE_GPIO_H) || defined(TRACE_HEADER_MULTI_READ) */
+#endif /* if !defined(_TRACE_GPIO_H) || defined(TRACE_HEADER_MULTI_READ) */
 
 /* This part must be outside protection */
-#समावेश <trace/define_trace.h>
+#include <trace/define_trace.h>

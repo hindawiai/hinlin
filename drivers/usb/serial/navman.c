@@ -1,115 +1,114 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Navman Serial USB driver
  *
- * Copyright (C) 2006 Greg Kroah-Harपंचांगan <gregkh@suse.de>
+ * Copyright (C) 2006 Greg Kroah-Hartman <gregkh@suse.de>
  *
  * TODO:
- *	Add termios method that uses copy_hw but also समाप्तs all echo
+ *	Add termios method that uses copy_hw but also kills all echo
  *	flags as the navman is rx only so cannot echo.
  */
 
-#समावेश <linux/gfp.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/tty.h>
-#समावेश <linux/tty_flip.h>
-#समावेश <linux/module.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/usb/serial.h>
+#include <linux/gfp.h>
+#include <linux/kernel.h>
+#include <linux/tty.h>
+#include <linux/tty_flip.h>
+#include <linux/module.h>
+#include <linux/usb.h>
+#include <linux/usb/serial.h>
 
-अटल स्थिर काष्ठा usb_device_id id_table[] = अणु
-	अणु USB_DEVICE(0x0a99, 0x0001) पूर्ण,	/* Talon Technology device */
-	अणु USB_DEVICE(0x0df7, 0x0900) पूर्ण,	/* Mobile Action i-gotU */
-	अणु पूर्ण,
-पूर्ण;
+static const struct usb_device_id id_table[] = {
+	{ USB_DEVICE(0x0a99, 0x0001) },	/* Talon Technology device */
+	{ USB_DEVICE(0x0df7, 0x0900) },	/* Mobile Action i-gotU */
+	{ },
+};
 MODULE_DEVICE_TABLE(usb, id_table);
 
-अटल व्योम navman_पढ़ो_पूर्णांक_callback(काष्ठा urb *urb)
-अणु
-	काष्ठा usb_serial_port *port = urb->context;
-	अचिन्हित अक्षर *data = urb->transfer_buffer;
-	पूर्णांक status = urb->status;
-	पूर्णांक result;
+static void navman_read_int_callback(struct urb *urb)
+{
+	struct usb_serial_port *port = urb->context;
+	unsigned char *data = urb->transfer_buffer;
+	int status = urb->status;
+	int result;
 
-	चयन (status) अणु
-	हाल 0:
+	switch (status) {
+	case 0:
 		/* success */
-		अवरोध;
-	हाल -ECONNRESET:
-	हाल -ENOENT:
-	हाल -ESHUTDOWN:
+		break;
+	case -ECONNRESET:
+	case -ENOENT:
+	case -ESHUTDOWN:
 		/* this urb is terminated, clean up */
 		dev_dbg(&port->dev, "%s - urb shutting down with status: %d\n",
 			__func__, status);
-		वापस;
-	शेष:
+		return;
+	default:
 		dev_dbg(&port->dev, "%s - nonzero urb status received: %d\n",
 			__func__, status);
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	usb_serial_debug_data(&port->dev, __func__, urb->actual_length, data);
 
-	अगर (urb->actual_length) अणु
+	if (urb->actual_length) {
 		tty_insert_flip_string(&port->port, data, urb->actual_length);
 		tty_flip_buffer_push(&port->port);
-	पूर्ण
+	}
 
-निकास:
+exit:
 	result = usb_submit_urb(urb, GFP_ATOMIC);
-	अगर (result)
+	if (result)
 		dev_err(&urb->dev->dev,
 			"%s - Error %d submitting interrupt urb\n",
 			__func__, result);
-पूर्ण
+}
 
-अटल पूर्णांक navman_खोलो(काष्ठा tty_काष्ठा *tty, काष्ठा usb_serial_port *port)
-अणु
-	पूर्णांक result = 0;
+static int navman_open(struct tty_struct *tty, struct usb_serial_port *port)
+{
+	int result = 0;
 
-	अगर (port->पूर्णांकerrupt_in_urb) अणु
+	if (port->interrupt_in_urb) {
 		dev_dbg(&port->dev, "%s - adding interrupt input for treo\n",
 			__func__);
-		result = usb_submit_urb(port->पूर्णांकerrupt_in_urb, GFP_KERNEL);
-		अगर (result)
+		result = usb_submit_urb(port->interrupt_in_urb, GFP_KERNEL);
+		if (result)
 			dev_err(&port->dev,
 				"%s - failed submitting interrupt urb, error %d\n",
 				__func__, result);
-	पूर्ण
-	वापस result;
-पूर्ण
+	}
+	return result;
+}
 
-अटल व्योम navman_बंद(काष्ठा usb_serial_port *port)
-अणु
-	usb_समाप्त_urb(port->पूर्णांकerrupt_in_urb);
-पूर्ण
+static void navman_close(struct usb_serial_port *port)
+{
+	usb_kill_urb(port->interrupt_in_urb);
+}
 
-अटल पूर्णांक navman_ग_लिखो(काष्ठा tty_काष्ठा *tty, काष्ठा usb_serial_port *port,
-			स्थिर अचिन्हित अक्षर *buf, पूर्णांक count)
-अणु
+static int navman_write(struct tty_struct *tty, struct usb_serial_port *port,
+			const unsigned char *buf, int count)
+{
 	/*
-	 * This device can't ग_लिखो any data, only पढ़ो from the device
+	 * This device can't write any data, only read from the device
 	 */
-	वापस -EOPNOTSUPP;
-पूर्ण
+	return -EOPNOTSUPP;
+}
 
-अटल काष्ठा usb_serial_driver navman_device = अणु
-	.driver = अणु
+static struct usb_serial_driver navman_device = {
+	.driver = {
 		.owner =	THIS_MODULE,
 		.name =		"navman",
-	पूर्ण,
+	},
 	.id_table =		id_table,
 	.num_ports =		1,
-	.खोलो =			navman_खोलो,
-	.बंद = 		navman_बंद,
-	.ग_लिखो = 		navman_ग_लिखो,
-	.पढ़ो_पूर्णांक_callback =	navman_पढ़ो_पूर्णांक_callback,
-पूर्ण;
+	.open =			navman_open,
+	.close = 		navman_close,
+	.write = 		navman_write,
+	.read_int_callback =	navman_read_int_callback,
+};
 
-अटल काष्ठा usb_serial_driver * स्थिर serial_drivers[] = अणु
-	&navman_device, शून्य
-पूर्ण;
+static struct usb_serial_driver * const serial_drivers[] = {
+	&navman_device, NULL
+};
 
 module_usb_serial_driver(serial_drivers, id_table);
 

@@ -1,61 +1,60 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /* Copyright (c) 2012 GCT Semiconductor, Inc. All rights reserved. */
 
-#अगर_अघोषित _GDM_TTY_H_
-#घोषणा _GDM_TTY_H_
+#ifndef _GDM_TTY_H_
+#define _GDM_TTY_H_
 
-#समावेश <linux/types.h>
-#समावेश <linux/tty.h>
+#include <linux/types.h>
+#include <linux/tty.h>
 
-#घोषणा TTY_MAX_COUNT		2
+#define TTY_MAX_COUNT		2
 
-#घोषणा MAX_ISSUE_NUM 3
+#define MAX_ISSUE_NUM 3
 
-क्रमागत TO_HOST_RESULT अणु
+enum TO_HOST_RESULT {
 	TO_HOST_BUFFER_REQUEST_FAIL = 1,
 	TO_HOST_PORT_CLOSE = 2,
 	TO_HOST_INVALID_PACKET = 3,
-पूर्ण;
+};
 
-क्रमागत RECV_PACKET_PROCESS अणु
+enum RECV_PACKET_PROCESS {
 	RECV_PACKET_PROCESS_COMPLETE = 0,
 	RECV_PACKET_PROCESS_CONTINUE = 1,
-पूर्ण;
+};
 
-काष्ठा gdm अणु
-	काष्ठा tty_dev *tty_dev;
-	काष्ठा tty_port port;
-	अचिन्हित पूर्णांक index;
-	अचिन्हित पूर्णांक minor;
-पूर्ण;
+struct gdm {
+	struct tty_dev *tty_dev;
+	struct tty_port port;
+	unsigned int index;
+	unsigned int minor;
+};
 
-काष्ठा tty_dev अणु
-	व्योम *priv_dev;
-	पूर्णांक (*send_func)(व्योम *priv_dev,
-			 व्योम *data,
-			 पूर्णांक len,
-			 पूर्णांक tty_index,
-			 व्योम (*cb)(व्योम *cb_data),
-			 व्योम *cb_data);
-	पूर्णांक (*recv_func)(व्योम *priv_dev,
-			 पूर्णांक (*cb)(व्योम *data,
-				   पूर्णांक len,
-				   पूर्णांक tty_index,
-				   काष्ठा tty_dev *tty_dev,
-				   पूर्णांक complete));
-	पूर्णांक (*send_control)(व्योम *priv_dev,
-			    पूर्णांक request,
-			    पूर्णांक value,
-			    व्योम *data,
-			    पूर्णांक len);
-	काष्ठा gdm *gdm[2];
-पूर्ण;
+struct tty_dev {
+	void *priv_dev;
+	int (*send_func)(void *priv_dev,
+			 void *data,
+			 int len,
+			 int tty_index,
+			 void (*cb)(void *cb_data),
+			 void *cb_data);
+	int (*recv_func)(void *priv_dev,
+			 int (*cb)(void *data,
+				   int len,
+				   int tty_index,
+				   struct tty_dev *tty_dev,
+				   int complete));
+	int (*send_control)(void *priv_dev,
+			    int request,
+			    int value,
+			    void *data,
+			    int len);
+	struct gdm *gdm[2];
+};
 
-पूर्णांक रेजिस्टर_lte_tty_driver(व्योम);
-व्योम unरेजिस्टर_lte_tty_driver(व्योम);
-पूर्णांक रेजिस्टर_lte_tty_device(काष्ठा tty_dev *tty_dev, काष्ठा device *dev);
-व्योम unरेजिस्टर_lte_tty_device(काष्ठा tty_dev *tty_dev);
+int register_lte_tty_driver(void);
+void unregister_lte_tty_driver(void);
+int register_lte_tty_device(struct tty_dev *tty_dev, struct device *dev);
+void unregister_lte_tty_device(struct tty_dev *tty_dev);
 
-#पूर्ण_अगर /* _GDM_USB_H_ */
+#endif /* _GDM_USB_H_ */
 

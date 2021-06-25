@@ -1,25 +1,24 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Common values क्रम the GHASH hash function
+ * Common values for the GHASH hash function
  */
 
-#अगर_अघोषित __CRYPTO_GHASH_H__
-#घोषणा __CRYPTO_GHASH_H__
+#ifndef __CRYPTO_GHASH_H__
+#define __CRYPTO_GHASH_H__
 
-#समावेश <linux/types.h>
-#समावेश <crypto/gf128mul.h>
+#include <linux/types.h>
+#include <crypto/gf128mul.h>
 
-#घोषणा GHASH_BLOCK_SIZE	16
-#घोषणा GHASH_DIGEST_SIZE	16
+#define GHASH_BLOCK_SIZE	16
+#define GHASH_DIGEST_SIZE	16
 
-काष्ठा ghash_ctx अणु
-	काष्ठा gf128mul_4k *gf128;
-पूर्ण;
+struct ghash_ctx {
+	struct gf128mul_4k *gf128;
+};
 
-काष्ठा ghash_desc_ctx अणु
+struct ghash_desc_ctx {
 	u8 buffer[GHASH_BLOCK_SIZE];
 	u32 bytes;
-पूर्ण;
+};
 
-#पूर्ण_अगर
+#endif

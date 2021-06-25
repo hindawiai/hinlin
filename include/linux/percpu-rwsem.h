@@ -1,154 +1,153 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_PERCPU_RWSEM_H
-#घोषणा _LINUX_PERCPU_RWSEM_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_PERCPU_RWSEM_H
+#define _LINUX_PERCPU_RWSEM_H
 
-#समावेश <linux/atomic.h>
-#समावेश <linux/percpu.h>
-#समावेश <linux/rcuरुको.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/rcu_sync.h>
-#समावेश <linux/lockdep.h>
+#include <linux/atomic.h>
+#include <linux/percpu.h>
+#include <linux/rcuwait.h>
+#include <linux/wait.h>
+#include <linux/rcu_sync.h>
+#include <linux/lockdep.h>
 
-काष्ठा percpu_rw_semaphore अणु
-	काष्ठा rcu_sync		rss;
-	अचिन्हित पूर्णांक __percpu	*पढ़ो_count;
-	काष्ठा rcuरुको		ग_लिखोr;
-	रुको_queue_head_t	रुकोers;
+struct percpu_rw_semaphore {
+	struct rcu_sync		rss;
+	unsigned int __percpu	*read_count;
+	struct rcuwait		writer;
+	wait_queue_head_t	waiters;
 	atomic_t		block;
-#अगर_घोषित CONFIG_DEBUG_LOCK_ALLOC
-	काष्ठा lockdep_map	dep_map;
-#पूर्ण_अगर
-पूर्ण;
+#ifdef CONFIG_DEBUG_LOCK_ALLOC
+	struct lockdep_map	dep_map;
+#endif
+};
 
-#अगर_घोषित CONFIG_DEBUG_LOCK_ALLOC
-#घोषणा __PERCPU_RWSEM_DEP_MAP_INIT(lockname)	.dep_map = अणु .name = #lockname पूर्ण,
-#अन्यथा
-#घोषणा __PERCPU_RWSEM_DEP_MAP_INIT(lockname)
-#पूर्ण_अगर
+#ifdef CONFIG_DEBUG_LOCK_ALLOC
+#define __PERCPU_RWSEM_DEP_MAP_INIT(lockname)	.dep_map = { .name = #lockname },
+#else
+#define __PERCPU_RWSEM_DEP_MAP_INIT(lockname)
+#endif
 
-#घोषणा __DEFINE_PERCPU_RWSEM(name, is_अटल)				\
-अटल DEFINE_PER_CPU(अचिन्हित पूर्णांक, __percpu_rwsem_rc_##name);		\
-is_अटल काष्ठा percpu_rw_semaphore name = अणु				\
+#define __DEFINE_PERCPU_RWSEM(name, is_static)				\
+static DEFINE_PER_CPU(unsigned int, __percpu_rwsem_rc_##name);		\
+is_static struct percpu_rw_semaphore name = {				\
 	.rss = __RCU_SYNC_INITIALIZER(name.rss),			\
-	.पढ़ो_count = &__percpu_rwsem_rc_##name,			\
-	.ग_लिखोr = __RCUWAIT_INITIALIZER(name.ग_लिखोr),			\
-	.रुकोers = __WAIT_QUEUE_HEAD_INITIALIZER(name.रुकोers),		\
+	.read_count = &__percpu_rwsem_rc_##name,			\
+	.writer = __RCUWAIT_INITIALIZER(name.writer),			\
+	.waiters = __WAIT_QUEUE_HEAD_INITIALIZER(name.waiters),		\
 	.block = ATOMIC_INIT(0),					\
 	__PERCPU_RWSEM_DEP_MAP_INIT(name)				\
-पूर्ण
+}
 
-#घोषणा DEFINE_PERCPU_RWSEM(name)		\
-	__DEFINE_PERCPU_RWSEM(name, /* not अटल */)
-#घोषणा DEFINE_STATIC_PERCPU_RWSEM(name)	\
-	__DEFINE_PERCPU_RWSEM(name, अटल)
+#define DEFINE_PERCPU_RWSEM(name)		\
+	__DEFINE_PERCPU_RWSEM(name, /* not static */)
+#define DEFINE_STATIC_PERCPU_RWSEM(name)	\
+	__DEFINE_PERCPU_RWSEM(name, static)
 
-बाह्य bool __percpu_करोwn_पढ़ो(काष्ठा percpu_rw_semaphore *, bool);
+extern bool __percpu_down_read(struct percpu_rw_semaphore *, bool);
 
-अटल अंतरभूत व्योम percpu_करोwn_पढ़ो(काष्ठा percpu_rw_semaphore *sem)
-अणु
+static inline void percpu_down_read(struct percpu_rw_semaphore *sem)
+{
 	might_sleep();
 
-	rwsem_acquire_पढ़ो(&sem->dep_map, 0, 0, _RET_IP_);
+	rwsem_acquire_read(&sem->dep_map, 0, 0, _RET_IP_);
 
 	preempt_disable();
 	/*
-	 * We are in an RCU-sched पढ़ो-side critical section, so the ग_लिखोr
-	 * cannot both change sem->state from पढ़ोers_fast and start checking
-	 * counters जबतक we are here. So अगर we see !sem->state, we know that
-	 * the ग_लिखोr won't be checking until we're past the preempt_enable()
-	 * and that once the synchronize_rcu() is करोne, the ग_लिखोr will see
-	 * anything we did within this RCU-sched पढ़ो-size critical section.
+	 * We are in an RCU-sched read-side critical section, so the writer
+	 * cannot both change sem->state from readers_fast and start checking
+	 * counters while we are here. So if we see !sem->state, we know that
+	 * the writer won't be checking until we're past the preempt_enable()
+	 * and that once the synchronize_rcu() is done, the writer will see
+	 * anything we did within this RCU-sched read-size critical section.
 	 */
-	अगर (likely(rcu_sync_is_idle(&sem->rss)))
-		this_cpu_inc(*sem->पढ़ो_count);
-	अन्यथा
-		__percpu_करोwn_पढ़ो(sem, false); /* Unconditional memory barrier */
+	if (likely(rcu_sync_is_idle(&sem->rss)))
+		this_cpu_inc(*sem->read_count);
+	else
+		__percpu_down_read(sem, false); /* Unconditional memory barrier */
 	/*
 	 * The preempt_enable() prevents the compiler from
 	 * bleeding the critical section out.
 	 */
 	preempt_enable();
-पूर्ण
+}
 
-अटल अंतरभूत bool percpu_करोwn_पढ़ो_trylock(काष्ठा percpu_rw_semaphore *sem)
-अणु
+static inline bool percpu_down_read_trylock(struct percpu_rw_semaphore *sem)
+{
 	bool ret = true;
 
 	preempt_disable();
 	/*
-	 * Same as in percpu_करोwn_पढ़ो().
+	 * Same as in percpu_down_read().
 	 */
-	अगर (likely(rcu_sync_is_idle(&sem->rss)))
-		this_cpu_inc(*sem->पढ़ो_count);
-	अन्यथा
-		ret = __percpu_करोwn_पढ़ो(sem, true); /* Unconditional memory barrier */
+	if (likely(rcu_sync_is_idle(&sem->rss)))
+		this_cpu_inc(*sem->read_count);
+	else
+		ret = __percpu_down_read(sem, true); /* Unconditional memory barrier */
 	preempt_enable();
 	/*
 	 * The barrier() from preempt_enable() prevents the compiler from
 	 * bleeding the critical section out.
 	 */
 
-	अगर (ret)
-		rwsem_acquire_पढ़ो(&sem->dep_map, 0, 1, _RET_IP_);
+	if (ret)
+		rwsem_acquire_read(&sem->dep_map, 0, 1, _RET_IP_);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत व्योम percpu_up_पढ़ो(काष्ठा percpu_rw_semaphore *sem)
-अणु
+static inline void percpu_up_read(struct percpu_rw_semaphore *sem)
+{
 	rwsem_release(&sem->dep_map, _RET_IP_);
 
 	preempt_disable();
 	/*
-	 * Same as in percpu_करोwn_पढ़ो().
+	 * Same as in percpu_down_read().
 	 */
-	अगर (likely(rcu_sync_is_idle(&sem->rss))) अणु
-		this_cpu_dec(*sem->पढ़ो_count);
-	पूर्ण अन्यथा अणु
+	if (likely(rcu_sync_is_idle(&sem->rss))) {
+		this_cpu_dec(*sem->read_count);
+	} else {
 		/*
-		 * slowpath; पढ़ोer will only ever wake a single blocked
-		 * ग_लिखोr.
+		 * slowpath; reader will only ever wake a single blocked
+		 * writer.
 		 */
 		smp_mb(); /* B matches C */
 		/*
-		 * In other words, अगर they see our decrement (presumably to
-		 * aggregate zero, as that is the only समय it matters) they
+		 * In other words, if they see our decrement (presumably to
+		 * aggregate zero, as that is the only time it matters) they
 		 * will also see our critical section.
 		 */
-		this_cpu_dec(*sem->पढ़ो_count);
-		rcuरुको_wake_up(&sem->ग_लिखोr);
-	पूर्ण
+		this_cpu_dec(*sem->read_count);
+		rcuwait_wake_up(&sem->writer);
+	}
 	preempt_enable();
-पूर्ण
+}
 
-बाह्य व्योम percpu_करोwn_ग_लिखो(काष्ठा percpu_rw_semaphore *);
-बाह्य व्योम percpu_up_ग_लिखो(काष्ठा percpu_rw_semaphore *);
+extern void percpu_down_write(struct percpu_rw_semaphore *);
+extern void percpu_up_write(struct percpu_rw_semaphore *);
 
-बाह्य पूर्णांक __percpu_init_rwsem(काष्ठा percpu_rw_semaphore *,
-				स्थिर अक्षर *, काष्ठा lock_class_key *);
+extern int __percpu_init_rwsem(struct percpu_rw_semaphore *,
+				const char *, struct lock_class_key *);
 
-बाह्य व्योम percpu_मुक्त_rwsem(काष्ठा percpu_rw_semaphore *);
+extern void percpu_free_rwsem(struct percpu_rw_semaphore *);
 
-#घोषणा percpu_init_rwsem(sem)					\
-(अणु								\
-	अटल काष्ठा lock_class_key rwsem_key;			\
+#define percpu_init_rwsem(sem)					\
+({								\
+	static struct lock_class_key rwsem_key;			\
 	__percpu_init_rwsem(sem, #sem, &rwsem_key);		\
-पूर्ण)
+})
 
-#घोषणा percpu_rwsem_is_held(sem)	lockdep_is_held(sem)
-#घोषणा percpu_rwsem_निश्चित_held(sem)	lockdep_निश्चित_held(sem)
+#define percpu_rwsem_is_held(sem)	lockdep_is_held(sem)
+#define percpu_rwsem_assert_held(sem)	lockdep_assert_held(sem)
 
-अटल अंतरभूत व्योम percpu_rwsem_release(काष्ठा percpu_rw_semaphore *sem,
-					bool पढ़ो, अचिन्हित दीर्घ ip)
-अणु
+static inline void percpu_rwsem_release(struct percpu_rw_semaphore *sem,
+					bool read, unsigned long ip)
+{
 	lock_release(&sem->dep_map, ip);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम percpu_rwsem_acquire(काष्ठा percpu_rw_semaphore *sem,
-					bool पढ़ो, अचिन्हित दीर्घ ip)
-अणु
-	lock_acquire(&sem->dep_map, 0, 1, पढ़ो, 1, शून्य, ip);
-पूर्ण
+static inline void percpu_rwsem_acquire(struct percpu_rw_semaphore *sem,
+					bool read, unsigned long ip)
+{
+	lock_acquire(&sem->dep_map, 0, 1, read, 1, NULL, ip);
+}
 
-#पूर्ण_अगर
+#endif

@@ -1,10 +1,9 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _SPARC_TERMBITS_H
-#घोषणा _SPARC_TERMBITS_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _SPARC_TERMBITS_H
+#define _SPARC_TERMBITS_H
 
-#समावेश <uapi/यंत्र/termbits.h>
+#include <uapi/asm/termbits.h>
 
-#घोषणा VMIN     16
-#घोषणा VTIME    17
-#पूर्ण_अगर /* !(_SPARC_TERMBITS_H) */
+#define VMIN     16
+#define VTIME    17
+#endif /* !(_SPARC_TERMBITS_H) */

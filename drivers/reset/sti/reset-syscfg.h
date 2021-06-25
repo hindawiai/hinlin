@@ -1,18 +1,17 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2013 STMicroelectronics (R&D) Limited
  * Author: Stephen Gallimore <stephen.gallimore@st.com>
  */
-#अगर_अघोषित __STI_RESET_SYSCFG_H
-#घोषणा __STI_RESET_SYSCFG_H
+#ifndef __STI_RESET_SYSCFG_H
+#define __STI_RESET_SYSCFG_H
 
-#समावेश <linux/device.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/reset-controller.h>
+#include <linux/device.h>
+#include <linux/regmap.h>
+#include <linux/reset-controller.h>
 
 /**
- * Reset channel description क्रम a प्रणाली configuration रेजिस्टर based
+ * Reset channel description for a system configuration register based
  * reset controller.
  *
  * @compatible: Compatible string of the syscon regmap containing this
@@ -20,47 +19,47 @@
  * @reset: Regmap field description of the channel's reset bit.
  * @ack: Regmap field description of the channel's acknowledge bit.
  */
-काष्ठा syscfg_reset_channel_data अणु
-	स्थिर अक्षर *compatible;
-	काष्ठा reg_field reset;
-	काष्ठा reg_field ack;
-पूर्ण;
+struct syscfg_reset_channel_data {
+	const char *compatible;
+	struct reg_field reset;
+	struct reg_field ack;
+};
 
-#घोषणा _SYSCFG_RST_CH(_c, _rr, _rb, _ar, _ab)		\
-	अणु .compatible	= _c,				\
+#define _SYSCFG_RST_CH(_c, _rr, _rb, _ar, _ab)		\
+	{ .compatible	= _c,				\
 	  .reset	= REG_FIELD(_rr, _rb, _rb),	\
-	  .ack		= REG_FIELD(_ar, _ab, _ab), पूर्ण
+	  .ack		= REG_FIELD(_ar, _ab, _ab), }
 
-#घोषणा _SYSCFG_RST_CH_NO_ACK(_c, _rr, _rb)		\
-	अणु .compatible	= _c,			\
-	  .reset	= REG_FIELD(_rr, _rb, _rb), पूर्ण
+#define _SYSCFG_RST_CH_NO_ACK(_c, _rr, _rb)		\
+	{ .compatible	= _c,			\
+	  .reset	= REG_FIELD(_rr, _rb, _rb), }
 
 /**
- * Description of a प्रणाली configuration रेजिस्टर based reset controller.
+ * Description of a system configuration register based reset controller.
  *
- * @रुको_क्रम_ack: The controller will रुको क्रम reset निश्चित and de-निश्चित to
+ * @wait_for_ack: The controller will wait for reset assert and de-assert to
  *                be "ack'd" in a channel's ack field.
  * @active_low: Are the resets in this controller active low, i.e. clearing
- *              the reset bit माला_दो the hardware पूर्णांकo reset.
+ *              the reset bit puts the hardware into reset.
  * @nr_channels: The number of reset channels in this controller.
  * @channels: An array of reset channel descriptions.
  */
-काष्ठा syscfg_reset_controller_data अणु
-	bool रुको_क्रम_ack;
+struct syscfg_reset_controller_data {
+	bool wait_for_ack;
 	bool active_low;
-	पूर्णांक nr_channels;
-	स्थिर काष्ठा syscfg_reset_channel_data *channels;
-पूर्ण;
+	int nr_channels;
+	const struct syscfg_reset_channel_data *channels;
+};
 
 /**
- * syscfg_reset_probe(): platक्रमm device probe function used by syscfg
- *                       reset controller drivers. This रेजिस्टरs a reset
- *                       controller configured by the OF match data क्रम
+ * syscfg_reset_probe(): platform device probe function used by syscfg
+ *                       reset controller drivers. This registers a reset
+ *                       controller configured by the OF match data for
  *                       the compatible device which should be of type
  *                       "struct syscfg_reset_controller_data".
  *
- * @pdev: platक्रमm device
+ * @pdev: platform device
  */
-पूर्णांक syscfg_reset_probe(काष्ठा platक्रमm_device *pdev);
+int syscfg_reset_probe(struct platform_device *pdev);
 
-#पूर्ण_अगर /* __STI_RESET_SYSCFG_H */
+#endif /* __STI_RESET_SYSCFG_H */

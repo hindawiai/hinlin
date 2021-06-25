@@ -1,108 +1,107 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /* Service connection management
  *
  * Copyright (C) 2016 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#समावेश <linux/slab.h>
-#समावेश "ar-internal.h"
+#include <linux/slab.h>
+#include "ar-internal.h"
 
-अटल काष्ठा rxrpc_bundle rxrpc_service_dummy_bundle = अणु
+static struct rxrpc_bundle rxrpc_service_dummy_bundle = {
 	.usage		= ATOMIC_INIT(1),
-	.debug_id	= अच_पूर्णांक_उच्च,
+	.debug_id	= UINT_MAX,
 	.channel_lock	= __SPIN_LOCK_UNLOCKED(&rxrpc_service_dummy_bundle.channel_lock),
-पूर्ण;
+};
 
 /*
  * Find a service connection under RCU conditions.
  *
  * We could use a hash table, but that is subject to bucket stuffing by an
- * attacker as the client माला_लो to pick the epoch and cid values and would know
- * the hash function.  So, instead, we use a hash table क्रम the peer and from
+ * attacker as the client gets to pick the epoch and cid values and would know
+ * the hash function.  So, instead, we use a hash table for the peer and from
  * that an rbtree to find the service connection.  Under ordinary circumstances
  * it might be slower than a large hash table, but it is at least limited in
  * depth.
  */
-काष्ठा rxrpc_connection *rxrpc_find_service_conn_rcu(काष्ठा rxrpc_peer *peer,
-						     काष्ठा sk_buff *skb)
-अणु
-	काष्ठा rxrpc_connection *conn = शून्य;
-	काष्ठा rxrpc_conn_proto k;
-	काष्ठा rxrpc_skb_priv *sp = rxrpc_skb(skb);
-	काष्ठा rb_node *p;
-	अचिन्हित पूर्णांक seq = 0;
+struct rxrpc_connection *rxrpc_find_service_conn_rcu(struct rxrpc_peer *peer,
+						     struct sk_buff *skb)
+{
+	struct rxrpc_connection *conn = NULL;
+	struct rxrpc_conn_proto k;
+	struct rxrpc_skb_priv *sp = rxrpc_skb(skb);
+	struct rb_node *p;
+	unsigned int seq = 0;
 
 	k.epoch	= sp->hdr.epoch;
 	k.cid	= sp->hdr.cid & RXRPC_CIDMASK;
 
-	करो अणु
-		/* Unक्रमtunately, rbtree walking करोesn't give reliable results
-		 * under just the RCU पढ़ो lock, so we have to check क्रम
+	do {
+		/* Unfortunately, rbtree walking doesn't give reliable results
+		 * under just the RCU read lock, so we have to check for
 		 * changes.
 		 */
-		पढ़ो_seqbegin_or_lock(&peer->service_conn_lock, &seq);
+		read_seqbegin_or_lock(&peer->service_conn_lock, &seq);
 
 		p = rcu_dereference_raw(peer->service_conns.rb_node);
-		जबतक (p) अणु
-			conn = rb_entry(p, काष्ठा rxrpc_connection, service_node);
+		while (p) {
+			conn = rb_entry(p, struct rxrpc_connection, service_node);
 
-			अगर (conn->proto.index_key < k.index_key)
+			if (conn->proto.index_key < k.index_key)
 				p = rcu_dereference_raw(p->rb_left);
-			अन्यथा अगर (conn->proto.index_key > k.index_key)
+			else if (conn->proto.index_key > k.index_key)
 				p = rcu_dereference_raw(p->rb_right);
-			अन्यथा
-				अवरोध;
-			conn = शून्य;
-		पूर्ण
-	पूर्ण जबतक (need_seqretry(&peer->service_conn_lock, seq));
+			else
+				break;
+			conn = NULL;
+		}
+	} while (need_seqretry(&peer->service_conn_lock, seq));
 
-	करोne_seqretry(&peer->service_conn_lock, seq);
+	done_seqretry(&peer->service_conn_lock, seq);
 	_leave(" = %d", conn ? conn->debug_id : -1);
-	वापस conn;
-पूर्ण
+	return conn;
+}
 
 /*
- * Insert a service connection पूर्णांकo a peer's tree, thereby making it a target
- * क्रम incoming packets.
+ * Insert a service connection into a peer's tree, thereby making it a target
+ * for incoming packets.
  */
-अटल व्योम rxrpc_publish_service_conn(काष्ठा rxrpc_peer *peer,
-				       काष्ठा rxrpc_connection *conn)
-अणु
-	काष्ठा rxrpc_connection *cursor = शून्य;
-	काष्ठा rxrpc_conn_proto k = conn->proto;
-	काष्ठा rb_node **pp, *parent;
+static void rxrpc_publish_service_conn(struct rxrpc_peer *peer,
+				       struct rxrpc_connection *conn)
+{
+	struct rxrpc_connection *cursor = NULL;
+	struct rxrpc_conn_proto k = conn->proto;
+	struct rb_node **pp, *parent;
 
-	ग_लिखो_seqlock_bh(&peer->service_conn_lock);
+	write_seqlock_bh(&peer->service_conn_lock);
 
 	pp = &peer->service_conns.rb_node;
-	parent = शून्य;
-	जबतक (*pp) अणु
+	parent = NULL;
+	while (*pp) {
 		parent = *pp;
 		cursor = rb_entry(parent,
-				  काष्ठा rxrpc_connection, service_node);
+				  struct rxrpc_connection, service_node);
 
-		अगर (cursor->proto.index_key < k.index_key)
+		if (cursor->proto.index_key < k.index_key)
 			pp = &(*pp)->rb_left;
-		अन्यथा अगर (cursor->proto.index_key > k.index_key)
+		else if (cursor->proto.index_key > k.index_key)
 			pp = &(*pp)->rb_right;
-		अन्यथा
-			जाओ found_extant_conn;
-	पूर्ण
+		else
+			goto found_extant_conn;
+	}
 
 	rb_link_node_rcu(&conn->service_node, parent, pp);
 	rb_insert_color(&conn->service_node, &peer->service_conns);
 conn_published:
 	set_bit(RXRPC_CONN_IN_SERVICE_CONNS, &conn->flags);
-	ग_लिखो_sequnlock_bh(&peer->service_conn_lock);
+	write_sequnlock_bh(&peer->service_conn_lock);
 	_leave(" = %d [new]", conn->debug_id);
-	वापस;
+	return;
 
 found_extant_conn:
-	अगर (atomic_पढ़ो(&cursor->usage) == 0)
-		जाओ replace_old_connection;
-	ग_लिखो_sequnlock_bh(&peer->service_conn_lock);
+	if (atomic_read(&cursor->usage) == 0)
+		goto replace_old_connection;
+	write_sequnlock_bh(&peer->service_conn_lock);
 	/* We should not be able to get here.  rxrpc_incoming_connection() is
 	 * called in a non-reentrant context, so there can't be a race to
 	 * insert a new connection.
@@ -116,20 +115,20 @@ replace_old_connection:
 			    &conn->service_node,
 			    &peer->service_conns);
 	clear_bit(RXRPC_CONN_IN_SERVICE_CONNS, &cursor->flags);
-	जाओ conn_published;
-पूर्ण
+	goto conn_published;
+}
 
 /*
- * Pपुनः_स्मृतिate a service connection.  The connection is placed on the proc and
- * reap lists so that we करोn't have to get the lock from BH context.
+ * Preallocate a service connection.  The connection is placed on the proc and
+ * reap lists so that we don't have to get the lock from BH context.
  */
-काष्ठा rxrpc_connection *rxrpc_pपुनः_स्मृति_service_connection(काष्ठा rxrpc_net *rxnet,
+struct rxrpc_connection *rxrpc_prealloc_service_connection(struct rxrpc_net *rxnet,
 							   gfp_t gfp)
-अणु
-	काष्ठा rxrpc_connection *conn = rxrpc_alloc_connection(gfp);
+{
+	struct rxrpc_connection *conn = rxrpc_alloc_connection(gfp);
 
-	अगर (conn) अणु
-		/* We मुख्यtain an extra ref on the connection whilst it is on
+	if (conn) {
+		/* We maintain an extra ref on the connection whilst it is on
 		 * the rxrpc_connections list.
 		 */
 		conn->state = RXRPC_CONN_SERVICE_PREALLOC;
@@ -137,29 +136,29 @@ replace_old_connection:
 		conn->bundle = rxrpc_get_bundle(&rxrpc_service_dummy_bundle);
 
 		atomic_inc(&rxnet->nr_conns);
-		ग_लिखो_lock(&rxnet->conn_lock);
+		write_lock(&rxnet->conn_lock);
 		list_add_tail(&conn->link, &rxnet->service_conns);
 		list_add_tail(&conn->proc_link, &rxnet->conn_proc_list);
-		ग_लिखो_unlock(&rxnet->conn_lock);
+		write_unlock(&rxnet->conn_lock);
 
 		trace_rxrpc_conn(conn->debug_id, rxrpc_conn_new_service,
-				 atomic_पढ़ो(&conn->usage),
-				 __builtin_वापस_address(0));
-	पूर्ण
+				 atomic_read(&conn->usage),
+				 __builtin_return_address(0));
+	}
 
-	वापस conn;
-पूर्ण
+	return conn;
+}
 
 /*
  * Set up an incoming connection.  This is called in BH context with the RCU
- * पढ़ो lock held.
+ * read lock held.
  */
-व्योम rxrpc_new_incoming_connection(काष्ठा rxrpc_sock *rx,
-				   काष्ठा rxrpc_connection *conn,
-				   स्थिर काष्ठा rxrpc_security *sec,
-				   काष्ठा sk_buff *skb)
-अणु
-	काष्ठा rxrpc_skb_priv *sp = rxrpc_skb(skb);
+void rxrpc_new_incoming_connection(struct rxrpc_sock *rx,
+				   struct rxrpc_connection *conn,
+				   const struct rxrpc_security *sec,
+				   struct sk_buff *skb)
+{
+	struct rxrpc_skb_priv *sp = rxrpc_skb(skb);
 
 	_enter("");
 
@@ -170,35 +169,35 @@ replace_old_connection:
 	conn->security_ix	= sp->hdr.securityIndex;
 	conn->out_clientflag	= 0;
 	conn->security		= sec;
-	अगर (conn->security_ix)
+	if (conn->security_ix)
 		conn->state	= RXRPC_CONN_SERVICE_UNSECURED;
-	अन्यथा
+	else
 		conn->state	= RXRPC_CONN_SERVICE;
 
-	/* See अगर we should upgrade the service.  This can only happen on the
-	 * first packet on a new connection.  Once करोne, it applies to all
+	/* See if we should upgrade the service.  This can only happen on the
+	 * first packet on a new connection.  Once done, it applies to all
 	 * subsequent calls on that connection.
 	 */
-	अगर (sp->hdr.userStatus == RXRPC_USERSTATUS_SERVICE_UPGRADE &&
+	if (sp->hdr.userStatus == RXRPC_USERSTATUS_SERVICE_UPGRADE &&
 	    conn->service_id == rx->service_upgrade.from)
 		conn->service_id = rx->service_upgrade.to;
 
-	/* Make the connection a target क्रम incoming packets. */
+	/* Make the connection a target for incoming packets. */
 	rxrpc_publish_service_conn(conn->params.peer, conn);
 
 	_net("CONNECTION new %d {%x}", conn->debug_id, conn->proto.cid);
-पूर्ण
+}
 
 /*
  * Remove the service connection from the peer's tree, thereby removing it as a
- * target क्रम incoming packets.
+ * target for incoming packets.
  */
-व्योम rxrpc_unpublish_service_conn(काष्ठा rxrpc_connection *conn)
-अणु
-	काष्ठा rxrpc_peer *peer = conn->params.peer;
+void rxrpc_unpublish_service_conn(struct rxrpc_connection *conn)
+{
+	struct rxrpc_peer *peer = conn->params.peer;
 
-	ग_लिखो_seqlock_bh(&peer->service_conn_lock);
-	अगर (test_and_clear_bit(RXRPC_CONN_IN_SERVICE_CONNS, &conn->flags))
+	write_seqlock_bh(&peer->service_conn_lock);
+	if (test_and_clear_bit(RXRPC_CONN_IN_SERVICE_CONNS, &conn->flags))
 		rb_erase(&conn->service_node, &peer->service_conns);
-	ग_लिखो_sequnlock_bh(&peer->service_conn_lock);
-पूर्ण
+	write_sequnlock_bh(&peer->service_conn_lock);
+}

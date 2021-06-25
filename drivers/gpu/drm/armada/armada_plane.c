@@ -1,24 +1,23 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2012 Russell King
- *  Rewritten from the करोvefb driver, and Armada510 manuals.
+ *  Rewritten from the dovefb driver, and Armada510 manuals.
  */
 
-#समावेश <drm/drm_atomic.h>
-#समावेश <drm/drm_atomic_helper.h>
-#समावेश <drm/drm_fourcc.h>
-#समावेश <drm/drm_plane_helper.h>
+#include <drm/drm_atomic.h>
+#include <drm/drm_atomic_helper.h>
+#include <drm/drm_fourcc.h>
+#include <drm/drm_plane_helper.h>
 
-#समावेश "armada_crtc.h"
-#समावेश "armada_drm.h"
-#समावेश "armada_fb.h"
-#समावेश "armada_gem.h"
-#समावेश "armada_hw.h"
-#समावेश "armada_plane.h"
-#समावेश "armada_trace.h"
+#include "armada_crtc.h"
+#include "armada_drm.h"
+#include "armada_fb.h"
+#include "armada_gem.h"
+#include "armada_hw.h"
+#include "armada_plane.h"
+#include "armada_trace.h"
 
-अटल स्थिर uपूर्णांक32_t armada_primary_क्रमmats[] = अणु
+static const uint32_t armada_primary_formats[] = {
 	DRM_FORMAT_UYVY,
 	DRM_FORMAT_YUYV,
 	DRM_FORMAT_VYUY,
@@ -33,119 +32,119 @@
 	DRM_FORMAT_ABGR1555,
 	DRM_FORMAT_RGB565,
 	DRM_FORMAT_BGR565,
-पूर्ण;
+};
 
-व्योम armada_drm_plane_calc(काष्ठा drm_plane_state *state, u32 addrs[2][3],
-	u16 pitches[3], bool पूर्णांकerlaced)
-अणु
-	काष्ठा drm_framebuffer *fb = state->fb;
-	स्थिर काष्ठा drm_क्रमmat_info *क्रमmat = fb->क्रमmat;
-	अचिन्हित पूर्णांक num_planes = क्रमmat->num_planes;
-	अचिन्हित पूर्णांक x = state->src.x1 >> 16;
-	अचिन्हित पूर्णांक y = state->src.y1 >> 16;
+void armada_drm_plane_calc(struct drm_plane_state *state, u32 addrs[2][3],
+	u16 pitches[3], bool interlaced)
+{
+	struct drm_framebuffer *fb = state->fb;
+	const struct drm_format_info *format = fb->format;
+	unsigned int num_planes = format->num_planes;
+	unsigned int x = state->src.x1 >> 16;
+	unsigned int y = state->src.y1 >> 16;
 	u32 addr = drm_fb_obj(fb)->dev_addr;
-	पूर्णांक i;
+	int i;
 
 	DRM_DEBUG_KMS("pitch %u x %d y %d bpp %d\n",
-		      fb->pitches[0], x, y, क्रमmat->cpp[0] * 8);
+		      fb->pitches[0], x, y, format->cpp[0] * 8);
 
-	अगर (num_planes > 3)
+	if (num_planes > 3)
 		num_planes = 3;
 
 	addrs[0][0] = addr + fb->offsets[0] + y * fb->pitches[0] +
-		      x * क्रमmat->cpp[0];
+		      x * format->cpp[0];
 	pitches[0] = fb->pitches[0];
 
-	y /= क्रमmat->vsub;
-	x /= क्रमmat->hsub;
+	y /= format->vsub;
+	x /= format->hsub;
 
-	क्रम (i = 1; i < num_planes; i++) अणु
+	for (i = 1; i < num_planes; i++) {
 		addrs[0][i] = addr + fb->offsets[i] + y * fb->pitches[i] +
-			      x * क्रमmat->cpp[i];
+			      x * format->cpp[i];
 		pitches[i] = fb->pitches[i];
-	पूर्ण
-	क्रम (; i < 3; i++) अणु
+	}
+	for (; i < 3; i++) {
 		addrs[0][i] = 0;
 		pitches[i] = 0;
-	पूर्ण
-	अगर (पूर्णांकerlaced) अणु
-		क्रम (i = 0; i < 3; i++) अणु
+	}
+	if (interlaced) {
+		for (i = 0; i < 3; i++) {
 			addrs[1][i] = addrs[0][i] + pitches[i];
 			pitches[i] *= 2;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		क्रम (i = 0; i < 3; i++)
+		}
+	} else {
+		for (i = 0; i < 3; i++)
 			addrs[1][i] = addrs[0][i];
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक armada_drm_plane_prepare_fb(काष्ठा drm_plane *plane,
-	काष्ठा drm_plane_state *state)
-अणु
+int armada_drm_plane_prepare_fb(struct drm_plane *plane,
+	struct drm_plane_state *state)
+{
 	DRM_DEBUG_KMS("[PLANE:%d:%s] [FB:%d]\n",
 		plane->base.id, plane->name,
 		state->fb ? state->fb->base.id : 0);
 
 	/*
 	 * Take a reference on the new framebuffer - we want to
-	 * hold on to it जबतक the hardware is displaying it.
+	 * hold on to it while the hardware is displaying it.
 	 */
-	अगर (state->fb)
+	if (state->fb)
 		drm_framebuffer_get(state->fb);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम armada_drm_plane_cleanup_fb(काष्ठा drm_plane *plane,
-	काष्ठा drm_plane_state *old_state)
-अणु
+void armada_drm_plane_cleanup_fb(struct drm_plane *plane,
+	struct drm_plane_state *old_state)
+{
 	DRM_DEBUG_KMS("[PLANE:%d:%s] [FB:%d]\n",
 		plane->base.id, plane->name,
 		old_state->fb ? old_state->fb->base.id : 0);
 
-	अगर (old_state->fb)
+	if (old_state->fb)
 		drm_framebuffer_put(old_state->fb);
-पूर्ण
+}
 
-पूर्णांक armada_drm_plane_atomic_check(काष्ठा drm_plane *plane,
-	काष्ठा drm_atomic_state *state)
-अणु
-	काष्ठा drm_plane_state *new_plane_state = drm_atomic_get_new_plane_state(state,
+int armada_drm_plane_atomic_check(struct drm_plane *plane,
+	struct drm_atomic_state *state)
+{
+	struct drm_plane_state *new_plane_state = drm_atomic_get_new_plane_state(state,
 										 plane);
-	काष्ठा armada_plane_state *st = to_armada_plane_state(new_plane_state);
-	काष्ठा drm_crtc *crtc = new_plane_state->crtc;
-	काष्ठा drm_crtc_state *crtc_state;
-	bool पूर्णांकerlace;
-	पूर्णांक ret;
+	struct armada_plane_state *st = to_armada_plane_state(new_plane_state);
+	struct drm_crtc *crtc = new_plane_state->crtc;
+	struct drm_crtc_state *crtc_state;
+	bool interlace;
+	int ret;
 
-	अगर (!new_plane_state->fb || WARN_ON(!new_plane_state->crtc)) अणु
+	if (!new_plane_state->fb || WARN_ON(!new_plane_state->crtc)) {
 		new_plane_state->visible = false;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (state)
+	if (state)
 		crtc_state = drm_atomic_get_existing_crtc_state(state,
 								crtc);
-	अन्यथा
+	else
 		crtc_state = crtc->state;
 
 	ret = drm_atomic_helper_check_plane_state(new_plane_state, crtc_state,
 						  0,
-						  पूर्णांक_उच्च, true, false);
-	अगर (ret)
-		वापस ret;
+						  INT_MAX, true, false);
+	if (ret)
+		return ret;
 
-	पूर्णांकerlace = crtc_state->adjusted_mode.flags & DRM_MODE_FLAG_INTERLACE;
-	अगर (पूर्णांकerlace) अणु
-		अगर ((new_plane_state->dst.y1 | new_plane_state->dst.y2) & 1)
-			वापस -EINVAL;
+	interlace = crtc_state->adjusted_mode.flags & DRM_MODE_FLAG_INTERLACE;
+	if (interlace) {
+		if ((new_plane_state->dst.y1 | new_plane_state->dst.y2) & 1)
+			return -EINVAL;
 		st->src_hw = drm_rect_height(&new_plane_state->src) >> 17;
 		st->dst_yx = new_plane_state->dst.y1 >> 1;
 		st->dst_hw = drm_rect_height(&new_plane_state->dst) >> 1;
-	पूर्ण अन्यथा अणु
+	} else {
 		st->src_hw = drm_rect_height(&new_plane_state->src) >> 16;
 		st->dst_yx = new_plane_state->dst.y1;
 		st->dst_hw = drm_rect_height(&new_plane_state->dst);
-	पूर्ण
+	}
 
 	st->src_hw <<= 16;
 	st->src_hw |= drm_rect_width(&new_plane_state->src) >> 16;
@@ -155,28 +154,28 @@
 	st->dst_hw |= drm_rect_width(&new_plane_state->dst) & 0x0000ffff;
 
 	armada_drm_plane_calc(new_plane_state, st->addrs, st->pitches,
-			      पूर्णांकerlace);
-	st->पूर्णांकerlace = पूर्णांकerlace;
+			      interlace);
+	st->interlace = interlace;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम armada_drm_primary_plane_atomic_update(काष्ठा drm_plane *plane,
-	काष्ठा drm_atomic_state *state)
-अणु
-	काष्ठा drm_plane_state *old_state = drm_atomic_get_old_plane_state(state,
+static void armada_drm_primary_plane_atomic_update(struct drm_plane *plane,
+	struct drm_atomic_state *state)
+{
+	struct drm_plane_state *old_state = drm_atomic_get_old_plane_state(state,
 									   plane);
-	काष्ठा drm_plane_state *new_state = drm_atomic_get_new_plane_state(state,
+	struct drm_plane_state *new_state = drm_atomic_get_new_plane_state(state,
 									   plane);
-	काष्ठा armada_crtc *dcrtc;
-	काष्ठा armada_regs *regs;
+	struct armada_crtc *dcrtc;
+	struct armada_regs *regs;
 	u32 cfg, cfg_mask, val;
-	अचिन्हित पूर्णांक idx;
+	unsigned int idx;
 
 	DRM_DEBUG_KMS("[PLANE:%d:%s]\n", plane->base.id, plane->name);
 
-	अगर (!new_state->fb || WARN_ON(!new_state->crtc))
-		वापस;
+	if (!new_state->fb || WARN_ON(!new_state->crtc))
+		return;
 
 	DRM_DEBUG_KMS("[PLANE:%d:%s] is on [CRTC:%d:%s] with [FB:%d] visible %u->%u\n",
 		plane->base.id, plane->name,
@@ -188,25 +187,25 @@
 	regs = dcrtc->regs + dcrtc->regs_idx;
 
 	idx = 0;
-	अगर (!old_state->visible && new_state->visible) अणु
+	if (!old_state->visible && new_state->visible) {
 		val = CFG_PDWN64x66;
-		अगर (drm_fb_to_armada_fb(new_state->fb)->fmt > CFG_420)
+		if (drm_fb_to_armada_fb(new_state->fb)->fmt > CFG_420)
 			val |= CFG_PDWN256x24;
 		armada_reg_queue_mod(regs, idx, 0, val, LCD_SPU_SRAM_PARA1);
-	पूर्ण
+	}
 	val = armada_src_hw(new_state);
-	अगर (armada_src_hw(old_state) != val)
+	if (armada_src_hw(old_state) != val)
 		armada_reg_queue_set(regs, idx, val, LCD_SPU_GRA_HPXL_VLN);
 	val = armada_dst_yx(new_state);
-	अगर (armada_dst_yx(old_state) != val)
+	if (armada_dst_yx(old_state) != val)
 		armada_reg_queue_set(regs, idx, val, LCD_SPU_GRA_OVSA_HPXL_VLN);
 	val = armada_dst_hw(new_state);
-	अगर (armada_dst_hw(old_state) != val)
+	if (armada_dst_hw(old_state) != val)
 		armada_reg_queue_set(regs, idx, val, LCD_SPU_GZM_HPXL_VLN);
-	अगर (old_state->src.x1 != new_state->src.x1 ||
+	if (old_state->src.x1 != new_state->src.x1 ||
 	    old_state->src.y1 != new_state->src.y1 ||
 	    old_state->fb != new_state->fb ||
-	    new_state->crtc->state->mode_changed) अणु
+	    new_state->crtc->state->mode_changed) {
 		armada_reg_queue_set(regs, idx, armada_addr(new_state, 0, 0),
 				     LCD_CFG_GRA_START_ADDR0);
 		armada_reg_queue_set(regs, idx, armada_addr(new_state, 1, 0),
@@ -214,56 +213,56 @@
 		armada_reg_queue_mod(regs, idx, armada_pitch(new_state, 0),
 				     0xffff,
 				     LCD_CFG_GRA_PITCH);
-	पूर्ण
-	अगर (old_state->fb != new_state->fb ||
-	    new_state->crtc->state->mode_changed) अणु
+	}
+	if (old_state->fb != new_state->fb ||
+	    new_state->crtc->state->mode_changed) {
 		cfg = CFG_GRA_FMT(drm_fb_to_armada_fb(new_state->fb)->fmt) |
 		      CFG_GRA_MOD(drm_fb_to_armada_fb(new_state->fb)->mod);
-		अगर (drm_fb_to_armada_fb(new_state->fb)->fmt > CFG_420)
+		if (drm_fb_to_armada_fb(new_state->fb)->fmt > CFG_420)
 			cfg |= CFG_PALETTE_ENA;
-		अगर (new_state->visible)
+		if (new_state->visible)
 			cfg |= CFG_GRA_ENA;
-		अगर (to_armada_plane_state(new_state)->पूर्णांकerlace)
+		if (to_armada_plane_state(new_state)->interlace)
 			cfg |= CFG_GRA_FTOGGLE;
 		cfg_mask = CFG_GRAFORMAT |
 			   CFG_GRA_MOD(CFG_SWAPRB | CFG_SWAPUV |
 				       CFG_SWAPYU | CFG_YUV2RGB) |
 			   CFG_PALETTE_ENA | CFG_GRA_FTOGGLE |
 			   CFG_GRA_ENA;
-	पूर्ण अन्यथा अगर (old_state->visible != new_state->visible) अणु
+	} else if (old_state->visible != new_state->visible) {
 		cfg = new_state->visible ? CFG_GRA_ENA : 0;
 		cfg_mask = CFG_GRA_ENA;
-	पूर्ण अन्यथा अणु
+	} else {
 		cfg = cfg_mask = 0;
-	पूर्ण
-	अगर (drm_rect_width(&old_state->src) != drm_rect_width(&new_state->src) ||
-	    drm_rect_width(&old_state->dst) != drm_rect_width(&new_state->dst)) अणु
+	}
+	if (drm_rect_width(&old_state->src) != drm_rect_width(&new_state->src) ||
+	    drm_rect_width(&old_state->dst) != drm_rect_width(&new_state->dst)) {
 		cfg_mask |= CFG_GRA_HSMOOTH;
-		अगर (drm_rect_width(&new_state->src) >> 16 !=
+		if (drm_rect_width(&new_state->src) >> 16 !=
 		    drm_rect_width(&new_state->dst))
 			cfg |= CFG_GRA_HSMOOTH;
-	पूर्ण
+	}
 
-	अगर (cfg_mask)
+	if (cfg_mask)
 		armada_reg_queue_mod(regs, idx, cfg, cfg_mask,
 				     LCD_SPU_DMA_CTRL0);
 
 	dcrtc->regs_idx += idx;
-पूर्ण
+}
 
-अटल व्योम armada_drm_primary_plane_atomic_disable(काष्ठा drm_plane *plane,
-	काष्ठा drm_atomic_state *state)
-अणु
-	काष्ठा drm_plane_state *old_state = drm_atomic_get_old_plane_state(state,
+static void armada_drm_primary_plane_atomic_disable(struct drm_plane *plane,
+	struct drm_atomic_state *state)
+{
+	struct drm_plane_state *old_state = drm_atomic_get_old_plane_state(state,
 									   plane);
-	काष्ठा armada_crtc *dcrtc;
-	काष्ठा armada_regs *regs;
-	अचिन्हित पूर्णांक idx = 0;
+	struct armada_crtc *dcrtc;
+	struct armada_regs *regs;
+	unsigned int idx = 0;
 
 	DRM_DEBUG_KMS("[PLANE:%d:%s]\n", plane->base.id, plane->name);
 
-	अगर (!old_state->crtc)
-		वापस;
+	if (!old_state->crtc)
+		return;
 
 	DRM_DEBUG_KMS("[PLANE:%d:%s] was on [CRTC:%d:%s] with [FB:%d]\n",
 		plane->base.id, plane->name,
@@ -273,70 +272,70 @@
 	dcrtc = drm_to_armada_crtc(old_state->crtc);
 	regs = dcrtc->regs + dcrtc->regs_idx;
 
-	/* Disable plane and घातer करोwn most RAMs and FIFOs */
+	/* Disable plane and power down most RAMs and FIFOs */
 	armada_reg_queue_mod(regs, idx, 0, CFG_GRA_ENA, LCD_SPU_DMA_CTRL0);
 	armada_reg_queue_mod(regs, idx, CFG_PDWN256x32 | CFG_PDWN256x24 |
 			     CFG_PDWN32x32 | CFG_PDWN64x66,
 			     0, LCD_SPU_SRAM_PARA1);
 
 	dcrtc->regs_idx += idx;
-पूर्ण
+}
 
-अटल स्थिर काष्ठा drm_plane_helper_funcs armada_primary_plane_helper_funcs = अणु
+static const struct drm_plane_helper_funcs armada_primary_plane_helper_funcs = {
 	.prepare_fb	= armada_drm_plane_prepare_fb,
 	.cleanup_fb	= armada_drm_plane_cleanup_fb,
 	.atomic_check	= armada_drm_plane_atomic_check,
 	.atomic_update	= armada_drm_primary_plane_atomic_update,
 	.atomic_disable	= armada_drm_primary_plane_atomic_disable,
-पूर्ण;
+};
 
-व्योम armada_plane_reset(काष्ठा drm_plane *plane)
-अणु
-	काष्ठा armada_plane_state *st;
-	अगर (plane->state)
+void armada_plane_reset(struct drm_plane *plane)
+{
+	struct armada_plane_state *st;
+	if (plane->state)
 		__drm_atomic_helper_plane_destroy_state(plane->state);
-	kमुक्त(plane->state);
-	st = kzalloc(माप(*st), GFP_KERNEL);
-	अगर (st)
+	kfree(plane->state);
+	st = kzalloc(sizeof(*st), GFP_KERNEL);
+	if (st)
 		__drm_atomic_helper_plane_reset(plane, &st->base);
-पूर्ण
+}
 
-काष्ठा drm_plane_state *armada_plane_duplicate_state(काष्ठा drm_plane *plane)
-अणु
-	काष्ठा armada_plane_state *st;
+struct drm_plane_state *armada_plane_duplicate_state(struct drm_plane *plane)
+{
+	struct armada_plane_state *st;
 
-	अगर (WARN_ON(!plane->state))
-		वापस शून्य;
+	if (WARN_ON(!plane->state))
+		return NULL;
 
-	st = kmemdup(plane->state, माप(*st), GFP_KERNEL);
-	अगर (st)
+	st = kmemdup(plane->state, sizeof(*st), GFP_KERNEL);
+	if (st)
 		__drm_atomic_helper_plane_duplicate_state(plane, &st->base);
 
-	वापस &st->base;
-पूर्ण
+	return &st->base;
+}
 
-अटल स्थिर काष्ठा drm_plane_funcs armada_primary_plane_funcs = अणु
+static const struct drm_plane_funcs armada_primary_plane_funcs = {
 	.update_plane	= drm_atomic_helper_update_plane,
 	.disable_plane	= drm_atomic_helper_disable_plane,
 	.destroy	= drm_primary_helper_destroy,
 	.reset		= armada_plane_reset,
 	.atomic_duplicate_state = armada_plane_duplicate_state,
 	.atomic_destroy_state = drm_atomic_helper_plane_destroy_state,
-पूर्ण;
+};
 
-पूर्णांक armada_drm_primary_plane_init(काष्ठा drm_device *drm,
-	काष्ठा drm_plane *primary)
-अणु
-	पूर्णांक ret;
+int armada_drm_primary_plane_init(struct drm_device *drm,
+	struct drm_plane *primary)
+{
+	int ret;
 
 	drm_plane_helper_add(primary, &armada_primary_plane_helper_funcs);
 
 	ret = drm_universal_plane_init(drm, primary, 0,
 				       &armada_primary_plane_funcs,
-				       armada_primary_क्रमmats,
-				       ARRAY_SIZE(armada_primary_क्रमmats),
-				       शून्य,
-				       DRM_PLANE_TYPE_PRIMARY, शून्य);
+				       armada_primary_formats,
+				       ARRAY_SIZE(armada_primary_formats),
+				       NULL,
+				       DRM_PLANE_TYPE_PRIMARY, NULL);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

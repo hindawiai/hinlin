@@ -1,501 +1,500 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * fs/f2fs/data.c
  *
  * Copyright (c) 2012 Samsung Electronics Co., Ltd.
  *             http://www.samsung.com/
  */
-#समावेश <linux/fs.h>
-#समावेश <linux/f2fs_fs.h>
-#समावेश <linux/buffer_head.h>
-#समावेश <linux/mpage.h>
-#समावेश <linux/ग_लिखोback.h>
-#समावेश <linux/backing-dev.h>
-#समावेश <linux/pagevec.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/bपन.स>
-#समावेश <linux/blk-crypto.h>
-#समावेश <linux/swap.h>
-#समावेश <linux/prefetch.h>
-#समावेश <linux/uपन.स>
-#समावेश <linux/cleancache.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/fiemap.h>
+#include <linux/fs.h>
+#include <linux/f2fs_fs.h>
+#include <linux/buffer_head.h>
+#include <linux/mpage.h>
+#include <linux/writeback.h>
+#include <linux/backing-dev.h>
+#include <linux/pagevec.h>
+#include <linux/blkdev.h>
+#include <linux/bio.h>
+#include <linux/blk-crypto.h>
+#include <linux/swap.h>
+#include <linux/prefetch.h>
+#include <linux/uio.h>
+#include <linux/cleancache.h>
+#include <linux/sched/signal.h>
+#include <linux/fiemap.h>
 
-#समावेश "f2fs.h"
-#समावेश "node.h"
-#समावेश "segment.h"
-#समावेश <trace/events/f2fs.h>
+#include "f2fs.h"
+#include "node.h"
+#include "segment.h"
+#include <trace/events/f2fs.h>
 
-#घोषणा NUM_PREALLOC_POST_READ_CTXS	128
+#define NUM_PREALLOC_POST_READ_CTXS	128
 
-अटल काष्ठा kmem_cache *bio_post_पढ़ो_ctx_cache;
-अटल काष्ठा kmem_cache *bio_entry_slab;
-अटल mempool_t *bio_post_पढ़ो_ctx_pool;
-अटल काष्ठा bio_set f2fs_bioset;
+static struct kmem_cache *bio_post_read_ctx_cache;
+static struct kmem_cache *bio_entry_slab;
+static mempool_t *bio_post_read_ctx_pool;
+static struct bio_set f2fs_bioset;
 
-#घोषणा	F2FS_BIO_POOL_SIZE	NR_CURSEG_TYPE
+#define	F2FS_BIO_POOL_SIZE	NR_CURSEG_TYPE
 
-पूर्णांक __init f2fs_init_bioset(व्योम)
-अणु
-	अगर (bioset_init(&f2fs_bioset, F2FS_BIO_POOL_SIZE,
+int __init f2fs_init_bioset(void)
+{
+	if (bioset_init(&f2fs_bioset, F2FS_BIO_POOL_SIZE,
 					0, BIOSET_NEED_BVECS))
-		वापस -ENOMEM;
-	वापस 0;
-पूर्ण
+		return -ENOMEM;
+	return 0;
+}
 
-व्योम f2fs_destroy_bioset(व्योम)
-अणु
-	bioset_निकास(&f2fs_bioset);
-पूर्ण
+void f2fs_destroy_bioset(void)
+{
+	bioset_exit(&f2fs_bioset);
+}
 
-अटल bool __is_cp_guaranteed(काष्ठा page *page)
-अणु
-	काष्ठा address_space *mapping = page->mapping;
-	काष्ठा inode *inode;
-	काष्ठा f2fs_sb_info *sbi;
+static bool __is_cp_guaranteed(struct page *page)
+{
+	struct address_space *mapping = page->mapping;
+	struct inode *inode;
+	struct f2fs_sb_info *sbi;
 
-	अगर (!mapping)
-		वापस false;
+	if (!mapping)
+		return false;
 
-	अगर (f2fs_is_compressed_page(page))
-		वापस false;
+	if (f2fs_is_compressed_page(page))
+		return false;
 
 	inode = mapping->host;
 	sbi = F2FS_I_SB(inode);
 
-	अगर (inode->i_ino == F2FS_META_INO(sbi) ||
+	if (inode->i_ino == F2FS_META_INO(sbi) ||
 			inode->i_ino == F2FS_NODE_INO(sbi) ||
-			S_ISसूची(inode->i_mode) ||
+			S_ISDIR(inode->i_mode) ||
 			(S_ISREG(inode->i_mode) &&
 			(f2fs_is_atomic_file(inode) || IS_NOQUOTA(inode))) ||
 			is_cold_data(page))
-		वापस true;
-	वापस false;
-पूर्ण
+		return true;
+	return false;
+}
 
-अटल क्रमागत count_type __पढ़ो_io_type(काष्ठा page *page)
-अणु
-	काष्ठा address_space *mapping = page_file_mapping(page);
+static enum count_type __read_io_type(struct page *page)
+{
+	struct address_space *mapping = page_file_mapping(page);
 
-	अगर (mapping) अणु
-		काष्ठा inode *inode = mapping->host;
-		काष्ठा f2fs_sb_info *sbi = F2FS_I_SB(inode);
+	if (mapping) {
+		struct inode *inode = mapping->host;
+		struct f2fs_sb_info *sbi = F2FS_I_SB(inode);
 
-		अगर (inode->i_ino == F2FS_META_INO(sbi))
-			वापस F2FS_RD_META;
+		if (inode->i_ino == F2FS_META_INO(sbi))
+			return F2FS_RD_META;
 
-		अगर (inode->i_ino == F2FS_NODE_INO(sbi))
-			वापस F2FS_RD_NODE;
-	पूर्ण
-	वापस F2FS_RD_DATA;
-पूर्ण
+		if (inode->i_ino == F2FS_NODE_INO(sbi))
+			return F2FS_RD_NODE;
+	}
+	return F2FS_RD_DATA;
+}
 
-/* postprocessing steps क्रम पढ़ो bios */
-क्रमागत bio_post_पढ़ो_step अणु
-#अगर_घोषित CONFIG_FS_ENCRYPTION
+/* postprocessing steps for read bios */
+enum bio_post_read_step {
+#ifdef CONFIG_FS_ENCRYPTION
 	STEP_DECRYPT	= 1 << 0,
-#अन्यथा
+#else
 	STEP_DECRYPT	= 0,	/* compile out the decryption-related code */
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_F2FS_FS_COMPRESSION
+#endif
+#ifdef CONFIG_F2FS_FS_COMPRESSION
 	STEP_DECOMPRESS	= 1 << 1,
-#अन्यथा
+#else
 	STEP_DECOMPRESS	= 0,	/* compile out the decompression-related code */
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_FS_VERITY
+#endif
+#ifdef CONFIG_FS_VERITY
 	STEP_VERITY	= 1 << 2,
-#अन्यथा
+#else
 	STEP_VERITY	= 0,	/* compile out the verity-related code */
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-काष्ठा bio_post_पढ़ो_ctx अणु
-	काष्ठा bio *bio;
-	काष्ठा f2fs_sb_info *sbi;
-	काष्ठा work_काष्ठा work;
-	अचिन्हित पूर्णांक enabled_steps;
-पूर्ण;
+struct bio_post_read_ctx {
+	struct bio *bio;
+	struct f2fs_sb_info *sbi;
+	struct work_struct work;
+	unsigned int enabled_steps;
+};
 
-अटल व्योम f2fs_finish_पढ़ो_bio(काष्ठा bio *bio)
-अणु
-	काष्ठा bio_vec *bv;
-	काष्ठा bvec_iter_all iter_all;
+static void f2fs_finish_read_bio(struct bio *bio)
+{
+	struct bio_vec *bv;
+	struct bvec_iter_all iter_all;
 
 	/*
 	 * Update and unlock the bio's pagecache pages, and put the
-	 * decompression context क्रम any compressed pages.
+	 * decompression context for any compressed pages.
 	 */
-	bio_क्रम_each_segment_all(bv, bio, iter_all) अणु
-		काष्ठा page *page = bv->bv_page;
+	bio_for_each_segment_all(bv, bio, iter_all) {
+		struct page *page = bv->bv_page;
 
-		अगर (f2fs_is_compressed_page(page)) अणु
-			अगर (bio->bi_status)
-				f2fs_end_पढ़ो_compressed_page(page, true);
+		if (f2fs_is_compressed_page(page)) {
+			if (bio->bi_status)
+				f2fs_end_read_compressed_page(page, true);
 			f2fs_put_page_dic(page);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		/* PG_error was set अगर decryption or verity failed. */
-		अगर (bio->bi_status || PageError(page)) अणु
+		/* PG_error was set if decryption or verity failed. */
+		if (bio->bi_status || PageError(page)) {
 			ClearPageUptodate(page);
-			/* will re-पढ़ो again later */
+			/* will re-read again later */
 			ClearPageError(page);
-		पूर्ण अन्यथा अणु
+		} else {
 			SetPageUptodate(page);
-		पूर्ण
-		dec_page_count(F2FS_P_SB(page), __पढ़ो_io_type(page));
+		}
+		dec_page_count(F2FS_P_SB(page), __read_io_type(page));
 		unlock_page(page);
-	पूर्ण
+	}
 
-	अगर (bio->bi_निजी)
-		mempool_मुक्त(bio->bi_निजी, bio_post_पढ़ो_ctx_pool);
+	if (bio->bi_private)
+		mempool_free(bio->bi_private, bio_post_read_ctx_pool);
 	bio_put(bio);
-पूर्ण
+}
 
-अटल व्योम f2fs_verअगरy_bio(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा bio_post_पढ़ो_ctx *ctx =
-		container_of(work, काष्ठा bio_post_पढ़ो_ctx, work);
-	काष्ठा bio *bio = ctx->bio;
+static void f2fs_verify_bio(struct work_struct *work)
+{
+	struct bio_post_read_ctx *ctx =
+		container_of(work, struct bio_post_read_ctx, work);
+	struct bio *bio = ctx->bio;
 	bool may_have_compressed_pages = (ctx->enabled_steps & STEP_DECOMPRESS);
 
 	/*
-	 * fsverity_verअगरy_bio() may call पढ़ोpages() again, and जबतक verity
-	 * will be disabled क्रम this, decryption and/or decompression may still
-	 * be needed, resulting in another bio_post_पढ़ो_ctx being allocated.
+	 * fsverity_verify_bio() may call readpages() again, and while verity
+	 * will be disabled for this, decryption and/or decompression may still
+	 * be needed, resulting in another bio_post_read_ctx being allocated.
 	 * So to prevent deadlocks we need to release the current ctx to the
-	 * mempool first.  This assumes that verity is the last post-पढ़ो step.
+	 * mempool first.  This assumes that verity is the last post-read step.
 	 */
-	mempool_मुक्त(ctx, bio_post_पढ़ो_ctx_pool);
-	bio->bi_निजी = शून्य;
+	mempool_free(ctx, bio_post_read_ctx_pool);
+	bio->bi_private = NULL;
 
 	/*
-	 * Verअगरy the bio's pages with fs-verity.  Exclude compressed pages,
-	 * as those were handled separately by f2fs_end_पढ़ो_compressed_page().
+	 * Verify the bio's pages with fs-verity.  Exclude compressed pages,
+	 * as those were handled separately by f2fs_end_read_compressed_page().
 	 */
-	अगर (may_have_compressed_pages) अणु
-		काष्ठा bio_vec *bv;
-		काष्ठा bvec_iter_all iter_all;
+	if (may_have_compressed_pages) {
+		struct bio_vec *bv;
+		struct bvec_iter_all iter_all;
 
-		bio_क्रम_each_segment_all(bv, bio, iter_all) अणु
-			काष्ठा page *page = bv->bv_page;
+		bio_for_each_segment_all(bv, bio, iter_all) {
+			struct page *page = bv->bv_page;
 
-			अगर (!f2fs_is_compressed_page(page) &&
-			    !PageError(page) && !fsverity_verअगरy_page(page))
+			if (!f2fs_is_compressed_page(page) &&
+			    !PageError(page) && !fsverity_verify_page(page))
 				SetPageError(page);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		fsverity_verअगरy_bio(bio);
-	पूर्ण
+		}
+	} else {
+		fsverity_verify_bio(bio);
+	}
 
-	f2fs_finish_पढ़ो_bio(bio);
-पूर्ण
+	f2fs_finish_read_bio(bio);
+}
 
 /*
- * If the bio's data needs to be verअगरied with fs-verity, then enqueue the
- * verity work क्रम the bio.  Otherwise finish the bio now.
+ * If the bio's data needs to be verified with fs-verity, then enqueue the
+ * verity work for the bio.  Otherwise finish the bio now.
  *
- * Note that to aव्योम deadlocks, the verity work can't be करोne on the
- * decryption/decompression workqueue.  This is because verअगरying the data pages
- * can involve पढ़ोing verity metadata pages from the file, and these verity
+ * Note that to avoid deadlocks, the verity work can't be done on the
+ * decryption/decompression workqueue.  This is because verifying the data pages
+ * can involve reading verity metadata pages from the file, and these verity
  * metadata pages may be encrypted and/or compressed.
  */
-अटल व्योम f2fs_verअगरy_and_finish_bio(काष्ठा bio *bio)
-अणु
-	काष्ठा bio_post_पढ़ो_ctx *ctx = bio->bi_निजी;
+static void f2fs_verify_and_finish_bio(struct bio *bio)
+{
+	struct bio_post_read_ctx *ctx = bio->bi_private;
 
-	अगर (ctx && (ctx->enabled_steps & STEP_VERITY)) अणु
-		INIT_WORK(&ctx->work, f2fs_verअगरy_bio);
-		fsverity_enqueue_verअगरy_work(&ctx->work);
-	पूर्ण अन्यथा अणु
-		f2fs_finish_पढ़ो_bio(bio);
-	पूर्ण
-पूर्ण
+	if (ctx && (ctx->enabled_steps & STEP_VERITY)) {
+		INIT_WORK(&ctx->work, f2fs_verify_bio);
+		fsverity_enqueue_verify_work(&ctx->work);
+	} else {
+		f2fs_finish_read_bio(bio);
+	}
+}
 
 /*
  * Handle STEP_DECOMPRESS by decompressing any compressed clusters whose last
- * reमुख्यing page was पढ़ो by @ctx->bio.
+ * remaining page was read by @ctx->bio.
  *
  * Note that a bio may span clusters (even a mix of compressed and uncompressed
- * clusters) or be क्रम just part of a cluster.  STEP_DECOMPRESS just indicates
+ * clusters) or be for just part of a cluster.  STEP_DECOMPRESS just indicates
  * that the bio includes at least one compressed page.  The actual decompression
- * is करोne on a per-cluster basis, not a per-bio basis.
+ * is done on a per-cluster basis, not a per-bio basis.
  */
-अटल व्योम f2fs_handle_step_decompress(काष्ठा bio_post_पढ़ो_ctx *ctx)
-अणु
-	काष्ठा bio_vec *bv;
-	काष्ठा bvec_iter_all iter_all;
+static void f2fs_handle_step_decompress(struct bio_post_read_ctx *ctx)
+{
+	struct bio_vec *bv;
+	struct bvec_iter_all iter_all;
 	bool all_compressed = true;
 
-	bio_क्रम_each_segment_all(bv, ctx->bio, iter_all) अणु
-		काष्ठा page *page = bv->bv_page;
+	bio_for_each_segment_all(bv, ctx->bio, iter_all) {
+		struct page *page = bv->bv_page;
 
-		/* PG_error was set अगर decryption failed. */
-		अगर (f2fs_is_compressed_page(page))
-			f2fs_end_पढ़ो_compressed_page(page, PageError(page));
-		अन्यथा
+		/* PG_error was set if decryption failed. */
+		if (f2fs_is_compressed_page(page))
+			f2fs_end_read_compressed_page(page, PageError(page));
+		else
 			all_compressed = false;
-	पूर्ण
+	}
 
 	/*
-	 * Optimization: अगर all the bio's pages are compressed, then scheduling
+	 * Optimization: if all the bio's pages are compressed, then scheduling
 	 * the per-bio verity work is unnecessary, as verity will be fully
 	 * handled at the compression cluster level.
 	 */
-	अगर (all_compressed)
+	if (all_compressed)
 		ctx->enabled_steps &= ~STEP_VERITY;
-पूर्ण
+}
 
-अटल व्योम f2fs_post_पढ़ो_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा bio_post_पढ़ो_ctx *ctx =
-		container_of(work, काष्ठा bio_post_पढ़ो_ctx, work);
+static void f2fs_post_read_work(struct work_struct *work)
+{
+	struct bio_post_read_ctx *ctx =
+		container_of(work, struct bio_post_read_ctx, work);
 
-	अगर (ctx->enabled_steps & STEP_DECRYPT)
+	if (ctx->enabled_steps & STEP_DECRYPT)
 		fscrypt_decrypt_bio(ctx->bio);
 
-	अगर (ctx->enabled_steps & STEP_DECOMPRESS)
+	if (ctx->enabled_steps & STEP_DECOMPRESS)
 		f2fs_handle_step_decompress(ctx);
 
-	f2fs_verअगरy_and_finish_bio(ctx->bio);
-पूर्ण
+	f2fs_verify_and_finish_bio(ctx->bio);
+}
 
-अटल व्योम f2fs_पढ़ो_end_io(काष्ठा bio *bio)
-अणु
-	काष्ठा f2fs_sb_info *sbi = F2FS_P_SB(bio_first_page_all(bio));
-	काष्ठा bio_post_पढ़ो_ctx *ctx = bio->bi_निजी;
+static void f2fs_read_end_io(struct bio *bio)
+{
+	struct f2fs_sb_info *sbi = F2FS_P_SB(bio_first_page_all(bio));
+	struct bio_post_read_ctx *ctx = bio->bi_private;
 
-	अगर (समय_प्रकारo_inject(sbi, FAULT_READ_IO)) अणु
+	if (time_to_inject(sbi, FAULT_READ_IO)) {
 		f2fs_show_injection_info(sbi, FAULT_READ_IO);
 		bio->bi_status = BLK_STS_IOERR;
-	पूर्ण
+	}
 
-	अगर (bio->bi_status) अणु
-		f2fs_finish_पढ़ो_bio(bio);
-		वापस;
-	पूर्ण
+	if (bio->bi_status) {
+		f2fs_finish_read_bio(bio);
+		return;
+	}
 
-	अगर (ctx && (ctx->enabled_steps & (STEP_DECRYPT | STEP_DECOMPRESS))) अणु
-		INIT_WORK(&ctx->work, f2fs_post_पढ़ो_work);
-		queue_work(ctx->sbi->post_पढ़ो_wq, &ctx->work);
-	पूर्ण अन्यथा अणु
-		f2fs_verअगरy_and_finish_bio(bio);
-	पूर्ण
-पूर्ण
+	if (ctx && (ctx->enabled_steps & (STEP_DECRYPT | STEP_DECOMPRESS))) {
+		INIT_WORK(&ctx->work, f2fs_post_read_work);
+		queue_work(ctx->sbi->post_read_wq, &ctx->work);
+	} else {
+		f2fs_verify_and_finish_bio(bio);
+	}
+}
 
-अटल व्योम f2fs_ग_लिखो_end_io(काष्ठा bio *bio)
-अणु
-	काष्ठा f2fs_sb_info *sbi = bio->bi_निजी;
-	काष्ठा bio_vec *bvec;
-	काष्ठा bvec_iter_all iter_all;
+static void f2fs_write_end_io(struct bio *bio)
+{
+	struct f2fs_sb_info *sbi = bio->bi_private;
+	struct bio_vec *bvec;
+	struct bvec_iter_all iter_all;
 
-	अगर (समय_प्रकारo_inject(sbi, FAULT_WRITE_IO)) अणु
+	if (time_to_inject(sbi, FAULT_WRITE_IO)) {
 		f2fs_show_injection_info(sbi, FAULT_WRITE_IO);
 		bio->bi_status = BLK_STS_IOERR;
-	पूर्ण
+	}
 
-	bio_क्रम_each_segment_all(bvec, bio, iter_all) अणु
-		काष्ठा page *page = bvec->bv_page;
-		क्रमागत count_type type = WB_DATA_TYPE(page);
+	bio_for_each_segment_all(bvec, bio, iter_all) {
+		struct page *page = bvec->bv_page;
+		enum count_type type = WB_DATA_TYPE(page);
 
-		अगर (IS_DUMMY_WRITTEN_PAGE(page)) अणु
-			set_page_निजी(page, (अचिन्हित दीर्घ)शून्य);
+		if (IS_DUMMY_WRITTEN_PAGE(page)) {
+			set_page_private(page, (unsigned long)NULL);
 			ClearPagePrivate(page);
 			unlock_page(page);
-			mempool_मुक्त(page, sbi->ग_लिखो_io_dummy);
+			mempool_free(page, sbi->write_io_dummy);
 
-			अगर (unlikely(bio->bi_status))
-				f2fs_stop_checkpoपूर्णांक(sbi, true);
-			जारी;
-		पूर्ण
+			if (unlikely(bio->bi_status))
+				f2fs_stop_checkpoint(sbi, true);
+			continue;
+		}
 
 		fscrypt_finalize_bounce_page(&page);
 
-#अगर_घोषित CONFIG_F2FS_FS_COMPRESSION
-		अगर (f2fs_is_compressed_page(page)) अणु
-			f2fs_compress_ग_लिखो_end_io(bio, page);
-			जारी;
-		पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_F2FS_FS_COMPRESSION
+		if (f2fs_is_compressed_page(page)) {
+			f2fs_compress_write_end_io(bio, page);
+			continue;
+		}
+#endif
 
-		अगर (unlikely(bio->bi_status)) अणु
+		if (unlikely(bio->bi_status)) {
 			mapping_set_error(page->mapping, -EIO);
-			अगर (type == F2FS_WB_CP_DATA)
-				f2fs_stop_checkpoपूर्णांक(sbi, true);
-		पूर्ण
+			if (type == F2FS_WB_CP_DATA)
+				f2fs_stop_checkpoint(sbi, true);
+		}
 
 		f2fs_bug_on(sbi, page->mapping == NODE_MAPPING(sbi) &&
 					page->index != nid_of_node(page));
 
 		dec_page_count(sbi, type);
-		अगर (f2fs_in_warm_node_list(sbi, page))
+		if (f2fs_in_warm_node_list(sbi, page))
 			f2fs_del_fsync_node_entry(sbi, page);
 		clear_cold_data(page);
-		end_page_ग_लिखोback(page);
-	पूर्ण
-	अगर (!get_pages(sbi, F2FS_WB_CP_DATA) &&
-				wq_has_sleeper(&sbi->cp_रुको))
-		wake_up(&sbi->cp_रुको);
+		end_page_writeback(page);
+	}
+	if (!get_pages(sbi, F2FS_WB_CP_DATA) &&
+				wq_has_sleeper(&sbi->cp_wait))
+		wake_up(&sbi->cp_wait);
 
 	bio_put(bio);
-पूर्ण
+}
 
-काष्ठा block_device *f2fs_target_device(काष्ठा f2fs_sb_info *sbi,
-				block_t blk_addr, काष्ठा bio *bio)
-अणु
-	काष्ठा block_device *bdev = sbi->sb->s_bdev;
-	पूर्णांक i;
+struct block_device *f2fs_target_device(struct f2fs_sb_info *sbi,
+				block_t blk_addr, struct bio *bio)
+{
+	struct block_device *bdev = sbi->sb->s_bdev;
+	int i;
 
-	अगर (f2fs_is_multi_device(sbi)) अणु
-		क्रम (i = 0; i < sbi->s_ndevs; i++) अणु
-			अगर (FDEV(i).start_blk <= blk_addr &&
-			    FDEV(i).end_blk >= blk_addr) अणु
+	if (f2fs_is_multi_device(sbi)) {
+		for (i = 0; i < sbi->s_ndevs; i++) {
+			if (FDEV(i).start_blk <= blk_addr &&
+			    FDEV(i).end_blk >= blk_addr) {
 				blk_addr -= FDEV(i).start_blk;
 				bdev = FDEV(i).bdev;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	अगर (bio) अणु
+				break;
+			}
+		}
+	}
+	if (bio) {
 		bio_set_dev(bio, bdev);
 		bio->bi_iter.bi_sector = SECTOR_FROM_BLOCK(blk_addr);
-	पूर्ण
-	वापस bdev;
-पूर्ण
+	}
+	return bdev;
+}
 
-पूर्णांक f2fs_target_device_index(काष्ठा f2fs_sb_info *sbi, block_t blkaddr)
-अणु
-	पूर्णांक i;
+int f2fs_target_device_index(struct f2fs_sb_info *sbi, block_t blkaddr)
+{
+	int i;
 
-	अगर (!f2fs_is_multi_device(sbi))
-		वापस 0;
+	if (!f2fs_is_multi_device(sbi))
+		return 0;
 
-	क्रम (i = 0; i < sbi->s_ndevs; i++)
-		अगर (FDEV(i).start_blk <= blkaddr && FDEV(i).end_blk >= blkaddr)
-			वापस i;
-	वापस 0;
-पूर्ण
+	for (i = 0; i < sbi->s_ndevs; i++)
+		if (FDEV(i).start_blk <= blkaddr && FDEV(i).end_blk >= blkaddr)
+			return i;
+	return 0;
+}
 
-अटल काष्ठा bio *__bio_alloc(काष्ठा f2fs_io_info *fio, पूर्णांक npages)
-अणु
-	काष्ठा f2fs_sb_info *sbi = fio->sbi;
-	काष्ठा bio *bio;
+static struct bio *__bio_alloc(struct f2fs_io_info *fio, int npages)
+{
+	struct f2fs_sb_info *sbi = fio->sbi;
+	struct bio *bio;
 
 	bio = bio_alloc_bioset(GFP_NOIO, npages, &f2fs_bioset);
 
 	f2fs_target_device(sbi, fio->new_blkaddr, bio);
-	अगर (is_पढ़ो_io(fio->op)) अणु
-		bio->bi_end_io = f2fs_पढ़ो_end_io;
-		bio->bi_निजी = शून्य;
-	पूर्ण अन्यथा अणु
-		bio->bi_end_io = f2fs_ग_लिखो_end_io;
-		bio->bi_निजी = sbi;
-		bio->bi_ग_लिखो_hपूर्णांक = f2fs_io_type_to_rw_hपूर्णांक(sbi,
+	if (is_read_io(fio->op)) {
+		bio->bi_end_io = f2fs_read_end_io;
+		bio->bi_private = NULL;
+	} else {
+		bio->bi_end_io = f2fs_write_end_io;
+		bio->bi_private = sbi;
+		bio->bi_write_hint = f2fs_io_type_to_rw_hint(sbi,
 						fio->type, fio->temp);
-	पूर्ण
-	अगर (fio->io_wbc)
+	}
+	if (fio->io_wbc)
 		wbc_init_bio(fio->io_wbc, bio);
 
-	वापस bio;
-पूर्ण
+	return bio;
+}
 
-अटल व्योम f2fs_set_bio_crypt_ctx(काष्ठा bio *bio, स्थिर काष्ठा inode *inode,
+static void f2fs_set_bio_crypt_ctx(struct bio *bio, const struct inode *inode,
 				  pgoff_t first_idx,
-				  स्थिर काष्ठा f2fs_io_info *fio,
+				  const struct f2fs_io_info *fio,
 				  gfp_t gfp_mask)
-अणु
+{
 	/*
 	 * The f2fs garbage collector sets ->encrypted_page when it wants to
-	 * पढ़ो/ग_लिखो raw data without encryption.
+	 * read/write raw data without encryption.
 	 */
-	अगर (!fio || !fio->encrypted_page)
+	if (!fio || !fio->encrypted_page)
 		fscrypt_set_bio_crypt_ctx(bio, inode, first_idx, gfp_mask);
-पूर्ण
+}
 
-अटल bool f2fs_crypt_mergeable_bio(काष्ठा bio *bio, स्थिर काष्ठा inode *inode,
+static bool f2fs_crypt_mergeable_bio(struct bio *bio, const struct inode *inode,
 				     pgoff_t next_idx,
-				     स्थिर काष्ठा f2fs_io_info *fio)
-अणु
+				     const struct f2fs_io_info *fio)
+{
 	/*
 	 * The f2fs garbage collector sets ->encrypted_page when it wants to
-	 * पढ़ो/ग_लिखो raw data without encryption.
+	 * read/write raw data without encryption.
 	 */
-	अगर (fio && fio->encrypted_page)
-		वापस !bio_has_crypt_ctx(bio);
+	if (fio && fio->encrypted_page)
+		return !bio_has_crypt_ctx(bio);
 
-	वापस fscrypt_mergeable_bio(bio, inode, next_idx);
-पूर्ण
+	return fscrypt_mergeable_bio(bio, inode, next_idx);
+}
 
-अटल अंतरभूत व्योम __submit_bio(काष्ठा f2fs_sb_info *sbi,
-				काष्ठा bio *bio, क्रमागत page_type type)
-अणु
-	अगर (!is_पढ़ो_io(bio_op(bio))) अणु
-		अचिन्हित पूर्णांक start;
+static inline void __submit_bio(struct f2fs_sb_info *sbi,
+				struct bio *bio, enum page_type type)
+{
+	if (!is_read_io(bio_op(bio))) {
+		unsigned int start;
 
-		अगर (type != DATA && type != NODE)
-			जाओ submit_io;
+		if (type != DATA && type != NODE)
+			goto submit_io;
 
-		अगर (f2fs_lfs_mode(sbi) && current->plug)
+		if (f2fs_lfs_mode(sbi) && current->plug)
 			blk_finish_plug(current->plug);
 
-		अगर (!F2FS_IO_ALIGNED(sbi))
-			जाओ submit_io;
+		if (!F2FS_IO_ALIGNED(sbi))
+			goto submit_io;
 
 		start = bio->bi_iter.bi_size >> F2FS_BLKSIZE_BITS;
 		start %= F2FS_IO_SIZE(sbi);
 
-		अगर (start == 0)
-			जाओ submit_io;
+		if (start == 0)
+			goto submit_io;
 
 		/* fill dummy pages */
-		क्रम (; start < F2FS_IO_SIZE(sbi); start++) अणु
-			काष्ठा page *page =
-				mempool_alloc(sbi->ग_लिखो_io_dummy,
+		for (; start < F2FS_IO_SIZE(sbi); start++) {
+			struct page *page =
+				mempool_alloc(sbi->write_io_dummy,
 					      GFP_NOIO | __GFP_NOFAIL);
 			f2fs_bug_on(sbi, !page);
 
 			zero_user_segment(page, 0, PAGE_SIZE);
 			SetPagePrivate(page);
-			set_page_निजी(page, DUMMY_WRITTEN_PAGE);
+			set_page_private(page, DUMMY_WRITTEN_PAGE);
 			lock_page(page);
-			अगर (bio_add_page(bio, page, PAGE_SIZE, 0) < PAGE_SIZE)
+			if (bio_add_page(bio, page, PAGE_SIZE, 0) < PAGE_SIZE)
 				f2fs_bug_on(sbi, 1);
-		पूर्ण
+		}
 		/*
-		 * In the NODE हाल, we lose next block address chain. So, we
-		 * need to करो checkpoपूर्णांक in f2fs_sync_file.
+		 * In the NODE case, we lose next block address chain. So, we
+		 * need to do checkpoint in f2fs_sync_file.
 		 */
-		अगर (type == NODE)
+		if (type == NODE)
 			set_sbi_flag(sbi, SBI_NEED_CP);
-	पूर्ण
+	}
 submit_io:
-	अगर (is_पढ़ो_io(bio_op(bio)))
-		trace_f2fs_submit_पढ़ो_bio(sbi->sb, type, bio);
-	अन्यथा
-		trace_f2fs_submit_ग_लिखो_bio(sbi->sb, type, bio);
+	if (is_read_io(bio_op(bio)))
+		trace_f2fs_submit_read_bio(sbi->sb, type, bio);
+	else
+		trace_f2fs_submit_write_bio(sbi->sb, type, bio);
 	submit_bio(bio);
-पूर्ण
+}
 
-व्योम f2fs_submit_bio(काष्ठा f2fs_sb_info *sbi,
-				काष्ठा bio *bio, क्रमागत page_type type)
-अणु
+void f2fs_submit_bio(struct f2fs_sb_info *sbi,
+				struct bio *bio, enum page_type type)
+{
 	__submit_bio(sbi, bio, type);
-पूर्ण
+}
 
-अटल व्योम __attach_io_flag(काष्ठा f2fs_io_info *fio)
-अणु
-	काष्ठा f2fs_sb_info *sbi = fio->sbi;
-	अचिन्हित पूर्णांक temp_mask = (1 << NR_TEMP_TYPE) - 1;
-	अचिन्हित पूर्णांक io_flag, fua_flag, meta_flag;
+static void __attach_io_flag(struct f2fs_io_info *fio)
+{
+	struct f2fs_sb_info *sbi = fio->sbi;
+	unsigned int temp_mask = (1 << NR_TEMP_TYPE) - 1;
+	unsigned int io_flag, fua_flag, meta_flag;
 
-	अगर (fio->type == DATA)
+	if (fio->type == DATA)
 		io_flag = sbi->data_io_flag;
-	अन्यथा अगर (fio->type == NODE)
+	else if (fio->type == NODE)
 		io_flag = sbi->node_io_flag;
-	अन्यथा
-		वापस;
+	else
+		return;
 
 	fua_flag = io_flag & temp_mask;
 	meta_flag = (io_flag >> NR_TEMP_TYPE) & temp_mask;
@@ -506,146 +505,146 @@ submit_io:
 	 *    5 |    4 |   3 |    2 |    1 |   0 |
 	 * Cold | Warm | Hot | Cold | Warm | Hot |
 	 */
-	अगर ((1 << fio->temp) & meta_flag)
+	if ((1 << fio->temp) & meta_flag)
 		fio->op_flags |= REQ_META;
-	अगर ((1 << fio->temp) & fua_flag)
+	if ((1 << fio->temp) & fua_flag)
 		fio->op_flags |= REQ_FUA;
-पूर्ण
+}
 
-अटल व्योम __submit_merged_bio(काष्ठा f2fs_bio_info *io)
-अणु
-	काष्ठा f2fs_io_info *fio = &io->fio;
+static void __submit_merged_bio(struct f2fs_bio_info *io)
+{
+	struct f2fs_io_info *fio = &io->fio;
 
-	अगर (!io->bio)
-		वापस;
+	if (!io->bio)
+		return;
 
 	__attach_io_flag(fio);
 	bio_set_op_attrs(io->bio, fio->op, fio->op_flags);
 
-	अगर (is_पढ़ो_io(fio->op))
-		trace_f2fs_prepare_पढ़ो_bio(io->sbi->sb, fio->type, io->bio);
-	अन्यथा
-		trace_f2fs_prepare_ग_लिखो_bio(io->sbi->sb, fio->type, io->bio);
+	if (is_read_io(fio->op))
+		trace_f2fs_prepare_read_bio(io->sbi->sb, fio->type, io->bio);
+	else
+		trace_f2fs_prepare_write_bio(io->sbi->sb, fio->type, io->bio);
 
 	__submit_bio(io->sbi, io->bio, fio->type);
-	io->bio = शून्य;
-पूर्ण
+	io->bio = NULL;
+}
 
-अटल bool __has_merged_page(काष्ठा bio *bio, काष्ठा inode *inode,
-						काष्ठा page *page, nid_t ino)
-अणु
-	काष्ठा bio_vec *bvec;
-	काष्ठा bvec_iter_all iter_all;
+static bool __has_merged_page(struct bio *bio, struct inode *inode,
+						struct page *page, nid_t ino)
+{
+	struct bio_vec *bvec;
+	struct bvec_iter_all iter_all;
 
-	अगर (!bio)
-		वापस false;
+	if (!bio)
+		return false;
 
-	अगर (!inode && !page && !ino)
-		वापस true;
+	if (!inode && !page && !ino)
+		return true;
 
-	bio_क्रम_each_segment_all(bvec, bio, iter_all) अणु
-		काष्ठा page *target = bvec->bv_page;
+	bio_for_each_segment_all(bvec, bio, iter_all) {
+		struct page *target = bvec->bv_page;
 
-		अगर (fscrypt_is_bounce_page(target)) अणु
+		if (fscrypt_is_bounce_page(target)) {
 			target = fscrypt_pagecache_page(target);
-			अगर (IS_ERR(target))
-				जारी;
-		पूर्ण
-		अगर (f2fs_is_compressed_page(target)) अणु
+			if (IS_ERR(target))
+				continue;
+		}
+		if (f2fs_is_compressed_page(target)) {
 			target = f2fs_compress_control_page(target);
-			अगर (IS_ERR(target))
-				जारी;
-		पूर्ण
+			if (IS_ERR(target))
+				continue;
+		}
 
-		अगर (inode && inode == target->mapping->host)
-			वापस true;
-		अगर (page && page == target)
-			वापस true;
-		अगर (ino && ino == ino_of_node(target))
-			वापस true;
-	पूर्ण
+		if (inode && inode == target->mapping->host)
+			return true;
+		if (page && page == target)
+			return true;
+		if (ino && ino == ino_of_node(target))
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल व्योम __f2fs_submit_merged_ग_लिखो(काष्ठा f2fs_sb_info *sbi,
-				क्रमागत page_type type, क्रमागत temp_type temp)
-अणु
-	क्रमागत page_type btype = PAGE_TYPE_OF_BIO(type);
-	काष्ठा f2fs_bio_info *io = sbi->ग_लिखो_io[btype] + temp;
+static void __f2fs_submit_merged_write(struct f2fs_sb_info *sbi,
+				enum page_type type, enum temp_type temp)
+{
+	enum page_type btype = PAGE_TYPE_OF_BIO(type);
+	struct f2fs_bio_info *io = sbi->write_io[btype] + temp;
 
-	करोwn_ग_लिखो(&io->io_rwsem);
+	down_write(&io->io_rwsem);
 
-	/* change META to META_FLUSH in the checkpoपूर्णांक procedure */
-	अगर (type >= META_FLUSH) अणु
+	/* change META to META_FLUSH in the checkpoint procedure */
+	if (type >= META_FLUSH) {
 		io->fio.type = META_FLUSH;
 		io->fio.op = REQ_OP_WRITE;
 		io->fio.op_flags = REQ_META | REQ_PRIO | REQ_SYNC;
-		अगर (!test_opt(sbi, NOBARRIER))
+		if (!test_opt(sbi, NOBARRIER))
 			io->fio.op_flags |= REQ_PREFLUSH | REQ_FUA;
-	पूर्ण
+	}
 	__submit_merged_bio(io);
-	up_ग_लिखो(&io->io_rwsem);
-पूर्ण
+	up_write(&io->io_rwsem);
+}
 
-अटल व्योम __submit_merged_ग_लिखो_cond(काष्ठा f2fs_sb_info *sbi,
-				काष्ठा inode *inode, काष्ठा page *page,
-				nid_t ino, क्रमागत page_type type, bool क्रमce)
-अणु
-	क्रमागत temp_type temp;
+static void __submit_merged_write_cond(struct f2fs_sb_info *sbi,
+				struct inode *inode, struct page *page,
+				nid_t ino, enum page_type type, bool force)
+{
+	enum temp_type temp;
 	bool ret = true;
 
-	क्रम (temp = HOT; temp < NR_TEMP_TYPE; temp++) अणु
-		अगर (!क्रमce)	अणु
-			क्रमागत page_type btype = PAGE_TYPE_OF_BIO(type);
-			काष्ठा f2fs_bio_info *io = sbi->ग_लिखो_io[btype] + temp;
+	for (temp = HOT; temp < NR_TEMP_TYPE; temp++) {
+		if (!force)	{
+			enum page_type btype = PAGE_TYPE_OF_BIO(type);
+			struct f2fs_bio_info *io = sbi->write_io[btype] + temp;
 
-			करोwn_पढ़ो(&io->io_rwsem);
+			down_read(&io->io_rwsem);
 			ret = __has_merged_page(io->bio, inode, page, ino);
-			up_पढ़ो(&io->io_rwsem);
-		पूर्ण
-		अगर (ret)
-			__f2fs_submit_merged_ग_लिखो(sbi, type, temp);
+			up_read(&io->io_rwsem);
+		}
+		if (ret)
+			__f2fs_submit_merged_write(sbi, type, temp);
 
-		/* TODO: use HOT temp only क्रम meta pages now. */
-		अगर (type >= META)
-			अवरोध;
-	पूर्ण
-पूर्ण
+		/* TODO: use HOT temp only for meta pages now. */
+		if (type >= META)
+			break;
+	}
+}
 
-व्योम f2fs_submit_merged_ग_लिखो(काष्ठा f2fs_sb_info *sbi, क्रमागत page_type type)
-अणु
-	__submit_merged_ग_लिखो_cond(sbi, शून्य, शून्य, 0, type, true);
-पूर्ण
+void f2fs_submit_merged_write(struct f2fs_sb_info *sbi, enum page_type type)
+{
+	__submit_merged_write_cond(sbi, NULL, NULL, 0, type, true);
+}
 
-व्योम f2fs_submit_merged_ग_लिखो_cond(काष्ठा f2fs_sb_info *sbi,
-				काष्ठा inode *inode, काष्ठा page *page,
-				nid_t ino, क्रमागत page_type type)
-अणु
-	__submit_merged_ग_लिखो_cond(sbi, inode, page, ino, type, false);
-पूर्ण
+void f2fs_submit_merged_write_cond(struct f2fs_sb_info *sbi,
+				struct inode *inode, struct page *page,
+				nid_t ino, enum page_type type)
+{
+	__submit_merged_write_cond(sbi, inode, page, ino, type, false);
+}
 
-व्योम f2fs_flush_merged_ग_लिखोs(काष्ठा f2fs_sb_info *sbi)
-अणु
-	f2fs_submit_merged_ग_लिखो(sbi, DATA);
-	f2fs_submit_merged_ग_लिखो(sbi, NODE);
-	f2fs_submit_merged_ग_लिखो(sbi, META);
-पूर्ण
+void f2fs_flush_merged_writes(struct f2fs_sb_info *sbi)
+{
+	f2fs_submit_merged_write(sbi, DATA);
+	f2fs_submit_merged_write(sbi, NODE);
+	f2fs_submit_merged_write(sbi, META);
+}
 
 /*
  * Fill the locked page with data located in the block address.
  * A caller needs to unlock the page on failure.
  */
-पूर्णांक f2fs_submit_page_bio(काष्ठा f2fs_io_info *fio)
-अणु
-	काष्ठा bio *bio;
-	काष्ठा page *page = fio->encrypted_page ?
+int f2fs_submit_page_bio(struct f2fs_io_info *fio)
+{
+	struct bio *bio;
+	struct page *page = fio->encrypted_page ?
 			fio->encrypted_page : fio->page;
 
-	अगर (!f2fs_is_valid_blkaddr(fio->sbi, fio->new_blkaddr,
+	if (!f2fs_is_valid_blkaddr(fio->sbi, fio->new_blkaddr,
 			fio->is_por ? META_POR : (__is_meta_io(fio) ?
 			META_GENERIC : DATA_GENERIC_ENHANCE)))
-		वापस -EFSCORRUPTED;
+		return -EFSCORRUPTED;
 
 	trace_f2fs_submit_page_bio(page, fio);
 
@@ -655,209 +654,209 @@ submit_io:
 	f2fs_set_bio_crypt_ctx(bio, fio->page->mapping->host,
 			       fio->page->index, fio, GFP_NOIO);
 
-	अगर (bio_add_page(bio, page, PAGE_SIZE, 0) < PAGE_SIZE) अणु
+	if (bio_add_page(bio, page, PAGE_SIZE, 0) < PAGE_SIZE) {
 		bio_put(bio);
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
-	अगर (fio->io_wbc && !is_पढ़ो_io(fio->op))
+	if (fio->io_wbc && !is_read_io(fio->op))
 		wbc_account_cgroup_owner(fio->io_wbc, page, PAGE_SIZE);
 
 	__attach_io_flag(fio);
 	bio_set_op_attrs(bio, fio->op, fio->op_flags);
 
-	inc_page_count(fio->sbi, is_पढ़ो_io(fio->op) ?
-			__पढ़ो_io_type(page): WB_DATA_TYPE(fio->page));
+	inc_page_count(fio->sbi, is_read_io(fio->op) ?
+			__read_io_type(page): WB_DATA_TYPE(fio->page));
 
 	__submit_bio(fio->sbi, bio, fio->type);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool page_is_mergeable(काष्ठा f2fs_sb_info *sbi, काष्ठा bio *bio,
+static bool page_is_mergeable(struct f2fs_sb_info *sbi, struct bio *bio,
 				block_t last_blkaddr, block_t cur_blkaddr)
-अणु
-	अगर (unlikely(sbi->max_io_bytes &&
+{
+	if (unlikely(sbi->max_io_bytes &&
 			bio->bi_iter.bi_size >= sbi->max_io_bytes))
-		वापस false;
-	अगर (last_blkaddr + 1 != cur_blkaddr)
-		वापस false;
-	वापस bio->bi_bdev == f2fs_target_device(sbi, cur_blkaddr, शून्य);
-पूर्ण
+		return false;
+	if (last_blkaddr + 1 != cur_blkaddr)
+		return false;
+	return bio->bi_bdev == f2fs_target_device(sbi, cur_blkaddr, NULL);
+}
 
-अटल bool io_type_is_mergeable(काष्ठा f2fs_bio_info *io,
-						काष्ठा f2fs_io_info *fio)
-अणु
-	अगर (io->fio.op != fio->op)
-		वापस false;
-	वापस io->fio.op_flags == fio->op_flags;
-पूर्ण
+static bool io_type_is_mergeable(struct f2fs_bio_info *io,
+						struct f2fs_io_info *fio)
+{
+	if (io->fio.op != fio->op)
+		return false;
+	return io->fio.op_flags == fio->op_flags;
+}
 
-अटल bool io_is_mergeable(काष्ठा f2fs_sb_info *sbi, काष्ठा bio *bio,
-					काष्ठा f2fs_bio_info *io,
-					काष्ठा f2fs_io_info *fio,
+static bool io_is_mergeable(struct f2fs_sb_info *sbi, struct bio *bio,
+					struct f2fs_bio_info *io,
+					struct f2fs_io_info *fio,
 					block_t last_blkaddr,
 					block_t cur_blkaddr)
-अणु
-	अगर (F2FS_IO_ALIGNED(sbi) && (fio->type == DATA || fio->type == NODE)) अणु
-		अचिन्हित पूर्णांक filled_blocks =
+{
+	if (F2FS_IO_ALIGNED(sbi) && (fio->type == DATA || fio->type == NODE)) {
+		unsigned int filled_blocks =
 				F2FS_BYTES_TO_BLK(bio->bi_iter.bi_size);
-		अचिन्हित पूर्णांक io_size = F2FS_IO_SIZE(sbi);
-		अचिन्हित पूर्णांक left_vecs = bio->bi_max_vecs - bio->bi_vcnt;
+		unsigned int io_size = F2FS_IO_SIZE(sbi);
+		unsigned int left_vecs = bio->bi_max_vecs - bio->bi_vcnt;
 
 		/* IOs in bio is aligned and left space of vectors is not enough */
-		अगर (!(filled_blocks % io_size) && left_vecs < io_size)
-			वापस false;
-	पूर्ण
-	अगर (!page_is_mergeable(sbi, bio, last_blkaddr, cur_blkaddr))
-		वापस false;
-	वापस io_type_is_mergeable(io, fio);
-पूर्ण
+		if (!(filled_blocks % io_size) && left_vecs < io_size)
+			return false;
+	}
+	if (!page_is_mergeable(sbi, bio, last_blkaddr, cur_blkaddr))
+		return false;
+	return io_type_is_mergeable(io, fio);
+}
 
-अटल व्योम add_bio_entry(काष्ठा f2fs_sb_info *sbi, काष्ठा bio *bio,
-				काष्ठा page *page, क्रमागत temp_type temp)
-अणु
-	काष्ठा f2fs_bio_info *io = sbi->ग_लिखो_io[DATA] + temp;
-	काष्ठा bio_entry *be;
+static void add_bio_entry(struct f2fs_sb_info *sbi, struct bio *bio,
+				struct page *page, enum temp_type temp)
+{
+	struct f2fs_bio_info *io = sbi->write_io[DATA] + temp;
+	struct bio_entry *be;
 
 	be = f2fs_kmem_cache_alloc(bio_entry_slab, GFP_NOFS);
 	be->bio = bio;
 	bio_get(bio);
 
-	अगर (bio_add_page(bio, page, PAGE_SIZE, 0) != PAGE_SIZE)
+	if (bio_add_page(bio, page, PAGE_SIZE, 0) != PAGE_SIZE)
 		f2fs_bug_on(sbi, 1);
 
-	करोwn_ग_लिखो(&io->bio_list_lock);
+	down_write(&io->bio_list_lock);
 	list_add_tail(&be->list, &io->bio_list);
-	up_ग_लिखो(&io->bio_list_lock);
-पूर्ण
+	up_write(&io->bio_list_lock);
+}
 
-अटल व्योम del_bio_entry(काष्ठा bio_entry *be)
-अणु
+static void del_bio_entry(struct bio_entry *be)
+{
 	list_del(&be->list);
-	kmem_cache_मुक्त(bio_entry_slab, be);
-पूर्ण
+	kmem_cache_free(bio_entry_slab, be);
+}
 
-अटल पूर्णांक add_ipu_page(काष्ठा f2fs_io_info *fio, काष्ठा bio **bio,
-							काष्ठा page *page)
-अणु
-	काष्ठा f2fs_sb_info *sbi = fio->sbi;
-	क्रमागत temp_type temp;
+static int add_ipu_page(struct f2fs_io_info *fio, struct bio **bio,
+							struct page *page)
+{
+	struct f2fs_sb_info *sbi = fio->sbi;
+	enum temp_type temp;
 	bool found = false;
-	पूर्णांक ret = -EAGAIN;
+	int ret = -EAGAIN;
 
-	क्रम (temp = HOT; temp < NR_TEMP_TYPE && !found; temp++) अणु
-		काष्ठा f2fs_bio_info *io = sbi->ग_लिखो_io[DATA] + temp;
-		काष्ठा list_head *head = &io->bio_list;
-		काष्ठा bio_entry *be;
+	for (temp = HOT; temp < NR_TEMP_TYPE && !found; temp++) {
+		struct f2fs_bio_info *io = sbi->write_io[DATA] + temp;
+		struct list_head *head = &io->bio_list;
+		struct bio_entry *be;
 
-		करोwn_ग_लिखो(&io->bio_list_lock);
-		list_क्रम_each_entry(be, head, list) अणु
-			अगर (be->bio != *bio)
-				जारी;
+		down_write(&io->bio_list_lock);
+		list_for_each_entry(be, head, list) {
+			if (be->bio != *bio)
+				continue;
 
 			found = true;
 
 			f2fs_bug_on(sbi, !page_is_mergeable(sbi, *bio,
 							    *fio->last_block,
 							    fio->new_blkaddr));
-			अगर (f2fs_crypt_mergeable_bio(*bio,
+			if (f2fs_crypt_mergeable_bio(*bio,
 					fio->page->mapping->host,
 					fio->page->index, fio) &&
 			    bio_add_page(*bio, page, PAGE_SIZE, 0) ==
-					PAGE_SIZE) अणु
+					PAGE_SIZE) {
 				ret = 0;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-			/* page can't be merged पूर्णांकo bio; submit the bio */
+			/* page can't be merged into bio; submit the bio */
 			del_bio_entry(be);
 			__submit_bio(sbi, *bio, DATA);
-			अवरोध;
-		पूर्ण
-		up_ग_लिखो(&io->bio_list_lock);
-	पूर्ण
+			break;
+		}
+		up_write(&io->bio_list_lock);
+	}
 
-	अगर (ret) अणु
+	if (ret) {
 		bio_put(*bio);
-		*bio = शून्य;
-	पूर्ण
+		*bio = NULL;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम f2fs_submit_merged_ipu_ग_लिखो(काष्ठा f2fs_sb_info *sbi,
-					काष्ठा bio **bio, काष्ठा page *page)
-अणु
-	क्रमागत temp_type temp;
+void f2fs_submit_merged_ipu_write(struct f2fs_sb_info *sbi,
+					struct bio **bio, struct page *page)
+{
+	enum temp_type temp;
 	bool found = false;
-	काष्ठा bio *target = bio ? *bio : शून्य;
+	struct bio *target = bio ? *bio : NULL;
 
-	क्रम (temp = HOT; temp < NR_TEMP_TYPE && !found; temp++) अणु
-		काष्ठा f2fs_bio_info *io = sbi->ग_लिखो_io[DATA] + temp;
-		काष्ठा list_head *head = &io->bio_list;
-		काष्ठा bio_entry *be;
+	for (temp = HOT; temp < NR_TEMP_TYPE && !found; temp++) {
+		struct f2fs_bio_info *io = sbi->write_io[DATA] + temp;
+		struct list_head *head = &io->bio_list;
+		struct bio_entry *be;
 
-		अगर (list_empty(head))
-			जारी;
+		if (list_empty(head))
+			continue;
 
-		करोwn_पढ़ो(&io->bio_list_lock);
-		list_क्रम_each_entry(be, head, list) अणु
-			अगर (target)
+		down_read(&io->bio_list_lock);
+		list_for_each_entry(be, head, list) {
+			if (target)
 				found = (target == be->bio);
-			अन्यथा
-				found = __has_merged_page(be->bio, शून्य,
+			else
+				found = __has_merged_page(be->bio, NULL,
 								page, 0);
-			अगर (found)
-				अवरोध;
-		पूर्ण
-		up_पढ़ो(&io->bio_list_lock);
+			if (found)
+				break;
+		}
+		up_read(&io->bio_list_lock);
 
-		अगर (!found)
-			जारी;
+		if (!found)
+			continue;
 
 		found = false;
 
-		करोwn_ग_लिखो(&io->bio_list_lock);
-		list_क्रम_each_entry(be, head, list) अणु
-			अगर (target)
+		down_write(&io->bio_list_lock);
+		list_for_each_entry(be, head, list) {
+			if (target)
 				found = (target == be->bio);
-			अन्यथा
-				found = __has_merged_page(be->bio, शून्य,
+			else
+				found = __has_merged_page(be->bio, NULL,
 								page, 0);
-			अगर (found) अणु
+			if (found) {
 				target = be->bio;
 				del_bio_entry(be);
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		up_ग_लिखो(&io->bio_list_lock);
-	पूर्ण
+				break;
+			}
+		}
+		up_write(&io->bio_list_lock);
+	}
 
-	अगर (found)
+	if (found)
 		__submit_bio(sbi, target, DATA);
-	अगर (bio && *bio) अणु
+	if (bio && *bio) {
 		bio_put(*bio);
-		*bio = शून्य;
-	पूर्ण
-पूर्ण
+		*bio = NULL;
+	}
+}
 
-पूर्णांक f2fs_merge_page_bio(काष्ठा f2fs_io_info *fio)
-अणु
-	काष्ठा bio *bio = *fio->bio;
-	काष्ठा page *page = fio->encrypted_page ?
+int f2fs_merge_page_bio(struct f2fs_io_info *fio)
+{
+	struct bio *bio = *fio->bio;
+	struct page *page = fio->encrypted_page ?
 			fio->encrypted_page : fio->page;
 
-	अगर (!f2fs_is_valid_blkaddr(fio->sbi, fio->new_blkaddr,
+	if (!f2fs_is_valid_blkaddr(fio->sbi, fio->new_blkaddr,
 			__is_meta_io(fio) ? META_GENERIC : DATA_GENERIC))
-		वापस -EFSCORRUPTED;
+		return -EFSCORRUPTED;
 
 	trace_f2fs_submit_page_bio(page, fio);
 
-	अगर (bio && !page_is_mergeable(fio->sbi, bio, *fio->last_block,
+	if (bio && !page_is_mergeable(fio->sbi, bio, *fio->last_block,
 						fio->new_blkaddr))
-		f2fs_submit_merged_ipu_ग_लिखो(fio->sbi, &bio, शून्य);
+		f2fs_submit_merged_ipu_write(fio->sbi, &bio, NULL);
 alloc_new:
-	अगर (!bio) अणु
+	if (!bio) {
 		bio = __bio_alloc(fio, BIO_MAX_VECS);
 		__attach_io_flag(fio);
 		f2fs_set_bio_crypt_ctx(bio, fio->page->mapping->host,
@@ -865,12 +864,12 @@ alloc_new:
 		bio_set_op_attrs(bio, fio->op, fio->op_flags);
 
 		add_bio_entry(fio->sbi, bio, page, fio->temp);
-	पूर्ण अन्यथा अणु
-		अगर (add_ipu_page(fio, &bio, page))
-			जाओ alloc_new;
-	पूर्ण
+	} else {
+		if (add_ipu_page(fio, &bio, page))
+			goto alloc_new;
+	}
 
-	अगर (fio->io_wbc)
+	if (fio->io_wbc)
 		wbc_account_cgroup_owner(fio->io_wbc, page, PAGE_SIZE);
 
 	inc_page_count(fio->sbi, WB_DATA_TYPE(page));
@@ -878,392 +877,392 @@ alloc_new:
 	*fio->last_block = fio->new_blkaddr;
 	*fio->bio = bio;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम f2fs_submit_page_ग_लिखो(काष्ठा f2fs_io_info *fio)
-अणु
-	काष्ठा f2fs_sb_info *sbi = fio->sbi;
-	क्रमागत page_type btype = PAGE_TYPE_OF_BIO(fio->type);
-	काष्ठा f2fs_bio_info *io = sbi->ग_लिखो_io[btype] + fio->temp;
-	काष्ठा page *bio_page;
+void f2fs_submit_page_write(struct f2fs_io_info *fio)
+{
+	struct f2fs_sb_info *sbi = fio->sbi;
+	enum page_type btype = PAGE_TYPE_OF_BIO(fio->type);
+	struct f2fs_bio_info *io = sbi->write_io[btype] + fio->temp;
+	struct page *bio_page;
 
-	f2fs_bug_on(sbi, is_पढ़ो_io(fio->op));
+	f2fs_bug_on(sbi, is_read_io(fio->op));
 
-	करोwn_ग_लिखो(&io->io_rwsem);
+	down_write(&io->io_rwsem);
 next:
-	अगर (fio->in_list) अणु
+	if (fio->in_list) {
 		spin_lock(&io->io_lock);
-		अगर (list_empty(&io->io_list)) अणु
+		if (list_empty(&io->io_list)) {
 			spin_unlock(&io->io_lock);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		fio = list_first_entry(&io->io_list,
-						काष्ठा f2fs_io_info, list);
+						struct f2fs_io_info, list);
 		list_del(&fio->list);
 		spin_unlock(&io->io_lock);
-	पूर्ण
+	}
 
-	verअगरy_fio_blkaddr(fio);
+	verify_fio_blkaddr(fio);
 
-	अगर (fio->encrypted_page)
+	if (fio->encrypted_page)
 		bio_page = fio->encrypted_page;
-	अन्यथा अगर (fio->compressed_page)
+	else if (fio->compressed_page)
 		bio_page = fio->compressed_page;
-	अन्यथा
+	else
 		bio_page = fio->page;
 
-	/* set submitted = true as a वापस value */
+	/* set submitted = true as a return value */
 	fio->submitted = true;
 
 	inc_page_count(sbi, WB_DATA_TYPE(bio_page));
 
-	अगर (io->bio &&
+	if (io->bio &&
 	    (!io_is_mergeable(sbi, io->bio, io, fio, io->last_block_in_bio,
 			      fio->new_blkaddr) ||
 	     !f2fs_crypt_mergeable_bio(io->bio, fio->page->mapping->host,
 				       bio_page->index, fio)))
 		__submit_merged_bio(io);
 alloc_new:
-	अगर (io->bio == शून्य) अणु
-		अगर (F2FS_IO_ALIGNED(sbi) &&
+	if (io->bio == NULL) {
+		if (F2FS_IO_ALIGNED(sbi) &&
 				(fio->type == DATA || fio->type == NODE) &&
-				fio->new_blkaddr & F2FS_IO_SIZE_MASK(sbi)) अणु
+				fio->new_blkaddr & F2FS_IO_SIZE_MASK(sbi)) {
 			dec_page_count(sbi, WB_DATA_TYPE(bio_page));
 			fio->retry = true;
-			जाओ skip;
-		पूर्ण
+			goto skip;
+		}
 		io->bio = __bio_alloc(fio, BIO_MAX_VECS);
 		f2fs_set_bio_crypt_ctx(io->bio, fio->page->mapping->host,
 				       bio_page->index, fio, GFP_NOIO);
 		io->fio = *fio;
-	पूर्ण
+	}
 
-	अगर (bio_add_page(io->bio, bio_page, PAGE_SIZE, 0) < PAGE_SIZE) अणु
+	if (bio_add_page(io->bio, bio_page, PAGE_SIZE, 0) < PAGE_SIZE) {
 		__submit_merged_bio(io);
-		जाओ alloc_new;
-	पूर्ण
+		goto alloc_new;
+	}
 
-	अगर (fio->io_wbc)
+	if (fio->io_wbc)
 		wbc_account_cgroup_owner(fio->io_wbc, bio_page, PAGE_SIZE);
 
 	io->last_block_in_bio = fio->new_blkaddr;
 
-	trace_f2fs_submit_page_ग_लिखो(fio->page, fio);
+	trace_f2fs_submit_page_write(fio->page, fio);
 skip:
-	अगर (fio->in_list)
-		जाओ next;
+	if (fio->in_list)
+		goto next;
 out:
-	अगर (is_sbi_flag_set(sbi, SBI_IS_SHUTDOWN) ||
-				!f2fs_is_checkpoपूर्णांक_पढ़ोy(sbi))
+	if (is_sbi_flag_set(sbi, SBI_IS_SHUTDOWN) ||
+				!f2fs_is_checkpoint_ready(sbi))
 		__submit_merged_bio(io);
-	up_ग_लिखो(&io->io_rwsem);
-पूर्ण
+	up_write(&io->io_rwsem);
+}
 
-अटल काष्ठा bio *f2fs_grab_पढ़ो_bio(काष्ठा inode *inode, block_t blkaddr,
-				      अचिन्हित nr_pages, अचिन्हित op_flag,
-				      pgoff_t first_idx, bool क्रम_ग_लिखो)
-अणु
-	काष्ठा f2fs_sb_info *sbi = F2FS_I_SB(inode);
-	काष्ठा bio *bio;
-	काष्ठा bio_post_पढ़ो_ctx *ctx;
-	अचिन्हित पूर्णांक post_पढ़ो_steps = 0;
+static struct bio *f2fs_grab_read_bio(struct inode *inode, block_t blkaddr,
+				      unsigned nr_pages, unsigned op_flag,
+				      pgoff_t first_idx, bool for_write)
+{
+	struct f2fs_sb_info *sbi = F2FS_I_SB(inode);
+	struct bio *bio;
+	struct bio_post_read_ctx *ctx;
+	unsigned int post_read_steps = 0;
 
-	bio = bio_alloc_bioset(क्रम_ग_लिखो ? GFP_NOIO : GFP_KERNEL,
+	bio = bio_alloc_bioset(for_write ? GFP_NOIO : GFP_KERNEL,
 			       bio_max_segs(nr_pages), &f2fs_bioset);
-	अगर (!bio)
-		वापस ERR_PTR(-ENOMEM);
+	if (!bio)
+		return ERR_PTR(-ENOMEM);
 
-	f2fs_set_bio_crypt_ctx(bio, inode, first_idx, शून्य, GFP_NOFS);
+	f2fs_set_bio_crypt_ctx(bio, inode, first_idx, NULL, GFP_NOFS);
 
 	f2fs_target_device(sbi, blkaddr, bio);
-	bio->bi_end_io = f2fs_पढ़ो_end_io;
+	bio->bi_end_io = f2fs_read_end_io;
 	bio_set_op_attrs(bio, REQ_OP_READ, op_flag);
 
-	अगर (fscrypt_inode_uses_fs_layer_crypto(inode))
-		post_पढ़ो_steps |= STEP_DECRYPT;
+	if (fscrypt_inode_uses_fs_layer_crypto(inode))
+		post_read_steps |= STEP_DECRYPT;
 
-	अगर (f2fs_need_verity(inode, first_idx))
-		post_पढ़ो_steps |= STEP_VERITY;
+	if (f2fs_need_verity(inode, first_idx))
+		post_read_steps |= STEP_VERITY;
 
 	/*
 	 * STEP_DECOMPRESS is handled specially, since a compressed file might
 	 * contain both compressed and uncompressed clusters.  We'll allocate a
-	 * bio_post_पढ़ो_ctx अगर the file is compressed, but the caller is
-	 * responsible क्रम enabling STEP_DECOMPRESS अगर it's actually needed.
+	 * bio_post_read_ctx if the file is compressed, but the caller is
+	 * responsible for enabling STEP_DECOMPRESS if it's actually needed.
 	 */
 
-	अगर (post_पढ़ो_steps || f2fs_compressed_file(inode)) अणु
+	if (post_read_steps || f2fs_compressed_file(inode)) {
 		/* Due to the mempool, this never fails. */
-		ctx = mempool_alloc(bio_post_पढ़ो_ctx_pool, GFP_NOFS);
+		ctx = mempool_alloc(bio_post_read_ctx_pool, GFP_NOFS);
 		ctx->bio = bio;
 		ctx->sbi = sbi;
-		ctx->enabled_steps = post_पढ़ो_steps;
-		bio->bi_निजी = ctx;
-	पूर्ण
+		ctx->enabled_steps = post_read_steps;
+		bio->bi_private = ctx;
+	}
 
-	वापस bio;
-पूर्ण
+	return bio;
+}
 
 /* This can handle encryption stuffs */
-अटल पूर्णांक f2fs_submit_page_पढ़ो(काष्ठा inode *inode, काष्ठा page *page,
-				 block_t blkaddr, पूर्णांक op_flags, bool क्रम_ग_लिखो)
-अणु
-	काष्ठा f2fs_sb_info *sbi = F2FS_I_SB(inode);
-	काष्ठा bio *bio;
+static int f2fs_submit_page_read(struct inode *inode, struct page *page,
+				 block_t blkaddr, int op_flags, bool for_write)
+{
+	struct f2fs_sb_info *sbi = F2FS_I_SB(inode);
+	struct bio *bio;
 
-	bio = f2fs_grab_पढ़ो_bio(inode, blkaddr, 1, op_flags,
-					page->index, क्रम_ग_लिखो);
-	अगर (IS_ERR(bio))
-		वापस PTR_ERR(bio);
+	bio = f2fs_grab_read_bio(inode, blkaddr, 1, op_flags,
+					page->index, for_write);
+	if (IS_ERR(bio))
+		return PTR_ERR(bio);
 
-	/* रुको क्रम GCed page ग_लिखोback via META_MAPPING */
-	f2fs_रुको_on_block_ग_लिखोback(inode, blkaddr);
+	/* wait for GCed page writeback via META_MAPPING */
+	f2fs_wait_on_block_writeback(inode, blkaddr);
 
-	अगर (bio_add_page(bio, page, PAGE_SIZE, 0) < PAGE_SIZE) अणु
+	if (bio_add_page(bio, page, PAGE_SIZE, 0) < PAGE_SIZE) {
 		bio_put(bio);
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 	ClearPageError(page);
 	inc_page_count(sbi, F2FS_RD_DATA);
 	f2fs_update_iostat(sbi, FS_DATA_READ_IO, F2FS_BLKSIZE);
 	__submit_bio(sbi, bio, DATA);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __set_data_blkaddr(काष्ठा dnode_of_data *dn)
-अणु
-	काष्ठा f2fs_node *rn = F2FS_NODE(dn->node_page);
+static void __set_data_blkaddr(struct dnode_of_data *dn)
+{
+	struct f2fs_node *rn = F2FS_NODE(dn->node_page);
 	__le32 *addr_array;
-	पूर्णांक base = 0;
+	int base = 0;
 
-	अगर (IS_INODE(dn->node_page) && f2fs_has_extra_attr(dn->inode))
+	if (IS_INODE(dn->node_page) && f2fs_has_extra_attr(dn->inode))
 		base = get_extra_isize(dn->inode);
 
 	/* Get physical address of data block */
 	addr_array = blkaddr_in_node(rn);
 	addr_array[base + dn->ofs_in_node] = cpu_to_le32(dn->data_blkaddr);
-पूर्ण
+}
 
 /*
- * Lock ordering क्रम the change of data block address:
+ * Lock ordering for the change of data block address:
  * ->data_page
  *  ->node_page
  *    update block addresses in the node page
  */
-व्योम f2fs_set_data_blkaddr(काष्ठा dnode_of_data *dn)
-अणु
-	f2fs_रुको_on_page_ग_लिखोback(dn->node_page, NODE, true, true);
+void f2fs_set_data_blkaddr(struct dnode_of_data *dn)
+{
+	f2fs_wait_on_page_writeback(dn->node_page, NODE, true, true);
 	__set_data_blkaddr(dn);
-	अगर (set_page_dirty(dn->node_page))
+	if (set_page_dirty(dn->node_page))
 		dn->node_changed = true;
-पूर्ण
+}
 
-व्योम f2fs_update_data_blkaddr(काष्ठा dnode_of_data *dn, block_t blkaddr)
-अणु
+void f2fs_update_data_blkaddr(struct dnode_of_data *dn, block_t blkaddr)
+{
 	dn->data_blkaddr = blkaddr;
 	f2fs_set_data_blkaddr(dn);
 	f2fs_update_extent_cache(dn);
-पूर्ण
+}
 
-/* dn->ofs_in_node will be वापसed with up-to-date last block poपूर्णांकer */
-पूर्णांक f2fs_reserve_new_blocks(काष्ठा dnode_of_data *dn, blkcnt_t count)
-अणु
-	काष्ठा f2fs_sb_info *sbi = F2FS_I_SB(dn->inode);
-	पूर्णांक err;
+/* dn->ofs_in_node will be returned with up-to-date last block pointer */
+int f2fs_reserve_new_blocks(struct dnode_of_data *dn, blkcnt_t count)
+{
+	struct f2fs_sb_info *sbi = F2FS_I_SB(dn->inode);
+	int err;
 
-	अगर (!count)
-		वापस 0;
+	if (!count)
+		return 0;
 
-	अगर (unlikely(is_inode_flag_set(dn->inode, FI_NO_ALLOC)))
-		वापस -EPERM;
-	अगर (unlikely((err = inc_valid_block_count(sbi, dn->inode, &count))))
-		वापस err;
+	if (unlikely(is_inode_flag_set(dn->inode, FI_NO_ALLOC)))
+		return -EPERM;
+	if (unlikely((err = inc_valid_block_count(sbi, dn->inode, &count))))
+		return err;
 
 	trace_f2fs_reserve_new_blocks(dn->inode, dn->nid,
 						dn->ofs_in_node, count);
 
-	f2fs_रुको_on_page_ग_लिखोback(dn->node_page, NODE, true, true);
+	f2fs_wait_on_page_writeback(dn->node_page, NODE, true, true);
 
-	क्रम (; count > 0; dn->ofs_in_node++) अणु
+	for (; count > 0; dn->ofs_in_node++) {
 		block_t blkaddr = f2fs_data_blkaddr(dn);
 
-		अगर (blkaddr == शून्य_ADDR) अणु
+		if (blkaddr == NULL_ADDR) {
 			dn->data_blkaddr = NEW_ADDR;
 			__set_data_blkaddr(dn);
 			count--;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (set_page_dirty(dn->node_page))
+	if (set_page_dirty(dn->node_page))
 		dn->node_changed = true;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Should keep dn->ofs_in_node unchanged */
-पूर्णांक f2fs_reserve_new_block(काष्ठा dnode_of_data *dn)
-अणु
-	अचिन्हित पूर्णांक ofs_in_node = dn->ofs_in_node;
-	पूर्णांक ret;
+int f2fs_reserve_new_block(struct dnode_of_data *dn)
+{
+	unsigned int ofs_in_node = dn->ofs_in_node;
+	int ret;
 
 	ret = f2fs_reserve_new_blocks(dn, 1);
 	dn->ofs_in_node = ofs_in_node;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक f2fs_reserve_block(काष्ठा dnode_of_data *dn, pgoff_t index)
-अणु
+int f2fs_reserve_block(struct dnode_of_data *dn, pgoff_t index)
+{
 	bool need_put = dn->inode_page ? false : true;
-	पूर्णांक err;
+	int err;
 
 	err = f2fs_get_dnode_of_data(dn, index, ALLOC_NODE);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (dn->data_blkaddr == शून्य_ADDR)
+	if (dn->data_blkaddr == NULL_ADDR)
 		err = f2fs_reserve_new_block(dn);
-	अगर (err || need_put)
+	if (err || need_put)
 		f2fs_put_dnode(dn);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक f2fs_get_block(काष्ठा dnode_of_data *dn, pgoff_t index)
-अणु
-	काष्ठा extent_info ei = अणु0, 0, 0पूर्ण;
-	काष्ठा inode *inode = dn->inode;
+int f2fs_get_block(struct dnode_of_data *dn, pgoff_t index)
+{
+	struct extent_info ei = {0, 0, 0};
+	struct inode *inode = dn->inode;
 
-	अगर (f2fs_lookup_extent_cache(inode, index, &ei)) अणु
+	if (f2fs_lookup_extent_cache(inode, index, &ei)) {
 		dn->data_blkaddr = ei.blk + index - ei.fofs;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस f2fs_reserve_block(dn, index);
-पूर्ण
+	return f2fs_reserve_block(dn, index);
+}
 
-काष्ठा page *f2fs_get_पढ़ो_data_page(काष्ठा inode *inode, pgoff_t index,
-						पूर्णांक op_flags, bool क्रम_ग_लिखो)
-अणु
-	काष्ठा address_space *mapping = inode->i_mapping;
-	काष्ठा dnode_of_data dn;
-	काष्ठा page *page;
-	काष्ठा extent_info ei = अणु0,0,0पूर्ण;
-	पूर्णांक err;
+struct page *f2fs_get_read_data_page(struct inode *inode, pgoff_t index,
+						int op_flags, bool for_write)
+{
+	struct address_space *mapping = inode->i_mapping;
+	struct dnode_of_data dn;
+	struct page *page;
+	struct extent_info ei = {0,0,0};
+	int err;
 
-	page = f2fs_grab_cache_page(mapping, index, क्रम_ग_लिखो);
-	अगर (!page)
-		वापस ERR_PTR(-ENOMEM);
+	page = f2fs_grab_cache_page(mapping, index, for_write);
+	if (!page)
+		return ERR_PTR(-ENOMEM);
 
-	अगर (f2fs_lookup_extent_cache(inode, index, &ei)) अणु
+	if (f2fs_lookup_extent_cache(inode, index, &ei)) {
 		dn.data_blkaddr = ei.blk + index - ei.fofs;
-		अगर (!f2fs_is_valid_blkaddr(F2FS_I_SB(inode), dn.data_blkaddr,
-						DATA_GENERIC_ENHANCE_READ)) अणु
+		if (!f2fs_is_valid_blkaddr(F2FS_I_SB(inode), dn.data_blkaddr,
+						DATA_GENERIC_ENHANCE_READ)) {
 			err = -EFSCORRUPTED;
-			जाओ put_err;
-		पूर्ण
-		जाओ got_it;
-	पूर्ण
+			goto put_err;
+		}
+		goto got_it;
+	}
 
-	set_new_dnode(&dn, inode, शून्य, शून्य, 0);
+	set_new_dnode(&dn, inode, NULL, NULL, 0);
 	err = f2fs_get_dnode_of_data(&dn, index, LOOKUP_NODE);
-	अगर (err)
-		जाओ put_err;
+	if (err)
+		goto put_err;
 	f2fs_put_dnode(&dn);
 
-	अगर (unlikely(dn.data_blkaddr == शून्य_ADDR)) अणु
+	if (unlikely(dn.data_blkaddr == NULL_ADDR)) {
 		err = -ENOENT;
-		जाओ put_err;
-	पूर्ण
-	अगर (dn.data_blkaddr != NEW_ADDR &&
+		goto put_err;
+	}
+	if (dn.data_blkaddr != NEW_ADDR &&
 			!f2fs_is_valid_blkaddr(F2FS_I_SB(inode),
 						dn.data_blkaddr,
-						DATA_GENERIC_ENHANCE)) अणु
+						DATA_GENERIC_ENHANCE)) {
 		err = -EFSCORRUPTED;
-		जाओ put_err;
-	पूर्ण
+		goto put_err;
+	}
 got_it:
-	अगर (PageUptodate(page)) अणु
+	if (PageUptodate(page)) {
 		unlock_page(page);
-		वापस page;
-	पूर्ण
+		return page;
+	}
 
 	/*
 	 * A new dentry page is allocated but not able to be written, since its
 	 * new inode page couldn't be allocated due to -ENOSPC.
-	 * In such the हाल, its blkaddr can be reमुख्यed as NEW_ADDR.
+	 * In such the case, its blkaddr can be remained as NEW_ADDR.
 	 * see, f2fs_add_link -> f2fs_get_new_data_page ->
 	 * f2fs_init_inode_metadata.
 	 */
-	अगर (dn.data_blkaddr == NEW_ADDR) अणु
+	if (dn.data_blkaddr == NEW_ADDR) {
 		zero_user_segment(page, 0, PAGE_SIZE);
-		अगर (!PageUptodate(page))
+		if (!PageUptodate(page))
 			SetPageUptodate(page);
 		unlock_page(page);
-		वापस page;
-	पूर्ण
+		return page;
+	}
 
-	err = f2fs_submit_page_पढ़ो(inode, page, dn.data_blkaddr,
-						op_flags, क्रम_ग_लिखो);
-	अगर (err)
-		जाओ put_err;
-	वापस page;
+	err = f2fs_submit_page_read(inode, page, dn.data_blkaddr,
+						op_flags, for_write);
+	if (err)
+		goto put_err;
+	return page;
 
 put_err:
 	f2fs_put_page(page, 1);
-	वापस ERR_PTR(err);
-पूर्ण
+	return ERR_PTR(err);
+}
 
-काष्ठा page *f2fs_find_data_page(काष्ठा inode *inode, pgoff_t index)
-अणु
-	काष्ठा address_space *mapping = inode->i_mapping;
-	काष्ठा page *page;
+struct page *f2fs_find_data_page(struct inode *inode, pgoff_t index)
+{
+	struct address_space *mapping = inode->i_mapping;
+	struct page *page;
 
 	page = find_get_page(mapping, index);
-	अगर (page && PageUptodate(page))
-		वापस page;
+	if (page && PageUptodate(page))
+		return page;
 	f2fs_put_page(page, 0);
 
-	page = f2fs_get_पढ़ो_data_page(inode, index, 0, false);
-	अगर (IS_ERR(page))
-		वापस page;
+	page = f2fs_get_read_data_page(inode, index, 0, false);
+	if (IS_ERR(page))
+		return page;
 
-	अगर (PageUptodate(page))
-		वापस page;
+	if (PageUptodate(page))
+		return page;
 
-	रुको_on_page_locked(page);
-	अगर (unlikely(!PageUptodate(page))) अणु
+	wait_on_page_locked(page);
+	if (unlikely(!PageUptodate(page))) {
 		f2fs_put_page(page, 0);
-		वापस ERR_PTR(-EIO);
-	पूर्ण
-	वापस page;
-पूर्ण
+		return ERR_PTR(-EIO);
+	}
+	return page;
+}
 
 /*
- * If it tries to access a hole, वापस an error.
+ * If it tries to access a hole, return an error.
  * Because, the callers, functions in dir.c and GC, should be able to know
  * whether this page exists or not.
  */
-काष्ठा page *f2fs_get_lock_data_page(काष्ठा inode *inode, pgoff_t index,
-							bool क्रम_ग_लिखो)
-अणु
-	काष्ठा address_space *mapping = inode->i_mapping;
-	काष्ठा page *page;
+struct page *f2fs_get_lock_data_page(struct inode *inode, pgoff_t index,
+							bool for_write)
+{
+	struct address_space *mapping = inode->i_mapping;
+	struct page *page;
 repeat:
-	page = f2fs_get_पढ़ो_data_page(inode, index, 0, क्रम_ग_लिखो);
-	अगर (IS_ERR(page))
-		वापस page;
+	page = f2fs_get_read_data_page(inode, index, 0, for_write);
+	if (IS_ERR(page))
+		return page;
 
-	/* रुको क्रम पढ़ो completion */
+	/* wait for read completion */
 	lock_page(page);
-	अगर (unlikely(page->mapping != mapping)) अणु
+	if (unlikely(page->mapping != mapping)) {
 		f2fs_put_page(page, 1);
-		जाओ repeat;
-	पूर्ण
-	अगर (unlikely(!PageUptodate(page))) अणु
+		goto repeat;
+	}
+	if (unlikely(!PageUptodate(page))) {
 		f2fs_put_page(page, 1);
-		वापस ERR_PTR(-EIO);
-	पूर्ण
-	वापस page;
-पूर्ण
+		return ERR_PTR(-EIO);
+	}
+	return page;
+}
 
 /*
  * Caller ensures that this data page is never allocated.
@@ -1271,183 +1270,183 @@ repeat:
  *
  * Also, caller should grab and release a rwsem by calling f2fs_lock_op() and
  * f2fs_unlock_op().
- * Note that, ipage is set only by make_empty_dir, and अगर any error occur,
+ * Note that, ipage is set only by make_empty_dir, and if any error occur,
  * ipage should be released by this function.
  */
-काष्ठा page *f2fs_get_new_data_page(काष्ठा inode *inode,
-		काष्ठा page *ipage, pgoff_t index, bool new_i_size)
-अणु
-	काष्ठा address_space *mapping = inode->i_mapping;
-	काष्ठा page *page;
-	काष्ठा dnode_of_data dn;
-	पूर्णांक err;
+struct page *f2fs_get_new_data_page(struct inode *inode,
+		struct page *ipage, pgoff_t index, bool new_i_size)
+{
+	struct address_space *mapping = inode->i_mapping;
+	struct page *page;
+	struct dnode_of_data dn;
+	int err;
 
 	page = f2fs_grab_cache_page(mapping, index, true);
-	अगर (!page) अणु
+	if (!page) {
 		/*
-		 * beक्रमe निकासing, we should make sure ipage will be released
-		 * अगर any error occur.
+		 * before exiting, we should make sure ipage will be released
+		 * if any error occur.
 		 */
 		f2fs_put_page(ipage, 1);
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+		return ERR_PTR(-ENOMEM);
+	}
 
-	set_new_dnode(&dn, inode, ipage, शून्य, 0);
+	set_new_dnode(&dn, inode, ipage, NULL, 0);
 	err = f2fs_reserve_block(&dn, index);
-	अगर (err) अणु
+	if (err) {
 		f2fs_put_page(page, 1);
-		वापस ERR_PTR(err);
-	पूर्ण
-	अगर (!ipage)
+		return ERR_PTR(err);
+	}
+	if (!ipage)
 		f2fs_put_dnode(&dn);
 
-	अगर (PageUptodate(page))
-		जाओ got_it;
+	if (PageUptodate(page))
+		goto got_it;
 
-	अगर (dn.data_blkaddr == NEW_ADDR) अणु
+	if (dn.data_blkaddr == NEW_ADDR) {
 		zero_user_segment(page, 0, PAGE_SIZE);
-		अगर (!PageUptodate(page))
+		if (!PageUptodate(page))
 			SetPageUptodate(page);
-	पूर्ण अन्यथा अणु
+	} else {
 		f2fs_put_page(page, 1);
 
-		/* अगर ipage exists, blkaddr should be NEW_ADDR */
+		/* if ipage exists, blkaddr should be NEW_ADDR */
 		f2fs_bug_on(F2FS_I_SB(inode), ipage);
 		page = f2fs_get_lock_data_page(inode, index, true);
-		अगर (IS_ERR(page))
-			वापस page;
-	पूर्ण
+		if (IS_ERR(page))
+			return page;
+	}
 got_it:
-	अगर (new_i_size && i_size_पढ़ो(inode) <
+	if (new_i_size && i_size_read(inode) <
 				((loff_t)(index + 1) << PAGE_SHIFT))
-		f2fs_i_size_ग_लिखो(inode, ((loff_t)(index + 1) << PAGE_SHIFT));
-	वापस page;
-पूर्ण
+		f2fs_i_size_write(inode, ((loff_t)(index + 1) << PAGE_SHIFT));
+	return page;
+}
 
-अटल पूर्णांक __allocate_data_block(काष्ठा dnode_of_data *dn, पूर्णांक seg_type)
-अणु
-	काष्ठा f2fs_sb_info *sbi = F2FS_I_SB(dn->inode);
-	काष्ठा f2fs_summary sum;
-	काष्ठा node_info ni;
+static int __allocate_data_block(struct dnode_of_data *dn, int seg_type)
+{
+	struct f2fs_sb_info *sbi = F2FS_I_SB(dn->inode);
+	struct f2fs_summary sum;
+	struct node_info ni;
 	block_t old_blkaddr;
 	blkcnt_t count = 1;
-	पूर्णांक err;
+	int err;
 
-	अगर (unlikely(is_inode_flag_set(dn->inode, FI_NO_ALLOC)))
-		वापस -EPERM;
+	if (unlikely(is_inode_flag_set(dn->inode, FI_NO_ALLOC)))
+		return -EPERM;
 
 	err = f2fs_get_node_info(sbi, dn->nid, &ni);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	dn->data_blkaddr = f2fs_data_blkaddr(dn);
-	अगर (dn->data_blkaddr != शून्य_ADDR)
-		जाओ alloc;
+	if (dn->data_blkaddr != NULL_ADDR)
+		goto alloc;
 
-	अगर (unlikely((err = inc_valid_block_count(sbi, dn->inode, &count))))
-		वापस err;
+	if (unlikely((err = inc_valid_block_count(sbi, dn->inode, &count))))
+		return err;
 
 alloc:
 	set_summary(&sum, dn->nid, dn->ofs_in_node, ni.version);
 	old_blkaddr = dn->data_blkaddr;
-	f2fs_allocate_data_block(sbi, शून्य, old_blkaddr, &dn->data_blkaddr,
-				&sum, seg_type, शून्य);
-	अगर (GET_SEGNO(sbi, old_blkaddr) != शून्य_SEGNO)
+	f2fs_allocate_data_block(sbi, NULL, old_blkaddr, &dn->data_blkaddr,
+				&sum, seg_type, NULL);
+	if (GET_SEGNO(sbi, old_blkaddr) != NULL_SEGNO)
 		invalidate_mapping_pages(META_MAPPING(sbi),
 					old_blkaddr, old_blkaddr);
 	f2fs_update_data_blkaddr(dn, dn->data_blkaddr);
 
 	/*
 	 * i_size will be updated by direct_IO. Otherwise, we'll get stale
-	 * data from unwritten block via dio_पढ़ो.
+	 * data from unwritten block via dio_read.
 	 */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक f2fs_pपुनः_स्मृतिate_blocks(काष्ठा kiocb *iocb, काष्ठा iov_iter *from)
-अणु
-	काष्ठा inode *inode = file_inode(iocb->ki_filp);
-	काष्ठा f2fs_map_blocks map;
-	पूर्णांक flag;
-	पूर्णांक err = 0;
-	bool direct_io = iocb->ki_flags & IOCB_सूचीECT;
+int f2fs_preallocate_blocks(struct kiocb *iocb, struct iov_iter *from)
+{
+	struct inode *inode = file_inode(iocb->ki_filp);
+	struct f2fs_map_blocks map;
+	int flag;
+	int err = 0;
+	bool direct_io = iocb->ki_flags & IOCB_DIRECT;
 
 	map.m_lblk = F2FS_BLK_ALIGN(iocb->ki_pos);
 	map.m_len = F2FS_BYTES_TO_BLK(iocb->ki_pos + iov_iter_count(from));
-	अगर (map.m_len > map.m_lblk)
+	if (map.m_len > map.m_lblk)
 		map.m_len -= map.m_lblk;
-	अन्यथा
+	else
 		map.m_len = 0;
 
-	map.m_next_pgofs = शून्य;
-	map.m_next_extent = शून्य;
+	map.m_next_pgofs = NULL;
+	map.m_next_extent = NULL;
 	map.m_seg_type = NO_CHECK_TYPE;
 	map.m_may_create = true;
 
-	अगर (direct_io) अणु
-		map.m_seg_type = f2fs_rw_hपूर्णांक_to_seg_type(iocb->ki_hपूर्णांक);
-		flag = f2fs_क्रमce_buffered_io(inode, iocb, from) ?
+	if (direct_io) {
+		map.m_seg_type = f2fs_rw_hint_to_seg_type(iocb->ki_hint);
+		flag = f2fs_force_buffered_io(inode, iocb, from) ?
 					F2FS_GET_BLOCK_PRE_AIO :
 					F2FS_GET_BLOCK_PRE_DIO;
-		जाओ map_blocks;
-	पूर्ण
-	अगर (iocb->ki_pos + iov_iter_count(from) > MAX_INLINE_DATA(inode)) अणु
-		err = f2fs_convert_अंतरभूत_inode(inode);
-		अगर (err)
-			वापस err;
-	पूर्ण
-	अगर (f2fs_has_अंतरभूत_data(inode))
-		वापस err;
+		goto map_blocks;
+	}
+	if (iocb->ki_pos + iov_iter_count(from) > MAX_INLINE_DATA(inode)) {
+		err = f2fs_convert_inline_inode(inode);
+		if (err)
+			return err;
+	}
+	if (f2fs_has_inline_data(inode))
+		return err;
 
 	flag = F2FS_GET_BLOCK_PRE_AIO;
 
 map_blocks:
 	err = f2fs_map_blocks(inode, &map, 1, flag);
-	अगर (map.m_len > 0 && err == -ENOSPC) अणु
-		अगर (!direct_io)
+	if (map.m_len > 0 && err == -ENOSPC) {
+		if (!direct_io)
 			set_inode_flag(inode, FI_NO_PREALLOC);
 		err = 0;
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
-व्योम f2fs_करो_map_lock(काष्ठा f2fs_sb_info *sbi, पूर्णांक flag, bool lock)
-अणु
-	अगर (flag == F2FS_GET_BLOCK_PRE_AIO) अणु
-		अगर (lock)
-			करोwn_पढ़ो(&sbi->node_change);
-		अन्यथा
-			up_पढ़ो(&sbi->node_change);
-	पूर्ण अन्यथा अणु
-		अगर (lock)
+void f2fs_do_map_lock(struct f2fs_sb_info *sbi, int flag, bool lock)
+{
+	if (flag == F2FS_GET_BLOCK_PRE_AIO) {
+		if (lock)
+			down_read(&sbi->node_change);
+		else
+			up_read(&sbi->node_change);
+	} else {
+		if (lock)
 			f2fs_lock_op(sbi);
-		अन्यथा
+		else
 			f2fs_unlock_op(sbi);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * f2fs_map_blocks() tries to find or build mapping relationship which
- * maps continuous logical blocks to physical blocks, and वापस such
- * info via f2fs_map_blocks काष्ठाure.
+ * maps continuous logical blocks to physical blocks, and return such
+ * info via f2fs_map_blocks structure.
  */
-पूर्णांक f2fs_map_blocks(काष्ठा inode *inode, काष्ठा f2fs_map_blocks *map,
-						पूर्णांक create, पूर्णांक flag)
-अणु
-	अचिन्हित पूर्णांक maxblocks = map->m_len;
-	काष्ठा dnode_of_data dn;
-	काष्ठा f2fs_sb_info *sbi = F2FS_I_SB(inode);
-	पूर्णांक mode = map->m_may_create ? ALLOC_NODE : LOOKUP_NODE;
+int f2fs_map_blocks(struct inode *inode, struct f2fs_map_blocks *map,
+						int create, int flag)
+{
+	unsigned int maxblocks = map->m_len;
+	struct dnode_of_data dn;
+	struct f2fs_sb_info *sbi = F2FS_I_SB(inode);
+	int mode = map->m_may_create ? ALLOC_NODE : LOOKUP_NODE;
 	pgoff_t pgofs, end_offset, end;
-	पूर्णांक err = 0, ofs = 1;
-	अचिन्हित पूर्णांक ofs_in_node, last_ofs_in_node;
-	blkcnt_t pपुनः_स्मृति;
-	काष्ठा extent_info ei = अणु0,0,0पूर्ण;
+	int err = 0, ofs = 1;
+	unsigned int ofs_in_node, last_ofs_in_node;
+	blkcnt_t prealloc;
+	struct extent_info ei = {0,0,0};
 	block_t blkaddr;
-	अचिन्हित पूर्णांक start_pgofs;
+	unsigned int start_pgofs;
 
-	अगर (!maxblocks)
-		वापस 0;
+	if (!maxblocks)
+		return 0;
 
 	map->m_len = 0;
 	map->m_flags = 0;
@@ -1456,342 +1455,342 @@ map_blocks:
 	pgofs =	(pgoff_t)map->m_lblk;
 	end = pgofs + maxblocks;
 
-	अगर (!create && f2fs_lookup_extent_cache(inode, pgofs, &ei)) अणु
-		अगर (f2fs_lfs_mode(sbi) && flag == F2FS_GET_BLOCK_DIO &&
+	if (!create && f2fs_lookup_extent_cache(inode, pgofs, &ei)) {
+		if (f2fs_lfs_mode(sbi) && flag == F2FS_GET_BLOCK_DIO &&
 							map->m_may_create)
-			जाओ next_dnode;
+			goto next_dnode;
 
 		map->m_pblk = ei.blk + pgofs - ei.fofs;
 		map->m_len = min((pgoff_t)maxblocks, ei.fofs + ei.len - pgofs);
 		map->m_flags = F2FS_MAP_MAPPED;
-		अगर (map->m_next_extent)
+		if (map->m_next_extent)
 			*map->m_next_extent = pgofs + map->m_len;
 
-		/* क्रम hardware encryption, but to aव्योम potential issue in future */
-		अगर (flag == F2FS_GET_BLOCK_DIO)
-			f2fs_रुको_on_block_ग_लिखोback_range(inode,
+		/* for hardware encryption, but to avoid potential issue in future */
+		if (flag == F2FS_GET_BLOCK_DIO)
+			f2fs_wait_on_block_writeback_range(inode,
 						map->m_pblk, map->m_len);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 next_dnode:
-	अगर (map->m_may_create)
-		f2fs_करो_map_lock(sbi, flag, true);
+	if (map->m_may_create)
+		f2fs_do_map_lock(sbi, flag, true);
 
-	/* When पढ़ोing holes, we need its node page */
-	set_new_dnode(&dn, inode, शून्य, शून्य, 0);
+	/* When reading holes, we need its node page */
+	set_new_dnode(&dn, inode, NULL, NULL, 0);
 	err = f2fs_get_dnode_of_data(&dn, pgofs, mode);
-	अगर (err) अणु
-		अगर (flag == F2FS_GET_BLOCK_BMAP)
+	if (err) {
+		if (flag == F2FS_GET_BLOCK_BMAP)
 			map->m_pblk = 0;
-		अगर (err == -ENOENT) अणु
+		if (err == -ENOENT) {
 			err = 0;
-			अगर (map->m_next_pgofs)
+			if (map->m_next_pgofs)
 				*map->m_next_pgofs =
 					f2fs_get_next_page_offset(&dn, pgofs);
-			अगर (map->m_next_extent)
+			if (map->m_next_extent)
 				*map->m_next_extent =
 					f2fs_get_next_page_offset(&dn, pgofs);
-		पूर्ण
-		जाओ unlock_out;
-	पूर्ण
+		}
+		goto unlock_out;
+	}
 
 	start_pgofs = pgofs;
-	pपुनः_स्मृति = 0;
+	prealloc = 0;
 	last_ofs_in_node = ofs_in_node = dn.ofs_in_node;
 	end_offset = ADDRS_PER_PAGE(dn.node_page, inode);
 
 next_block:
 	blkaddr = f2fs_data_blkaddr(&dn);
 
-	अगर (__is_valid_data_blkaddr(blkaddr) &&
-		!f2fs_is_valid_blkaddr(sbi, blkaddr, DATA_GENERIC_ENHANCE)) अणु
+	if (__is_valid_data_blkaddr(blkaddr) &&
+		!f2fs_is_valid_blkaddr(sbi, blkaddr, DATA_GENERIC_ENHANCE)) {
 		err = -EFSCORRUPTED;
-		जाओ sync_out;
-	पूर्ण
+		goto sync_out;
+	}
 
-	अगर (__is_valid_data_blkaddr(blkaddr)) अणु
-		/* use out-place-update क्रम driect IO under LFS mode */
-		अगर (f2fs_lfs_mode(sbi) && flag == F2FS_GET_BLOCK_DIO &&
-							map->m_may_create) अणु
+	if (__is_valid_data_blkaddr(blkaddr)) {
+		/* use out-place-update for driect IO under LFS mode */
+		if (f2fs_lfs_mode(sbi) && flag == F2FS_GET_BLOCK_DIO &&
+							map->m_may_create) {
 			err = __allocate_data_block(&dn, map->m_seg_type);
-			अगर (err)
-				जाओ sync_out;
+			if (err)
+				goto sync_out;
 			blkaddr = dn.data_blkaddr;
 			set_inode_flag(inode, FI_APPEND_WRITE);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (create) अणु
-			अगर (unlikely(f2fs_cp_error(sbi))) अणु
+		}
+	} else {
+		if (create) {
+			if (unlikely(f2fs_cp_error(sbi))) {
 				err = -EIO;
-				जाओ sync_out;
-			पूर्ण
-			अगर (flag == F2FS_GET_BLOCK_PRE_AIO) अणु
-				अगर (blkaddr == शून्य_ADDR) अणु
-					pपुनः_स्मृति++;
+				goto sync_out;
+			}
+			if (flag == F2FS_GET_BLOCK_PRE_AIO) {
+				if (blkaddr == NULL_ADDR) {
+					prealloc++;
 					last_ofs_in_node = dn.ofs_in_node;
-				पूर्ण
-			पूर्ण अन्यथा अणु
+				}
+			} else {
 				WARN_ON(flag != F2FS_GET_BLOCK_PRE_DIO &&
 					flag != F2FS_GET_BLOCK_DIO);
 				err = __allocate_data_block(&dn,
 							map->m_seg_type);
-				अगर (!err)
+				if (!err)
 					set_inode_flag(inode, FI_APPEND_WRITE);
-			पूर्ण
-			अगर (err)
-				जाओ sync_out;
+			}
+			if (err)
+				goto sync_out;
 			map->m_flags |= F2FS_MAP_NEW;
 			blkaddr = dn.data_blkaddr;
-		पूर्ण अन्यथा अणु
-			अगर (flag == F2FS_GET_BLOCK_BMAP) अणु
+		} else {
+			if (flag == F2FS_GET_BLOCK_BMAP) {
 				map->m_pblk = 0;
-				जाओ sync_out;
-			पूर्ण
-			अगर (flag == F2FS_GET_BLOCK_PRECACHE)
-				जाओ sync_out;
-			अगर (flag == F2FS_GET_BLOCK_FIEMAP &&
-						blkaddr == शून्य_ADDR) अणु
-				अगर (map->m_next_pgofs)
+				goto sync_out;
+			}
+			if (flag == F2FS_GET_BLOCK_PRECACHE)
+				goto sync_out;
+			if (flag == F2FS_GET_BLOCK_FIEMAP &&
+						blkaddr == NULL_ADDR) {
+				if (map->m_next_pgofs)
 					*map->m_next_pgofs = pgofs + 1;
-				जाओ sync_out;
-			पूर्ण
-			अगर (flag != F2FS_GET_BLOCK_FIEMAP) अणु
-				/* क्रम defragment हाल */
-				अगर (map->m_next_pgofs)
+				goto sync_out;
+			}
+			if (flag != F2FS_GET_BLOCK_FIEMAP) {
+				/* for defragment case */
+				if (map->m_next_pgofs)
 					*map->m_next_pgofs = pgofs + 1;
-				जाओ sync_out;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				goto sync_out;
+			}
+		}
+	}
 
-	अगर (flag == F2FS_GET_BLOCK_PRE_AIO)
-		जाओ skip;
+	if (flag == F2FS_GET_BLOCK_PRE_AIO)
+		goto skip;
 
-	अगर (map->m_len == 0) अणु
-		/* pपुनः_स्मृतिated unwritten block should be mapped क्रम fiemap. */
-		अगर (blkaddr == NEW_ADDR)
+	if (map->m_len == 0) {
+		/* preallocated unwritten block should be mapped for fiemap. */
+		if (blkaddr == NEW_ADDR)
 			map->m_flags |= F2FS_MAP_UNWRITTEN;
 		map->m_flags |= F2FS_MAP_MAPPED;
 
 		map->m_pblk = blkaddr;
 		map->m_len = 1;
-	पूर्ण अन्यथा अगर ((map->m_pblk != NEW_ADDR &&
+	} else if ((map->m_pblk != NEW_ADDR &&
 			blkaddr == (map->m_pblk + ofs)) ||
 			(map->m_pblk == NEW_ADDR && blkaddr == NEW_ADDR) ||
-			flag == F2FS_GET_BLOCK_PRE_DIO) अणु
+			flag == F2FS_GET_BLOCK_PRE_DIO) {
 		ofs++;
 		map->m_len++;
-	पूर्ण अन्यथा अणु
-		जाओ sync_out;
-	पूर्ण
+	} else {
+		goto sync_out;
+	}
 
 skip:
 	dn.ofs_in_node++;
 	pgofs++;
 
-	/* pपुनः_स्मृतिate blocks in batch क्रम one dnode page */
-	अगर (flag == F2FS_GET_BLOCK_PRE_AIO &&
-			(pgofs == end || dn.ofs_in_node == end_offset)) अणु
+	/* preallocate blocks in batch for one dnode page */
+	if (flag == F2FS_GET_BLOCK_PRE_AIO &&
+			(pgofs == end || dn.ofs_in_node == end_offset)) {
 
 		dn.ofs_in_node = ofs_in_node;
-		err = f2fs_reserve_new_blocks(&dn, pपुनः_स्मृति);
-		अगर (err)
-			जाओ sync_out;
+		err = f2fs_reserve_new_blocks(&dn, prealloc);
+		if (err)
+			goto sync_out;
 
 		map->m_len += dn.ofs_in_node - ofs_in_node;
-		अगर (pपुनः_स्मृति && dn.ofs_in_node != last_ofs_in_node + 1) अणु
+		if (prealloc && dn.ofs_in_node != last_ofs_in_node + 1) {
 			err = -ENOSPC;
-			जाओ sync_out;
-		पूर्ण
+			goto sync_out;
+		}
 		dn.ofs_in_node = end_offset;
-	पूर्ण
+	}
 
-	अगर (pgofs >= end)
-		जाओ sync_out;
-	अन्यथा अगर (dn.ofs_in_node < end_offset)
-		जाओ next_block;
+	if (pgofs >= end)
+		goto sync_out;
+	else if (dn.ofs_in_node < end_offset)
+		goto next_block;
 
-	अगर (flag == F2FS_GET_BLOCK_PRECACHE) अणु
-		अगर (map->m_flags & F2FS_MAP_MAPPED) अणु
-			अचिन्हित पूर्णांक ofs = start_pgofs - map->m_lblk;
+	if (flag == F2FS_GET_BLOCK_PRECACHE) {
+		if (map->m_flags & F2FS_MAP_MAPPED) {
+			unsigned int ofs = start_pgofs - map->m_lblk;
 
 			f2fs_update_extent_cache_range(&dn,
 				start_pgofs, map->m_pblk + ofs,
 				map->m_len - ofs);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	f2fs_put_dnode(&dn);
 
-	अगर (map->m_may_create) अणु
-		f2fs_करो_map_lock(sbi, flag, false);
+	if (map->m_may_create) {
+		f2fs_do_map_lock(sbi, flag, false);
 		f2fs_balance_fs(sbi, dn.node_changed);
-	पूर्ण
-	जाओ next_dnode;
+	}
+	goto next_dnode;
 
 sync_out:
 
-	/* क्रम hardware encryption, but to aव्योम potential issue in future */
-	अगर (flag == F2FS_GET_BLOCK_DIO && map->m_flags & F2FS_MAP_MAPPED)
-		f2fs_रुको_on_block_ग_लिखोback_range(inode,
+	/* for hardware encryption, but to avoid potential issue in future */
+	if (flag == F2FS_GET_BLOCK_DIO && map->m_flags & F2FS_MAP_MAPPED)
+		f2fs_wait_on_block_writeback_range(inode,
 						map->m_pblk, map->m_len);
 
-	अगर (flag == F2FS_GET_BLOCK_PRECACHE) अणु
-		अगर (map->m_flags & F2FS_MAP_MAPPED) अणु
-			अचिन्हित पूर्णांक ofs = start_pgofs - map->m_lblk;
+	if (flag == F2FS_GET_BLOCK_PRECACHE) {
+		if (map->m_flags & F2FS_MAP_MAPPED) {
+			unsigned int ofs = start_pgofs - map->m_lblk;
 
 			f2fs_update_extent_cache_range(&dn,
 				start_pgofs, map->m_pblk + ofs,
 				map->m_len - ofs);
-		पूर्ण
-		अगर (map->m_next_extent)
+		}
+		if (map->m_next_extent)
 			*map->m_next_extent = pgofs + 1;
-	पूर्ण
+	}
 	f2fs_put_dnode(&dn);
 unlock_out:
-	अगर (map->m_may_create) अणु
-		f2fs_करो_map_lock(sbi, flag, false);
+	if (map->m_may_create) {
+		f2fs_do_map_lock(sbi, flag, false);
 		f2fs_balance_fs(sbi, dn.node_changed);
-	पूर्ण
+	}
 out:
 	trace_f2fs_map_blocks(inode, map, err);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-bool f2fs_overग_लिखो_io(काष्ठा inode *inode, loff_t pos, माप_प्रकार len)
-अणु
-	काष्ठा f2fs_map_blocks map;
+bool f2fs_overwrite_io(struct inode *inode, loff_t pos, size_t len)
+{
+	struct f2fs_map_blocks map;
 	block_t last_lblk;
-	पूर्णांक err;
+	int err;
 
-	अगर (pos + len > i_size_पढ़ो(inode))
-		वापस false;
+	if (pos + len > i_size_read(inode))
+		return false;
 
 	map.m_lblk = F2FS_BYTES_TO_BLK(pos);
-	map.m_next_pgofs = शून्य;
-	map.m_next_extent = शून्य;
+	map.m_next_pgofs = NULL;
+	map.m_next_extent = NULL;
 	map.m_seg_type = NO_CHECK_TYPE;
 	map.m_may_create = false;
 	last_lblk = F2FS_BLK_ALIGN(pos + len);
 
-	जबतक (map.m_lblk < last_lblk) अणु
+	while (map.m_lblk < last_lblk) {
 		map.m_len = last_lblk - map.m_lblk;
 		err = f2fs_map_blocks(inode, &map, 0, F2FS_GET_BLOCK_DEFAULT);
-		अगर (err || map.m_len == 0)
-			वापस false;
+		if (err || map.m_len == 0)
+			return false;
 		map.m_lblk += map.m_len;
-	पूर्ण
-	वापस true;
-पूर्ण
+	}
+	return true;
+}
 
-अटल अंतरभूत u64 bytes_to_blks(काष्ठा inode *inode, u64 bytes)
-अणु
-	वापस (bytes >> inode->i_blkbits);
-पूर्ण
+static inline u64 bytes_to_blks(struct inode *inode, u64 bytes)
+{
+	return (bytes >> inode->i_blkbits);
+}
 
-अटल अंतरभूत u64 blks_to_bytes(काष्ठा inode *inode, u64 blks)
-अणु
-	वापस (blks << inode->i_blkbits);
-पूर्ण
+static inline u64 blks_to_bytes(struct inode *inode, u64 blks)
+{
+	return (blks << inode->i_blkbits);
+}
 
-अटल पूर्णांक __get_data_block(काष्ठा inode *inode, sector_t iblock,
-			काष्ठा buffer_head *bh, पूर्णांक create, पूर्णांक flag,
-			pgoff_t *next_pgofs, पूर्णांक seg_type, bool may_ग_लिखो)
-अणु
-	काष्ठा f2fs_map_blocks map;
-	पूर्णांक err;
+static int __get_data_block(struct inode *inode, sector_t iblock,
+			struct buffer_head *bh, int create, int flag,
+			pgoff_t *next_pgofs, int seg_type, bool may_write)
+{
+	struct f2fs_map_blocks map;
+	int err;
 
 	map.m_lblk = iblock;
 	map.m_len = bytes_to_blks(inode, bh->b_size);
 	map.m_next_pgofs = next_pgofs;
-	map.m_next_extent = शून्य;
+	map.m_next_extent = NULL;
 	map.m_seg_type = seg_type;
-	map.m_may_create = may_ग_लिखो;
+	map.m_may_create = may_write;
 
 	err = f2fs_map_blocks(inode, &map, create, flag);
-	अगर (!err) अणु
+	if (!err) {
 		map_bh(bh, inode->i_sb, map.m_pblk);
 		bh->b_state = (bh->b_state & ~F2FS_MAP_FLAGS) | map.m_flags;
 		bh->b_size = blks_to_bytes(inode, map.m_len);
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
-अटल पूर्णांक get_data_block_dio_ग_लिखो(काष्ठा inode *inode, sector_t iblock,
-			काष्ठा buffer_head *bh_result, पूर्णांक create)
-अणु
-	वापस __get_data_block(inode, iblock, bh_result, create,
-				F2FS_GET_BLOCK_DIO, शून्य,
-				f2fs_rw_hपूर्णांक_to_seg_type(inode->i_ग_लिखो_hपूर्णांक),
+static int get_data_block_dio_write(struct inode *inode, sector_t iblock,
+			struct buffer_head *bh_result, int create)
+{
+	return __get_data_block(inode, iblock, bh_result, create,
+				F2FS_GET_BLOCK_DIO, NULL,
+				f2fs_rw_hint_to_seg_type(inode->i_write_hint),
 				true);
-पूर्ण
+}
 
-अटल पूर्णांक get_data_block_dio(काष्ठा inode *inode, sector_t iblock,
-			काष्ठा buffer_head *bh_result, पूर्णांक create)
-अणु
-	वापस __get_data_block(inode, iblock, bh_result, create,
-				F2FS_GET_BLOCK_DIO, शून्य,
-				f2fs_rw_hपूर्णांक_to_seg_type(inode->i_ग_लिखो_hपूर्णांक),
+static int get_data_block_dio(struct inode *inode, sector_t iblock,
+			struct buffer_head *bh_result, int create)
+{
+	return __get_data_block(inode, iblock, bh_result, create,
+				F2FS_GET_BLOCK_DIO, NULL,
+				f2fs_rw_hint_to_seg_type(inode->i_write_hint),
 				false);
-पूर्ण
+}
 
-अटल पूर्णांक f2fs_xattr_fiemap(काष्ठा inode *inode,
-				काष्ठा fiemap_extent_info *fieinfo)
-अणु
-	काष्ठा f2fs_sb_info *sbi = F2FS_I_SB(inode);
-	काष्ठा page *page;
-	काष्ठा node_info ni;
+static int f2fs_xattr_fiemap(struct inode *inode,
+				struct fiemap_extent_info *fieinfo)
+{
+	struct f2fs_sb_info *sbi = F2FS_I_SB(inode);
+	struct page *page;
+	struct node_info ni;
 	__u64 phys = 0, len;
 	__u32 flags;
 	nid_t xnid = F2FS_I(inode)->i_xattr_nid;
-	पूर्णांक err = 0;
+	int err = 0;
 
-	अगर (f2fs_has_अंतरभूत_xattr(inode)) अणु
-		पूर्णांक offset;
+	if (f2fs_has_inline_xattr(inode)) {
+		int offset;
 
 		page = f2fs_grab_cache_page(NODE_MAPPING(sbi),
 						inode->i_ino, false);
-		अगर (!page)
-			वापस -ENOMEM;
+		if (!page)
+			return -ENOMEM;
 
 		err = f2fs_get_node_info(sbi, inode->i_ino, &ni);
-		अगर (err) अणु
+		if (err) {
 			f2fs_put_page(page, 1);
-			वापस err;
-		पूर्ण
+			return err;
+		}
 
 		phys = blks_to_bytes(inode, ni.blk_addr);
-		offset = दुरत्व(काष्ठा f2fs_inode, i_addr) +
-					माप(__le32) * (DEF_ADDRS_PER_INODE -
-					get_अंतरभूत_xattr_addrs(inode));
+		offset = offsetof(struct f2fs_inode, i_addr) +
+					sizeof(__le32) * (DEF_ADDRS_PER_INODE -
+					get_inline_xattr_addrs(inode));
 
 		phys += offset;
-		len = अंतरभूत_xattr_size(inode);
+		len = inline_xattr_size(inode);
 
 		f2fs_put_page(page, 1);
 
 		flags = FIEMAP_EXTENT_DATA_INLINE | FIEMAP_EXTENT_NOT_ALIGNED;
 
-		अगर (!xnid)
+		if (!xnid)
 			flags |= FIEMAP_EXTENT_LAST;
 
 		err = fiemap_fill_next_extent(fieinfo, 0, phys, len, flags);
 		trace_f2fs_fiemap(inode, 0, phys, len, flags, err);
-		अगर (err || err == 1)
-			वापस err;
-	पूर्ण
+		if (err || err == 1)
+			return err;
+	}
 
-	अगर (xnid) अणु
+	if (xnid) {
 		page = f2fs_grab_cache_page(NODE_MAPPING(sbi), xnid, false);
-		अगर (!page)
-			वापस -ENOMEM;
+		if (!page)
+			return -ENOMEM;
 
 		err = f2fs_get_node_info(sbi, xnid, &ni);
-		अगर (err) अणु
+		if (err) {
 			f2fs_put_page(page, 1);
-			वापस err;
-		पूर्ण
+			return err;
+		}
 
 		phys = blks_to_bytes(inode, ni.blk_addr);
 		len = inode->i_sb->s_blocksize;
@@ -1799,18 +1798,18 @@ bool f2fs_overग_लिखो_io(काष्ठा inode *inode, loff_t pos, �
 		f2fs_put_page(page, 1);
 
 		flags = FIEMAP_EXTENT_LAST;
-	पूर्ण
+	}
 
-	अगर (phys) अणु
+	if (phys) {
 		err = fiemap_fill_next_extent(fieinfo, 0, phys, len, flags);
 		trace_f2fs_fiemap(inode, 0, phys, len, flags, err);
-	पूर्ण
+	}
 
-	वापस (err < 0 ? err : 0);
-पूर्ण
+	return (err < 0 ? err : 0);
+}
 
-अटल loff_t max_inode_blocks(काष्ठा inode *inode)
-अणु
+static loff_t max_inode_blocks(struct inode *inode)
+{
 	loff_t result = ADDRS_PER_INODE(inode);
 	loff_t leaf_count = ADDRS_PER_BLOCK(inode);
 
@@ -1821,106 +1820,106 @@ bool f2fs_overग_लिखो_io(काष्ठा inode *inode, loff_t pos, �
 	leaf_count *= NIDS_PER_BLOCK;
 	result += (leaf_count * 2);
 
-	/* one द्विगुन indirect node block */
+	/* one double indirect node block */
 	leaf_count *= NIDS_PER_BLOCK;
 	result += leaf_count;
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-पूर्णांक f2fs_fiemap(काष्ठा inode *inode, काष्ठा fiemap_extent_info *fieinfo,
+int f2fs_fiemap(struct inode *inode, struct fiemap_extent_info *fieinfo,
 		u64 start, u64 len)
-अणु
-	काष्ठा f2fs_map_blocks map;
+{
+	struct f2fs_map_blocks map;
 	sector_t start_blk, last_blk;
 	pgoff_t next_pgofs;
 	u64 logical = 0, phys = 0, size = 0;
 	u32 flags = 0;
-	पूर्णांक ret = 0;
+	int ret = 0;
 	bool compr_cluster = false;
-	अचिन्हित पूर्णांक cluster_size = F2FS_I(inode)->i_cluster_size;
+	unsigned int cluster_size = F2FS_I(inode)->i_cluster_size;
 	loff_t maxbytes;
 
-	अगर (fieinfo->fi_flags & FIEMAP_FLAG_CACHE) अणु
+	if (fieinfo->fi_flags & FIEMAP_FLAG_CACHE) {
 		ret = f2fs_precache_extents(inode);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	ret = fiemap_prep(inode, fieinfo, start, &len, FIEMAP_FLAG_XATTR);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	inode_lock(inode);
 
 	maxbytes = max_file_blocks(inode) << F2FS_BLKSIZE_BITS;
-	अगर (start > maxbytes) अणु
+	if (start > maxbytes) {
 		ret = -EFBIG;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (len > maxbytes || (maxbytes - len) < start)
+	if (len > maxbytes || (maxbytes - len) < start)
 		len = maxbytes - start;
 
-	अगर (fieinfo->fi_flags & FIEMAP_FLAG_XATTR) अणु
+	if (fieinfo->fi_flags & FIEMAP_FLAG_XATTR) {
 		ret = f2fs_xattr_fiemap(inode, fieinfo);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (f2fs_has_अंतरभूत_data(inode) || f2fs_has_अंतरभूत_dentry(inode)) अणु
-		ret = f2fs_अंतरभूत_data_fiemap(inode, fieinfo, start, len);
-		अगर (ret != -EAGAIN)
-			जाओ out;
-	पूर्ण
+	if (f2fs_has_inline_data(inode) || f2fs_has_inline_dentry(inode)) {
+		ret = f2fs_inline_data_fiemap(inode, fieinfo, start, len);
+		if (ret != -EAGAIN)
+			goto out;
+	}
 
-	अगर (bytes_to_blks(inode, len) == 0)
+	if (bytes_to_blks(inode, len) == 0)
 		len = blks_to_bytes(inode, 1);
 
 	start_blk = bytes_to_blks(inode, start);
 	last_blk = bytes_to_blks(inode, start + len - 1);
 
 next:
-	स_रखो(&map, 0, माप(map));
+	memset(&map, 0, sizeof(map));
 	map.m_lblk = start_blk;
 	map.m_len = bytes_to_blks(inode, len);
 	map.m_next_pgofs = &next_pgofs;
 	map.m_seg_type = NO_CHECK_TYPE;
 
-	अगर (compr_cluster)
+	if (compr_cluster)
 		map.m_len = cluster_size - 1;
 
 	ret = f2fs_map_blocks(inode, &map, 0, F2FS_GET_BLOCK_FIEMAP);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	/* HOLE */
-	अगर (!(map.m_flags & F2FS_MAP_FLAGS)) अणु
+	if (!(map.m_flags & F2FS_MAP_FLAGS)) {
 		start_blk = next_pgofs;
 
-		अगर (blks_to_bytes(inode, start_blk) < blks_to_bytes(inode,
+		if (blks_to_bytes(inode, start_blk) < blks_to_bytes(inode,
 						max_inode_blocks(inode)))
-			जाओ prep_next;
+			goto prep_next;
 
 		flags |= FIEMAP_EXTENT_LAST;
-	पूर्ण
+	}
 
-	अगर (size) अणु
+	if (size) {
 		flags |= FIEMAP_EXTENT_MERGED;
-		अगर (IS_ENCRYPTED(inode))
+		if (IS_ENCRYPTED(inode))
 			flags |= FIEMAP_EXTENT_DATA_ENCRYPTED;
 
 		ret = fiemap_fill_next_extent(fieinfo, logical,
 				phys, size, flags);
 		trace_f2fs_fiemap(inode, logical, phys, size, flags, ret);
-		अगर (ret)
-			जाओ out;
+		if (ret)
+			goto out;
 		size = 0;
-	पूर्ण
+	}
 
-	अगर (start_blk > last_blk)
-		जाओ out;
+	if (start_blk > last_blk)
+		goto out;
 
-	अगर (compr_cluster) अणु
+	if (compr_cluster) {
 		compr_cluster = false;
 
 
@@ -1932,283 +1931,283 @@ next:
 
 		start_blk += cluster_size - 1;
 
-		अगर (start_blk > last_blk)
-			जाओ out;
+		if (start_blk > last_blk)
+			goto out;
 
-		जाओ prep_next;
-	पूर्ण
+		goto prep_next;
+	}
 
-	अगर (map.m_pblk == COMPRESS_ADDR) अणु
+	if (map.m_pblk == COMPRESS_ADDR) {
 		compr_cluster = true;
 		start_blk++;
-		जाओ prep_next;
-	पूर्ण
+		goto prep_next;
+	}
 
 	logical = blks_to_bytes(inode, start_blk);
 	phys = blks_to_bytes(inode, map.m_pblk);
 	size = blks_to_bytes(inode, map.m_len);
 	flags = 0;
-	अगर (map.m_flags & F2FS_MAP_UNWRITTEN)
+	if (map.m_flags & F2FS_MAP_UNWRITTEN)
 		flags = FIEMAP_EXTENT_UNWRITTEN;
 
 	start_blk += bytes_to_blks(inode, size);
 
 prep_next:
 	cond_resched();
-	अगर (fatal_संकेत_pending(current))
+	if (fatal_signal_pending(current))
 		ret = -EINTR;
-	अन्यथा
-		जाओ next;
+	else
+		goto next;
 out:
-	अगर (ret == 1)
+	if (ret == 1)
 		ret = 0;
 
 	inode_unlock(inode);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत loff_t f2fs_पढ़ोpage_limit(काष्ठा inode *inode)
-अणु
-	अगर (IS_ENABLED(CONFIG_FS_VERITY) &&
+static inline loff_t f2fs_readpage_limit(struct inode *inode)
+{
+	if (IS_ENABLED(CONFIG_FS_VERITY) &&
 	    (IS_VERITY(inode) || f2fs_verity_in_progress(inode)))
-		वापस inode->i_sb->s_maxbytes;
+		return inode->i_sb->s_maxbytes;
 
-	वापस i_size_पढ़ो(inode);
-पूर्ण
+	return i_size_read(inode);
+}
 
-अटल पूर्णांक f2fs_पढ़ो_single_page(काष्ठा inode *inode, काष्ठा page *page,
-					अचिन्हित nr_pages,
-					काष्ठा f2fs_map_blocks *map,
-					काष्ठा bio **bio_ret,
+static int f2fs_read_single_page(struct inode *inode, struct page *page,
+					unsigned nr_pages,
+					struct f2fs_map_blocks *map,
+					struct bio **bio_ret,
 					sector_t *last_block_in_bio,
-					bool is_पढ़ोahead)
-अणु
-	काष्ठा bio *bio = *bio_ret;
-	स्थिर अचिन्हित blocksize = blks_to_bytes(inode, 1);
+					bool is_readahead)
+{
+	struct bio *bio = *bio_ret;
+	const unsigned blocksize = blks_to_bytes(inode, 1);
 	sector_t block_in_file;
 	sector_t last_block;
 	sector_t last_block_in_file;
 	sector_t block_nr;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	block_in_file = (sector_t)page_index(page);
 	last_block = block_in_file + nr_pages;
 	last_block_in_file = bytes_to_blks(inode,
-			f2fs_पढ़ोpage_limit(inode) + blocksize - 1);
-	अगर (last_block > last_block_in_file)
+			f2fs_readpage_limit(inode) + blocksize - 1);
+	if (last_block > last_block_in_file)
 		last_block = last_block_in_file;
 
-	/* just zeroing out page which is beyond खातापूर्ण */
-	अगर (block_in_file >= last_block)
-		जाओ zero_out;
+	/* just zeroing out page which is beyond EOF */
+	if (block_in_file >= last_block)
+		goto zero_out;
 	/*
 	 * Map blocks using the previous result first.
 	 */
-	अगर ((map->m_flags & F2FS_MAP_MAPPED) &&
+	if ((map->m_flags & F2FS_MAP_MAPPED) &&
 			block_in_file > map->m_lblk &&
 			block_in_file < (map->m_lblk + map->m_len))
-		जाओ got_it;
+		goto got_it;
 
 	/*
-	 * Then करो more f2fs_map_blocks() calls until we are
-	 * करोne with this page.
+	 * Then do more f2fs_map_blocks() calls until we are
+	 * done with this page.
 	 */
 	map->m_lblk = block_in_file;
 	map->m_len = last_block - block_in_file;
 
 	ret = f2fs_map_blocks(inode, map, 0, F2FS_GET_BLOCK_DEFAULT);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 got_it:
-	अगर ((map->m_flags & F2FS_MAP_MAPPED)) अणु
+	if ((map->m_flags & F2FS_MAP_MAPPED)) {
 		block_nr = map->m_pblk + block_in_file - map->m_lblk;
 		SetPageMappedToDisk(page);
 
-		अगर (!PageUptodate(page) && (!PageSwapCache(page) &&
-					!cleancache_get_page(page))) अणु
+		if (!PageUptodate(page) && (!PageSwapCache(page) &&
+					!cleancache_get_page(page))) {
 			SetPageUptodate(page);
-			जाओ confused;
-		पूर्ण
+			goto confused;
+		}
 
-		अगर (!f2fs_is_valid_blkaddr(F2FS_I_SB(inode), block_nr,
-						DATA_GENERIC_ENHANCE_READ)) अणु
+		if (!f2fs_is_valid_blkaddr(F2FS_I_SB(inode), block_nr,
+						DATA_GENERIC_ENHANCE_READ)) {
 			ret = -EFSCORRUPTED;
-			जाओ out;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			goto out;
+		}
+	} else {
 zero_out:
 		zero_user_segment(page, 0, PAGE_SIZE);
-		अगर (f2fs_need_verity(inode, page->index) &&
-		    !fsverity_verअगरy_page(page)) अणु
+		if (f2fs_need_verity(inode, page->index) &&
+		    !fsverity_verify_page(page)) {
 			ret = -EIO;
-			जाओ out;
-		पूर्ण
-		अगर (!PageUptodate(page))
+			goto out;
+		}
+		if (!PageUptodate(page))
 			SetPageUptodate(page);
 		unlock_page(page);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
 	 * This page will go to BIO.  Do we need to send this
 	 * BIO off first?
 	 */
-	अगर (bio && (!page_is_mergeable(F2FS_I_SB(inode), bio,
+	if (bio && (!page_is_mergeable(F2FS_I_SB(inode), bio,
 				       *last_block_in_bio, block_nr) ||
-		    !f2fs_crypt_mergeable_bio(bio, inode, page->index, शून्य))) अणु
-submit_and_पुनः_स्मृति:
+		    !f2fs_crypt_mergeable_bio(bio, inode, page->index, NULL))) {
+submit_and_realloc:
 		__submit_bio(F2FS_I_SB(inode), bio, DATA);
-		bio = शून्य;
-	पूर्ण
-	अगर (bio == शून्य) अणु
-		bio = f2fs_grab_पढ़ो_bio(inode, block_nr, nr_pages,
-				is_पढ़ोahead ? REQ_RAHEAD : 0, page->index,
+		bio = NULL;
+	}
+	if (bio == NULL) {
+		bio = f2fs_grab_read_bio(inode, block_nr, nr_pages,
+				is_readahead ? REQ_RAHEAD : 0, page->index,
 				false);
-		अगर (IS_ERR(bio)) अणु
+		if (IS_ERR(bio)) {
 			ret = PTR_ERR(bio);
-			bio = शून्य;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			bio = NULL;
+			goto out;
+		}
+	}
 
 	/*
-	 * If the page is under ग_लिखोback, we need to रुको क्रम
+	 * If the page is under writeback, we need to wait for
 	 * its completion to see the correct decrypted data.
 	 */
-	f2fs_रुको_on_block_ग_लिखोback(inode, block_nr);
+	f2fs_wait_on_block_writeback(inode, block_nr);
 
-	अगर (bio_add_page(bio, page, blocksize, 0) < blocksize)
-		जाओ submit_and_पुनः_स्मृति;
+	if (bio_add_page(bio, page, blocksize, 0) < blocksize)
+		goto submit_and_realloc;
 
 	inc_page_count(F2FS_I_SB(inode), F2FS_RD_DATA);
 	f2fs_update_iostat(F2FS_I_SB(inode), FS_DATA_READ_IO, F2FS_BLKSIZE);
 	ClearPageError(page);
 	*last_block_in_bio = block_nr;
-	जाओ out;
+	goto out;
 confused:
-	अगर (bio) अणु
+	if (bio) {
 		__submit_bio(F2FS_I_SB(inode), bio, DATA);
-		bio = शून्य;
-	पूर्ण
+		bio = NULL;
+	}
 	unlock_page(page);
 out:
 	*bio_ret = bio;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#अगर_घोषित CONFIG_F2FS_FS_COMPRESSION
-पूर्णांक f2fs_पढ़ो_multi_pages(काष्ठा compress_ctx *cc, काष्ठा bio **bio_ret,
-				अचिन्हित nr_pages, sector_t *last_block_in_bio,
-				bool is_पढ़ोahead, bool क्रम_ग_लिखो)
-अणु
-	काष्ठा dnode_of_data dn;
-	काष्ठा inode *inode = cc->inode;
-	काष्ठा f2fs_sb_info *sbi = F2FS_I_SB(inode);
-	काष्ठा bio *bio = *bio_ret;
-	अचिन्हित पूर्णांक start_idx = cc->cluster_idx << cc->log_cluster_size;
+#ifdef CONFIG_F2FS_FS_COMPRESSION
+int f2fs_read_multi_pages(struct compress_ctx *cc, struct bio **bio_ret,
+				unsigned nr_pages, sector_t *last_block_in_bio,
+				bool is_readahead, bool for_write)
+{
+	struct dnode_of_data dn;
+	struct inode *inode = cc->inode;
+	struct f2fs_sb_info *sbi = F2FS_I_SB(inode);
+	struct bio *bio = *bio_ret;
+	unsigned int start_idx = cc->cluster_idx << cc->log_cluster_size;
 	sector_t last_block_in_file;
-	स्थिर अचिन्हित blocksize = blks_to_bytes(inode, 1);
-	काष्ठा decompress_io_ctx *dic = शून्य;
-	पूर्णांक i;
-	पूर्णांक ret = 0;
+	const unsigned blocksize = blks_to_bytes(inode, 1);
+	struct decompress_io_ctx *dic = NULL;
+	int i;
+	int ret = 0;
 
 	f2fs_bug_on(sbi, f2fs_cluster_is_empty(cc));
 
 	last_block_in_file = bytes_to_blks(inode,
-			f2fs_पढ़ोpage_limit(inode) + blocksize - 1);
+			f2fs_readpage_limit(inode) + blocksize - 1);
 
-	/* get rid of pages beyond खातापूर्ण */
-	क्रम (i = 0; i < cc->cluster_size; i++) अणु
-		काष्ठा page *page = cc->rpages[i];
+	/* get rid of pages beyond EOF */
+	for (i = 0; i < cc->cluster_size; i++) {
+		struct page *page = cc->rpages[i];
 
-		अगर (!page)
-			जारी;
-		अगर ((sector_t)page->index >= last_block_in_file) अणु
+		if (!page)
+			continue;
+		if ((sector_t)page->index >= last_block_in_file) {
 			zero_user_segment(page, 0, PAGE_SIZE);
-			अगर (!PageUptodate(page))
+			if (!PageUptodate(page))
 				SetPageUptodate(page);
-		पूर्ण अन्यथा अगर (!PageUptodate(page)) अणु
-			जारी;
-		पूर्ण
+		} else if (!PageUptodate(page)) {
+			continue;
+		}
 		unlock_page(page);
-		cc->rpages[i] = शून्य;
+		cc->rpages[i] = NULL;
 		cc->nr_rpages--;
-	पूर्ण
+	}
 
-	/* we are करोne since all pages are beyond खातापूर्ण */
-	अगर (f2fs_cluster_is_empty(cc))
-		जाओ out;
+	/* we are done since all pages are beyond EOF */
+	if (f2fs_cluster_is_empty(cc))
+		goto out;
 
-	set_new_dnode(&dn, inode, शून्य, शून्य, 0);
+	set_new_dnode(&dn, inode, NULL, NULL, 0);
 	ret = f2fs_get_dnode_of_data(&dn, start_idx, LOOKUP_NODE);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	f2fs_bug_on(sbi, dn.data_blkaddr != COMPRESS_ADDR);
 
-	क्रम (i = 1; i < cc->cluster_size; i++) अणु
+	for (i = 1; i < cc->cluster_size; i++) {
 		block_t blkaddr;
 
 		blkaddr = data_blkaddr(dn.inode, dn.node_page,
 						dn.ofs_in_node + i);
 
-		अगर (!__is_valid_data_blkaddr(blkaddr))
-			अवरोध;
+		if (!__is_valid_data_blkaddr(blkaddr))
+			break;
 
-		अगर (!f2fs_is_valid_blkaddr(sbi, blkaddr, DATA_GENERIC)) अणु
+		if (!f2fs_is_valid_blkaddr(sbi, blkaddr, DATA_GENERIC)) {
 			ret = -EFAULT;
-			जाओ out_put_dnode;
-		पूर्ण
+			goto out_put_dnode;
+		}
 		cc->nr_cpages++;
-	पूर्ण
+	}
 
 	/* nothing to decompress */
-	अगर (cc->nr_cpages == 0) अणु
+	if (cc->nr_cpages == 0) {
 		ret = 0;
-		जाओ out_put_dnode;
-	पूर्ण
+		goto out_put_dnode;
+	}
 
 	dic = f2fs_alloc_dic(cc);
-	अगर (IS_ERR(dic)) अणु
+	if (IS_ERR(dic)) {
 		ret = PTR_ERR(dic);
-		जाओ out_put_dnode;
-	पूर्ण
+		goto out_put_dnode;
+	}
 
-	क्रम (i = 0; i < dic->nr_cpages; i++) अणु
-		काष्ठा page *page = dic->cpages[i];
+	for (i = 0; i < dic->nr_cpages; i++) {
+		struct page *page = dic->cpages[i];
 		block_t blkaddr;
-		काष्ठा bio_post_पढ़ो_ctx *ctx;
+		struct bio_post_read_ctx *ctx;
 
 		blkaddr = data_blkaddr(dn.inode, dn.node_page,
 						dn.ofs_in_node + i + 1);
 
-		अगर (bio && (!page_is_mergeable(sbi, bio,
+		if (bio && (!page_is_mergeable(sbi, bio,
 					*last_block_in_bio, blkaddr) ||
-		    !f2fs_crypt_mergeable_bio(bio, inode, page->index, शून्य))) अणु
-submit_and_पुनः_स्मृति:
+		    !f2fs_crypt_mergeable_bio(bio, inode, page->index, NULL))) {
+submit_and_realloc:
 			__submit_bio(sbi, bio, DATA);
-			bio = शून्य;
-		पूर्ण
+			bio = NULL;
+		}
 
-		अगर (!bio) अणु
-			bio = f2fs_grab_पढ़ो_bio(inode, blkaddr, nr_pages,
-					is_पढ़ोahead ? REQ_RAHEAD : 0,
-					page->index, क्रम_ग_लिखो);
-			अगर (IS_ERR(bio)) अणु
+		if (!bio) {
+			bio = f2fs_grab_read_bio(inode, blkaddr, nr_pages,
+					is_readahead ? REQ_RAHEAD : 0,
+					page->index, for_write);
+			if (IS_ERR(bio)) {
 				ret = PTR_ERR(bio);
 				f2fs_decompress_end_io(dic, ret);
 				f2fs_put_dnode(&dn);
-				*bio_ret = शून्य;
-				वापस ret;
-			पूर्ण
-		पूर्ण
+				*bio_ret = NULL;
+				return ret;
+			}
+		}
 
-		f2fs_रुको_on_block_ग_लिखोback(inode, blkaddr);
+		f2fs_wait_on_block_writeback(inode, blkaddr);
 
-		अगर (bio_add_page(bio, page, blocksize, 0) < blocksize)
-			जाओ submit_and_पुनः_स्मृति;
+		if (bio_add_page(bio, page, blocksize, 0) < blocksize)
+			goto submit_and_realloc;
 
-		ctx = bio->bi_निजी;
+		ctx = bio->bi_private;
 		ctx->enabled_steps |= STEP_DECOMPRESS;
 		refcount_inc(&dic->refcnt);
 
@@ -2217,433 +2216,433 @@ submit_and_पुनः_स्मृति:
 		f2fs_update_iostat(sbi, FS_CDATA_READ_IO, F2FS_BLKSIZE);
 		ClearPageError(page);
 		*last_block_in_bio = blkaddr;
-	पूर्ण
+	}
 
 	f2fs_put_dnode(&dn);
 
 	*bio_ret = bio;
-	वापस 0;
+	return 0;
 
 out_put_dnode:
 	f2fs_put_dnode(&dn);
 out:
-	क्रम (i = 0; i < cc->cluster_size; i++) अणु
-		अगर (cc->rpages[i]) अणु
+	for (i = 0; i < cc->cluster_size; i++) {
+		if (cc->rpages[i]) {
 			ClearPageUptodate(cc->rpages[i]);
 			ClearPageError(cc->rpages[i]);
 			unlock_page(cc->rpages[i]);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	*bio_ret = bio;
-	वापस ret;
-पूर्ण
-#पूर्ण_अगर
+	return ret;
+}
+#endif
 
 /*
- * This function was originally taken from fs/mpage.c, and customized क्रम f2fs.
- * Major change was from block_size == page_size in f2fs by शेष.
+ * This function was originally taken from fs/mpage.c, and customized for f2fs.
+ * Major change was from block_size == page_size in f2fs by default.
  */
-अटल पूर्णांक f2fs_mpage_पढ़ोpages(काष्ठा inode *inode,
-		काष्ठा पढ़ोahead_control *rac, काष्ठा page *page)
-अणु
-	काष्ठा bio *bio = शून्य;
+static int f2fs_mpage_readpages(struct inode *inode,
+		struct readahead_control *rac, struct page *page)
+{
+	struct bio *bio = NULL;
 	sector_t last_block_in_bio = 0;
-	काष्ठा f2fs_map_blocks map;
-#अगर_घोषित CONFIG_F2FS_FS_COMPRESSION
-	काष्ठा compress_ctx cc = अणु
+	struct f2fs_map_blocks map;
+#ifdef CONFIG_F2FS_FS_COMPRESSION
+	struct compress_ctx cc = {
 		.inode = inode,
 		.log_cluster_size = F2FS_I(inode)->i_log_cluster_size,
 		.cluster_size = F2FS_I(inode)->i_cluster_size,
-		.cluster_idx = शून्य_CLUSTER,
-		.rpages = शून्य,
-		.cpages = शून्य,
+		.cluster_idx = NULL_CLUSTER,
+		.rpages = NULL,
+		.cpages = NULL,
 		.nr_rpages = 0,
 		.nr_cpages = 0,
-	पूर्ण;
-#पूर्ण_अगर
-	अचिन्हित nr_pages = rac ? पढ़ोahead_count(rac) : 1;
-	अचिन्हित max_nr_pages = nr_pages;
-	पूर्णांक ret = 0;
+	};
+#endif
+	unsigned nr_pages = rac ? readahead_count(rac) : 1;
+	unsigned max_nr_pages = nr_pages;
+	int ret = 0;
 
 	map.m_pblk = 0;
 	map.m_lblk = 0;
 	map.m_len = 0;
 	map.m_flags = 0;
-	map.m_next_pgofs = शून्य;
-	map.m_next_extent = शून्य;
+	map.m_next_pgofs = NULL;
+	map.m_next_extent = NULL;
 	map.m_seg_type = NO_CHECK_TYPE;
 	map.m_may_create = false;
 
-	क्रम (; nr_pages; nr_pages--) अणु
-		अगर (rac) अणु
-			page = पढ़ोahead_page(rac);
+	for (; nr_pages; nr_pages--) {
+		if (rac) {
+			page = readahead_page(rac);
 			prefetchw(&page->flags);
-		पूर्ण
+		}
 
-#अगर_घोषित CONFIG_F2FS_FS_COMPRESSION
-		अगर (f2fs_compressed_file(inode)) अणु
-			/* there are reमुख्यed comressed pages, submit them */
-			अगर (!f2fs_cluster_can_merge_page(&cc, page->index)) अणु
-				ret = f2fs_पढ़ो_multi_pages(&cc, &bio,
+#ifdef CONFIG_F2FS_FS_COMPRESSION
+		if (f2fs_compressed_file(inode)) {
+			/* there are remained comressed pages, submit them */
+			if (!f2fs_cluster_can_merge_page(&cc, page->index)) {
+				ret = f2fs_read_multi_pages(&cc, &bio,
 							max_nr_pages,
 							&last_block_in_bio,
-							rac != शून्य, false);
+							rac != NULL, false);
 				f2fs_destroy_compress_ctx(&cc, false);
-				अगर (ret)
-					जाओ set_error_page;
-			पूर्ण
+				if (ret)
+					goto set_error_page;
+			}
 			ret = f2fs_is_compressed_cluster(inode, page->index);
-			अगर (ret < 0)
-				जाओ set_error_page;
-			अन्यथा अगर (!ret)
-				जाओ पढ़ो_single_page;
+			if (ret < 0)
+				goto set_error_page;
+			else if (!ret)
+				goto read_single_page;
 
 			ret = f2fs_init_compress_ctx(&cc);
-			अगर (ret)
-				जाओ set_error_page;
+			if (ret)
+				goto set_error_page;
 
 			f2fs_compress_ctx_add_page(&cc, page);
 
-			जाओ next_page;
-		पूर्ण
-पढ़ो_single_page:
-#पूर्ण_अगर
+			goto next_page;
+		}
+read_single_page:
+#endif
 
-		ret = f2fs_पढ़ो_single_page(inode, page, max_nr_pages, &map,
+		ret = f2fs_read_single_page(inode, page, max_nr_pages, &map,
 					&bio, &last_block_in_bio, rac);
-		अगर (ret) अणु
-#अगर_घोषित CONFIG_F2FS_FS_COMPRESSION
+		if (ret) {
+#ifdef CONFIG_F2FS_FS_COMPRESSION
 set_error_page:
-#पूर्ण_अगर
+#endif
 			SetPageError(page);
 			zero_user_segment(page, 0, PAGE_SIZE);
 			unlock_page(page);
-		पूर्ण
-#अगर_घोषित CONFIG_F2FS_FS_COMPRESSION
+		}
+#ifdef CONFIG_F2FS_FS_COMPRESSION
 next_page:
-#पूर्ण_अगर
-		अगर (rac)
+#endif
+		if (rac)
 			put_page(page);
 
-#अगर_घोषित CONFIG_F2FS_FS_COMPRESSION
-		अगर (f2fs_compressed_file(inode)) अणु
+#ifdef CONFIG_F2FS_FS_COMPRESSION
+		if (f2fs_compressed_file(inode)) {
 			/* last page */
-			अगर (nr_pages == 1 && !f2fs_cluster_is_empty(&cc)) अणु
-				ret = f2fs_पढ़ो_multi_pages(&cc, &bio,
+			if (nr_pages == 1 && !f2fs_cluster_is_empty(&cc)) {
+				ret = f2fs_read_multi_pages(&cc, &bio,
 							max_nr_pages,
 							&last_block_in_bio,
-							rac != शून्य, false);
+							rac != NULL, false);
 				f2fs_destroy_compress_ctx(&cc, false);
-			पूर्ण
-		पूर्ण
-#पूर्ण_अगर
-	पूर्ण
-	अगर (bio)
+			}
+		}
+#endif
+	}
+	if (bio)
 		__submit_bio(F2FS_I_SB(inode), bio, DATA);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक f2fs_पढ़ो_data_page(काष्ठा file *file, काष्ठा page *page)
-अणु
-	काष्ठा inode *inode = page_file_mapping(page)->host;
-	पूर्णांक ret = -EAGAIN;
+static int f2fs_read_data_page(struct file *file, struct page *page)
+{
+	struct inode *inode = page_file_mapping(page)->host;
+	int ret = -EAGAIN;
 
-	trace_f2fs_पढ़ोpage(page, DATA);
+	trace_f2fs_readpage(page, DATA);
 
-	अगर (!f2fs_is_compress_backend_पढ़ोy(inode)) अणु
+	if (!f2fs_is_compress_backend_ready(inode)) {
 		unlock_page(page);
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	/* If the file has अंतरभूत data, try to पढ़ो it directly */
-	अगर (f2fs_has_अंतरभूत_data(inode))
-		ret = f2fs_पढ़ो_अंतरभूत_data(inode, page);
-	अगर (ret == -EAGAIN)
-		ret = f2fs_mpage_पढ़ोpages(inode, शून्य, page);
-	वापस ret;
-पूर्ण
+	/* If the file has inline data, try to read it directly */
+	if (f2fs_has_inline_data(inode))
+		ret = f2fs_read_inline_data(inode, page);
+	if (ret == -EAGAIN)
+		ret = f2fs_mpage_readpages(inode, NULL, page);
+	return ret;
+}
 
-अटल व्योम f2fs_पढ़ोahead(काष्ठा पढ़ोahead_control *rac)
-अणु
-	काष्ठा inode *inode = rac->mapping->host;
+static void f2fs_readahead(struct readahead_control *rac)
+{
+	struct inode *inode = rac->mapping->host;
 
-	trace_f2fs_पढ़ोpages(inode, पढ़ोahead_index(rac), पढ़ोahead_count(rac));
+	trace_f2fs_readpages(inode, readahead_index(rac), readahead_count(rac));
 
-	अगर (!f2fs_is_compress_backend_पढ़ोy(inode))
-		वापस;
+	if (!f2fs_is_compress_backend_ready(inode))
+		return;
 
-	/* If the file has अंतरभूत data, skip पढ़ोpages */
-	अगर (f2fs_has_अंतरभूत_data(inode))
-		वापस;
+	/* If the file has inline data, skip readpages */
+	if (f2fs_has_inline_data(inode))
+		return;
 
-	f2fs_mpage_पढ़ोpages(inode, rac, शून्य);
-पूर्ण
+	f2fs_mpage_readpages(inode, rac, NULL);
+}
 
-पूर्णांक f2fs_encrypt_one_page(काष्ठा f2fs_io_info *fio)
-अणु
-	काष्ठा inode *inode = fio->page->mapping->host;
-	काष्ठा page *mpage, *page;
+int f2fs_encrypt_one_page(struct f2fs_io_info *fio)
+{
+	struct inode *inode = fio->page->mapping->host;
+	struct page *mpage, *page;
 	gfp_t gfp_flags = GFP_NOFS;
 
-	अगर (!f2fs_encrypted_file(inode))
-		वापस 0;
+	if (!f2fs_encrypted_file(inode))
+		return 0;
 
 	page = fio->compressed_page ? fio->compressed_page : fio->page;
 
-	/* रुको क्रम GCed page ग_लिखोback via META_MAPPING */
-	f2fs_रुको_on_block_ग_लिखोback(inode, fio->old_blkaddr);
+	/* wait for GCed page writeback via META_MAPPING */
+	f2fs_wait_on_block_writeback(inode, fio->old_blkaddr);
 
-	अगर (fscrypt_inode_uses_अंतरभूत_crypto(inode))
-		वापस 0;
+	if (fscrypt_inode_uses_inline_crypto(inode))
+		return 0;
 
 retry_encrypt:
 	fio->encrypted_page = fscrypt_encrypt_pagecache_blocks(page,
 					PAGE_SIZE, 0, gfp_flags);
-	अगर (IS_ERR(fio->encrypted_page)) अणु
-		/* flush pending IOs and रुको क्रम a जबतक in the ENOMEM हाल */
-		अगर (PTR_ERR(fio->encrypted_page) == -ENOMEM) अणु
-			f2fs_flush_merged_ग_लिखोs(fio->sbi);
-			congestion_रुको(BLK_RW_ASYNC, DEFAULT_IO_TIMEOUT);
+	if (IS_ERR(fio->encrypted_page)) {
+		/* flush pending IOs and wait for a while in the ENOMEM case */
+		if (PTR_ERR(fio->encrypted_page) == -ENOMEM) {
+			f2fs_flush_merged_writes(fio->sbi);
+			congestion_wait(BLK_RW_ASYNC, DEFAULT_IO_TIMEOUT);
 			gfp_flags |= __GFP_NOFAIL;
-			जाओ retry_encrypt;
-		पूर्ण
-		वापस PTR_ERR(fio->encrypted_page);
-	पूर्ण
+			goto retry_encrypt;
+		}
+		return PTR_ERR(fio->encrypted_page);
+	}
 
 	mpage = find_lock_page(META_MAPPING(fio->sbi), fio->old_blkaddr);
-	अगर (mpage) अणु
-		अगर (PageUptodate(mpage))
-			स_नकल(page_address(mpage),
+	if (mpage) {
+		if (PageUptodate(mpage))
+			memcpy(page_address(mpage),
 				page_address(fio->encrypted_page), PAGE_SIZE);
 		f2fs_put_page(mpage, 1);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल अंतरभूत bool check_inplace_update_policy(काष्ठा inode *inode,
-				काष्ठा f2fs_io_info *fio)
-अणु
-	काष्ठा f2fs_sb_info *sbi = F2FS_I_SB(inode);
-	अचिन्हित पूर्णांक policy = SM_I(sbi)->ipu_policy;
+static inline bool check_inplace_update_policy(struct inode *inode,
+				struct f2fs_io_info *fio)
+{
+	struct f2fs_sb_info *sbi = F2FS_I_SB(inode);
+	unsigned int policy = SM_I(sbi)->ipu_policy;
 
-	अगर (policy & (0x1 << F2FS_IPU_FORCE))
-		वापस true;
-	अगर (policy & (0x1 << F2FS_IPU_SSR) && f2fs_need_SSR(sbi))
-		वापस true;
-	अगर (policy & (0x1 << F2FS_IPU_UTIL) &&
+	if (policy & (0x1 << F2FS_IPU_FORCE))
+		return true;
+	if (policy & (0x1 << F2FS_IPU_SSR) && f2fs_need_SSR(sbi))
+		return true;
+	if (policy & (0x1 << F2FS_IPU_UTIL) &&
 			utilization(sbi) > SM_I(sbi)->min_ipu_util)
-		वापस true;
-	अगर (policy & (0x1 << F2FS_IPU_SSR_UTIL) && f2fs_need_SSR(sbi) &&
+		return true;
+	if (policy & (0x1 << F2FS_IPU_SSR_UTIL) && f2fs_need_SSR(sbi) &&
 			utilization(sbi) > SM_I(sbi)->min_ipu_util)
-		वापस true;
+		return true;
 
 	/*
-	 * IPU क्रम reग_लिखो async pages
+	 * IPU for rewrite async pages
 	 */
-	अगर (policy & (0x1 << F2FS_IPU_ASYNC) &&
+	if (policy & (0x1 << F2FS_IPU_ASYNC) &&
 			fio && fio->op == REQ_OP_WRITE &&
 			!(fio->op_flags & REQ_SYNC) &&
 			!IS_ENCRYPTED(inode))
-		वापस true;
+		return true;
 
 	/* this is only set during fdatasync */
-	अगर (policy & (0x1 << F2FS_IPU_FSYNC) &&
+	if (policy & (0x1 << F2FS_IPU_FSYNC) &&
 			is_inode_flag_set(inode, FI_NEED_IPU))
-		वापस true;
+		return true;
 
-	अगर (unlikely(fio && is_sbi_flag_set(sbi, SBI_CP_DISABLED) &&
-			!f2fs_is_checkpoपूर्णांकed_data(sbi, fio->old_blkaddr)))
-		वापस true;
+	if (unlikely(fio && is_sbi_flag_set(sbi, SBI_CP_DISABLED) &&
+			!f2fs_is_checkpointed_data(sbi, fio->old_blkaddr)))
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-bool f2fs_should_update_inplace(काष्ठा inode *inode, काष्ठा f2fs_io_info *fio)
-अणु
-	अगर (f2fs_is_pinned_file(inode))
-		वापस true;
+bool f2fs_should_update_inplace(struct inode *inode, struct f2fs_io_info *fio)
+{
+	if (f2fs_is_pinned_file(inode))
+		return true;
 
-	/* अगर this is cold file, we should overग_लिखो to aव्योम fragmentation */
-	अगर (file_is_cold(inode))
-		वापस true;
+	/* if this is cold file, we should overwrite to avoid fragmentation */
+	if (file_is_cold(inode))
+		return true;
 
-	वापस check_inplace_update_policy(inode, fio);
-पूर्ण
+	return check_inplace_update_policy(inode, fio);
+}
 
-bool f2fs_should_update_outplace(काष्ठा inode *inode, काष्ठा f2fs_io_info *fio)
-अणु
-	काष्ठा f2fs_sb_info *sbi = F2FS_I_SB(inode);
+bool f2fs_should_update_outplace(struct inode *inode, struct f2fs_io_info *fio)
+{
+	struct f2fs_sb_info *sbi = F2FS_I_SB(inode);
 
-	अगर (f2fs_lfs_mode(sbi))
-		वापस true;
-	अगर (S_ISसूची(inode->i_mode))
-		वापस true;
-	अगर (IS_NOQUOTA(inode))
-		वापस true;
-	अगर (f2fs_is_atomic_file(inode))
-		वापस true;
-	अगर (fio) अणु
-		अगर (is_cold_data(fio->page))
-			वापस true;
-		अगर (IS_ATOMIC_WRITTEN_PAGE(fio->page))
-			वापस true;
-		अगर (unlikely(is_sbi_flag_set(sbi, SBI_CP_DISABLED) &&
-			f2fs_is_checkpoपूर्णांकed_data(sbi, fio->old_blkaddr)))
-			वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+	if (f2fs_lfs_mode(sbi))
+		return true;
+	if (S_ISDIR(inode->i_mode))
+		return true;
+	if (IS_NOQUOTA(inode))
+		return true;
+	if (f2fs_is_atomic_file(inode))
+		return true;
+	if (fio) {
+		if (is_cold_data(fio->page))
+			return true;
+		if (IS_ATOMIC_WRITTEN_PAGE(fio->page))
+			return true;
+		if (unlikely(is_sbi_flag_set(sbi, SBI_CP_DISABLED) &&
+			f2fs_is_checkpointed_data(sbi, fio->old_blkaddr)))
+			return true;
+	}
+	return false;
+}
 
-अटल अंतरभूत bool need_inplace_update(काष्ठा f2fs_io_info *fio)
-अणु
-	काष्ठा inode *inode = fio->page->mapping->host;
+static inline bool need_inplace_update(struct f2fs_io_info *fio)
+{
+	struct inode *inode = fio->page->mapping->host;
 
-	अगर (f2fs_should_update_outplace(inode, fio))
-		वापस false;
+	if (f2fs_should_update_outplace(inode, fio))
+		return false;
 
-	वापस f2fs_should_update_inplace(inode, fio);
-पूर्ण
+	return f2fs_should_update_inplace(inode, fio);
+}
 
-पूर्णांक f2fs_करो_ग_लिखो_data_page(काष्ठा f2fs_io_info *fio)
-अणु
-	काष्ठा page *page = fio->page;
-	काष्ठा inode *inode = page->mapping->host;
-	काष्ठा dnode_of_data dn;
-	काष्ठा extent_info ei = अणु0,0,0पूर्ण;
-	काष्ठा node_info ni;
-	bool ipu_क्रमce = false;
-	पूर्णांक err = 0;
+int f2fs_do_write_data_page(struct f2fs_io_info *fio)
+{
+	struct page *page = fio->page;
+	struct inode *inode = page->mapping->host;
+	struct dnode_of_data dn;
+	struct extent_info ei = {0,0,0};
+	struct node_info ni;
+	bool ipu_force = false;
+	int err = 0;
 
-	set_new_dnode(&dn, inode, शून्य, शून्य, 0);
-	अगर (need_inplace_update(fio) &&
-			f2fs_lookup_extent_cache(inode, page->index, &ei)) अणु
+	set_new_dnode(&dn, inode, NULL, NULL, 0);
+	if (need_inplace_update(fio) &&
+			f2fs_lookup_extent_cache(inode, page->index, &ei)) {
 		fio->old_blkaddr = ei.blk + page->index - ei.fofs;
 
-		अगर (!f2fs_is_valid_blkaddr(fio->sbi, fio->old_blkaddr,
+		if (!f2fs_is_valid_blkaddr(fio->sbi, fio->old_blkaddr,
 						DATA_GENERIC_ENHANCE))
-			वापस -EFSCORRUPTED;
+			return -EFSCORRUPTED;
 
-		ipu_क्रमce = true;
+		ipu_force = true;
 		fio->need_lock = LOCK_DONE;
-		जाओ got_it;
-	पूर्ण
+		goto got_it;
+	}
 
 	/* Deadlock due to between page->lock and f2fs_lock_op */
-	अगर (fio->need_lock == LOCK_REQ && !f2fs_trylock_op(fio->sbi))
-		वापस -EAGAIN;
+	if (fio->need_lock == LOCK_REQ && !f2fs_trylock_op(fio->sbi))
+		return -EAGAIN;
 
 	err = f2fs_get_dnode_of_data(&dn, page->index, LOOKUP_NODE);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 	fio->old_blkaddr = dn.data_blkaddr;
 
-	/* This page is alपढ़ोy truncated */
-	अगर (fio->old_blkaddr == शून्य_ADDR) अणु
+	/* This page is already truncated */
+	if (fio->old_blkaddr == NULL_ADDR) {
 		ClearPageUptodate(page);
 		clear_cold_data(page);
-		जाओ out_ग_लिखोpage;
-	पूर्ण
+		goto out_writepage;
+	}
 got_it:
-	अगर (__is_valid_data_blkaddr(fio->old_blkaddr) &&
+	if (__is_valid_data_blkaddr(fio->old_blkaddr) &&
 		!f2fs_is_valid_blkaddr(fio->sbi, fio->old_blkaddr,
-						DATA_GENERIC_ENHANCE)) अणु
+						DATA_GENERIC_ENHANCE)) {
 		err = -EFSCORRUPTED;
-		जाओ out_ग_लिखोpage;
-	पूर्ण
+		goto out_writepage;
+	}
 	/*
 	 * If current allocation needs SSR,
-	 * it had better in-place ग_लिखोs क्रम updated data.
+	 * it had better in-place writes for updated data.
 	 */
-	अगर (ipu_क्रमce ||
+	if (ipu_force ||
 		(__is_valid_data_blkaddr(fio->old_blkaddr) &&
-					need_inplace_update(fio))) अणु
+					need_inplace_update(fio))) {
 		err = f2fs_encrypt_one_page(fio);
-		अगर (err)
-			जाओ out_ग_लिखोpage;
+		if (err)
+			goto out_writepage;
 
-		set_page_ग_लिखोback(page);
+		set_page_writeback(page);
 		ClearPageError(page);
 		f2fs_put_dnode(&dn);
-		अगर (fio->need_lock == LOCK_REQ)
+		if (fio->need_lock == LOCK_REQ)
 			f2fs_unlock_op(fio->sbi);
-		err = f2fs_inplace_ग_लिखो_data(fio);
-		अगर (err) अणु
-			अगर (fscrypt_inode_uses_fs_layer_crypto(inode))
+		err = f2fs_inplace_write_data(fio);
+		if (err) {
+			if (fscrypt_inode_uses_fs_layer_crypto(inode))
 				fscrypt_finalize_bounce_page(&fio->encrypted_page);
-			अगर (PageWriteback(page))
-				end_page_ग_लिखोback(page);
-		पूर्ण अन्यथा अणु
+			if (PageWriteback(page))
+				end_page_writeback(page);
+		} else {
 			set_inode_flag(inode, FI_UPDATE_WRITE);
-		पूर्ण
-		trace_f2fs_करो_ग_लिखो_data_page(fio->page, IPU);
-		वापस err;
-	पूर्ण
+		}
+		trace_f2fs_do_write_data_page(fio->page, IPU);
+		return err;
+	}
 
-	अगर (fio->need_lock == LOCK_RETRY) अणु
-		अगर (!f2fs_trylock_op(fio->sbi)) अणु
+	if (fio->need_lock == LOCK_RETRY) {
+		if (!f2fs_trylock_op(fio->sbi)) {
 			err = -EAGAIN;
-			जाओ out_ग_लिखोpage;
-		पूर्ण
+			goto out_writepage;
+		}
 		fio->need_lock = LOCK_REQ;
-	पूर्ण
+	}
 
 	err = f2fs_get_node_info(fio->sbi, dn.nid, &ni);
-	अगर (err)
-		जाओ out_ग_लिखोpage;
+	if (err)
+		goto out_writepage;
 
 	fio->version = ni.version;
 
 	err = f2fs_encrypt_one_page(fio);
-	अगर (err)
-		जाओ out_ग_लिखोpage;
+	if (err)
+		goto out_writepage;
 
-	set_page_ग_लिखोback(page);
+	set_page_writeback(page);
 	ClearPageError(page);
 
-	अगर (fio->compr_blocks && fio->old_blkaddr == COMPRESS_ADDR)
+	if (fio->compr_blocks && fio->old_blkaddr == COMPRESS_ADDR)
 		f2fs_i_compr_blocks_update(inode, fio->compr_blocks - 1, false);
 
-	/* LFS mode ग_लिखो path */
-	f2fs_outplace_ग_लिखो_data(&dn, fio);
-	trace_f2fs_करो_ग_लिखो_data_page(page, OPU);
+	/* LFS mode write path */
+	f2fs_outplace_write_data(&dn, fio);
+	trace_f2fs_do_write_data_page(page, OPU);
 	set_inode_flag(inode, FI_APPEND_WRITE);
-	अगर (page->index == 0)
+	if (page->index == 0)
 		set_inode_flag(inode, FI_FIRST_BLOCK_WRITTEN);
-out_ग_लिखोpage:
+out_writepage:
 	f2fs_put_dnode(&dn);
 out:
-	अगर (fio->need_lock == LOCK_REQ)
+	if (fio->need_lock == LOCK_REQ)
 		f2fs_unlock_op(fio->sbi);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक f2fs_ग_लिखो_single_data_page(काष्ठा page *page, पूर्णांक *submitted,
-				काष्ठा bio **bio,
+int f2fs_write_single_data_page(struct page *page, int *submitted,
+				struct bio **bio,
 				sector_t *last_block,
-				काष्ठा ग_लिखोback_control *wbc,
-				क्रमागत iostat_type io_type,
-				पूर्णांक compr_blocks,
+				struct writeback_control *wbc,
+				enum iostat_type io_type,
+				int compr_blocks,
 				bool allow_balance)
-अणु
-	काष्ठा inode *inode = page->mapping->host;
-	काष्ठा f2fs_sb_info *sbi = F2FS_I_SB(inode);
-	loff_t i_size = i_size_पढ़ो(inode);
-	स्थिर pgoff_t end_index = ((अचिन्हित दीर्घ दीर्घ)i_size)
+{
+	struct inode *inode = page->mapping->host;
+	struct f2fs_sb_info *sbi = F2FS_I_SB(inode);
+	loff_t i_size = i_size_read(inode);
+	const pgoff_t end_index = ((unsigned long long)i_size)
 							>> PAGE_SHIFT;
 	loff_t psize = (loff_t)(page->index + 1) << PAGE_SHIFT;
-	अचिन्हित offset = 0;
+	unsigned offset = 0;
 	bool need_balance_fs = false;
-	पूर्णांक err = 0;
-	काष्ठा f2fs_io_info fio = अणु
+	int err = 0;
+	struct f2fs_io_info fio = {
 		.sbi = sbi,
 		.ino = inode->i_ino,
 		.type = DATA,
 		.op = REQ_OP_WRITE,
-		.op_flags = wbc_to_ग_लिखो_flags(wbc),
-		.old_blkaddr = शून्य_ADDR,
+		.op_flags = wbc_to_write_flags(wbc),
+		.old_blkaddr = NULL_ADDR,
 		.page = page,
-		.encrypted_page = शून्य,
+		.encrypted_page = NULL,
 		.submitted = false,
 		.compr_blocks = compr_blocks,
 		.need_lock = LOCK_RETRY,
@@ -2651,1339 +2650,1339 @@ out:
 		.io_wbc = wbc,
 		.bio = bio,
 		.last_block = last_block,
-	पूर्ण;
+	};
 
-	trace_f2fs_ग_लिखोpage(page, DATA);
+	trace_f2fs_writepage(page, DATA);
 
 	/* we should bypass data pages to proceed the kworkder jobs */
-	अगर (unlikely(f2fs_cp_error(sbi))) अणु
+	if (unlikely(f2fs_cp_error(sbi))) {
 		mapping_set_error(page->mapping, -EIO);
 		/*
-		 * करोn't drop any dirty dentry pages क्रम keeping lastest
-		 * directory काष्ठाure.
+		 * don't drop any dirty dentry pages for keeping lastest
+		 * directory structure.
 		 */
-		अगर (S_ISसूची(inode->i_mode))
-			जाओ redirty_out;
-		जाओ out;
-	पूर्ण
+		if (S_ISDIR(inode->i_mode))
+			goto redirty_out;
+		goto out;
+	}
 
-	अगर (unlikely(is_sbi_flag_set(sbi, SBI_POR_DOING)))
-		जाओ redirty_out;
+	if (unlikely(is_sbi_flag_set(sbi, SBI_POR_DOING)))
+		goto redirty_out;
 
-	अगर (page->index < end_index ||
+	if (page->index < end_index ||
 			f2fs_verity_in_progress(inode) ||
 			compr_blocks)
-		जाओ ग_लिखो;
+		goto write;
 
 	/*
 	 * If the offset is out-of-range of file size,
-	 * this page करोes not have to be written to disk.
+	 * this page does not have to be written to disk.
 	 */
 	offset = i_size & (PAGE_SIZE - 1);
-	अगर ((page->index >= end_index + 1) || !offset)
-		जाओ out;
+	if ((page->index >= end_index + 1) || !offset)
+		goto out;
 
 	zero_user_segment(page, offset, PAGE_SIZE);
-ग_लिखो:
-	अगर (f2fs_is_drop_cache(inode))
-		जाओ out;
-	/* we should not ग_लिखो 0'th page having journal header */
-	अगर (f2fs_is_अस्थिर_file(inode) && (!page->index ||
-			(!wbc->क्रम_reclaim &&
-			f2fs_available_मुक्त_memory(sbi, BASE_CHECK))))
-		जाओ redirty_out;
+write:
+	if (f2fs_is_drop_cache(inode))
+		goto out;
+	/* we should not write 0'th page having journal header */
+	if (f2fs_is_volatile_file(inode) && (!page->index ||
+			(!wbc->for_reclaim &&
+			f2fs_available_free_memory(sbi, BASE_CHECK))))
+		goto redirty_out;
 
-	/* Dentry/quota blocks are controlled by checkpoपूर्णांक */
-	अगर (S_ISसूची(inode->i_mode) || IS_NOQUOTA(inode)) अणु
+	/* Dentry/quota blocks are controlled by checkpoint */
+	if (S_ISDIR(inode->i_mode) || IS_NOQUOTA(inode)) {
 		/*
-		 * We need to रुको क्रम node_ग_लिखो to aव्योम block allocation during
-		 * checkpoपूर्णांक. This can only happen to quota ग_लिखोs which can cause
+		 * We need to wait for node_write to avoid block allocation during
+		 * checkpoint. This can only happen to quota writes which can cause
 		 * the below discard race condition.
 		 */
-		अगर (IS_NOQUOTA(inode))
-			करोwn_पढ़ो(&sbi->node_ग_लिखो);
+		if (IS_NOQUOTA(inode))
+			down_read(&sbi->node_write);
 
 		fio.need_lock = LOCK_DONE;
-		err = f2fs_करो_ग_लिखो_data_page(&fio);
+		err = f2fs_do_write_data_page(&fio);
 
-		अगर (IS_NOQUOTA(inode))
-			up_पढ़ो(&sbi->node_ग_लिखो);
+		if (IS_NOQUOTA(inode))
+			up_read(&sbi->node_write);
 
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	अगर (!wbc->क्रम_reclaim)
+	if (!wbc->for_reclaim)
 		need_balance_fs = true;
-	अन्यथा अगर (has_not_enough_मुक्त_secs(sbi, 0, 0))
-		जाओ redirty_out;
-	अन्यथा
+	else if (has_not_enough_free_secs(sbi, 0, 0))
+		goto redirty_out;
+	else
 		set_inode_flag(inode, FI_HOT_DATA);
 
 	err = -EAGAIN;
-	अगर (f2fs_has_अंतरभूत_data(inode)) अणु
-		err = f2fs_ग_लिखो_अंतरभूत_data(inode, page);
-		अगर (!err)
-			जाओ out;
-	पूर्ण
+	if (f2fs_has_inline_data(inode)) {
+		err = f2fs_write_inline_data(inode, page);
+		if (!err)
+			goto out;
+	}
 
-	अगर (err == -EAGAIN) अणु
-		err = f2fs_करो_ग_लिखो_data_page(&fio);
-		अगर (err == -EAGAIN) अणु
+	if (err == -EAGAIN) {
+		err = f2fs_do_write_data_page(&fio);
+		if (err == -EAGAIN) {
 			fio.need_lock = LOCK_REQ;
-			err = f2fs_करो_ग_लिखो_data_page(&fio);
-		पूर्ण
-	पूर्ण
+			err = f2fs_do_write_data_page(&fio);
+		}
+	}
 
-	अगर (err) अणु
+	if (err) {
 		file_set_keep_isize(inode);
-	पूर्ण अन्यथा अणु
+	} else {
 		spin_lock(&F2FS_I(inode)->i_size_lock);
-		अगर (F2FS_I(inode)->last_disk_size < psize)
+		if (F2FS_I(inode)->last_disk_size < psize)
 			F2FS_I(inode)->last_disk_size = psize;
 		spin_unlock(&F2FS_I(inode)->i_size_lock);
-	पूर्ण
+	}
 
-करोne:
-	अगर (err && err != -ENOENT)
-		जाओ redirty_out;
+done:
+	if (err && err != -ENOENT)
+		goto redirty_out;
 
 out:
 	inode_dec_dirty_pages(inode);
-	अगर (err) अणु
+	if (err) {
 		ClearPageUptodate(page);
 		clear_cold_data(page);
-	पूर्ण
+	}
 
-	अगर (wbc->क्रम_reclaim) अणु
-		f2fs_submit_merged_ग_लिखो_cond(sbi, शून्य, page, 0, DATA);
+	if (wbc->for_reclaim) {
+		f2fs_submit_merged_write_cond(sbi, NULL, page, 0, DATA);
 		clear_inode_flag(inode, FI_HOT_DATA);
-		f2fs_हटाओ_dirty_inode(inode);
-		submitted = शून्य;
-	पूर्ण
+		f2fs_remove_dirty_inode(inode);
+		submitted = NULL;
+	}
 	unlock_page(page);
-	अगर (!S_ISसूची(inode->i_mode) && !IS_NOQUOTA(inode) &&
+	if (!S_ISDIR(inode->i_mode) && !IS_NOQUOTA(inode) &&
 			!F2FS_I(inode)->cp_task && allow_balance)
 		f2fs_balance_fs(sbi, need_balance_fs);
 
-	अगर (unlikely(f2fs_cp_error(sbi))) अणु
-		f2fs_submit_merged_ग_लिखो(sbi, DATA);
-		f2fs_submit_merged_ipu_ग_लिखो(sbi, bio, शून्य);
-		submitted = शून्य;
-	पूर्ण
+	if (unlikely(f2fs_cp_error(sbi))) {
+		f2fs_submit_merged_write(sbi, DATA);
+		f2fs_submit_merged_ipu_write(sbi, bio, NULL);
+		submitted = NULL;
+	}
 
-	अगर (submitted)
+	if (submitted)
 		*submitted = fio.submitted ? 1 : 0;
 
-	वापस 0;
+	return 0;
 
 redirty_out:
-	redirty_page_क्रम_ग_लिखोpage(wbc, page);
+	redirty_page_for_writepage(wbc, page);
 	/*
-	 * pageout() in MM traslates EAGAIN, so calls handle_ग_लिखो_error()
+	 * pageout() in MM traslates EAGAIN, so calls handle_write_error()
 	 * -> mapping_set_error() -> set_bit(AS_EIO, ...).
-	 * file_ग_लिखो_and_रुको_range() will see EIO error, which is critical
-	 * to वापस value of fsync() followed by atomic_ग_लिखो failure to user.
+	 * file_write_and_wait_range() will see EIO error, which is critical
+	 * to return value of fsync() followed by atomic_write failure to user.
 	 */
-	अगर (!err || wbc->क्रम_reclaim)
-		वापस AOP_WRITEPAGE_ACTIVATE;
+	if (!err || wbc->for_reclaim)
+		return AOP_WRITEPAGE_ACTIVATE;
 	unlock_page(page);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक f2fs_ग_लिखो_data_page(काष्ठा page *page,
-					काष्ठा ग_लिखोback_control *wbc)
-अणु
-#अगर_घोषित CONFIG_F2FS_FS_COMPRESSION
-	काष्ठा inode *inode = page->mapping->host;
+static int f2fs_write_data_page(struct page *page,
+					struct writeback_control *wbc)
+{
+#ifdef CONFIG_F2FS_FS_COMPRESSION
+	struct inode *inode = page->mapping->host;
 
-	अगर (unlikely(f2fs_cp_error(F2FS_I_SB(inode))))
-		जाओ out;
+	if (unlikely(f2fs_cp_error(F2FS_I_SB(inode))))
+		goto out;
 
-	अगर (f2fs_compressed_file(inode)) अणु
-		अगर (f2fs_is_compressed_cluster(inode, page->index)) अणु
-			redirty_page_क्रम_ग_लिखोpage(wbc, page);
-			वापस AOP_WRITEPAGE_ACTIVATE;
-		पूर्ण
-	पूर्ण
+	if (f2fs_compressed_file(inode)) {
+		if (f2fs_is_compressed_cluster(inode, page->index)) {
+			redirty_page_for_writepage(wbc, page);
+			return AOP_WRITEPAGE_ACTIVATE;
+		}
+	}
 out:
-#पूर्ण_अगर
+#endif
 
-	वापस f2fs_ग_लिखो_single_data_page(page, शून्य, शून्य, शून्य,
+	return f2fs_write_single_data_page(page, NULL, NULL, NULL,
 						wbc, FS_DATA_IO, 0, true);
-पूर्ण
+}
 
 /*
- * This function was copied from ग_लिखो_cche_pages from mm/page-ग_लिखोback.c.
- * The major change is making ग_लिखो step of cold data page separately from
+ * This function was copied from write_cche_pages from mm/page-writeback.c.
+ * The major change is making write step of cold data page separately from
  * warm/hot data page.
  */
-अटल पूर्णांक f2fs_ग_लिखो_cache_pages(काष्ठा address_space *mapping,
-					काष्ठा ग_लिखोback_control *wbc,
-					क्रमागत iostat_type io_type)
-अणु
-	पूर्णांक ret = 0;
-	पूर्णांक करोne = 0, retry = 0;
-	काष्ठा pagevec pvec;
-	काष्ठा f2fs_sb_info *sbi = F2FS_M_SB(mapping);
-	काष्ठा bio *bio = शून्य;
+static int f2fs_write_cache_pages(struct address_space *mapping,
+					struct writeback_control *wbc,
+					enum iostat_type io_type)
+{
+	int ret = 0;
+	int done = 0, retry = 0;
+	struct pagevec pvec;
+	struct f2fs_sb_info *sbi = F2FS_M_SB(mapping);
+	struct bio *bio = NULL;
 	sector_t last_block;
-#अगर_घोषित CONFIG_F2FS_FS_COMPRESSION
-	काष्ठा inode *inode = mapping->host;
-	काष्ठा compress_ctx cc = अणु
+#ifdef CONFIG_F2FS_FS_COMPRESSION
+	struct inode *inode = mapping->host;
+	struct compress_ctx cc = {
 		.inode = inode,
 		.log_cluster_size = F2FS_I(inode)->i_log_cluster_size,
 		.cluster_size = F2FS_I(inode)->i_cluster_size,
-		.cluster_idx = शून्य_CLUSTER,
-		.rpages = शून्य,
+		.cluster_idx = NULL_CLUSTER,
+		.rpages = NULL,
 		.nr_rpages = 0,
-		.cpages = शून्य,
-		.rbuf = शून्य,
-		.cbuf = शून्य,
+		.cpages = NULL,
+		.rbuf = NULL,
+		.cbuf = NULL,
 		.rlen = PAGE_SIZE * F2FS_I(inode)->i_cluster_size,
-		.निजी = शून्य,
-	पूर्ण;
-#पूर्ण_अगर
-	पूर्णांक nr_pages;
+		.private = NULL,
+	};
+#endif
+	int nr_pages;
 	pgoff_t index;
 	pgoff_t end;		/* Inclusive */
-	pgoff_t करोne_index;
-	पूर्णांक range_whole = 0;
+	pgoff_t done_index;
+	int range_whole = 0;
 	xa_mark_t tag;
-	पूर्णांक nwritten = 0;
-	पूर्णांक submitted = 0;
-	पूर्णांक i;
+	int nwritten = 0;
+	int submitted = 0;
+	int i;
 
 	pagevec_init(&pvec);
 
-	अगर (get_dirty_pages(mapping->host) <=
+	if (get_dirty_pages(mapping->host) <=
 				SM_I(F2FS_M_SB(mapping))->min_hot_blocks)
 		set_inode_flag(mapping->host, FI_HOT_DATA);
-	अन्यथा
+	else
 		clear_inode_flag(mapping->host, FI_HOT_DATA);
 
-	अगर (wbc->range_cyclic) अणु
-		index = mapping->ग_लिखोback_index; /* prev offset */
+	if (wbc->range_cyclic) {
+		index = mapping->writeback_index; /* prev offset */
 		end = -1;
-	पूर्ण अन्यथा अणु
+	} else {
 		index = wbc->range_start >> PAGE_SHIFT;
 		end = wbc->range_end >> PAGE_SHIFT;
-		अगर (wbc->range_start == 0 && wbc->range_end == Lदीर्घ_उच्च)
+		if (wbc->range_start == 0 && wbc->range_end == LLONG_MAX)
 			range_whole = 1;
-	पूर्ण
-	अगर (wbc->sync_mode == WB_SYNC_ALL || wbc->tagged_ग_लिखोpages)
+	}
+	if (wbc->sync_mode == WB_SYNC_ALL || wbc->tagged_writepages)
 		tag = PAGECACHE_TAG_TOWRITE;
-	अन्यथा
-		tag = PAGECACHE_TAG_सूचीTY;
+	else
+		tag = PAGECACHE_TAG_DIRTY;
 retry:
 	retry = 0;
-	अगर (wbc->sync_mode == WB_SYNC_ALL || wbc->tagged_ग_लिखोpages)
-		tag_pages_क्रम_ग_लिखोback(mapping, index, end);
-	करोne_index = index;
-	जबतक (!करोne && !retry && (index <= end)) अणु
+	if (wbc->sync_mode == WB_SYNC_ALL || wbc->tagged_writepages)
+		tag_pages_for_writeback(mapping, index, end);
+	done_index = index;
+	while (!done && !retry && (index <= end)) {
 		nr_pages = pagevec_lookup_range_tag(&pvec, mapping, &index, end,
 				tag);
-		अगर (nr_pages == 0)
-			अवरोध;
+		if (nr_pages == 0)
+			break;
 
-		क्रम (i = 0; i < nr_pages; i++) अणु
-			काष्ठा page *page = pvec.pages[i];
-			bool need_पढ़ोd;
-पढ़ोd:
-			need_पढ़ोd = false;
-#अगर_घोषित CONFIG_F2FS_FS_COMPRESSION
-			अगर (f2fs_compressed_file(inode)) अणु
+		for (i = 0; i < nr_pages; i++) {
+			struct page *page = pvec.pages[i];
+			bool need_readd;
+readd:
+			need_readd = false;
+#ifdef CONFIG_F2FS_FS_COMPRESSION
+			if (f2fs_compressed_file(inode)) {
 				ret = f2fs_init_compress_ctx(&cc);
-				अगर (ret) अणु
-					करोne = 1;
-					अवरोध;
-				पूर्ण
+				if (ret) {
+					done = 1;
+					break;
+				}
 
-				अगर (!f2fs_cluster_can_merge_page(&cc,
-								page->index)) अणु
-					ret = f2fs_ग_लिखो_multi_pages(&cc,
+				if (!f2fs_cluster_can_merge_page(&cc,
+								page->index)) {
+					ret = f2fs_write_multi_pages(&cc,
 						&submitted, wbc, io_type);
-					अगर (!ret)
-						need_पढ़ोd = true;
-					जाओ result;
-				पूर्ण
+					if (!ret)
+						need_readd = true;
+					goto result;
+				}
 
-				अगर (unlikely(f2fs_cp_error(sbi)))
-					जाओ lock_page;
+				if (unlikely(f2fs_cp_error(sbi)))
+					goto lock_page;
 
-				अगर (f2fs_cluster_is_empty(&cc)) अणु
-					व्योम *fsdata = शून्य;
-					काष्ठा page *pagep;
-					पूर्णांक ret2;
+				if (f2fs_cluster_is_empty(&cc)) {
+					void *fsdata = NULL;
+					struct page *pagep;
+					int ret2;
 
-					ret2 = f2fs_prepare_compress_overग_लिखो(
+					ret2 = f2fs_prepare_compress_overwrite(
 							inode, &pagep,
 							page->index, &fsdata);
-					अगर (ret2 < 0) अणु
+					if (ret2 < 0) {
 						ret = ret2;
-						करोne = 1;
-						अवरोध;
-					पूर्ण अन्यथा अगर (ret2 &&
-						!f2fs_compress_ग_लिखो_end(inode,
+						done = 1;
+						break;
+					} else if (ret2 &&
+						!f2fs_compress_write_end(inode,
 								fsdata, page->index,
-								1)) अणु
+								1)) {
 						retry = 1;
-						अवरोध;
-					पूर्ण
-				पूर्ण अन्यथा अणु
-					जाओ lock_page;
-				पूर्ण
-			पूर्ण
-#पूर्ण_अगर
-			/* give a priority to WB_SYNC thपढ़ोs */
-			अगर (atomic_पढ़ो(&sbi->wb_sync_req[DATA]) &&
-					wbc->sync_mode == WB_SYNC_NONE) अणु
-				करोne = 1;
-				अवरोध;
-			पूर्ण
-#अगर_घोषित CONFIG_F2FS_FS_COMPRESSION
+						break;
+					}
+				} else {
+					goto lock_page;
+				}
+			}
+#endif
+			/* give a priority to WB_SYNC threads */
+			if (atomic_read(&sbi->wb_sync_req[DATA]) &&
+					wbc->sync_mode == WB_SYNC_NONE) {
+				done = 1;
+				break;
+			}
+#ifdef CONFIG_F2FS_FS_COMPRESSION
 lock_page:
-#पूर्ण_अगर
-			करोne_index = page->index;
-retry_ग_लिखो:
+#endif
+			done_index = page->index;
+retry_write:
 			lock_page(page);
 
-			अगर (unlikely(page->mapping != mapping)) अणु
-जारी_unlock:
+			if (unlikely(page->mapping != mapping)) {
+continue_unlock:
 				unlock_page(page);
-				जारी;
-			पूर्ण
+				continue;
+			}
 
-			अगर (!PageDirty(page)) अणु
-				/* someone wrote it क्रम us */
-				जाओ जारी_unlock;
-			पूर्ण
+			if (!PageDirty(page)) {
+				/* someone wrote it for us */
+				goto continue_unlock;
+			}
 
-			अगर (PageWriteback(page)) अणु
-				अगर (wbc->sync_mode != WB_SYNC_NONE)
-					f2fs_रुको_on_page_ग_लिखोback(page,
+			if (PageWriteback(page)) {
+				if (wbc->sync_mode != WB_SYNC_NONE)
+					f2fs_wait_on_page_writeback(page,
 							DATA, true, true);
-				अन्यथा
-					जाओ जारी_unlock;
-			पूर्ण
+				else
+					goto continue_unlock;
+			}
 
-			अगर (!clear_page_dirty_क्रम_io(page))
-				जाओ जारी_unlock;
+			if (!clear_page_dirty_for_io(page))
+				goto continue_unlock;
 
-#अगर_घोषित CONFIG_F2FS_FS_COMPRESSION
-			अगर (f2fs_compressed_file(inode)) अणु
+#ifdef CONFIG_F2FS_FS_COMPRESSION
+			if (f2fs_compressed_file(inode)) {
 				get_page(page);
 				f2fs_compress_ctx_add_page(&cc, page);
-				जारी;
-			पूर्ण
-#पूर्ण_अगर
-			ret = f2fs_ग_लिखो_single_data_page(page, &submitted,
+				continue;
+			}
+#endif
+			ret = f2fs_write_single_data_page(page, &submitted,
 					&bio, &last_block, wbc, io_type,
 					0, true);
-			अगर (ret == AOP_WRITEPAGE_ACTIVATE)
+			if (ret == AOP_WRITEPAGE_ACTIVATE)
 				unlock_page(page);
-#अगर_घोषित CONFIG_F2FS_FS_COMPRESSION
+#ifdef CONFIG_F2FS_FS_COMPRESSION
 result:
-#पूर्ण_अगर
+#endif
 			nwritten += submitted;
-			wbc->nr_to_ग_लिखो -= submitted;
+			wbc->nr_to_write -= submitted;
 
-			अगर (unlikely(ret)) अणु
+			if (unlikely(ret)) {
 				/*
-				 * keep nr_to_ग_लिखो, since vfs uses this to
+				 * keep nr_to_write, since vfs uses this to
 				 * get # of written pages.
 				 */
-				अगर (ret == AOP_WRITEPAGE_ACTIVATE) अणु
+				if (ret == AOP_WRITEPAGE_ACTIVATE) {
 					ret = 0;
-					जाओ next;
-				पूर्ण अन्यथा अगर (ret == -EAGAIN) अणु
+					goto next;
+				} else if (ret == -EAGAIN) {
 					ret = 0;
-					अगर (wbc->sync_mode == WB_SYNC_ALL) अणु
+					if (wbc->sync_mode == WB_SYNC_ALL) {
 						cond_resched();
-						congestion_रुको(BLK_RW_ASYNC,
+						congestion_wait(BLK_RW_ASYNC,
 							DEFAULT_IO_TIMEOUT);
-						जाओ retry_ग_लिखो;
-					पूर्ण
-					जाओ next;
-				पूर्ण
-				करोne_index = page->index + 1;
-				करोne = 1;
-				अवरोध;
-			पूर्ण
+						goto retry_write;
+					}
+					goto next;
+				}
+				done_index = page->index + 1;
+				done = 1;
+				break;
+			}
 
-			अगर (wbc->nr_to_ग_लिखो <= 0 &&
-					wbc->sync_mode == WB_SYNC_NONE) अणु
-				करोne = 1;
-				अवरोध;
-			पूर्ण
+			if (wbc->nr_to_write <= 0 &&
+					wbc->sync_mode == WB_SYNC_NONE) {
+				done = 1;
+				break;
+			}
 next:
-			अगर (need_पढ़ोd)
-				जाओ पढ़ोd;
-		पूर्ण
+			if (need_readd)
+				goto readd;
+		}
 		pagevec_release(&pvec);
 		cond_resched();
-	पूर्ण
-#अगर_घोषित CONFIG_F2FS_FS_COMPRESSION
-	/* flush reमुख्यed pages in compress cluster */
-	अगर (f2fs_compressed_file(inode) && !f2fs_cluster_is_empty(&cc)) अणु
-		ret = f2fs_ग_लिखो_multi_pages(&cc, &submitted, wbc, io_type);
+	}
+#ifdef CONFIG_F2FS_FS_COMPRESSION
+	/* flush remained pages in compress cluster */
+	if (f2fs_compressed_file(inode) && !f2fs_cluster_is_empty(&cc)) {
+		ret = f2fs_write_multi_pages(&cc, &submitted, wbc, io_type);
 		nwritten += submitted;
-		wbc->nr_to_ग_लिखो -= submitted;
-		अगर (ret) अणु
-			करोne = 1;
+		wbc->nr_to_write -= submitted;
+		if (ret) {
+			done = 1;
 			retry = 0;
-		पूर्ण
-	पूर्ण
-	अगर (f2fs_compressed_file(inode))
+		}
+	}
+	if (f2fs_compressed_file(inode))
 		f2fs_destroy_compress_ctx(&cc, false);
-#पूर्ण_अगर
-	अगर (retry) अणु
+#endif
+	if (retry) {
 		index = 0;
 		end = -1;
-		जाओ retry;
-	पूर्ण
-	अगर (wbc->range_cyclic && !करोne)
-		करोne_index = 0;
-	अगर (wbc->range_cyclic || (range_whole && wbc->nr_to_ग_लिखो > 0))
-		mapping->ग_लिखोback_index = करोne_index;
+		goto retry;
+	}
+	if (wbc->range_cyclic && !done)
+		done_index = 0;
+	if (wbc->range_cyclic || (range_whole && wbc->nr_to_write > 0))
+		mapping->writeback_index = done_index;
 
-	अगर (nwritten)
-		f2fs_submit_merged_ग_लिखो_cond(F2FS_M_SB(mapping), mapping->host,
-								शून्य, 0, DATA);
-	/* submit cached bio of IPU ग_लिखो */
-	अगर (bio)
-		f2fs_submit_merged_ipu_ग_लिखो(sbi, &bio, शून्य);
+	if (nwritten)
+		f2fs_submit_merged_write_cond(F2FS_M_SB(mapping), mapping->host,
+								NULL, 0, DATA);
+	/* submit cached bio of IPU write */
+	if (bio)
+		f2fs_submit_merged_ipu_write(sbi, &bio, NULL);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत bool __should_serialize_io(काष्ठा inode *inode,
-					काष्ठा ग_लिखोback_control *wbc)
-अणु
-	/* to aव्योम deadlock in path of data flush */
-	अगर (F2FS_I(inode)->cp_task)
-		वापस false;
+static inline bool __should_serialize_io(struct inode *inode,
+					struct writeback_control *wbc)
+{
+	/* to avoid deadlock in path of data flush */
+	if (F2FS_I(inode)->cp_task)
+		return false;
 
-	अगर (!S_ISREG(inode->i_mode))
-		वापस false;
-	अगर (IS_NOQUOTA(inode))
-		वापस false;
+	if (!S_ISREG(inode->i_mode))
+		return false;
+	if (IS_NOQUOTA(inode))
+		return false;
 
-	अगर (f2fs_need_compress_data(inode))
-		वापस true;
-	अगर (wbc->sync_mode != WB_SYNC_ALL)
-		वापस true;
-	अगर (get_dirty_pages(inode) >= SM_I(F2FS_I_SB(inode))->min_seq_blocks)
-		वापस true;
-	वापस false;
-पूर्ण
+	if (f2fs_need_compress_data(inode))
+		return true;
+	if (wbc->sync_mode != WB_SYNC_ALL)
+		return true;
+	if (get_dirty_pages(inode) >= SM_I(F2FS_I_SB(inode))->min_seq_blocks)
+		return true;
+	return false;
+}
 
-अटल पूर्णांक __f2fs_ग_लिखो_data_pages(काष्ठा address_space *mapping,
-						काष्ठा ग_लिखोback_control *wbc,
-						क्रमागत iostat_type io_type)
-अणु
-	काष्ठा inode *inode = mapping->host;
-	काष्ठा f2fs_sb_info *sbi = F2FS_I_SB(inode);
-	काष्ठा blk_plug plug;
-	पूर्णांक ret;
+static int __f2fs_write_data_pages(struct address_space *mapping,
+						struct writeback_control *wbc,
+						enum iostat_type io_type)
+{
+	struct inode *inode = mapping->host;
+	struct f2fs_sb_info *sbi = F2FS_I_SB(inode);
+	struct blk_plug plug;
+	int ret;
 	bool locked = false;
 
-	/* deal with अक्षरdevs and other special file */
-	अगर (!mapping->a_ops->ग_लिखोpage)
-		वापस 0;
+	/* deal with chardevs and other special file */
+	if (!mapping->a_ops->writepage)
+		return 0;
 
-	/* skip writing अगर there is no dirty page in this inode */
-	अगर (!get_dirty_pages(inode) && wbc->sync_mode == WB_SYNC_NONE)
-		वापस 0;
+	/* skip writing if there is no dirty page in this inode */
+	if (!get_dirty_pages(inode) && wbc->sync_mode == WB_SYNC_NONE)
+		return 0;
 
-	/* during POR, we करोn't need to trigger ग_लिखोpage at all. */
-	अगर (unlikely(is_sbi_flag_set(sbi, SBI_POR_DOING)))
-		जाओ skip_ग_लिखो;
+	/* during POR, we don't need to trigger writepage at all. */
+	if (unlikely(is_sbi_flag_set(sbi, SBI_POR_DOING)))
+		goto skip_write;
 
-	अगर ((S_ISसूची(inode->i_mode) || IS_NOQUOTA(inode)) &&
+	if ((S_ISDIR(inode->i_mode) || IS_NOQUOTA(inode)) &&
 			wbc->sync_mode == WB_SYNC_NONE &&
 			get_dirty_pages(inode) < nr_pages_to_skip(sbi, DATA) &&
-			f2fs_available_मुक्त_memory(sbi, सूचीTY_DENTS))
-		जाओ skip_ग_लिखो;
+			f2fs_available_free_memory(sbi, DIRTY_DENTS))
+		goto skip_write;
 
 	/* skip writing during file defragment */
-	अगर (is_inode_flag_set(inode, FI_DO_DEFRAG))
-		जाओ skip_ग_लिखो;
+	if (is_inode_flag_set(inode, FI_DO_DEFRAG))
+		goto skip_write;
 
-	trace_f2fs_ग_लिखोpages(mapping->host, wbc, DATA);
+	trace_f2fs_writepages(mapping->host, wbc, DATA);
 
-	/* to aव्योम spliting IOs due to mixed WB_SYNC_ALL and WB_SYNC_NONE */
-	अगर (wbc->sync_mode == WB_SYNC_ALL)
+	/* to avoid spliting IOs due to mixed WB_SYNC_ALL and WB_SYNC_NONE */
+	if (wbc->sync_mode == WB_SYNC_ALL)
 		atomic_inc(&sbi->wb_sync_req[DATA]);
-	अन्यथा अगर (atomic_पढ़ो(&sbi->wb_sync_req[DATA]))
-		जाओ skip_ग_लिखो;
+	else if (atomic_read(&sbi->wb_sync_req[DATA]))
+		goto skip_write;
 
-	अगर (__should_serialize_io(inode, wbc)) अणु
-		mutex_lock(&sbi->ग_लिखोpages);
+	if (__should_serialize_io(inode, wbc)) {
+		mutex_lock(&sbi->writepages);
 		locked = true;
-	पूर्ण
+	}
 
 	blk_start_plug(&plug);
-	ret = f2fs_ग_लिखो_cache_pages(mapping, wbc, io_type);
+	ret = f2fs_write_cache_pages(mapping, wbc, io_type);
 	blk_finish_plug(&plug);
 
-	अगर (locked)
-		mutex_unlock(&sbi->ग_लिखोpages);
+	if (locked)
+		mutex_unlock(&sbi->writepages);
 
-	अगर (wbc->sync_mode == WB_SYNC_ALL)
+	if (wbc->sync_mode == WB_SYNC_ALL)
 		atomic_dec(&sbi->wb_sync_req[DATA]);
 	/*
-	 * अगर some pages were truncated, we cannot guarantee its mapping->host
+	 * if some pages were truncated, we cannot guarantee its mapping->host
 	 * to detect pending bios.
 	 */
 
-	f2fs_हटाओ_dirty_inode(inode);
-	वापस ret;
+	f2fs_remove_dirty_inode(inode);
+	return ret;
 
-skip_ग_लिखो:
+skip_write:
 	wbc->pages_skipped += get_dirty_pages(inode);
-	trace_f2fs_ग_लिखोpages(mapping->host, wbc, DATA);
-	वापस 0;
-पूर्ण
+	trace_f2fs_writepages(mapping->host, wbc, DATA);
+	return 0;
+}
 
-अटल पूर्णांक f2fs_ग_लिखो_data_pages(काष्ठा address_space *mapping,
-			    काष्ठा ग_लिखोback_control *wbc)
-अणु
-	काष्ठा inode *inode = mapping->host;
+static int f2fs_write_data_pages(struct address_space *mapping,
+			    struct writeback_control *wbc)
+{
+	struct inode *inode = mapping->host;
 
-	वापस __f2fs_ग_लिखो_data_pages(mapping, wbc,
+	return __f2fs_write_data_pages(mapping, wbc,
 			F2FS_I(inode)->cp_task == current ?
 			FS_CP_DATA_IO : FS_DATA_IO);
-पूर्ण
+}
 
-अटल व्योम f2fs_ग_लिखो_failed(काष्ठा address_space *mapping, loff_t to)
-अणु
-	काष्ठा inode *inode = mapping->host;
-	loff_t i_size = i_size_पढ़ो(inode);
+static void f2fs_write_failed(struct address_space *mapping, loff_t to)
+{
+	struct inode *inode = mapping->host;
+	loff_t i_size = i_size_read(inode);
 
-	अगर (IS_NOQUOTA(inode))
-		वापस;
+	if (IS_NOQUOTA(inode))
+		return;
 
-	/* In the fs-verity हाल, f2fs_end_enable_verity() करोes the truncate */
-	अगर (to > i_size && !f2fs_verity_in_progress(inode)) अणु
-		करोwn_ग_लिखो(&F2FS_I(inode)->i_gc_rwsem[WRITE]);
-		करोwn_ग_लिखो(&F2FS_I(inode)->i_mmap_sem);
+	/* In the fs-verity case, f2fs_end_enable_verity() does the truncate */
+	if (to > i_size && !f2fs_verity_in_progress(inode)) {
+		down_write(&F2FS_I(inode)->i_gc_rwsem[WRITE]);
+		down_write(&F2FS_I(inode)->i_mmap_sem);
 
 		truncate_pagecache(inode, i_size);
 		f2fs_truncate_blocks(inode, i_size, true);
 
-		up_ग_लिखो(&F2FS_I(inode)->i_mmap_sem);
-		up_ग_लिखो(&F2FS_I(inode)->i_gc_rwsem[WRITE]);
-	पूर्ण
-पूर्ण
+		up_write(&F2FS_I(inode)->i_mmap_sem);
+		up_write(&F2FS_I(inode)->i_gc_rwsem[WRITE]);
+	}
+}
 
-अटल पूर्णांक prepare_ग_लिखो_begin(काष्ठा f2fs_sb_info *sbi,
-			काष्ठा page *page, loff_t pos, अचिन्हित len,
+static int prepare_write_begin(struct f2fs_sb_info *sbi,
+			struct page *page, loff_t pos, unsigned len,
 			block_t *blk_addr, bool *node_changed)
-अणु
-	काष्ठा inode *inode = page->mapping->host;
+{
+	struct inode *inode = page->mapping->host;
 	pgoff_t index = page->index;
-	काष्ठा dnode_of_data dn;
-	काष्ठा page *ipage;
+	struct dnode_of_data dn;
+	struct page *ipage;
 	bool locked = false;
-	काष्ठा extent_info ei = अणु0,0,0पूर्ण;
-	पूर्णांक err = 0;
-	पूर्णांक flag;
+	struct extent_info ei = {0,0,0};
+	int err = 0;
+	int flag;
 
 	/*
-	 * we alपढ़ोy allocated all the blocks, so we करोn't need to get
+	 * we already allocated all the blocks, so we don't need to get
 	 * the block addresses when there is no need to fill the page.
 	 */
-	अगर (!f2fs_has_अंतरभूत_data(inode) && len == PAGE_SIZE &&
+	if (!f2fs_has_inline_data(inode) && len == PAGE_SIZE &&
 	    !is_inode_flag_set(inode, FI_NO_PREALLOC) &&
 	    !f2fs_verity_in_progress(inode))
-		वापस 0;
+		return 0;
 
-	/* f2fs_lock_op aव्योमs race between ग_लिखो CP and convert_अंतरभूत_page */
-	अगर (f2fs_has_अंतरभूत_data(inode) && pos + len > MAX_INLINE_DATA(inode))
+	/* f2fs_lock_op avoids race between write CP and convert_inline_page */
+	if (f2fs_has_inline_data(inode) && pos + len > MAX_INLINE_DATA(inode))
 		flag = F2FS_GET_BLOCK_DEFAULT;
-	अन्यथा
+	else
 		flag = F2FS_GET_BLOCK_PRE_AIO;
 
-	अगर (f2fs_has_अंतरभूत_data(inode) ||
-			(pos & PAGE_MASK) >= i_size_पढ़ो(inode)) अणु
-		f2fs_करो_map_lock(sbi, flag, true);
+	if (f2fs_has_inline_data(inode) ||
+			(pos & PAGE_MASK) >= i_size_read(inode)) {
+		f2fs_do_map_lock(sbi, flag, true);
 		locked = true;
-	पूर्ण
+	}
 
 restart:
-	/* check अंतरभूत_data */
+	/* check inline_data */
 	ipage = f2fs_get_node_page(sbi, inode->i_ino);
-	अगर (IS_ERR(ipage)) अणु
+	if (IS_ERR(ipage)) {
 		err = PTR_ERR(ipage);
-		जाओ unlock_out;
-	पूर्ण
+		goto unlock_out;
+	}
 
 	set_new_dnode(&dn, inode, ipage, ipage, 0);
 
-	अगर (f2fs_has_अंतरभूत_data(inode)) अणु
-		अगर (pos + len <= MAX_INLINE_DATA(inode)) अणु
-			f2fs_करो_पढ़ो_अंतरभूत_data(page, ipage);
+	if (f2fs_has_inline_data(inode)) {
+		if (pos + len <= MAX_INLINE_DATA(inode)) {
+			f2fs_do_read_inline_data(page, ipage);
 			set_inode_flag(inode, FI_DATA_EXIST);
-			अगर (inode->i_nlink)
-				set_अंतरभूत_node(ipage);
-		पूर्ण अन्यथा अणु
-			err = f2fs_convert_अंतरभूत_page(&dn, page);
-			अगर (err)
-				जाओ out;
-			अगर (dn.data_blkaddr == शून्य_ADDR)
+			if (inode->i_nlink)
+				set_inline_node(ipage);
+		} else {
+			err = f2fs_convert_inline_page(&dn, page);
+			if (err)
+				goto out;
+			if (dn.data_blkaddr == NULL_ADDR)
 				err = f2fs_get_block(&dn, index);
-		पूर्ण
-	पूर्ण अन्यथा अगर (locked) अणु
+		}
+	} else if (locked) {
 		err = f2fs_get_block(&dn, index);
-	पूर्ण अन्यथा अणु
-		अगर (f2fs_lookup_extent_cache(inode, index, &ei)) अणु
+	} else {
+		if (f2fs_lookup_extent_cache(inode, index, &ei)) {
 			dn.data_blkaddr = ei.blk + index - ei.fofs;
-		पूर्ण अन्यथा अणु
-			/* hole हाल */
+		} else {
+			/* hole case */
 			err = f2fs_get_dnode_of_data(&dn, index, LOOKUP_NODE);
-			अगर (err || dn.data_blkaddr == शून्य_ADDR) अणु
+			if (err || dn.data_blkaddr == NULL_ADDR) {
 				f2fs_put_dnode(&dn);
-				f2fs_करो_map_lock(sbi, F2FS_GET_BLOCK_PRE_AIO,
+				f2fs_do_map_lock(sbi, F2FS_GET_BLOCK_PRE_AIO,
 								true);
 				WARN_ON(flag != F2FS_GET_BLOCK_PRE_AIO);
 				locked = true;
-				जाओ restart;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				goto restart;
+			}
+		}
+	}
 
-	/* convert_अंतरभूत_page can make node_changed */
+	/* convert_inline_page can make node_changed */
 	*blk_addr = dn.data_blkaddr;
 	*node_changed = dn.node_changed;
 out:
 	f2fs_put_dnode(&dn);
 unlock_out:
-	अगर (locked)
-		f2fs_करो_map_lock(sbi, flag, false);
-	वापस err;
-पूर्ण
+	if (locked)
+		f2fs_do_map_lock(sbi, flag, false);
+	return err;
+}
 
-अटल पूर्णांक f2fs_ग_लिखो_begin(काष्ठा file *file, काष्ठा address_space *mapping,
-		loff_t pos, अचिन्हित len, अचिन्हित flags,
-		काष्ठा page **pagep, व्योम **fsdata)
-अणु
-	काष्ठा inode *inode = mapping->host;
-	काष्ठा f2fs_sb_info *sbi = F2FS_I_SB(inode);
-	काष्ठा page *page = शून्य;
-	pgoff_t index = ((अचिन्हित दीर्घ दीर्घ) pos) >> PAGE_SHIFT;
+static int f2fs_write_begin(struct file *file, struct address_space *mapping,
+		loff_t pos, unsigned len, unsigned flags,
+		struct page **pagep, void **fsdata)
+{
+	struct inode *inode = mapping->host;
+	struct f2fs_sb_info *sbi = F2FS_I_SB(inode);
+	struct page *page = NULL;
+	pgoff_t index = ((unsigned long long) pos) >> PAGE_SHIFT;
 	bool need_balance = false, drop_atomic = false;
-	block_t blkaddr = शून्य_ADDR;
-	पूर्णांक err = 0;
+	block_t blkaddr = NULL_ADDR;
+	int err = 0;
 
-	trace_f2fs_ग_लिखो_begin(inode, pos, len, flags);
+	trace_f2fs_write_begin(inode, pos, len, flags);
 
-	अगर (!f2fs_is_checkpoपूर्णांक_पढ़ोy(sbi)) अणु
+	if (!f2fs_is_checkpoint_ready(sbi)) {
 		err = -ENOSPC;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	अगर ((f2fs_is_atomic_file(inode) &&
-			!f2fs_available_मुक्त_memory(sbi, INMEM_PAGES)) ||
-			is_inode_flag_set(inode, FI_ATOMIC_REVOKE_REQUEST)) अणु
+	if ((f2fs_is_atomic_file(inode) &&
+			!f2fs_available_free_memory(sbi, INMEM_PAGES)) ||
+			is_inode_flag_set(inode, FI_ATOMIC_REVOKE_REQUEST)) {
 		err = -ENOMEM;
 		drop_atomic = true;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	/*
-	 * We should check this at this moment to aव्योम deadlock on inode page
-	 * and #0 page. The locking rule क्रम अंतरभूत_data conversion should be:
+	 * We should check this at this moment to avoid deadlock on inode page
+	 * and #0 page. The locking rule for inline_data conversion should be:
 	 * lock_page(page #0) -> lock_page(inode_page)
 	 */
-	अगर (index != 0) अणु
-		err = f2fs_convert_अंतरभूत_inode(inode);
-		अगर (err)
-			जाओ fail;
-	पूर्ण
+	if (index != 0) {
+		err = f2fs_convert_inline_inode(inode);
+		if (err)
+			goto fail;
+	}
 
-#अगर_घोषित CONFIG_F2FS_FS_COMPRESSION
-	अगर (f2fs_compressed_file(inode)) अणु
-		पूर्णांक ret;
+#ifdef CONFIG_F2FS_FS_COMPRESSION
+	if (f2fs_compressed_file(inode)) {
+		int ret;
 
-		*fsdata = शून्य;
+		*fsdata = NULL;
 
-		ret = f2fs_prepare_compress_overग_लिखो(inode, pagep,
+		ret = f2fs_prepare_compress_overwrite(inode, pagep,
 							index, fsdata);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			err = ret;
-			जाओ fail;
-		पूर्ण अन्यथा अगर (ret) अणु
-			वापस 0;
-		पूर्ण
-	पूर्ण
-#पूर्ण_अगर
+			goto fail;
+		} else if (ret) {
+			return 0;
+		}
+	}
+#endif
 
 repeat:
 	/*
-	 * Do not use grab_cache_page_ग_लिखो_begin() to aव्योम deadlock due to
-	 * रुको_क्रम_stable_page. Will रुको that below with our IO control.
+	 * Do not use grab_cache_page_write_begin() to avoid deadlock due to
+	 * wait_for_stable_page. Will wait that below with our IO control.
 	 */
 	page = f2fs_pagecache_get_page(mapping, index,
 				FGP_LOCK | FGP_WRITE | FGP_CREAT, GFP_NOFS);
-	अगर (!page) अणु
+	if (!page) {
 		err = -ENOMEM;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	/* TODO: cluster can be compressed due to race with .ग_लिखोpage */
+	/* TODO: cluster can be compressed due to race with .writepage */
 
 	*pagep = page;
 
-	err = prepare_ग_लिखो_begin(sbi, page, pos, len,
+	err = prepare_write_begin(sbi, page, pos, len,
 					&blkaddr, &need_balance);
-	अगर (err)
-		जाओ fail;
+	if (err)
+		goto fail;
 
-	अगर (need_balance && !IS_NOQUOTA(inode) &&
-			has_not_enough_मुक्त_secs(sbi, 0, 0)) अणु
+	if (need_balance && !IS_NOQUOTA(inode) &&
+			has_not_enough_free_secs(sbi, 0, 0)) {
 		unlock_page(page);
 		f2fs_balance_fs(sbi, true);
 		lock_page(page);
-		अगर (page->mapping != mapping) अणु
+		if (page->mapping != mapping) {
 			/* The page got truncated from under us */
 			f2fs_put_page(page, 1);
-			जाओ repeat;
-		पूर्ण
-	पूर्ण
+			goto repeat;
+		}
+	}
 
-	f2fs_रुको_on_page_ग_लिखोback(page, DATA, false, true);
+	f2fs_wait_on_page_writeback(page, DATA, false, true);
 
-	अगर (len == PAGE_SIZE || PageUptodate(page))
-		वापस 0;
+	if (len == PAGE_SIZE || PageUptodate(page))
+		return 0;
 
-	अगर (!(pos & (PAGE_SIZE - 1)) && (pos + len) >= i_size_पढ़ो(inode) &&
-	    !f2fs_verity_in_progress(inode)) अणु
+	if (!(pos & (PAGE_SIZE - 1)) && (pos + len) >= i_size_read(inode) &&
+	    !f2fs_verity_in_progress(inode)) {
 		zero_user_segment(page, len, PAGE_SIZE);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (blkaddr == NEW_ADDR) अणु
+	if (blkaddr == NEW_ADDR) {
 		zero_user_segment(page, 0, PAGE_SIZE);
 		SetPageUptodate(page);
-	पूर्ण अन्यथा अणु
-		अगर (!f2fs_is_valid_blkaddr(sbi, blkaddr,
-				DATA_GENERIC_ENHANCE_READ)) अणु
+	} else {
+		if (!f2fs_is_valid_blkaddr(sbi, blkaddr,
+				DATA_GENERIC_ENHANCE_READ)) {
 			err = -EFSCORRUPTED;
-			जाओ fail;
-		पूर्ण
-		err = f2fs_submit_page_पढ़ो(inode, page, blkaddr, 0, true);
-		अगर (err)
-			जाओ fail;
+			goto fail;
+		}
+		err = f2fs_submit_page_read(inode, page, blkaddr, 0, true);
+		if (err)
+			goto fail;
 
 		lock_page(page);
-		अगर (unlikely(page->mapping != mapping)) अणु
+		if (unlikely(page->mapping != mapping)) {
 			f2fs_put_page(page, 1);
-			जाओ repeat;
-		पूर्ण
-		अगर (unlikely(!PageUptodate(page))) अणु
+			goto repeat;
+		}
+		if (unlikely(!PageUptodate(page))) {
 			err = -EIO;
-			जाओ fail;
-		पूर्ण
-	पूर्ण
-	वापस 0;
+			goto fail;
+		}
+	}
+	return 0;
 
 fail:
 	f2fs_put_page(page, 1);
-	f2fs_ग_लिखो_failed(mapping, pos + len);
-	अगर (drop_atomic)
+	f2fs_write_failed(mapping, pos + len);
+	if (drop_atomic)
 		f2fs_drop_inmem_pages_all(sbi, false);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक f2fs_ग_लिखो_end(काष्ठा file *file,
-			काष्ठा address_space *mapping,
-			loff_t pos, अचिन्हित len, अचिन्हित copied,
-			काष्ठा page *page, व्योम *fsdata)
-अणु
-	काष्ठा inode *inode = page->mapping->host;
+static int f2fs_write_end(struct file *file,
+			struct address_space *mapping,
+			loff_t pos, unsigned len, unsigned copied,
+			struct page *page, void *fsdata)
+{
+	struct inode *inode = page->mapping->host;
 
-	trace_f2fs_ग_लिखो_end(inode, pos, len, copied);
+	trace_f2fs_write_end(inode, pos, len, copied);
 
 	/*
 	 * This should be come from len == PAGE_SIZE, and we expect copied
 	 * should be PAGE_SIZE. Otherwise, we treat it with zero copied and
-	 * let generic_perक्रमm_ग_लिखो() try to copy data again through copied=0.
+	 * let generic_perform_write() try to copy data again through copied=0.
 	 */
-	अगर (!PageUptodate(page)) अणु
-		अगर (unlikely(copied != len))
+	if (!PageUptodate(page)) {
+		if (unlikely(copied != len))
 			copied = 0;
-		अन्यथा
+		else
 			SetPageUptodate(page);
-	पूर्ण
+	}
 
-#अगर_घोषित CONFIG_F2FS_FS_COMPRESSION
-	/* overग_लिखो compressed file */
-	अगर (f2fs_compressed_file(inode) && fsdata) अणु
-		f2fs_compress_ग_लिखो_end(inode, fsdata, page->index, copied);
-		f2fs_update_समय(F2FS_I_SB(inode), REQ_TIME);
+#ifdef CONFIG_F2FS_FS_COMPRESSION
+	/* overwrite compressed file */
+	if (f2fs_compressed_file(inode) && fsdata) {
+		f2fs_compress_write_end(inode, fsdata, page->index, copied);
+		f2fs_update_time(F2FS_I_SB(inode), REQ_TIME);
 
-		अगर (pos + copied > i_size_पढ़ो(inode) &&
+		if (pos + copied > i_size_read(inode) &&
 				!f2fs_verity_in_progress(inode))
-			f2fs_i_size_ग_लिखो(inode, pos + copied);
-		वापस copied;
-	पूर्ण
-#पूर्ण_अगर
+			f2fs_i_size_write(inode, pos + copied);
+		return copied;
+	}
+#endif
 
-	अगर (!copied)
-		जाओ unlock_out;
+	if (!copied)
+		goto unlock_out;
 
 	set_page_dirty(page);
 
-	अगर (pos + copied > i_size_पढ़ो(inode) &&
+	if (pos + copied > i_size_read(inode) &&
 	    !f2fs_verity_in_progress(inode))
-		f2fs_i_size_ग_लिखो(inode, pos + copied);
+		f2fs_i_size_write(inode, pos + copied);
 unlock_out:
 	f2fs_put_page(page, 1);
-	f2fs_update_समय(F2FS_I_SB(inode), REQ_TIME);
-	वापस copied;
-पूर्ण
+	f2fs_update_time(F2FS_I_SB(inode), REQ_TIME);
+	return copied;
+}
 
-अटल पूर्णांक check_direct_IO(काष्ठा inode *inode, काष्ठा iov_iter *iter,
+static int check_direct_IO(struct inode *inode, struct iov_iter *iter,
 			   loff_t offset)
-अणु
-	अचिन्हित i_blkbits = READ_ONCE(inode->i_blkbits);
-	अचिन्हित blkbits = i_blkbits;
-	अचिन्हित blocksize_mask = (1 << blkbits) - 1;
-	अचिन्हित दीर्घ align = offset | iov_iter_alignment(iter);
-	काष्ठा block_device *bdev = inode->i_sb->s_bdev;
+{
+	unsigned i_blkbits = READ_ONCE(inode->i_blkbits);
+	unsigned blkbits = i_blkbits;
+	unsigned blocksize_mask = (1 << blkbits) - 1;
+	unsigned long align = offset | iov_iter_alignment(iter);
+	struct block_device *bdev = inode->i_sb->s_bdev;
 
-	अगर (iov_iter_rw(iter) == READ && offset >= i_size_पढ़ो(inode))
-		वापस 1;
+	if (iov_iter_rw(iter) == READ && offset >= i_size_read(inode))
+		return 1;
 
-	अगर (align & blocksize_mask) अणु
-		अगर (bdev)
+	if (align & blocksize_mask) {
+		if (bdev)
 			blkbits = blksize_bits(bdev_logical_block_size(bdev));
 		blocksize_mask = (1 << blkbits) - 1;
-		अगर (align & blocksize_mask)
-			वापस -EINVAL;
-		वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (align & blocksize_mask)
+			return -EINVAL;
+		return 1;
+	}
+	return 0;
+}
 
-अटल व्योम f2fs_dio_end_io(काष्ठा bio *bio)
-अणु
-	काष्ठा f2fs_निजी_dio *dio = bio->bi_निजी;
+static void f2fs_dio_end_io(struct bio *bio)
+{
+	struct f2fs_private_dio *dio = bio->bi_private;
 
 	dec_page_count(F2FS_I_SB(dio->inode),
-			dio->ग_लिखो ? F2FS_DIO_WRITE : F2FS_DIO_READ);
+			dio->write ? F2FS_DIO_WRITE : F2FS_DIO_READ);
 
-	bio->bi_निजी = dio->orig_निजी;
+	bio->bi_private = dio->orig_private;
 	bio->bi_end_io = dio->orig_end_io;
 
-	kमुक्त(dio);
+	kfree(dio);
 
 	bio_endio(bio);
-पूर्ण
+}
 
-अटल व्योम f2fs_dio_submit_bio(काष्ठा bio *bio, काष्ठा inode *inode,
+static void f2fs_dio_submit_bio(struct bio *bio, struct inode *inode,
 							loff_t file_offset)
-अणु
-	काष्ठा f2fs_निजी_dio *dio;
-	bool ग_लिखो = (bio_op(bio) == REQ_OP_WRITE);
+{
+	struct f2fs_private_dio *dio;
+	bool write = (bio_op(bio) == REQ_OP_WRITE);
 
 	dio = f2fs_kzalloc(F2FS_I_SB(inode),
-			माप(काष्ठा f2fs_निजी_dio), GFP_NOFS);
-	अगर (!dio)
-		जाओ out;
+			sizeof(struct f2fs_private_dio), GFP_NOFS);
+	if (!dio)
+		goto out;
 
 	dio->inode = inode;
 	dio->orig_end_io = bio->bi_end_io;
-	dio->orig_निजी = bio->bi_निजी;
-	dio->ग_लिखो = ग_लिखो;
+	dio->orig_private = bio->bi_private;
+	dio->write = write;
 
 	bio->bi_end_io = f2fs_dio_end_io;
-	bio->bi_निजी = dio;
+	bio->bi_private = dio;
 
 	inc_page_count(F2FS_I_SB(inode),
-			ग_लिखो ? F2FS_DIO_WRITE : F2FS_DIO_READ);
+			write ? F2FS_DIO_WRITE : F2FS_DIO_READ);
 
 	submit_bio(bio);
-	वापस;
+	return;
 out:
 	bio->bi_status = BLK_STS_IOERR;
 	bio_endio(bio);
-पूर्ण
+}
 
-अटल sमाप_प्रकार f2fs_direct_IO(काष्ठा kiocb *iocb, काष्ठा iov_iter *iter)
-अणु
-	काष्ठा address_space *mapping = iocb->ki_filp->f_mapping;
-	काष्ठा inode *inode = mapping->host;
-	काष्ठा f2fs_sb_info *sbi = F2FS_I_SB(inode);
-	काष्ठा f2fs_inode_info *fi = F2FS_I(inode);
-	माप_प्रकार count = iov_iter_count(iter);
+static ssize_t f2fs_direct_IO(struct kiocb *iocb, struct iov_iter *iter)
+{
+	struct address_space *mapping = iocb->ki_filp->f_mapping;
+	struct inode *inode = mapping->host;
+	struct f2fs_sb_info *sbi = F2FS_I_SB(inode);
+	struct f2fs_inode_info *fi = F2FS_I(inode);
+	size_t count = iov_iter_count(iter);
 	loff_t offset = iocb->ki_pos;
-	पूर्णांक rw = iov_iter_rw(iter);
-	पूर्णांक err;
-	क्रमागत rw_hपूर्णांक hपूर्णांक = iocb->ki_hपूर्णांक;
-	पूर्णांक whपूर्णांक_mode = F2FS_OPTION(sbi).whपूर्णांक_mode;
-	bool करो_opu;
+	int rw = iov_iter_rw(iter);
+	int err;
+	enum rw_hint hint = iocb->ki_hint;
+	int whint_mode = F2FS_OPTION(sbi).whint_mode;
+	bool do_opu;
 
 	err = check_direct_IO(inode, iter, offset);
-	अगर (err)
-		वापस err < 0 ? err : 0;
+	if (err)
+		return err < 0 ? err : 0;
 
-	अगर (f2fs_क्रमce_buffered_io(inode, iocb, iter))
-		वापस 0;
+	if (f2fs_force_buffered_io(inode, iocb, iter))
+		return 0;
 
-	करो_opu = allow_outplace_dio(inode, iocb, iter);
+	do_opu = allow_outplace_dio(inode, iocb, iter);
 
 	trace_f2fs_direct_IO_enter(inode, offset, count, rw);
 
-	अगर (rw == WRITE && whपूर्णांक_mode == WHINT_MODE_OFF)
-		iocb->ki_hपूर्णांक = WRITE_LIFE_NOT_SET;
+	if (rw == WRITE && whint_mode == WHINT_MODE_OFF)
+		iocb->ki_hint = WRITE_LIFE_NOT_SET;
 
-	अगर (iocb->ki_flags & IOCB_NOWAIT) अणु
-		अगर (!करोwn_पढ़ो_trylock(&fi->i_gc_rwsem[rw])) अणु
-			iocb->ki_hपूर्णांक = hपूर्णांक;
+	if (iocb->ki_flags & IOCB_NOWAIT) {
+		if (!down_read_trylock(&fi->i_gc_rwsem[rw])) {
+			iocb->ki_hint = hint;
 			err = -EAGAIN;
-			जाओ out;
-		पूर्ण
-		अगर (करो_opu && !करोwn_पढ़ो_trylock(&fi->i_gc_rwsem[READ])) अणु
-			up_पढ़ो(&fi->i_gc_rwsem[rw]);
-			iocb->ki_hपूर्णांक = hपूर्णांक;
+			goto out;
+		}
+		if (do_opu && !down_read_trylock(&fi->i_gc_rwsem[READ])) {
+			up_read(&fi->i_gc_rwsem[rw]);
+			iocb->ki_hint = hint;
 			err = -EAGAIN;
-			जाओ out;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		करोwn_पढ़ो(&fi->i_gc_rwsem[rw]);
-		अगर (करो_opu)
-			करोwn_पढ़ो(&fi->i_gc_rwsem[READ]);
-	पूर्ण
+			goto out;
+		}
+	} else {
+		down_read(&fi->i_gc_rwsem[rw]);
+		if (do_opu)
+			down_read(&fi->i_gc_rwsem[READ]);
+	}
 
 	err = __blockdev_direct_IO(iocb, inode, inode->i_sb->s_bdev,
-			iter, rw == WRITE ? get_data_block_dio_ग_लिखो :
-			get_data_block_dio, शून्य, f2fs_dio_submit_bio,
+			iter, rw == WRITE ? get_data_block_dio_write :
+			get_data_block_dio, NULL, f2fs_dio_submit_bio,
 			rw == WRITE ? DIO_LOCKING | DIO_SKIP_HOLES :
 			DIO_SKIP_HOLES);
 
-	अगर (करो_opu)
-		up_पढ़ो(&fi->i_gc_rwsem[READ]);
+	if (do_opu)
+		up_read(&fi->i_gc_rwsem[READ]);
 
-	up_पढ़ो(&fi->i_gc_rwsem[rw]);
+	up_read(&fi->i_gc_rwsem[rw]);
 
-	अगर (rw == WRITE) अणु
-		अगर (whपूर्णांक_mode == WHINT_MODE_OFF)
-			iocb->ki_hपूर्णांक = hपूर्णांक;
-		अगर (err > 0) अणु
-			f2fs_update_iostat(F2FS_I_SB(inode), APP_सूचीECT_IO,
+	if (rw == WRITE) {
+		if (whint_mode == WHINT_MODE_OFF)
+			iocb->ki_hint = hint;
+		if (err > 0) {
+			f2fs_update_iostat(F2FS_I_SB(inode), APP_DIRECT_IO,
 									err);
-			अगर (!करो_opu)
+			if (!do_opu)
 				set_inode_flag(inode, FI_UPDATE_WRITE);
-		पूर्ण अन्यथा अगर (err == -EIOCBQUEUED) अणु
-			f2fs_update_iostat(F2FS_I_SB(inode), APP_सूचीECT_IO,
+		} else if (err == -EIOCBQUEUED) {
+			f2fs_update_iostat(F2FS_I_SB(inode), APP_DIRECT_IO,
 						count - iov_iter_count(iter));
-		पूर्ण अन्यथा अगर (err < 0) अणु
-			f2fs_ग_लिखो_failed(mapping, offset + count);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (err > 0)
-			f2fs_update_iostat(sbi, APP_सूचीECT_READ_IO, err);
-		अन्यथा अगर (err == -EIOCBQUEUED)
-			f2fs_update_iostat(F2FS_I_SB(inode), APP_सूचीECT_READ_IO,
+		} else if (err < 0) {
+			f2fs_write_failed(mapping, offset + count);
+		}
+	} else {
+		if (err > 0)
+			f2fs_update_iostat(sbi, APP_DIRECT_READ_IO, err);
+		else if (err == -EIOCBQUEUED)
+			f2fs_update_iostat(F2FS_I_SB(inode), APP_DIRECT_READ_IO,
 						count - iov_iter_count(iter));
-	पूर्ण
+	}
 
 out:
-	trace_f2fs_direct_IO_निकास(inode, offset, count, rw, err);
+	trace_f2fs_direct_IO_exit(inode, offset, count, rw, err);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम f2fs_invalidate_page(काष्ठा page *page, अचिन्हित पूर्णांक offset,
-							अचिन्हित पूर्णांक length)
-अणु
-	काष्ठा inode *inode = page->mapping->host;
-	काष्ठा f2fs_sb_info *sbi = F2FS_I_SB(inode);
+void f2fs_invalidate_page(struct page *page, unsigned int offset,
+							unsigned int length)
+{
+	struct inode *inode = page->mapping->host;
+	struct f2fs_sb_info *sbi = F2FS_I_SB(inode);
 
-	अगर (inode->i_ino >= F2FS_ROOT_INO(sbi) &&
+	if (inode->i_ino >= F2FS_ROOT_INO(sbi) &&
 		(offset % PAGE_SIZE || length != PAGE_SIZE))
-		वापस;
+		return;
 
-	अगर (PageDirty(page)) अणु
-		अगर (inode->i_ino == F2FS_META_INO(sbi)) अणु
-			dec_page_count(sbi, F2FS_सूचीTY_META);
-		पूर्ण अन्यथा अगर (inode->i_ino == F2FS_NODE_INO(sbi)) अणु
-			dec_page_count(sbi, F2FS_सूचीTY_NODES);
-		पूर्ण अन्यथा अणु
+	if (PageDirty(page)) {
+		if (inode->i_ino == F2FS_META_INO(sbi)) {
+			dec_page_count(sbi, F2FS_DIRTY_META);
+		} else if (inode->i_ino == F2FS_NODE_INO(sbi)) {
+			dec_page_count(sbi, F2FS_DIRTY_NODES);
+		} else {
 			inode_dec_dirty_pages(inode);
-			f2fs_हटाओ_dirty_inode(inode);
-		पूर्ण
-	पूर्ण
+			f2fs_remove_dirty_inode(inode);
+		}
+	}
 
 	clear_cold_data(page);
 
-	अगर (IS_ATOMIC_WRITTEN_PAGE(page))
-		वापस f2fs_drop_inmem_page(inode, page);
+	if (IS_ATOMIC_WRITTEN_PAGE(page))
+		return f2fs_drop_inmem_page(inode, page);
 
-	f2fs_clear_page_निजी(page);
-पूर्ण
+	f2fs_clear_page_private(page);
+}
 
-पूर्णांक f2fs_release_page(काष्ठा page *page, gfp_t रुको)
-अणु
+int f2fs_release_page(struct page *page, gfp_t wait)
+{
 	/* If this is dirty page, keep PagePrivate */
-	अगर (PageDirty(page))
-		वापस 0;
+	if (PageDirty(page))
+		return 0;
 
 	/* This is atomic written page, keep Private */
-	अगर (IS_ATOMIC_WRITTEN_PAGE(page))
-		वापस 0;
+	if (IS_ATOMIC_WRITTEN_PAGE(page))
+		return 0;
 
 	clear_cold_data(page);
-	f2fs_clear_page_निजी(page);
-	वापस 1;
-पूर्ण
+	f2fs_clear_page_private(page);
+	return 1;
+}
 
-अटल पूर्णांक f2fs_set_data_page_dirty(काष्ठा page *page)
-अणु
-	काष्ठा inode *inode = page_file_mapping(page)->host;
+static int f2fs_set_data_page_dirty(struct page *page)
+{
+	struct inode *inode = page_file_mapping(page)->host;
 
 	trace_f2fs_set_page_dirty(page, DATA);
 
-	अगर (!PageUptodate(page))
+	if (!PageUptodate(page))
 		SetPageUptodate(page);
-	अगर (PageSwapCache(page))
-		वापस __set_page_dirty_nobuffers(page);
+	if (PageSwapCache(page))
+		return __set_page_dirty_nobuffers(page);
 
-	अगर (f2fs_is_atomic_file(inode) && !f2fs_is_commit_atomic_ग_लिखो(inode)) अणु
-		अगर (!IS_ATOMIC_WRITTEN_PAGE(page)) अणु
-			f2fs_रेजिस्टर_inmem_page(inode, page);
-			वापस 1;
-		पूर्ण
+	if (f2fs_is_atomic_file(inode) && !f2fs_is_commit_atomic_write(inode)) {
+		if (!IS_ATOMIC_WRITTEN_PAGE(page)) {
+			f2fs_register_inmem_page(inode, page);
+			return 1;
+		}
 		/*
-		 * Previously, this page has been रेजिस्टरed, we just
-		 * वापस here.
+		 * Previously, this page has been registered, we just
+		 * return here.
 		 */
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (!PageDirty(page)) अणु
+	if (!PageDirty(page)) {
 		__set_page_dirty_nobuffers(page);
 		f2fs_update_dirty_page(inode, page);
-		वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return 1;
+	}
+	return 0;
+}
 
 
-अटल sector_t f2fs_bmap_compress(काष्ठा inode *inode, sector_t block)
-अणु
-#अगर_घोषित CONFIG_F2FS_FS_COMPRESSION
-	काष्ठा dnode_of_data dn;
+static sector_t f2fs_bmap_compress(struct inode *inode, sector_t block)
+{
+#ifdef CONFIG_F2FS_FS_COMPRESSION
+	struct dnode_of_data dn;
 	sector_t start_idx, blknr = 0;
-	पूर्णांक ret;
+	int ret;
 
-	start_idx = round_करोwn(block, F2FS_I(inode)->i_cluster_size);
+	start_idx = round_down(block, F2FS_I(inode)->i_cluster_size);
 
-	set_new_dnode(&dn, inode, शून्य, शून्य, 0);
+	set_new_dnode(&dn, inode, NULL, NULL, 0);
 	ret = f2fs_get_dnode_of_data(&dn, start_idx, LOOKUP_NODE);
-	अगर (ret)
-		वापस 0;
+	if (ret)
+		return 0;
 
-	अगर (dn.data_blkaddr != COMPRESS_ADDR) अणु
+	if (dn.data_blkaddr != COMPRESS_ADDR) {
 		dn.ofs_in_node += block - start_idx;
 		blknr = f2fs_data_blkaddr(&dn);
-		अगर (!__is_valid_data_blkaddr(blknr))
+		if (!__is_valid_data_blkaddr(blknr))
 			blknr = 0;
-	पूर्ण
+	}
 
 	f2fs_put_dnode(&dn);
-	वापस blknr;
-#अन्यथा
-	वापस 0;
-#पूर्ण_अगर
-पूर्ण
+	return blknr;
+#else
+	return 0;
+#endif
+}
 
 
-अटल sector_t f2fs_bmap(काष्ठा address_space *mapping, sector_t block)
-अणु
-	काष्ठा inode *inode = mapping->host;
+static sector_t f2fs_bmap(struct address_space *mapping, sector_t block)
+{
+	struct inode *inode = mapping->host;
 	sector_t blknr = 0;
 
-	अगर (f2fs_has_अंतरभूत_data(inode))
-		जाओ out;
+	if (f2fs_has_inline_data(inode))
+		goto out;
 
 	/* make sure allocating whole blocks */
-	अगर (mapping_tagged(mapping, PAGECACHE_TAG_सूचीTY))
-		filemap_ग_लिखो_and_रुको(mapping);
+	if (mapping_tagged(mapping, PAGECACHE_TAG_DIRTY))
+		filemap_write_and_wait(mapping);
 
 	/* Block number less than F2FS MAX BLOCKS */
-	अगर (unlikely(block >= max_file_blocks(inode)))
-		जाओ out;
+	if (unlikely(block >= max_file_blocks(inode)))
+		goto out;
 
-	अगर (f2fs_compressed_file(inode)) अणु
+	if (f2fs_compressed_file(inode)) {
 		blknr = f2fs_bmap_compress(inode, block);
-	पूर्ण अन्यथा अणु
-		काष्ठा f2fs_map_blocks map;
+	} else {
+		struct f2fs_map_blocks map;
 
-		स_रखो(&map, 0, माप(map));
+		memset(&map, 0, sizeof(map));
 		map.m_lblk = block;
 		map.m_len = 1;
-		map.m_next_pgofs = शून्य;
+		map.m_next_pgofs = NULL;
 		map.m_seg_type = NO_CHECK_TYPE;
 
-		अगर (!f2fs_map_blocks(inode, &map, 0, F2FS_GET_BLOCK_BMAP))
+		if (!f2fs_map_blocks(inode, &map, 0, F2FS_GET_BLOCK_BMAP))
 			blknr = map.m_pblk;
-	पूर्ण
+	}
 out:
 	trace_f2fs_bmap(inode, block, blknr);
-	वापस blknr;
-पूर्ण
+	return blknr;
+}
 
-#अगर_घोषित CONFIG_MIGRATION
-#समावेश <linux/migrate.h>
+#ifdef CONFIG_MIGRATION
+#include <linux/migrate.h>
 
-पूर्णांक f2fs_migrate_page(काष्ठा address_space *mapping,
-		काष्ठा page *newpage, काष्ठा page *page, क्रमागत migrate_mode mode)
-अणु
-	पूर्णांक rc, extra_count;
-	काष्ठा f2fs_inode_info *fi = F2FS_I(mapping->host);
+int f2fs_migrate_page(struct address_space *mapping,
+		struct page *newpage, struct page *page, enum migrate_mode mode)
+{
+	int rc, extra_count;
+	struct f2fs_inode_info *fi = F2FS_I(mapping->host);
 	bool atomic_written = IS_ATOMIC_WRITTEN_PAGE(page);
 
 	BUG_ON(PageWriteback(page));
 
 	/* migrating an atomic written page is safe with the inmem_lock hold */
-	अगर (atomic_written) अणु
-		अगर (mode != MIGRATE_SYNC)
-			वापस -EBUSY;
-		अगर (!mutex_trylock(&fi->inmem_lock))
-			वापस -EAGAIN;
-	पूर्ण
+	if (atomic_written) {
+		if (mode != MIGRATE_SYNC)
+			return -EBUSY;
+		if (!mutex_trylock(&fi->inmem_lock))
+			return -EAGAIN;
+	}
 
-	/* one extra reference was held क्रम atomic_ग_लिखो page */
+	/* one extra reference was held for atomic_write page */
 	extra_count = atomic_written ? 1 : 0;
 	rc = migrate_page_move_mapping(mapping, newpage,
 				page, extra_count);
-	अगर (rc != MIGRATEPAGE_SUCCESS) अणु
-		अगर (atomic_written)
+	if (rc != MIGRATEPAGE_SUCCESS) {
+		if (atomic_written)
 			mutex_unlock(&fi->inmem_lock);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
-	अगर (atomic_written) अणु
-		काष्ठा inmem_pages *cur;
+	if (atomic_written) {
+		struct inmem_pages *cur;
 
-		list_क्रम_each_entry(cur, &fi->inmem_pages, list)
-			अगर (cur->page == page) अणु
+		list_for_each_entry(cur, &fi->inmem_pages, list)
+			if (cur->page == page) {
 				cur->page = newpage;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 		mutex_unlock(&fi->inmem_lock);
 		put_page(page);
 		get_page(newpage);
-	पूर्ण
+	}
 
-	अगर (PagePrivate(page)) अणु
-		f2fs_set_page_निजी(newpage, page_निजी(page));
-		f2fs_clear_page_निजी(page);
-	पूर्ण
+	if (PagePrivate(page)) {
+		f2fs_set_page_private(newpage, page_private(page));
+		f2fs_clear_page_private(page);
+	}
 
-	अगर (mode != MIGRATE_SYNC_NO_COPY)
+	if (mode != MIGRATE_SYNC_NO_COPY)
 		migrate_page_copy(newpage, page);
-	अन्यथा
+	else
 		migrate_page_states(newpage, page);
 
-	वापस MIGRATEPAGE_SUCCESS;
-पूर्ण
-#पूर्ण_अगर
+	return MIGRATEPAGE_SUCCESS;
+}
+#endif
 
-#अगर_घोषित CONFIG_SWAP
-अटल पूर्णांक f2fs_is_file_aligned(काष्ठा inode *inode)
-अणु
-	काष्ठा f2fs_sb_info *sbi = F2FS_I_SB(inode);
-	block_t मुख्य_blkaddr = SM_I(sbi)->मुख्य_blkaddr;
+#ifdef CONFIG_SWAP
+static int f2fs_is_file_aligned(struct inode *inode)
+{
+	struct f2fs_sb_info *sbi = F2FS_I_SB(inode);
+	block_t main_blkaddr = SM_I(sbi)->main_blkaddr;
 	block_t cur_lblock;
 	block_t last_lblock;
 	block_t pblock;
-	अचिन्हित दीर्घ nr_pblocks;
-	अचिन्हित पूर्णांक blocks_per_sec = BLKS_PER_SEC(sbi);
-	अचिन्हित पूर्णांक not_aligned = 0;
-	पूर्णांक ret = 0;
+	unsigned long nr_pblocks;
+	unsigned int blocks_per_sec = BLKS_PER_SEC(sbi);
+	unsigned int not_aligned = 0;
+	int ret = 0;
 
 	cur_lblock = 0;
-	last_lblock = bytes_to_blks(inode, i_size_पढ़ो(inode));
+	last_lblock = bytes_to_blks(inode, i_size_read(inode));
 
-	जबतक (cur_lblock < last_lblock) अणु
-		काष्ठा f2fs_map_blocks map;
+	while (cur_lblock < last_lblock) {
+		struct f2fs_map_blocks map;
 
-		स_रखो(&map, 0, माप(map));
+		memset(&map, 0, sizeof(map));
 		map.m_lblk = cur_lblock;
 		map.m_len = last_lblock - cur_lblock;
-		map.m_next_pgofs = शून्य;
-		map.m_next_extent = शून्य;
+		map.m_next_pgofs = NULL;
+		map.m_next_extent = NULL;
 		map.m_seg_type = NO_CHECK_TYPE;
 		map.m_may_create = false;
 
 		ret = f2fs_map_blocks(inode, &map, 0, F2FS_GET_BLOCK_FIEMAP);
-		अगर (ret)
-			जाओ out;
+		if (ret)
+			goto out;
 
 		/* hole */
-		अगर (!(map.m_flags & F2FS_MAP_FLAGS)) अणु
+		if (!(map.m_flags & F2FS_MAP_FLAGS)) {
 			f2fs_err(sbi, "Swapfile has holes\n");
 			ret = -ENOENT;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		pblock = map.m_pblk;
 		nr_pblocks = map.m_len;
 
-		अगर ((pblock - मुख्य_blkaddr) & (blocks_per_sec - 1) ||
-			nr_pblocks & (blocks_per_sec - 1)) अणु
-			अगर (f2fs_is_pinned_file(inode)) अणु
+		if ((pblock - main_blkaddr) & (blocks_per_sec - 1) ||
+			nr_pblocks & (blocks_per_sec - 1)) {
+			if (f2fs_is_pinned_file(inode)) {
 				f2fs_err(sbi, "Swapfile does not align to section");
 				ret = -EINVAL;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 			not_aligned++;
-		पूर्ण
+		}
 
 		cur_lblock += nr_pblocks;
-	पूर्ण
-	अगर (not_aligned)
+	}
+	if (not_aligned)
 		f2fs_warn(sbi, "Swapfile (%u) is not align to section: \n"
 			"\t1) creat(), 2) ioctl(F2FS_IOC_SET_PIN_FILE), 3) fallocate()",
 			not_aligned);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक check_swap_activate_fast(काष्ठा swap_info_काष्ठा *sis,
-				काष्ठा file *swap_file, sector_t *span)
-अणु
-	काष्ठा address_space *mapping = swap_file->f_mapping;
-	काष्ठा inode *inode = mapping->host;
-	काष्ठा f2fs_sb_info *sbi = F2FS_I_SB(inode);
+static int check_swap_activate_fast(struct swap_info_struct *sis,
+				struct file *swap_file, sector_t *span)
+{
+	struct address_space *mapping = swap_file->f_mapping;
+	struct inode *inode = mapping->host;
+	struct f2fs_sb_info *sbi = F2FS_I_SB(inode);
 	sector_t cur_lblock;
 	sector_t last_lblock;
 	sector_t pblock;
 	sector_t lowest_pblock = -1;
 	sector_t highest_pblock = 0;
-	पूर्णांक nr_extents = 0;
-	अचिन्हित दीर्घ nr_pblocks;
-	अचिन्हित पूर्णांक blocks_per_sec = BLKS_PER_SEC(sbi);
-	अचिन्हित पूर्णांक not_aligned = 0;
-	पूर्णांक ret = 0;
+	int nr_extents = 0;
+	unsigned long nr_pblocks;
+	unsigned int blocks_per_sec = BLKS_PER_SEC(sbi);
+	unsigned int not_aligned = 0;
+	int ret = 0;
 
 	/*
-	 * Map all the blocks पूर्णांकo the extent list.  This code करोesn't try
+	 * Map all the blocks into the extent list.  This code doesn't try
 	 * to be very smart.
 	 */
 	cur_lblock = 0;
-	last_lblock = bytes_to_blks(inode, i_size_पढ़ो(inode));
+	last_lblock = bytes_to_blks(inode, i_size_read(inode));
 
-	जबतक (cur_lblock < last_lblock && cur_lblock < sis->max) अणु
-		काष्ठा f2fs_map_blocks map;
+	while (cur_lblock < last_lblock && cur_lblock < sis->max) {
+		struct f2fs_map_blocks map;
 
 		cond_resched();
 
-		स_रखो(&map, 0, माप(map));
+		memset(&map, 0, sizeof(map));
 		map.m_lblk = cur_lblock;
 		map.m_len = last_lblock - cur_lblock;
-		map.m_next_pgofs = शून्य;
-		map.m_next_extent = शून्य;
+		map.m_next_pgofs = NULL;
+		map.m_next_extent = NULL;
 		map.m_seg_type = NO_CHECK_TYPE;
 		map.m_may_create = false;
 
 		ret = f2fs_map_blocks(inode, &map, 0, F2FS_GET_BLOCK_FIEMAP);
-		अगर (ret)
-			जाओ out;
+		if (ret)
+			goto out;
 
 		/* hole */
-		अगर (!(map.m_flags & F2FS_MAP_FLAGS)) अणु
+		if (!(map.m_flags & F2FS_MAP_FLAGS)) {
 			f2fs_err(sbi, "Swapfile has holes\n");
 			ret = -EINVAL;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		pblock = map.m_pblk;
 		nr_pblocks = map.m_len;
 
-		अगर ((pblock - SM_I(sbi)->मुख्य_blkaddr) & (blocks_per_sec - 1) ||
-				nr_pblocks & (blocks_per_sec - 1)) अणु
-			अगर (f2fs_is_pinned_file(inode)) अणु
+		if ((pblock - SM_I(sbi)->main_blkaddr) & (blocks_per_sec - 1) ||
+				nr_pblocks & (blocks_per_sec - 1)) {
+			if (f2fs_is_pinned_file(inode)) {
 				f2fs_err(sbi, "Swapfile does not align to section");
 				ret = -EINVAL;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 			not_aligned++;
-		पूर्ण
+		}
 
-		अगर (cur_lblock + nr_pblocks >= sis->max)
+		if (cur_lblock + nr_pblocks >= sis->max)
 			nr_pblocks = sis->max - cur_lblock;
 
-		अगर (cur_lblock) अणु	/* exclude the header page */
-			अगर (pblock < lowest_pblock)
+		if (cur_lblock) {	/* exclude the header page */
+			if (pblock < lowest_pblock)
 				lowest_pblock = pblock;
-			अगर (pblock + nr_pblocks - 1 > highest_pblock)
+			if (pblock + nr_pblocks - 1 > highest_pblock)
 				highest_pblock = pblock + nr_pblocks - 1;
-		पूर्ण
+		}
 
 		/*
 		 * We found a PAGE_SIZE-length, PAGE_SIZE-aligned run of blocks
 		 */
 		ret = add_swap_extent(sis, cur_lblock, nr_pblocks, pblock);
-		अगर (ret < 0)
-			जाओ out;
+		if (ret < 0)
+			goto out;
 		nr_extents += ret;
 		cur_lblock += nr_pblocks;
-	पूर्ण
+	}
 	ret = nr_extents;
 	*span = 1 + highest_pblock - lowest_pblock;
-	अगर (cur_lblock == 0)
-		cur_lblock = 1;	/* क्रमce Empty message */
+	if (cur_lblock == 0)
+		cur_lblock = 1;	/* force Empty message */
 	sis->max = cur_lblock;
 	sis->pages = cur_lblock - 1;
 	sis->highest_bit = cur_lblock - 1;
 
-	अगर (not_aligned)
+	if (not_aligned)
 		f2fs_warn(sbi, "Swapfile (%u) is not align to section: \n"
 			"\t1) creat(), 2) ioctl(F2FS_IOC_SET_PIN_FILE), 3) fallocate()",
 			not_aligned);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* Copied from generic_swapfile_activate() to check any holes */
-अटल पूर्णांक check_swap_activate(काष्ठा swap_info_काष्ठा *sis,
-				काष्ठा file *swap_file, sector_t *span)
-अणु
-	काष्ठा address_space *mapping = swap_file->f_mapping;
-	काष्ठा inode *inode = mapping->host;
-	काष्ठा f2fs_sb_info *sbi = F2FS_I_SB(inode);
-	अचिन्हित blocks_per_page;
-	अचिन्हित दीर्घ page_no;
+static int check_swap_activate(struct swap_info_struct *sis,
+				struct file *swap_file, sector_t *span)
+{
+	struct address_space *mapping = swap_file->f_mapping;
+	struct inode *inode = mapping->host;
+	struct f2fs_sb_info *sbi = F2FS_I_SB(inode);
+	unsigned blocks_per_page;
+	unsigned long page_no;
 	sector_t probe_block;
 	sector_t last_block;
 	sector_t lowest_block = -1;
 	sector_t highest_block = 0;
-	पूर्णांक nr_extents = 0;
-	पूर्णांक ret = 0;
+	int nr_extents = 0;
+	int ret = 0;
 
-	अगर (PAGE_SIZE == F2FS_BLKSIZE)
-		वापस check_swap_activate_fast(sis, swap_file, span);
+	if (PAGE_SIZE == F2FS_BLKSIZE)
+		return check_swap_activate_fast(sis, swap_file, span);
 
 	ret = f2fs_is_file_aligned(inode);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	blocks_per_page = bytes_to_blks(inode, PAGE_SIZE);
 
 	/*
-	 * Map all the blocks पूर्णांकo the extent list.  This code करोesn't try
+	 * Map all the blocks into the extent list.  This code doesn't try
 	 * to be very smart.
 	 */
 	probe_block = 0;
 	page_no = 0;
-	last_block = bytes_to_blks(inode, i_size_पढ़ो(inode));
-	जबतक ((probe_block + blocks_per_page) <= last_block &&
-			page_no < sis->max) अणु
-		अचिन्हित block_in_page;
+	last_block = bytes_to_blks(inode, i_size_read(inode));
+	while ((probe_block + blocks_per_page) <= last_block &&
+			page_no < sis->max) {
+		unsigned block_in_page;
 		sector_t first_block;
 		sector_t block = 0;
 
@@ -3991,126 +3990,126 @@ out:
 
 		block = probe_block;
 		ret = bmap(inode, &block);
-		अगर (ret)
-			जाओ out;
-		अगर (!block)
-			जाओ bad_bmap;
+		if (ret)
+			goto out;
+		if (!block)
+			goto bad_bmap;
 		first_block = block;
 
 		/*
 		 * It must be PAGE_SIZE aligned on-disk
 		 */
-		अगर (first_block & (blocks_per_page - 1)) अणु
+		if (first_block & (blocks_per_page - 1)) {
 			probe_block++;
-			जाओ reprobe;
-		पूर्ण
+			goto reprobe;
+		}
 
-		क्रम (block_in_page = 1; block_in_page < blocks_per_page;
-					block_in_page++) अणु
+		for (block_in_page = 1; block_in_page < blocks_per_page;
+					block_in_page++) {
 
 			block = probe_block + block_in_page;
 			ret = bmap(inode, &block);
-			अगर (ret)
-				जाओ out;
-			अगर (!block)
-				जाओ bad_bmap;
+			if (ret)
+				goto out;
+			if (!block)
+				goto bad_bmap;
 
-			अगर (block != first_block + block_in_page) अणु
+			if (block != first_block + block_in_page) {
 				/* Discontiguity */
 				probe_block++;
-				जाओ reprobe;
-			पूर्ण
-		पूर्ण
+				goto reprobe;
+			}
+		}
 
 		first_block >>= (PAGE_SHIFT - inode->i_blkbits);
-		अगर (page_no) अणु	/* exclude the header page */
-			अगर (first_block < lowest_block)
+		if (page_no) {	/* exclude the header page */
+			if (first_block < lowest_block)
 				lowest_block = first_block;
-			अगर (first_block > highest_block)
+			if (first_block > highest_block)
 				highest_block = first_block;
-		पूर्ण
+		}
 
 		/*
 		 * We found a PAGE_SIZE-length, PAGE_SIZE-aligned run of blocks
 		 */
 		ret = add_swap_extent(sis, page_no, 1, first_block);
-		अगर (ret < 0)
-			जाओ out;
+		if (ret < 0)
+			goto out;
 		nr_extents += ret;
 		page_no++;
 		probe_block += blocks_per_page;
 reprobe:
-		जारी;
-	पूर्ण
+		continue;
+	}
 	ret = nr_extents;
 	*span = 1 + highest_block - lowest_block;
-	अगर (page_no == 0)
-		page_no = 1;	/* क्रमce Empty message */
+	if (page_no == 0)
+		page_no = 1;	/* force Empty message */
 	sis->max = page_no;
 	sis->pages = page_no - 1;
 	sis->highest_bit = page_no - 1;
 out:
-	वापस ret;
+	return ret;
 bad_bmap:
 	f2fs_err(sbi, "Swapfile has holes\n");
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक f2fs_swap_activate(काष्ठा swap_info_काष्ठा *sis, काष्ठा file *file,
+static int f2fs_swap_activate(struct swap_info_struct *sis, struct file *file,
 				sector_t *span)
-अणु
-	काष्ठा inode *inode = file_inode(file);
-	पूर्णांक ret;
+{
+	struct inode *inode = file_inode(file);
+	int ret;
 
-	अगर (!S_ISREG(inode->i_mode))
-		वापस -EINVAL;
+	if (!S_ISREG(inode->i_mode))
+		return -EINVAL;
 
-	अगर (f2fs_पढ़ोonly(F2FS_I_SB(inode)->sb))
-		वापस -EROFS;
+	if (f2fs_readonly(F2FS_I_SB(inode)->sb))
+		return -EROFS;
 
-	ret = f2fs_convert_अंतरभूत_inode(inode);
-	अगर (ret)
-		वापस ret;
+	ret = f2fs_convert_inline_inode(inode);
+	if (ret)
+		return ret;
 
-	अगर (!f2fs_disable_compressed_file(inode))
-		वापस -EINVAL;
+	if (!f2fs_disable_compressed_file(inode))
+		return -EINVAL;
 
 	f2fs_precache_extents(inode);
 
 	ret = check_swap_activate(sis, file, span);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	set_inode_flag(inode, FI_PIN_खाता);
-	f2fs_update_समय(F2FS_I_SB(inode), REQ_TIME);
-	वापस ret;
-पूर्ण
+	set_inode_flag(inode, FI_PIN_FILE);
+	f2fs_update_time(F2FS_I_SB(inode), REQ_TIME);
+	return ret;
+}
 
-अटल व्योम f2fs_swap_deactivate(काष्ठा file *file)
-अणु
-	काष्ठा inode *inode = file_inode(file);
+static void f2fs_swap_deactivate(struct file *file)
+{
+	struct inode *inode = file_inode(file);
 
-	clear_inode_flag(inode, FI_PIN_खाता);
-पूर्ण
-#अन्यथा
-अटल पूर्णांक f2fs_swap_activate(काष्ठा swap_info_काष्ठा *sis, काष्ठा file *file,
+	clear_inode_flag(inode, FI_PIN_FILE);
+}
+#else
+static int f2fs_swap_activate(struct swap_info_struct *sis, struct file *file,
 				sector_t *span)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+{
+	return -EOPNOTSUPP;
+}
 
-अटल व्योम f2fs_swap_deactivate(काष्ठा file *file)
-अणु
-पूर्ण
-#पूर्ण_अगर
+static void f2fs_swap_deactivate(struct file *file)
+{
+}
+#endif
 
-स्थिर काष्ठा address_space_operations f2fs_dblock_aops = अणु
-	.पढ़ोpage	= f2fs_पढ़ो_data_page,
-	.पढ़ोahead	= f2fs_पढ़ोahead,
-	.ग_लिखोpage	= f2fs_ग_लिखो_data_page,
-	.ग_लिखोpages	= f2fs_ग_लिखो_data_pages,
-	.ग_लिखो_begin	= f2fs_ग_लिखो_begin,
-	.ग_लिखो_end	= f2fs_ग_लिखो_end,
+const struct address_space_operations f2fs_dblock_aops = {
+	.readpage	= f2fs_read_data_page,
+	.readahead	= f2fs_readahead,
+	.writepage	= f2fs_write_data_page,
+	.writepages	= f2fs_write_data_pages,
+	.write_begin	= f2fs_write_begin,
+	.write_end	= f2fs_write_end,
 	.set_page_dirty	= f2fs_set_data_page_dirty,
 	.invalidatepage	= f2fs_invalidate_page,
 	.releasepage	= f2fs_release_page,
@@ -4118,79 +4117,79 @@ bad_bmap:
 	.bmap		= f2fs_bmap,
 	.swap_activate  = f2fs_swap_activate,
 	.swap_deactivate = f2fs_swap_deactivate,
-#अगर_घोषित CONFIG_MIGRATION
+#ifdef CONFIG_MIGRATION
 	.migratepage    = f2fs_migrate_page,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-व्योम f2fs_clear_page_cache_dirty_tag(काष्ठा page *page)
-अणु
-	काष्ठा address_space *mapping = page_mapping(page);
-	अचिन्हित दीर्घ flags;
+void f2fs_clear_page_cache_dirty_tag(struct page *page)
+{
+	struct address_space *mapping = page_mapping(page);
+	unsigned long flags;
 
 	xa_lock_irqsave(&mapping->i_pages, flags);
 	__xa_clear_mark(&mapping->i_pages, page_index(page),
-						PAGECACHE_TAG_सूचीTY);
+						PAGECACHE_TAG_DIRTY);
 	xa_unlock_irqrestore(&mapping->i_pages, flags);
-पूर्ण
+}
 
-पूर्णांक __init f2fs_init_post_पढ़ो_processing(व्योम)
-अणु
-	bio_post_पढ़ो_ctx_cache =
+int __init f2fs_init_post_read_processing(void)
+{
+	bio_post_read_ctx_cache =
 		kmem_cache_create("f2fs_bio_post_read_ctx",
-				  माप(काष्ठा bio_post_पढ़ो_ctx), 0, 0, शून्य);
-	अगर (!bio_post_पढ़ो_ctx_cache)
-		जाओ fail;
-	bio_post_पढ़ो_ctx_pool =
+				  sizeof(struct bio_post_read_ctx), 0, 0, NULL);
+	if (!bio_post_read_ctx_cache)
+		goto fail;
+	bio_post_read_ctx_pool =
 		mempool_create_slab_pool(NUM_PREALLOC_POST_READ_CTXS,
-					 bio_post_पढ़ो_ctx_cache);
-	अगर (!bio_post_पढ़ो_ctx_pool)
-		जाओ fail_मुक्त_cache;
-	वापस 0;
+					 bio_post_read_ctx_cache);
+	if (!bio_post_read_ctx_pool)
+		goto fail_free_cache;
+	return 0;
 
-fail_मुक्त_cache:
-	kmem_cache_destroy(bio_post_पढ़ो_ctx_cache);
+fail_free_cache:
+	kmem_cache_destroy(bio_post_read_ctx_cache);
 fail:
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-व्योम f2fs_destroy_post_पढ़ो_processing(व्योम)
-अणु
-	mempool_destroy(bio_post_पढ़ो_ctx_pool);
-	kmem_cache_destroy(bio_post_पढ़ो_ctx_cache);
-पूर्ण
+void f2fs_destroy_post_read_processing(void)
+{
+	mempool_destroy(bio_post_read_ctx_pool);
+	kmem_cache_destroy(bio_post_read_ctx_cache);
+}
 
-पूर्णांक f2fs_init_post_पढ़ो_wq(काष्ठा f2fs_sb_info *sbi)
-अणु
-	अगर (!f2fs_sb_has_encrypt(sbi) &&
+int f2fs_init_post_read_wq(struct f2fs_sb_info *sbi)
+{
+	if (!f2fs_sb_has_encrypt(sbi) &&
 		!f2fs_sb_has_verity(sbi) &&
 		!f2fs_sb_has_compression(sbi))
-		वापस 0;
+		return 0;
 
-	sbi->post_पढ़ो_wq = alloc_workqueue("f2fs_post_read_wq",
+	sbi->post_read_wq = alloc_workqueue("f2fs_post_read_wq",
 						 WQ_UNBOUND | WQ_HIGHPRI,
 						 num_online_cpus());
-	अगर (!sbi->post_पढ़ो_wq)
-		वापस -ENOMEM;
-	वापस 0;
-पूर्ण
+	if (!sbi->post_read_wq)
+		return -ENOMEM;
+	return 0;
+}
 
-व्योम f2fs_destroy_post_पढ़ो_wq(काष्ठा f2fs_sb_info *sbi)
-अणु
-	अगर (sbi->post_पढ़ो_wq)
-		destroy_workqueue(sbi->post_पढ़ो_wq);
-पूर्ण
+void f2fs_destroy_post_read_wq(struct f2fs_sb_info *sbi)
+{
+	if (sbi->post_read_wq)
+		destroy_workqueue(sbi->post_read_wq);
+}
 
-पूर्णांक __init f2fs_init_bio_entry_cache(व्योम)
-अणु
+int __init f2fs_init_bio_entry_cache(void)
+{
 	bio_entry_slab = f2fs_kmem_cache_create("f2fs_bio_entry_slab",
-			माप(काष्ठा bio_entry));
-	अगर (!bio_entry_slab)
-		वापस -ENOMEM;
-	वापस 0;
-पूर्ण
+			sizeof(struct bio_entry));
+	if (!bio_entry_slab)
+		return -ENOMEM;
+	return 0;
+}
 
-व्योम f2fs_destroy_bio_entry_cache(व्योम)
-अणु
+void f2fs_destroy_bio_entry_cache(void)
+{
 	kmem_cache_destroy(bio_entry_slab);
-पूर्ण
+}

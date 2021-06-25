@@ -1,96 +1,95 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  (C) 2004 Bruno Ducrot <ducrot@poupinou.org>
  *
  * Based on code found in
- * linux/arch/i386/kernel/cpu/cpufreq/घातernow-k8.c
+ * linux/arch/i386/kernel/cpu/cpufreq/powernow-k8.c
  * and originally developed by Paul Devriendt
  */
 
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <मानक_निवेशt.h>
-#समावेश <unistd.h>
-#समावेश <त्रुटिसं.स>
-#समावेश <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <unistd.h>
+#include <errno.h>
+#include <fcntl.h>
 
-#समावेश <sys/types.h>
-#समावेश <sys/स्थिति.स>
+#include <sys/types.h>
+#include <sys/stat.h>
 
-#घोषणा MCPU 32
+#define MCPU 32
 
-#घोषणा MSR_FIDVID_STATUS	0xc0010042
+#define MSR_FIDVID_STATUS	0xc0010042
 
-#घोषणा MSR_S_HI_CURRENT_VID	0x0000001f
-#घोषणा MSR_S_LO_CURRENT_FID	0x0000003f
+#define MSR_S_HI_CURRENT_VID	0x0000001f
+#define MSR_S_LO_CURRENT_FID	0x0000003f
 
-अटल पूर्णांक get_fidvid(uपूर्णांक32_t cpu, uपूर्णांक32_t *fid, uपूर्णांक32_t *vid)
-अणु
-	पूर्णांक err = 1;
-	uपूर्णांक64_t msr = 0;
-	पूर्णांक fd;
-	अक्षर file[20];
+static int get_fidvid(uint32_t cpu, uint32_t *fid, uint32_t *vid)
+{
+	int err = 1;
+	uint64_t msr = 0;
+	int fd;
+	char file[20];
 
-	अगर (cpu > MCPU)
-		जाओ out;
+	if (cpu > MCPU)
+		goto out;
 
-	प्र_लिखो(file, "/dev/cpu/%d/msr", cpu);
+	sprintf(file, "/dev/cpu/%d/msr", cpu);
 
-	fd = खोलो(file, O_RDONLY);
-	अगर (fd < 0)
-		जाओ out;
-	lseek(fd, MSR_FIDVID_STATUS, प्रस्तुत_से);
-	अगर (पढ़ो(fd, &msr, 8) != 8)
-		जाओ err1;
+	fd = open(file, O_RDONLY);
+	if (fd < 0)
+		goto out;
+	lseek(fd, MSR_FIDVID_STATUS, SEEK_CUR);
+	if (read(fd, &msr, 8) != 8)
+		goto err1;
 
-	*fid = ((uपूर्णांक32_t )(msr & 0xffffffffull)) & MSR_S_LO_CURRENT_FID;
-	*vid = ((uपूर्णांक32_t )(msr>>32 & 0xffffffffull)) & MSR_S_HI_CURRENT_VID;
+	*fid = ((uint32_t )(msr & 0xffffffffull)) & MSR_S_LO_CURRENT_FID;
+	*vid = ((uint32_t )(msr>>32 & 0xffffffffull)) & MSR_S_HI_CURRENT_VID;
 	err = 0;
 err1:
-	बंद(fd);
+	close(fd);
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
 
 /* Return a frequency in MHz, given an input fid */
-अटल uपूर्णांक32_t find_freq_from_fid(uपूर्णांक32_t fid)
-अणु
-	वापस 800 + (fid * 100);
-पूर्ण
+static uint32_t find_freq_from_fid(uint32_t fid)
+{
+	return 800 + (fid * 100);
+}
 
 /* Return a voltage in miliVolts, given an input vid */
-अटल uपूर्णांक32_t find_millivolts_from_vid(uपूर्णांक32_t vid)
-अणु
-	वापस 1550-vid*25;
-पूर्ण
+static uint32_t find_millivolts_from_vid(uint32_t vid)
+{
+	return 1550-vid*25;
+}
 
-पूर्णांक मुख्य (पूर्णांक argc, अक्षर *argv[])
-अणु
-	पूर्णांक err;
-	पूर्णांक cpu;
-	uपूर्णांक32_t fid, vid;
+int main (int argc, char *argv[])
+{
+	int err;
+	int cpu;
+	uint32_t fid, vid;
 
-	अगर (argc < 2)
+	if (argc < 2)
 		cpu = 0;
-	अन्यथा
-		cpu = म_से_अदीर्घ(argv[1], शून्य, 0);
+	else
+		cpu = strtoul(argv[1], NULL, 0);
 
 	err = get_fidvid(cpu, &fid, &vid);
 
-	अगर (err) अणु
-		म_लिखो("can't get fid, vid from MSR\n");
-		म_लिखो("Possible trouble: you don't run a powernow-k8 capable cpu\n");
-		म_लिखो("or you are not root, or the msr driver is not present\n");
-		निकास(1);
-	पूर्ण
+	if (err) {
+		printf("can't get fid, vid from MSR\n");
+		printf("Possible trouble: you don't run a powernow-k8 capable cpu\n");
+		printf("or you are not root, or the msr driver is not present\n");
+		exit(1);
+	}
 
 	
-	म_लिखो("cpu %d currently at %d MHz and %d mV\n",
+	printf("cpu %d currently at %d MHz and %d mV\n",
 			cpu,
 			find_freq_from_fid(fid),
 			find_millivolts_from_vid(vid));
 	
-	वापस 0;
-पूर्ण
+	return 0;
+}

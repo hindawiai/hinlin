@@ -1,24 +1,23 @@
-<शैली गुरु>
 /*
  * Allwinner sun5i SoCs pinctrl driver.
  *
- * Copyright (C) 2014-2016 Maxime Ripard <maxime.ripard@मुक्त-electrons.com>
- * Copyright (C) 2016 Mylene Josseअक्रम <mylene.josseअक्रम@मुक्त-electrons.com>
+ * Copyright (C) 2014-2016 Maxime Ripard <maxime.ripard@free-electrons.com>
+ * Copyright (C) 2016 Mylene Josserand <mylene.josserand@free-electrons.com>
  *
  * This file is licensed under the terms of the GNU General Public
  * License version 2.  This program is licensed "as is" without any
  * warranty of any kind, whether express or implied.
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/pinctrl/pinctrl.h>
+#include <linux/init.h>
+#include <linux/platform_device.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/pinctrl/pinctrl.h>
 
-#समावेश "pinctrl-sunxi.h"
+#include "pinctrl-sunxi.h"
 
-अटल स्थिर काष्ठा sunxi_desc_pin sun5i_pins[] = अणु
+static const struct sunxi_desc_pin sun5i_pins[] = {
 	SUNXI_PIN_VARIANT(SUNXI_PINCTRL_PIN(A, 0),
 		  PINCTRL_SUN5I_A10S,
 		  SUNXI_FUNCTION(0x0, "gpio_in"),
@@ -708,44 +707,44 @@
 		  SUNXI_FUNCTION(0x3, "pwm"),		/* PWM1 */
 		  SUNXI_FUNCTION(0x5, "uart2"),		/* CTS */
 		  SUNXI_FUNCTION_IRQ(0x6, 13)),		/* EINT13 */
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा sunxi_pinctrl_desc sun5i_pinctrl_data = अणु
+static const struct sunxi_pinctrl_desc sun5i_pinctrl_data = {
 	.pins = sun5i_pins,
 	.npins = ARRAY_SIZE(sun5i_pins),
 	.irq_banks = 1,
 	.disable_strict_mode = true,
-पूर्ण;
+};
 
-अटल पूर्णांक sun5i_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	अचिन्हित दीर्घ variant = (अचिन्हित दीर्घ)of_device_get_match_data(&pdev->dev);
+static int sun5i_pinctrl_probe(struct platform_device *pdev)
+{
+	unsigned long variant = (unsigned long)of_device_get_match_data(&pdev->dev);
 
-	वापस sunxi_pinctrl_init_with_variant(pdev, &sun5i_pinctrl_data,
+	return sunxi_pinctrl_init_with_variant(pdev, &sun5i_pinctrl_data,
 					       variant);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा of_device_id sun5i_pinctrl_match[] = अणु
-	अणु
+static const struct of_device_id sun5i_pinctrl_match[] = {
+	{
 		.compatible = "allwinner,sun5i-a10s-pinctrl",
-		.data = (व्योम *)PINCTRL_SUN5I_A10S
-	पूर्ण,
-	अणु
+		.data = (void *)PINCTRL_SUN5I_A10S
+	},
+	{
 		.compatible = "allwinner,sun5i-a13-pinctrl",
-		.data = (व्योम *)PINCTRL_SUN5I_A13
-	पूर्ण,
-	अणु
+		.data = (void *)PINCTRL_SUN5I_A13
+	},
+	{
 		.compatible = "nextthing,gr8-pinctrl",
-		.data = (व्योम *)PINCTRL_SUN5I_GR8
-	पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+		.data = (void *)PINCTRL_SUN5I_GR8
+	},
+	{ },
+};
 
-अटल काष्ठा platक्रमm_driver sun5i_pinctrl_driver = अणु
+static struct platform_driver sun5i_pinctrl_driver = {
 	.probe	= sun5i_pinctrl_probe,
-	.driver	= अणु
+	.driver	= {
 		.name		= "sun5i-pinctrl",
 		.of_match_table	= sun5i_pinctrl_match,
-	पूर्ण,
-पूर्ण;
-builtin_platक्रमm_driver(sun5i_pinctrl_driver);
+	},
+};
+builtin_platform_driver(sun5i_pinctrl_driver);

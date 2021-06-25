@@ -1,260 +1,259 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /* Copyright (c) 2017-2018 Mellanox Technologies. All rights reserved */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/netdevice.h>
-#समावेश <net/pkt_cls.h>
-#समावेश <net/red.h>
+#include <linux/kernel.h>
+#include <linux/errno.h>
+#include <linux/netdevice.h>
+#include <net/pkt_cls.h>
+#include <net/red.h>
 
-#समावेश "spectrum.h"
-#समावेश "spectrum_span.h"
-#समावेश "reg.h"
+#include "spectrum.h"
+#include "spectrum_span.h"
+#include "reg.h"
 
-#घोषणा MLXSW_SP_PRIO_BAND_TO_TCLASS(band) (IEEE_8021QAZ_MAX_TCS - band - 1)
-#घोषणा MLXSW_SP_PRIO_CHILD_TO_TCLASS(child) \
+#define MLXSW_SP_PRIO_BAND_TO_TCLASS(band) (IEEE_8021QAZ_MAX_TCS - band - 1)
+#define MLXSW_SP_PRIO_CHILD_TO_TCLASS(child) \
 	MLXSW_SP_PRIO_BAND_TO_TCLASS((child - 1))
 
-क्रमागत mlxsw_sp_qdisc_type अणु
+enum mlxsw_sp_qdisc_type {
 	MLXSW_SP_QDISC_NO_QDISC,
 	MLXSW_SP_QDISC_RED,
 	MLXSW_SP_QDISC_PRIO,
 	MLXSW_SP_QDISC_ETS,
 	MLXSW_SP_QDISC_TBF,
 	MLXSW_SP_QDISC_FIFO,
-पूर्ण;
+};
 
-काष्ठा mlxsw_sp_qdisc;
+struct mlxsw_sp_qdisc;
 
-काष्ठा mlxsw_sp_qdisc_ops अणु
-	क्रमागत mlxsw_sp_qdisc_type type;
-	पूर्णांक (*check_params)(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-			    व्योम *params);
-	पूर्णांक (*replace)(काष्ठा mlxsw_sp_port *mlxsw_sp_port, u32 handle,
-		       काष्ठा mlxsw_sp_qdisc *mlxsw_sp_qdisc, व्योम *params);
-	पूर्णांक (*destroy)(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-		       काष्ठा mlxsw_sp_qdisc *mlxsw_sp_qdisc);
-	पूर्णांक (*get_stats)(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-			 काष्ठा mlxsw_sp_qdisc *mlxsw_sp_qdisc,
-			 काष्ठा tc_qopt_offload_stats *stats_ptr);
-	पूर्णांक (*get_xstats)(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-			  काष्ठा mlxsw_sp_qdisc *mlxsw_sp_qdisc,
-			  व्योम *xstats_ptr);
-	व्योम (*clean_stats)(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-			    काष्ठा mlxsw_sp_qdisc *mlxsw_sp_qdisc);
-	/* unoffload - to be used क्रम a qdisc that stops being offloaded without
+struct mlxsw_sp_qdisc_ops {
+	enum mlxsw_sp_qdisc_type type;
+	int (*check_params)(struct mlxsw_sp_port *mlxsw_sp_port,
+			    void *params);
+	int (*replace)(struct mlxsw_sp_port *mlxsw_sp_port, u32 handle,
+		       struct mlxsw_sp_qdisc *mlxsw_sp_qdisc, void *params);
+	int (*destroy)(struct mlxsw_sp_port *mlxsw_sp_port,
+		       struct mlxsw_sp_qdisc *mlxsw_sp_qdisc);
+	int (*get_stats)(struct mlxsw_sp_port *mlxsw_sp_port,
+			 struct mlxsw_sp_qdisc *mlxsw_sp_qdisc,
+			 struct tc_qopt_offload_stats *stats_ptr);
+	int (*get_xstats)(struct mlxsw_sp_port *mlxsw_sp_port,
+			  struct mlxsw_sp_qdisc *mlxsw_sp_qdisc,
+			  void *xstats_ptr);
+	void (*clean_stats)(struct mlxsw_sp_port *mlxsw_sp_port,
+			    struct mlxsw_sp_qdisc *mlxsw_sp_qdisc);
+	/* unoffload - to be used for a qdisc that stops being offloaded without
 	 * being destroyed.
 	 */
-	व्योम (*unoffload)(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-			  काष्ठा mlxsw_sp_qdisc *mlxsw_sp_qdisc, व्योम *params);
-	काष्ठा mlxsw_sp_qdisc *(*find_class)(काष्ठा mlxsw_sp_qdisc *mlxsw_sp_qdisc,
+	void (*unoffload)(struct mlxsw_sp_port *mlxsw_sp_port,
+			  struct mlxsw_sp_qdisc *mlxsw_sp_qdisc, void *params);
+	struct mlxsw_sp_qdisc *(*find_class)(struct mlxsw_sp_qdisc *mlxsw_sp_qdisc,
 					     u32 parent);
-	अचिन्हित पूर्णांक num_classes;
-पूर्ण;
+	unsigned int num_classes;
+};
 
-काष्ठा mlxsw_sp_qdisc अणु
+struct mlxsw_sp_qdisc {
 	u32 handle;
-	पूर्णांक tclass_num;
-	u8 prio_biपंचांगap;
-	जोड़ अणु
-		काष्ठा red_stats red;
-	पूर्ण xstats_base;
-	काष्ठा mlxsw_sp_qdisc_stats अणु
+	int tclass_num;
+	u8 prio_bitmap;
+	union {
+		struct red_stats red;
+	} xstats_base;
+	struct mlxsw_sp_qdisc_stats {
 		u64 tx_bytes;
 		u64 tx_packets;
 		u64 drops;
 		u64 overlimits;
 		u64 backlog;
-	पूर्ण stats_base;
+	} stats_base;
 
-	काष्ठा mlxsw_sp_qdisc_ops *ops;
-	काष्ठा mlxsw_sp_qdisc *parent;
-	काष्ठा mlxsw_sp_qdisc *qdiscs;
-	अचिन्हित पूर्णांक num_classes;
-पूर्ण;
+	struct mlxsw_sp_qdisc_ops *ops;
+	struct mlxsw_sp_qdisc *parent;
+	struct mlxsw_sp_qdisc *qdiscs;
+	unsigned int num_classes;
+};
 
-काष्ठा mlxsw_sp_qdisc_state अणु
-	काष्ठा mlxsw_sp_qdisc root_qdisc;
+struct mlxsw_sp_qdisc_state {
+	struct mlxsw_sp_qdisc root_qdisc;
 
 	/* When a PRIO or ETS are added, the invisible FIFOs in their bands are
-	 * created first. When notअगरications क्रम these FIFOs arrive, it is not
+	 * created first. When notifications for these FIFOs arrive, it is not
 	 * known what qdisc their parent handle refers to. It could be a
 	 * newly-created PRIO that will replace the currently-offloaded one, or
 	 * it could be e.g. a RED that will be attached below it.
 	 *
-	 * As the notअगरications start to arrive, use them to note what the
+	 * As the notifications start to arrive, use them to note what the
 	 * future parent handle is, and keep track of which child FIFOs were
 	 * seen. Then when the parent is known, retroactively offload those
 	 * FIFOs.
 	 */
 	u32 future_handle;
-	bool future_fअगरos[IEEE_8021QAZ_MAX_TCS];
-	काष्ठा mutex lock; /* Protects qdisc state. */
-पूर्ण;
+	bool future_fifos[IEEE_8021QAZ_MAX_TCS];
+	struct mutex lock; /* Protects qdisc state. */
+};
 
-अटल bool
-mlxsw_sp_qdisc_compare(काष्ठा mlxsw_sp_qdisc *mlxsw_sp_qdisc, u32 handle)
-अणु
-	वापस mlxsw_sp_qdisc->ops && mlxsw_sp_qdisc->handle == handle;
-पूर्ण
+static bool
+mlxsw_sp_qdisc_compare(struct mlxsw_sp_qdisc *mlxsw_sp_qdisc, u32 handle)
+{
+	return mlxsw_sp_qdisc->ops && mlxsw_sp_qdisc->handle == handle;
+}
 
-अटल काष्ठा mlxsw_sp_qdisc *
-mlxsw_sp_qdisc_walk(काष्ठा mlxsw_sp_qdisc *qdisc,
-		    काष्ठा mlxsw_sp_qdisc *(*pre)(काष्ठा mlxsw_sp_qdisc *,
-						  व्योम *),
-		    व्योम *data)
-अणु
-	काष्ठा mlxsw_sp_qdisc *पंचांगp;
-	अचिन्हित पूर्णांक i;
+static struct mlxsw_sp_qdisc *
+mlxsw_sp_qdisc_walk(struct mlxsw_sp_qdisc *qdisc,
+		    struct mlxsw_sp_qdisc *(*pre)(struct mlxsw_sp_qdisc *,
+						  void *),
+		    void *data)
+{
+	struct mlxsw_sp_qdisc *tmp;
+	unsigned int i;
 
-	अगर (pre) अणु
-		पंचांगp = pre(qdisc, data);
-		अगर (पंचांगp)
-			वापस पंचांगp;
-	पूर्ण
+	if (pre) {
+		tmp = pre(qdisc, data);
+		if (tmp)
+			return tmp;
+	}
 
-	अगर (qdisc->ops) अणु
-		क्रम (i = 0; i < qdisc->num_classes; i++) अणु
-			पंचांगp = &qdisc->qdiscs[i];
-			अगर (qdisc->ops) अणु
-				पंचांगp = mlxsw_sp_qdisc_walk(पंचांगp, pre, data);
-				अगर (पंचांगp)
-					वापस पंचांगp;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+	if (qdisc->ops) {
+		for (i = 0; i < qdisc->num_classes; i++) {
+			tmp = &qdisc->qdiscs[i];
+			if (qdisc->ops) {
+				tmp = mlxsw_sp_qdisc_walk(tmp, pre, data);
+				if (tmp)
+					return tmp;
+			}
+		}
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा mlxsw_sp_qdisc *
-mlxsw_sp_qdisc_walk_cb_find(काष्ठा mlxsw_sp_qdisc *qdisc, व्योम *data)
-अणु
+static struct mlxsw_sp_qdisc *
+mlxsw_sp_qdisc_walk_cb_find(struct mlxsw_sp_qdisc *qdisc, void *data)
+{
 	u32 parent = *(u32 *)data;
 
-	अगर (qdisc->ops && TC_H_MAJ(qdisc->handle) == TC_H_MAJ(parent)) अणु
-		अगर (qdisc->ops->find_class)
-			वापस qdisc->ops->find_class(qdisc, parent);
-	पूर्ण
+	if (qdisc->ops && TC_H_MAJ(qdisc->handle) == TC_H_MAJ(parent)) {
+		if (qdisc->ops->find_class)
+			return qdisc->ops->find_class(qdisc, parent);
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा mlxsw_sp_qdisc *
-mlxsw_sp_qdisc_find(काष्ठा mlxsw_sp_port *mlxsw_sp_port, u32 parent,
+static struct mlxsw_sp_qdisc *
+mlxsw_sp_qdisc_find(struct mlxsw_sp_port *mlxsw_sp_port, u32 parent,
 		    bool root_only)
-अणु
-	काष्ठा mlxsw_sp_qdisc_state *qdisc_state = mlxsw_sp_port->qdisc;
+{
+	struct mlxsw_sp_qdisc_state *qdisc_state = mlxsw_sp_port->qdisc;
 
-	अगर (!qdisc_state)
-		वापस शून्य;
-	अगर (parent == TC_H_ROOT)
-		वापस &qdisc_state->root_qdisc;
-	अगर (root_only)
-		वापस शून्य;
-	वापस mlxsw_sp_qdisc_walk(&qdisc_state->root_qdisc,
+	if (!qdisc_state)
+		return NULL;
+	if (parent == TC_H_ROOT)
+		return &qdisc_state->root_qdisc;
+	if (root_only)
+		return NULL;
+	return mlxsw_sp_qdisc_walk(&qdisc_state->root_qdisc,
 				   mlxsw_sp_qdisc_walk_cb_find, &parent);
-पूर्ण
+}
 
-अटल काष्ठा mlxsw_sp_qdisc *
-mlxsw_sp_qdisc_walk_cb_find_by_handle(काष्ठा mlxsw_sp_qdisc *qdisc, व्योम *data)
-अणु
+static struct mlxsw_sp_qdisc *
+mlxsw_sp_qdisc_walk_cb_find_by_handle(struct mlxsw_sp_qdisc *qdisc, void *data)
+{
 	u32 handle = *(u32 *)data;
 
-	अगर (qdisc->ops && qdisc->handle == handle)
-		वापस qdisc;
-	वापस शून्य;
-पूर्ण
+	if (qdisc->ops && qdisc->handle == handle)
+		return qdisc;
+	return NULL;
+}
 
-अटल काष्ठा mlxsw_sp_qdisc *
-mlxsw_sp_qdisc_find_by_handle(काष्ठा mlxsw_sp_port *mlxsw_sp_port, u32 handle)
-अणु
-	काष्ठा mlxsw_sp_qdisc_state *qdisc_state = mlxsw_sp_port->qdisc;
+static struct mlxsw_sp_qdisc *
+mlxsw_sp_qdisc_find_by_handle(struct mlxsw_sp_port *mlxsw_sp_port, u32 handle)
+{
+	struct mlxsw_sp_qdisc_state *qdisc_state = mlxsw_sp_port->qdisc;
 
-	अगर (!qdisc_state)
-		वापस शून्य;
-	वापस mlxsw_sp_qdisc_walk(&qdisc_state->root_qdisc,
+	if (!qdisc_state)
+		return NULL;
+	return mlxsw_sp_qdisc_walk(&qdisc_state->root_qdisc,
 				   mlxsw_sp_qdisc_walk_cb_find_by_handle,
 				   &handle);
-पूर्ण
+}
 
-अटल व्योम
-mlxsw_sp_qdisc_reduce_parent_backlog(काष्ठा mlxsw_sp_qdisc *mlxsw_sp_qdisc)
-अणु
-	काष्ठा mlxsw_sp_qdisc *पंचांगp;
+static void
+mlxsw_sp_qdisc_reduce_parent_backlog(struct mlxsw_sp_qdisc *mlxsw_sp_qdisc)
+{
+	struct mlxsw_sp_qdisc *tmp;
 
-	क्रम (पंचांगp = mlxsw_sp_qdisc->parent; पंचांगp; पंचांगp = पंचांगp->parent)
-		पंचांगp->stats_base.backlog -= mlxsw_sp_qdisc->stats_base.backlog;
-पूर्ण
+	for (tmp = mlxsw_sp_qdisc->parent; tmp; tmp = tmp->parent)
+		tmp->stats_base.backlog -= mlxsw_sp_qdisc->stats_base.backlog;
+}
 
-अटल पूर्णांक
-mlxsw_sp_qdisc_destroy(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-		       काष्ठा mlxsw_sp_qdisc *mlxsw_sp_qdisc)
-अणु
-	काष्ठा mlxsw_sp_qdisc *root_qdisc = &mlxsw_sp_port->qdisc->root_qdisc;
-	पूर्णांक err_hdroom = 0;
-	पूर्णांक err = 0;
+static int
+mlxsw_sp_qdisc_destroy(struct mlxsw_sp_port *mlxsw_sp_port,
+		       struct mlxsw_sp_qdisc *mlxsw_sp_qdisc)
+{
+	struct mlxsw_sp_qdisc *root_qdisc = &mlxsw_sp_port->qdisc->root_qdisc;
+	int err_hdroom = 0;
+	int err = 0;
 
-	अगर (!mlxsw_sp_qdisc)
-		वापस 0;
+	if (!mlxsw_sp_qdisc)
+		return 0;
 
-	अगर (root_qdisc == mlxsw_sp_qdisc) अणु
-		काष्ठा mlxsw_sp_hdroom hdroom = *mlxsw_sp_port->hdroom;
+	if (root_qdisc == mlxsw_sp_qdisc) {
+		struct mlxsw_sp_hdroom hdroom = *mlxsw_sp_port->hdroom;
 
 		hdroom.mode = MLXSW_SP_HDROOM_MODE_DCB;
 		mlxsw_sp_hdroom_prios_reset_buf_idx(&hdroom);
 		mlxsw_sp_hdroom_bufs_reset_lossiness(&hdroom);
 		mlxsw_sp_hdroom_bufs_reset_sizes(mlxsw_sp_port, &hdroom);
 		err_hdroom = mlxsw_sp_hdroom_configure(mlxsw_sp_port, &hdroom);
-	पूर्ण
+	}
 
-	अगर (!mlxsw_sp_qdisc->ops)
-		वापस 0;
+	if (!mlxsw_sp_qdisc->ops)
+		return 0;
 
 	mlxsw_sp_qdisc_reduce_parent_backlog(mlxsw_sp_qdisc);
-	अगर (mlxsw_sp_qdisc->ops->destroy)
+	if (mlxsw_sp_qdisc->ops->destroy)
 		err = mlxsw_sp_qdisc->ops->destroy(mlxsw_sp_port,
 						   mlxsw_sp_qdisc);
-	अगर (mlxsw_sp_qdisc->ops->clean_stats)
+	if (mlxsw_sp_qdisc->ops->clean_stats)
 		mlxsw_sp_qdisc->ops->clean_stats(mlxsw_sp_port, mlxsw_sp_qdisc);
 
 	mlxsw_sp_qdisc->handle = TC_H_UNSPEC;
-	mlxsw_sp_qdisc->ops = शून्य;
+	mlxsw_sp_qdisc->ops = NULL;
 	mlxsw_sp_qdisc->num_classes = 0;
-	kमुक्त(mlxsw_sp_qdisc->qdiscs);
-	mlxsw_sp_qdisc->qdiscs = शून्य;
-	वापस err_hdroom ?: err;
-पूर्ण
+	kfree(mlxsw_sp_qdisc->qdiscs);
+	mlxsw_sp_qdisc->qdiscs = NULL;
+	return err_hdroom ?: err;
+}
 
-अटल पूर्णांक mlxsw_sp_qdisc_create(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
+static int mlxsw_sp_qdisc_create(struct mlxsw_sp_port *mlxsw_sp_port,
 				 u32 handle,
-				 काष्ठा mlxsw_sp_qdisc *mlxsw_sp_qdisc,
-				 काष्ठा mlxsw_sp_qdisc_ops *ops, व्योम *params)
-अणु
-	काष्ठा mlxsw_sp_qdisc *root_qdisc = &mlxsw_sp_port->qdisc->root_qdisc;
-	काष्ठा mlxsw_sp_hdroom orig_hdroom;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक err;
+				 struct mlxsw_sp_qdisc *mlxsw_sp_qdisc,
+				 struct mlxsw_sp_qdisc_ops *ops, void *params)
+{
+	struct mlxsw_sp_qdisc *root_qdisc = &mlxsw_sp_port->qdisc->root_qdisc;
+	struct mlxsw_sp_hdroom orig_hdroom;
+	unsigned int i;
+	int err;
 
 	err = ops->check_params(mlxsw_sp_port, params);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (ops->num_classes) अणु
-		mlxsw_sp_qdisc->qdiscs = kसुस्मृति(ops->num_classes,
-						 माप(*mlxsw_sp_qdisc->qdiscs),
+	if (ops->num_classes) {
+		mlxsw_sp_qdisc->qdiscs = kcalloc(ops->num_classes,
+						 sizeof(*mlxsw_sp_qdisc->qdiscs),
 						 GFP_KERNEL);
-		अगर (!mlxsw_sp_qdisc->qdiscs)
-			वापस -ENOMEM;
+		if (!mlxsw_sp_qdisc->qdiscs)
+			return -ENOMEM;
 
-		क्रम (i = 0; i < ops->num_classes; i++)
+		for (i = 0; i < ops->num_classes; i++)
 			mlxsw_sp_qdisc->qdiscs[i].parent = mlxsw_sp_qdisc;
-	पूर्ण
+	}
 
 	orig_hdroom = *mlxsw_sp_port->hdroom;
-	अगर (root_qdisc == mlxsw_sp_qdisc) अणु
-		काष्ठा mlxsw_sp_hdroom hdroom = orig_hdroom;
+	if (root_qdisc == mlxsw_sp_qdisc) {
+		struct mlxsw_sp_hdroom hdroom = orig_hdroom;
 
 		hdroom.mode = MLXSW_SP_HDROOM_MODE_TC;
 		mlxsw_sp_hdroom_prios_reset_buf_idx(&hdroom);
@@ -262,158 +261,158 @@ mlxsw_sp_qdisc_destroy(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
 		mlxsw_sp_hdroom_bufs_reset_sizes(mlxsw_sp_port, &hdroom);
 
 		err = mlxsw_sp_hdroom_configure(mlxsw_sp_port, &hdroom);
-		अगर (err)
-			जाओ err_hdroom_configure;
-	पूर्ण
+		if (err)
+			goto err_hdroom_configure;
+	}
 
 	mlxsw_sp_qdisc->num_classes = ops->num_classes;
 	mlxsw_sp_qdisc->ops = ops;
 	mlxsw_sp_qdisc->handle = handle;
 	err = ops->replace(mlxsw_sp_port, handle, mlxsw_sp_qdisc, params);
-	अगर (err)
-		जाओ err_replace;
+	if (err)
+		goto err_replace;
 
-	वापस 0;
+	return 0;
 
 err_replace:
 	mlxsw_sp_qdisc->handle = TC_H_UNSPEC;
-	mlxsw_sp_qdisc->ops = शून्य;
+	mlxsw_sp_qdisc->ops = NULL;
 	mlxsw_sp_qdisc->num_classes = 0;
 	mlxsw_sp_hdroom_configure(mlxsw_sp_port, &orig_hdroom);
 err_hdroom_configure:
-	kमुक्त(mlxsw_sp_qdisc->qdiscs);
-	mlxsw_sp_qdisc->qdiscs = शून्य;
-	वापस err;
-पूर्ण
+	kfree(mlxsw_sp_qdisc->qdiscs);
+	mlxsw_sp_qdisc->qdiscs = NULL;
+	return err;
+}
 
-अटल पूर्णांक
-mlxsw_sp_qdisc_change(काष्ठा mlxsw_sp_port *mlxsw_sp_port, u32 handle,
-		      काष्ठा mlxsw_sp_qdisc *mlxsw_sp_qdisc, व्योम *params)
-अणु
-	काष्ठा mlxsw_sp_qdisc_ops *ops = mlxsw_sp_qdisc->ops;
-	पूर्णांक err;
+static int
+mlxsw_sp_qdisc_change(struct mlxsw_sp_port *mlxsw_sp_port, u32 handle,
+		      struct mlxsw_sp_qdisc *mlxsw_sp_qdisc, void *params)
+{
+	struct mlxsw_sp_qdisc_ops *ops = mlxsw_sp_qdisc->ops;
+	int err;
 
 	err = ops->check_params(mlxsw_sp_port, params);
-	अगर (err)
-		जाओ unoffload;
+	if (err)
+		goto unoffload;
 
 	err = ops->replace(mlxsw_sp_port, handle, mlxsw_sp_qdisc, params);
-	अगर (err)
-		जाओ unoffload;
+	if (err)
+		goto unoffload;
 
-	/* Check अगर the Qdisc changed. That includes a situation where an
-	 * invisible Qdisc replaces another one, or is being added क्रम the
-	 * first समय.
+	/* Check if the Qdisc changed. That includes a situation where an
+	 * invisible Qdisc replaces another one, or is being added for the
+	 * first time.
 	 */
-	अगर (mlxsw_sp_qdisc->handle != handle) अणु
-		अगर (ops->clean_stats)
+	if (mlxsw_sp_qdisc->handle != handle) {
+		if (ops->clean_stats)
 			ops->clean_stats(mlxsw_sp_port, mlxsw_sp_qdisc);
-	पूर्ण
+	}
 
 	mlxsw_sp_qdisc->handle = handle;
-	वापस 0;
+	return 0;
 
 unoffload:
-	अगर (ops->unoffload)
+	if (ops->unoffload)
 		ops->unoffload(mlxsw_sp_port, mlxsw_sp_qdisc, params);
 
 	mlxsw_sp_qdisc_destroy(mlxsw_sp_port, mlxsw_sp_qdisc);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक
-mlxsw_sp_qdisc_replace(काष्ठा mlxsw_sp_port *mlxsw_sp_port, u32 handle,
-		       काष्ठा mlxsw_sp_qdisc *mlxsw_sp_qdisc,
-		       काष्ठा mlxsw_sp_qdisc_ops *ops, व्योम *params)
-अणु
-	अगर (mlxsw_sp_qdisc->ops && mlxsw_sp_qdisc->ops->type != ops->type)
-		/* In हाल this location contained a dअगरferent qdisc of the
+static int
+mlxsw_sp_qdisc_replace(struct mlxsw_sp_port *mlxsw_sp_port, u32 handle,
+		       struct mlxsw_sp_qdisc *mlxsw_sp_qdisc,
+		       struct mlxsw_sp_qdisc_ops *ops, void *params)
+{
+	if (mlxsw_sp_qdisc->ops && mlxsw_sp_qdisc->ops->type != ops->type)
+		/* In case this location contained a different qdisc of the
 		 * same type we can override the old qdisc configuration.
-		 * Otherwise, we need to हटाओ the old qdisc beक्रमe setting the
+		 * Otherwise, we need to remove the old qdisc before setting the
 		 * new one.
 		 */
 		mlxsw_sp_qdisc_destroy(mlxsw_sp_port, mlxsw_sp_qdisc);
 
-	अगर (!mlxsw_sp_qdisc->ops)
-		वापस mlxsw_sp_qdisc_create(mlxsw_sp_port, handle,
+	if (!mlxsw_sp_qdisc->ops)
+		return mlxsw_sp_qdisc_create(mlxsw_sp_port, handle,
 					     mlxsw_sp_qdisc, ops, params);
-	अन्यथा
-		वापस mlxsw_sp_qdisc_change(mlxsw_sp_port, handle,
+	else
+		return mlxsw_sp_qdisc_change(mlxsw_sp_port, handle,
 					     mlxsw_sp_qdisc, params);
-पूर्ण
+}
 
-अटल पूर्णांक
-mlxsw_sp_qdisc_get_stats(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-			 काष्ठा mlxsw_sp_qdisc *mlxsw_sp_qdisc,
-			 काष्ठा tc_qopt_offload_stats *stats_ptr)
-अणु
-	अगर (mlxsw_sp_qdisc && mlxsw_sp_qdisc->ops &&
+static int
+mlxsw_sp_qdisc_get_stats(struct mlxsw_sp_port *mlxsw_sp_port,
+			 struct mlxsw_sp_qdisc *mlxsw_sp_qdisc,
+			 struct tc_qopt_offload_stats *stats_ptr)
+{
+	if (mlxsw_sp_qdisc && mlxsw_sp_qdisc->ops &&
 	    mlxsw_sp_qdisc->ops->get_stats)
-		वापस mlxsw_sp_qdisc->ops->get_stats(mlxsw_sp_port,
+		return mlxsw_sp_qdisc->ops->get_stats(mlxsw_sp_port,
 						      mlxsw_sp_qdisc,
 						      stats_ptr);
 
-	वापस -EOPNOTSUPP;
-पूर्ण
+	return -EOPNOTSUPP;
+}
 
-अटल पूर्णांक
-mlxsw_sp_qdisc_get_xstats(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-			  काष्ठा mlxsw_sp_qdisc *mlxsw_sp_qdisc,
-			  व्योम *xstats_ptr)
-अणु
-	अगर (mlxsw_sp_qdisc && mlxsw_sp_qdisc->ops &&
+static int
+mlxsw_sp_qdisc_get_xstats(struct mlxsw_sp_port *mlxsw_sp_port,
+			  struct mlxsw_sp_qdisc *mlxsw_sp_qdisc,
+			  void *xstats_ptr)
+{
+	if (mlxsw_sp_qdisc && mlxsw_sp_qdisc->ops &&
 	    mlxsw_sp_qdisc->ops->get_xstats)
-		वापस mlxsw_sp_qdisc->ops->get_xstats(mlxsw_sp_port,
+		return mlxsw_sp_qdisc->ops->get_xstats(mlxsw_sp_port,
 						      mlxsw_sp_qdisc,
 						      xstats_ptr);
 
-	वापस -EOPNOTSUPP;
-पूर्ण
+	return -EOPNOTSUPP;
+}
 
-अटल u64
-mlxsw_sp_xstats_backlog(काष्ठा mlxsw_sp_port_xstats *xstats, पूर्णांक tclass_num)
-अणु
-	वापस xstats->backlog[tclass_num] +
+static u64
+mlxsw_sp_xstats_backlog(struct mlxsw_sp_port_xstats *xstats, int tclass_num)
+{
+	return xstats->backlog[tclass_num] +
 	       xstats->backlog[tclass_num + 8];
-पूर्ण
+}
 
-अटल u64
-mlxsw_sp_xstats_tail_drop(काष्ठा mlxsw_sp_port_xstats *xstats, पूर्णांक tclass_num)
-अणु
-	वापस xstats->tail_drop[tclass_num] +
+static u64
+mlxsw_sp_xstats_tail_drop(struct mlxsw_sp_port_xstats *xstats, int tclass_num)
+{
+	return xstats->tail_drop[tclass_num] +
 	       xstats->tail_drop[tclass_num + 8];
-पूर्ण
+}
 
-अटल व्योम
-mlxsw_sp_qdisc_bstats_per_priority_get(काष्ठा mlxsw_sp_port_xstats *xstats,
-				       u8 prio_biपंचांगap, u64 *tx_packets,
+static void
+mlxsw_sp_qdisc_bstats_per_priority_get(struct mlxsw_sp_port_xstats *xstats,
+				       u8 prio_bitmap, u64 *tx_packets,
 				       u64 *tx_bytes)
-अणु
-	पूर्णांक i;
+{
+	int i;
 
 	*tx_packets = 0;
 	*tx_bytes = 0;
-	क्रम (i = 0; i < IEEE_8021QAZ_MAX_TCS; i++) अणु
-		अगर (prio_biपंचांगap & BIT(i)) अणु
+	for (i = 0; i < IEEE_8021QAZ_MAX_TCS; i++) {
+		if (prio_bitmap & BIT(i)) {
 			*tx_packets += xstats->tx_packets[i];
 			*tx_bytes += xstats->tx_bytes[i];
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम
-mlxsw_sp_qdisc_collect_tc_stats(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-				काष्ठा mlxsw_sp_qdisc *mlxsw_sp_qdisc,
+static void
+mlxsw_sp_qdisc_collect_tc_stats(struct mlxsw_sp_port *mlxsw_sp_port,
+				struct mlxsw_sp_qdisc *mlxsw_sp_qdisc,
 				u64 *p_tx_bytes, u64 *p_tx_packets,
 				u64 *p_drops, u64 *p_backlog)
-अणु
-	पूर्णांक tclass_num = mlxsw_sp_qdisc->tclass_num;
-	काष्ठा mlxsw_sp_port_xstats *xstats;
+{
+	int tclass_num = mlxsw_sp_qdisc->tclass_num;
+	struct mlxsw_sp_port_xstats *xstats;
 	u64 tx_bytes, tx_packets;
 
 	xstats = &mlxsw_sp_port->periodic_hw_stats.xstats;
 	mlxsw_sp_qdisc_bstats_per_priority_get(xstats,
-					       mlxsw_sp_qdisc->prio_biपंचांगap,
+					       mlxsw_sp_qdisc->prio_bitmap,
 					       &tx_packets, &tx_bytes);
 
 	*p_tx_packets += tx_packets;
@@ -421,16 +420,16 @@ mlxsw_sp_qdisc_collect_tc_stats(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
 	*p_drops += xstats->wred_drop[tclass_num] +
 		    mlxsw_sp_xstats_tail_drop(xstats, tclass_num);
 	*p_backlog += mlxsw_sp_xstats_backlog(xstats, tclass_num);
-पूर्ण
+}
 
-अटल व्योम
-mlxsw_sp_qdisc_update_stats(काष्ठा mlxsw_sp *mlxsw_sp,
-			    काष्ठा mlxsw_sp_qdisc *mlxsw_sp_qdisc,
+static void
+mlxsw_sp_qdisc_update_stats(struct mlxsw_sp *mlxsw_sp,
+			    struct mlxsw_sp_qdisc *mlxsw_sp_qdisc,
 			    u64 tx_bytes, u64 tx_packets,
 			    u64 drops, u64 backlog,
-			    काष्ठा tc_qopt_offload_stats *stats_ptr)
-अणु
-	काष्ठा mlxsw_sp_qdisc_stats *stats_base = &mlxsw_sp_qdisc->stats_base;
+			    struct tc_qopt_offload_stats *stats_ptr)
+{
+	struct mlxsw_sp_qdisc_stats *stats_base = &mlxsw_sp_qdisc->stats_base;
 
 	tx_bytes -= stats_base->tx_bytes;
 	tx_packets -= stats_base->tx_packets;
@@ -445,13 +444,13 @@ mlxsw_sp_qdisc_update_stats(काष्ठा mlxsw_sp *mlxsw_sp,
 	stats_base->drops += drops;
 	stats_base->tx_bytes += tx_bytes;
 	stats_base->tx_packets += tx_packets;
-पूर्ण
+}
 
-अटल व्योम
-mlxsw_sp_qdisc_get_tc_stats(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-			    काष्ठा mlxsw_sp_qdisc *mlxsw_sp_qdisc,
-			    काष्ठा tc_qopt_offload_stats *stats_ptr)
-अणु
+static void
+mlxsw_sp_qdisc_get_tc_stats(struct mlxsw_sp_port *mlxsw_sp_port,
+			    struct mlxsw_sp_qdisc *mlxsw_sp_qdisc,
+			    struct tc_qopt_offload_stats *stats_ptr)
+{
 	u64 tx_packets = 0;
 	u64 tx_bytes = 0;
 	u64 backlog = 0;
@@ -463,61 +462,61 @@ mlxsw_sp_qdisc_get_tc_stats(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
 	mlxsw_sp_qdisc_update_stats(mlxsw_sp_port->mlxsw_sp, mlxsw_sp_qdisc,
 				    tx_bytes, tx_packets, drops, backlog,
 				    stats_ptr);
-पूर्ण
+}
 
-अटल पूर्णांक
-mlxsw_sp_tclass_congestion_enable(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-				  पूर्णांक tclass_num, u32 min, u32 max,
+static int
+mlxsw_sp_tclass_congestion_enable(struct mlxsw_sp_port *mlxsw_sp_port,
+				  int tclass_num, u32 min, u32 max,
 				  u32 probability, bool is_wred, bool is_ecn)
-अणु
-	अक्षर cwtpm_cmd[MLXSW_REG_CWTPM_LEN];
-	अक्षर cwtp_cmd[MLXSW_REG_CWTP_LEN];
-	काष्ठा mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
-	पूर्णांक err;
+{
+	char cwtpm_cmd[MLXSW_REG_CWTPM_LEN];
+	char cwtp_cmd[MLXSW_REG_CWTP_LEN];
+	struct mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
+	int err;
 
 	mlxsw_reg_cwtp_pack(cwtp_cmd, mlxsw_sp_port->local_port, tclass_num);
-	mlxsw_reg_cwtp_profile_pack(cwtp_cmd, MLXSW_REG_CWTP_DEFAULT_PROखाता,
+	mlxsw_reg_cwtp_profile_pack(cwtp_cmd, MLXSW_REG_CWTP_DEFAULT_PROFILE,
 				    roundup(min, MLXSW_REG_CWTP_MIN_VALUE),
 				    roundup(max, MLXSW_REG_CWTP_MIN_VALUE),
 				    probability);
 
-	err = mlxsw_reg_ग_लिखो(mlxsw_sp->core, MLXSW_REG(cwtp), cwtp_cmd);
-	अगर (err)
-		वापस err;
+	err = mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(cwtp), cwtp_cmd);
+	if (err)
+		return err;
 
 	mlxsw_reg_cwtpm_pack(cwtpm_cmd, mlxsw_sp_port->local_port, tclass_num,
-			     MLXSW_REG_CWTP_DEFAULT_PROखाता, is_wred, is_ecn);
+			     MLXSW_REG_CWTP_DEFAULT_PROFILE, is_wred, is_ecn);
 
-	वापस mlxsw_reg_ग_लिखो(mlxsw_sp->core, MLXSW_REG(cwtpm), cwtpm_cmd);
-पूर्ण
+	return mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(cwtpm), cwtpm_cmd);
+}
 
-अटल पूर्णांक
-mlxsw_sp_tclass_congestion_disable(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-				   पूर्णांक tclass_num)
-अणु
-	काष्ठा mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
-	अक्षर cwtpm_cmd[MLXSW_REG_CWTPM_LEN];
+static int
+mlxsw_sp_tclass_congestion_disable(struct mlxsw_sp_port *mlxsw_sp_port,
+				   int tclass_num)
+{
+	struct mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
+	char cwtpm_cmd[MLXSW_REG_CWTPM_LEN];
 
 	mlxsw_reg_cwtpm_pack(cwtpm_cmd, mlxsw_sp_port->local_port, tclass_num,
-			     MLXSW_REG_CWTPM_RESET_PROखाता, false, false);
-	वापस mlxsw_reg_ग_लिखो(mlxsw_sp->core, MLXSW_REG(cwtpm), cwtpm_cmd);
-पूर्ण
+			     MLXSW_REG_CWTPM_RESET_PROFILE, false, false);
+	return mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(cwtpm), cwtpm_cmd);
+}
 
-अटल व्योम
-mlxsw_sp_setup_tc_qdisc_red_clean_stats(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-					काष्ठा mlxsw_sp_qdisc *mlxsw_sp_qdisc)
-अणु
-	पूर्णांक tclass_num = mlxsw_sp_qdisc->tclass_num;
-	काष्ठा mlxsw_sp_qdisc_stats *stats_base;
-	काष्ठा mlxsw_sp_port_xstats *xstats;
-	काष्ठा red_stats *red_base;
+static void
+mlxsw_sp_setup_tc_qdisc_red_clean_stats(struct mlxsw_sp_port *mlxsw_sp_port,
+					struct mlxsw_sp_qdisc *mlxsw_sp_qdisc)
+{
+	int tclass_num = mlxsw_sp_qdisc->tclass_num;
+	struct mlxsw_sp_qdisc_stats *stats_base;
+	struct mlxsw_sp_port_xstats *xstats;
+	struct red_stats *red_base;
 
 	xstats = &mlxsw_sp_port->periodic_hw_stats.xstats;
 	stats_base = &mlxsw_sp_qdisc->stats_base;
 	red_base = &mlxsw_sp_qdisc->xstats_base.red;
 
 	mlxsw_sp_qdisc_bstats_per_priority_get(xstats,
-					       mlxsw_sp_qdisc->prio_biपंचांगap,
+					       mlxsw_sp_qdisc->prio_bitmap,
 					       &stats_base->tx_packets,
 					       &stats_base->tx_bytes);
 	red_base->prob_drop = xstats->wred_drop[tclass_num];
@@ -527,51 +526,51 @@ mlxsw_sp_setup_tc_qdisc_red_clean_stats(काष्ठा mlxsw_sp_port *mlxsw_
 	stats_base->drops = red_base->prob_drop + red_base->pdrop;
 
 	stats_base->backlog = 0;
-पूर्ण
+}
 
-अटल पूर्णांक
-mlxsw_sp_qdisc_red_destroy(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-			   काष्ठा mlxsw_sp_qdisc *mlxsw_sp_qdisc)
-अणु
-	वापस mlxsw_sp_tclass_congestion_disable(mlxsw_sp_port,
+static int
+mlxsw_sp_qdisc_red_destroy(struct mlxsw_sp_port *mlxsw_sp_port,
+			   struct mlxsw_sp_qdisc *mlxsw_sp_qdisc)
+{
+	return mlxsw_sp_tclass_congestion_disable(mlxsw_sp_port,
 						  mlxsw_sp_qdisc->tclass_num);
-पूर्ण
+}
 
-अटल पूर्णांक
-mlxsw_sp_qdisc_red_check_params(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-				व्योम *params)
-अणु
-	काष्ठा mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
-	काष्ठा tc_red_qopt_offload_params *p = params;
+static int
+mlxsw_sp_qdisc_red_check_params(struct mlxsw_sp_port *mlxsw_sp_port,
+				void *params)
+{
+	struct mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
+	struct tc_red_qopt_offload_params *p = params;
 
-	अगर (p->min > p->max) अणु
+	if (p->min > p->max) {
 		dev_err(mlxsw_sp->bus_info->dev,
 			"spectrum: RED: min %u is bigger then max %u\n", p->min,
 			p->max);
-		वापस -EINVAL;
-	पूर्ण
-	अगर (p->max > MLXSW_CORE_RES_GET(mlxsw_sp->core,
-					GUARANTEED_SHARED_BUFFER)) अणु
+		return -EINVAL;
+	}
+	if (p->max > MLXSW_CORE_RES_GET(mlxsw_sp->core,
+					GUARANTEED_SHARED_BUFFER)) {
 		dev_err(mlxsw_sp->bus_info->dev,
 			"spectrum: RED: max value %u is too big\n", p->max);
-		वापस -EINVAL;
-	पूर्ण
-	अगर (p->min == 0 || p->max == 0) अणु
+		return -EINVAL;
+	}
+	if (p->min == 0 || p->max == 0) {
 		dev_err(mlxsw_sp->bus_info->dev,
 			"spectrum: RED: 0 value is illegal for min and max\n");
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EINVAL;
+	}
+	return 0;
+}
 
-अटल पूर्णांक
-mlxsw_sp_qdisc_red_replace(काष्ठा mlxsw_sp_port *mlxsw_sp_port, u32 handle,
-			   काष्ठा mlxsw_sp_qdisc *mlxsw_sp_qdisc,
-			   व्योम *params)
-अणु
-	काष्ठा mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
-	काष्ठा tc_red_qopt_offload_params *p = params;
-	पूर्णांक tclass_num = mlxsw_sp_qdisc->tclass_num;
+static int
+mlxsw_sp_qdisc_red_replace(struct mlxsw_sp_port *mlxsw_sp_port, u32 handle,
+			   struct mlxsw_sp_qdisc *mlxsw_sp_qdisc,
+			   void *params)
+{
+	struct mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
+	struct tc_red_qopt_offload_params *p = params;
+	int tclass_num = mlxsw_sp_qdisc->tclass_num;
 	u32 min, max;
 	u64 prob;
 
@@ -582,44 +581,44 @@ mlxsw_sp_qdisc_red_replace(काष्ठा mlxsw_sp_port *mlxsw_sp_port, u32 
 	prob = DIV_ROUND_UP(prob, 1 << 16);
 	min = mlxsw_sp_bytes_cells(mlxsw_sp, p->min);
 	max = mlxsw_sp_bytes_cells(mlxsw_sp, p->max);
-	वापस mlxsw_sp_tclass_congestion_enable(mlxsw_sp_port, tclass_num,
+	return mlxsw_sp_tclass_congestion_enable(mlxsw_sp_port, tclass_num,
 						 min, max, prob,
 						 !p->is_nodrop, p->is_ecn);
-पूर्ण
+}
 
-अटल व्योम
-mlxsw_sp_qdisc_leaf_unoffload(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-			      काष्ठा mlxsw_sp_qdisc *mlxsw_sp_qdisc,
-			      काष्ठा gnet_stats_queue *qstats)
-अणु
+static void
+mlxsw_sp_qdisc_leaf_unoffload(struct mlxsw_sp_port *mlxsw_sp_port,
+			      struct mlxsw_sp_qdisc *mlxsw_sp_qdisc,
+			      struct gnet_stats_queue *qstats)
+{
 	u64 backlog;
 
 	backlog = mlxsw_sp_cells_bytes(mlxsw_sp_port->mlxsw_sp,
 				       mlxsw_sp_qdisc->stats_base.backlog);
 	qstats->backlog -= backlog;
 	mlxsw_sp_qdisc->stats_base.backlog = 0;
-पूर्ण
+}
 
-अटल व्योम
-mlxsw_sp_qdisc_red_unoffload(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-			     काष्ठा mlxsw_sp_qdisc *mlxsw_sp_qdisc,
-			     व्योम *params)
-अणु
-	काष्ठा tc_red_qopt_offload_params *p = params;
+static void
+mlxsw_sp_qdisc_red_unoffload(struct mlxsw_sp_port *mlxsw_sp_port,
+			     struct mlxsw_sp_qdisc *mlxsw_sp_qdisc,
+			     void *params)
+{
+	struct tc_red_qopt_offload_params *p = params;
 
 	mlxsw_sp_qdisc_leaf_unoffload(mlxsw_sp_port, mlxsw_sp_qdisc, p->qstats);
-पूर्ण
+}
 
-अटल पूर्णांक
-mlxsw_sp_qdisc_get_red_xstats(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-			      काष्ठा mlxsw_sp_qdisc *mlxsw_sp_qdisc,
-			      व्योम *xstats_ptr)
-अणु
-	काष्ठा red_stats *xstats_base = &mlxsw_sp_qdisc->xstats_base.red;
-	पूर्णांक tclass_num = mlxsw_sp_qdisc->tclass_num;
-	काष्ठा mlxsw_sp_port_xstats *xstats;
-	काष्ठा red_stats *res = xstats_ptr;
-	पूर्णांक early_drops, pdrops;
+static int
+mlxsw_sp_qdisc_get_red_xstats(struct mlxsw_sp_port *mlxsw_sp_port,
+			      struct mlxsw_sp_qdisc *mlxsw_sp_qdisc,
+			      void *xstats_ptr)
+{
+	struct red_stats *xstats_base = &mlxsw_sp_qdisc->xstats_base.red;
+	int tclass_num = mlxsw_sp_qdisc->tclass_num;
+	struct mlxsw_sp_port_xstats *xstats;
+	struct red_stats *res = xstats_ptr;
+	int early_drops, pdrops;
 
 	xstats = &mlxsw_sp_port->periodic_hw_stats.xstats;
 
@@ -632,17 +631,17 @@ mlxsw_sp_qdisc_get_red_xstats(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
 
 	xstats_base->pdrop += pdrops;
 	xstats_base->prob_drop += early_drops;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-mlxsw_sp_qdisc_get_red_stats(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-			     काष्ठा mlxsw_sp_qdisc *mlxsw_sp_qdisc,
-			     काष्ठा tc_qopt_offload_stats *stats_ptr)
-अणु
-	पूर्णांक tclass_num = mlxsw_sp_qdisc->tclass_num;
-	काष्ठा mlxsw_sp_qdisc_stats *stats_base;
-	काष्ठा mlxsw_sp_port_xstats *xstats;
+static int
+mlxsw_sp_qdisc_get_red_stats(struct mlxsw_sp_port *mlxsw_sp_port,
+			     struct mlxsw_sp_qdisc *mlxsw_sp_qdisc,
+			     struct tc_qopt_offload_stats *stats_ptr)
+{
+	int tclass_num = mlxsw_sp_qdisc->tclass_num;
+	struct mlxsw_sp_qdisc_stats *stats_base;
+	struct mlxsw_sp_port_xstats *xstats;
 	u64 overlimits;
 
 	xstats = &mlxsw_sp_port->periodic_hw_stats.xstats;
@@ -654,19 +653,19 @@ mlxsw_sp_qdisc_get_red_stats(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
 	stats_ptr->qstats->overlimits += overlimits;
 	stats_base->overlimits += overlimits;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा mlxsw_sp_qdisc *
-mlxsw_sp_qdisc_leaf_find_class(काष्ठा mlxsw_sp_qdisc *mlxsw_sp_qdisc,
+static struct mlxsw_sp_qdisc *
+mlxsw_sp_qdisc_leaf_find_class(struct mlxsw_sp_qdisc *mlxsw_sp_qdisc,
 			       u32 parent)
-अणु
-	वापस शून्य;
-पूर्ण
+{
+	return NULL;
+}
 
-#घोषणा MLXSW_SP_PORT_DEFAULT_TCLASS 0
+#define MLXSW_SP_PORT_DEFAULT_TCLASS 0
 
-अटल काष्ठा mlxsw_sp_qdisc_ops mlxsw_sp_qdisc_ops_red = अणु
+static struct mlxsw_sp_qdisc_ops mlxsw_sp_qdisc_ops_red = {
 	.type = MLXSW_SP_QDISC_RED,
 	.check_params = mlxsw_sp_qdisc_red_check_params,
 	.replace = mlxsw_sp_qdisc_red_replace,
@@ -676,56 +675,56 @@ mlxsw_sp_qdisc_leaf_find_class(काष्ठा mlxsw_sp_qdisc *mlxsw_sp_qdisc
 	.get_xstats = mlxsw_sp_qdisc_get_red_xstats,
 	.clean_stats = mlxsw_sp_setup_tc_qdisc_red_clean_stats,
 	.find_class = mlxsw_sp_qdisc_leaf_find_class,
-पूर्ण;
+};
 
-अटल पूर्णांक __mlxsw_sp_setup_tc_red(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-				   काष्ठा tc_red_qopt_offload *p)
-अणु
-	काष्ठा mlxsw_sp_qdisc *mlxsw_sp_qdisc;
+static int __mlxsw_sp_setup_tc_red(struct mlxsw_sp_port *mlxsw_sp_port,
+				   struct tc_red_qopt_offload *p)
+{
+	struct mlxsw_sp_qdisc *mlxsw_sp_qdisc;
 
 	mlxsw_sp_qdisc = mlxsw_sp_qdisc_find(mlxsw_sp_port, p->parent, false);
-	अगर (!mlxsw_sp_qdisc)
-		वापस -EOPNOTSUPP;
+	if (!mlxsw_sp_qdisc)
+		return -EOPNOTSUPP;
 
-	अगर (p->command == TC_RED_REPLACE)
-		वापस mlxsw_sp_qdisc_replace(mlxsw_sp_port, p->handle,
+	if (p->command == TC_RED_REPLACE)
+		return mlxsw_sp_qdisc_replace(mlxsw_sp_port, p->handle,
 					      mlxsw_sp_qdisc,
 					      &mlxsw_sp_qdisc_ops_red,
 					      &p->set);
 
-	अगर (!mlxsw_sp_qdisc_compare(mlxsw_sp_qdisc, p->handle))
-		वापस -EOPNOTSUPP;
+	if (!mlxsw_sp_qdisc_compare(mlxsw_sp_qdisc, p->handle))
+		return -EOPNOTSUPP;
 
-	चयन (p->command) अणु
-	हाल TC_RED_DESTROY:
-		वापस mlxsw_sp_qdisc_destroy(mlxsw_sp_port, mlxsw_sp_qdisc);
-	हाल TC_RED_XSTATS:
-		वापस mlxsw_sp_qdisc_get_xstats(mlxsw_sp_port, mlxsw_sp_qdisc,
+	switch (p->command) {
+	case TC_RED_DESTROY:
+		return mlxsw_sp_qdisc_destroy(mlxsw_sp_port, mlxsw_sp_qdisc);
+	case TC_RED_XSTATS:
+		return mlxsw_sp_qdisc_get_xstats(mlxsw_sp_port, mlxsw_sp_qdisc,
 						 p->xstats);
-	हाल TC_RED_STATS:
-		वापस mlxsw_sp_qdisc_get_stats(mlxsw_sp_port, mlxsw_sp_qdisc,
+	case TC_RED_STATS:
+		return mlxsw_sp_qdisc_get_stats(mlxsw_sp_port, mlxsw_sp_qdisc,
 						&p->stats);
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+	default:
+		return -EOPNOTSUPP;
+	}
+}
 
-पूर्णांक mlxsw_sp_setup_tc_red(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-			  काष्ठा tc_red_qopt_offload *p)
-अणु
-	पूर्णांक err;
+int mlxsw_sp_setup_tc_red(struct mlxsw_sp_port *mlxsw_sp_port,
+			  struct tc_red_qopt_offload *p)
+{
+	int err;
 
 	mutex_lock(&mlxsw_sp_port->qdisc->lock);
 	err = __mlxsw_sp_setup_tc_red(mlxsw_sp_port, p);
 	mutex_unlock(&mlxsw_sp_port->qdisc->lock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम
-mlxsw_sp_setup_tc_qdisc_leaf_clean_stats(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-					 काष्ठा mlxsw_sp_qdisc *mlxsw_sp_qdisc)
-अणु
+static void
+mlxsw_sp_setup_tc_qdisc_leaf_clean_stats(struct mlxsw_sp_port *mlxsw_sp_port,
+					 struct mlxsw_sp_qdisc *mlxsw_sp_qdisc)
+{
 	u64 backlog_cells = 0;
 	u64 tx_packets = 0;
 	u64 tx_bytes = 0;
@@ -739,78 +738,78 @@ mlxsw_sp_setup_tc_qdisc_leaf_clean_stats(काष्ठा mlxsw_sp_port *mlxsw
 	mlxsw_sp_qdisc->stats_base.tx_bytes = tx_bytes;
 	mlxsw_sp_qdisc->stats_base.drops = drops;
 	mlxsw_sp_qdisc->stats_base.backlog = 0;
-पूर्ण
+}
 
-अटल पूर्णांक
-mlxsw_sp_qdisc_tbf_destroy(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-			   काष्ठा mlxsw_sp_qdisc *mlxsw_sp_qdisc)
-अणु
-	वापस mlxsw_sp_port_ets_maxrate_set(mlxsw_sp_port,
+static int
+mlxsw_sp_qdisc_tbf_destroy(struct mlxsw_sp_port *mlxsw_sp_port,
+			   struct mlxsw_sp_qdisc *mlxsw_sp_qdisc)
+{
+	return mlxsw_sp_port_ets_maxrate_set(mlxsw_sp_port,
 					     MLXSW_REG_QEEC_HR_SUBGROUP,
 					     mlxsw_sp_qdisc->tclass_num, 0,
 					     MLXSW_REG_QEEC_MAS_DIS, 0);
-पूर्ण
+}
 
-अटल पूर्णांक
-mlxsw_sp_qdisc_tbf_bs(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
+static int
+mlxsw_sp_qdisc_tbf_bs(struct mlxsw_sp_port *mlxsw_sp_port,
 		      u32 max_size, u8 *p_burst_size)
-अणु
+{
 	/* TBF burst size is configured in bytes. The ASIC burst size value is
 	 * ((2 ^ bs) * 512 bits. Convert the TBF bytes to 512-bit units.
 	 */
 	u32 bs512 = max_size / 64;
 	u8 bs = fls(bs512);
 
-	अगर (!bs)
-		वापस -EINVAL;
+	if (!bs)
+		return -EINVAL;
 	--bs;
 
-	/* Demand a घातer of two. */
-	अगर ((1 << bs) != bs512)
-		वापस -EINVAL;
+	/* Demand a power of two. */
+	if ((1 << bs) != bs512)
+		return -EINVAL;
 
-	अगर (bs < mlxsw_sp_port->mlxsw_sp->lowest_shaper_bs ||
+	if (bs < mlxsw_sp_port->mlxsw_sp->lowest_shaper_bs ||
 	    bs > MLXSW_REG_QEEC_HIGHEST_SHAPER_BS)
-		वापस -EINVAL;
+		return -EINVAL;
 
 	*p_burst_size = bs;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u32
+static u32
 mlxsw_sp_qdisc_tbf_max_size(u8 bs)
-अणु
-	वापस (1U << bs) * 64;
-पूर्ण
+{
+	return (1U << bs) * 64;
+}
 
-अटल u64
-mlxsw_sp_qdisc_tbf_rate_kbps(काष्ठा tc_tbf_qopt_offload_replace_params *p)
-अणु
-	/* TBF पूर्णांकerface is in bytes/s, whereas Spectrum ASIC is configured in
+static u64
+mlxsw_sp_qdisc_tbf_rate_kbps(struct tc_tbf_qopt_offload_replace_params *p)
+{
+	/* TBF interface is in bytes/s, whereas Spectrum ASIC is configured in
 	 * Kbits/s.
 	 */
-	वापस भाग_u64(p->rate.rate_bytes_ps, 1000) * 8;
-पूर्ण
+	return div_u64(p->rate.rate_bytes_ps, 1000) * 8;
+}
 
-अटल पूर्णांक
-mlxsw_sp_qdisc_tbf_check_params(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-				व्योम *params)
-अणु
-	काष्ठा tc_tbf_qopt_offload_replace_params *p = params;
-	काष्ठा mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
+static int
+mlxsw_sp_qdisc_tbf_check_params(struct mlxsw_sp_port *mlxsw_sp_port,
+				void *params)
+{
+	struct tc_tbf_qopt_offload_replace_params *p = params;
+	struct mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
 	u64 rate_kbps = mlxsw_sp_qdisc_tbf_rate_kbps(p);
 	u8 burst_size;
-	पूर्णांक err;
+	int err;
 
-	अगर (rate_kbps >= MLXSW_REG_QEEC_MAS_DIS) अणु
+	if (rate_kbps >= MLXSW_REG_QEEC_MAS_DIS) {
 		dev_err(mlxsw_sp_port->mlxsw_sp->bus_info->dev,
 			"spectrum: TBF: rate of %lluKbps must be below %u\n",
 			rate_kbps, MLXSW_REG_QEEC_MAS_DIS);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	err = mlxsw_sp_qdisc_tbf_bs(mlxsw_sp_port, p->max_size, &burst_size);
-	अगर (err) अणु
+	if (err) {
 		u8 highest_shaper_bs = MLXSW_REG_QEEC_HIGHEST_SHAPER_BS;
 
 		dev_err(mlxsw_sp->bus_info->dev,
@@ -818,62 +817,62 @@ mlxsw_sp_qdisc_tbf_check_params(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
 			p->max_size,
 			mlxsw_sp_qdisc_tbf_max_size(mlxsw_sp->lowest_shaper_bs),
 			mlxsw_sp_qdisc_tbf_max_size(highest_shaper_bs));
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-mlxsw_sp_qdisc_tbf_replace(काष्ठा mlxsw_sp_port *mlxsw_sp_port, u32 handle,
-			   काष्ठा mlxsw_sp_qdisc *mlxsw_sp_qdisc,
-			   व्योम *params)
-अणु
-	काष्ठा tc_tbf_qopt_offload_replace_params *p = params;
+static int
+mlxsw_sp_qdisc_tbf_replace(struct mlxsw_sp_port *mlxsw_sp_port, u32 handle,
+			   struct mlxsw_sp_qdisc *mlxsw_sp_qdisc,
+			   void *params)
+{
+	struct tc_tbf_qopt_offload_replace_params *p = params;
 	u64 rate_kbps = mlxsw_sp_qdisc_tbf_rate_kbps(p);
 	u8 burst_size;
-	पूर्णांक err;
+	int err;
 
 	err = mlxsw_sp_qdisc_tbf_bs(mlxsw_sp_port, p->max_size, &burst_size);
-	अगर (WARN_ON_ONCE(err))
+	if (WARN_ON_ONCE(err))
 		/* check_params above was supposed to reject this value. */
-		वापस -EINVAL;
+		return -EINVAL;
 
 	/* Configure subgroup shaper, so that both UC and MC traffic is subject
 	 * to shaping. That is unlike RED, however UC queue lengths are going to
-	 * be dअगरferent than MC ones due to dअगरferent pool and quota
+	 * be different than MC ones due to different pool and quota
 	 * configurations, so the configuration is not applicable. For shaper on
 	 * the other hand, subjecting the overall stream to the configured
-	 * shaper makes sense. Also note that that is what we करो क्रम
-	 * ieee_seपंचांगaxrate().
+	 * shaper makes sense. Also note that that is what we do for
+	 * ieee_setmaxrate().
 	 */
-	वापस mlxsw_sp_port_ets_maxrate_set(mlxsw_sp_port,
+	return mlxsw_sp_port_ets_maxrate_set(mlxsw_sp_port,
 					     MLXSW_REG_QEEC_HR_SUBGROUP,
 					     mlxsw_sp_qdisc->tclass_num, 0,
 					     rate_kbps, burst_size);
-पूर्ण
+}
 
-अटल व्योम
-mlxsw_sp_qdisc_tbf_unoffload(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-			     काष्ठा mlxsw_sp_qdisc *mlxsw_sp_qdisc,
-			     व्योम *params)
-अणु
-	काष्ठा tc_tbf_qopt_offload_replace_params *p = params;
+static void
+mlxsw_sp_qdisc_tbf_unoffload(struct mlxsw_sp_port *mlxsw_sp_port,
+			     struct mlxsw_sp_qdisc *mlxsw_sp_qdisc,
+			     void *params)
+{
+	struct tc_tbf_qopt_offload_replace_params *p = params;
 
 	mlxsw_sp_qdisc_leaf_unoffload(mlxsw_sp_port, mlxsw_sp_qdisc, p->qstats);
-पूर्ण
+}
 
-अटल पूर्णांक
-mlxsw_sp_qdisc_get_tbf_stats(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-			     काष्ठा mlxsw_sp_qdisc *mlxsw_sp_qdisc,
-			     काष्ठा tc_qopt_offload_stats *stats_ptr)
-अणु
+static int
+mlxsw_sp_qdisc_get_tbf_stats(struct mlxsw_sp_port *mlxsw_sp_port,
+			     struct mlxsw_sp_qdisc *mlxsw_sp_qdisc,
+			     struct tc_qopt_offload_stats *stats_ptr)
+{
 	mlxsw_sp_qdisc_get_tc_stats(mlxsw_sp_port, mlxsw_sp_qdisc,
 				    stats_ptr);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा mlxsw_sp_qdisc_ops mlxsw_sp_qdisc_ops_tbf = अणु
+static struct mlxsw_sp_qdisc_ops mlxsw_sp_qdisc_ops_tbf = {
 	.type = MLXSW_SP_QDISC_TBF,
 	.check_params = mlxsw_sp_qdisc_tbf_check_params,
 	.replace = mlxsw_sp_qdisc_tbf_replace,
@@ -882,153 +881,153 @@ mlxsw_sp_qdisc_get_tbf_stats(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
 	.get_stats = mlxsw_sp_qdisc_get_tbf_stats,
 	.clean_stats = mlxsw_sp_setup_tc_qdisc_leaf_clean_stats,
 	.find_class = mlxsw_sp_qdisc_leaf_find_class,
-पूर्ण;
+};
 
-अटल पूर्णांक __mlxsw_sp_setup_tc_tbf(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-				   काष्ठा tc_tbf_qopt_offload *p)
-अणु
-	काष्ठा mlxsw_sp_qdisc *mlxsw_sp_qdisc;
+static int __mlxsw_sp_setup_tc_tbf(struct mlxsw_sp_port *mlxsw_sp_port,
+				   struct tc_tbf_qopt_offload *p)
+{
+	struct mlxsw_sp_qdisc *mlxsw_sp_qdisc;
 
 	mlxsw_sp_qdisc = mlxsw_sp_qdisc_find(mlxsw_sp_port, p->parent, false);
-	अगर (!mlxsw_sp_qdisc)
-		वापस -EOPNOTSUPP;
+	if (!mlxsw_sp_qdisc)
+		return -EOPNOTSUPP;
 
-	अगर (p->command == TC_TBF_REPLACE)
-		वापस mlxsw_sp_qdisc_replace(mlxsw_sp_port, p->handle,
+	if (p->command == TC_TBF_REPLACE)
+		return mlxsw_sp_qdisc_replace(mlxsw_sp_port, p->handle,
 					      mlxsw_sp_qdisc,
 					      &mlxsw_sp_qdisc_ops_tbf,
 					      &p->replace_params);
 
-	अगर (!mlxsw_sp_qdisc_compare(mlxsw_sp_qdisc, p->handle))
-		वापस -EOPNOTSUPP;
+	if (!mlxsw_sp_qdisc_compare(mlxsw_sp_qdisc, p->handle))
+		return -EOPNOTSUPP;
 
-	चयन (p->command) अणु
-	हाल TC_TBF_DESTROY:
-		वापस mlxsw_sp_qdisc_destroy(mlxsw_sp_port, mlxsw_sp_qdisc);
-	हाल TC_TBF_STATS:
-		वापस mlxsw_sp_qdisc_get_stats(mlxsw_sp_port, mlxsw_sp_qdisc,
+	switch (p->command) {
+	case TC_TBF_DESTROY:
+		return mlxsw_sp_qdisc_destroy(mlxsw_sp_port, mlxsw_sp_qdisc);
+	case TC_TBF_STATS:
+		return mlxsw_sp_qdisc_get_stats(mlxsw_sp_port, mlxsw_sp_qdisc,
 						&p->stats);
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+	default:
+		return -EOPNOTSUPP;
+	}
+}
 
-पूर्णांक mlxsw_sp_setup_tc_tbf(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-			  काष्ठा tc_tbf_qopt_offload *p)
-अणु
-	पूर्णांक err;
+int mlxsw_sp_setup_tc_tbf(struct mlxsw_sp_port *mlxsw_sp_port,
+			  struct tc_tbf_qopt_offload *p)
+{
+	int err;
 
 	mutex_lock(&mlxsw_sp_port->qdisc->lock);
 	err = __mlxsw_sp_setup_tc_tbf(mlxsw_sp_port, p);
 	mutex_unlock(&mlxsw_sp_port->qdisc->lock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक
-mlxsw_sp_qdisc_fअगरo_check_params(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-				 व्योम *params)
-अणु
-	वापस 0;
-पूर्ण
+static int
+mlxsw_sp_qdisc_fifo_check_params(struct mlxsw_sp_port *mlxsw_sp_port,
+				 void *params)
+{
+	return 0;
+}
 
-अटल पूर्णांक
-mlxsw_sp_qdisc_fअगरo_replace(काष्ठा mlxsw_sp_port *mlxsw_sp_port, u32 handle,
-			    काष्ठा mlxsw_sp_qdisc *mlxsw_sp_qdisc,
-			    व्योम *params)
-अणु
-	वापस 0;
-पूर्ण
+static int
+mlxsw_sp_qdisc_fifo_replace(struct mlxsw_sp_port *mlxsw_sp_port, u32 handle,
+			    struct mlxsw_sp_qdisc *mlxsw_sp_qdisc,
+			    void *params)
+{
+	return 0;
+}
 
-अटल पूर्णांक
-mlxsw_sp_qdisc_get_fअगरo_stats(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-			      काष्ठा mlxsw_sp_qdisc *mlxsw_sp_qdisc,
-			      काष्ठा tc_qopt_offload_stats *stats_ptr)
-अणु
+static int
+mlxsw_sp_qdisc_get_fifo_stats(struct mlxsw_sp_port *mlxsw_sp_port,
+			      struct mlxsw_sp_qdisc *mlxsw_sp_qdisc,
+			      struct tc_qopt_offload_stats *stats_ptr)
+{
 	mlxsw_sp_qdisc_get_tc_stats(mlxsw_sp_port, mlxsw_sp_qdisc,
 				    stats_ptr);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा mlxsw_sp_qdisc_ops mlxsw_sp_qdisc_ops_fअगरo = अणु
+static struct mlxsw_sp_qdisc_ops mlxsw_sp_qdisc_ops_fifo = {
 	.type = MLXSW_SP_QDISC_FIFO,
-	.check_params = mlxsw_sp_qdisc_fअगरo_check_params,
-	.replace = mlxsw_sp_qdisc_fअगरo_replace,
-	.get_stats = mlxsw_sp_qdisc_get_fअगरo_stats,
+	.check_params = mlxsw_sp_qdisc_fifo_check_params,
+	.replace = mlxsw_sp_qdisc_fifo_replace,
+	.get_stats = mlxsw_sp_qdisc_get_fifo_stats,
 	.clean_stats = mlxsw_sp_setup_tc_qdisc_leaf_clean_stats,
-पूर्ण;
+};
 
-अटल पूर्णांक __mlxsw_sp_setup_tc_fअगरo(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-				    काष्ठा tc_fअगरo_qopt_offload *p)
-अणु
-	काष्ठा mlxsw_sp_qdisc_state *qdisc_state = mlxsw_sp_port->qdisc;
-	काष्ठा mlxsw_sp_qdisc *mlxsw_sp_qdisc;
-	अचिन्हित पूर्णांक band;
+static int __mlxsw_sp_setup_tc_fifo(struct mlxsw_sp_port *mlxsw_sp_port,
+				    struct tc_fifo_qopt_offload *p)
+{
+	struct mlxsw_sp_qdisc_state *qdisc_state = mlxsw_sp_port->qdisc;
+	struct mlxsw_sp_qdisc *mlxsw_sp_qdisc;
+	unsigned int band;
 	u32 parent_handle;
 
 	mlxsw_sp_qdisc = mlxsw_sp_qdisc_find(mlxsw_sp_port, p->parent, false);
-	अगर (!mlxsw_sp_qdisc && p->handle == TC_H_UNSPEC) अणु
+	if (!mlxsw_sp_qdisc && p->handle == TC_H_UNSPEC) {
 		parent_handle = TC_H_MAJ(p->parent);
-		अगर (parent_handle != qdisc_state->future_handle) अणु
-			/* This notअगरications is क्रम a dअगरferent Qdisc than
+		if (parent_handle != qdisc_state->future_handle) {
+			/* This notifications is for a different Qdisc than
 			 * previously. Wipe the future cache.
 			 */
-			स_रखो(qdisc_state->future_fअगरos, 0,
-			       माप(qdisc_state->future_fअगरos));
+			memset(qdisc_state->future_fifos, 0,
+			       sizeof(qdisc_state->future_fifos));
 			qdisc_state->future_handle = parent_handle;
-		पूर्ण
+		}
 
 		band = TC_H_MIN(p->parent) - 1;
-		अगर (band < IEEE_8021QAZ_MAX_TCS) अणु
-			अगर (p->command == TC_FIFO_REPLACE)
-				qdisc_state->future_fअगरos[band] = true;
-			अन्यथा अगर (p->command == TC_FIFO_DESTROY)
-				qdisc_state->future_fअगरos[band] = false;
-		पूर्ण
-	पूर्ण
-	अगर (!mlxsw_sp_qdisc)
-		वापस -EOPNOTSUPP;
+		if (band < IEEE_8021QAZ_MAX_TCS) {
+			if (p->command == TC_FIFO_REPLACE)
+				qdisc_state->future_fifos[band] = true;
+			else if (p->command == TC_FIFO_DESTROY)
+				qdisc_state->future_fifos[band] = false;
+		}
+	}
+	if (!mlxsw_sp_qdisc)
+		return -EOPNOTSUPP;
 
-	अगर (p->command == TC_FIFO_REPLACE) अणु
-		वापस mlxsw_sp_qdisc_replace(mlxsw_sp_port, p->handle,
+	if (p->command == TC_FIFO_REPLACE) {
+		return mlxsw_sp_qdisc_replace(mlxsw_sp_port, p->handle,
 					      mlxsw_sp_qdisc,
-					      &mlxsw_sp_qdisc_ops_fअगरo, शून्य);
-	पूर्ण
+					      &mlxsw_sp_qdisc_ops_fifo, NULL);
+	}
 
-	अगर (!mlxsw_sp_qdisc_compare(mlxsw_sp_qdisc, p->handle))
-		वापस -EOPNOTSUPP;
+	if (!mlxsw_sp_qdisc_compare(mlxsw_sp_qdisc, p->handle))
+		return -EOPNOTSUPP;
 
-	चयन (p->command) अणु
-	हाल TC_FIFO_DESTROY:
-		वापस mlxsw_sp_qdisc_destroy(mlxsw_sp_port, mlxsw_sp_qdisc);
-	हाल TC_FIFO_STATS:
-		वापस mlxsw_sp_qdisc_get_stats(mlxsw_sp_port, mlxsw_sp_qdisc,
+	switch (p->command) {
+	case TC_FIFO_DESTROY:
+		return mlxsw_sp_qdisc_destroy(mlxsw_sp_port, mlxsw_sp_qdisc);
+	case TC_FIFO_STATS:
+		return mlxsw_sp_qdisc_get_stats(mlxsw_sp_port, mlxsw_sp_qdisc,
 						&p->stats);
-	हाल TC_FIFO_REPLACE: /* Handled above. */
-		अवरोध;
-	पूर्ण
+	case TC_FIFO_REPLACE: /* Handled above. */
+		break;
+	}
 
-	वापस -EOPNOTSUPP;
-पूर्ण
+	return -EOPNOTSUPP;
+}
 
-पूर्णांक mlxsw_sp_setup_tc_fअगरo(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-			   काष्ठा tc_fअगरo_qopt_offload *p)
-अणु
-	पूर्णांक err;
+int mlxsw_sp_setup_tc_fifo(struct mlxsw_sp_port *mlxsw_sp_port,
+			   struct tc_fifo_qopt_offload *p)
+{
+	int err;
 
 	mutex_lock(&mlxsw_sp_port->qdisc->lock);
-	err = __mlxsw_sp_setup_tc_fअगरo(mlxsw_sp_port, p);
+	err = __mlxsw_sp_setup_tc_fifo(mlxsw_sp_port, p);
 	mutex_unlock(&mlxsw_sp_port->qdisc->lock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक __mlxsw_sp_qdisc_ets_destroy(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-					काष्ठा mlxsw_sp_qdisc *mlxsw_sp_qdisc)
-अणु
-	पूर्णांक i;
+static int __mlxsw_sp_qdisc_ets_destroy(struct mlxsw_sp_port *mlxsw_sp_port,
+					struct mlxsw_sp_qdisc *mlxsw_sp_qdisc)
+{
+	int i;
 
-	क्रम (i = 0; i < mlxsw_sp_qdisc->num_classes; i++) अणु
+	for (i = 0; i < mlxsw_sp_qdisc->num_classes; i++) {
 		mlxsw_sp_port_prio_tc_set(mlxsw_sp_port, i,
 					  MLXSW_SP_PORT_DEFAULT_TCLASS);
 		mlxsw_sp_port_ets_set(mlxsw_sp_port,
@@ -1036,180 +1035,180 @@ mlxsw_sp_qdisc_get_fअगरo_stats(काष्ठा mlxsw_sp_port *mlxsw_sp_
 				      i, 0, false, 0);
 		mlxsw_sp_qdisc_destroy(mlxsw_sp_port,
 				       &mlxsw_sp_qdisc->qdiscs[i]);
-		mlxsw_sp_qdisc->qdiscs[i].prio_biपंचांगap = 0;
-	पूर्ण
+		mlxsw_sp_qdisc->qdiscs[i].prio_bitmap = 0;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-mlxsw_sp_qdisc_prio_destroy(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-			    काष्ठा mlxsw_sp_qdisc *mlxsw_sp_qdisc)
-अणु
-	वापस __mlxsw_sp_qdisc_ets_destroy(mlxsw_sp_port, mlxsw_sp_qdisc);
-पूर्ण
+static int
+mlxsw_sp_qdisc_prio_destroy(struct mlxsw_sp_port *mlxsw_sp_port,
+			    struct mlxsw_sp_qdisc *mlxsw_sp_qdisc)
+{
+	return __mlxsw_sp_qdisc_ets_destroy(mlxsw_sp_port, mlxsw_sp_qdisc);
+}
 
-अटल पूर्णांक
-__mlxsw_sp_qdisc_ets_check_params(अचिन्हित पूर्णांक nbands)
-अणु
-	अगर (nbands > IEEE_8021QAZ_MAX_TCS)
-		वापस -EOPNOTSUPP;
+static int
+__mlxsw_sp_qdisc_ets_check_params(unsigned int nbands)
+{
+	if (nbands > IEEE_8021QAZ_MAX_TCS)
+		return -EOPNOTSUPP;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-mlxsw_sp_qdisc_prio_check_params(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-				 व्योम *params)
-अणु
-	काष्ठा tc_prio_qopt_offload_params *p = params;
+static int
+mlxsw_sp_qdisc_prio_check_params(struct mlxsw_sp_port *mlxsw_sp_port,
+				 void *params)
+{
+	struct tc_prio_qopt_offload_params *p = params;
 
-	वापस __mlxsw_sp_qdisc_ets_check_params(p->bands);
-पूर्ण
+	return __mlxsw_sp_qdisc_ets_check_params(p->bands);
+}
 
-अटल पूर्णांक
-__mlxsw_sp_qdisc_ets_replace(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-			     काष्ठा mlxsw_sp_qdisc *mlxsw_sp_qdisc,
-			     u32 handle, अचिन्हित पूर्णांक nbands,
-			     स्थिर अचिन्हित पूर्णांक *quanta,
-			     स्थिर अचिन्हित पूर्णांक *weights,
-			     स्थिर u8 *priomap)
-अणु
-	काष्ठा mlxsw_sp_qdisc_state *qdisc_state = mlxsw_sp_port->qdisc;
-	काष्ठा mlxsw_sp_qdisc *child_qdisc;
-	पूर्णांक tclass, i, band, backlog;
+static int
+__mlxsw_sp_qdisc_ets_replace(struct mlxsw_sp_port *mlxsw_sp_port,
+			     struct mlxsw_sp_qdisc *mlxsw_sp_qdisc,
+			     u32 handle, unsigned int nbands,
+			     const unsigned int *quanta,
+			     const unsigned int *weights,
+			     const u8 *priomap)
+{
+	struct mlxsw_sp_qdisc_state *qdisc_state = mlxsw_sp_port->qdisc;
+	struct mlxsw_sp_qdisc *child_qdisc;
+	int tclass, i, band, backlog;
 	u8 old_priomap;
-	पूर्णांक err;
+	int err;
 
-	क्रम (band = 0; band < nbands; band++) अणु
+	for (band = 0; band < nbands; band++) {
 		tclass = MLXSW_SP_PRIO_BAND_TO_TCLASS(band);
 		child_qdisc = &mlxsw_sp_qdisc->qdiscs[band];
-		old_priomap = child_qdisc->prio_biपंचांगap;
-		child_qdisc->prio_biपंचांगap = 0;
+		old_priomap = child_qdisc->prio_bitmap;
+		child_qdisc->prio_bitmap = 0;
 
 		err = mlxsw_sp_port_ets_set(mlxsw_sp_port,
 					    MLXSW_REG_QEEC_HR_SUBGROUP,
 					    tclass, 0, !!quanta[band],
 					    weights[band]);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
-		क्रम (i = 0; i < IEEE_8021QAZ_MAX_TCS; i++) अणु
-			अगर (priomap[i] == band) अणु
-				child_qdisc->prio_biपंचांगap |= BIT(i);
-				अगर (BIT(i) & old_priomap)
-					जारी;
+		for (i = 0; i < IEEE_8021QAZ_MAX_TCS; i++) {
+			if (priomap[i] == band) {
+				child_qdisc->prio_bitmap |= BIT(i);
+				if (BIT(i) & old_priomap)
+					continue;
 				err = mlxsw_sp_port_prio_tc_set(mlxsw_sp_port,
 								i, tclass);
-				अगर (err)
-					वापस err;
-			पूर्ण
-		पूर्ण
+				if (err)
+					return err;
+			}
+		}
 
 		child_qdisc->tclass_num = tclass;
 
-		अगर (old_priomap != child_qdisc->prio_biपंचांगap &&
-		    child_qdisc->ops && child_qdisc->ops->clean_stats) अणु
+		if (old_priomap != child_qdisc->prio_bitmap &&
+		    child_qdisc->ops && child_qdisc->ops->clean_stats) {
 			backlog = child_qdisc->stats_base.backlog;
 			child_qdisc->ops->clean_stats(mlxsw_sp_port,
 						      child_qdisc);
 			child_qdisc->stats_base.backlog = backlog;
-		पूर्ण
+		}
 
-		अगर (handle == qdisc_state->future_handle &&
-		    qdisc_state->future_fअगरos[band]) अणु
+		if (handle == qdisc_state->future_handle &&
+		    qdisc_state->future_fifos[band]) {
 			err = mlxsw_sp_qdisc_replace(mlxsw_sp_port, TC_H_UNSPEC,
 						     child_qdisc,
-						     &mlxsw_sp_qdisc_ops_fअगरo,
-						     शून्य);
-			अगर (err)
-				वापस err;
-		पूर्ण
-	पूर्ण
-	क्रम (; band < IEEE_8021QAZ_MAX_TCS; band++) अणु
+						     &mlxsw_sp_qdisc_ops_fifo,
+						     NULL);
+			if (err)
+				return err;
+		}
+	}
+	for (; band < IEEE_8021QAZ_MAX_TCS; band++) {
 		tclass = MLXSW_SP_PRIO_BAND_TO_TCLASS(band);
 		child_qdisc = &mlxsw_sp_qdisc->qdiscs[band];
-		child_qdisc->prio_biपंचांगap = 0;
+		child_qdisc->prio_bitmap = 0;
 		mlxsw_sp_qdisc_destroy(mlxsw_sp_port, child_qdisc);
 		mlxsw_sp_port_ets_set(mlxsw_sp_port,
 				      MLXSW_REG_QEEC_HR_SUBGROUP,
 				      tclass, 0, false, 0);
-	पूर्ण
+	}
 
 	qdisc_state->future_handle = TC_H_UNSPEC;
-	स_रखो(qdisc_state->future_fअगरos, 0, माप(qdisc_state->future_fअगरos));
-	वापस 0;
-पूर्ण
+	memset(qdisc_state->future_fifos, 0, sizeof(qdisc_state->future_fifos));
+	return 0;
+}
 
-अटल पूर्णांक
-mlxsw_sp_qdisc_prio_replace(काष्ठा mlxsw_sp_port *mlxsw_sp_port, u32 handle,
-			    काष्ठा mlxsw_sp_qdisc *mlxsw_sp_qdisc,
-			    व्योम *params)
-अणु
-	काष्ठा tc_prio_qopt_offload_params *p = params;
-	अचिन्हित पूर्णांक zeroes[TCQ_ETS_MAX_BANDS] = अणु0पूर्ण;
+static int
+mlxsw_sp_qdisc_prio_replace(struct mlxsw_sp_port *mlxsw_sp_port, u32 handle,
+			    struct mlxsw_sp_qdisc *mlxsw_sp_qdisc,
+			    void *params)
+{
+	struct tc_prio_qopt_offload_params *p = params;
+	unsigned int zeroes[TCQ_ETS_MAX_BANDS] = {0};
 
-	वापस __mlxsw_sp_qdisc_ets_replace(mlxsw_sp_port, mlxsw_sp_qdisc,
+	return __mlxsw_sp_qdisc_ets_replace(mlxsw_sp_port, mlxsw_sp_qdisc,
 					    handle, p->bands, zeroes,
 					    zeroes, p->priomap);
-पूर्ण
+}
 
-अटल व्योम
-__mlxsw_sp_qdisc_ets_unoffload(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-			       काष्ठा mlxsw_sp_qdisc *mlxsw_sp_qdisc,
-			       काष्ठा gnet_stats_queue *qstats)
-अणु
+static void
+__mlxsw_sp_qdisc_ets_unoffload(struct mlxsw_sp_port *mlxsw_sp_port,
+			       struct mlxsw_sp_qdisc *mlxsw_sp_qdisc,
+			       struct gnet_stats_queue *qstats)
+{
 	u64 backlog;
 
 	backlog = mlxsw_sp_cells_bytes(mlxsw_sp_port->mlxsw_sp,
 				       mlxsw_sp_qdisc->stats_base.backlog);
 	qstats->backlog -= backlog;
-पूर्ण
+}
 
-अटल व्योम
-mlxsw_sp_qdisc_prio_unoffload(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-			      काष्ठा mlxsw_sp_qdisc *mlxsw_sp_qdisc,
-			      व्योम *params)
-अणु
-	काष्ठा tc_prio_qopt_offload_params *p = params;
+static void
+mlxsw_sp_qdisc_prio_unoffload(struct mlxsw_sp_port *mlxsw_sp_port,
+			      struct mlxsw_sp_qdisc *mlxsw_sp_qdisc,
+			      void *params)
+{
+	struct tc_prio_qopt_offload_params *p = params;
 
 	__mlxsw_sp_qdisc_ets_unoffload(mlxsw_sp_port, mlxsw_sp_qdisc,
 				       p->qstats);
-पूर्ण
+}
 
-अटल पूर्णांक
-mlxsw_sp_qdisc_get_prio_stats(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-			      काष्ठा mlxsw_sp_qdisc *mlxsw_sp_qdisc,
-			      काष्ठा tc_qopt_offload_stats *stats_ptr)
-अणु
-	काष्ठा mlxsw_sp_qdisc *tc_qdisc;
+static int
+mlxsw_sp_qdisc_get_prio_stats(struct mlxsw_sp_port *mlxsw_sp_port,
+			      struct mlxsw_sp_qdisc *mlxsw_sp_qdisc,
+			      struct tc_qopt_offload_stats *stats_ptr)
+{
+	struct mlxsw_sp_qdisc *tc_qdisc;
 	u64 tx_packets = 0;
 	u64 tx_bytes = 0;
 	u64 backlog = 0;
 	u64 drops = 0;
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < mlxsw_sp_qdisc->num_classes; i++) अणु
+	for (i = 0; i < mlxsw_sp_qdisc->num_classes; i++) {
 		tc_qdisc = &mlxsw_sp_qdisc->qdiscs[i];
 		mlxsw_sp_qdisc_collect_tc_stats(mlxsw_sp_port, tc_qdisc,
 						&tx_bytes, &tx_packets,
 						&drops, &backlog);
-	पूर्ण
+	}
 
 	mlxsw_sp_qdisc_update_stats(mlxsw_sp_port->mlxsw_sp, mlxsw_sp_qdisc,
 				    tx_bytes, tx_packets, drops, backlog,
 				    stats_ptr);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-mlxsw_sp_setup_tc_qdisc_prio_clean_stats(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-					 काष्ठा mlxsw_sp_qdisc *mlxsw_sp_qdisc)
-अणु
-	काष्ठा mlxsw_sp_qdisc_stats *stats_base;
-	काष्ठा mlxsw_sp_port_xstats *xstats;
-	काष्ठा rtnl_link_stats64 *stats;
-	पूर्णांक i;
+static void
+mlxsw_sp_setup_tc_qdisc_prio_clean_stats(struct mlxsw_sp_port *mlxsw_sp_port,
+					 struct mlxsw_sp_qdisc *mlxsw_sp_qdisc)
+{
+	struct mlxsw_sp_qdisc_stats *stats_base;
+	struct mlxsw_sp_port_xstats *xstats;
+	struct rtnl_link_stats64 *stats;
+	int i;
 
 	xstats = &mlxsw_sp_port->periodic_hw_stats.xstats;
 	stats = &mlxsw_sp_port->periodic_hw_stats.stats;
@@ -1219,27 +1218,27 @@ mlxsw_sp_setup_tc_qdisc_prio_clean_stats(काष्ठा mlxsw_sp_port *mlxsw
 	stats_base->tx_bytes = stats->tx_bytes;
 
 	stats_base->drops = 0;
-	क्रम (i = 0; i < IEEE_8021QAZ_MAX_TCS; i++) अणु
+	for (i = 0; i < IEEE_8021QAZ_MAX_TCS; i++) {
 		stats_base->drops += mlxsw_sp_xstats_tail_drop(xstats, i);
 		stats_base->drops += xstats->wred_drop[i];
-	पूर्ण
+	}
 
 	mlxsw_sp_qdisc->stats_base.backlog = 0;
-पूर्ण
+}
 
-अटल काष्ठा mlxsw_sp_qdisc *
-mlxsw_sp_qdisc_prio_find_class(काष्ठा mlxsw_sp_qdisc *mlxsw_sp_qdisc,
+static struct mlxsw_sp_qdisc *
+mlxsw_sp_qdisc_prio_find_class(struct mlxsw_sp_qdisc *mlxsw_sp_qdisc,
 			       u32 parent)
-अणु
-	पूर्णांक child_index = TC_H_MIN(parent);
-	पूर्णांक band = child_index - 1;
+{
+	int child_index = TC_H_MIN(parent);
+	int band = child_index - 1;
 
-	अगर (band < 0 || band >= mlxsw_sp_qdisc->num_classes)
-		वापस शून्य;
-	वापस &mlxsw_sp_qdisc->qdiscs[band];
-पूर्ण
+	if (band < 0 || band >= mlxsw_sp_qdisc->num_classes)
+		return NULL;
+	return &mlxsw_sp_qdisc->qdiscs[band];
+}
 
-अटल काष्ठा mlxsw_sp_qdisc_ops mlxsw_sp_qdisc_ops_prio = अणु
+static struct mlxsw_sp_qdisc_ops mlxsw_sp_qdisc_ops_prio = {
 	.type = MLXSW_SP_QDISC_PRIO,
 	.check_params = mlxsw_sp_qdisc_prio_check_params,
 	.replace = mlxsw_sp_qdisc_prio_replace,
@@ -1249,48 +1248,48 @@ mlxsw_sp_qdisc_prio_find_class(काष्ठा mlxsw_sp_qdisc *mlxsw_sp_qdisc
 	.clean_stats = mlxsw_sp_setup_tc_qdisc_prio_clean_stats,
 	.find_class = mlxsw_sp_qdisc_prio_find_class,
 	.num_classes = IEEE_8021QAZ_MAX_TCS,
-पूर्ण;
+};
 
-अटल पूर्णांक
-mlxsw_sp_qdisc_ets_check_params(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-				व्योम *params)
-अणु
-	काष्ठा tc_ets_qopt_offload_replace_params *p = params;
+static int
+mlxsw_sp_qdisc_ets_check_params(struct mlxsw_sp_port *mlxsw_sp_port,
+				void *params)
+{
+	struct tc_ets_qopt_offload_replace_params *p = params;
 
-	वापस __mlxsw_sp_qdisc_ets_check_params(p->bands);
-पूर्ण
+	return __mlxsw_sp_qdisc_ets_check_params(p->bands);
+}
 
-अटल पूर्णांक
-mlxsw_sp_qdisc_ets_replace(काष्ठा mlxsw_sp_port *mlxsw_sp_port, u32 handle,
-			   काष्ठा mlxsw_sp_qdisc *mlxsw_sp_qdisc,
-			   व्योम *params)
-अणु
-	काष्ठा tc_ets_qopt_offload_replace_params *p = params;
+static int
+mlxsw_sp_qdisc_ets_replace(struct mlxsw_sp_port *mlxsw_sp_port, u32 handle,
+			   struct mlxsw_sp_qdisc *mlxsw_sp_qdisc,
+			   void *params)
+{
+	struct tc_ets_qopt_offload_replace_params *p = params;
 
-	वापस __mlxsw_sp_qdisc_ets_replace(mlxsw_sp_port, mlxsw_sp_qdisc,
+	return __mlxsw_sp_qdisc_ets_replace(mlxsw_sp_port, mlxsw_sp_qdisc,
 					    handle, p->bands, p->quanta,
 					    p->weights, p->priomap);
-पूर्ण
+}
 
-अटल व्योम
-mlxsw_sp_qdisc_ets_unoffload(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-			     काष्ठा mlxsw_sp_qdisc *mlxsw_sp_qdisc,
-			     व्योम *params)
-अणु
-	काष्ठा tc_ets_qopt_offload_replace_params *p = params;
+static void
+mlxsw_sp_qdisc_ets_unoffload(struct mlxsw_sp_port *mlxsw_sp_port,
+			     struct mlxsw_sp_qdisc *mlxsw_sp_qdisc,
+			     void *params)
+{
+	struct tc_ets_qopt_offload_replace_params *p = params;
 
 	__mlxsw_sp_qdisc_ets_unoffload(mlxsw_sp_port, mlxsw_sp_qdisc,
 				       p->qstats);
-पूर्ण
+}
 
-अटल पूर्णांक
-mlxsw_sp_qdisc_ets_destroy(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-			   काष्ठा mlxsw_sp_qdisc *mlxsw_sp_qdisc)
-अणु
-	वापस __mlxsw_sp_qdisc_ets_destroy(mlxsw_sp_port, mlxsw_sp_qdisc);
-पूर्ण
+static int
+mlxsw_sp_qdisc_ets_destroy(struct mlxsw_sp_port *mlxsw_sp_port,
+			   struct mlxsw_sp_qdisc *mlxsw_sp_qdisc)
+{
+	return __mlxsw_sp_qdisc_ets_destroy(mlxsw_sp_port, mlxsw_sp_qdisc);
+}
 
-अटल काष्ठा mlxsw_sp_qdisc_ops mlxsw_sp_qdisc_ops_ets = अणु
+static struct mlxsw_sp_qdisc_ops mlxsw_sp_qdisc_ops_ets = {
 	.type = MLXSW_SP_QDISC_ETS,
 	.check_params = mlxsw_sp_qdisc_ets_check_params,
 	.replace = mlxsw_sp_qdisc_ets_replace,
@@ -1300,13 +1299,13 @@ mlxsw_sp_qdisc_ets_destroy(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
 	.clean_stats = mlxsw_sp_setup_tc_qdisc_prio_clean_stats,
 	.find_class = mlxsw_sp_qdisc_prio_find_class,
 	.num_classes = IEEE_8021QAZ_MAX_TCS,
-पूर्ण;
+};
 
-/* Linux allows linking of Qdiscs to arbitrary classes (so दीर्घ as the resulting
- * graph is मुक्त of cycles). These operations करो not change the parent handle
- * though, which means it can be incomplete (अगर there is more than one class
- * where the Qdisc in question is grafted) or outright wrong (अगर the Qdisc was
- * linked to a dअगरferent class and then हटाओd from the original class).
+/* Linux allows linking of Qdiscs to arbitrary classes (so long as the resulting
+ * graph is free of cycles). These operations do not change the parent handle
+ * though, which means it can be incomplete (if there is more than one class
+ * where the Qdisc in question is grafted) or outright wrong (if the Qdisc was
+ * linked to a different class and then removed from the original class).
  *
  * E.g. consider this sequence of operations:
  *
@@ -1315,201 +1314,201 @@ mlxsw_sp_qdisc_ets_destroy(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
  *  RED: set bandwidth to 10Mbit
  *  # tc qdisc link dev swp1 handle 13: parent 1:2
  *
- * At this poपूर्णांक, both 1:2 and 1:3 have the same RED Qdisc instance as their
- * child. But RED will still only claim that 1:3 is its parent. If it's हटाओd
- * from that band, its only parent will be 1:2, but it will जारी to claim
+ * At this point, both 1:2 and 1:3 have the same RED Qdisc instance as their
+ * child. But RED will still only claim that 1:3 is its parent. If it's removed
+ * from that band, its only parent will be 1:2, but it will continue to claim
  * that it is in fact 1:3.
  *
- * The notअगरication क्रम child Qdisc replace (e.g. TC_RED_REPLACE) comes beक्रमe
- * the notअगरication क्रम parent graft (e.g. TC_PRIO_GRAFT). We take the replace
- * notअगरication to offload the child Qdisc, based on its parent handle, and use
+ * The notification for child Qdisc replace (e.g. TC_RED_REPLACE) comes before
+ * the notification for parent graft (e.g. TC_PRIO_GRAFT). We take the replace
+ * notification to offload the child Qdisc, based on its parent handle, and use
  * the graft operation to validate that the class where the child is actually
- * grafted corresponds to the parent handle. If the two करोn't match, we
+ * grafted corresponds to the parent handle. If the two don't match, we
  * unoffload the child.
  */
-अटल पूर्णांक
-__mlxsw_sp_qdisc_ets_graft(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-			   काष्ठा mlxsw_sp_qdisc *mlxsw_sp_qdisc,
+static int
+__mlxsw_sp_qdisc_ets_graft(struct mlxsw_sp_port *mlxsw_sp_port,
+			   struct mlxsw_sp_qdisc *mlxsw_sp_qdisc,
 			   u8 band, u32 child_handle)
-अणु
-	काष्ठा mlxsw_sp_qdisc *old_qdisc;
+{
+	struct mlxsw_sp_qdisc *old_qdisc;
 	u32 parent;
 
-	अगर (band < mlxsw_sp_qdisc->num_classes &&
+	if (band < mlxsw_sp_qdisc->num_classes &&
 	    mlxsw_sp_qdisc->qdiscs[band].handle == child_handle)
-		वापस 0;
+		return 0;
 
-	अगर (!child_handle) अणु
+	if (!child_handle) {
 		/* This is an invisible FIFO replacing the original Qdisc.
 		 * Ignore it--the original Qdisc's destroy will follow.
 		 */
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	/* See अगर the grafted qdisc is alपढ़ोy offloaded on any tclass. If so,
+	/* See if the grafted qdisc is already offloaded on any tclass. If so,
 	 * unoffload it.
 	 */
 	old_qdisc = mlxsw_sp_qdisc_find_by_handle(mlxsw_sp_port,
 						  child_handle);
-	अगर (old_qdisc)
+	if (old_qdisc)
 		mlxsw_sp_qdisc_destroy(mlxsw_sp_port, old_qdisc);
 
 	parent = TC_H_MAKE(mlxsw_sp_qdisc->handle, band + 1);
 	mlxsw_sp_qdisc = mlxsw_sp_qdisc->ops->find_class(mlxsw_sp_qdisc,
 							 parent);
-	अगर (!WARN_ON(!mlxsw_sp_qdisc))
+	if (!WARN_ON(!mlxsw_sp_qdisc))
 		mlxsw_sp_qdisc_destroy(mlxsw_sp_port, mlxsw_sp_qdisc);
 
-	वापस -EOPNOTSUPP;
-पूर्ण
+	return -EOPNOTSUPP;
+}
 
-अटल पूर्णांक
-mlxsw_sp_qdisc_prio_graft(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-			  काष्ठा mlxsw_sp_qdisc *mlxsw_sp_qdisc,
-			  काष्ठा tc_prio_qopt_offload_graft_params *p)
-अणु
-	वापस __mlxsw_sp_qdisc_ets_graft(mlxsw_sp_port, mlxsw_sp_qdisc,
+static int
+mlxsw_sp_qdisc_prio_graft(struct mlxsw_sp_port *mlxsw_sp_port,
+			  struct mlxsw_sp_qdisc *mlxsw_sp_qdisc,
+			  struct tc_prio_qopt_offload_graft_params *p)
+{
+	return __mlxsw_sp_qdisc_ets_graft(mlxsw_sp_port, mlxsw_sp_qdisc,
 					  p->band, p->child_handle);
-पूर्ण
+}
 
-अटल पूर्णांक __mlxsw_sp_setup_tc_prio(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-				    काष्ठा tc_prio_qopt_offload *p)
-अणु
-	काष्ठा mlxsw_sp_qdisc *mlxsw_sp_qdisc;
+static int __mlxsw_sp_setup_tc_prio(struct mlxsw_sp_port *mlxsw_sp_port,
+				    struct tc_prio_qopt_offload *p)
+{
+	struct mlxsw_sp_qdisc *mlxsw_sp_qdisc;
 
 	mlxsw_sp_qdisc = mlxsw_sp_qdisc_find(mlxsw_sp_port, p->parent, true);
-	अगर (!mlxsw_sp_qdisc)
-		वापस -EOPNOTSUPP;
+	if (!mlxsw_sp_qdisc)
+		return -EOPNOTSUPP;
 
-	अगर (p->command == TC_PRIO_REPLACE)
-		वापस mlxsw_sp_qdisc_replace(mlxsw_sp_port, p->handle,
+	if (p->command == TC_PRIO_REPLACE)
+		return mlxsw_sp_qdisc_replace(mlxsw_sp_port, p->handle,
 					      mlxsw_sp_qdisc,
 					      &mlxsw_sp_qdisc_ops_prio,
 					      &p->replace_params);
 
-	अगर (!mlxsw_sp_qdisc_compare(mlxsw_sp_qdisc, p->handle))
-		वापस -EOPNOTSUPP;
+	if (!mlxsw_sp_qdisc_compare(mlxsw_sp_qdisc, p->handle))
+		return -EOPNOTSUPP;
 
-	चयन (p->command) अणु
-	हाल TC_PRIO_DESTROY:
-		वापस mlxsw_sp_qdisc_destroy(mlxsw_sp_port, mlxsw_sp_qdisc);
-	हाल TC_PRIO_STATS:
-		वापस mlxsw_sp_qdisc_get_stats(mlxsw_sp_port, mlxsw_sp_qdisc,
+	switch (p->command) {
+	case TC_PRIO_DESTROY:
+		return mlxsw_sp_qdisc_destroy(mlxsw_sp_port, mlxsw_sp_qdisc);
+	case TC_PRIO_STATS:
+		return mlxsw_sp_qdisc_get_stats(mlxsw_sp_port, mlxsw_sp_qdisc,
 						&p->stats);
-	हाल TC_PRIO_GRAFT:
-		वापस mlxsw_sp_qdisc_prio_graft(mlxsw_sp_port, mlxsw_sp_qdisc,
+	case TC_PRIO_GRAFT:
+		return mlxsw_sp_qdisc_prio_graft(mlxsw_sp_port, mlxsw_sp_qdisc,
 						 &p->graft_params);
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+	default:
+		return -EOPNOTSUPP;
+	}
+}
 
-पूर्णांक mlxsw_sp_setup_tc_prio(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-			   काष्ठा tc_prio_qopt_offload *p)
-अणु
-	पूर्णांक err;
+int mlxsw_sp_setup_tc_prio(struct mlxsw_sp_port *mlxsw_sp_port,
+			   struct tc_prio_qopt_offload *p)
+{
+	int err;
 
 	mutex_lock(&mlxsw_sp_port->qdisc->lock);
 	err = __mlxsw_sp_setup_tc_prio(mlxsw_sp_port, p);
 	mutex_unlock(&mlxsw_sp_port->qdisc->lock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक __mlxsw_sp_setup_tc_ets(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-				   काष्ठा tc_ets_qopt_offload *p)
-अणु
-	काष्ठा mlxsw_sp_qdisc *mlxsw_sp_qdisc;
+static int __mlxsw_sp_setup_tc_ets(struct mlxsw_sp_port *mlxsw_sp_port,
+				   struct tc_ets_qopt_offload *p)
+{
+	struct mlxsw_sp_qdisc *mlxsw_sp_qdisc;
 
 	mlxsw_sp_qdisc = mlxsw_sp_qdisc_find(mlxsw_sp_port, p->parent, true);
-	अगर (!mlxsw_sp_qdisc)
-		वापस -EOPNOTSUPP;
+	if (!mlxsw_sp_qdisc)
+		return -EOPNOTSUPP;
 
-	अगर (p->command == TC_ETS_REPLACE)
-		वापस mlxsw_sp_qdisc_replace(mlxsw_sp_port, p->handle,
+	if (p->command == TC_ETS_REPLACE)
+		return mlxsw_sp_qdisc_replace(mlxsw_sp_port, p->handle,
 					      mlxsw_sp_qdisc,
 					      &mlxsw_sp_qdisc_ops_ets,
 					      &p->replace_params);
 
-	अगर (!mlxsw_sp_qdisc_compare(mlxsw_sp_qdisc, p->handle))
-		वापस -EOPNOTSUPP;
+	if (!mlxsw_sp_qdisc_compare(mlxsw_sp_qdisc, p->handle))
+		return -EOPNOTSUPP;
 
-	चयन (p->command) अणु
-	हाल TC_ETS_DESTROY:
-		वापस mlxsw_sp_qdisc_destroy(mlxsw_sp_port, mlxsw_sp_qdisc);
-	हाल TC_ETS_STATS:
-		वापस mlxsw_sp_qdisc_get_stats(mlxsw_sp_port, mlxsw_sp_qdisc,
+	switch (p->command) {
+	case TC_ETS_DESTROY:
+		return mlxsw_sp_qdisc_destroy(mlxsw_sp_port, mlxsw_sp_qdisc);
+	case TC_ETS_STATS:
+		return mlxsw_sp_qdisc_get_stats(mlxsw_sp_port, mlxsw_sp_qdisc,
 						&p->stats);
-	हाल TC_ETS_GRAFT:
-		वापस __mlxsw_sp_qdisc_ets_graft(mlxsw_sp_port, mlxsw_sp_qdisc,
+	case TC_ETS_GRAFT:
+		return __mlxsw_sp_qdisc_ets_graft(mlxsw_sp_port, mlxsw_sp_qdisc,
 						  p->graft_params.band,
 						  p->graft_params.child_handle);
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+	default:
+		return -EOPNOTSUPP;
+	}
+}
 
-पूर्णांक mlxsw_sp_setup_tc_ets(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-			  काष्ठा tc_ets_qopt_offload *p)
-अणु
-	पूर्णांक err;
+int mlxsw_sp_setup_tc_ets(struct mlxsw_sp_port *mlxsw_sp_port,
+			  struct tc_ets_qopt_offload *p)
+{
+	int err;
 
 	mutex_lock(&mlxsw_sp_port->qdisc->lock);
 	err = __mlxsw_sp_setup_tc_ets(mlxsw_sp_port, p);
 	mutex_unlock(&mlxsw_sp_port->qdisc->lock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-काष्ठा mlxsw_sp_qevent_block अणु
-	काष्ठा list_head binding_list;
-	काष्ठा list_head mall_entry_list;
-	काष्ठा mlxsw_sp *mlxsw_sp;
-पूर्ण;
+struct mlxsw_sp_qevent_block {
+	struct list_head binding_list;
+	struct list_head mall_entry_list;
+	struct mlxsw_sp *mlxsw_sp;
+};
 
-काष्ठा mlxsw_sp_qevent_binding अणु
-	काष्ठा list_head list;
-	काष्ठा mlxsw_sp_port *mlxsw_sp_port;
+struct mlxsw_sp_qevent_binding {
+	struct list_head list;
+	struct mlxsw_sp_port *mlxsw_sp_port;
 	u32 handle;
-	पूर्णांक tclass_num;
-	क्रमागत mlxsw_sp_span_trigger span_trigger;
-पूर्ण;
+	int tclass_num;
+	enum mlxsw_sp_span_trigger span_trigger;
+};
 
-अटल LIST_HEAD(mlxsw_sp_qevent_block_cb_list);
+static LIST_HEAD(mlxsw_sp_qevent_block_cb_list);
 
-अटल पूर्णांक mlxsw_sp_qevent_span_configure(काष्ठा mlxsw_sp *mlxsw_sp,
-					  काष्ठा mlxsw_sp_mall_entry *mall_entry,
-					  काष्ठा mlxsw_sp_qevent_binding *qevent_binding,
-					  स्थिर काष्ठा mlxsw_sp_span_agent_parms *agent_parms,
-					  पूर्णांक *p_span_id)
-अणु
-	काष्ठा mlxsw_sp_port *mlxsw_sp_port = qevent_binding->mlxsw_sp_port;
-	काष्ठा mlxsw_sp_span_trigger_parms trigger_parms = अणुपूर्ण;
-	पूर्णांक span_id;
-	पूर्णांक err;
+static int mlxsw_sp_qevent_span_configure(struct mlxsw_sp *mlxsw_sp,
+					  struct mlxsw_sp_mall_entry *mall_entry,
+					  struct mlxsw_sp_qevent_binding *qevent_binding,
+					  const struct mlxsw_sp_span_agent_parms *agent_parms,
+					  int *p_span_id)
+{
+	struct mlxsw_sp_port *mlxsw_sp_port = qevent_binding->mlxsw_sp_port;
+	struct mlxsw_sp_span_trigger_parms trigger_parms = {};
+	int span_id;
+	int err;
 
 	err = mlxsw_sp_span_agent_get(mlxsw_sp, &span_id, agent_parms);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = mlxsw_sp_span_analyzed_port_get(mlxsw_sp_port, true);
-	अगर (err)
-		जाओ err_analyzed_port_get;
+	if (err)
+		goto err_analyzed_port_get;
 
 	trigger_parms.span_id = span_id;
 	trigger_parms.probability_rate = 1;
 	err = mlxsw_sp_span_agent_bind(mlxsw_sp, qevent_binding->span_trigger, mlxsw_sp_port,
 				       &trigger_parms);
-	अगर (err)
-		जाओ err_agent_bind;
+	if (err)
+		goto err_agent_bind;
 
 	err = mlxsw_sp_span_trigger_enable(mlxsw_sp_port, qevent_binding->span_trigger,
 					   qevent_binding->tclass_num);
-	अगर (err)
-		जाओ err_trigger_enable;
+	if (err)
+		goto err_trigger_enable;
 
 	*p_span_id = span_id;
-	वापस 0;
+	return 0;
 
 err_trigger_enable:
 	mlxsw_sp_span_agent_unbind(mlxsw_sp, qevent_binding->span_trigger, mlxsw_sp_port,
@@ -1518,17 +1517,17 @@ err_agent_bind:
 	mlxsw_sp_span_analyzed_port_put(mlxsw_sp_port, true);
 err_analyzed_port_get:
 	mlxsw_sp_span_agent_put(mlxsw_sp, span_id);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम mlxsw_sp_qevent_span_deconfigure(काष्ठा mlxsw_sp *mlxsw_sp,
-					     काष्ठा mlxsw_sp_qevent_binding *qevent_binding,
-					     पूर्णांक span_id)
-अणु
-	काष्ठा mlxsw_sp_port *mlxsw_sp_port = qevent_binding->mlxsw_sp_port;
-	काष्ठा mlxsw_sp_span_trigger_parms trigger_parms = अणु
+static void mlxsw_sp_qevent_span_deconfigure(struct mlxsw_sp *mlxsw_sp,
+					     struct mlxsw_sp_qevent_binding *qevent_binding,
+					     int span_id)
+{
+	struct mlxsw_sp_port *mlxsw_sp_port = qevent_binding->mlxsw_sp_port;
+	struct mlxsw_sp_span_trigger_parms trigger_parms = {
 		.span_id = span_id,
-	पूर्ण;
+	};
 
 	mlxsw_sp_span_trigger_disable(mlxsw_sp_port, qevent_binding->span_trigger,
 				      qevent_binding->tclass_num);
@@ -1536,474 +1535,474 @@ err_analyzed_port_get:
 				   &trigger_parms);
 	mlxsw_sp_span_analyzed_port_put(mlxsw_sp_port, true);
 	mlxsw_sp_span_agent_put(mlxsw_sp, span_id);
-पूर्ण
+}
 
-अटल पूर्णांक mlxsw_sp_qevent_mirror_configure(काष्ठा mlxsw_sp *mlxsw_sp,
-					    काष्ठा mlxsw_sp_mall_entry *mall_entry,
-					    काष्ठा mlxsw_sp_qevent_binding *qevent_binding)
-अणु
-	काष्ठा mlxsw_sp_span_agent_parms agent_parms = अणु
+static int mlxsw_sp_qevent_mirror_configure(struct mlxsw_sp *mlxsw_sp,
+					    struct mlxsw_sp_mall_entry *mall_entry,
+					    struct mlxsw_sp_qevent_binding *qevent_binding)
+{
+	struct mlxsw_sp_span_agent_parms agent_parms = {
 		.to_dev = mall_entry->mirror.to_dev,
-	पूर्ण;
+	};
 
-	वापस mlxsw_sp_qevent_span_configure(mlxsw_sp, mall_entry, qevent_binding,
+	return mlxsw_sp_qevent_span_configure(mlxsw_sp, mall_entry, qevent_binding,
 					      &agent_parms, &mall_entry->mirror.span_id);
-पूर्ण
+}
 
-अटल व्योम mlxsw_sp_qevent_mirror_deconfigure(काष्ठा mlxsw_sp *mlxsw_sp,
-					       काष्ठा mlxsw_sp_mall_entry *mall_entry,
-					       काष्ठा mlxsw_sp_qevent_binding *qevent_binding)
-अणु
+static void mlxsw_sp_qevent_mirror_deconfigure(struct mlxsw_sp *mlxsw_sp,
+					       struct mlxsw_sp_mall_entry *mall_entry,
+					       struct mlxsw_sp_qevent_binding *qevent_binding)
+{
 	mlxsw_sp_qevent_span_deconfigure(mlxsw_sp, qevent_binding, mall_entry->mirror.span_id);
-पूर्ण
+}
 
-अटल पूर्णांक mlxsw_sp_qevent_trap_configure(काष्ठा mlxsw_sp *mlxsw_sp,
-					  काष्ठा mlxsw_sp_mall_entry *mall_entry,
-					  काष्ठा mlxsw_sp_qevent_binding *qevent_binding)
-अणु
-	काष्ठा mlxsw_sp_span_agent_parms agent_parms = अणु
+static int mlxsw_sp_qevent_trap_configure(struct mlxsw_sp *mlxsw_sp,
+					  struct mlxsw_sp_mall_entry *mall_entry,
+					  struct mlxsw_sp_qevent_binding *qevent_binding)
+{
+	struct mlxsw_sp_span_agent_parms agent_parms = {
 		.session_id = MLXSW_SP_SPAN_SESSION_ID_BUFFER,
-	पूर्ण;
-	पूर्णांक err;
+	};
+	int err;
 
 	err = mlxsw_sp_trap_group_policer_hw_id_get(mlxsw_sp,
 						    DEVLINK_TRAP_GROUP_GENERIC_ID_BUFFER_DROPS,
 						    &agent_parms.policer_enable,
 						    &agent_parms.policer_id);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	वापस mlxsw_sp_qevent_span_configure(mlxsw_sp, mall_entry, qevent_binding,
+	return mlxsw_sp_qevent_span_configure(mlxsw_sp, mall_entry, qevent_binding,
 					      &agent_parms, &mall_entry->trap.span_id);
-पूर्ण
+}
 
-अटल व्योम mlxsw_sp_qevent_trap_deconfigure(काष्ठा mlxsw_sp *mlxsw_sp,
-					     काष्ठा mlxsw_sp_mall_entry *mall_entry,
-					     काष्ठा mlxsw_sp_qevent_binding *qevent_binding)
-अणु
+static void mlxsw_sp_qevent_trap_deconfigure(struct mlxsw_sp *mlxsw_sp,
+					     struct mlxsw_sp_mall_entry *mall_entry,
+					     struct mlxsw_sp_qevent_binding *qevent_binding)
+{
 	mlxsw_sp_qevent_span_deconfigure(mlxsw_sp, qevent_binding, mall_entry->trap.span_id);
-पूर्ण
+}
 
-अटल पूर्णांक mlxsw_sp_qevent_entry_configure(काष्ठा mlxsw_sp *mlxsw_sp,
-					   काष्ठा mlxsw_sp_mall_entry *mall_entry,
-					   काष्ठा mlxsw_sp_qevent_binding *qevent_binding)
-अणु
-	चयन (mall_entry->type) अणु
-	हाल MLXSW_SP_MALL_ACTION_TYPE_MIRROR:
-		वापस mlxsw_sp_qevent_mirror_configure(mlxsw_sp, mall_entry, qevent_binding);
-	हाल MLXSW_SP_MALL_ACTION_TYPE_TRAP:
-		वापस mlxsw_sp_qevent_trap_configure(mlxsw_sp, mall_entry, qevent_binding);
-	शेष:
+static int mlxsw_sp_qevent_entry_configure(struct mlxsw_sp *mlxsw_sp,
+					   struct mlxsw_sp_mall_entry *mall_entry,
+					   struct mlxsw_sp_qevent_binding *qevent_binding)
+{
+	switch (mall_entry->type) {
+	case MLXSW_SP_MALL_ACTION_TYPE_MIRROR:
+		return mlxsw_sp_qevent_mirror_configure(mlxsw_sp, mall_entry, qevent_binding);
+	case MLXSW_SP_MALL_ACTION_TYPE_TRAP:
+		return mlxsw_sp_qevent_trap_configure(mlxsw_sp, mall_entry, qevent_binding);
+	default:
 		/* This should have been validated away. */
 		WARN_ON(1);
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+		return -EOPNOTSUPP;
+	}
+}
 
-अटल व्योम mlxsw_sp_qevent_entry_deconfigure(काष्ठा mlxsw_sp *mlxsw_sp,
-					      काष्ठा mlxsw_sp_mall_entry *mall_entry,
-					      काष्ठा mlxsw_sp_qevent_binding *qevent_binding)
-अणु
-	चयन (mall_entry->type) अणु
-	हाल MLXSW_SP_MALL_ACTION_TYPE_MIRROR:
-		वापस mlxsw_sp_qevent_mirror_deconfigure(mlxsw_sp, mall_entry, qevent_binding);
-	हाल MLXSW_SP_MALL_ACTION_TYPE_TRAP:
-		वापस mlxsw_sp_qevent_trap_deconfigure(mlxsw_sp, mall_entry, qevent_binding);
-	शेष:
+static void mlxsw_sp_qevent_entry_deconfigure(struct mlxsw_sp *mlxsw_sp,
+					      struct mlxsw_sp_mall_entry *mall_entry,
+					      struct mlxsw_sp_qevent_binding *qevent_binding)
+{
+	switch (mall_entry->type) {
+	case MLXSW_SP_MALL_ACTION_TYPE_MIRROR:
+		return mlxsw_sp_qevent_mirror_deconfigure(mlxsw_sp, mall_entry, qevent_binding);
+	case MLXSW_SP_MALL_ACTION_TYPE_TRAP:
+		return mlxsw_sp_qevent_trap_deconfigure(mlxsw_sp, mall_entry, qevent_binding);
+	default:
 		WARN_ON(1);
-		वापस;
-	पूर्ण
-पूर्ण
+		return;
+	}
+}
 
-अटल पूर्णांक mlxsw_sp_qevent_binding_configure(काष्ठा mlxsw_sp_qevent_block *qevent_block,
-					     काष्ठा mlxsw_sp_qevent_binding *qevent_binding)
-अणु
-	काष्ठा mlxsw_sp_mall_entry *mall_entry;
-	पूर्णांक err;
+static int mlxsw_sp_qevent_binding_configure(struct mlxsw_sp_qevent_block *qevent_block,
+					     struct mlxsw_sp_qevent_binding *qevent_binding)
+{
+	struct mlxsw_sp_mall_entry *mall_entry;
+	int err;
 
-	list_क्रम_each_entry(mall_entry, &qevent_block->mall_entry_list, list) अणु
+	list_for_each_entry(mall_entry, &qevent_block->mall_entry_list, list) {
 		err = mlxsw_sp_qevent_entry_configure(qevent_block->mlxsw_sp, mall_entry,
 						      qevent_binding);
-		अगर (err)
-			जाओ err_entry_configure;
-	पूर्ण
+		if (err)
+			goto err_entry_configure;
+	}
 
-	वापस 0;
+	return 0;
 
 err_entry_configure:
-	list_क्रम_each_entry_जारी_reverse(mall_entry, &qevent_block->mall_entry_list, list)
+	list_for_each_entry_continue_reverse(mall_entry, &qevent_block->mall_entry_list, list)
 		mlxsw_sp_qevent_entry_deconfigure(qevent_block->mlxsw_sp, mall_entry,
 						  qevent_binding);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम mlxsw_sp_qevent_binding_deconfigure(काष्ठा mlxsw_sp_qevent_block *qevent_block,
-						काष्ठा mlxsw_sp_qevent_binding *qevent_binding)
-अणु
-	काष्ठा mlxsw_sp_mall_entry *mall_entry;
+static void mlxsw_sp_qevent_binding_deconfigure(struct mlxsw_sp_qevent_block *qevent_block,
+						struct mlxsw_sp_qevent_binding *qevent_binding)
+{
+	struct mlxsw_sp_mall_entry *mall_entry;
 
-	list_क्रम_each_entry(mall_entry, &qevent_block->mall_entry_list, list)
+	list_for_each_entry(mall_entry, &qevent_block->mall_entry_list, list)
 		mlxsw_sp_qevent_entry_deconfigure(qevent_block->mlxsw_sp, mall_entry,
 						  qevent_binding);
-पूर्ण
+}
 
-अटल पूर्णांक mlxsw_sp_qevent_block_configure(काष्ठा mlxsw_sp_qevent_block *qevent_block)
-अणु
-	काष्ठा mlxsw_sp_qevent_binding *qevent_binding;
-	पूर्णांक err;
+static int mlxsw_sp_qevent_block_configure(struct mlxsw_sp_qevent_block *qevent_block)
+{
+	struct mlxsw_sp_qevent_binding *qevent_binding;
+	int err;
 
-	list_क्रम_each_entry(qevent_binding, &qevent_block->binding_list, list) अणु
+	list_for_each_entry(qevent_binding, &qevent_block->binding_list, list) {
 		err = mlxsw_sp_qevent_binding_configure(qevent_block, qevent_binding);
-		अगर (err)
-			जाओ err_binding_configure;
-	पूर्ण
+		if (err)
+			goto err_binding_configure;
+	}
 
-	वापस 0;
+	return 0;
 
 err_binding_configure:
-	list_क्रम_each_entry_जारी_reverse(qevent_binding, &qevent_block->binding_list, list)
+	list_for_each_entry_continue_reverse(qevent_binding, &qevent_block->binding_list, list)
 		mlxsw_sp_qevent_binding_deconfigure(qevent_block, qevent_binding);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम mlxsw_sp_qevent_block_deconfigure(काष्ठा mlxsw_sp_qevent_block *qevent_block)
-अणु
-	काष्ठा mlxsw_sp_qevent_binding *qevent_binding;
+static void mlxsw_sp_qevent_block_deconfigure(struct mlxsw_sp_qevent_block *qevent_block)
+{
+	struct mlxsw_sp_qevent_binding *qevent_binding;
 
-	list_क्रम_each_entry(qevent_binding, &qevent_block->binding_list, list)
+	list_for_each_entry(qevent_binding, &qevent_block->binding_list, list)
 		mlxsw_sp_qevent_binding_deconfigure(qevent_block, qevent_binding);
-पूर्ण
+}
 
-अटल काष्ठा mlxsw_sp_mall_entry *
-mlxsw_sp_qevent_mall_entry_find(काष्ठा mlxsw_sp_qevent_block *block, अचिन्हित दीर्घ cookie)
-अणु
-	काष्ठा mlxsw_sp_mall_entry *mall_entry;
+static struct mlxsw_sp_mall_entry *
+mlxsw_sp_qevent_mall_entry_find(struct mlxsw_sp_qevent_block *block, unsigned long cookie)
+{
+	struct mlxsw_sp_mall_entry *mall_entry;
 
-	list_क्रम_each_entry(mall_entry, &block->mall_entry_list, list)
-		अगर (mall_entry->cookie == cookie)
-			वापस mall_entry;
+	list_for_each_entry(mall_entry, &block->mall_entry_list, list)
+		if (mall_entry->cookie == cookie)
+			return mall_entry;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक mlxsw_sp_qevent_mall_replace(काष्ठा mlxsw_sp *mlxsw_sp,
-					काष्ठा mlxsw_sp_qevent_block *qevent_block,
-					काष्ठा tc_cls_matchall_offload *f)
-अणु
-	काष्ठा mlxsw_sp_mall_entry *mall_entry;
-	काष्ठा flow_action_entry *act;
-	पूर्णांक err;
+static int mlxsw_sp_qevent_mall_replace(struct mlxsw_sp *mlxsw_sp,
+					struct mlxsw_sp_qevent_block *qevent_block,
+					struct tc_cls_matchall_offload *f)
+{
+	struct mlxsw_sp_mall_entry *mall_entry;
+	struct flow_action_entry *act;
+	int err;
 
 	/* It should not currently be possible to replace a matchall rule. So
 	 * this must be a new rule.
 	 */
-	अगर (!list_empty(&qevent_block->mall_entry_list)) अणु
+	if (!list_empty(&qevent_block->mall_entry_list)) {
 		NL_SET_ERR_MSG(f->common.extack, "At most one filter supported");
-		वापस -EOPNOTSUPP;
-	पूर्ण
-	अगर (f->rule->action.num_entries != 1) अणु
+		return -EOPNOTSUPP;
+	}
+	if (f->rule->action.num_entries != 1) {
 		NL_SET_ERR_MSG(f->common.extack, "Only singular actions supported");
-		वापस -EOPNOTSUPP;
-	पूर्ण
-	अगर (f->common.chain_index) अणु
+		return -EOPNOTSUPP;
+	}
+	if (f->common.chain_index) {
 		NL_SET_ERR_MSG(f->common.extack, "Only chain 0 is supported");
-		वापस -EOPNOTSUPP;
-	पूर्ण
-	अगर (f->common.protocol != htons(ETH_P_ALL)) अणु
+		return -EOPNOTSUPP;
+	}
+	if (f->common.protocol != htons(ETH_P_ALL)) {
 		NL_SET_ERR_MSG(f->common.extack, "Protocol matching not supported");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
 	act = &f->rule->action.entries[0];
-	अगर (!(act->hw_stats & FLOW_ACTION_HW_STATS_DISABLED)) अणु
+	if (!(act->hw_stats & FLOW_ACTION_HW_STATS_DISABLED)) {
 		NL_SET_ERR_MSG(f->common.extack, "HW counters not supported on qevents");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	mall_entry = kzalloc(माप(*mall_entry), GFP_KERNEL);
-	अगर (!mall_entry)
-		वापस -ENOMEM;
+	mall_entry = kzalloc(sizeof(*mall_entry), GFP_KERNEL);
+	if (!mall_entry)
+		return -ENOMEM;
 	mall_entry->cookie = f->cookie;
 
-	अगर (act->id == FLOW_ACTION_MIRRED) अणु
+	if (act->id == FLOW_ACTION_MIRRED) {
 		mall_entry->type = MLXSW_SP_MALL_ACTION_TYPE_MIRROR;
 		mall_entry->mirror.to_dev = act->dev;
-	पूर्ण अन्यथा अगर (act->id == FLOW_ACTION_TRAP) अणु
+	} else if (act->id == FLOW_ACTION_TRAP) {
 		mall_entry->type = MLXSW_SP_MALL_ACTION_TYPE_TRAP;
-	पूर्ण अन्यथा अणु
+	} else {
 		NL_SET_ERR_MSG(f->common.extack, "Unsupported action");
 		err = -EOPNOTSUPP;
-		जाओ err_unsupported_action;
-	पूर्ण
+		goto err_unsupported_action;
+	}
 
 	list_add_tail(&mall_entry->list, &qevent_block->mall_entry_list);
 
 	err = mlxsw_sp_qevent_block_configure(qevent_block);
-	अगर (err)
-		जाओ err_block_configure;
+	if (err)
+		goto err_block_configure;
 
-	वापस 0;
+	return 0;
 
 err_block_configure:
 	list_del(&mall_entry->list);
 err_unsupported_action:
-	kमुक्त(mall_entry);
-	वापस err;
-पूर्ण
+	kfree(mall_entry);
+	return err;
+}
 
-अटल व्योम mlxsw_sp_qevent_mall_destroy(काष्ठा mlxsw_sp_qevent_block *qevent_block,
-					 काष्ठा tc_cls_matchall_offload *f)
-अणु
-	काष्ठा mlxsw_sp_mall_entry *mall_entry;
+static void mlxsw_sp_qevent_mall_destroy(struct mlxsw_sp_qevent_block *qevent_block,
+					 struct tc_cls_matchall_offload *f)
+{
+	struct mlxsw_sp_mall_entry *mall_entry;
 
 	mall_entry = mlxsw_sp_qevent_mall_entry_find(qevent_block, f->cookie);
-	अगर (!mall_entry)
-		वापस;
+	if (!mall_entry)
+		return;
 
 	mlxsw_sp_qevent_block_deconfigure(qevent_block);
 
 	list_del(&mall_entry->list);
-	kमुक्त(mall_entry);
-पूर्ण
+	kfree(mall_entry);
+}
 
-अटल पूर्णांक mlxsw_sp_qevent_block_mall_cb(काष्ठा mlxsw_sp_qevent_block *qevent_block,
-					 काष्ठा tc_cls_matchall_offload *f)
-अणु
-	काष्ठा mlxsw_sp *mlxsw_sp = qevent_block->mlxsw_sp;
+static int mlxsw_sp_qevent_block_mall_cb(struct mlxsw_sp_qevent_block *qevent_block,
+					 struct tc_cls_matchall_offload *f)
+{
+	struct mlxsw_sp *mlxsw_sp = qevent_block->mlxsw_sp;
 
-	चयन (f->command) अणु
-	हाल TC_CLSMATCHALL_REPLACE:
-		वापस mlxsw_sp_qevent_mall_replace(mlxsw_sp, qevent_block, f);
-	हाल TC_CLSMATCHALL_DESTROY:
+	switch (f->command) {
+	case TC_CLSMATCHALL_REPLACE:
+		return mlxsw_sp_qevent_mall_replace(mlxsw_sp, qevent_block, f);
+	case TC_CLSMATCHALL_DESTROY:
 		mlxsw_sp_qevent_mall_destroy(qevent_block, f);
-		वापस 0;
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+		return 0;
+	default:
+		return -EOPNOTSUPP;
+	}
+}
 
-अटल पूर्णांक mlxsw_sp_qevent_block_cb(क्रमागत tc_setup_type type, व्योम *type_data, व्योम *cb_priv)
-अणु
-	काष्ठा mlxsw_sp_qevent_block *qevent_block = cb_priv;
+static int mlxsw_sp_qevent_block_cb(enum tc_setup_type type, void *type_data, void *cb_priv)
+{
+	struct mlxsw_sp_qevent_block *qevent_block = cb_priv;
 
-	चयन (type) अणु
-	हाल TC_SETUP_CLSMATCHALL:
-		वापस mlxsw_sp_qevent_block_mall_cb(qevent_block, type_data);
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+	switch (type) {
+	case TC_SETUP_CLSMATCHALL:
+		return mlxsw_sp_qevent_block_mall_cb(qevent_block, type_data);
+	default:
+		return -EOPNOTSUPP;
+	}
+}
 
-अटल काष्ठा mlxsw_sp_qevent_block *mlxsw_sp_qevent_block_create(काष्ठा mlxsw_sp *mlxsw_sp,
-								  काष्ठा net *net)
-अणु
-	काष्ठा mlxsw_sp_qevent_block *qevent_block;
+static struct mlxsw_sp_qevent_block *mlxsw_sp_qevent_block_create(struct mlxsw_sp *mlxsw_sp,
+								  struct net *net)
+{
+	struct mlxsw_sp_qevent_block *qevent_block;
 
-	qevent_block = kzalloc(माप(*qevent_block), GFP_KERNEL);
-	अगर (!qevent_block)
-		वापस शून्य;
+	qevent_block = kzalloc(sizeof(*qevent_block), GFP_KERNEL);
+	if (!qevent_block)
+		return NULL;
 
 	INIT_LIST_HEAD(&qevent_block->binding_list);
 	INIT_LIST_HEAD(&qevent_block->mall_entry_list);
 	qevent_block->mlxsw_sp = mlxsw_sp;
-	वापस qevent_block;
-पूर्ण
+	return qevent_block;
+}
 
-अटल व्योम
-mlxsw_sp_qevent_block_destroy(काष्ठा mlxsw_sp_qevent_block *qevent_block)
-अणु
+static void
+mlxsw_sp_qevent_block_destroy(struct mlxsw_sp_qevent_block *qevent_block)
+{
 	WARN_ON(!list_empty(&qevent_block->binding_list));
 	WARN_ON(!list_empty(&qevent_block->mall_entry_list));
-	kमुक्त(qevent_block);
-पूर्ण
+	kfree(qevent_block);
+}
 
-अटल व्योम mlxsw_sp_qevent_block_release(व्योम *cb_priv)
-अणु
-	काष्ठा mlxsw_sp_qevent_block *qevent_block = cb_priv;
+static void mlxsw_sp_qevent_block_release(void *cb_priv)
+{
+	struct mlxsw_sp_qevent_block *qevent_block = cb_priv;
 
 	mlxsw_sp_qevent_block_destroy(qevent_block);
-पूर्ण
+}
 
-अटल काष्ठा mlxsw_sp_qevent_binding *
-mlxsw_sp_qevent_binding_create(काष्ठा mlxsw_sp_port *mlxsw_sp_port, u32 handle, पूर्णांक tclass_num,
-			       क्रमागत mlxsw_sp_span_trigger span_trigger)
-अणु
-	काष्ठा mlxsw_sp_qevent_binding *binding;
+static struct mlxsw_sp_qevent_binding *
+mlxsw_sp_qevent_binding_create(struct mlxsw_sp_port *mlxsw_sp_port, u32 handle, int tclass_num,
+			       enum mlxsw_sp_span_trigger span_trigger)
+{
+	struct mlxsw_sp_qevent_binding *binding;
 
-	binding = kzalloc(माप(*binding), GFP_KERNEL);
-	अगर (!binding)
-		वापस ERR_PTR(-ENOMEM);
+	binding = kzalloc(sizeof(*binding), GFP_KERNEL);
+	if (!binding)
+		return ERR_PTR(-ENOMEM);
 
 	binding->mlxsw_sp_port = mlxsw_sp_port;
 	binding->handle = handle;
 	binding->tclass_num = tclass_num;
 	binding->span_trigger = span_trigger;
-	वापस binding;
-पूर्ण
+	return binding;
+}
 
-अटल व्योम
-mlxsw_sp_qevent_binding_destroy(काष्ठा mlxsw_sp_qevent_binding *binding)
-अणु
-	kमुक्त(binding);
-पूर्ण
+static void
+mlxsw_sp_qevent_binding_destroy(struct mlxsw_sp_qevent_binding *binding)
+{
+	kfree(binding);
+}
 
-अटल काष्ठा mlxsw_sp_qevent_binding *
-mlxsw_sp_qevent_binding_lookup(काष्ठा mlxsw_sp_qevent_block *block,
-			       काष्ठा mlxsw_sp_port *mlxsw_sp_port,
+static struct mlxsw_sp_qevent_binding *
+mlxsw_sp_qevent_binding_lookup(struct mlxsw_sp_qevent_block *block,
+			       struct mlxsw_sp_port *mlxsw_sp_port,
 			       u32 handle,
-			       क्रमागत mlxsw_sp_span_trigger span_trigger)
-अणु
-	काष्ठा mlxsw_sp_qevent_binding *qevent_binding;
+			       enum mlxsw_sp_span_trigger span_trigger)
+{
+	struct mlxsw_sp_qevent_binding *qevent_binding;
 
-	list_क्रम_each_entry(qevent_binding, &block->binding_list, list)
-		अगर (qevent_binding->mlxsw_sp_port == mlxsw_sp_port &&
+	list_for_each_entry(qevent_binding, &block->binding_list, list)
+		if (qevent_binding->mlxsw_sp_port == mlxsw_sp_port &&
 		    qevent_binding->handle == handle &&
 		    qevent_binding->span_trigger == span_trigger)
-			वापस qevent_binding;
-	वापस शून्य;
-पूर्ण
+			return qevent_binding;
+	return NULL;
+}
 
-अटल पूर्णांक mlxsw_sp_setup_tc_block_qevent_bind(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-					       काष्ठा flow_block_offload *f,
-					       क्रमागत mlxsw_sp_span_trigger span_trigger)
-अणु
-	काष्ठा mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
-	काष्ठा mlxsw_sp_qevent_binding *qevent_binding;
-	काष्ठा mlxsw_sp_qevent_block *qevent_block;
-	काष्ठा flow_block_cb *block_cb;
-	काष्ठा mlxsw_sp_qdisc *qdisc;
-	bool रेजिस्टर_block = false;
-	पूर्णांक err;
+static int mlxsw_sp_setup_tc_block_qevent_bind(struct mlxsw_sp_port *mlxsw_sp_port,
+					       struct flow_block_offload *f,
+					       enum mlxsw_sp_span_trigger span_trigger)
+{
+	struct mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
+	struct mlxsw_sp_qevent_binding *qevent_binding;
+	struct mlxsw_sp_qevent_block *qevent_block;
+	struct flow_block_cb *block_cb;
+	struct mlxsw_sp_qdisc *qdisc;
+	bool register_block = false;
+	int err;
 
 	block_cb = flow_block_cb_lookup(f->block, mlxsw_sp_qevent_block_cb, mlxsw_sp);
-	अगर (!block_cb) अणु
+	if (!block_cb) {
 		qevent_block = mlxsw_sp_qevent_block_create(mlxsw_sp, f->net);
-		अगर (!qevent_block)
-			वापस -ENOMEM;
+		if (!qevent_block)
+			return -ENOMEM;
 		block_cb = flow_block_cb_alloc(mlxsw_sp_qevent_block_cb, mlxsw_sp, qevent_block,
 					       mlxsw_sp_qevent_block_release);
-		अगर (IS_ERR(block_cb)) अणु
+		if (IS_ERR(block_cb)) {
 			mlxsw_sp_qevent_block_destroy(qevent_block);
-			वापस PTR_ERR(block_cb);
-		पूर्ण
-		रेजिस्टर_block = true;
-	पूर्ण अन्यथा अणु
+			return PTR_ERR(block_cb);
+		}
+		register_block = true;
+	} else {
 		qevent_block = flow_block_cb_priv(block_cb);
-	पूर्ण
+	}
 	flow_block_cb_incref(block_cb);
 
 	qdisc = mlxsw_sp_qdisc_find_by_handle(mlxsw_sp_port, f->sch->handle);
-	अगर (!qdisc) अणु
+	if (!qdisc) {
 		NL_SET_ERR_MSG(f->extack, "Qdisc not offloaded");
 		err = -ENOENT;
-		जाओ err_find_qdisc;
-	पूर्ण
+		goto err_find_qdisc;
+	}
 
-	अगर (WARN_ON(mlxsw_sp_qevent_binding_lookup(qevent_block, mlxsw_sp_port, f->sch->handle,
-						   span_trigger))) अणु
+	if (WARN_ON(mlxsw_sp_qevent_binding_lookup(qevent_block, mlxsw_sp_port, f->sch->handle,
+						   span_trigger))) {
 		err = -EEXIST;
-		जाओ err_binding_exists;
-	पूर्ण
+		goto err_binding_exists;
+	}
 
 	qevent_binding = mlxsw_sp_qevent_binding_create(mlxsw_sp_port, f->sch->handle,
 							qdisc->tclass_num, span_trigger);
-	अगर (IS_ERR(qevent_binding)) अणु
+	if (IS_ERR(qevent_binding)) {
 		err = PTR_ERR(qevent_binding);
-		जाओ err_binding_create;
-	पूर्ण
+		goto err_binding_create;
+	}
 
 	err = mlxsw_sp_qevent_binding_configure(qevent_block, qevent_binding);
-	अगर (err)
-		जाओ err_binding_configure;
+	if (err)
+		goto err_binding_configure;
 
 	list_add(&qevent_binding->list, &qevent_block->binding_list);
 
-	अगर (रेजिस्टर_block) अणु
+	if (register_block) {
 		flow_block_cb_add(block_cb, f);
 		list_add_tail(&block_cb->driver_list, &mlxsw_sp_qevent_block_cb_list);
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 err_binding_configure:
 	mlxsw_sp_qevent_binding_destroy(qevent_binding);
 err_binding_create:
 err_binding_exists:
 err_find_qdisc:
-	अगर (!flow_block_cb_decref(block_cb))
-		flow_block_cb_मुक्त(block_cb);
-	वापस err;
-पूर्ण
+	if (!flow_block_cb_decref(block_cb))
+		flow_block_cb_free(block_cb);
+	return err;
+}
 
-अटल व्योम mlxsw_sp_setup_tc_block_qevent_unbind(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-						  काष्ठा flow_block_offload *f,
-						  क्रमागत mlxsw_sp_span_trigger span_trigger)
-अणु
-	काष्ठा mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
-	काष्ठा mlxsw_sp_qevent_binding *qevent_binding;
-	काष्ठा mlxsw_sp_qevent_block *qevent_block;
-	काष्ठा flow_block_cb *block_cb;
+static void mlxsw_sp_setup_tc_block_qevent_unbind(struct mlxsw_sp_port *mlxsw_sp_port,
+						  struct flow_block_offload *f,
+						  enum mlxsw_sp_span_trigger span_trigger)
+{
+	struct mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
+	struct mlxsw_sp_qevent_binding *qevent_binding;
+	struct mlxsw_sp_qevent_block *qevent_block;
+	struct flow_block_cb *block_cb;
 
 	block_cb = flow_block_cb_lookup(f->block, mlxsw_sp_qevent_block_cb, mlxsw_sp);
-	अगर (!block_cb)
-		वापस;
+	if (!block_cb)
+		return;
 	qevent_block = flow_block_cb_priv(block_cb);
 
 	qevent_binding = mlxsw_sp_qevent_binding_lookup(qevent_block, mlxsw_sp_port, f->sch->handle,
 							span_trigger);
-	अगर (!qevent_binding)
-		वापस;
+	if (!qevent_binding)
+		return;
 
 	list_del(&qevent_binding->list);
 	mlxsw_sp_qevent_binding_deconfigure(qevent_block, qevent_binding);
 	mlxsw_sp_qevent_binding_destroy(qevent_binding);
 
-	अगर (!flow_block_cb_decref(block_cb)) अणु
-		flow_block_cb_हटाओ(block_cb, f);
+	if (!flow_block_cb_decref(block_cb)) {
+		flow_block_cb_remove(block_cb, f);
 		list_del(&block_cb->driver_list);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक mlxsw_sp_setup_tc_block_qevent(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-					  काष्ठा flow_block_offload *f,
-					  क्रमागत mlxsw_sp_span_trigger span_trigger)
-अणु
+static int mlxsw_sp_setup_tc_block_qevent(struct mlxsw_sp_port *mlxsw_sp_port,
+					  struct flow_block_offload *f,
+					  enum mlxsw_sp_span_trigger span_trigger)
+{
 	f->driver_block_list = &mlxsw_sp_qevent_block_cb_list;
 
-	चयन (f->command) अणु
-	हाल FLOW_BLOCK_BIND:
-		वापस mlxsw_sp_setup_tc_block_qevent_bind(mlxsw_sp_port, f, span_trigger);
-	हाल FLOW_BLOCK_UNBIND:
+	switch (f->command) {
+	case FLOW_BLOCK_BIND:
+		return mlxsw_sp_setup_tc_block_qevent_bind(mlxsw_sp_port, f, span_trigger);
+	case FLOW_BLOCK_UNBIND:
 		mlxsw_sp_setup_tc_block_qevent_unbind(mlxsw_sp_port, f, span_trigger);
-		वापस 0;
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+		return 0;
+	default:
+		return -EOPNOTSUPP;
+	}
+}
 
-पूर्णांक mlxsw_sp_setup_tc_block_qevent_early_drop(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-					      काष्ठा flow_block_offload *f)
-अणु
-	वापस mlxsw_sp_setup_tc_block_qevent(mlxsw_sp_port, f, MLXSW_SP_SPAN_TRIGGER_EARLY_DROP);
-पूर्ण
+int mlxsw_sp_setup_tc_block_qevent_early_drop(struct mlxsw_sp_port *mlxsw_sp_port,
+					      struct flow_block_offload *f)
+{
+	return mlxsw_sp_setup_tc_block_qevent(mlxsw_sp_port, f, MLXSW_SP_SPAN_TRIGGER_EARLY_DROP);
+}
 
-पूर्णांक mlxsw_sp_tc_qdisc_init(काष्ठा mlxsw_sp_port *mlxsw_sp_port)
-अणु
-	काष्ठा mlxsw_sp_qdisc_state *qdisc_state;
+int mlxsw_sp_tc_qdisc_init(struct mlxsw_sp_port *mlxsw_sp_port)
+{
+	struct mlxsw_sp_qdisc_state *qdisc_state;
 
-	qdisc_state = kzalloc(माप(*qdisc_state), GFP_KERNEL);
-	अगर (!qdisc_state)
-		वापस -ENOMEM;
+	qdisc_state = kzalloc(sizeof(*qdisc_state), GFP_KERNEL);
+	if (!qdisc_state)
+		return -ENOMEM;
 
 	mutex_init(&qdisc_state->lock);
-	qdisc_state->root_qdisc.prio_biपंचांगap = 0xff;
+	qdisc_state->root_qdisc.prio_bitmap = 0xff;
 	qdisc_state->root_qdisc.tclass_num = MLXSW_SP_PORT_DEFAULT_TCLASS;
 	mlxsw_sp_port->qdisc = qdisc_state;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम mlxsw_sp_tc_qdisc_fini(काष्ठा mlxsw_sp_port *mlxsw_sp_port)
-अणु
+void mlxsw_sp_tc_qdisc_fini(struct mlxsw_sp_port *mlxsw_sp_port)
+{
 	mutex_destroy(&mlxsw_sp_port->qdisc->lock);
-	kमुक्त(mlxsw_sp_port->qdisc);
-पूर्ण
+	kfree(mlxsw_sp_port->qdisc);
+}

@@ -1,623 +1,622 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Sample in-kernel QMI client driver
  *
  * Copyright (c) 2013-2014, The Linux Foundation. All rights reserved.
  * Copyright (C) 2017 Linaro Ltd.
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/qrtr.h>
-#समावेश <linux/net.h>
-#समावेश <linux/completion.h>
-#समावेश <linux/idr.h>
-#समावेश <linux/माला.स>
-#समावेश <net/sock.h>
-#समावेश <linux/soc/qcom/qmi.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/debugfs.h>
+#include <linux/device.h>
+#include <linux/platform_device.h>
+#include <linux/qrtr.h>
+#include <linux/net.h>
+#include <linux/completion.h>
+#include <linux/idr.h>
+#include <linux/string.h>
+#include <net/sock.h>
+#include <linux/soc/qcom/qmi.h>
 
-#घोषणा PING_REQ1_TLV_TYPE		0x1
-#घोषणा PING_RESP1_TLV_TYPE		0x2
-#घोषणा PING_OPT1_TLV_TYPE		0x10
-#घोषणा PING_OPT2_TLV_TYPE		0x11
+#define PING_REQ1_TLV_TYPE		0x1
+#define PING_RESP1_TLV_TYPE		0x2
+#define PING_OPT1_TLV_TYPE		0x10
+#define PING_OPT2_TLV_TYPE		0x11
 
-#घोषणा DATA_REQ1_TLV_TYPE		0x1
-#घोषणा DATA_RESP1_TLV_TYPE		0x2
-#घोषणा DATA_OPT1_TLV_TYPE		0x10
-#घोषणा DATA_OPT2_TLV_TYPE		0x11
+#define DATA_REQ1_TLV_TYPE		0x1
+#define DATA_RESP1_TLV_TYPE		0x2
+#define DATA_OPT1_TLV_TYPE		0x10
+#define DATA_OPT2_TLV_TYPE		0x11
 
-#घोषणा TEST_MED_DATA_SIZE_V01		8192
-#घोषणा TEST_MAX_NAME_SIZE_V01		255
+#define TEST_MED_DATA_SIZE_V01		8192
+#define TEST_MAX_NAME_SIZE_V01		255
 
-#घोषणा TEST_PING_REQ_MSG_ID_V01	0x20
-#घोषणा TEST_DATA_REQ_MSG_ID_V01	0x21
+#define TEST_PING_REQ_MSG_ID_V01	0x20
+#define TEST_DATA_REQ_MSG_ID_V01	0x21
 
-#घोषणा TEST_PING_REQ_MAX_MSG_LEN_V01	266
-#घोषणा TEST_DATA_REQ_MAX_MSG_LEN_V01	8456
+#define TEST_PING_REQ_MAX_MSG_LEN_V01	266
+#define TEST_DATA_REQ_MAX_MSG_LEN_V01	8456
 
-काष्ठा test_name_type_v01 अणु
+struct test_name_type_v01 {
 	u32 name_len;
-	अक्षर name[TEST_MAX_NAME_SIZE_V01];
-पूर्ण;
+	char name[TEST_MAX_NAME_SIZE_V01];
+};
 
-अटल काष्ठा qmi_elem_info test_name_type_v01_ei[] = अणु
-	अणु
+static struct qmi_elem_info test_name_type_v01_ei[] = {
+	{
 		.data_type	= QMI_DATA_LEN,
 		.elem_len	= 1,
-		.elem_size	= माप(u8),
+		.elem_size	= sizeof(u8),
 		.array_type	= NO_ARRAY,
 		.tlv_type	= QMI_COMMON_TLV_TYPE,
-		.offset		= दुरत्व(काष्ठा test_name_type_v01,
+		.offset		= offsetof(struct test_name_type_v01,
 					   name_len),
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_UNSIGNED_1_BYTE,
 		.elem_len	= TEST_MAX_NAME_SIZE_V01,
-		.elem_size	= माप(अक्षर),
+		.elem_size	= sizeof(char),
 		.array_type	= VAR_LEN_ARRAY,
 		.tlv_type	= QMI_COMMON_TLV_TYPE,
-		.offset		= दुरत्व(काष्ठा test_name_type_v01,
+		.offset		= offsetof(struct test_name_type_v01,
 					   name),
-	पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+	},
+	{}
+};
 
-काष्ठा test_ping_req_msg_v01 अणु
-	अक्षर ping[4];
+struct test_ping_req_msg_v01 {
+	char ping[4];
 
 	u8 client_name_valid;
-	काष्ठा test_name_type_v01 client_name;
-पूर्ण;
+	struct test_name_type_v01 client_name;
+};
 
-अटल काष्ठा qmi_elem_info test_ping_req_msg_v01_ei[] = अणु
-	अणु
+static struct qmi_elem_info test_ping_req_msg_v01_ei[] = {
+	{
 		.data_type	= QMI_UNSIGNED_1_BYTE,
 		.elem_len	= 4,
-		.elem_size	= माप(अक्षर),
+		.elem_size	= sizeof(char),
 		.array_type	= STATIC_ARRAY,
 		.tlv_type	= PING_REQ1_TLV_TYPE,
-		.offset		= दुरत्व(काष्ठा test_ping_req_msg_v01,
+		.offset		= offsetof(struct test_ping_req_msg_v01,
 					   ping),
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_OPT_FLAG,
 		.elem_len	= 1,
-		.elem_size	= माप(u8),
+		.elem_size	= sizeof(u8),
 		.array_type	= NO_ARRAY,
 		.tlv_type	= PING_OPT1_TLV_TYPE,
-		.offset		= दुरत्व(काष्ठा test_ping_req_msg_v01,
+		.offset		= offsetof(struct test_ping_req_msg_v01,
 					   client_name_valid),
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_STRUCT,
 		.elem_len	= 1,
-		.elem_size	= माप(काष्ठा test_name_type_v01),
+		.elem_size	= sizeof(struct test_name_type_v01),
 		.array_type	= NO_ARRAY,
 		.tlv_type	= PING_OPT1_TLV_TYPE,
-		.offset		= दुरत्व(काष्ठा test_ping_req_msg_v01,
+		.offset		= offsetof(struct test_ping_req_msg_v01,
 					   client_name),
 		.ei_array	= test_name_type_v01_ei,
-	पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+	},
+	{}
+};
 
-काष्ठा test_ping_resp_msg_v01 अणु
-	काष्ठा qmi_response_type_v01 resp;
+struct test_ping_resp_msg_v01 {
+	struct qmi_response_type_v01 resp;
 
 	u8 pong_valid;
-	अक्षर pong[4];
+	char pong[4];
 
 	u8 service_name_valid;
-	काष्ठा test_name_type_v01 service_name;
-पूर्ण;
+	struct test_name_type_v01 service_name;
+};
 
-अटल काष्ठा qmi_elem_info test_ping_resp_msg_v01_ei[] = अणु
-	अणु
+static struct qmi_elem_info test_ping_resp_msg_v01_ei[] = {
+	{
 		.data_type	= QMI_STRUCT,
 		.elem_len	= 1,
-		.elem_size	= माप(काष्ठा qmi_response_type_v01),
+		.elem_size	= sizeof(struct qmi_response_type_v01),
 		.array_type	= NO_ARRAY,
 		.tlv_type	= PING_RESP1_TLV_TYPE,
-		.offset		= दुरत्व(काष्ठा test_ping_resp_msg_v01,
+		.offset		= offsetof(struct test_ping_resp_msg_v01,
 					   resp),
 		.ei_array	= qmi_response_type_v01_ei,
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_OPT_FLAG,
 		.elem_len	= 1,
-		.elem_size	= माप(u8),
+		.elem_size	= sizeof(u8),
 		.array_type	= NO_ARRAY,
 		.tlv_type	= PING_OPT1_TLV_TYPE,
-		.offset		= दुरत्व(काष्ठा test_ping_resp_msg_v01,
+		.offset		= offsetof(struct test_ping_resp_msg_v01,
 					   pong_valid),
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_UNSIGNED_1_BYTE,
 		.elem_len	= 4,
-		.elem_size	= माप(अक्षर),
+		.elem_size	= sizeof(char),
 		.array_type	= STATIC_ARRAY,
 		.tlv_type	= PING_OPT1_TLV_TYPE,
-		.offset		= दुरत्व(काष्ठा test_ping_resp_msg_v01,
+		.offset		= offsetof(struct test_ping_resp_msg_v01,
 					   pong),
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_OPT_FLAG,
 		.elem_len	= 1,
-		.elem_size	= माप(u8),
+		.elem_size	= sizeof(u8),
 		.array_type	= NO_ARRAY,
 		.tlv_type	= PING_OPT2_TLV_TYPE,
-		.offset		= दुरत्व(काष्ठा test_ping_resp_msg_v01,
+		.offset		= offsetof(struct test_ping_resp_msg_v01,
 					   service_name_valid),
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_STRUCT,
 		.elem_len	= 1,
-		.elem_size	= माप(काष्ठा test_name_type_v01),
+		.elem_size	= sizeof(struct test_name_type_v01),
 		.array_type	= NO_ARRAY,
 		.tlv_type	= PING_OPT2_TLV_TYPE,
-		.offset		= दुरत्व(काष्ठा test_ping_resp_msg_v01,
+		.offset		= offsetof(struct test_ping_resp_msg_v01,
 					   service_name),
 		.ei_array	= test_name_type_v01_ei,
-	पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+	},
+	{}
+};
 
-काष्ठा test_data_req_msg_v01 अणु
+struct test_data_req_msg_v01 {
 	u32 data_len;
 	u8 data[TEST_MED_DATA_SIZE_V01];
 
 	u8 client_name_valid;
-	काष्ठा test_name_type_v01 client_name;
-पूर्ण;
+	struct test_name_type_v01 client_name;
+};
 
-अटल काष्ठा qmi_elem_info test_data_req_msg_v01_ei[] = अणु
-	अणु
+static struct qmi_elem_info test_data_req_msg_v01_ei[] = {
+	{
 		.data_type	= QMI_DATA_LEN,
 		.elem_len	= 1,
-		.elem_size	= माप(u32),
+		.elem_size	= sizeof(u32),
 		.array_type	= NO_ARRAY,
 		.tlv_type	= DATA_REQ1_TLV_TYPE,
-		.offset		= दुरत्व(काष्ठा test_data_req_msg_v01,
+		.offset		= offsetof(struct test_data_req_msg_v01,
 					   data_len),
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_UNSIGNED_1_BYTE,
 		.elem_len	= TEST_MED_DATA_SIZE_V01,
-		.elem_size	= माप(u8),
+		.elem_size	= sizeof(u8),
 		.array_type	= VAR_LEN_ARRAY,
 		.tlv_type	= DATA_REQ1_TLV_TYPE,
-		.offset		= दुरत्व(काष्ठा test_data_req_msg_v01,
+		.offset		= offsetof(struct test_data_req_msg_v01,
 					   data),
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_OPT_FLAG,
 		.elem_len	= 1,
-		.elem_size	= माप(u8),
+		.elem_size	= sizeof(u8),
 		.array_type	= NO_ARRAY,
 		.tlv_type	= DATA_OPT1_TLV_TYPE,
-		.offset		= दुरत्व(काष्ठा test_data_req_msg_v01,
+		.offset		= offsetof(struct test_data_req_msg_v01,
 					   client_name_valid),
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_STRUCT,
 		.elem_len	= 1,
-		.elem_size	= माप(काष्ठा test_name_type_v01),
+		.elem_size	= sizeof(struct test_name_type_v01),
 		.array_type	= NO_ARRAY,
 		.tlv_type	= DATA_OPT1_TLV_TYPE,
-		.offset		= दुरत्व(काष्ठा test_data_req_msg_v01,
+		.offset		= offsetof(struct test_data_req_msg_v01,
 					   client_name),
 		.ei_array	= test_name_type_v01_ei,
-	पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+	},
+	{}
+};
 
-काष्ठा test_data_resp_msg_v01 अणु
-	काष्ठा qmi_response_type_v01 resp;
+struct test_data_resp_msg_v01 {
+	struct qmi_response_type_v01 resp;
 
 	u8 data_valid;
 	u32 data_len;
 	u8 data[TEST_MED_DATA_SIZE_V01];
 
 	u8 service_name_valid;
-	काष्ठा test_name_type_v01 service_name;
-पूर्ण;
+	struct test_name_type_v01 service_name;
+};
 
-अटल काष्ठा qmi_elem_info test_data_resp_msg_v01_ei[] = अणु
-	अणु
+static struct qmi_elem_info test_data_resp_msg_v01_ei[] = {
+	{
 		.data_type	= QMI_STRUCT,
 		.elem_len	= 1,
-		.elem_size	= माप(काष्ठा qmi_response_type_v01),
+		.elem_size	= sizeof(struct qmi_response_type_v01),
 		.array_type	= NO_ARRAY,
 		.tlv_type	= DATA_RESP1_TLV_TYPE,
-		.offset		= दुरत्व(काष्ठा test_data_resp_msg_v01,
+		.offset		= offsetof(struct test_data_resp_msg_v01,
 					   resp),
 		.ei_array	= qmi_response_type_v01_ei,
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_OPT_FLAG,
 		.elem_len	= 1,
-		.elem_size	= माप(u8),
+		.elem_size	= sizeof(u8),
 		.array_type	= NO_ARRAY,
 		.tlv_type	= DATA_OPT1_TLV_TYPE,
-		.offset		= दुरत्व(काष्ठा test_data_resp_msg_v01,
+		.offset		= offsetof(struct test_data_resp_msg_v01,
 					   data_valid),
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_DATA_LEN,
 		.elem_len	= 1,
-		.elem_size	= माप(u32),
+		.elem_size	= sizeof(u32),
 		.array_type	= NO_ARRAY,
 		.tlv_type	= DATA_OPT1_TLV_TYPE,
-		.offset		= दुरत्व(काष्ठा test_data_resp_msg_v01,
+		.offset		= offsetof(struct test_data_resp_msg_v01,
 					   data_len),
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_UNSIGNED_1_BYTE,
 		.elem_len	= TEST_MED_DATA_SIZE_V01,
-		.elem_size	= माप(u8),
+		.elem_size	= sizeof(u8),
 		.array_type	= VAR_LEN_ARRAY,
 		.tlv_type	= DATA_OPT1_TLV_TYPE,
-		.offset		= दुरत्व(काष्ठा test_data_resp_msg_v01,
+		.offset		= offsetof(struct test_data_resp_msg_v01,
 					   data),
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_OPT_FLAG,
 		.elem_len	= 1,
-		.elem_size	= माप(u8),
+		.elem_size	= sizeof(u8),
 		.array_type	= NO_ARRAY,
 		.tlv_type	= DATA_OPT2_TLV_TYPE,
-		.offset		= दुरत्व(काष्ठा test_data_resp_msg_v01,
+		.offset		= offsetof(struct test_data_resp_msg_v01,
 					   service_name_valid),
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_STRUCT,
 		.elem_len	= 1,
-		.elem_size	= माप(काष्ठा test_name_type_v01),
+		.elem_size	= sizeof(struct test_name_type_v01),
 		.array_type	= NO_ARRAY,
 		.tlv_type	= DATA_OPT2_TLV_TYPE,
-		.offset		= दुरत्व(काष्ठा test_data_resp_msg_v01,
+		.offset		= offsetof(struct test_data_resp_msg_v01,
 					   service_name),
 		.ei_array	= test_name_type_v01_ei,
-	पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+	},
+	{}
+};
 
 /*
- * ping_ग_लिखो() - ping_pong debugfs file ग_लिखो handler
+ * ping_write() - ping_pong debugfs file write handler
  * @file:	debugfs file context
  * @user_buf:	reference to the user data (ignored)
  * @count:	number of bytes in @user_buf
- * @ppos:	offset in @file to ग_लिखो
+ * @ppos:	offset in @file to write
  *
  * This function allows user space to send out a ping_pong QMI encoded message
- * to the associated remote test service and will वापस with the result of the
+ * to the associated remote test service and will return with the result of the
  * transaction. It serves as an example of how to provide a custom response
  * handler.
  *
- * Return: @count, or negative त्रुटि_सं on failure.
+ * Return: @count, or negative errno on failure.
  */
-अटल sमाप_प्रकार ping_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *user_buf,
-			  माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा qmi_handle *qmi = file->निजी_data;
-	काष्ठा test_ping_req_msg_v01 req = अणुपूर्ण;
-	काष्ठा qmi_txn txn;
-	पूर्णांक ret;
+static ssize_t ping_write(struct file *file, const char __user *user_buf,
+			  size_t count, loff_t *ppos)
+{
+	struct qmi_handle *qmi = file->private_data;
+	struct test_ping_req_msg_v01 req = {};
+	struct qmi_txn txn;
+	int ret;
 
-	स_नकल(req.ping, "ping", माप(req.ping));
+	memcpy(req.ping, "ping", sizeof(req.ping));
 
-	ret = qmi_txn_init(qmi, &txn, शून्य, शून्य);
-	अगर (ret < 0)
-		वापस ret;
+	ret = qmi_txn_init(qmi, &txn, NULL, NULL);
+	if (ret < 0)
+		return ret;
 
-	ret = qmi_send_request(qmi, शून्य, &txn,
+	ret = qmi_send_request(qmi, NULL, &txn,
 			       TEST_PING_REQ_MSG_ID_V01,
 			       TEST_PING_REQ_MAX_MSG_LEN_V01,
 			       test_ping_req_msg_v01_ei, &req);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		qmi_txn_cancel(&txn);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = qmi_txn_रुको(&txn, 5 * HZ);
-	अगर (ret < 0)
+	ret = qmi_txn_wait(&txn, 5 * HZ);
+	if (ret < 0)
 		count = ret;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल स्थिर काष्ठा file_operations ping_fops = अणु
-	.खोलो = simple_खोलो,
-	.ग_लिखो = ping_ग_लिखो,
-पूर्ण;
+static const struct file_operations ping_fops = {
+	.open = simple_open,
+	.write = ping_write,
+};
 
-अटल व्योम ping_pong_cb(काष्ठा qmi_handle *qmi, काष्ठा sockaddr_qrtr *sq,
-			 काष्ठा qmi_txn *txn, स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा test_ping_resp_msg_v01 *resp = data;
+static void ping_pong_cb(struct qmi_handle *qmi, struct sockaddr_qrtr *sq,
+			 struct qmi_txn *txn, const void *data)
+{
+	const struct test_ping_resp_msg_v01 *resp = data;
 
-	अगर (!txn) अणु
+	if (!txn) {
 		pr_err("spurious ping response\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (resp->resp.result == QMI_RESULT_FAILURE_V01)
+	if (resp->resp.result == QMI_RESULT_FAILURE_V01)
 		txn->result = -ENXIO;
-	अन्यथा अगर (!resp->pong_valid || स_भेद(resp->pong, "pong", 4))
+	else if (!resp->pong_valid || memcmp(resp->pong, "pong", 4))
 		txn->result = -EINVAL;
 
 	complete(&txn->completion);
-पूर्ण
+}
 
 /*
- * data_ग_लिखो() - data debugfs file ग_लिखो handler
+ * data_write() - data debugfs file write handler
  * @file:	debugfs file context
  * @user_buf:	reference to the user data
  * @count:	number of bytes in @user_buf
- * @ppos:	offset in @file to ग_लिखो
+ * @ppos:	offset in @file to write
  *
  * This function allows user space to send out a data QMI encoded message to
- * the associated remote test service and will वापस with the result of the
+ * the associated remote test service and will return with the result of the
  * transaction. It serves as an example of how to have the QMI helpers decode a
- * transaction response पूर्णांकo a provided object स्वतःmatically.
+ * transaction response into a provided object automatically.
  *
- * Return: @count, or negative त्रुटि_सं on failure.
+ * Return: @count, or negative errno on failure.
  */
-अटल sमाप_प्रकार data_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *user_buf,
-			  माप_प्रकार count, loff_t *ppos)
+static ssize_t data_write(struct file *file, const char __user *user_buf,
+			  size_t count, loff_t *ppos)
 
-अणु
-	काष्ठा qmi_handle *qmi = file->निजी_data;
-	काष्ठा test_data_resp_msg_v01 *resp;
-	काष्ठा test_data_req_msg_v01 *req;
-	काष्ठा qmi_txn txn;
-	पूर्णांक ret;
+{
+	struct qmi_handle *qmi = file->private_data;
+	struct test_data_resp_msg_v01 *resp;
+	struct test_data_req_msg_v01 *req;
+	struct qmi_txn txn;
+	int ret;
 
-	req = kzalloc(माप(*req), GFP_KERNEL);
-	अगर (!req)
-		वापस -ENOMEM;
+	req = kzalloc(sizeof(*req), GFP_KERNEL);
+	if (!req)
+		return -ENOMEM;
 
-	resp = kzalloc(माप(*resp), GFP_KERNEL);
-	अगर (!resp) अणु
-		kमुक्त(req);
-		वापस -ENOMEM;
-	पूर्ण
+	resp = kzalloc(sizeof(*resp), GFP_KERNEL);
+	if (!resp) {
+		kfree(req);
+		return -ENOMEM;
+	}
 
-	req->data_len = min_t(माप_प्रकार, माप(req->data), count);
-	अगर (copy_from_user(req->data, user_buf, req->data_len)) अणु
+	req->data_len = min_t(size_t, sizeof(req->data), count);
+	if (copy_from_user(req->data, user_buf, req->data_len)) {
 		ret = -EFAULT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = qmi_txn_init(qmi, &txn, test_data_resp_msg_v01_ei, resp);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 
-	ret = qmi_send_request(qmi, शून्य, &txn,
+	ret = qmi_send_request(qmi, NULL, &txn,
 			       TEST_DATA_REQ_MSG_ID_V01,
 			       TEST_DATA_REQ_MAX_MSG_LEN_V01,
 			       test_data_req_msg_v01_ei, req);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		qmi_txn_cancel(&txn);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	ret = qmi_txn_रुको(&txn, 5 * HZ);
-	अगर (ret < 0) अणु
-		जाओ out;
-	पूर्ण अन्यथा अगर (!resp->data_valid ||
+	ret = qmi_txn_wait(&txn, 5 * HZ);
+	if (ret < 0) {
+		goto out;
+	} else if (!resp->data_valid ||
 		   resp->data_len != req->data_len ||
-		   स_भेद(resp->data, req->data, req->data_len)) अणु
+		   memcmp(resp->data, req->data, req->data_len)) {
 		pr_err("response data doesn't match expectation\n");
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = count;
 
 out:
-	kमुक्त(resp);
-	kमुक्त(req);
+	kfree(resp);
+	kfree(req);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा file_operations data_fops = अणु
-	.खोलो = simple_खोलो,
-	.ग_लिखो = data_ग_लिखो,
-पूर्ण;
+static const struct file_operations data_fops = {
+	.open = simple_open,
+	.write = data_write,
+};
 
-अटल स्थिर काष्ठा qmi_msg_handler qmi_sample_handlers[] = अणु
-	अणु
+static const struct qmi_msg_handler qmi_sample_handlers[] = {
+	{
 		.type = QMI_RESPONSE,
 		.msg_id = TEST_PING_REQ_MSG_ID_V01,
 		.ei = test_ping_resp_msg_v01_ei,
-		.decoded_size = माप(काष्ठा test_ping_req_msg_v01),
+		.decoded_size = sizeof(struct test_ping_req_msg_v01),
 		.fn = ping_pong_cb
-	पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+	},
+	{}
+};
 
-काष्ठा qmi_sample अणु
-	काष्ठा qmi_handle qmi;
+struct qmi_sample {
+	struct qmi_handle qmi;
 
-	काष्ठा dentry *de_dir;
-	काष्ठा dentry *de_data;
-	काष्ठा dentry *de_ping;
-पूर्ण;
+	struct dentry *de_dir;
+	struct dentry *de_data;
+	struct dentry *de_ping;
+};
 
-अटल काष्ठा dentry *qmi_debug_dir;
+static struct dentry *qmi_debug_dir;
 
-अटल पूर्णांक qmi_sample_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा sockaddr_qrtr *sq;
-	काष्ठा qmi_sample *sample;
-	अक्षर path[20];
-	पूर्णांक ret;
+static int qmi_sample_probe(struct platform_device *pdev)
+{
+	struct sockaddr_qrtr *sq;
+	struct qmi_sample *sample;
+	char path[20];
+	int ret;
 
-	sample = devm_kzalloc(&pdev->dev, माप(*sample), GFP_KERNEL);
-	अगर (!sample)
-		वापस -ENOMEM;
+	sample = devm_kzalloc(&pdev->dev, sizeof(*sample), GFP_KERNEL);
+	if (!sample)
+		return -ENOMEM;
 
 	ret = qmi_handle_init(&sample->qmi, TEST_DATA_REQ_MAX_MSG_LEN_V01,
-			      शून्य,
+			      NULL,
 			      qmi_sample_handlers);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	sq = dev_get_platdata(&pdev->dev);
-	ret = kernel_connect(sample->qmi.sock, (काष्ठा sockaddr *)sq,
-			     माप(*sq), 0);
-	अगर (ret < 0) अणु
+	ret = kernel_connect(sample->qmi.sock, (struct sockaddr *)sq,
+			     sizeof(*sq), 0);
+	if (ret < 0) {
 		pr_err("failed to connect to remote service port\n");
-		जाओ err_release_qmi_handle;
-	पूर्ण
+		goto err_release_qmi_handle;
+	}
 
-	snम_लिखो(path, माप(path), "%d:%d", sq->sq_node, sq->sq_port);
+	snprintf(path, sizeof(path), "%d:%d", sq->sq_node, sq->sq_port);
 
 	sample->de_dir = debugfs_create_dir(path, qmi_debug_dir);
-	अगर (IS_ERR(sample->de_dir)) अणु
+	if (IS_ERR(sample->de_dir)) {
 		ret = PTR_ERR(sample->de_dir);
-		जाओ err_release_qmi_handle;
-	पूर्ण
+		goto err_release_qmi_handle;
+	}
 
 	sample->de_data = debugfs_create_file("data", 0600, sample->de_dir,
 					      sample, &data_fops);
-	अगर (IS_ERR(sample->de_data)) अणु
+	if (IS_ERR(sample->de_data)) {
 		ret = PTR_ERR(sample->de_data);
-		जाओ err_हटाओ_de_dir;
-	पूर्ण
+		goto err_remove_de_dir;
+	}
 
 	sample->de_ping = debugfs_create_file("ping", 0600, sample->de_dir,
 					      sample, &ping_fops);
-	अगर (IS_ERR(sample->de_ping)) अणु
+	if (IS_ERR(sample->de_ping)) {
 		ret = PTR_ERR(sample->de_ping);
-		जाओ err_हटाओ_de_data;
-	पूर्ण
+		goto err_remove_de_data;
+	}
 
-	platक्रमm_set_drvdata(pdev, sample);
+	platform_set_drvdata(pdev, sample);
 
-	वापस 0;
+	return 0;
 
-err_हटाओ_de_data:
-	debugfs_हटाओ(sample->de_data);
-err_हटाओ_de_dir:
-	debugfs_हटाओ(sample->de_dir);
+err_remove_de_data:
+	debugfs_remove(sample->de_data);
+err_remove_de_dir:
+	debugfs_remove(sample->de_dir);
 err_release_qmi_handle:
 	qmi_handle_release(&sample->qmi);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक qmi_sample_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा qmi_sample *sample = platक्रमm_get_drvdata(pdev);
+static int qmi_sample_remove(struct platform_device *pdev)
+{
+	struct qmi_sample *sample = platform_get_drvdata(pdev);
 
-	debugfs_हटाओ(sample->de_ping);
-	debugfs_हटाओ(sample->de_data);
-	debugfs_हटाओ(sample->de_dir);
+	debugfs_remove(sample->de_ping);
+	debugfs_remove(sample->de_data);
+	debugfs_remove(sample->de_dir);
 
 	qmi_handle_release(&sample->qmi);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver qmi_sample_driver = अणु
+static struct platform_driver qmi_sample_driver = {
 	.probe = qmi_sample_probe,
-	.हटाओ = qmi_sample_हटाओ,
-	.driver = अणु
+	.remove = qmi_sample_remove,
+	.driver = {
 		.name = "qmi_sample_client",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक qmi_sample_new_server(काष्ठा qmi_handle *qmi,
-				 काष्ठा qmi_service *service)
-अणु
-	काष्ठा platक्रमm_device *pdev;
-	काष्ठा sockaddr_qrtr sq = अणु AF_QIPCRTR, service->node, service->port पूर्ण;
-	पूर्णांक ret;
+static int qmi_sample_new_server(struct qmi_handle *qmi,
+				 struct qmi_service *service)
+{
+	struct platform_device *pdev;
+	struct sockaddr_qrtr sq = { AF_QIPCRTR, service->node, service->port };
+	int ret;
 
-	pdev = platक्रमm_device_alloc("qmi_sample_client", PLATFORM_DEVID_AUTO);
-	अगर (!pdev)
-		वापस -ENOMEM;
+	pdev = platform_device_alloc("qmi_sample_client", PLATFORM_DEVID_AUTO);
+	if (!pdev)
+		return -ENOMEM;
 
-	ret = platक्रमm_device_add_data(pdev, &sq, माप(sq));
-	अगर (ret)
-		जाओ err_put_device;
+	ret = platform_device_add_data(pdev, &sq, sizeof(sq));
+	if (ret)
+		goto err_put_device;
 
-	ret = platक्रमm_device_add(pdev);
-	अगर (ret)
-		जाओ err_put_device;
+	ret = platform_device_add(pdev);
+	if (ret)
+		goto err_put_device;
 
 	service->priv = pdev;
 
-	वापस 0;
+	return 0;
 
 err_put_device:
-	platक्रमm_device_put(pdev);
+	platform_device_put(pdev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम qmi_sample_del_server(काष्ठा qmi_handle *qmi,
-				  काष्ठा qmi_service *service)
-अणु
-	काष्ठा platक्रमm_device *pdev = service->priv;
+static void qmi_sample_del_server(struct qmi_handle *qmi,
+				  struct qmi_service *service)
+{
+	struct platform_device *pdev = service->priv;
 
-	platक्रमm_device_unरेजिस्टर(pdev);
-पूर्ण
+	platform_device_unregister(pdev);
+}
 
-अटल काष्ठा qmi_handle lookup_client;
+static struct qmi_handle lookup_client;
 
-अटल स्थिर काष्ठा qmi_ops lookup_ops = अणु
+static const struct qmi_ops lookup_ops = {
 	.new_server = qmi_sample_new_server,
 	.del_server = qmi_sample_del_server,
-पूर्ण;
+};
 
-अटल पूर्णांक qmi_sample_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int qmi_sample_init(void)
+{
+	int ret;
 
-	qmi_debug_dir = debugfs_create_dir("qmi_sample", शून्य);
-	अगर (IS_ERR(qmi_debug_dir)) अणु
+	qmi_debug_dir = debugfs_create_dir("qmi_sample", NULL);
+	if (IS_ERR(qmi_debug_dir)) {
 		pr_err("failed to create qmi_sample dir\n");
-		वापस PTR_ERR(qmi_debug_dir);
-	पूर्ण
+		return PTR_ERR(qmi_debug_dir);
+	}
 
-	ret = platक्रमm_driver_रेजिस्टर(&qmi_sample_driver);
-	अगर (ret)
-		जाओ err_हटाओ_debug_dir;
+	ret = platform_driver_register(&qmi_sample_driver);
+	if (ret)
+		goto err_remove_debug_dir;
 
-	ret = qmi_handle_init(&lookup_client, 0, &lookup_ops, शून्य);
-	अगर (ret < 0)
-		जाओ err_unरेजिस्टर_driver;
+	ret = qmi_handle_init(&lookup_client, 0, &lookup_ops, NULL);
+	if (ret < 0)
+		goto err_unregister_driver;
 
 	qmi_add_lookup(&lookup_client, 15, 0, 0);
 
-	वापस 0;
+	return 0;
 
-err_unरेजिस्टर_driver:
-	platक्रमm_driver_unरेजिस्टर(&qmi_sample_driver);
-err_हटाओ_debug_dir:
-	debugfs_हटाओ(qmi_debug_dir);
+err_unregister_driver:
+	platform_driver_unregister(&qmi_sample_driver);
+err_remove_debug_dir:
+	debugfs_remove(qmi_debug_dir);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम qmi_sample_निकास(व्योम)
-अणु
+static void qmi_sample_exit(void)
+{
 	qmi_handle_release(&lookup_client);
 
-	platक्रमm_driver_unरेजिस्टर(&qmi_sample_driver);
+	platform_driver_unregister(&qmi_sample_driver);
 
-	debugfs_हटाओ(qmi_debug_dir);
-पूर्ण
+	debugfs_remove(qmi_debug_dir);
+}
 
 module_init(qmi_sample_init);
-module_निकास(qmi_sample_निकास);
+module_exit(qmi_sample_exit);
 
 MODULE_DESCRIPTION("Sample QMI client driver");
 MODULE_LICENSE("GPL v2");

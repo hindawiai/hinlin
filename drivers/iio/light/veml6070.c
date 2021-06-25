@@ -1,151 +1,150 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * veml6070.c - Support क्रम Vishay VEML6070 UV A light sensor
+ * veml6070.c - Support for Vishay VEML6070 UV A light sensor
  *
  * Copyright 2016 Peter Meerwald-Stadler <pmeerw@pmeerw.net>
  *
- * IIO driver क्रम VEML6070 (7-bit I2C slave addresses 0x38 and 0x39)
+ * IIO driver for VEML6070 (7-bit I2C slave addresses 0x38 and 0x39)
  *
- * TODO: पूर्णांकegration समय, ACK संकेत
+ * TODO: integration time, ACK signal
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/err.h>
-#समावेश <linux/delay.h>
+#include <linux/module.h>
+#include <linux/i2c.h>
+#include <linux/mutex.h>
+#include <linux/err.h>
+#include <linux/delay.h>
 
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/iio/sysfs.h>
+#include <linux/iio/iio.h>
+#include <linux/iio/sysfs.h>
 
-#घोषणा VEML6070_DRV_NAME "veml6070"
+#define VEML6070_DRV_NAME "veml6070"
 
-#घोषणा VEML6070_ADDR_CONFIG_DATA_MSB 0x38 /* पढ़ो: MSB data, ग_लिखो: config */
-#घोषणा VEML6070_ADDR_DATA_LSB	0x39 /* LSB data */
+#define VEML6070_ADDR_CONFIG_DATA_MSB 0x38 /* read: MSB data, write: config */
+#define VEML6070_ADDR_DATA_LSB	0x39 /* LSB data */
 
-#घोषणा VEML6070_COMMAND_ACK	BIT(5) /* उठाओ पूर्णांकerrupt when over threshold */
-#घोषणा VEML6070_COMMAND_IT	GENMASK(3, 2) /* bit mask पूर्णांकegration समय */
-#घोषणा VEML6070_COMMAND_RSRVD	BIT(1) /* reserved, set to 1 */
-#घोषणा VEML6070_COMMAND_SD	BIT(0) /* shutकरोwn mode when set */
+#define VEML6070_COMMAND_ACK	BIT(5) /* raise interrupt when over threshold */
+#define VEML6070_COMMAND_IT	GENMASK(3, 2) /* bit mask integration time */
+#define VEML6070_COMMAND_RSRVD	BIT(1) /* reserved, set to 1 */
+#define VEML6070_COMMAND_SD	BIT(0) /* shutdown mode when set */
 
-#घोषणा VEML6070_IT_10	0x04 /* पूर्णांकegration समय 1x */
+#define VEML6070_IT_10	0x04 /* integration time 1x */
 
-काष्ठा veml6070_data अणु
-	काष्ठा i2c_client *client1;
-	काष्ठा i2c_client *client2;
+struct veml6070_data {
+	struct i2c_client *client1;
+	struct i2c_client *client2;
 	u8 config;
-	काष्ठा mutex lock;
-पूर्ण;
+	struct mutex lock;
+};
 
-अटल पूर्णांक veml6070_पढ़ो(काष्ठा veml6070_data *data)
-अणु
-	पूर्णांक ret;
+static int veml6070_read(struct veml6070_data *data)
+{
+	int ret;
 	u8 msb, lsb;
 
 	mutex_lock(&data->lock);
 
-	/* disable shutकरोwn */
-	ret = i2c_smbus_ग_लिखो_byte(data->client1,
+	/* disable shutdown */
+	ret = i2c_smbus_write_byte(data->client1,
 	    data->config & ~VEML6070_COMMAND_SD);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 
-	msleep(125 + 10); /* measurement takes up to 125 ms क्रम IT 1x */
+	msleep(125 + 10); /* measurement takes up to 125 ms for IT 1x */
 
-	ret = i2c_smbus_पढ़ो_byte(data->client2); /* पढ़ो MSB, address 0x39 */
-	अगर (ret < 0)
-		जाओ out;
+	ret = i2c_smbus_read_byte(data->client2); /* read MSB, address 0x39 */
+	if (ret < 0)
+		goto out;
 	msb = ret;
 
-	ret = i2c_smbus_पढ़ो_byte(data->client1); /* पढ़ो LSB, address 0x38 */
-	अगर (ret < 0)
-		जाओ out;
+	ret = i2c_smbus_read_byte(data->client1); /* read LSB, address 0x38 */
+	if (ret < 0)
+		goto out;
 	lsb = ret;
 
-	/* shutकरोwn again */
-	ret = i2c_smbus_ग_लिखो_byte(data->client1, data->config);
-	अगर (ret < 0)
-		जाओ out;
+	/* shutdown again */
+	ret = i2c_smbus_write_byte(data->client1, data->config);
+	if (ret < 0)
+		goto out;
 
 	ret = (msb << 8) | lsb;
 
 out:
 	mutex_unlock(&data->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा iio_chan_spec veml6070_channels[] = अणु
-	अणु
+static const struct iio_chan_spec veml6070_channels[] = {
+	{
 		.type = IIO_INTENSITY,
-		.modअगरied = 1,
+		.modified = 1,
 		.channel2 = IIO_MOD_LIGHT_UV,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),
-	पूर्ण,
-	अणु
+	},
+	{
 		.type = IIO_UVINDEX,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_PROCESSED),
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल पूर्णांक veml6070_to_uv_index(अचिन्हित val)
-अणु
+static int veml6070_to_uv_index(unsigned val)
+{
 	/*
-	 * conversion of raw UV पूर्णांकensity values to UV index depends on
-	 * पूर्णांकegration समय (IT) and value of the resistor connected to
-	 * the RSET pin (शेष: 270 KOhm)
+	 * conversion of raw UV intensity values to UV index depends on
+	 * integration time (IT) and value of the resistor connected to
+	 * the RSET pin (default: 270 KOhm)
 	 */
-	अचिन्हित uvi[11] = अणु
+	unsigned uvi[11] = {
 		187, 373, 560, /* low */
 		746, 933, 1120, /* moderate */
 		1308, 1494, /* high */
-		1681, 1868, 2054पूर्ण; /* very high */
-	पूर्णांक i;
+		1681, 1868, 2054}; /* very high */
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(uvi); i++)
-		अगर (val <= uvi[i])
-			वापस i;
+	for (i = 0; i < ARRAY_SIZE(uvi); i++)
+		if (val <= uvi[i])
+			return i;
 
-	वापस 11; /* extreme */
-पूर्ण
+	return 11; /* extreme */
+}
 
-अटल पूर्णांक veml6070_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
-				काष्ठा iio_chan_spec स्थिर *chan,
-				पूर्णांक *val, पूर्णांक *val2, दीर्घ mask)
-अणु
-	काष्ठा veml6070_data *data = iio_priv(indio_dev);
-	पूर्णांक ret;
+static int veml6070_read_raw(struct iio_dev *indio_dev,
+				struct iio_chan_spec const *chan,
+				int *val, int *val2, long mask)
+{
+	struct veml6070_data *data = iio_priv(indio_dev);
+	int ret;
 
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_RAW:
-	हाल IIO_CHAN_INFO_PROCESSED:
-		ret = veml6070_पढ़ो(data);
-		अगर (ret < 0)
-			वापस ret;
-		अगर (mask == IIO_CHAN_INFO_PROCESSED)
+	switch (mask) {
+	case IIO_CHAN_INFO_RAW:
+	case IIO_CHAN_INFO_PROCESSED:
+		ret = veml6070_read(data);
+		if (ret < 0)
+			return ret;
+		if (mask == IIO_CHAN_INFO_PROCESSED)
 			*val = veml6070_to_uv_index(ret);
-		अन्यथा
+		else
 			*val = ret;
-		वापस IIO_VAL_INT;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+		return IIO_VAL_INT;
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल स्थिर काष्ठा iio_info veml6070_info = अणु
-	.पढ़ो_raw = veml6070_पढ़ो_raw,
-पूर्ण;
+static const struct iio_info veml6070_info = {
+	.read_raw = veml6070_read_raw,
+};
 
-अटल पूर्णांक veml6070_probe(काष्ठा i2c_client *client,
-			  स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा veml6070_data *data;
-	काष्ठा iio_dev *indio_dev;
-	पूर्णांक ret;
+static int veml6070_probe(struct i2c_client *client,
+			  const struct i2c_device_id *id)
+{
+	struct veml6070_data *data;
+	struct iio_dev *indio_dev;
+	int ret;
 
-	indio_dev = devm_iio_device_alloc(&client->dev, माप(*data));
-	अगर (!indio_dev)
-		वापस -ENOMEM;
+	indio_dev = devm_iio_device_alloc(&client->dev, sizeof(*data));
+	if (!indio_dev)
+		return -ENOMEM;
 
 	data = iio_priv(indio_dev);
 	i2c_set_clientdata(client, indio_dev);
@@ -156,56 +155,56 @@ out:
 	indio_dev->channels = veml6070_channels;
 	indio_dev->num_channels = ARRAY_SIZE(veml6070_channels);
 	indio_dev->name = VEML6070_DRV_NAME;
-	indio_dev->modes = INDIO_सूचीECT_MODE;
+	indio_dev->modes = INDIO_DIRECT_MODE;
 
 	data->client2 = i2c_new_dummy_device(client->adapter, VEML6070_ADDR_DATA_LSB);
-	अगर (IS_ERR(data->client2)) अणु
+	if (IS_ERR(data->client2)) {
 		dev_err(&client->dev, "i2c device for second chip address failed\n");
-		वापस PTR_ERR(data->client2);
-	पूर्ण
+		return PTR_ERR(data->client2);
+	}
 
 	data->config = VEML6070_IT_10 | VEML6070_COMMAND_RSRVD |
 		VEML6070_COMMAND_SD;
-	ret = i2c_smbus_ग_लिखो_byte(data->client1, data->config);
-	अगर (ret < 0)
-		जाओ fail;
+	ret = i2c_smbus_write_byte(data->client1, data->config);
+	if (ret < 0)
+		goto fail;
 
-	ret = iio_device_रेजिस्टर(indio_dev);
-	अगर (ret < 0)
-		जाओ fail;
+	ret = iio_device_register(indio_dev);
+	if (ret < 0)
+		goto fail;
 
-	वापस ret;
+	return ret;
 
 fail:
-	i2c_unरेजिस्टर_device(data->client2);
-	वापस ret;
-पूर्ण
+	i2c_unregister_device(data->client2);
+	return ret;
+}
 
-अटल पूर्णांक veml6070_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा iio_dev *indio_dev = i2c_get_clientdata(client);
-	काष्ठा veml6070_data *data = iio_priv(indio_dev);
+static int veml6070_remove(struct i2c_client *client)
+{
+	struct iio_dev *indio_dev = i2c_get_clientdata(client);
+	struct veml6070_data *data = iio_priv(indio_dev);
 
-	iio_device_unरेजिस्टर(indio_dev);
-	i2c_unरेजिस्टर_device(data->client2);
+	iio_device_unregister(indio_dev);
+	i2c_unregister_device(data->client2);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा i2c_device_id veml6070_id[] = अणु
-	अणु "veml6070", 0 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id veml6070_id[] = {
+	{ "veml6070", 0 },
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, veml6070_id);
 
-अटल काष्ठा i2c_driver veml6070_driver = अणु
-	.driver = अणु
+static struct i2c_driver veml6070_driver = {
+	.driver = {
 		.name   = VEML6070_DRV_NAME,
-	पूर्ण,
+	},
 	.probe  = veml6070_probe,
-	.हटाओ  = veml6070_हटाओ,
+	.remove  = veml6070_remove,
 	.id_table = veml6070_id,
-पूर्ण;
+};
 
 module_i2c_driver(veml6070_driver);
 

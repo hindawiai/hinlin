@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: (GPL-2.0+ or MIT) */
+/* SPDX-License-Identifier: (GPL-2.0+ or MIT) */
 /*
  * Copyright (c) 2017 Baylibre SAS.
  * Author:  Jerome Brunet  <jbrunet@baylibre.com>
@@ -9,55 +8,55 @@
  *
  */
 
-काष्ठा meson_pmx_bank अणु
-	स्थिर अक्षर *name;
-	अचिन्हित पूर्णांक first;
-	अचिन्हित पूर्णांक last;
-	अचिन्हित पूर्णांक reg;
-	अचिन्हित पूर्णांक offset;
-पूर्ण;
+struct meson_pmx_bank {
+	const char *name;
+	unsigned int first;
+	unsigned int last;
+	unsigned int reg;
+	unsigned int offset;
+};
 
-काष्ठा meson_axg_pmx_data अणु
-	काष्ठा meson_pmx_bank *pmx_banks;
-	अचिन्हित पूर्णांक num_pmx_banks;
-पूर्ण;
+struct meson_axg_pmx_data {
+	struct meson_pmx_bank *pmx_banks;
+	unsigned int num_pmx_banks;
+};
 
-#घोषणा BANK_PMX(n, f, l, r, o)				\
-	अणु							\
+#define BANK_PMX(n, f, l, r, o)				\
+	{							\
 		.name   = n,					\
 		.first	= f,					\
 		.last	= l,					\
 		.reg	= r,					\
 		.offset = o,					\
-	पूर्ण
+	}
 
-काष्ठा meson_pmx_axg_data अणु
-        अचिन्हित पूर्णांक func;
-पूर्ण;
+struct meson_pmx_axg_data {
+        unsigned int func;
+};
 
-#घोषणा PMX_DATA(f)							\
-	अणु								\
+#define PMX_DATA(f)							\
+	{								\
 		.func = f,						\
-	पूर्ण
+	}
 
-#घोषणा GROUP(grp, f)							\
-	अणु								\
+#define GROUP(grp, f)							\
+	{								\
 		.name = #grp,						\
 		.pins = grp ## _pins,                                   \
 		.num_pins = ARRAY_SIZE(grp ## _pins),			\
-		.data = (स्थिर काष्ठा meson_pmx_axg_data[])अणु		\
+		.data = (const struct meson_pmx_axg_data[]){		\
 			PMX_DATA(f),					\
-		पूर्ण,							\
-	पूर्ण
+		},							\
+	}
 
-#घोषणा GPIO_GROUP(gpio)						\
-	अणु								\
+#define GPIO_GROUP(gpio)						\
+	{								\
 		.name = #gpio,						\
-		.pins = (स्थिर अचिन्हित पूर्णांक[])अणु gpio पूर्ण,			\
+		.pins = (const unsigned int[]){ gpio },			\
 		.num_pins = 1,						\
-		.data = (स्थिर काष्ठा meson_pmx_axg_data[])अणु		\
+		.data = (const struct meson_pmx_axg_data[]){		\
 			PMX_DATA(0),					\
-		पूर्ण,							\
-	पूर्ण
+		},							\
+	}
 
-बाह्य स्थिर काष्ठा pinmux_ops meson_axg_pmx_ops;
+extern const struct pinmux_ops meson_axg_pmx_ops;

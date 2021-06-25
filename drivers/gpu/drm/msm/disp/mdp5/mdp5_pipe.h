@@ -1,47 +1,46 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2016 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
-#अगर_अघोषित __MDP5_PIPE_H__
-#घोषणा __MDP5_PIPE_H__
+#ifndef __MDP5_PIPE_H__
+#define __MDP5_PIPE_H__
 
 /* TODO: Add SSPP_MAX in mdp5.xml.h */
-#घोषणा SSPP_MAX	(SSPP_CURSOR1 + 1)
+#define SSPP_MAX	(SSPP_CURSOR1 + 1)
 
-/* represents a hw pipe, which is dynamically asचिन्हित to a plane */
-काष्ठा mdp5_hw_pipe अणु
-	पूर्णांक idx;
+/* represents a hw pipe, which is dynamically assigned to a plane */
+struct mdp5_hw_pipe {
+	int idx;
 
-	स्थिर अक्षर *name;
-	क्रमागत mdp5_pipe pipe;
+	const char *name;
+	enum mdp5_pipe pipe;
 
-	uपूर्णांक32_t reg_offset;
-	uपूर्णांक32_t caps;
+	uint32_t reg_offset;
+	uint32_t caps;
 
-	uपूर्णांक32_t flush_mask;      /* used to commit pipe रेजिस्टरs */
+	uint32_t flush_mask;      /* used to commit pipe registers */
 
 	/* number of smp blocks per plane, ie:
 	 *   nblks_y | (nblks_u << 8) | (nblks_v << 16)
 	 */
-	uपूर्णांक32_t blkcfg;
-पूर्ण;
+	uint32_t blkcfg;
+};
 
 /* global atomic state of assignment between pipes and planes: */
-काष्ठा mdp5_hw_pipe_state अणु
-	काष्ठा drm_plane *hwpipe_to_plane[SSPP_MAX];
-पूर्ण;
+struct mdp5_hw_pipe_state {
+	struct drm_plane *hwpipe_to_plane[SSPP_MAX];
+};
 
-पूर्णांक mdp5_pipe_assign(काष्ठा drm_atomic_state *s, काष्ठा drm_plane *plane,
-		     uपूर्णांक32_t caps, uपूर्णांक32_t blkcfg,
-		     काष्ठा mdp5_hw_pipe **hwpipe,
-		     काष्ठा mdp5_hw_pipe **r_hwpipe);
-व्योम mdp5_pipe_release(काष्ठा drm_atomic_state *s, काष्ठा mdp5_hw_pipe *hwpipe);
+int mdp5_pipe_assign(struct drm_atomic_state *s, struct drm_plane *plane,
+		     uint32_t caps, uint32_t blkcfg,
+		     struct mdp5_hw_pipe **hwpipe,
+		     struct mdp5_hw_pipe **r_hwpipe);
+void mdp5_pipe_release(struct drm_atomic_state *s, struct mdp5_hw_pipe *hwpipe);
 
-काष्ठा mdp5_hw_pipe *mdp5_pipe_init(क्रमागत mdp5_pipe pipe,
-		uपूर्णांक32_t reg_offset, uपूर्णांक32_t caps);
-व्योम mdp5_pipe_destroy(काष्ठा mdp5_hw_pipe *hwpipe);
+struct mdp5_hw_pipe *mdp5_pipe_init(enum mdp5_pipe pipe,
+		uint32_t reg_offset, uint32_t caps);
+void mdp5_pipe_destroy(struct mdp5_hw_pipe *hwpipe);
 
-#पूर्ण_अगर /* __MDP5_PIPE_H__ */
+#endif /* __MDP5_PIPE_H__ */

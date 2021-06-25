@@ -1,18 +1,17 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-/* IP tables module क्रम matching the value of the IPv4/IPv6 DSCP field
+// SPDX-License-Identifier: GPL-2.0-only
+/* IP tables module for matching the value of the IPv4/IPv6 DSCP field
  *
- * (C) 2002 by Harald Welte <laक्रमge@netfilter.org>
+ * (C) 2002 by Harald Welte <laforge@netfilter.org>
  */
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
-#समावेश <linux/module.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/ip.h>
-#समावेश <linux/ipv6.h>
-#समावेश <net/dsfield.h>
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/module.h>
+#include <linux/skbuff.h>
+#include <linux/ip.h>
+#include <linux/ipv6.h>
+#include <net/dsfield.h>
 
-#समावेश <linux/netfilter/x_tables.h>
-#समावेश <linux/netfilter/xt_dscp.h>
+#include <linux/netfilter/x_tables.h>
+#include <linux/netfilter/xt_dscp.h>
 
 MODULE_AUTHOR("Harald Welte <laforge@netfilter.org>");
 MODULE_DESCRIPTION("Xtables: DSCP/TOS field match");
@@ -22,90 +21,90 @@ MODULE_ALIAS("ip6t_dscp");
 MODULE_ALIAS("ipt_tos");
 MODULE_ALIAS("ip6t_tos");
 
-अटल bool
-dscp_mt(स्थिर काष्ठा sk_buff *skb, काष्ठा xt_action_param *par)
-अणु
-	स्थिर काष्ठा xt_dscp_info *info = par->matchinfo;
-	u_पूर्णांक8_t dscp = ipv4_get_dsfield(ip_hdr(skb)) >> XT_DSCP_SHIFT;
+static bool
+dscp_mt(const struct sk_buff *skb, struct xt_action_param *par)
+{
+	const struct xt_dscp_info *info = par->matchinfo;
+	u_int8_t dscp = ipv4_get_dsfield(ip_hdr(skb)) >> XT_DSCP_SHIFT;
 
-	वापस (dscp == info->dscp) ^ !!info->invert;
-पूर्ण
+	return (dscp == info->dscp) ^ !!info->invert;
+}
 
-अटल bool
-dscp_mt6(स्थिर काष्ठा sk_buff *skb, काष्ठा xt_action_param *par)
-अणु
-	स्थिर काष्ठा xt_dscp_info *info = par->matchinfo;
-	u_पूर्णांक8_t dscp = ipv6_get_dsfield(ipv6_hdr(skb)) >> XT_DSCP_SHIFT;
+static bool
+dscp_mt6(const struct sk_buff *skb, struct xt_action_param *par)
+{
+	const struct xt_dscp_info *info = par->matchinfo;
+	u_int8_t dscp = ipv6_get_dsfield(ipv6_hdr(skb)) >> XT_DSCP_SHIFT;
 
-	वापस (dscp == info->dscp) ^ !!info->invert;
-पूर्ण
+	return (dscp == info->dscp) ^ !!info->invert;
+}
 
-अटल पूर्णांक dscp_mt_check(स्थिर काष्ठा xt_mtchk_param *par)
-अणु
-	स्थिर काष्ठा xt_dscp_info *info = par->matchinfo;
+static int dscp_mt_check(const struct xt_mtchk_param *par)
+{
+	const struct xt_dscp_info *info = par->matchinfo;
 
-	अगर (info->dscp > XT_DSCP_MAX)
-		वापस -गलत_तर्क;
+	if (info->dscp > XT_DSCP_MAX)
+		return -EDOM;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool tos_mt(स्थिर काष्ठा sk_buff *skb, काष्ठा xt_action_param *par)
-अणु
-	स्थिर काष्ठा xt_tos_match_info *info = par->matchinfo;
+static bool tos_mt(const struct sk_buff *skb, struct xt_action_param *par)
+{
+	const struct xt_tos_match_info *info = par->matchinfo;
 
-	अगर (xt_family(par) == NFPROTO_IPV4)
-		वापस ((ip_hdr(skb)->tos & info->tos_mask) ==
+	if (xt_family(par) == NFPROTO_IPV4)
+		return ((ip_hdr(skb)->tos & info->tos_mask) ==
 		       info->tos_value) ^ !!info->invert;
-	अन्यथा
-		वापस ((ipv6_get_dsfield(ipv6_hdr(skb)) & info->tos_mask) ==
+	else
+		return ((ipv6_get_dsfield(ipv6_hdr(skb)) & info->tos_mask) ==
 		       info->tos_value) ^ !!info->invert;
-पूर्ण
+}
 
-अटल काष्ठा xt_match dscp_mt_reg[] __पढ़ो_mostly = अणु
-	अणु
+static struct xt_match dscp_mt_reg[] __read_mostly = {
+	{
 		.name		= "dscp",
 		.family		= NFPROTO_IPV4,
 		.checkentry	= dscp_mt_check,
 		.match		= dscp_mt,
-		.matchsize	= माप(काष्ठा xt_dscp_info),
+		.matchsize	= sizeof(struct xt_dscp_info),
 		.me		= THIS_MODULE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name		= "dscp",
 		.family		= NFPROTO_IPV6,
 		.checkentry	= dscp_mt_check,
 		.match		= dscp_mt6,
-		.matchsize	= माप(काष्ठा xt_dscp_info),
+		.matchsize	= sizeof(struct xt_dscp_info),
 		.me		= THIS_MODULE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name		= "tos",
 		.revision	= 1,
 		.family		= NFPROTO_IPV4,
 		.match		= tos_mt,
-		.matchsize	= माप(काष्ठा xt_tos_match_info),
+		.matchsize	= sizeof(struct xt_tos_match_info),
 		.me		= THIS_MODULE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name		= "tos",
 		.revision	= 1,
 		.family		= NFPROTO_IPV6,
 		.match		= tos_mt,
-		.matchsize	= माप(काष्ठा xt_tos_match_info),
+		.matchsize	= sizeof(struct xt_tos_match_info),
 		.me		= THIS_MODULE,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init dscp_mt_init(व्योम)
-अणु
-	वापस xt_रेजिस्टर_matches(dscp_mt_reg, ARRAY_SIZE(dscp_mt_reg));
-पूर्ण
+static int __init dscp_mt_init(void)
+{
+	return xt_register_matches(dscp_mt_reg, ARRAY_SIZE(dscp_mt_reg));
+}
 
-अटल व्योम __निकास dscp_mt_निकास(व्योम)
-अणु
-	xt_unरेजिस्टर_matches(dscp_mt_reg, ARRAY_SIZE(dscp_mt_reg));
-पूर्ण
+static void __exit dscp_mt_exit(void)
+{
+	xt_unregister_matches(dscp_mt_reg, ARRAY_SIZE(dscp_mt_reg));
+}
 
 module_init(dscp_mt_init);
-module_निकास(dscp_mt_निकास);
+module_exit(dscp_mt_exit);

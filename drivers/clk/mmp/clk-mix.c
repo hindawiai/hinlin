@@ -1,6 +1,5 @@
-<शैली गुरु>
 /*
- * mmp mix(भाग and mux) घड़ी operation source file
+ * mmp mix(div and mux) clock operation source file
  *
  * Copyright (C) 2014 Marvell
  * Chao Xie <chao.xie@marvell.com>
@@ -10,427 +9,427 @@
  * warranty of any kind, whether express or implied.
  */
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/err.h>
+#include <linux/clk-provider.h>
+#include <linux/slab.h>
+#include <linux/io.h>
+#include <linux/err.h>
 
-#समावेश "clk.h"
+#include "clk.h"
 
 /*
- * The mix घड़ी is a घड़ी combined mux and भाग type घड़ी.
- * Because the भाग field and mux field need to be set at same
- * समय, we can not भागide it पूर्णांकo 2 types of घड़ी
+ * The mix clock is a clock combined mux and div type clock.
+ * Because the div field and mux field need to be set at same
+ * time, we can not divide it into 2 types of clock
  */
 
-#घोषणा to_clk_mix(hw)	container_of(hw, काष्ठा mmp_clk_mix, hw)
+#define to_clk_mix(hw)	container_of(hw, struct mmp_clk_mix, hw)
 
-अटल अचिन्हित पूर्णांक _get_maxभाग(काष्ठा mmp_clk_mix *mix)
-अणु
-	अचिन्हित पूर्णांक भाग_mask = (1 << mix->reg_info.width_भाग) - 1;
-	अचिन्हित पूर्णांक maxभाग = 0;
-	काष्ठा clk_भाग_प्रकारable *clkt;
+static unsigned int _get_maxdiv(struct mmp_clk_mix *mix)
+{
+	unsigned int div_mask = (1 << mix->reg_info.width_div) - 1;
+	unsigned int maxdiv = 0;
+	struct clk_div_table *clkt;
 
-	अगर (mix->भाग_flags & CLK_DIVIDER_ONE_BASED)
-		वापस भाग_mask;
-	अगर (mix->भाग_flags & CLK_DIVIDER_POWER_OF_TWO)
-		वापस 1 << भाग_mask;
-	अगर (mix->भाग_प्रकारable) अणु
-		क्रम (clkt = mix->भाग_प्रकारable; clkt->भाग; clkt++)
-			अगर (clkt->भाग > maxभाग)
-				maxभाग = clkt->भाग;
-		वापस maxभाग;
-	पूर्ण
-	वापस भाग_mask + 1;
-पूर्ण
+	if (mix->div_flags & CLK_DIVIDER_ONE_BASED)
+		return div_mask;
+	if (mix->div_flags & CLK_DIVIDER_POWER_OF_TWO)
+		return 1 << div_mask;
+	if (mix->div_table) {
+		for (clkt = mix->div_table; clkt->div; clkt++)
+			if (clkt->div > maxdiv)
+				maxdiv = clkt->div;
+		return maxdiv;
+	}
+	return div_mask + 1;
+}
 
-अटल अचिन्हित पूर्णांक _get_भाग(काष्ठा mmp_clk_mix *mix, अचिन्हित पूर्णांक val)
-अणु
-	काष्ठा clk_भाग_प्रकारable *clkt;
+static unsigned int _get_div(struct mmp_clk_mix *mix, unsigned int val)
+{
+	struct clk_div_table *clkt;
 
-	अगर (mix->भाग_flags & CLK_DIVIDER_ONE_BASED)
-		वापस val;
-	अगर (mix->भाग_flags & CLK_DIVIDER_POWER_OF_TWO)
-		वापस 1 << val;
-	अगर (mix->भाग_प्रकारable) अणु
-		क्रम (clkt = mix->भाग_प्रकारable; clkt->भाग; clkt++)
-			अगर (clkt->val == val)
-				वापस clkt->भाग;
-		अगर (clkt->भाग == 0)
-			वापस 0;
-	पूर्ण
-	वापस val + 1;
-पूर्ण
+	if (mix->div_flags & CLK_DIVIDER_ONE_BASED)
+		return val;
+	if (mix->div_flags & CLK_DIVIDER_POWER_OF_TWO)
+		return 1 << val;
+	if (mix->div_table) {
+		for (clkt = mix->div_table; clkt->div; clkt++)
+			if (clkt->val == val)
+				return clkt->div;
+		if (clkt->div == 0)
+			return 0;
+	}
+	return val + 1;
+}
 
-अटल अचिन्हित पूर्णांक _get_mux(काष्ठा mmp_clk_mix *mix, अचिन्हित पूर्णांक val)
-अणु
-	पूर्णांक num_parents = clk_hw_get_num_parents(&mix->hw);
-	पूर्णांक i;
+static unsigned int _get_mux(struct mmp_clk_mix *mix, unsigned int val)
+{
+	int num_parents = clk_hw_get_num_parents(&mix->hw);
+	int i;
 
-	अगर (mix->mux_flags & CLK_MUX_INDEX_BIT)
-		वापस ffs(val) - 1;
-	अगर (mix->mux_flags & CLK_MUX_INDEX_ONE)
-		वापस val - 1;
-	अगर (mix->mux_table) अणु
-		क्रम (i = 0; i < num_parents; i++)
-			अगर (mix->mux_table[i] == val)
-				वापस i;
-		अगर (i == num_parents)
-			वापस 0;
-	पूर्ण
+	if (mix->mux_flags & CLK_MUX_INDEX_BIT)
+		return ffs(val) - 1;
+	if (mix->mux_flags & CLK_MUX_INDEX_ONE)
+		return val - 1;
+	if (mix->mux_table) {
+		for (i = 0; i < num_parents; i++)
+			if (mix->mux_table[i] == val)
+				return i;
+		if (i == num_parents)
+			return 0;
+	}
 
-	वापस val;
-पूर्ण
-अटल अचिन्हित पूर्णांक _get_भाग_val(काष्ठा mmp_clk_mix *mix, अचिन्हित पूर्णांक भाग)
-अणु
-	काष्ठा clk_भाग_प्रकारable *clkt;
+	return val;
+}
+static unsigned int _get_div_val(struct mmp_clk_mix *mix, unsigned int div)
+{
+	struct clk_div_table *clkt;
 
-	अगर (mix->भाग_flags & CLK_DIVIDER_ONE_BASED)
-		वापस भाग;
-	अगर (mix->भाग_flags & CLK_DIVIDER_POWER_OF_TWO)
-		वापस __ffs(भाग);
-	अगर (mix->भाग_प्रकारable) अणु
-		क्रम (clkt = mix->भाग_प्रकारable; clkt->भाग; clkt++)
-			अगर (clkt->भाग == भाग)
-				वापस clkt->val;
-		अगर (clkt->भाग == 0)
-			वापस 0;
-	पूर्ण
+	if (mix->div_flags & CLK_DIVIDER_ONE_BASED)
+		return div;
+	if (mix->div_flags & CLK_DIVIDER_POWER_OF_TWO)
+		return __ffs(div);
+	if (mix->div_table) {
+		for (clkt = mix->div_table; clkt->div; clkt++)
+			if (clkt->div == div)
+				return clkt->val;
+		if (clkt->div == 0)
+			return 0;
+	}
 
-	वापस भाग - 1;
-पूर्ण
+	return div - 1;
+}
 
-अटल अचिन्हित पूर्णांक _get_mux_val(काष्ठा mmp_clk_mix *mix, अचिन्हित पूर्णांक mux)
-अणु
-	अगर (mix->mux_table)
-		वापस mix->mux_table[mux];
+static unsigned int _get_mux_val(struct mmp_clk_mix *mix, unsigned int mux)
+{
+	if (mix->mux_table)
+		return mix->mux_table[mux];
 
-	वापस mux;
-पूर्ण
+	return mux;
+}
 
-अटल व्योम _filter_clk_table(काष्ठा mmp_clk_mix *mix,
-				काष्ठा mmp_clk_mix_clk_table *table,
-				अचिन्हित पूर्णांक table_size)
-अणु
-	पूर्णांक i;
-	काष्ठा mmp_clk_mix_clk_table *item;
-	काष्ठा clk_hw *parent, *hw;
-	अचिन्हित दीर्घ parent_rate;
+static void _filter_clk_table(struct mmp_clk_mix *mix,
+				struct mmp_clk_mix_clk_table *table,
+				unsigned int table_size)
+{
+	int i;
+	struct mmp_clk_mix_clk_table *item;
+	struct clk_hw *parent, *hw;
+	unsigned long parent_rate;
 
 	hw = &mix->hw;
 
-	क्रम (i = 0; i < table_size; i++) अणु
+	for (i = 0; i < table_size; i++) {
 		item = &table[i];
 		parent = clk_hw_get_parent_by_index(hw, item->parent_index);
 		parent_rate = clk_hw_get_rate(parent);
-		अगर (parent_rate % item->rate) अणु
+		if (parent_rate % item->rate) {
 			item->valid = 0;
-		पूर्ण अन्यथा अणु
-			item->भागisor = parent_rate / item->rate;
+		} else {
+			item->divisor = parent_rate / item->rate;
 			item->valid = 1;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल पूर्णांक _set_rate(काष्ठा mmp_clk_mix *mix, u32 mux_val, u32 भाग_val,
-			अचिन्हित पूर्णांक change_mux, अचिन्हित पूर्णांक change_भाग)
-अणु
-	काष्ठा mmp_clk_mix_reg_info *ri = &mix->reg_info;
-	u8 width, shअगरt;
-	u32 mux_भाग, fc_req;
-	पूर्णांक ret, समयout = 50;
-	अचिन्हित दीर्घ flags = 0;
+static int _set_rate(struct mmp_clk_mix *mix, u32 mux_val, u32 div_val,
+			unsigned int change_mux, unsigned int change_div)
+{
+	struct mmp_clk_mix_reg_info *ri = &mix->reg_info;
+	u8 width, shift;
+	u32 mux_div, fc_req;
+	int ret, timeout = 50;
+	unsigned long flags = 0;
 
-	अगर (!change_mux && !change_भाग)
-		वापस -EINVAL;
+	if (!change_mux && !change_div)
+		return -EINVAL;
 
-	अगर (mix->lock)
+	if (mix->lock)
 		spin_lock_irqsave(mix->lock, flags);
 
-	अगर (mix->type == MMP_CLK_MIX_TYPE_V1
+	if (mix->type == MMP_CLK_MIX_TYPE_V1
 		|| mix->type == MMP_CLK_MIX_TYPE_V2)
-		mux_भाग = पढ़ोl(ri->reg_clk_ctrl);
-	अन्यथा
-		mux_भाग = पढ़ोl(ri->reg_clk_sel);
+		mux_div = readl(ri->reg_clk_ctrl);
+	else
+		mux_div = readl(ri->reg_clk_sel);
 
-	अगर (change_भाग) अणु
-		width = ri->width_भाग;
-		shअगरt = ri->shअगरt_भाग;
-		mux_भाग &= ~MMP_CLK_BITS_MASK(width, shअगरt);
-		mux_भाग |= MMP_CLK_BITS_SET_VAL(भाग_val, width, shअगरt);
-	पूर्ण
+	if (change_div) {
+		width = ri->width_div;
+		shift = ri->shift_div;
+		mux_div &= ~MMP_CLK_BITS_MASK(width, shift);
+		mux_div |= MMP_CLK_BITS_SET_VAL(div_val, width, shift);
+	}
 
-	अगर (change_mux) अणु
+	if (change_mux) {
 		width = ri->width_mux;
-		shअगरt = ri->shअगरt_mux;
-		mux_भाग &= ~MMP_CLK_BITS_MASK(width, shअगरt);
-		mux_भाग |= MMP_CLK_BITS_SET_VAL(mux_val, width, shअगरt);
-	पूर्ण
+		shift = ri->shift_mux;
+		mux_div &= ~MMP_CLK_BITS_MASK(width, shift);
+		mux_div |= MMP_CLK_BITS_SET_VAL(mux_val, width, shift);
+	}
 
-	अगर (mix->type == MMP_CLK_MIX_TYPE_V1) अणु
-		ग_लिखोl(mux_भाग, ri->reg_clk_ctrl);
-	पूर्ण अन्यथा अगर (mix->type == MMP_CLK_MIX_TYPE_V2) अणु
-		mux_भाग |= (1 << ri->bit_fc);
-		ग_लिखोl(mux_भाग, ri->reg_clk_ctrl);
+	if (mix->type == MMP_CLK_MIX_TYPE_V1) {
+		writel(mux_div, ri->reg_clk_ctrl);
+	} else if (mix->type == MMP_CLK_MIX_TYPE_V2) {
+		mux_div |= (1 << ri->bit_fc);
+		writel(mux_div, ri->reg_clk_ctrl);
 
-		करो अणु
-			fc_req = पढ़ोl(ri->reg_clk_ctrl);
-			समयout--;
-			अगर (!(fc_req & (1 << ri->bit_fc)))
-				अवरोध;
-		पूर्ण जबतक (समयout);
+		do {
+			fc_req = readl(ri->reg_clk_ctrl);
+			timeout--;
+			if (!(fc_req & (1 << ri->bit_fc)))
+				break;
+		} while (timeout);
 
-		अगर (समयout == 0) अणु
+		if (timeout == 0) {
 			pr_err("%s:%s cannot do frequency change\n",
 				__func__, clk_hw_get_name(&mix->hw));
 			ret = -EBUSY;
-			जाओ error;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		fc_req = पढ़ोl(ri->reg_clk_ctrl);
+			goto error;
+		}
+	} else {
+		fc_req = readl(ri->reg_clk_ctrl);
 		fc_req |= 1 << ri->bit_fc;
-		ग_लिखोl(fc_req, ri->reg_clk_ctrl);
-		ग_लिखोl(mux_भाग, ri->reg_clk_sel);
+		writel(fc_req, ri->reg_clk_ctrl);
+		writel(mux_div, ri->reg_clk_sel);
 		fc_req &= ~(1 << ri->bit_fc);
-	पूर्ण
+	}
 
 	ret = 0;
 error:
-	अगर (mix->lock)
+	if (mix->lock)
 		spin_unlock_irqrestore(mix->lock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक mmp_clk_mix_determine_rate(काष्ठा clk_hw *hw,
-				      काष्ठा clk_rate_request *req)
-अणु
-	काष्ठा mmp_clk_mix *mix = to_clk_mix(hw);
-	काष्ठा mmp_clk_mix_clk_table *item;
-	काष्ठा clk_hw *parent, *parent_best;
-	अचिन्हित दीर्घ parent_rate, mix_rate, mix_rate_best, parent_rate_best;
-	अचिन्हित दीर्घ gap, gap_best;
-	u32 भाग_val_max;
-	अचिन्हित पूर्णांक भाग;
-	पूर्णांक i, j;
+static int mmp_clk_mix_determine_rate(struct clk_hw *hw,
+				      struct clk_rate_request *req)
+{
+	struct mmp_clk_mix *mix = to_clk_mix(hw);
+	struct mmp_clk_mix_clk_table *item;
+	struct clk_hw *parent, *parent_best;
+	unsigned long parent_rate, mix_rate, mix_rate_best, parent_rate_best;
+	unsigned long gap, gap_best;
+	u32 div_val_max;
+	unsigned int div;
+	int i, j;
 
 
 	mix_rate_best = 0;
 	parent_rate_best = 0;
-	gap_best = अच_दीर्घ_उच्च;
-	parent_best = शून्य;
+	gap_best = ULONG_MAX;
+	parent_best = NULL;
 
-	अगर (mix->table) अणु
-		क्रम (i = 0; i < mix->table_size; i++) अणु
+	if (mix->table) {
+		for (i = 0; i < mix->table_size; i++) {
 			item = &mix->table[i];
-			अगर (item->valid == 0)
-				जारी;
+			if (item->valid == 0)
+				continue;
 			parent = clk_hw_get_parent_by_index(hw,
 							item->parent_index);
 			parent_rate = clk_hw_get_rate(parent);
-			mix_rate = parent_rate / item->भागisor;
-			gap = असल(mix_rate - req->rate);
-			अगर (!parent_best || gap < gap_best) अणु
+			mix_rate = parent_rate / item->divisor;
+			gap = abs(mix_rate - req->rate);
+			if (!parent_best || gap < gap_best) {
 				parent_best = parent;
 				parent_rate_best = parent_rate;
 				mix_rate_best = mix_rate;
 				gap_best = gap;
-				अगर (gap_best == 0)
-					जाओ found;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		क्रम (i = 0; i < clk_hw_get_num_parents(hw); i++) अणु
+				if (gap_best == 0)
+					goto found;
+			}
+		}
+	} else {
+		for (i = 0; i < clk_hw_get_num_parents(hw); i++) {
 			parent = clk_hw_get_parent_by_index(hw, i);
 			parent_rate = clk_hw_get_rate(parent);
-			भाग_val_max = _get_maxभाग(mix);
-			क्रम (j = 0; j < भाग_val_max; j++) अणु
-				भाग = _get_भाग(mix, j);
-				mix_rate = parent_rate / भाग;
-				gap = असल(mix_rate - req->rate);
-				अगर (!parent_best || gap < gap_best) अणु
+			div_val_max = _get_maxdiv(mix);
+			for (j = 0; j < div_val_max; j++) {
+				div = _get_div(mix, j);
+				mix_rate = parent_rate / div;
+				gap = abs(mix_rate - req->rate);
+				if (!parent_best || gap < gap_best) {
 					parent_best = parent;
 					parent_rate_best = parent_rate;
 					mix_rate_best = mix_rate;
 					gap_best = gap;
-					अगर (gap_best == 0)
-						जाओ found;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
+					if (gap_best == 0)
+						goto found;
+				}
+			}
+		}
+	}
 
 found:
-	अगर (!parent_best)
-		वापस -EINVAL;
+	if (!parent_best)
+		return -EINVAL;
 
 	req->best_parent_rate = parent_rate_best;
 	req->best_parent_hw = parent_best;
 	req->rate = mix_rate_best;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mmp_clk_mix_set_rate_and_parent(काष्ठा clk_hw *hw,
-						अचिन्हित दीर्घ rate,
-						अचिन्हित दीर्घ parent_rate,
+static int mmp_clk_mix_set_rate_and_parent(struct clk_hw *hw,
+						unsigned long rate,
+						unsigned long parent_rate,
 						u8 index)
-अणु
-	काष्ठा mmp_clk_mix *mix = to_clk_mix(hw);
-	अचिन्हित पूर्णांक भाग;
-	u32 भाग_val, mux_val;
+{
+	struct mmp_clk_mix *mix = to_clk_mix(hw);
+	unsigned int div;
+	u32 div_val, mux_val;
 
-	भाग = parent_rate / rate;
-	भाग_val = _get_भाग_val(mix, भाग);
+	div = parent_rate / rate;
+	div_val = _get_div_val(mix, div);
 	mux_val = _get_mux_val(mix, index);
 
-	वापस _set_rate(mix, mux_val, भाग_val, 1, 1);
-पूर्ण
+	return _set_rate(mix, mux_val, div_val, 1, 1);
+}
 
-अटल u8 mmp_clk_mix_get_parent(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा mmp_clk_mix *mix = to_clk_mix(hw);
-	काष्ठा mmp_clk_mix_reg_info *ri = &mix->reg_info;
-	अचिन्हित दीर्घ flags = 0;
-	u32 mux_भाग = 0;
-	u8 width, shअगरt;
+static u8 mmp_clk_mix_get_parent(struct clk_hw *hw)
+{
+	struct mmp_clk_mix *mix = to_clk_mix(hw);
+	struct mmp_clk_mix_reg_info *ri = &mix->reg_info;
+	unsigned long flags = 0;
+	u32 mux_div = 0;
+	u8 width, shift;
 	u32 mux_val;
 
-	अगर (mix->lock)
+	if (mix->lock)
 		spin_lock_irqsave(mix->lock, flags);
 
-	अगर (mix->type == MMP_CLK_MIX_TYPE_V1
+	if (mix->type == MMP_CLK_MIX_TYPE_V1
 		|| mix->type == MMP_CLK_MIX_TYPE_V2)
-		mux_भाग = पढ़ोl(ri->reg_clk_ctrl);
-	अन्यथा
-		mux_भाग = पढ़ोl(ri->reg_clk_sel);
+		mux_div = readl(ri->reg_clk_ctrl);
+	else
+		mux_div = readl(ri->reg_clk_sel);
 
-	अगर (mix->lock)
+	if (mix->lock)
 		spin_unlock_irqrestore(mix->lock, flags);
 
 	width = mix->reg_info.width_mux;
-	shअगरt = mix->reg_info.shअगरt_mux;
+	shift = mix->reg_info.shift_mux;
 
-	mux_val = MMP_CLK_BITS_GET_VAL(mux_भाग, width, shअगरt);
+	mux_val = MMP_CLK_BITS_GET_VAL(mux_div, width, shift);
 
-	वापस _get_mux(mix, mux_val);
-पूर्ण
+	return _get_mux(mix, mux_val);
+}
 
-अटल अचिन्हित दीर्घ mmp_clk_mix_recalc_rate(काष्ठा clk_hw *hw,
-					अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा mmp_clk_mix *mix = to_clk_mix(hw);
-	काष्ठा mmp_clk_mix_reg_info *ri = &mix->reg_info;
-	अचिन्हित दीर्घ flags = 0;
-	u32 mux_भाग = 0;
-	u8 width, shअगरt;
-	अचिन्हित पूर्णांक भाग;
+static unsigned long mmp_clk_mix_recalc_rate(struct clk_hw *hw,
+					unsigned long parent_rate)
+{
+	struct mmp_clk_mix *mix = to_clk_mix(hw);
+	struct mmp_clk_mix_reg_info *ri = &mix->reg_info;
+	unsigned long flags = 0;
+	u32 mux_div = 0;
+	u8 width, shift;
+	unsigned int div;
 
-	अगर (mix->lock)
+	if (mix->lock)
 		spin_lock_irqsave(mix->lock, flags);
 
-	अगर (mix->type == MMP_CLK_MIX_TYPE_V1
+	if (mix->type == MMP_CLK_MIX_TYPE_V1
 		|| mix->type == MMP_CLK_MIX_TYPE_V2)
-		mux_भाग = पढ़ोl(ri->reg_clk_ctrl);
-	अन्यथा
-		mux_भाग = पढ़ोl(ri->reg_clk_sel);
+		mux_div = readl(ri->reg_clk_ctrl);
+	else
+		mux_div = readl(ri->reg_clk_sel);
 
-	अगर (mix->lock)
+	if (mix->lock)
 		spin_unlock_irqrestore(mix->lock, flags);
 
-	width = mix->reg_info.width_भाग;
-	shअगरt = mix->reg_info.shअगरt_भाग;
+	width = mix->reg_info.width_div;
+	shift = mix->reg_info.shift_div;
 
-	भाग = _get_भाग(mix, MMP_CLK_BITS_GET_VAL(mux_भाग, width, shअगरt));
+	div = _get_div(mix, MMP_CLK_BITS_GET_VAL(mux_div, width, shift));
 
-	वापस parent_rate / भाग;
-पूर्ण
+	return parent_rate / div;
+}
 
-अटल पूर्णांक mmp_clk_set_parent(काष्ठा clk_hw *hw, u8 index)
-अणु
-	काष्ठा mmp_clk_mix *mix = to_clk_mix(hw);
-	काष्ठा mmp_clk_mix_clk_table *item;
-	पूर्णांक i;
-	u32 भाग_val, mux_val;
+static int mmp_clk_set_parent(struct clk_hw *hw, u8 index)
+{
+	struct mmp_clk_mix *mix = to_clk_mix(hw);
+	struct mmp_clk_mix_clk_table *item;
+	int i;
+	u32 div_val, mux_val;
 
-	अगर (mix->table) अणु
-		क्रम (i = 0; i < mix->table_size; i++) अणु
+	if (mix->table) {
+		for (i = 0; i < mix->table_size; i++) {
 			item = &mix->table[i];
-			अगर (item->valid == 0)
-				जारी;
-			अगर (item->parent_index == index)
-				अवरोध;
-		पूर्ण
-		अगर (i < mix->table_size) अणु
-			भाग_val = _get_भाग_val(mix, item->भागisor);
+			if (item->valid == 0)
+				continue;
+			if (item->parent_index == index)
+				break;
+		}
+		if (i < mix->table_size) {
+			div_val = _get_div_val(mix, item->divisor);
 			mux_val = _get_mux_val(mix, item->parent_index);
-		पूर्ण अन्यथा
-			वापस -EINVAL;
-	पूर्ण अन्यथा अणु
+		} else
+			return -EINVAL;
+	} else {
 		mux_val = _get_mux_val(mix, index);
-		भाग_val = 0;
-	पूर्ण
+		div_val = 0;
+	}
 
-	वापस _set_rate(mix, mux_val, भाग_val, 1, भाग_val ? 1 : 0);
-पूर्ण
+	return _set_rate(mix, mux_val, div_val, 1, div_val ? 1 : 0);
+}
 
-अटल पूर्णांक mmp_clk_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				अचिन्हित दीर्घ best_parent_rate)
-अणु
-	काष्ठा mmp_clk_mix *mix = to_clk_mix(hw);
-	काष्ठा mmp_clk_mix_clk_table *item;
-	अचिन्हित दीर्घ parent_rate;
-	अचिन्हित पूर्णांक best_भागisor;
-	काष्ठा clk_hw *parent;
-	पूर्णांक i;
+static int mmp_clk_set_rate(struct clk_hw *hw, unsigned long rate,
+				unsigned long best_parent_rate)
+{
+	struct mmp_clk_mix *mix = to_clk_mix(hw);
+	struct mmp_clk_mix_clk_table *item;
+	unsigned long parent_rate;
+	unsigned int best_divisor;
+	struct clk_hw *parent;
+	int i;
 
-	best_भागisor = best_parent_rate / rate;
+	best_divisor = best_parent_rate / rate;
 
-	अगर (mix->table) अणु
-		क्रम (i = 0; i < mix->table_size; i++) अणु
+	if (mix->table) {
+		for (i = 0; i < mix->table_size; i++) {
 			item = &mix->table[i];
-			अगर (item->valid == 0)
-				जारी;
+			if (item->valid == 0)
+				continue;
 			parent = clk_hw_get_parent_by_index(hw,
 							item->parent_index);
 			parent_rate = clk_hw_get_rate(parent);
-			अगर (parent_rate == best_parent_rate
-				&& item->भागisor == best_भागisor)
-				अवरोध;
-		पूर्ण
-		अगर (i < mix->table_size)
-			वापस _set_rate(mix,
+			if (parent_rate == best_parent_rate
+				&& item->divisor == best_divisor)
+				break;
+		}
+		if (i < mix->table_size)
+			return _set_rate(mix,
 					_get_mux_val(mix, item->parent_index),
-					_get_भाग_val(mix, item->भागisor),
+					_get_div_val(mix, item->divisor),
 					1, 1);
-		अन्यथा
-			वापस -EINVAL;
-	पूर्ण अन्यथा अणु
-		क्रम (i = 0; i < clk_hw_get_num_parents(hw); i++) अणु
+		else
+			return -EINVAL;
+	} else {
+		for (i = 0; i < clk_hw_get_num_parents(hw); i++) {
 			parent = clk_hw_get_parent_by_index(hw, i);
 			parent_rate = clk_hw_get_rate(parent);
-			अगर (parent_rate == best_parent_rate)
-				अवरोध;
-		पूर्ण
-		अगर (i < clk_hw_get_num_parents(hw))
-			वापस _set_rate(mix, _get_mux_val(mix, i),
-					_get_भाग_val(mix, best_भागisor), 1, 1);
-		अन्यथा
-			वापस -EINVAL;
-	पूर्ण
-पूर्ण
+			if (parent_rate == best_parent_rate)
+				break;
+		}
+		if (i < clk_hw_get_num_parents(hw))
+			return _set_rate(mix, _get_mux_val(mix, i),
+					_get_div_val(mix, best_divisor), 1, 1);
+		else
+			return -EINVAL;
+	}
+}
 
-अटल पूर्णांक mmp_clk_mix_init(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा mmp_clk_mix *mix = to_clk_mix(hw);
+static int mmp_clk_mix_init(struct clk_hw *hw)
+{
+	struct mmp_clk_mix *mix = to_clk_mix(hw);
 
-	अगर (mix->table)
+	if (mix->table)
 		_filter_clk_table(mix, mix->table, mix->table_size);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-स्थिर काष्ठा clk_ops mmp_clk_mix_ops = अणु
+const struct clk_ops mmp_clk_mix_ops = {
 	.determine_rate = mmp_clk_mix_determine_rate,
 	.set_rate_and_parent = mmp_clk_mix_set_rate_and_parent,
 	.set_rate = mmp_clk_set_rate,
@@ -438,24 +437,24 @@ found:
 	.get_parent = mmp_clk_mix_get_parent,
 	.recalc_rate = mmp_clk_mix_recalc_rate,
 	.init = mmp_clk_mix_init,
-पूर्ण;
+};
 
-काष्ठा clk *mmp_clk_रेजिस्टर_mix(काष्ठा device *dev,
-					स्थिर अक्षर *name,
-					स्थिर अक्षर * स्थिर *parent_names,
+struct clk *mmp_clk_register_mix(struct device *dev,
+					const char *name,
+					const char * const *parent_names,
 					u8 num_parents,
-					अचिन्हित दीर्घ flags,
-					काष्ठा mmp_clk_mix_config *config,
+					unsigned long flags,
+					struct mmp_clk_mix_config *config,
 					spinlock_t *lock)
-अणु
-	काष्ठा mmp_clk_mix *mix;
-	काष्ठा clk *clk;
-	काष्ठा clk_init_data init;
-	माप_प्रकार table_bytes;
+{
+	struct mmp_clk_mix *mix;
+	struct clk *clk;
+	struct clk_init_data init;
+	size_t table_bytes;
 
-	mix = kzalloc(माप(*mix), GFP_KERNEL);
-	अगर (!mix)
-		वापस ERR_PTR(-ENOMEM);
+	mix = kzalloc(sizeof(*mix), GFP_KERNEL);
+	if (!mix)
+		return ERR_PTR(-ENOMEM);
 
 	init.name = name;
 	init.flags = flags | CLK_GET_RATE_NOCACHE;
@@ -463,48 +462,48 @@ found:
 	init.num_parents = num_parents;
 	init.ops = &mmp_clk_mix_ops;
 
-	स_नकल(&mix->reg_info, &config->reg_info, माप(config->reg_info));
-	अगर (config->table) अणु
-		table_bytes = माप(*config->table) * config->table_size;
+	memcpy(&mix->reg_info, &config->reg_info, sizeof(config->reg_info));
+	if (config->table) {
+		table_bytes = sizeof(*config->table) * config->table_size;
 		mix->table = kmemdup(config->table, table_bytes, GFP_KERNEL);
-		अगर (!mix->table)
-			जाओ मुक्त_mix;
+		if (!mix->table)
+			goto free_mix;
 
 		mix->table_size = config->table_size;
-	पूर्ण
+	}
 
-	अगर (config->mux_table) अणु
-		table_bytes = माप(u32) * num_parents;
+	if (config->mux_table) {
+		table_bytes = sizeof(u32) * num_parents;
 		mix->mux_table = kmemdup(config->mux_table, table_bytes,
 					 GFP_KERNEL);
-		अगर (!mix->mux_table) अणु
-			kमुक्त(mix->table);
-			जाओ मुक्त_mix;
-		पूर्ण
-	पूर्ण
+		if (!mix->mux_table) {
+			kfree(mix->table);
+			goto free_mix;
+		}
+	}
 
-	mix->भाग_flags = config->भाग_flags;
+	mix->div_flags = config->div_flags;
 	mix->mux_flags = config->mux_flags;
 	mix->lock = lock;
 	mix->hw.init = &init;
 
-	अगर (config->reg_info.bit_fc >= 32)
+	if (config->reg_info.bit_fc >= 32)
 		mix->type = MMP_CLK_MIX_TYPE_V1;
-	अन्यथा अगर (config->reg_info.reg_clk_sel)
+	else if (config->reg_info.reg_clk_sel)
 		mix->type = MMP_CLK_MIX_TYPE_V3;
-	अन्यथा
+	else
 		mix->type = MMP_CLK_MIX_TYPE_V2;
-	clk = clk_रेजिस्टर(dev, &mix->hw);
+	clk = clk_register(dev, &mix->hw);
 
-	अगर (IS_ERR(clk)) अणु
-		kमुक्त(mix->mux_table);
-		kमुक्त(mix->table);
-		kमुक्त(mix);
-	पूर्ण
+	if (IS_ERR(clk)) {
+		kfree(mix->mux_table);
+		kfree(mix->table);
+		kfree(mix);
+	}
 
-	वापस clk;
+	return clk;
 
-मुक्त_mix:
-	kमुक्त(mix);
-	वापस ERR_PTR(-ENOMEM);
-पूर्ण
+free_mix:
+	kfree(mix);
+	return ERR_PTR(-ENOMEM);
+}

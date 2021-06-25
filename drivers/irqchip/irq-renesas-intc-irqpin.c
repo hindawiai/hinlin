@@ -1,609 +1,608 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Renesas INTC External IRQ Pin Driver
  *
  *  Copyright (C) 2013 Magnus Damm
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/irq.h>
-#समावेश <linux/irqकरोमुख्य.h>
-#समावेश <linux/err.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/pm_runसमय.स>
+#include <linux/init.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/spinlock.h>
+#include <linux/interrupt.h>
+#include <linux/ioport.h>
+#include <linux/io.h>
+#include <linux/irq.h>
+#include <linux/irqdomain.h>
+#include <linux/err.h>
+#include <linux/slab.h>
+#include <linux/module.h>
+#include <linux/of_device.h>
+#include <linux/pm_runtime.h>
 
-#घोषणा INTC_IRQPIN_MAX 8 /* maximum 8 पूर्णांकerrupts per driver instance */
+#define INTC_IRQPIN_MAX 8 /* maximum 8 interrupts per driver instance */
 
-#घोषणा INTC_IRQPIN_REG_SENSE 0 /* ICRn */
-#घोषणा INTC_IRQPIN_REG_PRIO 1 /* INTPRInn */
-#घोषणा INTC_IRQPIN_REG_SOURCE 2 /* INTREQnn */
-#घोषणा INTC_IRQPIN_REG_MASK 3 /* INTMSKnn */
-#घोषणा INTC_IRQPIN_REG_CLEAR 4 /* INTMSKCLRnn */
-#घोषणा INTC_IRQPIN_REG_NR_MANDATORY 5
-#घोषणा INTC_IRQPIN_REG_IRLM 5 /* ICR0 with IRLM bit (optional) */
-#घोषणा INTC_IRQPIN_REG_NR 6
+#define INTC_IRQPIN_REG_SENSE 0 /* ICRn */
+#define INTC_IRQPIN_REG_PRIO 1 /* INTPRInn */
+#define INTC_IRQPIN_REG_SOURCE 2 /* INTREQnn */
+#define INTC_IRQPIN_REG_MASK 3 /* INTMSKnn */
+#define INTC_IRQPIN_REG_CLEAR 4 /* INTMSKCLRnn */
+#define INTC_IRQPIN_REG_NR_MANDATORY 5
+#define INTC_IRQPIN_REG_IRLM 5 /* ICR0 with IRLM bit (optional) */
+#define INTC_IRQPIN_REG_NR 6
 
-/* INTC बाह्यal IRQ PIN hardware रेजिस्टर access:
+/* INTC external IRQ PIN hardware register access:
  *
- * SENSE is पढ़ो-ग_लिखो 32-bit with 2-bits or 4-bits per IRQ (*)
- * PRIO is पढ़ो-ग_लिखो 32-bit with 4-bits per IRQ (**)
- * SOURCE is पढ़ो-only 32-bit or 8-bit with 1-bit per IRQ (***)
- * MASK is ग_लिखो-only 32-bit or 8-bit with 1-bit per IRQ (***)
- * CLEAR is ग_लिखो-only 32-bit or 8-bit with 1-bit per IRQ (***)
+ * SENSE is read-write 32-bit with 2-bits or 4-bits per IRQ (*)
+ * PRIO is read-write 32-bit with 4-bits per IRQ (**)
+ * SOURCE is read-only 32-bit or 8-bit with 1-bit per IRQ (***)
+ * MASK is write-only 32-bit or 8-bit with 1-bit per IRQ (***)
+ * CLEAR is write-only 32-bit or 8-bit with 1-bit per IRQ (***)
  *
  * (*) May be accessed by more than one driver instance - lock needed
- * (**) Read-modअगरy-ग_लिखो access by one driver instance - lock needed
+ * (**) Read-modify-write access by one driver instance - lock needed
  * (***) Accessed by one driver instance only - no locking needed
  */
 
-काष्ठा पूर्णांकc_irqpin_iomem अणु
-	व्योम __iomem *iomem;
-	अचिन्हित दीर्घ (*पढ़ो)(व्योम __iomem *iomem);
-	व्योम (*ग_लिखो)(व्योम __iomem *iomem, अचिन्हित दीर्घ data);
-	पूर्णांक width;
-पूर्ण;
+struct intc_irqpin_iomem {
+	void __iomem *iomem;
+	unsigned long (*read)(void __iomem *iomem);
+	void (*write)(void __iomem *iomem, unsigned long data);
+	int width;
+};
 
-काष्ठा पूर्णांकc_irqpin_irq अणु
-	पूर्णांक hw_irq;
-	पूर्णांक requested_irq;
-	पूर्णांक करोमुख्य_irq;
-	काष्ठा पूर्णांकc_irqpin_priv *p;
-पूर्ण;
+struct intc_irqpin_irq {
+	int hw_irq;
+	int requested_irq;
+	int domain_irq;
+	struct intc_irqpin_priv *p;
+};
 
-काष्ठा पूर्णांकc_irqpin_priv अणु
-	काष्ठा पूर्णांकc_irqpin_iomem iomem[INTC_IRQPIN_REG_NR];
-	काष्ठा पूर्णांकc_irqpin_irq irq[INTC_IRQPIN_MAX];
-	अचिन्हित पूर्णांक sense_bitfield_width;
-	काष्ठा platक्रमm_device *pdev;
-	काष्ठा irq_chip irq_chip;
-	काष्ठा irq_करोमुख्य *irq_करोमुख्य;
+struct intc_irqpin_priv {
+	struct intc_irqpin_iomem iomem[INTC_IRQPIN_REG_NR];
+	struct intc_irqpin_irq irq[INTC_IRQPIN_MAX];
+	unsigned int sense_bitfield_width;
+	struct platform_device *pdev;
+	struct irq_chip irq_chip;
+	struct irq_domain *irq_domain;
 	atomic_t wakeup_path;
-	अचिन्हित shared_irqs:1;
+	unsigned shared_irqs:1;
 	u8 shared_irq_mask;
-पूर्ण;
+};
 
-काष्ठा पूर्णांकc_irqpin_config अणु
-	पूर्णांक irlm_bit;		/* -1 अगर non-existent */
-पूर्ण;
+struct intc_irqpin_config {
+	int irlm_bit;		/* -1 if non-existent */
+};
 
-अटल अचिन्हित दीर्घ पूर्णांकc_irqpin_पढ़ो32(व्योम __iomem *iomem)
-अणु
-	वापस ioपढ़ो32(iomem);
-पूर्ण
+static unsigned long intc_irqpin_read32(void __iomem *iomem)
+{
+	return ioread32(iomem);
+}
 
-अटल अचिन्हित दीर्घ पूर्णांकc_irqpin_पढ़ो8(व्योम __iomem *iomem)
-अणु
-	वापस ioपढ़ो8(iomem);
-पूर्ण
+static unsigned long intc_irqpin_read8(void __iomem *iomem)
+{
+	return ioread8(iomem);
+}
 
-अटल व्योम पूर्णांकc_irqpin_ग_लिखो32(व्योम __iomem *iomem, अचिन्हित दीर्घ data)
-अणु
-	ioग_लिखो32(data, iomem);
-पूर्ण
+static void intc_irqpin_write32(void __iomem *iomem, unsigned long data)
+{
+	iowrite32(data, iomem);
+}
 
-अटल व्योम पूर्णांकc_irqpin_ग_लिखो8(व्योम __iomem *iomem, अचिन्हित दीर्घ data)
-अणु
-	ioग_लिखो8(data, iomem);
-पूर्ण
+static void intc_irqpin_write8(void __iomem *iomem, unsigned long data)
+{
+	iowrite8(data, iomem);
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ पूर्णांकc_irqpin_पढ़ो(काष्ठा पूर्णांकc_irqpin_priv *p,
-					     पूर्णांक reg)
-अणु
-	काष्ठा पूर्णांकc_irqpin_iomem *i = &p->iomem[reg];
+static inline unsigned long intc_irqpin_read(struct intc_irqpin_priv *p,
+					     int reg)
+{
+	struct intc_irqpin_iomem *i = &p->iomem[reg];
 
-	वापस i->पढ़ो(i->iomem);
-पूर्ण
+	return i->read(i->iomem);
+}
 
-अटल अंतरभूत व्योम पूर्णांकc_irqpin_ग_लिखो(काष्ठा पूर्णांकc_irqpin_priv *p,
-				     पूर्णांक reg, अचिन्हित दीर्घ data)
-अणु
-	काष्ठा पूर्णांकc_irqpin_iomem *i = &p->iomem[reg];
+static inline void intc_irqpin_write(struct intc_irqpin_priv *p,
+				     int reg, unsigned long data)
+{
+	struct intc_irqpin_iomem *i = &p->iomem[reg];
 
-	i->ग_लिखो(i->iomem, data);
-पूर्ण
+	i->write(i->iomem, data);
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ पूर्णांकc_irqpin_hwirq_mask(काष्ठा पूर्णांकc_irqpin_priv *p,
-						   पूर्णांक reg, पूर्णांक hw_irq)
-अणु
-	वापस BIT((p->iomem[reg].width - 1) - hw_irq);
-पूर्ण
+static inline unsigned long intc_irqpin_hwirq_mask(struct intc_irqpin_priv *p,
+						   int reg, int hw_irq)
+{
+	return BIT((p->iomem[reg].width - 1) - hw_irq);
+}
 
-अटल अंतरभूत व्योम पूर्णांकc_irqpin_irq_ग_लिखो_hwirq(काष्ठा पूर्णांकc_irqpin_priv *p,
-					       पूर्णांक reg, पूर्णांक hw_irq)
-अणु
-	पूर्णांकc_irqpin_ग_लिखो(p, reg, पूर्णांकc_irqpin_hwirq_mask(p, reg, hw_irq));
-पूर्ण
+static inline void intc_irqpin_irq_write_hwirq(struct intc_irqpin_priv *p,
+					       int reg, int hw_irq)
+{
+	intc_irqpin_write(p, reg, intc_irqpin_hwirq_mask(p, reg, hw_irq));
+}
 
-अटल DEFINE_RAW_SPINLOCK(पूर्णांकc_irqpin_lock); /* only used by slow path */
+static DEFINE_RAW_SPINLOCK(intc_irqpin_lock); /* only used by slow path */
 
-अटल व्योम पूर्णांकc_irqpin_पढ़ो_modअगरy_ग_लिखो(काष्ठा पूर्णांकc_irqpin_priv *p,
-					  पूर्णांक reg, पूर्णांक shअगरt,
-					  पूर्णांक width, पूर्णांक value)
-अणु
-	अचिन्हित दीर्घ flags;
-	अचिन्हित दीर्घ पंचांगp;
+static void intc_irqpin_read_modify_write(struct intc_irqpin_priv *p,
+					  int reg, int shift,
+					  int width, int value)
+{
+	unsigned long flags;
+	unsigned long tmp;
 
-	raw_spin_lock_irqsave(&पूर्णांकc_irqpin_lock, flags);
+	raw_spin_lock_irqsave(&intc_irqpin_lock, flags);
 
-	पंचांगp = पूर्णांकc_irqpin_पढ़ो(p, reg);
-	पंचांगp &= ~(((1 << width) - 1) << shअगरt);
-	पंचांगp |= value << shअगरt;
-	पूर्णांकc_irqpin_ग_लिखो(p, reg, पंचांगp);
+	tmp = intc_irqpin_read(p, reg);
+	tmp &= ~(((1 << width) - 1) << shift);
+	tmp |= value << shift;
+	intc_irqpin_write(p, reg, tmp);
 
-	raw_spin_unlock_irqrestore(&पूर्णांकc_irqpin_lock, flags);
-पूर्ण
+	raw_spin_unlock_irqrestore(&intc_irqpin_lock, flags);
+}
 
-अटल व्योम पूर्णांकc_irqpin_mask_unmask_prio(काष्ठा पूर्णांकc_irqpin_priv *p,
-					 पूर्णांक irq, पूर्णांक करो_mask)
-अणु
-	/* The PRIO रेजिस्टर is assumed to be 32-bit with fixed 4-bit fields. */
-	पूर्णांक bitfield_width = 4;
-	पूर्णांक shअगरt = 32 - (irq + 1) * bitfield_width;
+static void intc_irqpin_mask_unmask_prio(struct intc_irqpin_priv *p,
+					 int irq, int do_mask)
+{
+	/* The PRIO register is assumed to be 32-bit with fixed 4-bit fields. */
+	int bitfield_width = 4;
+	int shift = 32 - (irq + 1) * bitfield_width;
 
-	पूर्णांकc_irqpin_पढ़ो_modअगरy_ग_लिखो(p, INTC_IRQPIN_REG_PRIO,
-				      shअगरt, bitfield_width,
-				      करो_mask ? 0 : (1 << bitfield_width) - 1);
-पूर्ण
+	intc_irqpin_read_modify_write(p, INTC_IRQPIN_REG_PRIO,
+				      shift, bitfield_width,
+				      do_mask ? 0 : (1 << bitfield_width) - 1);
+}
 
-अटल पूर्णांक पूर्णांकc_irqpin_set_sense(काष्ठा पूर्णांकc_irqpin_priv *p, पूर्णांक irq, पूर्णांक value)
-अणु
-	/* The SENSE रेजिस्टर is assumed to be 32-bit. */
-	पूर्णांक bitfield_width = p->sense_bitfield_width;
-	पूर्णांक shअगरt = 32 - (irq + 1) * bitfield_width;
+static int intc_irqpin_set_sense(struct intc_irqpin_priv *p, int irq, int value)
+{
+	/* The SENSE register is assumed to be 32-bit. */
+	int bitfield_width = p->sense_bitfield_width;
+	int shift = 32 - (irq + 1) * bitfield_width;
 
 	dev_dbg(&p->pdev->dev, "sense irq = %d, mode = %d\n", irq, value);
 
-	अगर (value >= (1 << bitfield_width))
-		वापस -EINVAL;
+	if (value >= (1 << bitfield_width))
+		return -EINVAL;
 
-	पूर्णांकc_irqpin_पढ़ो_modअगरy_ग_लिखो(p, INTC_IRQPIN_REG_SENSE, shअगरt,
+	intc_irqpin_read_modify_write(p, INTC_IRQPIN_REG_SENSE, shift,
 				      bitfield_width, value);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम पूर्णांकc_irqpin_dbg(काष्ठा पूर्णांकc_irqpin_irq *i, अक्षर *str)
-अणु
+static void intc_irqpin_dbg(struct intc_irqpin_irq *i, char *str)
+{
 	dev_dbg(&i->p->pdev->dev, "%s (%d:%d:%d)\n",
-		str, i->requested_irq, i->hw_irq, i->करोमुख्य_irq);
-पूर्ण
+		str, i->requested_irq, i->hw_irq, i->domain_irq);
+}
 
-अटल व्योम पूर्णांकc_irqpin_irq_enable(काष्ठा irq_data *d)
-अणु
-	काष्ठा पूर्णांकc_irqpin_priv *p = irq_data_get_irq_chip_data(d);
-	पूर्णांक hw_irq = irqd_to_hwirq(d);
+static void intc_irqpin_irq_enable(struct irq_data *d)
+{
+	struct intc_irqpin_priv *p = irq_data_get_irq_chip_data(d);
+	int hw_irq = irqd_to_hwirq(d);
 
-	पूर्णांकc_irqpin_dbg(&p->irq[hw_irq], "enable");
-	पूर्णांकc_irqpin_irq_ग_लिखो_hwirq(p, INTC_IRQPIN_REG_CLEAR, hw_irq);
-पूर्ण
+	intc_irqpin_dbg(&p->irq[hw_irq], "enable");
+	intc_irqpin_irq_write_hwirq(p, INTC_IRQPIN_REG_CLEAR, hw_irq);
+}
 
-अटल व्योम पूर्णांकc_irqpin_irq_disable(काष्ठा irq_data *d)
-अणु
-	काष्ठा पूर्णांकc_irqpin_priv *p = irq_data_get_irq_chip_data(d);
-	पूर्णांक hw_irq = irqd_to_hwirq(d);
+static void intc_irqpin_irq_disable(struct irq_data *d)
+{
+	struct intc_irqpin_priv *p = irq_data_get_irq_chip_data(d);
+	int hw_irq = irqd_to_hwirq(d);
 
-	पूर्णांकc_irqpin_dbg(&p->irq[hw_irq], "disable");
-	पूर्णांकc_irqpin_irq_ग_लिखो_hwirq(p, INTC_IRQPIN_REG_MASK, hw_irq);
-पूर्ण
+	intc_irqpin_dbg(&p->irq[hw_irq], "disable");
+	intc_irqpin_irq_write_hwirq(p, INTC_IRQPIN_REG_MASK, hw_irq);
+}
 
-अटल व्योम पूर्णांकc_irqpin_shared_irq_enable(काष्ठा irq_data *d)
-अणु
-	काष्ठा पूर्णांकc_irqpin_priv *p = irq_data_get_irq_chip_data(d);
-	पूर्णांक hw_irq = irqd_to_hwirq(d);
+static void intc_irqpin_shared_irq_enable(struct irq_data *d)
+{
+	struct intc_irqpin_priv *p = irq_data_get_irq_chip_data(d);
+	int hw_irq = irqd_to_hwirq(d);
 
-	पूर्णांकc_irqpin_dbg(&p->irq[hw_irq], "shared enable");
-	पूर्णांकc_irqpin_irq_ग_लिखो_hwirq(p, INTC_IRQPIN_REG_CLEAR, hw_irq);
+	intc_irqpin_dbg(&p->irq[hw_irq], "shared enable");
+	intc_irqpin_irq_write_hwirq(p, INTC_IRQPIN_REG_CLEAR, hw_irq);
 
 	p->shared_irq_mask &= ~BIT(hw_irq);
-पूर्ण
+}
 
-अटल व्योम पूर्णांकc_irqpin_shared_irq_disable(काष्ठा irq_data *d)
-अणु
-	काष्ठा पूर्णांकc_irqpin_priv *p = irq_data_get_irq_chip_data(d);
-	पूर्णांक hw_irq = irqd_to_hwirq(d);
+static void intc_irqpin_shared_irq_disable(struct irq_data *d)
+{
+	struct intc_irqpin_priv *p = irq_data_get_irq_chip_data(d);
+	int hw_irq = irqd_to_hwirq(d);
 
-	पूर्णांकc_irqpin_dbg(&p->irq[hw_irq], "shared disable");
-	पूर्णांकc_irqpin_irq_ग_लिखो_hwirq(p, INTC_IRQPIN_REG_MASK, hw_irq);
+	intc_irqpin_dbg(&p->irq[hw_irq], "shared disable");
+	intc_irqpin_irq_write_hwirq(p, INTC_IRQPIN_REG_MASK, hw_irq);
 
 	p->shared_irq_mask |= BIT(hw_irq);
-पूर्ण
+}
 
-अटल व्योम पूर्णांकc_irqpin_irq_enable_क्रमce(काष्ठा irq_data *d)
-अणु
-	काष्ठा पूर्णांकc_irqpin_priv *p = irq_data_get_irq_chip_data(d);
-	पूर्णांक irq = p->irq[irqd_to_hwirq(d)].requested_irq;
+static void intc_irqpin_irq_enable_force(struct irq_data *d)
+{
+	struct intc_irqpin_priv *p = irq_data_get_irq_chip_data(d);
+	int irq = p->irq[irqd_to_hwirq(d)].requested_irq;
 
-	पूर्णांकc_irqpin_irq_enable(d);
+	intc_irqpin_irq_enable(d);
 
-	/* enable पूर्णांकerrupt through parent पूर्णांकerrupt controller,
-	 * assumes non-shared पूर्णांकerrupt with 1:1 mapping
-	 * needed क्रम busted IRQs on some SoCs like sh73a0
+	/* enable interrupt through parent interrupt controller,
+	 * assumes non-shared interrupt with 1:1 mapping
+	 * needed for busted IRQs on some SoCs like sh73a0
 	 */
 	irq_get_chip(irq)->irq_unmask(irq_get_irq_data(irq));
-पूर्ण
+}
 
-अटल व्योम पूर्णांकc_irqpin_irq_disable_क्रमce(काष्ठा irq_data *d)
-अणु
-	काष्ठा पूर्णांकc_irqpin_priv *p = irq_data_get_irq_chip_data(d);
-	पूर्णांक irq = p->irq[irqd_to_hwirq(d)].requested_irq;
+static void intc_irqpin_irq_disable_force(struct irq_data *d)
+{
+	struct intc_irqpin_priv *p = irq_data_get_irq_chip_data(d);
+	int irq = p->irq[irqd_to_hwirq(d)].requested_irq;
 
-	/* disable पूर्णांकerrupt through parent पूर्णांकerrupt controller,
-	 * assumes non-shared पूर्णांकerrupt with 1:1 mapping
-	 * needed क्रम busted IRQs on some SoCs like sh73a0
+	/* disable interrupt through parent interrupt controller,
+	 * assumes non-shared interrupt with 1:1 mapping
+	 * needed for busted IRQs on some SoCs like sh73a0
 	 */
 	irq_get_chip(irq)->irq_mask(irq_get_irq_data(irq));
-	पूर्णांकc_irqpin_irq_disable(d);
-पूर्ण
+	intc_irqpin_irq_disable(d);
+}
 
-#घोषणा INTC_IRQ_SENSE_VALID 0x10
-#घोषणा INTC_IRQ_SENSE(x) (x + INTC_IRQ_SENSE_VALID)
+#define INTC_IRQ_SENSE_VALID 0x10
+#define INTC_IRQ_SENSE(x) (x + INTC_IRQ_SENSE_VALID)
 
-अटल अचिन्हित अक्षर पूर्णांकc_irqpin_sense[IRQ_TYPE_SENSE_MASK + 1] = अणु
+static unsigned char intc_irqpin_sense[IRQ_TYPE_SENSE_MASK + 1] = {
 	[IRQ_TYPE_EDGE_FALLING] = INTC_IRQ_SENSE(0x00),
 	[IRQ_TYPE_EDGE_RISING] = INTC_IRQ_SENSE(0x01),
 	[IRQ_TYPE_LEVEL_LOW] = INTC_IRQ_SENSE(0x02),
 	[IRQ_TYPE_LEVEL_HIGH] = INTC_IRQ_SENSE(0x03),
 	[IRQ_TYPE_EDGE_BOTH] = INTC_IRQ_SENSE(0x04),
-पूर्ण;
+};
 
-अटल पूर्णांक पूर्णांकc_irqpin_irq_set_type(काष्ठा irq_data *d, अचिन्हित पूर्णांक type)
-अणु
-	अचिन्हित अक्षर value = पूर्णांकc_irqpin_sense[type & IRQ_TYPE_SENSE_MASK];
-	काष्ठा पूर्णांकc_irqpin_priv *p = irq_data_get_irq_chip_data(d);
+static int intc_irqpin_irq_set_type(struct irq_data *d, unsigned int type)
+{
+	unsigned char value = intc_irqpin_sense[type & IRQ_TYPE_SENSE_MASK];
+	struct intc_irqpin_priv *p = irq_data_get_irq_chip_data(d);
 
-	अगर (!(value & INTC_IRQ_SENSE_VALID))
-		वापस -EINVAL;
+	if (!(value & INTC_IRQ_SENSE_VALID))
+		return -EINVAL;
 
-	वापस पूर्णांकc_irqpin_set_sense(p, irqd_to_hwirq(d),
+	return intc_irqpin_set_sense(p, irqd_to_hwirq(d),
 				     value ^ INTC_IRQ_SENSE_VALID);
-पूर्ण
+}
 
-अटल पूर्णांक पूर्णांकc_irqpin_irq_set_wake(काष्ठा irq_data *d, अचिन्हित पूर्णांक on)
-अणु
-	काष्ठा पूर्णांकc_irqpin_priv *p = irq_data_get_irq_chip_data(d);
-	पूर्णांक hw_irq = irqd_to_hwirq(d);
+static int intc_irqpin_irq_set_wake(struct irq_data *d, unsigned int on)
+{
+	struct intc_irqpin_priv *p = irq_data_get_irq_chip_data(d);
+	int hw_irq = irqd_to_hwirq(d);
 
 	irq_set_irq_wake(p->irq[hw_irq].requested_irq, on);
-	अगर (on)
+	if (on)
 		atomic_inc(&p->wakeup_path);
-	अन्यथा
+	else
 		atomic_dec(&p->wakeup_path);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल irqवापस_t पूर्णांकc_irqpin_irq_handler(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा पूर्णांकc_irqpin_irq *i = dev_id;
-	काष्ठा पूर्णांकc_irqpin_priv *p = i->p;
-	अचिन्हित दीर्घ bit;
+static irqreturn_t intc_irqpin_irq_handler(int irq, void *dev_id)
+{
+	struct intc_irqpin_irq *i = dev_id;
+	struct intc_irqpin_priv *p = i->p;
+	unsigned long bit;
 
-	पूर्णांकc_irqpin_dbg(i, "demux1");
-	bit = पूर्णांकc_irqpin_hwirq_mask(p, INTC_IRQPIN_REG_SOURCE, i->hw_irq);
+	intc_irqpin_dbg(i, "demux1");
+	bit = intc_irqpin_hwirq_mask(p, INTC_IRQPIN_REG_SOURCE, i->hw_irq);
 
-	अगर (पूर्णांकc_irqpin_पढ़ो(p, INTC_IRQPIN_REG_SOURCE) & bit) अणु
-		पूर्णांकc_irqpin_ग_लिखो(p, INTC_IRQPIN_REG_SOURCE, ~bit);
-		पूर्णांकc_irqpin_dbg(i, "demux2");
-		generic_handle_irq(i->करोमुख्य_irq);
-		वापस IRQ_HANDLED;
-	पूर्ण
-	वापस IRQ_NONE;
-पूर्ण
+	if (intc_irqpin_read(p, INTC_IRQPIN_REG_SOURCE) & bit) {
+		intc_irqpin_write(p, INTC_IRQPIN_REG_SOURCE, ~bit);
+		intc_irqpin_dbg(i, "demux2");
+		generic_handle_irq(i->domain_irq);
+		return IRQ_HANDLED;
+	}
+	return IRQ_NONE;
+}
 
-अटल irqवापस_t पूर्णांकc_irqpin_shared_irq_handler(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा पूर्णांकc_irqpin_priv *p = dev_id;
-	अचिन्हित पूर्णांक reg_source = पूर्णांकc_irqpin_पढ़ो(p, INTC_IRQPIN_REG_SOURCE);
-	irqवापस_t status = IRQ_NONE;
-	पूर्णांक k;
+static irqreturn_t intc_irqpin_shared_irq_handler(int irq, void *dev_id)
+{
+	struct intc_irqpin_priv *p = dev_id;
+	unsigned int reg_source = intc_irqpin_read(p, INTC_IRQPIN_REG_SOURCE);
+	irqreturn_t status = IRQ_NONE;
+	int k;
 
-	क्रम (k = 0; k < 8; k++) अणु
-		अगर (reg_source & BIT(7 - k)) अणु
-			अगर (BIT(k) & p->shared_irq_mask)
-				जारी;
+	for (k = 0; k < 8; k++) {
+		if (reg_source & BIT(7 - k)) {
+			if (BIT(k) & p->shared_irq_mask)
+				continue;
 
-			status |= पूर्णांकc_irqpin_irq_handler(irq, &p->irq[k]);
-		पूर्ण
-	पूर्ण
+			status |= intc_irqpin_irq_handler(irq, &p->irq[k]);
+		}
+	}
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * This lock class tells lockdep that INTC External IRQ Pin irqs are in a
- * dअगरferent category than their parents, so it won't report false recursion.
+ * different category than their parents, so it won't report false recursion.
  */
-अटल काष्ठा lock_class_key पूर्णांकc_irqpin_irq_lock_class;
+static struct lock_class_key intc_irqpin_irq_lock_class;
 
-/* And this is क्रम the request mutex */
-अटल काष्ठा lock_class_key पूर्णांकc_irqpin_irq_request_class;
+/* And this is for the request mutex */
+static struct lock_class_key intc_irqpin_irq_request_class;
 
-अटल पूर्णांक पूर्णांकc_irqpin_irq_करोमुख्य_map(काष्ठा irq_करोमुख्य *h, अचिन्हित पूर्णांक virq,
+static int intc_irqpin_irq_domain_map(struct irq_domain *h, unsigned int virq,
 				      irq_hw_number_t hw)
-अणु
-	काष्ठा पूर्णांकc_irqpin_priv *p = h->host_data;
+{
+	struct intc_irqpin_priv *p = h->host_data;
 
-	p->irq[hw].करोमुख्य_irq = virq;
+	p->irq[hw].domain_irq = virq;
 	p->irq[hw].hw_irq = hw;
 
-	पूर्णांकc_irqpin_dbg(&p->irq[hw], "map");
+	intc_irqpin_dbg(&p->irq[hw], "map");
 	irq_set_chip_data(virq, h->host_data);
-	irq_set_lockdep_class(virq, &पूर्णांकc_irqpin_irq_lock_class,
-			      &पूर्णांकc_irqpin_irq_request_class);
+	irq_set_lockdep_class(virq, &intc_irqpin_irq_lock_class,
+			      &intc_irqpin_irq_request_class);
 	irq_set_chip_and_handler(virq, &p->irq_chip, handle_level_irq);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा irq_करोमुख्य_ops पूर्णांकc_irqpin_irq_करोमुख्य_ops = अणु
-	.map	= पूर्णांकc_irqpin_irq_करोमुख्य_map,
-	.xlate  = irq_करोमुख्य_xlate_twocell,
-पूर्ण;
+static const struct irq_domain_ops intc_irqpin_irq_domain_ops = {
+	.map	= intc_irqpin_irq_domain_map,
+	.xlate  = irq_domain_xlate_twocell,
+};
 
-अटल स्थिर काष्ठा पूर्णांकc_irqpin_config पूर्णांकc_irqpin_irlm_r8a777x = अणु
+static const struct intc_irqpin_config intc_irqpin_irlm_r8a777x = {
 	.irlm_bit = 23, /* ICR0.IRLM0 */
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा पूर्णांकc_irqpin_config पूर्णांकc_irqpin_rmobile = अणु
+static const struct intc_irqpin_config intc_irqpin_rmobile = {
 	.irlm_bit = -1,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id पूर्णांकc_irqpin_dt_ids[] = अणु
-	अणु .compatible = "renesas,intc-irqpin", पूर्ण,
-	अणु .compatible = "renesas,intc-irqpin-r8a7778",
-	  .data = &पूर्णांकc_irqpin_irlm_r8a777x पूर्ण,
-	अणु .compatible = "renesas,intc-irqpin-r8a7779",
-	  .data = &पूर्णांकc_irqpin_irlm_r8a777x पूर्ण,
-	अणु .compatible = "renesas,intc-irqpin-r8a7740",
-	  .data = &पूर्णांकc_irqpin_rmobile पूर्ण,
-	अणु .compatible = "renesas,intc-irqpin-sh73a0",
-	  .data = &पूर्णांकc_irqpin_rmobile पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
-MODULE_DEVICE_TABLE(of, पूर्णांकc_irqpin_dt_ids);
+static const struct of_device_id intc_irqpin_dt_ids[] = {
+	{ .compatible = "renesas,intc-irqpin", },
+	{ .compatible = "renesas,intc-irqpin-r8a7778",
+	  .data = &intc_irqpin_irlm_r8a777x },
+	{ .compatible = "renesas,intc-irqpin-r8a7779",
+	  .data = &intc_irqpin_irlm_r8a777x },
+	{ .compatible = "renesas,intc-irqpin-r8a7740",
+	  .data = &intc_irqpin_rmobile },
+	{ .compatible = "renesas,intc-irqpin-sh73a0",
+	  .data = &intc_irqpin_rmobile },
+	{},
+};
+MODULE_DEVICE_TABLE(of, intc_irqpin_dt_ids);
 
-अटल पूर्णांक पूर्णांकc_irqpin_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	स्थिर काष्ठा पूर्णांकc_irqpin_config *config;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा पूर्णांकc_irqpin_priv *p;
-	काष्ठा पूर्णांकc_irqpin_iomem *i;
-	काष्ठा resource *io[INTC_IRQPIN_REG_NR];
-	काष्ठा resource *irq;
-	काष्ठा irq_chip *irq_chip;
-	व्योम (*enable_fn)(काष्ठा irq_data *d);
-	व्योम (*disable_fn)(काष्ठा irq_data *d);
-	स्थिर अक्षर *name = dev_name(dev);
+static int intc_irqpin_probe(struct platform_device *pdev)
+{
+	const struct intc_irqpin_config *config;
+	struct device *dev = &pdev->dev;
+	struct intc_irqpin_priv *p;
+	struct intc_irqpin_iomem *i;
+	struct resource *io[INTC_IRQPIN_REG_NR];
+	struct resource *irq;
+	struct irq_chip *irq_chip;
+	void (*enable_fn)(struct irq_data *d);
+	void (*disable_fn)(struct irq_data *d);
+	const char *name = dev_name(dev);
 	bool control_parent;
-	अचिन्हित पूर्णांक nirqs;
-	पूर्णांक ref_irq;
-	पूर्णांक ret;
-	पूर्णांक k;
+	unsigned int nirqs;
+	int ref_irq;
+	int ret;
+	int k;
 
-	p = devm_kzalloc(dev, माप(*p), GFP_KERNEL);
-	अगर (!p)
-		वापस -ENOMEM;
+	p = devm_kzalloc(dev, sizeof(*p), GFP_KERNEL);
+	if (!p)
+		return -ENOMEM;
 
 	/* deal with driver instance configuration */
-	of_property_पढ़ो_u32(dev->of_node, "sense-bitfield-width",
+	of_property_read_u32(dev->of_node, "sense-bitfield-width",
 			     &p->sense_bitfield_width);
-	control_parent = of_property_पढ़ो_bool(dev->of_node, "control-parent");
-	अगर (!p->sense_bitfield_width)
-		p->sense_bitfield_width = 4; /* शेष to 4 bits */
+	control_parent = of_property_read_bool(dev->of_node, "control-parent");
+	if (!p->sense_bitfield_width)
+		p->sense_bitfield_width = 4; /* default to 4 bits */
 
 	p->pdev = pdev;
-	platक्रमm_set_drvdata(pdev, p);
+	platform_set_drvdata(pdev, p);
 
 	config = of_device_get_match_data(dev);
 
-	pm_runसमय_enable(dev);
-	pm_runसमय_get_sync(dev);
+	pm_runtime_enable(dev);
+	pm_runtime_get_sync(dev);
 
-	/* get hold of रेजिस्टर banks */
-	स_रखो(io, 0, माप(io));
-	क्रम (k = 0; k < INTC_IRQPIN_REG_NR; k++) अणु
-		io[k] = platक्रमm_get_resource(pdev, IORESOURCE_MEM, k);
-		अगर (!io[k] && k < INTC_IRQPIN_REG_NR_MANDATORY) अणु
+	/* get hold of register banks */
+	memset(io, 0, sizeof(io));
+	for (k = 0; k < INTC_IRQPIN_REG_NR; k++) {
+		io[k] = platform_get_resource(pdev, IORESOURCE_MEM, k);
+		if (!io[k] && k < INTC_IRQPIN_REG_NR_MANDATORY) {
 			dev_err(dev, "not enough IOMEM resources\n");
 			ret = -EINVAL;
-			जाओ err0;
-		पूर्ण
-	पूर्ण
+			goto err0;
+		}
+	}
 
 	/* allow any number of IRQs between 1 and INTC_IRQPIN_MAX */
-	क्रम (k = 0; k < INTC_IRQPIN_MAX; k++) अणु
-		irq = platक्रमm_get_resource(pdev, IORESOURCE_IRQ, k);
-		अगर (!irq)
-			अवरोध;
+	for (k = 0; k < INTC_IRQPIN_MAX; k++) {
+		irq = platform_get_resource(pdev, IORESOURCE_IRQ, k);
+		if (!irq)
+			break;
 
 		p->irq[k].p = p;
 		p->irq[k].requested_irq = irq->start;
-	पूर्ण
+	}
 
 	nirqs = k;
-	अगर (nirqs < 1) अणु
+	if (nirqs < 1) {
 		dev_err(dev, "not enough IRQ resources\n");
 		ret = -EINVAL;
-		जाओ err0;
-	पूर्ण
+		goto err0;
+	}
 
-	/* ioremap IOMEM and setup पढ़ो/ग_लिखो callbacks */
-	क्रम (k = 0; k < INTC_IRQPIN_REG_NR; k++) अणु
+	/* ioremap IOMEM and setup read/write callbacks */
+	for (k = 0; k < INTC_IRQPIN_REG_NR; k++) {
 		i = &p->iomem[k];
 
-		/* handle optional रेजिस्टरs */
-		अगर (!io[k])
-			जारी;
+		/* handle optional registers */
+		if (!io[k])
+			continue;
 
-		चयन (resource_size(io[k])) अणु
-		हाल 1:
+		switch (resource_size(io[k])) {
+		case 1:
 			i->width = 8;
-			i->पढ़ो = पूर्णांकc_irqpin_पढ़ो8;
-			i->ग_लिखो = पूर्णांकc_irqpin_ग_लिखो8;
-			अवरोध;
-		हाल 4:
+			i->read = intc_irqpin_read8;
+			i->write = intc_irqpin_write8;
+			break;
+		case 4:
 			i->width = 32;
-			i->पढ़ो = पूर्णांकc_irqpin_पढ़ो32;
-			i->ग_लिखो = पूर्णांकc_irqpin_ग_लिखो32;
-			अवरोध;
-		शेष:
+			i->read = intc_irqpin_read32;
+			i->write = intc_irqpin_write32;
+			break;
+		default:
 			dev_err(dev, "IOMEM size mismatch\n");
 			ret = -EINVAL;
-			जाओ err0;
-		पूर्ण
+			goto err0;
+		}
 
 		i->iomem = devm_ioremap(dev, io[k]->start,
 					resource_size(io[k]));
-		अगर (!i->iomem) अणु
+		if (!i->iomem) {
 			dev_err(dev, "failed to remap IOMEM\n");
 			ret = -ENXIO;
-			जाओ err0;
-		पूर्ण
-	पूर्ण
+			goto err0;
+		}
+	}
 
 	/* configure "individual IRQ mode" where needed */
-	अगर (config && config->irlm_bit >= 0) अणु
-		अगर (io[INTC_IRQPIN_REG_IRLM])
-			पूर्णांकc_irqpin_पढ़ो_modअगरy_ग_लिखो(p, INTC_IRQPIN_REG_IRLM,
+	if (config && config->irlm_bit >= 0) {
+		if (io[INTC_IRQPIN_REG_IRLM])
+			intc_irqpin_read_modify_write(p, INTC_IRQPIN_REG_IRLM,
 						      config->irlm_bit, 1, 1);
-		अन्यथा
+		else
 			dev_warn(dev, "unable to select IRLM mode\n");
-	पूर्ण
+	}
 
-	/* mask all पूर्णांकerrupts using priority */
-	क्रम (k = 0; k < nirqs; k++)
-		पूर्णांकc_irqpin_mask_unmask_prio(p, k, 1);
+	/* mask all interrupts using priority */
+	for (k = 0; k < nirqs; k++)
+		intc_irqpin_mask_unmask_prio(p, k, 1);
 
-	/* clear all pending पूर्णांकerrupts */
-	पूर्णांकc_irqpin_ग_लिखो(p, INTC_IRQPIN_REG_SOURCE, 0x0);
+	/* clear all pending interrupts */
+	intc_irqpin_write(p, INTC_IRQPIN_REG_SOURCE, 0x0);
 
-	/* scan क्रम shared पूर्णांकerrupt lines */
+	/* scan for shared interrupt lines */
 	ref_irq = p->irq[0].requested_irq;
 	p->shared_irqs = 1;
-	क्रम (k = 1; k < nirqs; k++) अणु
-		अगर (ref_irq != p->irq[k].requested_irq) अणु
+	for (k = 1; k < nirqs; k++) {
+		if (ref_irq != p->irq[k].requested_irq) {
 			p->shared_irqs = 0;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	/* use more severe masking method अगर requested */
-	अगर (control_parent) अणु
-		enable_fn = पूर्णांकc_irqpin_irq_enable_क्रमce;
-		disable_fn = पूर्णांकc_irqpin_irq_disable_क्रमce;
-	पूर्ण अन्यथा अगर (!p->shared_irqs) अणु
-		enable_fn = पूर्णांकc_irqpin_irq_enable;
-		disable_fn = पूर्णांकc_irqpin_irq_disable;
-	पूर्ण अन्यथा अणु
-		enable_fn = पूर्णांकc_irqpin_shared_irq_enable;
-		disable_fn = पूर्णांकc_irqpin_shared_irq_disable;
-	पूर्ण
+	/* use more severe masking method if requested */
+	if (control_parent) {
+		enable_fn = intc_irqpin_irq_enable_force;
+		disable_fn = intc_irqpin_irq_disable_force;
+	} else if (!p->shared_irqs) {
+		enable_fn = intc_irqpin_irq_enable;
+		disable_fn = intc_irqpin_irq_disable;
+	} else {
+		enable_fn = intc_irqpin_shared_irq_enable;
+		disable_fn = intc_irqpin_shared_irq_disable;
+	}
 
 	irq_chip = &p->irq_chip;
 	irq_chip->name = "intc-irqpin";
 	irq_chip->parent_device = dev;
 	irq_chip->irq_mask = disable_fn;
 	irq_chip->irq_unmask = enable_fn;
-	irq_chip->irq_set_type = पूर्णांकc_irqpin_irq_set_type;
-	irq_chip->irq_set_wake = पूर्णांकc_irqpin_irq_set_wake;
+	irq_chip->irq_set_type = intc_irqpin_irq_set_type;
+	irq_chip->irq_set_wake = intc_irqpin_irq_set_wake;
 	irq_chip->flags	= IRQCHIP_MASK_ON_SUSPEND;
 
-	p->irq_करोमुख्य = irq_करोमुख्य_add_simple(dev->of_node, nirqs, 0,
-					      &पूर्णांकc_irqpin_irq_करोमुख्य_ops, p);
-	अगर (!p->irq_करोमुख्य) अणु
+	p->irq_domain = irq_domain_add_simple(dev->of_node, nirqs, 0,
+					      &intc_irqpin_irq_domain_ops, p);
+	if (!p->irq_domain) {
 		ret = -ENXIO;
 		dev_err(dev, "cannot initialize irq domain\n");
-		जाओ err0;
-	पूर्ण
+		goto err0;
+	}
 
-	अगर (p->shared_irqs) अणु
-		/* request one shared पूर्णांकerrupt */
-		अगर (devm_request_irq(dev, p->irq[0].requested_irq,
-				पूर्णांकc_irqpin_shared_irq_handler,
-				IRQF_SHARED, name, p)) अणु
+	if (p->shared_irqs) {
+		/* request one shared interrupt */
+		if (devm_request_irq(dev, p->irq[0].requested_irq,
+				intc_irqpin_shared_irq_handler,
+				IRQF_SHARED, name, p)) {
 			dev_err(dev, "failed to request low IRQ\n");
 			ret = -ENOENT;
-			जाओ err1;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		/* request पूर्णांकerrupts one by one */
-		क्रम (k = 0; k < nirqs; k++) अणु
-			अगर (devm_request_irq(dev, p->irq[k].requested_irq,
-					     पूर्णांकc_irqpin_irq_handler, 0, name,
-					     &p->irq[k])) अणु
+			goto err1;
+		}
+	} else {
+		/* request interrupts one by one */
+		for (k = 0; k < nirqs; k++) {
+			if (devm_request_irq(dev, p->irq[k].requested_irq,
+					     intc_irqpin_irq_handler, 0, name,
+					     &p->irq[k])) {
 				dev_err(dev, "failed to request low IRQ\n");
 				ret = -ENOENT;
-				जाओ err1;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				goto err1;
+			}
+		}
+	}
 
-	/* unmask all पूर्णांकerrupts on prio level */
-	क्रम (k = 0; k < nirqs; k++)
-		पूर्णांकc_irqpin_mask_unmask_prio(p, k, 0);
+	/* unmask all interrupts on prio level */
+	for (k = 0; k < nirqs; k++)
+		intc_irqpin_mask_unmask_prio(p, k, 0);
 
 	dev_info(dev, "driving %d irqs\n", nirqs);
 
-	वापस 0;
+	return 0;
 
 err1:
-	irq_करोमुख्य_हटाओ(p->irq_करोमुख्य);
+	irq_domain_remove(p->irq_domain);
 err0:
-	pm_runसमय_put(dev);
-	pm_runसमय_disable(dev);
-	वापस ret;
-पूर्ण
+	pm_runtime_put(dev);
+	pm_runtime_disable(dev);
+	return ret;
+}
 
-अटल पूर्णांक पूर्णांकc_irqpin_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा पूर्णांकc_irqpin_priv *p = platक्रमm_get_drvdata(pdev);
+static int intc_irqpin_remove(struct platform_device *pdev)
+{
+	struct intc_irqpin_priv *p = platform_get_drvdata(pdev);
 
-	irq_करोमुख्य_हटाओ(p->irq_करोमुख्य);
-	pm_runसमय_put(&pdev->dev);
-	pm_runसमय_disable(&pdev->dev);
-	वापस 0;
-पूर्ण
+	irq_domain_remove(p->irq_domain);
+	pm_runtime_put(&pdev->dev);
+	pm_runtime_disable(&pdev->dev);
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused पूर्णांकc_irqpin_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा पूर्णांकc_irqpin_priv *p = dev_get_drvdata(dev);
+static int __maybe_unused intc_irqpin_suspend(struct device *dev)
+{
+	struct intc_irqpin_priv *p = dev_get_drvdata(dev);
 
-	अगर (atomic_पढ़ो(&p->wakeup_path))
+	if (atomic_read(&p->wakeup_path))
 		device_set_wakeup_path(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल SIMPLE_DEV_PM_OPS(पूर्णांकc_irqpin_pm_ops, पूर्णांकc_irqpin_suspend, शून्य);
+static SIMPLE_DEV_PM_OPS(intc_irqpin_pm_ops, intc_irqpin_suspend, NULL);
 
-अटल काष्ठा platक्रमm_driver पूर्णांकc_irqpin_device_driver = अणु
-	.probe		= पूर्णांकc_irqpin_probe,
-	.हटाओ		= पूर्णांकc_irqpin_हटाओ,
-	.driver		= अणु
+static struct platform_driver intc_irqpin_device_driver = {
+	.probe		= intc_irqpin_probe,
+	.remove		= intc_irqpin_remove,
+	.driver		= {
 		.name	= "renesas_intc_irqpin",
-		.of_match_table = पूर्णांकc_irqpin_dt_ids,
-		.pm	= &पूर्णांकc_irqpin_pm_ops,
-	पूर्ण
-पूर्ण;
+		.of_match_table = intc_irqpin_dt_ids,
+		.pm	= &intc_irqpin_pm_ops,
+	}
+};
 
-अटल पूर्णांक __init पूर्णांकc_irqpin_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&पूर्णांकc_irqpin_device_driver);
-पूर्ण
-postcore_initcall(पूर्णांकc_irqpin_init);
+static int __init intc_irqpin_init(void)
+{
+	return platform_driver_register(&intc_irqpin_device_driver);
+}
+postcore_initcall(intc_irqpin_init);
 
-अटल व्योम __निकास पूर्णांकc_irqpin_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&पूर्णांकc_irqpin_device_driver);
-पूर्ण
-module_निकास(पूर्णांकc_irqpin_निकास);
+static void __exit intc_irqpin_exit(void)
+{
+	platform_driver_unregister(&intc_irqpin_device_driver);
+}
+module_exit(intc_irqpin_exit);
 
 MODULE_AUTHOR("Magnus Damm");
 MODULE_DESCRIPTION("Renesas INTC External IRQ Pin Driver");

@@ -1,188 +1,187 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ALPHA_PAL_H
-#घोषणा __ALPHA_PAL_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ALPHA_PAL_H
+#define __ALPHA_PAL_H
 
-#समावेश <uapi/यंत्र/pal.h>
+#include <uapi/asm/pal.h>
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-बाह्य व्योम halt(व्योम) __attribute__((noवापस));
-#घोषणा __halt() __यंत्र__ __अस्थिर__ ("call_pal %0 #halt" : : "i" (PAL_halt))
+extern void halt(void) __attribute__((noreturn));
+#define __halt() __asm__ __volatile__ ("call_pal %0 #halt" : : "i" (PAL_halt))
 
-#घोषणा imb() \
-__यंत्र__ __अस्थिर__ ("call_pal %0 #imb" : : "i" (PAL_imb) : "memory")
+#define imb() \
+__asm__ __volatile__ ("call_pal %0 #imb" : : "i" (PAL_imb) : "memory")
 
-#घोषणा draina() \
-__यंत्र__ __अस्थिर__ ("call_pal %0 #draina" : : "i" (PAL_draina) : "memory")
+#define draina() \
+__asm__ __volatile__ ("call_pal %0 #draina" : : "i" (PAL_draina) : "memory")
 
-#घोषणा __CALL_PAL_R0(NAME, TYPE)				\
-बाह्य अंतरभूत TYPE NAME(व्योम)					\
-अणु								\
-	रेजिस्टर TYPE __r0 __यंत्र__("$0");			\
-	__यंत्र__ __अस्थिर__(					\
+#define __CALL_PAL_R0(NAME, TYPE)				\
+extern inline TYPE NAME(void)					\
+{								\
+	register TYPE __r0 __asm__("$0");			\
+	__asm__ __volatile__(					\
 		"call_pal %1 # " #NAME				\
 		:"=r" (__r0)					\
 		:"i" (PAL_ ## NAME)				\
 		:"$1", "$16", "$22", "$23", "$24", "$25");	\
-	वापस __r0;						\
-पूर्ण
+	return __r0;						\
+}
 
-#घोषणा __CALL_PAL_W1(NAME, TYPE0)				\
-बाह्य अंतरभूत व्योम NAME(TYPE0 arg0)				\
-अणु								\
-	रेजिस्टर TYPE0 __r16 __यंत्र__("$16") = arg0;		\
-	__यंत्र__ __अस्थिर__(					\
+#define __CALL_PAL_W1(NAME, TYPE0)				\
+extern inline void NAME(TYPE0 arg0)				\
+{								\
+	register TYPE0 __r16 __asm__("$16") = arg0;		\
+	__asm__ __volatile__(					\
 		"call_pal %1 # "#NAME				\
 		: "=r"(__r16)					\
 		: "i"(PAL_ ## NAME), "0"(__r16)			\
 		: "$1", "$22", "$23", "$24", "$25");		\
-पूर्ण
+}
 
-#घोषणा __CALL_PAL_W2(NAME, TYPE0, TYPE1)			\
-बाह्य अंतरभूत व्योम NAME(TYPE0 arg0, TYPE1 arg1)			\
-अणु								\
-	रेजिस्टर TYPE0 __r16 __यंत्र__("$16") = arg0;		\
-	रेजिस्टर TYPE1 __r17 __यंत्र__("$17") = arg1;		\
-	__यंत्र__ __अस्थिर__(					\
+#define __CALL_PAL_W2(NAME, TYPE0, TYPE1)			\
+extern inline void NAME(TYPE0 arg0, TYPE1 arg1)			\
+{								\
+	register TYPE0 __r16 __asm__("$16") = arg0;		\
+	register TYPE1 __r17 __asm__("$17") = arg1;		\
+	__asm__ __volatile__(					\
 		"call_pal %2 # "#NAME				\
 		: "=r"(__r16), "=r"(__r17)			\
 		: "i"(PAL_ ## NAME), "0"(__r16), "1"(__r17)	\
 		: "$1", "$22", "$23", "$24", "$25");		\
-पूर्ण
+}
 
-#घोषणा __CALL_PAL_RW1(NAME, RTYPE, TYPE0)			\
-बाह्य अंतरभूत RTYPE NAME(TYPE0 arg0)				\
-अणु								\
-	रेजिस्टर RTYPE __r0 __यंत्र__("$0");			\
-	रेजिस्टर TYPE0 __r16 __यंत्र__("$16") = arg0;		\
-	__यंत्र__ __अस्थिर__(					\
+#define __CALL_PAL_RW1(NAME, RTYPE, TYPE0)			\
+extern inline RTYPE NAME(TYPE0 arg0)				\
+{								\
+	register RTYPE __r0 __asm__("$0");			\
+	register TYPE0 __r16 __asm__("$16") = arg0;		\
+	__asm__ __volatile__(					\
 		"call_pal %2 # "#NAME				\
 		: "=r"(__r16), "=r"(__r0)			\
 		: "i"(PAL_ ## NAME), "0"(__r16)			\
 		: "$1", "$22", "$23", "$24", "$25");		\
-	वापस __r0;						\
-पूर्ण
+	return __r0;						\
+}
 
-#घोषणा __CALL_PAL_RW2(NAME, RTYPE, TYPE0, TYPE1)		\
-बाह्य अंतरभूत RTYPE NAME(TYPE0 arg0, TYPE1 arg1)		\
-अणु								\
-	रेजिस्टर RTYPE __r0 __यंत्र__("$0");			\
-	रेजिस्टर TYPE0 __r16 __यंत्र__("$16") = arg0;		\
-	रेजिस्टर TYPE1 __r17 __यंत्र__("$17") = arg1;		\
-	__यंत्र__ __अस्थिर__(					\
+#define __CALL_PAL_RW2(NAME, RTYPE, TYPE0, TYPE1)		\
+extern inline RTYPE NAME(TYPE0 arg0, TYPE1 arg1)		\
+{								\
+	register RTYPE __r0 __asm__("$0");			\
+	register TYPE0 __r16 __asm__("$16") = arg0;		\
+	register TYPE1 __r17 __asm__("$17") = arg1;		\
+	__asm__ __volatile__(					\
 		"call_pal %3 # "#NAME				\
 		: "=r"(__r16), "=r"(__r17), "=r"(__r0)		\
 		: "i"(PAL_ ## NAME), "0"(__r16), "1"(__r17)	\
 		: "$1", "$22", "$23", "$24", "$25");		\
-	वापस __r0;						\
-पूर्ण
+	return __r0;						\
+}
 
-__CALL_PAL_W1(cflush, अचिन्हित दीर्घ);
-__CALL_PAL_R0(rdmces, अचिन्हित दीर्घ);
-__CALL_PAL_R0(rdps, अचिन्हित दीर्घ);
-__CALL_PAL_R0(rdusp, अचिन्हित दीर्घ);
-__CALL_PAL_RW1(swpipl, अचिन्हित दीर्घ, अचिन्हित दीर्घ);
-__CALL_PAL_R0(whami, अचिन्हित दीर्घ);
-__CALL_PAL_W2(wrent, व्योम*, अचिन्हित दीर्घ);
-__CALL_PAL_W1(wripir, अचिन्हित दीर्घ);
-__CALL_PAL_W1(wrkgp, अचिन्हित दीर्घ);
-__CALL_PAL_W1(wrmces, अचिन्हित दीर्घ);
-__CALL_PAL_RW2(wrperfmon, अचिन्हित दीर्घ, अचिन्हित दीर्घ, अचिन्हित दीर्घ);
-__CALL_PAL_W1(wrusp, अचिन्हित दीर्घ);
-__CALL_PAL_W1(wrvptptr, अचिन्हित दीर्घ);
-__CALL_PAL_RW1(wtपूर्णांक, अचिन्हित दीर्घ, अचिन्हित दीर्घ);
+__CALL_PAL_W1(cflush, unsigned long);
+__CALL_PAL_R0(rdmces, unsigned long);
+__CALL_PAL_R0(rdps, unsigned long);
+__CALL_PAL_R0(rdusp, unsigned long);
+__CALL_PAL_RW1(swpipl, unsigned long, unsigned long);
+__CALL_PAL_R0(whami, unsigned long);
+__CALL_PAL_W2(wrent, void*, unsigned long);
+__CALL_PAL_W1(wripir, unsigned long);
+__CALL_PAL_W1(wrkgp, unsigned long);
+__CALL_PAL_W1(wrmces, unsigned long);
+__CALL_PAL_RW2(wrperfmon, unsigned long, unsigned long, unsigned long);
+__CALL_PAL_W1(wrusp, unsigned long);
+__CALL_PAL_W1(wrvptptr, unsigned long);
+__CALL_PAL_RW1(wtint, unsigned long, unsigned long);
 
 /*
  * TB routines..
  */
-#घोषणा __tbi(nr,arg,arg1...)					\
-(अणु								\
-	रेजिस्टर अचिन्हित दीर्घ __r16 __यंत्र__("$16") = (nr);	\
-	रेजिस्टर अचिन्हित दीर्घ __r17 __यंत्र__("$17"); arg;	\
-	__यंत्र__ __अस्थिर__(					\
+#define __tbi(nr,arg,arg1...)					\
+({								\
+	register unsigned long __r16 __asm__("$16") = (nr);	\
+	register unsigned long __r17 __asm__("$17"); arg;	\
+	__asm__ __volatile__(					\
 		"call_pal %3 #__tbi"				\
 		:"=r" (__r16),"=r" (__r17)			\
 		:"0" (__r16),"i" (PAL_tbi) ,##arg1		\
 		:"$0", "$1", "$22", "$23", "$24", "$25");	\
-पूर्ण)
+})
 
-#घोषणा tbi(x,y)	__tbi(x,__r17=(y),"1" (__r17))
-#घोषणा tbisi(x)	__tbi(1,__r17=(x),"1" (__r17))
-#घोषणा tbisd(x)	__tbi(2,__r17=(x),"1" (__r17))
-#घोषणा tbis(x)		__tbi(3,__r17=(x),"1" (__r17))
-#घोषणा tbiap()		__tbi(-1, /* no second argument */)
-#घोषणा tbia()		__tbi(-2, /* no second argument */)
+#define tbi(x,y)	__tbi(x,__r17=(y),"1" (__r17))
+#define tbisi(x)	__tbi(1,__r17=(x),"1" (__r17))
+#define tbisd(x)	__tbi(2,__r17=(x),"1" (__r17))
+#define tbis(x)		__tbi(3,__r17=(x),"1" (__r17))
+#define tbiap()		__tbi(-1, /* no second argument */)
+#define tbia()		__tbi(-2, /* no second argument */)
 
 /*
  * QEMU Cserv routines..
  */
 
-अटल अंतरभूत अचिन्हित दीर्घ
-qemu_get_wallसमय(व्योम)
-अणु
-	रेजिस्टर अचिन्हित दीर्घ v0 __यंत्र__("$0");
-	रेजिस्टर अचिन्हित दीर्घ a0 __यंत्र__("$16") = 3;
+static inline unsigned long
+qemu_get_walltime(void)
+{
+	register unsigned long v0 __asm__("$0");
+	register unsigned long a0 __asm__("$16") = 3;
 
-	यंत्र("call_pal %2 # cserve get_time"
+	asm("call_pal %2 # cserve get_time"
 	    : "=r"(v0), "+r"(a0)
 	    : "i"(PAL_cserve)
 	    : "$17", "$18", "$19", "$20", "$21");
 
-	वापस v0;
-पूर्ण
+	return v0;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ
-qemu_get_alarm(व्योम)
-अणु
-	रेजिस्टर अचिन्हित दीर्घ v0 __यंत्र__("$0");
-	रेजिस्टर अचिन्हित दीर्घ a0 __यंत्र__("$16") = 4;
+static inline unsigned long
+qemu_get_alarm(void)
+{
+	register unsigned long v0 __asm__("$0");
+	register unsigned long a0 __asm__("$16") = 4;
 
-	यंत्र("call_pal %2 # cserve get_alarm"
+	asm("call_pal %2 # cserve get_alarm"
 	    : "=r"(v0), "+r"(a0)
 	    : "i"(PAL_cserve)
 	    : "$17", "$18", "$19", "$20", "$21");
 
-	वापस v0;
-पूर्ण
+	return v0;
+}
 
-अटल अंतरभूत व्योम
-qemu_set_alarm_rel(अचिन्हित दीर्घ expire)
-अणु
-	रेजिस्टर अचिन्हित दीर्घ a0 __यंत्र__("$16") = 5;
-	रेजिस्टर अचिन्हित दीर्घ a1 __यंत्र__("$17") = expire;
+static inline void
+qemu_set_alarm_rel(unsigned long expire)
+{
+	register unsigned long a0 __asm__("$16") = 5;
+	register unsigned long a1 __asm__("$17") = expire;
 
-	यंत्र अस्थिर("call_pal %2 # cserve set_alarm_rel"
+	asm volatile("call_pal %2 # cserve set_alarm_rel"
 		     : "+r"(a0), "+r"(a1)
 		     : "i"(PAL_cserve)
 		     : "$0", "$18", "$19", "$20", "$21");
-पूर्ण
+}
 
-अटल अंतरभूत व्योम
-qemu_set_alarm_असल(अचिन्हित दीर्घ expire)
-अणु
-	रेजिस्टर अचिन्हित दीर्घ a0 __यंत्र__("$16") = 6;
-	रेजिस्टर अचिन्हित दीर्घ a1 __यंत्र__("$17") = expire;
+static inline void
+qemu_set_alarm_abs(unsigned long expire)
+{
+	register unsigned long a0 __asm__("$16") = 6;
+	register unsigned long a1 __asm__("$17") = expire;
 
-	यंत्र अस्थिर("call_pal %2 # cserve set_alarm_abs"
+	asm volatile("call_pal %2 # cserve set_alarm_abs"
 		     : "+r"(a0), "+r"(a1)
 		     : "i"(PAL_cserve)
 		     : "$0", "$18", "$19", "$20", "$21");
-पूर्ण
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ
-qemu_get_vmसमय(व्योम)
-अणु
-	रेजिस्टर अचिन्हित दीर्घ v0 __यंत्र__("$0");
-	रेजिस्टर अचिन्हित दीर्घ a0 __यंत्र__("$16") = 7;
+static inline unsigned long
+qemu_get_vmtime(void)
+{
+	register unsigned long v0 __asm__("$0");
+	register unsigned long a0 __asm__("$16") = 7;
 
-	यंत्र("call_pal %2 # cserve get_time"
+	asm("call_pal %2 # cserve get_time"
 	    : "=r"(v0), "+r"(a0)
 	    : "i"(PAL_cserve)
 	    : "$17", "$18", "$19", "$20", "$21");
 
-	वापस v0;
-पूर्ण
+	return v0;
+}
 
-#पूर्ण_अगर /* !__ASSEMBLY__ */
-#पूर्ण_अगर /* __ALPHA_PAL_H */
+#endif /* !__ASSEMBLY__ */
+#endif /* __ALPHA_PAL_H */

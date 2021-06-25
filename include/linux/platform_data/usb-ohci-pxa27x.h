@@ -1,38 +1,37 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित ASMARM_ARCH_OHCI_H
-#घोषणा ASMARM_ARCH_OHCI_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef ASMARM_ARCH_OHCI_H
+#define ASMARM_ARCH_OHCI_H
 
-काष्ठा device;
+struct device;
 
-काष्ठा pxaohci_platक्रमm_data अणु
-	पूर्णांक (*init)(काष्ठा device *);
-	व्योम (*निकास)(काष्ठा device *);
+struct pxaohci_platform_data {
+	int (*init)(struct device *);
+	void (*exit)(struct device *);
 
-	अचिन्हित दीर्घ flags;
-#घोषणा ENABLE_PORT1		(1 << 0)
-#घोषणा ENABLE_PORT2		(1 << 1)
-#घोषणा ENABLE_PORT3		(1 << 2)
-#घोषणा ENABLE_PORT_ALL		(ENABLE_PORT1 | ENABLE_PORT2 | ENABLE_PORT3)
+	unsigned long flags;
+#define ENABLE_PORT1		(1 << 0)
+#define ENABLE_PORT2		(1 << 1)
+#define ENABLE_PORT3		(1 << 2)
+#define ENABLE_PORT_ALL		(ENABLE_PORT1 | ENABLE_PORT2 | ENABLE_PORT3)
 
-#घोषणा POWER_SENSE_LOW		(1 << 3)
-#घोषणा POWER_CONTROL_LOW	(1 << 4)
-#घोषणा NO_OC_PROTECTION	(1 << 5)
-#घोषणा OC_MODE_GLOBAL		(0 << 6)
-#घोषणा OC_MODE_PERPORT		(1 << 6)
+#define POWER_SENSE_LOW		(1 << 3)
+#define POWER_CONTROL_LOW	(1 << 4)
+#define NO_OC_PROTECTION	(1 << 5)
+#define OC_MODE_GLOBAL		(0 << 6)
+#define OC_MODE_PERPORT		(1 << 6)
 
-	पूर्णांक घातer_on_delay;	/* Power On to Power Good समय - in ms
-				 * HCD must रुको क्रम this duration beक्रमe
-				 * accessing a घातered on port
+	int power_on_delay;	/* Power On to Power Good time - in ms
+				 * HCD must wait for this duration before
+				 * accessing a powered on port
 				 */
-	पूर्णांक port_mode;
-#घोषणा PMM_NPS_MODE           1
-#घोषणा PMM_GLOBAL_MODE        2
-#घोषणा PMM_PERPORT_MODE       3
+	int port_mode;
+#define PMM_NPS_MODE           1
+#define PMM_GLOBAL_MODE        2
+#define PMM_PERPORT_MODE       3
 
-	पूर्णांक घातer_budget;
-पूर्ण;
+	int power_budget;
+};
 
-बाह्य व्योम pxa_set_ohci_info(काष्ठा pxaohci_platक्रमm_data *info);
+extern void pxa_set_ohci_info(struct pxaohci_platform_data *info);
 
-#पूर्ण_अगर
+#endif

@@ -1,111 +1,110 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  linux/arch/arm/kernel/atags_compat.c
  *
  *  Copyright (C) 2001 Russell King
  *
  * We keep the old params compatibility cruft in one place (here)
- * so we करोn't end up with lots of mess around other places.
+ * so we don't end up with lots of mess around other places.
  *
  * NOTE:
- *  The old काष्ठा param_काष्ठा is deprecated, but it will be kept in
- *  the kernel क्रम 5 years from now (2001). This will allow boot loaders
- *  to convert to the new काष्ठा tag way.
+ *  The old struct param_struct is deprecated, but it will be kept in
+ *  the kernel for 5 years from now (2001). This will allow boot loaders
+ *  to convert to the new struct tag way.
  */
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/init.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/string.h>
+#include <linux/init.h>
 
-#समावेश <यंत्र/setup.h>
-#समावेश <यंत्र/mach-types.h>
-#समावेश <यंत्र/page.h>
+#include <asm/setup.h>
+#include <asm/mach-types.h>
+#include <asm/page.h>
 
-#समावेश <यंत्र/mach/arch.h>
+#include <asm/mach/arch.h>
 
-#समावेश "atags.h"
+#include "atags.h"
 
 /*
  * Usage:
- *  - करो not go blindly adding fields, add them at the end
- *  - when adding fields, करोn't rely on the address until
+ *  - do not go blindly adding fields, add them at the end
+ *  - when adding fields, don't rely on the address until
  *    a patch from me has been released
- *  - unused fields should be zero (क्रम future expansion)
- *  - this काष्ठाure is relatively लघु-lived - only
+ *  - unused fields should be zero (for future expansion)
+ *  - this structure is relatively short-lived - only
  *    guaranteed to contain useful data in setup_arch()
  *
  * This is the old deprecated way to pass parameters to the kernel
  */
-काष्ठा param_काष्ठा अणु
-    जोड़ अणु
-	काष्ठा अणु
-	    अचिन्हित दीर्घ page_size;		/*  0 */
-	    अचिन्हित दीर्घ nr_pages;		/*  4 */
-	    अचिन्हित दीर्घ ramdisk_size;		/*  8 */
-	    अचिन्हित दीर्घ flags;		/* 12 */
-#घोषणा FLAG_READONLY	1
-#घोषणा FLAG_RDLOAD	4
-#घोषणा FLAG_RDPROMPT	8
-	    अचिन्हित दीर्घ rootdev;		/* 16 */
-	    अचिन्हित दीर्घ video_num_cols;	/* 20 */
-	    अचिन्हित दीर्घ video_num_rows;	/* 24 */
-	    अचिन्हित दीर्घ video_x;		/* 28 */
-	    अचिन्हित दीर्घ video_y;		/* 32 */
-	    अचिन्हित दीर्घ memc_control_reg;	/* 36 */
-	    अचिन्हित अक्षर soundशेष;		/* 40 */
-	    अचिन्हित अक्षर adfsdrives;		/* 41 */
-	    अचिन्हित अक्षर bytes_per_अक्षर_h;	/* 42 */
-	    अचिन्हित अक्षर bytes_per_अक्षर_v;	/* 43 */
-	    अचिन्हित दीर्घ pages_in_bank[4];	/* 44 */
-	    अचिन्हित दीर्घ pages_in_vram;	/* 60 */
-	    अचिन्हित दीर्घ initrd_start;		/* 64 */
-	    अचिन्हित दीर्घ initrd_size;		/* 68 */
-	    अचिन्हित दीर्घ rd_start;		/* 72 */
-	    अचिन्हित दीर्घ प्रणाली_rev;		/* 76 */
-	    अचिन्हित दीर्घ प्रणाली_serial_low;	/* 80 */
-	    अचिन्हित दीर्घ प्रणाली_serial_high;	/* 84 */
-	    अचिन्हित दीर्घ mem_fclk_21285;       /* 88 */
-	पूर्ण s;
-	अक्षर unused[256];
-    पूर्ण u1;
-    जोड़ अणु
-	अक्षर paths[8][128];
-	काष्ठा अणु
-	    अचिन्हित दीर्घ magic;
-	    अक्षर n[1024 - माप(अचिन्हित दीर्घ)];
-	पूर्ण s;
-    पूर्ण u2;
-    अक्षर commandline[COMMAND_LINE_SIZE];
-पूर्ण;
+struct param_struct {
+    union {
+	struct {
+	    unsigned long page_size;		/*  0 */
+	    unsigned long nr_pages;		/*  4 */
+	    unsigned long ramdisk_size;		/*  8 */
+	    unsigned long flags;		/* 12 */
+#define FLAG_READONLY	1
+#define FLAG_RDLOAD	4
+#define FLAG_RDPROMPT	8
+	    unsigned long rootdev;		/* 16 */
+	    unsigned long video_num_cols;	/* 20 */
+	    unsigned long video_num_rows;	/* 24 */
+	    unsigned long video_x;		/* 28 */
+	    unsigned long video_y;		/* 32 */
+	    unsigned long memc_control_reg;	/* 36 */
+	    unsigned char sounddefault;		/* 40 */
+	    unsigned char adfsdrives;		/* 41 */
+	    unsigned char bytes_per_char_h;	/* 42 */
+	    unsigned char bytes_per_char_v;	/* 43 */
+	    unsigned long pages_in_bank[4];	/* 44 */
+	    unsigned long pages_in_vram;	/* 60 */
+	    unsigned long initrd_start;		/* 64 */
+	    unsigned long initrd_size;		/* 68 */
+	    unsigned long rd_start;		/* 72 */
+	    unsigned long system_rev;		/* 76 */
+	    unsigned long system_serial_low;	/* 80 */
+	    unsigned long system_serial_high;	/* 84 */
+	    unsigned long mem_fclk_21285;       /* 88 */
+	} s;
+	char unused[256];
+    } u1;
+    union {
+	char paths[8][128];
+	struct {
+	    unsigned long magic;
+	    char n[1024 - sizeof(unsigned long)];
+	} s;
+    } u2;
+    char commandline[COMMAND_LINE_SIZE];
+};
 
-अटल काष्ठा tag * __init memtag(काष्ठा tag *tag, अचिन्हित दीर्घ start, अचिन्हित दीर्घ size)
-अणु
+static struct tag * __init memtag(struct tag *tag, unsigned long start, unsigned long size)
+{
 	tag = tag_next(tag);
 	tag->hdr.tag = ATAG_MEM;
 	tag->hdr.size = tag_size(tag_mem32);
 	tag->u.mem.size = size;
 	tag->u.mem.start = start;
 
-	वापस tag;
-पूर्ण
+	return tag;
+}
 
-अटल व्योम __init build_tag_list(काष्ठा param_काष्ठा *params, व्योम *taglist)
-अणु
-	काष्ठा tag *tag = taglist;
+static void __init build_tag_list(struct param_struct *params, void *taglist)
+{
+	struct tag *tag = taglist;
 
-	अगर (params->u1.s.page_size != PAGE_SIZE) अणु
+	if (params->u1.s.page_size != PAGE_SIZE) {
 		pr_warn("Warning: bad configuration page, trying to continue\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	prपूर्णांकk(KERN_DEBUG "Converting old-style param struct to taglist\n");
+	printk(KERN_DEBUG "Converting old-style param struct to taglist\n");
 
-#अगर_घोषित CONFIG_ARCH_NETWINDER
-	अगर (params->u1.s.nr_pages != 0x02000 &&
+#ifdef CONFIG_ARCH_NETWINDER
+	if (params->u1.s.nr_pages != 0x02000 &&
 	    params->u1.s.nr_pages != 0x04000 &&
 	    params->u1.s.nr_pages != 0x08000 &&
-	    params->u1.s.nr_pages != 0x10000) अणु
+	    params->u1.s.nr_pages != 0x10000) {
 		pr_warn("Warning: bad NeTTrom parameters detected, using defaults\n");
 
 		params->u1.s.nr_pages = 0x1000;	/* 16MB */
@@ -114,8 +113,8 @@
 		params->u1.s.initrd_start = 0;
 		params->u1.s.initrd_size = 0;
 		params->u1.s.rd_start = 0;
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
 	tag->hdr.tag  = ATAG_CORE;
 	tag->hdr.size = tag_size(tag_core);
@@ -140,35 +139,35 @@
 	tag = tag_next(tag);
 	tag->hdr.tag = ATAG_SERIAL;
 	tag->hdr.size = tag_size(tag_serialnr);
-	tag->u.serialnr.low = params->u1.s.प्रणाली_serial_low;
-	tag->u.serialnr.high = params->u1.s.प्रणाली_serial_high;
+	tag->u.serialnr.low = params->u1.s.system_serial_low;
+	tag->u.serialnr.high = params->u1.s.system_serial_high;
 
 	tag = tag_next(tag);
 	tag->hdr.tag = ATAG_REVISION;
 	tag->hdr.size = tag_size(tag_revision);
-	tag->u.revision.rev = params->u1.s.प्रणाली_rev;
+	tag->u.revision.rev = params->u1.s.system_rev;
 
-#अगर_घोषित CONFIG_ARCH_ACORN
-	अगर (machine_is_riscpc()) अणु
-		पूर्णांक i;
-		क्रम (i = 0; i < 4; i++)
+#ifdef CONFIG_ARCH_ACORN
+	if (machine_is_riscpc()) {
+		int i;
+		for (i = 0; i < 4; i++)
 			tag = memtag(tag, PHYS_OFFSET + (i << 26),
 				 params->u1.s.pages_in_bank[i] * PAGE_SIZE);
-	पूर्ण अन्यथा
-#पूर्ण_अगर
+	} else
+#endif
 	tag = memtag(tag, PHYS_OFFSET, params->u1.s.nr_pages * PAGE_SIZE);
 
-#अगर_घोषित CONFIG_FOOTBRIDGE
-	अगर (params->u1.s.mem_fclk_21285) अणु
+#ifdef CONFIG_FOOTBRIDGE
+	if (params->u1.s.mem_fclk_21285) {
 		tag = tag_next(tag);
 		tag->hdr.tag = ATAG_MEMCLK;
 		tag->hdr.size = tag_size(tag_memclk);
 		tag->u.memclk.fmemclk = params->u1.s.mem_fclk_21285;
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
-#अगर_घोषित CONFIG_ARCH_EBSA285
-	अगर (machine_is_ebsa285()) अणु
+#ifdef CONFIG_ARCH_EBSA285
+	if (machine_is_ebsa285()) {
 		tag = tag_next(tag);
 		tag->hdr.tag = ATAG_VIDEOTEXT;
 		tag->hdr.size = tag_size(tag_videotext);
@@ -180,36 +179,36 @@
 		tag->u.videotext.video_ega_bx = 0;
 		tag->u.videotext.video_lines  = params->u1.s.video_num_rows;
 		tag->u.videotext.video_isvga  = 1;
-		tag->u.videotext.video_poपूर्णांकs = 8;
-	पूर्ण
-#पूर्ण_अगर
+		tag->u.videotext.video_points = 8;
+	}
+#endif
 
-#अगर_घोषित CONFIG_ARCH_ACORN
+#ifdef CONFIG_ARCH_ACORN
 	tag = tag_next(tag);
 	tag->hdr.tag = ATAG_ACORN;
 	tag->hdr.size = tag_size(tag_acorn);
 	tag->u.acorn.memc_control_reg = params->u1.s.memc_control_reg;
 	tag->u.acorn.vram_pages       = params->u1.s.pages_in_vram;
-	tag->u.acorn.soundशेष     = params->u1.s.soundशेष;
+	tag->u.acorn.sounddefault     = params->u1.s.sounddefault;
 	tag->u.acorn.adfsdrives       = params->u1.s.adfsdrives;
-#पूर्ण_अगर
+#endif
 
 	tag = tag_next(tag);
 	tag->hdr.tag = ATAG_CMDLINE;
-	tag->hdr.size = (म_माप(params->commandline) + 3 +
-			 माप(काष्ठा tag_header)) >> 2;
-	म_नकल(tag->u.cmdline.cmdline, params->commandline);
+	tag->hdr.size = (strlen(params->commandline) + 3 +
+			 sizeof(struct tag_header)) >> 2;
+	strcpy(tag->u.cmdline.cmdline, params->commandline);
 
 	tag = tag_next(tag);
 	tag->hdr.tag = ATAG_NONE;
 	tag->hdr.size = 0;
 
-	स_हटाओ(params, taglist, ((पूर्णांक)tag) - ((पूर्णांक)taglist) +
-				 माप(काष्ठा tag_header));
-पूर्ण
+	memmove(params, taglist, ((int)tag) - ((int)taglist) +
+				 sizeof(struct tag_header));
+}
 
-व्योम __init convert_to_tag_list(काष्ठा tag *tags)
-अणु
-	काष्ठा param_काष्ठा *params = (काष्ठा param_काष्ठा *)tags;
+void __init convert_to_tag_list(struct tag *tags)
+{
+	struct param_struct *params = (struct param_struct *)tags;
 	build_tag_list(params, &params->u2);
-पूर्ण
+}

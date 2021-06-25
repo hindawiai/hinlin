@@ -1,4 +1,3 @@
-<शैली गुरु>
 /***********************license start************************************
  * Copyright (c) 2003-2017 Cavium, Inc.
  * All rights reserved.
@@ -8,23 +7,23 @@
  * This file is provided under the terms of the Cavium License (see below)
  * or under the terms of GNU General Public License, Version 2, as
  * published by the Free Software Foundation. When using or redistributing
- * this file, you may करो so under either license.
+ * this file, you may do so under either license.
  *
- * Cavium License:  Redistribution and use in source and binary क्रमms, with
- * or without modअगरication, are permitted provided that the following
+ * Cavium License:  Redistribution and use in source and binary forms, with
+ * or without modification, are permitted provided that the following
  * conditions are met:
  *
  *  * Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  *
- *  * Redistributions in binary क्रमm must reproduce the above
+ *  * Redistributions in binary form must reproduce the above
  *    copyright notice, this list of conditions and the following
- *    disclaimer in the करोcumentation and/or other materials provided
+ *    disclaimer in the documentation and/or other materials provided
  *    with the distribution.
  *
  *  * Neither the name of Cavium Inc. nor the names of its contributors may be
- *    used to enकरोrse or promote products derived from this software without
- *    specअगरic prior written permission.
+ *    used to endorse or promote products derived from this software without
+ *    specific prior written permission.
  *
  * This Software, including technical data, may be subject to U.S. export
  * control laws, including the U.S. Export Administration Act and its
@@ -44,37 +43,37 @@
  * WITH YOU.
  ***********************license end**************************************/
 
-#अगर_अघोषित __ZIP_CRYPTO_H__
-#घोषणा __ZIP_CRYPTO_H__
+#ifndef __ZIP_CRYPTO_H__
+#define __ZIP_CRYPTO_H__
 
-#समावेश <linux/crypto.h>
-#समावेश <crypto/पूर्णांकernal/scompress.h>
-#समावेश "common.h"
-#समावेश "zip_deflate.h"
-#समावेश "zip_inflate.h"
+#include <linux/crypto.h>
+#include <crypto/internal/scompress.h>
+#include "common.h"
+#include "zip_deflate.h"
+#include "zip_inflate.h"
 
-काष्ठा zip_kernel_ctx अणु
-	काष्ठा zip_operation zip_comp;
-	काष्ठा zip_operation zip_decomp;
-पूर्ण;
+struct zip_kernel_ctx {
+	struct zip_operation zip_comp;
+	struct zip_operation zip_decomp;
+};
 
-पूर्णांक  zip_alloc_comp_ctx_deflate(काष्ठा crypto_tfm *tfm);
-पूर्णांक  zip_alloc_comp_ctx_lzs(काष्ठा crypto_tfm *tfm);
-व्योम zip_मुक्त_comp_ctx(काष्ठा crypto_tfm *tfm);
-पूर्णांक  zip_comp_compress(काष्ठा crypto_tfm *tfm,
-		       स्थिर u8 *src, अचिन्हित पूर्णांक slen,
-		       u8 *dst, अचिन्हित पूर्णांक *dlen);
-पूर्णांक  zip_comp_decompress(काष्ठा crypto_tfm *tfm,
-			 स्थिर u8 *src, अचिन्हित पूर्णांक slen,
-			 u8 *dst, अचिन्हित पूर्णांक *dlen);
+int  zip_alloc_comp_ctx_deflate(struct crypto_tfm *tfm);
+int  zip_alloc_comp_ctx_lzs(struct crypto_tfm *tfm);
+void zip_free_comp_ctx(struct crypto_tfm *tfm);
+int  zip_comp_compress(struct crypto_tfm *tfm,
+		       const u8 *src, unsigned int slen,
+		       u8 *dst, unsigned int *dlen);
+int  zip_comp_decompress(struct crypto_tfm *tfm,
+			 const u8 *src, unsigned int slen,
+			 u8 *dst, unsigned int *dlen);
 
-व्योम *zip_alloc_scomp_ctx_deflate(काष्ठा crypto_scomp *tfm);
-व्योम *zip_alloc_scomp_ctx_lzs(काष्ठा crypto_scomp *tfm);
-व्योम  zip_मुक्त_scomp_ctx(काष्ठा crypto_scomp *tfm, व्योम *zip_ctx);
-पूर्णांक   zip_scomp_compress(काष्ठा crypto_scomp *tfm,
-			 स्थिर u8 *src, अचिन्हित पूर्णांक slen,
-			 u8 *dst, अचिन्हित पूर्णांक *dlen, व्योम *ctx);
-पूर्णांक   zip_scomp_decompress(काष्ठा crypto_scomp *tfm,
-			   स्थिर u8 *src, अचिन्हित पूर्णांक slen,
-			   u8 *dst, अचिन्हित पूर्णांक *dlen, व्योम *ctx);
-#पूर्ण_अगर
+void *zip_alloc_scomp_ctx_deflate(struct crypto_scomp *tfm);
+void *zip_alloc_scomp_ctx_lzs(struct crypto_scomp *tfm);
+void  zip_free_scomp_ctx(struct crypto_scomp *tfm, void *zip_ctx);
+int   zip_scomp_compress(struct crypto_scomp *tfm,
+			 const u8 *src, unsigned int slen,
+			 u8 *dst, unsigned int *dlen, void *ctx);
+int   zip_scomp_decompress(struct crypto_scomp *tfm,
+			   const u8 *src, unsigned int slen,
+			   u8 *dst, unsigned int *dlen, void *ctx);
+#endif

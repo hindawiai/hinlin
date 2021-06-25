@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Shared Memory Communications over RDMA (SMC-R) and RoCE
  *
@@ -10,23 +9,23 @@
  * Author(s):  Ursula Braun <ubraun@linux.vnet.ibm.com>
  */
 
-#अगर_अघोषित SMC_RX_H
-#घोषणा SMC_RX_H
+#ifndef SMC_RX_H
+#define SMC_RX_H
 
-#समावेश <linux/socket.h>
-#समावेश <linux/types.h>
+#include <linux/socket.h>
+#include <linux/types.h>
 
-#समावेश "smc.h"
+#include "smc.h"
 
-व्योम smc_rx_init(काष्ठा smc_sock *smc);
+void smc_rx_init(struct smc_sock *smc);
 
-पूर्णांक smc_rx_recvmsg(काष्ठा smc_sock *smc, काष्ठा msghdr *msg,
-		   काष्ठा pipe_inode_info *pipe, माप_प्रकार len, पूर्णांक flags);
-पूर्णांक smc_rx_रुको(काष्ठा smc_sock *smc, दीर्घ *समयo,
-		पूर्णांक (*fcrit)(काष्ठा smc_connection *conn));
-अटल अंतरभूत पूर्णांक smc_rx_data_available(काष्ठा smc_connection *conn)
-अणु
-	वापस atomic_पढ़ो(&conn->bytes_to_rcv);
-पूर्ण
+int smc_rx_recvmsg(struct smc_sock *smc, struct msghdr *msg,
+		   struct pipe_inode_info *pipe, size_t len, int flags);
+int smc_rx_wait(struct smc_sock *smc, long *timeo,
+		int (*fcrit)(struct smc_connection *conn));
+static inline int smc_rx_data_available(struct smc_connection *conn)
+{
+	return atomic_read(&conn->bytes_to_rcv);
+}
 
-#पूर्ण_अगर /* SMC_RX_H */
+#endif /* SMC_RX_H */

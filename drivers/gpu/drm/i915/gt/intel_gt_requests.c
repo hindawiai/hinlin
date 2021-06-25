@@ -1,51 +1,50 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: MIT
+// SPDX-License-Identifier: MIT
 /*
- * Copyright तऊ 2019 Intel Corporation
+ * Copyright © 2019 Intel Corporation
  */
 
-#समावेश <linux/workqueue.h>
+#include <linux/workqueue.h>
 
-#समावेश "i915_drv.h" /* क्रम_each_engine() */
-#समावेश "i915_request.h"
-#समावेश "intel_engine_heartbeat.h"
-#समावेश "intel_execlists_submission.h"
-#समावेश "intel_gt.h"
-#समावेश "intel_gt_pm.h"
-#समावेश "intel_gt_requests.h"
-#समावेश "intel_timeline.h"
+#include "i915_drv.h" /* for_each_engine() */
+#include "i915_request.h"
+#include "intel_engine_heartbeat.h"
+#include "intel_execlists_submission.h"
+#include "intel_gt.h"
+#include "intel_gt_pm.h"
+#include "intel_gt_requests.h"
+#include "intel_timeline.h"
 
-अटल bool retire_requests(काष्ठा पूर्णांकel_समयline *tl)
-अणु
-	काष्ठा i915_request *rq, *rn;
+static bool retire_requests(struct intel_timeline *tl)
+{
+	struct i915_request *rq, *rn;
 
-	list_क्रम_each_entry_safe(rq, rn, &tl->requests, link)
-		अगर (!i915_request_retire(rq))
-			वापस false;
+	list_for_each_entry_safe(rq, rn, &tl->requests, link)
+		if (!i915_request_retire(rq))
+			return false;
 
 	/* And check nothing new was submitted */
-	वापस !i915_active_fence_isset(&tl->last_request);
-पूर्ण
+	return !i915_active_fence_isset(&tl->last_request);
+}
 
-अटल bool engine_active(स्थिर काष्ठा पूर्णांकel_engine_cs *engine)
-अणु
-	वापस !list_empty(&engine->kernel_context->समयline->requests);
-पूर्ण
+static bool engine_active(const struct intel_engine_cs *engine)
+{
+	return !list_empty(&engine->kernel_context->timeline->requests);
+}
 
-अटल bool flush_submission(काष्ठा पूर्णांकel_gt *gt, दीर्घ समयout)
-अणु
-	काष्ठा पूर्णांकel_engine_cs *engine;
-	क्रमागत पूर्णांकel_engine_id id;
+static bool flush_submission(struct intel_gt *gt, long timeout)
+{
+	struct intel_engine_cs *engine;
+	enum intel_engine_id id;
 	bool active = false;
 
-	अगर (!समयout)
-		वापस false;
+	if (!timeout)
+		return false;
 
-	अगर (!पूर्णांकel_gt_pm_is_awake(gt))
-		वापस false;
+	if (!intel_gt_pm_is_awake(gt))
+		return false;
 
-	क्रम_each_engine(engine, gt, id) अणु
-		पूर्णांकel_engine_flush_submission(engine);
+	for_each_engine(engine, gt, id) {
+		intel_engine_flush_submission(engine);
 
 		/* Flush the background retirement and idle barriers */
 		flush_work(&engine->retire_work);
@@ -53,222 +52,222 @@
 
 		/* Is the idle barrier still outstanding? */
 		active |= engine_active(engine);
-	पूर्ण
+	}
 
-	वापस active;
-पूर्ण
+	return active;
+}
 
-अटल व्योम engine_retire(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा पूर्णांकel_engine_cs *engine =
+static void engine_retire(struct work_struct *work)
+{
+	struct intel_engine_cs *engine =
 		container_of(work, typeof(*engine), retire_work);
-	काष्ठा पूर्णांकel_समयline *tl = xchg(&engine->retire, शून्य);
+	struct intel_timeline *tl = xchg(&engine->retire, NULL);
 
-	करो अणु
-		काष्ठा पूर्णांकel_समयline *next = xchg(&tl->retire, शून्य);
+	do {
+		struct intel_timeline *next = xchg(&tl->retire, NULL);
 
 		/*
-		 * Our goal here is to retire _idle_ समयlines as soon as
-		 * possible (as they are idle, we करो not expect userspace
-		 * to be cleaning up anyसमय soon).
+		 * Our goal here is to retire _idle_ timelines as soon as
+		 * possible (as they are idle, we do not expect userspace
+		 * to be cleaning up anytime soon).
 		 *
-		 * If the समयline is currently locked, either it is being
-		 * retired अन्यथाwhere or about to be!
+		 * If the timeline is currently locked, either it is being
+		 * retired elsewhere or about to be!
 		 */
-		अगर (mutex_trylock(&tl->mutex)) अणु
+		if (mutex_trylock(&tl->mutex)) {
 			retire_requests(tl);
 			mutex_unlock(&tl->mutex);
-		पूर्ण
-		पूर्णांकel_समयline_put(tl);
+		}
+		intel_timeline_put(tl);
 
 		GEM_BUG_ON(!next);
 		tl = ptr_mask_bits(next, 1);
-	पूर्ण जबतक (tl);
-पूर्ण
+	} while (tl);
+}
 
-अटल bool add_retire(काष्ठा पूर्णांकel_engine_cs *engine,
-		       काष्ठा पूर्णांकel_समयline *tl)
-अणु
-#घोषणा STUB ((काष्ठा पूर्णांकel_समयline *)1)
-	काष्ठा पूर्णांकel_समयline *first;
+static bool add_retire(struct intel_engine_cs *engine,
+		       struct intel_timeline *tl)
+{
+#define STUB ((struct intel_timeline *)1)
+	struct intel_timeline *first;
 
 	/*
-	 * We खोलो-code a llist here to include the additional tag [BIT(0)]
-	 * so that we know when the समयline is alपढ़ोy on a
+	 * We open-code a llist here to include the additional tag [BIT(0)]
+	 * so that we know when the timeline is already on a
 	 * retirement queue: either this engine or another.
 	 */
 
-	अगर (cmpxchg(&tl->retire, शून्य, STUB)) /* alपढ़ोy queued */
-		वापस false;
+	if (cmpxchg(&tl->retire, NULL, STUB)) /* already queued */
+		return false;
 
-	पूर्णांकel_समयline_get(tl);
+	intel_timeline_get(tl);
 	first = READ_ONCE(engine->retire);
-	करो
+	do
 		tl->retire = ptr_pack_bits(first, 1, 1);
-	जबतक (!try_cmpxchg(&engine->retire, &first, tl));
+	while (!try_cmpxchg(&engine->retire, &first, tl));
 
-	वापस !first;
-पूर्ण
+	return !first;
+}
 
-व्योम पूर्णांकel_engine_add_retire(काष्ठा पूर्णांकel_engine_cs *engine,
-			     काष्ठा पूर्णांकel_समयline *tl)
-अणु
-	/* We करोn't deal well with the engine disappearing beneath us */
-	GEM_BUG_ON(पूर्णांकel_engine_is_भव(engine));
+void intel_engine_add_retire(struct intel_engine_cs *engine,
+			     struct intel_timeline *tl)
+{
+	/* We don't deal well with the engine disappearing beneath us */
+	GEM_BUG_ON(intel_engine_is_virtual(engine));
 
-	अगर (add_retire(engine, tl))
+	if (add_retire(engine, tl))
 		schedule_work(&engine->retire_work);
-पूर्ण
+}
 
-व्योम पूर्णांकel_engine_init_retire(काष्ठा पूर्णांकel_engine_cs *engine)
-अणु
+void intel_engine_init_retire(struct intel_engine_cs *engine)
+{
 	INIT_WORK(&engine->retire_work, engine_retire);
-पूर्ण
+}
 
-व्योम पूर्णांकel_engine_fini_retire(काष्ठा पूर्णांकel_engine_cs *engine)
-अणु
+void intel_engine_fini_retire(struct intel_engine_cs *engine)
+{
 	flush_work(&engine->retire_work);
 	GEM_BUG_ON(engine->retire);
-पूर्ण
+}
 
-दीर्घ पूर्णांकel_gt_retire_requests_समयout(काष्ठा पूर्णांकel_gt *gt, दीर्घ समयout)
-अणु
-	काष्ठा पूर्णांकel_gt_समयlines *समयlines = &gt->समयlines;
-	काष्ठा पूर्णांकel_समयline *tl, *tn;
-	अचिन्हित दीर्घ active_count = 0;
-	LIST_HEAD(मुक्त);
+long intel_gt_retire_requests_timeout(struct intel_gt *gt, long timeout)
+{
+	struct intel_gt_timelines *timelines = &gt->timelines;
+	struct intel_timeline *tl, *tn;
+	unsigned long active_count = 0;
+	LIST_HEAD(free);
 
-	flush_submission(gt, समयout); /* kick the ksoftirqd tasklets */
-	spin_lock(&समयlines->lock);
-	list_क्रम_each_entry_safe(tl, tn, &समयlines->active_list, link) अणु
-		अगर (!mutex_trylock(&tl->mutex)) अणु
+	flush_submission(gt, timeout); /* kick the ksoftirqd tasklets */
+	spin_lock(&timelines->lock);
+	list_for_each_entry_safe(tl, tn, &timelines->active_list, link) {
+		if (!mutex_trylock(&tl->mutex)) {
 			active_count++; /* report busy to caller, try again? */
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		पूर्णांकel_समयline_get(tl);
-		GEM_BUG_ON(!atomic_पढ़ो(&tl->active_count));
+		intel_timeline_get(tl);
+		GEM_BUG_ON(!atomic_read(&tl->active_count));
 		atomic_inc(&tl->active_count); /* pin the list element */
-		spin_unlock(&समयlines->lock);
+		spin_unlock(&timelines->lock);
 
-		अगर (समयout > 0) अणु
-			काष्ठा dma_fence *fence;
+		if (timeout > 0) {
+			struct dma_fence *fence;
 
 			fence = i915_active_fence_get(&tl->last_request);
-			अगर (fence) अणु
+			if (fence) {
 				mutex_unlock(&tl->mutex);
 
-				समयout = dma_fence_रुको_समयout(fence,
+				timeout = dma_fence_wait_timeout(fence,
 								 true,
-								 समयout);
+								 timeout);
 				dma_fence_put(fence);
 
-				/* Retirement is best efक्रमt */
-				अगर (!mutex_trylock(&tl->mutex)) अणु
+				/* Retirement is best effort */
+				if (!mutex_trylock(&tl->mutex)) {
 					active_count++;
-					जाओ out_active;
-				पूर्ण
-			पूर्ण
-		पूर्ण
+					goto out_active;
+				}
+			}
+		}
 
-		अगर (!retire_requests(tl))
+		if (!retire_requests(tl))
 			active_count++;
 		mutex_unlock(&tl->mutex);
 
-out_active:	spin_lock(&समयlines->lock);
+out_active:	spin_lock(&timelines->lock);
 
 		/* Resume list iteration after reacquiring spinlock */
 		list_safe_reset_next(tl, tn, link);
-		अगर (atomic_dec_and_test(&tl->active_count))
+		if (atomic_dec_and_test(&tl->active_count))
 			list_del(&tl->link);
 
 		/* Defer the final release to after the spinlock */
-		अगर (refcount_dec_and_test(&tl->kref.refcount)) अणु
-			GEM_BUG_ON(atomic_पढ़ो(&tl->active_count));
-			list_add(&tl->link, &मुक्त);
-		पूर्ण
-	पूर्ण
-	spin_unlock(&समयlines->lock);
+		if (refcount_dec_and_test(&tl->kref.refcount)) {
+			GEM_BUG_ON(atomic_read(&tl->active_count));
+			list_add(&tl->link, &free);
+		}
+	}
+	spin_unlock(&timelines->lock);
 
-	list_क्रम_each_entry_safe(tl, tn, &मुक्त, link)
-		__पूर्णांकel_समयline_मुक्त(&tl->kref);
+	list_for_each_entry_safe(tl, tn, &free, link)
+		__intel_timeline_free(&tl->kref);
 
-	अगर (flush_submission(gt, समयout)) /* Wait, there's more! */
+	if (flush_submission(gt, timeout)) /* Wait, there's more! */
 		active_count++;
 
-	वापस active_count ? समयout : 0;
-पूर्ण
+	return active_count ? timeout : 0;
+}
 
-पूर्णांक पूर्णांकel_gt_रुको_क्रम_idle(काष्ठा पूर्णांकel_gt *gt, दीर्घ समयout)
-अणु
+int intel_gt_wait_for_idle(struct intel_gt *gt, long timeout)
+{
 	/* If the device is asleep, we have no requests outstanding */
-	अगर (!पूर्णांकel_gt_pm_is_awake(gt))
-		वापस 0;
+	if (!intel_gt_pm_is_awake(gt))
+		return 0;
 
-	जबतक ((समयout = पूर्णांकel_gt_retire_requests_समयout(gt, समयout)) > 0) अणु
+	while ((timeout = intel_gt_retire_requests_timeout(gt, timeout)) > 0) {
 		cond_resched();
-		अगर (संकेत_pending(current))
-			वापस -EINTR;
-	पूर्ण
+		if (signal_pending(current))
+			return -EINTR;
+	}
 
-	वापस समयout;
-पूर्ण
+	return timeout;
+}
 
-अटल व्योम retire_work_handler(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा पूर्णांकel_gt *gt =
+static void retire_work_handler(struct work_struct *work)
+{
+	struct intel_gt *gt =
 		container_of(work, typeof(*gt), requests.retire_work.work);
 
 	schedule_delayed_work(&gt->requests.retire_work,
-			      round_jअगरfies_up_relative(HZ));
-	पूर्णांकel_gt_retire_requests(gt);
-पूर्ण
+			      round_jiffies_up_relative(HZ));
+	intel_gt_retire_requests(gt);
+}
 
-व्योम पूर्णांकel_gt_init_requests(काष्ठा पूर्णांकel_gt *gt)
-अणु
+void intel_gt_init_requests(struct intel_gt *gt)
+{
 	INIT_DELAYED_WORK(&gt->requests.retire_work, retire_work_handler);
-पूर्ण
+}
 
-व्योम पूर्णांकel_gt_park_requests(काष्ठा पूर्णांकel_gt *gt)
-अणु
+void intel_gt_park_requests(struct intel_gt *gt)
+{
 	cancel_delayed_work(&gt->requests.retire_work);
-पूर्ण
+}
 
-व्योम पूर्णांकel_gt_unpark_requests(काष्ठा पूर्णांकel_gt *gt)
-अणु
+void intel_gt_unpark_requests(struct intel_gt *gt)
+{
 	schedule_delayed_work(&gt->requests.retire_work,
-			      round_jअगरfies_up_relative(HZ));
-पूर्ण
+			      round_jiffies_up_relative(HZ));
+}
 
-व्योम पूर्णांकel_gt_fini_requests(काष्ठा पूर्णांकel_gt *gt)
-अणु
-	/* Wait until the work is marked as finished beक्रमe unloading! */
+void intel_gt_fini_requests(struct intel_gt *gt)
+{
+	/* Wait until the work is marked as finished before unloading! */
 	cancel_delayed_work_sync(&gt->requests.retire_work);
 
-	flush_work(&gt->watchकरोg.work);
-पूर्ण
+	flush_work(&gt->watchdog.work);
+}
 
-व्योम पूर्णांकel_gt_watchकरोg_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा पूर्णांकel_gt *gt =
-		container_of(work, typeof(*gt), watchकरोg.work);
-	काष्ठा i915_request *rq, *rn;
-	काष्ठा llist_node *first;
+void intel_gt_watchdog_work(struct work_struct *work)
+{
+	struct intel_gt *gt =
+		container_of(work, typeof(*gt), watchdog.work);
+	struct i915_request *rq, *rn;
+	struct llist_node *first;
 
-	first = llist_del_all(&gt->watchकरोg.list);
-	अगर (!first)
-		वापस;
+	first = llist_del_all(&gt->watchdog.list);
+	if (!first)
+		return;
 
-	llist_क्रम_each_entry_safe(rq, rn, first, watchकरोg.link) अणु
-		अगर (!i915_request_completed(rq)) अणु
-			काष्ठा dma_fence *f = &rq->fence;
+	llist_for_each_entry_safe(rq, rn, first, watchdog.link) {
+		if (!i915_request_completed(rq)) {
+			struct dma_fence *f = &rq->fence;
 
 			pr_notice("Fence expiration time out i915-%s:%s:%llx!\n",
 				  f->ops->get_driver_name(f),
-				  f->ops->get_समयline_name(f),
+				  f->ops->get_timeline_name(f),
 				  f->seqno);
 			i915_request_cancel(rq, -EINTR);
-		पूर्ण
+		}
 		i915_request_put(rq);
-	पूर्ण
-पूर्ण
+	}
+}

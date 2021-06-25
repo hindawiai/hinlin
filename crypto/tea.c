@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /* 
  * Cryptographic API.
  *
@@ -9,58 +8,58 @@
  * and Roger Needham at the Computer Laboratory of Cambridge University.
  *
  * Due to the order of evaluation in XTEA many people have incorrectly
- * implemented it.  XETA (XTEA in the wrong order), exists क्रम
+ * implemented it.  XETA (XTEA in the wrong order), exists for
  * compatibility with these implementations.
  *
  * Copyright (c) 2004 Aaron Grothe ajgrothe@yahoo.com
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mm.h>
-#समावेश <यंत्र/byteorder.h>
-#समावेश <linux/crypto.h>
-#समावेश <linux/types.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/mm.h>
+#include <asm/byteorder.h>
+#include <linux/crypto.h>
+#include <linux/types.h>
 
-#घोषणा TEA_KEY_SIZE		16
-#घोषणा TEA_BLOCK_SIZE		8
-#घोषणा TEA_ROUNDS		32
-#घोषणा TEA_DELTA		0x9e3779b9
+#define TEA_KEY_SIZE		16
+#define TEA_BLOCK_SIZE		8
+#define TEA_ROUNDS		32
+#define TEA_DELTA		0x9e3779b9
 
-#घोषणा XTEA_KEY_SIZE		16
-#घोषणा XTEA_BLOCK_SIZE		8
-#घोषणा XTEA_ROUNDS		32
-#घोषणा XTEA_DELTA		0x9e3779b9
+#define XTEA_KEY_SIZE		16
+#define XTEA_BLOCK_SIZE		8
+#define XTEA_ROUNDS		32
+#define XTEA_DELTA		0x9e3779b9
 
-काष्ठा tea_ctx अणु
+struct tea_ctx {
 	u32 KEY[4];
-पूर्ण;
+};
 
-काष्ठा xtea_ctx अणु
+struct xtea_ctx {
 	u32 KEY[4];
-पूर्ण;
+};
 
-अटल पूर्णांक tea_setkey(काष्ठा crypto_tfm *tfm, स्थिर u8 *in_key,
-		      अचिन्हित पूर्णांक key_len)
-अणु
-	काष्ठा tea_ctx *ctx = crypto_tfm_ctx(tfm);
-	स्थिर __le32 *key = (स्थिर __le32 *)in_key;
+static int tea_setkey(struct crypto_tfm *tfm, const u8 *in_key,
+		      unsigned int key_len)
+{
+	struct tea_ctx *ctx = crypto_tfm_ctx(tfm);
+	const __le32 *key = (const __le32 *)in_key;
 
 	ctx->KEY[0] = le32_to_cpu(key[0]);
 	ctx->KEY[1] = le32_to_cpu(key[1]);
 	ctx->KEY[2] = le32_to_cpu(key[2]);
 	ctx->KEY[3] = le32_to_cpu(key[3]);
 
-	वापस 0; 
+	return 0; 
 
-पूर्ण
+}
 
-अटल व्योम tea_encrypt(काष्ठा crypto_tfm *tfm, u8 *dst, स्थिर u8 *src)
-अणु
+static void tea_encrypt(struct crypto_tfm *tfm, u8 *dst, const u8 *src)
+{
 	u32 y, z, n, sum = 0;
 	u32 k0, k1, k2, k3;
-	काष्ठा tea_ctx *ctx = crypto_tfm_ctx(tfm);
-	स्थिर __le32 *in = (स्थिर __le32 *)src;
+	struct tea_ctx *ctx = crypto_tfm_ctx(tfm);
+	const __le32 *in = (const __le32 *)src;
 	__le32 *out = (__le32 *)dst;
 
 	y = le32_to_cpu(in[0]);
@@ -73,22 +72,22 @@
 
 	n = TEA_ROUNDS;
 
-	जबतक (n-- > 0) अणु
+	while (n-- > 0) {
 		sum += TEA_DELTA;
 		y += ((z << 4) + k0) ^ (z + sum) ^ ((z >> 5) + k1);
 		z += ((y << 4) + k2) ^ (y + sum) ^ ((y >> 5) + k3);
-	पूर्ण
+	}
 	
 	out[0] = cpu_to_le32(y);
 	out[1] = cpu_to_le32(z);
-पूर्ण
+}
 
-अटल व्योम tea_decrypt(काष्ठा crypto_tfm *tfm, u8 *dst, स्थिर u8 *src)
-अणु
+static void tea_decrypt(struct crypto_tfm *tfm, u8 *dst, const u8 *src)
+{
 	u32 y, z, n, sum;
 	u32 k0, k1, k2, k3;
-	काष्ठा tea_ctx *ctx = crypto_tfm_ctx(tfm);
-	स्थिर __le32 *in = (स्थिर __le32 *)src;
+	struct tea_ctx *ctx = crypto_tfm_ctx(tfm);
+	const __le32 *in = (const __le32 *)src;
 	__le32 *out = (__le32 *)dst;
 
 	y = le32_to_cpu(in[0]);
@@ -103,57 +102,57 @@
 
 	n = TEA_ROUNDS;
 
-	जबतक (n-- > 0) अणु
+	while (n-- > 0) {
 		z -= ((y << 4) + k2) ^ (y + sum) ^ ((y >> 5) + k3);
 		y -= ((z << 4) + k0) ^ (z + sum) ^ ((z >> 5) + k1);
 		sum -= TEA_DELTA;
-	पूर्ण
+	}
 	
 	out[0] = cpu_to_le32(y);
 	out[1] = cpu_to_le32(z);
-पूर्ण
+}
 
-अटल पूर्णांक xtea_setkey(काष्ठा crypto_tfm *tfm, स्थिर u8 *in_key,
-		       अचिन्हित पूर्णांक key_len)
-अणु
-	काष्ठा xtea_ctx *ctx = crypto_tfm_ctx(tfm);
-	स्थिर __le32 *key = (स्थिर __le32 *)in_key;
+static int xtea_setkey(struct crypto_tfm *tfm, const u8 *in_key,
+		       unsigned int key_len)
+{
+	struct xtea_ctx *ctx = crypto_tfm_ctx(tfm);
+	const __le32 *key = (const __le32 *)in_key;
 
 	ctx->KEY[0] = le32_to_cpu(key[0]);
 	ctx->KEY[1] = le32_to_cpu(key[1]);
 	ctx->KEY[2] = le32_to_cpu(key[2]);
 	ctx->KEY[3] = le32_to_cpu(key[3]);
 
-	वापस 0; 
+	return 0; 
 
-पूर्ण
+}
 
-अटल व्योम xtea_encrypt(काष्ठा crypto_tfm *tfm, u8 *dst, स्थिर u8 *src)
-अणु
+static void xtea_encrypt(struct crypto_tfm *tfm, u8 *dst, const u8 *src)
+{
 	u32 y, z, sum = 0;
 	u32 limit = XTEA_DELTA * XTEA_ROUNDS;
-	काष्ठा xtea_ctx *ctx = crypto_tfm_ctx(tfm);
-	स्थिर __le32 *in = (स्थिर __le32 *)src;
+	struct xtea_ctx *ctx = crypto_tfm_ctx(tfm);
+	const __le32 *in = (const __le32 *)src;
 	__le32 *out = (__le32 *)dst;
 
 	y = le32_to_cpu(in[0]);
 	z = le32_to_cpu(in[1]);
 
-	जबतक (sum != limit) अणु
+	while (sum != limit) {
 		y += ((z << 4 ^ z >> 5) + z) ^ (sum + ctx->KEY[sum&3]); 
 		sum += XTEA_DELTA;
 		z += ((y << 4 ^ y >> 5) + y) ^ (sum + ctx->KEY[sum>>11 &3]); 
-	पूर्ण
+	}
 	
 	out[0] = cpu_to_le32(y);
 	out[1] = cpu_to_le32(z);
-पूर्ण
+}
 
-अटल व्योम xtea_decrypt(काष्ठा crypto_tfm *tfm, u8 *dst, स्थिर u8 *src)
-अणु
+static void xtea_decrypt(struct crypto_tfm *tfm, u8 *dst, const u8 *src)
+{
 	u32 y, z, sum;
-	काष्ठा tea_ctx *ctx = crypto_tfm_ctx(tfm);
-	स्थिर __le32 *in = (स्थिर __le32 *)src;
+	struct tea_ctx *ctx = crypto_tfm_ctx(tfm);
+	const __le32 *in = (const __le32 *)src;
 	__le32 *out = (__le32 *)dst;
 
 	y = le32_to_cpu(in[0]);
@@ -161,43 +160,43 @@
 
 	sum = XTEA_DELTA * XTEA_ROUNDS;
 
-	जबतक (sum) अणु
+	while (sum) {
 		z -= ((y << 4 ^ y >> 5) + y) ^ (sum + ctx->KEY[sum>>11 & 3]);
 		sum -= XTEA_DELTA;
 		y -= ((z << 4 ^ z >> 5) + z) ^ (sum + ctx->KEY[sum & 3]);
-	पूर्ण
+	}
 	
 	out[0] = cpu_to_le32(y);
 	out[1] = cpu_to_le32(z);
-पूर्ण
+}
 
 
-अटल व्योम xeta_encrypt(काष्ठा crypto_tfm *tfm, u8 *dst, स्थिर u8 *src)
-अणु
+static void xeta_encrypt(struct crypto_tfm *tfm, u8 *dst, const u8 *src)
+{
 	u32 y, z, sum = 0;
 	u32 limit = XTEA_DELTA * XTEA_ROUNDS;
-	काष्ठा xtea_ctx *ctx = crypto_tfm_ctx(tfm);
-	स्थिर __le32 *in = (स्थिर __le32 *)src;
+	struct xtea_ctx *ctx = crypto_tfm_ctx(tfm);
+	const __le32 *in = (const __le32 *)src;
 	__le32 *out = (__le32 *)dst;
 
 	y = le32_to_cpu(in[0]);
 	z = le32_to_cpu(in[1]);
 
-	जबतक (sum != limit) अणु
+	while (sum != limit) {
 		y += (z << 4 ^ z >> 5) + (z ^ sum) + ctx->KEY[sum&3];
 		sum += XTEA_DELTA;
 		z += (y << 4 ^ y >> 5) + (y ^ sum) + ctx->KEY[sum>>11 &3];
-	पूर्ण
+	}
 	
 	out[0] = cpu_to_le32(y);
 	out[1] = cpu_to_le32(z);
-पूर्ण
+}
 
-अटल व्योम xeta_decrypt(काष्ठा crypto_tfm *tfm, u8 *dst, स्थिर u8 *src)
-अणु
+static void xeta_decrypt(struct crypto_tfm *tfm, u8 *dst, const u8 *src)
+{
 	u32 y, z, sum;
-	काष्ठा tea_ctx *ctx = crypto_tfm_ctx(tfm);
-	स्थिर __le32 *in = (स्थिर __le32 *)src;
+	struct tea_ctx *ctx = crypto_tfm_ctx(tfm);
+	const __le32 *in = (const __le32 *)src;
 	__le32 *out = (__le32 *)dst;
 
 	y = le32_to_cpu(in[0]);
@@ -205,76 +204,76 @@
 
 	sum = XTEA_DELTA * XTEA_ROUNDS;
 
-	जबतक (sum) अणु
+	while (sum) {
 		z -= (y << 4 ^ y >> 5) + (y ^ sum) + ctx->KEY[sum>>11 & 3];
 		sum -= XTEA_DELTA;
 		y -= (z << 4 ^ z >> 5) + (z ^ sum) + ctx->KEY[sum & 3];
-	पूर्ण
+	}
 	
 	out[0] = cpu_to_le32(y);
 	out[1] = cpu_to_le32(z);
-पूर्ण
+}
 
-अटल काष्ठा crypto_alg tea_algs[3] = अणु अणु
+static struct crypto_alg tea_algs[3] = { {
 	.cra_name		=	"tea",
 	.cra_driver_name	=	"tea-generic",
 	.cra_flags		=	CRYPTO_ALG_TYPE_CIPHER,
 	.cra_blocksize		=	TEA_BLOCK_SIZE,
-	.cra_ctxsize		=	माप (काष्ठा tea_ctx),
+	.cra_ctxsize		=	sizeof (struct tea_ctx),
 	.cra_alignmask		=	3,
 	.cra_module		=	THIS_MODULE,
-	.cra_u			=	अणु .cipher = अणु
+	.cra_u			=	{ .cipher = {
 	.cia_min_keysize	=	TEA_KEY_SIZE,
 	.cia_max_keysize	=	TEA_KEY_SIZE,
 	.cia_setkey		= 	tea_setkey,
 	.cia_encrypt		=	tea_encrypt,
-	.cia_decrypt		=	tea_decrypt पूर्ण पूर्ण
-पूर्ण, अणु
+	.cia_decrypt		=	tea_decrypt } }
+}, {
 	.cra_name		=	"xtea",
 	.cra_driver_name	=	"xtea-generic",
 	.cra_flags		=	CRYPTO_ALG_TYPE_CIPHER,
 	.cra_blocksize		=	XTEA_BLOCK_SIZE,
-	.cra_ctxsize		=	माप (काष्ठा xtea_ctx),
+	.cra_ctxsize		=	sizeof (struct xtea_ctx),
 	.cra_alignmask		=	3,
 	.cra_module		=	THIS_MODULE,
-	.cra_u			=	अणु .cipher = अणु
+	.cra_u			=	{ .cipher = {
 	.cia_min_keysize	=	XTEA_KEY_SIZE,
 	.cia_max_keysize	=	XTEA_KEY_SIZE,
 	.cia_setkey		= 	xtea_setkey,
 	.cia_encrypt		=	xtea_encrypt,
-	.cia_decrypt		=	xtea_decrypt पूर्ण पूर्ण
-पूर्ण, अणु
+	.cia_decrypt		=	xtea_decrypt } }
+}, {
 	.cra_name		=	"xeta",
 	.cra_driver_name	=	"xeta-generic",
 	.cra_flags		=	CRYPTO_ALG_TYPE_CIPHER,
 	.cra_blocksize		=	XTEA_BLOCK_SIZE,
-	.cra_ctxsize		=	माप (काष्ठा xtea_ctx),
+	.cra_ctxsize		=	sizeof (struct xtea_ctx),
 	.cra_alignmask		=	3,
 	.cra_module		=	THIS_MODULE,
-	.cra_u			=	अणु .cipher = अणु
+	.cra_u			=	{ .cipher = {
 	.cia_min_keysize	=	XTEA_KEY_SIZE,
 	.cia_max_keysize	=	XTEA_KEY_SIZE,
 	.cia_setkey		= 	xtea_setkey,
 	.cia_encrypt		=	xeta_encrypt,
-	.cia_decrypt		=	xeta_decrypt पूर्ण पूर्ण
-पूर्ण पूर्ण;
+	.cia_decrypt		=	xeta_decrypt } }
+} };
 
-अटल पूर्णांक __init tea_mod_init(व्योम)
-अणु
-	वापस crypto_रेजिस्टर_algs(tea_algs, ARRAY_SIZE(tea_algs));
-पूर्ण
+static int __init tea_mod_init(void)
+{
+	return crypto_register_algs(tea_algs, ARRAY_SIZE(tea_algs));
+}
 
-अटल व्योम __निकास tea_mod_fini(व्योम)
-अणु
-	crypto_unरेजिस्टर_algs(tea_algs, ARRAY_SIZE(tea_algs));
-पूर्ण
+static void __exit tea_mod_fini(void)
+{
+	crypto_unregister_algs(tea_algs, ARRAY_SIZE(tea_algs));
+}
 
 MODULE_ALIAS_CRYPTO("tea");
 MODULE_ALIAS_CRYPTO("xtea");
 MODULE_ALIAS_CRYPTO("xeta");
 
 subsys_initcall(tea_mod_init);
-module_निकास(tea_mod_fini);
+module_exit(tea_mod_fini);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("TEA, XTEA & XETA Cryptographic Algorithms");

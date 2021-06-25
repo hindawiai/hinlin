@@ -1,36 +1,35 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * MPC52xx gpio driver
  *
  * Copyright (c) 2008 Sascha Hauer <s.hauer@pengutronix.de>, Pengutronix
  */
 
-#समावेश <linux/of.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/of_gpपन.स>
-#समावेश <linux/पन.स>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/module.h>
+#include <linux/of.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/of_gpio.h>
+#include <linux/io.h>
+#include <linux/of_platform.h>
+#include <linux/module.h>
 
-#समावेश <यंत्र/mpc52xx.h>
-#समावेश <sysdev/fsl_soc.h>
+#include <asm/mpc52xx.h>
+#include <sysdev/fsl_soc.h>
 
-अटल DEFINE_SPINLOCK(gpio_lock);
+static DEFINE_SPINLOCK(gpio_lock);
 
-काष्ठा mpc52xx_gpiochip अणु
-	काष्ठा of_mm_gpio_chip mmchip;
-	अचिन्हित पूर्णांक shaकरोw_dvo;
-	अचिन्हित पूर्णांक shaकरोw_gpioe;
-	अचिन्हित पूर्णांक shaकरोw_ddr;
-पूर्ण;
+struct mpc52xx_gpiochip {
+	struct of_mm_gpio_chip mmchip;
+	unsigned int shadow_dvo;
+	unsigned int shadow_gpioe;
+	unsigned int shadow_ddr;
+};
 
 /*
- * GPIO LIB API implementation क्रम wakeup GPIOs.
+ * GPIO LIB API implementation for wakeup GPIOs.
  *
  * There's a maximum of 8 wakeup GPIOs. Which of these are available
- * क्रम use depends on your board setup.
+ * for use depends on your board setup.
  *
  * 0 -> GPIO_WKUP_7
  * 1 -> GPIO_WKUP_6
@@ -42,38 +41,38 @@
  * 7 -> PSC1_4
  *
  */
-अटल पूर्णांक mpc52xx_wkup_gpio_get(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक gpio)
-अणु
-	काष्ठा of_mm_gpio_chip *mm_gc = to_of_mm_gpio_chip(gc);
-	काष्ठा mpc52xx_gpio_wkup __iomem *regs = mm_gc->regs;
-	अचिन्हित पूर्णांक ret;
+static int mpc52xx_wkup_gpio_get(struct gpio_chip *gc, unsigned int gpio)
+{
+	struct of_mm_gpio_chip *mm_gc = to_of_mm_gpio_chip(gc);
+	struct mpc52xx_gpio_wkup __iomem *regs = mm_gc->regs;
+	unsigned int ret;
 
 	ret = (in_8(&regs->wkup_ival) >> (7 - gpio)) & 1;
 
 	pr_debug("%s: gpio: %d ret: %d\n", __func__, gpio, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत व्योम
-__mpc52xx_wkup_gpio_set(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक gpio, पूर्णांक val)
-अणु
-	काष्ठा of_mm_gpio_chip *mm_gc = to_of_mm_gpio_chip(gc);
-	काष्ठा mpc52xx_gpiochip *chip = gpiochip_get_data(gc);
-	काष्ठा mpc52xx_gpio_wkup __iomem *regs = mm_gc->regs;
+static inline void
+__mpc52xx_wkup_gpio_set(struct gpio_chip *gc, unsigned int gpio, int val)
+{
+	struct of_mm_gpio_chip *mm_gc = to_of_mm_gpio_chip(gc);
+	struct mpc52xx_gpiochip *chip = gpiochip_get_data(gc);
+	struct mpc52xx_gpio_wkup __iomem *regs = mm_gc->regs;
 
-	अगर (val)
-		chip->shaकरोw_dvo |= 1 << (7 - gpio);
-	अन्यथा
-		chip->shaकरोw_dvo &= ~(1 << (7 - gpio));
+	if (val)
+		chip->shadow_dvo |= 1 << (7 - gpio);
+	else
+		chip->shadow_dvo &= ~(1 << (7 - gpio));
 
-	out_8(&regs->wkup_dvo, chip->shaकरोw_dvo);
-पूर्ण
+	out_8(&regs->wkup_dvo, chip->shadow_dvo);
+}
 
-अटल व्योम
-mpc52xx_wkup_gpio_set(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक gpio, पूर्णांक val)
-अणु
-	अचिन्हित दीर्घ flags;
+static void
+mpc52xx_wkup_gpio_set(struct gpio_chip *gc, unsigned int gpio, int val)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&gpio_lock, flags);
 
@@ -82,69 +81,69 @@ mpc52xx_wkup_gpio_set(काष्ठा gpio_chip *gc, अचिन्हित
 	spin_unlock_irqrestore(&gpio_lock, flags);
 
 	pr_debug("%s: gpio: %d val: %d\n", __func__, gpio, val);
-पूर्ण
+}
 
-अटल पूर्णांक mpc52xx_wkup_gpio_dir_in(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक gpio)
-अणु
-	काष्ठा of_mm_gpio_chip *mm_gc = to_of_mm_gpio_chip(gc);
-	काष्ठा mpc52xx_gpiochip *chip = gpiochip_get_data(gc);
-	काष्ठा mpc52xx_gpio_wkup __iomem *regs = mm_gc->regs;
-	अचिन्हित दीर्घ flags;
+static int mpc52xx_wkup_gpio_dir_in(struct gpio_chip *gc, unsigned int gpio)
+{
+	struct of_mm_gpio_chip *mm_gc = to_of_mm_gpio_chip(gc);
+	struct mpc52xx_gpiochip *chip = gpiochip_get_data(gc);
+	struct mpc52xx_gpio_wkup __iomem *regs = mm_gc->regs;
+	unsigned long flags;
 
 	spin_lock_irqsave(&gpio_lock, flags);
 
 	/* set the direction */
-	chip->shaकरोw_ddr &= ~(1 << (7 - gpio));
-	out_8(&regs->wkup_ddr, chip->shaकरोw_ddr);
+	chip->shadow_ddr &= ~(1 << (7 - gpio));
+	out_8(&regs->wkup_ddr, chip->shadow_ddr);
 
 	/* and enable the pin */
-	chip->shaकरोw_gpioe |= 1 << (7 - gpio);
-	out_8(&regs->wkup_gpioe, chip->shaकरोw_gpioe);
+	chip->shadow_gpioe |= 1 << (7 - gpio);
+	out_8(&regs->wkup_gpioe, chip->shadow_gpioe);
 
 	spin_unlock_irqrestore(&gpio_lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-mpc52xx_wkup_gpio_dir_out(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक gpio, पूर्णांक val)
-अणु
-	काष्ठा of_mm_gpio_chip *mm_gc = to_of_mm_gpio_chip(gc);
-	काष्ठा mpc52xx_gpio_wkup __iomem *regs = mm_gc->regs;
-	काष्ठा mpc52xx_gpiochip *chip = gpiochip_get_data(gc);
-	अचिन्हित दीर्घ flags;
+static int
+mpc52xx_wkup_gpio_dir_out(struct gpio_chip *gc, unsigned int gpio, int val)
+{
+	struct of_mm_gpio_chip *mm_gc = to_of_mm_gpio_chip(gc);
+	struct mpc52xx_gpio_wkup __iomem *regs = mm_gc->regs;
+	struct mpc52xx_gpiochip *chip = gpiochip_get_data(gc);
+	unsigned long flags;
 
 	spin_lock_irqsave(&gpio_lock, flags);
 
 	__mpc52xx_wkup_gpio_set(gc, gpio, val);
 
 	/* Then set direction */
-	chip->shaकरोw_ddr |= 1 << (7 - gpio);
-	out_8(&regs->wkup_ddr, chip->shaकरोw_ddr);
+	chip->shadow_ddr |= 1 << (7 - gpio);
+	out_8(&regs->wkup_ddr, chip->shadow_ddr);
 
 	/* Finally enable the pin */
-	chip->shaकरोw_gpioe |= 1 << (7 - gpio);
-	out_8(&regs->wkup_gpioe, chip->shaकरोw_gpioe);
+	chip->shadow_gpioe |= 1 << (7 - gpio);
+	out_8(&regs->wkup_gpioe, chip->shadow_gpioe);
 
 	spin_unlock_irqrestore(&gpio_lock, flags);
 
 	pr_debug("%s: gpio: %d val: %d\n", __func__, gpio, val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mpc52xx_wkup_gpiochip_probe(काष्ठा platक्रमm_device *ofdev)
-अणु
-	काष्ठा mpc52xx_gpiochip *chip;
-	काष्ठा mpc52xx_gpio_wkup __iomem *regs;
-	काष्ठा gpio_chip *gc;
-	पूर्णांक ret;
+static int mpc52xx_wkup_gpiochip_probe(struct platform_device *ofdev)
+{
+	struct mpc52xx_gpiochip *chip;
+	struct mpc52xx_gpio_wkup __iomem *regs;
+	struct gpio_chip *gc;
+	int ret;
 
-	chip = devm_kzalloc(&ofdev->dev, माप(*chip), GFP_KERNEL);
-	अगर (!chip)
-		वापस -ENOMEM;
+	chip = devm_kzalloc(&ofdev->dev, sizeof(*chip), GFP_KERNEL);
+	if (!chip)
+		return -ENOMEM;
 
-	platक्रमm_set_drvdata(ofdev, chip);
+	platform_set_drvdata(ofdev, chip);
 
 	gc = &chip->mmchip.gc;
 
@@ -155,46 +154,46 @@ mpc52xx_wkup_gpio_dir_out(काष्ठा gpio_chip *gc, अचिन्ह�
 	gc->set              = mpc52xx_wkup_gpio_set;
 
 	ret = of_mm_gpiochip_add_data(ofdev->dev.of_node, &chip->mmchip, chip);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	regs = chip->mmchip.regs;
-	chip->shaकरोw_gpioe = in_8(&regs->wkup_gpioe);
-	chip->shaकरोw_ddr = in_8(&regs->wkup_ddr);
-	chip->shaकरोw_dvo = in_8(&regs->wkup_dvo);
+	chip->shadow_gpioe = in_8(&regs->wkup_gpioe);
+	chip->shadow_ddr = in_8(&regs->wkup_ddr);
+	chip->shadow_dvo = in_8(&regs->wkup_dvo);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mpc52xx_gpiochip_हटाओ(काष्ठा platक्रमm_device *ofdev)
-अणु
-	काष्ठा mpc52xx_gpiochip *chip = platक्रमm_get_drvdata(ofdev);
+static int mpc52xx_gpiochip_remove(struct platform_device *ofdev)
+{
+	struct mpc52xx_gpiochip *chip = platform_get_drvdata(ofdev);
 
-	of_mm_gpiochip_हटाओ(&chip->mmchip);
+	of_mm_gpiochip_remove(&chip->mmchip);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id mpc52xx_wkup_gpiochip_match[] = अणु
-	अणु .compatible = "fsl,mpc5200-gpio-wkup", पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id mpc52xx_wkup_gpiochip_match[] = {
+	{ .compatible = "fsl,mpc5200-gpio-wkup", },
+	{}
+};
 
-अटल काष्ठा platक्रमm_driver mpc52xx_wkup_gpiochip_driver = अणु
-	.driver = अणु
+static struct platform_driver mpc52xx_wkup_gpiochip_driver = {
+	.driver = {
 		.name = "mpc5200-gpio-wkup",
 		.of_match_table = mpc52xx_wkup_gpiochip_match,
-	पूर्ण,
+	},
 	.probe = mpc52xx_wkup_gpiochip_probe,
-	.हटाओ = mpc52xx_gpiochip_हटाओ,
-पूर्ण;
+	.remove = mpc52xx_gpiochip_remove,
+};
 
 /*
- * GPIO LIB API implementation क्रम simple GPIOs
+ * GPIO LIB API implementation for simple GPIOs
  *
  * There's a maximum of 32 simple GPIOs. Which of these are available
- * क्रम use depends on your board setup.
- * The numbering reflects the bit numbering in the port रेजिस्टरs:
+ * for use depends on your board setup.
+ * The numbering reflects the bit numbering in the port registers:
  *
  *  0..1  > reserved
  *  2..3  > IRDA
@@ -206,35 +205,35 @@ mpc52xx_wkup_gpio_dir_out(काष्ठा gpio_chip *gc, अचिन्ह�
  * 24..27 > PSC2
  * 28..31 > PSC1
  */
-अटल पूर्णांक mpc52xx_simple_gpio_get(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक gpio)
-अणु
-	काष्ठा of_mm_gpio_chip *mm_gc = to_of_mm_gpio_chip(gc);
-	काष्ठा mpc52xx_gpio __iomem *regs = mm_gc->regs;
-	अचिन्हित पूर्णांक ret;
+static int mpc52xx_simple_gpio_get(struct gpio_chip *gc, unsigned int gpio)
+{
+	struct of_mm_gpio_chip *mm_gc = to_of_mm_gpio_chip(gc);
+	struct mpc52xx_gpio __iomem *regs = mm_gc->regs;
+	unsigned int ret;
 
 	ret = (in_be32(&regs->simple_ival) >> (31 - gpio)) & 1;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत व्योम
-__mpc52xx_simple_gpio_set(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक gpio, पूर्णांक val)
-अणु
-	काष्ठा of_mm_gpio_chip *mm_gc = to_of_mm_gpio_chip(gc);
-	काष्ठा mpc52xx_gpiochip *chip = gpiochip_get_data(gc);
-	काष्ठा mpc52xx_gpio __iomem *regs = mm_gc->regs;
+static inline void
+__mpc52xx_simple_gpio_set(struct gpio_chip *gc, unsigned int gpio, int val)
+{
+	struct of_mm_gpio_chip *mm_gc = to_of_mm_gpio_chip(gc);
+	struct mpc52xx_gpiochip *chip = gpiochip_get_data(gc);
+	struct mpc52xx_gpio __iomem *regs = mm_gc->regs;
 
-	अगर (val)
-		chip->shaकरोw_dvo |= 1 << (31 - gpio);
-	अन्यथा
-		chip->shaकरोw_dvo &= ~(1 << (31 - gpio));
-	out_be32(&regs->simple_dvo, chip->shaकरोw_dvo);
-पूर्ण
+	if (val)
+		chip->shadow_dvo |= 1 << (31 - gpio);
+	else
+		chip->shadow_dvo &= ~(1 << (31 - gpio));
+	out_be32(&regs->simple_dvo, chip->shadow_dvo);
+}
 
-अटल व्योम
-mpc52xx_simple_gpio_set(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक gpio, पूर्णांक val)
-अणु
-	अचिन्हित दीर्घ flags;
+static void
+mpc52xx_simple_gpio_set(struct gpio_chip *gc, unsigned int gpio, int val)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&gpio_lock, flags);
 
@@ -243,37 +242,37 @@ mpc52xx_simple_gpio_set(काष्ठा gpio_chip *gc, अचिन्हि�
 	spin_unlock_irqrestore(&gpio_lock, flags);
 
 	pr_debug("%s: gpio: %d val: %d\n", __func__, gpio, val);
-पूर्ण
+}
 
-अटल पूर्णांक mpc52xx_simple_gpio_dir_in(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक gpio)
-अणु
-	काष्ठा of_mm_gpio_chip *mm_gc = to_of_mm_gpio_chip(gc);
-	काष्ठा mpc52xx_gpiochip *chip = gpiochip_get_data(gc);
-	काष्ठा mpc52xx_gpio __iomem *regs = mm_gc->regs;
-	अचिन्हित दीर्घ flags;
+static int mpc52xx_simple_gpio_dir_in(struct gpio_chip *gc, unsigned int gpio)
+{
+	struct of_mm_gpio_chip *mm_gc = to_of_mm_gpio_chip(gc);
+	struct mpc52xx_gpiochip *chip = gpiochip_get_data(gc);
+	struct mpc52xx_gpio __iomem *regs = mm_gc->regs;
+	unsigned long flags;
 
 	spin_lock_irqsave(&gpio_lock, flags);
 
 	/* set the direction */
-	chip->shaकरोw_ddr &= ~(1 << (31 - gpio));
-	out_be32(&regs->simple_ddr, chip->shaकरोw_ddr);
+	chip->shadow_ddr &= ~(1 << (31 - gpio));
+	out_be32(&regs->simple_ddr, chip->shadow_ddr);
 
 	/* and enable the pin */
-	chip->shaकरोw_gpioe |= 1 << (31 - gpio);
-	out_be32(&regs->simple_gpioe, chip->shaकरोw_gpioe);
+	chip->shadow_gpioe |= 1 << (31 - gpio);
+	out_be32(&regs->simple_gpioe, chip->shadow_gpioe);
 
 	spin_unlock_irqrestore(&gpio_lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-mpc52xx_simple_gpio_dir_out(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक gpio, पूर्णांक val)
-अणु
-	काष्ठा of_mm_gpio_chip *mm_gc = to_of_mm_gpio_chip(gc);
-	काष्ठा mpc52xx_gpiochip *chip = gpiochip_get_data(gc);
-	काष्ठा mpc52xx_gpio __iomem *regs = mm_gc->regs;
-	अचिन्हित दीर्घ flags;
+static int
+mpc52xx_simple_gpio_dir_out(struct gpio_chip *gc, unsigned int gpio, int val)
+{
+	struct of_mm_gpio_chip *mm_gc = to_of_mm_gpio_chip(gc);
+	struct mpc52xx_gpiochip *chip = gpiochip_get_data(gc);
+	struct mpc52xx_gpio __iomem *regs = mm_gc->regs;
+	unsigned long flags;
 
 	spin_lock_irqsave(&gpio_lock, flags);
 
@@ -281,32 +280,32 @@ mpc52xx_simple_gpio_dir_out(काष्ठा gpio_chip *gc, अचिन्ह
 	__mpc52xx_simple_gpio_set(gc, gpio, val);
 
 	/* Then set direction */
-	chip->shaकरोw_ddr |= 1 << (31 - gpio);
-	out_be32(&regs->simple_ddr, chip->shaकरोw_ddr);
+	chip->shadow_ddr |= 1 << (31 - gpio);
+	out_be32(&regs->simple_ddr, chip->shadow_ddr);
 
 	/* Finally enable the pin */
-	chip->shaकरोw_gpioe |= 1 << (31 - gpio);
-	out_be32(&regs->simple_gpioe, chip->shaकरोw_gpioe);
+	chip->shadow_gpioe |= 1 << (31 - gpio);
+	out_be32(&regs->simple_gpioe, chip->shadow_gpioe);
 
 	spin_unlock_irqrestore(&gpio_lock, flags);
 
 	pr_debug("%s: gpio: %d val: %d\n", __func__, gpio, val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mpc52xx_simple_gpiochip_probe(काष्ठा platक्रमm_device *ofdev)
-अणु
-	काष्ठा mpc52xx_gpiochip *chip;
-	काष्ठा gpio_chip *gc;
-	काष्ठा mpc52xx_gpio __iomem *regs;
-	पूर्णांक ret;
+static int mpc52xx_simple_gpiochip_probe(struct platform_device *ofdev)
+{
+	struct mpc52xx_gpiochip *chip;
+	struct gpio_chip *gc;
+	struct mpc52xx_gpio __iomem *regs;
+	int ret;
 
-	chip = devm_kzalloc(&ofdev->dev, माप(*chip), GFP_KERNEL);
-	अगर (!chip)
-		वापस -ENOMEM;
+	chip = devm_kzalloc(&ofdev->dev, sizeof(*chip), GFP_KERNEL);
+	if (!chip)
+		return -ENOMEM;
 
-	platक्रमm_set_drvdata(ofdev, chip);
+	platform_set_drvdata(ofdev, chip);
 
 	gc = &chip->mmchip.gc;
 
@@ -317,49 +316,49 @@ mpc52xx_simple_gpio_dir_out(काष्ठा gpio_chip *gc, अचिन्ह
 	gc->set              = mpc52xx_simple_gpio_set;
 
 	ret = of_mm_gpiochip_add_data(ofdev->dev.of_node, &chip->mmchip, chip);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	regs = chip->mmchip.regs;
-	chip->shaकरोw_gpioe = in_be32(&regs->simple_gpioe);
-	chip->shaकरोw_ddr = in_be32(&regs->simple_ddr);
-	chip->shaकरोw_dvo = in_be32(&regs->simple_dvo);
+	chip->shadow_gpioe = in_be32(&regs->simple_gpioe);
+	chip->shadow_ddr = in_be32(&regs->simple_ddr);
+	chip->shadow_dvo = in_be32(&regs->simple_dvo);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id mpc52xx_simple_gpiochip_match[] = अणु
-	अणु .compatible = "fsl,mpc5200-gpio", पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id mpc52xx_simple_gpiochip_match[] = {
+	{ .compatible = "fsl,mpc5200-gpio", },
+	{}
+};
 
-अटल काष्ठा platक्रमm_driver mpc52xx_simple_gpiochip_driver = अणु
-	.driver = अणु
+static struct platform_driver mpc52xx_simple_gpiochip_driver = {
+	.driver = {
 		.name = "mpc5200-gpio",
 		.of_match_table = mpc52xx_simple_gpiochip_match,
-	पूर्ण,
+	},
 	.probe = mpc52xx_simple_gpiochip_probe,
-	.हटाओ = mpc52xx_gpiochip_हटाओ,
-पूर्ण;
+	.remove = mpc52xx_gpiochip_remove,
+};
 
-अटल काष्ठा platक्रमm_driver * स्थिर drivers[] = अणु
+static struct platform_driver * const drivers[] = {
 	&mpc52xx_wkup_gpiochip_driver,
 	&mpc52xx_simple_gpiochip_driver,
-पूर्ण;
+};
 
-अटल पूर्णांक __init mpc52xx_gpio_init(व्योम)
-अणु
-	वापस platक्रमm_रेजिस्टर_drivers(drivers, ARRAY_SIZE(drivers));
-पूर्ण
+static int __init mpc52xx_gpio_init(void)
+{
+	return platform_register_drivers(drivers, ARRAY_SIZE(drivers));
+}
 
-/* Make sure we get initialised beक्रमe anyone अन्यथा tries to use us */
+/* Make sure we get initialised before anyone else tries to use us */
 subsys_initcall(mpc52xx_gpio_init);
 
-अटल व्योम __निकास mpc52xx_gpio_निकास(व्योम)
-अणु
-	platक्रमm_unरेजिस्टर_drivers(drivers, ARRAY_SIZE(drivers));
-पूर्ण
-module_निकास(mpc52xx_gpio_निकास);
+static void __exit mpc52xx_gpio_exit(void)
+{
+	platform_unregister_drivers(drivers, ARRAY_SIZE(drivers));
+}
+module_exit(mpc52xx_gpio_exit);
 
 MODULE_DESCRIPTION("Freescale MPC52xx gpio driver");
 MODULE_AUTHOR("Sascha Hauer <s.hauer@pengutronix.de");

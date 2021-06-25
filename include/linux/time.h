@@ -1,103 +1,102 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_TIME_H
-#घोषणा _LINUX_TIME_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_TIME_H
+#define _LINUX_TIME_H
 
 # include <linux/cache.h>
 # include <linux/math64.h>
-# include <linux/समय64.h>
+# include <linux/time64.h>
 
-बाह्य काष्ठा समयzone sys_tz;
+extern struct timezone sys_tz;
 
-पूर्णांक get_बारpec64(काष्ठा बारpec64 *ts,
-		स्थिर काष्ठा __kernel_बारpec __user *uts);
-पूर्णांक put_बारpec64(स्थिर काष्ठा बारpec64 *ts,
-		काष्ठा __kernel_बारpec __user *uts);
-पूर्णांक get_iसमयrspec64(काष्ठा iसमयrspec64 *it,
-			स्थिर काष्ठा __kernel_iसमयrspec __user *uit);
-पूर्णांक put_iसमयrspec64(स्थिर काष्ठा iसमयrspec64 *it,
-			काष्ठा __kernel_iसमयrspec __user *uit);
+int get_timespec64(struct timespec64 *ts,
+		const struct __kernel_timespec __user *uts);
+int put_timespec64(const struct timespec64 *ts,
+		struct __kernel_timespec __user *uts);
+int get_itimerspec64(struct itimerspec64 *it,
+			const struct __kernel_itimerspec __user *uit);
+int put_itimerspec64(const struct itimerspec64 *it,
+			struct __kernel_itimerspec __user *uit);
 
-बाह्य समय64_t स_गढ़ो64(स्थिर अचिन्हित पूर्णांक year, स्थिर अचिन्हित पूर्णांक mon,
-			स्थिर अचिन्हित पूर्णांक day, स्थिर अचिन्हित पूर्णांक hour,
-			स्थिर अचिन्हित पूर्णांक min, स्थिर अचिन्हित पूर्णांक sec);
+extern time64_t mktime64(const unsigned int year, const unsigned int mon,
+			const unsigned int day, const unsigned int hour,
+			const unsigned int min, const unsigned int sec);
 
-#अगर_घोषित CONFIG_POSIX_TIMERS
-बाह्य व्योम clear_iसमयr(व्योम);
-#अन्यथा
-अटल अंतरभूत व्योम clear_iसमयr(व्योम) अणुपूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_POSIX_TIMERS
+extern void clear_itimer(void);
+#else
+static inline void clear_itimer(void) {}
+#endif
 
-बाह्य दीर्घ करो_uबार(पूर्णांक dfd, स्थिर अक्षर __user *filename, काष्ठा बारpec64 *बार, पूर्णांक flags);
+extern long do_utimes(int dfd, const char __user *filename, struct timespec64 *times, int flags);
 
 /*
- * Similar to the काष्ठा पंचांग in userspace <समय.स>, but it needs to be here so
+ * Similar to the struct tm in userspace <time.h>, but it needs to be here so
  * that the kernel source is self contained.
  */
-काष्ठा पंचांग अणु
+struct tm {
 	/*
 	 * the number of seconds after the minute, normally in the range
-	 * 0 to 59, but can be up to 60 to allow क्रम leap seconds
+	 * 0 to 59, but can be up to 60 to allow for leap seconds
 	 */
-	पूर्णांक पंचांग_sec;
+	int tm_sec;
 	/* the number of minutes after the hour, in the range 0 to 59*/
-	पूर्णांक पंचांग_min;
+	int tm_min;
 	/* the number of hours past midnight, in the range 0 to 23 */
-	पूर्णांक पंचांग_hour;
+	int tm_hour;
 	/* the day of the month, in the range 1 to 31 */
-	पूर्णांक पंचांग_mday;
+	int tm_mday;
 	/* the number of months since January, in the range 0 to 11 */
-	पूर्णांक पंचांग_mon;
+	int tm_mon;
 	/* the number of years since 1900 */
-	दीर्घ पंचांग_year;
+	long tm_year;
 	/* the number of days since Sunday, in the range 0 to 6 */
-	पूर्णांक पंचांग_wday;
+	int tm_wday;
 	/* the number of days since January 1, in the range 0 to 365 */
-	पूर्णांक पंचांग_yday;
-पूर्ण;
+	int tm_yday;
+};
 
-व्योम समय64_to_पंचांग(समय64_t totalsecs, पूर्णांक offset, काष्ठा पंचांग *result);
+void time64_to_tm(time64_t totalsecs, int offset, struct tm *result);
 
-# include <linux/समय32.h>
+# include <linux/time32.h>
 
-अटल अंतरभूत bool iसमयrspec64_valid(स्थिर काष्ठा iसमयrspec64 *its)
-अणु
-	अगर (!बारpec64_valid(&(its->it_पूर्णांकerval)) ||
-		!बारpec64_valid(&(its->it_value)))
-		वापस false;
+static inline bool itimerspec64_valid(const struct itimerspec64 *its)
+{
+	if (!timespec64_valid(&(its->it_interval)) ||
+		!timespec64_valid(&(its->it_value)))
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /**
- * समय_after32 - compare two 32-bit relative बार
- * @a:	the समय which may be after @b
- * @b:	the समय which may be beक्रमe @a
+ * time_after32 - compare two 32-bit relative times
+ * @a:	the time which may be after @b
+ * @b:	the time which may be before @a
  *
- * समय_after32(a, b) वापसs true अगर the समय @a is after समय @b.
- * समय_beक्रमe32(b, a) वापसs true अगर the समय @b is beक्रमe समय @a.
+ * time_after32(a, b) returns true if the time @a is after time @b.
+ * time_before32(b, a) returns true if the time @b is before time @a.
  *
- * Similar to समय_after(), compare two 32-bit बारtamps क्रम relative
- * बार.  This is useful क्रम comparing 32-bit seconds values that can't
- * be converted to 64-bit values (e.g. due to disk क्रमmat or wire protocol
- * issues) when it is known that the बार are less than 68 years apart.
+ * Similar to time_after(), compare two 32-bit timestamps for relative
+ * times.  This is useful for comparing 32-bit seconds values that can't
+ * be converted to 64-bit values (e.g. due to disk format or wire protocol
+ * issues) when it is known that the times are less than 68 years apart.
  */
-#घोषणा समय_after32(a, b)	((s32)((u32)(b) - (u32)(a)) < 0)
-#घोषणा समय_beक्रमe32(b, a)	समय_after32(a, b)
+#define time_after32(a, b)	((s32)((u32)(b) - (u32)(a)) < 0)
+#define time_before32(b, a)	time_after32(a, b)
 
 /**
- * समय_between32 - check अगर a 32-bit बारtamp is within a given समय range
- * @t:	the समय which may be within [l,h]
+ * time_between32 - check if a 32-bit timestamp is within a given time range
+ * @t:	the time which may be within [l,h]
  * @l:	the lower bound of the range
  * @h:	the higher bound of the range
  *
- * समय_beक्रमe32(t, l, h) वापसs true अगर @l <= @t <= @h. All opeअक्रमs are
- * treated as 32-bit पूर्णांकegers.
+ * time_before32(t, l, h) returns true if @l <= @t <= @h. All operands are
+ * treated as 32-bit integers.
  *
- * Equivalent to !(समय_beक्रमe32(@t, @l) || समय_after32(@t, @h)).
+ * Equivalent to !(time_before32(@t, @l) || time_after32(@t, @h)).
  */
-#घोषणा समय_between32(t, l, h) ((u32)(h) - (u32)(l) >= (u32)(t) - (u32)(l))
+#define time_between32(t, l, h) ((u32)(h) - (u32)(l) >= (u32)(t) - (u32)(l))
 
-# include <vdso/समय.स>
+# include <vdso/time.h>
 
-#पूर्ण_अगर
+#endif

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * APM X-Gene SoC Real Time Clock Driver
  *
@@ -8,274 +7,274 @@
  *         Loc Ho <lho@apm.com>
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/rtc.h>
-#समावेश <linux/slab.h>
+#include <linux/clk.h>
+#include <linux/delay.h>
+#include <linux/init.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/rtc.h>
+#include <linux/slab.h>
 
 /* RTC CSR Registers */
-#घोषणा RTC_CCVR		0x00
-#घोषणा RTC_CMR			0x04
-#घोषणा RTC_CLR			0x08
-#घोषणा RTC_CCR			0x0C
-#घोषणा  RTC_CCR_IE		BIT(0)
-#घोषणा  RTC_CCR_MASK		BIT(1)
-#घोषणा  RTC_CCR_EN		BIT(2)
-#घोषणा  RTC_CCR_WEN		BIT(3)
-#घोषणा RTC_STAT		0x10
-#घोषणा  RTC_STAT_BIT		BIT(0)
-#घोषणा RTC_RSTAT		0x14
-#घोषणा RTC_EOI			0x18
-#घोषणा RTC_VER			0x1C
+#define RTC_CCVR		0x00
+#define RTC_CMR			0x04
+#define RTC_CLR			0x08
+#define RTC_CCR			0x0C
+#define  RTC_CCR_IE		BIT(0)
+#define  RTC_CCR_MASK		BIT(1)
+#define  RTC_CCR_EN		BIT(2)
+#define  RTC_CCR_WEN		BIT(3)
+#define RTC_STAT		0x10
+#define  RTC_STAT_BIT		BIT(0)
+#define RTC_RSTAT		0x14
+#define RTC_EOI			0x18
+#define RTC_VER			0x1C
 
-काष्ठा xgene_rtc_dev अणु
-	काष्ठा rtc_device *rtc;
-	व्योम __iomem *csr_base;
-	काष्ठा clk *clk;
-	अचिन्हित पूर्णांक irq_wake;
-	अचिन्हित पूर्णांक irq_enabled;
-पूर्ण;
+struct xgene_rtc_dev {
+	struct rtc_device *rtc;
+	void __iomem *csr_base;
+	struct clk *clk;
+	unsigned int irq_wake;
+	unsigned int irq_enabled;
+};
 
-अटल पूर्णांक xgene_rtc_पढ़ो_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
-अणु
-	काष्ठा xgene_rtc_dev *pdata = dev_get_drvdata(dev);
+static int xgene_rtc_read_time(struct device *dev, struct rtc_time *tm)
+{
+	struct xgene_rtc_dev *pdata = dev_get_drvdata(dev);
 
-	rtc_समय64_to_पंचांग(पढ़ोl(pdata->csr_base + RTC_CCVR), पंचांग);
-	वापस 0;
-पूर्ण
+	rtc_time64_to_tm(readl(pdata->csr_base + RTC_CCVR), tm);
+	return 0;
+}
 
-अटल पूर्णांक xgene_rtc_set_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
-अणु
-	काष्ठा xgene_rtc_dev *pdata = dev_get_drvdata(dev);
+static int xgene_rtc_set_time(struct device *dev, struct rtc_time *tm)
+{
+	struct xgene_rtc_dev *pdata = dev_get_drvdata(dev);
 
 	/*
-	 * NOTE: After the following ग_लिखो, the RTC_CCVR is only reflected
+	 * NOTE: After the following write, the RTC_CCVR is only reflected
 	 *       after the update cycle of 1 seconds.
 	 */
-	ग_लिखोl((u32)rtc_पंचांग_to_समय64(पंचांग), pdata->csr_base + RTC_CLR);
-	पढ़ोl(pdata->csr_base + RTC_CLR); /* Force a barrier */
+	writel((u32)rtc_tm_to_time64(tm), pdata->csr_base + RTC_CLR);
+	readl(pdata->csr_base + RTC_CLR); /* Force a barrier */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक xgene_rtc_पढ़ो_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alrm)
-अणु
-	काष्ठा xgene_rtc_dev *pdata = dev_get_drvdata(dev);
+static int xgene_rtc_read_alarm(struct device *dev, struct rtc_wkalrm *alrm)
+{
+	struct xgene_rtc_dev *pdata = dev_get_drvdata(dev);
 
-	/* If possible, CMR should be पढ़ो here */
-	rtc_समय64_to_पंचांग(0, &alrm->समय);
-	alrm->enabled = पढ़ोl(pdata->csr_base + RTC_CCR) & RTC_CCR_IE;
+	/* If possible, CMR should be read here */
+	rtc_time64_to_tm(0, &alrm->time);
+	alrm->enabled = readl(pdata->csr_base + RTC_CCR) & RTC_CCR_IE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक xgene_rtc_alarm_irq_enable(काष्ठा device *dev, u32 enabled)
-अणु
-	काष्ठा xgene_rtc_dev *pdata = dev_get_drvdata(dev);
+static int xgene_rtc_alarm_irq_enable(struct device *dev, u32 enabled)
+{
+	struct xgene_rtc_dev *pdata = dev_get_drvdata(dev);
 	u32 ccr;
 
-	ccr = पढ़ोl(pdata->csr_base + RTC_CCR);
-	अगर (enabled) अणु
+	ccr = readl(pdata->csr_base + RTC_CCR);
+	if (enabled) {
 		ccr &= ~RTC_CCR_MASK;
 		ccr |= RTC_CCR_IE;
-	पूर्ण अन्यथा अणु
+	} else {
 		ccr &= ~RTC_CCR_IE;
 		ccr |= RTC_CCR_MASK;
-	पूर्ण
-	ग_लिखोl(ccr, pdata->csr_base + RTC_CCR);
+	}
+	writel(ccr, pdata->csr_base + RTC_CCR);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक xgene_rtc_alarm_irq_enabled(काष्ठा device *dev)
-अणु
-	काष्ठा xgene_rtc_dev *pdata = dev_get_drvdata(dev);
+static int xgene_rtc_alarm_irq_enabled(struct device *dev)
+{
+	struct xgene_rtc_dev *pdata = dev_get_drvdata(dev);
 
-	वापस पढ़ोl(pdata->csr_base + RTC_CCR) & RTC_CCR_IE ? 1 : 0;
-पूर्ण
+	return readl(pdata->csr_base + RTC_CCR) & RTC_CCR_IE ? 1 : 0;
+}
 
-अटल पूर्णांक xgene_rtc_set_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alrm)
-अणु
-	काष्ठा xgene_rtc_dev *pdata = dev_get_drvdata(dev);
+static int xgene_rtc_set_alarm(struct device *dev, struct rtc_wkalrm *alrm)
+{
+	struct xgene_rtc_dev *pdata = dev_get_drvdata(dev);
 
-	ग_लिखोl((u32)rtc_पंचांग_to_समय64(&alrm->समय), pdata->csr_base + RTC_CMR);
+	writel((u32)rtc_tm_to_time64(&alrm->time), pdata->csr_base + RTC_CMR);
 
 	xgene_rtc_alarm_irq_enable(dev, alrm->enabled);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा rtc_class_ops xgene_rtc_ops = अणु
-	.पढ़ो_समय	= xgene_rtc_पढ़ो_समय,
-	.set_समय	= xgene_rtc_set_समय,
-	.पढ़ो_alarm	= xgene_rtc_पढ़ो_alarm,
+static const struct rtc_class_ops xgene_rtc_ops = {
+	.read_time	= xgene_rtc_read_time,
+	.set_time	= xgene_rtc_set_time,
+	.read_alarm	= xgene_rtc_read_alarm,
 	.set_alarm	= xgene_rtc_set_alarm,
 	.alarm_irq_enable = xgene_rtc_alarm_irq_enable,
-पूर्ण;
+};
 
-अटल irqवापस_t xgene_rtc_पूर्णांकerrupt(पूर्णांक irq, व्योम *id)
-अणु
-	काष्ठा xgene_rtc_dev *pdata = id;
+static irqreturn_t xgene_rtc_interrupt(int irq, void *id)
+{
+	struct xgene_rtc_dev *pdata = id;
 
-	/* Check अगर पूर्णांकerrupt निश्चितed */
-	अगर (!(पढ़ोl(pdata->csr_base + RTC_STAT) & RTC_STAT_BIT))
-		वापस IRQ_NONE;
+	/* Check if interrupt asserted */
+	if (!(readl(pdata->csr_base + RTC_STAT) & RTC_STAT_BIT))
+		return IRQ_NONE;
 
-	/* Clear पूर्णांकerrupt */
-	पढ़ोl(pdata->csr_base + RTC_EOI);
+	/* Clear interrupt */
+	readl(pdata->csr_base + RTC_EOI);
 
 	rtc_update_irq(pdata->rtc, 1, RTC_IRQF | RTC_AF);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक xgene_rtc_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा xgene_rtc_dev *pdata;
-	पूर्णांक ret;
-	पूर्णांक irq;
+static int xgene_rtc_probe(struct platform_device *pdev)
+{
+	struct xgene_rtc_dev *pdata;
+	int ret;
+	int irq;
 
-	pdata = devm_kzalloc(&pdev->dev, माप(*pdata), GFP_KERNEL);
-	अगर (!pdata)
-		वापस -ENOMEM;
-	platक्रमm_set_drvdata(pdev, pdata);
+	pdata = devm_kzalloc(&pdev->dev, sizeof(*pdata), GFP_KERNEL);
+	if (!pdata)
+		return -ENOMEM;
+	platform_set_drvdata(pdev, pdata);
 
-	pdata->csr_base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(pdata->csr_base))
-		वापस PTR_ERR(pdata->csr_base);
+	pdata->csr_base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(pdata->csr_base))
+		return PTR_ERR(pdata->csr_base);
 
 	pdata->rtc = devm_rtc_allocate_device(&pdev->dev);
-	अगर (IS_ERR(pdata->rtc))
-		वापस PTR_ERR(pdata->rtc);
+	if (IS_ERR(pdata->rtc))
+		return PTR_ERR(pdata->rtc);
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq < 0)
-		वापस irq;
-	ret = devm_request_irq(&pdev->dev, irq, xgene_rtc_पूर्णांकerrupt, 0,
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0)
+		return irq;
+	ret = devm_request_irq(&pdev->dev, irq, xgene_rtc_interrupt, 0,
 			       dev_name(&pdev->dev), pdata);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "Could not request IRQ\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	pdata->clk = devm_clk_get(&pdev->dev, शून्य);
-	अगर (IS_ERR(pdata->clk)) अणु
+	pdata->clk = devm_clk_get(&pdev->dev, NULL);
+	if (IS_ERR(pdata->clk)) {
 		dev_err(&pdev->dev, "Couldn't get the clock for RTC\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 	ret = clk_prepare_enable(pdata->clk);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* Turn on the घड़ी and the crystal */
-	ग_लिखोl(RTC_CCR_EN, pdata->csr_base + RTC_CCR);
+	/* Turn on the clock and the crystal */
+	writel(RTC_CCR_EN, pdata->csr_base + RTC_CCR);
 
 	ret = device_init_wakeup(&pdev->dev, 1);
-	अगर (ret) अणु
+	if (ret) {
 		clk_disable_unprepare(pdata->clk);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* HW करोes not support update faster than 1 seconds */
+	/* HW does not support update faster than 1 seconds */
 	pdata->rtc->uie_unsupported = 1;
 	pdata->rtc->ops = &xgene_rtc_ops;
 	pdata->rtc->range_max = U32_MAX;
 
-	ret = devm_rtc_रेजिस्टर_device(pdata->rtc);
-	अगर (ret) अणु
+	ret = devm_rtc_register_device(pdata->rtc);
+	if (ret) {
 		clk_disable_unprepare(pdata->clk);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक xgene_rtc_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा xgene_rtc_dev *pdata = platक्रमm_get_drvdata(pdev);
+static int xgene_rtc_remove(struct platform_device *pdev)
+{
+	struct xgene_rtc_dev *pdata = platform_get_drvdata(pdev);
 
 	xgene_rtc_alarm_irq_enable(&pdev->dev, 0);
 	device_init_wakeup(&pdev->dev, 0);
 	clk_disable_unprepare(pdata->clk);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused xgene_rtc_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
-	काष्ठा xgene_rtc_dev *pdata = platक्रमm_get_drvdata(pdev);
-	पूर्णांक irq;
+static int __maybe_unused xgene_rtc_suspend(struct device *dev)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	struct xgene_rtc_dev *pdata = platform_get_drvdata(pdev);
+	int irq;
 
-	irq = platक्रमm_get_irq(pdev, 0);
+	irq = platform_get_irq(pdev, 0);
 
 	/*
-	 * If this RTC alarm will be used क्रम waking the प्रणाली up,
-	 * करोn't disable it of course. Else we just disable the alarm
-	 * and aरुको suspension.
+	 * If this RTC alarm will be used for waking the system up,
+	 * don't disable it of course. Else we just disable the alarm
+	 * and await suspension.
 	 */
-	अगर (device_may_wakeup(&pdev->dev)) अणु
-		अगर (!enable_irq_wake(irq))
+	if (device_may_wakeup(&pdev->dev)) {
+		if (!enable_irq_wake(irq))
 			pdata->irq_wake = 1;
-	पूर्ण अन्यथा अणु
+	} else {
 		pdata->irq_enabled = xgene_rtc_alarm_irq_enabled(dev);
 		xgene_rtc_alarm_irq_enable(dev, 0);
 		clk_disable_unprepare(pdata->clk);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused xgene_rtc_resume(काष्ठा device *dev)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
-	काष्ठा xgene_rtc_dev *pdata = platक्रमm_get_drvdata(pdev);
-	पूर्णांक irq;
-	पूर्णांक rc;
+static int __maybe_unused xgene_rtc_resume(struct device *dev)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	struct xgene_rtc_dev *pdata = platform_get_drvdata(pdev);
+	int irq;
+	int rc;
 
-	irq = platक्रमm_get_irq(pdev, 0);
+	irq = platform_get_irq(pdev, 0);
 
-	अगर (device_may_wakeup(&pdev->dev)) अणु
-		अगर (pdata->irq_wake) अणु
+	if (device_may_wakeup(&pdev->dev)) {
+		if (pdata->irq_wake) {
 			disable_irq_wake(irq);
 			pdata->irq_wake = 0;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		rc = clk_prepare_enable(pdata->clk);
-		अगर (rc) अणु
+		if (rc) {
 			dev_err(dev, "Unable to enable clock error %d\n", rc);
-			वापस rc;
-		पूर्ण
+			return rc;
+		}
 		xgene_rtc_alarm_irq_enable(dev, pdata->irq_enabled);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल SIMPLE_DEV_PM_OPS(xgene_rtc_pm_ops, xgene_rtc_suspend, xgene_rtc_resume);
+static SIMPLE_DEV_PM_OPS(xgene_rtc_pm_ops, xgene_rtc_suspend, xgene_rtc_resume);
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा of_device_id xgene_rtc_of_match[] = अणु
-	अणु.compatible = "apm,xgene-rtc" पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+#ifdef CONFIG_OF
+static const struct of_device_id xgene_rtc_of_match[] = {
+	{.compatible = "apm,xgene-rtc" },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, xgene_rtc_of_match);
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा platक्रमm_driver xgene_rtc_driver = अणु
+static struct platform_driver xgene_rtc_driver = {
 	.probe		= xgene_rtc_probe,
-	.हटाओ		= xgene_rtc_हटाओ,
-	.driver		= अणु
+	.remove		= xgene_rtc_remove,
+	.driver		= {
 		.name	= "xgene-rtc",
 		.pm = &xgene_rtc_pm_ops,
 		.of_match_table	= of_match_ptr(xgene_rtc_of_match),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(xgene_rtc_driver);
+module_platform_driver(xgene_rtc_driver);
 
 MODULE_DESCRIPTION("APM X-Gene SoC RTC driver");
 MODULE_AUTHOR("Rameshwar Sahu <rsahu@apm.com>");

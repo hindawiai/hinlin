@@ -1,65 +1,64 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright 2014, Michael Ellerman, IBM Corp.
  */
 
-#समावेश <संकेत.स>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <stdbool.h>
-#समावेश <sys/types.h>
-#समावेश <sys/रुको.h>
-#समावेश <unistd.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
-#समावेश "ebb.h"
+#include "ebb.h"
 
 
 /*
- * Tests we can setup an EBB on our child. Nothing पूर्णांकeresting happens, because
+ * Tests we can setup an EBB on our child. Nothing interesting happens, because
  * even though the event is enabled and running the child hasn't enabled the
  * actual delivery of the EBBs.
  */
 
-अटल पूर्णांक victim_child(जोड़ pipe पढ़ो_pipe, जोड़ pipe ग_लिखो_pipe)
-अणु
-	पूर्णांक i;
+static int victim_child(union pipe read_pipe, union pipe write_pipe)
+{
+	int i;
 
-	FAIL_IF(रुको_क्रम_parent(पढ़ो_pipe));
-	FAIL_IF(notअगरy_parent(ग_लिखो_pipe));
+	FAIL_IF(wait_for_parent(read_pipe));
+	FAIL_IF(notify_parent(write_pipe));
 
 	/* Parent creates EBB event */
 
-	FAIL_IF(रुको_क्रम_parent(पढ़ो_pipe));
-	FAIL_IF(notअगरy_parent(ग_लिखो_pipe));
+	FAIL_IF(wait_for_parent(read_pipe));
+	FAIL_IF(notify_parent(write_pipe));
 
 	/* Check the EBB is enabled by writing PMC1 */
-	ग_लिखो_pmc1();
+	write_pmc1();
 
 	/* EBB event is enabled here */
-	क्रम (i = 0; i < 1000000; i++) ;
+	for (i = 0; i < 1000000; i++) ;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक ebb_on_child(व्योम)
-अणु
-	जोड़ pipe पढ़ो_pipe, ग_लिखो_pipe;
-	काष्ठा event event;
+int ebb_on_child(void)
+{
+	union pipe read_pipe, write_pipe;
+	struct event event;
 	pid_t pid;
 
 	SKIP_IF(!ebb_is_supported());
 
-	FAIL_IF(pipe(पढ़ो_pipe.fds) == -1);
-	FAIL_IF(pipe(ग_लिखो_pipe.fds) == -1);
+	FAIL_IF(pipe(read_pipe.fds) == -1);
+	FAIL_IF(pipe(write_pipe.fds) == -1);
 
-	pid = विभाजन();
-	अगर (pid == 0) अणु
+	pid = fork();
+	if (pid == 0) {
 		/* NB order of pipes looks reversed */
-		निकास(victim_child(ग_लिखो_pipe, पढ़ो_pipe));
-	पूर्ण
+		exit(victim_child(write_pipe, read_pipe));
+	}
 
-	FAIL_IF(sync_with_child(पढ़ो_pipe, ग_लिखो_pipe));
+	FAIL_IF(sync_with_child(read_pipe, write_pipe));
 
 	/* Child is running now */
 
@@ -70,20 +69,20 @@
 	event.attr.exclude_hv = 1;
 	event.attr.exclude_idle = 1;
 
-	FAIL_IF(event_खोलो_with_pid(&event, pid));
+	FAIL_IF(event_open_with_pid(&event, pid));
 	FAIL_IF(ebb_event_enable(&event));
 
-	FAIL_IF(sync_with_child(पढ़ो_pipe, ग_लिखो_pipe));
+	FAIL_IF(sync_with_child(read_pipe, write_pipe));
 
-	/* Child should just निकास happily */
-	FAIL_IF(रुको_क्रम_child(pid));
+	/* Child should just exit happily */
+	FAIL_IF(wait_for_child(pid));
 
-	event_बंद(&event);
+	event_close(&event);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक मुख्य(व्योम)
-अणु
-	वापस test_harness(ebb_on_child, "ebb_on_child");
-पूर्ण
+int main(void)
+{
+	return test_harness(ebb_on_child, "ebb_on_child");
+}

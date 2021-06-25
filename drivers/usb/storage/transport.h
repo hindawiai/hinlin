@@ -1,89 +1,88 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
- * Driver क्रम USB Mass Storage compliant devices
+ * Driver for USB Mass Storage compliant devices
  * Transport Functions Header File
  *
- * Current development and मुख्यtenance by:
+ * Current development and maintenance by:
  *   (c) 1999, 2000 Matthew Dharm (mdharm-usb@one-eyed-alien.net)
  *
- * This driver is based on the 'USB Mass Storage Class' करोcument. This
+ * This driver is based on the 'USB Mass Storage Class' document. This
  * describes in detail the protocol used to communicate with such
  * devices.  Clearly, the designers had SCSI and ATAPI commands in
- * mind when they created this करोcument.  The commands are all very
- * similar to commands in the SCSI-II and ATAPI specअगरications.
+ * mind when they created this document.  The commands are all very
+ * similar to commands in the SCSI-II and ATAPI specifications.
  *
- * It is important to note that in a number of हालs this class
- * exhibits class-specअगरic exemptions from the USB specअगरication.
- * Notably the usage of NAK, STALL and ACK dअगरfers from the norm, in
- * that they are used to communicate रुको, failed and OK on commands.
+ * It is important to note that in a number of cases this class
+ * exhibits class-specific exemptions from the USB specification.
+ * Notably the usage of NAK, STALL and ACK differs from the norm, in
+ * that they are used to communicate wait, failed and OK on commands.
  *
- * Also, क्रम certain devices, the पूर्णांकerrupt endpoपूर्णांक is used to convey
+ * Also, for certain devices, the interrupt endpoint is used to convey
  * status of a command.
  */
 
-#अगर_अघोषित _TRANSPORT_H_
-#घोषणा _TRANSPORT_H_
+#ifndef _TRANSPORT_H_
+#define _TRANSPORT_H_
 
-#समावेश <linux/blkdev.h>
-
-/*
- * usb_stor_bulk_transfer_xxx() वापस codes, in order of severity
- */
-
-#घोषणा USB_STOR_XFER_GOOD	0	/* good transfer                 */
-#घोषणा USB_STOR_XFER_SHORT	1	/* transferred less than expected */
-#घोषणा USB_STOR_XFER_STALLED	2	/* endpoपूर्णांक stalled              */
-#घोषणा USB_STOR_XFER_LONG	3	/* device tried to send too much */
-#घोषणा USB_STOR_XFER_ERROR	4	/* transfer died in the middle   */
+#include <linux/blkdev.h>
 
 /*
- * Transport वापस codes
+ * usb_stor_bulk_transfer_xxx() return codes, in order of severity
  */
 
-#घोषणा USB_STOR_TRANSPORT_GOOD	   0   /* Transport good, command good	   */
-#घोषणा USB_STOR_TRANSPORT_FAILED  1   /* Transport good, command failed   */
-#घोषणा USB_STOR_TRANSPORT_NO_SENSE 2  /* Command failed, no स्वतः-sense    */
-#घोषणा USB_STOR_TRANSPORT_ERROR   3   /* Transport bad (i.e. device dead) */
+#define USB_STOR_XFER_GOOD	0	/* good transfer                 */
+#define USB_STOR_XFER_SHORT	1	/* transferred less than expected */
+#define USB_STOR_XFER_STALLED	2	/* endpoint stalled              */
+#define USB_STOR_XFER_LONG	3	/* device tried to send too much */
+#define USB_STOR_XFER_ERROR	4	/* transfer died in the middle   */
+
+/*
+ * Transport return codes
+ */
+
+#define USB_STOR_TRANSPORT_GOOD	   0   /* Transport good, command good	   */
+#define USB_STOR_TRANSPORT_FAILED  1   /* Transport good, command failed   */
+#define USB_STOR_TRANSPORT_NO_SENSE 2  /* Command failed, no auto-sense    */
+#define USB_STOR_TRANSPORT_ERROR   3   /* Transport bad (i.e. device dead) */
 
 /*
  * We used to have USB_STOR_XFER_ABORTED and USB_STOR_TRANSPORT_ABORTED
- * वापस codes.  But now the transport and low-level transfer routines
- * treat an पात as just another error (-ENOENT क्रम a cancelled URB).
- * It is up to the invoke_transport() function to test क्रम पातs and
+ * return codes.  But now the transport and low-level transfer routines
+ * treat an abort as just another error (-ENOENT for a cancelled URB).
+ * It is up to the invoke_transport() function to test for aborts and
  * distinguish them from genuine communication errors.
  */
 
 /*
- * CBI accept device specअगरic command
+ * CBI accept device specific command
  */
 
-#घोषणा US_CBI_ADSC		0
+#define US_CBI_ADSC		0
 
-बाह्य पूर्णांक usb_stor_CB_transport(काष्ठा scsi_cmnd *, काष्ठा us_data*);
-बाह्य पूर्णांक usb_stor_CB_reset(काष्ठा us_data*);
+extern int usb_stor_CB_transport(struct scsi_cmnd *, struct us_data*);
+extern int usb_stor_CB_reset(struct us_data*);
 
-बाह्य पूर्णांक usb_stor_Bulk_transport(काष्ठा scsi_cmnd *, काष्ठा us_data*);
-बाह्य पूर्णांक usb_stor_Bulk_max_lun(काष्ठा us_data*);
-बाह्य पूर्णांक usb_stor_Bulk_reset(काष्ठा us_data*);
+extern int usb_stor_Bulk_transport(struct scsi_cmnd *, struct us_data*);
+extern int usb_stor_Bulk_max_lun(struct us_data*);
+extern int usb_stor_Bulk_reset(struct us_data*);
 
-बाह्य व्योम usb_stor_invoke_transport(काष्ठा scsi_cmnd *, काष्ठा us_data*);
-बाह्य व्योम usb_stor_stop_transport(काष्ठा us_data*);
+extern void usb_stor_invoke_transport(struct scsi_cmnd *, struct us_data*);
+extern void usb_stor_stop_transport(struct us_data*);
 
-बाह्य पूर्णांक usb_stor_control_msg(काष्ठा us_data *us, अचिन्हित पूर्णांक pipe,
+extern int usb_stor_control_msg(struct us_data *us, unsigned int pipe,
 		u8 request, u8 requesttype, u16 value, u16 index,
-		व्योम *data, u16 size, पूर्णांक समयout);
-बाह्य पूर्णांक usb_stor_clear_halt(काष्ठा us_data *us, अचिन्हित पूर्णांक pipe);
+		void *data, u16 size, int timeout);
+extern int usb_stor_clear_halt(struct us_data *us, unsigned int pipe);
 
-बाह्य पूर्णांक usb_stor_ctrl_transfer(काष्ठा us_data *us, अचिन्हित पूर्णांक pipe,
+extern int usb_stor_ctrl_transfer(struct us_data *us, unsigned int pipe,
 		u8 request, u8 requesttype, u16 value, u16 index,
-		व्योम *data, u16 size);
-बाह्य पूर्णांक usb_stor_bulk_transfer_buf(काष्ठा us_data *us, अचिन्हित पूर्णांक pipe,
-		व्योम *buf, अचिन्हित पूर्णांक length, अचिन्हित पूर्णांक *act_len);
-बाह्य पूर्णांक usb_stor_bulk_transfer_sg(काष्ठा us_data *us, अचिन्हित पूर्णांक pipe,
-		व्योम *buf, अचिन्हित पूर्णांक length, पूर्णांक use_sg, पूर्णांक *residual);
-बाह्य पूर्णांक usb_stor_bulk_srb(काष्ठा us_data* us, अचिन्हित पूर्णांक pipe,
-		काष्ठा scsi_cmnd* srb);
+		void *data, u16 size);
+extern int usb_stor_bulk_transfer_buf(struct us_data *us, unsigned int pipe,
+		void *buf, unsigned int length, unsigned int *act_len);
+extern int usb_stor_bulk_transfer_sg(struct us_data *us, unsigned int pipe,
+		void *buf, unsigned int length, int use_sg, int *residual);
+extern int usb_stor_bulk_srb(struct us_data* us, unsigned int pipe,
+		struct scsi_cmnd* srb);
 
-बाह्य पूर्णांक usb_stor_port_reset(काष्ठा us_data *us);
-#पूर्ण_अगर
+extern int usb_stor_port_reset(struct us_data *us);
+#endif

@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright(c) 2011-2016 Intel Corporation. All rights reserved.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -22,72 +21,72 @@
  * SOFTWARE.
  *
  * Authors:
- *    Zhi Wang <zhi.a.wang@पूर्णांकel.com>
+ *    Zhi Wang <zhi.a.wang@intel.com>
  *
  * Contributors:
- *    Ping Gao <ping.a.gao@पूर्णांकel.com>
- *    Tina Zhang <tina.zhang@पूर्णांकel.com>
- *    Chanbin Du <changbin.du@पूर्णांकel.com>
- *    Min He <min.he@पूर्णांकel.com>
- *    Bing Niu <bing.niu@पूर्णांकel.com>
- *    Zhenyu Wang <zhenyuw@linux.पूर्णांकel.com>
+ *    Ping Gao <ping.a.gao@intel.com>
+ *    Tina Zhang <tina.zhang@intel.com>
+ *    Chanbin Du <changbin.du@intel.com>
+ *    Min He <min.he@intel.com>
+ *    Bing Niu <bing.niu@intel.com>
+ *    Zhenyu Wang <zhenyuw@linux.intel.com>
  *
  */
 
-#समावेश <linux/kthपढ़ो.h>
+#include <linux/kthread.h>
 
-#समावेश "gem/i915_gem_pm.h"
-#समावेश "gt/intel_context.h"
-#समावेश "gt/intel_execlists_submission.h"
-#समावेश "gt/intel_lrc.h"
-#समावेश "gt/intel_ring.h"
+#include "gem/i915_gem_pm.h"
+#include "gt/intel_context.h"
+#include "gt/intel_execlists_submission.h"
+#include "gt/intel_lrc.h"
+#include "gt/intel_ring.h"
 
-#समावेश "i915_drv.h"
-#समावेश "i915_gem_gtt.h"
-#समावेश "gvt.h"
+#include "i915_drv.h"
+#include "i915_gem_gtt.h"
+#include "gvt.h"
 
-#घोषणा RING_CTX_OFF(x) \
-	दुरत्व(काष्ठा execlist_ring_context, x)
+#define RING_CTX_OFF(x) \
+	offsetof(struct execlist_ring_context, x)
 
-अटल व्योम set_context_pdp_root_poपूर्णांकer(
-		काष्ठा execlist_ring_context *ring_context,
+static void set_context_pdp_root_pointer(
+		struct execlist_ring_context *ring_context,
 		u32 pdp[8])
-अणु
-	पूर्णांक i;
+{
+	int i;
 
-	क्रम (i = 0; i < 8; i++)
+	for (i = 0; i < 8; i++)
 		ring_context->pdps[i].val = pdp[7 - i];
-पूर्ण
+}
 
-अटल व्योम update_shaकरोw_pdps(काष्ठा पूर्णांकel_vgpu_workload *workload)
-अणु
-	काष्ठा execlist_ring_context *shaकरोw_ring_context;
-	काष्ठा पूर्णांकel_context *ctx = workload->req->context;
+static void update_shadow_pdps(struct intel_vgpu_workload *workload)
+{
+	struct execlist_ring_context *shadow_ring_context;
+	struct intel_context *ctx = workload->req->context;
 
-	अगर (WARN_ON(!workload->shaकरोw_mm))
-		वापस;
+	if (WARN_ON(!workload->shadow_mm))
+		return;
 
-	अगर (WARN_ON(!atomic_पढ़ो(&workload->shaकरोw_mm->pincount)))
-		वापस;
+	if (WARN_ON(!atomic_read(&workload->shadow_mm->pincount)))
+		return;
 
-	shaकरोw_ring_context = (काष्ठा execlist_ring_context *)ctx->lrc_reg_state;
-	set_context_pdp_root_poपूर्णांकer(shaकरोw_ring_context,
-			(व्योम *)workload->shaकरोw_mm->ppgtt_mm.shaकरोw_pdps);
-पूर्ण
+	shadow_ring_context = (struct execlist_ring_context *)ctx->lrc_reg_state;
+	set_context_pdp_root_pointer(shadow_ring_context,
+			(void *)workload->shadow_mm->ppgtt_mm.shadow_pdps);
+}
 
 /*
- * when populating shaकरोw ctx from guest, we should not overrride oa related
- * रेजिस्टरs, so that they will not be overlapped by guest oa configs. Thus
- * made it possible to capture oa data from host क्रम both host and guests.
+ * when populating shadow ctx from guest, we should not overrride oa related
+ * registers, so that they will not be overlapped by guest oa configs. Thus
+ * made it possible to capture oa data from host for both host and guests.
  */
-अटल व्योम sr_oa_regs(काष्ठा पूर्णांकel_vgpu_workload *workload,
+static void sr_oa_regs(struct intel_vgpu_workload *workload,
 		u32 *reg_state, bool save)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = workload->vgpu->gvt->gt->i915;
+{
+	struct drm_i915_private *dev_priv = workload->vgpu->gvt->gt->i915;
 	u32 ctx_oactxctrl = dev_priv->perf.ctx_oactxctrl_offset;
 	u32 ctx_flexeu0 = dev_priv->perf.ctx_flexeu0_offset;
-	पूर्णांक i = 0;
-	u32 flex_mmio[] = अणु
+	int i = 0;
+	u32 flex_mmio[] = {
 		i915_mmio_reg_offset(EU_PERF_CNTL0),
 		i915_mmio_reg_offset(EU_PERF_CNTL1),
 		i915_mmio_reg_offset(EU_PERF_CNTL2),
@@ -95,96 +94,96 @@
 		i915_mmio_reg_offset(EU_PERF_CNTL4),
 		i915_mmio_reg_offset(EU_PERF_CNTL5),
 		i915_mmio_reg_offset(EU_PERF_CNTL6),
-	पूर्ण;
+	};
 
-	अगर (workload->engine->id != RCS0)
-		वापस;
+	if (workload->engine->id != RCS0)
+		return;
 
-	अगर (save) अणु
+	if (save) {
 		workload->oactxctrl = reg_state[ctx_oactxctrl + 1];
 
-		क्रम (i = 0; i < ARRAY_SIZE(workload->flex_mmio); i++) अणु
+		for (i = 0; i < ARRAY_SIZE(workload->flex_mmio); i++) {
 			u32 state_offset = ctx_flexeu0 + i * 2;
 
 			workload->flex_mmio[i] = reg_state[state_offset + 1];
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		reg_state[ctx_oactxctrl] =
 			i915_mmio_reg_offset(GEN8_OACTXCONTROL);
 		reg_state[ctx_oactxctrl + 1] = workload->oactxctrl;
 
-		क्रम (i = 0; i < ARRAY_SIZE(workload->flex_mmio); i++) अणु
+		for (i = 0; i < ARRAY_SIZE(workload->flex_mmio); i++) {
 			u32 state_offset = ctx_flexeu0 + i * 2;
 			u32 mmio = flex_mmio[i];
 
 			reg_state[state_offset] = mmio;
 			reg_state[state_offset + 1] = workload->flex_mmio[i];
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल पूर्णांक populate_shaकरोw_context(काष्ठा पूर्णांकel_vgpu_workload *workload)
-अणु
-	काष्ठा पूर्णांकel_vgpu *vgpu = workload->vgpu;
-	काष्ठा पूर्णांकel_gvt *gvt = vgpu->gvt;
-	काष्ठा पूर्णांकel_context *ctx = workload->req->context;
-	काष्ठा execlist_ring_context *shaकरोw_ring_context;
-	व्योम *dst;
-	व्योम *context_base;
-	अचिन्हित दीर्घ context_gpa, context_page_num;
-	अचिन्हित दीर्घ gpa_base; /* first gpa of consecutive GPAs */
-	अचिन्हित दीर्घ gpa_size; /* size of consecutive GPAs */
-	काष्ठा पूर्णांकel_vgpu_submission *s = &vgpu->submission;
-	पूर्णांक i;
+static int populate_shadow_context(struct intel_vgpu_workload *workload)
+{
+	struct intel_vgpu *vgpu = workload->vgpu;
+	struct intel_gvt *gvt = vgpu->gvt;
+	struct intel_context *ctx = workload->req->context;
+	struct execlist_ring_context *shadow_ring_context;
+	void *dst;
+	void *context_base;
+	unsigned long context_gpa, context_page_num;
+	unsigned long gpa_base; /* first gpa of consecutive GPAs */
+	unsigned long gpa_size; /* size of consecutive GPAs */
+	struct intel_vgpu_submission *s = &vgpu->submission;
+	int i;
 	bool skip = false;
-	पूर्णांक ring_id = workload->engine->id;
-	पूर्णांक ret;
+	int ring_id = workload->engine->id;
+	int ret;
 
-	GEM_BUG_ON(!पूर्णांकel_context_is_pinned(ctx));
+	GEM_BUG_ON(!intel_context_is_pinned(ctx));
 
-	context_base = (व्योम *) ctx->lrc_reg_state -
+	context_base = (void *) ctx->lrc_reg_state -
 				(LRC_STATE_PN << I915_GTT_PAGE_SHIFT);
 
-	shaकरोw_ring_context = (व्योम *) ctx->lrc_reg_state;
+	shadow_ring_context = (void *) ctx->lrc_reg_state;
 
-	sr_oa_regs(workload, (u32 *)shaकरोw_ring_context, true);
-#घोषणा COPY_REG(name) \
-	पूर्णांकel_gvt_hypervisor_पढ़ो_gpa(vgpu, workload->ring_context_gpa \
-		+ RING_CTX_OFF(name.val), &shaकरोw_ring_context->name.val, 4)
-#घोषणा COPY_REG_MASKED(name) अणु\
-		पूर्णांकel_gvt_hypervisor_पढ़ो_gpa(vgpu, workload->ring_context_gpa \
+	sr_oa_regs(workload, (u32 *)shadow_ring_context, true);
+#define COPY_REG(name) \
+	intel_gvt_hypervisor_read_gpa(vgpu, workload->ring_context_gpa \
+		+ RING_CTX_OFF(name.val), &shadow_ring_context->name.val, 4)
+#define COPY_REG_MASKED(name) {\
+		intel_gvt_hypervisor_read_gpa(vgpu, workload->ring_context_gpa \
 					      + RING_CTX_OFF(name.val),\
-					      &shaकरोw_ring_context->name.val, 4);\
-		shaकरोw_ring_context->name.val |= 0xffff << 16;\
-	पूर्ण
+					      &shadow_ring_context->name.val, 4);\
+		shadow_ring_context->name.val |= 0xffff << 16;\
+	}
 
 	COPY_REG_MASKED(ctx_ctrl);
-	COPY_REG(ctx_बारtamp);
+	COPY_REG(ctx_timestamp);
 
-	अगर (workload->engine->id == RCS0) अणु
+	if (workload->engine->id == RCS0) {
 		COPY_REG(bb_per_ctx_ptr);
 		COPY_REG(rcs_indirect_ctx);
 		COPY_REG(rcs_indirect_ctx_offset);
-	पूर्ण अन्यथा अगर (workload->engine->id == BCS0)
-		पूर्णांकel_gvt_hypervisor_पढ़ो_gpa(vgpu,
+	} else if (workload->engine->id == BCS0)
+		intel_gvt_hypervisor_read_gpa(vgpu,
 				workload->ring_context_gpa +
 				BCS_TILE_REGISTER_VAL_OFFSET,
-				(व्योम *)shaकरोw_ring_context +
+				(void *)shadow_ring_context +
 				BCS_TILE_REGISTER_VAL_OFFSET, 4);
-#अघोषित COPY_REG
-#अघोषित COPY_REG_MASKED
+#undef COPY_REG
+#undef COPY_REG_MASKED
 
-	/* करोn't copy Ring Context (the first 0x50 dwords),
+	/* don't copy Ring Context (the first 0x50 dwords),
 	 * only copy the Engine Context part from guest
 	 */
-	पूर्णांकel_gvt_hypervisor_पढ़ो_gpa(vgpu,
+	intel_gvt_hypervisor_read_gpa(vgpu,
 			workload->ring_context_gpa +
 			RING_CTX_SIZE,
-			(व्योम *)shaकरोw_ring_context +
+			(void *)shadow_ring_context +
 			RING_CTX_SIZE,
 			I915_GTT_PAGE_SIZE - RING_CTX_SIZE);
 
-	sr_oa_regs(workload, (u32 *)shaकरोw_ring_context, false);
+	sr_oa_regs(workload, (u32 *)shadow_ring_context, false);
 
 	gvt_dbg_sched("ring %s workload lrca %x, ctx_id %x, ctx gpa %llx",
 			workload->engine->name, workload->ctx_desc.lrca,
@@ -194,10 +193,10 @@
 	/* only need to ensure this context is not pinned/unpinned during the
 	 * period from last submission to this this submission.
 	 * Upon reaching this function, the currently submitted context is not
-	 * supposed to get unpinned. If a misbehaving guest driver ever करोes
+	 * supposed to get unpinned. If a misbehaving guest driver ever does
 	 * this, it would corrupt itself.
 	 */
-	अगर (s->last_ctx[ring_id].valid &&
+	if (s->last_ctx[ring_id].valid &&
 			(s->last_ctx[ring_id].lrca ==
 				workload->ctx_desc.lrca) &&
 			(s->last_ctx[ring_id].ring_context_gpa ==
@@ -207,647 +206,647 @@
 	s->last_ctx[ring_id].lrca = workload->ctx_desc.lrca;
 	s->last_ctx[ring_id].ring_context_gpa = workload->ring_context_gpa;
 
-	अगर (IS_RESTORE_INHIBIT(shaकरोw_ring_context->ctx_ctrl.val) || skip)
-		वापस 0;
+	if (IS_RESTORE_INHIBIT(shadow_ring_context->ctx_ctrl.val) || skip)
+		return 0;
 
 	s->last_ctx[ring_id].valid = false;
 	context_page_num = workload->engine->context_size;
 	context_page_num = context_page_num >> PAGE_SHIFT;
 
-	अगर (IS_BROADWELL(gvt->gt->i915) && workload->engine->id == RCS0)
+	if (IS_BROADWELL(gvt->gt->i915) && workload->engine->id == RCS0)
 		context_page_num = 19;
 
 	/* find consecutive GPAs from gma until the first inconsecutive GPA.
-	 * पढ़ो from the continuous GPAs पूर्णांकo dst भव address
+	 * read from the continuous GPAs into dst virtual address
 	 */
 	gpa_size = 0;
-	क्रम (i = 2; i < context_page_num; i++) अणु
-		context_gpa = पूर्णांकel_vgpu_gma_to_gpa(vgpu->gtt.ggtt_mm,
+	for (i = 2; i < context_page_num; i++) {
+		context_gpa = intel_vgpu_gma_to_gpa(vgpu->gtt.ggtt_mm,
 				(u32)((workload->ctx_desc.lrca + i) <<
 				I915_GTT_PAGE_SHIFT));
-		अगर (context_gpa == INTEL_GVT_INVALID_ADDR) अणु
+		if (context_gpa == INTEL_GVT_INVALID_ADDR) {
 			gvt_vgpu_err("Invalid guest context descriptor\n");
-			वापस -EFAULT;
-		पूर्ण
+			return -EFAULT;
+		}
 
-		अगर (gpa_size == 0) अणु
+		if (gpa_size == 0) {
 			gpa_base = context_gpa;
 			dst = context_base + (i << I915_GTT_PAGE_SHIFT);
-		पूर्ण अन्यथा अगर (context_gpa != gpa_base + gpa_size)
-			जाओ पढ़ो;
+		} else if (context_gpa != gpa_base + gpa_size)
+			goto read;
 
 		gpa_size += I915_GTT_PAGE_SIZE;
 
-		अगर (i == context_page_num - 1)
-			जाओ पढ़ो;
+		if (i == context_page_num - 1)
+			goto read;
 
-		जारी;
+		continue;
 
-पढ़ो:
-		पूर्णांकel_gvt_hypervisor_पढ़ो_gpa(vgpu, gpa_base, dst, gpa_size);
+read:
+		intel_gvt_hypervisor_read_gpa(vgpu, gpa_base, dst, gpa_size);
 		gpa_base = context_gpa;
 		gpa_size = I915_GTT_PAGE_SIZE;
 		dst = context_base + (i << I915_GTT_PAGE_SHIFT);
-	पूर्ण
-	ret = पूर्णांकel_gvt_scan_engine_context(workload);
-	अगर (ret) अणु
+	}
+	ret = intel_gvt_scan_engine_context(workload);
+	if (ret) {
 		gvt_vgpu_err("invalid cmd found in guest context pages\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	s->last_ctx[ring_id].valid = true;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत bool is_gvt_request(काष्ठा i915_request *rq)
-अणु
-	वापस पूर्णांकel_context_क्रमce_single_submission(rq->context);
-पूर्ण
+static inline bool is_gvt_request(struct i915_request *rq)
+{
+	return intel_context_force_single_submission(rq->context);
+}
 
-अटल व्योम save_ring_hw_state(काष्ठा पूर्णांकel_vgpu *vgpu,
-			       स्थिर काष्ठा पूर्णांकel_engine_cs *engine)
-अणु
-	काष्ठा पूर्णांकel_uncore *uncore = engine->uncore;
+static void save_ring_hw_state(struct intel_vgpu *vgpu,
+			       const struct intel_engine_cs *engine)
+{
+	struct intel_uncore *uncore = engine->uncore;
 	i915_reg_t reg;
 
 	reg = RING_INSTDONE(engine->mmio_base);
 	vgpu_vreg(vgpu, i915_mmio_reg_offset(reg)) =
-		पूर्णांकel_uncore_पढ़ो(uncore, reg);
+		intel_uncore_read(uncore, reg);
 
 	reg = RING_ACTHD(engine->mmio_base);
 	vgpu_vreg(vgpu, i915_mmio_reg_offset(reg)) =
-		पूर्णांकel_uncore_पढ़ो(uncore, reg);
+		intel_uncore_read(uncore, reg);
 
 	reg = RING_ACTHD_UDW(engine->mmio_base);
 	vgpu_vreg(vgpu, i915_mmio_reg_offset(reg)) =
-		पूर्णांकel_uncore_पढ़ो(uncore, reg);
-पूर्ण
+		intel_uncore_read(uncore, reg);
+}
 
-अटल पूर्णांक shaकरोw_context_status_change(काष्ठा notअगरier_block *nb,
-		अचिन्हित दीर्घ action, व्योम *data)
-अणु
-	काष्ठा i915_request *rq = data;
-	काष्ठा पूर्णांकel_gvt *gvt = container_of(nb, काष्ठा पूर्णांकel_gvt,
-				shaकरोw_ctx_notअगरier_block[rq->engine->id]);
-	काष्ठा पूर्णांकel_gvt_workload_scheduler *scheduler = &gvt->scheduler;
-	क्रमागत पूर्णांकel_engine_id ring_id = rq->engine->id;
-	काष्ठा पूर्णांकel_vgpu_workload *workload;
-	अचिन्हित दीर्घ flags;
+static int shadow_context_status_change(struct notifier_block *nb,
+		unsigned long action, void *data)
+{
+	struct i915_request *rq = data;
+	struct intel_gvt *gvt = container_of(nb, struct intel_gvt,
+				shadow_ctx_notifier_block[rq->engine->id]);
+	struct intel_gvt_workload_scheduler *scheduler = &gvt->scheduler;
+	enum intel_engine_id ring_id = rq->engine->id;
+	struct intel_vgpu_workload *workload;
+	unsigned long flags;
 
-	अगर (!is_gvt_request(rq)) अणु
+	if (!is_gvt_request(rq)) {
 		spin_lock_irqsave(&scheduler->mmio_context_lock, flags);
-		अगर (action == INTEL_CONTEXT_SCHEDULE_IN &&
-		    scheduler->engine_owner[ring_id]) अणु
+		if (action == INTEL_CONTEXT_SCHEDULE_IN &&
+		    scheduler->engine_owner[ring_id]) {
 			/* Switch ring from vGPU to host. */
-			पूर्णांकel_gvt_चयन_mmio(scheduler->engine_owner[ring_id],
-					      शून्य, rq->engine);
-			scheduler->engine_owner[ring_id] = शून्य;
-		पूर्ण
+			intel_gvt_switch_mmio(scheduler->engine_owner[ring_id],
+					      NULL, rq->engine);
+			scheduler->engine_owner[ring_id] = NULL;
+		}
 		spin_unlock_irqrestore(&scheduler->mmio_context_lock, flags);
 
-		वापस NOTIFY_OK;
-	पूर्ण
+		return NOTIFY_OK;
+	}
 
 	workload = scheduler->current_workload[ring_id];
-	अगर (unlikely(!workload))
-		वापस NOTIFY_OK;
+	if (unlikely(!workload))
+		return NOTIFY_OK;
 
-	चयन (action) अणु
-	हाल INTEL_CONTEXT_SCHEDULE_IN:
+	switch (action) {
+	case INTEL_CONTEXT_SCHEDULE_IN:
 		spin_lock_irqsave(&scheduler->mmio_context_lock, flags);
-		अगर (workload->vgpu != scheduler->engine_owner[ring_id]) अणु
+		if (workload->vgpu != scheduler->engine_owner[ring_id]) {
 			/* Switch ring from host to vGPU or vGPU to vGPU. */
-			पूर्णांकel_gvt_चयन_mmio(scheduler->engine_owner[ring_id],
+			intel_gvt_switch_mmio(scheduler->engine_owner[ring_id],
 					      workload->vgpu, rq->engine);
 			scheduler->engine_owner[ring_id] = workload->vgpu;
-		पूर्ण अन्यथा
+		} else
 			gvt_dbg_sched("skip ring %d mmio switch for vgpu%d\n",
 				      ring_id, workload->vgpu->id);
 		spin_unlock_irqrestore(&scheduler->mmio_context_lock, flags);
-		atomic_set(&workload->shaकरोw_ctx_active, 1);
-		अवरोध;
-	हाल INTEL_CONTEXT_SCHEDULE_OUT:
+		atomic_set(&workload->shadow_ctx_active, 1);
+		break;
+	case INTEL_CONTEXT_SCHEDULE_OUT:
 		save_ring_hw_state(workload->vgpu, rq->engine);
-		atomic_set(&workload->shaकरोw_ctx_active, 0);
-		अवरोध;
-	हाल INTEL_CONTEXT_SCHEDULE_PREEMPTED:
+		atomic_set(&workload->shadow_ctx_active, 0);
+		break;
+	case INTEL_CONTEXT_SCHEDULE_PREEMPTED:
 		save_ring_hw_state(workload->vgpu, rq->engine);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		WARN_ON(1);
-		वापस NOTIFY_OK;
-	पूर्ण
-	wake_up(&workload->shaकरोw_ctx_status_wq);
-	वापस NOTIFY_OK;
-पूर्ण
+		return NOTIFY_OK;
+	}
+	wake_up(&workload->shadow_ctx_status_wq);
+	return NOTIFY_OK;
+}
 
-अटल व्योम
-shaकरोw_context_descriptor_update(काष्ठा पूर्णांकel_context *ce,
-				 काष्ठा पूर्णांकel_vgpu_workload *workload)
-अणु
+static void
+shadow_context_descriptor_update(struct intel_context *ce,
+				 struct intel_vgpu_workload *workload)
+{
 	u64 desc = ce->lrc.desc;
 
 	/*
 	 * Update bits 0-11 of the context descriptor which includes flags
-	 * like GEN8_CTX_* cached in desc_ढाँचा
+	 * like GEN8_CTX_* cached in desc_template
 	 */
 	desc &= ~(0x3ull << GEN8_CTX_ADDRESSING_MODE_SHIFT);
 	desc |= (u64)workload->ctx_desc.addressing_mode <<
 		GEN8_CTX_ADDRESSING_MODE_SHIFT;
 
 	ce->lrc.desc = desc;
-पूर्ण
+}
 
-अटल पूर्णांक copy_workload_to_ring_buffer(काष्ठा पूर्णांकel_vgpu_workload *workload)
-अणु
-	काष्ठा पूर्णांकel_vgpu *vgpu = workload->vgpu;
-	काष्ठा i915_request *req = workload->req;
-	व्योम *shaकरोw_ring_buffer_va;
+static int copy_workload_to_ring_buffer(struct intel_vgpu_workload *workload)
+{
+	struct intel_vgpu *vgpu = workload->vgpu;
+	struct i915_request *req = workload->req;
+	void *shadow_ring_buffer_va;
 	u32 *cs;
-	पूर्णांक err;
+	int err;
 
-	अगर (IS_GEN(req->engine->i915, 9) && is_inhibit_context(req->context))
-		पूर्णांकel_vgpu_restore_inhibit_context(vgpu, req);
+	if (IS_GEN(req->engine->i915, 9) && is_inhibit_context(req->context))
+		intel_vgpu_restore_inhibit_context(vgpu, req);
 
 	/*
 	 * To track whether a request has started on HW, we can emit a
-	 * bपढ़ोcrumb at the beginning of the request and check its
-	 * समयline's HWSP to see अगर the bपढ़ोcrumb has advanced past the
+	 * breadcrumb at the beginning of the request and check its
+	 * timeline's HWSP to see if the breadcrumb has advanced past the
 	 * start of this request. Actually, the request must have the
-	 * init_bपढ़ोcrumb अगर its समयline set has_init_bपढ़ो_crumb, or the
+	 * init_breadcrumb if its timeline set has_init_bread_crumb, or the
 	 * scheduler might get a wrong state of it during reset. Since the
-	 * requests from gvt always set the has_init_bपढ़ोcrumb flag, here
-	 * need to करो the emit_init_bपढ़ोcrumb क्रम all the requests.
+	 * requests from gvt always set the has_init_breadcrumb flag, here
+	 * need to do the emit_init_breadcrumb for all the requests.
 	 */
-	अगर (req->engine->emit_init_bपढ़ोcrumb) अणु
-		err = req->engine->emit_init_bपढ़ोcrumb(req);
-		अगर (err) अणु
+	if (req->engine->emit_init_breadcrumb) {
+		err = req->engine->emit_init_breadcrumb(req);
+		if (err) {
 			gvt_vgpu_err("fail to emit init breadcrumb\n");
-			वापस err;
-		पूर्ण
-	पूर्ण
+			return err;
+		}
+	}
 
-	/* allocate shaकरोw ring buffer */
-	cs = पूर्णांकel_ring_begin(workload->req, workload->rb_len / माप(u32));
-	अगर (IS_ERR(cs)) अणु
+	/* allocate shadow ring buffer */
+	cs = intel_ring_begin(workload->req, workload->rb_len / sizeof(u32));
+	if (IS_ERR(cs)) {
 		gvt_vgpu_err("fail to alloc size =%ld shadow  ring buffer\n",
 			workload->rb_len);
-		वापस PTR_ERR(cs);
-	पूर्ण
+		return PTR_ERR(cs);
+	}
 
-	shaकरोw_ring_buffer_va = workload->shaकरोw_ring_buffer_va;
+	shadow_ring_buffer_va = workload->shadow_ring_buffer_va;
 
-	/* get shaकरोw ring buffer va */
-	workload->shaकरोw_ring_buffer_va = cs;
+	/* get shadow ring buffer va */
+	workload->shadow_ring_buffer_va = cs;
 
-	स_नकल(cs, shaकरोw_ring_buffer_va,
+	memcpy(cs, shadow_ring_buffer_va,
 			workload->rb_len);
 
-	cs += workload->rb_len / माप(u32);
-	पूर्णांकel_ring_advance(workload->req, cs);
+	cs += workload->rb_len / sizeof(u32);
+	intel_ring_advance(workload->req, cs);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम release_shaकरोw_wa_ctx(काष्ठा पूर्णांकel_shaकरोw_wa_ctx *wa_ctx)
-अणु
-	अगर (!wa_ctx->indirect_ctx.obj)
-		वापस;
+static void release_shadow_wa_ctx(struct intel_shadow_wa_ctx *wa_ctx)
+{
+	if (!wa_ctx->indirect_ctx.obj)
+		return;
 
-	i915_gem_object_lock(wa_ctx->indirect_ctx.obj, शून्य);
+	i915_gem_object_lock(wa_ctx->indirect_ctx.obj, NULL);
 	i915_gem_object_unpin_map(wa_ctx->indirect_ctx.obj);
 	i915_gem_object_unlock(wa_ctx->indirect_ctx.obj);
 	i915_gem_object_put(wa_ctx->indirect_ctx.obj);
 
-	wa_ctx->indirect_ctx.obj = शून्य;
-	wa_ctx->indirect_ctx.shaकरोw_va = शून्य;
-पूर्ण
+	wa_ctx->indirect_ctx.obj = NULL;
+	wa_ctx->indirect_ctx.shadow_va = NULL;
+}
 
-अटल व्योम set_dma_address(काष्ठा i915_page_directory *pd, dma_addr_t addr)
-अणु
-	काष्ठा scatterlist *sg = pd->pt.base->mm.pages->sgl;
+static void set_dma_address(struct i915_page_directory *pd, dma_addr_t addr)
+{
+	struct scatterlist *sg = pd->pt.base->mm.pages->sgl;
 
 	/* This is not a good idea */
 	sg->dma_address = addr;
-पूर्ण
+}
 
-अटल व्योम set_context_ppgtt_from_shaकरोw(काष्ठा पूर्णांकel_vgpu_workload *workload,
-					  काष्ठा पूर्णांकel_context *ce)
-अणु
-	काष्ठा पूर्णांकel_vgpu_mm *mm = workload->shaकरोw_mm;
-	काष्ठा i915_ppgtt *ppgtt = i915_vm_to_ppgtt(ce->vm);
-	पूर्णांक i = 0;
+static void set_context_ppgtt_from_shadow(struct intel_vgpu_workload *workload,
+					  struct intel_context *ce)
+{
+	struct intel_vgpu_mm *mm = workload->shadow_mm;
+	struct i915_ppgtt *ppgtt = i915_vm_to_ppgtt(ce->vm);
+	int i = 0;
 
-	अगर (mm->ppgtt_mm.root_entry_type == GTT_TYPE_PPGTT_ROOT_L4_ENTRY) अणु
-		set_dma_address(ppgtt->pd, mm->ppgtt_mm.shaकरोw_pdps[0]);
-	पूर्ण अन्यथा अणु
-		क्रम (i = 0; i < GVT_RING_CTX_NR_PDPS; i++) अणु
-			काष्ठा i915_page_directory * स्थिर pd =
+	if (mm->ppgtt_mm.root_entry_type == GTT_TYPE_PPGTT_ROOT_L4_ENTRY) {
+		set_dma_address(ppgtt->pd, mm->ppgtt_mm.shadow_pdps[0]);
+	} else {
+		for (i = 0; i < GVT_RING_CTX_NR_PDPS; i++) {
+			struct i915_page_directory * const pd =
 				i915_pd_entry(ppgtt->pd, i);
 			/* skip now as current i915 ppgtt alloc won't allocate
-			   top level pdp क्रम non 4-level table, won't impact
-			   shaकरोw ppgtt. */
-			अगर (!pd)
-				अवरोध;
+			   top level pdp for non 4-level table, won't impact
+			   shadow ppgtt. */
+			if (!pd)
+				break;
 
-			set_dma_address(pd, mm->ppgtt_mm.shaकरोw_pdps[i]);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			set_dma_address(pd, mm->ppgtt_mm.shadow_pdps[i]);
+		}
+	}
+}
 
-अटल पूर्णांक
-पूर्णांकel_gvt_workload_req_alloc(काष्ठा पूर्णांकel_vgpu_workload *workload)
-अणु
-	काष्ठा पूर्णांकel_vgpu *vgpu = workload->vgpu;
-	काष्ठा पूर्णांकel_vgpu_submission *s = &vgpu->submission;
-	काष्ठा i915_request *rq;
+static int
+intel_gvt_workload_req_alloc(struct intel_vgpu_workload *workload)
+{
+	struct intel_vgpu *vgpu = workload->vgpu;
+	struct intel_vgpu_submission *s = &vgpu->submission;
+	struct i915_request *rq;
 
-	अगर (workload->req)
-		वापस 0;
+	if (workload->req)
+		return 0;
 
-	rq = i915_request_create(s->shaकरोw[workload->engine->id]);
-	अगर (IS_ERR(rq)) अणु
+	rq = i915_request_create(s->shadow[workload->engine->id]);
+	if (IS_ERR(rq)) {
 		gvt_vgpu_err("fail to allocate gem request\n");
-		वापस PTR_ERR(rq);
-	पूर्ण
+		return PTR_ERR(rq);
+	}
 
 	workload->req = i915_request_get(rq);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * पूर्णांकel_gvt_scan_and_shaकरोw_workload - audit the workload by scanning and
- * shaकरोw it as well, include ringbuffer,wa_ctx and ctx.
- * @workload: an असलtract entity क्रम each execlist submission.
+ * intel_gvt_scan_and_shadow_workload - audit the workload by scanning and
+ * shadow it as well, include ringbuffer,wa_ctx and ctx.
+ * @workload: an abstract entity for each execlist submission.
  *
- * This function is called beक्रमe the workload submitting to i915, to make
+ * This function is called before the workload submitting to i915, to make
  * sure the content of the workload is valid.
  */
-पूर्णांक पूर्णांकel_gvt_scan_and_shaकरोw_workload(काष्ठा पूर्णांकel_vgpu_workload *workload)
-अणु
-	काष्ठा पूर्णांकel_vgpu *vgpu = workload->vgpu;
-	काष्ठा पूर्णांकel_vgpu_submission *s = &vgpu->submission;
-	पूर्णांक ret;
+int intel_gvt_scan_and_shadow_workload(struct intel_vgpu_workload *workload)
+{
+	struct intel_vgpu *vgpu = workload->vgpu;
+	struct intel_vgpu_submission *s = &vgpu->submission;
+	int ret;
 
-	lockdep_निश्चित_held(&vgpu->vgpu_lock);
+	lockdep_assert_held(&vgpu->vgpu_lock);
 
-	अगर (workload->shaकरोw)
-		वापस 0;
+	if (workload->shadow)
+		return 0;
 
-	अगर (!test_and_set_bit(workload->engine->id, s->shaकरोw_ctx_desc_updated))
-		shaकरोw_context_descriptor_update(s->shaकरोw[workload->engine->id],
+	if (!test_and_set_bit(workload->engine->id, s->shadow_ctx_desc_updated))
+		shadow_context_descriptor_update(s->shadow[workload->engine->id],
 						 workload);
 
-	ret = पूर्णांकel_gvt_scan_and_shaकरोw_ringbuffer(workload);
-	अगर (ret)
-		वापस ret;
+	ret = intel_gvt_scan_and_shadow_ringbuffer(workload);
+	if (ret)
+		return ret;
 
-	अगर (workload->engine->id == RCS0 &&
-	    workload->wa_ctx.indirect_ctx.size) अणु
-		ret = पूर्णांकel_gvt_scan_and_shaकरोw_wa_ctx(&workload->wa_ctx);
-		अगर (ret)
-			जाओ err_shaकरोw;
-	पूर्ण
+	if (workload->engine->id == RCS0 &&
+	    workload->wa_ctx.indirect_ctx.size) {
+		ret = intel_gvt_scan_and_shadow_wa_ctx(&workload->wa_ctx);
+		if (ret)
+			goto err_shadow;
+	}
 
-	workload->shaकरोw = true;
-	वापस 0;
+	workload->shadow = true;
+	return 0;
 
-err_shaकरोw:
-	release_shaकरोw_wa_ctx(&workload->wa_ctx);
-	वापस ret;
-पूर्ण
+err_shadow:
+	release_shadow_wa_ctx(&workload->wa_ctx);
+	return ret;
+}
 
-अटल व्योम release_shaकरोw_batch_buffer(काष्ठा पूर्णांकel_vgpu_workload *workload);
+static void release_shadow_batch_buffer(struct intel_vgpu_workload *workload);
 
-अटल पूर्णांक prepare_shaकरोw_batch_buffer(काष्ठा पूर्णांकel_vgpu_workload *workload)
-अणु
-	काष्ठा पूर्णांकel_gvt *gvt = workload->vgpu->gvt;
-	स्थिर पूर्णांक gmadr_bytes = gvt->device_info.gmadr_bytes_in_cmd;
-	काष्ठा पूर्णांकel_vgpu_shaकरोw_bb *bb;
-	काष्ठा i915_gem_ww_ctx ww;
-	पूर्णांक ret;
+static int prepare_shadow_batch_buffer(struct intel_vgpu_workload *workload)
+{
+	struct intel_gvt *gvt = workload->vgpu->gvt;
+	const int gmadr_bytes = gvt->device_info.gmadr_bytes_in_cmd;
+	struct intel_vgpu_shadow_bb *bb;
+	struct i915_gem_ww_ctx ww;
+	int ret;
 
-	list_क्रम_each_entry(bb, &workload->shaकरोw_bb, list) अणु
+	list_for_each_entry(bb, &workload->shadow_bb, list) {
 		/* For privilge batch buffer and not wa_ctx, the bb_start_cmd_va
-		 * is only updated पूर्णांकo ring_scan_buffer, not real ring address
+		 * is only updated into ring_scan_buffer, not real ring address
 		 * allocated in later copy_workload_to_ring_buffer. pls be noted
-		 * shaकरोw_ring_buffer_va is now poपूर्णांकed to real ring buffer va
+		 * shadow_ring_buffer_va is now pointed to real ring buffer va
 		 * in copy_workload_to_ring_buffer.
 		 */
 
-		अगर (bb->bb_offset)
-			bb->bb_start_cmd_va = workload->shaकरोw_ring_buffer_va
+		if (bb->bb_offset)
+			bb->bb_start_cmd_va = workload->shadow_ring_buffer_va
 				+ bb->bb_offset;
 
 		/*
-		 * For non-priv bb, scan&shaकरोw is only क्रम
-		 * debugging purpose, so the content of shaकरोw bb
-		 * is the same as original bb. Thereक्रमe,
-		 * here, rather than चयन to shaकरोw bb's gma
+		 * For non-priv bb, scan&shadow is only for
+		 * debugging purpose, so the content of shadow bb
+		 * is the same as original bb. Therefore,
+		 * here, rather than switch to shadow bb's gma
 		 * address, we directly use original batch buffer's
 		 * gma address, and send original bb to hardware
 		 * directly
 		 */
-		अगर (!bb->ppgtt) अणु
+		if (!bb->ppgtt) {
 			i915_gem_ww_ctx_init(&ww, false);
 retry:
 			i915_gem_object_lock(bb->obj, &ww);
 
 			bb->vma = i915_gem_object_ggtt_pin_ww(bb->obj, &ww,
-							      शून्य, 0, 0, 0);
-			अगर (IS_ERR(bb->vma)) अणु
+							      NULL, 0, 0, 0);
+			if (IS_ERR(bb->vma)) {
 				ret = PTR_ERR(bb->vma);
-				अगर (ret == -EDEADLK) अणु
+				if (ret == -EDEADLK) {
 					ret = i915_gem_ww_ctx_backoff(&ww);
-					अगर (!ret)
-						जाओ retry;
-				पूर्ण
-				जाओ err;
-			पूर्ण
+					if (!ret)
+						goto retry;
+				}
+				goto err;
+			}
 
-			/* relocate shaकरोw batch buffer */
+			/* relocate shadow batch buffer */
 			bb->bb_start_cmd_va[1] = i915_ggtt_offset(bb->vma);
-			अगर (gmadr_bytes == 8)
+			if (gmadr_bytes == 8)
 				bb->bb_start_cmd_va[2] = 0;
 
 			ret = i915_vma_move_to_active(bb->vma,
 						      workload->req,
 						      0);
-			अगर (ret)
-				जाओ err;
+			if (ret)
+				goto err;
 
-			/* No one is going to touch shaकरोw bb from now on. */
+			/* No one is going to touch shadow bb from now on. */
 			i915_gem_object_flush_map(bb->obj);
 			i915_gem_object_unlock(bb->obj);
-		पूर्ण
-	पूर्ण
-	वापस 0;
+		}
+	}
+	return 0;
 err:
 	i915_gem_ww_ctx_fini(&ww);
-	release_shaकरोw_batch_buffer(workload);
-	वापस ret;
-पूर्ण
+	release_shadow_batch_buffer(workload);
+	return ret;
+}
 
-अटल व्योम update_wa_ctx_2_shaकरोw_ctx(काष्ठा पूर्णांकel_shaकरोw_wa_ctx *wa_ctx)
-अणु
-	काष्ठा पूर्णांकel_vgpu_workload *workload =
-		container_of(wa_ctx, काष्ठा पूर्णांकel_vgpu_workload, wa_ctx);
-	काष्ठा i915_request *rq = workload->req;
-	काष्ठा execlist_ring_context *shaकरोw_ring_context =
-		(काष्ठा execlist_ring_context *)rq->context->lrc_reg_state;
+static void update_wa_ctx_2_shadow_ctx(struct intel_shadow_wa_ctx *wa_ctx)
+{
+	struct intel_vgpu_workload *workload =
+		container_of(wa_ctx, struct intel_vgpu_workload, wa_ctx);
+	struct i915_request *rq = workload->req;
+	struct execlist_ring_context *shadow_ring_context =
+		(struct execlist_ring_context *)rq->context->lrc_reg_state;
 
-	shaकरोw_ring_context->bb_per_ctx_ptr.val =
-		(shaकरोw_ring_context->bb_per_ctx_ptr.val &
-		(~PER_CTX_ADDR_MASK)) | wa_ctx->per_ctx.shaकरोw_gma;
-	shaकरोw_ring_context->rcs_indirect_ctx.val =
-		(shaकरोw_ring_context->rcs_indirect_ctx.val &
-		(~INसूचीECT_CTX_ADDR_MASK)) | wa_ctx->indirect_ctx.shaकरोw_gma;
-पूर्ण
+	shadow_ring_context->bb_per_ctx_ptr.val =
+		(shadow_ring_context->bb_per_ctx_ptr.val &
+		(~PER_CTX_ADDR_MASK)) | wa_ctx->per_ctx.shadow_gma;
+	shadow_ring_context->rcs_indirect_ctx.val =
+		(shadow_ring_context->rcs_indirect_ctx.val &
+		(~INDIRECT_CTX_ADDR_MASK)) | wa_ctx->indirect_ctx.shadow_gma;
+}
 
-अटल पूर्णांक prepare_shaकरोw_wa_ctx(काष्ठा पूर्णांकel_shaकरोw_wa_ctx *wa_ctx)
-अणु
-	काष्ठा i915_vma *vma;
-	अचिन्हित अक्षर *per_ctx_va =
-		(अचिन्हित अक्षर *)wa_ctx->indirect_ctx.shaकरोw_va +
+static int prepare_shadow_wa_ctx(struct intel_shadow_wa_ctx *wa_ctx)
+{
+	struct i915_vma *vma;
+	unsigned char *per_ctx_va =
+		(unsigned char *)wa_ctx->indirect_ctx.shadow_va +
 		wa_ctx->indirect_ctx.size;
-	काष्ठा i915_gem_ww_ctx ww;
-	पूर्णांक ret;
+	struct i915_gem_ww_ctx ww;
+	int ret;
 
-	अगर (wa_ctx->indirect_ctx.size == 0)
-		वापस 0;
+	if (wa_ctx->indirect_ctx.size == 0)
+		return 0;
 
 	i915_gem_ww_ctx_init(&ww, false);
 retry:
 	i915_gem_object_lock(wa_ctx->indirect_ctx.obj, &ww);
 
-	vma = i915_gem_object_ggtt_pin_ww(wa_ctx->indirect_ctx.obj, &ww, शून्य,
+	vma = i915_gem_object_ggtt_pin_ww(wa_ctx->indirect_ctx.obj, &ww, NULL,
 					  0, CACHELINE_BYTES, 0);
-	अगर (IS_ERR(vma)) अणु
+	if (IS_ERR(vma)) {
 		ret = PTR_ERR(vma);
-		अगर (ret == -EDEADLK) अणु
+		if (ret == -EDEADLK) {
 			ret = i915_gem_ww_ctx_backoff(&ww);
-			अगर (!ret)
-				जाओ retry;
-		पूर्ण
-		वापस ret;
-	पूर्ण
+			if (!ret)
+				goto retry;
+		}
+		return ret;
+	}
 
 	i915_gem_object_unlock(wa_ctx->indirect_ctx.obj);
 
 	/* FIXME: we are not tracking our pinned VMA leaving it
 	 * up to the core to fix up the stray pin_count upon
-	 * मुक्त.
+	 * free.
 	 */
 
-	wa_ctx->indirect_ctx.shaकरोw_gma = i915_ggtt_offset(vma);
+	wa_ctx->indirect_ctx.shadow_gma = i915_ggtt_offset(vma);
 
-	wa_ctx->per_ctx.shaकरोw_gma = *((अचिन्हित पूर्णांक *)per_ctx_va + 1);
-	स_रखो(per_ctx_va, 0, CACHELINE_BYTES);
+	wa_ctx->per_ctx.shadow_gma = *((unsigned int *)per_ctx_va + 1);
+	memset(per_ctx_va, 0, CACHELINE_BYTES);
 
-	update_wa_ctx_2_shaकरोw_ctx(wa_ctx);
-	वापस 0;
-पूर्ण
+	update_wa_ctx_2_shadow_ctx(wa_ctx);
+	return 0;
+}
 
-अटल व्योम update_vreg_in_ctx(काष्ठा पूर्णांकel_vgpu_workload *workload)
-अणु
+static void update_vreg_in_ctx(struct intel_vgpu_workload *workload)
+{
 	vgpu_vreg_t(workload->vgpu, RING_START(workload->engine->mmio_base)) =
 		workload->rb_start;
-पूर्ण
+}
 
-अटल व्योम release_shaकरोw_batch_buffer(काष्ठा पूर्णांकel_vgpu_workload *workload)
-अणु
-	काष्ठा पूर्णांकel_vgpu_shaकरोw_bb *bb, *pos;
+static void release_shadow_batch_buffer(struct intel_vgpu_workload *workload)
+{
+	struct intel_vgpu_shadow_bb *bb, *pos;
 
-	अगर (list_empty(&workload->shaकरोw_bb))
-		वापस;
+	if (list_empty(&workload->shadow_bb))
+		return;
 
-	bb = list_first_entry(&workload->shaकरोw_bb,
-			काष्ठा पूर्णांकel_vgpu_shaकरोw_bb, list);
+	bb = list_first_entry(&workload->shadow_bb,
+			struct intel_vgpu_shadow_bb, list);
 
-	list_क्रम_each_entry_safe(bb, pos, &workload->shaकरोw_bb, list) अणु
-		अगर (bb->obj) अणु
-			i915_gem_object_lock(bb->obj, शून्य);
-			अगर (bb->va && !IS_ERR(bb->va))
+	list_for_each_entry_safe(bb, pos, &workload->shadow_bb, list) {
+		if (bb->obj) {
+			i915_gem_object_lock(bb->obj, NULL);
+			if (bb->va && !IS_ERR(bb->va))
 				i915_gem_object_unpin_map(bb->obj);
 
-			अगर (bb->vma && !IS_ERR(bb->vma))
+			if (bb->vma && !IS_ERR(bb->vma))
 				i915_vma_unpin(bb->vma);
 
 			i915_gem_object_unlock(bb->obj);
 			i915_gem_object_put(bb->obj);
-		पूर्ण
+		}
 		list_del(&bb->list);
-		kमुक्त(bb);
-	पूर्ण
-पूर्ण
+		kfree(bb);
+	}
+}
 
-अटल पूर्णांक
-पूर्णांकel_vgpu_shaकरोw_mm_pin(काष्ठा पूर्णांकel_vgpu_workload *workload)
-अणु
-	काष्ठा पूर्णांकel_vgpu *vgpu = workload->vgpu;
-	काष्ठा पूर्णांकel_vgpu_mm *m;
-	पूर्णांक ret = 0;
+static int
+intel_vgpu_shadow_mm_pin(struct intel_vgpu_workload *workload)
+{
+	struct intel_vgpu *vgpu = workload->vgpu;
+	struct intel_vgpu_mm *m;
+	int ret = 0;
 
-	ret = पूर्णांकel_vgpu_pin_mm(workload->shaकरोw_mm);
-	अगर (ret) अणु
+	ret = intel_vgpu_pin_mm(workload->shadow_mm);
+	if (ret) {
 		gvt_vgpu_err("fail to vgpu pin mm\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (workload->shaकरोw_mm->type != INTEL_GVT_MM_PPGTT ||
-	    !workload->shaकरोw_mm->ppgtt_mm.shaकरोwed) अणु
+	if (workload->shadow_mm->type != INTEL_GVT_MM_PPGTT ||
+	    !workload->shadow_mm->ppgtt_mm.shadowed) {
 		gvt_vgpu_err("workload shadow ppgtt isn't ready\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!list_empty(&workload->lri_shaकरोw_mm)) अणु
-		list_क्रम_each_entry(m, &workload->lri_shaकरोw_mm,
-				    ppgtt_mm.link) अणु
-			ret = पूर्णांकel_vgpu_pin_mm(m);
-			अगर (ret) अणु
-				list_क्रम_each_entry_from_reverse(m,
-								 &workload->lri_shaकरोw_mm,
+	if (!list_empty(&workload->lri_shadow_mm)) {
+		list_for_each_entry(m, &workload->lri_shadow_mm,
+				    ppgtt_mm.link) {
+			ret = intel_vgpu_pin_mm(m);
+			if (ret) {
+				list_for_each_entry_from_reverse(m,
+								 &workload->lri_shadow_mm,
 								 ppgtt_mm.link)
-					पूर्णांकel_vgpu_unpin_mm(m);
+					intel_vgpu_unpin_mm(m);
 				gvt_vgpu_err("LRI shadow ppgtt fail to pin\n");
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				break;
+			}
+		}
+	}
 
-	अगर (ret)
-		पूर्णांकel_vgpu_unpin_mm(workload->shaकरोw_mm);
+	if (ret)
+		intel_vgpu_unpin_mm(workload->shadow_mm);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम
-पूर्णांकel_vgpu_shaकरोw_mm_unpin(काष्ठा पूर्णांकel_vgpu_workload *workload)
-अणु
-	काष्ठा पूर्णांकel_vgpu_mm *m;
+static void
+intel_vgpu_shadow_mm_unpin(struct intel_vgpu_workload *workload)
+{
+	struct intel_vgpu_mm *m;
 
-	अगर (!list_empty(&workload->lri_shaकरोw_mm)) अणु
-		list_क्रम_each_entry(m, &workload->lri_shaकरोw_mm,
+	if (!list_empty(&workload->lri_shadow_mm)) {
+		list_for_each_entry(m, &workload->lri_shadow_mm,
 				    ppgtt_mm.link)
-			पूर्णांकel_vgpu_unpin_mm(m);
-	पूर्ण
-	पूर्णांकel_vgpu_unpin_mm(workload->shaकरोw_mm);
-पूर्ण
+			intel_vgpu_unpin_mm(m);
+	}
+	intel_vgpu_unpin_mm(workload->shadow_mm);
+}
 
-अटल पूर्णांक prepare_workload(काष्ठा पूर्णांकel_vgpu_workload *workload)
-अणु
-	काष्ठा पूर्णांकel_vgpu *vgpu = workload->vgpu;
-	काष्ठा पूर्णांकel_vgpu_submission *s = &vgpu->submission;
-	पूर्णांक ret = 0;
+static int prepare_workload(struct intel_vgpu_workload *workload)
+{
+	struct intel_vgpu *vgpu = workload->vgpu;
+	struct intel_vgpu_submission *s = &vgpu->submission;
+	int ret = 0;
 
-	ret = पूर्णांकel_vgpu_shaकरोw_mm_pin(workload);
-	अगर (ret) अणु
+	ret = intel_vgpu_shadow_mm_pin(workload);
+	if (ret) {
 		gvt_vgpu_err("fail to pin shadow mm\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	update_shaकरोw_pdps(workload);
+	update_shadow_pdps(workload);
 
-	set_context_ppgtt_from_shaकरोw(workload, s->shaकरोw[workload->engine->id]);
+	set_context_ppgtt_from_shadow(workload, s->shadow[workload->engine->id]);
 
-	ret = पूर्णांकel_vgpu_sync_oos_pages(workload->vgpu);
-	अगर (ret) अणु
+	ret = intel_vgpu_sync_oos_pages(workload->vgpu);
+	if (ret) {
 		gvt_vgpu_err("fail to vgpu sync oos pages\n");
-		जाओ err_unpin_mm;
-	पूर्ण
+		goto err_unpin_mm;
+	}
 
-	ret = पूर्णांकel_vgpu_flush_post_shaकरोw(workload->vgpu);
-	अगर (ret) अणु
+	ret = intel_vgpu_flush_post_shadow(workload->vgpu);
+	if (ret) {
 		gvt_vgpu_err("fail to flush post shadow\n");
-		जाओ err_unpin_mm;
-	पूर्ण
+		goto err_unpin_mm;
+	}
 
 	ret = copy_workload_to_ring_buffer(workload);
-	अगर (ret) अणु
+	if (ret) {
 		gvt_vgpu_err("fail to generate request\n");
-		जाओ err_unpin_mm;
-	पूर्ण
+		goto err_unpin_mm;
+	}
 
-	ret = prepare_shaकरोw_batch_buffer(workload);
-	अगर (ret) अणु
+	ret = prepare_shadow_batch_buffer(workload);
+	if (ret) {
 		gvt_vgpu_err("fail to prepare_shadow_batch_buffer\n");
-		जाओ err_unpin_mm;
-	पूर्ण
+		goto err_unpin_mm;
+	}
 
-	ret = prepare_shaकरोw_wa_ctx(&workload->wa_ctx);
-	अगर (ret) अणु
+	ret = prepare_shadow_wa_ctx(&workload->wa_ctx);
+	if (ret) {
 		gvt_vgpu_err("fail to prepare_shadow_wa_ctx\n");
-		जाओ err_shaकरोw_batch;
-	पूर्ण
+		goto err_shadow_batch;
+	}
 
-	अगर (workload->prepare) अणु
+	if (workload->prepare) {
 		ret = workload->prepare(workload);
-		अगर (ret)
-			जाओ err_shaकरोw_wa_ctx;
-	पूर्ण
+		if (ret)
+			goto err_shadow_wa_ctx;
+	}
 
-	वापस 0;
-err_shaकरोw_wa_ctx:
-	release_shaकरोw_wa_ctx(&workload->wa_ctx);
-err_shaकरोw_batch:
-	release_shaकरोw_batch_buffer(workload);
+	return 0;
+err_shadow_wa_ctx:
+	release_shadow_wa_ctx(&workload->wa_ctx);
+err_shadow_batch:
+	release_shadow_batch_buffer(workload);
 err_unpin_mm:
-	पूर्णांकel_vgpu_shaकरोw_mm_unpin(workload);
-	वापस ret;
-पूर्ण
+	intel_vgpu_shadow_mm_unpin(workload);
+	return ret;
+}
 
-अटल पूर्णांक dispatch_workload(काष्ठा पूर्णांकel_vgpu_workload *workload)
-अणु
-	काष्ठा पूर्णांकel_vgpu *vgpu = workload->vgpu;
-	काष्ठा i915_request *rq;
-	पूर्णांक ret;
+static int dispatch_workload(struct intel_vgpu_workload *workload)
+{
+	struct intel_vgpu *vgpu = workload->vgpu;
+	struct i915_request *rq;
+	int ret;
 
 	gvt_dbg_sched("ring id %s prepare to dispatch workload %p\n",
 		      workload->engine->name, workload);
 
 	mutex_lock(&vgpu->vgpu_lock);
 
-	ret = पूर्णांकel_gvt_workload_req_alloc(workload);
-	अगर (ret)
-		जाओ err_req;
+	ret = intel_gvt_workload_req_alloc(workload);
+	if (ret)
+		goto err_req;
 
-	ret = पूर्णांकel_gvt_scan_and_shaकरोw_workload(workload);
-	अगर (ret)
-		जाओ out;
+	ret = intel_gvt_scan_and_shadow_workload(workload);
+	if (ret)
+		goto out;
 
-	ret = populate_shaकरोw_context(workload);
-	अगर (ret) अणु
-		release_shaकरोw_wa_ctx(&workload->wa_ctx);
-		जाओ out;
-	पूर्ण
+	ret = populate_shadow_context(workload);
+	if (ret) {
+		release_shadow_wa_ctx(&workload->wa_ctx);
+		goto out;
+	}
 
 	ret = prepare_workload(workload);
 out:
-	अगर (ret) अणु
+	if (ret) {
 		/* We might still need to add request with
 		 * clean ctx to retire it properly..
 		 */
 		rq = fetch_and_zero(&workload->req);
 		i915_request_put(rq);
-	पूर्ण
+	}
 
-	अगर (!IS_ERR_OR_शून्य(workload->req)) अणु
+	if (!IS_ERR_OR_NULL(workload->req)) {
 		gvt_dbg_sched("ring id %s submit workload to i915 %p\n",
 			      workload->engine->name, workload->req);
 		i915_request_add(workload->req);
 		workload->dispatched = true;
-	पूर्ण
+	}
 err_req:
-	अगर (ret)
+	if (ret)
 		workload->status = ret;
 	mutex_unlock(&vgpu->vgpu_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा पूर्णांकel_vgpu_workload *
-pick_next_workload(काष्ठा पूर्णांकel_gvt *gvt, काष्ठा पूर्णांकel_engine_cs *engine)
-अणु
-	काष्ठा पूर्णांकel_gvt_workload_scheduler *scheduler = &gvt->scheduler;
-	काष्ठा पूर्णांकel_vgpu_workload *workload = शून्य;
+static struct intel_vgpu_workload *
+pick_next_workload(struct intel_gvt *gvt, struct intel_engine_cs *engine)
+{
+	struct intel_gvt_workload_scheduler *scheduler = &gvt->scheduler;
+	struct intel_vgpu_workload *workload = NULL;
 
 	mutex_lock(&gvt->sched_lock);
 
@@ -855,41 +854,41 @@ pick_next_workload(काष्ठा पूर्णांकel_gvt *gvt, क�
 	 * no current vgpu / will be scheduled out / no workload
 	 * bail out
 	 */
-	अगर (!scheduler->current_vgpu) अणु
+	if (!scheduler->current_vgpu) {
 		gvt_dbg_sched("ring %s stop - no current vgpu\n", engine->name);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (scheduler->need_reschedule) अणु
+	if (scheduler->need_reschedule) {
 		gvt_dbg_sched("ring %s stop - will reschedule\n", engine->name);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (!scheduler->current_vgpu->active ||
+	if (!scheduler->current_vgpu->active ||
 	    list_empty(workload_q_head(scheduler->current_vgpu, engine)))
-		जाओ out;
+		goto out;
 
 	/*
 	 * still have current workload, maybe the workload disptacher
-	 * fail to submit it क्रम some reason, resubmit it.
+	 * fail to submit it for some reason, resubmit it.
 	 */
-	अगर (scheduler->current_workload[engine->id]) अणु
+	if (scheduler->current_workload[engine->id]) {
 		workload = scheduler->current_workload[engine->id];
 		gvt_dbg_sched("ring %s still have current workload %p\n",
 			      engine->name, workload);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
 	 * pick a workload as current workload
 	 * once current workload is set, schedule policy routines
-	 * will रुको the current workload is finished when trying to
+	 * will wait the current workload is finished when trying to
 	 * schedule out a vgpu.
 	 */
 	scheduler->current_workload[engine->id] =
 		list_first_entry(workload_q_head(scheduler->current_vgpu,
 						 engine),
-				 काष्ठा पूर्णांकel_vgpu_workload, list);
+				 struct intel_vgpu_workload, list);
 
 	workload = scheduler->current_workload[engine->id];
 
@@ -898,52 +897,52 @@ pick_next_workload(काष्ठा पूर्णांकel_gvt *gvt, क�
 	atomic_inc(&workload->vgpu->submission.running_workload_num);
 out:
 	mutex_unlock(&gvt->sched_lock);
-	वापस workload;
-पूर्ण
+	return workload;
+}
 
-अटल व्योम update_guest_pdps(काष्ठा पूर्णांकel_vgpu *vgpu,
+static void update_guest_pdps(struct intel_vgpu *vgpu,
 			      u64 ring_context_gpa, u32 pdp[8])
-अणु
+{
 	u64 gpa;
-	पूर्णांक i;
+	int i;
 
 	gpa = ring_context_gpa + RING_CTX_OFF(pdps[0].val);
 
-	क्रम (i = 0; i < 8; i++)
-		पूर्णांकel_gvt_hypervisor_ग_लिखो_gpa(vgpu,
+	for (i = 0; i < 8; i++)
+		intel_gvt_hypervisor_write_gpa(vgpu,
 				gpa + i * 8, &pdp[7 - i], 4);
-पूर्ण
+}
 
-अटल __maybe_unused bool
-check_shaकरोw_context_ppgtt(काष्ठा execlist_ring_context *c, काष्ठा पूर्णांकel_vgpu_mm *m)
-अणु
-	अगर (m->ppgtt_mm.root_entry_type == GTT_TYPE_PPGTT_ROOT_L4_ENTRY) अणु
-		u64 shaकरोw_pdp = c->pdps[7].val | (u64) c->pdps[6].val << 32;
+static __maybe_unused bool
+check_shadow_context_ppgtt(struct execlist_ring_context *c, struct intel_vgpu_mm *m)
+{
+	if (m->ppgtt_mm.root_entry_type == GTT_TYPE_PPGTT_ROOT_L4_ENTRY) {
+		u64 shadow_pdp = c->pdps[7].val | (u64) c->pdps[6].val << 32;
 
-		अगर (shaकरोw_pdp != m->ppgtt_mm.shaकरोw_pdps[0]) अणु
+		if (shadow_pdp != m->ppgtt_mm.shadow_pdps[0]) {
 			gvt_dbg_mm("4-level context ppgtt not match LRI command\n");
-			वापस false;
-		पूर्ण
-		वापस true;
-	पूर्ण अन्यथा अणु
+			return false;
+		}
+		return true;
+	} else {
 		/* see comment in LRI handler in cmd_parser.c */
 		gvt_dbg_mm("invalid shadow mm type\n");
-		वापस false;
-	पूर्ण
-पूर्ण
+		return false;
+	}
+}
 
-अटल व्योम update_guest_context(काष्ठा पूर्णांकel_vgpu_workload *workload)
-अणु
-	काष्ठा i915_request *rq = workload->req;
-	काष्ठा पूर्णांकel_vgpu *vgpu = workload->vgpu;
-	काष्ठा execlist_ring_context *shaकरोw_ring_context;
-	काष्ठा पूर्णांकel_context *ctx = workload->req->context;
-	व्योम *context_base;
-	व्योम *src;
-	अचिन्हित दीर्घ context_gpa, context_page_num;
-	अचिन्हित दीर्घ gpa_base; /* first gpa of consecutive GPAs */
-	अचिन्हित दीर्घ gpa_size; /* size of consecutive GPAs*/
-	पूर्णांक i;
+static void update_guest_context(struct intel_vgpu_workload *workload)
+{
+	struct i915_request *rq = workload->req;
+	struct intel_vgpu *vgpu = workload->vgpu;
+	struct execlist_ring_context *shadow_ring_context;
+	struct intel_context *ctx = workload->req->context;
+	void *context_base;
+	void *src;
+	unsigned long context_gpa, context_page_num;
+	unsigned long gpa_base; /* first gpa of consecutive GPAs */
+	unsigned long gpa_size; /* size of consecutive GPAs*/
+	int i;
 	u32 ring_base;
 	u32 head, tail;
 	u16 wrap_count;
@@ -951,18 +950,18 @@ check_shaकरोw_context_ppgtt(काष्ठा execlist_ring_context *c, �
 	gvt_dbg_sched("ring id %d workload lrca %x\n", rq->engine->id,
 		      workload->ctx_desc.lrca);
 
-	GEM_BUG_ON(!पूर्णांकel_context_is_pinned(ctx));
+	GEM_BUG_ON(!intel_context_is_pinned(ctx));
 
 	head = workload->rb_head;
 	tail = workload->rb_tail;
 	wrap_count = workload->guest_rb_head >> RB_HEAD_WRAP_CNT_OFF;
 
-	अगर (tail < head) अणु
-		अगर (wrap_count == RB_HEAD_WRAP_CNT_MAX)
+	if (tail < head) {
+		if (wrap_count == RB_HEAD_WRAP_CNT_MAX)
 			wrap_count = 0;
-		अन्यथा
+		else
 			wrap_count += 1;
-	पूर्ण
+	}
 
 	head = (wrap_count << RB_HEAD_WRAP_CNT_OFF) | tail;
 
@@ -973,223 +972,223 @@ check_shaकरोw_context_ppgtt(काष्ठा execlist_ring_context *c, �
 	context_page_num = rq->engine->context_size;
 	context_page_num = context_page_num >> PAGE_SHIFT;
 
-	अगर (IS_BROADWELL(rq->engine->i915) && rq->engine->id == RCS0)
+	if (IS_BROADWELL(rq->engine->i915) && rq->engine->id == RCS0)
 		context_page_num = 19;
 
-	context_base = (व्योम *) ctx->lrc_reg_state -
+	context_base = (void *) ctx->lrc_reg_state -
 			(LRC_STATE_PN << I915_GTT_PAGE_SHIFT);
 
 	/* find consecutive GPAs from gma until the first inconsecutive GPA.
-	 * ग_लिखो to the consecutive GPAs from src भव address
+	 * write to the consecutive GPAs from src virtual address
 	 */
 	gpa_size = 0;
-	क्रम (i = 2; i < context_page_num; i++) अणु
-		context_gpa = पूर्णांकel_vgpu_gma_to_gpa(vgpu->gtt.ggtt_mm,
+	for (i = 2; i < context_page_num; i++) {
+		context_gpa = intel_vgpu_gma_to_gpa(vgpu->gtt.ggtt_mm,
 				(u32)((workload->ctx_desc.lrca + i) <<
 					I915_GTT_PAGE_SHIFT));
-		अगर (context_gpa == INTEL_GVT_INVALID_ADDR) अणु
+		if (context_gpa == INTEL_GVT_INVALID_ADDR) {
 			gvt_vgpu_err("invalid guest context descriptor\n");
-			वापस;
-		पूर्ण
+			return;
+		}
 
-		अगर (gpa_size == 0) अणु
+		if (gpa_size == 0) {
 			gpa_base = context_gpa;
 			src = context_base + (i << I915_GTT_PAGE_SHIFT);
-		पूर्ण अन्यथा अगर (context_gpa != gpa_base + gpa_size)
-			जाओ ग_लिखो;
+		} else if (context_gpa != gpa_base + gpa_size)
+			goto write;
 
 		gpa_size += I915_GTT_PAGE_SIZE;
 
-		अगर (i == context_page_num - 1)
-			जाओ ग_लिखो;
+		if (i == context_page_num - 1)
+			goto write;
 
-		जारी;
+		continue;
 
-ग_लिखो:
-		पूर्णांकel_gvt_hypervisor_ग_लिखो_gpa(vgpu, gpa_base, src, gpa_size);
+write:
+		intel_gvt_hypervisor_write_gpa(vgpu, gpa_base, src, gpa_size);
 		gpa_base = context_gpa;
 		gpa_size = I915_GTT_PAGE_SIZE;
 		src = context_base + (i << I915_GTT_PAGE_SHIFT);
-	पूर्ण
+	}
 
-	पूर्णांकel_gvt_hypervisor_ग_लिखो_gpa(vgpu, workload->ring_context_gpa +
+	intel_gvt_hypervisor_write_gpa(vgpu, workload->ring_context_gpa +
 		RING_CTX_OFF(ring_header.val), &workload->rb_tail, 4);
 
-	shaकरोw_ring_context = (व्योम *) ctx->lrc_reg_state;
+	shadow_ring_context = (void *) ctx->lrc_reg_state;
 
-	अगर (!list_empty(&workload->lri_shaकरोw_mm)) अणु
-		काष्ठा पूर्णांकel_vgpu_mm *m = list_last_entry(&workload->lri_shaकरोw_mm,
-							  काष्ठा पूर्णांकel_vgpu_mm,
+	if (!list_empty(&workload->lri_shadow_mm)) {
+		struct intel_vgpu_mm *m = list_last_entry(&workload->lri_shadow_mm,
+							  struct intel_vgpu_mm,
 							  ppgtt_mm.link);
-		GEM_BUG_ON(!check_shaकरोw_context_ppgtt(shaकरोw_ring_context, m));
+		GEM_BUG_ON(!check_shadow_context_ppgtt(shadow_ring_context, m));
 		update_guest_pdps(vgpu, workload->ring_context_gpa,
-				  (व्योम *)m->ppgtt_mm.guest_pdps);
-	पूर्ण
+				  (void *)m->ppgtt_mm.guest_pdps);
+	}
 
-#घोषणा COPY_REG(name) \
-	पूर्णांकel_gvt_hypervisor_ग_लिखो_gpa(vgpu, workload->ring_context_gpa + \
-		RING_CTX_OFF(name.val), &shaकरोw_ring_context->name.val, 4)
+#define COPY_REG(name) \
+	intel_gvt_hypervisor_write_gpa(vgpu, workload->ring_context_gpa + \
+		RING_CTX_OFF(name.val), &shadow_ring_context->name.val, 4)
 
 	COPY_REG(ctx_ctrl);
-	COPY_REG(ctx_बारtamp);
+	COPY_REG(ctx_timestamp);
 
-#अघोषित COPY_REG
+#undef COPY_REG
 
-	पूर्णांकel_gvt_hypervisor_ग_लिखो_gpa(vgpu,
+	intel_gvt_hypervisor_write_gpa(vgpu,
 			workload->ring_context_gpa +
-			माप(*shaकरोw_ring_context),
-			(व्योम *)shaकरोw_ring_context +
-			माप(*shaकरोw_ring_context),
-			I915_GTT_PAGE_SIZE - माप(*shaकरोw_ring_context));
-पूर्ण
+			sizeof(*shadow_ring_context),
+			(void *)shadow_ring_context +
+			sizeof(*shadow_ring_context),
+			I915_GTT_PAGE_SIZE - sizeof(*shadow_ring_context));
+}
 
-व्योम पूर्णांकel_vgpu_clean_workloads(काष्ठा पूर्णांकel_vgpu *vgpu,
-				पूर्णांकel_engine_mask_t engine_mask)
-अणु
-	काष्ठा पूर्णांकel_vgpu_submission *s = &vgpu->submission;
-	काष्ठा पूर्णांकel_engine_cs *engine;
-	काष्ठा पूर्णांकel_vgpu_workload *pos, *n;
-	पूर्णांकel_engine_mask_t पंचांगp;
+void intel_vgpu_clean_workloads(struct intel_vgpu *vgpu,
+				intel_engine_mask_t engine_mask)
+{
+	struct intel_vgpu_submission *s = &vgpu->submission;
+	struct intel_engine_cs *engine;
+	struct intel_vgpu_workload *pos, *n;
+	intel_engine_mask_t tmp;
 
-	/* मुक्त the unsubmited workloads in the queues. */
-	क्रम_each_engine_masked(engine, vgpu->gvt->gt, engine_mask, पंचांगp) अणु
-		list_क्रम_each_entry_safe(pos, n,
-			&s->workload_q_head[engine->id], list) अणु
+	/* free the unsubmited workloads in the queues. */
+	for_each_engine_masked(engine, vgpu->gvt->gt, engine_mask, tmp) {
+		list_for_each_entry_safe(pos, n,
+			&s->workload_q_head[engine->id], list) {
 			list_del_init(&pos->list);
-			पूर्णांकel_vgpu_destroy_workload(pos);
-		पूर्ण
-		clear_bit(engine->id, s->shaकरोw_ctx_desc_updated);
-	पूर्ण
-पूर्ण
+			intel_vgpu_destroy_workload(pos);
+		}
+		clear_bit(engine->id, s->shadow_ctx_desc_updated);
+	}
+}
 
-अटल व्योम complete_current_workload(काष्ठा पूर्णांकel_gvt *gvt, पूर्णांक ring_id)
-अणु
-	काष्ठा पूर्णांकel_gvt_workload_scheduler *scheduler = &gvt->scheduler;
-	काष्ठा पूर्णांकel_vgpu_workload *workload =
+static void complete_current_workload(struct intel_gvt *gvt, int ring_id)
+{
+	struct intel_gvt_workload_scheduler *scheduler = &gvt->scheduler;
+	struct intel_vgpu_workload *workload =
 		scheduler->current_workload[ring_id];
-	काष्ठा पूर्णांकel_vgpu *vgpu = workload->vgpu;
-	काष्ठा पूर्णांकel_vgpu_submission *s = &vgpu->submission;
-	काष्ठा i915_request *rq = workload->req;
-	पूर्णांक event;
+	struct intel_vgpu *vgpu = workload->vgpu;
+	struct intel_vgpu_submission *s = &vgpu->submission;
+	struct i915_request *rq = workload->req;
+	int event;
 
 	mutex_lock(&vgpu->vgpu_lock);
 	mutex_lock(&gvt->sched_lock);
 
-	/* For the workload w/ request, needs to रुको क्रम the context
-	 * चयन to make sure request is completed.
+	/* For the workload w/ request, needs to wait for the context
+	 * switch to make sure request is completed.
 	 * For the workload w/o request, directly complete the workload.
 	 */
-	अगर (rq) अणु
-		रुको_event(workload->shaकरोw_ctx_status_wq,
-			   !atomic_पढ़ो(&workload->shaकरोw_ctx_active));
+	if (rq) {
+		wait_event(workload->shadow_ctx_status_wq,
+			   !atomic_read(&workload->shadow_ctx_active));
 
 		/* If this request caused GPU hang, req->fence.error will
 		 * be set to -EIO. Use -EIO to set workload status so
 		 * that when this request caused GPU hang, didn't trigger
-		 * context चयन पूर्णांकerrupt to guest.
+		 * context switch interrupt to guest.
 		 */
-		अगर (likely(workload->status == -EINPROGRESS)) अणु
-			अगर (workload->req->fence.error == -EIO)
+		if (likely(workload->status == -EINPROGRESS)) {
+			if (workload->req->fence.error == -EIO)
 				workload->status = -EIO;
-			अन्यथा
+			else
 				workload->status = 0;
-		पूर्ण
+		}
 
-		अगर (!workload->status &&
-		    !(vgpu->resetting_eng & BIT(ring_id))) अणु
+		if (!workload->status &&
+		    !(vgpu->resetting_eng & BIT(ring_id))) {
 			update_guest_context(workload);
 
-			क्रम_each_set_bit(event, workload->pending_events,
+			for_each_set_bit(event, workload->pending_events,
 					 INTEL_GVT_EVENT_MAX)
-				पूर्णांकel_vgpu_trigger_भव_event(vgpu, event);
-		पूर्ण
+				intel_vgpu_trigger_virtual_event(vgpu, event);
+		}
 
 		i915_request_put(fetch_and_zero(&workload->req));
-	पूर्ण
+	}
 
 	gvt_dbg_sched("ring id %d complete workload %p status %d\n",
 			ring_id, workload, workload->status);
 
-	scheduler->current_workload[ring_id] = शून्य;
+	scheduler->current_workload[ring_id] = NULL;
 
 	list_del_init(&workload->list);
 
-	अगर (workload->status || vgpu->resetting_eng & BIT(ring_id)) अणु
-		/* अगर workload->status is not successful means HW GPU
+	if (workload->status || vgpu->resetting_eng & BIT(ring_id)) {
+		/* if workload->status is not successful means HW GPU
 		 * has occurred GPU hang or something wrong with i915/GVT,
-		 * and GVT won't inject context चयन पूर्णांकerrupt to guest.
+		 * and GVT won't inject context switch interrupt to guest.
 		 * So this error is a vGPU hang actually to the guest.
 		 * According to this we should emunlate a vGPU hang. If
-		 * there are pending workloads which are alपढ़ोy submitted
-		 * from guest, we should clean them up like HW GPU करोes.
+		 * there are pending workloads which are already submitted
+		 * from guest, we should clean them up like HW GPU does.
 		 *
-		 * अगर it is in middle of engine resetting, the pending
+		 * if it is in middle of engine resetting, the pending
 		 * workloads won't be submitted to HW GPU and will be
-		 * cleaned up during the resetting process later, so करोing
-		 * the workload clean up here करोesn't have any impact.
+		 * cleaned up during the resetting process later, so doing
+		 * the workload clean up here doesn't have any impact.
 		 **/
-		पूर्णांकel_vgpu_clean_workloads(vgpu, BIT(ring_id));
-	पूर्ण
+		intel_vgpu_clean_workloads(vgpu, BIT(ring_id));
+	}
 
 	workload->complete(workload);
 
-	पूर्णांकel_vgpu_shaकरोw_mm_unpin(workload);
-	पूर्णांकel_vgpu_destroy_workload(workload);
+	intel_vgpu_shadow_mm_unpin(workload);
+	intel_vgpu_destroy_workload(workload);
 
 	atomic_dec(&s->running_workload_num);
 	wake_up(&scheduler->workload_complete_wq);
 
-	अगर (gvt->scheduler.need_reschedule)
-		पूर्णांकel_gvt_request_service(gvt, INTEL_GVT_REQUEST_EVENT_SCHED);
+	if (gvt->scheduler.need_reschedule)
+		intel_gvt_request_service(gvt, INTEL_GVT_REQUEST_EVENT_SCHED);
 
 	mutex_unlock(&gvt->sched_lock);
 	mutex_unlock(&vgpu->vgpu_lock);
-पूर्ण
+}
 
-अटल पूर्णांक workload_thपढ़ो(व्योम *arg)
-अणु
-	काष्ठा पूर्णांकel_engine_cs *engine = arg;
-	स्थिर bool need_क्रमce_wake = INTEL_GEN(engine->i915) >= 9;
-	काष्ठा पूर्णांकel_gvt *gvt = engine->i915->gvt;
-	काष्ठा पूर्णांकel_gvt_workload_scheduler *scheduler = &gvt->scheduler;
-	काष्ठा पूर्णांकel_vgpu_workload *workload = शून्य;
-	काष्ठा पूर्णांकel_vgpu *vgpu = शून्य;
-	पूर्णांक ret;
-	DEFINE_WAIT_FUNC(रुको, woken_wake_function);
+static int workload_thread(void *arg)
+{
+	struct intel_engine_cs *engine = arg;
+	const bool need_force_wake = INTEL_GEN(engine->i915) >= 9;
+	struct intel_gvt *gvt = engine->i915->gvt;
+	struct intel_gvt_workload_scheduler *scheduler = &gvt->scheduler;
+	struct intel_vgpu_workload *workload = NULL;
+	struct intel_vgpu *vgpu = NULL;
+	int ret;
+	DEFINE_WAIT_FUNC(wait, woken_wake_function);
 
 	gvt_dbg_core("workload thread for ring %s started\n", engine->name);
 
-	जबतक (!kthपढ़ो_should_stop()) अणु
-		पूर्णांकel_wakeref_t wakeref;
+	while (!kthread_should_stop()) {
+		intel_wakeref_t wakeref;
 
-		add_रुको_queue(&scheduler->रुकोq[engine->id], &रुको);
-		करो अणु
+		add_wait_queue(&scheduler->waitq[engine->id], &wait);
+		do {
 			workload = pick_next_workload(gvt, engine);
-			अगर (workload)
-				अवरोध;
-			रुको_woken(&रुको, TASK_INTERRUPTIBLE,
+			if (workload)
+				break;
+			wait_woken(&wait, TASK_INTERRUPTIBLE,
 				   MAX_SCHEDULE_TIMEOUT);
-		पूर्ण जबतक (!kthपढ़ो_should_stop());
-		हटाओ_रुको_queue(&scheduler->रुकोq[engine->id], &रुको);
+		} while (!kthread_should_stop());
+		remove_wait_queue(&scheduler->waitq[engine->id], &wait);
 
-		अगर (!workload)
-			अवरोध;
+		if (!workload)
+			break;
 
 		gvt_dbg_sched("ring %s next workload %p vgpu %d\n",
 			      engine->name, workload,
 			      workload->vgpu->id);
 
-		wakeref = पूर्णांकel_runसमय_pm_get(engine->uncore->rpm);
+		wakeref = intel_runtime_pm_get(engine->uncore->rpm);
 
 		gvt_dbg_sched("ring %s will dispatch workload %p\n",
 			      engine->name, workload);
 
-		अगर (need_क्रमce_wake)
-			पूर्णांकel_uncore_क्रमcewake_get(engine->uncore,
+		if (need_force_wake)
+			intel_uncore_forcewake_get(engine->uncore,
 						   FORCEWAKE_ALL);
 		/*
 		 * Update the vReg of the vGPU which submitted this
-		 * workload. The vGPU may use these रेजिस्टरs क्रम checking
+		 * workload. The vGPU may use these registers for checking
 		 * the context state. The value comes from GPU commands
 		 * in this workload.
 		 */
@@ -1197,15 +1196,15 @@ check_shaकरोw_context_ppgtt(काष्ठा execlist_ring_context *c, �
 
 		ret = dispatch_workload(workload);
 
-		अगर (ret) अणु
+		if (ret) {
 			vgpu = workload->vgpu;
 			gvt_vgpu_err("fail to dispatch workload, skip\n");
-			जाओ complete;
-		पूर्ण
+			goto complete;
+		}
 
 		gvt_dbg_sched("ring %s wait workload %p\n",
 			      engine->name, workload);
-		i915_request_रुको(workload->req, 0, MAX_SCHEDULE_TIMEOUT);
+		i915_request_wait(workload->req, 0, MAX_SCHEDULE_TIMEOUT);
 
 complete:
 		gvt_dbg_sched("will complete workload %p, status: %d\n",
@@ -1213,407 +1212,407 @@ complete:
 
 		complete_current_workload(gvt, engine->id);
 
-		अगर (need_क्रमce_wake)
-			पूर्णांकel_uncore_क्रमcewake_put(engine->uncore,
+		if (need_force_wake)
+			intel_uncore_forcewake_put(engine->uncore,
 						   FORCEWAKE_ALL);
 
-		पूर्णांकel_runसमय_pm_put(engine->uncore->rpm, wakeref);
-		अगर (ret && (vgpu_is_vm_unhealthy(ret)))
+		intel_runtime_pm_put(engine->uncore->rpm, wakeref);
+		if (ret && (vgpu_is_vm_unhealthy(ret)))
 			enter_failsafe_mode(vgpu, GVT_FAILSAFE_GUEST_ERR);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-व्योम पूर्णांकel_gvt_रुको_vgpu_idle(काष्ठा पूर्णांकel_vgpu *vgpu)
-अणु
-	काष्ठा पूर्णांकel_vgpu_submission *s = &vgpu->submission;
-	काष्ठा पूर्णांकel_gvt *gvt = vgpu->gvt;
-	काष्ठा पूर्णांकel_gvt_workload_scheduler *scheduler = &gvt->scheduler;
+void intel_gvt_wait_vgpu_idle(struct intel_vgpu *vgpu)
+{
+	struct intel_vgpu_submission *s = &vgpu->submission;
+	struct intel_gvt *gvt = vgpu->gvt;
+	struct intel_gvt_workload_scheduler *scheduler = &gvt->scheduler;
 
-	अगर (atomic_पढ़ो(&s->running_workload_num)) अणु
+	if (atomic_read(&s->running_workload_num)) {
 		gvt_dbg_sched("wait vgpu idle\n");
 
-		रुको_event(scheduler->workload_complete_wq,
-				!atomic_पढ़ो(&s->running_workload_num));
-	पूर्ण
-पूर्ण
+		wait_event(scheduler->workload_complete_wq,
+				!atomic_read(&s->running_workload_num));
+	}
+}
 
-व्योम पूर्णांकel_gvt_clean_workload_scheduler(काष्ठा पूर्णांकel_gvt *gvt)
-अणु
-	काष्ठा पूर्णांकel_gvt_workload_scheduler *scheduler = &gvt->scheduler;
-	काष्ठा पूर्णांकel_engine_cs *engine;
-	क्रमागत पूर्णांकel_engine_id i;
+void intel_gvt_clean_workload_scheduler(struct intel_gvt *gvt)
+{
+	struct intel_gvt_workload_scheduler *scheduler = &gvt->scheduler;
+	struct intel_engine_cs *engine;
+	enum intel_engine_id i;
 
 	gvt_dbg_core("clean workload scheduler\n");
 
-	क्रम_each_engine(engine, gvt->gt, i) अणु
-		atomic_notअगरier_chain_unरेजिस्टर(
-					&engine->context_status_notअगरier,
-					&gvt->shaकरोw_ctx_notअगरier_block[i]);
-		kthपढ़ो_stop(scheduler->thपढ़ो[i]);
-	पूर्ण
-पूर्ण
+	for_each_engine(engine, gvt->gt, i) {
+		atomic_notifier_chain_unregister(
+					&engine->context_status_notifier,
+					&gvt->shadow_ctx_notifier_block[i]);
+		kthread_stop(scheduler->thread[i]);
+	}
+}
 
-पूर्णांक पूर्णांकel_gvt_init_workload_scheduler(काष्ठा पूर्णांकel_gvt *gvt)
-अणु
-	काष्ठा पूर्णांकel_gvt_workload_scheduler *scheduler = &gvt->scheduler;
-	काष्ठा पूर्णांकel_engine_cs *engine;
-	क्रमागत पूर्णांकel_engine_id i;
-	पूर्णांक ret;
+int intel_gvt_init_workload_scheduler(struct intel_gvt *gvt)
+{
+	struct intel_gvt_workload_scheduler *scheduler = &gvt->scheduler;
+	struct intel_engine_cs *engine;
+	enum intel_engine_id i;
+	int ret;
 
 	gvt_dbg_core("init workload scheduler\n");
 
-	init_रुकोqueue_head(&scheduler->workload_complete_wq);
+	init_waitqueue_head(&scheduler->workload_complete_wq);
 
-	क्रम_each_engine(engine, gvt->gt, i) अणु
-		init_रुकोqueue_head(&scheduler->रुकोq[i]);
+	for_each_engine(engine, gvt->gt, i) {
+		init_waitqueue_head(&scheduler->waitq[i]);
 
-		scheduler->thपढ़ो[i] = kthपढ़ो_run(workload_thपढ़ो, engine,
+		scheduler->thread[i] = kthread_run(workload_thread, engine,
 						   "gvt:%s", engine->name);
-		अगर (IS_ERR(scheduler->thपढ़ो[i])) अणु
+		if (IS_ERR(scheduler->thread[i])) {
 			gvt_err("fail to create workload thread\n");
-			ret = PTR_ERR(scheduler->thपढ़ो[i]);
-			जाओ err;
-		पूर्ण
+			ret = PTR_ERR(scheduler->thread[i]);
+			goto err;
+		}
 
-		gvt->shaकरोw_ctx_notअगरier_block[i].notअगरier_call =
-					shaकरोw_context_status_change;
-		atomic_notअगरier_chain_रेजिस्टर(&engine->context_status_notअगरier,
-					&gvt->shaकरोw_ctx_notअगरier_block[i]);
-	पूर्ण
+		gvt->shadow_ctx_notifier_block[i].notifier_call =
+					shadow_context_status_change;
+		atomic_notifier_chain_register(&engine->context_status_notifier,
+					&gvt->shadow_ctx_notifier_block[i]);
+	}
 
-	वापस 0;
+	return 0;
 
 err:
-	पूर्णांकel_gvt_clean_workload_scheduler(gvt);
-	वापस ret;
-पूर्ण
+	intel_gvt_clean_workload_scheduler(gvt);
+	return ret;
+}
 
-अटल व्योम
-i915_context_ppgtt_root_restore(काष्ठा पूर्णांकel_vgpu_submission *s,
-				काष्ठा i915_ppgtt *ppgtt)
-अणु
-	पूर्णांक i;
+static void
+i915_context_ppgtt_root_restore(struct intel_vgpu_submission *s,
+				struct i915_ppgtt *ppgtt)
+{
+	int i;
 
-	अगर (i915_vm_is_4lvl(&ppgtt->vm)) अणु
+	if (i915_vm_is_4lvl(&ppgtt->vm)) {
 		set_dma_address(ppgtt->pd, s->i915_context_pml4);
-	पूर्ण अन्यथा अणु
-		क्रम (i = 0; i < GEN8_3LVL_PDPES; i++) अणु
-			काष्ठा i915_page_directory * स्थिर pd =
+	} else {
+		for (i = 0; i < GEN8_3LVL_PDPES; i++) {
+			struct i915_page_directory * const pd =
 				i915_pd_entry(ppgtt->pd, i);
 
 			set_dma_address(pd, s->i915_context_pdps[i]);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /**
- * पूर्णांकel_vgpu_clean_submission - मुक्त submission-related resource क्रम vGPU
+ * intel_vgpu_clean_submission - free submission-related resource for vGPU
  * @vgpu: a vGPU
  *
  * This function is called when a vGPU is being destroyed.
  *
  */
-व्योम पूर्णांकel_vgpu_clean_submission(काष्ठा पूर्णांकel_vgpu *vgpu)
-अणु
-	काष्ठा पूर्णांकel_vgpu_submission *s = &vgpu->submission;
-	काष्ठा पूर्णांकel_engine_cs *engine;
-	क्रमागत पूर्णांकel_engine_id id;
+void intel_vgpu_clean_submission(struct intel_vgpu *vgpu)
+{
+	struct intel_vgpu_submission *s = &vgpu->submission;
+	struct intel_engine_cs *engine;
+	enum intel_engine_id id;
 
-	पूर्णांकel_vgpu_select_submission_ops(vgpu, ALL_ENGINES, 0);
+	intel_vgpu_select_submission_ops(vgpu, ALL_ENGINES, 0);
 
-	i915_context_ppgtt_root_restore(s, i915_vm_to_ppgtt(s->shaकरोw[0]->vm));
-	क्रम_each_engine(engine, vgpu->gvt->gt, id)
-		पूर्णांकel_context_put(s->shaकरोw[id]);
+	i915_context_ppgtt_root_restore(s, i915_vm_to_ppgtt(s->shadow[0]->vm));
+	for_each_engine(engine, vgpu->gvt->gt, id)
+		intel_context_put(s->shadow[id]);
 
 	kmem_cache_destroy(s->workloads);
-पूर्ण
+}
 
 
 /**
- * पूर्णांकel_vgpu_reset_submission - reset submission-related resource क्रम vGPU
+ * intel_vgpu_reset_submission - reset submission-related resource for vGPU
  * @vgpu: a vGPU
  * @engine_mask: engines expected to be reset
  *
  * This function is called when a vGPU is being destroyed.
  *
  */
-व्योम पूर्णांकel_vgpu_reset_submission(काष्ठा पूर्णांकel_vgpu *vgpu,
-				 पूर्णांकel_engine_mask_t engine_mask)
-अणु
-	काष्ठा पूर्णांकel_vgpu_submission *s = &vgpu->submission;
+void intel_vgpu_reset_submission(struct intel_vgpu *vgpu,
+				 intel_engine_mask_t engine_mask)
+{
+	struct intel_vgpu_submission *s = &vgpu->submission;
 
-	अगर (!s->active)
-		वापस;
+	if (!s->active)
+		return;
 
-	पूर्णांकel_vgpu_clean_workloads(vgpu, engine_mask);
+	intel_vgpu_clean_workloads(vgpu, engine_mask);
 	s->ops->reset(vgpu, engine_mask);
-पूर्ण
+}
 
-अटल व्योम
-i915_context_ppgtt_root_save(काष्ठा पूर्णांकel_vgpu_submission *s,
-			     काष्ठा i915_ppgtt *ppgtt)
-अणु
-	पूर्णांक i;
+static void
+i915_context_ppgtt_root_save(struct intel_vgpu_submission *s,
+			     struct i915_ppgtt *ppgtt)
+{
+	int i;
 
-	अगर (i915_vm_is_4lvl(&ppgtt->vm)) अणु
+	if (i915_vm_is_4lvl(&ppgtt->vm)) {
 		s->i915_context_pml4 = px_dma(ppgtt->pd);
-	पूर्ण अन्यथा अणु
-		क्रम (i = 0; i < GEN8_3LVL_PDPES; i++) अणु
-			काष्ठा i915_page_directory * स्थिर pd =
+	} else {
+		for (i = 0; i < GEN8_3LVL_PDPES; i++) {
+			struct i915_page_directory * const pd =
 				i915_pd_entry(ppgtt->pd, i);
 
 			s->i915_context_pdps[i] = px_dma(pd);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /**
- * पूर्णांकel_vgpu_setup_submission - setup submission-related resource क्रम vGPU
+ * intel_vgpu_setup_submission - setup submission-related resource for vGPU
  * @vgpu: a vGPU
  *
  * This function is called when a vGPU is being created.
  *
  * Returns:
- * Zero on success, negative error code अगर failed.
+ * Zero on success, negative error code if failed.
  *
  */
-पूर्णांक पूर्णांकel_vgpu_setup_submission(काष्ठा पूर्णांकel_vgpu *vgpu)
-अणु
-	काष्ठा drm_i915_निजी *i915 = vgpu->gvt->gt->i915;
-	काष्ठा पूर्णांकel_vgpu_submission *s = &vgpu->submission;
-	काष्ठा पूर्णांकel_engine_cs *engine;
-	काष्ठा i915_ppgtt *ppgtt;
-	क्रमागत पूर्णांकel_engine_id i;
-	पूर्णांक ret;
+int intel_vgpu_setup_submission(struct intel_vgpu *vgpu)
+{
+	struct drm_i915_private *i915 = vgpu->gvt->gt->i915;
+	struct intel_vgpu_submission *s = &vgpu->submission;
+	struct intel_engine_cs *engine;
+	struct i915_ppgtt *ppgtt;
+	enum intel_engine_id i;
+	int ret;
 
 	ppgtt = i915_ppgtt_create(&i915->gt);
-	अगर (IS_ERR(ppgtt))
-		वापस PTR_ERR(ppgtt);
+	if (IS_ERR(ppgtt))
+		return PTR_ERR(ppgtt);
 
 	i915_context_ppgtt_root_save(s, ppgtt);
 
-	क्रम_each_engine(engine, vgpu->gvt->gt, i) अणु
-		काष्ठा पूर्णांकel_context *ce;
+	for_each_engine(engine, vgpu->gvt->gt, i) {
+		struct intel_context *ce;
 
 		INIT_LIST_HEAD(&s->workload_q_head[i]);
-		s->shaकरोw[i] = ERR_PTR(-EINVAL);
+		s->shadow[i] = ERR_PTR(-EINVAL);
 
-		ce = पूर्णांकel_context_create(engine);
-		अगर (IS_ERR(ce)) अणु
+		ce = intel_context_create(engine);
+		if (IS_ERR(ce)) {
 			ret = PTR_ERR(ce);
-			जाओ out_shaकरोw_ctx;
-		पूर्ण
+			goto out_shadow_ctx;
+		}
 
 		i915_vm_put(ce->vm);
 		ce->vm = i915_vm_get(&ppgtt->vm);
-		पूर्णांकel_context_set_single_submission(ce);
+		intel_context_set_single_submission(ce);
 
 		/* Max ring buffer size */
-		अगर (!पूर्णांकel_uc_wants_guc_submission(&engine->gt->uc)) अणु
-			स्थिर अचिन्हित पूर्णांक ring_size = 512 * SZ_4K;
+		if (!intel_uc_wants_guc_submission(&engine->gt->uc)) {
+			const unsigned int ring_size = 512 * SZ_4K;
 
-			ce->ring = __पूर्णांकel_context_ring_size(ring_size);
-		पूर्ण
+			ce->ring = __intel_context_ring_size(ring_size);
+		}
 
-		s->shaकरोw[i] = ce;
-	पूर्ण
+		s->shadow[i] = ce;
+	}
 
-	biपंचांगap_zero(s->shaकरोw_ctx_desc_updated, I915_NUM_ENGINES);
+	bitmap_zero(s->shadow_ctx_desc_updated, I915_NUM_ENGINES);
 
 	s->workloads = kmem_cache_create_usercopy("gvt-g_vgpu_workload",
-						  माप(काष्ठा पूर्णांकel_vgpu_workload), 0,
+						  sizeof(struct intel_vgpu_workload), 0,
 						  SLAB_HWCACHE_ALIGN,
-						  दुरत्व(काष्ठा पूर्णांकel_vgpu_workload, rb_tail),
-						  माप_field(काष्ठा पूर्णांकel_vgpu_workload, rb_tail),
-						  शून्य);
+						  offsetof(struct intel_vgpu_workload, rb_tail),
+						  sizeof_field(struct intel_vgpu_workload, rb_tail),
+						  NULL);
 
-	अगर (!s->workloads) अणु
+	if (!s->workloads) {
 		ret = -ENOMEM;
-		जाओ out_shaकरोw_ctx;
-	पूर्ण
+		goto out_shadow_ctx;
+	}
 
 	atomic_set(&s->running_workload_num, 0);
-	biपंचांगap_zero(s->tlb_handle_pending, I915_NUM_ENGINES);
+	bitmap_zero(s->tlb_handle_pending, I915_NUM_ENGINES);
 
-	स_रखो(s->last_ctx, 0, माप(s->last_ctx));
+	memset(s->last_ctx, 0, sizeof(s->last_ctx));
 
 	i915_vm_put(&ppgtt->vm);
-	वापस 0;
+	return 0;
 
-out_shaकरोw_ctx:
+out_shadow_ctx:
 	i915_context_ppgtt_root_restore(s, ppgtt);
-	क्रम_each_engine(engine, vgpu->gvt->gt, i) अणु
-		अगर (IS_ERR(s->shaकरोw[i]))
-			अवरोध;
+	for_each_engine(engine, vgpu->gvt->gt, i) {
+		if (IS_ERR(s->shadow[i]))
+			break;
 
-		पूर्णांकel_context_put(s->shaकरोw[i]);
-	पूर्ण
+		intel_context_put(s->shadow[i]);
+	}
 	i915_vm_put(&ppgtt->vm);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * पूर्णांकel_vgpu_select_submission_ops - select भव submission पूर्णांकerface
+ * intel_vgpu_select_submission_ops - select virtual submission interface
  * @vgpu: a vGPU
  * @engine_mask: either ALL_ENGINES or target engine mask
- * @पूर्णांकerface: expected vGPU भव submission पूर्णांकerface
+ * @interface: expected vGPU virtual submission interface
  *
- * This function is called when guest configures submission पूर्णांकerface.
+ * This function is called when guest configures submission interface.
  *
  * Returns:
- * Zero on success, negative error code अगर failed.
+ * Zero on success, negative error code if failed.
  *
  */
-पूर्णांक पूर्णांकel_vgpu_select_submission_ops(काष्ठा पूर्णांकel_vgpu *vgpu,
-				     पूर्णांकel_engine_mask_t engine_mask,
-				     अचिन्हित पूर्णांक पूर्णांकerface)
-अणु
-	काष्ठा drm_i915_निजी *i915 = vgpu->gvt->gt->i915;
-	काष्ठा पूर्णांकel_vgpu_submission *s = &vgpu->submission;
-	स्थिर काष्ठा पूर्णांकel_vgpu_submission_ops *ops[] = अणु
+int intel_vgpu_select_submission_ops(struct intel_vgpu *vgpu,
+				     intel_engine_mask_t engine_mask,
+				     unsigned int interface)
+{
+	struct drm_i915_private *i915 = vgpu->gvt->gt->i915;
+	struct intel_vgpu_submission *s = &vgpu->submission;
+	const struct intel_vgpu_submission_ops *ops[] = {
 		[INTEL_VGPU_EXECLIST_SUBMISSION] =
-			&पूर्णांकel_vgpu_execlist_submission_ops,
-	पूर्ण;
-	पूर्णांक ret;
+			&intel_vgpu_execlist_submission_ops,
+	};
+	int ret;
 
-	अगर (drm_WARN_ON(&i915->drm, पूर्णांकerface >= ARRAY_SIZE(ops)))
-		वापस -EINVAL;
+	if (drm_WARN_ON(&i915->drm, interface >= ARRAY_SIZE(ops)))
+		return -EINVAL;
 
-	अगर (drm_WARN_ON(&i915->drm,
-			पूर्णांकerface == 0 && engine_mask != ALL_ENGINES))
-		वापस -EINVAL;
+	if (drm_WARN_ON(&i915->drm,
+			interface == 0 && engine_mask != ALL_ENGINES))
+		return -EINVAL;
 
-	अगर (s->active)
+	if (s->active)
 		s->ops->clean(vgpu, engine_mask);
 
-	अगर (पूर्णांकerface == 0) अणु
-		s->ops = शून्य;
-		s->भव_submission_पूर्णांकerface = 0;
+	if (interface == 0) {
+		s->ops = NULL;
+		s->virtual_submission_interface = 0;
 		s->active = false;
 		gvt_dbg_core("vgpu%d: remove submission ops\n", vgpu->id);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	ret = ops[पूर्णांकerface]->init(vgpu, engine_mask);
-	अगर (ret)
-		वापस ret;
+	ret = ops[interface]->init(vgpu, engine_mask);
+	if (ret)
+		return ret;
 
-	s->ops = ops[पूर्णांकerface];
-	s->भव_submission_पूर्णांकerface = पूर्णांकerface;
+	s->ops = ops[interface];
+	s->virtual_submission_interface = interface;
 	s->active = true;
 
 	gvt_dbg_core("vgpu%d: activate ops [ %s ]\n",
 			vgpu->id, s->ops->name);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * पूर्णांकel_vgpu_destroy_workload - destroy a vGPU workload
+ * intel_vgpu_destroy_workload - destroy a vGPU workload
  * @workload: workload to destroy
  *
  * This function is called when destroy a vGPU workload.
  *
  */
-व्योम पूर्णांकel_vgpu_destroy_workload(काष्ठा पूर्णांकel_vgpu_workload *workload)
-अणु
-	काष्ठा पूर्णांकel_vgpu_submission *s = &workload->vgpu->submission;
+void intel_vgpu_destroy_workload(struct intel_vgpu_workload *workload)
+{
+	struct intel_vgpu_submission *s = &workload->vgpu->submission;
 
-	पूर्णांकel_context_unpin(s->shaकरोw[workload->engine->id]);
-	release_shaकरोw_batch_buffer(workload);
-	release_shaकरोw_wa_ctx(&workload->wa_ctx);
+	intel_context_unpin(s->shadow[workload->engine->id]);
+	release_shadow_batch_buffer(workload);
+	release_shadow_wa_ctx(&workload->wa_ctx);
 
-	अगर (!list_empty(&workload->lri_shaकरोw_mm)) अणु
-		काष्ठा पूर्णांकel_vgpu_mm *m, *mm;
-		list_क्रम_each_entry_safe(m, mm, &workload->lri_shaकरोw_mm,
-					 ppgtt_mm.link) अणु
+	if (!list_empty(&workload->lri_shadow_mm)) {
+		struct intel_vgpu_mm *m, *mm;
+		list_for_each_entry_safe(m, mm, &workload->lri_shadow_mm,
+					 ppgtt_mm.link) {
 			list_del(&m->ppgtt_mm.link);
-			पूर्णांकel_vgpu_mm_put(m);
-		पूर्ण
-	पूर्ण
+			intel_vgpu_mm_put(m);
+		}
+	}
 
-	GEM_BUG_ON(!list_empty(&workload->lri_shaकरोw_mm));
-	अगर (workload->shaकरोw_mm)
-		पूर्णांकel_vgpu_mm_put(workload->shaकरोw_mm);
+	GEM_BUG_ON(!list_empty(&workload->lri_shadow_mm));
+	if (workload->shadow_mm)
+		intel_vgpu_mm_put(workload->shadow_mm);
 
-	kmem_cache_मुक्त(s->workloads, workload);
-पूर्ण
+	kmem_cache_free(s->workloads, workload);
+}
 
-अटल काष्ठा पूर्णांकel_vgpu_workload *
-alloc_workload(काष्ठा पूर्णांकel_vgpu *vgpu)
-अणु
-	काष्ठा पूर्णांकel_vgpu_submission *s = &vgpu->submission;
-	काष्ठा पूर्णांकel_vgpu_workload *workload;
+static struct intel_vgpu_workload *
+alloc_workload(struct intel_vgpu *vgpu)
+{
+	struct intel_vgpu_submission *s = &vgpu->submission;
+	struct intel_vgpu_workload *workload;
 
 	workload = kmem_cache_zalloc(s->workloads, GFP_KERNEL);
-	अगर (!workload)
-		वापस ERR_PTR(-ENOMEM);
+	if (!workload)
+		return ERR_PTR(-ENOMEM);
 
 	INIT_LIST_HEAD(&workload->list);
-	INIT_LIST_HEAD(&workload->shaकरोw_bb);
-	INIT_LIST_HEAD(&workload->lri_shaकरोw_mm);
+	INIT_LIST_HEAD(&workload->shadow_bb);
+	INIT_LIST_HEAD(&workload->lri_shadow_mm);
 
-	init_रुकोqueue_head(&workload->shaकरोw_ctx_status_wq);
-	atomic_set(&workload->shaकरोw_ctx_active, 0);
+	init_waitqueue_head(&workload->shadow_ctx_status_wq);
+	atomic_set(&workload->shadow_ctx_active, 0);
 
 	workload->status = -EINPROGRESS;
 	workload->vgpu = vgpu;
 
-	वापस workload;
-पूर्ण
+	return workload;
+}
 
-#घोषणा RING_CTX_OFF(x) \
-	दुरत्व(काष्ठा execlist_ring_context, x)
+#define RING_CTX_OFF(x) \
+	offsetof(struct execlist_ring_context, x)
 
-अटल व्योम पढ़ो_guest_pdps(काष्ठा पूर्णांकel_vgpu *vgpu,
+static void read_guest_pdps(struct intel_vgpu *vgpu,
 		u64 ring_context_gpa, u32 pdp[8])
-अणु
+{
 	u64 gpa;
-	पूर्णांक i;
+	int i;
 
 	gpa = ring_context_gpa + RING_CTX_OFF(pdps[0].val);
 
-	क्रम (i = 0; i < 8; i++)
-		पूर्णांकel_gvt_hypervisor_पढ़ो_gpa(vgpu,
+	for (i = 0; i < 8; i++)
+		intel_gvt_hypervisor_read_gpa(vgpu,
 				gpa + i * 8, &pdp[7 - i], 4);
-पूर्ण
+}
 
-अटल पूर्णांक prepare_mm(काष्ठा पूर्णांकel_vgpu_workload *workload)
-अणु
-	काष्ठा execlist_ctx_descriptor_क्रमmat *desc = &workload->ctx_desc;
-	काष्ठा पूर्णांकel_vgpu_mm *mm;
-	काष्ठा पूर्णांकel_vgpu *vgpu = workload->vgpu;
-	क्रमागत पूर्णांकel_gvt_gtt_type root_entry_type;
+static int prepare_mm(struct intel_vgpu_workload *workload)
+{
+	struct execlist_ctx_descriptor_format *desc = &workload->ctx_desc;
+	struct intel_vgpu_mm *mm;
+	struct intel_vgpu *vgpu = workload->vgpu;
+	enum intel_gvt_gtt_type root_entry_type;
 	u64 pdps[GVT_RING_CTX_NR_PDPS];
 
-	चयन (desc->addressing_mode) अणु
-	हाल 1: /* legacy 32-bit */
+	switch (desc->addressing_mode) {
+	case 1: /* legacy 32-bit */
 		root_entry_type = GTT_TYPE_PPGTT_ROOT_L3_ENTRY;
-		अवरोध;
-	हाल 3: /* legacy 64-bit */
+		break;
+	case 3: /* legacy 64-bit */
 		root_entry_type = GTT_TYPE_PPGTT_ROOT_L4_ENTRY;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		gvt_vgpu_err("Advanced Context mode(SVM) is not supported!\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	पढ़ो_guest_pdps(workload->vgpu, workload->ring_context_gpa, (व्योम *)pdps);
+	read_guest_pdps(workload->vgpu, workload->ring_context_gpa, (void *)pdps);
 
-	mm = पूर्णांकel_vgpu_get_ppgtt_mm(workload->vgpu, root_entry_type, pdps);
-	अगर (IS_ERR(mm))
-		वापस PTR_ERR(mm);
+	mm = intel_vgpu_get_ppgtt_mm(workload->vgpu, root_entry_type, pdps);
+	if (IS_ERR(mm))
+		return PTR_ERR(mm);
 
-	workload->shaकरोw_mm = mm;
-	वापस 0;
-पूर्ण
+	workload->shadow_mm = mm;
+	return 0;
+}
 
-#घोषणा same_context(a, b) (((a)->context_id == (b)->context_id) && \
+#define same_context(a, b) (((a)->context_id == (b)->context_id) && \
 		((a)->lrca == (b)->lrca))
 
 /**
- * पूर्णांकel_vgpu_create_workload - create a vGPU workload
+ * intel_vgpu_create_workload - create a vGPU workload
  * @vgpu: a vGPU
  * @engine: the engine
  * @desc: a guest context descriptor
@@ -1621,35 +1620,35 @@ alloc_workload(काष्ठा पूर्णांकel_vgpu *vgpu)
  * This function is called when creating a vGPU workload.
  *
  * Returns:
- * काष्ठा पूर्णांकel_vgpu_workload * on success, negative error code in
- * poपूर्णांकer अगर failed.
+ * struct intel_vgpu_workload * on success, negative error code in
+ * pointer if failed.
  *
  */
-काष्ठा पूर्णांकel_vgpu_workload *
-पूर्णांकel_vgpu_create_workload(काष्ठा पूर्णांकel_vgpu *vgpu,
-			   स्थिर काष्ठा पूर्णांकel_engine_cs *engine,
-			   काष्ठा execlist_ctx_descriptor_क्रमmat *desc)
-अणु
-	काष्ठा पूर्णांकel_vgpu_submission *s = &vgpu->submission;
-	काष्ठा list_head *q = workload_q_head(vgpu, engine);
-	काष्ठा पूर्णांकel_vgpu_workload *last_workload = शून्य;
-	काष्ठा पूर्णांकel_vgpu_workload *workload = शून्य;
+struct intel_vgpu_workload *
+intel_vgpu_create_workload(struct intel_vgpu *vgpu,
+			   const struct intel_engine_cs *engine,
+			   struct execlist_ctx_descriptor_format *desc)
+{
+	struct intel_vgpu_submission *s = &vgpu->submission;
+	struct list_head *q = workload_q_head(vgpu, engine);
+	struct intel_vgpu_workload *last_workload = NULL;
+	struct intel_vgpu_workload *workload = NULL;
 	u64 ring_context_gpa;
 	u32 head, tail, start, ctl, ctx_ctl, per_ctx, indirect_ctx;
 	u32 guest_head;
-	पूर्णांक ret;
+	int ret;
 
-	ring_context_gpa = पूर्णांकel_vgpu_gma_to_gpa(vgpu->gtt.ggtt_mm,
+	ring_context_gpa = intel_vgpu_gma_to_gpa(vgpu->gtt.ggtt_mm,
 			(u32)((desc->lrca + 1) << I915_GTT_PAGE_SHIFT));
-	अगर (ring_context_gpa == INTEL_GVT_INVALID_ADDR) अणु
+	if (ring_context_gpa == INTEL_GVT_INVALID_ADDR) {
 		gvt_vgpu_err("invalid guest context LRCA: %x\n", desc->lrca);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	पूर्णांकel_gvt_hypervisor_पढ़ो_gpa(vgpu, ring_context_gpa +
+	intel_gvt_hypervisor_read_gpa(vgpu, ring_context_gpa +
 			RING_CTX_OFF(ring_header.val), &head, 4);
 
-	पूर्णांकel_gvt_hypervisor_पढ़ो_gpa(vgpu, ring_context_gpa +
+	intel_gvt_hypervisor_read_gpa(vgpu, ring_context_gpa +
 			RING_CTX_OFF(ring_tail.val), &tail, 4);
 
 	guest_head = head;
@@ -1657,41 +1656,41 @@ alloc_workload(काष्ठा पूर्णांकel_vgpu *vgpu)
 	head &= RB_HEAD_OFF_MASK;
 	tail &= RB_TAIL_OFF_MASK;
 
-	list_क्रम_each_entry_reverse(last_workload, q, list) अणु
+	list_for_each_entry_reverse(last_workload, q, list) {
 
-		अगर (same_context(&last_workload->ctx_desc, desc)) अणु
+		if (same_context(&last_workload->ctx_desc, desc)) {
 			gvt_dbg_el("ring %s cur workload == last\n",
 				   engine->name);
 			gvt_dbg_el("ctx head %x real head %lx\n", head,
 				   last_workload->rb_tail);
 			/*
-			 * cannot use guest context head poपूर्णांकer here,
-			 * as it might not be updated at this समय
+			 * cannot use guest context head pointer here,
+			 * as it might not be updated at this time
 			 */
 			head = last_workload->rb_tail;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	gvt_dbg_el("ring %s begin a new workload\n", engine->name);
 
-	/* record some ring buffer रेजिस्टर values क्रम scan and shaकरोw */
-	पूर्णांकel_gvt_hypervisor_पढ़ो_gpa(vgpu, ring_context_gpa +
+	/* record some ring buffer register values for scan and shadow */
+	intel_gvt_hypervisor_read_gpa(vgpu, ring_context_gpa +
 			RING_CTX_OFF(rb_start.val), &start, 4);
-	पूर्णांकel_gvt_hypervisor_पढ़ो_gpa(vgpu, ring_context_gpa +
+	intel_gvt_hypervisor_read_gpa(vgpu, ring_context_gpa +
 			RING_CTX_OFF(rb_ctrl.val), &ctl, 4);
-	पूर्णांकel_gvt_hypervisor_पढ़ो_gpa(vgpu, ring_context_gpa +
+	intel_gvt_hypervisor_read_gpa(vgpu, ring_context_gpa +
 			RING_CTX_OFF(ctx_ctrl.val), &ctx_ctl, 4);
 
-	अगर (!पूर्णांकel_gvt_ggtt_validate_range(vgpu, start,
-				_RING_CTL_BUF_SIZE(ctl))) अणु
+	if (!intel_gvt_ggtt_validate_range(vgpu, start,
+				_RING_CTL_BUF_SIZE(ctl))) {
 		gvt_vgpu_err("context contain invalid rb at: 0x%x\n", start);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
 	workload = alloc_workload(vgpu);
-	अगर (IS_ERR(workload))
-		वापस workload;
+	if (IS_ERR(workload))
+		return workload;
 
 	workload->engine = engine;
 	workload->ctx_desc = *desc;
@@ -1702,87 +1701,87 @@ alloc_workload(काष्ठा पूर्णांकel_vgpu *vgpu)
 	workload->rb_start = start;
 	workload->rb_ctl = ctl;
 
-	अगर (engine->id == RCS0) अणु
-		पूर्णांकel_gvt_hypervisor_पढ़ो_gpa(vgpu, ring_context_gpa +
+	if (engine->id == RCS0) {
+		intel_gvt_hypervisor_read_gpa(vgpu, ring_context_gpa +
 			RING_CTX_OFF(bb_per_ctx_ptr.val), &per_ctx, 4);
-		पूर्णांकel_gvt_hypervisor_पढ़ो_gpa(vgpu, ring_context_gpa +
+		intel_gvt_hypervisor_read_gpa(vgpu, ring_context_gpa +
 			RING_CTX_OFF(rcs_indirect_ctx.val), &indirect_ctx, 4);
 
 		workload->wa_ctx.indirect_ctx.guest_gma =
-			indirect_ctx & INसूचीECT_CTX_ADDR_MASK;
+			indirect_ctx & INDIRECT_CTX_ADDR_MASK;
 		workload->wa_ctx.indirect_ctx.size =
-			(indirect_ctx & INसूचीECT_CTX_SIZE_MASK) *
+			(indirect_ctx & INDIRECT_CTX_SIZE_MASK) *
 			CACHELINE_BYTES;
 
-		अगर (workload->wa_ctx.indirect_ctx.size != 0) अणु
-			अगर (!पूर्णांकel_gvt_ggtt_validate_range(vgpu,
+		if (workload->wa_ctx.indirect_ctx.size != 0) {
+			if (!intel_gvt_ggtt_validate_range(vgpu,
 				workload->wa_ctx.indirect_ctx.guest_gma,
-				workload->wa_ctx.indirect_ctx.size)) अणु
+				workload->wa_ctx.indirect_ctx.size)) {
 				gvt_vgpu_err("invalid wa_ctx at: 0x%lx\n",
 				    workload->wa_ctx.indirect_ctx.guest_gma);
-				kmem_cache_मुक्त(s->workloads, workload);
-				वापस ERR_PTR(-EINVAL);
-			पूर्ण
-		पूर्ण
+				kmem_cache_free(s->workloads, workload);
+				return ERR_PTR(-EINVAL);
+			}
+		}
 
 		workload->wa_ctx.per_ctx.guest_gma =
 			per_ctx & PER_CTX_ADDR_MASK;
 		workload->wa_ctx.per_ctx.valid = per_ctx & 1;
-		अगर (workload->wa_ctx.per_ctx.valid) अणु
-			अगर (!पूर्णांकel_gvt_ggtt_validate_range(vgpu,
+		if (workload->wa_ctx.per_ctx.valid) {
+			if (!intel_gvt_ggtt_validate_range(vgpu,
 				workload->wa_ctx.per_ctx.guest_gma,
-				CACHELINE_BYTES)) अणु
+				CACHELINE_BYTES)) {
 				gvt_vgpu_err("invalid per_ctx at: 0x%lx\n",
 					workload->wa_ctx.per_ctx.guest_gma);
-				kmem_cache_मुक्त(s->workloads, workload);
-				वापस ERR_PTR(-EINVAL);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				kmem_cache_free(s->workloads, workload);
+				return ERR_PTR(-EINVAL);
+			}
+		}
+	}
 
 	gvt_dbg_el("workload %p ring %s head %x tail %x start %x ctl %x\n",
 		   workload, engine->name, head, tail, start, ctl);
 
 	ret = prepare_mm(workload);
-	अगर (ret) अणु
-		kmem_cache_मुक्त(s->workloads, workload);
-		वापस ERR_PTR(ret);
-	पूर्ण
+	if (ret) {
+		kmem_cache_free(s->workloads, workload);
+		return ERR_PTR(ret);
+	}
 
-	/* Only scan and shaकरोw the first workload in the queue
-	 * as there is only one pre-allocated buf-obj क्रम shaकरोw.
+	/* Only scan and shadow the first workload in the queue
+	 * as there is only one pre-allocated buf-obj for shadow.
 	 */
-	अगर (list_empty(q)) अणु
-		पूर्णांकel_wakeref_t wakeref;
+	if (list_empty(q)) {
+		intel_wakeref_t wakeref;
 
-		with_पूर्णांकel_runसमय_pm(engine->gt->uncore->rpm, wakeref)
-			ret = पूर्णांकel_gvt_scan_and_shaकरोw_workload(workload);
-	पूर्ण
+		with_intel_runtime_pm(engine->gt->uncore->rpm, wakeref)
+			ret = intel_gvt_scan_and_shadow_workload(workload);
+	}
 
-	अगर (ret) अणु
-		अगर (vgpu_is_vm_unhealthy(ret))
+	if (ret) {
+		if (vgpu_is_vm_unhealthy(ret))
 			enter_failsafe_mode(vgpu, GVT_FAILSAFE_GUEST_ERR);
-		पूर्णांकel_vgpu_destroy_workload(workload);
-		वापस ERR_PTR(ret);
-	पूर्ण
+		intel_vgpu_destroy_workload(workload);
+		return ERR_PTR(ret);
+	}
 
-	ret = पूर्णांकel_context_pin(s->shaकरोw[engine->id]);
-	अगर (ret) अणु
-		पूर्णांकel_vgpu_destroy_workload(workload);
-		वापस ERR_PTR(ret);
-	पूर्ण
+	ret = intel_context_pin(s->shadow[engine->id]);
+	if (ret) {
+		intel_vgpu_destroy_workload(workload);
+		return ERR_PTR(ret);
+	}
 
-	वापस workload;
-पूर्ण
+	return workload;
+}
 
 /**
- * पूर्णांकel_vgpu_queue_workload - Qeue a vGPU workload
+ * intel_vgpu_queue_workload - Qeue a vGPU workload
  * @workload: the workload to queue in
  */
-व्योम पूर्णांकel_vgpu_queue_workload(काष्ठा पूर्णांकel_vgpu_workload *workload)
-अणु
+void intel_vgpu_queue_workload(struct intel_vgpu_workload *workload)
+{
 	list_add_tail(&workload->list,
 		      workload_q_head(workload->vgpu, workload->engine));
-	पूर्णांकel_gvt_kick_schedule(workload->vgpu->gvt);
-	wake_up(&workload->vgpu->gvt->scheduler.रुकोq[workload->engine->id]);
-पूर्ण
+	intel_gvt_kick_schedule(workload->vgpu->gvt);
+	wake_up(&workload->vgpu->gvt->scheduler.waitq[workload->engine->id]);
+}

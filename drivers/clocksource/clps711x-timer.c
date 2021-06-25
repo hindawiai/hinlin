@@ -1,102 +1,101 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *  Cirrus Logic CLPS711X घड़ीsource driver
+ *  Cirrus Logic CLPS711X clocksource driver
  *
  *  Copyright (C) 2014 Alexander Shiyan <shc_work@mail.ru>
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/घड़ीchips.h>
-#समावेश <linux/घड़ीsource.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/sched_घड़ी.h>
-#समावेश <linux/slab.h>
+#include <linux/clk.h>
+#include <linux/clockchips.h>
+#include <linux/clocksource.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/of_address.h>
+#include <linux/of_irq.h>
+#include <linux/sched_clock.h>
+#include <linux/slab.h>
 
-क्रमागत अणु
+enum {
 	CLPS711X_CLKSRC_CLOCKSOURCE,
 	CLPS711X_CLKSRC_CLOCKEVENT,
-पूर्ण;
+};
 
-अटल व्योम __iomem *tcd;
+static void __iomem *tcd;
 
-अटल u64 notrace clps711x_sched_घड़ी_पढ़ो(व्योम)
-अणु
-	वापस ~पढ़ोw(tcd);
-पूर्ण
+static u64 notrace clps711x_sched_clock_read(void)
+{
+	return ~readw(tcd);
+}
 
-अटल व्योम __init clps711x_clksrc_init(काष्ठा clk *घड़ी, व्योम __iomem *base)
-अणु
-	अचिन्हित दीर्घ rate = clk_get_rate(घड़ी);
+static void __init clps711x_clksrc_init(struct clk *clock, void __iomem *base)
+{
+	unsigned long rate = clk_get_rate(clock);
 
 	tcd = base;
 
-	घड़ीsource_mmio_init(tcd, "clps711x-clocksource", rate, 300, 16,
-			      घड़ीsource_mmio_पढ़ोw_करोwn);
+	clocksource_mmio_init(tcd, "clps711x-clocksource", rate, 300, 16,
+			      clocksource_mmio_readw_down);
 
-	sched_घड़ी_रेजिस्टर(clps711x_sched_घड़ी_पढ़ो, 16, rate);
-पूर्ण
+	sched_clock_register(clps711x_sched_clock_read, 16, rate);
+}
 
-अटल irqवापस_t clps711x_समयr_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा घड़ी_event_device *evt = dev_id;
+static irqreturn_t clps711x_timer_interrupt(int irq, void *dev_id)
+{
+	struct clock_event_device *evt = dev_id;
 
 	evt->event_handler(evt);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक __init _clps711x_clkevt_init(काष्ठा clk *घड़ी, व्योम __iomem *base,
-					अचिन्हित पूर्णांक irq)
-अणु
-	काष्ठा घड़ी_event_device *clkevt;
-	अचिन्हित दीर्घ rate;
+static int __init _clps711x_clkevt_init(struct clk *clock, void __iomem *base,
+					unsigned int irq)
+{
+	struct clock_event_device *clkevt;
+	unsigned long rate;
 
-	clkevt = kzalloc(माप(*clkevt), GFP_KERNEL);
-	अगर (!clkevt)
-		वापस -ENOMEM;
+	clkevt = kzalloc(sizeof(*clkevt), GFP_KERNEL);
+	if (!clkevt)
+		return -ENOMEM;
 
-	rate = clk_get_rate(घड़ी);
+	rate = clk_get_rate(clock);
 
 	/* Set Timer prescaler */
-	ग_लिखोw(DIV_ROUND_CLOSEST(rate, HZ), base);
+	writew(DIV_ROUND_CLOSEST(rate, HZ), base);
 
 	clkevt->name = "clps711x-clockevent";
 	clkevt->rating = 300;
 	clkevt->features = CLOCK_EVT_FEAT_PERIODIC | CLOCK_EVT_FEAT_C3STOP;
 	clkevt->cpumask = cpumask_of(0);
-	घड़ीevents_config_and_रेजिस्टर(clkevt, HZ, 0, 0);
+	clockevents_config_and_register(clkevt, HZ, 0, 0);
 
-	वापस request_irq(irq, clps711x_समयr_पूर्णांकerrupt, IRQF_TIMER,
+	return request_irq(irq, clps711x_timer_interrupt, IRQF_TIMER,
 			   "clps711x-timer", clkevt);
-पूर्ण
+}
 
-अटल पूर्णांक __init clps711x_समयr_init(काष्ठा device_node *np)
-अणु
-	अचिन्हित पूर्णांक irq = irq_of_parse_and_map(np, 0);
-	काष्ठा clk *घड़ी = of_clk_get(np, 0);
-	व्योम __iomem *base = of_iomap(np, 0);
+static int __init clps711x_timer_init(struct device_node *np)
+{
+	unsigned int irq = irq_of_parse_and_map(np, 0);
+	struct clk *clock = of_clk_get(np, 0);
+	void __iomem *base = of_iomap(np, 0);
 
-	अगर (!base)
-		वापस -ENOMEM;
-	अगर (!irq)
-		वापस -EINVAL;
-	अगर (IS_ERR(घड़ी))
-		वापस PTR_ERR(घड़ी);
+	if (!base)
+		return -ENOMEM;
+	if (!irq)
+		return -EINVAL;
+	if (IS_ERR(clock))
+		return PTR_ERR(clock);
 
-	चयन (of_alias_get_id(np, "timer")) अणु
-	हाल CLPS711X_CLKSRC_CLOCKSOURCE:
-		clps711x_clksrc_init(घड़ी, base);
-		अवरोध;
-	हाल CLPS711X_CLKSRC_CLOCKEVENT:
-		वापस _clps711x_clkevt_init(घड़ी, base, irq);
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	switch (of_alias_get_id(np, "timer")) {
+	case CLPS711X_CLKSRC_CLOCKSOURCE:
+		clps711x_clksrc_init(clock, base);
+		break;
+	case CLPS711X_CLKSRC_CLOCKEVENT:
+		return _clps711x_clkevt_init(clock, base, irq);
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
-TIMER_OF_DECLARE(clps711x, "cirrus,ep7209-timer", clps711x_समयr_init);
+	return 0;
+}
+TIMER_OF_DECLARE(clps711x, "cirrus,ep7209-timer", clps711x_timer_init);

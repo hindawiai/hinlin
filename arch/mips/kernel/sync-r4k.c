@@ -1,123 +1,122 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Count रेजिस्टर synchronisation.
+ * Count register synchronisation.
  *
- * All CPUs will have their count रेजिस्टरs synchronised to the CPU0 next समय
- * value. This can cause a small समयwarp क्रम CPU0. All other CPU's should
- * not have करोne anything signअगरicant (but they may have had पूर्णांकerrupts
- * enabled briefly - prom_smp_finish() should not be responsible क्रम enabling
- * पूर्णांकerrupts...)
+ * All CPUs will have their count registers synchronised to the CPU0 next time
+ * value. This can cause a small timewarp for CPU0. All other CPU's should
+ * not have done anything significant (but they may have had interrupts
+ * enabled briefly - prom_smp_finish() should not be responsible for enabling
+ * interrupts...)
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/irqflags.h>
-#समावेश <linux/cpumask.h>
+#include <linux/kernel.h>
+#include <linux/irqflags.h>
+#include <linux/cpumask.h>
 
-#समावेश <यंत्र/r4k-समयr.h>
-#समावेश <linux/atomic.h>
-#समावेश <यंत्र/barrier.h>
-#समावेश <यंत्र/mipsregs.h>
+#include <asm/r4k-timer.h>
+#include <linux/atomic.h>
+#include <asm/barrier.h>
+#include <asm/mipsregs.h>
 
-अटल अचिन्हित पूर्णांक initcount = 0;
-अटल atomic_t count_count_start = ATOMIC_INIT(0);
-अटल atomic_t count_count_stop = ATOMIC_INIT(0);
+static unsigned int initcount = 0;
+static atomic_t count_count_start = ATOMIC_INIT(0);
+static atomic_t count_count_stop = ATOMIC_INIT(0);
 
-#घोषणा COUNTON 100
-#घोषणा NR_LOOPS 3
+#define COUNTON 100
+#define NR_LOOPS 3
 
-व्योम synchronise_count_master(पूर्णांक cpu)
-अणु
-	पूर्णांक i;
-	अचिन्हित दीर्घ flags;
+void synchronise_count_master(int cpu)
+{
+	int i;
+	unsigned long flags;
 
 	pr_info("Synchronize counters for CPU %u: ", cpu);
 
 	local_irq_save(flags);
 
 	/*
-	 * We loop a few बार to get a primed inकाष्ठाion cache,
+	 * We loop a few times to get a primed instruction cache,
 	 * then the last pass is more or less synchronised and
 	 * the master and slaves each set their cycle counters to a known
-	 * value all at once. This reduces the chance of having अक्रमom offsets
+	 * value all at once. This reduces the chance of having random offsets
 	 * between the processors, and guarantees that the maximum
 	 * delay between the cycle counters is never bigger than
-	 * the latency of inक्रमmation-passing (cachelines) between
+	 * the latency of information-passing (cachelines) between
 	 * two CPUs.
 	 */
 
-	क्रम (i = 0; i < NR_LOOPS; i++) अणु
+	for (i = 0; i < NR_LOOPS; i++) {
 		/* slaves loop on '!= 2' */
-		जबतक (atomic_पढ़ो(&count_count_start) != 1)
+		while (atomic_read(&count_count_start) != 1)
 			mb();
 		atomic_set(&count_count_stop, 0);
 		smp_wmb();
 
-		/* Let the slave ग_लिखोs its count रेजिस्टर */
+		/* Let the slave writes its count register */
 		atomic_inc(&count_count_start);
 
-		/* Count will be initialised to current समयr */
-		अगर (i == 1)
-			initcount = पढ़ो_c0_count();
+		/* Count will be initialised to current timer */
+		if (i == 1)
+			initcount = read_c0_count();
 
 		/*
 		 * Everyone initialises count in the last loop:
 		 */
-		अगर (i == NR_LOOPS-1)
-			ग_लिखो_c0_count(initcount);
+		if (i == NR_LOOPS-1)
+			write_c0_count(initcount);
 
 		/*
-		 * Wait क्रम slave to leave the synchronization poपूर्णांक:
+		 * Wait for slave to leave the synchronization point:
 		 */
-		जबतक (atomic_पढ़ो(&count_count_stop) != 1)
+		while (atomic_read(&count_count_stop) != 1)
 			mb();
 		atomic_set(&count_count_start, 0);
 		smp_wmb();
 		atomic_inc(&count_count_stop);
-	पूर्ण
-	/* Arrange क्रम an पूर्णांकerrupt in a लघु जबतक */
-	ग_लिखो_c0_compare(पढ़ो_c0_count() + COUNTON);
+	}
+	/* Arrange for an interrupt in a short while */
+	write_c0_compare(read_c0_count() + COUNTON);
 
 	local_irq_restore(flags);
 
 	/*
 	 * i386 code reported the skew here, but the
-	 * count रेजिस्टरs were almost certainly out of sync
-	 * so no poपूर्णांक in alarming people
+	 * count registers were almost certainly out of sync
+	 * so no point in alarming people
 	 */
 	pr_cont("done.\n");
-पूर्ण
+}
 
-व्योम synchronise_count_slave(पूर्णांक cpu)
-अणु
-	पूर्णांक i;
-	अचिन्हित दीर्घ flags;
+void synchronise_count_slave(int cpu)
+{
+	int i;
+	unsigned long flags;
 
 	local_irq_save(flags);
 
 	/*
-	 * Not every cpu is online at the समय this माला_लो called,
-	 * so we first रुको क्रम the master to say everyone is पढ़ोy
+	 * Not every cpu is online at the time this gets called,
+	 * so we first wait for the master to say everyone is ready
 	 */
 
-	क्रम (i = 0; i < NR_LOOPS; i++) अणु
+	for (i = 0; i < NR_LOOPS; i++) {
 		atomic_inc(&count_count_start);
-		जबतक (atomic_पढ़ो(&count_count_start) != 2)
+		while (atomic_read(&count_count_start) != 2)
 			mb();
 
 		/*
 		 * Everyone initialises count in the last loop:
 		 */
-		अगर (i == NR_LOOPS-1)
-			ग_लिखो_c0_count(initcount);
+		if (i == NR_LOOPS-1)
+			write_c0_count(initcount);
 
 		atomic_inc(&count_count_stop);
-		जबतक (atomic_पढ़ो(&count_count_stop) != 2)
+		while (atomic_read(&count_count_stop) != 2)
 			mb();
-	पूर्ण
-	/* Arrange क्रम an पूर्णांकerrupt in a लघु जबतक */
-	ग_लिखो_c0_compare(पढ़ो_c0_count() + COUNTON);
+	}
+	/* Arrange for an interrupt in a short while */
+	write_c0_compare(read_c0_count() + COUNTON);
 
 	local_irq_restore(flags);
-पूर्ण
-#अघोषित NR_LOOPS
+}
+#undef NR_LOOPS

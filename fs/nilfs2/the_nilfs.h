@@ -1,7 +1,6 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
- * the_nilfs.h - the_nilfs shared काष्ठाure.
+ * the_nilfs.h - the_nilfs shared structure.
  *
  * Copyright (C) 2005-2008 Nippon Telegraph and Telephone Corporation.
  *
@@ -9,78 +8,78 @@
  *
  */
 
-#अगर_अघोषित _THE_NILFS_H
-#घोषणा _THE_NILFS_H
+#ifndef _THE_NILFS_H
+#define _THE_NILFS_H
 
-#समावेश <linux/types.h>
-#समावेश <linux/buffer_head.h>
-#समावेश <linux/rbtree.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/backing-dev.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/refcount.h>
+#include <linux/types.h>
+#include <linux/buffer_head.h>
+#include <linux/rbtree.h>
+#include <linux/fs.h>
+#include <linux/blkdev.h>
+#include <linux/backing-dev.h>
+#include <linux/slab.h>
+#include <linux/refcount.h>
 
-काष्ठा nilfs_sc_info;
-काष्ठा nilfs_sysfs_dev_subgroups;
+struct nilfs_sc_info;
+struct nilfs_sysfs_dev_subgroups;
 
-/* the_nilfs काष्ठा */
-क्रमागत अणु
-	THE_NILFS_INIT = 0,     /* Inक्रमmation from super_block is set */
-	THE_NILFS_DISCONTINUED,	/* 'next' poपूर्णांकer chain has broken */
+/* the_nilfs struct */
+enum {
+	THE_NILFS_INIT = 0,     /* Information from super_block is set */
+	THE_NILFS_DISCONTINUED,	/* 'next' pointer chain has broken */
 	THE_NILFS_GC_RUNNING,	/* gc process is running */
-	THE_NILFS_SB_सूचीTY,	/* super block is dirty */
-पूर्ण;
+	THE_NILFS_SB_DIRTY,	/* super block is dirty */
+};
 
 /**
- * काष्ठा the_nilfs - काष्ठा to supervise multiple nilfs mount poपूर्णांकs
+ * struct the_nilfs - struct to supervise multiple nilfs mount points
  * @ns_flags: flags
- * @ns_flushed_device: flag indicating अगर all अस्थिर data was flushed
- * @ns_sb: back poपूर्णांकer to super block instance
+ * @ns_flushed_device: flag indicating if all volatile data was flushed
+ * @ns_sb: back pointer to super block instance
  * @ns_bdev: block device
- * @ns_sem: semaphore क्रम shared states
+ * @ns_sem: semaphore for shared states
  * @ns_snapshot_mount_mutex: mutex to protect snapshot mounts
  * @ns_sbh: buffer heads of on-disk super blocks
- * @ns_sbp: poपूर्णांकers to super block data
- * @ns_sbwसमय: previous ग_लिखो समय of super block
- * @ns_sbwcount: ग_लिखो count of super block
+ * @ns_sbp: pointers to super block data
+ * @ns_sbwtime: previous write time of super block
+ * @ns_sbwcount: write count of super block
  * @ns_sbsize: size of valid data in super block
- * @ns_mount_state: file प्रणाली state
- * @ns_sb_update_freq: पूर्णांकerval of periodical update of superblocks (in seconds)
+ * @ns_mount_state: file system state
+ * @ns_sb_update_freq: interval of periodical update of superblocks (in seconds)
  * @ns_seg_seq: segment sequence counter
  * @ns_segnum: index number of the latest full segment.
  * @ns_nextnum: index number of the full segment index to be used next
  * @ns_pseg_offset: offset of next partial segment in the current full segment
- * @ns_cno: next checkpoपूर्णांक number
- * @ns_स_समय: ग_लिखो समय of the last segment
- * @ns_nongc_स_समय: ग_लिखो समय of the last segment not क्रम cleaner operation
+ * @ns_cno: next checkpoint number
+ * @ns_ctime: write time of the last segment
+ * @ns_nongc_ctime: write time of the last segment not for cleaner operation
  * @ns_ndirtyblks: Number of dirty data blocks
- * @ns_last_segment_lock: lock protecting fields क्रम the latest segment
+ * @ns_last_segment_lock: lock protecting fields for the latest segment
  * @ns_last_pseg: start block number of the latest segment
  * @ns_last_seq: sequence value of the latest segment
- * @ns_last_cno: checkpoपूर्णांक number of the latest segment
+ * @ns_last_cno: checkpoint number of the latest segment
  * @ns_prot_seq: least sequence number of segments which must not be reclaimed
- * @ns_prev_seq: base sequence number used to decide अगर advance log cursor
- * @ns_ग_लिखोr: log ग_लिखोr
- * @ns_segctor_sem: semaphore protecting log ग_लिखो
+ * @ns_prev_seq: base sequence number used to decide if advance log cursor
+ * @ns_writer: log writer
+ * @ns_segctor_sem: semaphore protecting log write
  * @ns_dat: DAT file inode
- * @ns_cpfile: checkpoपूर्णांक file inode
+ * @ns_cpfile: checkpoint file inode
  * @ns_sufile: segusage file inode
- * @ns_cptree: rb-tree of all mounted checkpoपूर्णांकs (nilfs_root)
+ * @ns_cptree: rb-tree of all mounted checkpoints (nilfs_root)
  * @ns_cptree_lock: lock protecting @ns_cptree
  * @ns_dirty_files: list of dirty files
  * @ns_inode_lock: lock protecting @ns_dirty_files
  * @ns_gc_inodes: dummy inodes to keep live blocks
- * @ns_next_generation: next generation number क्रम inodes
+ * @ns_next_generation: next generation number for inodes
  * @ns_next_gen_lock: lock protecting @ns_next_generation
  * @ns_mount_opt: mount options
- * @ns_resuid: uid क्रम reserved blocks
- * @ns_resgid: gid क्रम reserved blocks
- * @ns_पूर्णांकerval: checkpoपूर्णांक creation पूर्णांकerval
- * @ns_watermark: watermark क्रम the number of dirty buffers
+ * @ns_resuid: uid for reserved blocks
+ * @ns_resgid: gid for reserved blocks
+ * @ns_interval: checkpoint creation interval
+ * @ns_watermark: watermark for the number of dirty buffers
  * @ns_blocksize_bits: bit length of block size
  * @ns_blocksize: block size
- * @ns_nsegments: number of segments in fileप्रणाली
+ * @ns_nsegments: number of segments in filesystem
  * @ns_blocks_per_segment: number of blocks per segment
  * @ns_r_segments_percentage: reserved segments percentage
  * @ns_nrsvsegs: number of reserved segments
@@ -89,47 +88,47 @@
  * @ns_first_ino: first not-special inode number
  * @ns_crc_seed: seed value of CRC32 calculation
  * @ns_dev_kobj: /sys/fs/<nilfs>/<device>
- * @ns_dev_kobj_unरेजिस्टर: completion state
- * @ns_dev_subgroups: <device> subgroups poपूर्णांकer
+ * @ns_dev_kobj_unregister: completion state
+ * @ns_dev_subgroups: <device> subgroups pointer
  */
-काष्ठा the_nilfs अणु
-	अचिन्हित दीर्घ		ns_flags;
-	पूर्णांक			ns_flushed_device;
+struct the_nilfs {
+	unsigned long		ns_flags;
+	int			ns_flushed_device;
 
-	काष्ठा super_block     *ns_sb;
-	काष्ठा block_device    *ns_bdev;
-	काष्ठा rw_semaphore	ns_sem;
-	काष्ठा mutex		ns_snapshot_mount_mutex;
+	struct super_block     *ns_sb;
+	struct block_device    *ns_bdev;
+	struct rw_semaphore	ns_sem;
+	struct mutex		ns_snapshot_mount_mutex;
 
 	/*
-	 * used क्रम
-	 * - loading the latest checkpoपूर्णांक exclusively.
+	 * used for
+	 * - loading the latest checkpoint exclusively.
 	 * - allocating a new full segment.
 	 */
-	काष्ठा buffer_head     *ns_sbh[2];
-	काष्ठा nilfs_super_block *ns_sbp[2];
-	समय64_t		ns_sbwसमय;
-	अचिन्हित पूर्णांक		ns_sbwcount;
-	अचिन्हित पूर्णांक		ns_sbsize;
-	अचिन्हित पूर्णांक		ns_mount_state;
-	अचिन्हित पूर्णांक		ns_sb_update_freq;
+	struct buffer_head     *ns_sbh[2];
+	struct nilfs_super_block *ns_sbp[2];
+	time64_t		ns_sbwtime;
+	unsigned int		ns_sbwcount;
+	unsigned int		ns_sbsize;
+	unsigned int		ns_mount_state;
+	unsigned int		ns_sb_update_freq;
 
 	/*
 	 * The following fields are updated by a writable FS-instance.
-	 * These fields are रक्षित by ns_segctor_sem outside load_nilfs().
+	 * These fields are protected by ns_segctor_sem outside load_nilfs().
 	 */
 	u64			ns_seg_seq;
 	__u64			ns_segnum;
 	__u64			ns_nextnum;
-	अचिन्हित दीर्घ		ns_pseg_offset;
+	unsigned long		ns_pseg_offset;
 	__u64			ns_cno;
-	समय64_t		ns_स_समय;
-	समय64_t		ns_nongc_स_समय;
+	time64_t		ns_ctime;
+	time64_t		ns_nongc_ctime;
 	atomic_t		ns_ndirtyblks;
 
 	/*
-	 * The following fields hold inक्रमmation on the latest partial segment
-	 * written to disk with a super root.  These fields are रक्षित by
+	 * The following fields hold information on the latest partial segment
+	 * written to disk with a super root.  These fields are protected by
 	 * ns_last_segment_lock.
 	 */
 	spinlock_t		ns_last_segment_lock;
@@ -139,235 +138,235 @@
 	u64			ns_prot_seq;
 	u64			ns_prev_seq;
 
-	काष्ठा nilfs_sc_info   *ns_ग_लिखोr;
-	काष्ठा rw_semaphore	ns_segctor_sem;
+	struct nilfs_sc_info   *ns_writer;
+	struct rw_semaphore	ns_segctor_sem;
 
 	/*
-	 * Following fields are lock मुक्त except क्रम the period beक्रमe
+	 * Following fields are lock free except for the period before
 	 * the_nilfs is initialized.
 	 */
-	काष्ठा inode	       *ns_dat;
-	काष्ठा inode	       *ns_cpfile;
-	काष्ठा inode	       *ns_sufile;
+	struct inode	       *ns_dat;
+	struct inode	       *ns_cpfile;
+	struct inode	       *ns_sufile;
 
-	/* Checkpoपूर्णांक tree */
-	काष्ठा rb_root		ns_cptree;
+	/* Checkpoint tree */
+	struct rb_root		ns_cptree;
 	spinlock_t		ns_cptree_lock;
 
 	/* Dirty inode list */
-	काष्ठा list_head	ns_dirty_files;
+	struct list_head	ns_dirty_files;
 	spinlock_t		ns_inode_lock;
 
 	/* GC inode list */
-	काष्ठा list_head	ns_gc_inodes;
+	struct list_head	ns_gc_inodes;
 
 	/* Inode allocator */
 	u32			ns_next_generation;
 	spinlock_t		ns_next_gen_lock;
 
 	/* Mount options */
-	अचिन्हित दीर्घ		ns_mount_opt;
+	unsigned long		ns_mount_opt;
 
 	uid_t			ns_resuid;
 	gid_t			ns_resgid;
-	अचिन्हित दीर्घ		ns_पूर्णांकerval;
-	अचिन्हित दीर्घ		ns_watermark;
+	unsigned long		ns_interval;
+	unsigned long		ns_watermark;
 
-	/* Disk layout inक्रमmation (अटल) */
-	अचिन्हित पूर्णांक		ns_blocksize_bits;
-	अचिन्हित पूर्णांक		ns_blocksize;
-	अचिन्हित दीर्घ		ns_nsegments;
-	अचिन्हित दीर्घ		ns_blocks_per_segment;
-	अचिन्हित दीर्घ		ns_r_segments_percentage;
-	अचिन्हित दीर्घ		ns_nrsvsegs;
-	अचिन्हित दीर्घ		ns_first_data_block;
-	पूर्णांक			ns_inode_size;
-	पूर्णांक			ns_first_ino;
+	/* Disk layout information (static) */
+	unsigned int		ns_blocksize_bits;
+	unsigned int		ns_blocksize;
+	unsigned long		ns_nsegments;
+	unsigned long		ns_blocks_per_segment;
+	unsigned long		ns_r_segments_percentage;
+	unsigned long		ns_nrsvsegs;
+	unsigned long		ns_first_data_block;
+	int			ns_inode_size;
+	int			ns_first_ino;
 	u32			ns_crc_seed;
 
 	/* /sys/fs/<nilfs>/<device> */
-	काष्ठा kobject ns_dev_kobj;
-	काष्ठा completion ns_dev_kobj_unरेजिस्टर;
-	काष्ठा nilfs_sysfs_dev_subgroups *ns_dev_subgroups;
-पूर्ण;
+	struct kobject ns_dev_kobj;
+	struct completion ns_dev_kobj_unregister;
+	struct nilfs_sysfs_dev_subgroups *ns_dev_subgroups;
+};
 
-#घोषणा THE_NILFS_FNS(bit, name)					\
-अटल अंतरभूत व्योम set_nilfs_##name(काष्ठा the_nilfs *nilfs)		\
-अणु									\
+#define THE_NILFS_FNS(bit, name)					\
+static inline void set_nilfs_##name(struct the_nilfs *nilfs)		\
+{									\
 	set_bit(THE_NILFS_##bit, &(nilfs)->ns_flags);			\
-पूर्ण									\
-अटल अंतरभूत व्योम clear_nilfs_##name(काष्ठा the_nilfs *nilfs)		\
-अणु									\
+}									\
+static inline void clear_nilfs_##name(struct the_nilfs *nilfs)		\
+{									\
 	clear_bit(THE_NILFS_##bit, &(nilfs)->ns_flags);			\
-पूर्ण									\
-अटल अंतरभूत पूर्णांक nilfs_##name(काष्ठा the_nilfs *nilfs)			\
-अणु									\
-	वापस test_bit(THE_NILFS_##bit, &(nilfs)->ns_flags);		\
-पूर्ण
+}									\
+static inline int nilfs_##name(struct the_nilfs *nilfs)			\
+{									\
+	return test_bit(THE_NILFS_##bit, &(nilfs)->ns_flags);		\
+}
 
 THE_NILFS_FNS(INIT, init)
-THE_NILFS_FNS(DISCONTINUED, disजारीd)
+THE_NILFS_FNS(DISCONTINUED, discontinued)
 THE_NILFS_FNS(GC_RUNNING, gc_running)
-THE_NILFS_FNS(SB_सूचीTY, sb_dirty)
+THE_NILFS_FNS(SB_DIRTY, sb_dirty)
 
 /*
  * Mount option operations
  */
-#घोषणा nilfs_clear_opt(nilfs, opt)  \
+#define nilfs_clear_opt(nilfs, opt)  \
 	((nilfs)->ns_mount_opt &= ~NILFS_MOUNT_##opt)
-#घोषणा nilfs_set_opt(nilfs, opt)  \
+#define nilfs_set_opt(nilfs, opt)  \
 	((nilfs)->ns_mount_opt |= NILFS_MOUNT_##opt)
-#घोषणा nilfs_test_opt(nilfs, opt) ((nilfs)->ns_mount_opt & NILFS_MOUNT_##opt)
-#घोषणा nilfs_ग_लिखो_opt(nilfs, mask, opt)				\
+#define nilfs_test_opt(nilfs, opt) ((nilfs)->ns_mount_opt & NILFS_MOUNT_##opt)
+#define nilfs_write_opt(nilfs, mask, opt)				\
 	((nilfs)->ns_mount_opt =					\
 		(((nilfs)->ns_mount_opt & ~NILFS_MOUNT_##mask) |	\
 		 NILFS_MOUNT_##opt))					\
 
 /**
- * काष्ठा nilfs_root - nilfs root object
- * @cno: checkpoपूर्णांक number
+ * struct nilfs_root - nilfs root object
+ * @cno: checkpoint number
  * @rb_node: red-black tree node
- * @count: refcount of this काष्ठाure
+ * @count: refcount of this structure
  * @nilfs: nilfs object
- * @अगरile: inode file
+ * @ifile: inode file
  * @inodes_count: number of inodes
  * @blocks_count: number of blocks
  * @snapshot_kobj: /sys/fs/<nilfs>/<device>/mounted_snapshots/<snapshot>
- * @snapshot_kobj_unरेजिस्टर: completion state क्रम kernel object
+ * @snapshot_kobj_unregister: completion state for kernel object
  */
-काष्ठा nilfs_root अणु
+struct nilfs_root {
 	__u64 cno;
-	काष्ठा rb_node rb_node;
+	struct rb_node rb_node;
 
 	refcount_t count;
-	काष्ठा the_nilfs *nilfs;
-	काष्ठा inode *अगरile;
+	struct the_nilfs *nilfs;
+	struct inode *ifile;
 
 	atomic64_t inodes_count;
 	atomic64_t blocks_count;
 
 	/* /sys/fs/<nilfs>/<device>/mounted_snapshots/<snapshot> */
-	काष्ठा kobject snapshot_kobj;
-	काष्ठा completion snapshot_kobj_unरेजिस्टर;
-पूर्ण;
+	struct kobject snapshot_kobj;
+	struct completion snapshot_kobj_unregister;
+};
 
-/* Special checkpoपूर्णांक number */
-#घोषणा NILFS_CPTREE_CURRENT_CNO	0
+/* Special checkpoint number */
+#define NILFS_CPTREE_CURRENT_CNO	0
 
-/* Minimum पूर्णांकerval of periodical update of superblocks (in seconds) */
-#घोषणा NILFS_SB_FREQ		10
+/* Minimum interval of periodical update of superblocks (in seconds) */
+#define NILFS_SB_FREQ		10
 
-अटल अंतरभूत पूर्णांक nilfs_sb_need_update(काष्ठा the_nilfs *nilfs)
-अणु
-	u64 t = kसमय_get_real_seconds();
+static inline int nilfs_sb_need_update(struct the_nilfs *nilfs)
+{
+	u64 t = ktime_get_real_seconds();
 
-	वापस t < nilfs->ns_sbwसमय ||
-		t > nilfs->ns_sbwसमय + nilfs->ns_sb_update_freq;
-पूर्ण
+	return t < nilfs->ns_sbwtime ||
+		t > nilfs->ns_sbwtime + nilfs->ns_sb_update_freq;
+}
 
-अटल अंतरभूत पूर्णांक nilfs_sb_will_flip(काष्ठा the_nilfs *nilfs)
-अणु
-	पूर्णांक flip_bits = nilfs->ns_sbwcount & 0x0FL;
+static inline int nilfs_sb_will_flip(struct the_nilfs *nilfs)
+{
+	int flip_bits = nilfs->ns_sbwcount & 0x0FL;
 
-	वापस (flip_bits != 0x08 && flip_bits != 0x0F);
-पूर्ण
+	return (flip_bits != 0x08 && flip_bits != 0x0F);
+}
 
-व्योम nilfs_set_last_segment(काष्ठा the_nilfs *, sector_t, u64, __u64);
-काष्ठा the_nilfs *alloc_nilfs(काष्ठा super_block *sb);
-व्योम destroy_nilfs(काष्ठा the_nilfs *nilfs);
-पूर्णांक init_nilfs(काष्ठा the_nilfs *nilfs, काष्ठा super_block *sb, अक्षर *data);
-पूर्णांक load_nilfs(काष्ठा the_nilfs *nilfs, काष्ठा super_block *sb);
-अचिन्हित दीर्घ nilfs_nrsvsegs(काष्ठा the_nilfs *nilfs, अचिन्हित दीर्घ nsegs);
-व्योम nilfs_set_nsegments(काष्ठा the_nilfs *nilfs, अचिन्हित दीर्घ nsegs);
-पूर्णांक nilfs_discard_segments(काष्ठा the_nilfs *, __u64 *, माप_प्रकार);
-पूर्णांक nilfs_count_मुक्त_blocks(काष्ठा the_nilfs *, sector_t *);
-काष्ठा nilfs_root *nilfs_lookup_root(काष्ठा the_nilfs *nilfs, __u64 cno);
-काष्ठा nilfs_root *nilfs_find_or_create_root(काष्ठा the_nilfs *nilfs,
+void nilfs_set_last_segment(struct the_nilfs *, sector_t, u64, __u64);
+struct the_nilfs *alloc_nilfs(struct super_block *sb);
+void destroy_nilfs(struct the_nilfs *nilfs);
+int init_nilfs(struct the_nilfs *nilfs, struct super_block *sb, char *data);
+int load_nilfs(struct the_nilfs *nilfs, struct super_block *sb);
+unsigned long nilfs_nrsvsegs(struct the_nilfs *nilfs, unsigned long nsegs);
+void nilfs_set_nsegments(struct the_nilfs *nilfs, unsigned long nsegs);
+int nilfs_discard_segments(struct the_nilfs *, __u64 *, size_t);
+int nilfs_count_free_blocks(struct the_nilfs *, sector_t *);
+struct nilfs_root *nilfs_lookup_root(struct the_nilfs *nilfs, __u64 cno);
+struct nilfs_root *nilfs_find_or_create_root(struct the_nilfs *nilfs,
 					     __u64 cno);
-व्योम nilfs_put_root(काष्ठा nilfs_root *root);
-पूर्णांक nilfs_near_disk_full(काष्ठा the_nilfs *);
-व्योम nilfs_fall_back_super_block(काष्ठा the_nilfs *);
-व्योम nilfs_swap_super_block(काष्ठा the_nilfs *);
+void nilfs_put_root(struct nilfs_root *root);
+int nilfs_near_disk_full(struct the_nilfs *);
+void nilfs_fall_back_super_block(struct the_nilfs *);
+void nilfs_swap_super_block(struct the_nilfs *);
 
 
-अटल अंतरभूत व्योम nilfs_get_root(काष्ठा nilfs_root *root)
-अणु
+static inline void nilfs_get_root(struct nilfs_root *root)
+{
 	refcount_inc(&root->count);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक nilfs_valid_fs(काष्ठा the_nilfs *nilfs)
-अणु
-	अचिन्हित पूर्णांक valid_fs;
+static inline int nilfs_valid_fs(struct the_nilfs *nilfs)
+{
+	unsigned int valid_fs;
 
-	करोwn_पढ़ो(&nilfs->ns_sem);
+	down_read(&nilfs->ns_sem);
 	valid_fs = (nilfs->ns_mount_state & NILFS_VALID_FS);
-	up_पढ़ो(&nilfs->ns_sem);
-	वापस valid_fs;
-पूर्ण
+	up_read(&nilfs->ns_sem);
+	return valid_fs;
+}
 
-अटल अंतरभूत व्योम
-nilfs_get_segment_range(काष्ठा the_nilfs *nilfs, __u64 segnum,
+static inline void
+nilfs_get_segment_range(struct the_nilfs *nilfs, __u64 segnum,
 			sector_t *seg_start, sector_t *seg_end)
-अणु
+{
 	*seg_start = (sector_t)nilfs->ns_blocks_per_segment * segnum;
 	*seg_end = *seg_start + nilfs->ns_blocks_per_segment - 1;
-	अगर (segnum == 0)
+	if (segnum == 0)
 		*seg_start = nilfs->ns_first_data_block;
-पूर्ण
+}
 
-अटल अंतरभूत sector_t
-nilfs_get_segment_start_blocknr(काष्ठा the_nilfs *nilfs, __u64 segnum)
-अणु
-	वापस (segnum == 0) ? nilfs->ns_first_data_block :
+static inline sector_t
+nilfs_get_segment_start_blocknr(struct the_nilfs *nilfs, __u64 segnum)
+{
+	return (segnum == 0) ? nilfs->ns_first_data_block :
 		(sector_t)nilfs->ns_blocks_per_segment * segnum;
-पूर्ण
+}
 
-अटल अंतरभूत __u64
-nilfs_get_segnum_of_block(काष्ठा the_nilfs *nilfs, sector_t blocknr)
-अणु
+static inline __u64
+nilfs_get_segnum_of_block(struct the_nilfs *nilfs, sector_t blocknr)
+{
 	sector_t segnum = blocknr;
 
-	sector_भाग(segnum, nilfs->ns_blocks_per_segment);
-	वापस segnum;
-पूर्ण
+	sector_div(segnum, nilfs->ns_blocks_per_segment);
+	return segnum;
+}
 
-अटल अंतरभूत व्योम
-nilfs_terminate_segment(काष्ठा the_nilfs *nilfs, sector_t seg_start,
+static inline void
+nilfs_terminate_segment(struct the_nilfs *nilfs, sector_t seg_start,
 			sector_t seg_end)
-अणु
-	/* terminate the current full segment (used in हाल of I/O-error) */
+{
+	/* terminate the current full segment (used in case of I/O-error) */
 	nilfs->ns_pseg_offset = seg_end - seg_start + 1;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम nilfs_shअगरt_to_next_segment(काष्ठा the_nilfs *nilfs)
-अणु
-	/* move क्रमward with a full segment */
+static inline void nilfs_shift_to_next_segment(struct the_nilfs *nilfs)
+{
+	/* move forward with a full segment */
 	nilfs->ns_segnum = nilfs->ns_nextnum;
 	nilfs->ns_pseg_offset = 0;
 	nilfs->ns_seg_seq++;
-पूर्ण
+}
 
-अटल अंतरभूत __u64 nilfs_last_cno(काष्ठा the_nilfs *nilfs)
-अणु
+static inline __u64 nilfs_last_cno(struct the_nilfs *nilfs)
+{
 	__u64 cno;
 
 	spin_lock(&nilfs->ns_last_segment_lock);
 	cno = nilfs->ns_last_cno;
 	spin_unlock(&nilfs->ns_last_segment_lock);
-	वापस cno;
-पूर्ण
+	return cno;
+}
 
-अटल अंतरभूत पूर्णांक nilfs_segment_is_active(काष्ठा the_nilfs *nilfs, __u64 n)
-अणु
-	वापस n == nilfs->ns_segnum || n == nilfs->ns_nextnum;
-पूर्ण
+static inline int nilfs_segment_is_active(struct the_nilfs *nilfs, __u64 n)
+{
+	return n == nilfs->ns_segnum || n == nilfs->ns_nextnum;
+}
 
-अटल अंतरभूत पूर्णांक nilfs_flush_device(काष्ठा the_nilfs *nilfs)
-अणु
-	पूर्णांक err;
+static inline int nilfs_flush_device(struct the_nilfs *nilfs)
+{
+	int err;
 
-	अगर (!nilfs_test_opt(nilfs, BARRIER) || nilfs->ns_flushed_device)
-		वापस 0;
+	if (!nilfs_test_opt(nilfs, BARRIER) || nilfs->ns_flushed_device)
+		return 0;
 
 	nilfs->ns_flushed_device = 1;
 	/*
@@ -377,9 +376,9 @@ nilfs_terminate_segment(काष्ठा the_nilfs *nilfs, sector_t seg_start,
 	smp_wmb();
 
 	err = blkdev_issue_flush(nilfs->ns_bdev);
-	अगर (err != -EIO)
+	if (err != -EIO)
 		err = 0;
-	वापस err;
-पूर्ण
+	return err;
+}
 
-#पूर्ण_अगर /* _THE_NILFS_H */
+#endif /* _THE_NILFS_H */

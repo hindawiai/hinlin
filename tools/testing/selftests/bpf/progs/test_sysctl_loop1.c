@@ -1,75 +1,74 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2019 Facebook
 
-#समावेश <मानक_निवेशt.h>
-#समावेश <माला.स>
+#include <stdint.h>
+#include <string.h>
 
-#समावेश <linux/मानकघोष.स>
-#समावेश <linux/bpf.h>
+#include <linux/stddef.h>
+#include <linux/bpf.h>
 
-#समावेश <bpf/bpf_helpers.h>
+#include <bpf/bpf_helpers.h>
 
-#अगर_अघोषित ARRAY_SIZE
-#घोषणा ARRAY_SIZE(x) (माप(x) / माप((x)[0]))
-#पूर्ण_अगर
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+#endif
 
-/* tcp_mem sysctl has only 3 पूर्णांकs, but this test is करोing TCP_MEM_LOOPS */
-#घोषणा TCP_MEM_LOOPS 28  /* because 30 करोesn't fit पूर्णांकo 512 bytes of stack */
-#घोषणा MAX_ULONG_STR_LEN 7
-#घोषणा MAX_VALUE_STR_LEN (TCP_MEM_LOOPS * MAX_ULONG_STR_LEN)
+/* tcp_mem sysctl has only 3 ints, but this test is doing TCP_MEM_LOOPS */
+#define TCP_MEM_LOOPS 28  /* because 30 doesn't fit into 512 bytes of stack */
+#define MAX_ULONG_STR_LEN 7
+#define MAX_VALUE_STR_LEN (TCP_MEM_LOOPS * MAX_ULONG_STR_LEN)
 
-स्थिर अक्षर tcp_mem_name[] = "net/ipv4/tcp_mem/very_very_very_very_long_pointless_string";
-अटल __always_अंतरभूत पूर्णांक is_tcp_mem(काष्ठा bpf_sysctl *ctx)
-अणु
-	अचिन्हित अक्षर i;
-	अक्षर name[माप(tcp_mem_name)];
-	पूर्णांक ret;
+const char tcp_mem_name[] = "net/ipv4/tcp_mem/very_very_very_very_long_pointless_string";
+static __always_inline int is_tcp_mem(struct bpf_sysctl *ctx)
+{
+	unsigned char i;
+	char name[sizeof(tcp_mem_name)];
+	int ret;
 
-	स_रखो(name, 0, माप(name));
-	ret = bpf_sysctl_get_name(ctx, name, माप(name), 0);
-	अगर (ret < 0 || ret != माप(tcp_mem_name) - 1)
-		वापस 0;
+	memset(name, 0, sizeof(name));
+	ret = bpf_sysctl_get_name(ctx, name, sizeof(name), 0);
+	if (ret < 0 || ret != sizeof(tcp_mem_name) - 1)
+		return 0;
 
-#आशय clang loop unroll(disable)
-	क्रम (i = 0; i < माप(tcp_mem_name); ++i)
-		अगर (name[i] != tcp_mem_name[i])
-			वापस 0;
+#pragma clang loop unroll(disable)
+	for (i = 0; i < sizeof(tcp_mem_name); ++i)
+		if (name[i] != tcp_mem_name[i])
+			return 0;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 SEC("cgroup/sysctl")
-पूर्णांक sysctl_tcp_mem(काष्ठा bpf_sysctl *ctx)
-अणु
-	अचिन्हित दीर्घ tcp_mem[TCP_MEM_LOOPS] = अणुपूर्ण;
-	अक्षर value[MAX_VALUE_STR_LEN];
-	अचिन्हित अक्षर i, off = 0;
+int sysctl_tcp_mem(struct bpf_sysctl *ctx)
+{
+	unsigned long tcp_mem[TCP_MEM_LOOPS] = {};
+	char value[MAX_VALUE_STR_LEN];
+	unsigned char i, off = 0;
 	/* a workaround to prevent compiler from generating
-	 * codes verअगरier cannot handle yet.
+	 * codes verifier cannot handle yet.
 	 */
-	अस्थिर पूर्णांक ret;
+	volatile int ret;
 
-	अगर (ctx->ग_लिखो)
-		वापस 0;
+	if (ctx->write)
+		return 0;
 
-	अगर (!is_tcp_mem(ctx))
-		वापस 0;
+	if (!is_tcp_mem(ctx))
+		return 0;
 
 	ret = bpf_sysctl_get_current_value(ctx, value, MAX_VALUE_STR_LEN);
-	अगर (ret < 0 || ret >= MAX_VALUE_STR_LEN)
-		वापस 0;
+	if (ret < 0 || ret >= MAX_VALUE_STR_LEN)
+		return 0;
 
-#आशय clang loop unroll(disable)
-	क्रम (i = 0; i < ARRAY_SIZE(tcp_mem); ++i) अणु
-		ret = bpf_म_से_अदीर्घ(value + off, MAX_ULONG_STR_LEN, 0,
+#pragma clang loop unroll(disable)
+	for (i = 0; i < ARRAY_SIZE(tcp_mem); ++i) {
+		ret = bpf_strtoul(value + off, MAX_ULONG_STR_LEN, 0,
 				  tcp_mem + i);
-		अगर (ret <= 0 || ret > MAX_ULONG_STR_LEN)
-			वापस 0;
+		if (ret <= 0 || ret > MAX_ULONG_STR_LEN)
+			return 0;
 		off += ret & MAX_ULONG_STR_LEN;
-	पूर्ण
+	}
 
-	वापस tcp_mem[0] < tcp_mem[1] && tcp_mem[1] < tcp_mem[2];
-पूर्ण
+	return tcp_mem[0] < tcp_mem[1] && tcp_mem[1] < tcp_mem[2];
+}
 
-अक्षर _license[] SEC("license") = "GPL";
+char _license[] SEC("license") = "GPL";

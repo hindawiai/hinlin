@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2016 Hisilicon Limited.
  * Copyright (c) 2007, 2008 Mellanox Technologies. All rights reserved.
@@ -6,20 +5,20 @@
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -32,287 +31,287 @@
  * SOFTWARE.
  */
 
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश "hns_roce_device.h"
-#समावेश <rdma/ib_uस्मृति.स>
+#include <linux/platform_device.h>
+#include <linux/vmalloc.h>
+#include "hns_roce_device.h"
+#include <rdma/ib_umem.h>
 
-पूर्णांक hns_roce_biपंचांगap_alloc(काष्ठा hns_roce_biपंचांगap *biपंचांगap, अचिन्हित दीर्घ *obj)
-अणु
-	पूर्णांक ret = 0;
+int hns_roce_bitmap_alloc(struct hns_roce_bitmap *bitmap, unsigned long *obj)
+{
+	int ret = 0;
 
-	spin_lock(&biपंचांगap->lock);
-	*obj = find_next_zero_bit(biपंचांगap->table, biपंचांगap->max, biपंचांगap->last);
-	अगर (*obj >= biपंचांगap->max) अणु
-		biपंचांगap->top = (biपंचांगap->top + biपंचांगap->max + biपंचांगap->reserved_top)
-			       & biपंचांगap->mask;
-		*obj = find_first_zero_bit(biपंचांगap->table, biपंचांगap->max);
-	पूर्ण
+	spin_lock(&bitmap->lock);
+	*obj = find_next_zero_bit(bitmap->table, bitmap->max, bitmap->last);
+	if (*obj >= bitmap->max) {
+		bitmap->top = (bitmap->top + bitmap->max + bitmap->reserved_top)
+			       & bitmap->mask;
+		*obj = find_first_zero_bit(bitmap->table, bitmap->max);
+	}
 
-	अगर (*obj < biपंचांगap->max) अणु
-		set_bit(*obj, biपंचांगap->table);
-		biपंचांगap->last = (*obj + 1);
-		अगर (biपंचांगap->last == biपंचांगap->max)
-			biपंचांगap->last = 0;
-		*obj |= biपंचांगap->top;
-	पूर्ण अन्यथा अणु
+	if (*obj < bitmap->max) {
+		set_bit(*obj, bitmap->table);
+		bitmap->last = (*obj + 1);
+		if (bitmap->last == bitmap->max)
+			bitmap->last = 0;
+		*obj |= bitmap->top;
+	} else {
 		ret = -EINVAL;
-	पूर्ण
+	}
 
-	spin_unlock(&biपंचांगap->lock);
+	spin_unlock(&bitmap->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम hns_roce_biपंचांगap_मुक्त(काष्ठा hns_roce_biपंचांगap *biपंचांगap, अचिन्हित दीर्घ obj,
-			  पूर्णांक rr)
-अणु
-	hns_roce_biपंचांगap_मुक्त_range(biपंचांगap, obj, 1, rr);
-पूर्ण
+void hns_roce_bitmap_free(struct hns_roce_bitmap *bitmap, unsigned long obj,
+			  int rr)
+{
+	hns_roce_bitmap_free_range(bitmap, obj, 1, rr);
+}
 
-पूर्णांक hns_roce_biपंचांगap_alloc_range(काष्ठा hns_roce_biपंचांगap *biपंचांगap, पूर्णांक cnt,
-				पूर्णांक align, अचिन्हित दीर्घ *obj)
-अणु
-	पूर्णांक ret = 0;
-	पूर्णांक i;
+int hns_roce_bitmap_alloc_range(struct hns_roce_bitmap *bitmap, int cnt,
+				int align, unsigned long *obj)
+{
+	int ret = 0;
+	int i;
 
-	अगर (likely(cnt == 1 && align == 1))
-		वापस hns_roce_biपंचांगap_alloc(biपंचांगap, obj);
+	if (likely(cnt == 1 && align == 1))
+		return hns_roce_bitmap_alloc(bitmap, obj);
 
-	spin_lock(&biपंचांगap->lock);
+	spin_lock(&bitmap->lock);
 
-	*obj = biपंचांगap_find_next_zero_area(biपंचांगap->table, biपंचांगap->max,
-					  biपंचांगap->last, cnt, align - 1);
-	अगर (*obj >= biपंचांगap->max) अणु
-		biपंचांगap->top = (biपंचांगap->top + biपंचांगap->max + biपंचांगap->reserved_top)
-			       & biपंचांगap->mask;
-		*obj = biपंचांगap_find_next_zero_area(biपंचांगap->table, biपंचांगap->max, 0,
+	*obj = bitmap_find_next_zero_area(bitmap->table, bitmap->max,
+					  bitmap->last, cnt, align - 1);
+	if (*obj >= bitmap->max) {
+		bitmap->top = (bitmap->top + bitmap->max + bitmap->reserved_top)
+			       & bitmap->mask;
+		*obj = bitmap_find_next_zero_area(bitmap->table, bitmap->max, 0,
 						  cnt, align - 1);
-	पूर्ण
+	}
 
-	अगर (*obj < biपंचांगap->max) अणु
-		क्रम (i = 0; i < cnt; i++)
-			set_bit(*obj + i, biपंचांगap->table);
+	if (*obj < bitmap->max) {
+		for (i = 0; i < cnt; i++)
+			set_bit(*obj + i, bitmap->table);
 
-		अगर (*obj == biपंचांगap->last) अणु
-			biपंचांगap->last = (*obj + cnt);
-			अगर (biपंचांगap->last >= biपंचांगap->max)
-				biपंचांगap->last = 0;
-		पूर्ण
-		*obj |= biपंचांगap->top;
-	पूर्ण अन्यथा अणु
+		if (*obj == bitmap->last) {
+			bitmap->last = (*obj + cnt);
+			if (bitmap->last >= bitmap->max)
+				bitmap->last = 0;
+		}
+		*obj |= bitmap->top;
+	} else {
 		ret = -EINVAL;
-	पूर्ण
+	}
 
-	spin_unlock(&biपंचांगap->lock);
+	spin_unlock(&bitmap->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम hns_roce_biपंचांगap_मुक्त_range(काष्ठा hns_roce_biपंचांगap *biपंचांगap,
-				अचिन्हित दीर्घ obj, पूर्णांक cnt,
-				पूर्णांक rr)
-अणु
-	पूर्णांक i;
+void hns_roce_bitmap_free_range(struct hns_roce_bitmap *bitmap,
+				unsigned long obj, int cnt,
+				int rr)
+{
+	int i;
 
-	obj &= biपंचांगap->max + biपंचांगap->reserved_top - 1;
+	obj &= bitmap->max + bitmap->reserved_top - 1;
 
-	spin_lock(&biपंचांगap->lock);
-	क्रम (i = 0; i < cnt; i++)
-		clear_bit(obj + i, biपंचांगap->table);
+	spin_lock(&bitmap->lock);
+	for (i = 0; i < cnt; i++)
+		clear_bit(obj + i, bitmap->table);
 
-	अगर (!rr)
-		biपंचांगap->last = min(biपंचांगap->last, obj);
-	biपंचांगap->top = (biपंचांगap->top + biपंचांगap->max + biपंचांगap->reserved_top)
-		       & biपंचांगap->mask;
-	spin_unlock(&biपंचांगap->lock);
-पूर्ण
+	if (!rr)
+		bitmap->last = min(bitmap->last, obj);
+	bitmap->top = (bitmap->top + bitmap->max + bitmap->reserved_top)
+		       & bitmap->mask;
+	spin_unlock(&bitmap->lock);
+}
 
-पूर्णांक hns_roce_biपंचांगap_init(काष्ठा hns_roce_biपंचांगap *biपंचांगap, u32 num, u32 mask,
+int hns_roce_bitmap_init(struct hns_roce_bitmap *bitmap, u32 num, u32 mask,
 			 u32 reserved_bot, u32 reserved_top)
-अणु
+{
 	u32 i;
 
-	अगर (num != roundup_घात_of_two(num))
-		वापस -EINVAL;
+	if (num != roundup_pow_of_two(num))
+		return -EINVAL;
 
-	biपंचांगap->last = 0;
-	biपंचांगap->top = 0;
-	biपंचांगap->max = num - reserved_top;
-	biपंचांगap->mask = mask;
-	biपंचांगap->reserved_top = reserved_top;
-	spin_lock_init(&biपंचांगap->lock);
-	biपंचांगap->table = kसुस्मृति(BITS_TO_LONGS(biपंचांगap->max), माप(दीर्घ),
+	bitmap->last = 0;
+	bitmap->top = 0;
+	bitmap->max = num - reserved_top;
+	bitmap->mask = mask;
+	bitmap->reserved_top = reserved_top;
+	spin_lock_init(&bitmap->lock);
+	bitmap->table = kcalloc(BITS_TO_LONGS(bitmap->max), sizeof(long),
 				GFP_KERNEL);
-	अगर (!biपंचांगap->table)
-		वापस -ENOMEM;
+	if (!bitmap->table)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < reserved_bot; ++i)
-		set_bit(i, biपंचांगap->table);
+	for (i = 0; i < reserved_bot; ++i)
+		set_bit(i, bitmap->table);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम hns_roce_biपंचांगap_cleanup(काष्ठा hns_roce_biपंचांगap *biपंचांगap)
-अणु
-	kमुक्त(biपंचांगap->table);
-पूर्ण
+void hns_roce_bitmap_cleanup(struct hns_roce_bitmap *bitmap)
+{
+	kfree(bitmap->table);
+}
 
-व्योम hns_roce_buf_मुक्त(काष्ठा hns_roce_dev *hr_dev, काष्ठा hns_roce_buf *buf)
-अणु
-	काष्ठा hns_roce_buf_list *trunks;
+void hns_roce_buf_free(struct hns_roce_dev *hr_dev, struct hns_roce_buf *buf)
+{
+	struct hns_roce_buf_list *trunks;
 	u32 i;
 
-	अगर (!buf)
-		वापस;
+	if (!buf)
+		return;
 
 	trunks = buf->trunk_list;
-	अगर (trunks) अणु
-		buf->trunk_list = शून्य;
-		क्रम (i = 0; i < buf->ntrunks; i++)
-			dma_मुक्त_coherent(hr_dev->dev, 1 << buf->trunk_shअगरt,
+	if (trunks) {
+		buf->trunk_list = NULL;
+		for (i = 0; i < buf->ntrunks; i++)
+			dma_free_coherent(hr_dev->dev, 1 << buf->trunk_shift,
 					  trunks[i].buf, trunks[i].map);
 
-		kमुक्त(trunks);
-	पूर्ण
+		kfree(trunks);
+	}
 
-	kमुक्त(buf);
-पूर्ण
+	kfree(buf);
+}
 
 /*
- * Allocate the dma buffer क्रम storing ROCEE table entries
+ * Allocate the dma buffer for storing ROCEE table entries
  *
  * @size: required size
- * @page_shअगरt: the unit size in a continuous dma address range
+ * @page_shift: the unit size in a continuous dma address range
  * @flags: HNS_ROCE_BUF_ flags to control the allocation flow.
  */
-काष्ठा hns_roce_buf *hns_roce_buf_alloc(काष्ठा hns_roce_dev *hr_dev, u32 size,
-					u32 page_shअगरt, u32 flags)
-अणु
+struct hns_roce_buf *hns_roce_buf_alloc(struct hns_roce_dev *hr_dev, u32 size,
+					u32 page_shift, u32 flags)
+{
 	u32 trunk_size, page_size, alloced_size;
-	काष्ठा hns_roce_buf_list *trunks;
-	काष्ठा hns_roce_buf *buf;
+	struct hns_roce_buf_list *trunks;
+	struct hns_roce_buf *buf;
 	gfp_t gfp_flags;
 	u32 ntrunk, i;
 
-	/* The minimum shअगरt of the page accessed by hw is HNS_HW_PAGE_SHIFT */
-	अगर (WARN_ON(page_shअगरt < HNS_HW_PAGE_SHIFT))
-		वापस ERR_PTR(-EINVAL);
+	/* The minimum shift of the page accessed by hw is HNS_HW_PAGE_SHIFT */
+	if (WARN_ON(page_shift < HNS_HW_PAGE_SHIFT))
+		return ERR_PTR(-EINVAL);
 
 	gfp_flags = (flags & HNS_ROCE_BUF_NOSLEEP) ? GFP_ATOMIC : GFP_KERNEL;
-	buf = kzalloc(माप(*buf), gfp_flags);
-	अगर (!buf)
-		वापस ERR_PTR(-ENOMEM);
+	buf = kzalloc(sizeof(*buf), gfp_flags);
+	if (!buf)
+		return ERR_PTR(-ENOMEM);
 
-	buf->page_shअगरt = page_shअगरt;
-	page_size = 1 << buf->page_shअगरt;
+	buf->page_shift = page_shift;
+	page_size = 1 << buf->page_shift;
 
-	/* Calc the trunk size and num by required size and page_shअगरt */
-	अगर (flags & HNS_ROCE_BUF_सूचीECT) अणु
-		buf->trunk_shअगरt = ilog2(ALIGN(size, PAGE_SIZE));
+	/* Calc the trunk size and num by required size and page_shift */
+	if (flags & HNS_ROCE_BUF_DIRECT) {
+		buf->trunk_shift = ilog2(ALIGN(size, PAGE_SIZE));
 		ntrunk = 1;
-	पूर्ण अन्यथा अणु
-		buf->trunk_shअगरt = ilog2(ALIGN(page_size, PAGE_SIZE));
-		ntrunk = DIV_ROUND_UP(size, 1 << buf->trunk_shअगरt);
-	पूर्ण
+	} else {
+		buf->trunk_shift = ilog2(ALIGN(page_size, PAGE_SIZE));
+		ntrunk = DIV_ROUND_UP(size, 1 << buf->trunk_shift);
+	}
 
-	trunks = kसुस्मृति(ntrunk, माप(*trunks), gfp_flags);
-	अगर (!trunks) अणु
-		kमुक्त(buf);
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+	trunks = kcalloc(ntrunk, sizeof(*trunks), gfp_flags);
+	if (!trunks) {
+		kfree(buf);
+		return ERR_PTR(-ENOMEM);
+	}
 
-	trunk_size = 1 << buf->trunk_shअगरt;
+	trunk_size = 1 << buf->trunk_shift;
 	alloced_size = 0;
-	क्रम (i = 0; i < ntrunk; i++) अणु
+	for (i = 0; i < ntrunk; i++) {
 		trunks[i].buf = dma_alloc_coherent(hr_dev->dev, trunk_size,
 						   &trunks[i].map, gfp_flags);
-		अगर (!trunks[i].buf)
-			अवरोध;
+		if (!trunks[i].buf)
+			break;
 
 		alloced_size += trunk_size;
-	पूर्ण
+	}
 
 	buf->ntrunks = i;
 
 	/* In nofail mode, it's only failed when the alloced size is 0 */
-	अगर ((flags & HNS_ROCE_BUF_NOFAIL) ? i == 0 : i != ntrunk) अणु
-		क्रम (i = 0; i < buf->ntrunks; i++)
-			dma_मुक्त_coherent(hr_dev->dev, trunk_size,
+	if ((flags & HNS_ROCE_BUF_NOFAIL) ? i == 0 : i != ntrunk) {
+		for (i = 0; i < buf->ntrunks; i++)
+			dma_free_coherent(hr_dev->dev, trunk_size,
 					  trunks[i].buf, trunks[i].map);
 
-		kमुक्त(trunks);
-		kमुक्त(buf);
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+		kfree(trunks);
+		kfree(buf);
+		return ERR_PTR(-ENOMEM);
+	}
 
 	buf->npages = DIV_ROUND_UP(alloced_size, page_size);
 	buf->trunk_list = trunks;
 
-	वापस buf;
-पूर्ण
+	return buf;
+}
 
-पूर्णांक hns_roce_get_kmem_bufs(काष्ठा hns_roce_dev *hr_dev, dma_addr_t *bufs,
-			   पूर्णांक buf_cnt, पूर्णांक start, काष्ठा hns_roce_buf *buf)
-अणु
-	पूर्णांक i, end;
-	पूर्णांक total;
+int hns_roce_get_kmem_bufs(struct hns_roce_dev *hr_dev, dma_addr_t *bufs,
+			   int buf_cnt, int start, struct hns_roce_buf *buf)
+{
+	int i, end;
+	int total;
 
 	end = start + buf_cnt;
-	अगर (end > buf->npages) अणु
+	if (end > buf->npages) {
 		dev_err(hr_dev->dev,
 			"failed to check kmem bufs, end %d + %d total %u!\n",
 			start, buf_cnt, buf->npages);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	total = 0;
-	क्रम (i = start; i < end; i++)
+	for (i = start; i < end; i++)
 		bufs[total++] = hns_roce_buf_page(buf, i);
 
-	वापस total;
-पूर्ण
+	return total;
+}
 
-पूर्णांक hns_roce_get_umem_bufs(काष्ठा hns_roce_dev *hr_dev, dma_addr_t *bufs,
-			   पूर्णांक buf_cnt, पूर्णांक start, काष्ठा ib_umem *umem,
-			   अचिन्हित पूर्णांक page_shअगरt)
-अणु
-	काष्ठा ib_block_iter biter;
-	पूर्णांक total = 0;
-	पूर्णांक idx = 0;
+int hns_roce_get_umem_bufs(struct hns_roce_dev *hr_dev, dma_addr_t *bufs,
+			   int buf_cnt, int start, struct ib_umem *umem,
+			   unsigned int page_shift)
+{
+	struct ib_block_iter biter;
+	int total = 0;
+	int idx = 0;
 	u64 addr;
 
-	अगर (page_shअगरt < HNS_HW_PAGE_SHIFT) अणु
+	if (page_shift < HNS_HW_PAGE_SHIFT) {
 		dev_err(hr_dev->dev, "failed to check umem page shift %u!\n",
-			page_shअगरt);
-		वापस -EINVAL;
-	पूर्ण
+			page_shift);
+		return -EINVAL;
+	}
 
-	/* convert प्रणाली page cnt to hw page cnt */
-	rdma_umem_क्रम_each_dma_block(umem, &biter, 1 << page_shअगरt) अणु
+	/* convert system page cnt to hw page cnt */
+	rdma_umem_for_each_dma_block(umem, &biter, 1 << page_shift) {
 		addr = rdma_block_iter_dma_address(&biter);
-		अगर (idx >= start) अणु
+		if (idx >= start) {
 			bufs[total++] = addr;
-			अगर (total >= buf_cnt)
-				जाओ करोne;
-		पूर्ण
+			if (total >= buf_cnt)
+				goto done;
+		}
 		idx++;
-	पूर्ण
+	}
 
-करोne:
-	वापस total;
-पूर्ण
+done:
+	return total;
+}
 
-व्योम hns_roce_cleanup_biपंचांगap(काष्ठा hns_roce_dev *hr_dev)
-अणु
-	अगर (hr_dev->caps.flags & HNS_ROCE_CAP_FLAG_XRC)
+void hns_roce_cleanup_bitmap(struct hns_roce_dev *hr_dev)
+{
+	if (hr_dev->caps.flags & HNS_ROCE_CAP_FLAG_XRC)
 		hns_roce_cleanup_xrcd_table(hr_dev);
 
-	अगर (hr_dev->caps.flags & HNS_ROCE_CAP_FLAG_SRQ)
+	if (hr_dev->caps.flags & HNS_ROCE_CAP_FLAG_SRQ)
 		hns_roce_cleanup_srq_table(hr_dev);
 	hns_roce_cleanup_qp_table(hr_dev);
 	hns_roce_cleanup_cq_table(hr_dev);
 	hns_roce_cleanup_mr_table(hr_dev);
 	hns_roce_cleanup_pd_table(hr_dev);
 	hns_roce_cleanup_uar_table(hr_dev);
-पूर्ण
+}

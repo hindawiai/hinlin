@@ -1,55 +1,54 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * linux/ipc/namespace.c
- * Copyright (C) 2006 Pavel Emelyanov <xemul@खोलोvz.org> OpenVZ, SWsoft Inc.
+ * Copyright (C) 2006 Pavel Emelyanov <xemul@openvz.org> OpenVZ, SWsoft Inc.
  */
 
-#समावेश <linux/ipc.h>
-#समावेश <linux/msg.h>
-#समावेश <linux/ipc_namespace.h>
-#समावेश <linux/rcupdate.h>
-#समावेश <linux/nsproxy.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/cred.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/mount.h>
-#समावेश <linux/user_namespace.h>
-#समावेश <linux/proc_ns.h>
-#समावेश <linux/sched/task.h>
+#include <linux/ipc.h>
+#include <linux/msg.h>
+#include <linux/ipc_namespace.h>
+#include <linux/rcupdate.h>
+#include <linux/nsproxy.h>
+#include <linux/slab.h>
+#include <linux/cred.h>
+#include <linux/fs.h>
+#include <linux/mount.h>
+#include <linux/user_namespace.h>
+#include <linux/proc_ns.h>
+#include <linux/sched/task.h>
 
-#समावेश "util.h"
+#include "util.h"
 
-अटल काष्ठा ucounts *inc_ipc_namespaces(काष्ठा user_namespace *ns)
-अणु
-	वापस inc_ucount(ns, current_euid(), UCOUNT_IPC_NAMESPACES);
-पूर्ण
+static struct ucounts *inc_ipc_namespaces(struct user_namespace *ns)
+{
+	return inc_ucount(ns, current_euid(), UCOUNT_IPC_NAMESPACES);
+}
 
-अटल व्योम dec_ipc_namespaces(काष्ठा ucounts *ucounts)
-अणु
+static void dec_ipc_namespaces(struct ucounts *ucounts)
+{
 	dec_ucount(ucounts, UCOUNT_IPC_NAMESPACES);
-पूर्ण
+}
 
-अटल काष्ठा ipc_namespace *create_ipc_ns(काष्ठा user_namespace *user_ns,
-					   काष्ठा ipc_namespace *old_ns)
-अणु
-	काष्ठा ipc_namespace *ns;
-	काष्ठा ucounts *ucounts;
-	पूर्णांक err;
+static struct ipc_namespace *create_ipc_ns(struct user_namespace *user_ns,
+					   struct ipc_namespace *old_ns)
+{
+	struct ipc_namespace *ns;
+	struct ucounts *ucounts;
+	int err;
 
 	err = -ENOSPC;
 	ucounts = inc_ipc_namespaces(user_ns);
-	अगर (!ucounts)
-		जाओ fail;
+	if (!ucounts)
+		goto fail;
 
 	err = -ENOMEM;
-	ns = kzalloc(माप(काष्ठा ipc_namespace), GFP_KERNEL);
-	अगर (ns == शून्य)
-		जाओ fail_dec;
+	ns = kzalloc(sizeof(struct ipc_namespace), GFP_KERNEL);
+	if (ns == NULL)
+		goto fail_dec;
 
 	err = ns_alloc_inum(&ns->ns);
-	अगर (err)
-		जाओ fail_मुक्त;
+	if (err)
+		goto fail_free;
 	ns->ns.ops = &ipcns_operations;
 
 	refcount_set(&ns->ns.count, 1);
@@ -57,170 +56,170 @@
 	ns->ucounts = ucounts;
 
 	err = mq_init_ns(ns);
-	अगर (err)
-		जाओ fail_put;
+	if (err)
+		goto fail_put;
 
 	sem_init_ns(ns);
 	msg_init_ns(ns);
 	shm_init_ns(ns);
 
-	वापस ns;
+	return ns;
 
 fail_put:
 	put_user_ns(ns->user_ns);
-	ns_मुक्त_inum(&ns->ns);
-fail_मुक्त:
-	kमुक्त(ns);
+	ns_free_inum(&ns->ns);
+fail_free:
+	kfree(ns);
 fail_dec:
 	dec_ipc_namespaces(ucounts);
 fail:
-	वापस ERR_PTR(err);
-पूर्ण
+	return ERR_PTR(err);
+}
 
-काष्ठा ipc_namespace *copy_ipcs(अचिन्हित दीर्घ flags,
-	काष्ठा user_namespace *user_ns, काष्ठा ipc_namespace *ns)
-अणु
-	अगर (!(flags & CLONE_NEWIPC))
-		वापस get_ipc_ns(ns);
-	वापस create_ipc_ns(user_ns, ns);
-पूर्ण
+struct ipc_namespace *copy_ipcs(unsigned long flags,
+	struct user_namespace *user_ns, struct ipc_namespace *ns)
+{
+	if (!(flags & CLONE_NEWIPC))
+		return get_ipc_ns(ns);
+	return create_ipc_ns(user_ns, ns);
+}
 
 /*
- * मुक्त_ipcs - मुक्त all ipcs of one type
- * @ns:   the namespace to हटाओ the ipcs from
- * @ids:  the table of ipcs to मुक्त
- * @मुक्त: the function called to मुक्त each inभागidual ipc
+ * free_ipcs - free all ipcs of one type
+ * @ns:   the namespace to remove the ipcs from
+ * @ids:  the table of ipcs to free
+ * @free: the function called to free each individual ipc
  *
- * Called क्रम each kind of ipc when an ipc_namespace निकासs.
+ * Called for each kind of ipc when an ipc_namespace exits.
  */
-व्योम मुक्त_ipcs(काष्ठा ipc_namespace *ns, काष्ठा ipc_ids *ids,
-	       व्योम (*मुक्त)(काष्ठा ipc_namespace *, काष्ठा kern_ipc_perm *))
-अणु
-	काष्ठा kern_ipc_perm *perm;
-	पूर्णांक next_id;
-	पूर्णांक total, in_use;
+void free_ipcs(struct ipc_namespace *ns, struct ipc_ids *ids,
+	       void (*free)(struct ipc_namespace *, struct kern_ipc_perm *))
+{
+	struct kern_ipc_perm *perm;
+	int next_id;
+	int total, in_use;
 
-	करोwn_ग_लिखो(&ids->rwsem);
+	down_write(&ids->rwsem);
 
 	in_use = ids->in_use;
 
-	क्रम (total = 0, next_id = 0; total < in_use; next_id++) अणु
+	for (total = 0, next_id = 0; total < in_use; next_id++) {
 		perm = idr_find(&ids->ipcs_idr, next_id);
-		अगर (perm == शून्य)
-			जारी;
-		rcu_पढ़ो_lock();
+		if (perm == NULL)
+			continue;
+		rcu_read_lock();
 		ipc_lock_object(perm);
-		मुक्त(ns, perm);
+		free(ns, perm);
 		total++;
-	पूर्ण
-	up_ग_लिखो(&ids->rwsem);
-पूर्ण
+	}
+	up_write(&ids->rwsem);
+}
 
-अटल व्योम मुक्त_ipc_ns(काष्ठा ipc_namespace *ns)
-अणु
-	/* mq_put_mnt() रुकोs क्रम a grace period as kern_unmount()
+static void free_ipc_ns(struct ipc_namespace *ns)
+{
+	/* mq_put_mnt() waits for a grace period as kern_unmount()
 	 * uses synchronize_rcu().
 	 */
 	mq_put_mnt(ns);
-	sem_निकास_ns(ns);
-	msg_निकास_ns(ns);
-	shm_निकास_ns(ns);
+	sem_exit_ns(ns);
+	msg_exit_ns(ns);
+	shm_exit_ns(ns);
 
 	dec_ipc_namespaces(ns->ucounts);
 	put_user_ns(ns->user_ns);
-	ns_मुक्त_inum(&ns->ns);
-	kमुक्त(ns);
-पूर्ण
+	ns_free_inum(&ns->ns);
+	kfree(ns);
+}
 
-अटल LLIST_HEAD(मुक्त_ipc_list);
-अटल व्योम मुक्त_ipc(काष्ठा work_काष्ठा *unused)
-अणु
-	काष्ठा llist_node *node = llist_del_all(&मुक्त_ipc_list);
-	काष्ठा ipc_namespace *n, *t;
+static LLIST_HEAD(free_ipc_list);
+static void free_ipc(struct work_struct *unused)
+{
+	struct llist_node *node = llist_del_all(&free_ipc_list);
+	struct ipc_namespace *n, *t;
 
-	llist_क्रम_each_entry_safe(n, t, node, mnt_llist)
-		मुक्त_ipc_ns(n);
-पूर्ण
+	llist_for_each_entry_safe(n, t, node, mnt_llist)
+		free_ipc_ns(n);
+}
 
 /*
- * The work queue is used to aव्योम the cost of synchronize_rcu in kern_unmount.
+ * The work queue is used to avoid the cost of synchronize_rcu in kern_unmount.
  */
-अटल DECLARE_WORK(मुक्त_ipc_work, मुक्त_ipc);
+static DECLARE_WORK(free_ipc_work, free_ipc);
 
 /*
  * put_ipc_ns - drop a reference to an ipc namespace.
  * @ns: the namespace to put
  *
- * If this is the last task in the namespace निकासing, and
+ * If this is the last task in the namespace exiting, and
  * it is dropping the refcount to 0, then it can race with
  * a task in another ipc namespace but in a mounts namespace
- * which has this ipcns's mqueuefs mounted, करोing some action
- * with one of the mqueuefs files.  That can उठाओ the refcount.
+ * which has this ipcns's mqueuefs mounted, doing some action
+ * with one of the mqueuefs files.  That can raise the refcount.
  * So dropping the refcount, and raising the refcount when
- * accessing it through the VFS, are रक्षित with mq_lock.
+ * accessing it through the VFS, are protected with mq_lock.
  *
  * (Clearly, a task raising the refcount on its own ipc_ns
  * needn't take mq_lock since it can't race with the last task
- * in the ipcns निकासing).
+ * in the ipcns exiting).
  */
-व्योम put_ipc_ns(काष्ठा ipc_namespace *ns)
-अणु
-	अगर (refcount_dec_and_lock(&ns->ns.count, &mq_lock)) अणु
+void put_ipc_ns(struct ipc_namespace *ns)
+{
+	if (refcount_dec_and_lock(&ns->ns.count, &mq_lock)) {
 		mq_clear_sbinfo(ns);
 		spin_unlock(&mq_lock);
 
-		अगर (llist_add(&ns->mnt_llist, &मुक्त_ipc_list))
-			schedule_work(&मुक्त_ipc_work);
-	पूर्ण
-पूर्ण
+		if (llist_add(&ns->mnt_llist, &free_ipc_list))
+			schedule_work(&free_ipc_work);
+	}
+}
 
-अटल अंतरभूत काष्ठा ipc_namespace *to_ipc_ns(काष्ठा ns_common *ns)
-अणु
-	वापस container_of(ns, काष्ठा ipc_namespace, ns);
-पूर्ण
+static inline struct ipc_namespace *to_ipc_ns(struct ns_common *ns)
+{
+	return container_of(ns, struct ipc_namespace, ns);
+}
 
-अटल काष्ठा ns_common *ipcns_get(काष्ठा task_काष्ठा *task)
-अणु
-	काष्ठा ipc_namespace *ns = शून्य;
-	काष्ठा nsproxy *nsproxy;
+static struct ns_common *ipcns_get(struct task_struct *task)
+{
+	struct ipc_namespace *ns = NULL;
+	struct nsproxy *nsproxy;
 
 	task_lock(task);
 	nsproxy = task->nsproxy;
-	अगर (nsproxy)
+	if (nsproxy)
 		ns = get_ipc_ns(nsproxy->ipc_ns);
 	task_unlock(task);
 
-	वापस ns ? &ns->ns : शून्य;
-पूर्ण
+	return ns ? &ns->ns : NULL;
+}
 
-अटल व्योम ipcns_put(काष्ठा ns_common *ns)
-अणु
-	वापस put_ipc_ns(to_ipc_ns(ns));
-पूर्ण
+static void ipcns_put(struct ns_common *ns)
+{
+	return put_ipc_ns(to_ipc_ns(ns));
+}
 
-अटल पूर्णांक ipcns_install(काष्ठा nsset *nsset, काष्ठा ns_common *new)
-अणु
-	काष्ठा nsproxy *nsproxy = nsset->nsproxy;
-	काष्ठा ipc_namespace *ns = to_ipc_ns(new);
-	अगर (!ns_capable(ns->user_ns, CAP_SYS_ADMIN) ||
+static int ipcns_install(struct nsset *nsset, struct ns_common *new)
+{
+	struct nsproxy *nsproxy = nsset->nsproxy;
+	struct ipc_namespace *ns = to_ipc_ns(new);
+	if (!ns_capable(ns->user_ns, CAP_SYS_ADMIN) ||
 	    !ns_capable(nsset->cred->user_ns, CAP_SYS_ADMIN))
-		वापस -EPERM;
+		return -EPERM;
 
 	put_ipc_ns(nsproxy->ipc_ns);
 	nsproxy->ipc_ns = get_ipc_ns(ns);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा user_namespace *ipcns_owner(काष्ठा ns_common *ns)
-अणु
-	वापस to_ipc_ns(ns)->user_ns;
-पूर्ण
+static struct user_namespace *ipcns_owner(struct ns_common *ns)
+{
+	return to_ipc_ns(ns)->user_ns;
+}
 
-स्थिर काष्ठा proc_ns_operations ipcns_operations = अणु
+const struct proc_ns_operations ipcns_operations = {
 	.name		= "ipc",
 	.type		= CLONE_NEWIPC,
 	.get		= ipcns_get,
 	.put		= ipcns_put,
 	.install	= ipcns_install,
 	.owner		= ipcns_owner,
-पूर्ण;
+};

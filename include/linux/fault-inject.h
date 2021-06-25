@@ -1,78 +1,77 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_FAULT_INJECT_H
-#घोषणा _LINUX_FAULT_INJECT_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_FAULT_INJECT_H
+#define _LINUX_FAULT_INJECT_H
 
-#अगर_घोषित CONFIG_FAULT_INJECTION
+#ifdef CONFIG_FAULT_INJECTION
 
-#समावेश <linux/types.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/ratelimit.h>
-#समावेश <linux/atomic.h>
+#include <linux/types.h>
+#include <linux/debugfs.h>
+#include <linux/ratelimit.h>
+#include <linux/atomic.h>
 
 /*
- * For explanation of the elements of this काष्ठा, see
+ * For explanation of the elements of this struct, see
  * Documentation/fault-injection/fault-injection.rst
  */
-काष्ठा fault_attr अणु
-	अचिन्हित दीर्घ probability;
-	अचिन्हित दीर्घ पूर्णांकerval;
-	atomic_t बार;
+struct fault_attr {
+	unsigned long probability;
+	unsigned long interval;
+	atomic_t times;
 	atomic_t space;
-	अचिन्हित दीर्घ verbose;
+	unsigned long verbose;
 	bool task_filter;
-	अचिन्हित दीर्घ stacktrace_depth;
-	अचिन्हित दीर्घ require_start;
-	अचिन्हित दीर्घ require_end;
-	अचिन्हित दीर्घ reject_start;
-	अचिन्हित दीर्घ reject_end;
+	unsigned long stacktrace_depth;
+	unsigned long require_start;
+	unsigned long require_end;
+	unsigned long reject_start;
+	unsigned long reject_end;
 
-	अचिन्हित दीर्घ count;
-	काष्ठा ratelimit_state ratelimit_state;
-	काष्ठा dentry *dname;
-पूर्ण;
+	unsigned long count;
+	struct ratelimit_state ratelimit_state;
+	struct dentry *dname;
+};
 
-#घोषणा FAULT_ATTR_INITIALIZER अणु					\
-		.पूर्णांकerval = 1,						\
-		.बार = ATOMIC_INIT(1),				\
-		.require_end = अच_दीर्घ_उच्च,				\
+#define FAULT_ATTR_INITIALIZER {					\
+		.interval = 1,						\
+		.times = ATOMIC_INIT(1),				\
+		.require_end = ULONG_MAX,				\
 		.stacktrace_depth = 32,					\
 		.ratelimit_state = RATELIMIT_STATE_INIT_DISABLED,	\
 		.verbose = 2,						\
-		.dname = शून्य,						\
-	पूर्ण
+		.dname = NULL,						\
+	}
 
-#घोषणा DECLARE_FAULT_ATTR(name) काष्ठा fault_attr name = FAULT_ATTR_INITIALIZER
-पूर्णांक setup_fault_attr(काष्ठा fault_attr *attr, अक्षर *str);
-bool should_fail(काष्ठा fault_attr *attr, sमाप_प्रकार size);
+#define DECLARE_FAULT_ATTR(name) struct fault_attr name = FAULT_ATTR_INITIALIZER
+int setup_fault_attr(struct fault_attr *attr, char *str);
+bool should_fail(struct fault_attr *attr, ssize_t size);
 
-#अगर_घोषित CONFIG_FAULT_INJECTION_DEBUG_FS
+#ifdef CONFIG_FAULT_INJECTION_DEBUG_FS
 
-काष्ठा dentry *fault_create_debugfs_attr(स्थिर अक्षर *name,
-			काष्ठा dentry *parent, काष्ठा fault_attr *attr);
+struct dentry *fault_create_debugfs_attr(const char *name,
+			struct dentry *parent, struct fault_attr *attr);
 
-#अन्यथा /* CONFIG_FAULT_INJECTION_DEBUG_FS */
+#else /* CONFIG_FAULT_INJECTION_DEBUG_FS */
 
-अटल अंतरभूत काष्ठा dentry *fault_create_debugfs_attr(स्थिर अक्षर *name,
-			काष्ठा dentry *parent, काष्ठा fault_attr *attr)
-अणु
-	वापस ERR_PTR(-ENODEV);
-पूर्ण
+static inline struct dentry *fault_create_debugfs_attr(const char *name,
+			struct dentry *parent, struct fault_attr *attr)
+{
+	return ERR_PTR(-ENODEV);
+}
 
-#पूर्ण_अगर /* CONFIG_FAULT_INJECTION_DEBUG_FS */
+#endif /* CONFIG_FAULT_INJECTION_DEBUG_FS */
 
-#पूर्ण_अगर /* CONFIG_FAULT_INJECTION */
+#endif /* CONFIG_FAULT_INJECTION */
 
-काष्ठा kmem_cache;
+struct kmem_cache;
 
-पूर्णांक should_failslab(काष्ठा kmem_cache *s, gfp_t gfpflags);
-#अगर_घोषित CONFIG_FAILSLAB
-बाह्य bool __should_failslab(काष्ठा kmem_cache *s, gfp_t gfpflags);
-#अन्यथा
-अटल अंतरभूत bool __should_failslab(काष्ठा kmem_cache *s, gfp_t gfpflags)
-अणु
-	वापस false;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_FAILSLAB */
+int should_failslab(struct kmem_cache *s, gfp_t gfpflags);
+#ifdef CONFIG_FAILSLAB
+extern bool __should_failslab(struct kmem_cache *s, gfp_t gfpflags);
+#else
+static inline bool __should_failslab(struct kmem_cache *s, gfp_t gfpflags)
+{
+	return false;
+}
+#endif /* CONFIG_FAILSLAB */
 
-#पूर्ण_अगर /* _LINUX_FAULT_INJECT_H */
+#endif /* _LINUX_FAULT_INJECT_H */

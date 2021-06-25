@@ -1,554 +1,553 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Driver क्रम the Aपंचांगel USBA high speed USB device controller
+ * Driver for the Atmel USBA high speed USB device controller
  *
- * Copyright (C) 2005-2007 Aपंचांगel Corporation
+ * Copyright (C) 2005-2007 Atmel Corporation
  */
-#समावेश <linux/clk.h>
-#समावेश <linux/clk/at91_pmc.h>
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/device.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/list.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/usb.h>
-#समावेश <linux/usb/ch9.h>
-#समावेश <linux/usb/gadget.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/of.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/gpio/consumer.h>
+#include <linux/clk.h>
+#include <linux/clk/at91_pmc.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/slab.h>
+#include <linux/device.h>
+#include <linux/dma-mapping.h>
+#include <linux/list.h>
+#include <linux/mfd/syscon.h>
+#include <linux/platform_device.h>
+#include <linux/regmap.h>
+#include <linux/ctype.h>
+#include <linux/usb.h>
+#include <linux/usb/ch9.h>
+#include <linux/usb/gadget.h>
+#include <linux/delay.h>
+#include <linux/of.h>
+#include <linux/irq.h>
+#include <linux/gpio/consumer.h>
 
-#समावेश "atmel_usba_udc.h"
-#घोषणा USBA_VBUS_IRQFLAGS (IRQF_ONESHOT \
+#include "atmel_usba_udc.h"
+#define USBA_VBUS_IRQFLAGS (IRQF_ONESHOT \
 			   | IRQF_TRIGGER_FALLING | IRQF_TRIGGER_RISING)
 
-#अगर_घोषित CONFIG_USB_GADGET_DEBUG_FS
-#समावेश <linux/debugfs.h>
-#समावेश <linux/uaccess.h>
+#ifdef CONFIG_USB_GADGET_DEBUG_FS
+#include <linux/debugfs.h>
+#include <linux/uaccess.h>
 
-अटल पूर्णांक queue_dbg_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा usba_ep *ep = inode->i_निजी;
-	काष्ठा usba_request *req, *req_copy;
-	काष्ठा list_head *queue_data;
+static int queue_dbg_open(struct inode *inode, struct file *file)
+{
+	struct usba_ep *ep = inode->i_private;
+	struct usba_request *req, *req_copy;
+	struct list_head *queue_data;
 
-	queue_data = kदो_स्मृति(माप(*queue_data), GFP_KERNEL);
-	अगर (!queue_data)
-		वापस -ENOMEM;
+	queue_data = kmalloc(sizeof(*queue_data), GFP_KERNEL);
+	if (!queue_data)
+		return -ENOMEM;
 	INIT_LIST_HEAD(queue_data);
 
 	spin_lock_irq(&ep->udc->lock);
-	list_क्रम_each_entry(req, &ep->queue, queue) अणु
-		req_copy = kmemdup(req, माप(*req_copy), GFP_ATOMIC);
-		अगर (!req_copy)
-			जाओ fail;
+	list_for_each_entry(req, &ep->queue, queue) {
+		req_copy = kmemdup(req, sizeof(*req_copy), GFP_ATOMIC);
+		if (!req_copy)
+			goto fail;
 		list_add_tail(&req_copy->queue, queue_data);
-	पूर्ण
+	}
 	spin_unlock_irq(&ep->udc->lock);
 
-	file->निजी_data = queue_data;
-	वापस 0;
+	file->private_data = queue_data;
+	return 0;
 
 fail:
 	spin_unlock_irq(&ep->udc->lock);
-	list_क्रम_each_entry_safe(req, req_copy, queue_data, queue) अणु
+	list_for_each_entry_safe(req, req_copy, queue_data, queue) {
 		list_del(&req->queue);
-		kमुक्त(req);
-	पूर्ण
-	kमुक्त(queue_data);
-	वापस -ENOMEM;
-पूर्ण
+		kfree(req);
+	}
+	kfree(queue_data);
+	return -ENOMEM;
+}
 
 /*
- * bbbbbbbb llllllll IZS sssss nnnn FDL\न\0
+ * bbbbbbbb llllllll IZS sssss nnnn FDL\n\0
  *
  * b: buffer address
  * l: buffer length
- * I/i: पूर्णांकerrupt/no पूर्णांकerrupt
+ * I/i: interrupt/no interrupt
  * Z/z: zero/no zero
- * S/s: लघु ok/लघु not ok
+ * S/s: short ok/short not ok
  * s: status
  * n: nr_packets
  * F/f: submitted/not submitted to FIFO
  * D/d: using/not using DMA
  * L/l: last transaction/not last transaction
  */
-अटल sमाप_प्रकार queue_dbg_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
-		माप_प्रकार nbytes, loff_t *ppos)
-अणु
-	काष्ठा list_head *queue = file->निजी_data;
-	काष्ठा usba_request *req, *पंचांगp_req;
-	माप_प्रकार len, reमुख्यing, actual = 0;
-	अक्षर पंचांगpbuf[38];
+static ssize_t queue_dbg_read(struct file *file, char __user *buf,
+		size_t nbytes, loff_t *ppos)
+{
+	struct list_head *queue = file->private_data;
+	struct usba_request *req, *tmp_req;
+	size_t len, remaining, actual = 0;
+	char tmpbuf[38];
 
-	अगर (!access_ok(buf, nbytes))
-		वापस -EFAULT;
+	if (!access_ok(buf, nbytes))
+		return -EFAULT;
 
 	inode_lock(file_inode(file));
-	list_क्रम_each_entry_safe(req, पंचांगp_req, queue, queue) अणु
-		len = snम_लिखो(पंचांगpbuf, माप(पंचांगpbuf),
+	list_for_each_entry_safe(req, tmp_req, queue, queue) {
+		len = snprintf(tmpbuf, sizeof(tmpbuf),
 				"%8p %08x %c%c%c %5d %c%c%c\n",
 				req->req.buf, req->req.length,
-				req->req.no_पूर्णांकerrupt ? 'i' : 'I',
+				req->req.no_interrupt ? 'i' : 'I',
 				req->req.zero ? 'Z' : 'z',
-				req->req.लघु_not_ok ? 's' : 'S',
+				req->req.short_not_ok ? 's' : 'S',
 				req->req.status,
 				req->submitted ? 'F' : 'f',
 				req->using_dma ? 'D' : 'd',
 				req->last_transaction ? 'L' : 'l');
-		len = min(len, माप(पंचांगpbuf));
-		अगर (len > nbytes)
-			अवरोध;
+		len = min(len, sizeof(tmpbuf));
+		if (len > nbytes)
+			break;
 
 		list_del(&req->queue);
-		kमुक्त(req);
+		kfree(req);
 
-		reमुख्यing = __copy_to_user(buf, पंचांगpbuf, len);
-		actual += len - reमुख्यing;
-		अगर (reमुख्यing)
-			अवरोध;
+		remaining = __copy_to_user(buf, tmpbuf, len);
+		actual += len - remaining;
+		if (remaining)
+			break;
 
 		nbytes -= len;
 		buf += len;
-	पूर्ण
+	}
 	inode_unlock(file_inode(file));
 
-	वापस actual;
-पूर्ण
+	return actual;
+}
 
-अटल पूर्णांक queue_dbg_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा list_head *queue_data = file->निजी_data;
-	काष्ठा usba_request *req, *पंचांगp_req;
+static int queue_dbg_release(struct inode *inode, struct file *file)
+{
+	struct list_head *queue_data = file->private_data;
+	struct usba_request *req, *tmp_req;
 
-	list_क्रम_each_entry_safe(req, पंचांगp_req, queue_data, queue) अणु
+	list_for_each_entry_safe(req, tmp_req, queue_data, queue) {
 		list_del(&req->queue);
-		kमुक्त(req);
-	पूर्ण
-	kमुक्त(queue_data);
-	वापस 0;
-पूर्ण
+		kfree(req);
+	}
+	kfree(queue_data);
+	return 0;
+}
 
-अटल पूर्णांक regs_dbg_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा usba_udc *udc;
-	अचिन्हित पूर्णांक i;
+static int regs_dbg_open(struct inode *inode, struct file *file)
+{
+	struct usba_udc *udc;
+	unsigned int i;
 	u32 *data;
-	पूर्णांक ret = -ENOMEM;
+	int ret = -ENOMEM;
 
 	inode_lock(inode);
-	udc = inode->i_निजी;
-	data = kदो_स्मृति(inode->i_size, GFP_KERNEL);
-	अगर (!data)
-		जाओ out;
+	udc = inode->i_private;
+	data = kmalloc(inode->i_size, GFP_KERNEL);
+	if (!data)
+		goto out;
 
 	spin_lock_irq(&udc->lock);
-	क्रम (i = 0; i < inode->i_size / 4; i++)
-		data[i] = पढ़ोl_relaxed(udc->regs + i * 4);
+	for (i = 0; i < inode->i_size / 4; i++)
+		data[i] = readl_relaxed(udc->regs + i * 4);
 	spin_unlock_irq(&udc->lock);
 
-	file->निजी_data = data;
+	file->private_data = data;
 	ret = 0;
 
 out:
 	inode_unlock(inode);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार regs_dbg_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
-		माप_प्रकार nbytes, loff_t *ppos)
-अणु
-	काष्ठा inode *inode = file_inode(file);
-	पूर्णांक ret;
+static ssize_t regs_dbg_read(struct file *file, char __user *buf,
+		size_t nbytes, loff_t *ppos)
+{
+	struct inode *inode = file_inode(file);
+	int ret;
 
 	inode_lock(inode);
-	ret = simple_पढ़ो_from_buffer(buf, nbytes, ppos,
-			file->निजी_data,
+	ret = simple_read_from_buffer(buf, nbytes, ppos,
+			file->private_data,
 			file_inode(file)->i_size);
 	inode_unlock(inode);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक regs_dbg_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	kमुक्त(file->निजी_data);
-	वापस 0;
-पूर्ण
+static int regs_dbg_release(struct inode *inode, struct file *file)
+{
+	kfree(file->private_data);
+	return 0;
+}
 
-अटल स्थिर काष्ठा file_operations queue_dbg_fops = अणु
+static const struct file_operations queue_dbg_fops = {
 	.owner		= THIS_MODULE,
-	.खोलो		= queue_dbg_खोलो,
+	.open		= queue_dbg_open,
 	.llseek		= no_llseek,
-	.पढ़ो		= queue_dbg_पढ़ो,
+	.read		= queue_dbg_read,
 	.release	= queue_dbg_release,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा file_operations regs_dbg_fops = अणु
+static const struct file_operations regs_dbg_fops = {
 	.owner		= THIS_MODULE,
-	.खोलो		= regs_dbg_खोलो,
+	.open		= regs_dbg_open,
 	.llseek		= generic_file_llseek,
-	.पढ़ो		= regs_dbg_पढ़ो,
+	.read		= regs_dbg_read,
 	.release	= regs_dbg_release,
-पूर्ण;
+};
 
-अटल व्योम usba_ep_init_debugfs(काष्ठा usba_udc *udc,
-		काष्ठा usba_ep *ep)
-अणु
-	काष्ठा dentry *ep_root;
+static void usba_ep_init_debugfs(struct usba_udc *udc,
+		struct usba_ep *ep)
+{
+	struct dentry *ep_root;
 
 	ep_root = debugfs_create_dir(ep->ep.name, udc->debugfs_root);
 	ep->debugfs_dir = ep_root;
 
 	debugfs_create_file("queue", 0400, ep_root, ep, &queue_dbg_fops);
-	अगर (ep->can_dma)
+	if (ep->can_dma)
 		debugfs_create_u32("dma_status", 0400, ep_root,
 				   &ep->last_dma_status);
-	अगर (ep_is_control(ep))
+	if (ep_is_control(ep))
 		debugfs_create_u32("state", 0400, ep_root, &ep->state);
-पूर्ण
+}
 
-अटल व्योम usba_ep_cleanup_debugfs(काष्ठा usba_ep *ep)
-अणु
-	debugfs_हटाओ_recursive(ep->debugfs_dir);
-पूर्ण
+static void usba_ep_cleanup_debugfs(struct usba_ep *ep)
+{
+	debugfs_remove_recursive(ep->debugfs_dir);
+}
 
-अटल व्योम usba_init_debugfs(काष्ठा usba_udc *udc)
-अणु
-	काष्ठा dentry *root;
-	काष्ठा resource *regs_resource;
+static void usba_init_debugfs(struct usba_udc *udc)
+{
+	struct dentry *root;
+	struct resource *regs_resource;
 
 	root = debugfs_create_dir(udc->gadget.name, usb_debug_root);
 	udc->debugfs_root = root;
 
-	regs_resource = platक्रमm_get_resource(udc->pdev, IORESOURCE_MEM,
+	regs_resource = platform_get_resource(udc->pdev, IORESOURCE_MEM,
 				CTRL_IOMEM_ID);
 
-	अगर (regs_resource) अणु
+	if (regs_resource) {
 		debugfs_create_file_size("regs", 0400, root, udc,
 					 &regs_dbg_fops,
 					 resource_size(regs_resource));
-	पूर्ण
+	}
 
 	usba_ep_init_debugfs(udc, to_usba_ep(udc->gadget.ep0));
-पूर्ण
+}
 
-अटल व्योम usba_cleanup_debugfs(काष्ठा usba_udc *udc)
-अणु
+static void usba_cleanup_debugfs(struct usba_udc *udc)
+{
 	usba_ep_cleanup_debugfs(to_usba_ep(udc->gadget.ep0));
-	debugfs_हटाओ_recursive(udc->debugfs_root);
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम usba_ep_init_debugfs(काष्ठा usba_udc *udc,
-					 काष्ठा usba_ep *ep)
-अणु
+	debugfs_remove_recursive(udc->debugfs_root);
+}
+#else
+static inline void usba_ep_init_debugfs(struct usba_udc *udc,
+					 struct usba_ep *ep)
+{
 
-पूर्ण
+}
 
-अटल अंतरभूत व्योम usba_ep_cleanup_debugfs(काष्ठा usba_ep *ep)
-अणु
+static inline void usba_ep_cleanup_debugfs(struct usba_ep *ep)
+{
 
-पूर्ण
+}
 
-अटल अंतरभूत व्योम usba_init_debugfs(काष्ठा usba_udc *udc)
-अणु
+static inline void usba_init_debugfs(struct usba_udc *udc)
+{
 
-पूर्ण
+}
 
-अटल अंतरभूत व्योम usba_cleanup_debugfs(काष्ठा usba_udc *udc)
-अणु
+static inline void usba_cleanup_debugfs(struct usba_udc *udc)
+{
 
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-अटल uलघु fअगरo_mode;
+static ushort fifo_mode;
 
-module_param(fअगरo_mode, uलघु, 0x0);
-MODULE_PARM_DESC(fअगरo_mode, "Endpoint configuration mode");
+module_param(fifo_mode, ushort, 0x0);
+MODULE_PARM_DESC(fifo_mode, "Endpoint configuration mode");
 
-/* mode 0 - uses स्वतःconfig */
+/* mode 0 - uses autoconfig */
 
-/* mode 1 - fits in 8KB, generic max fअगरo configuration */
-अटल काष्ठा usba_fअगरo_cfg mode_1_cfg[] = अणु
-अणु .hw_ep_num = 0, .fअगरo_size = 64,	.nr_banks = 1, पूर्ण,
-अणु .hw_ep_num = 1, .fअगरo_size = 1024,	.nr_banks = 2, पूर्ण,
-अणु .hw_ep_num = 2, .fअगरo_size = 1024,	.nr_banks = 1, पूर्ण,
-अणु .hw_ep_num = 3, .fअगरo_size = 1024,	.nr_banks = 1, पूर्ण,
-अणु .hw_ep_num = 4, .fअगरo_size = 1024,	.nr_banks = 1, पूर्ण,
-अणु .hw_ep_num = 5, .fअगरo_size = 1024,	.nr_banks = 1, पूर्ण,
-अणु .hw_ep_num = 6, .fअगरo_size = 1024,	.nr_banks = 1, पूर्ण,
-पूर्ण;
+/* mode 1 - fits in 8KB, generic max fifo configuration */
+static struct usba_fifo_cfg mode_1_cfg[] = {
+{ .hw_ep_num = 0, .fifo_size = 64,	.nr_banks = 1, },
+{ .hw_ep_num = 1, .fifo_size = 1024,	.nr_banks = 2, },
+{ .hw_ep_num = 2, .fifo_size = 1024,	.nr_banks = 1, },
+{ .hw_ep_num = 3, .fifo_size = 1024,	.nr_banks = 1, },
+{ .hw_ep_num = 4, .fifo_size = 1024,	.nr_banks = 1, },
+{ .hw_ep_num = 5, .fifo_size = 1024,	.nr_banks = 1, },
+{ .hw_ep_num = 6, .fifo_size = 1024,	.nr_banks = 1, },
+};
 
-/* mode 2 - fits in 8KB, perक्रमmance max fअगरo configuration */
-अटल काष्ठा usba_fअगरo_cfg mode_2_cfg[] = अणु
-अणु .hw_ep_num = 0, .fअगरo_size = 64,	.nr_banks = 1, पूर्ण,
-अणु .hw_ep_num = 1, .fअगरo_size = 1024,	.nr_banks = 3, पूर्ण,
-अणु .hw_ep_num = 2, .fअगरo_size = 1024,	.nr_banks = 2, पूर्ण,
-अणु .hw_ep_num = 3, .fअगरo_size = 1024,	.nr_banks = 2, पूर्ण,
-पूर्ण;
+/* mode 2 - fits in 8KB, performance max fifo configuration */
+static struct usba_fifo_cfg mode_2_cfg[] = {
+{ .hw_ep_num = 0, .fifo_size = 64,	.nr_banks = 1, },
+{ .hw_ep_num = 1, .fifo_size = 1024,	.nr_banks = 3, },
+{ .hw_ep_num = 2, .fifo_size = 1024,	.nr_banks = 2, },
+{ .hw_ep_num = 3, .fifo_size = 1024,	.nr_banks = 2, },
+};
 
-/* mode 3 - fits in 8KB, mixed fअगरo configuration */
-अटल काष्ठा usba_fअगरo_cfg mode_3_cfg[] = अणु
-अणु .hw_ep_num = 0, .fअगरo_size = 64,	.nr_banks = 1, पूर्ण,
-अणु .hw_ep_num = 1, .fअगरo_size = 1024,	.nr_banks = 2, पूर्ण,
-अणु .hw_ep_num = 2, .fअगरo_size = 512,	.nr_banks = 2, पूर्ण,
-अणु .hw_ep_num = 3, .fअगरo_size = 512,	.nr_banks = 2, पूर्ण,
-अणु .hw_ep_num = 4, .fअगरo_size = 512,	.nr_banks = 2, पूर्ण,
-अणु .hw_ep_num = 5, .fअगरo_size = 512,	.nr_banks = 2, पूर्ण,
-अणु .hw_ep_num = 6, .fअगरo_size = 512,	.nr_banks = 2, पूर्ण,
-पूर्ण;
+/* mode 3 - fits in 8KB, mixed fifo configuration */
+static struct usba_fifo_cfg mode_3_cfg[] = {
+{ .hw_ep_num = 0, .fifo_size = 64,	.nr_banks = 1, },
+{ .hw_ep_num = 1, .fifo_size = 1024,	.nr_banks = 2, },
+{ .hw_ep_num = 2, .fifo_size = 512,	.nr_banks = 2, },
+{ .hw_ep_num = 3, .fifo_size = 512,	.nr_banks = 2, },
+{ .hw_ep_num = 4, .fifo_size = 512,	.nr_banks = 2, },
+{ .hw_ep_num = 5, .fifo_size = 512,	.nr_banks = 2, },
+{ .hw_ep_num = 6, .fifo_size = 512,	.nr_banks = 2, },
+};
 
-/* mode 4 - fits in 8KB, custom fअगरo configuration */
-अटल काष्ठा usba_fअगरo_cfg mode_4_cfg[] = अणु
-अणु .hw_ep_num = 0, .fअगरo_size = 64,	.nr_banks = 1, पूर्ण,
-अणु .hw_ep_num = 1, .fअगरo_size = 512,	.nr_banks = 2, पूर्ण,
-अणु .hw_ep_num = 2, .fअगरo_size = 512,	.nr_banks = 2, पूर्ण,
-अणु .hw_ep_num = 3, .fअगरo_size = 8,	.nr_banks = 2, पूर्ण,
-अणु .hw_ep_num = 4, .fअगरo_size = 512,	.nr_banks = 2, पूर्ण,
-अणु .hw_ep_num = 5, .fअगरo_size = 512,	.nr_banks = 2, पूर्ण,
-अणु .hw_ep_num = 6, .fअगरo_size = 16,	.nr_banks = 2, पूर्ण,
-अणु .hw_ep_num = 7, .fअगरo_size = 8,	.nr_banks = 2, पूर्ण,
-अणु .hw_ep_num = 8, .fअगरo_size = 8,	.nr_banks = 2, पूर्ण,
-पूर्ण;
+/* mode 4 - fits in 8KB, custom fifo configuration */
+static struct usba_fifo_cfg mode_4_cfg[] = {
+{ .hw_ep_num = 0, .fifo_size = 64,	.nr_banks = 1, },
+{ .hw_ep_num = 1, .fifo_size = 512,	.nr_banks = 2, },
+{ .hw_ep_num = 2, .fifo_size = 512,	.nr_banks = 2, },
+{ .hw_ep_num = 3, .fifo_size = 8,	.nr_banks = 2, },
+{ .hw_ep_num = 4, .fifo_size = 512,	.nr_banks = 2, },
+{ .hw_ep_num = 5, .fifo_size = 512,	.nr_banks = 2, },
+{ .hw_ep_num = 6, .fifo_size = 16,	.nr_banks = 2, },
+{ .hw_ep_num = 7, .fifo_size = 8,	.nr_banks = 2, },
+{ .hw_ep_num = 8, .fifo_size = 8,	.nr_banks = 2, },
+};
 /* Add additional configurations here */
 
-अटल पूर्णांक usba_config_fअगरo_table(काष्ठा usba_udc *udc)
-अणु
-	पूर्णांक n;
+static int usba_config_fifo_table(struct usba_udc *udc)
+{
+	int n;
 
-	चयन (fअगरo_mode) अणु
-	शेष:
-		fअगरo_mode = 0;
+	switch (fifo_mode) {
+	default:
+		fifo_mode = 0;
 		fallthrough;
-	हाल 0:
-		udc->fअगरo_cfg = शून्य;
+	case 0:
+		udc->fifo_cfg = NULL;
 		n = 0;
-		अवरोध;
-	हाल 1:
-		udc->fअगरo_cfg = mode_1_cfg;
+		break;
+	case 1:
+		udc->fifo_cfg = mode_1_cfg;
 		n = ARRAY_SIZE(mode_1_cfg);
-		अवरोध;
-	हाल 2:
-		udc->fअगरo_cfg = mode_2_cfg;
+		break;
+	case 2:
+		udc->fifo_cfg = mode_2_cfg;
 		n = ARRAY_SIZE(mode_2_cfg);
-		अवरोध;
-	हाल 3:
-		udc->fअगरo_cfg = mode_3_cfg;
+		break;
+	case 3:
+		udc->fifo_cfg = mode_3_cfg;
 		n = ARRAY_SIZE(mode_3_cfg);
-		अवरोध;
-	हाल 4:
-		udc->fअगरo_cfg = mode_4_cfg;
+		break;
+	case 4:
+		udc->fifo_cfg = mode_4_cfg;
 		n = ARRAY_SIZE(mode_4_cfg);
-		अवरोध;
-	पूर्ण
-	DBG(DBG_HW, "Setup fifo_mode %d\n", fअगरo_mode);
+		break;
+	}
+	DBG(DBG_HW, "Setup fifo_mode %d\n", fifo_mode);
 
-	वापस n;
-पूर्ण
+	return n;
+}
 
-अटल अंतरभूत u32 usba_पूर्णांक_enb_get(काष्ठा usba_udc *udc)
-अणु
-	वापस udc->पूर्णांक_enb_cache;
-पूर्ण
+static inline u32 usba_int_enb_get(struct usba_udc *udc)
+{
+	return udc->int_enb_cache;
+}
 
-अटल अंतरभूत व्योम usba_पूर्णांक_enb_set(काष्ठा usba_udc *udc, u32 mask)
-अणु
+static inline void usba_int_enb_set(struct usba_udc *udc, u32 mask)
+{
 	u32 val;
 
-	val = udc->पूर्णांक_enb_cache | mask;
-	usba_ग_लिखोl(udc, INT_ENB, val);
-	udc->पूर्णांक_enb_cache = val;
-पूर्ण
+	val = udc->int_enb_cache | mask;
+	usba_writel(udc, INT_ENB, val);
+	udc->int_enb_cache = val;
+}
 
-अटल अंतरभूत व्योम usba_पूर्णांक_enb_clear(काष्ठा usba_udc *udc, u32 mask)
-अणु
+static inline void usba_int_enb_clear(struct usba_udc *udc, u32 mask)
+{
 	u32 val;
 
-	val = udc->पूर्णांक_enb_cache & ~mask;
-	usba_ग_लिखोl(udc, INT_ENB, val);
-	udc->पूर्णांक_enb_cache = val;
-पूर्ण
+	val = udc->int_enb_cache & ~mask;
+	usba_writel(udc, INT_ENB, val);
+	udc->int_enb_cache = val;
+}
 
-अटल पूर्णांक vbus_is_present(काष्ठा usba_udc *udc)
-अणु
-	अगर (udc->vbus_pin)
-		वापस gpiod_get_value(udc->vbus_pin);
+static int vbus_is_present(struct usba_udc *udc)
+{
+	if (udc->vbus_pin)
+		return gpiod_get_value(udc->vbus_pin);
 
 	/* No Vbus detection: Assume always present */
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल व्योम toggle_bias(काष्ठा usba_udc *udc, पूर्णांक is_on)
-अणु
-	अगर (udc->errata && udc->errata->toggle_bias)
+static void toggle_bias(struct usba_udc *udc, int is_on)
+{
+	if (udc->errata && udc->errata->toggle_bias)
 		udc->errata->toggle_bias(udc, is_on);
-पूर्ण
+}
 
-अटल व्योम generate_bias_pulse(काष्ठा usba_udc *udc)
-अणु
-	अगर (!udc->bias_pulse_needed)
-		वापस;
+static void generate_bias_pulse(struct usba_udc *udc)
+{
+	if (!udc->bias_pulse_needed)
+		return;
 
-	अगर (udc->errata && udc->errata->pulse_bias)
+	if (udc->errata && udc->errata->pulse_bias)
 		udc->errata->pulse_bias(udc);
 
 	udc->bias_pulse_needed = false;
-पूर्ण
+}
 
-अटल व्योम next_fअगरo_transaction(काष्ठा usba_ep *ep, काष्ठा usba_request *req)
-अणु
-	अचिन्हित पूर्णांक transaction_len;
+static void next_fifo_transaction(struct usba_ep *ep, struct usba_request *req)
+{
+	unsigned int transaction_len;
 
 	transaction_len = req->req.length - req->req.actual;
 	req->last_transaction = 1;
-	अगर (transaction_len > ep->ep.maxpacket) अणु
+	if (transaction_len > ep->ep.maxpacket) {
 		transaction_len = ep->ep.maxpacket;
 		req->last_transaction = 0;
-	पूर्ण अन्यथा अगर (transaction_len == ep->ep.maxpacket && req->req.zero)
+	} else if (transaction_len == ep->ep.maxpacket && req->req.zero)
 		req->last_transaction = 0;
 
 	DBG(DBG_QUEUE, "%s: submit_transaction, req %p (length %d)%s\n",
 		ep->ep.name, req, transaction_len,
 		req->last_transaction ? ", done" : "");
 
-	स_नकल_toio(ep->fअगरo, req->req.buf + req->req.actual, transaction_len);
-	usba_ep_ग_लिखोl(ep, SET_STA, USBA_TX_PK_RDY);
+	memcpy_toio(ep->fifo, req->req.buf + req->req.actual, transaction_len);
+	usba_ep_writel(ep, SET_STA, USBA_TX_PK_RDY);
 	req->req.actual += transaction_len;
-पूर्ण
+}
 
-अटल व्योम submit_request(काष्ठा usba_ep *ep, काष्ठा usba_request *req)
-अणु
+static void submit_request(struct usba_ep *ep, struct usba_request *req)
+{
 	DBG(DBG_QUEUE, "%s: submit_request: req %p (length %d)\n",
 		ep->ep.name, req, req->req.length);
 
 	req->req.actual = 0;
 	req->submitted = 1;
 
-	अगर (req->using_dma) अणु
-		अगर (req->req.length == 0) अणु
-			usba_ep_ग_लिखोl(ep, CTL_ENB, USBA_TX_PK_RDY);
-			वापस;
-		पूर्ण
+	if (req->using_dma) {
+		if (req->req.length == 0) {
+			usba_ep_writel(ep, CTL_ENB, USBA_TX_PK_RDY);
+			return;
+		}
 
-		अगर (req->req.zero)
-			usba_ep_ग_लिखोl(ep, CTL_ENB, USBA_SHORT_PACKET);
-		अन्यथा
-			usba_ep_ग_लिखोl(ep, CTL_DIS, USBA_SHORT_PACKET);
+		if (req->req.zero)
+			usba_ep_writel(ep, CTL_ENB, USBA_SHORT_PACKET);
+		else
+			usba_ep_writel(ep, CTL_DIS, USBA_SHORT_PACKET);
 
-		usba_dma_ग_लिखोl(ep, ADDRESS, req->req.dma);
-		usba_dma_ग_लिखोl(ep, CONTROL, req->ctrl);
-	पूर्ण अन्यथा अणु
-		next_fअगरo_transaction(ep, req);
-		अगर (req->last_transaction) अणु
-			usba_ep_ग_लिखोl(ep, CTL_DIS, USBA_TX_PK_RDY);
-			अगर (ep_is_control(ep))
-				usba_ep_ग_लिखोl(ep, CTL_ENB, USBA_TX_COMPLETE);
-		पूर्ण अन्यथा अणु
-			अगर (ep_is_control(ep))
-				usba_ep_ग_लिखोl(ep, CTL_DIS, USBA_TX_COMPLETE);
-			usba_ep_ग_लिखोl(ep, CTL_ENB, USBA_TX_PK_RDY);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		usba_dma_writel(ep, ADDRESS, req->req.dma);
+		usba_dma_writel(ep, CONTROL, req->ctrl);
+	} else {
+		next_fifo_transaction(ep, req);
+		if (req->last_transaction) {
+			usba_ep_writel(ep, CTL_DIS, USBA_TX_PK_RDY);
+			if (ep_is_control(ep))
+				usba_ep_writel(ep, CTL_ENB, USBA_TX_COMPLETE);
+		} else {
+			if (ep_is_control(ep))
+				usba_ep_writel(ep, CTL_DIS, USBA_TX_COMPLETE);
+			usba_ep_writel(ep, CTL_ENB, USBA_TX_PK_RDY);
+		}
+	}
+}
 
-अटल व्योम submit_next_request(काष्ठा usba_ep *ep)
-अणु
-	काष्ठा usba_request *req;
+static void submit_next_request(struct usba_ep *ep)
+{
+	struct usba_request *req;
 
-	अगर (list_empty(&ep->queue)) अणु
-		usba_ep_ग_लिखोl(ep, CTL_DIS, USBA_TX_PK_RDY | USBA_RX_BK_RDY);
-		वापस;
-	पूर्ण
+	if (list_empty(&ep->queue)) {
+		usba_ep_writel(ep, CTL_DIS, USBA_TX_PK_RDY | USBA_RX_BK_RDY);
+		return;
+	}
 
-	req = list_entry(ep->queue.next, काष्ठा usba_request, queue);
-	अगर (!req->submitted)
+	req = list_entry(ep->queue.next, struct usba_request, queue);
+	if (!req->submitted)
 		submit_request(ep, req);
-पूर्ण
+}
 
-अटल व्योम send_status(काष्ठा usba_udc *udc, काष्ठा usba_ep *ep)
-अणु
+static void send_status(struct usba_udc *udc, struct usba_ep *ep)
+{
 	ep->state = STATUS_STAGE_IN;
-	usba_ep_ग_लिखोl(ep, SET_STA, USBA_TX_PK_RDY);
-	usba_ep_ग_लिखोl(ep, CTL_ENB, USBA_TX_COMPLETE);
-पूर्ण
+	usba_ep_writel(ep, SET_STA, USBA_TX_PK_RDY);
+	usba_ep_writel(ep, CTL_ENB, USBA_TX_COMPLETE);
+}
 
-अटल व्योम receive_data(काष्ठा usba_ep *ep)
-अणु
-	काष्ठा usba_udc *udc = ep->udc;
-	काष्ठा usba_request *req;
-	अचिन्हित दीर्घ status;
-	अचिन्हित पूर्णांक bytecount, nr_busy;
-	पूर्णांक is_complete = 0;
+static void receive_data(struct usba_ep *ep)
+{
+	struct usba_udc *udc = ep->udc;
+	struct usba_request *req;
+	unsigned long status;
+	unsigned int bytecount, nr_busy;
+	int is_complete = 0;
 
-	status = usba_ep_पढ़ोl(ep, STA);
+	status = usba_ep_readl(ep, STA);
 	nr_busy = USBA_BFEXT(BUSY_BANKS, status);
 
 	DBG(DBG_QUEUE, "receive data: nr_busy=%u\n", nr_busy);
 
-	जबतक (nr_busy > 0) अणु
-		अगर (list_empty(&ep->queue)) अणु
-			usba_ep_ग_लिखोl(ep, CTL_DIS, USBA_RX_BK_RDY);
-			अवरोध;
-		पूर्ण
+	while (nr_busy > 0) {
+		if (list_empty(&ep->queue)) {
+			usba_ep_writel(ep, CTL_DIS, USBA_RX_BK_RDY);
+			break;
+		}
 		req = list_entry(ep->queue.next,
-				 काष्ठा usba_request, queue);
+				 struct usba_request, queue);
 
 		bytecount = USBA_BFEXT(BYTE_COUNT, status);
 
-		अगर (status & (1 << 31))
+		if (status & (1 << 31))
 			is_complete = 1;
-		अगर (req->req.actual + bytecount >= req->req.length) अणु
+		if (req->req.actual + bytecount >= req->req.length) {
 			is_complete = 1;
 			bytecount = req->req.length - req->req.actual;
-		पूर्ण
+		}
 
-		स_नकल_fromio(req->req.buf + req->req.actual,
-				ep->fअगरo, bytecount);
+		memcpy_fromio(req->req.buf + req->req.actual,
+				ep->fifo, bytecount);
 		req->req.actual += bytecount;
 
-		usba_ep_ग_लिखोl(ep, CLR_STA, USBA_RX_BK_RDY);
+		usba_ep_writel(ep, CLR_STA, USBA_RX_BK_RDY);
 
-		अगर (is_complete) अणु
+		if (is_complete) {
 			DBG(DBG_QUEUE, "%s: request done\n", ep->ep.name);
 			req->req.status = 0;
 			list_del_init(&req->queue);
-			usba_ep_ग_लिखोl(ep, CTL_DIS, USBA_RX_BK_RDY);
+			usba_ep_writel(ep, CTL_DIS, USBA_RX_BK_RDY);
 			spin_unlock(&udc->lock);
 			usb_gadget_giveback_request(&ep->ep, &req->req);
 			spin_lock(&udc->lock);
-		पूर्ण
+		}
 
-		status = usba_ep_पढ़ोl(ep, STA);
+		status = usba_ep_readl(ep, STA);
 		nr_busy = USBA_BFEXT(BUSY_BANKS, status);
 
-		अगर (is_complete && ep_is_control(ep)) अणु
+		if (is_complete && ep_is_control(ep)) {
 			send_status(udc, ep);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			break;
+		}
+	}
+}
 
-अटल व्योम
-request_complete(काष्ठा usba_ep *ep, काष्ठा usba_request *req, पूर्णांक status)
-अणु
-	काष्ठा usba_udc *udc = ep->udc;
+static void
+request_complete(struct usba_ep *ep, struct usba_request *req, int status)
+{
+	struct usba_udc *udc = ep->udc;
 
 	WARN_ON(!list_empty(&req->queue));
 
-	अगर (req->req.status == -EINPROGRESS)
+	if (req->req.status == -EINPROGRESS)
 		req->req.status = status;
 
-	अगर (req->using_dma)
+	if (req->using_dma)
 		usb_gadget_unmap_request(&udc->gadget, &req->req, ep->is_in);
 
 	DBG(DBG_GADGET | DBG_REQ,
@@ -558,39 +557,39 @@ request_complete(काष्ठा usba_ep *ep, काष्ठा usba_request
 	spin_unlock(&udc->lock);
 	usb_gadget_giveback_request(&ep->ep, &req->req);
 	spin_lock(&udc->lock);
-पूर्ण
+}
 
-अटल व्योम
-request_complete_list(काष्ठा usba_ep *ep, काष्ठा list_head *list, पूर्णांक status)
-अणु
-	काष्ठा usba_request *req, *पंचांगp_req;
+static void
+request_complete_list(struct usba_ep *ep, struct list_head *list, int status)
+{
+	struct usba_request *req, *tmp_req;
 
-	list_क्रम_each_entry_safe(req, पंचांगp_req, list, queue) अणु
+	list_for_each_entry_safe(req, tmp_req, list, queue) {
 		list_del_init(&req->queue);
 		request_complete(ep, req, status);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक
-usba_ep_enable(काष्ठा usb_ep *_ep, स्थिर काष्ठा usb_endpoपूर्णांक_descriptor *desc)
-अणु
-	काष्ठा usba_ep *ep = to_usba_ep(_ep);
-	काष्ठा usba_udc *udc = ep->udc;
-	अचिन्हित दीर्घ flags, maxpacket;
-	अचिन्हित पूर्णांक nr_trans;
+static int
+usba_ep_enable(struct usb_ep *_ep, const struct usb_endpoint_descriptor *desc)
+{
+	struct usba_ep *ep = to_usba_ep(_ep);
+	struct usba_udc *udc = ep->udc;
+	unsigned long flags, maxpacket;
+	unsigned int nr_trans;
 
 	DBG(DBG_GADGET, "%s: ep_enable: desc=%p\n", ep->ep.name, desc);
 
-	maxpacket = usb_endpoपूर्णांक_maxp(desc);
+	maxpacket = usb_endpoint_maxp(desc);
 
-	अगर (((desc->bEndpoपूर्णांकAddress & USB_ENDPOINT_NUMBER_MASK) != ep->index)
+	if (((desc->bEndpointAddress & USB_ENDPOINT_NUMBER_MASK) != ep->index)
 			|| ep->index == 0
 			|| desc->bDescriptorType != USB_DT_ENDPOINT
 			|| maxpacket == 0
-			|| maxpacket > ep->fअगरo_size) अणु
+			|| maxpacket > ep->fifo_size) {
 		DBG(DBG_ERR, "ep_enable: Invalid argument");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	ep->is_isoc = 0;
 	ep->is_in = 0;
@@ -598,196 +597,196 @@ usba_ep_enable(काष्ठा usb_ep *_ep, स्थिर काष्ठ�
 	DBG(DBG_ERR, "%s: EPT_CFG = 0x%lx (maxpacket = %lu)\n",
 			ep->ep.name, ep->ept_cfg, maxpacket);
 
-	अगर (usb_endpoपूर्णांक_dir_in(desc)) अणु
+	if (usb_endpoint_dir_in(desc)) {
 		ep->is_in = 1;
-		ep->ept_cfg |= USBA_EPT_सूची_IN;
-	पूर्ण
+		ep->ept_cfg |= USBA_EPT_DIR_IN;
+	}
 
-	चयन (usb_endpoपूर्णांक_type(desc)) अणु
-	हाल USB_ENDPOINT_XFER_CONTROL:
+	switch (usb_endpoint_type(desc)) {
+	case USB_ENDPOINT_XFER_CONTROL:
 		ep->ept_cfg |= USBA_BF(EPT_TYPE, USBA_EPT_TYPE_CONTROL);
-		अवरोध;
-	हाल USB_ENDPOINT_XFER_ISOC:
-		अगर (!ep->can_isoc) अणु
+		break;
+	case USB_ENDPOINT_XFER_ISOC:
+		if (!ep->can_isoc) {
 			DBG(DBG_ERR, "ep_enable: %s is not isoc capable\n",
 					ep->ep.name);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		/*
-		 * Bits 11:12 specअगरy number of _additional_
+		 * Bits 11:12 specify number of _additional_
 		 * transactions per microframe.
 		 */
-		nr_trans = usb_endpoपूर्णांक_maxp_mult(desc);
-		अगर (nr_trans > 3)
-			वापस -EINVAL;
+		nr_trans = usb_endpoint_maxp_mult(desc);
+		if (nr_trans > 3)
+			return -EINVAL;
 
 		ep->is_isoc = 1;
 		ep->ept_cfg |= USBA_BF(EPT_TYPE, USBA_EPT_TYPE_ISO);
 		ep->ept_cfg |= USBA_BF(NB_TRANS, nr_trans);
 
-		अवरोध;
-	हाल USB_ENDPOINT_XFER_BULK:
+		break;
+	case USB_ENDPOINT_XFER_BULK:
 		ep->ept_cfg |= USBA_BF(EPT_TYPE, USBA_EPT_TYPE_BULK);
-		अवरोध;
-	हाल USB_ENDPOINT_XFER_INT:
+		break;
+	case USB_ENDPOINT_XFER_INT:
 		ep->ept_cfg |= USBA_BF(EPT_TYPE, USBA_EPT_TYPE_INT);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	spin_lock_irqsave(&ep->udc->lock, flags);
 
 	ep->ep.desc = desc;
 	ep->ep.maxpacket = maxpacket;
 
-	usba_ep_ग_लिखोl(ep, CFG, ep->ept_cfg);
-	usba_ep_ग_लिखोl(ep, CTL_ENB, USBA_EPT_ENABLE);
+	usba_ep_writel(ep, CFG, ep->ept_cfg);
+	usba_ep_writel(ep, CTL_ENB, USBA_EPT_ENABLE);
 
-	अगर (ep->can_dma) अणु
+	if (ep->can_dma) {
 		u32 ctrl;
 
-		usba_पूर्णांक_enb_set(udc, USBA_BF(EPT_INT, 1 << ep->index) |
+		usba_int_enb_set(udc, USBA_BF(EPT_INT, 1 << ep->index) |
 				      USBA_BF(DMA_INT, 1 << ep->index));
 		ctrl = USBA_AUTO_VALID | USBA_INTDIS_DMA;
-		usba_ep_ग_लिखोl(ep, CTL_ENB, ctrl);
-	पूर्ण अन्यथा अणु
-		usba_पूर्णांक_enb_set(udc, USBA_BF(EPT_INT, 1 << ep->index));
-	पूर्ण
+		usba_ep_writel(ep, CTL_ENB, ctrl);
+	} else {
+		usba_int_enb_set(udc, USBA_BF(EPT_INT, 1 << ep->index));
+	}
 
 	spin_unlock_irqrestore(&udc->lock, flags);
 
 	DBG(DBG_HW, "EPT_CFG%d after init: %#08lx\n", ep->index,
-			(अचिन्हित दीर्घ)usba_ep_पढ़ोl(ep, CFG));
+			(unsigned long)usba_ep_readl(ep, CFG));
 	DBG(DBG_HW, "INT_ENB after init: %#08lx\n",
-			(अचिन्हित दीर्घ)usba_पूर्णांक_enb_get(udc));
+			(unsigned long)usba_int_enb_get(udc));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक usba_ep_disable(काष्ठा usb_ep *_ep)
-अणु
-	काष्ठा usba_ep *ep = to_usba_ep(_ep);
-	काष्ठा usba_udc *udc = ep->udc;
+static int usba_ep_disable(struct usb_ep *_ep)
+{
+	struct usba_ep *ep = to_usba_ep(_ep);
+	struct usba_udc *udc = ep->udc;
 	LIST_HEAD(req_list);
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	DBG(DBG_GADGET, "ep_disable: %s\n", ep->ep.name);
 
 	spin_lock_irqsave(&udc->lock, flags);
 
-	अगर (!ep->ep.desc) अणु
+	if (!ep->ep.desc) {
 		spin_unlock_irqrestore(&udc->lock, flags);
 		DBG(DBG_ERR, "ep_disable: %s not enabled\n", ep->ep.name);
-		वापस -EINVAL;
-	पूर्ण
-	ep->ep.desc = शून्य;
+		return -EINVAL;
+	}
+	ep->ep.desc = NULL;
 
 	list_splice_init(&ep->queue, &req_list);
-	अगर (ep->can_dma) अणु
-		usba_dma_ग_लिखोl(ep, CONTROL, 0);
-		usba_dma_ग_लिखोl(ep, ADDRESS, 0);
-		usba_dma_पढ़ोl(ep, STATUS);
-	पूर्ण
-	usba_ep_ग_लिखोl(ep, CTL_DIS, USBA_EPT_ENABLE);
-	usba_पूर्णांक_enb_clear(udc, USBA_BF(EPT_INT, 1 << ep->index));
+	if (ep->can_dma) {
+		usba_dma_writel(ep, CONTROL, 0);
+		usba_dma_writel(ep, ADDRESS, 0);
+		usba_dma_readl(ep, STATUS);
+	}
+	usba_ep_writel(ep, CTL_DIS, USBA_EPT_ENABLE);
+	usba_int_enb_clear(udc, USBA_BF(EPT_INT, 1 << ep->index));
 
 	request_complete_list(ep, &req_list, -ESHUTDOWN);
 
 	spin_unlock_irqrestore(&udc->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा usb_request *
-usba_ep_alloc_request(काष्ठा usb_ep *_ep, gfp_t gfp_flags)
-अणु
-	काष्ठा usba_request *req;
+static struct usb_request *
+usba_ep_alloc_request(struct usb_ep *_ep, gfp_t gfp_flags)
+{
+	struct usba_request *req;
 
 	DBG(DBG_GADGET, "ep_alloc_request: %p, 0x%x\n", _ep, gfp_flags);
 
-	req = kzalloc(माप(*req), gfp_flags);
-	अगर (!req)
-		वापस शून्य;
+	req = kzalloc(sizeof(*req), gfp_flags);
+	if (!req)
+		return NULL;
 
 	INIT_LIST_HEAD(&req->queue);
 
-	वापस &req->req;
-पूर्ण
+	return &req->req;
+}
 
-अटल व्योम
-usba_ep_मुक्त_request(काष्ठा usb_ep *_ep, काष्ठा usb_request *_req)
-अणु
-	काष्ठा usba_request *req = to_usba_req(_req);
+static void
+usba_ep_free_request(struct usb_ep *_ep, struct usb_request *_req)
+{
+	struct usba_request *req = to_usba_req(_req);
 
 	DBG(DBG_GADGET, "ep_free_request: %p, %p\n", _ep, _req);
 
-	kमुक्त(req);
-पूर्ण
+	kfree(req);
+}
 
-अटल पूर्णांक queue_dma(काष्ठा usba_udc *udc, काष्ठा usba_ep *ep,
-		काष्ठा usba_request *req, gfp_t gfp_flags)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+static int queue_dma(struct usba_udc *udc, struct usba_ep *ep,
+		struct usba_request *req, gfp_t gfp_flags)
+{
+	unsigned long flags;
+	int ret;
 
 	DBG(DBG_DMA, "%s: req l/%u d/%pad %c%c%c\n",
 		ep->ep.name, req->req.length, &req->req.dma,
 		req->req.zero ? 'Z' : 'z',
-		req->req.लघु_not_ok ? 'S' : 's',
-		req->req.no_पूर्णांकerrupt ? 'I' : 'i');
+		req->req.short_not_ok ? 'S' : 's',
+		req->req.no_interrupt ? 'I' : 'i');
 
-	अगर (req->req.length > 0x10000) अणु
+	if (req->req.length > 0x10000) {
 		/* Lengths from 0 to 65536 (inclusive) are supported */
 		DBG(DBG_ERR, "invalid request length %u\n", req->req.length);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	ret = usb_gadget_map_request(&udc->gadget, &req->req, ep->is_in);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	req->using_dma = 1;
 	req->ctrl = USBA_BF(DMA_BUF_LEN, req->req.length)
 			| USBA_DMA_CH_EN | USBA_DMA_END_BUF_IE
 			| USBA_DMA_END_BUF_EN;
 
-	अगर (!ep->is_in)
+	if (!ep->is_in)
 		req->ctrl |= USBA_DMA_END_TR_EN | USBA_DMA_END_TR_IE;
 
 	/*
-	 * Add this request to the queue and submit क्रम DMA अगर
-	 * possible. Check अगर we're still alive first -- we may have
-	 * received a reset since last समय we checked.
+	 * Add this request to the queue and submit for DMA if
+	 * possible. Check if we're still alive first -- we may have
+	 * received a reset since last time we checked.
 	 */
 	ret = -ESHUTDOWN;
 	spin_lock_irqsave(&udc->lock, flags);
-	अगर (ep->ep.desc) अणु
-		अगर (list_empty(&ep->queue))
+	if (ep->ep.desc) {
+		if (list_empty(&ep->queue))
 			submit_request(ep, req);
 
 		list_add_tail(&req->queue, &ep->queue);
 		ret = 0;
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&udc->lock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक
-usba_ep_queue(काष्ठा usb_ep *_ep, काष्ठा usb_request *_req, gfp_t gfp_flags)
-अणु
-	काष्ठा usba_request *req = to_usba_req(_req);
-	काष्ठा usba_ep *ep = to_usba_ep(_ep);
-	काष्ठा usba_udc *udc = ep->udc;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+static int
+usba_ep_queue(struct usb_ep *_ep, struct usb_request *_req, gfp_t gfp_flags)
+{
+	struct usba_request *req = to_usba_req(_req);
+	struct usba_ep *ep = to_usba_ep(_ep);
+	struct usba_udc *udc = ep->udc;
+	unsigned long flags;
+	int ret;
 
 	DBG(DBG_GADGET | DBG_QUEUE | DBG_REQ, "%s: queue req %p, len %u\n",
 			ep->ep.name, req, _req->length);
 
-	अगर (!udc->driver || udc->gadget.speed == USB_SPEED_UNKNOWN ||
+	if (!udc->driver || udc->gadget.speed == USB_SPEED_UNKNOWN ||
 	    !ep->ep.desc)
-		वापस -ESHUTDOWN;
+		return -ESHUTDOWN;
 
 	req->submitted = 0;
 	req->using_dma = 0;
@@ -796,73 +795,73 @@ usba_ep_queue(काष्ठा usb_ep *_ep, काष्ठा usb_request *_r
 	_req->status = -EINPROGRESS;
 	_req->actual = 0;
 
-	अगर (ep->can_dma)
-		वापस queue_dma(udc, ep, req, gfp_flags);
+	if (ep->can_dma)
+		return queue_dma(udc, ep, req, gfp_flags);
 
-	/* May have received a reset since last समय we checked */
+	/* May have received a reset since last time we checked */
 	ret = -ESHUTDOWN;
 	spin_lock_irqsave(&udc->lock, flags);
-	अगर (ep->ep.desc) अणु
+	if (ep->ep.desc) {
 		list_add_tail(&req->queue, &ep->queue);
 
-		अगर ((!ep_is_control(ep) && ep->is_in) ||
+		if ((!ep_is_control(ep) && ep->is_in) ||
 			(ep_is_control(ep)
 				&& (ep->state == DATA_STAGE_IN
 					|| ep->state == STATUS_STAGE_IN)))
-			usba_ep_ग_लिखोl(ep, CTL_ENB, USBA_TX_PK_RDY);
-		अन्यथा
-			usba_ep_ग_लिखोl(ep, CTL_ENB, USBA_RX_BK_RDY);
+			usba_ep_writel(ep, CTL_ENB, USBA_TX_PK_RDY);
+		else
+			usba_ep_writel(ep, CTL_ENB, USBA_RX_BK_RDY);
 		ret = 0;
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&udc->lock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम
-usba_update_req(काष्ठा usba_ep *ep, काष्ठा usba_request *req, u32 status)
-अणु
+static void
+usba_update_req(struct usba_ep *ep, struct usba_request *req, u32 status)
+{
 	req->req.actual = req->req.length - USBA_BFEXT(DMA_BUF_LEN, status);
-पूर्ण
+}
 
-अटल पूर्णांक stop_dma(काष्ठा usba_ep *ep, u32 *pstatus)
-अणु
-	अचिन्हित पूर्णांक समयout;
+static int stop_dma(struct usba_ep *ep, u32 *pstatus)
+{
+	unsigned int timeout;
 	u32 status;
 
 	/*
 	 * Stop the DMA controller. When writing both CH_EN
 	 * and LINK to 0, the other bits are not affected.
 	 */
-	usba_dma_ग_लिखोl(ep, CONTROL, 0);
+	usba_dma_writel(ep, CONTROL, 0);
 
-	/* Wait क्रम the FIFO to empty */
-	क्रम (समयout = 40; समयout; --समयout) अणु
-		status = usba_dma_पढ़ोl(ep, STATUS);
-		अगर (!(status & USBA_DMA_CH_EN))
-			अवरोध;
+	/* Wait for the FIFO to empty */
+	for (timeout = 40; timeout; --timeout) {
+		status = usba_dma_readl(ep, STATUS);
+		if (!(status & USBA_DMA_CH_EN))
+			break;
 		udelay(1);
-	पूर्ण
+	}
 
-	अगर (pstatus)
+	if (pstatus)
 		*pstatus = status;
 
-	अगर (समयout == 0) अणु
+	if (timeout == 0) {
 		dev_err(&ep->udc->pdev->dev,
 			"%s: timed out waiting for DMA FIFO to empty\n",
 			ep->ep.name);
-		वापस -ETIMEDOUT;
-	पूर्ण
+		return -ETIMEDOUT;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक usba_ep_dequeue(काष्ठा usb_ep *_ep, काष्ठा usb_request *_req)
-अणु
-	काष्ठा usba_ep *ep = to_usba_ep(_ep);
-	काष्ठा usba_udc *udc = ep->udc;
-	काष्ठा usba_request *req;
-	अचिन्हित दीर्घ flags;
+static int usba_ep_dequeue(struct usb_ep *_ep, struct usb_request *_req)
+{
+	struct usba_ep *ep = to_usba_ep(_ep);
+	struct usba_udc *udc = ep->udc;
+	struct usba_request *req;
+	unsigned long flags;
 	u32 status;
 
 	DBG(DBG_GADGET | DBG_QUEUE, "ep_dequeue: %s, req %p\n",
@@ -870,330 +869,330 @@ usba_update_req(काष्ठा usba_ep *ep, काष्ठा usba_request 
 
 	spin_lock_irqsave(&udc->lock, flags);
 
-	list_क्रम_each_entry(req, &ep->queue, queue) अणु
-		अगर (&req->req == _req)
-			अवरोध;
-	पूर्ण
+	list_for_each_entry(req, &ep->queue, queue) {
+		if (&req->req == _req)
+			break;
+	}
 
-	अगर (&req->req != _req) अणु
+	if (&req->req != _req) {
 		spin_unlock_irqrestore(&udc->lock, flags);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (req->using_dma) अणु
+	if (req->using_dma) {
 		/*
 		 * If this request is currently being transferred,
 		 * stop the DMA controller and reset the FIFO.
 		 */
-		अगर (ep->queue.next == &req->queue) अणु
-			status = usba_dma_पढ़ोl(ep, STATUS);
-			अगर (status & USBA_DMA_CH_EN)
+		if (ep->queue.next == &req->queue) {
+			status = usba_dma_readl(ep, STATUS);
+			if (status & USBA_DMA_CH_EN)
 				stop_dma(ep, &status);
 
-#अगर_घोषित CONFIG_USB_GADGET_DEBUG_FS
+#ifdef CONFIG_USB_GADGET_DEBUG_FS
 			ep->last_dma_status = status;
-#पूर्ण_अगर
+#endif
 
-			usba_ग_लिखोl(udc, EPT_RST, 1 << ep->index);
+			usba_writel(udc, EPT_RST, 1 << ep->index);
 
 			usba_update_req(ep, req, status);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/*
 	 * Errors should stop the queue from advancing until the
-	 * completion function वापसs.
+	 * completion function returns.
 	 */
 	list_del_init(&req->queue);
 
 	request_complete(ep, req, -ECONNRESET);
 
-	/* Process the next request अगर any */
+	/* Process the next request if any */
 	submit_next_request(ep);
 	spin_unlock_irqrestore(&udc->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक usba_ep_set_halt(काष्ठा usb_ep *_ep, पूर्णांक value)
-अणु
-	काष्ठा usba_ep *ep = to_usba_ep(_ep);
-	काष्ठा usba_udc *udc = ep->udc;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret = 0;
+static int usba_ep_set_halt(struct usb_ep *_ep, int value)
+{
+	struct usba_ep *ep = to_usba_ep(_ep);
+	struct usba_udc *udc = ep->udc;
+	unsigned long flags;
+	int ret = 0;
 
 	DBG(DBG_GADGET, "endpoint %s: %s HALT\n", ep->ep.name,
 			value ? "set" : "clear");
 
-	अगर (!ep->ep.desc) अणु
+	if (!ep->ep.desc) {
 		DBG(DBG_ERR, "Attempted to halt uninitialized ep %s\n",
 				ep->ep.name);
-		वापस -ENODEV;
-	पूर्ण
-	अगर (ep->is_isoc) अणु
+		return -ENODEV;
+	}
+	if (ep->is_isoc) {
 		DBG(DBG_ERR, "Attempted to halt isochronous ep %s\n",
 				ep->ep.name);
-		वापस -ENOTTY;
-	पूर्ण
+		return -ENOTTY;
+	}
 
 	spin_lock_irqsave(&udc->lock, flags);
 
 	/*
-	 * We can't halt IN endpoपूर्णांकs जबतक there are still data to be
+	 * We can't halt IN endpoints while there are still data to be
 	 * transferred
 	 */
-	अगर (!list_empty(&ep->queue)
-			|| ((value && ep->is_in && (usba_ep_पढ़ोl(ep, STA)
-					& USBA_BF(BUSY_BANKS, -1L))))) अणु
+	if (!list_empty(&ep->queue)
+			|| ((value && ep->is_in && (usba_ep_readl(ep, STA)
+					& USBA_BF(BUSY_BANKS, -1L))))) {
 		ret = -EAGAIN;
-	पूर्ण अन्यथा अणु
-		अगर (value)
-			usba_ep_ग_लिखोl(ep, SET_STA, USBA_FORCE_STALL);
-		अन्यथा
-			usba_ep_ग_लिखोl(ep, CLR_STA,
+	} else {
+		if (value)
+			usba_ep_writel(ep, SET_STA, USBA_FORCE_STALL);
+		else
+			usba_ep_writel(ep, CLR_STA,
 					USBA_FORCE_STALL | USBA_TOGGLE_CLR);
-		usba_ep_पढ़ोl(ep, STA);
-	पूर्ण
+		usba_ep_readl(ep, STA);
+	}
 
 	spin_unlock_irqrestore(&udc->lock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक usba_ep_fअगरo_status(काष्ठा usb_ep *_ep)
-अणु
-	काष्ठा usba_ep *ep = to_usba_ep(_ep);
+static int usba_ep_fifo_status(struct usb_ep *_ep)
+{
+	struct usba_ep *ep = to_usba_ep(_ep);
 
-	वापस USBA_BFEXT(BYTE_COUNT, usba_ep_पढ़ोl(ep, STA));
-पूर्ण
+	return USBA_BFEXT(BYTE_COUNT, usba_ep_readl(ep, STA));
+}
 
-अटल व्योम usba_ep_fअगरo_flush(काष्ठा usb_ep *_ep)
-अणु
-	काष्ठा usba_ep *ep = to_usba_ep(_ep);
-	काष्ठा usba_udc *udc = ep->udc;
+static void usba_ep_fifo_flush(struct usb_ep *_ep)
+{
+	struct usba_ep *ep = to_usba_ep(_ep);
+	struct usba_udc *udc = ep->udc;
 
-	usba_ग_लिखोl(udc, EPT_RST, 1 << ep->index);
-पूर्ण
+	usba_writel(udc, EPT_RST, 1 << ep->index);
+}
 
-अटल स्थिर काष्ठा usb_ep_ops usba_ep_ops = अणु
+static const struct usb_ep_ops usba_ep_ops = {
 	.enable		= usba_ep_enable,
 	.disable	= usba_ep_disable,
 	.alloc_request	= usba_ep_alloc_request,
-	.मुक्त_request	= usba_ep_मुक्त_request,
+	.free_request	= usba_ep_free_request,
 	.queue		= usba_ep_queue,
 	.dequeue	= usba_ep_dequeue,
 	.set_halt	= usba_ep_set_halt,
-	.fअगरo_status	= usba_ep_fअगरo_status,
-	.fअगरo_flush	= usba_ep_fअगरo_flush,
-पूर्ण;
+	.fifo_status	= usba_ep_fifo_status,
+	.fifo_flush	= usba_ep_fifo_flush,
+};
 
-अटल पूर्णांक usba_udc_get_frame(काष्ठा usb_gadget *gadget)
-अणु
-	काष्ठा usba_udc *udc = to_usba_udc(gadget);
+static int usba_udc_get_frame(struct usb_gadget *gadget)
+{
+	struct usba_udc *udc = to_usba_udc(gadget);
 
-	वापस USBA_BFEXT(FRAME_NUMBER, usba_पढ़ोl(udc, FNUM));
-पूर्ण
+	return USBA_BFEXT(FRAME_NUMBER, usba_readl(udc, FNUM));
+}
 
-अटल पूर्णांक usba_udc_wakeup(काष्ठा usb_gadget *gadget)
-अणु
-	काष्ठा usba_udc *udc = to_usba_udc(gadget);
-	अचिन्हित दीर्घ flags;
+static int usba_udc_wakeup(struct usb_gadget *gadget)
+{
+	struct usba_udc *udc = to_usba_udc(gadget);
+	unsigned long flags;
 	u32 ctrl;
-	पूर्णांक ret = -EINVAL;
+	int ret = -EINVAL;
 
 	spin_lock_irqsave(&udc->lock, flags);
-	अगर (udc->devstatus & (1 << USB_DEVICE_REMOTE_WAKEUP)) अणु
-		ctrl = usba_पढ़ोl(udc, CTRL);
-		usba_ग_लिखोl(udc, CTRL, ctrl | USBA_REMOTE_WAKE_UP);
+	if (udc->devstatus & (1 << USB_DEVICE_REMOTE_WAKEUP)) {
+		ctrl = usba_readl(udc, CTRL);
+		usba_writel(udc, CTRL, ctrl | USBA_REMOTE_WAKE_UP);
 		ret = 0;
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&udc->lock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक
-usba_udc_set_selfघातered(काष्ठा usb_gadget *gadget, पूर्णांक is_selfघातered)
-अणु
-	काष्ठा usba_udc *udc = to_usba_udc(gadget);
-	अचिन्हित दीर्घ flags;
+static int
+usba_udc_set_selfpowered(struct usb_gadget *gadget, int is_selfpowered)
+{
+	struct usba_udc *udc = to_usba_udc(gadget);
+	unsigned long flags;
 
-	gadget->is_selfघातered = (is_selfघातered != 0);
+	gadget->is_selfpowered = (is_selfpowered != 0);
 	spin_lock_irqsave(&udc->lock, flags);
-	अगर (is_selfघातered)
+	if (is_selfpowered)
 		udc->devstatus |= 1 << USB_DEVICE_SELF_POWERED;
-	अन्यथा
+	else
 		udc->devstatus &= ~(1 << USB_DEVICE_SELF_POWERED);
 	spin_unlock_irqrestore(&udc->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक aपंचांगel_usba_pullup(काष्ठा usb_gadget *gadget, पूर्णांक is_on);
-अटल पूर्णांक aपंचांगel_usba_start(काष्ठा usb_gadget *gadget,
-		काष्ठा usb_gadget_driver *driver);
-अटल पूर्णांक aपंचांगel_usba_stop(काष्ठा usb_gadget *gadget);
+static int atmel_usba_pullup(struct usb_gadget *gadget, int is_on);
+static int atmel_usba_start(struct usb_gadget *gadget,
+		struct usb_gadget_driver *driver);
+static int atmel_usba_stop(struct usb_gadget *gadget);
 
-अटल काष्ठा usb_ep *aपंचांगel_usba_match_ep(काष्ठा usb_gadget *gadget,
-				काष्ठा usb_endpoपूर्णांक_descriptor	*desc,
-				काष्ठा usb_ss_ep_comp_descriptor *ep_comp)
-अणु
-	काष्ठा usb_ep	*_ep;
-	काष्ठा usba_ep *ep;
+static struct usb_ep *atmel_usba_match_ep(struct usb_gadget *gadget,
+				struct usb_endpoint_descriptor	*desc,
+				struct usb_ss_ep_comp_descriptor *ep_comp)
+{
+	struct usb_ep	*_ep;
+	struct usba_ep *ep;
 
-	/* Look at endpoपूर्णांकs until an unclaimed one looks usable */
-	list_क्रम_each_entry(_ep, &gadget->ep_list, ep_list) अणु
-		अगर (usb_gadget_ep_match_desc(gadget, _ep, desc, ep_comp))
-			जाओ found_ep;
-	पूर्ण
+	/* Look at endpoints until an unclaimed one looks usable */
+	list_for_each_entry(_ep, &gadget->ep_list, ep_list) {
+		if (usb_gadget_ep_match_desc(gadget, _ep, desc, ep_comp))
+			goto found_ep;
+	}
 	/* Fail */
-	वापस शून्य;
+	return NULL;
 
 found_ep:
 
-	अगर (fअगरo_mode == 0) अणु
-		/* Optimize hw fअगरo size based on ep type and other info */
+	if (fifo_mode == 0) {
+		/* Optimize hw fifo size based on ep type and other info */
 		ep = to_usba_ep(_ep);
 
-		चयन (usb_endpoपूर्णांक_type(desc)) अणु
-		हाल USB_ENDPOINT_XFER_CONTROL:
+		switch (usb_endpoint_type(desc)) {
+		case USB_ENDPOINT_XFER_CONTROL:
 			ep->nr_banks = 1;
-			अवरोध;
+			break;
 
-		हाल USB_ENDPOINT_XFER_ISOC:
-			ep->fअगरo_size = 1024;
-			अगर (ep->udc->ep_pपुनः_स्मृति)
+		case USB_ENDPOINT_XFER_ISOC:
+			ep->fifo_size = 1024;
+			if (ep->udc->ep_prealloc)
 				ep->nr_banks = 2;
-			अवरोध;
+			break;
 
-		हाल USB_ENDPOINT_XFER_BULK:
-			ep->fअगरo_size = 512;
-			अगर (ep->udc->ep_pपुनः_स्मृति)
+		case USB_ENDPOINT_XFER_BULK:
+			ep->fifo_size = 512;
+			if (ep->udc->ep_prealloc)
 				ep->nr_banks = 1;
-			अवरोध;
+			break;
 
-		हाल USB_ENDPOINT_XFER_INT:
-			अगर (desc->wMaxPacketSize == 0)
-				ep->fअगरo_size =
-				    roundup_घात_of_two(_ep->maxpacket_limit);
-			अन्यथा
-				ep->fअगरo_size =
-				    roundup_घात_of_two(le16_to_cpu(desc->wMaxPacketSize));
-			अगर (ep->udc->ep_pपुनः_स्मृति)
+		case USB_ENDPOINT_XFER_INT:
+			if (desc->wMaxPacketSize == 0)
+				ep->fifo_size =
+				    roundup_pow_of_two(_ep->maxpacket_limit);
+			else
+				ep->fifo_size =
+				    roundup_pow_of_two(le16_to_cpu(desc->wMaxPacketSize));
+			if (ep->udc->ep_prealloc)
 				ep->nr_banks = 1;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		/* It might be a little bit late to set this */
-		usb_ep_set_maxpacket_limit(&ep->ep, ep->fअगरo_size);
+		usb_ep_set_maxpacket_limit(&ep->ep, ep->fifo_size);
 
 		/* Generate ept_cfg basd on FIFO size and number of banks */
-		अगर (ep->fअगरo_size  <= 8)
+		if (ep->fifo_size  <= 8)
 			ep->ept_cfg = USBA_BF(EPT_SIZE, USBA_EPT_SIZE_8);
-		अन्यथा
+		else
 			/* LSB is bit 1, not 0 */
 			ep->ept_cfg =
-				USBA_BF(EPT_SIZE, fls(ep->fअगरo_size - 1) - 3);
+				USBA_BF(EPT_SIZE, fls(ep->fifo_size - 1) - 3);
 
 		ep->ept_cfg |= USBA_BF(BK_NUMBER, ep->nr_banks);
-	पूर्ण
+	}
 
-	वापस _ep;
-पूर्ण
+	return _ep;
+}
 
-अटल स्थिर काष्ठा usb_gadget_ops usba_udc_ops = अणु
+static const struct usb_gadget_ops usba_udc_ops = {
 	.get_frame		= usba_udc_get_frame,
 	.wakeup			= usba_udc_wakeup,
-	.set_selfघातered	= usba_udc_set_selfघातered,
-	.pullup			= aपंचांगel_usba_pullup,
-	.udc_start		= aपंचांगel_usba_start,
-	.udc_stop		= aपंचांगel_usba_stop,
-	.match_ep		= aपंचांगel_usba_match_ep,
-पूर्ण;
+	.set_selfpowered	= usba_udc_set_selfpowered,
+	.pullup			= atmel_usba_pullup,
+	.udc_start		= atmel_usba_start,
+	.udc_stop		= atmel_usba_stop,
+	.match_ep		= atmel_usba_match_ep,
+};
 
-अटल काष्ठा usb_endpoपूर्णांक_descriptor usba_ep0_desc = अणु
+static struct usb_endpoint_descriptor usba_ep0_desc = {
 	.bLength = USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType = USB_DT_ENDPOINT,
-	.bEndpoपूर्णांकAddress = 0,
+	.bEndpointAddress = 0,
 	.bmAttributes = USB_ENDPOINT_XFER_CONTROL,
 	.wMaxPacketSize = cpu_to_le16(64),
 	/* FIXME: I have no idea what to put here */
 	.bInterval = 1,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा usb_gadget usba_gadget_ढाँचा = अणु
+static const struct usb_gadget usba_gadget_template = {
 	.ops		= &usba_udc_ops,
 	.max_speed	= USB_SPEED_HIGH,
 	.name		= "atmel_usba_udc",
-पूर्ण;
+};
 
 /*
- * Called with पूर्णांकerrupts disabled and udc->lock held.
+ * Called with interrupts disabled and udc->lock held.
  */
-अटल व्योम reset_all_endpoपूर्णांकs(काष्ठा usba_udc *udc)
-अणु
-	काष्ठा usba_ep *ep;
-	काष्ठा usba_request *req, *पंचांगp_req;
+static void reset_all_endpoints(struct usba_udc *udc)
+{
+	struct usba_ep *ep;
+	struct usba_request *req, *tmp_req;
 
-	usba_ग_लिखोl(udc, EPT_RST, ~0UL);
+	usba_writel(udc, EPT_RST, ~0UL);
 
 	ep = to_usba_ep(udc->gadget.ep0);
-	list_क्रम_each_entry_safe(req, पंचांगp_req, &ep->queue, queue) अणु
+	list_for_each_entry_safe(req, tmp_req, &ep->queue, queue) {
 		list_del_init(&req->queue);
 		request_complete(ep, req, -ECONNRESET);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल काष्ठा usba_ep *get_ep_by_addr(काष्ठा usba_udc *udc, u16 wIndex)
-अणु
-	काष्ठा usba_ep *ep;
+static struct usba_ep *get_ep_by_addr(struct usba_udc *udc, u16 wIndex)
+{
+	struct usba_ep *ep;
 
-	अगर ((wIndex & USB_ENDPOINT_NUMBER_MASK) == 0)
-		वापस to_usba_ep(udc->gadget.ep0);
+	if ((wIndex & USB_ENDPOINT_NUMBER_MASK) == 0)
+		return to_usba_ep(udc->gadget.ep0);
 
-	list_क्रम_each_entry (ep, &udc->gadget.ep_list, ep.ep_list) अणु
-		u8 bEndpoपूर्णांकAddress;
+	list_for_each_entry (ep, &udc->gadget.ep_list, ep.ep_list) {
+		u8 bEndpointAddress;
 
-		अगर (!ep->ep.desc)
-			जारी;
-		bEndpoपूर्णांकAddress = ep->ep.desc->bEndpoपूर्णांकAddress;
-		अगर ((wIndex ^ bEndpoपूर्णांकAddress) & USB_सूची_IN)
-			जारी;
-		अगर ((bEndpoपूर्णांकAddress & USB_ENDPOINT_NUMBER_MASK)
+		if (!ep->ep.desc)
+			continue;
+		bEndpointAddress = ep->ep.desc->bEndpointAddress;
+		if ((wIndex ^ bEndpointAddress) & USB_DIR_IN)
+			continue;
+		if ((bEndpointAddress & USB_ENDPOINT_NUMBER_MASK)
 				== (wIndex & USB_ENDPOINT_NUMBER_MASK))
-			वापस ep;
-	पूर्ण
+			return ep;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-/* Called with पूर्णांकerrupts disabled and udc->lock held */
-अटल अंतरभूत व्योम set_protocol_stall(काष्ठा usba_udc *udc, काष्ठा usba_ep *ep)
-अणु
-	usba_ep_ग_लिखोl(ep, SET_STA, USBA_FORCE_STALL);
+/* Called with interrupts disabled and udc->lock held */
+static inline void set_protocol_stall(struct usba_udc *udc, struct usba_ep *ep)
+{
+	usba_ep_writel(ep, SET_STA, USBA_FORCE_STALL);
 	ep->state = WAIT_FOR_SETUP;
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक is_stalled(काष्ठा usba_udc *udc, काष्ठा usba_ep *ep)
-अणु
-	अगर (usba_ep_पढ़ोl(ep, STA) & USBA_FORCE_STALL)
-		वापस 1;
-	वापस 0;
-पूर्ण
+static inline int is_stalled(struct usba_udc *udc, struct usba_ep *ep)
+{
+	if (usba_ep_readl(ep, STA) & USBA_FORCE_STALL)
+		return 1;
+	return 0;
+}
 
-अटल अंतरभूत व्योम set_address(काष्ठा usba_udc *udc, अचिन्हित पूर्णांक addr)
-अणु
+static inline void set_address(struct usba_udc *udc, unsigned int addr)
+{
 	u32 regval;
 
 	DBG(DBG_BUS, "setting address %u...\n", addr);
-	regval = usba_पढ़ोl(udc, CTRL);
+	regval = usba_readl(udc, CTRL);
 	regval = USBA_BFINS(DEV_ADDR, addr, regval);
-	usba_ग_लिखोl(udc, CTRL, regval);
-पूर्ण
+	usba_writel(udc, CTRL, regval);
+}
 
-अटल पूर्णांक करो_test_mode(काष्ठा usba_udc *udc)
-अणु
-	अटल स्थिर अक्षर test_packet_buffer[] = अणु
+static int do_test_mode(struct usba_udc *udc)
+{
+	static const char test_packet_buffer[] = {
 		/* JKJKJKJK * 9 */
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		/* JJKKJJKK * 8 */
@@ -1205,215 +1204,215 @@ found_ep:
 		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 		/* JJJJJJJK * 8 */
 		0x7F, 0xBF, 0xDF, 0xEF, 0xF7, 0xFB, 0xFD,
-		/* अणुJKKKKKKK * 10पूर्ण, JK */
+		/* {JKKKKKKK * 10}, JK */
 		0xFC, 0x7E, 0xBF, 0xDF, 0xEF, 0xF7, 0xFB, 0xFD, 0x7E
-	पूर्ण;
-	काष्ठा usba_ep *ep;
-	काष्ठा device *dev = &udc->pdev->dev;
-	पूर्णांक test_mode;
+	};
+	struct usba_ep *ep;
+	struct device *dev = &udc->pdev->dev;
+	int test_mode;
 
 	test_mode = udc->test_mode;
 
 	/* Start from a clean slate */
-	reset_all_endpoपूर्णांकs(udc);
+	reset_all_endpoints(udc);
 
-	चयन (test_mode) अणु
-	हाल 0x0100:
+	switch (test_mode) {
+	case 0x0100:
 		/* Test_J */
-		usba_ग_लिखोl(udc, TST, USBA_TST_J_MODE);
+		usba_writel(udc, TST, USBA_TST_J_MODE);
 		dev_info(dev, "Entering Test_J mode...\n");
-		अवरोध;
-	हाल 0x0200:
+		break;
+	case 0x0200:
 		/* Test_K */
-		usba_ग_लिखोl(udc, TST, USBA_TST_K_MODE);
+		usba_writel(udc, TST, USBA_TST_K_MODE);
 		dev_info(dev, "Entering Test_K mode...\n");
-		अवरोध;
-	हाल 0x0300:
+		break;
+	case 0x0300:
 		/*
 		 * Test_SE0_NAK: Force high-speed mode and set up ep0
-		 * क्रम Bulk IN transfers
+		 * for Bulk IN transfers
 		 */
 		ep = &udc->usba_ep[0];
-		usba_ग_लिखोl(udc, TST,
+		usba_writel(udc, TST,
 				USBA_BF(SPEED_CFG, USBA_SPEED_CFG_FORCE_HIGH));
-		usba_ep_ग_लिखोl(ep, CFG,
+		usba_ep_writel(ep, CFG,
 				USBA_BF(EPT_SIZE, USBA_EPT_SIZE_64)
-				| USBA_EPT_सूची_IN
+				| USBA_EPT_DIR_IN
 				| USBA_BF(EPT_TYPE, USBA_EPT_TYPE_BULK)
 				| USBA_BF(BK_NUMBER, 1));
-		अगर (!(usba_ep_पढ़ोl(ep, CFG) & USBA_EPT_MAPPED)) अणु
+		if (!(usba_ep_readl(ep, CFG) & USBA_EPT_MAPPED)) {
 			set_protocol_stall(udc, ep);
 			dev_err(dev, "Test_SE0_NAK: ep0 not mapped\n");
-		पूर्ण अन्यथा अणु
-			usba_ep_ग_लिखोl(ep, CTL_ENB, USBA_EPT_ENABLE);
+		} else {
+			usba_ep_writel(ep, CTL_ENB, USBA_EPT_ENABLE);
 			dev_info(dev, "Entering Test_SE0_NAK mode...\n");
-		पूर्ण
-		अवरोध;
-	हाल 0x0400:
+		}
+		break;
+	case 0x0400:
 		/* Test_Packet */
 		ep = &udc->usba_ep[0];
-		usba_ep_ग_लिखोl(ep, CFG,
+		usba_ep_writel(ep, CFG,
 				USBA_BF(EPT_SIZE, USBA_EPT_SIZE_64)
-				| USBA_EPT_सूची_IN
+				| USBA_EPT_DIR_IN
 				| USBA_BF(EPT_TYPE, USBA_EPT_TYPE_BULK)
 				| USBA_BF(BK_NUMBER, 1));
-		अगर (!(usba_ep_पढ़ोl(ep, CFG) & USBA_EPT_MAPPED)) अणु
+		if (!(usba_ep_readl(ep, CFG) & USBA_EPT_MAPPED)) {
 			set_protocol_stall(udc, ep);
 			dev_err(dev, "Test_Packet: ep0 not mapped\n");
-		पूर्ण अन्यथा अणु
-			usba_ep_ग_लिखोl(ep, CTL_ENB, USBA_EPT_ENABLE);
-			usba_ग_लिखोl(udc, TST, USBA_TST_PKT_MODE);
-			स_नकल_toio(ep->fअगरo, test_packet_buffer,
-					माप(test_packet_buffer));
-			usba_ep_ग_लिखोl(ep, SET_STA, USBA_TX_PK_RDY);
+		} else {
+			usba_ep_writel(ep, CTL_ENB, USBA_EPT_ENABLE);
+			usba_writel(udc, TST, USBA_TST_PKT_MODE);
+			memcpy_toio(ep->fifo, test_packet_buffer,
+					sizeof(test_packet_buffer));
+			usba_ep_writel(ep, SET_STA, USBA_TX_PK_RDY);
 			dev_info(dev, "Entering Test_Packet mode...\n");
-		पूर्ण
-		अवरोध;
-	शेष:
+		}
+		break;
+	default:
 		dev_err(dev, "Invalid test mode: 0x%04x\n", test_mode);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Aव्योम overly दीर्घ expressions */
-अटल अंतरभूत bool feature_is_dev_remote_wakeup(काष्ठा usb_ctrlrequest *crq)
-अणु
-	अगर (crq->wValue == cpu_to_le16(USB_DEVICE_REMOTE_WAKEUP))
-		वापस true;
-	वापस false;
-पूर्ण
+/* Avoid overly long expressions */
+static inline bool feature_is_dev_remote_wakeup(struct usb_ctrlrequest *crq)
+{
+	if (crq->wValue == cpu_to_le16(USB_DEVICE_REMOTE_WAKEUP))
+		return true;
+	return false;
+}
 
-अटल अंतरभूत bool feature_is_dev_test_mode(काष्ठा usb_ctrlrequest *crq)
-अणु
-	अगर (crq->wValue == cpu_to_le16(USB_DEVICE_TEST_MODE))
-		वापस true;
-	वापस false;
-पूर्ण
+static inline bool feature_is_dev_test_mode(struct usb_ctrlrequest *crq)
+{
+	if (crq->wValue == cpu_to_le16(USB_DEVICE_TEST_MODE))
+		return true;
+	return false;
+}
 
-अटल अंतरभूत bool feature_is_ep_halt(काष्ठा usb_ctrlrequest *crq)
-अणु
-	अगर (crq->wValue == cpu_to_le16(USB_ENDPOINT_HALT))
-		वापस true;
-	वापस false;
-पूर्ण
+static inline bool feature_is_ep_halt(struct usb_ctrlrequest *crq)
+{
+	if (crq->wValue == cpu_to_le16(USB_ENDPOINT_HALT))
+		return true;
+	return false;
+}
 
-अटल पूर्णांक handle_ep0_setup(काष्ठा usba_udc *udc, काष्ठा usba_ep *ep,
-		काष्ठा usb_ctrlrequest *crq)
-अणु
-	पूर्णांक retval = 0;
+static int handle_ep0_setup(struct usba_udc *udc, struct usba_ep *ep,
+		struct usb_ctrlrequest *crq)
+{
+	int retval = 0;
 
-	चयन (crq->bRequest) अणु
-	हाल USB_REQ_GET_STATUS: अणु
+	switch (crq->bRequest) {
+	case USB_REQ_GET_STATUS: {
 		u16 status;
 
-		अगर (crq->bRequestType == (USB_सूची_IN | USB_RECIP_DEVICE)) अणु
+		if (crq->bRequestType == (USB_DIR_IN | USB_RECIP_DEVICE)) {
 			status = cpu_to_le16(udc->devstatus);
-		पूर्ण अन्यथा अगर (crq->bRequestType
-				== (USB_सूची_IN | USB_RECIP_INTERFACE)) अणु
+		} else if (crq->bRequestType
+				== (USB_DIR_IN | USB_RECIP_INTERFACE)) {
 			status = cpu_to_le16(0);
-		पूर्ण अन्यथा अगर (crq->bRequestType
-				== (USB_सूची_IN | USB_RECIP_ENDPOINT)) अणु
-			काष्ठा usba_ep *target;
+		} else if (crq->bRequestType
+				== (USB_DIR_IN | USB_RECIP_ENDPOINT)) {
+			struct usba_ep *target;
 
 			target = get_ep_by_addr(udc, le16_to_cpu(crq->wIndex));
-			अगर (!target)
-				जाओ stall;
+			if (!target)
+				goto stall;
 
 			status = 0;
-			अगर (is_stalled(udc, target))
+			if (is_stalled(udc, target))
 				status |= cpu_to_le16(1);
-		पूर्ण अन्यथा
-			जाओ delegate;
+		} else
+			goto delegate;
 
-		/* Write directly to the FIFO. No queueing is करोne. */
-		अगर (crq->wLength != cpu_to_le16(माप(status)))
-			जाओ stall;
+		/* Write directly to the FIFO. No queueing is done. */
+		if (crq->wLength != cpu_to_le16(sizeof(status)))
+			goto stall;
 		ep->state = DATA_STAGE_IN;
-		ग_लिखोw_relaxed(status, ep->fअगरo);
-		usba_ep_ग_लिखोl(ep, SET_STA, USBA_TX_PK_RDY);
-		अवरोध;
-	पूर्ण
+		writew_relaxed(status, ep->fifo);
+		usba_ep_writel(ep, SET_STA, USBA_TX_PK_RDY);
+		break;
+	}
 
-	हाल USB_REQ_CLEAR_FEATURE: अणु
-		अगर (crq->bRequestType == USB_RECIP_DEVICE) अणु
-			अगर (feature_is_dev_remote_wakeup(crq))
+	case USB_REQ_CLEAR_FEATURE: {
+		if (crq->bRequestType == USB_RECIP_DEVICE) {
+			if (feature_is_dev_remote_wakeup(crq))
 				udc->devstatus
 					&= ~(1 << USB_DEVICE_REMOTE_WAKEUP);
-			अन्यथा
+			else
 				/* Can't CLEAR_FEATURE TEST_MODE */
-				जाओ stall;
-		पूर्ण अन्यथा अगर (crq->bRequestType == USB_RECIP_ENDPOINT) अणु
-			काष्ठा usba_ep *target;
+				goto stall;
+		} else if (crq->bRequestType == USB_RECIP_ENDPOINT) {
+			struct usba_ep *target;
 
-			अगर (crq->wLength != cpu_to_le16(0)
+			if (crq->wLength != cpu_to_le16(0)
 					|| !feature_is_ep_halt(crq))
-				जाओ stall;
+				goto stall;
 			target = get_ep_by_addr(udc, le16_to_cpu(crq->wIndex));
-			अगर (!target)
-				जाओ stall;
+			if (!target)
+				goto stall;
 
-			usba_ep_ग_लिखोl(target, CLR_STA, USBA_FORCE_STALL);
-			अगर (target->index != 0)
-				usba_ep_ग_लिखोl(target, CLR_STA,
+			usba_ep_writel(target, CLR_STA, USBA_FORCE_STALL);
+			if (target->index != 0)
+				usba_ep_writel(target, CLR_STA,
 						USBA_TOGGLE_CLR);
-		पूर्ण अन्यथा अणु
-			जाओ delegate;
-		पूर्ण
+		} else {
+			goto delegate;
+		}
 
 		send_status(udc, ep);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	हाल USB_REQ_SET_FEATURE: अणु
-		अगर (crq->bRequestType == USB_RECIP_DEVICE) अणु
-			अगर (feature_is_dev_test_mode(crq)) अणु
+	case USB_REQ_SET_FEATURE: {
+		if (crq->bRequestType == USB_RECIP_DEVICE) {
+			if (feature_is_dev_test_mode(crq)) {
 				send_status(udc, ep);
 				ep->state = STATUS_STAGE_TEST;
 				udc->test_mode = le16_to_cpu(crq->wIndex);
-				वापस 0;
-			पूर्ण अन्यथा अगर (feature_is_dev_remote_wakeup(crq)) अणु
+				return 0;
+			} else if (feature_is_dev_remote_wakeup(crq)) {
 				udc->devstatus |= 1 << USB_DEVICE_REMOTE_WAKEUP;
-			पूर्ण अन्यथा अणु
-				जाओ stall;
-			पूर्ण
-		पूर्ण अन्यथा अगर (crq->bRequestType == USB_RECIP_ENDPOINT) अणु
-			काष्ठा usba_ep *target;
+			} else {
+				goto stall;
+			}
+		} else if (crq->bRequestType == USB_RECIP_ENDPOINT) {
+			struct usba_ep *target;
 
-			अगर (crq->wLength != cpu_to_le16(0)
+			if (crq->wLength != cpu_to_le16(0)
 					|| !feature_is_ep_halt(crq))
-				जाओ stall;
+				goto stall;
 
 			target = get_ep_by_addr(udc, le16_to_cpu(crq->wIndex));
-			अगर (!target)
-				जाओ stall;
+			if (!target)
+				goto stall;
 
-			usba_ep_ग_लिखोl(target, SET_STA, USBA_FORCE_STALL);
-		पूर्ण अन्यथा
-			जाओ delegate;
+			usba_ep_writel(target, SET_STA, USBA_FORCE_STALL);
+		} else
+			goto delegate;
 
 		send_status(udc, ep);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	हाल USB_REQ_SET_ADDRESS:
-		अगर (crq->bRequestType != (USB_सूची_OUT | USB_RECIP_DEVICE))
-			जाओ delegate;
+	case USB_REQ_SET_ADDRESS:
+		if (crq->bRequestType != (USB_DIR_OUT | USB_RECIP_DEVICE))
+			goto delegate;
 
 		set_address(udc, le16_to_cpu(crq->wValue));
 		send_status(udc, ep);
 		ep->state = STATUS_STAGE_ADDR;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 delegate:
 		spin_unlock(&udc->lock);
 		retval = udc->driver->setup(&udc->gadget, crq);
 		spin_lock(&udc->lock);
-	पूर्ण
+	}
 
-	वापस retval;
+	return retval;
 
 stall:
 	pr_err("udc: %s: Invalid setup request: %02x.%02x v%04x i%04x l%d, "
@@ -1422,264 +1421,264 @@ stall:
 		le16_to_cpu(crq->wValue), le16_to_cpu(crq->wIndex),
 		le16_to_cpu(crq->wLength));
 	set_protocol_stall(udc, ep);
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल व्योम usba_control_irq(काष्ठा usba_udc *udc, काष्ठा usba_ep *ep)
-अणु
-	काष्ठा usba_request *req;
+static void usba_control_irq(struct usba_udc *udc, struct usba_ep *ep)
+{
+	struct usba_request *req;
 	u32 epstatus;
 	u32 epctrl;
 
 restart:
-	epstatus = usba_ep_पढ़ोl(ep, STA);
-	epctrl = usba_ep_पढ़ोl(ep, CTL);
+	epstatus = usba_ep_readl(ep, STA);
+	epctrl = usba_ep_readl(ep, CTL);
 
 	DBG(DBG_INT, "%s [%d]: s/%08x c/%08x\n",
 			ep->ep.name, ep->state, epstatus, epctrl);
 
-	req = शून्य;
-	अगर (!list_empty(&ep->queue))
+	req = NULL;
+	if (!list_empty(&ep->queue))
 		req = list_entry(ep->queue.next,
-				 काष्ठा usba_request, queue);
+				 struct usba_request, queue);
 
-	अगर ((epctrl & USBA_TX_PK_RDY) && !(epstatus & USBA_TX_PK_RDY)) अणु
-		अगर (req->submitted)
-			next_fअगरo_transaction(ep, req);
-		अन्यथा
+	if ((epctrl & USBA_TX_PK_RDY) && !(epstatus & USBA_TX_PK_RDY)) {
+		if (req->submitted)
+			next_fifo_transaction(ep, req);
+		else
 			submit_request(ep, req);
 
-		अगर (req->last_transaction) अणु
-			usba_ep_ग_लिखोl(ep, CTL_DIS, USBA_TX_PK_RDY);
-			usba_ep_ग_लिखोl(ep, CTL_ENB, USBA_TX_COMPLETE);
-		पूर्ण
-		जाओ restart;
-	पूर्ण
-	अगर ((epstatus & epctrl) & USBA_TX_COMPLETE) अणु
-		usba_ep_ग_लिखोl(ep, CLR_STA, USBA_TX_COMPLETE);
+		if (req->last_transaction) {
+			usba_ep_writel(ep, CTL_DIS, USBA_TX_PK_RDY);
+			usba_ep_writel(ep, CTL_ENB, USBA_TX_COMPLETE);
+		}
+		goto restart;
+	}
+	if ((epstatus & epctrl) & USBA_TX_COMPLETE) {
+		usba_ep_writel(ep, CLR_STA, USBA_TX_COMPLETE);
 
-		चयन (ep->state) अणु
-		हाल DATA_STAGE_IN:
-			usba_ep_ग_लिखोl(ep, CTL_ENB, USBA_RX_BK_RDY);
-			usba_ep_ग_लिखोl(ep, CTL_DIS, USBA_TX_COMPLETE);
+		switch (ep->state) {
+		case DATA_STAGE_IN:
+			usba_ep_writel(ep, CTL_ENB, USBA_RX_BK_RDY);
+			usba_ep_writel(ep, CTL_DIS, USBA_TX_COMPLETE);
 			ep->state = STATUS_STAGE_OUT;
-			अवरोध;
-		हाल STATUS_STAGE_ADDR:
+			break;
+		case STATUS_STAGE_ADDR:
 			/* Activate our new address */
-			usba_ग_लिखोl(udc, CTRL, (usba_पढ़ोl(udc, CTRL)
+			usba_writel(udc, CTRL, (usba_readl(udc, CTRL)
 						| USBA_FADDR_EN));
-			usba_ep_ग_लिखोl(ep, CTL_DIS, USBA_TX_COMPLETE);
+			usba_ep_writel(ep, CTL_DIS, USBA_TX_COMPLETE);
 			ep->state = WAIT_FOR_SETUP;
-			अवरोध;
-		हाल STATUS_STAGE_IN:
-			अगर (req) अणु
+			break;
+		case STATUS_STAGE_IN:
+			if (req) {
 				list_del_init(&req->queue);
 				request_complete(ep, req, 0);
 				submit_next_request(ep);
-			पूर्ण
-			usba_ep_ग_लिखोl(ep, CTL_DIS, USBA_TX_COMPLETE);
+			}
+			usba_ep_writel(ep, CTL_DIS, USBA_TX_COMPLETE);
 			ep->state = WAIT_FOR_SETUP;
-			अवरोध;
-		हाल STATUS_STAGE_TEST:
-			usba_ep_ग_लिखोl(ep, CTL_DIS, USBA_TX_COMPLETE);
+			break;
+		case STATUS_STAGE_TEST:
+			usba_ep_writel(ep, CTL_DIS, USBA_TX_COMPLETE);
 			ep->state = WAIT_FOR_SETUP;
-			अगर (करो_test_mode(udc))
+			if (do_test_mode(udc))
 				set_protocol_stall(udc, ep);
-			अवरोध;
-		शेष:
+			break;
+		default:
 			pr_err("udc: %s: TXCOMP: Invalid endpoint state %d, "
 				"halting endpoint...\n",
 				ep->ep.name, ep->state);
 			set_protocol_stall(udc, ep);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		जाओ restart;
-	पूर्ण
-	अगर ((epstatus & epctrl) & USBA_RX_BK_RDY) अणु
-		चयन (ep->state) अणु
-		हाल STATUS_STAGE_OUT:
-			usba_ep_ग_लिखोl(ep, CLR_STA, USBA_RX_BK_RDY);
-			usba_ep_ग_लिखोl(ep, CTL_DIS, USBA_RX_BK_RDY);
+		goto restart;
+	}
+	if ((epstatus & epctrl) & USBA_RX_BK_RDY) {
+		switch (ep->state) {
+		case STATUS_STAGE_OUT:
+			usba_ep_writel(ep, CLR_STA, USBA_RX_BK_RDY);
+			usba_ep_writel(ep, CTL_DIS, USBA_RX_BK_RDY);
 
-			अगर (req) अणु
+			if (req) {
 				list_del_init(&req->queue);
 				request_complete(ep, req, 0);
-			पूर्ण
+			}
 			ep->state = WAIT_FOR_SETUP;
-			अवरोध;
+			break;
 
-		हाल DATA_STAGE_OUT:
+		case DATA_STAGE_OUT:
 			receive_data(ep);
-			अवरोध;
+			break;
 
-		शेष:
-			usba_ep_ग_लिखोl(ep, CLR_STA, USBA_RX_BK_RDY);
-			usba_ep_ग_लिखोl(ep, CTL_DIS, USBA_RX_BK_RDY);
+		default:
+			usba_ep_writel(ep, CLR_STA, USBA_RX_BK_RDY);
+			usba_ep_writel(ep, CTL_DIS, USBA_RX_BK_RDY);
 			pr_err("udc: %s: RXRDY: Invalid endpoint state %d, "
 				"halting endpoint...\n",
 				ep->ep.name, ep->state);
 			set_protocol_stall(udc, ep);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		जाओ restart;
-	पूर्ण
-	अगर (epstatus & USBA_RX_SETUP) अणु
-		जोड़ अणु
-			काष्ठा usb_ctrlrequest crq;
-			अचिन्हित दीर्घ data[2];
-		पूर्ण crq;
-		अचिन्हित पूर्णांक pkt_len;
-		पूर्णांक ret;
+		goto restart;
+	}
+	if (epstatus & USBA_RX_SETUP) {
+		union {
+			struct usb_ctrlrequest crq;
+			unsigned long data[2];
+		} crq;
+		unsigned int pkt_len;
+		int ret;
 
-		अगर (ep->state != WAIT_FOR_SETUP) अणु
+		if (ep->state != WAIT_FOR_SETUP) {
 			/*
 			 * Didn't expect a SETUP packet at this
-			 * poपूर्णांक. Clean up any pending requests (which
+			 * point. Clean up any pending requests (which
 			 * may be successful).
 			 */
-			पूर्णांक status = -EPROTO;
+			int status = -EPROTO;
 
 			/*
 			 * RXRDY and TXCOMP are dropped when SETUP
 			 * packets arrive.  Just pretend we received
 			 * the status packet.
 			 */
-			अगर (ep->state == STATUS_STAGE_OUT
-					|| ep->state == STATUS_STAGE_IN) अणु
-				usba_ep_ग_लिखोl(ep, CTL_DIS, USBA_RX_BK_RDY);
+			if (ep->state == STATUS_STAGE_OUT
+					|| ep->state == STATUS_STAGE_IN) {
+				usba_ep_writel(ep, CTL_DIS, USBA_RX_BK_RDY);
 				status = 0;
-			पूर्ण
+			}
 
-			अगर (req) अणु
+			if (req) {
 				list_del_init(&req->queue);
 				request_complete(ep, req, status);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		pkt_len = USBA_BFEXT(BYTE_COUNT, usba_ep_पढ़ोl(ep, STA));
+		pkt_len = USBA_BFEXT(BYTE_COUNT, usba_ep_readl(ep, STA));
 		DBG(DBG_HW, "Packet length: %u\n", pkt_len);
-		अगर (pkt_len != माप(crq)) अणु
+		if (pkt_len != sizeof(crq)) {
 			pr_warn("udc: Invalid packet length %u (expected %zu)\n",
-				pkt_len, माप(crq));
+				pkt_len, sizeof(crq));
 			set_protocol_stall(udc, ep);
-			वापस;
-		पूर्ण
+			return;
+		}
 
-		DBG(DBG_FIFO, "Copying ctrl request from 0x%p:\n", ep->fअगरo);
-		स_नकल_fromio(crq.data, ep->fअगरo, माप(crq));
+		DBG(DBG_FIFO, "Copying ctrl request from 0x%p:\n", ep->fifo);
+		memcpy_fromio(crq.data, ep->fifo, sizeof(crq));
 
 		/* Free up one bank in the FIFO so that we can
 		 * generate or receive a reply right away. */
-		usba_ep_ग_लिखोl(ep, CLR_STA, USBA_RX_SETUP);
+		usba_ep_writel(ep, CLR_STA, USBA_RX_SETUP);
 
-		/* prपूर्णांकk(KERN_DEBUG "setup: %d: %02x.%02x\n",
+		/* printk(KERN_DEBUG "setup: %d: %02x.%02x\n",
 			ep->state, crq.crq.bRequestType,
 			crq.crq.bRequest); */
 
-		अगर (crq.crq.bRequestType & USB_सूची_IN) अणु
+		if (crq.crq.bRequestType & USB_DIR_IN) {
 			/*
-			 * The USB 2.0 spec states that "अगर wLength is
+			 * The USB 2.0 spec states that "if wLength is
 			 * zero, there is no data transfer phase."
 			 * However, testusb #14 seems to actually
-			 * expect a data phase even अगर wLength = 0...
+			 * expect a data phase even if wLength = 0...
 			 */
 			ep->state = DATA_STAGE_IN;
-		पूर्ण अन्यथा अणु
-			अगर (crq.crq.wLength != cpu_to_le16(0))
+		} else {
+			if (crq.crq.wLength != cpu_to_le16(0))
 				ep->state = DATA_STAGE_OUT;
-			अन्यथा
+			else
 				ep->state = STATUS_STAGE_IN;
-		पूर्ण
+		}
 
 		ret = -1;
-		अगर (ep->index == 0)
+		if (ep->index == 0)
 			ret = handle_ep0_setup(udc, ep, &crq.crq);
-		अन्यथा अणु
+		else {
 			spin_unlock(&udc->lock);
 			ret = udc->driver->setup(&udc->gadget, &crq.crq);
 			spin_lock(&udc->lock);
-		पूर्ण
+		}
 
 		DBG(DBG_BUS, "req %02x.%02x, length %d, state %d, ret %d\n",
 			crq.crq.bRequestType, crq.crq.bRequest,
 			le16_to_cpu(crq.crq.wLength), ep->state, ret);
 
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			/* Let the host know that we failed */
 			set_protocol_stall(udc, ep);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम usba_ep_irq(काष्ठा usba_udc *udc, काष्ठा usba_ep *ep)
-अणु
-	काष्ठा usba_request *req;
+static void usba_ep_irq(struct usba_udc *udc, struct usba_ep *ep)
+{
+	struct usba_request *req;
 	u32 epstatus;
 	u32 epctrl;
 
-	epstatus = usba_ep_पढ़ोl(ep, STA);
-	epctrl = usba_ep_पढ़ोl(ep, CTL);
+	epstatus = usba_ep_readl(ep, STA);
+	epctrl = usba_ep_readl(ep, CTL);
 
 	DBG(DBG_INT, "%s: interrupt, status: 0x%08x\n", ep->ep.name, epstatus);
 
-	जबतक ((epctrl & USBA_TX_PK_RDY) && !(epstatus & USBA_TX_PK_RDY)) अणु
+	while ((epctrl & USBA_TX_PK_RDY) && !(epstatus & USBA_TX_PK_RDY)) {
 		DBG(DBG_BUS, "%s: TX PK ready\n", ep->ep.name);
 
-		अगर (list_empty(&ep->queue)) अणु
+		if (list_empty(&ep->queue)) {
 			dev_warn(&udc->pdev->dev, "ep_irq: queue empty\n");
-			usba_ep_ग_लिखोl(ep, CTL_DIS, USBA_TX_PK_RDY);
-			वापस;
-		पूर्ण
+			usba_ep_writel(ep, CTL_DIS, USBA_TX_PK_RDY);
+			return;
+		}
 
-		req = list_entry(ep->queue.next, काष्ठा usba_request, queue);
+		req = list_entry(ep->queue.next, struct usba_request, queue);
 
-		अगर (req->using_dma) अणु
+		if (req->using_dma) {
 			/* Send a zero-length packet */
-			usba_ep_ग_लिखोl(ep, SET_STA,
+			usba_ep_writel(ep, SET_STA,
 					USBA_TX_PK_RDY);
-			usba_ep_ग_लिखोl(ep, CTL_DIS,
+			usba_ep_writel(ep, CTL_DIS,
 					USBA_TX_PK_RDY);
 			list_del_init(&req->queue);
 			submit_next_request(ep);
 			request_complete(ep, req, 0);
-		पूर्ण अन्यथा अणु
-			अगर (req->submitted)
-				next_fअगरo_transaction(ep, req);
-			अन्यथा
+		} else {
+			if (req->submitted)
+				next_fifo_transaction(ep, req);
+			else
 				submit_request(ep, req);
 
-			अगर (req->last_transaction) अणु
+			if (req->last_transaction) {
 				list_del_init(&req->queue);
 				submit_next_request(ep);
 				request_complete(ep, req, 0);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		epstatus = usba_ep_पढ़ोl(ep, STA);
-		epctrl = usba_ep_पढ़ोl(ep, CTL);
-	पूर्ण
-	अगर ((epstatus & epctrl) & USBA_RX_BK_RDY) अणु
+		epstatus = usba_ep_readl(ep, STA);
+		epctrl = usba_ep_readl(ep, CTL);
+	}
+	if ((epstatus & epctrl) & USBA_RX_BK_RDY) {
 		DBG(DBG_BUS, "%s: RX data ready\n", ep->ep.name);
 		receive_data(ep);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम usba_dma_irq(काष्ठा usba_udc *udc, काष्ठा usba_ep *ep)
-अणु
-	काष्ठा usba_request *req;
+static void usba_dma_irq(struct usba_udc *udc, struct usba_ep *ep)
+{
+	struct usba_request *req;
 	u32 status, control, pending;
 
-	status = usba_dma_पढ़ोl(ep, STATUS);
-	control = usba_dma_पढ़ोl(ep, CONTROL);
-#अगर_घोषित CONFIG_USB_GADGET_DEBUG_FS
+	status = usba_dma_readl(ep, STATUS);
+	control = usba_dma_readl(ep, CONTROL);
+#ifdef CONFIG_USB_GADGET_DEBUG_FS
 	ep->last_dma_status = status;
-#पूर्ण_अगर
+#endif
 	pending = status & control;
 	DBG(DBG_INT | DBG_DMA, "dma irq, s/%#08x, c/%#08x\n", status, control);
 
-	अगर (status & USBA_DMA_CH_EN) अणु
+	if (status & USBA_DMA_CH_EN) {
 		dev_err(&udc->pdev->dev,
 			"DMA_CH_EN is set after transfer is finished!\n");
 		dev_err(&udc->pdev->dev,
@@ -1688,125 +1687,125 @@ restart:
 
 		/*
 		 * try to pretend nothing happened. We might have to
-		 * करो something here...
+		 * do something here...
 		 */
-	पूर्ण
+	}
 
-	अगर (list_empty(&ep->queue))
-		/* Might happen अगर a reset comes aदीर्घ at the right moment */
-		वापस;
+	if (list_empty(&ep->queue))
+		/* Might happen if a reset comes along at the right moment */
+		return;
 
-	अगर (pending & (USBA_DMA_END_TR_ST | USBA_DMA_END_BUF_ST)) अणु
-		req = list_entry(ep->queue.next, काष्ठा usba_request, queue);
+	if (pending & (USBA_DMA_END_TR_ST | USBA_DMA_END_BUF_ST)) {
+		req = list_entry(ep->queue.next, struct usba_request, queue);
 		usba_update_req(ep, req, status);
 
 		list_del_init(&req->queue);
 		submit_next_request(ep);
 		request_complete(ep, req, 0);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक start_घड़ी(काष्ठा usba_udc *udc);
-अटल व्योम stop_घड़ी(काष्ठा usba_udc *udc);
+static int start_clock(struct usba_udc *udc);
+static void stop_clock(struct usba_udc *udc);
 
-अटल irqवापस_t usba_udc_irq(पूर्णांक irq, व्योम *devid)
-अणु
-	काष्ठा usba_udc *udc = devid;
-	u32 status, पूर्णांक_enb;
+static irqreturn_t usba_udc_irq(int irq, void *devid)
+{
+	struct usba_udc *udc = devid;
+	u32 status, int_enb;
 	u32 dma_status;
 	u32 ep_status;
 
 	spin_lock(&udc->lock);
 
-	पूर्णांक_enb = usba_पूर्णांक_enb_get(udc);
-	status = usba_पढ़ोl(udc, INT_STA) & (पूर्णांक_enb | USBA_HIGH_SPEED);
+	int_enb = usba_int_enb_get(udc);
+	status = usba_readl(udc, INT_STA) & (int_enb | USBA_HIGH_SPEED);
 	DBG(DBG_INT, "irq, status=%#08x\n", status);
 
-	अगर (status & USBA_DET_SUSPEND) अणु
-		usba_ग_लिखोl(udc, INT_CLR, USBA_DET_SUSPEND|USBA_WAKE_UP);
-		usba_पूर्णांक_enb_set(udc, USBA_WAKE_UP);
-		usba_पूर्णांक_enb_clear(udc, USBA_DET_SUSPEND);
+	if (status & USBA_DET_SUSPEND) {
+		usba_writel(udc, INT_CLR, USBA_DET_SUSPEND|USBA_WAKE_UP);
+		usba_int_enb_set(udc, USBA_WAKE_UP);
+		usba_int_enb_clear(udc, USBA_DET_SUSPEND);
 		udc->suspended = true;
 		toggle_bias(udc, 0);
 		udc->bias_pulse_needed = true;
-		stop_घड़ी(udc);
+		stop_clock(udc);
 		DBG(DBG_BUS, "Suspend detected\n");
-		अगर (udc->gadget.speed != USB_SPEED_UNKNOWN
-				&& udc->driver && udc->driver->suspend) अणु
+		if (udc->gadget.speed != USB_SPEED_UNKNOWN
+				&& udc->driver && udc->driver->suspend) {
 			spin_unlock(&udc->lock);
 			udc->driver->suspend(&udc->gadget);
 			spin_lock(&udc->lock);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (status & USBA_WAKE_UP) अणु
-		start_घड़ी(udc);
+	if (status & USBA_WAKE_UP) {
+		start_clock(udc);
 		toggle_bias(udc, 1);
-		usba_ग_लिखोl(udc, INT_CLR, USBA_WAKE_UP);
+		usba_writel(udc, INT_CLR, USBA_WAKE_UP);
 		DBG(DBG_BUS, "Wake Up CPU detected\n");
-	पूर्ण
+	}
 
-	अगर (status & USBA_END_OF_RESUME) अणु
+	if (status & USBA_END_OF_RESUME) {
 		udc->suspended = false;
-		usba_ग_लिखोl(udc, INT_CLR, USBA_END_OF_RESUME);
-		usba_पूर्णांक_enb_clear(udc, USBA_WAKE_UP);
-		usba_पूर्णांक_enb_set(udc, USBA_DET_SUSPEND);
+		usba_writel(udc, INT_CLR, USBA_END_OF_RESUME);
+		usba_int_enb_clear(udc, USBA_WAKE_UP);
+		usba_int_enb_set(udc, USBA_DET_SUSPEND);
 		generate_bias_pulse(udc);
 		DBG(DBG_BUS, "Resume detected\n");
-		अगर (udc->gadget.speed != USB_SPEED_UNKNOWN
-				&& udc->driver && udc->driver->resume) अणु
+		if (udc->gadget.speed != USB_SPEED_UNKNOWN
+				&& udc->driver && udc->driver->resume) {
 			spin_unlock(&udc->lock);
 			udc->driver->resume(&udc->gadget);
 			spin_lock(&udc->lock);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	dma_status = USBA_BFEXT(DMA_INT, status);
-	अगर (dma_status) अणु
-		पूर्णांक i;
+	if (dma_status) {
+		int i;
 
-		usba_पूर्णांक_enb_set(udc, USBA_DET_SUSPEND);
+		usba_int_enb_set(udc, USBA_DET_SUSPEND);
 
-		क्रम (i = 1; i <= USBA_NR_DMAS; i++)
-			अगर (dma_status & (1 << i))
+		for (i = 1; i <= USBA_NR_DMAS; i++)
+			if (dma_status & (1 << i))
 				usba_dma_irq(udc, &udc->usba_ep[i]);
-	पूर्ण
+	}
 
 	ep_status = USBA_BFEXT(EPT_INT, status);
-	अगर (ep_status) अणु
-		पूर्णांक i;
+	if (ep_status) {
+		int i;
 
-		usba_पूर्णांक_enb_set(udc, USBA_DET_SUSPEND);
+		usba_int_enb_set(udc, USBA_DET_SUSPEND);
 
-		क्रम (i = 0; i < udc->num_ep; i++)
-			अगर (ep_status & (1 << i)) अणु
-				अगर (ep_is_control(&udc->usba_ep[i]))
+		for (i = 0; i < udc->num_ep; i++)
+			if (ep_status & (1 << i)) {
+				if (ep_is_control(&udc->usba_ep[i]))
 					usba_control_irq(udc, &udc->usba_ep[i]);
-				अन्यथा
+				else
 					usba_ep_irq(udc, &udc->usba_ep[i]);
-			पूर्ण
-	पूर्ण
+			}
+	}
 
-	अगर (status & USBA_END_OF_RESET) अणु
-		काष्ठा usba_ep *ep0, *ep;
-		पूर्णांक i;
+	if (status & USBA_END_OF_RESET) {
+		struct usba_ep *ep0, *ep;
+		int i;
 
-		usba_ग_लिखोl(udc, INT_CLR,
+		usba_writel(udc, INT_CLR,
 			USBA_END_OF_RESET|USBA_END_OF_RESUME
 			|USBA_DET_SUSPEND|USBA_WAKE_UP);
 		generate_bias_pulse(udc);
-		reset_all_endpoपूर्णांकs(udc);
+		reset_all_endpoints(udc);
 
-		अगर (udc->gadget.speed != USB_SPEED_UNKNOWN && udc->driver) अणु
+		if (udc->gadget.speed != USB_SPEED_UNKNOWN && udc->driver) {
 			udc->gadget.speed = USB_SPEED_UNKNOWN;
 			spin_unlock(&udc->lock);
 			usb_gadget_udc_reset(&udc->gadget, udc->driver);
 			spin_lock(&udc->lock);
-		पूर्ण
+		}
 
-		अगर (status & USBA_HIGH_SPEED)
+		if (status & USBA_HIGH_SPEED)
 			udc->gadget.speed = USB_SPEED_HIGH;
-		अन्यथा
+		else
 			udc->gadget.speed = USB_SPEED_FULL;
 		DBG(DBG_BUS, "%s bus reset detected\n",
 		    usb_speed_string(udc->gadget.speed));
@@ -1814,131 +1813,131 @@ restart:
 		ep0 = &udc->usba_ep[0];
 		ep0->ep.desc = &usba_ep0_desc;
 		ep0->state = WAIT_FOR_SETUP;
-		usba_ep_ग_लिखोl(ep0, CFG,
+		usba_ep_writel(ep0, CFG,
 				(USBA_BF(EPT_SIZE, EP0_EPT_SIZE)
 				| USBA_BF(EPT_TYPE, USBA_EPT_TYPE_CONTROL)
 				| USBA_BF(BK_NUMBER, USBA_BK_NUMBER_ONE)));
-		usba_ep_ग_लिखोl(ep0, CTL_ENB,
+		usba_ep_writel(ep0, CTL_ENB,
 				USBA_EPT_ENABLE | USBA_RX_SETUP);
 
-		/* If we get reset जबतक suspended... */
+		/* If we get reset while suspended... */
 		udc->suspended = false;
-		usba_पूर्णांक_enb_clear(udc, USBA_WAKE_UP);
+		usba_int_enb_clear(udc, USBA_WAKE_UP);
 
-		usba_पूर्णांक_enb_set(udc, USBA_BF(EPT_INT, 1) |
+		usba_int_enb_set(udc, USBA_BF(EPT_INT, 1) |
 				      USBA_DET_SUSPEND | USBA_END_OF_RESUME);
 
 		/*
 		 * Unclear why we hit this irregularly, e.g. in usbtest,
 		 * but it's clearly harmless...
 		 */
-		अगर (!(usba_ep_पढ़ोl(ep0, CFG) & USBA_EPT_MAPPED))
+		if (!(usba_ep_readl(ep0, CFG) & USBA_EPT_MAPPED))
 			dev_err(&udc->pdev->dev,
 				"ODD: EP0 configuration is invalid!\n");
 
-		/* Pपुनः_स्मृतिate other endpoपूर्णांकs */
-		क्रम (i = 1; i < udc->num_ep; i++) अणु
+		/* Preallocate other endpoints */
+		for (i = 1; i < udc->num_ep; i++) {
 			ep = &udc->usba_ep[i];
-			अगर (ep->ep.claimed) अणु
-				usba_ep_ग_लिखोl(ep, CFG, ep->ept_cfg);
-				अगर (!(usba_ep_पढ़ोl(ep, CFG) & USBA_EPT_MAPPED))
+			if (ep->ep.claimed) {
+				usba_ep_writel(ep, CFG, ep->ept_cfg);
+				if (!(usba_ep_readl(ep, CFG) & USBA_EPT_MAPPED))
 					dev_err(&udc->pdev->dev,
 						"ODD: EP%d configuration is invalid!\n", i);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 	spin_unlock(&udc->lock);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक start_घड़ी(काष्ठा usba_udc *udc)
-अणु
-	पूर्णांक ret;
+static int start_clock(struct usba_udc *udc)
+{
+	int ret;
 
-	अगर (udc->घड़ीed)
-		वापस 0;
+	if (udc->clocked)
+		return 0;
 
 	pm_stay_awake(&udc->pdev->dev);
 
 	ret = clk_prepare_enable(udc->pclk);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	ret = clk_prepare_enable(udc->hclk);
-	अगर (ret) अणु
+	if (ret) {
 		clk_disable_unprepare(udc->pclk);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	udc->घड़ीed = true;
-	वापस 0;
-पूर्ण
+	udc->clocked = true;
+	return 0;
+}
 
-अटल व्योम stop_घड़ी(काष्ठा usba_udc *udc)
-अणु
-	अगर (!udc->घड़ीed)
-		वापस;
+static void stop_clock(struct usba_udc *udc)
+{
+	if (!udc->clocked)
+		return;
 
 	clk_disable_unprepare(udc->hclk);
 	clk_disable_unprepare(udc->pclk);
 
-	udc->घड़ीed = false;
+	udc->clocked = false;
 
 	pm_relax(&udc->pdev->dev);
-पूर्ण
+}
 
-अटल पूर्णांक usba_start(काष्ठा usba_udc *udc)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+static int usba_start(struct usba_udc *udc)
+{
+	unsigned long flags;
+	int ret;
 
-	ret = start_घड़ी(udc);
-	अगर (ret)
-		वापस ret;
+	ret = start_clock(udc);
+	if (ret)
+		return ret;
 
-	अगर (udc->suspended)
-		वापस 0;
+	if (udc->suspended)
+		return 0;
 
 	spin_lock_irqsave(&udc->lock, flags);
 	toggle_bias(udc, 1);
-	usba_ग_लिखोl(udc, CTRL, USBA_ENABLE_MASK);
-	/* Clear all requested and pending पूर्णांकerrupts... */
-	usba_ग_लिखोl(udc, INT_ENB, 0);
-	udc->पूर्णांक_enb_cache = 0;
-	usba_ग_लिखोl(udc, INT_CLR,
+	usba_writel(udc, CTRL, USBA_ENABLE_MASK);
+	/* Clear all requested and pending interrupts... */
+	usba_writel(udc, INT_ENB, 0);
+	udc->int_enb_cache = 0;
+	usba_writel(udc, INT_CLR,
 		USBA_END_OF_RESET|USBA_END_OF_RESUME
 		|USBA_DET_SUSPEND|USBA_WAKE_UP);
 	/* ...and enable just 'reset' IRQ to get us started */
-	usba_पूर्णांक_enb_set(udc, USBA_END_OF_RESET);
+	usba_int_enb_set(udc, USBA_END_OF_RESET);
 	spin_unlock_irqrestore(&udc->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम usba_stop(काष्ठा usba_udc *udc)
-अणु
-	अचिन्हित दीर्घ flags;
+static void usba_stop(struct usba_udc *udc)
+{
+	unsigned long flags;
 
-	अगर (udc->suspended)
-		वापस;
+	if (udc->suspended)
+		return;
 
 	spin_lock_irqsave(&udc->lock, flags);
 	udc->gadget.speed = USB_SPEED_UNKNOWN;
-	reset_all_endpoपूर्णांकs(udc);
+	reset_all_endpoints(udc);
 
 	/* This will also disable the DP pullup */
 	toggle_bias(udc, 0);
-	usba_ग_लिखोl(udc, CTRL, USBA_DISABLE_MASK);
+	usba_writel(udc, CTRL, USBA_DISABLE_MASK);
 	spin_unlock_irqrestore(&udc->lock, flags);
 
-	stop_घड़ी(udc);
-पूर्ण
+	stop_clock(udc);
+}
 
-अटल irqवापस_t usba_vbus_irq_thपढ़ो(पूर्णांक irq, व्योम *devid)
-अणु
-	काष्ठा usba_udc *udc = devid;
-	पूर्णांक vbus;
+static irqreturn_t usba_vbus_irq_thread(int irq, void *devid)
+{
+	struct usba_udc *udc = devid;
+	int vbus;
 
 	/* debounce */
 	udelay(10);
@@ -1946,47 +1945,47 @@ restart:
 	mutex_lock(&udc->vbus_mutex);
 
 	vbus = vbus_is_present(udc);
-	अगर (vbus != udc->vbus_prev) अणु
-		अगर (vbus) अणु
+	if (vbus != udc->vbus_prev) {
+		if (vbus) {
 			usba_start(udc);
-		पूर्ण अन्यथा अणु
+		} else {
 			udc->suspended = false;
-			अगर (udc->driver->disconnect)
+			if (udc->driver->disconnect)
 				udc->driver->disconnect(&udc->gadget);
 
 			usba_stop(udc);
-		पूर्ण
+		}
 		udc->vbus_prev = vbus;
-	पूर्ण
+	}
 
 	mutex_unlock(&udc->vbus_mutex);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक aपंचांगel_usba_pullup(काष्ठा usb_gadget *gadget, पूर्णांक is_on)
-अणु
-	काष्ठा usba_udc *udc = container_of(gadget, काष्ठा usba_udc, gadget);
-	अचिन्हित दीर्घ flags;
+static int atmel_usba_pullup(struct usb_gadget *gadget, int is_on)
+{
+	struct usba_udc *udc = container_of(gadget, struct usba_udc, gadget);
+	unsigned long flags;
 	u32 ctrl;
 
 	spin_lock_irqsave(&udc->lock, flags);
-	ctrl = usba_पढ़ोl(udc, CTRL);
-	अगर (is_on)
+	ctrl = usba_readl(udc, CTRL);
+	if (is_on)
 		ctrl &= ~USBA_DETACH;
-	अन्यथा
+	else
 		ctrl |= USBA_DETACH;
-	usba_ग_लिखोl(udc, CTRL, ctrl);
+	usba_writel(udc, CTRL, ctrl);
 	spin_unlock_irqrestore(&udc->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक aपंचांगel_usba_start(काष्ठा usb_gadget *gadget,
-		काष्ठा usb_gadget_driver *driver)
-अणु
-	पूर्णांक ret;
-	काष्ठा usba_udc *udc = container_of(gadget, काष्ठा usba_udc, gadget);
-	अचिन्हित दीर्घ flags;
+static int atmel_usba_start(struct usb_gadget *gadget,
+		struct usb_gadget_driver *driver)
+{
+	int ret;
+	struct usba_udc *udc = container_of(gadget, struct usba_udc, gadget);
+	unsigned long flags;
 
 	spin_lock_irqsave(&udc->lock, flags);
 	udc->devstatus = 1 << USB_DEVICE_SELF_POWERED;
@@ -1995,315 +1994,315 @@ restart:
 
 	mutex_lock(&udc->vbus_mutex);
 
-	अगर (udc->vbus_pin)
+	if (udc->vbus_pin)
 		enable_irq(gpiod_to_irq(udc->vbus_pin));
 
-	/* If Vbus is present, enable the controller and रुको क्रम reset */
+	/* If Vbus is present, enable the controller and wait for reset */
 	udc->vbus_prev = vbus_is_present(udc);
-	अगर (udc->vbus_prev) अणु
+	if (udc->vbus_prev) {
 		ret = usba_start(udc);
-		अगर (ret)
-			जाओ err;
-	पूर्ण
+		if (ret)
+			goto err;
+	}
 
 	mutex_unlock(&udc->vbus_mutex);
-	वापस 0;
+	return 0;
 
 err:
-	अगर (udc->vbus_pin)
+	if (udc->vbus_pin)
 		disable_irq(gpiod_to_irq(udc->vbus_pin));
 
 	mutex_unlock(&udc->vbus_mutex);
 
 	spin_lock_irqsave(&udc->lock, flags);
 	udc->devstatus &= ~(1 << USB_DEVICE_SELF_POWERED);
-	udc->driver = शून्य;
+	udc->driver = NULL;
 	spin_unlock_irqrestore(&udc->lock, flags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक aपंचांगel_usba_stop(काष्ठा usb_gadget *gadget)
-अणु
-	काष्ठा usba_udc *udc = container_of(gadget, काष्ठा usba_udc, gadget);
+static int atmel_usba_stop(struct usb_gadget *gadget)
+{
+	struct usba_udc *udc = container_of(gadget, struct usba_udc, gadget);
 
-	अगर (udc->vbus_pin)
+	if (udc->vbus_pin)
 		disable_irq(gpiod_to_irq(udc->vbus_pin));
 
 	udc->suspended = false;
 	usba_stop(udc);
 
-	udc->driver = शून्य;
+	udc->driver = NULL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम at91sam9rl_toggle_bias(काष्ठा usba_udc *udc, पूर्णांक is_on)
-अणु
+static void at91sam9rl_toggle_bias(struct usba_udc *udc, int is_on)
+{
 	regmap_update_bits(udc->pmc, AT91_CKGR_UCKR, AT91_PMC_BIASEN,
 			   is_on ? AT91_PMC_BIASEN : 0);
-पूर्ण
+}
 
-अटल व्योम at91sam9g45_pulse_bias(काष्ठा usba_udc *udc)
-अणु
+static void at91sam9g45_pulse_bias(struct usba_udc *udc)
+{
 	regmap_update_bits(udc->pmc, AT91_CKGR_UCKR, AT91_PMC_BIASEN, 0);
 	regmap_update_bits(udc->pmc, AT91_CKGR_UCKR, AT91_PMC_BIASEN,
 			   AT91_PMC_BIASEN);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा usba_udc_errata at91sam9rl_errata = अणु
+static const struct usba_udc_errata at91sam9rl_errata = {
 	.toggle_bias = at91sam9rl_toggle_bias,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा usba_udc_errata at91sam9g45_errata = अणु
+static const struct usba_udc_errata at91sam9g45_errata = {
 	.pulse_bias = at91sam9g45_pulse_bias,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा usba_ep_config ep_config_sam9[] __initस्थिर = अणु
-	अणु .nr_banks = 1 पूर्ण,				/* ep 0 */
-	अणु .nr_banks = 2, .can_dma = 1, .can_isoc = 1 पूर्ण,	/* ep 1 */
-	अणु .nr_banks = 2, .can_dma = 1, .can_isoc = 1 पूर्ण,	/* ep 2 */
-	अणु .nr_banks = 3, .can_dma = 1 पूर्ण,		/* ep 3 */
-	अणु .nr_banks = 3, .can_dma = 1 पूर्ण,		/* ep 4 */
-	अणु .nr_banks = 3, .can_dma = 1, .can_isoc = 1 पूर्ण,	/* ep 5 */
-	अणु .nr_banks = 3, .can_dma = 1, .can_isoc = 1 पूर्ण,	/* ep 6 */
-पूर्ण;
+static const struct usba_ep_config ep_config_sam9[] __initconst = {
+	{ .nr_banks = 1 },				/* ep 0 */
+	{ .nr_banks = 2, .can_dma = 1, .can_isoc = 1 },	/* ep 1 */
+	{ .nr_banks = 2, .can_dma = 1, .can_isoc = 1 },	/* ep 2 */
+	{ .nr_banks = 3, .can_dma = 1 },		/* ep 3 */
+	{ .nr_banks = 3, .can_dma = 1 },		/* ep 4 */
+	{ .nr_banks = 3, .can_dma = 1, .can_isoc = 1 },	/* ep 5 */
+	{ .nr_banks = 3, .can_dma = 1, .can_isoc = 1 },	/* ep 6 */
+};
 
-अटल स्थिर काष्ठा usba_ep_config ep_config_sama5[] __initस्थिर = अणु
-	अणु .nr_banks = 1 पूर्ण,				/* ep 0 */
-	अणु .nr_banks = 3, .can_dma = 1, .can_isoc = 1 पूर्ण,	/* ep 1 */
-	अणु .nr_banks = 3, .can_dma = 1, .can_isoc = 1 पूर्ण,	/* ep 2 */
-	अणु .nr_banks = 2, .can_dma = 1, .can_isoc = 1 पूर्ण,	/* ep 3 */
-	अणु .nr_banks = 2, .can_dma = 1, .can_isoc = 1 पूर्ण,	/* ep 4 */
-	अणु .nr_banks = 2, .can_dma = 1, .can_isoc = 1 पूर्ण,	/* ep 5 */
-	अणु .nr_banks = 2, .can_dma = 1, .can_isoc = 1 पूर्ण,	/* ep 6 */
-	अणु .nr_banks = 2, .can_dma = 1, .can_isoc = 1 पूर्ण,	/* ep 7 */
-	अणु .nr_banks = 2, .can_isoc = 1 पूर्ण,		/* ep 8 */
-	अणु .nr_banks = 2, .can_isoc = 1 पूर्ण,		/* ep 9 */
-	अणु .nr_banks = 2, .can_isoc = 1 पूर्ण,		/* ep 10 */
-	अणु .nr_banks = 2, .can_isoc = 1 पूर्ण,		/* ep 11 */
-	अणु .nr_banks = 2, .can_isoc = 1 पूर्ण,		/* ep 12 */
-	अणु .nr_banks = 2, .can_isoc = 1 पूर्ण,		/* ep 13 */
-	अणु .nr_banks = 2, .can_isoc = 1 पूर्ण,		/* ep 14 */
-	अणु .nr_banks = 2, .can_isoc = 1 पूर्ण,		/* ep 15 */
-पूर्ण;
+static const struct usba_ep_config ep_config_sama5[] __initconst = {
+	{ .nr_banks = 1 },				/* ep 0 */
+	{ .nr_banks = 3, .can_dma = 1, .can_isoc = 1 },	/* ep 1 */
+	{ .nr_banks = 3, .can_dma = 1, .can_isoc = 1 },	/* ep 2 */
+	{ .nr_banks = 2, .can_dma = 1, .can_isoc = 1 },	/* ep 3 */
+	{ .nr_banks = 2, .can_dma = 1, .can_isoc = 1 },	/* ep 4 */
+	{ .nr_banks = 2, .can_dma = 1, .can_isoc = 1 },	/* ep 5 */
+	{ .nr_banks = 2, .can_dma = 1, .can_isoc = 1 },	/* ep 6 */
+	{ .nr_banks = 2, .can_dma = 1, .can_isoc = 1 },	/* ep 7 */
+	{ .nr_banks = 2, .can_isoc = 1 },		/* ep 8 */
+	{ .nr_banks = 2, .can_isoc = 1 },		/* ep 9 */
+	{ .nr_banks = 2, .can_isoc = 1 },		/* ep 10 */
+	{ .nr_banks = 2, .can_isoc = 1 },		/* ep 11 */
+	{ .nr_banks = 2, .can_isoc = 1 },		/* ep 12 */
+	{ .nr_banks = 2, .can_isoc = 1 },		/* ep 13 */
+	{ .nr_banks = 2, .can_isoc = 1 },		/* ep 14 */
+	{ .nr_banks = 2, .can_isoc = 1 },		/* ep 15 */
+};
 
-अटल स्थिर काष्ठा usba_udc_config udc_at91sam9rl_cfg = अणु
+static const struct usba_udc_config udc_at91sam9rl_cfg = {
 	.errata = &at91sam9rl_errata,
 	.config = ep_config_sam9,
 	.num_ep = ARRAY_SIZE(ep_config_sam9),
-	.ep_pपुनः_स्मृति = true,
-पूर्ण;
+	.ep_prealloc = true,
+};
 
-अटल स्थिर काष्ठा usba_udc_config udc_at91sam9g45_cfg = अणु
+static const struct usba_udc_config udc_at91sam9g45_cfg = {
 	.errata = &at91sam9g45_errata,
 	.config = ep_config_sam9,
 	.num_ep = ARRAY_SIZE(ep_config_sam9),
-	.ep_pपुनः_स्मृति = true,
-पूर्ण;
+	.ep_prealloc = true,
+};
 
-अटल स्थिर काष्ठा usba_udc_config udc_sama5d3_cfg = अणु
+static const struct usba_udc_config udc_sama5d3_cfg = {
 	.config = ep_config_sama5,
 	.num_ep = ARRAY_SIZE(ep_config_sama5),
-	.ep_pपुनः_स्मृति = true,
-पूर्ण;
+	.ep_prealloc = true,
+};
 
-अटल स्थिर काष्ठा usba_udc_config udc_sam9x60_cfg = अणु
+static const struct usba_udc_config udc_sam9x60_cfg = {
 	.num_ep = ARRAY_SIZE(ep_config_sam9),
 	.config = ep_config_sam9,
-	.ep_pपुनः_स्मृति = false,
-पूर्ण;
+	.ep_prealloc = false,
+};
 
-अटल स्थिर काष्ठा of_device_id aपंचांगel_udc_dt_ids[] = अणु
-	अणु .compatible = "atmel,at91sam9rl-udc", .data = &udc_at91sam9rl_cfg पूर्ण,
-	अणु .compatible = "atmel,at91sam9g45-udc", .data = &udc_at91sam9g45_cfg पूर्ण,
-	अणु .compatible = "atmel,sama5d3-udc", .data = &udc_sama5d3_cfg पूर्ण,
-	अणु .compatible = "microchip,sam9x60-udc", .data = &udc_sam9x60_cfg पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+static const struct of_device_id atmel_udc_dt_ids[] = {
+	{ .compatible = "atmel,at91sam9rl-udc", .data = &udc_at91sam9rl_cfg },
+	{ .compatible = "atmel,at91sam9g45-udc", .data = &udc_at91sam9g45_cfg },
+	{ .compatible = "atmel,sama5d3-udc", .data = &udc_sama5d3_cfg },
+	{ .compatible = "microchip,sam9x60-udc", .data = &udc_sam9x60_cfg },
+	{ /* sentinel */ }
+};
 
-MODULE_DEVICE_TABLE(of, aपंचांगel_udc_dt_ids);
+MODULE_DEVICE_TABLE(of, atmel_udc_dt_ids);
 
-अटल स्थिर काष्ठा of_device_id aपंचांगel_pmc_dt_ids[] = अणु
-	अणु .compatible = "atmel,at91sam9g45-pmc" पूर्ण,
-	अणु .compatible = "atmel,at91sam9rl-pmc" पूर्ण,
-	अणु .compatible = "atmel,at91sam9x5-pmc" पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+static const struct of_device_id atmel_pmc_dt_ids[] = {
+	{ .compatible = "atmel,at91sam9g45-pmc" },
+	{ .compatible = "atmel,at91sam9rl-pmc" },
+	{ .compatible = "atmel,at91sam9x5-pmc" },
+	{ /* sentinel */ }
+};
 
-अटल काष्ठा usba_ep * aपंचांगel_udc_of_init(काष्ठा platक्रमm_device *pdev,
-						    काष्ठा usba_udc *udc)
-अणु
-	काष्ठा device_node *np = pdev->dev.of_node;
-	स्थिर काष्ठा of_device_id *match;
-	काष्ठा device_node *pp;
-	पूर्णांक i, ret;
-	काष्ठा usba_ep *eps, *ep;
-	स्थिर काष्ठा usba_udc_config *udc_config;
+static struct usba_ep * atmel_udc_of_init(struct platform_device *pdev,
+						    struct usba_udc *udc)
+{
+	struct device_node *np = pdev->dev.of_node;
+	const struct of_device_id *match;
+	struct device_node *pp;
+	int i, ret;
+	struct usba_ep *eps, *ep;
+	const struct usba_udc_config *udc_config;
 
-	match = of_match_node(aपंचांगel_udc_dt_ids, np);
-	अगर (!match)
-		वापस ERR_PTR(-EINVAL);
+	match = of_match_node(atmel_udc_dt_ids, np);
+	if (!match)
+		return ERR_PTR(-EINVAL);
 
 	udc_config = match->data;
-	udc->ep_pपुनः_स्मृति = udc_config->ep_pपुनः_स्मृति;
+	udc->ep_prealloc = udc_config->ep_prealloc;
 	udc->errata = udc_config->errata;
-	अगर (udc->errata) अणु
-		pp = of_find_matching_node_and_match(शून्य, aपंचांगel_pmc_dt_ids,
-						     शून्य);
-		अगर (!pp)
-			वापस ERR_PTR(-ENODEV);
+	if (udc->errata) {
+		pp = of_find_matching_node_and_match(NULL, atmel_pmc_dt_ids,
+						     NULL);
+		if (!pp)
+			return ERR_PTR(-ENODEV);
 
 		udc->pmc = syscon_node_to_regmap(pp);
 		of_node_put(pp);
-		अगर (IS_ERR(udc->pmc))
-			वापस ERR_CAST(udc->pmc);
-	पूर्ण
+		if (IS_ERR(udc->pmc))
+			return ERR_CAST(udc->pmc);
+	}
 
 	udc->num_ep = 0;
 
 	udc->vbus_pin = devm_gpiod_get_optional(&pdev->dev, "atmel,vbus",
 						GPIOD_IN);
 
-	अगर (fअगरo_mode == 0) अणु
+	if (fifo_mode == 0) {
 		udc->num_ep = udc_config->num_ep;
-	पूर्ण अन्यथा अणु
-		udc->num_ep = usba_config_fअगरo_table(udc);
-	पूर्ण
+	} else {
+		udc->num_ep = usba_config_fifo_table(udc);
+	}
 
-	eps = devm_kसुस्मृति(&pdev->dev, udc->num_ep, माप(काष्ठा usba_ep),
+	eps = devm_kcalloc(&pdev->dev, udc->num_ep, sizeof(struct usba_ep),
 			   GFP_KERNEL);
-	अगर (!eps)
-		वापस ERR_PTR(-ENOMEM);
+	if (!eps)
+		return ERR_PTR(-ENOMEM);
 
 	udc->gadget.ep0 = &eps[0].ep;
 
 	INIT_LIST_HEAD(&eps[0].ep.ep_list);
 
 	i = 0;
-	जबतक (i < udc->num_ep) अणु
-		स्थिर काष्ठा usba_ep_config *ep_cfg = &udc_config->config[i];
+	while (i < udc->num_ep) {
+		const struct usba_ep_config *ep_cfg = &udc_config->config[i];
 
 		ep = &eps[i];
 
-		ep->index = fअगरo_mode ? udc->fअगरo_cfg[i].hw_ep_num : i;
+		ep->index = fifo_mode ? udc->fifo_cfg[i].hw_ep_num : i;
 
 		/* Only the first EP is 64 bytes */
-		अगर (ep->index == 0)
-			ep->fअगरo_size = 64;
-		अन्यथा
-			ep->fअगरo_size = 1024;
+		if (ep->index == 0)
+			ep->fifo_size = 64;
+		else
+			ep->fifo_size = 1024;
 
-		अगर (fअगरo_mode) अणु
-			अगर (ep->fअगरo_size < udc->fअगरo_cfg[i].fअगरo_size)
+		if (fifo_mode) {
+			if (ep->fifo_size < udc->fifo_cfg[i].fifo_size)
 				dev_warn(&pdev->dev,
 					 "Using default max fifo-size value\n");
-			अन्यथा
-				ep->fअगरo_size = udc->fअगरo_cfg[i].fअगरo_size;
-		पूर्ण
+			else
+				ep->fifo_size = udc->fifo_cfg[i].fifo_size;
+		}
 
 		ep->nr_banks = ep_cfg->nr_banks;
-		अगर (fअगरo_mode) अणु
-			अगर (ep->nr_banks < udc->fअगरo_cfg[i].nr_banks)
+		if (fifo_mode) {
+			if (ep->nr_banks < udc->fifo_cfg[i].nr_banks)
 				dev_warn(&pdev->dev,
 					 "Using default max nb-banks value\n");
-			अन्यथा
-				ep->nr_banks = udc->fअगरo_cfg[i].nr_banks;
-		पूर्ण
+			else
+				ep->nr_banks = udc->fifo_cfg[i].nr_banks;
+		}
 
 		ep->can_dma = ep_cfg->can_dma;
 		ep->can_isoc = ep_cfg->can_isoc;
 
-		प्र_लिखो(ep->name, "ep%d", ep->index);
+		sprintf(ep->name, "ep%d", ep->index);
 		ep->ep.name = ep->name;
 
 		ep->ep_regs = udc->regs + USBA_EPT_BASE(i);
 		ep->dma_regs = udc->regs + USBA_DMA_BASE(i);
-		ep->fअगरo = udc->fअगरo + USBA_FIFO_BASE(i);
+		ep->fifo = udc->fifo + USBA_FIFO_BASE(i);
 		ep->ep.ops = &usba_ep_ops;
-		usb_ep_set_maxpacket_limit(&ep->ep, ep->fअगरo_size);
+		usb_ep_set_maxpacket_limit(&ep->ep, ep->fifo_size);
 		ep->udc = udc;
 		INIT_LIST_HEAD(&ep->queue);
 
-		अगर (ep->index == 0) अणु
+		if (ep->index == 0) {
 			ep->ep.caps.type_control = true;
-		पूर्ण अन्यथा अणु
+		} else {
 			ep->ep.caps.type_iso = ep->can_isoc;
 			ep->ep.caps.type_bulk = true;
-			ep->ep.caps.type_पूर्णांक = true;
-		पूर्ण
+			ep->ep.caps.type_int = true;
+		}
 
 		ep->ep.caps.dir_in = true;
 		ep->ep.caps.dir_out = true;
 
-		अगर (fअगरo_mode != 0) अणु
+		if (fifo_mode != 0) {
 			/*
 			 * Generate ept_cfg based on FIFO size and
 			 * banks number
 			 */
-			अगर (ep->fअगरo_size  <= 8)
+			if (ep->fifo_size  <= 8)
 				ep->ept_cfg = USBA_BF(EPT_SIZE, USBA_EPT_SIZE_8);
-			अन्यथा
+			else
 				/* LSB is bit 1, not 0 */
 				ep->ept_cfg =
-				  USBA_BF(EPT_SIZE, fls(ep->fअगरo_size - 1) - 3);
+				  USBA_BF(EPT_SIZE, fls(ep->fifo_size - 1) - 3);
 
 			ep->ept_cfg |= USBA_BF(BK_NUMBER, ep->nr_banks);
-		पूर्ण
+		}
 
-		अगर (i)
+		if (i)
 			list_add_tail(&ep->ep.ep_list, &udc->gadget.ep_list);
 
 		i++;
-	पूर्ण
+	}
 
-	अगर (i == 0) अणु
+	if (i == 0) {
 		dev_err(&pdev->dev, "of_probe: no endpoint specified\n");
 		ret = -EINVAL;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	वापस eps;
+	return eps;
 err:
-	वापस ERR_PTR(ret);
-पूर्ण
+	return ERR_PTR(ret);
+}
 
-अटल पूर्णांक usba_udc_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा resource *res;
-	काष्ठा clk *pclk, *hclk;
-	काष्ठा usba_udc *udc;
-	पूर्णांक irq, ret, i;
+static int usba_udc_probe(struct platform_device *pdev)
+{
+	struct resource *res;
+	struct clk *pclk, *hclk;
+	struct usba_udc *udc;
+	int irq, ret, i;
 
-	udc = devm_kzalloc(&pdev->dev, माप(*udc), GFP_KERNEL);
-	अगर (!udc)
-		वापस -ENOMEM;
+	udc = devm_kzalloc(&pdev->dev, sizeof(*udc), GFP_KERNEL);
+	if (!udc)
+		return -ENOMEM;
 
-	udc->gadget = usba_gadget_ढाँचा;
+	udc->gadget = usba_gadget_template;
 	INIT_LIST_HEAD(&udc->gadget.ep_list);
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, CTRL_IOMEM_ID);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, CTRL_IOMEM_ID);
 	udc->regs = devm_ioremap_resource(&pdev->dev, res);
-	अगर (IS_ERR(udc->regs))
-		वापस PTR_ERR(udc->regs);
+	if (IS_ERR(udc->regs))
+		return PTR_ERR(udc->regs);
 	dev_info(&pdev->dev, "MMIO registers at %pR mapped at %p\n",
 		 res, udc->regs);
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, FIFO_IOMEM_ID);
-	udc->fअगरo = devm_ioremap_resource(&pdev->dev, res);
-	अगर (IS_ERR(udc->fअगरo))
-		वापस PTR_ERR(udc->fअगरo);
-	dev_info(&pdev->dev, "FIFO at %pR mapped at %p\n", res, udc->fअगरo);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, FIFO_IOMEM_ID);
+	udc->fifo = devm_ioremap_resource(&pdev->dev, res);
+	if (IS_ERR(udc->fifo))
+		return PTR_ERR(udc->fifo);
+	dev_info(&pdev->dev, "FIFO at %pR mapped at %p\n", res, udc->fifo);
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq < 0)
-		वापस irq;
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0)
+		return irq;
 
 	pclk = devm_clk_get(&pdev->dev, "pclk");
-	अगर (IS_ERR(pclk))
-		वापस PTR_ERR(pclk);
+	if (IS_ERR(pclk))
+		return PTR_ERR(pclk);
 	hclk = devm_clk_get(&pdev->dev, "hclk");
-	अगर (IS_ERR(hclk))
-		वापस PTR_ERR(hclk);
+	if (IS_ERR(hclk))
+		return PTR_ERR(hclk);
 
 	spin_lock_init(&udc->lock);
 	mutex_init(&udc->vbus_mutex);
@@ -2311,149 +2310,149 @@ err:
 	udc->pclk = pclk;
 	udc->hclk = hclk;
 
-	platक्रमm_set_drvdata(pdev, udc);
+	platform_set_drvdata(pdev, udc);
 
 	/* Make sure we start from a clean slate */
 	ret = clk_prepare_enable(pclk);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "Unable to enable pclk, aborting.\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	usba_ग_लिखोl(udc, CTRL, USBA_DISABLE_MASK);
+	usba_writel(udc, CTRL, USBA_DISABLE_MASK);
 	clk_disable_unprepare(pclk);
 
-	udc->usba_ep = aपंचांगel_udc_of_init(pdev, udc);
+	udc->usba_ep = atmel_udc_of_init(pdev, udc);
 
 	toggle_bias(udc, 0);
 
-	अगर (IS_ERR(udc->usba_ep))
-		वापस PTR_ERR(udc->usba_ep);
+	if (IS_ERR(udc->usba_ep))
+		return PTR_ERR(udc->usba_ep);
 
 	ret = devm_request_irq(&pdev->dev, irq, usba_udc_irq, 0,
 				"atmel_usba_udc", udc);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "Cannot request irq %d (error %d)\n",
 			irq, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	udc->irq = irq;
 
-	अगर (udc->vbus_pin) अणु
+	if (udc->vbus_pin) {
 		irq_set_status_flags(gpiod_to_irq(udc->vbus_pin), IRQ_NOAUTOEN);
-		ret = devm_request_thपढ़ोed_irq(&pdev->dev,
-				gpiod_to_irq(udc->vbus_pin), शून्य,
-				usba_vbus_irq_thपढ़ो, USBA_VBUS_IRQFLAGS,
+		ret = devm_request_threaded_irq(&pdev->dev,
+				gpiod_to_irq(udc->vbus_pin), NULL,
+				usba_vbus_irq_thread, USBA_VBUS_IRQFLAGS,
 				"atmel_usba_udc", udc);
-		अगर (ret) अणु
-			udc->vbus_pin = शून्य;
+		if (ret) {
+			udc->vbus_pin = NULL;
 			dev_warn(&udc->pdev->dev,
 				 "failed to request vbus irq; "
 				 "assuming always on\n");
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	ret = usb_add_gadget_udc(&pdev->dev, &udc->gadget);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	device_init_wakeup(&pdev->dev, 1);
 
 	usba_init_debugfs(udc);
-	क्रम (i = 1; i < udc->num_ep; i++)
+	for (i = 1; i < udc->num_ep; i++)
 		usba_ep_init_debugfs(udc, &udc->usba_ep[i]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक usba_udc_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा usba_udc *udc;
-	पूर्णांक i;
+static int usba_udc_remove(struct platform_device *pdev)
+{
+	struct usba_udc *udc;
+	int i;
 
-	udc = platक्रमm_get_drvdata(pdev);
+	udc = platform_get_drvdata(pdev);
 
 	device_init_wakeup(&pdev->dev, 0);
 	usb_del_gadget_udc(&udc->gadget);
 
-	क्रम (i = 1; i < udc->num_ep; i++)
+	for (i = 1; i < udc->num_ep; i++)
 		usba_ep_cleanup_debugfs(&udc->usba_ep[i]);
 	usba_cleanup_debugfs(udc);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक usba_udc_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा usba_udc *udc = dev_get_drvdata(dev);
+#ifdef CONFIG_PM_SLEEP
+static int usba_udc_suspend(struct device *dev)
+{
+	struct usba_udc *udc = dev_get_drvdata(dev);
 
 	/* Not started */
-	अगर (!udc->driver)
-		वापस 0;
+	if (!udc->driver)
+		return 0;
 
 	mutex_lock(&udc->vbus_mutex);
 
-	अगर (!device_may_wakeup(dev)) अणु
+	if (!device_may_wakeup(dev)) {
 		udc->suspended = false;
 		usba_stop(udc);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
-	 * Device may wake up. We stay घड़ीed अगर we failed
+	 * Device may wake up. We stay clocked if we failed
 	 * to request vbus irq, assuming always on.
 	 */
-	अगर (udc->vbus_pin) अणु
+	if (udc->vbus_pin) {
 		/* FIXME: right to stop here...??? */
 		usba_stop(udc);
 		enable_irq_wake(gpiod_to_irq(udc->vbus_pin));
-	पूर्ण
+	}
 
 	enable_irq_wake(udc->irq);
 
 out:
 	mutex_unlock(&udc->vbus_mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक usba_udc_resume(काष्ठा device *dev)
-अणु
-	काष्ठा usba_udc *udc = dev_get_drvdata(dev);
+static int usba_udc_resume(struct device *dev)
+{
+	struct usba_udc *udc = dev_get_drvdata(dev);
 
 	/* Not started */
-	अगर (!udc->driver)
-		वापस 0;
+	if (!udc->driver)
+		return 0;
 
-	अगर (device_may_wakeup(dev)) अणु
-		अगर (udc->vbus_pin)
+	if (device_may_wakeup(dev)) {
+		if (udc->vbus_pin)
 			disable_irq_wake(gpiod_to_irq(udc->vbus_pin));
 
 		disable_irq_wake(udc->irq);
-	पूर्ण
+	}
 
-	/* If Vbus is present, enable the controller and रुको क्रम reset */
+	/* If Vbus is present, enable the controller and wait for reset */
 	mutex_lock(&udc->vbus_mutex);
 	udc->vbus_prev = vbus_is_present(udc);
-	अगर (udc->vbus_prev)
+	if (udc->vbus_prev)
 		usba_start(udc);
 	mutex_unlock(&udc->vbus_mutex);
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल SIMPLE_DEV_PM_OPS(usba_udc_pm_ops, usba_udc_suspend, usba_udc_resume);
+static SIMPLE_DEV_PM_OPS(usba_udc_pm_ops, usba_udc_suspend, usba_udc_resume);
 
-अटल काष्ठा platक्रमm_driver udc_driver = अणु
-	.हटाओ		= usba_udc_हटाओ,
-	.driver		= अणु
+static struct platform_driver udc_driver = {
+	.remove		= usba_udc_remove,
+	.driver		= {
 		.name		= "atmel_usba_udc",
 		.pm		= &usba_udc_pm_ops,
-		.of_match_table	= aपंचांगel_udc_dt_ids,
-	पूर्ण,
-पूर्ण;
+		.of_match_table	= atmel_udc_dt_ids,
+	},
+};
 
-module_platक्रमm_driver_probe(udc_driver, usba_udc_probe);
+module_platform_driver_probe(udc_driver, usba_udc_probe);
 
 MODULE_DESCRIPTION("Atmel USBA UDC driver");
 MODULE_AUTHOR("Haavard Skinnemoen (Atmel)");

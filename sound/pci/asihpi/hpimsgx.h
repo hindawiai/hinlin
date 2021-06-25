@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /******************************************************************************
 
     AudioScience HPI driver
@@ -11,16 +10,16 @@
 (C) Copyright AudioScience Inc. 1997-2003
 ******************************************************************************/
 
-#अगर_अघोषित _HPIMSGX_H_
-#घोषणा _HPIMSGX_H_
+#ifndef _HPIMSGX_H_
+#define _HPIMSGX_H_
 
-#समावेश "hpi_internal.h"
+#include "hpi_internal.h"
 
-#घोषणा HPIMSGX_ALLADAPTERS     (0xFFFF)
+#define HPIMSGX_ALLADAPTERS     (0xFFFF)
 
-व्योम hpi_send_recv_ex(काष्ठा hpi_message *phm, काष्ठा hpi_response *phr,
-	व्योम *h_owner);
+void hpi_send_recv_ex(struct hpi_message *phm, struct hpi_response *phr,
+	void *h_owner);
 
-#घोषणा HPI_MESSAGE_LOWER_LAYER hpi_send_recv_ex
+#define HPI_MESSAGE_LOWER_LAYER hpi_send_recv_ex
 
-#पूर्ण_अगर				/* _HPIMSGX_H_ */
+#endif				/* _HPIMSGX_H_ */

@@ -1,219 +1,218 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * srm_env.c - Access to SRM environment
  *             variables through linux' procfs
  *
  * (C) 2001,2002,2006 by Jan-Benedict Glaw <jbglaw@lug-owl.de>
  *
- * This driver is a modअगरied version of Erik Mouw's example proc
- * पूर्णांकerface, so: thank you, Erik! He can be reached via email at
+ * This driver is a modified version of Erik Mouw's example proc
+ * interface, so: thank you, Erik! He can be reached via email at
  * <J.A.K.Mouw@its.tudelft.nl>. It is based on an idea
  * provided by DEC^WCompaq^WIntel's "Jumpstart" CD. They
- * included a patch like this as well. Thanks क्रम idea!
+ * included a patch like this as well. Thanks for idea!
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/gfp.h>
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/seq_file.h>
-#समावेश <यंत्र/console.h>
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/machvec.h>
+#include <linux/kernel.h>
+#include <linux/gfp.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/proc_fs.h>
+#include <linux/seq_file.h>
+#include <asm/console.h>
+#include <linux/uaccess.h>
+#include <asm/machvec.h>
 
-#घोषणा BASE_सूची	"srm_environment"	/* Subdir in /proc/		*/
-#घोषणा NAMED_सूची	"named_variables"	/* Subdir क्रम known variables	*/
-#घोषणा NUMBERED_सूची	"numbered_variables"	/* Subdir क्रम all variables	*/
-#घोषणा VERSION		"0.0.6"			/* Module version		*/
-#घोषणा NAME		"srm_env"		/* Module name			*/
+#define BASE_DIR	"srm_environment"	/* Subdir in /proc/		*/
+#define NAMED_DIR	"named_variables"	/* Subdir for known variables	*/
+#define NUMBERED_DIR	"numbered_variables"	/* Subdir for all variables	*/
+#define VERSION		"0.0.6"			/* Module version		*/
+#define NAME		"srm_env"		/* Module name			*/
 
 MODULE_AUTHOR("Jan-Benedict Glaw <jbglaw@lug-owl.de>");
 MODULE_DESCRIPTION("Accessing Alpha SRM environment through procfs interface");
 MODULE_LICENSE("GPL");
 
-प्रकार काष्ठा _srm_env अणु
-	अक्षर			*name;
-	अचिन्हित दीर्घ		id;
-पूर्ण srm_env_t;
+typedef struct _srm_env {
+	char			*name;
+	unsigned long		id;
+} srm_env_t;
 
-अटल काष्ठा proc_dir_entry	*base_dir;
-अटल काष्ठा proc_dir_entry	*named_dir;
-अटल काष्ठा proc_dir_entry	*numbered_dir;
+static struct proc_dir_entry	*base_dir;
+static struct proc_dir_entry	*named_dir;
+static struct proc_dir_entry	*numbered_dir;
 
-अटल srm_env_t	srm_named_entries[] = अणु
-	अणु "auto_action",	ENV_AUTO_ACTION		पूर्ण,
-	अणु "boot_dev",		ENV_BOOT_DEV		पूर्ण,
-	अणु "bootdef_dev",	ENV_BOOTDEF_DEV		पूर्ण,
-	अणु "booted_dev",		ENV_BOOTED_DEV		पूर्ण,
-	अणु "boot_file",		ENV_BOOT_खाता		पूर्ण,
-	अणु "booted_file",	ENV_BOOTED_खाता		पूर्ण,
-	अणु "boot_osflags",	ENV_BOOT_OSFLAGS	पूर्ण,
-	अणु "booted_osflags",	ENV_BOOTED_OSFLAGS	पूर्ण,
-	अणु "boot_reset",		ENV_BOOT_RESET		पूर्ण,
-	अणु "dump_dev",		ENV_DUMP_DEV		पूर्ण,
-	अणु "enable_audit",	ENV_ENABLE_AUDIT	पूर्ण,
-	अणु "license",		ENV_LICENSE		पूर्ण,
-	अणु "char_set",		ENV_CHAR_SET		पूर्ण,
-	अणु "language",		ENV_LANGUAGE		पूर्ण,
-	अणु "tty_dev",		ENV_TTY_DEV		पूर्ण,
-	अणु शून्य,			0			पूर्ण,
-पूर्ण;
+static srm_env_t	srm_named_entries[] = {
+	{ "auto_action",	ENV_AUTO_ACTION		},
+	{ "boot_dev",		ENV_BOOT_DEV		},
+	{ "bootdef_dev",	ENV_BOOTDEF_DEV		},
+	{ "booted_dev",		ENV_BOOTED_DEV		},
+	{ "boot_file",		ENV_BOOT_FILE		},
+	{ "booted_file",	ENV_BOOTED_FILE		},
+	{ "boot_osflags",	ENV_BOOT_OSFLAGS	},
+	{ "booted_osflags",	ENV_BOOTED_OSFLAGS	},
+	{ "boot_reset",		ENV_BOOT_RESET		},
+	{ "dump_dev",		ENV_DUMP_DEV		},
+	{ "enable_audit",	ENV_ENABLE_AUDIT	},
+	{ "license",		ENV_LICENSE		},
+	{ "char_set",		ENV_CHAR_SET		},
+	{ "language",		ENV_LANGUAGE		},
+	{ "tty_dev",		ENV_TTY_DEV		},
+	{ NULL,			0			},
+};
 
-अटल पूर्णांक srm_env_proc_show(काष्ठा seq_file *m, व्योम *v)
-अणु
-	अचिन्हित दीर्घ	ret;
-	अचिन्हित दीर्घ	id = (अचिन्हित दीर्घ)m->निजी;
-	अक्षर		*page;
+static int srm_env_proc_show(struct seq_file *m, void *v)
+{
+	unsigned long	ret;
+	unsigned long	id = (unsigned long)m->private;
+	char		*page;
 
-	page = (अक्षर *)__get_मुक्त_page(GFP_USER);
-	अगर (!page)
-		वापस -ENOMEM;
+	page = (char *)__get_free_page(GFP_USER);
+	if (!page)
+		return -ENOMEM;
 
-	ret = callback_दो_पर्या(id, page, PAGE_SIZE);
+	ret = callback_getenv(id, page, PAGE_SIZE);
 
-	अगर ((ret >> 61) == 0) अणु
-		seq_ग_लिखो(m, page, ret);
+	if ((ret >> 61) == 0) {
+		seq_write(m, page, ret);
 		ret = 0;
-	पूर्ण अन्यथा
+	} else
 		ret = -EFAULT;
-	मुक्त_page((अचिन्हित दीर्घ)page);
-	वापस ret;
-पूर्ण
+	free_page((unsigned long)page);
+	return ret;
+}
 
-अटल पूर्णांक srm_env_proc_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस single_खोलो(file, srm_env_proc_show, PDE_DATA(inode));
-पूर्ण
+static int srm_env_proc_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, srm_env_proc_show, PDE_DATA(inode));
+}
 
-अटल sमाप_प्रकार srm_env_proc_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buffer,
-				  माप_प्रकार count, loff_t *pos)
-अणु
-	पूर्णांक res;
-	अचिन्हित दीर्घ	id = (अचिन्हित दीर्घ)PDE_DATA(file_inode(file));
-	अक्षर		*buf = (अक्षर *) __get_मुक्त_page(GFP_USER);
-	अचिन्हित दीर्घ	ret1, ret2;
+static ssize_t srm_env_proc_write(struct file *file, const char __user *buffer,
+				  size_t count, loff_t *pos)
+{
+	int res;
+	unsigned long	id = (unsigned long)PDE_DATA(file_inode(file));
+	char		*buf = (char *) __get_free_page(GFP_USER);
+	unsigned long	ret1, ret2;
 
-	अगर (!buf)
-		वापस -ENOMEM;
+	if (!buf)
+		return -ENOMEM;
 
 	res = -EINVAL;
-	अगर (count >= PAGE_SIZE)
-		जाओ out;
+	if (count >= PAGE_SIZE)
+		goto out;
 
 	res = -EFAULT;
-	अगर (copy_from_user(buf, buffer, count))
-		जाओ out;
+	if (copy_from_user(buf, buffer, count))
+		goto out;
 	buf[count] = '\0';
 
 	ret1 = callback_setenv(id, buf, count);
-	अगर ((ret1 >> 61) == 0) अणु
-		करो
+	if ((ret1 >> 61) == 0) {
+		do
 			ret2 = callback_save_env();
-		जबतक((ret2 >> 61) == 1);
-		res = (पूर्णांक) ret1;
-	पूर्ण
+		while((ret2 >> 61) == 1);
+		res = (int) ret1;
+	}
 
  out:
-	मुक्त_page((अचिन्हित दीर्घ)buf);
-	वापस res;
-पूर्ण
+	free_page((unsigned long)buf);
+	return res;
+}
 
-अटल स्थिर काष्ठा proc_ops srm_env_proc_ops = अणु
-	.proc_खोलो	= srm_env_proc_खोलो,
-	.proc_पढ़ो	= seq_पढ़ो,
+static const struct proc_ops srm_env_proc_ops = {
+	.proc_open	= srm_env_proc_open,
+	.proc_read	= seq_read,
 	.proc_lseek	= seq_lseek,
 	.proc_release	= single_release,
-	.proc_ग_लिखो	= srm_env_proc_ग_लिखो,
-पूर्ण;
+	.proc_write	= srm_env_proc_write,
+};
 
-अटल पूर्णांक __init
-srm_env_init(व्योम)
-अणु
+static int __init
+srm_env_init(void)
+{
 	srm_env_t	*entry;
-	अचिन्हित दीर्घ	var_num;
+	unsigned long	var_num;
 
 	/*
-	 * Check प्रणाली
+	 * Check system
 	 */
-	अगर (!alpha_using_srm) अणु
-		prपूर्णांकk(KERN_INFO "%s: This Alpha system doesn't "
+	if (!alpha_using_srm) {
+		printk(KERN_INFO "%s: This Alpha system doesn't "
 				"know about SRM (or you've booted "
 				"SRM->MILO->Linux, which gets "
 				"misdetected)...\n", __func__);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	/*
 	 * Create base directory
 	 */
-	base_dir = proc_सूची_गढ़ो(BASE_सूची, शून्य);
-	अगर (!base_dir) अणु
-		prपूर्णांकk(KERN_ERR "Couldn't create base dir /proc/%s\n",
-				BASE_सूची);
-		वापस -ENOMEM;
-	पूर्ण
+	base_dir = proc_mkdir(BASE_DIR, NULL);
+	if (!base_dir) {
+		printk(KERN_ERR "Couldn't create base dir /proc/%s\n",
+				BASE_DIR);
+		return -ENOMEM;
+	}
 
 	/*
 	 * Create per-name subdirectory
 	 */
-	named_dir = proc_सूची_गढ़ो(NAMED_सूची, base_dir);
-	अगर (!named_dir) अणु
-		prपूर्णांकk(KERN_ERR "Couldn't create dir /proc/%s/%s\n",
-				BASE_सूची, NAMED_सूची);
-		जाओ cleanup;
-	पूर्ण
+	named_dir = proc_mkdir(NAMED_DIR, base_dir);
+	if (!named_dir) {
+		printk(KERN_ERR "Couldn't create dir /proc/%s/%s\n",
+				BASE_DIR, NAMED_DIR);
+		goto cleanup;
+	}
 
 	/*
 	 * Create per-number subdirectory
 	 */
-	numbered_dir = proc_सूची_गढ़ो(NUMBERED_सूची, base_dir);
-	अगर (!numbered_dir) अणु
-		prपूर्णांकk(KERN_ERR "Couldn't create dir /proc/%s/%s\n",
-				BASE_सूची, NUMBERED_सूची);
-		जाओ cleanup;
+	numbered_dir = proc_mkdir(NUMBERED_DIR, base_dir);
+	if (!numbered_dir) {
+		printk(KERN_ERR "Couldn't create dir /proc/%s/%s\n",
+				BASE_DIR, NUMBERED_DIR);
+		goto cleanup;
 
-	पूर्ण
+	}
 
 	/*
 	 * Create all named nodes
 	 */
 	entry = srm_named_entries;
-	जबतक (entry->name && entry->id) अणु
-		अगर (!proc_create_data(entry->name, 0644, named_dir,
-			     &srm_env_proc_ops, (व्योम *)entry->id))
-			जाओ cleanup;
+	while (entry->name && entry->id) {
+		if (!proc_create_data(entry->name, 0644, named_dir,
+			     &srm_env_proc_ops, (void *)entry->id))
+			goto cleanup;
 		entry++;
-	पूर्ण
+	}
 
 	/*
 	 * Create all numbered nodes
 	 */
-	क्रम (var_num = 0; var_num <= 255; var_num++) अणु
-		अक्षर name[4];
-		प्र_लिखो(name, "%ld", var_num);
-		अगर (!proc_create_data(name, 0644, numbered_dir,
-			     &srm_env_proc_ops, (व्योम *)var_num))
-			जाओ cleanup;
-	पूर्ण
+	for (var_num = 0; var_num <= 255; var_num++) {
+		char name[4];
+		sprintf(name, "%ld", var_num);
+		if (!proc_create_data(name, 0644, numbered_dir,
+			     &srm_env_proc_ops, (void *)var_num))
+			goto cleanup;
+	}
 
-	prपूर्णांकk(KERN_INFO "%s: version %s loaded successfully\n", NAME,
+	printk(KERN_INFO "%s: version %s loaded successfully\n", NAME,
 			VERSION);
 
-	वापस 0;
+	return 0;
 
 cleanup:
-	हटाओ_proc_subtree(BASE_सूची, शून्य);
-	वापस -ENOMEM;
-पूर्ण
+	remove_proc_subtree(BASE_DIR, NULL);
+	return -ENOMEM;
+}
 
-अटल व्योम __निकास
-srm_env_निकास(व्योम)
-अणु
-	हटाओ_proc_subtree(BASE_सूची, शून्य);
-	prपूर्णांकk(KERN_INFO "%s: unloaded successfully\n", NAME);
-पूर्ण
+static void __exit
+srm_env_exit(void)
+{
+	remove_proc_subtree(BASE_DIR, NULL);
+	printk(KERN_INFO "%s: unloaded successfully\n", NAME);
+}
 
 module_init(srm_env_init);
-module_निकास(srm_env_निकास);
+module_exit(srm_env_exit);

@@ -1,153 +1,152 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /* Copyright (C) 2016 National Instruments Corp. */
-#समावेश <linux/leds.h>
-#समावेश <linux/phy.h>
-#समावेश <linux/phy_led_triggers.h>
-#समावेश <linux/netdevice.h>
+#include <linux/leds.h>
+#include <linux/phy.h>
+#include <linux/phy_led_triggers.h>
+#include <linux/netdevice.h>
 
-अटल काष्ठा phy_led_trigger *phy_speed_to_led_trigger(काष्ठा phy_device *phy,
-							अचिन्हित पूर्णांक speed)
-अणु
-	अचिन्हित पूर्णांक i;
+static struct phy_led_trigger *phy_speed_to_led_trigger(struct phy_device *phy,
+							unsigned int speed)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < phy->phy_num_led_triggers; i++) अणु
-		अगर (phy->phy_led_triggers[i].speed == speed)
-			वापस &phy->phy_led_triggers[i];
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	for (i = 0; i < phy->phy_num_led_triggers; i++) {
+		if (phy->phy_led_triggers[i].speed == speed)
+			return &phy->phy_led_triggers[i];
+	}
+	return NULL;
+}
 
-अटल व्योम phy_led_trigger_no_link(काष्ठा phy_device *phy)
-अणु
-	अगर (phy->last_triggered) अणु
+static void phy_led_trigger_no_link(struct phy_device *phy)
+{
+	if (phy->last_triggered) {
 		led_trigger_event(&phy->last_triggered->trigger, LED_OFF);
 		led_trigger_event(&phy->led_link_trigger->trigger, LED_OFF);
-		phy->last_triggered = शून्य;
-	पूर्ण
-पूर्ण
+		phy->last_triggered = NULL;
+	}
+}
 
-व्योम phy_led_trigger_change_speed(काष्ठा phy_device *phy)
-अणु
-	काष्ठा phy_led_trigger *plt;
+void phy_led_trigger_change_speed(struct phy_device *phy)
+{
+	struct phy_led_trigger *plt;
 
-	अगर (!phy->link)
-		वापस phy_led_trigger_no_link(phy);
+	if (!phy->link)
+		return phy_led_trigger_no_link(phy);
 
-	अगर (phy->speed == 0)
-		वापस;
+	if (phy->speed == 0)
+		return;
 
 	plt = phy_speed_to_led_trigger(phy, phy->speed);
-	अगर (!plt) अणु
+	if (!plt) {
 		netdev_alert(phy->attached_dev,
 			     "No phy led trigger registered for speed(%d)\n",
 			     phy->speed);
-		वापस phy_led_trigger_no_link(phy);
-	पूर्ण
+		return phy_led_trigger_no_link(phy);
+	}
 
-	अगर (plt != phy->last_triggered) अणु
-		अगर (!phy->last_triggered)
+	if (plt != phy->last_triggered) {
+		if (!phy->last_triggered)
 			led_trigger_event(&phy->led_link_trigger->trigger,
 					  LED_FULL);
-		अन्यथा
+		else
 			led_trigger_event(&phy->last_triggered->trigger, LED_OFF);
 
 		led_trigger_event(&plt->trigger, LED_FULL);
 		phy->last_triggered = plt;
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL_GPL(phy_led_trigger_change_speed);
 
-अटल व्योम phy_led_trigger_क्रमmat_name(काष्ठा phy_device *phy, अक्षर *buf,
-					माप_प्रकार size, स्थिर अक्षर *suffix)
-अणु
-	snम_लिखो(buf, size, PHY_ID_FMT ":%s",
+static void phy_led_trigger_format_name(struct phy_device *phy, char *buf,
+					size_t size, const char *suffix)
+{
+	snprintf(buf, size, PHY_ID_FMT ":%s",
 		 phy->mdio.bus->id, phy->mdio.addr, suffix);
-पूर्ण
+}
 
-अटल पूर्णांक phy_led_trigger_रेजिस्टर(काष्ठा phy_device *phy,
-				    काष्ठा phy_led_trigger *plt,
-				    अचिन्हित पूर्णांक speed,
-				    स्थिर अक्षर *suffix)
-अणु
+static int phy_led_trigger_register(struct phy_device *phy,
+				    struct phy_led_trigger *plt,
+				    unsigned int speed,
+				    const char *suffix)
+{
 	plt->speed = speed;
-	phy_led_trigger_क्रमmat_name(phy, plt->name, माप(plt->name), suffix);
+	phy_led_trigger_format_name(phy, plt->name, sizeof(plt->name), suffix);
 	plt->trigger.name = plt->name;
 
-	वापस led_trigger_रेजिस्टर(&plt->trigger);
-पूर्ण
+	return led_trigger_register(&plt->trigger);
+}
 
-अटल व्योम phy_led_trigger_unरेजिस्टर(काष्ठा phy_led_trigger *plt)
-अणु
-	led_trigger_unरेजिस्टर(&plt->trigger);
-पूर्ण
+static void phy_led_trigger_unregister(struct phy_led_trigger *plt)
+{
+	led_trigger_unregister(&plt->trigger);
+}
 
-पूर्णांक phy_led_triggers_रेजिस्टर(काष्ठा phy_device *phy)
-अणु
-	पूर्णांक i, err;
-	अचिन्हित पूर्णांक speeds[50];
+int phy_led_triggers_register(struct phy_device *phy)
+{
+	int i, err;
+	unsigned int speeds[50];
 
 	phy->phy_num_led_triggers = phy_supported_speeds(phy, speeds,
 							 ARRAY_SIZE(speeds));
-	अगर (!phy->phy_num_led_triggers)
-		वापस 0;
+	if (!phy->phy_num_led_triggers)
+		return 0;
 
 	phy->led_link_trigger = devm_kzalloc(&phy->mdio.dev,
-					     माप(*phy->led_link_trigger),
+					     sizeof(*phy->led_link_trigger),
 					     GFP_KERNEL);
-	अगर (!phy->led_link_trigger) अणु
+	if (!phy->led_link_trigger) {
 		err = -ENOMEM;
-		जाओ out_clear;
-	पूर्ण
+		goto out_clear;
+	}
 
-	err = phy_led_trigger_रेजिस्टर(phy, phy->led_link_trigger, 0, "link");
-	अगर (err)
-		जाओ out_मुक्त_link;
+	err = phy_led_trigger_register(phy, phy->led_link_trigger, 0, "link");
+	if (err)
+		goto out_free_link;
 
-	phy->phy_led_triggers = devm_kसुस्मृति(&phy->mdio.dev,
+	phy->phy_led_triggers = devm_kcalloc(&phy->mdio.dev,
 					    phy->phy_num_led_triggers,
-					    माप(काष्ठा phy_led_trigger),
+					    sizeof(struct phy_led_trigger),
 					    GFP_KERNEL);
-	अगर (!phy->phy_led_triggers) अणु
+	if (!phy->phy_led_triggers) {
 		err = -ENOMEM;
-		जाओ out_unreg_link;
-	पूर्ण
+		goto out_unreg_link;
+	}
 
-	क्रम (i = 0; i < phy->phy_num_led_triggers; i++) अणु
-		err = phy_led_trigger_रेजिस्टर(phy, &phy->phy_led_triggers[i],
+	for (i = 0; i < phy->phy_num_led_triggers; i++) {
+		err = phy_led_trigger_register(phy, &phy->phy_led_triggers[i],
 					       speeds[i],
 					       phy_speed_to_str(speeds[i]));
-		अगर (err)
-			जाओ out_unreg;
-	पूर्ण
+		if (err)
+			goto out_unreg;
+	}
 
-	phy->last_triggered = शून्य;
+	phy->last_triggered = NULL;
 	phy_led_trigger_change_speed(phy);
 
-	वापस 0;
+	return 0;
 out_unreg:
-	जबतक (i--)
-		phy_led_trigger_unरेजिस्टर(&phy->phy_led_triggers[i]);
-	devm_kमुक्त(&phy->mdio.dev, phy->phy_led_triggers);
+	while (i--)
+		phy_led_trigger_unregister(&phy->phy_led_triggers[i]);
+	devm_kfree(&phy->mdio.dev, phy->phy_led_triggers);
 out_unreg_link:
-	phy_led_trigger_unरेजिस्टर(phy->led_link_trigger);
-out_मुक्त_link:
-	devm_kमुक्त(&phy->mdio.dev, phy->led_link_trigger);
-	phy->led_link_trigger = शून्य;
+	phy_led_trigger_unregister(phy->led_link_trigger);
+out_free_link:
+	devm_kfree(&phy->mdio.dev, phy->led_link_trigger);
+	phy->led_link_trigger = NULL;
 out_clear:
 	phy->phy_num_led_triggers = 0;
-	वापस err;
-पूर्ण
-EXPORT_SYMBOL_GPL(phy_led_triggers_रेजिस्टर);
+	return err;
+}
+EXPORT_SYMBOL_GPL(phy_led_triggers_register);
 
-व्योम phy_led_triggers_unरेजिस्टर(काष्ठा phy_device *phy)
-अणु
-	पूर्णांक i;
+void phy_led_triggers_unregister(struct phy_device *phy)
+{
+	int i;
 
-	क्रम (i = 0; i < phy->phy_num_led_triggers; i++)
-		phy_led_trigger_unरेजिस्टर(&phy->phy_led_triggers[i]);
+	for (i = 0; i < phy->phy_num_led_triggers; i++)
+		phy_led_trigger_unregister(&phy->phy_led_triggers[i]);
 
-	अगर (phy->led_link_trigger)
-		phy_led_trigger_unरेजिस्टर(phy->led_link_trigger);
-पूर्ण
-EXPORT_SYMBOL_GPL(phy_led_triggers_unरेजिस्टर);
+	if (phy->led_link_trigger)
+		phy_led_trigger_unregister(phy->led_link_trigger);
+}
+EXPORT_SYMBOL_GPL(phy_led_triggers_unregister);

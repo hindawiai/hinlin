@@ -1,123 +1,122 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
-#समावेश "gcc-common.h"
+#include "gcc-common.h"
 
-__visible पूर्णांक plugin_is_GPL_compatible;
+__visible int plugin_is_GPL_compatible;
 
-अटल अचिन्हित पूर्णांक sp_mask, canary_offset;
+static unsigned int sp_mask, canary_offset;
 
-अटल अचिन्हित पूर्णांक arm_pertask_ssp_rtl_execute(व्योम)
-अणु
+static unsigned int arm_pertask_ssp_rtl_execute(void)
+{
 	rtx_insn *insn;
 
-	क्रम (insn = get_insns(); insn; insn = NEXT_INSN(insn)) अणु
-		स्थिर अक्षर *sym;
+	for (insn = get_insns(); insn; insn = NEXT_INSN(insn)) {
+		const char *sym;
 		rtx body;
 		rtx mask, masked_sp;
 
 		/*
 		 * Find a SET insn involving a SYMBOL_REF to __stack_chk_guard
 		 */
-		अगर (!INSN_P(insn))
-			जारी;
+		if (!INSN_P(insn))
+			continue;
 		body = PATTERN(insn);
-		अगर (GET_CODE(body) != SET ||
+		if (GET_CODE(body) != SET ||
 		    GET_CODE(SET_SRC(body)) != SYMBOL_REF)
-			जारी;
+			continue;
 		sym = XSTR(SET_SRC(body), 0);
-		अगर (म_भेद(sym, "__stack_chk_guard"))
-			जारी;
+		if (strcmp(sym, "__stack_chk_guard"))
+			continue;
 
 		/*
 		 * Replace the source of the SET insn with an expression that
 		 * produces the address of the copy of the stack canary value
-		 * stored in काष्ठा thपढ़ो_info
+		 * stored in struct thread_info
 		 */
 		mask = GEN_INT(sext_hwi(sp_mask, GET_MODE_PRECISION(Pmode)));
 		masked_sp = gen_reg_rtx(Pmode);
 
-		emit_insn_beक्रमe(gen_rtx_set(masked_sp,
+		emit_insn_before(gen_rtx_set(masked_sp,
 					     gen_rtx_AND(Pmode,
-							 stack_poपूर्णांकer_rtx,
+							 stack_pointer_rtx,
 							 mask)),
 				 insn);
 
 		SET_SRC(body) = gen_rtx_PLUS(Pmode, masked_sp,
 					     GEN_INT(canary_offset));
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-#घोषणा PASS_NAME arm_pertask_ssp_rtl
+#define PASS_NAME arm_pertask_ssp_rtl
 
-#घोषणा NO_GATE
-#समावेश "gcc-generate-rtl-pass.h"
+#define NO_GATE
+#include "gcc-generate-rtl-pass.h"
 
-#अगर BUILDING_GCC_VERSION >= 9000
-अटल bool no(व्योम)
-अणु
-	वापस false;
-पूर्ण
+#if BUILDING_GCC_VERSION >= 9000
+static bool no(void)
+{
+	return false;
+}
 
-अटल व्योम arm_pertask_ssp_start_unit(व्योम *gcc_data, व्योम *user_data)
-अणु
-	targeपंचांग.have_stack_protect_combined_set = no;
-	targeपंचांग.have_stack_protect_combined_test = no;
-पूर्ण
-#पूर्ण_अगर
+static void arm_pertask_ssp_start_unit(void *gcc_data, void *user_data)
+{
+	targetm.have_stack_protect_combined_set = no;
+	targetm.have_stack_protect_combined_test = no;
+}
+#endif
 
-__visible पूर्णांक plugin_init(काष्ठा plugin_name_args *plugin_info,
-			  काष्ठा plugin_gcc_version *version)
-अणु
-	स्थिर अक्षर * स्थिर plugin_name = plugin_info->base_name;
-	स्थिर पूर्णांक argc = plugin_info->argc;
-	स्थिर काष्ठा plugin_argument *argv = plugin_info->argv;
-	पूर्णांक tso = 0;
-	पूर्णांक i;
+__visible int plugin_init(struct plugin_name_args *plugin_info,
+			  struct plugin_gcc_version *version)
+{
+	const char * const plugin_name = plugin_info->base_name;
+	const int argc = plugin_info->argc;
+	const struct plugin_argument *argv = plugin_info->argv;
+	int tso = 0;
+	int i;
 
-	अगर (!plugin_शेष_version_check(version, &gcc_version)) अणु
+	if (!plugin_default_version_check(version, &gcc_version)) {
 		error(G_("incompatible gcc/plugin versions"));
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	क्रम (i = 0; i < argc; ++i) अणु
-		अगर (!म_भेद(argv[i].key, "disable"))
-			वापस 0;
+	for (i = 0; i < argc; ++i) {
+		if (!strcmp(argv[i].key, "disable"))
+			return 0;
 
-		/* all reमुख्यing options require a value */
-		अगर (!argv[i].value) अणु
+		/* all remaining options require a value */
+		if (!argv[i].value) {
 			error(G_("no value supplied for option '-fplugin-arg-%s-%s'"),
 			      plugin_name, argv[i].key);
-			वापस 1;
-		पूर्ण
+			return 1;
+		}
 
-		अगर (!म_भेद(argv[i].key, "tso")) अणु
-			tso = म_से_प(argv[i].value);
-			जारी;
-		पूर्ण
+		if (!strcmp(argv[i].key, "tso")) {
+			tso = atoi(argv[i].value);
+			continue;
+		}
 
-		अगर (!म_भेद(argv[i].key, "offset")) अणु
-			canary_offset = म_से_प(argv[i].value);
-			जारी;
-		पूर्ण
+		if (!strcmp(argv[i].key, "offset")) {
+			canary_offset = atoi(argv[i].value);
+			continue;
+		}
 		error(G_("unknown option '-fplugin-arg-%s-%s'"),
 		      plugin_name, argv[i].key);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
 	/* create the mask that produces the base of the stack */
 	sp_mask = ~((1U << (12 + tso)) - 1);
 
 	PASS_INFO(arm_pertask_ssp_rtl, "expand", 1, PASS_POS_INSERT_AFTER);
 
-	रेजिस्टर_callback(plugin_info->base_name, PLUGIN_PASS_MANAGER_SETUP,
-			  शून्य, &arm_pertask_ssp_rtl_pass_info);
+	register_callback(plugin_info->base_name, PLUGIN_PASS_MANAGER_SETUP,
+			  NULL, &arm_pertask_ssp_rtl_pass_info);
 
-#अगर BUILDING_GCC_VERSION >= 9000
-	रेजिस्टर_callback(plugin_info->base_name, PLUGIN_START_UNIT,
-			  arm_pertask_ssp_start_unit, शून्य);
-#पूर्ण_अगर
+#if BUILDING_GCC_VERSION >= 9000
+	register_callback(plugin_info->base_name, PLUGIN_START_UNIT,
+			  arm_pertask_ssp_start_unit, NULL);
+#endif
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

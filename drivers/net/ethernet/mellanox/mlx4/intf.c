@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2006, 2007 Cisco Systems, Inc. All rights reserved.
  * Copyright (c) 2007, 2008 Mellanox Technologies. All rights reserved.
@@ -6,20 +5,20 @@
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -32,245 +31,245 @@
  * SOFTWARE.
  */
 
-#समावेश <linux/slab.h>
-#समावेश <linux/export.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <net/devlink.h>
+#include <linux/slab.h>
+#include <linux/export.h>
+#include <linux/errno.h>
+#include <net/devlink.h>
 
-#समावेश "mlx4.h"
+#include "mlx4.h"
 
-काष्ठा mlx4_device_context अणु
-	काष्ठा list_head	list;
-	काष्ठा list_head	bond_list;
-	काष्ठा mlx4_पूर्णांकerface  *पूर्णांकf;
-	व्योम		       *context;
-पूर्ण;
+struct mlx4_device_context {
+	struct list_head	list;
+	struct list_head	bond_list;
+	struct mlx4_interface  *intf;
+	void		       *context;
+};
 
-अटल LIST_HEAD(पूर्णांकf_list);
-अटल LIST_HEAD(dev_list);
-अटल DEFINE_MUTEX(पूर्णांकf_mutex);
+static LIST_HEAD(intf_list);
+static LIST_HEAD(dev_list);
+static DEFINE_MUTEX(intf_mutex);
 
-अटल व्योम mlx4_add_device(काष्ठा mlx4_पूर्णांकerface *पूर्णांकf, काष्ठा mlx4_priv *priv)
-अणु
-	काष्ठा mlx4_device_context *dev_ctx;
+static void mlx4_add_device(struct mlx4_interface *intf, struct mlx4_priv *priv)
+{
+	struct mlx4_device_context *dev_ctx;
 
-	dev_ctx = kदो_स्मृति(माप(*dev_ctx), GFP_KERNEL);
-	अगर (!dev_ctx)
-		वापस;
+	dev_ctx = kmalloc(sizeof(*dev_ctx), GFP_KERNEL);
+	if (!dev_ctx)
+		return;
 
-	dev_ctx->पूर्णांकf    = पूर्णांकf;
-	dev_ctx->context = पूर्णांकf->add(&priv->dev);
+	dev_ctx->intf    = intf;
+	dev_ctx->context = intf->add(&priv->dev);
 
-	अगर (dev_ctx->context) अणु
+	if (dev_ctx->context) {
 		spin_lock_irq(&priv->ctx_lock);
 		list_add_tail(&dev_ctx->list, &priv->ctx_list);
 		spin_unlock_irq(&priv->ctx_lock);
-		अगर (पूर्णांकf->activate)
-			पूर्णांकf->activate(&priv->dev, dev_ctx->context);
-	पूर्ण अन्यथा
-		kमुक्त(dev_ctx);
+		if (intf->activate)
+			intf->activate(&priv->dev, dev_ctx->context);
+	} else
+		kfree(dev_ctx);
 
-पूर्ण
+}
 
-अटल व्योम mlx4_हटाओ_device(काष्ठा mlx4_पूर्णांकerface *पूर्णांकf, काष्ठा mlx4_priv *priv)
-अणु
-	काष्ठा mlx4_device_context *dev_ctx;
+static void mlx4_remove_device(struct mlx4_interface *intf, struct mlx4_priv *priv)
+{
+	struct mlx4_device_context *dev_ctx;
 
-	list_क्रम_each_entry(dev_ctx, &priv->ctx_list, list)
-		अगर (dev_ctx->पूर्णांकf == पूर्णांकf) अणु
+	list_for_each_entry(dev_ctx, &priv->ctx_list, list)
+		if (dev_ctx->intf == intf) {
 			spin_lock_irq(&priv->ctx_lock);
 			list_del(&dev_ctx->list);
 			spin_unlock_irq(&priv->ctx_lock);
 
-			पूर्णांकf->हटाओ(&priv->dev, dev_ctx->context);
-			kमुक्त(dev_ctx);
-			वापस;
-		पूर्ण
-पूर्ण
+			intf->remove(&priv->dev, dev_ctx->context);
+			kfree(dev_ctx);
+			return;
+		}
+}
 
-पूर्णांक mlx4_रेजिस्टर_पूर्णांकerface(काष्ठा mlx4_पूर्णांकerface *पूर्णांकf)
-अणु
-	काष्ठा mlx4_priv *priv;
+int mlx4_register_interface(struct mlx4_interface *intf)
+{
+	struct mlx4_priv *priv;
 
-	अगर (!पूर्णांकf->add || !पूर्णांकf->हटाओ)
-		वापस -EINVAL;
+	if (!intf->add || !intf->remove)
+		return -EINVAL;
 
-	mutex_lock(&पूर्णांकf_mutex);
+	mutex_lock(&intf_mutex);
 
-	list_add_tail(&पूर्णांकf->list, &पूर्णांकf_list);
-	list_क्रम_each_entry(priv, &dev_list, dev_list) अणु
-		अगर (mlx4_is_mfunc(&priv->dev) && (पूर्णांकf->flags & MLX4_INTFF_BONDING)) अणु
+	list_add_tail(&intf->list, &intf_list);
+	list_for_each_entry(priv, &dev_list, dev_list) {
+		if (mlx4_is_mfunc(&priv->dev) && (intf->flags & MLX4_INTFF_BONDING)) {
 			mlx4_dbg(&priv->dev,
-				 "SRIOV, disabling HA mode for intf proto %d\n", पूर्णांकf->protocol);
-			पूर्णांकf->flags &= ~MLX4_INTFF_BONDING;
-		पूर्ण
-		mlx4_add_device(पूर्णांकf, priv);
-	पूर्ण
+				 "SRIOV, disabling HA mode for intf proto %d\n", intf->protocol);
+			intf->flags &= ~MLX4_INTFF_BONDING;
+		}
+		mlx4_add_device(intf, priv);
+	}
 
-	mutex_unlock(&पूर्णांकf_mutex);
+	mutex_unlock(&intf_mutex);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(mlx4_रेजिस्टर_पूर्णांकerface);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(mlx4_register_interface);
 
-व्योम mlx4_unरेजिस्टर_पूर्णांकerface(काष्ठा mlx4_पूर्णांकerface *पूर्णांकf)
-अणु
-	काष्ठा mlx4_priv *priv;
+void mlx4_unregister_interface(struct mlx4_interface *intf)
+{
+	struct mlx4_priv *priv;
 
-	mutex_lock(&पूर्णांकf_mutex);
+	mutex_lock(&intf_mutex);
 
-	list_क्रम_each_entry(priv, &dev_list, dev_list)
-		mlx4_हटाओ_device(पूर्णांकf, priv);
+	list_for_each_entry(priv, &dev_list, dev_list)
+		mlx4_remove_device(intf, priv);
 
-	list_del(&पूर्णांकf->list);
+	list_del(&intf->list);
 
-	mutex_unlock(&पूर्णांकf_mutex);
-पूर्ण
-EXPORT_SYMBOL_GPL(mlx4_unरेजिस्टर_पूर्णांकerface);
+	mutex_unlock(&intf_mutex);
+}
+EXPORT_SYMBOL_GPL(mlx4_unregister_interface);
 
-पूर्णांक mlx4_करो_bond(काष्ठा mlx4_dev *dev, bool enable)
-अणु
-	काष्ठा mlx4_priv *priv = mlx4_priv(dev);
-	काष्ठा mlx4_device_context *dev_ctx = शून्य, *temp_dev_ctx;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+int mlx4_do_bond(struct mlx4_dev *dev, bool enable)
+{
+	struct mlx4_priv *priv = mlx4_priv(dev);
+	struct mlx4_device_context *dev_ctx = NULL, *temp_dev_ctx;
+	unsigned long flags;
+	int ret;
 	LIST_HEAD(bond_list);
 
-	अगर (!(dev->caps.flags2 & MLX4_DEV_CAP_FLAG2_PORT_REMAP))
-		वापस -EOPNOTSUPP;
+	if (!(dev->caps.flags2 & MLX4_DEV_CAP_FLAG2_PORT_REMAP))
+		return -EOPNOTSUPP;
 
 	ret = mlx4_disable_rx_port_check(dev, enable);
-	अगर (ret) अणु
+	if (ret) {
 		mlx4_err(dev, "Fail to %s rx port check\n",
 			 enable ? "enable" : "disable");
-		वापस ret;
-	पूर्ण
-	अगर (enable) अणु
+		return ret;
+	}
+	if (enable) {
 		dev->flags |= MLX4_FLAG_BONDED;
-	पूर्ण अन्यथा अणु
+	} else {
 		ret = mlx4_virt2phy_port_map(dev, 1, 2);
-		अगर (ret) अणु
+		if (ret) {
 			mlx4_err(dev, "Fail to reset port map\n");
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		dev->flags &= ~MLX4_FLAG_BONDED;
-	पूर्ण
+	}
 
 	spin_lock_irqsave(&priv->ctx_lock, flags);
-	list_क्रम_each_entry_safe(dev_ctx, temp_dev_ctx, &priv->ctx_list, list) अणु
-		अगर (dev_ctx->पूर्णांकf->flags & MLX4_INTFF_BONDING) अणु
+	list_for_each_entry_safe(dev_ctx, temp_dev_ctx, &priv->ctx_list, list) {
+		if (dev_ctx->intf->flags & MLX4_INTFF_BONDING) {
 			list_add_tail(&dev_ctx->bond_list, &bond_list);
 			list_del(&dev_ctx->list);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	spin_unlock_irqrestore(&priv->ctx_lock, flags);
 
-	list_क्रम_each_entry(dev_ctx, &bond_list, bond_list) अणु
-		dev_ctx->पूर्णांकf->हटाओ(dev, dev_ctx->context);
-		dev_ctx->context =  dev_ctx->पूर्णांकf->add(dev);
+	list_for_each_entry(dev_ctx, &bond_list, bond_list) {
+		dev_ctx->intf->remove(dev, dev_ctx->context);
+		dev_ctx->context =  dev_ctx->intf->add(dev);
 
 		spin_lock_irqsave(&priv->ctx_lock, flags);
 		list_add_tail(&dev_ctx->list, &priv->ctx_list);
 		spin_unlock_irqrestore(&priv->ctx_lock, flags);
 
 		mlx4_dbg(dev, "Interface for protocol %d restarted with bonded mode %s\n",
-			 dev_ctx->पूर्णांकf->protocol, enable ?
+			 dev_ctx->intf->protocol, enable ?
 			 "enabled" : "disabled");
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-व्योम mlx4_dispatch_event(काष्ठा mlx4_dev *dev, क्रमागत mlx4_dev_event type,
-			 अचिन्हित दीर्घ param)
-अणु
-	काष्ठा mlx4_priv *priv = mlx4_priv(dev);
-	काष्ठा mlx4_device_context *dev_ctx;
-	अचिन्हित दीर्घ flags;
+void mlx4_dispatch_event(struct mlx4_dev *dev, enum mlx4_dev_event type,
+			 unsigned long param)
+{
+	struct mlx4_priv *priv = mlx4_priv(dev);
+	struct mlx4_device_context *dev_ctx;
+	unsigned long flags;
 
 	spin_lock_irqsave(&priv->ctx_lock, flags);
 
-	list_क्रम_each_entry(dev_ctx, &priv->ctx_list, list)
-		अगर (dev_ctx->पूर्णांकf->event)
-			dev_ctx->पूर्णांकf->event(dev, dev_ctx->context, type, param);
+	list_for_each_entry(dev_ctx, &priv->ctx_list, list)
+		if (dev_ctx->intf->event)
+			dev_ctx->intf->event(dev, dev_ctx->context, type, param);
 
 	spin_unlock_irqrestore(&priv->ctx_lock, flags);
-पूर्ण
+}
 
-पूर्णांक mlx4_रेजिस्टर_device(काष्ठा mlx4_dev *dev)
-अणु
-	काष्ठा mlx4_priv *priv = mlx4_priv(dev);
-	काष्ठा mlx4_पूर्णांकerface *पूर्णांकf;
+int mlx4_register_device(struct mlx4_dev *dev)
+{
+	struct mlx4_priv *priv = mlx4_priv(dev);
+	struct mlx4_interface *intf;
 
-	mutex_lock(&पूर्णांकf_mutex);
+	mutex_lock(&intf_mutex);
 
-	dev->persist->पूर्णांकerface_state |= MLX4_INTERFACE_STATE_UP;
+	dev->persist->interface_state |= MLX4_INTERFACE_STATE_UP;
 	list_add_tail(&priv->dev_list, &dev_list);
-	list_क्रम_each_entry(पूर्णांकf, &पूर्णांकf_list, list)
-		mlx4_add_device(पूर्णांकf, priv);
+	list_for_each_entry(intf, &intf_list, list)
+		mlx4_add_device(intf, priv);
 
-	mutex_unlock(&पूर्णांकf_mutex);
+	mutex_unlock(&intf_mutex);
 	mlx4_start_catas_poll(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम mlx4_unरेजिस्टर_device(काष्ठा mlx4_dev *dev)
-अणु
-	काष्ठा mlx4_priv *priv = mlx4_priv(dev);
-	काष्ठा mlx4_पूर्णांकerface *पूर्णांकf;
+void mlx4_unregister_device(struct mlx4_dev *dev)
+{
+	struct mlx4_priv *priv = mlx4_priv(dev);
+	struct mlx4_interface *intf;
 
-	अगर (!(dev->persist->पूर्णांकerface_state & MLX4_INTERFACE_STATE_UP))
-		वापस;
+	if (!(dev->persist->interface_state & MLX4_INTERFACE_STATE_UP))
+		return;
 
 	mlx4_stop_catas_poll(dev);
-	अगर (dev->persist->पूर्णांकerface_state & MLX4_INTERFACE_STATE_DELETION &&
-	    mlx4_is_slave(dev)) अणु
-		/* In mlx4_हटाओ_one on a VF */
-		u32 slave_पढ़ो =
-			swab32(पढ़ोl(&mlx4_priv(dev)->mfunc.comm->slave_पढ़ो));
+	if (dev->persist->interface_state & MLX4_INTERFACE_STATE_DELETION &&
+	    mlx4_is_slave(dev)) {
+		/* In mlx4_remove_one on a VF */
+		u32 slave_read =
+			swab32(readl(&mlx4_priv(dev)->mfunc.comm->slave_read));
 
-		अगर (mlx4_comm_पूर्णांकernal_err(slave_पढ़ो)) अणु
+		if (mlx4_comm_internal_err(slave_read)) {
 			mlx4_dbg(dev, "%s: comm channel is down, entering error state.\n",
 				 __func__);
 			mlx4_enter_error_state(dev->persist);
-		पूर्ण
-	पूर्ण
-	mutex_lock(&पूर्णांकf_mutex);
+		}
+	}
+	mutex_lock(&intf_mutex);
 
-	list_क्रम_each_entry(पूर्णांकf, &पूर्णांकf_list, list)
-		mlx4_हटाओ_device(पूर्णांकf, priv);
+	list_for_each_entry(intf, &intf_list, list)
+		mlx4_remove_device(intf, priv);
 
 	list_del(&priv->dev_list);
-	dev->persist->पूर्णांकerface_state &= ~MLX4_INTERFACE_STATE_UP;
+	dev->persist->interface_state &= ~MLX4_INTERFACE_STATE_UP;
 
-	mutex_unlock(&पूर्णांकf_mutex);
-पूर्ण
+	mutex_unlock(&intf_mutex);
+}
 
-व्योम *mlx4_get_protocol_dev(काष्ठा mlx4_dev *dev, क्रमागत mlx4_protocol proto, पूर्णांक port)
-अणु
-	काष्ठा mlx4_priv *priv = mlx4_priv(dev);
-	काष्ठा mlx4_device_context *dev_ctx;
-	अचिन्हित दीर्घ flags;
-	व्योम *result = शून्य;
+void *mlx4_get_protocol_dev(struct mlx4_dev *dev, enum mlx4_protocol proto, int port)
+{
+	struct mlx4_priv *priv = mlx4_priv(dev);
+	struct mlx4_device_context *dev_ctx;
+	unsigned long flags;
+	void *result = NULL;
 
 	spin_lock_irqsave(&priv->ctx_lock, flags);
 
-	list_क्रम_each_entry(dev_ctx, &priv->ctx_list, list)
-		अगर (dev_ctx->पूर्णांकf->protocol == proto && dev_ctx->पूर्णांकf->get_dev) अणु
-			result = dev_ctx->पूर्णांकf->get_dev(dev, dev_ctx->context, port);
-			अवरोध;
-		पूर्ण
+	list_for_each_entry(dev_ctx, &priv->ctx_list, list)
+		if (dev_ctx->intf->protocol == proto && dev_ctx->intf->get_dev) {
+			result = dev_ctx->intf->get_dev(dev, dev_ctx->context, port);
+			break;
+		}
 
 	spin_unlock_irqrestore(&priv->ctx_lock, flags);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 EXPORT_SYMBOL_GPL(mlx4_get_protocol_dev);
 
-काष्ठा devlink_port *mlx4_get_devlink_port(काष्ठा mlx4_dev *dev, पूर्णांक port)
-अणु
-	काष्ठा mlx4_port_info *info = &mlx4_priv(dev)->port[port];
+struct devlink_port *mlx4_get_devlink_port(struct mlx4_dev *dev, int port)
+{
+	struct mlx4_port_info *info = &mlx4_priv(dev)->port[port];
 
-	वापस &info->devlink_port;
-पूर्ण
+	return &info->devlink_port;
+}
 EXPORT_SYMBOL_GPL(mlx4_get_devlink_port);

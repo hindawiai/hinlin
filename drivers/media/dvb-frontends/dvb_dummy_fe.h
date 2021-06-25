@@ -1,37 +1,36 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- *  Driver क्रम Dummy Frontend
+ *  Driver for Dummy Frontend
  *
  *  Written by Emard <emard@softhome.net>
  */
 
-#अगर_अघोषित DVB_DUMMY_FE_H
-#घोषणा DVB_DUMMY_FE_H
+#ifndef DVB_DUMMY_FE_H
+#define DVB_DUMMY_FE_H
 
-#समावेश <linux/dvb/frontend.h>
-#समावेश <media/dvb_frontend.h>
+#include <linux/dvb/frontend.h>
+#include <media/dvb_frontend.h>
 
-#अगर IS_REACHABLE(CONFIG_DVB_DUMMY_FE)
-काष्ठा dvb_frontend *dvb_dummy_fe_ofdm_attach(व्योम);
-काष्ठा dvb_frontend *dvb_dummy_fe_qpsk_attach(व्योम);
-काष्ठा dvb_frontend *dvb_dummy_fe_qam_attach(व्योम);
-#अन्यथा
-अटल अंतरभूत काष्ठा dvb_frontend *dvb_dummy_fe_ofdm_attach(व्योम)
-अणु
+#if IS_REACHABLE(CONFIG_DVB_DUMMY_FE)
+struct dvb_frontend *dvb_dummy_fe_ofdm_attach(void);
+struct dvb_frontend *dvb_dummy_fe_qpsk_attach(void);
+struct dvb_frontend *dvb_dummy_fe_qam_attach(void);
+#else
+static inline struct dvb_frontend *dvb_dummy_fe_ofdm_attach(void)
+{
 	pr_warn("%s: driver disabled by Kconfig\n", __func__);
-	वापस शून्य;
-पूर्ण
-अटल अंतरभूत काष्ठा dvb_frontend *dvb_dummy_fe_qpsk_attach(व्योम)
-अणु
+	return NULL;
+}
+static inline struct dvb_frontend *dvb_dummy_fe_qpsk_attach(void)
+{
 	pr_warn("%s: driver disabled by Kconfig\n", __func__);
-	वापस शून्य;
-पूर्ण
-अटल अंतरभूत काष्ठा dvb_frontend *dvb_dummy_fe_qam_attach(व्योम)
-अणु
+	return NULL;
+}
+static inline struct dvb_frontend *dvb_dummy_fe_qam_attach(void)
+{
 	pr_warn("%s: driver disabled by Kconfig\n", __func__);
-	वापस शून्य;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_DVB_DUMMY_FE */
+	return NULL;
+}
+#endif /* CONFIG_DVB_DUMMY_FE */
 
-#पूर्ण_अगर // DVB_DUMMY_FE_H
+#endif // DVB_DUMMY_FE_H

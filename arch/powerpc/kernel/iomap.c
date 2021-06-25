@@ -1,32 +1,31 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * ppc64 "iomap" पूर्णांकerface implementation.
+ * ppc64 "iomap" interface implementation.
  *
  * (C) Copyright 2004 Linus Torvalds
  */
-#समावेश <linux/pci.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/export.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/pci-bridge.h>
-#समावेश <यंत्र/isa-bridge.h>
+#include <linux/pci.h>
+#include <linux/mm.h>
+#include <linux/export.h>
+#include <asm/io.h>
+#include <asm/pci-bridge.h>
+#include <asm/isa-bridge.h>
 
-व्योम __iomem *ioport_map(अचिन्हित दीर्घ port, अचिन्हित पूर्णांक len)
-अणु
-	वापस (व्योम __iomem *) (port + _IO_BASE);
-पूर्ण
+void __iomem *ioport_map(unsigned long port, unsigned int len)
+{
+	return (void __iomem *) (port + _IO_BASE);
+}
 EXPORT_SYMBOL(ioport_map);
 
-#अगर_घोषित CONFIG_PCI
-व्योम pci_iounmap(काष्ठा pci_dev *dev, व्योम __iomem *addr)
-अणु
-	अगर (isa_vaddr_is_ioport(addr))
-		वापस;
-	अगर (pcibios_vaddr_is_ioport(addr))
-		वापस;
+#ifdef CONFIG_PCI
+void pci_iounmap(struct pci_dev *dev, void __iomem *addr)
+{
+	if (isa_vaddr_is_ioport(addr))
+		return;
+	if (pcibios_vaddr_is_ioport(addr))
+		return;
 	iounmap(addr);
-पूर्ण
+}
 
 EXPORT_SYMBOL(pci_iounmap);
-#पूर्ण_अगर /* CONFIG_PCI */
+#endif /* CONFIG_PCI */

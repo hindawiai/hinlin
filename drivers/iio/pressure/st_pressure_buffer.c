@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * STMicroelectronics pressures driver
  *
@@ -8,53 +7,53 @@
  * Denis Ciocca <denis.ciocca@st.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/स्थिति.स>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/iio/buffer.h>
-#समावेश <linux/iio/trigger_consumer.h>
-#समावेश <linux/iio/triggered_buffer.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/stat.h>
+#include <linux/interrupt.h>
+#include <linux/i2c.h>
+#include <linux/delay.h>
+#include <linux/iio/iio.h>
+#include <linux/iio/buffer.h>
+#include <linux/iio/trigger_consumer.h>
+#include <linux/iio/triggered_buffer.h>
 
-#समावेश <linux/iio/common/st_sensors.h>
-#समावेश "st_pressure.h"
+#include <linux/iio/common/st_sensors.h>
+#include "st_pressure.h"
 
-पूर्णांक st_press_trig_set_state(काष्ठा iio_trigger *trig, bool state)
-अणु
-	काष्ठा iio_dev *indio_dev = iio_trigger_get_drvdata(trig);
+int st_press_trig_set_state(struct iio_trigger *trig, bool state)
+{
+	struct iio_dev *indio_dev = iio_trigger_get_drvdata(trig);
 
-	वापस st_sensors_set_dataपढ़ोy_irq(indio_dev, state);
-पूर्ण
+	return st_sensors_set_dataready_irq(indio_dev, state);
+}
 
-अटल पूर्णांक st_press_buffer_postenable(काष्ठा iio_dev *indio_dev)
-अणु
-	वापस st_sensors_set_enable(indio_dev, true);
-पूर्ण
+static int st_press_buffer_postenable(struct iio_dev *indio_dev)
+{
+	return st_sensors_set_enable(indio_dev, true);
+}
 
-अटल पूर्णांक st_press_buffer_predisable(काष्ठा iio_dev *indio_dev)
-अणु
-	वापस st_sensors_set_enable(indio_dev, false);
-पूर्ण
+static int st_press_buffer_predisable(struct iio_dev *indio_dev)
+{
+	return st_sensors_set_enable(indio_dev, false);
+}
 
-अटल स्थिर काष्ठा iio_buffer_setup_ops st_press_buffer_setup_ops = अणु
+static const struct iio_buffer_setup_ops st_press_buffer_setup_ops = {
 	.postenable = &st_press_buffer_postenable,
 	.predisable = &st_press_buffer_predisable,
-पूर्ण;
+};
 
-पूर्णांक st_press_allocate_ring(काष्ठा iio_dev *indio_dev)
-अणु
-	वापस iio_triggered_buffer_setup(indio_dev, शून्य,
+int st_press_allocate_ring(struct iio_dev *indio_dev)
+{
+	return iio_triggered_buffer_setup(indio_dev, NULL,
 		&st_sensors_trigger_handler, &st_press_buffer_setup_ops);
-पूर्ण
+}
 
-व्योम st_press_deallocate_ring(काष्ठा iio_dev *indio_dev)
-अणु
+void st_press_deallocate_ring(struct iio_dev *indio_dev)
+{
 	iio_triggered_buffer_cleanup(indio_dev);
-पूर्ण
+}
 
 MODULE_AUTHOR("Denis Ciocca <denis.ciocca@st.com>");
 MODULE_DESCRIPTION("STMicroelectronics pressures buffer");

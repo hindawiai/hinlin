@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /** -*- linux-c -*- ***********************************************************
  * Linux PPP over X/Ethernet (PPPoX/PPPoE) Sockets
  *
@@ -15,143 +14,143 @@
  * License:
  */
 
-#समावेश <linux/माला.स>
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/compat.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/net.h>
-#समावेश <linux/init.h>
-#समावेश <linux/अगर_pppox.h>
-#समावेश <linux/ppp_defs.h>
-#समावेश <linux/ppp-ioctl.h>
-#समावेश <linux/ppp_channel.h>
-#समावेश <linux/kmod.h>
+#include <linux/string.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/compat.h>
+#include <linux/errno.h>
+#include <linux/netdevice.h>
+#include <linux/net.h>
+#include <linux/init.h>
+#include <linux/if_pppox.h>
+#include <linux/ppp_defs.h>
+#include <linux/ppp-ioctl.h>
+#include <linux/ppp_channel.h>
+#include <linux/kmod.h>
 
-#समावेश <net/sock.h>
+#include <net/sock.h>
 
-#समावेश <linux/uaccess.h>
+#include <linux/uaccess.h>
 
-अटल स्थिर काष्ठा pppox_proto *pppox_protos[PX_MAX_PROTO + 1];
+static const struct pppox_proto *pppox_protos[PX_MAX_PROTO + 1];
 
-पूर्णांक रेजिस्टर_pppox_proto(पूर्णांक proto_num, स्थिर काष्ठा pppox_proto *pp)
-अणु
-	अगर (proto_num < 0 || proto_num > PX_MAX_PROTO)
-		वापस -EINVAL;
-	अगर (pppox_protos[proto_num])
-		वापस -EALREADY;
+int register_pppox_proto(int proto_num, const struct pppox_proto *pp)
+{
+	if (proto_num < 0 || proto_num > PX_MAX_PROTO)
+		return -EINVAL;
+	if (pppox_protos[proto_num])
+		return -EALREADY;
 	pppox_protos[proto_num] = pp;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम unरेजिस्टर_pppox_proto(पूर्णांक proto_num)
-अणु
-	अगर (proto_num >= 0 && proto_num <= PX_MAX_PROTO)
-		pppox_protos[proto_num] = शून्य;
-पूर्ण
+void unregister_pppox_proto(int proto_num)
+{
+	if (proto_num >= 0 && proto_num <= PX_MAX_PROTO)
+		pppox_protos[proto_num] = NULL;
+}
 
-व्योम pppox_unbind_sock(काष्ठा sock *sk)
-अणु
-	/* Clear connection to ppp device, अगर attached. */
+void pppox_unbind_sock(struct sock *sk)
+{
+	/* Clear connection to ppp device, if attached. */
 
-	अगर (sk->sk_state & (PPPOX_BOUND | PPPOX_CONNECTED)) अणु
-		ppp_unरेजिस्टर_channel(&pppox_sk(sk)->chan);
+	if (sk->sk_state & (PPPOX_BOUND | PPPOX_CONNECTED)) {
+		ppp_unregister_channel(&pppox_sk(sk)->chan);
 		sk->sk_state = PPPOX_DEAD;
-	पूर्ण
-पूर्ण
+	}
+}
 
-EXPORT_SYMBOL(रेजिस्टर_pppox_proto);
-EXPORT_SYMBOL(unरेजिस्टर_pppox_proto);
+EXPORT_SYMBOL(register_pppox_proto);
+EXPORT_SYMBOL(unregister_pppox_proto);
 EXPORT_SYMBOL(pppox_unbind_sock);
 
-पूर्णांक pppox_ioctl(काष्ठा socket *sock, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा pppox_sock *po = pppox_sk(sk);
-	पूर्णांक rc;
+int pppox_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
+{
+	struct sock *sk = sock->sk;
+	struct pppox_sock *po = pppox_sk(sk);
+	int rc;
 
 	lock_sock(sk);
 
-	चयन (cmd) अणु
-	हाल PPPIOCGCHAN: अणु
-		पूर्णांक index;
+	switch (cmd) {
+	case PPPIOCGCHAN: {
+		int index;
 		rc = -ENOTCONN;
-		अगर (!(sk->sk_state & PPPOX_CONNECTED))
-			अवरोध;
+		if (!(sk->sk_state & PPPOX_CONNECTED))
+			break;
 
 		rc = -EINVAL;
 		index = ppp_channel_index(&po->chan);
-		अगर (put_user(index , (पूर्णांक __user *) arg))
-			अवरोध;
+		if (put_user(index , (int __user *) arg))
+			break;
 
 		rc = 0;
 		sk->sk_state |= PPPOX_BOUND;
-		अवरोध;
-	पूर्ण
-	शेष:
+		break;
+	}
+	default:
 		rc = pppox_protos[sk->sk_protocol]->ioctl ?
 			pppox_protos[sk->sk_protocol]->ioctl(sock, cmd, arg) : -ENOTTY;
-	पूर्ण
+	}
 
 	release_sock(sk);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 EXPORT_SYMBOL(pppox_ioctl);
 
-#अगर_घोषित CONFIG_COMPAT
-पूर्णांक pppox_compat_ioctl(काष्ठा socket *sock, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	अगर (cmd == PPPOEIOCSFWD32)
+#ifdef CONFIG_COMPAT
+int pppox_compat_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
+{
+	if (cmd == PPPOEIOCSFWD32)
 		cmd = PPPOEIOCSFWD;
 
-	वापस pppox_ioctl(sock, cmd, (अचिन्हित दीर्घ)compat_ptr(arg));
-पूर्ण
+	return pppox_ioctl(sock, cmd, (unsigned long)compat_ptr(arg));
+}
 
 EXPORT_SYMBOL(pppox_compat_ioctl);
-#पूर्ण_अगर
+#endif
 
-अटल पूर्णांक pppox_create(काष्ठा net *net, काष्ठा socket *sock, पूर्णांक protocol,
-			पूर्णांक kern)
-अणु
-	पूर्णांक rc = -EPROTOTYPE;
+static int pppox_create(struct net *net, struct socket *sock, int protocol,
+			int kern)
+{
+	int rc = -EPROTOTYPE;
 
-	अगर (protocol < 0 || protocol > PX_MAX_PROTO)
-		जाओ out;
+	if (protocol < 0 || protocol > PX_MAX_PROTO)
+		goto out;
 
 	rc = -EPROTONOSUPPORT;
-	अगर (!pppox_protos[protocol])
+	if (!pppox_protos[protocol])
 		request_module("net-pf-%d-proto-%d", PF_PPPOX, protocol);
-	अगर (!pppox_protos[protocol] ||
+	if (!pppox_protos[protocol] ||
 	    !try_module_get(pppox_protos[protocol]->owner))
-		जाओ out;
+		goto out;
 
 	rc = pppox_protos[protocol]->create(net, sock, kern);
 
 	module_put(pppox_protos[protocol]->owner);
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल स्थिर काष्ठा net_proto_family pppox_proto_family = अणु
+static const struct net_proto_family pppox_proto_family = {
 	.family	= PF_PPPOX,
 	.create	= pppox_create,
 	.owner	= THIS_MODULE,
-पूर्ण;
+};
 
-अटल पूर्णांक __init pppox_init(व्योम)
-अणु
-	वापस sock_रेजिस्टर(&pppox_proto_family);
-पूर्ण
+static int __init pppox_init(void)
+{
+	return sock_register(&pppox_proto_family);
+}
 
-अटल व्योम __निकास pppox_निकास(व्योम)
-अणु
-	sock_unरेजिस्टर(PF_PPPOX);
-पूर्ण
+static void __exit pppox_exit(void)
+{
+	sock_unregister(PF_PPPOX);
+}
 
 module_init(pppox_init);
-module_निकास(pppox_निकास);
+module_exit(pppox_exit);
 
 MODULE_AUTHOR("Michal Ostrowski <mostrows@speakeasy.net>");
 MODULE_DESCRIPTION("PPP over Ethernet driver (generic socket layer)");

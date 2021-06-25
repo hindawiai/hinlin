@@ -1,18 +1,17 @@
-<शैली गुरु>
-/* r128_drm.h -- Public header क्रम the r128 driver -*- linux-c -*-
+/* r128_drm.h -- Public header for the r128 driver -*- linux-c -*-
  * Created: Wed Apr  5 19:24:19 2000 by kevin@precisioninsight.com
  */
 /*
  * Copyright 2000 Precision Insight, Inc., Cedar Park, Texas.
- * Copyright 2000 VA Linux Systems, Inc., Sunnyvale, Calअगरornia.
+ * Copyright 2000 VA Linux Systems, Inc., Sunnyvale, California.
  * All rights reserved.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -31,307 +30,307 @@
  *    Kevin E. Martin <martin@valinux.com>
  */
 
-#अगर_अघोषित __R128_DRM_H__
-#घोषणा __R128_DRM_H__
+#ifndef __R128_DRM_H__
+#define __R128_DRM_H__
 
-#समावेश "drm.h"
+#include "drm.h"
 
-#अगर defined(__cplusplus)
-बाह्य "C" अणु
-#पूर्ण_अगर
+#if defined(__cplusplus)
+extern "C" {
+#endif
 
 /* WARNING: If you change any of these defines, make sure to change the
  * defines in the X server file (r128_sarea.h)
  */
-#अगर_अघोषित __R128_SAREA_DEFINES__
-#घोषणा __R128_SAREA_DEFINES__
+#ifndef __R128_SAREA_DEFINES__
+#define __R128_SAREA_DEFINES__
 
-/* What needs to be changed क्रम the current vertex buffer?
+/* What needs to be changed for the current vertex buffer?
  */
-#घोषणा R128_UPLOAD_CONTEXT		0x001
-#घोषणा R128_UPLOAD_SETUP		0x002
-#घोषणा R128_UPLOAD_TEX0		0x004
-#घोषणा R128_UPLOAD_TEX1		0x008
-#घोषणा R128_UPLOAD_TEX0IMAGES		0x010
-#घोषणा R128_UPLOAD_TEX1IMAGES		0x020
-#घोषणा R128_UPLOAD_CORE		0x040
-#घोषणा R128_UPLOAD_MASKS		0x080
-#घोषणा R128_UPLOAD_WINDOW		0x100
-#घोषणा R128_UPLOAD_CLIPRECTS		0x200	/* handled client-side */
-#घोषणा R128_REQUIRE_QUIESCENCE		0x400
-#घोषणा R128_UPLOAD_ALL			0x7ff
+#define R128_UPLOAD_CONTEXT		0x001
+#define R128_UPLOAD_SETUP		0x002
+#define R128_UPLOAD_TEX0		0x004
+#define R128_UPLOAD_TEX1		0x008
+#define R128_UPLOAD_TEX0IMAGES		0x010
+#define R128_UPLOAD_TEX1IMAGES		0x020
+#define R128_UPLOAD_CORE		0x040
+#define R128_UPLOAD_MASKS		0x080
+#define R128_UPLOAD_WINDOW		0x100
+#define R128_UPLOAD_CLIPRECTS		0x200	/* handled client-side */
+#define R128_REQUIRE_QUIESCENCE		0x400
+#define R128_UPLOAD_ALL			0x7ff
 
-#घोषणा R128_FRONT			0x1
-#घोषणा R128_BACK			0x2
-#घोषणा R128_DEPTH			0x4
+#define R128_FRONT			0x1
+#define R128_BACK			0x2
+#define R128_DEPTH			0x4
 
 /* Primitive types
  */
-#घोषणा R128_POINTS			0x1
-#घोषणा R128_LINES			0x2
-#घोषणा R128_LINE_STRIP			0x3
-#घोषणा R128_TRIANGLES			0x4
-#घोषणा R128_TRIANGLE_FAN		0x5
-#घोषणा R128_TRIANGLE_STRIP		0x6
+#define R128_POINTS			0x1
+#define R128_LINES			0x2
+#define R128_LINE_STRIP			0x3
+#define R128_TRIANGLES			0x4
+#define R128_TRIANGLE_FAN		0x5
+#define R128_TRIANGLE_STRIP		0x6
 
 /* Vertex/indirect buffer size
  */
-#घोषणा R128_BUFFER_SIZE		16384
+#define R128_BUFFER_SIZE		16384
 
-/* Byte offsets क्रम indirect buffer data
+/* Byte offsets for indirect buffer data
  */
-#घोषणा R128_INDEX_PRIM_OFFSET		20
-#घोषणा R128_HOSTDATA_BLIT_OFFSET	32
+#define R128_INDEX_PRIM_OFFSET		20
+#define R128_HOSTDATA_BLIT_OFFSET	32
 
-/* Keep these small क्रम testing.
+/* Keep these small for testing.
  */
-#घोषणा R128_NR_SAREA_CLIPRECTS		12
+#define R128_NR_SAREA_CLIPRECTS		12
 
 /* There are 2 heaps (local/AGP).  Each region within a heap is a
  *  minimum of 64k, and there are at most 64 of them per heap.
  */
-#घोषणा R128_LOCAL_TEX_HEAP		0
-#घोषणा R128_AGP_TEX_HEAP		1
-#घोषणा R128_NR_TEX_HEAPS		2
-#घोषणा R128_NR_TEX_REGIONS		64
-#घोषणा R128_LOG_TEX_GRANULARITY	16
+#define R128_LOCAL_TEX_HEAP		0
+#define R128_AGP_TEX_HEAP		1
+#define R128_NR_TEX_HEAPS		2
+#define R128_NR_TEX_REGIONS		64
+#define R128_LOG_TEX_GRANULARITY	16
 
-#घोषणा R128_NR_CONTEXT_REGS		12
+#define R128_NR_CONTEXT_REGS		12
 
-#घोषणा R128_MAX_TEXTURE_LEVELS		11
-#घोषणा R128_MAX_TEXTURE_UNITS		2
+#define R128_MAX_TEXTURE_LEVELS		11
+#define R128_MAX_TEXTURE_UNITS		2
 
-#पूर्ण_अगर				/* __R128_SAREA_DEFINES__ */
+#endif				/* __R128_SAREA_DEFINES__ */
 
-प्रकार काष्ठा अणु
+typedef struct {
 	/* Context state - can be written in one large chunk */
-	अचिन्हित पूर्णांक dst_pitch_offset_c;
-	अचिन्हित पूर्णांक dp_gui_master_cntl_c;
-	अचिन्हित पूर्णांक sc_top_left_c;
-	अचिन्हित पूर्णांक sc_bottom_right_c;
-	अचिन्हित पूर्णांक z_offset_c;
-	अचिन्हित पूर्णांक z_pitch_c;
-	अचिन्हित पूर्णांक z_sten_cntl_c;
-	अचिन्हित पूर्णांक tex_cntl_c;
-	अचिन्हित पूर्णांक misc_3d_state_cntl_reg;
-	अचिन्हित पूर्णांक texture_clr_cmp_clr_c;
-	अचिन्हित पूर्णांक texture_clr_cmp_msk_c;
-	अचिन्हित पूर्णांक fog_color_c;
+	unsigned int dst_pitch_offset_c;
+	unsigned int dp_gui_master_cntl_c;
+	unsigned int sc_top_left_c;
+	unsigned int sc_bottom_right_c;
+	unsigned int z_offset_c;
+	unsigned int z_pitch_c;
+	unsigned int z_sten_cntl_c;
+	unsigned int tex_cntl_c;
+	unsigned int misc_3d_state_cntl_reg;
+	unsigned int texture_clr_cmp_clr_c;
+	unsigned int texture_clr_cmp_msk_c;
+	unsigned int fog_color_c;
 
 	/* Texture state */
-	अचिन्हित पूर्णांक tex_size_pitch_c;
-	अचिन्हित पूर्णांक स्थिरant_color_c;
+	unsigned int tex_size_pitch_c;
+	unsigned int constant_color_c;
 
 	/* Setup state */
-	अचिन्हित पूर्णांक pm4_vc_fpu_setup;
-	अचिन्हित पूर्णांक setup_cntl;
+	unsigned int pm4_vc_fpu_setup;
+	unsigned int setup_cntl;
 
 	/* Mask state */
-	अचिन्हित पूर्णांक dp_ग_लिखो_mask;
-	अचिन्हित पूर्णांक sten_ref_mask_c;
-	अचिन्हित पूर्णांक plane_3d_mask_c;
+	unsigned int dp_write_mask;
+	unsigned int sten_ref_mask_c;
+	unsigned int plane_3d_mask_c;
 
-	/* Winकरोw state */
-	अचिन्हित पूर्णांक winकरोw_xy_offset;
+	/* Window state */
+	unsigned int window_xy_offset;
 
 	/* Core state */
-	अचिन्हित पूर्णांक scale_3d_cntl;
-पूर्ण drm_r128_context_regs_t;
+	unsigned int scale_3d_cntl;
+} drm_r128_context_regs_t;
 
-/* Setup रेजिस्टरs क्रम each texture unit
+/* Setup registers for each texture unit
  */
-प्रकार काष्ठा अणु
-	अचिन्हित पूर्णांक tex_cntl;
-	अचिन्हित पूर्णांक tex_combine_cntl;
-	अचिन्हित पूर्णांक tex_size_pitch;
-	अचिन्हित पूर्णांक tex_offset[R128_MAX_TEXTURE_LEVELS];
-	अचिन्हित पूर्णांक tex_border_color;
-पूर्ण drm_r128_texture_regs_t;
+typedef struct {
+	unsigned int tex_cntl;
+	unsigned int tex_combine_cntl;
+	unsigned int tex_size_pitch;
+	unsigned int tex_offset[R128_MAX_TEXTURE_LEVELS];
+	unsigned int tex_border_color;
+} drm_r128_texture_regs_t;
 
-प्रकार काष्ठा drm_r128_sarea अणु
-	/* The channel क्रम communication of state inक्रमmation to the kernel
+typedef struct drm_r128_sarea {
+	/* The channel for communication of state information to the kernel
 	 * on firing a vertex buffer.
 	 */
 	drm_r128_context_regs_t context_state;
 	drm_r128_texture_regs_t tex_state[R128_MAX_TEXTURE_UNITS];
-	अचिन्हित पूर्णांक dirty;
-	अचिन्हित पूर्णांक vertsize;
-	अचिन्हित पूर्णांक vc_क्रमmat;
+	unsigned int dirty;
+	unsigned int vertsize;
+	unsigned int vc_format;
 
 	/* The current cliprects, or a subset thereof.
 	 */
-	काष्ठा drm_clip_rect boxes[R128_NR_SAREA_CLIPRECTS];
-	अचिन्हित पूर्णांक nbox;
+	struct drm_clip_rect boxes[R128_NR_SAREA_CLIPRECTS];
+	unsigned int nbox;
 
-	/* Counters क्रम client-side throttling of rendering clients.
+	/* Counters for client-side throttling of rendering clients.
 	 */
-	अचिन्हित पूर्णांक last_frame;
-	अचिन्हित पूर्णांक last_dispatch;
+	unsigned int last_frame;
+	unsigned int last_dispatch;
 
-	काष्ठा drm_tex_region tex_list[R128_NR_TEX_HEAPS][R128_NR_TEX_REGIONS + 1];
-	अचिन्हित पूर्णांक tex_age[R128_NR_TEX_HEAPS];
-	पूर्णांक ctx_owner;
-	पूर्णांक pfAllowPageFlip;	/* number of 3d winकरोws (0,1,2 or more) */
-	पूर्णांक pfCurrentPage;	/* which buffer is being displayed? */
-पूर्ण drm_r128_sarea_t;
+	struct drm_tex_region tex_list[R128_NR_TEX_HEAPS][R128_NR_TEX_REGIONS + 1];
+	unsigned int tex_age[R128_NR_TEX_HEAPS];
+	int ctx_owner;
+	int pfAllowPageFlip;	/* number of 3d windows (0,1,2 or more) */
+	int pfCurrentPage;	/* which buffer is being displayed? */
+} drm_r128_sarea_t;
 
 /* WARNING: If you change any of these defines, make sure to change the
  * defines in the Xserver file (xf86drmR128.h)
  */
 
-/* Rage 128 specअगरic ioctls
- * The device specअगरic ioctl range is 0x40 to 0x79.
+/* Rage 128 specific ioctls
+ * The device specific ioctl range is 0x40 to 0x79.
  */
-#घोषणा DRM_R128_INIT       0x00
-#घोषणा DRM_R128_CCE_START  0x01
-#घोषणा DRM_R128_CCE_STOP   0x02
-#घोषणा DRM_R128_CCE_RESET  0x03
-#घोषणा DRM_R128_CCE_IDLE   0x04
+#define DRM_R128_INIT       0x00
+#define DRM_R128_CCE_START  0x01
+#define DRM_R128_CCE_STOP   0x02
+#define DRM_R128_CCE_RESET  0x03
+#define DRM_R128_CCE_IDLE   0x04
 /* 0x05 not used */
-#घोषणा DRM_R128_RESET      0x06
-#घोषणा DRM_R128_SWAP       0x07
-#घोषणा DRM_R128_CLEAR      0x08
-#घोषणा DRM_R128_VERTEX     0x09
-#घोषणा DRM_R128_INDICES    0x0a
-#घोषणा DRM_R128_BLIT       0x0b
-#घोषणा DRM_R128_DEPTH      0x0c
-#घोषणा DRM_R128_STIPPLE    0x0d
+#define DRM_R128_RESET      0x06
+#define DRM_R128_SWAP       0x07
+#define DRM_R128_CLEAR      0x08
+#define DRM_R128_VERTEX     0x09
+#define DRM_R128_INDICES    0x0a
+#define DRM_R128_BLIT       0x0b
+#define DRM_R128_DEPTH      0x0c
+#define DRM_R128_STIPPLE    0x0d
 /* 0x0e not used */
-#घोषणा DRM_R128_INसूचीECT   0x0f
-#घोषणा DRM_R128_FULLSCREEN 0x10
-#घोषणा DRM_R128_CLEAR2     0x11
-#घोषणा DRM_R128_GETPARAM   0x12
-#घोषणा DRM_R128_FLIP       0x13
+#define DRM_R128_INDIRECT   0x0f
+#define DRM_R128_FULLSCREEN 0x10
+#define DRM_R128_CLEAR2     0x11
+#define DRM_R128_GETPARAM   0x12
+#define DRM_R128_FLIP       0x13
 
-#घोषणा DRM_IOCTL_R128_INIT       DRM_IOW( DRM_COMMAND_BASE + DRM_R128_INIT, drm_r128_init_t)
-#घोषणा DRM_IOCTL_R128_CCE_START  DRM_IO(  DRM_COMMAND_BASE + DRM_R128_CCE_START)
-#घोषणा DRM_IOCTL_R128_CCE_STOP   DRM_IOW( DRM_COMMAND_BASE + DRM_R128_CCE_STOP, drm_r128_cce_stop_t)
-#घोषणा DRM_IOCTL_R128_CCE_RESET  DRM_IO(  DRM_COMMAND_BASE + DRM_R128_CCE_RESET)
-#घोषणा DRM_IOCTL_R128_CCE_IDLE   DRM_IO(  DRM_COMMAND_BASE + DRM_R128_CCE_IDLE)
+#define DRM_IOCTL_R128_INIT       DRM_IOW( DRM_COMMAND_BASE + DRM_R128_INIT, drm_r128_init_t)
+#define DRM_IOCTL_R128_CCE_START  DRM_IO(  DRM_COMMAND_BASE + DRM_R128_CCE_START)
+#define DRM_IOCTL_R128_CCE_STOP   DRM_IOW( DRM_COMMAND_BASE + DRM_R128_CCE_STOP, drm_r128_cce_stop_t)
+#define DRM_IOCTL_R128_CCE_RESET  DRM_IO(  DRM_COMMAND_BASE + DRM_R128_CCE_RESET)
+#define DRM_IOCTL_R128_CCE_IDLE   DRM_IO(  DRM_COMMAND_BASE + DRM_R128_CCE_IDLE)
 /* 0x05 not used */
-#घोषणा DRM_IOCTL_R128_RESET      DRM_IO(  DRM_COMMAND_BASE + DRM_R128_RESET)
-#घोषणा DRM_IOCTL_R128_SWAP       DRM_IO(  DRM_COMMAND_BASE + DRM_R128_SWAP)
-#घोषणा DRM_IOCTL_R128_CLEAR      DRM_IOW( DRM_COMMAND_BASE + DRM_R128_CLEAR, drm_r128_clear_t)
-#घोषणा DRM_IOCTL_R128_VERTEX     DRM_IOW( DRM_COMMAND_BASE + DRM_R128_VERTEX, drm_r128_vertex_t)
-#घोषणा DRM_IOCTL_R128_INDICES    DRM_IOW( DRM_COMMAND_BASE + DRM_R128_INDICES, drm_r128_indices_t)
-#घोषणा DRM_IOCTL_R128_BLIT       DRM_IOW( DRM_COMMAND_BASE + DRM_R128_BLIT, drm_r128_blit_t)
-#घोषणा DRM_IOCTL_R128_DEPTH      DRM_IOW( DRM_COMMAND_BASE + DRM_R128_DEPTH, drm_r128_depth_t)
-#घोषणा DRM_IOCTL_R128_STIPPLE    DRM_IOW( DRM_COMMAND_BASE + DRM_R128_STIPPLE, drm_r128_stipple_t)
+#define DRM_IOCTL_R128_RESET      DRM_IO(  DRM_COMMAND_BASE + DRM_R128_RESET)
+#define DRM_IOCTL_R128_SWAP       DRM_IO(  DRM_COMMAND_BASE + DRM_R128_SWAP)
+#define DRM_IOCTL_R128_CLEAR      DRM_IOW( DRM_COMMAND_BASE + DRM_R128_CLEAR, drm_r128_clear_t)
+#define DRM_IOCTL_R128_VERTEX     DRM_IOW( DRM_COMMAND_BASE + DRM_R128_VERTEX, drm_r128_vertex_t)
+#define DRM_IOCTL_R128_INDICES    DRM_IOW( DRM_COMMAND_BASE + DRM_R128_INDICES, drm_r128_indices_t)
+#define DRM_IOCTL_R128_BLIT       DRM_IOW( DRM_COMMAND_BASE + DRM_R128_BLIT, drm_r128_blit_t)
+#define DRM_IOCTL_R128_DEPTH      DRM_IOW( DRM_COMMAND_BASE + DRM_R128_DEPTH, drm_r128_depth_t)
+#define DRM_IOCTL_R128_STIPPLE    DRM_IOW( DRM_COMMAND_BASE + DRM_R128_STIPPLE, drm_r128_stipple_t)
 /* 0x0e not used */
-#घोषणा DRM_IOCTL_R128_INसूचीECT   DRM_IOWR(DRM_COMMAND_BASE + DRM_R128_INसूचीECT, drm_r128_indirect_t)
-#घोषणा DRM_IOCTL_R128_FULLSCREEN DRM_IOW( DRM_COMMAND_BASE + DRM_R128_FULLSCREEN, drm_r128_fullscreen_t)
-#घोषणा DRM_IOCTL_R128_CLEAR2     DRM_IOW( DRM_COMMAND_BASE + DRM_R128_CLEAR2, drm_r128_clear2_t)
-#घोषणा DRM_IOCTL_R128_GETPARAM   DRM_IOWR( DRM_COMMAND_BASE + DRM_R128_GETPARAM, drm_r128_getparam_t)
-#घोषणा DRM_IOCTL_R128_FLIP       DRM_IO(  DRM_COMMAND_BASE + DRM_R128_FLIP)
+#define DRM_IOCTL_R128_INDIRECT   DRM_IOWR(DRM_COMMAND_BASE + DRM_R128_INDIRECT, drm_r128_indirect_t)
+#define DRM_IOCTL_R128_FULLSCREEN DRM_IOW( DRM_COMMAND_BASE + DRM_R128_FULLSCREEN, drm_r128_fullscreen_t)
+#define DRM_IOCTL_R128_CLEAR2     DRM_IOW( DRM_COMMAND_BASE + DRM_R128_CLEAR2, drm_r128_clear2_t)
+#define DRM_IOCTL_R128_GETPARAM   DRM_IOWR( DRM_COMMAND_BASE + DRM_R128_GETPARAM, drm_r128_getparam_t)
+#define DRM_IOCTL_R128_FLIP       DRM_IO(  DRM_COMMAND_BASE + DRM_R128_FLIP)
 
-प्रकार काष्ठा drm_r128_init अणु
-	क्रमागत अणु
+typedef struct drm_r128_init {
+	enum {
 		R128_INIT_CCE = 0x01,
 		R128_CLEANUP_CCE = 0x02
-	पूर्ण func;
-	अचिन्हित दीर्घ sarea_priv_offset;
-	पूर्णांक is_pci;
-	पूर्णांक cce_mode;
-	पूर्णांक cce_secure;
-	पूर्णांक ring_size;
-	पूर्णांक usec_समयout;
+	} func;
+	unsigned long sarea_priv_offset;
+	int is_pci;
+	int cce_mode;
+	int cce_secure;
+	int ring_size;
+	int usec_timeout;
 
-	अचिन्हित पूर्णांक fb_bpp;
-	अचिन्हित पूर्णांक front_offset, front_pitch;
-	अचिन्हित पूर्णांक back_offset, back_pitch;
-	अचिन्हित पूर्णांक depth_bpp;
-	अचिन्हित पूर्णांक depth_offset, depth_pitch;
-	अचिन्हित पूर्णांक span_offset;
+	unsigned int fb_bpp;
+	unsigned int front_offset, front_pitch;
+	unsigned int back_offset, back_pitch;
+	unsigned int depth_bpp;
+	unsigned int depth_offset, depth_pitch;
+	unsigned int span_offset;
 
-	अचिन्हित दीर्घ fb_offset;
-	अचिन्हित दीर्घ mmio_offset;
-	अचिन्हित दीर्घ ring_offset;
-	अचिन्हित दीर्घ ring_rptr_offset;
-	अचिन्हित दीर्घ buffers_offset;
-	अचिन्हित दीर्घ agp_textures_offset;
-पूर्ण drm_r128_init_t;
+	unsigned long fb_offset;
+	unsigned long mmio_offset;
+	unsigned long ring_offset;
+	unsigned long ring_rptr_offset;
+	unsigned long buffers_offset;
+	unsigned long agp_textures_offset;
+} drm_r128_init_t;
 
-प्रकार काष्ठा drm_r128_cce_stop अणु
-	पूर्णांक flush;
-	पूर्णांक idle;
-पूर्ण drm_r128_cce_stop_t;
+typedef struct drm_r128_cce_stop {
+	int flush;
+	int idle;
+} drm_r128_cce_stop_t;
 
-प्रकार काष्ठा drm_r128_clear अणु
-	अचिन्हित पूर्णांक flags;
-	अचिन्हित पूर्णांक clear_color;
-	अचिन्हित पूर्णांक clear_depth;
-	अचिन्हित पूर्णांक color_mask;
-	अचिन्हित पूर्णांक depth_mask;
-पूर्ण drm_r128_clear_t;
+typedef struct drm_r128_clear {
+	unsigned int flags;
+	unsigned int clear_color;
+	unsigned int clear_depth;
+	unsigned int color_mask;
+	unsigned int depth_mask;
+} drm_r128_clear_t;
 
-प्रकार काष्ठा drm_r128_vertex अणु
-	पूर्णांक prim;
-	पूर्णांक idx;		/* Index of vertex buffer */
-	पूर्णांक count;		/* Number of vertices in buffer */
-	पूर्णांक discard;		/* Client finished with buffer? */
-पूर्ण drm_r128_vertex_t;
+typedef struct drm_r128_vertex {
+	int prim;
+	int idx;		/* Index of vertex buffer */
+	int count;		/* Number of vertices in buffer */
+	int discard;		/* Client finished with buffer? */
+} drm_r128_vertex_t;
 
-प्रकार काष्ठा drm_r128_indices अणु
-	पूर्णांक prim;
-	पूर्णांक idx;
-	पूर्णांक start;
-	पूर्णांक end;
-	पूर्णांक discard;		/* Client finished with buffer? */
-पूर्ण drm_r128_indices_t;
+typedef struct drm_r128_indices {
+	int prim;
+	int idx;
+	int start;
+	int end;
+	int discard;		/* Client finished with buffer? */
+} drm_r128_indices_t;
 
-प्रकार काष्ठा drm_r128_blit अणु
-	पूर्णांक idx;
-	पूर्णांक pitch;
-	पूर्णांक offset;
-	पूर्णांक क्रमmat;
-	अचिन्हित लघु x, y;
-	अचिन्हित लघु width, height;
-पूर्ण drm_r128_blit_t;
+typedef struct drm_r128_blit {
+	int idx;
+	int pitch;
+	int offset;
+	int format;
+	unsigned short x, y;
+	unsigned short width, height;
+} drm_r128_blit_t;
 
-प्रकार काष्ठा drm_r128_depth अणु
-	क्रमागत अणु
+typedef struct drm_r128_depth {
+	enum {
 		R128_WRITE_SPAN = 0x01,
 		R128_WRITE_PIXELS = 0x02,
 		R128_READ_SPAN = 0x03,
 		R128_READ_PIXELS = 0x04
-	पूर्ण func;
-	पूर्णांक n;
-	पूर्णांक __user *x;
-	पूर्णांक __user *y;
-	अचिन्हित पूर्णांक __user *buffer;
-	अचिन्हित अक्षर __user *mask;
-पूर्ण drm_r128_depth_t;
+	} func;
+	int n;
+	int __user *x;
+	int __user *y;
+	unsigned int __user *buffer;
+	unsigned char __user *mask;
+} drm_r128_depth_t;
 
-प्रकार काष्ठा drm_r128_stipple अणु
-	अचिन्हित पूर्णांक __user *mask;
-पूर्ण drm_r128_stipple_t;
+typedef struct drm_r128_stipple {
+	unsigned int __user *mask;
+} drm_r128_stipple_t;
 
-प्रकार काष्ठा drm_r128_indirect अणु
-	पूर्णांक idx;
-	पूर्णांक start;
-	पूर्णांक end;
-	पूर्णांक discard;
-पूर्ण drm_r128_indirect_t;
+typedef struct drm_r128_indirect {
+	int idx;
+	int start;
+	int end;
+	int discard;
+} drm_r128_indirect_t;
 
-प्रकार काष्ठा drm_r128_fullscreen अणु
-	क्रमागत अणु
+typedef struct drm_r128_fullscreen {
+	enum {
 		R128_INIT_FULLSCREEN = 0x01,
 		R128_CLEANUP_FULLSCREEN = 0x02
-	पूर्ण func;
-पूर्ण drm_r128_fullscreen_t;
+	} func;
+} drm_r128_fullscreen_t;
 
 /* 2.3: An ioctl to get parameters that aren't available to the 3d
  * client any other way.
  */
-#घोषणा R128_PARAM_IRQ_NR            1
+#define R128_PARAM_IRQ_NR            1
 
-प्रकार काष्ठा drm_r128_getparam अणु
-	पूर्णांक param;
-	व्योम __user *value;
-पूर्ण drm_r128_getparam_t;
+typedef struct drm_r128_getparam {
+	int param;
+	void __user *value;
+} drm_r128_getparam_t;
 
-#अगर defined(__cplusplus)
-पूर्ण
-#पूर्ण_अगर
+#if defined(__cplusplus)
+}
+#endif
 
-#पूर्ण_अगर
+#endif

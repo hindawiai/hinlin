@@ -1,12 +1,11 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित _ASM_POWERPC_ERRNO_H
-#घोषणा _ASM_POWERPC_ERRNO_H
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef _ASM_POWERPC_ERRNO_H
+#define _ASM_POWERPC_ERRNO_H
 
-#अघोषित	EDEADLOCK
-#समावेश <यंत्र-generic/त्रुटिसं.स>
+#undef	EDEADLOCK
+#include <asm-generic/errno.h>
 
-#अघोषित	EDEADLOCK
-#घोषणा	EDEADLOCK	58	/* File locking deadlock error */
+#undef	EDEADLOCK
+#define	EDEADLOCK	58	/* File locking deadlock error */
 
-#पूर्ण_अगर	/* _ASM_POWERPC_ERRNO_H */
+#endif	/* _ASM_POWERPC_ERRNO_H */

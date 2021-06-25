@@ -1,12 +1,11 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * linux/fs/ext2/xattr.c
  *
  * Copyright (C) 2001-2003 Andreas Gruenbacher <agruen@suse.de>
  *
  * Fix by Harrison Xing <harrison@mountainviewdata.com>.
- * Extended attributes क्रम symlinks and special files added per
+ * Extended attributes for symlinks and special files added per
  *  suggestion of Luka Renko <luka.renko@hermes.si>.
  * xattr consolidation Copyright (c) 2004 James Morris <jmorris@redhat.com>,
  *  Red Hat Inc.
@@ -15,10 +14,10 @@
 
 /*
  * Extended attributes are stored on disk blocks allocated outside of
- * any inode. The i_file_acl field is then made to poपूर्णांक to this allocated
+ * any inode. The i_file_acl field is then made to point to this allocated
  * block. If all extended attributes of an inode are identical, these
  * inodes may share the same extended attribute block. Such situations
- * are स्वतःmatically detected by keeping a cache of recent attribute block
+ * are automatically detected by keeping a cache of recent attribute block
  * numbers and hashes over the block's contents in memory.
  *
  *
@@ -27,7 +26,7 @@
  *   +------------------+
  *   | header           |
  *   | entry 1          | |
- *   | entry 2          | | growing करोwnwards
+ *   | entry 2          | | growing downwards
  *   | entry 3          | v
  *   | four null bytes  |
  *   | . . .            |
@@ -42,1032 +41,1032 @@
  * so that two extended attribute blocks can be compared efficiently.
  *
  * Attribute values are aligned to the end of the block, stored in
- * no specअगरic order. They are also padded to EXT2_XATTR_PAD byte
+ * no specific order. They are also padded to EXT2_XATTR_PAD byte
  * boundaries. No additional gaps are left between them.
  *
  * Locking strategy
  * ----------------
- * EXT2_I(inode)->i_file_acl is रक्षित by EXT2_I(inode)->xattr_sem.
- * EA blocks are only changed अगर they are exclusive to an inode, so
+ * EXT2_I(inode)->i_file_acl is protected by EXT2_I(inode)->xattr_sem.
+ * EA blocks are only changed if they are exclusive to an inode, so
  * holding xattr_sem also means that nothing but the EA block's reference
- * count will change. Multiple ग_लिखोrs to an EA block are synchronized
- * by the bh lock. No more than a single bh lock is held at any समय
- * to aव्योम deadlocks.
+ * count will change. Multiple writers to an EA block are synchronized
+ * by the bh lock. No more than a single bh lock is held at any time
+ * to avoid deadlocks.
  */
 
-#समावेश <linux/buffer_head.h>
-#समावेश <linux/init.h>
-#समावेश <linux/prपूर्णांकk.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/mbcache.h>
-#समावेश <linux/quotaops.h>
-#समावेश <linux/rwsem.h>
-#समावेश <linux/security.h>
-#समावेश "ext2.h"
-#समावेश "xattr.h"
-#समावेश "acl.h"
+#include <linux/buffer_head.h>
+#include <linux/init.h>
+#include <linux/printk.h>
+#include <linux/slab.h>
+#include <linux/mbcache.h>
+#include <linux/quotaops.h>
+#include <linux/rwsem.h>
+#include <linux/security.h>
+#include "ext2.h"
+#include "xattr.h"
+#include "acl.h"
 
-#घोषणा HDR(bh) ((काष्ठा ext2_xattr_header *)((bh)->b_data))
-#घोषणा ENTRY(ptr) ((काष्ठा ext2_xattr_entry *)(ptr))
-#घोषणा FIRST_ENTRY(bh) ENTRY(HDR(bh)+1)
-#घोषणा IS_LAST_ENTRY(entry) (*(__u32 *)(entry) == 0)
+#define HDR(bh) ((struct ext2_xattr_header *)((bh)->b_data))
+#define ENTRY(ptr) ((struct ext2_xattr_entry *)(ptr))
+#define FIRST_ENTRY(bh) ENTRY(HDR(bh)+1)
+#define IS_LAST_ENTRY(entry) (*(__u32 *)(entry) == 0)
 
-#अगर_घोषित EXT2_XATTR_DEBUG
-# define ea_idebug(inode, f...) करो अणु \
-		prपूर्णांकk(KERN_DEBUG "inode %s:%ld: ", \
+#ifdef EXT2_XATTR_DEBUG
+# define ea_idebug(inode, f...) do { \
+		printk(KERN_DEBUG "inode %s:%ld: ", \
 			inode->i_sb->s_id, inode->i_ino); \
-		prपूर्णांकk(f); \
-		prपूर्णांकk("\n"); \
-	पूर्ण जबतक (0)
-# define ea_bdebug(bh, f...) करो अणु \
-		prपूर्णांकk(KERN_DEBUG "block %pg:%lu: ", \
-			bh->b_bdev, (अचिन्हित दीर्घ) bh->b_blocknr); \
-		prपूर्णांकk(f); \
-		prपूर्णांकk("\n"); \
-	पूर्ण जबतक (0)
-#अन्यथा
-# define ea_idebug(inode, f...)	no_prपूर्णांकk(f)
-# define ea_bdebug(bh, f...)	no_prपूर्णांकk(f)
-#पूर्ण_अगर
+		printk(f); \
+		printk("\n"); \
+	} while (0)
+# define ea_bdebug(bh, f...) do { \
+		printk(KERN_DEBUG "block %pg:%lu: ", \
+			bh->b_bdev, (unsigned long) bh->b_blocknr); \
+		printk(f); \
+		printk("\n"); \
+	} while (0)
+#else
+# define ea_idebug(inode, f...)	no_printk(f)
+# define ea_bdebug(bh, f...)	no_printk(f)
+#endif
 
-अटल पूर्णांक ext2_xattr_set2(काष्ठा inode *, काष्ठा buffer_head *,
-			   काष्ठा ext2_xattr_header *);
+static int ext2_xattr_set2(struct inode *, struct buffer_head *,
+			   struct ext2_xattr_header *);
 
-अटल पूर्णांक ext2_xattr_cache_insert(काष्ठा mb_cache *, काष्ठा buffer_head *);
-अटल काष्ठा buffer_head *ext2_xattr_cache_find(काष्ठा inode *,
-						 काष्ठा ext2_xattr_header *);
-अटल व्योम ext2_xattr_rehash(काष्ठा ext2_xattr_header *,
-			      काष्ठा ext2_xattr_entry *);
+static int ext2_xattr_cache_insert(struct mb_cache *, struct buffer_head *);
+static struct buffer_head *ext2_xattr_cache_find(struct inode *,
+						 struct ext2_xattr_header *);
+static void ext2_xattr_rehash(struct ext2_xattr_header *,
+			      struct ext2_xattr_entry *);
 
-अटल स्थिर काष्ठा xattr_handler *ext2_xattr_handler_map[] = अणु
+static const struct xattr_handler *ext2_xattr_handler_map[] = {
 	[EXT2_XATTR_INDEX_USER]		     = &ext2_xattr_user_handler,
-#अगर_घोषित CONFIG_EXT2_FS_POSIX_ACL
+#ifdef CONFIG_EXT2_FS_POSIX_ACL
 	[EXT2_XATTR_INDEX_POSIX_ACL_ACCESS]  = &posix_acl_access_xattr_handler,
-	[EXT2_XATTR_INDEX_POSIX_ACL_DEFAULT] = &posix_acl_शेष_xattr_handler,
-#पूर्ण_अगर
+	[EXT2_XATTR_INDEX_POSIX_ACL_DEFAULT] = &posix_acl_default_xattr_handler,
+#endif
 	[EXT2_XATTR_INDEX_TRUSTED]	     = &ext2_xattr_trusted_handler,
-#अगर_घोषित CONFIG_EXT2_FS_SECURITY
+#ifdef CONFIG_EXT2_FS_SECURITY
 	[EXT2_XATTR_INDEX_SECURITY]	     = &ext2_xattr_security_handler,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-स्थिर काष्ठा xattr_handler *ext2_xattr_handlers[] = अणु
+const struct xattr_handler *ext2_xattr_handlers[] = {
 	&ext2_xattr_user_handler,
 	&ext2_xattr_trusted_handler,
-#अगर_घोषित CONFIG_EXT2_FS_POSIX_ACL
+#ifdef CONFIG_EXT2_FS_POSIX_ACL
 	&posix_acl_access_xattr_handler,
-	&posix_acl_शेष_xattr_handler,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_EXT2_FS_SECURITY
+	&posix_acl_default_xattr_handler,
+#endif
+#ifdef CONFIG_EXT2_FS_SECURITY
 	&ext2_xattr_security_handler,
-#पूर्ण_अगर
-	शून्य
-पूर्ण;
+#endif
+	NULL
+};
 
-#घोषणा EA_BLOCK_CACHE(inode)	(EXT2_SB(inode->i_sb)->s_ea_block_cache)
+#define EA_BLOCK_CACHE(inode)	(EXT2_SB(inode->i_sb)->s_ea_block_cache)
 
-अटल अंतरभूत स्थिर काष्ठा xattr_handler *
-ext2_xattr_handler(पूर्णांक name_index)
-अणु
-	स्थिर काष्ठा xattr_handler *handler = शून्य;
+static inline const struct xattr_handler *
+ext2_xattr_handler(int name_index)
+{
+	const struct xattr_handler *handler = NULL;
 
-	अगर (name_index > 0 && name_index < ARRAY_SIZE(ext2_xattr_handler_map))
+	if (name_index > 0 && name_index < ARRAY_SIZE(ext2_xattr_handler_map))
 		handler = ext2_xattr_handler_map[name_index];
-	वापस handler;
-पूर्ण
+	return handler;
+}
 
-अटल bool
-ext2_xattr_header_valid(काष्ठा ext2_xattr_header *header)
-अणु
-	अगर (header->h_magic != cpu_to_le32(EXT2_XATTR_MAGIC) ||
+static bool
+ext2_xattr_header_valid(struct ext2_xattr_header *header)
+{
+	if (header->h_magic != cpu_to_le32(EXT2_XATTR_MAGIC) ||
 	    header->h_blocks != cpu_to_le32(1))
-		वापस false;
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool
-ext2_xattr_entry_valid(काष्ठा ext2_xattr_entry *entry,
-		       अक्षर *end, माप_प्रकार end_offs)
-अणु
-	काष्ठा ext2_xattr_entry *next;
-	माप_प्रकार size;
+static bool
+ext2_xattr_entry_valid(struct ext2_xattr_entry *entry,
+		       char *end, size_t end_offs)
+{
+	struct ext2_xattr_entry *next;
+	size_t size;
 
 	next = EXT2_XATTR_NEXT(entry);
-	अगर ((अक्षर *)next >= end)
-		वापस false;
+	if ((char *)next >= end)
+		return false;
 
-	अगर (entry->e_value_block != 0)
-		वापस false;
+	if (entry->e_value_block != 0)
+		return false;
 
 	size = le32_to_cpu(entry->e_value_size);
-	अगर (size > end_offs ||
+	if (size > end_offs ||
 	    le16_to_cpu(entry->e_value_offs) + size > end_offs)
-		वापस false;
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक
-ext2_xattr_cmp_entry(पूर्णांक name_index, माप_प्रकार name_len, स्थिर अक्षर *name,
-		     काष्ठा ext2_xattr_entry *entry)
-अणु
-	पूर्णांक cmp;
+static int
+ext2_xattr_cmp_entry(int name_index, size_t name_len, const char *name,
+		     struct ext2_xattr_entry *entry)
+{
+	int cmp;
 
 	cmp = name_index - entry->e_name_index;
-	अगर (!cmp)
+	if (!cmp)
 		cmp = name_len - entry->e_name_len;
-	अगर (!cmp)
-		cmp = स_भेद(name, entry->e_name, name_len);
+	if (!cmp)
+		cmp = memcmp(name, entry->e_name, name_len);
 
-	वापस cmp;
-पूर्ण
+	return cmp;
+}
 
 /*
  * ext2_xattr_get()
  *
- * Copy an extended attribute पूर्णांकo the buffer
+ * Copy an extended attribute into the buffer
  * provided, or compute the buffer size required.
- * Buffer is शून्य to compute the size of the buffer required.
+ * Buffer is NULL to compute the size of the buffer required.
  *
  * Returns a negative error number on failure, or the number of bytes
  * used / required on success.
  */
-पूर्णांक
-ext2_xattr_get(काष्ठा inode *inode, पूर्णांक name_index, स्थिर अक्षर *name,
-	       व्योम *buffer, माप_प्रकार buffer_size)
-अणु
-	काष्ठा buffer_head *bh = शून्य;
-	काष्ठा ext2_xattr_entry *entry;
-	माप_प्रकार name_len, size;
-	अक्षर *end;
-	पूर्णांक error, not_found;
-	काष्ठा mb_cache *ea_block_cache = EA_BLOCK_CACHE(inode);
+int
+ext2_xattr_get(struct inode *inode, int name_index, const char *name,
+	       void *buffer, size_t buffer_size)
+{
+	struct buffer_head *bh = NULL;
+	struct ext2_xattr_entry *entry;
+	size_t name_len, size;
+	char *end;
+	int error, not_found;
+	struct mb_cache *ea_block_cache = EA_BLOCK_CACHE(inode);
 
 	ea_idebug(inode, "name=%d.%s, buffer=%p, buffer_size=%ld",
-		  name_index, name, buffer, (दीर्घ)buffer_size);
+		  name_index, name, buffer, (long)buffer_size);
 
-	अगर (name == शून्य)
-		वापस -EINVAL;
-	name_len = म_माप(name);
-	अगर (name_len > 255)
-		वापस -दुस्फल;
+	if (name == NULL)
+		return -EINVAL;
+	name_len = strlen(name);
+	if (name_len > 255)
+		return -ERANGE;
 
-	करोwn_पढ़ो(&EXT2_I(inode)->xattr_sem);
+	down_read(&EXT2_I(inode)->xattr_sem);
 	error = -ENODATA;
-	अगर (!EXT2_I(inode)->i_file_acl)
-		जाओ cleanup;
+	if (!EXT2_I(inode)->i_file_acl)
+		goto cleanup;
 	ea_idebug(inode, "reading block %d", EXT2_I(inode)->i_file_acl);
-	bh = sb_bपढ़ो(inode->i_sb, EXT2_I(inode)->i_file_acl);
+	bh = sb_bread(inode->i_sb, EXT2_I(inode)->i_file_acl);
 	error = -EIO;
-	अगर (!bh)
-		जाओ cleanup;
+	if (!bh)
+		goto cleanup;
 	ea_bdebug(bh, "b_count=%d, refcount=%d",
-		atomic_पढ़ो(&(bh->b_count)), le32_to_cpu(HDR(bh)->h_refcount));
+		atomic_read(&(bh->b_count)), le32_to_cpu(HDR(bh)->h_refcount));
 	end = bh->b_data + bh->b_size;
-	अगर (!ext2_xattr_header_valid(HDR(bh))) अणु
+	if (!ext2_xattr_header_valid(HDR(bh))) {
 bad_block:
 		ext2_error(inode->i_sb, "ext2_xattr_get",
 			"inode %ld: bad block %d", inode->i_ino,
 			EXT2_I(inode)->i_file_acl);
 		error = -EIO;
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 
 	/* find named attribute */
 	entry = FIRST_ENTRY(bh);
-	जबतक (!IS_LAST_ENTRY(entry)) अणु
-		अगर (!ext2_xattr_entry_valid(entry, end,
+	while (!IS_LAST_ENTRY(entry)) {
+		if (!ext2_xattr_entry_valid(entry, end,
 		    inode->i_sb->s_blocksize))
-			जाओ bad_block;
+			goto bad_block;
 
 		not_found = ext2_xattr_cmp_entry(name_index, name_len, name,
 						 entry);
-		अगर (!not_found)
-			जाओ found;
-		अगर (not_found < 0)
-			अवरोध;
+		if (!not_found)
+			goto found;
+		if (not_found < 0)
+			break;
 
 		entry = EXT2_XATTR_NEXT(entry);
-	पूर्ण
-	अगर (ext2_xattr_cache_insert(ea_block_cache, bh))
+	}
+	if (ext2_xattr_cache_insert(ea_block_cache, bh))
 		ea_idebug(inode, "cache insert failed");
 	error = -ENODATA;
-	जाओ cleanup;
+	goto cleanup;
 found:
 	size = le32_to_cpu(entry->e_value_size);
-	अगर (ext2_xattr_cache_insert(ea_block_cache, bh))
+	if (ext2_xattr_cache_insert(ea_block_cache, bh))
 		ea_idebug(inode, "cache insert failed");
-	अगर (buffer) अणु
-		error = -दुस्फल;
-		अगर (size > buffer_size)
-			जाओ cleanup;
-		/* वापस value of attribute */
-		स_नकल(buffer, bh->b_data + le16_to_cpu(entry->e_value_offs),
+	if (buffer) {
+		error = -ERANGE;
+		if (size > buffer_size)
+			goto cleanup;
+		/* return value of attribute */
+		memcpy(buffer, bh->b_data + le16_to_cpu(entry->e_value_offs),
 			size);
-	पूर्ण
+	}
 	error = size;
 
 cleanup:
-	brअन्यथा(bh);
-	up_पढ़ो(&EXT2_I(inode)->xattr_sem);
+	brelse(bh);
+	up_read(&EXT2_I(inode)->xattr_sem);
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /*
  * ext2_xattr_list()
  *
- * Copy a list of attribute names पूर्णांकo the buffer
+ * Copy a list of attribute names into the buffer
  * provided, or compute the buffer size required.
- * Buffer is शून्य to compute the size of the buffer required.
+ * Buffer is NULL to compute the size of the buffer required.
  *
  * Returns a negative error number on failure, or the number of bytes
  * used / required on success.
  */
-अटल पूर्णांक
-ext2_xattr_list(काष्ठा dentry *dentry, अक्षर *buffer, माप_प्रकार buffer_size)
-अणु
-	काष्ठा inode *inode = d_inode(dentry);
-	काष्ठा buffer_head *bh = शून्य;
-	काष्ठा ext2_xattr_entry *entry;
-	अक्षर *end;
-	माप_प्रकार rest = buffer_size;
-	पूर्णांक error;
-	काष्ठा mb_cache *ea_block_cache = EA_BLOCK_CACHE(inode);
+static int
+ext2_xattr_list(struct dentry *dentry, char *buffer, size_t buffer_size)
+{
+	struct inode *inode = d_inode(dentry);
+	struct buffer_head *bh = NULL;
+	struct ext2_xattr_entry *entry;
+	char *end;
+	size_t rest = buffer_size;
+	int error;
+	struct mb_cache *ea_block_cache = EA_BLOCK_CACHE(inode);
 
 	ea_idebug(inode, "buffer=%p, buffer_size=%ld",
-		  buffer, (दीर्घ)buffer_size);
+		  buffer, (long)buffer_size);
 
-	करोwn_पढ़ो(&EXT2_I(inode)->xattr_sem);
+	down_read(&EXT2_I(inode)->xattr_sem);
 	error = 0;
-	अगर (!EXT2_I(inode)->i_file_acl)
-		जाओ cleanup;
+	if (!EXT2_I(inode)->i_file_acl)
+		goto cleanup;
 	ea_idebug(inode, "reading block %d", EXT2_I(inode)->i_file_acl);
-	bh = sb_bपढ़ो(inode->i_sb, EXT2_I(inode)->i_file_acl);
+	bh = sb_bread(inode->i_sb, EXT2_I(inode)->i_file_acl);
 	error = -EIO;
-	अगर (!bh)
-		जाओ cleanup;
+	if (!bh)
+		goto cleanup;
 	ea_bdebug(bh, "b_count=%d, refcount=%d",
-		atomic_पढ़ो(&(bh->b_count)), le32_to_cpu(HDR(bh)->h_refcount));
+		atomic_read(&(bh->b_count)), le32_to_cpu(HDR(bh)->h_refcount));
 	end = bh->b_data + bh->b_size;
-	अगर (!ext2_xattr_header_valid(HDR(bh))) अणु
+	if (!ext2_xattr_header_valid(HDR(bh))) {
 bad_block:
 		ext2_error(inode->i_sb, "ext2_xattr_list",
 			"inode %ld: bad block %d", inode->i_ino,
 			EXT2_I(inode)->i_file_acl);
 		error = -EIO;
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 
-	/* check the on-disk data काष्ठाure */
+	/* check the on-disk data structure */
 	entry = FIRST_ENTRY(bh);
-	जबतक (!IS_LAST_ENTRY(entry)) अणु
-		अगर (!ext2_xattr_entry_valid(entry, end,
+	while (!IS_LAST_ENTRY(entry)) {
+		if (!ext2_xattr_entry_valid(entry, end,
 		    inode->i_sb->s_blocksize))
-			जाओ bad_block;
+			goto bad_block;
 		entry = EXT2_XATTR_NEXT(entry);
-	पूर्ण
-	अगर (ext2_xattr_cache_insert(ea_block_cache, bh))
+	}
+	if (ext2_xattr_cache_insert(ea_block_cache, bh))
 		ea_idebug(inode, "cache insert failed");
 
 	/* list the attribute names */
-	क्रम (entry = FIRST_ENTRY(bh); !IS_LAST_ENTRY(entry);
-	     entry = EXT2_XATTR_NEXT(entry)) अणु
-		स्थिर काष्ठा xattr_handler *handler =
+	for (entry = FIRST_ENTRY(bh); !IS_LAST_ENTRY(entry);
+	     entry = EXT2_XATTR_NEXT(entry)) {
+		const struct xattr_handler *handler =
 			ext2_xattr_handler(entry->e_name_index);
 
-		अगर (handler && (!handler->list || handler->list(dentry))) अणु
-			स्थिर अक्षर *prefix = handler->prefix ?: handler->name;
-			माप_प्रकार prefix_len = म_माप(prefix);
-			माप_प्रकार size = prefix_len + entry->e_name_len + 1;
+		if (handler && (!handler->list || handler->list(dentry))) {
+			const char *prefix = handler->prefix ?: handler->name;
+			size_t prefix_len = strlen(prefix);
+			size_t size = prefix_len + entry->e_name_len + 1;
 
-			अगर (buffer) अणु
-				अगर (size > rest) अणु
-					error = -दुस्फल;
-					जाओ cleanup;
-				पूर्ण
-				स_नकल(buffer, prefix, prefix_len);
+			if (buffer) {
+				if (size > rest) {
+					error = -ERANGE;
+					goto cleanup;
+				}
+				memcpy(buffer, prefix, prefix_len);
 				buffer += prefix_len;
-				स_नकल(buffer, entry->e_name, entry->e_name_len);
+				memcpy(buffer, entry->e_name, entry->e_name_len);
 				buffer += entry->e_name_len;
 				*buffer++ = 0;
-			पूर्ण
+			}
 			rest -= size;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	error = buffer_size - rest;  /* total size */
 
 cleanup:
-	brअन्यथा(bh);
-	up_पढ़ो(&EXT2_I(inode)->xattr_sem);
+	brelse(bh);
+	up_read(&EXT2_I(inode)->xattr_sem);
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /*
  * Inode operation listxattr()
  *
- * d_inode(dentry)->i_mutex: करोn't care
+ * d_inode(dentry)->i_mutex: don't care
  */
-sमाप_प्रकार
-ext2_listxattr(काष्ठा dentry *dentry, अक्षर *buffer, माप_प्रकार size)
-अणु
-	वापस ext2_xattr_list(dentry, buffer, size);
-पूर्ण
+ssize_t
+ext2_listxattr(struct dentry *dentry, char *buffer, size_t size)
+{
+	return ext2_xattr_list(dentry, buffer, size);
+}
 
 /*
- * If the EXT2_FEATURE_COMPAT_EXT_ATTR feature of this file प्रणाली is
+ * If the EXT2_FEATURE_COMPAT_EXT_ATTR feature of this file system is
  * not set, set it.
  */
-अटल व्योम ext2_xattr_update_super_block(काष्ठा super_block *sb)
-अणु
-	अगर (EXT2_HAS_COMPAT_FEATURE(sb, EXT2_FEATURE_COMPAT_EXT_ATTR))
-		वापस;
+static void ext2_xattr_update_super_block(struct super_block *sb)
+{
+	if (EXT2_HAS_COMPAT_FEATURE(sb, EXT2_FEATURE_COMPAT_EXT_ATTR))
+		return;
 
 	spin_lock(&EXT2_SB(sb)->s_lock);
 	ext2_update_dynamic_rev(sb);
 	EXT2_SET_COMPAT_FEATURE(sb, EXT2_FEATURE_COMPAT_EXT_ATTR);
 	spin_unlock(&EXT2_SB(sb)->s_lock);
 	mark_buffer_dirty(EXT2_SB(sb)->s_sbh);
-पूर्ण
+}
 
 /*
  * ext2_xattr_set()
  *
- * Create, replace or हटाओ an extended attribute क्रम this inode.  Value
- * is शून्य to हटाओ an existing extended attribute, and non-शून्य to
+ * Create, replace or remove an extended attribute for this inode.  Value
+ * is NULL to remove an existing extended attribute, and non-NULL to
  * either replace an existing extended attribute, or create a new extended
  * attribute. The flags XATTR_REPLACE and XATTR_CREATE
- * specअगरy that an extended attribute must exist and must not exist
+ * specify that an extended attribute must exist and must not exist
  * previous to the call, respectively.
  *
  * Returns 0, or a negative error number on failure.
  */
-पूर्णांक
-ext2_xattr_set(काष्ठा inode *inode, पूर्णांक name_index, स्थिर अक्षर *name,
-	       स्थिर व्योम *value, माप_प्रकार value_len, पूर्णांक flags)
-अणु
-	काष्ठा super_block *sb = inode->i_sb;
-	काष्ठा buffer_head *bh = शून्य;
-	काष्ठा ext2_xattr_header *header = शून्य;
-	काष्ठा ext2_xattr_entry *here = शून्य, *last = शून्य;
-	माप_प्रकार name_len, मुक्त, min_offs = sb->s_blocksize;
-	पूर्णांक not_found = 1, error;
-	अक्षर *end;
+int
+ext2_xattr_set(struct inode *inode, int name_index, const char *name,
+	       const void *value, size_t value_len, int flags)
+{
+	struct super_block *sb = inode->i_sb;
+	struct buffer_head *bh = NULL;
+	struct ext2_xattr_header *header = NULL;
+	struct ext2_xattr_entry *here = NULL, *last = NULL;
+	size_t name_len, free, min_offs = sb->s_blocksize;
+	int not_found = 1, error;
+	char *end;
 	
 	/*
-	 * header -- Poपूर्णांकs either पूर्णांकo bh, or to a temporarily
+	 * header -- Points either into bh, or to a temporarily
 	 *           allocated buffer.
-	 * here -- The named entry found, or the place क्रम inserting, within
-	 *         the block poपूर्णांकed to by header.
-	 * last -- Poपूर्णांकs right after the last named entry within the block
-	 *         poपूर्णांकed to by header.
+	 * here -- The named entry found, or the place for inserting, within
+	 *         the block pointed to by header.
+	 * last -- Points right after the last named entry within the block
+	 *         pointed to by header.
 	 * min_offs -- The offset of the first value (values are aligned
 	 *             towards the end of the block).
-	 * end -- Poपूर्णांकs right after the block poपूर्णांकed to by header.
+	 * end -- Points right after the block pointed to by header.
 	 */
 	
 	ea_idebug(inode, "name=%d.%s, value=%p, value_len=%ld",
-		  name_index, name, value, (दीर्घ)value_len);
+		  name_index, name, value, (long)value_len);
 
-	अगर (value == शून्य)
+	if (value == NULL)
 		value_len = 0;
-	अगर (name == शून्य)
-		वापस -EINVAL;
-	name_len = म_माप(name);
-	अगर (name_len > 255 || value_len > sb->s_blocksize)
-		वापस -दुस्फल;
+	if (name == NULL)
+		return -EINVAL;
+	name_len = strlen(name);
+	if (name_len > 255 || value_len > sb->s_blocksize)
+		return -ERANGE;
 	error = dquot_initialize(inode);
-	अगर (error)
-		वापस error;
-	करोwn_ग_लिखो(&EXT2_I(inode)->xattr_sem);
-	अगर (EXT2_I(inode)->i_file_acl) अणु
-		/* The inode alपढ़ोy has an extended attribute block. */
-		bh = sb_bपढ़ो(sb, EXT2_I(inode)->i_file_acl);
+	if (error)
+		return error;
+	down_write(&EXT2_I(inode)->xattr_sem);
+	if (EXT2_I(inode)->i_file_acl) {
+		/* The inode already has an extended attribute block. */
+		bh = sb_bread(sb, EXT2_I(inode)->i_file_acl);
 		error = -EIO;
-		अगर (!bh)
-			जाओ cleanup;
+		if (!bh)
+			goto cleanup;
 		ea_bdebug(bh, "b_count=%d, refcount=%d",
-			atomic_पढ़ो(&(bh->b_count)),
+			atomic_read(&(bh->b_count)),
 			le32_to_cpu(HDR(bh)->h_refcount));
 		header = HDR(bh);
 		end = bh->b_data + bh->b_size;
-		अगर (!ext2_xattr_header_valid(header)) अणु
+		if (!ext2_xattr_header_valid(header)) {
 bad_block:
 			ext2_error(sb, "ext2_xattr_set",
 				"inode %ld: bad block %d", inode->i_ino, 
 				   EXT2_I(inode)->i_file_acl);
 			error = -EIO;
-			जाओ cleanup;
-		पूर्ण
+			goto cleanup;
+		}
 		/*
-		 * Find the named attribute. If not found, 'here' will poपूर्णांक
+		 * Find the named attribute. If not found, 'here' will point
 		 * to entry where the new attribute should be inserted to
-		 * मुख्यtain sorting.
+		 * maintain sorting.
 		 */
 		last = FIRST_ENTRY(bh);
-		जबतक (!IS_LAST_ENTRY(last)) अणु
-			अगर (!ext2_xattr_entry_valid(last, end, sb->s_blocksize))
-				जाओ bad_block;
-			अगर (last->e_value_size) अणु
-				माप_प्रकार offs = le16_to_cpu(last->e_value_offs);
-				अगर (offs < min_offs)
+		while (!IS_LAST_ENTRY(last)) {
+			if (!ext2_xattr_entry_valid(last, end, sb->s_blocksize))
+				goto bad_block;
+			if (last->e_value_size) {
+				size_t offs = le16_to_cpu(last->e_value_offs);
+				if (offs < min_offs)
 					min_offs = offs;
-			पूर्ण
-			अगर (not_found > 0) अणु
+			}
+			if (not_found > 0) {
 				not_found = ext2_xattr_cmp_entry(name_index,
 								 name_len,
 								 name, last);
-				अगर (not_found <= 0)
+				if (not_found <= 0)
 					here = last;
-			पूर्ण
+			}
 			last = EXT2_XATTR_NEXT(last);
-		पूर्ण
-		अगर (not_found > 0)
+		}
+		if (not_found > 0)
 			here = last;
 
 		/* Check whether we have enough space left. */
-		मुक्त = min_offs - ((अक्षर*)last - (अक्षर*)header) - माप(__u32);
-	पूर्ण अन्यथा अणु
+		free = min_offs - ((char*)last - (char*)header) - sizeof(__u32);
+	} else {
 		/* We will use a new extended attribute block. */
-		मुक्त = sb->s_blocksize -
-			माप(काष्ठा ext2_xattr_header) - माप(__u32);
-	पूर्ण
+		free = sb->s_blocksize -
+			sizeof(struct ext2_xattr_header) - sizeof(__u32);
+	}
 
-	अगर (not_found) अणु
-		/* Request to हटाओ a nonexistent attribute? */
+	if (not_found) {
+		/* Request to remove a nonexistent attribute? */
 		error = -ENODATA;
-		अगर (flags & XATTR_REPLACE)
-			जाओ cleanup;
+		if (flags & XATTR_REPLACE)
+			goto cleanup;
 		error = 0;
-		अगर (value == शून्य)
-			जाओ cleanup;
-	पूर्ण अन्यथा अणु
+		if (value == NULL)
+			goto cleanup;
+	} else {
 		/* Request to create an existing attribute? */
 		error = -EEXIST;
-		अगर (flags & XATTR_CREATE)
-			जाओ cleanup;
-		मुक्त += EXT2_XATTR_SIZE(le32_to_cpu(here->e_value_size));
-		मुक्त += EXT2_XATTR_LEN(name_len);
-	पूर्ण
+		if (flags & XATTR_CREATE)
+			goto cleanup;
+		free += EXT2_XATTR_SIZE(le32_to_cpu(here->e_value_size));
+		free += EXT2_XATTR_LEN(name_len);
+	}
 	error = -ENOSPC;
-	अगर (मुक्त < EXT2_XATTR_LEN(name_len) + EXT2_XATTR_SIZE(value_len))
-		जाओ cleanup;
+	if (free < EXT2_XATTR_LEN(name_len) + EXT2_XATTR_SIZE(value_len))
+		goto cleanup;
 
 	/* Here we know that we can set the new attribute. */
 
-	अगर (header) अणु
-		/* निश्चित(header == HDR(bh)); */
+	if (header) {
+		/* assert(header == HDR(bh)); */
 		lock_buffer(bh);
-		अगर (header->h_refcount == cpu_to_le32(1)) अणु
+		if (header->h_refcount == cpu_to_le32(1)) {
 			__u32 hash = le32_to_cpu(header->h_hash);
 
 			ea_bdebug(bh, "modifying in-place");
 			/*
-			 * This must happen under buffer lock क्रम
-			 * ext2_xattr_set2() to reliably detect modअगरied block
+			 * This must happen under buffer lock for
+			 * ext2_xattr_set2() to reliably detect modified block
 			 */
 			mb_cache_entry_delete(EA_BLOCK_CACHE(inode), hash,
 					      bh->b_blocknr);
 
-			/* keep the buffer locked जबतक modअगरying it. */
-		पूर्ण अन्यथा अणु
-			पूर्णांक offset;
+			/* keep the buffer locked while modifying it. */
+		} else {
+			int offset;
 
 			unlock_buffer(bh);
 			ea_bdebug(bh, "cloning");
 			header = kmemdup(HDR(bh), bh->b_size, GFP_KERNEL);
 			error = -ENOMEM;
-			अगर (header == शून्य)
-				जाओ cleanup;
+			if (header == NULL)
+				goto cleanup;
 			header->h_refcount = cpu_to_le32(1);
 
-			offset = (अक्षर *)here - bh->b_data;
-			here = ENTRY((अक्षर *)header + offset);
-			offset = (अक्षर *)last - bh->b_data;
-			last = ENTRY((अक्षर *)header + offset);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		/* Allocate a buffer where we स्थिरruct the new block. */
+			offset = (char *)here - bh->b_data;
+			here = ENTRY((char *)header + offset);
+			offset = (char *)last - bh->b_data;
+			last = ENTRY((char *)header + offset);
+		}
+	} else {
+		/* Allocate a buffer where we construct the new block. */
 		header = kzalloc(sb->s_blocksize, GFP_KERNEL);
 		error = -ENOMEM;
-		अगर (header == शून्य)
-			जाओ cleanup;
-		end = (अक्षर *)header + sb->s_blocksize;
+		if (header == NULL)
+			goto cleanup;
+		end = (char *)header + sb->s_blocksize;
 		header->h_magic = cpu_to_le32(EXT2_XATTR_MAGIC);
 		header->h_blocks = header->h_refcount = cpu_to_le32(1);
 		last = here = ENTRY(header+1);
-	पूर्ण
+	}
 
-	/* Iff we are modअगरying the block in-place, bh is locked here. */
+	/* Iff we are modifying the block in-place, bh is locked here. */
 
-	अगर (not_found) अणु
+	if (not_found) {
 		/* Insert the new name. */
-		माप_प्रकार size = EXT2_XATTR_LEN(name_len);
-		माप_प्रकार rest = (अक्षर *)last - (अक्षर *)here;
-		स_हटाओ((अक्षर *)here + size, here, rest);
-		स_रखो(here, 0, size);
+		size_t size = EXT2_XATTR_LEN(name_len);
+		size_t rest = (char *)last - (char *)here;
+		memmove((char *)here + size, here, rest);
+		memset(here, 0, size);
 		here->e_name_index = name_index;
 		here->e_name_len = name_len;
-		स_नकल(here->e_name, name, name_len);
-	पूर्ण अन्यथा अणु
-		अगर (here->e_value_size) अणु
-			अक्षर *first_val = (अक्षर *)header + min_offs;
-			माप_प्रकार offs = le16_to_cpu(here->e_value_offs);
-			अक्षर *val = (अक्षर *)header + offs;
-			माप_प्रकार size = EXT2_XATTR_SIZE(
+		memcpy(here->e_name, name, name_len);
+	} else {
+		if (here->e_value_size) {
+			char *first_val = (char *)header + min_offs;
+			size_t offs = le16_to_cpu(here->e_value_offs);
+			char *val = (char *)header + offs;
+			size_t size = EXT2_XATTR_SIZE(
 				le32_to_cpu(here->e_value_size));
 
-			अगर (size == EXT2_XATTR_SIZE(value_len)) अणु
+			if (size == EXT2_XATTR_SIZE(value_len)) {
 				/* The old and the new value have the same
 				   size. Just replace. */
 				here->e_value_size = cpu_to_le32(value_len);
-				स_रखो(val + size - EXT2_XATTR_PAD, 0,
+				memset(val + size - EXT2_XATTR_PAD, 0,
 				       EXT2_XATTR_PAD); /* Clear pad bytes. */
-				स_नकल(val, value, value_len);
-				जाओ skip_replace;
-			पूर्ण
+				memcpy(val, value, value_len);
+				goto skip_replace;
+			}
 
 			/* Remove the old value. */
-			स_हटाओ(first_val + size, first_val, val - first_val);
-			स_रखो(first_val, 0, size);
+			memmove(first_val + size, first_val, val - first_val);
+			memset(first_val, 0, size);
 			min_offs += size;
 
 			/* Adjust all value offsets. */
 			last = ENTRY(header+1);
-			जबतक (!IS_LAST_ENTRY(last)) अणु
-				माप_प्रकार o = le16_to_cpu(last->e_value_offs);
-				अगर (o < offs)
+			while (!IS_LAST_ENTRY(last)) {
+				size_t o = le16_to_cpu(last->e_value_offs);
+				if (o < offs)
 					last->e_value_offs =
 						cpu_to_le16(o + size);
 				last = EXT2_XATTR_NEXT(last);
-			पूर्ण
+			}
 
 			here->e_value_offs = 0;
-		पूर्ण
-		अगर (value == शून्य) अणु
+		}
+		if (value == NULL) {
 			/* Remove the old name. */
-			माप_प्रकार size = EXT2_XATTR_LEN(name_len);
-			last = ENTRY((अक्षर *)last - size);
-			स_हटाओ(here, (अक्षर*)here + size,
-				(अक्षर*)last - (अक्षर*)here);
-			स_रखो(last, 0, size);
-		पूर्ण
-	पूर्ण
+			size_t size = EXT2_XATTR_LEN(name_len);
+			last = ENTRY((char *)last - size);
+			memmove(here, (char*)here + size,
+				(char*)last - (char*)here);
+			memset(last, 0, size);
+		}
+	}
 
-	अगर (value != शून्य) अणु
+	if (value != NULL) {
 		/* Insert the new value. */
 		here->e_value_size = cpu_to_le32(value_len);
-		अगर (value_len) अणु
-			माप_प्रकार size = EXT2_XATTR_SIZE(value_len);
-			अक्षर *val = (अक्षर *)header + min_offs - size;
+		if (value_len) {
+			size_t size = EXT2_XATTR_SIZE(value_len);
+			char *val = (char *)header + min_offs - size;
 			here->e_value_offs =
-				cpu_to_le16((अक्षर *)val - (अक्षर *)header);
-			स_रखो(val + size - EXT2_XATTR_PAD, 0,
+				cpu_to_le16((char *)val - (char *)header);
+			memset(val + size - EXT2_XATTR_PAD, 0,
 			       EXT2_XATTR_PAD); /* Clear the pad bytes. */
-			स_नकल(val, value, value_len);
-		पूर्ण
-	पूर्ण
+			memcpy(val, value, value_len);
+		}
+	}
 
 skip_replace:
-	अगर (IS_LAST_ENTRY(ENTRY(header+1))) अणु
+	if (IS_LAST_ENTRY(ENTRY(header+1))) {
 		/* This block is now empty. */
-		अगर (bh && header == HDR(bh))
-			unlock_buffer(bh);  /* we were modअगरying in-place. */
-		error = ext2_xattr_set2(inode, bh, शून्य);
-	पूर्ण अन्यथा अणु
+		if (bh && header == HDR(bh))
+			unlock_buffer(bh);  /* we were modifying in-place. */
+		error = ext2_xattr_set2(inode, bh, NULL);
+	} else {
 		ext2_xattr_rehash(header, here);
-		अगर (bh && header == HDR(bh))
-			unlock_buffer(bh);  /* we were modअगरying in-place. */
+		if (bh && header == HDR(bh))
+			unlock_buffer(bh);  /* we were modifying in-place. */
 		error = ext2_xattr_set2(inode, bh, header);
-	पूर्ण
+	}
 
 cleanup:
-	अगर (!(bh && header == HDR(bh)))
-		kमुक्त(header);
-	brअन्यथा(bh);
-	up_ग_लिखो(&EXT2_I(inode)->xattr_sem);
+	if (!(bh && header == HDR(bh)))
+		kfree(header);
+	brelse(bh);
+	up_write(&EXT2_I(inode)->xattr_sem);
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /*
- * Second half of ext2_xattr_set(): Update the file प्रणाली.
+ * Second half of ext2_xattr_set(): Update the file system.
  */
-अटल पूर्णांक
-ext2_xattr_set2(काष्ठा inode *inode, काष्ठा buffer_head *old_bh,
-		काष्ठा ext2_xattr_header *header)
-अणु
-	काष्ठा super_block *sb = inode->i_sb;
-	काष्ठा buffer_head *new_bh = शून्य;
-	पूर्णांक error;
-	काष्ठा mb_cache *ea_block_cache = EA_BLOCK_CACHE(inode);
+static int
+ext2_xattr_set2(struct inode *inode, struct buffer_head *old_bh,
+		struct ext2_xattr_header *header)
+{
+	struct super_block *sb = inode->i_sb;
+	struct buffer_head *new_bh = NULL;
+	int error;
+	struct mb_cache *ea_block_cache = EA_BLOCK_CACHE(inode);
 
-	अगर (header) अणु
+	if (header) {
 		new_bh = ext2_xattr_cache_find(inode, header);
-		अगर (new_bh) अणु
+		if (new_bh) {
 			/* We found an identical block in the cache. */
-			अगर (new_bh == old_bh) अणु
+			if (new_bh == old_bh) {
 				ea_bdebug(new_bh, "keeping this block");
-			पूर्ण अन्यथा अणु
+			} else {
 				/* The old block is released after updating
 				   the inode.  */
 				ea_bdebug(new_bh, "reusing block");
 
 				error = dquot_alloc_block(inode, 1);
-				अगर (error) अणु
+				if (error) {
 					unlock_buffer(new_bh);
-					जाओ cleanup;
-				पूर्ण
+					goto cleanup;
+				}
 				le32_add_cpu(&HDR(new_bh)->h_refcount, 1);
 				ea_bdebug(new_bh, "refcount now=%d",
 					le32_to_cpu(HDR(new_bh)->h_refcount));
-			पूर्ण
+			}
 			unlock_buffer(new_bh);
-		पूर्ण अन्यथा अगर (old_bh && header == HDR(old_bh)) अणु
+		} else if (old_bh && header == HDR(old_bh)) {
 			/* Keep this block. No need to lock the block as we
-			   करोn't need to change the reference count. */
+			   don't need to change the reference count. */
 			new_bh = old_bh;
 			get_bh(new_bh);
 			ext2_xattr_cache_insert(ea_block_cache, new_bh);
-		पूर्ण अन्यथा अणु
+		} else {
 			/* We need to allocate a new block */
 			ext2_fsblk_t goal = ext2_group_first_block_no(sb,
 						EXT2_I(inode)->i_block_group);
-			पूर्णांक block = ext2_new_block(inode, goal, &error);
-			अगर (error)
-				जाओ cleanup;
+			int block = ext2_new_block(inode, goal, &error);
+			if (error)
+				goto cleanup;
 			ea_idebug(inode, "creating block %d", block);
 
 			new_bh = sb_getblk(sb, block);
-			अगर (unlikely(!new_bh)) अणु
-				ext2_मुक्त_blocks(inode, block, 1);
+			if (unlikely(!new_bh)) {
+				ext2_free_blocks(inode, block, 1);
 				mark_inode_dirty(inode);
 				error = -ENOMEM;
-				जाओ cleanup;
-			पूर्ण
+				goto cleanup;
+			}
 			lock_buffer(new_bh);
-			स_नकल(new_bh->b_data, header, new_bh->b_size);
+			memcpy(new_bh->b_data, header, new_bh->b_size);
 			set_buffer_uptodate(new_bh);
 			unlock_buffer(new_bh);
 			ext2_xattr_cache_insert(ea_block_cache, new_bh);
 			
 			ext2_xattr_update_super_block(sb);
-		पूर्ण
+		}
 		mark_buffer_dirty(new_bh);
-		अगर (IS_SYNC(inode)) अणु
+		if (IS_SYNC(inode)) {
 			sync_dirty_buffer(new_bh);
 			error = -EIO;
-			अगर (buffer_req(new_bh) && !buffer_uptodate(new_bh))
-				जाओ cleanup;
-		पूर्ण
-	पूर्ण
+			if (buffer_req(new_bh) && !buffer_uptodate(new_bh))
+				goto cleanup;
+		}
+	}
 
 	/* Update the inode. */
 	EXT2_I(inode)->i_file_acl = new_bh ? new_bh->b_blocknr : 0;
-	inode->i_स_समय = current_समय(inode);
-	अगर (IS_SYNC(inode)) अणु
+	inode->i_ctime = current_time(inode);
+	if (IS_SYNC(inode)) {
 		error = sync_inode_metadata(inode, 1);
-		/* In हाल sync failed due to ENOSPC the inode was actually
+		/* In case sync failed due to ENOSPC the inode was actually
 		 * written (only some dirty data were not) so we just proceed
-		 * as अगर nothing happened and cleanup the unused block */
-		अगर (error && error != -ENOSPC) अणु
-			अगर (new_bh && new_bh != old_bh) अणु
-				dquot_मुक्त_block_nodirty(inode, 1);
+		 * as if nothing happened and cleanup the unused block */
+		if (error && error != -ENOSPC) {
+			if (new_bh && new_bh != old_bh) {
+				dquot_free_block_nodirty(inode, 1);
 				mark_inode_dirty(inode);
-			पूर्ण
-			जाओ cleanup;
-		पूर्ण
-	पूर्ण अन्यथा
+			}
+			goto cleanup;
+		}
+	} else
 		mark_inode_dirty(inode);
 
 	error = 0;
-	अगर (old_bh && old_bh != new_bh) अणु
+	if (old_bh && old_bh != new_bh) {
 		/*
-		 * If there was an old block and we are no दीर्घer using it,
+		 * If there was an old block and we are no longer using it,
 		 * release the old block.
 		 */
 		lock_buffer(old_bh);
-		अगर (HDR(old_bh)->h_refcount == cpu_to_le32(1)) अणु
+		if (HDR(old_bh)->h_refcount == cpu_to_le32(1)) {
 			__u32 hash = le32_to_cpu(HDR(old_bh)->h_hash);
 
 			/*
-			 * This must happen under buffer lock क्रम
-			 * ext2_xattr_set2() to reliably detect मुक्तd block
+			 * This must happen under buffer lock for
+			 * ext2_xattr_set2() to reliably detect freed block
 			 */
 			mb_cache_entry_delete(ea_block_cache, hash,
 					      old_bh->b_blocknr);
 			/* Free the old block. */
 			ea_bdebug(old_bh, "freeing");
-			ext2_मुक्त_blocks(inode, old_bh->b_blocknr, 1);
+			ext2_free_blocks(inode, old_bh->b_blocknr, 1);
 			mark_inode_dirty(inode);
 			/* We let our caller release old_bh, so we
-			 * need to duplicate the buffer beक्रमe. */
+			 * need to duplicate the buffer before. */
 			get_bh(old_bh);
-			bक्रमget(old_bh);
-		पूर्ण अन्यथा अणु
+			bforget(old_bh);
+		} else {
 			/* Decrement the refcount only. */
 			le32_add_cpu(&HDR(old_bh)->h_refcount, -1);
-			dquot_मुक्त_block_nodirty(inode, 1);
+			dquot_free_block_nodirty(inode, 1);
 			mark_inode_dirty(inode);
 			mark_buffer_dirty(old_bh);
 			ea_bdebug(old_bh, "refcount now=%d",
 				le32_to_cpu(HDR(old_bh)->h_refcount));
-		पूर्ण
+		}
 		unlock_buffer(old_bh);
-	पूर्ण
+	}
 
 cleanup:
-	brअन्यथा(new_bh);
+	brelse(new_bh);
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /*
  * ext2_xattr_delete_inode()
  *
  * Free extended attribute resources associated with this inode. This
- * is called immediately beक्रमe an inode is मुक्तd.
+ * is called immediately before an inode is freed.
  */
-व्योम
-ext2_xattr_delete_inode(काष्ठा inode *inode)
-अणु
-	काष्ठा buffer_head *bh = शून्य;
-	काष्ठा ext2_sb_info *sbi = EXT2_SB(inode->i_sb);
+void
+ext2_xattr_delete_inode(struct inode *inode)
+{
+	struct buffer_head *bh = NULL;
+	struct ext2_sb_info *sbi = EXT2_SB(inode->i_sb);
 
 	/*
 	 * We are the only ones holding inode reference. The xattr_sem should
 	 * better be unlocked! We could as well just not acquire xattr_sem at
 	 * all but this makes the code more futureproof. OTOH we need trylock
-	 * here to aव्योम false-positive warning from lockdep about reclaim
+	 * here to avoid false-positive warning from lockdep about reclaim
 	 * circular dependency.
 	 */
-	अगर (WARN_ON_ONCE(!करोwn_ग_लिखो_trylock(&EXT2_I(inode)->xattr_sem)))
-		वापस;
-	अगर (!EXT2_I(inode)->i_file_acl)
-		जाओ cleanup;
+	if (WARN_ON_ONCE(!down_write_trylock(&EXT2_I(inode)->xattr_sem)))
+		return;
+	if (!EXT2_I(inode)->i_file_acl)
+		goto cleanup;
 
-	अगर (!ext2_data_block_valid(sbi, EXT2_I(inode)->i_file_acl, 1)) अणु
+	if (!ext2_data_block_valid(sbi, EXT2_I(inode)->i_file_acl, 1)) {
 		ext2_error(inode->i_sb, "ext2_xattr_delete_inode",
 			"inode %ld: xattr block %d is out of data blocks range",
 			inode->i_ino, EXT2_I(inode)->i_file_acl);
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 
-	bh = sb_bपढ़ो(inode->i_sb, EXT2_I(inode)->i_file_acl);
-	अगर (!bh) अणु
+	bh = sb_bread(inode->i_sb, EXT2_I(inode)->i_file_acl);
+	if (!bh) {
 		ext2_error(inode->i_sb, "ext2_xattr_delete_inode",
 			"inode %ld: block %d read error", inode->i_ino,
 			EXT2_I(inode)->i_file_acl);
-		जाओ cleanup;
-	पूर्ण
-	ea_bdebug(bh, "b_count=%d", atomic_पढ़ो(&(bh->b_count)));
-	अगर (!ext2_xattr_header_valid(HDR(bh))) अणु
+		goto cleanup;
+	}
+	ea_bdebug(bh, "b_count=%d", atomic_read(&(bh->b_count)));
+	if (!ext2_xattr_header_valid(HDR(bh))) {
 		ext2_error(inode->i_sb, "ext2_xattr_delete_inode",
 			"inode %ld: bad block %d", inode->i_ino,
 			EXT2_I(inode)->i_file_acl);
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 	lock_buffer(bh);
-	अगर (HDR(bh)->h_refcount == cpu_to_le32(1)) अणु
+	if (HDR(bh)->h_refcount == cpu_to_le32(1)) {
 		__u32 hash = le32_to_cpu(HDR(bh)->h_hash);
 
 		/*
-		 * This must happen under buffer lock क्रम ext2_xattr_set2() to
-		 * reliably detect मुक्तd block
+		 * This must happen under buffer lock for ext2_xattr_set2() to
+		 * reliably detect freed block
 		 */
 		mb_cache_entry_delete(EA_BLOCK_CACHE(inode), hash,
 				      bh->b_blocknr);
-		ext2_मुक्त_blocks(inode, EXT2_I(inode)->i_file_acl, 1);
+		ext2_free_blocks(inode, EXT2_I(inode)->i_file_acl, 1);
 		get_bh(bh);
-		bक्रमget(bh);
+		bforget(bh);
 		unlock_buffer(bh);
-	पूर्ण अन्यथा अणु
+	} else {
 		le32_add_cpu(&HDR(bh)->h_refcount, -1);
 		ea_bdebug(bh, "refcount now=%d",
 			le32_to_cpu(HDR(bh)->h_refcount));
 		unlock_buffer(bh);
 		mark_buffer_dirty(bh);
-		अगर (IS_SYNC(inode))
+		if (IS_SYNC(inode))
 			sync_dirty_buffer(bh);
-		dquot_मुक्त_block_nodirty(inode, 1);
-	पूर्ण
+		dquot_free_block_nodirty(inode, 1);
+	}
 	EXT2_I(inode)->i_file_acl = 0;
 
 cleanup:
-	brअन्यथा(bh);
-	up_ग_लिखो(&EXT2_I(inode)->xattr_sem);
-पूर्ण
+	brelse(bh);
+	up_write(&EXT2_I(inode)->xattr_sem);
+}
 
 /*
  * ext2_xattr_cache_insert()
  *
  * Create a new entry in the extended attribute cache, and insert
- * it unless such an entry is alपढ़ोy in the cache.
+ * it unless such an entry is already in the cache.
  *
  * Returns 0, or a negative error number on failure.
  */
-अटल पूर्णांक
-ext2_xattr_cache_insert(काष्ठा mb_cache *cache, काष्ठा buffer_head *bh)
-अणु
+static int
+ext2_xattr_cache_insert(struct mb_cache *cache, struct buffer_head *bh)
+{
 	__u32 hash = le32_to_cpu(HDR(bh)->h_hash);
-	पूर्णांक error;
+	int error;
 
 	error = mb_cache_entry_create(cache, GFP_NOFS, hash, bh->b_blocknr,
 				      true);
-	अगर (error) अणु
-		अगर (error == -EBUSY) अणु
+	if (error) {
+		if (error == -EBUSY) {
 			ea_bdebug(bh, "already in cache");
 			error = 0;
-		पूर्ण
-	पूर्ण अन्यथा
-		ea_bdebug(bh, "inserting [%x]", (पूर्णांक)hash);
-	वापस error;
-पूर्ण
+		}
+	} else
+		ea_bdebug(bh, "inserting [%x]", (int)hash);
+	return error;
+}
 
 /*
  * ext2_xattr_cmp()
  *
- * Compare two extended attribute blocks क्रम equality.
+ * Compare two extended attribute blocks for equality.
  *
- * Returns 0 अगर the blocks are equal, 1 अगर they dअगरfer, and
+ * Returns 0 if the blocks are equal, 1 if they differ, and
  * a negative error number on errors.
  */
-अटल पूर्णांक
-ext2_xattr_cmp(काष्ठा ext2_xattr_header *header1,
-	       काष्ठा ext2_xattr_header *header2)
-अणु
-	काष्ठा ext2_xattr_entry *entry1, *entry2;
+static int
+ext2_xattr_cmp(struct ext2_xattr_header *header1,
+	       struct ext2_xattr_header *header2)
+{
+	struct ext2_xattr_entry *entry1, *entry2;
 
 	entry1 = ENTRY(header1+1);
 	entry2 = ENTRY(header2+1);
-	जबतक (!IS_LAST_ENTRY(entry1)) अणु
-		अगर (IS_LAST_ENTRY(entry2))
-			वापस 1;
-		अगर (entry1->e_hash != entry2->e_hash ||
+	while (!IS_LAST_ENTRY(entry1)) {
+		if (IS_LAST_ENTRY(entry2))
+			return 1;
+		if (entry1->e_hash != entry2->e_hash ||
 		    entry1->e_name_index != entry2->e_name_index ||
 		    entry1->e_name_len != entry2->e_name_len ||
 		    entry1->e_value_size != entry2->e_value_size ||
-		    स_भेद(entry1->e_name, entry2->e_name, entry1->e_name_len))
-			वापस 1;
-		अगर (entry1->e_value_block != 0 || entry2->e_value_block != 0)
-			वापस -EIO;
-		अगर (स_भेद((अक्षर *)header1 + le16_to_cpu(entry1->e_value_offs),
-			   (अक्षर *)header2 + le16_to_cpu(entry2->e_value_offs),
+		    memcmp(entry1->e_name, entry2->e_name, entry1->e_name_len))
+			return 1;
+		if (entry1->e_value_block != 0 || entry2->e_value_block != 0)
+			return -EIO;
+		if (memcmp((char *)header1 + le16_to_cpu(entry1->e_value_offs),
+			   (char *)header2 + le16_to_cpu(entry2->e_value_offs),
 			   le32_to_cpu(entry1->e_value_size)))
-			वापस 1;
+			return 1;
 
 		entry1 = EXT2_XATTR_NEXT(entry1);
 		entry2 = EXT2_XATTR_NEXT(entry2);
-	पूर्ण
-	अगर (!IS_LAST_ENTRY(entry2))
-		वापस 1;
-	वापस 0;
-पूर्ण
+	}
+	if (!IS_LAST_ENTRY(entry2))
+		return 1;
+	return 0;
+}
 
 /*
  * ext2_xattr_cache_find()
  *
  * Find an identical extended attribute block.
  *
- * Returns a locked buffer head to the block found, or शून्य अगर such
+ * Returns a locked buffer head to the block found, or NULL if such
  * a block was not found or an error occurred.
  */
-अटल काष्ठा buffer_head *
-ext2_xattr_cache_find(काष्ठा inode *inode, काष्ठा ext2_xattr_header *header)
-अणु
+static struct buffer_head *
+ext2_xattr_cache_find(struct inode *inode, struct ext2_xattr_header *header)
+{
 	__u32 hash = le32_to_cpu(header->h_hash);
-	काष्ठा mb_cache_entry *ce;
-	काष्ठा mb_cache *ea_block_cache = EA_BLOCK_CACHE(inode);
+	struct mb_cache_entry *ce;
+	struct mb_cache *ea_block_cache = EA_BLOCK_CACHE(inode);
 
-	अगर (!header->h_hash)
-		वापस शून्य;  /* never share */
-	ea_idebug(inode, "looking for cached blocks [%x]", (पूर्णांक)hash);
+	if (!header->h_hash)
+		return NULL;  /* never share */
+	ea_idebug(inode, "looking for cached blocks [%x]", (int)hash);
 again:
 	ce = mb_cache_entry_find_first(ea_block_cache, hash);
-	जबतक (ce) अणु
-		काष्ठा buffer_head *bh;
+	while (ce) {
+		struct buffer_head *bh;
 
-		bh = sb_bपढ़ो(inode->i_sb, ce->e_value);
-		अगर (!bh) अणु
+		bh = sb_bread(inode->i_sb, ce->e_value);
+		if (!bh) {
 			ext2_error(inode->i_sb, "ext2_xattr_cache_find",
 				"inode %ld: block %ld read error",
-				inode->i_ino, (अचिन्हित दीर्घ) ce->e_value);
-		पूर्ण अन्यथा अणु
+				inode->i_ino, (unsigned long) ce->e_value);
+		} else {
 			lock_buffer(bh);
 			/*
-			 * We have to be careful about races with मुक्तing or
+			 * We have to be careful about races with freeing or
 			 * rehashing of xattr block. Once we hold buffer lock
 			 * xattr block's state is stable so we can check
-			 * whether the block got मुक्तd / rehashed or not.
+			 * whether the block got freed / rehashed or not.
 			 * Since we unhash mbcache entry under buffer lock when
-			 * मुक्तing / rehashing xattr block, checking whether
+			 * freeing / rehashing xattr block, checking whether
 			 * entry is still hashed is reliable.
 			 */
-			अगर (hlist_bl_unhashed(&ce->e_hash_list)) अणु
+			if (hlist_bl_unhashed(&ce->e_hash_list)) {
 				mb_cache_entry_put(ea_block_cache, ce);
 				unlock_buffer(bh);
-				brअन्यथा(bh);
-				जाओ again;
-			पूर्ण अन्यथा अगर (le32_to_cpu(HDR(bh)->h_refcount) >
-				   EXT2_XATTR_REFCOUNT_MAX) अणु
+				brelse(bh);
+				goto again;
+			} else if (le32_to_cpu(HDR(bh)->h_refcount) >
+				   EXT2_XATTR_REFCOUNT_MAX) {
 				ea_idebug(inode, "block %ld refcount %d>%d",
-					  (अचिन्हित दीर्घ) ce->e_value,
+					  (unsigned long) ce->e_value,
 					  le32_to_cpu(HDR(bh)->h_refcount),
 					  EXT2_XATTR_REFCOUNT_MAX);
-			पूर्ण अन्यथा अगर (!ext2_xattr_cmp(header, HDR(bh))) अणु
+			} else if (!ext2_xattr_cmp(header, HDR(bh))) {
 				ea_bdebug(bh, "b_count=%d",
-					  atomic_पढ़ो(&(bh->b_count)));
+					  atomic_read(&(bh->b_count)));
 				mb_cache_entry_touch(ea_block_cache, ce);
 				mb_cache_entry_put(ea_block_cache, ce);
-				वापस bh;
-			पूर्ण
+				return bh;
+			}
 			unlock_buffer(bh);
-			brअन्यथा(bh);
-		पूर्ण
+			brelse(bh);
+		}
 		ce = mb_cache_entry_find_next(ea_block_cache, ce);
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	}
+	return NULL;
+}
 
-#घोषणा NAME_HASH_SHIFT 5
-#घोषणा VALUE_HASH_SHIFT 16
+#define NAME_HASH_SHIFT 5
+#define VALUE_HASH_SHIFT 16
 
 /*
  * ext2_xattr_hash_entry()
  *
  * Compute the hash of an extended attribute.
  */
-अटल अंतरभूत व्योम ext2_xattr_hash_entry(काष्ठा ext2_xattr_header *header,
-					 काष्ठा ext2_xattr_entry *entry)
-अणु
+static inline void ext2_xattr_hash_entry(struct ext2_xattr_header *header,
+					 struct ext2_xattr_entry *entry)
+{
 	__u32 hash = 0;
-	अक्षर *name = entry->e_name;
-	पूर्णांक n;
+	char *name = entry->e_name;
+	int n;
 
-	क्रम (n=0; n < entry->e_name_len; n++) अणु
+	for (n=0; n < entry->e_name_len; n++) {
 		hash = (hash << NAME_HASH_SHIFT) ^
-		       (hash >> (8*माप(hash) - NAME_HASH_SHIFT)) ^
+		       (hash >> (8*sizeof(hash) - NAME_HASH_SHIFT)) ^
 		       *name++;
-	पूर्ण
+	}
 
-	अगर (entry->e_value_block == 0 && entry->e_value_size != 0) अणु
-		__le32 *value = (__le32 *)((अक्षर *)header +
+	if (entry->e_value_block == 0 && entry->e_value_size != 0) {
+		__le32 *value = (__le32 *)((char *)header +
 			le16_to_cpu(entry->e_value_offs));
-		क्रम (n = (le32_to_cpu(entry->e_value_size) +
-		     EXT2_XATTR_ROUND) >> EXT2_XATTR_PAD_BITS; n; n--) अणु
+		for (n = (le32_to_cpu(entry->e_value_size) +
+		     EXT2_XATTR_ROUND) >> EXT2_XATTR_PAD_BITS; n; n--) {
 			hash = (hash << VALUE_HASH_SHIFT) ^
-			       (hash >> (8*माप(hash) - VALUE_HASH_SHIFT)) ^
+			       (hash >> (8*sizeof(hash) - VALUE_HASH_SHIFT)) ^
 			       le32_to_cpu(*value++);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	entry->e_hash = cpu_to_le32(hash);
-पूर्ण
+}
 
-#अघोषित NAME_HASH_SHIFT
-#अघोषित VALUE_HASH_SHIFT
+#undef NAME_HASH_SHIFT
+#undef VALUE_HASH_SHIFT
 
-#घोषणा BLOCK_HASH_SHIFT 16
+#define BLOCK_HASH_SHIFT 16
 
 /*
  * ext2_xattr_rehash()
  *
  * Re-compute the extended attribute hash value after an entry has changed.
  */
-अटल व्योम ext2_xattr_rehash(काष्ठा ext2_xattr_header *header,
-			      काष्ठा ext2_xattr_entry *entry)
-अणु
-	काष्ठा ext2_xattr_entry *here;
+static void ext2_xattr_rehash(struct ext2_xattr_header *header,
+			      struct ext2_xattr_entry *entry)
+{
+	struct ext2_xattr_entry *here;
 	__u32 hash = 0;
 	
 	ext2_xattr_hash_entry(header, entry);
 	here = ENTRY(header+1);
-	जबतक (!IS_LAST_ENTRY(here)) अणु
-		अगर (!here->e_hash) अणु
-			/* Block is not shared अगर an entry's hash value == 0 */
+	while (!IS_LAST_ENTRY(here)) {
+		if (!here->e_hash) {
+			/* Block is not shared if an entry's hash value == 0 */
 			hash = 0;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		hash = (hash << BLOCK_HASH_SHIFT) ^
-		       (hash >> (8*माप(hash) - BLOCK_HASH_SHIFT)) ^
+		       (hash >> (8*sizeof(hash) - BLOCK_HASH_SHIFT)) ^
 		       le32_to_cpu(here->e_hash);
 		here = EXT2_XATTR_NEXT(here);
-	पूर्ण
+	}
 	header->h_hash = cpu_to_le32(hash);
-पूर्ण
+}
 
-#अघोषित BLOCK_HASH_SHIFT
+#undef BLOCK_HASH_SHIFT
 
-#घोषणा HASH_BUCKET_BITS 10
+#define HASH_BUCKET_BITS 10
 
-काष्ठा mb_cache *ext2_xattr_create_cache(व्योम)
-अणु
-	वापस mb_cache_create(HASH_BUCKET_BITS);
-पूर्ण
+struct mb_cache *ext2_xattr_create_cache(void)
+{
+	return mb_cache_create(HASH_BUCKET_BITS);
+}
 
-व्योम ext2_xattr_destroy_cache(काष्ठा mb_cache *cache)
-अणु
-	अगर (cache)
+void ext2_xattr_destroy_cache(struct mb_cache *cache)
+{
+	if (cache)
 		mb_cache_destroy(cache);
-पूर्ण
+}

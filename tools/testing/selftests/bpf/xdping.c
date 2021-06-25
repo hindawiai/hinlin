@@ -1,79 +1,78 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved. */
 
-#समावेश <linux/bpf.h>
-#समावेश <linux/अगर_link.h>
-#समावेश <arpa/inet.h>
-#समावेश <निश्चित.स>
-#समावेश <त्रुटिसं.स>
-#समावेश <संकेत.स>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <unistd.h>
-#समावेश <libgen.h>
-#समावेश <sys/resource.h>
-#समावेश <net/अगर.h>
-#समावेश <sys/types.h>
-#समावेश <sys/socket.h>
-#समावेश <netdb.h>
+#include <linux/bpf.h>
+#include <linux/if_link.h>
+#include <arpa/inet.h>
+#include <assert.h>
+#include <errno.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <libgen.h>
+#include <sys/resource.h>
+#include <net/if.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
 
-#समावेश "bpf/bpf.h"
-#समावेश "bpf/libbpf.h"
+#include "bpf/bpf.h"
+#include "bpf/libbpf.h"
 
-#समावेश "xdping.h"
+#include "xdping.h"
 
-अटल पूर्णांक अगरindex;
-अटल __u32 xdp_flags = XDP_FLAGS_UPDATE_IF_NOEXIST;
+static int ifindex;
+static __u32 xdp_flags = XDP_FLAGS_UPDATE_IF_NOEXIST;
 
-अटल व्योम cleanup(पूर्णांक sig)
-अणु
-	bpf_set_link_xdp_fd(अगरindex, -1, xdp_flags);
-	अगर (sig)
-		निकास(1);
-पूर्ण
+static void cleanup(int sig)
+{
+	bpf_set_link_xdp_fd(ifindex, -1, xdp_flags);
+	if (sig)
+		exit(1);
+}
 
-अटल पूर्णांक get_stats(पूर्णांक fd, __u16 count, __u32 raddr)
-अणु
-	काष्ठा pinginfo pinginfo = अणु 0 पूर्ण;
-	अक्षर inaddrbuf[INET_ADDRSTRLEN];
-	काष्ठा in_addr inaddr;
+static int get_stats(int fd, __u16 count, __u32 raddr)
+{
+	struct pinginfo pinginfo = { 0 };
+	char inaddrbuf[INET_ADDRSTRLEN];
+	struct in_addr inaddr;
 	__u16 i;
 
 	inaddr.s_addr = raddr;
 
-	म_लिखो("\nXDP RTT data:\n");
+	printf("\nXDP RTT data:\n");
 
-	अगर (bpf_map_lookup_elem(fd, &raddr, &pinginfo)) अणु
-		लिखो_त्रुटि("bpf_map_lookup elem");
-		वापस 1;
-	पूर्ण
+	if (bpf_map_lookup_elem(fd, &raddr, &pinginfo)) {
+		perror("bpf_map_lookup elem");
+		return 1;
+	}
 
-	क्रम (i = 0; i < count; i++) अणु
-		अगर (pinginfo.बार[i] == 0)
-			अवरोध;
+	for (i = 0; i < count; i++) {
+		if (pinginfo.times[i] == 0)
+			break;
 
-		म_लिखो("64 bytes from %s: icmp_seq=%d ttl=64 time=%#.5f ms\n",
+		printf("64 bytes from %s: icmp_seq=%d ttl=64 time=%#.5f ms\n",
 		       inet_ntop(AF_INET, &inaddr, inaddrbuf,
-				 माप(inaddrbuf)),
+				 sizeof(inaddrbuf)),
 		       count + i + 1,
-		       (द्विगुन)pinginfo.बार[i]/1000000);
-	पूर्ण
+		       (double)pinginfo.times[i]/1000000);
+	}
 
-	अगर (i < count) अणु
-		ख_लिखो(मानक_त्रुटि, "Expected %d samples, got %d.\n", count, i);
-		वापस 1;
-	पूर्ण
+	if (i < count) {
+		fprintf(stderr, "Expected %d samples, got %d.\n", count, i);
+		return 1;
+	}
 
 	bpf_map_delete_elem(fd, &raddr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम show_usage(स्थिर अक्षर *prog)
-अणु
-	ख_लिखो(मानक_त्रुटि,
+static void show_usage(const char *prog)
+{
+	fprintf(stderr,
 		"usage: %s [OPTS] -I interface destination\n\n"
 		"OPTS:\n"
 		"    -c count		Stop after sending count requests\n"
@@ -83,177 +82,177 @@
 		"    -s			Server mode\n"
 		"    -S			Run in skb mode\n",
 		prog, XDPING_DEFAULT_COUNT, XDPING_MAX_COUNT);
-पूर्ण
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
-अणु
+int main(int argc, char **argv)
+{
 	__u32 mode_flags = XDP_FLAGS_DRV_MODE | XDP_FLAGS_SKB_MODE;
-	काष्ठा addrinfo *a, hपूर्णांकs = अणु .ai_family = AF_INET पूर्ण;
-	काष्ठा rlimit r = अणुRLIM_अनन्त, RLIM_अनन्तपूर्ण;
+	struct addrinfo *a, hints = { .ai_family = AF_INET };
+	struct rlimit r = {RLIM_INFINITY, RLIM_INFINITY};
 	__u16 count = XDPING_DEFAULT_COUNT;
-	काष्ठा pinginfo pinginfo = अणु 0 पूर्ण;
-	स्थिर अक्षर *optstr = "c:I:NsS";
-	काष्ठा bpf_program *मुख्य_prog;
-	पूर्णांक prog_fd = -1, map_fd = -1;
-	काष्ठा sockaddr_in rin;
-	काष्ठा bpf_object *obj;
-	काष्ठा bpf_map *map;
-	अक्षर *अगरname = शून्य;
-	अक्षर filename[256];
-	पूर्णांक opt, ret = 1;
+	struct pinginfo pinginfo = { 0 };
+	const char *optstr = "c:I:NsS";
+	struct bpf_program *main_prog;
+	int prog_fd = -1, map_fd = -1;
+	struct sockaddr_in rin;
+	struct bpf_object *obj;
+	struct bpf_map *map;
+	char *ifname = NULL;
+	char filename[256];
+	int opt, ret = 1;
 	__u32 raddr = 0;
-	पूर्णांक server = 0;
-	अक्षर cmd[256];
+	int server = 0;
+	char cmd[256];
 
-	जबतक ((opt = getopt(argc, argv, optstr)) != -1) अणु
-		चयन (opt) अणु
-		हाल 'c':
-			count = म_से_प(optarg);
-			अगर (count < 1 || count > XDPING_MAX_COUNT) अणु
-				ख_लिखो(मानक_त्रुटि,
+	while ((opt = getopt(argc, argv, optstr)) != -1) {
+		switch (opt) {
+		case 'c':
+			count = atoi(optarg);
+			if (count < 1 || count > XDPING_MAX_COUNT) {
+				fprintf(stderr,
 					"min count is 1, max count is %d\n",
 					XDPING_MAX_COUNT);
-				वापस 1;
-			पूर्ण
-			अवरोध;
-		हाल 'I':
-			अगरname = optarg;
-			अगरindex = अगर_nametoindex(अगरname);
-			अगर (!अगरindex) अणु
-				ख_लिखो(मानक_त्रुटि, "Could not get interface %s\n",
-					अगरname);
-				वापस 1;
-			पूर्ण
-			अवरोध;
-		हाल 'N':
+				return 1;
+			}
+			break;
+		case 'I':
+			ifname = optarg;
+			ifindex = if_nametoindex(ifname);
+			if (!ifindex) {
+				fprintf(stderr, "Could not get interface %s\n",
+					ifname);
+				return 1;
+			}
+			break;
+		case 'N':
 			xdp_flags |= XDP_FLAGS_DRV_MODE;
-			अवरोध;
-		हाल 's':
+			break;
+		case 's':
 			/* use server program */
 			server = 1;
-			अवरोध;
-		हाल 'S':
+			break;
+		case 'S':
 			xdp_flags |= XDP_FLAGS_SKB_MODE;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			show_usage(basename(argv[0]));
-			वापस 1;
-		पूर्ण
-	पूर्ण
+			return 1;
+		}
+	}
 
-	अगर (!अगरname) अणु
+	if (!ifname) {
 		show_usage(basename(argv[0]));
-		वापस 1;
-	पूर्ण
-	अगर (!server && optind == argc) अणु
+		return 1;
+	}
+	if (!server && optind == argc) {
 		show_usage(basename(argv[0]));
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	अगर ((xdp_flags & mode_flags) == mode_flags) अणु
-		ख_लिखो(मानक_त्रुटि, "-N or -S can be specified, not both.\n");
+	if ((xdp_flags & mode_flags) == mode_flags) {
+		fprintf(stderr, "-N or -S can be specified, not both.\n");
 		show_usage(basename(argv[0]));
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	अगर (!server) अणु
-		/* Only supports IPv4; see hपूर्णांकs initiailization above. */
-		अगर (getaddrinfo(argv[optind], शून्य, &hपूर्णांकs, &a) || !a) अणु
-			ख_लिखो(मानक_त्रुटि, "Could not resolve %s\n", argv[optind]);
-			वापस 1;
-		पूर्ण
-		स_नकल(&rin, a->ai_addr, माप(rin));
+	if (!server) {
+		/* Only supports IPv4; see hints initiailization above. */
+		if (getaddrinfo(argv[optind], NULL, &hints, &a) || !a) {
+			fprintf(stderr, "Could not resolve %s\n", argv[optind]);
+			return 1;
+		}
+		memcpy(&rin, a->ai_addr, sizeof(rin));
 		raddr = rin.sin_addr.s_addr;
-		मुक्तaddrinfo(a);
-	पूर्ण
+		freeaddrinfo(a);
+	}
 
-	अगर (setrlimit(RLIMIT_MEMLOCK, &r)) अणु
-		लिखो_त्रुटि("setrlimit(RLIMIT_MEMLOCK)");
-		वापस 1;
-	पूर्ण
+	if (setrlimit(RLIMIT_MEMLOCK, &r)) {
+		perror("setrlimit(RLIMIT_MEMLOCK)");
+		return 1;
+	}
 
-	snम_लिखो(filename, माप(filename), "%s_kern.o", argv[0]);
+	snprintf(filename, sizeof(filename), "%s_kern.o", argv[0]);
 
-	अगर (bpf_prog_load(filename, BPF_PROG_TYPE_XDP, &obj, &prog_fd)) अणु
-		ख_लिखो(मानक_त्रुटि, "load of %s failed\n", filename);
-		वापस 1;
-	पूर्ण
+	if (bpf_prog_load(filename, BPF_PROG_TYPE_XDP, &obj, &prog_fd)) {
+		fprintf(stderr, "load of %s failed\n", filename);
+		return 1;
+	}
 
-	मुख्य_prog = bpf_object__find_program_by_title(obj,
+	main_prog = bpf_object__find_program_by_title(obj,
 						      server ? "xdpserver" :
 							       "xdpclient");
-	अगर (मुख्य_prog)
-		prog_fd = bpf_program__fd(मुख्य_prog);
-	अगर (!मुख्य_prog || prog_fd < 0) अणु
-		ख_लिखो(मानक_त्रुटि, "could not find xdping program");
-		वापस 1;
-	पूर्ण
+	if (main_prog)
+		prog_fd = bpf_program__fd(main_prog);
+	if (!main_prog || prog_fd < 0) {
+		fprintf(stderr, "could not find xdping program");
+		return 1;
+	}
 
-	map = bpf_map__next(शून्य, obj);
-	अगर (map)
+	map = bpf_map__next(NULL, obj);
+	if (map)
 		map_fd = bpf_map__fd(map);
-	अगर (!map || map_fd < 0) अणु
-		ख_लिखो(मानक_त्रुटि, "Could not find ping map");
-		जाओ करोne;
-	पूर्ण
+	if (!map || map_fd < 0) {
+		fprintf(stderr, "Could not find ping map");
+		goto done;
+	}
 
-	संकेत(संक_विघ्न, cleanup);
-	संकेत(संक_इति, cleanup);
+	signal(SIGINT, cleanup);
+	signal(SIGTERM, cleanup);
 
-	म_लिखो("Setting up XDP for %s, please wait...\n", अगरname);
+	printf("Setting up XDP for %s, please wait...\n", ifname);
 
-	म_लिखो("XDP setup disrupts network connectivity, hit Ctrl+C to quit\n");
+	printf("XDP setup disrupts network connectivity, hit Ctrl+C to quit\n");
 
-	अगर (bpf_set_link_xdp_fd(अगरindex, prog_fd, xdp_flags) < 0) अणु
-		ख_लिखो(मानक_त्रुटि, "Link set xdp fd failed for %s\n", अगरname);
-		जाओ करोne;
-	पूर्ण
+	if (bpf_set_link_xdp_fd(ifindex, prog_fd, xdp_flags) < 0) {
+		fprintf(stderr, "Link set xdp fd failed for %s\n", ifname);
+		goto done;
+	}
 
-	अगर (server) अणु
-		बंद(prog_fd);
-		बंद(map_fd);
-		म_लिखो("Running server on %s; press Ctrl+C to exit...\n",
-		       अगरname);
-		करो अणु पूर्ण जबतक (1);
-	पूर्ण
+	if (server) {
+		close(prog_fd);
+		close(map_fd);
+		printf("Running server on %s; press Ctrl+C to exit...\n",
+		       ifname);
+		do { } while (1);
+	}
 
-	/* Start xdping-ing from last regular ping reply, e.g. क्रम a count
+	/* Start xdping-ing from last regular ping reply, e.g. for a count
 	 * of 10 ICMP requests, we start xdping-ing using reply with seq number
 	 * 10.  The reason the last "real" ping RTT is much higher is that
 	 * the ping program sees the ICMP reply associated with the last
-	 * XDP-generated packet, so ping करोesn't get a reply until XDP is करोne.
+	 * XDP-generated packet, so ping doesn't get a reply until XDP is done.
 	 */
 	pinginfo.seq = htons(count);
 	pinginfo.count = count;
 
-	अगर (bpf_map_update_elem(map_fd, &raddr, &pinginfo, BPF_ANY)) अणु
-		ख_लिखो(मानक_त्रुटि, "could not communicate with BPF map: %s\n",
-			म_त्रुटि(त्रुटि_सं));
+	if (bpf_map_update_elem(map_fd, &raddr, &pinginfo, BPF_ANY)) {
+		fprintf(stderr, "could not communicate with BPF map: %s\n",
+			strerror(errno));
 		cleanup(0);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	/* We need to रुको क्रम XDP setup to complete. */
+	/* We need to wait for XDP setup to complete. */
 	sleep(10);
 
-	snम_लिखो(cmd, माप(cmd), "ping -c %d -I %s %s",
-		 count, अगरname, argv[optind]);
+	snprintf(cmd, sizeof(cmd), "ping -c %d -I %s %s",
+		 count, ifname, argv[optind]);
 
-	म_लिखो("\nNormal ping RTT data\n");
-	म_लिखो("[Ignore final RTT; it is distorted by XDP using the reply]\n");
+	printf("\nNormal ping RTT data\n");
+	printf("[Ignore final RTT; it is distorted by XDP using the reply]\n");
 
-	ret = प्रणाली(cmd);
+	ret = system(cmd);
 
-	अगर (!ret)
+	if (!ret)
 		ret = get_stats(map_fd, count, raddr);
 
 	cleanup(0);
 
-करोne:
-	अगर (prog_fd > 0)
-		बंद(prog_fd);
-	अगर (map_fd > 0)
-		बंद(map_fd);
+done:
+	if (prog_fd > 0)
+		close(prog_fd);
+	if (map_fd > 0)
+		close(map_fd);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

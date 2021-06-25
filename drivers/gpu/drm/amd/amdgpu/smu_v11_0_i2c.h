@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,14 +21,14 @@
  *
  */
 
-#अगर_अघोषित SMU_V11_I2C_CONTROL_H
-#घोषणा SMU_V11_I2C_CONTROL_H
+#ifndef SMU_V11_I2C_CONTROL_H
+#define SMU_V11_I2C_CONTROL_H
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-काष्ठा i2c_adapter;
+struct i2c_adapter;
 
-पूर्णांक smu_v11_0_i2c_control_init(काष्ठा i2c_adapter *control);
-व्योम smu_v11_0_i2c_control_fini(काष्ठा i2c_adapter *control);
+int smu_v11_0_i2c_control_init(struct i2c_adapter *control);
+void smu_v11_0_i2c_control_fini(struct i2c_adapter *control);
 
-#पूर्ण_अगर
+#endif

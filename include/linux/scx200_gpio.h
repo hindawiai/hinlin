@@ -1,90 +1,89 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-u32 scx200_gpio_configure(अचिन्हित index, u32 set, u32 clear);
+/* SPDX-License-Identifier: GPL-2.0 */
+u32 scx200_gpio_configure(unsigned index, u32 set, u32 clear);
 
-बाह्य अचिन्हित scx200_gpio_base;
-बाह्य अचिन्हित दीर्घ scx200_gpio_shaकरोw[2];
-बाह्य काष्ठा nsc_gpio_ops scx200_gpio_ops;
+extern unsigned scx200_gpio_base;
+extern unsigned long scx200_gpio_shadow[2];
+extern struct nsc_gpio_ops scx200_gpio_ops;
 
-#घोषणा scx200_gpio_present() (scx200_gpio_base!=0)
+#define scx200_gpio_present() (scx200_gpio_base!=0)
 
-/* Definitions to make sure I करो the same thing in all functions */
-#घोषणा __SCx200_GPIO_BANK अचिन्हित bank = index>>5
-#घोषणा __SCx200_GPIO_IOADDR अचिन्हित लघु ioaddr = scx200_gpio_base+0x10*bank
-#घोषणा __SCx200_GPIO_SHADOW अचिन्हित दीर्घ *shaकरोw = scx200_gpio_shaकरोw+bank
-#घोषणा __SCx200_GPIO_INDEX index &= 31
+/* Definitions to make sure I do the same thing in all functions */
+#define __SCx200_GPIO_BANK unsigned bank = index>>5
+#define __SCx200_GPIO_IOADDR unsigned short ioaddr = scx200_gpio_base+0x10*bank
+#define __SCx200_GPIO_SHADOW unsigned long *shadow = scx200_gpio_shadow+bank
+#define __SCx200_GPIO_INDEX index &= 31
 
-#घोषणा __SCx200_GPIO_OUT __यंत्र__ __अस्थिर__("outsl":"=mS" (shaकरोw):"d" (ioaddr), "0" (shaकरोw))
+#define __SCx200_GPIO_OUT __asm__ __volatile__("outsl":"=mS" (shadow):"d" (ioaddr), "0" (shadow))
 
-/* वापसs the value of the GPIO pin */
+/* returns the value of the GPIO pin */
 
-अटल अंतरभूत पूर्णांक scx200_gpio_get(अचिन्हित index) अणु
+static inline int scx200_gpio_get(unsigned index) {
 	__SCx200_GPIO_BANK;
 	__SCx200_GPIO_IOADDR + 0x04;
 	__SCx200_GPIO_INDEX;
 		
-	वापस (inl(ioaddr) & (1<<index)) ? 1 : 0;
-पूर्ण
+	return (inl(ioaddr) & (1<<index)) ? 1 : 0;
+}
 
-/* वापस the value driven on the GPIO संकेत (the value that will be
-   driven अगर the GPIO is configured as an output, it might not be the
-   state of the GPIO right now अगर the GPIO is configured as an input) */
+/* return the value driven on the GPIO signal (the value that will be
+   driven if the GPIO is configured as an output, it might not be the
+   state of the GPIO right now if the GPIO is configured as an input) */
 
-अटल अंतरभूत पूर्णांक scx200_gpio_current(अचिन्हित index) अणु
+static inline int scx200_gpio_current(unsigned index) {
         __SCx200_GPIO_BANK;
 	__SCx200_GPIO_INDEX;
 		
-	वापस (scx200_gpio_shaकरोw[bank] & (1<<index)) ? 1 : 0;
-पूर्ण
+	return (scx200_gpio_shadow[bank] & (1<<index)) ? 1 : 0;
+}
 
-/* drive the GPIO संकेत high */
+/* drive the GPIO signal high */
 
-अटल अंतरभूत व्योम scx200_gpio_set_high(अचिन्हित index) अणु
+static inline void scx200_gpio_set_high(unsigned index) {
 	__SCx200_GPIO_BANK;
 	__SCx200_GPIO_IOADDR;
 	__SCx200_GPIO_SHADOW;
 	__SCx200_GPIO_INDEX;
-	set_bit(index, shaकरोw);	/* __set_bit()? */
+	set_bit(index, shadow);	/* __set_bit()? */
 	__SCx200_GPIO_OUT;
-पूर्ण
+}
 
-/* drive the GPIO संकेत low */
+/* drive the GPIO signal low */
 
-अटल अंतरभूत व्योम scx200_gpio_set_low(अचिन्हित index) अणु
+static inline void scx200_gpio_set_low(unsigned index) {
 	__SCx200_GPIO_BANK;
 	__SCx200_GPIO_IOADDR;
 	__SCx200_GPIO_SHADOW;
 	__SCx200_GPIO_INDEX;
-	clear_bit(index, shaकरोw); /* __clear_bit()? */
+	clear_bit(index, shadow); /* __clear_bit()? */
 	__SCx200_GPIO_OUT;
-पूर्ण
+}
 
-/* drive the GPIO संकेत to state */
+/* drive the GPIO signal to state */
 
-अटल अंतरभूत व्योम scx200_gpio_set(अचिन्हित index, पूर्णांक state) अणु
+static inline void scx200_gpio_set(unsigned index, int state) {
 	__SCx200_GPIO_BANK;
 	__SCx200_GPIO_IOADDR;
 	__SCx200_GPIO_SHADOW;
 	__SCx200_GPIO_INDEX;
-	अगर (state)
-		set_bit(index, shaकरोw);
-	अन्यथा
-		clear_bit(index, shaकरोw);
+	if (state)
+		set_bit(index, shadow);
+	else
+		clear_bit(index, shadow);
 	__SCx200_GPIO_OUT;
-पूर्ण
+}
 
-/* toggle the GPIO संकेत */
-अटल अंतरभूत व्योम scx200_gpio_change(अचिन्हित index) अणु
+/* toggle the GPIO signal */
+static inline void scx200_gpio_change(unsigned index) {
 	__SCx200_GPIO_BANK;
 	__SCx200_GPIO_IOADDR;
 	__SCx200_GPIO_SHADOW;
 	__SCx200_GPIO_INDEX;
-	change_bit(index, shaकरोw);
+	change_bit(index, shadow);
 	__SCx200_GPIO_OUT;
-पूर्ण
+}
 
-#अघोषित __SCx200_GPIO_BANK
-#अघोषित __SCx200_GPIO_IOADDR
-#अघोषित __SCx200_GPIO_SHADOW
-#अघोषित __SCx200_GPIO_INDEX
-#अघोषित __SCx200_GPIO_OUT
+#undef __SCx200_GPIO_BANK
+#undef __SCx200_GPIO_IOADDR
+#undef __SCx200_GPIO_SHADOW
+#undef __SCx200_GPIO_INDEX
+#undef __SCx200_GPIO_OUT

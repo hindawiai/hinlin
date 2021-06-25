@@ -1,33 +1,32 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+// SPDX-License-Identifier: GPL-2.0
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/mm.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/sched/mm.h>
-#समावेश <linux/sched/coredump.h>
-#समावेश <linux/mmu_notअगरier.h>
-#समावेश <linux/rmap.h>
-#समावेश <linux/swap.h>
-#समावेश <linux/mm_अंतरभूत.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/khugepaged.h>
-#समावेश <linux/मुक्तzer.h>
-#समावेश <linux/mman.h>
-#समावेश <linux/hashtable.h>
-#समावेश <linux/userfaultfd_k.h>
-#समावेश <linux/page_idle.h>
-#समावेश <linux/swapops.h>
-#समावेश <linux/shmem_fs.h>
+#include <linux/mm.h>
+#include <linux/sched.h>
+#include <linux/sched/mm.h>
+#include <linux/sched/coredump.h>
+#include <linux/mmu_notifier.h>
+#include <linux/rmap.h>
+#include <linux/swap.h>
+#include <linux/mm_inline.h>
+#include <linux/kthread.h>
+#include <linux/khugepaged.h>
+#include <linux/freezer.h>
+#include <linux/mman.h>
+#include <linux/hashtable.h>
+#include <linux/userfaultfd_k.h>
+#include <linux/page_idle.h>
+#include <linux/swapops.h>
+#include <linux/shmem_fs.h>
 
-#समावेश <यंत्र/tlb.h>
-#समावेश <यंत्र/pgभाग.स>
-#समावेश "internal.h"
+#include <asm/tlb.h>
+#include <asm/pgalloc.h>
+#include "internal.h"
 
-क्रमागत scan_result अणु
+enum scan_result {
 	SCAN_FAIL,
 	SCAN_SUCCEED,
-	SCAN_PMD_शून्य,
+	SCAN_PMD_NULL,
 	SCAN_EXCEED_NONE_PTE,
 	SCAN_EXCEED_SWAP_PTE,
 	SCAN_EXCEED_SHARED_PTE,
@@ -35,7 +34,7 @@
 	SCAN_PTE_UFFD_WP,
 	SCAN_PAGE_RO,
 	SCAN_LACK_REFERENCED_PAGE,
-	SCAN_PAGE_शून्य,
+	SCAN_PAGE_NULL,
 	SCAN_SCAN_ABORT,
 	SCAN_PAGE_COUNT,
 	SCAN_PAGE_LRU,
@@ -43,7 +42,7 @@
 	SCAN_PAGE_ANON,
 	SCAN_PAGE_COMPOUND,
 	SCAN_ANY_PROCESS,
-	SCAN_VMA_शून्य,
+	SCAN_VMA_NULL,
 	SCAN_VMA_CHECK,
 	SCAN_ADDRESS_RANGE,
 	SCAN_SWAP_CACHE_PAGE,
@@ -52,281 +51,281 @@
 	SCAN_CGROUP_CHARGE_FAIL,
 	SCAN_TRUNCATED,
 	SCAN_PAGE_HAS_PRIVATE,
-पूर्ण;
+};
 
-#घोषणा CREATE_TRACE_POINTS
-#समावेश <trace/events/huge_memory.h>
+#define CREATE_TRACE_POINTS
+#include <trace/events/huge_memory.h>
 
-अटल काष्ठा task_काष्ठा *khugepaged_thपढ़ो __पढ़ो_mostly;
-अटल DEFINE_MUTEX(khugepaged_mutex);
+static struct task_struct *khugepaged_thread __read_mostly;
+static DEFINE_MUTEX(khugepaged_mutex);
 
-/* शेष scan 8*512 pte (or vmas) every 30 second */
-अटल अचिन्हित पूर्णांक khugepaged_pages_to_scan __पढ़ो_mostly;
-अटल अचिन्हित पूर्णांक khugepaged_pages_collapsed;
-अटल अचिन्हित पूर्णांक khugepaged_full_scans;
-अटल अचिन्हित पूर्णांक khugepaged_scan_sleep_millisecs __पढ़ो_mostly = 10000;
+/* default scan 8*512 pte (or vmas) every 30 second */
+static unsigned int khugepaged_pages_to_scan __read_mostly;
+static unsigned int khugepaged_pages_collapsed;
+static unsigned int khugepaged_full_scans;
+static unsigned int khugepaged_scan_sleep_millisecs __read_mostly = 10000;
 /* during fragmentation poll the hugepage allocator once every minute */
-अटल अचिन्हित पूर्णांक khugepaged_alloc_sleep_millisecs __पढ़ो_mostly = 60000;
-अटल अचिन्हित दीर्घ khugepaged_sleep_expire;
-अटल DEFINE_SPINLOCK(khugepaged_mm_lock);
-अटल DECLARE_WAIT_QUEUE_HEAD(khugepaged_रुको);
+static unsigned int khugepaged_alloc_sleep_millisecs __read_mostly = 60000;
+static unsigned long khugepaged_sleep_expire;
+static DEFINE_SPINLOCK(khugepaged_mm_lock);
+static DECLARE_WAIT_QUEUE_HEAD(khugepaged_wait);
 /*
- * शेष collapse hugepages अगर there is at least one pte mapped like
- * it would have happened अगर the vma was large enough during page
+ * default collapse hugepages if there is at least one pte mapped like
+ * it would have happened if the vma was large enough during page
  * fault.
  */
-अटल अचिन्हित पूर्णांक khugepaged_max_ptes_none __पढ़ो_mostly;
-अटल अचिन्हित पूर्णांक khugepaged_max_ptes_swap __पढ़ो_mostly;
-अटल अचिन्हित पूर्णांक khugepaged_max_ptes_shared __पढ़ो_mostly;
+static unsigned int khugepaged_max_ptes_none __read_mostly;
+static unsigned int khugepaged_max_ptes_swap __read_mostly;
+static unsigned int khugepaged_max_ptes_shared __read_mostly;
 
-#घोषणा MM_SLOTS_HASH_BITS 10
-अटल __पढ़ो_mostly DEFINE_HASHTABLE(mm_slots_hash, MM_SLOTS_HASH_BITS);
+#define MM_SLOTS_HASH_BITS 10
+static __read_mostly DEFINE_HASHTABLE(mm_slots_hash, MM_SLOTS_HASH_BITS);
 
-अटल काष्ठा kmem_cache *mm_slot_cache __पढ़ो_mostly;
+static struct kmem_cache *mm_slot_cache __read_mostly;
 
-#घोषणा MAX_PTE_MAPPED_THP 8
+#define MAX_PTE_MAPPED_THP 8
 
 /**
- * काष्ठा mm_slot - hash lookup from mm to mm_slot
+ * struct mm_slot - hash lookup from mm to mm_slot
  * @hash: hash collision list
  * @mm_node: khugepaged scan list headed in khugepaged_scan.mm_head
- * @mm: the mm that this inक्रमmation is valid क्रम
+ * @mm: the mm that this information is valid for
  * @nr_pte_mapped_thp: number of pte mapped THP
  * @pte_mapped_thp: address array corresponding pte mapped THP
  */
-काष्ठा mm_slot अणु
-	काष्ठा hlist_node hash;
-	काष्ठा list_head mm_node;
-	काष्ठा mm_काष्ठा *mm;
+struct mm_slot {
+	struct hlist_node hash;
+	struct list_head mm_node;
+	struct mm_struct *mm;
 
 	/* pte-mapped THP in this mm */
-	पूर्णांक nr_pte_mapped_thp;
-	अचिन्हित दीर्घ pte_mapped_thp[MAX_PTE_MAPPED_THP];
-पूर्ण;
+	int nr_pte_mapped_thp;
+	unsigned long pte_mapped_thp[MAX_PTE_MAPPED_THP];
+};
 
 /**
- * काष्ठा khugepaged_scan - cursor क्रम scanning
+ * struct khugepaged_scan - cursor for scanning
  * @mm_head: the head of the mm list to scan
  * @mm_slot: the current mm_slot we are scanning
  * @address: the next address inside that to be scanned
  *
- * There is only the one khugepaged_scan instance of this cursor काष्ठाure.
+ * There is only the one khugepaged_scan instance of this cursor structure.
  */
-काष्ठा khugepaged_scan अणु
-	काष्ठा list_head mm_head;
-	काष्ठा mm_slot *mm_slot;
-	अचिन्हित दीर्घ address;
-पूर्ण;
+struct khugepaged_scan {
+	struct list_head mm_head;
+	struct mm_slot *mm_slot;
+	unsigned long address;
+};
 
-अटल काष्ठा khugepaged_scan khugepaged_scan = अणु
+static struct khugepaged_scan khugepaged_scan = {
 	.mm_head = LIST_HEAD_INIT(khugepaged_scan.mm_head),
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_SYSFS
-अटल sमाप_प्रकार scan_sleep_millisecs_show(काष्ठा kobject *kobj,
-					 काष्ठा kobj_attribute *attr,
-					 अक्षर *buf)
-अणु
-	वापस sysfs_emit(buf, "%u\n", khugepaged_scan_sleep_millisecs);
-पूर्ण
+#ifdef CONFIG_SYSFS
+static ssize_t scan_sleep_millisecs_show(struct kobject *kobj,
+					 struct kobj_attribute *attr,
+					 char *buf)
+{
+	return sysfs_emit(buf, "%u\n", khugepaged_scan_sleep_millisecs);
+}
 
-अटल sमाप_प्रकार scan_sleep_millisecs_store(काष्ठा kobject *kobj,
-					  काष्ठा kobj_attribute *attr,
-					  स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	अचिन्हित पूर्णांक msecs;
-	पूर्णांक err;
+static ssize_t scan_sleep_millisecs_store(struct kobject *kobj,
+					  struct kobj_attribute *attr,
+					  const char *buf, size_t count)
+{
+	unsigned int msecs;
+	int err;
 
-	err = kstrtouपूर्णांक(buf, 10, &msecs);
-	अगर (err)
-		वापस -EINVAL;
+	err = kstrtouint(buf, 10, &msecs);
+	if (err)
+		return -EINVAL;
 
 	khugepaged_scan_sleep_millisecs = msecs;
 	khugepaged_sleep_expire = 0;
-	wake_up_पूर्णांकerruptible(&khugepaged_रुको);
+	wake_up_interruptible(&khugepaged_wait);
 
-	वापस count;
-पूर्ण
-अटल काष्ठा kobj_attribute scan_sleep_millisecs_attr =
+	return count;
+}
+static struct kobj_attribute scan_sleep_millisecs_attr =
 	__ATTR(scan_sleep_millisecs, 0644, scan_sleep_millisecs_show,
 	       scan_sleep_millisecs_store);
 
-अटल sमाप_प्रकार alloc_sleep_millisecs_show(काष्ठा kobject *kobj,
-					  काष्ठा kobj_attribute *attr,
-					  अक्षर *buf)
-अणु
-	वापस sysfs_emit(buf, "%u\n", khugepaged_alloc_sleep_millisecs);
-पूर्ण
+static ssize_t alloc_sleep_millisecs_show(struct kobject *kobj,
+					  struct kobj_attribute *attr,
+					  char *buf)
+{
+	return sysfs_emit(buf, "%u\n", khugepaged_alloc_sleep_millisecs);
+}
 
-अटल sमाप_प्रकार alloc_sleep_millisecs_store(काष्ठा kobject *kobj,
-					   काष्ठा kobj_attribute *attr,
-					   स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	अचिन्हित पूर्णांक msecs;
-	पूर्णांक err;
+static ssize_t alloc_sleep_millisecs_store(struct kobject *kobj,
+					   struct kobj_attribute *attr,
+					   const char *buf, size_t count)
+{
+	unsigned int msecs;
+	int err;
 
-	err = kstrtouपूर्णांक(buf, 10, &msecs);
-	अगर (err)
-		वापस -EINVAL;
+	err = kstrtouint(buf, 10, &msecs);
+	if (err)
+		return -EINVAL;
 
 	khugepaged_alloc_sleep_millisecs = msecs;
 	khugepaged_sleep_expire = 0;
-	wake_up_पूर्णांकerruptible(&khugepaged_रुको);
+	wake_up_interruptible(&khugepaged_wait);
 
-	वापस count;
-पूर्ण
-अटल काष्ठा kobj_attribute alloc_sleep_millisecs_attr =
+	return count;
+}
+static struct kobj_attribute alloc_sleep_millisecs_attr =
 	__ATTR(alloc_sleep_millisecs, 0644, alloc_sleep_millisecs_show,
 	       alloc_sleep_millisecs_store);
 
-अटल sमाप_प्रकार pages_to_scan_show(काष्ठा kobject *kobj,
-				  काष्ठा kobj_attribute *attr,
-				  अक्षर *buf)
-अणु
-	वापस sysfs_emit(buf, "%u\n", khugepaged_pages_to_scan);
-पूर्ण
-अटल sमाप_प्रकार pages_to_scan_store(काष्ठा kobject *kobj,
-				   काष्ठा kobj_attribute *attr,
-				   स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	अचिन्हित पूर्णांक pages;
-	पूर्णांक err;
+static ssize_t pages_to_scan_show(struct kobject *kobj,
+				  struct kobj_attribute *attr,
+				  char *buf)
+{
+	return sysfs_emit(buf, "%u\n", khugepaged_pages_to_scan);
+}
+static ssize_t pages_to_scan_store(struct kobject *kobj,
+				   struct kobj_attribute *attr,
+				   const char *buf, size_t count)
+{
+	unsigned int pages;
+	int err;
 
-	err = kstrtouपूर्णांक(buf, 10, &pages);
-	अगर (err || !pages)
-		वापस -EINVAL;
+	err = kstrtouint(buf, 10, &pages);
+	if (err || !pages)
+		return -EINVAL;
 
 	khugepaged_pages_to_scan = pages;
 
-	वापस count;
-पूर्ण
-अटल काष्ठा kobj_attribute pages_to_scan_attr =
+	return count;
+}
+static struct kobj_attribute pages_to_scan_attr =
 	__ATTR(pages_to_scan, 0644, pages_to_scan_show,
 	       pages_to_scan_store);
 
-अटल sमाप_प्रकार pages_collapsed_show(काष्ठा kobject *kobj,
-				    काष्ठा kobj_attribute *attr,
-				    अक्षर *buf)
-अणु
-	वापस sysfs_emit(buf, "%u\n", khugepaged_pages_collapsed);
-पूर्ण
-अटल काष्ठा kobj_attribute pages_collapsed_attr =
+static ssize_t pages_collapsed_show(struct kobject *kobj,
+				    struct kobj_attribute *attr,
+				    char *buf)
+{
+	return sysfs_emit(buf, "%u\n", khugepaged_pages_collapsed);
+}
+static struct kobj_attribute pages_collapsed_attr =
 	__ATTR_RO(pages_collapsed);
 
-अटल sमाप_प्रकार full_scans_show(काष्ठा kobject *kobj,
-			       काष्ठा kobj_attribute *attr,
-			       अक्षर *buf)
-अणु
-	वापस sysfs_emit(buf, "%u\n", khugepaged_full_scans);
-पूर्ण
-अटल काष्ठा kobj_attribute full_scans_attr =
+static ssize_t full_scans_show(struct kobject *kobj,
+			       struct kobj_attribute *attr,
+			       char *buf)
+{
+	return sysfs_emit(buf, "%u\n", khugepaged_full_scans);
+}
+static struct kobj_attribute full_scans_attr =
 	__ATTR_RO(full_scans);
 
-अटल sमाप_प्रकार khugepaged_defrag_show(काष्ठा kobject *kobj,
-				      काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	वापस single_hugepage_flag_show(kobj, attr, buf,
+static ssize_t khugepaged_defrag_show(struct kobject *kobj,
+				      struct kobj_attribute *attr, char *buf)
+{
+	return single_hugepage_flag_show(kobj, attr, buf,
 					 TRANSPARENT_HUGEPAGE_DEFRAG_KHUGEPAGED_FLAG);
-पूर्ण
-अटल sमाप_प्रकार khugepaged_defrag_store(काष्ठा kobject *kobj,
-				       काष्ठा kobj_attribute *attr,
-				       स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	वापस single_hugepage_flag_store(kobj, attr, buf, count,
+}
+static ssize_t khugepaged_defrag_store(struct kobject *kobj,
+				       struct kobj_attribute *attr,
+				       const char *buf, size_t count)
+{
+	return single_hugepage_flag_store(kobj, attr, buf, count,
 				 TRANSPARENT_HUGEPAGE_DEFRAG_KHUGEPAGED_FLAG);
-पूर्ण
-अटल काष्ठा kobj_attribute khugepaged_defrag_attr =
+}
+static struct kobj_attribute khugepaged_defrag_attr =
 	__ATTR(defrag, 0644, khugepaged_defrag_show,
 	       khugepaged_defrag_store);
 
 /*
- * max_ptes_none controls अगर khugepaged should collapse hugepages over
+ * max_ptes_none controls if khugepaged should collapse hugepages over
  * any unmapped ptes in turn potentially increasing the memory
- * footprपूर्णांक of the vmas. When max_ptes_none is 0 khugepaged will not
- * reduce the available मुक्त memory in the प्रणाली as it
+ * footprint of the vmas. When max_ptes_none is 0 khugepaged will not
+ * reduce the available free memory in the system as it
  * runs. Increasing max_ptes_none will instead potentially reduce the
- * मुक्त memory in the प्रणाली during the khugepaged scan.
+ * free memory in the system during the khugepaged scan.
  */
-अटल sमाप_प्रकार khugepaged_max_ptes_none_show(काष्ठा kobject *kobj,
-					     काष्ठा kobj_attribute *attr,
-					     अक्षर *buf)
-अणु
-	वापस sysfs_emit(buf, "%u\n", khugepaged_max_ptes_none);
-पूर्ण
-अटल sमाप_प्रकार khugepaged_max_ptes_none_store(काष्ठा kobject *kobj,
-					      काष्ठा kobj_attribute *attr,
-					      स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	पूर्णांक err;
-	अचिन्हित दीर्घ max_ptes_none;
+static ssize_t khugepaged_max_ptes_none_show(struct kobject *kobj,
+					     struct kobj_attribute *attr,
+					     char *buf)
+{
+	return sysfs_emit(buf, "%u\n", khugepaged_max_ptes_none);
+}
+static ssize_t khugepaged_max_ptes_none_store(struct kobject *kobj,
+					      struct kobj_attribute *attr,
+					      const char *buf, size_t count)
+{
+	int err;
+	unsigned long max_ptes_none;
 
-	err = kम_से_अदीर्घ(buf, 10, &max_ptes_none);
-	अगर (err || max_ptes_none > HPAGE_PMD_NR-1)
-		वापस -EINVAL;
+	err = kstrtoul(buf, 10, &max_ptes_none);
+	if (err || max_ptes_none > HPAGE_PMD_NR-1)
+		return -EINVAL;
 
 	khugepaged_max_ptes_none = max_ptes_none;
 
-	वापस count;
-पूर्ण
-अटल काष्ठा kobj_attribute khugepaged_max_ptes_none_attr =
+	return count;
+}
+static struct kobj_attribute khugepaged_max_ptes_none_attr =
 	__ATTR(max_ptes_none, 0644, khugepaged_max_ptes_none_show,
 	       khugepaged_max_ptes_none_store);
 
-अटल sमाप_प्रकार khugepaged_max_ptes_swap_show(काष्ठा kobject *kobj,
-					     काष्ठा kobj_attribute *attr,
-					     अक्षर *buf)
-अणु
-	वापस sysfs_emit(buf, "%u\n", khugepaged_max_ptes_swap);
-पूर्ण
+static ssize_t khugepaged_max_ptes_swap_show(struct kobject *kobj,
+					     struct kobj_attribute *attr,
+					     char *buf)
+{
+	return sysfs_emit(buf, "%u\n", khugepaged_max_ptes_swap);
+}
 
-अटल sमाप_प्रकार khugepaged_max_ptes_swap_store(काष्ठा kobject *kobj,
-					      काष्ठा kobj_attribute *attr,
-					      स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	पूर्णांक err;
-	अचिन्हित दीर्घ max_ptes_swap;
+static ssize_t khugepaged_max_ptes_swap_store(struct kobject *kobj,
+					      struct kobj_attribute *attr,
+					      const char *buf, size_t count)
+{
+	int err;
+	unsigned long max_ptes_swap;
 
-	err  = kम_से_अदीर्घ(buf, 10, &max_ptes_swap);
-	अगर (err || max_ptes_swap > HPAGE_PMD_NR-1)
-		वापस -EINVAL;
+	err  = kstrtoul(buf, 10, &max_ptes_swap);
+	if (err || max_ptes_swap > HPAGE_PMD_NR-1)
+		return -EINVAL;
 
 	khugepaged_max_ptes_swap = max_ptes_swap;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल काष्ठा kobj_attribute khugepaged_max_ptes_swap_attr =
+static struct kobj_attribute khugepaged_max_ptes_swap_attr =
 	__ATTR(max_ptes_swap, 0644, khugepaged_max_ptes_swap_show,
 	       khugepaged_max_ptes_swap_store);
 
-अटल sमाप_प्रकार khugepaged_max_ptes_shared_show(काष्ठा kobject *kobj,
-					       काष्ठा kobj_attribute *attr,
-					       अक्षर *buf)
-अणु
-	वापस sysfs_emit(buf, "%u\n", khugepaged_max_ptes_shared);
-पूर्ण
+static ssize_t khugepaged_max_ptes_shared_show(struct kobject *kobj,
+					       struct kobj_attribute *attr,
+					       char *buf)
+{
+	return sysfs_emit(buf, "%u\n", khugepaged_max_ptes_shared);
+}
 
-अटल sमाप_प्रकार khugepaged_max_ptes_shared_store(काष्ठा kobject *kobj,
-					      काष्ठा kobj_attribute *attr,
-					      स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	पूर्णांक err;
-	अचिन्हित दीर्घ max_ptes_shared;
+static ssize_t khugepaged_max_ptes_shared_store(struct kobject *kobj,
+					      struct kobj_attribute *attr,
+					      const char *buf, size_t count)
+{
+	int err;
+	unsigned long max_ptes_shared;
 
-	err  = kम_से_अदीर्घ(buf, 10, &max_ptes_shared);
-	अगर (err || max_ptes_shared > HPAGE_PMD_NR-1)
-		वापस -EINVAL;
+	err  = kstrtoul(buf, 10, &max_ptes_shared);
+	if (err || max_ptes_shared > HPAGE_PMD_NR-1)
+		return -EINVAL;
 
 	khugepaged_max_ptes_shared = max_ptes_shared;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल काष्ठा kobj_attribute khugepaged_max_ptes_shared_attr =
+static struct kobj_attribute khugepaged_max_ptes_shared_attr =
 	__ATTR(max_ptes_shared, 0644, khugepaged_max_ptes_shared_show,
 	       khugepaged_max_ptes_shared_store);
 
-अटल काष्ठा attribute *khugepaged_attr[] = अणु
+static struct attribute *khugepaged_attr[] = {
 	&khugepaged_defrag_attr.attr,
 	&khugepaged_max_ptes_none_attr.attr,
 	&khugepaged_max_ptes_swap_attr.attr,
@@ -336,421 +335,421 @@
 	&full_scans_attr.attr,
 	&scan_sleep_millisecs_attr.attr,
 	&alloc_sleep_millisecs_attr.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-काष्ठा attribute_group khugepaged_attr_group = अणु
+struct attribute_group khugepaged_attr_group = {
 	.attrs = khugepaged_attr,
 	.name = "khugepaged",
-पूर्ण;
-#पूर्ण_अगर /* CONFIG_SYSFS */
+};
+#endif /* CONFIG_SYSFS */
 
-पूर्णांक hugepage_madvise(काष्ठा vm_area_काष्ठा *vma,
-		     अचिन्हित दीर्घ *vm_flags, पूर्णांक advice)
-अणु
-	चयन (advice) अणु
-	हाल MADV_HUGEPAGE:
-#अगर_घोषित CONFIG_S390
+int hugepage_madvise(struct vm_area_struct *vma,
+		     unsigned long *vm_flags, int advice)
+{
+	switch (advice) {
+	case MADV_HUGEPAGE:
+#ifdef CONFIG_S390
 		/*
 		 * qemu blindly sets MADV_HUGEPAGE on all allocations, but s390
 		 * can't handle this properly after s390_enable_sie, so we simply
-		 * ignore the madvise to prevent qemu from causing a संक_अंश.
+		 * ignore the madvise to prevent qemu from causing a SIGSEGV.
 		 */
-		अगर (mm_has_pgste(vma->vm_mm))
-			वापस 0;
-#पूर्ण_अगर
+		if (mm_has_pgste(vma->vm_mm))
+			return 0;
+#endif
 		*vm_flags &= ~VM_NOHUGEPAGE;
 		*vm_flags |= VM_HUGEPAGE;
 		/*
-		 * If the vma become good क्रम khugepaged to scan,
-		 * रेजिस्टर it here without रुकोing a page fault that
-		 * may not happen any समय soon.
+		 * If the vma become good for khugepaged to scan,
+		 * register it here without waiting a page fault that
+		 * may not happen any time soon.
 		 */
-		अगर (!(*vm_flags & VM_NO_KHUGEPAGED) &&
+		if (!(*vm_flags & VM_NO_KHUGEPAGED) &&
 				khugepaged_enter_vma_merge(vma, *vm_flags))
-			वापस -ENOMEM;
-		अवरोध;
-	हाल MADV_NOHUGEPAGE:
+			return -ENOMEM;
+		break;
+	case MADV_NOHUGEPAGE:
 		*vm_flags &= ~VM_HUGEPAGE;
 		*vm_flags |= VM_NOHUGEPAGE;
 		/*
 		 * Setting VM_NOHUGEPAGE will prevent khugepaged from scanning
-		 * this vma even अगर we leave the mm रेजिस्टरed in khugepaged अगर
-		 * it got रेजिस्टरed beक्रमe VM_NOHUGEPAGE was set.
+		 * this vma even if we leave the mm registered in khugepaged if
+		 * it got registered before VM_NOHUGEPAGE was set.
 		 */
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक __init khugepaged_init(व्योम)
-अणु
+int __init khugepaged_init(void)
+{
 	mm_slot_cache = kmem_cache_create("khugepaged_mm_slot",
-					  माप(काष्ठा mm_slot),
-					  __alignof__(काष्ठा mm_slot), 0, शून्य);
-	अगर (!mm_slot_cache)
-		वापस -ENOMEM;
+					  sizeof(struct mm_slot),
+					  __alignof__(struct mm_slot), 0, NULL);
+	if (!mm_slot_cache)
+		return -ENOMEM;
 
 	khugepaged_pages_to_scan = HPAGE_PMD_NR * 8;
 	khugepaged_max_ptes_none = HPAGE_PMD_NR - 1;
 	khugepaged_max_ptes_swap = HPAGE_PMD_NR / 8;
 	khugepaged_max_ptes_shared = HPAGE_PMD_NR / 2;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम __init khugepaged_destroy(व्योम)
-अणु
+void __init khugepaged_destroy(void)
+{
 	kmem_cache_destroy(mm_slot_cache);
-पूर्ण
+}
 
-अटल अंतरभूत काष्ठा mm_slot *alloc_mm_slot(व्योम)
-अणु
-	अगर (!mm_slot_cache)	/* initialization failed */
-		वापस शून्य;
-	वापस kmem_cache_zalloc(mm_slot_cache, GFP_KERNEL);
-पूर्ण
+static inline struct mm_slot *alloc_mm_slot(void)
+{
+	if (!mm_slot_cache)	/* initialization failed */
+		return NULL;
+	return kmem_cache_zalloc(mm_slot_cache, GFP_KERNEL);
+}
 
-अटल अंतरभूत व्योम मुक्त_mm_slot(काष्ठा mm_slot *mm_slot)
-अणु
-	kmem_cache_मुक्त(mm_slot_cache, mm_slot);
-पूर्ण
+static inline void free_mm_slot(struct mm_slot *mm_slot)
+{
+	kmem_cache_free(mm_slot_cache, mm_slot);
+}
 
-अटल काष्ठा mm_slot *get_mm_slot(काष्ठा mm_काष्ठा *mm)
-अणु
-	काष्ठा mm_slot *mm_slot;
+static struct mm_slot *get_mm_slot(struct mm_struct *mm)
+{
+	struct mm_slot *mm_slot;
 
-	hash_क्रम_each_possible(mm_slots_hash, mm_slot, hash, (अचिन्हित दीर्घ)mm)
-		अगर (mm == mm_slot->mm)
-			वापस mm_slot;
+	hash_for_each_possible(mm_slots_hash, mm_slot, hash, (unsigned long)mm)
+		if (mm == mm_slot->mm)
+			return mm_slot;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम insert_to_mm_slots_hash(काष्ठा mm_काष्ठा *mm,
-				    काष्ठा mm_slot *mm_slot)
-अणु
+static void insert_to_mm_slots_hash(struct mm_struct *mm,
+				    struct mm_slot *mm_slot)
+{
 	mm_slot->mm = mm;
-	hash_add(mm_slots_hash, &mm_slot->hash, (दीर्घ)mm);
-पूर्ण
+	hash_add(mm_slots_hash, &mm_slot->hash, (long)mm);
+}
 
-अटल अंतरभूत पूर्णांक khugepaged_test_निकास(काष्ठा mm_काष्ठा *mm)
-अणु
-	वापस atomic_पढ़ो(&mm->mm_users) == 0;
-पूर्ण
+static inline int khugepaged_test_exit(struct mm_struct *mm)
+{
+	return atomic_read(&mm->mm_users) == 0;
+}
 
-अटल bool hugepage_vma_check(काष्ठा vm_area_काष्ठा *vma,
-			       अचिन्हित दीर्घ vm_flags)
-अणु
+static bool hugepage_vma_check(struct vm_area_struct *vma,
+			       unsigned long vm_flags)
+{
 	/* Explicitly disabled through madvise. */
-	अगर ((vm_flags & VM_NOHUGEPAGE) ||
+	if ((vm_flags & VM_NOHUGEPAGE) ||
 	    test_bit(MMF_DISABLE_THP, &vma->vm_mm->flags))
-		वापस false;
+		return false;
 
 	/* Enabled via shmem mount options or sysfs settings. */
-	अगर (shmem_file(vma->vm_file) && shmem_huge_enabled(vma)) अणु
-		वापस IS_ALIGNED((vma->vm_start >> PAGE_SHIFT) - vma->vm_pgoff,
+	if (shmem_file(vma->vm_file) && shmem_huge_enabled(vma)) {
+		return IS_ALIGNED((vma->vm_start >> PAGE_SHIFT) - vma->vm_pgoff,
 				HPAGE_PMD_NR);
-	पूर्ण
+	}
 
 	/* THP settings require madvise. */
-	अगर (!(vm_flags & VM_HUGEPAGE) && !khugepaged_always())
-		वापस false;
+	if (!(vm_flags & VM_HUGEPAGE) && !khugepaged_always())
+		return false;
 
-	/* Read-only file mappings need to be aligned क्रम THP to work. */
-	अगर (IS_ENABLED(CONFIG_READ_ONLY_THP_FOR_FS) && vma->vm_file &&
-	    (vm_flags & VM_DENYWRITE)) अणु
-		वापस IS_ALIGNED((vma->vm_start >> PAGE_SHIFT) - vma->vm_pgoff,
+	/* Read-only file mappings need to be aligned for THP to work. */
+	if (IS_ENABLED(CONFIG_READ_ONLY_THP_FOR_FS) && vma->vm_file &&
+	    (vm_flags & VM_DENYWRITE)) {
+		return IS_ALIGNED((vma->vm_start >> PAGE_SHIFT) - vma->vm_pgoff,
 				HPAGE_PMD_NR);
-	पूर्ण
+	}
 
-	अगर (!vma->anon_vma || vma->vm_ops)
-		वापस false;
-	अगर (vma_is_temporary_stack(vma))
-		वापस false;
-	वापस !(vm_flags & VM_NO_KHUGEPAGED);
-पूर्ण
+	if (!vma->anon_vma || vma->vm_ops)
+		return false;
+	if (vma_is_temporary_stack(vma))
+		return false;
+	return !(vm_flags & VM_NO_KHUGEPAGED);
+}
 
-पूर्णांक __khugepaged_enter(काष्ठा mm_काष्ठा *mm)
-अणु
-	काष्ठा mm_slot *mm_slot;
-	पूर्णांक wakeup;
+int __khugepaged_enter(struct mm_struct *mm)
+{
+	struct mm_slot *mm_slot;
+	int wakeup;
 
 	mm_slot = alloc_mm_slot();
-	अगर (!mm_slot)
-		वापस -ENOMEM;
+	if (!mm_slot)
+		return -ENOMEM;
 
-	/* __khugepaged_निकास() must not run from under us */
-	VM_BUG_ON_MM(khugepaged_test_निकास(mm), mm);
-	अगर (unlikely(test_and_set_bit(MMF_VM_HUGEPAGE, &mm->flags))) अणु
-		मुक्त_mm_slot(mm_slot);
-		वापस 0;
-	पूर्ण
+	/* __khugepaged_exit() must not run from under us */
+	VM_BUG_ON_MM(khugepaged_test_exit(mm), mm);
+	if (unlikely(test_and_set_bit(MMF_VM_HUGEPAGE, &mm->flags))) {
+		free_mm_slot(mm_slot);
+		return 0;
+	}
 
 	spin_lock(&khugepaged_mm_lock);
 	insert_to_mm_slots_hash(mm, mm_slot);
 	/*
 	 * Insert just behind the scanning cursor, to let the area settle
-	 * करोwn a little.
+	 * down a little.
 	 */
 	wakeup = list_empty(&khugepaged_scan.mm_head);
 	list_add_tail(&mm_slot->mm_node, &khugepaged_scan.mm_head);
 	spin_unlock(&khugepaged_mm_lock);
 
 	mmgrab(mm);
-	अगर (wakeup)
-		wake_up_पूर्णांकerruptible(&khugepaged_रुको);
+	if (wakeup)
+		wake_up_interruptible(&khugepaged_wait);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक khugepaged_enter_vma_merge(काष्ठा vm_area_काष्ठा *vma,
-			       अचिन्हित दीर्घ vm_flags)
-अणु
-	अचिन्हित दीर्घ hstart, hend;
+int khugepaged_enter_vma_merge(struct vm_area_struct *vma,
+			       unsigned long vm_flags)
+{
+	unsigned long hstart, hend;
 
 	/*
-	 * khugepaged only supports पढ़ो-only files क्रम non-shmem files.
-	 * khugepaged करोes not yet work on special mappings. And
-	 * file-निजी shmem THP is not supported.
+	 * khugepaged only supports read-only files for non-shmem files.
+	 * khugepaged does not yet work on special mappings. And
+	 * file-private shmem THP is not supported.
 	 */
-	अगर (!hugepage_vma_check(vma, vm_flags))
-		वापस 0;
+	if (!hugepage_vma_check(vma, vm_flags))
+		return 0;
 
 	hstart = (vma->vm_start + ~HPAGE_PMD_MASK) & HPAGE_PMD_MASK;
 	hend = vma->vm_end & HPAGE_PMD_MASK;
-	अगर (hstart < hend)
-		वापस khugepaged_enter(vma, vm_flags);
-	वापस 0;
-पूर्ण
+	if (hstart < hend)
+		return khugepaged_enter(vma, vm_flags);
+	return 0;
+}
 
-व्योम __khugepaged_निकास(काष्ठा mm_काष्ठा *mm)
-अणु
-	काष्ठा mm_slot *mm_slot;
-	पूर्णांक मुक्त = 0;
+void __khugepaged_exit(struct mm_struct *mm)
+{
+	struct mm_slot *mm_slot;
+	int free = 0;
 
 	spin_lock(&khugepaged_mm_lock);
 	mm_slot = get_mm_slot(mm);
-	अगर (mm_slot && khugepaged_scan.mm_slot != mm_slot) अणु
+	if (mm_slot && khugepaged_scan.mm_slot != mm_slot) {
 		hash_del(&mm_slot->hash);
 		list_del(&mm_slot->mm_node);
-		मुक्त = 1;
-	पूर्ण
+		free = 1;
+	}
 	spin_unlock(&khugepaged_mm_lock);
 
-	अगर (मुक्त) अणु
+	if (free) {
 		clear_bit(MMF_VM_HUGEPAGE, &mm->flags);
-		मुक्त_mm_slot(mm_slot);
+		free_mm_slot(mm_slot);
 		mmdrop(mm);
-	पूर्ण अन्यथा अगर (mm_slot) अणु
+	} else if (mm_slot) {
 		/*
 		 * This is required to serialize against
-		 * khugepaged_test_निकास() (which is guaranteed to run
-		 * under mmap sem पढ़ो mode). Stop here (after we
-		 * वापस all pagetables will be destroyed) until
+		 * khugepaged_test_exit() (which is guaranteed to run
+		 * under mmap sem read mode). Stop here (after we
+		 * return all pagetables will be destroyed) until
 		 * khugepaged has finished working on the pagetables
 		 * under the mmap_lock.
 		 */
-		mmap_ग_लिखो_lock(mm);
-		mmap_ग_लिखो_unlock(mm);
-	पूर्ण
-पूर्ण
+		mmap_write_lock(mm);
+		mmap_write_unlock(mm);
+	}
+}
 
-अटल व्योम release_pte_page(काष्ठा page *page)
-अणु
+static void release_pte_page(struct page *page)
+{
 	mod_node_page_state(page_pgdat(page),
 			NR_ISOLATED_ANON + page_is_file_lru(page),
 			-compound_nr(page));
 	unlock_page(page);
 	putback_lru_page(page);
-पूर्ण
+}
 
-अटल व्योम release_pte_pages(pte_t *pte, pte_t *_pte,
-		काष्ठा list_head *compound_pagelist)
-अणु
-	काष्ठा page *page, *पंचांगp;
+static void release_pte_pages(pte_t *pte, pte_t *_pte,
+		struct list_head *compound_pagelist)
+{
+	struct page *page, *tmp;
 
-	जबतक (--_pte >= pte) अणु
+	while (--_pte >= pte) {
 		pte_t pteval = *_pte;
 
 		page = pte_page(pteval);
-		अगर (!pte_none(pteval) && !is_zero_pfn(pte_pfn(pteval)) &&
+		if (!pte_none(pteval) && !is_zero_pfn(pte_pfn(pteval)) &&
 				!PageCompound(page))
 			release_pte_page(page);
-	पूर्ण
+	}
 
-	list_क्रम_each_entry_safe(page, पंचांगp, compound_pagelist, lru) अणु
+	list_for_each_entry_safe(page, tmp, compound_pagelist, lru) {
 		list_del(&page->lru);
 		release_pte_page(page);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल bool is_refcount_suitable(काष्ठा page *page)
-अणु
-	पूर्णांक expected_refcount;
+static bool is_refcount_suitable(struct page *page)
+{
+	int expected_refcount;
 
 	expected_refcount = total_mapcount(page);
-	अगर (PageSwapCache(page))
+	if (PageSwapCache(page))
 		expected_refcount += compound_nr(page);
 
-	वापस page_count(page) == expected_refcount;
-पूर्ण
+	return page_count(page) == expected_refcount;
+}
 
-अटल पूर्णांक __collapse_huge_page_isolate(काष्ठा vm_area_काष्ठा *vma,
-					अचिन्हित दीर्घ address,
+static int __collapse_huge_page_isolate(struct vm_area_struct *vma,
+					unsigned long address,
 					pte_t *pte,
-					काष्ठा list_head *compound_pagelist)
-अणु
-	काष्ठा page *page = शून्य;
+					struct list_head *compound_pagelist)
+{
+	struct page *page = NULL;
 	pte_t *_pte;
-	पूर्णांक none_or_zero = 0, shared = 0, result = 0, referenced = 0;
+	int none_or_zero = 0, shared = 0, result = 0, referenced = 0;
 	bool writable = false;
 
-	क्रम (_pte = pte; _pte < pte+HPAGE_PMD_NR;
-	     _pte++, address += PAGE_SIZE) अणु
+	for (_pte = pte; _pte < pte+HPAGE_PMD_NR;
+	     _pte++, address += PAGE_SIZE) {
 		pte_t pteval = *_pte;
-		अगर (pte_none(pteval) || (pte_present(pteval) &&
-				is_zero_pfn(pte_pfn(pteval)))) अणु
-			अगर (!userfaultfd_armed(vma) &&
-			    ++none_or_zero <= khugepaged_max_ptes_none) अणु
-				जारी;
-			पूर्ण अन्यथा अणु
+		if (pte_none(pteval) || (pte_present(pteval) &&
+				is_zero_pfn(pte_pfn(pteval)))) {
+			if (!userfaultfd_armed(vma) &&
+			    ++none_or_zero <= khugepaged_max_ptes_none) {
+				continue;
+			} else {
 				result = SCAN_EXCEED_NONE_PTE;
-				जाओ out;
-			पूर्ण
-		पूर्ण
-		अगर (!pte_present(pteval)) अणु
+				goto out;
+			}
+		}
+		if (!pte_present(pteval)) {
 			result = SCAN_PTE_NON_PRESENT;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		page = vm_normal_page(vma, address, pteval);
-		अगर (unlikely(!page)) अणु
-			result = SCAN_PAGE_शून्य;
-			जाओ out;
-		पूर्ण
+		if (unlikely(!page)) {
+			result = SCAN_PAGE_NULL;
+			goto out;
+		}
 
 		VM_BUG_ON_PAGE(!PageAnon(page), page);
 
-		अगर (page_mapcount(page) > 1 &&
-				++shared > khugepaged_max_ptes_shared) अणु
+		if (page_mapcount(page) > 1 &&
+				++shared > khugepaged_max_ptes_shared) {
 			result = SCAN_EXCEED_SHARED_PTE;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		अगर (PageCompound(page)) अणु
-			काष्ठा page *p;
+		if (PageCompound(page)) {
+			struct page *p;
 			page = compound_head(page);
 
 			/*
-			 * Check अगर we have dealt with the compound page
-			 * alपढ़ोy
+			 * Check if we have dealt with the compound page
+			 * already
 			 */
-			list_क्रम_each_entry(p, compound_pagelist, lru) अणु
-				अगर (page == p)
-					जाओ next;
-			पूर्ण
-		पूर्ण
+			list_for_each_entry(p, compound_pagelist, lru) {
+				if (page == p)
+					goto next;
+			}
+		}
 
 		/*
-		 * We can करो it beक्रमe isolate_lru_page because the
-		 * page can't be मुक्तd from under us. NOTE: PG_lock
+		 * We can do it before isolate_lru_page because the
+		 * page can't be freed from under us. NOTE: PG_lock
 		 * is needed to serialize against split_huge_page
 		 * when invoked from the VM.
 		 */
-		अगर (!trylock_page(page)) अणु
+		if (!trylock_page(page)) {
 			result = SCAN_PAGE_LOCK;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		/*
-		 * Check अगर the page has any GUP (or other बाह्यal) pins.
+		 * Check if the page has any GUP (or other external) pins.
 		 *
-		 * The page table that maps the page has been alपढ़ोy unlinked
+		 * The page table that maps the page has been already unlinked
 		 * from the page table tree and this process cannot get
 		 * an additional pin on the page.
 		 *
-		 * New pins can come later अगर the page is shared across विभाजन,
-		 * but not from this process. The other process cannot ग_लिखो to
+		 * New pins can come later if the page is shared across fork,
+		 * but not from this process. The other process cannot write to
 		 * the page, only trigger CoW.
 		 */
-		अगर (!is_refcount_suitable(page)) अणु
+		if (!is_refcount_suitable(page)) {
 			unlock_page(page);
 			result = SCAN_PAGE_COUNT;
-			जाओ out;
-		पूर्ण
-		अगर (!pte_ग_लिखो(pteval) && PageSwapCache(page) &&
-				!reuse_swap_page(page, शून्य)) अणु
+			goto out;
+		}
+		if (!pte_write(pteval) && PageSwapCache(page) &&
+				!reuse_swap_page(page, NULL)) {
 			/*
 			 * Page is in the swap cache and cannot be re-used.
-			 * It cannot be collapsed पूर्णांकo a THP.
+			 * It cannot be collapsed into a THP.
 			 */
 			unlock_page(page);
 			result = SCAN_SWAP_CACHE_PAGE;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		/*
-		 * Isolate the page to aव्योम collapsing an hugepage
+		 * Isolate the page to avoid collapsing an hugepage
 		 * currently in use by the VM.
 		 */
-		अगर (isolate_lru_page(page)) अणु
+		if (isolate_lru_page(page)) {
 			unlock_page(page);
 			result = SCAN_DEL_PAGE_LRU;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		mod_node_page_state(page_pgdat(page),
 				NR_ISOLATED_ANON + page_is_file_lru(page),
 				compound_nr(page));
 		VM_BUG_ON_PAGE(!PageLocked(page), page);
 		VM_BUG_ON_PAGE(PageLRU(page), page);
 
-		अगर (PageCompound(page))
+		if (PageCompound(page))
 			list_add_tail(&page->lru, compound_pagelist);
 next:
 		/* There should be enough young pte to collapse the page */
-		अगर (pte_young(pteval) ||
+		if (pte_young(pteval) ||
 		    page_is_young(page) || PageReferenced(page) ||
-		    mmu_notअगरier_test_young(vma->vm_mm, address))
+		    mmu_notifier_test_young(vma->vm_mm, address))
 			referenced++;
 
-		अगर (pte_ग_लिखो(pteval))
+		if (pte_write(pteval))
 			writable = true;
-	पूर्ण
+	}
 
-	अगर (unlikely(!writable)) अणु
+	if (unlikely(!writable)) {
 		result = SCAN_PAGE_RO;
-	पूर्ण अन्यथा अगर (unlikely(!referenced)) अणु
+	} else if (unlikely(!referenced)) {
 		result = SCAN_LACK_REFERENCED_PAGE;
-	पूर्ण अन्यथा अणु
+	} else {
 		result = SCAN_SUCCEED;
 		trace_mm_collapse_huge_page_isolate(page, none_or_zero,
 						    referenced, writable, result);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 out:
 	release_pte_pages(pte, _pte, compound_pagelist);
 	trace_mm_collapse_huge_page_isolate(page, none_or_zero,
 					    referenced, writable, result);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __collapse_huge_page_copy(pte_t *pte, काष्ठा page *page,
-				      काष्ठा vm_area_काष्ठा *vma,
-				      अचिन्हित दीर्घ address,
+static void __collapse_huge_page_copy(pte_t *pte, struct page *page,
+				      struct vm_area_struct *vma,
+				      unsigned long address,
 				      spinlock_t *ptl,
-				      काष्ठा list_head *compound_pagelist)
-अणु
-	काष्ठा page *src_page, *पंचांगp;
+				      struct list_head *compound_pagelist)
+{
+	struct page *src_page, *tmp;
 	pte_t *_pte;
-	क्रम (_pte = pte; _pte < pte + HPAGE_PMD_NR;
-				_pte++, page++, address += PAGE_SIZE) अणु
+	for (_pte = pte; _pte < pte + HPAGE_PMD_NR;
+				_pte++, page++, address += PAGE_SIZE) {
 		pte_t pteval = *_pte;
 
-		अगर (pte_none(pteval) || is_zero_pfn(pte_pfn(pteval))) अणु
+		if (pte_none(pteval) || is_zero_pfn(pte_pfn(pteval))) {
 			clear_user_highpage(page, address);
 			add_mm_counter(vma->vm_mm, MM_ANONPAGES, 1);
-			अगर (is_zero_pfn(pte_pfn(pteval))) अणु
+			if (is_zero_pfn(pte_pfn(pteval))) {
 				/*
 				 * ptl mostly unnecessary.
 				 */
@@ -761,16 +760,16 @@ out:
 				 */
 				pte_clear(vma->vm_mm, address, _pte);
 				spin_unlock(ptl);
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			src_page = pte_page(pteval);
 			copy_user_highpage(page, src_page, address, vma);
-			अगर (!PageCompound(src_page))
+			if (!PageCompound(src_page))
 				release_pte_page(src_page);
 			/*
 			 * ptl mostly unnecessary, but preempt has to
 			 * be disabled to update the per-cpu stats
-			 * inside page_हटाओ_rmap().
+			 * inside page_remove_rmap().
 			 */
 			spin_lock(ptl);
 			/*
@@ -778,297 +777,297 @@ out:
 			 * superfluous.
 			 */
 			pte_clear(vma->vm_mm, address, _pte);
-			page_हटाओ_rmap(src_page, false);
+			page_remove_rmap(src_page, false);
 			spin_unlock(ptl);
-			मुक्त_page_and_swap_cache(src_page);
-		पूर्ण
-	पूर्ण
+			free_page_and_swap_cache(src_page);
+		}
+	}
 
-	list_क्रम_each_entry_safe(src_page, पंचांगp, compound_pagelist, lru) अणु
+	list_for_each_entry_safe(src_page, tmp, compound_pagelist, lru) {
 		list_del(&src_page->lru);
 		release_pte_page(src_page);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम khugepaged_alloc_sleep(व्योम)
-अणु
-	DEFINE_WAIT(रुको);
+static void khugepaged_alloc_sleep(void)
+{
+	DEFINE_WAIT(wait);
 
-	add_रुको_queue(&khugepaged_रुको, &रुको);
-	मुक्तzable_schedule_समयout_पूर्णांकerruptible(
-		msecs_to_jअगरfies(khugepaged_alloc_sleep_millisecs));
-	हटाओ_रुको_queue(&khugepaged_रुको, &रुको);
-पूर्ण
+	add_wait_queue(&khugepaged_wait, &wait);
+	freezable_schedule_timeout_interruptible(
+		msecs_to_jiffies(khugepaged_alloc_sleep_millisecs));
+	remove_wait_queue(&khugepaged_wait, &wait);
+}
 
-अटल पूर्णांक khugepaged_node_load[MAX_NUMNODES];
+static int khugepaged_node_load[MAX_NUMNODES];
 
-अटल bool khugepaged_scan_पात(पूर्णांक nid)
-अणु
-	पूर्णांक i;
+static bool khugepaged_scan_abort(int nid)
+{
+	int i;
 
 	/*
-	 * If node_reclaim_mode is disabled, then no extra efक्रमt is made to
+	 * If node_reclaim_mode is disabled, then no extra effort is made to
 	 * allocate memory locally.
 	 */
-	अगर (!node_reclaim_enabled())
-		वापस false;
+	if (!node_reclaim_enabled())
+		return false;
 
-	/* If there is a count क्रम this node alपढ़ोy, it must be acceptable */
-	अगर (khugepaged_node_load[nid])
-		वापस false;
+	/* If there is a count for this node already, it must be acceptable */
+	if (khugepaged_node_load[nid])
+		return false;
 
-	क्रम (i = 0; i < MAX_NUMNODES; i++) अणु
-		अगर (!khugepaged_node_load[i])
-			जारी;
-		अगर (node_distance(nid, i) > node_reclaim_distance)
-			वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+	for (i = 0; i < MAX_NUMNODES; i++) {
+		if (!khugepaged_node_load[i])
+			continue;
+		if (node_distance(nid, i) > node_reclaim_distance)
+			return true;
+	}
+	return false;
+}
 
-/* Defrag क्रम khugepaged will enter direct reclaim/compaction अगर necessary */
-अटल अंतरभूत gfp_t alloc_hugepage_khugepaged_gfpmask(व्योम)
-अणु
-	वापस khugepaged_defrag() ? GFP_TRANSHUGE : GFP_TRANSHUGE_LIGHT;
-पूर्ण
+/* Defrag for khugepaged will enter direct reclaim/compaction if necessary */
+static inline gfp_t alloc_hugepage_khugepaged_gfpmask(void)
+{
+	return khugepaged_defrag() ? GFP_TRANSHUGE : GFP_TRANSHUGE_LIGHT;
+}
 
-#अगर_घोषित CONFIG_NUMA
-अटल पूर्णांक khugepaged_find_target_node(व्योम)
-अणु
-	अटल पूर्णांक last_khugepaged_target_node = NUMA_NO_NODE;
-	पूर्णांक nid, target_node = 0, max_value = 0;
+#ifdef CONFIG_NUMA
+static int khugepaged_find_target_node(void)
+{
+	static int last_khugepaged_target_node = NUMA_NO_NODE;
+	int nid, target_node = 0, max_value = 0;
 
 	/* find first node with max normal pages hit */
-	क्रम (nid = 0; nid < MAX_NUMNODES; nid++)
-		अगर (khugepaged_node_load[nid] > max_value) अणु
+	for (nid = 0; nid < MAX_NUMNODES; nid++)
+		if (khugepaged_node_load[nid] > max_value) {
 			max_value = khugepaged_node_load[nid];
 			target_node = nid;
-		पूर्ण
+		}
 
-	/* करो some balance अगर several nodes have the same hit record */
-	अगर (target_node <= last_khugepaged_target_node)
-		क्रम (nid = last_khugepaged_target_node + 1; nid < MAX_NUMNODES;
+	/* do some balance if several nodes have the same hit record */
+	if (target_node <= last_khugepaged_target_node)
+		for (nid = last_khugepaged_target_node + 1; nid < MAX_NUMNODES;
 				nid++)
-			अगर (max_value == khugepaged_node_load[nid]) अणु
+			if (max_value == khugepaged_node_load[nid]) {
 				target_node = nid;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
 	last_khugepaged_target_node = target_node;
-	वापस target_node;
-पूर्ण
+	return target_node;
+}
 
-अटल bool khugepaged_pपुनः_स्मृति_page(काष्ठा page **hpage, bool *रुको)
-अणु
-	अगर (IS_ERR(*hpage)) अणु
-		अगर (!*रुको)
-			वापस false;
+static bool khugepaged_prealloc_page(struct page **hpage, bool *wait)
+{
+	if (IS_ERR(*hpage)) {
+		if (!*wait)
+			return false;
 
-		*रुको = false;
-		*hpage = शून्य;
+		*wait = false;
+		*hpage = NULL;
 		khugepaged_alloc_sleep();
-	पूर्ण अन्यथा अगर (*hpage) अणु
+	} else if (*hpage) {
 		put_page(*hpage);
-		*hpage = शून्य;
-	पूर्ण
+		*hpage = NULL;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल काष्ठा page *
-khugepaged_alloc_page(काष्ठा page **hpage, gfp_t gfp, पूर्णांक node)
-अणु
+static struct page *
+khugepaged_alloc_page(struct page **hpage, gfp_t gfp, int node)
+{
 	VM_BUG_ON_PAGE(*hpage, *hpage);
 
 	*hpage = __alloc_pages_node(node, gfp, HPAGE_PMD_ORDER);
-	अगर (unlikely(!*hpage)) अणु
+	if (unlikely(!*hpage)) {
 		count_vm_event(THP_COLLAPSE_ALLOC_FAILED);
 		*hpage = ERR_PTR(-ENOMEM);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	prep_transhuge_page(*hpage);
 	count_vm_event(THP_COLLAPSE_ALLOC);
-	वापस *hpage;
-पूर्ण
-#अन्यथा
-अटल पूर्णांक khugepaged_find_target_node(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+	return *hpage;
+}
+#else
+static int khugepaged_find_target_node(void)
+{
+	return 0;
+}
 
-अटल अंतरभूत काष्ठा page *alloc_khugepaged_hugepage(व्योम)
-अणु
-	काष्ठा page *page;
+static inline struct page *alloc_khugepaged_hugepage(void)
+{
+	struct page *page;
 
 	page = alloc_pages(alloc_hugepage_khugepaged_gfpmask(),
 			   HPAGE_PMD_ORDER);
-	अगर (page)
+	if (page)
 		prep_transhuge_page(page);
-	वापस page;
-पूर्ण
+	return page;
+}
 
-अटल काष्ठा page *khugepaged_alloc_hugepage(bool *रुको)
-अणु
-	काष्ठा page *hpage;
+static struct page *khugepaged_alloc_hugepage(bool *wait)
+{
+	struct page *hpage;
 
-	करो अणु
+	do {
 		hpage = alloc_khugepaged_hugepage();
-		अगर (!hpage) अणु
+		if (!hpage) {
 			count_vm_event(THP_COLLAPSE_ALLOC_FAILED);
-			अगर (!*रुको)
-				वापस शून्य;
+			if (!*wait)
+				return NULL;
 
-			*रुको = false;
+			*wait = false;
 			khugepaged_alloc_sleep();
-		पूर्ण अन्यथा
+		} else
 			count_vm_event(THP_COLLAPSE_ALLOC);
-	पूर्ण जबतक (unlikely(!hpage) && likely(khugepaged_enabled()));
+	} while (unlikely(!hpage) && likely(khugepaged_enabled()));
 
-	वापस hpage;
-पूर्ण
+	return hpage;
+}
 
-अटल bool khugepaged_pपुनः_स्मृति_page(काष्ठा page **hpage, bool *रुको)
-अणु
+static bool khugepaged_prealloc_page(struct page **hpage, bool *wait)
+{
 	/*
 	 * If the hpage allocated earlier was briefly exposed in page cache
-	 * beक्रमe collapse_file() failed, it is possible that racing lookups
+	 * before collapse_file() failed, it is possible that racing lookups
 	 * have not yet completed, and would then be unpleasantly surprised by
-	 * finding the hpage reused क्रम the same mapping at a dअगरferent offset.
-	 * Just release the previous allocation अगर there is any danger of that.
+	 * finding the hpage reused for the same mapping at a different offset.
+	 * Just release the previous allocation if there is any danger of that.
 	 */
-	अगर (*hpage && page_count(*hpage) > 1) अणु
+	if (*hpage && page_count(*hpage) > 1) {
 		put_page(*hpage);
-		*hpage = शून्य;
-	पूर्ण
+		*hpage = NULL;
+	}
 
-	अगर (!*hpage)
-		*hpage = khugepaged_alloc_hugepage(रुको);
+	if (!*hpage)
+		*hpage = khugepaged_alloc_hugepage(wait);
 
-	अगर (unlikely(!*hpage))
-		वापस false;
+	if (unlikely(!*hpage))
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल काष्ठा page *
-khugepaged_alloc_page(काष्ठा page **hpage, gfp_t gfp, पूर्णांक node)
-अणु
+static struct page *
+khugepaged_alloc_page(struct page **hpage, gfp_t gfp, int node)
+{
 	VM_BUG_ON(!*hpage);
 
-	वापस  *hpage;
-पूर्ण
-#पूर्ण_अगर
+	return  *hpage;
+}
+#endif
 
 /*
  * If mmap_lock temporarily dropped, revalidate vma
- * beक्रमe taking mmap_lock.
- * Return 0 अगर succeeds, otherwise वापस none-zero
+ * before taking mmap_lock.
+ * Return 0 if succeeds, otherwise return none-zero
  * value (scan code).
  */
 
-अटल पूर्णांक hugepage_vma_revalidate(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ address,
-		काष्ठा vm_area_काष्ठा **vmap)
-अणु
-	काष्ठा vm_area_काष्ठा *vma;
-	अचिन्हित दीर्घ hstart, hend;
+static int hugepage_vma_revalidate(struct mm_struct *mm, unsigned long address,
+		struct vm_area_struct **vmap)
+{
+	struct vm_area_struct *vma;
+	unsigned long hstart, hend;
 
-	अगर (unlikely(khugepaged_test_निकास(mm)))
-		वापस SCAN_ANY_PROCESS;
+	if (unlikely(khugepaged_test_exit(mm)))
+		return SCAN_ANY_PROCESS;
 
 	*vmap = vma = find_vma(mm, address);
-	अगर (!vma)
-		वापस SCAN_VMA_शून्य;
+	if (!vma)
+		return SCAN_VMA_NULL;
 
 	hstart = (vma->vm_start + ~HPAGE_PMD_MASK) & HPAGE_PMD_MASK;
 	hend = vma->vm_end & HPAGE_PMD_MASK;
-	अगर (address < hstart || address + HPAGE_PMD_SIZE > hend)
-		वापस SCAN_ADDRESS_RANGE;
-	अगर (!hugepage_vma_check(vma, vma->vm_flags))
-		वापस SCAN_VMA_CHECK;
+	if (address < hstart || address + HPAGE_PMD_SIZE > hend)
+		return SCAN_ADDRESS_RANGE;
+	if (!hugepage_vma_check(vma, vma->vm_flags))
+		return SCAN_VMA_CHECK;
 	/* Anon VMA expected */
-	अगर (!vma->anon_vma || vma->vm_ops)
-		वापस SCAN_VMA_CHECK;
-	वापस 0;
-पूर्ण
+	if (!vma->anon_vma || vma->vm_ops)
+		return SCAN_VMA_CHECK;
+	return 0;
+}
 
 /*
  * Bring missing pages in from swap, to complete THP collapse.
- * Only करोne अगर khugepaged_scan_pmd believes it is worthजबतक.
+ * Only done if khugepaged_scan_pmd believes it is worthwhile.
  *
- * Called and वापसs without pte mapped or spinlocks held,
+ * Called and returns without pte mapped or spinlocks held,
  * but with mmap_lock held to protect against vma changes.
  */
 
-अटल bool __collapse_huge_page_swapin(काष्ठा mm_काष्ठा *mm,
-					काष्ठा vm_area_काष्ठा *vma,
-					अचिन्हित दीर्घ haddr, pmd_t *pmd,
-					पूर्णांक referenced)
-अणु
-	पूर्णांक swapped_in = 0;
+static bool __collapse_huge_page_swapin(struct mm_struct *mm,
+					struct vm_area_struct *vma,
+					unsigned long haddr, pmd_t *pmd,
+					int referenced)
+{
+	int swapped_in = 0;
 	vm_fault_t ret = 0;
-	अचिन्हित दीर्घ address, end = haddr + (HPAGE_PMD_NR * PAGE_SIZE);
+	unsigned long address, end = haddr + (HPAGE_PMD_NR * PAGE_SIZE);
 
-	क्रम (address = haddr; address < end; address += PAGE_SIZE) अणु
-		काष्ठा vm_fault vmf = अणु
+	for (address = haddr; address < end; address += PAGE_SIZE) {
+		struct vm_fault vmf = {
 			.vma = vma,
 			.address = address,
 			.pgoff = linear_page_index(vma, haddr),
 			.flags = FAULT_FLAG_ALLOW_RETRY,
 			.pmd = pmd,
-		पूर्ण;
+		};
 
 		vmf.pte = pte_offset_map(pmd, address);
 		vmf.orig_pte = *vmf.pte;
-		अगर (!is_swap_pte(vmf.orig_pte)) अणु
+		if (!is_swap_pte(vmf.orig_pte)) {
 			pte_unmap(vmf.pte);
-			जारी;
-		पूर्ण
+			continue;
+		}
 		swapped_in++;
-		ret = करो_swap_page(&vmf);
+		ret = do_swap_page(&vmf);
 
-		/* करो_swap_page वापसs VM_FAULT_RETRY with released mmap_lock */
-		अगर (ret & VM_FAULT_RETRY) अणु
-			mmap_पढ़ो_lock(mm);
-			अगर (hugepage_vma_revalidate(mm, haddr, &vma)) अणु
-				/* vma is no दीर्घer available, करोn't जारी to swapin */
+		/* do_swap_page returns VM_FAULT_RETRY with released mmap_lock */
+		if (ret & VM_FAULT_RETRY) {
+			mmap_read_lock(mm);
+			if (hugepage_vma_revalidate(mm, haddr, &vma)) {
+				/* vma is no longer available, don't continue to swapin */
 				trace_mm_collapse_huge_page_swapin(mm, swapped_in, referenced, 0);
-				वापस false;
-			पूर्ण
-			/* check अगर the pmd is still valid */
-			अगर (mm_find_pmd(mm, haddr) != pmd) अणु
+				return false;
+			}
+			/* check if the pmd is still valid */
+			if (mm_find_pmd(mm, haddr) != pmd) {
 				trace_mm_collapse_huge_page_swapin(mm, swapped_in, referenced, 0);
-				वापस false;
-			पूर्ण
-		पूर्ण
-		अगर (ret & VM_FAULT_ERROR) अणु
+				return false;
+			}
+		}
+		if (ret & VM_FAULT_ERROR) {
 			trace_mm_collapse_huge_page_swapin(mm, swapped_in, referenced, 0);
-			वापस false;
-		पूर्ण
-	पूर्ण
+			return false;
+		}
+	}
 
-	/* Drain LRU add pagevec to हटाओ extra pin on the swapped in pages */
-	अगर (swapped_in)
+	/* Drain LRU add pagevec to remove extra pin on the swapped in pages */
+	if (swapped_in)
 		lru_add_drain();
 
 	trace_mm_collapse_huge_page_swapin(mm, swapped_in, referenced, 1);
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल व्योम collapse_huge_page(काष्ठा mm_काष्ठा *mm,
-				   अचिन्हित दीर्घ address,
-				   काष्ठा page **hpage,
-				   पूर्णांक node, पूर्णांक referenced, पूर्णांक unmapped)
-अणु
+static void collapse_huge_page(struct mm_struct *mm,
+				   unsigned long address,
+				   struct page **hpage,
+				   int node, int referenced, int unmapped)
+{
 	LIST_HEAD(compound_pagelist);
 	pmd_t *pmd, _pmd;
 	pte_t *pte;
 	pgtable_t pgtable;
-	काष्ठा page *new_page;
+	struct page *new_page;
 	spinlock_t *pmd_ptl, *pte_ptl;
-	पूर्णांक isolated = 0, result = 0;
-	काष्ठा vm_area_काष्ठा *vma;
-	काष्ठा mmu_notअगरier_range range;
+	int isolated = 0, result = 0;
+	struct vm_area_struct *vma;
+	struct mmu_notifier_range range;
 	gfp_t gfp;
 
 	VM_BUG_ON(address & ~HPAGE_PMD_MASK);
@@ -1077,109 +1076,109 @@ khugepaged_alloc_page(काष्ठा page **hpage, gfp_t gfp, पूर्�
 	gfp = alloc_hugepage_khugepaged_gfpmask() | __GFP_THISNODE;
 
 	/*
-	 * Beक्रमe allocating the hugepage, release the mmap_lock पढ़ो lock.
-	 * The allocation can take potentially a दीर्घ समय अगर it involves
-	 * sync compaction, and we करो not need to hold the mmap_lock during
-	 * that. We will recheck the vma after taking it again in ग_लिखो mode.
+	 * Before allocating the hugepage, release the mmap_lock read lock.
+	 * The allocation can take potentially a long time if it involves
+	 * sync compaction, and we do not need to hold the mmap_lock during
+	 * that. We will recheck the vma after taking it again in write mode.
 	 */
-	mmap_पढ़ो_unlock(mm);
+	mmap_read_unlock(mm);
 	new_page = khugepaged_alloc_page(hpage, gfp, node);
-	अगर (!new_page) अणु
+	if (!new_page) {
 		result = SCAN_ALLOC_HUGE_PAGE_FAIL;
-		जाओ out_nolock;
-	पूर्ण
+		goto out_nolock;
+	}
 
-	अगर (unlikely(mem_cgroup_अक्षरge(new_page, mm, gfp))) अणु
+	if (unlikely(mem_cgroup_charge(new_page, mm, gfp))) {
 		result = SCAN_CGROUP_CHARGE_FAIL;
-		जाओ out_nolock;
-	पूर्ण
+		goto out_nolock;
+	}
 	count_memcg_page_event(new_page, THP_COLLAPSE_ALLOC);
 
-	mmap_पढ़ो_lock(mm);
+	mmap_read_lock(mm);
 	result = hugepage_vma_revalidate(mm, address, &vma);
-	अगर (result) अणु
-		mmap_पढ़ो_unlock(mm);
-		जाओ out_nolock;
-	पूर्ण
+	if (result) {
+		mmap_read_unlock(mm);
+		goto out_nolock;
+	}
 
 	pmd = mm_find_pmd(mm, address);
-	अगर (!pmd) अणु
-		result = SCAN_PMD_शून्य;
-		mmap_पढ़ो_unlock(mm);
-		जाओ out_nolock;
-	पूर्ण
+	if (!pmd) {
+		result = SCAN_PMD_NULL;
+		mmap_read_unlock(mm);
+		goto out_nolock;
+	}
 
 	/*
-	 * __collapse_huge_page_swapin always वापसs with mmap_lock locked.
+	 * __collapse_huge_page_swapin always returns with mmap_lock locked.
 	 * If it fails, we release mmap_lock and jump out_nolock.
 	 * Continuing to collapse causes inconsistency.
 	 */
-	अगर (unmapped && !__collapse_huge_page_swapin(mm, vma, address,
-						     pmd, referenced)) अणु
-		mmap_पढ़ो_unlock(mm);
-		जाओ out_nolock;
-	पूर्ण
+	if (unmapped && !__collapse_huge_page_swapin(mm, vma, address,
+						     pmd, referenced)) {
+		mmap_read_unlock(mm);
+		goto out_nolock;
+	}
 
-	mmap_पढ़ो_unlock(mm);
+	mmap_read_unlock(mm);
 	/*
 	 * Prevent all access to pagetables with the exception of
 	 * gup_fast later handled by the ptep_clear_flush and the VM
 	 * handled by the anon_vma lock + PG_lock.
 	 */
-	mmap_ग_लिखो_lock(mm);
+	mmap_write_lock(mm);
 	result = hugepage_vma_revalidate(mm, address, &vma);
-	अगर (result)
-		जाओ out_up_ग_लिखो;
-	/* check अगर the pmd is still valid */
-	अगर (mm_find_pmd(mm, address) != pmd)
-		जाओ out_up_ग_लिखो;
+	if (result)
+		goto out_up_write;
+	/* check if the pmd is still valid */
+	if (mm_find_pmd(mm, address) != pmd)
+		goto out_up_write;
 
-	anon_vma_lock_ग_लिखो(vma->anon_vma);
+	anon_vma_lock_write(vma->anon_vma);
 
-	mmu_notअगरier_range_init(&range, MMU_NOTIFY_CLEAR, 0, शून्य, mm,
+	mmu_notifier_range_init(&range, MMU_NOTIFY_CLEAR, 0, NULL, mm,
 				address, address + HPAGE_PMD_SIZE);
-	mmu_notअगरier_invalidate_range_start(&range);
+	mmu_notifier_invalidate_range_start(&range);
 
 	pte = pte_offset_map(pmd, address);
 	pte_ptl = pte_lockptr(mm, pmd);
 
 	pmd_ptl = pmd_lock(mm, pmd); /* probably unnecessary */
 	/*
-	 * After this gup_fast can't run anymore. This also हटाओs
+	 * After this gup_fast can't run anymore. This also removes
 	 * any huge TLB entry from the CPU so we won't allow
-	 * huge and small TLB entries क्रम the same भव address
-	 * to aव्योम the risk of CPU bugs in that area.
+	 * huge and small TLB entries for the same virtual address
+	 * to avoid the risk of CPU bugs in that area.
 	 */
 	_pmd = pmdp_collapse_flush(vma, address, pmd);
 	spin_unlock(pmd_ptl);
-	mmu_notअगरier_invalidate_range_end(&range);
+	mmu_notifier_invalidate_range_end(&range);
 
 	spin_lock(pte_ptl);
 	isolated = __collapse_huge_page_isolate(vma, address, pte,
 			&compound_pagelist);
 	spin_unlock(pte_ptl);
 
-	अगर (unlikely(!isolated)) अणु
+	if (unlikely(!isolated)) {
 		pte_unmap(pte);
 		spin_lock(pmd_ptl);
 		BUG_ON(!pmd_none(*pmd));
 		/*
 		 * We can only use set_pmd_at when establishing
-		 * hugepmds and never क्रम establishing regular pmds that
-		 * poपूर्णांकs to regular pagetables. Use pmd_populate क्रम that
+		 * hugepmds and never for establishing regular pmds that
+		 * points to regular pagetables. Use pmd_populate for that
 		 */
 		pmd_populate(mm, pmd, pmd_pgtable(_pmd));
 		spin_unlock(pmd_ptl);
-		anon_vma_unlock_ग_लिखो(vma->anon_vma);
+		anon_vma_unlock_write(vma->anon_vma);
 		result = SCAN_FAIL;
-		जाओ out_up_ग_लिखो;
-	पूर्ण
+		goto out_up_write;
+	}
 
 	/*
 	 * All pages are isolated and locked so anon_vma rmap
 	 * can't run anymore.
 	 */
-	anon_vma_unlock_ग_लिखो(vma->anon_vma);
+	anon_vma_unlock_write(vma->anon_vma);
 
 	__collapse_huge_page_copy(pte, new_page, vma, address, pte_ptl,
 			&compound_pagelist);
@@ -1187,14 +1186,14 @@ khugepaged_alloc_page(काष्ठा page **hpage, gfp_t gfp, पूर्�
 	/*
 	 * spin_lock() below is not the equivalent of smp_wmb(), but
 	 * the smp_wmb() inside __SetPageUptodate() can be reused to
-	 * aव्योम the copy_huge_page ग_लिखोs to become visible after
-	 * the set_pmd_at() ग_लिखो.
+	 * avoid the copy_huge_page writes to become visible after
+	 * the set_pmd_at() write.
 	 */
 	__SetPageUptodate(new_page);
 	pgtable = pmd_pgtable(_pmd);
 
 	_pmd = mk_huge_pmd(new_page, vma->vm_page_prot);
-	_pmd = maybe_pmd_mkग_लिखो(pmd_सूची_गढ़ोty(_pmd), vma);
+	_pmd = maybe_pmd_mkwrite(pmd_mkdirty(_pmd), vma);
 
 	spin_lock(pmd_ptl);
 	BUG_ON(!pmd_none(*pmd));
@@ -1205,280 +1204,280 @@ khugepaged_alloc_page(काष्ठा page **hpage, gfp_t gfp, पूर्�
 	update_mmu_cache_pmd(vma, address, pmd);
 	spin_unlock(pmd_ptl);
 
-	*hpage = शून्य;
+	*hpage = NULL;
 
 	khugepaged_pages_collapsed++;
 	result = SCAN_SUCCEED;
-out_up_ग_लिखो:
-	mmap_ग_लिखो_unlock(mm);
+out_up_write:
+	mmap_write_unlock(mm);
 out_nolock:
-	अगर (!IS_ERR_OR_शून्य(*hpage))
-		mem_cgroup_unअक्षरge(*hpage);
+	if (!IS_ERR_OR_NULL(*hpage))
+		mem_cgroup_uncharge(*hpage);
 	trace_mm_collapse_huge_page(mm, isolated, result);
-	वापस;
-पूर्ण
+	return;
+}
 
-अटल पूर्णांक khugepaged_scan_pmd(काष्ठा mm_काष्ठा *mm,
-			       काष्ठा vm_area_काष्ठा *vma,
-			       अचिन्हित दीर्घ address,
-			       काष्ठा page **hpage)
-अणु
+static int khugepaged_scan_pmd(struct mm_struct *mm,
+			       struct vm_area_struct *vma,
+			       unsigned long address,
+			       struct page **hpage)
+{
 	pmd_t *pmd;
 	pte_t *pte, *_pte;
-	पूर्णांक ret = 0, result = 0, referenced = 0;
-	पूर्णांक none_or_zero = 0, shared = 0;
-	काष्ठा page *page = शून्य;
-	अचिन्हित दीर्घ _address;
+	int ret = 0, result = 0, referenced = 0;
+	int none_or_zero = 0, shared = 0;
+	struct page *page = NULL;
+	unsigned long _address;
 	spinlock_t *ptl;
-	पूर्णांक node = NUMA_NO_NODE, unmapped = 0;
+	int node = NUMA_NO_NODE, unmapped = 0;
 	bool writable = false;
 
 	VM_BUG_ON(address & ~HPAGE_PMD_MASK);
 
 	pmd = mm_find_pmd(mm, address);
-	अगर (!pmd) अणु
-		result = SCAN_PMD_शून्य;
-		जाओ out;
-	पूर्ण
+	if (!pmd) {
+		result = SCAN_PMD_NULL;
+		goto out;
+	}
 
-	स_रखो(khugepaged_node_load, 0, माप(khugepaged_node_load));
+	memset(khugepaged_node_load, 0, sizeof(khugepaged_node_load));
 	pte = pte_offset_map_lock(mm, pmd, address, &ptl);
-	क्रम (_address = address, _pte = pte; _pte < pte+HPAGE_PMD_NR;
-	     _pte++, _address += PAGE_SIZE) अणु
+	for (_address = address, _pte = pte; _pte < pte+HPAGE_PMD_NR;
+	     _pte++, _address += PAGE_SIZE) {
 		pte_t pteval = *_pte;
-		अगर (is_swap_pte(pteval)) अणु
-			अगर (++unmapped <= khugepaged_max_ptes_swap) अणु
+		if (is_swap_pte(pteval)) {
+			if (++unmapped <= khugepaged_max_ptes_swap) {
 				/*
 				 * Always be strict with uffd-wp
 				 * enabled swap entries.  Please see
-				 * comment below क्रम pte_uffd_wp().
+				 * comment below for pte_uffd_wp().
 				 */
-				अगर (pte_swp_uffd_wp(pteval)) अणु
+				if (pte_swp_uffd_wp(pteval)) {
 					result = SCAN_PTE_UFFD_WP;
-					जाओ out_unmap;
-				पूर्ण
-				जारी;
-			पूर्ण अन्यथा अणु
+					goto out_unmap;
+				}
+				continue;
+			} else {
 				result = SCAN_EXCEED_SWAP_PTE;
-				जाओ out_unmap;
-			पूर्ण
-		पूर्ण
-		अगर (pte_none(pteval) || is_zero_pfn(pte_pfn(pteval))) अणु
-			अगर (!userfaultfd_armed(vma) &&
-			    ++none_or_zero <= khugepaged_max_ptes_none) अणु
-				जारी;
-			पूर्ण अन्यथा अणु
+				goto out_unmap;
+			}
+		}
+		if (pte_none(pteval) || is_zero_pfn(pte_pfn(pteval))) {
+			if (!userfaultfd_armed(vma) &&
+			    ++none_or_zero <= khugepaged_max_ptes_none) {
+				continue;
+			} else {
 				result = SCAN_EXCEED_NONE_PTE;
-				जाओ out_unmap;
-			पूर्ण
-		पूर्ण
-		अगर (pte_uffd_wp(pteval)) अणु
+				goto out_unmap;
+			}
+		}
+		if (pte_uffd_wp(pteval)) {
 			/*
-			 * Don't collapse the page अगर any of the small
-			 * PTEs are armed with uffd ग_लिखो protection.
+			 * Don't collapse the page if any of the small
+			 * PTEs are armed with uffd write protection.
 			 * Here we can also mark the new huge pmd as
-			 * ग_लिखो रक्षित अगर any of the small ones is
+			 * write protected if any of the small ones is
 			 * marked but that could bring unknown
 			 * userfault messages that falls outside of
-			 * the रेजिस्टरed range.  So, just be simple.
+			 * the registered range.  So, just be simple.
 			 */
 			result = SCAN_PTE_UFFD_WP;
-			जाओ out_unmap;
-		पूर्ण
-		अगर (pte_ग_लिखो(pteval))
+			goto out_unmap;
+		}
+		if (pte_write(pteval))
 			writable = true;
 
 		page = vm_normal_page(vma, _address, pteval);
-		अगर (unlikely(!page)) अणु
-			result = SCAN_PAGE_शून्य;
-			जाओ out_unmap;
-		पूर्ण
+		if (unlikely(!page)) {
+			result = SCAN_PAGE_NULL;
+			goto out_unmap;
+		}
 
-		अगर (page_mapcount(page) > 1 &&
-				++shared > khugepaged_max_ptes_shared) अणु
+		if (page_mapcount(page) > 1 &&
+				++shared > khugepaged_max_ptes_shared) {
 			result = SCAN_EXCEED_SHARED_PTE;
-			जाओ out_unmap;
-		पूर्ण
+			goto out_unmap;
+		}
 
 		page = compound_head(page);
 
 		/*
 		 * Record which node the original page is from and save this
-		 * inक्रमmation to khugepaged_node_load[].
+		 * information to khugepaged_node_load[].
 		 * Khupaged will allocate hugepage from the node has the max
 		 * hit record.
 		 */
 		node = page_to_nid(page);
-		अगर (khugepaged_scan_पात(node)) अणु
+		if (khugepaged_scan_abort(node)) {
 			result = SCAN_SCAN_ABORT;
-			जाओ out_unmap;
-		पूर्ण
+			goto out_unmap;
+		}
 		khugepaged_node_load[node]++;
-		अगर (!PageLRU(page)) अणु
+		if (!PageLRU(page)) {
 			result = SCAN_PAGE_LRU;
-			जाओ out_unmap;
-		पूर्ण
-		अगर (PageLocked(page)) अणु
+			goto out_unmap;
+		}
+		if (PageLocked(page)) {
 			result = SCAN_PAGE_LOCK;
-			जाओ out_unmap;
-		पूर्ण
-		अगर (!PageAnon(page)) अणु
+			goto out_unmap;
+		}
+		if (!PageAnon(page)) {
 			result = SCAN_PAGE_ANON;
-			जाओ out_unmap;
-		पूर्ण
+			goto out_unmap;
+		}
 
 		/*
-		 * Check अगर the page has any GUP (or other बाह्यal) pins.
+		 * Check if the page has any GUP (or other external) pins.
 		 *
-		 * Here the check is racy it may see toपंचांगal_mapcount > refcount
-		 * in some हालs.
-		 * For example, one process with one विभाजनed child process.
+		 * Here the check is racy it may see totmal_mapcount > refcount
+		 * in some cases.
+		 * For example, one process with one forked child process.
 		 * The parent has the PMD split due to MADV_DONTNEED, then
 		 * the child is trying unmap the whole PMD, but khugepaged
 		 * may be scanning the parent between the child has
 		 * PageDoubleMap flag cleared and dec the mapcount.  So
 		 * khugepaged may see total_mapcount > refcount.
 		 *
-		 * But such हाल is ephemeral we could always retry collapse
-		 * later.  However it may report false positive अगर the page
+		 * But such case is ephemeral we could always retry collapse
+		 * later.  However it may report false positive if the page
 		 * has excessive GUP pins (i.e. 512).  Anyway the same check
-		 * will be करोne again later the risk seems low.
+		 * will be done again later the risk seems low.
 		 */
-		अगर (!is_refcount_suitable(page)) अणु
+		if (!is_refcount_suitable(page)) {
 			result = SCAN_PAGE_COUNT;
-			जाओ out_unmap;
-		पूर्ण
-		अगर (pte_young(pteval) ||
+			goto out_unmap;
+		}
+		if (pte_young(pteval) ||
 		    page_is_young(page) || PageReferenced(page) ||
-		    mmu_notअगरier_test_young(vma->vm_mm, address))
+		    mmu_notifier_test_young(vma->vm_mm, address))
 			referenced++;
-	पूर्ण
-	अगर (!writable) अणु
+	}
+	if (!writable) {
 		result = SCAN_PAGE_RO;
-	पूर्ण अन्यथा अगर (!referenced || (unmapped && referenced < HPAGE_PMD_NR/2)) अणु
+	} else if (!referenced || (unmapped && referenced < HPAGE_PMD_NR/2)) {
 		result = SCAN_LACK_REFERENCED_PAGE;
-	पूर्ण अन्यथा अणु
+	} else {
 		result = SCAN_SUCCEED;
 		ret = 1;
-	पूर्ण
+	}
 out_unmap:
 	pte_unmap_unlock(pte, ptl);
-	अगर (ret) अणु
+	if (ret) {
 		node = khugepaged_find_target_node();
-		/* collapse_huge_page will वापस with the mmap_lock released */
+		/* collapse_huge_page will return with the mmap_lock released */
 		collapse_huge_page(mm, address, hpage, node,
 				referenced, unmapped);
-	पूर्ण
+	}
 out:
 	trace_mm_khugepaged_scan_pmd(mm, page, writable, referenced,
 				     none_or_zero, result, unmapped);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम collect_mm_slot(काष्ठा mm_slot *mm_slot)
-अणु
-	काष्ठा mm_काष्ठा *mm = mm_slot->mm;
+static void collect_mm_slot(struct mm_slot *mm_slot)
+{
+	struct mm_struct *mm = mm_slot->mm;
 
-	lockdep_निश्चित_held(&khugepaged_mm_lock);
+	lockdep_assert_held(&khugepaged_mm_lock);
 
-	अगर (khugepaged_test_निकास(mm)) अणु
-		/* मुक्त mm_slot */
+	if (khugepaged_test_exit(mm)) {
+		/* free mm_slot */
 		hash_del(&mm_slot->hash);
 		list_del(&mm_slot->mm_node);
 
 		/*
-		 * Not strictly needed because the mm निकासed alपढ़ोy.
+		 * Not strictly needed because the mm exited already.
 		 *
 		 * clear_bit(MMF_VM_HUGEPAGE, &mm->flags);
 		 */
 
-		/* khugepaged_mm_lock actually not necessary क्रम the below */
-		मुक्त_mm_slot(mm_slot);
+		/* khugepaged_mm_lock actually not necessary for the below */
+		free_mm_slot(mm_slot);
 		mmdrop(mm);
-	पूर्ण
-पूर्ण
+	}
+}
 
-#अगर_घोषित CONFIG_SHMEM
+#ifdef CONFIG_SHMEM
 /*
- * Notअगरy khugepaged that given addr of the mm is pte-mapped THP. Then
+ * Notify khugepaged that given addr of the mm is pte-mapped THP. Then
  * khugepaged should try to collapse the page table.
  */
-अटल पूर्णांक khugepaged_add_pte_mapped_thp(काष्ठा mm_काष्ठा *mm,
-					 अचिन्हित दीर्घ addr)
-अणु
-	काष्ठा mm_slot *mm_slot;
+static int khugepaged_add_pte_mapped_thp(struct mm_struct *mm,
+					 unsigned long addr)
+{
+	struct mm_slot *mm_slot;
 
 	VM_BUG_ON(addr & ~HPAGE_PMD_MASK);
 
 	spin_lock(&khugepaged_mm_lock);
 	mm_slot = get_mm_slot(mm);
-	अगर (likely(mm_slot && mm_slot->nr_pte_mapped_thp < MAX_PTE_MAPPED_THP))
+	if (likely(mm_slot && mm_slot->nr_pte_mapped_thp < MAX_PTE_MAPPED_THP))
 		mm_slot->pte_mapped_thp[mm_slot->nr_pte_mapped_thp++] = addr;
 	spin_unlock(&khugepaged_mm_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * collapse_pte_mapped_thp - Try to collapse a pte-mapped THP क्रम mm at
+ * collapse_pte_mapped_thp - Try to collapse a pte-mapped THP for mm at
  * address haddr.
  *
  * @mm: process address space where collapse happens
  * @addr: THP collapse address
  *
- * This function checks whether all the PTEs in the PMD are poपूर्णांकing to the
+ * This function checks whether all the PTEs in the PMD are pointing to the
  * right THP. If so, retract the page table so the THP can refault in with
  * as pmd-mapped.
  */
-व्योम collapse_pte_mapped_thp(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr)
-अणु
-	अचिन्हित दीर्घ haddr = addr & HPAGE_PMD_MASK;
-	काष्ठा vm_area_काष्ठा *vma = find_vma(mm, haddr);
-	काष्ठा page *hpage;
+void collapse_pte_mapped_thp(struct mm_struct *mm, unsigned long addr)
+{
+	unsigned long haddr = addr & HPAGE_PMD_MASK;
+	struct vm_area_struct *vma = find_vma(mm, haddr);
+	struct page *hpage;
 	pte_t *start_pte, *pte;
 	pmd_t *pmd, _pmd;
 	spinlock_t *ptl;
-	पूर्णांक count = 0;
-	पूर्णांक i;
+	int count = 0;
+	int i;
 
-	अगर (!vma || !vma->vm_file ||
+	if (!vma || !vma->vm_file ||
 	    !range_in_vma(vma, haddr, haddr + HPAGE_PMD_SIZE))
-		वापस;
+		return;
 
 	/*
-	 * This vm_flags may not have VM_HUGEPAGE अगर the page was not
-	 * collapsed by this mm. But we can still collapse अगर the page is
+	 * This vm_flags may not have VM_HUGEPAGE if the page was not
+	 * collapsed by this mm. But we can still collapse if the page is
 	 * the valid THP. Add extra VM_HUGEPAGE so hugepage_vma_check()
-	 * will not fail the vma क्रम missing VM_HUGEPAGE
+	 * will not fail the vma for missing VM_HUGEPAGE
 	 */
-	अगर (!hugepage_vma_check(vma, vma->vm_flags | VM_HUGEPAGE))
-		वापस;
+	if (!hugepage_vma_check(vma, vma->vm_flags | VM_HUGEPAGE))
+		return;
 
 	hpage = find_lock_page(vma->vm_file->f_mapping,
 			       linear_page_index(vma, haddr));
-	अगर (!hpage)
-		वापस;
+	if (!hpage)
+		return;
 
-	अगर (!PageHead(hpage))
-		जाओ drop_hpage;
+	if (!PageHead(hpage))
+		goto drop_hpage;
 
 	pmd = mm_find_pmd(mm, haddr);
-	अगर (!pmd)
-		जाओ drop_hpage;
+	if (!pmd)
+		goto drop_hpage;
 
 	start_pte = pte_offset_map_lock(mm, pmd, haddr, &ptl);
 
 	/* step 1: check all mapped PTEs are to the right huge page */
-	क्रम (i = 0, addr = haddr, pte = start_pte;
-	     i < HPAGE_PMD_NR; i++, addr += PAGE_SIZE, pte++) अणु
-		काष्ठा page *page;
+	for (i = 0, addr = haddr, pte = start_pte;
+	     i < HPAGE_PMD_NR; i++, addr += PAGE_SIZE, pte++) {
+		struct page *page;
 
 		/* empty pte, skip */
-		अगर (pte_none(*pte))
-			जारी;
+		if (pte_none(*pte))
+			continue;
 
-		/* page swapped out, पात */
-		अगर (!pte_present(*pte))
-			जाओ पात;
+		/* page swapped out, abort */
+		if (!pte_present(*pte))
+			goto abort;
 
 		page = vm_normal_page(vma, addr, *pte);
 
@@ -1486,167 +1485,167 @@ out:
 		 * Note that uprobe, debugger, or MAP_PRIVATE may change the
 		 * page table, but the new page will not be a subpage of hpage.
 		 */
-		अगर (hpage + i != page)
-			जाओ पात;
+		if (hpage + i != page)
+			goto abort;
 		count++;
-	पूर्ण
+	}
 
 	/* step 2: adjust rmap */
-	क्रम (i = 0, addr = haddr, pte = start_pte;
-	     i < HPAGE_PMD_NR; i++, addr += PAGE_SIZE, pte++) अणु
-		काष्ठा page *page;
+	for (i = 0, addr = haddr, pte = start_pte;
+	     i < HPAGE_PMD_NR; i++, addr += PAGE_SIZE, pte++) {
+		struct page *page;
 
-		अगर (pte_none(*pte))
-			जारी;
+		if (pte_none(*pte))
+			continue;
 		page = vm_normal_page(vma, addr, *pte);
-		page_हटाओ_rmap(page, false);
-	पूर्ण
+		page_remove_rmap(page, false);
+	}
 
 	pte_unmap_unlock(start_pte, ptl);
 
 	/* step 3: set proper refcount and mm_counters. */
-	अगर (count) अणु
+	if (count) {
 		page_ref_sub(hpage, count);
 		add_mm_counter(vma->vm_mm, mm_counter_file(hpage), -count);
-	पूर्ण
+	}
 
 	/* step 4: collapse pmd */
 	ptl = pmd_lock(vma->vm_mm, pmd);
 	_pmd = pmdp_collapse_flush(vma, haddr, pmd);
 	spin_unlock(ptl);
 	mm_dec_nr_ptes(mm);
-	pte_मुक्त(mm, pmd_pgtable(_pmd));
+	pte_free(mm, pmd_pgtable(_pmd));
 
 drop_hpage:
 	unlock_page(hpage);
 	put_page(hpage);
-	वापस;
+	return;
 
-पात:
+abort:
 	pte_unmap_unlock(start_pte, ptl);
-	जाओ drop_hpage;
-पूर्ण
+	goto drop_hpage;
+}
 
-अटल व्योम khugepaged_collapse_pte_mapped_thps(काष्ठा mm_slot *mm_slot)
-अणु
-	काष्ठा mm_काष्ठा *mm = mm_slot->mm;
-	पूर्णांक i;
+static void khugepaged_collapse_pte_mapped_thps(struct mm_slot *mm_slot)
+{
+	struct mm_struct *mm = mm_slot->mm;
+	int i;
 
-	अगर (likely(mm_slot->nr_pte_mapped_thp == 0))
-		वापस;
+	if (likely(mm_slot->nr_pte_mapped_thp == 0))
+		return;
 
-	अगर (!mmap_ग_लिखो_trylock(mm))
-		वापस;
+	if (!mmap_write_trylock(mm))
+		return;
 
-	अगर (unlikely(khugepaged_test_निकास(mm)))
-		जाओ out;
+	if (unlikely(khugepaged_test_exit(mm)))
+		goto out;
 
-	क्रम (i = 0; i < mm_slot->nr_pte_mapped_thp; i++)
+	for (i = 0; i < mm_slot->nr_pte_mapped_thp; i++)
 		collapse_pte_mapped_thp(mm, mm_slot->pte_mapped_thp[i]);
 
 out:
 	mm_slot->nr_pte_mapped_thp = 0;
-	mmap_ग_लिखो_unlock(mm);
-पूर्ण
+	mmap_write_unlock(mm);
+}
 
-अटल व्योम retract_page_tables(काष्ठा address_space *mapping, pgoff_t pgoff)
-अणु
-	काष्ठा vm_area_काष्ठा *vma;
-	काष्ठा mm_काष्ठा *mm;
-	अचिन्हित दीर्घ addr;
+static void retract_page_tables(struct address_space *mapping, pgoff_t pgoff)
+{
+	struct vm_area_struct *vma;
+	struct mm_struct *mm;
+	unsigned long addr;
 	pmd_t *pmd, _pmd;
 
-	i_mmap_lock_ग_लिखो(mapping);
-	vma_पूर्णांकerval_tree_क्रमeach(vma, &mapping->i_mmap, pgoff, pgoff) अणु
+	i_mmap_lock_write(mapping);
+	vma_interval_tree_foreach(vma, &mapping->i_mmap, pgoff, pgoff) {
 		/*
 		 * Check vma->anon_vma to exclude MAP_PRIVATE mappings that
 		 * got written to. These VMAs are likely not worth investing
-		 * mmap_ग_लिखो_lock(mm) as PMD-mapping is likely to be split
+		 * mmap_write_lock(mm) as PMD-mapping is likely to be split
 		 * later.
 		 *
 		 * Not that vma->anon_vma check is racy: it can be set up after
-		 * the check but beक्रमe we took mmap_lock by the fault path.
+		 * the check but before we took mmap_lock by the fault path.
 		 * But page lock would prevent establishing any new ptes of the
 		 * page, so we are safe.
 		 *
 		 * An alternative would be drop the check, but check that page
-		 * table is clear beक्रमe calling pmdp_collapse_flush() under
-		 * ptl. It has higher chance to recover THP क्रम the VMA, but
+		 * table is clear before calling pmdp_collapse_flush() under
+		 * ptl. It has higher chance to recover THP for the VMA, but
 		 * has higher cost too.
 		 */
-		अगर (vma->anon_vma)
-			जारी;
+		if (vma->anon_vma)
+			continue;
 		addr = vma->vm_start + ((pgoff - vma->vm_pgoff) << PAGE_SHIFT);
-		अगर (addr & ~HPAGE_PMD_MASK)
-			जारी;
-		अगर (vma->vm_end < addr + HPAGE_PMD_SIZE)
-			जारी;
+		if (addr & ~HPAGE_PMD_MASK)
+			continue;
+		if (vma->vm_end < addr + HPAGE_PMD_SIZE)
+			continue;
 		mm = vma->vm_mm;
 		pmd = mm_find_pmd(mm, addr);
-		अगर (!pmd)
-			जारी;
+		if (!pmd)
+			continue;
 		/*
 		 * We need exclusive mmap_lock to retract page table.
 		 *
 		 * We use trylock due to lock inversion: we need to acquire
-		 * mmap_lock जबतक holding page lock. Fault path करोes it in
-		 * reverse order. Trylock is a way to aव्योम deadlock.
+		 * mmap_lock while holding page lock. Fault path does it in
+		 * reverse order. Trylock is a way to avoid deadlock.
 		 */
-		अगर (mmap_ग_लिखो_trylock(mm)) अणु
-			अगर (!khugepaged_test_निकास(mm)) अणु
+		if (mmap_write_trylock(mm)) {
+			if (!khugepaged_test_exit(mm)) {
 				spinlock_t *ptl = pmd_lock(mm, pmd);
 				/* assume page table is clear */
 				_pmd = pmdp_collapse_flush(vma, addr, pmd);
 				spin_unlock(ptl);
 				mm_dec_nr_ptes(mm);
-				pte_मुक्त(mm, pmd_pgtable(_pmd));
-			पूर्ण
-			mmap_ग_लिखो_unlock(mm);
-		पूर्ण अन्यथा अणु
+				pte_free(mm, pmd_pgtable(_pmd));
+			}
+			mmap_write_unlock(mm);
+		} else {
 			/* Try again later */
 			khugepaged_add_pte_mapped_thp(mm, addr);
-		पूर्ण
-	पूर्ण
-	i_mmap_unlock_ग_लिखो(mapping);
-पूर्ण
+		}
+	}
+	i_mmap_unlock_write(mapping);
+}
 
 /**
- * collapse_file - collapse filemap/पंचांगpfs/shmem pages पूर्णांकo huge one.
+ * collapse_file - collapse filemap/tmpfs/shmem pages into huge one.
  *
  * @mm: process address space where collapse happens
  * @file: file that collapse on
  * @start: collapse start address
- * @hpage: new allocated huge page क्रम collapse
- * @node: appoपूर्णांकed node the new huge page allocate from
+ * @hpage: new allocated huge page for collapse
+ * @node: appointed node the new huge page allocate from
  *
  * Basic scheme is simple, details are more complex:
  *  - allocate and lock a new huge page;
  *  - scan page cache replacing old pages with the new one
- *    + swap/gup in pages अगर necessary;
+ *    + swap/gup in pages if necessary;
  *    + fill in gaps;
- *    + keep old pages around in हाल rollback is required;
- *  - अगर replacing succeeds:
+ *    + keep old pages around in case rollback is required;
+ *  - if replacing succeeds:
  *    + copy data over;
- *    + मुक्त old pages;
+ *    + free old pages;
  *    + unlock huge page;
- *  - अगर replacing failed;
- *    + put all pages back and unमुक्तze them;
+ *  - if replacing failed;
+ *    + put all pages back and unfreeze them;
  *    + restore gaps in the page cache;
- *    + unlock and मुक्त huge page;
+ *    + unlock and free huge page;
  */
-अटल व्योम collapse_file(काष्ठा mm_काष्ठा *mm,
-		काष्ठा file *file, pgoff_t start,
-		काष्ठा page **hpage, पूर्णांक node)
-अणु
-	काष्ठा address_space *mapping = file->f_mapping;
+static void collapse_file(struct mm_struct *mm,
+		struct file *file, pgoff_t start,
+		struct page **hpage, int node)
+{
+	struct address_space *mapping = file->f_mapping;
 	gfp_t gfp;
-	काष्ठा page *new_page;
+	struct page *new_page;
 	pgoff_t index, end = start + HPAGE_PMD_NR;
 	LIST_HEAD(pagelist);
 	XA_STATE_ORDER(xas, &mapping->i_pages, start, HPAGE_PMD_ORDER);
-	पूर्णांक nr_none = 0, result = SCAN_SUCCEED;
+	int nr_none = 0, result = SCAN_SUCCEED;
 	bool is_shmem = shmem_file(file);
-	पूर्णांक nr;
+	int nr;
 
 	VM_BUG_ON(!IS_ENABLED(CONFIG_READ_ONLY_THP_FOR_FS) && !is_shmem);
 	VM_BUG_ON(start & (HPAGE_PMD_NR - 1));
@@ -1655,124 +1654,124 @@ out:
 	gfp = alloc_hugepage_khugepaged_gfpmask() | __GFP_THISNODE;
 
 	new_page = khugepaged_alloc_page(hpage, gfp, node);
-	अगर (!new_page) अणु
+	if (!new_page) {
 		result = SCAN_ALLOC_HUGE_PAGE_FAIL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (unlikely(mem_cgroup_अक्षरge(new_page, mm, gfp))) अणु
+	if (unlikely(mem_cgroup_charge(new_page, mm, gfp))) {
 		result = SCAN_CGROUP_CHARGE_FAIL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	count_memcg_page_event(new_page, THP_COLLAPSE_ALLOC);
 
 	/* This will be less messy when we use multi-index entries */
-	करो अणु
+	do {
 		xas_lock_irq(&xas);
 		xas_create_range(&xas);
-		अगर (!xas_error(&xas))
-			अवरोध;
+		if (!xas_error(&xas))
+			break;
 		xas_unlock_irq(&xas);
-		अगर (!xas_nomem(&xas, GFP_KERNEL)) अणु
+		if (!xas_nomem(&xas, GFP_KERNEL)) {
 			result = SCAN_FAIL;
-			जाओ out;
-		पूर्ण
-	पूर्ण जबतक (1);
+			goto out;
+		}
+	} while (1);
 
 	__SetPageLocked(new_page);
-	अगर (is_shmem)
+	if (is_shmem)
 		__SetPageSwapBacked(new_page);
 	new_page->index = start;
 	new_page->mapping = mapping;
 
 	/*
-	 * At this poपूर्णांक the new_page is locked and not up-to-date.
-	 * It's safe to insert it पूर्णांकo the page cache, because nobody would
+	 * At this point the new_page is locked and not up-to-date.
+	 * It's safe to insert it into the page cache, because nobody would
 	 * be able to map it or use it in another way until we unlock it.
 	 */
 
 	xas_set(&xas, start);
-	क्रम (index = start; index < end; index++) अणु
-		काष्ठा page *page = xas_next(&xas);
+	for (index = start; index < end; index++) {
+		struct page *page = xas_next(&xas);
 
 		VM_BUG_ON(index != xas.xa_index);
-		अगर (is_shmem) अणु
-			अगर (!page) अणु
+		if (is_shmem) {
+			if (!page) {
 				/*
-				 * Stop अगर extent has been truncated or
+				 * Stop if extent has been truncated or
 				 * hole-punched, and is now completely
 				 * empty.
 				 */
-				अगर (index == start) अणु
-					अगर (!xas_next_entry(&xas, end - 1)) अणु
+				if (index == start) {
+					if (!xas_next_entry(&xas, end - 1)) {
 						result = SCAN_TRUNCATED;
-						जाओ xa_locked;
-					पूर्ण
+						goto xa_locked;
+					}
 					xas_set(&xas, index);
-				पूर्ण
-				अगर (!shmem_अक्षरge(mapping->host, 1)) अणु
+				}
+				if (!shmem_charge(mapping->host, 1)) {
 					result = SCAN_FAIL;
-					जाओ xa_locked;
-				पूर्ण
+					goto xa_locked;
+				}
 				xas_store(&xas, new_page);
 				nr_none++;
-				जारी;
-			पूर्ण
+				continue;
+			}
 
-			अगर (xa_is_value(page) || !PageUptodate(page)) अणु
+			if (xa_is_value(page) || !PageUptodate(page)) {
 				xas_unlock_irq(&xas);
 				/* swap in or instantiate fallocated page */
-				अगर (shmem_getpage(mapping->host, index, &page,
-						  SGP_NOHUGE)) अणु
+				if (shmem_getpage(mapping->host, index, &page,
+						  SGP_NOHUGE)) {
 					result = SCAN_FAIL;
-					जाओ xa_unlocked;
-				पूर्ण
-			पूर्ण अन्यथा अगर (trylock_page(page)) अणु
+					goto xa_unlocked;
+				}
+			} else if (trylock_page(page)) {
 				get_page(page);
 				xas_unlock_irq(&xas);
-			पूर्ण अन्यथा अणु
+			} else {
 				result = SCAN_PAGE_LOCK;
-				जाओ xa_locked;
-			पूर्ण
-		पूर्ण अन्यथा अणु	/* !is_shmem */
-			अगर (!page || xa_is_value(page)) अणु
+				goto xa_locked;
+			}
+		} else {	/* !is_shmem */
+			if (!page || xa_is_value(page)) {
 				xas_unlock_irq(&xas);
-				page_cache_sync_पढ़ोahead(mapping, &file->f_ra,
+				page_cache_sync_readahead(mapping, &file->f_ra,
 							  file, index,
 							  end - index);
 				/* drain pagevecs to help isolate_lru_page() */
 				lru_add_drain();
 				page = find_lock_page(mapping, index);
-				अगर (unlikely(page == शून्य)) अणु
+				if (unlikely(page == NULL)) {
 					result = SCAN_FAIL;
-					जाओ xa_unlocked;
-				पूर्ण
-			पूर्ण अन्यथा अगर (PageDirty(page)) अणु
+					goto xa_unlocked;
+				}
+			} else if (PageDirty(page)) {
 				/*
-				 * khugepaged only works on पढ़ो-only fd,
+				 * khugepaged only works on read-only fd,
 				 * so this page is dirty because it hasn't
-				 * been flushed since first ग_लिखो. There
+				 * been flushed since first write. There
 				 * won't be new dirty pages.
 				 *
 				 * Trigger async flush here and hope the
-				 * ग_लिखोback is करोne when khugepaged
+				 * writeback is done when khugepaged
 				 * revisits this page.
 				 *
 				 * This is a one-off situation. We are not
-				 * क्रमcing ग_लिखोback in loop.
+				 * forcing writeback in loop.
 				 */
 				xas_unlock_irq(&xas);
 				filemap_flush(mapping);
 				result = SCAN_FAIL;
-				जाओ xa_unlocked;
-			पूर्ण अन्यथा अगर (trylock_page(page)) अणु
+				goto xa_unlocked;
+			} else if (trylock_page(page)) {
 				get_page(page);
 				xas_unlock_irq(&xas);
-			पूर्ण अन्यथा अणु
+			} else {
 				result = SCAN_PAGE_LOCK;
-				जाओ xa_locked;
-			पूर्ण
-		पूर्ण
+				goto xa_locked;
+			}
+		}
 
 		/*
 		 * The page must be locked, so we can drop the i_pages lock
@@ -1781,48 +1780,48 @@ out:
 		VM_BUG_ON_PAGE(!PageLocked(page), page);
 
 		/* make sure the page is up to date */
-		अगर (unlikely(!PageUptodate(page))) अणु
+		if (unlikely(!PageUptodate(page))) {
 			result = SCAN_FAIL;
-			जाओ out_unlock;
-		पूर्ण
+			goto out_unlock;
+		}
 
 		/*
-		 * If file was truncated then extended, or hole-punched, beक्रमe
-		 * we locked the first page, then a THP might be there alपढ़ोy.
+		 * If file was truncated then extended, or hole-punched, before
+		 * we locked the first page, then a THP might be there already.
 		 */
-		अगर (PageTransCompound(page)) अणु
+		if (PageTransCompound(page)) {
 			result = SCAN_PAGE_COMPOUND;
-			जाओ out_unlock;
-		पूर्ण
+			goto out_unlock;
+		}
 
-		अगर (page_mapping(page) != mapping) अणु
+		if (page_mapping(page) != mapping) {
 			result = SCAN_TRUNCATED;
-			जाओ out_unlock;
-		पूर्ण
+			goto out_unlock;
+		}
 
-		अगर (!is_shmem && PageDirty(page)) अणु
+		if (!is_shmem && PageDirty(page)) {
 			/*
-			 * khugepaged only works on पढ़ो-only fd, so this
+			 * khugepaged only works on read-only fd, so this
 			 * page is dirty because it hasn't been flushed
-			 * since first ग_लिखो.
+			 * since first write.
 			 */
 			result = SCAN_FAIL;
-			जाओ out_unlock;
-		पूर्ण
+			goto out_unlock;
+		}
 
-		अगर (isolate_lru_page(page)) अणु
+		if (isolate_lru_page(page)) {
 			result = SCAN_DEL_PAGE_LRU;
-			जाओ out_unlock;
-		पूर्ण
+			goto out_unlock;
+		}
 
-		अगर (page_has_निजी(page) &&
-		    !try_to_release_page(page, GFP_KERNEL)) अणु
+		if (page_has_private(page) &&
+		    !try_to_release_page(page, GFP_KERNEL)) {
 			result = SCAN_PAGE_HAS_PRIVATE;
 			putback_lru_page(page);
-			जाओ out_unlock;
-		पूर्ण
+			goto out_unlock;
+		}
 
-		अगर (page_mapped(page))
+		if (page_mapped(page))
 			unmap_mapping_pages(mapping, index, 1, false);
 
 		xas_lock_irq(&xas);
@@ -1837,78 +1836,78 @@ out:
 		 *  - one reference from page cache;
 		 *  - one from isolate_lru_page;
 		 */
-		अगर (!page_ref_मुक्तze(page, 3)) अणु
+		if (!page_ref_freeze(page, 3)) {
 			result = SCAN_PAGE_COUNT;
 			xas_unlock_irq(&xas);
 			putback_lru_page(page);
-			जाओ out_unlock;
-		पूर्ण
+			goto out_unlock;
+		}
 
 		/*
-		 * Add the page to the list to be able to unकरो the collapse अगर
+		 * Add the page to the list to be able to undo the collapse if
 		 * something go wrong.
 		 */
 		list_add_tail(&page->lru, &pagelist);
 
 		/* Finally, replace with the new page. */
 		xas_store(&xas, new_page);
-		जारी;
+		continue;
 out_unlock:
 		unlock_page(page);
 		put_page(page);
-		जाओ xa_unlocked;
-	पूर्ण
+		goto xa_unlocked;
+	}
 	nr = thp_nr_pages(new_page);
 
-	अगर (is_shmem)
+	if (is_shmem)
 		__mod_lruvec_page_state(new_page, NR_SHMEM_THPS, nr);
-	अन्यथा अणु
-		__mod_lruvec_page_state(new_page, NR_खाता_THPS, nr);
+	else {
+		__mod_lruvec_page_state(new_page, NR_FILE_THPS, nr);
 		filemap_nr_thps_inc(mapping);
-	पूर्ण
+	}
 
-	अगर (nr_none) अणु
-		__mod_lruvec_page_state(new_page, NR_खाता_PAGES, nr_none);
-		अगर (is_shmem)
+	if (nr_none) {
+		__mod_lruvec_page_state(new_page, NR_FILE_PAGES, nr_none);
+		if (is_shmem)
 			__mod_lruvec_page_state(new_page, NR_SHMEM, nr_none);
-	पूर्ण
+	}
 
 xa_locked:
 	xas_unlock_irq(&xas);
 xa_unlocked:
 
-	अगर (result == SCAN_SUCCEED) अणु
-		काष्ठा page *page, *पंचांगp;
+	if (result == SCAN_SUCCEED) {
+		struct page *page, *tmp;
 
 		/*
 		 * Replacing old pages with new one has succeeded, now we
-		 * need to copy the content and मुक्त the old pages.
+		 * need to copy the content and free the old pages.
 		 */
 		index = start;
-		list_क्रम_each_entry_safe(page, पंचांगp, &pagelist, lru) अणु
-			जबतक (index < page->index) अणु
+		list_for_each_entry_safe(page, tmp, &pagelist, lru) {
+			while (index < page->index) {
 				clear_highpage(new_page + (index % HPAGE_PMD_NR));
 				index++;
-			पूर्ण
+			}
 			copy_highpage(new_page + (page->index % HPAGE_PMD_NR),
 					page);
 			list_del(&page->lru);
-			page->mapping = शून्य;
-			page_ref_unमुक्तze(page, 1);
+			page->mapping = NULL;
+			page_ref_unfreeze(page, 1);
 			ClearPageActive(page);
 			ClearPageUnevictable(page);
 			unlock_page(page);
 			put_page(page);
 			index++;
-		पूर्ण
-		जबतक (index < end) अणु
+		}
+		while (index < end) {
 			clear_highpage(new_page + (index % HPAGE_PMD_NR));
 			index++;
-		पूर्ण
+		}
 
 		SetPageUptodate(new_page);
 		page_ref_add(new_page, HPAGE_PMD_NR - 1);
-		अगर (is_shmem)
+		if (is_shmem)
 			set_page_dirty(new_page);
 		lru_cache_add(new_page);
 
@@ -1916,441 +1915,441 @@ xa_unlocked:
 		 * Remove pte page tables, so we can re-fault the page as huge.
 		 */
 		retract_page_tables(mapping, start);
-		*hpage = शून्य;
+		*hpage = NULL;
 
 		khugepaged_pages_collapsed++;
-	पूर्ण अन्यथा अणु
-		काष्ठा page *page;
+	} else {
+		struct page *page;
 
 		/* Something went wrong: roll back page cache changes */
 		xas_lock_irq(&xas);
 		mapping->nrpages -= nr_none;
 
-		अगर (is_shmem)
-			shmem_unअक्षरge(mapping->host, nr_none);
+		if (is_shmem)
+			shmem_uncharge(mapping->host, nr_none);
 
 		xas_set(&xas, start);
-		xas_क्रम_each(&xas, page, end - 1) अणु
+		xas_for_each(&xas, page, end - 1) {
 			page = list_first_entry_or_null(&pagelist,
-					काष्ठा page, lru);
-			अगर (!page || xas.xa_index < page->index) अणु
-				अगर (!nr_none)
-					अवरोध;
+					struct page, lru);
+			if (!page || xas.xa_index < page->index) {
+				if (!nr_none)
+					break;
 				nr_none--;
 				/* Put holes back where they were */
-				xas_store(&xas, शून्य);
-				जारी;
-			पूर्ण
+				xas_store(&xas, NULL);
+				continue;
+			}
 
 			VM_BUG_ON_PAGE(page->index != xas.xa_index, page);
 
-			/* Unमुक्तze the page. */
+			/* Unfreeze the page. */
 			list_del(&page->lru);
-			page_ref_unमुक्तze(page, 2);
+			page_ref_unfreeze(page, 2);
 			xas_store(&xas, page);
-			xas_छोड़ो(&xas);
+			xas_pause(&xas);
 			xas_unlock_irq(&xas);
 			unlock_page(page);
 			putback_lru_page(page);
 			xas_lock_irq(&xas);
-		पूर्ण
+		}
 		VM_BUG_ON(nr_none);
 		xas_unlock_irq(&xas);
 
-		new_page->mapping = शून्य;
-	पूर्ण
+		new_page->mapping = NULL;
+	}
 
 	unlock_page(new_page);
 out:
 	VM_BUG_ON(!list_empty(&pagelist));
-	अगर (!IS_ERR_OR_शून्य(*hpage))
-		mem_cgroup_unअक्षरge(*hpage);
-	/* TODO: tracepoपूर्णांकs */
-पूर्ण
+	if (!IS_ERR_OR_NULL(*hpage))
+		mem_cgroup_uncharge(*hpage);
+	/* TODO: tracepoints */
+}
 
-अटल व्योम khugepaged_scan_file(काष्ठा mm_काष्ठा *mm,
-		काष्ठा file *file, pgoff_t start, काष्ठा page **hpage)
-अणु
-	काष्ठा page *page = शून्य;
-	काष्ठा address_space *mapping = file->f_mapping;
+static void khugepaged_scan_file(struct mm_struct *mm,
+		struct file *file, pgoff_t start, struct page **hpage)
+{
+	struct page *page = NULL;
+	struct address_space *mapping = file->f_mapping;
 	XA_STATE(xas, &mapping->i_pages, start);
-	पूर्णांक present, swap;
-	पूर्णांक node = NUMA_NO_NODE;
-	पूर्णांक result = SCAN_SUCCEED;
+	int present, swap;
+	int node = NUMA_NO_NODE;
+	int result = SCAN_SUCCEED;
 
 	present = 0;
 	swap = 0;
-	स_रखो(khugepaged_node_load, 0, माप(khugepaged_node_load));
-	rcu_पढ़ो_lock();
-	xas_क्रम_each(&xas, page, start + HPAGE_PMD_NR - 1) अणु
-		अगर (xas_retry(&xas, page))
-			जारी;
+	memset(khugepaged_node_load, 0, sizeof(khugepaged_node_load));
+	rcu_read_lock();
+	xas_for_each(&xas, page, start + HPAGE_PMD_NR - 1) {
+		if (xas_retry(&xas, page))
+			continue;
 
-		अगर (xa_is_value(page)) अणु
-			अगर (++swap > khugepaged_max_ptes_swap) अणु
+		if (xa_is_value(page)) {
+			if (++swap > khugepaged_max_ptes_swap) {
 				result = SCAN_EXCEED_SWAP_PTE;
-				अवरोध;
-			पूर्ण
-			जारी;
-		पूर्ण
+				break;
+			}
+			continue;
+		}
 
-		अगर (PageTransCompound(page)) अणु
+		if (PageTransCompound(page)) {
 			result = SCAN_PAGE_COMPOUND;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		node = page_to_nid(page);
-		अगर (khugepaged_scan_पात(node)) अणु
+		if (khugepaged_scan_abort(node)) {
 			result = SCAN_SCAN_ABORT;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		khugepaged_node_load[node]++;
 
-		अगर (!PageLRU(page)) अणु
+		if (!PageLRU(page)) {
 			result = SCAN_PAGE_LRU;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (page_count(page) !=
-		    1 + page_mapcount(page) + page_has_निजी(page)) अणु
+		if (page_count(page) !=
+		    1 + page_mapcount(page) + page_has_private(page)) {
 			result = SCAN_PAGE_COUNT;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		/*
-		 * We probably should check अगर the page is referenced here, but
-		 * nobody would transfer pte_young() to PageReferenced() क्रम us.
+		 * We probably should check if the page is referenced here, but
+		 * nobody would transfer pte_young() to PageReferenced() for us.
 		 * And rmap walk here is just too costly...
 		 */
 
 		present++;
 
-		अगर (need_resched()) अणु
-			xas_छोड़ो(&xas);
+		if (need_resched()) {
+			xas_pause(&xas);
 			cond_resched_rcu();
-		पूर्ण
-	पूर्ण
-	rcu_पढ़ो_unlock();
+		}
+	}
+	rcu_read_unlock();
 
-	अगर (result == SCAN_SUCCEED) अणु
-		अगर (present < HPAGE_PMD_NR - khugepaged_max_ptes_none) अणु
+	if (result == SCAN_SUCCEED) {
+		if (present < HPAGE_PMD_NR - khugepaged_max_ptes_none) {
 			result = SCAN_EXCEED_NONE_PTE;
-		पूर्ण अन्यथा अणु
+		} else {
 			node = khugepaged_find_target_node();
 			collapse_file(mm, file, start, hpage, node);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* TODO: tracepoपूर्णांकs */
-पूर्ण
-#अन्यथा
-अटल व्योम khugepaged_scan_file(काष्ठा mm_काष्ठा *mm,
-		काष्ठा file *file, pgoff_t start, काष्ठा page **hpage)
-अणु
+	/* TODO: tracepoints */
+}
+#else
+static void khugepaged_scan_file(struct mm_struct *mm,
+		struct file *file, pgoff_t start, struct page **hpage)
+{
 	BUILD_BUG();
-पूर्ण
+}
 
-अटल व्योम khugepaged_collapse_pte_mapped_thps(काष्ठा mm_slot *mm_slot)
-अणु
-पूर्ण
-#पूर्ण_अगर
+static void khugepaged_collapse_pte_mapped_thps(struct mm_slot *mm_slot)
+{
+}
+#endif
 
-अटल अचिन्हित पूर्णांक khugepaged_scan_mm_slot(अचिन्हित पूर्णांक pages,
-					    काष्ठा page **hpage)
+static unsigned int khugepaged_scan_mm_slot(unsigned int pages,
+					    struct page **hpage)
 	__releases(&khugepaged_mm_lock)
 	__acquires(&khugepaged_mm_lock)
-अणु
-	काष्ठा mm_slot *mm_slot;
-	काष्ठा mm_काष्ठा *mm;
-	काष्ठा vm_area_काष्ठा *vma;
-	पूर्णांक progress = 0;
+{
+	struct mm_slot *mm_slot;
+	struct mm_struct *mm;
+	struct vm_area_struct *vma;
+	int progress = 0;
 
 	VM_BUG_ON(!pages);
-	lockdep_निश्चित_held(&khugepaged_mm_lock);
+	lockdep_assert_held(&khugepaged_mm_lock);
 
-	अगर (khugepaged_scan.mm_slot)
+	if (khugepaged_scan.mm_slot)
 		mm_slot = khugepaged_scan.mm_slot;
-	अन्यथा अणु
+	else {
 		mm_slot = list_entry(khugepaged_scan.mm_head.next,
-				     काष्ठा mm_slot, mm_node);
+				     struct mm_slot, mm_node);
 		khugepaged_scan.address = 0;
 		khugepaged_scan.mm_slot = mm_slot;
-	पूर्ण
+	}
 	spin_unlock(&khugepaged_mm_lock);
 	khugepaged_collapse_pte_mapped_thps(mm_slot);
 
 	mm = mm_slot->mm;
 	/*
-	 * Don't रुको क्रम semaphore (to aव्योम दीर्घ रुको बार).  Just move to
+	 * Don't wait for semaphore (to avoid long wait times).  Just move to
 	 * the next mm on the list.
 	 */
-	vma = शून्य;
-	अगर (unlikely(!mmap_पढ़ो_trylock(mm)))
-		जाओ अवरोधouterloop_mmap_lock;
-	अगर (likely(!khugepaged_test_निकास(mm)))
+	vma = NULL;
+	if (unlikely(!mmap_read_trylock(mm)))
+		goto breakouterloop_mmap_lock;
+	if (likely(!khugepaged_test_exit(mm)))
 		vma = find_vma(mm, khugepaged_scan.address);
 
 	progress++;
-	क्रम (; vma; vma = vma->vm_next) अणु
-		अचिन्हित दीर्घ hstart, hend;
+	for (; vma; vma = vma->vm_next) {
+		unsigned long hstart, hend;
 
 		cond_resched();
-		अगर (unlikely(khugepaged_test_निकास(mm))) अणु
+		if (unlikely(khugepaged_test_exit(mm))) {
 			progress++;
-			अवरोध;
-		पूर्ण
-		अगर (!hugepage_vma_check(vma, vma->vm_flags)) अणु
+			break;
+		}
+		if (!hugepage_vma_check(vma, vma->vm_flags)) {
 skip:
 			progress++;
-			जारी;
-		पूर्ण
+			continue;
+		}
 		hstart = (vma->vm_start + ~HPAGE_PMD_MASK) & HPAGE_PMD_MASK;
 		hend = vma->vm_end & HPAGE_PMD_MASK;
-		अगर (hstart >= hend)
-			जाओ skip;
-		अगर (khugepaged_scan.address > hend)
-			जाओ skip;
-		अगर (khugepaged_scan.address < hstart)
+		if (hstart >= hend)
+			goto skip;
+		if (khugepaged_scan.address > hend)
+			goto skip;
+		if (khugepaged_scan.address < hstart)
 			khugepaged_scan.address = hstart;
 		VM_BUG_ON(khugepaged_scan.address & ~HPAGE_PMD_MASK);
-		अगर (shmem_file(vma->vm_file) && !shmem_huge_enabled(vma))
-			जाओ skip;
+		if (shmem_file(vma->vm_file) && !shmem_huge_enabled(vma))
+			goto skip;
 
-		जबतक (khugepaged_scan.address < hend) अणु
-			पूर्णांक ret;
+		while (khugepaged_scan.address < hend) {
+			int ret;
 			cond_resched();
-			अगर (unlikely(khugepaged_test_निकास(mm)))
-				जाओ अवरोधouterloop;
+			if (unlikely(khugepaged_test_exit(mm)))
+				goto breakouterloop;
 
 			VM_BUG_ON(khugepaged_scan.address < hstart ||
 				  khugepaged_scan.address + HPAGE_PMD_SIZE >
 				  hend);
-			अगर (IS_ENABLED(CONFIG_SHMEM) && vma->vm_file) अणु
-				काष्ठा file *file = get_file(vma->vm_file);
+			if (IS_ENABLED(CONFIG_SHMEM) && vma->vm_file) {
+				struct file *file = get_file(vma->vm_file);
 				pgoff_t pgoff = linear_page_index(vma,
 						khugepaged_scan.address);
 
-				mmap_पढ़ो_unlock(mm);
+				mmap_read_unlock(mm);
 				ret = 1;
 				khugepaged_scan_file(mm, file, pgoff, hpage);
 				fput(file);
-			पूर्ण अन्यथा अणु
+			} else {
 				ret = khugepaged_scan_pmd(mm, vma,
 						khugepaged_scan.address,
 						hpage);
-			पूर्ण
+			}
 			/* move to next address */
 			khugepaged_scan.address += HPAGE_PMD_SIZE;
 			progress += HPAGE_PMD_NR;
-			अगर (ret)
-				/* we released mmap_lock so अवरोध loop */
-				जाओ अवरोधouterloop_mmap_lock;
-			अगर (progress >= pages)
-				जाओ अवरोधouterloop;
-		पूर्ण
-	पूर्ण
-अवरोधouterloop:
-	mmap_पढ़ो_unlock(mm); /* निकास_mmap will destroy ptes after this */
-अवरोधouterloop_mmap_lock:
+			if (ret)
+				/* we released mmap_lock so break loop */
+				goto breakouterloop_mmap_lock;
+			if (progress >= pages)
+				goto breakouterloop;
+		}
+	}
+breakouterloop:
+	mmap_read_unlock(mm); /* exit_mmap will destroy ptes after this */
+breakouterloop_mmap_lock:
 
 	spin_lock(&khugepaged_mm_lock);
 	VM_BUG_ON(khugepaged_scan.mm_slot != mm_slot);
 	/*
-	 * Release the current mm_slot अगर this mm is about to die, or
-	 * अगर we scanned all vmas of this mm.
+	 * Release the current mm_slot if this mm is about to die, or
+	 * if we scanned all vmas of this mm.
 	 */
-	अगर (khugepaged_test_निकास(mm) || !vma) अणु
+	if (khugepaged_test_exit(mm) || !vma) {
 		/*
-		 * Make sure that अगर mm_users is reaching zero जबतक
-		 * khugepaged runs here, khugepaged_निकास will find
-		 * mm_slot not poपूर्णांकing to the निकासing mm.
+		 * Make sure that if mm_users is reaching zero while
+		 * khugepaged runs here, khugepaged_exit will find
+		 * mm_slot not pointing to the exiting mm.
 		 */
-		अगर (mm_slot->mm_node.next != &khugepaged_scan.mm_head) अणु
+		if (mm_slot->mm_node.next != &khugepaged_scan.mm_head) {
 			khugepaged_scan.mm_slot = list_entry(
 				mm_slot->mm_node.next,
-				काष्ठा mm_slot, mm_node);
+				struct mm_slot, mm_node);
 			khugepaged_scan.address = 0;
-		पूर्ण अन्यथा अणु
-			khugepaged_scan.mm_slot = शून्य;
+		} else {
+			khugepaged_scan.mm_slot = NULL;
 			khugepaged_full_scans++;
-		पूर्ण
+		}
 
 		collect_mm_slot(mm_slot);
-	पूर्ण
+	}
 
-	वापस progress;
-पूर्ण
+	return progress;
+}
 
-अटल पूर्णांक khugepaged_has_work(व्योम)
-अणु
-	वापस !list_empty(&khugepaged_scan.mm_head) &&
+static int khugepaged_has_work(void)
+{
+	return !list_empty(&khugepaged_scan.mm_head) &&
 		khugepaged_enabled();
-पूर्ण
+}
 
-अटल पूर्णांक khugepaged_रुको_event(व्योम)
-अणु
-	वापस !list_empty(&khugepaged_scan.mm_head) ||
-		kthपढ़ो_should_stop();
-पूर्ण
+static int khugepaged_wait_event(void)
+{
+	return !list_empty(&khugepaged_scan.mm_head) ||
+		kthread_should_stop();
+}
 
-अटल व्योम khugepaged_करो_scan(व्योम)
-अणु
-	काष्ठा page *hpage = शून्य;
-	अचिन्हित पूर्णांक progress = 0, pass_through_head = 0;
-	अचिन्हित पूर्णांक pages = READ_ONCE(khugepaged_pages_to_scan);
-	bool रुको = true;
+static void khugepaged_do_scan(void)
+{
+	struct page *hpage = NULL;
+	unsigned int progress = 0, pass_through_head = 0;
+	unsigned int pages = READ_ONCE(khugepaged_pages_to_scan);
+	bool wait = true;
 
 	lru_add_drain_all();
 
-	जबतक (progress < pages) अणु
-		अगर (!khugepaged_pपुनः_स्मृति_page(&hpage, &रुको))
-			अवरोध;
+	while (progress < pages) {
+		if (!khugepaged_prealloc_page(&hpage, &wait))
+			break;
 
 		cond_resched();
 
-		अगर (unlikely(kthपढ़ो_should_stop() || try_to_मुक्तze()))
-			अवरोध;
+		if (unlikely(kthread_should_stop() || try_to_freeze()))
+			break;
 
 		spin_lock(&khugepaged_mm_lock);
-		अगर (!khugepaged_scan.mm_slot)
+		if (!khugepaged_scan.mm_slot)
 			pass_through_head++;
-		अगर (khugepaged_has_work() &&
+		if (khugepaged_has_work() &&
 		    pass_through_head < 2)
 			progress += khugepaged_scan_mm_slot(pages - progress,
 							    &hpage);
-		अन्यथा
+		else
 			progress = pages;
 		spin_unlock(&khugepaged_mm_lock);
-	पूर्ण
+	}
 
-	अगर (!IS_ERR_OR_शून्य(hpage))
+	if (!IS_ERR_OR_NULL(hpage))
 		put_page(hpage);
-पूर्ण
+}
 
-अटल bool khugepaged_should_wakeup(व्योम)
-अणु
-	वापस kthपढ़ो_should_stop() ||
-	       समय_after_eq(jअगरfies, khugepaged_sleep_expire);
-पूर्ण
+static bool khugepaged_should_wakeup(void)
+{
+	return kthread_should_stop() ||
+	       time_after_eq(jiffies, khugepaged_sleep_expire);
+}
 
-अटल व्योम khugepaged_रुको_work(व्योम)
-अणु
-	अगर (khugepaged_has_work()) अणु
-		स्थिर अचिन्हित दीर्घ scan_sleep_jअगरfies =
-			msecs_to_jअगरfies(khugepaged_scan_sleep_millisecs);
+static void khugepaged_wait_work(void)
+{
+	if (khugepaged_has_work()) {
+		const unsigned long scan_sleep_jiffies =
+			msecs_to_jiffies(khugepaged_scan_sleep_millisecs);
 
-		अगर (!scan_sleep_jअगरfies)
-			वापस;
+		if (!scan_sleep_jiffies)
+			return;
 
-		khugepaged_sleep_expire = jअगरfies + scan_sleep_jअगरfies;
-		रुको_event_मुक्तzable_समयout(khugepaged_रुको,
+		khugepaged_sleep_expire = jiffies + scan_sleep_jiffies;
+		wait_event_freezable_timeout(khugepaged_wait,
 					     khugepaged_should_wakeup(),
-					     scan_sleep_jअगरfies);
-		वापस;
-	पूर्ण
+					     scan_sleep_jiffies);
+		return;
+	}
 
-	अगर (khugepaged_enabled())
-		रुको_event_मुक्तzable(khugepaged_रुको, khugepaged_रुको_event());
-पूर्ण
+	if (khugepaged_enabled())
+		wait_event_freezable(khugepaged_wait, khugepaged_wait_event());
+}
 
-अटल पूर्णांक khugepaged(व्योम *none)
-अणु
-	काष्ठा mm_slot *mm_slot;
+static int khugepaged(void *none)
+{
+	struct mm_slot *mm_slot;
 
-	set_मुक्तzable();
+	set_freezable();
 	set_user_nice(current, MAX_NICE);
 
-	जबतक (!kthपढ़ो_should_stop()) अणु
-		khugepaged_करो_scan();
-		khugepaged_रुको_work();
-	पूर्ण
+	while (!kthread_should_stop()) {
+		khugepaged_do_scan();
+		khugepaged_wait_work();
+	}
 
 	spin_lock(&khugepaged_mm_lock);
 	mm_slot = khugepaged_scan.mm_slot;
-	khugepaged_scan.mm_slot = शून्य;
-	अगर (mm_slot)
+	khugepaged_scan.mm_slot = NULL;
+	if (mm_slot)
 		collect_mm_slot(mm_slot);
 	spin_unlock(&khugepaged_mm_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम set_recommended_min_मुक्त_kbytes(व्योम)
-अणु
-	काष्ठा zone *zone;
-	पूर्णांक nr_zones = 0;
-	अचिन्हित दीर्घ recommended_min;
+static void set_recommended_min_free_kbytes(void)
+{
+	struct zone *zone;
+	int nr_zones = 0;
+	unsigned long recommended_min;
 
-	क्रम_each_populated_zone(zone) अणु
+	for_each_populated_zone(zone) {
 		/*
-		 * We करोn't need to worry about fragmentation of
+		 * We don't need to worry about fragmentation of
 		 * ZONE_MOVABLE since it only has movable pages.
 		 */
-		अगर (zone_idx(zone) > gfp_zone(GFP_USER))
-			जारी;
+		if (zone_idx(zone) > gfp_zone(GFP_USER))
+			continue;
 
 		nr_zones++;
-	पूर्ण
+	}
 
-	/* Ensure 2 pageblocks are मुक्त to assist fragmentation aव्योमance */
+	/* Ensure 2 pageblocks are free to assist fragmentation avoidance */
 	recommended_min = pageblock_nr_pages * nr_zones * 2;
 
 	/*
-	 * Make sure that on average at least two pageblocks are almost मुक्त
-	 * of another type, one क्रम a migratetype to fall back to and a
-	 * second to aव्योम subsequent fallbacks of other types There are 3
+	 * Make sure that on average at least two pageblocks are almost free
+	 * of another type, one for a migratetype to fall back to and a
+	 * second to avoid subsequent fallbacks of other types There are 3
 	 * MIGRATE_TYPES we care about.
 	 */
 	recommended_min += pageblock_nr_pages * nr_zones *
 			   MIGRATE_PCPTYPES * MIGRATE_PCPTYPES;
 
-	/* करोn't ever allow to reserve more than 5% of the lowmem */
+	/* don't ever allow to reserve more than 5% of the lowmem */
 	recommended_min = min(recommended_min,
-			      (अचिन्हित दीर्घ) nr_मुक्त_buffer_pages() / 20);
+			      (unsigned long) nr_free_buffer_pages() / 20);
 	recommended_min <<= (PAGE_SHIFT-10);
 
-	अगर (recommended_min > min_मुक्त_kbytes) अणु
-		अगर (user_min_मुक्त_kbytes >= 0)
+	if (recommended_min > min_free_kbytes) {
+		if (user_min_free_kbytes >= 0)
 			pr_info("raising min_free_kbytes from %d to %lu to help transparent hugepage allocations\n",
-				min_मुक्त_kbytes, recommended_min);
+				min_free_kbytes, recommended_min);
 
-		min_मुक्त_kbytes = recommended_min;
-	पूर्ण
+		min_free_kbytes = recommended_min;
+	}
 	setup_per_zone_wmarks();
-पूर्ण
+}
 
-पूर्णांक start_stop_khugepaged(व्योम)
-अणु
-	पूर्णांक err = 0;
+int start_stop_khugepaged(void)
+{
+	int err = 0;
 
 	mutex_lock(&khugepaged_mutex);
-	अगर (khugepaged_enabled()) अणु
-		अगर (!khugepaged_thपढ़ो)
-			khugepaged_thपढ़ो = kthपढ़ो_run(khugepaged, शून्य,
+	if (khugepaged_enabled()) {
+		if (!khugepaged_thread)
+			khugepaged_thread = kthread_run(khugepaged, NULL,
 							"khugepaged");
-		अगर (IS_ERR(khugepaged_thपढ़ो)) अणु
+		if (IS_ERR(khugepaged_thread)) {
 			pr_err("khugepaged: kthread_run(khugepaged) failed\n");
-			err = PTR_ERR(khugepaged_thपढ़ो);
-			khugepaged_thपढ़ो = शून्य;
-			जाओ fail;
-		पूर्ण
+			err = PTR_ERR(khugepaged_thread);
+			khugepaged_thread = NULL;
+			goto fail;
+		}
 
-		अगर (!list_empty(&khugepaged_scan.mm_head))
-			wake_up_पूर्णांकerruptible(&khugepaged_रुको);
+		if (!list_empty(&khugepaged_scan.mm_head))
+			wake_up_interruptible(&khugepaged_wait);
 
-		set_recommended_min_मुक्त_kbytes();
-	पूर्ण अन्यथा अगर (khugepaged_thपढ़ो) अणु
-		kthपढ़ो_stop(khugepaged_thपढ़ो);
-		khugepaged_thपढ़ो = शून्य;
-	पूर्ण
+		set_recommended_min_free_kbytes();
+	} else if (khugepaged_thread) {
+		kthread_stop(khugepaged_thread);
+		khugepaged_thread = NULL;
+	}
 fail:
 	mutex_unlock(&khugepaged_mutex);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम khugepaged_min_मुक्त_kbytes_update(व्योम)
-अणु
+void khugepaged_min_free_kbytes_update(void)
+{
 	mutex_lock(&khugepaged_mutex);
-	अगर (khugepaged_enabled() && khugepaged_thपढ़ो)
-		set_recommended_min_मुक्त_kbytes();
+	if (khugepaged_enabled() && khugepaged_thread)
+		set_recommended_min_free_kbytes();
 	mutex_unlock(&khugepaged_mutex);
-पूर्ण
+}

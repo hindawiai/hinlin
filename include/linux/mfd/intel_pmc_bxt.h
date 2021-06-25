@@ -1,54 +1,53 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित MFD_INTEL_PMC_BXT_H
-#घोषणा MFD_INTEL_PMC_BXT_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef MFD_INTEL_PMC_BXT_H
+#define MFD_INTEL_PMC_BXT_H
 
 /* GCR reg offsets from GCR base */
-#घोषणा PMC_GCR_PMC_CFG_REG		0x08
-#घोषणा PMC_GCR_TELEM_DEEP_S0IX_REG	0x78
-#घोषणा PMC_GCR_TELEM_SHLW_S0IX_REG	0x80
+#define PMC_GCR_PMC_CFG_REG		0x08
+#define PMC_GCR_TELEM_DEEP_S0IX_REG	0x78
+#define PMC_GCR_TELEM_SHLW_S0IX_REG	0x80
 
 /* PMC_CFG_REG bit masks */
-#घोषणा PMC_CFG_NO_REBOOT_EN		BIT(4)
+#define PMC_CFG_NO_REBOOT_EN		BIT(4)
 
 /**
- * काष्ठा पूर्णांकel_pmc_dev - Intel PMC device काष्ठाure
- * @dev: Poपूर्णांकer to the parent PMC device
- * @scu: Poपूर्णांकer to the SCU IPC device data काष्ठाure
+ * struct intel_pmc_dev - Intel PMC device structure
+ * @dev: Pointer to the parent PMC device
+ * @scu: Pointer to the SCU IPC device data structure
  * @gcr_mem_base: Virtual base address of GCR (Global Configuration Registers)
- * @gcr_lock: Lock used to serialize access to GCR रेजिस्टरs
- * @telem_base: Poपूर्णांकer to telemetry SSRAM base resource or %शून्य अगर not
+ * @gcr_lock: Lock used to serialize access to GCR registers
+ * @telem_base: Pointer to telemetry SSRAM base resource or %NULL if not
  *		available
  */
-काष्ठा पूर्णांकel_pmc_dev अणु
-	काष्ठा device *dev;
-	काष्ठा पूर्णांकel_scu_ipc_dev *scu;
-	व्योम __iomem *gcr_mem_base;
+struct intel_pmc_dev {
+	struct device *dev;
+	struct intel_scu_ipc_dev *scu;
+	void __iomem *gcr_mem_base;
 	spinlock_t gcr_lock;
-	काष्ठा resource *telem_base;
-पूर्ण;
+	struct resource *telem_base;
+};
 
-#अगर IS_ENABLED(CONFIG_MFD_INTEL_PMC_BXT)
-पूर्णांक पूर्णांकel_pmc_gcr_पढ़ो64(काष्ठा पूर्णांकel_pmc_dev *pmc, u32 offset, u64 *data);
-पूर्णांक पूर्णांकel_pmc_gcr_update(काष्ठा पूर्णांकel_pmc_dev *pmc, u32 offset, u32 mask, u32 val);
-पूर्णांक पूर्णांकel_pmc_s0ix_counter_पढ़ो(काष्ठा पूर्णांकel_pmc_dev *pmc, u64 *data);
-#अन्यथा
-अटल अंतरभूत पूर्णांक पूर्णांकel_pmc_gcr_पढ़ो64(काष्ठा पूर्णांकel_pmc_dev *pmc, u32 offset,
+#if IS_ENABLED(CONFIG_MFD_INTEL_PMC_BXT)
+int intel_pmc_gcr_read64(struct intel_pmc_dev *pmc, u32 offset, u64 *data);
+int intel_pmc_gcr_update(struct intel_pmc_dev *pmc, u32 offset, u32 mask, u32 val);
+int intel_pmc_s0ix_counter_read(struct intel_pmc_dev *pmc, u64 *data);
+#else
+static inline int intel_pmc_gcr_read64(struct intel_pmc_dev *pmc, u32 offset,
 				       u64 *data)
-अणु
-	वापस -ENOTSUPP;
-पूर्ण
+{
+	return -ENOTSUPP;
+}
 
-अटल अंतरभूत पूर्णांक पूर्णांकel_pmc_gcr_update(काष्ठा पूर्णांकel_pmc_dev *pmc, u32 offset,
+static inline int intel_pmc_gcr_update(struct intel_pmc_dev *pmc, u32 offset,
 				       u32 mask, u32 val)
-अणु
-	वापस -ENOTSUPP;
-पूर्ण
+{
+	return -ENOTSUPP;
+}
 
-अटल अंतरभूत पूर्णांक पूर्णांकel_pmc_s0ix_counter_पढ़ो(काष्ठा पूर्णांकel_pmc_dev *pmc, u64 *data)
-अणु
-	वापस -ENOTSUPP;
-पूर्ण
-#पूर्ण_अगर
+static inline int intel_pmc_s0ix_counter_read(struct intel_pmc_dev *pmc, u64 *data)
+{
+	return -ENOTSUPP;
+}
+#endif
 
-#पूर्ण_अगर /* MFD_INTEL_PMC_BXT_H */
+#endif /* MFD_INTEL_PMC_BXT_H */

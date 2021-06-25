@@ -1,3 +1,2 @@
-<शैली गुरु>
-#समावेश "locking-selftest-wlock.h"
-#समावेश "locking-selftest-softirq.h"
+#include "locking-selftest-wlock.h"
+#include "locking-selftest-softirq.h"

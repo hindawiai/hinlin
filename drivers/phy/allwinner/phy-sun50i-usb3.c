@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Allwinner sun50i(H6) USB 3.0 phy driver
  *
@@ -14,76 +13,76 @@
  * Copyright (c) 2010-2015 Allwinner Technology Co., Ltd.
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/err.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/phy/phy.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/reset.h>
+#include <linux/clk.h>
+#include <linux/err.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/phy/phy.h>
+#include <linux/platform_device.h>
+#include <linux/reset.h>
 
 /* Interface Status and Control Registers */
-#घोषणा SUNXI_ISCR			0x00
-#घोषणा SUNXI_PIPE_CLOCK_CONTROL	0x14
-#घोषणा SUNXI_PHY_TUNE_LOW		0x18
-#घोषणा SUNXI_PHY_TUNE_HIGH		0x1c
-#घोषणा SUNXI_PHY_EXTERNAL_CONTROL	0x20
+#define SUNXI_ISCR			0x00
+#define SUNXI_PIPE_CLOCK_CONTROL	0x14
+#define SUNXI_PHY_TUNE_LOW		0x18
+#define SUNXI_PHY_TUNE_HIGH		0x1c
+#define SUNXI_PHY_EXTERNAL_CONTROL	0x20
 
 /* USB2.0 Interface Status and Control Register */
-#घोषणा SUNXI_ISCR_FORCE_VBUS		(3 << 12)
+#define SUNXI_ISCR_FORCE_VBUS		(3 << 12)
 
 /* PIPE Clock Control Register */
-#घोषणा SUNXI_PCC_PIPE_CLK_OPEN		(1 << 6)
+#define SUNXI_PCC_PIPE_CLK_OPEN		(1 << 6)
 
 /* PHY External Control Register */
-#घोषणा SUNXI_PEC_EXTERN_VBUS		(3 << 1)
-#घोषणा SUNXI_PEC_SSC_EN		(1 << 24)
-#घोषणा SUNXI_PEC_REF_SSP_EN		(1 << 26)
+#define SUNXI_PEC_EXTERN_VBUS		(3 << 1)
+#define SUNXI_PEC_SSC_EN		(1 << 24)
+#define SUNXI_PEC_REF_SSP_EN		(1 << 26)
 
 /* PHY Tune High Register */
-#घोषणा SUNXI_TX_DEEMPH_3P5DB(n)	((n) << 19)
-#घोषणा SUNXI_TX_DEEMPH_3P5DB_MASK	GENMASK(24, 19)
-#घोषणा SUNXI_TX_DEEMPH_6DB(n)		((n) << 13)
-#घोषणा SUNXI_TX_DEEMPH_6GB_MASK	GENMASK(18, 13)
-#घोषणा SUNXI_TX_SWING_FULL(n)		((n) << 6)
-#घोषणा SUNXI_TX_SWING_FULL_MASK	GENMASK(12, 6)
-#घोषणा SUNXI_LOS_BIAS(n)		((n) << 3)
-#घोषणा SUNXI_LOS_BIAS_MASK		GENMASK(5, 3)
-#घोषणा SUNXI_TXVBOOSTLVL(n)		((n) << 0)
-#घोषणा SUNXI_TXVBOOSTLVL_MASK		GENMASK(2, 0)
+#define SUNXI_TX_DEEMPH_3P5DB(n)	((n) << 19)
+#define SUNXI_TX_DEEMPH_3P5DB_MASK	GENMASK(24, 19)
+#define SUNXI_TX_DEEMPH_6DB(n)		((n) << 13)
+#define SUNXI_TX_DEEMPH_6GB_MASK	GENMASK(18, 13)
+#define SUNXI_TX_SWING_FULL(n)		((n) << 6)
+#define SUNXI_TX_SWING_FULL_MASK	GENMASK(12, 6)
+#define SUNXI_LOS_BIAS(n)		((n) << 3)
+#define SUNXI_LOS_BIAS_MASK		GENMASK(5, 3)
+#define SUNXI_TXVBOOSTLVL(n)		((n) << 0)
+#define SUNXI_TXVBOOSTLVL_MASK		GENMASK(2, 0)
 
-काष्ठा sun50i_usb3_phy अणु
-	काष्ठा phy *phy;
-	व्योम __iomem *regs;
-	काष्ठा reset_control *reset;
-	काष्ठा clk *clk;
-पूर्ण;
+struct sun50i_usb3_phy {
+	struct phy *phy;
+	void __iomem *regs;
+	struct reset_control *reset;
+	struct clk *clk;
+};
 
-अटल व्योम sun50i_usb3_phy_खोलो(काष्ठा sun50i_usb3_phy *phy)
-अणु
+static void sun50i_usb3_phy_open(struct sun50i_usb3_phy *phy)
+{
 	u32 val;
 
-	val = पढ़ोl(phy->regs + SUNXI_PHY_EXTERNAL_CONTROL);
+	val = readl(phy->regs + SUNXI_PHY_EXTERNAL_CONTROL);
 	val |= SUNXI_PEC_EXTERN_VBUS;
 	val |= SUNXI_PEC_SSC_EN | SUNXI_PEC_REF_SSP_EN;
-	ग_लिखोl(val, phy->regs + SUNXI_PHY_EXTERNAL_CONTROL);
+	writel(val, phy->regs + SUNXI_PHY_EXTERNAL_CONTROL);
 
-	val = पढ़ोl(phy->regs + SUNXI_PIPE_CLOCK_CONTROL);
+	val = readl(phy->regs + SUNXI_PIPE_CLOCK_CONTROL);
 	val |= SUNXI_PCC_PIPE_CLK_OPEN;
-	ग_लिखोl(val, phy->regs + SUNXI_PIPE_CLOCK_CONTROL);
+	writel(val, phy->regs + SUNXI_PIPE_CLOCK_CONTROL);
 
-	val = पढ़ोl(phy->regs + SUNXI_ISCR);
+	val = readl(phy->regs + SUNXI_ISCR);
 	val |= SUNXI_ISCR_FORCE_VBUS;
-	ग_लिखोl(val, phy->regs + SUNXI_ISCR);
+	writel(val, phy->regs + SUNXI_ISCR);
 
 	/*
-	 * All the magic numbers written to the PHY_TUNE_अणुLOW_HIGHपूर्ण
-	 * रेजिस्टरs are directly taken from the BSP USB3 driver from
+	 * All the magic numbers written to the PHY_TUNE_{LOW_HIGH}
+	 * registers are directly taken from the BSP USB3 driver from
 	 * Allwiner.
 	 */
-	ग_लिखोl(0x0047fc87, phy->regs + SUNXI_PHY_TUNE_LOW);
+	writel(0x0047fc87, phy->regs + SUNXI_PHY_TUNE_LOW);
 
-	val = पढ़ोl(phy->regs + SUNXI_PHY_TUNE_HIGH);
+	val = readl(phy->regs + SUNXI_PHY_TUNE_HIGH);
 	val &= ~(SUNXI_TXVBOOSTLVL_MASK | SUNXI_LOS_BIAS_MASK |
 		 SUNXI_TX_SWING_FULL_MASK | SUNXI_TX_DEEMPH_6GB_MASK |
 		 SUNXI_TX_DEEMPH_3P5DB_MASK);
@@ -92,97 +91,97 @@
 	val |= SUNXI_TX_SWING_FULL(0x55);
 	val |= SUNXI_TX_DEEMPH_6DB(0x20);
 	val |= SUNXI_TX_DEEMPH_3P5DB(0x15);
-	ग_लिखोl(val, phy->regs + SUNXI_PHY_TUNE_HIGH);
-पूर्ण
+	writel(val, phy->regs + SUNXI_PHY_TUNE_HIGH);
+}
 
-अटल पूर्णांक sun50i_usb3_phy_init(काष्ठा phy *_phy)
-अणु
-	काष्ठा sun50i_usb3_phy *phy = phy_get_drvdata(_phy);
-	पूर्णांक ret;
+static int sun50i_usb3_phy_init(struct phy *_phy)
+{
+	struct sun50i_usb3_phy *phy = phy_get_drvdata(_phy);
+	int ret;
 
 	ret = clk_prepare_enable(phy->clk);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = reset_control_deनिश्चित(phy->reset);
-	अगर (ret) अणु
+	ret = reset_control_deassert(phy->reset);
+	if (ret) {
 		clk_disable_unprepare(phy->clk);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	sun50i_usb3_phy_खोलो(phy);
-	वापस 0;
-पूर्ण
+	sun50i_usb3_phy_open(phy);
+	return 0;
+}
 
-अटल पूर्णांक sun50i_usb3_phy_निकास(काष्ठा phy *_phy)
-अणु
-	काष्ठा sun50i_usb3_phy *phy = phy_get_drvdata(_phy);
+static int sun50i_usb3_phy_exit(struct phy *_phy)
+{
+	struct sun50i_usb3_phy *phy = phy_get_drvdata(_phy);
 
-	reset_control_निश्चित(phy->reset);
+	reset_control_assert(phy->reset);
 	clk_disable_unprepare(phy->clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा phy_ops sun50i_usb3_phy_ops = अणु
+static const struct phy_ops sun50i_usb3_phy_ops = {
 	.init		= sun50i_usb3_phy_init,
-	.निकास		= sun50i_usb3_phy_निकास,
+	.exit		= sun50i_usb3_phy_exit,
 	.owner		= THIS_MODULE,
-पूर्ण;
+};
 
-अटल पूर्णांक sun50i_usb3_phy_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा sun50i_usb3_phy *phy;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा phy_provider *phy_provider;
+static int sun50i_usb3_phy_probe(struct platform_device *pdev)
+{
+	struct sun50i_usb3_phy *phy;
+	struct device *dev = &pdev->dev;
+	struct phy_provider *phy_provider;
 
-	phy = devm_kzalloc(dev, माप(*phy), GFP_KERNEL);
-	अगर (!phy)
-		वापस -ENOMEM;
+	phy = devm_kzalloc(dev, sizeof(*phy), GFP_KERNEL);
+	if (!phy)
+		return -ENOMEM;
 
-	phy->clk = devm_clk_get(dev, शून्य);
-	अगर (IS_ERR(phy->clk)) अणु
-		अगर (PTR_ERR(phy->clk) != -EPROBE_DEFER)
+	phy->clk = devm_clk_get(dev, NULL);
+	if (IS_ERR(phy->clk)) {
+		if (PTR_ERR(phy->clk) != -EPROBE_DEFER)
 			dev_err(dev, "failed to get phy clock\n");
-		वापस PTR_ERR(phy->clk);
-	पूर्ण
+		return PTR_ERR(phy->clk);
+	}
 
-	phy->reset = devm_reset_control_get(dev, शून्य);
-	अगर (IS_ERR(phy->reset)) अणु
+	phy->reset = devm_reset_control_get(dev, NULL);
+	if (IS_ERR(phy->reset)) {
 		dev_err(dev, "failed to get reset control\n");
-		वापस PTR_ERR(phy->reset);
-	पूर्ण
+		return PTR_ERR(phy->reset);
+	}
 
-	phy->regs = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(phy->regs))
-		वापस PTR_ERR(phy->regs);
+	phy->regs = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(phy->regs))
+		return PTR_ERR(phy->regs);
 
-	phy->phy = devm_phy_create(dev, शून्य, &sun50i_usb3_phy_ops);
-	अगर (IS_ERR(phy->phy)) अणु
+	phy->phy = devm_phy_create(dev, NULL, &sun50i_usb3_phy_ops);
+	if (IS_ERR(phy->phy)) {
 		dev_err(dev, "failed to create PHY\n");
-		वापस PTR_ERR(phy->phy);
-	पूर्ण
+		return PTR_ERR(phy->phy);
+	}
 
 	phy_set_drvdata(phy->phy, phy);
-	phy_provider = devm_of_phy_provider_रेजिस्टर(dev, of_phy_simple_xlate);
+	phy_provider = devm_of_phy_provider_register(dev, of_phy_simple_xlate);
 
-	वापस PTR_ERR_OR_ZERO(phy_provider);
-पूर्ण
+	return PTR_ERR_OR_ZERO(phy_provider);
+}
 
-अटल स्थिर काष्ठा of_device_id sun50i_usb3_phy_of_match[] = अणु
-	अणु .compatible = "allwinner,sun50i-h6-usb3-phy" पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct of_device_id sun50i_usb3_phy_of_match[] = {
+	{ .compatible = "allwinner,sun50i-h6-usb3-phy" },
+	{ },
+};
 MODULE_DEVICE_TABLE(of, sun50i_usb3_phy_of_match);
 
-अटल काष्ठा platक्रमm_driver sun50i_usb3_phy_driver = अणु
+static struct platform_driver sun50i_usb3_phy_driver = {
 	.probe	= sun50i_usb3_phy_probe,
-	.driver = अणु
+	.driver = {
 		.of_match_table	= sun50i_usb3_phy_of_match,
 		.name  = "sun50i-usb3-phy",
-	पूर्ण
-पूर्ण;
-module_platक्रमm_driver(sun50i_usb3_phy_driver);
+	}
+};
+module_platform_driver(sun50i_usb3_phy_driver);
 
 MODULE_DESCRIPTION("Allwinner H6 USB 3.0 phy driver");
 MODULE_AUTHOR("Icenowy Zheng <icenowy@aosc.io>");

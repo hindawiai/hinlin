@@ -1,64 +1,63 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <मानकपन.स>
-#समावेश "api/fs/fs.h"
-#समावेश "util/pmu.h"
-#समावेश "util/topdown.h"
+// SPDX-License-Identifier: GPL-2.0
+#include <stdio.h>
+#include "api/fs/fs.h"
+#include "util/pmu.h"
+#include "util/topdown.h"
 
 /*
- * Check whether we can use a group क्रम top करोwn.
+ * Check whether we can use a group for top down.
  * Without a group may get bad results due to multiplexing.
  */
-bool arch_topकरोwn_check_group(bool *warn)
-अणु
-	पूर्णांक n;
+bool arch_topdown_check_group(bool *warn)
+{
+	int n;
 
-	अगर (sysctl__पढ़ो_पूर्णांक("kernel/nmi_watchdog", &n) < 0)
-		वापस false;
-	अगर (n > 0) अणु
+	if (sysctl__read_int("kernel/nmi_watchdog", &n) < 0)
+		return false;
+	if (n > 0) {
 		*warn = true;
-		वापस false;
-	पूर्ण
-	वापस true;
-पूर्ण
+		return false;
+	}
+	return true;
+}
 
-व्योम arch_topकरोwn_group_warn(व्योम)
-अणु
-	ख_लिखो(मानक_त्रुटि,
+void arch_topdown_group_warn(void)
+{
+	fprintf(stderr,
 		"nmi_watchdog enabled with topdown. May give wrong results.\n"
 		"Disable with echo 0 > /proc/sys/kernel/nmi_watchdog\n");
-पूर्ण
+}
 
-#घोषणा TOPDOWN_SLOTS		0x0400
+#define TOPDOWN_SLOTS		0x0400
 
-अटल bool is_topकरोwn_slots_event(काष्ठा evsel *counter)
-अणु
-	अगर (!counter->pmu_name)
-		वापस false;
+static bool is_topdown_slots_event(struct evsel *counter)
+{
+	if (!counter->pmu_name)
+		return false;
 
-	अगर (म_भेद(counter->pmu_name, "cpu"))
-		वापस false;
+	if (strcmp(counter->pmu_name, "cpu"))
+		return false;
 
-	अगर (counter->core.attr.config == TOPDOWN_SLOTS)
-		वापस true;
+	if (counter->core.attr.config == TOPDOWN_SLOTS)
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /*
- * Check whether a topकरोwn group supports sample-पढ़ो.
+ * Check whether a topdown group supports sample-read.
  *
- * Only Topकरोwn metic supports sample-पढ़ो. The slots
- * event must be the leader of the topकरोwn group.
+ * Only Topdown metic supports sample-read. The slots
+ * event must be the leader of the topdown group.
  */
 
-bool arch_topकरोwn_sample_पढ़ो(काष्ठा evsel *leader)
-अणु
-	अगर (!pmu_have_event("cpu", "slots"))
-		वापस false;
+bool arch_topdown_sample_read(struct evsel *leader)
+{
+	if (!pmu_have_event("cpu", "slots"))
+		return false;
 
-	अगर (is_topकरोwn_slots_event(leader))
-		वापस true;
+	if (is_topdown_slots_event(leader))
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}

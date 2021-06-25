@@ -1,12 +1,11 @@
-<शैली गुरु>
 /*
- *   fs/cअगरs/smb2file.c
+ *   fs/cifs/smb2file.c
  *
  *   Copyright (C) International Business Machines  Corp., 2002, 2011
  *   Author(s): Steve French (sfrench@us.ibm.com),
  *              Pavel Shilovsky ((pshilovsky@samba.org) 2012
  *
- *   This library is मुक्त software; you can redistribute it and/or modअगरy
+ *   This library is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU Lesser General Public License as published
  *   by the Free Software Foundation; either version 2.1 of the License, or
  *   (at your option) any later version.
@@ -14,288 +13,288 @@
  *   This library is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
- *   the GNU Lesser General Public License क्रम more details.
+ *   the GNU Lesser General Public License for more details.
  *
  *   You should have received a copy of the GNU Lesser General Public License
- *   aदीर्घ with this library; अगर not, ग_लिखो to the Free Software
+ *   along with this library; if not, write to the Free Software
  *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-#समावेश <linux/fs.h>
-#समावेश <linux/स्थिति.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/pagemap.h>
-#समावेश <यंत्र/भाग64.h>
-#समावेश "cifsfs.h"
-#समावेश "cifspdu.h"
-#समावेश "cifsglob.h"
-#समावेश "cifsproto.h"
-#समावेश "cifs_debug.h"
-#समावेश "cifs_fs_sb.h"
-#समावेश "cifs_unicode.h"
-#समावेश "fscache.h"
-#समावेश "smb2proto.h"
+#include <linux/fs.h>
+#include <linux/stat.h>
+#include <linux/slab.h>
+#include <linux/pagemap.h>
+#include <asm/div64.h>
+#include "cifsfs.h"
+#include "cifspdu.h"
+#include "cifsglob.h"
+#include "cifsproto.h"
+#include "cifs_debug.h"
+#include "cifs_fs_sb.h"
+#include "cifs_unicode.h"
+#include "fscache.h"
+#include "smb2proto.h"
 
-पूर्णांक
-smb2_खोलो_file(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_खोलो_parms *oparms,
-	       __u32 *oplock, खाता_ALL_INFO *buf)
-अणु
-	पूर्णांक rc;
+int
+smb2_open_file(const unsigned int xid, struct cifs_open_parms *oparms,
+	       __u32 *oplock, FILE_ALL_INFO *buf)
+{
+	int rc;
 	__le16 *smb2_path;
-	काष्ठा smb2_file_all_info *smb2_data = शून्य;
+	struct smb2_file_all_info *smb2_data = NULL;
 	__u8 smb2_oplock;
-	काष्ठा cअगरs_fid *fid = oparms->fid;
-	काष्ठा network_resiliency_req nr_ioctl_req;
+	struct cifs_fid *fid = oparms->fid;
+	struct network_resiliency_req nr_ioctl_req;
 
-	smb2_path = cअगरs_convert_path_to_utf16(oparms->path, oparms->cअगरs_sb);
-	अगर (smb2_path == शून्य) अणु
+	smb2_path = cifs_convert_path_to_utf16(oparms->path, oparms->cifs_sb);
+	if (smb2_path == NULL) {
 		rc = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	smb2_data = kzalloc(माप(काष्ठा smb2_file_all_info) + PATH_MAX * 2,
+	smb2_data = kzalloc(sizeof(struct smb2_file_all_info) + PATH_MAX * 2,
 			    GFP_KERNEL);
-	अगर (smb2_data == शून्य) अणु
+	if (smb2_data == NULL) {
 		rc = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	oparms->desired_access |= खाता_READ_ATTRIBUTES;
+	oparms->desired_access |= FILE_READ_ATTRIBUTES;
 	smb2_oplock = SMB2_OPLOCK_LEVEL_BATCH;
 
-	rc = SMB2_खोलो(xid, oparms, smb2_path, &smb2_oplock, smb2_data, शून्य,
-		       शून्य, शून्य);
-	अगर (rc)
-		जाओ out;
+	rc = SMB2_open(xid, oparms, smb2_path, &smb2_oplock, smb2_data, NULL,
+		       NULL, NULL);
+	if (rc)
+		goto out;
 
 
-	अगर (oparms->tcon->use_resilient) अणु
-		/* शेष समयout is 0, servers pick शेष (120 seconds) */
+	if (oparms->tcon->use_resilient) {
+		/* default timeout is 0, servers pick default (120 seconds) */
 		nr_ioctl_req.Timeout =
-			cpu_to_le32(oparms->tcon->handle_समयout);
+			cpu_to_le32(oparms->tcon->handle_timeout);
 		nr_ioctl_req.Reserved = 0;
 		rc = SMB2_ioctl(xid, oparms->tcon, fid->persistent_fid,
-			fid->अस्थिर_fid, FSCTL_LMR_REQUEST_RESILIENCY,
+			fid->volatile_fid, FSCTL_LMR_REQUEST_RESILIENCY,
 			true /* is_fsctl */,
-			(अक्षर *)&nr_ioctl_req, माप(nr_ioctl_req),
-			CIFSMaxBufSize, शून्य, शून्य /* no वापस info */);
-		अगर (rc == -EOPNOTSUPP) अणु
-			cअगरs_dbg(VFS,
+			(char *)&nr_ioctl_req, sizeof(nr_ioctl_req),
+			CIFSMaxBufSize, NULL, NULL /* no return info */);
+		if (rc == -EOPNOTSUPP) {
+			cifs_dbg(VFS,
 			     "resiliency not supported by server, disabling\n");
 			oparms->tcon->use_resilient = false;
-		पूर्ण अन्यथा अगर (rc)
-			cअगरs_dbg(FYI, "error %d setting resiliency\n", rc);
+		} else if (rc)
+			cifs_dbg(FYI, "error %d setting resiliency\n", rc);
 
 		rc = 0;
-	पूर्ण
+	}
 
-	अगर (buf) अणु
-		/* अगर खोलो response करोes not have IndexNumber field - get it */
-		अगर (smb2_data->IndexNumber == 0) अणु
+	if (buf) {
+		/* if open response does not have IndexNumber field - get it */
+		if (smb2_data->IndexNumber == 0) {
 			rc = SMB2_get_srv_num(xid, oparms->tcon,
 				      fid->persistent_fid,
-				      fid->अस्थिर_fid,
+				      fid->volatile_fid,
 				      &smb2_data->IndexNumber);
-			अगर (rc) अणु
+			if (rc) {
 				/*
 				 * let get_inode_info disable server inode
 				 * numbers
 				 */
 				smb2_data->IndexNumber = 0;
 				rc = 0;
-			पूर्ण
-		पूर्ण
-		move_smb2_info_to_cअगरs(buf, smb2_data);
-	पूर्ण
+			}
+		}
+		move_smb2_info_to_cifs(buf, smb2_data);
+	}
 
 	*oplock = smb2_oplock;
 out:
-	kमुक्त(smb2_data);
-	kमुक्त(smb2_path);
-	वापस rc;
-पूर्ण
+	kfree(smb2_data);
+	kfree(smb2_path);
+	return rc;
+}
 
-पूर्णांक
-smb2_unlock_range(काष्ठा cअगरsFileInfo *cfile, काष्ठा file_lock *flock,
-		  स्थिर अचिन्हित पूर्णांक xid)
-अणु
-	पूर्णांक rc = 0, stored_rc;
-	अचिन्हित पूर्णांक max_num, num = 0, max_buf;
-	काष्ठा smb2_lock_element *buf, *cur;
-	काष्ठा cअगरs_tcon *tcon = tlink_tcon(cfile->tlink);
-	काष्ठा cअगरsInodeInfo *cinode = CIFS_I(d_inode(cfile->dentry));
-	काष्ठा cअगरsLockInfo *li, *पंचांगp;
+int
+smb2_unlock_range(struct cifsFileInfo *cfile, struct file_lock *flock,
+		  const unsigned int xid)
+{
+	int rc = 0, stored_rc;
+	unsigned int max_num, num = 0, max_buf;
+	struct smb2_lock_element *buf, *cur;
+	struct cifs_tcon *tcon = tlink_tcon(cfile->tlink);
+	struct cifsInodeInfo *cinode = CIFS_I(d_inode(cfile->dentry));
+	struct cifsLockInfo *li, *tmp;
 	__u64 length = 1 + flock->fl_end - flock->fl_start;
-	काष्ठा list_head पंचांगp_llist;
+	struct list_head tmp_llist;
 
-	INIT_LIST_HEAD(&पंचांगp_llist);
+	INIT_LIST_HEAD(&tmp_llist);
 
 	/*
-	 * Accessing maxBuf is racy with cअगरs_reconnect - need to store value
-	 * and check it beक्रमe using.
+	 * Accessing maxBuf is racy with cifs_reconnect - need to store value
+	 * and check it before using.
 	 */
 	max_buf = tcon->ses->server->maxBuf;
-	अगर (max_buf < माप(काष्ठा smb2_lock_element))
-		वापस -EINVAL;
+	if (max_buf < sizeof(struct smb2_lock_element))
+		return -EINVAL;
 
-	BUILD_BUG_ON(माप(काष्ठा smb2_lock_element) > PAGE_SIZE);
-	max_buf = min_t(अचिन्हित पूर्णांक, max_buf, PAGE_SIZE);
-	max_num = max_buf / माप(काष्ठा smb2_lock_element);
-	buf = kसुस्मृति(max_num, माप(काष्ठा smb2_lock_element), GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	BUILD_BUG_ON(sizeof(struct smb2_lock_element) > PAGE_SIZE);
+	max_buf = min_t(unsigned int, max_buf, PAGE_SIZE);
+	max_num = max_buf / sizeof(struct smb2_lock_element);
+	buf = kcalloc(max_num, sizeof(struct smb2_lock_element), GFP_KERNEL);
+	if (!buf)
+		return -ENOMEM;
 
 	cur = buf;
 
-	cअगरs_करोwn_ग_लिखो(&cinode->lock_sem);
-	list_क्रम_each_entry_safe(li, पंचांगp, &cfile->llist->locks, llist) अणु
-		अगर (flock->fl_start > li->offset ||
+	cifs_down_write(&cinode->lock_sem);
+	list_for_each_entry_safe(li, tmp, &cfile->llist->locks, llist) {
+		if (flock->fl_start > li->offset ||
 		    (flock->fl_start + length) <
 		    (li->offset + li->length))
-			जारी;
-		अगर (current->tgid != li->pid)
+			continue;
+		if (current->tgid != li->pid)
 			/*
-			 * flock and OFD lock are associated with an खोलो
+			 * flock and OFD lock are associated with an open
 			 * file description, not the process.
 			 */
-			अगर (!(flock->fl_flags & (FL_FLOCK | FL_OFDLCK)))
-				जारी;
-		अगर (cinode->can_cache_brlcks) अणु
+			if (!(flock->fl_flags & (FL_FLOCK | FL_OFDLCK)))
+				continue;
+		if (cinode->can_cache_brlcks) {
 			/*
-			 * We can cache brlock requests - simply हटाओ a lock
+			 * We can cache brlock requests - simply remove a lock
 			 * from the file's list.
 			 */
 			list_del(&li->llist);
-			cअगरs_del_lock_रुकोers(li);
-			kमुक्त(li);
-			जारी;
-		पूर्ण
+			cifs_del_lock_waiters(li);
+			kfree(li);
+			continue;
+		}
 		cur->Length = cpu_to_le64(li->length);
 		cur->Offset = cpu_to_le64(li->offset);
 		cur->Flags = cpu_to_le32(SMB2_LOCKFLAG_UNLOCK);
 		/*
 		 * We need to save a lock here to let us add it again to the
-		 * file's list अगर the unlock range request fails on the server.
+		 * file's list if the unlock range request fails on the server.
 		 */
-		list_move(&li->llist, &पंचांगp_llist);
-		अगर (++num == max_num) अणु
+		list_move(&li->llist, &tmp_llist);
+		if (++num == max_num) {
 			stored_rc = smb2_lockv(xid, tcon,
 					       cfile->fid.persistent_fid,
-					       cfile->fid.अस्थिर_fid,
+					       cfile->fid.volatile_fid,
 					       current->tgid, num, buf);
-			अगर (stored_rc) अणु
+			if (stored_rc) {
 				/*
 				 * We failed on the unlock range request - add
-				 * all locks from the पंचांगp list to the head of
+				 * all locks from the tmp list to the head of
 				 * the file's list.
 				 */
-				cअगरs_move_llist(&पंचांगp_llist,
+				cifs_move_llist(&tmp_llist,
 						&cfile->llist->locks);
 				rc = stored_rc;
-			पूर्ण अन्यथा
+			} else
 				/*
-				 * The unlock range request succeed - मुक्त the
-				 * पंचांगp list.
+				 * The unlock range request succeed - free the
+				 * tmp list.
 				 */
-				cअगरs_मुक्त_llist(&पंचांगp_llist);
+				cifs_free_llist(&tmp_llist);
 			cur = buf;
 			num = 0;
-		पूर्ण अन्यथा
+		} else
 			cur++;
-	पूर्ण
-	अगर (num) अणु
+	}
+	if (num) {
 		stored_rc = smb2_lockv(xid, tcon, cfile->fid.persistent_fid,
-				       cfile->fid.अस्थिर_fid, current->tgid,
+				       cfile->fid.volatile_fid, current->tgid,
 				       num, buf);
-		अगर (stored_rc) अणु
-			cअगरs_move_llist(&पंचांगp_llist, &cfile->llist->locks);
+		if (stored_rc) {
+			cifs_move_llist(&tmp_llist, &cfile->llist->locks);
 			rc = stored_rc;
-		पूर्ण अन्यथा
-			cअगरs_मुक्त_llist(&पंचांगp_llist);
-	पूर्ण
-	up_ग_लिखो(&cinode->lock_sem);
+		} else
+			cifs_free_llist(&tmp_llist);
+	}
+	up_write(&cinode->lock_sem);
 
-	kमुक्त(buf);
-	वापस rc;
-पूर्ण
+	kfree(buf);
+	return rc;
+}
 
-अटल पूर्णांक
-smb2_push_mand_fdlocks(काष्ठा cअगरs_fid_locks *fdlocks, स्थिर अचिन्हित पूर्णांक xid,
-		       काष्ठा smb2_lock_element *buf, अचिन्हित पूर्णांक max_num)
-अणु
-	पूर्णांक rc = 0, stored_rc;
-	काष्ठा cअगरsFileInfo *cfile = fdlocks->cfile;
-	काष्ठा cअगरsLockInfo *li;
-	अचिन्हित पूर्णांक num = 0;
-	काष्ठा smb2_lock_element *cur = buf;
-	काष्ठा cअगरs_tcon *tcon = tlink_tcon(cfile->tlink);
+static int
+smb2_push_mand_fdlocks(struct cifs_fid_locks *fdlocks, const unsigned int xid,
+		       struct smb2_lock_element *buf, unsigned int max_num)
+{
+	int rc = 0, stored_rc;
+	struct cifsFileInfo *cfile = fdlocks->cfile;
+	struct cifsLockInfo *li;
+	unsigned int num = 0;
+	struct smb2_lock_element *cur = buf;
+	struct cifs_tcon *tcon = tlink_tcon(cfile->tlink);
 
-	list_क्रम_each_entry(li, &fdlocks->locks, llist) अणु
+	list_for_each_entry(li, &fdlocks->locks, llist) {
 		cur->Length = cpu_to_le64(li->length);
 		cur->Offset = cpu_to_le64(li->offset);
 		cur->Flags = cpu_to_le32(li->type |
 						SMB2_LOCKFLAG_FAIL_IMMEDIATELY);
-		अगर (++num == max_num) अणु
+		if (++num == max_num) {
 			stored_rc = smb2_lockv(xid, tcon,
 					       cfile->fid.persistent_fid,
-					       cfile->fid.अस्थिर_fid,
+					       cfile->fid.volatile_fid,
 					       current->tgid, num, buf);
-			अगर (stored_rc)
+			if (stored_rc)
 				rc = stored_rc;
 			cur = buf;
 			num = 0;
-		पूर्ण अन्यथा
+		} else
 			cur++;
-	पूर्ण
-	अगर (num) अणु
+	}
+	if (num) {
 		stored_rc = smb2_lockv(xid, tcon,
 				       cfile->fid.persistent_fid,
-				       cfile->fid.अस्थिर_fid,
+				       cfile->fid.volatile_fid,
 				       current->tgid, num, buf);
-		अगर (stored_rc)
+		if (stored_rc)
 			rc = stored_rc;
-	पूर्ण
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-पूर्णांक
-smb2_push_mandatory_locks(काष्ठा cअगरsFileInfo *cfile)
-अणु
-	पूर्णांक rc = 0, stored_rc;
-	अचिन्हित पूर्णांक xid;
-	अचिन्हित पूर्णांक max_num, max_buf;
-	काष्ठा smb2_lock_element *buf;
-	काष्ठा cअगरsInodeInfo *cinode = CIFS_I(d_inode(cfile->dentry));
-	काष्ठा cअगरs_fid_locks *fdlocks;
+int
+smb2_push_mandatory_locks(struct cifsFileInfo *cfile)
+{
+	int rc = 0, stored_rc;
+	unsigned int xid;
+	unsigned int max_num, max_buf;
+	struct smb2_lock_element *buf;
+	struct cifsInodeInfo *cinode = CIFS_I(d_inode(cfile->dentry));
+	struct cifs_fid_locks *fdlocks;
 
 	xid = get_xid();
 
 	/*
-	 * Accessing maxBuf is racy with cअगरs_reconnect - need to store value
-	 * and check it क्रम zero beक्रमe using.
+	 * Accessing maxBuf is racy with cifs_reconnect - need to store value
+	 * and check it for zero before using.
 	 */
 	max_buf = tlink_tcon(cfile->tlink)->ses->server->maxBuf;
-	अगर (max_buf < माप(काष्ठा smb2_lock_element)) अणु
-		मुक्त_xid(xid);
-		वापस -EINVAL;
-	पूर्ण
+	if (max_buf < sizeof(struct smb2_lock_element)) {
+		free_xid(xid);
+		return -EINVAL;
+	}
 
-	BUILD_BUG_ON(माप(काष्ठा smb2_lock_element) > PAGE_SIZE);
-	max_buf = min_t(अचिन्हित पूर्णांक, max_buf, PAGE_SIZE);
-	max_num = max_buf / माप(काष्ठा smb2_lock_element);
-	buf = kसुस्मृति(max_num, माप(काष्ठा smb2_lock_element), GFP_KERNEL);
-	अगर (!buf) अणु
-		मुक्त_xid(xid);
-		वापस -ENOMEM;
-	पूर्ण
+	BUILD_BUG_ON(sizeof(struct smb2_lock_element) > PAGE_SIZE);
+	max_buf = min_t(unsigned int, max_buf, PAGE_SIZE);
+	max_num = max_buf / sizeof(struct smb2_lock_element);
+	buf = kcalloc(max_num, sizeof(struct smb2_lock_element), GFP_KERNEL);
+	if (!buf) {
+		free_xid(xid);
+		return -ENOMEM;
+	}
 
-	list_क्रम_each_entry(fdlocks, &cinode->llist, llist) अणु
+	list_for_each_entry(fdlocks, &cinode->llist, llist) {
 		stored_rc = smb2_push_mand_fdlocks(fdlocks, xid, buf, max_num);
-		अगर (stored_rc)
+		if (stored_rc)
 			rc = stored_rc;
-	पूर्ण
+	}
 
-	kमुक्त(buf);
-	मुक्त_xid(xid);
-	वापस rc;
-पूर्ण
+	kfree(buf);
+	free_xid(xid);
+	return rc;
+}

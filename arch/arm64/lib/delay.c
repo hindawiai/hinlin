@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Delay loops based on the OpenRISC implementation.
  *
@@ -8,53 +7,53 @@
  * Author: Will Deacon <will.deacon@arm.com>
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/समयx.h>
+#include <linux/delay.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/timex.h>
 
-#समावेश <घड़ीsource/arm_arch_समयr.h>
+#include <clocksource/arm_arch_timer.h>
 
-#घोषणा USECS_TO_CYCLES(समय_usecs)			\
-	xloops_to_cycles((समय_usecs) * 0x10C7UL)
+#define USECS_TO_CYCLES(time_usecs)			\
+	xloops_to_cycles((time_usecs) * 0x10C7UL)
 
-अटल अंतरभूत अचिन्हित दीर्घ xloops_to_cycles(अचिन्हित दीर्घ xloops)
-अणु
-	वापस (xloops * loops_per_jअगरfy * HZ) >> 32;
-पूर्ण
+static inline unsigned long xloops_to_cycles(unsigned long xloops)
+{
+	return (xloops * loops_per_jiffy * HZ) >> 32;
+}
 
-व्योम __delay(अचिन्हित दीर्घ cycles)
-अणु
+void __delay(unsigned long cycles)
+{
 	cycles_t start = get_cycles();
 
-	अगर (arch_समयr_evtstrm_available()) अणु
-		स्थिर cycles_t समयr_evt_period =
+	if (arch_timer_evtstrm_available()) {
+		const cycles_t timer_evt_period =
 			USECS_TO_CYCLES(ARCH_TIMER_EVT_STREAM_PERIOD_US);
 
-		जबतक ((get_cycles() - start + समयr_evt_period) < cycles)
+		while ((get_cycles() - start + timer_evt_period) < cycles)
 			wfe();
-	पूर्ण
+	}
 
-	जबतक ((get_cycles() - start) < cycles)
+	while ((get_cycles() - start) < cycles)
 		cpu_relax();
-पूर्ण
+}
 EXPORT_SYMBOL(__delay);
 
-अंतरभूत व्योम __स्थिर_udelay(अचिन्हित दीर्घ xloops)
-अणु
+inline void __const_udelay(unsigned long xloops)
+{
 	__delay(xloops_to_cycles(xloops));
-पूर्ण
-EXPORT_SYMBOL(__स्थिर_udelay);
+}
+EXPORT_SYMBOL(__const_udelay);
 
-व्योम __udelay(अचिन्हित दीर्घ usecs)
-अणु
-	__स्थिर_udelay(usecs * 0x10C7UL); /* 2**32 / 1000000 (rounded up) */
-पूर्ण
+void __udelay(unsigned long usecs)
+{
+	__const_udelay(usecs * 0x10C7UL); /* 2**32 / 1000000 (rounded up) */
+}
 EXPORT_SYMBOL(__udelay);
 
-व्योम __ndelay(अचिन्हित दीर्घ nsecs)
-अणु
-	__स्थिर_udelay(nsecs * 0x5UL); /* 2**32 / 1000000000 (rounded up) */
-पूर्ण
+void __ndelay(unsigned long nsecs)
+{
+	__const_udelay(nsecs * 0x5UL); /* 2**32 / 1000000000 (rounded up) */
+}
 EXPORT_SYMBOL(__ndelay);

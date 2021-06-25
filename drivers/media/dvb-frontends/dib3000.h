@@ -1,53 +1,52 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * खुला header file of the frontend drivers क्रम mobile DVB-T demodulators
+ * public header file of the frontend drivers for mobile DVB-T demodulators
  * DiBcom 3000M-B and DiBcom 3000P/M-C (http://www.dibcom.fr/)
  *
  * Copyright (C) 2004-5 Patrick Boettcher (patrick.boettcher@posteo.de)
  *
  * based on GPL code from DibCom, which has
  *
- * Copyright (C) 2004 Amaury Demol क्रम DiBcom
+ * Copyright (C) 2004 Amaury Demol for DiBcom
  *
  * Acknowledgements
  *
- *  Amaury Demol from DiBcom क्रम providing specs and driver
+ *  Amaury Demol from DiBcom for providing specs and driver
  *  sources, on which this driver (and the dvb-dibusb) are based.
  *
- * see Documentation/driver-api/media/drivers/dvb-usb.rst क्रम more inक्रमmation
+ * see Documentation/driver-api/media/drivers/dvb-usb.rst for more information
  */
 
-#अगर_अघोषित DIB3000_H
-#घोषणा DIB3000_H
+#ifndef DIB3000_H
+#define DIB3000_H
 
-#समावेश <linux/dvb/frontend.h>
+#include <linux/dvb/frontend.h>
 
-काष्ठा dib3000_config
-अणु
+struct dib3000_config
+{
 	/* the demodulator's i2c address */
 	u8 demod_address;
-पूर्ण;
+};
 
-काष्ठा dib_fe_xfer_ops
-अणु
-	/* pid and transfer handling is करोne in the demodulator */
-	पूर्णांक (*pid_parse)(काष्ठा dvb_frontend *fe, पूर्णांक onoff);
-	पूर्णांक (*fअगरo_ctrl)(काष्ठा dvb_frontend *fe, पूर्णांक onoff);
-	पूर्णांक (*pid_ctrl)(काष्ठा dvb_frontend *fe, पूर्णांक index, पूर्णांक pid, पूर्णांक onoff);
-	पूर्णांक (*tuner_pass_ctrl)(काष्ठा dvb_frontend *fe, पूर्णांक onoff, u8 pll_ctrl);
-पूर्ण;
+struct dib_fe_xfer_ops
+{
+	/* pid and transfer handling is done in the demodulator */
+	int (*pid_parse)(struct dvb_frontend *fe, int onoff);
+	int (*fifo_ctrl)(struct dvb_frontend *fe, int onoff);
+	int (*pid_ctrl)(struct dvb_frontend *fe, int index, int pid, int onoff);
+	int (*tuner_pass_ctrl)(struct dvb_frontend *fe, int onoff, u8 pll_ctrl);
+};
 
-#अगर IS_REACHABLE(CONFIG_DVB_DIB3000MB)
-बाह्य काष्ठा dvb_frontend* dib3000mb_attach(स्थिर काष्ठा dib3000_config* config,
-					     काष्ठा i2c_adapter* i2c, काष्ठा dib_fe_xfer_ops *xfer_ops);
-#अन्यथा
-अटल अंतरभूत काष्ठा dvb_frontend* dib3000mb_attach(स्थिर काष्ठा dib3000_config* config,
-					     काष्ठा i2c_adapter* i2c, काष्ठा dib_fe_xfer_ops *xfer_ops)
-अणु
-	prपूर्णांकk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
-	वापस शून्य;
-पूर्ण
-#पूर्ण_अगर // CONFIG_DVB_DIB3000MB
+#if IS_REACHABLE(CONFIG_DVB_DIB3000MB)
+extern struct dvb_frontend* dib3000mb_attach(const struct dib3000_config* config,
+					     struct i2c_adapter* i2c, struct dib_fe_xfer_ops *xfer_ops);
+#else
+static inline struct dvb_frontend* dib3000mb_attach(const struct dib3000_config* config,
+					     struct i2c_adapter* i2c, struct dib_fe_xfer_ops *xfer_ops)
+{
+	printk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
+	return NULL;
+}
+#endif // CONFIG_DVB_DIB3000MB
 
-#पूर्ण_अगर // DIB3000_H
+#endif // DIB3000_H

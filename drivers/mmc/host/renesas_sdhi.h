@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Renesas Mobile SDHI
  *
@@ -7,78 +6,78 @@
  * Copyright (C) 2017-19 Renesas Electronics Corporation
  */
 
-#अगर_अघोषित RENESAS_SDHI_H
-#घोषणा RENESAS_SDHI_H
+#ifndef RENESAS_SDHI_H
+#define RENESAS_SDHI_H
 
-#समावेश <linux/platक्रमm_device.h>
-#समावेश "tmio_mmc.h"
+#include <linux/platform_device.h>
+#include "tmio_mmc.h"
 
-काष्ठा renesas_sdhi_scc अणु
-	अचिन्हित दीर्घ clk_rate;	/* घड़ी rate क्रम SDR104 */
-	u32 tap;		/* sampling घड़ी position क्रम SDR104/HS400 (8 TAP) */
-	u32 tap_hs400_4tap;	/* sampling घड़ी position क्रम HS400 (4 TAP) */
-पूर्ण;
+struct renesas_sdhi_scc {
+	unsigned long clk_rate;	/* clock rate for SDR104 */
+	u32 tap;		/* sampling clock position for SDR104/HS400 (8 TAP) */
+	u32 tap_hs400_4tap;	/* sampling clock position for HS400 (4 TAP) */
+};
 
-काष्ठा renesas_sdhi_of_data अणु
-	अचिन्हित दीर्घ पंचांगio_flags;
-	u32	      पंचांगio_ocr_mask;
-	अचिन्हित दीर्घ capabilities;
-	अचिन्हित दीर्घ capabilities2;
-	क्रमागत dma_slave_buswidth dma_buswidth;
+struct renesas_sdhi_of_data {
+	unsigned long tmio_flags;
+	u32	      tmio_ocr_mask;
+	unsigned long capabilities;
+	unsigned long capabilities2;
+	enum dma_slave_buswidth dma_buswidth;
 	dma_addr_t dma_rx_offset;
-	अचिन्हित पूर्णांक bus_shअगरt;
-	पूर्णांक scc_offset;
-	काष्ठा renesas_sdhi_scc *taps;
-	पूर्णांक taps_num;
-	अचिन्हित पूर्णांक max_blk_count;
-	अचिन्हित लघु max_segs;
-पूर्ण;
+	unsigned int bus_shift;
+	int scc_offset;
+	struct renesas_sdhi_scc *taps;
+	int taps_num;
+	unsigned int max_blk_count;
+	unsigned short max_segs;
+};
 
-#घोषणा SDHI_CALIB_TABLE_MAX 32
+#define SDHI_CALIB_TABLE_MAX 32
 
-काष्ठा renesas_sdhi_quirks अणु
+struct renesas_sdhi_quirks {
 	bool hs400_disabled;
 	bool hs400_4taps;
 	u32 hs400_bad_taps;
-	स्थिर u8 (*hs400_calib_table)[SDHI_CALIB_TABLE_MAX];
-पूर्ण;
+	const u8 (*hs400_calib_table)[SDHI_CALIB_TABLE_MAX];
+};
 
-काष्ठा पंचांगio_mmc_dma अणु
-	क्रमागत dma_slave_buswidth dma_buswidth;
-	bool (*filter)(काष्ठा dma_chan *chan, व्योम *arg);
-	व्योम (*enable)(काष्ठा पंचांगio_mmc_host *host, bool enable);
-	काष्ठा completion	dma_dataend;
-	काष्ठा tasklet_काष्ठा	dma_complete;
-पूर्ण;
+struct tmio_mmc_dma {
+	enum dma_slave_buswidth dma_buswidth;
+	bool (*filter)(struct dma_chan *chan, void *arg);
+	void (*enable)(struct tmio_mmc_host *host, bool enable);
+	struct completion	dma_dataend;
+	struct tasklet_struct	dma_complete;
+};
 
-काष्ठा renesas_sdhi अणु
-	काष्ठा clk *clk;
-	काष्ठा clk *clk_cd;
-	काष्ठा पंचांगio_mmc_data mmc_data;
-	काष्ठा पंचांगio_mmc_dma dma_priv;
-	स्थिर काष्ठा renesas_sdhi_quirks *quirks;
-	काष्ठा pinctrl *pinctrl;
-	काष्ठा pinctrl_state *pins_शेष, *pins_uhs;
-	व्योम __iomem *scc_ctl;
+struct renesas_sdhi {
+	struct clk *clk;
+	struct clk *clk_cd;
+	struct tmio_mmc_data mmc_data;
+	struct tmio_mmc_dma dma_priv;
+	const struct renesas_sdhi_quirks *quirks;
+	struct pinctrl *pinctrl;
+	struct pinctrl_state *pins_default, *pins_uhs;
+	void __iomem *scc_ctl;
 	u32 scc_tappos;
 	u32 scc_tappos_hs400;
-	स्थिर u8 *adjust_hs400_calib_table;
+	const u8 *adjust_hs400_calib_table;
 	bool needs_adjust_hs400;
 
-	/* Tuning values: 1 क्रम success, 0 क्रम failure */
+	/* Tuning values: 1 for success, 0 for failure */
 	DECLARE_BITMAP(taps, BITS_PER_LONG);
-	/* Sampling data comparison: 1 क्रम match, 0 क्रम mismatch */
+	/* Sampling data comparison: 1 for match, 0 for mismatch */
 	DECLARE_BITMAP(smpcmp, BITS_PER_LONG);
-	अचिन्हित पूर्णांक tap_num;
-	अचिन्हित पूर्णांक tap_set;
+	unsigned int tap_num;
+	unsigned int tap_set;
 
-	काष्ठा reset_control *rstc;
-पूर्ण;
+	struct reset_control *rstc;
+};
 
-#घोषणा host_to_priv(host) \
-	container_of((host)->pdata, काष्ठा renesas_sdhi, mmc_data)
+#define host_to_priv(host) \
+	container_of((host)->pdata, struct renesas_sdhi, mmc_data)
 
-पूर्णांक renesas_sdhi_probe(काष्ठा platक्रमm_device *pdev,
-		       स्थिर काष्ठा पंचांगio_mmc_dma_ops *dma_ops);
-पूर्णांक renesas_sdhi_हटाओ(काष्ठा platक्रमm_device *pdev);
-#पूर्ण_अगर
+int renesas_sdhi_probe(struct platform_device *pdev,
+		       const struct tmio_mmc_dma_ops *dma_ops);
+int renesas_sdhi_remove(struct platform_device *pdev);
+#endif

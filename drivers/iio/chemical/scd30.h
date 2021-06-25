@@ -1,31 +1,30 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _SCD30_H
-#घोषणा _SCD30_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _SCD30_H
+#define _SCD30_H
 
-#समावेश <linux/completion.h>
-#समावेश <linux/device.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/regulator/consumer.h>
-#समावेश <linux/types.h>
+#include <linux/completion.h>
+#include <linux/device.h>
+#include <linux/mutex.h>
+#include <linux/pm.h>
+#include <linux/regulator/consumer.h>
+#include <linux/types.h>
 
-काष्ठा scd30_state;
+struct scd30_state;
 
-क्रमागत scd30_cmd अणु
+enum scd30_cmd {
 	/* start continuous measurement with pressure compensation */
 	CMD_START_MEAS,
 	/* stop continuous measurement */
 	CMD_STOP_MEAS,
-	/* set/get measurement पूर्णांकerval */
+	/* set/get measurement interval */
 	CMD_MEAS_INTERVAL,
-	/* check whether new measurement is पढ़ोy */
+	/* check whether new measurement is ready */
 	CMD_MEAS_READY,
 	/* get measurement */
 	CMD_READ_MEAS,
-	/* turn on/off स्वतःmatic self calibration */
+	/* turn on/off automatic self calibration */
 	CMD_ASC,
-	/* set/get क्रमced recalibration value */
+	/* set/get forced recalibration value */
 	CMD_FRC,
 	/* set/get temperature offset */
 	CMD_TEMP_OFFSET,
@@ -34,46 +33,46 @@
 	/* reset sensor */
 	CMD_RESET,
 	/*
-	 * Command क्रम altitude compensation was omitted पूर्णांकentionally because
+	 * Command for altitude compensation was omitted intentionally because
 	 * the same can be achieved by means of CMD_START_MEAS which takes
 	 * pressure above the sea level as an argument.
 	 */
-पूर्ण;
+};
 
-#घोषणा SCD30_MEAS_COUNT 3
+#define SCD30_MEAS_COUNT 3
 
-प्रकार पूर्णांक (*scd30_command_t)(काष्ठा scd30_state *state, क्रमागत scd30_cmd cmd, u16 arg,
-			       व्योम *response, पूर्णांक size);
+typedef int (*scd30_command_t)(struct scd30_state *state, enum scd30_cmd cmd, u16 arg,
+			       void *response, int size);
 
-काष्ठा scd30_state अणु
+struct scd30_state {
 	/* serialize access to the device */
-	काष्ठा mutex lock;
-	काष्ठा device *dev;
-	काष्ठा regulator *vdd;
-	काष्ठा completion meas_पढ़ोy;
+	struct mutex lock;
+	struct device *dev;
+	struct regulator *vdd;
+	struct completion meas_ready;
 	/*
-	 * priv poपूर्णांकer is solely क्रम serdev driver निजी data. We keep it
-	 * here because driver_data inside dev has been alपढ़ोy used क्रम iio and
-	 * काष्ठा serdev_device करोesn't have one.
+	 * priv pointer is solely for serdev driver private data. We keep it
+	 * here because driver_data inside dev has been already used for iio and
+	 * struct serdev_device doesn't have one.
 	 */
-	व्योम *priv;
-	पूर्णांक irq;
+	void *priv;
+	int irq;
 	/*
 	 * no way to retrieve current ambient pressure compensation value from
 	 * the sensor so keep one around
 	 */
 	u16 pressure_comp;
-	u16 meas_पूर्णांकerval;
-	पूर्णांक meas[SCD30_MEAS_COUNT];
+	u16 meas_interval;
+	int meas[SCD30_MEAS_COUNT];
 
 	scd30_command_t command;
-पूर्ण;
+};
 
-पूर्णांक scd30_suspend(काष्ठा device *dev);
-पूर्णांक scd30_resume(काष्ठा device *dev);
+int scd30_suspend(struct device *dev);
+int scd30_resume(struct device *dev);
 
-अटल __maybe_unused SIMPLE_DEV_PM_OPS(scd30_pm_ops, scd30_suspend, scd30_resume);
+static __maybe_unused SIMPLE_DEV_PM_OPS(scd30_pm_ops, scd30_suspend, scd30_resume);
 
-पूर्णांक scd30_probe(काष्ठा device *dev, पूर्णांक irq, स्थिर अक्षर *name, व्योम *priv, scd30_command_t command);
+int scd30_probe(struct device *dev, int irq, const char *name, void *priv, scd30_command_t command);
 
-#पूर्ण_अगर
+#endif

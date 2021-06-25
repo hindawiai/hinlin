@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * Driver क्रम Realtek PCI-Express card पढ़ोer
+ * Driver for Realtek PCI-Express card reader
  *
  * Copyright(c) 2009-2013 Realtek Semiconductor Corp. All rights reserved.
  *
@@ -10,11 +9,11 @@
  *   Micky Ching (micky_ching@realsil.com.cn)
  */
 
-#समावेश <linux/blkdev.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/sched.h>
+#include <linux/blkdev.h>
+#include <linux/kthread.h>
+#include <linux/sched.h>
 
-#समावेश "rtsx.h"
+#include "rtsx.h"
 
 /***********************************************************************
  * Scatter-gather transfer buffer access routines
@@ -22,83 +21,83 @@
 
 /*
  * Copy a buffer of length buflen to/from the srb's transfer buffer.
- * (Note: क्रम scatter-gather transfers (srb->use_sg > 0), srb->request_buffer
- * poपूर्णांकs to a list of s-g entries and we ignore srb->request_bufflen.
- * For non-scatter-gather transfers, srb->request_buffer poपूर्णांकs to the
+ * (Note: for scatter-gather transfers (srb->use_sg > 0), srb->request_buffer
+ * points to a list of s-g entries and we ignore srb->request_bufflen.
+ * For non-scatter-gather transfers, srb->request_buffer points to the
  * transfer buffer itself and srb->request_bufflen is the buffer's length.)
  * Update the *index and *offset variables so that the next copy will
  * pick up from where this one left off.
  */
 
-अचिन्हित पूर्णांक rtsx_stor_access_xfer_buf(अचिन्हित अक्षर *buffer,
-				       अचिन्हित पूर्णांक buflen,
-				       काष्ठा scsi_cmnd *srb,
-				       अचिन्हित पूर्णांक *index,
-				       अचिन्हित पूर्णांक *offset,
-				       क्रमागत xfer_buf_dir dir)
-अणु
-	अचिन्हित पूर्णांक cnt;
+unsigned int rtsx_stor_access_xfer_buf(unsigned char *buffer,
+				       unsigned int buflen,
+				       struct scsi_cmnd *srb,
+				       unsigned int *index,
+				       unsigned int *offset,
+				       enum xfer_buf_dir dir)
+{
+	unsigned int cnt;
 
 	/* If not using scatter-gather, just transfer the data directly. */
-	अगर (scsi_sg_count(srb) == 0) अणु
-		अचिन्हित अक्षर *sgbuffer;
+	if (scsi_sg_count(srb) == 0) {
+		unsigned char *sgbuffer;
 
-		अगर (*offset >= scsi_bufflen(srb))
-			वापस 0;
+		if (*offset >= scsi_bufflen(srb))
+			return 0;
 		cnt = min(buflen, scsi_bufflen(srb) - *offset);
 
-		sgbuffer = (अचिन्हित अक्षर *)scsi_sglist(srb) + *offset;
+		sgbuffer = (unsigned char *)scsi_sglist(srb) + *offset;
 
-		अगर (dir == TO_XFER_BUF)
-			स_नकल(sgbuffer, buffer, cnt);
-		अन्यथा
-			स_नकल(buffer, sgbuffer, cnt);
+		if (dir == TO_XFER_BUF)
+			memcpy(sgbuffer, buffer, cnt);
+		else
+			memcpy(buffer, sgbuffer, cnt);
 		*offset += cnt;
 
 	/*
 	 * Using scatter-gather.  We have to go through the list one entry
-	 * at a समय.  Each s-g entry contains some number of pages, and
+	 * at a time.  Each s-g entry contains some number of pages, and
 	 * each page has to be kmap()'ed separately.
 	 */
-	पूर्ण अन्यथा अणु
-		काष्ठा scatterlist *sg =
-				(काष्ठा scatterlist *)scsi_sglist(srb)
+	} else {
+		struct scatterlist *sg =
+				(struct scatterlist *)scsi_sglist(srb)
 				+ *index;
 
 		/*
 		 * This loop handles a single s-g list entry, which may
-		 * include multiple pages.  Find the initial page काष्ठाure
+		 * include multiple pages.  Find the initial page structure
 		 * and the starting offset within the page, and update
-		 * the *offset and *index values क्रम the next loop.
+		 * the *offset and *index values for the next loop.
 		 */
 		cnt = 0;
-		जबतक (cnt < buflen && *index < scsi_sg_count(srb)) अणु
-			काष्ठा page *page = sg_page(sg) +
+		while (cnt < buflen && *index < scsi_sg_count(srb)) {
+			struct page *page = sg_page(sg) +
 					((sg->offset + *offset) >> PAGE_SHIFT);
-			अचिन्हित पूर्णांक poff = (sg->offset + *offset) &
+			unsigned int poff = (sg->offset + *offset) &
 					    (PAGE_SIZE - 1);
-			अचिन्हित पूर्णांक sglen = sg->length - *offset;
+			unsigned int sglen = sg->length - *offset;
 
-			अगर (sglen > buflen - cnt) अणु
+			if (sglen > buflen - cnt) {
 				/* Transfer ends within this s-g entry */
 				sglen = buflen - cnt;
 				*offset += sglen;
-			पूर्ण अन्यथा अणु
-				/* Transfer जारीs to next s-g entry */
+			} else {
+				/* Transfer continues to next s-g entry */
 				*offset = 0;
 				++*index;
 				++sg;
-			पूर्ण
+			}
 
-			जबतक (sglen > 0) अणु
-				अचिन्हित पूर्णांक plen = min(sglen, (अचिन्हित पूर्णांक)
+			while (sglen > 0) {
+				unsigned int plen = min(sglen, (unsigned int)
 						PAGE_SIZE - poff);
-				अचिन्हित अक्षर *ptr = kmap(page);
+				unsigned char *ptr = kmap(page);
 
-				अगर (dir == TO_XFER_BUF)
-					स_नकल(ptr + poff, buffer + cnt, plen);
-				अन्यथा
-					स_नकल(buffer + cnt, ptr + poff, plen);
+				if (dir == TO_XFER_BUF)
+					memcpy(ptr + poff, buffer + cnt, plen);
+				else
+					memcpy(buffer + cnt, ptr + poff, plen);
 				kunmap(page);
 
 				/* Start at the beginning of the next page */
@@ -106,39 +105,39 @@
 				++page;
 				cnt += plen;
 				sglen -= plen;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 	/* Return the amount actually transferred */
-	वापस cnt;
-पूर्ण
+	return cnt;
+}
 
 /*
- * Store the contents of buffer पूर्णांकo srb's transfer buffer and set the
+ * Store the contents of buffer into srb's transfer buffer and set the
  * SCSI residue.
  */
-व्योम rtsx_stor_set_xfer_buf(अचिन्हित अक्षर *buffer,
-			    अचिन्हित पूर्णांक buflen, काष्ठा scsi_cmnd *srb)
-अणु
-	अचिन्हित पूर्णांक index = 0, offset = 0;
+void rtsx_stor_set_xfer_buf(unsigned char *buffer,
+			    unsigned int buflen, struct scsi_cmnd *srb)
+{
+	unsigned int index = 0, offset = 0;
 
 	rtsx_stor_access_xfer_buf(buffer, buflen, srb, &index, &offset,
 				  TO_XFER_BUF);
-	अगर (buflen < scsi_bufflen(srb))
+	if (buflen < scsi_bufflen(srb))
 		scsi_set_resid(srb, scsi_bufflen(srb) - buflen);
-पूर्ण
+}
 
-व्योम rtsx_stor_get_xfer_buf(अचिन्हित अक्षर *buffer,
-			    अचिन्हित पूर्णांक buflen, काष्ठा scsi_cmnd *srb)
-अणु
-	अचिन्हित पूर्णांक index = 0, offset = 0;
+void rtsx_stor_get_xfer_buf(unsigned char *buffer,
+			    unsigned int buflen, struct scsi_cmnd *srb)
+{
+	unsigned int index = 0, offset = 0;
 
 	rtsx_stor_access_xfer_buf(buffer, buflen, srb, &index, &offset,
 				  FROM_XFER_BUF);
-	अगर (buflen < scsi_bufflen(srb))
+	if (buflen < scsi_bufflen(srb))
 		scsi_set_resid(srb, scsi_bufflen(srb) - buflen);
-पूर्ण
+}
 
 /***********************************************************************
  * Transport routines
@@ -149,53 +148,53 @@
  *
  * This is used to send the message to the device and receive the response.
  */
-व्योम rtsx_invoke_transport(काष्ठा scsi_cmnd *srb, काष्ठा rtsx_chip *chip)
-अणु
-	पूर्णांक result;
+void rtsx_invoke_transport(struct scsi_cmnd *srb, struct rtsx_chip *chip)
+{
+	int result;
 
 	result = rtsx_scsi_handler(srb, chip);
 
 	/*
-	 * अगर the command माला_लो पातed by the higher layers, we need to
-	 * लघु-circuit all other processing.
+	 * if the command gets aborted by the higher layers, we need to
+	 * short-circuit all other processing.
 	 */
-	अगर (rtsx_chk_stat(chip, RTSX_STAT_ABORT)) अणु
+	if (rtsx_chk_stat(chip, RTSX_STAT_ABORT)) {
 		dev_dbg(rtsx_dev(chip), "-- command was aborted\n");
 		srb->result = DID_ABORT << 16;
-		जाओ handle_errors;
-	पूर्ण
+		goto handle_errors;
+	}
 
-	/* अगर there is a transport error, reset and करोn't स्वतः-sense */
-	अगर (result == TRANSPORT_ERROR) अणु
+	/* if there is a transport error, reset and don't auto-sense */
+	if (result == TRANSPORT_ERROR) {
 		dev_dbg(rtsx_dev(chip), "-- transport indicates error, resetting\n");
 		srb->result = DID_ERROR << 16;
-		जाओ handle_errors;
-	पूर्ण
+		goto handle_errors;
+	}
 
 	srb->result = SAM_STAT_GOOD;
 
 	/*
-	 * If we have a failure, we're going to करो a REQUEST_SENSE
-	 * स्वतःmatically.  Note that we dअगरferentiate between a command
+	 * If we have a failure, we're going to do a REQUEST_SENSE
+	 * automatically.  Note that we differentiate between a command
 	 * "failure" and an "error" in the transport mechanism.
 	 */
-	अगर (result == TRANSPORT_FAILED) अणु
+	if (result == TRANSPORT_FAILED) {
 		/* set the result so the higher layers expect this data */
 		srb->result = SAM_STAT_CHECK_CONDITION;
-		स_नकल(srb->sense_buffer,
-		       (अचिन्हित अक्षर *)&chip->sense_buffer[SCSI_LUN(srb)],
-		       माप(काष्ठा sense_data_t));
-	पूर्ण
+		memcpy(srb->sense_buffer,
+		       (unsigned char *)&chip->sense_buffer[SCSI_LUN(srb)],
+		       sizeof(struct sense_data_t));
+	}
 
-	वापस;
+	return;
 
 handle_errors:
-	वापस;
-पूर्ण
+	return;
+}
 
-व्योम rtsx_add_cmd(काष्ठा rtsx_chip *chip,
+void rtsx_add_cmd(struct rtsx_chip *chip,
 		  u8 cmd_type, u16 reg_addr, u8 mask, u8 data)
-अणु
+{
 	__le32 *cb = (__le32 *)(chip->host_cmds_ptr);
 	u32 val = 0;
 
@@ -205,151 +204,151 @@ handle_errors:
 	val |= (u32)data;
 
 	spin_lock_irq(&chip->rtsx->reg_lock);
-	अगर (chip->ci < (HOST_CMDS_BUF_LEN / 4))
+	if (chip->ci < (HOST_CMDS_BUF_LEN / 4))
 		cb[(chip->ci)++] = cpu_to_le32(val);
 
 	spin_unlock_irq(&chip->rtsx->reg_lock);
-पूर्ण
+}
 
-व्योम rtsx_send_cmd_no_रुको(काष्ठा rtsx_chip *chip)
-अणु
+void rtsx_send_cmd_no_wait(struct rtsx_chip *chip)
+{
 	u32 val = BIT(31);
 
-	rtsx_ग_लिखोl(chip, RTSX_HCBAR, chip->host_cmds_addr);
+	rtsx_writel(chip, RTSX_HCBAR, chip->host_cmds_addr);
 
 	val |= (u32)(chip->ci * 4) & 0x00FFFFFF;
 	/* Hardware Auto Response */
 	val |= 0x40000000;
-	rtsx_ग_लिखोl(chip, RTSX_HCBCTLR, val);
-पूर्ण
+	rtsx_writel(chip, RTSX_HCBCTLR, val);
+}
 
-पूर्णांक rtsx_send_cmd(काष्ठा rtsx_chip *chip, u8 card, पूर्णांक समयout)
-अणु
-	काष्ठा rtsx_dev *rtsx = chip->rtsx;
-	काष्ठा completion trans_करोne;
+int rtsx_send_cmd(struct rtsx_chip *chip, u8 card, int timeout)
+{
+	struct rtsx_dev *rtsx = chip->rtsx;
+	struct completion trans_done;
 	u32 val = BIT(31);
-	दीर्घ समयleft;
-	पूर्णांक err = 0;
+	long timeleft;
+	int err = 0;
 
-	अगर (card == SD_CARD)
+	if (card == SD_CARD)
 		rtsx->check_card_cd = SD_EXIST;
-	अन्यथा अगर (card == MS_CARD)
+	else if (card == MS_CARD)
 		rtsx->check_card_cd = MS_EXIST;
-	अन्यथा अगर (card == XD_CARD)
+	else if (card == XD_CARD)
 		rtsx->check_card_cd = XD_EXIST;
-	अन्यथा
+	else
 		rtsx->check_card_cd = 0;
 
 	spin_lock_irq(&rtsx->reg_lock);
 
-	/* set up data काष्ठाures क्रम the wakeup प्रणाली */
-	rtsx->करोne = &trans_करोne;
+	/* set up data structures for the wakeup system */
+	rtsx->done = &trans_done;
 	rtsx->trans_result = TRANS_NOT_READY;
-	init_completion(&trans_करोne);
+	init_completion(&trans_done);
 	rtsx->trans_state = STATE_TRANS_CMD;
 
-	rtsx_ग_लिखोl(chip, RTSX_HCBAR, chip->host_cmds_addr);
+	rtsx_writel(chip, RTSX_HCBAR, chip->host_cmds_addr);
 
 	val |= (u32)(chip->ci * 4) & 0x00FFFFFF;
 	/* Hardware Auto Response */
 	val |= 0x40000000;
-	rtsx_ग_लिखोl(chip, RTSX_HCBCTLR, val);
+	rtsx_writel(chip, RTSX_HCBCTLR, val);
 
 	spin_unlock_irq(&rtsx->reg_lock);
 
-	/* Wait क्रम TRANS_OK_INT */
-	समयleft = रुको_क्रम_completion_पूर्णांकerruptible_समयout(&trans_करोne,
-							     msecs_to_jअगरfies(समयout));
-	अगर (समयleft <= 0) अणु
+	/* Wait for TRANS_OK_INT */
+	timeleft = wait_for_completion_interruptible_timeout(&trans_done,
+							     msecs_to_jiffies(timeout));
+	if (timeleft <= 0) {
 		dev_dbg(rtsx_dev(chip), "chip->int_reg = 0x%x\n",
-			chip->पूर्णांक_reg);
+			chip->int_reg);
 		err = -ETIMEDOUT;
-		जाओ finish_send_cmd;
-	पूर्ण
+		goto finish_send_cmd;
+	}
 
 	spin_lock_irq(&rtsx->reg_lock);
-	अगर (rtsx->trans_result == TRANS_RESULT_FAIL)
+	if (rtsx->trans_result == TRANS_RESULT_FAIL)
 		err = -EIO;
-	अन्यथा अगर (rtsx->trans_result == TRANS_RESULT_OK)
+	else if (rtsx->trans_result == TRANS_RESULT_OK)
 		err = 0;
 
 	spin_unlock_irq(&rtsx->reg_lock);
 
 finish_send_cmd:
-	rtsx->करोne = शून्य;
+	rtsx->done = NULL;
 	rtsx->trans_state = STATE_TRANS_NONE;
 
-	अगर (err < 0)
+	if (err < 0)
 		rtsx_stop_cmd(chip, card);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल अंतरभूत व्योम rtsx_add_sg_tbl(काष्ठा rtsx_chip *chip,
+static inline void rtsx_add_sg_tbl(struct rtsx_chip *chip,
 				   u32 addr, u32 len, u8 option)
-अणु
+{
 	__le64 *sgb = (__le64 *)(chip->host_sg_tbl_ptr);
 	u64 val = 0;
 	u32 temp_len = 0;
 	u8  temp_opt = 0;
 
-	करो अणु
-		अगर (len > 0x80000) अणु
+	do {
+		if (len > 0x80000) {
 			temp_len = 0x80000;
 			temp_opt = option & (~RTSX_SG_END);
-		पूर्ण अन्यथा अणु
+		} else {
 			temp_len = len;
 			temp_opt = option;
-		पूर्ण
+		}
 		val = ((u64)addr << 32) | ((u64)temp_len << 12) | temp_opt;
 
-		अगर (chip->sgi < (HOST_SG_TBL_BUF_LEN / 8))
+		if (chip->sgi < (HOST_SG_TBL_BUF_LEN / 8))
 			sgb[(chip->sgi)++] = cpu_to_le64(val);
 
 		len -= temp_len;
 		addr += temp_len;
-	पूर्ण जबतक (len);
-पूर्ण
+	} while (len);
+}
 
-अटल पूर्णांक rtsx_transfer_sglist_adma_partial(काष्ठा rtsx_chip *chip, u8 card,
-					     काष्ठा scatterlist *sg, पूर्णांक num_sg,
-					     अचिन्हित पूर्णांक *index,
-					     अचिन्हित पूर्णांक *offset, पूर्णांक size,
-					     क्रमागत dma_data_direction dma_dir,
-					     पूर्णांक समयout)
-अणु
-	काष्ठा rtsx_dev *rtsx = chip->rtsx;
-	काष्ठा completion trans_करोne;
+static int rtsx_transfer_sglist_adma_partial(struct rtsx_chip *chip, u8 card,
+					     struct scatterlist *sg, int num_sg,
+					     unsigned int *index,
+					     unsigned int *offset, int size,
+					     enum dma_data_direction dma_dir,
+					     int timeout)
+{
+	struct rtsx_dev *rtsx = chip->rtsx;
+	struct completion trans_done;
 	u8 dir;
-	पूर्णांक sg_cnt, i, resid;
-	पूर्णांक err = 0;
-	दीर्घ समयleft;
-	काष्ठा scatterlist *sg_ptr;
+	int sg_cnt, i, resid;
+	int err = 0;
+	long timeleft;
+	struct scatterlist *sg_ptr;
 	u32 val = TRIG_DMA;
 
-	अगर (!sg || (num_sg <= 0) || !offset || !index)
-		वापस -EIO;
+	if (!sg || (num_sg <= 0) || !offset || !index)
+		return -EIO;
 
-	अगर (dma_dir == DMA_TO_DEVICE)
+	if (dma_dir == DMA_TO_DEVICE)
 		dir = HOST_TO_DEVICE;
-	अन्यथा अगर (dma_dir == DMA_FROM_DEVICE)
+	else if (dma_dir == DMA_FROM_DEVICE)
 		dir = DEVICE_TO_HOST;
-	अन्यथा
-		वापस -ENXIO;
+	else
+		return -ENXIO;
 
-	अगर (card == SD_CARD)
+	if (card == SD_CARD)
 		rtsx->check_card_cd = SD_EXIST;
-	अन्यथा अगर (card == MS_CARD)
+	else if (card == MS_CARD)
 		rtsx->check_card_cd = MS_EXIST;
-	अन्यथा अगर (card == XD_CARD)
+	else if (card == XD_CARD)
 		rtsx->check_card_cd = XD_EXIST;
-	अन्यथा
+	else
 		rtsx->check_card_cd = 0;
 
 	spin_lock_irq(&rtsx->reg_lock);
 
-	/* set up data काष्ठाures क्रम the wakeup प्रणाली */
-	rtsx->करोne = &trans_करोne;
+	/* set up data structures for the wakeup system */
+	rtsx->done = &trans_done;
 
 	rtsx->trans_state = STATE_TRANS_SG;
 	rtsx->trans_result = TRANS_NOT_READY;
@@ -362,49 +361,49 @@ finish_send_cmd:
 	sg_ptr = sg;
 	chip->sgi = 0;
 	/*
-	 * Usually the next entry will be @sg@ + 1, but अगर this sg element
+	 * Usually the next entry will be @sg@ + 1, but if this sg element
 	 * is part of a chained scatterlist, it could jump to the start of
 	 * a new scatterlist array. So here we use sg_next to move to
 	 * the proper sg.
 	 */
-	क्रम (i = 0; i < *index; i++)
+	for (i = 0; i < *index; i++)
 		sg_ptr = sg_next(sg_ptr);
-	क्रम (i = *index; i < sg_cnt; i++) अणु
+	for (i = *index; i < sg_cnt; i++) {
 		dma_addr_t addr;
-		अचिन्हित पूर्णांक len;
+		unsigned int len;
 		u8 option;
 
 		addr = sg_dma_address(sg_ptr);
 		len = sg_dma_len(sg_ptr);
 
 		dev_dbg(rtsx_dev(chip), "DMA addr: 0x%x, Len: 0x%x\n",
-			(अचिन्हित पूर्णांक)addr, len);
+			(unsigned int)addr, len);
 		dev_dbg(rtsx_dev(chip), "*index = %d, *offset = %d\n",
 			*index, *offset);
 
 		addr += *offset;
 
-		अगर ((len - *offset) > resid) अणु
+		if ((len - *offset) > resid) {
 			*offset += resid;
 			len = resid;
 			resid = 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			resid -= (len - *offset);
 			len -= *offset;
 			*offset = 0;
 			*index = *index + 1;
-		पूर्ण
+		}
 		option = RTSX_SG_VALID | RTSX_SG_TRANS_DATA;
-		अगर ((i == sg_cnt - 1) || !resid)
+		if ((i == sg_cnt - 1) || !resid)
 			option |= RTSX_SG_END;
 
 		rtsx_add_sg_tbl(chip, (u32)addr, (u32)len, option);
 
-		अगर (!resid)
-			अवरोध;
+		if (!resid)
+			break;
 
 		sg_ptr = sg_next(sg_ptr);
-	पूर्ण
+	}
 
 	dev_dbg(rtsx_dev(chip), "SG table count = %d\n", chip->sgi);
 
@@ -413,106 +412,106 @@ finish_send_cmd:
 
 	spin_lock_irq(&rtsx->reg_lock);
 
-	init_completion(&trans_करोne);
+	init_completion(&trans_done);
 
-	rtsx_ग_लिखोl(chip, RTSX_HDBAR, chip->host_sg_tbl_addr);
-	rtsx_ग_लिखोl(chip, RTSX_HDBCTLR, val);
+	rtsx_writel(chip, RTSX_HDBAR, chip->host_sg_tbl_addr);
+	rtsx_writel(chip, RTSX_HDBCTLR, val);
 
 	spin_unlock_irq(&rtsx->reg_lock);
 
-	समयleft = रुको_क्रम_completion_पूर्णांकerruptible_समयout(&trans_करोne,
-							     msecs_to_jअगरfies(समयout));
-	अगर (समयleft <= 0) अणु
+	timeleft = wait_for_completion_interruptible_timeout(&trans_done,
+							     msecs_to_jiffies(timeout));
+	if (timeleft <= 0) {
 		dev_dbg(rtsx_dev(chip), "Timeout (%s %d)\n",
 			__func__, __LINE__);
 		dev_dbg(rtsx_dev(chip), "chip->int_reg = 0x%x\n",
-			chip->पूर्णांक_reg);
+			chip->int_reg);
 		err = -ETIMEDOUT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	spin_lock_irq(&rtsx->reg_lock);
-	अगर (rtsx->trans_result == TRANS_RESULT_FAIL) अणु
+	if (rtsx->trans_result == TRANS_RESULT_FAIL) {
 		err = -EIO;
 		spin_unlock_irq(&rtsx->reg_lock);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	spin_unlock_irq(&rtsx->reg_lock);
 
-	/* Wait क्रम TRANS_OK_INT */
+	/* Wait for TRANS_OK_INT */
 	spin_lock_irq(&rtsx->reg_lock);
-	अगर (rtsx->trans_result == TRANS_NOT_READY) अणु
-		init_completion(&trans_करोne);
+	if (rtsx->trans_result == TRANS_NOT_READY) {
+		init_completion(&trans_done);
 		spin_unlock_irq(&rtsx->reg_lock);
-		समयleft = रुको_क्रम_completion_पूर्णांकerruptible_समयout(&trans_करोne,
-								     msecs_to_jअगरfies(समयout));
-		अगर (समयleft <= 0) अणु
+		timeleft = wait_for_completion_interruptible_timeout(&trans_done,
+								     msecs_to_jiffies(timeout));
+		if (timeleft <= 0) {
 			dev_dbg(rtsx_dev(chip), "Timeout (%s %d)\n",
 				__func__, __LINE__);
 			dev_dbg(rtsx_dev(chip), "chip->int_reg = 0x%x\n",
-				chip->पूर्णांक_reg);
+				chip->int_reg);
 			err = -ETIMEDOUT;
-			जाओ out;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			goto out;
+		}
+	} else {
 		spin_unlock_irq(&rtsx->reg_lock);
-	पूर्ण
+	}
 
 	spin_lock_irq(&rtsx->reg_lock);
-	अगर (rtsx->trans_result == TRANS_RESULT_FAIL)
+	if (rtsx->trans_result == TRANS_RESULT_FAIL)
 		err = -EIO;
-	अन्यथा अगर (rtsx->trans_result == TRANS_RESULT_OK)
+	else if (rtsx->trans_result == TRANS_RESULT_OK)
 		err = 0;
 
 	spin_unlock_irq(&rtsx->reg_lock);
 
 out:
-	rtsx->करोne = शून्य;
+	rtsx->done = NULL;
 	rtsx->trans_state = STATE_TRANS_NONE;
 	dma_unmap_sg(&rtsx->pci->dev, sg, num_sg, dma_dir);
 
-	अगर (err < 0)
+	if (err < 0)
 		rtsx_stop_cmd(chip, card);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक rtsx_transfer_sglist_adma(काष्ठा rtsx_chip *chip, u8 card,
-				     काष्ठा scatterlist *sg, पूर्णांक num_sg,
-				     क्रमागत dma_data_direction dma_dir,
-				     पूर्णांक समयout)
-अणु
-	काष्ठा rtsx_dev *rtsx = chip->rtsx;
-	काष्ठा completion trans_करोne;
+static int rtsx_transfer_sglist_adma(struct rtsx_chip *chip, u8 card,
+				     struct scatterlist *sg, int num_sg,
+				     enum dma_data_direction dma_dir,
+				     int timeout)
+{
+	struct rtsx_dev *rtsx = chip->rtsx;
+	struct completion trans_done;
 	u8 dir;
-	पूर्णांक buf_cnt, i;
-	पूर्णांक err = 0;
-	दीर्घ समयleft;
-	काष्ठा scatterlist *sg_ptr;
+	int buf_cnt, i;
+	int err = 0;
+	long timeleft;
+	struct scatterlist *sg_ptr;
 
-	अगर (!sg || (num_sg <= 0))
-		वापस -EIO;
+	if (!sg || (num_sg <= 0))
+		return -EIO;
 
-	अगर (dma_dir == DMA_TO_DEVICE)
+	if (dma_dir == DMA_TO_DEVICE)
 		dir = HOST_TO_DEVICE;
-	अन्यथा अगर (dma_dir == DMA_FROM_DEVICE)
+	else if (dma_dir == DMA_FROM_DEVICE)
 		dir = DEVICE_TO_HOST;
-	अन्यथा
-		वापस -ENXIO;
+	else
+		return -ENXIO;
 
-	अगर (card == SD_CARD)
+	if (card == SD_CARD)
 		rtsx->check_card_cd = SD_EXIST;
-	अन्यथा अगर (card == MS_CARD)
+	else if (card == MS_CARD)
 		rtsx->check_card_cd = MS_EXIST;
-	अन्यथा अगर (card == XD_CARD)
+	else if (card == XD_CARD)
 		rtsx->check_card_cd = XD_EXIST;
-	अन्यथा
+	else
 		rtsx->check_card_cd = 0;
 
 	spin_lock_irq(&rtsx->reg_lock);
 
-	/* set up data काष्ठाures क्रम the wakeup प्रणाली */
-	rtsx->करोne = &trans_करोne;
+	/* set up data structures for the wakeup system */
+	rtsx->done = &trans_done;
 
 	rtsx->trans_state = STATE_TRANS_SG;
 	rtsx->trans_result = TRANS_NOT_READY;
@@ -523,32 +522,32 @@ out:
 
 	sg_ptr = sg;
 
-	क्रम (i = 0; i <= buf_cnt / (HOST_SG_TBL_BUF_LEN / 8); i++) अणु
+	for (i = 0; i <= buf_cnt / (HOST_SG_TBL_BUF_LEN / 8); i++) {
 		u32 val = TRIG_DMA;
-		पूर्णांक sg_cnt, j;
+		int sg_cnt, j;
 
-		अगर (i == buf_cnt / (HOST_SG_TBL_BUF_LEN / 8))
+		if (i == buf_cnt / (HOST_SG_TBL_BUF_LEN / 8))
 			sg_cnt = buf_cnt % (HOST_SG_TBL_BUF_LEN / 8);
-		अन्यथा
+		else
 			sg_cnt = HOST_SG_TBL_BUF_LEN / 8;
 
 		chip->sgi = 0;
-		क्रम (j = 0; j < sg_cnt; j++) अणु
+		for (j = 0; j < sg_cnt; j++) {
 			dma_addr_t addr = sg_dma_address(sg_ptr);
-			अचिन्हित पूर्णांक len = sg_dma_len(sg_ptr);
+			unsigned int len = sg_dma_len(sg_ptr);
 			u8 option;
 
 			dev_dbg(rtsx_dev(chip), "DMA addr: 0x%x, Len: 0x%x\n",
-				(अचिन्हित पूर्णांक)addr, len);
+				(unsigned int)addr, len);
 
 			option = RTSX_SG_VALID | RTSX_SG_TRANS_DATA;
-			अगर (j == (sg_cnt - 1))
+			if (j == (sg_cnt - 1))
 				option |= RTSX_SG_END;
 
 			rtsx_add_sg_tbl(chip, (u32)addr, (u32)len, option);
 
 			sg_ptr = sg_next(sg_ptr);
-		पूर्ण
+		}
 
 		dev_dbg(rtsx_dev(chip), "SG table count = %d\n", chip->sgi);
 
@@ -557,106 +556,106 @@ out:
 
 		spin_lock_irq(&rtsx->reg_lock);
 
-		init_completion(&trans_करोne);
+		init_completion(&trans_done);
 
-		rtsx_ग_लिखोl(chip, RTSX_HDBAR, chip->host_sg_tbl_addr);
-		rtsx_ग_लिखोl(chip, RTSX_HDBCTLR, val);
+		rtsx_writel(chip, RTSX_HDBAR, chip->host_sg_tbl_addr);
+		rtsx_writel(chip, RTSX_HDBCTLR, val);
 
 		spin_unlock_irq(&rtsx->reg_lock);
 
-		समयleft = रुको_क्रम_completion_पूर्णांकerruptible_समयout(&trans_करोne,
-								     msecs_to_jअगरfies(समयout));
-		अगर (समयleft <= 0) अणु
+		timeleft = wait_for_completion_interruptible_timeout(&trans_done,
+								     msecs_to_jiffies(timeout));
+		if (timeleft <= 0) {
 			dev_dbg(rtsx_dev(chip), "Timeout (%s %d)\n",
 				__func__, __LINE__);
 			dev_dbg(rtsx_dev(chip), "chip->int_reg = 0x%x\n",
-				chip->पूर्णांक_reg);
+				chip->int_reg);
 			err = -ETIMEDOUT;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		spin_lock_irq(&rtsx->reg_lock);
-		अगर (rtsx->trans_result == TRANS_RESULT_FAIL) अणु
+		if (rtsx->trans_result == TRANS_RESULT_FAIL) {
 			err = -EIO;
 			spin_unlock_irq(&rtsx->reg_lock);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		spin_unlock_irq(&rtsx->reg_lock);
 
 		sg_ptr += sg_cnt;
-	पूर्ण
+	}
 
-	/* Wait क्रम TRANS_OK_INT */
+	/* Wait for TRANS_OK_INT */
 	spin_lock_irq(&rtsx->reg_lock);
-	अगर (rtsx->trans_result == TRANS_NOT_READY) अणु
-		init_completion(&trans_करोne);
+	if (rtsx->trans_result == TRANS_NOT_READY) {
+		init_completion(&trans_done);
 		spin_unlock_irq(&rtsx->reg_lock);
-		समयleft = रुको_क्रम_completion_पूर्णांकerruptible_समयout(&trans_करोne,
-								     msecs_to_jअगरfies(समयout));
-		अगर (समयleft <= 0) अणु
+		timeleft = wait_for_completion_interruptible_timeout(&trans_done,
+								     msecs_to_jiffies(timeout));
+		if (timeleft <= 0) {
 			dev_dbg(rtsx_dev(chip), "Timeout (%s %d)\n",
 				__func__, __LINE__);
 			dev_dbg(rtsx_dev(chip), "chip->int_reg = 0x%x\n",
-				chip->पूर्णांक_reg);
+				chip->int_reg);
 			err = -ETIMEDOUT;
-			जाओ out;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			goto out;
+		}
+	} else {
 		spin_unlock_irq(&rtsx->reg_lock);
-	पूर्ण
+	}
 
 	spin_lock_irq(&rtsx->reg_lock);
-	अगर (rtsx->trans_result == TRANS_RESULT_FAIL)
+	if (rtsx->trans_result == TRANS_RESULT_FAIL)
 		err = -EIO;
-	अन्यथा अगर (rtsx->trans_result == TRANS_RESULT_OK)
+	else if (rtsx->trans_result == TRANS_RESULT_OK)
 		err = 0;
 
 	spin_unlock_irq(&rtsx->reg_lock);
 
 out:
-	rtsx->करोne = शून्य;
+	rtsx->done = NULL;
 	rtsx->trans_state = STATE_TRANS_NONE;
 	dma_unmap_sg(&rtsx->pci->dev, sg, num_sg, dma_dir);
 
-	अगर (err < 0)
+	if (err < 0)
 		rtsx_stop_cmd(chip, card);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक rtsx_transfer_buf(काष्ठा rtsx_chip *chip, u8 card, व्योम *buf,
-			     माप_प्रकार len, क्रमागत dma_data_direction dma_dir,
-			     पूर्णांक समयout)
-अणु
-	काष्ठा rtsx_dev *rtsx = chip->rtsx;
-	काष्ठा completion trans_करोne;
+static int rtsx_transfer_buf(struct rtsx_chip *chip, u8 card, void *buf,
+			     size_t len, enum dma_data_direction dma_dir,
+			     int timeout)
+{
+	struct rtsx_dev *rtsx = chip->rtsx;
+	struct completion trans_done;
 	dma_addr_t addr;
 	u8 dir;
-	पूर्णांक err = 0;
+	int err = 0;
 	u32 val = BIT(31);
-	दीर्घ समयleft;
+	long timeleft;
 
-	अगर (!buf || (len <= 0))
-		वापस -EIO;
+	if (!buf || (len <= 0))
+		return -EIO;
 
-	अगर (dma_dir == DMA_TO_DEVICE)
+	if (dma_dir == DMA_TO_DEVICE)
 		dir = HOST_TO_DEVICE;
-	अन्यथा अगर (dma_dir == DMA_FROM_DEVICE)
+	else if (dma_dir == DMA_FROM_DEVICE)
 		dir = DEVICE_TO_HOST;
-	अन्यथा
-		वापस -ENXIO;
+	else
+		return -ENXIO;
 
 	addr = dma_map_single(&rtsx->pci->dev, buf, len, dma_dir);
-	अगर (dma_mapping_error(&rtsx->pci->dev, addr))
-		वापस -ENOMEM;
+	if (dma_mapping_error(&rtsx->pci->dev, addr))
+		return -ENOMEM;
 
-	अगर (card == SD_CARD)
+	if (card == SD_CARD)
 		rtsx->check_card_cd = SD_EXIST;
-	अन्यथा अगर (card == MS_CARD)
+	else if (card == MS_CARD)
 		rtsx->check_card_cd = MS_EXIST;
-	अन्यथा अगर (card == XD_CARD)
+	else if (card == XD_CARD)
 		rtsx->check_card_cd = XD_EXIST;
-	अन्यथा
+	else
 		rtsx->check_card_cd = 0;
 
 	val |= (u32)(dir & 0x01) << 29;
@@ -664,108 +663,108 @@ out:
 
 	spin_lock_irq(&rtsx->reg_lock);
 
-	/* set up data काष्ठाures क्रम the wakeup प्रणाली */
-	rtsx->करोne = &trans_करोne;
+	/* set up data structures for the wakeup system */
+	rtsx->done = &trans_done;
 
-	init_completion(&trans_करोne);
+	init_completion(&trans_done);
 
 	rtsx->trans_state = STATE_TRANS_BUF;
 	rtsx->trans_result = TRANS_NOT_READY;
 
-	rtsx_ग_लिखोl(chip, RTSX_HDBAR, addr);
-	rtsx_ग_लिखोl(chip, RTSX_HDBCTLR, val);
+	rtsx_writel(chip, RTSX_HDBAR, addr);
+	rtsx_writel(chip, RTSX_HDBCTLR, val);
 
 	spin_unlock_irq(&rtsx->reg_lock);
 
-	/* Wait क्रम TRANS_OK_INT */
-	समयleft = रुको_क्रम_completion_पूर्णांकerruptible_समयout(&trans_करोne,
-							     msecs_to_jअगरfies(समयout));
-	अगर (समयleft <= 0) अणु
+	/* Wait for TRANS_OK_INT */
+	timeleft = wait_for_completion_interruptible_timeout(&trans_done,
+							     msecs_to_jiffies(timeout));
+	if (timeleft <= 0) {
 		dev_dbg(rtsx_dev(chip), "Timeout (%s %d)\n",
 			__func__, __LINE__);
 		dev_dbg(rtsx_dev(chip), "chip->int_reg = 0x%x\n",
-			chip->पूर्णांक_reg);
+			chip->int_reg);
 		err = -ETIMEDOUT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	spin_lock_irq(&rtsx->reg_lock);
-	अगर (rtsx->trans_result == TRANS_RESULT_FAIL)
+	if (rtsx->trans_result == TRANS_RESULT_FAIL)
 		err = -EIO;
-	अन्यथा अगर (rtsx->trans_result == TRANS_RESULT_OK)
+	else if (rtsx->trans_result == TRANS_RESULT_OK)
 		err = 0;
 
 	spin_unlock_irq(&rtsx->reg_lock);
 
 out:
-	rtsx->करोne = शून्य;
+	rtsx->done = NULL;
 	rtsx->trans_state = STATE_TRANS_NONE;
 	dma_unmap_single(&rtsx->pci->dev, addr, len, dma_dir);
 
-	अगर (err < 0)
+	if (err < 0)
 		rtsx_stop_cmd(chip, card);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक rtsx_transfer_data_partial(काष्ठा rtsx_chip *chip, u8 card,
-			       व्योम *buf, माप_प्रकार len, पूर्णांक use_sg,
-			       अचिन्हित पूर्णांक *index, अचिन्हित पूर्णांक *offset,
-			       क्रमागत dma_data_direction dma_dir, पूर्णांक समयout)
-अणु
-	पूर्णांक err = 0;
+int rtsx_transfer_data_partial(struct rtsx_chip *chip, u8 card,
+			       void *buf, size_t len, int use_sg,
+			       unsigned int *index, unsigned int *offset,
+			       enum dma_data_direction dma_dir, int timeout)
+{
+	int err = 0;
 
-	/* करोn't transfer data during पात processing */
-	अगर (rtsx_chk_stat(chip, RTSX_STAT_ABORT))
-		वापस -EIO;
+	/* don't transfer data during abort processing */
+	if (rtsx_chk_stat(chip, RTSX_STAT_ABORT))
+		return -EIO;
 
-	अगर (use_sg) अणु
-		काष्ठा scatterlist *sg = buf;
+	if (use_sg) {
+		struct scatterlist *sg = buf;
 
 		err = rtsx_transfer_sglist_adma_partial(chip, card, sg, use_sg,
-							index, offset, (पूर्णांक)len,
-							dma_dir, समयout);
-	पूर्ण अन्यथा अणु
+							index, offset, (int)len,
+							dma_dir, timeout);
+	} else {
 		err = rtsx_transfer_buf(chip, card,
-					buf, len, dma_dir, समयout);
-	पूर्ण
-	अगर (err < 0) अणु
-		अगर (RTSX_TST_DELINK(chip)) अणु
+					buf, len, dma_dir, timeout);
+	}
+	if (err < 0) {
+		if (RTSX_TST_DELINK(chip)) {
 			RTSX_CLR_DELINK(chip);
 			chip->need_reinit = SD_CARD | MS_CARD | XD_CARD;
 			rtsx_reinit_cards(chip, 1);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक rtsx_transfer_data(काष्ठा rtsx_chip *chip, u8 card, व्योम *buf, माप_प्रकार len,
-		       पूर्णांक use_sg, क्रमागत dma_data_direction dma_dir, पूर्णांक समयout)
-अणु
-	पूर्णांक err = 0;
+int rtsx_transfer_data(struct rtsx_chip *chip, u8 card, void *buf, size_t len,
+		       int use_sg, enum dma_data_direction dma_dir, int timeout)
+{
+	int err = 0;
 
 	dev_dbg(rtsx_dev(chip), "use_sg = %d\n", use_sg);
 
-	/* करोn't transfer data during पात processing */
-	अगर (rtsx_chk_stat(chip, RTSX_STAT_ABORT))
-		वापस -EIO;
+	/* don't transfer data during abort processing */
+	if (rtsx_chk_stat(chip, RTSX_STAT_ABORT))
+		return -EIO;
 
-	अगर (use_sg) अणु
+	if (use_sg) {
 		err = rtsx_transfer_sglist_adma(chip, card, buf,
-						use_sg, dma_dir, समयout);
-	पूर्ण अन्यथा अणु
-		err = rtsx_transfer_buf(chip, card, buf, len, dma_dir, समयout);
-	पूर्ण
+						use_sg, dma_dir, timeout);
+	} else {
+		err = rtsx_transfer_buf(chip, card, buf, len, dma_dir, timeout);
+	}
 
-	अगर (err < 0) अणु
-		अगर (RTSX_TST_DELINK(chip)) अणु
+	if (err < 0) {
+		if (RTSX_TST_DELINK(chip)) {
 			RTSX_CLR_DELINK(chip);
 			chip->need_reinit = SD_CARD | MS_CARD | XD_CARD;
 			rtsx_reinit_cards(chip, 1);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 

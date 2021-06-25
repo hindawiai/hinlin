@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright IBM Corp. 2012
  *
@@ -7,26 +6,26 @@
  *   Jan Glauber <jang@linux.vnet.ibm.com>
  */
 
-#घोषणा KMSG_COMPONENT "zpci"
-#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#define KMSG_COMPONENT "zpci"
+#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/स्थिति.स>
-#समावेश <linux/pci.h>
+#include <linux/kernel.h>
+#include <linux/stat.h>
+#include <linux/pci.h>
 
-#समावेश "../../../drivers/pci/pci.h"
+#include "../../../drivers/pci/pci.h"
 
-#समावेश <यंत्र/sclp.h>
+#include <asm/sclp.h>
 
-#घोषणा zpci_attr(name, fmt, member)					\
-अटल sमाप_प्रकार name##_show(काष्ठा device *dev,				\
-			   काष्ठा device_attribute *attr, अक्षर *buf)	\
-अणु									\
-	काष्ठा zpci_dev *zdev = to_zpci(to_pci_dev(dev));		\
+#define zpci_attr(name, fmt, member)					\
+static ssize_t name##_show(struct device *dev,				\
+			   struct device_attribute *attr, char *buf)	\
+{									\
+	struct zpci_dev *zdev = to_zpci(to_pci_dev(dev));		\
 									\
-	वापस प्र_लिखो(buf, fmt, zdev->member);				\
-पूर्ण									\
-अटल DEVICE_ATTR_RO(name)
+	return sprintf(buf, fmt, zdev->member);				\
+}									\
+static DEVICE_ATTR_RO(name)
 
 zpci_attr(function_id, "0x%08x\n", fid);
 zpci_attr(function_handle, "0x%08x\n", fh);
@@ -41,143 +40,143 @@ zpci_attr(segment1, "0x%02x\n", pfip[1]);
 zpci_attr(segment2, "0x%02x\n", pfip[2]);
 zpci_attr(segment3, "0x%02x\n", pfip[3]);
 
-अटल sमाप_प्रकार mio_enabled_show(काष्ठा device *dev,
-				काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा zpci_dev *zdev = to_zpci(to_pci_dev(dev));
+static ssize_t mio_enabled_show(struct device *dev,
+				struct device_attribute *attr, char *buf)
+{
+	struct zpci_dev *zdev = to_zpci(to_pci_dev(dev));
 
-	वापस प्र_लिखो(buf, zpci_use_mio(zdev) ? "1\n" : "0\n");
-पूर्ण
-अटल DEVICE_ATTR_RO(mio_enabled);
+	return sprintf(buf, zpci_use_mio(zdev) ? "1\n" : "0\n");
+}
+static DEVICE_ATTR_RO(mio_enabled);
 
-अटल sमाप_प्रकार recover_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			     स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा kernfs_node *kn;
-	काष्ठा pci_dev *pdev = to_pci_dev(dev);
-	काष्ठा zpci_dev *zdev = to_zpci(pdev);
-	पूर्णांक ret = 0;
+static ssize_t recover_store(struct device *dev, struct device_attribute *attr,
+			     const char *buf, size_t count)
+{
+	struct kernfs_node *kn;
+	struct pci_dev *pdev = to_pci_dev(dev);
+	struct zpci_dev *zdev = to_zpci(pdev);
+	int ret = 0;
 
-	/* Can't use device_हटाओ_self() here as that would lead us to lock
-	 * the pci_rescan_हटाओ_lock जबतक holding the device' kernfs lock.
+	/* Can't use device_remove_self() here as that would lead us to lock
+	 * the pci_rescan_remove_lock while holding the device' kernfs lock.
 	 * This would create a possible deadlock with disable_slot() which is
-	 * not directly रक्षित by the device' kernfs lock but takes it
+	 * not directly protected by the device' kernfs lock but takes it
 	 * during the device removal which happens under
-	 * pci_rescan_हटाओ_lock.
+	 * pci_rescan_remove_lock.
 	 *
 	 * This is analogous to sdev_store_delete() in
 	 * drivers/scsi/scsi_sysfs.c
 	 */
-	kn = sysfs_अवरोध_active_protection(&dev->kobj, &attr->attr);
+	kn = sysfs_break_active_protection(&dev->kobj, &attr->attr);
 	WARN_ON_ONCE(!kn);
-	/* device_हटाओ_file() serializes concurrent calls ignoring all but
+	/* device_remove_file() serializes concurrent calls ignoring all but
 	 * the first
 	 */
-	device_हटाओ_file(dev, attr);
+	device_remove_file(dev, attr);
 
 	/* A concurrent call to recover_store() may slip between
-	 * sysfs_अवरोध_active_protection() and the sysfs file removal.
-	 * Once it unblocks from pci_lock_rescan_हटाओ() the original pdev
-	 * will alपढ़ोy be हटाओd.
+	 * sysfs_break_active_protection() and the sysfs file removal.
+	 * Once it unblocks from pci_lock_rescan_remove() the original pdev
+	 * will already be removed.
 	 */
-	pci_lock_rescan_हटाओ();
-	अगर (pci_dev_is_added(pdev)) अणु
-		pci_stop_and_हटाओ_bus_device(pdev);
+	pci_lock_rescan_remove();
+	if (pci_dev_is_added(pdev)) {
+		pci_stop_and_remove_bus_device(pdev);
 		ret = zpci_disable_device(zdev);
-		अगर (ret)
-			जाओ out;
+		if (ret)
+			goto out;
 
 		ret = zpci_enable_device(zdev);
-		अगर (ret)
-			जाओ out;
+		if (ret)
+			goto out;
 		pci_rescan_bus(zdev->zbus->bus);
-	पूर्ण
+	}
 out:
-	pci_unlock_rescan_हटाओ();
-	अगर (kn)
-		sysfs_unअवरोध_active_protection(kn);
-	वापस ret ? ret : count;
-पूर्ण
-अटल DEVICE_ATTR_WO(recover);
+	pci_unlock_rescan_remove();
+	if (kn)
+		sysfs_unbreak_active_protection(kn);
+	return ret ? ret : count;
+}
+static DEVICE_ATTR_WO(recover);
 
-अटल sमाप_प्रकार util_string_पढ़ो(काष्ठा file *filp, काष्ठा kobject *kobj,
-				काष्ठा bin_attribute *attr, अक्षर *buf,
-				loff_t off, माप_प्रकार count)
-अणु
-	काष्ठा device *dev = kobj_to_dev(kobj);
-	काष्ठा pci_dev *pdev = to_pci_dev(dev);
-	काष्ठा zpci_dev *zdev = to_zpci(pdev);
+static ssize_t util_string_read(struct file *filp, struct kobject *kobj,
+				struct bin_attribute *attr, char *buf,
+				loff_t off, size_t count)
+{
+	struct device *dev = kobj_to_dev(kobj);
+	struct pci_dev *pdev = to_pci_dev(dev);
+	struct zpci_dev *zdev = to_zpci(pdev);
 
-	वापस memory_पढ़ो_from_buffer(buf, count, &off, zdev->util_str,
-				       माप(zdev->util_str));
-पूर्ण
-अटल BIN_ATTR_RO(util_string, CLP_UTIL_STR_LEN);
+	return memory_read_from_buffer(buf, count, &off, zdev->util_str,
+				       sizeof(zdev->util_str));
+}
+static BIN_ATTR_RO(util_string, CLP_UTIL_STR_LEN);
 
-अटल sमाप_प्रकार report_error_ग_लिखो(काष्ठा file *filp, काष्ठा kobject *kobj,
-				  काष्ठा bin_attribute *attr, अक्षर *buf,
-				  loff_t off, माप_प्रकार count)
-अणु
-	काष्ठा zpci_report_error_header *report = (व्योम *) buf;
-	काष्ठा device *dev = kobj_to_dev(kobj);
-	काष्ठा pci_dev *pdev = to_pci_dev(dev);
-	काष्ठा zpci_dev *zdev = to_zpci(pdev);
-	पूर्णांक ret;
+static ssize_t report_error_write(struct file *filp, struct kobject *kobj,
+				  struct bin_attribute *attr, char *buf,
+				  loff_t off, size_t count)
+{
+	struct zpci_report_error_header *report = (void *) buf;
+	struct device *dev = kobj_to_dev(kobj);
+	struct pci_dev *pdev = to_pci_dev(dev);
+	struct zpci_dev *zdev = to_zpci(pdev);
+	int ret;
 
-	अगर (off || (count < माप(*report)))
-		वापस -EINVAL;
+	if (off || (count < sizeof(*report)))
+		return -EINVAL;
 
 	ret = sclp_pci_report(report, zdev->fh, zdev->fid);
 
-	वापस ret ? ret : count;
-पूर्ण
-अटल BIN_ATTR(report_error, S_IWUSR, शून्य, report_error_ग_लिखो, PAGE_SIZE);
+	return ret ? ret : count;
+}
+static BIN_ATTR(report_error, S_IWUSR, NULL, report_error_write, PAGE_SIZE);
 
-अटल sमाप_प्रकार uid_is_unique_show(काष्ठा device *dev,
-				  काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	वापस sysfs_emit(buf, "%d\n", zpci_unique_uid ? 1 : 0);
-पूर्ण
-अटल DEVICE_ATTR_RO(uid_is_unique);
+static ssize_t uid_is_unique_show(struct device *dev,
+				  struct device_attribute *attr, char *buf)
+{
+	return sysfs_emit(buf, "%d\n", zpci_unique_uid ? 1 : 0);
+}
+static DEVICE_ATTR_RO(uid_is_unique);
 
-#अगर_अघोषित CONFIG_DMI
+#ifndef CONFIG_DMI
 /* analogous to smbios index */
-अटल sमाप_प्रकार index_show(काष्ठा device *dev,
-			  काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा zpci_dev *zdev = to_zpci(to_pci_dev(dev));
+static ssize_t index_show(struct device *dev,
+			  struct device_attribute *attr, char *buf)
+{
+	struct zpci_dev *zdev = to_zpci(to_pci_dev(dev));
 	u32 index = ~0;
 
-	अगर (zpci_unique_uid)
+	if (zpci_unique_uid)
 		index = zdev->uid;
 
-	वापस sysfs_emit(buf, "%u\n", index);
-पूर्ण
-अटल DEVICE_ATTR_RO(index);
+	return sysfs_emit(buf, "%u\n", index);
+}
+static DEVICE_ATTR_RO(index);
 
-अटल umode_t zpci_index_is_visible(काष्ठा kobject *kobj,
-				     काष्ठा attribute *attr, पूर्णांक n)
-अणु
-	वापस zpci_unique_uid ? attr->mode : 0;
-पूर्ण
+static umode_t zpci_index_is_visible(struct kobject *kobj,
+				     struct attribute *attr, int n)
+{
+	return zpci_unique_uid ? attr->mode : 0;
+}
 
-अटल काष्ठा attribute *zpci_ident_attrs[] = अणु
+static struct attribute *zpci_ident_attrs[] = {
 	&dev_attr_index.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल काष्ठा attribute_group zpci_ident_attr_group = अणु
+static struct attribute_group zpci_ident_attr_group = {
 	.attrs = zpci_ident_attrs,
 	.is_visible = zpci_index_is_visible,
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif
 
-अटल काष्ठा bin_attribute *zpci_bin_attrs[] = अणु
+static struct bin_attribute *zpci_bin_attrs[] = {
 	&bin_attr_util_string,
 	&bin_attr_report_error,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल काष्ठा attribute *zpci_dev_attrs[] = अणु
+static struct attribute *zpci_dev_attrs[] = {
 	&dev_attr_function_id.attr,
 	&dev_attr_function_handle.attr,
 	&dev_attr_pchid.attr,
@@ -189,31 +188,31 @@ out:
 	&dev_attr_recover.attr,
 	&dev_attr_mio_enabled.attr,
 	&dev_attr_uid_is_unique.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल काष्ठा attribute_group zpci_attr_group = अणु
+static struct attribute_group zpci_attr_group = {
 	.attrs = zpci_dev_attrs,
 	.bin_attrs = zpci_bin_attrs,
-पूर्ण;
+};
 
-अटल काष्ठा attribute *pfip_attrs[] = अणु
+static struct attribute *pfip_attrs[] = {
 	&dev_attr_segment0.attr,
 	&dev_attr_segment1.attr,
 	&dev_attr_segment2.attr,
 	&dev_attr_segment3.attr,
-	शून्य,
-पूर्ण;
-अटल काष्ठा attribute_group pfip_attr_group = अणु
+	NULL,
+};
+static struct attribute_group pfip_attr_group = {
 	.name = "pfip",
 	.attrs = pfip_attrs,
-पूर्ण;
+};
 
-स्थिर काष्ठा attribute_group *zpci_attr_groups[] = अणु
+const struct attribute_group *zpci_attr_groups[] = {
 	&zpci_attr_group,
 	&pfip_attr_group,
-#अगर_अघोषित CONFIG_DMI
+#ifndef CONFIG_DMI
 	&zpci_ident_attr_group,
-#पूर्ण_अगर
-	शून्य,
-पूर्ण;
+#endif
+	NULL,
+};

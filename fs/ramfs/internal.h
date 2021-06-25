@@ -1,10 +1,9 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
-/* पूर्णांकernal.h: ramfs पूर्णांकernal definitions
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+/* internal.h: ramfs internal definitions
  *
  * Copyright (C) 2005 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
 
-बाह्य स्थिर काष्ठा inode_operations ramfs_file_inode_operations;
+extern const struct inode_operations ramfs_file_inode_operations;

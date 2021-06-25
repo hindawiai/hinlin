@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,67 +21,67 @@
  *
  * Authors: Ben Skeggs
  */
-#समावेश "channv50.h"
-#समावेश "rootnv50.h"
+#include "channv50.h"
+#include "rootnv50.h"
 
-#समावेश <subdev/समयr.h>
+#include <subdev/timer.h>
 
-अटल व्योम
-nv50_disp_pioc_fini(काष्ठा nv50_disp_chan *chan)
-अणु
-	काष्ठा nv50_disp *disp = chan->disp;
-	काष्ठा nvkm_subdev *subdev = &disp->base.engine.subdev;
-	काष्ठा nvkm_device *device = subdev->device;
-	पूर्णांक ctrl = chan->chid.ctrl;
-	पूर्णांक user = chan->chid.user;
+static void
+nv50_disp_pioc_fini(struct nv50_disp_chan *chan)
+{
+	struct nv50_disp *disp = chan->disp;
+	struct nvkm_subdev *subdev = &disp->base.engine.subdev;
+	struct nvkm_device *device = subdev->device;
+	int ctrl = chan->chid.ctrl;
+	int user = chan->chid.user;
 
 	nvkm_mask(device, 0x610200 + (ctrl * 0x10), 0x00000001, 0x00000000);
-	अगर (nvkm_msec(device, 2000,
-		अगर (!(nvkm_rd32(device, 0x610200 + (ctrl * 0x10)) & 0x00030000))
-			अवरोध;
-	) < 0) अणु
+	if (nvkm_msec(device, 2000,
+		if (!(nvkm_rd32(device, 0x610200 + (ctrl * 0x10)) & 0x00030000))
+			break;
+	) < 0) {
 		nvkm_error(subdev, "ch %d timeout: %08x\n", user,
 			   nvkm_rd32(device, 0x610200 + (ctrl * 0x10)));
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक
-nv50_disp_pioc_init(काष्ठा nv50_disp_chan *chan)
-अणु
-	काष्ठा nv50_disp *disp = chan->disp;
-	काष्ठा nvkm_subdev *subdev = &disp->base.engine.subdev;
-	काष्ठा nvkm_device *device = subdev->device;
-	पूर्णांक ctrl = chan->chid.ctrl;
-	पूर्णांक user = chan->chid.user;
+static int
+nv50_disp_pioc_init(struct nv50_disp_chan *chan)
+{
+	struct nv50_disp *disp = chan->disp;
+	struct nvkm_subdev *subdev = &disp->base.engine.subdev;
+	struct nvkm_device *device = subdev->device;
+	int ctrl = chan->chid.ctrl;
+	int user = chan->chid.user;
 
 	nvkm_wr32(device, 0x610200 + (ctrl * 0x10), 0x00002000);
-	अगर (nvkm_msec(device, 2000,
-		अगर (!(nvkm_rd32(device, 0x610200 + (ctrl * 0x10)) & 0x00030000))
-			अवरोध;
-	) < 0) अणु
+	if (nvkm_msec(device, 2000,
+		if (!(nvkm_rd32(device, 0x610200 + (ctrl * 0x10)) & 0x00030000))
+			break;
+	) < 0) {
 		nvkm_error(subdev, "ch %d timeout0: %08x\n", user,
 			   nvkm_rd32(device, 0x610200 + (ctrl * 0x10)));
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	nvkm_wr32(device, 0x610200 + (ctrl * 0x10), 0x00000001);
-	अगर (nvkm_msec(device, 2000,
-		u32 पंचांगp = nvkm_rd32(device, 0x610200 + (ctrl * 0x10));
-		अगर ((पंचांगp & 0x00030000) == 0x00010000)
-			अवरोध;
-	) < 0) अणु
+	if (nvkm_msec(device, 2000,
+		u32 tmp = nvkm_rd32(device, 0x610200 + (ctrl * 0x10));
+		if ((tmp & 0x00030000) == 0x00010000)
+			break;
+	) < 0) {
 		nvkm_error(subdev, "ch %d timeout1: %08x\n", user,
 			   nvkm_rd32(device, 0x610200 + (ctrl * 0x10)));
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-स्थिर काष्ठा nv50_disp_chan_func
-nv50_disp_pioc_func = अणु
+const struct nv50_disp_chan_func
+nv50_disp_pioc_func = {
 	.init = nv50_disp_pioc_init,
 	.fini = nv50_disp_pioc_fini,
-	.पूर्णांकr = nv50_disp_chan_पूर्णांकr,
+	.intr = nv50_disp_chan_intr,
 	.user = nv50_disp_chan_user,
-पूर्ण;
+};

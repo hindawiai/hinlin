@@ -1,38 +1,37 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Support क्रम libpfm4 event encoding.
+ * Support for libpfm4 event encoding.
  *
  * Copyright 2020 Google LLC.
  */
-#अगर_अघोषित __PERF_PFM_H
-#घोषणा __PERF_PFM_H
+#ifndef __PERF_PFM_H
+#define __PERF_PFM_H
 
-#समावेश <subcmd/parse-options.h>
+#include <subcmd/parse-options.h>
 
-#अगर_घोषित HAVE_LIBPFM
-पूर्णांक parse_libpfm_events_option(स्थिर काष्ठा option *opt, स्थिर अक्षर *str,
-			पूर्णांक unset);
+#ifdef HAVE_LIBPFM
+int parse_libpfm_events_option(const struct option *opt, const char *str,
+			int unset);
 
-व्योम prपूर्णांक_libpfm_events(bool name_only, bool दीर्घ_desc);
+void print_libpfm_events(bool name_only, bool long_desc);
 
-#अन्यथा
-#समावेश <linux/compiler.h>
+#else
+#include <linux/compiler.h>
 
-अटल अंतरभूत पूर्णांक parse_libpfm_events_option(
-	स्थिर काष्ठा option *opt __maybe_unused,
-	स्थिर अक्षर *str __maybe_unused,
-	पूर्णांक unset __maybe_unused)
-अणु
-	वापस 0;
-पूर्ण
+static inline int parse_libpfm_events_option(
+	const struct option *opt __maybe_unused,
+	const char *str __maybe_unused,
+	int unset __maybe_unused)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम prपूर्णांक_libpfm_events(bool name_only __maybe_unused,
-				       bool दीर्घ_desc __maybe_unused)
-अणु
-पूर्ण
+static inline void print_libpfm_events(bool name_only __maybe_unused,
+				       bool long_desc __maybe_unused)
+{
+}
 
-#पूर्ण_अगर
+#endif
 
 
-#पूर्ण_अगर /* __PERF_PFM_H */
+#endif /* __PERF_PFM_H */

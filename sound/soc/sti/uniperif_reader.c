@@ -1,25 +1,24 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) STMicroelectronics SA 2015
  * Authors: Arnaud Pouliquen <arnaud.pouliquen@st.com>
- *          क्रम STMicroelectronics.
+ *          for STMicroelectronics.
  */
 
-#समावेश <sound/soc.h>
+#include <sound/soc.h>
 
-#समावेश "uniperif.h"
+#include "uniperif.h"
 
-#घोषणा UNIPERIF_READER_I2S_IN 0 /* पढ़ोer id connected to I2S/TDM TX bus */
+#define UNIPERIF_READER_I2S_IN 0 /* reader id connected to I2S/TDM TX bus */
 /*
  * Note: snd_pcm_hardware is linked to DMA controller but is declared here to
- * पूर्णांकegrate uniपढ़ोer capability in term of rate and supported channels
+ * integrate unireader capability in term of rate and supported channels
  */
-अटल स्थिर काष्ठा snd_pcm_hardware uni_पढ़ोer_pcm_hw = अणु
+static const struct snd_pcm_hardware uni_reader_pcm_hw = {
 	.info = SNDRV_PCM_INFO_INTERLEAVED | SNDRV_PCM_INFO_BLOCK_TRANSFER |
 		SNDRV_PCM_INFO_PAUSE | SNDRV_PCM_INFO_MMAP |
 		SNDRV_PCM_INFO_MMAP_VALID,
-	.क्रमmats = SNDRV_PCM_FMTBIT_S32_LE | SNDRV_PCM_FMTBIT_S16_LE,
+	.formats = SNDRV_PCM_FMTBIT_S32_LE | SNDRV_PCM_FMTBIT_S16_LE,
 
 	.rates = SNDRV_PCM_RATE_CONTINUOUS,
 	.rate_min = 8000,
@@ -34,404 +33,404 @@
 	.period_bytes_min = 128,
 	.period_bytes_max = 64 * PAGE_SIZE,
 	.buffer_bytes_max = 256 * PAGE_SIZE
-पूर्ण;
+};
 
 /*
- * uni_पढ़ोer_irq_handler
- * In हाल of error audio stream is stopped; stop action is रक्षित via PCM
- * stream lock  to aव्योम race condition with trigger callback.
+ * uni_reader_irq_handler
+ * In case of error audio stream is stopped; stop action is protected via PCM
+ * stream lock  to avoid race condition with trigger callback.
  */
-अटल irqवापस_t uni_पढ़ोer_irq_handler(पूर्णांक irq, व्योम *dev_id)
-अणु
-	irqवापस_t ret = IRQ_NONE;
-	काष्ठा uniperअगर *पढ़ोer = dev_id;
-	अचिन्हित पूर्णांक status;
+static irqreturn_t uni_reader_irq_handler(int irq, void *dev_id)
+{
+	irqreturn_t ret = IRQ_NONE;
+	struct uniperif *reader = dev_id;
+	unsigned int status;
 
-	spin_lock(&पढ़ोer->irq_lock);
-	अगर (!पढ़ोer->substream)
-		जाओ irq_spin_unlock;
+	spin_lock(&reader->irq_lock);
+	if (!reader->substream)
+		goto irq_spin_unlock;
 
-	snd_pcm_stream_lock(पढ़ोer->substream);
-	अगर (पढ़ोer->state == UNIPERIF_STATE_STOPPED) अणु
-		/* Unexpected IRQ: करो nothing */
-		dev_warn(पढ़ोer->dev, "unexpected IRQ\n");
-		जाओ stream_unlock;
-	पूर्ण
+	snd_pcm_stream_lock(reader->substream);
+	if (reader->state == UNIPERIF_STATE_STOPPED) {
+		/* Unexpected IRQ: do nothing */
+		dev_warn(reader->dev, "unexpected IRQ\n");
+		goto stream_unlock;
+	}
 
-	/* Get पूर्णांकerrupt status & clear them immediately */
-	status = GET_UNIPERIF_ITS(पढ़ोer);
-	SET_UNIPERIF_ITS_BCLR(पढ़ोer, status);
+	/* Get interrupt status & clear them immediately */
+	status = GET_UNIPERIF_ITS(reader);
+	SET_UNIPERIF_ITS_BCLR(reader, status);
 
-	/* Check क्रम fअगरo overflow error */
-	अगर (unlikely(status & UNIPERIF_ITS_FIFO_ERROR_MASK(पढ़ोer))) अणु
-		dev_err(पढ़ोer->dev, "FIFO error detected\n");
+	/* Check for fifo overflow error */
+	if (unlikely(status & UNIPERIF_ITS_FIFO_ERROR_MASK(reader))) {
+		dev_err(reader->dev, "FIFO error detected\n");
 
-		snd_pcm_stop_xrun(पढ़ोer->substream);
+		snd_pcm_stop_xrun(reader->substream);
 
 		ret = IRQ_HANDLED;
-	पूर्ण
+	}
 
 stream_unlock:
-	snd_pcm_stream_unlock(पढ़ोer->substream);
+	snd_pcm_stream_unlock(reader->substream);
 irq_spin_unlock:
-	spin_unlock(&पढ़ोer->irq_lock);
+	spin_unlock(&reader->irq_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक uni_पढ़ोer_prepare_pcm(काष्ठा snd_pcm_runसमय *runसमय,
-				  काष्ठा uniperअगर *पढ़ोer)
-अणु
-	पूर्णांक slot_width;
+static int uni_reader_prepare_pcm(struct snd_pcm_runtime *runtime,
+				  struct uniperif *reader)
+{
+	int slot_width;
 
 	/* Force slot width to 32 in I2S mode */
-	अगर ((पढ़ोer->daअगरmt & SND_SOC_DAIFMT_FORMAT_MASK)
-		== SND_SOC_DAIFMT_I2S) अणु
+	if ((reader->daifmt & SND_SOC_DAIFMT_FORMAT_MASK)
+		== SND_SOC_DAIFMT_I2S) {
 		slot_width = 32;
-	पूर्ण अन्यथा अणु
-		चयन (runसमय->क्रमmat) अणु
-		हाल SNDRV_PCM_FORMAT_S16_LE:
+	} else {
+		switch (runtime->format) {
+		case SNDRV_PCM_FORMAT_S16_LE:
 			slot_width = 16;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			slot_width = 32;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	/* Number of bits per subframe (i.e one channel sample) on input. */
-	चयन (slot_width) अणु
-	हाल 32:
-		SET_UNIPERIF_I2S_FMT_NBIT_32(पढ़ोer);
-		SET_UNIPERIF_I2S_FMT_DATA_SIZE_32(पढ़ोer);
-		अवरोध;
-	हाल 16:
-		SET_UNIPERIF_I2S_FMT_NBIT_16(पढ़ोer);
-		SET_UNIPERIF_I2S_FMT_DATA_SIZE_16(पढ़ोer);
-		अवरोध;
-	शेष:
-		dev_err(पढ़ोer->dev, "subframe format not supported\n");
-		वापस -EINVAL;
-	पूर्ण
+	switch (slot_width) {
+	case 32:
+		SET_UNIPERIF_I2S_FMT_NBIT_32(reader);
+		SET_UNIPERIF_I2S_FMT_DATA_SIZE_32(reader);
+		break;
+	case 16:
+		SET_UNIPERIF_I2S_FMT_NBIT_16(reader);
+		SET_UNIPERIF_I2S_FMT_DATA_SIZE_16(reader);
+		break;
+	default:
+		dev_err(reader->dev, "subframe format not supported\n");
+		return -EINVAL;
+	}
 
-	/* Configure data memory क्रमmat */
-	चयन (runसमय->क्रमmat) अणु
-	हाल SNDRV_PCM_FORMAT_S16_LE:
+	/* Configure data memory format */
+	switch (runtime->format) {
+	case SNDRV_PCM_FORMAT_S16_LE:
 		/* One data word contains two samples */
-		SET_UNIPERIF_CONFIG_MEM_FMT_16_16(पढ़ोer);
-		अवरोध;
+		SET_UNIPERIF_CONFIG_MEM_FMT_16_16(reader);
+		break;
 
-	हाल SNDRV_PCM_FORMAT_S32_LE:
+	case SNDRV_PCM_FORMAT_S32_LE:
 		/*
 		 * Actually "16 bits/0 bits" means "32/28/24/20/18/16 bits
-		 * on the MSB then zeros (अगर less than 32 bytes)"...
+		 * on the MSB then zeros (if less than 32 bytes)"...
 		 */
-		SET_UNIPERIF_CONFIG_MEM_FMT_16_0(पढ़ोer);
-		अवरोध;
+		SET_UNIPERIF_CONFIG_MEM_FMT_16_0(reader);
+		break;
 
-	शेष:
-		dev_err(पढ़ोer->dev, "format not supported\n");
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		dev_err(reader->dev, "format not supported\n");
+		return -EINVAL;
+	}
 
 	/* Number of channels must be even */
-	अगर ((runसमय->channels % 2) || (runसमय->channels < 2) ||
-	    (runसमय->channels > 10)) अणु
-		dev_err(पढ़ोer->dev, "%s: invalid nb of channels\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+	if ((runtime->channels % 2) || (runtime->channels < 2) ||
+	    (runtime->channels > 10)) {
+		dev_err(reader->dev, "%s: invalid nb of channels\n", __func__);
+		return -EINVAL;
+	}
 
-	SET_UNIPERIF_I2S_FMT_NUM_CH(पढ़ोer, runसमय->channels / 2);
-	SET_UNIPERIF_I2S_FMT_ORDER_MSB(पढ़ोer);
+	SET_UNIPERIF_I2S_FMT_NUM_CH(reader, runtime->channels / 2);
+	SET_UNIPERIF_I2S_FMT_ORDER_MSB(reader);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक uni_पढ़ोer_prepare_tdm(काष्ठा snd_pcm_runसमय *runसमय,
-				  काष्ठा uniperअगर *पढ़ोer)
-अणु
-	पूर्णांक frame_size; /* user tdm frame size in bytes */
-	/* शेष unip TDM_WORD_POS_X_Y */
-	अचिन्हित पूर्णांक word_pos[4] = अणु
-		0x04060002, 0x0C0E080A, 0x14161012, 0x1C1E181Aपूर्ण;
+static int uni_reader_prepare_tdm(struct snd_pcm_runtime *runtime,
+				  struct uniperif *reader)
+{
+	int frame_size; /* user tdm frame size in bytes */
+	/* default unip TDM_WORD_POS_X_Y */
+	unsigned int word_pos[4] = {
+		0x04060002, 0x0C0E080A, 0x14161012, 0x1C1E181A};
 
-	frame_size = sti_uniperiph_get_user_frame_size(runसमय);
+	frame_size = sti_uniperiph_get_user_frame_size(runtime);
 
-	/* fix 16/0 क्रमmat */
-	SET_UNIPERIF_CONFIG_MEM_FMT_16_0(पढ़ोer);
-	SET_UNIPERIF_I2S_FMT_DATA_SIZE_32(पढ़ोer);
+	/* fix 16/0 format */
+	SET_UNIPERIF_CONFIG_MEM_FMT_16_0(reader);
+	SET_UNIPERIF_I2S_FMT_DATA_SIZE_32(reader);
 
 	/* number of words inserted on the TDM line */
-	SET_UNIPERIF_I2S_FMT_NUM_CH(पढ़ोer, frame_size / 4 / 2);
+	SET_UNIPERIF_I2S_FMT_NUM_CH(reader, frame_size / 4 / 2);
 
-	SET_UNIPERIF_I2S_FMT_ORDER_MSB(पढ़ोer);
-	SET_UNIPERIF_I2S_FMT_ALIGN_LEFT(पढ़ोer);
-	SET_UNIPERIF_TDM_ENABLE_TDM_ENABLE(पढ़ोer);
+	SET_UNIPERIF_I2S_FMT_ORDER_MSB(reader);
+	SET_UNIPERIF_I2S_FMT_ALIGN_LEFT(reader);
+	SET_UNIPERIF_TDM_ENABLE_TDM_ENABLE(reader);
 
 	/*
-	 * set the बारlots allocation क्रम words in FIFO
+	 * set the timeslots allocation for words in FIFO
 	 *
 	 * HW bug: (LSB word < MSB word) => this config is not possible
-	 *         So अगर we want (LSB word < MSB) word, then it shall be
+	 *         So if we want (LSB word < MSB) word, then it shall be
 	 *         handled by user
 	 */
-	sti_uniperiph_get_tdm_word_pos(पढ़ोer, word_pos);
-	SET_UNIPERIF_TDM_WORD_POS(पढ़ोer, 1_2, word_pos[WORD_1_2]);
-	SET_UNIPERIF_TDM_WORD_POS(पढ़ोer, 3_4, word_pos[WORD_3_4]);
-	SET_UNIPERIF_TDM_WORD_POS(पढ़ोer, 5_6, word_pos[WORD_5_6]);
-	SET_UNIPERIF_TDM_WORD_POS(पढ़ोer, 7_8, word_pos[WORD_7_8]);
+	sti_uniperiph_get_tdm_word_pos(reader, word_pos);
+	SET_UNIPERIF_TDM_WORD_POS(reader, 1_2, word_pos[WORD_1_2]);
+	SET_UNIPERIF_TDM_WORD_POS(reader, 3_4, word_pos[WORD_3_4]);
+	SET_UNIPERIF_TDM_WORD_POS(reader, 5_6, word_pos[WORD_5_6]);
+	SET_UNIPERIF_TDM_WORD_POS(reader, 7_8, word_pos[WORD_7_8]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक uni_पढ़ोer_prepare(काष्ठा snd_pcm_substream *substream,
-			      काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा sti_uniperiph_data *priv = snd_soc_dai_get_drvdata(dai);
-	काष्ठा uniperअगर *पढ़ोer = priv->dai_data.uni;
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	पूर्णांक transfer_size, trigger_limit, ret;
+static int uni_reader_prepare(struct snd_pcm_substream *substream,
+			      struct snd_soc_dai *dai)
+{
+	struct sti_uniperiph_data *priv = snd_soc_dai_get_drvdata(dai);
+	struct uniperif *reader = priv->dai_data.uni;
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	int transfer_size, trigger_limit, ret;
 
-	/* The पढ़ोer should be stopped */
-	अगर (पढ़ोer->state != UNIPERIF_STATE_STOPPED) अणु
-		dev_err(पढ़ोer->dev, "%s: invalid reader state %d\n", __func__,
-			पढ़ोer->state);
-		वापस -EINVAL;
-	पूर्ण
+	/* The reader should be stopped */
+	if (reader->state != UNIPERIF_STATE_STOPPED) {
+		dev_err(reader->dev, "%s: invalid reader state %d\n", __func__,
+			reader->state);
+		return -EINVAL;
+	}
 
-	/* Calculate transfer size (in fअगरo cells and bytes) क्रम frame count */
-	अगर (पढ़ोer->type == SND_ST_UNIPERIF_TYPE_TDM) अणु
+	/* Calculate transfer size (in fifo cells and bytes) for frame count */
+	if (reader->type == SND_ST_UNIPERIF_TYPE_TDM) {
 		/* transfer size = unip frame size (in 32 bits FIFO cell) */
 		transfer_size =
-			sti_uniperiph_get_user_frame_size(runसमय) / 4;
-	पूर्ण अन्यथा अणु
-		transfer_size = runसमय->channels * UNIPERIF_FIFO_FRAMES;
-	पूर्ण
+			sti_uniperiph_get_user_frame_size(runtime) / 4;
+	} else {
+		transfer_size = runtime->channels * UNIPERIF_FIFO_FRAMES;
+	}
 
-	/* Calculate number of empty cells available beक्रमe निश्चितing DREQ */
-	अगर (पढ़ोer->ver < SND_ST_UNIPERIF_VERSION_UNI_PLR_TOP_1_0)
+	/* Calculate number of empty cells available before asserting DREQ */
+	if (reader->ver < SND_ST_UNIPERIF_VERSION_UNI_PLR_TOP_1_0)
 		trigger_limit = UNIPERIF_FIFO_SIZE - transfer_size;
-	अन्यथा
+	else
 		/*
 		 * Since SND_ST_UNIPERIF_VERSION_UNI_PLR_TOP_1_0
-		 * FDMA_TRIGGER_LIMIT also controls when the state चयनes
+		 * FDMA_TRIGGER_LIMIT also controls when the state switches
 		 * from OFF or STANDBY to AUDIO DATA.
 		 */
 		trigger_limit = transfer_size;
 
 	/* Trigger limit must be an even number */
-	अगर ((!trigger_limit % 2) ||
+	if ((!trigger_limit % 2) ||
 	    (trigger_limit != 1 && transfer_size % 2) ||
-	    (trigger_limit > UNIPERIF_CONFIG_DMA_TRIG_LIMIT_MASK(पढ़ोer))) अणु
-		dev_err(पढ़ोer->dev, "invalid trigger limit %d\n",
+	    (trigger_limit > UNIPERIF_CONFIG_DMA_TRIG_LIMIT_MASK(reader))) {
+		dev_err(reader->dev, "invalid trigger limit %d\n",
 			trigger_limit);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	SET_UNIPERIF_CONFIG_DMA_TRIG_LIMIT(पढ़ोer, trigger_limit);
+	SET_UNIPERIF_CONFIG_DMA_TRIG_LIMIT(reader, trigger_limit);
 
-	अगर (UNIPERIF_TYPE_IS_TDM(पढ़ोer))
-		ret = uni_पढ़ोer_prepare_tdm(runसमय, पढ़ोer);
-	अन्यथा
-		ret = uni_पढ़ोer_prepare_pcm(runसमय, पढ़ोer);
-	अगर (ret)
-		वापस ret;
+	if (UNIPERIF_TYPE_IS_TDM(reader))
+		ret = uni_reader_prepare_tdm(runtime, reader);
+	else
+		ret = uni_reader_prepare_pcm(runtime, reader);
+	if (ret)
+		return ret;
 
-	चयन (पढ़ोer->daअगरmt & SND_SOC_DAIFMT_FORMAT_MASK) अणु
-	हाल SND_SOC_DAIFMT_I2S:
-		SET_UNIPERIF_I2S_FMT_ALIGN_LEFT(पढ़ोer);
-		SET_UNIPERIF_I2S_FMT_PADDING_I2S_MODE(पढ़ोer);
-		अवरोध;
-	हाल SND_SOC_DAIFMT_LEFT_J:
-		SET_UNIPERIF_I2S_FMT_ALIGN_LEFT(पढ़ोer);
-		SET_UNIPERIF_I2S_FMT_PADDING_SONY_MODE(पढ़ोer);
-		अवरोध;
-	हाल SND_SOC_DAIFMT_RIGHT_J:
-		SET_UNIPERIF_I2S_FMT_ALIGN_RIGHT(पढ़ोer);
-		SET_UNIPERIF_I2S_FMT_PADDING_SONY_MODE(पढ़ोer);
-		अवरोध;
-	शेष:
-		dev_err(पढ़ोer->dev, "format not supported\n");
-		वापस -EINVAL;
-	पूर्ण
+	switch (reader->daifmt & SND_SOC_DAIFMT_FORMAT_MASK) {
+	case SND_SOC_DAIFMT_I2S:
+		SET_UNIPERIF_I2S_FMT_ALIGN_LEFT(reader);
+		SET_UNIPERIF_I2S_FMT_PADDING_I2S_MODE(reader);
+		break;
+	case SND_SOC_DAIFMT_LEFT_J:
+		SET_UNIPERIF_I2S_FMT_ALIGN_LEFT(reader);
+		SET_UNIPERIF_I2S_FMT_PADDING_SONY_MODE(reader);
+		break;
+	case SND_SOC_DAIFMT_RIGHT_J:
+		SET_UNIPERIF_I2S_FMT_ALIGN_RIGHT(reader);
+		SET_UNIPERIF_I2S_FMT_PADDING_SONY_MODE(reader);
+		break;
+	default:
+		dev_err(reader->dev, "format not supported\n");
+		return -EINVAL;
+	}
 
-	/* Data घड़ीing (changing) on the rising/falling edge */
-	चयन (पढ़ोer->daअगरmt & SND_SOC_DAIFMT_INV_MASK) अणु
-	हाल SND_SOC_DAIFMT_NB_NF:
-		SET_UNIPERIF_I2S_FMT_LR_POL_LOW(पढ़ोer);
-		SET_UNIPERIF_I2S_FMT_SCLK_EDGE_RISING(पढ़ोer);
-		अवरोध;
-	हाल SND_SOC_DAIFMT_NB_IF:
-		SET_UNIPERIF_I2S_FMT_LR_POL_HIG(पढ़ोer);
-		SET_UNIPERIF_I2S_FMT_SCLK_EDGE_RISING(पढ़ोer);
-		अवरोध;
-	हाल SND_SOC_DAIFMT_IB_NF:
-		SET_UNIPERIF_I2S_FMT_LR_POL_LOW(पढ़ोer);
-		SET_UNIPERIF_I2S_FMT_SCLK_EDGE_FALLING(पढ़ोer);
-		अवरोध;
-	हाल SND_SOC_DAIFMT_IB_IF:
-		SET_UNIPERIF_I2S_FMT_LR_POL_HIG(पढ़ोer);
-		SET_UNIPERIF_I2S_FMT_SCLK_EDGE_FALLING(पढ़ोer);
-		अवरोध;
-	पूर्ण
+	/* Data clocking (changing) on the rising/falling edge */
+	switch (reader->daifmt & SND_SOC_DAIFMT_INV_MASK) {
+	case SND_SOC_DAIFMT_NB_NF:
+		SET_UNIPERIF_I2S_FMT_LR_POL_LOW(reader);
+		SET_UNIPERIF_I2S_FMT_SCLK_EDGE_RISING(reader);
+		break;
+	case SND_SOC_DAIFMT_NB_IF:
+		SET_UNIPERIF_I2S_FMT_LR_POL_HIG(reader);
+		SET_UNIPERIF_I2S_FMT_SCLK_EDGE_RISING(reader);
+		break;
+	case SND_SOC_DAIFMT_IB_NF:
+		SET_UNIPERIF_I2S_FMT_LR_POL_LOW(reader);
+		SET_UNIPERIF_I2S_FMT_SCLK_EDGE_FALLING(reader);
+		break;
+	case SND_SOC_DAIFMT_IB_IF:
+		SET_UNIPERIF_I2S_FMT_LR_POL_HIG(reader);
+		SET_UNIPERIF_I2S_FMT_SCLK_EDGE_FALLING(reader);
+		break;
+	}
 
-	/* Clear any pending पूर्णांकerrupts */
-	SET_UNIPERIF_ITS_BCLR(पढ़ोer, GET_UNIPERIF_ITS(पढ़ोer));
+	/* Clear any pending interrupts */
+	SET_UNIPERIF_ITS_BCLR(reader, GET_UNIPERIF_ITS(reader));
 
-	SET_UNIPERIF_I2S_FMT_NO_OF_SAMPLES_TO_READ(पढ़ोer, 0);
+	SET_UNIPERIF_I2S_FMT_NO_OF_SAMPLES_TO_READ(reader, 0);
 
-	/* Set the पूर्णांकerrupt mask */
-	SET_UNIPERIF_ITM_BSET_DMA_ERROR(पढ़ोer);
-	SET_UNIPERIF_ITM_BSET_FIFO_ERROR(पढ़ोer);
-	SET_UNIPERIF_ITM_BSET_MEM_BLK_READ(पढ़ोer);
+	/* Set the interrupt mask */
+	SET_UNIPERIF_ITM_BSET_DMA_ERROR(reader);
+	SET_UNIPERIF_ITM_BSET_FIFO_ERROR(reader);
+	SET_UNIPERIF_ITM_BSET_MEM_BLK_READ(reader);
 
-	/* Enable underflow recovery पूर्णांकerrupts */
-	अगर (पढ़ोer->underflow_enabled) अणु
-		SET_UNIPERIF_ITM_BSET_UNDERFLOW_REC_DONE(पढ़ोer);
-		SET_UNIPERIF_ITM_BSET_UNDERFLOW_REC_FAILED(पढ़ोer);
-	पूर्ण
+	/* Enable underflow recovery interrupts */
+	if (reader->underflow_enabled) {
+		SET_UNIPERIF_ITM_BSET_UNDERFLOW_REC_DONE(reader);
+		SET_UNIPERIF_ITM_BSET_UNDERFLOW_REC_FAILED(reader);
+	}
 
-	/* Reset uniperipheral पढ़ोer */
-	वापस sti_uniperiph_reset(पढ़ोer);
-पूर्ण
+	/* Reset uniperipheral reader */
+	return sti_uniperiph_reset(reader);
+}
 
-अटल पूर्णांक uni_पढ़ोer_start(काष्ठा uniperअगर *पढ़ोer)
-अणु
-	/* The पढ़ोer should be stopped */
-	अगर (पढ़ोer->state != UNIPERIF_STATE_STOPPED) अणु
-		dev_err(पढ़ोer->dev, "%s: invalid reader state\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+static int uni_reader_start(struct uniperif *reader)
+{
+	/* The reader should be stopped */
+	if (reader->state != UNIPERIF_STATE_STOPPED) {
+		dev_err(reader->dev, "%s: invalid reader state\n", __func__);
+		return -EINVAL;
+	}
 
-	/* Enable पढ़ोer पूर्णांकerrupts (and clear possible stalled ones) */
-	SET_UNIPERIF_ITS_BCLR_FIFO_ERROR(पढ़ोer);
-	SET_UNIPERIF_ITM_BSET_FIFO_ERROR(पढ़ोer);
+	/* Enable reader interrupts (and clear possible stalled ones) */
+	SET_UNIPERIF_ITS_BCLR_FIFO_ERROR(reader);
+	SET_UNIPERIF_ITM_BSET_FIFO_ERROR(reader);
 
-	/* Launch the पढ़ोer */
-	SET_UNIPERIF_CTRL_OPERATION_PCM_DATA(पढ़ोer);
+	/* Launch the reader */
+	SET_UNIPERIF_CTRL_OPERATION_PCM_DATA(reader);
 
 	/* Update state to started */
-	पढ़ोer->state = UNIPERIF_STATE_STARTED;
-	वापस 0;
-पूर्ण
+	reader->state = UNIPERIF_STATE_STARTED;
+	return 0;
+}
 
-अटल पूर्णांक uni_पढ़ोer_stop(काष्ठा uniperअगर *पढ़ोer)
-अणु
-	/* The पढ़ोer should not be in stopped state */
-	अगर (पढ़ोer->state == UNIPERIF_STATE_STOPPED) अणु
-		dev_err(पढ़ोer->dev, "%s: invalid reader state\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+static int uni_reader_stop(struct uniperif *reader)
+{
+	/* The reader should not be in stopped state */
+	if (reader->state == UNIPERIF_STATE_STOPPED) {
+		dev_err(reader->dev, "%s: invalid reader state\n", __func__);
+		return -EINVAL;
+	}
 
-	/* Turn the पढ़ोer off */
-	SET_UNIPERIF_CTRL_OPERATION_OFF(पढ़ोer);
+	/* Turn the reader off */
+	SET_UNIPERIF_CTRL_OPERATION_OFF(reader);
 
-	/* Disable पूर्णांकerrupts */
-	SET_UNIPERIF_ITM_BCLR(पढ़ोer, GET_UNIPERIF_ITM(पढ़ोer));
+	/* Disable interrupts */
+	SET_UNIPERIF_ITM_BCLR(reader, GET_UNIPERIF_ITM(reader));
 
-	/* Update state to stopped and वापस */
-	पढ़ोer->state = UNIPERIF_STATE_STOPPED;
+	/* Update state to stopped and return */
+	reader->state = UNIPERIF_STATE_STOPPED;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक  uni_पढ़ोer_trigger(काष्ठा snd_pcm_substream *substream,
-			       पूर्णांक cmd, काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा sti_uniperiph_data *priv = snd_soc_dai_get_drvdata(dai);
-	काष्ठा uniperअगर *पढ़ोer = priv->dai_data.uni;
+static int  uni_reader_trigger(struct snd_pcm_substream *substream,
+			       int cmd, struct snd_soc_dai *dai)
+{
+	struct sti_uniperiph_data *priv = snd_soc_dai_get_drvdata(dai);
+	struct uniperif *reader = priv->dai_data.uni;
 
-	चयन (cmd) अणु
-	हाल SNDRV_PCM_TRIGGER_START:
-		वापस  uni_पढ़ोer_start(पढ़ोer);
-	हाल SNDRV_PCM_TRIGGER_STOP:
-		वापस  uni_पढ़ोer_stop(पढ़ोer);
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+	switch (cmd) {
+	case SNDRV_PCM_TRIGGER_START:
+		return  uni_reader_start(reader);
+	case SNDRV_PCM_TRIGGER_STOP:
+		return  uni_reader_stop(reader);
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल पूर्णांक uni_पढ़ोer_startup(काष्ठा snd_pcm_substream *substream,
-			      काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा sti_uniperiph_data *priv = snd_soc_dai_get_drvdata(dai);
-	काष्ठा uniperअगर *पढ़ोer = priv->dai_data.uni;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+static int uni_reader_startup(struct snd_pcm_substream *substream,
+			      struct snd_soc_dai *dai)
+{
+	struct sti_uniperiph_data *priv = snd_soc_dai_get_drvdata(dai);
+	struct uniperif *reader = priv->dai_data.uni;
+	unsigned long flags;
+	int ret;
 
-	spin_lock_irqsave(&पढ़ोer->irq_lock, flags);
-	पढ़ोer->substream = substream;
-	spin_unlock_irqrestore(&पढ़ोer->irq_lock, flags);
+	spin_lock_irqsave(&reader->irq_lock, flags);
+	reader->substream = substream;
+	spin_unlock_irqrestore(&reader->irq_lock, flags);
 
-	अगर (!UNIPERIF_TYPE_IS_TDM(पढ़ोer))
-		वापस 0;
+	if (!UNIPERIF_TYPE_IS_TDM(reader))
+		return 0;
 
-	/* refine hw स्थिरraपूर्णांक in tdm mode */
-	ret = snd_pcm_hw_rule_add(substream->runसमय, 0,
+	/* refine hw constraint in tdm mode */
+	ret = snd_pcm_hw_rule_add(substream->runtime, 0,
 				  SNDRV_PCM_HW_PARAM_CHANNELS,
 				  sti_uniperiph_fix_tdm_chan,
-				  पढ़ोer, SNDRV_PCM_HW_PARAM_CHANNELS,
+				  reader, SNDRV_PCM_HW_PARAM_CHANNELS,
 				  -1);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस snd_pcm_hw_rule_add(substream->runसमय, 0,
+	return snd_pcm_hw_rule_add(substream->runtime, 0,
 				   SNDRV_PCM_HW_PARAM_FORMAT,
-				   sti_uniperiph_fix_tdm_क्रमmat,
-				   पढ़ोer, SNDRV_PCM_HW_PARAM_FORMAT,
+				   sti_uniperiph_fix_tdm_format,
+				   reader, SNDRV_PCM_HW_PARAM_FORMAT,
 				   -1);
-पूर्ण
+}
 
-अटल व्योम uni_पढ़ोer_shutकरोwn(काष्ठा snd_pcm_substream *substream,
-				काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा sti_uniperiph_data *priv = snd_soc_dai_get_drvdata(dai);
-	काष्ठा uniperअगर *पढ़ोer = priv->dai_data.uni;
-	अचिन्हित दीर्घ flags;
+static void uni_reader_shutdown(struct snd_pcm_substream *substream,
+				struct snd_soc_dai *dai)
+{
+	struct sti_uniperiph_data *priv = snd_soc_dai_get_drvdata(dai);
+	struct uniperif *reader = priv->dai_data.uni;
+	unsigned long flags;
 
-	spin_lock_irqsave(&पढ़ोer->irq_lock, flags);
-	अगर (पढ़ोer->state != UNIPERIF_STATE_STOPPED) अणु
-		/* Stop the पढ़ोer */
-		uni_पढ़ोer_stop(पढ़ोer);
-	पूर्ण
-	पढ़ोer->substream = शून्य;
-	spin_unlock_irqrestore(&पढ़ोer->irq_lock, flags);
-पूर्ण
+	spin_lock_irqsave(&reader->irq_lock, flags);
+	if (reader->state != UNIPERIF_STATE_STOPPED) {
+		/* Stop the reader */
+		uni_reader_stop(reader);
+	}
+	reader->substream = NULL;
+	spin_unlock_irqrestore(&reader->irq_lock, flags);
+}
 
-अटल स्थिर काष्ठा snd_soc_dai_ops uni_पढ़ोer_dai_ops = अणु
-		.startup = uni_पढ़ोer_startup,
-		.shutकरोwn = uni_पढ़ोer_shutकरोwn,
-		.prepare = uni_पढ़ोer_prepare,
-		.trigger = uni_पढ़ोer_trigger,
+static const struct snd_soc_dai_ops uni_reader_dai_ops = {
+		.startup = uni_reader_startup,
+		.shutdown = uni_reader_shutdown,
+		.prepare = uni_reader_prepare,
+		.trigger = uni_reader_trigger,
 		.hw_params = sti_uniperiph_dai_hw_params,
 		.set_fmt = sti_uniperiph_dai_set_fmt,
 		.set_tdm_slot = sti_uniperiph_set_tdm_slot
-पूर्ण;
+};
 
-पूर्णांक uni_पढ़ोer_init(काष्ठा platक्रमm_device *pdev,
-		    काष्ठा uniperअगर *पढ़ोer)
-अणु
-	पूर्णांक ret = 0;
+int uni_reader_init(struct platform_device *pdev,
+		    struct uniperif *reader)
+{
+	int ret = 0;
 
-	पढ़ोer->dev = &pdev->dev;
-	पढ़ोer->state = UNIPERIF_STATE_STOPPED;
-	पढ़ोer->dai_ops = &uni_पढ़ोer_dai_ops;
+	reader->dev = &pdev->dev;
+	reader->state = UNIPERIF_STATE_STOPPED;
+	reader->dai_ops = &uni_reader_dai_ops;
 
-	अगर (UNIPERIF_TYPE_IS_TDM(पढ़ोer))
-		पढ़ोer->hw = &uni_tdm_hw;
-	अन्यथा
-		पढ़ोer->hw = &uni_पढ़ोer_pcm_hw;
+	if (UNIPERIF_TYPE_IS_TDM(reader))
+		reader->hw = &uni_tdm_hw;
+	else
+		reader->hw = &uni_reader_pcm_hw;
 
-	ret = devm_request_irq(&pdev->dev, पढ़ोer->irq,
-			       uni_पढ़ोer_irq_handler, IRQF_SHARED,
-			       dev_name(&pdev->dev), पढ़ोer);
-	अगर (ret < 0) अणु
+	ret = devm_request_irq(&pdev->dev, reader->irq,
+			       uni_reader_irq_handler, IRQF_SHARED,
+			       dev_name(&pdev->dev), reader);
+	if (ret < 0) {
 		dev_err(&pdev->dev, "Failed to request IRQ\n");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	spin_lock_init(&पढ़ोer->irq_lock);
+	spin_lock_init(&reader->irq_lock);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(uni_पढ़ोer_init);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(uni_reader_init);

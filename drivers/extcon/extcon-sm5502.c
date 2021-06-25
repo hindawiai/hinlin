@@ -1,85 +1,84 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * extcon-sm5502.c - Silicon Mitus SM5502 extcon drvier to support USB चयनes
+ * extcon-sm5502.c - Silicon Mitus SM5502 extcon drvier to support USB switches
  *
  * Copyright (c) 2014 Samsung Electronics Co., Ltd
  * Author: Chanwoo Choi <cw00.choi@samsung.com>
  */
 
-#समावेश <linux/err.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irqकरोमुख्य.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/extcon-provider.h>
+#include <linux/err.h>
+#include <linux/i2c.h>
+#include <linux/interrupt.h>
+#include <linux/irqdomain.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/regmap.h>
+#include <linux/slab.h>
+#include <linux/extcon-provider.h>
 
-#समावेश "extcon-sm5502.h"
+#include "extcon-sm5502.h"
 
-#घोषणा	DELAY_MS_DEFAULT		17000	/* unit: millisecond */
+#define	DELAY_MS_DEFAULT		17000	/* unit: millisecond */
 
-काष्ठा muic_irq अणु
-	अचिन्हित पूर्णांक irq;
-	स्थिर अक्षर *name;
-	अचिन्हित पूर्णांक virq;
-पूर्ण;
+struct muic_irq {
+	unsigned int irq;
+	const char *name;
+	unsigned int virq;
+};
 
-काष्ठा reg_data अणु
+struct reg_data {
 	u8 reg;
-	अचिन्हित पूर्णांक val;
+	unsigned int val;
 	bool invert;
-पूर्ण;
+};
 
-काष्ठा sm5502_muic_info अणु
-	काष्ठा device *dev;
-	काष्ठा extcon_dev *edev;
+struct sm5502_muic_info {
+	struct device *dev;
+	struct extcon_dev *edev;
 
-	काष्ठा i2c_client *i2c;
-	काष्ठा regmap *regmap;
+	struct i2c_client *i2c;
+	struct regmap *regmap;
 
-	काष्ठा regmap_irq_chip_data *irq_data;
-	काष्ठा muic_irq *muic_irqs;
-	अचिन्हित पूर्णांक num_muic_irqs;
-	पूर्णांक irq;
+	struct regmap_irq_chip_data *irq_data;
+	struct muic_irq *muic_irqs;
+	unsigned int num_muic_irqs;
+	int irq;
 	bool irq_attach;
 	bool irq_detach;
-	काष्ठा work_काष्ठा irq_work;
+	struct work_struct irq_work;
 
-	काष्ठा reg_data *reg_data;
-	अचिन्हित पूर्णांक num_reg_data;
+	struct reg_data *reg_data;
+	unsigned int num_reg_data;
 
-	काष्ठा mutex mutex;
+	struct mutex mutex;
 
 	/*
 	 * Use delayed workqueue to detect cable state and then
-	 * notअगरy cable state to notअगरiee/platक्रमm through uevent.
-	 * After completing the booting of platक्रमm, the extcon provider
-	 * driver should notअगरy cable state to upper layer.
+	 * notify cable state to notifiee/platform through uevent.
+	 * After completing the booting of platform, the extcon provider
+	 * driver should notify cable state to upper layer.
 	 */
-	काष्ठा delayed_work wq_detcable;
-पूर्ण;
+	struct delayed_work wq_detcable;
+};
 
-/* Default value of SM5502 रेजिस्टर to bring up MUIC device. */
-अटल काष्ठा reg_data sm5502_reg_data[] = अणु
-	अणु
+/* Default value of SM5502 register to bring up MUIC device. */
+static struct reg_data sm5502_reg_data[] = {
+	{
 		.reg = SM5502_REG_RESET,
 		.val = SM5502_REG_RESET_MASK,
 		.invert = true,
-	पूर्ण, अणु
+	}, {
 		.reg = SM5502_REG_CONTROL,
 		.val = SM5502_REG_CONTROL_MASK_INT_MASK,
 		.invert = false,
-	पूर्ण, अणु
+	}, {
 		.reg = SM5502_REG_INTMASK1,
 		.val = SM5502_REG_INTM1_KP_MASK
 			| SM5502_REG_INTM1_LKP_MASK
 			| SM5502_REG_INTM1_LKR_MASK,
 		.invert = true,
-	पूर्ण, अणु
+	}, {
 		.reg = SM5502_REG_INTMASK2,
 		.val = SM5502_REG_INTM2_VBUS_DET_MASK
 			| SM5502_REG_INTM2_REV_ACCE_MASK
@@ -88,21 +87,21 @@
 			| SM5502_REG_INTM2_STUCK_KEY_RCV_MASK
 			| SM5502_REG_INTM2_MHL_MASK,
 		.invert = true,
-	पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+	},
+	{ }
+};
 
 /* List of detectable cables */
-अटल स्थिर अचिन्हित पूर्णांक sm5502_extcon_cable[] = अणु
+static const unsigned int sm5502_extcon_cable[] = {
 	EXTCON_USB,
 	EXTCON_USB_HOST,
 	EXTCON_CHG_USB_SDP,
 	EXTCON_CHG_USB_DCP,
 	EXTCON_NONE,
-पूर्ण;
+};
 
 /* Define supported accessory type */
-क्रमागत sm5502_muic_acc_type अणु
+enum sm5502_muic_acc_type {
 	SM5502_MUIC_ADC_GROUND = 0x0,
 	SM5502_MUIC_ADC_SEND_END_BUTTON,
 	SM5502_MUIC_ADC_REMOTE_S1_BUTTON,
@@ -138,7 +137,7 @@
 
 	/*
 	 * The below accessories have same ADC value (0x1f or 0x1e).
-	 * So, Device type1 is used to separate specअगरic accessory.
+	 * So, Device type1 is used to separate specific accessory.
 	 */
 							/* |---------|--ADC| */
 							/* |    [7:5]|[4:0]| */
@@ -149,48 +148,48 @@
 	SM5502_MUIC_ADC_OPEN_USB = 0x5f,		/* |      010|11111| */
 	SM5502_MUIC_ADC_OPEN_TA = 0xdf,			/* |      110|11111| */
 	SM5502_MUIC_ADC_OPEN_USB_OTG = 0xff,		/* |      111|11111| */
-पूर्ण;
+};
 
-/* List of supported पूर्णांकerrupt क्रम SM5502 */
-अटल काष्ठा muic_irq sm5502_muic_irqs[] = अणु
-	अणु SM5502_IRQ_INT1_ATTACH,	"muic-attach" पूर्ण,
-	अणु SM5502_IRQ_INT1_DETACH,	"muic-detach" पूर्ण,
-	अणु SM5502_IRQ_INT1_KP,		"muic-kp" पूर्ण,
-	अणु SM5502_IRQ_INT1_LKP,		"muic-lkp" पूर्ण,
-	अणु SM5502_IRQ_INT1_LKR,		"muic-lkr" पूर्ण,
-	अणु SM5502_IRQ_INT1_OVP_EVENT,	"muic-ovp-event" पूर्ण,
-	अणु SM5502_IRQ_INT1_OCP_EVENT,	"muic-ocp-event" पूर्ण,
-	अणु SM5502_IRQ_INT1_OVP_OCP_DIS,	"muic-ovp-ocp-dis" पूर्ण,
-	अणु SM5502_IRQ_INT2_VBUS_DET,	"muic-vbus-det" पूर्ण,
-	अणु SM5502_IRQ_INT2_REV_ACCE,	"muic-rev-acce" पूर्ण,
-	अणु SM5502_IRQ_INT2_ADC_CHG,	"muic-adc-chg" पूर्ण,
-	अणु SM5502_IRQ_INT2_STUCK_KEY,	"muic-stuck-key" पूर्ण,
-	अणु SM5502_IRQ_INT2_STUCK_KEY_RCV, "muic-stuck-key-rcv" पूर्ण,
-	अणु SM5502_IRQ_INT2_MHL,		"muic-mhl" पूर्ण,
-पूर्ण;
+/* List of supported interrupt for SM5502 */
+static struct muic_irq sm5502_muic_irqs[] = {
+	{ SM5502_IRQ_INT1_ATTACH,	"muic-attach" },
+	{ SM5502_IRQ_INT1_DETACH,	"muic-detach" },
+	{ SM5502_IRQ_INT1_KP,		"muic-kp" },
+	{ SM5502_IRQ_INT1_LKP,		"muic-lkp" },
+	{ SM5502_IRQ_INT1_LKR,		"muic-lkr" },
+	{ SM5502_IRQ_INT1_OVP_EVENT,	"muic-ovp-event" },
+	{ SM5502_IRQ_INT1_OCP_EVENT,	"muic-ocp-event" },
+	{ SM5502_IRQ_INT1_OVP_OCP_DIS,	"muic-ovp-ocp-dis" },
+	{ SM5502_IRQ_INT2_VBUS_DET,	"muic-vbus-det" },
+	{ SM5502_IRQ_INT2_REV_ACCE,	"muic-rev-acce" },
+	{ SM5502_IRQ_INT2_ADC_CHG,	"muic-adc-chg" },
+	{ SM5502_IRQ_INT2_STUCK_KEY,	"muic-stuck-key" },
+	{ SM5502_IRQ_INT2_STUCK_KEY_RCV, "muic-stuck-key-rcv" },
+	{ SM5502_IRQ_INT2_MHL,		"muic-mhl" },
+};
 
-/* Define पूर्णांकerrupt list of SM5502 to रेजिस्टर regmap_irq */
-अटल स्थिर काष्ठा regmap_irq sm5502_irqs[] = अणु
-	/* INT1 पूर्णांकerrupts */
-	अणु .reg_offset = 0, .mask = SM5502_IRQ_INT1_ATTACH_MASK, पूर्ण,
-	अणु .reg_offset = 0, .mask = SM5502_IRQ_INT1_DETACH_MASK, पूर्ण,
-	अणु .reg_offset = 0, .mask = SM5502_IRQ_INT1_KP_MASK, पूर्ण,
-	अणु .reg_offset = 0, .mask = SM5502_IRQ_INT1_LKP_MASK, पूर्ण,
-	अणु .reg_offset = 0, .mask = SM5502_IRQ_INT1_LKR_MASK, पूर्ण,
-	अणु .reg_offset = 0, .mask = SM5502_IRQ_INT1_OVP_EVENT_MASK, पूर्ण,
-	अणु .reg_offset = 0, .mask = SM5502_IRQ_INT1_OCP_EVENT_MASK, पूर्ण,
-	अणु .reg_offset = 0, .mask = SM5502_IRQ_INT1_OVP_OCP_DIS_MASK, पूर्ण,
+/* Define interrupt list of SM5502 to register regmap_irq */
+static const struct regmap_irq sm5502_irqs[] = {
+	/* INT1 interrupts */
+	{ .reg_offset = 0, .mask = SM5502_IRQ_INT1_ATTACH_MASK, },
+	{ .reg_offset = 0, .mask = SM5502_IRQ_INT1_DETACH_MASK, },
+	{ .reg_offset = 0, .mask = SM5502_IRQ_INT1_KP_MASK, },
+	{ .reg_offset = 0, .mask = SM5502_IRQ_INT1_LKP_MASK, },
+	{ .reg_offset = 0, .mask = SM5502_IRQ_INT1_LKR_MASK, },
+	{ .reg_offset = 0, .mask = SM5502_IRQ_INT1_OVP_EVENT_MASK, },
+	{ .reg_offset = 0, .mask = SM5502_IRQ_INT1_OCP_EVENT_MASK, },
+	{ .reg_offset = 0, .mask = SM5502_IRQ_INT1_OVP_OCP_DIS_MASK, },
 
-	/* INT2 पूर्णांकerrupts */
-	अणु .reg_offset = 1, .mask = SM5502_IRQ_INT2_VBUS_DET_MASK,पूर्ण,
-	अणु .reg_offset = 1, .mask = SM5502_IRQ_INT2_REV_ACCE_MASK, पूर्ण,
-	अणु .reg_offset = 1, .mask = SM5502_IRQ_INT2_ADC_CHG_MASK, पूर्ण,
-	अणु .reg_offset = 1, .mask = SM5502_IRQ_INT2_STUCK_KEY_MASK, पूर्ण,
-	अणु .reg_offset = 1, .mask = SM5502_IRQ_INT2_STUCK_KEY_RCV_MASK, पूर्ण,
-	अणु .reg_offset = 1, .mask = SM5502_IRQ_INT2_MHL_MASK, पूर्ण,
-पूर्ण;
+	/* INT2 interrupts */
+	{ .reg_offset = 1, .mask = SM5502_IRQ_INT2_VBUS_DET_MASK,},
+	{ .reg_offset = 1, .mask = SM5502_IRQ_INT2_REV_ACCE_MASK, },
+	{ .reg_offset = 1, .mask = SM5502_IRQ_INT2_ADC_CHG_MASK, },
+	{ .reg_offset = 1, .mask = SM5502_IRQ_INT2_STUCK_KEY_MASK, },
+	{ .reg_offset = 1, .mask = SM5502_IRQ_INT2_STUCK_KEY_RCV_MASK, },
+	{ .reg_offset = 1, .mask = SM5502_IRQ_INT2_MHL_MASK, },
+};
 
-अटल स्थिर काष्ठा regmap_irq_chip sm5502_muic_irq_chip = अणु
+static const struct regmap_irq_chip sm5502_muic_irq_chip = {
 	.name			= "sm5502",
 	.status_base		= SM5502_REG_INT1,
 	.mask_base		= SM5502_REG_INTMASK1,
@@ -198,385 +197,385 @@
 	.num_regs		= 2,
 	.irqs			= sm5502_irqs,
 	.num_irqs		= ARRAY_SIZE(sm5502_irqs),
-पूर्ण;
+};
 
-/* Define regmap configuration of SM5502 क्रम I2C communication  */
-अटल bool sm5502_muic_अस्थिर_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	हाल SM5502_REG_INTMASK1:
-	हाल SM5502_REG_INTMASK2:
-		वापस true;
-	शेष:
-		अवरोध;
-	पूर्ण
-	वापस false;
-पूर्ण
+/* Define regmap configuration of SM5502 for I2C communication  */
+static bool sm5502_muic_volatile_reg(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case SM5502_REG_INTMASK1:
+	case SM5502_REG_INTMASK2:
+		return true;
+	default:
+		break;
+	}
+	return false;
+}
 
-अटल स्थिर काष्ठा regmap_config sm5502_muic_regmap_config = अणु
+static const struct regmap_config sm5502_muic_regmap_config = {
 	.reg_bits	= 8,
 	.val_bits	= 8,
-	.अस्थिर_reg	= sm5502_muic_अस्थिर_reg,
-	.max_रेजिस्टर	= SM5502_REG_END,
-पूर्ण;
+	.volatile_reg	= sm5502_muic_volatile_reg,
+	.max_register	= SM5502_REG_END,
+};
 
-/* Change DM_CON/DP_CON/VBUSIN चयन according to cable type */
-अटल पूर्णांक sm5502_muic_set_path(काष्ठा sm5502_muic_info *info,
-				अचिन्हित पूर्णांक con_sw, अचिन्हित पूर्णांक vbus_sw,
+/* Change DM_CON/DP_CON/VBUSIN switch according to cable type */
+static int sm5502_muic_set_path(struct sm5502_muic_info *info,
+				unsigned int con_sw, unsigned int vbus_sw,
 				bool attached)
-अणु
-	पूर्णांक ret;
+{
+	int ret;
 
-	अगर (!attached) अणु
+	if (!attached) {
 		con_sw	= DM_DP_SWITCH_OPEN;
 		vbus_sw	= VBUSIN_SWITCH_OPEN;
-	पूर्ण
+	}
 
-	चयन (con_sw) अणु
-	हाल DM_DP_SWITCH_OPEN:
-	हाल DM_DP_SWITCH_USB:
-	हाल DM_DP_SWITCH_AUDIO:
-	हाल DM_DP_SWITCH_UART:
+	switch (con_sw) {
+	case DM_DP_SWITCH_OPEN:
+	case DM_DP_SWITCH_USB:
+	case DM_DP_SWITCH_AUDIO:
+	case DM_DP_SWITCH_UART:
 		ret = regmap_update_bits(info->regmap, SM5502_REG_MANUAL_SW1,
 					 SM5502_REG_MANUAL_SW1_DP_MASK |
 					 SM5502_REG_MANUAL_SW1_DM_MASK,
 					 con_sw);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(info->dev,
 				"cannot update DM_CON/DP_CON switch\n");
-			वापस ret;
-		पूर्ण
-		अवरोध;
-	शेष:
+			return ret;
+		}
+		break;
+	default:
 		dev_err(info->dev, "Unknown DM_CON/DP_CON switch type (%d)\n",
 				con_sw);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	चयन (vbus_sw) अणु
-	हाल VBUSIN_SWITCH_OPEN:
-	हाल VBUSIN_SWITCH_VBUSOUT:
-	हाल VBUSIN_SWITCH_MIC:
-	हाल VBUSIN_SWITCH_VBUSOUT_WITH_USB:
+	switch (vbus_sw) {
+	case VBUSIN_SWITCH_OPEN:
+	case VBUSIN_SWITCH_VBUSOUT:
+	case VBUSIN_SWITCH_MIC:
+	case VBUSIN_SWITCH_VBUSOUT_WITH_USB:
 		ret = regmap_update_bits(info->regmap, SM5502_REG_MANUAL_SW1,
 					 SM5502_REG_MANUAL_SW1_VBUSIN_MASK,
 					 vbus_sw);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(info->dev,
 				"cannot update VBUSIN switch\n");
-			वापस ret;
-		पूर्ण
-		अवरोध;
-	शेष:
+			return ret;
+		}
+		break;
+	default:
 		dev_err(info->dev, "Unknown VBUS switch type (%d)\n", vbus_sw);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Return cable type of attached or detached accessories */
-अटल अचिन्हित पूर्णांक sm5502_muic_get_cable_type(काष्ठा sm5502_muic_info *info)
-अणु
-	अचिन्हित पूर्णांक cable_type, adc, dev_type1;
-	पूर्णांक ret;
+static unsigned int sm5502_muic_get_cable_type(struct sm5502_muic_info *info)
+{
+	unsigned int cable_type, adc, dev_type1;
+	int ret;
 
-	/* Read ADC value according to बाह्यal cable or button */
-	ret = regmap_पढ़ो(info->regmap, SM5502_REG_ADC, &adc);
-	अगर (ret) अणु
+	/* Read ADC value according to external cable or button */
+	ret = regmap_read(info->regmap, SM5502_REG_ADC, &adc);
+	if (ret) {
 		dev_err(info->dev, "failed to read ADC register\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/*
-	 * If ADC is SM5502_MUIC_ADC_GROUND(0x0), बाह्यal cable hasn't
+	 * If ADC is SM5502_MUIC_ADC_GROUND(0x0), external cable hasn't
 	 * connected with to MUIC device.
 	 */
 	cable_type = adc & SM5502_REG_ADC_MASK;
 
-	चयन (cable_type) अणु
-	हाल SM5502_MUIC_ADC_GROUND:
-		ret = regmap_पढ़ो(info->regmap, SM5502_REG_DEV_TYPE1,
+	switch (cable_type) {
+	case SM5502_MUIC_ADC_GROUND:
+		ret = regmap_read(info->regmap, SM5502_REG_DEV_TYPE1,
 				  &dev_type1);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(info->dev, "failed to read DEV_TYPE1 reg\n");
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
-		चयन (dev_type1) अणु
-		हाल SM5502_REG_DEV_TYPE1_USB_OTG_MASK:
+		switch (dev_type1) {
+		case SM5502_REG_DEV_TYPE1_USB_OTG_MASK:
 			cable_type = SM5502_MUIC_ADC_GROUND_USB_OTG;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			dev_dbg(info->dev,
 				"cannot identify the cable type: adc(0x%x), dev_type1(0x%x)\n",
 				adc, dev_type1);
-			वापस -EINVAL;
-		पूर्ण
-		अवरोध;
-	हाल SM5502_MUIC_ADC_SEND_END_BUTTON:
-	हाल SM5502_MUIC_ADC_REMOTE_S1_BUTTON:
-	हाल SM5502_MUIC_ADC_REMOTE_S2_BUTTON:
-	हाल SM5502_MUIC_ADC_REMOTE_S3_BUTTON:
-	हाल SM5502_MUIC_ADC_REMOTE_S4_BUTTON:
-	हाल SM5502_MUIC_ADC_REMOTE_S5_BUTTON:
-	हाल SM5502_MUIC_ADC_REMOTE_S6_BUTTON:
-	हाल SM5502_MUIC_ADC_REMOTE_S7_BUTTON:
-	हाल SM5502_MUIC_ADC_REMOTE_S8_BUTTON:
-	हाल SM5502_MUIC_ADC_REMOTE_S9_BUTTON:
-	हाल SM5502_MUIC_ADC_REMOTE_S10_BUTTON:
-	हाल SM5502_MUIC_ADC_REMOTE_S11_BUTTON:
-	हाल SM5502_MUIC_ADC_REMOTE_S12_BUTTON:
-	हाल SM5502_MUIC_ADC_RESERVED_ACC_1:
-	हाल SM5502_MUIC_ADC_RESERVED_ACC_2:
-	हाल SM5502_MUIC_ADC_RESERVED_ACC_3:
-	हाल SM5502_MUIC_ADC_RESERVED_ACC_4:
-	हाल SM5502_MUIC_ADC_RESERVED_ACC_5:
-	हाल SM5502_MUIC_ADC_AUDIO_TYPE2:
-	हाल SM5502_MUIC_ADC_PHONE_POWERED_DEV:
-	हाल SM5502_MUIC_ADC_TTY_CONVERTER:
-	हाल SM5502_MUIC_ADC_UART_CABLE:
-	हाल SM5502_MUIC_ADC_TYPE1_CHARGER:
-	हाल SM5502_MUIC_ADC_FACTORY_MODE_BOOT_OFF_USB:
-	हाल SM5502_MUIC_ADC_FACTORY_MODE_BOOT_ON_USB:
-	हाल SM5502_MUIC_ADC_AUDIO_VIDEO_CABLE:
-	हाल SM5502_MUIC_ADC_TYPE2_CHARGER:
-	हाल SM5502_MUIC_ADC_FACTORY_MODE_BOOT_OFF_UART:
-	हाल SM5502_MUIC_ADC_FACTORY_MODE_BOOT_ON_UART:
-		अवरोध;
-	हाल SM5502_MUIC_ADC_AUDIO_TYPE1:
+			return -EINVAL;
+		}
+		break;
+	case SM5502_MUIC_ADC_SEND_END_BUTTON:
+	case SM5502_MUIC_ADC_REMOTE_S1_BUTTON:
+	case SM5502_MUIC_ADC_REMOTE_S2_BUTTON:
+	case SM5502_MUIC_ADC_REMOTE_S3_BUTTON:
+	case SM5502_MUIC_ADC_REMOTE_S4_BUTTON:
+	case SM5502_MUIC_ADC_REMOTE_S5_BUTTON:
+	case SM5502_MUIC_ADC_REMOTE_S6_BUTTON:
+	case SM5502_MUIC_ADC_REMOTE_S7_BUTTON:
+	case SM5502_MUIC_ADC_REMOTE_S8_BUTTON:
+	case SM5502_MUIC_ADC_REMOTE_S9_BUTTON:
+	case SM5502_MUIC_ADC_REMOTE_S10_BUTTON:
+	case SM5502_MUIC_ADC_REMOTE_S11_BUTTON:
+	case SM5502_MUIC_ADC_REMOTE_S12_BUTTON:
+	case SM5502_MUIC_ADC_RESERVED_ACC_1:
+	case SM5502_MUIC_ADC_RESERVED_ACC_2:
+	case SM5502_MUIC_ADC_RESERVED_ACC_3:
+	case SM5502_MUIC_ADC_RESERVED_ACC_4:
+	case SM5502_MUIC_ADC_RESERVED_ACC_5:
+	case SM5502_MUIC_ADC_AUDIO_TYPE2:
+	case SM5502_MUIC_ADC_PHONE_POWERED_DEV:
+	case SM5502_MUIC_ADC_TTY_CONVERTER:
+	case SM5502_MUIC_ADC_UART_CABLE:
+	case SM5502_MUIC_ADC_TYPE1_CHARGER:
+	case SM5502_MUIC_ADC_FACTORY_MODE_BOOT_OFF_USB:
+	case SM5502_MUIC_ADC_FACTORY_MODE_BOOT_ON_USB:
+	case SM5502_MUIC_ADC_AUDIO_VIDEO_CABLE:
+	case SM5502_MUIC_ADC_TYPE2_CHARGER:
+	case SM5502_MUIC_ADC_FACTORY_MODE_BOOT_OFF_UART:
+	case SM5502_MUIC_ADC_FACTORY_MODE_BOOT_ON_UART:
+		break;
+	case SM5502_MUIC_ADC_AUDIO_TYPE1:
 		/*
 		 * Check whether cable type is
 		 * SM5502_MUIC_ADC_AUDIO_TYPE1_FULL_REMOTE
 		 * or SM5502_MUIC_ADC_AUDIO_TYPE1_SEND_END
 		 * by using Button event.
 		 */
-		अवरोध;
-	हाल SM5502_MUIC_ADC_OPEN:
-		ret = regmap_पढ़ो(info->regmap, SM5502_REG_DEV_TYPE1,
+		break;
+	case SM5502_MUIC_ADC_OPEN:
+		ret = regmap_read(info->regmap, SM5502_REG_DEV_TYPE1,
 				  &dev_type1);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(info->dev, "failed to read DEV_TYPE1 reg\n");
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
-		चयन (dev_type1) अणु
-		हाल SM5502_REG_DEV_TYPE1_USB_SDP_MASK:
+		switch (dev_type1) {
+		case SM5502_REG_DEV_TYPE1_USB_SDP_MASK:
 			cable_type = SM5502_MUIC_ADC_OPEN_USB;
-			अवरोध;
-		हाल SM5502_REG_DEV_TYPE1_DEDICATED_CHG_MASK:
+			break;
+		case SM5502_REG_DEV_TYPE1_DEDICATED_CHG_MASK:
 			cable_type = SM5502_MUIC_ADC_OPEN_TA;
-			अवरोध;
-		हाल SM5502_REG_DEV_TYPE1_USB_OTG_MASK:
+			break;
+		case SM5502_REG_DEV_TYPE1_USB_OTG_MASK:
 			cable_type = SM5502_MUIC_ADC_OPEN_USB_OTG;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			dev_dbg(info->dev,
 				"cannot identify the cable type: adc(0x%x)\n",
 				adc);
-			वापस -EINVAL;
-		पूर्ण
-		अवरोध;
-	शेष:
+			return -EINVAL;
+		}
+		break;
+	default:
 		dev_err(info->dev,
 			"failed to identify the cable type: adc(0x%x)\n", adc);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस cable_type;
-पूर्ण
+	return cable_type;
+}
 
-अटल पूर्णांक sm5502_muic_cable_handler(काष्ठा sm5502_muic_info *info,
+static int sm5502_muic_cable_handler(struct sm5502_muic_info *info,
 				     bool attached)
-अणु
-	अटल अचिन्हित पूर्णांक prev_cable_type = SM5502_MUIC_ADC_GROUND;
-	अचिन्हित पूर्णांक cable_type = SM5502_MUIC_ADC_GROUND;
-	अचिन्हित पूर्णांक con_sw = DM_DP_SWITCH_OPEN;
-	अचिन्हित पूर्णांक vbus_sw = VBUSIN_SWITCH_OPEN;
-	अचिन्हित पूर्णांक id;
-	पूर्णांक ret;
+{
+	static unsigned int prev_cable_type = SM5502_MUIC_ADC_GROUND;
+	unsigned int cable_type = SM5502_MUIC_ADC_GROUND;
+	unsigned int con_sw = DM_DP_SWITCH_OPEN;
+	unsigned int vbus_sw = VBUSIN_SWITCH_OPEN;
+	unsigned int id;
+	int ret;
 
 	/* Get the type of attached or detached cable */
-	अगर (attached)
+	if (attached)
 		cable_type = sm5502_muic_get_cable_type(info);
-	अन्यथा
+	else
 		cable_type = prev_cable_type;
 	prev_cable_type = cable_type;
 
-	चयन (cable_type) अणु
-	हाल SM5502_MUIC_ADC_OPEN_USB:
+	switch (cable_type) {
+	case SM5502_MUIC_ADC_OPEN_USB:
 		id	= EXTCON_USB;
 		con_sw	= DM_DP_SWITCH_USB;
 		vbus_sw	= VBUSIN_SWITCH_VBUSOUT_WITH_USB;
-		अवरोध;
-	हाल SM5502_MUIC_ADC_OPEN_TA:
+		break;
+	case SM5502_MUIC_ADC_OPEN_TA:
 		id	= EXTCON_CHG_USB_DCP;
 		con_sw	= DM_DP_SWITCH_OPEN;
 		vbus_sw	= VBUSIN_SWITCH_VBUSOUT;
-		अवरोध;
-	हाल SM5502_MUIC_ADC_GROUND_USB_OTG:
-	हाल SM5502_MUIC_ADC_OPEN_USB_OTG:
+		break;
+	case SM5502_MUIC_ADC_GROUND_USB_OTG:
+	case SM5502_MUIC_ADC_OPEN_USB_OTG:
 		id	= EXTCON_USB_HOST;
 		con_sw	= DM_DP_SWITCH_USB;
 		vbus_sw	= VBUSIN_SWITCH_OPEN;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_dbg(info->dev,
 			"cannot handle this cable_type (0x%x)\n", cable_type);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	/* Change पूर्णांकernal hardware path(DM_CON/DP_CON, VBUSIN) */
+	/* Change internal hardware path(DM_CON/DP_CON, VBUSIN) */
 	ret = sm5502_muic_set_path(info, con_sw, vbus_sw, attached);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	/* Change the state of बाह्यal accessory */
+	/* Change the state of external accessory */
 	extcon_set_state_sync(info->edev, id, attached);
-	अगर (id == EXTCON_USB)
+	if (id == EXTCON_USB)
 		extcon_set_state_sync(info->edev, EXTCON_CHG_USB_SDP,
 					attached);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम sm5502_muic_irq_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा sm5502_muic_info *info = container_of(work,
-			काष्ठा sm5502_muic_info, irq_work);
-	पूर्णांक ret = 0;
+static void sm5502_muic_irq_work(struct work_struct *work)
+{
+	struct sm5502_muic_info *info = container_of(work,
+			struct sm5502_muic_info, irq_work);
+	int ret = 0;
 
-	अगर (!info->edev)
-		वापस;
+	if (!info->edev)
+		return;
 
 	mutex_lock(&info->mutex);
 
 	/* Detect attached or detached cables */
-	अगर (info->irq_attach) अणु
+	if (info->irq_attach) {
 		ret = sm5502_muic_cable_handler(info, true);
 		info->irq_attach = false;
-	पूर्ण
-	अगर (info->irq_detach) अणु
+	}
+	if (info->irq_detach) {
 		ret = sm5502_muic_cable_handler(info, false);
 		info->irq_detach = false;
-	पूर्ण
+	}
 
-	अगर (ret < 0)
+	if (ret < 0)
 		dev_err(info->dev, "failed to handle MUIC interrupt\n");
 
 	mutex_unlock(&info->mutex);
-पूर्ण
+}
 
 /*
- * Sets irq_attach or irq_detach in sm5502_muic_info and वापसs 0.
- * Returns -ESRCH अगर irq_type करोes not match रेजिस्टरed IRQ क्रम this dev type.
+ * Sets irq_attach or irq_detach in sm5502_muic_info and returns 0.
+ * Returns -ESRCH if irq_type does not match registered IRQ for this dev type.
  */
-अटल पूर्णांक sm5502_parse_irq(काष्ठा sm5502_muic_info *info, पूर्णांक irq_type)
-अणु
-	चयन (irq_type) अणु
-	हाल SM5502_IRQ_INT1_ATTACH:
+static int sm5502_parse_irq(struct sm5502_muic_info *info, int irq_type)
+{
+	switch (irq_type) {
+	case SM5502_IRQ_INT1_ATTACH:
 		info->irq_attach = true;
-		अवरोध;
-	हाल SM5502_IRQ_INT1_DETACH:
+		break;
+	case SM5502_IRQ_INT1_DETACH:
 		info->irq_detach = true;
-		अवरोध;
-	हाल SM5502_IRQ_INT1_KP:
-	हाल SM5502_IRQ_INT1_LKP:
-	हाल SM5502_IRQ_INT1_LKR:
-	हाल SM5502_IRQ_INT1_OVP_EVENT:
-	हाल SM5502_IRQ_INT1_OCP_EVENT:
-	हाल SM5502_IRQ_INT1_OVP_OCP_DIS:
-	हाल SM5502_IRQ_INT2_VBUS_DET:
-	हाल SM5502_IRQ_INT2_REV_ACCE:
-	हाल SM5502_IRQ_INT2_ADC_CHG:
-	हाल SM5502_IRQ_INT2_STUCK_KEY:
-	हाल SM5502_IRQ_INT2_STUCK_KEY_RCV:
-	हाल SM5502_IRQ_INT2_MHL:
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	case SM5502_IRQ_INT1_KP:
+	case SM5502_IRQ_INT1_LKP:
+	case SM5502_IRQ_INT1_LKR:
+	case SM5502_IRQ_INT1_OVP_EVENT:
+	case SM5502_IRQ_INT1_OCP_EVENT:
+	case SM5502_IRQ_INT1_OVP_OCP_DIS:
+	case SM5502_IRQ_INT2_VBUS_DET:
+	case SM5502_IRQ_INT2_REV_ACCE:
+	case SM5502_IRQ_INT2_ADC_CHG:
+	case SM5502_IRQ_INT2_STUCK_KEY:
+	case SM5502_IRQ_INT2_STUCK_KEY_RCV:
+	case SM5502_IRQ_INT2_MHL:
+	default:
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल irqवापस_t sm5502_muic_irq_handler(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा sm5502_muic_info *info = data;
-	पूर्णांक i, irq_type = -1, ret;
+static irqreturn_t sm5502_muic_irq_handler(int irq, void *data)
+{
+	struct sm5502_muic_info *info = data;
+	int i, irq_type = -1, ret;
 
-	क्रम (i = 0; i < info->num_muic_irqs; i++)
-		अगर (irq == info->muic_irqs[i].virq)
+	for (i = 0; i < info->num_muic_irqs; i++)
+		if (irq == info->muic_irqs[i].virq)
 			irq_type = info->muic_irqs[i].irq;
 
 	ret = sm5502_parse_irq(info, irq_type);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_warn(info->dev, "cannot handle is interrupt:%d\n",
 				    irq_type);
-		वापस IRQ_HANDLED;
-	पूर्ण
+		return IRQ_HANDLED;
+	}
 	schedule_work(&info->irq_work);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम sm5502_muic_detect_cable_wq(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा sm5502_muic_info *info = container_of(to_delayed_work(work),
-				काष्ठा sm5502_muic_info, wq_detcable);
-	पूर्णांक ret;
+static void sm5502_muic_detect_cable_wq(struct work_struct *work)
+{
+	struct sm5502_muic_info *info = container_of(to_delayed_work(work),
+				struct sm5502_muic_info, wq_detcable);
+	int ret;
 
-	/* Notअगरy the state of connector cable or not  */
+	/* Notify the state of connector cable or not  */
 	ret = sm5502_muic_cable_handler(info, true);
-	अगर (ret < 0)
+	if (ret < 0)
 		dev_warn(info->dev, "failed to detect cable state\n");
-पूर्ण
+}
 
-अटल व्योम sm5502_init_dev_type(काष्ठा sm5502_muic_info *info)
-अणु
-	अचिन्हित पूर्णांक reg_data, venकरोr_id, version_id;
-	पूर्णांक i, ret;
+static void sm5502_init_dev_type(struct sm5502_muic_info *info)
+{
+	unsigned int reg_data, vendor_id, version_id;
+	int i, ret;
 
-	/* To test I2C, Prपूर्णांक version_id and venकरोr_id of SM5502 */
-	ret = regmap_पढ़ो(info->regmap, SM5502_REG_DEVICE_ID, &reg_data);
-	अगर (ret) अणु
+	/* To test I2C, Print version_id and vendor_id of SM5502 */
+	ret = regmap_read(info->regmap, SM5502_REG_DEVICE_ID, &reg_data);
+	if (ret) {
 		dev_err(info->dev,
 			"failed to read DEVICE_ID register: %d\n", ret);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	venकरोr_id = ((reg_data & SM5502_REG_DEVICE_ID_VENDOR_MASK) >>
+	vendor_id = ((reg_data & SM5502_REG_DEVICE_ID_VENDOR_MASK) >>
 				SM5502_REG_DEVICE_ID_VENDOR_SHIFT);
 	version_id = ((reg_data & SM5502_REG_DEVICE_ID_VERSION_MASK) >>
 				SM5502_REG_DEVICE_ID_VERSION_SHIFT);
 
 	dev_info(info->dev, "Device type: version: 0x%x, vendor: 0x%x\n",
-			    version_id, venकरोr_id);
+			    version_id, vendor_id);
 
-	/* Initiazle the रेजिस्टर of SM5502 device to bring-up */
-	क्रम (i = 0; i < info->num_reg_data; i++) अणु
-		अचिन्हित पूर्णांक val = 0;
+	/* Initiazle the register of SM5502 device to bring-up */
+	for (i = 0; i < info->num_reg_data; i++) {
+		unsigned int val = 0;
 
-		अगर (!info->reg_data[i].invert)
+		if (!info->reg_data[i].invert)
 			val |= ~info->reg_data[i].val;
-		अन्यथा
+		else
 			val = info->reg_data[i].val;
-		regmap_ग_लिखो(info->regmap, info->reg_data[i].reg, val);
-	पूर्ण
-पूर्ण
+		regmap_write(info->regmap, info->reg_data[i].reg, val);
+	}
+}
 
-अटल पूर्णांक sm5022_muic_i2c_probe(काष्ठा i2c_client *i2c,
-				 स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा device_node *np = i2c->dev.of_node;
-	काष्ठा sm5502_muic_info *info;
-	पूर्णांक i, ret, irq_flags;
+static int sm5022_muic_i2c_probe(struct i2c_client *i2c,
+				 const struct i2c_device_id *id)
+{
+	struct device_node *np = i2c->dev.of_node;
+	struct sm5502_muic_info *info;
+	int i, ret, irq_flags;
 
-	अगर (!np)
-		वापस -EINVAL;
+	if (!np)
+		return -EINVAL;
 
-	info = devm_kzalloc(&i2c->dev, माप(*info), GFP_KERNEL);
-	अगर (!info)
-		वापस -ENOMEM;
+	info = devm_kzalloc(&i2c->dev, sizeof(*info), GFP_KERNEL);
+	if (!info)
+		return -ENOMEM;
 	i2c_set_clientdata(i2c, info);
 
 	info->dev = &i2c->dev;
@@ -592,137 +591,137 @@
 	INIT_WORK(&info->irq_work, sm5502_muic_irq_work);
 
 	info->regmap = devm_regmap_init_i2c(i2c, &sm5502_muic_regmap_config);
-	अगर (IS_ERR(info->regmap)) अणु
+	if (IS_ERR(info->regmap)) {
 		ret = PTR_ERR(info->regmap);
 		dev_err(info->dev, "failed to allocate register map: %d\n",
 				   ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* Support irq करोमुख्य क्रम SM5502 MUIC device */
+	/* Support irq domain for SM5502 MUIC device */
 	irq_flags = IRQF_TRIGGER_FALLING | IRQF_ONESHOT | IRQF_SHARED;
 	ret = regmap_add_irq_chip(info->regmap, info->irq, irq_flags, 0,
 				  &sm5502_muic_irq_chip, &info->irq_data);
-	अगर (ret != 0) अणु
+	if (ret != 0) {
 		dev_err(info->dev, "failed to request IRQ %d: %d\n",
 				    info->irq, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	क्रम (i = 0; i < info->num_muic_irqs; i++) अणु
-		काष्ठा muic_irq *muic_irq = &info->muic_irqs[i];
-		पूर्णांक virq = 0;
+	for (i = 0; i < info->num_muic_irqs; i++) {
+		struct muic_irq *muic_irq = &info->muic_irqs[i];
+		int virq = 0;
 
 		virq = regmap_irq_get_virq(info->irq_data, muic_irq->irq);
-		अगर (virq <= 0)
-			वापस -EINVAL;
+		if (virq <= 0)
+			return -EINVAL;
 		muic_irq->virq = virq;
 
-		ret = devm_request_thपढ़ोed_irq(info->dev, virq, शून्य,
+		ret = devm_request_threaded_irq(info->dev, virq, NULL,
 						sm5502_muic_irq_handler,
 						IRQF_NO_SUSPEND | IRQF_ONESHOT,
 						muic_irq->name, info);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(info->dev,
 				"failed: irq request (IRQ: %d, error :%d)\n",
 				muic_irq->irq, ret);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
 	/* Allocate extcon device */
 	info->edev = devm_extcon_dev_allocate(info->dev, sm5502_extcon_cable);
-	अगर (IS_ERR(info->edev)) अणु
+	if (IS_ERR(info->edev)) {
 		dev_err(info->dev, "failed to allocate memory for extcon\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	/* Register extcon device */
-	ret = devm_extcon_dev_रेजिस्टर(info->dev, info->edev);
-	अगर (ret) अणु
+	ret = devm_extcon_dev_register(info->dev, info->edev);
+	if (ret) {
 		dev_err(info->dev, "failed to register extcon device\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/*
-	 * Detect accessory after completing the initialization of platक्रमm
+	 * Detect accessory after completing the initialization of platform
 	 *
 	 * - Use delayed workqueue to detect cable state and then
-	 * notअगरy cable state to notअगरiee/platक्रमm through uevent.
-	 * After completing the booting of platक्रमm, the extcon provider
-	 * driver should notअगरy cable state to upper layer.
+	 * notify cable state to notifiee/platform through uevent.
+	 * After completing the booting of platform, the extcon provider
+	 * driver should notify cable state to upper layer.
 	 */
 	INIT_DELAYED_WORK(&info->wq_detcable, sm5502_muic_detect_cable_wq);
-	queue_delayed_work(प्रणाली_घातer_efficient_wq, &info->wq_detcable,
-			msecs_to_jअगरfies(DELAY_MS_DEFAULT));
+	queue_delayed_work(system_power_efficient_wq, &info->wq_detcable,
+			msecs_to_jiffies(DELAY_MS_DEFAULT));
 
-	/* Initialize SM5502 device and prपूर्णांक venकरोr id and version id */
+	/* Initialize SM5502 device and print vendor id and version id */
 	sm5502_init_dev_type(info);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sm5502_muic_i2c_हटाओ(काष्ठा i2c_client *i2c)
-अणु
-	काष्ठा sm5502_muic_info *info = i2c_get_clientdata(i2c);
+static int sm5502_muic_i2c_remove(struct i2c_client *i2c)
+{
+	struct sm5502_muic_info *info = i2c_get_clientdata(i2c);
 
 	regmap_del_irq_chip(info->irq, info->irq_data);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id sm5502_dt_match[] = अणु
-	अणु .compatible = "siliconmitus,sm5502-muic" पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct of_device_id sm5502_dt_match[] = {
+	{ .compatible = "siliconmitus,sm5502-muic" },
+	{ },
+};
 MODULE_DEVICE_TABLE(of, sm5502_dt_match);
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक sm5502_muic_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा i2c_client *i2c = to_i2c_client(dev);
-	काष्ठा sm5502_muic_info *info = i2c_get_clientdata(i2c);
+#ifdef CONFIG_PM_SLEEP
+static int sm5502_muic_suspend(struct device *dev)
+{
+	struct i2c_client *i2c = to_i2c_client(dev);
+	struct sm5502_muic_info *info = i2c_get_clientdata(i2c);
 
 	enable_irq_wake(info->irq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sm5502_muic_resume(काष्ठा device *dev)
-अणु
-	काष्ठा i2c_client *i2c = to_i2c_client(dev);
-	काष्ठा sm5502_muic_info *info = i2c_get_clientdata(i2c);
+static int sm5502_muic_resume(struct device *dev)
+{
+	struct i2c_client *i2c = to_i2c_client(dev);
+	struct sm5502_muic_info *info = i2c_get_clientdata(i2c);
 
 	disable_irq_wake(info->irq);
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल SIMPLE_DEV_PM_OPS(sm5502_muic_pm_ops,
+static SIMPLE_DEV_PM_OPS(sm5502_muic_pm_ops,
 			 sm5502_muic_suspend, sm5502_muic_resume);
 
-अटल स्थिर काष्ठा i2c_device_id sm5502_i2c_id[] = अणु
-	अणु "sm5502", TYPE_SM5502 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id sm5502_i2c_id[] = {
+	{ "sm5502", TYPE_SM5502 },
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, sm5502_i2c_id);
 
-अटल काष्ठा i2c_driver sm5502_muic_i2c_driver = अणु
-	.driver		= अणु
+static struct i2c_driver sm5502_muic_i2c_driver = {
+	.driver		= {
 		.name	= "sm5502",
 		.pm	= &sm5502_muic_pm_ops,
 		.of_match_table = sm5502_dt_match,
-	पूर्ण,
+	},
 	.probe	= sm5022_muic_i2c_probe,
-	.हटाओ	= sm5502_muic_i2c_हटाओ,
+	.remove	= sm5502_muic_i2c_remove,
 	.id_table = sm5502_i2c_id,
-पूर्ण;
+};
 
-अटल पूर्णांक __init sm5502_muic_i2c_init(व्योम)
-अणु
-	वापस i2c_add_driver(&sm5502_muic_i2c_driver);
-पूर्ण
+static int __init sm5502_muic_i2c_init(void)
+{
+	return i2c_add_driver(&sm5502_muic_i2c_driver);
+}
 subsys_initcall(sm5502_muic_i2c_init);
 
 MODULE_DESCRIPTION("Silicon Mitus SM5502 Extcon driver");

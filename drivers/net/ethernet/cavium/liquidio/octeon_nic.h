@@ -1,4 +1,3 @@
-<शैली गुरु>
 /**********************************************************************
  * Author: Cavium, Inc.
  *
@@ -7,44 +6,44 @@
  *
  * Copyright (c) 2003-2016 Cavium, Inc.
  *
- * This file is मुक्त software; you can redistribute it and/or modअगरy
+ * This file is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, Version 2, as
  * published by the Free Software Foundation.
  *
  * This file is distributed in the hope that it will be useful, but
  * AS-IS and WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE, TITLE, or
- * NONINFRINGEMENT.  See the GNU General Public License क्रम more
+ * NONINFRINGEMENT.  See the GNU General Public License for more
  * details.
  **********************************************************************/
 
-/*!  \पile octeon_nic.h
- *   \मrief Host NIC Driver: Routine to send network data &
+/*!  \file octeon_nic.h
+ *   \brief Host NIC Driver: Routine to send network data &
  *   control packet to Octeon.
  */
 
-#अगर_अघोषित __OCTEON_NIC_H__
-#घोषणा  __OCTEON_NIC_H__
+#ifndef __OCTEON_NIC_H__
+#define  __OCTEON_NIC_H__
 
 /* Maximum number of 8-byte words can be sent in a NIC control message.
  */
-#घोषणा  MAX_NCTRL_UDD  32
+#define  MAX_NCTRL_UDD  32
 
-प्रकार व्योम (*octnic_ctrl_pkt_cb_fn_t) (व्योम *);
+typedef void (*octnic_ctrl_pkt_cb_fn_t) (void *);
 
-/* Structure of control inक्रमmation passed by the NIC module to the OSI
+/* Structure of control information passed by the NIC module to the OSI
  * layer when sending control commands to Octeon device software.
  */
-काष्ठा octnic_ctrl_pkt अणु
+struct octnic_ctrl_pkt {
 	/** Command to be passed to the Octeon device software. */
-	जोड़ octnet_cmd ncmd;
+	union octnet_cmd ncmd;
 
 	/** Send buffer  */
-	व्योम *data;
+	void *data;
 	u64 dmadata;
 
 	/** Response buffer */
-	व्योम *rdata;
+	void *rdata;
 	u64 dmardata;
 
 	/** Additional data that may be needed by some commands. */
@@ -60,18 +59,18 @@
 	octnic_ctrl_pkt_cb_fn_t cb_fn;
 
 	u32 sc_status;
-पूर्ण;
+};
 
-#घोषणा MAX_UDD_SIZE(nctrl) (माप((nctrl)->udd))
+#define MAX_UDD_SIZE(nctrl) (sizeof((nctrl)->udd))
 
-/** Structure of data inक्रमmation passed by the NIC module to the OSI
- * layer when क्रमwarding data to Octeon device software.
+/** Structure of data information passed by the NIC module to the OSI
+ * layer when forwarding data to Octeon device software.
  */
-काष्ठा octnic_data_pkt अणु
-	/** Poपूर्णांकer to inक्रमmation मुख्यtained by NIC module क्रम this packet. The
+struct octnic_data_pkt {
+	/** Pointer to information maintained by NIC module for this packet. The
 	 *  OSI layer passes this as-is to the driver.
 	 */
-	व्योम *buf;
+	void *buf;
 
 	/** Type of buffer passed in "buf" above. */
 	u32 reqtype;
@@ -80,82 +79,82 @@
 	u32 datasize;
 
 	/** Command to be passed to the Octeon device software. */
-	जोड़ octeon_instr_64B cmd;
+	union octeon_instr_64B cmd;
 
 	/** Input queue to use to send this command. */
 	u32 q_no;
 
-पूर्ण;
+};
 
 /** Structure passed by NIC module to OSI layer to prepare a command to send
  * network data to Octeon.
  */
-जोड़ octnic_cmd_setup अणु
-	काष्ठा अणु
+union octnic_cmd_setup {
+	struct {
 		u32 iq_no:8;
 		u32 gather:1;
-		u32 बारtamp:1;
+		u32 timestamp:1;
 		u32 ip_csum:1;
 		u32 transport_csum:1;
 		u32 tnl_csum:1;
 		u32 rsvd:19;
 
-		जोड़ अणु
+		union {
 			u32 datasize;
 			u32 gatherptrs;
-		पूर्ण u;
-	पूर्ण s;
+		} u;
+	} s;
 
 	u64 u64;
 
-पूर्ण;
+};
 
-अटल अंतरभूत पूर्णांक octnet_iq_is_full(काष्ठा octeon_device *oct, u32 q_no)
-अणु
-	वापस ((u32)atomic_पढ़ो(&oct->instr_queue[q_no]->instr_pending)
+static inline int octnet_iq_is_full(struct octeon_device *oct, u32 q_no)
+{
+	return ((u32)atomic_read(&oct->instr_queue[q_no]->instr_pending)
 		>= (oct->instr_queue[q_no]->max_count - 2));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम
-octnet_prepare_pci_cmd_o2(काष्ठा octeon_device *oct,
-			  जोड़ octeon_instr_64B *cmd,
-			  जोड़ octnic_cmd_setup *setup, u32 tag)
-अणु
-	काष्ठा octeon_instr_ih2 *ih2;
-	काष्ठा octeon_instr_irh *irh;
-	जोड़ octnic_packet_params packet_params;
-	पूर्णांक port;
+static inline void
+octnet_prepare_pci_cmd_o2(struct octeon_device *oct,
+			  union octeon_instr_64B *cmd,
+			  union octnic_cmd_setup *setup, u32 tag)
+{
+	struct octeon_instr_ih2 *ih2;
+	struct octeon_instr_irh *irh;
+	union octnic_packet_params packet_params;
+	int port;
 
-	स_रखो(cmd, 0, माप(जोड़ octeon_instr_64B));
+	memset(cmd, 0, sizeof(union octeon_instr_64B));
 
-	ih2 = (काष्ठा octeon_instr_ih2 *)&cmd->cmd2.ih2;
+	ih2 = (struct octeon_instr_ih2 *)&cmd->cmd2.ih2;
 
-	/* assume that rflag is cleared so thereक्रमe front data will only have
-	 * irh and ossp[0], ossp[1] क्रम a total of 32 bytes
+	/* assume that rflag is cleared so therefore front data will only have
+	 * irh and ossp[0], ossp[1] for a total of 32 bytes
 	 */
 	ih2->fsz = LIO_PCICMD_O2;
 
 	ih2->tagtype = ORDERED_TAG;
 	ih2->grp = DEFAULT_POW_GRP;
 
-	port = (पूर्णांक)oct->instr_queue[setup->s.iq_no]->txpciq.s.port;
+	port = (int)oct->instr_queue[setup->s.iq_no]->txpciq.s.port;
 
-	अगर (tag)
+	if (tag)
 		ih2->tag = tag;
-	अन्यथा
+	else
 		ih2->tag = LIO_DATA(port);
 
 	ih2->raw = 1;
-	ih2->qos = (port & 3) + 4;	/* map qos based on पूर्णांकerface */
+	ih2->qos = (port & 3) + 4;	/* map qos based on interface */
 
-	अगर (!setup->s.gather) अणु
+	if (!setup->s.gather) {
 		ih2->dlengsz = setup->s.u.datasize;
-	पूर्ण अन्यथा अणु
+	} else {
 		ih2->gather = 1;
 		ih2->dlengsz = setup->s.u.gatherptrs;
-	पूर्ण
+	}
 
-	irh = (काष्ठा octeon_instr_irh *)&cmd->cmd2.irh;
+	irh = (struct octeon_instr_irh *)&cmd->cmd2.irh;
 
 	irh->opcode = OPCODE_NIC;
 	irh->subcode = OPCODE_NIC_NW_DATA;
@@ -165,40 +164,40 @@ octnet_prepare_pci_cmd_o2(काष्ठा octeon_device *oct,
 	packet_params.s.ip_csum = setup->s.ip_csum;
 	packet_params.s.transport_csum = setup->s.transport_csum;
 	packet_params.s.tnl_csum = setup->s.tnl_csum;
-	packet_params.s.tsflag = setup->s.बारtamp;
+	packet_params.s.tsflag = setup->s.timestamp;
 
 	irh->ossp = packet_params.u32;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम
-octnet_prepare_pci_cmd_o3(काष्ठा octeon_device *oct,
-			  जोड़ octeon_instr_64B *cmd,
-			  जोड़ octnic_cmd_setup *setup, u32 tag)
-अणु
-	काष्ठा octeon_instr_irh *irh;
-	काष्ठा octeon_instr_ih3     *ih3;
-	काष्ठा octeon_instr_pki_ih3 *pki_ih3;
-	जोड़ octnic_packet_params packet_params;
-	पूर्णांक port;
+static inline void
+octnet_prepare_pci_cmd_o3(struct octeon_device *oct,
+			  union octeon_instr_64B *cmd,
+			  union octnic_cmd_setup *setup, u32 tag)
+{
+	struct octeon_instr_irh *irh;
+	struct octeon_instr_ih3     *ih3;
+	struct octeon_instr_pki_ih3 *pki_ih3;
+	union octnic_packet_params packet_params;
+	int port;
 
-	स_रखो(cmd, 0, माप(जोड़ octeon_instr_64B));
+	memset(cmd, 0, sizeof(union octeon_instr_64B));
 
-	ih3 = (काष्ठा octeon_instr_ih3 *)&cmd->cmd3.ih3;
-	pki_ih3 = (काष्ठा octeon_instr_pki_ih3 *)&cmd->cmd3.pki_ih3;
+	ih3 = (struct octeon_instr_ih3 *)&cmd->cmd3.ih3;
+	pki_ih3 = (struct octeon_instr_pki_ih3 *)&cmd->cmd3.pki_ih3;
 
-	/* assume that rflag is cleared so thereक्रमe front data will only have
-	 * irh and ossp[1] and ossp[2] क्रम a total of 24 bytes
+	/* assume that rflag is cleared so therefore front data will only have
+	 * irh and ossp[1] and ossp[2] for a total of 24 bytes
 	 */
 	ih3->pkind       = oct->instr_queue[setup->s.iq_no]->txpciq.s.pkind;
 	/*PKI IH*/
 	ih3->fsz = LIO_PCICMD_O3;
 
-	अगर (!setup->s.gather) अणु
+	if (!setup->s.gather) {
 		ih3->dlengsz = setup->s.u.datasize;
-	पूर्ण अन्यथा अणु
+	} else {
 		ih3->gather = 1;
 		ih3->dlengsz = setup->s.u.gatherptrs;
-	पूर्ण
+	}
 
 	pki_ih3->w       = 1;
 	pki_ih3->raw     = 1;
@@ -206,19 +205,19 @@ octnet_prepare_pci_cmd_o3(काष्ठा octeon_device *oct,
 	pki_ih3->utt     = 1;
 	pki_ih3->uqpg    = oct->instr_queue[setup->s.iq_no]->txpciq.s.use_qpg;
 
-	port = (पूर्णांक)oct->instr_queue[setup->s.iq_no]->txpciq.s.port;
+	port = (int)oct->instr_queue[setup->s.iq_no]->txpciq.s.port;
 
-	अगर (tag)
+	if (tag)
 		pki_ih3->tag = tag;
-	अन्यथा
+	else
 		pki_ih3->tag     = LIO_DATA(port);
 
 	pki_ih3->tagtype = ORDERED_TAG;
 	pki_ih3->qpg     = oct->instr_queue[setup->s.iq_no]->txpciq.s.qpg;
-	pki_ih3->pm      = 0x7; /*0x7 - meant क्रम Parse nothing, unपूर्णांकerpreted*/
-	pki_ih3->sl      = 8;   /* sl will be माप(pki_ih3)*/
+	pki_ih3->pm      = 0x7; /*0x7 - meant for Parse nothing, uninterpreted*/
+	pki_ih3->sl      = 8;   /* sl will be sizeof(pki_ih3)*/
 
-	irh = (काष्ठा octeon_instr_irh *)&cmd->cmd3.irh;
+	irh = (struct octeon_instr_irh *)&cmd->cmd3.irh;
 
 	irh->opcode = OPCODE_NIC;
 	irh->subcode = OPCODE_NIC_NW_DATA;
@@ -228,62 +227,62 @@ octnet_prepare_pci_cmd_o3(काष्ठा octeon_device *oct,
 	packet_params.s.ip_csum = setup->s.ip_csum;
 	packet_params.s.transport_csum = setup->s.transport_csum;
 	packet_params.s.tnl_csum = setup->s.tnl_csum;
-	packet_params.s.tsflag = setup->s.बारtamp;
+	packet_params.s.tsflag = setup->s.timestamp;
 
 	irh->ossp = packet_params.u32;
-पूर्ण
+}
 
-/** Utility function to prepare a 64B NIC inकाष्ठाion based on a setup command
- * @param cmd - poपूर्णांकer to inकाष्ठाion to be filled in.
- * @param setup - poपूर्णांकer to the setup काष्ठाure
- * @param q_no - which queue क्रम back pressure
+/** Utility function to prepare a 64B NIC instruction based on a setup command
+ * @param cmd - pointer to instruction to be filled in.
+ * @param setup - pointer to the setup structure
+ * @param q_no - which queue for back pressure
  *
- * Assumes the cmd inकाष्ठाion is pre-allocated, but no fields are filled in.
+ * Assumes the cmd instruction is pre-allocated, but no fields are filled in.
  */
-अटल अंतरभूत व्योम
-octnet_prepare_pci_cmd(काष्ठा octeon_device *oct, जोड़ octeon_instr_64B *cmd,
-		       जोड़ octnic_cmd_setup *setup, u32 tag)
-अणु
-	अगर (OCTEON_CN6XXX(oct))
+static inline void
+octnet_prepare_pci_cmd(struct octeon_device *oct, union octeon_instr_64B *cmd,
+		       union octnic_cmd_setup *setup, u32 tag)
+{
+	if (OCTEON_CN6XXX(oct))
 		octnet_prepare_pci_cmd_o2(oct, cmd, setup, tag);
-	अन्यथा
+	else
 		octnet_prepare_pci_cmd_o3(oct, cmd, setup, tag);
-पूर्ण
+}
 
-/** Allocate and a soft command with space क्रम a response immediately following
+/** Allocate and a soft command with space for a response immediately following
  * the commnad.
- * @param oct - octeon device poपूर्णांकer
- * @param cmd - poपूर्णांकer to the command काष्ठाure, pre-filled क्रम everything
+ * @param oct - octeon device pointer
+ * @param cmd - pointer to the command structure, pre-filled for everything
  * except the response.
  * @param rdatasize - size in bytes of the response.
  *
- * @वापसs poपूर्णांकer to allocated buffer with command copied पूर्णांकo it, and
+ * @returns pointer to allocated buffer with command copied into it, and
  * response space immediately following.
  */
-व्योम *
-octeon_alloc_soft_command_resp(काष्ठा octeon_device    *oct,
-			       जोड़ octeon_instr_64B *cmd,
+void *
+octeon_alloc_soft_command_resp(struct octeon_device    *oct,
+			       union octeon_instr_64B *cmd,
 			       u32		       rdatasize);
 
 /** Send a NIC data packet to the device
- * @param oct - octeon device poपूर्णांकer
- * @param ndata - control काष्ठाure with queueing, and buffer inक्रमmation
+ * @param oct - octeon device pointer
+ * @param ndata - control structure with queueing, and buffer information
  *
- * @वापसs IQ_FAILED अगर it failed to add to the input queue. IQ_STOP अगर it the
- * queue should be stopped, and IQ_SEND_OK अगर it sent okay.
+ * @returns IQ_FAILED if it failed to add to the input queue. IQ_STOP if it the
+ * queue should be stopped, and IQ_SEND_OK if it sent okay.
  */
-पूर्णांक octnet_send_nic_data_pkt(काष्ठा octeon_device *oct,
-			     काष्ठा octnic_data_pkt *ndata,
-			     पूर्णांक xmit_more);
+int octnet_send_nic_data_pkt(struct octeon_device *oct,
+			     struct octnic_data_pkt *ndata,
+			     int xmit_more);
 
 /** Send a NIC control packet to the device
- * @param oct - octeon device poपूर्णांकer
- * @param nctrl - control काष्ठाure with command, timout, and callback info
- * @वापसs IQ_FAILED अगर it failed to add to the input queue. IQ_STOP अगर it the
- * queue should be stopped, and IQ_SEND_OK अगर it sent okay.
+ * @param oct - octeon device pointer
+ * @param nctrl - control structure with command, timout, and callback info
+ * @returns IQ_FAILED if it failed to add to the input queue. IQ_STOP if it the
+ * queue should be stopped, and IQ_SEND_OK if it sent okay.
  */
-पूर्णांक
-octnet_send_nic_ctrl_pkt(काष्ठा octeon_device *oct,
-			 काष्ठा octnic_ctrl_pkt *nctrl);
+int
+octnet_send_nic_ctrl_pkt(struct octeon_device *oct,
+			 struct octnic_ctrl_pkt *nctrl);
 
-#पूर्ण_अगर
+#endif

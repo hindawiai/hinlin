@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * linux/arch/sh/boards/renesas/rts7751r2d/irq.c
  *
@@ -8,21 +7,21 @@
  *
  * Renesas Technology Sales RTS7751R2D Support, R2D-PLUS and R2D-1.
  *
- * Modअगरied क्रम RTS7751R2D by
+ * Modified for RTS7751R2D by
  * Atom Create Engineering Co., Ltd. 2002.
  */
-#समावेश <linux/init.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <mach/r2d.h>
+#include <linux/init.h>
+#include <linux/irq.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <mach/r2d.h>
 
-#घोषणा R2D_NR_IRL 13
+#define R2D_NR_IRL 13
 
-क्रमागत अणु
+enum {
 	UNUSED = 0,
 
-	/* board specअगरic पूर्णांकerrupt sources (R2D-1 and R2D-PLUS) */
+	/* board specific interrupt sources (R2D-1 and R2D-PLUS) */
 	EXT,              /* EXT_INT0-3 */
 	RTC_T, RTC_A,     /* Real Time Clock */
 	AX88796,          /* Ethernet controller (R2D-1 board) */
@@ -36,12 +35,12 @@
 	PCI_INTB_SLOT,    /* PCI Slot 3.3v (R2D-1 board) */
 	PCI_INTA_SLOT,    /* PCI Slot 3.3v */
 	TP,               /* Touch Panel */
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_RTS7751R2D_1
+#ifdef CONFIG_RTS7751R2D_1
 
-/* Vectors क्रम R2D-1 */
-अटल काष्ठा पूर्णांकc_vect vectors_r2d_1[] __initdata = अणु
+/* Vectors for R2D-1 */
+static struct intc_vect vectors_r2d_1[] __initdata = {
 	INTC_IRQ(EXT, IRQ_EXT),
 	INTC_IRQ(RTC_T, IRQ_RTC_T), INTC_IRQ(RTC_A, IRQ_RTC_A),
 	INTC_IRQ(AX88796, IRQ_AX88796), INTC_IRQ(SDCARD, IRQ_SDCARD),
@@ -52,34 +51,34 @@
 	INTC_IRQ(PCI_INTB_SLOT, IRQ_PCI_INTB),
 	INTC_IRQ(PCI_INTA_SLOT, IRQ_PCI_INTA),
 	INTC_IRQ(TP, IRQ_TP),
-पूर्ण;
+};
 
-/* IRLMSK mask रेजिस्टर layout क्रम R2D-1 */
-अटल काष्ठा पूर्णांकc_mask_reg mask_रेजिस्टरs_r2d_1[] __initdata = अणु
-	अणु 0xa4000000, 0, 16, /* IRLMSK */
-	  अणु TP, PCI_INTA_SLOT, PCI_INTB_SLOT,
+/* IRLMSK mask register layout for R2D-1 */
+static struct intc_mask_reg mask_registers_r2d_1[] __initdata = {
+	{ 0xa4000000, 0, 16, /* IRLMSK */
+	  { TP, PCI_INTA_SLOT, PCI_INTB_SLOT,
 	    PCI_INTC_PCI1520, PCI_INTD_RTL8139,
 	    SM501, CF_IDE, CF_CD, SDCARD, AX88796,
-	    RTC_A, RTC_T, 0, 0, 0, EXT पूर्ण पूर्ण,
-पूर्ण;
+	    RTC_A, RTC_T, 0, 0, 0, EXT } },
+};
 
-/* IRLn to IRQ table क्रम R2D-1 */
-अटल अचिन्हित अक्षर irl2irq_r2d_1[R2D_NR_IRL] __initdata = अणु
+/* IRLn to IRQ table for R2D-1 */
+static unsigned char irl2irq_r2d_1[R2D_NR_IRL] __initdata = {
 	IRQ_PCI_INTD, IRQ_CF_IDE, IRQ_CF_CD, IRQ_PCI_INTC,
 	IRQ_VOYAGER, IRQ_AX88796, IRQ_RTC_A, IRQ_RTC_T,
 	IRQ_SDCARD, IRQ_PCI_INTA, IRQ_PCI_INTB, IRQ_EXT,
 	IRQ_TP,
-पूर्ण;
+};
 
-अटल DECLARE_INTC_DESC(पूर्णांकc_desc_r2d_1, "r2d-1", vectors_r2d_1,
-			 शून्य, mask_रेजिस्टरs_r2d_1, शून्य, शून्य);
+static DECLARE_INTC_DESC(intc_desc_r2d_1, "r2d-1", vectors_r2d_1,
+			 NULL, mask_registers_r2d_1, NULL, NULL);
 
-#पूर्ण_अगर /* CONFIG_RTS7751R2D_1 */
+#endif /* CONFIG_RTS7751R2D_1 */
 
-#अगर_घोषित CONFIG_RTS7751R2D_PLUS
+#ifdef CONFIG_RTS7751R2D_PLUS
 
-/* Vectors क्रम R2D-PLUS */
-अटल काष्ठा पूर्णांकc_vect vectors_r2d_plus[] __initdata = अणु
+/* Vectors for R2D-PLUS */
+static struct intc_vect vectors_r2d_plus[] __initdata = {
 	INTC_IRQ(EXT, IRQ_EXT),
 	INTC_IRQ(RTC_T, IRQ_RTC_T), INTC_IRQ(RTC_A, IRQ_RTC_A),
 	INTC_IRQ(KEY, IRQ_KEY), INTC_IRQ(SDCARD, IRQ_SDCARD),
@@ -90,68 +89,68 @@
 	INTC_IRQ(PCI_INTB_RTL8139, IRQ_PCI_INTB),
 	INTC_IRQ(PCI_INTA_SLOT, IRQ_PCI_INTA),
 	INTC_IRQ(TP, IRQ_TP),
-पूर्ण;
+};
 
-/* IRLMSK mask रेजिस्टर layout क्रम R2D-PLUS */
-अटल काष्ठा पूर्णांकc_mask_reg mask_रेजिस्टरs_r2d_plus[] __initdata = अणु
-	अणु 0xa4000000, 0, 16, /* IRLMSK */
-	  अणु TP, PCI_INTA_SLOT, PCI_INTB_RTL8139,
+/* IRLMSK mask register layout for R2D-PLUS */
+static struct intc_mask_reg mask_registers_r2d_plus[] __initdata = {
+	{ 0xa4000000, 0, 16, /* IRLMSK */
+	  { TP, PCI_INTA_SLOT, PCI_INTB_RTL8139,
 	    PCI_INTC_PCI1520, PCI_INTD_RTL8139,
 	    SM501, CF_IDE, CF_CD, SDCARD, KEY,
-	    RTC_A, RTC_T, 0, 0, 0, EXT पूर्ण पूर्ण,
-पूर्ण;
+	    RTC_A, RTC_T, 0, 0, 0, EXT } },
+};
 
-/* IRLn to IRQ table क्रम R2D-PLUS */
-अटल अचिन्हित अक्षर irl2irq_r2d_plus[R2D_NR_IRL] __initdata = अणु
+/* IRLn to IRQ table for R2D-PLUS */
+static unsigned char irl2irq_r2d_plus[R2D_NR_IRL] __initdata = {
 	IRQ_PCI_INTD, IRQ_CF_IDE, IRQ_CF_CD, IRQ_PCI_INTC,
 	IRQ_VOYAGER, IRQ_KEY, IRQ_RTC_A, IRQ_RTC_T,
 	IRQ_SDCARD, IRQ_PCI_INTA, IRQ_PCI_INTB, IRQ_EXT,
 	IRQ_TP,
-पूर्ण;
+};
 
-अटल DECLARE_INTC_DESC(पूर्णांकc_desc_r2d_plus, "r2d-plus", vectors_r2d_plus,
-			 शून्य, mask_रेजिस्टरs_r2d_plus, शून्य, शून्य);
+static DECLARE_INTC_DESC(intc_desc_r2d_plus, "r2d-plus", vectors_r2d_plus,
+			 NULL, mask_registers_r2d_plus, NULL, NULL);
 
-#पूर्ण_अगर /* CONFIG_RTS7751R2D_PLUS */
+#endif /* CONFIG_RTS7751R2D_PLUS */
 
-अटल अचिन्हित अक्षर irl2irq[R2D_NR_IRL];
+static unsigned char irl2irq[R2D_NR_IRL];
 
-पूर्णांक rts7751r2d_irq_demux(पूर्णांक irq)
-अणु
-	अगर (irq >= R2D_NR_IRL || irq < 0 || !irl2irq[irq])
-		वापस irq;
+int rts7751r2d_irq_demux(int irq)
+{
+	if (irq >= R2D_NR_IRL || irq < 0 || !irl2irq[irq])
+		return irq;
 
-	वापस irl2irq[irq];
-पूर्ण
+	return irl2irq[irq];
+}
 
 /*
  * Initialize IRQ setting
  */
-व्योम __init init_rts7751r2d_IRQ(व्योम)
-अणु
-	काष्ठा पूर्णांकc_desc *d;
+void __init init_rts7751r2d_IRQ(void)
+{
+	struct intc_desc *d;
 
-	चयन (__raw_पढ़ोw(PA_VERREG) & 0xf0) अणु
-#अगर_घोषित CONFIG_RTS7751R2D_PLUS
-	हाल 0x10:
-		prपूर्णांकk(KERN_INFO "Using R2D-PLUS interrupt controller.\n");
-		d = &पूर्णांकc_desc_r2d_plus;
-		स_नकल(irl2irq, irl2irq_r2d_plus, R2D_NR_IRL);
-		अवरोध;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_RTS7751R2D_1
-	हाल 0x00: /* according to manual */
-	हाल 0x30: /* in reality */
-		prपूर्णांकk(KERN_INFO "Using R2D-1 interrupt controller.\n");
-		d = &पूर्णांकc_desc_r2d_1;
-		स_नकल(irl2irq, irl2irq_r2d_1, R2D_NR_IRL);
-		अवरोध;
-#पूर्ण_अगर
-	शेष:
-		prपूर्णांकk(KERN_INFO "Unknown R2D interrupt controller 0x%04x\n",
-		       __raw_पढ़ोw(PA_VERREG));
-		वापस;
-	पूर्ण
+	switch (__raw_readw(PA_VERREG) & 0xf0) {
+#ifdef CONFIG_RTS7751R2D_PLUS
+	case 0x10:
+		printk(KERN_INFO "Using R2D-PLUS interrupt controller.\n");
+		d = &intc_desc_r2d_plus;
+		memcpy(irl2irq, irl2irq_r2d_plus, R2D_NR_IRL);
+		break;
+#endif
+#ifdef CONFIG_RTS7751R2D_1
+	case 0x00: /* according to manual */
+	case 0x30: /* in reality */
+		printk(KERN_INFO "Using R2D-1 interrupt controller.\n");
+		d = &intc_desc_r2d_1;
+		memcpy(irl2irq, irl2irq_r2d_1, R2D_NR_IRL);
+		break;
+#endif
+	default:
+		printk(KERN_INFO "Unknown R2D interrupt controller 0x%04x\n",
+		       __raw_readw(PA_VERREG));
+		return;
+	}
 
-	रेजिस्टर_पूर्णांकc_controller(d);
-पूर्ण
+	register_intc_controller(d);
+}

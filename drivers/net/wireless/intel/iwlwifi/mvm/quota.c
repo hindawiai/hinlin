@@ -1,159 +1,158 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0 OR BSD-3-Clause
+// SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
 /*
  * Copyright (C) 2012-2014, 2018 Intel Corporation
  * Copyright (C) 2013-2014 Intel Mobile Communications GmbH
  * Copyright (C) 2016-2017 Intel Deutschland GmbH
  */
-#समावेश <net/mac80211.h>
-#समावेश "fw-api.h"
-#समावेश "mvm.h"
+#include <net/mac80211.h>
+#include "fw-api.h"
+#include "mvm.h"
 
-#घोषणा QUOTA_100	IWL_MVM_MAX_QUOTA
-#घोषणा QUOTA_LOWLAT_MIN ((QUOTA_100 * IWL_MVM_LOWLAT_QUOTA_MIN_PERCENT) / 100)
+#define QUOTA_100	IWL_MVM_MAX_QUOTA
+#define QUOTA_LOWLAT_MIN ((QUOTA_100 * IWL_MVM_LOWLAT_QUOTA_MIN_PERCENT) / 100)
 
-काष्ठा iwl_mvm_quota_iterator_data अणु
-	पूर्णांक n_पूर्णांकerfaces[MAX_BINDINGS];
-	पूर्णांक colors[MAX_BINDINGS];
-	पूर्णांक low_latency[MAX_BINDINGS];
-#अगर_घोषित CONFIG_IWLWIFI_DEBUGFS
-	पूर्णांक dbgfs_min[MAX_BINDINGS];
-#पूर्ण_अगर
-	पूर्णांक n_low_latency_bindings;
-	काष्ठा ieee80211_vअगर *disabled_vअगर;
-पूर्ण;
+struct iwl_mvm_quota_iterator_data {
+	int n_interfaces[MAX_BINDINGS];
+	int colors[MAX_BINDINGS];
+	int low_latency[MAX_BINDINGS];
+#ifdef CONFIG_IWLWIFI_DEBUGFS
+	int dbgfs_min[MAX_BINDINGS];
+#endif
+	int n_low_latency_bindings;
+	struct ieee80211_vif *disabled_vif;
+};
 
-अटल व्योम iwl_mvm_quota_iterator(व्योम *_data, u8 *mac,
-				   काष्ठा ieee80211_vअगर *vअगर)
-अणु
-	काष्ठा iwl_mvm_quota_iterator_data *data = _data;
-	काष्ठा iwl_mvm_vअगर *mvmvअगर = iwl_mvm_vअगर_from_mac80211(vअगर);
+static void iwl_mvm_quota_iterator(void *_data, u8 *mac,
+				   struct ieee80211_vif *vif)
+{
+	struct iwl_mvm_quota_iterator_data *data = _data;
+	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(vif);
 	u16 id;
 
-	/* skip disabled पूर्णांकerfaces here immediately */
-	अगर (vअगर == data->disabled_vअगर)
-		वापस;
+	/* skip disabled interfaces here immediately */
+	if (vif == data->disabled_vif)
+		return;
 
-	अगर (!mvmvअगर->phy_ctxt)
-		वापस;
+	if (!mvmvif->phy_ctxt)
+		return;
 
 	/* currently, PHY ID == binding ID */
-	id = mvmvअगर->phy_ctxt->id;
+	id = mvmvif->phy_ctxt->id;
 
 	/* need at least one binding per PHY */
 	BUILD_BUG_ON(NUM_PHY_CTX > MAX_BINDINGS);
 
-	अगर (WARN_ON_ONCE(id >= MAX_BINDINGS))
-		वापस;
+	if (WARN_ON_ONCE(id >= MAX_BINDINGS))
+		return;
 
-	चयन (vअगर->type) अणु
-	हाल NL80211_IFTYPE_STATION:
-		अगर (vअगर->bss_conf.assoc)
-			अवरोध;
-		वापस;
-	हाल NL80211_IFTYPE_AP:
-	हाल NL80211_IFTYPE_ADHOC:
-		अगर (mvmvअगर->ap_ibss_active)
-			अवरोध;
-		वापस;
-	हाल NL80211_IFTYPE_MONITOR:
-		अगर (mvmvअगर->monitor_active)
-			अवरोध;
-		वापस;
-	हाल NL80211_IFTYPE_P2P_DEVICE:
-		वापस;
-	शेष:
+	switch (vif->type) {
+	case NL80211_IFTYPE_STATION:
+		if (vif->bss_conf.assoc)
+			break;
+		return;
+	case NL80211_IFTYPE_AP:
+	case NL80211_IFTYPE_ADHOC:
+		if (mvmvif->ap_ibss_active)
+			break;
+		return;
+	case NL80211_IFTYPE_MONITOR:
+		if (mvmvif->monitor_active)
+			break;
+		return;
+	case NL80211_IFTYPE_P2P_DEVICE:
+		return;
+	default:
 		WARN_ON_ONCE(1);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (data->colors[id] < 0)
-		data->colors[id] = mvmvअगर->phy_ctxt->color;
-	अन्यथा
-		WARN_ON_ONCE(data->colors[id] != mvmvअगर->phy_ctxt->color);
+	if (data->colors[id] < 0)
+		data->colors[id] = mvmvif->phy_ctxt->color;
+	else
+		WARN_ON_ONCE(data->colors[id] != mvmvif->phy_ctxt->color);
 
-	data->n_पूर्णांकerfaces[id]++;
+	data->n_interfaces[id]++;
 
-#अगर_घोषित CONFIG_IWLWIFI_DEBUGFS
-	अगर (mvmvअगर->dbgfs_quota_min)
+#ifdef CONFIG_IWLWIFI_DEBUGFS
+	if (mvmvif->dbgfs_quota_min)
 		data->dbgfs_min[id] = max(data->dbgfs_min[id],
-					  mvmvअगर->dbgfs_quota_min);
-#पूर्ण_अगर
+					  mvmvif->dbgfs_quota_min);
+#endif
 
-	अगर (iwl_mvm_vअगर_low_latency(mvmvअगर) && !data->low_latency[id]) अणु
+	if (iwl_mvm_vif_low_latency(mvmvif) && !data->low_latency[id]) {
 		data->n_low_latency_bindings++;
 		data->low_latency[id] = true;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम iwl_mvm_adjust_quota_क्रम_noa(काष्ठा iwl_mvm *mvm,
-					 काष्ठा iwl_समय_quota_cmd *cmd)
-अणु
-#अगर_घोषित CONFIG_NL80211_TESTMODE
-	काष्ठा iwl_mvm_vअगर *mvmvअगर;
-	पूर्णांक i, phy_id = -1, beacon_पूर्णांक = 0;
+static void iwl_mvm_adjust_quota_for_noa(struct iwl_mvm *mvm,
+					 struct iwl_time_quota_cmd *cmd)
+{
+#ifdef CONFIG_NL80211_TESTMODE
+	struct iwl_mvm_vif *mvmvif;
+	int i, phy_id = -1, beacon_int = 0;
 
-	अगर (!mvm->noa_duration || !mvm->noa_vअगर)
-		वापस;
+	if (!mvm->noa_duration || !mvm->noa_vif)
+		return;
 
-	mvmvअगर = iwl_mvm_vअगर_from_mac80211(mvm->noa_vअगर);
-	अगर (!mvmvअगर->ap_ibss_active)
-		वापस;
+	mvmvif = iwl_mvm_vif_from_mac80211(mvm->noa_vif);
+	if (!mvmvif->ap_ibss_active)
+		return;
 
-	phy_id = mvmvअगर->phy_ctxt->id;
-	beacon_पूर्णांक = mvm->noa_vअगर->bss_conf.beacon_पूर्णांक;
+	phy_id = mvmvif->phy_ctxt->id;
+	beacon_int = mvm->noa_vif->bss_conf.beacon_int;
 
-	क्रम (i = 0; i < MAX_BINDINGS; i++) अणु
-		काष्ठा iwl_समय_quota_data *data =
+	for (i = 0; i < MAX_BINDINGS; i++) {
+		struct iwl_time_quota_data *data =
 					iwl_mvm_quota_cmd_get_quota(mvm, cmd,
 								    i);
 		u32 id_n_c = le32_to_cpu(data->id_and_color);
 		u32 id = (id_n_c & FW_CTXT_ID_MSK) >> FW_CTXT_ID_POS;
 		u32 quota = le32_to_cpu(data->quota);
 
-		अगर (id != phy_id)
-			जारी;
+		if (id != phy_id)
+			continue;
 
-		quota *= (beacon_पूर्णांक - mvm->noa_duration);
-		quota /= beacon_पूर्णांक;
+		quota *= (beacon_int - mvm->noa_duration);
+		quota /= beacon_int;
 
 		IWL_DEBUG_QUOTA(mvm, "quota: adjust for NoA from %d to %d\n",
 				le32_to_cpu(data->quota), quota);
 
 		data->quota = cpu_to_le32(quota);
-	पूर्ण
-#पूर्ण_अगर
-पूर्ण
+	}
+#endif
+}
 
-पूर्णांक iwl_mvm_update_quotas(काष्ठा iwl_mvm *mvm,
-			  bool क्रमce_update,
-			  काष्ठा ieee80211_vअगर *disabled_vअगर)
-अणु
-	काष्ठा iwl_समय_quota_cmd cmd = अणुपूर्ण;
-	पूर्णांक i, idx, err, num_active_macs, quota, quota_rem, n_non_lowlat;
-	काष्ठा iwl_mvm_quota_iterator_data data = अणु
-		.n_पूर्णांकerfaces = अणुपूर्ण,
-		.colors = अणु -1, -1, -1, -1 पूर्ण,
-		.disabled_vअगर = disabled_vअगर,
-	पूर्ण;
-	काष्ठा iwl_समय_quota_cmd *last = &mvm->last_quota_cmd;
-	काष्ठा iwl_समय_quota_data *qdata, *last_data;
+int iwl_mvm_update_quotas(struct iwl_mvm *mvm,
+			  bool force_update,
+			  struct ieee80211_vif *disabled_vif)
+{
+	struct iwl_time_quota_cmd cmd = {};
+	int i, idx, err, num_active_macs, quota, quota_rem, n_non_lowlat;
+	struct iwl_mvm_quota_iterator_data data = {
+		.n_interfaces = {},
+		.colors = { -1, -1, -1, -1 },
+		.disabled_vif = disabled_vif,
+	};
+	struct iwl_time_quota_cmd *last = &mvm->last_quota_cmd;
+	struct iwl_time_quota_data *qdata, *last_data;
 	bool send = false;
 
-	lockdep_निश्चित_held(&mvm->mutex);
+	lockdep_assert_held(&mvm->mutex);
 
-	अगर (fw_has_capa(&mvm->fw->ucode_capa,
+	if (fw_has_capa(&mvm->fw->ucode_capa,
 			IWL_UCODE_TLV_CAPA_DYNAMIC_QUOTA))
-		वापस 0;
+		return 0;
 
 	/* update all upon completion */
-	अगर (test_bit(IWL_MVM_STATUS_IN_HW_RESTART, &mvm->status))
-		वापस 0;
+	if (test_bit(IWL_MVM_STATUS_IN_HW_RESTART, &mvm->status))
+		return 0;
 
 	/* iterator data above must match */
 	BUILD_BUG_ON(MAX_BINDINGS != 4);
 
-	ieee80211_iterate_active_पूर्णांकerfaces_atomic(
+	ieee80211_iterate_active_interfaces_atomic(
 		mvm->hw, IEEE80211_IFACE_ITER_NORMAL,
 		iwl_mvm_quota_iterator, &data);
 
@@ -163,29 +162,29 @@
 	 * equally between all the bindings that require quota
 	 */
 	num_active_macs = 0;
-	क्रम (i = 0; i < MAX_BINDINGS; i++) अणु
+	for (i = 0; i < MAX_BINDINGS; i++) {
 		qdata = iwl_mvm_quota_cmd_get_quota(mvm, &cmd, i);
 		qdata->id_and_color = cpu_to_le32(FW_CTXT_INVALID);
-		num_active_macs += data.n_पूर्णांकerfaces[i];
-	पूर्ण
+		num_active_macs += data.n_interfaces[i];
+	}
 
 	n_non_lowlat = num_active_macs;
 
-	अगर (data.n_low_latency_bindings == 1) अणु
-		क्रम (i = 0; i < MAX_BINDINGS; i++) अणु
-			अगर (data.low_latency[i]) अणु
-				n_non_lowlat -= data.n_पूर्णांकerfaces[i];
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+	if (data.n_low_latency_bindings == 1) {
+		for (i = 0; i < MAX_BINDINGS; i++) {
+			if (data.low_latency[i]) {
+				n_non_lowlat -= data.n_interfaces[i];
+				break;
+			}
+		}
+	}
 
-	अगर (data.n_low_latency_bindings == 1 && n_non_lowlat) अणु
+	if (data.n_low_latency_bindings == 1 && n_non_lowlat) {
 		/*
-		 * Reserve quota क्रम the low latency binding in हाल that
+		 * Reserve quota for the low latency binding in case that
 		 * there are several data bindings but only a single
 		 * low latency one. Split the rest of the quota equally
-		 * between the other data पूर्णांकerfaces.
+		 * between the other data interfaces.
 		 */
 		quota = (QUOTA_100 - QUOTA_LOWLAT_MIN) / n_non_lowlat;
 		quota_rem = QUOTA_100 - n_non_lowlat * quota -
@@ -193,51 +192,51 @@
 		IWL_DEBUG_QUOTA(mvm,
 				"quota: low-latency binding active, remaining quota per other binding: %d\n",
 				quota);
-	पूर्ण अन्यथा अगर (num_active_macs) अणु
+	} else if (num_active_macs) {
 		/*
 		 * There are 0 or more than 1 low latency bindings, or all the
-		 * data पूर्णांकerfaces beदीर्घ to the single low latency binding.
-		 * Split the quota equally between the data पूर्णांकerfaces.
+		 * data interfaces belong to the single low latency binding.
+		 * Split the quota equally between the data interfaces.
 		 */
 		quota = QUOTA_100 / num_active_macs;
 		quota_rem = QUOTA_100 % num_active_macs;
 		IWL_DEBUG_QUOTA(mvm,
 				"quota: splitting evenly per binding: %d\n",
 				quota);
-	पूर्ण अन्यथा अणु
-		/* values करोn't really matter - won't be used */
+	} else {
+		/* values don't really matter - won't be used */
 		quota = 0;
 		quota_rem = 0;
-	पूर्ण
+	}
 
-	क्रम (idx = 0, i = 0; i < MAX_BINDINGS; i++) अणु
-		अगर (data.colors[i] < 0)
-			जारी;
+	for (idx = 0, i = 0; i < MAX_BINDINGS; i++) {
+		if (data.colors[i] < 0)
+			continue;
 
 		qdata = iwl_mvm_quota_cmd_get_quota(mvm, &cmd, idx);
 
 		qdata->id_and_color =
 			cpu_to_le32(FW_CMD_ID_AND_COLOR(i, data.colors[i]));
 
-		अगर (data.n_पूर्णांकerfaces[i] <= 0)
+		if (data.n_interfaces[i] <= 0)
 			qdata->quota = cpu_to_le32(0);
-#अगर_घोषित CONFIG_IWLWIFI_DEBUGFS
-		अन्यथा अगर (data.dbgfs_min[i])
+#ifdef CONFIG_IWLWIFI_DEBUGFS
+		else if (data.dbgfs_min[i])
 			qdata->quota =
 				cpu_to_le32(data.dbgfs_min[i] * QUOTA_100 / 100);
-#पूर्ण_अगर
-		अन्यथा अगर (data.n_low_latency_bindings == 1 && n_non_lowlat &&
+#endif
+		else if (data.n_low_latency_bindings == 1 && n_non_lowlat &&
 			 data.low_latency[i])
 			/*
 			 * There is more than one binding, but only one of the
-			 * bindings is in low latency. For this हाल, allocate
-			 * the minimal required quota क्रम the low latency
+			 * bindings is in low latency. For this case, allocate
+			 * the minimal required quota for the low latency
 			 * binding.
 			 */
 			qdata->quota = cpu_to_le32(QUOTA_LOWLAT_MIN);
-		अन्यथा
+		else
 			qdata->quota =
-				cpu_to_le32(quota * data.n_पूर्णांकerfaces[i]);
+				cpu_to_le32(quota * data.n_interfaces[i]);
 
 		WARN_ONCE(le32_to_cpu(qdata->quota) > QUOTA_100,
 			  "Binding=%d, quota=%u > max=%u\n",
@@ -246,54 +245,54 @@
 		qdata->max_duration = cpu_to_le32(0);
 
 		idx++;
-	पूर्ण
+	}
 
-	/* Give the reमुख्यder of the session to the first data binding */
-	क्रम (i = 0; i < MAX_BINDINGS; i++) अणु
+	/* Give the remainder of the session to the first data binding */
+	for (i = 0; i < MAX_BINDINGS; i++) {
 		qdata = iwl_mvm_quota_cmd_get_quota(mvm, &cmd, i);
-		अगर (le32_to_cpu(qdata->quota) != 0) अणु
+		if (le32_to_cpu(qdata->quota) != 0) {
 			le32_add_cpu(&qdata->quota, quota_rem);
 			IWL_DEBUG_QUOTA(mvm,
 					"quota: giving remainder of %d to binding %d\n",
 					quota_rem, i);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	iwl_mvm_adjust_quota_क्रम_noa(mvm, &cmd);
+	iwl_mvm_adjust_quota_for_noa(mvm, &cmd);
 
-	/* check that we have non-zero quota क्रम all valid bindings */
-	क्रम (i = 0; i < MAX_BINDINGS; i++) अणु
+	/* check that we have non-zero quota for all valid bindings */
+	for (i = 0; i < MAX_BINDINGS; i++) {
 		qdata = iwl_mvm_quota_cmd_get_quota(mvm, &cmd, i);
 		last_data = iwl_mvm_quota_cmd_get_quota(mvm, last, i);
-		अगर (qdata->id_and_color != last_data->id_and_color)
+		if (qdata->id_and_color != last_data->id_and_color)
 			send = true;
-		अगर (qdata->max_duration != last_data->max_duration)
+		if (qdata->max_duration != last_data->max_duration)
 			send = true;
-		अगर (असल((पूर्णांक)le32_to_cpu(qdata->quota) -
-			(पूर्णांक)le32_to_cpu(last_data->quota))
+		if (abs((int)le32_to_cpu(qdata->quota) -
+			(int)le32_to_cpu(last_data->quota))
 						> IWL_MVM_QUOTA_THRESHOLD)
 			send = true;
-		अगर (qdata->id_and_color == cpu_to_le32(FW_CTXT_INVALID))
-			जारी;
+		if (qdata->id_and_color == cpu_to_le32(FW_CTXT_INVALID))
+			continue;
 		WARN_ONCE(qdata->quota == 0,
 			  "zero quota on binding %d\n", i);
-	पूर्ण
+	}
 
-	अगर (!send && !क्रमce_update) अणु
-		/* करोn't send a practically unchanged command, the firmware has
+	if (!send && !force_update) {
+		/* don't send a practically unchanged command, the firmware has
 		 * to re-initialize a lot of state and that can have an adverse
 		 * impact on it
 		 */
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	err = iwl_mvm_send_cmd_pdu(mvm, TIME_QUOTA_CMD, 0,
 				   iwl_mvm_quota_cmd_size(mvm), &cmd);
 
-	अगर (err)
+	if (err)
 		IWL_ERR(mvm, "Failed to send quota: %d\n", err);
-	अन्यथा
+	else
 		mvm->last_quota_cmd = cmd;
-	वापस err;
-पूर्ण
+	return err;
+}

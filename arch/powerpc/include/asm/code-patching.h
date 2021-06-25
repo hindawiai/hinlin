@@ -1,96 +1,95 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
-#अगर_अघोषित _ASM_POWERPC_CODE_PATCHING_H
-#घोषणा _ASM_POWERPC_CODE_PATCHING_H
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+#ifndef _ASM_POWERPC_CODE_PATCHING_H
+#define _ASM_POWERPC_CODE_PATCHING_H
 
 /*
  * Copyright 2008, Michael Ellerman, IBM Corporation.
  */
 
-#समावेश <यंत्र/types.h>
-#समावेश <यंत्र/ppc-opcode.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/kallsyms.h>
-#समावेश <यंत्र/यंत्र-compat.h>
-#समावेश <यंत्र/inst.h>
+#include <asm/types.h>
+#include <asm/ppc-opcode.h>
+#include <linux/string.h>
+#include <linux/kallsyms.h>
+#include <asm/asm-compat.h>
+#include <asm/inst.h>
 
-/* Flags क्रम create_branch:
+/* Flags for create_branch:
  * "b"   == create_branch(addr, target, 0);
  * "ba"  == create_branch(addr, target, BRANCH_ABSOLUTE);
  * "bl"  == create_branch(addr, target, BRANCH_SET_LINK);
  * "bla" == create_branch(addr, target, BRANCH_ABSOLUTE | BRANCH_SET_LINK);
  */
-#घोषणा BRANCH_SET_LINK	0x1
-#घोषणा BRANCH_ABSOLUTE	0x2
+#define BRANCH_SET_LINK	0x1
+#define BRANCH_ABSOLUTE	0x2
 
-bool is_offset_in_branch_range(दीर्घ offset);
-पूर्णांक create_branch(काष्ठा ppc_inst *instr, स्थिर काष्ठा ppc_inst *addr,
-		  अचिन्हित दीर्घ target, पूर्णांक flags);
-पूर्णांक create_cond_branch(काष्ठा ppc_inst *instr, स्थिर काष्ठा ppc_inst *addr,
-		       अचिन्हित दीर्घ target, पूर्णांक flags);
-पूर्णांक patch_branch(काष्ठा ppc_inst *addr, अचिन्हित दीर्घ target, पूर्णांक flags);
-पूर्णांक patch_inकाष्ठाion(काष्ठा ppc_inst *addr, काष्ठा ppc_inst instr);
-पूर्णांक raw_patch_inकाष्ठाion(काष्ठा ppc_inst *addr, काष्ठा ppc_inst instr);
+bool is_offset_in_branch_range(long offset);
+int create_branch(struct ppc_inst *instr, const struct ppc_inst *addr,
+		  unsigned long target, int flags);
+int create_cond_branch(struct ppc_inst *instr, const struct ppc_inst *addr,
+		       unsigned long target, int flags);
+int patch_branch(struct ppc_inst *addr, unsigned long target, int flags);
+int patch_instruction(struct ppc_inst *addr, struct ppc_inst instr);
+int raw_patch_instruction(struct ppc_inst *addr, struct ppc_inst instr);
 
-अटल अंतरभूत अचिन्हित दीर्घ patch_site_addr(s32 *site)
-अणु
-	वापस (अचिन्हित दीर्घ)site + *site;
-पूर्ण
+static inline unsigned long patch_site_addr(s32 *site)
+{
+	return (unsigned long)site + *site;
+}
 
-अटल अंतरभूत पूर्णांक patch_inकाष्ठाion_site(s32 *site, काष्ठा ppc_inst instr)
-अणु
-	वापस patch_inकाष्ठाion((काष्ठा ppc_inst *)patch_site_addr(site), instr);
-पूर्ण
+static inline int patch_instruction_site(s32 *site, struct ppc_inst instr)
+{
+	return patch_instruction((struct ppc_inst *)patch_site_addr(site), instr);
+}
 
-अटल अंतरभूत पूर्णांक patch_branch_site(s32 *site, अचिन्हित दीर्घ target, पूर्णांक flags)
-अणु
-	वापस patch_branch((काष्ठा ppc_inst *)patch_site_addr(site), target, flags);
-पूर्ण
+static inline int patch_branch_site(s32 *site, unsigned long target, int flags)
+{
+	return patch_branch((struct ppc_inst *)patch_site_addr(site), target, flags);
+}
 
-अटल अंतरभूत पूर्णांक modअगरy_inकाष्ठाion(अचिन्हित पूर्णांक *addr, अचिन्हित पूर्णांक clr,
-				     अचिन्हित पूर्णांक set)
-अणु
-	वापस patch_inकाष्ठाion((काष्ठा ppc_inst *)addr, ppc_inst((*addr & ~clr) | set));
-पूर्ण
+static inline int modify_instruction(unsigned int *addr, unsigned int clr,
+				     unsigned int set)
+{
+	return patch_instruction((struct ppc_inst *)addr, ppc_inst((*addr & ~clr) | set));
+}
 
-अटल अंतरभूत पूर्णांक modअगरy_inकाष्ठाion_site(s32 *site, अचिन्हित पूर्णांक clr, अचिन्हित पूर्णांक set)
-अणु
-	वापस modअगरy_inकाष्ठाion((अचिन्हित पूर्णांक *)patch_site_addr(site), clr, set);
-पूर्ण
+static inline int modify_instruction_site(s32 *site, unsigned int clr, unsigned int set)
+{
+	return modify_instruction((unsigned int *)patch_site_addr(site), clr, set);
+}
 
-पूर्णांक instr_is_relative_branch(काष्ठा ppc_inst instr);
-पूर्णांक instr_is_relative_link_branch(काष्ठा ppc_inst instr);
-पूर्णांक instr_is_branch_to_addr(स्थिर काष्ठा ppc_inst *instr, अचिन्हित दीर्घ addr);
-अचिन्हित दीर्घ branch_target(स्थिर काष्ठा ppc_inst *instr);
-पूर्णांक translate_branch(काष्ठा ppc_inst *instr, स्थिर काष्ठा ppc_inst *dest,
-		     स्थिर काष्ठा ppc_inst *src);
-बाह्य bool is_conditional_branch(काष्ठा ppc_inst instr);
-#अगर_घोषित CONFIG_PPC_BOOK3E_64
-व्योम __patch_exception(पूर्णांक exc, अचिन्हित दीर्घ addr);
-#घोषणा patch_exception(exc, name) करो अणु \
-	बाह्य अचिन्हित पूर्णांक name; \
-	__patch_exception((exc), (अचिन्हित दीर्घ)&name); \
-पूर्ण जबतक (0)
-#पूर्ण_अगर
+int instr_is_relative_branch(struct ppc_inst instr);
+int instr_is_relative_link_branch(struct ppc_inst instr);
+int instr_is_branch_to_addr(const struct ppc_inst *instr, unsigned long addr);
+unsigned long branch_target(const struct ppc_inst *instr);
+int translate_branch(struct ppc_inst *instr, const struct ppc_inst *dest,
+		     const struct ppc_inst *src);
+extern bool is_conditional_branch(struct ppc_inst instr);
+#ifdef CONFIG_PPC_BOOK3E_64
+void __patch_exception(int exc, unsigned long addr);
+#define patch_exception(exc, name) do { \
+	extern unsigned int name; \
+	__patch_exception((exc), (unsigned long)&name); \
+} while (0)
+#endif
 
-#घोषणा OP_RT_RA_MASK	0xffff0000UL
-#घोषणा LIS_R2		(PPC_INST_ADDIS | __PPC_RT(R2))
-#घोषणा ADDIS_R2_R12	(PPC_INST_ADDIS | __PPC_RT(R2) | __PPC_RA(R12))
-#घोषणा ADDI_R2_R2	(PPC_INST_ADDI  | __PPC_RT(R2) | __PPC_RA(R2))
+#define OP_RT_RA_MASK	0xffff0000UL
+#define LIS_R2		(PPC_INST_ADDIS | __PPC_RT(R2))
+#define ADDIS_R2_R12	(PPC_INST_ADDIS | __PPC_RT(R2) | __PPC_RA(R12))
+#define ADDI_R2_R2	(PPC_INST_ADDI  | __PPC_RT(R2) | __PPC_RA(R2))
 
 
-अटल अंतरभूत अचिन्हित दीर्घ ppc_function_entry(व्योम *func)
-अणु
-#अगर_घोषित PPC64_ELF_ABI_v2
+static inline unsigned long ppc_function_entry(void *func)
+{
+#ifdef PPC64_ELF_ABI_v2
 	u32 *insn = func;
 
 	/*
 	 * A PPC64 ABIv2 function may have a local and a global entry
-	 * poपूर्णांक. We need to use the local entry poपूर्णांक when patching
-	 * functions, so identअगरy and step over the global entry poपूर्णांक
+	 * point. We need to use the local entry point when patching
+	 * functions, so identify and step over the global entry point
 	 * sequence.
 	 *
-	 * The global entry poपूर्णांक sequence is always of the क्रमm:
+	 * The global entry point sequence is always of the form:
 	 *
 	 * addis r2,r12,XXXX
 	 * addi  r2,r2,XXXX
@@ -100,93 +99,93 @@ bool is_offset_in_branch_range(दीर्घ offset);
 	 * lis   r2,XXXX
 	 * addi  r2,r2,XXXX
 	 */
-	अगर ((((*insn & OP_RT_RA_MASK) == ADDIS_R2_R12) ||
+	if ((((*insn & OP_RT_RA_MASK) == ADDIS_R2_R12) ||
 	     ((*insn & OP_RT_RA_MASK) == LIS_R2)) &&
 	    ((*(insn+1) & OP_RT_RA_MASK) == ADDI_R2_R2))
-		वापस (अचिन्हित दीर्घ)(insn + 2);
-	अन्यथा
-		वापस (अचिन्हित दीर्घ)func;
-#या_अगर defined(PPC64_ELF_ABI_v1)
+		return (unsigned long)(insn + 2);
+	else
+		return (unsigned long)func;
+#elif defined(PPC64_ELF_ABI_v1)
 	/*
-	 * On PPC64 ABIv1 the function poपूर्णांकer actually poपूर्णांकs to the
+	 * On PPC64 ABIv1 the function pointer actually points to the
 	 * function's descriptor. The first entry in the descriptor is the
 	 * address of the function text.
 	 */
-	वापस ((func_descr_t *)func)->entry;
-#अन्यथा
-	वापस (अचिन्हित दीर्घ)func;
-#पूर्ण_अगर
-पूर्ण
+	return ((func_descr_t *)func)->entry;
+#else
+	return (unsigned long)func;
+#endif
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ ppc_global_function_entry(व्योम *func)
-अणु
-#अगर_घोषित PPC64_ELF_ABI_v2
-	/* PPC64 ABIv2 the global entry poपूर्णांक is at the address */
-	वापस (अचिन्हित दीर्घ)func;
-#अन्यथा
-	/* All other हालs there is no change vs ppc_function_entry() */
-	वापस ppc_function_entry(func);
-#पूर्ण_अगर
-पूर्ण
+static inline unsigned long ppc_global_function_entry(void *func)
+{
+#ifdef PPC64_ELF_ABI_v2
+	/* PPC64 ABIv2 the global entry point is at the address */
+	return (unsigned long)func;
+#else
+	/* All other cases there is no change vs ppc_function_entry() */
+	return ppc_function_entry(func);
+#endif
+}
 
 /*
- * Wrapper around kallsyms_lookup() to वापस function entry address:
- * - For ABIv1, we lookup the करोt variant.
- * - For ABIv2, we वापस the local entry poपूर्णांक.
+ * Wrapper around kallsyms_lookup() to return function entry address:
+ * - For ABIv1, we lookup the dot variant.
+ * - For ABIv2, we return the local entry point.
  */
-अटल अंतरभूत अचिन्हित दीर्घ ppc_kallsyms_lookup_name(स्थिर अक्षर *name)
-अणु
-	अचिन्हित दीर्घ addr;
-#अगर_घोषित PPC64_ELF_ABI_v1
-	/* check क्रम करोt variant */
-	अक्षर करोt_name[1 + KSYM_NAME_LEN];
-	bool करोt_appended = false;
+static inline unsigned long ppc_kallsyms_lookup_name(const char *name)
+{
+	unsigned long addr;
+#ifdef PPC64_ELF_ABI_v1
+	/* check for dot variant */
+	char dot_name[1 + KSYM_NAME_LEN];
+	bool dot_appended = false;
 
-	अगर (strnlen(name, KSYM_NAME_LEN) >= KSYM_NAME_LEN)
-		वापस 0;
+	if (strnlen(name, KSYM_NAME_LEN) >= KSYM_NAME_LEN)
+		return 0;
 
-	अगर (name[0] != '.') अणु
-		करोt_name[0] = '.';
-		करोt_name[1] = '\0';
-		strlcat(करोt_name, name, माप(करोt_name));
-		करोt_appended = true;
-	पूर्ण अन्यथा अणु
-		करोt_name[0] = '\0';
-		strlcat(करोt_name, name, माप(करोt_name));
-	पूर्ण
-	addr = kallsyms_lookup_name(करोt_name);
-	अगर (!addr && करोt_appended)
-		/* Let's try the original non-करोt symbol lookup	*/
+	if (name[0] != '.') {
+		dot_name[0] = '.';
+		dot_name[1] = '\0';
+		strlcat(dot_name, name, sizeof(dot_name));
+		dot_appended = true;
+	} else {
+		dot_name[0] = '\0';
+		strlcat(dot_name, name, sizeof(dot_name));
+	}
+	addr = kallsyms_lookup_name(dot_name);
+	if (!addr && dot_appended)
+		/* Let's try the original non-dot symbol lookup	*/
 		addr = kallsyms_lookup_name(name);
-#या_अगर defined(PPC64_ELF_ABI_v2)
+#elif defined(PPC64_ELF_ABI_v2)
 	addr = kallsyms_lookup_name(name);
-	अगर (addr)
-		addr = ppc_function_entry((व्योम *)addr);
-#अन्यथा
+	if (addr)
+		addr = ppc_function_entry((void *)addr);
+#else
 	addr = kallsyms_lookup_name(name);
-#पूर्ण_अगर
-	वापस addr;
-पूर्ण
+#endif
+	return addr;
+}
 
-#अगर_घोषित CONFIG_PPC64
+#ifdef CONFIG_PPC64
 /*
- * Some inकाष्ठाion encodings commonly used in dynamic ftracing
+ * Some instruction encodings commonly used in dynamic ftracing
  * and function live patching.
  */
 
-/* This must match the definition of STK_GOT in <यंत्र/ppc_यंत्र.h> */
-#अगर_घोषित PPC64_ELF_ABI_v2
-#घोषणा R2_STACK_OFFSET         24
-#अन्यथा
-#घोषणा R2_STACK_OFFSET         40
-#पूर्ण_अगर
+/* This must match the definition of STK_GOT in <asm/ppc_asm.h> */
+#ifdef PPC64_ELF_ABI_v2
+#define R2_STACK_OFFSET         24
+#else
+#define R2_STACK_OFFSET         40
+#endif
 
-#घोषणा PPC_INST_LD_TOC		(PPC_INST_LD  | ___PPC_RT(__REG_R2) | \
+#define PPC_INST_LD_TOC		(PPC_INST_LD  | ___PPC_RT(__REG_R2) | \
 				 ___PPC_RA(__REG_R1) | R2_STACK_OFFSET)
 
 /* usually preceded by a mflr r0 */
-#घोषणा PPC_INST_STD_LR		(PPC_INST_STD | ___PPC_RS(__REG_R0) | \
+#define PPC_INST_STD_LR		(PPC_INST_STD | ___PPC_RS(__REG_R0) | \
 				 ___PPC_RA(__REG_R1) | PPC_LR_STKOFF)
-#पूर्ण_अगर /* CONFIG_PPC64 */
+#endif /* CONFIG_PPC64 */
 
-#पूर्ण_अगर /* _ASM_POWERPC_CODE_PATCHING_H */
+#endif /* _ASM_POWERPC_CODE_PATCHING_H */

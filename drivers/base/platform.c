@@ -1,956 +1,955 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * platक्रमm.c - platक्रमm 'pseudo' bus क्रम legacy devices
+ * platform.c - platform 'pseudo' bus for legacy devices
  *
  * Copyright (c) 2002-3 Patrick Mochel
- * Copyright (c) 2002-3 Open Source Development Lअसल
+ * Copyright (c) 2002-3 Open Source Development Labs
  *
- * Please see Documentation/driver-api/driver-model/platक्रमm.rst क्रम more
- * inक्रमmation.
+ * Please see Documentation/driver-api/driver-model/platform.rst for more
+ * information.
  */
 
-#समावेश <linux/माला.स>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/memblock.h>
-#समावेश <linux/err.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/pm_करोमुख्य.h>
-#समावेश <linux/idr.h>
-#समावेश <linux/acpi.h>
-#समावेश <linux/clk/clk-conf.h>
-#समावेश <linux/सीमा.स>
-#समावेश <linux/property.h>
-#समावेश <linux/kmemleak.h>
-#समावेश <linux/types.h>
+#include <linux/string.h>
+#include <linux/platform_device.h>
+#include <linux/of_device.h>
+#include <linux/of_irq.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/ioport.h>
+#include <linux/dma-mapping.h>
+#include <linux/memblock.h>
+#include <linux/err.h>
+#include <linux/slab.h>
+#include <linux/pm_runtime.h>
+#include <linux/pm_domain.h>
+#include <linux/idr.h>
+#include <linux/acpi.h>
+#include <linux/clk/clk-conf.h>
+#include <linux/limits.h>
+#include <linux/property.h>
+#include <linux/kmemleak.h>
+#include <linux/types.h>
 
-#समावेश "base.h"
-#समावेश "power/power.h"
+#include "base.h"
+#include "power/power.h"
 
-/* For स्वतःmatically allocated device IDs */
-अटल DEFINE_IDA(platक्रमm_devid_ida);
+/* For automatically allocated device IDs */
+static DEFINE_IDA(platform_devid_ida);
 
-काष्ठा device platक्रमm_bus = अणु
+struct device platform_bus = {
 	.init_name	= "platform",
-पूर्ण;
-EXPORT_SYMBOL_GPL(platक्रमm_bus);
+};
+EXPORT_SYMBOL_GPL(platform_bus);
 
 /**
- * platक्रमm_get_resource - get a resource क्रम a device
- * @dev: platक्रमm device
+ * platform_get_resource - get a resource for a device
+ * @dev: platform device
  * @type: resource type
  * @num: resource index
  *
- * Return: a poपूर्णांकer to the resource or शून्य on failure.
+ * Return: a pointer to the resource or NULL on failure.
  */
-काष्ठा resource *platक्रमm_get_resource(काष्ठा platक्रमm_device *dev,
-				       अचिन्हित पूर्णांक type, अचिन्हित पूर्णांक num)
-अणु
+struct resource *platform_get_resource(struct platform_device *dev,
+				       unsigned int type, unsigned int num)
+{
 	u32 i;
 
-	क्रम (i = 0; i < dev->num_resources; i++) अणु
-		काष्ठा resource *r = &dev->resource[i];
+	for (i = 0; i < dev->num_resources; i++) {
+		struct resource *r = &dev->resource[i];
 
-		अगर (type == resource_type(r) && num-- == 0)
-			वापस r;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
-EXPORT_SYMBOL_GPL(platक्रमm_get_resource);
+		if (type == resource_type(r) && num-- == 0)
+			return r;
+	}
+	return NULL;
+}
+EXPORT_SYMBOL_GPL(platform_get_resource);
 
-काष्ठा resource *platक्रमm_get_mem_or_io(काष्ठा platक्रमm_device *dev,
-					अचिन्हित पूर्णांक num)
-अणु
+struct resource *platform_get_mem_or_io(struct platform_device *dev,
+					unsigned int num)
+{
 	u32 i;
 
-	क्रम (i = 0; i < dev->num_resources; i++) अणु
-		काष्ठा resource *r = &dev->resource[i];
+	for (i = 0; i < dev->num_resources; i++) {
+		struct resource *r = &dev->resource[i];
 
-		अगर ((resource_type(r) & (IORESOURCE_MEM|IORESOURCE_IO)) && num-- == 0)
-			वापस r;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
-EXPORT_SYMBOL_GPL(platक्रमm_get_mem_or_io);
+		if ((resource_type(r) & (IORESOURCE_MEM|IORESOURCE_IO)) && num-- == 0)
+			return r;
+	}
+	return NULL;
+}
+EXPORT_SYMBOL_GPL(platform_get_mem_or_io);
 
-#अगर_घोषित CONFIG_HAS_IOMEM
+#ifdef CONFIG_HAS_IOMEM
 /**
- * devm_platक्रमm_get_and_ioremap_resource - call devm_ioremap_resource() क्रम a
- *					    platक्रमm device and get resource
+ * devm_platform_get_and_ioremap_resource - call devm_ioremap_resource() for a
+ *					    platform device and get resource
  *
- * @pdev: platक्रमm device to use both क्रम memory resource lookup as well as
+ * @pdev: platform device to use both for memory resource lookup as well as
  *        resource management
  * @index: resource index
- * @res: optional output parameter to store a poपूर्णांकer to the obtained resource.
+ * @res: optional output parameter to store a pointer to the obtained resource.
  *
- * Return: a poपूर्णांकer to the remapped memory or an ERR_PTR() encoded error code
+ * Return: a pointer to the remapped memory or an ERR_PTR() encoded error code
  * on failure.
  */
-व्योम __iomem *
-devm_platक्रमm_get_and_ioremap_resource(काष्ठा platक्रमm_device *pdev,
-				अचिन्हित पूर्णांक index, काष्ठा resource **res)
-अणु
-	काष्ठा resource *r;
+void __iomem *
+devm_platform_get_and_ioremap_resource(struct platform_device *pdev,
+				unsigned int index, struct resource **res)
+{
+	struct resource *r;
 
-	r = platक्रमm_get_resource(pdev, IORESOURCE_MEM, index);
-	अगर (res)
+	r = platform_get_resource(pdev, IORESOURCE_MEM, index);
+	if (res)
 		*res = r;
-	वापस devm_ioremap_resource(&pdev->dev, r);
-पूर्ण
-EXPORT_SYMBOL_GPL(devm_platक्रमm_get_and_ioremap_resource);
+	return devm_ioremap_resource(&pdev->dev, r);
+}
+EXPORT_SYMBOL_GPL(devm_platform_get_and_ioremap_resource);
 
 /**
- * devm_platक्रमm_ioremap_resource - call devm_ioremap_resource() क्रम a platक्रमm
+ * devm_platform_ioremap_resource - call devm_ioremap_resource() for a platform
  *				    device
  *
- * @pdev: platक्रमm device to use both क्रम memory resource lookup as well as
+ * @pdev: platform device to use both for memory resource lookup as well as
  *        resource management
  * @index: resource index
  *
- * Return: a poपूर्णांकer to the remapped memory or an ERR_PTR() encoded error code
+ * Return: a pointer to the remapped memory or an ERR_PTR() encoded error code
  * on failure.
  */
-व्योम __iomem *devm_platक्रमm_ioremap_resource(काष्ठा platक्रमm_device *pdev,
-					     अचिन्हित पूर्णांक index)
-अणु
-	वापस devm_platक्रमm_get_and_ioremap_resource(pdev, index, शून्य);
-पूर्ण
-EXPORT_SYMBOL_GPL(devm_platक्रमm_ioremap_resource);
+void __iomem *devm_platform_ioremap_resource(struct platform_device *pdev,
+					     unsigned int index)
+{
+	return devm_platform_get_and_ioremap_resource(pdev, index, NULL);
+}
+EXPORT_SYMBOL_GPL(devm_platform_ioremap_resource);
 
 /**
- * devm_platक्रमm_ioremap_resource_wc - ग_लिखो-combined variant of
- *                                     devm_platक्रमm_ioremap_resource()
+ * devm_platform_ioremap_resource_wc - write-combined variant of
+ *                                     devm_platform_ioremap_resource()
  *
- * @pdev: platक्रमm device to use both क्रम memory resource lookup as well as
+ * @pdev: platform device to use both for memory resource lookup as well as
  *        resource management
  * @index: resource index
  *
- * Return: a poपूर्णांकer to the remapped memory or an ERR_PTR() encoded error code
+ * Return: a pointer to the remapped memory or an ERR_PTR() encoded error code
  * on failure.
  */
-व्योम __iomem *devm_platक्रमm_ioremap_resource_wc(काष्ठा platक्रमm_device *pdev,
-						अचिन्हित पूर्णांक index)
-अणु
-	काष्ठा resource *res;
+void __iomem *devm_platform_ioremap_resource_wc(struct platform_device *pdev,
+						unsigned int index)
+{
+	struct resource *res;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, index);
-	वापस devm_ioremap_resource_wc(&pdev->dev, res);
-पूर्ण
+	res = platform_get_resource(pdev, IORESOURCE_MEM, index);
+	return devm_ioremap_resource_wc(&pdev->dev, res);
+}
 
 /**
- * devm_platक्रमm_ioremap_resource_byname - call devm_ioremap_resource क्रम
- *					   a platक्रमm device, retrieve the
+ * devm_platform_ioremap_resource_byname - call devm_ioremap_resource for
+ *					   a platform device, retrieve the
  *					   resource by name
  *
- * @pdev: platक्रमm device to use both क्रम memory resource lookup as well as
+ * @pdev: platform device to use both for memory resource lookup as well as
  *	  resource management
  * @name: name of the resource
  *
- * Return: a poपूर्णांकer to the remapped memory or an ERR_PTR() encoded error code
+ * Return: a pointer to the remapped memory or an ERR_PTR() encoded error code
  * on failure.
  */
-व्योम __iomem *
-devm_platक्रमm_ioremap_resource_byname(काष्ठा platक्रमm_device *pdev,
-				      स्थिर अक्षर *name)
-अणु
-	काष्ठा resource *res;
+void __iomem *
+devm_platform_ioremap_resource_byname(struct platform_device *pdev,
+				      const char *name)
+{
+	struct resource *res;
 
-	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, name);
-	वापस devm_ioremap_resource(&pdev->dev, res);
-पूर्ण
-EXPORT_SYMBOL_GPL(devm_platक्रमm_ioremap_resource_byname);
-#पूर्ण_अगर /* CONFIG_HAS_IOMEM */
+	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, name);
+	return devm_ioremap_resource(&pdev->dev, res);
+}
+EXPORT_SYMBOL_GPL(devm_platform_ioremap_resource_byname);
+#endif /* CONFIG_HAS_IOMEM */
 
 /**
- * platक्रमm_get_irq_optional - get an optional IRQ क्रम a device
- * @dev: platक्रमm device
+ * platform_get_irq_optional - get an optional IRQ for a device
+ * @dev: platform device
  * @num: IRQ number index
  *
- * Gets an IRQ क्रम a platक्रमm device. Device drivers should check the वापस
- * value क्रम errors so as to not pass a negative पूर्णांकeger value to the
- * request_irq() APIs. This is the same as platक्रमm_get_irq(), except that it
- * करोes not prपूर्णांक an error message अगर an IRQ can not be obtained.
+ * Gets an IRQ for a platform device. Device drivers should check the return
+ * value for errors so as to not pass a negative integer value to the
+ * request_irq() APIs. This is the same as platform_get_irq(), except that it
+ * does not print an error message if an IRQ can not be obtained.
  *
  * For example::
  *
- *		पूर्णांक irq = platक्रमm_get_irq_optional(pdev, 0);
- *		अगर (irq < 0)
- *			वापस irq;
+ *		int irq = platform_get_irq_optional(pdev, 0);
+ *		if (irq < 0)
+ *			return irq;
  *
  * Return: non-zero IRQ number on success, negative error number on failure.
  */
-पूर्णांक platक्रमm_get_irq_optional(काष्ठा platक्रमm_device *dev, अचिन्हित पूर्णांक num)
-अणु
-	पूर्णांक ret;
-#अगर_घोषित CONFIG_SPARC
-	/* sparc करोes not have irqs represented as IORESOURCE_IRQ resources */
-	अगर (!dev || num >= dev->archdata.num_irqs)
-		जाओ out_not_found;
+int platform_get_irq_optional(struct platform_device *dev, unsigned int num)
+{
+	int ret;
+#ifdef CONFIG_SPARC
+	/* sparc does not have irqs represented as IORESOURCE_IRQ resources */
+	if (!dev || num >= dev->archdata.num_irqs)
+		goto out_not_found;
 	ret = dev->archdata.irqs[num];
-	जाओ out;
-#अन्यथा
-	काष्ठा resource *r;
+	goto out;
+#else
+	struct resource *r;
 
-	अगर (IS_ENABLED(CONFIG_OF_IRQ) && dev->dev.of_node) अणु
+	if (IS_ENABLED(CONFIG_OF_IRQ) && dev->dev.of_node) {
 		ret = of_irq_get(dev->dev.of_node, num);
-		अगर (ret > 0 || ret == -EPROBE_DEFER)
-			जाओ out;
-	पूर्ण
+		if (ret > 0 || ret == -EPROBE_DEFER)
+			goto out;
+	}
 
-	r = platक्रमm_get_resource(dev, IORESOURCE_IRQ, num);
-	अगर (has_acpi_companion(&dev->dev)) अणु
-		अगर (r && r->flags & IORESOURCE_DISABLED) अणु
+	r = platform_get_resource(dev, IORESOURCE_IRQ, num);
+	if (has_acpi_companion(&dev->dev)) {
+		if (r && r->flags & IORESOURCE_DISABLED) {
 			ret = acpi_irq_get(ACPI_HANDLE(&dev->dev), num, r);
-			अगर (ret)
-				जाओ out;
-		पूर्ण
-	पूर्ण
+			if (ret)
+				goto out;
+		}
+	}
 
 	/*
 	 * The resources may pass trigger flags to the irqs that need
-	 * to be set up. It so happens that the trigger flags क्रम
+	 * to be set up. It so happens that the trigger flags for
 	 * IORESOURCE_BITS correspond 1-to-1 to the IRQF_TRIGGER*
 	 * settings.
 	 */
-	अगर (r && r->flags & IORESOURCE_BITS) अणु
-		काष्ठा irq_data *irqd;
+	if (r && r->flags & IORESOURCE_BITS) {
+		struct irq_data *irqd;
 
 		irqd = irq_get_irq_data(r->start);
-		अगर (!irqd)
-			जाओ out_not_found;
+		if (!irqd)
+			goto out_not_found;
 		irqd_set_trigger_type(irqd, r->flags & IORESOURCE_BITS);
-	पूर्ण
+	}
 
-	अगर (r) अणु
+	if (r) {
 		ret = r->start;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
-	 * For the index 0 पूर्णांकerrupt, allow falling back to GpioInt
+	 * For the index 0 interrupt, allow falling back to GpioInt
 	 * resources. While a device could have both Interrupt and GpioInt
-	 * resources, making this fallback ambiguous, in many common हालs
+	 * resources, making this fallback ambiguous, in many common cases
 	 * the device will only expose one IRQ, and this fallback
 	 * allows a common code path across either kind of resource.
 	 */
-	अगर (num == 0 && has_acpi_companion(&dev->dev)) अणु
+	if (num == 0 && has_acpi_companion(&dev->dev)) {
 		ret = acpi_dev_gpio_irq_get(ACPI_COMPANION(&dev->dev), num);
-		/* Our callers expect -ENXIO क्रम missing IRQs. */
-		अगर (ret >= 0 || ret == -EPROBE_DEFER)
-			जाओ out;
-	पूर्ण
+		/* Our callers expect -ENXIO for missing IRQs. */
+		if (ret >= 0 || ret == -EPROBE_DEFER)
+			goto out;
+	}
 
-#पूर्ण_अगर
+#endif
 out_not_found:
 	ret = -ENXIO;
 out:
 	WARN(ret == 0, "0 is an invalid IRQ number\n");
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(platक्रमm_get_irq_optional);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(platform_get_irq_optional);
 
 /**
- * platक्रमm_get_irq - get an IRQ क्रम a device
- * @dev: platक्रमm device
+ * platform_get_irq - get an IRQ for a device
+ * @dev: platform device
  * @num: IRQ number index
  *
- * Gets an IRQ क्रम a platक्रमm device and prपूर्णांकs an error message अगर finding the
- * IRQ fails. Device drivers should check the वापस value क्रम errors so as to
- * not pass a negative पूर्णांकeger value to the request_irq() APIs.
+ * Gets an IRQ for a platform device and prints an error message if finding the
+ * IRQ fails. Device drivers should check the return value for errors so as to
+ * not pass a negative integer value to the request_irq() APIs.
  *
  * For example::
  *
- *		पूर्णांक irq = platक्रमm_get_irq(pdev, 0);
- *		अगर (irq < 0)
- *			वापस irq;
+ *		int irq = platform_get_irq(pdev, 0);
+ *		if (irq < 0)
+ *			return irq;
  *
  * Return: non-zero IRQ number on success, negative error number on failure.
  */
-पूर्णांक platक्रमm_get_irq(काष्ठा platक्रमm_device *dev, अचिन्हित पूर्णांक num)
-अणु
-	पूर्णांक ret;
+int platform_get_irq(struct platform_device *dev, unsigned int num)
+{
+	int ret;
 
-	ret = platक्रमm_get_irq_optional(dev, num);
-	अगर (ret < 0 && ret != -EPROBE_DEFER)
+	ret = platform_get_irq_optional(dev, num);
+	if (ret < 0 && ret != -EPROBE_DEFER)
 		dev_err(&dev->dev, "IRQ index %u not found\n", num);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(platक्रमm_get_irq);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(platform_get_irq);
 
 /**
- * platक्रमm_irq_count - Count the number of IRQs a platक्रमm device uses
- * @dev: platक्रमm device
+ * platform_irq_count - Count the number of IRQs a platform device uses
+ * @dev: platform device
  *
- * Return: Number of IRQs a platक्रमm device uses or EPROBE_DEFER
+ * Return: Number of IRQs a platform device uses or EPROBE_DEFER
  */
-पूर्णांक platक्रमm_irq_count(काष्ठा platक्रमm_device *dev)
-अणु
-	पूर्णांक ret, nr = 0;
+int platform_irq_count(struct platform_device *dev)
+{
+	int ret, nr = 0;
 
-	जबतक ((ret = platक्रमm_get_irq_optional(dev, nr)) >= 0)
+	while ((ret = platform_get_irq_optional(dev, nr)) >= 0)
 		nr++;
 
-	अगर (ret == -EPROBE_DEFER)
-		वापस ret;
+	if (ret == -EPROBE_DEFER)
+		return ret;
 
-	वापस nr;
-पूर्ण
-EXPORT_SYMBOL_GPL(platक्रमm_irq_count);
+	return nr;
+}
+EXPORT_SYMBOL_GPL(platform_irq_count);
 
-काष्ठा irq_affinity_devres अणु
-	अचिन्हित पूर्णांक count;
-	अचिन्हित पूर्णांक irq[];
-पूर्ण;
+struct irq_affinity_devres {
+	unsigned int count;
+	unsigned int irq[];
+};
 
-अटल व्योम platक्रमm_disable_acpi_irq(काष्ठा platक्रमm_device *pdev, पूर्णांक index)
-अणु
-	काष्ठा resource *r;
+static void platform_disable_acpi_irq(struct platform_device *pdev, int index)
+{
+	struct resource *r;
 
-	r = platक्रमm_get_resource(pdev, IORESOURCE_IRQ, index);
-	अगर (r)
+	r = platform_get_resource(pdev, IORESOURCE_IRQ, index);
+	if (r)
 		irqresource_disabled(r, 0);
-पूर्ण
+}
 
-अटल व्योम devm_platक्रमm_get_irqs_affinity_release(काष्ठा device *dev,
-						    व्योम *res)
-अणु
-	काष्ठा irq_affinity_devres *ptr = res;
-	पूर्णांक i;
+static void devm_platform_get_irqs_affinity_release(struct device *dev,
+						    void *res)
+{
+	struct irq_affinity_devres *ptr = res;
+	int i;
 
-	क्रम (i = 0; i < ptr->count; i++) अणु
+	for (i = 0; i < ptr->count; i++) {
 		irq_dispose_mapping(ptr->irq[i]);
 
-		अगर (has_acpi_companion(dev))
-			platक्रमm_disable_acpi_irq(to_platक्रमm_device(dev), i);
-	पूर्ण
-पूर्ण
+		if (has_acpi_companion(dev))
+			platform_disable_acpi_irq(to_platform_device(dev), i);
+	}
+}
 
 /**
- * devm_platक्रमm_get_irqs_affinity - devm method to get a set of IRQs क्रम a
- *				device using an पूर्णांकerrupt affinity descriptor
- * @dev: platक्रमm device poपूर्णांकer
+ * devm_platform_get_irqs_affinity - devm method to get a set of IRQs for a
+ *				device using an interrupt affinity descriptor
+ * @dev: platform device pointer
  * @affd: affinity descriptor
- * @minvec: minimum count of पूर्णांकerrupt vectors
- * @maxvec: maximum count of पूर्णांकerrupt vectors
- * @irqs: poपूर्णांकer holder क्रम IRQ numbers
+ * @minvec: minimum count of interrupt vectors
+ * @maxvec: maximum count of interrupt vectors
+ * @irqs: pointer holder for IRQ numbers
  *
- * Gets a set of IRQs क्रम a platक्रमm device, and updates IRQ afffपूर्णांकy according
+ * Gets a set of IRQs for a platform device, and updates IRQ afffinty according
  * to the passed affinity descriptor
  *
  * Return: Number of vectors on success, negative error number on failure.
  */
-पूर्णांक devm_platक्रमm_get_irqs_affinity(काष्ठा platक्रमm_device *dev,
-				    काष्ठा irq_affinity *affd,
-				    अचिन्हित पूर्णांक minvec,
-				    अचिन्हित पूर्णांक maxvec,
-				    पूर्णांक **irqs)
-अणु
-	काष्ठा irq_affinity_devres *ptr;
-	काष्ठा irq_affinity_desc *desc;
-	माप_प्रकार size;
-	पूर्णांक i, ret, nvec;
+int devm_platform_get_irqs_affinity(struct platform_device *dev,
+				    struct irq_affinity *affd,
+				    unsigned int minvec,
+				    unsigned int maxvec,
+				    int **irqs)
+{
+	struct irq_affinity_devres *ptr;
+	struct irq_affinity_desc *desc;
+	size_t size;
+	int i, ret, nvec;
 
-	अगर (!affd)
-		वापस -EPERM;
+	if (!affd)
+		return -EPERM;
 
-	अगर (maxvec < minvec)
-		वापस -दुस्फल;
+	if (maxvec < minvec)
+		return -ERANGE;
 
-	nvec = platक्रमm_irq_count(dev);
-	अगर (nvec < 0)
-		वापस nvec;
+	nvec = platform_irq_count(dev);
+	if (nvec < 0)
+		return nvec;
 
-	अगर (nvec < minvec)
-		वापस -ENOSPC;
+	if (nvec < minvec)
+		return -ENOSPC;
 
 	nvec = irq_calc_affinity_vectors(minvec, nvec, affd);
-	अगर (nvec < minvec)
-		वापस -ENOSPC;
+	if (nvec < minvec)
+		return -ENOSPC;
 
-	अगर (nvec > maxvec)
+	if (nvec > maxvec)
 		nvec = maxvec;
 
-	size = माप(*ptr) + माप(अचिन्हित पूर्णांक) * nvec;
-	ptr = devres_alloc(devm_platक्रमm_get_irqs_affinity_release, size,
+	size = sizeof(*ptr) + sizeof(unsigned int) * nvec;
+	ptr = devres_alloc(devm_platform_get_irqs_affinity_release, size,
 			   GFP_KERNEL);
-	अगर (!ptr)
-		वापस -ENOMEM;
+	if (!ptr)
+		return -ENOMEM;
 
 	ptr->count = nvec;
 
-	क्रम (i = 0; i < nvec; i++) अणु
-		पूर्णांक irq = platक्रमm_get_irq(dev, i);
-		अगर (irq < 0) अणु
+	for (i = 0; i < nvec; i++) {
+		int irq = platform_get_irq(dev, i);
+		if (irq < 0) {
 			ret = irq;
-			जाओ err_मुक्त_devres;
-		पूर्ण
+			goto err_free_devres;
+		}
 		ptr->irq[i] = irq;
-	पूर्ण
+	}
 
 	desc = irq_create_affinity_masks(nvec, affd);
-	अगर (!desc) अणु
+	if (!desc) {
 		ret = -ENOMEM;
-		जाओ err_मुक्त_devres;
-	पूर्ण
+		goto err_free_devres;
+	}
 
-	क्रम (i = 0; i < nvec; i++) अणु
+	for (i = 0; i < nvec; i++) {
 		ret = irq_update_affinity_desc(ptr->irq[i], &desc[i]);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(&dev->dev, "failed to update irq%d affinity descriptor (%d)\n",
 				ptr->irq[i], ret);
-			जाओ err_मुक्त_desc;
-		पूर्ण
-	पूर्ण
+			goto err_free_desc;
+		}
+	}
 
 	devres_add(&dev->dev, ptr);
 
-	kमुक्त(desc);
+	kfree(desc);
 
 	*irqs = ptr->irq;
 
-	वापस nvec;
+	return nvec;
 
-err_मुक्त_desc:
-	kमुक्त(desc);
-err_मुक्त_devres:
-	devres_मुक्त(ptr);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(devm_platक्रमm_get_irqs_affinity);
+err_free_desc:
+	kfree(desc);
+err_free_devres:
+	devres_free(ptr);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(devm_platform_get_irqs_affinity);
 
 /**
- * platक्रमm_get_resource_byname - get a resource क्रम a device by name
- * @dev: platक्रमm device
+ * platform_get_resource_byname - get a resource for a device by name
+ * @dev: platform device
  * @type: resource type
  * @name: resource name
  */
-काष्ठा resource *platक्रमm_get_resource_byname(काष्ठा platक्रमm_device *dev,
-					      अचिन्हित पूर्णांक type,
-					      स्थिर अक्षर *name)
-अणु
+struct resource *platform_get_resource_byname(struct platform_device *dev,
+					      unsigned int type,
+					      const char *name)
+{
 	u32 i;
 
-	क्रम (i = 0; i < dev->num_resources; i++) अणु
-		काष्ठा resource *r = &dev->resource[i];
+	for (i = 0; i < dev->num_resources; i++) {
+		struct resource *r = &dev->resource[i];
 
-		अगर (unlikely(!r->name))
-			जारी;
+		if (unlikely(!r->name))
+			continue;
 
-		अगर (type == resource_type(r) && !म_भेद(r->name, name))
-			वापस r;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
-EXPORT_SYMBOL_GPL(platक्रमm_get_resource_byname);
+		if (type == resource_type(r) && !strcmp(r->name, name))
+			return r;
+	}
+	return NULL;
+}
+EXPORT_SYMBOL_GPL(platform_get_resource_byname);
 
-अटल पूर्णांक __platक्रमm_get_irq_byname(काष्ठा platक्रमm_device *dev,
-				     स्थिर अक्षर *name)
-अणु
-	काष्ठा resource *r;
-	पूर्णांक ret;
+static int __platform_get_irq_byname(struct platform_device *dev,
+				     const char *name)
+{
+	struct resource *r;
+	int ret;
 
-	अगर (IS_ENABLED(CONFIG_OF_IRQ) && dev->dev.of_node) अणु
+	if (IS_ENABLED(CONFIG_OF_IRQ) && dev->dev.of_node) {
 		ret = of_irq_get_byname(dev->dev.of_node, name);
-		अगर (ret > 0 || ret == -EPROBE_DEFER)
-			वापस ret;
-	पूर्ण
+		if (ret > 0 || ret == -EPROBE_DEFER)
+			return ret;
+	}
 
-	r = platक्रमm_get_resource_byname(dev, IORESOURCE_IRQ, name);
-	अगर (r) अणु
+	r = platform_get_resource_byname(dev, IORESOURCE_IRQ, name);
+	if (r) {
 		WARN(r->start == 0, "0 is an invalid IRQ number\n");
-		वापस r->start;
-	पूर्ण
+		return r->start;
+	}
 
-	वापस -ENXIO;
-पूर्ण
+	return -ENXIO;
+}
 
 /**
- * platक्रमm_get_irq_byname - get an IRQ क्रम a device by name
- * @dev: platक्रमm device
+ * platform_get_irq_byname - get an IRQ for a device by name
+ * @dev: platform device
  * @name: IRQ name
  *
- * Get an IRQ like platक्रमm_get_irq(), but then by name rather then by index.
+ * Get an IRQ like platform_get_irq(), but then by name rather then by index.
  *
  * Return: non-zero IRQ number on success, negative error number on failure.
  */
-पूर्णांक platक्रमm_get_irq_byname(काष्ठा platक्रमm_device *dev, स्थिर अक्षर *name)
-अणु
-	पूर्णांक ret;
+int platform_get_irq_byname(struct platform_device *dev, const char *name)
+{
+	int ret;
 
-	ret = __platक्रमm_get_irq_byname(dev, name);
-	अगर (ret < 0 && ret != -EPROBE_DEFER)
+	ret = __platform_get_irq_byname(dev, name);
+	if (ret < 0 && ret != -EPROBE_DEFER)
 		dev_err(&dev->dev, "IRQ %s not found\n", name);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(platक्रमm_get_irq_byname);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(platform_get_irq_byname);
 
 /**
- * platक्रमm_get_irq_byname_optional - get an optional IRQ क्रम a device by name
- * @dev: platक्रमm device
+ * platform_get_irq_byname_optional - get an optional IRQ for a device by name
+ * @dev: platform device
  * @name: IRQ name
  *
- * Get an optional IRQ by name like platक्रमm_get_irq_byname(). Except that it
- * करोes not prपूर्णांक an error message अगर an IRQ can not be obtained.
+ * Get an optional IRQ by name like platform_get_irq_byname(). Except that it
+ * does not print an error message if an IRQ can not be obtained.
  *
  * Return: non-zero IRQ number on success, negative error number on failure.
  */
-पूर्णांक platक्रमm_get_irq_byname_optional(काष्ठा platक्रमm_device *dev,
-				     स्थिर अक्षर *name)
-अणु
-	वापस __platक्रमm_get_irq_byname(dev, name);
-पूर्ण
-EXPORT_SYMBOL_GPL(platक्रमm_get_irq_byname_optional);
+int platform_get_irq_byname_optional(struct platform_device *dev,
+				     const char *name)
+{
+	return __platform_get_irq_byname(dev, name);
+}
+EXPORT_SYMBOL_GPL(platform_get_irq_byname_optional);
 
 /**
- * platक्रमm_add_devices - add a numbers of platक्रमm devices
- * @devs: array of platक्रमm devices to add
- * @num: number of platक्रमm devices in array
+ * platform_add_devices - add a numbers of platform devices
+ * @devs: array of platform devices to add
+ * @num: number of platform devices in array
  */
-पूर्णांक platक्रमm_add_devices(काष्ठा platक्रमm_device **devs, पूर्णांक num)
-अणु
-	पूर्णांक i, ret = 0;
+int platform_add_devices(struct platform_device **devs, int num)
+{
+	int i, ret = 0;
 
-	क्रम (i = 0; i < num; i++) अणु
-		ret = platक्रमm_device_रेजिस्टर(devs[i]);
-		अगर (ret) अणु
-			जबतक (--i >= 0)
-				platक्रमm_device_unरेजिस्टर(devs[i]);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+	for (i = 0; i < num; i++) {
+		ret = platform_device_register(devs[i]);
+		if (ret) {
+			while (--i >= 0)
+				platform_device_unregister(devs[i]);
+			break;
+		}
+	}
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(platक्रमm_add_devices);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(platform_add_devices);
 
-काष्ठा platक्रमm_object अणु
-	काष्ठा platक्रमm_device pdev;
-	अक्षर name[];
-पूर्ण;
+struct platform_object {
+	struct platform_device pdev;
+	char name[];
+};
 
 /*
- * Set up शेष DMA mask क्रम platक्रमm devices अगर the they weren't
+ * Set up default DMA mask for platform devices if the they weren't
  * previously set by the architecture / DT.
  */
-अटल व्योम setup_pdev_dma_masks(काष्ठा platक्रमm_device *pdev)
-अणु
+static void setup_pdev_dma_masks(struct platform_device *pdev)
+{
 	pdev->dev.dma_parms = &pdev->dma_parms;
 
-	अगर (!pdev->dev.coherent_dma_mask)
+	if (!pdev->dev.coherent_dma_mask)
 		pdev->dev.coherent_dma_mask = DMA_BIT_MASK(32);
-	अगर (!pdev->dev.dma_mask) अणु
-		pdev->platक्रमm_dma_mask = DMA_BIT_MASK(32);
-		pdev->dev.dma_mask = &pdev->platक्रमm_dma_mask;
-	पूर्ण
-पूर्ण;
+	if (!pdev->dev.dma_mask) {
+		pdev->platform_dma_mask = DMA_BIT_MASK(32);
+		pdev->dev.dma_mask = &pdev->platform_dma_mask;
+	}
+};
 
 /**
- * platक्रमm_device_put - destroy a platक्रमm device
- * @pdev: platक्रमm device to मुक्त
+ * platform_device_put - destroy a platform device
+ * @pdev: platform device to free
  *
- * Free all memory associated with a platक्रमm device.  This function must
- * _only_ be बाह्यally called in error हालs.  All other usage is a bug.
+ * Free all memory associated with a platform device.  This function must
+ * _only_ be externally called in error cases.  All other usage is a bug.
  */
-व्योम platक्रमm_device_put(काष्ठा platक्रमm_device *pdev)
-अणु
-	अगर (!IS_ERR_OR_शून्य(pdev))
+void platform_device_put(struct platform_device *pdev)
+{
+	if (!IS_ERR_OR_NULL(pdev))
 		put_device(&pdev->dev);
-पूर्ण
-EXPORT_SYMBOL_GPL(platक्रमm_device_put);
+}
+EXPORT_SYMBOL_GPL(platform_device_put);
 
-अटल व्योम platक्रमm_device_release(काष्ठा device *dev)
-अणु
-	काष्ठा platक्रमm_object *pa = container_of(dev, काष्ठा platक्रमm_object,
+static void platform_device_release(struct device *dev)
+{
+	struct platform_object *pa = container_of(dev, struct platform_object,
 						  pdev.dev);
 
 	of_node_put(pa->pdev.dev.of_node);
-	kमुक्त(pa->pdev.dev.platक्रमm_data);
-	kमुक्त(pa->pdev.mfd_cell);
-	kमुक्त(pa->pdev.resource);
-	kमुक्त(pa->pdev.driver_override);
-	kमुक्त(pa);
-पूर्ण
+	kfree(pa->pdev.dev.platform_data);
+	kfree(pa->pdev.mfd_cell);
+	kfree(pa->pdev.resource);
+	kfree(pa->pdev.driver_override);
+	kfree(pa);
+}
 
 /**
- * platक्रमm_device_alloc - create a platक्रमm device
+ * platform_device_alloc - create a platform device
  * @name: base name of the device we're adding
  * @id: instance id
  *
- * Create a platक्रमm device object which can have other objects attached
- * to it, and which will have attached objects मुक्तd when it is released.
+ * Create a platform device object which can have other objects attached
+ * to it, and which will have attached objects freed when it is released.
  */
-काष्ठा platक्रमm_device *platक्रमm_device_alloc(स्थिर अक्षर *name, पूर्णांक id)
-अणु
-	काष्ठा platक्रमm_object *pa;
+struct platform_device *platform_device_alloc(const char *name, int id)
+{
+	struct platform_object *pa;
 
-	pa = kzalloc(माप(*pa) + म_माप(name) + 1, GFP_KERNEL);
-	अगर (pa) अणु
-		म_नकल(pa->name, name);
+	pa = kzalloc(sizeof(*pa) + strlen(name) + 1, GFP_KERNEL);
+	if (pa) {
+		strcpy(pa->name, name);
 		pa->pdev.name = pa->name;
 		pa->pdev.id = id;
 		device_initialize(&pa->pdev.dev);
-		pa->pdev.dev.release = platक्रमm_device_release;
+		pa->pdev.dev.release = platform_device_release;
 		setup_pdev_dma_masks(&pa->pdev);
-	पूर्ण
+	}
 
-	वापस pa ? &pa->pdev : शून्य;
-पूर्ण
-EXPORT_SYMBOL_GPL(platक्रमm_device_alloc);
+	return pa ? &pa->pdev : NULL;
+}
+EXPORT_SYMBOL_GPL(platform_device_alloc);
 
 /**
- * platक्रमm_device_add_resources - add resources to a platक्रमm device
- * @pdev: platक्रमm device allocated by platक्रमm_device_alloc to add resources to
- * @res: set of resources that needs to be allocated क्रम the device
+ * platform_device_add_resources - add resources to a platform device
+ * @pdev: platform device allocated by platform_device_alloc to add resources to
+ * @res: set of resources that needs to be allocated for the device
  * @num: number of resources
  *
- * Add a copy of the resources to the platक्रमm device.  The memory
- * associated with the resources will be मुक्तd when the platक्रमm device is
+ * Add a copy of the resources to the platform device.  The memory
+ * associated with the resources will be freed when the platform device is
  * released.
  */
-पूर्णांक platक्रमm_device_add_resources(काष्ठा platक्रमm_device *pdev,
-				  स्थिर काष्ठा resource *res, अचिन्हित पूर्णांक num)
-अणु
-	काष्ठा resource *r = शून्य;
+int platform_device_add_resources(struct platform_device *pdev,
+				  const struct resource *res, unsigned int num)
+{
+	struct resource *r = NULL;
 
-	अगर (res) अणु
-		r = kmemdup(res, माप(काष्ठा resource) * num, GFP_KERNEL);
-		अगर (!r)
-			वापस -ENOMEM;
-	पूर्ण
+	if (res) {
+		r = kmemdup(res, sizeof(struct resource) * num, GFP_KERNEL);
+		if (!r)
+			return -ENOMEM;
+	}
 
-	kमुक्त(pdev->resource);
+	kfree(pdev->resource);
 	pdev->resource = r;
 	pdev->num_resources = num;
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(platक्रमm_device_add_resources);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(platform_device_add_resources);
 
 /**
- * platक्रमm_device_add_data - add platक्रमm-specअगरic data to a platक्रमm device
- * @pdev: platक्रमm device allocated by platक्रमm_device_alloc to add resources to
- * @data: platक्रमm specअगरic data क्रम this platक्रमm device
- * @size: size of platक्रमm specअगरic data
+ * platform_device_add_data - add platform-specific data to a platform device
+ * @pdev: platform device allocated by platform_device_alloc to add resources to
+ * @data: platform specific data for this platform device
+ * @size: size of platform specific data
  *
- * Add a copy of platक्रमm specअगरic data to the platक्रमm device's
- * platक्रमm_data poपूर्णांकer.  The memory associated with the platक्रमm data
- * will be मुक्तd when the platक्रमm device is released.
+ * Add a copy of platform specific data to the platform device's
+ * platform_data pointer.  The memory associated with the platform data
+ * will be freed when the platform device is released.
  */
-पूर्णांक platक्रमm_device_add_data(काष्ठा platक्रमm_device *pdev, स्थिर व्योम *data,
-			     माप_प्रकार size)
-अणु
-	व्योम *d = शून्य;
+int platform_device_add_data(struct platform_device *pdev, const void *data,
+			     size_t size)
+{
+	void *d = NULL;
 
-	अगर (data) अणु
+	if (data) {
 		d = kmemdup(data, size, GFP_KERNEL);
-		अगर (!d)
-			वापस -ENOMEM;
-	पूर्ण
+		if (!d)
+			return -ENOMEM;
+	}
 
-	kमुक्त(pdev->dev.platक्रमm_data);
-	pdev->dev.platक्रमm_data = d;
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(platक्रमm_device_add_data);
+	kfree(pdev->dev.platform_data);
+	pdev->dev.platform_data = d;
+	return 0;
+}
+EXPORT_SYMBOL_GPL(platform_device_add_data);
 
 /**
- * platक्रमm_device_add_properties - add built-in properties to a platक्रमm device
- * @pdev: platक्रमm device to add properties to
+ * platform_device_add_properties - add built-in properties to a platform device
+ * @pdev: platform device to add properties to
  * @properties: null terminated array of properties to add
  *
  * The function will take deep copy of @properties and attach the copy to the
- * platक्रमm device. The memory associated with properties will be मुक्तd when the
- * platक्रमm device is released.
+ * platform device. The memory associated with properties will be freed when the
+ * platform device is released.
  */
-पूर्णांक platक्रमm_device_add_properties(काष्ठा platक्रमm_device *pdev,
-				   स्थिर काष्ठा property_entry *properties)
-अणु
-	वापस device_add_properties(&pdev->dev, properties);
-पूर्ण
-EXPORT_SYMBOL_GPL(platक्रमm_device_add_properties);
+int platform_device_add_properties(struct platform_device *pdev,
+				   const struct property_entry *properties)
+{
+	return device_add_properties(&pdev->dev, properties);
+}
+EXPORT_SYMBOL_GPL(platform_device_add_properties);
 
 /**
- * platक्रमm_device_add - add a platक्रमm device to device hierarchy
- * @pdev: platक्रमm device we're adding
+ * platform_device_add - add a platform device to device hierarchy
+ * @pdev: platform device we're adding
  *
- * This is part 2 of platक्रमm_device_रेजिस्टर(), though may be called
- * separately _अगरf_ pdev was allocated by platक्रमm_device_alloc().
+ * This is part 2 of platform_device_register(), though may be called
+ * separately _iff_ pdev was allocated by platform_device_alloc().
  */
-पूर्णांक platक्रमm_device_add(काष्ठा platक्रमm_device *pdev)
-अणु
+int platform_device_add(struct platform_device *pdev)
+{
 	u32 i;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!pdev)
-		वापस -EINVAL;
+	if (!pdev)
+		return -EINVAL;
 
-	अगर (!pdev->dev.parent)
-		pdev->dev.parent = &platक्रमm_bus;
+	if (!pdev->dev.parent)
+		pdev->dev.parent = &platform_bus;
 
-	pdev->dev.bus = &platक्रमm_bus_type;
+	pdev->dev.bus = &platform_bus_type;
 
-	चयन (pdev->id) अणु
-	शेष:
+	switch (pdev->id) {
+	default:
 		dev_set_name(&pdev->dev, "%s.%d", pdev->name,  pdev->id);
-		अवरोध;
-	हाल PLATFORM_DEVID_NONE:
+		break;
+	case PLATFORM_DEVID_NONE:
 		dev_set_name(&pdev->dev, "%s", pdev->name);
-		अवरोध;
-	हाल PLATFORM_DEVID_AUTO:
+		break;
+	case PLATFORM_DEVID_AUTO:
 		/*
 		 * Automatically allocated device ID. We mark it as such so
-		 * that we remember it must be मुक्तd, and we append a suffix
-		 * to aव्योम namespace collision with explicit IDs.
+		 * that we remember it must be freed, and we append a suffix
+		 * to avoid namespace collision with explicit IDs.
 		 */
-		ret = ida_alloc(&platक्रमm_devid_ida, GFP_KERNEL);
-		अगर (ret < 0)
-			जाओ err_out;
+		ret = ida_alloc(&platform_devid_ida, GFP_KERNEL);
+		if (ret < 0)
+			goto err_out;
 		pdev->id = ret;
-		pdev->id_स्वतः = true;
+		pdev->id_auto = true;
 		dev_set_name(&pdev->dev, "%s.%d.auto", pdev->name, pdev->id);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	क्रम (i = 0; i < pdev->num_resources; i++) अणु
-		काष्ठा resource *p, *r = &pdev->resource[i];
+	for (i = 0; i < pdev->num_resources; i++) {
+		struct resource *p, *r = &pdev->resource[i];
 
-		अगर (r->name == शून्य)
+		if (r->name == NULL)
 			r->name = dev_name(&pdev->dev);
 
 		p = r->parent;
-		अगर (!p) अणु
-			अगर (resource_type(r) == IORESOURCE_MEM)
+		if (!p) {
+			if (resource_type(r) == IORESOURCE_MEM)
 				p = &iomem_resource;
-			अन्यथा अगर (resource_type(r) == IORESOURCE_IO)
+			else if (resource_type(r) == IORESOURCE_IO)
 				p = &ioport_resource;
-		पूर्ण
+		}
 
-		अगर (p) अणु
+		if (p) {
 			ret = insert_resource(p, r);
-			अगर (ret) अणु
+			if (ret) {
 				dev_err(&pdev->dev, "failed to claim resource %d: %pR\n", i, r);
-				जाओ failed;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				goto failed;
+			}
+		}
+	}
 
 	pr_debug("Registering platform device '%s'. Parent at %s\n",
 		 dev_name(&pdev->dev), dev_name(pdev->dev.parent));
 
 	ret = device_add(&pdev->dev);
-	अगर (ret == 0)
-		वापस ret;
+	if (ret == 0)
+		return ret;
 
  failed:
-	अगर (pdev->id_स्वतः) अणु
-		ida_मुक्त(&platक्रमm_devid_ida, pdev->id);
+	if (pdev->id_auto) {
+		ida_free(&platform_devid_ida, pdev->id);
 		pdev->id = PLATFORM_DEVID_AUTO;
-	पूर्ण
+	}
 
-	जबतक (i--) अणु
-		काष्ठा resource *r = &pdev->resource[i];
-		अगर (r->parent)
+	while (i--) {
+		struct resource *r = &pdev->resource[i];
+		if (r->parent)
 			release_resource(r);
-	पूर्ण
+	}
 
  err_out:
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(platक्रमm_device_add);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(platform_device_add);
 
 /**
- * platक्रमm_device_del - हटाओ a platक्रमm-level device
- * @pdev: platक्रमm device we're removing
+ * platform_device_del - remove a platform-level device
+ * @pdev: platform device we're removing
  *
  * Note that this function will also release all memory- and port-based
  * resources owned by the device (@dev->resource).  This function must
- * _only_ be बाह्यally called in error हालs.  All other usage is a bug.
+ * _only_ be externally called in error cases.  All other usage is a bug.
  */
-व्योम platक्रमm_device_del(काष्ठा platक्रमm_device *pdev)
-अणु
+void platform_device_del(struct platform_device *pdev)
+{
 	u32 i;
 
-	अगर (!IS_ERR_OR_शून्य(pdev)) अणु
+	if (!IS_ERR_OR_NULL(pdev)) {
 		device_del(&pdev->dev);
 
-		अगर (pdev->id_स्वतः) अणु
-			ida_मुक्त(&platक्रमm_devid_ida, pdev->id);
+		if (pdev->id_auto) {
+			ida_free(&platform_devid_ida, pdev->id);
 			pdev->id = PLATFORM_DEVID_AUTO;
-		पूर्ण
+		}
 
-		क्रम (i = 0; i < pdev->num_resources; i++) अणु
-			काष्ठा resource *r = &pdev->resource[i];
-			अगर (r->parent)
+		for (i = 0; i < pdev->num_resources; i++) {
+			struct resource *r = &pdev->resource[i];
+			if (r->parent)
 				release_resource(r);
-		पूर्ण
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL_GPL(platक्रमm_device_del);
+		}
+	}
+}
+EXPORT_SYMBOL_GPL(platform_device_del);
 
 /**
- * platक्रमm_device_रेजिस्टर - add a platक्रमm-level device
- * @pdev: platक्रमm device we're adding
+ * platform_device_register - add a platform-level device
+ * @pdev: platform device we're adding
  */
-पूर्णांक platक्रमm_device_रेजिस्टर(काष्ठा platक्रमm_device *pdev)
-अणु
+int platform_device_register(struct platform_device *pdev)
+{
 	device_initialize(&pdev->dev);
 	setup_pdev_dma_masks(pdev);
-	वापस platक्रमm_device_add(pdev);
-पूर्ण
-EXPORT_SYMBOL_GPL(platक्रमm_device_रेजिस्टर);
+	return platform_device_add(pdev);
+}
+EXPORT_SYMBOL_GPL(platform_device_register);
 
 /**
- * platक्रमm_device_unरेजिस्टर - unरेजिस्टर a platक्रमm-level device
- * @pdev: platक्रमm device we're unरेजिस्टरing
+ * platform_device_unregister - unregister a platform-level device
+ * @pdev: platform device we're unregistering
  *
- * Unregistration is करोne in 2 steps. First we release all resources
- * and हटाओ it from the subप्रणाली, then we drop reference count by
- * calling platक्रमm_device_put().
+ * Unregistration is done in 2 steps. First we release all resources
+ * and remove it from the subsystem, then we drop reference count by
+ * calling platform_device_put().
  */
-व्योम platक्रमm_device_unरेजिस्टर(काष्ठा platक्रमm_device *pdev)
-अणु
-	platक्रमm_device_del(pdev);
-	platक्रमm_device_put(pdev);
-पूर्ण
-EXPORT_SYMBOL_GPL(platक्रमm_device_unरेजिस्टर);
+void platform_device_unregister(struct platform_device *pdev)
+{
+	platform_device_del(pdev);
+	platform_device_put(pdev);
+}
+EXPORT_SYMBOL_GPL(platform_device_unregister);
 
 /**
- * platक्रमm_device_रेजिस्टर_full - add a platक्रमm-level device with
- * resources and platक्रमm-specअगरic data
+ * platform_device_register_full - add a platform-level device with
+ * resources and platform-specific data
  *
  * @pdevinfo: data used to create device
  *
- * Returns &काष्ठा platक्रमm_device poपूर्णांकer on success, or ERR_PTR() on error.
+ * Returns &struct platform_device pointer on success, or ERR_PTR() on error.
  */
-काष्ठा platक्रमm_device *platक्रमm_device_रेजिस्टर_full(
-		स्थिर काष्ठा platक्रमm_device_info *pdevinfo)
-अणु
-	पूर्णांक ret;
-	काष्ठा platक्रमm_device *pdev;
+struct platform_device *platform_device_register_full(
+		const struct platform_device_info *pdevinfo)
+{
+	int ret;
+	struct platform_device *pdev;
 
-	pdev = platक्रमm_device_alloc(pdevinfo->name, pdevinfo->id);
-	अगर (!pdev)
-		वापस ERR_PTR(-ENOMEM);
+	pdev = platform_device_alloc(pdevinfo->name, pdevinfo->id);
+	if (!pdev)
+		return ERR_PTR(-ENOMEM);
 
 	pdev->dev.parent = pdevinfo->parent;
 	pdev->dev.fwnode = pdevinfo->fwnode;
 	pdev->dev.of_node = of_node_get(to_of_node(pdev->dev.fwnode));
 	pdev->dev.of_node_reused = pdevinfo->of_node_reused;
 
-	अगर (pdevinfo->dma_mask) अणु
-		pdev->platक्रमm_dma_mask = pdevinfo->dma_mask;
-		pdev->dev.dma_mask = &pdev->platक्रमm_dma_mask;
+	if (pdevinfo->dma_mask) {
+		pdev->platform_dma_mask = pdevinfo->dma_mask;
+		pdev->dev.dma_mask = &pdev->platform_dma_mask;
 		pdev->dev.coherent_dma_mask = pdevinfo->dma_mask;
-	पूर्ण
+	}
 
-	ret = platक्रमm_device_add_resources(pdev,
+	ret = platform_device_add_resources(pdev,
 			pdevinfo->res, pdevinfo->num_res);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
-	ret = platक्रमm_device_add_data(pdev,
+	ret = platform_device_add_data(pdev,
 			pdevinfo->data, pdevinfo->size_data);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
-	अगर (pdevinfo->properties) अणु
-		ret = platक्रमm_device_add_properties(pdev,
+	if (pdevinfo->properties) {
+		ret = platform_device_add_properties(pdev,
 						     pdevinfo->properties);
-		अगर (ret)
-			जाओ err;
-	पूर्ण
+		if (ret)
+			goto err;
+	}
 
-	ret = platक्रमm_device_add(pdev);
-	अगर (ret) अणु
+	ret = platform_device_add(pdev);
+	if (ret) {
 err:
-		ACPI_COMPANION_SET(&pdev->dev, शून्य);
-		platक्रमm_device_put(pdev);
-		वापस ERR_PTR(ret);
-	पूर्ण
+		ACPI_COMPANION_SET(&pdev->dev, NULL);
+		platform_device_put(pdev);
+		return ERR_PTR(ret);
+	}
 
-	वापस pdev;
-पूर्ण
-EXPORT_SYMBOL_GPL(platक्रमm_device_रेजिस्टर_full);
+	return pdev;
+}
+EXPORT_SYMBOL_GPL(platform_device_register_full);
 
 /**
- * __platक्रमm_driver_रेजिस्टर - रेजिस्टर a driver क्रम platक्रमm-level devices
- * @drv: platक्रमm driver काष्ठाure
+ * __platform_driver_register - register a driver for platform-level devices
+ * @drv: platform driver structure
  * @owner: owning module/driver
  */
-पूर्णांक __platक्रमm_driver_रेजिस्टर(काष्ठा platक्रमm_driver *drv,
-				काष्ठा module *owner)
-अणु
+int __platform_driver_register(struct platform_driver *drv,
+				struct module *owner)
+{
 	drv->driver.owner = owner;
-	drv->driver.bus = &platक्रमm_bus_type;
+	drv->driver.bus = &platform_bus_type;
 
-	वापस driver_रेजिस्टर(&drv->driver);
-पूर्ण
-EXPORT_SYMBOL_GPL(__platक्रमm_driver_रेजिस्टर);
+	return driver_register(&drv->driver);
+}
+EXPORT_SYMBOL_GPL(__platform_driver_register);
 
 /**
- * platक्रमm_driver_unरेजिस्टर - unरेजिस्टर a driver क्रम platक्रमm-level devices
- * @drv: platक्रमm driver काष्ठाure
+ * platform_driver_unregister - unregister a driver for platform-level devices
+ * @drv: platform driver structure
  */
-व्योम platक्रमm_driver_unरेजिस्टर(काष्ठा platक्रमm_driver *drv)
-अणु
-	driver_unरेजिस्टर(&drv->driver);
-पूर्ण
-EXPORT_SYMBOL_GPL(platक्रमm_driver_unरेजिस्टर);
+void platform_driver_unregister(struct platform_driver *drv)
+{
+	driver_unregister(&drv->driver);
+}
+EXPORT_SYMBOL_GPL(platform_driver_unregister);
 
-अटल पूर्णांक platक्रमm_probe_fail(काष्ठा platक्रमm_device *pdev)
-अणु
-	वापस -ENXIO;
-पूर्ण
+static int platform_probe_fail(struct platform_device *pdev)
+{
+	return -ENXIO;
+}
 
 /**
- * __platक्रमm_driver_probe - रेजिस्टर driver क्रम non-hotpluggable device
- * @drv: platक्रमm driver काष्ठाure
+ * __platform_driver_probe - register driver for non-hotpluggable device
+ * @drv: platform driver structure
  * @probe: the driver probe routine, probably from an __init section
  * @module: module which will be the owner of the driver
  *
- * Use this instead of platक्रमm_driver_रेजिस्टर() when you know the device
- * is not hotpluggable and has alपढ़ोy been रेजिस्टरed, and you want to
- * हटाओ its run-once probe() infraकाष्ठाure from memory after the driver
+ * Use this instead of platform_driver_register() when you know the device
+ * is not hotpluggable and has already been registered, and you want to
+ * remove its run-once probe() infrastructure from memory after the driver
  * has bound to the device.
  *
- * One typical use क्रम this would be with drivers क्रम controllers पूर्णांकegrated
- * पूर्णांकo प्रणाली-on-chip processors, where the controller devices have been
+ * One typical use for this would be with drivers for controllers integrated
+ * into system-on-chip processors, where the controller devices have been
  * configured as part of board setup.
  *
  * Note that this is incompatible with deferred probing.
  *
- * Returns zero अगर the driver रेजिस्टरed and bound to a device, अन्यथा वापसs
- * a negative error code and with the driver not रेजिस्टरed.
+ * Returns zero if the driver registered and bound to a device, else returns
+ * a negative error code and with the driver not registered.
  */
-पूर्णांक __init_or_module __platक्रमm_driver_probe(काष्ठा platक्रमm_driver *drv,
-		पूर्णांक (*probe)(काष्ठा platक्रमm_device *), काष्ठा module *module)
-अणु
-	पूर्णांक retval, code;
+int __init_or_module __platform_driver_probe(struct platform_driver *drv,
+		int (*probe)(struct platform_device *), struct module *module)
+{
+	int retval, code;
 
-	अगर (drv->driver.probe_type == PROBE_PREFER_ASYNCHRONOUS) अणु
+	if (drv->driver.probe_type == PROBE_PREFER_ASYNCHRONOUS) {
 		pr_err("%s: drivers registered with %s can not be probed asynchronously\n",
 			 drv->driver.name, __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/*
-	 * We have to run our probes synchronously because we check अगर
-	 * we find any devices to bind to and निकास with error अगर there
+	 * We have to run our probes synchronously because we check if
+	 * we find any devices to bind to and exit with error if there
 	 * are any.
 	 */
 	drv->driver.probe_type = PROBE_FORCE_SYNCHRONOUS;
 
 	/*
-	 * Prevent driver from requesting probe deferral to aव्योम further
+	 * Prevent driver from requesting probe deferral to avoid further
 	 * futile probe attempts.
 	 */
 	drv->prevent_deferred_probe = true;
@@ -960,604 +959,604 @@ EXPORT_SYMBOL_GPL(platक्रमm_driver_unरेजिस्टर);
 
 	/* temporary section violation during probe() */
 	drv->probe = probe;
-	retval = code = __platक्रमm_driver_रेजिस्टर(drv, module);
-	अगर (retval)
-		वापस retval;
+	retval = code = __platform_driver_register(drv, module);
+	if (retval)
+		return retval;
 
 	/*
 	 * Fixup that section violation, being paranoid about code scanning
 	 * the list of drivers in order to probe new devices.  Check to see
-	 * अगर the probe was successful, and make sure any क्रमced probes of
+	 * if the probe was successful, and make sure any forced probes of
 	 * new devices fail.
 	 */
 	spin_lock(&drv->driver.bus->p->klist_drivers.k_lock);
-	drv->probe = platक्रमm_probe_fail;
-	अगर (code == 0 && list_empty(&drv->driver.p->klist_devices.k_list))
+	drv->probe = platform_probe_fail;
+	if (code == 0 && list_empty(&drv->driver.p->klist_devices.k_list))
 		retval = -ENODEV;
 	spin_unlock(&drv->driver.bus->p->klist_drivers.k_lock);
 
-	अगर (code != retval)
-		platक्रमm_driver_unरेजिस्टर(drv);
-	वापस retval;
-पूर्ण
-EXPORT_SYMBOL_GPL(__platक्रमm_driver_probe);
+	if (code != retval)
+		platform_driver_unregister(drv);
+	return retval;
+}
+EXPORT_SYMBOL_GPL(__platform_driver_probe);
 
 /**
- * __platक्रमm_create_bundle - रेजिस्टर driver and create corresponding device
- * @driver: platक्रमm driver काष्ठाure
+ * __platform_create_bundle - register driver and create corresponding device
+ * @driver: platform driver structure
  * @probe: the driver probe routine, probably from an __init section
- * @res: set of resources that needs to be allocated क्रम the device
+ * @res: set of resources that needs to be allocated for the device
  * @n_res: number of resources
- * @data: platक्रमm specअगरic data क्रम this platक्रमm device
- * @size: size of platक्रमm specअगरic data
+ * @data: platform specific data for this platform device
+ * @size: size of platform specific data
  * @module: module which will be the owner of the driver
  *
  * Use this in legacy-style modules that probe hardware directly and
- * रेजिस्टर a single platक्रमm device and corresponding platक्रमm driver.
+ * register a single platform device and corresponding platform driver.
  *
- * Returns &काष्ठा platक्रमm_device poपूर्णांकer on success, or ERR_PTR() on error.
+ * Returns &struct platform_device pointer on success, or ERR_PTR() on error.
  */
-काष्ठा platक्रमm_device * __init_or_module __platक्रमm_create_bundle(
-			काष्ठा platक्रमm_driver *driver,
-			पूर्णांक (*probe)(काष्ठा platक्रमm_device *),
-			काष्ठा resource *res, अचिन्हित पूर्णांक n_res,
-			स्थिर व्योम *data, माप_प्रकार size, काष्ठा module *module)
-अणु
-	काष्ठा platक्रमm_device *pdev;
-	पूर्णांक error;
+struct platform_device * __init_or_module __platform_create_bundle(
+			struct platform_driver *driver,
+			int (*probe)(struct platform_device *),
+			struct resource *res, unsigned int n_res,
+			const void *data, size_t size, struct module *module)
+{
+	struct platform_device *pdev;
+	int error;
 
-	pdev = platक्रमm_device_alloc(driver->driver.name, -1);
-	अगर (!pdev) अणु
+	pdev = platform_device_alloc(driver->driver.name, -1);
+	if (!pdev) {
 		error = -ENOMEM;
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 
-	error = platक्रमm_device_add_resources(pdev, res, n_res);
-	अगर (error)
-		जाओ err_pdev_put;
+	error = platform_device_add_resources(pdev, res, n_res);
+	if (error)
+		goto err_pdev_put;
 
-	error = platक्रमm_device_add_data(pdev, data, size);
-	अगर (error)
-		जाओ err_pdev_put;
+	error = platform_device_add_data(pdev, data, size);
+	if (error)
+		goto err_pdev_put;
 
-	error = platक्रमm_device_add(pdev);
-	अगर (error)
-		जाओ err_pdev_put;
+	error = platform_device_add(pdev);
+	if (error)
+		goto err_pdev_put;
 
-	error = __platक्रमm_driver_probe(driver, probe, module);
-	अगर (error)
-		जाओ err_pdev_del;
+	error = __platform_driver_probe(driver, probe, module);
+	if (error)
+		goto err_pdev_del;
 
-	वापस pdev;
+	return pdev;
 
 err_pdev_del:
-	platक्रमm_device_del(pdev);
+	platform_device_del(pdev);
 err_pdev_put:
-	platक्रमm_device_put(pdev);
+	platform_device_put(pdev);
 err_out:
-	वापस ERR_PTR(error);
-पूर्ण
-EXPORT_SYMBOL_GPL(__platक्रमm_create_bundle);
+	return ERR_PTR(error);
+}
+EXPORT_SYMBOL_GPL(__platform_create_bundle);
 
 /**
- * __platक्रमm_रेजिस्टर_drivers - रेजिस्टर an array of platक्रमm drivers
- * @drivers: an array of drivers to रेजिस्टर
- * @count: the number of drivers to रेजिस्टर
+ * __platform_register_drivers - register an array of platform drivers
+ * @drivers: an array of drivers to register
+ * @count: the number of drivers to register
  * @owner: module owning the drivers
  *
- * Registers platक्रमm drivers specअगरied by an array. On failure to रेजिस्टर a
- * driver, all previously रेजिस्टरed drivers will be unरेजिस्टरed. Callers of
- * this API should use platक्रमm_unरेजिस्टर_drivers() to unरेजिस्टर drivers in
+ * Registers platform drivers specified by an array. On failure to register a
+ * driver, all previously registered drivers will be unregistered. Callers of
+ * this API should use platform_unregister_drivers() to unregister drivers in
  * the reverse order.
  *
  * Returns: 0 on success or a negative error code on failure.
  */
-पूर्णांक __platक्रमm_रेजिस्टर_drivers(काष्ठा platक्रमm_driver * स्थिर *drivers,
-				अचिन्हित पूर्णांक count, काष्ठा module *owner)
-अणु
-	अचिन्हित पूर्णांक i;
-	पूर्णांक err;
+int __platform_register_drivers(struct platform_driver * const *drivers,
+				unsigned int count, struct module *owner)
+{
+	unsigned int i;
+	int err;
 
-	क्रम (i = 0; i < count; i++) अणु
+	for (i = 0; i < count; i++) {
 		pr_debug("registering platform driver %ps\n", drivers[i]);
 
-		err = __platक्रमm_driver_रेजिस्टर(drivers[i], owner);
-		अगर (err < 0) अणु
+		err = __platform_driver_register(drivers[i], owner);
+		if (err < 0) {
 			pr_err("failed to register platform driver %ps: %d\n",
 			       drivers[i], err);
-			जाओ error;
-		पूर्ण
-	पूर्ण
+			goto error;
+		}
+	}
 
-	वापस 0;
+	return 0;
 
 error:
-	जबतक (i--) अणु
+	while (i--) {
 		pr_debug("unregistering platform driver %ps\n", drivers[i]);
-		platक्रमm_driver_unरेजिस्टर(drivers[i]);
-	पूर्ण
+		platform_driver_unregister(drivers[i]);
+	}
 
-	वापस err;
-पूर्ण
-EXPORT_SYMBOL_GPL(__platक्रमm_रेजिस्टर_drivers);
+	return err;
+}
+EXPORT_SYMBOL_GPL(__platform_register_drivers);
 
 /**
- * platक्रमm_unरेजिस्टर_drivers - unरेजिस्टर an array of platक्रमm drivers
- * @drivers: an array of drivers to unरेजिस्टर
- * @count: the number of drivers to unरेजिस्टर
+ * platform_unregister_drivers - unregister an array of platform drivers
+ * @drivers: an array of drivers to unregister
+ * @count: the number of drivers to unregister
  *
- * Unरेजिस्टरs platक्रमm drivers specअगरied by an array. This is typically used
- * to complement an earlier call to platक्रमm_रेजिस्टर_drivers(). Drivers are
- * unरेजिस्टरed in the reverse order in which they were रेजिस्टरed.
+ * Unregisters platform drivers specified by an array. This is typically used
+ * to complement an earlier call to platform_register_drivers(). Drivers are
+ * unregistered in the reverse order in which they were registered.
  */
-व्योम platक्रमm_unरेजिस्टर_drivers(काष्ठा platक्रमm_driver * स्थिर *drivers,
-				 अचिन्हित पूर्णांक count)
-अणु
-	जबतक (count--) अणु
+void platform_unregister_drivers(struct platform_driver * const *drivers,
+				 unsigned int count)
+{
+	while (count--) {
 		pr_debug("unregistering platform driver %ps\n", drivers[count]);
-		platक्रमm_driver_unरेजिस्टर(drivers[count]);
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL_GPL(platक्रमm_unरेजिस्टर_drivers);
+		platform_driver_unregister(drivers[count]);
+	}
+}
+EXPORT_SYMBOL_GPL(platform_unregister_drivers);
 
-अटल स्थिर काष्ठा platक्रमm_device_id *platक्रमm_match_id(
-			स्थिर काष्ठा platक्रमm_device_id *id,
-			काष्ठा platक्रमm_device *pdev)
-अणु
-	जबतक (id->name[0]) अणु
-		अगर (म_भेद(pdev->name, id->name) == 0) अणु
+static const struct platform_device_id *platform_match_id(
+			const struct platform_device_id *id,
+			struct platform_device *pdev)
+{
+	while (id->name[0]) {
+		if (strcmp(pdev->name, id->name) == 0) {
 			pdev->id_entry = id;
-			वापस id;
-		पूर्ण
+			return id;
+		}
 		id++;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	}
+	return NULL;
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
+#ifdef CONFIG_PM_SLEEP
 
-अटल पूर्णांक platक्रमm_legacy_suspend(काष्ठा device *dev, pm_message_t mesg)
-अणु
-	काष्ठा platक्रमm_driver *pdrv = to_platक्रमm_driver(dev->driver);
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
-	पूर्णांक ret = 0;
+static int platform_legacy_suspend(struct device *dev, pm_message_t mesg)
+{
+	struct platform_driver *pdrv = to_platform_driver(dev->driver);
+	struct platform_device *pdev = to_platform_device(dev);
+	int ret = 0;
 
-	अगर (dev->driver && pdrv->suspend)
+	if (dev->driver && pdrv->suspend)
 		ret = pdrv->suspend(pdev, mesg);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक platक्रमm_legacy_resume(काष्ठा device *dev)
-अणु
-	काष्ठा platक्रमm_driver *pdrv = to_platक्रमm_driver(dev->driver);
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
-	पूर्णांक ret = 0;
+static int platform_legacy_resume(struct device *dev)
+{
+	struct platform_driver *pdrv = to_platform_driver(dev->driver);
+	struct platform_device *pdev = to_platform_device(dev);
+	int ret = 0;
 
-	अगर (dev->driver && pdrv->resume)
+	if (dev->driver && pdrv->resume)
 		ret = pdrv->resume(pdev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#पूर्ण_अगर /* CONFIG_PM_SLEEP */
+#endif /* CONFIG_PM_SLEEP */
 
-#अगर_घोषित CONFIG_SUSPEND
+#ifdef CONFIG_SUSPEND
 
-पूर्णांक platक्रमm_pm_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा device_driver *drv = dev->driver;
-	पूर्णांक ret = 0;
+int platform_pm_suspend(struct device *dev)
+{
+	struct device_driver *drv = dev->driver;
+	int ret = 0;
 
-	अगर (!drv)
-		वापस 0;
+	if (!drv)
+		return 0;
 
-	अगर (drv->pm) अणु
-		अगर (drv->pm->suspend)
+	if (drv->pm) {
+		if (drv->pm->suspend)
 			ret = drv->pm->suspend(dev);
-	पूर्ण अन्यथा अणु
-		ret = platक्रमm_legacy_suspend(dev, PMSG_SUSPEND);
-	पूर्ण
+	} else {
+		ret = platform_legacy_suspend(dev, PMSG_SUSPEND);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक platक्रमm_pm_resume(काष्ठा device *dev)
-अणु
-	काष्ठा device_driver *drv = dev->driver;
-	पूर्णांक ret = 0;
+int platform_pm_resume(struct device *dev)
+{
+	struct device_driver *drv = dev->driver;
+	int ret = 0;
 
-	अगर (!drv)
-		वापस 0;
+	if (!drv)
+		return 0;
 
-	अगर (drv->pm) अणु
-		अगर (drv->pm->resume)
+	if (drv->pm) {
+		if (drv->pm->resume)
 			ret = drv->pm->resume(dev);
-	पूर्ण अन्यथा अणु
-		ret = platक्रमm_legacy_resume(dev);
-	पूर्ण
+	} else {
+		ret = platform_legacy_resume(dev);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#पूर्ण_अगर /* CONFIG_SUSPEND */
+#endif /* CONFIG_SUSPEND */
 
-#अगर_घोषित CONFIG_HIBERNATE_CALLBACKS
+#ifdef CONFIG_HIBERNATE_CALLBACKS
 
-पूर्णांक platक्रमm_pm_मुक्तze(काष्ठा device *dev)
-अणु
-	काष्ठा device_driver *drv = dev->driver;
-	पूर्णांक ret = 0;
+int platform_pm_freeze(struct device *dev)
+{
+	struct device_driver *drv = dev->driver;
+	int ret = 0;
 
-	अगर (!drv)
-		वापस 0;
+	if (!drv)
+		return 0;
 
-	अगर (drv->pm) अणु
-		अगर (drv->pm->मुक्तze)
-			ret = drv->pm->मुक्तze(dev);
-	पूर्ण अन्यथा अणु
-		ret = platक्रमm_legacy_suspend(dev, PMSG_FREEZE);
-	पूर्ण
+	if (drv->pm) {
+		if (drv->pm->freeze)
+			ret = drv->pm->freeze(dev);
+	} else {
+		ret = platform_legacy_suspend(dev, PMSG_FREEZE);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक platक्रमm_pm_thaw(काष्ठा device *dev)
-अणु
-	काष्ठा device_driver *drv = dev->driver;
-	पूर्णांक ret = 0;
+int platform_pm_thaw(struct device *dev)
+{
+	struct device_driver *drv = dev->driver;
+	int ret = 0;
 
-	अगर (!drv)
-		वापस 0;
+	if (!drv)
+		return 0;
 
-	अगर (drv->pm) अणु
-		अगर (drv->pm->thaw)
+	if (drv->pm) {
+		if (drv->pm->thaw)
 			ret = drv->pm->thaw(dev);
-	पूर्ण अन्यथा अणु
-		ret = platक्रमm_legacy_resume(dev);
-	पूर्ण
+	} else {
+		ret = platform_legacy_resume(dev);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक platक्रमm_pm_घातeroff(काष्ठा device *dev)
-अणु
-	काष्ठा device_driver *drv = dev->driver;
-	पूर्णांक ret = 0;
+int platform_pm_poweroff(struct device *dev)
+{
+	struct device_driver *drv = dev->driver;
+	int ret = 0;
 
-	अगर (!drv)
-		वापस 0;
+	if (!drv)
+		return 0;
 
-	अगर (drv->pm) अणु
-		अगर (drv->pm->घातeroff)
-			ret = drv->pm->घातeroff(dev);
-	पूर्ण अन्यथा अणु
-		ret = platक्रमm_legacy_suspend(dev, PMSG_HIBERNATE);
-	पूर्ण
+	if (drv->pm) {
+		if (drv->pm->poweroff)
+			ret = drv->pm->poweroff(dev);
+	} else {
+		ret = platform_legacy_suspend(dev, PMSG_HIBERNATE);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक platक्रमm_pm_restore(काष्ठा device *dev)
-अणु
-	काष्ठा device_driver *drv = dev->driver;
-	पूर्णांक ret = 0;
+int platform_pm_restore(struct device *dev)
+{
+	struct device_driver *drv = dev->driver;
+	int ret = 0;
 
-	अगर (!drv)
-		वापस 0;
+	if (!drv)
+		return 0;
 
-	अगर (drv->pm) अणु
-		अगर (drv->pm->restore)
+	if (drv->pm) {
+		if (drv->pm->restore)
 			ret = drv->pm->restore(dev);
-	पूर्ण अन्यथा अणु
-		ret = platक्रमm_legacy_resume(dev);
-	पूर्ण
+	} else {
+		ret = platform_legacy_resume(dev);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#पूर्ण_अगर /* CONFIG_HIBERNATE_CALLBACKS */
+#endif /* CONFIG_HIBERNATE_CALLBACKS */
 
 /* modalias support enables more hands-off userspace setup:
- * (a) environment variable lets new-style hotplug events work once प्रणाली is
+ * (a) environment variable lets new-style hotplug events work once system is
  *     fully running:  "modprobe $MODALIAS"
  * (b) sysfs attribute lets new-style coldplug recover from hotplug events
- *     mishandled beक्रमe प्रणाली is fully running:  "modprobe $(cat modalias)"
+ *     mishandled before system is fully running:  "modprobe $(cat modalias)"
  */
-अटल sमाप_प्रकार modalias_show(काष्ठा device *dev,
-			     काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
-	पूर्णांक len;
+static ssize_t modalias_show(struct device *dev,
+			     struct device_attribute *attr, char *buf)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	int len;
 
 	len = of_device_modalias(dev, buf, PAGE_SIZE);
-	अगर (len != -ENODEV)
-		वापस len;
+	if (len != -ENODEV)
+		return len;
 
 	len = acpi_device_modalias(dev, buf, PAGE_SIZE - 1);
-	अगर (len != -ENODEV)
-		वापस len;
+	if (len != -ENODEV)
+		return len;
 
-	वापस sysfs_emit(buf, "platform:%s\n", pdev->name);
-पूर्ण
-अटल DEVICE_ATTR_RO(modalias);
+	return sysfs_emit(buf, "platform:%s\n", pdev->name);
+}
+static DEVICE_ATTR_RO(modalias);
 
-अटल sमाप_प्रकार numa_node_show(काष्ठा device *dev,
-			      काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	वापस sysfs_emit(buf, "%d\n", dev_to_node(dev));
-पूर्ण
-अटल DEVICE_ATTR_RO(numa_node);
+static ssize_t numa_node_show(struct device *dev,
+			      struct device_attribute *attr, char *buf)
+{
+	return sysfs_emit(buf, "%d\n", dev_to_node(dev));
+}
+static DEVICE_ATTR_RO(numa_node);
 
-अटल sमाप_प्रकार driver_override_show(काष्ठा device *dev,
-				    काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
-	sमाप_प्रकार len;
+static ssize_t driver_override_show(struct device *dev,
+				    struct device_attribute *attr, char *buf)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	ssize_t len;
 
 	device_lock(dev);
 	len = sysfs_emit(buf, "%s\n", pdev->driver_override);
 	device_unlock(dev);
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल sमाप_प्रकार driver_override_store(काष्ठा device *dev,
-				     काष्ठा device_attribute *attr,
-				     स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
-	अक्षर *driver_override, *old, *cp;
+static ssize_t driver_override_store(struct device *dev,
+				     struct device_attribute *attr,
+				     const char *buf, size_t count)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	char *driver_override, *old, *cp;
 
-	/* We need to keep extra room क्रम a newline */
-	अगर (count >= (PAGE_SIZE - 1))
-		वापस -EINVAL;
+	/* We need to keep extra room for a newline */
+	if (count >= (PAGE_SIZE - 1))
+		return -EINVAL;
 
 	driver_override = kstrndup(buf, count, GFP_KERNEL);
-	अगर (!driver_override)
-		वापस -ENOMEM;
+	if (!driver_override)
+		return -ENOMEM;
 
-	cp = म_अक्षर(driver_override, '\n');
-	अगर (cp)
+	cp = strchr(driver_override, '\n');
+	if (cp)
 		*cp = '\0';
 
 	device_lock(dev);
 	old = pdev->driver_override;
-	अगर (म_माप(driver_override)) अणु
+	if (strlen(driver_override)) {
 		pdev->driver_override = driver_override;
-	पूर्ण अन्यथा अणु
-		kमुक्त(driver_override);
-		pdev->driver_override = शून्य;
-	पूर्ण
+	} else {
+		kfree(driver_override);
+		pdev->driver_override = NULL;
+	}
 	device_unlock(dev);
 
-	kमुक्त(old);
+	kfree(old);
 
-	वापस count;
-पूर्ण
-अटल DEVICE_ATTR_RW(driver_override);
+	return count;
+}
+static DEVICE_ATTR_RW(driver_override);
 
-अटल काष्ठा attribute *platक्रमm_dev_attrs[] = अणु
+static struct attribute *platform_dev_attrs[] = {
 	&dev_attr_modalias.attr,
 	&dev_attr_numa_node.attr,
 	&dev_attr_driver_override.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल umode_t platक्रमm_dev_attrs_visible(काष्ठा kobject *kobj, काष्ठा attribute *a,
-		पूर्णांक n)
-अणु
-	काष्ठा device *dev = container_of(kobj, typeof(*dev), kobj);
+static umode_t platform_dev_attrs_visible(struct kobject *kobj, struct attribute *a,
+		int n)
+{
+	struct device *dev = container_of(kobj, typeof(*dev), kobj);
 
-	अगर (a == &dev_attr_numa_node.attr &&
+	if (a == &dev_attr_numa_node.attr &&
 			dev_to_node(dev) == NUMA_NO_NODE)
-		वापस 0;
+		return 0;
 
-	वापस a->mode;
-पूर्ण
+	return a->mode;
+}
 
-अटल काष्ठा attribute_group platक्रमm_dev_group = अणु
-	.attrs = platक्रमm_dev_attrs,
-	.is_visible = platक्रमm_dev_attrs_visible,
-पूर्ण;
-__ATTRIBUTE_GROUPS(platक्रमm_dev);
+static struct attribute_group platform_dev_group = {
+	.attrs = platform_dev_attrs,
+	.is_visible = platform_dev_attrs_visible,
+};
+__ATTRIBUTE_GROUPS(platform_dev);
 
 
 /**
- * platक्रमm_match - bind platक्रमm device to platक्रमm driver.
+ * platform_match - bind platform device to platform driver.
  * @dev: device.
  * @drv: driver.
  *
- * Platक्रमm device IDs are assumed to be encoded like this:
- * "<name><instance>", where <name> is a लघु description of the type of
- * device, like "pci" or "floppy", and <instance> is the क्रमागतerated
+ * Platform device IDs are assumed to be encoded like this:
+ * "<name><instance>", where <name> is a short description of the type of
+ * device, like "pci" or "floppy", and <instance> is the enumerated
  * instance of the device, like '0' or '42'.  Driver IDs are simply
- * "<name>".  So, extract the <name> from the platक्रमm_device काष्ठाure,
+ * "<name>".  So, extract the <name> from the platform_device structure,
  * and compare it against the name of the driver. Return whether they match
  * or not.
  */
-अटल पूर्णांक platक्रमm_match(काष्ठा device *dev, काष्ठा device_driver *drv)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
-	काष्ठा platक्रमm_driver *pdrv = to_platक्रमm_driver(drv);
+static int platform_match(struct device *dev, struct device_driver *drv)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	struct platform_driver *pdrv = to_platform_driver(drv);
 
 	/* When driver_override is set, only bind to the matching driver */
-	अगर (pdev->driver_override)
-		वापस !म_भेद(pdev->driver_override, drv->name);
+	if (pdev->driver_override)
+		return !strcmp(pdev->driver_override, drv->name);
 
 	/* Attempt an OF style match first */
-	अगर (of_driver_match_device(dev, drv))
-		वापस 1;
+	if (of_driver_match_device(dev, drv))
+		return 1;
 
 	/* Then try ACPI style match */
-	अगर (acpi_driver_match_device(dev, drv))
-		वापस 1;
+	if (acpi_driver_match_device(dev, drv))
+		return 1;
 
 	/* Then try to match against the id table */
-	अगर (pdrv->id_table)
-		वापस platक्रमm_match_id(pdrv->id_table, pdev) != शून्य;
+	if (pdrv->id_table)
+		return platform_match_id(pdrv->id_table, pdev) != NULL;
 
 	/* fall-back to driver name match */
-	वापस (म_भेद(pdev->name, drv->name) == 0);
-पूर्ण
+	return (strcmp(pdev->name, drv->name) == 0);
+}
 
-अटल पूर्णांक platक्रमm_uevent(काष्ठा device *dev, काष्ठा kobj_uevent_env *env)
-अणु
-	काष्ठा platक्रमm_device	*pdev = to_platक्रमm_device(dev);
-	पूर्णांक rc;
+static int platform_uevent(struct device *dev, struct kobj_uevent_env *env)
+{
+	struct platform_device	*pdev = to_platform_device(dev);
+	int rc;
 
 	/* Some devices have extra OF data and an OF-style MODALIAS */
 	rc = of_device_uevent_modalias(dev, env);
-	अगर (rc != -ENODEV)
-		वापस rc;
+	if (rc != -ENODEV)
+		return rc;
 
 	rc = acpi_device_uevent_modalias(dev, env);
-	अगर (rc != -ENODEV)
-		वापस rc;
+	if (rc != -ENODEV)
+		return rc;
 
 	add_uevent_var(env, "MODALIAS=%s%s", PLATFORM_MODULE_PREFIX,
 			pdev->name);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक platक्रमm_probe(काष्ठा device *_dev)
-अणु
-	काष्ठा platक्रमm_driver *drv = to_platक्रमm_driver(_dev->driver);
-	काष्ठा platक्रमm_device *dev = to_platक्रमm_device(_dev);
-	पूर्णांक ret;
+static int platform_probe(struct device *_dev)
+{
+	struct platform_driver *drv = to_platform_driver(_dev->driver);
+	struct platform_device *dev = to_platform_device(_dev);
+	int ret;
 
 	/*
-	 * A driver रेजिस्टरed using platक्रमm_driver_probe() cannot be bound
+	 * A driver registered using platform_driver_probe() cannot be bound
 	 * again later because the probe function usually lives in __init code
 	 * and so is gone. For these drivers .probe is set to
-	 * platक्रमm_probe_fail in __platक्रमm_driver_probe(). Don't even prepare
-	 * घड़ीs and PM करोमुख्यs क्रम these to match the traditional behaviour.
+	 * platform_probe_fail in __platform_driver_probe(). Don't even prepare
+	 * clocks and PM domains for these to match the traditional behaviour.
 	 */
-	अगर (unlikely(drv->probe == platक्रमm_probe_fail))
-		वापस -ENXIO;
+	if (unlikely(drv->probe == platform_probe_fail))
+		return -ENXIO;
 
-	ret = of_clk_set_शेषs(_dev->of_node, false);
-	अगर (ret < 0)
-		वापस ret;
+	ret = of_clk_set_defaults(_dev->of_node, false);
+	if (ret < 0)
+		return ret;
 
-	ret = dev_pm_करोमुख्य_attach(_dev, true);
-	अगर (ret)
-		जाओ out;
+	ret = dev_pm_domain_attach(_dev, true);
+	if (ret)
+		goto out;
 
-	अगर (drv->probe) अणु
+	if (drv->probe) {
 		ret = drv->probe(dev);
-		अगर (ret)
-			dev_pm_करोमुख्य_detach(_dev, true);
-	पूर्ण
+		if (ret)
+			dev_pm_domain_detach(_dev, true);
+	}
 
 out:
-	अगर (drv->prevent_deferred_probe && ret == -EPROBE_DEFER) अणु
+	if (drv->prevent_deferred_probe && ret == -EPROBE_DEFER) {
 		dev_warn(_dev, "probe deferral not supported\n");
 		ret = -ENXIO;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक platक्रमm_हटाओ(काष्ठा device *_dev)
-अणु
-	काष्ठा platक्रमm_driver *drv = to_platक्रमm_driver(_dev->driver);
-	काष्ठा platक्रमm_device *dev = to_platक्रमm_device(_dev);
+static int platform_remove(struct device *_dev)
+{
+	struct platform_driver *drv = to_platform_driver(_dev->driver);
+	struct platform_device *dev = to_platform_device(_dev);
 
-	अगर (drv->हटाओ) अणु
-		पूर्णांक ret = drv->हटाओ(dev);
+	if (drv->remove) {
+		int ret = drv->remove(dev);
 
-		अगर (ret)
+		if (ret)
 			dev_warn(_dev, "remove callback returned a non-zero value. This will be ignored.\n");
-	पूर्ण
-	dev_pm_करोमुख्य_detach(_dev, true);
+	}
+	dev_pm_domain_detach(_dev, true);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम platक्रमm_shutकरोwn(काष्ठा device *_dev)
-अणु
-	काष्ठा platक्रमm_device *dev = to_platक्रमm_device(_dev);
-	काष्ठा platक्रमm_driver *drv;
+static void platform_shutdown(struct device *_dev)
+{
+	struct platform_device *dev = to_platform_device(_dev);
+	struct platform_driver *drv;
 
-	अगर (!_dev->driver)
-		वापस;
+	if (!_dev->driver)
+		return;
 
-	drv = to_platक्रमm_driver(_dev->driver);
-	अगर (drv->shutकरोwn)
-		drv->shutकरोwn(dev);
-पूर्ण
+	drv = to_platform_driver(_dev->driver);
+	if (drv->shutdown)
+		drv->shutdown(dev);
+}
 
 
-पूर्णांक platक्रमm_dma_configure(काष्ठा device *dev)
-अणु
-	क्रमागत dev_dma_attr attr;
-	पूर्णांक ret = 0;
+int platform_dma_configure(struct device *dev)
+{
+	enum dev_dma_attr attr;
+	int ret = 0;
 
-	अगर (dev->of_node) अणु
+	if (dev->of_node) {
 		ret = of_dma_configure(dev, dev->of_node, true);
-	पूर्ण अन्यथा अगर (has_acpi_companion(dev)) अणु
+	} else if (has_acpi_companion(dev)) {
 		attr = acpi_get_dma_attr(to_acpi_device_node(dev->fwnode));
 		ret = acpi_dma_configure(dev, attr);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops platक्रमm_dev_pm_ops = अणु
-	.runसमय_suspend = pm_generic_runसमय_suspend,
-	.runसमय_resume = pm_generic_runसमय_resume,
+static const struct dev_pm_ops platform_dev_pm_ops = {
+	.runtime_suspend = pm_generic_runtime_suspend,
+	.runtime_resume = pm_generic_runtime_resume,
 	USE_PLATFORM_PM_SLEEP_OPS
-पूर्ण;
+};
 
-काष्ठा bus_type platक्रमm_bus_type = अणु
+struct bus_type platform_bus_type = {
 	.name		= "platform",
-	.dev_groups	= platक्रमm_dev_groups,
-	.match		= platक्रमm_match,
-	.uevent		= platक्रमm_uevent,
-	.probe		= platक्रमm_probe,
-	.हटाओ		= platक्रमm_हटाओ,
-	.shutकरोwn	= platक्रमm_shutकरोwn,
-	.dma_configure	= platक्रमm_dma_configure,
-	.pm		= &platक्रमm_dev_pm_ops,
-पूर्ण;
-EXPORT_SYMBOL_GPL(platक्रमm_bus_type);
+	.dev_groups	= platform_dev_groups,
+	.match		= platform_match,
+	.uevent		= platform_uevent,
+	.probe		= platform_probe,
+	.remove		= platform_remove,
+	.shutdown	= platform_shutdown,
+	.dma_configure	= platform_dma_configure,
+	.pm		= &platform_dev_pm_ops,
+};
+EXPORT_SYMBOL_GPL(platform_bus_type);
 
-अटल अंतरभूत पूर्णांक __platक्रमm_match(काष्ठा device *dev, स्थिर व्योम *drv)
-अणु
-	वापस platक्रमm_match(dev, (काष्ठा device_driver *)drv);
-पूर्ण
+static inline int __platform_match(struct device *dev, const void *drv)
+{
+	return platform_match(dev, (struct device_driver *)drv);
+}
 
 /**
- * platक्रमm_find_device_by_driver - Find a platक्रमm device with a given
+ * platform_find_device_by_driver - Find a platform device with a given
  * driver.
  * @start: The device to start the search from.
- * @drv: The device driver to look क्रम.
+ * @drv: The device driver to look for.
  */
-काष्ठा device *platक्रमm_find_device_by_driver(काष्ठा device *start,
-					      स्थिर काष्ठा device_driver *drv)
-अणु
-	वापस bus_find_device(&platक्रमm_bus_type, start, drv,
-			       __platक्रमm_match);
-पूर्ण
-EXPORT_SYMBOL_GPL(platक्रमm_find_device_by_driver);
+struct device *platform_find_device_by_driver(struct device *start,
+					      const struct device_driver *drv)
+{
+	return bus_find_device(&platform_bus_type, start, drv,
+			       __platform_match);
+}
+EXPORT_SYMBOL_GPL(platform_find_device_by_driver);
 
-व्योम __weak __init early_platक्रमm_cleanup(व्योम) अणु पूर्ण
+void __weak __init early_platform_cleanup(void) { }
 
-पूर्णांक __init platक्रमm_bus_init(व्योम)
-अणु
-	पूर्णांक error;
+int __init platform_bus_init(void)
+{
+	int error;
 
-	early_platक्रमm_cleanup();
+	early_platform_cleanup();
 
-	error = device_रेजिस्टर(&platक्रमm_bus);
-	अगर (error) अणु
-		put_device(&platक्रमm_bus);
-		वापस error;
-	पूर्ण
-	error =  bus_रेजिस्टर(&platक्रमm_bus_type);
-	अगर (error)
-		device_unरेजिस्टर(&platक्रमm_bus);
-	of_platक्रमm_रेजिस्टर_reconfig_notअगरier();
-	वापस error;
-पूर्ण
+	error = device_register(&platform_bus);
+	if (error) {
+		put_device(&platform_bus);
+		return error;
+	}
+	error =  bus_register(&platform_bus_type);
+	if (error)
+		device_unregister(&platform_bus);
+	of_platform_register_reconfig_notifier();
+	return error;
+}

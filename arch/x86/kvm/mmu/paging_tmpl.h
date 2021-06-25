@@ -1,9 +1,8 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Kernel-based Virtual Machine driver क्रम Linux
+ * Kernel-based Virtual Machine driver for Linux
  *
- * This module enables machines with Intel VT-x extensions to run भव
+ * This module enables machines with Intel VT-x extensions to run virtual
  * machines without emulation or binary translation.
  *
  * MMU support
@@ -21,312 +20,312 @@
  * so the code in this file is compiled twice, once per pte size.
  */
 
-#अगर PTTYPE == 64
-	#घोषणा pt_element_t u64
-	#घोषणा guest_walker guest_walker64
-	#घोषणा FNAME(name) paging##64_##name
-	#घोषणा PT_BASE_ADDR_MASK PT64_BASE_ADDR_MASK
-	#घोषणा PT_LVL_ADDR_MASK(lvl) PT64_LVL_ADDR_MASK(lvl)
-	#घोषणा PT_LVL_OFFSET_MASK(lvl) PT64_LVL_OFFSET_MASK(lvl)
-	#घोषणा PT_INDEX(addr, level) PT64_INDEX(addr, level)
-	#घोषणा PT_LEVEL_BITS PT64_LEVEL_BITS
-	#घोषणा PT_GUEST_सूचीTY_SHIFT PT_सूचीTY_SHIFT
-	#घोषणा PT_GUEST_ACCESSED_SHIFT PT_ACCESSED_SHIFT
-	#घोषणा PT_HAVE_ACCESSED_सूचीTY(mmu) true
-	#अगर_घोषित CONFIG_X86_64
-	#घोषणा PT_MAX_FULL_LEVELS PT64_ROOT_MAX_LEVEL
-	#घोषणा CMPXCHG cmpxchg
-	#अन्यथा
-	#घोषणा CMPXCHG cmpxchg64
-	#घोषणा PT_MAX_FULL_LEVELS 2
-	#पूर्ण_अगर
-#या_अगर PTTYPE == 32
-	#घोषणा pt_element_t u32
-	#घोषणा guest_walker guest_walker32
-	#घोषणा FNAME(name) paging##32_##name
-	#घोषणा PT_BASE_ADDR_MASK PT32_BASE_ADDR_MASK
-	#घोषणा PT_LVL_ADDR_MASK(lvl) PT32_LVL_ADDR_MASK(lvl)
-	#घोषणा PT_LVL_OFFSET_MASK(lvl) PT32_LVL_OFFSET_MASK(lvl)
-	#घोषणा PT_INDEX(addr, level) PT32_INDEX(addr, level)
-	#घोषणा PT_LEVEL_BITS PT32_LEVEL_BITS
-	#घोषणा PT_MAX_FULL_LEVELS 2
-	#घोषणा PT_GUEST_सूचीTY_SHIFT PT_सूचीTY_SHIFT
-	#घोषणा PT_GUEST_ACCESSED_SHIFT PT_ACCESSED_SHIFT
-	#घोषणा PT_HAVE_ACCESSED_सूचीTY(mmu) true
-	#घोषणा CMPXCHG cmpxchg
-#या_अगर PTTYPE == PTTYPE_EPT
-	#घोषणा pt_element_t u64
-	#घोषणा guest_walker guest_walkerEPT
-	#घोषणा FNAME(name) ept_##name
-	#घोषणा PT_BASE_ADDR_MASK PT64_BASE_ADDR_MASK
-	#घोषणा PT_LVL_ADDR_MASK(lvl) PT64_LVL_ADDR_MASK(lvl)
-	#घोषणा PT_LVL_OFFSET_MASK(lvl) PT64_LVL_OFFSET_MASK(lvl)
-	#घोषणा PT_INDEX(addr, level) PT64_INDEX(addr, level)
-	#घोषणा PT_LEVEL_BITS PT64_LEVEL_BITS
-	#घोषणा PT_GUEST_सूचीTY_SHIFT 9
-	#घोषणा PT_GUEST_ACCESSED_SHIFT 8
-	#घोषणा PT_HAVE_ACCESSED_सूचीTY(mmu) ((mmu)->ept_ad)
-	#घोषणा CMPXCHG cmpxchg64
-	#घोषणा PT_MAX_FULL_LEVELS PT64_ROOT_MAX_LEVEL
-#अन्यथा
-	#त्रुटि Invalid PTTYPE value
-#पूर्ण_अगर
+#if PTTYPE == 64
+	#define pt_element_t u64
+	#define guest_walker guest_walker64
+	#define FNAME(name) paging##64_##name
+	#define PT_BASE_ADDR_MASK PT64_BASE_ADDR_MASK
+	#define PT_LVL_ADDR_MASK(lvl) PT64_LVL_ADDR_MASK(lvl)
+	#define PT_LVL_OFFSET_MASK(lvl) PT64_LVL_OFFSET_MASK(lvl)
+	#define PT_INDEX(addr, level) PT64_INDEX(addr, level)
+	#define PT_LEVEL_BITS PT64_LEVEL_BITS
+	#define PT_GUEST_DIRTY_SHIFT PT_DIRTY_SHIFT
+	#define PT_GUEST_ACCESSED_SHIFT PT_ACCESSED_SHIFT
+	#define PT_HAVE_ACCESSED_DIRTY(mmu) true
+	#ifdef CONFIG_X86_64
+	#define PT_MAX_FULL_LEVELS PT64_ROOT_MAX_LEVEL
+	#define CMPXCHG cmpxchg
+	#else
+	#define CMPXCHG cmpxchg64
+	#define PT_MAX_FULL_LEVELS 2
+	#endif
+#elif PTTYPE == 32
+	#define pt_element_t u32
+	#define guest_walker guest_walker32
+	#define FNAME(name) paging##32_##name
+	#define PT_BASE_ADDR_MASK PT32_BASE_ADDR_MASK
+	#define PT_LVL_ADDR_MASK(lvl) PT32_LVL_ADDR_MASK(lvl)
+	#define PT_LVL_OFFSET_MASK(lvl) PT32_LVL_OFFSET_MASK(lvl)
+	#define PT_INDEX(addr, level) PT32_INDEX(addr, level)
+	#define PT_LEVEL_BITS PT32_LEVEL_BITS
+	#define PT_MAX_FULL_LEVELS 2
+	#define PT_GUEST_DIRTY_SHIFT PT_DIRTY_SHIFT
+	#define PT_GUEST_ACCESSED_SHIFT PT_ACCESSED_SHIFT
+	#define PT_HAVE_ACCESSED_DIRTY(mmu) true
+	#define CMPXCHG cmpxchg
+#elif PTTYPE == PTTYPE_EPT
+	#define pt_element_t u64
+	#define guest_walker guest_walkerEPT
+	#define FNAME(name) ept_##name
+	#define PT_BASE_ADDR_MASK PT64_BASE_ADDR_MASK
+	#define PT_LVL_ADDR_MASK(lvl) PT64_LVL_ADDR_MASK(lvl)
+	#define PT_LVL_OFFSET_MASK(lvl) PT64_LVL_OFFSET_MASK(lvl)
+	#define PT_INDEX(addr, level) PT64_INDEX(addr, level)
+	#define PT_LEVEL_BITS PT64_LEVEL_BITS
+	#define PT_GUEST_DIRTY_SHIFT 9
+	#define PT_GUEST_ACCESSED_SHIFT 8
+	#define PT_HAVE_ACCESSED_DIRTY(mmu) ((mmu)->ept_ad)
+	#define CMPXCHG cmpxchg64
+	#define PT_MAX_FULL_LEVELS PT64_ROOT_MAX_LEVEL
+#else
+	#error Invalid PTTYPE value
+#endif
 
-#घोषणा PT_GUEST_सूचीTY_MASK    (1 << PT_GUEST_सूचीTY_SHIFT)
-#घोषणा PT_GUEST_ACCESSED_MASK (1 << PT_GUEST_ACCESSED_SHIFT)
+#define PT_GUEST_DIRTY_MASK    (1 << PT_GUEST_DIRTY_SHIFT)
+#define PT_GUEST_ACCESSED_MASK (1 << PT_GUEST_ACCESSED_SHIFT)
 
-#घोषणा gpte_to_gfn_lvl FNAME(gpte_to_gfn_lvl)
-#घोषणा gpte_to_gfn(pte) gpte_to_gfn_lvl((pte), PG_LEVEL_4K)
+#define gpte_to_gfn_lvl FNAME(gpte_to_gfn_lvl)
+#define gpte_to_gfn(pte) gpte_to_gfn_lvl((pte), PG_LEVEL_4K)
 
 /*
- * The guest_walker काष्ठाure emulates the behavior of the hardware page
+ * The guest_walker structure emulates the behavior of the hardware page
  * table walker.
  */
-काष्ठा guest_walker अणु
-	पूर्णांक level;
-	अचिन्हित max_level;
+struct guest_walker {
+	int level;
+	unsigned max_level;
 	gfn_t table_gfn[PT_MAX_FULL_LEVELS];
 	pt_element_t ptes[PT_MAX_FULL_LEVELS];
 	pt_element_t prefetch_ptes[PTE_PREFETCH_NUM];
 	gpa_t pte_gpa[PT_MAX_FULL_LEVELS];
 	pt_element_t __user *ptep_user[PT_MAX_FULL_LEVELS];
 	bool pte_writable[PT_MAX_FULL_LEVELS];
-	अचिन्हित पूर्णांक pt_access[PT_MAX_FULL_LEVELS];
-	अचिन्हित पूर्णांक pte_access;
+	unsigned int pt_access[PT_MAX_FULL_LEVELS];
+	unsigned int pte_access;
 	gfn_t gfn;
-	काष्ठा x86_exception fault;
-पूर्ण;
+	struct x86_exception fault;
+};
 
-अटल gfn_t gpte_to_gfn_lvl(pt_element_t gpte, पूर्णांक lvl)
-अणु
-	वापस (gpte & PT_LVL_ADDR_MASK(lvl)) >> PAGE_SHIFT;
-पूर्ण
+static gfn_t gpte_to_gfn_lvl(pt_element_t gpte, int lvl)
+{
+	return (gpte & PT_LVL_ADDR_MASK(lvl)) >> PAGE_SHIFT;
+}
 
-अटल अंतरभूत व्योम FNAME(protect_clean_gpte)(काष्ठा kvm_mmu *mmu, अचिन्हित *access,
-					     अचिन्हित gpte)
-अणु
-	अचिन्हित mask;
+static inline void FNAME(protect_clean_gpte)(struct kvm_mmu *mmu, unsigned *access,
+					     unsigned gpte)
+{
+	unsigned mask;
 
 	/* dirty bit is not supported, so no need to track it */
-	अगर (!PT_HAVE_ACCESSED_सूचीTY(mmu))
-		वापस;
+	if (!PT_HAVE_ACCESSED_DIRTY(mmu))
+		return;
 
 	BUILD_BUG_ON(PT_WRITABLE_MASK != ACC_WRITE_MASK);
 
-	mask = (अचिन्हित)~ACC_WRITE_MASK;
-	/* Allow ग_लिखो access to dirty gptes */
-	mask |= (gpte >> (PT_GUEST_सूचीTY_SHIFT - PT_WRITABLE_SHIFT)) &
+	mask = (unsigned)~ACC_WRITE_MASK;
+	/* Allow write access to dirty gptes */
+	mask |= (gpte >> (PT_GUEST_DIRTY_SHIFT - PT_WRITABLE_SHIFT)) &
 		PT_WRITABLE_MASK;
 	*access &= mask;
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक FNAME(is_present_gpte)(अचिन्हित दीर्घ pte)
-अणु
-#अगर PTTYPE != PTTYPE_EPT
-	वापस pte & PT_PRESENT_MASK;
-#अन्यथा
-	वापस pte & 7;
-#पूर्ण_अगर
-पूर्ण
+static inline int FNAME(is_present_gpte)(unsigned long pte)
+{
+#if PTTYPE != PTTYPE_EPT
+	return pte & PT_PRESENT_MASK;
+#else
+	return pte & 7;
+#endif
+}
 
-अटल bool FNAME(is_bad_mt_xwr)(काष्ठा rsvd_bits_validate *rsvd_check, u64 gpte)
-अणु
-#अगर PTTYPE != PTTYPE_EPT
-	वापस false;
-#अन्यथा
-	वापस __is_bad_mt_xwr(rsvd_check, gpte);
-#पूर्ण_अगर
-पूर्ण
+static bool FNAME(is_bad_mt_xwr)(struct rsvd_bits_validate *rsvd_check, u64 gpte)
+{
+#if PTTYPE != PTTYPE_EPT
+	return false;
+#else
+	return __is_bad_mt_xwr(rsvd_check, gpte);
+#endif
+}
 
-अटल bool FNAME(is_rsvd_bits_set)(काष्ठा kvm_mmu *mmu, u64 gpte, पूर्णांक level)
-अणु
-	वापस __is_rsvd_bits_set(&mmu->guest_rsvd_check, gpte, level) ||
+static bool FNAME(is_rsvd_bits_set)(struct kvm_mmu *mmu, u64 gpte, int level)
+{
+	return __is_rsvd_bits_set(&mmu->guest_rsvd_check, gpte, level) ||
 	       FNAME(is_bad_mt_xwr)(&mmu->guest_rsvd_check, gpte);
-पूर्ण
+}
 
-अटल पूर्णांक FNAME(cmpxchg_gpte)(काष्ठा kvm_vcpu *vcpu, काष्ठा kvm_mmu *mmu,
-			       pt_element_t __user *ptep_user, अचिन्हित index,
+static int FNAME(cmpxchg_gpte)(struct kvm_vcpu *vcpu, struct kvm_mmu *mmu,
+			       pt_element_t __user *ptep_user, unsigned index,
 			       pt_element_t orig_pte, pt_element_t new_pte)
-अणु
-	पूर्णांक npages;
+{
+	int npages;
 	pt_element_t ret;
 	pt_element_t *table;
-	काष्ठा page *page;
+	struct page *page;
 
-	npages = get_user_pages_fast((अचिन्हित दीर्घ)ptep_user, 1, FOLL_WRITE, &page);
-	अगर (likely(npages == 1)) अणु
+	npages = get_user_pages_fast((unsigned long)ptep_user, 1, FOLL_WRITE, &page);
+	if (likely(npages == 1)) {
 		table = kmap_atomic(page);
 		ret = CMPXCHG(&table[index], orig_pte, new_pte);
 		kunmap_atomic(table);
 
 		kvm_release_page_dirty(page);
-	पूर्ण अन्यथा अणु
-		काष्ठा vm_area_काष्ठा *vma;
-		अचिन्हित दीर्घ vaddr = (अचिन्हित दीर्घ)ptep_user & PAGE_MASK;
-		अचिन्हित दीर्घ pfn;
-		अचिन्हित दीर्घ paddr;
+	} else {
+		struct vm_area_struct *vma;
+		unsigned long vaddr = (unsigned long)ptep_user & PAGE_MASK;
+		unsigned long pfn;
+		unsigned long paddr;
 
-		mmap_पढ़ो_lock(current->mm);
-		vma = find_vma_पूर्णांकersection(current->mm, vaddr, vaddr + PAGE_SIZE);
-		अगर (!vma || !(vma->vm_flags & VM_PFNMAP)) अणु
-			mmap_पढ़ो_unlock(current->mm);
-			वापस -EFAULT;
-		पूर्ण
+		mmap_read_lock(current->mm);
+		vma = find_vma_intersection(current->mm, vaddr, vaddr + PAGE_SIZE);
+		if (!vma || !(vma->vm_flags & VM_PFNMAP)) {
+			mmap_read_unlock(current->mm);
+			return -EFAULT;
+		}
 		pfn = ((vaddr - vma->vm_start) >> PAGE_SHIFT) + vma->vm_pgoff;
 		paddr = pfn << PAGE_SHIFT;
 		table = memremap(paddr, PAGE_SIZE, MEMREMAP_WB);
-		अगर (!table) अणु
-			mmap_पढ़ो_unlock(current->mm);
-			वापस -EFAULT;
-		पूर्ण
+		if (!table) {
+			mmap_read_unlock(current->mm);
+			return -EFAULT;
+		}
 		ret = CMPXCHG(&table[index], orig_pte, new_pte);
 		memunmap(table);
-		mmap_पढ़ो_unlock(current->mm);
-	पूर्ण
+		mmap_read_unlock(current->mm);
+	}
 
-	वापस (ret != orig_pte);
-पूर्ण
+	return (ret != orig_pte);
+}
 
-अटल bool FNAME(prefetch_invalid_gpte)(काष्ठा kvm_vcpu *vcpu,
-				  काष्ठा kvm_mmu_page *sp, u64 *spte,
+static bool FNAME(prefetch_invalid_gpte)(struct kvm_vcpu *vcpu,
+				  struct kvm_mmu_page *sp, u64 *spte,
 				  u64 gpte)
-अणु
-	अगर (!FNAME(is_present_gpte)(gpte))
-		जाओ no_present;
+{
+	if (!FNAME(is_present_gpte)(gpte))
+		goto no_present;
 
-	/* अगर accessed bit is not supported prefetch non accessed gpte */
-	अगर (PT_HAVE_ACCESSED_सूचीTY(vcpu->arch.mmu) &&
+	/* if accessed bit is not supported prefetch non accessed gpte */
+	if (PT_HAVE_ACCESSED_DIRTY(vcpu->arch.mmu) &&
 	    !(gpte & PT_GUEST_ACCESSED_MASK))
-		जाओ no_present;
+		goto no_present;
 
-	अगर (FNAME(is_rsvd_bits_set)(vcpu->arch.mmu, gpte, PG_LEVEL_4K))
-		जाओ no_present;
+	if (FNAME(is_rsvd_bits_set)(vcpu->arch.mmu, gpte, PG_LEVEL_4K))
+		goto no_present;
 
-	वापस false;
+	return false;
 
 no_present:
 	drop_spte(vcpu->kvm, spte);
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /*
- * For PTTYPE_EPT, a page table can be executable but not पढ़ोable
- * on supported processors. Thereक्रमe, set_spte करोes not स्वतःmatically
- * set bit 0 अगर execute only is supported. Here, we repurpose ACC_USER_MASK
- * to signअगरy पढ़ोability since it isn't used in the EPT हाल
+ * For PTTYPE_EPT, a page table can be executable but not readable
+ * on supported processors. Therefore, set_spte does not automatically
+ * set bit 0 if execute only is supported. Here, we repurpose ACC_USER_MASK
+ * to signify readability since it isn't used in the EPT case
  */
-अटल अंतरभूत अचिन्हित FNAME(gpte_access)(u64 gpte)
-अणु
-	अचिन्हित access;
-#अगर PTTYPE == PTTYPE_EPT
+static inline unsigned FNAME(gpte_access)(u64 gpte)
+{
+	unsigned access;
+#if PTTYPE == PTTYPE_EPT
 	access = ((gpte & VMX_EPT_WRITABLE_MASK) ? ACC_WRITE_MASK : 0) |
 		((gpte & VMX_EPT_EXECUTABLE_MASK) ? ACC_EXEC_MASK : 0) |
 		((gpte & VMX_EPT_READABLE_MASK) ? ACC_USER_MASK : 0);
-#अन्यथा
+#else
 	BUILD_BUG_ON(ACC_EXEC_MASK != PT_PRESENT_MASK);
 	BUILD_BUG_ON(ACC_EXEC_MASK != 1);
 	access = gpte & (PT_WRITABLE_MASK | PT_USER_MASK | PT_PRESENT_MASK);
 	/* Combine NX with P (which is set here) to get ACC_EXEC_MASK.  */
 	access ^= (gpte >> PT64_NX_SHIFT);
-#पूर्ण_अगर
+#endif
 
-	वापस access;
-पूर्ण
+	return access;
+}
 
-अटल पूर्णांक FNAME(update_accessed_dirty_bits)(काष्ठा kvm_vcpu *vcpu,
-					     काष्ठा kvm_mmu *mmu,
-					     काष्ठा guest_walker *walker,
-					     gpa_t addr, पूर्णांक ग_लिखो_fault)
-अणु
-	अचिन्हित level, index;
+static int FNAME(update_accessed_dirty_bits)(struct kvm_vcpu *vcpu,
+					     struct kvm_mmu *mmu,
+					     struct guest_walker *walker,
+					     gpa_t addr, int write_fault)
+{
+	unsigned level, index;
 	pt_element_t pte, orig_pte;
 	pt_element_t __user *ptep_user;
 	gfn_t table_gfn;
-	पूर्णांक ret;
+	int ret;
 
 	/* dirty/accessed bits are not supported, so no need to update them */
-	अगर (!PT_HAVE_ACCESSED_सूचीTY(mmu))
-		वापस 0;
+	if (!PT_HAVE_ACCESSED_DIRTY(mmu))
+		return 0;
 
-	क्रम (level = walker->max_level; level >= walker->level; --level) अणु
+	for (level = walker->max_level; level >= walker->level; --level) {
 		pte = orig_pte = walker->ptes[level - 1];
 		table_gfn = walker->table_gfn[level - 1];
 		ptep_user = walker->ptep_user[level - 1];
-		index = offset_in_page(ptep_user) / माप(pt_element_t);
-		अगर (!(pte & PT_GUEST_ACCESSED_MASK)) अणु
-			trace_kvm_mmu_set_accessed_bit(table_gfn, index, माप(pte));
+		index = offset_in_page(ptep_user) / sizeof(pt_element_t);
+		if (!(pte & PT_GUEST_ACCESSED_MASK)) {
+			trace_kvm_mmu_set_accessed_bit(table_gfn, index, sizeof(pte));
 			pte |= PT_GUEST_ACCESSED_MASK;
-		पूर्ण
-		अगर (level == walker->level && ग_लिखो_fault &&
-				!(pte & PT_GUEST_सूचीTY_MASK)) अणु
-			trace_kvm_mmu_set_dirty_bit(table_gfn, index, माप(pte));
-#अगर PTTYPE == PTTYPE_EPT
-			अगर (kvm_x86_ops.nested_ops->ग_लिखो_log_dirty(vcpu, addr))
-				वापस -EINVAL;
-#पूर्ण_अगर
-			pte |= PT_GUEST_सूचीTY_MASK;
-		पूर्ण
-		अगर (pte == orig_pte)
-			जारी;
+		}
+		if (level == walker->level && write_fault &&
+				!(pte & PT_GUEST_DIRTY_MASK)) {
+			trace_kvm_mmu_set_dirty_bit(table_gfn, index, sizeof(pte));
+#if PTTYPE == PTTYPE_EPT
+			if (kvm_x86_ops.nested_ops->write_log_dirty(vcpu, addr))
+				return -EINVAL;
+#endif
+			pte |= PT_GUEST_DIRTY_MASK;
+		}
+		if (pte == orig_pte)
+			continue;
 
 		/*
-		 * If the slot is पढ़ो-only, simply करो not process the accessed
-		 * and dirty bits.  This is the correct thing to करो अगर the slot
-		 * is ROM, and page tables in पढ़ो-as-ROM/ग_लिखो-as-MMIO slots
-		 * are only supported अगर the accessed and dirty bits are alपढ़ोy
-		 * set in the ROM (so that MMIO ग_लिखोs are never needed).
+		 * If the slot is read-only, simply do not process the accessed
+		 * and dirty bits.  This is the correct thing to do if the slot
+		 * is ROM, and page tables in read-as-ROM/write-as-MMIO slots
+		 * are only supported if the accessed and dirty bits are already
+		 * set in the ROM (so that MMIO writes are never needed).
 		 *
-		 * Note that NPT करोes not allow this at all and faults, since
-		 * it always wants nested page table entries क्रम the guest
+		 * Note that NPT does not allow this at all and faults, since
+		 * it always wants nested page table entries for the guest
 		 * page tables to be writable.  And EPT works but will simply
-		 * overग_लिखो the पढ़ो-only memory to set the accessed and dirty
+		 * overwrite the read-only memory to set the accessed and dirty
 		 * bits.
 		 */
-		अगर (unlikely(!walker->pte_writable[level - 1]))
-			जारी;
+		if (unlikely(!walker->pte_writable[level - 1]))
+			continue;
 
 		ret = FNAME(cmpxchg_gpte)(vcpu, mmu, ptep_user, index, orig_pte, pte);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		kvm_vcpu_mark_page_dirty(vcpu, table_gfn);
 		walker->ptes[level - 1] = pte;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल अंतरभूत अचिन्हित FNAME(gpte_pkeys)(काष्ठा kvm_vcpu *vcpu, u64 gpte)
-अणु
-	अचिन्हित pkeys = 0;
-#अगर PTTYPE == 64
-	pte_t pte = अणु.pte = gpteपूर्ण;
+static inline unsigned FNAME(gpte_pkeys)(struct kvm_vcpu *vcpu, u64 gpte)
+{
+	unsigned pkeys = 0;
+#if PTTYPE == 64
+	pte_t pte = {.pte = gpte};
 
 	pkeys = pte_flags_pkey(pte_flags(pte));
-#पूर्ण_अगर
-	वापस pkeys;
-पूर्ण
+#endif
+	return pkeys;
+}
 
 /*
- * Fetch a guest pte क्रम a guest भव address, or क्रम an L2's GPA.
+ * Fetch a guest pte for a guest virtual address, or for an L2's GPA.
  */
-अटल पूर्णांक FNAME(walk_addr_generic)(काष्ठा guest_walker *walker,
-				    काष्ठा kvm_vcpu *vcpu, काष्ठा kvm_mmu *mmu,
+static int FNAME(walk_addr_generic)(struct guest_walker *walker,
+				    struct kvm_vcpu *vcpu, struct kvm_mmu *mmu,
 				    gpa_t addr, u32 access)
-अणु
-	पूर्णांक ret;
+{
+	int ret;
 	pt_element_t pte;
 	pt_element_t __user *ptep_user;
 	gfn_t table_gfn;
 	u64 pt_access, pte_access;
-	अचिन्हित index, accessed_dirty, pte_pkey;
-	अचिन्हित nested_access;
+	unsigned index, accessed_dirty, pte_pkey;
+	unsigned nested_access;
 	gpa_t pte_gpa;
 	bool have_ad;
-	पूर्णांक offset;
+	int offset;
 	u64 walk_nx_mask = 0;
-	स्थिर पूर्णांक ग_लिखो_fault = access & PFERR_WRITE_MASK;
-	स्थिर पूर्णांक user_fault  = access & PFERR_USER_MASK;
-	स्थिर पूर्णांक fetch_fault = access & PFERR_FETCH_MASK;
+	const int write_fault = access & PFERR_WRITE_MASK;
+	const int user_fault  = access & PFERR_USER_MASK;
+	const int fetch_fault = access & PFERR_FETCH_MASK;
 	u16 errcode = 0;
 	gpa_t real_gpa;
 	gfn_t gfn;
@@ -335,40 +334,40 @@ no_present:
 retry_walk:
 	walker->level = mmu->root_level;
 	pte           = mmu->get_guest_pgd(vcpu);
-	have_ad       = PT_HAVE_ACCESSED_सूचीTY(mmu);
+	have_ad       = PT_HAVE_ACCESSED_DIRTY(mmu);
 
-#अगर PTTYPE == 64
+#if PTTYPE == 64
 	walk_nx_mask = 1ULL << PT64_NX_SHIFT;
-	अगर (walker->level == PT32E_ROOT_LEVEL) अणु
+	if (walker->level == PT32E_ROOT_LEVEL) {
 		pte = mmu->get_pdptr(vcpu, (addr >> 30) & 3);
 		trace_kvm_mmu_paging_element(pte, walker->level);
-		अगर (!FNAME(is_present_gpte)(pte))
-			जाओ error;
+		if (!FNAME(is_present_gpte)(pte))
+			goto error;
 		--walker->level;
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 	walker->max_level = walker->level;
-	ASSERT(!(is_दीर्घ_mode(vcpu) && !is_pae(vcpu)));
+	ASSERT(!(is_long_mode(vcpu) && !is_pae(vcpu)));
 
 	/*
-	 * FIXME: on Intel processors, loads of the PDPTE रेजिस्टरs क्रम PAE paging
-	 * by the MOV to CR inकाष्ठाion are treated as पढ़ोs and करो not cause the
-	 * processor to set the dirty flag in any EPT paging-काष्ठाure entry.
+	 * FIXME: on Intel processors, loads of the PDPTE registers for PAE paging
+	 * by the MOV to CR instruction are treated as reads and do not cause the
+	 * processor to set the dirty flag in any EPT paging-structure entry.
 	 */
 	nested_access = (have_ad ? PFERR_WRITE_MASK : 0) | PFERR_USER_MASK;
 
 	pte_access = ~0;
 	++walker->level;
 
-	करो अणु
-		अचिन्हित दीर्घ host_addr;
+	do {
+		unsigned long host_addr;
 
 		pt_access = pte_access;
 		--walker->level;
 
 		index = PT_INDEX(addr, walker->level);
 		table_gfn = gpte_to_gfn(pte);
-		offset    = index * माप(pt_element_t);
+		offset    = index * sizeof(pt_element_t);
 		pte_gpa   = gfn_to_gpa(table_gfn) + offset;
 
 		BUG_ON(walker->level < 1);
@@ -380,26 +379,26 @@ retry_walk:
 					      &walker->fault);
 
 		/*
-		 * FIXME: This can happen अगर emulation (क्रम of an INS/OUTS
-		 * inकाष्ठाion) triggers a nested page fault.  The निकास
-		 * qualअगरication / निकास info field will incorrectly have
+		 * FIXME: This can happen if emulation (for of an INS/OUTS
+		 * instruction) triggers a nested page fault.  The exit
+		 * qualification / exit info field will incorrectly have
 		 * "guest page access" as the nested page fault's cause,
 		 * instead of "guest page structure access".  To fix this,
-		 * the x86_exception काष्ठा should be augmented with enough
-		 * inक्रमmation to fix the निकास_qualअगरication or निकास_info_1
+		 * the x86_exception struct should be augmented with enough
+		 * information to fix the exit_qualification or exit_info_1
 		 * fields.
 		 */
-		अगर (unlikely(real_gpa == UNMAPPED_GVA))
-			वापस 0;
+		if (unlikely(real_gpa == UNMAPPED_GVA))
+			return 0;
 
 		host_addr = kvm_vcpu_gfn_to_hva_prot(vcpu, gpa_to_gfn(real_gpa),
 					    &walker->pte_writable[walker->level - 1]);
-		अगर (unlikely(kvm_is_error_hva(host_addr)))
-			जाओ error;
+		if (unlikely(kvm_is_error_hva(host_addr)))
+			goto error;
 
-		ptep_user = (pt_element_t __user *)((व्योम *)host_addr + offset);
-		अगर (unlikely(__get_user(pte, ptep_user)))
-			जाओ error;
+		ptep_user = (pt_element_t __user *)((void *)host_addr + offset);
+		if (unlikely(__get_user(pte, ptep_user)))
+			goto error;
 		walker->ptep_user[walker->level - 1] = ptep_user;
 
 		trace_kvm_mmu_paging_element(pte, walker->level);
@@ -410,714 +409,714 @@ retry_walk:
 		 */
 		pte_access = pt_access & (pte ^ walk_nx_mask);
 
-		अगर (unlikely(!FNAME(is_present_gpte)(pte)))
-			जाओ error;
+		if (unlikely(!FNAME(is_present_gpte)(pte)))
+			goto error;
 
-		अगर (unlikely(FNAME(is_rsvd_bits_set)(mmu, pte, walker->level))) अणु
+		if (unlikely(FNAME(is_rsvd_bits_set)(mmu, pte, walker->level))) {
 			errcode = PFERR_RSVD_MASK | PFERR_PRESENT_MASK;
-			जाओ error;
-		पूर्ण
+			goto error;
+		}
 
 		walker->ptes[walker->level - 1] = pte;
 
-		/* Convert to ACC_*_MASK flags क्रम काष्ठा guest_walker.  */
+		/* Convert to ACC_*_MASK flags for struct guest_walker.  */
 		walker->pt_access[walker->level - 1] = FNAME(gpte_access)(pt_access ^ walk_nx_mask);
-	पूर्ण जबतक (!is_last_gpte(mmu, walker->level, pte));
+	} while (!is_last_gpte(mmu, walker->level, pte));
 
 	pte_pkey = FNAME(gpte_pkeys)(vcpu, pte);
 	accessed_dirty = have_ad ? pte_access & PT_GUEST_ACCESSED_MASK : 0;
 
-	/* Convert to ACC_*_MASK flags क्रम काष्ठा guest_walker.  */
+	/* Convert to ACC_*_MASK flags for struct guest_walker.  */
 	walker->pte_access = FNAME(gpte_access)(pte_access ^ walk_nx_mask);
 	errcode = permission_fault(vcpu, mmu, walker->pte_access, pte_pkey, access);
-	अगर (unlikely(errcode))
-		जाओ error;
+	if (unlikely(errcode))
+		goto error;
 
 	gfn = gpte_to_gfn_lvl(pte, walker->level);
 	gfn += (addr & PT_LVL_OFFSET_MASK(walker->level)) >> PAGE_SHIFT;
 
-	अगर (PTTYPE == 32 && walker->level > PG_LEVEL_4K && is_cpuid_PSE36())
+	if (PTTYPE == 32 && walker->level > PG_LEVEL_4K && is_cpuid_PSE36())
 		gfn += pse36_gfn_delta(pte);
 
 	real_gpa = mmu->translate_gpa(vcpu, gfn_to_gpa(gfn), access, &walker->fault);
-	अगर (real_gpa == UNMAPPED_GVA)
-		वापस 0;
+	if (real_gpa == UNMAPPED_GVA)
+		return 0;
 
 	walker->gfn = real_gpa >> PAGE_SHIFT;
 
-	अगर (!ग_लिखो_fault)
+	if (!write_fault)
 		FNAME(protect_clean_gpte)(mmu, &walker->pte_access, pte);
-	अन्यथा
+	else
 		/*
-		 * On a ग_लिखो fault, fold the dirty bit पूर्णांकo accessed_dirty.
+		 * On a write fault, fold the dirty bit into accessed_dirty.
 		 * For modes without A/D bits support accessed_dirty will be
 		 * always clear.
 		 */
 		accessed_dirty &= pte >>
-			(PT_GUEST_सूचीTY_SHIFT - PT_GUEST_ACCESSED_SHIFT);
+			(PT_GUEST_DIRTY_SHIFT - PT_GUEST_ACCESSED_SHIFT);
 
-	अगर (unlikely(!accessed_dirty)) अणु
+	if (unlikely(!accessed_dirty)) {
 		ret = FNAME(update_accessed_dirty_bits)(vcpu, mmu, walker,
-							addr, ग_लिखो_fault);
-		अगर (unlikely(ret < 0))
-			जाओ error;
-		अन्यथा अगर (ret)
-			जाओ retry_walk;
-	पूर्ण
+							addr, write_fault);
+		if (unlikely(ret < 0))
+			goto error;
+		else if (ret)
+			goto retry_walk;
+	}
 
-	pgprपूर्णांकk("%s: pte %llx pte_access %x pt_access %x\n",
+	pgprintk("%s: pte %llx pte_access %x pt_access %x\n",
 		 __func__, (u64)pte, walker->pte_access,
 		 walker->pt_access[walker->level - 1]);
-	वापस 1;
+	return 1;
 
 error:
-	errcode |= ग_लिखो_fault | user_fault;
-	अगर (fetch_fault && (mmu->nx ||
-			    kvm_पढ़ो_cr4_bits(vcpu, X86_CR4_SMEP)))
+	errcode |= write_fault | user_fault;
+	if (fetch_fault && (mmu->nx ||
+			    kvm_read_cr4_bits(vcpu, X86_CR4_SMEP)))
 		errcode |= PFERR_FETCH_MASK;
 
 	walker->fault.vector = PF_VECTOR;
 	walker->fault.error_code_valid = true;
 	walker->fault.error_code = errcode;
 
-#अगर PTTYPE == PTTYPE_EPT
+#if PTTYPE == PTTYPE_EPT
 	/*
-	 * Use PFERR_RSVD_MASK in error_code to to tell अगर EPT
+	 * Use PFERR_RSVD_MASK in error_code to to tell if EPT
 	 * misconfiguration requires to be injected. The detection is
-	 * करोne by is_rsvd_bits_set() above.
+	 * done by is_rsvd_bits_set() above.
 	 *
-	 * We set up the value of निकास_qualअगरication to inject:
-	 * [2:0] - Derive from the access bits. The निकास_qualअगरication might be
-	 *         out of date अगर it is serving an EPT misconfiguration.
+	 * We set up the value of exit_qualification to inject:
+	 * [2:0] - Derive from the access bits. The exit_qualification might be
+	 *         out of date if it is serving an EPT misconfiguration.
 	 * [5:3] - Calculated by the page walk of the guest EPT page tables
-	 * [7:8] - Derived from [7:8] of real निकास_qualअगरication
+	 * [7:8] - Derived from [7:8] of real exit_qualification
 	 *
 	 * The other bits are set to 0.
 	 */
-	अगर (!(errcode & PFERR_RSVD_MASK)) अणु
-		vcpu->arch.निकास_qualअगरication &= 0x180;
-		अगर (ग_लिखो_fault)
-			vcpu->arch.निकास_qualअगरication |= EPT_VIOLATION_ACC_WRITE;
-		अगर (user_fault)
-			vcpu->arch.निकास_qualअगरication |= EPT_VIOLATION_ACC_READ;
-		अगर (fetch_fault)
-			vcpu->arch.निकास_qualअगरication |= EPT_VIOLATION_ACC_INSTR;
-		vcpu->arch.निकास_qualअगरication |= (pte_access & 0x7) << 3;
-	पूर्ण
-#पूर्ण_अगर
+	if (!(errcode & PFERR_RSVD_MASK)) {
+		vcpu->arch.exit_qualification &= 0x180;
+		if (write_fault)
+			vcpu->arch.exit_qualification |= EPT_VIOLATION_ACC_WRITE;
+		if (user_fault)
+			vcpu->arch.exit_qualification |= EPT_VIOLATION_ACC_READ;
+		if (fetch_fault)
+			vcpu->arch.exit_qualification |= EPT_VIOLATION_ACC_INSTR;
+		vcpu->arch.exit_qualification |= (pte_access & 0x7) << 3;
+	}
+#endif
 	walker->fault.address = addr;
 	walker->fault.nested_page_fault = mmu != vcpu->arch.walk_mmu;
 	walker->fault.async_page_fault = false;
 
 	trace_kvm_mmu_walker_error(walker->fault.error_code);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक FNAME(walk_addr)(काष्ठा guest_walker *walker,
-			    काष्ठा kvm_vcpu *vcpu, gpa_t addr, u32 access)
-अणु
-	वापस FNAME(walk_addr_generic)(walker, vcpu, vcpu->arch.mmu, addr,
+static int FNAME(walk_addr)(struct guest_walker *walker,
+			    struct kvm_vcpu *vcpu, gpa_t addr, u32 access)
+{
+	return FNAME(walk_addr_generic)(walker, vcpu, vcpu->arch.mmu, addr,
 					access);
-पूर्ण
+}
 
-#अगर PTTYPE != PTTYPE_EPT
-अटल पूर्णांक FNAME(walk_addr_nested)(काष्ठा guest_walker *walker,
-				   काष्ठा kvm_vcpu *vcpu, gva_t addr,
+#if PTTYPE != PTTYPE_EPT
+static int FNAME(walk_addr_nested)(struct guest_walker *walker,
+				   struct kvm_vcpu *vcpu, gva_t addr,
 				   u32 access)
-अणु
-	वापस FNAME(walk_addr_generic)(walker, vcpu, &vcpu->arch.nested_mmu,
+{
+	return FNAME(walk_addr_generic)(walker, vcpu, &vcpu->arch.nested_mmu,
 					addr, access);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-अटल bool
-FNAME(prefetch_gpte)(काष्ठा kvm_vcpu *vcpu, काष्ठा kvm_mmu_page *sp,
+static bool
+FNAME(prefetch_gpte)(struct kvm_vcpu *vcpu, struct kvm_mmu_page *sp,
 		     u64 *spte, pt_element_t gpte, bool no_dirty_log)
-अणु
-	अचिन्हित pte_access;
+{
+	unsigned pte_access;
 	gfn_t gfn;
 	kvm_pfn_t pfn;
 
-	अगर (FNAME(prefetch_invalid_gpte)(vcpu, sp, spte, gpte))
-		वापस false;
+	if (FNAME(prefetch_invalid_gpte)(vcpu, sp, spte, gpte))
+		return false;
 
-	pgprपूर्णांकk("%s: gpte %llx spte %p\n", __func__, (u64)gpte, spte);
+	pgprintk("%s: gpte %llx spte %p\n", __func__, (u64)gpte, spte);
 
 	gfn = gpte_to_gfn(gpte);
 	pte_access = sp->role.access & FNAME(gpte_access)(gpte);
 	FNAME(protect_clean_gpte)(vcpu->arch.mmu, &pte_access, gpte);
 	pfn = pte_prefetch_gfn_to_pfn(vcpu, gfn,
 			no_dirty_log && (pte_access & ACC_WRITE_MASK));
-	अगर (is_error_pfn(pfn))
-		वापस false;
+	if (is_error_pfn(pfn))
+		return false;
 
 	/*
 	 * we call mmu_set_spte() with host_writable = true because
-	 * pte_prefetch_gfn_to_pfn always माला_लो a writable pfn.
+	 * pte_prefetch_gfn_to_pfn always gets a writable pfn.
 	 */
 	mmu_set_spte(vcpu, spte, pte_access, false, PG_LEVEL_4K, gfn, pfn,
 		     true, true);
 
 	kvm_release_pfn_clean(pfn);
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल व्योम FNAME(update_pte)(काष्ठा kvm_vcpu *vcpu, काष्ठा kvm_mmu_page *sp,
-			      u64 *spte, स्थिर व्योम *pte)
-अणु
-	pt_element_t gpte = *(स्थिर pt_element_t *)pte;
+static void FNAME(update_pte)(struct kvm_vcpu *vcpu, struct kvm_mmu_page *sp,
+			      u64 *spte, const void *pte)
+{
+	pt_element_t gpte = *(const pt_element_t *)pte;
 
 	FNAME(prefetch_gpte)(vcpu, sp, spte, gpte, false);
-पूर्ण
+}
 
-अटल bool FNAME(gpte_changed)(काष्ठा kvm_vcpu *vcpu,
-				काष्ठा guest_walker *gw, पूर्णांक level)
-अणु
+static bool FNAME(gpte_changed)(struct kvm_vcpu *vcpu,
+				struct guest_walker *gw, int level)
+{
 	pt_element_t curr_pte;
 	gpa_t base_gpa, pte_gpa = gw->pte_gpa[level - 1];
 	u64 mask;
-	पूर्णांक r, index;
+	int r, index;
 
-	अगर (level == PG_LEVEL_4K) अणु
-		mask = PTE_PREFETCH_NUM * माप(pt_element_t) - 1;
+	if (level == PG_LEVEL_4K) {
+		mask = PTE_PREFETCH_NUM * sizeof(pt_element_t) - 1;
 		base_gpa = pte_gpa & ~mask;
-		index = (pte_gpa - base_gpa) / माप(pt_element_t);
+		index = (pte_gpa - base_gpa) / sizeof(pt_element_t);
 
-		r = kvm_vcpu_पढ़ो_guest_atomic(vcpu, base_gpa,
-				gw->prefetch_ptes, माप(gw->prefetch_ptes));
+		r = kvm_vcpu_read_guest_atomic(vcpu, base_gpa,
+				gw->prefetch_ptes, sizeof(gw->prefetch_ptes));
 		curr_pte = gw->prefetch_ptes[index];
-	पूर्ण अन्यथा
-		r = kvm_vcpu_पढ़ो_guest_atomic(vcpu, pte_gpa,
-				  &curr_pte, माप(curr_pte));
+	} else
+		r = kvm_vcpu_read_guest_atomic(vcpu, pte_gpa,
+				  &curr_pte, sizeof(curr_pte));
 
-	वापस r || curr_pte != gw->ptes[level - 1];
-पूर्ण
+	return r || curr_pte != gw->ptes[level - 1];
+}
 
-अटल व्योम FNAME(pte_prefetch)(काष्ठा kvm_vcpu *vcpu, काष्ठा guest_walker *gw,
+static void FNAME(pte_prefetch)(struct kvm_vcpu *vcpu, struct guest_walker *gw,
 				u64 *sptep)
-अणु
-	काष्ठा kvm_mmu_page *sp;
+{
+	struct kvm_mmu_page *sp;
 	pt_element_t *gptep = gw->prefetch_ptes;
 	u64 *spte;
-	पूर्णांक i;
+	int i;
 
 	sp = sptep_to_sp(sptep);
 
-	अगर (sp->role.level > PG_LEVEL_4K)
-		वापस;
+	if (sp->role.level > PG_LEVEL_4K)
+		return;
 
 	/*
-	 * If addresses are being invalidated, skip prefetching to aव्योम
+	 * If addresses are being invalidated, skip prefetching to avoid
 	 * accidentally prefetching those addresses.
 	 */
-	अगर (unlikely(vcpu->kvm->mmu_notअगरier_count))
-		वापस;
+	if (unlikely(vcpu->kvm->mmu_notifier_count))
+		return;
 
-	अगर (sp->role.direct)
-		वापस __direct_pte_prefetch(vcpu, sp, sptep);
+	if (sp->role.direct)
+		return __direct_pte_prefetch(vcpu, sp, sptep);
 
 	i = (sptep - sp->spt) & ~(PTE_PREFETCH_NUM - 1);
 	spte = sp->spt + i;
 
-	क्रम (i = 0; i < PTE_PREFETCH_NUM; i++, spte++) अणु
-		अगर (spte == sptep)
-			जारी;
+	for (i = 0; i < PTE_PREFETCH_NUM; i++, spte++) {
+		if (spte == sptep)
+			continue;
 
-		अगर (is_shaकरोw_present_pte(*spte))
-			जारी;
+		if (is_shadow_present_pte(*spte))
+			continue;
 
-		अगर (!FNAME(prefetch_gpte)(vcpu, sp, spte, gptep[i], true))
-			अवरोध;
-	पूर्ण
-पूर्ण
+		if (!FNAME(prefetch_gpte)(vcpu, sp, spte, gptep[i], true))
+			break;
+	}
+}
 
 /*
- * Fetch a shaकरोw pte क्रम a specअगरic level in the paging hierarchy.
- * If the guest tries to ग_लिखो a ग_लिखो-रक्षित page, we need to
- * emulate this operation, वापस 1 to indicate this हाल.
+ * Fetch a shadow pte for a specific level in the paging hierarchy.
+ * If the guest tries to write a write-protected page, we need to
+ * emulate this operation, return 1 to indicate this case.
  */
-अटल पूर्णांक FNAME(fetch)(काष्ठा kvm_vcpu *vcpu, gpa_t addr,
-			 काष्ठा guest_walker *gw, u32 error_code,
-			 पूर्णांक max_level, kvm_pfn_t pfn, bool map_writable,
+static int FNAME(fetch)(struct kvm_vcpu *vcpu, gpa_t addr,
+			 struct guest_walker *gw, u32 error_code,
+			 int max_level, kvm_pfn_t pfn, bool map_writable,
 			 bool prefault)
-अणु
+{
 	bool nx_huge_page_workaround_enabled = is_nx_huge_page_enabled();
-	bool ग_लिखो_fault = error_code & PFERR_WRITE_MASK;
+	bool write_fault = error_code & PFERR_WRITE_MASK;
 	bool exec = error_code & PFERR_FETCH_MASK;
 	bool huge_page_disallowed = exec && nx_huge_page_workaround_enabled;
-	काष्ठा kvm_mmu_page *sp = शून्य;
-	काष्ठा kvm_shaकरोw_walk_iterator it;
-	अचिन्हित पूर्णांक direct_access, access;
-	पूर्णांक top_level, level, req_level, ret;
+	struct kvm_mmu_page *sp = NULL;
+	struct kvm_shadow_walk_iterator it;
+	unsigned int direct_access, access;
+	int top_level, level, req_level, ret;
 	gfn_t base_gfn = gw->gfn;
 
 	direct_access = gw->pte_access;
 
 	top_level = vcpu->arch.mmu->root_level;
-	अगर (top_level == PT32E_ROOT_LEVEL)
+	if (top_level == PT32E_ROOT_LEVEL)
 		top_level = PT32_ROOT_LEVEL;
 	/*
-	 * Verअगरy that the top-level gpte is still there.  Since the page
-	 * is a root page, it is either ग_लिखो रक्षित (and cannot be
-	 * changed from now on) or it is invalid (in which हाल, we करोn't
-	 * really care अगर it changes underneath us after this poपूर्णांक).
+	 * Verify that the top-level gpte is still there.  Since the page
+	 * is a root page, it is either write protected (and cannot be
+	 * changed from now on) or it is invalid (in which case, we don't
+	 * really care if it changes underneath us after this point).
 	 */
-	अगर (FNAME(gpte_changed)(vcpu, gw, top_level))
-		जाओ out_gpte_changed;
+	if (FNAME(gpte_changed)(vcpu, gw, top_level))
+		goto out_gpte_changed;
 
-	अगर (WARN_ON(!VALID_PAGE(vcpu->arch.mmu->root_hpa)))
-		जाओ out_gpte_changed;
+	if (WARN_ON(!VALID_PAGE(vcpu->arch.mmu->root_hpa)))
+		goto out_gpte_changed;
 
-	क्रम (shaकरोw_walk_init(&it, vcpu, addr);
-	     shaकरोw_walk_okay(&it) && it.level > gw->level;
-	     shaकरोw_walk_next(&it)) अणु
+	for (shadow_walk_init(&it, vcpu, addr);
+	     shadow_walk_okay(&it) && it.level > gw->level;
+	     shadow_walk_next(&it)) {
 		gfn_t table_gfn;
 
-		clear_sp_ग_लिखो_flooding_count(it.sptep);
+		clear_sp_write_flooding_count(it.sptep);
 		drop_large_spte(vcpu, it.sptep);
 
-		sp = शून्य;
-		अगर (!is_shaकरोw_present_pte(*it.sptep)) अणु
+		sp = NULL;
+		if (!is_shadow_present_pte(*it.sptep)) {
 			table_gfn = gw->table_gfn[it.level - 2];
 			access = gw->pt_access[it.level - 2];
 			sp = kvm_mmu_get_page(vcpu, table_gfn, addr, it.level-1,
 					      false, access);
-		पूर्ण
+		}
 
 		/*
-		 * Verअगरy that the gpte in the page we've just ग_लिखो
-		 * रक्षित is still there.
+		 * Verify that the gpte in the page we've just write
+		 * protected is still there.
 		 */
-		अगर (FNAME(gpte_changed)(vcpu, gw, it.level - 1))
-			जाओ out_gpte_changed;
+		if (FNAME(gpte_changed)(vcpu, gw, it.level - 1))
+			goto out_gpte_changed;
 
-		अगर (sp)
-			link_shaकरोw_page(vcpu, it.sptep, sp);
-	पूर्ण
+		if (sp)
+			link_shadow_page(vcpu, it.sptep, sp);
+	}
 
 	level = kvm_mmu_hugepage_adjust(vcpu, gw->gfn, max_level, &pfn,
 					huge_page_disallowed, &req_level);
 
 	trace_kvm_mmu_spte_requested(addr, gw->level, pfn);
 
-	क्रम (; shaकरोw_walk_okay(&it); shaकरोw_walk_next(&it)) अणु
-		clear_sp_ग_लिखो_flooding_count(it.sptep);
+	for (; shadow_walk_okay(&it); shadow_walk_next(&it)) {
+		clear_sp_write_flooding_count(it.sptep);
 
 		/*
-		 * We cannot overग_लिखो existing page tables with an NX
+		 * We cannot overwrite existing page tables with an NX
 		 * large page, as the leaf could be executable.
 		 */
-		अगर (nx_huge_page_workaround_enabled)
+		if (nx_huge_page_workaround_enabled)
 			disallowed_hugepage_adjust(*it.sptep, gw->gfn, it.level,
 						   &pfn, &level);
 
 		base_gfn = gw->gfn & ~(KVM_PAGES_PER_HPAGE(it.level) - 1);
-		अगर (it.level == level)
-			अवरोध;
+		if (it.level == level)
+			break;
 
 		validate_direct_spte(vcpu, it.sptep, direct_access);
 
 		drop_large_spte(vcpu, it.sptep);
 
-		अगर (!is_shaकरोw_present_pte(*it.sptep)) अणु
+		if (!is_shadow_present_pte(*it.sptep)) {
 			sp = kvm_mmu_get_page(vcpu, base_gfn, addr,
 					      it.level - 1, true, direct_access);
-			link_shaकरोw_page(vcpu, it.sptep, sp);
-			अगर (huge_page_disallowed && req_level >= it.level)
+			link_shadow_page(vcpu, it.sptep, sp);
+			if (huge_page_disallowed && req_level >= it.level)
 				account_huge_nx_page(vcpu->kvm, sp);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	ret = mmu_set_spte(vcpu, it.sptep, gw->pte_access, ग_लिखो_fault,
+	ret = mmu_set_spte(vcpu, it.sptep, gw->pte_access, write_fault,
 			   it.level, base_gfn, pfn, prefault, map_writable);
-	अगर (ret == RET_PF_SPURIOUS)
-		वापस ret;
+	if (ret == RET_PF_SPURIOUS)
+		return ret;
 
 	FNAME(pte_prefetch)(vcpu, gw, it.sptep);
 	++vcpu->stat.pf_fixed;
-	वापस ret;
+	return ret;
 
 out_gpte_changed:
-	वापस RET_PF_RETRY;
-पूर्ण
+	return RET_PF_RETRY;
+}
 
  /*
- * To see whether the mapped gfn can ग_लिखो its page table in the current
+ * To see whether the mapped gfn can write its page table in the current
  * mapping.
  *
  * It is the helper function of FNAME(page_fault). When guest uses large page
  * size to map the writable gfn which is used as current page table, we should
- * क्रमce kvm to use small page size to map it because new shaकरोw page will be
- * created when kvm establishes shaकरोw page table that stop kvm using large
- * page size. Do it early can aव्योम unnecessary #PF and emulation.
+ * force kvm to use small page size to map it because new shadow page will be
+ * created when kvm establishes shadow page table that stop kvm using large
+ * page size. Do it early can avoid unnecessary #PF and emulation.
  *
- * @ग_लिखो_fault_to_shaकरोw_pgtable will वापस true अगर the fault gfn is
+ * @write_fault_to_shadow_pgtable will return true if the fault gfn is
  * currently used as its page table.
  *
- * Note: the PDPT page table is not checked क्रम PAE-32 bit guest. It is ok
- * since the PDPT is always shaकरोwed, that means, we can not use large page
+ * Note: the PDPT page table is not checked for PAE-32 bit guest. It is ok
+ * since the PDPT is always shadowed, that means, we can not use large page
  * size to map the gfn which is used as PDPT.
  */
-अटल bool
-FNAME(is_self_change_mapping)(काष्ठा kvm_vcpu *vcpu,
-			      काष्ठा guest_walker *walker, bool user_fault,
-			      bool *ग_लिखो_fault_to_shaकरोw_pgtable)
-अणु
-	पूर्णांक level;
+static bool
+FNAME(is_self_change_mapping)(struct kvm_vcpu *vcpu,
+			      struct guest_walker *walker, bool user_fault,
+			      bool *write_fault_to_shadow_pgtable)
+{
+	int level;
 	gfn_t mask = ~(KVM_PAGES_PER_HPAGE(walker->level) - 1);
 	bool self_changed = false;
 
-	अगर (!(walker->pte_access & ACC_WRITE_MASK ||
-	      (!is_ग_लिखो_protection(vcpu) && !user_fault)))
-		वापस false;
+	if (!(walker->pte_access & ACC_WRITE_MASK ||
+	      (!is_write_protection(vcpu) && !user_fault)))
+		return false;
 
-	क्रम (level = walker->level; level <= walker->max_level; level++) अणु
+	for (level = walker->level; level <= walker->max_level; level++) {
 		gfn_t gfn = walker->gfn ^ walker->table_gfn[level - 1];
 
 		self_changed |= !(gfn & mask);
-		*ग_लिखो_fault_to_shaकरोw_pgtable |= !gfn;
-	पूर्ण
+		*write_fault_to_shadow_pgtable |= !gfn;
+	}
 
-	वापस self_changed;
-पूर्ण
+	return self_changed;
+}
 
 /*
- * Page fault handler.  There are several causes क्रम a page fault:
- *   - there is no shaकरोw pte क्रम the guest pte
- *   - ग_लिखो access through a shaकरोw pte marked पढ़ो only so that we can set
+ * Page fault handler.  There are several causes for a page fault:
+ *   - there is no shadow pte for the guest pte
+ *   - write access through a shadow pte marked read only so that we can set
  *     the dirty bit
- *   - ग_लिखो access to a shaकरोw pte marked पढ़ो only so we can update the page
- *     dirty biपंचांगap, when userspace requests it
- *   - mmio access; in this हाल we will never install a present shaकरोw pte
+ *   - write access to a shadow pte marked read only so we can update the page
+ *     dirty bitmap, when userspace requests it
+ *   - mmio access; in this case we will never install a present shadow pte
  *   - normal guest page fault due to the guest pte marked not present, not
  *     writable, or not executable
  *
- *  Returns: 1 अगर we need to emulate the inकाष्ठाion, 0 otherwise, or
+ *  Returns: 1 if we need to emulate the instruction, 0 otherwise, or
  *           a negative value on error.
  */
-अटल पूर्णांक FNAME(page_fault)(काष्ठा kvm_vcpu *vcpu, gpa_t addr, u32 error_code,
+static int FNAME(page_fault)(struct kvm_vcpu *vcpu, gpa_t addr, u32 error_code,
 			     bool prefault)
-अणु
-	bool ग_लिखो_fault = error_code & PFERR_WRITE_MASK;
+{
+	bool write_fault = error_code & PFERR_WRITE_MASK;
 	bool user_fault = error_code & PFERR_USER_MASK;
-	काष्ठा guest_walker walker;
-	पूर्णांक r;
+	struct guest_walker walker;
+	int r;
 	kvm_pfn_t pfn;
 	hva_t hva;
-	अचिन्हित दीर्घ mmu_seq;
+	unsigned long mmu_seq;
 	bool map_writable, is_self_change_mapping;
-	पूर्णांक max_level;
+	int max_level;
 
-	pgprपूर्णांकk("%s: addr %lx err %x\n", __func__, addr, error_code);
+	pgprintk("%s: addr %lx err %x\n", __func__, addr, error_code);
 
 	/*
-	 * If PFEC.RSVD is set, this is a shaकरोw page fault.
-	 * The bit needs to be cleared beक्रमe walking guest page tables.
+	 * If PFEC.RSVD is set, this is a shadow page fault.
+	 * The bit needs to be cleared before walking guest page tables.
 	 */
 	error_code &= ~PFERR_RSVD_MASK;
 
 	/*
-	 * Look up the guest pte क्रम the faulting address.
+	 * Look up the guest pte for the faulting address.
 	 */
 	r = FNAME(walk_addr)(&walker, vcpu, addr, error_code);
 
 	/*
 	 * The page is not mapped by the guest.  Let the guest handle it.
 	 */
-	अगर (!r) अणु
-		pgprपूर्णांकk("%s: guest page fault\n", __func__);
-		अगर (!prefault)
+	if (!r) {
+		pgprintk("%s: guest page fault\n", __func__);
+		if (!prefault)
 			kvm_inject_emulated_page_fault(vcpu, &walker.fault);
 
-		वापस RET_PF_RETRY;
-	पूर्ण
+		return RET_PF_RETRY;
+	}
 
-	अगर (page_fault_handle_page_track(vcpu, error_code, walker.gfn)) अणु
-		shaकरोw_page_table_clear_flood(vcpu, addr);
-		वापस RET_PF_EMULATE;
-	पूर्ण
+	if (page_fault_handle_page_track(vcpu, error_code, walker.gfn)) {
+		shadow_page_table_clear_flood(vcpu, addr);
+		return RET_PF_EMULATE;
+	}
 
 	r = mmu_topup_memory_caches(vcpu, true);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
-	vcpu->arch.ग_लिखो_fault_to_shaकरोw_pgtable = false;
+	vcpu->arch.write_fault_to_shadow_pgtable = false;
 
 	is_self_change_mapping = FNAME(is_self_change_mapping)(vcpu,
-	      &walker, user_fault, &vcpu->arch.ग_लिखो_fault_to_shaकरोw_pgtable);
+	      &walker, user_fault, &vcpu->arch.write_fault_to_shadow_pgtable);
 
-	अगर (is_self_change_mapping)
+	if (is_self_change_mapping)
 		max_level = PG_LEVEL_4K;
-	अन्यथा
+	else
 		max_level = walker.level;
 
-	mmu_seq = vcpu->kvm->mmu_notअगरier_seq;
+	mmu_seq = vcpu->kvm->mmu_notifier_seq;
 	smp_rmb();
 
-	अगर (try_async_pf(vcpu, prefault, walker.gfn, addr, &pfn, &hva,
-			 ग_लिखो_fault, &map_writable))
-		वापस RET_PF_RETRY;
+	if (try_async_pf(vcpu, prefault, walker.gfn, addr, &pfn, &hva,
+			 write_fault, &map_writable))
+		return RET_PF_RETRY;
 
-	अगर (handle_abnormal_pfn(vcpu, addr, walker.gfn, pfn, walker.pte_access, &r))
-		वापस r;
+	if (handle_abnormal_pfn(vcpu, addr, walker.gfn, pfn, walker.pte_access, &r))
+		return r;
 
 	/*
-	 * Do not change pte_access अगर the pfn is a mmio page, otherwise
-	 * we will cache the incorrect access पूर्णांकo mmio spte.
+	 * Do not change pte_access if the pfn is a mmio page, otherwise
+	 * we will cache the incorrect access into mmio spte.
 	 */
-	अगर (ग_लिखो_fault && !(walker.pte_access & ACC_WRITE_MASK) &&
-	     !is_ग_लिखो_protection(vcpu) && !user_fault &&
-	      !is_noslot_pfn(pfn)) अणु
+	if (write_fault && !(walker.pte_access & ACC_WRITE_MASK) &&
+	     !is_write_protection(vcpu) && !user_fault &&
+	      !is_noslot_pfn(pfn)) {
 		walker.pte_access |= ACC_WRITE_MASK;
 		walker.pte_access &= ~ACC_USER_MASK;
 
 		/*
 		 * If we converted a user page to a kernel page,
-		 * so that the kernel can ग_लिखो to it when cr0.wp=0,
+		 * so that the kernel can write to it when cr0.wp=0,
 		 * then we should prevent the kernel from executing it
-		 * अगर SMEP is enabled.
+		 * if SMEP is enabled.
 		 */
-		अगर (kvm_पढ़ो_cr4_bits(vcpu, X86_CR4_SMEP))
+		if (kvm_read_cr4_bits(vcpu, X86_CR4_SMEP))
 			walker.pte_access &= ~ACC_EXEC_MASK;
-	पूर्ण
+	}
 
 	r = RET_PF_RETRY;
-	ग_लिखो_lock(&vcpu->kvm->mmu_lock);
-	अगर (!is_noslot_pfn(pfn) && mmu_notअगरier_retry_hva(vcpu->kvm, mmu_seq, hva))
-		जाओ out_unlock;
+	write_lock(&vcpu->kvm->mmu_lock);
+	if (!is_noslot_pfn(pfn) && mmu_notifier_retry_hva(vcpu->kvm, mmu_seq, hva))
+		goto out_unlock;
 
 	kvm_mmu_audit(vcpu, AUDIT_PRE_PAGE_FAULT);
 	r = make_mmu_pages_available(vcpu);
-	अगर (r)
-		जाओ out_unlock;
+	if (r)
+		goto out_unlock;
 	r = FNAME(fetch)(vcpu, addr, &walker, error_code, max_level, pfn,
 			 map_writable, prefault);
 	kvm_mmu_audit(vcpu, AUDIT_POST_PAGE_FAULT);
 
 out_unlock:
-	ग_लिखो_unlock(&vcpu->kvm->mmu_lock);
+	write_unlock(&vcpu->kvm->mmu_lock);
 	kvm_release_pfn_clean(pfn);
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल gpa_t FNAME(get_level1_sp_gpa)(काष्ठा kvm_mmu_page *sp)
-अणु
-	पूर्णांक offset = 0;
+static gpa_t FNAME(get_level1_sp_gpa)(struct kvm_mmu_page *sp)
+{
+	int offset = 0;
 
 	WARN_ON(sp->role.level != PG_LEVEL_4K);
 
-	अगर (PTTYPE == 32)
+	if (PTTYPE == 32)
 		offset = sp->role.quadrant << PT64_LEVEL_BITS;
 
-	वापस gfn_to_gpa(sp->gfn) + offset * माप(pt_element_t);
-पूर्ण
+	return gfn_to_gpa(sp->gfn) + offset * sizeof(pt_element_t);
+}
 
-अटल व्योम FNAME(invlpg)(काष्ठा kvm_vcpu *vcpu, gva_t gva, hpa_t root_hpa)
-अणु
-	काष्ठा kvm_shaकरोw_walk_iterator iterator;
-	काष्ठा kvm_mmu_page *sp;
+static void FNAME(invlpg)(struct kvm_vcpu *vcpu, gva_t gva, hpa_t root_hpa)
+{
+	struct kvm_shadow_walk_iterator iterator;
+	struct kvm_mmu_page *sp;
 	u64 old_spte;
-	पूर्णांक level;
+	int level;
 	u64 *sptep;
 
 	vcpu_clear_mmio_info(vcpu, gva);
 
 	/*
-	 * No need to check वापस value here, rmap_can_add() can
+	 * No need to check return value here, rmap_can_add() can
 	 * help us to skip pte prefetch later.
 	 */
 	mmu_topup_memory_caches(vcpu, true);
 
-	अगर (!VALID_PAGE(root_hpa)) अणु
+	if (!VALID_PAGE(root_hpa)) {
 		WARN_ON(1);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	ग_लिखो_lock(&vcpu->kvm->mmu_lock);
-	क्रम_each_shaकरोw_entry_using_root(vcpu, root_hpa, gva, iterator) अणु
+	write_lock(&vcpu->kvm->mmu_lock);
+	for_each_shadow_entry_using_root(vcpu, root_hpa, gva, iterator) {
 		level = iterator.level;
 		sptep = iterator.sptep;
 
 		sp = sptep_to_sp(sptep);
 		old_spte = *sptep;
-		अगर (is_last_spte(old_spte, level)) अणु
+		if (is_last_spte(old_spte, level)) {
 			pt_element_t gpte;
 			gpa_t pte_gpa;
 
-			अगर (!sp->unsync)
-				अवरोध;
+			if (!sp->unsync)
+				break;
 
 			pte_gpa = FNAME(get_level1_sp_gpa)(sp);
-			pte_gpa += (sptep - sp->spt) * माप(pt_element_t);
+			pte_gpa += (sptep - sp->spt) * sizeof(pt_element_t);
 
-			mmu_page_zap_pte(vcpu->kvm, sp, sptep, शून्य);
-			अगर (is_shaकरोw_present_pte(old_spte))
+			mmu_page_zap_pte(vcpu->kvm, sp, sptep, NULL);
+			if (is_shadow_present_pte(old_spte))
 				kvm_flush_remote_tlbs_with_address(vcpu->kvm,
 					sp->gfn, KVM_PAGES_PER_HPAGE(sp->role.level));
 
-			अगर (!rmap_can_add(vcpu))
-				अवरोध;
+			if (!rmap_can_add(vcpu))
+				break;
 
-			अगर (kvm_vcpu_पढ़ो_guest_atomic(vcpu, pte_gpa, &gpte,
-						       माप(pt_element_t)))
-				अवरोध;
+			if (kvm_vcpu_read_guest_atomic(vcpu, pte_gpa, &gpte,
+						       sizeof(pt_element_t)))
+				break;
 
 			FNAME(update_pte)(vcpu, sp, sptep, &gpte);
-		पूर्ण
+		}
 
-		अगर (!is_shaकरोw_present_pte(*sptep) || !sp->unsync_children)
-			अवरोध;
-	पूर्ण
-	ग_लिखो_unlock(&vcpu->kvm->mmu_lock);
-पूर्ण
+		if (!is_shadow_present_pte(*sptep) || !sp->unsync_children)
+			break;
+	}
+	write_unlock(&vcpu->kvm->mmu_lock);
+}
 
 /* Note, @addr is a GPA when gva_to_gpa() translates an L2 GPA to an L1 GPA. */
-अटल gpa_t FNAME(gva_to_gpa)(काष्ठा kvm_vcpu *vcpu, gpa_t addr, u32 access,
-			       काष्ठा x86_exception *exception)
-अणु
-	काष्ठा guest_walker walker;
+static gpa_t FNAME(gva_to_gpa)(struct kvm_vcpu *vcpu, gpa_t addr, u32 access,
+			       struct x86_exception *exception)
+{
+	struct guest_walker walker;
 	gpa_t gpa = UNMAPPED_GVA;
-	पूर्णांक r;
+	int r;
 
 	r = FNAME(walk_addr)(&walker, vcpu, addr, access);
 
-	अगर (r) अणु
+	if (r) {
 		gpa = gfn_to_gpa(walker.gfn);
 		gpa |= addr & ~PAGE_MASK;
-	पूर्ण अन्यथा अगर (exception)
+	} else if (exception)
 		*exception = walker.fault;
 
-	वापस gpa;
-पूर्ण
+	return gpa;
+}
 
-#अगर PTTYPE != PTTYPE_EPT
+#if PTTYPE != PTTYPE_EPT
 /* Note, gva_to_gpa_nested() is only used to translate L2 GVAs. */
-अटल gpa_t FNAME(gva_to_gpa_nested)(काष्ठा kvm_vcpu *vcpu, gpa_t vaddr,
+static gpa_t FNAME(gva_to_gpa_nested)(struct kvm_vcpu *vcpu, gpa_t vaddr,
 				      u32 access,
-				      काष्ठा x86_exception *exception)
-अणु
-	काष्ठा guest_walker walker;
+				      struct x86_exception *exception)
+{
+	struct guest_walker walker;
 	gpa_t gpa = UNMAPPED_GVA;
-	पूर्णांक r;
+	int r;
 
-#अगर_अघोषित CONFIG_X86_64
+#ifndef CONFIG_X86_64
 	/* A 64-bit GVA should be impossible on 32-bit KVM. */
 	WARN_ON_ONCE(vaddr >> 32);
-#पूर्ण_अगर
+#endif
 
 	r = FNAME(walk_addr_nested)(&walker, vcpu, vaddr, access);
 
-	अगर (r) अणु
+	if (r) {
 		gpa = gfn_to_gpa(walker.gfn);
 		gpa |= vaddr & ~PAGE_MASK;
-	पूर्ण अन्यथा अगर (exception)
+	} else if (exception)
 		*exception = walker.fault;
 
-	वापस gpa;
-पूर्ण
-#पूर्ण_अगर
+	return gpa;
+}
+#endif
 
 /*
- * Using the cached inक्रमmation from sp->gfns is safe because:
- * - The spte has a reference to the काष्ठा page, so the pfn क्रम a given gfn
- *   can't change unless all sptes poपूर्णांकing to it are nuked first.
+ * Using the cached information from sp->gfns is safe because:
+ * - The spte has a reference to the struct page, so the pfn for a given gfn
+ *   can't change unless all sptes pointing to it are nuked first.
  *
  * Note:
- *   We should flush all tlbs अगर spte is dropped even though guest is
- *   responsible क्रम it. Since अगर we करोn't, kvm_mmu_notअगरier_invalidate_page
- *   and kvm_mmu_notअगरier_invalidate_range_start detect the mapping page isn't
+ *   We should flush all tlbs if spte is dropped even though guest is
+ *   responsible for it. Since if we don't, kvm_mmu_notifier_invalidate_page
+ *   and kvm_mmu_notifier_invalidate_range_start detect the mapping page isn't
  *   used by guest then tlbs are not flushed, so guest is allowed to access the
- *   मुक्तd pages.
- *   And we increase kvm->tlbs_dirty to delay tlbs flush in this हाल.
+ *   freed pages.
+ *   And we increase kvm->tlbs_dirty to delay tlbs flush in this case.
  */
-अटल पूर्णांक FNAME(sync_page)(काष्ठा kvm_vcpu *vcpu, काष्ठा kvm_mmu_page *sp)
-अणु
-	पूर्णांक i, nr_present = 0;
+static int FNAME(sync_page)(struct kvm_vcpu *vcpu, struct kvm_mmu_page *sp)
+{
+	int i, nr_present = 0;
 	bool host_writable;
 	gpa_t first_pte_gpa;
-	पूर्णांक set_spte_ret = 0;
+	int set_spte_ret = 0;
 
 	/* direct kvm_mmu_page can not be unsync. */
 	BUG_ON(sp->role.direct);
 
 	first_pte_gpa = FNAME(get_level1_sp_gpa)(sp);
 
-	क्रम (i = 0; i < PT64_ENT_PER_PAGE; i++) अणु
-		अचिन्हित pte_access;
+	for (i = 0; i < PT64_ENT_PER_PAGE; i++) {
+		unsigned pte_access;
 		pt_element_t gpte;
 		gpa_t pte_gpa;
 		gfn_t gfn;
 
-		अगर (!sp->spt[i])
-			जारी;
+		if (!sp->spt[i])
+			continue;
 
-		pte_gpa = first_pte_gpa + i * माप(pt_element_t);
+		pte_gpa = first_pte_gpa + i * sizeof(pt_element_t);
 
-		अगर (kvm_vcpu_पढ़ो_guest_atomic(vcpu, pte_gpa, &gpte,
-					       माप(pt_element_t)))
-			वापस 0;
+		if (kvm_vcpu_read_guest_atomic(vcpu, pte_gpa, &gpte,
+					       sizeof(pt_element_t)))
+			return 0;
 
-		अगर (FNAME(prefetch_invalid_gpte)(vcpu, sp, &sp->spt[i], gpte)) अणु
+		if (FNAME(prefetch_invalid_gpte)(vcpu, sp, &sp->spt[i], gpte)) {
 			/*
-			 * Update spte beक्रमe increasing tlbs_dirty to make
+			 * Update spte before increasing tlbs_dirty to make
 			 * sure no tlb flush is lost after spte is zapped; see
 			 * the comments in kvm_flush_remote_tlbs().
 			 */
 			smp_wmb();
 			vcpu->kvm->tlbs_dirty++;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		gfn = gpte_to_gfn(gpte);
 		pte_access = sp->role.access;
 		pte_access &= FNAME(gpte_access)(gpte);
 		FNAME(protect_clean_gpte)(vcpu->arch.mmu, &pte_access, gpte);
 
-		अगर (sync_mmio_spte(vcpu, &sp->spt[i], gfn, pte_access,
+		if (sync_mmio_spte(vcpu, &sp->spt[i], gfn, pte_access,
 		      &nr_present))
-			जारी;
+			continue;
 
-		अगर (gfn != sp->gfns[i]) अणु
+		if (gfn != sp->gfns[i]) {
 			drop_spte(vcpu->kvm, &sp->spt[i]);
 			/*
-			 * The same as above where we are करोing
+			 * The same as above where we are doing
 			 * prefetch_invalid_gpte().
 			 */
 			smp_wmb();
 			vcpu->kvm->tlbs_dirty++;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		nr_present++;
 
-		host_writable = sp->spt[i] & shaकरोw_host_writable_mask;
+		host_writable = sp->spt[i] & shadow_host_writable_mask;
 
 		set_spte_ret |= set_spte(vcpu, &sp->spt[i],
 					 pte_access, PG_LEVEL_4K,
 					 gfn, spte_to_pfn(sp->spt[i]),
 					 true, false, host_writable);
-	पूर्ण
+	}
 
-	अगर (set_spte_ret & SET_SPTE_NEED_REMOTE_TLB_FLUSH)
+	if (set_spte_ret & SET_SPTE_NEED_REMOTE_TLB_FLUSH)
 		kvm_flush_remote_tlbs(vcpu->kvm);
 
-	वापस nr_present;
-पूर्ण
+	return nr_present;
+}
 
-#अघोषित pt_element_t
-#अघोषित guest_walker
-#अघोषित FNAME
-#अघोषित PT_BASE_ADDR_MASK
-#अघोषित PT_INDEX
-#अघोषित PT_LVL_ADDR_MASK
-#अघोषित PT_LVL_OFFSET_MASK
-#अघोषित PT_LEVEL_BITS
-#अघोषित PT_MAX_FULL_LEVELS
-#अघोषित gpte_to_gfn
-#अघोषित gpte_to_gfn_lvl
-#अघोषित CMPXCHG
-#अघोषित PT_GUEST_ACCESSED_MASK
-#अघोषित PT_GUEST_सूचीTY_MASK
-#अघोषित PT_GUEST_सूचीTY_SHIFT
-#अघोषित PT_GUEST_ACCESSED_SHIFT
-#अघोषित PT_HAVE_ACCESSED_सूचीTY
+#undef pt_element_t
+#undef guest_walker
+#undef FNAME
+#undef PT_BASE_ADDR_MASK
+#undef PT_INDEX
+#undef PT_LVL_ADDR_MASK
+#undef PT_LVL_OFFSET_MASK
+#undef PT_LEVEL_BITS
+#undef PT_MAX_FULL_LEVELS
+#undef gpte_to_gfn
+#undef gpte_to_gfn_lvl
+#undef CMPXCHG
+#undef PT_GUEST_ACCESSED_MASK
+#undef PT_GUEST_DIRTY_MASK
+#undef PT_GUEST_DIRTY_SHIFT
+#undef PT_GUEST_ACCESSED_SHIFT
+#undef PT_HAVE_ACCESSED_DIRTY

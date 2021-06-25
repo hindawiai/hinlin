@@ -1,108 +1,107 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: ISC
+// SPDX-License-Identifier: ISC
 /*
  * Copyright (c) 2010 Broadcom Corporation
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/bitops.h>
+#include <linux/kernel.h>
+#include <linux/delay.h>
+#include <linux/bitops.h>
 
-#समावेश <brcm_hw_ids.h>
-#समावेश <chipcommon.h>
-#समावेश <aiutils.h>
-#समावेश <d11.h>
-#समावेश <phy_shim.h>
-#समावेश "phy_hal.h"
-#समावेश "phy_int.h"
-#समावेश "phy_radio.h"
-#समावेश "phy_lcn.h"
-#समावेश "phyreg_n.h"
+#include <brcm_hw_ids.h>
+#include <chipcommon.h>
+#include <aiutils.h>
+#include <d11.h>
+#include <phy_shim.h>
+#include "phy_hal.h"
+#include "phy_int.h"
+#include "phy_radio.h"
+#include "phy_lcn.h"
+#include "phyreg_n.h"
 
-#घोषणा VALID_N_RADIO(radioid) ((radioid == BCM2055_ID) || \
+#define VALID_N_RADIO(radioid) ((radioid == BCM2055_ID) || \
 				 (radioid == BCM2056_ID) || \
 				 (radioid == BCM2057_ID))
 
-#घोषणा VALID_LCN_RADIO(radioid)	(radioid == BCM2064_ID)
+#define VALID_LCN_RADIO(radioid)	(radioid == BCM2064_ID)
 
-#घोषणा VALID_RADIO(pi, radioid)        ( \
+#define VALID_RADIO(pi, radioid)        ( \
 		(ISNPHY(pi) ? VALID_N_RADIO(radioid) : false) || \
 		(ISLCNPHY(pi) ? VALID_LCN_RADIO(radioid) : false))
 
 /* basic mux operation - can be optimized on several architectures */
-#घोषणा MUX(pred, true, false) ((pred) ? (true) : (false))
+#define MUX(pred, true, false) ((pred) ? (true) : (false))
 
 /* modulo inc/dec - assumes x E [0, bound - 1] */
-#घोषणा MODINC(x, bound) MUX((x) == (bound) - 1, 0, (x) + 1)
+#define MODINC(x, bound) MUX((x) == (bound) - 1, 0, (x) + 1)
 
 /* modulo inc/dec, bound = 2^k */
-#घोषणा MODDEC_POW2(x, bound) (((x) - 1) & ((bound) - 1))
-#घोषणा MODINC_POW2(x, bound) (((x) + 1) & ((bound) - 1))
+#define MODDEC_POW2(x, bound) (((x) - 1) & ((bound) - 1))
+#define MODINC_POW2(x, bound) (((x) + 1) & ((bound) - 1))
 
-काष्ठा chan_info_basic अणु
+struct chan_info_basic {
 	u16 chan;
 	u16 freq;
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा chan_info_basic chan_info_all[] = अणु
-	अणु1, 2412पूर्ण,
-	अणु2, 2417पूर्ण,
-	अणु3, 2422पूर्ण,
-	अणु4, 2427पूर्ण,
-	अणु5, 2432पूर्ण,
-	अणु6, 2437पूर्ण,
-	अणु7, 2442पूर्ण,
-	अणु8, 2447पूर्ण,
-	अणु9, 2452पूर्ण,
-	अणु10, 2457पूर्ण,
-	अणु11, 2462पूर्ण,
-	अणु12, 2467पूर्ण,
-	अणु13, 2472पूर्ण,
-	अणु14, 2484पूर्ण,
+static const struct chan_info_basic chan_info_all[] = {
+	{1, 2412},
+	{2, 2417},
+	{3, 2422},
+	{4, 2427},
+	{5, 2432},
+	{6, 2437},
+	{7, 2442},
+	{8, 2447},
+	{9, 2452},
+	{10, 2457},
+	{11, 2462},
+	{12, 2467},
+	{13, 2472},
+	{14, 2484},
 
-	अणु34, 5170पूर्ण,
-	अणु38, 5190पूर्ण,
-	अणु42, 5210पूर्ण,
-	अणु46, 5230पूर्ण,
+	{34, 5170},
+	{38, 5190},
+	{42, 5210},
+	{46, 5230},
 
-	अणु36, 5180पूर्ण,
-	अणु40, 5200पूर्ण,
-	अणु44, 5220पूर्ण,
-	अणु48, 5240पूर्ण,
-	अणु52, 5260पूर्ण,
-	अणु56, 5280पूर्ण,
-	अणु60, 5300पूर्ण,
-	अणु64, 5320पूर्ण,
+	{36, 5180},
+	{40, 5200},
+	{44, 5220},
+	{48, 5240},
+	{52, 5260},
+	{56, 5280},
+	{60, 5300},
+	{64, 5320},
 
-	अणु100, 5500पूर्ण,
-	अणु104, 5520पूर्ण,
-	अणु108, 5540पूर्ण,
-	अणु112, 5560पूर्ण,
-	अणु116, 5580पूर्ण,
-	अणु120, 5600पूर्ण,
-	अणु124, 5620पूर्ण,
-	अणु128, 5640पूर्ण,
-	अणु132, 5660पूर्ण,
-	अणु136, 5680पूर्ण,
-	अणु140, 5700पूर्ण,
+	{100, 5500},
+	{104, 5520},
+	{108, 5540},
+	{112, 5560},
+	{116, 5580},
+	{120, 5600},
+	{124, 5620},
+	{128, 5640},
+	{132, 5660},
+	{136, 5680},
+	{140, 5700},
 
-	अणु149, 5745पूर्ण,
-	अणु153, 5765पूर्ण,
-	अणु157, 5785पूर्ण,
-	अणु161, 5805पूर्ण,
-	अणु165, 5825पूर्ण,
+	{149, 5745},
+	{153, 5765},
+	{157, 5785},
+	{161, 5805},
+	{165, 5825},
 
-	अणु184, 4920पूर्ण,
-	अणु188, 4940पूर्ण,
-	अणु192, 4960पूर्ण,
-	अणु196, 4980पूर्ण,
-	अणु200, 5000पूर्ण,
-	अणु204, 5020पूर्ण,
-	अणु208, 5040पूर्ण,
-	अणु212, 5060पूर्ण,
-	अणु216, 5080पूर्ण
-पूर्ण;
+	{184, 4920},
+	{188, 4940},
+	{192, 4960},
+	{196, 4980},
+	{200, 5000},
+	{204, 5020},
+	{208, 5040},
+	{212, 5060},
+	{216, 5080}
+};
 
-अटल स्थिर u8 ofdm_rate_lookup[] = अणु
+static const u8 ofdm_rate_lookup[] = {
 
 	BRCM_RATE_48M,
 	BRCM_RATE_24M,
@@ -112,253 +111,253 @@
 	BRCM_RATE_36M,
 	BRCM_RATE_18M,
 	BRCM_RATE_9M
-पूर्ण;
+};
 
-#घोषणा PHY_WREG_LIMIT  24
+#define PHY_WREG_LIMIT  24
 
-व्योम wlc_phyreg_enter(काष्ठा brcms_phy_pub *pih)
-अणु
-	काष्ठा brcms_phy *pi = container_of(pih, काष्ठा brcms_phy, pubpi_ro);
+void wlc_phyreg_enter(struct brcms_phy_pub *pih)
+{
+	struct brcms_phy *pi = container_of(pih, struct brcms_phy, pubpi_ro);
 	wlapi_bmac_ucode_wake_override_phyreg_set(pi->sh->physhim);
-पूर्ण
+}
 
-व्योम wlc_phyreg_निकास(काष्ठा brcms_phy_pub *pih)
-अणु
-	काष्ठा brcms_phy *pi = container_of(pih, काष्ठा brcms_phy, pubpi_ro);
+void wlc_phyreg_exit(struct brcms_phy_pub *pih)
+{
+	struct brcms_phy *pi = container_of(pih, struct brcms_phy, pubpi_ro);
 	wlapi_bmac_ucode_wake_override_phyreg_clear(pi->sh->physhim);
-पूर्ण
+}
 
-व्योम wlc_radioreg_enter(काष्ठा brcms_phy_pub *pih)
-अणु
-	काष्ठा brcms_phy *pi = container_of(pih, काष्ठा brcms_phy, pubpi_ro);
+void wlc_radioreg_enter(struct brcms_phy_pub *pih)
+{
+	struct brcms_phy *pi = container_of(pih, struct brcms_phy, pubpi_ro);
 	wlapi_bmac_mctrl(pi->sh->physhim, MCTL_LOCK_RADIO, MCTL_LOCK_RADIO);
 
 	udelay(10);
-पूर्ण
+}
 
-व्योम wlc_radioreg_निकास(काष्ठा brcms_phy_pub *pih)
-अणु
-	काष्ठा brcms_phy *pi = container_of(pih, काष्ठा brcms_phy, pubpi_ro);
+void wlc_radioreg_exit(struct brcms_phy_pub *pih)
+{
+	struct brcms_phy *pi = container_of(pih, struct brcms_phy, pubpi_ro);
 
-	(व्योम)bcma_पढ़ो16(pi->d11core, D11REGOFFS(phyversion));
+	(void)bcma_read16(pi->d11core, D11REGOFFS(phyversion));
 	pi->phy_wreg = 0;
 	wlapi_bmac_mctrl(pi->sh->physhim, MCTL_LOCK_RADIO, 0);
-पूर्ण
+}
 
-u16 पढ़ो_radio_reg(काष्ठा brcms_phy *pi, u16 addr)
-अणु
+u16 read_radio_reg(struct brcms_phy *pi, u16 addr)
+{
 	u16 data;
 
-	अगर (addr == RADIO_IDCODE)
-		वापस 0xffff;
+	if (addr == RADIO_IDCODE)
+		return 0xffff;
 
-	चयन (pi->pubpi.phy_type) अणु
-	हाल PHY_TYPE_N:
-		अगर (!CONF_HAS(PHYTYPE, PHY_TYPE_N))
-			अवरोध;
-		अगर (NREV_GE(pi->pubpi.phy_rev, 7))
+	switch (pi->pubpi.phy_type) {
+	case PHY_TYPE_N:
+		if (!CONF_HAS(PHYTYPE, PHY_TYPE_N))
+			break;
+		if (NREV_GE(pi->pubpi.phy_rev, 7))
 			addr |= RADIO_2057_READ_OFF;
-		अन्यथा
+		else
 			addr |= RADIO_2055_READ_OFF;
-		अवरोध;
+		break;
 
-	हाल PHY_TYPE_LCN:
-		अगर (!CONF_HAS(PHYTYPE, PHY_TYPE_LCN))
-			अवरोध;
+	case PHY_TYPE_LCN:
+		if (!CONF_HAS(PHYTYPE, PHY_TYPE_LCN))
+			break;
 		addr |= RADIO_2064_READ_OFF;
-		अवरोध;
+		break;
 
-	शेष:
-		अवरोध;
-	पूर्ण
+	default:
+		break;
+	}
 
-	अगर ((D11REV_GE(pi->sh->corerev, 24)) ||
+	if ((D11REV_GE(pi->sh->corerev, 24)) ||
 	    (D11REV_IS(pi->sh->corerev, 22)
-	     && (pi->pubpi.phy_type != PHY_TYPE_SSN))) अणु
+	     && (pi->pubpi.phy_type != PHY_TYPE_SSN))) {
 		bcma_wflush16(pi->d11core, D11REGOFFS(radioregaddr), addr);
-		data = bcma_पढ़ो16(pi->d11core, D11REGOFFS(radioregdata));
-	पूर्ण अन्यथा अणु
+		data = bcma_read16(pi->d11core, D11REGOFFS(radioregdata));
+	} else {
 		bcma_wflush16(pi->d11core, D11REGOFFS(phy4waddr), addr);
-		data = bcma_पढ़ो16(pi->d11core, D11REGOFFS(phy4wdatalo));
-	पूर्ण
+		data = bcma_read16(pi->d11core, D11REGOFFS(phy4wdatalo));
+	}
 	pi->phy_wreg = 0;
 
-	वापस data;
-पूर्ण
+	return data;
+}
 
-व्योम ग_लिखो_radio_reg(काष्ठा brcms_phy *pi, u16 addr, u16 val)
-अणु
-	अगर ((D11REV_GE(pi->sh->corerev, 24)) ||
+void write_radio_reg(struct brcms_phy *pi, u16 addr, u16 val)
+{
+	if ((D11REV_GE(pi->sh->corerev, 24)) ||
 	    (D11REV_IS(pi->sh->corerev, 22)
-	     && (pi->pubpi.phy_type != PHY_TYPE_SSN))) अणु
+	     && (pi->pubpi.phy_type != PHY_TYPE_SSN))) {
 
 		bcma_wflush16(pi->d11core, D11REGOFFS(radioregaddr), addr);
-		bcma_ग_लिखो16(pi->d11core, D11REGOFFS(radioregdata), val);
-	पूर्ण अन्यथा अणु
+		bcma_write16(pi->d11core, D11REGOFFS(radioregdata), val);
+	} else {
 		bcma_wflush16(pi->d11core, D11REGOFFS(phy4waddr), addr);
-		bcma_ग_लिखो16(pi->d11core, D11REGOFFS(phy4wdatalo), val);
-	पूर्ण
+		bcma_write16(pi->d11core, D11REGOFFS(phy4wdatalo), val);
+	}
 
-	अगर ((pi->d11core->bus->hosttype == BCMA_HOSTTYPE_PCI) &&
-	    (++pi->phy_wreg >= pi->phy_wreg_limit)) अणु
-		(व्योम)bcma_पढ़ो32(pi->d11core, D11REGOFFS(maccontrol));
+	if ((pi->d11core->bus->hosttype == BCMA_HOSTTYPE_PCI) &&
+	    (++pi->phy_wreg >= pi->phy_wreg_limit)) {
+		(void)bcma_read32(pi->d11core, D11REGOFFS(maccontrol));
 		pi->phy_wreg = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल u32 पढ़ो_radio_id(काष्ठा brcms_phy *pi)
-अणु
+static u32 read_radio_id(struct brcms_phy *pi)
+{
 	u32 id;
 
-	अगर (D11REV_GE(pi->sh->corerev, 24)) अणु
+	if (D11REV_GE(pi->sh->corerev, 24)) {
 		u32 b0, b1, b2;
 
 		bcma_wflush16(pi->d11core, D11REGOFFS(radioregaddr), 0);
-		b0 = (u32) bcma_पढ़ो16(pi->d11core, D11REGOFFS(radioregdata));
+		b0 = (u32) bcma_read16(pi->d11core, D11REGOFFS(radioregdata));
 		bcma_wflush16(pi->d11core, D11REGOFFS(radioregaddr), 1);
-		b1 = (u32) bcma_पढ़ो16(pi->d11core, D11REGOFFS(radioregdata));
+		b1 = (u32) bcma_read16(pi->d11core, D11REGOFFS(radioregdata));
 		bcma_wflush16(pi->d11core, D11REGOFFS(radioregaddr), 2);
-		b2 = (u32) bcma_पढ़ो16(pi->d11core, D11REGOFFS(radioregdata));
+		b2 = (u32) bcma_read16(pi->d11core, D11REGOFFS(radioregdata));
 
 		id = ((b0 & 0xf) << 28) | (((b2 << 8) | b1) << 12) | ((b0 >> 4)
 								      & 0xf);
-	पूर्ण अन्यथा अणु
+	} else {
 		bcma_wflush16(pi->d11core, D11REGOFFS(phy4waddr), RADIO_IDCODE);
-		id = (u32) bcma_पढ़ो16(pi->d11core, D11REGOFFS(phy4wdatalo));
-		id |= (u32) bcma_पढ़ो16(pi->d11core,
+		id = (u32) bcma_read16(pi->d11core, D11REGOFFS(phy4wdatalo));
+		id |= (u32) bcma_read16(pi->d11core,
 					D11REGOFFS(phy4wdatahi)) << 16;
-	पूर्ण
+	}
 	pi->phy_wreg = 0;
-	वापस id;
-पूर्ण
+	return id;
+}
 
-व्योम and_radio_reg(काष्ठा brcms_phy *pi, u16 addr, u16 val)
-अणु
+void and_radio_reg(struct brcms_phy *pi, u16 addr, u16 val)
+{
 	u16 rval;
 
-	rval = पढ़ो_radio_reg(pi, addr);
-	ग_लिखो_radio_reg(pi, addr, (rval & val));
-पूर्ण
+	rval = read_radio_reg(pi, addr);
+	write_radio_reg(pi, addr, (rval & val));
+}
 
-व्योम or_radio_reg(काष्ठा brcms_phy *pi, u16 addr, u16 val)
-अणु
+void or_radio_reg(struct brcms_phy *pi, u16 addr, u16 val)
+{
 	u16 rval;
 
-	rval = पढ़ो_radio_reg(pi, addr);
-	ग_लिखो_radio_reg(pi, addr, (rval | val));
-पूर्ण
+	rval = read_radio_reg(pi, addr);
+	write_radio_reg(pi, addr, (rval | val));
+}
 
-व्योम xor_radio_reg(काष्ठा brcms_phy *pi, u16 addr, u16 mask)
-अणु
+void xor_radio_reg(struct brcms_phy *pi, u16 addr, u16 mask)
+{
 	u16 rval;
 
-	rval = पढ़ो_radio_reg(pi, addr);
-	ग_लिखो_radio_reg(pi, addr, (rval ^ mask));
-पूर्ण
+	rval = read_radio_reg(pi, addr);
+	write_radio_reg(pi, addr, (rval ^ mask));
+}
 
-व्योम mod_radio_reg(काष्ठा brcms_phy *pi, u16 addr, u16 mask, u16 val)
-अणु
+void mod_radio_reg(struct brcms_phy *pi, u16 addr, u16 mask, u16 val)
+{
 	u16 rval;
 
-	rval = पढ़ो_radio_reg(pi, addr);
-	ग_लिखो_radio_reg(pi, addr, (rval & ~mask) | (val & mask));
-पूर्ण
+	rval = read_radio_reg(pi, addr);
+	write_radio_reg(pi, addr, (rval & ~mask) | (val & mask));
+}
 
-व्योम ग_लिखो_phy_channel_reg(काष्ठा brcms_phy *pi, uपूर्णांक val)
-अणु
-	bcma_ग_लिखो16(pi->d11core, D11REGOFFS(phychannel), val);
-पूर्ण
+void write_phy_channel_reg(struct brcms_phy *pi, uint val)
+{
+	bcma_write16(pi->d11core, D11REGOFFS(phychannel), val);
+}
 
-u16 पढ़ो_phy_reg(काष्ठा brcms_phy *pi, u16 addr)
-अणु
+u16 read_phy_reg(struct brcms_phy *pi, u16 addr)
+{
 	bcma_wflush16(pi->d11core, D11REGOFFS(phyregaddr), addr);
 
 	pi->phy_wreg = 0;
-	वापस bcma_पढ़ो16(pi->d11core, D11REGOFFS(phyregdata));
-पूर्ण
+	return bcma_read16(pi->d11core, D11REGOFFS(phyregdata));
+}
 
-व्योम ग_लिखो_phy_reg(काष्ठा brcms_phy *pi, u16 addr, u16 val)
-अणु
-#अगर_घोषित CONFIG_BCM47XX
+void write_phy_reg(struct brcms_phy *pi, u16 addr, u16 val)
+{
+#ifdef CONFIG_BCM47XX
 	bcma_wflush16(pi->d11core, D11REGOFFS(phyregaddr), addr);
-	bcma_ग_लिखो16(pi->d11core, D11REGOFFS(phyregdata), val);
-	अगर (addr == 0x72)
-		(व्योम)bcma_पढ़ो16(pi->d11core, D11REGOFFS(phyregdata));
-#अन्यथा
-	bcma_ग_लिखो32(pi->d11core, D11REGOFFS(phyregaddr), addr | (val << 16));
-	अगर ((pi->d11core->bus->hosttype == BCMA_HOSTTYPE_PCI) &&
-	    (++pi->phy_wreg >= pi->phy_wreg_limit)) अणु
+	bcma_write16(pi->d11core, D11REGOFFS(phyregdata), val);
+	if (addr == 0x72)
+		(void)bcma_read16(pi->d11core, D11REGOFFS(phyregdata));
+#else
+	bcma_write32(pi->d11core, D11REGOFFS(phyregaddr), addr | (val << 16));
+	if ((pi->d11core->bus->hosttype == BCMA_HOSTTYPE_PCI) &&
+	    (++pi->phy_wreg >= pi->phy_wreg_limit)) {
 		pi->phy_wreg = 0;
-		(व्योम)bcma_पढ़ो16(pi->d11core, D11REGOFFS(phyversion));
-	पूर्ण
-#पूर्ण_अगर
-पूर्ण
+		(void)bcma_read16(pi->d11core, D11REGOFFS(phyversion));
+	}
+#endif
+}
 
-व्योम and_phy_reg(काष्ठा brcms_phy *pi, u16 addr, u16 val)
-अणु
+void and_phy_reg(struct brcms_phy *pi, u16 addr, u16 val)
+{
 	bcma_wflush16(pi->d11core, D11REGOFFS(phyregaddr), addr);
 	bcma_mask16(pi->d11core, D11REGOFFS(phyregdata), val);
 	pi->phy_wreg = 0;
-पूर्ण
+}
 
-व्योम or_phy_reg(काष्ठा brcms_phy *pi, u16 addr, u16 val)
-अणु
+void or_phy_reg(struct brcms_phy *pi, u16 addr, u16 val)
+{
 	bcma_wflush16(pi->d11core, D11REGOFFS(phyregaddr), addr);
 	bcma_set16(pi->d11core, D11REGOFFS(phyregdata), val);
 	pi->phy_wreg = 0;
-पूर्ण
+}
 
-व्योम mod_phy_reg(काष्ठा brcms_phy *pi, u16 addr, u16 mask, u16 val)
-अणु
+void mod_phy_reg(struct brcms_phy *pi, u16 addr, u16 mask, u16 val)
+{
 	val &= mask;
 	bcma_wflush16(pi->d11core, D11REGOFFS(phyregaddr), addr);
 	bcma_maskset16(pi->d11core, D11REGOFFS(phyregdata), ~mask, val);
 	pi->phy_wreg = 0;
-पूर्ण
+}
 
-अटल व्योम wlc_set_phy_uninitted(काष्ठा brcms_phy *pi)
-अणु
-	पूर्णांक i, j;
+static void wlc_set_phy_uninitted(struct brcms_phy *pi)
+{
+	int i, j;
 
 	pi->initialized = false;
 
 	pi->tx_vos = 0xffff;
 	pi->nrssi_table_delta = 0x7fffffff;
 	pi->rc_cal = 0xffff;
-	pi->mपूर्णांकxbias = 0xffff;
+	pi->mintxbias = 0xffff;
 	pi->txpwridx = -1;
-	अगर (ISNPHY(pi)) अणु
-		pi->phy_spuraव्योम = SPURAVOID_DISABLE;
+	if (ISNPHY(pi)) {
+		pi->phy_spuravoid = SPURAVOID_DISABLE;
 
-		अगर (NREV_GE(pi->pubpi.phy_rev, 3)
+		if (NREV_GE(pi->pubpi.phy_rev, 3)
 		    && NREV_LT(pi->pubpi.phy_rev, 7))
-			pi->phy_spuraव्योम = SPURAVOID_AUTO;
+			pi->phy_spuravoid = SPURAVOID_AUTO;
 
 		pi->nphy_papd_skip = 0;
 		pi->nphy_papd_epsilon_offset[0] = 0xf588;
 		pi->nphy_papd_epsilon_offset[1] = 0xf588;
 		pi->nphy_txpwr_idx[0] = 128;
 		pi->nphy_txpwr_idx[1] = 128;
-		pi->nphy_txpwrindex[0].index_पूर्णांकernal = 40;
-		pi->nphy_txpwrindex[1].index_पूर्णांकernal = 40;
+		pi->nphy_txpwrindex[0].index_internal = 40;
+		pi->nphy_txpwrindex[1].index_internal = 40;
 		pi->phy_pabias = 0;
-	पूर्ण अन्यथा अणु
-		pi->phy_spuraव्योम = SPURAVOID_AUTO;
-	पूर्ण
+	} else {
+		pi->phy_spuravoid = SPURAVOID_AUTO;
+	}
 	pi->radiopwr = 0xffff;
-	क्रम (i = 0; i < STATIC_NUM_RF; i++) अणु
-		क्रम (j = 0; j < STATIC_NUM_BB; j++)
-			pi->stats_11b_txघातer[i][j] = -1;
-	पूर्ण
-पूर्ण
+	for (i = 0; i < STATIC_NUM_RF; i++) {
+		for (j = 0; j < STATIC_NUM_BB; j++)
+			pi->stats_11b_txpower[i][j] = -1;
+	}
+}
 
-काष्ठा shared_phy *wlc_phy_shared_attach(काष्ठा shared_phy_params *shp)
-अणु
-	काष्ठा shared_phy *sh;
+struct shared_phy *wlc_phy_shared_attach(struct shared_phy_params *shp)
+{
+	struct shared_phy *sh;
 
-	sh = kzalloc(माप(काष्ठा shared_phy), GFP_ATOMIC);
-	अगर (sh == शून्य)
-		वापस शून्य;
+	sh = kzalloc(sizeof(struct shared_phy), GFP_ATOMIC);
+	if (sh == NULL)
+		return NULL;
 
 	sh->physhim = shp->physhim;
 	sh->unit = shp->unit;
@@ -375,76 +374,76 @@ u16 पढ़ो_phy_reg(काष्ठा brcms_phy *pi, u16 addr)
 	sh->boardflags = shp->boardflags;
 	sh->boardflags2 = shp->boardflags2;
 
-	sh->fast_समयr = PHY_SW_TIMER_FAST;
-	sh->slow_समयr = PHY_SW_TIMER_SLOW;
-	sh->glacial_समयr = PHY_SW_TIMER_GLACIAL;
+	sh->fast_timer = PHY_SW_TIMER_FAST;
+	sh->slow_timer = PHY_SW_TIMER_SLOW;
+	sh->glacial_timer = PHY_SW_TIMER_GLACIAL;
 
 	sh->rssi_mode = RSSI_ANT_MERGE_MAX;
 
-	वापस sh;
-पूर्ण
+	return sh;
+}
 
-अटल व्योम wlc_phy_समयrcb_phycal(काष्ठा brcms_phy *pi)
-अणु
-	uपूर्णांक delay = 5;
+static void wlc_phy_timercb_phycal(struct brcms_phy *pi)
+{
+	uint delay = 5;
 
-	अगर (PHY_PERICAL_MPHASE_PENDING(pi)) अणु
-		अगर (!pi->sh->up) अणु
+	if (PHY_PERICAL_MPHASE_PENDING(pi)) {
+		if (!pi->sh->up) {
 			wlc_phy_cal_perical_mphase_reset(pi);
-			वापस;
-		पूर्ण
+			return;
+		}
 
-		अगर (SCAN_RM_IN_PROGRESS(pi) || PLT_INPROG_PHY(pi)) अणु
+		if (SCAN_RM_IN_PROGRESS(pi) || PLT_INPROG_PHY(pi)) {
 
 			delay = 1000;
 			wlc_phy_cal_perical_mphase_restart(pi);
-		पूर्ण अन्यथा
+		} else
 			wlc_phy_cal_perical_nphy_run(pi, PHY_PERICAL_AUTO);
-		wlapi_add_समयr(pi->phycal_समयr, delay, 0);
-		वापस;
-	पूर्ण
+		wlapi_add_timer(pi->phycal_timer, delay, 0);
+		return;
+	}
 
-पूर्ण
+}
 
-अटल u32 wlc_phy_get_radio_ver(काष्ठा brcms_phy *pi)
-अणु
+static u32 wlc_phy_get_radio_ver(struct brcms_phy *pi)
+{
 	u32 ver;
 
-	ver = पढ़ो_radio_id(pi);
+	ver = read_radio_id(pi);
 
-	वापस ver;
-पूर्ण
+	return ver;
+}
 
-काष्ठा brcms_phy_pub *
-wlc_phy_attach(काष्ठा shared_phy *sh, काष्ठा bcma_device *d11core,
-	       पूर्णांक bandtype, काष्ठा wiphy *wiphy)
-अणु
-	काष्ठा brcms_phy *pi;
+struct brcms_phy_pub *
+wlc_phy_attach(struct shared_phy *sh, struct bcma_device *d11core,
+	       int bandtype, struct wiphy *wiphy)
+{
+	struct brcms_phy *pi;
 	u32 sflags = 0;
-	uपूर्णांक phyversion;
+	uint phyversion;
 	u32 idcode;
-	पूर्णांक i;
+	int i;
 
-	अगर (D11REV_IS(sh->corerev, 4))
+	if (D11REV_IS(sh->corerev, 4))
 		sflags = SISF_2G_PHY | SISF_5G_PHY;
-	अन्यथा
-		sflags = bcma_aपढ़ो32(d11core, BCMA_IOST);
+	else
+		sflags = bcma_aread32(d11core, BCMA_IOST);
 
-	अगर (bandtype == BRCM_BAND_5G) अणु
-		अगर ((sflags & (SISF_5G_PHY | SISF_DB_PHY)) == 0)
-			वापस शून्य;
-	पूर्ण
+	if (bandtype == BRCM_BAND_5G) {
+		if ((sflags & (SISF_5G_PHY | SISF_DB_PHY)) == 0)
+			return NULL;
+	}
 
 	pi = sh->phy_head;
-	अगर ((sflags & SISF_DB_PHY) && pi) अणु
+	if ((sflags & SISF_DB_PHY) && pi) {
 		wlapi_bmac_corereset(pi->sh->physhim, pi->pubpi.coreflags);
 		pi->refcnt++;
-		वापस &pi->pubpi_ro;
-	पूर्ण
+		return &pi->pubpi_ro;
+	}
 
-	pi = kzalloc(माप(काष्ठा brcms_phy), GFP_ATOMIC);
-	अगर (pi == शून्य)
-		वापस शून्य;
+	pi = kzalloc(sizeof(struct brcms_phy), GFP_ATOMIC);
+	if (pi == NULL)
+		return NULL;
 	pi->wiphy = wiphy;
 	pi->d11core = d11core;
 	pi->sh = sh;
@@ -453,38 +452,38 @@ wlc_phy_attach(काष्ठा shared_phy *sh, काष्ठा bcma_device
 
 	pi->txpwr_percent = 100;
 
-	pi->करो_initcal = true;
+	pi->do_initcal = true;
 
 	pi->phycal_tempdelta = 0;
 
-	अगर (bandtype == BRCM_BAND_2G && (sflags & SISF_2G_PHY))
+	if (bandtype == BRCM_BAND_2G && (sflags & SISF_2G_PHY))
 		pi->pubpi.coreflags = SICF_GMODE;
 
 	wlapi_bmac_corereset(pi->sh->physhim, pi->pubpi.coreflags);
-	phyversion = bcma_पढ़ो16(pi->d11core, D11REGOFFS(phyversion));
+	phyversion = bcma_read16(pi->d11core, D11REGOFFS(phyversion));
 
 	pi->pubpi.phy_type = PHY_TYPE(phyversion);
 	pi->pubpi.phy_rev = phyversion & PV_PV_MASK;
 
-	अगर (pi->pubpi.phy_type == PHY_TYPE_LCNXN) अणु
+	if (pi->pubpi.phy_type == PHY_TYPE_LCNXN) {
 		pi->pubpi.phy_type = PHY_TYPE_N;
 		pi->pubpi.phy_rev += LCNXN_BASEREV;
-	पूर्ण
-	pi->pubpi.phy_corक्रमागत = PHY_CORE_NUM_2;
+	}
+	pi->pubpi.phy_corenum = PHY_CORE_NUM_2;
 	pi->pubpi.ana_rev = (phyversion & PV_AV_MASK) >> PV_AV_SHIFT;
 
-	अगर (pi->pubpi.phy_type != PHY_TYPE_N &&
+	if (pi->pubpi.phy_type != PHY_TYPE_N &&
 	    pi->pubpi.phy_type != PHY_TYPE_LCN)
-		जाओ err;
+		goto err;
 
-	अगर (bandtype == BRCM_BAND_5G) अणु
-		अगर (!ISNPHY(pi))
-			जाओ err;
-	पूर्ण अन्यथा अगर (!ISNPHY(pi) && !ISLCNPHY(pi)) अणु
-		जाओ err;
-	पूर्ण
+	if (bandtype == BRCM_BAND_5G) {
+		if (!ISNPHY(pi))
+			goto err;
+	} else if (!ISNPHY(pi) && !ISLCNPHY(pi)) {
+		goto err;
+	}
 
-	wlc_phy_anacore((काष्ठा brcms_phy_pub *) pi, ON);
+	wlc_phy_anacore((struct brcms_phy_pub *) pi, ON);
 
 	idcode = wlc_phy_get_radio_ver(pi);
 	pi->pubpi.radioid =
@@ -493,10 +492,10 @@ wlc_phy_attach(काष्ठा shared_phy *sh, काष्ठा bcma_device
 		(idcode & IDCODE_REV_MASK) >> IDCODE_REV_SHIFT;
 	pi->pubpi.radiover =
 		(idcode & IDCODE_VER_MASK) >> IDCODE_VER_SHIFT;
-	अगर (!VALID_RADIO(pi, pi->pubpi.radioid))
-		जाओ err;
+	if (!VALID_RADIO(pi, pi->pubpi.radioid))
+		goto err;
 
-	wlc_phy_चयन_radio((काष्ठा brcms_phy_pub *) pi, OFF);
+	wlc_phy_switch_radio((struct brcms_phy_pub *) pi, OFF);
 
 	wlc_set_phy_uninitted(pi);
 
@@ -507,16 +506,16 @@ wlc_phy_attach(काष्ठा shared_phy *sh, काष्ठा bcma_device
 	pi->rxiq_samps = PHY_NOISE_SAMPLE_LOG_NUM_NPHY;
 	pi->rxiq_antsel = ANT_RX_DIV_DEF;
 
-	pi->watchकरोg_override = true;
+	pi->watchdog_override = true;
 
 	pi->cal_type_override = PHY_PERICAL_AUTO;
 
 	pi->nphy_saved_noisevars.bufcount = 0;
 
-	अगर (ISNPHY(pi))
-		pi->min_txघातer = PHY_TXPWR_MIN_NPHY;
-	अन्यथा
-		pi->min_txघातer = PHY_TXPWR_MIN;
+	if (ISNPHY(pi))
+		pi->min_txpower = PHY_TXPWR_MIN_NPHY;
+	else
+		pi->min_txpower = PHY_TXPWR_MIN;
 
 	pi->sh->phyrxchain = 0x3;
 
@@ -531,594 +530,594 @@ wlc_phy_attach(काष्ठा shared_phy *sh, काष्ठा bcma_device
 	pi->nphy_lastcal_temp = -50;
 
 	pi->phynoise_polling = true;
-	अगर (ISNPHY(pi) || ISLCNPHY(pi))
+	if (ISNPHY(pi) || ISLCNPHY(pi))
 		pi->phynoise_polling = false;
 
-	क्रम (i = 0; i < TXP_NUM_RATES; i++) अणु
+	for (i = 0; i < TXP_NUM_RATES; i++) {
 		pi->txpwr_limit[i] = BRCMS_TXPWR_MAX;
 		pi->txpwr_env_limit[i] = BRCMS_TXPWR_MAX;
 		pi->tx_user_target[i] = BRCMS_TXPWR_MAX;
-	पूर्ण
+	}
 
 	pi->radiopwr_override = RADIOPWR_OVERRIDE_DEF;
 
 	pi->user_txpwr_at_rfport = false;
 
-	अगर (ISNPHY(pi)) अणु
+	if (ISNPHY(pi)) {
 
-		pi->phycal_समयr = wlapi_init_समयr(pi->sh->physhim,
-						    wlc_phy_समयrcb_phycal,
+		pi->phycal_timer = wlapi_init_timer(pi->sh->physhim,
+						    wlc_phy_timercb_phycal,
 						    pi, "phycal");
-		अगर (!pi->phycal_समयr)
-			जाओ err;
+		if (!pi->phycal_timer)
+			goto err;
 
-		अगर (!wlc_phy_attach_nphy(pi))
-			जाओ err;
+		if (!wlc_phy_attach_nphy(pi))
+			goto err;
 
-	पूर्ण अन्यथा अगर (ISLCNPHY(pi)) अणु
-		अगर (!wlc_phy_attach_lcnphy(pi))
-			जाओ err;
+	} else if (ISLCNPHY(pi)) {
+		if (!wlc_phy_attach_lcnphy(pi))
+			goto err;
 
-	पूर्ण
+	}
 
 	pi->refcnt++;
 	pi->next = pi->sh->phy_head;
 	sh->phy_head = pi;
 
-	स_नकल(&pi->pubpi_ro, &pi->pubpi, माप(काष्ठा brcms_phy_pub));
+	memcpy(&pi->pubpi_ro, &pi->pubpi, sizeof(struct brcms_phy_pub));
 
-	वापस &pi->pubpi_ro;
+	return &pi->pubpi_ro;
 
 err:
-	kमुक्त(pi);
-	वापस शून्य;
-पूर्ण
+	kfree(pi);
+	return NULL;
+}
 
-व्योम wlc_phy_detach(काष्ठा brcms_phy_pub *pih)
-अणु
-	काष्ठा brcms_phy *pi = container_of(pih, काष्ठा brcms_phy, pubpi_ro);
+void wlc_phy_detach(struct brcms_phy_pub *pih)
+{
+	struct brcms_phy *pi = container_of(pih, struct brcms_phy, pubpi_ro);
 
-	अगर (pih) अणु
-		अगर (--pi->refcnt)
-			वापस;
+	if (pih) {
+		if (--pi->refcnt)
+			return;
 
-		अगर (pi->phycal_समयr) अणु
-			wlapi_मुक्त_समयr(pi->phycal_समयr);
-			pi->phycal_समयr = शून्य;
-		पूर्ण
+		if (pi->phycal_timer) {
+			wlapi_free_timer(pi->phycal_timer);
+			pi->phycal_timer = NULL;
+		}
 
-		अगर (pi->sh->phy_head == pi)
+		if (pi->sh->phy_head == pi)
 			pi->sh->phy_head = pi->next;
-		अन्यथा अगर (pi->sh->phy_head->next == pi)
-			pi->sh->phy_head->next = शून्य;
+		else if (pi->sh->phy_head->next == pi)
+			pi->sh->phy_head->next = NULL;
 
-		अगर (pi->pi_fptr.detach)
+		if (pi->pi_fptr.detach)
 			(pi->pi_fptr.detach)(pi);
 
-		kमुक्त(pi);
-	पूर्ण
-पूर्ण
+		kfree(pi);
+	}
+}
 
 bool
-wlc_phy_get_phyversion(काष्ठा brcms_phy_pub *pih, u16 *phytype, u16 *phyrev,
+wlc_phy_get_phyversion(struct brcms_phy_pub *pih, u16 *phytype, u16 *phyrev,
 		       u16 *radioid, u16 *radiover)
-अणु
-	काष्ठा brcms_phy *pi = container_of(pih, काष्ठा brcms_phy, pubpi_ro);
+{
+	struct brcms_phy *pi = container_of(pih, struct brcms_phy, pubpi_ro);
 	*phytype = (u16) pi->pubpi.phy_type;
 	*phyrev = (u16) pi->pubpi.phy_rev;
 	*radioid = pi->pubpi.radioid;
 	*radiover = pi->pubpi.radiorev;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-bool wlc_phy_get_encore(काष्ठा brcms_phy_pub *pih)
-अणु
-	काष्ठा brcms_phy *pi = container_of(pih, काष्ठा brcms_phy, pubpi_ro);
-	वापस pi->pubpi.abgphy_encore;
-पूर्ण
+bool wlc_phy_get_encore(struct brcms_phy_pub *pih)
+{
+	struct brcms_phy *pi = container_of(pih, struct brcms_phy, pubpi_ro);
+	return pi->pubpi.abgphy_encore;
+}
 
-u32 wlc_phy_get_coreflags(काष्ठा brcms_phy_pub *pih)
-अणु
-	काष्ठा brcms_phy *pi = container_of(pih, काष्ठा brcms_phy, pubpi_ro);
-	वापस pi->pubpi.coreflags;
-पूर्ण
+u32 wlc_phy_get_coreflags(struct brcms_phy_pub *pih)
+{
+	struct brcms_phy *pi = container_of(pih, struct brcms_phy, pubpi_ro);
+	return pi->pubpi.coreflags;
+}
 
-व्योम wlc_phy_anacore(काष्ठा brcms_phy_pub *pih, bool on)
-अणु
-	काष्ठा brcms_phy *pi = container_of(pih, काष्ठा brcms_phy, pubpi_ro);
+void wlc_phy_anacore(struct brcms_phy_pub *pih, bool on)
+{
+	struct brcms_phy *pi = container_of(pih, struct brcms_phy, pubpi_ro);
 
-	अगर (ISNPHY(pi)) अणु
-		अगर (on) अणु
-			अगर (NREV_GE(pi->pubpi.phy_rev, 3)) अणु
-				ग_लिखो_phy_reg(pi, 0xa6, 0x0d);
-				ग_लिखो_phy_reg(pi, 0x8f, 0x0);
-				ग_लिखो_phy_reg(pi, 0xa7, 0x0d);
-				ग_लिखो_phy_reg(pi, 0xa5, 0x0);
-			पूर्ण अन्यथा अणु
-				ग_लिखो_phy_reg(pi, 0xa5, 0x0);
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (NREV_GE(pi->pubpi.phy_rev, 3)) अणु
-				ग_लिखो_phy_reg(pi, 0x8f, 0x07ff);
-				ग_लिखो_phy_reg(pi, 0xa6, 0x0fd);
-				ग_लिखो_phy_reg(pi, 0xa5, 0x07ff);
-				ग_लिखो_phy_reg(pi, 0xa7, 0x0fd);
-			पूर्ण अन्यथा अणु
-				ग_लिखो_phy_reg(pi, 0xa5, 0x7fff);
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अगर (ISLCNPHY(pi)) अणु
-		अगर (on) अणु
+	if (ISNPHY(pi)) {
+		if (on) {
+			if (NREV_GE(pi->pubpi.phy_rev, 3)) {
+				write_phy_reg(pi, 0xa6, 0x0d);
+				write_phy_reg(pi, 0x8f, 0x0);
+				write_phy_reg(pi, 0xa7, 0x0d);
+				write_phy_reg(pi, 0xa5, 0x0);
+			} else {
+				write_phy_reg(pi, 0xa5, 0x0);
+			}
+		} else {
+			if (NREV_GE(pi->pubpi.phy_rev, 3)) {
+				write_phy_reg(pi, 0x8f, 0x07ff);
+				write_phy_reg(pi, 0xa6, 0x0fd);
+				write_phy_reg(pi, 0xa5, 0x07ff);
+				write_phy_reg(pi, 0xa7, 0x0fd);
+			} else {
+				write_phy_reg(pi, 0xa5, 0x7fff);
+			}
+		}
+	} else if (ISLCNPHY(pi)) {
+		if (on) {
 			and_phy_reg(pi, 0x43b,
 				    ~((0x1 << 0) | (0x1 << 1) | (0x1 << 2)));
-		पूर्ण अन्यथा अणु
+		} else {
 			or_phy_reg(pi, 0x43c,
 				   (0x1 << 0) | (0x1 << 1) | (0x1 << 2));
 			or_phy_reg(pi, 0x43b,
 				   (0x1 << 0) | (0x1 << 1) | (0x1 << 2));
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-u32 wlc_phy_clk_bwbits(काष्ठा brcms_phy_pub *pih)
-अणु
-	काष्ठा brcms_phy *pi = container_of(pih, काष्ठा brcms_phy, pubpi_ro);
+u32 wlc_phy_clk_bwbits(struct brcms_phy_pub *pih)
+{
+	struct brcms_phy *pi = container_of(pih, struct brcms_phy, pubpi_ro);
 
 	u32 phy_bw_clkbits = 0;
 
-	अगर (pi && (ISNPHY(pi) || ISLCNPHY(pi))) अणु
-		चयन (pi->bw) अणु
-		हाल WL_CHANSPEC_BW_10:
+	if (pi && (ISNPHY(pi) || ISLCNPHY(pi))) {
+		switch (pi->bw) {
+		case WL_CHANSPEC_BW_10:
 			phy_bw_clkbits = SICF_BW10;
-			अवरोध;
-		हाल WL_CHANSPEC_BW_20:
+			break;
+		case WL_CHANSPEC_BW_20:
 			phy_bw_clkbits = SICF_BW20;
-			अवरोध;
-		हाल WL_CHANSPEC_BW_40:
+			break;
+		case WL_CHANSPEC_BW_40:
 			phy_bw_clkbits = SICF_BW40;
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		default:
+			break;
+		}
+	}
 
-	वापस phy_bw_clkbits;
-पूर्ण
+	return phy_bw_clkbits;
+}
 
-व्योम wlc_phy_por_inक्रमm(काष्ठा brcms_phy_pub *ppi)
-अणु
-	काष्ठा brcms_phy *pi = container_of(ppi, काष्ठा brcms_phy, pubpi_ro);
+void wlc_phy_por_inform(struct brcms_phy_pub *ppi)
+{
+	struct brcms_phy *pi = container_of(ppi, struct brcms_phy, pubpi_ro);
 
 	pi->phy_init_por = true;
-पूर्ण
+}
 
-व्योम wlc_phy_edcrs_lock(काष्ठा brcms_phy_pub *pih, bool lock)
-अणु
-	काष्ठा brcms_phy *pi = container_of(pih, काष्ठा brcms_phy, pubpi_ro);
+void wlc_phy_edcrs_lock(struct brcms_phy_pub *pih, bool lock)
+{
+	struct brcms_phy *pi = container_of(pih, struct brcms_phy, pubpi_ro);
 
 	pi->edcrs_threshold_lock = lock;
 
-	ग_लिखो_phy_reg(pi, 0x22c, 0x46b);
-	ग_लिखो_phy_reg(pi, 0x22d, 0x46b);
-	ग_लिखो_phy_reg(pi, 0x22e, 0x3c0);
-	ग_लिखो_phy_reg(pi, 0x22f, 0x3c0);
-पूर्ण
+	write_phy_reg(pi, 0x22c, 0x46b);
+	write_phy_reg(pi, 0x22d, 0x46b);
+	write_phy_reg(pi, 0x22e, 0x3c0);
+	write_phy_reg(pi, 0x22f, 0x3c0);
+}
 
-व्योम wlc_phy_initcal_enable(काष्ठा brcms_phy_pub *pih, bool initcal)
-अणु
-	काष्ठा brcms_phy *pi = container_of(pih, काष्ठा brcms_phy, pubpi_ro);
+void wlc_phy_initcal_enable(struct brcms_phy_pub *pih, bool initcal)
+{
+	struct brcms_phy *pi = container_of(pih, struct brcms_phy, pubpi_ro);
 
-	pi->करो_initcal = initcal;
-पूर्ण
+	pi->do_initcal = initcal;
+}
 
-व्योम wlc_phy_hw_clk_state_upd(काष्ठा brcms_phy_pub *pih, bool newstate)
-अणु
-	काष्ठा brcms_phy *pi = container_of(pih, काष्ठा brcms_phy, pubpi_ro);
+void wlc_phy_hw_clk_state_upd(struct brcms_phy_pub *pih, bool newstate)
+{
+	struct brcms_phy *pi = container_of(pih, struct brcms_phy, pubpi_ro);
 
-	अगर (!pi || !pi->sh)
-		वापस;
+	if (!pi || !pi->sh)
+		return;
 
 	pi->sh->clk = newstate;
-पूर्ण
+}
 
-व्योम wlc_phy_hw_state_upd(काष्ठा brcms_phy_pub *pih, bool newstate)
-अणु
-	काष्ठा brcms_phy *pi = container_of(pih, काष्ठा brcms_phy, pubpi_ro);
+void wlc_phy_hw_state_upd(struct brcms_phy_pub *pih, bool newstate)
+{
+	struct brcms_phy *pi = container_of(pih, struct brcms_phy, pubpi_ro);
 
-	अगर (!pi || !pi->sh)
-		वापस;
+	if (!pi || !pi->sh)
+		return;
 
 	pi->sh->up = newstate;
-पूर्ण
+}
 
-व्योम wlc_phy_init(काष्ठा brcms_phy_pub *pih, u16 chanspec)
-अणु
+void wlc_phy_init(struct brcms_phy_pub *pih, u16 chanspec)
+{
 	u32 mc;
-	व्योम (*phy_init)(काष्ठा brcms_phy *) = शून्य;
-	काष्ठा brcms_phy *pi = container_of(pih, काष्ठा brcms_phy, pubpi_ro);
+	void (*phy_init)(struct brcms_phy *) = NULL;
+	struct brcms_phy *pi = container_of(pih, struct brcms_phy, pubpi_ro);
 
-	अगर (pi->init_in_progress)
-		वापस;
+	if (pi->init_in_progress)
+		return;
 
 	pi->init_in_progress = true;
 
 	pi->radio_chanspec = chanspec;
 
-	mc = bcma_पढ़ो32(pi->d11core, D11REGOFFS(maccontrol));
-	अगर (WARN(mc & MCTL_EN_MAC, "HW error MAC running on init"))
-		वापस;
+	mc = bcma_read32(pi->d11core, D11REGOFFS(maccontrol));
+	if (WARN(mc & MCTL_EN_MAC, "HW error MAC running on init"))
+		return;
 
-	अगर (!(pi->measure_hold & PHY_HOLD_FOR_SCAN))
+	if (!(pi->measure_hold & PHY_HOLD_FOR_SCAN))
 		pi->measure_hold |= PHY_HOLD_FOR_NOT_ASSOC;
 
-	अगर (WARN(!(bcma_aपढ़ो32(pi->d11core, BCMA_IOST) & SISF_FCLKA),
+	if (WARN(!(bcma_aread32(pi->d11core, BCMA_IOST) & SISF_FCLKA),
 		 "HW error SISF_FCLKA\n"))
-		वापस;
+		return;
 
 	phy_init = pi->pi_fptr.init;
 
-	अगर (phy_init == शून्य)
-		वापस;
+	if (phy_init == NULL)
+		return;
 
 	wlc_phy_anacore(pih, ON);
 
-	अगर (CHSPEC_BW(pi->radio_chanspec) != pi->bw)
+	if (CHSPEC_BW(pi->radio_chanspec) != pi->bw)
 		wlapi_bmac_bw_set(pi->sh->physhim,
 				  CHSPEC_BW(pi->radio_chanspec));
 
 	pi->nphy_gain_boost = true;
 
-	wlc_phy_चयन_radio((काष्ठा brcms_phy_pub *) pi, ON);
+	wlc_phy_switch_radio((struct brcms_phy_pub *) pi, ON);
 
 	(*phy_init)(pi);
 
 	pi->phy_init_por = false;
 
-	अगर (D11REV_IS(pi->sh->corerev, 11) || D11REV_IS(pi->sh->corerev, 12))
-		wlc_phy_करो_dummy_tx(pi, true, OFF);
+	if (D11REV_IS(pi->sh->corerev, 11) || D11REV_IS(pi->sh->corerev, 12))
+		wlc_phy_do_dummy_tx(pi, true, OFF);
 
-	अगर (!(ISNPHY(pi)))
-		wlc_phy_txघातer_update_shm(pi);
+	if (!(ISNPHY(pi)))
+		wlc_phy_txpower_update_shm(pi);
 
-	wlc_phy_ant_rxभाग_set((काष्ठा brcms_phy_pub *) pi, pi->sh->rx_antभाग);
+	wlc_phy_ant_rxdiv_set((struct brcms_phy_pub *) pi, pi->sh->rx_antdiv);
 
 	pi->init_in_progress = false;
-पूर्ण
+}
 
-व्योम wlc_phy_cal_init(काष्ठा brcms_phy_pub *pih)
-अणु
-	काष्ठा brcms_phy *pi = container_of(pih, काष्ठा brcms_phy, pubpi_ro);
-	व्योम (*cal_init)(काष्ठा brcms_phy *) = शून्य;
+void wlc_phy_cal_init(struct brcms_phy_pub *pih)
+{
+	struct brcms_phy *pi = container_of(pih, struct brcms_phy, pubpi_ro);
+	void (*cal_init)(struct brcms_phy *) = NULL;
 
-	अगर (WARN((bcma_पढ़ो32(pi->d11core, D11REGOFFS(maccontrol)) &
+	if (WARN((bcma_read32(pi->d11core, D11REGOFFS(maccontrol)) &
 		  MCTL_EN_MAC) != 0, "HW error: MAC enabled during phy cal\n"))
-		वापस;
+		return;
 
-	अगर (!pi->initialized) अणु
+	if (!pi->initialized) {
 		cal_init = pi->pi_fptr.calinit;
-		अगर (cal_init)
+		if (cal_init)
 			(*cal_init)(pi);
 
 		pi->initialized = true;
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक wlc_phy_करोwn(काष्ठा brcms_phy_pub *pih)
-अणु
-	काष्ठा brcms_phy *pi = container_of(pih, काष्ठा brcms_phy, pubpi_ro);
-	पूर्णांक callbacks = 0;
+int wlc_phy_down(struct brcms_phy_pub *pih)
+{
+	struct brcms_phy *pi = container_of(pih, struct brcms_phy, pubpi_ro);
+	int callbacks = 0;
 
-	अगर (pi->phycal_समयr
-	    && !wlapi_del_समयr(pi->phycal_समयr))
+	if (pi->phycal_timer
+	    && !wlapi_del_timer(pi->phycal_timer))
 		callbacks++;
 
 	pi->nphy_iqcal_chanspec_2G = 0;
 	pi->nphy_iqcal_chanspec_5G = 0;
 
-	वापस callbacks;
-पूर्ण
+	return callbacks;
+}
 
-व्योम
-wlc_phy_table_addr(काष्ठा brcms_phy *pi, uपूर्णांक tbl_id, uपूर्णांक tbl_offset,
+void
+wlc_phy_table_addr(struct brcms_phy *pi, uint tbl_id, uint tbl_offset,
 		   u16 tblAddr, u16 tblDataHi, u16 tblDataLo)
-अणु
-	ग_लिखो_phy_reg(pi, tblAddr, (tbl_id << 10) | tbl_offset);
+{
+	write_phy_reg(pi, tblAddr, (tbl_id << 10) | tbl_offset);
 
 	pi->tbl_data_hi = tblDataHi;
 	pi->tbl_data_lo = tblDataLo;
 
-	अगर (pi->sh->chip == BCMA_CHIP_ID_BCM43224 &&
-	    pi->sh->chiprev == 1) अणु
+	if (pi->sh->chip == BCMA_CHIP_ID_BCM43224 &&
+	    pi->sh->chiprev == 1) {
 		pi->tbl_addr = tblAddr;
 		pi->tbl_save_id = tbl_id;
 		pi->tbl_save_offset = tbl_offset;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम wlc_phy_table_data_ग_लिखो(काष्ठा brcms_phy *pi, uपूर्णांक width, u32 val)
-अणु
-	अगर ((pi->sh->chip == BCMA_CHIP_ID_BCM43224) &&
+void wlc_phy_table_data_write(struct brcms_phy *pi, uint width, u32 val)
+{
+	if ((pi->sh->chip == BCMA_CHIP_ID_BCM43224) &&
 	    (pi->sh->chiprev == 1) &&
-	    (pi->tbl_save_id == NPHY_TBL_ID_ANTSWCTRLLUT)) अणु
-		पढ़ो_phy_reg(pi, pi->tbl_data_lo);
+	    (pi->tbl_save_id == NPHY_TBL_ID_ANTSWCTRLLUT)) {
+		read_phy_reg(pi, pi->tbl_data_lo);
 
-		ग_लिखो_phy_reg(pi, pi->tbl_addr,
+		write_phy_reg(pi, pi->tbl_addr,
 			      (pi->tbl_save_id << 10) | pi->tbl_save_offset);
 		pi->tbl_save_offset++;
-	पूर्ण
+	}
 
-	अगर (width == 32) अणु
-		ग_लिखो_phy_reg(pi, pi->tbl_data_hi, (u16) (val >> 16));
-		ग_लिखो_phy_reg(pi, pi->tbl_data_lo, (u16) val);
-	पूर्ण अन्यथा अणु
-		ग_लिखो_phy_reg(pi, pi->tbl_data_lo, (u16) val);
-	पूर्ण
-पूर्ण
+	if (width == 32) {
+		write_phy_reg(pi, pi->tbl_data_hi, (u16) (val >> 16));
+		write_phy_reg(pi, pi->tbl_data_lo, (u16) val);
+	} else {
+		write_phy_reg(pi, pi->tbl_data_lo, (u16) val);
+	}
+}
 
-व्योम
-wlc_phy_ग_लिखो_table(काष्ठा brcms_phy *pi, स्थिर काष्ठा phytbl_info *ptbl_info,
+void
+wlc_phy_write_table(struct brcms_phy *pi, const struct phytbl_info *ptbl_info,
 		    u16 tblAddr, u16 tblDataHi, u16 tblDataLo)
-अणु
-	uपूर्णांक idx;
-	uपूर्णांक tbl_id = ptbl_info->tbl_id;
-	uपूर्णांक tbl_offset = ptbl_info->tbl_offset;
-	uपूर्णांक tbl_width = ptbl_info->tbl_width;
-	स्थिर u8 *ptbl_8b = (स्थिर u8 *)ptbl_info->tbl_ptr;
-	स्थिर u16 *ptbl_16b = (स्थिर u16 *)ptbl_info->tbl_ptr;
-	स्थिर u32 *ptbl_32b = (स्थिर u32 *)ptbl_info->tbl_ptr;
+{
+	uint idx;
+	uint tbl_id = ptbl_info->tbl_id;
+	uint tbl_offset = ptbl_info->tbl_offset;
+	uint tbl_width = ptbl_info->tbl_width;
+	const u8 *ptbl_8b = (const u8 *)ptbl_info->tbl_ptr;
+	const u16 *ptbl_16b = (const u16 *)ptbl_info->tbl_ptr;
+	const u32 *ptbl_32b = (const u32 *)ptbl_info->tbl_ptr;
 
-	ग_लिखो_phy_reg(pi, tblAddr, (tbl_id << 10) | tbl_offset);
+	write_phy_reg(pi, tblAddr, (tbl_id << 10) | tbl_offset);
 
-	क्रम (idx = 0; idx < ptbl_info->tbl_len; idx++) अणु
+	for (idx = 0; idx < ptbl_info->tbl_len; idx++) {
 
-		अगर ((pi->sh->chip == BCMA_CHIP_ID_BCM43224) &&
+		if ((pi->sh->chip == BCMA_CHIP_ID_BCM43224) &&
 		    (pi->sh->chiprev == 1) &&
-		    (tbl_id == NPHY_TBL_ID_ANTSWCTRLLUT)) अणु
-			पढ़ो_phy_reg(pi, tblDataLo);
+		    (tbl_id == NPHY_TBL_ID_ANTSWCTRLLUT)) {
+			read_phy_reg(pi, tblDataLo);
 
-			ग_लिखो_phy_reg(pi, tblAddr,
+			write_phy_reg(pi, tblAddr,
 				      (tbl_id << 10) | (tbl_offset + idx));
-		पूर्ण
+		}
 
-		अगर (tbl_width == 32) अणु
-			ग_लिखो_phy_reg(pi, tblDataHi,
+		if (tbl_width == 32) {
+			write_phy_reg(pi, tblDataHi,
 				      (u16) (ptbl_32b[idx] >> 16));
-			ग_लिखो_phy_reg(pi, tblDataLo, (u16) ptbl_32b[idx]);
-		पूर्ण अन्यथा अगर (tbl_width == 16) अणु
-			ग_लिखो_phy_reg(pi, tblDataLo, ptbl_16b[idx]);
-		पूर्ण अन्यथा अणु
-			ग_लिखो_phy_reg(pi, tblDataLo, ptbl_8b[idx]);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			write_phy_reg(pi, tblDataLo, (u16) ptbl_32b[idx]);
+		} else if (tbl_width == 16) {
+			write_phy_reg(pi, tblDataLo, ptbl_16b[idx]);
+		} else {
+			write_phy_reg(pi, tblDataLo, ptbl_8b[idx]);
+		}
+	}
+}
 
-व्योम
-wlc_phy_पढ़ो_table(काष्ठा brcms_phy *pi, स्थिर काष्ठा phytbl_info *ptbl_info,
+void
+wlc_phy_read_table(struct brcms_phy *pi, const struct phytbl_info *ptbl_info,
 		   u16 tblAddr, u16 tblDataHi, u16 tblDataLo)
-अणु
-	uपूर्णांक idx;
-	uपूर्णांक tbl_id = ptbl_info->tbl_id;
-	uपूर्णांक tbl_offset = ptbl_info->tbl_offset;
-	uपूर्णांक tbl_width = ptbl_info->tbl_width;
+{
+	uint idx;
+	uint tbl_id = ptbl_info->tbl_id;
+	uint tbl_offset = ptbl_info->tbl_offset;
+	uint tbl_width = ptbl_info->tbl_width;
 	u8 *ptbl_8b = (u8 *)ptbl_info->tbl_ptr;
 	u16 *ptbl_16b = (u16 *)ptbl_info->tbl_ptr;
 	u32 *ptbl_32b = (u32 *)ptbl_info->tbl_ptr;
 
-	ग_लिखो_phy_reg(pi, tblAddr, (tbl_id << 10) | tbl_offset);
+	write_phy_reg(pi, tblAddr, (tbl_id << 10) | tbl_offset);
 
-	क्रम (idx = 0; idx < ptbl_info->tbl_len; idx++) अणु
+	for (idx = 0; idx < ptbl_info->tbl_len; idx++) {
 
-		अगर ((pi->sh->chip == BCMA_CHIP_ID_BCM43224) &&
-		    (pi->sh->chiprev == 1)) अणु
-			(व्योम)पढ़ो_phy_reg(pi, tblDataLo);
+		if ((pi->sh->chip == BCMA_CHIP_ID_BCM43224) &&
+		    (pi->sh->chiprev == 1)) {
+			(void)read_phy_reg(pi, tblDataLo);
 
-			ग_लिखो_phy_reg(pi, tblAddr,
+			write_phy_reg(pi, tblAddr,
 				      (tbl_id << 10) | (tbl_offset + idx));
-		पूर्ण
+		}
 
-		अगर (tbl_width == 32) अणु
-			ptbl_32b[idx] = पढ़ो_phy_reg(pi, tblDataLo);
-			ptbl_32b[idx] |= (पढ़ो_phy_reg(pi, tblDataHi) << 16);
-		पूर्ण अन्यथा अगर (tbl_width == 16) अणु
-			ptbl_16b[idx] = पढ़ो_phy_reg(pi, tblDataLo);
-		पूर्ण अन्यथा अणु
-			ptbl_8b[idx] = (u8) पढ़ो_phy_reg(pi, tblDataLo);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		if (tbl_width == 32) {
+			ptbl_32b[idx] = read_phy_reg(pi, tblDataLo);
+			ptbl_32b[idx] |= (read_phy_reg(pi, tblDataHi) << 16);
+		} else if (tbl_width == 16) {
+			ptbl_16b[idx] = read_phy_reg(pi, tblDataLo);
+		} else {
+			ptbl_8b[idx] = (u8) read_phy_reg(pi, tblDataLo);
+		}
+	}
+}
 
-uपूर्णांक
-wlc_phy_init_radio_regs_allbands(काष्ठा brcms_phy *pi,
-				 काष्ठा radio_20xx_regs *radioregs)
-अणु
-	uपूर्णांक i = 0;
+uint
+wlc_phy_init_radio_regs_allbands(struct brcms_phy *pi,
+				 struct radio_20xx_regs *radioregs)
+{
+	uint i = 0;
 
-	करो अणु
-		अगर (radioregs[i].करो_init)
-			ग_लिखो_radio_reg(pi, radioregs[i].address,
+	do {
+		if (radioregs[i].do_init)
+			write_radio_reg(pi, radioregs[i].address,
 					(u16) radioregs[i].init);
 
 		i++;
-	पूर्ण जबतक (radioregs[i].address != 0xffff);
+	} while (radioregs[i].address != 0xffff);
 
-	वापस i;
-पूर्ण
+	return i;
+}
 
-uपूर्णांक
-wlc_phy_init_radio_regs(काष्ठा brcms_phy *pi,
-			स्थिर काष्ठा radio_regs *radioregs,
+uint
+wlc_phy_init_radio_regs(struct brcms_phy *pi,
+			const struct radio_regs *radioregs,
 			u16 core_offset)
-अणु
-	uपूर्णांक i = 0;
-	uपूर्णांक count = 0;
+{
+	uint i = 0;
+	uint count = 0;
 
-	करो अणु
-		अगर (CHSPEC_IS5G(pi->radio_chanspec)) अणु
-			अगर (radioregs[i].करो_init_a) अणु
-				ग_लिखो_radio_reg(pi,
+	do {
+		if (CHSPEC_IS5G(pi->radio_chanspec)) {
+			if (radioregs[i].do_init_a) {
+				write_radio_reg(pi,
 						radioregs[i].
 						address | core_offset,
 						(u16) radioregs[i].init_a);
-				अगर (ISNPHY(pi) && (++count % 4 == 0))
+				if (ISNPHY(pi) && (++count % 4 == 0))
 					BRCMS_PHY_WAR_PR51571(pi);
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (radioregs[i].करो_init_g) अणु
-				ग_लिखो_radio_reg(pi,
+			}
+		} else {
+			if (radioregs[i].do_init_g) {
+				write_radio_reg(pi,
 						radioregs[i].
 						address | core_offset,
 						(u16) radioregs[i].init_g);
-				अगर (ISNPHY(pi) && (++count % 4 == 0))
+				if (ISNPHY(pi) && (++count % 4 == 0))
 					BRCMS_PHY_WAR_PR51571(pi);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		i++;
-	पूर्ण जबतक (radioregs[i].address != 0xffff);
+	} while (radioregs[i].address != 0xffff);
 
-	वापस i;
-पूर्ण
+	return i;
+}
 
-व्योम wlc_phy_करो_dummy_tx(काष्ठा brcms_phy *pi, bool ofdm, bool pa_on)
-अणु
-#घोषणा DUMMY_PKT_LEN   20
-	काष्ठा bcma_device *core = pi->d11core;
-	पूर्णांक i, count;
-	u8 ofdmpkt[DUMMY_PKT_LEN] = अणु
+void wlc_phy_do_dummy_tx(struct brcms_phy *pi, bool ofdm, bool pa_on)
+{
+#define DUMMY_PKT_LEN   20
+	struct bcma_device *core = pi->d11core;
+	int i, count;
+	u8 ofdmpkt[DUMMY_PKT_LEN] = {
 		0xcc, 0x01, 0x02, 0x00, 0x00, 0x00, 0xd4, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00
-	पूर्ण;
-	u8 cckpkt[DUMMY_PKT_LEN] = अणु
+	};
+	u8 cckpkt[DUMMY_PKT_LEN] = {
 		0x6e, 0x84, 0x0b, 0x00, 0x00, 0x00, 0xd4, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00
-	पूर्ण;
+	};
 	u32 *dummypkt;
 
 	dummypkt = (u32 *) (ofdm ? ofdmpkt : cckpkt);
-	wlapi_bmac_ग_लिखो_ढाँचा_ram(pi->sh->physhim, 0, DUMMY_PKT_LEN,
+	wlapi_bmac_write_template_ram(pi->sh->physhim, 0, DUMMY_PKT_LEN,
 				      dummypkt);
 
-	bcma_ग_लिखो16(core, D11REGOFFS(xmtsel), 0);
+	bcma_write16(core, D11REGOFFS(xmtsel), 0);
 
-	अगर (D11REV_GE(pi->sh->corerev, 11))
-		bcma_ग_लिखो16(core, D11REGOFFS(wepctl), 0x100);
-	अन्यथा
-		bcma_ग_लिखो16(core, D11REGOFFS(wepctl), 0);
+	if (D11REV_GE(pi->sh->corerev, 11))
+		bcma_write16(core, D11REGOFFS(wepctl), 0x100);
+	else
+		bcma_write16(core, D11REGOFFS(wepctl), 0);
 
-	bcma_ग_लिखो16(core, D11REGOFFS(txe_phyctl),
+	bcma_write16(core, D11REGOFFS(txe_phyctl),
 		     (ofdm ? 1 : 0) | PHY_TXC_ANT_0);
-	अगर (ISNPHY(pi) || ISLCNPHY(pi))
-		bcma_ग_लिखो16(core, D11REGOFFS(txe_phyctl1), 0x1A02);
+	if (ISNPHY(pi) || ISLCNPHY(pi))
+		bcma_write16(core, D11REGOFFS(txe_phyctl1), 0x1A02);
 
-	bcma_ग_लिखो16(core, D11REGOFFS(txe_wm_0), 0);
-	bcma_ग_लिखो16(core, D11REGOFFS(txe_wm_1), 0);
+	bcma_write16(core, D11REGOFFS(txe_wm_0), 0);
+	bcma_write16(core, D11REGOFFS(txe_wm_1), 0);
 
-	bcma_ग_लिखो16(core, D11REGOFFS(xmttplatetxptr), 0);
-	bcma_ग_लिखो16(core, D11REGOFFS(xmttxcnt), DUMMY_PKT_LEN);
+	bcma_write16(core, D11REGOFFS(xmttplatetxptr), 0);
+	bcma_write16(core, D11REGOFFS(xmttxcnt), DUMMY_PKT_LEN);
 
-	bcma_ग_लिखो16(core, D11REGOFFS(xmtsel),
+	bcma_write16(core, D11REGOFFS(xmtsel),
 		     ((8 << 8) | (1 << 5) | (1 << 2) | 2));
 
-	bcma_ग_लिखो16(core, D11REGOFFS(txe_ctl), 0);
+	bcma_write16(core, D11REGOFFS(txe_ctl), 0);
 
-	अगर (!pa_on) अणु
-		अगर (ISNPHY(pi))
+	if (!pa_on) {
+		if (ISNPHY(pi))
 			wlc_phy_pa_override_nphy(pi, OFF);
-	पूर्ण
+	}
 
-	अगर (ISNPHY(pi) || ISLCNPHY(pi))
-		bcma_ग_लिखो16(core, D11REGOFFS(txe_aux), 0xD0);
-	अन्यथा
-		bcma_ग_लिखो16(core, D11REGOFFS(txe_aux), ((1 << 5) | (1 << 4)));
+	if (ISNPHY(pi) || ISLCNPHY(pi))
+		bcma_write16(core, D11REGOFFS(txe_aux), 0xD0);
+	else
+		bcma_write16(core, D11REGOFFS(txe_aux), ((1 << 5) | (1 << 4)));
 
-	(व्योम)bcma_पढ़ो16(core, D11REGOFFS(txe_aux));
+	(void)bcma_read16(core, D11REGOFFS(txe_aux));
 
 	i = 0;
 	count = ofdm ? 30 : 250;
-	जबतक ((i++ < count)
-	       && (bcma_पढ़ो16(core, D11REGOFFS(txe_status)) & (1 << 7)))
+	while ((i++ < count)
+	       && (bcma_read16(core, D11REGOFFS(txe_status)) & (1 << 7)))
 		udelay(10);
 
 	i = 0;
 
-	जबतक ((i++ < 10) &&
-	       ((bcma_पढ़ो16(core, D11REGOFFS(txe_status)) & (1 << 10)) == 0))
+	while ((i++ < 10) &&
+	       ((bcma_read16(core, D11REGOFFS(txe_status)) & (1 << 10)) == 0))
 		udelay(10);
 
 	i = 0;
 
-	जबतक ((i++ < 10) &&
-	       ((bcma_पढ़ो16(core, D11REGOFFS(अगरsstat)) & (1 << 8))))
+	while ((i++ < 10) &&
+	       ((bcma_read16(core, D11REGOFFS(ifsstat)) & (1 << 8))))
 		udelay(10);
 
-	अगर (!pa_on) अणु
-		अगर (ISNPHY(pi))
+	if (!pa_on) {
+		if (ISNPHY(pi))
 			wlc_phy_pa_override_nphy(pi, ON);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम wlc_phy_hold_upd(काष्ठा brcms_phy_pub *pih, u32 id, bool set)
-अणु
-	काष्ठा brcms_phy *pi = container_of(pih, काष्ठा brcms_phy, pubpi_ro);
+void wlc_phy_hold_upd(struct brcms_phy_pub *pih, u32 id, bool set)
+{
+	struct brcms_phy *pi = container_of(pih, struct brcms_phy, pubpi_ro);
 
-	अगर (set)
+	if (set)
 		mboolset(pi->measure_hold, id);
-	अन्यथा
+	else
 		mboolclr(pi->measure_hold, id);
 
-	वापस;
-पूर्ण
+	return;
+}
 
-व्योम wlc_phy_mute_upd(काष्ठा brcms_phy_pub *pih, bool mute, u32 flags)
-अणु
-	काष्ठा brcms_phy *pi = container_of(pih, काष्ठा brcms_phy, pubpi_ro);
+void wlc_phy_mute_upd(struct brcms_phy_pub *pih, bool mute, u32 flags)
+{
+	struct brcms_phy *pi = container_of(pih, struct brcms_phy, pubpi_ro);
 
-	अगर (mute)
+	if (mute)
 		mboolset(pi->measure_hold, PHY_HOLD_FOR_MUTE);
-	अन्यथा
+	else
 		mboolclr(pi->measure_hold, PHY_HOLD_FOR_MUTE);
 
-	अगर (!mute && (flags & PHY_MUTE_FOR_PREISM))
-		pi->nphy_perical_last = pi->sh->now - pi->sh->glacial_समयr;
-	वापस;
-पूर्ण
+	if (!mute && (flags & PHY_MUTE_FOR_PREISM))
+		pi->nphy_perical_last = pi->sh->now - pi->sh->glacial_timer;
+	return;
+}
 
-व्योम wlc_phy_clear_tssi(काष्ठा brcms_phy_pub *pih)
-अणु
-	काष्ठा brcms_phy *pi = container_of(pih, काष्ठा brcms_phy, pubpi_ro);
+void wlc_phy_clear_tssi(struct brcms_phy_pub *pih)
+{
+	struct brcms_phy *pi = container_of(pih, struct brcms_phy, pubpi_ro);
 
-	अगर (ISNPHY(pi)) अणु
-		वापस;
-	पूर्ण अन्यथा अणु
-		wlapi_bmac_ग_लिखो_shm(pi->sh->physhim, M_B_TSSI_0, शून्य_TSSI_W);
-		wlapi_bmac_ग_लिखो_shm(pi->sh->physhim, M_B_TSSI_1, शून्य_TSSI_W);
-		wlapi_bmac_ग_लिखो_shm(pi->sh->physhim, M_G_TSSI_0, शून्य_TSSI_W);
-		wlapi_bmac_ग_लिखो_shm(pi->sh->physhim, M_G_TSSI_1, शून्य_TSSI_W);
-	पूर्ण
-पूर्ण
+	if (ISNPHY(pi)) {
+		return;
+	} else {
+		wlapi_bmac_write_shm(pi->sh->physhim, M_B_TSSI_0, NULL_TSSI_W);
+		wlapi_bmac_write_shm(pi->sh->physhim, M_B_TSSI_1, NULL_TSSI_W);
+		wlapi_bmac_write_shm(pi->sh->physhim, M_G_TSSI_0, NULL_TSSI_W);
+		wlapi_bmac_write_shm(pi->sh->physhim, M_G_TSSI_1, NULL_TSSI_W);
+	}
+}
 
-अटल bool wlc_phy_cal_txघातer_recalc_sw(काष्ठा brcms_phy *pi)
-अणु
-	वापस false;
-पूर्ण
+static bool wlc_phy_cal_txpower_recalc_sw(struct brcms_phy *pi)
+{
+	return false;
+}
 
-व्योम wlc_phy_चयन_radio(काष्ठा brcms_phy_pub *pih, bool on)
-अणु
-	काष्ठा brcms_phy *pi = container_of(pih, काष्ठा brcms_phy, pubpi_ro);
-	(व्योम)bcma_पढ़ो32(pi->d11core, D11REGOFFS(maccontrol));
+void wlc_phy_switch_radio(struct brcms_phy_pub *pih, bool on)
+{
+	struct brcms_phy *pi = container_of(pih, struct brcms_phy, pubpi_ro);
+	(void)bcma_read32(pi->d11core, D11REGOFFS(maccontrol));
 
-	अगर (ISNPHY(pi)) अणु
-		wlc_phy_चयन_radio_nphy(pi, on);
-	पूर्ण अन्यथा अगर (ISLCNPHY(pi)) अणु
-		अगर (on) अणु
+	if (ISNPHY(pi)) {
+		wlc_phy_switch_radio_nphy(pi, on);
+	} else if (ISLCNPHY(pi)) {
+		if (on) {
 			and_phy_reg(pi, 0x44c,
 				    ~((0x1 << 8) |
 				      (0x1 << 9) |
 				      (0x1 << 10) | (0x1 << 11) | (0x1 << 12)));
 			and_phy_reg(pi, 0x4b0, ~((0x1 << 3) | (0x1 << 11)));
 			and_phy_reg(pi, 0x4f9, ~(0x1 << 3));
-		पूर्ण अन्यथा अणु
+		} else {
 			and_phy_reg(pi, 0x44d,
 				    ~((0x1 << 10) |
 				      (0x1 << 11) |
@@ -1133,324 +1132,324 @@ wlc_phy_init_radio_regs(काष्ठा brcms_phy *pi,
 			or_phy_reg(pi, 0x4b0, (0x1 << 3) | (0x1 << 11));
 			and_phy_reg(pi, 0x4fa, ~((0x1 << 3)));
 			or_phy_reg(pi, 0x4f9, (0x1 << 3));
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-u16 wlc_phy_bw_state_get(काष्ठा brcms_phy_pub *ppi)
-अणु
-	काष्ठा brcms_phy *pi = container_of(ppi, काष्ठा brcms_phy, pubpi_ro);
+u16 wlc_phy_bw_state_get(struct brcms_phy_pub *ppi)
+{
+	struct brcms_phy *pi = container_of(ppi, struct brcms_phy, pubpi_ro);
 
-	वापस pi->bw;
-पूर्ण
+	return pi->bw;
+}
 
-व्योम wlc_phy_bw_state_set(काष्ठा brcms_phy_pub *ppi, u16 bw)
-अणु
-	काष्ठा brcms_phy *pi = container_of(ppi, काष्ठा brcms_phy, pubpi_ro);
+void wlc_phy_bw_state_set(struct brcms_phy_pub *ppi, u16 bw)
+{
+	struct brcms_phy *pi = container_of(ppi, struct brcms_phy, pubpi_ro);
 
 	pi->bw = bw;
-पूर्ण
+}
 
-व्योम wlc_phy_chanspec_radio_set(काष्ठा brcms_phy_pub *ppi, u16 newch)
-अणु
-	काष्ठा brcms_phy *pi = container_of(ppi, काष्ठा brcms_phy, pubpi_ro);
+void wlc_phy_chanspec_radio_set(struct brcms_phy_pub *ppi, u16 newch)
+{
+	struct brcms_phy *pi = container_of(ppi, struct brcms_phy, pubpi_ro);
 	pi->radio_chanspec = newch;
 
-पूर्ण
+}
 
-u16 wlc_phy_chanspec_get(काष्ठा brcms_phy_pub *ppi)
-अणु
-	काष्ठा brcms_phy *pi = container_of(ppi, काष्ठा brcms_phy, pubpi_ro);
+u16 wlc_phy_chanspec_get(struct brcms_phy_pub *ppi)
+{
+	struct brcms_phy *pi = container_of(ppi, struct brcms_phy, pubpi_ro);
 
-	वापस pi->radio_chanspec;
-पूर्ण
+	return pi->radio_chanspec;
+}
 
-व्योम wlc_phy_chanspec_set(काष्ठा brcms_phy_pub *ppi, u16 chanspec)
-अणु
-	काष्ठा brcms_phy *pi = container_of(ppi, काष्ठा brcms_phy, pubpi_ro);
+void wlc_phy_chanspec_set(struct brcms_phy_pub *ppi, u16 chanspec)
+{
+	struct brcms_phy *pi = container_of(ppi, struct brcms_phy, pubpi_ro);
 	u16 m_cur_channel;
-	व्योम (*chanspec_set)(काष्ठा brcms_phy *, u16) = शून्य;
+	void (*chanspec_set)(struct brcms_phy *, u16) = NULL;
 	m_cur_channel = CHSPEC_CHANNEL(chanspec);
-	अगर (CHSPEC_IS5G(chanspec))
+	if (CHSPEC_IS5G(chanspec))
 		m_cur_channel |= D11_CURCHANNEL_5G;
-	अगर (CHSPEC_IS40(chanspec))
+	if (CHSPEC_IS40(chanspec))
 		m_cur_channel |= D11_CURCHANNEL_40;
-	wlapi_bmac_ग_लिखो_shm(pi->sh->physhim, M_CURCHANNEL, m_cur_channel);
+	wlapi_bmac_write_shm(pi->sh->physhim, M_CURCHANNEL, m_cur_channel);
 
 	chanspec_set = pi->pi_fptr.chanset;
-	अगर (chanspec_set)
+	if (chanspec_set)
 		(*chanspec_set)(pi, chanspec);
 
-पूर्ण
+}
 
-पूर्णांक wlc_phy_chanspec_freq2bandrange_lpssn(uपूर्णांक freq)
-अणु
-	पूर्णांक range = -1;
+int wlc_phy_chanspec_freq2bandrange_lpssn(uint freq)
+{
+	int range = -1;
 
-	अगर (freq < 2500)
+	if (freq < 2500)
 		range = WL_CHAN_FREQ_RANGE_2G;
-	अन्यथा अगर (freq <= 5320)
+	else if (freq <= 5320)
 		range = WL_CHAN_FREQ_RANGE_5GL;
-	अन्यथा अगर (freq <= 5700)
+	else if (freq <= 5700)
 		range = WL_CHAN_FREQ_RANGE_5GM;
-	अन्यथा
+	else
 		range = WL_CHAN_FREQ_RANGE_5GH;
 
-	वापस range;
-पूर्ण
+	return range;
+}
 
-पूर्णांक wlc_phy_chanspec_bandrange_get(काष्ठा brcms_phy *pi, u16 chanspec)
-अणु
-	पूर्णांक range = -1;
-	uपूर्णांक channel = CHSPEC_CHANNEL(chanspec);
-	uपूर्णांक freq = wlc_phy_channel2freq(channel);
+int wlc_phy_chanspec_bandrange_get(struct brcms_phy *pi, u16 chanspec)
+{
+	int range = -1;
+	uint channel = CHSPEC_CHANNEL(chanspec);
+	uint freq = wlc_phy_channel2freq(channel);
 
-	अगर (ISNPHY(pi))
+	if (ISNPHY(pi))
 		range = wlc_phy_get_chan_freq_range_nphy(pi, channel);
-	अन्यथा अगर (ISLCNPHY(pi))
+	else if (ISLCNPHY(pi))
 		range = wlc_phy_chanspec_freq2bandrange_lpssn(freq);
 
-	वापस range;
-पूर्ण
+	return range;
+}
 
-व्योम wlc_phy_chanspec_ch14_widefilter_set(काष्ठा brcms_phy_pub *ppi,
+void wlc_phy_chanspec_ch14_widefilter_set(struct brcms_phy_pub *ppi,
 					  bool wide_filter)
-अणु
-	काष्ठा brcms_phy *pi = container_of(ppi, काष्ठा brcms_phy, pubpi_ro);
+{
+	struct brcms_phy *pi = container_of(ppi, struct brcms_phy, pubpi_ro);
 
 	pi->channel_14_wide_filter = wide_filter;
 
-पूर्ण
+}
 
-पूर्णांक wlc_phy_channel2freq(uपूर्णांक channel)
-अणु
-	uपूर्णांक i;
+int wlc_phy_channel2freq(uint channel)
+{
+	uint i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(chan_info_all); i++)
-		अगर (chan_info_all[i].chan == channel)
-			वापस chan_info_all[i].freq;
-	वापस 0;
-पूर्ण
+	for (i = 0; i < ARRAY_SIZE(chan_info_all); i++)
+		if (chan_info_all[i].chan == channel)
+			return chan_info_all[i].freq;
+	return 0;
+}
 
-व्योम
-wlc_phy_chanspec_band_validch(काष्ठा brcms_phy_pub *ppi, uपूर्णांक band,
-			      काष्ठा brcms_chanvec *channels)
-अणु
-	काष्ठा brcms_phy *pi = container_of(ppi, काष्ठा brcms_phy, pubpi_ro);
-	uपूर्णांक i;
-	uपूर्णांक channel;
+void
+wlc_phy_chanspec_band_validch(struct brcms_phy_pub *ppi, uint band,
+			      struct brcms_chanvec *channels)
+{
+	struct brcms_phy *pi = container_of(ppi, struct brcms_phy, pubpi_ro);
+	uint i;
+	uint channel;
 
-	स_रखो(channels, 0, माप(काष्ठा brcms_chanvec));
+	memset(channels, 0, sizeof(struct brcms_chanvec));
 
-	क्रम (i = 0; i < ARRAY_SIZE(chan_info_all); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(chan_info_all); i++) {
 		channel = chan_info_all[i].chan;
 
-		अगर ((pi->a_band_high_disable) && (channel >= FIRST_REF5_CHANNUM)
+		if ((pi->a_band_high_disable) && (channel >= FIRST_REF5_CHANNUM)
 		    && (channel <= LAST_REF5_CHANNUM))
-			जारी;
+			continue;
 
-		अगर ((band == BRCM_BAND_2G && channel <= CH_MAX_2G_CHANNEL) ||
+		if ((band == BRCM_BAND_2G && channel <= CH_MAX_2G_CHANNEL) ||
 		    (band == BRCM_BAND_5G && channel > CH_MAX_2G_CHANNEL))
 			setbit(channels->vec, channel);
-	पूर्ण
-पूर्ण
+	}
+}
 
-u16 wlc_phy_chanspec_band_firstch(काष्ठा brcms_phy_pub *ppi, uपूर्णांक band)
-अणु
-	काष्ठा brcms_phy *pi = container_of(ppi, काष्ठा brcms_phy, pubpi_ro);
-	uपूर्णांक i;
-	uपूर्णांक channel;
+u16 wlc_phy_chanspec_band_firstch(struct brcms_phy_pub *ppi, uint band)
+{
+	struct brcms_phy *pi = container_of(ppi, struct brcms_phy, pubpi_ro);
+	uint i;
+	uint channel;
 	u16 chspec;
 
-	क्रम (i = 0; i < ARRAY_SIZE(chan_info_all); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(chan_info_all); i++) {
 		channel = chan_info_all[i].chan;
 
-		अगर (ISNPHY(pi) && pi->bw == WL_CHANSPEC_BW_40) अणु
-			uपूर्णांक j;
+		if (ISNPHY(pi) && pi->bw == WL_CHANSPEC_BW_40) {
+			uint j;
 
-			क्रम (j = 0; j < ARRAY_SIZE(chan_info_all); j++) अणु
-				अगर (chan_info_all[j].chan ==
+			for (j = 0; j < ARRAY_SIZE(chan_info_all); j++) {
+				if (chan_info_all[j].chan ==
 				    channel + CH_10MHZ_APART)
-					अवरोध;
-			पूर्ण
+					break;
+			}
 
-			अगर (j == ARRAY_SIZE(chan_info_all))
-				जारी;
+			if (j == ARRAY_SIZE(chan_info_all))
+				continue;
 
 			channel = upper_20_sb(channel);
 			chspec =  channel | WL_CHANSPEC_BW_40 |
 				  WL_CHANSPEC_CTL_SB_LOWER;
-			अगर (band == BRCM_BAND_2G)
+			if (band == BRCM_BAND_2G)
 				chspec |= WL_CHANSPEC_BAND_2G;
-			अन्यथा
+			else
 				chspec |= WL_CHANSPEC_BAND_5G;
-		पूर्ण अन्यथा
+		} else
 			chspec = ch20mhz_chspec(channel);
 
-		अगर ((pi->a_band_high_disable) && (channel >= FIRST_REF5_CHANNUM)
+		if ((pi->a_band_high_disable) && (channel >= FIRST_REF5_CHANNUM)
 		    && (channel <= LAST_REF5_CHANNUM))
-			जारी;
+			continue;
 
-		अगर ((band == BRCM_BAND_2G && channel <= CH_MAX_2G_CHANNEL) ||
+		if ((band == BRCM_BAND_2G && channel <= CH_MAX_2G_CHANNEL) ||
 		    (band == BRCM_BAND_5G && channel > CH_MAX_2G_CHANNEL))
-			वापस chspec;
-	पूर्ण
+			return chspec;
+	}
 
-	वापस (u16) INVCHANSPEC;
-पूर्ण
+	return (u16) INVCHANSPEC;
+}
 
-पूर्णांक wlc_phy_txघातer_get(काष्ठा brcms_phy_pub *ppi, uपूर्णांक *qdbm, bool *override)
-अणु
-	काष्ठा brcms_phy *pi = container_of(ppi, काष्ठा brcms_phy, pubpi_ro);
+int wlc_phy_txpower_get(struct brcms_phy_pub *ppi, uint *qdbm, bool *override)
+{
+	struct brcms_phy *pi = container_of(ppi, struct brcms_phy, pubpi_ro);
 
 	*qdbm = pi->tx_user_target[0];
-	अगर (override != शून्य)
+	if (override != NULL)
 		*override = pi->txpwroverride;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम wlc_phy_txघातer_target_set(काष्ठा brcms_phy_pub *ppi,
-				काष्ठा txpwr_limits *txpwr)
-अणु
+void wlc_phy_txpower_target_set(struct brcms_phy_pub *ppi,
+				struct txpwr_limits *txpwr)
+{
 	bool mac_enabled = false;
-	काष्ठा brcms_phy *pi = container_of(ppi, काष्ठा brcms_phy, pubpi_ro);
+	struct brcms_phy *pi = container_of(ppi, struct brcms_phy, pubpi_ro);
 
-	स_नकल(&pi->tx_user_target[TXP_FIRST_CCK],
+	memcpy(&pi->tx_user_target[TXP_FIRST_CCK],
 	       &txpwr->cck[0], BRCMS_NUM_RATES_CCK);
 
-	स_नकल(&pi->tx_user_target[TXP_FIRST_OFDM],
+	memcpy(&pi->tx_user_target[TXP_FIRST_OFDM],
 	       &txpwr->ofdm[0], BRCMS_NUM_RATES_OFDM);
-	स_नकल(&pi->tx_user_target[TXP_FIRST_OFDM_20_CDD],
+	memcpy(&pi->tx_user_target[TXP_FIRST_OFDM_20_CDD],
 	       &txpwr->ofdm_cdd[0], BRCMS_NUM_RATES_OFDM);
 
-	स_नकल(&pi->tx_user_target[TXP_FIRST_OFDM_40_SISO],
+	memcpy(&pi->tx_user_target[TXP_FIRST_OFDM_40_SISO],
 	       &txpwr->ofdm_40_siso[0], BRCMS_NUM_RATES_OFDM);
-	स_नकल(&pi->tx_user_target[TXP_FIRST_OFDM_40_CDD],
+	memcpy(&pi->tx_user_target[TXP_FIRST_OFDM_40_CDD],
 	       &txpwr->ofdm_40_cdd[0], BRCMS_NUM_RATES_OFDM);
 
-	स_नकल(&pi->tx_user_target[TXP_FIRST_MCS_20_SISO],
+	memcpy(&pi->tx_user_target[TXP_FIRST_MCS_20_SISO],
 	       &txpwr->mcs_20_siso[0], BRCMS_NUM_RATES_MCS_1_STREAM);
-	स_नकल(&pi->tx_user_target[TXP_FIRST_MCS_20_CDD],
+	memcpy(&pi->tx_user_target[TXP_FIRST_MCS_20_CDD],
 	       &txpwr->mcs_20_cdd[0], BRCMS_NUM_RATES_MCS_1_STREAM);
-	स_नकल(&pi->tx_user_target[TXP_FIRST_MCS_20_STBC],
+	memcpy(&pi->tx_user_target[TXP_FIRST_MCS_20_STBC],
 	       &txpwr->mcs_20_stbc[0], BRCMS_NUM_RATES_MCS_1_STREAM);
-	स_नकल(&pi->tx_user_target[TXP_FIRST_MCS_20_SDM],
+	memcpy(&pi->tx_user_target[TXP_FIRST_MCS_20_SDM],
 	       &txpwr->mcs_20_mimo[0], BRCMS_NUM_RATES_MCS_2_STREAM);
 
-	स_नकल(&pi->tx_user_target[TXP_FIRST_MCS_40_SISO],
+	memcpy(&pi->tx_user_target[TXP_FIRST_MCS_40_SISO],
 	       &txpwr->mcs_40_siso[0], BRCMS_NUM_RATES_MCS_1_STREAM);
-	स_नकल(&pi->tx_user_target[TXP_FIRST_MCS_40_CDD],
+	memcpy(&pi->tx_user_target[TXP_FIRST_MCS_40_CDD],
 	       &txpwr->mcs_40_cdd[0], BRCMS_NUM_RATES_MCS_1_STREAM);
-	स_नकल(&pi->tx_user_target[TXP_FIRST_MCS_40_STBC],
+	memcpy(&pi->tx_user_target[TXP_FIRST_MCS_40_STBC],
 	       &txpwr->mcs_40_stbc[0], BRCMS_NUM_RATES_MCS_1_STREAM);
-	स_नकल(&pi->tx_user_target[TXP_FIRST_MCS_40_SDM],
+	memcpy(&pi->tx_user_target[TXP_FIRST_MCS_40_SDM],
 	       &txpwr->mcs_40_mimo[0], BRCMS_NUM_RATES_MCS_2_STREAM);
 
-	अगर (bcma_पढ़ो32(pi->d11core, D11REGOFFS(maccontrol)) & MCTL_EN_MAC)
+	if (bcma_read32(pi->d11core, D11REGOFFS(maccontrol)) & MCTL_EN_MAC)
 		mac_enabled = true;
 
-	अगर (mac_enabled)
-		wlapi_suspend_mac_and_रुको(pi->sh->physhim);
+	if (mac_enabled)
+		wlapi_suspend_mac_and_wait(pi->sh->physhim);
 
-	wlc_phy_txघातer_recalc_target(pi);
-	wlc_phy_cal_txघातer_recalc_sw(pi);
+	wlc_phy_txpower_recalc_target(pi);
+	wlc_phy_cal_txpower_recalc_sw(pi);
 
-	अगर (mac_enabled)
+	if (mac_enabled)
 		wlapi_enable_mac(pi->sh->physhim);
-पूर्ण
+}
 
-पूर्णांक wlc_phy_txघातer_set(काष्ठा brcms_phy_pub *ppi, uपूर्णांक qdbm, bool override)
-अणु
-	काष्ठा brcms_phy *pi = container_of(ppi, काष्ठा brcms_phy, pubpi_ro);
-	पूर्णांक i;
+int wlc_phy_txpower_set(struct brcms_phy_pub *ppi, uint qdbm, bool override)
+{
+	struct brcms_phy *pi = container_of(ppi, struct brcms_phy, pubpi_ro);
+	int i;
 
-	अगर (qdbm > 127)
-		वापस -EINVAL;
+	if (qdbm > 127)
+		return -EINVAL;
 
-	क्रम (i = 0; i < TXP_NUM_RATES; i++)
+	for (i = 0; i < TXP_NUM_RATES; i++)
 		pi->tx_user_target[i] = (u8) qdbm;
 
 	pi->txpwroverride = false;
 
-	अगर (pi->sh->up) अणु
-		अगर (!SCAN_INPROG_PHY(pi)) अणु
+	if (pi->sh->up) {
+		if (!SCAN_INPROG_PHY(pi)) {
 			bool suspend;
 
-			suspend = (0 == (bcma_पढ़ो32(pi->d11core,
+			suspend = (0 == (bcma_read32(pi->d11core,
 						     D11REGOFFS(maccontrol)) &
 					 MCTL_EN_MAC));
 
-			अगर (!suspend)
-				wlapi_suspend_mac_and_रुको(pi->sh->physhim);
+			if (!suspend)
+				wlapi_suspend_mac_and_wait(pi->sh->physhim);
 
-			wlc_phy_txघातer_recalc_target(pi);
-			wlc_phy_cal_txघातer_recalc_sw(pi);
+			wlc_phy_txpower_recalc_target(pi);
+			wlc_phy_cal_txpower_recalc_sw(pi);
 
-			अगर (!suspend)
+			if (!suspend)
 				wlapi_enable_mac(pi->sh->physhim);
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+	}
+	return 0;
+}
 
-व्योम
-wlc_phy_txघातer_sromlimit(काष्ठा brcms_phy_pub *ppi, uपूर्णांक channel, u8 *min_pwr,
-			  u8 *max_pwr, पूर्णांक txp_rate_idx)
-अणु
-	काष्ठा brcms_phy *pi = container_of(ppi, काष्ठा brcms_phy, pubpi_ro);
-	uपूर्णांक i;
+void
+wlc_phy_txpower_sromlimit(struct brcms_phy_pub *ppi, uint channel, u8 *min_pwr,
+			  u8 *max_pwr, int txp_rate_idx)
+{
+	struct brcms_phy *pi = container_of(ppi, struct brcms_phy, pubpi_ro);
+	uint i;
 
-	*min_pwr = pi->min_txघातer * BRCMS_TXPWR_DB_FACTOR;
+	*min_pwr = pi->min_txpower * BRCMS_TXPWR_DB_FACTOR;
 
-	अगर (ISNPHY(pi)) अणु
-		अगर (txp_rate_idx < 0)
+	if (ISNPHY(pi)) {
+		if (txp_rate_idx < 0)
 			txp_rate_idx = TXP_FIRST_CCK;
-		wlc_phy_txघातer_sromlimit_get_nphy(pi, channel, max_pwr,
+		wlc_phy_txpower_sromlimit_get_nphy(pi, channel, max_pwr,
 						   (u8) txp_rate_idx);
 
-	पूर्ण अन्यथा अगर ((channel <= CH_MAX_2G_CHANNEL)) अणु
-		अगर (txp_rate_idx < 0)
+	} else if ((channel <= CH_MAX_2G_CHANNEL)) {
+		if (txp_rate_idx < 0)
 			txp_rate_idx = TXP_FIRST_CCK;
 		*max_pwr = pi->tx_srom_max_rate_2g[txp_rate_idx];
-	पूर्ण अन्यथा अणु
+	} else {
 
 		*max_pwr = BRCMS_TXPWR_MAX;
 
-		अगर (txp_rate_idx < 0)
+		if (txp_rate_idx < 0)
 			txp_rate_idx = TXP_FIRST_OFDM;
 
-		क्रम (i = 0; i < ARRAY_SIZE(chan_info_all); i++) अणु
-			अगर (channel == chan_info_all[i].chan)
-				अवरोध;
-		पूर्ण
+		for (i = 0; i < ARRAY_SIZE(chan_info_all); i++) {
+			if (channel == chan_info_all[i].chan)
+				break;
+		}
 
-		अगर (pi->hwtxpwr) अणु
+		if (pi->hwtxpwr) {
 			*max_pwr = pi->hwtxpwr[i];
-		पूर्ण अन्यथा अणु
+		} else {
 
-			अगर ((i >= FIRST_MID_5G_CHAN) && (i <= LAST_MID_5G_CHAN))
+			if ((i >= FIRST_MID_5G_CHAN) && (i <= LAST_MID_5G_CHAN))
 				*max_pwr =
 				    pi->tx_srom_max_rate_5g_mid[txp_rate_idx];
-			अगर ((i >= FIRST_HIGH_5G_CHAN)
+			if ((i >= FIRST_HIGH_5G_CHAN)
 			    && (i <= LAST_HIGH_5G_CHAN))
 				*max_pwr =
 				    pi->tx_srom_max_rate_5g_hi[txp_rate_idx];
-			अगर ((i >= FIRST_LOW_5G_CHAN) && (i <= LAST_LOW_5G_CHAN))
+			if ((i >= FIRST_LOW_5G_CHAN) && (i <= LAST_LOW_5G_CHAN))
 				*max_pwr =
 				    pi->tx_srom_max_rate_5g_low[txp_rate_idx];
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-व्योम
-wlc_phy_txघातer_sromlimit_max_get(काष्ठा brcms_phy_pub *ppi, uपूर्णांक chan,
+void
+wlc_phy_txpower_sromlimit_max_get(struct brcms_phy_pub *ppi, uint chan,
 				  u8 *max_txpwr, u8 *min_txpwr)
-अणु
-	काष्ठा brcms_phy *pi = container_of(ppi, काष्ठा brcms_phy, pubpi_ro);
+{
+	struct brcms_phy *pi = container_of(ppi, struct brcms_phy, pubpi_ro);
 	u8 tx_pwr_max = 0;
 	u8 tx_pwr_min = 255;
 	u8 max_num_rate;
-	u8 maxtxpwr, mपूर्णांकxpwr, rate, pactrl;
+	u8 maxtxpwr, mintxpwr, rate, pactrl;
 
 	pactrl = 0;
 
@@ -1458,9 +1457,9 @@ wlc_phy_txघातer_sromlimit_max_get(काष्ठा brcms_phy_pub *ppi, u
 		       ISLCNPHY(pi) ? (TXP_LAST_SISO_MCS_20 +
 				       1) : (TXP_LAST_OFDM + 1);
 
-	क्रम (rate = 0; rate < max_num_rate; rate++) अणु
+	for (rate = 0; rate < max_num_rate; rate++) {
 
-		wlc_phy_txघातer_sromlimit(ppi, chan, &mपूर्णांकxpwr, &maxtxpwr,
+		wlc_phy_txpower_sromlimit(ppi, chan, &mintxpwr, &maxtxpwr,
 					  rate);
 
 		maxtxpwr = (maxtxpwr > pactrl) ? (maxtxpwr - pactrl) : 0;
@@ -1469,70 +1468,70 @@ wlc_phy_txघातer_sromlimit_max_get(काष्ठा brcms_phy_pub *ppi, u
 
 		tx_pwr_max = max(tx_pwr_max, maxtxpwr);
 		tx_pwr_min = min(tx_pwr_min, maxtxpwr);
-	पूर्ण
+	}
 	*max_txpwr = tx_pwr_max;
 	*min_txpwr = tx_pwr_min;
-पूर्ण
+}
 
-व्योम
-wlc_phy_txघातer_boardlimit_band(काष्ठा brcms_phy_pub *ppi, uपूर्णांक bandunit,
+void
+wlc_phy_txpower_boardlimit_band(struct brcms_phy_pub *ppi, uint bandunit,
 				s32 *max_pwr, s32 *min_pwr, u32 *step_pwr)
-अणु
-	वापस;
-पूर्ण
+{
+	return;
+}
 
-u8 wlc_phy_txघातer_get_target_min(काष्ठा brcms_phy_pub *ppi)
-अणु
-	काष्ठा brcms_phy *pi = container_of(ppi, काष्ठा brcms_phy, pubpi_ro);
+u8 wlc_phy_txpower_get_target_min(struct brcms_phy_pub *ppi)
+{
+	struct brcms_phy *pi = container_of(ppi, struct brcms_phy, pubpi_ro);
 
-	वापस pi->tx_घातer_min;
-पूर्ण
+	return pi->tx_power_min;
+}
 
-u8 wlc_phy_txघातer_get_target_max(काष्ठा brcms_phy_pub *ppi)
-अणु
-	काष्ठा brcms_phy *pi = container_of(ppi, काष्ठा brcms_phy, pubpi_ro);
+u8 wlc_phy_txpower_get_target_max(struct brcms_phy_pub *ppi)
+{
+	struct brcms_phy *pi = container_of(ppi, struct brcms_phy, pubpi_ro);
 
-	वापस pi->tx_घातer_max;
-पूर्ण
+	return pi->tx_power_max;
+}
 
-अटल s8 wlc_phy_env_measure_vbat(काष्ठा brcms_phy *pi)
-अणु
-	अगर (ISLCNPHY(pi))
-		वापस wlc_lcnphy_vbatsense(pi, 0);
-	अन्यथा
-		वापस 0;
-पूर्ण
+static s8 wlc_phy_env_measure_vbat(struct brcms_phy *pi)
+{
+	if (ISLCNPHY(pi))
+		return wlc_lcnphy_vbatsense(pi, 0);
+	else
+		return 0;
+}
 
-अटल s8 wlc_phy_env_measure_temperature(काष्ठा brcms_phy *pi)
-अणु
-	अगर (ISLCNPHY(pi))
-		वापस wlc_lcnphy_tempsense_degree(pi, 0);
-	अन्यथा
-		वापस 0;
-पूर्ण
+static s8 wlc_phy_env_measure_temperature(struct brcms_phy *pi)
+{
+	if (ISLCNPHY(pi))
+		return wlc_lcnphy_tempsense_degree(pi, 0);
+	else
+		return 0;
+}
 
-अटल व्योम wlc_phy_upd_env_txpwr_rate_limits(काष्ठा brcms_phy *pi, u32 band)
-अणु
+static void wlc_phy_upd_env_txpwr_rate_limits(struct brcms_phy *pi, u32 band)
+{
 	u8 i;
 
-	क्रम (i = 0; i < TXP_NUM_RATES; i++)
+	for (i = 0; i < TXP_NUM_RATES; i++)
 		pi->txpwr_env_limit[i] = BRCMS_TXPWR_MAX;
 
 	wlc_phy_env_measure_vbat(pi);
 	wlc_phy_env_measure_temperature(pi);
-पूर्ण
+}
 
-अटल s8
-wlc_user_txpwr_antport_to_rfport(काष्ठा brcms_phy *pi, uपूर्णांक chan, u32 band,
+static s8
+wlc_user_txpwr_antport_to_rfport(struct brcms_phy *pi, uint chan, u32 band,
 				 u8 rate)
-अणु
-	वापस 0;
-पूर्ण
+{
+	return 0;
+}
 
-व्योम wlc_phy_txघातer_recalc_target(काष्ठा brcms_phy *pi)
-अणु
-	u8 maxtxpwr, mपूर्णांकxpwr, rate, pactrl;
-	uपूर्णांक target_chan;
+void wlc_phy_txpower_recalc_target(struct brcms_phy *pi)
+{
+	u8 maxtxpwr, mintxpwr, rate, pactrl;
+	uint target_chan;
 	u8 tx_pwr_target[TXP_NUM_RATES];
 	u8 tx_pwr_max = 0;
 	u8 tx_pwr_min = 255;
@@ -1541,40 +1540,40 @@ wlc_user_txpwr_antport_to_rfport(काष्ठा brcms_phy *pi, uपूर्
 	u8 start_rate = 0;
 	u16 chspec;
 	u32 band = CHSPEC2BAND(pi->radio_chanspec);
-	व्योम (*txpwr_recalc_fn)(काष्ठा brcms_phy *) = शून्य;
+	void (*txpwr_recalc_fn)(struct brcms_phy *) = NULL;
 
 	chspec = pi->radio_chanspec;
-	अगर (CHSPEC_CTL_SB(chspec) == WL_CHANSPEC_CTL_SB_NONE)
+	if (CHSPEC_CTL_SB(chspec) == WL_CHANSPEC_CTL_SB_NONE)
 		target_chan = CHSPEC_CHANNEL(chspec);
-	अन्यथा अगर (CHSPEC_CTL_SB(chspec) == WL_CHANSPEC_CTL_SB_UPPER)
+	else if (CHSPEC_CTL_SB(chspec) == WL_CHANSPEC_CTL_SB_UPPER)
 		target_chan = upper_20_sb(CHSPEC_CHANNEL(chspec));
-	अन्यथा
+	else
 		target_chan = lower_20_sb(CHSPEC_CHANNEL(chspec));
 
 	pactrl = 0;
-	अगर (ISLCNPHY(pi)) अणु
+	if (ISLCNPHY(pi)) {
 		u32 offset_mcs, i;
 
-		अगर (CHSPEC_IS40(pi->radio_chanspec)) अणु
+		if (CHSPEC_IS40(pi->radio_chanspec)) {
 			offset_mcs = pi->mcs40_po;
-			क्रम (i = TXP_FIRST_SISO_MCS_20;
-			     i <= TXP_LAST_SISO_MCS_20; i++) अणु
+			for (i = TXP_FIRST_SISO_MCS_20;
+			     i <= TXP_LAST_SISO_MCS_20; i++) {
 				pi->tx_srom_max_rate_2g[i - 8] =
 					pi->tx_srom_max_2g -
 					((offset_mcs & 0xf) * 2);
 				offset_mcs >>= 4;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			offset_mcs = pi->mcs20_po;
-			क्रम (i = TXP_FIRST_SISO_MCS_20;
-			     i <= TXP_LAST_SISO_MCS_20; i++) अणु
+			for (i = TXP_FIRST_SISO_MCS_20;
+			     i <= TXP_LAST_SISO_MCS_20; i++) {
 				pi->tx_srom_max_rate_2g[i - 8] =
 					pi->tx_srom_max_2g -
 					((offset_mcs & 0xf) * 2);
 				offset_mcs >>= 4;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 	max_num_rate = ((ISNPHY(pi)) ? (TXP_NUM_RATES) :
 			((ISLCNPHY(pi)) ?
@@ -1582,20 +1581,20 @@ wlc_user_txpwr_antport_to_rfport(काष्ठा brcms_phy *pi, uपूर्
 
 	wlc_phy_upd_env_txpwr_rate_limits(pi, band);
 
-	क्रम (rate = start_rate; rate < max_num_rate; rate++) अणु
+	for (rate = start_rate; rate < max_num_rate; rate++) {
 
 		tx_pwr_target[rate] = pi->tx_user_target[rate];
 
-		अगर (pi->user_txpwr_at_rfport)
+		if (pi->user_txpwr_at_rfport)
 			tx_pwr_target[rate] +=
 				wlc_user_txpwr_antport_to_rfport(pi,
 								 target_chan,
 								 band,
 								 rate);
 
-		wlc_phy_txघातer_sromlimit((काष्ठा brcms_phy_pub *) pi,
+		wlc_phy_txpower_sromlimit((struct brcms_phy_pub *) pi,
 					  target_chan,
-					  &mपूर्णांकxpwr, &maxtxpwr, rate);
+					  &mintxpwr, &maxtxpwr, rate);
 
 		maxtxpwr = min(maxtxpwr, pi->txpwr_limit[rate]);
 
@@ -1605,188 +1604,188 @@ wlc_user_txpwr_antport_to_rfport(काष्ठा brcms_phy *pi, uपूर्
 
 		maxtxpwr = min(maxtxpwr, tx_pwr_target[rate]);
 
-		अगर (pi->txpwr_percent <= 100)
+		if (pi->txpwr_percent <= 100)
 			maxtxpwr = (maxtxpwr * pi->txpwr_percent) / 100;
 
-		tx_pwr_target[rate] = max(maxtxpwr, mपूर्णांकxpwr);
+		tx_pwr_target[rate] = max(maxtxpwr, mintxpwr);
 
 		tx_pwr_target[rate] =
 			min(tx_pwr_target[rate], pi->txpwr_env_limit[rate]);
 
-		अगर (tx_pwr_target[rate] > tx_pwr_max)
+		if (tx_pwr_target[rate] > tx_pwr_max)
 			tx_pwr_max_rate_ind = rate;
 
 		tx_pwr_max = max(tx_pwr_max, tx_pwr_target[rate]);
 		tx_pwr_min = min(tx_pwr_min, tx_pwr_target[rate]);
-	पूर्ण
+	}
 
-	स_रखो(pi->tx_घातer_offset, 0, माप(pi->tx_घातer_offset));
-	pi->tx_घातer_max = tx_pwr_max;
-	pi->tx_घातer_min = tx_pwr_min;
-	pi->tx_घातer_max_rate_ind = tx_pwr_max_rate_ind;
-	क्रम (rate = 0; rate < max_num_rate; rate++) अणु
+	memset(pi->tx_power_offset, 0, sizeof(pi->tx_power_offset));
+	pi->tx_power_max = tx_pwr_max;
+	pi->tx_power_min = tx_pwr_min;
+	pi->tx_power_max_rate_ind = tx_pwr_max_rate_ind;
+	for (rate = 0; rate < max_num_rate; rate++) {
 
-		pi->tx_घातer_target[rate] = tx_pwr_target[rate];
+		pi->tx_power_target[rate] = tx_pwr_target[rate];
 
-		अगर (!pi->hwpwrctrl || ISNPHY(pi))
-			pi->tx_घातer_offset[rate] =
-				pi->tx_घातer_max - pi->tx_घातer_target[rate];
-		अन्यथा
-			pi->tx_घातer_offset[rate] =
-				pi->tx_घातer_target[rate] - pi->tx_घातer_min;
-	पूर्ण
+		if (!pi->hwpwrctrl || ISNPHY(pi))
+			pi->tx_power_offset[rate] =
+				pi->tx_power_max - pi->tx_power_target[rate];
+		else
+			pi->tx_power_offset[rate] =
+				pi->tx_power_target[rate] - pi->tx_power_min;
+	}
 
 	txpwr_recalc_fn = pi->pi_fptr.txpwrrecalc;
-	अगर (txpwr_recalc_fn)
+	if (txpwr_recalc_fn)
 		(*txpwr_recalc_fn)(pi);
-पूर्ण
+}
 
-अटल व्योम
-wlc_phy_txघातer_reg_limit_calc(काष्ठा brcms_phy *pi, काष्ठा txpwr_limits *txpwr,
+static void
+wlc_phy_txpower_reg_limit_calc(struct brcms_phy *pi, struct txpwr_limits *txpwr,
 			       u16 chanspec)
-अणु
-	u8 पंचांगp_txpwr_limit[2 * BRCMS_NUM_RATES_OFDM];
-	u8 *txpwr_ptr1 = शून्य, *txpwr_ptr2 = शून्य;
-	पूर्णांक rate_start_index = 0, rate1, rate2, k;
+{
+	u8 tmp_txpwr_limit[2 * BRCMS_NUM_RATES_OFDM];
+	u8 *txpwr_ptr1 = NULL, *txpwr_ptr2 = NULL;
+	int rate_start_index = 0, rate1, rate2, k;
 
-	क्रम (rate1 = WL_TX_POWER_CCK_FIRST, rate2 = 0;
+	for (rate1 = WL_TX_POWER_CCK_FIRST, rate2 = 0;
 	     rate2 < WL_TX_POWER_CCK_NUM; rate1++, rate2++)
 		pi->txpwr_limit[rate1] = txpwr->cck[rate2];
 
-	क्रम (rate1 = WL_TX_POWER_OFDM_FIRST, rate2 = 0;
+	for (rate1 = WL_TX_POWER_OFDM_FIRST, rate2 = 0;
 	     rate2 < WL_TX_POWER_OFDM_NUM; rate1++, rate2++)
 		pi->txpwr_limit[rate1] = txpwr->ofdm[rate2];
 
-	अगर (ISNPHY(pi)) अणु
+	if (ISNPHY(pi)) {
 
-		क्रम (k = 0; k < 4; k++) अणु
-			चयन (k) अणु
-			हाल 0:
+		for (k = 0; k < 4; k++) {
+			switch (k) {
+			case 0:
 
 				txpwr_ptr1 = txpwr->mcs_20_siso;
 				txpwr_ptr2 = txpwr->ofdm;
 				rate_start_index = WL_TX_POWER_OFDM_FIRST;
-				अवरोध;
-			हाल 1:
+				break;
+			case 1:
 
 				txpwr_ptr1 = txpwr->mcs_20_cdd;
 				txpwr_ptr2 = txpwr->ofdm_cdd;
 				rate_start_index = WL_TX_POWER_OFDM20_CDD_FIRST;
-				अवरोध;
-			हाल 2:
+				break;
+			case 2:
 
 				txpwr_ptr1 = txpwr->mcs_40_siso;
 				txpwr_ptr2 = txpwr->ofdm_40_siso;
 				rate_start_index =
 					WL_TX_POWER_OFDM40_SISO_FIRST;
-				अवरोध;
-			हाल 3:
+				break;
+			case 3:
 
 				txpwr_ptr1 = txpwr->mcs_40_cdd;
 				txpwr_ptr2 = txpwr->ofdm_40_cdd;
 				rate_start_index = WL_TX_POWER_OFDM40_CDD_FIRST;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-			क्रम (rate2 = 0; rate2 < BRCMS_NUM_RATES_OFDM;
-			     rate2++) अणु
-				पंचांगp_txpwr_limit[rate2] = 0;
-				पंचांगp_txpwr_limit[BRCMS_NUM_RATES_OFDM + rate2] =
+			for (rate2 = 0; rate2 < BRCMS_NUM_RATES_OFDM;
+			     rate2++) {
+				tmp_txpwr_limit[rate2] = 0;
+				tmp_txpwr_limit[BRCMS_NUM_RATES_OFDM + rate2] =
 					txpwr_ptr1[rate2];
-			पूर्ण
-			wlc_phy_mcs_to_ofdm_घातers_nphy(
-				पंचांगp_txpwr_limit, 0,
+			}
+			wlc_phy_mcs_to_ofdm_powers_nphy(
+				tmp_txpwr_limit, 0,
 				BRCMS_NUM_RATES_OFDM -
 				1, BRCMS_NUM_RATES_OFDM);
-			क्रम (rate1 = rate_start_index, rate2 = 0;
+			for (rate1 = rate_start_index, rate2 = 0;
 			     rate2 < BRCMS_NUM_RATES_OFDM; rate1++, rate2++)
 				pi->txpwr_limit[rate1] =
 					min(txpwr_ptr2[rate2],
-					    पंचांगp_txpwr_limit[rate2]);
-		पूर्ण
+					    tmp_txpwr_limit[rate2]);
+		}
 
-		क्रम (k = 0; k < 4; k++) अणु
-			चयन (k) अणु
-			हाल 0:
+		for (k = 0; k < 4; k++) {
+			switch (k) {
+			case 0:
 
 				txpwr_ptr1 = txpwr->ofdm;
 				txpwr_ptr2 = txpwr->mcs_20_siso;
 				rate_start_index = WL_TX_POWER_MCS20_SISO_FIRST;
-				अवरोध;
-			हाल 1:
+				break;
+			case 1:
 
 				txpwr_ptr1 = txpwr->ofdm_cdd;
 				txpwr_ptr2 = txpwr->mcs_20_cdd;
 				rate_start_index = WL_TX_POWER_MCS20_CDD_FIRST;
-				अवरोध;
-			हाल 2:
+				break;
+			case 2:
 
 				txpwr_ptr1 = txpwr->ofdm_40_siso;
 				txpwr_ptr2 = txpwr->mcs_40_siso;
 				rate_start_index = WL_TX_POWER_MCS40_SISO_FIRST;
-				अवरोध;
-			हाल 3:
+				break;
+			case 3:
 
 				txpwr_ptr1 = txpwr->ofdm_40_cdd;
 				txpwr_ptr2 = txpwr->mcs_40_cdd;
 				rate_start_index = WL_TX_POWER_MCS40_CDD_FIRST;
-				अवरोध;
-			पूर्ण
-			क्रम (rate2 = 0; rate2 < BRCMS_NUM_RATES_OFDM;
-			     rate2++) अणु
-				पंचांगp_txpwr_limit[rate2] = 0;
-				पंचांगp_txpwr_limit[BRCMS_NUM_RATES_OFDM + rate2] =
+				break;
+			}
+			for (rate2 = 0; rate2 < BRCMS_NUM_RATES_OFDM;
+			     rate2++) {
+				tmp_txpwr_limit[rate2] = 0;
+				tmp_txpwr_limit[BRCMS_NUM_RATES_OFDM + rate2] =
 					txpwr_ptr1[rate2];
-			पूर्ण
-			wlc_phy_ofdm_to_mcs_घातers_nphy(
-				पंचांगp_txpwr_limit, 0,
+			}
+			wlc_phy_ofdm_to_mcs_powers_nphy(
+				tmp_txpwr_limit, 0,
 				BRCMS_NUM_RATES_OFDM -
 				1, BRCMS_NUM_RATES_OFDM);
-			क्रम (rate1 = rate_start_index, rate2 = 0;
+			for (rate1 = rate_start_index, rate2 = 0;
 			     rate2 < BRCMS_NUM_RATES_MCS_1_STREAM;
 			     rate1++, rate2++)
 				pi->txpwr_limit[rate1] =
 					min(txpwr_ptr2[rate2],
-					    पंचांगp_txpwr_limit[rate2]);
-		पूर्ण
+					    tmp_txpwr_limit[rate2]);
+		}
 
-		क्रम (k = 0; k < 2; k++) अणु
-			चयन (k) अणु
-			हाल 0:
+		for (k = 0; k < 2; k++) {
+			switch (k) {
+			case 0:
 
 				rate_start_index = WL_TX_POWER_MCS20_STBC_FIRST;
 				txpwr_ptr1 = txpwr->mcs_20_stbc;
-				अवरोध;
-			हाल 1:
+				break;
+			case 1:
 
 				rate_start_index = WL_TX_POWER_MCS40_STBC_FIRST;
 				txpwr_ptr1 = txpwr->mcs_40_stbc;
-				अवरोध;
-			पूर्ण
-			क्रम (rate1 = rate_start_index, rate2 = 0;
+				break;
+			}
+			for (rate1 = rate_start_index, rate2 = 0;
 			     rate2 < BRCMS_NUM_RATES_MCS_1_STREAM;
 			     rate1++, rate2++)
 				pi->txpwr_limit[rate1] = txpwr_ptr1[rate2];
-		पूर्ण
+		}
 
-		क्रम (k = 0; k < 2; k++) अणु
-			चयन (k) अणु
-			हाल 0:
+		for (k = 0; k < 2; k++) {
+			switch (k) {
+			case 0:
 
 				rate_start_index = WL_TX_POWER_MCS20_SDM_FIRST;
 				txpwr_ptr1 = txpwr->mcs_20_mimo;
-				अवरोध;
-			हाल 1:
+				break;
+			case 1:
 
 				rate_start_index = WL_TX_POWER_MCS40_SDM_FIRST;
 				txpwr_ptr1 = txpwr->mcs_40_mimo;
-				अवरोध;
-			पूर्ण
-			क्रम (rate1 = rate_start_index, rate2 = 0;
+				break;
+			}
+			for (rate1 = rate_start_index, rate2 = 0;
 			     rate2 < BRCMS_NUM_RATES_MCS_2_STREAM;
 			     rate1++, rate2++)
 				pi->txpwr_limit[rate1] = txpwr_ptr1[rate2];
-		पूर्ण
+		}
 
 		pi->txpwr_limit[WL_TX_POWER_MCS_32] = txpwr->mcs32;
 
@@ -1795,440 +1794,440 @@ wlc_phy_txघातer_reg_limit_calc(काष्ठा brcms_phy *pi, काष
 			    pi->txpwr_limit[WL_TX_POWER_MCS_32]);
 		pi->txpwr_limit[WL_TX_POWER_MCS_32] =
 			pi->txpwr_limit[WL_TX_POWER_MCS40_CDD_FIRST];
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम wlc_phy_txpwr_percent_set(काष्ठा brcms_phy_pub *ppi, u8 txpwr_percent)
-अणु
-	काष्ठा brcms_phy *pi = container_of(ppi, काष्ठा brcms_phy, pubpi_ro);
+void wlc_phy_txpwr_percent_set(struct brcms_phy_pub *ppi, u8 txpwr_percent)
+{
+	struct brcms_phy *pi = container_of(ppi, struct brcms_phy, pubpi_ro);
 
 	pi->txpwr_percent = txpwr_percent;
-पूर्ण
+}
 
-व्योम wlc_phy_machwcap_set(काष्ठा brcms_phy_pub *ppi, u32 machwcap)
-अणु
-	काष्ठा brcms_phy *pi = container_of(ppi, काष्ठा brcms_phy, pubpi_ro);
+void wlc_phy_machwcap_set(struct brcms_phy_pub *ppi, u32 machwcap)
+{
+	struct brcms_phy *pi = container_of(ppi, struct brcms_phy, pubpi_ro);
 
 	pi->sh->machwcap = machwcap;
-पूर्ण
+}
 
-व्योम wlc_phy_runbist_config(काष्ठा brcms_phy_pub *ppi, bool start_end)
-अणु
-	काष्ठा brcms_phy *pi = container_of(ppi, काष्ठा brcms_phy, pubpi_ro);
+void wlc_phy_runbist_config(struct brcms_phy_pub *ppi, bool start_end)
+{
+	struct brcms_phy *pi = container_of(ppi, struct brcms_phy, pubpi_ro);
 	u16 rxc;
 	rxc = 0;
 
-	अगर (start_end == ON) अणु
-		अगर (!ISNPHY(pi))
-			वापस;
+	if (start_end == ON) {
+		if (!ISNPHY(pi))
+			return;
 
-		अगर (NREV_IS(pi->pubpi.phy_rev, 3)
-		    || NREV_IS(pi->pubpi.phy_rev, 4)) अणु
+		if (NREV_IS(pi->pubpi.phy_rev, 3)
+		    || NREV_IS(pi->pubpi.phy_rev, 4)) {
 			bcma_wflush16(pi->d11core, D11REGOFFS(phyregaddr),
 				      0xa0);
 			bcma_set16(pi->d11core, D11REGOFFS(phyregdata),
 				   0x1 << 15);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (NREV_IS(pi->pubpi.phy_rev, 3)
-		    || NREV_IS(pi->pubpi.phy_rev, 4)) अणु
+		}
+	} else {
+		if (NREV_IS(pi->pubpi.phy_rev, 3)
+		    || NREV_IS(pi->pubpi.phy_rev, 4)) {
 			bcma_wflush16(pi->d11core, D11REGOFFS(phyregaddr),
 				      0xa0);
-			bcma_ग_लिखो16(pi->d11core, D11REGOFFS(phyregdata), rxc);
-		पूर्ण
+			bcma_write16(pi->d11core, D11REGOFFS(phyregdata), rxc);
+		}
 
-		wlc_phy_por_inक्रमm(ppi);
-	पूर्ण
-पूर्ण
+		wlc_phy_por_inform(ppi);
+	}
+}
 
-व्योम
-wlc_phy_txघातer_limit_set(काष्ठा brcms_phy_pub *ppi, काष्ठा txpwr_limits *txpwr,
+void
+wlc_phy_txpower_limit_set(struct brcms_phy_pub *ppi, struct txpwr_limits *txpwr,
 			  u16 chanspec)
-अणु
-	काष्ठा brcms_phy *pi = container_of(ppi, काष्ठा brcms_phy, pubpi_ro);
+{
+	struct brcms_phy *pi = container_of(ppi, struct brcms_phy, pubpi_ro);
 
-	wlc_phy_txघातer_reg_limit_calc(pi, txpwr, chanspec);
+	wlc_phy_txpower_reg_limit_calc(pi, txpwr, chanspec);
 
-	अगर (ISLCNPHY(pi)) अणु
-		पूर्णांक i, j;
-		क्रम (i = TXP_FIRST_OFDM_20_CDD, j = 0;
-		     j < BRCMS_NUM_RATES_MCS_1_STREAM; i++, j++) अणु
-			अगर (txpwr->mcs_20_siso[j])
+	if (ISLCNPHY(pi)) {
+		int i, j;
+		for (i = TXP_FIRST_OFDM_20_CDD, j = 0;
+		     j < BRCMS_NUM_RATES_MCS_1_STREAM; i++, j++) {
+			if (txpwr->mcs_20_siso[j])
 				pi->txpwr_limit[i] = txpwr->mcs_20_siso[j];
-			अन्यथा
+			else
 				pi->txpwr_limit[i] = txpwr->ofdm[j];
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	wlapi_suspend_mac_and_रुको(pi->sh->physhim);
+	wlapi_suspend_mac_and_wait(pi->sh->physhim);
 
-	wlc_phy_txघातer_recalc_target(pi);
-	wlc_phy_cal_txघातer_recalc_sw(pi);
+	wlc_phy_txpower_recalc_target(pi);
+	wlc_phy_cal_txpower_recalc_sw(pi);
 	wlapi_enable_mac(pi->sh->physhim);
-पूर्ण
+}
 
-व्योम wlc_phy_ofdm_rateset_war(काष्ठा brcms_phy_pub *pih, bool war)
-अणु
-	काष्ठा brcms_phy *pi = container_of(pih, काष्ठा brcms_phy, pubpi_ro);
+void wlc_phy_ofdm_rateset_war(struct brcms_phy_pub *pih, bool war)
+{
+	struct brcms_phy *pi = container_of(pih, struct brcms_phy, pubpi_ro);
 
 	pi->ofdm_rateset_war = war;
-पूर्ण
+}
 
-व्योम wlc_phy_bf_preempt_enable(काष्ठा brcms_phy_pub *pih, bool bf_preempt)
-अणु
-	काष्ठा brcms_phy *pi = container_of(pih, काष्ठा brcms_phy, pubpi_ro);
+void wlc_phy_bf_preempt_enable(struct brcms_phy_pub *pih, bool bf_preempt)
+{
+	struct brcms_phy *pi = container_of(pih, struct brcms_phy, pubpi_ro);
 
 	pi->bf_preempt_4306 = bf_preempt;
-पूर्ण
+}
 
-व्योम wlc_phy_txघातer_update_shm(काष्ठा brcms_phy *pi)
-अणु
-	पूर्णांक j;
-	अगर (ISNPHY(pi))
-		वापस;
+void wlc_phy_txpower_update_shm(struct brcms_phy *pi)
+{
+	int j;
+	if (ISNPHY(pi))
+		return;
 
-	अगर (!pi->sh->clk)
-		वापस;
+	if (!pi->sh->clk)
+		return;
 
-	अगर (pi->hwpwrctrl) अणु
+	if (pi->hwpwrctrl) {
 		u16 offset;
 
-		wlapi_bmac_ग_लिखो_shm(pi->sh->physhim, M_TXPWR_MAX, 63);
-		wlapi_bmac_ग_लिखो_shm(pi->sh->physhim, M_TXPWR_N,
+		wlapi_bmac_write_shm(pi->sh->physhim, M_TXPWR_MAX, 63);
+		wlapi_bmac_write_shm(pi->sh->physhim, M_TXPWR_N,
 				     1 << NUM_TSSI_FRAMES);
 
-		wlapi_bmac_ग_लिखो_shm(pi->sh->physhim, M_TXPWR_TARGET,
-				     pi->tx_घातer_min << NUM_TSSI_FRAMES);
+		wlapi_bmac_write_shm(pi->sh->physhim, M_TXPWR_TARGET,
+				     pi->tx_power_min << NUM_TSSI_FRAMES);
 
-		wlapi_bmac_ग_लिखो_shm(pi->sh->physhim, M_TXPWR_CUR,
+		wlapi_bmac_write_shm(pi->sh->physhim, M_TXPWR_CUR,
 				     pi->hwpwr_txcur);
 
-		क्रम (j = TXP_FIRST_OFDM; j <= TXP_LAST_OFDM; j++) अणु
-			अटल स्थिर u8 ucode_ofdm_rates[] = अणु
+		for (j = TXP_FIRST_OFDM; j <= TXP_LAST_OFDM; j++) {
+			static const u8 ucode_ofdm_rates[] = {
 				0x0c, 0x12, 0x18, 0x24, 0x30, 0x48, 0x60, 0x6c
-			पूर्ण;
+			};
 			offset = wlapi_bmac_rate_shm_offset(
 				pi->sh->physhim,
 				ucode_ofdm_rates[j - TXP_FIRST_OFDM]);
-			wlapi_bmac_ग_लिखो_shm(pi->sh->physhim, offset + 6,
-					     pi->tx_घातer_offset[j]);
-			wlapi_bmac_ग_लिखो_shm(pi->sh->physhim, offset + 14,
-					     -(pi->tx_घातer_offset[j] / 2));
-		पूर्ण
+			wlapi_bmac_write_shm(pi->sh->physhim, offset + 6,
+					     pi->tx_power_offset[j]);
+			wlapi_bmac_write_shm(pi->sh->physhim, offset + 14,
+					     -(pi->tx_power_offset[j] / 2));
+		}
 
 		wlapi_bmac_mhf(pi->sh->physhim, MHF2, MHF2_HWPWRCTL,
 			       MHF2_HWPWRCTL, BRCM_BAND_ALL);
-	पूर्ण अन्यथा अणु
-		पूर्णांक i;
+	} else {
+		int i;
 
-		क्रम (i = TXP_FIRST_OFDM; i <= TXP_LAST_OFDM; i++)
-			pi->tx_घातer_offset[i] =
-				(u8) roundup(pi->tx_घातer_offset[i], 8);
-		wlapi_bmac_ग_लिखो_shm(pi->sh->physhim, M_OFDM_OFFSET,
+		for (i = TXP_FIRST_OFDM; i <= TXP_LAST_OFDM; i++)
+			pi->tx_power_offset[i] =
+				(u8) roundup(pi->tx_power_offset[i], 8);
+		wlapi_bmac_write_shm(pi->sh->physhim, M_OFDM_OFFSET,
 				     (u16)
-				     ((pi->tx_घातer_offset[TXP_FIRST_OFDM]
+				     ((pi->tx_power_offset[TXP_FIRST_OFDM]
 				       + 7) >> 3));
-	पूर्ण
-पूर्ण
+	}
+}
 
-bool wlc_phy_txघातer_hw_ctrl_get(काष्ठा brcms_phy_pub *ppi)
-अणु
-	काष्ठा brcms_phy *pi = container_of(ppi, काष्ठा brcms_phy, pubpi_ro);
+bool wlc_phy_txpower_hw_ctrl_get(struct brcms_phy_pub *ppi)
+{
+	struct brcms_phy *pi = container_of(ppi, struct brcms_phy, pubpi_ro);
 
-	अगर (ISNPHY(pi))
-		वापस pi->nphy_txpwrctrl;
-	अन्यथा
-		वापस pi->hwpwrctrl;
-पूर्ण
+	if (ISNPHY(pi))
+		return pi->nphy_txpwrctrl;
+	else
+		return pi->hwpwrctrl;
+}
 
-व्योम wlc_phy_txघातer_hw_ctrl_set(काष्ठा brcms_phy_pub *ppi, bool hwpwrctrl)
-अणु
-	काष्ठा brcms_phy *pi = container_of(ppi, काष्ठा brcms_phy, pubpi_ro);
+void wlc_phy_txpower_hw_ctrl_set(struct brcms_phy_pub *ppi, bool hwpwrctrl)
+{
+	struct brcms_phy *pi = container_of(ppi, struct brcms_phy, pubpi_ro);
 	bool suspend;
 
-	अगर (!pi->hwpwrctrl_capable)
-		वापस;
+	if (!pi->hwpwrctrl_capable)
+		return;
 
 	pi->hwpwrctrl = hwpwrctrl;
 	pi->nphy_txpwrctrl = hwpwrctrl;
 	pi->txpwrctrl = hwpwrctrl;
 
-	अगर (ISNPHY(pi)) अणु
-		suspend = (0 == (bcma_पढ़ो32(pi->d11core,
+	if (ISNPHY(pi)) {
+		suspend = (0 == (bcma_read32(pi->d11core,
 					     D11REGOFFS(maccontrol)) &
 				 MCTL_EN_MAC));
-		अगर (!suspend)
-			wlapi_suspend_mac_and_रुको(pi->sh->physhim);
+		if (!suspend)
+			wlapi_suspend_mac_and_wait(pi->sh->physhim);
 
 		wlc_phy_txpwrctrl_enable_nphy(pi, pi->nphy_txpwrctrl);
-		अगर (pi->nphy_txpwrctrl == PHY_TPC_HW_OFF)
-			wlc_phy_txpwr_fixघातer_nphy(pi);
-		अन्यथा
+		if (pi->nphy_txpwrctrl == PHY_TPC_HW_OFF)
+			wlc_phy_txpwr_fixpower_nphy(pi);
+		else
 			mod_phy_reg(pi, 0x1e7, (0x7f << 0),
 				    pi->saved_txpwr_idx);
 
-		अगर (!suspend)
+		if (!suspend)
 			wlapi_enable_mac(pi->sh->physhim);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम wlc_phy_txघातer_ipa_upd(काष्ठा brcms_phy *pi)
-अणु
+void wlc_phy_txpower_ipa_upd(struct brcms_phy *pi)
+{
 
-	अगर (NREV_GE(pi->pubpi.phy_rev, 3)) अणु
+	if (NREV_GE(pi->pubpi.phy_rev, 3)) {
 		pi->ipa2g_on = (pi->srom_fem2g.extpagain == 2);
 		pi->ipa5g_on = (pi->srom_fem5g.extpagain == 2);
-	पूर्ण अन्यथा अणु
+	} else {
 		pi->ipa2g_on = false;
 		pi->ipa5g_on = false;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल u32 wlc_phy_txघातer_est_घातer_nphy(काष्ठा brcms_phy *pi)
-अणु
+static u32 wlc_phy_txpower_est_power_nphy(struct brcms_phy *pi)
+{
 	s16 tx0_status, tx1_status;
 	u16 estPower1, estPower2;
 	u8 pwr0, pwr1, adj_pwr0, adj_pwr1;
 	u32 est_pwr;
 
-	estPower1 = पढ़ो_phy_reg(pi, 0x118);
-	estPower2 = पढ़ो_phy_reg(pi, 0x119);
+	estPower1 = read_phy_reg(pi, 0x118);
+	estPower2 = read_phy_reg(pi, 0x119);
 
-	अगर ((estPower1 & (0x1 << 8)) == (0x1 << 8))
+	if ((estPower1 & (0x1 << 8)) == (0x1 << 8))
 		pwr0 = (u8) (estPower1 & (0xff << 0)) >> 0;
-	अन्यथा
+	else
 		pwr0 = 0x80;
 
-	अगर ((estPower2 & (0x1 << 8)) == (0x1 << 8))
+	if ((estPower2 & (0x1 << 8)) == (0x1 << 8))
 		pwr1 = (u8) (estPower2 & (0xff << 0)) >> 0;
-	अन्यथा
+	else
 		pwr1 = 0x80;
 
-	tx0_status = पढ़ो_phy_reg(pi, 0x1ed);
-	tx1_status = पढ़ो_phy_reg(pi, 0x1ee);
+	tx0_status = read_phy_reg(pi, 0x1ed);
+	tx1_status = read_phy_reg(pi, 0x1ee);
 
-	अगर ((tx0_status & (0x1 << 15)) == (0x1 << 15))
+	if ((tx0_status & (0x1 << 15)) == (0x1 << 15))
 		adj_pwr0 = (u8) (tx0_status & (0xff << 0)) >> 0;
-	अन्यथा
+	else
 		adj_pwr0 = 0x80;
-	अगर ((tx1_status & (0x1 << 15)) == (0x1 << 15))
+	if ((tx1_status & (0x1 << 15)) == (0x1 << 15))
 		adj_pwr1 = (u8) (tx1_status & (0xff << 0)) >> 0;
-	अन्यथा
+	else
 		adj_pwr1 = 0x80;
 
 	est_pwr = (u32) ((pwr0 << 24) | (pwr1 << 16) | (adj_pwr0 << 8) |
 			 adj_pwr1);
 
-	वापस est_pwr;
-पूर्ण
+	return est_pwr;
+}
 
-व्योम
-wlc_phy_txघातer_get_current(काष्ठा brcms_phy_pub *ppi, काष्ठा tx_घातer *घातer,
-			    uपूर्णांक channel)
-अणु
-	काष्ठा brcms_phy *pi = container_of(ppi, काष्ठा brcms_phy, pubpi_ro);
-	uपूर्णांक rate, num_rates;
+void
+wlc_phy_txpower_get_current(struct brcms_phy_pub *ppi, struct tx_power *power,
+			    uint channel)
+{
+	struct brcms_phy *pi = container_of(ppi, struct brcms_phy, pubpi_ro);
+	uint rate, num_rates;
 	u8 min_pwr, max_pwr;
 
-#अगर WL_TX_POWER_RATES != TXP_NUM_RATES
-#त्रुटि "struct tx_power out of sync with this fn"
-#पूर्ण_अगर
+#if WL_TX_POWER_RATES != TXP_NUM_RATES
+#error "struct tx_power out of sync with this fn"
+#endif
 
-	अगर (ISNPHY(pi)) अणु
-		घातer->rf_cores = 2;
-		घातer->flags |= (WL_TX_POWER_F_MIMO);
-		अगर (pi->nphy_txpwrctrl == PHY_TPC_HW_ON)
-			घातer->flags |=
+	if (ISNPHY(pi)) {
+		power->rf_cores = 2;
+		power->flags |= (WL_TX_POWER_F_MIMO);
+		if (pi->nphy_txpwrctrl == PHY_TPC_HW_ON)
+			power->flags |=
 				(WL_TX_POWER_F_ENABLED | WL_TX_POWER_F_HW);
-	पूर्ण अन्यथा अगर (ISLCNPHY(pi)) अणु
-		घातer->rf_cores = 1;
-		घातer->flags |= (WL_TX_POWER_F_SISO);
-		अगर (pi->radiopwr_override == RADIOPWR_OVERRIDE_DEF)
-			घातer->flags |= WL_TX_POWER_F_ENABLED;
-		अगर (pi->hwpwrctrl)
-			घातer->flags |= WL_TX_POWER_F_HW;
-	पूर्ण
+	} else if (ISLCNPHY(pi)) {
+		power->rf_cores = 1;
+		power->flags |= (WL_TX_POWER_F_SISO);
+		if (pi->radiopwr_override == RADIOPWR_OVERRIDE_DEF)
+			power->flags |= WL_TX_POWER_F_ENABLED;
+		if (pi->hwpwrctrl)
+			power->flags |= WL_TX_POWER_F_HW;
+	}
 
 	num_rates = ((ISNPHY(pi)) ? (TXP_NUM_RATES) :
 		     ((ISLCNPHY(pi)) ?
 		      (TXP_LAST_OFDM_20_CDD + 1) : (TXP_LAST_OFDM + 1)));
 
-	क्रम (rate = 0; rate < num_rates; rate++) अणु
-		घातer->user_limit[rate] = pi->tx_user_target[rate];
-		wlc_phy_txघातer_sromlimit(ppi, channel, &min_pwr, &max_pwr,
+	for (rate = 0; rate < num_rates; rate++) {
+		power->user_limit[rate] = pi->tx_user_target[rate];
+		wlc_phy_txpower_sromlimit(ppi, channel, &min_pwr, &max_pwr,
 					  rate);
-		घातer->board_limit[rate] = (u8) max_pwr;
-		घातer->target[rate] = pi->tx_घातer_target[rate];
-	पूर्ण
+		power->board_limit[rate] = (u8) max_pwr;
+		power->target[rate] = pi->tx_power_target[rate];
+	}
 
-	अगर (ISNPHY(pi)) अणु
+	if (ISNPHY(pi)) {
 		u32 est_pout;
 
-		wlapi_suspend_mac_and_रुको(pi->sh->physhim);
-		wlc_phyreg_enter((काष्ठा brcms_phy_pub *) pi);
-		est_pout = wlc_phy_txघातer_est_घातer_nphy(pi);
-		wlc_phyreg_निकास((काष्ठा brcms_phy_pub *) pi);
+		wlapi_suspend_mac_and_wait(pi->sh->physhim);
+		wlc_phyreg_enter((struct brcms_phy_pub *) pi);
+		est_pout = wlc_phy_txpower_est_power_nphy(pi);
+		wlc_phyreg_exit((struct brcms_phy_pub *) pi);
 		wlapi_enable_mac(pi->sh->physhim);
 
-		घातer->est_Pout[0] = (est_pout >> 8) & 0xff;
-		घातer->est_Pout[1] = est_pout & 0xff;
+		power->est_Pout[0] = (est_pout >> 8) & 0xff;
+		power->est_Pout[1] = est_pout & 0xff;
 
-		घातer->est_Pout_act[0] = est_pout >> 24;
-		घातer->est_Pout_act[1] = (est_pout >> 16) & 0xff;
+		power->est_Pout_act[0] = est_pout >> 24;
+		power->est_Pout_act[1] = (est_pout >> 16) & 0xff;
 
-		अगर (घातer->est_Pout[0] == 0x80)
-			घातer->est_Pout[0] = 0;
-		अगर (घातer->est_Pout[1] == 0x80)
-			घातer->est_Pout[1] = 0;
+		if (power->est_Pout[0] == 0x80)
+			power->est_Pout[0] = 0;
+		if (power->est_Pout[1] == 0x80)
+			power->est_Pout[1] = 0;
 
-		अगर (घातer->est_Pout_act[0] == 0x80)
-			घातer->est_Pout_act[0] = 0;
-		अगर (घातer->est_Pout_act[1] == 0x80)
-			घातer->est_Pout_act[1] = 0;
+		if (power->est_Pout_act[0] == 0x80)
+			power->est_Pout_act[0] = 0;
+		if (power->est_Pout_act[1] == 0x80)
+			power->est_Pout_act[1] = 0;
 
-		घातer->est_Pout_cck = 0;
+		power->est_Pout_cck = 0;
 
-		घातer->tx_घातer_max[0] = pi->tx_घातer_max;
-		घातer->tx_घातer_max[1] = pi->tx_घातer_max;
+		power->tx_power_max[0] = pi->tx_power_max;
+		power->tx_power_max[1] = pi->tx_power_max;
 
-		घातer->tx_घातer_max_rate_ind[0] = pi->tx_घातer_max_rate_ind;
-		घातer->tx_घातer_max_rate_ind[1] = pi->tx_घातer_max_rate_ind;
-	पूर्ण अन्यथा अगर (pi->hwpwrctrl && pi->sh->up) अणु
+		power->tx_power_max_rate_ind[0] = pi->tx_power_max_rate_ind;
+		power->tx_power_max_rate_ind[1] = pi->tx_power_max_rate_ind;
+	} else if (pi->hwpwrctrl && pi->sh->up) {
 
 		wlc_phyreg_enter(ppi);
-		अगर (ISLCNPHY(pi)) अणु
+		if (ISLCNPHY(pi)) {
 
-			घातer->tx_घातer_max[0] = pi->tx_घातer_max;
-			घातer->tx_घातer_max[1] = pi->tx_घातer_max;
+			power->tx_power_max[0] = pi->tx_power_max;
+			power->tx_power_max[1] = pi->tx_power_max;
 
-			घातer->tx_घातer_max_rate_ind[0] =
-				pi->tx_घातer_max_rate_ind;
-			घातer->tx_घातer_max_rate_ind[1] =
-				pi->tx_घातer_max_rate_ind;
+			power->tx_power_max_rate_ind[0] =
+				pi->tx_power_max_rate_ind;
+			power->tx_power_max_rate_ind[1] =
+				pi->tx_power_max_rate_ind;
 
-			अगर (wlc_phy_tpc_isenabled_lcnphy(pi))
-				घातer->flags |=
+			if (wlc_phy_tpc_isenabled_lcnphy(pi))
+				power->flags |=
 					(WL_TX_POWER_F_HW |
 					 WL_TX_POWER_F_ENABLED);
-			अन्यथा
-				घातer->flags &=
+			else
+				power->flags &=
 					~(WL_TX_POWER_F_HW |
 					  WL_TX_POWER_F_ENABLED);
 
-			wlc_lcnphy_get_tssi(pi, (s8 *) &घातer->est_Pout[0],
-					    (s8 *) &घातer->est_Pout_cck);
-		पूर्ण
-		wlc_phyreg_निकास(ppi);
-	पूर्ण
-पूर्ण
+			wlc_lcnphy_get_tssi(pi, (s8 *) &power->est_Pout[0],
+					    (s8 *) &power->est_Pout_cck);
+		}
+		wlc_phyreg_exit(ppi);
+	}
+}
 
-व्योम wlc_phy_antsel_type_set(काष्ठा brcms_phy_pub *ppi, u8 antsel_type)
-अणु
-	काष्ठा brcms_phy *pi = container_of(ppi, काष्ठा brcms_phy, pubpi_ro);
+void wlc_phy_antsel_type_set(struct brcms_phy_pub *ppi, u8 antsel_type)
+{
+	struct brcms_phy *pi = container_of(ppi, struct brcms_phy, pubpi_ro);
 
 	pi->antsel_type = antsel_type;
-पूर्ण
+}
 
-bool wlc_phy_test_ison(काष्ठा brcms_phy_pub *ppi)
-अणु
-	काष्ठा brcms_phy *pi = container_of(ppi, काष्ठा brcms_phy, pubpi_ro);
+bool wlc_phy_test_ison(struct brcms_phy_pub *ppi)
+{
+	struct brcms_phy *pi = container_of(ppi, struct brcms_phy, pubpi_ro);
 
-	वापस pi->phytest_on;
-पूर्ण
+	return pi->phytest_on;
+}
 
-व्योम wlc_phy_ant_rxभाग_set(काष्ठा brcms_phy_pub *ppi, u8 val)
-अणु
-	काष्ठा brcms_phy *pi = container_of(ppi, काष्ठा brcms_phy, pubpi_ro);
+void wlc_phy_ant_rxdiv_set(struct brcms_phy_pub *ppi, u8 val)
+{
+	struct brcms_phy *pi = container_of(ppi, struct brcms_phy, pubpi_ro);
 	bool suspend;
 
-	pi->sh->rx_antभाग = val;
+	pi->sh->rx_antdiv = val;
 
-	अगर (!(ISNPHY(pi) && D11REV_IS(pi->sh->corerev, 16))) अणु
-		अगर (val > ANT_RX_DIV_FORCE_1)
+	if (!(ISNPHY(pi) && D11REV_IS(pi->sh->corerev, 16))) {
+		if (val > ANT_RX_DIV_FORCE_1)
 			wlapi_bmac_mhf(pi->sh->physhim, MHF1, MHF1_ANTDIV,
 				       MHF1_ANTDIV, BRCM_BAND_ALL);
-		अन्यथा
+		else
 			wlapi_bmac_mhf(pi->sh->physhim, MHF1, MHF1_ANTDIV, 0,
 				       BRCM_BAND_ALL);
-	पूर्ण
+	}
 
-	अगर (ISNPHY(pi))
-		वापस;
+	if (ISNPHY(pi))
+		return;
 
-	अगर (!pi->sh->clk)
-		वापस;
+	if (!pi->sh->clk)
+		return;
 
-	suspend = (0 == (bcma_पढ़ो32(pi->d11core, D11REGOFFS(maccontrol)) &
+	suspend = (0 == (bcma_read32(pi->d11core, D11REGOFFS(maccontrol)) &
 			 MCTL_EN_MAC));
-	अगर (!suspend)
-		wlapi_suspend_mac_and_रुको(pi->sh->physhim);
+	if (!suspend)
+		wlapi_suspend_mac_and_wait(pi->sh->physhim);
 
-	अगर (ISLCNPHY(pi)) अणु
-		अगर (val > ANT_RX_DIV_FORCE_1) अणु
+	if (ISLCNPHY(pi)) {
+		if (val > ANT_RX_DIV_FORCE_1) {
 			mod_phy_reg(pi, 0x410, (0x1 << 1), 0x01 << 1);
 			mod_phy_reg(pi, 0x410,
 				    (0x1 << 0),
 				    ((ANT_RX_DIV_START_1 == val) ? 1 : 0) << 0);
-		पूर्ण अन्यथा अणु
+		} else {
 			mod_phy_reg(pi, 0x410, (0x1 << 1), 0x00 << 1);
 			mod_phy_reg(pi, 0x410, (0x1 << 0), (u16) val << 0);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!suspend)
+	if (!suspend)
 		wlapi_enable_mac(pi->sh->physhim);
 
-	वापस;
-पूर्ण
+	return;
+}
 
-अटल bool
-wlc_phy_noise_calc_phy(काष्ठा brcms_phy *pi, u32 *cmplx_pwr, s8 *pwr_ant)
-अणु
+static bool
+wlc_phy_noise_calc_phy(struct brcms_phy *pi, u32 *cmplx_pwr, s8 *pwr_ant)
+{
 	s8 cmplx_pwr_dbm[PHY_CORE_MAX];
 	u8 i;
 
-	स_रखो((u8 *) cmplx_pwr_dbm, 0, माप(cmplx_pwr_dbm));
-	wlc_phy_compute_dB(cmplx_pwr, cmplx_pwr_dbm, pi->pubpi.phy_corक्रमागत);
+	memset((u8 *) cmplx_pwr_dbm, 0, sizeof(cmplx_pwr_dbm));
+	wlc_phy_compute_dB(cmplx_pwr, cmplx_pwr_dbm, pi->pubpi.phy_corenum);
 
-	क्रम (i = 0; i < pi->pubpi.phy_corक्रमागत; i++) अणु
-		अगर (NREV_GE(pi->pubpi.phy_rev, 3))
+	for (i = 0; i < pi->pubpi.phy_corenum; i++) {
+		if (NREV_GE(pi->pubpi.phy_rev, 3))
 			cmplx_pwr_dbm[i] += (s8) PHY_NOISE_OFFSETFACT_4322;
-		अन्यथा
+		else
 
 			cmplx_pwr_dbm[i] += (s8) (16 - (15) * 3 - 70);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < pi->pubpi.phy_corक्रमागत; i++) अणु
+	for (i = 0; i < pi->pubpi.phy_corenum; i++) {
 		pi->nphy_noise_win[i][pi->nphy_noise_index] = cmplx_pwr_dbm[i];
 		pwr_ant[i] = cmplx_pwr_dbm[i];
-	पूर्ण
+	}
 	pi->nphy_noise_index =
 		MODINC_POW2(pi->nphy_noise_index, PHY_NOISE_WINDOW_SZ);
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल व्योम wlc_phy_noise_cb(काष्ठा brcms_phy *pi, u8 channel, s8 noise_dbm)
-अणु
-	अगर (!pi->phynoise_state)
-		वापस;
+static void wlc_phy_noise_cb(struct brcms_phy *pi, u8 channel, s8 noise_dbm)
+{
+	if (!pi->phynoise_state)
+		return;
 
-	अगर (pi->phynoise_state & PHY_NOISE_STATE_MON) अणु
-		अगर (pi->phynoise_chan_watchकरोg == channel) अणु
-			pi->sh->phy_noise_winकरोw[pi->sh->phy_noise_index] =
+	if (pi->phynoise_state & PHY_NOISE_STATE_MON) {
+		if (pi->phynoise_chan_watchdog == channel) {
+			pi->sh->phy_noise_window[pi->sh->phy_noise_index] =
 				noise_dbm;
 			pi->sh->phy_noise_index =
 				MODINC(pi->sh->phy_noise_index, MA_WINDOW_SZ);
-		पूर्ण
+		}
 		pi->phynoise_state &= ~PHY_NOISE_STATE_MON;
-	पूर्ण
+	}
 
-	अगर (pi->phynoise_state & PHY_NOISE_STATE_EXTERNAL)
+	if (pi->phynoise_state & PHY_NOISE_STATE_EXTERNAL)
 		pi->phynoise_state &= ~PHY_NOISE_STATE_EXTERNAL;
 
-पूर्ण
+}
 
-अटल s8 wlc_phy_noise_पढ़ो_shmem(काष्ठा brcms_phy *pi)
-अणु
+static s8 wlc_phy_noise_read_shmem(struct brcms_phy *pi)
+{
 	u32 cmplx_pwr[PHY_CORE_MAX];
 	s8 noise_dbm_ant[PHY_CORE_MAX];
 	u16 lo, hi;
@@ -2236,123 +2235,123 @@ wlc_phy_noise_calc_phy(काष्ठा brcms_phy *pi, u32 *cmplx_pwr, s8 *pwr
 	s8 noise_dbm = PHY_NOISE_FIXED_VAL_NPHY;
 	u8 idx, core;
 
-	स_रखो((u8 *) cmplx_pwr, 0, माप(cmplx_pwr));
-	स_रखो((u8 *) noise_dbm_ant, 0, माप(noise_dbm_ant));
+	memset((u8 *) cmplx_pwr, 0, sizeof(cmplx_pwr));
+	memset((u8 *) noise_dbm_ant, 0, sizeof(noise_dbm_ant));
 
-	क्रम (idx = 0, core = 0; core < pi->pubpi.phy_corक्रमागत; idx += 2,
-	     core++) अणु
-		lo = wlapi_bmac_पढ़ो_shm(pi->sh->physhim, M_PWRIND_MAP(idx));
-		hi = wlapi_bmac_पढ़ो_shm(pi->sh->physhim,
+	for (idx = 0, core = 0; core < pi->pubpi.phy_corenum; idx += 2,
+	     core++) {
+		lo = wlapi_bmac_read_shm(pi->sh->physhim, M_PWRIND_MAP(idx));
+		hi = wlapi_bmac_read_shm(pi->sh->physhim,
 					 M_PWRIND_MAP(idx + 1));
 		cmplx_pwr[core] = (hi << 16) + lo;
 		cmplx_pwr_tot += cmplx_pwr[core];
-		अगर (cmplx_pwr[core] == 0)
+		if (cmplx_pwr[core] == 0)
 			noise_dbm_ant[core] = PHY_NOISE_FIXED_VAL_NPHY;
-		अन्यथा
+		else
 			cmplx_pwr[core] >>= PHY_NOISE_SAMPLE_LOG_NUM_UCODE;
-	पूर्ण
+	}
 
-	अगर (cmplx_pwr_tot != 0)
+	if (cmplx_pwr_tot != 0)
 		wlc_phy_noise_calc_phy(pi, cmplx_pwr, noise_dbm_ant);
 
-	क्रम (core = 0; core < pi->pubpi.phy_corक्रमागत; core++) अणु
+	for (core = 0; core < pi->pubpi.phy_corenum; core++) {
 		pi->nphy_noise_win[core][pi->nphy_noise_index] =
 			noise_dbm_ant[core];
 
-		अगर (noise_dbm_ant[core] > noise_dbm)
+		if (noise_dbm_ant[core] > noise_dbm)
 			noise_dbm = noise_dbm_ant[core];
-	पूर्ण
+	}
 	pi->nphy_noise_index =
 		MODINC_POW2(pi->nphy_noise_index, PHY_NOISE_WINDOW_SZ);
 
-	वापस noise_dbm;
+	return noise_dbm;
 
-पूर्ण
+}
 
-व्योम wlc_phy_noise_sample_पूर्णांकr(काष्ठा brcms_phy_pub *pih)
-अणु
-	काष्ठा brcms_phy *pi = container_of(pih, काष्ठा brcms_phy, pubpi_ro);
+void wlc_phy_noise_sample_intr(struct brcms_phy_pub *pih)
+{
+	struct brcms_phy *pi = container_of(pih, struct brcms_phy, pubpi_ro);
 	u16 jssi_aux;
 	u8 channel = 0;
 	s8 noise_dbm = PHY_NOISE_FIXED_VAL_NPHY;
 
-	अगर (ISLCNPHY(pi)) अणु
+	if (ISLCNPHY(pi)) {
 		u32 cmplx_pwr, cmplx_pwr0, cmplx_pwr1;
 		u16 lo, hi;
 		s32 pwr_offset_dB, gain_dB;
 		u16 status_0, status_1;
 
-		jssi_aux = wlapi_bmac_पढ़ो_shm(pi->sh->physhim, M_JSSI_AUX);
+		jssi_aux = wlapi_bmac_read_shm(pi->sh->physhim, M_JSSI_AUX);
 		channel = jssi_aux & D11_CURCHANNEL_MAX;
 
-		lo = wlapi_bmac_पढ़ो_shm(pi->sh->physhim, M_PWRIND_MAP0);
-		hi = wlapi_bmac_पढ़ो_shm(pi->sh->physhim, M_PWRIND_MAP1);
+		lo = wlapi_bmac_read_shm(pi->sh->physhim, M_PWRIND_MAP0);
+		hi = wlapi_bmac_read_shm(pi->sh->physhim, M_PWRIND_MAP1);
 		cmplx_pwr0 = (hi << 16) + lo;
 
-		lo = wlapi_bmac_पढ़ो_shm(pi->sh->physhim, M_PWRIND_MAP2);
-		hi = wlapi_bmac_पढ़ो_shm(pi->sh->physhim, M_PWRIND_MAP3);
+		lo = wlapi_bmac_read_shm(pi->sh->physhim, M_PWRIND_MAP2);
+		hi = wlapi_bmac_read_shm(pi->sh->physhim, M_PWRIND_MAP3);
 		cmplx_pwr1 = (hi << 16) + lo;
 		cmplx_pwr = (cmplx_pwr0 + cmplx_pwr1) >> 6;
 
 		status_0 = 0x44;
-		status_1 = wlapi_bmac_पढ़ो_shm(pi->sh->physhim, M_JSSI_0);
-		अगर ((cmplx_pwr > 0 && cmplx_pwr < 500)
-		    && ((status_1 & 0xc000) == 0x4000)) अणु
+		status_1 = wlapi_bmac_read_shm(pi->sh->physhim, M_JSSI_0);
+		if ((cmplx_pwr > 0 && cmplx_pwr < 500)
+		    && ((status_1 & 0xc000) == 0x4000)) {
 
 			wlc_phy_compute_dB(&cmplx_pwr, &noise_dbm,
-					   pi->pubpi.phy_corक्रमागत);
-			pwr_offset_dB = (पढ़ो_phy_reg(pi, 0x434) & 0xFF);
-			अगर (pwr_offset_dB > 127)
+					   pi->pubpi.phy_corenum);
+			pwr_offset_dB = (read_phy_reg(pi, 0x434) & 0xFF);
+			if (pwr_offset_dB > 127)
 				pwr_offset_dB -= 256;
 
 			noise_dbm += (s8) (pwr_offset_dB - 30);
 
 			gain_dB = (status_0 & 0x1ff);
 			noise_dbm -= (s8) (gain_dB);
-		पूर्ण अन्यथा अणु
+		} else {
 			noise_dbm = PHY_NOISE_FIXED_VAL_LCNPHY;
-		पूर्ण
-	पूर्ण अन्यथा अगर (ISNPHY(pi)) अणु
+		}
+	} else if (ISNPHY(pi)) {
 
-		jssi_aux = wlapi_bmac_पढ़ो_shm(pi->sh->physhim, M_JSSI_AUX);
+		jssi_aux = wlapi_bmac_read_shm(pi->sh->physhim, M_JSSI_AUX);
 		channel = jssi_aux & D11_CURCHANNEL_MAX;
 
-		noise_dbm = wlc_phy_noise_पढ़ो_shmem(pi);
-	पूर्ण
+		noise_dbm = wlc_phy_noise_read_shmem(pi);
+	}
 
 	wlc_phy_noise_cb(pi, channel, noise_dbm);
 
-पूर्ण
+}
 
-अटल व्योम
-wlc_phy_noise_sample_request(काष्ठा brcms_phy_pub *pih, u8 reason, u8 ch)
-अणु
-	काष्ठा brcms_phy *pi = container_of(pih, काष्ठा brcms_phy, pubpi_ro);
+static void
+wlc_phy_noise_sample_request(struct brcms_phy_pub *pih, u8 reason, u8 ch)
+{
+	struct brcms_phy *pi = container_of(pih, struct brcms_phy, pubpi_ro);
 	s8 noise_dbm = PHY_NOISE_FIXED_VAL_NPHY;
 	bool sampling_in_progress = (pi->phynoise_state != 0);
-	bool रुको_क्रम_पूर्णांकr = true;
+	bool wait_for_intr = true;
 
-	चयन (reason) अणु
-	हाल PHY_NOISE_SAMPLE_MON:
-		pi->phynoise_chan_watchकरोg = ch;
+	switch (reason) {
+	case PHY_NOISE_SAMPLE_MON:
+		pi->phynoise_chan_watchdog = ch;
 		pi->phynoise_state |= PHY_NOISE_STATE_MON;
-		अवरोध;
+		break;
 
-	हाल PHY_NOISE_SAMPLE_EXTERNAL:
+	case PHY_NOISE_SAMPLE_EXTERNAL:
 		pi->phynoise_state |= PHY_NOISE_STATE_EXTERNAL;
-		अवरोध;
+		break;
 
-	शेष:
-		अवरोध;
-	पूर्ण
+	default:
+		break;
+	}
 
-	अगर (sampling_in_progress)
-		वापस;
+	if (sampling_in_progress)
+		return;
 
 	pi->phynoise_now = pi->sh->now;
 
-	अगर (pi->phy_fixed_noise) अणु
-		अगर (ISNPHY(pi)) अणु
+	if (pi->phy_fixed_noise) {
+		if (ISNPHY(pi)) {
 			pi->nphy_noise_win[WL_ANT_IDX_1][pi->nphy_noise_index] =
 				PHY_NOISE_FIXED_VAL_NPHY;
 			pi->nphy_noise_win[WL_ANT_IDX_2][pi->nphy_noise_index] =
@@ -2360,105 +2359,105 @@ wlc_phy_noise_sample_request(काष्ठा brcms_phy_pub *pih, u8 reason, u
 			pi->nphy_noise_index = MODINC_POW2(pi->nphy_noise_index,
 							   PHY_NOISE_WINDOW_SZ);
 			noise_dbm = PHY_NOISE_FIXED_VAL_NPHY;
-		पूर्ण अन्यथा अणु
+		} else {
 			noise_dbm = PHY_NOISE_FIXED_VAL;
-		पूर्ण
+		}
 
-		रुको_क्रम_पूर्णांकr = false;
-		जाओ करोne;
-	पूर्ण
+		wait_for_intr = false;
+		goto done;
+	}
 
-	अगर (ISLCNPHY(pi)) अणु
-		अगर (!pi->phynoise_polling
-		    || (reason == PHY_NOISE_SAMPLE_EXTERNAL)) अणु
-			wlapi_bmac_ग_लिखो_shm(pi->sh->physhim, M_JSSI_0, 0);
-			wlapi_bmac_ग_लिखो_shm(pi->sh->physhim, M_PWRIND_MAP0, 0);
-			wlapi_bmac_ग_लिखो_shm(pi->sh->physhim, M_PWRIND_MAP1, 0);
-			wlapi_bmac_ग_लिखो_shm(pi->sh->physhim, M_PWRIND_MAP2, 0);
-			wlapi_bmac_ग_लिखो_shm(pi->sh->physhim, M_PWRIND_MAP3, 0);
+	if (ISLCNPHY(pi)) {
+		if (!pi->phynoise_polling
+		    || (reason == PHY_NOISE_SAMPLE_EXTERNAL)) {
+			wlapi_bmac_write_shm(pi->sh->physhim, M_JSSI_0, 0);
+			wlapi_bmac_write_shm(pi->sh->physhim, M_PWRIND_MAP0, 0);
+			wlapi_bmac_write_shm(pi->sh->physhim, M_PWRIND_MAP1, 0);
+			wlapi_bmac_write_shm(pi->sh->physhim, M_PWRIND_MAP2, 0);
+			wlapi_bmac_write_shm(pi->sh->physhim, M_PWRIND_MAP3, 0);
 
 			bcma_set32(pi->d11core, D11REGOFFS(maccommand),
 				   MCMD_BG_NOISE);
-		पूर्ण अन्यथा अणु
-			wlapi_suspend_mac_and_रुको(pi->sh->physhim);
+		} else {
+			wlapi_suspend_mac_and_wait(pi->sh->physhim);
 			wlc_lcnphy_deaf_mode(pi, (bool) 0);
-			noise_dbm = (s8) wlc_lcnphy_rx_संकेत_घातer(pi, 20);
+			noise_dbm = (s8) wlc_lcnphy_rx_signal_power(pi, 20);
 			wlc_lcnphy_deaf_mode(pi, (bool) 1);
 			wlapi_enable_mac(pi->sh->physhim);
-			रुको_क्रम_पूर्णांकr = false;
-		पूर्ण
-	पूर्ण अन्यथा अगर (ISNPHY(pi)) अणु
-		अगर (!pi->phynoise_polling
-		    || (reason == PHY_NOISE_SAMPLE_EXTERNAL)) अणु
+			wait_for_intr = false;
+		}
+	} else if (ISNPHY(pi)) {
+		if (!pi->phynoise_polling
+		    || (reason == PHY_NOISE_SAMPLE_EXTERNAL)) {
 
-			wlapi_bmac_ग_लिखो_shm(pi->sh->physhim, M_PWRIND_MAP0, 0);
-			wlapi_bmac_ग_लिखो_shm(pi->sh->physhim, M_PWRIND_MAP1, 0);
-			wlapi_bmac_ग_लिखो_shm(pi->sh->physhim, M_PWRIND_MAP2, 0);
-			wlapi_bmac_ग_लिखो_shm(pi->sh->physhim, M_PWRIND_MAP3, 0);
+			wlapi_bmac_write_shm(pi->sh->physhim, M_PWRIND_MAP0, 0);
+			wlapi_bmac_write_shm(pi->sh->physhim, M_PWRIND_MAP1, 0);
+			wlapi_bmac_write_shm(pi->sh->physhim, M_PWRIND_MAP2, 0);
+			wlapi_bmac_write_shm(pi->sh->physhim, M_PWRIND_MAP3, 0);
 
 			bcma_set32(pi->d11core, D11REGOFFS(maccommand),
 				   MCMD_BG_NOISE);
-		पूर्ण अन्यथा अणु
-			काष्ठा phy_iq_est est[PHY_CORE_MAX];
+		} else {
+			struct phy_iq_est est[PHY_CORE_MAX];
 			u32 cmplx_pwr[PHY_CORE_MAX];
 			s8 noise_dbm_ant[PHY_CORE_MAX];
-			u16 log_num_samps, num_samps, classअगर_state = 0;
-			u8 रुको_समय = 32;
-			u8 रुको_crs = 0;
+			u16 log_num_samps, num_samps, classif_state = 0;
+			u8 wait_time = 32;
+			u8 wait_crs = 0;
 			u8 i;
 
-			स_रखो((u8 *) est, 0, माप(est));
-			स_रखो((u8 *) cmplx_pwr, 0, माप(cmplx_pwr));
-			स_रखो((u8 *) noise_dbm_ant, 0, माप(noise_dbm_ant));
+			memset((u8 *) est, 0, sizeof(est));
+			memset((u8 *) cmplx_pwr, 0, sizeof(cmplx_pwr));
+			memset((u8 *) noise_dbm_ant, 0, sizeof(noise_dbm_ant));
 
 			log_num_samps = PHY_NOISE_SAMPLE_LOG_NUM_NPHY;
 			num_samps = 1 << log_num_samps;
 
-			wlapi_suspend_mac_and_रुको(pi->sh->physhim);
-			classअगर_state = wlc_phy_classअगरier_nphy(pi, 0, 0);
-			wlc_phy_classअगरier_nphy(pi, 3, 0);
-			wlc_phy_rx_iq_est_nphy(pi, est, num_samps, रुको_समय,
-					       रुको_crs);
-			wlc_phy_classअगरier_nphy(pi, (0x7 << 0), classअगर_state);
+			wlapi_suspend_mac_and_wait(pi->sh->physhim);
+			classif_state = wlc_phy_classifier_nphy(pi, 0, 0);
+			wlc_phy_classifier_nphy(pi, 3, 0);
+			wlc_phy_rx_iq_est_nphy(pi, est, num_samps, wait_time,
+					       wait_crs);
+			wlc_phy_classifier_nphy(pi, (0x7 << 0), classif_state);
 			wlapi_enable_mac(pi->sh->physhim);
 
-			क्रम (i = 0; i < pi->pubpi.phy_corक्रमागत; i++)
+			for (i = 0; i < pi->pubpi.phy_corenum; i++)
 				cmplx_pwr[i] = (est[i].i_pwr + est[i].q_pwr) >>
 					       log_num_samps;
 
 			wlc_phy_noise_calc_phy(pi, cmplx_pwr, noise_dbm_ant);
 
-			क्रम (i = 0; i < pi->pubpi.phy_corक्रमागत; i++) अणु
+			for (i = 0; i < pi->pubpi.phy_corenum; i++) {
 				pi->nphy_noise_win[i][pi->nphy_noise_index] =
 					noise_dbm_ant[i];
 
-				अगर (noise_dbm_ant[i] > noise_dbm)
+				if (noise_dbm_ant[i] > noise_dbm)
 					noise_dbm = noise_dbm_ant[i];
-			पूर्ण
+			}
 			pi->nphy_noise_index = MODINC_POW2(pi->nphy_noise_index,
 							   PHY_NOISE_WINDOW_SZ);
 
-			रुको_क्रम_पूर्णांकr = false;
-		पूर्ण
-	पूर्ण
+			wait_for_intr = false;
+		}
+	}
 
-करोne:
+done:
 
-	अगर (!रुको_क्रम_पूर्णांकr)
+	if (!wait_for_intr)
 		wlc_phy_noise_cb(pi, ch, noise_dbm);
 
-पूर्ण
+}
 
-व्योम wlc_phy_noise_sample_request_बाह्यal(काष्ठा brcms_phy_pub *pih)
-अणु
+void wlc_phy_noise_sample_request_external(struct brcms_phy_pub *pih)
+{
 	u8 channel;
 
 	channel = CHSPEC_CHANNEL(wlc_phy_chanspec_get(pih));
 
 	wlc_phy_noise_sample_request(pih, PHY_NOISE_SAMPLE_EXTERNAL, channel);
-पूर्ण
+}
 
-अटल स्थिर s8 lcnphy_gain_index_offset_क्रम_pkt_rssi[] = अणु
+static const s8 lcnphy_gain_index_offset_for_pkt_rssi[] = {
 	8,
 	8,
 	8,
@@ -2497,236 +2496,236 @@ wlc_phy_noise_sample_request(काष्ठा brcms_phy_pub *pih, u8 reason, u
 	0,
 	0,
 	0
-पूर्ण;
+};
 
-व्योम wlc_phy_compute_dB(u32 *cmplx_pwr, s8 *p_cmplx_pwr_dB, u8 core)
-अणु
+void wlc_phy_compute_dB(u32 *cmplx_pwr, s8 *p_cmplx_pwr_dB, u8 core)
+{
 	u8 msb, secondmsb, i;
-	u32 पंचांगp;
+	u32 tmp;
 
-	क्रम (i = 0; i < core; i++) अणु
+	for (i = 0; i < core; i++) {
 		secondmsb = 0;
-		पंचांगp = cmplx_pwr[i];
-		msb = fls(पंचांगp);
-		अगर (msb)
-			secondmsb = (u8) ((पंचांगp >> (--msb - 1)) & 1);
+		tmp = cmplx_pwr[i];
+		msb = fls(tmp);
+		if (msb)
+			secondmsb = (u8) ((tmp >> (--msb - 1)) & 1);
 		p_cmplx_pwr_dB[i] = (s8) (3 * msb + 2 * secondmsb);
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक wlc_phy_rssi_compute(काष्ठा brcms_phy_pub *pih,
-			 काष्ठा d11rxhdr *rxh)
-अणु
-	पूर्णांक rssi = rxh->PhyRxStatus_1 & PRXS1_JSSI_MASK;
-	uपूर्णांक radioid = pih->radioid;
-	काष्ठा brcms_phy *pi = container_of(pih, काष्ठा brcms_phy, pubpi_ro);
+int wlc_phy_rssi_compute(struct brcms_phy_pub *pih,
+			 struct d11rxhdr *rxh)
+{
+	int rssi = rxh->PhyRxStatus_1 & PRXS1_JSSI_MASK;
+	uint radioid = pih->radioid;
+	struct brcms_phy *pi = container_of(pih, struct brcms_phy, pubpi_ro);
 
-	अगर ((pi->sh->corerev >= 11)
-	    && !(rxh->RxStatus2 & RXS_PHYRXST_VALID)) अणु
+	if ((pi->sh->corerev >= 11)
+	    && !(rxh->RxStatus2 & RXS_PHYRXST_VALID)) {
 		rssi = BRCMS_RSSI_INVALID;
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
-	अगर (ISLCNPHY(pi)) अणु
+	if (ISLCNPHY(pi)) {
 		u8 gidx = (rxh->PhyRxStatus_2 & 0xFC00) >> 10;
-		काष्ठा brcms_phy_lcnphy *pi_lcn = pi->u.pi_lcnphy;
+		struct brcms_phy_lcnphy *pi_lcn = pi->u.pi_lcnphy;
 
-		अगर (rssi > 127)
+		if (rssi > 127)
 			rssi -= 256;
 
-		rssi = rssi + lcnphy_gain_index_offset_क्रम_pkt_rssi[gidx];
-		अगर ((rssi > -46) && (gidx > 18))
+		rssi = rssi + lcnphy_gain_index_offset_for_pkt_rssi[gidx];
+		if ((rssi > -46) && (gidx > 18))
 			rssi = rssi + 7;
 
 		rssi = rssi + pi_lcn->lcnphy_pkteng_rssi_slope;
 
 		rssi = rssi + 2;
 
-	पूर्ण
+	}
 
-	अगर (ISLCNPHY(pi)) अणु
-		अगर (rssi > 127)
+	if (ISLCNPHY(pi)) {
+		if (rssi > 127)
 			rssi -= 256;
-	पूर्ण अन्यथा अगर (radioid == BCM2055_ID || radioid == BCM2056_ID
-		   || radioid == BCM2057_ID) अणु
+	} else if (radioid == BCM2055_ID || radioid == BCM2056_ID
+		   || radioid == BCM2057_ID) {
 		rssi = wlc_phy_rssi_compute_nphy(pi, rxh);
-	पूर्ण
+	}
 
 end:
-	वापस rssi;
-पूर्ण
+	return rssi;
+}
 
-व्योम wlc_phy_freqtrack_start(काष्ठा brcms_phy_pub *pih)
-अणु
-	वापस;
-पूर्ण
+void wlc_phy_freqtrack_start(struct brcms_phy_pub *pih)
+{
+	return;
+}
 
-व्योम wlc_phy_freqtrack_end(काष्ठा brcms_phy_pub *pih)
-अणु
-	वापस;
-पूर्ण
+void wlc_phy_freqtrack_end(struct brcms_phy_pub *pih)
+{
+	return;
+}
 
-व्योम wlc_phy_set_deaf(काष्ठा brcms_phy_pub *ppi, bool user_flag)
-अणु
-	काष्ठा brcms_phy *pi;
-	pi = (काष्ठा brcms_phy *) ppi;
+void wlc_phy_set_deaf(struct brcms_phy_pub *ppi, bool user_flag)
+{
+	struct brcms_phy *pi;
+	pi = (struct brcms_phy *) ppi;
 
-	अगर (ISLCNPHY(pi))
+	if (ISLCNPHY(pi))
 		wlc_lcnphy_deaf_mode(pi, true);
-	अन्यथा अगर (ISNPHY(pi))
+	else if (ISNPHY(pi))
 		wlc_nphy_deaf_mode(pi, true);
-पूर्ण
+}
 
-व्योम wlc_phy_watchकरोg(काष्ठा brcms_phy_pub *pih)
-अणु
-	काष्ठा brcms_phy *pi = container_of(pih, काष्ठा brcms_phy, pubpi_ro);
+void wlc_phy_watchdog(struct brcms_phy_pub *pih)
+{
+	struct brcms_phy *pi = container_of(pih, struct brcms_phy, pubpi_ro);
 	bool delay_phy_cal = false;
 	pi->sh->now++;
 
-	अगर (!pi->watchकरोg_override)
-		वापस;
+	if (!pi->watchdog_override)
+		return;
 
-	अगर (!(SCAN_RM_IN_PROGRESS(pi) || PLT_INPROG_PHY(pi)))
-		wlc_phy_noise_sample_request((काष्ठा brcms_phy_pub *) pi,
+	if (!(SCAN_RM_IN_PROGRESS(pi) || PLT_INPROG_PHY(pi)))
+		wlc_phy_noise_sample_request((struct brcms_phy_pub *) pi,
 					     PHY_NOISE_SAMPLE_MON,
 					     CHSPEC_CHANNEL(pi->
 							    radio_chanspec));
 
-	अगर (pi->phynoise_state && (pi->sh->now - pi->phynoise_now) > 5)
+	if (pi->phynoise_state && (pi->sh->now - pi->phynoise_now) > 5)
 		pi->phynoise_state = 0;
 
-	अगर ((!pi->phycal_txघातer) ||
-	    ((pi->sh->now - pi->phycal_txघातer) >= pi->sh->fast_समयr)) अणु
+	if ((!pi->phycal_txpower) ||
+	    ((pi->sh->now - pi->phycal_txpower) >= pi->sh->fast_timer)) {
 
-		अगर (!SCAN_INPROG_PHY(pi) && wlc_phy_cal_txघातer_recalc_sw(pi))
-			pi->phycal_txघातer = pi->sh->now;
-	पूर्ण
+		if (!SCAN_INPROG_PHY(pi) && wlc_phy_cal_txpower_recalc_sw(pi))
+			pi->phycal_txpower = pi->sh->now;
+	}
 
-	अगर ((SCAN_RM_IN_PROGRESS(pi) || PLT_INPROG_PHY(pi)
+	if ((SCAN_RM_IN_PROGRESS(pi) || PLT_INPROG_PHY(pi)
 	     || ASSOC_INPROG_PHY(pi)))
-		वापस;
+		return;
 
-	अगर (ISNPHY(pi) && !pi->disable_percal && !delay_phy_cal) अणु
+	if (ISNPHY(pi) && !pi->disable_percal && !delay_phy_cal) {
 
-		अगर ((pi->nphy_perical != PHY_PERICAL_DISABLE) &&
+		if ((pi->nphy_perical != PHY_PERICAL_DISABLE) &&
 		    (pi->nphy_perical != PHY_PERICAL_MANUAL) &&
 		    ((pi->sh->now - pi->nphy_perical_last) >=
-		     pi->sh->glacial_समयr))
-			wlc_phy_cal_perical((काष्ठा brcms_phy_pub *) pi,
+		     pi->sh->glacial_timer))
+			wlc_phy_cal_perical((struct brcms_phy_pub *) pi,
 					    PHY_PERICAL_WATCHDOG);
 
 		wlc_phy_txpwr_papd_cal_nphy(pi);
-	पूर्ण
+	}
 
-	अगर (ISLCNPHY(pi)) अणु
-		अगर (pi->phy_क्रमcecal ||
+	if (ISLCNPHY(pi)) {
+		if (pi->phy_forcecal ||
 		    ((pi->sh->now - pi->phy_lastcal) >=
-		     pi->sh->glacial_समयr)) अणु
-			अगर (!(SCAN_RM_IN_PROGRESS(pi) || ASSOC_INPROG_PHY(pi)))
+		     pi->sh->glacial_timer)) {
+			if (!(SCAN_RM_IN_PROGRESS(pi) || ASSOC_INPROG_PHY(pi)))
 				wlc_lcnphy_calib_modes(
 					pi,
 					LCNPHY_PERICAL_TEMPBASED_TXPWRCTRL);
-			अगर (!
+			if (!
 			    (SCAN_RM_IN_PROGRESS(pi) || PLT_INPROG_PHY(pi)
 			     || ASSOC_INPROG_PHY(pi)
 			     || pi->carrier_suppr_disable
 			     || pi->disable_percal))
 				wlc_lcnphy_calib_modes(pi,
 						       PHY_PERICAL_WATCHDOG);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-व्योम wlc_phy_BSSinit(काष्ठा brcms_phy_pub *pih, bool bonlyap, पूर्णांक rssi)
-अणु
-	काष्ठा brcms_phy *pi = container_of(pih, काष्ठा brcms_phy, pubpi_ro);
-	uपूर्णांक i;
-	uपूर्णांक k;
+void wlc_phy_BSSinit(struct brcms_phy_pub *pih, bool bonlyap, int rssi)
+{
+	struct brcms_phy *pi = container_of(pih, struct brcms_phy, pubpi_ro);
+	uint i;
+	uint k;
 
-	क्रम (i = 0; i < MA_WINDOW_SZ; i++)
-		pi->sh->phy_noise_winकरोw[i] = (s8) (rssi & 0xff);
-	अगर (ISLCNPHY(pi)) अणु
-		क्रम (i = 0; i < MA_WINDOW_SZ; i++)
-			pi->sh->phy_noise_winकरोw[i] =
+	for (i = 0; i < MA_WINDOW_SZ; i++)
+		pi->sh->phy_noise_window[i] = (s8) (rssi & 0xff);
+	if (ISLCNPHY(pi)) {
+		for (i = 0; i < MA_WINDOW_SZ; i++)
+			pi->sh->phy_noise_window[i] =
 				PHY_NOISE_FIXED_VAL_LCNPHY;
-	पूर्ण
+	}
 	pi->sh->phy_noise_index = 0;
 
-	क्रम (i = 0; i < PHY_NOISE_WINDOW_SZ; i++) अणु
-		क्रम (k = WL_ANT_IDX_1; k < WL_ANT_RX_MAX; k++)
+	for (i = 0; i < PHY_NOISE_WINDOW_SZ; i++) {
+		for (k = WL_ANT_IDX_1; k < WL_ANT_RX_MAX; k++)
 			pi->nphy_noise_win[k][i] = PHY_NOISE_FIXED_VAL_NPHY;
-	पूर्ण
+	}
 	pi->nphy_noise_index = 0;
-पूर्ण
+}
 
-व्योम
+void
 wlc_phy_papd_decode_epsilon(u32 epsilon, s32 *eps_real, s32 *eps_imag)
-अणु
+{
 	*eps_imag = (epsilon >> 13);
-	अगर (*eps_imag > 0xfff)
+	if (*eps_imag > 0xfff)
 		*eps_imag -= 0x2000;
 
 	*eps_real = (epsilon & 0x1fff);
-	अगर (*eps_real > 0xfff)
+	if (*eps_real > 0xfff)
 		*eps_real -= 0x2000;
-पूर्ण
+}
 
-व्योम wlc_phy_cal_perical_mphase_reset(काष्ठा brcms_phy *pi)
-अणु
-	wlapi_del_समयr(pi->phycal_समयr);
+void wlc_phy_cal_perical_mphase_reset(struct brcms_phy *pi)
+{
+	wlapi_del_timer(pi->phycal_timer);
 
 	pi->cal_type_override = PHY_PERICAL_AUTO;
 	pi->mphase_cal_phase_id = MPHASE_CAL_STATE_IDLE;
 	pi->mphase_txcal_cmdidx = 0;
-पूर्ण
+}
 
-अटल व्योम
-wlc_phy_cal_perical_mphase_schedule(काष्ठा brcms_phy *pi, uपूर्णांक delay)
-अणु
+static void
+wlc_phy_cal_perical_mphase_schedule(struct brcms_phy *pi, uint delay)
+{
 
-	अगर ((pi->nphy_perical != PHY_PERICAL_MPHASE) &&
+	if ((pi->nphy_perical != PHY_PERICAL_MPHASE) &&
 	    (pi->nphy_perical != PHY_PERICAL_MANUAL))
-		वापस;
+		return;
 
-	wlapi_del_समयr(pi->phycal_समयr);
+	wlapi_del_timer(pi->phycal_timer);
 
 	pi->mphase_cal_phase_id = MPHASE_CAL_STATE_INIT;
-	wlapi_add_समयr(pi->phycal_समयr, delay, 0);
-पूर्ण
+	wlapi_add_timer(pi->phycal_timer, delay, 0);
+}
 
-व्योम wlc_phy_cal_perical(काष्ठा brcms_phy_pub *pih, u8 reason)
-अणु
+void wlc_phy_cal_perical(struct brcms_phy_pub *pih, u8 reason)
+{
 	s16 nphy_currtemp = 0;
 	s16 delta_temp = 0;
-	bool करो_periodic_cal = true;
-	काष्ठा brcms_phy *pi = container_of(pih, काष्ठा brcms_phy, pubpi_ro);
+	bool do_periodic_cal = true;
+	struct brcms_phy *pi = container_of(pih, struct brcms_phy, pubpi_ro);
 
-	अगर (!ISNPHY(pi))
-		वापस;
+	if (!ISNPHY(pi))
+		return;
 
-	अगर ((pi->nphy_perical == PHY_PERICAL_DISABLE) ||
+	if ((pi->nphy_perical == PHY_PERICAL_DISABLE) ||
 	    (pi->nphy_perical == PHY_PERICAL_MANUAL))
-		वापस;
+		return;
 
-	चयन (reason) अणु
-	हाल PHY_PERICAL_DRIVERUP:
-		अवरोध;
+	switch (reason) {
+	case PHY_PERICAL_DRIVERUP:
+		break;
 
-	हाल PHY_PERICAL_PHYINIT:
-		अगर (pi->nphy_perical == PHY_PERICAL_MPHASE) अणु
-			अगर (PHY_PERICAL_MPHASE_PENDING(pi))
+	case PHY_PERICAL_PHYINIT:
+		if (pi->nphy_perical == PHY_PERICAL_MPHASE) {
+			if (PHY_PERICAL_MPHASE_PENDING(pi))
 				wlc_phy_cal_perical_mphase_reset(pi);
 
 			wlc_phy_cal_perical_mphase_schedule(
 				pi,
 				PHY_PERICAL_INIT_DELAY);
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल PHY_PERICAL_JOIN_BSS:
-	हाल PHY_PERICAL_START_IBSS:
-	हाल PHY_PERICAL_UP_BSS:
-		अगर ((pi->nphy_perical == PHY_PERICAL_MPHASE) &&
+	case PHY_PERICAL_JOIN_BSS:
+	case PHY_PERICAL_START_IBSS:
+	case PHY_PERICAL_UP_BSS:
+		if ((pi->nphy_perical == PHY_PERICAL_MPHASE) &&
 		    PHY_PERICAL_MPHASE_PENDING(pi))
 			wlc_phy_cal_perical_mphase_reset(pi);
 
@@ -2734,128 +2733,128 @@ wlc_phy_cal_perical_mphase_schedule(काष्ठा brcms_phy *pi, uपूर
 
 		pi->cal_type_override = PHY_PERICAL_FULL;
 
-		अगर (pi->phycal_tempdelta)
+		if (pi->phycal_tempdelta)
 			pi->nphy_lastcal_temp = wlc_phy_tempsense_nphy(pi);
 
 		wlc_phy_cal_perical_nphy_run(pi, PHY_PERICAL_FULL);
-		अवरोध;
+		break;
 
-	हाल PHY_PERICAL_WATCHDOG:
-		अगर (pi->phycal_tempdelta) अणु
+	case PHY_PERICAL_WATCHDOG:
+		if (pi->phycal_tempdelta) {
 			nphy_currtemp = wlc_phy_tempsense_nphy(pi);
 			delta_temp =
 				(nphy_currtemp > pi->nphy_lastcal_temp) ?
 				nphy_currtemp - pi->nphy_lastcal_temp :
 				pi->nphy_lastcal_temp - nphy_currtemp;
 
-			अगर ((delta_temp < (s16) pi->phycal_tempdelta) &&
+			if ((delta_temp < (s16) pi->phycal_tempdelta) &&
 			    (pi->nphy_txiqlocal_chanspec ==
 			     pi->radio_chanspec))
-				करो_periodic_cal = false;
-			अन्यथा
+				do_periodic_cal = false;
+			else
 				pi->nphy_lastcal_temp = nphy_currtemp;
-		पूर्ण
+		}
 
-		अगर (करो_periodic_cal) अणु
-			अगर (pi->nphy_perical == PHY_PERICAL_MPHASE) अणु
-				अगर (!PHY_PERICAL_MPHASE_PENDING(pi))
+		if (do_periodic_cal) {
+			if (pi->nphy_perical == PHY_PERICAL_MPHASE) {
+				if (!PHY_PERICAL_MPHASE_PENDING(pi))
 					wlc_phy_cal_perical_mphase_schedule(
 						pi,
 						PHY_PERICAL_WDOG_DELAY);
-			पूर्ण अन्यथा अगर (pi->nphy_perical == PHY_PERICAL_SPHASE)
+			} else if (pi->nphy_perical == PHY_PERICAL_SPHASE)
 				wlc_phy_cal_perical_nphy_run(pi,
 							     PHY_PERICAL_AUTO);
-		पूर्ण
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		}
+		break;
+	default:
+		break;
+	}
+}
 
-व्योम wlc_phy_cal_perical_mphase_restart(काष्ठा brcms_phy *pi)
-अणु
+void wlc_phy_cal_perical_mphase_restart(struct brcms_phy *pi)
+{
 	pi->mphase_cal_phase_id = MPHASE_CAL_STATE_INIT;
 	pi->mphase_txcal_cmdidx = 0;
-पूर्ण
+}
 
 u8 wlc_phy_nbits(s32 value)
-अणु
-	s32 असल_val;
+{
+	s32 abs_val;
 	u8 nbits = 0;
 
-	असल_val = असल(value);
-	जबतक ((असल_val >> nbits) > 0)
+	abs_val = abs(value);
+	while ((abs_val >> nbits) > 0)
 		nbits++;
 
-	वापस nbits;
-पूर्ण
+	return nbits;
+}
 
-व्योम wlc_phy_stf_chain_init(काष्ठा brcms_phy_pub *pih, u8 txchain, u8 rxchain)
-अणु
-	काष्ठा brcms_phy *pi = container_of(pih, काष्ठा brcms_phy, pubpi_ro);
+void wlc_phy_stf_chain_init(struct brcms_phy_pub *pih, u8 txchain, u8 rxchain)
+{
+	struct brcms_phy *pi = container_of(pih, struct brcms_phy, pubpi_ro);
 
 	pi->sh->hw_phytxchain = txchain;
 	pi->sh->hw_phyrxchain = rxchain;
 	pi->sh->phytxchain = txchain;
 	pi->sh->phyrxchain = rxchain;
-	pi->pubpi.phy_corक्रमागत = (u8)hweight8(pi->sh->phyrxchain);
-पूर्ण
+	pi->pubpi.phy_corenum = (u8)hweight8(pi->sh->phyrxchain);
+}
 
-व्योम wlc_phy_stf_chain_set(काष्ठा brcms_phy_pub *pih, u8 txchain, u8 rxchain)
-अणु
-	काष्ठा brcms_phy *pi = container_of(pih, काष्ठा brcms_phy, pubpi_ro);
+void wlc_phy_stf_chain_set(struct brcms_phy_pub *pih, u8 txchain, u8 rxchain)
+{
+	struct brcms_phy *pi = container_of(pih, struct brcms_phy, pubpi_ro);
 
 	pi->sh->phytxchain = txchain;
 
-	अगर (ISNPHY(pi))
+	if (ISNPHY(pi))
 		wlc_phy_rxcore_setstate_nphy(pih, rxchain);
 
-	pi->pubpi.phy_corक्रमागत = (u8)hweight8(pi->sh->phyrxchain);
-पूर्ण
+	pi->pubpi.phy_corenum = (u8)hweight8(pi->sh->phyrxchain);
+}
 
-व्योम wlc_phy_stf_chain_get(काष्ठा brcms_phy_pub *pih, u8 *txchain, u8 *rxchain)
-अणु
-	काष्ठा brcms_phy *pi = container_of(pih, काष्ठा brcms_phy, pubpi_ro);
+void wlc_phy_stf_chain_get(struct brcms_phy_pub *pih, u8 *txchain, u8 *rxchain)
+{
+	struct brcms_phy *pi = container_of(pih, struct brcms_phy, pubpi_ro);
 
 	*txchain = pi->sh->phytxchain;
 	*rxchain = pi->sh->phyrxchain;
-पूर्ण
+}
 
-u8 wlc_phy_stf_chain_active_get(काष्ठा brcms_phy_pub *pih)
-अणु
+u8 wlc_phy_stf_chain_active_get(struct brcms_phy_pub *pih)
+{
 	s16 nphy_currtemp;
-	u8 active_biपंचांगap;
-	काष्ठा brcms_phy *pi = container_of(pih, काष्ठा brcms_phy, pubpi_ro);
+	u8 active_bitmap;
+	struct brcms_phy *pi = container_of(pih, struct brcms_phy, pubpi_ro);
 
-	active_biपंचांगap = (pi->phy_txcore_heatedup) ? 0x31 : 0x33;
+	active_bitmap = (pi->phy_txcore_heatedup) ? 0x31 : 0x33;
 
-	अगर (!pi->watchकरोg_override)
-		वापस active_biपंचांगap;
+	if (!pi->watchdog_override)
+		return active_bitmap;
 
-	अगर (NREV_GE(pi->pubpi.phy_rev, 6)) अणु
-		wlapi_suspend_mac_and_रुको(pi->sh->physhim);
+	if (NREV_GE(pi->pubpi.phy_rev, 6)) {
+		wlapi_suspend_mac_and_wait(pi->sh->physhim);
 		nphy_currtemp = wlc_phy_tempsense_nphy(pi);
 		wlapi_enable_mac(pi->sh->physhim);
 
-		अगर (!pi->phy_txcore_heatedup) अणु
-			अगर (nphy_currtemp >= pi->phy_txcore_disable_temp) अणु
-				active_biपंचांगap &= 0xFD;
+		if (!pi->phy_txcore_heatedup) {
+			if (nphy_currtemp >= pi->phy_txcore_disable_temp) {
+				active_bitmap &= 0xFD;
 				pi->phy_txcore_heatedup = true;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (nphy_currtemp <= pi->phy_txcore_enable_temp) अणु
-				active_biपंचांगap |= 0x2;
+			}
+		} else {
+			if (nphy_currtemp <= pi->phy_txcore_enable_temp) {
+				active_bitmap |= 0x2;
 				pi->phy_txcore_heatedup = false;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	वापस active_biपंचांगap;
-पूर्ण
+	return active_bitmap;
+}
 
-s8 wlc_phy_stf_ssmode_get(काष्ठा brcms_phy_pub *pih, u16 chanspec)
-अणु
-	काष्ठा brcms_phy *pi = container_of(pih, काष्ठा brcms_phy, pubpi_ro);
+s8 wlc_phy_stf_ssmode_get(struct brcms_phy_pub *pih, u16 chanspec)
+{
+	struct brcms_phy *pi = container_of(pih, struct brcms_phy, pubpi_ro);
 	u8 siso_mcs_id, cdd_mcs_id;
 
 	siso_mcs_id =
@@ -2865,31 +2864,31 @@ s8 wlc_phy_stf_ssmode_get(काष्ठा brcms_phy_pub *pih, u16 chanspec)
 		(CHSPEC_IS40(chanspec)) ? TXP_FIRST_MCS_40_CDD :
 		TXP_FIRST_MCS_20_CDD;
 
-	अगर (pi->tx_घातer_target[siso_mcs_id] >
-	    (pi->tx_घातer_target[cdd_mcs_id] + 12))
-		वापस PHY_TXC1_MODE_SISO;
-	अन्यथा
-		वापस PHY_TXC1_MODE_CDD;
-पूर्ण
+	if (pi->tx_power_target[siso_mcs_id] >
+	    (pi->tx_power_target[cdd_mcs_id] + 12))
+		return PHY_TXC1_MODE_SISO;
+	else
+		return PHY_TXC1_MODE_CDD;
+}
 
-स्थिर u8 *wlc_phy_get_ofdm_rate_lookup(व्योम)
-अणु
-	वापस ofdm_rate_lookup;
-पूर्ण
+const u8 *wlc_phy_get_ofdm_rate_lookup(void)
+{
+	return ofdm_rate_lookup;
+}
 
-व्योम wlc_lcnphy_epa_चयन(काष्ठा brcms_phy *pi, bool mode)
-अणु
-	अगर ((pi->sh->chip == BCMA_CHIP_ID_BCM4313) &&
-	    (pi->sh->boardflags & BFL_FEM)) अणु
-		अगर (mode) अणु
+void wlc_lcnphy_epa_switch(struct brcms_phy *pi, bool mode)
+{
+	if ((pi->sh->chip == BCMA_CHIP_ID_BCM4313) &&
+	    (pi->sh->boardflags & BFL_FEM)) {
+		if (mode) {
 			u16 txant = 0;
 			txant = wlapi_bmac_get_txant(pi->sh->physhim);
-			अगर (txant == 1) अणु
+			if (txant == 1) {
 				mod_phy_reg(pi, 0x44d, (0x1 << 2), (1) << 2);
 
 				mod_phy_reg(pi, 0x44c, (0x1 << 2), (1) << 2);
 
-			पूर्ण
+			}
 
 			bcma_chipco_gpio_control(&pi->d11core->bus->drv_cc,
 						 0x0, 0x0);
@@ -2897,7 +2896,7 @@ s8 wlc_phy_stf_ssmode_get(काष्ठा brcms_phy_pub *pih, u16 chanspec)
 					     ~0x40, 0x40);
 			bcma_chipco_gpio_outen(&pi->d11core->bus->drv_cc,
 					       ~0x40, 0x40);
-		पूर्ण अन्यथा अणु
+		} else {
 			mod_phy_reg(pi, 0x44c, (0x1 << 2), (0) << 2);
 
 			mod_phy_reg(pi, 0x44d, (0x1 << 2), (0) << 2);
@@ -2908,34 +2907,34 @@ s8 wlc_phy_stf_ssmode_get(काष्ठा brcms_phy_pub *pih, u16 chanspec)
 					       ~0x40, 0x00);
 			bcma_chipco_gpio_control(&pi->d11core->bus->drv_cc,
 						 0x0, 0x40);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-व्योम wlc_phy_ldpc_override_set(काष्ठा brcms_phy_pub *ppi, bool ldpc)
-अणु
-	वापस;
-पूर्ण
+void wlc_phy_ldpc_override_set(struct brcms_phy_pub *ppi, bool ldpc)
+{
+	return;
+}
 
-व्योम
-wlc_phy_get_pwrdet_offsets(काष्ठा brcms_phy *pi, s8 *cckoffset, s8 *ofdmoffset)
-अणु
+void
+wlc_phy_get_pwrdet_offsets(struct brcms_phy *pi, s8 *cckoffset, s8 *ofdmoffset)
+{
 	*cckoffset = 0;
 	*ofdmoffset = 0;
-पूर्ण
+}
 
-s8 wlc_phy_upd_rssi_offset(काष्ठा brcms_phy *pi, s8 rssi, u16 chanspec)
-अणु
+s8 wlc_phy_upd_rssi_offset(struct brcms_phy *pi, s8 rssi, u16 chanspec)
+{
 
-	वापस rssi;
-पूर्ण
+	return rssi;
+}
 
-bool wlc_phy_txघातer_ipa_ison(काष्ठा brcms_phy_pub *ppi)
-अणु
-	काष्ठा brcms_phy *pi = container_of(ppi, काष्ठा brcms_phy, pubpi_ro);
+bool wlc_phy_txpower_ipa_ison(struct brcms_phy_pub *ppi)
+{
+	struct brcms_phy *pi = container_of(ppi, struct brcms_phy, pubpi_ro);
 
-	अगर (ISNPHY(pi))
-		वापस wlc_phy_n_txघातer_ipa_ison(pi);
-	अन्यथा
-		वापस false;
-पूर्ण
+	if (ISNPHY(pi))
+		return wlc_phy_n_txpower_ipa_ison(pi);
+	else
+		return false;
+}

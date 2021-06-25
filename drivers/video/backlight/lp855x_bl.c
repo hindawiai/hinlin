@@ -1,412 +1,411 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * TI LP855x Backlight Driver
  *
  *			Copyright (C) 2011 Texas Instruments
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/backlight.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/err.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_data/lp855x.h>
-#समावेश <linux/pwm.h>
-#समावेश <linux/regulator/consumer.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/i2c.h>
+#include <linux/backlight.h>
+#include <linux/delay.h>
+#include <linux/err.h>
+#include <linux/of.h>
+#include <linux/platform_data/lp855x.h>
+#include <linux/pwm.h>
+#include <linux/regulator/consumer.h>
 
 /* LP8550/1/2/3/6 Registers */
-#घोषणा LP855X_BRIGHTNESS_CTRL		0x00
-#घोषणा LP855X_DEVICE_CTRL		0x01
-#घोषणा LP855X_EEPROM_START		0xA0
-#घोषणा LP855X_EEPROM_END		0xA7
-#घोषणा LP8556_EPROM_START		0xA0
-#घोषणा LP8556_EPROM_END		0xAF
+#define LP855X_BRIGHTNESS_CTRL		0x00
+#define LP855X_DEVICE_CTRL		0x01
+#define LP855X_EEPROM_START		0xA0
+#define LP855X_EEPROM_END		0xA7
+#define LP8556_EPROM_START		0xA0
+#define LP8556_EPROM_END		0xAF
 
 /* LP8555/7 Registers */
-#घोषणा LP8557_BL_CMD			0x00
-#घोषणा LP8557_BL_MASK			0x01
-#घोषणा LP8557_BL_ON			0x01
-#घोषणा LP8557_BL_OFF			0x00
-#घोषणा LP8557_BRIGHTNESS_CTRL		0x04
-#घोषणा LP8557_CONFIG			0x10
-#घोषणा LP8555_EPROM_START		0x10
-#घोषणा LP8555_EPROM_END		0x7A
-#घोषणा LP8557_EPROM_START		0x10
-#घोषणा LP8557_EPROM_END		0x1E
+#define LP8557_BL_CMD			0x00
+#define LP8557_BL_MASK			0x01
+#define LP8557_BL_ON			0x01
+#define LP8557_BL_OFF			0x00
+#define LP8557_BRIGHTNESS_CTRL		0x04
+#define LP8557_CONFIG			0x10
+#define LP8555_EPROM_START		0x10
+#define LP8555_EPROM_END		0x7A
+#define LP8557_EPROM_START		0x10
+#define LP8557_EPROM_END		0x1E
 
-#घोषणा DEFAULT_BL_NAME		"lcd-backlight"
-#घोषणा MAX_BRIGHTNESS		255
+#define DEFAULT_BL_NAME		"lcd-backlight"
+#define MAX_BRIGHTNESS		255
 
-क्रमागत lp855x_brightness_ctrl_mode अणु
+enum lp855x_brightness_ctrl_mode {
 	PWM_BASED = 1,
 	REGISTER_BASED,
-पूर्ण;
+};
 
-काष्ठा lp855x;
+struct lp855x;
 
 /*
- * काष्ठा lp855x_device_config
- * @pre_init_device: init device function call beक्रमe updating the brightness
- * @reg_brightness: रेजिस्टर address क्रम brigthenss control
- * @reg_devicectrl: रेजिस्टर address क्रम device control
+ * struct lp855x_device_config
+ * @pre_init_device: init device function call before updating the brightness
+ * @reg_brightness: register address for brigthenss control
+ * @reg_devicectrl: register address for device control
  * @post_init_device: late init device function call
  */
-काष्ठा lp855x_device_config अणु
-	पूर्णांक (*pre_init_device)(काष्ठा lp855x *);
+struct lp855x_device_config {
+	int (*pre_init_device)(struct lp855x *);
 	u8 reg_brightness;
 	u8 reg_devicectrl;
-	पूर्णांक (*post_init_device)(काष्ठा lp855x *);
-पूर्ण;
+	int (*post_init_device)(struct lp855x *);
+};
 
-काष्ठा lp855x अणु
-	स्थिर अक्षर *chipname;
-	क्रमागत lp855x_chip_id chip_id;
-	क्रमागत lp855x_brightness_ctrl_mode mode;
-	काष्ठा lp855x_device_config *cfg;
-	काष्ठा i2c_client *client;
-	काष्ठा backlight_device *bl;
-	काष्ठा device *dev;
-	काष्ठा lp855x_platक्रमm_data *pdata;
-	काष्ठा pwm_device *pwm;
-	काष्ठा regulator *supply;	/* regulator क्रम VDD input */
-	काष्ठा regulator *enable;	/* regulator क्रम EN/VDDIO input */
-पूर्ण;
+struct lp855x {
+	const char *chipname;
+	enum lp855x_chip_id chip_id;
+	enum lp855x_brightness_ctrl_mode mode;
+	struct lp855x_device_config *cfg;
+	struct i2c_client *client;
+	struct backlight_device *bl;
+	struct device *dev;
+	struct lp855x_platform_data *pdata;
+	struct pwm_device *pwm;
+	struct regulator *supply;	/* regulator for VDD input */
+	struct regulator *enable;	/* regulator for EN/VDDIO input */
+};
 
-अटल पूर्णांक lp855x_ग_लिखो_byte(काष्ठा lp855x *lp, u8 reg, u8 data)
-अणु
-	वापस i2c_smbus_ग_लिखो_byte_data(lp->client, reg, data);
-पूर्ण
+static int lp855x_write_byte(struct lp855x *lp, u8 reg, u8 data)
+{
+	return i2c_smbus_write_byte_data(lp->client, reg, data);
+}
 
-अटल पूर्णांक lp855x_update_bit(काष्ठा lp855x *lp, u8 reg, u8 mask, u8 data)
-अणु
-	पूर्णांक ret;
-	u8 पंचांगp;
+static int lp855x_update_bit(struct lp855x *lp, u8 reg, u8 mask, u8 data)
+{
+	int ret;
+	u8 tmp;
 
-	ret = i2c_smbus_पढ़ो_byte_data(lp->client, reg);
-	अगर (ret < 0) अणु
+	ret = i2c_smbus_read_byte_data(lp->client, reg);
+	if (ret < 0) {
 		dev_err(lp->dev, "failed to read 0x%.2x\n", reg);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	पंचांगp = (u8)ret;
-	पंचांगp &= ~mask;
-	पंचांगp |= data & mask;
+	tmp = (u8)ret;
+	tmp &= ~mask;
+	tmp |= data & mask;
 
-	वापस lp855x_ग_लिखो_byte(lp, reg, पंचांगp);
-पूर्ण
+	return lp855x_write_byte(lp, reg, tmp);
+}
 
-अटल bool lp855x_is_valid_rom_area(काष्ठा lp855x *lp, u8 addr)
-अणु
+static bool lp855x_is_valid_rom_area(struct lp855x *lp, u8 addr)
+{
 	u8 start, end;
 
-	चयन (lp->chip_id) अणु
-	हाल LP8550:
-	हाल LP8551:
-	हाल LP8552:
-	हाल LP8553:
+	switch (lp->chip_id) {
+	case LP8550:
+	case LP8551:
+	case LP8552:
+	case LP8553:
 		start = LP855X_EEPROM_START;
 		end = LP855X_EEPROM_END;
-		अवरोध;
-	हाल LP8556:
+		break;
+	case LP8556:
 		start = LP8556_EPROM_START;
 		end = LP8556_EPROM_END;
-		अवरोध;
-	हाल LP8555:
+		break;
+	case LP8555:
 		start = LP8555_EPROM_START;
 		end = LP8555_EPROM_END;
-		अवरोध;
-	हाल LP8557:
+		break;
+	case LP8557:
 		start = LP8557_EPROM_START;
 		end = LP8557_EPROM_END;
-		अवरोध;
-	शेष:
-		वापस false;
-	पूर्ण
+		break;
+	default:
+		return false;
+	}
 
-	वापस addr >= start && addr <= end;
-पूर्ण
+	return addr >= start && addr <= end;
+}
 
-अटल पूर्णांक lp8557_bl_off(काष्ठा lp855x *lp)
-अणु
-	/* BL_ON = 0 beक्रमe updating EPROM settings */
-	वापस lp855x_update_bit(lp, LP8557_BL_CMD, LP8557_BL_MASK,
+static int lp8557_bl_off(struct lp855x *lp)
+{
+	/* BL_ON = 0 before updating EPROM settings */
+	return lp855x_update_bit(lp, LP8557_BL_CMD, LP8557_BL_MASK,
 				LP8557_BL_OFF);
-पूर्ण
+}
 
-अटल पूर्णांक lp8557_bl_on(काष्ठा lp855x *lp)
-अणु
+static int lp8557_bl_on(struct lp855x *lp)
+{
 	/* BL_ON = 1 after updating EPROM settings */
-	वापस lp855x_update_bit(lp, LP8557_BL_CMD, LP8557_BL_MASK,
+	return lp855x_update_bit(lp, LP8557_BL_CMD, LP8557_BL_MASK,
 				LP8557_BL_ON);
-पूर्ण
+}
 
-अटल काष्ठा lp855x_device_config lp855x_dev_cfg = अणु
+static struct lp855x_device_config lp855x_dev_cfg = {
 	.reg_brightness = LP855X_BRIGHTNESS_CTRL,
 	.reg_devicectrl = LP855X_DEVICE_CTRL,
-पूर्ण;
+};
 
-अटल काष्ठा lp855x_device_config lp8557_dev_cfg = अणु
+static struct lp855x_device_config lp8557_dev_cfg = {
 	.reg_brightness = LP8557_BRIGHTNESS_CTRL,
 	.reg_devicectrl = LP8557_CONFIG,
 	.pre_init_device = lp8557_bl_off,
 	.post_init_device = lp8557_bl_on,
-पूर्ण;
+};
 
 /*
- * Device specअगरic configuration flow
+ * Device specific configuration flow
  *
  *    a) pre_init_device(optional)
- *    b) update the brightness रेजिस्टर
- *    c) update device control रेजिस्टर
+ *    b) update the brightness register
+ *    c) update device control register
  *    d) update ROM area(optional)
  *    e) post_init_device(optional)
  *
  */
-अटल पूर्णांक lp855x_configure(काष्ठा lp855x *lp)
-अणु
+static int lp855x_configure(struct lp855x *lp)
+{
 	u8 val, addr;
-	पूर्णांक i, ret;
-	काष्ठा lp855x_platक्रमm_data *pd = lp->pdata;
+	int i, ret;
+	struct lp855x_platform_data *pd = lp->pdata;
 
-	चयन (lp->chip_id) अणु
-	हाल LP8550:
-	हाल LP8551:
-	हाल LP8552:
-	हाल LP8553:
-	हाल LP8556:
+	switch (lp->chip_id) {
+	case LP8550:
+	case LP8551:
+	case LP8552:
+	case LP8553:
+	case LP8556:
 		lp->cfg = &lp855x_dev_cfg;
-		अवरोध;
-	हाल LP8555:
-	हाल LP8557:
+		break;
+	case LP8555:
+	case LP8557:
 		lp->cfg = &lp8557_dev_cfg;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	अगर (lp->cfg->pre_init_device) अणु
+	if (lp->cfg->pre_init_device) {
 		ret = lp->cfg->pre_init_device(lp);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(lp->dev, "pre init device err: %d\n", ret);
-			जाओ err;
-		पूर्ण
-	पूर्ण
+			goto err;
+		}
+	}
 
 	val = pd->initial_brightness;
-	ret = lp855x_ग_लिखो_byte(lp, lp->cfg->reg_brightness, val);
-	अगर (ret)
-		जाओ err;
+	ret = lp855x_write_byte(lp, lp->cfg->reg_brightness, val);
+	if (ret)
+		goto err;
 
 	val = pd->device_control;
-	ret = lp855x_ग_लिखो_byte(lp, lp->cfg->reg_devicectrl, val);
-	अगर (ret)
-		जाओ err;
+	ret = lp855x_write_byte(lp, lp->cfg->reg_devicectrl, val);
+	if (ret)
+		goto err;
 
-	अगर (pd->size_program > 0) अणु
-		क्रम (i = 0; i < pd->size_program; i++) अणु
+	if (pd->size_program > 0) {
+		for (i = 0; i < pd->size_program; i++) {
 			addr = pd->rom_data[i].addr;
 			val = pd->rom_data[i].val;
-			अगर (!lp855x_is_valid_rom_area(lp, addr))
-				जारी;
+			if (!lp855x_is_valid_rom_area(lp, addr))
+				continue;
 
-			ret = lp855x_ग_लिखो_byte(lp, addr, val);
-			अगर (ret)
-				जाओ err;
-		पूर्ण
-	पूर्ण
+			ret = lp855x_write_byte(lp, addr, val);
+			if (ret)
+				goto err;
+		}
+	}
 
-	अगर (lp->cfg->post_init_device) अणु
+	if (lp->cfg->post_init_device) {
 		ret = lp->cfg->post_init_device(lp);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(lp->dev, "post init device err: %d\n", ret);
-			जाओ err;
-		पूर्ण
-	पूर्ण
+			goto err;
+		}
+	}
 
-	वापस 0;
+	return 0;
 
 err:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम lp855x_pwm_ctrl(काष्ठा lp855x *lp, पूर्णांक br, पूर्णांक max_br)
-अणु
-	अचिन्हित पूर्णांक period = lp->pdata->period_ns;
-	अचिन्हित पूर्णांक duty = br * period / max_br;
-	काष्ठा pwm_device *pwm;
+static void lp855x_pwm_ctrl(struct lp855x *lp, int br, int max_br)
+{
+	unsigned int period = lp->pdata->period_ns;
+	unsigned int duty = br * period / max_br;
+	struct pwm_device *pwm;
 
 	/* request pwm device with the consumer name */
-	अगर (!lp->pwm) अणु
+	if (!lp->pwm) {
 		pwm = devm_pwm_get(lp->dev, lp->chipname);
-		अगर (IS_ERR(pwm))
-			वापस;
+		if (IS_ERR(pwm))
+			return;
 
 		lp->pwm = pwm;
 
 		/*
-		 * FIXME: pwm_apply_args() should be हटाओd when चयनing to
+		 * FIXME: pwm_apply_args() should be removed when switching to
 		 * the atomic PWM API.
 		 */
 		pwm_apply_args(pwm);
-	पूर्ण
+	}
 
 	pwm_config(lp->pwm, duty, period);
-	अगर (duty)
+	if (duty)
 		pwm_enable(lp->pwm);
-	अन्यथा
+	else
 		pwm_disable(lp->pwm);
-पूर्ण
+}
 
-अटल पूर्णांक lp855x_bl_update_status(काष्ठा backlight_device *bl)
-अणु
-	काष्ठा lp855x *lp = bl_get_data(bl);
-	पूर्णांक brightness = bl->props.brightness;
+static int lp855x_bl_update_status(struct backlight_device *bl)
+{
+	struct lp855x *lp = bl_get_data(bl);
+	int brightness = bl->props.brightness;
 
-	अगर (bl->props.state & (BL_CORE_SUSPENDED | BL_CORE_FBBLANK))
+	if (bl->props.state & (BL_CORE_SUSPENDED | BL_CORE_FBBLANK))
 		brightness = 0;
 
-	अगर (lp->mode == PWM_BASED)
+	if (lp->mode == PWM_BASED)
 		lp855x_pwm_ctrl(lp, brightness, bl->props.max_brightness);
-	अन्यथा अगर (lp->mode == REGISTER_BASED)
-		lp855x_ग_लिखो_byte(lp, lp->cfg->reg_brightness, (u8)brightness);
+	else if (lp->mode == REGISTER_BASED)
+		lp855x_write_byte(lp, lp->cfg->reg_brightness, (u8)brightness);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा backlight_ops lp855x_bl_ops = अणु
+static const struct backlight_ops lp855x_bl_ops = {
 	.options = BL_CORE_SUSPENDRESUME,
 	.update_status = lp855x_bl_update_status,
-पूर्ण;
+};
 
-अटल पूर्णांक lp855x_backlight_रेजिस्टर(काष्ठा lp855x *lp)
-अणु
-	काष्ठा backlight_device *bl;
-	काष्ठा backlight_properties props;
-	काष्ठा lp855x_platक्रमm_data *pdata = lp->pdata;
-	स्थिर अक्षर *name = pdata->name ? : DEFAULT_BL_NAME;
+static int lp855x_backlight_register(struct lp855x *lp)
+{
+	struct backlight_device *bl;
+	struct backlight_properties props;
+	struct lp855x_platform_data *pdata = lp->pdata;
+	const char *name = pdata->name ? : DEFAULT_BL_NAME;
 
-	स_रखो(&props, 0, माप(props));
+	memset(&props, 0, sizeof(props));
 	props.type = BACKLIGHT_PLATFORM;
 	props.max_brightness = MAX_BRIGHTNESS;
 
-	अगर (pdata->initial_brightness > props.max_brightness)
+	if (pdata->initial_brightness > props.max_brightness)
 		pdata->initial_brightness = props.max_brightness;
 
 	props.brightness = pdata->initial_brightness;
 
-	bl = devm_backlight_device_रेजिस्टर(lp->dev, name, lp->dev, lp,
+	bl = devm_backlight_device_register(lp->dev, name, lp->dev, lp,
 				       &lp855x_bl_ops, &props);
-	अगर (IS_ERR(bl))
-		वापस PTR_ERR(bl);
+	if (IS_ERR(bl))
+		return PTR_ERR(bl);
 
 	lp->bl = bl;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार lp855x_get_chip_id(काष्ठा device *dev,
-				काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा lp855x *lp = dev_get_drvdata(dev);
+static ssize_t lp855x_get_chip_id(struct device *dev,
+				struct device_attribute *attr, char *buf)
+{
+	struct lp855x *lp = dev_get_drvdata(dev);
 
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%s\n", lp->chipname);
-पूर्ण
+	return scnprintf(buf, PAGE_SIZE, "%s\n", lp->chipname);
+}
 
-अटल sमाप_प्रकार lp855x_get_bl_ctl_mode(काष्ठा device *dev,
-				     काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा lp855x *lp = dev_get_drvdata(dev);
-	अक्षर *strmode = शून्य;
+static ssize_t lp855x_get_bl_ctl_mode(struct device *dev,
+				     struct device_attribute *attr, char *buf)
+{
+	struct lp855x *lp = dev_get_drvdata(dev);
+	char *strmode = NULL;
 
-	अगर (lp->mode == PWM_BASED)
+	if (lp->mode == PWM_BASED)
 		strmode = "pwm based";
-	अन्यथा अगर (lp->mode == REGISTER_BASED)
+	else if (lp->mode == REGISTER_BASED)
 		strmode = "register based";
 
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%s\n", strmode);
-पूर्ण
+	return scnprintf(buf, PAGE_SIZE, "%s\n", strmode);
+}
 
-अटल DEVICE_ATTR(chip_id, S_IRUGO, lp855x_get_chip_id, शून्य);
-अटल DEVICE_ATTR(bl_ctl_mode, S_IRUGO, lp855x_get_bl_ctl_mode, शून्य);
+static DEVICE_ATTR(chip_id, S_IRUGO, lp855x_get_chip_id, NULL);
+static DEVICE_ATTR(bl_ctl_mode, S_IRUGO, lp855x_get_bl_ctl_mode, NULL);
 
-अटल काष्ठा attribute *lp855x_attributes[] = अणु
+static struct attribute *lp855x_attributes[] = {
 	&dev_attr_chip_id.attr,
 	&dev_attr_bl_ctl_mode.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group lp855x_attr_group = अणु
+static const struct attribute_group lp855x_attr_group = {
 	.attrs = lp855x_attributes,
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_OF
-अटल पूर्णांक lp855x_parse_dt(काष्ठा lp855x *lp)
-अणु
-	काष्ठा device *dev = lp->dev;
-	काष्ठा device_node *node = dev->of_node;
-	काष्ठा lp855x_platक्रमm_data *pdata;
-	पूर्णांक rom_length;
+#ifdef CONFIG_OF
+static int lp855x_parse_dt(struct lp855x *lp)
+{
+	struct device *dev = lp->dev;
+	struct device_node *node = dev->of_node;
+	struct lp855x_platform_data *pdata;
+	int rom_length;
 
-	अगर (!node) अणु
+	if (!node) {
 		dev_err(dev, "no platform data\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	pdata = devm_kzalloc(dev, माप(*pdata), GFP_KERNEL);
-	अगर (!pdata)
-		वापस -ENOMEM;
+	pdata = devm_kzalloc(dev, sizeof(*pdata), GFP_KERNEL);
+	if (!pdata)
+		return -ENOMEM;
 
-	of_property_पढ़ो_string(node, "bl-name", &pdata->name);
-	of_property_पढ़ो_u8(node, "dev-ctrl", &pdata->device_control);
-	of_property_पढ़ो_u8(node, "init-brt", &pdata->initial_brightness);
-	of_property_पढ़ो_u32(node, "pwm-period", &pdata->period_ns);
+	of_property_read_string(node, "bl-name", &pdata->name);
+	of_property_read_u8(node, "dev-ctrl", &pdata->device_control);
+	of_property_read_u8(node, "init-brt", &pdata->initial_brightness);
+	of_property_read_u32(node, "pwm-period", &pdata->period_ns);
 
-	/* Fill ROM platक्रमm data अगर defined */
+	/* Fill ROM platform data if defined */
 	rom_length = of_get_child_count(node);
-	अगर (rom_length > 0) अणु
-		काष्ठा lp855x_rom_data *rom;
-		काष्ठा device_node *child;
-		पूर्णांक i = 0;
+	if (rom_length > 0) {
+		struct lp855x_rom_data *rom;
+		struct device_node *child;
+		int i = 0;
 
-		rom = devm_kसुस्मृति(dev, rom_length, माप(*rom), GFP_KERNEL);
-		अगर (!rom)
-			वापस -ENOMEM;
+		rom = devm_kcalloc(dev, rom_length, sizeof(*rom), GFP_KERNEL);
+		if (!rom)
+			return -ENOMEM;
 
-		क्रम_each_child_of_node(node, child) अणु
-			of_property_पढ़ो_u8(child, "rom-addr", &rom[i].addr);
-			of_property_पढ़ो_u8(child, "rom-val", &rom[i].val);
+		for_each_child_of_node(node, child) {
+			of_property_read_u8(child, "rom-addr", &rom[i].addr);
+			of_property_read_u8(child, "rom-val", &rom[i].val);
 			i++;
-		पूर्ण
+		}
 
 		pdata->size_program = rom_length;
 		pdata->rom_data = &rom[0];
-	पूर्ण
+	}
 
 	lp->pdata = pdata;
 
-	वापस 0;
-पूर्ण
-#अन्यथा
-अटल पूर्णांक lp855x_parse_dt(काष्ठा lp855x *lp)
-अणु
-	वापस -EINVAL;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#else
+static int lp855x_parse_dt(struct lp855x *lp)
+{
+	return -EINVAL;
+}
+#endif
 
-अटल पूर्णांक lp855x_probe(काष्ठा i2c_client *cl, स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा lp855x *lp;
-	पूर्णांक ret;
+static int lp855x_probe(struct i2c_client *cl, const struct i2c_device_id *id)
+{
+	struct lp855x *lp;
+	int ret;
 
-	अगर (!i2c_check_functionality(cl->adapter, I2C_FUNC_SMBUS_I2C_BLOCK))
-		वापस -EIO;
+	if (!i2c_check_functionality(cl->adapter, I2C_FUNC_SMBUS_I2C_BLOCK))
+		return -EIO;
 
-	lp = devm_kzalloc(&cl->dev, माप(काष्ठा lp855x), GFP_KERNEL);
-	अगर (!lp)
-		वापस -ENOMEM;
+	lp = devm_kzalloc(&cl->dev, sizeof(struct lp855x), GFP_KERNEL);
+	if (!lp)
+		return -ENOMEM;
 
 	lp->client = cl;
 	lp->dev = &cl->dev;
@@ -414,142 +413,142 @@ err:
 	lp->chip_id = id->driver_data;
 	lp->pdata = dev_get_platdata(&cl->dev);
 
-	अगर (!lp->pdata) अणु
+	if (!lp->pdata) {
 		ret = lp855x_parse_dt(lp);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
+		if (ret < 0)
+			return ret;
+	}
 
-	अगर (lp->pdata->period_ns > 0)
+	if (lp->pdata->period_ns > 0)
 		lp->mode = PWM_BASED;
-	अन्यथा
+	else
 		lp->mode = REGISTER_BASED;
 
 	lp->supply = devm_regulator_get(lp->dev, "power");
-	अगर (IS_ERR(lp->supply)) अणु
-		अगर (PTR_ERR(lp->supply) == -EPROBE_DEFER)
-			वापस -EPROBE_DEFER;
-		lp->supply = शून्य;
-	पूर्ण
+	if (IS_ERR(lp->supply)) {
+		if (PTR_ERR(lp->supply) == -EPROBE_DEFER)
+			return -EPROBE_DEFER;
+		lp->supply = NULL;
+	}
 
 	lp->enable = devm_regulator_get_optional(lp->dev, "enable");
-	अगर (IS_ERR(lp->enable)) अणु
+	if (IS_ERR(lp->enable)) {
 		ret = PTR_ERR(lp->enable);
-		अगर (ret == -ENODEV) अणु
-			lp->enable = शून्य;
-		पूर्ण अन्यथा अणु
-			अगर (ret != -EPROBE_DEFER)
+		if (ret == -ENODEV) {
+			lp->enable = NULL;
+		} else {
+			if (ret != -EPROBE_DEFER)
 				dev_err(lp->dev, "error getting enable regulator: %d\n",
 					ret);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	अगर (lp->supply) अणु
+	if (lp->supply) {
 		ret = regulator_enable(lp->supply);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(&cl->dev, "failed to enable supply: %d\n", ret);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	अगर (lp->enable) अणु
+	if (lp->enable) {
 		ret = regulator_enable(lp->enable);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(lp->dev, "failed to enable vddio: %d\n", ret);
-			जाओ disable_supply;
-		पूर्ण
+			goto disable_supply;
+		}
 
 		/*
-		 * LP8555 datasheet says t_RESPONSE (समय between VDDIO and
+		 * LP8555 datasheet says t_RESPONSE (time between VDDIO and
 		 * I2C) is 1ms.
 		 */
 		usleep_range(1000, 2000);
-	पूर्ण
+	}
 
 	i2c_set_clientdata(cl, lp);
 
 	ret = lp855x_configure(lp);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(lp->dev, "device config err: %d", ret);
-		जाओ disable_vddio;
-	पूर्ण
+		goto disable_vddio;
+	}
 
-	ret = lp855x_backlight_रेजिस्टर(lp);
-	अगर (ret) अणु
+	ret = lp855x_backlight_register(lp);
+	if (ret) {
 		dev_err(lp->dev,
 			"failed to register backlight. err: %d\n", ret);
-		जाओ disable_vddio;
-	पूर्ण
+		goto disable_vddio;
+	}
 
 	ret = sysfs_create_group(&lp->dev->kobj, &lp855x_attr_group);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(lp->dev, "failed to register sysfs. err: %d\n", ret);
-		जाओ disable_vddio;
-	पूर्ण
+		goto disable_vddio;
+	}
 
 	backlight_update_status(lp->bl);
 
-	वापस 0;
+	return 0;
 
 disable_vddio:
-	अगर (lp->enable)
+	if (lp->enable)
 		regulator_disable(lp->enable);
 disable_supply:
-	अगर (lp->supply)
+	if (lp->supply)
 		regulator_disable(lp->supply);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक lp855x_हटाओ(काष्ठा i2c_client *cl)
-अणु
-	काष्ठा lp855x *lp = i2c_get_clientdata(cl);
+static int lp855x_remove(struct i2c_client *cl)
+{
+	struct lp855x *lp = i2c_get_clientdata(cl);
 
 	lp->bl->props.brightness = 0;
 	backlight_update_status(lp->bl);
-	अगर (lp->enable)
+	if (lp->enable)
 		regulator_disable(lp->enable);
-	अगर (lp->supply)
+	if (lp->supply)
 		regulator_disable(lp->supply);
-	sysfs_हटाओ_group(&lp->dev->kobj, &lp855x_attr_group);
+	sysfs_remove_group(&lp->dev->kobj, &lp855x_attr_group);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id lp855x_dt_ids[] = अणु
-	अणु .compatible = "ti,lp8550", पूर्ण,
-	अणु .compatible = "ti,lp8551", पूर्ण,
-	अणु .compatible = "ti,lp8552", पूर्ण,
-	अणु .compatible = "ti,lp8553", पूर्ण,
-	अणु .compatible = "ti,lp8555", पूर्ण,
-	अणु .compatible = "ti,lp8556", पूर्ण,
-	अणु .compatible = "ti,lp8557", पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id lp855x_dt_ids[] = {
+	{ .compatible = "ti,lp8550", },
+	{ .compatible = "ti,lp8551", },
+	{ .compatible = "ti,lp8552", },
+	{ .compatible = "ti,lp8553", },
+	{ .compatible = "ti,lp8555", },
+	{ .compatible = "ti,lp8556", },
+	{ .compatible = "ti,lp8557", },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, lp855x_dt_ids);
 
-अटल स्थिर काष्ठा i2c_device_id lp855x_ids[] = अणु
-	अणु"lp8550", LP8550पूर्ण,
-	अणु"lp8551", LP8551पूर्ण,
-	अणु"lp8552", LP8552पूर्ण,
-	अणु"lp8553", LP8553पूर्ण,
-	अणु"lp8555", LP8555पूर्ण,
-	अणु"lp8556", LP8556पूर्ण,
-	अणु"lp8557", LP8557पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id lp855x_ids[] = {
+	{"lp8550", LP8550},
+	{"lp8551", LP8551},
+	{"lp8552", LP8552},
+	{"lp8553", LP8553},
+	{"lp8555", LP8555},
+	{"lp8556", LP8556},
+	{"lp8557", LP8557},
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, lp855x_ids);
 
-अटल काष्ठा i2c_driver lp855x_driver = अणु
-	.driver = अणु
+static struct i2c_driver lp855x_driver = {
+	.driver = {
 		   .name = "lp855x",
 		   .of_match_table = of_match_ptr(lp855x_dt_ids),
-		   पूर्ण,
+		   },
 	.probe = lp855x_probe,
-	.हटाओ = lp855x_हटाओ,
+	.remove = lp855x_remove,
 	.id_table = lp855x_ids,
-पूर्ण;
+};
 
 module_i2c_driver(lp855x_driver);
 

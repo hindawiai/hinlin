@@ -1,30 +1,29 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (C) 2012 Regents of the University of Calअगरornia
+ * Copyright (C) 2012 Regents of the University of California
  */
 
 
-#अगर_अघोषित _ASM_RISCV_MMU_H
-#घोषणा _ASM_RISCV_MMU_H
+#ifndef _ASM_RISCV_MMU_H
+#define _ASM_RISCV_MMU_H
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-प्रकार काष्ठा अणु
-#अगर_अघोषित CONFIG_MMU
-	अचिन्हित दीर्घ	end_brk;
-#अन्यथा
-	atomic_दीर्घ_t id;
-#पूर्ण_अगर
-	व्योम *vdso;
-#अगर_घोषित CONFIG_SMP
-	/* A local icache flush is needed beक्रमe user execution can resume. */
+typedef struct {
+#ifndef CONFIG_MMU
+	unsigned long	end_brk;
+#else
+	atomic_long_t id;
+#endif
+	void *vdso;
+#ifdef CONFIG_SMP
+	/* A local icache flush is needed before user execution can resume. */
 	cpumask_t icache_stale_mask;
-#पूर्ण_अगर
-पूर्ण mm_context_t;
+#endif
+} mm_context_t;
 
-व्योम __init create_pgd_mapping(pgd_t *pgdp, uपूर्णांकptr_t va, phys_addr_t pa,
+void __init create_pgd_mapping(pgd_t *pgdp, uintptr_t va, phys_addr_t pa,
 			       phys_addr_t sz, pgprot_t prot);
-#पूर्ण_अगर /* __ASSEMBLY__ */
+#endif /* __ASSEMBLY__ */
 
-#पूर्ण_अगर /* _ASM_RISCV_MMU_H */
+#endif /* _ASM_RISCV_MMU_H */

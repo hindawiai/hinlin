@@ -1,53 +1,52 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2008 Sensoray Company Inc.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/videodev2.h>
-#समावेश <linux/slab.h>
-#समावेश <media/v4l2-device.h>
-#समावेश <media/v4l2-common.h>
-#समावेश <media/v4l2-subdev.h>
-#समावेश "go7007-priv.h"
+#include <linux/module.h>
+#include <linux/usb.h>
+#include <linux/i2c.h>
+#include <linux/videodev2.h>
+#include <linux/slab.h>
+#include <media/v4l2-device.h>
+#include <media/v4l2-common.h>
+#include <media/v4l2-subdev.h>
+#include "go7007-priv.h"
 
 MODULE_DESCRIPTION("Sensoray 2250/2251 i2c v4l2 subdev driver");
 MODULE_LICENSE("GPL v2");
 
 /*
  * Note: this board has two i2c devices: a vpx3226f and a tlv320aic23b.
- * Due to the unusual way these are accessed on this device we करो not
+ * Due to the unusual way these are accessed on this device we do not
  * reuse the i2c drivers, but instead they are implemented in this
  * driver. It would be nice to improve on this, though.
  */
 
-#घोषणा TLV320_ADDRESS      0x34
-#घोषणा VPX322_ADDR_ANALOGCONTROL1	0x02
-#घोषणा VPX322_ADDR_BRIGHTNESS0		0x0127
-#घोषणा VPX322_ADDR_BRIGHTNESS1		0x0131
-#घोषणा VPX322_ADDR_CONTRAST0		0x0128
-#घोषणा VPX322_ADDR_CONTRAST1		0x0132
-#घोषणा VPX322_ADDR_HUE			0x00dc
-#घोषणा VPX322_ADDR_SAT			0x0030
+#define TLV320_ADDRESS      0x34
+#define VPX322_ADDR_ANALOGCONTROL1	0x02
+#define VPX322_ADDR_BRIGHTNESS0		0x0127
+#define VPX322_ADDR_BRIGHTNESS1		0x0131
+#define VPX322_ADDR_CONTRAST0		0x0128
+#define VPX322_ADDR_CONTRAST1		0x0132
+#define VPX322_ADDR_HUE			0x00dc
+#define VPX322_ADDR_SAT			0x0030
 
-काष्ठा go7007_usb_board अणु
-	अचिन्हित पूर्णांक flags;
-	काष्ठा go7007_board_info मुख्य_info;
-पूर्ण;
+struct go7007_usb_board {
+	unsigned int flags;
+	struct go7007_board_info main_info;
+};
 
-काष्ठा go7007_usb अणु
-	काष्ठा go7007_usb_board *board;
-	काष्ठा mutex i2c_lock;
-	काष्ठा usb_device *usbdev;
-	काष्ठा urb *video_urbs[8];
-	काष्ठा urb *audio_urbs[8];
-	काष्ठा urb *पूर्णांकr_urb;
-पूर्ण;
+struct go7007_usb {
+	struct go7007_usb_board *board;
+	struct mutex i2c_lock;
+	struct usb_device *usbdev;
+	struct urb *video_urbs[8];
+	struct urb *audio_urbs[8];
+	struct urb *intr_urb;
+};
 
-अटल अचिन्हित अक्षर aud_regs[] = अणु
+static unsigned char aud_regs[] = {
 	0x1e, 0x00,
 	0x00, 0x17,
 	0x02, 0x17,
@@ -62,17 +61,17 @@ MODULE_LICENSE("GPL v2");
 	0x10, 0x00,
 	0x12, 0x01,
 	0x00, 0x00,
-पूर्ण;
+};
 
 
-अटल अचिन्हित अक्षर vid_regs[] = अणु
+static unsigned char vid_regs[] = {
 	0xF2, 0x0f,
 	0xAA, 0x00,
 	0xF8, 0xff,
 	0x00, 0x00,
-पूर्ण;
+};
 
-अटल u16 vid_regs_fp[] = अणु
+static u16 vid_regs_fp[] = {
 	0x028, 0x067,
 	0x120, 0x016,
 	0x121, 0xcF2,
@@ -95,10 +94,10 @@ MODULE_LICENSE("GPL v2");
 	0x154, 0x200,
 	0x150, 0x801,
 	0x000, 0x000
-पूर्ण;
+};
 
-/* PAL specअगरic values */
-अटल u16 vid_regs_fp_pal[] = अणु
+/* PAL specific values */
+static u16 vid_regs_fp_pal[] = {
 	0x120, 0x017,
 	0x121, 0xd22,
 	0x122, 0x122,
@@ -107,347 +106,347 @@ MODULE_LICENSE("GPL v2");
 	0x12C, 0x122,
 	0x140, 0x060,
 	0x000, 0x000,
-पूर्ण;
+};
 
-काष्ठा s2250 अणु
-	काष्ठा v4l2_subdev sd;
-	काष्ठा v4l2_ctrl_handler hdl;
+struct s2250 {
+	struct v4l2_subdev sd;
+	struct v4l2_ctrl_handler hdl;
 	v4l2_std_id std;
-	पूर्णांक input;
-	पूर्णांक brightness;
-	पूर्णांक contrast;
-	पूर्णांक saturation;
-	पूर्णांक hue;
-	पूर्णांक reg12b_val;
-	पूर्णांक audio_input;
-	काष्ठा i2c_client *audio;
-पूर्ण;
+	int input;
+	int brightness;
+	int contrast;
+	int saturation;
+	int hue;
+	int reg12b_val;
+	int audio_input;
+	struct i2c_client *audio;
+};
 
-अटल अंतरभूत काष्ठा s2250 *to_state(काष्ठा v4l2_subdev *sd)
-अणु
-	वापस container_of(sd, काष्ठा s2250, sd);
-पूर्ण
+static inline struct s2250 *to_state(struct v4l2_subdev *sd)
+{
+	return container_of(sd, struct s2250, sd);
+}
 
 /* from go7007-usb.c which is Copyright (C) 2005-2006 Micronas USA Inc.*/
-अटल पूर्णांक go7007_usb_venकरोr_request(काष्ठा go7007 *go, u16 request,
-	u16 value, u16 index, व्योम *transfer_buffer, पूर्णांक length, पूर्णांक in)
-अणु
-	काष्ठा go7007_usb *usb = go->hpi_context;
-	पूर्णांक समयout = 5000;
+static int go7007_usb_vendor_request(struct go7007 *go, u16 request,
+	u16 value, u16 index, void *transfer_buffer, int length, int in)
+{
+	struct go7007_usb *usb = go->hpi_context;
+	int timeout = 5000;
 
-	अगर (in) अणु
-		वापस usb_control_msg(usb->usbdev,
+	if (in) {
+		return usb_control_msg(usb->usbdev,
 				usb_rcvctrlpipe(usb->usbdev, 0), request,
-				USB_TYPE_VENDOR | USB_RECIP_DEVICE | USB_सूची_IN,
-				value, index, transfer_buffer, length, समयout);
-	पूर्ण अन्यथा अणु
-		वापस usb_control_msg(usb->usbdev,
+				USB_TYPE_VENDOR | USB_RECIP_DEVICE | USB_DIR_IN,
+				value, index, transfer_buffer, length, timeout);
+	} else {
+		return usb_control_msg(usb->usbdev,
 				usb_sndctrlpipe(usb->usbdev, 0), request,
 				USB_TYPE_VENDOR | USB_RECIP_DEVICE,
-				value, index, transfer_buffer, length, समयout);
-	पूर्ण
-पूर्ण
+				value, index, transfer_buffer, length, timeout);
+	}
+}
 /* end from go7007-usb.c which is Copyright (C) 2005-2006 Micronas USA Inc.*/
 
-अटल पूर्णांक ग_लिखो_reg(काष्ठा i2c_client *client, u8 reg, u8 value)
-अणु
-	काष्ठा go7007 *go = i2c_get_adapdata(client->adapter);
-	काष्ठा go7007_usb *usb;
-	पूर्णांक rc;
-	पूर्णांक dev_addr = client->addr << 1;  /* firmware wants 8-bit address */
+static int write_reg(struct i2c_client *client, u8 reg, u8 value)
+{
+	struct go7007 *go = i2c_get_adapdata(client->adapter);
+	struct go7007_usb *usb;
+	int rc;
+	int dev_addr = client->addr << 1;  /* firmware wants 8-bit address */
 	u8 *buf;
 
-	अगर (go == शून्य)
-		वापस -ENODEV;
+	if (go == NULL)
+		return -ENODEV;
 
-	अगर (go->status == STATUS_SHUTDOWN)
-		वापस -EBUSY;
+	if (go->status == STATUS_SHUTDOWN)
+		return -EBUSY;
 
 	buf = kzalloc(16, GFP_KERNEL);
-	अगर (buf == शून्य)
-		वापस -ENOMEM;
+	if (buf == NULL)
+		return -ENOMEM;
 
 	usb = go->hpi_context;
-	अगर (mutex_lock_पूर्णांकerruptible(&usb->i2c_lock) != 0) अणु
+	if (mutex_lock_interruptible(&usb->i2c_lock) != 0) {
 		dev_info(&client->dev, "i2c lock failed\n");
-		kमुक्त(buf);
-		वापस -EINTR;
-	पूर्ण
-	rc = go7007_usb_venकरोr_request(go, 0x55, dev_addr,
+		kfree(buf);
+		return -EINTR;
+	}
+	rc = go7007_usb_vendor_request(go, 0x55, dev_addr,
 				       (reg<<8 | value),
 				       buf,
 				       16, 1);
 
 	mutex_unlock(&usb->i2c_lock);
-	kमुक्त(buf);
-	वापस rc;
-पूर्ण
+	kfree(buf);
+	return rc;
+}
 
-अटल पूर्णांक ग_लिखो_reg_fp(काष्ठा i2c_client *client, u16 addr, u16 val)
-अणु
-	काष्ठा go7007 *go = i2c_get_adapdata(client->adapter);
-	काष्ठा go7007_usb *usb;
-	पूर्णांक rc;
+static int write_reg_fp(struct i2c_client *client, u16 addr, u16 val)
+{
+	struct go7007 *go = i2c_get_adapdata(client->adapter);
+	struct go7007_usb *usb;
+	int rc;
 	u8 *buf;
-	काष्ठा s2250 *dec = i2c_get_clientdata(client);
+	struct s2250 *dec = i2c_get_clientdata(client);
 
-	अगर (go == शून्य)
-		वापस -ENODEV;
+	if (go == NULL)
+		return -ENODEV;
 
-	अगर (go->status == STATUS_SHUTDOWN)
-		वापस -EBUSY;
+	if (go->status == STATUS_SHUTDOWN)
+		return -EBUSY;
 
 	buf = kzalloc(16, GFP_KERNEL);
 
-	अगर (buf == शून्य)
-		वापस -ENOMEM;
+	if (buf == NULL)
+		return -ENOMEM;
 
 
 
-	स_रखो(buf, 0xcd, 6);
+	memset(buf, 0xcd, 6);
 
 	usb = go->hpi_context;
-	अगर (mutex_lock_पूर्णांकerruptible(&usb->i2c_lock) != 0) अणु
+	if (mutex_lock_interruptible(&usb->i2c_lock) != 0) {
 		dev_info(&client->dev, "i2c lock failed\n");
-		kमुक्त(buf);
-		वापस -EINTR;
-	पूर्ण
-	rc = go7007_usb_venकरोr_request(go, 0x57, addr, val, buf, 16, 1);
+		kfree(buf);
+		return -EINTR;
+	}
+	rc = go7007_usb_vendor_request(go, 0x57, addr, val, buf, 16, 1);
 	mutex_unlock(&usb->i2c_lock);
-	अगर (rc < 0) अणु
-		kमुक्त(buf);
-		वापस rc;
-	पूर्ण
+	if (rc < 0) {
+		kfree(buf);
+		return rc;
+	}
 
-	अगर (buf[0] == 0) अणु
-		अचिन्हित पूर्णांक subaddr, val_पढ़ो;
+	if (buf[0] == 0) {
+		unsigned int subaddr, val_read;
 
 		subaddr = (buf[4] << 8) + buf[5];
-		val_पढ़ो = (buf[2] << 8) + buf[3];
-		kमुक्त(buf);
-		अगर (val_पढ़ो != val) अणु
+		val_read = (buf[2] << 8) + buf[3];
+		kfree(buf);
+		if (val_read != val) {
 			dev_info(&client->dev, "invalid fp write %x %x\n",
-				 val_पढ़ो, val);
-			वापस -EFAULT;
-		पूर्ण
-		अगर (subaddr != addr) अणु
+				 val_read, val);
+			return -EFAULT;
+		}
+		if (subaddr != addr) {
 			dev_info(&client->dev, "invalid fp write addr %x %x\n",
 				 subaddr, addr);
-			वापस -EFAULT;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		kमुक्त(buf);
-		वापस -EFAULT;
-	पूर्ण
+			return -EFAULT;
+		}
+	} else {
+		kfree(buf);
+		return -EFAULT;
+	}
 
 	/* save last 12b value */
-	अगर (addr == 0x12b)
+	if (addr == 0x12b)
 		dec->reg12b_val = val;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक पढ़ो_reg_fp(काष्ठा i2c_client *client, u16 addr, u16 *val)
-अणु
-	काष्ठा go7007 *go = i2c_get_adapdata(client->adapter);
-	काष्ठा go7007_usb *usb;
-	पूर्णांक rc;
+static int read_reg_fp(struct i2c_client *client, u16 addr, u16 *val)
+{
+	struct go7007 *go = i2c_get_adapdata(client->adapter);
+	struct go7007_usb *usb;
+	int rc;
 	u8 *buf;
 
-	अगर (go == शून्य)
-		वापस -ENODEV;
+	if (go == NULL)
+		return -ENODEV;
 
-	अगर (go->status == STATUS_SHUTDOWN)
-		वापस -EBUSY;
+	if (go->status == STATUS_SHUTDOWN)
+		return -EBUSY;
 
 	buf = kzalloc(16, GFP_KERNEL);
 
-	अगर (buf == शून्य)
-		वापस -ENOMEM;
+	if (buf == NULL)
+		return -ENOMEM;
 
 
 
-	स_रखो(buf, 0xcd, 6);
+	memset(buf, 0xcd, 6);
 	usb = go->hpi_context;
-	अगर (mutex_lock_पूर्णांकerruptible(&usb->i2c_lock) != 0) अणु
+	if (mutex_lock_interruptible(&usb->i2c_lock) != 0) {
 		dev_info(&client->dev, "i2c lock failed\n");
-		kमुक्त(buf);
-		वापस -EINTR;
-	पूर्ण
-	rc = go7007_usb_venकरोr_request(go, 0x58, addr, 0, buf, 16, 1);
+		kfree(buf);
+		return -EINTR;
+	}
+	rc = go7007_usb_vendor_request(go, 0x58, addr, 0, buf, 16, 1);
 	mutex_unlock(&usb->i2c_lock);
-	अगर (rc < 0) अणु
-		kमुक्त(buf);
-		वापस rc;
-	पूर्ण
+	if (rc < 0) {
+		kfree(buf);
+		return rc;
+	}
 
 	*val = (buf[0] << 8) | buf[1];
-	kमुक्त(buf);
+	kfree(buf);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक ग_लिखो_regs(काष्ठा i2c_client *client, u8 *regs)
-अणु
-	पूर्णांक i;
+static int write_regs(struct i2c_client *client, u8 *regs)
+{
+	int i;
 
-	क्रम (i = 0; !((regs[i] == 0x00) && (regs[i+1] == 0x00)); i += 2) अणु
-		अगर (ग_लिखो_reg(client, regs[i], regs[i+1]) < 0) अणु
+	for (i = 0; !((regs[i] == 0x00) && (regs[i+1] == 0x00)); i += 2) {
+		if (write_reg(client, regs[i], regs[i+1]) < 0) {
 			dev_info(&client->dev, "failed\n");
-			वापस -1;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return -1;
+		}
+	}
+	return 0;
+}
 
-अटल पूर्णांक ग_लिखो_regs_fp(काष्ठा i2c_client *client, u16 *regs)
-अणु
-	पूर्णांक i;
+static int write_regs_fp(struct i2c_client *client, u16 *regs)
+{
+	int i;
 
-	क्रम (i = 0; !((regs[i] == 0x00) && (regs[i+1] == 0x00)); i += 2) अणु
-		अगर (ग_लिखो_reg_fp(client, regs[i], regs[i+1]) < 0) अणु
+	for (i = 0; !((regs[i] == 0x00) && (regs[i+1] == 0x00)); i += 2) {
+		if (write_reg_fp(client, regs[i], regs[i+1]) < 0) {
 			dev_info(&client->dev, "failed fp\n");
-			वापस -1;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return -1;
+		}
+	}
+	return 0;
+}
 
 
 /* ------------------------------------------------------------------------- */
 
-अटल पूर्णांक s2250_s_video_routing(काष्ठा v4l2_subdev *sd, u32 input, u32 output,
+static int s2250_s_video_routing(struct v4l2_subdev *sd, u32 input, u32 output,
 				 u32 config)
-अणु
-	काष्ठा s2250 *state = to_state(sd);
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
-	पूर्णांक vidsys;
+{
+	struct s2250 *state = to_state(sd);
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
+	int vidsys;
 
 	vidsys = (state->std == V4L2_STD_NTSC) ? 0x01 : 0x00;
-	अगर (input == 0) अणु
+	if (input == 0) {
 		/* composite */
-		ग_लिखो_reg_fp(client, 0x20, 0x020 | vidsys);
-		ग_लिखो_reg_fp(client, 0x21, 0x662);
-		ग_लिखो_reg_fp(client, 0x140, 0x060);
-	पूर्ण अन्यथा अगर (input == 1) अणु
+		write_reg_fp(client, 0x20, 0x020 | vidsys);
+		write_reg_fp(client, 0x21, 0x662);
+		write_reg_fp(client, 0x140, 0x060);
+	} else if (input == 1) {
 		/* S-Video */
-		ग_लिखो_reg_fp(client, 0x20, 0x040 | vidsys);
-		ग_लिखो_reg_fp(client, 0x21, 0x666);
-		ग_लिखो_reg_fp(client, 0x140, 0x060);
-	पूर्ण अन्यथा अणु
-		वापस -EINVAL;
-	पूर्ण
+		write_reg_fp(client, 0x20, 0x040 | vidsys);
+		write_reg_fp(client, 0x21, 0x666);
+		write_reg_fp(client, 0x140, 0x060);
+	} else {
+		return -EINVAL;
+	}
 	state->input = input;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक s2250_s_std(काष्ठा v4l2_subdev *sd, v4l2_std_id norm)
-अणु
-	काष्ठा s2250 *state = to_state(sd);
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
+static int s2250_s_std(struct v4l2_subdev *sd, v4l2_std_id norm)
+{
+	struct s2250 *state = to_state(sd);
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
 	u16 vidsource;
 
 	vidsource = (state->input == 1) ? 0x040 : 0x020;
-	अगर (norm & V4L2_STD_625_50) अणु
-		ग_लिखो_regs_fp(client, vid_regs_fp);
-		ग_लिखो_regs_fp(client, vid_regs_fp_pal);
-		ग_लिखो_reg_fp(client, 0x20, vidsource);
-	पूर्ण अन्यथा अणु
-		ग_लिखो_regs_fp(client, vid_regs_fp);
-		ग_लिखो_reg_fp(client, 0x20, vidsource | 1);
-	पूर्ण
+	if (norm & V4L2_STD_625_50) {
+		write_regs_fp(client, vid_regs_fp);
+		write_regs_fp(client, vid_regs_fp_pal);
+		write_reg_fp(client, 0x20, vidsource);
+	} else {
+		write_regs_fp(client, vid_regs_fp);
+		write_reg_fp(client, 0x20, vidsource | 1);
+	}
 	state->std = norm;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक s2250_s_ctrl(काष्ठा v4l2_ctrl *ctrl)
-अणु
-	काष्ठा s2250 *state = container_of(ctrl->handler, काष्ठा s2250, hdl);
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(&state->sd);
+static int s2250_s_ctrl(struct v4l2_ctrl *ctrl)
+{
+	struct s2250 *state = container_of(ctrl->handler, struct s2250, hdl);
+	struct i2c_client *client = v4l2_get_subdevdata(&state->sd);
 	u16 oldvalue;
 
-	चयन (ctrl->id) अणु
-	हाल V4L2_CID_BRIGHTNESS:
-		पढ़ो_reg_fp(client, VPX322_ADDR_BRIGHTNESS0, &oldvalue);
-		ग_लिखो_reg_fp(client, VPX322_ADDR_BRIGHTNESS0,
+	switch (ctrl->id) {
+	case V4L2_CID_BRIGHTNESS:
+		read_reg_fp(client, VPX322_ADDR_BRIGHTNESS0, &oldvalue);
+		write_reg_fp(client, VPX322_ADDR_BRIGHTNESS0,
 			     ctrl->val | (oldvalue & ~0xff));
-		पढ़ो_reg_fp(client, VPX322_ADDR_BRIGHTNESS1, &oldvalue);
-		ग_लिखो_reg_fp(client, VPX322_ADDR_BRIGHTNESS1,
+		read_reg_fp(client, VPX322_ADDR_BRIGHTNESS1, &oldvalue);
+		write_reg_fp(client, VPX322_ADDR_BRIGHTNESS1,
 			     ctrl->val | (oldvalue & ~0xff));
-		ग_लिखो_reg_fp(client, 0x140, 0x60);
-		अवरोध;
-	हाल V4L2_CID_CONTRAST:
-		पढ़ो_reg_fp(client, VPX322_ADDR_CONTRAST0, &oldvalue);
-		ग_लिखो_reg_fp(client, VPX322_ADDR_CONTRAST0,
+		write_reg_fp(client, 0x140, 0x60);
+		break;
+	case V4L2_CID_CONTRAST:
+		read_reg_fp(client, VPX322_ADDR_CONTRAST0, &oldvalue);
+		write_reg_fp(client, VPX322_ADDR_CONTRAST0,
 			     ctrl->val | (oldvalue & ~0x3f));
-		पढ़ो_reg_fp(client, VPX322_ADDR_CONTRAST1, &oldvalue);
-		ग_लिखो_reg_fp(client, VPX322_ADDR_CONTRAST1,
+		read_reg_fp(client, VPX322_ADDR_CONTRAST1, &oldvalue);
+		write_reg_fp(client, VPX322_ADDR_CONTRAST1,
 			     ctrl->val | (oldvalue & ~0x3f));
-		ग_लिखो_reg_fp(client, 0x140, 0x60);
-		अवरोध;
-	हाल V4L2_CID_SATURATION:
-		ग_लिखो_reg_fp(client, VPX322_ADDR_SAT, ctrl->val);
-		अवरोध;
-	हाल V4L2_CID_HUE:
-		ग_लिखो_reg_fp(client, VPX322_ADDR_HUE, ctrl->val);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		write_reg_fp(client, 0x140, 0x60);
+		break;
+	case V4L2_CID_SATURATION:
+		write_reg_fp(client, VPX322_ADDR_SAT, ctrl->val);
+		break;
+	case V4L2_CID_HUE:
+		write_reg_fp(client, VPX322_ADDR_HUE, ctrl->val);
+		break;
+	default:
+		return -EINVAL;
+	}
+	return 0;
+}
 
-अटल पूर्णांक s2250_set_fmt(काष्ठा v4l2_subdev *sd,
-		काष्ठा v4l2_subdev_pad_config *cfg,
-		काष्ठा v4l2_subdev_क्रमmat *क्रमmat)
-अणु
-	काष्ठा v4l2_mbus_framefmt *fmt = &क्रमmat->क्रमmat;
-	काष्ठा s2250 *state = to_state(sd);
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
+static int s2250_set_fmt(struct v4l2_subdev *sd,
+		struct v4l2_subdev_pad_config *cfg,
+		struct v4l2_subdev_format *format)
+{
+	struct v4l2_mbus_framefmt *fmt = &format->format;
+	struct s2250 *state = to_state(sd);
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
 
-	अगर (क्रमmat->pad)
-		वापस -EINVAL;
+	if (format->pad)
+		return -EINVAL;
 
-	अगर (क्रमmat->which == V4L2_SUBDEV_FORMAT_TRY)
-		वापस 0;
+	if (format->which == V4L2_SUBDEV_FORMAT_TRY)
+		return 0;
 
-	अगर (fmt->height < 640) अणु
-		ग_लिखो_reg_fp(client, 0x12b, state->reg12b_val | 0x400);
-		ग_लिखो_reg_fp(client, 0x140, 0x060);
-	पूर्ण अन्यथा अणु
-		ग_लिखो_reg_fp(client, 0x12b, state->reg12b_val & ~0x400);
-		ग_लिखो_reg_fp(client, 0x140, 0x060);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	if (fmt->height < 640) {
+		write_reg_fp(client, 0x12b, state->reg12b_val | 0x400);
+		write_reg_fp(client, 0x140, 0x060);
+	} else {
+		write_reg_fp(client, 0x12b, state->reg12b_val & ~0x400);
+		write_reg_fp(client, 0x140, 0x060);
+	}
+	return 0;
+}
 
-अटल पूर्णांक s2250_s_audio_routing(काष्ठा v4l2_subdev *sd, u32 input, u32 output,
+static int s2250_s_audio_routing(struct v4l2_subdev *sd, u32 input, u32 output,
 				 u32 config)
-अणु
-	काष्ठा s2250 *state = to_state(sd);
+{
+	struct s2250 *state = to_state(sd);
 
-	चयन (input) अणु
-	हाल 0:
-		ग_लिखो_reg(state->audio, 0x08, 0x02); /* Line In */
-		अवरोध;
-	हाल 1:
-		ग_लिखो_reg(state->audio, 0x08, 0x04); /* Mic */
-		अवरोध;
-	हाल 2:
-		ग_लिखो_reg(state->audio, 0x08, 0x05); /* Mic Boost */
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	switch (input) {
+	case 0:
+		write_reg(state->audio, 0x08, 0x02); /* Line In */
+		break;
+	case 1:
+		write_reg(state->audio, 0x08, 0x04); /* Mic */
+		break;
+	case 2:
+		write_reg(state->audio, 0x08, 0x05); /* Mic Boost */
+		break;
+	default:
+		return -EINVAL;
+	}
 	state->audio_input = input;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक s2250_log_status(काष्ठा v4l2_subdev *sd)
-अणु
-	काष्ठा s2250 *state = to_state(sd);
+static int s2250_log_status(struct v4l2_subdev *sd)
+{
+	struct s2250 *state = to_state(sd);
 
 	v4l2_info(sd, "Standard: %s\n", state->std == V4L2_STD_NTSC ? "NTSC" :
 					state->std == V4L2_STD_PAL ? "PAL" :
@@ -460,61 +459,61 @@ MODULE_LICENSE("GPL v2");
 					state->audio_input == 1 ? "Mic" :
 					state->audio_input == 2 ? "Mic Boost" :
 					"error");
-	वापस v4l2_ctrl_subdev_log_status(sd);
-पूर्ण
+	return v4l2_ctrl_subdev_log_status(sd);
+}
 
 /* --------------------------------------------------------------------------*/
 
-अटल स्थिर काष्ठा v4l2_ctrl_ops s2250_ctrl_ops = अणु
+static const struct v4l2_ctrl_ops s2250_ctrl_ops = {
 	.s_ctrl = s2250_s_ctrl,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_core_ops s2250_core_ops = अणु
+static const struct v4l2_subdev_core_ops s2250_core_ops = {
 	.log_status = s2250_log_status,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_audio_ops s2250_audio_ops = अणु
+static const struct v4l2_subdev_audio_ops s2250_audio_ops = {
 	.s_routing = s2250_s_audio_routing,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_video_ops s2250_video_ops = अणु
+static const struct v4l2_subdev_video_ops s2250_video_ops = {
 	.s_std = s2250_s_std,
 	.s_routing = s2250_s_video_routing,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_pad_ops s2250_pad_ops = अणु
+static const struct v4l2_subdev_pad_ops s2250_pad_ops = {
 	.set_fmt = s2250_set_fmt,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_ops s2250_ops = अणु
+static const struct v4l2_subdev_ops s2250_ops = {
 	.core = &s2250_core_ops,
 	.audio = &s2250_audio_ops,
 	.video = &s2250_video_ops,
 	.pad = &s2250_pad_ops,
-पूर्ण;
+};
 
 /* --------------------------------------------------------------------------*/
 
-अटल पूर्णांक s2250_probe(काष्ठा i2c_client *client,
-		       स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा i2c_client *audio;
-	काष्ठा i2c_adapter *adapter = client->adapter;
-	काष्ठा s2250 *state;
-	काष्ठा v4l2_subdev *sd;
+static int s2250_probe(struct i2c_client *client,
+		       const struct i2c_device_id *id)
+{
+	struct i2c_client *audio;
+	struct i2c_adapter *adapter = client->adapter;
+	struct s2250 *state;
+	struct v4l2_subdev *sd;
 	u8 *data;
-	काष्ठा go7007 *go = i2c_get_adapdata(adapter);
-	काष्ठा go7007_usb *usb = go->hpi_context;
+	struct go7007 *go = i2c_get_adapdata(adapter);
+	struct go7007_usb *usb = go->hpi_context;
 
 	audio = i2c_new_dummy_device(adapter, TLV320_ADDRESS >> 1);
-	अगर (IS_ERR(audio))
-		वापस PTR_ERR(audio);
+	if (IS_ERR(audio))
+		return PTR_ERR(audio);
 
-	state = kzalloc(माप(काष्ठा s2250), GFP_KERNEL);
-	अगर (state == शून्य) अणु
-		i2c_unरेजिस्टर_device(audio);
-		वापस -ENOMEM;
-	पूर्ण
+	state = kzalloc(sizeof(struct s2250), GFP_KERNEL);
+	if (state == NULL) {
+		i2c_unregister_device(audio);
+		return -ENOMEM;
+	}
 
 	sd = &state->sd;
 	v4l2_i2c_subdev_init(sd, client, &s2250_ops);
@@ -532,13 +531,13 @@ MODULE_LICENSE("GPL v2");
 	v4l2_ctrl_new_std(&state->hdl, &s2250_ctrl_ops,
 		V4L2_CID_HUE, -512, 511, 1, 0);
 	sd->ctrl_handler = &state->hdl;
-	अगर (state->hdl.error) अणु
-		पूर्णांक err = state->hdl.error;
+	if (state->hdl.error) {
+		int err = state->hdl.error;
 
-		v4l2_ctrl_handler_मुक्त(&state->hdl);
-		kमुक्त(state);
-		वापस err;
-	पूर्ण
+		v4l2_ctrl_handler_free(&state->hdl);
+		kfree(state);
+		return err;
+	}
 
 	state->std = V4L2_STD_NTSC;
 	state->brightness = 50;
@@ -548,86 +547,86 @@ MODULE_LICENSE("GPL v2");
 	state->audio = audio;
 
 	/* initialize the audio */
-	अगर (ग_लिखो_regs(audio, aud_regs) < 0) अणु
+	if (write_regs(audio, aud_regs) < 0) {
 		dev_err(&client->dev, "error initializing audio\n");
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	अगर (ग_लिखो_regs(client, vid_regs) < 0) अणु
+	if (write_regs(client, vid_regs) < 0) {
 		dev_err(&client->dev, "error initializing decoder\n");
-		जाओ fail;
-	पूर्ण
-	अगर (ग_लिखो_regs_fp(client, vid_regs_fp) < 0) अणु
+		goto fail;
+	}
+	if (write_regs_fp(client, vid_regs_fp) < 0) {
 		dev_err(&client->dev, "error initializing decoder\n");
-		जाओ fail;
-	पूर्ण
-	/* set शेष channel */
+		goto fail;
+	}
+	/* set default channel */
 	/* composite */
-	ग_लिखो_reg_fp(client, 0x20, 0x020 | 1);
-	ग_लिखो_reg_fp(client, 0x21, 0x662);
-	ग_लिखो_reg_fp(client, 0x140, 0x060);
+	write_reg_fp(client, 0x20, 0x020 | 1);
+	write_reg_fp(client, 0x21, 0x662);
+	write_reg_fp(client, 0x140, 0x060);
 
-	/* set शेष audio input */
+	/* set default audio input */
 	state->audio_input = 0;
-	ग_लिखो_reg(client, 0x08, 0x02); /* Line In */
+	write_reg(client, 0x08, 0x02); /* Line In */
 
-	अगर (mutex_lock_पूर्णांकerruptible(&usb->i2c_lock) == 0) अणु
+	if (mutex_lock_interruptible(&usb->i2c_lock) == 0) {
 		data = kzalloc(16, GFP_KERNEL);
-		अगर (data != शून्य) अणु
-			पूर्णांक rc = go7007_usb_venकरोr_request(go, 0x41, 0, 0,
+		if (data != NULL) {
+			int rc = go7007_usb_vendor_request(go, 0x41, 0, 0,
 						       data, 16, 1);
 
-			अगर (rc > 0) अणु
+			if (rc > 0) {
 				u8 mask;
 
 				data[0] = 0;
 				mask = 1<<5;
 				data[0] &= ~mask;
 				data[1] |= mask;
-				go7007_usb_venकरोr_request(go, 0x40, 0,
+				go7007_usb_vendor_request(go, 0x40, 0,
 							  (data[1]<<8)
 							  + data[1],
 							  data, 16, 0);
-			पूर्ण
-			kमुक्त(data);
-		पूर्ण
+			}
+			kfree(data);
+		}
 		mutex_unlock(&usb->i2c_lock);
-	पूर्ण
+	}
 
 	v4l2_info(sd, "initialized successfully\n");
-	वापस 0;
+	return 0;
 
 fail:
-	i2c_unरेजिस्टर_device(audio);
-	v4l2_ctrl_handler_मुक्त(&state->hdl);
-	kमुक्त(state);
-	वापस -EIO;
-पूर्ण
+	i2c_unregister_device(audio);
+	v4l2_ctrl_handler_free(&state->hdl);
+	kfree(state);
+	return -EIO;
+}
 
-अटल पूर्णांक s2250_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा s2250 *state = to_state(i2c_get_clientdata(client));
+static int s2250_remove(struct i2c_client *client)
+{
+	struct s2250 *state = to_state(i2c_get_clientdata(client));
 
-	i2c_unरेजिस्टर_device(state->audio);
-	v4l2_device_unरेजिस्टर_subdev(&state->sd);
-	v4l2_ctrl_handler_मुक्त(&state->hdl);
-	kमुक्त(state);
-	वापस 0;
-पूर्ण
+	i2c_unregister_device(state->audio);
+	v4l2_device_unregister_subdev(&state->sd);
+	v4l2_ctrl_handler_free(&state->hdl);
+	kfree(state);
+	return 0;
+}
 
-अटल स्थिर काष्ठा i2c_device_id s2250_id[] = अणु
-	अणु "s2250", 0 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id s2250_id[] = {
+	{ "s2250", 0 },
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, s2250_id);
 
-अटल काष्ठा i2c_driver s2250_driver = अणु
-	.driver = अणु
+static struct i2c_driver s2250_driver = {
+	.driver = {
 		.name	= "s2250",
-	पूर्ण,
+	},
 	.probe		= s2250_probe,
-	.हटाओ		= s2250_हटाओ,
+	.remove		= s2250_remove,
 	.id_table	= s2250_id,
-पूर्ण;
+};
 
 module_i2c_driver(s2250_driver);

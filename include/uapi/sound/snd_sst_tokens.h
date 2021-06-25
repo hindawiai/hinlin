@@ -1,29 +1,28 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 /*
  * snd_sst_tokens.h - Intel SST tokens definition
  *
  * Copyright (C) 2016 Intel Corp
- * Author: Shreyas NC <shreyas.nc@पूर्णांकel.com>
+ * Author: Shreyas NC <shreyas.nc@intel.com>
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy
+ * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as version 2, as
  * published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License क्रम more details.
+ * General Public License for more details.
  */
-#अगर_अघोषित __SND_SST_TOKENS_H__
-#घोषणा __SND_SST_TOKENS_H__
+#ifndef __SND_SST_TOKENS_H__
+#define __SND_SST_TOKENS_H__
 
 /**
  * %SKL_TKN_UUID:               Module UUID
  *
- * %SKL_TKN_U8_BLOCK_TYPE:      Type of the निजी data block.Can be:
- *                              tuples, bytes, लघु and words
+ * %SKL_TKN_U8_BLOCK_TYPE:      Type of the private data block.Can be:
+ *                              tuples, bytes, short and words
  *
  * %SKL_TKN_U8_IN_PIN_TYPE:     Input pin type,
  *                              homogenous=0, heterogenous=1
@@ -31,10 +30,10 @@
  * %SKL_TKN_U8_OUT_PIN_TYPE:    Output pin type,
  *                              homogenous=0, heterogenous=1
  * %SKL_TKN_U8_DYN_IN_PIN:      Configure Input pin dynamically
- *                              अगर true
+ *                              if true
  *
  * %SKL_TKN_U8_DYN_OUT_PIN:     Configure Output pin dynamically
- *                              अगर true
+ *                              if true
  *
  * %SKL_TKN_U8_IN_QUEUE_COUNT:  Store the number of Input pins
  *
@@ -103,16 +102,16 @@
  * %SKL_TKN_U32_PIPE_PRIORITY:  Pipe priority value
  * %SKL_TKN_U32_PIPE_MEM_PGS:   Pipe resource pages
  *
- * %SKL_TKN_U32_सूची_PIN_COUNT:  Value क्रम the direction to set input/output
- *                              क्रमmats and the pin count.
+ * %SKL_TKN_U32_DIR_PIN_COUNT:  Value for the direction to set input/output
+ *                              formats and the pin count.
  *                              The first 4 bits have the direction
  *                              value and the next 4 have
  *                              the pin count value.
- *                              SKL_सूची_IN = 0, SKL_सूची_OUT = 1.
- *                              The input and output क्रमmats
+ *                              SKL_DIR_IN = 0, SKL_DIR_OUT = 1.
+ *                              The input and output formats
  *                              share the same set of tokens
  *                              with the distinction between input
- *                              and output made by पढ़ोing direction
+ *                              and output made by reading direction
  *                              token.
  *
  * %SKL_TKN_U32_FMT_CH:         Supported channel count
@@ -123,7 +122,7 @@
  *
  * %SKL_TKN_U32_FMT_SAMPLE_SIZE:Number of samples in the container
  *
- * %SKL_TKN_U32_FMT_CH_CONFIG:  Supported channel configurations क्रम the
+ * %SKL_TKN_U32_FMT_CH_CONFIG:  Supported channel configurations for the
  *                              input/output.
  *
  * %SKL_TKN_U32_FMT_INTERLEAVE: Interleaving style which can be per
@@ -132,7 +131,7 @@
  *                              SKL_INTERLEAVING_PER_SAMPLE = 1,
  *
  * %SKL_TKN_U32_FMT_SAMPLE_TYPE:
- *                              Specअगरies the sample type. Can take the
+ *                              Specifies the sample type. Can take the
  *                              values: SKL_SAMPLE_TYPE_INT_MSB = 0,
  *                              SKL_SAMPLE_TYPE_INT_LSB = 1,
  *                              SKL_SAMPLE_TYPE_INT_SIGNED = 2,
@@ -153,61 +152,61 @@
  *
  * %SKL_TKN_U32_CAPS_SIZE:      Caps size
  *
- * %SKL_TKN_U32_PROC_DOMAIN:    Specअगरy processing करोमुख्य
+ * %SKL_TKN_U32_PROC_DOMAIN:    Specify processing domain
  *
- * %SKL_TKN_U32_LIB_COUNT:      Specअगरies the number of libraries
+ * %SKL_TKN_U32_LIB_COUNT:      Specifies the number of libraries
  *
- * %SKL_TKN_STR_LIB_NAME:       Specअगरies the library name
+ * %SKL_TKN_STR_LIB_NAME:       Specifies the library name
  *
- * %SKL_TKN_U32_PMODE:		Specअगरies the घातer mode क्रम pipe
+ * %SKL_TKN_U32_PMODE:		Specifies the power mode for pipe
  *
- * %SKL_TKL_U32_D0I3_CAPS:	Specअगरies the D0i3 capability क्रम module
+ * %SKL_TKL_U32_D0I3_CAPS:	Specifies the D0i3 capability for module
  *
  * %SKL_TKN_U32_DMA_BUF_SIZE:	DMA buffer size in millisec
  *
- * %SKL_TKN_U32_PIPE_सूची:       Specअगरies pipe direction. Can be
+ * %SKL_TKN_U32_PIPE_DIR:       Specifies pipe direction. Can be
  *                              playback/capture.
  *
  * %SKL_TKN_U32_NUM_CONFIGS:    Number of pipe configs
  *
- * %SKL_TKN_U32_PATH_MEM_PGS:   Size of memory (in pages) required क्रम pipeline
+ * %SKL_TKN_U32_PATH_MEM_PGS:   Size of memory (in pages) required for pipeline
  *                              and its data
  *
- * %SKL_TKN_U32_PIPE_CONFIG_ID: Config id क्रम the modules in the pipe
+ * %SKL_TKN_U32_PIPE_CONFIG_ID: Config id for the modules in the pipe
  *                              and PCM params supported by that pipe
  *                              config. This is used as index to fill
  *                              up the pipe config and module config
- *                              काष्ठाure.
+ *                              structure.
  *
  * %SKL_TKN_U32_CFG_FREQ:
  * %SKL_TKN_U8_CFG_CHAN:
  * %SKL_TKN_U8_CFG_BPS:         PCM params (freq, channels, bits per sample)
- *                              supported क्रम each of the pipe configs.
+ *                              supported for each of the pipe configs.
  *
- * %SKL_TKN_CFG_MOD_RES_ID:     Module's resource index क्रम each of the
+ * %SKL_TKN_CFG_MOD_RES_ID:     Module's resource index for each of the
  *                              pipe config
  *
- * %SKL_TKN_CFG_MOD_FMT_ID:     Module's पूर्णांकerface index क्रम each of the
+ * %SKL_TKN_CFG_MOD_FMT_ID:     Module's interface index for each of the
  *                              pipe config
  *
- * %SKL_TKN_U8_NUM_MOD:         Number of modules in the manअगरest
+ * %SKL_TKN_U8_NUM_MOD:         Number of modules in the manifest
  *
- * %SKL_TKN_MM_U8_MOD_IDX:      Current index of the module in the manअगरest
+ * %SKL_TKN_MM_U8_MOD_IDX:      Current index of the module in the manifest
  *
- * %SKL_TKN_MM_U8_NUM_RES:      Number of resources क्रम the module
+ * %SKL_TKN_MM_U8_NUM_RES:      Number of resources for the module
  *
- * %SKL_TKN_MM_U8_NUM_INTF:     Number of पूर्णांकerfaces क्रम the module
+ * %SKL_TKN_MM_U8_NUM_INTF:     Number of interfaces for the module
  *
- * %SKL_TKN_MM_U32_RES_ID:      Resource index क्रम the resource info to
- *                              be filled पूर्णांकo.
+ * %SKL_TKN_MM_U32_RES_ID:      Resource index for the resource info to
+ *                              be filled into.
  *                              A module can support multiple resource
  *                              configuration and is represnted as a
  *                              resource table. This index is used to
- *                              fill inक्रमmation पूर्णांकo appropriate index.
+ *                              fill information into appropriate index.
  *
  * %SKL_TKN_MM_U32_CPS:         DSP cycles per second
  *
- * %SKL_TKN_MM_U32_DMA_SIZE:    Allocated buffer size क्रम gateway DMA
+ * %SKL_TKN_MM_U32_DMA_SIZE:    Allocated buffer size for gateway DMA
  *
  * %SKL_TKN_MM_U32_CPC:         DSP cycles allocated per frame
  *
@@ -217,32 +216,32 @@
  *
  * %SKL_TKN_MM_U32_PIN_BUF:     Buffer size of the module pin
  *
- * %SKL_TKN_MM_U32_FMT_ID:      Format index क्रम each of the पूर्णांकerface/
- *                              क्रमmat inक्रमmation to be filled पूर्णांकo.
+ * %SKL_TKN_MM_U32_FMT_ID:      Format index for each of the interface/
+ *                              format information to be filled into.
  *
- * %SKL_TKN_MM_U32_NUM_IN_FMT:  Number of input क्रमmats
- * %SKL_TKN_MM_U32_NUM_OUT_FMT: Number of output क्रमmats
+ * %SKL_TKN_MM_U32_NUM_IN_FMT:  Number of input formats
+ * %SKL_TKN_MM_U32_NUM_OUT_FMT: Number of output formats
  *
- * %SKL_TKN_U32_ASTATE_IDX:     Table Index क्रम the A-State entry to be filled
- *                              with kcps and घड़ी source
+ * %SKL_TKN_U32_ASTATE_IDX:     Table Index for the A-State entry to be filled
+ *                              with kcps and clock source
  *
  * %SKL_TKN_U32_ASTATE_COUNT:   Number of valid entries in A-State table
  *
- * %SKL_TKN_U32_ASTATE_KCPS:    Specअगरies the core load threshold (in kilo
- *                              cycles per second) below which DSP is घड़ीed
- *                              from source specअगरied by घड़ी source.
+ * %SKL_TKN_U32_ASTATE_KCPS:    Specifies the core load threshold (in kilo
+ *                              cycles per second) below which DSP is clocked
+ *                              from source specified by clock source.
  *
- * %SKL_TKN_U32_ASTATE_CLK_SRC: Clock source क्रम A-State entry
+ * %SKL_TKN_U32_ASTATE_CLK_SRC: Clock source for A-State entry
  *
- * module_id and loadable flags करोnt have tokens as these values will be
- * पढ़ो from the DSP FW manअगरest
+ * module_id and loadable flags dont have tokens as these values will be
+ * read from the DSP FW manifest
  *
- * Tokens defined can be used either in the manअगरest or widget निजी data.
+ * Tokens defined can be used either in the manifest or widget private data.
  *
- * SKL_TKN_MM is used as a suffix क्रम all tokens that represent
- * module data in the manअगरest.
+ * SKL_TKN_MM is used as a suffix for all tokens that represent
+ * module data in the manifest.
  */
-क्रमागत SKL_TKNS अणु
+enum SKL_TKNS {
 	SKL_TKN_UUID = 1,
 	SKL_TKN_U8_NUM_BLOCKS,
 	SKL_TKN_U8_BLOCK_TYPE,
@@ -271,7 +270,7 @@
 	SKL_TKN_U32_PIPE_CONN_TYPE,
 	SKL_TKN_U32_PIPE_PRIORITY,
 	SKL_TKN_U32_PIPE_MEM_PGS,
-	SKL_TKN_U32_सूची_PIN_COUNT,
+	SKL_TKN_U32_DIR_PIN_COUNT,
 	SKL_TKN_U32_FMT_CH,
 	SKL_TKN_U32_FMT_FREQ,
 	SKL_TKN_U32_FMT_BIT_DEPTH,
@@ -295,7 +294,7 @@
 	SKL_TKN_U32_D0I3_CAPS = SKL_TKL_U32_D0I3_CAPS,
 	SKL_TKN_U32_DMA_BUF_SIZE,
 
-	SKL_TKN_U32_PIPE_सूचीECTION,
+	SKL_TKN_U32_PIPE_DIRECTION,
 	SKL_TKN_U32_PIPE_CONFIG_ID,
 	SKL_TKN_U32_NUM_CONFIGS,
 	SKL_TKN_U32_PATH_MEM_PGS,
@@ -326,6 +325,6 @@
 	SKL_TKN_U32_ASTATE_KCPS,
 	SKL_TKN_U32_ASTATE_CLK_SRC,
 	SKL_TKN_MAX = SKL_TKN_U32_ASTATE_CLK_SRC,
-पूर्ण;
+};
 
-#पूर्ण_अगर
+#endif

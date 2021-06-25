@@ -1,51 +1,50 @@
-<शैली गुरु>
-#अगर_अघोषित _LINUX_PSI_TYPES_H
-#घोषणा _LINUX_PSI_TYPES_H
+#ifndef _LINUX_PSI_TYPES_H
+#define _LINUX_PSI_TYPES_H
 
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/seqlock.h>
-#समावेश <linux/types.h>
-#समावेश <linux/kref.h>
-#समावेश <linux/रुको.h>
+#include <linux/kthread.h>
+#include <linux/seqlock.h>
+#include <linux/types.h>
+#include <linux/kref.h>
+#include <linux/wait.h>
 
-#अगर_घोषित CONFIG_PSI
+#ifdef CONFIG_PSI
 
 /* Tracked task states */
-क्रमागत psi_task_count अणु
+enum psi_task_count {
 	NR_IOWAIT,
 	NR_MEMSTALL,
 	NR_RUNNING,
 	/*
 	 * This can't have values other than 0 or 1 and could be
-	 * implemented as a bit flag. But क्रम now we still have room
+	 * implemented as a bit flag. But for now we still have room
 	 * in the first cacheline of psi_group_cpu, and this way we
-	 * करोn't have to special हाल any state tracking क्रम it.
+	 * don't have to special case any state tracking for it.
 	 */
 	NR_ONCPU,
 	NR_PSI_TASK_COUNTS = 4,
-पूर्ण;
+};
 
-/* Task state biपंचांगasks */
-#घोषणा TSK_IOWAIT	(1 << NR_IOWAIT)
-#घोषणा TSK_MEMSTALL	(1 << NR_MEMSTALL)
-#घोषणा TSK_RUNNING	(1 << NR_RUNNING)
-#घोषणा TSK_ONCPU	(1 << NR_ONCPU)
+/* Task state bitmasks */
+#define TSK_IOWAIT	(1 << NR_IOWAIT)
+#define TSK_MEMSTALL	(1 << NR_MEMSTALL)
+#define TSK_RUNNING	(1 << NR_RUNNING)
+#define TSK_ONCPU	(1 << NR_ONCPU)
 
 /* Resources that workloads could be stalled on */
-क्रमागत psi_res अणु
+enum psi_res {
 	PSI_IO,
 	PSI_MEM,
 	PSI_CPU,
 	NR_PSI_RESOURCES = 3,
-पूर्ण;
+};
 
 /*
- * Pressure states क्रम each resource:
+ * Pressure states for each resource:
  *
  * SOME: Stalled tasks & working tasks
  * FULL: Stalled tasks & no working tasks
  */
-क्रमागत psi_states अणु
+enum psi_states {
 	PSI_IO_SOME,
 	PSI_IO_FULL,
 	PSI_MEM_SOME,
@@ -55,92 +54,92 @@
 	/* Only per-CPU, to weigh the CPU in the global average: */
 	PSI_NONIDLE,
 	NR_PSI_STATES = 7,
-पूर्ण;
+};
 
-क्रमागत psi_aggregators अणु
+enum psi_aggregators {
 	PSI_AVGS = 0,
 	PSI_POLL,
 	NR_PSI_AGGREGATORS,
-पूर्ण;
+};
 
-काष्ठा psi_group_cpu अणु
+struct psi_group_cpu {
 	/* 1st cacheline updated by the scheduler */
 
 	/* Aggregator needs to know of concurrent changes */
 	seqcount_t seq ____cacheline_aligned_in_smp;
 
-	/* States of the tasks beदीर्घing to this group */
-	अचिन्हित पूर्णांक tasks[NR_PSI_TASK_COUNTS];
+	/* States of the tasks belonging to this group */
+	unsigned int tasks[NR_PSI_TASK_COUNTS];
 
 	/* Aggregate pressure state derived from the tasks */
 	u32 state_mask;
 
-	/* Period समय sampling buckets क्रम each state of पूर्णांकerest (ns) */
-	u32 बार[NR_PSI_STATES];
+	/* Period time sampling buckets for each state of interest (ns) */
+	u32 times[NR_PSI_STATES];
 
-	/* Time of last task change in this group (rq_घड़ी) */
+	/* Time of last task change in this group (rq_clock) */
 	u64 state_start;
 
 	/* 2nd cacheline updated by the aggregator */
 
 	/* Delta detection against the sampling buckets */
-	u32 बार_prev[NR_PSI_AGGREGATORS][NR_PSI_STATES]
+	u32 times_prev[NR_PSI_AGGREGATORS][NR_PSI_STATES]
 			____cacheline_aligned_in_smp;
-पूर्ण;
+};
 
-/* PSI growth tracking winकरोw */
-काष्ठा psi_winकरोw अणु
-	/* Winकरोw size in ns */
+/* PSI growth tracking window */
+struct psi_window {
+	/* Window size in ns */
 	u64 size;
 
-	/* Start समय of the current winकरोw in ns */
-	u64 start_समय;
+	/* Start time of the current window in ns */
+	u64 start_time;
 
-	/* Value at the start of the winकरोw */
+	/* Value at the start of the window */
 	u64 start_value;
 
-	/* Value growth in the previous winकरोw */
+	/* Value growth in the previous window */
 	u64 prev_growth;
-पूर्ण;
+};
 
-काष्ठा psi_trigger अणु
+struct psi_trigger {
 	/* PSI state being monitored by the trigger */
-	क्रमागत psi_states state;
+	enum psi_states state;
 
-	/* User-spacअगरied threshold in ns */
+	/* User-spacified threshold in ns */
 	u64 threshold;
 
 	/* List node inside triggers list */
-	काष्ठा list_head node;
+	struct list_head node;
 
-	/* Backpoपूर्णांकer needed during trigger deकाष्ठाion */
-	काष्ठा psi_group *group;
+	/* Backpointer needed during trigger destruction */
+	struct psi_group *group;
 
-	/* Wait queue क्रम polling */
-	रुको_queue_head_t event_रुको;
+	/* Wait queue for polling */
+	wait_queue_head_t event_wait;
 
 	/* Pending event flag */
-	पूर्णांक event;
+	int event;
 
-	/* Tracking winकरोw */
-	काष्ठा psi_winकरोw win;
+	/* Tracking window */
+	struct psi_window win;
 
 	/*
-	 * Time last event was generated. Used क्रम rate-limiting
-	 * events to one per winकरोw
+	 * Time last event was generated. Used for rate-limiting
+	 * events to one per window
 	 */
-	u64 last_event_समय;
+	u64 last_event_time;
 
-	/* Refcounting to prevent premature deकाष्ठाion */
-	काष्ठा kref refcount;
-पूर्ण;
+	/* Refcounting to prevent premature destruction */
+	struct kref refcount;
+};
 
-काष्ठा psi_group अणु
+struct psi_group {
 	/* Protects data used by the aggregator */
-	काष्ठा mutex avgs_lock;
+	struct mutex avgs_lock;
 
-	/* Per-cpu task state & समय tracking */
-	काष्ठा psi_group_cpu __percpu *pcpu;
+	/* Per-cpu task state & time tracking */
+	struct psi_group_cpu __percpu *pcpu;
 
 	/* Running pressure averages */
 	u64 avg_total[NR_PSI_STATES - 1];
@@ -148,37 +147,37 @@
 	u64 avg_next_update;
 
 	/* Aggregator work control */
-	काष्ठा delayed_work avgs_work;
+	struct delayed_work avgs_work;
 
-	/* Total stall बार and sampled pressure averages */
+	/* Total stall times and sampled pressure averages */
 	u64 total[NR_PSI_AGGREGATORS][NR_PSI_STATES - 1];
-	अचिन्हित दीर्घ avg[NR_PSI_STATES - 1][3];
+	unsigned long avg[NR_PSI_STATES - 1][3];
 
 	/* Monitor work control */
-	काष्ठा task_काष्ठा __rcu *poll_task;
-	काष्ठा समयr_list poll_समयr;
-	रुको_queue_head_t poll_रुको;
+	struct task_struct __rcu *poll_task;
+	struct timer_list poll_timer;
+	wait_queue_head_t poll_wait;
 	atomic_t poll_wakeup;
 
 	/* Protects data used by the monitor */
-	काष्ठा mutex trigger_lock;
+	struct mutex trigger_lock;
 
 	/* Configured polling triggers */
-	काष्ठा list_head triggers;
+	struct list_head triggers;
 	u32 nr_triggers[NR_PSI_STATES - 1];
 	u32 poll_states;
 	u64 poll_min_period;
 
-	/* Total stall बार at the start of monitor activation */
+	/* Total stall times at the start of monitor activation */
 	u64 polling_total[NR_PSI_STATES - 1];
 	u64 polling_next_update;
 	u64 polling_until;
-पूर्ण;
+};
 
-#अन्यथा /* CONFIG_PSI */
+#else /* CONFIG_PSI */
 
-काष्ठा psi_group अणु पूर्ण;
+struct psi_group { };
 
-#पूर्ण_अगर /* CONFIG_PSI */
+#endif /* CONFIG_PSI */
 
-#पूर्ण_अगर /* _LINUX_PSI_TYPES_H */
+#endif /* _LINUX_PSI_TYPES_H */

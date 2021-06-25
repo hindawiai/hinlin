@@ -1,158 +1,157 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _IIO_BUFFER_GENERIC_IMPL_H_
-#घोषणा _IIO_BUFFER_GENERIC_IMPL_H_
-#समावेश <linux/sysfs.h>
-#समावेश <linux/kref.h>
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _IIO_BUFFER_GENERIC_IMPL_H_
+#define _IIO_BUFFER_GENERIC_IMPL_H_
+#include <linux/sysfs.h>
+#include <linux/kref.h>
 
-#अगर_घोषित CONFIG_IIO_BUFFER
+#ifdef CONFIG_IIO_BUFFER
 
-#समावेश <uapi/linux/iio/buffer.h>
+#include <uapi/linux/iio/buffer.h>
 
-काष्ठा iio_dev;
-काष्ठा iio_buffer;
+struct iio_dev;
+struct iio_buffer;
 
 /**
  * INDIO_BUFFER_FLAG_FIXED_WATERMARK - Watermark level of the buffer can not be
- *   configured. It has a fixed value which will be buffer specअगरic.
+ *   configured. It has a fixed value which will be buffer specific.
  */
-#घोषणा INDIO_BUFFER_FLAG_FIXED_WATERMARK BIT(0)
+#define INDIO_BUFFER_FLAG_FIXED_WATERMARK BIT(0)
 
 /**
- * काष्ठा iio_buffer_access_funcs - access functions क्रम buffers.
+ * struct iio_buffer_access_funcs - access functions for buffers.
  * @store_to:		actually store stuff to the buffer
- * @पढ़ो:		try to get a specअगरied number of bytes (must exist)
- * @data_available:	indicates how much data is available क्रम पढ़ोing from
+ * @read:		try to get a specified number of bytes (must exist)
+ * @data_available:	indicates how much data is available for reading from
  *			the buffer.
- * @request_update:	अगर a parameter change has been marked, update underlying
+ * @request_update:	if a parameter change has been marked, update underlying
  *			storage.
  * @set_bytes_per_datum:set number of bytes per datum
  * @set_length:		set number of datums in buffer
- * @enable:             called अगर the buffer is attached to a device and the
+ * @enable:             called if the buffer is attached to a device and the
  *                      device starts sampling. Calls are balanced with
  *                      @disable.
- * @disable:            called अगर the buffer is attached to a device and the
+ * @disable:            called if the buffer is attached to a device and the
  *                      device stops sampling. Calles are balanced with @enable.
  * @release:		called when the last reference to the buffer is dropped,
- *			should मुक्त all resources allocated by the buffer.
+ *			should free all resources allocated by the buffer.
  * @modes:		Supported operating modes by this buffer type
- * @flags:		A biपंचांगask combination of INDIO_BUFFER_FLAG_*
+ * @flags:		A bitmask combination of INDIO_BUFFER_FLAG_*
  *
- * The purpose of this काष्ठाure is to make the buffer element
- * modular as event क्रम a given driver, dअगरferent useहालs may require
- * dअगरferent buffer designs (space efficiency vs speed क्रम example).
+ * The purpose of this structure is to make the buffer element
+ * modular as event for a given driver, different usecases may require
+ * different buffer designs (space efficiency vs speed for example).
  *
  * It is worth noting that a given buffer implementation may only support a
  * small proportion of these functions.  The core code 'should' cope fine with
  * any of them not existing.
  **/
-काष्ठा iio_buffer_access_funcs अणु
-	पूर्णांक (*store_to)(काष्ठा iio_buffer *buffer, स्थिर व्योम *data);
-	पूर्णांक (*पढ़ो)(काष्ठा iio_buffer *buffer, माप_प्रकार n, अक्षर __user *buf);
-	माप_प्रकार (*data_available)(काष्ठा iio_buffer *buffer);
+struct iio_buffer_access_funcs {
+	int (*store_to)(struct iio_buffer *buffer, const void *data);
+	int (*read)(struct iio_buffer *buffer, size_t n, char __user *buf);
+	size_t (*data_available)(struct iio_buffer *buffer);
 
-	पूर्णांक (*request_update)(काष्ठा iio_buffer *buffer);
+	int (*request_update)(struct iio_buffer *buffer);
 
-	पूर्णांक (*set_bytes_per_datum)(काष्ठा iio_buffer *buffer, माप_प्रकार bpd);
-	पूर्णांक (*set_length)(काष्ठा iio_buffer *buffer, अचिन्हित पूर्णांक length);
+	int (*set_bytes_per_datum)(struct iio_buffer *buffer, size_t bpd);
+	int (*set_length)(struct iio_buffer *buffer, unsigned int length);
 
-	पूर्णांक (*enable)(काष्ठा iio_buffer *buffer, काष्ठा iio_dev *indio_dev);
-	पूर्णांक (*disable)(काष्ठा iio_buffer *buffer, काष्ठा iio_dev *indio_dev);
+	int (*enable)(struct iio_buffer *buffer, struct iio_dev *indio_dev);
+	int (*disable)(struct iio_buffer *buffer, struct iio_dev *indio_dev);
 
-	व्योम (*release)(काष्ठा iio_buffer *buffer);
+	void (*release)(struct iio_buffer *buffer);
 
-	अचिन्हित पूर्णांक modes;
-	अचिन्हित पूर्णांक flags;
-पूर्ण;
+	unsigned int modes;
+	unsigned int flags;
+};
 
 /**
- * काष्ठा iio_buffer - general buffer काष्ठाure
+ * struct iio_buffer - general buffer structure
  *
- * Note that the पूर्णांकernals of this काष्ठाure should only be of पूर्णांकerest to
+ * Note that the internals of this structure should only be of interest to
  * those writing new buffer implementations.
  */
-काष्ठा iio_buffer अणु
+struct iio_buffer {
 	/** @length: Number of datums in buffer. */
-	अचिन्हित पूर्णांक length;
+	unsigned int length;
 
 	/** @flags: File ops flags including busy flag. */
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
-	/**  @bytes_per_datum: Size of inभागidual datum including बारtamp. */
-	माप_प्रकार bytes_per_datum;
+	/**  @bytes_per_datum: Size of individual datum including timestamp. */
+	size_t bytes_per_datum;
 
 	/**
 	 * @access: Buffer access functions associated with the
 	 * implementation.
 	 */
-	स्थिर काष्ठा iio_buffer_access_funcs *access;
+	const struct iio_buffer_access_funcs *access;
 
-	/** @scan_mask: Biपंचांगask used in masking scan mode elements. */
-	दीर्घ *scan_mask;
+	/** @scan_mask: Bitmask used in masking scan mode elements. */
+	long *scan_mask;
 
 	/** @demux_list: List of operations required to demux the scan. */
-	काष्ठा list_head demux_list;
+	struct list_head demux_list;
 
-	/** @pollq: Wait queue to allow क्रम polling on the buffer. */
-	रुको_queue_head_t pollq;
+	/** @pollq: Wait queue to allow for polling on the buffer. */
+	wait_queue_head_t pollq;
 
-	/** @watermark: Number of datums to रुको क्रम poll/पढ़ो. */
-	अचिन्हित पूर्णांक watermark;
+	/** @watermark: Number of datums to wait for poll/read. */
+	unsigned int watermark;
 
-	/* निजी: */
-	/* @scan_बारtamp: Does the scan mode include a बारtamp. */
-	bool scan_बारtamp;
+	/* private: */
+	/* @scan_timestamp: Does the scan mode include a timestamp. */
+	bool scan_timestamp;
 
 	/* @buffer_attr_list: List of buffer attributes. */
-	काष्ठा list_head buffer_attr_list;
+	struct list_head buffer_attr_list;
 
 	/*
 	 * @buffer_group: Attributes of the new buffer group.
 	 * Includes scan elements attributes.
 	 */
-	काष्ठा attribute_group buffer_group;
+	struct attribute_group buffer_group;
 
 	/* @attrs: Standard attributes of the buffer. */
-	स्थिर काष्ठा attribute **attrs;
+	const struct attribute **attrs;
 
-	/* @demux_bounce: Buffer क्रम करोing gather from incoming scan. */
-	व्योम *demux_bounce;
+	/* @demux_bounce: Buffer for doing gather from incoming scan. */
+	void *demux_bounce;
 
 	/* @attached_entry: Entry in the devices list of buffers attached by the driver. */
-	काष्ठा list_head attached_entry;
+	struct list_head attached_entry;
 
 	/* @buffer_list: Entry in the devices list of current buffers. */
-	काष्ठा list_head buffer_list;
+	struct list_head buffer_list;
 
 	/* @ref: Reference count of the buffer. */
-	काष्ठा kref ref;
-पूर्ण;
+	struct kref ref;
+};
 
 /**
- * iio_update_buffers() - add or हटाओ buffer from active list
+ * iio_update_buffers() - add or remove buffer from active list
  * @indio_dev:		device to add buffer to
  * @insert_buffer:	buffer to insert
- * @हटाओ_buffer:	buffer_to_हटाओ
+ * @remove_buffer:	buffer_to_remove
  *
- * Note this will tear करोwn the all buffering and build it up again
+ * Note this will tear down the all buffering and build it up again
  */
-पूर्णांक iio_update_buffers(काष्ठा iio_dev *indio_dev,
-		       काष्ठा iio_buffer *insert_buffer,
-		       काष्ठा iio_buffer *हटाओ_buffer);
+int iio_update_buffers(struct iio_dev *indio_dev,
+		       struct iio_buffer *insert_buffer,
+		       struct iio_buffer *remove_buffer);
 
 /**
- * iio_buffer_init() - Initialize the buffer काष्ठाure
+ * iio_buffer_init() - Initialize the buffer structure
  * @buffer:		buffer to be initialized
  **/
-व्योम iio_buffer_init(काष्ठा iio_buffer *buffer);
+void iio_buffer_init(struct iio_buffer *buffer);
 
-काष्ठा iio_buffer *iio_buffer_get(काष्ठा iio_buffer *buffer);
-व्योम iio_buffer_put(काष्ठा iio_buffer *buffer);
+struct iio_buffer *iio_buffer_get(struct iio_buffer *buffer);
+void iio_buffer_put(struct iio_buffer *buffer);
 
-#अन्यथा /* CONFIG_IIO_BUFFER */
+#else /* CONFIG_IIO_BUFFER */
 
-अटल अंतरभूत व्योम iio_buffer_get(काष्ठा iio_buffer *buffer) अणुपूर्ण
-अटल अंतरभूत व्योम iio_buffer_put(काष्ठा iio_buffer *buffer) अणुपूर्ण
+static inline void iio_buffer_get(struct iio_buffer *buffer) {}
+static inline void iio_buffer_put(struct iio_buffer *buffer) {}
 
-#पूर्ण_अगर /* CONFIG_IIO_BUFFER */
-#पूर्ण_अगर /* _IIO_BUFFER_GENERIC_IMPL_H_ */
+#endif /* CONFIG_IIO_BUFFER */
+#endif /* _IIO_BUFFER_GENERIC_IMPL_H_ */

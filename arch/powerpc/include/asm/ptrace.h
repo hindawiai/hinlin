@@ -1,325 +1,324 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2001 PPC64 Team, IBM Corp
  *
- * This काष्ठा defines the way the रेजिस्टरs are stored on the
- * kernel stack during a प्रणाली call or other kernel entry.
+ * This struct defines the way the registers are stored on the
+ * kernel stack during a system call or other kernel entry.
  *
- * this should only contain अस्थिर regs
- * since we can keep non-अस्थिर in the thपढ़ो_काष्ठा
- * should set this up when only अस्थिरs are saved
- * by पूर्णांकr code.
+ * this should only contain volatile regs
+ * since we can keep non-volatile in the thread_struct
+ * should set this up when only volatiles are saved
+ * by intr code.
  *
  * Since this is going on the stack, *CARE MUST BE TAKEN* to insure
- * that the overall काष्ठाure is a multiple of 16 bytes in length.
+ * that the overall structure is a multiple of 16 bytes in length.
  *
- * Note that the offsets of the fields in this काष्ठा correspond with
- * the PT_* values below.  This simplअगरies arch/घातerpc/kernel/ptrace.c.
+ * Note that the offsets of the fields in this struct correspond with
+ * the PT_* values below.  This simplifies arch/powerpc/kernel/ptrace.c.
  */
-#अगर_अघोषित _ASM_POWERPC_PTRACE_H
-#घोषणा _ASM_POWERPC_PTRACE_H
+#ifndef _ASM_POWERPC_PTRACE_H
+#define _ASM_POWERPC_PTRACE_H
 
-#समावेश <linux/err.h>
-#समावेश <uapi/यंत्र/ptrace.h>
-#समावेश <यंत्र/यंत्र-स्थिर.h>
+#include <linux/err.h>
+#include <uapi/asm/ptrace.h>
+#include <asm/asm-const.h>
 
-#अगर_अघोषित __ASSEMBLY__
-काष्ठा pt_regs
-अणु
-	जोड़ अणु
-		काष्ठा user_pt_regs user_regs;
-		काष्ठा अणु
-			अचिन्हित दीर्घ gpr[32];
-			अचिन्हित दीर्घ nip;
-			अचिन्हित दीर्घ msr;
-			अचिन्हित दीर्घ orig_gpr3;
-			अचिन्हित दीर्घ ctr;
-			अचिन्हित दीर्घ link;
-			अचिन्हित दीर्घ xer;
-			अचिन्हित दीर्घ ccr;
-#अगर_घोषित CONFIG_PPC64
-			अचिन्हित दीर्घ softe;
-#अन्यथा
-			अचिन्हित दीर्घ mq;
-#पूर्ण_अगर
-			अचिन्हित दीर्घ trap;
-			अचिन्हित दीर्घ dar;
-			अचिन्हित दीर्घ dsisr;
-			अचिन्हित दीर्घ result;
-		पूर्ण;
-	पूर्ण;
+#ifndef __ASSEMBLY__
+struct pt_regs
+{
+	union {
+		struct user_pt_regs user_regs;
+		struct {
+			unsigned long gpr[32];
+			unsigned long nip;
+			unsigned long msr;
+			unsigned long orig_gpr3;
+			unsigned long ctr;
+			unsigned long link;
+			unsigned long xer;
+			unsigned long ccr;
+#ifdef CONFIG_PPC64
+			unsigned long softe;
+#else
+			unsigned long mq;
+#endif
+			unsigned long trap;
+			unsigned long dar;
+			unsigned long dsisr;
+			unsigned long result;
+		};
+	};
 
-	जोड़ अणु
-		काष्ठा अणु
-#अगर_घोषित CONFIG_PPC64
-			अचिन्हित दीर्घ ppr;
-#पूर्ण_अगर
-			जोड़ अणु
-#अगर_घोषित CONFIG_PPC_KUAP
-				अचिन्हित दीर्घ kuap;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PPC_PKEY
-				अचिन्हित दीर्घ amr;
-#पूर्ण_अगर
-			पूर्ण;
-#अगर_घोषित CONFIG_PPC_PKEY
-			अचिन्हित दीर्घ iamr;
-#पूर्ण_अगर
-		पूर्ण;
-		अचिन्हित दीर्घ __pad[4];	/* Maपूर्णांकain 16 byte पूर्णांकerrupt stack alignment */
-	पूर्ण;
-पूर्ण;
-#पूर्ण_अगर
+	union {
+		struct {
+#ifdef CONFIG_PPC64
+			unsigned long ppr;
+#endif
+			union {
+#ifdef CONFIG_PPC_KUAP
+				unsigned long kuap;
+#endif
+#ifdef CONFIG_PPC_PKEY
+				unsigned long amr;
+#endif
+			};
+#ifdef CONFIG_PPC_PKEY
+			unsigned long iamr;
+#endif
+		};
+		unsigned long __pad[4];	/* Maintain 16 byte interrupt stack alignment */
+	};
+};
+#endif
 
 
-#घोषणा STACK_FRAME_WITH_PT_REGS (STACK_FRAME_OVERHEAD + माप(काष्ठा pt_regs))
+#define STACK_FRAME_WITH_PT_REGS (STACK_FRAME_OVERHEAD + sizeof(struct pt_regs))
 
-#अगर_घोषित __घातerpc64__
+#ifdef __powerpc64__
 
 /*
  * Size of redzone that userspace is allowed to use below the stack
- * poपूर्णांकer.  This is 288 in the 64-bit big-endian ELF ABI, and 512 in
+ * pointer.  This is 288 in the 64-bit big-endian ELF ABI, and 512 in
  * the new ELFv2 little-endian ABI, so we allow the larger amount.
  *
  * For kernel code we allow a 288-byte redzone, in order to conserve
  * kernel stack space; gcc currently only uses 288 bytes, and will
  * hopefully allow explicit control of the redzone size in future.
  */
-#घोषणा USER_REDZONE_SIZE	512
-#घोषणा KERNEL_REDZONE_SIZE	288
+#define USER_REDZONE_SIZE	512
+#define KERNEL_REDZONE_SIZE	288
 
-#घोषणा STACK_FRAME_OVERHEAD	112	/* size of minimum stack frame */
-#घोषणा STACK_FRAME_LR_SAVE	2	/* Location of LR in stack frame */
-#घोषणा STACK_FRAME_REGS_MARKER	ASM_CONST(0x7265677368657265)
-#घोषणा STACK_INT_FRAME_SIZE	(माप(काष्ठा pt_regs) + \
+#define STACK_FRAME_OVERHEAD	112	/* size of minimum stack frame */
+#define STACK_FRAME_LR_SAVE	2	/* Location of LR in stack frame */
+#define STACK_FRAME_REGS_MARKER	ASM_CONST(0x7265677368657265)
+#define STACK_INT_FRAME_SIZE	(sizeof(struct pt_regs) + \
 				 STACK_FRAME_OVERHEAD + KERNEL_REDZONE_SIZE)
-#घोषणा STACK_FRAME_MARKER	12
+#define STACK_FRAME_MARKER	12
 
-#अगर_घोषित PPC64_ELF_ABI_v2
-#घोषणा STACK_FRAME_MIN_SIZE	32
-#अन्यथा
-#घोषणा STACK_FRAME_MIN_SIZE	STACK_FRAME_OVERHEAD
-#पूर्ण_अगर
+#ifdef PPC64_ELF_ABI_v2
+#define STACK_FRAME_MIN_SIZE	32
+#else
+#define STACK_FRAME_MIN_SIZE	STACK_FRAME_OVERHEAD
+#endif
 
-/* Size of dummy stack frame allocated when calling संकेत handler. */
-#घोषणा __SIGNAL_FRAMESIZE	128
-#घोषणा __SIGNAL_FRAMESIZE32	64
+/* Size of dummy stack frame allocated when calling signal handler. */
+#define __SIGNAL_FRAMESIZE	128
+#define __SIGNAL_FRAMESIZE32	64
 
-#अन्यथा /* __घातerpc64__ */
+#else /* __powerpc64__ */
 
-#घोषणा USER_REDZONE_SIZE	0
-#घोषणा KERNEL_REDZONE_SIZE	0
-#घोषणा STACK_FRAME_OVERHEAD	16	/* size of minimum stack frame */
-#घोषणा STACK_FRAME_LR_SAVE	1	/* Location of LR in stack frame */
-#घोषणा STACK_FRAME_REGS_MARKER	ASM_CONST(0x72656773)
-#घोषणा STACK_INT_FRAME_SIZE	(माप(काष्ठा pt_regs) + STACK_FRAME_OVERHEAD)
-#घोषणा STACK_FRAME_MARKER	2
-#घोषणा STACK_FRAME_MIN_SIZE	STACK_FRAME_OVERHEAD
+#define USER_REDZONE_SIZE	0
+#define KERNEL_REDZONE_SIZE	0
+#define STACK_FRAME_OVERHEAD	16	/* size of minimum stack frame */
+#define STACK_FRAME_LR_SAVE	1	/* Location of LR in stack frame */
+#define STACK_FRAME_REGS_MARKER	ASM_CONST(0x72656773)
+#define STACK_INT_FRAME_SIZE	(sizeof(struct pt_regs) + STACK_FRAME_OVERHEAD)
+#define STACK_FRAME_MARKER	2
+#define STACK_FRAME_MIN_SIZE	STACK_FRAME_OVERHEAD
 
-/* Size of stack frame allocated when calling संकेत handler. */
-#घोषणा __SIGNAL_FRAMESIZE	64
+/* Size of stack frame allocated when calling signal handler. */
+#define __SIGNAL_FRAMESIZE	64
 
-#पूर्ण_अगर /* __घातerpc64__ */
+#endif /* __powerpc64__ */
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-अटल अंतरभूत अचिन्हित दीर्घ inकाष्ठाion_poपूर्णांकer(काष्ठा pt_regs *regs)
-अणु
-	वापस regs->nip;
-पूर्ण
+static inline unsigned long instruction_pointer(struct pt_regs *regs)
+{
+	return regs->nip;
+}
 
-अटल अंतरभूत व्योम inकाष्ठाion_poपूर्णांकer_set(काष्ठा pt_regs *regs,
-		अचिन्हित दीर्घ val)
-अणु
+static inline void instruction_pointer_set(struct pt_regs *regs,
+		unsigned long val)
+{
 	regs->nip = val;
-पूर्ण
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ user_stack_poपूर्णांकer(काष्ठा pt_regs *regs)
-अणु
-	वापस regs->gpr[1];
-पूर्ण
+static inline unsigned long user_stack_pointer(struct pt_regs *regs)
+{
+	return regs->gpr[1];
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ frame_poपूर्णांकer(काष्ठा pt_regs *regs)
-अणु
-	वापस 0;
-पूर्ण
+static inline unsigned long frame_pointer(struct pt_regs *regs)
+{
+	return 0;
+}
 
-#अगर_घोषित CONFIG_SMP
-बाह्य अचिन्हित दीर्घ profile_pc(काष्ठा pt_regs *regs);
-#अन्यथा
-#घोषणा profile_pc(regs) inकाष्ठाion_poपूर्णांकer(regs)
-#पूर्ण_अगर
+#ifdef CONFIG_SMP
+extern unsigned long profile_pc(struct pt_regs *regs);
+#else
+#define profile_pc(regs) instruction_pointer(regs)
+#endif
 
-दीर्घ करो_syscall_trace_enter(काष्ठा pt_regs *regs);
-व्योम करो_syscall_trace_leave(काष्ठा pt_regs *regs);
+long do_syscall_trace_enter(struct pt_regs *regs);
+void do_syscall_trace_leave(struct pt_regs *regs);
 
-#अगर_घोषित __घातerpc64__
-#घोषणा user_mode(regs) ((((regs)->msr) >> MSR_PR_LG) & 0x1)
-#अन्यथा
-#घोषणा user_mode(regs) (((regs)->msr & MSR_PR) != 0)
-#पूर्ण_अगर
+#ifdef __powerpc64__
+#define user_mode(regs) ((((regs)->msr) >> MSR_PR_LG) & 0x1)
+#else
+#define user_mode(regs) (((regs)->msr & MSR_PR) != 0)
+#endif
 
-#घोषणा क्रमce_successful_syscall_वापस()   \
-	करो अणु \
-		set_thपढ़ो_flag(TIF_NOERROR); \
-	पूर्ण जबतक(0)
+#define force_successful_syscall_return()   \
+	do { \
+		set_thread_flag(TIF_NOERROR); \
+	} while(0)
 
-#घोषणा current_pt_regs() \
-	((काष्ठा pt_regs *)((अचिन्हित दीर्घ)task_stack_page(current) + THREAD_SIZE) - 1)
+#define current_pt_regs() \
+	((struct pt_regs *)((unsigned long)task_stack_page(current) + THREAD_SIZE) - 1)
 
 /*
  * The 4 low bits (0xf) are available as flags to overload the trap word,
- * because पूर्णांकerrupt vectors have minimum alignment of 0x10. TRAP_FLAGS_MASK
+ * because interrupt vectors have minimum alignment of 0x10. TRAP_FLAGS_MASK
  * must cover the bits used as flags, including bit 0 which is used as the
  * "norestart" bit.
  */
-#अगर_घोषित __घातerpc64__
-#घोषणा TRAP_FLAGS_MASK		0x1
-#अन्यथा
+#ifdef __powerpc64__
+#define TRAP_FLAGS_MASK		0x1
+#else
 /*
  * On 4xx we use bit 1 in the trap word to indicate whether the exception
  * is a critical exception (1 means it is).
  */
-#घोषणा TRAP_FLAGS_MASK		0xf
-#घोषणा IS_CRITICAL_EXC(regs)	(((regs)->trap & 2) != 0)
-#घोषणा IS_MCHECK_EXC(regs)	(((regs)->trap & 4) != 0)
-#घोषणा IS_DEBUG_EXC(regs)	(((regs)->trap & 8) != 0)
-#पूर्ण_अगर /* __घातerpc64__ */
-#घोषणा TRAP(regs)		((regs)->trap & ~TRAP_FLAGS_MASK)
+#define TRAP_FLAGS_MASK		0xf
+#define IS_CRITICAL_EXC(regs)	(((regs)->trap & 2) != 0)
+#define IS_MCHECK_EXC(regs)	(((regs)->trap & 4) != 0)
+#define IS_DEBUG_EXC(regs)	(((regs)->trap & 8) != 0)
+#endif /* __powerpc64__ */
+#define TRAP(regs)		((regs)->trap & ~TRAP_FLAGS_MASK)
 
-अटल __always_अंतरभूत व्योम set_trap(काष्ठा pt_regs *regs, अचिन्हित दीर्घ val)
-अणु
+static __always_inline void set_trap(struct pt_regs *regs, unsigned long val)
+{
 	regs->trap = (regs->trap & TRAP_FLAGS_MASK) | (val & ~TRAP_FLAGS_MASK);
-पूर्ण
+}
 
-अटल अंतरभूत bool trap_is_scv(काष्ठा pt_regs *regs)
-अणु
-	वापस (IS_ENABLED(CONFIG_PPC_BOOK3S_64) && TRAP(regs) == 0x3000);
-पूर्ण
+static inline bool trap_is_scv(struct pt_regs *regs)
+{
+	return (IS_ENABLED(CONFIG_PPC_BOOK3S_64) && TRAP(regs) == 0x3000);
+}
 
-अटल अंतरभूत bool trap_is_unsupported_scv(काष्ठा pt_regs *regs)
-अणु
-	वापस IS_ENABLED(CONFIG_PPC_BOOK3S_64) && TRAP(regs) == 0x7ff0;
-पूर्ण
+static inline bool trap_is_unsupported_scv(struct pt_regs *regs)
+{
+	return IS_ENABLED(CONFIG_PPC_BOOK3S_64) && TRAP(regs) == 0x7ff0;
+}
 
-अटल अंतरभूत bool trap_is_syscall(काष्ठा pt_regs *regs)
-अणु
-	वापस (trap_is_scv(regs) || TRAP(regs) == 0xc00);
-पूर्ण
+static inline bool trap_is_syscall(struct pt_regs *regs)
+{
+	return (trap_is_scv(regs) || TRAP(regs) == 0xc00);
+}
 
-अटल अंतरभूत bool trap_norestart(काष्ठा pt_regs *regs)
-अणु
-	वापस regs->trap & 0x1;
-पूर्ण
+static inline bool trap_norestart(struct pt_regs *regs)
+{
+	return regs->trap & 0x1;
+}
 
-अटल __always_अंतरभूत व्योम set_trap_norestart(काष्ठा pt_regs *regs)
-अणु
+static __always_inline void set_trap_norestart(struct pt_regs *regs)
+{
 	regs->trap |= 0x1;
-पूर्ण
+}
 
-#घोषणा kernel_stack_poपूर्णांकer(regs) ((regs)->gpr[1])
-अटल अंतरभूत पूर्णांक is_syscall_success(काष्ठा pt_regs *regs)
-अणु
-	अगर (trap_is_scv(regs))
-		वापस !IS_ERR_VALUE((अचिन्हित दीर्घ)regs->gpr[3]);
-	अन्यथा
-		वापस !(regs->ccr & 0x10000000);
-पूर्ण
+#define kernel_stack_pointer(regs) ((regs)->gpr[1])
+static inline int is_syscall_success(struct pt_regs *regs)
+{
+	if (trap_is_scv(regs))
+		return !IS_ERR_VALUE((unsigned long)regs->gpr[3]);
+	else
+		return !(regs->ccr & 0x10000000);
+}
 
-अटल अंतरभूत दीर्घ regs_वापस_value(काष्ठा pt_regs *regs)
-अणु
-	अगर (trap_is_scv(regs))
-		वापस regs->gpr[3];
+static inline long regs_return_value(struct pt_regs *regs)
+{
+	if (trap_is_scv(regs))
+		return regs->gpr[3];
 
-	अगर (is_syscall_success(regs))
-		वापस regs->gpr[3];
-	अन्यथा
-		वापस -regs->gpr[3];
-पूर्ण
+	if (is_syscall_success(regs))
+		return regs->gpr[3];
+	else
+		return -regs->gpr[3];
+}
 
-अटल अंतरभूत व्योम regs_set_वापस_value(काष्ठा pt_regs *regs, अचिन्हित दीर्घ rc)
-अणु
+static inline void regs_set_return_value(struct pt_regs *regs, unsigned long rc)
+{
 	regs->gpr[3] = rc;
-पूर्ण
+}
 
-#घोषणा arch_has_single_step()	(1)
-#घोषणा arch_has_block_step()	(true)
-#घोषणा ARCH_HAS_USER_SINGLE_STEP_REPORT
+#define arch_has_single_step()	(1)
+#define arch_has_block_step()	(true)
+#define ARCH_HAS_USER_SINGLE_STEP_REPORT
 
 /*
  * kprobe-based event tracer support
  */
 
-#समावेश <linux/मानकघोष.स>
-#समावेश <linux/thपढ़ो_info.h>
-बाह्य पूर्णांक regs_query_रेजिस्टर_offset(स्थिर अक्षर *name);
-बाह्य स्थिर अक्षर *regs_query_रेजिस्टर_name(अचिन्हित पूर्णांक offset);
-#घोषणा MAX_REG_OFFSET (दुरत्व(काष्ठा pt_regs, dsisr))
+#include <linux/stddef.h>
+#include <linux/thread_info.h>
+extern int regs_query_register_offset(const char *name);
+extern const char *regs_query_register_name(unsigned int offset);
+#define MAX_REG_OFFSET (offsetof(struct pt_regs, dsisr))
 
 /**
- * regs_get_रेजिस्टर() - get रेजिस्टर value from its offset
- * @regs:	   pt_regs from which रेजिस्टर value is gotten
- * @offset:    offset number of the रेजिस्टर.
+ * regs_get_register() - get register value from its offset
+ * @regs:	   pt_regs from which register value is gotten
+ * @offset:    offset number of the register.
  *
- * regs_get_रेजिस्टर वापसs the value of a रेजिस्टर whose offset from @regs.
- * The @offset is the offset of the रेजिस्टर in काष्ठा pt_regs.
- * If @offset is bigger than MAX_REG_OFFSET, this वापसs 0.
+ * regs_get_register returns the value of a register whose offset from @regs.
+ * The @offset is the offset of the register in struct pt_regs.
+ * If @offset is bigger than MAX_REG_OFFSET, this returns 0.
  */
-अटल अंतरभूत अचिन्हित दीर्घ regs_get_रेजिस्टर(काष्ठा pt_regs *regs,
-						अचिन्हित पूर्णांक offset)
-अणु
-	अगर (unlikely(offset > MAX_REG_OFFSET))
-		वापस 0;
-	वापस *(अचिन्हित दीर्घ *)((अचिन्हित दीर्घ)regs + offset);
-पूर्ण
+static inline unsigned long regs_get_register(struct pt_regs *regs,
+						unsigned int offset)
+{
+	if (unlikely(offset > MAX_REG_OFFSET))
+		return 0;
+	return *(unsigned long *)((unsigned long)regs + offset);
+}
 
 /**
  * regs_within_kernel_stack() - check the address in the stack
- * @regs:      pt_regs which contains kernel stack poपूर्णांकer.
+ * @regs:      pt_regs which contains kernel stack pointer.
  * @addr:      address which is checked.
  *
  * regs_within_kernel_stack() checks @addr is within the kernel stack page(s).
- * If @addr is within the kernel stack, it वापसs true. If not, वापसs false.
+ * If @addr is within the kernel stack, it returns true. If not, returns false.
  */
 
-अटल अंतरभूत bool regs_within_kernel_stack(काष्ठा pt_regs *regs,
-						अचिन्हित दीर्घ addr)
-अणु
-	वापस ((addr & ~(THREAD_SIZE - 1))  ==
-		(kernel_stack_poपूर्णांकer(regs) & ~(THREAD_SIZE - 1)));
-पूर्ण
+static inline bool regs_within_kernel_stack(struct pt_regs *regs,
+						unsigned long addr)
+{
+	return ((addr & ~(THREAD_SIZE - 1))  ==
+		(kernel_stack_pointer(regs) & ~(THREAD_SIZE - 1)));
+}
 
 /**
  * regs_get_kernel_stack_nth() - get Nth entry of the stack
- * @regs:	pt_regs which contains kernel stack poपूर्णांकer.
+ * @regs:	pt_regs which contains kernel stack pointer.
  * @n:		stack entry number.
  *
- * regs_get_kernel_stack_nth() वापसs @n th entry of the kernel stack which
- * is specअगरied by @regs. If the @n th entry is NOT in the kernel stack,
- * this वापसs 0.
+ * regs_get_kernel_stack_nth() returns @n th entry of the kernel stack which
+ * is specified by @regs. If the @n th entry is NOT in the kernel stack,
+ * this returns 0.
  */
-अटल अंतरभूत अचिन्हित दीर्घ regs_get_kernel_stack_nth(काष्ठा pt_regs *regs,
-						      अचिन्हित पूर्णांक n)
-अणु
-	अचिन्हित दीर्घ *addr = (अचिन्हित दीर्घ *)kernel_stack_poपूर्णांकer(regs);
+static inline unsigned long regs_get_kernel_stack_nth(struct pt_regs *regs,
+						      unsigned int n)
+{
+	unsigned long *addr = (unsigned long *)kernel_stack_pointer(regs);
 	addr += n;
-	अगर (regs_within_kernel_stack(regs, (अचिन्हित दीर्घ)addr))
-		वापस *addr;
-	अन्यथा
-		वापस 0;
-पूर्ण
+	if (regs_within_kernel_stack(regs, (unsigned long)addr))
+		return *addr;
+	else
+		return 0;
+}
 
-#पूर्ण_अगर /* __ASSEMBLY__ */
+#endif /* __ASSEMBLY__ */
 
-#अगर_अघोषित __घातerpc64__
-/* We need PT_SOFTE defined at all समय to aव्योम #अगर_घोषितs */
-#घोषणा PT_SOFTE PT_MQ
-#अन्यथा /* __घातerpc64__ */
-#घोषणा PT_FPSCR32 (PT_FPR0 + 2*32 + 1)	/* each FP reg occupies 2 32-bit userspace slots */
-#घोषणा PT_VR0_32 164	/* each Vector reg occupies 4 slots in 32-bit */
-#घोषणा PT_VSCR_32 (PT_VR0 + 32*4 + 3)
-#घोषणा PT_VRSAVE_32 (PT_VR0 + 33*4)
-#घोषणा PT_VSR0_32 300 	/* each VSR reg occupies 4 slots in 32-bit */
-#पूर्ण_अगर /* __घातerpc64__ */
-#पूर्ण_अगर /* _ASM_POWERPC_PTRACE_H */
+#ifndef __powerpc64__
+/* We need PT_SOFTE defined at all time to avoid #ifdefs */
+#define PT_SOFTE PT_MQ
+#else /* __powerpc64__ */
+#define PT_FPSCR32 (PT_FPR0 + 2*32 + 1)	/* each FP reg occupies 2 32-bit userspace slots */
+#define PT_VR0_32 164	/* each Vector reg occupies 4 slots in 32-bit */
+#define PT_VSCR_32 (PT_VR0 + 32*4 + 3)
+#define PT_VRSAVE_32 (PT_VR0 + 33*4)
+#define PT_VSR0_32 300 	/* each VSR reg occupies 4 slots in 32-bit */
+#endif /* __powerpc64__ */
+#endif /* _ASM_POWERPC_PTRACE_H */

@@ -1,139 +1,138 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित _ASM_X86_STAT_H
-#घोषणा _ASM_X86_STAT_H
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef _ASM_X86_STAT_H
+#define _ASM_X86_STAT_H
 
-#समावेश <यंत्र/posix_types.h>
+#include <asm/posix_types.h>
 
-#घोषणा STAT_HAVE_NSEC 1
+#define STAT_HAVE_NSEC 1
 
-#अगर_घोषित __i386__
-काष्ठा stat अणु
-	अचिन्हित दीर्घ  st_dev;
-	अचिन्हित दीर्घ  st_ino;
-	अचिन्हित लघु st_mode;
-	अचिन्हित लघु st_nlink;
-	अचिन्हित लघु st_uid;
-	अचिन्हित लघु st_gid;
-	अचिन्हित दीर्घ  st_rdev;
-	अचिन्हित दीर्घ  st_size;
-	अचिन्हित दीर्घ  st_blksize;
-	अचिन्हित दीर्घ  st_blocks;
-	अचिन्हित दीर्घ  st_aसमय;
-	अचिन्हित दीर्घ  st_aसमय_nsec;
-	अचिन्हित दीर्घ  st_mसमय;
-	अचिन्हित दीर्घ  st_mसमय_nsec;
-	अचिन्हित दीर्घ  st_स_समय;
-	अचिन्हित दीर्घ  st_स_समय_nsec;
-	अचिन्हित दीर्घ  __unused4;
-	अचिन्हित दीर्घ  __unused5;
-पूर्ण;
+#ifdef __i386__
+struct stat {
+	unsigned long  st_dev;
+	unsigned long  st_ino;
+	unsigned short st_mode;
+	unsigned short st_nlink;
+	unsigned short st_uid;
+	unsigned short st_gid;
+	unsigned long  st_rdev;
+	unsigned long  st_size;
+	unsigned long  st_blksize;
+	unsigned long  st_blocks;
+	unsigned long  st_atime;
+	unsigned long  st_atime_nsec;
+	unsigned long  st_mtime;
+	unsigned long  st_mtime_nsec;
+	unsigned long  st_ctime;
+	unsigned long  st_ctime_nsec;
+	unsigned long  __unused4;
+	unsigned long  __unused5;
+};
 
-/* We करोn't need to स_रखो the whole thing just to initialize the padding */
-#घोषणा INIT_STRUCT_STAT_PADDING(st) करो अणु	\
+/* We don't need to memset the whole thing just to initialize the padding */
+#define INIT_STRUCT_STAT_PADDING(st) do {	\
 	st.__unused4 = 0;			\
 	st.__unused5 = 0;			\
-पूर्ण जबतक (0)
+} while (0)
 
-#घोषणा STAT64_HAS_BROKEN_ST_INO	1
+#define STAT64_HAS_BROKEN_ST_INO	1
 
-/* This matches काष्ठा stat64 in glibc2.1, hence the असलolutely
+/* This matches struct stat64 in glibc2.1, hence the absolutely
  * insane amounts of padding around dev_t's.
  */
-काष्ठा stat64 अणु
-	अचिन्हित दीर्घ दीर्घ	st_dev;
-	अचिन्हित अक्षर	__pad0[4];
+struct stat64 {
+	unsigned long long	st_dev;
+	unsigned char	__pad0[4];
 
-	अचिन्हित दीर्घ	__st_ino;
+	unsigned long	__st_ino;
 
-	अचिन्हित पूर्णांक	st_mode;
-	अचिन्हित पूर्णांक	st_nlink;
+	unsigned int	st_mode;
+	unsigned int	st_nlink;
 
-	अचिन्हित दीर्घ	st_uid;
-	अचिन्हित दीर्घ	st_gid;
+	unsigned long	st_uid;
+	unsigned long	st_gid;
 
-	अचिन्हित दीर्घ दीर्घ	st_rdev;
-	अचिन्हित अक्षर	__pad3[4];
+	unsigned long long	st_rdev;
+	unsigned char	__pad3[4];
 
-	दीर्घ दीर्घ	st_size;
-	अचिन्हित दीर्घ	st_blksize;
+	long long	st_size;
+	unsigned long	st_blksize;
 
 	/* Number 512-byte blocks allocated. */
-	अचिन्हित दीर्घ दीर्घ	st_blocks;
+	unsigned long long	st_blocks;
 
-	अचिन्हित दीर्घ	st_aसमय;
-	अचिन्हित दीर्घ	st_aसमय_nsec;
+	unsigned long	st_atime;
+	unsigned long	st_atime_nsec;
 
-	अचिन्हित दीर्घ	st_mसमय;
-	अचिन्हित पूर्णांक	st_mसमय_nsec;
+	unsigned long	st_mtime;
+	unsigned int	st_mtime_nsec;
 
-	अचिन्हित दीर्घ	st_स_समय;
-	अचिन्हित दीर्घ	st_स_समय_nsec;
+	unsigned long	st_ctime;
+	unsigned long	st_ctime_nsec;
 
-	अचिन्हित दीर्घ दीर्घ	st_ino;
-पूर्ण;
+	unsigned long long	st_ino;
+};
 
-/* We करोn't need to स_रखो the whole thing just to initialize the padding */
-#घोषणा INIT_STRUCT_STAT64_PADDING(st) करो अणु		\
-	स_रखो(&st.__pad0, 0, माप(st.__pad0));	\
-	स_रखो(&st.__pad3, 0, माप(st.__pad3));	\
-पूर्ण जबतक (0)
+/* We don't need to memset the whole thing just to initialize the padding */
+#define INIT_STRUCT_STAT64_PADDING(st) do {		\
+	memset(&st.__pad0, 0, sizeof(st.__pad0));	\
+	memset(&st.__pad3, 0, sizeof(st.__pad3));	\
+} while (0)
 
-#अन्यथा /* __i386__ */
+#else /* __i386__ */
 
-काष्ठा stat अणु
-	__kernel_uदीर्घ_t	st_dev;
-	__kernel_uदीर्घ_t	st_ino;
-	__kernel_uदीर्घ_t	st_nlink;
+struct stat {
+	__kernel_ulong_t	st_dev;
+	__kernel_ulong_t	st_ino;
+	__kernel_ulong_t	st_nlink;
 
-	अचिन्हित पूर्णांक		st_mode;
-	अचिन्हित पूर्णांक		st_uid;
-	अचिन्हित पूर्णांक		st_gid;
-	अचिन्हित पूर्णांक		__pad0;
-	__kernel_uदीर्घ_t	st_rdev;
-	__kernel_दीर्घ_t		st_size;
-	__kernel_दीर्घ_t		st_blksize;
-	__kernel_दीर्घ_t		st_blocks;	/* Number 512-byte blocks allocated. */
+	unsigned int		st_mode;
+	unsigned int		st_uid;
+	unsigned int		st_gid;
+	unsigned int		__pad0;
+	__kernel_ulong_t	st_rdev;
+	__kernel_long_t		st_size;
+	__kernel_long_t		st_blksize;
+	__kernel_long_t		st_blocks;	/* Number 512-byte blocks allocated. */
 
-	__kernel_uदीर्घ_t	st_aसमय;
-	__kernel_uदीर्घ_t	st_aसमय_nsec;
-	__kernel_uदीर्घ_t	st_mसमय;
-	__kernel_uदीर्घ_t	st_mसमय_nsec;
-	__kernel_uदीर्घ_t	st_स_समय;
-	__kernel_uदीर्घ_t	st_स_समय_nsec;
-	__kernel_दीर्घ_t		__unused[3];
-पूर्ण;
+	__kernel_ulong_t	st_atime;
+	__kernel_ulong_t	st_atime_nsec;
+	__kernel_ulong_t	st_mtime;
+	__kernel_ulong_t	st_mtime_nsec;
+	__kernel_ulong_t	st_ctime;
+	__kernel_ulong_t	st_ctime_nsec;
+	__kernel_long_t		__unused[3];
+};
 
-/* We करोn't need to स_रखो the whole thing just to initialize the padding */
-#घोषणा INIT_STRUCT_STAT_PADDING(st) करो अणु	\
+/* We don't need to memset the whole thing just to initialize the padding */
+#define INIT_STRUCT_STAT_PADDING(st) do {	\
 	st.__pad0 = 0;				\
 	st.__unused[0] = 0;			\
 	st.__unused[1] = 0;			\
 	st.__unused[2] = 0;			\
-पूर्ण जबतक (0)
+} while (0)
 
-#पूर्ण_अगर
+#endif
 
-/* क्रम 32bit emulation and 32 bit kernels */
-काष्ठा __old_kernel_stat अणु
-	अचिन्हित लघु st_dev;
-	अचिन्हित लघु st_ino;
-	अचिन्हित लघु st_mode;
-	अचिन्हित लघु st_nlink;
-	अचिन्हित लघु st_uid;
-	अचिन्हित लघु st_gid;
-	अचिन्हित लघु st_rdev;
-#अगर_घोषित __i386__
-	अचिन्हित दीर्घ  st_size;
-	अचिन्हित दीर्घ  st_aसमय;
-	अचिन्हित दीर्घ  st_mसमय;
-	अचिन्हित दीर्घ  st_स_समय;
-#अन्यथा
-	अचिन्हित पूर्णांक  st_size;
-	अचिन्हित पूर्णांक  st_aसमय;
-	अचिन्हित पूर्णांक  st_mसमय;
-	अचिन्हित पूर्णांक  st_स_समय;
-#पूर्ण_अगर
-पूर्ण;
+/* for 32bit emulation and 32 bit kernels */
+struct __old_kernel_stat {
+	unsigned short st_dev;
+	unsigned short st_ino;
+	unsigned short st_mode;
+	unsigned short st_nlink;
+	unsigned short st_uid;
+	unsigned short st_gid;
+	unsigned short st_rdev;
+#ifdef __i386__
+	unsigned long  st_size;
+	unsigned long  st_atime;
+	unsigned long  st_mtime;
+	unsigned long  st_ctime;
+#else
+	unsigned int  st_size;
+	unsigned int  st_atime;
+	unsigned int  st_mtime;
+	unsigned int  st_ctime;
+#endif
+};
 
-#पूर्ण_अगर /* _ASM_X86_STAT_H */
+#endif /* _ASM_X86_STAT_H */

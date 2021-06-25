@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  *
  * Copyright IBM Corporation, 2012
@@ -8,7 +7,7 @@
  * Copyright (C) 2019 Red Hat, Inc.
  * Author: Giuseppe Scrivano <gscrivan@redhat.com>
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms of version 2.1 of the GNU Lesser General Public License
  * as published by the Free Software Foundation.
  *
@@ -18,94 +17,94 @@
  *
  */
 
-#समावेश <linux/cgroup.h>
-#समावेश <linux/page_counter.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/hugetlb.h>
-#समावेश <linux/hugetlb_cgroup.h>
+#include <linux/cgroup.h>
+#include <linux/page_counter.h>
+#include <linux/slab.h>
+#include <linux/hugetlb.h>
+#include <linux/hugetlb_cgroup.h>
 
-#घोषणा MEMखाता_PRIVATE(x, val)	(((x) << 16) | (val))
-#घोषणा MEMखाता_IDX(val)	(((val) >> 16) & 0xffff)
-#घोषणा MEMखाता_ATTR(val)	((val) & 0xffff)
+#define MEMFILE_PRIVATE(x, val)	(((x) << 16) | (val))
+#define MEMFILE_IDX(val)	(((val) >> 16) & 0xffff)
+#define MEMFILE_ATTR(val)	((val) & 0xffff)
 
-#घोषणा hugetlb_cgroup_from_counter(counter, idx)                   \
-	container_of(counter, काष्ठा hugetlb_cgroup, hugepage[idx])
+#define hugetlb_cgroup_from_counter(counter, idx)                   \
+	container_of(counter, struct hugetlb_cgroup, hugepage[idx])
 
-अटल काष्ठा hugetlb_cgroup *root_h_cgroup __पढ़ो_mostly;
+static struct hugetlb_cgroup *root_h_cgroup __read_mostly;
 
-अटल अंतरभूत काष्ठा page_counter *
-__hugetlb_cgroup_counter_from_cgroup(काष्ठा hugetlb_cgroup *h_cg, पूर्णांक idx,
+static inline struct page_counter *
+__hugetlb_cgroup_counter_from_cgroup(struct hugetlb_cgroup *h_cg, int idx,
 				     bool rsvd)
-अणु
-	अगर (rsvd)
-		वापस &h_cg->rsvd_hugepage[idx];
-	वापस &h_cg->hugepage[idx];
-पूर्ण
+{
+	if (rsvd)
+		return &h_cg->rsvd_hugepage[idx];
+	return &h_cg->hugepage[idx];
+}
 
-अटल अंतरभूत काष्ठा page_counter *
-hugetlb_cgroup_counter_from_cgroup(काष्ठा hugetlb_cgroup *h_cg, पूर्णांक idx)
-अणु
-	वापस __hugetlb_cgroup_counter_from_cgroup(h_cg, idx, false);
-पूर्ण
+static inline struct page_counter *
+hugetlb_cgroup_counter_from_cgroup(struct hugetlb_cgroup *h_cg, int idx)
+{
+	return __hugetlb_cgroup_counter_from_cgroup(h_cg, idx, false);
+}
 
-अटल अंतरभूत काष्ठा page_counter *
-hugetlb_cgroup_counter_from_cgroup_rsvd(काष्ठा hugetlb_cgroup *h_cg, पूर्णांक idx)
-अणु
-	वापस __hugetlb_cgroup_counter_from_cgroup(h_cg, idx, true);
-पूर्ण
+static inline struct page_counter *
+hugetlb_cgroup_counter_from_cgroup_rsvd(struct hugetlb_cgroup *h_cg, int idx)
+{
+	return __hugetlb_cgroup_counter_from_cgroup(h_cg, idx, true);
+}
 
-अटल अंतरभूत
-काष्ठा hugetlb_cgroup *hugetlb_cgroup_from_css(काष्ठा cgroup_subsys_state *s)
-अणु
-	वापस s ? container_of(s, काष्ठा hugetlb_cgroup, css) : शून्य;
-पूर्ण
+static inline
+struct hugetlb_cgroup *hugetlb_cgroup_from_css(struct cgroup_subsys_state *s)
+{
+	return s ? container_of(s, struct hugetlb_cgroup, css) : NULL;
+}
 
-अटल अंतरभूत
-काष्ठा hugetlb_cgroup *hugetlb_cgroup_from_task(काष्ठा task_काष्ठा *task)
-अणु
-	वापस hugetlb_cgroup_from_css(task_css(task, hugetlb_cgrp_id));
-पूर्ण
+static inline
+struct hugetlb_cgroup *hugetlb_cgroup_from_task(struct task_struct *task)
+{
+	return hugetlb_cgroup_from_css(task_css(task, hugetlb_cgrp_id));
+}
 
-अटल अंतरभूत bool hugetlb_cgroup_is_root(काष्ठा hugetlb_cgroup *h_cg)
-अणु
-	वापस (h_cg == root_h_cgroup);
-पूर्ण
+static inline bool hugetlb_cgroup_is_root(struct hugetlb_cgroup *h_cg)
+{
+	return (h_cg == root_h_cgroup);
+}
 
-अटल अंतरभूत काष्ठा hugetlb_cgroup *
-parent_hugetlb_cgroup(काष्ठा hugetlb_cgroup *h_cg)
-अणु
-	वापस hugetlb_cgroup_from_css(h_cg->css.parent);
-पूर्ण
+static inline struct hugetlb_cgroup *
+parent_hugetlb_cgroup(struct hugetlb_cgroup *h_cg)
+{
+	return hugetlb_cgroup_from_css(h_cg->css.parent);
+}
 
-अटल अंतरभूत bool hugetlb_cgroup_have_usage(काष्ठा hugetlb_cgroup *h_cg)
-अणु
-	पूर्णांक idx;
+static inline bool hugetlb_cgroup_have_usage(struct hugetlb_cgroup *h_cg)
+{
+	int idx;
 
-	क्रम (idx = 0; idx < hugetlb_max_hstate; idx++) अणु
-		अगर (page_counter_पढ़ो(
+	for (idx = 0; idx < hugetlb_max_hstate; idx++) {
+		if (page_counter_read(
 				hugetlb_cgroup_counter_from_cgroup(h_cg, idx)))
-			वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+			return true;
+	}
+	return false;
+}
 
-अटल व्योम hugetlb_cgroup_init(काष्ठा hugetlb_cgroup *h_cgroup,
-				काष्ठा hugetlb_cgroup *parent_h_cgroup)
-अणु
-	पूर्णांक idx;
+static void hugetlb_cgroup_init(struct hugetlb_cgroup *h_cgroup,
+				struct hugetlb_cgroup *parent_h_cgroup)
+{
+	int idx;
 
-	क्रम (idx = 0; idx < HUGE_MAX_HSTATE; idx++) अणु
-		काष्ठा page_counter *fault_parent = शून्य;
-		काष्ठा page_counter *rsvd_parent = शून्य;
-		अचिन्हित दीर्घ limit;
-		पूर्णांक ret;
+	for (idx = 0; idx < HUGE_MAX_HSTATE; idx++) {
+		struct page_counter *fault_parent = NULL;
+		struct page_counter *rsvd_parent = NULL;
+		unsigned long limit;
+		int ret;
 
-		अगर (parent_h_cgroup) अणु
+		if (parent_h_cgroup) {
 			fault_parent = hugetlb_cgroup_counter_from_cgroup(
 				parent_h_cgroup, idx);
 			rsvd_parent = hugetlb_cgroup_counter_from_cgroup_rsvd(
 				parent_h_cgroup, idx);
-		पूर्ण
+		}
 		page_counter_init(hugetlb_cgroup_counter_from_cgroup(h_cgroup,
 								     idx),
 				  fault_parent);
@@ -113,7 +112,7 @@ parent_hugetlb_cgroup(काष्ठा hugetlb_cgroup *h_cg)
 			hugetlb_cgroup_counter_from_cgroup_rsvd(h_cgroup, idx),
 			rsvd_parent);
 
-		limit = round_करोwn(PAGE_COUNTER_MAX,
+		limit = round_down(PAGE_COUNTER_MAX,
 				   pages_per_huge_page(&hstates[idx]));
 
 		ret = page_counter_set_max(
@@ -124,48 +123,48 @@ parent_hugetlb_cgroup(काष्ठा hugetlb_cgroup *h_cg)
 			hugetlb_cgroup_counter_from_cgroup_rsvd(h_cgroup, idx),
 			limit);
 		VM_BUG_ON(ret);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल काष्ठा cgroup_subsys_state *
-hugetlb_cgroup_css_alloc(काष्ठा cgroup_subsys_state *parent_css)
-अणु
-	काष्ठा hugetlb_cgroup *parent_h_cgroup = hugetlb_cgroup_from_css(parent_css);
-	काष्ठा hugetlb_cgroup *h_cgroup;
+static struct cgroup_subsys_state *
+hugetlb_cgroup_css_alloc(struct cgroup_subsys_state *parent_css)
+{
+	struct hugetlb_cgroup *parent_h_cgroup = hugetlb_cgroup_from_css(parent_css);
+	struct hugetlb_cgroup *h_cgroup;
 
-	h_cgroup = kzalloc(माप(*h_cgroup), GFP_KERNEL);
-	अगर (!h_cgroup)
-		वापस ERR_PTR(-ENOMEM);
+	h_cgroup = kzalloc(sizeof(*h_cgroup), GFP_KERNEL);
+	if (!h_cgroup)
+		return ERR_PTR(-ENOMEM);
 
-	अगर (!parent_h_cgroup)
+	if (!parent_h_cgroup)
 		root_h_cgroup = h_cgroup;
 
 	hugetlb_cgroup_init(h_cgroup, parent_h_cgroup);
-	वापस &h_cgroup->css;
-पूर्ण
+	return &h_cgroup->css;
+}
 
-अटल व्योम hugetlb_cgroup_css_मुक्त(काष्ठा cgroup_subsys_state *css)
-अणु
-	काष्ठा hugetlb_cgroup *h_cgroup;
+static void hugetlb_cgroup_css_free(struct cgroup_subsys_state *css)
+{
+	struct hugetlb_cgroup *h_cgroup;
 
 	h_cgroup = hugetlb_cgroup_from_css(css);
-	kमुक्त(h_cgroup);
-पूर्ण
+	kfree(h_cgroup);
+}
 
 /*
  * Should be called with hugetlb_lock held.
  * Since we are holding hugetlb_lock, pages cannot get moved from
- * active list or unअक्षरged from the cgroup, So no need to get
- * page reference and test क्रम page active here. This function
+ * active list or uncharged from the cgroup, So no need to get
+ * page reference and test for page active here. This function
  * cannot fail.
  */
-अटल व्योम hugetlb_cgroup_move_parent(पूर्णांक idx, काष्ठा hugetlb_cgroup *h_cg,
-				       काष्ठा page *page)
-अणु
-	अचिन्हित पूर्णांक nr_pages;
-	काष्ठा page_counter *counter;
-	काष्ठा hugetlb_cgroup *page_hcg;
-	काष्ठा hugetlb_cgroup *parent = parent_hugetlb_cgroup(h_cg);
+static void hugetlb_cgroup_move_parent(int idx, struct hugetlb_cgroup *h_cg,
+				       struct page *page)
+{
+	unsigned int nr_pages;
+	struct page_counter *counter;
+	struct hugetlb_cgroup *page_hcg;
+	struct hugetlb_cgroup *parent = parent_hugetlb_cgroup(h_cg);
 
 	page_hcg = hugetlb_cgroup_from_page(page);
 	/*
@@ -173,245 +172,245 @@ hugetlb_cgroup_css_alloc(काष्ठा cgroup_subsys_state *parent_css)
 	 * ie, hugepage with less than 3 pages. We can safely
 	 * ignore those pages.
 	 */
-	अगर (!page_hcg || page_hcg != h_cg)
-		जाओ out;
+	if (!page_hcg || page_hcg != h_cg)
+		goto out;
 
 	nr_pages = compound_nr(page);
-	अगर (!parent) अणु
+	if (!parent) {
 		parent = root_h_cgroup;
 		/* root has no limit */
-		page_counter_अक्षरge(&parent->hugepage[idx], nr_pages);
-	पूर्ण
+		page_counter_charge(&parent->hugepage[idx], nr_pages);
+	}
 	counter = &h_cg->hugepage[idx];
 	/* Take the pages off the local counter */
 	page_counter_cancel(counter, nr_pages);
 
 	set_hugetlb_cgroup(page, parent);
 out:
-	वापस;
-पूर्ण
+	return;
+}
 
 /*
  * Force the hugetlb cgroup to empty the hugetlb resources by moving them to
  * the parent cgroup.
  */
-अटल व्योम hugetlb_cgroup_css_offline(काष्ठा cgroup_subsys_state *css)
-अणु
-	काष्ठा hugetlb_cgroup *h_cg = hugetlb_cgroup_from_css(css);
-	काष्ठा hstate *h;
-	काष्ठा page *page;
-	पूर्णांक idx;
+static void hugetlb_cgroup_css_offline(struct cgroup_subsys_state *css)
+{
+	struct hugetlb_cgroup *h_cg = hugetlb_cgroup_from_css(css);
+	struct hstate *h;
+	struct page *page;
+	int idx;
 
-	करो अणु
+	do {
 		idx = 0;
-		क्रम_each_hstate(h) अणु
+		for_each_hstate(h) {
 			spin_lock_irq(&hugetlb_lock);
-			list_क्रम_each_entry(page, &h->hugepage_activelist, lru)
+			list_for_each_entry(page, &h->hugepage_activelist, lru)
 				hugetlb_cgroup_move_parent(idx, h_cg, page);
 
 			spin_unlock_irq(&hugetlb_lock);
 			idx++;
-		पूर्ण
+		}
 		cond_resched();
-	पूर्ण जबतक (hugetlb_cgroup_have_usage(h_cg));
-पूर्ण
+	} while (hugetlb_cgroup_have_usage(h_cg));
+}
 
-अटल अंतरभूत व्योम hugetlb_event(काष्ठा hugetlb_cgroup *hugetlb, पूर्णांक idx,
-				 क्रमागत hugetlb_memory_event event)
-अणु
-	atomic_दीर्घ_inc(&hugetlb->events_local[idx][event]);
-	cgroup_file_notअगरy(&hugetlb->events_local_file[idx]);
+static inline void hugetlb_event(struct hugetlb_cgroup *hugetlb, int idx,
+				 enum hugetlb_memory_event event)
+{
+	atomic_long_inc(&hugetlb->events_local[idx][event]);
+	cgroup_file_notify(&hugetlb->events_local_file[idx]);
 
-	करो अणु
-		atomic_दीर्घ_inc(&hugetlb->events[idx][event]);
-		cgroup_file_notअगरy(&hugetlb->events_file[idx]);
-	पूर्ण जबतक ((hugetlb = parent_hugetlb_cgroup(hugetlb)) &&
+	do {
+		atomic_long_inc(&hugetlb->events[idx][event]);
+		cgroup_file_notify(&hugetlb->events_file[idx]);
+	} while ((hugetlb = parent_hugetlb_cgroup(hugetlb)) &&
 		 !hugetlb_cgroup_is_root(hugetlb));
-पूर्ण
+}
 
-अटल पूर्णांक __hugetlb_cgroup_अक्षरge_cgroup(पूर्णांक idx, अचिन्हित दीर्घ nr_pages,
-					  काष्ठा hugetlb_cgroup **ptr,
+static int __hugetlb_cgroup_charge_cgroup(int idx, unsigned long nr_pages,
+					  struct hugetlb_cgroup **ptr,
 					  bool rsvd)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा page_counter *counter;
-	काष्ठा hugetlb_cgroup *h_cg = शून्य;
+{
+	int ret = 0;
+	struct page_counter *counter;
+	struct hugetlb_cgroup *h_cg = NULL;
 
-	अगर (hugetlb_cgroup_disabled())
-		जाओ करोne;
+	if (hugetlb_cgroup_disabled())
+		goto done;
 	/*
-	 * We करोn't अक्षरge any cgroup अगर the compound page have less
+	 * We don't charge any cgroup if the compound page have less
 	 * than 3 pages.
 	 */
-	अगर (huge_page_order(&hstates[idx]) < HUGETLB_CGROUP_MIN_ORDER)
-		जाओ करोne;
+	if (huge_page_order(&hstates[idx]) < HUGETLB_CGROUP_MIN_ORDER)
+		goto done;
 again:
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	h_cg = hugetlb_cgroup_from_task(current);
-	अगर (!css_tryget(&h_cg->css)) अणु
-		rcu_पढ़ो_unlock();
-		जाओ again;
-	पूर्ण
-	rcu_पढ़ो_unlock();
+	if (!css_tryget(&h_cg->css)) {
+		rcu_read_unlock();
+		goto again;
+	}
+	rcu_read_unlock();
 
-	अगर (!page_counter_try_अक्षरge(
+	if (!page_counter_try_charge(
 		    __hugetlb_cgroup_counter_from_cgroup(h_cg, idx, rsvd),
-		    nr_pages, &counter)) अणु
+		    nr_pages, &counter)) {
 		ret = -ENOMEM;
 		hugetlb_event(h_cg, idx, HUGETLB_MAX);
 		css_put(&h_cg->css);
-		जाओ करोne;
-	पूर्ण
-	/* Reservations take a reference to the css because they करो not get
+		goto done;
+	}
+	/* Reservations take a reference to the css because they do not get
 	 * reparented.
 	 */
-	अगर (!rsvd)
+	if (!rsvd)
 		css_put(&h_cg->css);
-करोne:
+done:
 	*ptr = h_cg;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक hugetlb_cgroup_अक्षरge_cgroup(पूर्णांक idx, अचिन्हित दीर्घ nr_pages,
-				 काष्ठा hugetlb_cgroup **ptr)
-अणु
-	वापस __hugetlb_cgroup_अक्षरge_cgroup(idx, nr_pages, ptr, false);
-पूर्ण
+int hugetlb_cgroup_charge_cgroup(int idx, unsigned long nr_pages,
+				 struct hugetlb_cgroup **ptr)
+{
+	return __hugetlb_cgroup_charge_cgroup(idx, nr_pages, ptr, false);
+}
 
-पूर्णांक hugetlb_cgroup_अक्षरge_cgroup_rsvd(पूर्णांक idx, अचिन्हित दीर्घ nr_pages,
-				      काष्ठा hugetlb_cgroup **ptr)
-अणु
-	वापस __hugetlb_cgroup_अक्षरge_cgroup(idx, nr_pages, ptr, true);
-पूर्ण
+int hugetlb_cgroup_charge_cgroup_rsvd(int idx, unsigned long nr_pages,
+				      struct hugetlb_cgroup **ptr)
+{
+	return __hugetlb_cgroup_charge_cgroup(idx, nr_pages, ptr, true);
+}
 
 /* Should be called with hugetlb_lock held */
-अटल व्योम __hugetlb_cgroup_commit_अक्षरge(पूर्णांक idx, अचिन्हित दीर्घ nr_pages,
-					   काष्ठा hugetlb_cgroup *h_cg,
-					   काष्ठा page *page, bool rsvd)
-अणु
-	अगर (hugetlb_cgroup_disabled() || !h_cg)
-		वापस;
+static void __hugetlb_cgroup_commit_charge(int idx, unsigned long nr_pages,
+					   struct hugetlb_cgroup *h_cg,
+					   struct page *page, bool rsvd)
+{
+	if (hugetlb_cgroup_disabled() || !h_cg)
+		return;
 
 	__set_hugetlb_cgroup(page, h_cg, rsvd);
-	वापस;
-पूर्ण
+	return;
+}
 
-व्योम hugetlb_cgroup_commit_अक्षरge(पूर्णांक idx, अचिन्हित दीर्घ nr_pages,
-				  काष्ठा hugetlb_cgroup *h_cg,
-				  काष्ठा page *page)
-अणु
-	__hugetlb_cgroup_commit_अक्षरge(idx, nr_pages, h_cg, page, false);
-पूर्ण
+void hugetlb_cgroup_commit_charge(int idx, unsigned long nr_pages,
+				  struct hugetlb_cgroup *h_cg,
+				  struct page *page)
+{
+	__hugetlb_cgroup_commit_charge(idx, nr_pages, h_cg, page, false);
+}
 
-व्योम hugetlb_cgroup_commit_अक्षरge_rsvd(पूर्णांक idx, अचिन्हित दीर्घ nr_pages,
-				       काष्ठा hugetlb_cgroup *h_cg,
-				       काष्ठा page *page)
-अणु
-	__hugetlb_cgroup_commit_अक्षरge(idx, nr_pages, h_cg, page, true);
-पूर्ण
+void hugetlb_cgroup_commit_charge_rsvd(int idx, unsigned long nr_pages,
+				       struct hugetlb_cgroup *h_cg,
+				       struct page *page)
+{
+	__hugetlb_cgroup_commit_charge(idx, nr_pages, h_cg, page, true);
+}
 
 /*
  * Should be called with hugetlb_lock held
  */
-अटल व्योम __hugetlb_cgroup_unअक्षरge_page(पूर्णांक idx, अचिन्हित दीर्घ nr_pages,
-					   काष्ठा page *page, bool rsvd)
-अणु
-	काष्ठा hugetlb_cgroup *h_cg;
+static void __hugetlb_cgroup_uncharge_page(int idx, unsigned long nr_pages,
+					   struct page *page, bool rsvd)
+{
+	struct hugetlb_cgroup *h_cg;
 
-	अगर (hugetlb_cgroup_disabled())
-		वापस;
-	lockdep_निश्चित_held(&hugetlb_lock);
+	if (hugetlb_cgroup_disabled())
+		return;
+	lockdep_assert_held(&hugetlb_lock);
 	h_cg = __hugetlb_cgroup_from_page(page, rsvd);
-	अगर (unlikely(!h_cg))
-		वापस;
-	__set_hugetlb_cgroup(page, शून्य, rsvd);
+	if (unlikely(!h_cg))
+		return;
+	__set_hugetlb_cgroup(page, NULL, rsvd);
 
-	page_counter_unअक्षरge(__hugetlb_cgroup_counter_from_cgroup(h_cg, idx,
+	page_counter_uncharge(__hugetlb_cgroup_counter_from_cgroup(h_cg, idx,
 								   rsvd),
 			      nr_pages);
 
-	अगर (rsvd)
+	if (rsvd)
 		css_put(&h_cg->css);
 
-	वापस;
-पूर्ण
+	return;
+}
 
-व्योम hugetlb_cgroup_unअक्षरge_page(पूर्णांक idx, अचिन्हित दीर्घ nr_pages,
-				  काष्ठा page *page)
-अणु
-	__hugetlb_cgroup_unअक्षरge_page(idx, nr_pages, page, false);
-पूर्ण
+void hugetlb_cgroup_uncharge_page(int idx, unsigned long nr_pages,
+				  struct page *page)
+{
+	__hugetlb_cgroup_uncharge_page(idx, nr_pages, page, false);
+}
 
-व्योम hugetlb_cgroup_unअक्षरge_page_rsvd(पूर्णांक idx, अचिन्हित दीर्घ nr_pages,
-				       काष्ठा page *page)
-अणु
-	__hugetlb_cgroup_unअक्षरge_page(idx, nr_pages, page, true);
-पूर्ण
+void hugetlb_cgroup_uncharge_page_rsvd(int idx, unsigned long nr_pages,
+				       struct page *page)
+{
+	__hugetlb_cgroup_uncharge_page(idx, nr_pages, page, true);
+}
 
-अटल व्योम __hugetlb_cgroup_unअक्षरge_cgroup(पूर्णांक idx, अचिन्हित दीर्घ nr_pages,
-					     काष्ठा hugetlb_cgroup *h_cg,
+static void __hugetlb_cgroup_uncharge_cgroup(int idx, unsigned long nr_pages,
+					     struct hugetlb_cgroup *h_cg,
 					     bool rsvd)
-अणु
-	अगर (hugetlb_cgroup_disabled() || !h_cg)
-		वापस;
+{
+	if (hugetlb_cgroup_disabled() || !h_cg)
+		return;
 
-	अगर (huge_page_order(&hstates[idx]) < HUGETLB_CGROUP_MIN_ORDER)
-		वापस;
+	if (huge_page_order(&hstates[idx]) < HUGETLB_CGROUP_MIN_ORDER)
+		return;
 
-	page_counter_unअक्षरge(__hugetlb_cgroup_counter_from_cgroup(h_cg, idx,
+	page_counter_uncharge(__hugetlb_cgroup_counter_from_cgroup(h_cg, idx,
 								   rsvd),
 			      nr_pages);
 
-	अगर (rsvd)
+	if (rsvd)
 		css_put(&h_cg->css);
-पूर्ण
+}
 
-व्योम hugetlb_cgroup_unअक्षरge_cgroup(पूर्णांक idx, अचिन्हित दीर्घ nr_pages,
-				    काष्ठा hugetlb_cgroup *h_cg)
-अणु
-	__hugetlb_cgroup_unअक्षरge_cgroup(idx, nr_pages, h_cg, false);
-पूर्ण
+void hugetlb_cgroup_uncharge_cgroup(int idx, unsigned long nr_pages,
+				    struct hugetlb_cgroup *h_cg)
+{
+	__hugetlb_cgroup_uncharge_cgroup(idx, nr_pages, h_cg, false);
+}
 
-व्योम hugetlb_cgroup_unअक्षरge_cgroup_rsvd(पूर्णांक idx, अचिन्हित दीर्घ nr_pages,
-					 काष्ठा hugetlb_cgroup *h_cg)
-अणु
-	__hugetlb_cgroup_unअक्षरge_cgroup(idx, nr_pages, h_cg, true);
-पूर्ण
+void hugetlb_cgroup_uncharge_cgroup_rsvd(int idx, unsigned long nr_pages,
+					 struct hugetlb_cgroup *h_cg)
+{
+	__hugetlb_cgroup_uncharge_cgroup(idx, nr_pages, h_cg, true);
+}
 
-व्योम hugetlb_cgroup_unअक्षरge_counter(काष्ठा resv_map *resv, अचिन्हित दीर्घ start,
-				     अचिन्हित दीर्घ end)
-अणु
-	अगर (hugetlb_cgroup_disabled() || !resv || !resv->reservation_counter ||
+void hugetlb_cgroup_uncharge_counter(struct resv_map *resv, unsigned long start,
+				     unsigned long end)
+{
+	if (hugetlb_cgroup_disabled() || !resv || !resv->reservation_counter ||
 	    !resv->css)
-		वापस;
+		return;
 
-	page_counter_unअक्षरge(resv->reservation_counter,
+	page_counter_uncharge(resv->reservation_counter,
 			      (end - start) * resv->pages_per_hpage);
 	css_put(resv->css);
-पूर्ण
+}
 
-व्योम hugetlb_cgroup_unअक्षरge_file_region(काष्ठा resv_map *resv,
-					 काष्ठा file_region *rg,
-					 अचिन्हित दीर्घ nr_pages,
+void hugetlb_cgroup_uncharge_file_region(struct resv_map *resv,
+					 struct file_region *rg,
+					 unsigned long nr_pages,
 					 bool region_del)
-अणु
-	अगर (hugetlb_cgroup_disabled() || !resv || !rg || !nr_pages)
-		वापस;
+{
+	if (hugetlb_cgroup_disabled() || !resv || !rg || !nr_pages)
+		return;
 
-	अगर (rg->reservation_counter && resv->pages_per_hpage && nr_pages > 0 &&
-	    !resv->reservation_counter) अणु
-		page_counter_unअक्षरge(rg->reservation_counter,
+	if (rg->reservation_counter && resv->pages_per_hpage && nr_pages > 0 &&
+	    !resv->reservation_counter) {
+		page_counter_uncharge(rg->reservation_counter,
 				      nr_pages * resv->pages_per_hpage);
 		/*
-		 * Only करो css_put(rg->css) when we delete the entire region
+		 * Only do css_put(rg->css) when we delete the entire region
 		 * because one file_region must hold exactly one css reference.
 		 */
-		अगर (region_del)
+		if (region_del)
 			css_put(rg->css);
-	पूर्ण
-पूर्ण
+	}
+}
 
-क्रमागत अणु
+enum {
 	RES_USAGE,
 	RES_RSVD_USAGE,
 	RES_LIMIT,
@@ -420,393 +419,393 @@ again:
 	RES_RSVD_MAX_USAGE,
 	RES_FAILCNT,
 	RES_RSVD_FAILCNT,
-पूर्ण;
+};
 
-अटल u64 hugetlb_cgroup_पढ़ो_u64(काष्ठा cgroup_subsys_state *css,
-				   काष्ठा cftype *cft)
-अणु
-	काष्ठा page_counter *counter;
-	काष्ठा page_counter *rsvd_counter;
-	काष्ठा hugetlb_cgroup *h_cg = hugetlb_cgroup_from_css(css);
+static u64 hugetlb_cgroup_read_u64(struct cgroup_subsys_state *css,
+				   struct cftype *cft)
+{
+	struct page_counter *counter;
+	struct page_counter *rsvd_counter;
+	struct hugetlb_cgroup *h_cg = hugetlb_cgroup_from_css(css);
 
-	counter = &h_cg->hugepage[MEMखाता_IDX(cft->निजी)];
-	rsvd_counter = &h_cg->rsvd_hugepage[MEMखाता_IDX(cft->निजी)];
+	counter = &h_cg->hugepage[MEMFILE_IDX(cft->private)];
+	rsvd_counter = &h_cg->rsvd_hugepage[MEMFILE_IDX(cft->private)];
 
-	चयन (MEMखाता_ATTR(cft->निजी)) अणु
-	हाल RES_USAGE:
-		वापस (u64)page_counter_पढ़ो(counter) * PAGE_SIZE;
-	हाल RES_RSVD_USAGE:
-		वापस (u64)page_counter_पढ़ो(rsvd_counter) * PAGE_SIZE;
-	हाल RES_LIMIT:
-		वापस (u64)counter->max * PAGE_SIZE;
-	हाल RES_RSVD_LIMIT:
-		वापस (u64)rsvd_counter->max * PAGE_SIZE;
-	हाल RES_MAX_USAGE:
-		वापस (u64)counter->watermark * PAGE_SIZE;
-	हाल RES_RSVD_MAX_USAGE:
-		वापस (u64)rsvd_counter->watermark * PAGE_SIZE;
-	हाल RES_FAILCNT:
-		वापस counter->failcnt;
-	हाल RES_RSVD_FAILCNT:
-		वापस rsvd_counter->failcnt;
-	शेष:
+	switch (MEMFILE_ATTR(cft->private)) {
+	case RES_USAGE:
+		return (u64)page_counter_read(counter) * PAGE_SIZE;
+	case RES_RSVD_USAGE:
+		return (u64)page_counter_read(rsvd_counter) * PAGE_SIZE;
+	case RES_LIMIT:
+		return (u64)counter->max * PAGE_SIZE;
+	case RES_RSVD_LIMIT:
+		return (u64)rsvd_counter->max * PAGE_SIZE;
+	case RES_MAX_USAGE:
+		return (u64)counter->watermark * PAGE_SIZE;
+	case RES_RSVD_MAX_USAGE:
+		return (u64)rsvd_counter->watermark * PAGE_SIZE;
+	case RES_FAILCNT:
+		return counter->failcnt;
+	case RES_RSVD_FAILCNT:
+		return rsvd_counter->failcnt;
+	default:
 		BUG();
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक hugetlb_cgroup_पढ़ो_u64_max(काष्ठा seq_file *seq, व्योम *v)
-अणु
-	पूर्णांक idx;
+static int hugetlb_cgroup_read_u64_max(struct seq_file *seq, void *v)
+{
+	int idx;
 	u64 val;
-	काष्ठा cftype *cft = seq_cft(seq);
-	अचिन्हित दीर्घ limit;
-	काष्ठा page_counter *counter;
-	काष्ठा hugetlb_cgroup *h_cg = hugetlb_cgroup_from_css(seq_css(seq));
+	struct cftype *cft = seq_cft(seq);
+	unsigned long limit;
+	struct page_counter *counter;
+	struct hugetlb_cgroup *h_cg = hugetlb_cgroup_from_css(seq_css(seq));
 
-	idx = MEMखाता_IDX(cft->निजी);
+	idx = MEMFILE_IDX(cft->private);
 	counter = &h_cg->hugepage[idx];
 
-	limit = round_करोwn(PAGE_COUNTER_MAX,
+	limit = round_down(PAGE_COUNTER_MAX,
 			   pages_per_huge_page(&hstates[idx]));
 
-	चयन (MEMखाता_ATTR(cft->निजी)) अणु
-	हाल RES_RSVD_USAGE:
+	switch (MEMFILE_ATTR(cft->private)) {
+	case RES_RSVD_USAGE:
 		counter = &h_cg->rsvd_hugepage[idx];
 		fallthrough;
-	हाल RES_USAGE:
-		val = (u64)page_counter_पढ़ो(counter);
-		seq_म_लिखो(seq, "%llu\n", val * PAGE_SIZE);
-		अवरोध;
-	हाल RES_RSVD_LIMIT:
+	case RES_USAGE:
+		val = (u64)page_counter_read(counter);
+		seq_printf(seq, "%llu\n", val * PAGE_SIZE);
+		break;
+	case RES_RSVD_LIMIT:
 		counter = &h_cg->rsvd_hugepage[idx];
 		fallthrough;
-	हाल RES_LIMIT:
+	case RES_LIMIT:
 		val = (u64)counter->max;
-		अगर (val == limit)
-			seq_माला_दो(seq, "max\n");
-		अन्यथा
-			seq_म_लिखो(seq, "%llu\n", val * PAGE_SIZE);
-		अवरोध;
-	शेष:
+		if (val == limit)
+			seq_puts(seq, "max\n");
+		else
+			seq_printf(seq, "%llu\n", val * PAGE_SIZE);
+		break;
+	default:
 		BUG();
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल DEFINE_MUTEX(hugetlb_limit_mutex);
+static DEFINE_MUTEX(hugetlb_limit_mutex);
 
-अटल sमाप_प्रकार hugetlb_cgroup_ग_लिखो(काष्ठा kernfs_खोलो_file *of,
-				    अक्षर *buf, माप_प्रकार nbytes, loff_t off,
-				    स्थिर अक्षर *max)
-अणु
-	पूर्णांक ret, idx;
-	अचिन्हित दीर्घ nr_pages;
-	काष्ठा hugetlb_cgroup *h_cg = hugetlb_cgroup_from_css(of_css(of));
+static ssize_t hugetlb_cgroup_write(struct kernfs_open_file *of,
+				    char *buf, size_t nbytes, loff_t off,
+				    const char *max)
+{
+	int ret, idx;
+	unsigned long nr_pages;
+	struct hugetlb_cgroup *h_cg = hugetlb_cgroup_from_css(of_css(of));
 	bool rsvd = false;
 
-	अगर (hugetlb_cgroup_is_root(h_cg)) /* Can't set limit on root */
-		वापस -EINVAL;
+	if (hugetlb_cgroup_is_root(h_cg)) /* Can't set limit on root */
+		return -EINVAL;
 
-	buf = म_मालाip(buf);
+	buf = strstrip(buf);
 	ret = page_counter_memparse(buf, max, &nr_pages);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	idx = MEMखाता_IDX(of_cft(of)->निजी);
-	nr_pages = round_करोwn(nr_pages, pages_per_huge_page(&hstates[idx]));
+	idx = MEMFILE_IDX(of_cft(of)->private);
+	nr_pages = round_down(nr_pages, pages_per_huge_page(&hstates[idx]));
 
-	चयन (MEMखाता_ATTR(of_cft(of)->निजी)) अणु
-	हाल RES_RSVD_LIMIT:
+	switch (MEMFILE_ATTR(of_cft(of)->private)) {
+	case RES_RSVD_LIMIT:
 		rsvd = true;
 		fallthrough;
-	हाल RES_LIMIT:
+	case RES_LIMIT:
 		mutex_lock(&hugetlb_limit_mutex);
 		ret = page_counter_set_max(
 			__hugetlb_cgroup_counter_from_cgroup(h_cg, idx, rsvd),
 			nr_pages);
 		mutex_unlock(&hugetlb_limit_mutex);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EINVAL;
-		अवरोध;
-	पूर्ण
-	वापस ret ?: nbytes;
-पूर्ण
+		break;
+	}
+	return ret ?: nbytes;
+}
 
-अटल sमाप_प्रकार hugetlb_cgroup_ग_लिखो_legacy(काष्ठा kernfs_खोलो_file *of,
-					   अक्षर *buf, माप_प्रकार nbytes, loff_t off)
-अणु
-	वापस hugetlb_cgroup_ग_लिखो(of, buf, nbytes, off, "-1");
-पूर्ण
+static ssize_t hugetlb_cgroup_write_legacy(struct kernfs_open_file *of,
+					   char *buf, size_t nbytes, loff_t off)
+{
+	return hugetlb_cgroup_write(of, buf, nbytes, off, "-1");
+}
 
-अटल sमाप_प्रकार hugetlb_cgroup_ग_लिखो_dfl(काष्ठा kernfs_खोलो_file *of,
-					अक्षर *buf, माप_प्रकार nbytes, loff_t off)
-अणु
-	वापस hugetlb_cgroup_ग_लिखो(of, buf, nbytes, off, "max");
-पूर्ण
+static ssize_t hugetlb_cgroup_write_dfl(struct kernfs_open_file *of,
+					char *buf, size_t nbytes, loff_t off)
+{
+	return hugetlb_cgroup_write(of, buf, nbytes, off, "max");
+}
 
-अटल sमाप_प्रकार hugetlb_cgroup_reset(काष्ठा kernfs_खोलो_file *of,
-				    अक्षर *buf, माप_प्रकार nbytes, loff_t off)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा page_counter *counter, *rsvd_counter;
-	काष्ठा hugetlb_cgroup *h_cg = hugetlb_cgroup_from_css(of_css(of));
+static ssize_t hugetlb_cgroup_reset(struct kernfs_open_file *of,
+				    char *buf, size_t nbytes, loff_t off)
+{
+	int ret = 0;
+	struct page_counter *counter, *rsvd_counter;
+	struct hugetlb_cgroup *h_cg = hugetlb_cgroup_from_css(of_css(of));
 
-	counter = &h_cg->hugepage[MEMखाता_IDX(of_cft(of)->निजी)];
-	rsvd_counter = &h_cg->rsvd_hugepage[MEMखाता_IDX(of_cft(of)->निजी)];
+	counter = &h_cg->hugepage[MEMFILE_IDX(of_cft(of)->private)];
+	rsvd_counter = &h_cg->rsvd_hugepage[MEMFILE_IDX(of_cft(of)->private)];
 
-	चयन (MEMखाता_ATTR(of_cft(of)->निजी)) अणु
-	हाल RES_MAX_USAGE:
+	switch (MEMFILE_ATTR(of_cft(of)->private)) {
+	case RES_MAX_USAGE:
 		page_counter_reset_watermark(counter);
-		अवरोध;
-	हाल RES_RSVD_MAX_USAGE:
+		break;
+	case RES_RSVD_MAX_USAGE:
 		page_counter_reset_watermark(rsvd_counter);
-		अवरोध;
-	हाल RES_FAILCNT:
+		break;
+	case RES_FAILCNT:
 		counter->failcnt = 0;
-		अवरोध;
-	हाल RES_RSVD_FAILCNT:
+		break;
+	case RES_RSVD_FAILCNT:
 		rsvd_counter->failcnt = 0;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EINVAL;
-		अवरोध;
-	पूर्ण
-	वापस ret ?: nbytes;
-पूर्ण
+		break;
+	}
+	return ret ?: nbytes;
+}
 
-अटल अक्षर *mem_fmt(अक्षर *buf, पूर्णांक size, अचिन्हित दीर्घ hsize)
-अणु
-	अगर (hsize >= (1UL << 30))
-		snम_लिखो(buf, size, "%luGB", hsize >> 30);
-	अन्यथा अगर (hsize >= (1UL << 20))
-		snम_लिखो(buf, size, "%luMB", hsize >> 20);
-	अन्यथा
-		snम_लिखो(buf, size, "%luKB", hsize >> 10);
-	वापस buf;
-पूर्ण
+static char *mem_fmt(char *buf, int size, unsigned long hsize)
+{
+	if (hsize >= (1UL << 30))
+		snprintf(buf, size, "%luGB", hsize >> 30);
+	else if (hsize >= (1UL << 20))
+		snprintf(buf, size, "%luMB", hsize >> 20);
+	else
+		snprintf(buf, size, "%luKB", hsize >> 10);
+	return buf;
+}
 
-अटल पूर्णांक __hugetlb_events_show(काष्ठा seq_file *seq, bool local)
-अणु
-	पूर्णांक idx;
-	दीर्घ max;
-	काष्ठा cftype *cft = seq_cft(seq);
-	काष्ठा hugetlb_cgroup *h_cg = hugetlb_cgroup_from_css(seq_css(seq));
+static int __hugetlb_events_show(struct seq_file *seq, bool local)
+{
+	int idx;
+	long max;
+	struct cftype *cft = seq_cft(seq);
+	struct hugetlb_cgroup *h_cg = hugetlb_cgroup_from_css(seq_css(seq));
 
-	idx = MEMखाता_IDX(cft->निजी);
+	idx = MEMFILE_IDX(cft->private);
 
-	अगर (local)
-		max = atomic_दीर्घ_पढ़ो(&h_cg->events_local[idx][HUGETLB_MAX]);
-	अन्यथा
-		max = atomic_दीर्घ_पढ़ो(&h_cg->events[idx][HUGETLB_MAX]);
+	if (local)
+		max = atomic_long_read(&h_cg->events_local[idx][HUGETLB_MAX]);
+	else
+		max = atomic_long_read(&h_cg->events[idx][HUGETLB_MAX]);
 
-	seq_म_लिखो(seq, "max %lu\n", max);
+	seq_printf(seq, "max %lu\n", max);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hugetlb_events_show(काष्ठा seq_file *seq, व्योम *v)
-अणु
-	वापस __hugetlb_events_show(seq, false);
-पूर्ण
+static int hugetlb_events_show(struct seq_file *seq, void *v)
+{
+	return __hugetlb_events_show(seq, false);
+}
 
-अटल पूर्णांक hugetlb_events_local_show(काष्ठा seq_file *seq, व्योम *v)
-अणु
-	वापस __hugetlb_events_show(seq, true);
-पूर्ण
+static int hugetlb_events_local_show(struct seq_file *seq, void *v)
+{
+	return __hugetlb_events_show(seq, true);
+}
 
-अटल व्योम __init __hugetlb_cgroup_file_dfl_init(पूर्णांक idx)
-अणु
-	अक्षर buf[32];
-	काष्ठा cftype *cft;
-	काष्ठा hstate *h = &hstates[idx];
+static void __init __hugetlb_cgroup_file_dfl_init(int idx)
+{
+	char buf[32];
+	struct cftype *cft;
+	struct hstate *h = &hstates[idx];
 
-	/* क्रमmat the size */
-	mem_fmt(buf, माप(buf), huge_page_size(h));
+	/* format the size */
+	mem_fmt(buf, sizeof(buf), huge_page_size(h));
 
 	/* Add the limit file */
 	cft = &h->cgroup_files_dfl[0];
-	snम_लिखो(cft->name, MAX_CFTYPE_NAME, "%s.max", buf);
-	cft->निजी = MEMखाता_PRIVATE(idx, RES_LIMIT);
-	cft->seq_show = hugetlb_cgroup_पढ़ो_u64_max;
-	cft->ग_लिखो = hugetlb_cgroup_ग_लिखो_dfl;
+	snprintf(cft->name, MAX_CFTYPE_NAME, "%s.max", buf);
+	cft->private = MEMFILE_PRIVATE(idx, RES_LIMIT);
+	cft->seq_show = hugetlb_cgroup_read_u64_max;
+	cft->write = hugetlb_cgroup_write_dfl;
 	cft->flags = CFTYPE_NOT_ON_ROOT;
 
 	/* Add the reservation limit file */
 	cft = &h->cgroup_files_dfl[1];
-	snम_लिखो(cft->name, MAX_CFTYPE_NAME, "%s.rsvd.max", buf);
-	cft->निजी = MEMखाता_PRIVATE(idx, RES_RSVD_LIMIT);
-	cft->seq_show = hugetlb_cgroup_पढ़ो_u64_max;
-	cft->ग_लिखो = hugetlb_cgroup_ग_लिखो_dfl;
+	snprintf(cft->name, MAX_CFTYPE_NAME, "%s.rsvd.max", buf);
+	cft->private = MEMFILE_PRIVATE(idx, RES_RSVD_LIMIT);
+	cft->seq_show = hugetlb_cgroup_read_u64_max;
+	cft->write = hugetlb_cgroup_write_dfl;
 	cft->flags = CFTYPE_NOT_ON_ROOT;
 
 	/* Add the current usage file */
 	cft = &h->cgroup_files_dfl[2];
-	snम_लिखो(cft->name, MAX_CFTYPE_NAME, "%s.current", buf);
-	cft->निजी = MEMखाता_PRIVATE(idx, RES_USAGE);
-	cft->seq_show = hugetlb_cgroup_पढ़ो_u64_max;
+	snprintf(cft->name, MAX_CFTYPE_NAME, "%s.current", buf);
+	cft->private = MEMFILE_PRIVATE(idx, RES_USAGE);
+	cft->seq_show = hugetlb_cgroup_read_u64_max;
 	cft->flags = CFTYPE_NOT_ON_ROOT;
 
 	/* Add the current reservation usage file */
 	cft = &h->cgroup_files_dfl[3];
-	snम_लिखो(cft->name, MAX_CFTYPE_NAME, "%s.rsvd.current", buf);
-	cft->निजी = MEMखाता_PRIVATE(idx, RES_RSVD_USAGE);
-	cft->seq_show = hugetlb_cgroup_पढ़ो_u64_max;
+	snprintf(cft->name, MAX_CFTYPE_NAME, "%s.rsvd.current", buf);
+	cft->private = MEMFILE_PRIVATE(idx, RES_RSVD_USAGE);
+	cft->seq_show = hugetlb_cgroup_read_u64_max;
 	cft->flags = CFTYPE_NOT_ON_ROOT;
 
 	/* Add the events file */
 	cft = &h->cgroup_files_dfl[4];
-	snम_लिखो(cft->name, MAX_CFTYPE_NAME, "%s.events", buf);
-	cft->निजी = MEMखाता_PRIVATE(idx, 0);
+	snprintf(cft->name, MAX_CFTYPE_NAME, "%s.events", buf);
+	cft->private = MEMFILE_PRIVATE(idx, 0);
 	cft->seq_show = hugetlb_events_show;
-	cft->file_offset = दुरत्व(काष्ठा hugetlb_cgroup, events_file[idx]);
+	cft->file_offset = offsetof(struct hugetlb_cgroup, events_file[idx]);
 	cft->flags = CFTYPE_NOT_ON_ROOT;
 
 	/* Add the events.local file */
 	cft = &h->cgroup_files_dfl[5];
-	snम_लिखो(cft->name, MAX_CFTYPE_NAME, "%s.events.local", buf);
-	cft->निजी = MEMखाता_PRIVATE(idx, 0);
+	snprintf(cft->name, MAX_CFTYPE_NAME, "%s.events.local", buf);
+	cft->private = MEMFILE_PRIVATE(idx, 0);
 	cft->seq_show = hugetlb_events_local_show;
-	cft->file_offset = दुरत्व(काष्ठा hugetlb_cgroup,
+	cft->file_offset = offsetof(struct hugetlb_cgroup,
 				    events_local_file[idx]);
 	cft->flags = CFTYPE_NOT_ON_ROOT;
 
-	/* शून्य terminate the last cft */
+	/* NULL terminate the last cft */
 	cft = &h->cgroup_files_dfl[6];
-	स_रखो(cft, 0, माप(*cft));
+	memset(cft, 0, sizeof(*cft));
 
 	WARN_ON(cgroup_add_dfl_cftypes(&hugetlb_cgrp_subsys,
 				       h->cgroup_files_dfl));
-पूर्ण
+}
 
-अटल व्योम __init __hugetlb_cgroup_file_legacy_init(पूर्णांक idx)
-अणु
-	अक्षर buf[32];
-	काष्ठा cftype *cft;
-	काष्ठा hstate *h = &hstates[idx];
+static void __init __hugetlb_cgroup_file_legacy_init(int idx)
+{
+	char buf[32];
+	struct cftype *cft;
+	struct hstate *h = &hstates[idx];
 
-	/* क्रमmat the size */
-	mem_fmt(buf, माप(buf), huge_page_size(h));
+	/* format the size */
+	mem_fmt(buf, sizeof(buf), huge_page_size(h));
 
 	/* Add the limit file */
 	cft = &h->cgroup_files_legacy[0];
-	snम_लिखो(cft->name, MAX_CFTYPE_NAME, "%s.limit_in_bytes", buf);
-	cft->निजी = MEMखाता_PRIVATE(idx, RES_LIMIT);
-	cft->पढ़ो_u64 = hugetlb_cgroup_पढ़ो_u64;
-	cft->ग_लिखो = hugetlb_cgroup_ग_लिखो_legacy;
+	snprintf(cft->name, MAX_CFTYPE_NAME, "%s.limit_in_bytes", buf);
+	cft->private = MEMFILE_PRIVATE(idx, RES_LIMIT);
+	cft->read_u64 = hugetlb_cgroup_read_u64;
+	cft->write = hugetlb_cgroup_write_legacy;
 
 	/* Add the reservation limit file */
 	cft = &h->cgroup_files_legacy[1];
-	snम_लिखो(cft->name, MAX_CFTYPE_NAME, "%s.rsvd.limit_in_bytes", buf);
-	cft->निजी = MEMखाता_PRIVATE(idx, RES_RSVD_LIMIT);
-	cft->पढ़ो_u64 = hugetlb_cgroup_पढ़ो_u64;
-	cft->ग_लिखो = hugetlb_cgroup_ग_लिखो_legacy;
+	snprintf(cft->name, MAX_CFTYPE_NAME, "%s.rsvd.limit_in_bytes", buf);
+	cft->private = MEMFILE_PRIVATE(idx, RES_RSVD_LIMIT);
+	cft->read_u64 = hugetlb_cgroup_read_u64;
+	cft->write = hugetlb_cgroup_write_legacy;
 
 	/* Add the usage file */
 	cft = &h->cgroup_files_legacy[2];
-	snम_लिखो(cft->name, MAX_CFTYPE_NAME, "%s.usage_in_bytes", buf);
-	cft->निजी = MEMखाता_PRIVATE(idx, RES_USAGE);
-	cft->पढ़ो_u64 = hugetlb_cgroup_पढ़ो_u64;
+	snprintf(cft->name, MAX_CFTYPE_NAME, "%s.usage_in_bytes", buf);
+	cft->private = MEMFILE_PRIVATE(idx, RES_USAGE);
+	cft->read_u64 = hugetlb_cgroup_read_u64;
 
 	/* Add the reservation usage file */
 	cft = &h->cgroup_files_legacy[3];
-	snम_लिखो(cft->name, MAX_CFTYPE_NAME, "%s.rsvd.usage_in_bytes", buf);
-	cft->निजी = MEMखाता_PRIVATE(idx, RES_RSVD_USAGE);
-	cft->पढ़ो_u64 = hugetlb_cgroup_पढ़ो_u64;
+	snprintf(cft->name, MAX_CFTYPE_NAME, "%s.rsvd.usage_in_bytes", buf);
+	cft->private = MEMFILE_PRIVATE(idx, RES_RSVD_USAGE);
+	cft->read_u64 = hugetlb_cgroup_read_u64;
 
 	/* Add the MAX usage file */
 	cft = &h->cgroup_files_legacy[4];
-	snम_लिखो(cft->name, MAX_CFTYPE_NAME, "%s.max_usage_in_bytes", buf);
-	cft->निजी = MEMखाता_PRIVATE(idx, RES_MAX_USAGE);
-	cft->ग_लिखो = hugetlb_cgroup_reset;
-	cft->पढ़ो_u64 = hugetlb_cgroup_पढ़ो_u64;
+	snprintf(cft->name, MAX_CFTYPE_NAME, "%s.max_usage_in_bytes", buf);
+	cft->private = MEMFILE_PRIVATE(idx, RES_MAX_USAGE);
+	cft->write = hugetlb_cgroup_reset;
+	cft->read_u64 = hugetlb_cgroup_read_u64;
 
 	/* Add the MAX reservation usage file */
 	cft = &h->cgroup_files_legacy[5];
-	snम_लिखो(cft->name, MAX_CFTYPE_NAME, "%s.rsvd.max_usage_in_bytes", buf);
-	cft->निजी = MEMखाता_PRIVATE(idx, RES_RSVD_MAX_USAGE);
-	cft->ग_लिखो = hugetlb_cgroup_reset;
-	cft->पढ़ो_u64 = hugetlb_cgroup_पढ़ो_u64;
+	snprintf(cft->name, MAX_CFTYPE_NAME, "%s.rsvd.max_usage_in_bytes", buf);
+	cft->private = MEMFILE_PRIVATE(idx, RES_RSVD_MAX_USAGE);
+	cft->write = hugetlb_cgroup_reset;
+	cft->read_u64 = hugetlb_cgroup_read_u64;
 
 	/* Add the failcntfile */
 	cft = &h->cgroup_files_legacy[6];
-	snम_लिखो(cft->name, MAX_CFTYPE_NAME, "%s.failcnt", buf);
-	cft->निजी = MEMखाता_PRIVATE(idx, RES_FAILCNT);
-	cft->ग_लिखो = hugetlb_cgroup_reset;
-	cft->पढ़ो_u64 = hugetlb_cgroup_पढ़ो_u64;
+	snprintf(cft->name, MAX_CFTYPE_NAME, "%s.failcnt", buf);
+	cft->private = MEMFILE_PRIVATE(idx, RES_FAILCNT);
+	cft->write = hugetlb_cgroup_reset;
+	cft->read_u64 = hugetlb_cgroup_read_u64;
 
 	/* Add the reservation failcntfile */
 	cft = &h->cgroup_files_legacy[7];
-	snम_लिखो(cft->name, MAX_CFTYPE_NAME, "%s.rsvd.failcnt", buf);
-	cft->निजी = MEMखाता_PRIVATE(idx, RES_RSVD_FAILCNT);
-	cft->ग_लिखो = hugetlb_cgroup_reset;
-	cft->पढ़ो_u64 = hugetlb_cgroup_पढ़ो_u64;
+	snprintf(cft->name, MAX_CFTYPE_NAME, "%s.rsvd.failcnt", buf);
+	cft->private = MEMFILE_PRIVATE(idx, RES_RSVD_FAILCNT);
+	cft->write = hugetlb_cgroup_reset;
+	cft->read_u64 = hugetlb_cgroup_read_u64;
 
-	/* शून्य terminate the last cft */
+	/* NULL terminate the last cft */
 	cft = &h->cgroup_files_legacy[8];
-	स_रखो(cft, 0, माप(*cft));
+	memset(cft, 0, sizeof(*cft));
 
 	WARN_ON(cgroup_add_legacy_cftypes(&hugetlb_cgrp_subsys,
 					  h->cgroup_files_legacy));
-पूर्ण
+}
 
-अटल व्योम __init __hugetlb_cgroup_file_init(पूर्णांक idx)
-अणु
+static void __init __hugetlb_cgroup_file_init(int idx)
+{
 	__hugetlb_cgroup_file_dfl_init(idx);
 	__hugetlb_cgroup_file_legacy_init(idx);
-पूर्ण
+}
 
-व्योम __init hugetlb_cgroup_file_init(व्योम)
-अणु
-	काष्ठा hstate *h;
+void __init hugetlb_cgroup_file_init(void)
+{
+	struct hstate *h;
 
-	क्रम_each_hstate(h) अणु
+	for_each_hstate(h) {
 		/*
-		 * Add cgroup control files only अगर the huge page consists
+		 * Add cgroup control files only if the huge page consists
 		 * of more than two normal pages. This is because we use
-		 * page[2].निजी क्रम storing cgroup details.
+		 * page[2].private for storing cgroup details.
 		 */
-		अगर (huge_page_order(h) >= HUGETLB_CGROUP_MIN_ORDER)
+		if (huge_page_order(h) >= HUGETLB_CGROUP_MIN_ORDER)
 			__hugetlb_cgroup_file_init(hstate_index(h));
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * hugetlb_lock will make sure a parallel cgroup सूची_हटाओ won't happen
+ * hugetlb_lock will make sure a parallel cgroup rmdir won't happen
  * when we migrate hugepages
  */
-व्योम hugetlb_cgroup_migrate(काष्ठा page *oldhpage, काष्ठा page *newhpage)
-अणु
-	काष्ठा hugetlb_cgroup *h_cg;
-	काष्ठा hugetlb_cgroup *h_cg_rsvd;
-	काष्ठा hstate *h = page_hstate(oldhpage);
+void hugetlb_cgroup_migrate(struct page *oldhpage, struct page *newhpage)
+{
+	struct hugetlb_cgroup *h_cg;
+	struct hugetlb_cgroup *h_cg_rsvd;
+	struct hstate *h = page_hstate(oldhpage);
 
-	अगर (hugetlb_cgroup_disabled())
-		वापस;
+	if (hugetlb_cgroup_disabled())
+		return;
 
 	spin_lock_irq(&hugetlb_lock);
 	h_cg = hugetlb_cgroup_from_page(oldhpage);
 	h_cg_rsvd = hugetlb_cgroup_from_page_rsvd(oldhpage);
-	set_hugetlb_cgroup(oldhpage, शून्य);
-	set_hugetlb_cgroup_rsvd(oldhpage, शून्य);
+	set_hugetlb_cgroup(oldhpage, NULL);
+	set_hugetlb_cgroup_rsvd(oldhpage, NULL);
 
 	/* move the h_cg details to new cgroup */
 	set_hugetlb_cgroup(newhpage, h_cg);
 	set_hugetlb_cgroup_rsvd(newhpage, h_cg_rsvd);
 	list_move(&newhpage->lru, &h->hugepage_activelist);
 	spin_unlock_irq(&hugetlb_lock);
-	वापस;
-पूर्ण
+	return;
+}
 
-अटल काष्ठा cftype hugetlb_files[] = अणु
-	अणुपूर्ण /* terminate */
-पूर्ण;
+static struct cftype hugetlb_files[] = {
+	{} /* terminate */
+};
 
-काष्ठा cgroup_subsys hugetlb_cgrp_subsys = अणु
+struct cgroup_subsys hugetlb_cgrp_subsys = {
 	.css_alloc	= hugetlb_cgroup_css_alloc,
 	.css_offline	= hugetlb_cgroup_css_offline,
-	.css_मुक्त	= hugetlb_cgroup_css_मुक्त,
+	.css_free	= hugetlb_cgroup_css_free,
 	.dfl_cftypes	= hugetlb_files,
 	.legacy_cftypes	= hugetlb_files,
-पूर्ण;
+};

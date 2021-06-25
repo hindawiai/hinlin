@@ -1,18 +1,17 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __MAC80211_DEBUGFS_H
-#घोषणा __MAC80211_DEBUGFS_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __MAC80211_DEBUGFS_H
+#define __MAC80211_DEBUGFS_H
 
-#समावेश "ieee80211_i.h"
+#include "ieee80211_i.h"
 
-#अगर_घोषित CONFIG_MAC80211_DEBUGFS
-व्योम debugfs_hw_add(काष्ठा ieee80211_local *local);
-पूर्णांक __म_लिखो(4, 5) mac80211_क्रमmat_buffer(अक्षर __user *userbuf, माप_प्रकार count,
-					  loff_t *ppos, अक्षर *fmt, ...);
-#अन्यथा
-अटल अंतरभूत व्योम debugfs_hw_add(काष्ठा ieee80211_local *local)
-अणु
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_MAC80211_DEBUGFS
+void debugfs_hw_add(struct ieee80211_local *local);
+int __printf(4, 5) mac80211_format_buffer(char __user *userbuf, size_t count,
+					  loff_t *ppos, char *fmt, ...);
+#else
+static inline void debugfs_hw_add(struct ieee80211_local *local)
+{
+}
+#endif
 
-#पूर्ण_अगर /* __MAC80211_DEBUGFS_H */
+#endif /* __MAC80211_DEBUGFS_H */

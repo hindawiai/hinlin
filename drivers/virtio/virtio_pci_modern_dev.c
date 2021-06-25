@@ -1,9 +1,8 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 
-#समावेश <linux/virtio_pci_modern.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
+#include <linux/virtio_pci_modern.h>
+#include <linux/module.h>
+#include <linux/pci.h>
 
 /*
  * vp_modern_map_capability - map a part of virtio pci capability
@@ -16,254 +15,254 @@
  * @len: the length that is actually mapped
  * @pa: physical address of the capability
  *
- * Returns the io address of क्रम the part of the capability
+ * Returns the io address of for the part of the capability
  */
-अटल व्योम __iomem *
-vp_modern_map_capability(काष्ठा virtio_pci_modern_device *mdev, पूर्णांक off,
-			 माप_प्रकार minlen, u32 align, u32 start, u32 size,
-			 माप_प्रकार *len, resource_माप_प्रकार *pa)
-अणु
-	काष्ठा pci_dev *dev = mdev->pci_dev;
+static void __iomem *
+vp_modern_map_capability(struct virtio_pci_modern_device *mdev, int off,
+			 size_t minlen, u32 align, u32 start, u32 size,
+			 size_t *len, resource_size_t *pa)
+{
+	struct pci_dev *dev = mdev->pci_dev;
 	u8 bar;
 	u32 offset, length;
-	व्योम __iomem *p;
+	void __iomem *p;
 
-	pci_पढ़ो_config_byte(dev, off + दुरत्व(काष्ठा virtio_pci_cap,
+	pci_read_config_byte(dev, off + offsetof(struct virtio_pci_cap,
 						 bar),
 			     &bar);
-	pci_पढ़ो_config_dword(dev, off + दुरत्व(काष्ठा virtio_pci_cap, offset),
+	pci_read_config_dword(dev, off + offsetof(struct virtio_pci_cap, offset),
 			     &offset);
-	pci_पढ़ो_config_dword(dev, off + दुरत्व(काष्ठा virtio_pci_cap, length),
+	pci_read_config_dword(dev, off + offsetof(struct virtio_pci_cap, length),
 			      &length);
 
-	अगर (length <= start) अणु
+	if (length <= start) {
 		dev_err(&dev->dev,
 			"virtio_pci: bad capability len %u (>%u expected)\n",
 			length, start);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	अगर (length - start < minlen) अणु
+	if (length - start < minlen) {
 		dev_err(&dev->dev,
 			"virtio_pci: bad capability len %u (>=%zu expected)\n",
 			length, minlen);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	length -= start;
 
-	अगर (start + offset < offset) अणु
+	if (start + offset < offset) {
 		dev_err(&dev->dev,
 			"virtio_pci: map wrap-around %u+%u\n",
 			start, offset);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	offset += start;
 
-	अगर (offset & (align - 1)) अणु
+	if (offset & (align - 1)) {
 		dev_err(&dev->dev,
 			"virtio_pci: offset %u not aligned to %u\n",
 			offset, align);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	अगर (length > size)
+	if (length > size)
 		length = size;
 
-	अगर (len)
+	if (len)
 		*len = length;
 
-	अगर (minlen + offset < minlen ||
-	    minlen + offset > pci_resource_len(dev, bar)) अणु
+	if (minlen + offset < minlen ||
+	    minlen + offset > pci_resource_len(dev, bar)) {
 		dev_err(&dev->dev,
 			"virtio_pci: map virtio %zu@%u "
 			"out of range on bar %i length %lu\n",
 			minlen, offset,
-			bar, (अचिन्हित दीर्घ)pci_resource_len(dev, bar));
-		वापस शून्य;
-	पूर्ण
+			bar, (unsigned long)pci_resource_len(dev, bar));
+		return NULL;
+	}
 
 	p = pci_iomap_range(dev, bar, offset, length);
-	अगर (!p)
+	if (!p)
 		dev_err(&dev->dev,
 			"virtio_pci: unable to map virtio %u@%u on bar %i\n",
 			length, offset, bar);
-	अन्यथा अगर (pa)
+	else if (pa)
 		*pa = pci_resource_start(dev, bar) + offset;
 
-	वापस p;
-पूर्ण
+	return p;
+}
 
 /**
  * virtio_pci_find_capability - walk capabilities to find device info.
  * @dev: the pci device
  * @cfg_type: the VIRTIO_PCI_CAP_* value we seek
  * @ioresource_types: IORESOURCE_MEM and/or IORESOURCE_IO.
- * @bars: the biपंचांगask of BARs
+ * @bars: the bitmask of BARs
  *
  * Returns offset of the capability, or 0.
  */
-अटल अंतरभूत पूर्णांक virtio_pci_find_capability(काष्ठा pci_dev *dev, u8 cfg_type,
-					     u32 ioresource_types, पूर्णांक *bars)
-अणु
-	पूर्णांक pos;
+static inline int virtio_pci_find_capability(struct pci_dev *dev, u8 cfg_type,
+					     u32 ioresource_types, int *bars)
+{
+	int pos;
 
-	क्रम (pos = pci_find_capability(dev, PCI_CAP_ID_VNDR);
+	for (pos = pci_find_capability(dev, PCI_CAP_ID_VNDR);
 	     pos > 0;
-	     pos = pci_find_next_capability(dev, pos, PCI_CAP_ID_VNDR)) अणु
+	     pos = pci_find_next_capability(dev, pos, PCI_CAP_ID_VNDR)) {
 		u8 type, bar;
-		pci_पढ़ो_config_byte(dev, pos + दुरत्व(काष्ठा virtio_pci_cap,
+		pci_read_config_byte(dev, pos + offsetof(struct virtio_pci_cap,
 							 cfg_type),
 				     &type);
-		pci_पढ़ो_config_byte(dev, pos + दुरत्व(काष्ठा virtio_pci_cap,
+		pci_read_config_byte(dev, pos + offsetof(struct virtio_pci_cap,
 							 bar),
 				     &bar);
 
-		/* Ignore काष्ठाures with reserved BAR values */
-		अगर (bar > 0x5)
-			जारी;
+		/* Ignore structures with reserved BAR values */
+		if (bar > 0x5)
+			continue;
 
-		अगर (type == cfg_type) अणु
-			अगर (pci_resource_len(dev, bar) &&
-			    pci_resource_flags(dev, bar) & ioresource_types) अणु
+		if (type == cfg_type) {
+			if (pci_resource_len(dev, bar) &&
+			    pci_resource_flags(dev, bar) & ioresource_types) {
 				*bars |= (1 << bar);
-				वापस pos;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+				return pos;
+			}
+		}
+	}
+	return 0;
+}
 
 /* This is part of the ABI.  Don't screw with it. */
-अटल अंतरभूत व्योम check_offsets(व्योम)
-अणु
+static inline void check_offsets(void)
+{
 	/* Note: disk space was harmed in compilation of this function. */
 	BUILD_BUG_ON(VIRTIO_PCI_CAP_VNDR !=
-		     दुरत्व(काष्ठा virtio_pci_cap, cap_vndr));
+		     offsetof(struct virtio_pci_cap, cap_vndr));
 	BUILD_BUG_ON(VIRTIO_PCI_CAP_NEXT !=
-		     दुरत्व(काष्ठा virtio_pci_cap, cap_next));
+		     offsetof(struct virtio_pci_cap, cap_next));
 	BUILD_BUG_ON(VIRTIO_PCI_CAP_LEN !=
-		     दुरत्व(काष्ठा virtio_pci_cap, cap_len));
+		     offsetof(struct virtio_pci_cap, cap_len));
 	BUILD_BUG_ON(VIRTIO_PCI_CAP_CFG_TYPE !=
-		     दुरत्व(काष्ठा virtio_pci_cap, cfg_type));
+		     offsetof(struct virtio_pci_cap, cfg_type));
 	BUILD_BUG_ON(VIRTIO_PCI_CAP_BAR !=
-		     दुरत्व(काष्ठा virtio_pci_cap, bar));
+		     offsetof(struct virtio_pci_cap, bar));
 	BUILD_BUG_ON(VIRTIO_PCI_CAP_OFFSET !=
-		     दुरत्व(काष्ठा virtio_pci_cap, offset));
+		     offsetof(struct virtio_pci_cap, offset));
 	BUILD_BUG_ON(VIRTIO_PCI_CAP_LENGTH !=
-		     दुरत्व(काष्ठा virtio_pci_cap, length));
+		     offsetof(struct virtio_pci_cap, length));
 	BUILD_BUG_ON(VIRTIO_PCI_NOTIFY_CAP_MULT !=
-		     दुरत्व(काष्ठा virtio_pci_notअगरy_cap,
-			      notअगरy_off_multiplier));
+		     offsetof(struct virtio_pci_notify_cap,
+			      notify_off_multiplier));
 	BUILD_BUG_ON(VIRTIO_PCI_COMMON_DFSELECT !=
-		     दुरत्व(काष्ठा virtio_pci_common_cfg,
+		     offsetof(struct virtio_pci_common_cfg,
 			      device_feature_select));
 	BUILD_BUG_ON(VIRTIO_PCI_COMMON_DF !=
-		     दुरत्व(काष्ठा virtio_pci_common_cfg, device_feature));
+		     offsetof(struct virtio_pci_common_cfg, device_feature));
 	BUILD_BUG_ON(VIRTIO_PCI_COMMON_GFSELECT !=
-		     दुरत्व(काष्ठा virtio_pci_common_cfg,
+		     offsetof(struct virtio_pci_common_cfg,
 			      guest_feature_select));
 	BUILD_BUG_ON(VIRTIO_PCI_COMMON_GF !=
-		     दुरत्व(काष्ठा virtio_pci_common_cfg, guest_feature));
+		     offsetof(struct virtio_pci_common_cfg, guest_feature));
 	BUILD_BUG_ON(VIRTIO_PCI_COMMON_MSIX !=
-		     दुरत्व(काष्ठा virtio_pci_common_cfg, msix_config));
+		     offsetof(struct virtio_pci_common_cfg, msix_config));
 	BUILD_BUG_ON(VIRTIO_PCI_COMMON_NUMQ !=
-		     दुरत्व(काष्ठा virtio_pci_common_cfg, num_queues));
+		     offsetof(struct virtio_pci_common_cfg, num_queues));
 	BUILD_BUG_ON(VIRTIO_PCI_COMMON_STATUS !=
-		     दुरत्व(काष्ठा virtio_pci_common_cfg, device_status));
+		     offsetof(struct virtio_pci_common_cfg, device_status));
 	BUILD_BUG_ON(VIRTIO_PCI_COMMON_CFGGENERATION !=
-		     दुरत्व(काष्ठा virtio_pci_common_cfg, config_generation));
+		     offsetof(struct virtio_pci_common_cfg, config_generation));
 	BUILD_BUG_ON(VIRTIO_PCI_COMMON_Q_SELECT !=
-		     दुरत्व(काष्ठा virtio_pci_common_cfg, queue_select));
+		     offsetof(struct virtio_pci_common_cfg, queue_select));
 	BUILD_BUG_ON(VIRTIO_PCI_COMMON_Q_SIZE !=
-		     दुरत्व(काष्ठा virtio_pci_common_cfg, queue_size));
+		     offsetof(struct virtio_pci_common_cfg, queue_size));
 	BUILD_BUG_ON(VIRTIO_PCI_COMMON_Q_MSIX !=
-		     दुरत्व(काष्ठा virtio_pci_common_cfg, queue_msix_vector));
+		     offsetof(struct virtio_pci_common_cfg, queue_msix_vector));
 	BUILD_BUG_ON(VIRTIO_PCI_COMMON_Q_ENABLE !=
-		     दुरत्व(काष्ठा virtio_pci_common_cfg, queue_enable));
+		     offsetof(struct virtio_pci_common_cfg, queue_enable));
 	BUILD_BUG_ON(VIRTIO_PCI_COMMON_Q_NOFF !=
-		     दुरत्व(काष्ठा virtio_pci_common_cfg, queue_notअगरy_off));
+		     offsetof(struct virtio_pci_common_cfg, queue_notify_off));
 	BUILD_BUG_ON(VIRTIO_PCI_COMMON_Q_DESCLO !=
-		     दुरत्व(काष्ठा virtio_pci_common_cfg, queue_desc_lo));
+		     offsetof(struct virtio_pci_common_cfg, queue_desc_lo));
 	BUILD_BUG_ON(VIRTIO_PCI_COMMON_Q_DESCHI !=
-		     दुरत्व(काष्ठा virtio_pci_common_cfg, queue_desc_hi));
+		     offsetof(struct virtio_pci_common_cfg, queue_desc_hi));
 	BUILD_BUG_ON(VIRTIO_PCI_COMMON_Q_AVAILLO !=
-		     दुरत्व(काष्ठा virtio_pci_common_cfg, queue_avail_lo));
+		     offsetof(struct virtio_pci_common_cfg, queue_avail_lo));
 	BUILD_BUG_ON(VIRTIO_PCI_COMMON_Q_AVAILHI !=
-		     दुरत्व(काष्ठा virtio_pci_common_cfg, queue_avail_hi));
+		     offsetof(struct virtio_pci_common_cfg, queue_avail_hi));
 	BUILD_BUG_ON(VIRTIO_PCI_COMMON_Q_USEDLO !=
-		     दुरत्व(काष्ठा virtio_pci_common_cfg, queue_used_lo));
+		     offsetof(struct virtio_pci_common_cfg, queue_used_lo));
 	BUILD_BUG_ON(VIRTIO_PCI_COMMON_Q_USEDHI !=
-		     दुरत्व(काष्ठा virtio_pci_common_cfg, queue_used_hi));
-पूर्ण
+		     offsetof(struct virtio_pci_common_cfg, queue_used_hi));
+}
 
 /*
  * vp_modern_probe: probe the modern virtio pci device, note that the
- * caller is required to enable PCI device beक्रमe calling this function.
+ * caller is required to enable PCI device before calling this function.
  * @mdev: the modern virtio-pci device
  *
  * Return 0 on succeed otherwise fail
  */
-पूर्णांक vp_modern_probe(काष्ठा virtio_pci_modern_device *mdev)
-अणु
-	काष्ठा pci_dev *pci_dev = mdev->pci_dev;
-	पूर्णांक err, common, isr, notअगरy, device;
-	u32 notअगरy_length;
-	u32 notअगरy_offset;
+int vp_modern_probe(struct virtio_pci_modern_device *mdev)
+{
+	struct pci_dev *pci_dev = mdev->pci_dev;
+	int err, common, isr, notify, device;
+	u32 notify_length;
+	u32 notify_offset;
 
 	check_offsets();
 
 	mdev->pci_dev = pci_dev;
 
 	/* We only own devices >= 0x1000 and <= 0x107f: leave the rest. */
-	अगर (pci_dev->device < 0x1000 || pci_dev->device > 0x107f)
-		वापस -ENODEV;
+	if (pci_dev->device < 0x1000 || pci_dev->device > 0x107f)
+		return -ENODEV;
 
-	अगर (pci_dev->device < 0x1040) अणु
-		/* Transitional devices: use the PCI subप्रणाली device id as
+	if (pci_dev->device < 0x1040) {
+		/* Transitional devices: use the PCI subsystem device id as
 		 * virtio device id, same as legacy driver always did.
 		 */
-		mdev->id.device = pci_dev->subप्रणाली_device;
-	पूर्ण अन्यथा अणु
+		mdev->id.device = pci_dev->subsystem_device;
+	} else {
 		/* Modern devices: simply use PCI device id, but start from 0x1040. */
 		mdev->id.device = pci_dev->device - 0x1040;
-	पूर्ण
-	mdev->id.venकरोr = pci_dev->subप्रणाली_venकरोr;
+	}
+	mdev->id.vendor = pci_dev->subsystem_vendor;
 
-	/* check क्रम a common config: अगर not, use legacy mode (bar 0). */
+	/* check for a common config: if not, use legacy mode (bar 0). */
 	common = virtio_pci_find_capability(pci_dev, VIRTIO_PCI_CAP_COMMON_CFG,
 					    IORESOURCE_IO | IORESOURCE_MEM,
 					    &mdev->modern_bars);
-	अगर (!common) अणु
+	if (!common) {
 		dev_info(&pci_dev->dev,
 			 "virtio_pci: leaving for legacy driver\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	/* If common is there, these should be too... */
 	isr = virtio_pci_find_capability(pci_dev, VIRTIO_PCI_CAP_ISR_CFG,
 					 IORESOURCE_IO | IORESOURCE_MEM,
 					 &mdev->modern_bars);
-	notअगरy = virtio_pci_find_capability(pci_dev, VIRTIO_PCI_CAP_NOTIFY_CFG,
+	notify = virtio_pci_find_capability(pci_dev, VIRTIO_PCI_CAP_NOTIFY_CFG,
 					    IORESOURCE_IO | IORESOURCE_MEM,
 					    &mdev->modern_bars);
-	अगर (!isr || !notअगरy) अणु
+	if (!isr || !notify) {
 		dev_err(&pci_dev->dev,
 			"virtio_pci: missing capabilities %i/%i/%i\n",
-			common, isr, notअगरy);
-		वापस -EINVAL;
-	पूर्ण
+			common, isr, notify);
+		return -EINVAL;
+	}
 
 	err = dma_set_mask_and_coherent(&pci_dev->dev, DMA_BIT_MASK(64));
-	अगर (err)
+	if (err)
 		err = dma_set_mask_and_coherent(&pci_dev->dev,
 						DMA_BIT_MASK(32));
-	अगर (err)
+	if (err)
 		dev_warn(&pci_dev->dev, "Failed to enable 64-bit or 32-bit DMA.  Trying to continue, but this might not work.\n");
 
-	/* Device capability is only mandatory क्रम devices that have
-	 * device-specअगरic configuration.
+	/* Device capability is only mandatory for devices that have
+	 * device-specific configuration.
 	 */
 	device = virtio_pci_find_capability(pci_dev, VIRTIO_PCI_CAP_DEVICE_CFG,
 					    IORESOURCE_IO | IORESOURCE_MEM,
@@ -271,117 +270,117 @@ vp_modern_map_capability(काष्ठा virtio_pci_modern_device *mdev, प�
 
 	err = pci_request_selected_regions(pci_dev, mdev->modern_bars,
 					   "virtio-pci-modern");
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = -EINVAL;
 	mdev->common = vp_modern_map_capability(mdev, common,
-				      माप(काष्ठा virtio_pci_common_cfg), 4,
-				      0, माप(काष्ठा virtio_pci_common_cfg),
-				      शून्य, शून्य);
-	अगर (!mdev->common)
-		जाओ err_map_common;
-	mdev->isr = vp_modern_map_capability(mdev, isr, माप(u8), 1,
+				      sizeof(struct virtio_pci_common_cfg), 4,
+				      0, sizeof(struct virtio_pci_common_cfg),
+				      NULL, NULL);
+	if (!mdev->common)
+		goto err_map_common;
+	mdev->isr = vp_modern_map_capability(mdev, isr, sizeof(u8), 1,
 					     0, 1,
-					     शून्य, शून्य);
-	अगर (!mdev->isr)
-		जाओ err_map_isr;
+					     NULL, NULL);
+	if (!mdev->isr)
+		goto err_map_isr;
 
-	/* Read notअगरy_off_multiplier from config space. */
-	pci_पढ़ो_config_dword(pci_dev,
-			      notअगरy + दुरत्व(काष्ठा virtio_pci_notअगरy_cap,
-						notअगरy_off_multiplier),
-			      &mdev->notअगरy_offset_multiplier);
-	/* Read notअगरy length and offset from config space. */
-	pci_पढ़ो_config_dword(pci_dev,
-			      notअगरy + दुरत्व(काष्ठा virtio_pci_notअगरy_cap,
+	/* Read notify_off_multiplier from config space. */
+	pci_read_config_dword(pci_dev,
+			      notify + offsetof(struct virtio_pci_notify_cap,
+						notify_off_multiplier),
+			      &mdev->notify_offset_multiplier);
+	/* Read notify length and offset from config space. */
+	pci_read_config_dword(pci_dev,
+			      notify + offsetof(struct virtio_pci_notify_cap,
 						cap.length),
-			      &notअगरy_length);
+			      &notify_length);
 
-	pci_पढ़ो_config_dword(pci_dev,
-			      notअगरy + दुरत्व(काष्ठा virtio_pci_notअगरy_cap,
+	pci_read_config_dword(pci_dev,
+			      notify + offsetof(struct virtio_pci_notify_cap,
 						cap.offset),
-			      &notअगरy_offset);
+			      &notify_offset);
 
-	/* We करोn't know how many VQs we'll map, ahead of the समय.
-	 * If notअगरy length is small, map it all now.
-	 * Otherwise, map each VQ inभागidually later.
+	/* We don't know how many VQs we'll map, ahead of the time.
+	 * If notify length is small, map it all now.
+	 * Otherwise, map each VQ individually later.
 	 */
-	अगर ((u64)notअगरy_length + (notअगरy_offset % PAGE_SIZE) <= PAGE_SIZE) अणु
-		mdev->notअगरy_base = vp_modern_map_capability(mdev, notअगरy,
+	if ((u64)notify_length + (notify_offset % PAGE_SIZE) <= PAGE_SIZE) {
+		mdev->notify_base = vp_modern_map_capability(mdev, notify,
 							     2, 2,
-							     0, notअगरy_length,
-							     &mdev->notअगरy_len,
-							     &mdev->notअगरy_pa);
-		अगर (!mdev->notअगरy_base)
-			जाओ err_map_notअगरy;
-	पूर्ण अन्यथा अणु
-		mdev->notअगरy_map_cap = notअगरy;
-	पूर्ण
+							     0, notify_length,
+							     &mdev->notify_len,
+							     &mdev->notify_pa);
+		if (!mdev->notify_base)
+			goto err_map_notify;
+	} else {
+		mdev->notify_map_cap = notify;
+	}
 
-	/* Again, we करोn't know how much we should map, but PAGE_SIZE
-	 * is more than enough क्रम all existing devices.
+	/* Again, we don't know how much we should map, but PAGE_SIZE
+	 * is more than enough for all existing devices.
 	 */
-	अगर (device) अणु
+	if (device) {
 		mdev->device = vp_modern_map_capability(mdev, device, 0, 4,
 							0, PAGE_SIZE,
 							&mdev->device_len,
-							शून्य);
-		अगर (!mdev->device)
-			जाओ err_map_device;
-	पूर्ण
+							NULL);
+		if (!mdev->device)
+			goto err_map_device;
+	}
 
-	वापस 0;
+	return 0;
 
 err_map_device:
-	अगर (mdev->notअगरy_base)
-		pci_iounmap(pci_dev, mdev->notअगरy_base);
-err_map_notअगरy:
+	if (mdev->notify_base)
+		pci_iounmap(pci_dev, mdev->notify_base);
+err_map_notify:
 	pci_iounmap(pci_dev, mdev->isr);
 err_map_isr:
 	pci_iounmap(pci_dev, mdev->common);
 err_map_common:
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_SYMBOL_GPL(vp_modern_probe);
 
 /*
- * vp_modern_probe: हटाओ and cleanup the modern virtio pci device
+ * vp_modern_probe: remove and cleanup the modern virtio pci device
  * @mdev: the modern virtio-pci device
  */
-व्योम vp_modern_हटाओ(काष्ठा virtio_pci_modern_device *mdev)
-अणु
-	काष्ठा pci_dev *pci_dev = mdev->pci_dev;
+void vp_modern_remove(struct virtio_pci_modern_device *mdev)
+{
+	struct pci_dev *pci_dev = mdev->pci_dev;
 
-	अगर (mdev->device)
+	if (mdev->device)
 		pci_iounmap(pci_dev, mdev->device);
-	अगर (mdev->notअगरy_base)
-		pci_iounmap(pci_dev, mdev->notअगरy_base);
+	if (mdev->notify_base)
+		pci_iounmap(pci_dev, mdev->notify_base);
 	pci_iounmap(pci_dev, mdev->isr);
 	pci_iounmap(pci_dev, mdev->common);
 	pci_release_selected_regions(pci_dev, mdev->modern_bars);
-पूर्ण
-EXPORT_SYMBOL_GPL(vp_modern_हटाओ);
+}
+EXPORT_SYMBOL_GPL(vp_modern_remove);
 
 /*
  * vp_modern_get_features - get features from device
  * @mdev: the modern virtio-pci device
  *
- * Returns the features पढ़ो from the device
+ * Returns the features read from the device
  */
-u64 vp_modern_get_features(काष्ठा virtio_pci_modern_device *mdev)
-अणु
-	काष्ठा virtio_pci_common_cfg __iomem *cfg = mdev->common;
+u64 vp_modern_get_features(struct virtio_pci_modern_device *mdev)
+{
+	struct virtio_pci_common_cfg __iomem *cfg = mdev->common;
 
 	u64 features;
 
-	vp_ioग_लिखो32(0, &cfg->device_feature_select);
-	features = vp_ioपढ़ो32(&cfg->device_feature);
-	vp_ioग_लिखो32(1, &cfg->device_feature_select);
-	features |= ((u64)vp_ioपढ़ो32(&cfg->device_feature) << 32);
+	vp_iowrite32(0, &cfg->device_feature_select);
+	features = vp_ioread32(&cfg->device_feature);
+	vp_iowrite32(1, &cfg->device_feature_select);
+	features |= ((u64)vp_ioread32(&cfg->device_feature) << 32);
 
-	वापस features;
-पूर्ण
+	return features;
+}
 EXPORT_SYMBOL_GPL(vp_modern_get_features);
 
 /*
@@ -389,44 +388,44 @@ EXPORT_SYMBOL_GPL(vp_modern_get_features);
  * @mdev: the modern virtio-pci device
  * @features: the features set to device
  */
-व्योम vp_modern_set_features(काष्ठा virtio_pci_modern_device *mdev,
+void vp_modern_set_features(struct virtio_pci_modern_device *mdev,
 			    u64 features)
-अणु
-	काष्ठा virtio_pci_common_cfg __iomem *cfg = mdev->common;
+{
+	struct virtio_pci_common_cfg __iomem *cfg = mdev->common;
 
-	vp_ioग_लिखो32(0, &cfg->guest_feature_select);
-	vp_ioग_लिखो32((u32)features, &cfg->guest_feature);
-	vp_ioग_लिखो32(1, &cfg->guest_feature_select);
-	vp_ioग_लिखो32(features >> 32, &cfg->guest_feature);
-पूर्ण
+	vp_iowrite32(0, &cfg->guest_feature_select);
+	vp_iowrite32((u32)features, &cfg->guest_feature);
+	vp_iowrite32(1, &cfg->guest_feature_select);
+	vp_iowrite32(features >> 32, &cfg->guest_feature);
+}
 EXPORT_SYMBOL_GPL(vp_modern_set_features);
 
 /*
  * vp_modern_generation - get the device genreation
  * @mdev: the modern virtio-pci device
  *
- * Returns the genreation पढ़ो from device
+ * Returns the genreation read from device
  */
-u32 vp_modern_generation(काष्ठा virtio_pci_modern_device *mdev)
-अणु
-	काष्ठा virtio_pci_common_cfg __iomem *cfg = mdev->common;
+u32 vp_modern_generation(struct virtio_pci_modern_device *mdev)
+{
+	struct virtio_pci_common_cfg __iomem *cfg = mdev->common;
 
-	वापस vp_ioपढ़ो8(&cfg->config_generation);
-पूर्ण
+	return vp_ioread8(&cfg->config_generation);
+}
 EXPORT_SYMBOL_GPL(vp_modern_generation);
 
 /*
  * vp_modern_get_status - get the device status
  * @mdev: the modern virtio-pci device
  *
- * Returns the status पढ़ो from device
+ * Returns the status read from device
  */
-u8 vp_modern_get_status(काष्ठा virtio_pci_modern_device *mdev)
-अणु
-	काष्ठा virtio_pci_common_cfg __iomem *cfg = mdev->common;
+u8 vp_modern_get_status(struct virtio_pci_modern_device *mdev)
+{
+	struct virtio_pci_common_cfg __iomem *cfg = mdev->common;
 
-	वापस vp_ioपढ़ो8(&cfg->device_status);
-पूर्ण
+	return vp_ioread8(&cfg->device_status);
+}
 EXPORT_SYMBOL_GPL(vp_modern_get_status);
 
 /*
@@ -434,53 +433,53 @@ EXPORT_SYMBOL_GPL(vp_modern_get_status);
  * @mdev: the modern virtio-pci device
  * @status: the status set to device
  */
-व्योम vp_modern_set_status(काष्ठा virtio_pci_modern_device *mdev,
+void vp_modern_set_status(struct virtio_pci_modern_device *mdev,
 				 u8 status)
-अणु
-	काष्ठा virtio_pci_common_cfg __iomem *cfg = mdev->common;
+{
+	struct virtio_pci_common_cfg __iomem *cfg = mdev->common;
 
-	vp_ioग_लिखो8(status, &cfg->device_status);
-पूर्ण
+	vp_iowrite8(status, &cfg->device_status);
+}
 EXPORT_SYMBOL_GPL(vp_modern_set_status);
 
 /*
- * vp_modern_queue_vector - set the MSIX vector क्रम a specअगरic virtqueue
+ * vp_modern_queue_vector - set the MSIX vector for a specific virtqueue
  * @mdev: the modern virtio-pci device
  * @index: queue index
  * @vector: the config vector
  *
- * Returns the config vector पढ़ो from the device
+ * Returns the config vector read from the device
  */
-u16 vp_modern_queue_vector(काष्ठा virtio_pci_modern_device *mdev,
+u16 vp_modern_queue_vector(struct virtio_pci_modern_device *mdev,
 			   u16 index, u16 vector)
-अणु
-	काष्ठा virtio_pci_common_cfg __iomem *cfg = mdev->common;
+{
+	struct virtio_pci_common_cfg __iomem *cfg = mdev->common;
 
-	vp_ioग_लिखो16(index, &cfg->queue_select);
-	vp_ioग_लिखो16(vector, &cfg->queue_msix_vector);
-	/* Flush the ग_लिखो out to device */
-	वापस vp_ioपढ़ो16(&cfg->queue_msix_vector);
-पूर्ण
+	vp_iowrite16(index, &cfg->queue_select);
+	vp_iowrite16(vector, &cfg->queue_msix_vector);
+	/* Flush the write out to device */
+	return vp_ioread16(&cfg->queue_msix_vector);
+}
 EXPORT_SYMBOL_GPL(vp_modern_queue_vector);
 
 /*
- * vp_modern_config_vector - set the vector क्रम config पूर्णांकerrupt
+ * vp_modern_config_vector - set the vector for config interrupt
  * @mdev: the modern virtio-pci device
  * @vector: the config vector
  *
- * Returns the config vector पढ़ो from the device
+ * Returns the config vector read from the device
  */
-u16 vp_modern_config_vector(काष्ठा virtio_pci_modern_device *mdev,
+u16 vp_modern_config_vector(struct virtio_pci_modern_device *mdev,
 			    u16 vector)
-अणु
-	काष्ठा virtio_pci_common_cfg __iomem *cfg = mdev->common;
+{
+	struct virtio_pci_common_cfg __iomem *cfg = mdev->common;
 
-	/* Setup the vector used क्रम configuration events */
-	vp_ioग_लिखो16(vector, &cfg->msix_config);
-	/* Verअगरy we had enough resources to assign the vector */
-	/* Will also flush the ग_लिखो out to device */
-	वापस vp_ioपढ़ो16(&cfg->msix_config);
-पूर्ण
+	/* Setup the vector used for configuration events */
+	vp_iowrite16(vector, &cfg->msix_config);
+	/* Verify we had enough resources to assign the vector */
+	/* Will also flush the write out to device */
+	return vp_ioread16(&cfg->msix_config);
+}
 EXPORT_SYMBOL_GPL(vp_modern_config_vector);
 
 /*
@@ -491,21 +490,21 @@ EXPORT_SYMBOL_GPL(vp_modern_config_vector);
  * @driver_addr: address of the driver area
  * @device_addr: address of the device area
  */
-व्योम vp_modern_queue_address(काष्ठा virtio_pci_modern_device *mdev,
+void vp_modern_queue_address(struct virtio_pci_modern_device *mdev,
 			     u16 index, u64 desc_addr, u64 driver_addr,
 			     u64 device_addr)
-अणु
-	काष्ठा virtio_pci_common_cfg __iomem *cfg = mdev->common;
+{
+	struct virtio_pci_common_cfg __iomem *cfg = mdev->common;
 
-	vp_ioग_लिखो16(index, &cfg->queue_select);
+	vp_iowrite16(index, &cfg->queue_select);
 
-	vp_ioग_लिखो64_twopart(desc_addr, &cfg->queue_desc_lo,
+	vp_iowrite64_twopart(desc_addr, &cfg->queue_desc_lo,
 			     &cfg->queue_desc_hi);
-	vp_ioग_लिखो64_twopart(driver_addr, &cfg->queue_avail_lo,
+	vp_iowrite64_twopart(driver_addr, &cfg->queue_avail_lo,
 			     &cfg->queue_avail_hi);
-	vp_ioग_लिखो64_twopart(device_addr, &cfg->queue_used_lo,
+	vp_iowrite64_twopart(device_addr, &cfg->queue_used_lo,
 			     &cfg->queue_used_hi);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(vp_modern_queue_address);
 
 /*
@@ -514,12 +513,12 @@ EXPORT_SYMBOL_GPL(vp_modern_queue_address);
  * @index: the queue index
  * @enable: whether the virtqueue is enable or not
  */
-व्योम vp_modern_set_queue_enable(काष्ठा virtio_pci_modern_device *mdev,
+void vp_modern_set_queue_enable(struct virtio_pci_modern_device *mdev,
 				u16 index, bool enable)
-अणु
-	vp_ioग_लिखो16(index, &mdev->common->queue_select);
-	vp_ioग_लिखो16(enable, &mdev->common->queue_enable);
-पूर्ण
+{
+	vp_iowrite16(index, &mdev->common->queue_select);
+	vp_iowrite16(enable, &mdev->common->queue_enable);
+}
 EXPORT_SYMBOL_GPL(vp_modern_set_queue_enable);
 
 /*
@@ -529,45 +528,45 @@ EXPORT_SYMBOL_GPL(vp_modern_set_queue_enable);
  *
  * Returns whether a virtqueue is enabled or not
  */
-bool vp_modern_get_queue_enable(काष्ठा virtio_pci_modern_device *mdev,
+bool vp_modern_get_queue_enable(struct virtio_pci_modern_device *mdev,
 				u16 index)
-अणु
-	vp_ioग_लिखो16(index, &mdev->common->queue_select);
+{
+	vp_iowrite16(index, &mdev->common->queue_select);
 
-	वापस vp_ioपढ़ो16(&mdev->common->queue_enable);
-पूर्ण
+	return vp_ioread16(&mdev->common->queue_enable);
+}
 EXPORT_SYMBOL_GPL(vp_modern_get_queue_enable);
 
 /*
- * vp_modern_set_queue_size - set size क्रम a virtqueue
+ * vp_modern_set_queue_size - set size for a virtqueue
  * @mdev: the modern virtio-pci device
  * @index: the queue index
  * @size: the size of the virtqueue
  */
-व्योम vp_modern_set_queue_size(काष्ठा virtio_pci_modern_device *mdev,
+void vp_modern_set_queue_size(struct virtio_pci_modern_device *mdev,
 			      u16 index, u16 size)
-अणु
-	vp_ioग_लिखो16(index, &mdev->common->queue_select);
-	vp_ioग_लिखो16(size, &mdev->common->queue_size);
+{
+	vp_iowrite16(index, &mdev->common->queue_select);
+	vp_iowrite16(size, &mdev->common->queue_size);
 
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(vp_modern_set_queue_size);
 
 /*
- * vp_modern_get_queue_size - get size क्रम a virtqueue
+ * vp_modern_get_queue_size - get size for a virtqueue
  * @mdev: the modern virtio-pci device
  * @index: the queue index
  *
  * Returns the size of the virtqueue
  */
-u16 vp_modern_get_queue_size(काष्ठा virtio_pci_modern_device *mdev,
+u16 vp_modern_get_queue_size(struct virtio_pci_modern_device *mdev,
 			     u16 index)
-अणु
-	vp_ioग_लिखो16(index, &mdev->common->queue_select);
+{
+	vp_iowrite16(index, &mdev->common->queue_select);
 
-	वापस vp_ioपढ़ो16(&mdev->common->queue_size);
+	return vp_ioread16(&mdev->common->queue_size);
 
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(vp_modern_get_queue_size);
 
 /*
@@ -576,64 +575,64 @@ EXPORT_SYMBOL_GPL(vp_modern_get_queue_size);
  *
  * Returns the number of virtqueues
  */
-u16 vp_modern_get_num_queues(काष्ठा virtio_pci_modern_device *mdev)
-अणु
-	वापस vp_ioपढ़ो16(&mdev->common->num_queues);
-पूर्ण
+u16 vp_modern_get_num_queues(struct virtio_pci_modern_device *mdev)
+{
+	return vp_ioread16(&mdev->common->num_queues);
+}
 EXPORT_SYMBOL_GPL(vp_modern_get_num_queues);
 
 /*
- * vp_modern_get_queue_notअगरy_off - get notअगरication offset क्रम a virtqueue
+ * vp_modern_get_queue_notify_off - get notification offset for a virtqueue
  * @mdev: the modern virtio-pci device
  * @index: the queue index
  *
- * Returns the notअगरication offset क्रम a virtqueue
+ * Returns the notification offset for a virtqueue
  */
-अटल u16 vp_modern_get_queue_notअगरy_off(काष्ठा virtio_pci_modern_device *mdev,
+static u16 vp_modern_get_queue_notify_off(struct virtio_pci_modern_device *mdev,
 					  u16 index)
-अणु
-	vp_ioग_लिखो16(index, &mdev->common->queue_select);
+{
+	vp_iowrite16(index, &mdev->common->queue_select);
 
-	वापस vp_ioपढ़ो16(&mdev->common->queue_notअगरy_off);
-पूर्ण
+	return vp_ioread16(&mdev->common->queue_notify_off);
+}
 
 /*
- * vp_modern_map_vq_notअगरy - map notअगरication area क्रम a
- * specअगरic virtqueue
+ * vp_modern_map_vq_notify - map notification area for a
+ * specific virtqueue
  * @mdev: the modern virtio-pci device
  * @index: the queue index
- * @pa: the poपूर्णांकer to the physical address of the nofity area
+ * @pa: the pointer to the physical address of the nofity area
  *
- * Returns the address of the notअगरication area
+ * Returns the address of the notification area
  */
-व्योम __iomem *vp_modern_map_vq_notअगरy(काष्ठा virtio_pci_modern_device *mdev,
-				      u16 index, resource_माप_प्रकार *pa)
-अणु
-	u16 off = vp_modern_get_queue_notअगरy_off(mdev, index);
+void __iomem *vp_modern_map_vq_notify(struct virtio_pci_modern_device *mdev,
+				      u16 index, resource_size_t *pa)
+{
+	u16 off = vp_modern_get_queue_notify_off(mdev, index);
 
-	अगर (mdev->notअगरy_base) अणु
+	if (mdev->notify_base) {
 		/* offset should not wrap */
-		अगर ((u64)off * mdev->notअगरy_offset_multiplier + 2
-			> mdev->notअगरy_len) अणु
+		if ((u64)off * mdev->notify_offset_multiplier + 2
+			> mdev->notify_len) {
 			dev_warn(&mdev->pci_dev->dev,
 				 "bad notification offset %u (x %u) "
 				 "for queue %u > %zd",
-				 off, mdev->notअगरy_offset_multiplier,
-				 index, mdev->notअगरy_len);
-			वापस शून्य;
-		पूर्ण
-		अगर (pa)
-			*pa = mdev->notअगरy_pa +
-			      off * mdev->notअगरy_offset_multiplier;
-		वापस mdev->notअगरy_base + off * mdev->notअगरy_offset_multiplier;
-	पूर्ण अन्यथा अणु
-		वापस vp_modern_map_capability(mdev,
-				       mdev->notअगरy_map_cap, 2, 2,
-				       off * mdev->notअगरy_offset_multiplier, 2,
-				       शून्य, pa);
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL_GPL(vp_modern_map_vq_notअगरy);
+				 off, mdev->notify_offset_multiplier,
+				 index, mdev->notify_len);
+			return NULL;
+		}
+		if (pa)
+			*pa = mdev->notify_pa +
+			      off * mdev->notify_offset_multiplier;
+		return mdev->notify_base + off * mdev->notify_offset_multiplier;
+	} else {
+		return vp_modern_map_capability(mdev,
+				       mdev->notify_map_cap, 2, 2,
+				       off * mdev->notify_offset_multiplier, 2,
+				       NULL, pa);
+	}
+}
+EXPORT_SYMBOL_GPL(vp_modern_map_vq_notify);
 
 MODULE_VERSION("0.1");
 MODULE_DESCRIPTION("Modern Virtio PCI Device");

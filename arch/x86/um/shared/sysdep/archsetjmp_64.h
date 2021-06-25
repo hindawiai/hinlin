@@ -1,26 +1,25 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * arch/um/include/sysdep-x86_64/archसमलाँघ.स
+ * arch/um/include/sysdep-x86_64/archsetjmp.h
  */
 
-#अगर_अघोषित _KLIBC_ARCHSETJMP_H
-#घोषणा _KLIBC_ARCHSETJMP_H
+#ifndef _KLIBC_ARCHSETJMP_H
+#define _KLIBC_ARCHSETJMP_H
 
-काष्ठा __लाँघ_बफ अणु
-	अचिन्हित दीर्घ __rbx;
-	अचिन्हित दीर्घ __rsp;
-	अचिन्हित दीर्घ __rbp;
-	अचिन्हित दीर्घ __r12;
-	अचिन्हित दीर्घ __r13;
-	अचिन्हित दीर्घ __r14;
-	अचिन्हित दीर्घ __r15;
-	अचिन्हित दीर्घ __rip;
-पूर्ण;
+struct __jmp_buf {
+	unsigned long __rbx;
+	unsigned long __rsp;
+	unsigned long __rbp;
+	unsigned long __r12;
+	unsigned long __r13;
+	unsigned long __r14;
+	unsigned long __r15;
+	unsigned long __rip;
+};
 
-प्रकार काष्ठा __लाँघ_बफ लाँघ_बफ[1];
+typedef struct __jmp_buf jmp_buf[1];
 
-#घोषणा JB_IP __rip
-#घोषणा JB_SP __rsp
+#define JB_IP __rip
+#define JB_SP __rsp
 
-#पूर्ण_अगर				/* _SETJMP_H */
+#endif				/* _SETJMP_H */

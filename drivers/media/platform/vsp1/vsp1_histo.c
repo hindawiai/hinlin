@@ -1,226 +1,225 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * vsp1_histo.c  --  R-Car VSP1 Histogram API
  *
  * Copyright (C) 2016 Renesas Electronics Corporation
- * Copyright (C) 2016 Laurent Pinअक्षरt
+ * Copyright (C) 2016 Laurent Pinchart
  *
- * Contact: Laurent Pinअक्षरt (laurent.pinअक्षरt@ideasonboard.com)
+ * Contact: Laurent Pinchart (laurent.pinchart@ideasonboard.com)
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/gfp.h>
+#include <linux/device.h>
+#include <linux/gfp.h>
 
-#समावेश <media/v4l2-ioctl.h>
-#समावेश <media/v4l2-subdev.h>
-#समावेश <media/videobuf2-vदो_स्मृति.h>
+#include <media/v4l2-ioctl.h>
+#include <media/v4l2-subdev.h>
+#include <media/videobuf2-vmalloc.h>
 
-#समावेश "vsp1.h"
-#समावेश "vsp1_histo.h"
-#समावेश "vsp1_pipe.h"
+#include "vsp1.h"
+#include "vsp1_histo.h"
+#include "vsp1_pipe.h"
 
-#घोषणा HISTO_MIN_SIZE				4U
-#घोषणा HISTO_MAX_SIZE				8192U
+#define HISTO_MIN_SIZE				4U
+#define HISTO_MAX_SIZE				8192U
 
 /* -----------------------------------------------------------------------------
  * Buffer Operations
  */
 
-अटल अंतरभूत काष्ठा vsp1_histogram_buffer *
-to_vsp1_histogram_buffer(काष्ठा vb2_v4l2_buffer *vbuf)
-अणु
-	वापस container_of(vbuf, काष्ठा vsp1_histogram_buffer, buf);
-पूर्ण
+static inline struct vsp1_histogram_buffer *
+to_vsp1_histogram_buffer(struct vb2_v4l2_buffer *vbuf)
+{
+	return container_of(vbuf, struct vsp1_histogram_buffer, buf);
+}
 
-काष्ठा vsp1_histogram_buffer *
-vsp1_histogram_buffer_get(काष्ठा vsp1_histogram *histo)
-अणु
-	काष्ठा vsp1_histogram_buffer *buf = शून्य;
-	अचिन्हित दीर्घ flags;
+struct vsp1_histogram_buffer *
+vsp1_histogram_buffer_get(struct vsp1_histogram *histo)
+{
+	struct vsp1_histogram_buffer *buf = NULL;
+	unsigned long flags;
 
 	spin_lock_irqsave(&histo->irqlock, flags);
 
-	अगर (list_empty(&histo->irqqueue))
-		जाओ करोne;
+	if (list_empty(&histo->irqqueue))
+		goto done;
 
-	buf = list_first_entry(&histo->irqqueue, काष्ठा vsp1_histogram_buffer,
+	buf = list_first_entry(&histo->irqqueue, struct vsp1_histogram_buffer,
 			       queue);
 	list_del(&buf->queue);
-	histo->पढ़ोout = true;
+	histo->readout = true;
 
-करोne:
+done:
 	spin_unlock_irqrestore(&histo->irqlock, flags);
-	वापस buf;
-पूर्ण
+	return buf;
+}
 
-व्योम vsp1_histogram_buffer_complete(काष्ठा vsp1_histogram *histo,
-				    काष्ठा vsp1_histogram_buffer *buf,
-				    माप_प्रकार size)
-अणु
-	काष्ठा vsp1_pipeline *pipe = histo->entity.pipe;
-	अचिन्हित दीर्घ flags;
+void vsp1_histogram_buffer_complete(struct vsp1_histogram *histo,
+				    struct vsp1_histogram_buffer *buf,
+				    size_t size)
+{
+	struct vsp1_pipeline *pipe = histo->entity.pipe;
+	unsigned long flags;
 
 	/*
-	 * The pipeline poपूर्णांकer is guaranteed to be valid as this function is
-	 * called from the frame completion पूर्णांकerrupt handler, which can only
+	 * The pipeline pointer is guaranteed to be valid as this function is
+	 * called from the frame completion interrupt handler, which can only
 	 * occur when video streaming is active.
 	 */
 	buf->buf.sequence = pipe->sequence;
-	buf->buf.vb2_buf.बारtamp = kसमय_get_ns();
+	buf->buf.vb2_buf.timestamp = ktime_get_ns();
 	vb2_set_plane_payload(&buf->buf.vb2_buf, 0, size);
-	vb2_buffer_करोne(&buf->buf.vb2_buf, VB2_BUF_STATE_DONE);
+	vb2_buffer_done(&buf->buf.vb2_buf, VB2_BUF_STATE_DONE);
 
 	spin_lock_irqsave(&histo->irqlock, flags);
-	histo->पढ़ोout = false;
-	wake_up(&histo->रुको_queue);
+	histo->readout = false;
+	wake_up(&histo->wait_queue);
 	spin_unlock_irqrestore(&histo->irqlock, flags);
-पूर्ण
+}
 
 /* -----------------------------------------------------------------------------
  * videobuf2 Queue Operations
  */
 
-अटल पूर्णांक histo_queue_setup(काष्ठा vb2_queue *vq, अचिन्हित पूर्णांक *nbuffers,
-			     अचिन्हित पूर्णांक *nplanes, अचिन्हित पूर्णांक sizes[],
-			     काष्ठा device *alloc_devs[])
-अणु
-	काष्ठा vsp1_histogram *histo = vb2_get_drv_priv(vq);
+static int histo_queue_setup(struct vb2_queue *vq, unsigned int *nbuffers,
+			     unsigned int *nplanes, unsigned int sizes[],
+			     struct device *alloc_devs[])
+{
+	struct vsp1_histogram *histo = vb2_get_drv_priv(vq);
 
-	अगर (*nplanes) अणु
-		अगर (*nplanes != 1)
-			वापस -EINVAL;
+	if (*nplanes) {
+		if (*nplanes != 1)
+			return -EINVAL;
 
-		अगर (sizes[0] < histo->data_size)
-			वापस -EINVAL;
+		if (sizes[0] < histo->data_size)
+			return -EINVAL;
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	*nplanes = 1;
 	sizes[0] = histo->data_size;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक histo_buffer_prepare(काष्ठा vb2_buffer *vb)
-अणु
-	काष्ठा vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
-	काष्ठा vsp1_histogram *histo = vb2_get_drv_priv(vb->vb2_queue);
-	काष्ठा vsp1_histogram_buffer *buf = to_vsp1_histogram_buffer(vbuf);
+static int histo_buffer_prepare(struct vb2_buffer *vb)
+{
+	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
+	struct vsp1_histogram *histo = vb2_get_drv_priv(vb->vb2_queue);
+	struct vsp1_histogram_buffer *buf = to_vsp1_histogram_buffer(vbuf);
 
-	अगर (vb->num_planes != 1)
-		वापस -EINVAL;
+	if (vb->num_planes != 1)
+		return -EINVAL;
 
-	अगर (vb2_plane_size(vb, 0) < histo->data_size)
-		वापस -EINVAL;
+	if (vb2_plane_size(vb, 0) < histo->data_size)
+		return -EINVAL;
 
 	buf->addr = vb2_plane_vaddr(vb, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम histo_buffer_queue(काष्ठा vb2_buffer *vb)
-अणु
-	काष्ठा vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
-	काष्ठा vsp1_histogram *histo = vb2_get_drv_priv(vb->vb2_queue);
-	काष्ठा vsp1_histogram_buffer *buf = to_vsp1_histogram_buffer(vbuf);
-	अचिन्हित दीर्घ flags;
+static void histo_buffer_queue(struct vb2_buffer *vb)
+{
+	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
+	struct vsp1_histogram *histo = vb2_get_drv_priv(vb->vb2_queue);
+	struct vsp1_histogram_buffer *buf = to_vsp1_histogram_buffer(vbuf);
+	unsigned long flags;
 
 	spin_lock_irqsave(&histo->irqlock, flags);
 	list_add_tail(&buf->queue, &histo->irqqueue);
 	spin_unlock_irqrestore(&histo->irqlock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक histo_start_streaming(काष्ठा vb2_queue *vq, अचिन्हित पूर्णांक count)
-अणु
-	वापस 0;
-पूर्ण
+static int histo_start_streaming(struct vb2_queue *vq, unsigned int count)
+{
+	return 0;
+}
 
-अटल व्योम histo_stop_streaming(काष्ठा vb2_queue *vq)
-अणु
-	काष्ठा vsp1_histogram *histo = vb2_get_drv_priv(vq);
-	काष्ठा vsp1_histogram_buffer *buffer;
-	अचिन्हित दीर्घ flags;
+static void histo_stop_streaming(struct vb2_queue *vq)
+{
+	struct vsp1_histogram *histo = vb2_get_drv_priv(vq);
+	struct vsp1_histogram_buffer *buffer;
+	unsigned long flags;
 
 	spin_lock_irqsave(&histo->irqlock, flags);
 
 	/* Remove all buffers from the IRQ queue. */
-	list_क्रम_each_entry(buffer, &histo->irqqueue, queue)
-		vb2_buffer_करोne(&buffer->buf.vb2_buf, VB2_BUF_STATE_ERROR);
+	list_for_each_entry(buffer, &histo->irqqueue, queue)
+		vb2_buffer_done(&buffer->buf.vb2_buf, VB2_BUF_STATE_ERROR);
 	INIT_LIST_HEAD(&histo->irqqueue);
 
-	/* Wait क्रम the buffer being पढ़ो out (अगर any) to complete. */
-	रुको_event_lock_irq(histo->रुको_queue, !histo->पढ़ोout, histo->irqlock);
+	/* Wait for the buffer being read out (if any) to complete. */
+	wait_event_lock_irq(histo->wait_queue, !histo->readout, histo->irqlock);
 
 	spin_unlock_irqrestore(&histo->irqlock, flags);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा vb2_ops histo_video_queue_qops = अणु
+static const struct vb2_ops histo_video_queue_qops = {
 	.queue_setup = histo_queue_setup,
 	.buf_prepare = histo_buffer_prepare,
 	.buf_queue = histo_buffer_queue,
-	.रुको_prepare = vb2_ops_रुको_prepare,
-	.रुको_finish = vb2_ops_रुको_finish,
+	.wait_prepare = vb2_ops_wait_prepare,
+	.wait_finish = vb2_ops_wait_finish,
 	.start_streaming = histo_start_streaming,
 	.stop_streaming = histo_stop_streaming,
-पूर्ण;
+};
 
 /* -----------------------------------------------------------------------------
  * V4L2 Subdevice Operations
  */
 
-अटल पूर्णांक histo_क्रमागत_mbus_code(काष्ठा v4l2_subdev *subdev,
-				काष्ठा v4l2_subdev_pad_config *cfg,
-				काष्ठा v4l2_subdev_mbus_code_क्रमागत *code)
-अणु
-	काष्ठा vsp1_histogram *histo = subdev_to_histo(subdev);
+static int histo_enum_mbus_code(struct v4l2_subdev *subdev,
+				struct v4l2_subdev_pad_config *cfg,
+				struct v4l2_subdev_mbus_code_enum *code)
+{
+	struct vsp1_histogram *histo = subdev_to_histo(subdev);
 
-	अगर (code->pad == HISTO_PAD_SOURCE) अणु
+	if (code->pad == HISTO_PAD_SOURCE) {
 		code->code = MEDIA_BUS_FMT_FIXED;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस vsp1_subdev_क्रमागत_mbus_code(subdev, cfg, code, histo->क्रमmats,
-					  histo->num_क्रमmats);
-पूर्ण
+	return vsp1_subdev_enum_mbus_code(subdev, cfg, code, histo->formats,
+					  histo->num_formats);
+}
 
-अटल पूर्णांक histo_क्रमागत_frame_size(काष्ठा v4l2_subdev *subdev,
-				 काष्ठा v4l2_subdev_pad_config *cfg,
-				 काष्ठा v4l2_subdev_frame_size_क्रमागत *fse)
-अणु
-	अगर (fse->pad != HISTO_PAD_SINK)
-		वापस -EINVAL;
+static int histo_enum_frame_size(struct v4l2_subdev *subdev,
+				 struct v4l2_subdev_pad_config *cfg,
+				 struct v4l2_subdev_frame_size_enum *fse)
+{
+	if (fse->pad != HISTO_PAD_SINK)
+		return -EINVAL;
 
-	वापस vsp1_subdev_क्रमागत_frame_size(subdev, cfg, fse, HISTO_MIN_SIZE,
+	return vsp1_subdev_enum_frame_size(subdev, cfg, fse, HISTO_MIN_SIZE,
 					   HISTO_MIN_SIZE, HISTO_MAX_SIZE,
 					   HISTO_MAX_SIZE);
-पूर्ण
+}
 
-अटल पूर्णांक histo_get_selection(काष्ठा v4l2_subdev *subdev,
-			       काष्ठा v4l2_subdev_pad_config *cfg,
-			       काष्ठा v4l2_subdev_selection *sel)
-अणु
-	काष्ठा vsp1_histogram *histo = subdev_to_histo(subdev);
-	काष्ठा v4l2_subdev_pad_config *config;
-	काष्ठा v4l2_mbus_framefmt *क्रमmat;
-	काष्ठा v4l2_rect *crop;
-	पूर्णांक ret = 0;
+static int histo_get_selection(struct v4l2_subdev *subdev,
+			       struct v4l2_subdev_pad_config *cfg,
+			       struct v4l2_subdev_selection *sel)
+{
+	struct vsp1_histogram *histo = subdev_to_histo(subdev);
+	struct v4l2_subdev_pad_config *config;
+	struct v4l2_mbus_framefmt *format;
+	struct v4l2_rect *crop;
+	int ret = 0;
 
-	अगर (sel->pad != HISTO_PAD_SINK)
-		वापस -EINVAL;
+	if (sel->pad != HISTO_PAD_SINK)
+		return -EINVAL;
 
 	mutex_lock(&histo->entity.lock);
 
 	config = vsp1_entity_get_pad_config(&histo->entity, cfg, sel->which);
-	अगर (!config) अणु
+	if (!config) {
 		ret = -EINVAL;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	चयन (sel->target) अणु
-	हाल V4L2_SEL_TGT_COMPOSE_BOUNDS:
-	हाल V4L2_SEL_TGT_COMPOSE_DEFAULT:
+	switch (sel->target) {
+	case V4L2_SEL_TGT_COMPOSE_BOUNDS:
+	case V4L2_SEL_TGT_COMPOSE_DEFAULT:
 		crop = vsp1_entity_get_pad_selection(&histo->entity, config,
 						     HISTO_PAD_SINK,
 						     V4L2_SEL_TGT_CROP);
@@ -228,51 +227,51 @@ vsp1_histogram_buffer_get(काष्ठा vsp1_histogram *histo)
 		sel->r.top = 0;
 		sel->r.width = crop->width;
 		sel->r.height = crop->height;
-		अवरोध;
+		break;
 
-	हाल V4L2_SEL_TGT_CROP_BOUNDS:
-	हाल V4L2_SEL_TGT_CROP_DEFAULT:
-		क्रमmat = vsp1_entity_get_pad_क्रमmat(&histo->entity, config,
+	case V4L2_SEL_TGT_CROP_BOUNDS:
+	case V4L2_SEL_TGT_CROP_DEFAULT:
+		format = vsp1_entity_get_pad_format(&histo->entity, config,
 						    HISTO_PAD_SINK);
 		sel->r.left = 0;
 		sel->r.top = 0;
-		sel->r.width = क्रमmat->width;
-		sel->r.height = क्रमmat->height;
-		अवरोध;
+		sel->r.width = format->width;
+		sel->r.height = format->height;
+		break;
 
-	हाल V4L2_SEL_TGT_COMPOSE:
-	हाल V4L2_SEL_TGT_CROP:
+	case V4L2_SEL_TGT_COMPOSE:
+	case V4L2_SEL_TGT_CROP:
 		sel->r = *vsp1_entity_get_pad_selection(&histo->entity, config,
 							sel->pad, sel->target);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		ret = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-करोne:
+done:
 	mutex_unlock(&histo->entity.lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक histo_set_crop(काष्ठा v4l2_subdev *subdev,
-			  काष्ठा v4l2_subdev_pad_config *config,
-			 काष्ठा v4l2_subdev_selection *sel)
-अणु
-	काष्ठा vsp1_histogram *histo = subdev_to_histo(subdev);
-	काष्ठा v4l2_mbus_framefmt *क्रमmat;
-	काष्ठा v4l2_rect *selection;
+static int histo_set_crop(struct v4l2_subdev *subdev,
+			  struct v4l2_subdev_pad_config *config,
+			 struct v4l2_subdev_selection *sel)
+{
+	struct vsp1_histogram *histo = subdev_to_histo(subdev);
+	struct v4l2_mbus_framefmt *format;
+	struct v4l2_rect *selection;
 
 	/* The crop rectangle must be inside the input frame. */
-	क्रमmat = vsp1_entity_get_pad_क्रमmat(&histo->entity, config,
+	format = vsp1_entity_get_pad_format(&histo->entity, config,
 					    HISTO_PAD_SINK);
-	sel->r.left = clamp_t(अचिन्हित पूर्णांक, sel->r.left, 0, क्रमmat->width - 1);
-	sel->r.top = clamp_t(अचिन्हित पूर्णांक, sel->r.top, 0, क्रमmat->height - 1);
-	sel->r.width = clamp_t(अचिन्हित पूर्णांक, sel->r.width, HISTO_MIN_SIZE,
-			       क्रमmat->width - sel->r.left);
-	sel->r.height = clamp_t(अचिन्हित पूर्णांक, sel->r.height, HISTO_MIN_SIZE,
-				क्रमmat->height - sel->r.top);
+	sel->r.left = clamp_t(unsigned int, sel->r.left, 0, format->width - 1);
+	sel->r.top = clamp_t(unsigned int, sel->r.top, 0, format->height - 1);
+	sel->r.width = clamp_t(unsigned int, sel->r.width, HISTO_MIN_SIZE,
+			       format->width - sel->r.left);
+	sel->r.height = clamp_t(unsigned int, sel->r.height, HISTO_MIN_SIZE,
+				format->height - sel->r.top);
 
 	/* Set the crop rectangle and reset the compose rectangle. */
 	selection = vsp1_entity_get_pad_selection(&histo->entity, config,
@@ -284,20 +283,20 @@ vsp1_histogram_buffer_get(काष्ठा vsp1_histogram *histo)
 						  V4L2_SEL_TGT_COMPOSE);
 	*selection = sel->r;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक histo_set_compose(काष्ठा v4l2_subdev *subdev,
-			     काष्ठा v4l2_subdev_pad_config *config,
-			     काष्ठा v4l2_subdev_selection *sel)
-अणु
-	काष्ठा vsp1_histogram *histo = subdev_to_histo(subdev);
-	काष्ठा v4l2_rect *compose;
-	काष्ठा v4l2_rect *crop;
-	अचिन्हित पूर्णांक ratio;
+static int histo_set_compose(struct v4l2_subdev *subdev,
+			     struct v4l2_subdev_pad_config *config,
+			     struct v4l2_subdev_selection *sel)
+{
+	struct vsp1_histogram *histo = subdev_to_histo(subdev);
+	struct v4l2_rect *compose;
+	struct v4l2_rect *crop;
+	unsigned int ratio;
 
 	/*
-	 * The compose rectangle is used to configure करोwnscaling, the top left
+	 * The compose rectangle is used to configure downscaling, the top left
 	 * corner is fixed to (0,0) and the size to 1/2 or 1/4 of the crop
 	 * rectangle.
 	 */
@@ -309,7 +308,7 @@ vsp1_histogram_buffer_get(काष्ठा vsp1_histogram *histo)
 
 	/*
 	 * Clamp the width and height to acceptable values first and then
-	 * compute the बंदst rounded भागiding ratio.
+	 * compute the closest rounded dividing ratio.
 	 *
 	 * Ratio	Rounded ratio
 	 * --------------------------
@@ -319,7 +318,7 @@ vsp1_histogram_buffer_get(काष्ठा vsp1_histogram *histo)
 	 *
 	 * The rounded ratio can be computed using
 	 *
-	 * 1 << (उच्चमान(ratio * 2) / 3)
+	 * 1 << (ceil(ratio * 2) / 3)
 	 */
 	sel->r.width = clamp(sel->r.width, crop->width / 4, crop->width);
 	ratio = 1 << (crop->width * 2 / sel->r.width / 3);
@@ -335,145 +334,145 @@ vsp1_histogram_buffer_get(काष्ठा vsp1_histogram *histo)
 						V4L2_SEL_TGT_COMPOSE);
 	*compose = sel->r;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक histo_set_selection(काष्ठा v4l2_subdev *subdev,
-			       काष्ठा v4l2_subdev_pad_config *cfg,
-			       काष्ठा v4l2_subdev_selection *sel)
-अणु
-	काष्ठा vsp1_histogram *histo = subdev_to_histo(subdev);
-	काष्ठा v4l2_subdev_pad_config *config;
-	पूर्णांक ret;
+static int histo_set_selection(struct v4l2_subdev *subdev,
+			       struct v4l2_subdev_pad_config *cfg,
+			       struct v4l2_subdev_selection *sel)
+{
+	struct vsp1_histogram *histo = subdev_to_histo(subdev);
+	struct v4l2_subdev_pad_config *config;
+	int ret;
 
-	अगर (sel->pad != HISTO_PAD_SINK)
-		वापस -EINVAL;
+	if (sel->pad != HISTO_PAD_SINK)
+		return -EINVAL;
 
 	mutex_lock(&histo->entity.lock);
 
 	config = vsp1_entity_get_pad_config(&histo->entity, cfg, sel->which);
-	अगर (!config) अणु
+	if (!config) {
 		ret = -EINVAL;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	अगर (sel->target == V4L2_SEL_TGT_CROP)
+	if (sel->target == V4L2_SEL_TGT_CROP)
 		ret = histo_set_crop(subdev, config, sel);
-	अन्यथा अगर (sel->target == V4L2_SEL_TGT_COMPOSE)
+	else if (sel->target == V4L2_SEL_TGT_COMPOSE)
 		ret = histo_set_compose(subdev, config, sel);
-	अन्यथा
+	else
 		ret = -EINVAL;
 
-करोne:
+done:
 	mutex_unlock(&histo->entity.lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक histo_get_क्रमmat(काष्ठा v4l2_subdev *subdev,
-			    काष्ठा v4l2_subdev_pad_config *cfg,
-			    काष्ठा v4l2_subdev_क्रमmat *fmt)
-अणु
-	अगर (fmt->pad == HISTO_PAD_SOURCE) अणु
-		fmt->क्रमmat.code = MEDIA_BUS_FMT_FIXED;
-		fmt->क्रमmat.width = 0;
-		fmt->क्रमmat.height = 0;
-		fmt->क्रमmat.field = V4L2_FIELD_NONE;
-		fmt->क्रमmat.colorspace = V4L2_COLORSPACE_RAW;
-		वापस 0;
-	पूर्ण
+static int histo_get_format(struct v4l2_subdev *subdev,
+			    struct v4l2_subdev_pad_config *cfg,
+			    struct v4l2_subdev_format *fmt)
+{
+	if (fmt->pad == HISTO_PAD_SOURCE) {
+		fmt->format.code = MEDIA_BUS_FMT_FIXED;
+		fmt->format.width = 0;
+		fmt->format.height = 0;
+		fmt->format.field = V4L2_FIELD_NONE;
+		fmt->format.colorspace = V4L2_COLORSPACE_RAW;
+		return 0;
+	}
 
-	वापस vsp1_subdev_get_pad_क्रमmat(subdev, cfg, fmt);
-पूर्ण
+	return vsp1_subdev_get_pad_format(subdev, cfg, fmt);
+}
 
-अटल पूर्णांक histo_set_क्रमmat(काष्ठा v4l2_subdev *subdev,
-			    काष्ठा v4l2_subdev_pad_config *cfg,
-			    काष्ठा v4l2_subdev_क्रमmat *fmt)
-अणु
-	काष्ठा vsp1_histogram *histo = subdev_to_histo(subdev);
+static int histo_set_format(struct v4l2_subdev *subdev,
+			    struct v4l2_subdev_pad_config *cfg,
+			    struct v4l2_subdev_format *fmt)
+{
+	struct vsp1_histogram *histo = subdev_to_histo(subdev);
 
-	अगर (fmt->pad != HISTO_PAD_SINK)
-		वापस histo_get_क्रमmat(subdev, cfg, fmt);
+	if (fmt->pad != HISTO_PAD_SINK)
+		return histo_get_format(subdev, cfg, fmt);
 
-	वापस vsp1_subdev_set_pad_क्रमmat(subdev, cfg, fmt,
-					  histo->क्रमmats, histo->num_क्रमmats,
+	return vsp1_subdev_set_pad_format(subdev, cfg, fmt,
+					  histo->formats, histo->num_formats,
 					  HISTO_MIN_SIZE, HISTO_MIN_SIZE,
 					  HISTO_MAX_SIZE, HISTO_MAX_SIZE);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा v4l2_subdev_pad_ops histo_pad_ops = अणु
-	.क्रमागत_mbus_code = histo_क्रमागत_mbus_code,
-	.क्रमागत_frame_size = histo_क्रमागत_frame_size,
-	.get_fmt = histo_get_क्रमmat,
-	.set_fmt = histo_set_क्रमmat,
+static const struct v4l2_subdev_pad_ops histo_pad_ops = {
+	.enum_mbus_code = histo_enum_mbus_code,
+	.enum_frame_size = histo_enum_frame_size,
+	.get_fmt = histo_get_format,
+	.set_fmt = histo_set_format,
 	.get_selection = histo_get_selection,
 	.set_selection = histo_set_selection,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_ops histo_ops = अणु
+static const struct v4l2_subdev_ops histo_ops = {
 	.pad    = &histo_pad_ops,
-पूर्ण;
+};
 
 /* -----------------------------------------------------------------------------
  * V4L2 ioctls
  */
 
-अटल पूर्णांक histo_v4l2_querycap(काष्ठा file *file, व्योम *fh,
-			       काष्ठा v4l2_capability *cap)
-अणु
-	काष्ठा v4l2_fh *vfh = file->निजी_data;
-	काष्ठा vsp1_histogram *histo = vdev_to_histo(vfh->vdev);
+static int histo_v4l2_querycap(struct file *file, void *fh,
+			       struct v4l2_capability *cap)
+{
+	struct v4l2_fh *vfh = file->private_data;
+	struct vsp1_histogram *histo = vdev_to_histo(vfh->vdev);
 
 	cap->capabilities = V4L2_CAP_DEVICE_CAPS | V4L2_CAP_STREAMING
 			  | V4L2_CAP_VIDEO_CAPTURE_MPLANE
 			  | V4L2_CAP_VIDEO_OUTPUT_MPLANE
 			  | V4L2_CAP_META_CAPTURE;
 
-	strscpy(cap->driver, "vsp1", माप(cap->driver));
-	strscpy(cap->card, histo->video.name, माप(cap->card));
-	snम_लिखो(cap->bus_info, माप(cap->bus_info), "platform:%s",
+	strscpy(cap->driver, "vsp1", sizeof(cap->driver));
+	strscpy(cap->card, histo->video.name, sizeof(cap->card));
+	snprintf(cap->bus_info, sizeof(cap->bus_info), "platform:%s",
 		 dev_name(histo->entity.vsp1->dev));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक histo_v4l2_क्रमागत_क्रमmat(काष्ठा file *file, व्योम *fh,
-				  काष्ठा v4l2_fmtdesc *f)
-अणु
-	काष्ठा v4l2_fh *vfh = file->निजी_data;
-	काष्ठा vsp1_histogram *histo = vdev_to_histo(vfh->vdev);
+static int histo_v4l2_enum_format(struct file *file, void *fh,
+				  struct v4l2_fmtdesc *f)
+{
+	struct v4l2_fh *vfh = file->private_data;
+	struct vsp1_histogram *histo = vdev_to_histo(vfh->vdev);
 
-	अगर (f->index > 0 || f->type != histo->queue.type)
-		वापस -EINVAL;
+	if (f->index > 0 || f->type != histo->queue.type)
+		return -EINVAL;
 
-	f->pixelक्रमmat = histo->meta_क्रमmat;
+	f->pixelformat = histo->meta_format;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक histo_v4l2_get_क्रमmat(काष्ठा file *file, व्योम *fh,
-				 काष्ठा v4l2_क्रमmat *क्रमmat)
-अणु
-	काष्ठा v4l2_fh *vfh = file->निजी_data;
-	काष्ठा vsp1_histogram *histo = vdev_to_histo(vfh->vdev);
-	काष्ठा v4l2_meta_क्रमmat *meta = &क्रमmat->fmt.meta;
+static int histo_v4l2_get_format(struct file *file, void *fh,
+				 struct v4l2_format *format)
+{
+	struct v4l2_fh *vfh = file->private_data;
+	struct vsp1_histogram *histo = vdev_to_histo(vfh->vdev);
+	struct v4l2_meta_format *meta = &format->fmt.meta;
 
-	अगर (क्रमmat->type != histo->queue.type)
-		वापस -EINVAL;
+	if (format->type != histo->queue.type)
+		return -EINVAL;
 
-	स_रखो(meta, 0, माप(*meta));
+	memset(meta, 0, sizeof(*meta));
 
-	meta->dataक्रमmat = histo->meta_क्रमmat;
+	meta->dataformat = histo->meta_format;
 	meta->buffersize = histo->data_size;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा v4l2_ioctl_ops histo_v4l2_ioctl_ops = अणु
+static const struct v4l2_ioctl_ops histo_v4l2_ioctl_ops = {
 	.vidioc_querycap		= histo_v4l2_querycap,
-	.vidioc_क्रमागत_fmt_meta_cap	= histo_v4l2_क्रमागत_क्रमmat,
-	.vidioc_g_fmt_meta_cap		= histo_v4l2_get_क्रमmat,
-	.vidioc_s_fmt_meta_cap		= histo_v4l2_get_क्रमmat,
-	.vidioc_try_fmt_meta_cap	= histo_v4l2_get_क्रमmat,
+	.vidioc_enum_fmt_meta_cap	= histo_v4l2_enum_format,
+	.vidioc_g_fmt_meta_cap		= histo_v4l2_get_format,
+	.vidioc_s_fmt_meta_cap		= histo_v4l2_get_format,
+	.vidioc_try_fmt_meta_cap	= histo_v4l2_get_format,
 	.vidioc_reqbufs			= vb2_ioctl_reqbufs,
 	.vidioc_querybuf		= vb2_ioctl_querybuf,
 	.vidioc_qbuf			= vb2_ioctl_qbuf,
@@ -482,56 +481,56 @@ vsp1_histogram_buffer_get(काष्ठा vsp1_histogram *histo)
 	.vidioc_prepare_buf		= vb2_ioctl_prepare_buf,
 	.vidioc_streamon		= vb2_ioctl_streamon,
 	.vidioc_streamoff		= vb2_ioctl_streamoff,
-पूर्ण;
+};
 
 /* -----------------------------------------------------------------------------
  * V4L2 File Operations
  */
 
-अटल स्थिर काष्ठा v4l2_file_operations histo_v4l2_fops = अणु
+static const struct v4l2_file_operations histo_v4l2_fops = {
 	.owner = THIS_MODULE,
 	.unlocked_ioctl = video_ioctl2,
-	.खोलो = v4l2_fh_खोलो,
+	.open = v4l2_fh_open,
 	.release = vb2_fop_release,
 	.poll = vb2_fop_poll,
 	.mmap = vb2_fop_mmap,
-पूर्ण;
+};
 
-अटल व्योम vsp1_histogram_cleanup(काष्ठा vsp1_histogram *histo)
-अणु
-	अगर (video_is_रेजिस्टरed(&histo->video))
-		video_unरेजिस्टर_device(&histo->video);
+static void vsp1_histogram_cleanup(struct vsp1_histogram *histo)
+{
+	if (video_is_registered(&histo->video))
+		video_unregister_device(&histo->video);
 
 	media_entity_cleanup(&histo->video.entity);
-पूर्ण
+}
 
-व्योम vsp1_histogram_destroy(काष्ठा vsp1_entity *entity)
-अणु
-	काष्ठा vsp1_histogram *histo = subdev_to_histo(&entity->subdev);
+void vsp1_histogram_destroy(struct vsp1_entity *entity)
+{
+	struct vsp1_histogram *histo = subdev_to_histo(&entity->subdev);
 
 	vsp1_histogram_cleanup(histo);
-पूर्ण
+}
 
-पूर्णांक vsp1_histogram_init(काष्ठा vsp1_device *vsp1, काष्ठा vsp1_histogram *histo,
-			क्रमागत vsp1_entity_type type, स्थिर अक्षर *name,
-			स्थिर काष्ठा vsp1_entity_operations *ops,
-			स्थिर अचिन्हित पूर्णांक *क्रमmats, अचिन्हित पूर्णांक num_क्रमmats,
-			माप_प्रकार data_size, u32 meta_क्रमmat)
-अणु
-	पूर्णांक ret;
+int vsp1_histogram_init(struct vsp1_device *vsp1, struct vsp1_histogram *histo,
+			enum vsp1_entity_type type, const char *name,
+			const struct vsp1_entity_operations *ops,
+			const unsigned int *formats, unsigned int num_formats,
+			size_t data_size, u32 meta_format)
+{
+	int ret;
 
-	histo->क्रमmats = क्रमmats;
-	histo->num_क्रमmats = num_क्रमmats;
+	histo->formats = formats;
+	histo->num_formats = num_formats;
 	histo->data_size = data_size;
-	histo->meta_क्रमmat = meta_क्रमmat;
+	histo->meta_format = meta_format;
 
 	histo->pad.flags = MEDIA_PAD_FL_SINK;
-	histo->video.vfl_dir = VFL_सूची_RX;
+	histo->video.vfl_dir = VFL_DIR_RX;
 
 	mutex_init(&histo->lock);
 	spin_lock_init(&histo->irqlock);
 	INIT_LIST_HEAD(&histo->irqqueue);
-	init_रुकोqueue_head(&histo->रुको_queue);
+	init_waitqueue_head(&histo->wait_queue);
 
 	/* Initialize the VSP entity... */
 	histo->entity.ops = ops;
@@ -539,18 +538,18 @@ vsp1_histogram_buffer_get(काष्ठा vsp1_histogram *histo)
 
 	ret = vsp1_entity_init(vsp1, &histo->entity, name, 2, &histo_ops,
 			       MEDIA_ENT_F_PROC_VIDEO_STATISTICS);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	/* ... and the media entity... */
 	ret = media_entity_pads_init(&histo->video.entity, 1, &histo->pad);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	/* ... and the video node... */
 	histo->video.v4l2_dev = &vsp1->v4l2_dev;
 	histo->video.fops = &histo_v4l2_fops;
-	snम_लिखो(histo->video.name, माप(histo->video.name),
+	snprintf(histo->video.name, sizeof(histo->video.name),
 		 "%s histo", histo->entity.subdev.name);
 	histo->video.vfl_type = VFL_TYPE_VIDEO;
 	histo->video.release = video_device_release_empty;
@@ -564,28 +563,28 @@ vsp1_histogram_buffer_get(काष्ठा vsp1_histogram *histo)
 	histo->queue.io_modes = VB2_MMAP | VB2_USERPTR | VB2_DMABUF;
 	histo->queue.lock = &histo->lock;
 	histo->queue.drv_priv = histo;
-	histo->queue.buf_काष्ठा_size = माप(काष्ठा vsp1_histogram_buffer);
+	histo->queue.buf_struct_size = sizeof(struct vsp1_histogram_buffer);
 	histo->queue.ops = &histo_video_queue_qops;
-	histo->queue.mem_ops = &vb2_vदो_स्मृति_memops;
-	histo->queue.बारtamp_flags = V4L2_BUF_FLAG_TIMESTAMP_COPY;
+	histo->queue.mem_ops = &vb2_vmalloc_memops;
+	histo->queue.timestamp_flags = V4L2_BUF_FLAG_TIMESTAMP_COPY;
 	histo->queue.dev = vsp1->dev;
 	ret = vb2_queue_init(&histo->queue);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(vsp1->dev, "failed to initialize vb2 queue\n");
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	/* ... and रेजिस्टर the video device. */
+	/* ... and register the video device. */
 	histo->video.queue = &histo->queue;
-	ret = video_रेजिस्टर_device(&histo->video, VFL_TYPE_VIDEO, -1);
-	अगर (ret < 0) अणु
+	ret = video_register_device(&histo->video, VFL_TYPE_VIDEO, -1);
+	if (ret < 0) {
 		dev_err(vsp1->dev, "failed to register video device\n");
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	वापस 0;
+	return 0;
 
 error:
 	vsp1_histogram_cleanup(histo);
-	वापस ret;
-पूर्ण
+	return ret;
+}

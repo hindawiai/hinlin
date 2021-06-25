@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Microchip Image Sensor Controller (ISC) driver header file
  *
@@ -9,99 +8,99 @@
  * Author: Eugen Hristev <eugen.hristev@microchip.com>
  *
  */
-#अगर_अघोषित _ATMEL_ISC_H_
+#ifndef _ATMEL_ISC_H_
 
-#घोषणा ISC_MAX_SUPPORT_WIDTH   2592
-#घोषणा ISC_MAX_SUPPORT_HEIGHT  1944
+#define ISC_MAX_SUPPORT_WIDTH   2592
+#define ISC_MAX_SUPPORT_HEIGHT  1944
 
-#घोषणा ISC_CLK_MAX_DIV		255
+#define ISC_CLK_MAX_DIV		255
 
-क्रमागत isc_clk_id अणु
+enum isc_clk_id {
 	ISC_ISPCK = 0,
 	ISC_MCK = 1,
-पूर्ण;
+};
 
-काष्ठा isc_clk अणु
-	काष्ठा clk_hw   hw;
-	काष्ठा clk      *clk;
-	काष्ठा regmap   *regmap;
-	spinlock_t	lock;	/* serialize access to घड़ी रेजिस्टरs */
+struct isc_clk {
+	struct clk_hw   hw;
+	struct clk      *clk;
+	struct regmap   *regmap;
+	spinlock_t	lock;	/* serialize access to clock registers */
 	u8		id;
 	u8		parent_id;
-	u32		भाग;
-	काष्ठा device	*dev;
-पूर्ण;
+	u32		div;
+	struct device	*dev;
+};
 
-#घोषणा to_isc_clk(v) container_of(v, काष्ठा isc_clk, hw)
+#define to_isc_clk(v) container_of(v, struct isc_clk, hw)
 
-काष्ठा isc_buffer अणु
-	काष्ठा vb2_v4l2_buffer  vb;
-	काष्ठा list_head	list;
-पूर्ण;
+struct isc_buffer {
+	struct vb2_v4l2_buffer  vb;
+	struct list_head	list;
+};
 
-काष्ठा isc_subdev_entity अणु
-	काष्ठा v4l2_subdev		*sd;
-	काष्ठा v4l2_async_subdev	*asd;
-	काष्ठा device_node		*epn;
-	काष्ठा v4l2_async_notअगरier      notअगरier;
+struct isc_subdev_entity {
+	struct v4l2_subdev		*sd;
+	struct v4l2_async_subdev	*asd;
+	struct device_node		*epn;
+	struct v4l2_async_notifier      notifier;
 
 	u32 pfe_cfg0;
 
-	काष्ठा list_head list;
-पूर्ण;
+	struct list_head list;
+};
 
 /*
- * काष्ठा isc_क्रमmat - ISC media bus क्रमmat inक्रमmation
-			This काष्ठाure represents the पूर्णांकerface between the ISC
-			and the sensor. It's the input क्रमmat received by
+ * struct isc_format - ISC media bus format information
+			This structure represents the interface between the ISC
+			and the sensor. It's the input format received by
 			the ISC.
- * @fourcc:		Fourcc code क्रम this क्रमmat
- * @mbus_code:		V4L2 media bus क्रमmat code.
- * @cfa_baycfg:		If this क्रमmat is RAW BAYER, indicate the type of bayer.
+ * @fourcc:		Fourcc code for this format
+ * @mbus_code:		V4L2 media bus format code.
+ * @cfa_baycfg:		If this format is RAW BAYER, indicate the type of bayer.
 			this is either BGBG, RGRG, etc.
  * @pfe_cfg0_bps:	Number of hardware data lines connected to the ISC
  */
 
-काष्ठा isc_क्रमmat अणु
+struct isc_format {
 	u32	fourcc;
 	u32	mbus_code;
 	u32	cfa_baycfg;
 
 	bool	sd_support;
 	u32	pfe_cfg0_bps;
-पूर्ण;
+};
 
-/* Pipeline biपंचांगap */
-#घोषणा WB_ENABLE	BIT(0)
-#घोषणा CFA_ENABLE	BIT(1)
-#घोषणा CC_ENABLE	BIT(2)
-#घोषणा GAM_ENABLE	BIT(3)
-#घोषणा GAM_BENABLE	BIT(4)
-#घोषणा GAM_GENABLE	BIT(5)
-#घोषणा GAM_RENABLE	BIT(6)
-#घोषणा CSC_ENABLE	BIT(7)
-#घोषणा CBC_ENABLE	BIT(8)
-#घोषणा SUB422_ENABLE	BIT(9)
-#घोषणा SUB420_ENABLE	BIT(10)
+/* Pipeline bitmap */
+#define WB_ENABLE	BIT(0)
+#define CFA_ENABLE	BIT(1)
+#define CC_ENABLE	BIT(2)
+#define GAM_ENABLE	BIT(3)
+#define GAM_BENABLE	BIT(4)
+#define GAM_GENABLE	BIT(5)
+#define GAM_RENABLE	BIT(6)
+#define CSC_ENABLE	BIT(7)
+#define CBC_ENABLE	BIT(8)
+#define SUB422_ENABLE	BIT(9)
+#define SUB420_ENABLE	BIT(10)
 
-#घोषणा GAM_ENABLES	(GAM_RENABLE | GAM_GENABLE | GAM_BENABLE | GAM_ENABLE)
+#define GAM_ENABLES	(GAM_RENABLE | GAM_GENABLE | GAM_BENABLE | GAM_ENABLE)
 
 /*
- * काष्ठा fmt_config - ISC क्रमmat configuration and पूर्णांकernal pipeline
-			This काष्ठाure represents the पूर्णांकernal configuration
+ * struct fmt_config - ISC format configuration and internal pipeline
+			This structure represents the internal configuration
 			of the ISC.
-			It also holds the क्रमmat that ISC will present to v4l2.
- * @sd_क्रमmat:		Poपूर्णांकer to an isc_क्रमmat काष्ठा that holds the sensor
+			It also holds the format that ISC will present to v4l2.
+ * @sd_format:		Pointer to an isc_format struct that holds the sensor
 			configuration.
- * @fourcc:		Fourcc code क्रम this क्रमmat.
- * @bpp:		Bytes per pixel in the current क्रमmat.
+ * @fourcc:		Fourcc code for this format.
+ * @bpp:		Bytes per pixel in the current format.
  * @rlp_cfg_mode:	Configuration of the RLP (rounding, limiting packaging)
  * @dcfg_imode:		Configuration of the input of the DMA module
  * @dctrl_dview:	Configuration of the output of the DMA module
  * @bits_pipeline:	Configuration of the pipeline, which modules are enabled
  */
-काष्ठा fmt_config अणु
-	काष्ठा isc_क्रमmat	*sd_क्रमmat;
+struct fmt_config {
+	struct isc_format	*sd_format;
 
 	u32			fourcc;
 	u8			bpp;
@@ -111,29 +110,29 @@
 	u32			dctrl_dview;
 
 	u32			bits_pipeline;
-पूर्ण;
+};
 
-#घोषणा HIST_ENTRIES		512
-#घोषणा HIST_BAYER		(ISC_HIS_CFG_MODE_B + 1)
+#define HIST_ENTRIES		512
+#define HIST_BAYER		(ISC_HIS_CFG_MODE_B + 1)
 
-क्रमागतअणु
+enum{
 	HIST_INIT = 0,
 	HIST_ENABLED,
 	HIST_DISABLED,
-पूर्ण;
+};
 
-काष्ठा isc_ctrls अणु
-	काष्ठा v4l2_ctrl_handler handler;
+struct isc_ctrls {
+	struct v4l2_ctrl_handler handler;
 
 	u32 brightness;
 	u32 contrast;
 	u8 gamma_index;
-#घोषणा ISC_WB_NONE	0
-#घोषणा ISC_WB_AUTO	1
-#घोषणा ISC_WB_ONETIME	2
+#define ISC_WB_NONE	0
+#define ISC_WB_AUTO	1
+#define ISC_WB_ONETIME	2
 	u8 awb;
 
-	/* one क्रम each component : GR, R, GB, B */
+	/* one for each component : GR, R, GB, B */
 	u32 gain[HIST_BAYER];
 	s32 offset[HIST_BAYER];
 
@@ -141,47 +140,47 @@
 	u32 hist_count[HIST_BAYER];
 	u8 hist_id;
 	u8 hist_stat;
-#घोषणा HIST_MIN_INDEX		0
-#घोषणा HIST_MAX_INDEX		1
+#define HIST_MIN_INDEX		0
+#define HIST_MAX_INDEX		1
 	u32 hist_minmax[HIST_BAYER][2];
-पूर्ण;
+};
 
-#घोषणा ISC_PIPE_LINE_NODE_NUM	11
+#define ISC_PIPE_LINE_NODE_NUM	11
 
 /*
- * काष्ठा isc_device - ISC device driver data/config काष्ठा
+ * struct isc_device - ISC device driver data/config struct
  * @regmap:		Register map
- * @hघड़ी:		Hघड़ी घड़ी input (refer datasheet)
- * @ispck:		iscpck घड़ी (refer datasheet)
- * @isc_clks:		ISC घड़ीs
+ * @hclock:		Hclock clock input (refer datasheet)
+ * @ispck:		iscpck clock (refer datasheet)
+ * @isc_clks:		ISC clocks
  *
  * @dev:		Registered device driver
- * @v4l2_dev:		v4l2 रेजिस्टरed device
- * @video_dev:		रेजिस्टरed video device
+ * @v4l2_dev:		v4l2 registered device
+ * @video_dev:		registered video device
  *
  * @vb2_vidq:		video buffer 2 video queue
  * @dma_queue_lock:	lock to serialize the dma buffer queue
- * @dma_queue:		the queue क्रम dma buffers
+ * @dma_queue:		the queue for dma buffers
  * @cur_frm:		current isc frame/buffer
  * @sequence:		current frame number
- * @stop:		true अगर isc is not streaming, false अगर streaming
- * @comp:		completion reference that संकेतs frame completion
+ * @stop:		true if isc is not streaming, false if streaming
+ * @comp:		completion reference that signals frame completion
  *
- * @fmt:		current v42l क्रमmat
- * @user_क्रमmats:	list of क्रमmats that are supported and agreed with sd
- * @num_user_क्रमmats:	how many क्रमmats are in user_क्रमmats
+ * @fmt:		current v42l format
+ * @user_formats:	list of formats that are supported and agreed with sd
+ * @num_user_formats:	how many formats are in user_formats
  *
- * @config:		current ISC क्रमmat configuration
- * @try_config:		the current ISC try क्रमmat , not yet activated
+ * @config:		current ISC format configuration
+ * @try_config:		the current ISC try format , not yet activated
  *
- * @ctrls:		holds inक्रमmation about ISC controls
- * @करो_wb_ctrl:		control regarding the DO_WHITE_BALANCE button
- * @awb_work:		workqueue reference क्रम स्वतःwhitebalance histogram
+ * @ctrls:		holds information about ISC controls
+ * @do_wb_ctrl:		control regarding the DO_WHITE_BALANCE button
+ * @awb_work:		workqueue reference for autowhitebalance histogram
  *			analysis
  *
- * @lock:		lock क्रम serializing userspace file operations
+ * @lock:		lock for serializing userspace file operations
  *			with ISC operations
- * @awb_lock:		lock क्रम serializing awb work queue operations
+ * @awb_lock:		lock for serializing awb work queue operations
  *			with DMA/buffer operations
  *
  * @pipeline:		configuration of the ISC pipeline
@@ -189,80 +188,80 @@
  * @current_subdev:	current subdevice: the sensor
  * @subdev_entities:	list of subdevice entitites
  */
-काष्ठा isc_device अणु
-	काष्ठा regmap		*regmap;
-	काष्ठा clk		*hघड़ी;
-	काष्ठा clk		*ispck;
-	काष्ठा isc_clk		isc_clks[2];
+struct isc_device {
+	struct regmap		*regmap;
+	struct clk		*hclock;
+	struct clk		*ispck;
+	struct isc_clk		isc_clks[2];
 
-	काष्ठा device		*dev;
-	काष्ठा v4l2_device	v4l2_dev;
-	काष्ठा video_device	video_dev;
+	struct device		*dev;
+	struct v4l2_device	v4l2_dev;
+	struct video_device	video_dev;
 
-	काष्ठा vb2_queue	vb2_vidq;
+	struct vb2_queue	vb2_vidq;
 	spinlock_t		dma_queue_lock; /* serialize access to dma queue */
-	काष्ठा list_head	dma_queue;
-	काष्ठा isc_buffer	*cur_frm;
-	अचिन्हित पूर्णांक		sequence;
+	struct list_head	dma_queue;
+	struct isc_buffer	*cur_frm;
+	unsigned int		sequence;
 	bool			stop;
-	काष्ठा completion	comp;
+	struct completion	comp;
 
-	काष्ठा v4l2_क्रमmat	fmt;
-	काष्ठा isc_क्रमmat	**user_क्रमmats;
-	अचिन्हित पूर्णांक		num_user_क्रमmats;
+	struct v4l2_format	fmt;
+	struct isc_format	**user_formats;
+	unsigned int		num_user_formats;
 
-	काष्ठा fmt_config	config;
-	काष्ठा fmt_config	try_config;
+	struct fmt_config	config;
+	struct fmt_config	try_config;
 
-	काष्ठा isc_ctrls	ctrls;
-	काष्ठा work_काष्ठा	awb_work;
+	struct isc_ctrls	ctrls;
+	struct work_struct	awb_work;
 
-	काष्ठा mutex		lock; /* serialize access to file operations */
+	struct mutex		lock; /* serialize access to file operations */
 	spinlock_t		awb_lock; /* serialize access to DMA buffers from awb work queue */
 
-	काष्ठा regmap_field	*pipeline[ISC_PIPE_LINE_NODE_NUM];
+	struct regmap_field	*pipeline[ISC_PIPE_LINE_NODE_NUM];
 
-	काष्ठा isc_subdev_entity	*current_subdev;
-	काष्ठा list_head		subdev_entities;
+	struct isc_subdev_entity	*current_subdev;
+	struct list_head		subdev_entities;
 
-	काष्ठा अणु
-#घोषणा ISC_CTRL_DO_WB 1
-#घोषणा ISC_CTRL_R_GAIN 2
-#घोषणा ISC_CTRL_B_GAIN 3
-#घोषणा ISC_CTRL_GR_GAIN 4
-#घोषणा ISC_CTRL_GB_GAIN 5
-#घोषणा ISC_CTRL_R_OFF 6
-#घोषणा ISC_CTRL_B_OFF 7
-#घोषणा ISC_CTRL_GR_OFF 8
-#घोषणा ISC_CTRL_GB_OFF 9
-		काष्ठा v4l2_ctrl	*awb_ctrl;
-		काष्ठा v4l2_ctrl	*करो_wb_ctrl;
-		काष्ठा v4l2_ctrl	*r_gain_ctrl;
-		काष्ठा v4l2_ctrl	*b_gain_ctrl;
-		काष्ठा v4l2_ctrl	*gr_gain_ctrl;
-		काष्ठा v4l2_ctrl	*gb_gain_ctrl;
-		काष्ठा v4l2_ctrl	*r_off_ctrl;
-		काष्ठा v4l2_ctrl	*b_off_ctrl;
-		काष्ठा v4l2_ctrl	*gr_off_ctrl;
-		काष्ठा v4l2_ctrl	*gb_off_ctrl;
-	पूर्ण;
-पूर्ण;
+	struct {
+#define ISC_CTRL_DO_WB 1
+#define ISC_CTRL_R_GAIN 2
+#define ISC_CTRL_B_GAIN 3
+#define ISC_CTRL_GR_GAIN 4
+#define ISC_CTRL_GB_GAIN 5
+#define ISC_CTRL_R_OFF 6
+#define ISC_CTRL_B_OFF 7
+#define ISC_CTRL_GR_OFF 8
+#define ISC_CTRL_GB_OFF 9
+		struct v4l2_ctrl	*awb_ctrl;
+		struct v4l2_ctrl	*do_wb_ctrl;
+		struct v4l2_ctrl	*r_gain_ctrl;
+		struct v4l2_ctrl	*b_gain_ctrl;
+		struct v4l2_ctrl	*gr_gain_ctrl;
+		struct v4l2_ctrl	*gb_gain_ctrl;
+		struct v4l2_ctrl	*r_off_ctrl;
+		struct v4l2_ctrl	*b_off_ctrl;
+		struct v4l2_ctrl	*gr_off_ctrl;
+		struct v4l2_ctrl	*gb_off_ctrl;
+	};
+};
 
-#घोषणा GAMMA_MAX	2
-#घोषणा GAMMA_ENTRIES	64
+#define GAMMA_MAX	2
+#define GAMMA_ENTRIES	64
 
-#घोषणा ATMEL_ISC_NAME "atmel-isc"
+#define ATMEL_ISC_NAME "atmel-isc"
 
-बाह्य काष्ठा isc_क्रमmat क्रमmats_list[];
-बाह्य स्थिर काष्ठा isc_क्रमmat controller_क्रमmats[];
-बाह्य स्थिर u32 isc_gamma_table[GAMMA_MAX + 1][GAMMA_ENTRIES];
-बाह्य स्थिर काष्ठा regmap_config isc_regmap_config;
-बाह्य स्थिर काष्ठा v4l2_async_notअगरier_operations isc_async_ops;
+extern struct isc_format formats_list[];
+extern const struct isc_format controller_formats[];
+extern const u32 isc_gamma_table[GAMMA_MAX + 1][GAMMA_ENTRIES];
+extern const struct regmap_config isc_regmap_config;
+extern const struct v4l2_async_notifier_operations isc_async_ops;
 
-irqवापस_t isc_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id);
-पूर्णांक isc_pipeline_init(काष्ठा isc_device *isc);
-पूर्णांक isc_clk_init(काष्ठा isc_device *isc);
-व्योम isc_subdev_cleanup(काष्ठा isc_device *isc);
-व्योम isc_clk_cleanup(काष्ठा isc_device *isc);
+irqreturn_t isc_interrupt(int irq, void *dev_id);
+int isc_pipeline_init(struct isc_device *isc);
+int isc_clk_init(struct isc_device *isc);
+void isc_subdev_cleanup(struct isc_device *isc);
+void isc_clk_cleanup(struct isc_device *isc);
 
-#पूर्ण_अगर
+#endif

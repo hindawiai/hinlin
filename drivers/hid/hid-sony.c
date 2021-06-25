@@ -1,11 +1,10 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *  HID driver क्रम Sony / PS2 / PS3 / PS4 BD devices.
+ *  HID driver for Sony / PS2 / PS3 / PS4 BD devices.
  *
  *  Copyright (c) 1999 Andreas Gal
  *  Copyright (c) 2000-2005 Vojtech Pavlik <vojtech@suse.cz>
- *  Copyright (c) 2005 Michael Haboustak <mike-@cinci.rr.com> क्रम Concept2, Inc
+ *  Copyright (c) 2005 Michael Haboustak <mike-@cinci.rr.com> for Concept2, Inc
  *  Copyright (c) 2008 Jiri Slaby
  *  Copyright (c) 2012 David Dillow <dave@thedillows.org>
  *  Copyright (c) 2006-2013 Jiri Kosina
@@ -20,86 +19,86 @@
  */
 
 /*
- * NOTE: in order क्रम the Sony PS3 BD Remote Control to be found by
+ * NOTE: in order for the Sony PS3 BD Remote Control to be found by
  * a Bluetooth host, the key combination Start+Enter has to be kept pressed
- * क्रम about 7 seconds with the Bluetooth Host Controller in discovering mode.
+ * for about 7 seconds with the Bluetooth Host Controller in discovering mode.
  *
  * There will be no PIN request from the device.
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/hid.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/leds.h>
-#समावेश <linux/घातer_supply.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/list.h>
-#समावेश <linux/idr.h>
-#समावेश <linux/input/mt.h>
-#समावेश <linux/crc32.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/समयr.h>
-#समावेश <यंत्र/unaligned.h>
+#include <linux/device.h>
+#include <linux/hid.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/leds.h>
+#include <linux/power_supply.h>
+#include <linux/spinlock.h>
+#include <linux/list.h>
+#include <linux/idr.h>
+#include <linux/input/mt.h>
+#include <linux/crc32.h>
+#include <linux/usb.h>
+#include <linux/timer.h>
+#include <asm/unaligned.h>
 
-#समावेश "hid-ids.h"
+#include "hid-ids.h"
 
-#घोषणा VAIO_RDESC_CONSTANT       BIT(0)
-#घोषणा SIXAXIS_CONTROLLER_USB    BIT(1)
-#घोषणा SIXAXIS_CONTROLLER_BT     BIT(2)
-#घोषणा BUZZ_CONTROLLER           BIT(3)
-#घोषणा PS3REMOTE                 BIT(4)
-#घोषणा DUALSHOCK4_CONTROLLER_USB BIT(5)
-#घोषणा DUALSHOCK4_CONTROLLER_BT  BIT(6)
-#घोषणा DUALSHOCK4_DONGLE         BIT(7)
-#घोषणा MOTION_CONTROLLER_USB     BIT(8)
-#घोषणा MOTION_CONTROLLER_BT      BIT(9)
-#घोषणा NAVIGATION_CONTROLLER_USB BIT(10)
-#घोषणा NAVIGATION_CONTROLLER_BT  BIT(11)
-#घोषणा SINO_LITE_CONTROLLER      BIT(12)
-#घोषणा FUTUREMAX_DANCE_MAT       BIT(13)
-#घोषणा NSG_MR5U_REMOTE_BT        BIT(14)
-#घोषणा NSG_MR7U_REMOTE_BT        BIT(15)
-#घोषणा SHANWAN_GAMEPAD           BIT(16)
-#घोषणा GH_GUITAR_CONTROLLER      BIT(17)
-#घोषणा GHL_GUITAR_PS3WIIU        BIT(18)
+#define VAIO_RDESC_CONSTANT       BIT(0)
+#define SIXAXIS_CONTROLLER_USB    BIT(1)
+#define SIXAXIS_CONTROLLER_BT     BIT(2)
+#define BUZZ_CONTROLLER           BIT(3)
+#define PS3REMOTE                 BIT(4)
+#define DUALSHOCK4_CONTROLLER_USB BIT(5)
+#define DUALSHOCK4_CONTROLLER_BT  BIT(6)
+#define DUALSHOCK4_DONGLE         BIT(7)
+#define MOTION_CONTROLLER_USB     BIT(8)
+#define MOTION_CONTROLLER_BT      BIT(9)
+#define NAVIGATION_CONTROLLER_USB BIT(10)
+#define NAVIGATION_CONTROLLER_BT  BIT(11)
+#define SINO_LITE_CONTROLLER      BIT(12)
+#define FUTUREMAX_DANCE_MAT       BIT(13)
+#define NSG_MR5U_REMOTE_BT        BIT(14)
+#define NSG_MR7U_REMOTE_BT        BIT(15)
+#define SHANWAN_GAMEPAD           BIT(16)
+#define GH_GUITAR_CONTROLLER      BIT(17)
+#define GHL_GUITAR_PS3WIIU        BIT(18)
 
-#घोषणा SIXAXIS_CONTROLLER (SIXAXIS_CONTROLLER_USB | SIXAXIS_CONTROLLER_BT)
-#घोषणा MOTION_CONTROLLER (MOTION_CONTROLLER_USB | MOTION_CONTROLLER_BT)
-#घोषणा NAVIGATION_CONTROLLER (NAVIGATION_CONTROLLER_USB |\
+#define SIXAXIS_CONTROLLER (SIXAXIS_CONTROLLER_USB | SIXAXIS_CONTROLLER_BT)
+#define MOTION_CONTROLLER (MOTION_CONTROLLER_USB | MOTION_CONTROLLER_BT)
+#define NAVIGATION_CONTROLLER (NAVIGATION_CONTROLLER_USB |\
 				NAVIGATION_CONTROLLER_BT)
-#घोषणा DUALSHOCK4_CONTROLLER (DUALSHOCK4_CONTROLLER_USB |\
+#define DUALSHOCK4_CONTROLLER (DUALSHOCK4_CONTROLLER_USB |\
 				DUALSHOCK4_CONTROLLER_BT | \
 				DUALSHOCK4_DONGLE)
-#घोषणा SONY_LED_SUPPORT (SIXAXIS_CONTROLLER | BUZZ_CONTROLLER |\
+#define SONY_LED_SUPPORT (SIXAXIS_CONTROLLER | BUZZ_CONTROLLER |\
 				DUALSHOCK4_CONTROLLER | MOTION_CONTROLLER |\
 				NAVIGATION_CONTROLLER)
-#घोषणा SONY_BATTERY_SUPPORT (SIXAXIS_CONTROLLER | DUALSHOCK4_CONTROLLER |\
+#define SONY_BATTERY_SUPPORT (SIXAXIS_CONTROLLER | DUALSHOCK4_CONTROLLER |\
 				MOTION_CONTROLLER_BT | NAVIGATION_CONTROLLER)
-#घोषणा SONY_FF_SUPPORT (SIXAXIS_CONTROLLER | DUALSHOCK4_CONTROLLER |\
+#define SONY_FF_SUPPORT (SIXAXIS_CONTROLLER | DUALSHOCK4_CONTROLLER |\
 				MOTION_CONTROLLER)
-#घोषणा SONY_BT_DEVICE (SIXAXIS_CONTROLLER_BT | DUALSHOCK4_CONTROLLER_BT |\
+#define SONY_BT_DEVICE (SIXAXIS_CONTROLLER_BT | DUALSHOCK4_CONTROLLER_BT |\
 			MOTION_CONTROLLER_BT | NAVIGATION_CONTROLLER_BT)
-#घोषणा NSG_MRXU_REMOTE (NSG_MR5U_REMOTE_BT | NSG_MR7U_REMOTE_BT)
+#define NSG_MRXU_REMOTE (NSG_MR5U_REMOTE_BT | NSG_MR7U_REMOTE_BT)
 
-#घोषणा MAX_LEDS 4
-#घोषणा NSG_MRXU_MAX_X 1667
-#घोषणा NSG_MRXU_MAX_Y 1868
+#define MAX_LEDS 4
+#define NSG_MRXU_MAX_X 1667
+#define NSG_MRXU_MAX_Y 1868
 
-#घोषणा GHL_GUITAR_POKE_INTERVAL 10 /* In seconds */
-#घोषणा GUITAR_TILT_USAGE 44
+#define GHL_GUITAR_POKE_INTERVAL 10 /* In seconds */
+#define GUITAR_TILT_USAGE 44
 
 /* Magic value and data taken from GHLtarUtility:
  * https://github.com/ghlre/GHLtarUtility/blob/master/PS3Guitar.cs
- * Note: The Wii U and PS3 करोngles happen to share the same!
+ * Note: The Wii U and PS3 dongles happen to share the same!
  */
-अटल स्थिर u16 ghl_ps3wiiu_magic_value = 0x201;
-अटल स्थिर अक्षर ghl_ps3wiiu_magic_data[] = अणु
+static const u16 ghl_ps3wiiu_magic_value = 0x201;
+static const char ghl_ps3wiiu_magic_data[] = {
 	0x02, 0x08, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00
-पूर्ण;
+};
 
 /* PS/3 Motion controller */
-अटल u8 motion_rdesc[] = अणु
+static u8 motion_rdesc[] = {
 	0x05, 0x01,         /*  Usage Page (Desktop),               */
 	0x09, 0x04,         /*  Usage (Joystick),                   */
 	0xA1, 0x01,         /*  Collection (Application),           */
@@ -146,7 +145,7 @@
 	0x95, 0x03,         /*          Report Count (3),           * Skip Accels 2nd frame */
 	0x81, 0x02,         /*          Input (Variable),           */
 	0x05, 0x01,         /*          Usage Page (Desktop),       */
-	0x09, 0x01,         /*          Usage (Poपूर्णांकer),            */
+	0x09, 0x01,         /*          Usage (Pointer),            */
 	0x95, 0x03,         /*          Report Count (3),           * 3x Gyros */
 	0x81, 0x02,         /*          Input (Variable),           */
 	0x06, 0x00, 0xFF,   /*          Usage Page (FF00h),         */
@@ -164,55 +163,55 @@
 	0x81, 0x02,         /*          Input (Variable),           */
 	0x75, 0x08,         /*          Report Size (8),            */
 	0x95, 0x30,         /*          Report Count (48),          */
-	0x09, 0x01,         /*          Usage (Poपूर्णांकer),            */
+	0x09, 0x01,         /*          Usage (Pointer),            */
 	0x91, 0x02,         /*          Output (Variable),          */
 	0x75, 0x08,         /*          Report Size (8),            */
 	0x95, 0x30,         /*          Report Count (48),          */
-	0x09, 0x01,         /*          Usage (Poपूर्णांकer),            */
+	0x09, 0x01,         /*          Usage (Pointer),            */
 	0xB1, 0x02,         /*          Feature (Variable),         */
 	0xC0,               /*      End Collection,                 */
 	0xA1, 0x02,         /*      Collection (Logical),           */
 	0x85, 0x02,         /*          Report ID (2),              */
 	0x75, 0x08,         /*          Report Size (8),            */
 	0x95, 0x30,         /*          Report Count (48),          */
-	0x09, 0x01,         /*          Usage (Poपूर्णांकer),            */
+	0x09, 0x01,         /*          Usage (Pointer),            */
 	0xB1, 0x02,         /*          Feature (Variable),         */
 	0xC0,               /*      End Collection,                 */
 	0xA1, 0x02,         /*      Collection (Logical),           */
 	0x85, 0xEE,         /*          Report ID (238),            */
 	0x75, 0x08,         /*          Report Size (8),            */
 	0x95, 0x30,         /*          Report Count (48),          */
-	0x09, 0x01,         /*          Usage (Poपूर्णांकer),            */
+	0x09, 0x01,         /*          Usage (Pointer),            */
 	0xB1, 0x02,         /*          Feature (Variable),         */
 	0xC0,               /*      End Collection,                 */
 	0xA1, 0x02,         /*      Collection (Logical),           */
 	0x85, 0xEF,         /*          Report ID (239),            */
 	0x75, 0x08,         /*          Report Size (8),            */
 	0x95, 0x30,         /*          Report Count (48),          */
-	0x09, 0x01,         /*          Usage (Poपूर्णांकer),            */
+	0x09, 0x01,         /*          Usage (Pointer),            */
 	0xB1, 0x02,         /*          Feature (Variable),         */
 	0xC0,               /*      End Collection,                 */
 	0xC0                /*  End Collection                      */
-पूर्ण;
+};
 
-अटल u8 ps3remote_rdesc[] = अणु
+static u8 ps3remote_rdesc[] = {
 	0x05, 0x01,          /* GUsagePage Generic Desktop */
 	0x09, 0x05,          /* LUsage 0x05 [Game Pad] */
 	0xA1, 0x01,          /* MCollection Application (mouse, keyboard) */
 
-	 /* Use collection 1 क्रम joypad buttons */
-	 0xA1, 0x02,         /* MCollection Logical (पूर्णांकerrelated data) */
+	 /* Use collection 1 for joypad buttons */
+	 0xA1, 0x02,         /* MCollection Logical (interrelated data) */
 
 	  /*
-	   * Ignore the 1st byte, maybe it is used क्रम a controller
-	   * number but it's not needed क्रम correct operation
+	   * Ignore the 1st byte, maybe it is used for a controller
+	   * number but it's not needed for correct operation
 	   */
 	  0x75, 0x08,        /* GReportSize 0x08 [8] */
 	  0x95, 0x01,        /* GReportCount 0x01 [1] */
 	  0x81, 0x01,        /* MInput 0x01 (Const[0] Arr[1] Abs[2]) */
 
 	  /*
-	   * Bytes from 2nd to 4th are a biपंचांगap क्रम joypad buttons, क्रम these
+	   * Bytes from 2nd to 4th are a bitmap for joypad buttons, for these
 	   * buttons multiple keypresses are allowed
 	   */
 	  0x05, 0x09,        /* GUsagePage Button */
@@ -226,10 +225,10 @@
 
 	  0xC0,              /* MEndCollection */
 
-	 /* Use collection 2 क्रम remote control buttons */
-	 0xA1, 0x02,         /* MCollection Logical (पूर्णांकerrelated data) */
+	 /* Use collection 2 for remote control buttons */
+	 0xA1, 0x02,         /* MCollection Logical (interrelated data) */
 
-	  /* 5th byte is used क्रम remote control buttons */
+	  /* 5th byte is used for remote control buttons */
 	  0x05, 0x09,        /* GUsagePage Button */
 	  0x18,              /* LUsageMinimum [No button pressed] */
 	  0x29, 0xFE,        /* LUsageMaximum 0xFE [Button 254] */
@@ -240,14 +239,14 @@
 	  0x80,              /* MInput  */
 
 	  /*
-	   * Ignore bytes from 6th to 11th, 6th to 10th are always स्थिरant at
-	   * 0xff and 11th is क्रम press indication
+	   * Ignore bytes from 6th to 11th, 6th to 10th are always constant at
+	   * 0xff and 11th is for press indication
 	   */
 	  0x75, 0x08,        /* GReportSize 0x08 [8] */
 	  0x95, 0x06,        /* GReportCount 0x06 [6] */
 	  0x81, 0x01,        /* MInput 0x01 (Const[0] Arr[1] Abs[2]) */
 
-	  /* 12th byte is क्रम battery strength */
+	  /* 12th byte is for battery strength */
 	  0x05, 0x06,        /* GUsagePage Generic Device Controls */
 	  0x09, 0x20,        /* LUsage 0x20 [Battery Strength] */
 	  0x14,              /* GLogicalMinimum [0] */
@@ -259,9 +258,9 @@
 	  0xC0,              /* MEndCollection */
 
 	 0xC0                /* MEndCollection [Game Pad] */
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक ps3remote_keymap_joypad_buttons[] = अणु
+static const unsigned int ps3remote_keymap_joypad_buttons[] = {
 	[0x01] = KEY_SELECT,
 	[0x02] = BTN_THUMBL,		/* L3 */
 	[0x03] = BTN_THUMBR,		/* R3 */
@@ -280,8 +279,8 @@
 	[0x10] = KEY_SCREEN,		/* view/square */
 	[0x11] = KEY_HOMEPAGE,		/* PS button */
 	[0x14] = KEY_ENTER,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ps3remote_keymap_remote_buttons[] = अणु
+};
+static const unsigned int ps3remote_keymap_remote_buttons[] = {
 	[0x00] = KEY_1,
 	[0x01] = KEY_2,
 	[0x02] = KEY_3,
@@ -292,7 +291,7 @@
 	[0x07] = KEY_8,
 	[0x08] = KEY_9,
 	[0x09] = KEY_0,
-	[0x0e] = KEY_ESC,		/* वापस */
+	[0x0e] = KEY_ESC,		/* return */
 	[0x0f] = KEY_CLEAR,
 	[0x16] = KEY_EJECTCD,
 	[0x1a] = KEY_MENU,		/* top menu */
@@ -301,12 +300,12 @@
 	[0x31] = KEY_NEXT,
 	[0x32] = KEY_PLAY,
 	[0x33] = KEY_REWIND,		/* scan back */
-	[0x34] = KEY_FORWARD,		/* scan क्रमward */
+	[0x34] = KEY_FORWARD,		/* scan forward */
 	[0x38] = KEY_STOP,
 	[0x39] = KEY_PAUSE,
 	[0x40] = KEY_CONTEXT_MENU,	/* pop up/menu */
 	[0x60] = KEY_FRAMEBACK,		/* slow/step back */
-	[0x61] = KEY_FRAMEFORWARD,	/* slow/step क्रमward */
+	[0x61] = KEY_FRAMEFORWARD,	/* slow/step forward */
 	[0x63] = KEY_SUBTITLE,
 	[0x64] = KEY_AUDIO,
 	[0x65] = KEY_ANGLE,
@@ -315,9 +314,9 @@
 	[0x81] = KEY_RED,
 	[0x82] = KEY_GREEN,
 	[0x83] = KEY_YELLOW,
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक buzz_keymap[] = अणु
+static const unsigned int buzz_keymap[] = {
 	/*
 	 * The controller has 4 remote buzzers, each with one LED and 5
 	 * buttons.
@@ -332,7 +331,7 @@
 	 * Green             3
 	 * Yellow            2
 	 *
-	 * So, क्रम example, the orange button on the third buzzer is mapped to
+	 * So, for example, the orange button on the third buzzer is mapped to
 	 * BTN_TRIGGER_HAPPY14
 	 */
 	 [1] = BTN_TRIGGER_HAPPY1,
@@ -355,23 +354,23 @@
 	[18] = BTN_TRIGGER_HAPPY18,
 	[19] = BTN_TRIGGER_HAPPY19,
 	[20] = BTN_TRIGGER_HAPPY20,
-पूर्ण;
+};
 
 /* The Navigation controller is a partial DS3 and uses the same HID report
  * and hence the same keymap indices, however not not all axes/buttons
  * are physically present. We use the same axis and button mapping as
  * the DS3, which uses the Linux gamepad spec.
  */
-अटल स्थिर अचिन्हित पूर्णांक navigation_असलmap[] = अणु
+static const unsigned int navigation_absmap[] = {
 	[0x30] = ABS_X,
 	[0x31] = ABS_Y,
 	[0x33] = ABS_Z, /* L2 */
-पूर्ण;
+};
 
 /* Buttons not physically available on the device, but still available
- * in the reports are explicitly set to 0 क्रम करोcumentation purposes.
+ * in the reports are explicitly set to 0 for documentation purposes.
  */
-अटल स्थिर अचिन्हित पूर्णांक navigation_keymap[] = अणु
+static const unsigned int navigation_keymap[] = {
 	[0x01] = 0, /* Select */
 	[0x02] = BTN_THUMBL, /* L3 */
 	[0x03] = 0, /* R3 */
@@ -389,16 +388,16 @@
 	[0x0f] = BTN_SOUTH, /* Cross */
 	[0x10] = BTN_WEST, /* Square */
 	[0x11] = BTN_MODE, /* PS */
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक sixaxis_असलmap[] = अणु
+static const unsigned int sixaxis_absmap[] = {
 	[0x30] = ABS_X,
 	[0x31] = ABS_Y,
 	[0x32] = ABS_RX, /* right stick X */
 	[0x35] = ABS_RY, /* right stick Y */
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक sixaxis_keymap[] = अणु
+static const unsigned int sixaxis_keymap[] = {
 	[0x01] = BTN_SELECT, /* Select */
 	[0x02] = BTN_THUMBL, /* L3 */
 	[0x03] = BTN_THUMBR, /* R3 */
@@ -416,18 +415,18 @@
 	[0x0f] = BTN_SOUTH, /* Cross */
 	[0x10] = BTN_WEST, /* Square */
 	[0x11] = BTN_MODE, /* PS */
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक ds4_असलmap[] = अणु
+static const unsigned int ds4_absmap[] = {
 	[0x30] = ABS_X,
 	[0x31] = ABS_Y,
 	[0x32] = ABS_RX, /* right stick X */
 	[0x33] = ABS_Z, /* L2 */
 	[0x34] = ABS_RZ, /* R2 */
 	[0x35] = ABS_RY, /* right stick Y */
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक ds4_keymap[] = अणु
+static const unsigned int ds4_keymap[] = {
 	[0x1] = BTN_WEST, /* Square */
 	[0x2] = BTN_SOUTH, /* Cross */
 	[0x3] = BTN_EAST, /* Circle */
@@ -441,648 +440,648 @@
 	[0xb] = BTN_THUMBL, /* L3 */
 	[0xc] = BTN_THUMBR, /* R3 */
 	[0xd] = BTN_MODE, /* PS */
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा अणुपूर्णांक x; पूर्णांक y; पूर्ण ds4_hat_mapping[] = अणु
-	अणु0, -1पूर्ण, अणु1, -1पूर्ण, अणु1, 0पूर्ण, अणु1, 1पूर्ण, अणु0, 1पूर्ण, अणु-1, 1पूर्ण, अणु-1, 0पूर्ण, अणु-1, -1पूर्ण,
-	अणु0, 0पूर्ण
-पूर्ण;
+static const struct {int x; int y; } ds4_hat_mapping[] = {
+	{0, -1}, {1, -1}, {1, 0}, {1, 1}, {0, 1}, {-1, 1}, {-1, 0}, {-1, -1},
+	{0, 0}
+};
 
-अटल क्रमागत घातer_supply_property sony_battery_props[] = अणु
+static enum power_supply_property sony_battery_props[] = {
 	POWER_SUPPLY_PROP_PRESENT,
 	POWER_SUPPLY_PROP_CAPACITY,
 	POWER_SUPPLY_PROP_SCOPE,
 	POWER_SUPPLY_PROP_STATUS,
-पूर्ण;
+};
 
-काष्ठा sixaxis_led अणु
-	u8 समय_enabled; /* the total समय the led is active (0xff means क्रमever) */
-	u8 duty_length;  /* how दीर्घ a cycle is in deciseconds (0 means "really fast") */
+struct sixaxis_led {
+	u8 time_enabled; /* the total time the led is active (0xff means forever) */
+	u8 duty_length;  /* how long a cycle is in deciseconds (0 means "really fast") */
 	u8 enabled;
 	u8 duty_off; /* % of duty_length the led is off (0xff means 100%) */
 	u8 duty_on;  /* % of duty_length the led is on (0xff mean 100%) */
-पूर्ण __packed;
+} __packed;
 
-काष्ठा sixaxis_rumble अणु
+struct sixaxis_rumble {
 	u8 padding;
-	u8 right_duration; /* Right motor duration (0xff means क्रमever) */
+	u8 right_duration; /* Right motor duration (0xff means forever) */
 	u8 right_motor_on; /* Right (small) motor on/off, only supports values of 0 or 1 (off/on) */
-	u8 left_duration;    /* Left motor duration (0xff means क्रमever) */
-	u8 left_motor_क्रमce; /* left (large) motor, supports क्रमce values from 0 to 255 */
-पूर्ण __packed;
+	u8 left_duration;    /* Left motor duration (0xff means forever) */
+	u8 left_motor_force; /* left (large) motor, supports force values from 0 to 255 */
+} __packed;
 
-काष्ठा sixaxis_output_report अणु
+struct sixaxis_output_report {
 	u8 report_id;
-	काष्ठा sixaxis_rumble rumble;
+	struct sixaxis_rumble rumble;
 	u8 padding[4];
-	u8 leds_biपंचांगap; /* biपंचांगap of enabled LEDs: LED_1 = 0x02, LED_2 = 0x04, ... */
-	काष्ठा sixaxis_led led[4];    /* LEDx at (4 - x) */
-	काष्ठा sixaxis_led _reserved; /* LED5, not actually soldered */
-पूर्ण __packed;
+	u8 leds_bitmap; /* bitmap of enabled LEDs: LED_1 = 0x02, LED_2 = 0x04, ... */
+	struct sixaxis_led led[4];    /* LEDx at (4 - x) */
+	struct sixaxis_led _reserved; /* LED5, not actually soldered */
+} __packed;
 
-जोड़ sixaxis_output_report_01 अणु
-	काष्ठा sixaxis_output_report data;
+union sixaxis_output_report_01 {
+	struct sixaxis_output_report data;
 	u8 buf[36];
-पूर्ण;
+};
 
-काष्ठा motion_output_report_02 अणु
+struct motion_output_report_02 {
 	u8 type, zero;
 	u8 r, g, b;
 	u8 zero2;
 	u8 rumble;
-पूर्ण;
+};
 
-#घोषणा DS4_FEATURE_REPORT_0x02_SIZE 37
-#घोषणा DS4_FEATURE_REPORT_0x05_SIZE 41
-#घोषणा DS4_FEATURE_REPORT_0x81_SIZE 7
-#घोषणा DS4_FEATURE_REPORT_0xA3_SIZE 49
-#घोषणा DS4_INPUT_REPORT_0x11_SIZE 78
-#घोषणा DS4_OUTPUT_REPORT_0x05_SIZE 32
-#घोषणा DS4_OUTPUT_REPORT_0x11_SIZE 78
-#घोषणा SIXAXIS_REPORT_0xF2_SIZE 17
-#घोषणा SIXAXIS_REPORT_0xF5_SIZE 8
-#घोषणा MOTION_REPORT_0x02_SIZE 49
+#define DS4_FEATURE_REPORT_0x02_SIZE 37
+#define DS4_FEATURE_REPORT_0x05_SIZE 41
+#define DS4_FEATURE_REPORT_0x81_SIZE 7
+#define DS4_FEATURE_REPORT_0xA3_SIZE 49
+#define DS4_INPUT_REPORT_0x11_SIZE 78
+#define DS4_OUTPUT_REPORT_0x05_SIZE 32
+#define DS4_OUTPUT_REPORT_0x11_SIZE 78
+#define SIXAXIS_REPORT_0xF2_SIZE 17
+#define SIXAXIS_REPORT_0xF5_SIZE 8
+#define MOTION_REPORT_0x02_SIZE 49
 
 /* Offsets relative to USB input report (0x1). Bluetooth (0x11) requires an
  * additional +2.
  */
-#घोषणा DS4_INPUT_REPORT_AXIS_OFFSET      1
-#घोषणा DS4_INPUT_REPORT_BUTTON_OFFSET    5
-#घोषणा DS4_INPUT_REPORT_TIMESTAMP_OFFSET 10
-#घोषणा DS4_INPUT_REPORT_GYRO_X_OFFSET   13
-#घोषणा DS4_INPUT_REPORT_BATTERY_OFFSET  30
-#घोषणा DS4_INPUT_REPORT_TOUCHPAD_OFFSET 33
+#define DS4_INPUT_REPORT_AXIS_OFFSET      1
+#define DS4_INPUT_REPORT_BUTTON_OFFSET    5
+#define DS4_INPUT_REPORT_TIMESTAMP_OFFSET 10
+#define DS4_INPUT_REPORT_GYRO_X_OFFSET   13
+#define DS4_INPUT_REPORT_BATTERY_OFFSET  30
+#define DS4_INPUT_REPORT_TOUCHPAD_OFFSET 33
 
-#घोषणा SENSOR_SUFFIX " Motion Sensors"
-#घोषणा DS4_TOUCHPAD_SUFFIX " Touchpad"
+#define SENSOR_SUFFIX " Motion Sensors"
+#define DS4_TOUCHPAD_SUFFIX " Touchpad"
 
-/* Default to 4ms poll पूर्णांकerval, which is same as USB (not adjustable). */
-#घोषणा DS4_BT_DEFAULT_POLL_INTERVAL_MS 4
-#घोषणा DS4_BT_MAX_POLL_INTERVAL_MS 62
-#घोषणा DS4_GYRO_RES_PER_DEG_S 1024
-#घोषणा DS4_ACC_RES_PER_G      8192
+/* Default to 4ms poll interval, which is same as USB (not adjustable). */
+#define DS4_BT_DEFAULT_POLL_INTERVAL_MS 4
+#define DS4_BT_MAX_POLL_INTERVAL_MS 62
+#define DS4_GYRO_RES_PER_DEG_S 1024
+#define DS4_ACC_RES_PER_G      8192
 
-#घोषणा SIXAXIS_INPUT_REPORT_ACC_X_OFFSET 41
-#घोषणा SIXAXIS_ACC_RES_PER_G 113
+#define SIXAXIS_INPUT_REPORT_ACC_X_OFFSET 41
+#define SIXAXIS_ACC_RES_PER_G 113
 
-अटल DEFINE_SPINLOCK(sony_dev_list_lock);
-अटल LIST_HEAD(sony_device_list);
-अटल DEFINE_IDA(sony_device_id_allocator);
+static DEFINE_SPINLOCK(sony_dev_list_lock);
+static LIST_HEAD(sony_device_list);
+static DEFINE_IDA(sony_device_id_allocator);
 
-/* Used क्रम calibration of DS4 accelerometer and gyro. */
-काष्ठा ds4_calibration_data अणु
-	पूर्णांक असल_code;
-	लघु bias;
+/* Used for calibration of DS4 accelerometer and gyro. */
+struct ds4_calibration_data {
+	int abs_code;
+	short bias;
 	/* Calibration requires scaling against a sensitivity value, which is a
-	 * भग्न. Store sensitivity as a fraction to limit भग्नing poपूर्णांक
+	 * float. Store sensitivity as a fraction to limit floating point
 	 * calculations until final calibration.
 	 */
-	पूर्णांक sens_numer;
-	पूर्णांक sens_denom;
-पूर्ण;
+	int sens_numer;
+	int sens_denom;
+};
 
-क्रमागत ds4_करोngle_state अणु
+enum ds4_dongle_state {
 	DONGLE_DISCONNECTED,
 	DONGLE_CALIBRATING,
 	DONGLE_CONNECTED,
 	DONGLE_DISABLED
-पूर्ण;
+};
 
-क्रमागत sony_worker अणु
+enum sony_worker {
 	SONY_WORKER_STATE,
 	SONY_WORKER_HOTPLUG
-पूर्ण;
+};
 
-काष्ठा sony_sc अणु
+struct sony_sc {
 	spinlock_t lock;
-	काष्ठा list_head list_node;
-	काष्ठा hid_device *hdev;
-	काष्ठा input_dev *touchpad;
-	काष्ठा input_dev *sensor_dev;
-	काष्ठा led_classdev *leds[MAX_LEDS];
-	अचिन्हित दीर्घ quirks;
-	काष्ठा work_काष्ठा hotplug_worker;
-	काष्ठा work_काष्ठा state_worker;
-	व्योम (*send_output_report)(काष्ठा sony_sc *);
-	काष्ठा घातer_supply *battery;
-	काष्ठा घातer_supply_desc battery_desc;
-	पूर्णांक device_id;
-	अचिन्हित fw_version;
+	struct list_head list_node;
+	struct hid_device *hdev;
+	struct input_dev *touchpad;
+	struct input_dev *sensor_dev;
+	struct led_classdev *leds[MAX_LEDS];
+	unsigned long quirks;
+	struct work_struct hotplug_worker;
+	struct work_struct state_worker;
+	void (*send_output_report)(struct sony_sc *);
+	struct power_supply *battery;
+	struct power_supply_desc battery_desc;
+	int device_id;
+	unsigned fw_version;
 	bool fw_version_created;
-	अचिन्हित hw_version;
+	unsigned hw_version;
 	bool hw_version_created;
 	u8 *output_report_dmabuf;
 
-#अगर_घोषित CONFIG_SONY_FF
+#ifdef CONFIG_SONY_FF
 	u8 left;
 	u8 right;
-#पूर्ण_अगर
+#endif
 
 	u8 mac_address[6];
 	u8 hotplug_worker_initialized;
 	u8 state_worker_initialized;
 	u8 defer_initialization;
 	u8 battery_capacity;
-	पूर्णांक battery_status;
+	int battery_status;
 	u8 led_state[MAX_LEDS];
 	u8 led_delay_on[MAX_LEDS];
 	u8 led_delay_off[MAX_LEDS];
 	u8 led_count;
 
-	bool बारtamp_initialized;
-	u16 prev_बारtamp;
-	अचिन्हित पूर्णांक बारtamp_us;
+	bool timestamp_initialized;
+	u16 prev_timestamp;
+	unsigned int timestamp_us;
 
-	u8 ds4_bt_poll_पूर्णांकerval;
-	क्रमागत ds4_करोngle_state ds4_करोngle_state;
+	u8 ds4_bt_poll_interval;
+	enum ds4_dongle_state ds4_dongle_state;
 	/* DS4 calibration data */
-	काष्ठा ds4_calibration_data ds4_calib_data[6];
+	struct ds4_calibration_data ds4_calib_data[6];
 	/* GH Live */
-	काष्ठा समयr_list ghl_poke_समयr;
-	काष्ठा usb_ctrlrequest *ghl_cr;
+	struct timer_list ghl_poke_timer;
+	struct usb_ctrlrequest *ghl_cr;
 	u8 *ghl_databuf;
-पूर्ण;
+};
 
-अटल व्योम sony_set_leds(काष्ठा sony_sc *sc);
+static void sony_set_leds(struct sony_sc *sc);
 
-अटल अंतरभूत व्योम sony_schedule_work(काष्ठा sony_sc *sc,
-				      क्रमागत sony_worker which)
-अणु
-	अचिन्हित दीर्घ flags;
+static inline void sony_schedule_work(struct sony_sc *sc,
+				      enum sony_worker which)
+{
+	unsigned long flags;
 
-	चयन (which) अणु
-	हाल SONY_WORKER_STATE:
+	switch (which) {
+	case SONY_WORKER_STATE:
 		spin_lock_irqsave(&sc->lock, flags);
-		अगर (!sc->defer_initialization && sc->state_worker_initialized)
+		if (!sc->defer_initialization && sc->state_worker_initialized)
 			schedule_work(&sc->state_worker);
 		spin_unlock_irqrestore(&sc->lock, flags);
-		अवरोध;
-	हाल SONY_WORKER_HOTPLUG:
-		अगर (sc->hotplug_worker_initialized)
+		break;
+	case SONY_WORKER_HOTPLUG:
+		if (sc->hotplug_worker_initialized)
 			schedule_work(&sc->hotplug_worker);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम ghl_magic_poke_cb(काष्ठा urb *urb)
-अणु
-	अगर (urb) अणु
+static void ghl_magic_poke_cb(struct urb *urb)
+{
+	if (urb) {
 		/* Free sc->ghl_cr and sc->ghl_databuf allocated in
 		 * ghl_magic_poke()
 		 */
-		kमुक्त(urb->setup_packet);
-		kमुक्त(urb->transfer_buffer);
-	पूर्ण
-पूर्ण
+		kfree(urb->setup_packet);
+		kfree(urb->transfer_buffer);
+	}
+}
 
-अटल व्योम ghl_magic_poke(काष्ठा समयr_list *t)
-अणु
-	काष्ठा sony_sc *sc = from_समयr(sc, t, ghl_poke_समयr);
+static void ghl_magic_poke(struct timer_list *t)
+{
+	struct sony_sc *sc = from_timer(sc, t, ghl_poke_timer);
 
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक pipe;
-	काष्ठा urb *urb;
-	काष्ठा usb_device *usbdev = to_usb_device(sc->hdev->dev.parent->parent);
-	स्थिर u16 poke_size =
+	int ret;
+	unsigned int pipe;
+	struct urb *urb;
+	struct usb_device *usbdev = to_usb_device(sc->hdev->dev.parent->parent);
+	const u16 poke_size =
 		ARRAY_SIZE(ghl_ps3wiiu_magic_data);
 
 	pipe = usb_sndctrlpipe(usbdev, 0);
 
-	अगर (!sc->ghl_cr) अणु
-		sc->ghl_cr = kzalloc(माप(*sc->ghl_cr), GFP_ATOMIC);
-		अगर (!sc->ghl_cr)
-			जाओ resched;
-	पूर्ण
+	if (!sc->ghl_cr) {
+		sc->ghl_cr = kzalloc(sizeof(*sc->ghl_cr), GFP_ATOMIC);
+		if (!sc->ghl_cr)
+			goto resched;
+	}
 
-	अगर (!sc->ghl_databuf) अणु
+	if (!sc->ghl_databuf) {
 		sc->ghl_databuf = kzalloc(poke_size, GFP_ATOMIC);
-		अगर (!sc->ghl_databuf)
-			जाओ resched;
-	पूर्ण
+		if (!sc->ghl_databuf)
+			goto resched;
+	}
 
 	urb = usb_alloc_urb(0, GFP_ATOMIC);
-	अगर (!urb)
-		जाओ resched;
+	if (!urb)
+		goto resched;
 
 	sc->ghl_cr->bRequestType =
-		USB_RECIP_INTERFACE | USB_TYPE_CLASS | USB_सूची_OUT;
+		USB_RECIP_INTERFACE | USB_TYPE_CLASS | USB_DIR_OUT;
 	sc->ghl_cr->bRequest = USB_REQ_SET_CONFIGURATION;
 	sc->ghl_cr->wValue = cpu_to_le16(ghl_ps3wiiu_magic_value);
 	sc->ghl_cr->wIndex = 0;
 	sc->ghl_cr->wLength = cpu_to_le16(poke_size);
-	स_नकल(sc->ghl_databuf, ghl_ps3wiiu_magic_data, poke_size);
+	memcpy(sc->ghl_databuf, ghl_ps3wiiu_magic_data, poke_size);
 
 	usb_fill_control_urb(
 		urb, usbdev, pipe,
-		(अचिन्हित अक्षर *) sc->ghl_cr, sc->ghl_databuf,
-		poke_size, ghl_magic_poke_cb, शून्य);
+		(unsigned char *) sc->ghl_cr, sc->ghl_databuf,
+		poke_size, ghl_magic_poke_cb, NULL);
 	ret = usb_submit_urb(urb, GFP_ATOMIC);
-	अगर (ret < 0) अणु
-		kमुक्त(sc->ghl_databuf);
-		kमुक्त(sc->ghl_cr);
-	पूर्ण
-	usb_मुक्त_urb(urb);
+	if (ret < 0) {
+		kfree(sc->ghl_databuf);
+		kfree(sc->ghl_cr);
+	}
+	usb_free_urb(urb);
 
 resched:
-	/* Reschedule क्रम next समय */
-	mod_समयr(&sc->ghl_poke_समयr, jअगरfies + GHL_GUITAR_POKE_INTERVAL*HZ);
-पूर्ण
+	/* Reschedule for next time */
+	mod_timer(&sc->ghl_poke_timer, jiffies + GHL_GUITAR_POKE_INTERVAL*HZ);
+}
 
-अटल पूर्णांक guitar_mapping(काष्ठा hid_device *hdev, काष्ठा hid_input *hi,
-			  काष्ठा hid_field *field, काष्ठा hid_usage *usage,
-			  अचिन्हित दीर्घ **bit, पूर्णांक *max)
-अणु
-	अगर ((usage->hid & HID_USAGE_PAGE) == HID_UP_MSVENDOR) अणु
-		अचिन्हित पूर्णांक असल = usage->hid & HID_USAGE;
+static int guitar_mapping(struct hid_device *hdev, struct hid_input *hi,
+			  struct hid_field *field, struct hid_usage *usage,
+			  unsigned long **bit, int *max)
+{
+	if ((usage->hid & HID_USAGE_PAGE) == HID_UP_MSVENDOR) {
+		unsigned int abs = usage->hid & HID_USAGE;
 
-		अगर (असल == GUITAR_TILT_USAGE) अणु
+		if (abs == GUITAR_TILT_USAGE) {
 			hid_map_usage_clear(hi, usage, bit, max, EV_ABS, ABS_RY);
-			वापस 1;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return 1;
+		}
+	}
+	return 0;
+}
 
-अटल sमाप_प्रकार ds4_show_poll_पूर्णांकerval(काष्ठा device *dev,
-				काष्ठा device_attribute
-				*attr, अक्षर *buf)
-अणु
-	काष्ठा hid_device *hdev = to_hid_device(dev);
-	काष्ठा sony_sc *sc = hid_get_drvdata(hdev);
+static ssize_t ds4_show_poll_interval(struct device *dev,
+				struct device_attribute
+				*attr, char *buf)
+{
+	struct hid_device *hdev = to_hid_device(dev);
+	struct sony_sc *sc = hid_get_drvdata(hdev);
 
-	वापस snम_लिखो(buf, PAGE_SIZE, "%i\n", sc->ds4_bt_poll_पूर्णांकerval);
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, "%i\n", sc->ds4_bt_poll_interval);
+}
 
-अटल sमाप_प्रकार ds4_store_poll_पूर्णांकerval(काष्ठा device *dev,
-				काष्ठा device_attribute *attr,
-				स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा hid_device *hdev = to_hid_device(dev);
-	काष्ठा sony_sc *sc = hid_get_drvdata(hdev);
-	अचिन्हित दीर्घ flags;
-	u8 पूर्णांकerval;
+static ssize_t ds4_store_poll_interval(struct device *dev,
+				struct device_attribute *attr,
+				const char *buf, size_t count)
+{
+	struct hid_device *hdev = to_hid_device(dev);
+	struct sony_sc *sc = hid_get_drvdata(hdev);
+	unsigned long flags;
+	u8 interval;
 
-	अगर (kstrtou8(buf, 0, &पूर्णांकerval))
-		वापस -EINVAL;
+	if (kstrtou8(buf, 0, &interval))
+		return -EINVAL;
 
-	अगर (पूर्णांकerval > DS4_BT_MAX_POLL_INTERVAL_MS)
-		वापस -EINVAL;
+	if (interval > DS4_BT_MAX_POLL_INTERVAL_MS)
+		return -EINVAL;
 
 	spin_lock_irqsave(&sc->lock, flags);
-	sc->ds4_bt_poll_पूर्णांकerval = पूर्णांकerval;
+	sc->ds4_bt_poll_interval = interval;
 	spin_unlock_irqrestore(&sc->lock, flags);
 
 	sony_schedule_work(sc, SONY_WORKER_STATE);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल DEVICE_ATTR(bt_poll_पूर्णांकerval, 0644, ds4_show_poll_पूर्णांकerval,
-		ds4_store_poll_पूर्णांकerval);
+static DEVICE_ATTR(bt_poll_interval, 0644, ds4_show_poll_interval,
+		ds4_store_poll_interval);
 
-अटल sमाप_प्रकार sony_show_firmware_version(काष्ठा device *dev,
-				काष्ठा device_attribute
-				*attr, अक्षर *buf)
-अणु
-	काष्ठा hid_device *hdev = to_hid_device(dev);
-	काष्ठा sony_sc *sc = hid_get_drvdata(hdev);
+static ssize_t sony_show_firmware_version(struct device *dev,
+				struct device_attribute
+				*attr, char *buf)
+{
+	struct hid_device *hdev = to_hid_device(dev);
+	struct sony_sc *sc = hid_get_drvdata(hdev);
 
-	वापस snम_लिखो(buf, PAGE_SIZE, "0x%04x\n", sc->fw_version);
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, "0x%04x\n", sc->fw_version);
+}
 
-अटल DEVICE_ATTR(firmware_version, 0444, sony_show_firmware_version, शून्य);
+static DEVICE_ATTR(firmware_version, 0444, sony_show_firmware_version, NULL);
 
-अटल sमाप_प्रकार sony_show_hardware_version(काष्ठा device *dev,
-				काष्ठा device_attribute
-				*attr, अक्षर *buf)
-अणु
-	काष्ठा hid_device *hdev = to_hid_device(dev);
-	काष्ठा sony_sc *sc = hid_get_drvdata(hdev);
+static ssize_t sony_show_hardware_version(struct device *dev,
+				struct device_attribute
+				*attr, char *buf)
+{
+	struct hid_device *hdev = to_hid_device(dev);
+	struct sony_sc *sc = hid_get_drvdata(hdev);
 
-	वापस snम_लिखो(buf, PAGE_SIZE, "0x%04x\n", sc->hw_version);
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, "0x%04x\n", sc->hw_version);
+}
 
-अटल DEVICE_ATTR(hardware_version, 0444, sony_show_hardware_version, शून्य);
+static DEVICE_ATTR(hardware_version, 0444, sony_show_hardware_version, NULL);
 
-अटल u8 *motion_fixup(काष्ठा hid_device *hdev, u8 *rdesc,
-			     अचिन्हित पूर्णांक *rsize)
-अणु
-	*rsize = माप(motion_rdesc);
-	वापस motion_rdesc;
-पूर्ण
+static u8 *motion_fixup(struct hid_device *hdev, u8 *rdesc,
+			     unsigned int *rsize)
+{
+	*rsize = sizeof(motion_rdesc);
+	return motion_rdesc;
+}
 
-अटल u8 *ps3remote_fixup(काष्ठा hid_device *hdev, u8 *rdesc,
-			     अचिन्हित पूर्णांक *rsize)
-अणु
-	*rsize = माप(ps3remote_rdesc);
-	वापस ps3remote_rdesc;
-पूर्ण
+static u8 *ps3remote_fixup(struct hid_device *hdev, u8 *rdesc,
+			     unsigned int *rsize)
+{
+	*rsize = sizeof(ps3remote_rdesc);
+	return ps3remote_rdesc;
+}
 
-अटल पूर्णांक ps3remote_mapping(काष्ठा hid_device *hdev, काष्ठा hid_input *hi,
-			     काष्ठा hid_field *field, काष्ठा hid_usage *usage,
-			     अचिन्हित दीर्घ **bit, पूर्णांक *max)
-अणु
-	अचिन्हित पूर्णांक key = usage->hid & HID_USAGE;
+static int ps3remote_mapping(struct hid_device *hdev, struct hid_input *hi,
+			     struct hid_field *field, struct hid_usage *usage,
+			     unsigned long **bit, int *max)
+{
+	unsigned int key = usage->hid & HID_USAGE;
 
-	अगर ((usage->hid & HID_USAGE_PAGE) != HID_UP_BUTTON)
-		वापस -1;
+	if ((usage->hid & HID_USAGE_PAGE) != HID_UP_BUTTON)
+		return -1;
 
-	चयन (usage->collection_index) अणु
-	हाल 1:
-		अगर (key >= ARRAY_SIZE(ps3remote_keymap_joypad_buttons))
-			वापस -1;
+	switch (usage->collection_index) {
+	case 1:
+		if (key >= ARRAY_SIZE(ps3remote_keymap_joypad_buttons))
+			return -1;
 
 		key = ps3remote_keymap_joypad_buttons[key];
-		अगर (!key)
-			वापस -1;
-		अवरोध;
-	हाल 2:
-		अगर (key >= ARRAY_SIZE(ps3remote_keymap_remote_buttons))
-			वापस -1;
+		if (!key)
+			return -1;
+		break;
+	case 2:
+		if (key >= ARRAY_SIZE(ps3remote_keymap_remote_buttons))
+			return -1;
 
 		key = ps3remote_keymap_remote_buttons[key];
-		अगर (!key)
-			वापस -1;
-		अवरोध;
-	शेष:
-		वापस -1;
-	पूर्ण
+		if (!key)
+			return -1;
+		break;
+	default:
+		return -1;
+	}
 
 	hid_map_usage_clear(hi, usage, bit, max, EV_KEY, key);
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक navigation_mapping(काष्ठा hid_device *hdev, काष्ठा hid_input *hi,
-			  काष्ठा hid_field *field, काष्ठा hid_usage *usage,
-			  अचिन्हित दीर्घ **bit, पूर्णांक *max)
-अणु
-	अगर ((usage->hid & HID_USAGE_PAGE) == HID_UP_BUTTON) अणु
-		अचिन्हित पूर्णांक key = usage->hid & HID_USAGE;
+static int navigation_mapping(struct hid_device *hdev, struct hid_input *hi,
+			  struct hid_field *field, struct hid_usage *usage,
+			  unsigned long **bit, int *max)
+{
+	if ((usage->hid & HID_USAGE_PAGE) == HID_UP_BUTTON) {
+		unsigned int key = usage->hid & HID_USAGE;
 
-		अगर (key >= ARRAY_SIZE(sixaxis_keymap))
-			वापस -1;
+		if (key >= ARRAY_SIZE(sixaxis_keymap))
+			return -1;
 
 		key = navigation_keymap[key];
-		अगर (!key)
-			वापस -1;
+		if (!key)
+			return -1;
 
 		hid_map_usage_clear(hi, usage, bit, max, EV_KEY, key);
-		वापस 1;
-	पूर्ण अन्यथा अगर (usage->hid == HID_GD_POINTER) अणु
+		return 1;
+	} else if (usage->hid == HID_GD_POINTER) {
 		/* See comment in sixaxis_mapping, basically the L2 (and R2)
-		 * triggers are reported through GD Poपूर्णांकer.
+		 * triggers are reported through GD Pointer.
 		 * In addition we ignore any analog button 'axes' and only
 		 * support digital buttons.
 		 */
-		चयन (usage->usage_index) अणु
-		हाल 8: /* L2 */
+		switch (usage->usage_index) {
+		case 8: /* L2 */
 			usage->hid = HID_GD_Z;
-			अवरोध;
-		शेष:
-			वापस -1;
-		पूर्ण
+			break;
+		default:
+			return -1;
+		}
 
 		hid_map_usage_clear(hi, usage, bit, max, EV_ABS, usage->hid & 0xf);
-		वापस 1;
-	पूर्ण अन्यथा अगर ((usage->hid & HID_USAGE_PAGE) == HID_UP_GENDESK) अणु
-		अचिन्हित पूर्णांक असल = usage->hid & HID_USAGE;
+		return 1;
+	} else if ((usage->hid & HID_USAGE_PAGE) == HID_UP_GENDESK) {
+		unsigned int abs = usage->hid & HID_USAGE;
 
-		अगर (असल >= ARRAY_SIZE(navigation_असलmap))
-			वापस -1;
+		if (abs >= ARRAY_SIZE(navigation_absmap))
+			return -1;
 
-		असल = navigation_असलmap[असल];
+		abs = navigation_absmap[abs];
 
-		hid_map_usage_clear(hi, usage, bit, max, EV_ABS, असल);
-		वापस 1;
-	पूर्ण
+		hid_map_usage_clear(hi, usage, bit, max, EV_ABS, abs);
+		return 1;
+	}
 
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
 
-अटल पूर्णांक sixaxis_mapping(काष्ठा hid_device *hdev, काष्ठा hid_input *hi,
-			  काष्ठा hid_field *field, काष्ठा hid_usage *usage,
-			  अचिन्हित दीर्घ **bit, पूर्णांक *max)
-अणु
-	अगर ((usage->hid & HID_USAGE_PAGE) == HID_UP_BUTTON) अणु
-		अचिन्हित पूर्णांक key = usage->hid & HID_USAGE;
+static int sixaxis_mapping(struct hid_device *hdev, struct hid_input *hi,
+			  struct hid_field *field, struct hid_usage *usage,
+			  unsigned long **bit, int *max)
+{
+	if ((usage->hid & HID_USAGE_PAGE) == HID_UP_BUTTON) {
+		unsigned int key = usage->hid & HID_USAGE;
 
-		अगर (key >= ARRAY_SIZE(sixaxis_keymap))
-			वापस -1;
+		if (key >= ARRAY_SIZE(sixaxis_keymap))
+			return -1;
 
 		key = sixaxis_keymap[key];
 		hid_map_usage_clear(hi, usage, bit, max, EV_KEY, key);
-		वापस 1;
-	पूर्ण अन्यथा अगर (usage->hid == HID_GD_POINTER) अणु
-		/* The DS3 provides analog values क्रम most buttons and even
-		 * क्रम HAT axes through GD Poपूर्णांकer. L2 and R2 are reported
+		return 1;
+	} else if (usage->hid == HID_GD_POINTER) {
+		/* The DS3 provides analog values for most buttons and even
+		 * for HAT axes through GD Pointer. L2 and R2 are reported
 		 * among these as well instead of as GD Z / RZ. Remap L2
 		 * and R2 and ignore other analog 'button axes' as there is
-		 * no good way क्रम reporting them.
+		 * no good way for reporting them.
 		 */
-		चयन (usage->usage_index) अणु
-		हाल 8: /* L2 */
+		switch (usage->usage_index) {
+		case 8: /* L2 */
 			usage->hid = HID_GD_Z;
-			अवरोध;
-		हाल 9: /* R2 */
+			break;
+		case 9: /* R2 */
 			usage->hid = HID_GD_RZ;
-			अवरोध;
-		शेष:
-			वापस -1;
-		पूर्ण
+			break;
+		default:
+			return -1;
+		}
 
 		hid_map_usage_clear(hi, usage, bit, max, EV_ABS, usage->hid & 0xf);
-		वापस 1;
-	पूर्ण अन्यथा अगर ((usage->hid & HID_USAGE_PAGE) == HID_UP_GENDESK) अणु
-		अचिन्हित पूर्णांक असल = usage->hid & HID_USAGE;
+		return 1;
+	} else if ((usage->hid & HID_USAGE_PAGE) == HID_UP_GENDESK) {
+		unsigned int abs = usage->hid & HID_USAGE;
 
-		अगर (असल >= ARRAY_SIZE(sixaxis_असलmap))
-			वापस -1;
+		if (abs >= ARRAY_SIZE(sixaxis_absmap))
+			return -1;
 
-		असल = sixaxis_असलmap[असल];
+		abs = sixaxis_absmap[abs];
 
-		hid_map_usage_clear(hi, usage, bit, max, EV_ABS, असल);
-		वापस 1;
-	पूर्ण
+		hid_map_usage_clear(hi, usage, bit, max, EV_ABS, abs);
+		return 1;
+	}
 
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल पूर्णांक ds4_mapping(काष्ठा hid_device *hdev, काष्ठा hid_input *hi,
-		       काष्ठा hid_field *field, काष्ठा hid_usage *usage,
-		       अचिन्हित दीर्घ **bit, पूर्णांक *max)
-अणु
-	अगर ((usage->hid & HID_USAGE_PAGE) == HID_UP_BUTTON) अणु
-		अचिन्हित पूर्णांक key = usage->hid & HID_USAGE;
+static int ds4_mapping(struct hid_device *hdev, struct hid_input *hi,
+		       struct hid_field *field, struct hid_usage *usage,
+		       unsigned long **bit, int *max)
+{
+	if ((usage->hid & HID_USAGE_PAGE) == HID_UP_BUTTON) {
+		unsigned int key = usage->hid & HID_USAGE;
 
-		अगर (key >= ARRAY_SIZE(ds4_keymap))
-			वापस -1;
+		if (key >= ARRAY_SIZE(ds4_keymap))
+			return -1;
 
 		key = ds4_keymap[key];
 		hid_map_usage_clear(hi, usage, bit, max, EV_KEY, key);
-		वापस 1;
-	पूर्ण अन्यथा अगर ((usage->hid & HID_USAGE_PAGE) == HID_UP_GENDESK) अणु
-		अचिन्हित पूर्णांक असल = usage->hid & HID_USAGE;
+		return 1;
+	} else if ((usage->hid & HID_USAGE_PAGE) == HID_UP_GENDESK) {
+		unsigned int abs = usage->hid & HID_USAGE;
 
 		/* Let the HID parser deal with the HAT. */
-		अगर (usage->hid == HID_GD_HATSWITCH)
-			वापस 0;
+		if (usage->hid == HID_GD_HATSWITCH)
+			return 0;
 
-		अगर (असल >= ARRAY_SIZE(ds4_असलmap))
-			वापस -1;
+		if (abs >= ARRAY_SIZE(ds4_absmap))
+			return -1;
 
-		असल = ds4_असलmap[असल];
-		hid_map_usage_clear(hi, usage, bit, max, EV_ABS, असल);
-		वापस 1;
-	पूर्ण
+		abs = ds4_absmap[abs];
+		hid_map_usage_clear(hi, usage, bit, max, EV_ABS, abs);
+		return 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u8 *sony_report_fixup(काष्ठा hid_device *hdev, u8 *rdesc,
-		अचिन्हित पूर्णांक *rsize)
-अणु
-	काष्ठा sony_sc *sc = hid_get_drvdata(hdev);
+static u8 *sony_report_fixup(struct hid_device *hdev, u8 *rdesc,
+		unsigned int *rsize)
+{
+	struct sony_sc *sc = hid_get_drvdata(hdev);
 
-	अगर (sc->quirks & (SINO_LITE_CONTROLLER | FUTUREMAX_DANCE_MAT))
-		वापस rdesc;
+	if (sc->quirks & (SINO_LITE_CONTROLLER | FUTUREMAX_DANCE_MAT))
+		return rdesc;
 
 	/*
-	 * Some Sony RF receivers wrongly declare the mouse poपूर्णांकer as a
-	 * a स्थिरant non-data variable.
+	 * Some Sony RF receivers wrongly declare the mouse pointer as a
+	 * a constant non-data variable.
 	 */
-	अगर ((sc->quirks & VAIO_RDESC_CONSTANT) && *rsize >= 56 &&
+	if ((sc->quirks & VAIO_RDESC_CONSTANT) && *rsize >= 56 &&
 	    /* usage page: generic desktop controls */
 	    /* rdesc[0] == 0x05 && rdesc[1] == 0x01 && */
 	    /* usage: mouse */
 	    rdesc[2] == 0x09 && rdesc[3] == 0x02 &&
-	    /* input (usage page क्रम x,y axes): स्थिरant, variable, relative */
-	    rdesc[54] == 0x81 && rdesc[55] == 0x07) अणु
+	    /* input (usage page for x,y axes): constant, variable, relative */
+	    rdesc[54] == 0x81 && rdesc[55] == 0x07) {
 		hid_info(hdev, "Fixing up Sony RF Receiver report descriptor\n");
 		/* input: data, variable, relative */
 		rdesc[55] = 0x06;
-	पूर्ण
+	}
 
-	अगर (sc->quirks & MOTION_CONTROLLER)
-		वापस motion_fixup(hdev, rdesc, rsize);
+	if (sc->quirks & MOTION_CONTROLLER)
+		return motion_fixup(hdev, rdesc, rsize);
 
-	अगर (sc->quirks & PS3REMOTE)
-		वापस ps3remote_fixup(hdev, rdesc, rsize);
+	if (sc->quirks & PS3REMOTE)
+		return ps3remote_fixup(hdev, rdesc, rsize);
 
 	/*
-	 * Some knock-off USB करोngles incorrectly report their button count
+	 * Some knock-off USB dongles incorrectly report their button count
 	 * as 13 instead of 16 causing three non-functional buttons.
 	 */
-	अगर ((sc->quirks & SIXAXIS_CONTROLLER_USB) && *rsize >= 45 &&
+	if ((sc->quirks & SIXAXIS_CONTROLLER_USB) && *rsize >= 45 &&
 		/* Report Count (13) */
 		rdesc[23] == 0x95 && rdesc[24] == 0x0D &&
 		/* Usage Maximum (13) */
 		rdesc[37] == 0x29 && rdesc[38] == 0x0D &&
 		/* Report Count (3) */
-		rdesc[43] == 0x95 && rdesc[44] == 0x03) अणु
+		rdesc[43] == 0x95 && rdesc[44] == 0x03) {
 		hid_info(hdev, "Fixing up USB dongle report descriptor\n");
 		rdesc[24] = 0x10;
 		rdesc[38] = 0x10;
 		rdesc[44] = 0x00;
-	पूर्ण
+	}
 
-	वापस rdesc;
-पूर्ण
+	return rdesc;
+}
 
-अटल व्योम sixaxis_parse_report(काष्ठा sony_sc *sc, u8 *rd, पूर्णांक size)
-अणु
-	अटल स्थिर u8 sixaxis_battery_capacity[] = अणु 0, 1, 25, 50, 75, 100 पूर्ण;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक offset;
+static void sixaxis_parse_report(struct sony_sc *sc, u8 *rd, int size)
+{
+	static const u8 sixaxis_battery_capacity[] = { 0, 1, 25, 50, 75, 100 };
+	unsigned long flags;
+	int offset;
 	u8 battery_capacity;
-	पूर्णांक battery_status;
+	int battery_status;
 
 	/*
-	 * The sixaxis is अक्षरging अगर the battery value is 0xee
-	 * and it is fully अक्षरged अगर the value is 0xef.
-	 * It करोes not report the actual level जबतक अक्षरging so it
-	 * is set to 100% जबतक अक्षरging is in progress.
+	 * The sixaxis is charging if the battery value is 0xee
+	 * and it is fully charged if the value is 0xef.
+	 * It does not report the actual level while charging so it
+	 * is set to 100% while charging is in progress.
 	 */
 	offset = (sc->quirks & MOTION_CONTROLLER) ? 12 : 30;
 
-	अगर (rd[offset] >= 0xee) अणु
+	if (rd[offset] >= 0xee) {
 		battery_capacity = 100;
 		battery_status = (rd[offset] & 0x01) ? POWER_SUPPLY_STATUS_FULL : POWER_SUPPLY_STATUS_CHARGING;
-	पूर्ण अन्यथा अणु
+	} else {
 		u8 index = rd[offset] <= 5 ? rd[offset] : 5;
 		battery_capacity = sixaxis_battery_capacity[index];
 		battery_status = POWER_SUPPLY_STATUS_DISCHARGING;
-	पूर्ण
+	}
 
 	spin_lock_irqsave(&sc->lock, flags);
 	sc->battery_capacity = battery_capacity;
 	sc->battery_status = battery_status;
 	spin_unlock_irqrestore(&sc->lock, flags);
 
-	अगर (sc->quirks & SIXAXIS_CONTROLLER) अणु
-		पूर्णांक val;
+	if (sc->quirks & SIXAXIS_CONTROLLER) {
+		int val;
 
 		offset = SIXAXIS_INPUT_REPORT_ACC_X_OFFSET;
 		val = ((rd[offset+1] << 8) | rd[offset]) - 511;
-		input_report_असल(sc->sensor_dev, ABS_X, val);
+		input_report_abs(sc->sensor_dev, ABS_X, val);
 
 		/* Y and Z are swapped and inversed */
 		val = 511 - ((rd[offset+5] << 8) | rd[offset+4]);
-		input_report_असल(sc->sensor_dev, ABS_Y, val);
+		input_report_abs(sc->sensor_dev, ABS_Y, val);
 
 		val = 511 - ((rd[offset+3] << 8) | rd[offset+2]);
-		input_report_असल(sc->sensor_dev, ABS_Z, val);
+		input_report_abs(sc->sensor_dev, ABS_Z, val);
 
 		input_sync(sc->sensor_dev);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम dualshock4_parse_report(काष्ठा sony_sc *sc, u8 *rd, पूर्णांक size)
-अणु
-	काष्ठा hid_input *hidinput = list_entry(sc->hdev->inमाला_दो.next,
-						काष्ठा hid_input, list);
-	काष्ठा input_dev *input_dev = hidinput->input;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक n, m, offset, num_touch_data, max_touch_data;
+static void dualshock4_parse_report(struct sony_sc *sc, u8 *rd, int size)
+{
+	struct hid_input *hidinput = list_entry(sc->hdev->inputs.next,
+						struct hid_input, list);
+	struct input_dev *input_dev = hidinput->input;
+	unsigned long flags;
+	int n, m, offset, num_touch_data, max_touch_data;
 	u8 cable_state, battery_capacity;
-	पूर्णांक battery_status;
-	u16 बारtamp;
+	int battery_status;
+	u16 timestamp;
 
-	/* When using Bluetooth the header is 2 bytes दीर्घer, so skip these. */
-	पूर्णांक data_offset = (sc->quirks & DUALSHOCK4_CONTROLLER_BT) ? 2 : 0;
+	/* When using Bluetooth the header is 2 bytes longer, so skip these. */
+	int data_offset = (sc->quirks & DUALSHOCK4_CONTROLLER_BT) ? 2 : 0;
 
-	/* Second bit of third button byte is क्रम the touchpad button. */
+	/* Second bit of third button byte is for the touchpad button. */
 	offset = data_offset + DS4_INPUT_REPORT_BUTTON_OFFSET;
 	input_report_key(sc->touchpad, BTN_LEFT, rd[offset+2] & 0x2);
 
 	/*
-	 * The शेष behavior of the Dualshock 4 is to send reports using
+	 * The default behavior of the Dualshock 4 is to send reports using
 	 * report type 1 when running over Bluetooth. However, when feature
 	 * report 2 is requested during the controller initialization it starts
 	 * sending input reports in report 17. Since report 17 is undefined
-	 * in the शेष HID descriptor, the HID layer won't generate events.
-	 * While it is possible (and this was करोne beक्रमe) to fixup the HID
-	 * descriptor to add this mapping, it was better to करो this manually.
-	 * The reason is there were various pieces software both खोलो and बंदd
+	 * in the default HID descriptor, the HID layer won't generate events.
+	 * While it is possible (and this was done before) to fixup the HID
+	 * descriptor to add this mapping, it was better to do this manually.
+	 * The reason is there were various pieces software both open and closed
 	 * source, relying on the descriptors to be the same across various
-	 * operating प्रणालीs. If the descriptors wouldn't match some
+	 * operating systems. If the descriptors wouldn't match some
 	 * applications e.g. games on Wine would not be able to function due
-	 * to dअगरferent descriptors, which such applications are not parsing.
+	 * to different descriptors, which such applications are not parsing.
 	 */
-	अगर (rd[0] == 17) अणु
-		पूर्णांक value;
+	if (rd[0] == 17) {
+		int value;
 
 		offset = data_offset + DS4_INPUT_REPORT_AXIS_OFFSET;
-		input_report_असल(input_dev, ABS_X, rd[offset]);
-		input_report_असल(input_dev, ABS_Y, rd[offset+1]);
-		input_report_असल(input_dev, ABS_RX, rd[offset+2]);
-		input_report_असल(input_dev, ABS_RY, rd[offset+3]);
+		input_report_abs(input_dev, ABS_X, rd[offset]);
+		input_report_abs(input_dev, ABS_Y, rd[offset+1]);
+		input_report_abs(input_dev, ABS_RX, rd[offset+2]);
+		input_report_abs(input_dev, ABS_RY, rd[offset+3]);
 
 		value = rd[offset+4] & 0xf;
-		अगर (value > 7)
+		if (value > 7)
 			value = 8; /* Center 0, 0 */
-		input_report_असल(input_dev, ABS_HAT0X, ds4_hat_mapping[value].x);
-		input_report_असल(input_dev, ABS_HAT0Y, ds4_hat_mapping[value].y);
+		input_report_abs(input_dev, ABS_HAT0X, ds4_hat_mapping[value].x);
+		input_report_abs(input_dev, ABS_HAT0Y, ds4_hat_mapping[value].y);
 
 		input_report_key(input_dev, BTN_WEST, rd[offset+4] & 0x10);
 		input_report_key(input_dev, BTN_SOUTH, rd[offset+4] & 0x20);
@@ -1100,52 +1099,52 @@ resched:
 
 		input_report_key(input_dev, BTN_MODE, rd[offset+6] & 0x1);
 
-		input_report_असल(input_dev, ABS_Z, rd[offset+7]);
-		input_report_असल(input_dev, ABS_RZ, rd[offset+8]);
+		input_report_abs(input_dev, ABS_Z, rd[offset+7]);
+		input_report_abs(input_dev, ABS_RZ, rd[offset+8]);
 
 		input_sync(input_dev);
-	पूर्ण
+	}
 
-	/* Convert बारtamp (in 5.33us unit) to बारtamp_us */
+	/* Convert timestamp (in 5.33us unit) to timestamp_us */
 	offset = data_offset + DS4_INPUT_REPORT_TIMESTAMP_OFFSET;
-	बारtamp = get_unaligned_le16(&rd[offset]);
-	अगर (!sc->बारtamp_initialized) अणु
-		sc->बारtamp_us = ((अचिन्हित पूर्णांक)बारtamp * 16) / 3;
-		sc->बारtamp_initialized = true;
-	पूर्ण अन्यथा अणु
+	timestamp = get_unaligned_le16(&rd[offset]);
+	if (!sc->timestamp_initialized) {
+		sc->timestamp_us = ((unsigned int)timestamp * 16) / 3;
+		sc->timestamp_initialized = true;
+	} else {
 		u16 delta;
 
-		अगर (sc->prev_बारtamp > बारtamp)
-			delta = (U16_MAX - sc->prev_बारtamp + बारtamp + 1);
-		अन्यथा
-			delta = बारtamp - sc->prev_बारtamp;
-		sc->बारtamp_us += (delta * 16) / 3;
-	पूर्ण
-	sc->prev_बारtamp = बारtamp;
-	input_event(sc->sensor_dev, EV_MSC, MSC_TIMESTAMP, sc->बारtamp_us);
+		if (sc->prev_timestamp > timestamp)
+			delta = (U16_MAX - sc->prev_timestamp + timestamp + 1);
+		else
+			delta = timestamp - sc->prev_timestamp;
+		sc->timestamp_us += (delta * 16) / 3;
+	}
+	sc->prev_timestamp = timestamp;
+	input_event(sc->sensor_dev, EV_MSC, MSC_TIMESTAMP, sc->timestamp_us);
 
 	offset = data_offset + DS4_INPUT_REPORT_GYRO_X_OFFSET;
-	क्रम (n = 0; n < 6; n++) अणु
-		/* Store data in पूर्णांक क्रम more precision during mult_frac. */
-		पूर्णांक raw_data = (लघु)((rd[offset+1] << 8) | rd[offset]);
-		काष्ठा ds4_calibration_data *calib = &sc->ds4_calib_data[n];
+	for (n = 0; n < 6; n++) {
+		/* Store data in int for more precision during mult_frac. */
+		int raw_data = (short)((rd[offset+1] << 8) | rd[offset]);
+		struct ds4_calibration_data *calib = &sc->ds4_calib_data[n];
 
 		/* High precision is needed during calibration, but the
 		 * calibrated values are within 32-bit.
-		 * Note: we swap numerator 'x' and 'numer' in mult_frac क्रम
-		 *       precision reasons so we करोn't need 64-bit.
+		 * Note: we swap numerator 'x' and 'numer' in mult_frac for
+		 *       precision reasons so we don't need 64-bit.
 		 */
-		पूर्णांक calib_data = mult_frac(calib->sens_numer,
+		int calib_data = mult_frac(calib->sens_numer,
 					   raw_data - calib->bias,
 					   calib->sens_denom);
 
-		input_report_असल(sc->sensor_dev, calib->असल_code, calib_data);
+		input_report_abs(sc->sensor_dev, calib->abs_code, calib_data);
 		offset += 2;
-	पूर्ण
+	}
 	input_sync(sc->sensor_dev);
 
 	/*
-	 * The lower 4 bits of byte 30 (or 32 क्रम BT) contain the battery level
+	 * The lower 4 bits of byte 30 (or 32 for BT) contain the battery level
 	 * and the 5th bit contains the USB cable state.
 	 */
 	offset = data_offset + DS4_INPUT_REPORT_BATTERY_OFFSET;
@@ -1158,40 +1157,40 @@ resched:
 	 * When a cable is plugged in:
 	 * - 0-10: percentage in units of 10%.
 	 * - 11: battery is full
-	 * - 14: not अक्षरging due to Voltage or temperature error
-	 * - 15: अक्षरge error
+	 * - 14: not charging due to Voltage or temperature error
+	 * - 15: charge error
 	 */
-	अगर (cable_state) अणु
+	if (cable_state) {
 		u8 battery_data = rd[offset] & 0xf;
 
-		अगर (battery_data < 10) अणु
-			/* Take the mid-poपूर्णांक क्रम each battery capacity value,
+		if (battery_data < 10) {
+			/* Take the mid-point for each battery capacity value,
 			 * because on the hardware side 0 = 0-9%, 1=10-19%, etc.
-			 * This matches official platक्रमm behavior, which करोes
+			 * This matches official platform behavior, which does
 			 * the same.
 			 */
 			battery_capacity = battery_data * 10 + 5;
 			battery_status = POWER_SUPPLY_STATUS_CHARGING;
-		पूर्ण अन्यथा अगर (battery_data == 10) अणु
+		} else if (battery_data == 10) {
 			battery_capacity = 100;
 			battery_status = POWER_SUPPLY_STATUS_CHARGING;
-		पूर्ण अन्यथा अगर (battery_data == 11) अणु
+		} else if (battery_data == 11) {
 			battery_capacity = 100;
 			battery_status = POWER_SUPPLY_STATUS_FULL;
-		पूर्ण अन्यथा अणु /* 14, 15 and undefined values */
+		} else { /* 14, 15 and undefined values */
 			battery_capacity = 0;
 			battery_status = POWER_SUPPLY_STATUS_UNKNOWN;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		u8 battery_data = rd[offset] & 0xf;
 
-		अगर (battery_data < 10)
+		if (battery_data < 10)
 			battery_capacity = battery_data * 10 + 5;
-		अन्यथा /* 10 */
+		else /* 10 */
 			battery_capacity = 100;
 
 		battery_status = POWER_SUPPLY_STATUS_DISCHARGING;
-	पूर्ण
+	}
 
 	spin_lock_irqsave(&sc->lock, flags);
 	sc->battery_capacity = battery_capacity;
@@ -1202,18 +1201,18 @@ resched:
 	 * The Dualshock 4 multi-touch trackpad data starts at offset 33 on USB
 	 * and 35 on Bluetooth.
 	 * The first byte indicates the number of touch data in the report.
-	 * Trackpad data starts 2 bytes later (e.g. 35 क्रम USB).
+	 * Trackpad data starts 2 bytes later (e.g. 35 for USB).
 	 */
 	offset = data_offset + DS4_INPUT_REPORT_TOUCHPAD_OFFSET;
 	max_touch_data = (sc->quirks & DUALSHOCK4_CONTROLLER_BT) ? 4 : 3;
-	अगर (rd[offset] > 0 && rd[offset] <= max_touch_data)
+	if (rd[offset] > 0 && rd[offset] <= max_touch_data)
 		num_touch_data = rd[offset];
-	अन्यथा
+	else
 		num_touch_data = 1;
 	offset += 1;
 
-	क्रम (m = 0; m < num_touch_data; m++) अणु
-		/* Skip past बारtamp */
+	for (m = 0; m < num_touch_data; m++) {
+		/* Skip past timestamp */
 		offset += 1;
 
 		/*
@@ -1221,10 +1220,10 @@ resched:
 		 * a touch indicator that is 0 when pressed and 1 when not
 		 * pressed.
 		 * The next 3 bytes are two 12 bit touch coordinates, X and Y.
-		 * The data क्रम the second touch is in the same क्रमmat and
-		 * immediately follows the data क्रम the first.
+		 * The data for the second touch is in the same format and
+		 * immediately follows the data for the first.
 		 */
-		क्रम (n = 0; n < 2; n++) अणु
+		for (n = 0; n < 2; n++) {
 			u16 x, y;
 			bool active;
 
@@ -1235,21 +1234,21 @@ resched:
 			input_mt_slot(sc->touchpad, n);
 			input_mt_report_slot_state(sc->touchpad, MT_TOOL_FINGER, active);
 
-			अगर (active) अणु
-				input_report_असल(sc->touchpad, ABS_MT_POSITION_X, x);
-				input_report_असल(sc->touchpad, ABS_MT_POSITION_Y, y);
-			पूर्ण
+			if (active) {
+				input_report_abs(sc->touchpad, ABS_MT_POSITION_X, x);
+				input_report_abs(sc->touchpad, ABS_MT_POSITION_Y, y);
+			}
 
 			offset += 4;
-		पूर्ण
+		}
 		input_mt_sync_frame(sc->touchpad);
 		input_sync(sc->touchpad);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम nsg_mrxu_parse_report(काष्ठा sony_sc *sc, u8 *rd, पूर्णांक size)
-अणु
-	पूर्णांक n, offset, relx, rely;
+static void nsg_mrxu_parse_report(struct sony_sc *sc, u8 *rd, int size)
+{
+	int n, offset, relx, rely;
 	u8 active;
 
 	/*
@@ -1258,14 +1257,14 @@ resched:
 	 * For the first byte, bit 0 is set when touchpad button is pressed.
 	 * Bit 2 is set when a touch is active and the drag (Fn) key is pressed.
 	 * This drag key is mapped to BTN_LEFT.  It is operational only when a 
-	 *   touch poपूर्णांक is active.
-	 * Bit 4 is set when only the first touch poपूर्णांक is active.
-	 * Bit 6 is set when only the second touch poपूर्णांक is active.
-	 * Bits 5 and 7 are set when both touch poपूर्णांकs are active.
-	 * The next 3 bytes are two 12 bit X/Y coordinates क्रम the first touch.
+	 *   touch point is active.
+	 * Bit 4 is set when only the first touch point is active.
+	 * Bit 6 is set when only the second touch point is active.
+	 * Bits 5 and 7 are set when both touch points are active.
+	 * The next 3 bytes are two 12 bit X/Y coordinates for the first touch.
 	 * The following byte, offset 5, has the touch width and length.
 	 *   Bits 0-4=X (width), bits 5-7=Y (length).
-	 * A चिन्हित relative X coordinate is at offset 6.
+	 * A signed relative X coordinate is at offset 6.
 	 * The bytes at offset 7-9 are the second touch X/Y coordinates.
 	 * Offset 10 has the second touch width and length.
 	 * Offset 11 has the relative Y coordinate.
@@ -1279,7 +1278,7 @@ resched:
 
 	offset++;
 
-	क्रम (n = 0; n < 2; n++) अणु
+	for (n = 0; n < 2; n++) {
 		u16 x, y;
 		u8 contactx, contacty;
 
@@ -1289,58 +1288,58 @@ resched:
 		input_mt_slot(sc->touchpad, n);
 		input_mt_report_slot_state(sc->touchpad, MT_TOOL_FINGER, active & 0x03);
 
-		अगर (active & 0x03) अणु
+		if (active & 0x03) {
 			contactx = rd[offset+3] & 0x0F;
 			contacty = rd[offset+3] >> 4;
-			input_report_असल(sc->touchpad, ABS_MT_TOUCH_MAJOR,
+			input_report_abs(sc->touchpad, ABS_MT_TOUCH_MAJOR,
 				max(contactx, contacty));
-			input_report_असल(sc->touchpad, ABS_MT_TOUCH_MINOR,
+			input_report_abs(sc->touchpad, ABS_MT_TOUCH_MINOR,
 				min(contactx, contacty));
-			input_report_असल(sc->touchpad, ABS_MT_ORIENTATION,
+			input_report_abs(sc->touchpad, ABS_MT_ORIENTATION,
 				(bool) (contactx > contacty));
-			input_report_असल(sc->touchpad, ABS_MT_POSITION_X, x);
-			input_report_असल(sc->touchpad, ABS_MT_POSITION_Y,
+			input_report_abs(sc->touchpad, ABS_MT_POSITION_X, x);
+			input_report_abs(sc->touchpad, ABS_MT_POSITION_Y,
 				NSG_MRXU_MAX_Y - y);
 			/*
-			 * The relative coordinates beदीर्घ to the first touch
-			 * poपूर्णांक, when present, or to the second touch poपूर्णांक
+			 * The relative coordinates belong to the first touch
+			 * point, when present, or to the second touch point
 			 * when the first is not active.
 			 */
-			अगर ((n == 0) || ((n == 1) && (active & 0x01))) अणु
+			if ((n == 0) || ((n == 1) && (active & 0x01))) {
 				input_report_rel(sc->touchpad, REL_X, relx);
 				input_report_rel(sc->touchpad, REL_Y, rely);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		offset += 5;
 		active >>= 2;
-	पूर्ण
+	}
 
 	input_mt_sync_frame(sc->touchpad);
 
 	input_sync(sc->touchpad);
-पूर्ण
+}
 
-अटल पूर्णांक sony_raw_event(काष्ठा hid_device *hdev, काष्ठा hid_report *report,
-		u8 *rd, पूर्णांक size)
-अणु
-	काष्ठा sony_sc *sc = hid_get_drvdata(hdev);
+static int sony_raw_event(struct hid_device *hdev, struct hid_report *report,
+		u8 *rd, int size)
+{
+	struct sony_sc *sc = hid_get_drvdata(hdev);
 
 	/*
 	 * Sixaxis HID report has acclerometers/gyro with MSByte first, this
-	 * has to be BYTE_SWAPPED beक्रमe passing up to joystick पूर्णांकerface
+	 * has to be BYTE_SWAPPED before passing up to joystick interface
 	 */
-	अगर ((sc->quirks & SIXAXIS_CONTROLLER) && rd[0] == 0x01 && size == 49) अणु
+	if ((sc->quirks & SIXAXIS_CONTROLLER) && rd[0] == 0x01 && size == 49) {
 		/*
 		 * When connected via Bluetooth the Sixaxis occasionally sends
 		 * a report with the second byte 0xff and the rest zeroed.
 		 *
-		 * This report करोes not reflect the actual state of the
-		 * controller must be ignored to aव्योम generating false input
+		 * This report does not reflect the actual state of the
+		 * controller must be ignored to avoid generating false input
 		 * events.
 		 */
-		अगर (rd[1] == 0xff)
-			वापस -EINVAL;
+		if (rd[1] == 0xff)
+			return -EINVAL;
 
 		swap(rd[41], rd[42]);
 		swap(rd[43], rd[44]);
@@ -1348,16 +1347,16 @@ resched:
 		swap(rd[47], rd[48]);
 
 		sixaxis_parse_report(sc, rd, size);
-	पूर्ण अन्यथा अगर ((sc->quirks & MOTION_CONTROLLER_BT) && rd[0] == 0x01 && size == 49) अणु
+	} else if ((sc->quirks & MOTION_CONTROLLER_BT) && rd[0] == 0x01 && size == 49) {
 		sixaxis_parse_report(sc, rd, size);
-	पूर्ण अन्यथा अगर ((sc->quirks & NAVIGATION_CONTROLLER) && rd[0] == 0x01 &&
-			size == 49) अणु
+	} else if ((sc->quirks & NAVIGATION_CONTROLLER) && rd[0] == 0x01 &&
+			size == 49) {
 		sixaxis_parse_report(sc, rd, size);
-	पूर्ण अन्यथा अगर ((sc->quirks & DUALSHOCK4_CONTROLLER_USB) && rd[0] == 0x01 &&
-			size == 64) अणु
+	} else if ((sc->quirks & DUALSHOCK4_CONTROLLER_USB) && rd[0] == 0x01 &&
+			size == 64) {
 		dualshock4_parse_report(sc, rd, size);
-	पूर्ण अन्यथा अगर (((sc->quirks & DUALSHOCK4_CONTROLLER_BT) && rd[0] == 0x11 &&
-			size == 78)) अणु
+	} else if (((sc->quirks & DUALSHOCK4_CONTROLLER_BT) && rd[0] == 0x11 &&
+			size == 78)) {
 		/* CRC check */
 		u8 bthdr = 0xA1;
 		u32 crc;
@@ -1366,43 +1365,43 @@ resched:
 		crc = crc32_le(0xFFFFFFFF, &bthdr, 1);
 		crc = ~crc32_le(crc, rd, DS4_INPUT_REPORT_0x11_SIZE-4);
 		report_crc = get_unaligned_le32(&rd[DS4_INPUT_REPORT_0x11_SIZE-4]);
-		अगर (crc != report_crc) अणु
+		if (crc != report_crc) {
 			hid_dbg(sc->hdev, "DualShock 4 input report's CRC check failed, received crc 0x%0x != 0x%0x\n",
 				report_crc, crc);
-			वापस -EILSEQ;
-		पूर्ण
+			return -EILSEQ;
+		}
 
 		dualshock4_parse_report(sc, rd, size);
-	पूर्ण अन्यथा अगर ((sc->quirks & DUALSHOCK4_DONGLE) && rd[0] == 0x01 &&
-			size == 64) अणु
-		अचिन्हित दीर्घ flags;
-		क्रमागत ds4_करोngle_state करोngle_state;
+	} else if ((sc->quirks & DUALSHOCK4_DONGLE) && rd[0] == 0x01 &&
+			size == 64) {
+		unsigned long flags;
+		enum ds4_dongle_state dongle_state;
 
 		/*
-		 * In the हाल of a DS4 USB करोngle, bit[2] of byte 31 indicates
-		 * अगर a DS4 is actually connected (indicated by '0').
-		 * For non-करोngle, this bit is always 0 (connected).
+		 * In the case of a DS4 USB dongle, bit[2] of byte 31 indicates
+		 * if a DS4 is actually connected (indicated by '0').
+		 * For non-dongle, this bit is always 0 (connected).
 		 */
 		bool connected = (rd[31] & 0x04) ? false : true;
 
 		spin_lock_irqsave(&sc->lock, flags);
-		करोngle_state = sc->ds4_करोngle_state;
+		dongle_state = sc->ds4_dongle_state;
 		spin_unlock_irqrestore(&sc->lock, flags);
 
 		/*
-		 * The करोngle always sends input reports even when no
+		 * The dongle always sends input reports even when no
 		 * DS4 is attached. When a DS4 is connected, we need to
-		 * obtain calibration data beक्रमe we can use it.
-		 * The code below tracks करोngle state and kicks of
+		 * obtain calibration data before we can use it.
+		 * The code below tracks dongle state and kicks of
 		 * calibration when needed and only allows us to process
-		 * input अगर a DS4 is actually connected.
+		 * input if a DS4 is actually connected.
 		 */
-		अगर (करोngle_state == DONGLE_DISCONNECTED && connected) अणु
+		if (dongle_state == DONGLE_DISCONNECTED && connected) {
 			hid_info(sc->hdev, "DualShock 4 USB dongle: controller connected\n");
 			sony_set_leds(sc);
 
 			spin_lock_irqsave(&sc->lock, flags);
-			sc->ds4_करोngle_state = DONGLE_CALIBRATING;
+			sc->ds4_dongle_state = DONGLE_CALIBRATING;
 			spin_unlock_irqrestore(&sc->lock, flags);
 
 			sony_schedule_work(sc, SONY_WORKER_HOTPLUG);
@@ -1410,115 +1409,115 @@ resched:
 			/* Don't process the report since we don't have
 			 * calibration data, but let hidraw have it anyway.
 			 */
-			वापस 0;
-		पूर्ण अन्यथा अगर ((करोngle_state == DONGLE_CONNECTED ||
-			    करोngle_state == DONGLE_DISABLED) && !connected) अणु
+			return 0;
+		} else if ((dongle_state == DONGLE_CONNECTED ||
+			    dongle_state == DONGLE_DISABLED) && !connected) {
 			hid_info(sc->hdev, "DualShock 4 USB dongle: controller disconnected\n");
 
 			spin_lock_irqsave(&sc->lock, flags);
-			sc->ds4_करोngle_state = DONGLE_DISCONNECTED;
+			sc->ds4_dongle_state = DONGLE_DISCONNECTED;
 			spin_unlock_irqrestore(&sc->lock, flags);
 
 			/* Return 0, so hidraw can get the report. */
-			वापस 0;
-		पूर्ण अन्यथा अगर (करोngle_state == DONGLE_CALIBRATING ||
-			   करोngle_state == DONGLE_DISABLED ||
-			   करोngle_state == DONGLE_DISCONNECTED) अणु
+			return 0;
+		} else if (dongle_state == DONGLE_CALIBRATING ||
+			   dongle_state == DONGLE_DISABLED ||
+			   dongle_state == DONGLE_DISCONNECTED) {
 			/* Return 0, so hidraw can get the report. */
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
 		dualshock4_parse_report(sc, rd, size);
 
-	पूर्ण अन्यथा अगर ((sc->quirks & NSG_MRXU_REMOTE) && rd[0] == 0x02) अणु
+	} else if ((sc->quirks & NSG_MRXU_REMOTE) && rd[0] == 0x02) {
 		nsg_mrxu_parse_report(sc, rd, size);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	अगर (sc->defer_initialization) अणु
+	if (sc->defer_initialization) {
 		sc->defer_initialization = 0;
 		sony_schedule_work(sc, SONY_WORKER_STATE);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sony_mapping(काष्ठा hid_device *hdev, काष्ठा hid_input *hi,
-			काष्ठा hid_field *field, काष्ठा hid_usage *usage,
-			अचिन्हित दीर्घ **bit, पूर्णांक *max)
-अणु
-	काष्ठा sony_sc *sc = hid_get_drvdata(hdev);
+static int sony_mapping(struct hid_device *hdev, struct hid_input *hi,
+			struct hid_field *field, struct hid_usage *usage,
+			unsigned long **bit, int *max)
+{
+	struct sony_sc *sc = hid_get_drvdata(hdev);
 
-	अगर (sc->quirks & BUZZ_CONTROLLER) अणु
-		अचिन्हित पूर्णांक key = usage->hid & HID_USAGE;
+	if (sc->quirks & BUZZ_CONTROLLER) {
+		unsigned int key = usage->hid & HID_USAGE;
 
-		अगर ((usage->hid & HID_USAGE_PAGE) != HID_UP_BUTTON)
-			वापस -1;
+		if ((usage->hid & HID_USAGE_PAGE) != HID_UP_BUTTON)
+			return -1;
 
-		चयन (usage->collection_index) अणु
-		हाल 1:
-			अगर (key >= ARRAY_SIZE(buzz_keymap))
-				वापस -1;
+		switch (usage->collection_index) {
+		case 1:
+			if (key >= ARRAY_SIZE(buzz_keymap))
+				return -1;
 
 			key = buzz_keymap[key];
-			अगर (!key)
-				वापस -1;
-			अवरोध;
-		शेष:
-			वापस -1;
-		पूर्ण
+			if (!key)
+				return -1;
+			break;
+		default:
+			return -1;
+		}
 
 		hid_map_usage_clear(hi, usage, bit, max, EV_KEY, key);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	अगर (sc->quirks & PS3REMOTE)
-		वापस ps3remote_mapping(hdev, hi, field, usage, bit, max);
+	if (sc->quirks & PS3REMOTE)
+		return ps3remote_mapping(hdev, hi, field, usage, bit, max);
 
-	अगर (sc->quirks & NAVIGATION_CONTROLLER)
-		वापस navigation_mapping(hdev, hi, field, usage, bit, max);
+	if (sc->quirks & NAVIGATION_CONTROLLER)
+		return navigation_mapping(hdev, hi, field, usage, bit, max);
 
-	अगर (sc->quirks & SIXAXIS_CONTROLLER)
-		वापस sixaxis_mapping(hdev, hi, field, usage, bit, max);
+	if (sc->quirks & SIXAXIS_CONTROLLER)
+		return sixaxis_mapping(hdev, hi, field, usage, bit, max);
 
-	अगर (sc->quirks & DUALSHOCK4_CONTROLLER)
-		वापस ds4_mapping(hdev, hi, field, usage, bit, max);
+	if (sc->quirks & DUALSHOCK4_CONTROLLER)
+		return ds4_mapping(hdev, hi, field, usage, bit, max);
 
-	अगर (sc->quirks & GH_GUITAR_CONTROLLER)
-		वापस guitar_mapping(hdev, hi, field, usage, bit, max);
+	if (sc->quirks & GH_GUITAR_CONTROLLER)
+		return guitar_mapping(hdev, hi, field, usage, bit, max);
 
-	/* Let hid-core decide क्रम the others */
-	वापस 0;
-पूर्ण
+	/* Let hid-core decide for the others */
+	return 0;
+}
 
-अटल पूर्णांक sony_रेजिस्टर_touchpad(काष्ठा sony_sc *sc, पूर्णांक touch_count,
-		पूर्णांक w, पूर्णांक h, पूर्णांक touch_major, पूर्णांक touch_minor, पूर्णांक orientation)
-अणु
-	माप_प्रकार name_sz;
-	अक्षर *name;
-	पूर्णांक ret;
+static int sony_register_touchpad(struct sony_sc *sc, int touch_count,
+		int w, int h, int touch_major, int touch_minor, int orientation)
+{
+	size_t name_sz;
+	char *name;
+	int ret;
 
 	sc->touchpad = devm_input_allocate_device(&sc->hdev->dev);
-	अगर (!sc->touchpad)
-		वापस -ENOMEM;
+	if (!sc->touchpad)
+		return -ENOMEM;
 
 	input_set_drvdata(sc->touchpad, sc);
 	sc->touchpad->dev.parent = &sc->hdev->dev;
 	sc->touchpad->phys = sc->hdev->phys;
 	sc->touchpad->uniq = sc->hdev->uniq;
 	sc->touchpad->id.bustype = sc->hdev->bus;
-	sc->touchpad->id.venकरोr = sc->hdev->venकरोr;
+	sc->touchpad->id.vendor = sc->hdev->vendor;
 	sc->touchpad->id.product = sc->hdev->product;
 	sc->touchpad->id.version = sc->hdev->version;
 
 	/* Append a suffix to the controller name as there are various
-	 * DS4 compatible non-Sony devices with dअगरferent names.
+	 * DS4 compatible non-Sony devices with different names.
 	 */
-	name_sz = म_माप(sc->hdev->name) + माप(DS4_TOUCHPAD_SUFFIX);
+	name_sz = strlen(sc->hdev->name) + sizeof(DS4_TOUCHPAD_SUFFIX);
 	name = devm_kzalloc(&sc->hdev->dev, name_sz, GFP_KERNEL);
-	अगर (!name)
-		वापस -ENOMEM;
-	snम_लिखो(name, name_sz, "%s" DS4_TOUCHPAD_SUFFIX, sc->hdev->name);
+	if (!name)
+		return -ENOMEM;
+	snprintf(name, name_sz, "%s" DS4_TOUCHPAD_SUFFIX, sc->hdev->name);
 	sc->touchpad->name = name;
 
 	/* We map the button underneath the touchpad to BTN_LEFT. */
@@ -1526,284 +1525,284 @@ resched:
 	__set_bit(BTN_LEFT, sc->touchpad->keybit);
 	__set_bit(INPUT_PROP_BUTTONPAD, sc->touchpad->propbit);
 
-	input_set_असल_params(sc->touchpad, ABS_MT_POSITION_X, 0, w, 0, 0);
-	input_set_असल_params(sc->touchpad, ABS_MT_POSITION_Y, 0, h, 0, 0);
+	input_set_abs_params(sc->touchpad, ABS_MT_POSITION_X, 0, w, 0, 0);
+	input_set_abs_params(sc->touchpad, ABS_MT_POSITION_Y, 0, h, 0, 0);
 
-	अगर (touch_major > 0) अणु
-		input_set_असल_params(sc->touchpad, ABS_MT_TOUCH_MAJOR, 
+	if (touch_major > 0) {
+		input_set_abs_params(sc->touchpad, ABS_MT_TOUCH_MAJOR, 
 			0, touch_major, 0, 0);
-		अगर (touch_minor > 0)
-			input_set_असल_params(sc->touchpad, ABS_MT_TOUCH_MINOR, 
+		if (touch_minor > 0)
+			input_set_abs_params(sc->touchpad, ABS_MT_TOUCH_MINOR, 
 				0, touch_minor, 0, 0);
-		अगर (orientation > 0)
-			input_set_असल_params(sc->touchpad, ABS_MT_ORIENTATION, 
+		if (orientation > 0)
+			input_set_abs_params(sc->touchpad, ABS_MT_ORIENTATION, 
 				0, orientation, 0, 0);
-	पूर्ण
+	}
 
-	अगर (sc->quirks & NSG_MRXU_REMOTE) अणु
+	if (sc->quirks & NSG_MRXU_REMOTE) {
 		__set_bit(EV_REL, sc->touchpad->evbit);
-	पूर्ण
+	}
 
 	ret = input_mt_init_slots(sc->touchpad, touch_count, INPUT_MT_POINTER);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	ret = input_रेजिस्टर_device(sc->touchpad);
-	अगर (ret < 0)
-		वापस ret;
+	ret = input_register_device(sc->touchpad);
+	if (ret < 0)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sony_रेजिस्टर_sensors(काष्ठा sony_sc *sc)
-अणु
-	माप_प्रकार name_sz;
-	अक्षर *name;
-	पूर्णांक ret;
-	पूर्णांक range;
+static int sony_register_sensors(struct sony_sc *sc)
+{
+	size_t name_sz;
+	char *name;
+	int ret;
+	int range;
 
 	sc->sensor_dev = devm_input_allocate_device(&sc->hdev->dev);
-	अगर (!sc->sensor_dev)
-		वापस -ENOMEM;
+	if (!sc->sensor_dev)
+		return -ENOMEM;
 
 	input_set_drvdata(sc->sensor_dev, sc);
 	sc->sensor_dev->dev.parent = &sc->hdev->dev;
 	sc->sensor_dev->phys = sc->hdev->phys;
 	sc->sensor_dev->uniq = sc->hdev->uniq;
 	sc->sensor_dev->id.bustype = sc->hdev->bus;
-	sc->sensor_dev->id.venकरोr = sc->hdev->venकरोr;
+	sc->sensor_dev->id.vendor = sc->hdev->vendor;
 	sc->sensor_dev->id.product = sc->hdev->product;
 	sc->sensor_dev->id.version = sc->hdev->version;
 
 	/* Append a suffix to the controller name as there are various
-	 * DS4 compatible non-Sony devices with dअगरferent names.
+	 * DS4 compatible non-Sony devices with different names.
 	 */
-	name_sz = म_माप(sc->hdev->name) + माप(SENSOR_SUFFIX);
+	name_sz = strlen(sc->hdev->name) + sizeof(SENSOR_SUFFIX);
 	name = devm_kzalloc(&sc->hdev->dev, name_sz, GFP_KERNEL);
-	अगर (!name)
-		वापस -ENOMEM;
-	snम_लिखो(name, name_sz, "%s" SENSOR_SUFFIX, sc->hdev->name);
+	if (!name)
+		return -ENOMEM;
+	snprintf(name, name_sz, "%s" SENSOR_SUFFIX, sc->hdev->name);
 	sc->sensor_dev->name = name;
 
-	अगर (sc->quirks & SIXAXIS_CONTROLLER) अणु
+	if (sc->quirks & SIXAXIS_CONTROLLER) {
 		/* For the DS3 we only support the accelerometer, which works
 		 * quite well even without calibration. The device also has
-		 * a 1-axis gyro, but it is very dअगरficult to manage from within
+		 * a 1-axis gyro, but it is very difficult to manage from within
 		 * the driver even to get data, the sensor is inaccurate and
-		 * the behavior is very dअगरferent between hardware revisions.
+		 * the behavior is very different between hardware revisions.
 		 */
-		input_set_असल_params(sc->sensor_dev, ABS_X, -512, 511, 4, 0);
-		input_set_असल_params(sc->sensor_dev, ABS_Y, -512, 511, 4, 0);
-		input_set_असल_params(sc->sensor_dev, ABS_Z, -512, 511, 4, 0);
-		input_असल_set_res(sc->sensor_dev, ABS_X, SIXAXIS_ACC_RES_PER_G);
-		input_असल_set_res(sc->sensor_dev, ABS_Y, SIXAXIS_ACC_RES_PER_G);
-		input_असल_set_res(sc->sensor_dev, ABS_Z, SIXAXIS_ACC_RES_PER_G);
-	पूर्ण अन्यथा अगर (sc->quirks & DUALSHOCK4_CONTROLLER) अणु
+		input_set_abs_params(sc->sensor_dev, ABS_X, -512, 511, 4, 0);
+		input_set_abs_params(sc->sensor_dev, ABS_Y, -512, 511, 4, 0);
+		input_set_abs_params(sc->sensor_dev, ABS_Z, -512, 511, 4, 0);
+		input_abs_set_res(sc->sensor_dev, ABS_X, SIXAXIS_ACC_RES_PER_G);
+		input_abs_set_res(sc->sensor_dev, ABS_Y, SIXAXIS_ACC_RES_PER_G);
+		input_abs_set_res(sc->sensor_dev, ABS_Z, SIXAXIS_ACC_RES_PER_G);
+	} else if (sc->quirks & DUALSHOCK4_CONTROLLER) {
 		range = DS4_ACC_RES_PER_G*4;
-		input_set_असल_params(sc->sensor_dev, ABS_X, -range, range, 16, 0);
-		input_set_असल_params(sc->sensor_dev, ABS_Y, -range, range, 16, 0);
-		input_set_असल_params(sc->sensor_dev, ABS_Z, -range, range, 16, 0);
-		input_असल_set_res(sc->sensor_dev, ABS_X, DS4_ACC_RES_PER_G);
-		input_असल_set_res(sc->sensor_dev, ABS_Y, DS4_ACC_RES_PER_G);
-		input_असल_set_res(sc->sensor_dev, ABS_Z, DS4_ACC_RES_PER_G);
+		input_set_abs_params(sc->sensor_dev, ABS_X, -range, range, 16, 0);
+		input_set_abs_params(sc->sensor_dev, ABS_Y, -range, range, 16, 0);
+		input_set_abs_params(sc->sensor_dev, ABS_Z, -range, range, 16, 0);
+		input_abs_set_res(sc->sensor_dev, ABS_X, DS4_ACC_RES_PER_G);
+		input_abs_set_res(sc->sensor_dev, ABS_Y, DS4_ACC_RES_PER_G);
+		input_abs_set_res(sc->sensor_dev, ABS_Z, DS4_ACC_RES_PER_G);
 
 		range = DS4_GYRO_RES_PER_DEG_S*2048;
-		input_set_असल_params(sc->sensor_dev, ABS_RX, -range, range, 16, 0);
-		input_set_असल_params(sc->sensor_dev, ABS_RY, -range, range, 16, 0);
-		input_set_असल_params(sc->sensor_dev, ABS_RZ, -range, range, 16, 0);
-		input_असल_set_res(sc->sensor_dev, ABS_RX, DS4_GYRO_RES_PER_DEG_S);
-		input_असल_set_res(sc->sensor_dev, ABS_RY, DS4_GYRO_RES_PER_DEG_S);
-		input_असल_set_res(sc->sensor_dev, ABS_RZ, DS4_GYRO_RES_PER_DEG_S);
+		input_set_abs_params(sc->sensor_dev, ABS_RX, -range, range, 16, 0);
+		input_set_abs_params(sc->sensor_dev, ABS_RY, -range, range, 16, 0);
+		input_set_abs_params(sc->sensor_dev, ABS_RZ, -range, range, 16, 0);
+		input_abs_set_res(sc->sensor_dev, ABS_RX, DS4_GYRO_RES_PER_DEG_S);
+		input_abs_set_res(sc->sensor_dev, ABS_RY, DS4_GYRO_RES_PER_DEG_S);
+		input_abs_set_res(sc->sensor_dev, ABS_RZ, DS4_GYRO_RES_PER_DEG_S);
 
 		__set_bit(EV_MSC, sc->sensor_dev->evbit);
 		__set_bit(MSC_TIMESTAMP, sc->sensor_dev->mscbit);
-	पूर्ण
+	}
 
 	__set_bit(INPUT_PROP_ACCELEROMETER, sc->sensor_dev->propbit);
 
-	ret = input_रेजिस्टर_device(sc->sensor_dev);
-	अगर (ret < 0)
-		वापस ret;
+	ret = input_register_device(sc->sensor_dev);
+	if (ret < 0)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Sending HID_REQ_GET_REPORT changes the operation mode of the ps3 controller
  * to "operational".  Without this, the ps3 controller will not report any
  * events.
  */
-अटल पूर्णांक sixaxis_set_operational_usb(काष्ठा hid_device *hdev)
-अणु
-	काष्ठा sony_sc *sc = hid_get_drvdata(hdev);
-	स्थिर पूर्णांक buf_size =
+static int sixaxis_set_operational_usb(struct hid_device *hdev)
+{
+	struct sony_sc *sc = hid_get_drvdata(hdev);
+	const int buf_size =
 		max(SIXAXIS_REPORT_0xF2_SIZE, SIXAXIS_REPORT_0xF5_SIZE);
 	u8 *buf;
-	पूर्णांक ret;
+	int ret;
 
-	buf = kदो_स्मृति(buf_size, GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	buf = kmalloc(buf_size, GFP_KERNEL);
+	if (!buf)
+		return -ENOMEM;
 
 	ret = hid_hw_raw_request(hdev, 0xf2, buf, SIXAXIS_REPORT_0xF2_SIZE,
 				 HID_FEATURE_REPORT, HID_REQ_GET_REPORT);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		hid_err(hdev, "can't set operational mode: step 1\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
 	 * Some compatible controllers like the Speedlink Strike FX and
-	 * Gasia need another query plus an USB पूर्णांकerrupt to get operational.
+	 * Gasia need another query plus an USB interrupt to get operational.
 	 */
 	ret = hid_hw_raw_request(hdev, 0xf5, buf, SIXAXIS_REPORT_0xF5_SIZE,
 				 HID_FEATURE_REPORT, HID_REQ_GET_REPORT);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		hid_err(hdev, "can't set operational mode: step 2\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
-	 * But the USB पूर्णांकerrupt would cause SHANWAN controllers to
-	 * start rumbling non-stop, so skip step 3 क्रम these controllers.
+	 * But the USB interrupt would cause SHANWAN controllers to
+	 * start rumbling non-stop, so skip step 3 for these controllers.
 	 */
-	अगर (sc->quirks & SHANWAN_GAMEPAD)
-		जाओ out;
+	if (sc->quirks & SHANWAN_GAMEPAD)
+		goto out;
 
 	ret = hid_hw_output_report(hdev, buf, 1);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		hid_info(hdev, "can't set operational mode: step 3, ignoring\n");
 		ret = 0;
-	पूर्ण
+	}
 
 out:
-	kमुक्त(buf);
+	kfree(buf);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक sixaxis_set_operational_bt(काष्ठा hid_device *hdev)
-अणु
-	अटल स्थिर u8 report[] = अणु 0xf4, 0x42, 0x03, 0x00, 0x00 पूर्ण;
+static int sixaxis_set_operational_bt(struct hid_device *hdev)
+{
+	static const u8 report[] = { 0xf4, 0x42, 0x03, 0x00, 0x00 };
 	u8 *buf;
-	पूर्णांक ret;
+	int ret;
 
-	buf = kmemdup(report, माप(report), GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	buf = kmemdup(report, sizeof(report), GFP_KERNEL);
+	if (!buf)
+		return -ENOMEM;
 
-	ret = hid_hw_raw_request(hdev, buf[0], buf, माप(report),
+	ret = hid_hw_raw_request(hdev, buf[0], buf, sizeof(report),
 				  HID_FEATURE_REPORT, HID_REQ_SET_REPORT);
 
-	kमुक्त(buf);
+	kfree(buf);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Request DS4 calibration data क्रम the motion sensors.
+ * Request DS4 calibration data for the motion sensors.
  * For Bluetooth this also affects the operating mode (see below).
  */
-अटल पूर्णांक dualshock4_get_calibration_data(काष्ठा sony_sc *sc)
-अणु
+static int dualshock4_get_calibration_data(struct sony_sc *sc)
+{
 	u8 *buf;
-	पूर्णांक ret;
-	लघु gyro_pitch_bias, gyro_pitch_plus, gyro_pitch_minus;
-	लघु gyro_yaw_bias, gyro_yaw_plus, gyro_yaw_minus;
-	लघु gyro_roll_bias, gyro_roll_plus, gyro_roll_minus;
-	लघु gyro_speed_plus, gyro_speed_minus;
-	लघु acc_x_plus, acc_x_minus;
-	लघु acc_y_plus, acc_y_minus;
-	लघु acc_z_plus, acc_z_minus;
-	पूर्णांक speed_2x;
-	पूर्णांक range_2g;
+	int ret;
+	short gyro_pitch_bias, gyro_pitch_plus, gyro_pitch_minus;
+	short gyro_yaw_bias, gyro_yaw_plus, gyro_yaw_minus;
+	short gyro_roll_bias, gyro_roll_plus, gyro_roll_minus;
+	short gyro_speed_plus, gyro_speed_minus;
+	short acc_x_plus, acc_x_minus;
+	short acc_y_plus, acc_y_minus;
+	short acc_z_plus, acc_z_minus;
+	int speed_2x;
+	int range_2g;
 
-	/* For Bluetooth we use a dअगरferent request, which supports CRC.
+	/* For Bluetooth we use a different request, which supports CRC.
 	 * Note: in Bluetooth mode feature report 0x02 also changes the state
 	 * of the controller, so that it sends input reports of type 0x11.
 	 */
-	अगर (sc->quirks & (DUALSHOCK4_CONTROLLER_USB | DUALSHOCK4_DONGLE)) अणु
-		पूर्णांक retries;
+	if (sc->quirks & (DUALSHOCK4_CONTROLLER_USB | DUALSHOCK4_DONGLE)) {
+		int retries;
 
-		buf = kदो_स्मृति(DS4_FEATURE_REPORT_0x02_SIZE, GFP_KERNEL);
-		अगर (!buf)
-			वापस -ENOMEM;
+		buf = kmalloc(DS4_FEATURE_REPORT_0x02_SIZE, GFP_KERNEL);
+		if (!buf)
+			return -ENOMEM;
 
 		/* We should normally receive the feature report data we asked
-		 * क्रम, but hidraw applications such as Steam can issue feature
-		 * reports as well. In particular क्रम Dongle reconnects, Steam
+		 * for, but hidraw applications such as Steam can issue feature
+		 * reports as well. In particular for Dongle reconnects, Steam
 		 * and this function are competing resulting in often receiving
-		 * data क्रम a dअगरferent HID report, so retry a few बार.
+		 * data for a different HID report, so retry a few times.
 		 */
-		क्रम (retries = 0; retries < 3; retries++) अणु
+		for (retries = 0; retries < 3; retries++) {
 			ret = hid_hw_raw_request(sc->hdev, 0x02, buf,
 						 DS4_FEATURE_REPORT_0x02_SIZE,
 						 HID_FEATURE_REPORT,
 						 HID_REQ_GET_REPORT);
-			अगर (ret < 0)
-				जाओ err_stop;
+			if (ret < 0)
+				goto err_stop;
 
-			अगर (buf[0] != 0x02) अणु
-				अगर (retries < 2) अणु
+			if (buf[0] != 0x02) {
+				if (retries < 2) {
 					hid_warn(sc->hdev, "Retrying DualShock 4 get calibration report (0x02) request\n");
-					जारी;
-				पूर्ण अन्यथा अणु
+					continue;
+				} else {
 					ret = -EILSEQ;
-					जाओ err_stop;
-				पूर्ण
-			पूर्ण अन्यथा अणु
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
+					goto err_stop;
+				}
+			} else {
+				break;
+			}
+		}
+	} else {
 		u8 bthdr = 0xA3;
 		u32 crc;
 		u32 report_crc;
-		पूर्णांक retries;
+		int retries;
 
-		buf = kदो_स्मृति(DS4_FEATURE_REPORT_0x05_SIZE, GFP_KERNEL);
-		अगर (!buf)
-			वापस -ENOMEM;
+		buf = kmalloc(DS4_FEATURE_REPORT_0x05_SIZE, GFP_KERNEL);
+		if (!buf)
+			return -ENOMEM;
 
-		क्रम (retries = 0; retries < 3; retries++) अणु
+		for (retries = 0; retries < 3; retries++) {
 			ret = hid_hw_raw_request(sc->hdev, 0x05, buf,
 						 DS4_FEATURE_REPORT_0x05_SIZE,
 						 HID_FEATURE_REPORT,
 						 HID_REQ_GET_REPORT);
-			अगर (ret < 0)
-				जाओ err_stop;
+			if (ret < 0)
+				goto err_stop;
 
 			/* CRC check */
 			crc = crc32_le(0xFFFFFFFF, &bthdr, 1);
 			crc = ~crc32_le(crc, buf, DS4_FEATURE_REPORT_0x05_SIZE-4);
 			report_crc = get_unaligned_le32(&buf[DS4_FEATURE_REPORT_0x05_SIZE-4]);
-			अगर (crc != report_crc) अणु
+			if (crc != report_crc) {
 				hid_warn(sc->hdev, "DualShock 4 calibration report's CRC check failed, received crc 0x%0x != 0x%0x\n",
 					report_crc, crc);
-				अगर (retries < 2) अणु
+				if (retries < 2) {
 					hid_warn(sc->hdev, "Retrying DualShock 4 get calibration report request\n");
-					जारी;
-				पूर्ण अन्यथा अणु
+					continue;
+				} else {
 					ret = -EILSEQ;
-					जाओ err_stop;
-				पूर्ण
-			पूर्ण अन्यथा अणु
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+					goto err_stop;
+				}
+			} else {
+				break;
+			}
+		}
+	}
 
 	gyro_pitch_bias  = get_unaligned_le16(&buf[1]);
 	gyro_yaw_bias    = get_unaligned_le16(&buf[3]);
 	gyro_roll_bias   = get_unaligned_le16(&buf[5]);
-	अगर (sc->quirks & DUALSHOCK4_CONTROLLER_USB) अणु
+	if (sc->quirks & DUALSHOCK4_CONTROLLER_USB) {
 		gyro_pitch_plus  = get_unaligned_le16(&buf[7]);
 		gyro_pitch_minus = get_unaligned_le16(&buf[9]);
 		gyro_yaw_plus    = get_unaligned_le16(&buf[11]);
 		gyro_yaw_minus   = get_unaligned_le16(&buf[13]);
 		gyro_roll_plus   = get_unaligned_le16(&buf[15]);
 		gyro_roll_minus  = get_unaligned_le16(&buf[17]);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* BT + Dongle */
 		gyro_pitch_plus  = get_unaligned_le16(&buf[7]);
 		gyro_yaw_plus    = get_unaligned_le16(&buf[9]);
@@ -1811,7 +1810,7 @@ out:
 		gyro_pitch_minus = get_unaligned_le16(&buf[13]);
 		gyro_yaw_minus   = get_unaligned_le16(&buf[15]);
 		gyro_roll_minus  = get_unaligned_le16(&buf[17]);
-	पूर्ण
+	}
 	gyro_speed_plus  = get_unaligned_le16(&buf[19]);
 	gyro_speed_minus = get_unaligned_le16(&buf[21]);
 	acc_x_plus       = get_unaligned_le16(&buf[23]);
@@ -1825,17 +1824,17 @@ out:
 	 * Data values will be normalized to 1/DS4_GYRO_RES_PER_DEG_S degree/s.
 	 */
 	speed_2x = (gyro_speed_plus + gyro_speed_minus);
-	sc->ds4_calib_data[0].असल_code = ABS_RX;
+	sc->ds4_calib_data[0].abs_code = ABS_RX;
 	sc->ds4_calib_data[0].bias = gyro_pitch_bias;
 	sc->ds4_calib_data[0].sens_numer = speed_2x*DS4_GYRO_RES_PER_DEG_S;
 	sc->ds4_calib_data[0].sens_denom = gyro_pitch_plus - gyro_pitch_minus;
 
-	sc->ds4_calib_data[1].असल_code = ABS_RY;
+	sc->ds4_calib_data[1].abs_code = ABS_RY;
 	sc->ds4_calib_data[1].bias = gyro_yaw_bias;
 	sc->ds4_calib_data[1].sens_numer = speed_2x*DS4_GYRO_RES_PER_DEG_S;
 	sc->ds4_calib_data[1].sens_denom = gyro_yaw_plus - gyro_yaw_minus;
 
-	sc->ds4_calib_data[2].असल_code = ABS_RZ;
+	sc->ds4_calib_data[2].abs_code = ABS_RZ;
 	sc->ds4_calib_data[2].bias = gyro_roll_bias;
 	sc->ds4_calib_data[2].sens_numer = speed_2x*DS4_GYRO_RES_PER_DEG_S;
 	sc->ds4_calib_data[2].sens_denom = gyro_roll_plus - gyro_roll_minus;
@@ -1844,137 +1843,137 @@ out:
 	 * Data values will be normalized to 1/DS4_ACC_RES_PER_G G.
 	 */
 	range_2g = acc_x_plus - acc_x_minus;
-	sc->ds4_calib_data[3].असल_code = ABS_X;
+	sc->ds4_calib_data[3].abs_code = ABS_X;
 	sc->ds4_calib_data[3].bias = acc_x_plus - range_2g / 2;
 	sc->ds4_calib_data[3].sens_numer = 2*DS4_ACC_RES_PER_G;
 	sc->ds4_calib_data[3].sens_denom = range_2g;
 
 	range_2g = acc_y_plus - acc_y_minus;
-	sc->ds4_calib_data[4].असल_code = ABS_Y;
+	sc->ds4_calib_data[4].abs_code = ABS_Y;
 	sc->ds4_calib_data[4].bias = acc_y_plus - range_2g / 2;
 	sc->ds4_calib_data[4].sens_numer = 2*DS4_ACC_RES_PER_G;
 	sc->ds4_calib_data[4].sens_denom = range_2g;
 
 	range_2g = acc_z_plus - acc_z_minus;
-	sc->ds4_calib_data[5].असल_code = ABS_Z;
+	sc->ds4_calib_data[5].abs_code = ABS_Z;
 	sc->ds4_calib_data[5].bias = acc_z_plus - range_2g / 2;
 	sc->ds4_calib_data[5].sens_numer = 2*DS4_ACC_RES_PER_G;
 	sc->ds4_calib_data[5].sens_denom = range_2g;
 
 err_stop:
-	kमुक्त(buf);
-	वापस ret;
-पूर्ण
+	kfree(buf);
+	return ret;
+}
 
-अटल व्योम dualshock4_calibration_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा sony_sc *sc = container_of(work, काष्ठा sony_sc, hotplug_worker);
-	अचिन्हित दीर्घ flags;
-	क्रमागत ds4_करोngle_state करोngle_state;
-	पूर्णांक ret;
+static void dualshock4_calibration_work(struct work_struct *work)
+{
+	struct sony_sc *sc = container_of(work, struct sony_sc, hotplug_worker);
+	unsigned long flags;
+	enum ds4_dongle_state dongle_state;
+	int ret;
 
 	ret = dualshock4_get_calibration_data(sc);
-	अगर (ret < 0) अणु
-		/* This call is very unlikely to fail क्रम the करोngle. When it
+	if (ret < 0) {
+		/* This call is very unlikely to fail for the dongle. When it
 		 * fails we are probably in a very bad state, so mark the
-		 * करोngle as disabled. We will re-enable the करोngle अगर a new
+		 * dongle as disabled. We will re-enable the dongle if a new
 		 * DS4 hotplug is detect from sony_raw_event as any issues
-		 * are likely resolved then (the करोngle is quite stupid).
+		 * are likely resolved then (the dongle is quite stupid).
 		 */
 		hid_err(sc->hdev, "DualShock 4 USB dongle: calibration failed, disabling device\n");
-		करोngle_state = DONGLE_DISABLED;
-	पूर्ण अन्यथा अणु
+		dongle_state = DONGLE_DISABLED;
+	} else {
 		hid_info(sc->hdev, "DualShock 4 USB dongle: calibration completed\n");
-		करोngle_state = DONGLE_CONNECTED;
-	पूर्ण
+		dongle_state = DONGLE_CONNECTED;
+	}
 
 	spin_lock_irqsave(&sc->lock, flags);
-	sc->ds4_करोngle_state = करोngle_state;
+	sc->ds4_dongle_state = dongle_state;
 	spin_unlock_irqrestore(&sc->lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक dualshock4_get_version_info(काष्ठा sony_sc *sc)
-अणु
+static int dualshock4_get_version_info(struct sony_sc *sc)
+{
 	u8 *buf;
-	पूर्णांक ret;
+	int ret;
 
-	buf = kदो_स्मृति(DS4_FEATURE_REPORT_0xA3_SIZE, GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	buf = kmalloc(DS4_FEATURE_REPORT_0xA3_SIZE, GFP_KERNEL);
+	if (!buf)
+		return -ENOMEM;
 
 	ret = hid_hw_raw_request(sc->hdev, 0xA3, buf,
 				 DS4_FEATURE_REPORT_0xA3_SIZE,
 				 HID_FEATURE_REPORT,
 				 HID_REQ_GET_REPORT);
-	अगर (ret < 0) अणु
-		kमुक्त(buf);
-		वापस ret;
-	पूर्ण
+	if (ret < 0) {
+		kfree(buf);
+		return ret;
+	}
 
 	sc->hw_version = get_unaligned_le16(&buf[35]);
 	sc->fw_version = get_unaligned_le16(&buf[41]);
 
-	kमुक्त(buf);
-	वापस 0;
-पूर्ण
+	kfree(buf);
+	return 0;
+}
 
-अटल व्योम sixaxis_set_leds_from_id(काष्ठा sony_sc *sc)
-अणु
-	अटल स्थिर u8 sixaxis_leds[10][4] = अणु
-				अणु 0x01, 0x00, 0x00, 0x00 पूर्ण,
-				अणु 0x00, 0x01, 0x00, 0x00 पूर्ण,
-				अणु 0x00, 0x00, 0x01, 0x00 पूर्ण,
-				अणु 0x00, 0x00, 0x00, 0x01 पूर्ण,
-				अणु 0x01, 0x00, 0x00, 0x01 पूर्ण,
-				अणु 0x00, 0x01, 0x00, 0x01 पूर्ण,
-				अणु 0x00, 0x00, 0x01, 0x01 पूर्ण,
-				अणु 0x01, 0x00, 0x01, 0x01 पूर्ण,
-				अणु 0x00, 0x01, 0x01, 0x01 पूर्ण,
-				अणु 0x01, 0x01, 0x01, 0x01 पूर्ण
-	पूर्ण;
+static void sixaxis_set_leds_from_id(struct sony_sc *sc)
+{
+	static const u8 sixaxis_leds[10][4] = {
+				{ 0x01, 0x00, 0x00, 0x00 },
+				{ 0x00, 0x01, 0x00, 0x00 },
+				{ 0x00, 0x00, 0x01, 0x00 },
+				{ 0x00, 0x00, 0x00, 0x01 },
+				{ 0x01, 0x00, 0x00, 0x01 },
+				{ 0x00, 0x01, 0x00, 0x01 },
+				{ 0x00, 0x00, 0x01, 0x01 },
+				{ 0x01, 0x00, 0x01, 0x01 },
+				{ 0x00, 0x01, 0x01, 0x01 },
+				{ 0x01, 0x01, 0x01, 0x01 }
+	};
 
-	पूर्णांक id = sc->device_id;
+	int id = sc->device_id;
 
 	BUILD_BUG_ON(MAX_LEDS < ARRAY_SIZE(sixaxis_leds[0]));
 
-	अगर (id < 0)
-		वापस;
+	if (id < 0)
+		return;
 
 	id %= 10;
-	स_नकल(sc->led_state, sixaxis_leds[id], माप(sixaxis_leds[id]));
-पूर्ण
+	memcpy(sc->led_state, sixaxis_leds[id], sizeof(sixaxis_leds[id]));
+}
 
-अटल व्योम dualshock4_set_leds_from_id(काष्ठा sony_sc *sc)
-अणु
+static void dualshock4_set_leds_from_id(struct sony_sc *sc)
+{
 	/* The first 4 color/index entries match what the PS4 assigns */
-	अटल स्थिर u8 color_code[7][3] = अणु
-			/* Blue   */	अणु 0x00, 0x00, 0x40 पूर्ण,
-			/* Red	  */	अणु 0x40, 0x00, 0x00 पूर्ण,
-			/* Green  */	अणु 0x00, 0x40, 0x00 पूर्ण,
-			/* Pink   */	अणु 0x20, 0x00, 0x20 पूर्ण,
-			/* Orange */	अणु 0x02, 0x01, 0x00 पूर्ण,
-			/* Teal   */	अणु 0x00, 0x01, 0x01 पूर्ण,
-			/* White  */	अणु 0x01, 0x01, 0x01 पूर्ण
-	पूर्ण;
+	static const u8 color_code[7][3] = {
+			/* Blue   */	{ 0x00, 0x00, 0x40 },
+			/* Red	  */	{ 0x40, 0x00, 0x00 },
+			/* Green  */	{ 0x00, 0x40, 0x00 },
+			/* Pink   */	{ 0x20, 0x00, 0x20 },
+			/* Orange */	{ 0x02, 0x01, 0x00 },
+			/* Teal   */	{ 0x00, 0x01, 0x01 },
+			/* White  */	{ 0x01, 0x01, 0x01 }
+	};
 
-	पूर्णांक id = sc->device_id;
+	int id = sc->device_id;
 
 	BUILD_BUG_ON(MAX_LEDS < ARRAY_SIZE(color_code[0]));
 
-	अगर (id < 0)
-		वापस;
+	if (id < 0)
+		return;
 
 	id %= 7;
-	स_नकल(sc->led_state, color_code[id], माप(color_code[id]));
-पूर्ण
+	memcpy(sc->led_state, color_code[id], sizeof(color_code[id]));
+}
 
-अटल व्योम buzz_set_leds(काष्ठा sony_sc *sc)
-अणु
-	काष्ठा hid_device *hdev = sc->hdev;
-	काष्ठा list_head *report_list =
-		&hdev->report_क्रमागत[HID_OUTPUT_REPORT].report_list;
-	काष्ठा hid_report *report = list_entry(report_list->next,
-		काष्ठा hid_report, list);
+static void buzz_set_leds(struct sony_sc *sc)
+{
+	struct hid_device *hdev = sc->hdev;
+	struct list_head *report_list =
+		&hdev->report_enum[HID_OUTPUT_REPORT].report_list;
+	struct hid_report *report = list_entry(report_list->next,
+		struct hid_report, list);
 	s32 *value = report->field[0]->value;
 
 	BUILD_BUG_ON(MAX_LEDS < 4);
@@ -1987,46 +1986,46 @@ err_stop:
 	value[5] = 0x00;
 	value[6] = 0x00;
 	hid_hw_request(hdev, report, HID_REQ_SET_REPORT);
-पूर्ण
+}
 
-अटल व्योम sony_set_leds(काष्ठा sony_sc *sc)
-अणु
-	अगर (!(sc->quirks & BUZZ_CONTROLLER))
+static void sony_set_leds(struct sony_sc *sc)
+{
+	if (!(sc->quirks & BUZZ_CONTROLLER))
 		sony_schedule_work(sc, SONY_WORKER_STATE);
-	अन्यथा
+	else
 		buzz_set_leds(sc);
-पूर्ण
+}
 
-अटल व्योम sony_led_set_brightness(काष्ठा led_classdev *led,
-				    क्रमागत led_brightness value)
-अणु
-	काष्ठा device *dev = led->dev->parent;
-	काष्ठा hid_device *hdev = to_hid_device(dev);
-	काष्ठा sony_sc *drv_data;
+static void sony_led_set_brightness(struct led_classdev *led,
+				    enum led_brightness value)
+{
+	struct device *dev = led->dev->parent;
+	struct hid_device *hdev = to_hid_device(dev);
+	struct sony_sc *drv_data;
 
-	पूर्णांक n;
-	पूर्णांक क्रमce_update;
+	int n;
+	int force_update;
 
 	drv_data = hid_get_drvdata(hdev);
-	अगर (!drv_data) अणु
+	if (!drv_data) {
 		hid_err(hdev, "No device data\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
 	 * The Sixaxis on USB will override any LED settings sent to it
 	 * and keep flashing all of the LEDs until the PS button is pressed.
-	 * Updates, even अगर redundant, must be always be sent to the
-	 * controller to aव्योम having to toggle the state of an LED just to
+	 * Updates, even if redundant, must be always be sent to the
+	 * controller to avoid having to toggle the state of an LED just to
 	 * stop the flashing later on.
 	 */
-	क्रमce_update = !!(drv_data->quirks & SIXAXIS_CONTROLLER_USB);
+	force_update = !!(drv_data->quirks & SIXAXIS_CONTROLLER_USB);
 
-	क्रम (n = 0; n < drv_data->led_count; n++) अणु
-		अगर (led == drv_data->leds[n] && (क्रमce_update ||
+	for (n = 0; n < drv_data->led_count; n++) {
+		if (led == drv_data->leds[n] && (force_update ||
 			(value != drv_data->led_state[n] ||
 			drv_data->led_delay_on[n] ||
-			drv_data->led_delay_off[n]))) अणु
+			drv_data->led_delay_off[n]))) {
 
 			drv_data->led_state[n] = value;
 
@@ -2035,164 +2034,164 @@ err_stop:
 			drv_data->led_delay_off[n] = 0;
 
 			sony_set_leds(drv_data);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			break;
+		}
+	}
+}
 
-अटल क्रमागत led_brightness sony_led_get_brightness(काष्ठा led_classdev *led)
-अणु
-	काष्ठा device *dev = led->dev->parent;
-	काष्ठा hid_device *hdev = to_hid_device(dev);
-	काष्ठा sony_sc *drv_data;
+static enum led_brightness sony_led_get_brightness(struct led_classdev *led)
+{
+	struct device *dev = led->dev->parent;
+	struct hid_device *hdev = to_hid_device(dev);
+	struct sony_sc *drv_data;
 
-	पूर्णांक n;
+	int n;
 
 	drv_data = hid_get_drvdata(hdev);
-	अगर (!drv_data) अणु
+	if (!drv_data) {
 		hid_err(hdev, "No device data\n");
-		वापस LED_OFF;
-	पूर्ण
+		return LED_OFF;
+	}
 
-	क्रम (n = 0; n < drv_data->led_count; n++) अणु
-		अगर (led == drv_data->leds[n])
-			वापस drv_data->led_state[n];
-	पूर्ण
+	for (n = 0; n < drv_data->led_count; n++) {
+		if (led == drv_data->leds[n])
+			return drv_data->led_state[n];
+	}
 
-	वापस LED_OFF;
-पूर्ण
+	return LED_OFF;
+}
 
-अटल पूर्णांक sony_led_blink_set(काष्ठा led_classdev *led, अचिन्हित दीर्घ *delay_on,
-				अचिन्हित दीर्घ *delay_off)
-अणु
-	काष्ठा device *dev = led->dev->parent;
-	काष्ठा hid_device *hdev = to_hid_device(dev);
-	काष्ठा sony_sc *drv_data = hid_get_drvdata(hdev);
-	पूर्णांक n;
+static int sony_led_blink_set(struct led_classdev *led, unsigned long *delay_on,
+				unsigned long *delay_off)
+{
+	struct device *dev = led->dev->parent;
+	struct hid_device *hdev = to_hid_device(dev);
+	struct sony_sc *drv_data = hid_get_drvdata(hdev);
+	int n;
 	u8 new_on, new_off;
 
-	अगर (!drv_data) अणु
+	if (!drv_data) {
 		hid_err(hdev, "No device data\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* Max delay is 255 deciseconds or 2550 milliseconds */
-	अगर (*delay_on > 2550)
+	if (*delay_on > 2550)
 		*delay_on = 2550;
-	अगर (*delay_off > 2550)
+	if (*delay_off > 2550)
 		*delay_off = 2550;
 
-	/* Blink at 1 Hz अगर both values are zero */
-	अगर (!*delay_on && !*delay_off)
+	/* Blink at 1 Hz if both values are zero */
+	if (!*delay_on && !*delay_off)
 		*delay_on = *delay_off = 500;
 
 	new_on = *delay_on / 10;
 	new_off = *delay_off / 10;
 
-	क्रम (n = 0; n < drv_data->led_count; n++) अणु
-		अगर (led == drv_data->leds[n])
-			अवरोध;
-	पूर्ण
+	for (n = 0; n < drv_data->led_count; n++) {
+		if (led == drv_data->leds[n])
+			break;
+	}
 
-	/* This LED is not रेजिस्टरed on this device */
-	अगर (n >= drv_data->led_count)
-		वापस -EINVAL;
+	/* This LED is not registered on this device */
+	if (n >= drv_data->led_count)
+		return -EINVAL;
 
 	/* Don't schedule work if the values didn't change */
-	अगर (new_on != drv_data->led_delay_on[n] ||
-		new_off != drv_data->led_delay_off[n]) अणु
+	if (new_on != drv_data->led_delay_on[n] ||
+		new_off != drv_data->led_delay_off[n]) {
 		drv_data->led_delay_on[n] = new_on;
 		drv_data->led_delay_off[n] = new_off;
 		sony_schedule_work(drv_data, SONY_WORKER_STATE);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sony_leds_init(काष्ठा sony_sc *sc)
-अणु
-	काष्ठा hid_device *hdev = sc->hdev;
-	पूर्णांक n, ret = 0;
-	पूर्णांक use_ds4_names;
-	काष्ठा led_classdev *led;
-	माप_प्रकार name_sz;
-	अक्षर *name;
-	माप_प्रकार name_len;
-	स्थिर अक्षर *name_fmt;
-	अटल स्थिर अक्षर * स्थिर ds4_name_str[] = अणु "red", "green", "blue",
-						  "global" पूर्ण;
-	u8 max_brightness[MAX_LEDS] = अणु [0 ... (MAX_LEDS - 1)] = 1 पूर्ण;
-	u8 use_hw_blink[MAX_LEDS] = अणु 0 पूर्ण;
+static int sony_leds_init(struct sony_sc *sc)
+{
+	struct hid_device *hdev = sc->hdev;
+	int n, ret = 0;
+	int use_ds4_names;
+	struct led_classdev *led;
+	size_t name_sz;
+	char *name;
+	size_t name_len;
+	const char *name_fmt;
+	static const char * const ds4_name_str[] = { "red", "green", "blue",
+						  "global" };
+	u8 max_brightness[MAX_LEDS] = { [0 ... (MAX_LEDS - 1)] = 1 };
+	u8 use_hw_blink[MAX_LEDS] = { 0 };
 
 	BUG_ON(!(sc->quirks & SONY_LED_SUPPORT));
 
-	अगर (sc->quirks & BUZZ_CONTROLLER) अणु
+	if (sc->quirks & BUZZ_CONTROLLER) {
 		sc->led_count = 4;
 		use_ds4_names = 0;
-		name_len = म_माप("::buzz#");
+		name_len = strlen("::buzz#");
 		name_fmt = "%s::buzz%d";
-		/* Validate expected report अक्षरacteristics. */
-		अगर (!hid_validate_values(hdev, HID_OUTPUT_REPORT, 0, 0, 7))
-			वापस -ENODEV;
-	पूर्ण अन्यथा अगर (sc->quirks & DUALSHOCK4_CONTROLLER) अणु
+		/* Validate expected report characteristics. */
+		if (!hid_validate_values(hdev, HID_OUTPUT_REPORT, 0, 0, 7))
+			return -ENODEV;
+	} else if (sc->quirks & DUALSHOCK4_CONTROLLER) {
 		dualshock4_set_leds_from_id(sc);
 		sc->led_state[3] = 1;
 		sc->led_count = 4;
-		स_रखो(max_brightness, 255, 3);
+		memset(max_brightness, 255, 3);
 		use_hw_blink[3] = 1;
 		use_ds4_names = 1;
 		name_len = 0;
 		name_fmt = "%s:%s";
-	पूर्ण अन्यथा अगर (sc->quirks & MOTION_CONTROLLER) अणु
+	} else if (sc->quirks & MOTION_CONTROLLER) {
 		sc->led_count = 3;
-		स_रखो(max_brightness, 255, 3);
+		memset(max_brightness, 255, 3);
 		use_ds4_names = 1;
 		name_len = 0;
 		name_fmt = "%s:%s";
-	पूर्ण अन्यथा अगर (sc->quirks & NAVIGATION_CONTROLLER) अणु
-		अटल स्थिर u8 navigation_leds[4] = अणु0x01, 0x00, 0x00, 0x00पूर्ण;
+	} else if (sc->quirks & NAVIGATION_CONTROLLER) {
+		static const u8 navigation_leds[4] = {0x01, 0x00, 0x00, 0x00};
 
-		स_नकल(sc->led_state, navigation_leds, माप(navigation_leds));
+		memcpy(sc->led_state, navigation_leds, sizeof(navigation_leds));
 		sc->led_count = 1;
-		स_रखो(use_hw_blink, 1, 4);
+		memset(use_hw_blink, 1, 4);
 		use_ds4_names = 0;
-		name_len = म_माप("::sony#");
+		name_len = strlen("::sony#");
 		name_fmt = "%s::sony%d";
-	पूर्ण अन्यथा अणु
+	} else {
 		sixaxis_set_leds_from_id(sc);
 		sc->led_count = 4;
-		स_रखो(use_hw_blink, 1, 4);
+		memset(use_hw_blink, 1, 4);
 		use_ds4_names = 0;
-		name_len = म_माप("::sony#");
+		name_len = strlen("::sony#");
 		name_fmt = "%s::sony%d";
-	पूर्ण
+	}
 
 	/*
-	 * Clear LEDs as we have no way of पढ़ोing their initial state. This is
-	 * only relevant अगर the driver is loaded after somebody actively set the
+	 * Clear LEDs as we have no way of reading their initial state. This is
+	 * only relevant if the driver is loaded after somebody actively set the
 	 * LEDs to on
 	 */
 	sony_set_leds(sc);
 
-	name_sz = म_माप(dev_name(&hdev->dev)) + name_len + 1;
+	name_sz = strlen(dev_name(&hdev->dev)) + name_len + 1;
 
-	क्रम (n = 0; n < sc->led_count; n++) अणु
+	for (n = 0; n < sc->led_count; n++) {
 
-		अगर (use_ds4_names)
-			name_sz = म_माप(dev_name(&hdev->dev)) + म_माप(ds4_name_str[n]) + 2;
+		if (use_ds4_names)
+			name_sz = strlen(dev_name(&hdev->dev)) + strlen(ds4_name_str[n]) + 2;
 
-		led = devm_kzalloc(&hdev->dev, माप(काष्ठा led_classdev) + name_sz, GFP_KERNEL);
-		अगर (!led) अणु
+		led = devm_kzalloc(&hdev->dev, sizeof(struct led_classdev) + name_sz, GFP_KERNEL);
+		if (!led) {
 			hid_err(hdev, "Couldn't allocate memory for LED %d\n", n);
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 
-		name = (व्योम *)(&led[1]);
-		अगर (use_ds4_names)
-			snम_लिखो(name, name_sz, name_fmt, dev_name(&hdev->dev),
+		name = (void *)(&led[1]);
+		if (use_ds4_names)
+			snprintf(name, name_sz, name_fmt, dev_name(&hdev->dev),
 			ds4_name_str[n]);
-		अन्यथा
-			snम_लिखो(name, name_sz, name_fmt, dev_name(&hdev->dev), n + 1);
+		else
+			snprintf(name, name_sz, name_fmt, dev_name(&hdev->dev), n + 1);
 		led->name = name;
 		led->brightness = sc->led_state[n];
 		led->max_brightness = max_brightness[n];
@@ -2200,25 +2199,25 @@ err_stop:
 		led->brightness_get = sony_led_get_brightness;
 		led->brightness_set = sony_led_set_brightness;
 
-		अगर (use_hw_blink[n])
+		if (use_hw_blink[n])
 			led->blink_set = sony_led_blink_set;
 
 		sc->leds[n] = led;
 
-		ret = devm_led_classdev_रेजिस्टर(&hdev->dev, led);
-		अगर (ret) अणु
+		ret = devm_led_classdev_register(&hdev->dev, led);
+		if (ret) {
 			hid_err(hdev, "Failed to register LED %d\n", n);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम sixaxis_send_output_report(काष्ठा sony_sc *sc)
-अणु
-	अटल स्थिर जोड़ sixaxis_output_report_01 शेष_report = अणु
-		.buf = अणु
+static void sixaxis_send_output_report(struct sony_sc *sc)
+{
+	static const union sixaxis_output_report_01 default_report = {
+		.buf = {
 			0x01,
 			0x01, 0xff, 0x00, 0xff, 0x00,
 			0x00, 0x00, 0x00, 0x00, 0x00,
@@ -2227,106 +2226,106 @@ err_stop:
 			0xff, 0x27, 0x10, 0x00, 0x32,
 			0xff, 0x27, 0x10, 0x00, 0x32,
 			0x00, 0x00, 0x00, 0x00, 0x00
-		पूर्ण
-	पूर्ण;
-	काष्ठा sixaxis_output_report *report =
-		(काष्ठा sixaxis_output_report *)sc->output_report_dmabuf;
-	पूर्णांक n;
+		}
+	};
+	struct sixaxis_output_report *report =
+		(struct sixaxis_output_report *)sc->output_report_dmabuf;
+	int n;
 
-	/* Initialize the report with शेष values */
-	स_नकल(report, &शेष_report, माप(काष्ठा sixaxis_output_report));
+	/* Initialize the report with default values */
+	memcpy(report, &default_report, sizeof(struct sixaxis_output_report));
 
-#अगर_घोषित CONFIG_SONY_FF
+#ifdef CONFIG_SONY_FF
 	report->rumble.right_motor_on = sc->right ? 1 : 0;
-	report->rumble.left_motor_क्रमce = sc->left;
-#पूर्ण_अगर
+	report->rumble.left_motor_force = sc->left;
+#endif
 
-	report->leds_biपंचांगap |= sc->led_state[0] << 1;
-	report->leds_biपंचांगap |= sc->led_state[1] << 2;
-	report->leds_biपंचांगap |= sc->led_state[2] << 3;
-	report->leds_biपंचांगap |= sc->led_state[3] << 4;
+	report->leds_bitmap |= sc->led_state[0] << 1;
+	report->leds_bitmap |= sc->led_state[1] << 2;
+	report->leds_bitmap |= sc->led_state[2] << 3;
+	report->leds_bitmap |= sc->led_state[3] << 4;
 
-	/* Set flag क्रम all leds off, required क्रम 3rd party INTEC controller */
-	अगर ((report->leds_biपंचांगap & 0x1E) == 0)
-		report->leds_biपंचांगap |= 0x20;
+	/* Set flag for all leds off, required for 3rd party INTEC controller */
+	if ((report->leds_bitmap & 0x1E) == 0)
+		report->leds_bitmap |= 0x20;
 
 	/*
 	 * The LEDs in the report are indexed in reverse order to their
 	 * corresponding light on the controller.
 	 * Index 0 = LED 4, index 1 = LED 3, etc...
 	 *
-	 * In the हाल of both delay values being zero (blinking disabled) the
-	 * शेष report values should be used or the controller LED will be
+	 * In the case of both delay values being zero (blinking disabled) the
+	 * default report values should be used or the controller LED will be
 	 * always off.
 	 */
-	क्रम (n = 0; n < 4; n++) अणु
-		अगर (sc->led_delay_on[n] || sc->led_delay_off[n]) अणु
+	for (n = 0; n < 4; n++) {
+		if (sc->led_delay_on[n] || sc->led_delay_off[n]) {
 			report->led[3 - n].duty_off = sc->led_delay_off[n];
 			report->led[3 - n].duty_on = sc->led_delay_on[n];
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* SHANWAN controllers require output reports via पूर्णांकr channel */
-	अगर (sc->quirks & SHANWAN_GAMEPAD)
+	/* SHANWAN controllers require output reports via intr channel */
+	if (sc->quirks & SHANWAN_GAMEPAD)
 		hid_hw_output_report(sc->hdev, (u8 *)report,
-				माप(काष्ठा sixaxis_output_report));
-	अन्यथा
+				sizeof(struct sixaxis_output_report));
+	else
 		hid_hw_raw_request(sc->hdev, report->report_id, (u8 *)report,
-				माप(काष्ठा sixaxis_output_report),
+				sizeof(struct sixaxis_output_report),
 				HID_OUTPUT_REPORT, HID_REQ_SET_REPORT);
-पूर्ण
+}
 
-अटल व्योम dualshock4_send_output_report(काष्ठा sony_sc *sc)
-अणु
-	काष्ठा hid_device *hdev = sc->hdev;
+static void dualshock4_send_output_report(struct sony_sc *sc)
+{
+	struct hid_device *hdev = sc->hdev;
 	u8 *buf = sc->output_report_dmabuf;
-	पूर्णांक offset;
+	int offset;
 
 	/*
 	 * NOTE: The lower 6 bits of buf[1] field of the Bluetooth report
-	 * control the पूर्णांकerval at which Dualshock 4 reports data:
+	 * control the interval at which Dualshock 4 reports data:
 	 * 0x00 - 1ms
 	 * 0x01 - 1ms
 	 * 0x02 - 2ms
 	 * 0x3E - 62ms
 	 * 0x3F - disabled
 	 */
-	अगर (sc->quirks & (DUALSHOCK4_CONTROLLER_USB | DUALSHOCK4_DONGLE)) अणु
-		स_रखो(buf, 0, DS4_OUTPUT_REPORT_0x05_SIZE);
+	if (sc->quirks & (DUALSHOCK4_CONTROLLER_USB | DUALSHOCK4_DONGLE)) {
+		memset(buf, 0, DS4_OUTPUT_REPORT_0x05_SIZE);
 		buf[0] = 0x05;
 		buf[1] = 0x07; /* blink + LEDs + motor */
 		offset = 4;
-	पूर्ण अन्यथा अणु
-		स_रखो(buf, 0, DS4_OUTPUT_REPORT_0x11_SIZE);
+	} else {
+		memset(buf, 0, DS4_OUTPUT_REPORT_0x11_SIZE);
 		buf[0] = 0x11;
-		buf[1] = 0xC0 /* HID + CRC */ | sc->ds4_bt_poll_पूर्णांकerval;
+		buf[1] = 0xC0 /* HID + CRC */ | sc->ds4_bt_poll_interval;
 		buf[3] = 0x07; /* blink + LEDs + motor */
 		offset = 6;
-	पूर्ण
+	}
 
-#अगर_घोषित CONFIG_SONY_FF
+#ifdef CONFIG_SONY_FF
 	buf[offset++] = sc->right;
 	buf[offset++] = sc->left;
-#अन्यथा
+#else
 	offset += 2;
-#पूर्ण_अगर
+#endif
 
 	/* LED 3 is the global control */
-	अगर (sc->led_state[3]) अणु
+	if (sc->led_state[3]) {
 		buf[offset++] = sc->led_state[0];
 		buf[offset++] = sc->led_state[1];
 		buf[offset++] = sc->led_state[2];
-	पूर्ण अन्यथा अणु
+	} else {
 		offset += 3;
-	पूर्ण
+	}
 
 	/* If both delay values are zero the DualShock 4 disables blinking. */
 	buf[offset++] = sc->led_delay_on[3];
 	buf[offset++] = sc->led_delay_off[3];
 
-	अगर (sc->quirks & (DUALSHOCK4_CONTROLLER_USB | DUALSHOCK4_DONGLE))
+	if (sc->quirks & (DUALSHOCK4_CONTROLLER_USB | DUALSHOCK4_DONGLE))
 		hid_hw_output_report(hdev, buf, DS4_OUTPUT_REPORT_0x05_SIZE);
-	अन्यथा अणु
+	else {
 		/* CRC generation */
 		u8 bthdr = 0xA2;
 		u32 crc;
@@ -2335,159 +2334,159 @@ err_stop:
 		crc = ~crc32_le(crc, buf, DS4_OUTPUT_REPORT_0x11_SIZE-4);
 		put_unaligned_le32(crc, &buf[74]);
 		hid_hw_output_report(hdev, buf, DS4_OUTPUT_REPORT_0x11_SIZE);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम motion_send_output_report(काष्ठा sony_sc *sc)
-अणु
-	काष्ठा hid_device *hdev = sc->hdev;
-	काष्ठा motion_output_report_02 *report =
-		(काष्ठा motion_output_report_02 *)sc->output_report_dmabuf;
+static void motion_send_output_report(struct sony_sc *sc)
+{
+	struct hid_device *hdev = sc->hdev;
+	struct motion_output_report_02 *report =
+		(struct motion_output_report_02 *)sc->output_report_dmabuf;
 
-	स_रखो(report, 0, MOTION_REPORT_0x02_SIZE);
+	memset(report, 0, MOTION_REPORT_0x02_SIZE);
 
 	report->type = 0x02; /* set leds */
 	report->r = sc->led_state[0];
 	report->g = sc->led_state[1];
 	report->b = sc->led_state[2];
 
-#अगर_घोषित CONFIG_SONY_FF
+#ifdef CONFIG_SONY_FF
 	report->rumble = max(sc->right, sc->left);
-#पूर्ण_अगर
+#endif
 
 	hid_hw_output_report(hdev, (u8 *)report, MOTION_REPORT_0x02_SIZE);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम sony_send_output_report(काष्ठा sony_sc *sc)
-अणु
-	अगर (sc->send_output_report)
+static inline void sony_send_output_report(struct sony_sc *sc)
+{
+	if (sc->send_output_report)
 		sc->send_output_report(sc);
-पूर्ण
+}
 
-अटल व्योम sony_state_worker(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा sony_sc *sc = container_of(work, काष्ठा sony_sc, state_worker);
+static void sony_state_worker(struct work_struct *work)
+{
+	struct sony_sc *sc = container_of(work, struct sony_sc, state_worker);
 
 	sc->send_output_report(sc);
-पूर्ण
+}
 
-अटल पूर्णांक sony_allocate_output_report(काष्ठा sony_sc *sc)
-अणु
-	अगर ((sc->quirks & SIXAXIS_CONTROLLER) ||
+static int sony_allocate_output_report(struct sony_sc *sc)
+{
+	if ((sc->quirks & SIXAXIS_CONTROLLER) ||
 			(sc->quirks & NAVIGATION_CONTROLLER))
 		sc->output_report_dmabuf =
-			devm_kदो_स्मृति(&sc->hdev->dev,
-				माप(जोड़ sixaxis_output_report_01),
+			devm_kmalloc(&sc->hdev->dev,
+				sizeof(union sixaxis_output_report_01),
 				GFP_KERNEL);
-	अन्यथा अगर (sc->quirks & DUALSHOCK4_CONTROLLER_BT)
-		sc->output_report_dmabuf = devm_kदो_स्मृति(&sc->hdev->dev,
+	else if (sc->quirks & DUALSHOCK4_CONTROLLER_BT)
+		sc->output_report_dmabuf = devm_kmalloc(&sc->hdev->dev,
 						DS4_OUTPUT_REPORT_0x11_SIZE,
 						GFP_KERNEL);
-	अन्यथा अगर (sc->quirks & (DUALSHOCK4_CONTROLLER_USB | DUALSHOCK4_DONGLE))
-		sc->output_report_dmabuf = devm_kदो_स्मृति(&sc->hdev->dev,
+	else if (sc->quirks & (DUALSHOCK4_CONTROLLER_USB | DUALSHOCK4_DONGLE))
+		sc->output_report_dmabuf = devm_kmalloc(&sc->hdev->dev,
 						DS4_OUTPUT_REPORT_0x05_SIZE,
 						GFP_KERNEL);
-	अन्यथा अगर (sc->quirks & MOTION_CONTROLLER)
-		sc->output_report_dmabuf = devm_kदो_स्मृति(&sc->hdev->dev,
+	else if (sc->quirks & MOTION_CONTROLLER)
+		sc->output_report_dmabuf = devm_kmalloc(&sc->hdev->dev,
 						MOTION_REPORT_0x02_SIZE,
 						GFP_KERNEL);
-	अन्यथा
-		वापस 0;
+	else
+		return 0;
 
-	अगर (!sc->output_report_dmabuf)
-		वापस -ENOMEM;
+	if (!sc->output_report_dmabuf)
+		return -ENOMEM;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_SONY_FF
-अटल पूर्णांक sony_play_effect(काष्ठा input_dev *dev, व्योम *data,
-			    काष्ठा ff_effect *effect)
-अणु
-	काष्ठा hid_device *hid = input_get_drvdata(dev);
-	काष्ठा sony_sc *sc = hid_get_drvdata(hid);
+#ifdef CONFIG_SONY_FF
+static int sony_play_effect(struct input_dev *dev, void *data,
+			    struct ff_effect *effect)
+{
+	struct hid_device *hid = input_get_drvdata(dev);
+	struct sony_sc *sc = hid_get_drvdata(hid);
 
-	अगर (effect->type != FF_RUMBLE)
-		वापस 0;
+	if (effect->type != FF_RUMBLE)
+		return 0;
 
 	sc->left = effect->u.rumble.strong_magnitude / 256;
 	sc->right = effect->u.rumble.weak_magnitude / 256;
 
 	sony_schedule_work(sc, SONY_WORKER_STATE);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sony_init_ff(काष्ठा sony_sc *sc)
-अणु
-	काष्ठा hid_input *hidinput;
-	काष्ठा input_dev *input_dev;
+static int sony_init_ff(struct sony_sc *sc)
+{
+	struct hid_input *hidinput;
+	struct input_dev *input_dev;
 
-	अगर (list_empty(&sc->hdev->inमाला_दो)) अणु
+	if (list_empty(&sc->hdev->inputs)) {
 		hid_err(sc->hdev, "no inputs found\n");
-		वापस -ENODEV;
-	पूर्ण
-	hidinput = list_entry(sc->hdev->inमाला_दो.next, काष्ठा hid_input, list);
+		return -ENODEV;
+	}
+	hidinput = list_entry(sc->hdev->inputs.next, struct hid_input, list);
 	input_dev = hidinput->input;
 
 	input_set_capability(input_dev, EV_FF, FF_RUMBLE);
-	वापस input_ff_create_memless(input_dev, शून्य, sony_play_effect);
-पूर्ण
+	return input_ff_create_memless(input_dev, NULL, sony_play_effect);
+}
 
-#अन्यथा
-अटल पूर्णांक sony_init_ff(काष्ठा sony_sc *sc)
-अणु
-	वापस 0;
-पूर्ण
+#else
+static int sony_init_ff(struct sony_sc *sc)
+{
+	return 0;
+}
 
-#पूर्ण_अगर
+#endif
 
-अटल पूर्णांक sony_battery_get_property(काष्ठा घातer_supply *psy,
-				     क्रमागत घातer_supply_property psp,
-				     जोड़ घातer_supply_propval *val)
-अणु
-	काष्ठा sony_sc *sc = घातer_supply_get_drvdata(psy);
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret = 0;
+static int sony_battery_get_property(struct power_supply *psy,
+				     enum power_supply_property psp,
+				     union power_supply_propval *val)
+{
+	struct sony_sc *sc = power_supply_get_drvdata(psy);
+	unsigned long flags;
+	int ret = 0;
 	u8 battery_capacity;
-	पूर्णांक battery_status;
+	int battery_status;
 
 	spin_lock_irqsave(&sc->lock, flags);
 	battery_capacity = sc->battery_capacity;
 	battery_status = sc->battery_status;
 	spin_unlock_irqrestore(&sc->lock, flags);
 
-	चयन (psp) अणु
-	हाल POWER_SUPPLY_PROP_PRESENT:
-		val->पूर्णांकval = 1;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_SCOPE:
-		val->पूर्णांकval = POWER_SUPPLY_SCOPE_DEVICE;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_CAPACITY:
-		val->पूर्णांकval = battery_capacity;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_STATUS:
-		val->पूर्णांकval = battery_status;
-		अवरोध;
-	शेष:
+	switch (psp) {
+	case POWER_SUPPLY_PROP_PRESENT:
+		val->intval = 1;
+		break;
+	case POWER_SUPPLY_PROP_SCOPE:
+		val->intval = POWER_SUPPLY_SCOPE_DEVICE;
+		break;
+	case POWER_SUPPLY_PROP_CAPACITY:
+		val->intval = battery_capacity;
+		break;
+	case POWER_SUPPLY_PROP_STATUS:
+		val->intval = battery_status;
+		break;
+	default:
 		ret = -EINVAL;
-		अवरोध;
-	पूर्ण
-	वापस ret;
-पूर्ण
+		break;
+	}
+	return ret;
+}
 
-अटल पूर्णांक sony_battery_probe(काष्ठा sony_sc *sc, पूर्णांक append_dev_id)
-अणु
-	स्थिर अक्षर *battery_str_fmt = append_dev_id ?
+static int sony_battery_probe(struct sony_sc *sc, int append_dev_id)
+{
+	const char *battery_str_fmt = append_dev_id ?
 		"sony_controller_battery_%pMR_%i" :
 		"sony_controller_battery_%pMR";
-	काष्ठा घातer_supply_config psy_cfg = अणु .drv_data = sc, पूर्ण;
-	काष्ठा hid_device *hdev = sc->hdev;
-	पूर्णांक ret;
+	struct power_supply_config psy_cfg = { .drv_data = sc, };
+	struct hid_device *hdev = sc->hdev;
+	int ret;
 
 	/*
-	 * Set the शेष battery level to 100% to aव्योम low battery warnings
-	 * अगर the battery is polled beक्रमe the first device report is received.
+	 * Set the default battery level to 100% to avoid low battery warnings
+	 * if the battery is polled before the first device report is received.
 	 */
 	sc->battery_capacity = 100;
 
@@ -2495,130 +2494,130 @@ err_stop:
 	sc->battery_desc.num_properties = ARRAY_SIZE(sony_battery_props);
 	sc->battery_desc.get_property = sony_battery_get_property;
 	sc->battery_desc.type = POWER_SUPPLY_TYPE_BATTERY;
-	sc->battery_desc.use_क्रम_apm = 0;
-	sc->battery_desc.name = devm_kaप्र_लिखो(&hdev->dev, GFP_KERNEL,
+	sc->battery_desc.use_for_apm = 0;
+	sc->battery_desc.name = devm_kasprintf(&hdev->dev, GFP_KERNEL,
 					  battery_str_fmt, sc->mac_address, sc->device_id);
-	अगर (!sc->battery_desc.name)
-		वापस -ENOMEM;
+	if (!sc->battery_desc.name)
+		return -ENOMEM;
 
-	sc->battery = devm_घातer_supply_रेजिस्टर(&hdev->dev, &sc->battery_desc,
+	sc->battery = devm_power_supply_register(&hdev->dev, &sc->battery_desc,
 					    &psy_cfg);
-	अगर (IS_ERR(sc->battery)) अणु
+	if (IS_ERR(sc->battery)) {
 		ret = PTR_ERR(sc->battery);
 		hid_err(hdev, "Unable to register battery device\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	घातer_supply_घातers(sc->battery, &hdev->dev);
-	वापस 0;
-पूर्ण
+	power_supply_powers(sc->battery, &hdev->dev);
+	return 0;
+}
 
 /*
- * If a controller is plugged in via USB जबतक alपढ़ोy connected via Bluetooth
+ * If a controller is plugged in via USB while already connected via Bluetooth
  * it will show up as two devices. A global list of connected controllers and
- * their MAC addresses is मुख्यtained to ensure that a device is only connected
+ * their MAC addresses is maintained to ensure that a device is only connected
  * once.
  *
  * Some USB-only devices masquerade as Sixaxis controllers and all have the
  * same dummy Bluetooth address, so a comparison of the connection type is
- * required.  Devices are only rejected in the हाल where two devices have
- * matching Bluetooth addresses on dअगरferent bus types.
+ * required.  Devices are only rejected in the case where two devices have
+ * matching Bluetooth addresses on different bus types.
  */
-अटल अंतरभूत पूर्णांक sony_compare_connection_type(काष्ठा sony_sc *sc0,
-						काष्ठा sony_sc *sc1)
-अणु
-	स्थिर पूर्णांक sc0_not_bt = !(sc0->quirks & SONY_BT_DEVICE);
-	स्थिर पूर्णांक sc1_not_bt = !(sc1->quirks & SONY_BT_DEVICE);
+static inline int sony_compare_connection_type(struct sony_sc *sc0,
+						struct sony_sc *sc1)
+{
+	const int sc0_not_bt = !(sc0->quirks & SONY_BT_DEVICE);
+	const int sc1_not_bt = !(sc1->quirks & SONY_BT_DEVICE);
 
-	वापस sc0_not_bt == sc1_not_bt;
-पूर्ण
+	return sc0_not_bt == sc1_not_bt;
+}
 
-अटल पूर्णांक sony_check_add_dev_list(काष्ठा sony_sc *sc)
-अणु
-	काष्ठा sony_sc *entry;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+static int sony_check_add_dev_list(struct sony_sc *sc)
+{
+	struct sony_sc *entry;
+	unsigned long flags;
+	int ret;
 
 	spin_lock_irqsave(&sony_dev_list_lock, flags);
 
-	list_क्रम_each_entry(entry, &sony_device_list, list_node) अणु
-		ret = स_भेद(sc->mac_address, entry->mac_address,
-				माप(sc->mac_address));
-		अगर (!ret) अणु
-			अगर (sony_compare_connection_type(sc, entry)) अणु
+	list_for_each_entry(entry, &sony_device_list, list_node) {
+		ret = memcmp(sc->mac_address, entry->mac_address,
+				sizeof(sc->mac_address));
+		if (!ret) {
+			if (sony_compare_connection_type(sc, entry)) {
 				ret = 1;
-			पूर्ण अन्यथा अणु
+			} else {
 				ret = -EEXIST;
 				hid_info(sc->hdev,
 				"controller with MAC address %pMR already connected\n",
 				sc->mac_address);
-			पूर्ण
-			जाओ unlock;
-		पूर्ण
-	पूर्ण
+			}
+			goto unlock;
+		}
+	}
 
 	ret = 0;
 	list_add(&(sc->list_node), &sony_device_list);
 
 unlock:
 	spin_unlock_irqrestore(&sony_dev_list_lock, flags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम sony_हटाओ_dev_list(काष्ठा sony_sc *sc)
-अणु
-	अचिन्हित दीर्घ flags;
+static void sony_remove_dev_list(struct sony_sc *sc)
+{
+	unsigned long flags;
 
-	अगर (sc->list_node.next) अणु
+	if (sc->list_node.next) {
 		spin_lock_irqsave(&sony_dev_list_lock, flags);
 		list_del(&(sc->list_node));
 		spin_unlock_irqrestore(&sony_dev_list_lock, flags);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक sony_get_bt_devaddr(काष्ठा sony_sc *sc)
-अणु
-	पूर्णांक ret;
+static int sony_get_bt_devaddr(struct sony_sc *sc)
+{
+	int ret;
 
 	/* HIDP stores the device MAC address as a string in the uniq field. */
-	ret = म_माप(sc->hdev->uniq);
-	अगर (ret != 17)
-		वापस -EINVAL;
+	ret = strlen(sc->hdev->uniq);
+	if (ret != 17)
+		return -EINVAL;
 
-	ret = माला_पूछो(sc->hdev->uniq,
+	ret = sscanf(sc->hdev->uniq,
 		"%02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx",
 		&sc->mac_address[5], &sc->mac_address[4], &sc->mac_address[3],
 		&sc->mac_address[2], &sc->mac_address[1], &sc->mac_address[0]);
 
-	अगर (ret != 6)
-		वापस -EINVAL;
+	if (ret != 6)
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sony_check_add(काष्ठा sony_sc *sc)
-अणु
-	u8 *buf = शून्य;
-	पूर्णांक n, ret;
+static int sony_check_add(struct sony_sc *sc)
+{
+	u8 *buf = NULL;
+	int n, ret;
 
-	अगर ((sc->quirks & DUALSHOCK4_CONTROLLER_BT) ||
+	if ((sc->quirks & DUALSHOCK4_CONTROLLER_BT) ||
 	    (sc->quirks & MOTION_CONTROLLER_BT) ||
 	    (sc->quirks & NAVIGATION_CONTROLLER_BT) ||
-	    (sc->quirks & SIXAXIS_CONTROLLER_BT)) अणु
+	    (sc->quirks & SIXAXIS_CONTROLLER_BT)) {
 		/*
 		 * sony_get_bt_devaddr() attempts to parse the Bluetooth MAC
 		 * address from the uniq string where HIDP stores it.
-		 * As uniq cannot be guaranteed to be a MAC address in all हालs
+		 * As uniq cannot be guaranteed to be a MAC address in all cases
 		 * a failure of this function should not prevent the connection.
 		 */
-		अगर (sony_get_bt_devaddr(sc) < 0) अणु
+		if (sony_get_bt_devaddr(sc) < 0) {
 			hid_warn(sc->hdev, "UNIQ does not contain a MAC address; duplicate check skipped\n");
-			वापस 0;
-		पूर्ण
-	पूर्ण अन्यथा अगर (sc->quirks & (DUALSHOCK4_CONTROLLER_USB | DUALSHOCK4_DONGLE)) अणु
-		buf = kदो_स्मृति(DS4_FEATURE_REPORT_0x81_SIZE, GFP_KERNEL);
-		अगर (!buf)
-			वापस -ENOMEM;
+			return 0;
+		}
+	} else if (sc->quirks & (DUALSHOCK4_CONTROLLER_USB | DUALSHOCK4_DONGLE)) {
+		buf = kmalloc(DS4_FEATURE_REPORT_0x81_SIZE, GFP_KERNEL);
+		if (!buf)
+			return -ENOMEM;
 
 		/*
 		 * The MAC address of a DS4 controller connected via USB can be
@@ -2629,21 +2628,21 @@ unlock:
 				DS4_FEATURE_REPORT_0x81_SIZE, HID_FEATURE_REPORT,
 				HID_REQ_GET_REPORT);
 
-		अगर (ret != DS4_FEATURE_REPORT_0x81_SIZE) अणु
+		if (ret != DS4_FEATURE_REPORT_0x81_SIZE) {
 			hid_err(sc->hdev, "failed to retrieve feature report 0x81 with the DualShock 4 MAC address\n");
 			ret = ret < 0 ? ret : -EINVAL;
-			जाओ out_मुक्त;
-		पूर्ण
+			goto out_free;
+		}
 
-		स_नकल(sc->mac_address, &buf[1], माप(sc->mac_address));
+		memcpy(sc->mac_address, &buf[1], sizeof(sc->mac_address));
 
-		snम_लिखो(sc->hdev->uniq, माप(sc->hdev->uniq),
+		snprintf(sc->hdev->uniq, sizeof(sc->hdev->uniq),
 			 "%pMR", sc->mac_address);
-	पूर्ण अन्यथा अगर ((sc->quirks & SIXAXIS_CONTROLLER_USB) ||
-			(sc->quirks & NAVIGATION_CONTROLLER_USB)) अणु
-		buf = kदो_स्मृति(SIXAXIS_REPORT_0xF2_SIZE, GFP_KERNEL);
-		अगर (!buf)
-			वापस -ENOMEM;
+	} else if ((sc->quirks & SIXAXIS_CONTROLLER_USB) ||
+			(sc->quirks & NAVIGATION_CONTROLLER_USB)) {
+		buf = kmalloc(SIXAXIS_REPORT_0xF2_SIZE, GFP_KERNEL);
+		if (!buf)
+			return -ENOMEM;
 
 		/*
 		 * The MAC address of a Sixaxis controller connected via USB can
@@ -2654,124 +2653,124 @@ unlock:
 				SIXAXIS_REPORT_0xF2_SIZE, HID_FEATURE_REPORT,
 				HID_REQ_GET_REPORT);
 
-		अगर (ret != SIXAXIS_REPORT_0xF2_SIZE) अणु
+		if (ret != SIXAXIS_REPORT_0xF2_SIZE) {
 			hid_err(sc->hdev, "failed to retrieve feature report 0xf2 with the Sixaxis MAC address\n");
 			ret = ret < 0 ? ret : -EINVAL;
-			जाओ out_मुक्त;
-		पूर्ण
+			goto out_free;
+		}
 
 		/*
 		 * The Sixaxis device MAC in the report is big-endian and must
 		 * be byte-swapped.
 		 */
-		क्रम (n = 0; n < 6; n++)
+		for (n = 0; n < 6; n++)
 			sc->mac_address[5-n] = buf[4+n];
 
-		snम_लिखो(sc->hdev->uniq, माप(sc->hdev->uniq),
+		snprintf(sc->hdev->uniq, sizeof(sc->hdev->uniq),
 			 "%pMR", sc->mac_address);
-	पूर्ण अन्यथा अणु
-		वापस 0;
-	पूर्ण
+	} else {
+		return 0;
+	}
 
 	ret = sony_check_add_dev_list(sc);
 
-out_मुक्त:
+out_free:
 
-	kमुक्त(buf);
+	kfree(buf);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक sony_set_device_id(काष्ठा sony_sc *sc)
-अणु
-	पूर्णांक ret;
+static int sony_set_device_id(struct sony_sc *sc)
+{
+	int ret;
 
 	/*
 	 * Only DualShock 4 or Sixaxis controllers get an id.
 	 * All others are set to -1.
 	 */
-	अगर ((sc->quirks & SIXAXIS_CONTROLLER) ||
-	    (sc->quirks & DUALSHOCK4_CONTROLLER)) अणु
+	if ((sc->quirks & SIXAXIS_CONTROLLER) ||
+	    (sc->quirks & DUALSHOCK4_CONTROLLER)) {
 		ret = ida_simple_get(&sony_device_id_allocator, 0, 0,
 					GFP_KERNEL);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			sc->device_id = -1;
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		sc->device_id = ret;
-	पूर्ण अन्यथा अणु
+	} else {
 		sc->device_id = -1;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम sony_release_device_id(काष्ठा sony_sc *sc)
-अणु
-	अगर (sc->device_id >= 0) अणु
-		ida_simple_हटाओ(&sony_device_id_allocator, sc->device_id);
+static void sony_release_device_id(struct sony_sc *sc)
+{
+	if (sc->device_id >= 0) {
+		ida_simple_remove(&sony_device_id_allocator, sc->device_id);
 		sc->device_id = -1;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम sony_init_output_report(काष्ठा sony_sc *sc,
-				व्योम (*send_output_report)(काष्ठा sony_sc *))
-अणु
+static inline void sony_init_output_report(struct sony_sc *sc,
+				void (*send_output_report)(struct sony_sc *))
+{
 	sc->send_output_report = send_output_report;
 
-	अगर (!sc->state_worker_initialized)
+	if (!sc->state_worker_initialized)
 		INIT_WORK(&sc->state_worker, sony_state_worker);
 
 	sc->state_worker_initialized = 1;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम sony_cancel_work_sync(काष्ठा sony_sc *sc)
-अणु
-	अचिन्हित दीर्घ flags;
+static inline void sony_cancel_work_sync(struct sony_sc *sc)
+{
+	unsigned long flags;
 
-	अगर (sc->hotplug_worker_initialized)
+	if (sc->hotplug_worker_initialized)
 		cancel_work_sync(&sc->hotplug_worker);
-	अगर (sc->state_worker_initialized) अणु
+	if (sc->state_worker_initialized) {
 		spin_lock_irqsave(&sc->lock, flags);
 		sc->state_worker_initialized = 0;
 		spin_unlock_irqrestore(&sc->lock, flags);
 		cancel_work_sync(&sc->state_worker);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक sony_input_configured(काष्ठा hid_device *hdev,
-					काष्ठा hid_input *hidinput)
-अणु
-	काष्ठा sony_sc *sc = hid_get_drvdata(hdev);
-	पूर्णांक append_dev_id;
-	पूर्णांक ret;
+static int sony_input_configured(struct hid_device *hdev,
+					struct hid_input *hidinput)
+{
+	struct sony_sc *sc = hid_get_drvdata(hdev);
+	int append_dev_id;
+	int ret;
 
 	ret = sony_set_device_id(sc);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		hid_err(hdev, "failed to allocate the device id\n");
-		जाओ err_stop;
-	पूर्ण
+		goto err_stop;
+	}
 
 	ret = append_dev_id = sony_check_add(sc);
-	अगर (ret < 0)
-		जाओ err_stop;
+	if (ret < 0)
+		goto err_stop;
 
 	ret = sony_allocate_output_report(sc);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		hid_err(hdev, "failed to allocate the output report buffer\n");
-		जाओ err_stop;
-	पूर्ण
+		goto err_stop;
+	}
 
-	अगर (sc->quirks & NAVIGATION_CONTROLLER_USB) अणु
+	if (sc->quirks & NAVIGATION_CONTROLLER_USB) {
 		/*
-		 * The Sony Sixaxis करोes not handle HID Output Reports on the
-		 * Interrupt EP like it could, so we need to क्रमce HID Output
+		 * The Sony Sixaxis does not handle HID Output Reports on the
+		 * Interrupt EP like it could, so we need to force HID Output
 		 * Reports to use HID_REQ_SET_REPORT on the Control EP.
 		 *
 		 * There is also another issue about HID Output Reports via USB,
-		 * the Sixaxis करोes not want the report_id as part of the data
+		 * the Sixaxis does not want the report_id as part of the data
 		 * packet, so we have to discard buf[0] when sending the actual
-		 * control message, even क्रम numbered reports, humpf!
+		 * control message, even for numbered reports, humpf!
 		 *
 		 * Additionally, the Sixaxis on USB isn't properly initialized
 		 * until the PS logo button is pressed and as such won't retain
@@ -2784,217 +2783,217 @@ out_मुक्त:
 		sc->defer_initialization = 1;
 
 		ret = sixaxis_set_operational_usb(hdev);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			hid_err(hdev, "Failed to set controller into operational mode\n");
-			जाओ err_stop;
-		पूर्ण
+			goto err_stop;
+		}
 
 		sony_init_output_report(sc, sixaxis_send_output_report);
-	पूर्ण अन्यथा अगर (sc->quirks & NAVIGATION_CONTROLLER_BT) अणु
+	} else if (sc->quirks & NAVIGATION_CONTROLLER_BT) {
 		/*
 		 * The Navigation controller wants output reports sent on the ctrl
-		 * endpoपूर्णांक when connected via Bluetooth.
+		 * endpoint when connected via Bluetooth.
 		 */
 		hdev->quirks |= HID_QUIRK_NO_OUTPUT_REPORTS_ON_INTR_EP;
 
 		ret = sixaxis_set_operational_bt(hdev);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			hid_err(hdev, "Failed to set controller into operational mode\n");
-			जाओ err_stop;
-		पूर्ण
+			goto err_stop;
+		}
 
 		sony_init_output_report(sc, sixaxis_send_output_report);
-	पूर्ण अन्यथा अगर (sc->quirks & SIXAXIS_CONTROLLER_USB) अणु
+	} else if (sc->quirks & SIXAXIS_CONTROLLER_USB) {
 		/*
-		 * The Sony Sixaxis करोes not handle HID Output Reports on the
+		 * The Sony Sixaxis does not handle HID Output Reports on the
 		 * Interrupt EP and the device only becomes active when the
-		 * PS button is pressed. See comment क्रम Navigation controller
-		 * above क्रम more details.
+		 * PS button is pressed. See comment for Navigation controller
+		 * above for more details.
 		 */
 		hdev->quirks |= HID_QUIRK_NO_OUTPUT_REPORTS_ON_INTR_EP;
 		hdev->quirks |= HID_QUIRK_SKIP_OUTPUT_REPORT_ID;
 		sc->defer_initialization = 1;
 
 		ret = sixaxis_set_operational_usb(hdev);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			hid_err(hdev, "Failed to set controller into operational mode\n");
-			जाओ err_stop;
-		पूर्ण
+			goto err_stop;
+		}
 
-		ret = sony_रेजिस्टर_sensors(sc);
-		अगर (ret) अणु
+		ret = sony_register_sensors(sc);
+		if (ret) {
 			hid_err(sc->hdev,
 			"Unable to initialize motion sensors: %d\n", ret);
-			जाओ err_stop;
-		पूर्ण
+			goto err_stop;
+		}
 
 		sony_init_output_report(sc, sixaxis_send_output_report);
-	पूर्ण अन्यथा अगर (sc->quirks & SIXAXIS_CONTROLLER_BT) अणु
+	} else if (sc->quirks & SIXAXIS_CONTROLLER_BT) {
 		/*
-		 * The Sixaxis wants output reports sent on the ctrl endpoपूर्णांक
+		 * The Sixaxis wants output reports sent on the ctrl endpoint
 		 * when connected via Bluetooth.
 		 */
 		hdev->quirks |= HID_QUIRK_NO_OUTPUT_REPORTS_ON_INTR_EP;
 
 		ret = sixaxis_set_operational_bt(hdev);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			hid_err(hdev, "Failed to set controller into operational mode\n");
-			जाओ err_stop;
-		पूर्ण
+			goto err_stop;
+		}
 
-		ret = sony_रेजिस्टर_sensors(sc);
-		अगर (ret) अणु
+		ret = sony_register_sensors(sc);
+		if (ret) {
 			hid_err(sc->hdev,
 			"Unable to initialize motion sensors: %d\n", ret);
-			जाओ err_stop;
-		पूर्ण
+			goto err_stop;
+		}
 
 		sony_init_output_report(sc, sixaxis_send_output_report);
-	पूर्ण अन्यथा अगर (sc->quirks & DUALSHOCK4_CONTROLLER) अणु
+	} else if (sc->quirks & DUALSHOCK4_CONTROLLER) {
 		ret = dualshock4_get_calibration_data(sc);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			hid_err(hdev, "Failed to get calibration data from Dualshock 4\n");
-			जाओ err_stop;
-		पूर्ण
+			goto err_stop;
+		}
 
 		ret = dualshock4_get_version_info(sc);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			hid_err(sc->hdev, "Failed to get version data from Dualshock 4\n");
-			जाओ err_stop;
-		पूर्ण
+			goto err_stop;
+		}
 
 		ret = device_create_file(&sc->hdev->dev, &dev_attr_firmware_version);
-		अगर (ret) अणु
+		if (ret) {
 			hid_err(sc->hdev, "can't create sysfs firmware_version attribute err: %d\n", ret);
-			जाओ err_stop;
-		पूर्ण
+			goto err_stop;
+		}
 		sc->fw_version_created = true;
 
 		ret = device_create_file(&sc->hdev->dev, &dev_attr_hardware_version);
-		अगर (ret) अणु
+		if (ret) {
 			hid_err(sc->hdev, "can't create sysfs hardware_version attribute err: %d\n", ret);
-			जाओ err_stop;
-		पूर्ण
+			goto err_stop;
+		}
 		sc->hw_version_created = true;
 
 		/*
 		 * The Dualshock 4 touchpad supports 2 touches and has a
-		 * resolution of 1920x942 (44.86 करोts/mm).
+		 * resolution of 1920x942 (44.86 dots/mm).
 		 */
-		ret = sony_रेजिस्टर_touchpad(sc, 2, 1920, 942, 0, 0, 0);
-		अगर (ret) अणु
+		ret = sony_register_touchpad(sc, 2, 1920, 942, 0, 0, 0);
+		if (ret) {
 			hid_err(sc->hdev,
 			"Unable to initialize multi-touch slots: %d\n",
 			ret);
-			जाओ err_stop;
-		पूर्ण
+			goto err_stop;
+		}
 
-		ret = sony_रेजिस्टर_sensors(sc);
-		अगर (ret) अणु
+		ret = sony_register_sensors(sc);
+		if (ret) {
 			hid_err(sc->hdev,
 			"Unable to initialize motion sensors: %d\n", ret);
-			जाओ err_stop;
-		पूर्ण
+			goto err_stop;
+		}
 
-		अगर (sc->quirks & DUALSHOCK4_CONTROLLER_BT) अणु
-			sc->ds4_bt_poll_पूर्णांकerval = DS4_BT_DEFAULT_POLL_INTERVAL_MS;
-			ret = device_create_file(&sc->hdev->dev, &dev_attr_bt_poll_पूर्णांकerval);
-			अगर (ret)
+		if (sc->quirks & DUALSHOCK4_CONTROLLER_BT) {
+			sc->ds4_bt_poll_interval = DS4_BT_DEFAULT_POLL_INTERVAL_MS;
+			ret = device_create_file(&sc->hdev->dev, &dev_attr_bt_poll_interval);
+			if (ret)
 				hid_warn(sc->hdev,
 				 "can't create sysfs bt_poll_interval attribute err: %d\n",
 				 ret);
-		पूर्ण
+		}
 
-		अगर (sc->quirks & DUALSHOCK4_DONGLE) अणु
+		if (sc->quirks & DUALSHOCK4_DONGLE) {
 			INIT_WORK(&sc->hotplug_worker, dualshock4_calibration_work);
 			sc->hotplug_worker_initialized = 1;
-			sc->ds4_करोngle_state = DONGLE_DISCONNECTED;
-		पूर्ण
+			sc->ds4_dongle_state = DONGLE_DISCONNECTED;
+		}
 
 		sony_init_output_report(sc, dualshock4_send_output_report);
-	पूर्ण अन्यथा अगर (sc->quirks & NSG_MRXU_REMOTE) अणु
+	} else if (sc->quirks & NSG_MRXU_REMOTE) {
 		/*
 		 * The NSG-MRxU touchpad supports 2 touches and has a
 		 * resolution of 1667x1868
 		 */
-		ret = sony_रेजिस्टर_touchpad(sc, 2,
+		ret = sony_register_touchpad(sc, 2,
 			NSG_MRXU_MAX_X, NSG_MRXU_MAX_Y, 15, 15, 1);
-		अगर (ret) अणु
+		if (ret) {
 			hid_err(sc->hdev,
 			"Unable to initialize multi-touch slots: %d\n",
 			ret);
-			जाओ err_stop;
-		पूर्ण
+			goto err_stop;
+		}
 
-	पूर्ण अन्यथा अगर (sc->quirks & MOTION_CONTROLLER) अणु
+	} else if (sc->quirks & MOTION_CONTROLLER) {
 		sony_init_output_report(sc, motion_send_output_report);
-	पूर्ण अन्यथा अणु
+	} else {
 		ret = 0;
-	पूर्ण
+	}
 
-	अगर (sc->quirks & SONY_LED_SUPPORT) अणु
+	if (sc->quirks & SONY_LED_SUPPORT) {
 		ret = sony_leds_init(sc);
-		अगर (ret < 0)
-			जाओ err_stop;
-	पूर्ण
+		if (ret < 0)
+			goto err_stop;
+	}
 
-	अगर (sc->quirks & SONY_BATTERY_SUPPORT) अणु
+	if (sc->quirks & SONY_BATTERY_SUPPORT) {
 		ret = sony_battery_probe(sc, append_dev_id);
-		अगर (ret < 0)
-			जाओ err_stop;
+		if (ret < 0)
+			goto err_stop;
 
 		/* Open the device to receive reports with battery info */
-		ret = hid_hw_खोलो(hdev);
-		अगर (ret < 0) अणु
+		ret = hid_hw_open(hdev);
+		if (ret < 0) {
 			hid_err(hdev, "hw open failed\n");
-			जाओ err_stop;
-		पूर्ण
-	पूर्ण
+			goto err_stop;
+		}
+	}
 
-	अगर (sc->quirks & SONY_FF_SUPPORT) अणु
+	if (sc->quirks & SONY_FF_SUPPORT) {
 		ret = sony_init_ff(sc);
-		अगर (ret < 0)
-			जाओ err_बंद;
-	पूर्ण
+		if (ret < 0)
+			goto err_close;
+	}
 
-	वापस 0;
-err_बंद:
-	hid_hw_बंद(hdev);
+	return 0;
+err_close:
+	hid_hw_close(hdev);
 err_stop:
-	/* Piggy back on the शेष ds4_bt_ poll_पूर्णांकerval to determine
-	 * अगर we need to हटाओ the file as we करोn't know क्रम sure अगर we
+	/* Piggy back on the default ds4_bt_ poll_interval to determine
+	 * if we need to remove the file as we don't know for sure if we
 	 * executed that logic.
 	 */
-	अगर (sc->ds4_bt_poll_पूर्णांकerval)
-		device_हटाओ_file(&sc->hdev->dev, &dev_attr_bt_poll_पूर्णांकerval);
-	अगर (sc->fw_version_created)
-		device_हटाओ_file(&sc->hdev->dev, &dev_attr_firmware_version);
-	अगर (sc->hw_version_created)
-		device_हटाओ_file(&sc->hdev->dev, &dev_attr_hardware_version);
+	if (sc->ds4_bt_poll_interval)
+		device_remove_file(&sc->hdev->dev, &dev_attr_bt_poll_interval);
+	if (sc->fw_version_created)
+		device_remove_file(&sc->hdev->dev, &dev_attr_firmware_version);
+	if (sc->hw_version_created)
+		device_remove_file(&sc->hdev->dev, &dev_attr_hardware_version);
 	sony_cancel_work_sync(sc);
-	sony_हटाओ_dev_list(sc);
+	sony_remove_dev_list(sc);
 	sony_release_device_id(sc);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक sony_probe(काष्ठा hid_device *hdev, स्थिर काष्ठा hid_device_id *id)
-अणु
-	पूर्णांक ret;
-	अचिन्हित दीर्घ quirks = id->driver_data;
-	काष्ठा sony_sc *sc;
-	अचिन्हित पूर्णांक connect_mask = HID_CONNECT_DEFAULT;
+static int sony_probe(struct hid_device *hdev, const struct hid_device_id *id)
+{
+	int ret;
+	unsigned long quirks = id->driver_data;
+	struct sony_sc *sc;
+	unsigned int connect_mask = HID_CONNECT_DEFAULT;
 
-	अगर (!म_भेद(hdev->name, "FutureMax Dance Mat"))
+	if (!strcmp(hdev->name, "FutureMax Dance Mat"))
 		quirks |= FUTUREMAX_DANCE_MAT;
 
-	अगर (!म_भेद(hdev->name, "SHANWAN PS3 GamePad"))
+	if (!strcmp(hdev->name, "SHANWAN PS3 GamePad"))
 		quirks |= SHANWAN_GAMEPAD;
 
-	sc = devm_kzalloc(&hdev->dev, माप(*sc), GFP_KERNEL);
-	अगर (sc == शून्य) अणु
+	sc = devm_kzalloc(&hdev->dev, sizeof(*sc), GFP_KERNEL);
+	if (sc == NULL) {
 		hid_err(hdev, "can't alloc sony descriptor\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	spin_lock_init(&sc->lock);
 
@@ -3003,217 +3002,217 @@ err_stop:
 	sc->hdev = hdev;
 
 	ret = hid_parse(hdev);
-	अगर (ret) अणु
+	if (ret) {
 		hid_err(hdev, "parse failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (sc->quirks & VAIO_RDESC_CONSTANT)
+	if (sc->quirks & VAIO_RDESC_CONSTANT)
 		connect_mask |= HID_CONNECT_HIDDEV_FORCE;
-	अन्यथा अगर (sc->quirks & SIXAXIS_CONTROLLER)
+	else if (sc->quirks & SIXAXIS_CONTROLLER)
 		connect_mask |= HID_CONNECT_HIDDEV_FORCE;
 
 	/* Patch the hw version on DS3/4 compatible devices, so applications can
-	 * distinguish between the शेष HID mappings and the mappings defined
-	 * by the Linux game controller spec. This is important क्रम the SDL2
+	 * distinguish between the default HID mappings and the mappings defined
+	 * by the Linux game controller spec. This is important for the SDL2
 	 * library, which has a game controller database, which uses device ids
 	 * in combination with version as a key.
 	 */
-	अगर (sc->quirks & (SIXAXIS_CONTROLLER | DUALSHOCK4_CONTROLLER))
+	if (sc->quirks & (SIXAXIS_CONTROLLER | DUALSHOCK4_CONTROLLER))
 		hdev->version |= 0x8000;
 
 	ret = hid_hw_start(hdev, connect_mask);
-	अगर (ret) अणु
+	if (ret) {
 		hid_err(hdev, "hw start failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* sony_input_configured can fail, but this करोesn't result
-	 * in hid_hw_start failures (पूर्णांकended). Check whether
-	 * the HID layer claimed the device अन्यथा fail.
-	 * We करोn't know the actual reason क्रम the failure, most
-	 * likely it is due to EEXIST in हाल of द्विगुन connection
+	/* sony_input_configured can fail, but this doesn't result
+	 * in hid_hw_start failures (intended). Check whether
+	 * the HID layer claimed the device else fail.
+	 * We don't know the actual reason for the failure, most
+	 * likely it is due to EEXIST in case of double connection
 	 * of USB and Bluetooth, but could have been due to ENOMEM
 	 * or other reasons as well.
 	 */
-	अगर (!(hdev->claimed & HID_CLAIMED_INPUT)) अणु
+	if (!(hdev->claimed & HID_CLAIMED_INPUT)) {
 		hid_err(hdev, "failed to claim input\n");
 		hid_hw_stop(hdev);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (sc->quirks & GHL_GUITAR_PS3WIIU) अणु
-		समयr_setup(&sc->ghl_poke_समयr, ghl_magic_poke, 0);
-		mod_समयr(&sc->ghl_poke_समयr,
-			  jअगरfies + GHL_GUITAR_POKE_INTERVAL*HZ);
-	पूर्ण
+	if (sc->quirks & GHL_GUITAR_PS3WIIU) {
+		timer_setup(&sc->ghl_poke_timer, ghl_magic_poke, 0);
+		mod_timer(&sc->ghl_poke_timer,
+			  jiffies + GHL_GUITAR_POKE_INTERVAL*HZ);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम sony_हटाओ(काष्ठा hid_device *hdev)
-अणु
-	काष्ठा sony_sc *sc = hid_get_drvdata(hdev);
+static void sony_remove(struct hid_device *hdev)
+{
+	struct sony_sc *sc = hid_get_drvdata(hdev);
 
-	अगर (sc->quirks & GHL_GUITAR_PS3WIIU)
-		del_समयr_sync(&sc->ghl_poke_समयr);
+	if (sc->quirks & GHL_GUITAR_PS3WIIU)
+		del_timer_sync(&sc->ghl_poke_timer);
 
-	hid_hw_बंद(hdev);
+	hid_hw_close(hdev);
 
-	अगर (sc->quirks & DUALSHOCK4_CONTROLLER_BT)
-		device_हटाओ_file(&sc->hdev->dev, &dev_attr_bt_poll_पूर्णांकerval);
+	if (sc->quirks & DUALSHOCK4_CONTROLLER_BT)
+		device_remove_file(&sc->hdev->dev, &dev_attr_bt_poll_interval);
 
-	अगर (sc->fw_version_created)
-		device_हटाओ_file(&sc->hdev->dev, &dev_attr_firmware_version);
+	if (sc->fw_version_created)
+		device_remove_file(&sc->hdev->dev, &dev_attr_firmware_version);
 
-	अगर (sc->hw_version_created)
-		device_हटाओ_file(&sc->hdev->dev, &dev_attr_hardware_version);
+	if (sc->hw_version_created)
+		device_remove_file(&sc->hdev->dev, &dev_attr_hardware_version);
 
 	sony_cancel_work_sync(sc);
 
-	sony_हटाओ_dev_list(sc);
+	sony_remove_dev_list(sc);
 
 	sony_release_device_id(sc);
 
 	hid_hw_stop(hdev);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_PM
+#ifdef CONFIG_PM
 
-अटल पूर्णांक sony_suspend(काष्ठा hid_device *hdev, pm_message_t message)
-अणु
-#अगर_घोषित CONFIG_SONY_FF
+static int sony_suspend(struct hid_device *hdev, pm_message_t message)
+{
+#ifdef CONFIG_SONY_FF
 
-	/* On suspend stop any running क्रमce-feedback events */
-	अगर (SONY_FF_SUPPORT) अणु
-		काष्ठा sony_sc *sc = hid_get_drvdata(hdev);
+	/* On suspend stop any running force-feedback events */
+	if (SONY_FF_SUPPORT) {
+		struct sony_sc *sc = hid_get_drvdata(hdev);
 
 		sc->left = sc->right = 0;
 		sony_send_output_report(sc);
-	पूर्ण
+	}
 
-#पूर्ण_अगर
-	वापस 0;
-पूर्ण
+#endif
+	return 0;
+}
 
-अटल पूर्णांक sony_resume(काष्ठा hid_device *hdev)
-अणु
-	काष्ठा sony_sc *sc = hid_get_drvdata(hdev);
+static int sony_resume(struct hid_device *hdev)
+{
+	struct sony_sc *sc = hid_get_drvdata(hdev);
 
 	/*
 	 * The Sixaxis and navigation controllers on USB need to be
 	 * reinitialized on resume or they won't behave properly.
 	 */
-	अगर ((sc->quirks & SIXAXIS_CONTROLLER_USB) ||
-		(sc->quirks & NAVIGATION_CONTROLLER_USB)) अणु
+	if ((sc->quirks & SIXAXIS_CONTROLLER_USB) ||
+		(sc->quirks & NAVIGATION_CONTROLLER_USB)) {
 		sixaxis_set_operational_usb(sc->hdev);
 		sc->defer_initialization = 1;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#पूर्ण_अगर
+#endif
 
-अटल स्थिर काष्ठा hid_device_id sony_devices[] = अणु
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_SONY, USB_DEVICE_ID_SONY_PS3_CONTROLLER),
-		.driver_data = SIXAXIS_CONTROLLER_USB पूर्ण,
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_SONY, USB_DEVICE_ID_SONY_NAVIGATION_CONTROLLER),
-		.driver_data = NAVIGATION_CONTROLLER_USB पूर्ण,
-	अणु HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_SONY, USB_DEVICE_ID_SONY_NAVIGATION_CONTROLLER),
-		.driver_data = NAVIGATION_CONTROLLER_BT पूर्ण,
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_SONY, USB_DEVICE_ID_SONY_MOTION_CONTROLLER),
-		.driver_data = MOTION_CONTROLLER_USB पूर्ण,
-	अणु HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_SONY, USB_DEVICE_ID_SONY_MOTION_CONTROLLER),
-		.driver_data = MOTION_CONTROLLER_BT पूर्ण,
-	अणु HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_SONY, USB_DEVICE_ID_SONY_PS3_CONTROLLER),
-		.driver_data = SIXAXIS_CONTROLLER_BT पूर्ण,
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_SONY, USB_DEVICE_ID_SONY_VAIO_VGX_MOUSE),
-		.driver_data = VAIO_RDESC_CONSTANT पूर्ण,
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_SONY, USB_DEVICE_ID_SONY_VAIO_VGP_MOUSE),
-		.driver_data = VAIO_RDESC_CONSTANT पूर्ण,
+static const struct hid_device_id sony_devices[] = {
+	{ HID_USB_DEVICE(USB_VENDOR_ID_SONY, USB_DEVICE_ID_SONY_PS3_CONTROLLER),
+		.driver_data = SIXAXIS_CONTROLLER_USB },
+	{ HID_USB_DEVICE(USB_VENDOR_ID_SONY, USB_DEVICE_ID_SONY_NAVIGATION_CONTROLLER),
+		.driver_data = NAVIGATION_CONTROLLER_USB },
+	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_SONY, USB_DEVICE_ID_SONY_NAVIGATION_CONTROLLER),
+		.driver_data = NAVIGATION_CONTROLLER_BT },
+	{ HID_USB_DEVICE(USB_VENDOR_ID_SONY, USB_DEVICE_ID_SONY_MOTION_CONTROLLER),
+		.driver_data = MOTION_CONTROLLER_USB },
+	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_SONY, USB_DEVICE_ID_SONY_MOTION_CONTROLLER),
+		.driver_data = MOTION_CONTROLLER_BT },
+	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_SONY, USB_DEVICE_ID_SONY_PS3_CONTROLLER),
+		.driver_data = SIXAXIS_CONTROLLER_BT },
+	{ HID_USB_DEVICE(USB_VENDOR_ID_SONY, USB_DEVICE_ID_SONY_VAIO_VGX_MOUSE),
+		.driver_data = VAIO_RDESC_CONSTANT },
+	{ HID_USB_DEVICE(USB_VENDOR_ID_SONY, USB_DEVICE_ID_SONY_VAIO_VGP_MOUSE),
+		.driver_data = VAIO_RDESC_CONSTANT },
 	/*
 	 * Wired Buzz Controller. Reported as Sony Hub from its USB ID and as
 	 * Logitech joystick from the device descriptor.
 	 */
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_SONY, USB_DEVICE_ID_SONY_BUZZ_CONTROLLER),
-		.driver_data = BUZZ_CONTROLLER पूर्ण,
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_SONY, USB_DEVICE_ID_SONY_WIRELESS_BUZZ_CONTROLLER),
-		.driver_data = BUZZ_CONTROLLER पूर्ण,
+	{ HID_USB_DEVICE(USB_VENDOR_ID_SONY, USB_DEVICE_ID_SONY_BUZZ_CONTROLLER),
+		.driver_data = BUZZ_CONTROLLER },
+	{ HID_USB_DEVICE(USB_VENDOR_ID_SONY, USB_DEVICE_ID_SONY_WIRELESS_BUZZ_CONTROLLER),
+		.driver_data = BUZZ_CONTROLLER },
 	/* PS3 BD Remote Control */
-	अणु HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_SONY, USB_DEVICE_ID_SONY_PS3_BDREMOTE),
-		.driver_data = PS3REMOTE पूर्ण,
-	/* Logitech Harmony Adapter क्रम PS3 */
-	अणु HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_LOGITECH, USB_DEVICE_ID_LOGITECH_HARMONY_PS3),
-		.driver_data = PS3REMOTE पूर्ण,
+	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_SONY, USB_DEVICE_ID_SONY_PS3_BDREMOTE),
+		.driver_data = PS3REMOTE },
+	/* Logitech Harmony Adapter for PS3 */
+	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_LOGITECH, USB_DEVICE_ID_LOGITECH_HARMONY_PS3),
+		.driver_data = PS3REMOTE },
 	/* SMK-Link PS3 BD Remote Control */
-	अणु HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_SMK, USB_DEVICE_ID_SMK_PS3_BDREMOTE),
-		.driver_data = PS3REMOTE पूर्ण,
-	/* Sony Dualshock 4 controllers क्रम PS4 */
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_SONY, USB_DEVICE_ID_SONY_PS4_CONTROLLER),
-		.driver_data = DUALSHOCK4_CONTROLLER_USB पूर्ण,
-	अणु HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_SONY, USB_DEVICE_ID_SONY_PS4_CONTROLLER),
-		.driver_data = DUALSHOCK4_CONTROLLER_BT पूर्ण,
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_SONY, USB_DEVICE_ID_SONY_PS4_CONTROLLER_2),
-		.driver_data = DUALSHOCK4_CONTROLLER_USB पूर्ण,
-	अणु HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_SONY, USB_DEVICE_ID_SONY_PS4_CONTROLLER_2),
-		.driver_data = DUALSHOCK4_CONTROLLER_BT पूर्ण,
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_SONY, USB_DEVICE_ID_SONY_PS4_CONTROLLER_DONGLE),
-		.driver_data = DUALSHOCK4_DONGLE पूर्ण,
-	/* Nyko Core Controller क्रम PS3 */
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_SINO_LITE, USB_DEVICE_ID_SINO_LITE_CONTROLLER),
-		.driver_data = SIXAXIS_CONTROLLER_USB | SINO_LITE_CONTROLLER पूर्ण,
+	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_SMK, USB_DEVICE_ID_SMK_PS3_BDREMOTE),
+		.driver_data = PS3REMOTE },
+	/* Sony Dualshock 4 controllers for PS4 */
+	{ HID_USB_DEVICE(USB_VENDOR_ID_SONY, USB_DEVICE_ID_SONY_PS4_CONTROLLER),
+		.driver_data = DUALSHOCK4_CONTROLLER_USB },
+	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_SONY, USB_DEVICE_ID_SONY_PS4_CONTROLLER),
+		.driver_data = DUALSHOCK4_CONTROLLER_BT },
+	{ HID_USB_DEVICE(USB_VENDOR_ID_SONY, USB_DEVICE_ID_SONY_PS4_CONTROLLER_2),
+		.driver_data = DUALSHOCK4_CONTROLLER_USB },
+	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_SONY, USB_DEVICE_ID_SONY_PS4_CONTROLLER_2),
+		.driver_data = DUALSHOCK4_CONTROLLER_BT },
+	{ HID_USB_DEVICE(USB_VENDOR_ID_SONY, USB_DEVICE_ID_SONY_PS4_CONTROLLER_DONGLE),
+		.driver_data = DUALSHOCK4_DONGLE },
+	/* Nyko Core Controller for PS3 */
+	{ HID_USB_DEVICE(USB_VENDOR_ID_SINO_LITE, USB_DEVICE_ID_SINO_LITE_CONTROLLER),
+		.driver_data = SIXAXIS_CONTROLLER_USB | SINO_LITE_CONTROLLER },
 	/* SMK-Link NSG-MR5U Remote Control */
-	अणु HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_SMK, USB_DEVICE_ID_SMK_NSG_MR5U_REMOTE),
-		.driver_data = NSG_MR5U_REMOTE_BT पूर्ण,
+	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_SMK, USB_DEVICE_ID_SMK_NSG_MR5U_REMOTE),
+		.driver_data = NSG_MR5U_REMOTE_BT },
 	/* SMK-Link NSG-MR7U Remote Control */
-	अणु HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_SMK, USB_DEVICE_ID_SMK_NSG_MR7U_REMOTE),
-		.driver_data = NSG_MR7U_REMOTE_BT पूर्ण,
-	/* Guitar Hero Live PS3 and Wii U guitar करोngles */
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_SONY_RHYTHM, USB_DEVICE_ID_SONY_PS3WIIU_GHLIVE_DONGLE),
-		.driver_data = GHL_GUITAR_PS3WIIU | GH_GUITAR_CONTROLLER पूर्ण,
+	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_SMK, USB_DEVICE_ID_SMK_NSG_MR7U_REMOTE),
+		.driver_data = NSG_MR7U_REMOTE_BT },
+	/* Guitar Hero Live PS3 and Wii U guitar dongles */
+	{ HID_USB_DEVICE(USB_VENDOR_ID_SONY_RHYTHM, USB_DEVICE_ID_SONY_PS3WIIU_GHLIVE_DONGLE),
+		.driver_data = GHL_GUITAR_PS3WIIU | GH_GUITAR_CONTROLLER },
 	/* Guitar Hero PC Guitar Dongle */
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_ACTIVISION, USB_DEVICE_ID_ACTIVISION_GUITAR_DONGLE),
-		.driver_data = GH_GUITAR_CONTROLLER पूर्ण,
+	{ HID_USB_DEVICE(USB_VENDOR_ID_ACTIVISION, USB_DEVICE_ID_ACTIVISION_GUITAR_DONGLE),
+		.driver_data = GH_GUITAR_CONTROLLER },
 	/* Guitar Hero PS3 World Tour Guitar Dongle */
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_SONY_RHYTHM, USB_DEVICE_ID_SONY_PS3_GUITAR_DONGLE),
-		.driver_data = GH_GUITAR_CONTROLLER पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+	{ HID_USB_DEVICE(USB_VENDOR_ID_SONY_RHYTHM, USB_DEVICE_ID_SONY_PS3_GUITAR_DONGLE),
+		.driver_data = GH_GUITAR_CONTROLLER },
+	{ }
+};
 MODULE_DEVICE_TABLE(hid, sony_devices);
 
-अटल काष्ठा hid_driver sony_driver = अणु
+static struct hid_driver sony_driver = {
 	.name             = "sony",
 	.id_table         = sony_devices,
 	.input_mapping    = sony_mapping,
 	.input_configured = sony_input_configured,
 	.probe            = sony_probe,
-	.हटाओ           = sony_हटाओ,
+	.remove           = sony_remove,
 	.report_fixup     = sony_report_fixup,
 	.raw_event        = sony_raw_event,
 
-#अगर_घोषित CONFIG_PM
+#ifdef CONFIG_PM
 	.suspend          = sony_suspend,
 	.resume	          = sony_resume,
 	.reset_resume     = sony_resume,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-अटल पूर्णांक __init sony_init(व्योम)
-अणु
+static int __init sony_init(void)
+{
 	dbg_hid("Sony:%s\n", __func__);
 
-	वापस hid_रेजिस्टर_driver(&sony_driver);
-पूर्ण
+	return hid_register_driver(&sony_driver);
+}
 
-अटल व्योम __निकास sony_निकास(व्योम)
-अणु
+static void __exit sony_exit(void)
+{
 	dbg_hid("Sony:%s\n", __func__);
 
-	hid_unरेजिस्टर_driver(&sony_driver);
+	hid_unregister_driver(&sony_driver);
 	ida_destroy(&sony_device_id_allocator);
-पूर्ण
+}
 module_init(sony_init);
-module_निकास(sony_निकास);
+module_exit(sony_exit);
 
 MODULE_LICENSE("GPL");

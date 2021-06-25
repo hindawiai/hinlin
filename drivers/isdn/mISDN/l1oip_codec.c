@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
 
  * l1oip_codec.c  generic codec using lookup table
@@ -19,37 +18,37 @@
   How the codec works:
   --------------------
 
-  The volume is increased to increase the dynamic range of the audio संकेत.
+  The volume is increased to increase the dynamic range of the audio signal.
   Each sample is converted to a-LAW with only 16 steps of level resolution.
   A pair of two samples are stored in one byte.
 
   The first byte is stored in the upper bits, the second byte is stored in the
   lower bits.
 
-  To speed up compression and decompression, two lookup tables are क्रमmed:
+  To speed up compression and decompression, two lookup tables are formed:
 
-  - 16 bits index क्रम two samples (law encoded) with 8 bit compressed result.
-  - 8 bits index क्रम one compressed data with 16 bits decompressed result.
+  - 16 bits index for two samples (law encoded) with 8 bit compressed result.
+  - 8 bits index for one compressed data with 16 bits decompressed result.
 
   NOTE: The bytes are handled as they are law-encoded.
 
 */
 
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/mISDNअगर.h>
-#समावेश <linux/in.h>
-#समावेश "core.h"
-#समावेश "l1oip.h"
+#include <linux/vmalloc.h>
+#include <linux/mISDNif.h>
+#include <linux/in.h>
+#include "core.h"
+#include "l1oip.h"
 
-/* definitions of codec. करोn't use calculations, code may run slower. */
+/* definitions of codec. don't use calculations, code may run slower. */
 
-अटल u8 *table_com;
-अटल u16 *table_dec;
+static u8 *table_com;
+static u16 *table_dec;
 
 
 /* alaw -> ulaw */
-अटल u8 alaw_to_ulaw[256] =
-अणु
+static u8 alaw_to_ulaw[256] =
+{
 	0xab, 0x2b, 0xe3, 0x63, 0x8b, 0x0b, 0xc9, 0x49,
 	0xba, 0x3a, 0xf6, 0x76, 0x9b, 0x1b, 0xd7, 0x57,
 	0xa3, 0x23, 0xdd, 0x5d, 0x83, 0x03, 0xc1, 0x41,
@@ -82,11 +81,11 @@
 	0xbd, 0x3d, 0xfc, 0x7c, 0x9e, 0x1e, 0xda, 0x5a,
 	0xa6, 0x26, 0xdf, 0x5f, 0x86, 0x06, 0xc4, 0x44,
 	0xb5, 0x35, 0xee, 0x6e, 0x96, 0x16, 0xd2, 0x52
-पूर्ण;
+};
 
 /* ulaw -> alaw */
-अटल u8 ulaw_to_alaw[256] =
-अणु
+static u8 ulaw_to_alaw[256] =
+{
 	0xab, 0x55, 0xd5, 0x15, 0x95, 0x75, 0xf5, 0x35,
 	0xb5, 0x45, 0xc5, 0x05, 0x85, 0x65, 0xe5, 0x25,
 	0xa5, 0x5d, 0xdd, 0x1d, 0x9d, 0x7d, 0xfd, 0x3d,
@@ -119,10 +118,10 @@
 	0xa2, 0x5a, 0xda, 0x1a, 0x9a, 0x7a, 0xfa, 0x3a,
 	0xba, 0xba, 0x4a, 0x4a, 0xca, 0xca, 0x0a, 0x0a,
 	0x8a, 0x8a, 0x6a, 0x6a, 0xea, 0xea, 0x2a, 0x2a
-पूर्ण;
+};
 
 /* alaw -> 4bit compression */
-अटल u8 alaw_to_4bit[256] = अणु
+static u8 alaw_to_4bit[256] = {
 	0x0e, 0x01, 0x0a, 0x05, 0x0f, 0x00, 0x0c, 0x03,
 	0x0d, 0x02, 0x08, 0x07, 0x0f, 0x00, 0x0b, 0x04,
 	0x0e, 0x01, 0x0a, 0x05, 0x0f, 0x00, 0x0c, 0x03,
@@ -155,16 +154,16 @@
 	0x0d, 0x02, 0x08, 0x07, 0x0f, 0x00, 0x0b, 0x04,
 	0x0e, 0x01, 0x0a, 0x05, 0x0f, 0x00, 0x0c, 0x03,
 	0x0d, 0x02, 0x09, 0x06, 0x0f, 0x00, 0x0b, 0x04,
-पूर्ण;
+};
 
 /* 4bit -> alaw decompression */
-अटल u8 _4bit_to_alaw[16] = अणु
+static u8 _4bit_to_alaw[16] = {
 	0x5d, 0x51, 0xd9, 0xd7, 0x5f, 0x53, 0xa3, 0x4b,
 	0x2a, 0x3a, 0x22, 0x2e, 0x26, 0x56, 0x20, 0x2c,
-पूर्ण;
+};
 
 /* ulaw -> 4bit compression */
-अटल u8 ulaw_to_4bit[256] = अणु
+static u8 ulaw_to_4bit[256] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -197,13 +196,13 @@
 	0x09, 0x09, 0x09, 0x09, 0x09, 0x09, 0x09, 0x09,
 	0x09, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08,
 	0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08,
-पूर्ण;
+};
 
 /* 4bit -> ulaw decompression */
-अटल u8 _4bit_to_ulaw[16] = अणु
+static u8 _4bit_to_ulaw[16] = {
 	0x11, 0x21, 0x31, 0x40, 0x4e, 0x5c, 0x68, 0x71,
 	0xfe, 0xef, 0xe7, 0xdb, 0xcd, 0xbf, 0xaf, 0x9f,
-पूर्ण;
+};
 
 
 /*
@@ -211,149 +210,149 @@
  * The result size must be at least half of the input buffer.
  * The number of samples also must be even!
  */
-पूर्णांक
-l1oip_law_to_4bit(u8 *data, पूर्णांक len, u8 *result, u32 *state)
-अणु
-	पूर्णांक ii, i = 0, o = 0;
+int
+l1oip_law_to_4bit(u8 *data, int len, u8 *result, u32 *state)
+{
+	int ii, i = 0, o = 0;
 
-	अगर (!len)
-		वापस 0;
+	if (!len)
+		return 0;
 
 	/* send saved byte and first input byte */
-	अगर (*state) अणु
+	if (*state) {
 		*result++ = table_com[(((*state) << 8) & 0xff00) | (*data++)];
 		len--;
 		o++;
-	पूर्ण
+	}
 
 	ii = len >> 1;
 
-	जबतक (i < ii) अणु
+	while (i < ii) {
 		*result++ = table_com[(data[0]<<8) | (data[1])];
 		data += 2;
 		i++;
 		o++;
-	पूर्ण
+	}
 
-	/* अगर len has an odd number, we save byte क्रम next call */
-	अगर (len & 1)
+	/* if len has an odd number, we save byte for next call */
+	if (len & 1)
 		*state = 0x100 + *data;
-	अन्यथा
+	else
 		*state = 0;
 
-	वापस o;
-पूर्ण
+	return o;
+}
 
 /* Decompress data to the result buffer
  * The result size must be the number of sample in packet. (2 * input data)
  * The number of samples in the result are even!
  */
-पूर्णांक
-l1oip_4bit_to_law(u8 *data, पूर्णांक len, u8 *result)
-अणु
-	पूर्णांक i = 0;
+int
+l1oip_4bit_to_law(u8 *data, int len, u8 *result)
+{
+	int i = 0;
 	u16 r;
 
-	जबतक (i < len) अणु
+	while (i < len) {
 		r = table_dec[*data++];
 		*result++ = r >> 8;
 		*result++ = r;
 		i++;
-	पूर्ण
+	}
 
-	वापस len << 1;
-पूर्ण
+	return len << 1;
+}
 
 
 /*
  * law conversion
  */
-पूर्णांक
-l1oip_alaw_to_ulaw(u8 *data, पूर्णांक len, u8 *result)
-अणु
-	पूर्णांक i = 0;
+int
+l1oip_alaw_to_ulaw(u8 *data, int len, u8 *result)
+{
+	int i = 0;
 
-	जबतक (i < len) अणु
+	while (i < len) {
 		*result++ = alaw_to_ulaw[*data++];
 		i++;
-	पूर्ण
+	}
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-पूर्णांक
-l1oip_ulaw_to_alaw(u8 *data, पूर्णांक len, u8 *result)
-अणु
-	पूर्णांक i = 0;
+int
+l1oip_ulaw_to_alaw(u8 *data, int len, u8 *result)
+{
+	int i = 0;
 
-	जबतक (i < len) अणु
+	while (i < len) {
 		*result++ = ulaw_to_alaw[*data++];
 		i++;
-	पूर्ण
+	}
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
 
 /*
- * generate/मुक्त compression and decompression table
+ * generate/free compression and decompression table
  */
-व्योम
-l1oip_4bit_मुक्त(व्योम)
-अणु
-	vमुक्त(table_dec);
-	vमुक्त(table_com);
-	table_com = शून्य;
-	table_dec = शून्य;
-पूर्ण
+void
+l1oip_4bit_free(void)
+{
+	vfree(table_dec);
+	vfree(table_com);
+	table_com = NULL;
+	table_dec = NULL;
+}
 
-पूर्णांक
-l1oip_4bit_alloc(पूर्णांक ulaw)
-अणु
-	पूर्णांक i1, i2, c, sample;
+int
+l1oip_4bit_alloc(int ulaw)
+{
+	int i1, i2, c, sample;
 
-	/* in हाल, it is called again */
-	अगर (table_dec)
-		वापस 0;
+	/* in case, it is called again */
+	if (table_dec)
+		return 0;
 
 	/* alloc conversion tables */
 	table_com = vzalloc(65536);
 	table_dec = vzalloc(512);
-	अगर (!table_com || !table_dec) अणु
-		l1oip_4bit_मुक्त();
-		वापस -ENOMEM;
-	पूर्ण
+	if (!table_com || !table_dec) {
+		l1oip_4bit_free();
+		return -ENOMEM;
+	}
 	/* generate compression table */
 	i1 = 0;
-	जबतक (i1 < 256) अणु
-		अगर (ulaw)
+	while (i1 < 256) {
+		if (ulaw)
 			c = ulaw_to_4bit[i1];
-		अन्यथा
+		else
 			c = alaw_to_4bit[i1];
 		i2 = 0;
-		जबतक (i2 < 256) अणु
+		while (i2 < 256) {
 			table_com[(i1 << 8) | i2] |= (c << 4);
 			table_com[(i2 << 8) | i1] |= c;
 			i2++;
-		पूर्ण
+		}
 		i1++;
-	पूर्ण
+	}
 
 	/* generate decompression table */
 	i1 = 0;
-	जबतक (i1 < 16) अणु
-		अगर (ulaw)
+	while (i1 < 16) {
+		if (ulaw)
 			sample = _4bit_to_ulaw[i1];
-		अन्यथा
+		else
 			sample = _4bit_to_alaw[i1];
 		i2 = 0;
-		जबतक (i2 < 16) अणु
+		while (i2 < 16) {
 			table_dec[(i1 << 4) | i2] |= (sample << 8);
 			table_dec[(i2 << 4) | i1] |= sample;
 			i2++;
-		पूर्ण
+		}
 		i1++;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

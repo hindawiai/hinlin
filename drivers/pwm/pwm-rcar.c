@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * R-Car PWM Timer driver
  *
@@ -9,263 +8,263 @@
  * - The hardware cannot generate a 0% duty cycle.
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/err.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/log2.h>
-#समावेश <linux/math64.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/pwm.h>
-#समावेश <linux/slab.h>
+#include <linux/clk.h>
+#include <linux/err.h>
+#include <linux/io.h>
+#include <linux/log2.h>
+#include <linux/math64.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/pm_runtime.h>
+#include <linux/pwm.h>
+#include <linux/slab.h>
 
-#घोषणा RCAR_PWM_MAX_DIVISION	24
-#घोषणा RCAR_PWM_MAX_CYCLE	1023
+#define RCAR_PWM_MAX_DIVISION	24
+#define RCAR_PWM_MAX_CYCLE	1023
 
-#घोषणा RCAR_PWMCR		0x00
-#घोषणा  RCAR_PWMCR_CC0_MASK	0x000f0000
-#घोषणा  RCAR_PWMCR_CC0_SHIFT	16
-#घोषणा  RCAR_PWMCR_CCMD	BIT(15)
-#घोषणा  RCAR_PWMCR_SYNC	BIT(11)
-#घोषणा  RCAR_PWMCR_SS0		BIT(4)
-#घोषणा  RCAR_PWMCR_EN0		BIT(0)
+#define RCAR_PWMCR		0x00
+#define  RCAR_PWMCR_CC0_MASK	0x000f0000
+#define  RCAR_PWMCR_CC0_SHIFT	16
+#define  RCAR_PWMCR_CCMD	BIT(15)
+#define  RCAR_PWMCR_SYNC	BIT(11)
+#define  RCAR_PWMCR_SS0		BIT(4)
+#define  RCAR_PWMCR_EN0		BIT(0)
 
-#घोषणा RCAR_PWMCNT		0x04
-#घोषणा  RCAR_PWMCNT_CYC0_MASK	0x03ff0000
-#घोषणा  RCAR_PWMCNT_CYC0_SHIFT	16
-#घोषणा  RCAR_PWMCNT_PH0_MASK	0x000003ff
-#घोषणा  RCAR_PWMCNT_PH0_SHIFT	0
+#define RCAR_PWMCNT		0x04
+#define  RCAR_PWMCNT_CYC0_MASK	0x03ff0000
+#define  RCAR_PWMCNT_CYC0_SHIFT	16
+#define  RCAR_PWMCNT_PH0_MASK	0x000003ff
+#define  RCAR_PWMCNT_PH0_SHIFT	0
 
-काष्ठा rcar_pwm_chip अणु
-	काष्ठा pwm_chip chip;
-	व्योम __iomem *base;
-	काष्ठा clk *clk;
-पूर्ण;
+struct rcar_pwm_chip {
+	struct pwm_chip chip;
+	void __iomem *base;
+	struct clk *clk;
+};
 
-अटल अंतरभूत काष्ठा rcar_pwm_chip *to_rcar_pwm_chip(काष्ठा pwm_chip *chip)
-अणु
-	वापस container_of(chip, काष्ठा rcar_pwm_chip, chip);
-पूर्ण
+static inline struct rcar_pwm_chip *to_rcar_pwm_chip(struct pwm_chip *chip)
+{
+	return container_of(chip, struct rcar_pwm_chip, chip);
+}
 
-अटल व्योम rcar_pwm_ग_लिखो(काष्ठा rcar_pwm_chip *rp, u32 data,
-			   अचिन्हित पूर्णांक offset)
-अणु
-	ग_लिखोl(data, rp->base + offset);
-पूर्ण
+static void rcar_pwm_write(struct rcar_pwm_chip *rp, u32 data,
+			   unsigned int offset)
+{
+	writel(data, rp->base + offset);
+}
 
-अटल u32 rcar_pwm_पढ़ो(काष्ठा rcar_pwm_chip *rp, अचिन्हित पूर्णांक offset)
-अणु
-	वापस पढ़ोl(rp->base + offset);
-पूर्ण
+static u32 rcar_pwm_read(struct rcar_pwm_chip *rp, unsigned int offset)
+{
+	return readl(rp->base + offset);
+}
 
-अटल व्योम rcar_pwm_update(काष्ठा rcar_pwm_chip *rp, u32 mask, u32 data,
-			    अचिन्हित पूर्णांक offset)
-अणु
+static void rcar_pwm_update(struct rcar_pwm_chip *rp, u32 mask, u32 data,
+			    unsigned int offset)
+{
 	u32 value;
 
-	value = rcar_pwm_पढ़ो(rp, offset);
+	value = rcar_pwm_read(rp, offset);
 	value &= ~mask;
 	value |= data & mask;
-	rcar_pwm_ग_लिखो(rp, value, offset);
-पूर्ण
+	rcar_pwm_write(rp, value, offset);
+}
 
-अटल पूर्णांक rcar_pwm_get_घड़ी_भागision(काष्ठा rcar_pwm_chip *rp, पूर्णांक period_ns)
-अणु
-	अचिन्हित दीर्घ clk_rate = clk_get_rate(rp->clk);
-	u64 भाग, पंचांगp;
+static int rcar_pwm_get_clock_division(struct rcar_pwm_chip *rp, int period_ns)
+{
+	unsigned long clk_rate = clk_get_rate(rp->clk);
+	u64 div, tmp;
 
-	अगर (clk_rate == 0)
-		वापस -EINVAL;
+	if (clk_rate == 0)
+		return -EINVAL;
 
-	भाग = (u64)NSEC_PER_SEC * RCAR_PWM_MAX_CYCLE;
-	पंचांगp = (u64)period_ns * clk_rate + भाग - 1;
-	पंचांगp = भाग64_u64(पंचांगp, भाग);
-	भाग = ilog2(पंचांगp - 1) + 1;
+	div = (u64)NSEC_PER_SEC * RCAR_PWM_MAX_CYCLE;
+	tmp = (u64)period_ns * clk_rate + div - 1;
+	tmp = div64_u64(tmp, div);
+	div = ilog2(tmp - 1) + 1;
 
-	वापस (भाग <= RCAR_PWM_MAX_DIVISION) ? भाग : -दुस्फल;
-पूर्ण
+	return (div <= RCAR_PWM_MAX_DIVISION) ? div : -ERANGE;
+}
 
-अटल व्योम rcar_pwm_set_घड़ी_control(काष्ठा rcar_pwm_chip *rp,
-				       अचिन्हित पूर्णांक भाग)
-अणु
+static void rcar_pwm_set_clock_control(struct rcar_pwm_chip *rp,
+				       unsigned int div)
+{
 	u32 value;
 
-	value = rcar_pwm_पढ़ो(rp, RCAR_PWMCR);
+	value = rcar_pwm_read(rp, RCAR_PWMCR);
 	value &= ~(RCAR_PWMCR_CCMD | RCAR_PWMCR_CC0_MASK);
 
-	अगर (भाग & 1)
+	if (div & 1)
 		value |= RCAR_PWMCR_CCMD;
 
-	भाग >>= 1;
+	div >>= 1;
 
-	value |= भाग << RCAR_PWMCR_CC0_SHIFT;
-	rcar_pwm_ग_लिखो(rp, value, RCAR_PWMCR);
-पूर्ण
+	value |= div << RCAR_PWMCR_CC0_SHIFT;
+	rcar_pwm_write(rp, value, RCAR_PWMCR);
+}
 
-अटल पूर्णांक rcar_pwm_set_counter(काष्ठा rcar_pwm_chip *rp, पूर्णांक भाग, पूर्णांक duty_ns,
-				पूर्णांक period_ns)
-अणु
-	अचिन्हित दीर्घ दीर्घ one_cycle, पंचांगp;	/* 0.01 nanoseconds */
-	अचिन्हित दीर्घ clk_rate = clk_get_rate(rp->clk);
+static int rcar_pwm_set_counter(struct rcar_pwm_chip *rp, int div, int duty_ns,
+				int period_ns)
+{
+	unsigned long long one_cycle, tmp;	/* 0.01 nanoseconds */
+	unsigned long clk_rate = clk_get_rate(rp->clk);
 	u32 cyc, ph;
 
-	one_cycle = (अचिन्हित दीर्घ दीर्घ)NSEC_PER_SEC * 100ULL * (1 << भाग);
-	करो_भाग(one_cycle, clk_rate);
+	one_cycle = (unsigned long long)NSEC_PER_SEC * 100ULL * (1 << div);
+	do_div(one_cycle, clk_rate);
 
-	पंचांगp = period_ns * 100ULL;
-	करो_भाग(पंचांगp, one_cycle);
-	cyc = (पंचांगp << RCAR_PWMCNT_CYC0_SHIFT) & RCAR_PWMCNT_CYC0_MASK;
+	tmp = period_ns * 100ULL;
+	do_div(tmp, one_cycle);
+	cyc = (tmp << RCAR_PWMCNT_CYC0_SHIFT) & RCAR_PWMCNT_CYC0_MASK;
 
-	पंचांगp = duty_ns * 100ULL;
-	करो_भाग(पंचांगp, one_cycle);
-	ph = पंचांगp & RCAR_PWMCNT_PH0_MASK;
+	tmp = duty_ns * 100ULL;
+	do_div(tmp, one_cycle);
+	ph = tmp & RCAR_PWMCNT_PH0_MASK;
 
-	/* Aव्योम prohibited setting */
-	अगर (cyc == 0 || ph == 0)
-		वापस -EINVAL;
+	/* Avoid prohibited setting */
+	if (cyc == 0 || ph == 0)
+		return -EINVAL;
 
-	rcar_pwm_ग_लिखो(rp, cyc | ph, RCAR_PWMCNT);
+	rcar_pwm_write(rp, cyc | ph, RCAR_PWMCNT);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rcar_pwm_request(काष्ठा pwm_chip *chip, काष्ठा pwm_device *pwm)
-अणु
-	वापस pm_runसमय_get_sync(chip->dev);
-पूर्ण
+static int rcar_pwm_request(struct pwm_chip *chip, struct pwm_device *pwm)
+{
+	return pm_runtime_get_sync(chip->dev);
+}
 
-अटल व्योम rcar_pwm_मुक्त(काष्ठा pwm_chip *chip, काष्ठा pwm_device *pwm)
-अणु
-	pm_runसमय_put(chip->dev);
-पूर्ण
+static void rcar_pwm_free(struct pwm_chip *chip, struct pwm_device *pwm)
+{
+	pm_runtime_put(chip->dev);
+}
 
-अटल पूर्णांक rcar_pwm_enable(काष्ठा rcar_pwm_chip *rp)
-अणु
+static int rcar_pwm_enable(struct rcar_pwm_chip *rp)
+{
 	u32 value;
 
-	/* Don't enable the PWM device अगर CYC0 or PH0 is 0 */
-	value = rcar_pwm_पढ़ो(rp, RCAR_PWMCNT);
-	अगर ((value & RCAR_PWMCNT_CYC0_MASK) == 0 ||
+	/* Don't enable the PWM device if CYC0 or PH0 is 0 */
+	value = rcar_pwm_read(rp, RCAR_PWMCNT);
+	if ((value & RCAR_PWMCNT_CYC0_MASK) == 0 ||
 	    (value & RCAR_PWMCNT_PH0_MASK) == 0)
-		वापस -EINVAL;
+		return -EINVAL;
 
 	rcar_pwm_update(rp, RCAR_PWMCR_EN0, RCAR_PWMCR_EN0, RCAR_PWMCR);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम rcar_pwm_disable(काष्ठा rcar_pwm_chip *rp)
-अणु
+static void rcar_pwm_disable(struct rcar_pwm_chip *rp)
+{
 	rcar_pwm_update(rp, RCAR_PWMCR_EN0, 0, RCAR_PWMCR);
-पूर्ण
+}
 
-अटल पूर्णांक rcar_pwm_apply(काष्ठा pwm_chip *chip, काष्ठा pwm_device *pwm,
-			  स्थिर काष्ठा pwm_state *state)
-अणु
-	काष्ठा rcar_pwm_chip *rp = to_rcar_pwm_chip(chip);
-	पूर्णांक भाग, ret;
+static int rcar_pwm_apply(struct pwm_chip *chip, struct pwm_device *pwm,
+			  const struct pwm_state *state)
+{
+	struct rcar_pwm_chip *rp = to_rcar_pwm_chip(chip);
+	int div, ret;
 
 	/* This HW/driver only supports normal polarity */
-	अगर (state->polarity != PWM_POLARITY_NORMAL)
-		वापस -EINVAL;
+	if (state->polarity != PWM_POLARITY_NORMAL)
+		return -EINVAL;
 
-	अगर (!state->enabled) अणु
+	if (!state->enabled) {
 		rcar_pwm_disable(rp);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	भाग = rcar_pwm_get_घड़ी_भागision(rp, state->period);
-	अगर (भाग < 0)
-		वापस भाग;
+	div = rcar_pwm_get_clock_division(rp, state->period);
+	if (div < 0)
+		return div;
 
 	rcar_pwm_update(rp, RCAR_PWMCR_SYNC, RCAR_PWMCR_SYNC, RCAR_PWMCR);
 
-	ret = rcar_pwm_set_counter(rp, भाग, state->duty_cycle, state->period);
-	अगर (!ret)
-		rcar_pwm_set_घड़ी_control(rp, भाग);
+	ret = rcar_pwm_set_counter(rp, div, state->duty_cycle, state->period);
+	if (!ret)
+		rcar_pwm_set_clock_control(rp, div);
 
-	/* The SYNC should be set to 0 even अगर rcar_pwm_set_counter failed */
+	/* The SYNC should be set to 0 even if rcar_pwm_set_counter failed */
 	rcar_pwm_update(rp, RCAR_PWMCR_SYNC, 0, RCAR_PWMCR);
 
-	अगर (!ret)
+	if (!ret)
 		ret = rcar_pwm_enable(rp);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा pwm_ops rcar_pwm_ops = अणु
+static const struct pwm_ops rcar_pwm_ops = {
 	.request = rcar_pwm_request,
-	.मुक्त = rcar_pwm_मुक्त,
+	.free = rcar_pwm_free,
 	.apply = rcar_pwm_apply,
 	.owner = THIS_MODULE,
-पूर्ण;
+};
 
-अटल पूर्णांक rcar_pwm_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा rcar_pwm_chip *rcar_pwm;
-	पूर्णांक ret;
+static int rcar_pwm_probe(struct platform_device *pdev)
+{
+	struct rcar_pwm_chip *rcar_pwm;
+	int ret;
 
-	rcar_pwm = devm_kzalloc(&pdev->dev, माप(*rcar_pwm), GFP_KERNEL);
-	अगर (rcar_pwm == शून्य)
-		वापस -ENOMEM;
+	rcar_pwm = devm_kzalloc(&pdev->dev, sizeof(*rcar_pwm), GFP_KERNEL);
+	if (rcar_pwm == NULL)
+		return -ENOMEM;
 
-	rcar_pwm->base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(rcar_pwm->base))
-		वापस PTR_ERR(rcar_pwm->base);
+	rcar_pwm->base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(rcar_pwm->base))
+		return PTR_ERR(rcar_pwm->base);
 
-	rcar_pwm->clk = devm_clk_get(&pdev->dev, शून्य);
-	अगर (IS_ERR(rcar_pwm->clk)) अणु
+	rcar_pwm->clk = devm_clk_get(&pdev->dev, NULL);
+	if (IS_ERR(rcar_pwm->clk)) {
 		dev_err(&pdev->dev, "cannot get clock\n");
-		वापस PTR_ERR(rcar_pwm->clk);
-	पूर्ण
+		return PTR_ERR(rcar_pwm->clk);
+	}
 
-	platक्रमm_set_drvdata(pdev, rcar_pwm);
+	platform_set_drvdata(pdev, rcar_pwm);
 
 	rcar_pwm->chip.dev = &pdev->dev;
 	rcar_pwm->chip.ops = &rcar_pwm_ops;
 	rcar_pwm->chip.npwm = 1;
 
-	pm_runसमय_enable(&pdev->dev);
+	pm_runtime_enable(&pdev->dev);
 
 	ret = pwmchip_add(&rcar_pwm->chip);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&pdev->dev, "failed to register PWM chip: %d\n", ret);
-		pm_runसमय_disable(&pdev->dev);
-		वापस ret;
-	पूर्ण
+		pm_runtime_disable(&pdev->dev);
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rcar_pwm_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा rcar_pwm_chip *rcar_pwm = platक्रमm_get_drvdata(pdev);
-	पूर्णांक ret;
+static int rcar_pwm_remove(struct platform_device *pdev)
+{
+	struct rcar_pwm_chip *rcar_pwm = platform_get_drvdata(pdev);
+	int ret;
 
-	ret = pwmchip_हटाओ(&rcar_pwm->chip);
+	ret = pwmchip_remove(&rcar_pwm->chip);
 
-	pm_runसमय_disable(&pdev->dev);
+	pm_runtime_disable(&pdev->dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा of_device_id rcar_pwm_of_table[] = अणु
-	अणु .compatible = "renesas,pwm-rcar", पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct of_device_id rcar_pwm_of_table[] = {
+	{ .compatible = "renesas,pwm-rcar", },
+	{ },
+};
 MODULE_DEVICE_TABLE(of, rcar_pwm_of_table);
 
-अटल काष्ठा platक्रमm_driver rcar_pwm_driver = अणु
+static struct platform_driver rcar_pwm_driver = {
 	.probe = rcar_pwm_probe,
-	.हटाओ = rcar_pwm_हटाओ,
-	.driver = अणु
+	.remove = rcar_pwm_remove,
+	.driver = {
 		.name = "pwm-rcar",
 		.of_match_table = of_match_ptr(rcar_pwm_of_table),
-	पूर्ण
-पूर्ण;
-module_platक्रमm_driver(rcar_pwm_driver);
+	}
+};
+module_platform_driver(rcar_pwm_driver);
 
 MODULE_AUTHOR("Yoshihiro Shimoda <yoshihiro.shimoda.uh@renesas.com>");
 MODULE_DESCRIPTION("Renesas PWM Timer Driver");

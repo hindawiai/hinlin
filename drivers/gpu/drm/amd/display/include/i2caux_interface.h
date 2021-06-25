@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,57 +23,57 @@
  *
  */
 
-#अगर_अघोषित __DAL_I2CAUX_INTERFACE_H__
-#घोषणा __DAL_I2CAUX_INTERFACE_H__
+#ifndef __DAL_I2CAUX_INTERFACE_H__
+#define __DAL_I2CAUX_INTERFACE_H__
 
-#समावेश "dc_types.h"
-#समावेश "gpio_service_interface.h"
+#include "dc_types.h"
+#include "gpio_service_interface.h"
 
 
-#घोषणा DEFAULT_AUX_MAX_DATA_SIZE 16
-#घोषणा AUX_MAX_DEFER_WRITE_RETRY 20
+#define DEFAULT_AUX_MAX_DATA_SIZE 16
+#define AUX_MAX_DEFER_WRITE_RETRY 20
 
-काष्ठा aux_payload अणु
-	/* set following flag to पढ़ो/ग_लिखो I2C data,
-	 * reset it to पढ़ो/ग_लिखो DPCD data */
+struct aux_payload {
+	/* set following flag to read/write I2C data,
+	 * reset it to read/write DPCD data */
 	bool i2c_over_aux;
-	/* set following flag to ग_लिखो data,
-	 * reset it to पढ़ो data */
-	bool ग_लिखो;
+	/* set following flag to write data,
+	 * reset it to read data */
+	bool write;
 	bool mot;
-	uपूर्णांक32_t address;
-	uपूर्णांक32_t length;
-	uपूर्णांक8_t *data;
+	uint32_t address;
+	uint32_t length;
+	uint8_t *data;
 	/*
-	 * used to वापस the reply type of the transaction
-	 * ignored अगर शून्य
+	 * used to return the reply type of the transaction
+	 * ignored if NULL
 	 */
-	uपूर्णांक8_t *reply;
+	uint8_t *reply;
 	/* expressed in milliseconds
 	 * zero means "use default value"
 	 */
-	uपूर्णांक32_t defer_delay;
-पूर्ण;
+	uint32_t defer_delay;
+};
 
-काष्ठा aux_command अणु
-	काष्ठा aux_payload *payloads;
-	uपूर्णांक8_t number_of_payloads;
+struct aux_command {
+	struct aux_payload *payloads;
+	uint8_t number_of_payloads;
 
 	/* expressed in milliseconds
 	 * zero means "use default value" */
-	uपूर्णांक32_t defer_delay;
+	uint32_t defer_delay;
 
 	/* zero means "use default value" */
-	uपूर्णांक32_t max_defer_ग_लिखो_retry;
+	uint32_t max_defer_write_retry;
 
-	क्रमागत i2c_mot_mode mot;
-पूर्ण;
+	enum i2c_mot_mode mot;
+};
 
-जोड़ aux_config अणु
-	काष्ठा अणु
-		uपूर्णांक32_t ALLOW_AUX_WHEN_HPD_LOW:1;
-	पूर्ण bits;
-	uपूर्णांक32_t raw;
-पूर्ण;
+union aux_config {
+	struct {
+		uint32_t ALLOW_AUX_WHEN_HPD_LOW:1;
+	} bits;
+	uint32_t raw;
+};
 
-#पूर्ण_अगर
+#endif

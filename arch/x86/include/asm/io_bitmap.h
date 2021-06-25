@@ -1,53 +1,52 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_X86_IOBITMAP_H
-#घोषणा _ASM_X86_IOBITMAP_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_X86_IOBITMAP_H
+#define _ASM_X86_IOBITMAP_H
 
-#समावेश <linux/refcount.h>
-#समावेश <यंत्र/processor.h>
+#include <linux/refcount.h>
+#include <asm/processor.h>
 
-काष्ठा io_biपंचांगap अणु
+struct io_bitmap {
 	u64		sequence;
 	refcount_t	refcnt;
 	/* The maximum number of bytes to copy so all zero bits are covered */
-	अचिन्हित पूर्णांक	max;
-	अचिन्हित दीर्घ	biपंचांगap[IO_BITMAP_LONGS];
-पूर्ण;
+	unsigned int	max;
+	unsigned long	bitmap[IO_BITMAP_LONGS];
+};
 
-काष्ठा task_काष्ठा;
+struct task_struct;
 
-#अगर_घोषित CONFIG_X86_IOPL_IOPERM
-व्योम io_biपंचांगap_share(काष्ठा task_काष्ठा *tsk);
-व्योम io_biपंचांगap_निकास(काष्ठा task_काष्ठा *tsk);
+#ifdef CONFIG_X86_IOPL_IOPERM
+void io_bitmap_share(struct task_struct *tsk);
+void io_bitmap_exit(struct task_struct *tsk);
 
-अटल अंतरभूत व्योम native_tss_invalidate_io_biपंचांगap(व्योम)
-अणु
+static inline void native_tss_invalidate_io_bitmap(void)
+{
 	/*
-	 * Invalidate the I/O biपंचांगap by moving io_biपंचांगap_base outside the
+	 * Invalidate the I/O bitmap by moving io_bitmap_base outside the
 	 * TSS limit so any subsequent I/O access from user space will
 	 * trigger a #GP.
 	 *
-	 * This is correct even when VMEXIT reग_लिखोs the TSS limit
-	 * to 0x67 as the only requirement is that the base poपूर्णांकs
+	 * This is correct even when VMEXIT rewrites the TSS limit
+	 * to 0x67 as the only requirement is that the base points
 	 * outside the limit.
 	 */
-	this_cpu_ग_लिखो(cpu_tss_rw.x86_tss.io_biपंचांगap_base,
+	this_cpu_write(cpu_tss_rw.x86_tss.io_bitmap_base,
 		       IO_BITMAP_OFFSET_INVALID);
-पूर्ण
+}
 
-व्योम native_tss_update_io_biपंचांगap(व्योम);
+void native_tss_update_io_bitmap(void);
 
-#अगर_घोषित CONFIG_PARAVIRT_XXL
-#समावेश <यंत्र/paravirt.h>
-#अन्यथा
-#घोषणा tss_update_io_biपंचांगap native_tss_update_io_biपंचांगap
-#घोषणा tss_invalidate_io_biपंचांगap native_tss_invalidate_io_biपंचांगap
-#पूर्ण_अगर
+#ifdef CONFIG_PARAVIRT_XXL
+#include <asm/paravirt.h>
+#else
+#define tss_update_io_bitmap native_tss_update_io_bitmap
+#define tss_invalidate_io_bitmap native_tss_invalidate_io_bitmap
+#endif
 
-#अन्यथा
-अटल अंतरभूत व्योम io_biपंचांगap_share(काष्ठा task_काष्ठा *tsk) अणु पूर्ण
-अटल अंतरभूत व्योम io_biपंचांगap_निकास(काष्ठा task_काष्ठा *tsk) अणु पूर्ण
-अटल अंतरभूत व्योम tss_update_io_biपंचांगap(व्योम) अणु पूर्ण
-#पूर्ण_अगर
+#else
+static inline void io_bitmap_share(struct task_struct *tsk) { }
+static inline void io_bitmap_exit(struct task_struct *tsk) { }
+static inline void tss_update_io_bitmap(void) { }
+#endif
 
-#पूर्ण_अगर
+#endif

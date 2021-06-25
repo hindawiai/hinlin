@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
 /*
  * SM4 Cipher Algorithm.
@@ -8,20 +7,20 @@
  * All rights reserved.
  */
 
-#समावेश <crypto/sm4.h>
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/types.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/crypto.h>
-#समावेश <यंत्र/byteorder.h>
-#समावेश <यंत्र/unaligned.h>
+#include <crypto/sm4.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/types.h>
+#include <linux/errno.h>
+#include <linux/crypto.h>
+#include <asm/byteorder.h>
+#include <asm/unaligned.h>
 
-अटल स्थिर u32 fk[4] = अणु
+static const u32 fk[4] = {
 	0xa3b1bac6, 0x56aa3350, 0x677d9197, 0xb27022dc
-पूर्ण;
+};
 
-अटल स्थिर u8 sbox[256] = अणु
+static const u8 sbox[256] = {
 	0xd6, 0x90, 0xe9, 0xfe, 0xcc, 0xe1, 0x3d, 0xb7,
 	0x16, 0xb6, 0x14, 0xc2, 0x28, 0xfb, 0x2c, 0x05,
 	0x2b, 0x67, 0x9a, 0x76, 0x2a, 0xbe, 0x04, 0xc3,
@@ -54,9 +53,9 @@
 	0x65, 0xb9, 0xf1, 0x09, 0xc5, 0x6e, 0xc6, 0x84,
 	0x18, 0xf0, 0x7d, 0xec, 0x3a, 0xdc, 0x4d, 0x20,
 	0x79, 0xee, 0x5f, 0x3e, 0xd7, 0xcb, 0x39, 0x48
-पूर्ण;
+};
 
-अटल स्थिर u32 ck[] = अणु
+static const u32 ck[] = {
 	0x00070e15, 0x1c232a31, 0x383f464d, 0x545b6269,
 	0x70777e85, 0x8c939aa1, 0xa8afb6bd, 0xc4cbd2d9,
 	0xe0e7eef5, 0xfc030a11, 0x181f262d, 0x343b4249,
@@ -65,44 +64,44 @@
 	0x30373e45, 0x4c535a61, 0x686f767d, 0x848b9299,
 	0xa0a7aeb5, 0xbcc3cad1, 0xd8dfe6ed, 0xf4fb0209,
 	0x10171e25, 0x2c333a41, 0x484f565d, 0x646b7279
-पूर्ण;
+};
 
-अटल u32 sm4_t_non_lin_sub(u32 x)
-अणु
-	पूर्णांक i;
+static u32 sm4_t_non_lin_sub(u32 x)
+{
+	int i;
 	u8 *b = (u8 *)&x;
 
-	क्रम (i = 0; i < 4; ++i)
+	for (i = 0; i < 4; ++i)
 		b[i] = sbox[b[i]];
 
-	वापस x;
-पूर्ण
+	return x;
+}
 
-अटल u32 sm4_key_lin_sub(u32 x)
-अणु
-	वापस x ^ rol32(x, 13) ^ rol32(x, 23);
+static u32 sm4_key_lin_sub(u32 x)
+{
+	return x ^ rol32(x, 13) ^ rol32(x, 23);
 
-पूर्ण
+}
 
-अटल u32 sm4_enc_lin_sub(u32 x)
-अणु
-	वापस x ^ rol32(x, 2) ^ rol32(x, 10) ^ rol32(x, 18) ^ rol32(x, 24);
-पूर्ण
+static u32 sm4_enc_lin_sub(u32 x)
+{
+	return x ^ rol32(x, 2) ^ rol32(x, 10) ^ rol32(x, 18) ^ rol32(x, 24);
+}
 
-अटल u32 sm4_key_sub(u32 x)
-अणु
-	वापस sm4_key_lin_sub(sm4_t_non_lin_sub(x));
-पूर्ण
+static u32 sm4_key_sub(u32 x)
+{
+	return sm4_key_lin_sub(sm4_t_non_lin_sub(x));
+}
 
-अटल u32 sm4_enc_sub(u32 x)
-अणु
-	वापस sm4_enc_lin_sub(sm4_t_non_lin_sub(x));
-पूर्ण
+static u32 sm4_enc_sub(u32 x)
+{
+	return sm4_enc_lin_sub(sm4_t_non_lin_sub(x));
+}
 
-अटल u32 sm4_round(स्थिर u32 *x, स्थिर u32 rk)
-अणु
-	वापस x[0] ^ sm4_enc_sub(x[1] ^ x[2] ^ x[3] ^ rk);
-पूर्ण
+static u32 sm4_round(const u32 *x, const u32 rk)
+{
+	return x[0] ^ sm4_enc_sub(x[1] ^ x[2] ^ x[3] ^ rk);
+}
 
 
 /**
@@ -111,36 +110,36 @@
  * @in_key:	The supplied key.
  * @key_len:	The length of the supplied key.
  *
- * Returns 0 on success. The function fails only अगर an invalid key size (or
- * poपूर्णांकer) is supplied.
+ * Returns 0 on success. The function fails only if an invalid key size (or
+ * pointer) is supplied.
  */
-पूर्णांक crypto_sm4_expand_key(काष्ठा crypto_sm4_ctx *ctx, स्थिर u8 *in_key,
-			  अचिन्हित पूर्णांक key_len)
-अणु
+int crypto_sm4_expand_key(struct crypto_sm4_ctx *ctx, const u8 *in_key,
+			  unsigned int key_len)
+{
 	u32 rk[4], t;
-	स्थिर u32 *key = (u32 *)in_key;
-	पूर्णांक i;
+	const u32 *key = (u32 *)in_key;
+	int i;
 
-	अगर (key_len != SM4_KEY_SIZE)
-		वापस -EINVAL;
+	if (key_len != SM4_KEY_SIZE)
+		return -EINVAL;
 
-	क्रम (i = 0; i < 4; ++i)
+	for (i = 0; i < 4; ++i)
 		rk[i] = get_unaligned_be32(&key[i]) ^ fk[i];
 
-	क्रम (i = 0; i < 32; ++i) अणु
+	for (i = 0; i < 32; ++i) {
 		t = rk[0] ^ sm4_key_sub(rk[1] ^ rk[2] ^ rk[3] ^ ck[i]);
 		ctx->rkey_enc[i] = t;
 		rk[0] = rk[1];
 		rk[1] = rk[2];
 		rk[2] = rk[3];
 		rk[3] = t;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < 32; ++i)
+	for (i = 0; i < 32; ++i)
 		ctx->rkey_dec[i] = ctx->rkey_enc[31 - i];
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(crypto_sm4_expand_key);
 
 /**
@@ -150,90 +149,90 @@ EXPORT_SYMBOL_GPL(crypto_sm4_expand_key);
  * @key_len:	The size of the key.
  *
  * This function uses crypto_sm4_expand_key() to expand the key.
- * &crypto_sm4_ctx _must_ be the निजी data embedded in @tfm which is
+ * &crypto_sm4_ctx _must_ be the private data embedded in @tfm which is
  * retrieved with crypto_tfm_ctx().
  *
- * Return: 0 on success; -EINVAL on failure (only happens क्रम bad key lengths)
+ * Return: 0 on success; -EINVAL on failure (only happens for bad key lengths)
  */
-पूर्णांक crypto_sm4_set_key(काष्ठा crypto_tfm *tfm, स्थिर u8 *in_key,
-		       अचिन्हित पूर्णांक key_len)
-अणु
-	काष्ठा crypto_sm4_ctx *ctx = crypto_tfm_ctx(tfm);
+int crypto_sm4_set_key(struct crypto_tfm *tfm, const u8 *in_key,
+		       unsigned int key_len)
+{
+	struct crypto_sm4_ctx *ctx = crypto_tfm_ctx(tfm);
 
-	वापस crypto_sm4_expand_key(ctx, in_key, key_len);
-पूर्ण
+	return crypto_sm4_expand_key(ctx, in_key, key_len);
+}
 EXPORT_SYMBOL_GPL(crypto_sm4_set_key);
 
-अटल व्योम sm4_करो_crypt(स्थिर u32 *rk, u32 *out, स्थिर u32 *in)
-अणु
+static void sm4_do_crypt(const u32 *rk, u32 *out, const u32 *in)
+{
 	u32 x[4], i, t;
 
-	क्रम (i = 0; i < 4; ++i)
+	for (i = 0; i < 4; ++i)
 		x[i] = get_unaligned_be32(&in[i]);
 
-	क्रम (i = 0; i < 32; ++i) अणु
+	for (i = 0; i < 32; ++i) {
 		t = sm4_round(x, rk[i]);
 		x[0] = x[1];
 		x[1] = x[2];
 		x[2] = x[3];
 		x[3] = t;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < 4; ++i)
+	for (i = 0; i < 4; ++i)
 		put_unaligned_be32(x[3 - i], &out[i]);
-पूर्ण
+}
 
 /* encrypt a block of text */
 
-व्योम crypto_sm4_encrypt(काष्ठा crypto_tfm *tfm, u8 *out, स्थिर u8 *in)
-अणु
-	स्थिर काष्ठा crypto_sm4_ctx *ctx = crypto_tfm_ctx(tfm);
+void crypto_sm4_encrypt(struct crypto_tfm *tfm, u8 *out, const u8 *in)
+{
+	const struct crypto_sm4_ctx *ctx = crypto_tfm_ctx(tfm);
 
-	sm4_करो_crypt(ctx->rkey_enc, (u32 *)out, (u32 *)in);
-पूर्ण
+	sm4_do_crypt(ctx->rkey_enc, (u32 *)out, (u32 *)in);
+}
 EXPORT_SYMBOL_GPL(crypto_sm4_encrypt);
 
 /* decrypt a block of text */
 
-व्योम crypto_sm4_decrypt(काष्ठा crypto_tfm *tfm, u8 *out, स्थिर u8 *in)
-अणु
-	स्थिर काष्ठा crypto_sm4_ctx *ctx = crypto_tfm_ctx(tfm);
+void crypto_sm4_decrypt(struct crypto_tfm *tfm, u8 *out, const u8 *in)
+{
+	const struct crypto_sm4_ctx *ctx = crypto_tfm_ctx(tfm);
 
-	sm4_करो_crypt(ctx->rkey_dec, (u32 *)out, (u32 *)in);
-पूर्ण
+	sm4_do_crypt(ctx->rkey_dec, (u32 *)out, (u32 *)in);
+}
 EXPORT_SYMBOL_GPL(crypto_sm4_decrypt);
 
-अटल काष्ठा crypto_alg sm4_alg = अणु
+static struct crypto_alg sm4_alg = {
 	.cra_name		=	"sm4",
 	.cra_driver_name	=	"sm4-generic",
 	.cra_priority		=	100,
 	.cra_flags		=	CRYPTO_ALG_TYPE_CIPHER,
 	.cra_blocksize		=	SM4_BLOCK_SIZE,
-	.cra_ctxsize		=	माप(काष्ठा crypto_sm4_ctx),
+	.cra_ctxsize		=	sizeof(struct crypto_sm4_ctx),
 	.cra_module		=	THIS_MODULE,
-	.cra_u			=	अणु
-		.cipher = अणु
+	.cra_u			=	{
+		.cipher = {
 			.cia_min_keysize	=	SM4_KEY_SIZE,
 			.cia_max_keysize	=	SM4_KEY_SIZE,
 			.cia_setkey		=	crypto_sm4_set_key,
 			.cia_encrypt		=	crypto_sm4_encrypt,
 			.cia_decrypt		=	crypto_sm4_decrypt
-		पूर्ण
-	पूर्ण
-पूर्ण;
+		}
+	}
+};
 
-अटल पूर्णांक __init sm4_init(व्योम)
-अणु
-	वापस crypto_रेजिस्टर_alg(&sm4_alg);
-पूर्ण
+static int __init sm4_init(void)
+{
+	return crypto_register_alg(&sm4_alg);
+}
 
-अटल व्योम __निकास sm4_fini(व्योम)
-अणु
-	crypto_unरेजिस्टर_alg(&sm4_alg);
-पूर्ण
+static void __exit sm4_fini(void)
+{
+	crypto_unregister_alg(&sm4_alg);
+}
 
 subsys_initcall(sm4_init);
-module_निकास(sm4_fini);
+module_exit(sm4_fini);
 
 MODULE_DESCRIPTION("SM4 Cipher Algorithm");
 MODULE_LICENSE("GPL v2");

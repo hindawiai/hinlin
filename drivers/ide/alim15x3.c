@@ -1,11 +1,10 @@
-<शैली गुरु>
 /*
- *  Copyright (C) 1998-2000 Michel Aubry, Maपूर्णांकainer
- *  Copyright (C) 1998-2000 Andrzej Krzysztofowicz, Maपूर्णांकainer
- *  Copyright (C) 1999-2000 CJ, cjtsai@ali.com.tw, Maपूर्णांकainer
+ *  Copyright (C) 1998-2000 Michel Aubry, Maintainer
+ *  Copyright (C) 1998-2000 Andrzej Krzysztofowicz, Maintainer
+ *  Copyright (C) 1999-2000 CJ, cjtsai@ali.com.tw, Maintainer
  *
  *  Copyright (C) 1998-2000 Andre Hedrick (andre@linux-ide.org)
- *  May be copied or modअगरied under the terms of the GNU General Public License
+ *  May be copied or modified under the terms of the GNU General Public License
  *  Copyright (C) 2002 Alan Cox
  *  ALi (now ULi M5228) support by Clear Zhang <Clear.Zhang@ali.com.tw>
  *  Copyright (C) 2007 MontaVista Software, Inc. <source@mvista.com>
@@ -15,7 +14,7 @@
  *
  **********************************************************************
  *  9/7/99 --Parts from the above author are included and need to be
- *  converted पूर्णांकo standard पूर्णांकerface, once I finish the thought.
+ *  converted into standard interface, once I finish the thought.
  *
  *  Recent changes
  *	Don't use LBA48 mode on ALi <= 0xC4
@@ -24,61 +23,61 @@
  *	Allow UDMA6 on revisions > 0xC4
  *
  *  Documentation
- *	Chipset करोcumentation available under NDA only
+ *	Chipset documentation available under NDA only
  *
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/ide.h>
-#समावेश <linux/init.h>
-#समावेश <linux/dmi.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/pci.h>
+#include <linux/ide.h>
+#include <linux/init.h>
+#include <linux/dmi.h>
 
-#समावेश <यंत्र/पन.स>
+#include <asm/io.h>
 
-#घोषणा DRV_NAME "alim15x3"
+#define DRV_NAME "alim15x3"
 
 /*
- *	ALi devices are not plug in. Otherwise these अटल values would
+ *	ALi devices are not plug in. Otherwise these static values would
  *	need to go. They ought to go away anyway
  */
  
-अटल u8 m5229_revision;
-अटल u8 chip_is_1543c_e;
-अटल काष्ठा pci_dev *isa_dev;
+static u8 m5229_revision;
+static u8 chip_is_1543c_e;
+static struct pci_dev *isa_dev;
 
-अटल व्योम ali_fअगरo_control(ide_hwअगर_t *hwअगर, ide_drive_t *drive, पूर्णांक on)
-अणु
-	काष्ठा pci_dev *pdev = to_pci_dev(hwअगर->dev);
-	पूर्णांक pio_fअगरo = 0x54 + hwअगर->channel;
-	u8 fअगरo;
-	पूर्णांक shअगरt = 4 * (drive->dn & 1);
+static void ali_fifo_control(ide_hwif_t *hwif, ide_drive_t *drive, int on)
+{
+	struct pci_dev *pdev = to_pci_dev(hwif->dev);
+	int pio_fifo = 0x54 + hwif->channel;
+	u8 fifo;
+	int shift = 4 * (drive->dn & 1);
 
-	pci_पढ़ो_config_byte(pdev, pio_fअगरo, &fअगरo);
-	fअगरo &= ~(0x0F << shअगरt);
-	fअगरo |= (on << shअगरt);
-	pci_ग_लिखो_config_byte(pdev, pio_fअगरo, fअगरo);
-पूर्ण
+	pci_read_config_byte(pdev, pio_fifo, &fifo);
+	fifo &= ~(0x0F << shift);
+	fifo |= (on << shift);
+	pci_write_config_byte(pdev, pio_fifo, fifo);
+}
 
-अटल व्योम ali_program_timings(ide_hwअगर_t *hwअगर, ide_drive_t *drive,
-				काष्ठा ide_timing *t, u8 ultra)
-अणु
-	काष्ठा pci_dev *dev = to_pci_dev(hwअगर->dev);
-	पूर्णांक port = hwअगर->channel ? 0x5c : 0x58;
-	पूर्णांक udmat = 0x56 + hwअगर->channel;
+static void ali_program_timings(ide_hwif_t *hwif, ide_drive_t *drive,
+				struct ide_timing *t, u8 ultra)
+{
+	struct pci_dev *dev = to_pci_dev(hwif->dev);
+	int port = hwif->channel ? 0x5c : 0x58;
+	int udmat = 0x56 + hwif->channel;
 	u8 unit = drive->dn & 1, udma;
-	पूर्णांक shअगरt = 4 * unit;
+	int shift = 4 * unit;
 
 	/* Set up the UDMA */
-	pci_पढ़ो_config_byte(dev, udmat, &udma);
-	udma &= ~(0x0F << shअगरt);
-	udma |= ultra << shअगरt;
-	pci_ग_लिखो_config_byte(dev, udmat, udma);
+	pci_read_config_byte(dev, udmat, &udma);
+	udma &= ~(0x0F << shift);
+	udma |= ultra << shift;
+	pci_write_config_byte(dev, udmat, udma);
 
-	अगर (t == शून्य)
-		वापस;
+	if (t == NULL)
+		return;
 
 	t->setup = clamp_val(t->setup, 1, 8) & 7;
 	t->act8b = clamp_val(t->act8b, 1, 8) & 7;
@@ -86,48 +85,48 @@
 	t->active = clamp_val(t->active, 1, 8) & 7;
 	t->recover = clamp_val(t->recover, 1, 16) & 15;
 
-	pci_ग_लिखो_config_byte(dev, port, t->setup);
-	pci_ग_लिखो_config_byte(dev, port + 1, (t->act8b << 4) | t->rec8b);
-	pci_ग_लिखो_config_byte(dev, port + unit + 2,
+	pci_write_config_byte(dev, port, t->setup);
+	pci_write_config_byte(dev, port + 1, (t->act8b << 4) | t->rec8b);
+	pci_write_config_byte(dev, port + unit + 2,
 			      (t->active << 4) | t->recover);
-पूर्ण
+}
 
 /**
- *	ali_set_pio_mode	-	set host controller क्रम PIO mode
- *	@hwअगर: port
+ *	ali_set_pio_mode	-	set host controller for PIO mode
+ *	@hwif: port
  *	@drive: drive
  *
- *	Program the controller क्रम the given PIO mode.
+ *	Program the controller for the given PIO mode.
  */
 
-अटल व्योम ali_set_pio_mode(ide_hwअगर_t *hwअगर, ide_drive_t *drive)
-अणु
+static void ali_set_pio_mode(ide_hwif_t *hwif, ide_drive_t *drive)
+{
 	ide_drive_t *pair = ide_get_pair_dev(drive);
-	पूर्णांक bus_speed = ide_pci_clk ? ide_pci_clk : 33;
-	अचिन्हित दीर्घ T =  1000000 / bus_speed; /* PCI घड़ी based */
-	काष्ठा ide_timing t;
+	int bus_speed = ide_pci_clk ? ide_pci_clk : 33;
+	unsigned long T =  1000000 / bus_speed; /* PCI clock based */
+	struct ide_timing t;
 
 	ide_timing_compute(drive, drive->pio_mode, &t, T, 1);
-	अगर (pair) अणु
-		काष्ठा ide_timing p;
+	if (pair) {
+		struct ide_timing p;
 
 		ide_timing_compute(pair, pair->pio_mode, &p, T, 1);
 		ide_timing_merge(&p, &t, &t,
 			IDE_TIMING_SETUP | IDE_TIMING_8BIT);
-		अगर (pair->dma_mode) अणु
+		if (pair->dma_mode) {
 			ide_timing_compute(pair, pair->dma_mode, &p, T, 1);
 			ide_timing_merge(&p, &t, &t,
 				IDE_TIMING_SETUP | IDE_TIMING_8BIT);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* 
 	 * PIO mode => ATA FIFO on, ATAPI FIFO off
 	 */
-	ali_fअगरo_control(hwअगर, drive, (drive->media == ide_disk) ? 0x05 : 0x00);
+	ali_fifo_control(hwif, drive, (drive->media == ide_disk) ? 0x05 : 0x00);
 
-	ali_program_timings(hwअगर, drive, &t, 0);
-पूर्ण
+	ali_program_timings(hwif, drive, &t, 0);
+}
 
 /**
  *	ali_udma_filter		-	compute UDMA mask
@@ -135,87 +134,87 @@
  *
  *	Return available UDMA modes.
  *
- *	The actual rules क्रम the ALi are:
+ *	The actual rules for the ALi are:
  *		No UDMA on revisions <= 0x20
- *		Disk only क्रम revisions < 0xC2
+ *		Disk only for revisions < 0xC2
  *		Not WDC drives on M1543C-E (?)
  */
 
-अटल u8 ali_udma_filter(ide_drive_t *drive)
-अणु
-	अगर (m5229_revision > 0x20 && m5229_revision < 0xC2) अणु
-		अगर (drive->media != ide_disk)
-			वापस 0;
-		अगर (chip_is_1543c_e &&
-		    म_माला((अक्षर *)&drive->id[ATA_ID_PROD], "WDC "))
-			वापस 0;
-	पूर्ण
+static u8 ali_udma_filter(ide_drive_t *drive)
+{
+	if (m5229_revision > 0x20 && m5229_revision < 0xC2) {
+		if (drive->media != ide_disk)
+			return 0;
+		if (chip_is_1543c_e &&
+		    strstr((char *)&drive->id[ATA_ID_PROD], "WDC "))
+			return 0;
+	}
 
-	वापस drive->hwअगर->ultra_mask;
-पूर्ण
+	return drive->hwif->ultra_mask;
+}
 
 /**
- *	ali_set_dma_mode	-	set host controller क्रम DMA mode
- *	@hwअगर: port
+ *	ali_set_dma_mode	-	set host controller for DMA mode
+ *	@hwif: port
  *	@drive: drive
  *
- *	Configure the hardware क्रम the desired IDE transfer mode.
+ *	Configure the hardware for the desired IDE transfer mode.
  */
 
-अटल व्योम ali_set_dma_mode(ide_hwअगर_t *hwअगर, ide_drive_t *drive)
-अणु
-	अटल u8 udma_timing[7] = अणु 0xC, 0xB, 0xA, 0x9, 0x8, 0xF, 0xD पूर्ण;
-	काष्ठा pci_dev *dev	= to_pci_dev(hwअगर->dev);
+static void ali_set_dma_mode(ide_hwif_t *hwif, ide_drive_t *drive)
+{
+	static u8 udma_timing[7] = { 0xC, 0xB, 0xA, 0x9, 0x8, 0xF, 0xD };
+	struct pci_dev *dev	= to_pci_dev(hwif->dev);
 	ide_drive_t *pair	= ide_get_pair_dev(drive);
-	पूर्णांक bus_speed		= ide_pci_clk ? ide_pci_clk : 33;
-	अचिन्हित दीर्घ T		=  1000000 / bus_speed; /* PCI घड़ी based */
-	स्थिर u8 speed		= drive->dma_mode;
-	u8 पंचांगpbyte		= 0x00;
-	काष्ठा ide_timing t;
+	int bus_speed		= ide_pci_clk ? ide_pci_clk : 33;
+	unsigned long T		=  1000000 / bus_speed; /* PCI clock based */
+	const u8 speed		= drive->dma_mode;
+	u8 tmpbyte		= 0x00;
+	struct ide_timing t;
 
-	अगर (speed < XFER_UDMA_0) अणु
+	if (speed < XFER_UDMA_0) {
 		ide_timing_compute(drive, drive->dma_mode, &t, T, 1);
-		अगर (pair) अणु
-			काष्ठा ide_timing p;
+		if (pair) {
+			struct ide_timing p;
 
 			ide_timing_compute(pair, pair->pio_mode, &p, T, 1);
 			ide_timing_merge(&p, &t, &t,
 				IDE_TIMING_SETUP | IDE_TIMING_8BIT);
-			अगर (pair->dma_mode) अणु
+			if (pair->dma_mode) {
 				ide_timing_compute(pair, pair->dma_mode,
 						&p, T, 1);
 				ide_timing_merge(&p, &t, &t,
 					IDE_TIMING_SETUP | IDE_TIMING_8BIT);
-			पूर्ण
-		पूर्ण
-		ali_program_timings(hwअगर, drive, &t, 0);
-	पूर्ण अन्यथा अणु
-		ali_program_timings(hwअगर, drive, शून्य,
+			}
+		}
+		ali_program_timings(hwif, drive, &t, 0);
+	} else {
+		ali_program_timings(hwif, drive, NULL,
 				udma_timing[speed - XFER_UDMA_0]);
-		अगर (speed >= XFER_UDMA_3) अणु
-			pci_पढ़ो_config_byte(dev, 0x4b, &पंचांगpbyte);
-			पंचांगpbyte |= 1;
-			pci_ग_लिखो_config_byte(dev, 0x4b, पंचांगpbyte);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		if (speed >= XFER_UDMA_3) {
+			pci_read_config_byte(dev, 0x4b, &tmpbyte);
+			tmpbyte |= 1;
+			pci_write_config_byte(dev, 0x4b, tmpbyte);
+		}
+	}
+}
 
 /**
  *	ali_dma_check	-	DMA check
  *	@drive:	target device
  *	@cmd: command
  *
- *	Returns 1 अगर the DMA cannot be perक्रमmed, zero on success.
+ *	Returns 1 if the DMA cannot be performed, zero on success.
  */
 
-अटल पूर्णांक ali_dma_check(ide_drive_t *drive, काष्ठा ide_cmd *cmd)
-अणु
-	अगर (m5229_revision < 0xC2 && drive->media != ide_disk) अणु
-		अगर (cmd->tf_flags & IDE_TFLAG_WRITE)
-			वापस 1;	/* try PIO instead of DMA */
-	पूर्ण
-	वापस 0;
-पूर्ण
+static int ali_dma_check(ide_drive_t *drive, struct ide_cmd *cmd)
+{
+	if (m5229_revision < 0xC2 && drive->media != ide_disk) {
+		if (cmd->tf_flags & IDE_TFLAG_WRITE)
+			return 1;	/* try PIO instead of DMA */
+	}
+	return 0;
+}
 
 /**
  *	init_chipset_ali15x3	-	Initialise an ALi IDE controller
@@ -225,282 +224,282 @@
  *	appropriate also sets up the 1533 southbridge.
  */
 
-अटल पूर्णांक init_chipset_ali15x3(काष्ठा pci_dev *dev)
-अणु
-	अचिन्हित दीर्घ flags;
-	u8 पंचांगpbyte;
-	काष्ठा pci_dev *north = pci_get_slot(dev->bus, PCI_DEVFN(0,0));
+static int init_chipset_ali15x3(struct pci_dev *dev)
+{
+	unsigned long flags;
+	u8 tmpbyte;
+	struct pci_dev *north = pci_get_slot(dev->bus, PCI_DEVFN(0,0));
 
 	m5229_revision = dev->revision;
 
-	isa_dev = pci_get_device(PCI_VENDOR_ID_AL, PCI_DEVICE_ID_AL_M1533, शून्य);
+	isa_dev = pci_get_device(PCI_VENDOR_ID_AL, PCI_DEVICE_ID_AL_M1533, NULL);
 
 	local_irq_save(flags);
 
-	अगर (m5229_revision < 0xC2) अणु
+	if (m5229_revision < 0xC2) {
 		/*
 		 * revision 0x20 (1543-E, 1543-F)
 		 * revision 0xC0, 0xC1 (1543C-C, 1543C-D, 1543C-E)
-		 * clear CD-ROM DMA ग_लिखो bit, m5229, 0x4b, bit 7
+		 * clear CD-ROM DMA write bit, m5229, 0x4b, bit 7
 		 */
-		pci_पढ़ो_config_byte(dev, 0x4b, &पंचांगpbyte);
+		pci_read_config_byte(dev, 0x4b, &tmpbyte);
 		/*
 		 * clear bit 7
 		 */
-		pci_ग_लिखो_config_byte(dev, 0x4b, पंचांगpbyte & 0x7F);
+		pci_write_config_byte(dev, 0x4b, tmpbyte & 0x7F);
 		/*
 		 * check m1533, 0x5e, bit 1~4 == 1001 => & 00011110 = 00010010
 		 */
-		अगर (m5229_revision >= 0x20 && isa_dev) अणु
-			pci_पढ़ो_config_byte(isa_dev, 0x5e, &पंचांगpbyte);
-			chip_is_1543c_e = ((पंचांगpbyte & 0x1e) == 0x12) ? 1: 0;
-		पूर्ण
-		जाओ out;
-	पूर्ण
+		if (m5229_revision >= 0x20 && isa_dev) {
+			pci_read_config_byte(isa_dev, 0x5e, &tmpbyte);
+			chip_is_1543c_e = ((tmpbyte & 0x1e) == 0x12) ? 1: 0;
+		}
+		goto out;
+	}
 
 	/*
 	 * 1543C-B?, 1535, 1535D, 1553
 	 * Note 1: not all "motherboard" support this detection
-	 * Note 2: अगर no udma 66 device, the detection may "error".
-	 *         but in this हाल, we will not set the device to
+	 * Note 2: if no udma 66 device, the detection may "error".
+	 *         but in this case, we will not set the device to
 	 *         ultra 66, the detection result is not important
 	 */
 
 	/*
 	 * enable "Cable Detection", m5229, 0x4b, bit3
 	 */
-	pci_पढ़ो_config_byte(dev, 0x4b, &पंचांगpbyte);
-	pci_ग_लिखो_config_byte(dev, 0x4b, पंचांगpbyte | 0x08);
+	pci_read_config_byte(dev, 0x4b, &tmpbyte);
+	pci_write_config_byte(dev, 0x4b, tmpbyte | 0x08);
 
 	/*
-	 * We should only tune the 1533 enable अगर we are using an ALi
+	 * We should only tune the 1533 enable if we are using an ALi
 	 * North bridge. We might have no north found on some zany
 	 * box without a device at 0:0.0. The ALi bridge will be at
-	 * 0:0.0 so अगर we didn't find one we know what is cooking.
+	 * 0:0.0 so if we didn't find one we know what is cooking.
 	 */
-	अगर (north && north->venकरोr != PCI_VENDOR_ID_AL)
-		जाओ out;
+	if (north && north->vendor != PCI_VENDOR_ID_AL)
+		goto out;
 
-	अगर (m5229_revision < 0xC5 && isa_dev)
-	अणु	
+	if (m5229_revision < 0xC5 && isa_dev)
+	{	
 		/*
 		 * set south-bridge's enable bit, m1533, 0x79
 		 */
 
-		pci_पढ़ो_config_byte(isa_dev, 0x79, &पंचांगpbyte);
-		अगर (m5229_revision == 0xC2) अणु
+		pci_read_config_byte(isa_dev, 0x79, &tmpbyte);
+		if (m5229_revision == 0xC2) {
 			/*
 			 * 1543C-B0 (m1533, 0x79, bit 2)
 			 */
-			pci_ग_लिखो_config_byte(isa_dev, 0x79, पंचांगpbyte | 0x04);
-		पूर्ण अन्यथा अगर (m5229_revision >= 0xC3) अणु
+			pci_write_config_byte(isa_dev, 0x79, tmpbyte | 0x04);
+		} else if (m5229_revision >= 0xC3) {
 			/*
 			 * 1553/1535 (m1533, 0x79, bit 1)
 			 */
-			pci_ग_लिखो_config_byte(isa_dev, 0x79, पंचांगpbyte | 0x02);
-		पूर्ण
-	पूर्ण
+			pci_write_config_byte(isa_dev, 0x79, tmpbyte | 0x02);
+		}
+	}
 
 out:
 	/*
 	 * CD_ROM DMA on (m5229, 0x53, bit0)
-	 *      Enable this bit even अगर we want to use PIO.
+	 *      Enable this bit even if we want to use PIO.
 	 * PIO FIFO off (m5229, 0x53, bit1)
 	 *      The hardware will use 0x54h and 0x55h to control PIO FIFO.
 	 *	(Not on later devices it seems)
 	 *
 	 *	0x53 changes meaning on later revs - we must no touch
-	 *	bit 1 on them.  Need to check अगर 0x20 is the right अवरोध.
+	 *	bit 1 on them.  Need to check if 0x20 is the right break.
 	 */
-	अगर (m5229_revision >= 0x20) अणु
-		pci_पढ़ो_config_byte(dev, 0x53, &पंचांगpbyte);
+	if (m5229_revision >= 0x20) {
+		pci_read_config_byte(dev, 0x53, &tmpbyte);
 
-		अगर (m5229_revision <= 0x20)
-			पंचांगpbyte = (पंचांगpbyte & (~0x02)) | 0x01;
-		अन्यथा अगर (m5229_revision == 0xc7 || m5229_revision == 0xc8)
-			पंचांगpbyte |= 0x03;
-		अन्यथा
-			पंचांगpbyte |= 0x01;
+		if (m5229_revision <= 0x20)
+			tmpbyte = (tmpbyte & (~0x02)) | 0x01;
+		else if (m5229_revision == 0xc7 || m5229_revision == 0xc8)
+			tmpbyte |= 0x03;
+		else
+			tmpbyte |= 0x01;
 
-		pci_ग_लिखो_config_byte(dev, 0x53, पंचांगpbyte);
-	पूर्ण
+		pci_write_config_byte(dev, 0x53, tmpbyte);
+	}
 	local_irq_restore(flags);
 	pci_dev_put(north);
 	pci_dev_put(isa_dev);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- *	Cable special हालs
+ *	Cable special cases
  */
 
-अटल स्थिर काष्ठा dmi_प्रणाली_id cable_dmi_table[] = अणु
-	अणु
+static const struct dmi_system_id cable_dmi_table[] = {
+	{
 		.ident = "HP Pavilion N5430",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_VENDOR, "Hewlett-Packard"),
 			DMI_MATCH(DMI_BOARD_VERSION, "OmniBook N32N-736"),
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.ident = "Toshiba Satellite S1800-814",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "TOSHIBA"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "S1800-814"),
-		पूर्ण,
-	पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+		},
+	},
+	{ }
+};
 
-अटल पूर्णांक ali_cable_override(काष्ठा pci_dev *pdev)
-अणु
+static int ali_cable_override(struct pci_dev *pdev)
+{
 	/* Fujitsu P2000 */
-	अगर (pdev->subप्रणाली_venकरोr == 0x10CF &&
-	    pdev->subप्रणाली_device == 0x10AF)
-		वापस 1;
+	if (pdev->subsystem_vendor == 0x10CF &&
+	    pdev->subsystem_device == 0x10AF)
+		return 1;
 
 	/* Mitac 8317 (Winbook-A) and relatives */
-	अगर (pdev->subप्रणाली_venकरोr == 0x1071 &&
-	    pdev->subप्रणाली_device == 0x8317)
-		वापस 1;
+	if (pdev->subsystem_vendor == 0x1071 &&
+	    pdev->subsystem_device == 0x8317)
+		return 1;
 
 	/* Systems by DMI */
-	अगर (dmi_check_प्रणाली(cable_dmi_table))
-		वापस 1;
+	if (dmi_check_system(cable_dmi_table))
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  *	ali_cable_detect	-	cable detection
- *	@hwअगर: IDE पूर्णांकerface
+ *	@hwif: IDE interface
  *
- *	This checks अगर the controller and the cable are capable
- *	of UDMA66 transfers. It करोesn't check the drives.
+ *	This checks if the controller and the cable are capable
+ *	of UDMA66 transfers. It doesn't check the drives.
  */
 
-अटल u8 ali_cable_detect(ide_hwअगर_t *hwअगर)
-अणु
-	काष्ठा pci_dev *dev = to_pci_dev(hwअगर->dev);
-	u8 cbl = ATA_CBL_PATA40, पंचांगpbyte;
+static u8 ali_cable_detect(ide_hwif_t *hwif)
+{
+	struct pci_dev *dev = to_pci_dev(hwif->dev);
+	u8 cbl = ATA_CBL_PATA40, tmpbyte;
 
-	अगर (m5229_revision >= 0xC2) अणु
+	if (m5229_revision >= 0xC2) {
 		/*
 		 * m5229 80-pin cable detection (from Host View)
 		 *
 		 * 0x4a bit0 is 0 => primary channel has 80-pin
 		 * 0x4a bit1 is 0 => secondary channel has 80-pin
 		 *
-		 * Certain laptops use लघु but suitable cables
-		 * and करोn't implement the detect logic.
+		 * Certain laptops use short but suitable cables
+		 * and don't implement the detect logic.
 		 */
-		अगर (ali_cable_override(dev))
+		if (ali_cable_override(dev))
 			cbl = ATA_CBL_PATA40_SHORT;
-		अन्यथा अणु
-			pci_पढ़ो_config_byte(dev, 0x4a, &पंचांगpbyte);
-			अगर ((पंचांगpbyte & (1 << hwअगर->channel)) == 0)
+		else {
+			pci_read_config_byte(dev, 0x4a, &tmpbyte);
+			if ((tmpbyte & (1 << hwif->channel)) == 0)
 				cbl = ATA_CBL_PATA80;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस cbl;
-पूर्ण
+	return cbl;
+}
 
-#अगर_अघोषित CONFIG_SPARC64
+#ifndef CONFIG_SPARC64
 /**
- *	init_hwअगर_ali15x3	-	Initialize the ALI IDE x86 stuff
- *	@hwअगर: पूर्णांकerface to configure
+ *	init_hwif_ali15x3	-	Initialize the ALI IDE x86 stuff
+ *	@hwif: interface to configure
  *
- *	Obtain the IRQ tables क्रम an ALi based IDE solution on the PC
- *	class platक्रमms. This part of the code isn't applicable to the
- *	Sparc प्रणालीs.
+ *	Obtain the IRQ tables for an ALi based IDE solution on the PC
+ *	class platforms. This part of the code isn't applicable to the
+ *	Sparc systems.
  */
 
-अटल व्योम init_hwअगर_ali15x3(ide_hwअगर_t *hwअगर)
-अणु
+static void init_hwif_ali15x3(ide_hwif_t *hwif)
+{
 	u8 ideic, inmir;
-	s8 irq_routing_table[] = अणु -1,  9, 3, 10, 4,  5, 7,  6,
-				      1, 11, 0, 12, 0, 14, 0, 15 पूर्ण;
-	पूर्णांक irq = -1;
+	s8 irq_routing_table[] = { -1,  9, 3, 10, 4,  5, 7,  6,
+				      1, 11, 0, 12, 0, 14, 0, 15 };
+	int irq = -1;
 
-	अगर (isa_dev) अणु
+	if (isa_dev) {
 		/*
-		 * पढ़ो IDE पूर्णांकerface control
+		 * read IDE interface control
 		 */
-		pci_पढ़ो_config_byte(isa_dev, 0x58, &ideic);
+		pci_read_config_byte(isa_dev, 0x58, &ideic);
 
 		/* bit0, bit1 */
 		ideic = ideic & 0x03;
 
-		/* get IRQ क्रम IDE Controller */
-		अगर ((hwअगर->channel && ideic == 0x03) ||
-		    (!hwअगर->channel && !ideic)) अणु
+		/* get IRQ for IDE Controller */
+		if ((hwif->channel && ideic == 0x03) ||
+		    (!hwif->channel && !ideic)) {
 			/*
 			 * get SIRQ1 routing table
 			 */
-			pci_पढ़ो_config_byte(isa_dev, 0x44, &inmir);
+			pci_read_config_byte(isa_dev, 0x44, &inmir);
 			inmir = inmir & 0x0f;
 			irq = irq_routing_table[inmir];
-		पूर्ण अन्यथा अगर (hwअगर->channel && !(ideic & 0x01)) अणु
+		} else if (hwif->channel && !(ideic & 0x01)) {
 			/*
 			 * get SIRQ2 routing table
 			 */
-			pci_पढ़ो_config_byte(isa_dev, 0x75, &inmir);
+			pci_read_config_byte(isa_dev, 0x75, &inmir);
 			inmir = inmir & 0x0f;
 			irq = irq_routing_table[inmir];
-		पूर्ण
-		अगर(irq >= 0)
-			hwअगर->irq = irq;
-	पूर्ण
-पूर्ण
-#अन्यथा
-#घोषणा init_hwअगर_ali15x3 शून्य
-#पूर्ण_अगर /* CONFIG_SPARC64 */
+		}
+		if(irq >= 0)
+			hwif->irq = irq;
+	}
+}
+#else
+#define init_hwif_ali15x3 NULL
+#endif /* CONFIG_SPARC64 */
 
 /**
  *	init_dma_ali15x3	-	set up DMA on ALi15x3
- *	@hwअगर: IDE पूर्णांकerface
+ *	@hwif: IDE interface
  *	@d: IDE port info
  *
  *	Set up the DMA functionality on the ALi 15x3.
  */
 
-अटल पूर्णांक init_dma_ali15x3(ide_hwअगर_t *hwअगर, स्थिर काष्ठा ide_port_info *d)
-अणु
-	काष्ठा pci_dev *dev = to_pci_dev(hwअगर->dev);
-	अचिन्हित दीर्घ base = ide_pci_dma_base(hwअगर, d);
+static int init_dma_ali15x3(ide_hwif_t *hwif, const struct ide_port_info *d)
+{
+	struct pci_dev *dev = to_pci_dev(hwif->dev);
+	unsigned long base = ide_pci_dma_base(hwif, d);
 
-	अगर (base == 0)
-		वापस -1;
+	if (base == 0)
+		return -1;
 
-	hwअगर->dma_base = base;
+	hwif->dma_base = base;
 
-	अगर (ide_pci_check_simplex(hwअगर, d) < 0)
-		वापस -1;
+	if (ide_pci_check_simplex(hwif, d) < 0)
+		return -1;
 
-	अगर (ide_pci_set_master(dev, d->name) < 0)
-		वापस -1;
+	if (ide_pci_set_master(dev, d->name) < 0)
+		return -1;
 
-	अगर (!hwअगर->channel)
+	if (!hwif->channel)
 		outb(inb(base + 2) & 0x60, base + 2);
 
-	prपूर्णांकk(KERN_INFO "    %s: BM-DMA at 0x%04lx-0x%04lx\n",
-			 hwअगर->name, base, base + 7);
+	printk(KERN_INFO "    %s: BM-DMA at 0x%04lx-0x%04lx\n",
+			 hwif->name, base, base + 7);
 
-	अगर (ide_allocate_dma_engine(hwअगर))
-		वापस -1;
+	if (ide_allocate_dma_engine(hwif))
+		return -1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा ide_port_ops ali_port_ops = अणु
+static const struct ide_port_ops ali_port_ops = {
 	.set_pio_mode		= ali_set_pio_mode,
 	.set_dma_mode		= ali_set_dma_mode,
 	.udma_filter		= ali_udma_filter,
 	.cable_detect		= ali_cable_detect,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा ide_dma_ops ali_dma_ops = अणु
+static const struct ide_dma_ops ali_dma_ops = {
 	.dma_host_set		= ide_dma_host_set,
 	.dma_setup		= ide_dma_setup,
 	.dma_start		= ide_dma_start,
@@ -508,95 +507,95 @@ out:
 	.dma_test_irq		= ide_dma_test_irq,
 	.dma_lost_irq		= ide_dma_lost_irq,
 	.dma_check		= ali_dma_check,
-	.dma_समयr_expiry	= ide_dma_sff_समयr_expiry,
-	.dma_sff_पढ़ो_status	= ide_dma_sff_पढ़ो_status,
-पूर्ण;
+	.dma_timer_expiry	= ide_dma_sff_timer_expiry,
+	.dma_sff_read_status	= ide_dma_sff_read_status,
+};
 
-अटल स्थिर काष्ठा ide_port_info ali15x3_chipset = अणु
+static const struct ide_port_info ali15x3_chipset = {
 	.name		= DRV_NAME,
 	.init_chipset	= init_chipset_ali15x3,
-	.init_hwअगर	= init_hwअगर_ali15x3,
+	.init_hwif	= init_hwif_ali15x3,
 	.init_dma	= init_dma_ali15x3,
 	.port_ops	= &ali_port_ops,
 	.dma_ops	= &sff_dma_ops,
 	.pio_mask	= ATA_PIO5,
 	.swdma_mask	= ATA_SWDMA2,
 	.mwdma_mask	= ATA_MWDMA2,
-पूर्ण;
+};
 
 /**
  *	alim15x3_init_one	-	set up an ALi15x3 IDE controller
  *	@dev: PCI device to set up
  *
- *	Perक्रमm the actual set up क्रम an ALi15x3 that has been found by the
+ *	Perform the actual set up for an ALi15x3 that has been found by the
  *	hot plug layer.
  */
  
-अटल पूर्णांक alim15x3_init_one(काष्ठा pci_dev *dev,
-			     स्थिर काष्ठा pci_device_id *id)
-अणु
-	काष्ठा ide_port_info d = ali15x3_chipset;
+static int alim15x3_init_one(struct pci_dev *dev,
+			     const struct pci_device_id *id)
+{
+	struct ide_port_info d = ali15x3_chipset;
 	u8 rev = dev->revision, idx = id->driver_data;
 
-	/* करोn't use LBA48 DMA on ALi devices beक्रमe rev 0xC5 */
-	अगर (rev <= 0xC4)
+	/* don't use LBA48 DMA on ALi devices before rev 0xC5 */
+	if (rev <= 0xC4)
 		d.host_flags |= IDE_HFLAG_NO_LBA48_DMA;
 
-	अगर (rev >= 0x20) अणु
-		अगर (rev == 0x20)
+	if (rev >= 0x20) {
+		if (rev == 0x20)
 			d.host_flags |= IDE_HFLAG_NO_ATAPI_DMA;
 
-		अगर (rev < 0xC2)
+		if (rev < 0xC2)
 			d.udma_mask = ATA_UDMA2;
-		अन्यथा अगर (rev == 0xC2 || rev == 0xC3)
+		else if (rev == 0xC2 || rev == 0xC3)
 			d.udma_mask = ATA_UDMA4;
-		अन्यथा अगर (rev == 0xC4)
+		else if (rev == 0xC4)
 			d.udma_mask = ATA_UDMA5;
-		अन्यथा
+		else
 			d.udma_mask = ATA_UDMA6;
 
 		d.dma_ops = &ali_dma_ops;
-	पूर्ण अन्यथा अणु
+	} else {
 		d.host_flags |= IDE_HFLAG_NO_DMA;
 
 		d.mwdma_mask = d.swdma_mask = 0;
-	पूर्ण
+	}
 
-	अगर (idx == 0)
+	if (idx == 0)
 		d.host_flags |= IDE_HFLAG_CLEAR_SIMPLEX;
 
-	वापस ide_pci_init_one(dev, &d, शून्य);
-पूर्ण
+	return ide_pci_init_one(dev, &d, NULL);
+}
 
 
-अटल स्थिर काष्ठा pci_device_id alim15x3_pci_tbl[] = अणु
-	अणु PCI_VDEVICE(AL, PCI_DEVICE_ID_AL_M5229), 0 पूर्ण,
-	अणु PCI_VDEVICE(AL, PCI_DEVICE_ID_AL_M5228), 1 पूर्ण,
-	अणु 0, पूर्ण,
-पूर्ण;
+static const struct pci_device_id alim15x3_pci_tbl[] = {
+	{ PCI_VDEVICE(AL, PCI_DEVICE_ID_AL_M5229), 0 },
+	{ PCI_VDEVICE(AL, PCI_DEVICE_ID_AL_M5228), 1 },
+	{ 0, },
+};
 MODULE_DEVICE_TABLE(pci, alim15x3_pci_tbl);
 
-अटल काष्ठा pci_driver alim15x3_pci_driver = अणु
+static struct pci_driver alim15x3_pci_driver = {
 	.name		= "ALI15x3_IDE",
 	.id_table	= alim15x3_pci_tbl,
 	.probe		= alim15x3_init_one,
-	.हटाओ		= ide_pci_हटाओ,
+	.remove		= ide_pci_remove,
 	.suspend	= ide_pci_suspend,
 	.resume		= ide_pci_resume,
-पूर्ण;
+};
 
-अटल पूर्णांक __init ali15x3_ide_init(व्योम)
-अणु
-	वापस ide_pci_रेजिस्टर_driver(&alim15x3_pci_driver);
-पूर्ण
+static int __init ali15x3_ide_init(void)
+{
+	return ide_pci_register_driver(&alim15x3_pci_driver);
+}
 
-अटल व्योम __निकास ali15x3_ide_निकास(व्योम)
-अणु
-	pci_unरेजिस्टर_driver(&alim15x3_pci_driver);
-पूर्ण
+static void __exit ali15x3_ide_exit(void)
+{
+	pci_unregister_driver(&alim15x3_pci_driver);
+}
 
 module_init(ali15x3_ide_init);
-module_निकास(ali15x3_ide_निकास);
+module_exit(ali15x3_ide_exit);
 
 MODULE_AUTHOR("Michael Aubry, Andrzej Krzysztofowicz, CJ, Andre Hedrick, Alan Cox, Bartlomiej Zolnierkiewicz");
 MODULE_DESCRIPTION("PCI driver module for ALi 15x3 IDE");

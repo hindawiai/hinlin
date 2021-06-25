@@ -1,387 +1,386 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2015-2019 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
  */
 
-#समावेश "allowedips.h"
-#समावेश "peer.h"
+#include "allowedips.h"
+#include "peer.h"
 
-अटल काष्ठा kmem_cache *node_cache;
+static struct kmem_cache *node_cache;
 
-अटल व्योम swap_endian(u8 *dst, स्थिर u8 *src, u8 bits)
-अणु
-	अगर (bits == 32) अणु
-		*(u32 *)dst = be32_to_cpu(*(स्थिर __be32 *)src);
-	पूर्ण अन्यथा अगर (bits == 128) अणु
-		((u64 *)dst)[0] = be64_to_cpu(((स्थिर __be64 *)src)[0]);
-		((u64 *)dst)[1] = be64_to_cpu(((स्थिर __be64 *)src)[1]);
-	पूर्ण
-पूर्ण
+static void swap_endian(u8 *dst, const u8 *src, u8 bits)
+{
+	if (bits == 32) {
+		*(u32 *)dst = be32_to_cpu(*(const __be32 *)src);
+	} else if (bits == 128) {
+		((u64 *)dst)[0] = be64_to_cpu(((const __be64 *)src)[0]);
+		((u64 *)dst)[1] = be64_to_cpu(((const __be64 *)src)[1]);
+	}
+}
 
-अटल व्योम copy_and_assign_cidr(काष्ठा allowedips_node *node, स्थिर u8 *src,
+static void copy_and_assign_cidr(struct allowedips_node *node, const u8 *src,
 				 u8 cidr, u8 bits)
-अणु
+{
 	node->cidr = cidr;
 	node->bit_at_a = cidr / 8U;
-#अगर_घोषित __LITTLE_ENDIAN
+#ifdef __LITTLE_ENDIAN
 	node->bit_at_a ^= (bits / 8U - 1U) % 8U;
-#पूर्ण_अगर
+#endif
 	node->bit_at_b = 7U - (cidr % 8U);
 	node->bitlen = bits;
-	स_नकल(node->bits, src, bits / 8U);
-पूर्ण
+	memcpy(node->bits, src, bits / 8U);
+}
 
-अटल अंतरभूत u8 choose(काष्ठा allowedips_node *node, स्थिर u8 *key)
-अणु
-	वापस (key[node->bit_at_a] >> node->bit_at_b) & 1;
-पूर्ण
+static inline u8 choose(struct allowedips_node *node, const u8 *key)
+{
+	return (key[node->bit_at_a] >> node->bit_at_b) & 1;
+}
 
-अटल व्योम push_rcu(काष्ठा allowedips_node **stack,
-		     काष्ठा allowedips_node __rcu *p, अचिन्हित पूर्णांक *len)
-अणु
-	अगर (rcu_access_poपूर्णांकer(p)) अणु
+static void push_rcu(struct allowedips_node **stack,
+		     struct allowedips_node __rcu *p, unsigned int *len)
+{
+	if (rcu_access_pointer(p)) {
 		WARN_ON(IS_ENABLED(DEBUG) && *len >= 128);
 		stack[(*len)++] = rcu_dereference_raw(p);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम node_मुक्त_rcu(काष्ठा rcu_head *rcu)
-अणु
-	kmem_cache_मुक्त(node_cache, container_of(rcu, काष्ठा allowedips_node, rcu));
-पूर्ण
+static void node_free_rcu(struct rcu_head *rcu)
+{
+	kmem_cache_free(node_cache, container_of(rcu, struct allowedips_node, rcu));
+}
 
-अटल व्योम root_मुक्त_rcu(काष्ठा rcu_head *rcu)
-अणु
-	काष्ठा allowedips_node *node, *stack[128] = अणु
-		container_of(rcu, काष्ठा allowedips_node, rcu) पूर्ण;
-	अचिन्हित पूर्णांक len = 1;
+static void root_free_rcu(struct rcu_head *rcu)
+{
+	struct allowedips_node *node, *stack[128] = {
+		container_of(rcu, struct allowedips_node, rcu) };
+	unsigned int len = 1;
 
-	जबतक (len > 0 && (node = stack[--len])) अणु
+	while (len > 0 && (node = stack[--len])) {
 		push_rcu(stack, node->bit[0], &len);
 		push_rcu(stack, node->bit[1], &len);
-		kmem_cache_मुक्त(node_cache, node);
-	पूर्ण
-पूर्ण
+		kmem_cache_free(node_cache, node);
+	}
+}
 
-अटल व्योम root_हटाओ_peer_lists(काष्ठा allowedips_node *root)
-अणु
-	काष्ठा allowedips_node *node, *stack[128] = अणु root पूर्ण;
-	अचिन्हित पूर्णांक len = 1;
+static void root_remove_peer_lists(struct allowedips_node *root)
+{
+	struct allowedips_node *node, *stack[128] = { root };
+	unsigned int len = 1;
 
-	जबतक (len > 0 && (node = stack[--len])) अणु
+	while (len > 0 && (node = stack[--len])) {
 		push_rcu(stack, node->bit[0], &len);
 		push_rcu(stack, node->bit[1], &len);
-		अगर (rcu_access_poपूर्णांकer(node->peer))
+		if (rcu_access_pointer(node->peer))
 			list_del(&node->peer_list);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अचिन्हित पूर्णांक fls128(u64 a, u64 b)
-अणु
-	वापस a ? fls64(a) + 64U : fls64(b);
-पूर्ण
+static unsigned int fls128(u64 a, u64 b)
+{
+	return a ? fls64(a) + 64U : fls64(b);
+}
 
-अटल u8 common_bits(स्थिर काष्ठा allowedips_node *node, स्थिर u8 *key,
+static u8 common_bits(const struct allowedips_node *node, const u8 *key,
 		      u8 bits)
-अणु
-	अगर (bits == 32)
-		वापस 32U - fls(*(स्थिर u32 *)node->bits ^ *(स्थिर u32 *)key);
-	अन्यथा अगर (bits == 128)
-		वापस 128U - fls128(
-			*(स्थिर u64 *)&node->bits[0] ^ *(स्थिर u64 *)&key[0],
-			*(स्थिर u64 *)&node->bits[8] ^ *(स्थिर u64 *)&key[8]);
-	वापस 0;
-पूर्ण
+{
+	if (bits == 32)
+		return 32U - fls(*(const u32 *)node->bits ^ *(const u32 *)key);
+	else if (bits == 128)
+		return 128U - fls128(
+			*(const u64 *)&node->bits[0] ^ *(const u64 *)&key[0],
+			*(const u64 *)&node->bits[8] ^ *(const u64 *)&key[8]);
+	return 0;
+}
 
-अटल bool prefix_matches(स्थिर काष्ठा allowedips_node *node, स्थिर u8 *key,
+static bool prefix_matches(const struct allowedips_node *node, const u8 *key,
 			   u8 bits)
-अणु
-	/* This could be much faster अगर it actually just compared the common
+{
+	/* This could be much faster if it actually just compared the common
 	 * bits properly, by precomputing a mask bswap(~0 << (32 - cidr)), and
-	 * the rest, but it turns out that common_bits is alपढ़ोy super fast on
-	 * modern processors, even taking पूर्णांकo account the unक्रमtunate bswap.
-	 * So, we just अंतरभूत it like this instead.
+	 * the rest, but it turns out that common_bits is already super fast on
+	 * modern processors, even taking into account the unfortunate bswap.
+	 * So, we just inline it like this instead.
 	 */
-	वापस common_bits(node, key, bits) >= node->cidr;
-पूर्ण
+	return common_bits(node, key, bits) >= node->cidr;
+}
 
-अटल काष्ठा allowedips_node *find_node(काष्ठा allowedips_node *trie, u8 bits,
-					 स्थिर u8 *key)
-अणु
-	काष्ठा allowedips_node *node = trie, *found = शून्य;
+static struct allowedips_node *find_node(struct allowedips_node *trie, u8 bits,
+					 const u8 *key)
+{
+	struct allowedips_node *node = trie, *found = NULL;
 
-	जबतक (node && prefix_matches(node, key, bits)) अणु
-		अगर (rcu_access_poपूर्णांकer(node->peer))
+	while (node && prefix_matches(node, key, bits)) {
+		if (rcu_access_pointer(node->peer))
 			found = node;
-		अगर (node->cidr == bits)
-			अवरोध;
+		if (node->cidr == bits)
+			break;
 		node = rcu_dereference_bh(node->bit[choose(node, key)]);
-	पूर्ण
-	वापस found;
-पूर्ण
+	}
+	return found;
+}
 
 /* Returns a strong reference to a peer */
-अटल काष्ठा wg_peer *lookup(काष्ठा allowedips_node __rcu *root, u8 bits,
-			      स्थिर व्योम *be_ip)
-अणु
+static struct wg_peer *lookup(struct allowedips_node __rcu *root, u8 bits,
+			      const void *be_ip)
+{
 	/* Aligned so it can be passed to fls/fls64 */
 	u8 ip[16] __aligned(__alignof(u64));
-	काष्ठा allowedips_node *node;
-	काष्ठा wg_peer *peer = शून्य;
+	struct allowedips_node *node;
+	struct wg_peer *peer = NULL;
 
 	swap_endian(ip, be_ip, bits);
 
-	rcu_पढ़ो_lock_bh();
+	rcu_read_lock_bh();
 retry:
 	node = find_node(rcu_dereference_bh(root), bits, ip);
-	अगर (node) अणु
+	if (node) {
 		peer = wg_peer_get_maybe_zero(rcu_dereference_bh(node->peer));
-		अगर (!peer)
-			जाओ retry;
-	पूर्ण
-	rcu_पढ़ो_unlock_bh();
-	वापस peer;
-पूर्ण
+		if (!peer)
+			goto retry;
+	}
+	rcu_read_unlock_bh();
+	return peer;
+}
 
-अटल bool node_placement(काष्ठा allowedips_node __rcu *trie, स्थिर u8 *key,
-			   u8 cidr, u8 bits, काष्ठा allowedips_node **rnode,
-			   काष्ठा mutex *lock)
-अणु
-	काष्ठा allowedips_node *node = rcu_dereference_रक्षित(trie, lockdep_is_held(lock));
-	काष्ठा allowedips_node *parent = शून्य;
+static bool node_placement(struct allowedips_node __rcu *trie, const u8 *key,
+			   u8 cidr, u8 bits, struct allowedips_node **rnode,
+			   struct mutex *lock)
+{
+	struct allowedips_node *node = rcu_dereference_protected(trie, lockdep_is_held(lock));
+	struct allowedips_node *parent = NULL;
 	bool exact = false;
 
-	जबतक (node && node->cidr <= cidr && prefix_matches(node, key, bits)) अणु
+	while (node && node->cidr <= cidr && prefix_matches(node, key, bits)) {
 		parent = node;
-		अगर (parent->cidr == cidr) अणु
+		if (parent->cidr == cidr) {
 			exact = true;
-			अवरोध;
-		पूर्ण
-		node = rcu_dereference_रक्षित(parent->bit[choose(parent, key)], lockdep_is_held(lock));
-	पूर्ण
+			break;
+		}
+		node = rcu_dereference_protected(parent->bit[choose(parent, key)], lockdep_is_held(lock));
+	}
 	*rnode = parent;
-	वापस exact;
-पूर्ण
+	return exact;
+}
 
-अटल अंतरभूत व्योम connect_node(काष्ठा allowedips_node **parent, u8 bit, काष्ठा allowedips_node *node)
-अणु
-	node->parent_bit_packed = (अचिन्हित दीर्घ)parent | bit;
-	rcu_assign_poपूर्णांकer(*parent, node);
-पूर्ण
+static inline void connect_node(struct allowedips_node **parent, u8 bit, struct allowedips_node *node)
+{
+	node->parent_bit_packed = (unsigned long)parent | bit;
+	rcu_assign_pointer(*parent, node);
+}
 
-अटल अंतरभूत व्योम choose_and_connect_node(काष्ठा allowedips_node *parent, काष्ठा allowedips_node *node)
-अणु
+static inline void choose_and_connect_node(struct allowedips_node *parent, struct allowedips_node *node)
+{
 	u8 bit = choose(parent, node->bits);
 	connect_node(&parent->bit[bit], bit, node);
-पूर्ण
+}
 
-अटल पूर्णांक add(काष्ठा allowedips_node __rcu **trie, u8 bits, स्थिर u8 *key,
-	       u8 cidr, काष्ठा wg_peer *peer, काष्ठा mutex *lock)
-अणु
-	काष्ठा allowedips_node *node, *parent, *करोwn, *newnode;
+static int add(struct allowedips_node __rcu **trie, u8 bits, const u8 *key,
+	       u8 cidr, struct wg_peer *peer, struct mutex *lock)
+{
+	struct allowedips_node *node, *parent, *down, *newnode;
 
-	अगर (unlikely(cidr > bits || !peer))
-		वापस -EINVAL;
+	if (unlikely(cidr > bits || !peer))
+		return -EINVAL;
 
-	अगर (!rcu_access_poपूर्णांकer(*trie)) अणु
+	if (!rcu_access_pointer(*trie)) {
 		node = kmem_cache_zalloc(node_cache, GFP_KERNEL);
-		अगर (unlikely(!node))
-			वापस -ENOMEM;
+		if (unlikely(!node))
+			return -ENOMEM;
 		RCU_INIT_POINTER(node->peer, peer);
 		list_add_tail(&node->peer_list, &peer->allowedips_list);
 		copy_and_assign_cidr(node, key, cidr, bits);
 		connect_node(trie, 2, node);
-		वापस 0;
-	पूर्ण
-	अगर (node_placement(*trie, key, cidr, bits, &node, lock)) अणु
-		rcu_assign_poपूर्णांकer(node->peer, peer);
+		return 0;
+	}
+	if (node_placement(*trie, key, cidr, bits, &node, lock)) {
+		rcu_assign_pointer(node->peer, peer);
 		list_move_tail(&node->peer_list, &peer->allowedips_list);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	newnode = kmem_cache_zalloc(node_cache, GFP_KERNEL);
-	अगर (unlikely(!newnode))
-		वापस -ENOMEM;
+	if (unlikely(!newnode))
+		return -ENOMEM;
 	RCU_INIT_POINTER(newnode->peer, peer);
 	list_add_tail(&newnode->peer_list, &peer->allowedips_list);
 	copy_and_assign_cidr(newnode, key, cidr, bits);
 
-	अगर (!node) अणु
-		करोwn = rcu_dereference_रक्षित(*trie, lockdep_is_held(lock));
-	पूर्ण अन्यथा अणु
-		स्थिर u8 bit = choose(node, key);
-		करोwn = rcu_dereference_रक्षित(node->bit[bit], lockdep_is_held(lock));
-		अगर (!करोwn) अणु
+	if (!node) {
+		down = rcu_dereference_protected(*trie, lockdep_is_held(lock));
+	} else {
+		const u8 bit = choose(node, key);
+		down = rcu_dereference_protected(node->bit[bit], lockdep_is_held(lock));
+		if (!down) {
 			connect_node(&node->bit[bit], bit, newnode);
-			वापस 0;
-		पूर्ण
-	पूर्ण
-	cidr = min(cidr, common_bits(करोwn, key, bits));
+			return 0;
+		}
+	}
+	cidr = min(cidr, common_bits(down, key, bits));
 	parent = node;
 
-	अगर (newnode->cidr == cidr) अणु
-		choose_and_connect_node(newnode, करोwn);
-		अगर (!parent)
+	if (newnode->cidr == cidr) {
+		choose_and_connect_node(newnode, down);
+		if (!parent)
 			connect_node(trie, 2, newnode);
-		अन्यथा
+		else
 			choose_and_connect_node(parent, newnode);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	node = kmem_cache_zalloc(node_cache, GFP_KERNEL);
-	अगर (unlikely(!node)) अणु
+	if (unlikely(!node)) {
 		list_del(&newnode->peer_list);
-		kmem_cache_मुक्त(node_cache, newnode);
-		वापस -ENOMEM;
-	पूर्ण
+		kmem_cache_free(node_cache, newnode);
+		return -ENOMEM;
+	}
 	INIT_LIST_HEAD(&node->peer_list);
 	copy_and_assign_cidr(node, newnode->bits, cidr, bits);
 
-	choose_and_connect_node(node, करोwn);
+	choose_and_connect_node(node, down);
 	choose_and_connect_node(node, newnode);
-	अगर (!parent)
+	if (!parent)
 		connect_node(trie, 2, node);
-	अन्यथा
+	else
 		choose_and_connect_node(parent, node);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम wg_allowedips_init(काष्ठा allowedips *table)
-अणु
-	table->root4 = table->root6 = शून्य;
+void wg_allowedips_init(struct allowedips *table)
+{
+	table->root4 = table->root6 = NULL;
 	table->seq = 1;
-पूर्ण
+}
 
-व्योम wg_allowedips_मुक्त(काष्ठा allowedips *table, काष्ठा mutex *lock)
-अणु
-	काष्ठा allowedips_node __rcu *old4 = table->root4, *old6 = table->root6;
+void wg_allowedips_free(struct allowedips *table, struct mutex *lock)
+{
+	struct allowedips_node __rcu *old4 = table->root4, *old6 = table->root6;
 
 	++table->seq;
-	RCU_INIT_POINTER(table->root4, शून्य);
-	RCU_INIT_POINTER(table->root6, शून्य);
-	अगर (rcu_access_poपूर्णांकer(old4)) अणु
-		काष्ठा allowedips_node *node = rcu_dereference_रक्षित(old4,
+	RCU_INIT_POINTER(table->root4, NULL);
+	RCU_INIT_POINTER(table->root6, NULL);
+	if (rcu_access_pointer(old4)) {
+		struct allowedips_node *node = rcu_dereference_protected(old4,
 							lockdep_is_held(lock));
 
-		root_हटाओ_peer_lists(node);
-		call_rcu(&node->rcu, root_मुक्त_rcu);
-	पूर्ण
-	अगर (rcu_access_poपूर्णांकer(old6)) अणु
-		काष्ठा allowedips_node *node = rcu_dereference_रक्षित(old6,
+		root_remove_peer_lists(node);
+		call_rcu(&node->rcu, root_free_rcu);
+	}
+	if (rcu_access_pointer(old6)) {
+		struct allowedips_node *node = rcu_dereference_protected(old6,
 							lockdep_is_held(lock));
 
-		root_हटाओ_peer_lists(node);
-		call_rcu(&node->rcu, root_मुक्त_rcu);
-	पूर्ण
-पूर्ण
+		root_remove_peer_lists(node);
+		call_rcu(&node->rcu, root_free_rcu);
+	}
+}
 
-पूर्णांक wg_allowedips_insert_v4(काष्ठा allowedips *table, स्थिर काष्ठा in_addr *ip,
-			    u8 cidr, काष्ठा wg_peer *peer, काष्ठा mutex *lock)
-अणु
+int wg_allowedips_insert_v4(struct allowedips *table, const struct in_addr *ip,
+			    u8 cidr, struct wg_peer *peer, struct mutex *lock)
+{
 	/* Aligned so it can be passed to fls */
 	u8 key[4] __aligned(__alignof(u32));
 
 	++table->seq;
-	swap_endian(key, (स्थिर u8 *)ip, 32);
-	वापस add(&table->root4, 32, key, cidr, peer, lock);
-पूर्ण
+	swap_endian(key, (const u8 *)ip, 32);
+	return add(&table->root4, 32, key, cidr, peer, lock);
+}
 
-पूर्णांक wg_allowedips_insert_v6(काष्ठा allowedips *table, स्थिर काष्ठा in6_addr *ip,
-			    u8 cidr, काष्ठा wg_peer *peer, काष्ठा mutex *lock)
-अणु
+int wg_allowedips_insert_v6(struct allowedips *table, const struct in6_addr *ip,
+			    u8 cidr, struct wg_peer *peer, struct mutex *lock)
+{
 	/* Aligned so it can be passed to fls64 */
 	u8 key[16] __aligned(__alignof(u64));
 
 	++table->seq;
-	swap_endian(key, (स्थिर u8 *)ip, 128);
-	वापस add(&table->root6, 128, key, cidr, peer, lock);
-पूर्ण
+	swap_endian(key, (const u8 *)ip, 128);
+	return add(&table->root6, 128, key, cidr, peer, lock);
+}
 
-व्योम wg_allowedips_हटाओ_by_peer(काष्ठा allowedips *table,
-				  काष्ठा wg_peer *peer, काष्ठा mutex *lock)
-अणु
-	काष्ठा allowedips_node *node, *child, **parent_bit, *parent, *पंचांगp;
-	bool मुक्त_parent;
+void wg_allowedips_remove_by_peer(struct allowedips *table,
+				  struct wg_peer *peer, struct mutex *lock)
+{
+	struct allowedips_node *node, *child, **parent_bit, *parent, *tmp;
+	bool free_parent;
 
-	अगर (list_empty(&peer->allowedips_list))
-		वापस;
+	if (list_empty(&peer->allowedips_list))
+		return;
 	++table->seq;
-	list_क्रम_each_entry_safe(node, पंचांगp, &peer->allowedips_list, peer_list) अणु
+	list_for_each_entry_safe(node, tmp, &peer->allowedips_list, peer_list) {
 		list_del_init(&node->peer_list);
-		RCU_INIT_POINTER(node->peer, शून्य);
-		अगर (node->bit[0] && node->bit[1])
-			जारी;
-		child = rcu_dereference_रक्षित(node->bit[!rcu_access_poपूर्णांकer(node->bit[0])],
+		RCU_INIT_POINTER(node->peer, NULL);
+		if (node->bit[0] && node->bit[1])
+			continue;
+		child = rcu_dereference_protected(node->bit[!rcu_access_pointer(node->bit[0])],
 						  lockdep_is_held(lock));
-		अगर (child)
+		if (child)
 			child->parent_bit_packed = node->parent_bit_packed;
-		parent_bit = (काष्ठा allowedips_node **)(node->parent_bit_packed & ~3UL);
+		parent_bit = (struct allowedips_node **)(node->parent_bit_packed & ~3UL);
 		*parent_bit = child;
-		parent = (व्योम *)parent_bit -
-			 दुरत्व(काष्ठा allowedips_node, bit[node->parent_bit_packed & 1]);
-		मुक्त_parent = !rcu_access_poपूर्णांकer(node->bit[0]) &&
-			      !rcu_access_poपूर्णांकer(node->bit[1]) &&
+		parent = (void *)parent_bit -
+			 offsetof(struct allowedips_node, bit[node->parent_bit_packed & 1]);
+		free_parent = !rcu_access_pointer(node->bit[0]) &&
+			      !rcu_access_pointer(node->bit[1]) &&
 			      (node->parent_bit_packed & 3) <= 1 &&
-			      !rcu_access_poपूर्णांकer(parent->peer);
-		अगर (मुक्त_parent)
-			child = rcu_dereference_रक्षित(
+			      !rcu_access_pointer(parent->peer);
+		if (free_parent)
+			child = rcu_dereference_protected(
 					parent->bit[!(node->parent_bit_packed & 1)],
 					lockdep_is_held(lock));
-		call_rcu(&node->rcu, node_मुक्त_rcu);
-		अगर (!मुक्त_parent)
-			जारी;
-		अगर (child)
+		call_rcu(&node->rcu, node_free_rcu);
+		if (!free_parent)
+			continue;
+		if (child)
 			child->parent_bit_packed = parent->parent_bit_packed;
-		*(काष्ठा allowedips_node **)(parent->parent_bit_packed & ~3UL) = child;
-		call_rcu(&parent->rcu, node_मुक्त_rcu);
-	पूर्ण
-पूर्ण
+		*(struct allowedips_node **)(parent->parent_bit_packed & ~3UL) = child;
+		call_rcu(&parent->rcu, node_free_rcu);
+	}
+}
 
-पूर्णांक wg_allowedips_पढ़ो_node(काष्ठा allowedips_node *node, u8 ip[16], u8 *cidr)
-अणु
-	स्थिर अचिन्हित पूर्णांक cidr_bytes = DIV_ROUND_UP(node->cidr, 8U);
+int wg_allowedips_read_node(struct allowedips_node *node, u8 ip[16], u8 *cidr)
+{
+	const unsigned int cidr_bytes = DIV_ROUND_UP(node->cidr, 8U);
 	swap_endian(ip, node->bits, node->bitlen);
-	स_रखो(ip + cidr_bytes, 0, node->bitlen / 8U - cidr_bytes);
-	अगर (node->cidr)
+	memset(ip + cidr_bytes, 0, node->bitlen / 8U - cidr_bytes);
+	if (node->cidr)
 		ip[cidr_bytes - 1U] &= ~0U << (-node->cidr % 8U);
 
 	*cidr = node->cidr;
-	वापस node->bitlen == 32 ? AF_INET : AF_INET6;
-पूर्ण
+	return node->bitlen == 32 ? AF_INET : AF_INET6;
+}
 
 /* Returns a strong reference to a peer */
-काष्ठा wg_peer *wg_allowedips_lookup_dst(काष्ठा allowedips *table,
-					 काष्ठा sk_buff *skb)
-अणु
-	अगर (skb->protocol == htons(ETH_P_IP))
-		वापस lookup(table->root4, 32, &ip_hdr(skb)->daddr);
-	अन्यथा अगर (skb->protocol == htons(ETH_P_IPV6))
-		वापस lookup(table->root6, 128, &ipv6_hdr(skb)->daddr);
-	वापस शून्य;
-पूर्ण
+struct wg_peer *wg_allowedips_lookup_dst(struct allowedips *table,
+					 struct sk_buff *skb)
+{
+	if (skb->protocol == htons(ETH_P_IP))
+		return lookup(table->root4, 32, &ip_hdr(skb)->daddr);
+	else if (skb->protocol == htons(ETH_P_IPV6))
+		return lookup(table->root6, 128, &ipv6_hdr(skb)->daddr);
+	return NULL;
+}
 
 /* Returns a strong reference to a peer */
-काष्ठा wg_peer *wg_allowedips_lookup_src(काष्ठा allowedips *table,
-					 काष्ठा sk_buff *skb)
-अणु
-	अगर (skb->protocol == htons(ETH_P_IP))
-		वापस lookup(table->root4, 32, &ip_hdr(skb)->saddr);
-	अन्यथा अगर (skb->protocol == htons(ETH_P_IPV6))
-		वापस lookup(table->root6, 128, &ipv6_hdr(skb)->saddr);
-	वापस शून्य;
-पूर्ण
+struct wg_peer *wg_allowedips_lookup_src(struct allowedips *table,
+					 struct sk_buff *skb)
+{
+	if (skb->protocol == htons(ETH_P_IP))
+		return lookup(table->root4, 32, &ip_hdr(skb)->saddr);
+	else if (skb->protocol == htons(ETH_P_IPV6))
+		return lookup(table->root6, 128, &ipv6_hdr(skb)->saddr);
+	return NULL;
+}
 
-पूर्णांक __init wg_allowedips_slab_init(व्योम)
-अणु
+int __init wg_allowedips_slab_init(void)
+{
 	node_cache = KMEM_CACHE(allowedips_node, 0);
-	वापस node_cache ? 0 : -ENOMEM;
-पूर्ण
+	return node_cache ? 0 : -ENOMEM;
+}
 
-व्योम wg_allowedips_slab_uninit(व्योम)
-अणु
+void wg_allowedips_slab_uninit(void)
+{
 	rcu_barrier();
 	kmem_cache_destroy(node_cache);
-पूर्ण
+}
 
-#समावेश "selftest/allowedips.c"
+#include "selftest/allowedips.c"

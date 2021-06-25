@@ -1,150 +1,149 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _CSS_H
-#घोषणा _CSS_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _CSS_H
+#define _CSS_H
 
-#समावेश <linux/mutex.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/device.h>
-#समावेश <linux/types.h>
+#include <linux/mutex.h>
+#include <linux/wait.h>
+#include <linux/workqueue.h>
+#include <linux/device.h>
+#include <linux/types.h>
 
-#समावेश <यंत्र/cपन.स>
-#समावेश <यंत्र/chpid.h>
-#समावेश <यंत्र/schid.h>
+#include <asm/cio.h>
+#include <asm/chpid.h>
+#include <asm/schid.h>
 
-#समावेश "cio.h"
+#include "cio.h"
 
 /*
  * path grouping stuff
  */
-#घोषणा SPID_FUNC_SINGLE_PATH	   0x00
-#घोषणा SPID_FUNC_MULTI_PATH	   0x80
-#घोषणा SPID_FUNC_ESTABLISH	   0x00
-#घोषणा SPID_FUNC_RESIGN	   0x40
-#घोषणा SPID_FUNC_DISBAND	   0x20
+#define SPID_FUNC_SINGLE_PATH	   0x00
+#define SPID_FUNC_MULTI_PATH	   0x80
+#define SPID_FUNC_ESTABLISH	   0x00
+#define SPID_FUNC_RESIGN	   0x40
+#define SPID_FUNC_DISBAND	   0x20
 
-#घोषणा SNID_STATE1_RESET	   0
-#घोषणा SNID_STATE1_UNGROUPED	   2
-#घोषणा SNID_STATE1_GROUPED	   3
+#define SNID_STATE1_RESET	   0
+#define SNID_STATE1_UNGROUPED	   2
+#define SNID_STATE1_GROUPED	   3
 
-#घोषणा SNID_STATE2_NOT_RESVD	   0
-#घोषणा SNID_STATE2_RESVD_ELSE	   2
-#घोषणा SNID_STATE2_RESVD_SELF	   3
+#define SNID_STATE2_NOT_RESVD	   0
+#define SNID_STATE2_RESVD_ELSE	   2
+#define SNID_STATE2_RESVD_SELF	   3
 
-#घोषणा SNID_STATE3_MULTI_PATH	   1
-#घोषणा SNID_STATE3_SINGLE_PATH	   0
+#define SNID_STATE3_MULTI_PATH	   1
+#define SNID_STATE3_SINGLE_PATH	   0
 
-काष्ठा path_state अणु
+struct path_state {
 	__u8  state1 : 2;	/* path state value 1 */
 	__u8  state2 : 2;	/* path state value 2 */
 	__u8  state3 : 1;	/* path state value 3 */
 	__u8  resvd  : 3;	/* reserved */
-पूर्ण __attribute__ ((packed));
+} __attribute__ ((packed));
 
-काष्ठा extended_cssid अणु
+struct extended_cssid {
 	u8 version;
 	u8 cssid;
-पूर्ण __attribute__ ((packed));
+} __attribute__ ((packed));
 
-काष्ठा pgid अणु
-	जोड़ अणु
+struct pgid {
+	union {
 		__u8 fc;   	/* SPID function code */
-		काष्ठा path_state ps;	/* SNID path state */
-	पूर्ण __attribute__ ((packed)) inf;
-	जोड़ अणु
+		struct path_state ps;	/* SNID path state */
+	} __attribute__ ((packed)) inf;
+	union {
 		__u32 cpu_addr	: 16;	/* CPU address */
-		काष्ठा extended_cssid ext_cssid;
-	पूर्ण __attribute__ ((packed)) pgid_high;
-	__u32 cpu_id	: 24;	/* CPU identअगरication */
+		struct extended_cssid ext_cssid;
+	} __attribute__ ((packed)) pgid_high;
+	__u32 cpu_id	: 24;	/* CPU identification */
 	__u32 cpu_model : 16;	/* CPU model */
-	__u32 tod_high;		/* high word TOD घड़ी */
-पूर्ण __attribute__ ((packed));
+	__u32 tod_high;		/* high word TOD clock */
+} __attribute__ ((packed));
 
-काष्ठा subchannel;
-काष्ठा chp_link;
+struct subchannel;
+struct chp_link;
 /**
- * काष्ठा css_driver - device driver क्रम subchannels
+ * struct css_driver - device driver for subchannels
  * @subchannel_type: subchannel type supported by this driver
- * @drv: embedded device driver काष्ठाure
- * @irq: called on पूर्णांकerrupts
- * @chp_event: called क्रम events affecting a channel path
- * @sch_event: called क्रम events affecting the subchannel
+ * @drv: embedded device driver structure
+ * @irq: called on interrupts
+ * @chp_event: called for events affecting a channel path
+ * @sch_event: called for events affecting the subchannel
  * @probe: function called on probe
- * @हटाओ: function called on हटाओ
- * @shutकरोwn: called at device shutकरोwn
- * @settle: रुको क्रम asynchronous work to finish
+ * @remove: function called on remove
+ * @shutdown: called at device shutdown
+ * @settle: wait for asynchronous work to finish
  */
-काष्ठा css_driver अणु
-	काष्ठा css_device_id *subchannel_type;
-	काष्ठा device_driver drv;
-	व्योम (*irq)(काष्ठा subchannel *);
-	पूर्णांक (*chp_event)(काष्ठा subchannel *, काष्ठा chp_link *, पूर्णांक);
-	पूर्णांक (*sch_event)(काष्ठा subchannel *, पूर्णांक);
-	पूर्णांक (*probe)(काष्ठा subchannel *);
-	पूर्णांक (*हटाओ)(काष्ठा subchannel *);
-	व्योम (*shutकरोwn)(काष्ठा subchannel *);
-	पूर्णांक (*settle)(व्योम);
-पूर्ण;
+struct css_driver {
+	struct css_device_id *subchannel_type;
+	struct device_driver drv;
+	void (*irq)(struct subchannel *);
+	int (*chp_event)(struct subchannel *, struct chp_link *, int);
+	int (*sch_event)(struct subchannel *, int);
+	int (*probe)(struct subchannel *);
+	int (*remove)(struct subchannel *);
+	void (*shutdown)(struct subchannel *);
+	int (*settle)(void);
+};
 
-#घोषणा to_cssdriver(n) container_of(n, काष्ठा css_driver, drv)
+#define to_cssdriver(n) container_of(n, struct css_driver, drv)
 
-बाह्य पूर्णांक css_driver_रेजिस्टर(काष्ठा css_driver *);
-बाह्य व्योम css_driver_unरेजिस्टर(काष्ठा css_driver *);
+extern int css_driver_register(struct css_driver *);
+extern void css_driver_unregister(struct css_driver *);
 
-बाह्य व्योम css_sch_device_unरेजिस्टर(काष्ठा subchannel *);
-बाह्य पूर्णांक css_रेजिस्टर_subchannel(काष्ठा subchannel *);
-बाह्य काष्ठा subchannel *css_alloc_subchannel(काष्ठा subchannel_id,
-					       काष्ठा schib *schib);
-बाह्य काष्ठा subchannel *get_subchannel_by_schid(काष्ठा subchannel_id);
-बाह्य पूर्णांक css_init_करोne;
-बाह्य पूर्णांक max_ssid;
-पूर्णांक क्रम_each_subchannel_staged(पूर्णांक (*fn_known)(काष्ठा subchannel *, व्योम *),
-			       पूर्णांक (*fn_unknown)(काष्ठा subchannel_id,
-			       व्योम *), व्योम *data);
-बाह्य पूर्णांक क्रम_each_subchannel(पूर्णांक(*fn)(काष्ठा subchannel_id, व्योम *), व्योम *);
-व्योम css_update_ssd_info(काष्ठा subchannel *sch);
+extern void css_sch_device_unregister(struct subchannel *);
+extern int css_register_subchannel(struct subchannel *);
+extern struct subchannel *css_alloc_subchannel(struct subchannel_id,
+					       struct schib *schib);
+extern struct subchannel *get_subchannel_by_schid(struct subchannel_id);
+extern int css_init_done;
+extern int max_ssid;
+int for_each_subchannel_staged(int (*fn_known)(struct subchannel *, void *),
+			       int (*fn_unknown)(struct subchannel_id,
+			       void *), void *data);
+extern int for_each_subchannel(int(*fn)(struct subchannel_id, void *), void *);
+void css_update_ssd_info(struct subchannel *sch);
 
-काष्ठा channel_subप्रणाली अणु
+struct channel_subsystem {
 	u8 cssid;
 	u8 iid;
 	bool id_valid; /* cssid,iid */
-	काष्ठा channel_path *chps[__MAX_CHPID + 1];
-	काष्ठा device device;
-	काष्ठा pgid global_pgid;
-	काष्ठा mutex mutex;
+	struct channel_path *chps[__MAX_CHPID + 1];
+	struct device device;
+	struct pgid global_pgid;
+	struct mutex mutex;
 	/* channel measurement related */
-	पूर्णांक cm_enabled;
-	व्योम *cub_addr1;
-	व्योम *cub_addr2;
-	/* क्रम orphaned ccw devices */
-	काष्ठा subchannel *pseuकरो_subchannel;
-पूर्ण;
-#घोषणा to_css(dev) container_of(dev, काष्ठा channel_subप्रणाली, device)
+	int cm_enabled;
+	void *cub_addr1;
+	void *cub_addr2;
+	/* for orphaned ccw devices */
+	struct subchannel *pseudo_subchannel;
+};
+#define to_css(dev) container_of(dev, struct channel_subsystem, device)
 
-बाह्य काष्ठा channel_subप्रणाली *channel_subप्रणालीs[];
+extern struct channel_subsystem *channel_subsystems[];
 
 /* Dummy helper which needs to change once we support more than one css. */
-अटल अंतरभूत काष्ठा channel_subप्रणाली *css_by_id(u8 cssid)
-अणु
-	वापस channel_subप्रणालीs[0];
-पूर्ण
+static inline struct channel_subsystem *css_by_id(u8 cssid)
+{
+	return channel_subsystems[0];
+}
 
 /* Dummy iterator which needs to change once we support more than one css. */
-#घोषणा क्रम_each_css(css)						\
-	क्रम ((css) = channel_subप्रणालीs[0]; (css); (css) = शून्य)
+#define for_each_css(css)						\
+	for ((css) = channel_subsystems[0]; (css); (css) = NULL)
 
-/* Helper functions to build lists क्रम the slow path. */
-व्योम css_schedule_eval(काष्ठा subchannel_id schid);
-व्योम css_schedule_eval_all(व्योम);
-व्योम css_schedule_eval_all_unreg(अचिन्हित दीर्घ delay);
-पूर्णांक css_complete_work(व्योम);
+/* Helper functions to build lists for the slow path. */
+void css_schedule_eval(struct subchannel_id schid);
+void css_schedule_eval_all(void);
+void css_schedule_eval_all_unreg(unsigned long delay);
+int css_complete_work(void);
 
-पूर्णांक sch_is_pseuकरो_sch(काष्ठा subchannel *);
-काष्ठा schib;
-पूर्णांक css_sch_is_valid(काष्ठा schib *);
+int sch_is_pseudo_sch(struct subchannel *);
+struct schib;
+int css_sch_is_valid(struct schib *);
 
-बाह्य काष्ठा workqueue_काष्ठा *cio_work_q;
-व्योम css_रुको_क्रम_slow_path(व्योम);
-व्योम css_sched_sch_toकरो(काष्ठा subchannel *sch, क्रमागत sch_toकरो toकरो);
-#पूर्ण_अगर
+extern struct workqueue_struct *cio_work_q;
+void css_wait_for_slow_path(void);
+void css_sched_sch_todo(struct subchannel *sch, enum sch_todo todo);
+#endif

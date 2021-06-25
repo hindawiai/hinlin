@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _BCACHE_EXTENTS_H
-#घोषणा _BCACHE_EXTENTS_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _BCACHE_EXTENTS_H
+#define _BCACHE_EXTENTS_H
 
-बाह्य स्थिर काष्ठा btree_keys_ops bch_btree_keys_ops;
-बाह्य स्थिर काष्ठा btree_keys_ops bch_extent_keys_ops;
+extern const struct btree_keys_ops bch_btree_keys_ops;
+extern const struct btree_keys_ops bch_extent_keys_ops;
 
-काष्ठा bkey;
-काष्ठा cache_set;
+struct bkey;
+struct cache_set;
 
-व्योम bch_extent_to_text(अक्षर *buf, माप_प्रकार size, स्थिर काष्ठा bkey *k);
-bool __bch_btree_ptr_invalid(काष्ठा cache_set *c, स्थिर काष्ठा bkey *k);
-bool __bch_extent_invalid(काष्ठा cache_set *c, स्थिर काष्ठा bkey *k);
+void bch_extent_to_text(char *buf, size_t size, const struct bkey *k);
+bool __bch_btree_ptr_invalid(struct cache_set *c, const struct bkey *k);
+bool __bch_extent_invalid(struct cache_set *c, const struct bkey *k);
 
-#पूर्ण_अगर /* _BCACHE_EXTENTS_H */
+#endif /* _BCACHE_EXTENTS_H */

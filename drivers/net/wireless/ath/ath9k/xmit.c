@@ -1,528 +1,527 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2008-2011 Atheros Communications Inc.
  *
- * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#समावेश <linux/dma-mapping.h>
-#समावेश "ath9k.h"
-#समावेश "ar9003_mac.h"
+#include <linux/dma-mapping.h>
+#include "ath9k.h"
+#include "ar9003_mac.h"
 
-#घोषणा BITS_PER_BYTE           8
-#घोषणा OFDM_PLCP_BITS          22
-#घोषणा HT_RC_2_STREAMS(_rc)    ((((_rc) & 0x78) >> 3) + 1)
-#घोषणा L_STF                   8
-#घोषणा L_LTF                   8
-#घोषणा L_SIG                   4
-#घोषणा HT_SIG                  8
-#घोषणा HT_STF                  4
-#घोषणा HT_LTF(_ns)             (4 * (_ns))
-#घोषणा SYMBOL_TIME(_ns)        ((_ns) << 2) /* ns * 4 us */
-#घोषणा SYMBOL_TIME_HALFGI(_ns) (((_ns) * 18 + 4) / 5)  /* ns * 3.6 us */
-#घोषणा TIME_SYMBOLS(t)         ((t) >> 2)
-#घोषणा TIME_SYMBOLS_HALFGI(t)  (((t) * 5 - 4) / 18)
-#घोषणा NUM_SYMBOLS_PER_USEC(_usec) (_usec >> 2)
-#घोषणा NUM_SYMBOLS_PER_USEC_HALFGI(_usec) (((_usec*5)-4)/18)
+#define BITS_PER_BYTE           8
+#define OFDM_PLCP_BITS          22
+#define HT_RC_2_STREAMS(_rc)    ((((_rc) & 0x78) >> 3) + 1)
+#define L_STF                   8
+#define L_LTF                   8
+#define L_SIG                   4
+#define HT_SIG                  8
+#define HT_STF                  4
+#define HT_LTF(_ns)             (4 * (_ns))
+#define SYMBOL_TIME(_ns)        ((_ns) << 2) /* ns * 4 us */
+#define SYMBOL_TIME_HALFGI(_ns) (((_ns) * 18 + 4) / 5)  /* ns * 3.6 us */
+#define TIME_SYMBOLS(t)         ((t) >> 2)
+#define TIME_SYMBOLS_HALFGI(t)  (((t) * 5 - 4) / 18)
+#define NUM_SYMBOLS_PER_USEC(_usec) (_usec >> 2)
+#define NUM_SYMBOLS_PER_USEC_HALFGI(_usec) (((_usec*5)-4)/18)
 
 
-अटल u16 bits_per_symbol[][2] = अणु
+static u16 bits_per_symbol[][2] = {
 	/* 20MHz 40MHz */
-	अणु    26,   54 पूर्ण,     /*  0: BPSK */
-	अणु    52,  108 पूर्ण,     /*  1: QPSK 1/2 */
-	अणु    78,  162 पूर्ण,     /*  2: QPSK 3/4 */
-	अणु   104,  216 पूर्ण,     /*  3: 16-QAM 1/2 */
-	अणु   156,  324 पूर्ण,     /*  4: 16-QAM 3/4 */
-	अणु   208,  432 पूर्ण,     /*  5: 64-QAM 2/3 */
-	अणु   234,  486 पूर्ण,     /*  6: 64-QAM 3/4 */
-	अणु   260,  540 पूर्ण,     /*  7: 64-QAM 5/6 */
-पूर्ण;
+	{    26,   54 },     /*  0: BPSK */
+	{    52,  108 },     /*  1: QPSK 1/2 */
+	{    78,  162 },     /*  2: QPSK 3/4 */
+	{   104,  216 },     /*  3: 16-QAM 1/2 */
+	{   156,  324 },     /*  4: 16-QAM 3/4 */
+	{   208,  432 },     /*  5: 64-QAM 2/3 */
+	{   234,  486 },     /*  6: 64-QAM 3/4 */
+	{   260,  540 },     /*  7: 64-QAM 5/6 */
+};
 
-अटल व्योम ath_tx_send_normal(काष्ठा ath_softc *sc, काष्ठा ath_txq *txq,
-			       काष्ठा ath_atx_tid *tid, काष्ठा sk_buff *skb);
-अटल व्योम ath_tx_complete(काष्ठा ath_softc *sc, काष्ठा sk_buff *skb,
-			    पूर्णांक tx_flags, काष्ठा ath_txq *txq,
-			    काष्ठा ieee80211_sta *sta);
-अटल व्योम ath_tx_complete_buf(काष्ठा ath_softc *sc, काष्ठा ath_buf *bf,
-				काष्ठा ath_txq *txq, काष्ठा list_head *bf_q,
-				काष्ठा ieee80211_sta *sta,
-				काष्ठा ath_tx_status *ts, पूर्णांक txok);
-अटल व्योम ath_tx_txqaddbuf(काष्ठा ath_softc *sc, काष्ठा ath_txq *txq,
-			     काष्ठा list_head *head, bool पूर्णांकernal);
-अटल व्योम ath_tx_rc_status(काष्ठा ath_softc *sc, काष्ठा ath_buf *bf,
-			     काष्ठा ath_tx_status *ts, पूर्णांक nframes, पूर्णांक nbad,
-			     पूर्णांक txok);
-अटल व्योम ath_tx_update_baw(काष्ठा ath_softc *sc, काष्ठा ath_atx_tid *tid,
-			      काष्ठा ath_buf *bf);
-अटल काष्ठा ath_buf *ath_tx_setup_buffer(काष्ठा ath_softc *sc,
-					   काष्ठा ath_txq *txq,
-					   काष्ठा ath_atx_tid *tid,
-					   काष्ठा sk_buff *skb);
-अटल पूर्णांक ath_tx_prepare(काष्ठा ieee80211_hw *hw, काष्ठा sk_buff *skb,
-			  काष्ठा ath_tx_control *txctl);
+static void ath_tx_send_normal(struct ath_softc *sc, struct ath_txq *txq,
+			       struct ath_atx_tid *tid, struct sk_buff *skb);
+static void ath_tx_complete(struct ath_softc *sc, struct sk_buff *skb,
+			    int tx_flags, struct ath_txq *txq,
+			    struct ieee80211_sta *sta);
+static void ath_tx_complete_buf(struct ath_softc *sc, struct ath_buf *bf,
+				struct ath_txq *txq, struct list_head *bf_q,
+				struct ieee80211_sta *sta,
+				struct ath_tx_status *ts, int txok);
+static void ath_tx_txqaddbuf(struct ath_softc *sc, struct ath_txq *txq,
+			     struct list_head *head, bool internal);
+static void ath_tx_rc_status(struct ath_softc *sc, struct ath_buf *bf,
+			     struct ath_tx_status *ts, int nframes, int nbad,
+			     int txok);
+static void ath_tx_update_baw(struct ath_softc *sc, struct ath_atx_tid *tid,
+			      struct ath_buf *bf);
+static struct ath_buf *ath_tx_setup_buffer(struct ath_softc *sc,
+					   struct ath_txq *txq,
+					   struct ath_atx_tid *tid,
+					   struct sk_buff *skb);
+static int ath_tx_prepare(struct ieee80211_hw *hw, struct sk_buff *skb,
+			  struct ath_tx_control *txctl);
 
-क्रमागत अणु
+enum {
 	MCS_HT20,
 	MCS_HT20_SGI,
 	MCS_HT40,
 	MCS_HT40_SGI,
-पूर्ण;
+};
 
 /*********************/
 /* Aggregation logic */
 /*********************/
 
-अटल व्योम ath_tx_status(काष्ठा ieee80211_hw *hw, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
-	काष्ठा ieee80211_sta *sta = info->status.status_driver_data[0];
+static void ath_tx_status(struct ieee80211_hw *hw, struct sk_buff *skb)
+{
+	struct ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
+	struct ieee80211_sta *sta = info->status.status_driver_data[0];
 
-	अगर (info->flags & (IEEE80211_TX_CTL_REQ_TX_STATUS |
-			   IEEE80211_TX_STATUS_EOSP)) अणु
+	if (info->flags & (IEEE80211_TX_CTL_REQ_TX_STATUS |
+			   IEEE80211_TX_STATUS_EOSP)) {
 		ieee80211_tx_status(hw, skb);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (sta)
+	if (sta)
 		ieee80211_tx_status_noskb(hw, sta, info);
 
-	dev_kमुक्त_skb(skb);
-पूर्ण
+	dev_kfree_skb(skb);
+}
 
-व्योम ath_txq_unlock_complete(काष्ठा ath_softc *sc, काष्ठा ath_txq *txq)
+void ath_txq_unlock_complete(struct ath_softc *sc, struct ath_txq *txq)
 	__releases(&txq->axq_lock)
-अणु
-	काष्ठा ieee80211_hw *hw = sc->hw;
-	काष्ठा sk_buff_head q;
-	काष्ठा sk_buff *skb;
+{
+	struct ieee80211_hw *hw = sc->hw;
+	struct sk_buff_head q;
+	struct sk_buff *skb;
 
 	__skb_queue_head_init(&q);
 	skb_queue_splice_init(&txq->complete_q, &q);
 	spin_unlock_bh(&txq->axq_lock);
 
-	जबतक ((skb = __skb_dequeue(&q)))
+	while ((skb = __skb_dequeue(&q)))
 		ath_tx_status(hw, skb);
-पूर्ण
+}
 
-व्योम ath_tx_queue_tid(काष्ठा ath_softc *sc, काष्ठा ath_atx_tid *tid)
-अणु
-	काष्ठा ieee80211_txq *queue =
-		container_of((व्योम *)tid, काष्ठा ieee80211_txq, drv_priv);
+void ath_tx_queue_tid(struct ath_softc *sc, struct ath_atx_tid *tid)
+{
+	struct ieee80211_txq *queue =
+		container_of((void *)tid, struct ieee80211_txq, drv_priv);
 
 	ieee80211_schedule_txq(sc->hw, queue);
-पूर्ण
+}
 
-व्योम ath9k_wake_tx_queue(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_txq *queue)
-अणु
-	काष्ठा ath_softc *sc = hw->priv;
-	काष्ठा ath_common *common = ath9k_hw_common(sc->sc_ah);
-	काष्ठा ath_atx_tid *tid = (काष्ठा ath_atx_tid *) queue->drv_priv;
-	काष्ठा ath_txq *txq = tid->txq;
+void ath9k_wake_tx_queue(struct ieee80211_hw *hw, struct ieee80211_txq *queue)
+{
+	struct ath_softc *sc = hw->priv;
+	struct ath_common *common = ath9k_hw_common(sc->sc_ah);
+	struct ath_atx_tid *tid = (struct ath_atx_tid *) queue->drv_priv;
+	struct ath_txq *txq = tid->txq;
 
 	ath_dbg(common, QUEUE, "Waking TX queue: %pM (%d)\n",
-		queue->sta ? queue->sta->addr : queue->vअगर->addr,
+		queue->sta ? queue->sta->addr : queue->vif->addr,
 		tid->tidno);
 
 	ath_txq_lock(sc, txq);
 	ath_txq_schedule(sc, txq);
 	ath_txq_unlock(sc, txq);
-पूर्ण
+}
 
-अटल काष्ठा ath_frame_info *get_frame_info(काष्ठा sk_buff *skb)
-अणु
-	काष्ठा ieee80211_tx_info *tx_info = IEEE80211_SKB_CB(skb);
-	BUILD_BUG_ON(माप(काष्ठा ath_frame_info) >
-		     माप(tx_info->rate_driver_data));
-	वापस (काष्ठा ath_frame_info *) &tx_info->rate_driver_data[0];
-पूर्ण
+static struct ath_frame_info *get_frame_info(struct sk_buff *skb)
+{
+	struct ieee80211_tx_info *tx_info = IEEE80211_SKB_CB(skb);
+	BUILD_BUG_ON(sizeof(struct ath_frame_info) >
+		     sizeof(tx_info->rate_driver_data));
+	return (struct ath_frame_info *) &tx_info->rate_driver_data[0];
+}
 
-अटल व्योम ath_send_bar(काष्ठा ath_atx_tid *tid, u16 seqno)
-अणु
-	अगर (!tid->an->sta)
-		वापस;
+static void ath_send_bar(struct ath_atx_tid *tid, u16 seqno)
+{
+	if (!tid->an->sta)
+		return;
 
-	ieee80211_send_bar(tid->an->vअगर, tid->an->sta->addr, tid->tidno,
+	ieee80211_send_bar(tid->an->vif, tid->an->sta->addr, tid->tidno,
 			   seqno << IEEE80211_SEQ_SEQ_SHIFT);
-पूर्ण
+}
 
-अटल व्योम ath_set_rates(काष्ठा ieee80211_vअगर *vअगर, काष्ठा ieee80211_sta *sta,
-			  काष्ठा ath_buf *bf)
-अणु
-	ieee80211_get_tx_rates(vअगर, sta, bf->bf_mpdu, bf->rates,
+static void ath_set_rates(struct ieee80211_vif *vif, struct ieee80211_sta *sta,
+			  struct ath_buf *bf)
+{
+	ieee80211_get_tx_rates(vif, sta, bf->bf_mpdu, bf->rates,
 			       ARRAY_SIZE(bf->rates));
-पूर्ण
+}
 
-अटल व्योम ath_txq_skb_करोne(काष्ठा ath_softc *sc, काष्ठा ath_txq *txq,
-			     काष्ठा sk_buff *skb)
-अणु
-	काष्ठा ath_frame_info *fi = get_frame_info(skb);
-	पूर्णांक q = fi->txq;
+static void ath_txq_skb_done(struct ath_softc *sc, struct ath_txq *txq,
+			     struct sk_buff *skb)
+{
+	struct ath_frame_info *fi = get_frame_info(skb);
+	int q = fi->txq;
 
-	अगर (q < 0)
-		वापस;
+	if (q < 0)
+		return;
 
 	txq = sc->tx.txq_map[q];
-	अगर (WARN_ON(--txq->pending_frames < 0))
+	if (WARN_ON(--txq->pending_frames < 0))
 		txq->pending_frames = 0;
 
-पूर्ण
+}
 
-अटल काष्ठा ath_atx_tid *
-ath_get_skb_tid(काष्ठा ath_softc *sc, काष्ठा ath_node *an, काष्ठा sk_buff *skb)
-अणु
+static struct ath_atx_tid *
+ath_get_skb_tid(struct ath_softc *sc, struct ath_node *an, struct sk_buff *skb)
+{
 	u8 tidno = skb->priority & IEEE80211_QOS_CTL_TID_MASK;
-	वापस ATH_AN_2_TID(an, tidno);
-पूर्ण
+	return ATH_AN_2_TID(an, tidno);
+}
 
-अटल पूर्णांक
-ath_tid_pull(काष्ठा ath_atx_tid *tid, काष्ठा sk_buff **skbuf)
-अणु
-	काष्ठा ieee80211_txq *txq = container_of((व्योम*)tid, काष्ठा ieee80211_txq, drv_priv);
-	काष्ठा ath_softc *sc = tid->an->sc;
-	काष्ठा ieee80211_hw *hw = sc->hw;
-	काष्ठा ath_tx_control txctl = अणु
+static int
+ath_tid_pull(struct ath_atx_tid *tid, struct sk_buff **skbuf)
+{
+	struct ieee80211_txq *txq = container_of((void*)tid, struct ieee80211_txq, drv_priv);
+	struct ath_softc *sc = tid->an->sc;
+	struct ieee80211_hw *hw = sc->hw;
+	struct ath_tx_control txctl = {
 		.txq = tid->txq,
 		.sta = tid->an->sta,
-	पूर्ण;
-	काष्ठा sk_buff *skb;
-	काष्ठा ath_frame_info *fi;
-	पूर्णांक q, ret;
+	};
+	struct sk_buff *skb;
+	struct ath_frame_info *fi;
+	int q, ret;
 
 	skb = ieee80211_tx_dequeue(hw, txq);
-	अगर (!skb)
-		वापस -ENOENT;
+	if (!skb)
+		return -ENOENT;
 
 	ret = ath_tx_prepare(hw, skb, &txctl);
-	अगर (ret) अणु
-		ieee80211_मुक्त_txskb(hw, skb);
-		वापस ret;
-	पूर्ण
+	if (ret) {
+		ieee80211_free_txskb(hw, skb);
+		return ret;
+	}
 
 	q = skb_get_queue_mapping(skb);
-	अगर (tid->txq == sc->tx.txq_map[q]) अणु
+	if (tid->txq == sc->tx.txq_map[q]) {
 		fi = get_frame_info(skb);
 		fi->txq = q;
 		++tid->txq->pending_frames;
-	पूर्ण
+	}
 
 	*skbuf = skb;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ath_tid_dequeue(काष्ठा ath_atx_tid *tid,
-			   काष्ठा sk_buff **skb)
-अणु
-	पूर्णांक ret = 0;
+static int ath_tid_dequeue(struct ath_atx_tid *tid,
+			   struct sk_buff **skb)
+{
+	int ret = 0;
 	*skb = __skb_dequeue(&tid->retry_q);
-	अगर (!*skb)
+	if (!*skb)
 		ret = ath_tid_pull(tid, skb);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम ath_tx_flush_tid(काष्ठा ath_softc *sc, काष्ठा ath_atx_tid *tid)
-अणु
-	काष्ठा ath_txq *txq = tid->txq;
-	काष्ठा sk_buff *skb;
-	काष्ठा ath_buf *bf;
-	काष्ठा list_head bf_head;
-	काष्ठा ath_tx_status ts;
-	काष्ठा ath_frame_info *fi;
+static void ath_tx_flush_tid(struct ath_softc *sc, struct ath_atx_tid *tid)
+{
+	struct ath_txq *txq = tid->txq;
+	struct sk_buff *skb;
+	struct ath_buf *bf;
+	struct list_head bf_head;
+	struct ath_tx_status ts;
+	struct ath_frame_info *fi;
 	bool sendbar = false;
 
 	INIT_LIST_HEAD(&bf_head);
 
-	स_रखो(&ts, 0, माप(ts));
+	memset(&ts, 0, sizeof(ts));
 
-	जबतक ((skb = __skb_dequeue(&tid->retry_q))) अणु
+	while ((skb = __skb_dequeue(&tid->retry_q))) {
 		fi = get_frame_info(skb);
 		bf = fi->bf;
-		अगर (!bf) अणु
-			ath_txq_skb_करोne(sc, txq, skb);
-			ieee80211_मुक्त_txskb(sc->hw, skb);
-			जारी;
-		पूर्ण
+		if (!bf) {
+			ath_txq_skb_done(sc, txq, skb);
+			ieee80211_free_txskb(sc->hw, skb);
+			continue;
+		}
 
-		अगर (fi->baw_tracked) अणु
+		if (fi->baw_tracked) {
 			ath_tx_update_baw(sc, tid, bf);
 			sendbar = true;
-		पूर्ण
+		}
 
 		list_add_tail(&bf->list, &bf_head);
-		ath_tx_complete_buf(sc, bf, txq, &bf_head, शून्य, &ts, 0);
-	पूर्ण
+		ath_tx_complete_buf(sc, bf, txq, &bf_head, NULL, &ts, 0);
+	}
 
-	अगर (sendbar) अणु
+	if (sendbar) {
 		ath_txq_unlock(sc, txq);
 		ath_send_bar(tid, tid->seq_start);
 		ath_txq_lock(sc, txq);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम ath_tx_update_baw(काष्ठा ath_softc *sc, काष्ठा ath_atx_tid *tid,
-			      काष्ठा ath_buf *bf)
-अणु
-	काष्ठा ath_frame_info *fi = get_frame_info(bf->bf_mpdu);
+static void ath_tx_update_baw(struct ath_softc *sc, struct ath_atx_tid *tid,
+			      struct ath_buf *bf)
+{
+	struct ath_frame_info *fi = get_frame_info(bf->bf_mpdu);
 	u16 seqno = bf->bf_state.seqno;
-	पूर्णांक index, cindex;
+	int index, cindex;
 
-	अगर (!fi->baw_tracked)
-		वापस;
+	if (!fi->baw_tracked)
+		return;
 
 	index  = ATH_BA_INDEX(tid->seq_start, seqno);
 	cindex = (tid->baw_head + index) & (ATH_TID_MAX_BUFS - 1);
 
 	__clear_bit(cindex, tid->tx_buf);
 
-	जबतक (tid->baw_head != tid->baw_tail && !test_bit(tid->baw_head, tid->tx_buf)) अणु
+	while (tid->baw_head != tid->baw_tail && !test_bit(tid->baw_head, tid->tx_buf)) {
 		INCR(tid->seq_start, IEEE80211_SEQ_MAX);
 		INCR(tid->baw_head, ATH_TID_MAX_BUFS);
-		अगर (tid->bar_index >= 0)
+		if (tid->bar_index >= 0)
 			tid->bar_index--;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम ath_tx_addto_baw(काष्ठा ath_softc *sc, काष्ठा ath_atx_tid *tid,
-			     काष्ठा ath_buf *bf)
-अणु
-	काष्ठा ath_frame_info *fi = get_frame_info(bf->bf_mpdu);
+static void ath_tx_addto_baw(struct ath_softc *sc, struct ath_atx_tid *tid,
+			     struct ath_buf *bf)
+{
+	struct ath_frame_info *fi = get_frame_info(bf->bf_mpdu);
 	u16 seqno = bf->bf_state.seqno;
-	पूर्णांक index, cindex;
+	int index, cindex;
 
-	अगर (fi->baw_tracked)
-		वापस;
+	if (fi->baw_tracked)
+		return;
 
 	index  = ATH_BA_INDEX(tid->seq_start, seqno);
 	cindex = (tid->baw_head + index) & (ATH_TID_MAX_BUFS - 1);
 	__set_bit(cindex, tid->tx_buf);
 	fi->baw_tracked = 1;
 
-	अगर (index >= ((tid->baw_tail - tid->baw_head) &
-		(ATH_TID_MAX_BUFS - 1))) अणु
+	if (index >= ((tid->baw_tail - tid->baw_head) &
+		(ATH_TID_MAX_BUFS - 1))) {
 		tid->baw_tail = cindex;
 		INCR(tid->baw_tail, ATH_TID_MAX_BUFS);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम ath_tid_drain(काष्ठा ath_softc *sc, काष्ठा ath_txq *txq,
-			  काष्ठा ath_atx_tid *tid)
+static void ath_tid_drain(struct ath_softc *sc, struct ath_txq *txq,
+			  struct ath_atx_tid *tid)
 
-अणु
-	काष्ठा sk_buff *skb;
-	काष्ठा ath_buf *bf;
-	काष्ठा list_head bf_head;
-	काष्ठा ath_tx_status ts;
-	काष्ठा ath_frame_info *fi;
-	पूर्णांक ret;
+{
+	struct sk_buff *skb;
+	struct ath_buf *bf;
+	struct list_head bf_head;
+	struct ath_tx_status ts;
+	struct ath_frame_info *fi;
+	int ret;
 
-	स_रखो(&ts, 0, माप(ts));
+	memset(&ts, 0, sizeof(ts));
 	INIT_LIST_HEAD(&bf_head);
 
-	जबतक ((ret = ath_tid_dequeue(tid, &skb)) == 0) अणु
+	while ((ret = ath_tid_dequeue(tid, &skb)) == 0) {
 		fi = get_frame_info(skb);
 		bf = fi->bf;
 
-		अगर (!bf) अणु
-			ath_tx_complete(sc, skb, ATH_TX_ERROR, txq, शून्य);
-			जारी;
-		पूर्ण
+		if (!bf) {
+			ath_tx_complete(sc, skb, ATH_TX_ERROR, txq, NULL);
+			continue;
+		}
 
 		list_add_tail(&bf->list, &bf_head);
-		ath_tx_complete_buf(sc, bf, txq, &bf_head, शून्य, &ts, 0);
-	पूर्ण
-पूर्ण
+		ath_tx_complete_buf(sc, bf, txq, &bf_head, NULL, &ts, 0);
+	}
+}
 
-अटल व्योम ath_tx_set_retry(काष्ठा ath_softc *sc, काष्ठा ath_txq *txq,
-			     काष्ठा sk_buff *skb, पूर्णांक count)
-अणु
-	काष्ठा ath_frame_info *fi = get_frame_info(skb);
-	काष्ठा ath_buf *bf = fi->bf;
-	काष्ठा ieee80211_hdr *hdr;
-	पूर्णांक prev = fi->retries;
+static void ath_tx_set_retry(struct ath_softc *sc, struct ath_txq *txq,
+			     struct sk_buff *skb, int count)
+{
+	struct ath_frame_info *fi = get_frame_info(skb);
+	struct ath_buf *bf = fi->bf;
+	struct ieee80211_hdr *hdr;
+	int prev = fi->retries;
 
 	TX_STAT_INC(sc, txq->axq_qnum, a_retries);
 	fi->retries += count;
 
-	अगर (prev > 0)
-		वापस;
+	if (prev > 0)
+		return;
 
-	hdr = (काष्ठा ieee80211_hdr *)skb->data;
+	hdr = (struct ieee80211_hdr *)skb->data;
 	hdr->frame_control |= cpu_to_le16(IEEE80211_FCTL_RETRY);
-	dma_sync_single_क्रम_device(sc->dev, bf->bf_buf_addr,
-		माप(*hdr), DMA_TO_DEVICE);
-पूर्ण
+	dma_sync_single_for_device(sc->dev, bf->bf_buf_addr,
+		sizeof(*hdr), DMA_TO_DEVICE);
+}
 
-अटल काष्ठा ath_buf *ath_tx_get_buffer(काष्ठा ath_softc *sc)
-अणु
-	काष्ठा ath_buf *bf = शून्य;
+static struct ath_buf *ath_tx_get_buffer(struct ath_softc *sc)
+{
+	struct ath_buf *bf = NULL;
 
 	spin_lock_bh(&sc->tx.txbuflock);
 
-	अगर (unlikely(list_empty(&sc->tx.txbuf))) अणु
+	if (unlikely(list_empty(&sc->tx.txbuf))) {
 		spin_unlock_bh(&sc->tx.txbuflock);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	bf = list_first_entry(&sc->tx.txbuf, काष्ठा ath_buf, list);
+	bf = list_first_entry(&sc->tx.txbuf, struct ath_buf, list);
 	list_del(&bf->list);
 
 	spin_unlock_bh(&sc->tx.txbuflock);
 
-	वापस bf;
-पूर्ण
+	return bf;
+}
 
-अटल व्योम ath_tx_वापस_buffer(काष्ठा ath_softc *sc, काष्ठा ath_buf *bf)
-अणु
+static void ath_tx_return_buffer(struct ath_softc *sc, struct ath_buf *bf)
+{
 	spin_lock_bh(&sc->tx.txbuflock);
 	list_add_tail(&bf->list, &sc->tx.txbuf);
 	spin_unlock_bh(&sc->tx.txbuflock);
-पूर्ण
+}
 
-अटल काष्ठा ath_buf* ath_clone_txbuf(काष्ठा ath_softc *sc, काष्ठा ath_buf *bf)
-अणु
-	काष्ठा ath_buf *tbf;
+static struct ath_buf* ath_clone_txbuf(struct ath_softc *sc, struct ath_buf *bf)
+{
+	struct ath_buf *tbf;
 
 	tbf = ath_tx_get_buffer(sc);
-	अगर (WARN_ON(!tbf))
-		वापस शून्य;
+	if (WARN_ON(!tbf))
+		return NULL;
 
 	ATH_TXBUF_RESET(tbf);
 
 	tbf->bf_mpdu = bf->bf_mpdu;
 	tbf->bf_buf_addr = bf->bf_buf_addr;
-	स_नकल(tbf->bf_desc, bf->bf_desc, sc->sc_ah->caps.tx_desc_len);
+	memcpy(tbf->bf_desc, bf->bf_desc, sc->sc_ah->caps.tx_desc_len);
 	tbf->bf_state = bf->bf_state;
 	tbf->bf_state.stale = false;
 
-	वापस tbf;
-पूर्ण
+	return tbf;
+}
 
-अटल व्योम ath_tx_count_frames(काष्ठा ath_softc *sc, काष्ठा ath_buf *bf,
-			        काष्ठा ath_tx_status *ts, पूर्णांक txok,
-			        पूर्णांक *nframes, पूर्णांक *nbad)
-अणु
+static void ath_tx_count_frames(struct ath_softc *sc, struct ath_buf *bf,
+			        struct ath_tx_status *ts, int txok,
+			        int *nframes, int *nbad)
+{
 	u16 seq_st = 0;
 	u32 ba[WME_BA_BMP_SIZE >> 5];
-	पूर्णांक ba_index;
-	पूर्णांक isaggr = 0;
+	int ba_index;
+	int isaggr = 0;
 
 	*nbad = 0;
 	*nframes = 0;
 
 	isaggr = bf_isaggr(bf);
-	अगर (isaggr) अणु
+	if (isaggr) {
 		seq_st = ts->ts_seqnum;
-		स_नकल(ba, &ts->ba_low, WME_BA_BMP_SIZE >> 3);
-	पूर्ण
+		memcpy(ba, &ts->ba_low, WME_BA_BMP_SIZE >> 3);
+	}
 
-	जबतक (bf) अणु
+	while (bf) {
 		ba_index = ATH_BA_INDEX(seq_st, bf->bf_state.seqno);
 
 		(*nframes)++;
-		अगर (!txok || (isaggr && !ATH_BA_ISSET(ba, ba_index)))
+		if (!txok || (isaggr && !ATH_BA_ISSET(ba, ba_index)))
 			(*nbad)++;
 
 		bf = bf->bf_next;
-	पूर्ण
-पूर्ण
+	}
+}
 
 
-अटल व्योम ath_tx_complete_aggr(काष्ठा ath_softc *sc, काष्ठा ath_txq *txq,
-				 काष्ठा ath_buf *bf, काष्ठा list_head *bf_q,
-				 काष्ठा ieee80211_sta *sta,
-				 काष्ठा ath_atx_tid *tid,
-				 काष्ठा ath_tx_status *ts, पूर्णांक txok)
-अणु
-	काष्ठा ath_node *an = शून्य;
-	काष्ठा sk_buff *skb;
-	काष्ठा ieee80211_tx_info *tx_info;
-	काष्ठा ath_buf *bf_next, *bf_last = bf->bf_lastbf;
-	काष्ठा list_head bf_head;
-	काष्ठा sk_buff_head bf_pending;
+static void ath_tx_complete_aggr(struct ath_softc *sc, struct ath_txq *txq,
+				 struct ath_buf *bf, struct list_head *bf_q,
+				 struct ieee80211_sta *sta,
+				 struct ath_atx_tid *tid,
+				 struct ath_tx_status *ts, int txok)
+{
+	struct ath_node *an = NULL;
+	struct sk_buff *skb;
+	struct ieee80211_tx_info *tx_info;
+	struct ath_buf *bf_next, *bf_last = bf->bf_lastbf;
+	struct list_head bf_head;
+	struct sk_buff_head bf_pending;
 	u16 seq_st = 0, acked_cnt = 0, txfail_cnt = 0, seq_first;
 	u32 ba[WME_BA_BMP_SIZE >> 5];
-	पूर्णांक isaggr, txfail, txpending, sendbar = 0, needreset = 0, nbad = 0;
+	int isaggr, txfail, txpending, sendbar = 0, needreset = 0, nbad = 0;
 	bool rc_update = true, isba;
-	काष्ठा ieee80211_tx_rate rates[4];
-	काष्ठा ath_frame_info *fi;
-	पूर्णांक nframes;
+	struct ieee80211_tx_rate rates[4];
+	struct ath_frame_info *fi;
+	int nframes;
 	bool flush = !!(ts->ts_status & ATH9K_TX_FLUSH);
-	पूर्णांक i, retries;
-	पूर्णांक bar_index = -1;
+	int i, retries;
+	int bar_index = -1;
 
 	skb = bf->bf_mpdu;
 	tx_info = IEEE80211_SKB_CB(skb);
 
-	स_नकल(rates, bf->rates, माप(rates));
+	memcpy(rates, bf->rates, sizeof(rates));
 
-	retries = ts->ts_दीर्घretry + 1;
-	क्रम (i = 0; i < ts->ts_rateindex; i++)
+	retries = ts->ts_longretry + 1;
+	for (i = 0; i < ts->ts_rateindex; i++)
 		retries += rates[i].count;
 
-	अगर (!sta) अणु
+	if (!sta) {
 		INIT_LIST_HEAD(&bf_head);
-		जबतक (bf) अणु
+		while (bf) {
 			bf_next = bf->bf_next;
 
-			अगर (!bf->bf_state.stale || bf_next != शून्य)
+			if (!bf->bf_state.stale || bf_next != NULL)
 				list_move_tail(&bf->list, &bf_head);
 
-			ath_tx_complete_buf(sc, bf, txq, &bf_head, शून्य, ts, 0);
+			ath_tx_complete_buf(sc, bf, txq, &bf_head, NULL, ts, 0);
 
 			bf = bf_next;
-		पूर्ण
-		वापस;
-	पूर्ण
+		}
+		return;
+	}
 
-	an = (काष्ठा ath_node *)sta->drv_priv;
+	an = (struct ath_node *)sta->drv_priv;
 	seq_first = tid->seq_start;
 	isba = ts->ts_flags & ATH9K_TX_BA;
 
 	/*
-	 * The hardware occasionally sends a tx status क्रम the wrong TID.
-	 * In this हाल, the BA status cannot be considered valid and all
+	 * The hardware occasionally sends a tx status for the wrong TID.
+	 * In this case, the BA status cannot be considered valid and all
 	 * subframes need to be retransmitted
 	 *
-	 * Only BlockAcks have a TID and thereक्रमe normal Acks cannot be
+	 * Only BlockAcks have a TID and therefore normal Acks cannot be
 	 * checked
 	 */
-	अगर (isba && tid->tidno != ts->tid)
+	if (isba && tid->tidno != ts->tid)
 		txok = false;
 
 	isaggr = bf_isaggr(bf);
-	स_रखो(ba, 0, WME_BA_BMP_SIZE >> 3);
+	memset(ba, 0, WME_BA_BMP_SIZE >> 3);
 
-	अगर (isaggr && txok) अणु
-		अगर (ts->ts_flags & ATH9K_TX_BA) अणु
+	if (isaggr && txok) {
+		if (ts->ts_flags & ATH9K_TX_BA) {
 			seq_st = ts->ts_seqnum;
-			स_नकल(ba, &ts->ba_low, WME_BA_BMP_SIZE >> 3);
-		पूर्ण अन्यथा अणु
+			memcpy(ba, &ts->ba_low, WME_BA_BMP_SIZE >> 3);
+		} else {
 			/*
 			 * AR5416 can become deaf/mute when BA
 			 * issue happens. Chip needs to be reset.
 			 * But AP code may have sychronization issues
-			 * when perक्रमm पूर्णांकernal reset in this routine.
-			 * Only enable reset in STA mode क्रम now.
+			 * when perform internal reset in this routine.
+			 * Only enable reset in STA mode for now.
 			 */
-			अगर (sc->sc_ah->opmode == NL80211_IFTYPE_STATION)
+			if (sc->sc_ah->opmode == NL80211_IFTYPE_STATION)
 				needreset = 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	__skb_queue_head_init(&bf_pending);
 
 	ath_tx_count_frames(sc, bf, ts, txok, &nframes, &nbad);
-	जबतक (bf) अणु
+	while (bf) {
 		u16 seqno = bf->bf_state.seqno;
 
 		txfail = txpending = sendbar = 0;
@@ -532,162 +531,162 @@ ath_tid_pull(काष्ठा ath_atx_tid *tid, काष्ठा sk_buff **s
 		tx_info = IEEE80211_SKB_CB(skb);
 		fi = get_frame_info(skb);
 
-		अगर (!BAW_WITHIN(tid->seq_start, tid->baw_size, seqno) ||
-		    !tid->active) अणु
+		if (!BAW_WITHIN(tid->seq_start, tid->baw_size, seqno) ||
+		    !tid->active) {
 			/*
-			 * Outside of the current BlockAck winकरोw,
+			 * Outside of the current BlockAck window,
 			 * maybe part of a previous session
 			 */
 			txfail = 1;
-		पूर्ण अन्यथा अगर (ATH_BA_ISSET(ba, ATH_BA_INDEX(seq_st, seqno))) अणु
+		} else if (ATH_BA_ISSET(ba, ATH_BA_INDEX(seq_st, seqno))) {
 			/* transmit completion, subframe is
 			 * acked by block ack */
 			acked_cnt++;
-		पूर्ण अन्यथा अगर (!isaggr && txok) अणु
+		} else if (!isaggr && txok) {
 			/* transmit completion */
 			acked_cnt++;
-		पूर्ण अन्यथा अगर (flush) अणु
+		} else if (flush) {
 			txpending = 1;
-		पूर्ण अन्यथा अगर (fi->retries < ATH_MAX_SW_RETRIES) अणु
-			अगर (txok || !an->sleeping)
+		} else if (fi->retries < ATH_MAX_SW_RETRIES) {
+			if (txok || !an->sleeping)
 				ath_tx_set_retry(sc, txq, bf->bf_mpdu,
 						 retries);
 
 			txpending = 1;
-		पूर्ण अन्यथा अणु
+		} else {
 			txfail = 1;
 			txfail_cnt++;
-			bar_index = max_t(पूर्णांक, bar_index,
+			bar_index = max_t(int, bar_index,
 				ATH_BA_INDEX(seq_first, seqno));
-		पूर्ण
+		}
 
 		/*
-		 * Make sure the last desc is reclaimed अगर it
+		 * Make sure the last desc is reclaimed if it
 		 * not a holding desc.
 		 */
 		INIT_LIST_HEAD(&bf_head);
-		अगर (bf_next != शून्य || !bf_last->bf_state.stale)
+		if (bf_next != NULL || !bf_last->bf_state.stale)
 			list_move_tail(&bf->list, &bf_head);
 
-		अगर (!txpending) अणु
+		if (!txpending) {
 			/*
 			 * complete the acked-ones/xretried ones; update
-			 * block-ack winकरोw
+			 * block-ack window
 			 */
 			ath_tx_update_baw(sc, tid, bf);
 
-			अगर (rc_update && (acked_cnt == 1 || txfail_cnt == 1)) अणु
-				स_नकल(tx_info->control.rates, rates, माप(rates));
+			if (rc_update && (acked_cnt == 1 || txfail_cnt == 1)) {
+				memcpy(tx_info->control.rates, rates, sizeof(rates));
 				ath_tx_rc_status(sc, bf, ts, nframes, nbad, txok);
 				rc_update = false;
-				अगर (bf == bf->bf_lastbf)
+				if (bf == bf->bf_lastbf)
 					ath_dynack_sample_tx_ts(sc->sc_ah,
 								bf->bf_mpdu,
 								ts, sta);
-			पूर्ण
+			}
 
 			ath_tx_complete_buf(sc, bf, txq, &bf_head, sta, ts,
 				!txfail);
-		पूर्ण अन्यथा अणु
-			अगर (tx_info->flags & IEEE80211_TX_STATUS_EOSP) अणु
+		} else {
+			if (tx_info->flags & IEEE80211_TX_STATUS_EOSP) {
 				tx_info->flags &= ~IEEE80211_TX_STATUS_EOSP;
 				ieee80211_sta_eosp(sta);
-			पूर्ण
+			}
 			/* retry the un-acked ones */
-			अगर (bf->bf_next == शून्य && bf_last->bf_state.stale) अणु
-				काष्ठा ath_buf *tbf;
+			if (bf->bf_next == NULL && bf_last->bf_state.stale) {
+				struct ath_buf *tbf;
 
 				tbf = ath_clone_txbuf(sc, bf_last);
 				/*
 				 * Update tx baw and complete the
-				 * frame with failed status अगर we
+				 * frame with failed status if we
 				 * run out of tx buf.
 				 */
-				अगर (!tbf) अणु
+				if (!tbf) {
 					ath_tx_update_baw(sc, tid, bf);
 
 					ath_tx_complete_buf(sc, bf, txq,
-							    &bf_head, शून्य, ts,
+							    &bf_head, NULL, ts,
 							    0);
-					bar_index = max_t(पूर्णांक, bar_index,
+					bar_index = max_t(int, bar_index,
 						ATH_BA_INDEX(seq_first, seqno));
-					अवरोध;
-				पूर्ण
+					break;
+				}
 
 				fi->bf = tbf;
-			पूर्ण
+			}
 
 			/*
 			 * Put this buffer to the temporary pending
 			 * queue to retain ordering
 			 */
 			__skb_queue_tail(&bf_pending, skb);
-		पूर्ण
+		}
 
 		bf = bf_next;
-	पूर्ण
+	}
 
 	/* prepend un-acked frames to the beginning of the pending frame queue */
-	अगर (!skb_queue_empty(&bf_pending)) अणु
-		अगर (an->sleeping)
+	if (!skb_queue_empty(&bf_pending)) {
+		if (an->sleeping)
 			ieee80211_sta_set_buffered(sta, tid->tidno, true);
 
 		skb_queue_splice_tail(&bf_pending, &tid->retry_q);
-		अगर (!an->sleeping) अणु
+		if (!an->sleeping) {
 			ath_tx_queue_tid(sc, tid);
-			अगर (ts->ts_status & (ATH9K_TXERR_FILT | ATH9K_TXERR_XRETRY))
+			if (ts->ts_status & (ATH9K_TXERR_FILT | ATH9K_TXERR_XRETRY))
 				tid->clear_ps_filter = true;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (bar_index >= 0) अणु
+	if (bar_index >= 0) {
 		u16 bar_seq = ATH_BA_INDEX2SEQ(seq_first, bar_index);
 
-		अगर (BAW_WITHIN(tid->seq_start, tid->baw_size, bar_seq))
+		if (BAW_WITHIN(tid->seq_start, tid->baw_size, bar_seq))
 			tid->bar_index = ATH_BA_INDEX(tid->seq_start, bar_seq);
 
 		ath_txq_unlock(sc, txq);
 		ath_send_bar(tid, ATH_BA_INDEX2SEQ(seq_first, bar_index + 1));
 		ath_txq_lock(sc, txq);
-	पूर्ण
+	}
 
-	अगर (needreset)
+	if (needreset)
 		ath9k_queue_reset(sc, RESET_TYPE_TX_ERROR);
-पूर्ण
+}
 
-अटल bool bf_is_ampdu_not_probing(काष्ठा ath_buf *bf)
-अणु
-    काष्ठा ieee80211_tx_info *info = IEEE80211_SKB_CB(bf->bf_mpdu);
-    वापस bf_isampdu(bf) && !(info->flags & IEEE80211_TX_CTL_RATE_CTRL_PROBE);
-पूर्ण
+static bool bf_is_ampdu_not_probing(struct ath_buf *bf)
+{
+    struct ieee80211_tx_info *info = IEEE80211_SKB_CB(bf->bf_mpdu);
+    return bf_isampdu(bf) && !(info->flags & IEEE80211_TX_CTL_RATE_CTRL_PROBE);
+}
 
-अटल व्योम ath_tx_count_airसमय(काष्ठा ath_softc *sc,
-				 काष्ठा ieee80211_sta *sta,
-				 काष्ठा ath_buf *bf,
-				 काष्ठा ath_tx_status *ts,
+static void ath_tx_count_airtime(struct ath_softc *sc,
+				 struct ieee80211_sta *sta,
+				 struct ath_buf *bf,
+				 struct ath_tx_status *ts,
 				 u8 tid)
-अणु
-	u32 airसमय = 0;
-	पूर्णांक i;
+{
+	u32 airtime = 0;
+	int i;
 
-	airसमय += ts->duration * (ts->ts_दीर्घretry + 1);
-	क्रम(i = 0; i < ts->ts_rateindex; i++) अणु
-		पूर्णांक rate_dur = ath9k_hw_get_duration(sc->sc_ah, bf->bf_desc, i);
-		airसमय += rate_dur * bf->rates[i].count;
-	पूर्ण
+	airtime += ts->duration * (ts->ts_longretry + 1);
+	for(i = 0; i < ts->ts_rateindex; i++) {
+		int rate_dur = ath9k_hw_get_duration(sc->sc_ah, bf->bf_desc, i);
+		airtime += rate_dur * bf->rates[i].count;
+	}
 
-	ieee80211_sta_रेजिस्टर_airसमय(sta, tid, airसमय, 0);
-पूर्ण
+	ieee80211_sta_register_airtime(sta, tid, airtime, 0);
+}
 
-अटल व्योम ath_tx_process_buffer(काष्ठा ath_softc *sc, काष्ठा ath_txq *txq,
-				  काष्ठा ath_tx_status *ts, काष्ठा ath_buf *bf,
-				  काष्ठा list_head *bf_head)
-अणु
-	काष्ठा ieee80211_hw *hw = sc->hw;
-	काष्ठा ieee80211_tx_info *info;
-	काष्ठा ieee80211_sta *sta;
-	काष्ठा ieee80211_hdr *hdr;
-	काष्ठा ath_atx_tid *tid = शून्य;
+static void ath_tx_process_buffer(struct ath_softc *sc, struct ath_txq *txq,
+				  struct ath_tx_status *ts, struct ath_buf *bf,
+				  struct list_head *bf_head)
+{
+	struct ieee80211_hw *hw = sc->hw;
+	struct ieee80211_tx_info *info;
+	struct ieee80211_sta *sta;
+	struct ieee80211_hdr *hdr;
+	struct ath_atx_tid *tid = NULL;
 	bool txok, flush;
 
 	txok = !(ts->ts_status & ATH9K_TXERR_MASK);
@@ -695,71 +694,71 @@ ath_tid_pull(काष्ठा ath_atx_tid *tid, काष्ठा sk_buff **s
 	txq->axq_tx_inprogress = false;
 
 	txq->axq_depth--;
-	अगर (bf_is_ampdu_not_probing(bf))
+	if (bf_is_ampdu_not_probing(bf))
 		txq->axq_ampdu_depth--;
 
 	ts->duration = ath9k_hw_get_duration(sc->sc_ah, bf->bf_desc,
 					     ts->ts_rateindex);
 
-	hdr = (काष्ठा ieee80211_hdr *) bf->bf_mpdu->data;
-	sta = ieee80211_find_sta_by_अगरaddr(hw, hdr->addr1, hdr->addr2);
-	अगर (sta) अणु
-		काष्ठा ath_node *an = (काष्ठा ath_node *)sta->drv_priv;
+	hdr = (struct ieee80211_hdr *) bf->bf_mpdu->data;
+	sta = ieee80211_find_sta_by_ifaddr(hw, hdr->addr1, hdr->addr2);
+	if (sta) {
+		struct ath_node *an = (struct ath_node *)sta->drv_priv;
 		tid = ath_get_skb_tid(sc, an, bf->bf_mpdu);
-		ath_tx_count_airसमय(sc, sta, bf, ts, tid->tidno);
-		अगर (ts->ts_status & (ATH9K_TXERR_FILT | ATH9K_TXERR_XRETRY))
+		ath_tx_count_airtime(sc, sta, bf, ts, tid->tidno);
+		if (ts->ts_status & (ATH9K_TXERR_FILT | ATH9K_TXERR_XRETRY))
 			tid->clear_ps_filter = true;
-	पूर्ण
+	}
 
-	अगर (!bf_isampdu(bf)) अणु
-		अगर (!flush) अणु
+	if (!bf_isampdu(bf)) {
+		if (!flush) {
 			info = IEEE80211_SKB_CB(bf->bf_mpdu);
-			स_नकल(info->control.rates, bf->rates,
-			       माप(info->control.rates));
+			memcpy(info->control.rates, bf->rates,
+			       sizeof(info->control.rates));
 			ath_tx_rc_status(sc, bf, ts, 1, txok ? 0 : 1, txok);
 			ath_dynack_sample_tx_ts(sc->sc_ah, bf->bf_mpdu, ts,
 						sta);
-		पूर्ण
+		}
 		ath_tx_complete_buf(sc, bf, txq, bf_head, sta, ts, txok);
-	पूर्ण अन्यथा
+	} else
 		ath_tx_complete_aggr(sc, txq, bf, bf_head, sta, tid, ts, txok);
 
-	अगर (!flush)
+	if (!flush)
 		ath_txq_schedule(sc, txq);
-पूर्ण
+}
 
-अटल bool ath_lookup_legacy(काष्ठा ath_buf *bf)
-अणु
-	काष्ठा sk_buff *skb;
-	काष्ठा ieee80211_tx_info *tx_info;
-	काष्ठा ieee80211_tx_rate *rates;
-	पूर्णांक i;
+static bool ath_lookup_legacy(struct ath_buf *bf)
+{
+	struct sk_buff *skb;
+	struct ieee80211_tx_info *tx_info;
+	struct ieee80211_tx_rate *rates;
+	int i;
 
 	skb = bf->bf_mpdu;
 	tx_info = IEEE80211_SKB_CB(skb);
 	rates = tx_info->control.rates;
 
-	क्रम (i = 0; i < 4; i++) अणु
-		अगर (!rates[i].count || rates[i].idx < 0)
-			अवरोध;
+	for (i = 0; i < 4; i++) {
+		if (!rates[i].count || rates[i].idx < 0)
+			break;
 
-		अगर (!(rates[i].flags & IEEE80211_TX_RC_MCS))
-			वापस true;
-	पूर्ण
+		if (!(rates[i].flags & IEEE80211_TX_RC_MCS))
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल u32 ath_lookup_rate(काष्ठा ath_softc *sc, काष्ठा ath_buf *bf,
-			   काष्ठा ath_atx_tid *tid)
-अणु
-	काष्ठा sk_buff *skb;
-	काष्ठा ieee80211_tx_info *tx_info;
-	काष्ठा ieee80211_tx_rate *rates;
+static u32 ath_lookup_rate(struct ath_softc *sc, struct ath_buf *bf,
+			   struct ath_atx_tid *tid)
+{
+	struct sk_buff *skb;
+	struct ieee80211_tx_info *tx_info;
+	struct ieee80211_tx_rate *rates;
 	u32 max_4ms_framelen, frmlen;
 	u16 aggr_limit, bt_aggr_limit, legacy = 0;
-	पूर्णांक q = tid->txq->mac80211_qnum;
-	पूर्णांक i;
+	int q = tid->txq->mac80211_qnum;
+	int i;
 
 	skb = bf->bf_mpdu;
 	tx_info = IEEE80211_SKB_CB(skb);
@@ -771,66 +770,66 @@ ath_tid_pull(काष्ठा ath_atx_tid *tid, काष्ठा sk_buff **s
 	 */
 	max_4ms_framelen = ATH_AMPDU_LIMIT_MAX;
 
-	क्रम (i = 0; i < 4; i++) अणु
-		पूर्णांक modeidx;
+	for (i = 0; i < 4; i++) {
+		int modeidx;
 
-		अगर (!rates[i].count)
-			जारी;
+		if (!rates[i].count)
+			continue;
 
-		अगर (!(rates[i].flags & IEEE80211_TX_RC_MCS)) अणु
+		if (!(rates[i].flags & IEEE80211_TX_RC_MCS)) {
 			legacy = 1;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (rates[i].flags & IEEE80211_TX_RC_40_MHZ_WIDTH)
+		if (rates[i].flags & IEEE80211_TX_RC_40_MHZ_WIDTH)
 			modeidx = MCS_HT40;
-		अन्यथा
+		else
 			modeidx = MCS_HT20;
 
-		अगर (rates[i].flags & IEEE80211_TX_RC_SHORT_GI)
+		if (rates[i].flags & IEEE80211_TX_RC_SHORT_GI)
 			modeidx++;
 
 		frmlen = sc->tx.max_aggr_framelen[q][modeidx][rates[i].idx];
 		max_4ms_framelen = min(max_4ms_framelen, frmlen);
-	पूर्ण
+	}
 
 	/*
-	 * limit aggregate size by the minimum rate अगर rate selected is
-	 * not a probe rate, अगर rate selected is a probe rate then
-	 * aव्योम aggregation of this packet.
+	 * limit aggregate size by the minimum rate if rate selected is
+	 * not a probe rate, if rate selected is a probe rate then
+	 * avoid aggregation of this packet.
 	 */
-	अगर (tx_info->flags & IEEE80211_TX_CTL_RATE_CTRL_PROBE || legacy)
-		वापस 0;
+	if (tx_info->flags & IEEE80211_TX_CTL_RATE_CTRL_PROBE || legacy)
+		return 0;
 
 	aggr_limit = min(max_4ms_framelen, (u32)ATH_AMPDU_LIMIT_MAX);
 
 	/*
-	 * Override the शेष aggregation limit क्रम BTCOEX.
+	 * Override the default aggregation limit for BTCOEX.
 	 */
 	bt_aggr_limit = ath9k_btcoex_aggr_limit(sc, max_4ms_framelen);
-	अगर (bt_aggr_limit)
+	if (bt_aggr_limit)
 		aggr_limit = bt_aggr_limit;
 
-	अगर (tid->an->maxampdu)
+	if (tid->an->maxampdu)
 		aggr_limit = min(aggr_limit, tid->an->maxampdu);
 
-	वापस aggr_limit;
-पूर्ण
+	return aggr_limit;
+}
 
 /*
  * Returns the number of delimiters to be added to
  * meet the minimum required mpdudensity.
  */
-अटल पूर्णांक ath_compute_num_delims(काष्ठा ath_softc *sc, काष्ठा ath_atx_tid *tid,
-				  काष्ठा ath_buf *bf, u16 frmlen,
+static int ath_compute_num_delims(struct ath_softc *sc, struct ath_atx_tid *tid,
+				  struct ath_buf *bf, u16 frmlen,
 				  bool first_subfrm)
-अणु
-#घोषणा FIRST_DESC_NDELIMS 60
+{
+#define FIRST_DESC_NDELIMS 60
 	u32 nsymbits, nsymbols;
 	u16 minlen;
 	u8 flags, rix;
-	पूर्णांक width, streams, half_gi, ndelim, mindelim;
-	काष्ठा ath_frame_info *fi = get_frame_info(bf->bf_mpdu);
+	int width, streams, half_gi, ndelim, mindelim;
+	struct ath_frame_info *fi = get_frame_info(bf->bf_mpdu);
 
 	/* Select standard number of delimiters based on frame length alone */
 	ndelim = ATH_AGGR_GET_NDELIM(frmlen);
@@ -841,7 +840,7 @@ ath_tid_pull(काष्ठा ath_atx_tid *tid, काष्ठा sk_buff **s
 	 * TODO - this could be improved to be dependent on the rate.
 	 *      The hardware can keep up at lower rates, but not higher rates
 	 */
-	अगर ((fi->keyix != ATH9K_TXKEYIX_INVALID) &&
+	if ((fi->keyix != ATH9K_TXKEYIX_INVALID) &&
 	    !(sc->sc_ah->caps.hw_caps & ATH9K_HW_CAP_EDMA))
 		ndelim += ATH_AGGR_ENCRYPTDELIM;
 
@@ -849,78 +848,78 @@ ath_tid_pull(काष्ठा ath_atx_tid *tid, काष्ठा sk_buff **s
 	 * Add delimiter when using RTS/CTS with aggregation
 	 * and non enterprise AR9003 card
 	 */
-	अगर (first_subfrm && !AR_SREV_9580_10_OR_LATER(sc->sc_ah) &&
+	if (first_subfrm && !AR_SREV_9580_10_OR_LATER(sc->sc_ah) &&
 	    (sc->sc_ah->ent_mode & AR_ENT_OTP_MIN_PKT_SIZE_DISABLE))
 		ndelim = max(ndelim, FIRST_DESC_NDELIMS);
 
 	/*
 	 * Convert desired mpdu density from microeconds to bytes based
 	 * on highest rate in rate series (i.e. first rate) to determine
-	 * required minimum length क्रम subframe. Take पूर्णांकo account
+	 * required minimum length for subframe. Take into account
 	 * whether high rate is 20 or 40Mhz and half or full GI.
 	 *
 	 * If there is no mpdu density restriction, no further calculation
 	 * is needed.
 	 */
 
-	अगर (tid->an->mpdudensity == 0)
-		वापस ndelim;
+	if (tid->an->mpdudensity == 0)
+		return ndelim;
 
 	rix = bf->rates[0].idx;
 	flags = bf->rates[0].flags;
 	width = (flags & IEEE80211_TX_RC_40_MHZ_WIDTH) ? 1 : 0;
 	half_gi = (flags & IEEE80211_TX_RC_SHORT_GI) ? 1 : 0;
 
-	अगर (half_gi)
+	if (half_gi)
 		nsymbols = NUM_SYMBOLS_PER_USEC_HALFGI(tid->an->mpdudensity);
-	अन्यथा
+	else
 		nsymbols = NUM_SYMBOLS_PER_USEC(tid->an->mpdudensity);
 
-	अगर (nsymbols == 0)
+	if (nsymbols == 0)
 		nsymbols = 1;
 
 	streams = HT_RC_2_STREAMS(rix);
 	nsymbits = bits_per_symbol[rix % 8][width] * streams;
 	minlen = (nsymbols * nsymbits) / BITS_PER_BYTE;
 
-	अगर (frmlen < minlen) अणु
+	if (frmlen < minlen) {
 		mindelim = (minlen - frmlen) / ATH_AGGR_DELIM_SZ;
 		ndelim = max(mindelim, ndelim);
-	पूर्ण
+	}
 
-	वापस ndelim;
-पूर्ण
+	return ndelim;
+}
 
-अटल पूर्णांक
-ath_tx_get_tid_subframe(काष्ठा ath_softc *sc, काष्ठा ath_txq *txq,
-			काष्ठा ath_atx_tid *tid, काष्ठा ath_buf **buf)
-अणु
-	काष्ठा ieee80211_tx_info *tx_info;
-	काष्ठा ath_frame_info *fi;
-	काष्ठा ath_buf *bf;
-	काष्ठा sk_buff *skb, *first_skb = शून्य;
+static int
+ath_tx_get_tid_subframe(struct ath_softc *sc, struct ath_txq *txq,
+			struct ath_atx_tid *tid, struct ath_buf **buf)
+{
+	struct ieee80211_tx_info *tx_info;
+	struct ath_frame_info *fi;
+	struct ath_buf *bf;
+	struct sk_buff *skb, *first_skb = NULL;
 	u16 seqno;
-	पूर्णांक ret;
+	int ret;
 
-	जबतक (1) अणु
+	while (1) {
 		ret = ath_tid_dequeue(tid, &skb);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 
 		fi = get_frame_info(skb);
 		bf = fi->bf;
-		अगर (!fi->bf)
+		if (!fi->bf)
 			bf = ath_tx_setup_buffer(sc, txq, tid, skb);
-		अन्यथा
+		else
 			bf->bf_state.stale = false;
 
-		अगर (!bf) अणु
-			ath_txq_skb_करोne(sc, txq, skb);
-			ieee80211_मुक्त_txskb(sc->hw, skb);
-			जारी;
-		पूर्ण
+		if (!bf) {
+			ath_txq_skb_done(sc, txq, skb);
+			ieee80211_free_txskb(sc->hw, skb);
+			continue;
+		}
 
-		bf->bf_next = शून्य;
+		bf->bf_next = NULL;
 		bf->bf_lastbf = bf;
 
 		tx_info = IEEE80211_SKB_CB(skb);
@@ -932,146 +931,146 @@ ath_tx_get_tid_subframe(काष्ठा ath_softc *sc, काष्ठा ath
 		 * from a previous session or a failed attempt in the queue.
 		 * Send them out as normal data frames
 		 */
-		अगर (!tid->active)
+		if (!tid->active)
 			tx_info->flags &= ~IEEE80211_TX_CTL_AMPDU;
 
-		अगर (!(tx_info->flags & IEEE80211_TX_CTL_AMPDU)) अणु
+		if (!(tx_info->flags & IEEE80211_TX_CTL_AMPDU)) {
 			bf->bf_state.bf_type = 0;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		bf->bf_state.bf_type = BUF_AMPDU | BUF_AGGR;
 		seqno = bf->bf_state.seqno;
 
-		/* करो not step over block-ack winकरोw */
-		अगर (!BAW_WITHIN(tid->seq_start, tid->baw_size, seqno)) अणु
+		/* do not step over block-ack window */
+		if (!BAW_WITHIN(tid->seq_start, tid->baw_size, seqno)) {
 			__skb_queue_tail(&tid->retry_q, skb);
 
 			/* If there are other skbs in the retry q, they are
 			 * probably within the BAW, so loop immediately to get
 			 * one of them. Otherwise the queue can get stuck. */
-			अगर (!skb_queue_is_first(&tid->retry_q, skb) &&
-			    !WARN_ON(skb == first_skb)) अणु
-				अगर(!first_skb) /* infinite loop prevention */
+			if (!skb_queue_is_first(&tid->retry_q, skb) &&
+			    !WARN_ON(skb == first_skb)) {
+				if(!first_skb) /* infinite loop prevention */
 					first_skb = skb;
-				जारी;
-			पूर्ण
-			वापस -EINPROGRESS;
-		पूर्ण
+				continue;
+			}
+			return -EINPROGRESS;
+		}
 
-		अगर (tid->bar_index > ATH_BA_INDEX(tid->seq_start, seqno)) अणु
-			काष्ठा ath_tx_status ts = अणुपूर्ण;
-			काष्ठा list_head bf_head;
+		if (tid->bar_index > ATH_BA_INDEX(tid->seq_start, seqno)) {
+			struct ath_tx_status ts = {};
+			struct list_head bf_head;
 
 			INIT_LIST_HEAD(&bf_head);
 			list_add(&bf->list, &bf_head);
 			ath_tx_update_baw(sc, tid, bf);
-			ath_tx_complete_buf(sc, bf, txq, &bf_head, शून्य, &ts, 0);
-			जारी;
-		पूर्ण
+			ath_tx_complete_buf(sc, bf, txq, &bf_head, NULL, &ts, 0);
+			continue;
+		}
 
-		अगर (bf_isampdu(bf))
+		if (bf_isampdu(bf))
 			ath_tx_addto_baw(sc, tid, bf);
 
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	*buf = bf;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-ath_tx_क्रमm_aggr(काष्ठा ath_softc *sc, काष्ठा ath_txq *txq,
-		 काष्ठा ath_atx_tid *tid, काष्ठा list_head *bf_q,
-		 काष्ठा ath_buf *bf_first)
-अणु
-#घोषणा PADBYTES(_len) ((4 - ((_len) % 4)) % 4)
-	काष्ठा ath_buf *bf = bf_first, *bf_prev = शून्य;
-	पूर्णांक nframes = 0, ndelim, ret;
+static int
+ath_tx_form_aggr(struct ath_softc *sc, struct ath_txq *txq,
+		 struct ath_atx_tid *tid, struct list_head *bf_q,
+		 struct ath_buf *bf_first)
+{
+#define PADBYTES(_len) ((4 - ((_len) % 4)) % 4)
+	struct ath_buf *bf = bf_first, *bf_prev = NULL;
+	int nframes = 0, ndelim, ret;
 	u16 aggr_limit = 0, al = 0, bpad = 0,
 	    al_delta, h_baw = tid->baw_size / 2;
-	काष्ठा ieee80211_tx_info *tx_info;
-	काष्ठा ath_frame_info *fi;
-	काष्ठा sk_buff *skb;
+	struct ieee80211_tx_info *tx_info;
+	struct ath_frame_info *fi;
+	struct sk_buff *skb;
 
 
 	bf = bf_first;
 	aggr_limit = ath_lookup_rate(sc, bf, tid);
 
-	जबतक (bf)
-	अणु
+	while (bf)
+	{
 		skb = bf->bf_mpdu;
 		fi = get_frame_info(skb);
 
-		/* करो not exceed aggregation limit */
+		/* do not exceed aggregation limit */
 		al_delta = ATH_AGGR_DELIM_SZ + fi->framelen;
-		अगर (nframes) अणु
-			अगर (aggr_limit < al + bpad + al_delta ||
+		if (nframes) {
+			if (aggr_limit < al + bpad + al_delta ||
 			    ath_lookup_legacy(bf) || nframes >= h_baw)
-				जाओ stop;
+				goto stop;
 
 			tx_info = IEEE80211_SKB_CB(bf->bf_mpdu);
-			अगर ((tx_info->flags & IEEE80211_TX_CTL_RATE_CTRL_PROBE) ||
+			if ((tx_info->flags & IEEE80211_TX_CTL_RATE_CTRL_PROBE) ||
 			    !(tx_info->flags & IEEE80211_TX_CTL_AMPDU))
-				जाओ stop;
-		पूर्ण
+				goto stop;
+		}
 
-		/* add padding क्रम previous frame to aggregation length */
+		/* add padding for previous frame to aggregation length */
 		al += bpad + al_delta;
 
 		/*
 		 * Get the delimiters needed to meet the MPDU
-		 * density क्रम this node.
+		 * density for this node.
 		 */
 		ndelim = ath_compute_num_delims(sc, tid, bf_first, fi->framelen,
 						!nframes);
 		bpad = PADBYTES(al_delta) + (ndelim << 2);
 
 		nframes++;
-		bf->bf_next = शून्य;
+		bf->bf_next = NULL;
 
 		/* link buffers of this frame to the aggregate */
 		bf->bf_state.ndelim = ndelim;
 
 		list_add_tail(&bf->list, bf_q);
-		अगर (bf_prev)
+		if (bf_prev)
 			bf_prev->bf_next = bf;
 
 		bf_prev = bf;
 
 		ret = ath_tx_get_tid_subframe(sc, txq, tid, &bf);
-		अगर (ret < 0)
-			अवरोध;
-	पूर्ण
-	जाओ finish;
+		if (ret < 0)
+			break;
+	}
+	goto finish;
 stop:
 	__skb_queue_tail(&tid->retry_q, bf->bf_mpdu);
 finish:
 	bf = bf_first;
 	bf->bf_lastbf = bf_prev;
 
-	अगर (bf == bf_prev) अणु
+	if (bf == bf_prev) {
 		al = get_frame_info(bf->bf_mpdu)->framelen;
 		bf->bf_state.bf_type = BUF_AMPDU;
-	पूर्ण अन्यथा अणु
+	} else {
 		TX_STAT_INC(sc, txq->axq_qnum, a_aggr);
-	पूर्ण
+	}
 
-	वापस al;
-#अघोषित PADBYTES
-पूर्ण
+	return al;
+#undef PADBYTES
+}
 
 /*
  * rix - rate index
  * pktlen - total bytes (delims + data + fcs + pads + pad delims)
- * width  - 0 क्रम 20 MHz, 1 क्रम 40 MHz
- * half_gi - to use 4us v/s 3.6 us क्रम symbol समय
+ * width  - 0 for 20 MHz, 1 for 40 MHz
+ * half_gi - to use 4us v/s 3.6 us for symbol time
  */
-u32 ath_pkt_duration(काष्ठा ath_softc *sc, u8 rix, पूर्णांक pktlen,
-		     पूर्णांक width, पूर्णांक half_gi, bool लघुPreamble)
-अणु
+u32 ath_pkt_duration(struct ath_softc *sc, u8 rix, int pktlen,
+		     int width, int half_gi, bool shortPreamble)
+{
 	u32 nbits, nsymbits, duration, nsymbols;
-	पूर्णांक streams;
+	int streams;
 
 	/* find number of symbols: PLCP + data */
 	streams = HT_RC_2_STREAMS(rix);
@@ -1079,337 +1078,337 @@ u32 ath_pkt_duration(काष्ठा ath_softc *sc, u8 rix, पूर्ण�
 	nsymbits = bits_per_symbol[rix % 8][width] * streams;
 	nsymbols = (nbits + nsymbits - 1) / nsymbits;
 
-	अगर (!half_gi)
+	if (!half_gi)
 		duration = SYMBOL_TIME(nsymbols);
-	अन्यथा
+	else
 		duration = SYMBOL_TIME_HALFGI(nsymbols);
 
-	/* addup duration क्रम legacy/ht training and संकेत fields */
+	/* addup duration for legacy/ht training and signal fields */
 	duration += L_STF + L_LTF + L_SIG + HT_SIG + HT_STF + HT_LTF(streams);
 
-	वापस duration;
-पूर्ण
+	return duration;
+}
 
-अटल पूर्णांक ath_max_framelen(पूर्णांक usec, पूर्णांक mcs, bool ht40, bool sgi)
-अणु
-	पूर्णांक streams = HT_RC_2_STREAMS(mcs);
-	पूर्णांक symbols, bits;
-	पूर्णांक bytes = 0;
+static int ath_max_framelen(int usec, int mcs, bool ht40, bool sgi)
+{
+	int streams = HT_RC_2_STREAMS(mcs);
+	int symbols, bits;
+	int bytes = 0;
 
 	usec -= L_STF + L_LTF + L_SIG + HT_SIG + HT_STF + HT_LTF(streams);
 	symbols = sgi ? TIME_SYMBOLS_HALFGI(usec) : TIME_SYMBOLS(usec);
 	bits = symbols * bits_per_symbol[mcs % 8][ht40] * streams;
 	bits -= OFDM_PLCP_BITS;
 	bytes = bits / 8;
-	अगर (bytes > 65532)
+	if (bytes > 65532)
 		bytes = 65532;
 
-	वापस bytes;
-पूर्ण
+	return bytes;
+}
 
-व्योम ath_update_max_aggr_framelen(काष्ठा ath_softc *sc, पूर्णांक queue, पूर्णांक txop)
-अणु
+void ath_update_max_aggr_framelen(struct ath_softc *sc, int queue, int txop)
+{
 	u16 *cur_ht20, *cur_ht20_sgi, *cur_ht40, *cur_ht40_sgi;
-	पूर्णांक mcs;
+	int mcs;
 
-	/* 4ms is the शेष (and maximum) duration */
-	अगर (!txop || txop > 4096)
+	/* 4ms is the default (and maximum) duration */
+	if (!txop || txop > 4096)
 		txop = 4096;
 
 	cur_ht20 = sc->tx.max_aggr_framelen[queue][MCS_HT20];
 	cur_ht20_sgi = sc->tx.max_aggr_framelen[queue][MCS_HT20_SGI];
 	cur_ht40 = sc->tx.max_aggr_framelen[queue][MCS_HT40];
 	cur_ht40_sgi = sc->tx.max_aggr_framelen[queue][MCS_HT40_SGI];
-	क्रम (mcs = 0; mcs < 32; mcs++) अणु
+	for (mcs = 0; mcs < 32; mcs++) {
 		cur_ht20[mcs] = ath_max_framelen(txop, mcs, false, false);
 		cur_ht20_sgi[mcs] = ath_max_framelen(txop, mcs, false, true);
 		cur_ht40[mcs] = ath_max_framelen(txop, mcs, true, false);
 		cur_ht40_sgi[mcs] = ath_max_framelen(txop, mcs, true, true);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल u8 ath_get_rate_txघातer(काष्ठा ath_softc *sc, काष्ठा ath_buf *bf,
+static u8 ath_get_rate_txpower(struct ath_softc *sc, struct ath_buf *bf,
 			       u8 rateidx, bool is_40, bool is_cck)
-अणु
-	u8 max_घातer;
-	काष्ठा sk_buff *skb;
-	काष्ठा ath_frame_info *fi;
-	काष्ठा ieee80211_tx_info *info;
-	काष्ठा ath_hw *ah = sc->sc_ah;
+{
+	u8 max_power;
+	struct sk_buff *skb;
+	struct ath_frame_info *fi;
+	struct ieee80211_tx_info *info;
+	struct ath_hw *ah = sc->sc_ah;
 
-	अगर (sc->tx99_state || !ah->tpc_enabled)
-		वापस MAX_RATE_POWER;
+	if (sc->tx99_state || !ah->tpc_enabled)
+		return MAX_RATE_POWER;
 
 	skb = bf->bf_mpdu;
 	fi = get_frame_info(skb);
 	info = IEEE80211_SKB_CB(skb);
 
-	अगर (!AR_SREV_9300_20_OR_LATER(ah)) अणु
-		पूर्णांक txघातer = fi->tx_घातer;
+	if (!AR_SREV_9300_20_OR_LATER(ah)) {
+		int txpower = fi->tx_power;
 
-		अगर (is_40) अणु
-			u8 घातer_ht40delta;
-			काष्ठा ar5416_eeprom_def *eep = &ah->eeprom.def;
+		if (is_40) {
+			u8 power_ht40delta;
+			struct ar5416_eeprom_def *eep = &ah->eeprom.def;
 			u16 eeprom_rev = ah->eep_ops->get_eeprom_rev(ah);
 
-			अगर (eeprom_rev >= AR5416_EEP_MINOR_VER_2) अणु
+			if (eeprom_rev >= AR5416_EEP_MINOR_VER_2) {
 				bool is_2ghz;
-				काष्ठा modal_eep_header *pmodal;
+				struct modal_eep_header *pmodal;
 
 				is_2ghz = info->band == NL80211_BAND_2GHZ;
 				pmodal = &eep->modalHeader[is_2ghz];
-				घातer_ht40delta = pmodal->ht40PowerIncForPdadc;
-			पूर्ण अन्यथा अणु
-				घातer_ht40delta = 2;
-			पूर्ण
-			txघातer += घातer_ht40delta;
-		पूर्ण
+				power_ht40delta = pmodal->ht40PowerIncForPdadc;
+			} else {
+				power_ht40delta = 2;
+			}
+			txpower += power_ht40delta;
+		}
 
-		अगर (AR_SREV_9287(ah) || AR_SREV_9285(ah) ||
-		    AR_SREV_9271(ah)) अणु
-			txघातer -= 2 * AR9287_PWR_TABLE_OFFSET_DB;
-		पूर्ण अन्यथा अगर (AR_SREV_9280_20_OR_LATER(ah)) अणु
-			s8 घातer_offset;
+		if (AR_SREV_9287(ah) || AR_SREV_9285(ah) ||
+		    AR_SREV_9271(ah)) {
+			txpower -= 2 * AR9287_PWR_TABLE_OFFSET_DB;
+		} else if (AR_SREV_9280_20_OR_LATER(ah)) {
+			s8 power_offset;
 
-			घातer_offset = ah->eep_ops->get_eeprom(ah,
+			power_offset = ah->eep_ops->get_eeprom(ah,
 							EEP_PWR_TABLE_OFFSET);
-			txघातer -= 2 * घातer_offset;
-		पूर्ण
+			txpower -= 2 * power_offset;
+		}
 
-		अगर (OLC_FOR_AR9280_20_LATER && is_cck)
-			txघातer -= 2;
+		if (OLC_FOR_AR9280_20_LATER && is_cck)
+			txpower -= 2;
 
-		txघातer = max(txघातer, 0);
-		max_घातer = min_t(u8, ah->tx_घातer[rateidx], txघातer);
+		txpower = max(txpower, 0);
+		max_power = min_t(u8, ah->tx_power[rateidx], txpower);
 
-		/* XXX: clamp minimum TX घातer at 1 क्रम AR9160 since अगर
-		 * max_घातer is set to 0, frames are transmitted at max
-		 * TX घातer
+		/* XXX: clamp minimum TX power at 1 for AR9160 since if
+		 * max_power is set to 0, frames are transmitted at max
+		 * TX power
 		 */
-		अगर (!max_घातer && !AR_SREV_9280_20_OR_LATER(ah))
-			max_घातer = 1;
-	पूर्ण अन्यथा अगर (!bf->bf_state.bfs_paprd) अणु
-		अगर (rateidx < 8 && (info->flags & IEEE80211_TX_CTL_STBC))
-			max_घातer = min_t(u8, ah->tx_घातer_stbc[rateidx],
-					  fi->tx_घातer);
-		अन्यथा
-			max_घातer = min_t(u8, ah->tx_घातer[rateidx],
-					  fi->tx_घातer);
-	पूर्ण अन्यथा अणु
-		max_घातer = ah->paprd_training_घातer;
-	पूर्ण
+		if (!max_power && !AR_SREV_9280_20_OR_LATER(ah))
+			max_power = 1;
+	} else if (!bf->bf_state.bfs_paprd) {
+		if (rateidx < 8 && (info->flags & IEEE80211_TX_CTL_STBC))
+			max_power = min_t(u8, ah->tx_power_stbc[rateidx],
+					  fi->tx_power);
+		else
+			max_power = min_t(u8, ah->tx_power[rateidx],
+					  fi->tx_power);
+	} else {
+		max_power = ah->paprd_training_power;
+	}
 
-	वापस max_घातer;
-पूर्ण
+	return max_power;
+}
 
-अटल व्योम ath_buf_set_rate(काष्ठा ath_softc *sc, काष्ठा ath_buf *bf,
-			     काष्ठा ath_tx_info *info, पूर्णांक len, bool rts)
-अणु
-	काष्ठा ath_hw *ah = sc->sc_ah;
-	काष्ठा ath_common *common = ath9k_hw_common(ah);
-	काष्ठा sk_buff *skb;
-	काष्ठा ieee80211_tx_info *tx_info;
-	काष्ठा ieee80211_tx_rate *rates;
-	स्थिर काष्ठा ieee80211_rate *rate;
-	काष्ठा ieee80211_hdr *hdr;
-	काष्ठा ath_frame_info *fi = get_frame_info(bf->bf_mpdu);
+static void ath_buf_set_rate(struct ath_softc *sc, struct ath_buf *bf,
+			     struct ath_tx_info *info, int len, bool rts)
+{
+	struct ath_hw *ah = sc->sc_ah;
+	struct ath_common *common = ath9k_hw_common(ah);
+	struct sk_buff *skb;
+	struct ieee80211_tx_info *tx_info;
+	struct ieee80211_tx_rate *rates;
+	const struct ieee80211_rate *rate;
+	struct ieee80211_hdr *hdr;
+	struct ath_frame_info *fi = get_frame_info(bf->bf_mpdu);
 	u32 rts_thresh = sc->hw->wiphy->rts_threshold;
-	पूर्णांक i;
+	int i;
 	u8 rix = 0;
 
 	skb = bf->bf_mpdu;
 	tx_info = IEEE80211_SKB_CB(skb);
 	rates = bf->rates;
-	hdr = (काष्ठा ieee80211_hdr *)skb->data;
+	hdr = (struct ieee80211_hdr *)skb->data;
 
-	/* set dur_update_en क्रम l-sig computation except क्रम PS-Poll frames */
+	/* set dur_update_en for l-sig computation except for PS-Poll frames */
 	info->dur_update = !ieee80211_is_pspoll(hdr->frame_control);
 	info->rtscts_rate = fi->rtscts_rate;
 
-	क्रम (i = 0; i < ARRAY_SIZE(bf->rates); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(bf->rates); i++) {
 		bool is_40, is_sgi, is_sp, is_cck;
-		पूर्णांक phy;
+		int phy;
 
-		अगर (!rates[i].count || (rates[i].idx < 0))
-			जारी;
+		if (!rates[i].count || (rates[i].idx < 0))
+			continue;
 
 		rix = rates[i].idx;
 		info->rates[i].Tries = rates[i].count;
 
 		/*
-		 * Handle RTS threshold क्रम unaggregated HT frames.
+		 * Handle RTS threshold for unaggregated HT frames.
 		 */
-		अगर (bf_isampdu(bf) && !bf_isaggr(bf) &&
+		if (bf_isampdu(bf) && !bf_isaggr(bf) &&
 		    (rates[i].flags & IEEE80211_TX_RC_MCS) &&
-		    unlikely(rts_thresh != (u32) -1)) अणु
-			अगर (!rts_thresh || (len > rts_thresh))
+		    unlikely(rts_thresh != (u32) -1)) {
+			if (!rts_thresh || (len > rts_thresh))
 				rts = true;
-		पूर्ण
+		}
 
-		अगर (rts || rates[i].flags & IEEE80211_TX_RC_USE_RTS_CTS) अणु
+		if (rts || rates[i].flags & IEEE80211_TX_RC_USE_RTS_CTS) {
 			info->rates[i].RateFlags |= ATH9K_RATESERIES_RTS_CTS;
 			info->flags |= ATH9K_TXDESC_RTSENA;
-		पूर्ण अन्यथा अगर (rates[i].flags & IEEE80211_TX_RC_USE_CTS_PROTECT) अणु
+		} else if (rates[i].flags & IEEE80211_TX_RC_USE_CTS_PROTECT) {
 			info->rates[i].RateFlags |= ATH9K_RATESERIES_RTS_CTS;
 			info->flags |= ATH9K_TXDESC_CTSENA;
-		पूर्ण
+		}
 
-		अगर (rates[i].flags & IEEE80211_TX_RC_40_MHZ_WIDTH)
+		if (rates[i].flags & IEEE80211_TX_RC_40_MHZ_WIDTH)
 			info->rates[i].RateFlags |= ATH9K_RATESERIES_2040;
-		अगर (rates[i].flags & IEEE80211_TX_RC_SHORT_GI)
+		if (rates[i].flags & IEEE80211_TX_RC_SHORT_GI)
 			info->rates[i].RateFlags |= ATH9K_RATESERIES_HALFGI;
 
 		is_sgi = !!(rates[i].flags & IEEE80211_TX_RC_SHORT_GI);
 		is_40 = !!(rates[i].flags & IEEE80211_TX_RC_40_MHZ_WIDTH);
 		is_sp = !!(rates[i].flags & IEEE80211_TX_RC_USE_SHORT_PREAMBLE);
 
-		अगर (rates[i].flags & IEEE80211_TX_RC_MCS) अणु
+		if (rates[i].flags & IEEE80211_TX_RC_MCS) {
 			/* MCS rates */
 			info->rates[i].Rate = rix | 0x80;
 			info->rates[i].ChSel = ath_txchainmask_reduction(sc,
 					ah->txchainmask, info->rates[i].Rate);
 			info->rates[i].PktDuration = ath_pkt_duration(sc, rix, len,
 				 is_40, is_sgi, is_sp);
-			अगर (rix < 8 && (tx_info->flags & IEEE80211_TX_CTL_STBC))
+			if (rix < 8 && (tx_info->flags & IEEE80211_TX_CTL_STBC))
 				info->rates[i].RateFlags |= ATH9K_RATESERIES_STBC;
-			अगर (rix >= 8 && fi->dyn_smps) अणु
+			if (rix >= 8 && fi->dyn_smps) {
 				info->rates[i].RateFlags |=
 					ATH9K_RATESERIES_RTS_CTS;
 				info->flags |= ATH9K_TXDESC_CTSENA;
-			पूर्ण
+			}
 
-			info->txघातer[i] = ath_get_rate_txघातer(sc, bf, rix,
+			info->txpower[i] = ath_get_rate_txpower(sc, bf, rix,
 								is_40, false);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/* legacy rates */
 		rate = &common->sbands[tx_info->band].bitrates[rates[i].idx];
-		अगर ((tx_info->band == NL80211_BAND_2GHZ) &&
+		if ((tx_info->band == NL80211_BAND_2GHZ) &&
 		    !(rate->flags & IEEE80211_RATE_ERP_G))
 			phy = WLAN_RC_PHY_CCK;
-		अन्यथा
+		else
 			phy = WLAN_RC_PHY_OFDM;
 
 		info->rates[i].Rate = rate->hw_value;
-		अगर (rate->hw_value_लघु) अणु
-			अगर (rates[i].flags & IEEE80211_TX_RC_USE_SHORT_PREAMBLE)
-				info->rates[i].Rate |= rate->hw_value_लघु;
-		पूर्ण अन्यथा अणु
+		if (rate->hw_value_short) {
+			if (rates[i].flags & IEEE80211_TX_RC_USE_SHORT_PREAMBLE)
+				info->rates[i].Rate |= rate->hw_value_short;
+		} else {
 			is_sp = false;
-		पूर्ण
+		}
 
-		अगर (bf->bf_state.bfs_paprd)
+		if (bf->bf_state.bfs_paprd)
 			info->rates[i].ChSel = ah->txchainmask;
-		अन्यथा
+		else
 			info->rates[i].ChSel = ath_txchainmask_reduction(sc,
 					ah->txchainmask, info->rates[i].Rate);
 
-		info->rates[i].PktDuration = ath9k_hw_computetxसमय(sc->sc_ah,
+		info->rates[i].PktDuration = ath9k_hw_computetxtime(sc->sc_ah,
 			phy, rate->bitrate * 100, len, rix, is_sp);
 
 		is_cck = IS_CCK_RATE(info->rates[i].Rate);
-		info->txघातer[i] = ath_get_rate_txघातer(sc, bf, rix, false,
+		info->txpower[i] = ath_get_rate_txpower(sc, bf, rix, false,
 							is_cck);
-	पूर्ण
+	}
 
 	/* For AR5416 - RTS cannot be followed by a frame larger than 8K */
-	अगर (bf_isaggr(bf) && (len > sc->sc_ah->caps.rts_aggr_limit))
+	if (bf_isaggr(bf) && (len > sc->sc_ah->caps.rts_aggr_limit))
 		info->flags &= ~ATH9K_TXDESC_RTSENA;
 
 	/* ATH9K_TXDESC_RTSENA and ATH9K_TXDESC_CTSENA are mutually exclusive. */
-	अगर (info->flags & ATH9K_TXDESC_RTSENA)
+	if (info->flags & ATH9K_TXDESC_RTSENA)
 		info->flags &= ~ATH9K_TXDESC_CTSENA;
-पूर्ण
+}
 
-अटल क्रमागत ath9k_pkt_type get_hw_packet_type(काष्ठा sk_buff *skb)
-अणु
-	काष्ठा ieee80211_hdr *hdr;
-	क्रमागत ath9k_pkt_type htype;
+static enum ath9k_pkt_type get_hw_packet_type(struct sk_buff *skb)
+{
+	struct ieee80211_hdr *hdr;
+	enum ath9k_pkt_type htype;
 	__le16 fc;
 
-	hdr = (काष्ठा ieee80211_hdr *)skb->data;
+	hdr = (struct ieee80211_hdr *)skb->data;
 	fc = hdr->frame_control;
 
-	अगर (ieee80211_is_beacon(fc))
+	if (ieee80211_is_beacon(fc))
 		htype = ATH9K_PKT_TYPE_BEACON;
-	अन्यथा अगर (ieee80211_is_probe_resp(fc))
+	else if (ieee80211_is_probe_resp(fc))
 		htype = ATH9K_PKT_TYPE_PROBE_RESP;
-	अन्यथा अगर (ieee80211_is_atim(fc))
+	else if (ieee80211_is_atim(fc))
 		htype = ATH9K_PKT_TYPE_ATIM;
-	अन्यथा अगर (ieee80211_is_pspoll(fc))
+	else if (ieee80211_is_pspoll(fc))
 		htype = ATH9K_PKT_TYPE_PSPOLL;
-	अन्यथा
+	else
 		htype = ATH9K_PKT_TYPE_NORMAL;
 
-	वापस htype;
-पूर्ण
+	return htype;
+}
 
-अटल व्योम ath_tx_fill_desc(काष्ठा ath_softc *sc, काष्ठा ath_buf *bf,
-			     काष्ठा ath_txq *txq, पूर्णांक len)
-अणु
-	काष्ठा ath_hw *ah = sc->sc_ah;
-	काष्ठा ath_buf *bf_first = शून्य;
-	काष्ठा ath_tx_info info;
+static void ath_tx_fill_desc(struct ath_softc *sc, struct ath_buf *bf,
+			     struct ath_txq *txq, int len)
+{
+	struct ath_hw *ah = sc->sc_ah;
+	struct ath_buf *bf_first = NULL;
+	struct ath_tx_info info;
 	u32 rts_thresh = sc->hw->wiphy->rts_threshold;
 	bool rts = false;
 
-	स_रखो(&info, 0, माप(info));
+	memset(&info, 0, sizeof(info));
 	info.is_first = true;
 	info.is_last = true;
 	info.qcu = txq->axq_qnum;
 
-	जबतक (bf) अणु
-		काष्ठा sk_buff *skb = bf->bf_mpdu;
-		काष्ठा ieee80211_tx_info *tx_info = IEEE80211_SKB_CB(skb);
-		काष्ठा ath_frame_info *fi = get_frame_info(skb);
+	while (bf) {
+		struct sk_buff *skb = bf->bf_mpdu;
+		struct ieee80211_tx_info *tx_info = IEEE80211_SKB_CB(skb);
+		struct ath_frame_info *fi = get_frame_info(skb);
 		bool aggr = !!(bf->bf_state.bf_type & BUF_AGGR);
 
 		info.type = get_hw_packet_type(skb);
-		अगर (bf->bf_next)
+		if (bf->bf_next)
 			info.link = bf->bf_next->bf_daddr;
-		अन्यथा
+		else
 			info.link = (sc->tx99_state) ? bf->bf_daddr : 0;
 
-		अगर (!bf_first) अणु
+		if (!bf_first) {
 			bf_first = bf;
 
-			अगर (!sc->tx99_state)
+			if (!sc->tx99_state)
 				info.flags = ATH9K_TXDESC_INTREQ;
-			अगर ((tx_info->flags & IEEE80211_TX_CTL_CLEAR_PS_FILT) ||
+			if ((tx_info->flags & IEEE80211_TX_CTL_CLEAR_PS_FILT) ||
 			    txq == sc->tx.uapsdq)
 				info.flags |= ATH9K_TXDESC_CLRDMASK;
 
-			अगर (tx_info->flags & IEEE80211_TX_CTL_NO_ACK)
+			if (tx_info->flags & IEEE80211_TX_CTL_NO_ACK)
 				info.flags |= ATH9K_TXDESC_NOACK;
-			अगर (tx_info->flags & IEEE80211_TX_CTL_LDPC)
+			if (tx_info->flags & IEEE80211_TX_CTL_LDPC)
 				info.flags |= ATH9K_TXDESC_LDPC;
 
-			अगर (bf->bf_state.bfs_paprd)
+			if (bf->bf_state.bfs_paprd)
 				info.flags |= (u32) bf->bf_state.bfs_paprd <<
 					      ATH9K_TXDESC_PAPRD_S;
 
 			/*
-			 * mac80211 करोesn't handle RTS threshold क्रम HT because
+			 * mac80211 doesn't handle RTS threshold for HT because
 			 * the decision has to be taken based on AMPDU length
-			 * and aggregation is करोne entirely inside ath9k.
-			 * Set the RTS/CTS flag क्रम the first subframe based
+			 * and aggregation is done entirely inside ath9k.
+			 * Set the RTS/CTS flag for the first subframe based
 			 * on the threshold.
 			 */
-			अगर (aggr && (bf == bf_first) &&
-			    unlikely(rts_thresh != (u32) -1)) अणु
+			if (aggr && (bf == bf_first) &&
+			    unlikely(rts_thresh != (u32) -1)) {
 				/*
 				 * "len" is the size of the entire AMPDU.
 				 */
-				अगर (!rts_thresh || (len > rts_thresh))
+				if (!rts_thresh || (len > rts_thresh))
 					rts = true;
-			पूर्ण
+			}
 
-			अगर (!aggr)
+			if (!aggr)
 				len = fi->framelen;
 
 			ath_buf_set_rate(sc, bf, &info, len, rts);
-		पूर्ण
+		}
 
 		info.buf_addr[0] = bf->bf_buf_addr;
 		info.buf_len[0] = skb->len;
@@ -1417,114 +1416,114 @@ u32 ath_pkt_duration(काष्ठा ath_softc *sc, u8 rix, पूर्ण�
 		info.keyix = fi->keyix;
 		info.keytype = fi->keytype;
 
-		अगर (aggr) अणु
-			अगर (bf == bf_first)
+		if (aggr) {
+			if (bf == bf_first)
 				info.aggr = AGGR_BUF_FIRST;
-			अन्यथा अगर (bf == bf_first->bf_lastbf)
+			else if (bf == bf_first->bf_lastbf)
 				info.aggr = AGGR_BUF_LAST;
-			अन्यथा
+			else
 				info.aggr = AGGR_BUF_MIDDLE;
 
 			info.ndelim = bf->bf_state.ndelim;
 			info.aggr_len = len;
-		पूर्ण
+		}
 
-		अगर (bf == bf_first->bf_lastbf)
-			bf_first = शून्य;
+		if (bf == bf_first->bf_lastbf)
+			bf_first = NULL;
 
 		ath9k_hw_set_txdesc(ah, bf->bf_desc, &info);
 		bf = bf->bf_next;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम
-ath_tx_क्रमm_burst(काष्ठा ath_softc *sc, काष्ठा ath_txq *txq,
-		  काष्ठा ath_atx_tid *tid, काष्ठा list_head *bf_q,
-		  काष्ठा ath_buf *bf_first)
-अणु
-	काष्ठा ath_buf *bf = bf_first, *bf_prev = शून्य;
-	पूर्णांक nframes = 0, ret;
+static void
+ath_tx_form_burst(struct ath_softc *sc, struct ath_txq *txq,
+		  struct ath_atx_tid *tid, struct list_head *bf_q,
+		  struct ath_buf *bf_first)
+{
+	struct ath_buf *bf = bf_first, *bf_prev = NULL;
+	int nframes = 0, ret;
 
-	करो अणु
-		काष्ठा ieee80211_tx_info *tx_info;
+	do {
+		struct ieee80211_tx_info *tx_info;
 
 		nframes++;
 		list_add_tail(&bf->list, bf_q);
-		अगर (bf_prev)
+		if (bf_prev)
 			bf_prev->bf_next = bf;
 		bf_prev = bf;
 
-		अगर (nframes >= 2)
-			अवरोध;
+		if (nframes >= 2)
+			break;
 
 		ret = ath_tx_get_tid_subframe(sc, txq, tid, &bf);
-		अगर (ret < 0)
-			अवरोध;
+		if (ret < 0)
+			break;
 
 		tx_info = IEEE80211_SKB_CB(bf->bf_mpdu);
-		अगर (tx_info->flags & IEEE80211_TX_CTL_AMPDU) अणु
+		if (tx_info->flags & IEEE80211_TX_CTL_AMPDU) {
 			__skb_queue_tail(&tid->retry_q, bf->bf_mpdu);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		ath_set_rates(tid->an->vअगर, tid->an->sta, bf);
-	पूर्ण जबतक (1);
-पूर्ण
+		ath_set_rates(tid->an->vif, tid->an->sta, bf);
+	} while (1);
+}
 
-अटल पूर्णांक ath_tx_sched_aggr(काष्ठा ath_softc *sc, काष्ठा ath_txq *txq,
-			     काष्ठा ath_atx_tid *tid)
-अणु
-	काष्ठा ath_buf *bf = शून्य;
-	काष्ठा ieee80211_tx_info *tx_info;
-	काष्ठा list_head bf_q;
-	पूर्णांक aggr_len = 0, ret;
+static int ath_tx_sched_aggr(struct ath_softc *sc, struct ath_txq *txq,
+			     struct ath_atx_tid *tid)
+{
+	struct ath_buf *bf = NULL;
+	struct ieee80211_tx_info *tx_info;
+	struct list_head bf_q;
+	int aggr_len = 0, ret;
 	bool aggr;
 
 	INIT_LIST_HEAD(&bf_q);
 
 	ret = ath_tx_get_tid_subframe(sc, txq, tid, &bf);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	tx_info = IEEE80211_SKB_CB(bf->bf_mpdu);
 	aggr = !!(tx_info->flags & IEEE80211_TX_CTL_AMPDU);
-	अगर ((aggr && txq->axq_ampdu_depth >= ATH_AGGR_MIN_QDEPTH) ||
-	    (!aggr && txq->axq_depth >= ATH_NON_AGGR_MIN_QDEPTH)) अणु
+	if ((aggr && txq->axq_ampdu_depth >= ATH_AGGR_MIN_QDEPTH) ||
+	    (!aggr && txq->axq_depth >= ATH_NON_AGGR_MIN_QDEPTH)) {
 		__skb_queue_tail(&tid->retry_q, bf->bf_mpdu);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	ath_set_rates(tid->an->vअगर, tid->an->sta, bf);
-	अगर (aggr)
-		aggr_len = ath_tx_क्रमm_aggr(sc, txq, tid, &bf_q, bf);
-	अन्यथा
-		ath_tx_क्रमm_burst(sc, txq, tid, &bf_q, bf);
+	ath_set_rates(tid->an->vif, tid->an->sta, bf);
+	if (aggr)
+		aggr_len = ath_tx_form_aggr(sc, txq, tid, &bf_q, bf);
+	else
+		ath_tx_form_burst(sc, txq, tid, &bf_q, bf);
 
-	अगर (list_empty(&bf_q))
-		वापस -EAGAIN;
+	if (list_empty(&bf_q))
+		return -EAGAIN;
 
-	अगर (tid->clear_ps_filter || tid->an->no_ps_filter) अणु
+	if (tid->clear_ps_filter || tid->an->no_ps_filter) {
 		tid->clear_ps_filter = false;
 		tx_info->flags |= IEEE80211_TX_CTL_CLEAR_PS_FILT;
-	पूर्ण
+	}
 
 	ath_tx_fill_desc(sc, bf, txq, aggr_len);
 	ath_tx_txqaddbuf(sc, txq, &bf_q, false);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक ath_tx_aggr_start(काष्ठा ath_softc *sc, काष्ठा ieee80211_sta *sta,
+int ath_tx_aggr_start(struct ath_softc *sc, struct ieee80211_sta *sta,
 		      u16 tid, u16 *ssn)
-अणु
-	काष्ठा ath_common *common = ath9k_hw_common(sc->sc_ah);
-	काष्ठा ath_atx_tid *txtid;
-	काष्ठा ath_txq *txq;
-	काष्ठा ath_node *an;
+{
+	struct ath_common *common = ath9k_hw_common(sc->sc_ah);
+	struct ath_atx_tid *txtid;
+	struct ath_txq *txq;
+	struct ath_node *an;
 	u8 density;
 
 	ath_dbg(common, XMIT, "%s called\n", __func__);
 
-	an = (काष्ठा ath_node *)sta->drv_priv;
+	an = (struct ath_node *)sta->drv_priv;
 	txtid = ATH_AN_2_TID(an, tid);
 	txq = txtid->txq;
 
@@ -1532,33 +1531,33 @@ ath_tx_क्रमm_burst(काष्ठा ath_softc *sc, काष्ठा 
 
 	/* update ampdu factor/density, they may have changed. This may happen
 	 * in HT IBSS when a beacon with HT-info is received after the station
-	 * has alपढ़ोy been added.
+	 * has already been added.
 	 */
-	अगर (sta->ht_cap.ht_supported) अणु
+	if (sta->ht_cap.ht_supported) {
 		an->maxampdu = (1 << (IEEE80211_HT_MAX_AMPDU_FACTOR +
 				      sta->ht_cap.ampdu_factor)) - 1;
 		density = ath9k_parse_mpdudensity(sta->ht_cap.ampdu_density);
 		an->mpdudensity = density;
-	पूर्ण
+	}
 
 	txtid->active = true;
 	*ssn = txtid->seq_start = txtid->seq_next;
 	txtid->bar_index = -1;
 
-	स_रखो(txtid->tx_buf, 0, माप(txtid->tx_buf));
+	memset(txtid->tx_buf, 0, sizeof(txtid->tx_buf));
 	txtid->baw_head = txtid->baw_tail = 0;
 
 	ath_txq_unlock_complete(sc, txq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम ath_tx_aggr_stop(काष्ठा ath_softc *sc, काष्ठा ieee80211_sta *sta, u16 tid)
-अणु
-	काष्ठा ath_common *common = ath9k_hw_common(sc->sc_ah);
-	काष्ठा ath_node *an = (काष्ठा ath_node *)sta->drv_priv;
-	काष्ठा ath_atx_tid *txtid = ATH_AN_2_TID(an, tid);
-	काष्ठा ath_txq *txq = txtid->txq;
+void ath_tx_aggr_stop(struct ath_softc *sc, struct ieee80211_sta *sta, u16 tid)
+{
+	struct ath_common *common = ath9k_hw_common(sc->sc_ah);
+	struct ath_node *an = (struct ath_node *)sta->drv_priv;
+	struct ath_atx_tid *txtid = ATH_AN_2_TID(an, tid);
+	struct ath_txq *txq = txtid->txq;
 
 	ath_dbg(common, XMIT, "%s called\n", __func__);
 
@@ -1566,103 +1565,103 @@ ath_tx_क्रमm_burst(काष्ठा ath_softc *sc, काष्ठा 
 	txtid->active = false;
 	ath_tx_flush_tid(sc, txtid);
 	ath_txq_unlock_complete(sc, txq);
-पूर्ण
+}
 
-व्योम ath_tx_aggr_sleep(काष्ठा ieee80211_sta *sta, काष्ठा ath_softc *sc,
-		       काष्ठा ath_node *an)
-अणु
-	काष्ठा ath_common *common = ath9k_hw_common(sc->sc_ah);
-	काष्ठा ath_atx_tid *tid;
-	पूर्णांक tidno;
+void ath_tx_aggr_sleep(struct ieee80211_sta *sta, struct ath_softc *sc,
+		       struct ath_node *an)
+{
+	struct ath_common *common = ath9k_hw_common(sc->sc_ah);
+	struct ath_atx_tid *tid;
+	int tidno;
 
 	ath_dbg(common, XMIT, "%s called\n", __func__);
 
-	क्रम (tidno = 0; tidno < IEEE80211_NUM_TIDS; tidno++) अणु
+	for (tidno = 0; tidno < IEEE80211_NUM_TIDS; tidno++) {
 		tid = ath_node_to_tid(an, tidno);
 
-		अगर (!skb_queue_empty(&tid->retry_q))
+		if (!skb_queue_empty(&tid->retry_q))
 			ieee80211_sta_set_buffered(sta, tid->tidno, true);
 
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम ath_tx_aggr_wakeup(काष्ठा ath_softc *sc, काष्ठा ath_node *an)
-अणु
-	काष्ठा ath_common *common = ath9k_hw_common(sc->sc_ah);
-	काष्ठा ath_atx_tid *tid;
-	काष्ठा ath_txq *txq;
-	पूर्णांक tidno;
+void ath_tx_aggr_wakeup(struct ath_softc *sc, struct ath_node *an)
+{
+	struct ath_common *common = ath9k_hw_common(sc->sc_ah);
+	struct ath_atx_tid *tid;
+	struct ath_txq *txq;
+	int tidno;
 
 	ath_dbg(common, XMIT, "%s called\n", __func__);
 
-	क्रम (tidno = 0; tidno < IEEE80211_NUM_TIDS; tidno++) अणु
+	for (tidno = 0; tidno < IEEE80211_NUM_TIDS; tidno++) {
 		tid = ath_node_to_tid(an, tidno);
 		txq = tid->txq;
 
 		ath_txq_lock(sc, txq);
 		tid->clear_ps_filter = true;
-		अगर (!skb_queue_empty(&tid->retry_q)) अणु
+		if (!skb_queue_empty(&tid->retry_q)) {
 			ath_tx_queue_tid(sc, tid);
 			ath_txq_schedule(sc, txq);
-		पूर्ण
+		}
 		ath_txq_unlock_complete(sc, txq);
 
-	पूर्ण
-पूर्ण
+	}
+}
 
 
-अटल व्योम
-ath9k_set_moredata(काष्ठा ath_softc *sc, काष्ठा ath_buf *bf, bool val)
-अणु
-	काष्ठा ieee80211_hdr *hdr;
+static void
+ath9k_set_moredata(struct ath_softc *sc, struct ath_buf *bf, bool val)
+{
+	struct ieee80211_hdr *hdr;
 	u16 mask = cpu_to_le16(IEEE80211_FCTL_MOREDATA);
 	u16 mask_val = mask * val;
 
-	hdr = (काष्ठा ieee80211_hdr *) bf->bf_mpdu->data;
-	अगर ((hdr->frame_control & mask) != mask_val) अणु
+	hdr = (struct ieee80211_hdr *) bf->bf_mpdu->data;
+	if ((hdr->frame_control & mask) != mask_val) {
 		hdr->frame_control = (hdr->frame_control & ~mask) | mask_val;
-		dma_sync_single_क्रम_device(sc->dev, bf->bf_buf_addr,
-			माप(*hdr), DMA_TO_DEVICE);
-	पूर्ण
-पूर्ण
+		dma_sync_single_for_device(sc->dev, bf->bf_buf_addr,
+			sizeof(*hdr), DMA_TO_DEVICE);
+	}
+}
 
-व्योम ath9k_release_buffered_frames(काष्ठा ieee80211_hw *hw,
-				   काष्ठा ieee80211_sta *sta,
-				   u16 tids, पूर्णांक nframes,
-				   क्रमागत ieee80211_frame_release_type reason,
+void ath9k_release_buffered_frames(struct ieee80211_hw *hw,
+				   struct ieee80211_sta *sta,
+				   u16 tids, int nframes,
+				   enum ieee80211_frame_release_type reason,
 				   bool more_data)
-अणु
-	काष्ठा ath_softc *sc = hw->priv;
-	काष्ठा ath_node *an = (काष्ठा ath_node *)sta->drv_priv;
-	काष्ठा ath_txq *txq = sc->tx.uapsdq;
-	काष्ठा ieee80211_tx_info *info;
-	काष्ठा list_head bf_q;
-	काष्ठा ath_buf *bf_tail = शून्य, *bf = शून्य;
-	पूर्णांक sent = 0;
-	पूर्णांक i, ret;
+{
+	struct ath_softc *sc = hw->priv;
+	struct ath_node *an = (struct ath_node *)sta->drv_priv;
+	struct ath_txq *txq = sc->tx.uapsdq;
+	struct ieee80211_tx_info *info;
+	struct list_head bf_q;
+	struct ath_buf *bf_tail = NULL, *bf = NULL;
+	int sent = 0;
+	int i, ret;
 
 	INIT_LIST_HEAD(&bf_q);
-	क्रम (i = 0; tids && nframes; i++, tids >>= 1) अणु
-		काष्ठा ath_atx_tid *tid;
+	for (i = 0; tids && nframes; i++, tids >>= 1) {
+		struct ath_atx_tid *tid;
 
-		अगर (!(tids & 1))
-			जारी;
+		if (!(tids & 1))
+			continue;
 
 		tid = ATH_AN_2_TID(an, i);
 
 		ath_txq_lock(sc, tid->txq);
-		जबतक (nframes > 0) अणु
+		while (nframes > 0) {
 			ret = ath_tx_get_tid_subframe(sc, sc->tx.uapsdq,
 						      tid, &bf);
-			अगर (ret < 0)
-				अवरोध;
+			if (ret < 0)
+				break;
 
 			ath9k_set_moredata(sc, bf, true);
 			list_add_tail(&bf->list, &bf_q);
-			ath_set_rates(tid->an->vअगर, tid->an->sta, bf);
-			अगर (bf_isampdu(bf))
+			ath_set_rates(tid->an->vif, tid->an->sta, bf);
+			if (bf_isampdu(bf))
 				bf->bf_state.bf_type &= ~BUF_AGGR;
-			अगर (bf_tail)
+			if (bf_tail)
 				bf_tail->bf_next = bf;
 
 			bf_tail = bf;
@@ -1670,89 +1669,89 @@ ath9k_set_moredata(काष्ठा ath_softc *sc, काष्ठा ath_buf 
 			sent++;
 			TX_STAT_INC(sc, txq->axq_qnum, a_queued_hw);
 
-			अगर (an->sta && skb_queue_empty(&tid->retry_q))
+			if (an->sta && skb_queue_empty(&tid->retry_q))
 				ieee80211_sta_set_buffered(an->sta, i, false);
-		पूर्ण
+		}
 		ath_txq_unlock_complete(sc, tid->txq);
-	पूर्ण
+	}
 
-	अगर (list_empty(&bf_q))
-		वापस;
+	if (list_empty(&bf_q))
+		return;
 
-	अगर (!more_data)
+	if (!more_data)
 		ath9k_set_moredata(sc, bf_tail, false);
 
 	info = IEEE80211_SKB_CB(bf_tail->bf_mpdu);
 	info->flags |= IEEE80211_TX_STATUS_EOSP;
 
-	bf = list_first_entry(&bf_q, काष्ठा ath_buf, list);
+	bf = list_first_entry(&bf_q, struct ath_buf, list);
 	ath_txq_lock(sc, txq);
 	ath_tx_fill_desc(sc, bf, txq, 0);
 	ath_tx_txqaddbuf(sc, txq, &bf_q, false);
 	ath_txq_unlock(sc, txq);
-पूर्ण
+}
 
 /********************/
 /* Queue Management */
 /********************/
 
-काष्ठा ath_txq *ath_txq_setup(काष्ठा ath_softc *sc, पूर्णांक qtype, पूर्णांक subtype)
-अणु
-	काष्ठा ath_hw *ah = sc->sc_ah;
-	काष्ठा ath9k_tx_queue_info qi;
-	अटल स्थिर पूर्णांक subtype_txq_to_hwq[] = अणु
+struct ath_txq *ath_txq_setup(struct ath_softc *sc, int qtype, int subtype)
+{
+	struct ath_hw *ah = sc->sc_ah;
+	struct ath9k_tx_queue_info qi;
+	static const int subtype_txq_to_hwq[] = {
 		[IEEE80211_AC_BE] = ATH_TXQ_AC_BE,
 		[IEEE80211_AC_BK] = ATH_TXQ_AC_BK,
 		[IEEE80211_AC_VI] = ATH_TXQ_AC_VI,
 		[IEEE80211_AC_VO] = ATH_TXQ_AC_VO,
-	पूर्ण;
-	पूर्णांक axq_qnum, i;
+	};
+	int axq_qnum, i;
 
-	स_रखो(&qi, 0, माप(qi));
+	memset(&qi, 0, sizeof(qi));
 	qi.tqi_subtype = subtype_txq_to_hwq[subtype];
-	qi.tqi_aअगरs = ATH9K_TXQ_USEDEFAULT;
+	qi.tqi_aifs = ATH9K_TXQ_USEDEFAULT;
 	qi.tqi_cwmin = ATH9K_TXQ_USEDEFAULT;
 	qi.tqi_cwmax = ATH9K_TXQ_USEDEFAULT;
 	qi.tqi_physCompBuf = 0;
 
 	/*
-	 * Enable पूर्णांकerrupts only क्रम EOL and DESC conditions.
-	 * We mark tx descriptors to receive a DESC पूर्णांकerrupt
-	 * when a tx queue माला_लो deep; otherwise रुकोing क्रम the
-	 * EOL to reap descriptors.  Note that this is करोne to
-	 * reduce पूर्णांकerrupt load and this only defers reaping
+	 * Enable interrupts only for EOL and DESC conditions.
+	 * We mark tx descriptors to receive a DESC interrupt
+	 * when a tx queue gets deep; otherwise waiting for the
+	 * EOL to reap descriptors.  Note that this is done to
+	 * reduce interrupt load and this only defers reaping
 	 * descriptors, never transmitting frames.  Aside from
-	 * reducing पूर्णांकerrupts this also permits more concurrency.
-	 * The only potential करोwnside is अगर the tx queue backs
-	 * up in which हाल the top half of the kernel may backup
+	 * reducing interrupts this also permits more concurrency.
+	 * The only potential downside is if the tx queue backs
+	 * up in which case the top half of the kernel may backup
 	 * due to a lack of tx descriptors.
 	 *
 	 * The UAPSD queue is an exception, since we take a desc-
-	 * based पूर्णांकr on the EOSP frames.
+	 * based intr on the EOSP frames.
 	 */
-	अगर (ah->caps.hw_caps & ATH9K_HW_CAP_EDMA) अणु
+	if (ah->caps.hw_caps & ATH9K_HW_CAP_EDMA) {
 		qi.tqi_qflags = TXQ_FLAG_TXINT_ENABLE;
-	पूर्ण अन्यथा अणु
-		अगर (qtype == ATH9K_TX_QUEUE_UAPSD)
+	} else {
+		if (qtype == ATH9K_TX_QUEUE_UAPSD)
 			qi.tqi_qflags = TXQ_FLAG_TXDESCINT_ENABLE;
-		अन्यथा
+		else
 			qi.tqi_qflags = TXQ_FLAG_TXEOLINT_ENABLE |
 					TXQ_FLAG_TXDESCINT_ENABLE;
-	पूर्ण
+	}
 	axq_qnum = ath9k_hw_setuptxqueue(ah, qtype, &qi);
-	अगर (axq_qnum == -1) अणु
+	if (axq_qnum == -1) {
 		/*
-		 * NB: करोn't prपूर्णांक a message, this happens
+		 * NB: don't print a message, this happens
 		 * normally on parts with too few tx queues
 		 */
-		वापस शून्य;
-	पूर्ण
-	अगर (!ATH_TXQ_SETUP(sc, axq_qnum)) अणु
-		काष्ठा ath_txq *txq = &sc->tx.txq[axq_qnum];
+		return NULL;
+	}
+	if (!ATH_TXQ_SETUP(sc, axq_qnum)) {
+		struct ath_txq *txq = &sc->tx.txq[axq_qnum];
 
 		txq->axq_qnum = axq_qnum;
 		txq->mac80211_qnum = -1;
-		txq->axq_link = शून्य;
+		txq->axq_link = NULL;
 		__skb_queue_head_init(&txq->complete_q);
 		INIT_LIST_HEAD(&txq->axq_q);
 		spin_lock_init(&txq->axq_lock);
@@ -1762,214 +1761,214 @@ ath9k_set_moredata(काष्ठा ath_softc *sc, काष्ठा ath_buf 
 		sc->tx.txqsetup |= 1<<axq_qnum;
 
 		txq->txq_headidx = txq->txq_tailidx = 0;
-		क्रम (i = 0; i < ATH_TXFIFO_DEPTH; i++)
-			INIT_LIST_HEAD(&txq->txq_fअगरo[i]);
-	पूर्ण
-	वापस &sc->tx.txq[axq_qnum];
-पूर्ण
+		for (i = 0; i < ATH_TXFIFO_DEPTH; i++)
+			INIT_LIST_HEAD(&txq->txq_fifo[i]);
+	}
+	return &sc->tx.txq[axq_qnum];
+}
 
-पूर्णांक ath_txq_update(काष्ठा ath_softc *sc, पूर्णांक qnum,
-		   काष्ठा ath9k_tx_queue_info *qinfo)
-अणु
-	काष्ठा ath_hw *ah = sc->sc_ah;
-	पूर्णांक error = 0;
-	काष्ठा ath9k_tx_queue_info qi;
+int ath_txq_update(struct ath_softc *sc, int qnum,
+		   struct ath9k_tx_queue_info *qinfo)
+{
+	struct ath_hw *ah = sc->sc_ah;
+	int error = 0;
+	struct ath9k_tx_queue_info qi;
 
 	BUG_ON(sc->tx.txq[qnum].axq_qnum != qnum);
 
 	ath9k_hw_get_txq_props(ah, qnum, &qi);
-	qi.tqi_aअगरs = qinfo->tqi_aअगरs;
+	qi.tqi_aifs = qinfo->tqi_aifs;
 	qi.tqi_cwmin = qinfo->tqi_cwmin;
 	qi.tqi_cwmax = qinfo->tqi_cwmax;
 	qi.tqi_burstTime = qinfo->tqi_burstTime;
-	qi.tqi_पढ़ोyTime = qinfo->tqi_पढ़ोyTime;
+	qi.tqi_readyTime = qinfo->tqi_readyTime;
 
-	अगर (!ath9k_hw_set_txq_props(ah, qnum, &qi)) अणु
+	if (!ath9k_hw_set_txq_props(ah, qnum, &qi)) {
 		ath_err(ath9k_hw_common(sc->sc_ah),
 			"Unable to update hardware queue %u!\n", qnum);
 		error = -EIO;
-	पूर्ण अन्यथा अणु
+	} else {
 		ath9k_hw_resettxqueue(ah, qnum);
-	पूर्ण
+	}
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-पूर्णांक ath_cabq_update(काष्ठा ath_softc *sc)
-अणु
-	काष्ठा ath9k_tx_queue_info qi;
-	काष्ठा ath_beacon_config *cur_conf = &sc->cur_chan->beacon;
-	पूर्णांक qnum = sc->beacon.cabq->axq_qnum;
+int ath_cabq_update(struct ath_softc *sc)
+{
+	struct ath9k_tx_queue_info qi;
+	struct ath_beacon_config *cur_conf = &sc->cur_chan->beacon;
+	int qnum = sc->beacon.cabq->axq_qnum;
 
 	ath9k_hw_get_txq_props(sc->sc_ah, qnum, &qi);
 
-	qi.tqi_पढ़ोyTime = (TU_TO_USEC(cur_conf->beacon_पूर्णांकerval) *
+	qi.tqi_readyTime = (TU_TO_USEC(cur_conf->beacon_interval) *
 			    ATH_CABQ_READY_TIME) / 100;
 	ath_txq_update(sc, qnum, &qi);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ath_drain_txq_list(काष्ठा ath_softc *sc, काष्ठा ath_txq *txq,
-			       काष्ठा list_head *list)
-अणु
-	काष्ठा ath_buf *bf, *lastbf;
-	काष्ठा list_head bf_head;
-	काष्ठा ath_tx_status ts;
+static void ath_drain_txq_list(struct ath_softc *sc, struct ath_txq *txq,
+			       struct list_head *list)
+{
+	struct ath_buf *bf, *lastbf;
+	struct list_head bf_head;
+	struct ath_tx_status ts;
 
-	स_रखो(&ts, 0, माप(ts));
+	memset(&ts, 0, sizeof(ts));
 	ts.ts_status = ATH9K_TX_FLUSH;
 	INIT_LIST_HEAD(&bf_head);
 
-	जबतक (!list_empty(list)) अणु
-		bf = list_first_entry(list, काष्ठा ath_buf, list);
+	while (!list_empty(list)) {
+		bf = list_first_entry(list, struct ath_buf, list);
 
-		अगर (bf->bf_state.stale) अणु
+		if (bf->bf_state.stale) {
 			list_del(&bf->list);
 
-			ath_tx_वापस_buffer(sc, bf);
-			जारी;
-		पूर्ण
+			ath_tx_return_buffer(sc, bf);
+			continue;
+		}
 
 		lastbf = bf->bf_lastbf;
 		list_cut_position(&bf_head, list, &lastbf->list);
 		ath_tx_process_buffer(sc, txq, &ts, bf, &bf_head);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Drain a given TX queue (could be Beacon or Data)
  *
  * This assumes output has been stopped and
- * we करो not need to block ath_tx_tasklet.
+ * we do not need to block ath_tx_tasklet.
  */
-व्योम ath_draपूर्णांकxq(काष्ठा ath_softc *sc, काष्ठा ath_txq *txq)
-अणु
-	rcu_पढ़ो_lock();
+void ath_draintxq(struct ath_softc *sc, struct ath_txq *txq)
+{
+	rcu_read_lock();
 	ath_txq_lock(sc, txq);
 
-	अगर (sc->sc_ah->caps.hw_caps & ATH9K_HW_CAP_EDMA) अणु
-		पूर्णांक idx = txq->txq_tailidx;
+	if (sc->sc_ah->caps.hw_caps & ATH9K_HW_CAP_EDMA) {
+		int idx = txq->txq_tailidx;
 
-		जबतक (!list_empty(&txq->txq_fअगरo[idx])) अणु
-			ath_drain_txq_list(sc, txq, &txq->txq_fअगरo[idx]);
+		while (!list_empty(&txq->txq_fifo[idx])) {
+			ath_drain_txq_list(sc, txq, &txq->txq_fifo[idx]);
 
 			INCR(idx, ATH_TXFIFO_DEPTH);
-		पूर्ण
+		}
 		txq->txq_tailidx = idx;
-	पूर्ण
+	}
 
-	txq->axq_link = शून्य;
+	txq->axq_link = NULL;
 	txq->axq_tx_inprogress = false;
 	ath_drain_txq_list(sc, txq, &txq->axq_q);
 
 	ath_txq_unlock_complete(sc, txq);
-	rcu_पढ़ो_unlock();
-पूर्ण
+	rcu_read_unlock();
+}
 
-bool ath_drain_all_txq(काष्ठा ath_softc *sc)
-अणु
-	काष्ठा ath_hw *ah = sc->sc_ah;
-	काष्ठा ath_common *common = ath9k_hw_common(sc->sc_ah);
-	काष्ठा ath_txq *txq;
-	पूर्णांक i;
+bool ath_drain_all_txq(struct ath_softc *sc)
+{
+	struct ath_hw *ah = sc->sc_ah;
+	struct ath_common *common = ath9k_hw_common(sc->sc_ah);
+	struct ath_txq *txq;
+	int i;
 	u32 npend = 0;
 
-	अगर (test_bit(ATH_OP_INVALID, &common->op_flags))
-		वापस true;
+	if (test_bit(ATH_OP_INVALID, &common->op_flags))
+		return true;
 
-	ath9k_hw_पात_tx_dma(ah);
+	ath9k_hw_abort_tx_dma(ah);
 
-	/* Check अगर any queue reमुख्यs active */
-	क्रम (i = 0; i < ATH9K_NUM_TX_QUEUES; i++) अणु
-		अगर (!ATH_TXQ_SETUP(sc, i))
-			जारी;
+	/* Check if any queue remains active */
+	for (i = 0; i < ATH9K_NUM_TX_QUEUES; i++) {
+		if (!ATH_TXQ_SETUP(sc, i))
+			continue;
 
-		अगर (!sc->tx.txq[i].axq_depth)
-			जारी;
+		if (!sc->tx.txq[i].axq_depth)
+			continue;
 
-		अगर (ath9k_hw_numtxpending(ah, sc->tx.txq[i].axq_qnum))
+		if (ath9k_hw_numtxpending(ah, sc->tx.txq[i].axq_qnum))
 			npend |= BIT(i);
-	पूर्ण
+	}
 
-	अगर (npend) अणु
+	if (npend) {
 		RESET_STAT_INC(sc, RESET_TX_DMA_ERROR);
 		ath_dbg(common, RESET,
 			"Failed to stop TX DMA, queues=0x%03x!\n", npend);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < ATH9K_NUM_TX_QUEUES; i++) अणु
-		अगर (!ATH_TXQ_SETUP(sc, i))
-			जारी;
+	for (i = 0; i < ATH9K_NUM_TX_QUEUES; i++) {
+		if (!ATH_TXQ_SETUP(sc, i))
+			continue;
 
 		txq = &sc->tx.txq[i];
-		ath_draपूर्णांकxq(sc, txq);
-	पूर्ण
+		ath_draintxq(sc, txq);
+	}
 
-	वापस !npend;
-पूर्ण
+	return !npend;
+}
 
-व्योम ath_tx_cleanupq(काष्ठा ath_softc *sc, काष्ठा ath_txq *txq)
-अणु
+void ath_tx_cleanupq(struct ath_softc *sc, struct ath_txq *txq)
+{
 	ath9k_hw_releasetxqueue(sc->sc_ah, txq->axq_qnum);
 	sc->tx.txqsetup &= ~(1<<txq->axq_qnum);
-पूर्ण
+}
 
-/* For each acq entry, क्रम each tid, try to schedule packets
- * क्रम transmit until ampdu_depth has reached min Q depth.
+/* For each acq entry, for each tid, try to schedule packets
+ * for transmit until ampdu_depth has reached min Q depth.
  */
-व्योम ath_txq_schedule(काष्ठा ath_softc *sc, काष्ठा ath_txq *txq)
-अणु
-	काष्ठा ieee80211_hw *hw = sc->hw;
-	काष्ठा ath_common *common = ath9k_hw_common(sc->sc_ah);
-	काष्ठा ieee80211_txq *queue;
-	काष्ठा ath_atx_tid *tid;
-	पूर्णांक ret;
+void ath_txq_schedule(struct ath_softc *sc, struct ath_txq *txq)
+{
+	struct ieee80211_hw *hw = sc->hw;
+	struct ath_common *common = ath9k_hw_common(sc->sc_ah);
+	struct ieee80211_txq *queue;
+	struct ath_atx_tid *tid;
+	int ret;
 
-	अगर (txq->mac80211_qnum < 0)
-		वापस;
+	if (txq->mac80211_qnum < 0)
+		return;
 
-	अगर (test_bit(ATH_OP_HW_RESET, &common->op_flags))
-		वापस;
+	if (test_bit(ATH_OP_HW_RESET, &common->op_flags))
+		return;
 
 	ieee80211_txq_schedule_start(hw, txq->mac80211_qnum);
 	spin_lock_bh(&sc->chan_lock);
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 
-	अगर (sc->cur_chan->stopped)
-		जाओ out;
+	if (sc->cur_chan->stopped)
+		goto out;
 
-	जबतक ((queue = ieee80211_next_txq(hw, txq->mac80211_qnum))) अणु
-		bool क्रमce;
+	while ((queue = ieee80211_next_txq(hw, txq->mac80211_qnum))) {
+		bool force;
 
-		tid = (काष्ठा ath_atx_tid *)queue->drv_priv;
+		tid = (struct ath_atx_tid *)queue->drv_priv;
 
 		ret = ath_tx_sched_aggr(sc, txq, tid);
 		ath_dbg(common, QUEUE, "ath_tx_sched_aggr returned %d\n", ret);
 
-		क्रमce = !skb_queue_empty(&tid->retry_q);
-		ieee80211_वापस_txq(hw, queue, क्रमce);
-	पूर्ण
+		force = !skb_queue_empty(&tid->retry_q);
+		ieee80211_return_txq(hw, queue, force);
+	}
 
 out:
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 	spin_unlock_bh(&sc->chan_lock);
 	ieee80211_txq_schedule_end(hw, txq->mac80211_qnum);
-पूर्ण
+}
 
-व्योम ath_txq_schedule_all(काष्ठा ath_softc *sc)
-अणु
-	काष्ठा ath_txq *txq;
-	पूर्णांक i;
+void ath_txq_schedule_all(struct ath_softc *sc)
+{
+	struct ath_txq *txq;
+	int i;
 
-	क्रम (i = 0; i < IEEE80211_NUM_ACS; i++) अणु
+	for (i = 0; i < IEEE80211_NUM_ACS; i++) {
 		txq = sc->tx.txq_map[i];
 
 		spin_lock_bh(&txq->axq_lock);
 		ath_txq_schedule(sc, txq);
 		spin_unlock_bh(&txq->axq_lock);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /***********/
 /* TX, DMA */
@@ -1977,14 +1976,14 @@ out:
 
 /*
  * Insert a chain of ath_buf (descriptors) on a txq and
- * assume the descriptors are alपढ़ोy chained together by caller.
+ * assume the descriptors are already chained together by caller.
  */
-अटल व्योम ath_tx_txqaddbuf(काष्ठा ath_softc *sc, काष्ठा ath_txq *txq,
-			     काष्ठा list_head *head, bool पूर्णांकernal)
-अणु
-	काष्ठा ath_hw *ah = sc->sc_ah;
-	काष्ठा ath_common *common = ath9k_hw_common(ah);
-	काष्ठा ath_buf *bf, *bf_last;
+static void ath_tx_txqaddbuf(struct ath_softc *sc, struct ath_txq *txq,
+			     struct list_head *head, bool internal)
+{
+	struct ath_hw *ah = sc->sc_ah;
+	struct ath_common *common = ath9k_hw_common(ah);
+	struct ath_buf *bf, *bf_last;
 	bool puttxbuf = false;
 	bool edma;
 
@@ -1993,454 +1992,454 @@ out:
 	 * pass it on to the hardware.
 	 */
 
-	अगर (list_empty(head))
-		वापस;
+	if (list_empty(head))
+		return;
 
 	edma = !!(ah->caps.hw_caps & ATH9K_HW_CAP_EDMA);
-	bf = list_first_entry(head, काष्ठा ath_buf, list);
-	bf_last = list_entry(head->prev, काष्ठा ath_buf, list);
+	bf = list_first_entry(head, struct ath_buf, list);
+	bf_last = list_entry(head->prev, struct ath_buf, list);
 
 	ath_dbg(common, QUEUE, "qnum: %d, txq depth: %d\n",
 		txq->axq_qnum, txq->axq_depth);
 
-	अगर (edma && list_empty(&txq->txq_fअगरo[txq->txq_headidx])) अणु
-		list_splice_tail_init(head, &txq->txq_fअगरo[txq->txq_headidx]);
+	if (edma && list_empty(&txq->txq_fifo[txq->txq_headidx])) {
+		list_splice_tail_init(head, &txq->txq_fifo[txq->txq_headidx]);
 		INCR(txq->txq_headidx, ATH_TXFIFO_DEPTH);
 		puttxbuf = true;
-	पूर्ण अन्यथा अणु
+	} else {
 		list_splice_tail_init(head, &txq->axq_q);
 
-		अगर (txq->axq_link) अणु
+		if (txq->axq_link) {
 			ath9k_hw_set_desc_link(ah, txq->axq_link, bf->bf_daddr);
 			ath_dbg(common, XMIT, "link[%u] (%p)=%llx (%p)\n",
 				txq->axq_qnum, txq->axq_link,
 				ito64(bf->bf_daddr), bf->bf_desc);
-		पूर्ण अन्यथा अगर (!edma)
+		} else if (!edma)
 			puttxbuf = true;
 
 		txq->axq_link = bf_last->bf_desc;
-	पूर्ण
+	}
 
-	अगर (puttxbuf) अणु
+	if (puttxbuf) {
 		TX_STAT_INC(sc, txq->axq_qnum, puttxbuf);
 		ath9k_hw_puttxbuf(ah, txq->axq_qnum, bf->bf_daddr);
 		ath_dbg(common, XMIT, "TXDP[%u] = %llx (%p)\n",
 			txq->axq_qnum, ito64(bf->bf_daddr), bf->bf_desc);
-	पूर्ण
+	}
 
-	अगर (!edma || sc->tx99_state) अणु
+	if (!edma || sc->tx99_state) {
 		TX_STAT_INC(sc, txq->axq_qnum, txstart);
 		ath9k_hw_txstart(ah, txq->axq_qnum);
-	पूर्ण
+	}
 
-	अगर (!पूर्णांकernal) अणु
-		जबतक (bf) अणु
+	if (!internal) {
+		while (bf) {
 			txq->axq_depth++;
-			अगर (bf_is_ampdu_not_probing(bf))
+			if (bf_is_ampdu_not_probing(bf))
 				txq->axq_ampdu_depth++;
 
 			bf_last = bf->bf_lastbf;
 			bf = bf_last->bf_next;
-			bf_last->bf_next = शून्य;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			bf_last->bf_next = NULL;
+		}
+	}
+}
 
-अटल व्योम ath_tx_send_normal(काष्ठा ath_softc *sc, काष्ठा ath_txq *txq,
-			       काष्ठा ath_atx_tid *tid, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा ieee80211_tx_info *tx_info = IEEE80211_SKB_CB(skb);
-	काष्ठा ath_frame_info *fi = get_frame_info(skb);
-	काष्ठा list_head bf_head;
-	काष्ठा ath_buf *bf = fi->bf;
+static void ath_tx_send_normal(struct ath_softc *sc, struct ath_txq *txq,
+			       struct ath_atx_tid *tid, struct sk_buff *skb)
+{
+	struct ieee80211_tx_info *tx_info = IEEE80211_SKB_CB(skb);
+	struct ath_frame_info *fi = get_frame_info(skb);
+	struct list_head bf_head;
+	struct ath_buf *bf = fi->bf;
 
 	INIT_LIST_HEAD(&bf_head);
 	list_add_tail(&bf->list, &bf_head);
 	bf->bf_state.bf_type = 0;
-	अगर (tid && (tx_info->flags & IEEE80211_TX_CTL_AMPDU)) अणु
+	if (tid && (tx_info->flags & IEEE80211_TX_CTL_AMPDU)) {
 		bf->bf_state.bf_type = BUF_AMPDU;
 		ath_tx_addto_baw(sc, tid, bf);
-	पूर्ण
+	}
 
-	bf->bf_next = शून्य;
+	bf->bf_next = NULL;
 	bf->bf_lastbf = bf;
 	ath_tx_fill_desc(sc, bf, txq, fi->framelen);
 	ath_tx_txqaddbuf(sc, txq, &bf_head, false);
 	TX_STAT_INC(sc, txq->axq_qnum, queued);
-पूर्ण
+}
 
-अटल व्योम setup_frame_info(काष्ठा ieee80211_hw *hw,
-			     काष्ठा ieee80211_sta *sta,
-			     काष्ठा sk_buff *skb,
-			     पूर्णांक framelen)
-अणु
-	काष्ठा ieee80211_tx_info *tx_info = IEEE80211_SKB_CB(skb);
-	काष्ठा ieee80211_key_conf *hw_key = tx_info->control.hw_key;
-	काष्ठा ieee80211_hdr *hdr = (काष्ठा ieee80211_hdr *)skb->data;
-	स्थिर काष्ठा ieee80211_rate *rate;
-	काष्ठा ath_frame_info *fi = get_frame_info(skb);
-	काष्ठा ath_node *an = शून्य;
-	क्रमागत ath9k_key_type keytype;
-	bool लघु_preamble = false;
-	u8 txघातer;
+static void setup_frame_info(struct ieee80211_hw *hw,
+			     struct ieee80211_sta *sta,
+			     struct sk_buff *skb,
+			     int framelen)
+{
+	struct ieee80211_tx_info *tx_info = IEEE80211_SKB_CB(skb);
+	struct ieee80211_key_conf *hw_key = tx_info->control.hw_key;
+	struct ieee80211_hdr *hdr = (struct ieee80211_hdr *)skb->data;
+	const struct ieee80211_rate *rate;
+	struct ath_frame_info *fi = get_frame_info(skb);
+	struct ath_node *an = NULL;
+	enum ath9k_key_type keytype;
+	bool short_preamble = false;
+	u8 txpower;
 
 	/*
-	 * We check अगर Short Preamble is needed क्रम the CTS rate by
+	 * We check if Short Preamble is needed for the CTS rate by
 	 * checking the BSS's global flag.
-	 * But क्रम the rate series, IEEE80211_TX_RC_USE_SHORT_PREAMBLE is used.
+	 * But for the rate series, IEEE80211_TX_RC_USE_SHORT_PREAMBLE is used.
 	 */
-	अगर (tx_info->control.vअगर &&
-	    tx_info->control.vअगर->bss_conf.use_लघु_preamble)
-		लघु_preamble = true;
+	if (tx_info->control.vif &&
+	    tx_info->control.vif->bss_conf.use_short_preamble)
+		short_preamble = true;
 
 	rate = ieee80211_get_rts_cts_rate(hw, tx_info);
 	keytype = ath9k_cmn_get_hw_crypto_keytype(skb);
 
-	अगर (sta)
-		an = (काष्ठा ath_node *) sta->drv_priv;
+	if (sta)
+		an = (struct ath_node *) sta->drv_priv;
 
-	अगर (tx_info->control.vअगर) अणु
-		काष्ठा ieee80211_vअगर *vअगर = tx_info->control.vअगर;
-		अगर (vअगर->bss_conf.txघातer == पूर्णांक_न्यून)
-			जाओ nonvअगरघातer;
-		txघातer = 2 * vअगर->bss_conf.txघातer;
-	पूर्ण अन्यथा अणु
-		काष्ठा ath_softc *sc;
-	nonvअगरघातer:
+	if (tx_info->control.vif) {
+		struct ieee80211_vif *vif = tx_info->control.vif;
+		if (vif->bss_conf.txpower == INT_MIN)
+			goto nonvifpower;
+		txpower = 2 * vif->bss_conf.txpower;
+	} else {
+		struct ath_softc *sc;
+	nonvifpower:
 		sc = hw->priv;
 
-		txघातer = sc->cur_chan->cur_txघातer;
-	पूर्ण
+		txpower = sc->cur_chan->cur_txpower;
+	}
 
-	स_रखो(fi, 0, माप(*fi));
+	memset(fi, 0, sizeof(*fi));
 	fi->txq = -1;
-	अगर (hw_key)
+	if (hw_key)
 		fi->keyix = hw_key->hw_key_idx;
-	अन्यथा अगर (an && ieee80211_is_data(hdr->frame_control) && an->ps_key > 0)
+	else if (an && ieee80211_is_data(hdr->frame_control) && an->ps_key > 0)
 		fi->keyix = an->ps_key;
-	अन्यथा
+	else
 		fi->keyix = ATH9K_TXKEYIX_INVALID;
 	fi->dyn_smps = sta && sta->smps_mode == IEEE80211_SMPS_DYNAMIC;
 	fi->keytype = keytype;
 	fi->framelen = framelen;
-	fi->tx_घातer = txघातer;
+	fi->tx_power = txpower;
 
-	अगर (!rate)
-		वापस;
+	if (!rate)
+		return;
 	fi->rtscts_rate = rate->hw_value;
-	अगर (लघु_preamble)
-		fi->rtscts_rate |= rate->hw_value_लघु;
-पूर्ण
+	if (short_preamble)
+		fi->rtscts_rate |= rate->hw_value_short;
+}
 
-u8 ath_txchainmask_reduction(काष्ठा ath_softc *sc, u8 chainmask, u32 rate)
-अणु
-	काष्ठा ath_hw *ah = sc->sc_ah;
-	काष्ठा ath9k_channel *curchan = ah->curchan;
+u8 ath_txchainmask_reduction(struct ath_softc *sc, u8 chainmask, u32 rate)
+{
+	struct ath_hw *ah = sc->sc_ah;
+	struct ath9k_channel *curchan = ah->curchan;
 
-	अगर ((ah->caps.hw_caps & ATH9K_HW_CAP_APM) && IS_CHAN_5GHZ(curchan) &&
+	if ((ah->caps.hw_caps & ATH9K_HW_CAP_APM) && IS_CHAN_5GHZ(curchan) &&
 	    (chainmask == 0x7) && (rate < 0x90))
-		वापस 0x3;
-	अन्यथा अगर (AR_SREV_9462(ah) && ath9k_hw_btcoex_is_enabled(ah) &&
+		return 0x3;
+	else if (AR_SREV_9462(ah) && ath9k_hw_btcoex_is_enabled(ah) &&
 		 IS_CCK_RATE(rate))
-		वापस 0x2;
-	अन्यथा
-		वापस chainmask;
-पूर्ण
+		return 0x2;
+	else
+		return chainmask;
+}
 
 /*
- * Assign a descriptor (and sequence number अगर necessary,
- * and map buffer क्रम DMA. Frees skb on error
+ * Assign a descriptor (and sequence number if necessary,
+ * and map buffer for DMA. Frees skb on error
  */
-अटल काष्ठा ath_buf *ath_tx_setup_buffer(काष्ठा ath_softc *sc,
-					   काष्ठा ath_txq *txq,
-					   काष्ठा ath_atx_tid *tid,
-					   काष्ठा sk_buff *skb)
-अणु
-	काष्ठा ath_common *common = ath9k_hw_common(sc->sc_ah);
-	काष्ठा ath_frame_info *fi = get_frame_info(skb);
-	काष्ठा ieee80211_hdr *hdr = (काष्ठा ieee80211_hdr *)skb->data;
-	काष्ठा ath_buf *bf;
-	पूर्णांक fragno;
+static struct ath_buf *ath_tx_setup_buffer(struct ath_softc *sc,
+					   struct ath_txq *txq,
+					   struct ath_atx_tid *tid,
+					   struct sk_buff *skb)
+{
+	struct ath_common *common = ath9k_hw_common(sc->sc_ah);
+	struct ath_frame_info *fi = get_frame_info(skb);
+	struct ieee80211_hdr *hdr = (struct ieee80211_hdr *)skb->data;
+	struct ath_buf *bf;
+	int fragno;
 	u16 seqno;
 
 	bf = ath_tx_get_buffer(sc);
-	अगर (!bf) अणु
+	if (!bf) {
 		ath_dbg(common, XMIT, "TX buffers are full\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	ATH_TXBUF_RESET(bf);
 
-	अगर (tid && ieee80211_is_data_present(hdr->frame_control)) अणु
+	if (tid && ieee80211_is_data_present(hdr->frame_control)) {
 		fragno = le16_to_cpu(hdr->seq_ctrl) & IEEE80211_SCTL_FRAG;
 		seqno = tid->seq_next;
 		hdr->seq_ctrl = cpu_to_le16(tid->seq_next << IEEE80211_SEQ_SEQ_SHIFT);
 
-		अगर (fragno)
+		if (fragno)
 			hdr->seq_ctrl |= cpu_to_le16(fragno);
 
-		अगर (!ieee80211_has_morefrags(hdr->frame_control))
+		if (!ieee80211_has_morefrags(hdr->frame_control))
 			INCR(tid->seq_next, IEEE80211_SEQ_MAX);
 
 		bf->bf_state.seqno = seqno;
-	पूर्ण
+	}
 
 	bf->bf_mpdu = skb;
 
 	bf->bf_buf_addr = dma_map_single(sc->dev, skb->data,
 					 skb->len, DMA_TO_DEVICE);
-	अगर (unlikely(dma_mapping_error(sc->dev, bf->bf_buf_addr))) अणु
-		bf->bf_mpdu = शून्य;
+	if (unlikely(dma_mapping_error(sc->dev, bf->bf_buf_addr))) {
+		bf->bf_mpdu = NULL;
 		bf->bf_buf_addr = 0;
 		ath_err(ath9k_hw_common(sc->sc_ah),
 			"dma_mapping_error() on TX\n");
-		ath_tx_वापस_buffer(sc, bf);
-		वापस शून्य;
-	पूर्ण
+		ath_tx_return_buffer(sc, bf);
+		return NULL;
+	}
 
 	fi->bf = bf;
 
-	वापस bf;
-पूर्ण
+	return bf;
+}
 
-व्योम ath_assign_seq(काष्ठा ath_common *common, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा ieee80211_hdr *hdr = (काष्ठा ieee80211_hdr *) skb->data;
-	काष्ठा ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
-	काष्ठा ieee80211_vअगर *vअगर = info->control.vअगर;
-	काष्ठा ath_vअगर *avp;
+void ath_assign_seq(struct ath_common *common, struct sk_buff *skb)
+{
+	struct ieee80211_hdr *hdr = (struct ieee80211_hdr *) skb->data;
+	struct ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
+	struct ieee80211_vif *vif = info->control.vif;
+	struct ath_vif *avp;
 
-	अगर (!(info->flags & IEEE80211_TX_CTL_ASSIGN_SEQ))
-		वापस;
+	if (!(info->flags & IEEE80211_TX_CTL_ASSIGN_SEQ))
+		return;
 
-	अगर (!vअगर)
-		वापस;
+	if (!vif)
+		return;
 
-	avp = (काष्ठा ath_vअगर *)vअगर->drv_priv;
+	avp = (struct ath_vif *)vif->drv_priv;
 
-	अगर (info->flags & IEEE80211_TX_CTL_FIRST_FRAGMENT)
+	if (info->flags & IEEE80211_TX_CTL_FIRST_FRAGMENT)
 		avp->seq_no += 0x10;
 
 	hdr->seq_ctrl &= cpu_to_le16(IEEE80211_SCTL_FRAG);
 	hdr->seq_ctrl |= cpu_to_le16(avp->seq_no);
-पूर्ण
+}
 
-अटल पूर्णांक ath_tx_prepare(काष्ठा ieee80211_hw *hw, काष्ठा sk_buff *skb,
-			  काष्ठा ath_tx_control *txctl)
-अणु
-	काष्ठा ieee80211_hdr *hdr = (काष्ठा ieee80211_hdr *) skb->data;
-	काष्ठा ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
-	काष्ठा ieee80211_sta *sta = txctl->sta;
-	काष्ठा ieee80211_vअगर *vअगर = info->control.vअगर;
-	काष्ठा ath_vअगर *avp;
-	काष्ठा ath_softc *sc = hw->priv;
-	पूर्णांक frmlen = skb->len + FCS_LEN;
-	पूर्णांक padpos, padsize;
+static int ath_tx_prepare(struct ieee80211_hw *hw, struct sk_buff *skb,
+			  struct ath_tx_control *txctl)
+{
+	struct ieee80211_hdr *hdr = (struct ieee80211_hdr *) skb->data;
+	struct ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
+	struct ieee80211_sta *sta = txctl->sta;
+	struct ieee80211_vif *vif = info->control.vif;
+	struct ath_vif *avp;
+	struct ath_softc *sc = hw->priv;
+	int frmlen = skb->len + FCS_LEN;
+	int padpos, padsize;
 
-	/* NOTE:  sta can be शून्य according to net/mac80211.h */
-	अगर (sta)
-		txctl->an = (काष्ठा ath_node *)sta->drv_priv;
-	अन्यथा अगर (vअगर && ieee80211_is_data(hdr->frame_control)) अणु
-		avp = (व्योम *)vअगर->drv_priv;
+	/* NOTE:  sta can be NULL according to net/mac80211.h */
+	if (sta)
+		txctl->an = (struct ath_node *)sta->drv_priv;
+	else if (vif && ieee80211_is_data(hdr->frame_control)) {
+		avp = (void *)vif->drv_priv;
 		txctl->an = &avp->mcast_node;
-	पूर्ण
+	}
 
-	अगर (info->control.hw_key)
+	if (info->control.hw_key)
 		frmlen += info->control.hw_key->icv_len;
 
 	ath_assign_seq(ath9k_hw_common(sc->sc_ah), skb);
 
-	अगर ((vअगर && vअगर->type != NL80211_IFTYPE_AP &&
-	            vअगर->type != NL80211_IFTYPE_AP_VLAN) ||
+	if ((vif && vif->type != NL80211_IFTYPE_AP &&
+	            vif->type != NL80211_IFTYPE_AP_VLAN) ||
 	    !ieee80211_is_data(hdr->frame_control))
 		info->flags |= IEEE80211_TX_CTL_CLEAR_PS_FILT;
 
-	/* Add the padding after the header अगर this is not alपढ़ोy करोne */
+	/* Add the padding after the header if this is not already done */
 	padpos = ieee80211_hdrlen(hdr->frame_control);
 	padsize = padpos & 3;
-	अगर (padsize && skb->len > padpos) अणु
-		अगर (skb_headroom(skb) < padsize)
-			वापस -ENOMEM;
+	if (padsize && skb->len > padpos) {
+		if (skb_headroom(skb) < padsize)
+			return -ENOMEM;
 
 		skb_push(skb, padsize);
-		स_हटाओ(skb->data, skb->data + padsize, padpos);
-	पूर्ण
+		memmove(skb->data, skb->data + padsize, padpos);
+	}
 
 	setup_frame_info(hw, sta, skb, frmlen);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-/* Upon failure caller should मुक्त skb */
-पूर्णांक ath_tx_start(काष्ठा ieee80211_hw *hw, काष्ठा sk_buff *skb,
-		 काष्ठा ath_tx_control *txctl)
-अणु
-	काष्ठा ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
-	काष्ठा ieee80211_sta *sta = txctl->sta;
-	काष्ठा ieee80211_vअगर *vअगर = info->control.vअगर;
-	काष्ठा ath_frame_info *fi = get_frame_info(skb);
-	काष्ठा ath_softc *sc = hw->priv;
-	काष्ठा ath_txq *txq = txctl->txq;
-	काष्ठा ath_atx_tid *tid = शून्य;
-	काष्ठा ath_node *an = शून्य;
-	काष्ठा ath_buf *bf;
+/* Upon failure caller should free skb */
+int ath_tx_start(struct ieee80211_hw *hw, struct sk_buff *skb,
+		 struct ath_tx_control *txctl)
+{
+	struct ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
+	struct ieee80211_sta *sta = txctl->sta;
+	struct ieee80211_vif *vif = info->control.vif;
+	struct ath_frame_info *fi = get_frame_info(skb);
+	struct ath_softc *sc = hw->priv;
+	struct ath_txq *txq = txctl->txq;
+	struct ath_atx_tid *tid = NULL;
+	struct ath_node *an = NULL;
+	struct ath_buf *bf;
 	bool ps_resp;
-	पूर्णांक q, ret;
+	int q, ret;
 
 	ps_resp = !!(info->control.flags & IEEE80211_TX_CTRL_PS_RESPONSE);
 
 	ret = ath_tx_prepare(hw, skb, txctl);
-	अगर (ret)
-	    वापस ret;
+	if (ret)
+	    return ret;
 
 	/*
-	 * At this poपूर्णांक, the vअगर, hw_key and sta poपूर्णांकers in the tx control
-	 * info are no दीर्घer valid (overwritten by the ath_frame_info data.
+	 * At this point, the vif, hw_key and sta pointers in the tx control
+	 * info are no longer valid (overwritten by the ath_frame_info data.
 	 */
 
 	q = skb_get_queue_mapping(skb);
 
-	अगर (ps_resp)
+	if (ps_resp)
 		txq = sc->tx.uapsdq;
 
-	अगर (txctl->sta) अणु
-		an = (काष्ठा ath_node *) sta->drv_priv;
+	if (txctl->sta) {
+		an = (struct ath_node *) sta->drv_priv;
 		tid = ath_get_skb_tid(sc, an, skb);
-	पूर्ण
+	}
 
 	ath_txq_lock(sc, txq);
-	अगर (txq == sc->tx.txq_map[q]) अणु
+	if (txq == sc->tx.txq_map[q]) {
 		fi->txq = q;
 		++txq->pending_frames;
-	पूर्ण
+	}
 
 	bf = ath_tx_setup_buffer(sc, txq, tid, skb);
-	अगर (!bf) अणु
-		ath_txq_skb_करोne(sc, txq, skb);
-		अगर (txctl->paprd)
-			dev_kमुक्त_skb_any(skb);
-		अन्यथा
-			ieee80211_मुक्त_txskb(sc->hw, skb);
-		जाओ out;
-	पूर्ण
+	if (!bf) {
+		ath_txq_skb_done(sc, txq, skb);
+		if (txctl->paprd)
+			dev_kfree_skb_any(skb);
+		else
+			ieee80211_free_txskb(sc->hw, skb);
+		goto out;
+	}
 
 	bf->bf_state.bfs_paprd = txctl->paprd;
 
-	अगर (txctl->paprd)
-		bf->bf_state.bfs_paprd_बारtamp = jअगरfies;
+	if (txctl->paprd)
+		bf->bf_state.bfs_paprd_timestamp = jiffies;
 
-	ath_set_rates(vअगर, sta, bf);
+	ath_set_rates(vif, sta, bf);
 	ath_tx_send_normal(sc, txq, tid, skb);
 
 out:
 	ath_txq_unlock(sc, txq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम ath_tx_cabq(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर,
-		 काष्ठा sk_buff *skb)
-अणु
-	काष्ठा ath_softc *sc = hw->priv;
-	काष्ठा ath_tx_control txctl = अणु
+void ath_tx_cabq(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
+		 struct sk_buff *skb)
+{
+	struct ath_softc *sc = hw->priv;
+	struct ath_tx_control txctl = {
 		.txq = sc->beacon.cabq
-	पूर्ण;
-	काष्ठा ath_tx_info info = अणुपूर्ण;
-	काष्ठा ath_buf *bf_tail = शून्य;
-	काष्ठा ath_buf *bf;
+	};
+	struct ath_tx_info info = {};
+	struct ath_buf *bf_tail = NULL;
+	struct ath_buf *bf;
 	LIST_HEAD(bf_q);
-	पूर्णांक duration = 0;
-	पूर्णांक max_duration;
+	int duration = 0;
+	int max_duration;
 
 	max_duration =
-		sc->cur_chan->beacon.beacon_पूर्णांकerval * 1000 *
+		sc->cur_chan->beacon.beacon_interval * 1000 *
 		sc->cur_chan->beacon.dtim_period / ATH_BCBUF;
 
-	करो अणु
-		काष्ठा ath_frame_info *fi = get_frame_info(skb);
+	do {
+		struct ath_frame_info *fi = get_frame_info(skb);
 
-		अगर (ath_tx_prepare(hw, skb, &txctl))
-			अवरोध;
+		if (ath_tx_prepare(hw, skb, &txctl))
+			break;
 
-		bf = ath_tx_setup_buffer(sc, txctl.txq, शून्य, skb);
-		अगर (!bf)
-			अवरोध;
+		bf = ath_tx_setup_buffer(sc, txctl.txq, NULL, skb);
+		if (!bf)
+			break;
 
 		bf->bf_lastbf = bf;
-		ath_set_rates(vअगर, शून्य, bf);
+		ath_set_rates(vif, NULL, bf);
 		ath_buf_set_rate(sc, bf, &info, fi->framelen, false);
 		duration += info.rates[0].PktDuration;
-		अगर (bf_tail)
+		if (bf_tail)
 			bf_tail->bf_next = bf;
 
 		list_add_tail(&bf->list, &bf_q);
 		bf_tail = bf;
-		skb = शून्य;
+		skb = NULL;
 
-		अगर (duration > max_duration)
-			अवरोध;
+		if (duration > max_duration)
+			break;
 
-		skb = ieee80211_get_buffered_bc(hw, vअगर);
-	पूर्ण जबतक(skb);
+		skb = ieee80211_get_buffered_bc(hw, vif);
+	} while(skb);
 
-	अगर (skb)
-		ieee80211_मुक्त_txskb(hw, skb);
+	if (skb)
+		ieee80211_free_txskb(hw, skb);
 
-	अगर (list_empty(&bf_q))
-		वापस;
+	if (list_empty(&bf_q))
+		return;
 
-	bf = list_last_entry(&bf_q, काष्ठा ath_buf, list);
+	bf = list_last_entry(&bf_q, struct ath_buf, list);
 	ath9k_set_moredata(sc, bf, false);
 
-	bf = list_first_entry(&bf_q, काष्ठा ath_buf, list);
+	bf = list_first_entry(&bf_q, struct ath_buf, list);
 	ath_txq_lock(sc, txctl.txq);
 	ath_tx_fill_desc(sc, bf, txctl.txq, 0);
 	ath_tx_txqaddbuf(sc, txctl.txq, &bf_q, false);
 	TX_STAT_INC(sc, txctl.txq->axq_qnum, queued);
 	ath_txq_unlock(sc, txctl.txq);
-पूर्ण
+}
 
 /*****************/
 /* TX Completion */
 /*****************/
 
-अटल व्योम ath_tx_complete(काष्ठा ath_softc *sc, काष्ठा sk_buff *skb,
-			    पूर्णांक tx_flags, काष्ठा ath_txq *txq,
-			    काष्ठा ieee80211_sta *sta)
-अणु
-	काष्ठा ieee80211_tx_info *tx_info = IEEE80211_SKB_CB(skb);
-	काष्ठा ath_common *common = ath9k_hw_common(sc->sc_ah);
-	काष्ठा ieee80211_hdr * hdr = (काष्ठा ieee80211_hdr *)skb->data;
-	पूर्णांक padpos, padsize;
-	अचिन्हित दीर्घ flags;
+static void ath_tx_complete(struct ath_softc *sc, struct sk_buff *skb,
+			    int tx_flags, struct ath_txq *txq,
+			    struct ieee80211_sta *sta)
+{
+	struct ieee80211_tx_info *tx_info = IEEE80211_SKB_CB(skb);
+	struct ath_common *common = ath9k_hw_common(sc->sc_ah);
+	struct ieee80211_hdr * hdr = (struct ieee80211_hdr *)skb->data;
+	int padpos, padsize;
+	unsigned long flags;
 
 	ath_dbg(common, XMIT, "TX complete: skb: %p\n", skb);
 
-	अगर (sc->sc_ah->caldata)
+	if (sc->sc_ah->caldata)
 		set_bit(PAPRD_PACKET_SENT, &sc->sc_ah->caldata->cal_flags);
 
-	अगर (!(tx_flags & ATH_TX_ERROR)) अणु
-		अगर (tx_info->flags & IEEE80211_TX_CTL_NO_ACK)
+	if (!(tx_flags & ATH_TX_ERROR)) {
+		if (tx_info->flags & IEEE80211_TX_CTL_NO_ACK)
 			tx_info->flags |= IEEE80211_TX_STAT_NOACK_TRANSMITTED;
-		अन्यथा
+		else
 			tx_info->flags |= IEEE80211_TX_STAT_ACK;
-	पूर्ण
+	}
 
-	अगर (tx_info->flags & IEEE80211_TX_CTL_REQ_TX_STATUS) अणु
+	if (tx_info->flags & IEEE80211_TX_CTL_REQ_TX_STATUS) {
 		padpos = ieee80211_hdrlen(hdr->frame_control);
 		padsize = padpos & 3;
-		अगर (padsize && skb->len>padpos+padsize) अणु
+		if (padsize && skb->len>padpos+padsize) {
 			/*
-			 * Remove MAC header padding beक्रमe giving the frame back to
+			 * Remove MAC header padding before giving the frame back to
 			 * mac80211.
 			 */
-			स_हटाओ(skb->data + padsize, skb->data, padpos);
+			memmove(skb->data + padsize, skb->data, padpos);
 			skb_pull(skb, padsize);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	spin_lock_irqsave(&sc->sc_pm_lock, flags);
-	अगर ((sc->ps_flags & PS_WAIT_FOR_TX_ACK) && !txq->axq_depth) अणु
+	if ((sc->ps_flags & PS_WAIT_FOR_TX_ACK) && !txq->axq_depth) {
 		sc->ps_flags &= ~PS_WAIT_FOR_TX_ACK;
 		ath_dbg(common, PS,
 			"Going back to sleep after having received TX status (0x%lx)\n",
@@ -2448,244 +2447,244 @@ out:
 					PS_WAIT_FOR_CAB |
 					PS_WAIT_FOR_PSPOLL_DATA |
 					PS_WAIT_FOR_TX_ACK));
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&sc->sc_pm_lock, flags);
 
-	ath_txq_skb_करोne(sc, txq, skb);
+	ath_txq_skb_done(sc, txq, skb);
 	tx_info->status.status_driver_data[0] = sta;
 	__skb_queue_tail(&txq->complete_q, skb);
-पूर्ण
+}
 
-अटल व्योम ath_tx_complete_buf(काष्ठा ath_softc *sc, काष्ठा ath_buf *bf,
-				काष्ठा ath_txq *txq, काष्ठा list_head *bf_q,
-				काष्ठा ieee80211_sta *sta,
-				काष्ठा ath_tx_status *ts, पूर्णांक txok)
-अणु
-	काष्ठा sk_buff *skb = bf->bf_mpdu;
-	काष्ठा ieee80211_tx_info *tx_info = IEEE80211_SKB_CB(skb);
-	अचिन्हित दीर्घ flags;
-	पूर्णांक tx_flags = 0;
+static void ath_tx_complete_buf(struct ath_softc *sc, struct ath_buf *bf,
+				struct ath_txq *txq, struct list_head *bf_q,
+				struct ieee80211_sta *sta,
+				struct ath_tx_status *ts, int txok)
+{
+	struct sk_buff *skb = bf->bf_mpdu;
+	struct ieee80211_tx_info *tx_info = IEEE80211_SKB_CB(skb);
+	unsigned long flags;
+	int tx_flags = 0;
 
-	अगर (!txok)
+	if (!txok)
 		tx_flags |= ATH_TX_ERROR;
 
-	अगर (ts->ts_status & ATH9K_TXERR_FILT)
+	if (ts->ts_status & ATH9K_TXERR_FILT)
 		tx_info->flags |= IEEE80211_TX_STAT_TX_FILTERED;
 
 	dma_unmap_single(sc->dev, bf->bf_buf_addr, skb->len, DMA_TO_DEVICE);
 	bf->bf_buf_addr = 0;
-	अगर (sc->tx99_state)
-		जाओ skip_tx_complete;
+	if (sc->tx99_state)
+		goto skip_tx_complete;
 
-	अगर (bf->bf_state.bfs_paprd) अणु
-		अगर (समय_after(jअगरfies,
-				bf->bf_state.bfs_paprd_बारtamp +
-				msecs_to_jअगरfies(ATH_PAPRD_TIMEOUT)))
-			dev_kमुक्त_skb_any(skb);
-		अन्यथा
+	if (bf->bf_state.bfs_paprd) {
+		if (time_after(jiffies,
+				bf->bf_state.bfs_paprd_timestamp +
+				msecs_to_jiffies(ATH_PAPRD_TIMEOUT)))
+			dev_kfree_skb_any(skb);
+		else
 			complete(&sc->paprd_complete);
-	पूर्ण अन्यथा अणु
+	} else {
 		ath_debug_stat_tx(sc, bf, ts, txq, tx_flags);
 		ath_tx_complete(sc, skb, tx_flags, txq, sta);
-	पूर्ण
+	}
 skip_tx_complete:
-	/* At this poपूर्णांक, skb (bf->bf_mpdu) is consumed...make sure we करोn't
+	/* At this point, skb (bf->bf_mpdu) is consumed...make sure we don't
 	 * accidentally reference it later.
 	 */
-	bf->bf_mpdu = शून्य;
+	bf->bf_mpdu = NULL;
 
 	/*
-	 * Return the list of ath_buf of this mpdu to मुक्त queue
+	 * Return the list of ath_buf of this mpdu to free queue
 	 */
 	spin_lock_irqsave(&sc->tx.txbuflock, flags);
 	list_splice_tail_init(bf_q, &sc->tx.txbuf);
 	spin_unlock_irqrestore(&sc->tx.txbuflock, flags);
-पूर्ण
+}
 
-अटल व्योम ath_tx_rc_status(काष्ठा ath_softc *sc, काष्ठा ath_buf *bf,
-			     काष्ठा ath_tx_status *ts, पूर्णांक nframes, पूर्णांक nbad,
-			     पूर्णांक txok)
-अणु
-	काष्ठा sk_buff *skb = bf->bf_mpdu;
-	काष्ठा ieee80211_hdr *hdr = (काष्ठा ieee80211_hdr *)skb->data;
-	काष्ठा ieee80211_tx_info *tx_info = IEEE80211_SKB_CB(skb);
-	काष्ठा ieee80211_hw *hw = sc->hw;
-	काष्ठा ath_hw *ah = sc->sc_ah;
+static void ath_tx_rc_status(struct ath_softc *sc, struct ath_buf *bf,
+			     struct ath_tx_status *ts, int nframes, int nbad,
+			     int txok)
+{
+	struct sk_buff *skb = bf->bf_mpdu;
+	struct ieee80211_hdr *hdr = (struct ieee80211_hdr *)skb->data;
+	struct ieee80211_tx_info *tx_info = IEEE80211_SKB_CB(skb);
+	struct ieee80211_hw *hw = sc->hw;
+	struct ath_hw *ah = sc->sc_ah;
 	u8 i, tx_rateindex;
 
-	अगर (txok)
-		tx_info->status.ack_संकेत = ts->ts_rssi;
+	if (txok)
+		tx_info->status.ack_signal = ts->ts_rssi;
 
 	tx_rateindex = ts->ts_rateindex;
 	WARN_ON(tx_rateindex >= hw->max_rates);
 
-	अगर (tx_info->flags & IEEE80211_TX_CTL_AMPDU) अणु
+	if (tx_info->flags & IEEE80211_TX_CTL_AMPDU) {
 		tx_info->flags |= IEEE80211_TX_STAT_AMPDU;
 
 		BUG_ON(nbad > nframes);
-	पूर्ण
+	}
 	tx_info->status.ampdu_len = nframes;
 	tx_info->status.ampdu_ack_len = nframes - nbad;
 
-	अगर ((ts->ts_status & ATH9K_TXERR_FILT) == 0 &&
-	    (tx_info->flags & IEEE80211_TX_CTL_NO_ACK) == 0) अणु
+	if ((ts->ts_status & ATH9K_TXERR_FILT) == 0 &&
+	    (tx_info->flags & IEEE80211_TX_CTL_NO_ACK) == 0) {
 		/*
 		 * If an underrun error is seen assume it as an excessive
-		 * retry only अगर max frame trigger level has been reached
-		 * (2 KB क्रम single stream, and 4 KB क्रम dual stream).
-		 * Adjust the दीर्घ retry as अगर the frame was tried
-		 * hw->max_rate_tries बार to affect how rate control updates
-		 * PER क्रम the failed rate.
-		 * In हाल of congestion on the bus penalizing this type of
+		 * retry only if max frame trigger level has been reached
+		 * (2 KB for single stream, and 4 KB for dual stream).
+		 * Adjust the long retry as if the frame was tried
+		 * hw->max_rate_tries times to affect how rate control updates
+		 * PER for the failed rate.
+		 * In case of congestion on the bus penalizing this type of
 		 * underruns should help hardware actually transmit new frames
 		 * successfully by eventually preferring slower rates.
 		 * This itself should also alleviate congestion on the bus.
 		 */
-		अगर (unlikely(ts->ts_flags & (ATH9K_TX_DATA_UNDERRUN |
+		if (unlikely(ts->ts_flags & (ATH9K_TX_DATA_UNDERRUN |
 		                             ATH9K_TX_DELIM_UNDERRUN)) &&
 		    ieee80211_is_data(hdr->frame_control) &&
 		    ah->tx_trig_level >= sc->sc_ah->config.max_txtrig_level)
 			tx_info->status.rates[tx_rateindex].count =
 				hw->max_rate_tries;
-	पूर्ण
+	}
 
-	क्रम (i = tx_rateindex + 1; i < hw->max_rates; i++) अणु
+	for (i = tx_rateindex + 1; i < hw->max_rates; i++) {
 		tx_info->status.rates[i].count = 0;
 		tx_info->status.rates[i].idx = -1;
-	पूर्ण
+	}
 
-	tx_info->status.rates[tx_rateindex].count = ts->ts_दीर्घretry + 1;
+	tx_info->status.rates[tx_rateindex].count = ts->ts_longretry + 1;
 
-	/* we report airसमय in ath_tx_count_airसमय(), करोn't report twice */
-	tx_info->status.tx_समय = 0;
-पूर्ण
+	/* we report airtime in ath_tx_count_airtime(), don't report twice */
+	tx_info->status.tx_time = 0;
+}
 
-अटल व्योम ath_tx_processq(काष्ठा ath_softc *sc, काष्ठा ath_txq *txq)
-अणु
-	काष्ठा ath_hw *ah = sc->sc_ah;
-	काष्ठा ath_common *common = ath9k_hw_common(ah);
-	काष्ठा ath_buf *bf, *lastbf, *bf_held = शून्य;
-	काष्ठा list_head bf_head;
-	काष्ठा ath_desc *ds;
-	काष्ठा ath_tx_status ts;
-	पूर्णांक status;
+static void ath_tx_processq(struct ath_softc *sc, struct ath_txq *txq)
+{
+	struct ath_hw *ah = sc->sc_ah;
+	struct ath_common *common = ath9k_hw_common(ah);
+	struct ath_buf *bf, *lastbf, *bf_held = NULL;
+	struct list_head bf_head;
+	struct ath_desc *ds;
+	struct ath_tx_status ts;
+	int status;
 
 	ath_dbg(common, QUEUE, "tx queue %d (%x), link %p\n",
 		txq->axq_qnum, ath9k_hw_gettxbuf(sc->sc_ah, txq->axq_qnum),
 		txq->axq_link);
 
 	ath_txq_lock(sc, txq);
-	क्रम (;;) अणु
-		अगर (test_bit(ATH_OP_HW_RESET, &common->op_flags))
-			अवरोध;
+	for (;;) {
+		if (test_bit(ATH_OP_HW_RESET, &common->op_flags))
+			break;
 
-		अगर (list_empty(&txq->axq_q)) अणु
-			txq->axq_link = शून्य;
+		if (list_empty(&txq->axq_q)) {
+			txq->axq_link = NULL;
 			ath_txq_schedule(sc, txq);
-			अवरोध;
-		पूर्ण
-		bf = list_first_entry(&txq->axq_q, काष्ठा ath_buf, list);
+			break;
+		}
+		bf = list_first_entry(&txq->axq_q, struct ath_buf, list);
 
 		/*
-		 * There is a race condition that a BH माला_लो scheduled
-		 * after sw ग_लिखोs TxE and beक्रमe hw re-load the last
+		 * There is a race condition that a BH gets scheduled
+		 * after sw writes TxE and before hw re-load the last
 		 * descriptor to get the newly chained one.
 		 * Software must keep the last DONE descriptor as a
-		 * holding descriptor - software करोes so by marking
+		 * holding descriptor - software does so by marking
 		 * it with the STALE flag.
 		 */
-		bf_held = शून्य;
-		अगर (bf->bf_state.stale) अणु
+		bf_held = NULL;
+		if (bf->bf_state.stale) {
 			bf_held = bf;
-			अगर (list_is_last(&bf_held->list, &txq->axq_q))
-				अवरोध;
+			if (list_is_last(&bf_held->list, &txq->axq_q))
+				break;
 
-			bf = list_entry(bf_held->list.next, काष्ठा ath_buf,
+			bf = list_entry(bf_held->list.next, struct ath_buf,
 					list);
-		पूर्ण
+		}
 
 		lastbf = bf->bf_lastbf;
 		ds = lastbf->bf_desc;
 
-		स_रखो(&ts, 0, माप(ts));
+		memset(&ts, 0, sizeof(ts));
 		status = ath9k_hw_txprocdesc(ah, ds, &ts);
-		अगर (status == -EINPROGRESS)
-			अवरोध;
+		if (status == -EINPROGRESS)
+			break;
 
 		TX_STAT_INC(sc, txq->axq_qnum, txprocdesc);
 
 		/*
 		 * Remove ath_buf's of the same transmit unit from txq,
 		 * however leave the last descriptor back as the holding
-		 * descriptor क्रम hw.
+		 * descriptor for hw.
 		 */
 		lastbf->bf_state.stale = true;
 		INIT_LIST_HEAD(&bf_head);
-		अगर (!list_is_singular(&lastbf->list))
+		if (!list_is_singular(&lastbf->list))
 			list_cut_position(&bf_head,
 				&txq->axq_q, lastbf->list.prev);
 
-		अगर (bf_held) अणु
+		if (bf_held) {
 			list_del(&bf_held->list);
-			ath_tx_वापस_buffer(sc, bf_held);
-		पूर्ण
+			ath_tx_return_buffer(sc, bf_held);
+		}
 
 		ath_tx_process_buffer(sc, txq, &ts, bf, &bf_head);
-	पूर्ण
+	}
 	ath_txq_unlock_complete(sc, txq);
-पूर्ण
+}
 
-व्योम ath_tx_tasklet(काष्ठा ath_softc *sc)
-अणु
-	काष्ठा ath_hw *ah = sc->sc_ah;
-	u32 qcumask = ((1 << ATH9K_NUM_TX_QUEUES) - 1) & ah->पूर्णांकr_txqs;
-	पूर्णांक i;
+void ath_tx_tasklet(struct ath_softc *sc)
+{
+	struct ath_hw *ah = sc->sc_ah;
+	u32 qcumask = ((1 << ATH9K_NUM_TX_QUEUES) - 1) & ah->intr_txqs;
+	int i;
 
-	rcu_पढ़ो_lock();
-	क्रम (i = 0; i < ATH9K_NUM_TX_QUEUES; i++) अणु
-		अगर (ATH_TXQ_SETUP(sc, i) && (qcumask & (1 << i)))
+	rcu_read_lock();
+	for (i = 0; i < ATH9K_NUM_TX_QUEUES; i++) {
+		if (ATH_TXQ_SETUP(sc, i) && (qcumask & (1 << i)))
 			ath_tx_processq(sc, &sc->tx.txq[i]);
-	पूर्ण
-	rcu_पढ़ो_unlock();
-पूर्ण
+	}
+	rcu_read_unlock();
+}
 
-व्योम ath_tx_edma_tasklet(काष्ठा ath_softc *sc)
-अणु
-	काष्ठा ath_tx_status ts;
-	काष्ठा ath_common *common = ath9k_hw_common(sc->sc_ah);
-	काष्ठा ath_hw *ah = sc->sc_ah;
-	काष्ठा ath_txq *txq;
-	काष्ठा ath_buf *bf, *lastbf;
-	काष्ठा list_head bf_head;
-	काष्ठा list_head *fअगरo_list;
-	पूर्णांक status;
+void ath_tx_edma_tasklet(struct ath_softc *sc)
+{
+	struct ath_tx_status ts;
+	struct ath_common *common = ath9k_hw_common(sc->sc_ah);
+	struct ath_hw *ah = sc->sc_ah;
+	struct ath_txq *txq;
+	struct ath_buf *bf, *lastbf;
+	struct list_head bf_head;
+	struct list_head *fifo_list;
+	int status;
 
-	rcu_पढ़ो_lock();
-	क्रम (;;) अणु
-		अगर (test_bit(ATH_OP_HW_RESET, &common->op_flags))
-			अवरोध;
+	rcu_read_lock();
+	for (;;) {
+		if (test_bit(ATH_OP_HW_RESET, &common->op_flags))
+			break;
 
-		status = ath9k_hw_txprocdesc(ah, शून्य, (व्योम *)&ts);
-		अगर (status == -EINPROGRESS)
-			अवरोध;
-		अगर (status == -EIO) अणु
+		status = ath9k_hw_txprocdesc(ah, NULL, (void *)&ts);
+		if (status == -EINPROGRESS)
+			break;
+		if (status == -EIO) {
 			ath_dbg(common, XMIT, "Error processing tx status\n");
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		/* Process beacon completions separately */
-		अगर (ts.qid == sc->beacon.beaconq) अणु
+		if (ts.qid == sc->beacon.beaconq) {
 			sc->beacon.tx_processed = true;
 			sc->beacon.tx_last = !(ts.ts_status & ATH9K_TXERR_MASK);
 
-			अगर (ath9k_is_chanctx_enabled()) अणु
-				ath_chanctx_event(sc, शून्य,
+			if (ath9k_is_chanctx_enabled()) {
+				ath_chanctx_event(sc, NULL,
 						  ATH_CHANCTX_EVENT_BEACON_SENT);
-			पूर्ण
+			}
 
 			ath9k_csa_update(sc);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		txq = &sc->tx.txq[ts.qid];
 
@@ -2693,113 +2692,113 @@ skip_tx_complete:
 
 		TX_STAT_INC(sc, txq->axq_qnum, txprocdesc);
 
-		fअगरo_list = &txq->txq_fअगरo[txq->txq_tailidx];
-		अगर (list_empty(fअगरo_list)) अणु
+		fifo_list = &txq->txq_fifo[txq->txq_tailidx];
+		if (list_empty(fifo_list)) {
 			ath_txq_unlock(sc, txq);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		bf = list_first_entry(fअगरo_list, काष्ठा ath_buf, list);
-		अगर (bf->bf_state.stale) अणु
+		bf = list_first_entry(fifo_list, struct ath_buf, list);
+		if (bf->bf_state.stale) {
 			list_del(&bf->list);
-			ath_tx_वापस_buffer(sc, bf);
-			bf = list_first_entry(fअगरo_list, काष्ठा ath_buf, list);
-		पूर्ण
+			ath_tx_return_buffer(sc, bf);
+			bf = list_first_entry(fifo_list, struct ath_buf, list);
+		}
 
 		lastbf = bf->bf_lastbf;
 
 		INIT_LIST_HEAD(&bf_head);
-		अगर (list_is_last(&lastbf->list, fअगरo_list)) अणु
-			list_splice_tail_init(fअगरo_list, &bf_head);
+		if (list_is_last(&lastbf->list, fifo_list)) {
+			list_splice_tail_init(fifo_list, &bf_head);
 			INCR(txq->txq_tailidx, ATH_TXFIFO_DEPTH);
 
-			अगर (!list_empty(&txq->axq_q)) अणु
-				काष्ठा list_head bf_q;
+			if (!list_empty(&txq->axq_q)) {
+				struct list_head bf_q;
 
 				INIT_LIST_HEAD(&bf_q);
-				txq->axq_link = शून्य;
+				txq->axq_link = NULL;
 				list_splice_tail_init(&txq->axq_q, &bf_q);
 				ath_tx_txqaddbuf(sc, txq, &bf_q, true);
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			lastbf->bf_state.stale = true;
-			अगर (bf != lastbf)
-				list_cut_position(&bf_head, fअगरo_list,
+			if (bf != lastbf)
+				list_cut_position(&bf_head, fifo_list,
 						  lastbf->list.prev);
-		पूर्ण
+		}
 
 		ath_tx_process_buffer(sc, txq, &ts, bf, &bf_head);
 		ath_txq_unlock_complete(sc, txq);
-	पूर्ण
-	rcu_पढ़ो_unlock();
-पूर्ण
+	}
+	rcu_read_unlock();
+}
 
 /*****************/
 /* Init, Cleanup */
 /*****************/
 
-अटल पूर्णांक ath_txstatus_setup(काष्ठा ath_softc *sc, पूर्णांक size)
-अणु
-	काष्ठा ath_descdma *dd = &sc->txsdma;
+static int ath_txstatus_setup(struct ath_softc *sc, int size)
+{
+	struct ath_descdma *dd = &sc->txsdma;
 	u8 txs_len = sc->sc_ah->caps.txs_len;
 
 	dd->dd_desc_len = size * txs_len;
 	dd->dd_desc = dmam_alloc_coherent(sc->dev, dd->dd_desc_len,
 					  &dd->dd_desc_paddr, GFP_KERNEL);
-	अगर (!dd->dd_desc)
-		वापस -ENOMEM;
+	if (!dd->dd_desc)
+		return -ENOMEM;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ath_tx_edma_init(काष्ठा ath_softc *sc)
-अणु
-	पूर्णांक err;
+static int ath_tx_edma_init(struct ath_softc *sc)
+{
+	int err;
 
 	err = ath_txstatus_setup(sc, ATH_TXSTATUS_RING_SIZE);
-	अगर (!err)
+	if (!err)
 		ath9k_hw_setup_statusring(sc->sc_ah, sc->txsdma.dd_desc,
 					  sc->txsdma.dd_desc_paddr,
 					  ATH_TXSTATUS_RING_SIZE);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक ath_tx_init(काष्ठा ath_softc *sc, पूर्णांक nbufs)
-अणु
-	काष्ठा ath_common *common = ath9k_hw_common(sc->sc_ah);
-	पूर्णांक error = 0;
+int ath_tx_init(struct ath_softc *sc, int nbufs)
+{
+	struct ath_common *common = ath9k_hw_common(sc->sc_ah);
+	int error = 0;
 
 	spin_lock_init(&sc->tx.txbuflock);
 
 	error = ath_descdma_setup(sc, &sc->tx.txdma, &sc->tx.txbuf,
 				  "tx", nbufs, 1, 1);
-	अगर (error != 0) अणु
+	if (error != 0) {
 		ath_err(common,
 			"Failed to allocate tx descriptors: %d\n", error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
 	error = ath_descdma_setup(sc, &sc->beacon.bdma, &sc->beacon.bbuf,
 				  "beacon", ATH_BCBUF, 1, 1);
-	अगर (error != 0) अणु
+	if (error != 0) {
 		ath_err(common,
 			"Failed to allocate beacon descriptors: %d\n", error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	अगर (sc->sc_ah->caps.hw_caps & ATH9K_HW_CAP_EDMA)
+	if (sc->sc_ah->caps.hw_caps & ATH9K_HW_CAP_EDMA)
 		error = ath_tx_edma_init(sc);
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-व्योम ath_tx_node_init(काष्ठा ath_softc *sc, काष्ठा ath_node *an)
-अणु
-	काष्ठा ath_atx_tid *tid;
-	पूर्णांक tidno, acno;
+void ath_tx_node_init(struct ath_softc *sc, struct ath_node *an)
+{
+	struct ath_atx_tid *tid;
+	int tidno, acno;
 
-	क्रम (tidno = 0; tidno < IEEE80211_NUM_TIDS; tidno++) अणु
+	for (tidno = 0; tidno < IEEE80211_NUM_TIDS; tidno++) {
 		tid = ath_node_to_tid(an, tidno);
 		tid->an        = an;
 		tid->tidno     = tidno;
@@ -2813,26 +2812,26 @@ skip_tx_complete:
 		acno = TID_TO_WME_AC(tidno);
 		tid->txq = sc->tx.txq_map[acno];
 
-		अगर (!an->sta)
-			अवरोध; /* just one multicast ath_atx_tid */
-	पूर्ण
-पूर्ण
+		if (!an->sta)
+			break; /* just one multicast ath_atx_tid */
+	}
+}
 
-व्योम ath_tx_node_cleanup(काष्ठा ath_softc *sc, काष्ठा ath_node *an)
-अणु
-	काष्ठा ath_atx_tid *tid;
-	काष्ठा ath_txq *txq;
-	पूर्णांक tidno;
+void ath_tx_node_cleanup(struct ath_softc *sc, struct ath_node *an)
+{
+	struct ath_atx_tid *tid;
+	struct ath_txq *txq;
+	int tidno;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 
-	क्रम (tidno = 0; tidno < IEEE80211_NUM_TIDS; tidno++) अणु
+	for (tidno = 0; tidno < IEEE80211_NUM_TIDS; tidno++) {
 		tid = ath_node_to_tid(an, tidno);
 		txq = tid->txq;
 
 		ath_txq_lock(sc, txq);
 
-		अगर (!list_empty(&tid->list))
+		if (!list_empty(&tid->list))
 			list_del_init(&tid->list);
 
 		ath_tid_drain(sc, txq, tid);
@@ -2840,56 +2839,56 @@ skip_tx_complete:
 
 		ath_txq_unlock(sc, txq);
 
-		अगर (!an->sta)
-			अवरोध; /* just one multicast ath_atx_tid */
-	पूर्ण
+		if (!an->sta)
+			break; /* just one multicast ath_atx_tid */
+	}
 
-	rcu_पढ़ो_unlock();
-पूर्ण
+	rcu_read_unlock();
+}
 
-#अगर_घोषित CONFIG_ATH9K_TX99
+#ifdef CONFIG_ATH9K_TX99
 
-पूर्णांक ath9k_tx99_send(काष्ठा ath_softc *sc, काष्ठा sk_buff *skb,
-		    काष्ठा ath_tx_control *txctl)
-अणु
-	काष्ठा ieee80211_hdr *hdr = (काष्ठा ieee80211_hdr *) skb->data;
-	काष्ठा ath_frame_info *fi = get_frame_info(skb);
-	काष्ठा ath_common *common = ath9k_hw_common(sc->sc_ah);
-	काष्ठा ath_buf *bf;
-	पूर्णांक padpos, padsize;
+int ath9k_tx99_send(struct ath_softc *sc, struct sk_buff *skb,
+		    struct ath_tx_control *txctl)
+{
+	struct ieee80211_hdr *hdr = (struct ieee80211_hdr *) skb->data;
+	struct ath_frame_info *fi = get_frame_info(skb);
+	struct ath_common *common = ath9k_hw_common(sc->sc_ah);
+	struct ath_buf *bf;
+	int padpos, padsize;
 
 	padpos = ieee80211_hdrlen(hdr->frame_control);
 	padsize = padpos & 3;
 
-	अगर (padsize && skb->len > padpos) अणु
-		अगर (skb_headroom(skb) < padsize) अणु
+	if (padsize && skb->len > padpos) {
+		if (skb_headroom(skb) < padsize) {
 			ath_dbg(common, XMIT,
 				"tx99 padding failed\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		skb_push(skb, padsize);
-		स_हटाओ(skb->data, skb->data + padsize, padpos);
-	पूर्ण
+		memmove(skb->data, skb->data + padsize, padpos);
+	}
 
 	fi->keyix = ATH9K_TXKEYIX_INVALID;
 	fi->framelen = skb->len + FCS_LEN;
 	fi->keytype = ATH9K_KEY_TYPE_CLEAR;
 
-	bf = ath_tx_setup_buffer(sc, txctl->txq, शून्य, skb);
-	अगर (!bf) अणु
+	bf = ath_tx_setup_buffer(sc, txctl->txq, NULL, skb);
+	if (!bf) {
 		ath_dbg(common, XMIT, "tx99 buffer setup failed\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ath_set_rates(sc->tx99_vअगर, शून्य, bf);
+	ath_set_rates(sc->tx99_vif, NULL, bf);
 
 	ath9k_hw_set_desc_link(sc->sc_ah, bf->bf_desc, bf->bf_daddr);
 	ath9k_hw_tx99_start(sc->sc_ah, txctl->txq->axq_qnum);
 
-	ath_tx_send_normal(sc, txctl->txq, शून्य, skb);
+	ath_tx_send_normal(sc, txctl->txq, NULL, skb);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#पूर्ण_अगर /* CONFIG_ATH9K_TX99 */
+#endif /* CONFIG_ATH9K_TX99 */

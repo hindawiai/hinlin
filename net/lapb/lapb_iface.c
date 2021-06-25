@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *	LAPB release 002
  *
@@ -7,216 +6,216 @@
  *
  *	History
  *	LAPB 001	Jonathan Naylor	Started Coding
- *	LAPB 002	Jonathan Naylor	New समयr architecture.
- *	2000-10-29	Henner Eisen	lapb_data_indication() वापस status.
+ *	LAPB 002	Jonathan Naylor	New timer architecture.
+ *	2000-10-29	Henner Eisen	lapb_data_indication() return status.
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/types.h>
-#समावेश <linux/socket.h>
-#समावेश <linux/in.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/sockios.h>
-#समावेश <linux/net.h>
-#समावेश <linux/inet.h>
-#समावेश <linux/अगर_arp.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/slab.h>
-#समावेश <net/sock.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/fcntl.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/स्थिति.स>
-#समावेश <linux/init.h>
-#समावेश <net/lapb.h>
+#include <linux/module.h>
+#include <linux/errno.h>
+#include <linux/types.h>
+#include <linux/socket.h>
+#include <linux/in.h>
+#include <linux/kernel.h>
+#include <linux/jiffies.h>
+#include <linux/timer.h>
+#include <linux/string.h>
+#include <linux/sockios.h>
+#include <linux/net.h>
+#include <linux/inet.h>
+#include <linux/if_arp.h>
+#include <linux/skbuff.h>
+#include <linux/slab.h>
+#include <net/sock.h>
+#include <linux/uaccess.h>
+#include <linux/fcntl.h>
+#include <linux/mm.h>
+#include <linux/interrupt.h>
+#include <linux/stat.h>
+#include <linux/init.h>
+#include <net/lapb.h>
 
-अटल LIST_HEAD(lapb_list);
-अटल DEFINE_RWLOCK(lapb_list_lock);
+static LIST_HEAD(lapb_list);
+static DEFINE_RWLOCK(lapb_list_lock);
 
 /*
  *	Free an allocated lapb control block.
  */
-अटल व्योम lapb_मुक्त_cb(काष्ठा lapb_cb *lapb)
-अणु
-	kमुक्त(lapb);
-पूर्ण
+static void lapb_free_cb(struct lapb_cb *lapb)
+{
+	kfree(lapb);
+}
 
-अटल __अंतरभूत__ व्योम lapb_hold(काष्ठा lapb_cb *lapb)
-अणु
+static __inline__ void lapb_hold(struct lapb_cb *lapb)
+{
 	refcount_inc(&lapb->refcnt);
-पूर्ण
+}
 
-अटल __अंतरभूत__ व्योम lapb_put(काष्ठा lapb_cb *lapb)
-अणु
-	अगर (refcount_dec_and_test(&lapb->refcnt))
-		lapb_मुक्त_cb(lapb);
-पूर्ण
+static __inline__ void lapb_put(struct lapb_cb *lapb)
+{
+	if (refcount_dec_and_test(&lapb->refcnt))
+		lapb_free_cb(lapb);
+}
 
 /*
- *	Socket removal during an पूर्णांकerrupt is now safe.
+ *	Socket removal during an interrupt is now safe.
  */
-अटल व्योम __lapb_हटाओ_cb(काष्ठा lapb_cb *lapb)
-अणु
-	अगर (lapb->node.next) अणु
+static void __lapb_remove_cb(struct lapb_cb *lapb)
+{
+	if (lapb->node.next) {
 		list_del(&lapb->node);
 		lapb_put(lapb);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  *	Add a socket to the bound sockets list.
  */
-अटल व्योम __lapb_insert_cb(काष्ठा lapb_cb *lapb)
-अणु
+static void __lapb_insert_cb(struct lapb_cb *lapb)
+{
 	list_add(&lapb->node, &lapb_list);
 	lapb_hold(lapb);
-पूर्ण
+}
 
-अटल काष्ठा lapb_cb *__lapb_devtoकाष्ठा(काष्ठा net_device *dev)
-अणु
-	काष्ठा list_head *entry;
-	काष्ठा lapb_cb *lapb, *use = शून्य;
+static struct lapb_cb *__lapb_devtostruct(struct net_device *dev)
+{
+	struct list_head *entry;
+	struct lapb_cb *lapb, *use = NULL;
 
-	list_क्रम_each(entry, &lapb_list) अणु
-		lapb = list_entry(entry, काष्ठा lapb_cb, node);
-		अगर (lapb->dev == dev) अणु
+	list_for_each(entry, &lapb_list) {
+		lapb = list_entry(entry, struct lapb_cb, node);
+		if (lapb->dev == dev) {
 			use = lapb;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (use)
+	if (use)
 		lapb_hold(use);
 
-	वापस use;
-पूर्ण
+	return use;
+}
 
-अटल काष्ठा lapb_cb *lapb_devtoकाष्ठा(काष्ठा net_device *dev)
-अणु
-	काष्ठा lapb_cb *rc;
+static struct lapb_cb *lapb_devtostruct(struct net_device *dev)
+{
+	struct lapb_cb *rc;
 
-	पढ़ो_lock_bh(&lapb_list_lock);
-	rc = __lapb_devtoकाष्ठा(dev);
-	पढ़ो_unlock_bh(&lapb_list_lock);
+	read_lock_bh(&lapb_list_lock);
+	rc = __lapb_devtostruct(dev);
+	read_unlock_bh(&lapb_list_lock);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 /*
  *	Create an empty LAPB control block.
  */
-अटल काष्ठा lapb_cb *lapb_create_cb(व्योम)
-अणु
-	काष्ठा lapb_cb *lapb = kzalloc(माप(*lapb), GFP_ATOMIC);
+static struct lapb_cb *lapb_create_cb(void)
+{
+	struct lapb_cb *lapb = kzalloc(sizeof(*lapb), GFP_ATOMIC);
 
-	अगर (!lapb)
-		जाओ out;
+	if (!lapb)
+		goto out;
 
-	skb_queue_head_init(&lapb->ग_लिखो_queue);
+	skb_queue_head_init(&lapb->write_queue);
 	skb_queue_head_init(&lapb->ack_queue);
 
-	समयr_setup(&lapb->t1समयr, शून्य, 0);
-	समयr_setup(&lapb->t2समयr, शून्य, 0);
-	lapb->t1समयr_running = false;
-	lapb->t2समयr_running = false;
+	timer_setup(&lapb->t1timer, NULL, 0);
+	timer_setup(&lapb->t2timer, NULL, 0);
+	lapb->t1timer_running = false;
+	lapb->t2timer_running = false;
 
 	lapb->t1      = LAPB_DEFAULT_T1;
 	lapb->t2      = LAPB_DEFAULT_T2;
 	lapb->n2      = LAPB_DEFAULT_N2;
 	lapb->mode    = LAPB_DEFAULT_MODE;
-	lapb->winकरोw  = LAPB_DEFAULT_WINDOW;
+	lapb->window  = LAPB_DEFAULT_WINDOW;
 	lapb->state   = LAPB_STATE_0;
 
 	spin_lock_init(&lapb->lock);
 	refcount_set(&lapb->refcnt, 1);
 out:
-	वापस lapb;
-पूर्ण
+	return lapb;
+}
 
-पूर्णांक lapb_रेजिस्टर(काष्ठा net_device *dev,
-		  स्थिर काष्ठा lapb_रेजिस्टर_काष्ठा *callbacks)
-अणु
-	काष्ठा lapb_cb *lapb;
-	पूर्णांक rc = LAPB_BADTOKEN;
+int lapb_register(struct net_device *dev,
+		  const struct lapb_register_struct *callbacks)
+{
+	struct lapb_cb *lapb;
+	int rc = LAPB_BADTOKEN;
 
-	ग_लिखो_lock_bh(&lapb_list_lock);
+	write_lock_bh(&lapb_list_lock);
 
-	lapb = __lapb_devtoकाष्ठा(dev);
-	अगर (lapb) अणु
+	lapb = __lapb_devtostruct(dev);
+	if (lapb) {
 		lapb_put(lapb);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	lapb = lapb_create_cb();
 	rc = LAPB_NOMEM;
-	अगर (!lapb)
-		जाओ out;
+	if (!lapb)
+		goto out;
 
 	lapb->dev       = dev;
 	lapb->callbacks = callbacks;
 
 	__lapb_insert_cb(lapb);
 
-	lapb_start_t1समयr(lapb);
+	lapb_start_t1timer(lapb);
 
 	rc = LAPB_OK;
 out:
-	ग_लिखो_unlock_bh(&lapb_list_lock);
-	वापस rc;
-पूर्ण
-EXPORT_SYMBOL(lapb_रेजिस्टर);
+	write_unlock_bh(&lapb_list_lock);
+	return rc;
+}
+EXPORT_SYMBOL(lapb_register);
 
-पूर्णांक lapb_unरेजिस्टर(काष्ठा net_device *dev)
-अणु
-	काष्ठा lapb_cb *lapb;
-	पूर्णांक rc = LAPB_BADTOKEN;
+int lapb_unregister(struct net_device *dev)
+{
+	struct lapb_cb *lapb;
+	int rc = LAPB_BADTOKEN;
 
-	ग_लिखो_lock_bh(&lapb_list_lock);
-	lapb = __lapb_devtoकाष्ठा(dev);
-	अगर (!lapb)
-		जाओ out;
+	write_lock_bh(&lapb_list_lock);
+	lapb = __lapb_devtostruct(dev);
+	if (!lapb)
+		goto out;
 	lapb_put(lapb);
 
-	/* Wait क्रम other refs to "lapb" to drop */
-	जबतक (refcount_पढ़ो(&lapb->refcnt) > 2)
+	/* Wait for other refs to "lapb" to drop */
+	while (refcount_read(&lapb->refcnt) > 2)
 		usleep_range(1, 10);
 
 	spin_lock_bh(&lapb->lock);
 
-	lapb_stop_t1समयr(lapb);
-	lapb_stop_t2समयr(lapb);
+	lapb_stop_t1timer(lapb);
+	lapb_stop_t2timer(lapb);
 
 	lapb_clear_queues(lapb);
 
 	spin_unlock_bh(&lapb->lock);
 
-	/* Wait क्रम running समयrs to stop */
-	del_समयr_sync(&lapb->t1समयr);
-	del_समयr_sync(&lapb->t2समयr);
+	/* Wait for running timers to stop */
+	del_timer_sync(&lapb->t1timer);
+	del_timer_sync(&lapb->t2timer);
 
-	__lapb_हटाओ_cb(lapb);
+	__lapb_remove_cb(lapb);
 
 	lapb_put(lapb);
 	rc = LAPB_OK;
 out:
-	ग_लिखो_unlock_bh(&lapb_list_lock);
-	वापस rc;
-पूर्ण
-EXPORT_SYMBOL(lapb_unरेजिस्टर);
+	write_unlock_bh(&lapb_list_lock);
+	return rc;
+}
+EXPORT_SYMBOL(lapb_unregister);
 
-पूर्णांक lapb_getparms(काष्ठा net_device *dev, काष्ठा lapb_parms_काष्ठा *parms)
-अणु
-	पूर्णांक rc = LAPB_BADTOKEN;
-	काष्ठा lapb_cb *lapb = lapb_devtoकाष्ठा(dev);
+int lapb_getparms(struct net_device *dev, struct lapb_parms_struct *parms)
+{
+	int rc = LAPB_BADTOKEN;
+	struct lapb_cb *lapb = lapb_devtostruct(dev);
 
-	अगर (!lapb)
-		जाओ out;
+	if (!lapb)
+		goto out;
 
 	spin_lock_bh(&lapb->lock);
 
@@ -225,52 +224,52 @@ EXPORT_SYMBOL(lapb_unरेजिस्टर);
 	parms->n2      = lapb->n2;
 	parms->n2count = lapb->n2count;
 	parms->state   = lapb->state;
-	parms->winकरोw  = lapb->winकरोw;
+	parms->window  = lapb->window;
 	parms->mode    = lapb->mode;
 
-	अगर (!समयr_pending(&lapb->t1समयr))
-		parms->t1समयr = 0;
-	अन्यथा
-		parms->t1समयr = (lapb->t1समयr.expires - jअगरfies) / HZ;
+	if (!timer_pending(&lapb->t1timer))
+		parms->t1timer = 0;
+	else
+		parms->t1timer = (lapb->t1timer.expires - jiffies) / HZ;
 
-	अगर (!समयr_pending(&lapb->t2समयr))
-		parms->t2समयr = 0;
-	अन्यथा
-		parms->t2समयr = (lapb->t2समयr.expires - jअगरfies) / HZ;
+	if (!timer_pending(&lapb->t2timer))
+		parms->t2timer = 0;
+	else
+		parms->t2timer = (lapb->t2timer.expires - jiffies) / HZ;
 
 	spin_unlock_bh(&lapb->lock);
 	lapb_put(lapb);
 	rc = LAPB_OK;
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 EXPORT_SYMBOL(lapb_getparms);
 
-पूर्णांक lapb_setparms(काष्ठा net_device *dev, काष्ठा lapb_parms_काष्ठा *parms)
-अणु
-	पूर्णांक rc = LAPB_BADTOKEN;
-	काष्ठा lapb_cb *lapb = lapb_devtoकाष्ठा(dev);
+int lapb_setparms(struct net_device *dev, struct lapb_parms_struct *parms)
+{
+	int rc = LAPB_BADTOKEN;
+	struct lapb_cb *lapb = lapb_devtostruct(dev);
 
-	अगर (!lapb)
-		जाओ out;
+	if (!lapb)
+		goto out;
 
 	spin_lock_bh(&lapb->lock);
 
 	rc = LAPB_INVALUE;
-	अगर (parms->t1 < 1 || parms->t2 < 1 || parms->n2 < 1)
-		जाओ out_put;
+	if (parms->t1 < 1 || parms->t2 < 1 || parms->n2 < 1)
+		goto out_put;
 
-	अगर (lapb->state == LAPB_STATE_0) अणु
-		अगर (parms->mode & LAPB_EXTENDED) अणु
-			अगर (parms->winकरोw < 1 || parms->winकरोw > 127)
-				जाओ out_put;
-		पूर्ण अन्यथा अणु
-			अगर (parms->winकरोw < 1 || parms->winकरोw > 7)
-				जाओ out_put;
-		पूर्ण
+	if (lapb->state == LAPB_STATE_0) {
+		if (parms->mode & LAPB_EXTENDED) {
+			if (parms->window < 1 || parms->window > 127)
+				goto out_put;
+		} else {
+			if (parms->window < 1 || parms->window > 7)
+				goto out_put;
+		}
 		lapb->mode    = parms->mode;
-		lapb->winकरोw  = parms->winकरोw;
-	पूर्ण
+		lapb->window  = parms->window;
+	}
 
 	lapb->t1    = parms->t1 * HZ;
 	lapb->t2    = parms->t2 * HZ;
@@ -281,27 +280,27 @@ out_put:
 	spin_unlock_bh(&lapb->lock);
 	lapb_put(lapb);
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 EXPORT_SYMBOL(lapb_setparms);
 
-पूर्णांक lapb_connect_request(काष्ठा net_device *dev)
-अणु
-	काष्ठा lapb_cb *lapb = lapb_devtoकाष्ठा(dev);
-	पूर्णांक rc = LAPB_BADTOKEN;
+int lapb_connect_request(struct net_device *dev)
+{
+	struct lapb_cb *lapb = lapb_devtostruct(dev);
+	int rc = LAPB_BADTOKEN;
 
-	अगर (!lapb)
-		जाओ out;
+	if (!lapb)
+		goto out;
 
 	spin_lock_bh(&lapb->lock);
 
 	rc = LAPB_OK;
-	अगर (lapb->state == LAPB_STATE_1)
-		जाओ out_put;
+	if (lapb->state == LAPB_STATE_1)
+		goto out_put;
 
 	rc = LAPB_CONNECTED;
-	अगर (lapb->state == LAPB_STATE_3 || lapb->state == LAPB_STATE_4)
-		जाओ out_put;
+	if (lapb->state == LAPB_STATE_3 || lapb->state == LAPB_STATE_4)
+		goto out_put;
 
 	lapb_establish_data_link(lapb);
 
@@ -313,48 +312,48 @@ out_put:
 	spin_unlock_bh(&lapb->lock);
 	lapb_put(lapb);
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 EXPORT_SYMBOL(lapb_connect_request);
 
-अटल पूर्णांक __lapb_disconnect_request(काष्ठा lapb_cb *lapb)
-अणु
-	चयन (lapb->state) अणु
-	हाल LAPB_STATE_0:
-		वापस LAPB_NOTCONNECTED;
+static int __lapb_disconnect_request(struct lapb_cb *lapb)
+{
+	switch (lapb->state) {
+	case LAPB_STATE_0:
+		return LAPB_NOTCONNECTED;
 
-	हाल LAPB_STATE_1:
+	case LAPB_STATE_1:
 		lapb_dbg(1, "(%p) S1 TX DISC(1)\n", lapb->dev);
 		lapb_dbg(0, "(%p) S1 -> S0\n", lapb->dev);
 		lapb_send_control(lapb, LAPB_DISC, LAPB_POLLON, LAPB_COMMAND);
 		lapb->state = LAPB_STATE_0;
-		lapb_start_t1समयr(lapb);
-		वापस LAPB_NOTCONNECTED;
+		lapb_start_t1timer(lapb);
+		return LAPB_NOTCONNECTED;
 
-	हाल LAPB_STATE_2:
-		वापस LAPB_OK;
-	पूर्ण
+	case LAPB_STATE_2:
+		return LAPB_OK;
+	}
 
 	lapb_clear_queues(lapb);
 	lapb->n2count = 0;
 	lapb_send_control(lapb, LAPB_DISC, LAPB_POLLON, LAPB_COMMAND);
-	lapb_start_t1समयr(lapb);
-	lapb_stop_t2समयr(lapb);
+	lapb_start_t1timer(lapb);
+	lapb_stop_t2timer(lapb);
 	lapb->state = LAPB_STATE_2;
 
 	lapb_dbg(1, "(%p) S3 DISC(1)\n", lapb->dev);
 	lapb_dbg(0, "(%p) S3 -> S2\n", lapb->dev);
 
-	वापस LAPB_OK;
-पूर्ण
+	return LAPB_OK;
+}
 
-पूर्णांक lapb_disconnect_request(काष्ठा net_device *dev)
-अणु
-	काष्ठा lapb_cb *lapb = lapb_devtoकाष्ठा(dev);
-	पूर्णांक rc = LAPB_BADTOKEN;
+int lapb_disconnect_request(struct net_device *dev)
+{
+	struct lapb_cb *lapb = lapb_devtostruct(dev);
+	int rc = LAPB_BADTOKEN;
 
-	अगर (!lapb)
-		जाओ out;
+	if (!lapb)
+		goto out;
 
 	spin_lock_bh(&lapb->lock);
 
@@ -363,194 +362,194 @@ EXPORT_SYMBOL(lapb_connect_request);
 	spin_unlock_bh(&lapb->lock);
 	lapb_put(lapb);
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 EXPORT_SYMBOL(lapb_disconnect_request);
 
-पूर्णांक lapb_data_request(काष्ठा net_device *dev, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा lapb_cb *lapb = lapb_devtoकाष्ठा(dev);
-	पूर्णांक rc = LAPB_BADTOKEN;
+int lapb_data_request(struct net_device *dev, struct sk_buff *skb)
+{
+	struct lapb_cb *lapb = lapb_devtostruct(dev);
+	int rc = LAPB_BADTOKEN;
 
-	अगर (!lapb)
-		जाओ out;
+	if (!lapb)
+		goto out;
 
 	spin_lock_bh(&lapb->lock);
 
 	rc = LAPB_NOTCONNECTED;
-	अगर (lapb->state != LAPB_STATE_3 && lapb->state != LAPB_STATE_4)
-		जाओ out_put;
+	if (lapb->state != LAPB_STATE_3 && lapb->state != LAPB_STATE_4)
+		goto out_put;
 
-	skb_queue_tail(&lapb->ग_लिखो_queue, skb);
+	skb_queue_tail(&lapb->write_queue, skb);
 	lapb_kick(lapb);
 	rc = LAPB_OK;
 out_put:
 	spin_unlock_bh(&lapb->lock);
 	lapb_put(lapb);
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 EXPORT_SYMBOL(lapb_data_request);
 
-पूर्णांक lapb_data_received(काष्ठा net_device *dev, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा lapb_cb *lapb = lapb_devtoकाष्ठा(dev);
-	पूर्णांक rc = LAPB_BADTOKEN;
+int lapb_data_received(struct net_device *dev, struct sk_buff *skb)
+{
+	struct lapb_cb *lapb = lapb_devtostruct(dev);
+	int rc = LAPB_BADTOKEN;
 
-	अगर (lapb) अणु
+	if (lapb) {
 		spin_lock_bh(&lapb->lock);
 		lapb_data_input(lapb, skb);
 		spin_unlock_bh(&lapb->lock);
 		lapb_put(lapb);
 		rc = LAPB_OK;
-	पूर्ण
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 EXPORT_SYMBOL(lapb_data_received);
 
-व्योम lapb_connect_confirmation(काष्ठा lapb_cb *lapb, पूर्णांक reason)
-अणु
-	अगर (lapb->callbacks->connect_confirmation)
+void lapb_connect_confirmation(struct lapb_cb *lapb, int reason)
+{
+	if (lapb->callbacks->connect_confirmation)
 		lapb->callbacks->connect_confirmation(lapb->dev, reason);
-पूर्ण
+}
 
-व्योम lapb_connect_indication(काष्ठा lapb_cb *lapb, पूर्णांक reason)
-अणु
-	अगर (lapb->callbacks->connect_indication)
+void lapb_connect_indication(struct lapb_cb *lapb, int reason)
+{
+	if (lapb->callbacks->connect_indication)
 		lapb->callbacks->connect_indication(lapb->dev, reason);
-पूर्ण
+}
 
-व्योम lapb_disconnect_confirmation(काष्ठा lapb_cb *lapb, पूर्णांक reason)
-अणु
-	अगर (lapb->callbacks->disconnect_confirmation)
+void lapb_disconnect_confirmation(struct lapb_cb *lapb, int reason)
+{
+	if (lapb->callbacks->disconnect_confirmation)
 		lapb->callbacks->disconnect_confirmation(lapb->dev, reason);
-पूर्ण
+}
 
-व्योम lapb_disconnect_indication(काष्ठा lapb_cb *lapb, पूर्णांक reason)
-अणु
-	अगर (lapb->callbacks->disconnect_indication)
+void lapb_disconnect_indication(struct lapb_cb *lapb, int reason)
+{
+	if (lapb->callbacks->disconnect_indication)
 		lapb->callbacks->disconnect_indication(lapb->dev, reason);
-पूर्ण
+}
 
-पूर्णांक lapb_data_indication(काष्ठा lapb_cb *lapb, काष्ठा sk_buff *skb)
-अणु
-	अगर (lapb->callbacks->data_indication)
-		वापस lapb->callbacks->data_indication(lapb->dev, skb);
+int lapb_data_indication(struct lapb_cb *lapb, struct sk_buff *skb)
+{
+	if (lapb->callbacks->data_indication)
+		return lapb->callbacks->data_indication(lapb->dev, skb);
 
-	kमुक्त_skb(skb);
-	वापस NET_RX_SUCCESS; /* For now; must be != NET_RX_DROP */
-पूर्ण
+	kfree_skb(skb);
+	return NET_RX_SUCCESS; /* For now; must be != NET_RX_DROP */
+}
 
-पूर्णांक lapb_data_transmit(काष्ठा lapb_cb *lapb, काष्ठा sk_buff *skb)
-अणु
-	पूर्णांक used = 0;
+int lapb_data_transmit(struct lapb_cb *lapb, struct sk_buff *skb)
+{
+	int used = 0;
 
-	अगर (lapb->callbacks->data_transmit) अणु
+	if (lapb->callbacks->data_transmit) {
 		lapb->callbacks->data_transmit(lapb->dev, skb);
 		used = 1;
-	पूर्ण
+	}
 
-	वापस used;
-पूर्ण
+	return used;
+}
 
 /* Handle device status changes. */
-अटल पूर्णांक lapb_device_event(काष्ठा notअगरier_block *this, अचिन्हित दीर्घ event,
-			     व्योम *ptr)
-अणु
-	काष्ठा net_device *dev = netdev_notअगरier_info_to_dev(ptr);
-	काष्ठा lapb_cb *lapb;
+static int lapb_device_event(struct notifier_block *this, unsigned long event,
+			     void *ptr)
+{
+	struct net_device *dev = netdev_notifier_info_to_dev(ptr);
+	struct lapb_cb *lapb;
 
-	अगर (!net_eq(dev_net(dev), &init_net))
-		वापस NOTIFY_DONE;
+	if (!net_eq(dev_net(dev), &init_net))
+		return NOTIFY_DONE;
 
-	अगर (dev->type != ARPHRD_X25)
-		वापस NOTIFY_DONE;
+	if (dev->type != ARPHRD_X25)
+		return NOTIFY_DONE;
 
-	lapb = lapb_devtoकाष्ठा(dev);
-	अगर (!lapb)
-		वापस NOTIFY_DONE;
+	lapb = lapb_devtostruct(dev);
+	if (!lapb)
+		return NOTIFY_DONE;
 
 	spin_lock_bh(&lapb->lock);
 
-	चयन (event) अणु
-	हाल NETDEV_UP:
+	switch (event) {
+	case NETDEV_UP:
 		lapb_dbg(0, "(%p) Interface up: %s\n", dev, dev->name);
 
-		अगर (netअगर_carrier_ok(dev)) अणु
+		if (netif_carrier_ok(dev)) {
 			lapb_dbg(0, "(%p): Carrier is already up: %s\n", dev,
 				 dev->name);
-			अगर (lapb->mode & LAPB_DCE) अणु
-				lapb_start_t1समयr(lapb);
-			पूर्ण अन्यथा अणु
-				अगर (lapb->state == LAPB_STATE_0) अणु
+			if (lapb->mode & LAPB_DCE) {
+				lapb_start_t1timer(lapb);
+			} else {
+				if (lapb->state == LAPB_STATE_0) {
 					lapb->state = LAPB_STATE_1;
 					lapb_establish_data_link(lapb);
-				पूर्ण
-			पूर्ण
-		पूर्ण
-		अवरोध;
-	हाल NETDEV_GOING_DOWN:
-		अगर (netअगर_carrier_ok(dev))
+				}
+			}
+		}
+		break;
+	case NETDEV_GOING_DOWN:
+		if (netif_carrier_ok(dev))
 			__lapb_disconnect_request(lapb);
-		अवरोध;
-	हाल NETDEV_DOWN:
+		break;
+	case NETDEV_DOWN:
 		lapb_dbg(0, "(%p) Interface down: %s\n", dev, dev->name);
 		lapb_dbg(0, "(%p) S%d -> S0\n", dev, lapb->state);
 		lapb_clear_queues(lapb);
 		lapb->state = LAPB_STATE_0;
 		lapb->n2count   = 0;
-		lapb_stop_t1समयr(lapb);
-		lapb_stop_t2समयr(lapb);
-		अवरोध;
-	हाल NETDEV_CHANGE:
-		अगर (netअगर_carrier_ok(dev)) अणु
+		lapb_stop_t1timer(lapb);
+		lapb_stop_t2timer(lapb);
+		break;
+	case NETDEV_CHANGE:
+		if (netif_carrier_ok(dev)) {
 			lapb_dbg(0, "(%p): Carrier detected: %s\n", dev,
 				 dev->name);
-			अगर (lapb->mode & LAPB_DCE) अणु
-				lapb_start_t1समयr(lapb);
-			पूर्ण अन्यथा अणु
-				अगर (lapb->state == LAPB_STATE_0) अणु
+			if (lapb->mode & LAPB_DCE) {
+				lapb_start_t1timer(lapb);
+			} else {
+				if (lapb->state == LAPB_STATE_0) {
 					lapb->state = LAPB_STATE_1;
 					lapb_establish_data_link(lapb);
-				पूर्ण
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				}
+			}
+		} else {
 			lapb_dbg(0, "(%p) Carrier lost: %s\n", dev, dev->name);
 			lapb_dbg(0, "(%p) S%d -> S0\n", dev, lapb->state);
 			lapb_clear_queues(lapb);
 			lapb->state = LAPB_STATE_0;
 			lapb->n2count   = 0;
-			lapb_stop_t1समयr(lapb);
-			lapb_stop_t2समयr(lapb);
-		पूर्ण
-		अवरोध;
-	पूर्ण
+			lapb_stop_t1timer(lapb);
+			lapb_stop_t2timer(lapb);
+		}
+		break;
+	}
 
 	spin_unlock_bh(&lapb->lock);
 	lapb_put(lapb);
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
-अटल काष्ठा notअगरier_block lapb_dev_notअगरier = अणु
-	.notअगरier_call = lapb_device_event,
-पूर्ण;
+static struct notifier_block lapb_dev_notifier = {
+	.notifier_call = lapb_device_event,
+};
 
-अटल पूर्णांक __init lapb_init(व्योम)
-अणु
-	वापस रेजिस्टर_netdevice_notअगरier(&lapb_dev_notअगरier);
-पूर्ण
+static int __init lapb_init(void)
+{
+	return register_netdevice_notifier(&lapb_dev_notifier);
+}
 
-अटल व्योम __निकास lapb_निकास(व्योम)
-अणु
+static void __exit lapb_exit(void)
+{
 	WARN_ON(!list_empty(&lapb_list));
 
-	unरेजिस्टर_netdevice_notअगरier(&lapb_dev_notअगरier);
-पूर्ण
+	unregister_netdevice_notifier(&lapb_dev_notifier);
+}
 
 MODULE_AUTHOR("Jonathan Naylor <g4klx@g4klx.demon.co.uk>");
 MODULE_DESCRIPTION("The X.25 Link Access Procedure B link layer protocol");
 MODULE_LICENSE("GPL");
 
 module_init(lapb_init);
-module_निकास(lapb_निकास);
+module_exit(lapb_exit);

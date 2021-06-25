@@ -1,158 +1,157 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Xen event channels
  *
- * Xen models पूर्णांकerrupts with असलtract event channels.  Because each
- * करोमुख्य माला_लो 1024 event channels, but NR_IRQ is not that large, we
+ * Xen models interrupts with abstract event channels.  Because each
+ * domain gets 1024 event channels, but NR_IRQ is not that large, we
  * must dynamically map irqs<->event channels.  The event channels
- * पूर्णांकerface with the rest of the kernel by defining a xen पूर्णांकerrupt
+ * interface with the rest of the kernel by defining a xen interrupt
  * chip.  When an event is received, it is mapped to an irq and sent
- * through the normal पूर्णांकerrupt processing path.
+ * through the normal interrupt processing path.
  *
  * There are four kinds of events which can be mapped to an event
  * channel:
  *
- * 1. Inter-करोमुख्य notअगरications.  This includes all the भव
- *    device events, since they're driven by front-ends in another करोमुख्य
- *    (typically करोm0).
- * 2. VIRQs, typically used क्रम समयrs.  These are per-cpu events.
+ * 1. Inter-domain notifications.  This includes all the virtual
+ *    device events, since they're driven by front-ends in another domain
+ *    (typically dom0).
+ * 2. VIRQs, typically used for timers.  These are per-cpu events.
  * 3. IPIs.
- * 4. PIRQs - Hardware पूर्णांकerrupts.
+ * 4. PIRQs - Hardware interrupts.
  *
  * Jeremy Fitzhardinge <jeremy@xensource.com>, XenSource Inc, 2007
  */
 
-#घोषणा pr_fmt(fmt) "xen:" KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) "xen:" KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/linkage.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/memblock.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/irqnr.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/cpuhotplug.h>
-#समावेश <linux/atomic.h>
-#समावेश <linux/kसमय.स>
+#include <linux/linkage.h>
+#include <linux/interrupt.h>
+#include <linux/irq.h>
+#include <linux/moduleparam.h>
+#include <linux/string.h>
+#include <linux/memblock.h>
+#include <linux/slab.h>
+#include <linux/irqnr.h>
+#include <linux/pci.h>
+#include <linux/spinlock.h>
+#include <linux/cpuhotplug.h>
+#include <linux/atomic.h>
+#include <linux/ktime.h>
 
-#अगर_घोषित CONFIG_X86
-#समावेश <यंत्र/desc.h>
-#समावेश <यंत्र/ptrace.h>
-#समावेश <यंत्र/idtentry.h>
-#समावेश <यंत्र/irq.h>
-#समावेश <यंत्र/io_apic.h>
-#समावेश <यंत्र/i8259.h>
-#समावेश <यंत्र/xen/pci.h>
-#पूर्ण_अगर
-#समावेश <यंत्र/sync_bitops.h>
-#समावेश <यंत्र/xen/hypercall.h>
-#समावेश <यंत्र/xen/hypervisor.h>
-#समावेश <xen/page.h>
+#ifdef CONFIG_X86
+#include <asm/desc.h>
+#include <asm/ptrace.h>
+#include <asm/idtentry.h>
+#include <asm/irq.h>
+#include <asm/io_apic.h>
+#include <asm/i8259.h>
+#include <asm/xen/pci.h>
+#endif
+#include <asm/sync_bitops.h>
+#include <asm/xen/hypercall.h>
+#include <asm/xen/hypervisor.h>
+#include <xen/page.h>
 
-#समावेश <xen/xen.h>
-#समावेश <xen/hvm.h>
-#समावेश <xen/xen-ops.h>
-#समावेश <xen/events.h>
-#समावेश <xen/पूर्णांकerface/xen.h>
-#समावेश <xen/पूर्णांकerface/event_channel.h>
-#समावेश <xen/पूर्णांकerface/hvm/hvm_op.h>
-#समावेश <xen/पूर्णांकerface/hvm/params.h>
-#समावेश <xen/पूर्णांकerface/physdev.h>
-#समावेश <xen/पूर्णांकerface/sched.h>
-#समावेश <xen/पूर्णांकerface/vcpu.h>
-#समावेश <xen/xenbus.h>
-#समावेश <यंत्र/hw_irq.h>
+#include <xen/xen.h>
+#include <xen/hvm.h>
+#include <xen/xen-ops.h>
+#include <xen/events.h>
+#include <xen/interface/xen.h>
+#include <xen/interface/event_channel.h>
+#include <xen/interface/hvm/hvm_op.h>
+#include <xen/interface/hvm/params.h>
+#include <xen/interface/physdev.h>
+#include <xen/interface/sched.h>
+#include <xen/interface/vcpu.h>
+#include <xen/xenbus.h>
+#include <asm/hw_irq.h>
 
-#समावेश "events_internal.h"
+#include "events_internal.h"
 
-#अघोषित MODULE_PARAM_PREFIX
-#घोषणा MODULE_PARAM_PREFIX "xen."
+#undef MODULE_PARAM_PREFIX
+#define MODULE_PARAM_PREFIX "xen."
 
 /* Interrupt types. */
-क्रमागत xen_irq_type अणु
+enum xen_irq_type {
 	IRQT_UNBOUND = 0,
 	IRQT_PIRQ,
 	IRQT_VIRQ,
 	IRQT_IPI,
 	IRQT_EVTCHN
-पूर्ण;
+};
 
 /*
- * Packed IRQ inक्रमmation:
- * type - क्रमागत xen_irq_type
+ * Packed IRQ information:
+ * type - enum xen_irq_type
  * event channel - irq->event channel mapping
  * cpu - cpu this event channel is bound to
- * index - type-specअगरic inक्रमmation:
+ * index - type-specific information:
  *    PIRQ - vector, with MSB being "needs EIO", or physical IRQ of the HVM
  *           guest, or GSI (real passthrough IRQ) of the device.
  *    VIRQ - virq number
  *    IPI - IPI vector
  *    EVTCHN -
  */
-काष्ठा irq_info अणु
-	काष्ठा list_head list;
-	काष्ठा list_head eoi_list;
-	लघु refcnt;
+struct irq_info {
+	struct list_head list;
+	struct list_head eoi_list;
+	short refcnt;
 	u8 spurious_cnt;
 	u8 is_accounted;
-	लघु type;		/* type: IRQT_* */
+	short type;		/* type: IRQT_* */
 	u8 mask_reason;		/* Why is event channel masked */
-#घोषणा EVT_MASK_REASON_EXPLICIT	0x01
-#घोषणा EVT_MASK_REASON_TEMPORARY	0x02
-#घोषणा EVT_MASK_REASON_EOI_PENDING	0x04
+#define EVT_MASK_REASON_EXPLICIT	0x01
+#define EVT_MASK_REASON_TEMPORARY	0x02
+#define EVT_MASK_REASON_EOI_PENDING	0x04
 	u8 is_active;		/* Is event just being handled? */
-	अचिन्हित irq;
+	unsigned irq;
 	evtchn_port_t evtchn;   /* event channel */
-	अचिन्हित लघु cpu;     /* cpu bound */
-	अचिन्हित लघु eoi_cpu; /* EOI must happen on this cpu-1 */
-	अचिन्हित पूर्णांक irq_epoch; /* If eoi_cpu valid: irq_epoch of event */
-	u64 eoi_समय;           /* Time in jअगरfies when to EOI. */
+	unsigned short cpu;     /* cpu bound */
+	unsigned short eoi_cpu; /* EOI must happen on this cpu-1 */
+	unsigned int irq_epoch; /* If eoi_cpu valid: irq_epoch of event */
+	u64 eoi_time;           /* Time in jiffies when to EOI. */
 	raw_spinlock_t lock;
 
-	जोड़ अणु
-		अचिन्हित लघु virq;
-		क्रमागत ipi_vector ipi;
-		काष्ठा अणु
-			अचिन्हित लघु pirq;
-			अचिन्हित लघु gsi;
-			अचिन्हित अक्षर vector;
-			अचिन्हित अक्षर flags;
-			uपूर्णांक16_t करोmid;
-		पूर्ण pirq;
-		काष्ठा xenbus_device *पूर्णांकerकरोमुख्य;
-	पूर्ण u;
-पूर्ण;
+	union {
+		unsigned short virq;
+		enum ipi_vector ipi;
+		struct {
+			unsigned short pirq;
+			unsigned short gsi;
+			unsigned char vector;
+			unsigned char flags;
+			uint16_t domid;
+		} pirq;
+		struct xenbus_device *interdomain;
+	} u;
+};
 
-#घोषणा PIRQ_NEEDS_EOI	(1 << 0)
-#घोषणा PIRQ_SHAREABLE	(1 << 1)
-#घोषणा PIRQ_MSI_GROUP	(1 << 2)
+#define PIRQ_NEEDS_EOI	(1 << 0)
+#define PIRQ_SHAREABLE	(1 << 1)
+#define PIRQ_MSI_GROUP	(1 << 2)
 
-अटल uपूर्णांक __पढ़ो_mostly event_loop_समयout = 2;
-module_param(event_loop_समयout, uपूर्णांक, 0644);
+static uint __read_mostly event_loop_timeout = 2;
+module_param(event_loop_timeout, uint, 0644);
 
-अटल uपूर्णांक __पढ़ो_mostly event_eoi_delay = 10;
-module_param(event_eoi_delay, uपूर्णांक, 0644);
+static uint __read_mostly event_eoi_delay = 10;
+module_param(event_eoi_delay, uint, 0644);
 
-स्थिर काष्ठा evtchn_ops *evtchn_ops;
+const struct evtchn_ops *evtchn_ops;
 
 /*
  * This lock protects updates to the following mapping and reference-count
- * arrays. The lock करोes not need to be acquired to पढ़ो the mapping tables.
+ * arrays. The lock does not need to be acquired to read the mapping tables.
  */
-अटल DEFINE_MUTEX(irq_mapping_update_lock);
+static DEFINE_MUTEX(irq_mapping_update_lock);
 
 /*
  * Lock protecting event handling loop against removing event channels.
  * Adding of event channels is no issue as the associated IRQ becomes active
- * only after everything is setup (beक्रमe request_[thपढ़ोed_]irq() the handler
- * can't be entered क्रम an event, as the event channel will be unmasked only
+ * only after everything is setup (before request_[threaded_]irq() the handler
+ * can't be entered for an event, as the event channel will be unmasked only
  * then).
  */
-अटल DEFINE_RWLOCK(evtchn_rwlock);
+static DEFINE_RWLOCK(evtchn_rwlock);
 
 /*
  * Lock hierarchy:
@@ -164,147 +163,147 @@ module_param(event_eoi_delay, uपूर्णांक, 0644);
  *         irq_info->lock
  */
 
-अटल LIST_HEAD(xen_irq_list_head);
+static LIST_HEAD(xen_irq_list_head);
 
 /* IRQ <-> VIRQ mapping. */
-अटल DEFINE_PER_CPU(पूर्णांक [NR_VIRQS], virq_to_irq) = अणु[0 ... NR_VIRQS-1] = -1पूर्ण;
+static DEFINE_PER_CPU(int [NR_VIRQS], virq_to_irq) = {[0 ... NR_VIRQS-1] = -1};
 
 /* IRQ <-> IPI mapping */
-अटल DEFINE_PER_CPU(पूर्णांक [XEN_NR_IPIS], ipi_to_irq) = अणु[0 ... XEN_NR_IPIS-1] = -1पूर्ण;
+static DEFINE_PER_CPU(int [XEN_NR_IPIS], ipi_to_irq) = {[0 ... XEN_NR_IPIS-1] = -1};
 
 /* Event channel distribution data */
-अटल atomic_t channels_on_cpu[NR_CPUS];
+static atomic_t channels_on_cpu[NR_CPUS];
 
-अटल पूर्णांक **evtchn_to_irq;
-#अगर_घोषित CONFIG_X86
-अटल अचिन्हित दीर्घ *pirq_eoi_map;
-#पूर्ण_अगर
-अटल bool (*pirq_needs_eoi)(अचिन्हित irq);
+static int **evtchn_to_irq;
+#ifdef CONFIG_X86
+static unsigned long *pirq_eoi_map;
+#endif
+static bool (*pirq_needs_eoi)(unsigned irq);
 
-#घोषणा EVTCHN_ROW(e)  (e / (PAGE_SIZE/माप(**evtchn_to_irq)))
-#घोषणा EVTCHN_COL(e)  (e % (PAGE_SIZE/माप(**evtchn_to_irq)))
-#घोषणा EVTCHN_PER_ROW (PAGE_SIZE / माप(**evtchn_to_irq))
+#define EVTCHN_ROW(e)  (e / (PAGE_SIZE/sizeof(**evtchn_to_irq)))
+#define EVTCHN_COL(e)  (e % (PAGE_SIZE/sizeof(**evtchn_to_irq)))
+#define EVTCHN_PER_ROW (PAGE_SIZE / sizeof(**evtchn_to_irq))
 
-/* Xen will never allocate port zero क्रम any purpose. */
-#घोषणा VALID_EVTCHN(chn)	((chn) != 0)
+/* Xen will never allocate port zero for any purpose. */
+#define VALID_EVTCHN(chn)	((chn) != 0)
 
-अटल काष्ठा irq_info *legacy_info_ptrs[NR_IRQS_LEGACY];
+static struct irq_info *legacy_info_ptrs[NR_IRQS_LEGACY];
 
-अटल काष्ठा irq_chip xen_dynamic_chip;
-अटल काष्ठा irq_chip xen_lateeoi_chip;
-अटल काष्ठा irq_chip xen_percpu_chip;
-अटल काष्ठा irq_chip xen_pirq_chip;
-अटल व्योम enable_dynirq(काष्ठा irq_data *data);
-अटल व्योम disable_dynirq(काष्ठा irq_data *data);
+static struct irq_chip xen_dynamic_chip;
+static struct irq_chip xen_lateeoi_chip;
+static struct irq_chip xen_percpu_chip;
+static struct irq_chip xen_pirq_chip;
+static void enable_dynirq(struct irq_data *data);
+static void disable_dynirq(struct irq_data *data);
 
-अटल DEFINE_PER_CPU(अचिन्हित पूर्णांक, irq_epoch);
+static DEFINE_PER_CPU(unsigned int, irq_epoch);
 
-अटल व्योम clear_evtchn_to_irq_row(अचिन्हित row)
-अणु
-	अचिन्हित col;
+static void clear_evtchn_to_irq_row(unsigned row)
+{
+	unsigned col;
 
-	क्रम (col = 0; col < EVTCHN_PER_ROW; col++)
+	for (col = 0; col < EVTCHN_PER_ROW; col++)
 		WRITE_ONCE(evtchn_to_irq[row][col], -1);
-पूर्ण
+}
 
-अटल व्योम clear_evtchn_to_irq_all(व्योम)
-अणु
-	अचिन्हित row;
+static void clear_evtchn_to_irq_all(void)
+{
+	unsigned row;
 
-	क्रम (row = 0; row < EVTCHN_ROW(xen_evtchn_max_channels()); row++) अणु
-		अगर (evtchn_to_irq[row] == शून्य)
-			जारी;
+	for (row = 0; row < EVTCHN_ROW(xen_evtchn_max_channels()); row++) {
+		if (evtchn_to_irq[row] == NULL)
+			continue;
 		clear_evtchn_to_irq_row(row);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक set_evtchn_to_irq(evtchn_port_t evtchn, अचिन्हित पूर्णांक irq)
-अणु
-	अचिन्हित row;
-	अचिन्हित col;
+static int set_evtchn_to_irq(evtchn_port_t evtchn, unsigned int irq)
+{
+	unsigned row;
+	unsigned col;
 
-	अगर (evtchn >= xen_evtchn_max_channels())
-		वापस -EINVAL;
+	if (evtchn >= xen_evtchn_max_channels())
+		return -EINVAL;
 
 	row = EVTCHN_ROW(evtchn);
 	col = EVTCHN_COL(evtchn);
 
-	अगर (evtchn_to_irq[row] == शून्य) अणु
-		/* Unallocated irq entries वापस -1 anyway */
-		अगर (irq == -1)
-			वापस 0;
+	if (evtchn_to_irq[row] == NULL) {
+		/* Unallocated irq entries return -1 anyway */
+		if (irq == -1)
+			return 0;
 
-		evtchn_to_irq[row] = (पूर्णांक *)get_zeroed_page(GFP_KERNEL);
-		अगर (evtchn_to_irq[row] == शून्य)
-			वापस -ENOMEM;
+		evtchn_to_irq[row] = (int *)get_zeroed_page(GFP_KERNEL);
+		if (evtchn_to_irq[row] == NULL)
+			return -ENOMEM;
 
 		clear_evtchn_to_irq_row(row);
-	पूर्ण
+	}
 
 	WRITE_ONCE(evtchn_to_irq[row][col], irq);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक get_evtchn_to_irq(evtchn_port_t evtchn)
-अणु
-	अगर (evtchn >= xen_evtchn_max_channels())
-		वापस -1;
-	अगर (evtchn_to_irq[EVTCHN_ROW(evtchn)] == शून्य)
-		वापस -1;
-	वापस READ_ONCE(evtchn_to_irq[EVTCHN_ROW(evtchn)][EVTCHN_COL(evtchn)]);
-पूर्ण
+int get_evtchn_to_irq(evtchn_port_t evtchn)
+{
+	if (evtchn >= xen_evtchn_max_channels())
+		return -1;
+	if (evtchn_to_irq[EVTCHN_ROW(evtchn)] == NULL)
+		return -1;
+	return READ_ONCE(evtchn_to_irq[EVTCHN_ROW(evtchn)][EVTCHN_COL(evtchn)]);
+}
 
-/* Get info क्रम IRQ */
-अटल काष्ठा irq_info *info_क्रम_irq(अचिन्हित irq)
-अणु
-	अगर (irq < nr_legacy_irqs())
-		वापस legacy_info_ptrs[irq];
-	अन्यथा
-		वापस irq_get_chip_data(irq);
-पूर्ण
+/* Get info for IRQ */
+static struct irq_info *info_for_irq(unsigned irq)
+{
+	if (irq < nr_legacy_irqs())
+		return legacy_info_ptrs[irq];
+	else
+		return irq_get_chip_data(irq);
+}
 
-अटल व्योम set_info_क्रम_irq(अचिन्हित पूर्णांक irq, काष्ठा irq_info *info)
-अणु
-	अगर (irq < nr_legacy_irqs())
+static void set_info_for_irq(unsigned int irq, struct irq_info *info)
+{
+	if (irq < nr_legacy_irqs())
 		legacy_info_ptrs[irq] = info;
-	अन्यथा
+	else
 		irq_set_chip_data(irq, info);
-पूर्ण
+}
 
 /* Per CPU channel accounting */
-अटल व्योम channels_on_cpu_dec(काष्ठा irq_info *info)
-अणु
-	अगर (!info->is_accounted)
-		वापस;
+static void channels_on_cpu_dec(struct irq_info *info)
+{
+	if (!info->is_accounted)
+		return;
 
 	info->is_accounted = 0;
 
-	अगर (WARN_ON_ONCE(info->cpu >= nr_cpu_ids))
-		वापस;
+	if (WARN_ON_ONCE(info->cpu >= nr_cpu_ids))
+		return;
 
 	WARN_ON_ONCE(!atomic_add_unless(&channels_on_cpu[info->cpu], -1 , 0));
-पूर्ण
+}
 
-अटल व्योम channels_on_cpu_inc(काष्ठा irq_info *info)
-अणु
-	अगर (WARN_ON_ONCE(info->cpu >= nr_cpu_ids))
-		वापस;
+static void channels_on_cpu_inc(struct irq_info *info)
+{
+	if (WARN_ON_ONCE(info->cpu >= nr_cpu_ids))
+		return;
 
-	अगर (WARN_ON_ONCE(!atomic_add_unless(&channels_on_cpu[info->cpu], 1,
-					    पूर्णांक_उच्च)))
-		वापस;
+	if (WARN_ON_ONCE(!atomic_add_unless(&channels_on_cpu[info->cpu], 1,
+					    INT_MAX)))
+		return;
 
 	info->is_accounted = 1;
-पूर्ण
+}
 
-/* Conकाष्ठाors क्रम packed IRQ inक्रमmation. */
-अटल पूर्णांक xen_irq_info_common_setup(काष्ठा irq_info *info,
-				     अचिन्हित irq,
-				     क्रमागत xen_irq_type type,
+/* Constructors for packed IRQ information. */
+static int xen_irq_info_common_setup(struct irq_info *info,
+				     unsigned irq,
+				     enum xen_irq_type type,
 				     evtchn_port_t evtchn,
-				     अचिन्हित लघु cpu)
-अणु
-	पूर्णांक ret;
+				     unsigned short cpu)
+{
+	int ret;
 
 	BUG_ON(info->type != IRQT_UNBOUND && info->type != type);
 
@@ -316,1055 +315,1055 @@ module_param(event_eoi_delay, uपूर्णांक, 0644);
 	raw_spin_lock_init(&info->lock);
 
 	ret = set_evtchn_to_irq(evtchn, irq);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	irq_clear_status_flags(irq, IRQ_NOREQUEST|IRQ_NOAUTOEN);
 
-	वापस xen_evtchn_port_setup(evtchn);
-पूर्ण
+	return xen_evtchn_port_setup(evtchn);
+}
 
-अटल पूर्णांक xen_irq_info_evtchn_setup(अचिन्हित irq,
+static int xen_irq_info_evtchn_setup(unsigned irq,
 				     evtchn_port_t evtchn,
-				     काष्ठा xenbus_device *dev)
-अणु
-	काष्ठा irq_info *info = info_क्रम_irq(irq);
-	पूर्णांक ret;
+				     struct xenbus_device *dev)
+{
+	struct irq_info *info = info_for_irq(irq);
+	int ret;
 
 	ret = xen_irq_info_common_setup(info, irq, IRQT_EVTCHN, evtchn, 0);
-	info->u.पूर्णांकerकरोमुख्य = dev;
-	अगर (dev)
+	info->u.interdomain = dev;
+	if (dev)
 		atomic_inc(&dev->event_channels);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक xen_irq_info_ipi_setup(अचिन्हित cpu,
-				  अचिन्हित irq,
+static int xen_irq_info_ipi_setup(unsigned cpu,
+				  unsigned irq,
 				  evtchn_port_t evtchn,
-				  क्रमागत ipi_vector ipi)
-अणु
-	काष्ठा irq_info *info = info_क्रम_irq(irq);
+				  enum ipi_vector ipi)
+{
+	struct irq_info *info = info_for_irq(irq);
 
 	info->u.ipi = ipi;
 
 	per_cpu(ipi_to_irq, cpu)[ipi] = irq;
 
-	वापस xen_irq_info_common_setup(info, irq, IRQT_IPI, evtchn, 0);
-पूर्ण
+	return xen_irq_info_common_setup(info, irq, IRQT_IPI, evtchn, 0);
+}
 
-अटल पूर्णांक xen_irq_info_virq_setup(अचिन्हित cpu,
-				   अचिन्हित irq,
+static int xen_irq_info_virq_setup(unsigned cpu,
+				   unsigned irq,
 				   evtchn_port_t evtchn,
-				   अचिन्हित virq)
-अणु
-	काष्ठा irq_info *info = info_क्रम_irq(irq);
+				   unsigned virq)
+{
+	struct irq_info *info = info_for_irq(irq);
 
 	info->u.virq = virq;
 
 	per_cpu(virq_to_irq, cpu)[virq] = irq;
 
-	वापस xen_irq_info_common_setup(info, irq, IRQT_VIRQ, evtchn, 0);
-पूर्ण
+	return xen_irq_info_common_setup(info, irq, IRQT_VIRQ, evtchn, 0);
+}
 
-अटल पूर्णांक xen_irq_info_pirq_setup(अचिन्हित irq,
+static int xen_irq_info_pirq_setup(unsigned irq,
 				   evtchn_port_t evtchn,
-				   अचिन्हित pirq,
-				   अचिन्हित gsi,
-				   uपूर्णांक16_t करोmid,
-				   अचिन्हित अक्षर flags)
-अणु
-	काष्ठा irq_info *info = info_क्रम_irq(irq);
+				   unsigned pirq,
+				   unsigned gsi,
+				   uint16_t domid,
+				   unsigned char flags)
+{
+	struct irq_info *info = info_for_irq(irq);
 
 	info->u.pirq.pirq = pirq;
 	info->u.pirq.gsi = gsi;
-	info->u.pirq.करोmid = करोmid;
+	info->u.pirq.domid = domid;
 	info->u.pirq.flags = flags;
 
-	वापस xen_irq_info_common_setup(info, irq, IRQT_PIRQ, evtchn, 0);
-पूर्ण
+	return xen_irq_info_common_setup(info, irq, IRQT_PIRQ, evtchn, 0);
+}
 
-अटल व्योम xen_irq_info_cleanup(काष्ठा irq_info *info)
-अणु
+static void xen_irq_info_cleanup(struct irq_info *info)
+{
 	set_evtchn_to_irq(info->evtchn, -1);
-	xen_evtchn_port_हटाओ(info->evtchn, info->cpu);
+	xen_evtchn_port_remove(info->evtchn, info->cpu);
 	info->evtchn = 0;
 	channels_on_cpu_dec(info);
-पूर्ण
+}
 
 /*
- * Accessors क्रम packed IRQ inक्रमmation.
+ * Accessors for packed IRQ information.
  */
-evtchn_port_t evtchn_from_irq(अचिन्हित irq)
-अणु
-	स्थिर काष्ठा irq_info *info = शून्य;
+evtchn_port_t evtchn_from_irq(unsigned irq)
+{
+	const struct irq_info *info = NULL;
 
-	अगर (likely(irq < nr_irqs))
-		info = info_क्रम_irq(irq);
-	अगर (!info)
-		वापस 0;
+	if (likely(irq < nr_irqs))
+		info = info_for_irq(irq);
+	if (!info)
+		return 0;
 
-	वापस info->evtchn;
-पूर्ण
+	return info->evtchn;
+}
 
-अचिन्हित पूर्णांक irq_from_evtchn(evtchn_port_t evtchn)
-अणु
-	वापस get_evtchn_to_irq(evtchn);
-पूर्ण
+unsigned int irq_from_evtchn(evtchn_port_t evtchn)
+{
+	return get_evtchn_to_irq(evtchn);
+}
 EXPORT_SYMBOL_GPL(irq_from_evtchn);
 
-पूर्णांक irq_from_virq(अचिन्हित पूर्णांक cpu, अचिन्हित पूर्णांक virq)
-अणु
-	वापस per_cpu(virq_to_irq, cpu)[virq];
-पूर्ण
+int irq_from_virq(unsigned int cpu, unsigned int virq)
+{
+	return per_cpu(virq_to_irq, cpu)[virq];
+}
 
-अटल क्रमागत ipi_vector ipi_from_irq(अचिन्हित irq)
-अणु
-	काष्ठा irq_info *info = info_क्रम_irq(irq);
+static enum ipi_vector ipi_from_irq(unsigned irq)
+{
+	struct irq_info *info = info_for_irq(irq);
 
-	BUG_ON(info == शून्य);
+	BUG_ON(info == NULL);
 	BUG_ON(info->type != IRQT_IPI);
 
-	वापस info->u.ipi;
-पूर्ण
+	return info->u.ipi;
+}
 
-अटल अचिन्हित virq_from_irq(अचिन्हित irq)
-अणु
-	काष्ठा irq_info *info = info_क्रम_irq(irq);
+static unsigned virq_from_irq(unsigned irq)
+{
+	struct irq_info *info = info_for_irq(irq);
 
-	BUG_ON(info == शून्य);
+	BUG_ON(info == NULL);
 	BUG_ON(info->type != IRQT_VIRQ);
 
-	वापस info->u.virq;
-पूर्ण
+	return info->u.virq;
+}
 
-अटल अचिन्हित pirq_from_irq(अचिन्हित irq)
-अणु
-	काष्ठा irq_info *info = info_क्रम_irq(irq);
+static unsigned pirq_from_irq(unsigned irq)
+{
+	struct irq_info *info = info_for_irq(irq);
 
-	BUG_ON(info == शून्य);
+	BUG_ON(info == NULL);
 	BUG_ON(info->type != IRQT_PIRQ);
 
-	वापस info->u.pirq.pirq;
-पूर्ण
+	return info->u.pirq.pirq;
+}
 
-अटल क्रमागत xen_irq_type type_from_irq(अचिन्हित irq)
-अणु
-	वापस info_क्रम_irq(irq)->type;
-पूर्ण
+static enum xen_irq_type type_from_irq(unsigned irq)
+{
+	return info_for_irq(irq)->type;
+}
 
-अटल अचिन्हित cpu_from_irq(अचिन्हित irq)
-अणु
-	वापस info_क्रम_irq(irq)->cpu;
-पूर्ण
+static unsigned cpu_from_irq(unsigned irq)
+{
+	return info_for_irq(irq)->cpu;
+}
 
-अचिन्हित पूर्णांक cpu_from_evtchn(evtchn_port_t evtchn)
-अणु
-	पूर्णांक irq = get_evtchn_to_irq(evtchn);
-	अचिन्हित ret = 0;
+unsigned int cpu_from_evtchn(evtchn_port_t evtchn)
+{
+	int irq = get_evtchn_to_irq(evtchn);
+	unsigned ret = 0;
 
-	अगर (irq != -1)
+	if (irq != -1)
 		ret = cpu_from_irq(irq);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम करो_mask(काष्ठा irq_info *info, u8 reason)
-अणु
-	अचिन्हित दीर्घ flags;
+static void do_mask(struct irq_info *info, u8 reason)
+{
+	unsigned long flags;
 
 	raw_spin_lock_irqsave(&info->lock, flags);
 
-	अगर (!info->mask_reason)
+	if (!info->mask_reason)
 		mask_evtchn(info->evtchn);
 
 	info->mask_reason |= reason;
 
 	raw_spin_unlock_irqrestore(&info->lock, flags);
-पूर्ण
+}
 
-अटल व्योम करो_unmask(काष्ठा irq_info *info, u8 reason)
-अणु
-	अचिन्हित दीर्घ flags;
+static void do_unmask(struct irq_info *info, u8 reason)
+{
+	unsigned long flags;
 
 	raw_spin_lock_irqsave(&info->lock, flags);
 
 	info->mask_reason &= ~reason;
 
-	अगर (!info->mask_reason)
+	if (!info->mask_reason)
 		unmask_evtchn(info->evtchn);
 
 	raw_spin_unlock_irqrestore(&info->lock, flags);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_X86
-अटल bool pirq_check_eoi_map(अचिन्हित irq)
-अणु
-	वापस test_bit(pirq_from_irq(irq), pirq_eoi_map);
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_X86
+static bool pirq_check_eoi_map(unsigned irq)
+{
+	return test_bit(pirq_from_irq(irq), pirq_eoi_map);
+}
+#endif
 
-अटल bool pirq_needs_eoi_flag(अचिन्हित irq)
-अणु
-	काष्ठा irq_info *info = info_क्रम_irq(irq);
+static bool pirq_needs_eoi_flag(unsigned irq)
+{
+	struct irq_info *info = info_for_irq(irq);
 	BUG_ON(info->type != IRQT_PIRQ);
 
-	वापस info->u.pirq.flags & PIRQ_NEEDS_EOI;
-पूर्ण
+	return info->u.pirq.flags & PIRQ_NEEDS_EOI;
+}
 
-अटल व्योम bind_evtchn_to_cpu(evtchn_port_t evtchn, अचिन्हित पूर्णांक cpu,
-			       bool क्रमce_affinity)
-अणु
-	पूर्णांक irq = get_evtchn_to_irq(evtchn);
-	काष्ठा irq_info *info = info_क्रम_irq(irq);
+static void bind_evtchn_to_cpu(evtchn_port_t evtchn, unsigned int cpu,
+			       bool force_affinity)
+{
+	int irq = get_evtchn_to_irq(evtchn);
+	struct irq_info *info = info_for_irq(irq);
 
 	BUG_ON(irq == -1);
 
-	अगर (IS_ENABLED(CONFIG_SMP) && क्रमce_affinity) अणु
+	if (IS_ENABLED(CONFIG_SMP) && force_affinity) {
 		cpumask_copy(irq_get_affinity_mask(irq), cpumask_of(cpu));
 		cpumask_copy(irq_get_effective_affinity_mask(irq),
 			     cpumask_of(cpu));
-	पूर्ण
+	}
 
 	xen_evtchn_port_bind_to_cpu(evtchn, cpu, info->cpu);
 
 	channels_on_cpu_dec(info);
 	info->cpu = cpu;
 	channels_on_cpu_inc(info);
-पूर्ण
+}
 
 /**
- * notअगरy_remote_via_irq - send event to remote end of event channel via irq
+ * notify_remote_via_irq - send event to remote end of event channel via irq
  * @irq: irq of event channel to send event to
  *
- * Unlike notअगरy_remote_via_evtchn(), this is safe to use across
- * save/restore. Notअगरications on a broken connection are silently
+ * Unlike notify_remote_via_evtchn(), this is safe to use across
+ * save/restore. Notifications on a broken connection are silently
  * dropped.
  */
-व्योम notअगरy_remote_via_irq(पूर्णांक irq)
-अणु
+void notify_remote_via_irq(int irq)
+{
 	evtchn_port_t evtchn = evtchn_from_irq(irq);
 
-	अगर (VALID_EVTCHN(evtchn))
-		notअगरy_remote_via_evtchn(evtchn);
-पूर्ण
-EXPORT_SYMBOL_GPL(notअगरy_remote_via_irq);
+	if (VALID_EVTCHN(evtchn))
+		notify_remote_via_evtchn(evtchn);
+}
+EXPORT_SYMBOL_GPL(notify_remote_via_irq);
 
-काष्ठा lateeoi_work अणु
-	काष्ठा delayed_work delayed;
+struct lateeoi_work {
+	struct delayed_work delayed;
 	spinlock_t eoi_list_lock;
-	काष्ठा list_head eoi_list;
-पूर्ण;
+	struct list_head eoi_list;
+};
 
-अटल DEFINE_PER_CPU(काष्ठा lateeoi_work, lateeoi);
+static DEFINE_PER_CPU(struct lateeoi_work, lateeoi);
 
-अटल व्योम lateeoi_list_del(काष्ठा irq_info *info)
-अणु
-	काष्ठा lateeoi_work *eoi = &per_cpu(lateeoi, info->eoi_cpu);
-	अचिन्हित दीर्घ flags;
+static void lateeoi_list_del(struct irq_info *info)
+{
+	struct lateeoi_work *eoi = &per_cpu(lateeoi, info->eoi_cpu);
+	unsigned long flags;
 
 	spin_lock_irqsave(&eoi->eoi_list_lock, flags);
 	list_del_init(&info->eoi_list);
 	spin_unlock_irqrestore(&eoi->eoi_list_lock, flags);
-पूर्ण
+}
 
-अटल व्योम lateeoi_list_add(काष्ठा irq_info *info)
-अणु
-	काष्ठा lateeoi_work *eoi = &per_cpu(lateeoi, info->eoi_cpu);
-	काष्ठा irq_info *elem;
-	u64 now = get_jअगरfies_64();
-	अचिन्हित दीर्घ delay;
-	अचिन्हित दीर्घ flags;
+static void lateeoi_list_add(struct irq_info *info)
+{
+	struct lateeoi_work *eoi = &per_cpu(lateeoi, info->eoi_cpu);
+	struct irq_info *elem;
+	u64 now = get_jiffies_64();
+	unsigned long delay;
+	unsigned long flags;
 
-	अगर (now < info->eoi_समय)
-		delay = info->eoi_समय - now;
-	अन्यथा
+	if (now < info->eoi_time)
+		delay = info->eoi_time - now;
+	else
 		delay = 1;
 
 	spin_lock_irqsave(&eoi->eoi_list_lock, flags);
 
-	अगर (list_empty(&eoi->eoi_list)) अणु
+	if (list_empty(&eoi->eoi_list)) {
 		list_add(&info->eoi_list, &eoi->eoi_list);
-		mod_delayed_work_on(info->eoi_cpu, प्रणाली_wq,
+		mod_delayed_work_on(info->eoi_cpu, system_wq,
 				    &eoi->delayed, delay);
-	पूर्ण अन्यथा अणु
-		list_क्रम_each_entry_reverse(elem, &eoi->eoi_list, eoi_list) अणु
-			अगर (elem->eoi_समय <= info->eoi_समय)
-				अवरोध;
-		पूर्ण
+	} else {
+		list_for_each_entry_reverse(elem, &eoi->eoi_list, eoi_list) {
+			if (elem->eoi_time <= info->eoi_time)
+				break;
+		}
 		list_add(&info->eoi_list, &elem->eoi_list);
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&eoi->eoi_list_lock, flags);
-पूर्ण
+}
 
-अटल व्योम xen_irq_lateeoi_locked(काष्ठा irq_info *info, bool spurious)
-अणु
+static void xen_irq_lateeoi_locked(struct irq_info *info, bool spurious)
+{
 	evtchn_port_t evtchn;
-	अचिन्हित पूर्णांक cpu;
-	अचिन्हित पूर्णांक delay = 0;
+	unsigned int cpu;
+	unsigned int delay = 0;
 
 	evtchn = info->evtchn;
-	अगर (!VALID_EVTCHN(evtchn) || !list_empty(&info->eoi_list))
-		वापस;
+	if (!VALID_EVTCHN(evtchn) || !list_empty(&info->eoi_list))
+		return;
 
-	अगर (spurious) अणु
-		काष्ठा xenbus_device *dev = info->u.पूर्णांकerकरोमुख्य;
-		अचिन्हित पूर्णांक threshold = 1;
+	if (spurious) {
+		struct xenbus_device *dev = info->u.interdomain;
+		unsigned int threshold = 1;
 
-		अगर (dev && dev->spurious_threshold)
+		if (dev && dev->spurious_threshold)
 			threshold = dev->spurious_threshold;
 
-		अगर ((1 << info->spurious_cnt) < (HZ << 2)) अणु
-			अगर (info->spurious_cnt != 0xFF)
+		if ((1 << info->spurious_cnt) < (HZ << 2)) {
+			if (info->spurious_cnt != 0xFF)
 				info->spurious_cnt++;
-		पूर्ण
-		अगर (info->spurious_cnt > threshold) अणु
+		}
+		if (info->spurious_cnt > threshold) {
 			delay = 1 << (info->spurious_cnt - 1 - threshold);
-			अगर (delay > HZ)
+			if (delay > HZ)
 				delay = HZ;
-			अगर (!info->eoi_समय)
+			if (!info->eoi_time)
 				info->eoi_cpu = smp_processor_id();
-			info->eoi_समय = get_jअगरfies_64() + delay;
-			अगर (dev)
-				atomic_add(delay, &dev->jअगरfies_eoi_delayed);
-		पूर्ण
-		अगर (dev)
+			info->eoi_time = get_jiffies_64() + delay;
+			if (dev)
+				atomic_add(delay, &dev->jiffies_eoi_delayed);
+		}
+		if (dev)
 			atomic_inc(&dev->spurious_events);
-	पूर्ण अन्यथा अणु
+	} else {
 		info->spurious_cnt = 0;
-	पूर्ण
+	}
 
 	cpu = info->eoi_cpu;
-	अगर (info->eoi_समय &&
-	    (info->irq_epoch == per_cpu(irq_epoch, cpu) || delay)) अणु
+	if (info->eoi_time &&
+	    (info->irq_epoch == per_cpu(irq_epoch, cpu) || delay)) {
 		lateeoi_list_add(info);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	info->eoi_समय = 0;
-	करो_unmask(info, EVT_MASK_REASON_EOI_PENDING);
-पूर्ण
+	info->eoi_time = 0;
+	do_unmask(info, EVT_MASK_REASON_EOI_PENDING);
+}
 
-अटल व्योम xen_irq_lateeoi_worker(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा lateeoi_work *eoi;
-	काष्ठा irq_info *info;
-	u64 now = get_jअगरfies_64();
-	अचिन्हित दीर्घ flags;
+static void xen_irq_lateeoi_worker(struct work_struct *work)
+{
+	struct lateeoi_work *eoi;
+	struct irq_info *info;
+	u64 now = get_jiffies_64();
+	unsigned long flags;
 
-	eoi = container_of(to_delayed_work(work), काष्ठा lateeoi_work, delayed);
+	eoi = container_of(to_delayed_work(work), struct lateeoi_work, delayed);
 
-	पढ़ो_lock_irqsave(&evtchn_rwlock, flags);
+	read_lock_irqsave(&evtchn_rwlock, flags);
 
-	जबतक (true) अणु
+	while (true) {
 		spin_lock(&eoi->eoi_list_lock);
 
-		info = list_first_entry_or_null(&eoi->eoi_list, काष्ठा irq_info,
+		info = list_first_entry_or_null(&eoi->eoi_list, struct irq_info,
 						eoi_list);
 
-		अगर (info == शून्य || now < info->eoi_समय) अणु
+		if (info == NULL || now < info->eoi_time) {
 			spin_unlock(&eoi->eoi_list_lock);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		list_del_init(&info->eoi_list);
 
 		spin_unlock(&eoi->eoi_list_lock);
 
-		info->eoi_समय = 0;
+		info->eoi_time = 0;
 
 		xen_irq_lateeoi_locked(info, false);
-	पूर्ण
+	}
 
-	अगर (info)
-		mod_delayed_work_on(info->eoi_cpu, प्रणाली_wq,
-				    &eoi->delayed, info->eoi_समय - now);
+	if (info)
+		mod_delayed_work_on(info->eoi_cpu, system_wq,
+				    &eoi->delayed, info->eoi_time - now);
 
-	पढ़ो_unlock_irqrestore(&evtchn_rwlock, flags);
-पूर्ण
+	read_unlock_irqrestore(&evtchn_rwlock, flags);
+}
 
-अटल व्योम xen_cpu_init_eoi(अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा lateeoi_work *eoi = &per_cpu(lateeoi, cpu);
+static void xen_cpu_init_eoi(unsigned int cpu)
+{
+	struct lateeoi_work *eoi = &per_cpu(lateeoi, cpu);
 
 	INIT_DELAYED_WORK(&eoi->delayed, xen_irq_lateeoi_worker);
 	spin_lock_init(&eoi->eoi_list_lock);
 	INIT_LIST_HEAD(&eoi->eoi_list);
-पूर्ण
+}
 
-व्योम xen_irq_lateeoi(अचिन्हित पूर्णांक irq, अचिन्हित पूर्णांक eoi_flags)
-अणु
-	काष्ठा irq_info *info;
-	अचिन्हित दीर्घ flags;
+void xen_irq_lateeoi(unsigned int irq, unsigned int eoi_flags)
+{
+	struct irq_info *info;
+	unsigned long flags;
 
-	पढ़ो_lock_irqsave(&evtchn_rwlock, flags);
+	read_lock_irqsave(&evtchn_rwlock, flags);
 
-	info = info_क्रम_irq(irq);
+	info = info_for_irq(irq);
 
-	अगर (info)
+	if (info)
 		xen_irq_lateeoi_locked(info, eoi_flags & XEN_EOI_FLAG_SPURIOUS);
 
-	पढ़ो_unlock_irqrestore(&evtchn_rwlock, flags);
-पूर्ण
+	read_unlock_irqrestore(&evtchn_rwlock, flags);
+}
 EXPORT_SYMBOL_GPL(xen_irq_lateeoi);
 
-अटल व्योम xen_irq_init(अचिन्हित irq)
-अणु
-	काष्ठा irq_info *info;
+static void xen_irq_init(unsigned irq)
+{
+	struct irq_info *info;
 
-	info = kzalloc(माप(*info), GFP_KERNEL);
-	अगर (info == शून्य)
+	info = kzalloc(sizeof(*info), GFP_KERNEL);
+	if (info == NULL)
 		panic("Unable to allocate metadata for IRQ%d\n", irq);
 
 	info->type = IRQT_UNBOUND;
 	info->refcnt = -1;
 
-	set_info_क्रम_irq(irq, info);
+	set_info_for_irq(irq, info);
 	/*
-	 * Interrupt affinity setting can be immediate. No poपूर्णांक
-	 * in delaying it until an पूर्णांकerrupt is handled.
+	 * Interrupt affinity setting can be immediate. No point
+	 * in delaying it until an interrupt is handled.
 	 */
 	irq_set_status_flags(irq, IRQ_MOVE_PCNTXT);
 
 	INIT_LIST_HEAD(&info->eoi_list);
 	list_add_tail(&info->list, &xen_irq_list_head);
-पूर्ण
+}
 
-अटल पूर्णांक __must_check xen_allocate_irqs_dynamic(पूर्णांक nvec)
-अणु
-	पूर्णांक i, irq = irq_alloc_descs(-1, 0, nvec, -1);
+static int __must_check xen_allocate_irqs_dynamic(int nvec)
+{
+	int i, irq = irq_alloc_descs(-1, 0, nvec, -1);
 
-	अगर (irq >= 0) अणु
-		क्रम (i = 0; i < nvec; i++)
+	if (irq >= 0) {
+		for (i = 0; i < nvec; i++)
 			xen_irq_init(irq + i);
-	पूर्ण
+	}
 
-	वापस irq;
-पूर्ण
+	return irq;
+}
 
-अटल अंतरभूत पूर्णांक __must_check xen_allocate_irq_dynamic(व्योम)
-अणु
+static inline int __must_check xen_allocate_irq_dynamic(void)
+{
 
-	वापस xen_allocate_irqs_dynamic(1);
-पूर्ण
+	return xen_allocate_irqs_dynamic(1);
+}
 
-अटल पूर्णांक __must_check xen_allocate_irq_gsi(अचिन्हित gsi)
-अणु
-	पूर्णांक irq;
+static int __must_check xen_allocate_irq_gsi(unsigned gsi)
+{
+	int irq;
 
 	/*
 	 * A PV guest has no concept of a GSI (since it has no ACPI
-	 * nor access to/knowledge of the physical APICs). Thereक्रमe
+	 * nor access to/knowledge of the physical APICs). Therefore
 	 * all IRQs are dynamically allocated from the entire IRQ
 	 * space.
 	 */
-	अगर (xen_pv_करोमुख्य() && !xen_initial_करोमुख्य())
-		वापस xen_allocate_irq_dynamic();
+	if (xen_pv_domain() && !xen_initial_domain())
+		return xen_allocate_irq_dynamic();
 
-	/* Legacy IRQ descriptors are alपढ़ोy allocated by the arch. */
-	अगर (gsi < nr_legacy_irqs())
+	/* Legacy IRQ descriptors are already allocated by the arch. */
+	if (gsi < nr_legacy_irqs())
 		irq = gsi;
-	अन्यथा
+	else
 		irq = irq_alloc_desc_at(gsi, -1);
 
 	xen_irq_init(irq);
 
-	वापस irq;
-पूर्ण
+	return irq;
+}
 
-अटल व्योम xen_मुक्त_irq(अचिन्हित irq)
-अणु
-	काष्ठा irq_info *info = info_क्रम_irq(irq);
-	अचिन्हित दीर्घ flags;
+static void xen_free_irq(unsigned irq)
+{
+	struct irq_info *info = info_for_irq(irq);
+	unsigned long flags;
 
-	अगर (WARN_ON(!info))
-		वापस;
+	if (WARN_ON(!info))
+		return;
 
-	ग_लिखो_lock_irqsave(&evtchn_rwlock, flags);
+	write_lock_irqsave(&evtchn_rwlock, flags);
 
-	अगर (!list_empty(&info->eoi_list))
+	if (!list_empty(&info->eoi_list))
 		lateeoi_list_del(info);
 
 	list_del(&info->list);
 
-	set_info_क्रम_irq(irq, शून्य);
+	set_info_for_irq(irq, NULL);
 
 	WARN_ON(info->refcnt > 0);
 
-	ग_लिखो_unlock_irqrestore(&evtchn_rwlock, flags);
+	write_unlock_irqrestore(&evtchn_rwlock, flags);
 
-	kमुक्त(info);
+	kfree(info);
 
 	/* Legacy IRQ descriptors are managed by the arch. */
-	अगर (irq < nr_legacy_irqs())
-		वापस;
+	if (irq < nr_legacy_irqs())
+		return;
 
-	irq_मुक्त_desc(irq);
-पूर्ण
+	irq_free_desc(irq);
+}
 
-अटल व्योम xen_evtchn_बंद(evtchn_port_t port)
-अणु
-	काष्ठा evtchn_बंद बंद;
+static void xen_evtchn_close(evtchn_port_t port)
+{
+	struct evtchn_close close;
 
-	बंद.port = port;
-	अगर (HYPERVISOR_event_channel_op(EVTCHNOP_बंद, &बंद) != 0)
+	close.port = port;
+	if (HYPERVISOR_event_channel_op(EVTCHNOP_close, &close) != 0)
 		BUG();
-पूर्ण
+}
 
-अटल व्योम event_handler_निकास(काष्ठा irq_info *info)
-अणु
+static void event_handler_exit(struct irq_info *info)
+{
 	smp_store_release(&info->is_active, 0);
 	clear_evtchn(info->evtchn);
-पूर्ण
+}
 
-अटल व्योम pirq_query_unmask(पूर्णांक irq)
-अणु
-	काष्ठा physdev_irq_status_query irq_status;
-	काष्ठा irq_info *info = info_क्रम_irq(irq);
+static void pirq_query_unmask(int irq)
+{
+	struct physdev_irq_status_query irq_status;
+	struct irq_info *info = info_for_irq(irq);
 
 	BUG_ON(info->type != IRQT_PIRQ);
 
 	irq_status.irq = pirq_from_irq(irq);
-	अगर (HYPERVISOR_physdev_op(PHYSDEVOP_irq_status_query, &irq_status))
+	if (HYPERVISOR_physdev_op(PHYSDEVOP_irq_status_query, &irq_status))
 		irq_status.flags = 0;
 
 	info->u.pirq.flags &= ~PIRQ_NEEDS_EOI;
-	अगर (irq_status.flags & XENIRQSTAT_needs_eoi)
+	if (irq_status.flags & XENIRQSTAT_needs_eoi)
 		info->u.pirq.flags |= PIRQ_NEEDS_EOI;
-पूर्ण
+}
 
-अटल व्योम eoi_pirq(काष्ठा irq_data *data)
-अणु
-	काष्ठा irq_info *info = info_क्रम_irq(data->irq);
+static void eoi_pirq(struct irq_data *data)
+{
+	struct irq_info *info = info_for_irq(data->irq);
 	evtchn_port_t evtchn = info ? info->evtchn : 0;
-	काष्ठा physdev_eoi eoi = अणु .irq = pirq_from_irq(data->irq) पूर्ण;
-	पूर्णांक rc = 0;
+	struct physdev_eoi eoi = { .irq = pirq_from_irq(data->irq) };
+	int rc = 0;
 
-	अगर (!VALID_EVTCHN(evtchn))
-		वापस;
+	if (!VALID_EVTCHN(evtchn))
+		return;
 
-	event_handler_निकास(info);
+	event_handler_exit(info);
 
-	अगर (pirq_needs_eoi(data->irq)) अणु
+	if (pirq_needs_eoi(data->irq)) {
 		rc = HYPERVISOR_physdev_op(PHYSDEVOP_eoi, &eoi);
 		WARN_ON(rc);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम mask_ack_pirq(काष्ठा irq_data *data)
-अणु
+static void mask_ack_pirq(struct irq_data *data)
+{
 	disable_dynirq(data);
 	eoi_pirq(data);
-पूर्ण
+}
 
-अटल अचिन्हित पूर्णांक __startup_pirq(अचिन्हित पूर्णांक irq)
-अणु
-	काष्ठा evtchn_bind_pirq bind_pirq;
-	काष्ठा irq_info *info = info_क्रम_irq(irq);
+static unsigned int __startup_pirq(unsigned int irq)
+{
+	struct evtchn_bind_pirq bind_pirq;
+	struct irq_info *info = info_for_irq(irq);
 	evtchn_port_t evtchn = evtchn_from_irq(irq);
-	पूर्णांक rc;
+	int rc;
 
 	BUG_ON(info->type != IRQT_PIRQ);
 
-	अगर (VALID_EVTCHN(evtchn))
-		जाओ out;
+	if (VALID_EVTCHN(evtchn))
+		goto out;
 
 	bind_pirq.pirq = pirq_from_irq(irq);
 	/* NB. We are happy to share unless we are probing. */
 	bind_pirq.flags = info->u.pirq.flags & PIRQ_SHAREABLE ?
 					BIND_PIRQ__WILL_SHARE : 0;
 	rc = HYPERVISOR_event_channel_op(EVTCHNOP_bind_pirq, &bind_pirq);
-	अगर (rc != 0) अणु
+	if (rc != 0) {
 		pr_warn("Failed to obtain physical IRQ %d\n", irq);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	evtchn = bind_pirq.port;
 
 	pirq_query_unmask(irq);
 
 	rc = set_evtchn_to_irq(evtchn, irq);
-	अगर (rc)
-		जाओ err;
+	if (rc)
+		goto err;
 
 	info->evtchn = evtchn;
 	bind_evtchn_to_cpu(evtchn, 0, false);
 
 	rc = xen_evtchn_port_setup(evtchn);
-	अगर (rc)
-		जाओ err;
+	if (rc)
+		goto err;
 
 out:
-	करो_unmask(info, EVT_MASK_REASON_EXPLICIT);
+	do_unmask(info, EVT_MASK_REASON_EXPLICIT);
 
 	eoi_pirq(irq_get_irq_data(irq));
 
-	वापस 0;
+	return 0;
 
 err:
 	pr_err("irq%d: Failed to set port to irq mapping (%d)\n", irq, rc);
-	xen_evtchn_बंद(evtchn);
-	वापस 0;
-पूर्ण
+	xen_evtchn_close(evtchn);
+	return 0;
+}
 
-अटल अचिन्हित पूर्णांक startup_pirq(काष्ठा irq_data *data)
-अणु
-	वापस __startup_pirq(data->irq);
-पूर्ण
+static unsigned int startup_pirq(struct irq_data *data)
+{
+	return __startup_pirq(data->irq);
+}
 
-अटल व्योम shutकरोwn_pirq(काष्ठा irq_data *data)
-अणु
-	अचिन्हित पूर्णांक irq = data->irq;
-	काष्ठा irq_info *info = info_क्रम_irq(irq);
+static void shutdown_pirq(struct irq_data *data)
+{
+	unsigned int irq = data->irq;
+	struct irq_info *info = info_for_irq(irq);
 	evtchn_port_t evtchn = evtchn_from_irq(irq);
 
 	BUG_ON(info->type != IRQT_PIRQ);
 
-	अगर (!VALID_EVTCHN(evtchn))
-		वापस;
+	if (!VALID_EVTCHN(evtchn))
+		return;
 
-	करो_mask(info, EVT_MASK_REASON_EXPLICIT);
-	xen_evtchn_बंद(evtchn);
+	do_mask(info, EVT_MASK_REASON_EXPLICIT);
+	xen_evtchn_close(evtchn);
 	xen_irq_info_cleanup(info);
-पूर्ण
+}
 
-अटल व्योम enable_pirq(काष्ठा irq_data *data)
-अणु
+static void enable_pirq(struct irq_data *data)
+{
 	enable_dynirq(data);
-पूर्ण
+}
 
-अटल व्योम disable_pirq(काष्ठा irq_data *data)
-अणु
+static void disable_pirq(struct irq_data *data)
+{
 	disable_dynirq(data);
-पूर्ण
+}
 
-पूर्णांक xen_irq_from_gsi(अचिन्हित gsi)
-अणु
-	काष्ठा irq_info *info;
+int xen_irq_from_gsi(unsigned gsi)
+{
+	struct irq_info *info;
 
-	list_क्रम_each_entry(info, &xen_irq_list_head, list) अणु
-		अगर (info->type != IRQT_PIRQ)
-			जारी;
+	list_for_each_entry(info, &xen_irq_list_head, list) {
+		if (info->type != IRQT_PIRQ)
+			continue;
 
-		अगर (info->u.pirq.gsi == gsi)
-			वापस info->irq;
-	पूर्ण
+		if (info->u.pirq.gsi == gsi)
+			return info->irq;
+	}
 
-	वापस -1;
-पूर्ण
+	return -1;
+}
 EXPORT_SYMBOL_GPL(xen_irq_from_gsi);
 
-अटल व्योम __unbind_from_irq(अचिन्हित पूर्णांक irq)
-अणु
+static void __unbind_from_irq(unsigned int irq)
+{
 	evtchn_port_t evtchn = evtchn_from_irq(irq);
-	काष्ठा irq_info *info = info_क्रम_irq(irq);
+	struct irq_info *info = info_for_irq(irq);
 
-	अगर (info->refcnt > 0) अणु
+	if (info->refcnt > 0) {
 		info->refcnt--;
-		अगर (info->refcnt != 0)
-			वापस;
-	पूर्ण
+		if (info->refcnt != 0)
+			return;
+	}
 
-	अगर (VALID_EVTCHN(evtchn)) अणु
-		अचिन्हित पूर्णांक cpu = cpu_from_irq(irq);
-		काष्ठा xenbus_device *dev;
+	if (VALID_EVTCHN(evtchn)) {
+		unsigned int cpu = cpu_from_irq(irq);
+		struct xenbus_device *dev;
 
-		xen_evtchn_बंद(evtchn);
+		xen_evtchn_close(evtchn);
 
-		चयन (type_from_irq(irq)) अणु
-		हाल IRQT_VIRQ:
+		switch (type_from_irq(irq)) {
+		case IRQT_VIRQ:
 			per_cpu(virq_to_irq, cpu)[virq_from_irq(irq)] = -1;
-			अवरोध;
-		हाल IRQT_IPI:
+			break;
+		case IRQT_IPI:
 			per_cpu(ipi_to_irq, cpu)[ipi_from_irq(irq)] = -1;
-			अवरोध;
-		हाल IRQT_EVTCHN:
-			dev = info->u.पूर्णांकerकरोमुख्य;
-			अगर (dev)
+			break;
+		case IRQT_EVTCHN:
+			dev = info->u.interdomain;
+			if (dev)
 				atomic_dec(&dev->event_channels);
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
+			break;
+		default:
+			break;
+		}
 
 		xen_irq_info_cleanup(info);
-	पूर्ण
+	}
 
-	xen_मुक्त_irq(irq);
-पूर्ण
+	xen_free_irq(irq);
+}
 
 /*
  * Do not make any assumptions regarding the relationship between the
- * IRQ number वापसed here and the Xen pirq argument.
+ * IRQ number returned here and the Xen pirq argument.
  *
- * Note: We करोn't assign an event channel until the irq actually started
- * up.  Return an existing irq अगर we've alपढ़ोy got one क्रम the gsi.
+ * Note: We don't assign an event channel until the irq actually started
+ * up.  Return an existing irq if we've already got one for the gsi.
  *
  * Shareable implies level triggered, not shareable implies edge
  * triggered here.
  */
-पूर्णांक xen_bind_pirq_gsi_to_irq(अचिन्हित gsi,
-			     अचिन्हित pirq, पूर्णांक shareable, अक्षर *name)
-अणु
-	पूर्णांक irq = -1;
-	काष्ठा physdev_irq irq_op;
-	पूर्णांक ret;
+int xen_bind_pirq_gsi_to_irq(unsigned gsi,
+			     unsigned pirq, int shareable, char *name)
+{
+	int irq = -1;
+	struct physdev_irq irq_op;
+	int ret;
 
 	mutex_lock(&irq_mapping_update_lock);
 
 	irq = xen_irq_from_gsi(gsi);
-	अगर (irq != -1) अणु
+	if (irq != -1) {
 		pr_info("%s: returning irq %d for gsi %u\n",
 			__func__, irq, gsi);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	irq = xen_allocate_irq_gsi(gsi);
-	अगर (irq < 0)
-		जाओ out;
+	if (irq < 0)
+		goto out;
 
 	irq_op.irq = irq;
 	irq_op.vector = 0;
 
-	/* Only the privileged करोमुख्य can करो this. For non-priv, the pcअगरront
-	 * driver provides a PCI bus that करोes the call to करो exactly
-	 * this in the priv करोमुख्य. */
-	अगर (xen_initial_करोमुख्य() &&
-	    HYPERVISOR_physdev_op(PHYSDEVOP_alloc_irq_vector, &irq_op)) अणु
-		xen_मुक्त_irq(irq);
+	/* Only the privileged domain can do this. For non-priv, the pcifront
+	 * driver provides a PCI bus that does the call to do exactly
+	 * this in the priv domain. */
+	if (xen_initial_domain() &&
+	    HYPERVISOR_physdev_op(PHYSDEVOP_alloc_irq_vector, &irq_op)) {
+		xen_free_irq(irq);
 		irq = -ENOSPC;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = xen_irq_info_pirq_setup(irq, 0, pirq, gsi, DOMID_SELF,
 			       shareable ? PIRQ_SHAREABLE : 0);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		__unbind_from_irq(irq);
 		irq = ret;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	pirq_query_unmask(irq);
-	/* We try to use the handler with the appropriate semantic क्रम the
-	 * type of पूर्णांकerrupt: अगर the पूर्णांकerrupt is an edge triggered
-	 * पूर्णांकerrupt we use handle_edge_irq.
+	/* We try to use the handler with the appropriate semantic for the
+	 * type of interrupt: if the interrupt is an edge triggered
+	 * interrupt we use handle_edge_irq.
 	 *
-	 * On the other hand अगर the पूर्णांकerrupt is level triggered we use
-	 * handle_fasteoi_irq like the native code करोes क्रम this kind of
-	 * पूर्णांकerrupts.
+	 * On the other hand if the interrupt is level triggered we use
+	 * handle_fasteoi_irq like the native code does for this kind of
+	 * interrupts.
 	 *
-	 * Depending on the Xen version, pirq_needs_eoi might वापस true
-	 * not only क्रम level triggered पूर्णांकerrupts but क्रम edge triggered
-	 * पूर्णांकerrupts too. In any हाल Xen always honors the eoi mechanism,
-	 * not injecting any more pirqs of the same kind अगर the first one
-	 * hasn't received an eoi yet. Thereक्रमe using the fasteoi handler
+	 * Depending on the Xen version, pirq_needs_eoi might return true
+	 * not only for level triggered interrupts but for edge triggered
+	 * interrupts too. In any case Xen always honors the eoi mechanism,
+	 * not injecting any more pirqs of the same kind if the first one
+	 * hasn't received an eoi yet. Therefore using the fasteoi handler
 	 * is the right choice either way.
 	 */
-	अगर (shareable)
+	if (shareable)
 		irq_set_chip_and_handler_name(irq, &xen_pirq_chip,
 				handle_fasteoi_irq, name);
-	अन्यथा
+	else
 		irq_set_chip_and_handler_name(irq, &xen_pirq_chip,
 				handle_edge_irq, name);
 
 out:
 	mutex_unlock(&irq_mapping_update_lock);
 
-	वापस irq;
-पूर्ण
+	return irq;
+}
 
-#अगर_घोषित CONFIG_PCI_MSI
-पूर्णांक xen_allocate_pirq_msi(काष्ठा pci_dev *dev, काष्ठा msi_desc *msidesc)
-अणु
-	पूर्णांक rc;
-	काष्ठा physdev_get_मुक्त_pirq op_get_मुक्त_pirq;
+#ifdef CONFIG_PCI_MSI
+int xen_allocate_pirq_msi(struct pci_dev *dev, struct msi_desc *msidesc)
+{
+	int rc;
+	struct physdev_get_free_pirq op_get_free_pirq;
 
-	op_get_मुक्त_pirq.type = MAP_PIRQ_TYPE_MSI;
-	rc = HYPERVISOR_physdev_op(PHYSDEVOP_get_मुक्त_pirq, &op_get_मुक्त_pirq);
+	op_get_free_pirq.type = MAP_PIRQ_TYPE_MSI;
+	rc = HYPERVISOR_physdev_op(PHYSDEVOP_get_free_pirq, &op_get_free_pirq);
 
 	WARN_ONCE(rc == -ENOSYS,
 		  "hypervisor does not support the PHYSDEVOP_get_free_pirq interface\n");
 
-	वापस rc ? -1 : op_get_मुक्त_pirq.pirq;
-पूर्ण
+	return rc ? -1 : op_get_free_pirq.pirq;
+}
 
-पूर्णांक xen_bind_pirq_msi_to_irq(काष्ठा pci_dev *dev, काष्ठा msi_desc *msidesc,
-			     पूर्णांक pirq, पूर्णांक nvec, स्थिर अक्षर *name, करोmid_t करोmid)
-अणु
-	पूर्णांक i, irq, ret;
+int xen_bind_pirq_msi_to_irq(struct pci_dev *dev, struct msi_desc *msidesc,
+			     int pirq, int nvec, const char *name, domid_t domid)
+{
+	int i, irq, ret;
 
 	mutex_lock(&irq_mapping_update_lock);
 
 	irq = xen_allocate_irqs_dynamic(nvec);
-	अगर (irq < 0)
-		जाओ out;
+	if (irq < 0)
+		goto out;
 
-	क्रम (i = 0; i < nvec; i++) अणु
+	for (i = 0; i < nvec; i++) {
 		irq_set_chip_and_handler_name(irq + i, &xen_pirq_chip, handle_edge_irq, name);
 
-		ret = xen_irq_info_pirq_setup(irq + i, 0, pirq + i, 0, करोmid,
+		ret = xen_irq_info_pirq_setup(irq + i, 0, pirq + i, 0, domid,
 					      i == 0 ? 0 : PIRQ_MSI_GROUP);
-		अगर (ret < 0)
-			जाओ error_irq;
-	पूर्ण
+		if (ret < 0)
+			goto error_irq;
+	}
 
 	ret = irq_set_msi_desc(irq, msidesc);
-	अगर (ret < 0)
-		जाओ error_irq;
+	if (ret < 0)
+		goto error_irq;
 out:
 	mutex_unlock(&irq_mapping_update_lock);
-	वापस irq;
+	return irq;
 error_irq:
-	जबतक (nvec--)
+	while (nvec--)
 		__unbind_from_irq(irq + nvec);
 	mutex_unlock(&irq_mapping_update_lock);
-	वापस ret;
-पूर्ण
-#पूर्ण_अगर
+	return ret;
+}
+#endif
 
-पूर्णांक xen_destroy_irq(पूर्णांक irq)
-अणु
-	काष्ठा physdev_unmap_pirq unmap_irq;
-	काष्ठा irq_info *info = info_क्रम_irq(irq);
-	पूर्णांक rc = -ENOENT;
+int xen_destroy_irq(int irq)
+{
+	struct physdev_unmap_pirq unmap_irq;
+	struct irq_info *info = info_for_irq(irq);
+	int rc = -ENOENT;
 
 	mutex_lock(&irq_mapping_update_lock);
 
 	/*
-	 * If trying to हटाओ a vector in a MSI group dअगरferent
+	 * If trying to remove a vector in a MSI group different
 	 * than the first one skip the PIRQ unmap unless this vector
 	 * is the first one in the group.
 	 */
-	अगर (xen_initial_करोमुख्य() && !(info->u.pirq.flags & PIRQ_MSI_GROUP)) अणु
+	if (xen_initial_domain() && !(info->u.pirq.flags & PIRQ_MSI_GROUP)) {
 		unmap_irq.pirq = info->u.pirq.pirq;
-		unmap_irq.करोmid = info->u.pirq.करोmid;
+		unmap_irq.domid = info->u.pirq.domid;
 		rc = HYPERVISOR_physdev_op(PHYSDEVOP_unmap_pirq, &unmap_irq);
-		/* If another करोमुख्य quits without making the pci_disable_msix
-		 * call, the Xen hypervisor takes care of मुक्तing the PIRQs
-		 * (मुक्त_करोमुख्य_pirqs).
+		/* If another domain quits without making the pci_disable_msix
+		 * call, the Xen hypervisor takes care of freeing the PIRQs
+		 * (free_domain_pirqs).
 		 */
-		अगर ((rc == -ESRCH && info->u.pirq.करोmid != DOMID_SELF))
+		if ((rc == -ESRCH && info->u.pirq.domid != DOMID_SELF))
 			pr_info("domain %d does not have %d anymore\n",
-				info->u.pirq.करोmid, info->u.pirq.pirq);
-		अन्यथा अगर (rc) अणु
+				info->u.pirq.domid, info->u.pirq.pirq);
+		else if (rc) {
 			pr_warn("unmap irq failed %d\n", rc);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
-	xen_मुक्त_irq(irq);
+	xen_free_irq(irq);
 
 out:
 	mutex_unlock(&irq_mapping_update_lock);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-पूर्णांक xen_irq_from_pirq(अचिन्हित pirq)
-अणु
-	पूर्णांक irq;
+int xen_irq_from_pirq(unsigned pirq)
+{
+	int irq;
 
-	काष्ठा irq_info *info;
+	struct irq_info *info;
 
 	mutex_lock(&irq_mapping_update_lock);
 
-	list_क्रम_each_entry(info, &xen_irq_list_head, list) अणु
-		अगर (info->type != IRQT_PIRQ)
-			जारी;
+	list_for_each_entry(info, &xen_irq_list_head, list) {
+		if (info->type != IRQT_PIRQ)
+			continue;
 		irq = info->irq;
-		अगर (info->u.pirq.pirq == pirq)
-			जाओ out;
-	पूर्ण
+		if (info->u.pirq.pirq == pirq)
+			goto out;
+	}
 	irq = -1;
 out:
 	mutex_unlock(&irq_mapping_update_lock);
 
-	वापस irq;
-पूर्ण
+	return irq;
+}
 
 
-पूर्णांक xen_pirq_from_irq(अचिन्हित irq)
-अणु
-	वापस pirq_from_irq(irq);
-पूर्ण
+int xen_pirq_from_irq(unsigned irq)
+{
+	return pirq_from_irq(irq);
+}
 EXPORT_SYMBOL_GPL(xen_pirq_from_irq);
 
-अटल पूर्णांक bind_evtchn_to_irq_chip(evtchn_port_t evtchn, काष्ठा irq_chip *chip,
-				   काष्ठा xenbus_device *dev)
-अणु
-	पूर्णांक irq;
-	पूर्णांक ret;
+static int bind_evtchn_to_irq_chip(evtchn_port_t evtchn, struct irq_chip *chip,
+				   struct xenbus_device *dev)
+{
+	int irq;
+	int ret;
 
-	अगर (evtchn >= xen_evtchn_max_channels())
-		वापस -ENOMEM;
+	if (evtchn >= xen_evtchn_max_channels())
+		return -ENOMEM;
 
 	mutex_lock(&irq_mapping_update_lock);
 
 	irq = get_evtchn_to_irq(evtchn);
 
-	अगर (irq == -1) अणु
+	if (irq == -1) {
 		irq = xen_allocate_irq_dynamic();
-		अगर (irq < 0)
-			जाओ out;
+		if (irq < 0)
+			goto out;
 
 		irq_set_chip_and_handler_name(irq, chip,
 					      handle_edge_irq, "event");
 
 		ret = xen_irq_info_evtchn_setup(irq, evtchn, dev);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			__unbind_from_irq(irq);
 			irq = ret;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		/*
-		 * New पूर्णांकerकरोमुख्य events are initially bound to vCPU0 This
+		 * New interdomain events are initially bound to vCPU0 This
 		 * is required to setup the event channel in the first
-		 * place and also important क्रम UP guests because the
+		 * place and also important for UP guests because the
 		 * affinity setting is not invoked on them so nothing would
 		 * bind the channel.
 		 */
 		bind_evtchn_to_cpu(evtchn, 0, false);
-	पूर्ण अन्यथा अणु
-		काष्ठा irq_info *info = info_क्रम_irq(irq);
-		WARN_ON(info == शून्य || info->type != IRQT_EVTCHN);
-	पूर्ण
+	} else {
+		struct irq_info *info = info_for_irq(irq);
+		WARN_ON(info == NULL || info->type != IRQT_EVTCHN);
+	}
 
 out:
 	mutex_unlock(&irq_mapping_update_lock);
 
-	वापस irq;
-पूर्ण
+	return irq;
+}
 
-पूर्णांक bind_evtchn_to_irq(evtchn_port_t evtchn)
-अणु
-	वापस bind_evtchn_to_irq_chip(evtchn, &xen_dynamic_chip, शून्य);
-पूर्ण
+int bind_evtchn_to_irq(evtchn_port_t evtchn)
+{
+	return bind_evtchn_to_irq_chip(evtchn, &xen_dynamic_chip, NULL);
+}
 EXPORT_SYMBOL_GPL(bind_evtchn_to_irq);
 
-अटल पूर्णांक bind_ipi_to_irq(अचिन्हित पूर्णांक ipi, अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा evtchn_bind_ipi bind_ipi;
+static int bind_ipi_to_irq(unsigned int ipi, unsigned int cpu)
+{
+	struct evtchn_bind_ipi bind_ipi;
 	evtchn_port_t evtchn;
-	पूर्णांक ret, irq;
+	int ret, irq;
 
 	mutex_lock(&irq_mapping_update_lock);
 
 	irq = per_cpu(ipi_to_irq, cpu)[ipi];
 
-	अगर (irq == -1) अणु
+	if (irq == -1) {
 		irq = xen_allocate_irq_dynamic();
-		अगर (irq < 0)
-			जाओ out;
+		if (irq < 0)
+			goto out;
 
 		irq_set_chip_and_handler_name(irq, &xen_percpu_chip,
 					      handle_percpu_irq, "ipi");
 
 		bind_ipi.vcpu = xen_vcpu_nr(cpu);
-		अगर (HYPERVISOR_event_channel_op(EVTCHNOP_bind_ipi,
+		if (HYPERVISOR_event_channel_op(EVTCHNOP_bind_ipi,
 						&bind_ipi) != 0)
 			BUG();
 		evtchn = bind_ipi.port;
 
 		ret = xen_irq_info_ipi_setup(cpu, irq, evtchn, ipi);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			__unbind_from_irq(irq);
 			irq = ret;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		/*
 		 * Force the affinity mask to the target CPU so proc shows
 		 * the correct target.
 		 */
 		bind_evtchn_to_cpu(evtchn, cpu, true);
-	पूर्ण अन्यथा अणु
-		काष्ठा irq_info *info = info_क्रम_irq(irq);
-		WARN_ON(info == शून्य || info->type != IRQT_IPI);
-	पूर्ण
+	} else {
+		struct irq_info *info = info_for_irq(irq);
+		WARN_ON(info == NULL || info->type != IRQT_IPI);
+	}
 
  out:
 	mutex_unlock(&irq_mapping_update_lock);
-	वापस irq;
-पूर्ण
+	return irq;
+}
 
-अटल पूर्णांक bind_पूर्णांकerकरोमुख्य_evtchn_to_irq_chip(काष्ठा xenbus_device *dev,
+static int bind_interdomain_evtchn_to_irq_chip(struct xenbus_device *dev,
 					       evtchn_port_t remote_port,
-					       काष्ठा irq_chip *chip)
-अणु
-	काष्ठा evtchn_bind_पूर्णांकerकरोमुख्य bind_पूर्णांकerकरोमुख्य;
-	पूर्णांक err;
+					       struct irq_chip *chip)
+{
+	struct evtchn_bind_interdomain bind_interdomain;
+	int err;
 
-	bind_पूर्णांकerकरोमुख्य.remote_करोm  = dev->otherend_id;
-	bind_पूर्णांकerकरोमुख्य.remote_port = remote_port;
+	bind_interdomain.remote_dom  = dev->otherend_id;
+	bind_interdomain.remote_port = remote_port;
 
-	err = HYPERVISOR_event_channel_op(EVTCHNOP_bind_पूर्णांकerकरोमुख्य,
-					  &bind_पूर्णांकerकरोमुख्य);
+	err = HYPERVISOR_event_channel_op(EVTCHNOP_bind_interdomain,
+					  &bind_interdomain);
 
-	वापस err ? : bind_evtchn_to_irq_chip(bind_पूर्णांकerकरोमुख्य.local_port,
+	return err ? : bind_evtchn_to_irq_chip(bind_interdomain.local_port,
 					       chip, dev);
-पूर्ण
+}
 
-पूर्णांक bind_पूर्णांकerकरोमुख्य_evtchn_to_irq_lateeoi(काष्ठा xenbus_device *dev,
+int bind_interdomain_evtchn_to_irq_lateeoi(struct xenbus_device *dev,
 					   evtchn_port_t remote_port)
-अणु
-	वापस bind_पूर्णांकerकरोमुख्य_evtchn_to_irq_chip(dev, remote_port,
+{
+	return bind_interdomain_evtchn_to_irq_chip(dev, remote_port,
 						   &xen_lateeoi_chip);
-पूर्ण
-EXPORT_SYMBOL_GPL(bind_पूर्णांकerकरोमुख्य_evtchn_to_irq_lateeoi);
+}
+EXPORT_SYMBOL_GPL(bind_interdomain_evtchn_to_irq_lateeoi);
 
-अटल पूर्णांक find_virq(अचिन्हित पूर्णांक virq, अचिन्हित पूर्णांक cpu, evtchn_port_t *evtchn)
-अणु
-	काष्ठा evtchn_status status;
+static int find_virq(unsigned int virq, unsigned int cpu, evtchn_port_t *evtchn)
+{
+	struct evtchn_status status;
 	evtchn_port_t port;
-	पूर्णांक rc = -ENOENT;
+	int rc = -ENOENT;
 
-	स_रखो(&status, 0, माप(status));
-	क्रम (port = 0; port < xen_evtchn_max_channels(); port++) अणु
-		status.करोm = DOMID_SELF;
+	memset(&status, 0, sizeof(status));
+	for (port = 0; port < xen_evtchn_max_channels(); port++) {
+		status.dom = DOMID_SELF;
 		status.port = port;
 		rc = HYPERVISOR_event_channel_op(EVTCHNOP_status, &status);
-		अगर (rc < 0)
-			जारी;
-		अगर (status.status != EVTCHNSTAT_virq)
-			जारी;
-		अगर (status.u.virq == virq && status.vcpu == xen_vcpu_nr(cpu)) अणु
+		if (rc < 0)
+			continue;
+		if (status.status != EVTCHNSTAT_virq)
+			continue;
+		if (status.u.virq == virq && status.vcpu == xen_vcpu_nr(cpu)) {
 			*evtchn = port;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	वापस rc;
-पूर्ण
+			break;
+		}
+	}
+	return rc;
+}
 
 /**
  * xen_evtchn_nr_channels - number of usable event channel ports
  *
  * This may be less than the maximum supported by the current
- * hypervisor ABI. Use xen_evtchn_max_channels() क्रम the maximum
+ * hypervisor ABI. Use xen_evtchn_max_channels() for the maximum
  * supported.
  */
-अचिन्हित xen_evtchn_nr_channels(व्योम)
-अणु
-        वापस evtchn_ops->nr_channels();
-पूर्ण
+unsigned xen_evtchn_nr_channels(void)
+{
+        return evtchn_ops->nr_channels();
+}
 EXPORT_SYMBOL_GPL(xen_evtchn_nr_channels);
 
-पूर्णांक bind_virq_to_irq(अचिन्हित पूर्णांक virq, अचिन्हित पूर्णांक cpu, bool percpu)
-अणु
-	काष्ठा evtchn_bind_virq bind_virq;
+int bind_virq_to_irq(unsigned int virq, unsigned int cpu, bool percpu)
+{
+	struct evtchn_bind_virq bind_virq;
 	evtchn_port_t evtchn = 0;
-	पूर्णांक irq, ret;
+	int irq, ret;
 
 	mutex_lock(&irq_mapping_update_lock);
 
 	irq = per_cpu(virq_to_irq, cpu)[virq];
 
-	अगर (irq == -1) अणु
+	if (irq == -1) {
 		irq = xen_allocate_irq_dynamic();
-		अगर (irq < 0)
-			जाओ out;
+		if (irq < 0)
+			goto out;
 
-		अगर (percpu)
+		if (percpu)
 			irq_set_chip_and_handler_name(irq, &xen_percpu_chip,
 						      handle_percpu_irq, "virq");
-		अन्यथा
+		else
 			irq_set_chip_and_handler_name(irq, &xen_dynamic_chip,
 						      handle_edge_irq, "virq");
 
@@ -1372,170 +1371,170 @@ EXPORT_SYMBOL_GPL(xen_evtchn_nr_channels);
 		bind_virq.vcpu = xen_vcpu_nr(cpu);
 		ret = HYPERVISOR_event_channel_op(EVTCHNOP_bind_virq,
 						&bind_virq);
-		अगर (ret == 0)
+		if (ret == 0)
 			evtchn = bind_virq.port;
-		अन्यथा अणु
-			अगर (ret == -EEXIST)
+		else {
+			if (ret == -EEXIST)
 				ret = find_virq(virq, cpu, &evtchn);
 			BUG_ON(ret < 0);
-		पूर्ण
+		}
 
 		ret = xen_irq_info_virq_setup(cpu, irq, evtchn, virq);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			__unbind_from_irq(irq);
 			irq = ret;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		/*
-		 * Force the affinity mask क्रम percpu पूर्णांकerrupts so proc
+		 * Force the affinity mask for percpu interrupts so proc
 		 * shows the correct target.
 		 */
 		bind_evtchn_to_cpu(evtchn, cpu, percpu);
-	पूर्ण अन्यथा अणु
-		काष्ठा irq_info *info = info_क्रम_irq(irq);
-		WARN_ON(info == शून्य || info->type != IRQT_VIRQ);
-	पूर्ण
+	} else {
+		struct irq_info *info = info_for_irq(irq);
+		WARN_ON(info == NULL || info->type != IRQT_VIRQ);
+	}
 
 out:
 	mutex_unlock(&irq_mapping_update_lock);
 
-	वापस irq;
-पूर्ण
+	return irq;
+}
 
-अटल व्योम unbind_from_irq(अचिन्हित पूर्णांक irq)
-अणु
+static void unbind_from_irq(unsigned int irq)
+{
 	mutex_lock(&irq_mapping_update_lock);
 	__unbind_from_irq(irq);
 	mutex_unlock(&irq_mapping_update_lock);
-पूर्ण
+}
 
-अटल पूर्णांक bind_evtchn_to_irqhandler_chip(evtchn_port_t evtchn,
+static int bind_evtchn_to_irqhandler_chip(evtchn_port_t evtchn,
 					  irq_handler_t handler,
-					  अचिन्हित दीर्घ irqflags,
-					  स्थिर अक्षर *devname, व्योम *dev_id,
-					  काष्ठा irq_chip *chip)
-अणु
-	पूर्णांक irq, retval;
+					  unsigned long irqflags,
+					  const char *devname, void *dev_id,
+					  struct irq_chip *chip)
+{
+	int irq, retval;
 
-	irq = bind_evtchn_to_irq_chip(evtchn, chip, शून्य);
-	अगर (irq < 0)
-		वापस irq;
+	irq = bind_evtchn_to_irq_chip(evtchn, chip, NULL);
+	if (irq < 0)
+		return irq;
 	retval = request_irq(irq, handler, irqflags, devname, dev_id);
-	अगर (retval != 0) अणु
+	if (retval != 0) {
 		unbind_from_irq(irq);
-		वापस retval;
-	पूर्ण
+		return retval;
+	}
 
-	वापस irq;
-पूर्ण
+	return irq;
+}
 
-पूर्णांक bind_evtchn_to_irqhandler(evtchn_port_t evtchn,
+int bind_evtchn_to_irqhandler(evtchn_port_t evtchn,
 			      irq_handler_t handler,
-			      अचिन्हित दीर्घ irqflags,
-			      स्थिर अक्षर *devname, व्योम *dev_id)
-अणु
-	वापस bind_evtchn_to_irqhandler_chip(evtchn, handler, irqflags,
+			      unsigned long irqflags,
+			      const char *devname, void *dev_id)
+{
+	return bind_evtchn_to_irqhandler_chip(evtchn, handler, irqflags,
 					      devname, dev_id,
 					      &xen_dynamic_chip);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(bind_evtchn_to_irqhandler);
 
-पूर्णांक bind_evtchn_to_irqhandler_lateeoi(evtchn_port_t evtchn,
+int bind_evtchn_to_irqhandler_lateeoi(evtchn_port_t evtchn,
 				      irq_handler_t handler,
-				      अचिन्हित दीर्घ irqflags,
-				      स्थिर अक्षर *devname, व्योम *dev_id)
-अणु
-	वापस bind_evtchn_to_irqhandler_chip(evtchn, handler, irqflags,
+				      unsigned long irqflags,
+				      const char *devname, void *dev_id)
+{
+	return bind_evtchn_to_irqhandler_chip(evtchn, handler, irqflags,
 					      devname, dev_id,
 					      &xen_lateeoi_chip);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(bind_evtchn_to_irqhandler_lateeoi);
 
-अटल पूर्णांक bind_पूर्णांकerकरोमुख्य_evtchn_to_irqhandler_chip(
-		काष्ठा xenbus_device *dev, evtchn_port_t remote_port,
-		irq_handler_t handler, अचिन्हित दीर्घ irqflags,
-		स्थिर अक्षर *devname, व्योम *dev_id, काष्ठा irq_chip *chip)
-अणु
-	पूर्णांक irq, retval;
+static int bind_interdomain_evtchn_to_irqhandler_chip(
+		struct xenbus_device *dev, evtchn_port_t remote_port,
+		irq_handler_t handler, unsigned long irqflags,
+		const char *devname, void *dev_id, struct irq_chip *chip)
+{
+	int irq, retval;
 
-	irq = bind_पूर्णांकerकरोमुख्य_evtchn_to_irq_chip(dev, remote_port, chip);
-	अगर (irq < 0)
-		वापस irq;
+	irq = bind_interdomain_evtchn_to_irq_chip(dev, remote_port, chip);
+	if (irq < 0)
+		return irq;
 
 	retval = request_irq(irq, handler, irqflags, devname, dev_id);
-	अगर (retval != 0) अणु
+	if (retval != 0) {
 		unbind_from_irq(irq);
-		वापस retval;
-	पूर्ण
+		return retval;
+	}
 
-	वापस irq;
-पूर्ण
+	return irq;
+}
 
-पूर्णांक bind_पूर्णांकerकरोमुख्य_evtchn_to_irqhandler_lateeoi(काष्ठा xenbus_device *dev,
+int bind_interdomain_evtchn_to_irqhandler_lateeoi(struct xenbus_device *dev,
 						  evtchn_port_t remote_port,
 						  irq_handler_t handler,
-						  अचिन्हित दीर्घ irqflags,
-						  स्थिर अक्षर *devname,
-						  व्योम *dev_id)
-अणु
-	वापस bind_पूर्णांकerकरोमुख्य_evtchn_to_irqhandler_chip(dev,
+						  unsigned long irqflags,
+						  const char *devname,
+						  void *dev_id)
+{
+	return bind_interdomain_evtchn_to_irqhandler_chip(dev,
 				remote_port, handler, irqflags, devname,
 				dev_id, &xen_lateeoi_chip);
-पूर्ण
-EXPORT_SYMBOL_GPL(bind_पूर्णांकerकरोमुख्य_evtchn_to_irqhandler_lateeoi);
+}
+EXPORT_SYMBOL_GPL(bind_interdomain_evtchn_to_irqhandler_lateeoi);
 
-पूर्णांक bind_virq_to_irqhandler(अचिन्हित पूर्णांक virq, अचिन्हित पूर्णांक cpu,
+int bind_virq_to_irqhandler(unsigned int virq, unsigned int cpu,
 			    irq_handler_t handler,
-			    अचिन्हित दीर्घ irqflags, स्थिर अक्षर *devname, व्योम *dev_id)
-अणु
-	पूर्णांक irq, retval;
+			    unsigned long irqflags, const char *devname, void *dev_id)
+{
+	int irq, retval;
 
 	irq = bind_virq_to_irq(virq, cpu, irqflags & IRQF_PERCPU);
-	अगर (irq < 0)
-		वापस irq;
+	if (irq < 0)
+		return irq;
 	retval = request_irq(irq, handler, irqflags, devname, dev_id);
-	अगर (retval != 0) अणु
+	if (retval != 0) {
 		unbind_from_irq(irq);
-		वापस retval;
-	पूर्ण
+		return retval;
+	}
 
-	वापस irq;
-पूर्ण
+	return irq;
+}
 EXPORT_SYMBOL_GPL(bind_virq_to_irqhandler);
 
-पूर्णांक bind_ipi_to_irqhandler(क्रमागत ipi_vector ipi,
-			   अचिन्हित पूर्णांक cpu,
+int bind_ipi_to_irqhandler(enum ipi_vector ipi,
+			   unsigned int cpu,
 			   irq_handler_t handler,
-			   अचिन्हित दीर्घ irqflags,
-			   स्थिर अक्षर *devname,
-			   व्योम *dev_id)
-अणु
-	पूर्णांक irq, retval;
+			   unsigned long irqflags,
+			   const char *devname,
+			   void *dev_id)
+{
+	int irq, retval;
 
 	irq = bind_ipi_to_irq(ipi, cpu);
-	अगर (irq < 0)
-		वापस irq;
+	if (irq < 0)
+		return irq;
 
 	irqflags |= IRQF_NO_SUSPEND | IRQF_FORCE_RESUME | IRQF_EARLY_RESUME;
 	retval = request_irq(irq, handler, irqflags, devname, dev_id);
-	अगर (retval != 0) अणु
+	if (retval != 0) {
 		unbind_from_irq(irq);
-		वापस retval;
-	पूर्ण
+		return retval;
+	}
 
-	वापस irq;
-पूर्ण
+	return irq;
+}
 
-व्योम unbind_from_irqhandler(अचिन्हित पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा irq_info *info = info_क्रम_irq(irq);
+void unbind_from_irqhandler(unsigned int irq, void *dev_id)
+{
+	struct irq_info *info = info_for_irq(irq);
 
-	अगर (WARN_ON(!info))
-		वापस;
-	मुक्त_irq(irq, dev_id);
+	if (WARN_ON(!info))
+		return;
+	free_irq(irq, dev_id);
 	unbind_from_irq(irq);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(unbind_from_irqhandler);
 
 /**
@@ -1543,163 +1542,163 @@ EXPORT_SYMBOL_GPL(unbind_from_irqhandler);
  * @irq:irq bound to an event channel.
  * @priority: priority between XEN_IRQ_PRIORITY_MAX and XEN_IRQ_PRIORITY_MIN.
  */
-पूर्णांक xen_set_irq_priority(अचिन्हित irq, अचिन्हित priority)
-अणु
-	काष्ठा evtchn_set_priority set_priority;
+int xen_set_irq_priority(unsigned irq, unsigned priority)
+{
+	struct evtchn_set_priority set_priority;
 
 	set_priority.port = evtchn_from_irq(irq);
 	set_priority.priority = priority;
 
-	वापस HYPERVISOR_event_channel_op(EVTCHNOP_set_priority,
+	return HYPERVISOR_event_channel_op(EVTCHNOP_set_priority,
 					   &set_priority);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(xen_set_irq_priority);
 
-पूर्णांक evtchn_make_refcounted(evtchn_port_t evtchn)
-अणु
-	पूर्णांक irq = get_evtchn_to_irq(evtchn);
-	काष्ठा irq_info *info;
+int evtchn_make_refcounted(evtchn_port_t evtchn)
+{
+	int irq = get_evtchn_to_irq(evtchn);
+	struct irq_info *info;
 
-	अगर (irq == -1)
-		वापस -ENOENT;
+	if (irq == -1)
+		return -ENOENT;
 
-	info = info_क्रम_irq(irq);
+	info = info_for_irq(irq);
 
-	अगर (!info)
-		वापस -ENOENT;
+	if (!info)
+		return -ENOENT;
 
 	WARN_ON(info->refcnt != -1);
 
 	info->refcnt = 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(evtchn_make_refcounted);
 
-पूर्णांक evtchn_get(evtchn_port_t evtchn)
-अणु
-	पूर्णांक irq;
-	काष्ठा irq_info *info;
-	पूर्णांक err = -ENOENT;
+int evtchn_get(evtchn_port_t evtchn)
+{
+	int irq;
+	struct irq_info *info;
+	int err = -ENOENT;
 
-	अगर (evtchn >= xen_evtchn_max_channels())
-		वापस -EINVAL;
+	if (evtchn >= xen_evtchn_max_channels())
+		return -EINVAL;
 
 	mutex_lock(&irq_mapping_update_lock);
 
 	irq = get_evtchn_to_irq(evtchn);
-	अगर (irq == -1)
-		जाओ करोne;
+	if (irq == -1)
+		goto done;
 
-	info = info_क्रम_irq(irq);
+	info = info_for_irq(irq);
 
-	अगर (!info)
-		जाओ करोne;
+	if (!info)
+		goto done;
 
 	err = -EINVAL;
-	अगर (info->refcnt <= 0 || info->refcnt == लघु_उच्च)
-		जाओ करोne;
+	if (info->refcnt <= 0 || info->refcnt == SHRT_MAX)
+		goto done;
 
 	info->refcnt++;
 	err = 0;
- करोne:
+ done:
 	mutex_unlock(&irq_mapping_update_lock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_SYMBOL_GPL(evtchn_get);
 
-व्योम evtchn_put(evtchn_port_t evtchn)
-अणु
-	पूर्णांक irq = get_evtchn_to_irq(evtchn);
-	अगर (WARN_ON(irq == -1))
-		वापस;
+void evtchn_put(evtchn_port_t evtchn)
+{
+	int irq = get_evtchn_to_irq(evtchn);
+	if (WARN_ON(irq == -1))
+		return;
 	unbind_from_irq(irq);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(evtchn_put);
 
-व्योम xen_send_IPI_one(अचिन्हित पूर्णांक cpu, क्रमागत ipi_vector vector)
-अणु
-	पूर्णांक irq;
+void xen_send_IPI_one(unsigned int cpu, enum ipi_vector vector)
+{
+	int irq;
 
-#अगर_घोषित CONFIG_X86
-	अगर (unlikely(vector == XEN_NMI_VECTOR)) अणु
-		पूर्णांक rc =  HYPERVISOR_vcpu_op(VCPUOP_send_nmi, xen_vcpu_nr(cpu),
-					     शून्य);
-		अगर (rc < 0)
-			prपूर्णांकk(KERN_WARNING "Sending nmi to CPU%d failed (rc:%d)\n", cpu, rc);
-		वापस;
-	पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_X86
+	if (unlikely(vector == XEN_NMI_VECTOR)) {
+		int rc =  HYPERVISOR_vcpu_op(VCPUOP_send_nmi, xen_vcpu_nr(cpu),
+					     NULL);
+		if (rc < 0)
+			printk(KERN_WARNING "Sending nmi to CPU%d failed (rc:%d)\n", cpu, rc);
+		return;
+	}
+#endif
 	irq = per_cpu(ipi_to_irq, cpu)[vector];
 	BUG_ON(irq < 0);
-	notअगरy_remote_via_irq(irq);
-पूर्ण
+	notify_remote_via_irq(irq);
+}
 
-काष्ठा evtchn_loop_ctrl अणु
-	kसमय_प्रकार समयout;
-	अचिन्हित count;
+struct evtchn_loop_ctrl {
+	ktime_t timeout;
+	unsigned count;
 	bool defer_eoi;
-पूर्ण;
+};
 
-व्योम handle_irq_क्रम_port(evtchn_port_t port, काष्ठा evtchn_loop_ctrl *ctrl)
-अणु
-	पूर्णांक irq;
-	काष्ठा irq_info *info;
-	काष्ठा xenbus_device *dev;
+void handle_irq_for_port(evtchn_port_t port, struct evtchn_loop_ctrl *ctrl)
+{
+	int irq;
+	struct irq_info *info;
+	struct xenbus_device *dev;
 
 	irq = get_evtchn_to_irq(port);
-	अगर (irq == -1)
-		वापस;
+	if (irq == -1)
+		return;
 
 	/*
-	 * Check क्रम समयout every 256 events.
-	 * We are setting the समयout value only after the first 256
-	 * events in order to not hurt the common हाल of few loop
+	 * Check for timeout every 256 events.
+	 * We are setting the timeout value only after the first 256
+	 * events in order to not hurt the common case of few loop
 	 * iterations. The 256 is basically an arbitrary value.
 	 *
-	 * In हाल we are hitting the समयout we need to defer all further
+	 * In case we are hitting the timeout we need to defer all further
 	 * EOIs in order to ensure to leave the event handling loop rather
 	 * sooner than later.
 	 */
-	अगर (!ctrl->defer_eoi && !(++ctrl->count & 0xff)) अणु
-		kसमय_प्रकार kt = kसमय_get();
+	if (!ctrl->defer_eoi && !(++ctrl->count & 0xff)) {
+		ktime_t kt = ktime_get();
 
-		अगर (!ctrl->समयout) अणु
-			kt = kसमय_add_ms(kt,
-					  jअगरfies_to_msecs(event_loop_समयout));
-			ctrl->समयout = kt;
-		पूर्ण अन्यथा अगर (kt > ctrl->समयout) अणु
+		if (!ctrl->timeout) {
+			kt = ktime_add_ms(kt,
+					  jiffies_to_msecs(event_loop_timeout));
+			ctrl->timeout = kt;
+		} else if (kt > ctrl->timeout) {
 			ctrl->defer_eoi = true;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	info = info_क्रम_irq(irq);
-	अगर (xchg_acquire(&info->is_active, 1))
-		वापस;
+	info = info_for_irq(irq);
+	if (xchg_acquire(&info->is_active, 1))
+		return;
 
-	dev = (info->type == IRQT_EVTCHN) ? info->u.पूर्णांकerकरोमुख्य : शून्य;
-	अगर (dev)
+	dev = (info->type == IRQT_EVTCHN) ? info->u.interdomain : NULL;
+	if (dev)
 		atomic_inc(&dev->events);
 
-	अगर (ctrl->defer_eoi) अणु
+	if (ctrl->defer_eoi) {
 		info->eoi_cpu = smp_processor_id();
-		info->irq_epoch = __this_cpu_पढ़ो(irq_epoch);
-		info->eoi_समय = get_jअगरfies_64() + event_eoi_delay;
-	पूर्ण
+		info->irq_epoch = __this_cpu_read(irq_epoch);
+		info->eoi_time = get_jiffies_64() + event_eoi_delay;
+	}
 
 	generic_handle_irq(irq);
-पूर्ण
+}
 
-अटल व्योम __xen_evtchn_करो_upcall(व्योम)
-अणु
-	काष्ठा vcpu_info *vcpu_info = __this_cpu_पढ़ो(xen_vcpu);
-	पूर्णांक cpu = smp_processor_id();
-	काष्ठा evtchn_loop_ctrl ctrl = अणु 0 पूर्ण;
+static void __xen_evtchn_do_upcall(void)
+{
+	struct vcpu_info *vcpu_info = __this_cpu_read(xen_vcpu);
+	int cpu = smp_processor_id();
+	struct evtchn_loop_ctrl ctrl = { 0 };
 
-	पढ़ो_lock(&evtchn_rwlock);
+	read_lock(&evtchn_rwlock);
 
-	करो अणु
+	do {
 		vcpu_info->evtchn_upcall_pending = 0;
 
 		xen_evtchn_handle_events(cpu, &ctrl);
@@ -1708,43 +1707,43 @@ EXPORT_SYMBOL_GPL(evtchn_put);
 
 		virt_rmb(); /* Hypervisor can set upcall pending. */
 
-	पूर्ण जबतक (vcpu_info->evtchn_upcall_pending);
+	} while (vcpu_info->evtchn_upcall_pending);
 
-	पढ़ो_unlock(&evtchn_rwlock);
+	read_unlock(&evtchn_rwlock);
 
 	/*
-	 * Increment irq_epoch only now to defer EOIs only क्रम
+	 * Increment irq_epoch only now to defer EOIs only for
 	 * xen_irq_lateeoi() invocations occurring from inside the loop
 	 * above.
 	 */
 	__this_cpu_inc(irq_epoch);
-पूर्ण
+}
 
-व्योम xen_evtchn_करो_upcall(काष्ठा pt_regs *regs)
-अणु
-	काष्ठा pt_regs *old_regs = set_irq_regs(regs);
+void xen_evtchn_do_upcall(struct pt_regs *regs)
+{
+	struct pt_regs *old_regs = set_irq_regs(regs);
 
 	irq_enter();
 
-	__xen_evtchn_करो_upcall();
+	__xen_evtchn_do_upcall();
 
-	irq_निकास();
+	irq_exit();
 	set_irq_regs(old_regs);
-पूर्ण
+}
 
-व्योम xen_hvm_evtchn_करो_upcall(व्योम)
-अणु
-	__xen_evtchn_करो_upcall();
-पूर्ण
-EXPORT_SYMBOL_GPL(xen_hvm_evtchn_करो_upcall);
+void xen_hvm_evtchn_do_upcall(void)
+{
+	__xen_evtchn_do_upcall();
+}
+EXPORT_SYMBOL_GPL(xen_hvm_evtchn_do_upcall);
 
 /* Rebind a new event channel to an existing irq. */
-व्योम rebind_evtchn_irq(evtchn_port_t evtchn, पूर्णांक irq)
-अणु
-	काष्ठा irq_info *info = info_क्रम_irq(irq);
+void rebind_evtchn_irq(evtchn_port_t evtchn, int irq)
+{
+	struct irq_info *info = info_for_irq(irq);
 
-	अगर (WARN_ON(!info))
-		वापस;
+	if (WARN_ON(!info))
+		return;
 
 	/* Make sure the irq is masked, since the new event channel
 	   will also be masked. */
@@ -1754,11 +1753,11 @@ EXPORT_SYMBOL_GPL(xen_hvm_evtchn_करो_upcall);
 
 	/* After resume the irq<->evtchn mappings are all cleared out */
 	BUG_ON(get_evtchn_to_irq(evtchn) != -1);
-	/* Expect irq to have been bound beक्रमe,
+	/* Expect irq to have been bound before,
 	   so there should be a proper type */
 	BUG_ON(info->type == IRQT_UNBOUND);
 
-	(व्योम)xen_irq_info_evtchn_setup(irq, evtchn, शून्य);
+	(void)xen_irq_info_evtchn_setup(irq, evtchn, NULL);
 
 	mutex_unlock(&irq_mapping_update_lock);
 
@@ -1766,343 +1765,343 @@ EXPORT_SYMBOL_GPL(xen_hvm_evtchn_करो_upcall);
 
 	/* Unmask the event channel. */
 	enable_irq(irq);
-पूर्ण
+}
 
-/* Rebind an evtchn so that it माला_लो delivered to a specअगरic cpu */
-अटल पूर्णांक xen_rebind_evtchn_to_cpu(काष्ठा irq_info *info, अचिन्हित पूर्णांक tcpu)
-अणु
-	काष्ठा evtchn_bind_vcpu bind_vcpu;
+/* Rebind an evtchn so that it gets delivered to a specific cpu */
+static int xen_rebind_evtchn_to_cpu(struct irq_info *info, unsigned int tcpu)
+{
+	struct evtchn_bind_vcpu bind_vcpu;
 	evtchn_port_t evtchn = info ? info->evtchn : 0;
 
-	अगर (!VALID_EVTCHN(evtchn))
-		वापस -1;
+	if (!VALID_EVTCHN(evtchn))
+		return -1;
 
-	अगर (!xen_support_evtchn_rebind())
-		वापस -1;
+	if (!xen_support_evtchn_rebind())
+		return -1;
 
-	/* Send future instances of this पूर्णांकerrupt to other vcpu. */
+	/* Send future instances of this interrupt to other vcpu. */
 	bind_vcpu.port = evtchn;
 	bind_vcpu.vcpu = xen_vcpu_nr(tcpu);
 
 	/*
-	 * Mask the event जबतक changing the VCPU binding to prevent
+	 * Mask the event while changing the VCPU binding to prevent
 	 * it being delivered on an unexpected VCPU.
 	 */
-	करो_mask(info, EVT_MASK_REASON_TEMPORARY);
+	do_mask(info, EVT_MASK_REASON_TEMPORARY);
 
 	/*
 	 * If this fails, it usually just indicates that we're dealing with a
-	 * virq or IPI channel, which करोn't actually need to be rebound. Ignore
-	 * it, but करोn't करो the xenlinux-level rebind in that हाल.
+	 * virq or IPI channel, which don't actually need to be rebound. Ignore
+	 * it, but don't do the xenlinux-level rebind in that case.
 	 */
-	अगर (HYPERVISOR_event_channel_op(EVTCHNOP_bind_vcpu, &bind_vcpu) >= 0)
+	if (HYPERVISOR_event_channel_op(EVTCHNOP_bind_vcpu, &bind_vcpu) >= 0)
 		bind_evtchn_to_cpu(evtchn, tcpu, false);
 
-	करो_unmask(info, EVT_MASK_REASON_TEMPORARY);
+	do_unmask(info, EVT_MASK_REASON_TEMPORARY);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Find the CPU within @dest mask which has the least number of channels
- * asचिन्हित. This is not precise as the per cpu counts can be modअगरied
+ * assigned. This is not precise as the per cpu counts can be modified
  * concurrently.
  */
-अटल अचिन्हित पूर्णांक select_target_cpu(स्थिर काष्ठा cpumask *dest)
-अणु
-	अचिन्हित पूर्णांक cpu, best_cpu = अच_पूर्णांक_उच्च, minch = अच_पूर्णांक_उच्च;
+static unsigned int select_target_cpu(const struct cpumask *dest)
+{
+	unsigned int cpu, best_cpu = UINT_MAX, minch = UINT_MAX;
 
-	क्रम_each_cpu_and(cpu, dest, cpu_online_mask) अणु
-		अचिन्हित पूर्णांक curch = atomic_पढ़ो(&channels_on_cpu[cpu]);
+	for_each_cpu_and(cpu, dest, cpu_online_mask) {
+		unsigned int curch = atomic_read(&channels_on_cpu[cpu]);
 
-		अगर (curch < minch) अणु
+		if (curch < minch) {
 			minch = curch;
 			best_cpu = cpu;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/*
-	 * Catch the unlikely हाल that dest contains no online CPUs. Can't
+	 * Catch the unlikely case that dest contains no online CPUs. Can't
 	 * recurse.
 	 */
-	अगर (best_cpu == अच_पूर्णांक_उच्च)
-		वापस select_target_cpu(cpu_online_mask);
+	if (best_cpu == UINT_MAX)
+		return select_target_cpu(cpu_online_mask);
 
-	वापस best_cpu;
-पूर्ण
+	return best_cpu;
+}
 
-अटल पूर्णांक set_affinity_irq(काष्ठा irq_data *data, स्थिर काष्ठा cpumask *dest,
-			    bool क्रमce)
-अणु
-	अचिन्हित पूर्णांक tcpu = select_target_cpu(dest);
-	पूर्णांक ret;
+static int set_affinity_irq(struct irq_data *data, const struct cpumask *dest,
+			    bool force)
+{
+	unsigned int tcpu = select_target_cpu(dest);
+	int ret;
 
-	ret = xen_rebind_evtchn_to_cpu(info_क्रम_irq(data->irq), tcpu);
-	अगर (!ret)
+	ret = xen_rebind_evtchn_to_cpu(info_for_irq(data->irq), tcpu);
+	if (!ret)
 		irq_data_update_effective_affinity(data, cpumask_of(tcpu));
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम enable_dynirq(काष्ठा irq_data *data)
-अणु
-	काष्ठा irq_info *info = info_क्रम_irq(data->irq);
+static void enable_dynirq(struct irq_data *data)
+{
+	struct irq_info *info = info_for_irq(data->irq);
 	evtchn_port_t evtchn = info ? info->evtchn : 0;
 
-	अगर (VALID_EVTCHN(evtchn))
-		करो_unmask(info, EVT_MASK_REASON_EXPLICIT);
-पूर्ण
+	if (VALID_EVTCHN(evtchn))
+		do_unmask(info, EVT_MASK_REASON_EXPLICIT);
+}
 
-अटल व्योम disable_dynirq(काष्ठा irq_data *data)
-अणु
-	काष्ठा irq_info *info = info_क्रम_irq(data->irq);
+static void disable_dynirq(struct irq_data *data)
+{
+	struct irq_info *info = info_for_irq(data->irq);
 	evtchn_port_t evtchn = info ? info->evtchn : 0;
 
-	अगर (VALID_EVTCHN(evtchn))
-		करो_mask(info, EVT_MASK_REASON_EXPLICIT);
-पूर्ण
+	if (VALID_EVTCHN(evtchn))
+		do_mask(info, EVT_MASK_REASON_EXPLICIT);
+}
 
-अटल व्योम ack_dynirq(काष्ठा irq_data *data)
-अणु
-	काष्ठा irq_info *info = info_क्रम_irq(data->irq);
+static void ack_dynirq(struct irq_data *data)
+{
+	struct irq_info *info = info_for_irq(data->irq);
 	evtchn_port_t evtchn = info ? info->evtchn : 0;
 
-	अगर (VALID_EVTCHN(evtchn))
-		event_handler_निकास(info);
-पूर्ण
+	if (VALID_EVTCHN(evtchn))
+		event_handler_exit(info);
+}
 
-अटल व्योम mask_ack_dynirq(काष्ठा irq_data *data)
-अणु
+static void mask_ack_dynirq(struct irq_data *data)
+{
 	disable_dynirq(data);
 	ack_dynirq(data);
-पूर्ण
+}
 
-अटल व्योम lateeoi_ack_dynirq(काष्ठा irq_data *data)
-अणु
-	काष्ठा irq_info *info = info_क्रम_irq(data->irq);
+static void lateeoi_ack_dynirq(struct irq_data *data)
+{
+	struct irq_info *info = info_for_irq(data->irq);
 	evtchn_port_t evtchn = info ? info->evtchn : 0;
 
-	अगर (VALID_EVTCHN(evtchn)) अणु
-		करो_mask(info, EVT_MASK_REASON_EOI_PENDING);
-		event_handler_निकास(info);
-	पूर्ण
-पूर्ण
+	if (VALID_EVTCHN(evtchn)) {
+		do_mask(info, EVT_MASK_REASON_EOI_PENDING);
+		event_handler_exit(info);
+	}
+}
 
-अटल व्योम lateeoi_mask_ack_dynirq(काष्ठा irq_data *data)
-अणु
-	काष्ठा irq_info *info = info_क्रम_irq(data->irq);
+static void lateeoi_mask_ack_dynirq(struct irq_data *data)
+{
+	struct irq_info *info = info_for_irq(data->irq);
 	evtchn_port_t evtchn = info ? info->evtchn : 0;
 
-	अगर (VALID_EVTCHN(evtchn)) अणु
-		करो_mask(info, EVT_MASK_REASON_EXPLICIT);
-		event_handler_निकास(info);
-	पूर्ण
-पूर्ण
+	if (VALID_EVTCHN(evtchn)) {
+		do_mask(info, EVT_MASK_REASON_EXPLICIT);
+		event_handler_exit(info);
+	}
+}
 
-अटल पूर्णांक retrigger_dynirq(काष्ठा irq_data *data)
-अणु
-	काष्ठा irq_info *info = info_क्रम_irq(data->irq);
+static int retrigger_dynirq(struct irq_data *data)
+{
+	struct irq_info *info = info_for_irq(data->irq);
 	evtchn_port_t evtchn = info ? info->evtchn : 0;
 
-	अगर (!VALID_EVTCHN(evtchn))
-		वापस 0;
+	if (!VALID_EVTCHN(evtchn))
+		return 0;
 
-	करो_mask(info, EVT_MASK_REASON_TEMPORARY);
+	do_mask(info, EVT_MASK_REASON_TEMPORARY);
 	set_evtchn(evtchn);
-	करो_unmask(info, EVT_MASK_REASON_TEMPORARY);
+	do_unmask(info, EVT_MASK_REASON_TEMPORARY);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल व्योम restore_pirqs(व्योम)
-अणु
-	पूर्णांक pirq, rc, irq, gsi;
-	काष्ठा physdev_map_pirq map_irq;
-	काष्ठा irq_info *info;
+static void restore_pirqs(void)
+{
+	int pirq, rc, irq, gsi;
+	struct physdev_map_pirq map_irq;
+	struct irq_info *info;
 
-	list_क्रम_each_entry(info, &xen_irq_list_head, list) अणु
-		अगर (info->type != IRQT_PIRQ)
-			जारी;
+	list_for_each_entry(info, &xen_irq_list_head, list) {
+		if (info->type != IRQT_PIRQ)
+			continue;
 
 		pirq = info->u.pirq.pirq;
 		gsi = info->u.pirq.gsi;
 		irq = info->irq;
 
-		/* save/restore of PT devices करोesn't work, so at this poपूर्णांक the
+		/* save/restore of PT devices doesn't work, so at this point the
 		 * only devices present are GSI based emulated devices */
-		अगर (!gsi)
-			जारी;
+		if (!gsi)
+			continue;
 
-		map_irq.करोmid = DOMID_SELF;
+		map_irq.domid = DOMID_SELF;
 		map_irq.type = MAP_PIRQ_TYPE_GSI;
 		map_irq.index = gsi;
 		map_irq.pirq = pirq;
 
 		rc = HYPERVISOR_physdev_op(PHYSDEVOP_map_pirq, &map_irq);
-		अगर (rc) अणु
+		if (rc) {
 			pr_warn("xen map irq failed gsi=%d irq=%d pirq=%d rc=%d\n",
 				gsi, irq, pirq, rc);
-			xen_मुक्त_irq(irq);
-			जारी;
-		पूर्ण
+			xen_free_irq(irq);
+			continue;
+		}
 
-		prपूर्णांकk(KERN_DEBUG "xen: --> irq=%d, pirq=%d\n", irq, map_irq.pirq);
+		printk(KERN_DEBUG "xen: --> irq=%d, pirq=%d\n", irq, map_irq.pirq);
 
 		__startup_pirq(irq);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम restore_cpu_virqs(अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा evtchn_bind_virq bind_virq;
+static void restore_cpu_virqs(unsigned int cpu)
+{
+	struct evtchn_bind_virq bind_virq;
 	evtchn_port_t evtchn;
-	पूर्णांक virq, irq;
+	int virq, irq;
 
-	क्रम (virq = 0; virq < NR_VIRQS; virq++) अणु
-		अगर ((irq = per_cpu(virq_to_irq, cpu)[virq]) == -1)
-			जारी;
+	for (virq = 0; virq < NR_VIRQS; virq++) {
+		if ((irq = per_cpu(virq_to_irq, cpu)[virq]) == -1)
+			continue;
 
 		BUG_ON(virq_from_irq(irq) != virq);
 
 		/* Get a new binding from Xen. */
 		bind_virq.virq = virq;
 		bind_virq.vcpu = xen_vcpu_nr(cpu);
-		अगर (HYPERVISOR_event_channel_op(EVTCHNOP_bind_virq,
+		if (HYPERVISOR_event_channel_op(EVTCHNOP_bind_virq,
 						&bind_virq) != 0)
 			BUG();
 		evtchn = bind_virq.port;
 
 		/* Record the new mapping. */
-		(व्योम)xen_irq_info_virq_setup(cpu, irq, evtchn, virq);
+		(void)xen_irq_info_virq_setup(cpu, irq, evtchn, virq);
 		/* The affinity mask is still valid */
 		bind_evtchn_to_cpu(evtchn, cpu, false);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम restore_cpu_ipis(अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा evtchn_bind_ipi bind_ipi;
+static void restore_cpu_ipis(unsigned int cpu)
+{
+	struct evtchn_bind_ipi bind_ipi;
 	evtchn_port_t evtchn;
-	पूर्णांक ipi, irq;
+	int ipi, irq;
 
-	क्रम (ipi = 0; ipi < XEN_NR_IPIS; ipi++) अणु
-		अगर ((irq = per_cpu(ipi_to_irq, cpu)[ipi]) == -1)
-			जारी;
+	for (ipi = 0; ipi < XEN_NR_IPIS; ipi++) {
+		if ((irq = per_cpu(ipi_to_irq, cpu)[ipi]) == -1)
+			continue;
 
 		BUG_ON(ipi_from_irq(irq) != ipi);
 
 		/* Get a new binding from Xen. */
 		bind_ipi.vcpu = xen_vcpu_nr(cpu);
-		अगर (HYPERVISOR_event_channel_op(EVTCHNOP_bind_ipi,
+		if (HYPERVISOR_event_channel_op(EVTCHNOP_bind_ipi,
 						&bind_ipi) != 0)
 			BUG();
 		evtchn = bind_ipi.port;
 
 		/* Record the new mapping. */
-		(व्योम)xen_irq_info_ipi_setup(cpu, irq, evtchn, ipi);
+		(void)xen_irq_info_ipi_setup(cpu, irq, evtchn, ipi);
 		/* The affinity mask is still valid */
 		bind_evtchn_to_cpu(evtchn, cpu, false);
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* Clear an irq's pending state, in preparation क्रम polling on it */
-व्योम xen_clear_irq_pending(पूर्णांक irq)
-अणु
-	काष्ठा irq_info *info = info_क्रम_irq(irq);
+/* Clear an irq's pending state, in preparation for polling on it */
+void xen_clear_irq_pending(int irq)
+{
+	struct irq_info *info = info_for_irq(irq);
 	evtchn_port_t evtchn = info ? info->evtchn : 0;
 
-	अगर (VALID_EVTCHN(evtchn))
-		event_handler_निकास(info);
-पूर्ण
+	if (VALID_EVTCHN(evtchn))
+		event_handler_exit(info);
+}
 EXPORT_SYMBOL(xen_clear_irq_pending);
-व्योम xen_set_irq_pending(पूर्णांक irq)
-अणु
+void xen_set_irq_pending(int irq)
+{
 	evtchn_port_t evtchn = evtchn_from_irq(irq);
 
-	अगर (VALID_EVTCHN(evtchn))
+	if (VALID_EVTCHN(evtchn))
 		set_evtchn(evtchn);
-पूर्ण
+}
 
-bool xen_test_irq_pending(पूर्णांक irq)
-अणु
+bool xen_test_irq_pending(int irq)
+{
 	evtchn_port_t evtchn = evtchn_from_irq(irq);
 	bool ret = false;
 
-	अगर (VALID_EVTCHN(evtchn))
+	if (VALID_EVTCHN(evtchn))
 		ret = test_evtchn(evtchn);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* Poll रुकोing क्रम an irq to become pending with समयout.  In the usual हाल,
- * the irq will be disabled so it won't deliver an पूर्णांकerrupt. */
-व्योम xen_poll_irq_समयout(पूर्णांक irq, u64 समयout)
-अणु
+/* Poll waiting for an irq to become pending with timeout.  In the usual case,
+ * the irq will be disabled so it won't deliver an interrupt. */
+void xen_poll_irq_timeout(int irq, u64 timeout)
+{
 	evtchn_port_t evtchn = evtchn_from_irq(irq);
 
-	अगर (VALID_EVTCHN(evtchn)) अणु
-		काष्ठा sched_poll poll;
+	if (VALID_EVTCHN(evtchn)) {
+		struct sched_poll poll;
 
 		poll.nr_ports = 1;
-		poll.समयout = समयout;
+		poll.timeout = timeout;
 		set_xen_guest_handle(poll.ports, &evtchn);
 
-		अगर (HYPERVISOR_sched_op(SCHEDOP_poll, &poll) != 0)
+		if (HYPERVISOR_sched_op(SCHEDOP_poll, &poll) != 0)
 			BUG();
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL(xen_poll_irq_समयout);
-/* Poll रुकोing क्रम an irq to become pending.  In the usual हाल, the
- * irq will be disabled so it won't deliver an पूर्णांकerrupt. */
-व्योम xen_poll_irq(पूर्णांक irq)
-अणु
-	xen_poll_irq_समयout(irq, 0 /* no समयout */);
-पूर्ण
+	}
+}
+EXPORT_SYMBOL(xen_poll_irq_timeout);
+/* Poll waiting for an irq to become pending.  In the usual case, the
+ * irq will be disabled so it won't deliver an interrupt. */
+void xen_poll_irq(int irq)
+{
+	xen_poll_irq_timeout(irq, 0 /* no timeout */);
+}
 
 /* Check whether the IRQ line is shared with other guests. */
-पूर्णांक xen_test_irq_shared(पूर्णांक irq)
-अणु
-	काष्ठा irq_info *info = info_क्रम_irq(irq);
-	काष्ठा physdev_irq_status_query irq_status;
+int xen_test_irq_shared(int irq)
+{
+	struct irq_info *info = info_for_irq(irq);
+	struct physdev_irq_status_query irq_status;
 
-	अगर (WARN_ON(!info))
-		वापस -ENOENT;
+	if (WARN_ON(!info))
+		return -ENOENT;
 
 	irq_status.irq = info->u.pirq.pirq;
 
-	अगर (HYPERVISOR_physdev_op(PHYSDEVOP_irq_status_query, &irq_status))
-		वापस 0;
-	वापस !(irq_status.flags & XENIRQSTAT_shared);
-पूर्ण
+	if (HYPERVISOR_physdev_op(PHYSDEVOP_irq_status_query, &irq_status))
+		return 0;
+	return !(irq_status.flags & XENIRQSTAT_shared);
+}
 EXPORT_SYMBOL_GPL(xen_test_irq_shared);
 
-व्योम xen_irq_resume(व्योम)
-अणु
-	अचिन्हित पूर्णांक cpu;
-	काष्ठा irq_info *info;
+void xen_irq_resume(void)
+{
+	unsigned int cpu;
+	struct irq_info *info;
 
 	/* New event-channel space is not 'live' yet. */
 	xen_evtchn_resume();
 
 	/* No IRQ <-> event-channel mappings. */
-	list_क्रम_each_entry(info, &xen_irq_list_head, list) अणु
+	list_for_each_entry(info, &xen_irq_list_head, list) {
 		/* Zap event-channel binding */
 		info->evtchn = 0;
 		/* Adjust accounting */
 		channels_on_cpu_dec(info);
-	पूर्ण
+	}
 
 	clear_evtchn_to_irq_all();
 
-	क्रम_each_possible_cpu(cpu) अणु
+	for_each_possible_cpu(cpu) {
 		restore_cpu_virqs(cpu);
 		restore_cpu_ipis(cpu);
-	पूर्ण
+	}
 
 	restore_pirqs();
-पूर्ण
+}
 
-अटल काष्ठा irq_chip xen_dynamic_chip __पढ़ो_mostly = अणु
+static struct irq_chip xen_dynamic_chip __read_mostly = {
 	.name			= "xen-dyn",
 
 	.irq_disable		= disable_dynirq,
@@ -2114,10 +2113,10 @@ EXPORT_SYMBOL_GPL(xen_test_irq_shared);
 
 	.irq_set_affinity	= set_affinity_irq,
 	.irq_retrigger		= retrigger_dynirq,
-पूर्ण;
+};
 
-अटल काष्ठा irq_chip xen_lateeoi_chip __पढ़ो_mostly = अणु
-	/* The chip name needs to contain "xen-dyn" क्रम irqbalance to work. */
+static struct irq_chip xen_lateeoi_chip __read_mostly = {
+	/* The chip name needs to contain "xen-dyn" for irqbalance to work. */
 	.name			= "xen-dyn-lateeoi",
 
 	.irq_disable		= disable_dynirq,
@@ -2129,13 +2128,13 @@ EXPORT_SYMBOL_GPL(xen_test_irq_shared);
 
 	.irq_set_affinity	= set_affinity_irq,
 	.irq_retrigger		= retrigger_dynirq,
-पूर्ण;
+};
 
-अटल काष्ठा irq_chip xen_pirq_chip __पढ़ो_mostly = अणु
+static struct irq_chip xen_pirq_chip __read_mostly = {
 	.name			= "xen-pirq",
 
 	.irq_startup		= startup_pirq,
-	.irq_shutकरोwn		= shutकरोwn_pirq,
+	.irq_shutdown		= shutdown_pirq,
 	.irq_enable		= enable_pirq,
 	.irq_disable		= disable_pirq,
 
@@ -2149,9 +2148,9 @@ EXPORT_SYMBOL_GPL(xen_test_irq_shared);
 	.irq_set_affinity	= set_affinity_irq,
 
 	.irq_retrigger		= retrigger_dynirq,
-पूर्ण;
+};
 
-अटल काष्ठा irq_chip xen_percpu_chip __पढ़ो_mostly = अणु
+static struct irq_chip xen_percpu_chip __read_mostly = {
 	.name			= "xen-percpu",
 
 	.irq_disable		= disable_dynirq,
@@ -2159,74 +2158,74 @@ EXPORT_SYMBOL_GPL(xen_test_irq_shared);
 	.irq_unmask		= enable_dynirq,
 
 	.irq_ack		= ack_dynirq,
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_XEN_PVHVM
-/* Vector callbacks are better than PCI पूर्णांकerrupts to receive event
- * channel notअगरications because we can receive vector callbacks on any
- * vcpu and we करोn't need PCI support or APIC पूर्णांकeractions. */
-व्योम xen_setup_callback_vector(व्योम)
-अणु
-	uपूर्णांक64_t callback_via;
+#ifdef CONFIG_XEN_PVHVM
+/* Vector callbacks are better than PCI interrupts to receive event
+ * channel notifications because we can receive vector callbacks on any
+ * vcpu and we don't need PCI support or APIC interactions. */
+void xen_setup_callback_vector(void)
+{
+	uint64_t callback_via;
 
-	अगर (xen_have_vector_callback) अणु
+	if (xen_have_vector_callback) {
 		callback_via = HVM_CALLBACK_VECTOR(HYPERVISOR_CALLBACK_VECTOR);
-		अगर (xen_set_callback_via(callback_via)) अणु
+		if (xen_set_callback_via(callback_via)) {
 			pr_err("Request for Xen HVM callback vector failed\n");
 			xen_have_vector_callback = 0;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल __init व्योम xen_alloc_callback_vector(व्योम)
-अणु
-	अगर (!xen_have_vector_callback)
-		वापस;
+static __init void xen_alloc_callback_vector(void)
+{
+	if (!xen_have_vector_callback)
+		return;
 
 	pr_info("Xen HVM callback vector for event delivery is enabled\n");
-	alloc_पूर्णांकr_gate(HYPERVISOR_CALLBACK_VECTOR, यंत्र_sysvec_xen_hvm_callback);
-पूर्ण
-#अन्यथा
-व्योम xen_setup_callback_vector(व्योम) अणुपूर्ण
-अटल अंतरभूत व्योम xen_alloc_callback_vector(व्योम) अणुपूर्ण
-#पूर्ण_अगर
+	alloc_intr_gate(HYPERVISOR_CALLBACK_VECTOR, asm_sysvec_xen_hvm_callback);
+}
+#else
+void xen_setup_callback_vector(void) {}
+static inline void xen_alloc_callback_vector(void) {}
+#endif
 
-bool xen_fअगरo_events = true;
-module_param_named(fअगरo_events, xen_fअगरo_events, bool, 0);
+bool xen_fifo_events = true;
+module_param_named(fifo_events, xen_fifo_events, bool, 0);
 
-अटल पूर्णांक xen_evtchn_cpu_prepare(अचिन्हित पूर्णांक cpu)
-अणु
-	पूर्णांक ret = 0;
+static int xen_evtchn_cpu_prepare(unsigned int cpu)
+{
+	int ret = 0;
 
 	xen_cpu_init_eoi(cpu);
 
-	अगर (evtchn_ops->percpu_init)
+	if (evtchn_ops->percpu_init)
 		ret = evtchn_ops->percpu_init(cpu);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक xen_evtchn_cpu_dead(अचिन्हित पूर्णांक cpu)
-अणु
-	पूर्णांक ret = 0;
+static int xen_evtchn_cpu_dead(unsigned int cpu)
+{
+	int ret = 0;
 
-	अगर (evtchn_ops->percpu_deinit)
+	if (evtchn_ops->percpu_deinit)
 		ret = evtchn_ops->percpu_deinit(cpu);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम __init xen_init_IRQ(व्योम)
-अणु
-	पूर्णांक ret = -EINVAL;
+void __init xen_init_IRQ(void)
+{
+	int ret = -EINVAL;
 	evtchn_port_t evtchn;
 
-	अगर (xen_fअगरo_events)
-		ret = xen_evtchn_fअगरo_init();
-	अगर (ret < 0) अणु
+	if (xen_fifo_events)
+		ret = xen_evtchn_fifo_init();
+	if (ret < 0) {
 		xen_evtchn_2l_init();
-		xen_fअगरo_events = false;
-	पूर्ण
+		xen_fifo_events = false;
+	}
 
 	xen_cpu_init_eoi(smp_processor_id());
 
@@ -2234,43 +2233,43 @@ module_param_named(fअगरo_events, xen_fअगरo_events, bool, 0);
 				  "xen/evtchn:prepare",
 				  xen_evtchn_cpu_prepare, xen_evtchn_cpu_dead);
 
-	evtchn_to_irq = kसुस्मृति(EVTCHN_ROW(xen_evtchn_max_channels()),
-				माप(*evtchn_to_irq), GFP_KERNEL);
+	evtchn_to_irq = kcalloc(EVTCHN_ROW(xen_evtchn_max_channels()),
+				sizeof(*evtchn_to_irq), GFP_KERNEL);
 	BUG_ON(!evtchn_to_irq);
 
 	/* No event channels are 'live' right now. */
-	क्रम (evtchn = 0; evtchn < xen_evtchn_nr_channels(); evtchn++)
+	for (evtchn = 0; evtchn < xen_evtchn_nr_channels(); evtchn++)
 		mask_evtchn(evtchn);
 
 	pirq_needs_eoi = pirq_needs_eoi_flag;
 
-#अगर_घोषित CONFIG_X86
-	अगर (xen_pv_करोमुख्य()) अणु
-		अगर (xen_initial_करोमुख्य())
-			pci_xen_initial_करोमुख्य();
-	पूर्ण
-	अगर (xen_feature(XENFEAT_hvm_callback_vector)) अणु
+#ifdef CONFIG_X86
+	if (xen_pv_domain()) {
+		if (xen_initial_domain())
+			pci_xen_initial_domain();
+	}
+	if (xen_feature(XENFEAT_hvm_callback_vector)) {
 		xen_setup_callback_vector();
 		xen_alloc_callback_vector();
-	पूर्ण
+	}
 
-	अगर (xen_hvm_करोमुख्य()) अणु
+	if (xen_hvm_domain()) {
 		native_init_IRQ();
 		/* pci_xen_hvm_init must be called after native_init_IRQ so that
-		 * __acpi_रेजिस्टर_gsi can poपूर्णांक at the right function */
+		 * __acpi_register_gsi can point at the right function */
 		pci_xen_hvm_init();
-	पूर्ण अन्यथा अणु
-		पूर्णांक rc;
-		काष्ठा physdev_pirq_eoi_gmfn eoi_gmfn;
+	} else {
+		int rc;
+		struct physdev_pirq_eoi_gmfn eoi_gmfn;
 
-		pirq_eoi_map = (व्योम *)__get_मुक्त_page(GFP_KERNEL|__GFP_ZERO);
+		pirq_eoi_map = (void *)__get_free_page(GFP_KERNEL|__GFP_ZERO);
 		eoi_gmfn.gmfn = virt_to_gfn(pirq_eoi_map);
 		rc = HYPERVISOR_physdev_op(PHYSDEVOP_pirq_eoi_gmfn_v2, &eoi_gmfn);
-		अगर (rc != 0) अणु
-			मुक्त_page((अचिन्हित दीर्घ) pirq_eoi_map);
-			pirq_eoi_map = शून्य;
-		पूर्ण अन्यथा
+		if (rc != 0) {
+			free_page((unsigned long) pirq_eoi_map);
+			pirq_eoi_map = NULL;
+		} else
 			pirq_needs_eoi = pirq_check_eoi_map;
-	पूर्ण
-#पूर्ण_अगर
-पूर्ण
+	}
+#endif
+}

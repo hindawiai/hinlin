@@ -1,10 +1,9 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 
-#अगर_अघोषित __ABI_CSKY_ELF_H
-#घोषणा __ABI_CSKY_ELF_H
+#ifndef __ABI_CSKY_ELF_H
+#define __ABI_CSKY_ELF_H
 
-#घोषणा ELF_CORE_COPY_REGS(pr_reg, regs) करो अणु	\
+#define ELF_CORE_COPY_REGS(pr_reg, regs) do {	\
 	pr_reg[0] = regs->pc;			\
 	pr_reg[1] = regs->regs[9];		\
 	pr_reg[2] = regs->usp;			\
@@ -23,5 +22,5 @@
 	pr_reg[15] = regs->regs[7];		\
 	pr_reg[16] = regs->regs[8];		\
 	pr_reg[17] = regs->lr;			\
-पूर्ण जबतक (0);
-#पूर्ण_अगर /* __ABI_CSKY_ELF_H */
+} while (0);
+#endif /* __ABI_CSKY_ELF_H */

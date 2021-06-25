@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,78 +21,78 @@
  *
  * Authors: Ben Skeggs
  */
-#घोषणा nv04_disp_root(p) container_of((p), काष्ठा nv04_disp_root, object)
-#समावेश "priv.h"
-#समावेश "head.h"
+#define nv04_disp_root(p) container_of((p), struct nv04_disp_root, object)
+#include "priv.h"
+#include "head.h"
 
-#समावेश <core/client.h>
+#include <core/client.h>
 
-#समावेश <nvअगर/class.h>
-#समावेश <nvअगर/cl0046.h>
-#समावेश <nvअगर/unpack.h>
+#include <nvif/class.h>
+#include <nvif/cl0046.h>
+#include <nvif/unpack.h>
 
-काष्ठा nv04_disp_root अणु
-	काष्ठा nvkm_object object;
-	काष्ठा nvkm_disp *disp;
-पूर्ण;
+struct nv04_disp_root {
+	struct nvkm_object object;
+	struct nvkm_disp *disp;
+};
 
-अटल पूर्णांक
-nv04_disp_mthd(काष्ठा nvkm_object *object, u32 mthd, व्योम *data, u32 size)
-अणु
-	काष्ठा nv04_disp_root *root = nv04_disp_root(object);
-	जोड़ अणु
-		काष्ठा nv04_disp_mthd_v0 v0;
-	पूर्ण *args = data;
-	काष्ठा nvkm_head *head;
-	पूर्णांक id, ret = -ENOSYS;
+static int
+nv04_disp_mthd(struct nvkm_object *object, u32 mthd, void *data, u32 size)
+{
+	struct nv04_disp_root *root = nv04_disp_root(object);
+	union {
+		struct nv04_disp_mthd_v0 v0;
+	} *args = data;
+	struct nvkm_head *head;
+	int id, ret = -ENOSYS;
 
-	nvअगर_ioctl(object, "disp mthd size %d\n", size);
-	अगर (!(ret = nvअगर_unpack(ret, &data, &size, args->v0, 0, 0, true))) अणु
-		nvअगर_ioctl(object, "disp mthd vers %d mthd %02x head %d\n",
+	nvif_ioctl(object, "disp mthd size %d\n", size);
+	if (!(ret = nvif_unpack(ret, &data, &size, args->v0, 0, 0, true))) {
+		nvif_ioctl(object, "disp mthd vers %d mthd %02x head %d\n",
 			   args->v0.version, args->v0.method, args->v0.head);
 		mthd = args->v0.method;
 		id   = args->v0.head;
-	पूर्ण अन्यथा
-		वापस ret;
+	} else
+		return ret;
 
-	अगर (!(head = nvkm_head_find(root->disp, id)))
-		वापस -ENXIO;
+	if (!(head = nvkm_head_find(root->disp, id)))
+		return -ENXIO;
 
-	चयन (mthd) अणु
-	हाल NV04_DISP_SCANOUTPOS:
-		वापस nvkm_head_mthd_scanoutpos(object, head, data, size);
-	शेष:
-		अवरोध;
-	पूर्ण
+	switch (mthd) {
+	case NV04_DISP_SCANOUTPOS:
+		return nvkm_head_mthd_scanoutpos(object, head, data, size);
+	default:
+		break;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल स्थिर काष्ठा nvkm_object_func
-nv04_disp_root = अणु
+static const struct nvkm_object_func
+nv04_disp_root = {
 	.mthd = nv04_disp_mthd,
 	.ntfy = nvkm_disp_ntfy,
-पूर्ण;
+};
 
-अटल पूर्णांक
-nv04_disp_root_new(काष्ठा nvkm_disp *disp, स्थिर काष्ठा nvkm_oclass *oclass,
-		   व्योम *data, u32 size, काष्ठा nvkm_object **pobject)
-अणु
-	काष्ठा nv04_disp_root *root;
+static int
+nv04_disp_root_new(struct nvkm_disp *disp, const struct nvkm_oclass *oclass,
+		   void *data, u32 size, struct nvkm_object **pobject)
+{
+	struct nv04_disp_root *root;
 
-	अगर (!(root = kzalloc(माप(*root), GFP_KERNEL)))
-		वापस -ENOMEM;
+	if (!(root = kzalloc(sizeof(*root), GFP_KERNEL)))
+		return -ENOMEM;
 	root->disp = disp;
 	*pobject = &root->object;
 
 	nvkm_object_ctor(&nv04_disp_root, oclass, &root->object);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-स्थिर काष्ठा nvkm_disp_oclass
-nv04_disp_root_oclass = अणु
+const struct nvkm_disp_oclass
+nv04_disp_root_oclass = {
 	.base.oclass = NV04_DISP,
 	.base.minver = -1,
 	.base.maxver = -1,
 	.ctor = nv04_disp_root_new,
-पूर्ण;
+};

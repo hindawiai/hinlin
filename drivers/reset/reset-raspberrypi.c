@@ -1,45 +1,44 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Raspberry Pi 4 firmware reset driver
  *
  * Copyright (C) 2020 Nicolas Saenz Julienne <nsaenzjulienne@suse.de>
  */
-#समावेश <linux/delay.h>
-#समावेश <linux/device.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/reset-controller.h>
-#समावेश <soc/bcm2835/raspberrypi-firmware.h>
-#समावेश <dt-bindings/reset/raspberrypi,firmware-reset.h>
+#include <linux/delay.h>
+#include <linux/device.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/reset-controller.h>
+#include <soc/bcm2835/raspberrypi-firmware.h>
+#include <dt-bindings/reset/raspberrypi,firmware-reset.h>
 
-काष्ठा rpi_reset अणु
-	काष्ठा reset_controller_dev rcdev;
-	काष्ठा rpi_firmware *fw;
-पूर्ण;
+struct rpi_reset {
+	struct reset_controller_dev rcdev;
+	struct rpi_firmware *fw;
+};
 
-अटल अंतरभूत काष्ठा rpi_reset *to_rpi(काष्ठा reset_controller_dev *rcdev)
-अणु
-	वापस container_of(rcdev, काष्ठा rpi_reset, rcdev);
-पूर्ण
+static inline struct rpi_reset *to_rpi(struct reset_controller_dev *rcdev)
+{
+	return container_of(rcdev, struct rpi_reset, rcdev);
+}
 
-अटल पूर्णांक rpi_reset_reset(काष्ठा reset_controller_dev *rcdev, अचिन्हित दीर्घ id)
-अणु
-	काष्ठा rpi_reset *priv = to_rpi(rcdev);
+static int rpi_reset_reset(struct reset_controller_dev *rcdev, unsigned long id)
+{
+	struct rpi_reset *priv = to_rpi(rcdev);
 	u32 dev_addr;
-	पूर्णांक ret;
+	int ret;
 
-	चयन (id) अणु
-	हाल RASPBERRYPI_FIRMWARE_RESET_ID_USB:
+	switch (id) {
+	case RASPBERRYPI_FIRMWARE_RESET_ID_USB:
 		/*
-		 * The Raspberry Pi 4 माला_लो its USB functionality from VL805, a
+		 * The Raspberry Pi 4 gets its USB functionality from VL805, a
 		 * PCIe chip that implements xHCI. After a PCI reset, VL805's
-		 * firmware may either be loaded directly from an EEPROM or, अगर
+		 * firmware may either be loaded directly from an EEPROM or, if
 		 * not present, by the SoC's co-processor, VideoCore. rpi's
-		 * VideoCore OS contains both the non खुला firmware load
+		 * VideoCore OS contains both the non public firmware load
 		 * logic and the VL805 firmware blob. This triggers the
-		 * aक्रमementioned process.
+		 * aforementioned process.
 		 *
 		 * The pci device address is expected is expected by the
 		 * firmware encoded like this:
@@ -51,46 +50,46 @@
 		 */
 		dev_addr = 0x100000;
 		ret = rpi_firmware_property(priv->fw, RPI_FIRMWARE_NOTIFY_XHCI_RESET,
-					    &dev_addr, माप(dev_addr));
-		अगर (ret)
-			वापस ret;
+					    &dev_addr, sizeof(dev_addr));
+		if (ret)
+			return ret;
 
-		/* Wait क्रम vl805 to startup */
+		/* Wait for vl805 to startup */
 		usleep_range(200, 1000);
-		अवरोध;
+		break;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा reset_control_ops rpi_reset_ops = अणु
+static const struct reset_control_ops rpi_reset_ops = {
 	.reset	= rpi_reset_reset,
-पूर्ण;
+};
 
-अटल पूर्णांक rpi_reset_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा rpi_firmware *fw;
-	काष्ठा device_node *np;
-	काष्ठा rpi_reset *priv;
+static int rpi_reset_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct rpi_firmware *fw;
+	struct device_node *np;
+	struct rpi_reset *priv;
 
 	np = of_get_parent(dev->of_node);
-	अगर (!np) अणु
+	if (!np) {
 		dev_err(dev, "Missing firmware node\n");
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
 	fw = devm_rpi_firmware_get(&pdev->dev, np);
 	of_node_put(np);
-	अगर (!fw)
-		वापस -EPROBE_DEFER;
+	if (!fw)
+		return -EPROBE_DEFER;
 
-	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
 	dev_set_drvdata(dev, priv);
 
@@ -100,23 +99,23 @@
 	priv->rcdev.ops = &rpi_reset_ops;
 	priv->rcdev.of_node = dev->of_node;
 
-	वापस devm_reset_controller_रेजिस्टर(dev, &priv->rcdev);
-पूर्ण
+	return devm_reset_controller_register(dev, &priv->rcdev);
+}
 
-अटल स्थिर काष्ठा of_device_id rpi_reset_of_match[] = अणु
-	अणु .compatible = "raspberrypi,firmware-reset" पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+static const struct of_device_id rpi_reset_of_match[] = {
+	{ .compatible = "raspberrypi,firmware-reset" },
+	{ /* sentinel */ }
+};
 MODULE_DEVICE_TABLE(of, rpi_reset_of_match);
 
-अटल काष्ठा platक्रमm_driver rpi_reset_driver = अणु
+static struct platform_driver rpi_reset_driver = {
 	.probe	= rpi_reset_probe,
-	.driver	= अणु
+	.driver	= {
 		.name = "raspberrypi-reset",
 		.of_match_table = rpi_reset_of_match,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(rpi_reset_driver);
+	},
+};
+module_platform_driver(rpi_reset_driver);
 
 MODULE_AUTHOR("Nicolas Saenz Julienne <nsaenzjulienne@suse.de>");
 MODULE_DESCRIPTION("Raspberry Pi 4 firmware reset driver");

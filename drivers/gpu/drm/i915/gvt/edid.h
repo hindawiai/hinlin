@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright(c) 2011-2016 Intel Corporation. All rights reserved.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -23,133 +22,133 @@
  *
  * Authors:
  *    Ke Yu
- *    Zhiyuan Lv <zhiyuan.lv@पूर्णांकel.com>
+ *    Zhiyuan Lv <zhiyuan.lv@intel.com>
  *
  * Contributors:
- *    Terrence Xu <terrence.xu@पूर्णांकel.com>
- *    Changbin Du <changbin.du@पूर्णांकel.com>
- *    Bing Niu <bing.niu@पूर्णांकel.com>
- *    Zhi Wang <zhi.a.wang@पूर्णांकel.com>
+ *    Terrence Xu <terrence.xu@intel.com>
+ *    Changbin Du <changbin.du@intel.com>
+ *    Bing Niu <bing.niu@intel.com>
+ *    Zhi Wang <zhi.a.wang@intel.com>
  *
  */
 
-#अगर_अघोषित _GVT_EDID_H_
-#घोषणा _GVT_EDID_H_
+#ifndef _GVT_EDID_H_
+#define _GVT_EDID_H_
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-काष्ठा पूर्णांकel_vgpu;
+struct intel_vgpu;
 
-#घोषणा EDID_SIZE		128
-#घोषणा EDID_ADDR		0x50 /* Linux hvm EDID addr */
+#define EDID_SIZE		128
+#define EDID_ADDR		0x50 /* Linux hvm EDID addr */
 
-#घोषणा GVT_AUX_NATIVE_WRITE			0x8
-#घोषणा GVT_AUX_NATIVE_READ			0x9
-#घोषणा GVT_AUX_I2C_WRITE			0x0
-#घोषणा GVT_AUX_I2C_READ			0x1
-#घोषणा GVT_AUX_I2C_STATUS			0x2
-#घोषणा GVT_AUX_I2C_MOT				0x4
-#घोषणा GVT_AUX_I2C_REPLY_ACK			0x0
+#define GVT_AUX_NATIVE_WRITE			0x8
+#define GVT_AUX_NATIVE_READ			0x9
+#define GVT_AUX_I2C_WRITE			0x0
+#define GVT_AUX_I2C_READ			0x1
+#define GVT_AUX_I2C_STATUS			0x2
+#define GVT_AUX_I2C_MOT				0x4
+#define GVT_AUX_I2C_REPLY_ACK			0x0
 
-काष्ठा पूर्णांकel_vgpu_edid_data अणु
+struct intel_vgpu_edid_data {
 	bool data_valid;
-	अचिन्हित अक्षर edid_block[EDID_SIZE];
-पूर्ण;
+	unsigned char edid_block[EDID_SIZE];
+};
 
-क्रमागत gmbus_cycle_type अणु
+enum gmbus_cycle_type {
 	GMBUS_NOCYCLE	= 0x0,
 	NIDX_NS_W	= 0x1,
 	IDX_NS_W	= 0x3,
 	GMBUS_STOP	= 0x4,
 	NIDX_STOP	= 0x5,
 	IDX_STOP	= 0x7
-पूर्ण;
+};
 
 /*
  * States of GMBUS
  *
- * GMBUS0-3 could be related to the EDID भवization. Another two GMBUS
- * रेजिस्टरs, GMBUS4 (पूर्णांकerrupt mask) and GMBUS5 (2 byte indes रेजिस्टर), are
- * not considered here. Below describes the usage of GMBUS रेजिस्टरs that are
- * cared by the EDID भवization
+ * GMBUS0-3 could be related to the EDID virtualization. Another two GMBUS
+ * registers, GMBUS4 (interrupt mask) and GMBUS5 (2 byte indes register), are
+ * not considered here. Below describes the usage of GMBUS registers that are
+ * cared by the EDID virtualization
  *
  * GMBUS0:
  *      R/W
- *      port selection. value of bit0 - bit2 corresponds to the GPIO रेजिस्टरs.
+ *      port selection. value of bit0 - bit2 corresponds to the GPIO registers.
  *
  * GMBUS1:
  *      R/W Protect
  *      Command and Status.
- *      bit0 is the direction bit: 1 is पढ़ो; 0 is ग_लिखो.
+ *      bit0 is the direction bit: 1 is read; 0 is write.
  *      bit1 - bit7 is slave 7-bit address.
  *      bit16 - bit24 total byte count (ignore?)
  *
  * GMBUS2:
- *      Most of bits are पढ़ो only except bit 15 (IN_USE)
- *      Status रेजिस्टर
+ *      Most of bits are read only except bit 15 (IN_USE)
+ *      Status register
  *      bit0 - bit8 current byte count
- *      bit 11: hardware पढ़ोy;
+ *      bit 11: hardware ready;
  *
  * GMBUS3:
  *      Read/Write
- *      Data क्रम transfer
+ *      Data for transfer
  */
 
 /* From hw specs, Other phases like START, ADDRESS, INDEX
- * are invisible to GMBUS MMIO पूर्णांकerface. So no definitions
- * in below क्रमागत types
+ * are invisible to GMBUS MMIO interface. So no definitions
+ * in below enum types
  */
-क्रमागत gvt_gmbus_phase अणु
+enum gvt_gmbus_phase {
 	GMBUS_IDLE_PHASE = 0,
 	GMBUS_DATA_PHASE,
 	GMBUS_WAIT_PHASE,
 	//GMBUS_STOP_PHASE,
 	GMBUS_MAX_PHASE
-पूर्ण;
+};
 
-काष्ठा पूर्णांकel_vgpu_i2c_gmbus अणु
-	अचिन्हित पूर्णांक total_byte_count; /* from GMBUS1 */
-	क्रमागत gmbus_cycle_type cycle_type;
-	क्रमागत gvt_gmbus_phase phase;
-पूर्ण;
+struct intel_vgpu_i2c_gmbus {
+	unsigned int total_byte_count; /* from GMBUS1 */
+	enum gmbus_cycle_type cycle_type;
+	enum gvt_gmbus_phase phase;
+};
 
-काष्ठा पूर्णांकel_vgpu_i2c_aux_ch अणु
+struct intel_vgpu_i2c_aux_ch {
 	bool i2c_over_aux_ch;
 	bool aux_ch_mot;
-पूर्ण;
+};
 
-क्रमागत i2c_state अणु
+enum i2c_state {
 	I2C_NOT_SPECIFIED = 0,
 	I2C_GMBUS = 1,
 	I2C_AUX_CH = 2
-पूर्ण;
+};
 
-/* I2C sequences cannot पूर्णांकerleave.
- * GMBUS and AUX_CH sequences cannot पूर्णांकerleave.
+/* I2C sequences cannot interleave.
+ * GMBUS and AUX_CH sequences cannot interleave.
  */
-काष्ठा पूर्णांकel_vgpu_i2c_edid अणु
-	क्रमागत i2c_state state;
+struct intel_vgpu_i2c_edid {
+	enum i2c_state state;
 
-	अचिन्हित पूर्णांक port;
+	unsigned int port;
 	bool slave_selected;
 	bool edid_available;
-	अचिन्हित पूर्णांक current_edid_पढ़ो;
+	unsigned int current_edid_read;
 
-	काष्ठा पूर्णांकel_vgpu_i2c_gmbus gmbus;
-	काष्ठा पूर्णांकel_vgpu_i2c_aux_ch aux_ch;
-पूर्ण;
+	struct intel_vgpu_i2c_gmbus gmbus;
+	struct intel_vgpu_i2c_aux_ch aux_ch;
+};
 
-व्योम पूर्णांकel_vgpu_init_i2c_edid(काष्ठा पूर्णांकel_vgpu *vgpu);
+void intel_vgpu_init_i2c_edid(struct intel_vgpu *vgpu);
 
-पूर्णांक पूर्णांकel_gvt_i2c_handle_gmbus_पढ़ो(काष्ठा पूर्णांकel_vgpu *vgpu,
-		अचिन्हित पूर्णांक offset, व्योम *p_data, अचिन्हित पूर्णांक bytes);
+int intel_gvt_i2c_handle_gmbus_read(struct intel_vgpu *vgpu,
+		unsigned int offset, void *p_data, unsigned int bytes);
 
-पूर्णांक पूर्णांकel_gvt_i2c_handle_gmbus_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu,
-		अचिन्हित पूर्णांक offset, व्योम *p_data, अचिन्हित पूर्णांक bytes);
+int intel_gvt_i2c_handle_gmbus_write(struct intel_vgpu *vgpu,
+		unsigned int offset, void *p_data, unsigned int bytes);
 
-व्योम पूर्णांकel_gvt_i2c_handle_aux_ch_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu,
-		पूर्णांक port_idx,
-		अचिन्हित पूर्णांक offset,
-		व्योम *p_data);
+void intel_gvt_i2c_handle_aux_ch_write(struct intel_vgpu *vgpu,
+		int port_idx,
+		unsigned int offset,
+		void *p_data);
 
-#पूर्ण_अगर /*_GVT_EDID_H_*/
+#endif /*_GVT_EDID_H_*/

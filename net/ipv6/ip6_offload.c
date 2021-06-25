@@ -1,218 +1,217 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *	IPV6 GSO/GRO offload support
  *	Linux INET6 implementation
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/socket.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/prपूर्णांकk.h>
+#include <linux/kernel.h>
+#include <linux/socket.h>
+#include <linux/netdevice.h>
+#include <linux/skbuff.h>
+#include <linux/printk.h>
 
-#समावेश <net/protocol.h>
-#समावेश <net/ipv6.h>
-#समावेश <net/inet_common.h>
-#समावेश <net/tcp.h>
-#समावेश <net/udp.h>
-#समावेश <net/gro.h>
+#include <net/protocol.h>
+#include <net/ipv6.h>
+#include <net/inet_common.h>
+#include <net/tcp.h>
+#include <net/udp.h>
+#include <net/gro.h>
 
-#समावेश "ip6_offload.h"
+#include "ip6_offload.h"
 
 /* All GRO functions are always builtin, except UDP over ipv6, which lays in
  * ipv6 module, as it depends on UDPv6 lookup function, so we need special care
  * when ipv6 is built as a module
  */
-#अगर IS_BUILTIN(CONFIG_IPV6)
-#घोषणा INसूचीECT_CALL_L4(f, f2, f1, ...) INसूचीECT_CALL_2(f, f2, f1, __VA_ARGS__)
-#अन्यथा
-#घोषणा INसूचीECT_CALL_L4(f, f2, f1, ...) INसूचीECT_CALL_1(f, f2, __VA_ARGS__)
-#पूर्ण_अगर
+#if IS_BUILTIN(CONFIG_IPV6)
+#define INDIRECT_CALL_L4(f, f2, f1, ...) INDIRECT_CALL_2(f, f2, f1, __VA_ARGS__)
+#else
+#define INDIRECT_CALL_L4(f, f2, f1, ...) INDIRECT_CALL_1(f, f2, __VA_ARGS__)
+#endif
 
-#घोषणा indirect_call_gro_receive_l4(f2, f1, cb, head, skb)	\
-(अणु								\
+#define indirect_call_gro_receive_l4(f2, f1, cb, head, skb)	\
+({								\
 	unlikely(gro_recursion_inc_test(skb)) ?			\
-		NAPI_GRO_CB(skb)->flush |= 1, शून्य :		\
-		INसूचीECT_CALL_L4(cb, f2, f1, head, skb);	\
-पूर्ण)
+		NAPI_GRO_CB(skb)->flush |= 1, NULL :		\
+		INDIRECT_CALL_L4(cb, f2, f1, head, skb);	\
+})
 
-अटल पूर्णांक ipv6_gso_pull_exthdrs(काष्ठा sk_buff *skb, पूर्णांक proto)
-अणु
-	स्थिर काष्ठा net_offload *ops = शून्य;
+static int ipv6_gso_pull_exthdrs(struct sk_buff *skb, int proto)
+{
+	const struct net_offload *ops = NULL;
 
-	क्रम (;;) अणु
-		काष्ठा ipv6_opt_hdr *opth;
-		पूर्णांक len;
+	for (;;) {
+		struct ipv6_opt_hdr *opth;
+		int len;
 
-		अगर (proto != NEXTHDR_HOP) अणु
+		if (proto != NEXTHDR_HOP) {
 			ops = rcu_dereference(inet6_offloads[proto]);
 
-			अगर (unlikely(!ops))
-				अवरोध;
+			if (unlikely(!ops))
+				break;
 
-			अगर (!(ops->flags & INET6_PROTO_GSO_EXTHDR))
-				अवरोध;
-		पूर्ण
+			if (!(ops->flags & INET6_PROTO_GSO_EXTHDR))
+				break;
+		}
 
-		अगर (unlikely(!pskb_may_pull(skb, 8)))
-			अवरोध;
+		if (unlikely(!pskb_may_pull(skb, 8)))
+			break;
 
-		opth = (व्योम *)skb->data;
+		opth = (void *)skb->data;
 		len = ipv6_optlen(opth);
 
-		अगर (unlikely(!pskb_may_pull(skb, len)))
-			अवरोध;
+		if (unlikely(!pskb_may_pull(skb, len)))
+			break;
 
-		opth = (व्योम *)skb->data;
+		opth = (void *)skb->data;
 		proto = opth->nexthdr;
 		__skb_pull(skb, len);
-	पूर्ण
+	}
 
-	वापस proto;
-पूर्ण
+	return proto;
+}
 
-अटल काष्ठा sk_buff *ipv6_gso_segment(काष्ठा sk_buff *skb,
+static struct sk_buff *ipv6_gso_segment(struct sk_buff *skb,
 	netdev_features_t features)
-अणु
-	काष्ठा sk_buff *segs = ERR_PTR(-EINVAL);
-	काष्ठा ipv6hdr *ipv6h;
-	स्थिर काष्ठा net_offload *ops;
-	पूर्णांक proto;
-	काष्ठा frag_hdr *fptr;
-	अचिन्हित पूर्णांक payload_len;
+{
+	struct sk_buff *segs = ERR_PTR(-EINVAL);
+	struct ipv6hdr *ipv6h;
+	const struct net_offload *ops;
+	int proto;
+	struct frag_hdr *fptr;
+	unsigned int payload_len;
 	u8 *prevhdr;
-	पूर्णांक offset = 0;
+	int offset = 0;
 	bool encap, udpfrag;
-	पूर्णांक nhoff;
+	int nhoff;
 	bool gso_partial;
 
 	skb_reset_network_header(skb);
 	nhoff = skb_network_header(skb) - skb_mac_header(skb);
-	अगर (unlikely(!pskb_may_pull(skb, माप(*ipv6h))))
-		जाओ out;
+	if (unlikely(!pskb_may_pull(skb, sizeof(*ipv6h))))
+		goto out;
 
 	encap = SKB_GSO_CB(skb)->encap_level > 0;
-	अगर (encap)
+	if (encap)
 		features &= skb->dev->hw_enc_features;
-	SKB_GSO_CB(skb)->encap_level += माप(*ipv6h);
+	SKB_GSO_CB(skb)->encap_level += sizeof(*ipv6h);
 
 	ipv6h = ipv6_hdr(skb);
-	__skb_pull(skb, माप(*ipv6h));
+	__skb_pull(skb, sizeof(*ipv6h));
 	segs = ERR_PTR(-EPROTONOSUPPORT);
 
 	proto = ipv6_gso_pull_exthdrs(skb, ipv6h->nexthdr);
 
-	अगर (skb->encapsulation &&
+	if (skb->encapsulation &&
 	    skb_shinfo(skb)->gso_type & (SKB_GSO_IPXIP4 | SKB_GSO_IPXIP6))
 		udpfrag = proto == IPPROTO_UDP && encap &&
 			  (skb_shinfo(skb)->gso_type & SKB_GSO_UDP);
-	अन्यथा
+	else
 		udpfrag = proto == IPPROTO_UDP && !skb->encapsulation &&
 			  (skb_shinfo(skb)->gso_type & SKB_GSO_UDP);
 
 	ops = rcu_dereference(inet6_offloads[proto]);
-	अगर (likely(ops && ops->callbacks.gso_segment)) अणु
+	if (likely(ops && ops->callbacks.gso_segment)) {
 		skb_reset_transport_header(skb);
 		segs = ops->callbacks.gso_segment(skb, features);
-	पूर्ण
+	}
 
-	अगर (IS_ERR_OR_शून्य(segs))
-		जाओ out;
+	if (IS_ERR_OR_NULL(segs))
+		goto out;
 
 	gso_partial = !!(skb_shinfo(segs)->gso_type & SKB_GSO_PARTIAL);
 
-	क्रम (skb = segs; skb; skb = skb->next) अणु
-		ipv6h = (काष्ठा ipv6hdr *)(skb_mac_header(skb) + nhoff);
-		अगर (gso_partial && skb_is_gso(skb))
+	for (skb = segs; skb; skb = skb->next) {
+		ipv6h = (struct ipv6hdr *)(skb_mac_header(skb) + nhoff);
+		if (gso_partial && skb_is_gso(skb))
 			payload_len = skb_shinfo(skb)->gso_size +
 				      SKB_GSO_CB(skb)->data_offset +
-				      skb->head - (अचिन्हित अक्षर *)(ipv6h + 1);
-		अन्यथा
-			payload_len = skb->len - nhoff - माप(*ipv6h);
+				      skb->head - (unsigned char *)(ipv6h + 1);
+		else
+			payload_len = skb->len - nhoff - sizeof(*ipv6h);
 		ipv6h->payload_len = htons(payload_len);
 		skb->network_header = (u8 *)ipv6h - skb->head;
 		skb_reset_mac_len(skb);
 
-		अगर (udpfrag) अणु
-			पूर्णांक err = ip6_find_1stfragopt(skb, &prevhdr);
-			अगर (err < 0) अणु
-				kमुक्त_skb_list(segs);
-				वापस ERR_PTR(err);
-			पूर्ण
-			fptr = (काष्ठा frag_hdr *)((u8 *)ipv6h + err);
+		if (udpfrag) {
+			int err = ip6_find_1stfragopt(skb, &prevhdr);
+			if (err < 0) {
+				kfree_skb_list(segs);
+				return ERR_PTR(err);
+			}
+			fptr = (struct frag_hdr *)((u8 *)ipv6h + err);
 			fptr->frag_off = htons(offset);
-			अगर (skb->next)
+			if (skb->next)
 				fptr->frag_off |= htons(IP6_MF);
 			offset += (ntohs(ipv6h->payload_len) -
-				   माप(काष्ठा frag_hdr));
-		पूर्ण
-		अगर (encap)
+				   sizeof(struct frag_hdr));
+		}
+		if (encap)
 			skb_reset_inner_headers(skb);
-	पूर्ण
+	}
 
 out:
-	वापस segs;
-पूर्ण
+	return segs;
+}
 
 /* Return the total length of all the extension hdrs, following the same
  * logic in ipv6_gso_pull_exthdrs() when parsing ext-hdrs.
  */
-अटल पूर्णांक ipv6_exthdrs_len(काष्ठा ipv6hdr *iph,
-			    स्थिर काष्ठा net_offload **opps)
-अणु
-	काष्ठा ipv6_opt_hdr *opth = (व्योम *)iph;
-	पूर्णांक len = 0, proto, optlen = माप(*iph);
+static int ipv6_exthdrs_len(struct ipv6hdr *iph,
+			    const struct net_offload **opps)
+{
+	struct ipv6_opt_hdr *opth = (void *)iph;
+	int len = 0, proto, optlen = sizeof(*iph);
 
 	proto = iph->nexthdr;
-	क्रम (;;) अणु
-		अगर (proto != NEXTHDR_HOP) अणु
+	for (;;) {
+		if (proto != NEXTHDR_HOP) {
 			*opps = rcu_dereference(inet6_offloads[proto]);
-			अगर (unlikely(!(*opps)))
-				अवरोध;
-			अगर (!((*opps)->flags & INET6_PROTO_GSO_EXTHDR))
-				अवरोध;
-		पूर्ण
-		opth = (व्योम *)opth + optlen;
+			if (unlikely(!(*opps)))
+				break;
+			if (!((*opps)->flags & INET6_PROTO_GSO_EXTHDR))
+				break;
+		}
+		opth = (void *)opth + optlen;
 		optlen = ipv6_optlen(opth);
 		len += optlen;
 		proto = opth->nexthdr;
-	पूर्ण
-	वापस len;
-पूर्ण
+	}
+	return len;
+}
 
-INसूचीECT_CALLABLE_SCOPE काष्ठा sk_buff *ipv6_gro_receive(काष्ठा list_head *head,
-							 काष्ठा sk_buff *skb)
-अणु
-	स्थिर काष्ठा net_offload *ops;
-	काष्ठा sk_buff *pp = शून्य;
-	काष्ठा sk_buff *p;
-	काष्ठा ipv6hdr *iph;
-	अचिन्हित पूर्णांक nlen;
-	अचिन्हित पूर्णांक hlen;
-	अचिन्हित पूर्णांक off;
+INDIRECT_CALLABLE_SCOPE struct sk_buff *ipv6_gro_receive(struct list_head *head,
+							 struct sk_buff *skb)
+{
+	const struct net_offload *ops;
+	struct sk_buff *pp = NULL;
+	struct sk_buff *p;
+	struct ipv6hdr *iph;
+	unsigned int nlen;
+	unsigned int hlen;
+	unsigned int off;
 	u16 flush = 1;
-	पूर्णांक proto;
+	int proto;
 
 	off = skb_gro_offset(skb);
-	hlen = off + माप(*iph);
+	hlen = off + sizeof(*iph);
 	iph = skb_gro_header_fast(skb, off);
-	अगर (skb_gro_header_hard(skb, hlen)) अणु
+	if (skb_gro_header_hard(skb, hlen)) {
 		iph = skb_gro_header_slow(skb, hlen, off);
-		अगर (unlikely(!iph))
-			जाओ out;
-	पूर्ण
+		if (unlikely(!iph))
+			goto out;
+	}
 
 	skb_set_network_header(skb, off);
-	skb_gro_pull(skb, माप(*iph));
+	skb_gro_pull(skb, sizeof(*iph));
 	skb_set_transport_header(skb, skb_gro_offset(skb));
 
 	flush += ntohs(iph->payload_len) != skb_gro_len(skb);
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	proto = iph->nexthdr;
 	ops = rcu_dereference(inet6_offloads[proto]);
-	अगर (!ops || !ops->callbacks.gro_receive) अणु
+	if (!ops || !ops->callbacks.gro_receive) {
 		__pskb_pull(skb, skb_gro_offset(skb));
 		skb_gro_frag0_invalidate(skb);
 		proto = ipv6_gso_pull_exthdrs(skb, proto);
@@ -221,56 +220,56 @@ INसूचीECT_CALLABLE_SCOPE काष्ठा sk_buff *ipv6_gro_receive(�
 		__skb_push(skb, skb_gro_offset(skb));
 
 		ops = rcu_dereference(inet6_offloads[proto]);
-		अगर (!ops || !ops->callbacks.gro_receive)
-			जाओ out_unlock;
+		if (!ops || !ops->callbacks.gro_receive)
+			goto out_unlock;
 
 		iph = ipv6_hdr(skb);
-	पूर्ण
+	}
 
 	NAPI_GRO_CB(skb)->proto = proto;
 
 	flush--;
 	nlen = skb_network_header_len(skb);
 
-	list_क्रम_each_entry(p, head, list) अणु
-		स्थिर काष्ठा ipv6hdr *iph2;
+	list_for_each_entry(p, head, list) {
+		const struct ipv6hdr *iph2;
 		__be32 first_word; /* <Version:4><Traffic_Class:8><Flow_Label:20> */
 
-		अगर (!NAPI_GRO_CB(p)->same_flow)
-			जारी;
+		if (!NAPI_GRO_CB(p)->same_flow)
+			continue;
 
-		iph2 = (काष्ठा ipv6hdr *)(p->data + off);
+		iph2 = (struct ipv6hdr *)(p->data + off);
 		first_word = *(__be32 *)iph ^ *(__be32 *)iph2;
 
 		/* All fields must match except length and Traffic Class.
 		 * XXX skbs on the gro_list have all been parsed and pulled
-		 * alपढ़ोy so we करोn't need to compare nlen
-		 * (nlen != (माप(*iph2) + ipv6_exthdrs_len(iph2, &ops)))
-		 * स_भेद() alone below is sufficient, right?
+		 * already so we don't need to compare nlen
+		 * (nlen != (sizeof(*iph2) + ipv6_exthdrs_len(iph2, &ops)))
+		 * memcmp() alone below is sufficient, right?
 		 */
-		 अगर ((first_word & htonl(0xF00FFFFF)) ||
+		 if ((first_word & htonl(0xF00FFFFF)) ||
 		    !ipv6_addr_equal(&iph->saddr, &iph2->saddr) ||
 		    !ipv6_addr_equal(&iph->daddr, &iph2->daddr) ||
-		    *(u16 *)&iph->nexthdr != *(u16 *)&iph2->nexthdr) अणु
+		    *(u16 *)&iph->nexthdr != *(u16 *)&iph2->nexthdr) {
 not_same_flow:
 			NAPI_GRO_CB(p)->same_flow = 0;
-			जारी;
-		पूर्ण
-		अगर (unlikely(nlen > माप(काष्ठा ipv6hdr))) अणु
-			अगर (स_भेद(iph + 1, iph2 + 1,
-				   nlen - माप(काष्ठा ipv6hdr)))
-				जाओ not_same_flow;
-		पूर्ण
-		/* flush अगर Traffic Class fields are dअगरferent */
+			continue;
+		}
+		if (unlikely(nlen > sizeof(struct ipv6hdr))) {
+			if (memcmp(iph + 1, iph2 + 1,
+				   nlen - sizeof(struct ipv6hdr)))
+				goto not_same_flow;
+		}
+		/* flush if Traffic Class fields are different */
 		NAPI_GRO_CB(p)->flush |= !!(first_word & htonl(0x0FF00000));
 		NAPI_GRO_CB(p)->flush |= flush;
 
 		/* If the previous IP ID value was based on an atomic
-		 * datagram we can overग_लिखो the value and ignore it.
+		 * datagram we can overwrite the value and ignore it.
 		 */
-		अगर (NAPI_GRO_CB(skb)->is_atomic)
+		if (NAPI_GRO_CB(skb)->is_atomic)
 			NAPI_GRO_CB(p)->flush_id = 0;
-	पूर्ण
+	}
 
 	NAPI_GRO_CB(skb)->is_atomic = true;
 	NAPI_GRO_CB(skb)->flush |= flush;
@@ -281,158 +280,158 @@ not_same_flow:
 					 ops->callbacks.gro_receive, head, skb);
 
 out_unlock:
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
 out:
 	skb_gro_flush_final(skb, pp, flush);
 
-	वापस pp;
-पूर्ण
+	return pp;
+}
 
-अटल काष्ठा sk_buff *sit_ip6ip6_gro_receive(काष्ठा list_head *head,
-					      काष्ठा sk_buff *skb)
-अणु
-	/* Common GRO receive क्रम SIT and IP6IP6 */
+static struct sk_buff *sit_ip6ip6_gro_receive(struct list_head *head,
+					      struct sk_buff *skb)
+{
+	/* Common GRO receive for SIT and IP6IP6 */
 
-	अगर (NAPI_GRO_CB(skb)->encap_mark) अणु
+	if (NAPI_GRO_CB(skb)->encap_mark) {
 		NAPI_GRO_CB(skb)->flush = 1;
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	NAPI_GRO_CB(skb)->encap_mark = 1;
 
-	वापस ipv6_gro_receive(head, skb);
-पूर्ण
+	return ipv6_gro_receive(head, skb);
+}
 
-अटल काष्ठा sk_buff *ip4ip6_gro_receive(काष्ठा list_head *head,
-					  काष्ठा sk_buff *skb)
-अणु
-	/* Common GRO receive क्रम SIT and IP6IP6 */
+static struct sk_buff *ip4ip6_gro_receive(struct list_head *head,
+					  struct sk_buff *skb)
+{
+	/* Common GRO receive for SIT and IP6IP6 */
 
-	अगर (NAPI_GRO_CB(skb)->encap_mark) अणु
+	if (NAPI_GRO_CB(skb)->encap_mark) {
 		NAPI_GRO_CB(skb)->flush = 1;
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	NAPI_GRO_CB(skb)->encap_mark = 1;
 
-	वापस inet_gro_receive(head, skb);
-पूर्ण
+	return inet_gro_receive(head, skb);
+}
 
-INसूचीECT_CALLABLE_SCOPE पूर्णांक ipv6_gro_complete(काष्ठा sk_buff *skb, पूर्णांक nhoff)
-अणु
-	स्थिर काष्ठा net_offload *ops;
-	काष्ठा ipv6hdr *iph = (काष्ठा ipv6hdr *)(skb->data + nhoff);
-	पूर्णांक err = -ENOSYS;
+INDIRECT_CALLABLE_SCOPE int ipv6_gro_complete(struct sk_buff *skb, int nhoff)
+{
+	const struct net_offload *ops;
+	struct ipv6hdr *iph = (struct ipv6hdr *)(skb->data + nhoff);
+	int err = -ENOSYS;
 
-	अगर (skb->encapsulation) अणु
+	if (skb->encapsulation) {
 		skb_set_inner_protocol(skb, cpu_to_be16(ETH_P_IPV6));
 		skb_set_inner_network_header(skb, nhoff);
-	पूर्ण
+	}
 
-	iph->payload_len = htons(skb->len - nhoff - माप(*iph));
+	iph->payload_len = htons(skb->len - nhoff - sizeof(*iph));
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 
-	nhoff += माप(*iph) + ipv6_exthdrs_len(iph, &ops);
-	अगर (WARN_ON(!ops || !ops->callbacks.gro_complete))
-		जाओ out_unlock;
+	nhoff += sizeof(*iph) + ipv6_exthdrs_len(iph, &ops);
+	if (WARN_ON(!ops || !ops->callbacks.gro_complete))
+		goto out_unlock;
 
-	err = INसूचीECT_CALL_L4(ops->callbacks.gro_complete, tcp6_gro_complete,
+	err = INDIRECT_CALL_L4(ops->callbacks.gro_complete, tcp6_gro_complete,
 			       udp6_gro_complete, skb, nhoff);
 
 out_unlock:
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक sit_gro_complete(काष्ठा sk_buff *skb, पूर्णांक nhoff)
-अणु
+static int sit_gro_complete(struct sk_buff *skb, int nhoff)
+{
 	skb->encapsulation = 1;
 	skb_shinfo(skb)->gso_type |= SKB_GSO_IPXIP4;
-	वापस ipv6_gro_complete(skb, nhoff);
-पूर्ण
+	return ipv6_gro_complete(skb, nhoff);
+}
 
-अटल पूर्णांक ip6ip6_gro_complete(काष्ठा sk_buff *skb, पूर्णांक nhoff)
-अणु
+static int ip6ip6_gro_complete(struct sk_buff *skb, int nhoff)
+{
 	skb->encapsulation = 1;
 	skb_shinfo(skb)->gso_type |= SKB_GSO_IPXIP6;
-	वापस ipv6_gro_complete(skb, nhoff);
-पूर्ण
+	return ipv6_gro_complete(skb, nhoff);
+}
 
-अटल पूर्णांक ip4ip6_gro_complete(काष्ठा sk_buff *skb, पूर्णांक nhoff)
-अणु
+static int ip4ip6_gro_complete(struct sk_buff *skb, int nhoff)
+{
 	skb->encapsulation = 1;
 	skb_shinfo(skb)->gso_type |= SKB_GSO_IPXIP6;
-	वापस inet_gro_complete(skb, nhoff);
-पूर्ण
+	return inet_gro_complete(skb, nhoff);
+}
 
-अटल काष्ठा packet_offload ipv6_packet_offload __पढ़ो_mostly = अणु
+static struct packet_offload ipv6_packet_offload __read_mostly = {
 	.type = cpu_to_be16(ETH_P_IPV6),
-	.callbacks = अणु
+	.callbacks = {
 		.gso_segment = ipv6_gso_segment,
 		.gro_receive = ipv6_gro_receive,
 		.gro_complete = ipv6_gro_complete,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा sk_buff *sit_gso_segment(काष्ठा sk_buff *skb,
+static struct sk_buff *sit_gso_segment(struct sk_buff *skb,
 				       netdev_features_t features)
-अणु
-	अगर (!(skb_shinfo(skb)->gso_type & SKB_GSO_IPXIP4))
-		वापस ERR_PTR(-EINVAL);
+{
+	if (!(skb_shinfo(skb)->gso_type & SKB_GSO_IPXIP4))
+		return ERR_PTR(-EINVAL);
 
-	वापस ipv6_gso_segment(skb, features);
-पूर्ण
+	return ipv6_gso_segment(skb, features);
+}
 
-अटल काष्ठा sk_buff *ip4ip6_gso_segment(काष्ठा sk_buff *skb,
+static struct sk_buff *ip4ip6_gso_segment(struct sk_buff *skb,
 					  netdev_features_t features)
-अणु
-	अगर (!(skb_shinfo(skb)->gso_type & SKB_GSO_IPXIP6))
-		वापस ERR_PTR(-EINVAL);
+{
+	if (!(skb_shinfo(skb)->gso_type & SKB_GSO_IPXIP6))
+		return ERR_PTR(-EINVAL);
 
-	वापस inet_gso_segment(skb, features);
-पूर्ण
+	return inet_gso_segment(skb, features);
+}
 
-अटल काष्ठा sk_buff *ip6ip6_gso_segment(काष्ठा sk_buff *skb,
+static struct sk_buff *ip6ip6_gso_segment(struct sk_buff *skb,
 					  netdev_features_t features)
-अणु
-	अगर (!(skb_shinfo(skb)->gso_type & SKB_GSO_IPXIP6))
-		वापस ERR_PTR(-EINVAL);
+{
+	if (!(skb_shinfo(skb)->gso_type & SKB_GSO_IPXIP6))
+		return ERR_PTR(-EINVAL);
 
-	वापस ipv6_gso_segment(skb, features);
-पूर्ण
+	return ipv6_gso_segment(skb, features);
+}
 
-अटल स्थिर काष्ठा net_offload sit_offload = अणु
-	.callbacks = अणु
+static const struct net_offload sit_offload = {
+	.callbacks = {
 		.gso_segment	= sit_gso_segment,
 		.gro_receive    = sit_ip6ip6_gro_receive,
 		.gro_complete   = sit_gro_complete,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा net_offload ip4ip6_offload = अणु
-	.callbacks = अणु
+static const struct net_offload ip4ip6_offload = {
+	.callbacks = {
 		.gso_segment	= ip4ip6_gso_segment,
 		.gro_receive    = ip4ip6_gro_receive,
 		.gro_complete   = ip4ip6_gro_complete,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा net_offload ip6ip6_offload = अणु
-	.callbacks = अणु
+static const struct net_offload ip6ip6_offload = {
+	.callbacks = {
 		.gso_segment	= ip6ip6_gso_segment,
 		.gro_receive    = sit_ip6ip6_gro_receive,
 		.gro_complete   = ip6ip6_gro_complete,
-	पूर्ण,
-पूर्ण;
-अटल पूर्णांक __init ipv6_offload_init(व्योम)
-अणु
+	},
+};
+static int __init ipv6_offload_init(void)
+{
 
-	अगर (tcpv6_offload_init() < 0)
+	if (tcpv6_offload_init() < 0)
 		pr_crit("%s: Cannot add TCP protocol offload\n", __func__);
-	अगर (ipv6_exthdrs_offload_init() < 0)
+	if (ipv6_exthdrs_offload_init() < 0)
 		pr_crit("%s: Cannot add EXTHDRS protocol offload\n", __func__);
 
 	dev_add_offload(&ipv6_packet_offload);
@@ -441,7 +440,7 @@ out_unlock:
 	inet6_add_offload(&ip6ip6_offload, IPPROTO_IPV6);
 	inet6_add_offload(&ip4ip6_offload, IPPROTO_IPIP);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 fs_initcall(ipv6_offload_init);

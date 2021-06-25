@@ -1,54 +1,53 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2018, Intel Corporation
  * Copied from reset-sunxi.c
  */
 
-#समावेश <linux/err.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/init.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/reset-controller.h>
-#समावेश <linux/reset/reset-simple.h>
-#समावेश <linux/reset/socfpga.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/types.h>
+#include <linux/err.h>
+#include <linux/io.h>
+#include <linux/init.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/platform_device.h>
+#include <linux/reset-controller.h>
+#include <linux/reset/reset-simple.h>
+#include <linux/reset/socfpga.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
+#include <linux/types.h>
 
-#घोषणा SOCFPGA_NR_BANKS	8
+#define SOCFPGA_NR_BANKS	8
 
-अटल पूर्णांक a10_reset_init(काष्ठा device_node *np)
-अणु
-	काष्ठा reset_simple_data *data;
-	काष्ठा resource res;
-	resource_माप_प्रकार size;
-	पूर्णांक ret;
+static int a10_reset_init(struct device_node *np)
+{
+	struct reset_simple_data *data;
+	struct resource res;
+	resource_size_t size;
+	int ret;
 	u32 reg_offset = 0x10;
 
-	data = kzalloc(माप(*data), GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = kzalloc(sizeof(*data), GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
 
 	ret = of_address_to_resource(np, 0, &res);
-	अगर (ret)
-		जाओ err_alloc;
+	if (ret)
+		goto err_alloc;
 
 	size = resource_size(&res);
-	अगर (!request_mem_region(res.start, size, np->name)) अणु
+	if (!request_mem_region(res.start, size, np->name)) {
 		ret = -EBUSY;
-		जाओ err_alloc;
-	पूर्ण
+		goto err_alloc;
+	}
 
 	data->membase = ioremap(res.start, size);
-	अगर (!data->membase) अणु
+	if (!data->membase) {
 		ret = -ENOMEM;
-		जाओ release_region;
-	पूर्ण
+		goto release_region;
+	}
 
-	अगर (of_property_पढ़ो_u32(np, "altr,modrst-offset", &reg_offset))
+	if (of_property_read_u32(np, "altr,modrst-offset", &reg_offset))
 		pr_warn("missing altr,modrst-offset property, assuming 0x10\n");
 	data->membase += reg_offset;
 
@@ -60,36 +59,36 @@
 	data->rcdev.of_node = np;
 	data->status_active_low = true;
 
-	ret = reset_controller_रेजिस्टर(&data->rcdev);
-	अगर (ret)
+	ret = reset_controller_register(&data->rcdev);
+	if (ret)
 		pr_err("unable to register device\n");
 
-	वापस ret;
+	return ret;
 
 release_region:
 	release_mem_region(res.start, size);
 
 err_alloc:
-	kमुक्त(data);
-	वापस ret;
-पूर्ण;
+	kfree(data);
+	return ret;
+};
 
 /*
  * These are the reset controller we need to initialize early on in
- * our प्रणाली, beक्रमe we can even think of using a regular device
- * driver क्रम it.
- * The controllers that we can रेजिस्टर through the regular device
+ * our system, before we can even think of using a regular device
+ * driver for it.
+ * The controllers that we can register through the regular device
  * model are handled by the simple reset driver directly.
  */
-अटल स्थिर काष्ठा of_device_id socfpga_early_reset_dt_ids[] __initस्थिर = अणु
-	अणु .compatible = "altr,rst-mgr", पूर्ण,
-	अणु /* sentinel */ पूर्ण,
-पूर्ण;
+static const struct of_device_id socfpga_early_reset_dt_ids[] __initconst = {
+	{ .compatible = "altr,rst-mgr", },
+	{ /* sentinel */ },
+};
 
-व्योम __init socfpga_reset_init(व्योम)
-अणु
-	काष्ठा device_node *np;
+void __init socfpga_reset_init(void)
+{
+	struct device_node *np;
 
-	क्रम_each_matching_node(np, socfpga_early_reset_dt_ids)
+	for_each_matching_node(np, socfpga_early_reset_dt_ids)
 		a10_reset_init(np);
-पूर्ण
+}

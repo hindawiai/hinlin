@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * arch/arm/mach-spear3xx/spear3xx.c
  *
@@ -12,90 +11,90 @@
  * warranty of any kind, whether express or implied.
  */
 
-#घोषणा pr_fmt(fmt) "SPEAr3xx: " fmt
+#define pr_fmt(fmt) "SPEAr3xx: " fmt
 
-#समावेश <linux/amba/pl022.h>
-#समावेश <linux/amba/pl080.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/पन.स>
-#समावेश <यंत्र/mach/map.h>
-#समावेश "pl080.h"
-#समावेश "generic.h"
-#समावेश <mach/spear.h>
-#समावेश <mach/misc_regs.h>
+#include <linux/amba/pl022.h>
+#include <linux/amba/pl080.h>
+#include <linux/clk.h>
+#include <linux/io.h>
+#include <asm/mach/map.h>
+#include "pl080.h"
+#include "generic.h"
+#include <mach/spear.h>
+#include <mach/misc_regs.h>
 
 /* ssp device registration */
-काष्ठा pl022_ssp_controller pl022_plat_data = अणु
+struct pl022_ssp_controller pl022_plat_data = {
 	.bus_id = 0,
 	.enable_dma = 1,
 	.dma_filter = pl08x_filter_id,
 	.dma_tx_param = "ssp0_tx",
 	.dma_rx_param = "ssp0_rx",
-पूर्ण;
+};
 
 /* dmac device registration */
-काष्ठा pl08x_platक्रमm_data pl080_plat_data = अणु
-	.स_नकल_burst_size = PL08X_BURST_SZ_16,
-	.स_नकल_bus_width = PL08X_BUS_WIDTH_32_BITS,
-	.स_नकल_prot_buff = true,
-	.स_नकल_prot_cache = true,
+struct pl08x_platform_data pl080_plat_data = {
+	.memcpy_burst_size = PL08X_BURST_SZ_16,
+	.memcpy_bus_width = PL08X_BUS_WIDTH_32_BITS,
+	.memcpy_prot_buff = true,
+	.memcpy_prot_cache = true,
 	.lli_buses = PL08X_AHB1,
 	.mem_buses = PL08X_AHB1,
-	.get_xfer_संकेत = pl080_get_संकेत,
-	.put_xfer_संकेत = pl080_put_संकेत,
-पूर्ण;
+	.get_xfer_signal = pl080_get_signal,
+	.put_xfer_signal = pl080_put_signal,
+};
 
 /*
- * Following will create 16MB अटल भव/physical mappings
+ * Following will create 16MB static virtual/physical mappings
  * PHYSICAL		VIRTUAL
  * 0xD0000000		0xFD000000
  * 0xFC000000		0xFC000000
  */
-काष्ठा map_desc spear3xx_io_desc[] __initdata = अणु
-	अणु
-		.भव	= (अचिन्हित दीर्घ)VA_SPEAR_ICM1_2_BASE,
+struct map_desc spear3xx_io_desc[] __initdata = {
+	{
+		.virtual	= (unsigned long)VA_SPEAR_ICM1_2_BASE,
 		.pfn		= __phys_to_pfn(SPEAR_ICM1_2_BASE),
 		.length		= SZ_16M,
 		.type		= MT_DEVICE
-	पूर्ण, अणु
-		.भव	= (अचिन्हित दीर्घ)VA_SPEAR_ICM3_SMI_CTRL_BASE,
+	}, {
+		.virtual	= (unsigned long)VA_SPEAR_ICM3_SMI_CTRL_BASE,
 		.pfn		= __phys_to_pfn(SPEAR_ICM3_SMI_CTRL_BASE),
 		.length		= SZ_16M,
 		.type		= MT_DEVICE
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-/* This will create अटल memory mapping क्रम selected devices */
-व्योम __init spear3xx_map_io(व्योम)
-अणु
+/* This will create static memory mapping for selected devices */
+void __init spear3xx_map_io(void)
+{
 	iotable_init(spear3xx_io_desc, ARRAY_SIZE(spear3xx_io_desc));
-पूर्ण
+}
 
-व्योम __init spear3xx_समयr_init(व्योम)
-अणु
-	अक्षर pclk_name[] = "pll3_clk";
-	काष्ठा clk *gpt_clk, *pclk;
+void __init spear3xx_timer_init(void)
+{
+	char pclk_name[] = "pll3_clk";
+	struct clk *gpt_clk, *pclk;
 
 	spear3xx_clk_init(MISC_BASE, VA_SPEAR320_SOC_CONFIG_BASE);
 
-	/* get the प्रणाली समयr घड़ी */
-	gpt_clk = clk_get_sys("gpt0", शून्य);
-	अगर (IS_ERR(gpt_clk)) अणु
+	/* get the system timer clock */
+	gpt_clk = clk_get_sys("gpt0", NULL);
+	if (IS_ERR(gpt_clk)) {
 		pr_err("%s:couldn't get clk for gpt\n", __func__);
 		BUG();
-	पूर्ण
+	}
 
-	/* get the suitable parent घड़ी क्रम समयr*/
-	pclk = clk_get(शून्य, pclk_name);
-	अगर (IS_ERR(pclk)) अणु
+	/* get the suitable parent clock for timer*/
+	pclk = clk_get(NULL, pclk_name);
+	if (IS_ERR(pclk)) {
 		pr_err("%s:couldn't get %s as parent for gpt\n",
 				__func__, pclk_name);
 		BUG();
-	पूर्ण
+	}
 
 	clk_set_parent(gpt_clk, pclk);
 	clk_put(gpt_clk);
 	clk_put(pclk);
 
-	spear_setup_of_समयr();
-पूर्ण
+	spear_setup_of_timer();
+}

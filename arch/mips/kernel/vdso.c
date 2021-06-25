@@ -1,48 +1,47 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2015 Imagination Technologies
  * Author: Alex Smith <alex.smith@imgtec.com>
  */
 
-#समावेश <linux/binfmts.h>
-#समावेश <linux/elf.h>
-#समावेश <linux/err.h>
-#समावेश <linux/init.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/अक्रमom.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/समयkeeper_पूर्णांकernal.h>
+#include <linux/binfmts.h>
+#include <linux/elf.h>
+#include <linux/err.h>
+#include <linux/init.h>
+#include <linux/ioport.h>
+#include <linux/kernel.h>
+#include <linux/mm.h>
+#include <linux/random.h>
+#include <linux/sched.h>
+#include <linux/slab.h>
+#include <linux/timekeeper_internal.h>
 
-#समावेश <यंत्र/abi.h>
-#समावेश <यंत्र/mips-cps.h>
-#समावेश <यंत्र/page.h>
-#समावेश <यंत्र/vdso.h>
-#समावेश <vdso/helpers.h>
-#समावेश <vdso/vsyscall.h>
+#include <asm/abi.h>
+#include <asm/mips-cps.h>
+#include <asm/page.h>
+#include <asm/vdso.h>
+#include <vdso/helpers.h>
+#include <vdso/vsyscall.h>
 
 /* Kernel-provided data used by the VDSO. */
-अटल जोड़ mips_vdso_data mips_vdso_data __page_aligned_data;
-काष्ठा vdso_data *vdso_data = mips_vdso_data.data;
+static union mips_vdso_data mips_vdso_data __page_aligned_data;
+struct vdso_data *vdso_data = mips_vdso_data.data;
 
 /*
- * Mapping क्रम the VDSO data/GIC pages. The real pages are mapped manually, as
+ * Mapping for the VDSO data/GIC pages. The real pages are mapped manually, as
  * what we map and where within the area they are mapped is determined at
- * runसमय.
+ * runtime.
  */
-अटल काष्ठा page *no_pages[] = अणु शून्य पूर्ण;
-अटल काष्ठा vm_special_mapping vdso_vvar_mapping = अणु
+static struct page *no_pages[] = { NULL };
+static struct vm_special_mapping vdso_vvar_mapping = {
 	.name = "[vvar]",
 	.pages = no_pages,
-पूर्ण;
+};
 
-अटल व्योम __init init_vdso_image(काष्ठा mips_vdso_image *image)
-अणु
-	अचिन्हित दीर्घ num_pages, i;
-	अचिन्हित दीर्घ data_pfn;
+static void __init init_vdso_image(struct mips_vdso_image *image)
+{
+	unsigned long num_pages, i;
+	unsigned long data_pfn;
 
 	BUG_ON(!PAGE_ALIGNED(image->data));
 	BUG_ON(!PAGE_ALIGNED(image->size));
@@ -50,90 +49,90 @@
 	num_pages = image->size / PAGE_SIZE;
 
 	data_pfn = __phys_to_pfn(__pa_symbol(image->data));
-	क्रम (i = 0; i < num_pages; i++)
+	for (i = 0; i < num_pages; i++)
 		image->mapping.pages[i] = pfn_to_page(data_pfn + i);
-पूर्ण
+}
 
-अटल पूर्णांक __init init_vdso(व्योम)
-अणु
+static int __init init_vdso(void)
+{
 	init_vdso_image(&vdso_image);
 
-#अगर_घोषित CONFIG_MIPS32_O32
+#ifdef CONFIG_MIPS32_O32
 	init_vdso_image(&vdso_image_o32);
-#पूर्ण_अगर
+#endif
 
-#अगर_घोषित CONFIG_MIPS32_N32
+#ifdef CONFIG_MIPS32_N32
 	init_vdso_image(&vdso_image_n32);
-#पूर्ण_अगर
+#endif
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 subsys_initcall(init_vdso);
 
-अटल अचिन्हित दीर्घ vdso_base(व्योम)
-अणु
-	अचिन्हित दीर्घ base = STACK_TOP;
+static unsigned long vdso_base(void)
+{
+	unsigned long base = STACK_TOP;
 
-	अगर (IS_ENABLED(CONFIG_MIPS_FP_SUPPORT)) अणु
+	if (IS_ENABLED(CONFIG_MIPS_FP_SUPPORT)) {
 		/* Skip the delay slot emulation page */
 		base += PAGE_SIZE;
-	पूर्ण
+	}
 
-	अगर (current->flags & PF_RANDOMIZE) अणु
-		base += get_अक्रमom_पूर्णांक() & (VDSO_RANDOMIZE_SIZE - 1);
+	if (current->flags & PF_RANDOMIZE) {
+		base += get_random_int() & (VDSO_RANDOMIZE_SIZE - 1);
 		base = PAGE_ALIGN(base);
-	पूर्ण
+	}
 
-	वापस base;
-पूर्ण
+	return base;
+}
 
-पूर्णांक arch_setup_additional_pages(काष्ठा linux_binprm *bprm, पूर्णांक uses_पूर्णांकerp)
-अणु
-	काष्ठा mips_vdso_image *image = current->thपढ़ो.abi->vdso;
-	काष्ठा mm_काष्ठा *mm = current->mm;
-	अचिन्हित दीर्घ gic_size, vvar_size, size, base, data_addr, vdso_addr, gic_pfn, gic_base;
-	काष्ठा vm_area_काष्ठा *vma;
-	पूर्णांक ret;
+int arch_setup_additional_pages(struct linux_binprm *bprm, int uses_interp)
+{
+	struct mips_vdso_image *image = current->thread.abi->vdso;
+	struct mm_struct *mm = current->mm;
+	unsigned long gic_size, vvar_size, size, base, data_addr, vdso_addr, gic_pfn, gic_base;
+	struct vm_area_struct *vma;
+	int ret;
 
-	अगर (mmap_ग_लिखो_lock_समाप्तable(mm))
-		वापस -EINTR;
+	if (mmap_write_lock_killable(mm))
+		return -EINTR;
 
-	अगर (IS_ENABLED(CONFIG_MIPS_FP_SUPPORT)) अणु
+	if (IS_ENABLED(CONFIG_MIPS_FP_SUPPORT)) {
 		/* Map delay slot emulation page */
-		base = mmap_region(शून्य, STACK_TOP, PAGE_SIZE,
+		base = mmap_region(NULL, STACK_TOP, PAGE_SIZE,
 				VM_READ | VM_EXEC |
 				VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC,
-				0, शून्य);
-		अगर (IS_ERR_VALUE(base)) अणु
+				0, NULL);
+		if (IS_ERR_VALUE(base)) {
 			ret = base;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 	/*
 	 * Determine total area size. This includes the VDSO data itself, the
-	 * data page, and the GIC user page अगर present. Always create a mapping
-	 * क्रम the GIC user area अगर the GIC is present regardless of whether it
-	 * is the current घड़ीsource, in हाल it comes पूर्णांकo use later on. We
+	 * data page, and the GIC user page if present. Always create a mapping
+	 * for the GIC user area if the GIC is present regardless of whether it
+	 * is the current clocksource, in case it comes into use later on. We
 	 * only map a page even though the total area is 64K, as we only need
-	 * the counter रेजिस्टरs at the start.
+	 * the counter registers at the start.
 	 */
 	gic_size = mips_gic_present() ? PAGE_SIZE : 0;
 	vvar_size = gic_size + PAGE_SIZE;
 	size = vvar_size + image->size;
 
 	/*
-	 * Find a region that's large enough क्रम us to perक्रमm the
+	 * Find a region that's large enough for us to perform the
 	 * colour-matching alignment below.
 	 */
-	अगर (cpu_has_dc_aliases)
+	if (cpu_has_dc_aliases)
 		size += shm_align_mask + 1;
 
-	base = get_unmapped_area(शून्य, vdso_base(), size, 0, 0);
-	अगर (IS_ERR_VALUE(base)) अणु
+	base = get_unmapped_area(NULL, vdso_base(), size, 0, 0);
+	if (IS_ERR_VALUE(base)) {
 		ret = base;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
 	 * If we suffer from dcache aliasing, ensure that the VDSO data page
@@ -141,10 +140,10 @@ subsys_initcall(init_vdso);
 	 * This ensures that when the kernel updates the VDSO data userland
 	 * will observe it without requiring cache invalidations.
 	 */
-	अगर (cpu_has_dc_aliases) अणु
+	if (cpu_has_dc_aliases) {
 		base = __ALIGN_MASK(base, shm_align_mask);
-		base += ((अचिन्हित दीर्घ)vdso_data - gic_size) & shm_align_mask;
-	पूर्ण
+		base += ((unsigned long)vdso_data - gic_size) & shm_align_mask;
+	}
 
 	data_addr = base + gic_size;
 	vdso_addr = data_addr + PAGE_SIZE;
@@ -152,43 +151,43 @@ subsys_initcall(init_vdso);
 	vma = _install_special_mapping(mm, base, vvar_size,
 				       VM_READ | VM_MAYREAD,
 				       &vdso_vvar_mapping);
-	अगर (IS_ERR(vma)) अणु
+	if (IS_ERR(vma)) {
 		ret = PTR_ERR(vma);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* Map GIC user page. */
-	अगर (gic_size) अणु
-		gic_base = (अचिन्हित दीर्घ)mips_gic_base + MIPS_GIC_USER_OFS;
-		gic_pfn = virt_to_phys((व्योम *)gic_base) >> PAGE_SHIFT;
+	if (gic_size) {
+		gic_base = (unsigned long)mips_gic_base + MIPS_GIC_USER_OFS;
+		gic_pfn = virt_to_phys((void *)gic_base) >> PAGE_SHIFT;
 
 		ret = io_remap_pfn_range(vma, base, gic_pfn, gic_size,
 					 pgprot_noncached(vma->vm_page_prot));
-		अगर (ret)
-			जाओ out;
-	पूर्ण
+		if (ret)
+			goto out;
+	}
 
 	/* Map data page. */
 	ret = remap_pfn_range(vma, data_addr,
 			      virt_to_phys(vdso_data) >> PAGE_SHIFT,
 			      PAGE_SIZE, vma->vm_page_prot);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	/* Map VDSO image. */
 	vma = _install_special_mapping(mm, vdso_addr, image->size,
 				       VM_READ | VM_EXEC |
 				       VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC,
 				       &image->mapping);
-	अगर (IS_ERR(vma)) अणु
+	if (IS_ERR(vma)) {
 		ret = PTR_ERR(vma);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	mm->context.vdso = (व्योम *)vdso_addr;
+	mm->context.vdso = (void *)vdso_addr;
 	ret = 0;
 
 out:
-	mmap_ग_लिखो_unlock(mm);
-	वापस ret;
-पूर्ण
+	mmap_write_unlock(mm);
+	return ret;
+}

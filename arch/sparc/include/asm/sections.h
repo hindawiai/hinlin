@@ -1,15 +1,14 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __SPARC_SECTIONS_H
-#घोषणा __SPARC_SECTIONS_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __SPARC_SECTIONS_H
+#define __SPARC_SECTIONS_H
 
-/* nothing to see, move aदीर्घ */
-#समावेश <यंत्र-generic/sections.h>
+/* nothing to see, move along */
+#include <asm-generic/sections.h>
 
-/* sparc entry poपूर्णांक */
-बाह्य अक्षर _start[];
+/* sparc entry point */
+extern char _start[];
 
-बाह्य अक्षर __leon_1insn_patch[];
-बाह्य अक्षर __leon_1insn_patch_end[];
+extern char __leon_1insn_patch[];
+extern char __leon_1insn_patch_end[];
 
-#पूर्ण_अगर
+#endif

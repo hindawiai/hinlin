@@ -1,110 +1,109 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2020 HiSilicon Limited.
  */
 
-#घोषणा pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/debugfs.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/device.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/math64.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/समयkeeping.h>
+#include <linux/debugfs.h>
+#include <linux/delay.h>
+#include <linux/device.h>
+#include <linux/dma-mapping.h>
+#include <linux/kernel.h>
+#include <linux/kthread.h>
+#include <linux/math64.h>
+#include <linux/module.h>
+#include <linux/pci.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
+#include <linux/timekeeping.h>
 
-#घोषणा DMA_MAP_BENCHMARK	_IOWR('d', 1, काष्ठा map_benchmark)
-#घोषणा DMA_MAP_MAX_THREADS	1024
-#घोषणा DMA_MAP_MAX_SECONDS	300
-#घोषणा DMA_MAP_MAX_TRANS_DELAY	(10 * NSEC_PER_MSEC)
+#define DMA_MAP_BENCHMARK	_IOWR('d', 1, struct map_benchmark)
+#define DMA_MAP_MAX_THREADS	1024
+#define DMA_MAP_MAX_SECONDS	300
+#define DMA_MAP_MAX_TRANS_DELAY	(10 * NSEC_PER_MSEC)
 
-#घोषणा DMA_MAP_BIसूचीECTIONAL	0
-#घोषणा DMA_MAP_TO_DEVICE	1
-#घोषणा DMA_MAP_FROM_DEVICE	2
+#define DMA_MAP_BIDIRECTIONAL	0
+#define DMA_MAP_TO_DEVICE	1
+#define DMA_MAP_FROM_DEVICE	2
 
-काष्ठा map_benchmark अणु
+struct map_benchmark {
 	__u64 avg_map_100ns; /* average map latency in 100ns */
 	__u64 map_stddev; /* standard deviation of map latency */
 	__u64 avg_unmap_100ns; /* as above */
 	__u64 unmap_stddev;
-	__u32 thपढ़ोs; /* how many thपढ़ोs will करो map/unmap in parallel */
-	__u32 seconds; /* how दीर्घ the test will last */
+	__u32 threads; /* how many threads will do map/unmap in parallel */
+	__u32 seconds; /* how long the test will last */
 	__s32 node; /* which numa node this benchmark will run on */
 	__u32 dma_bits; /* DMA addressing capability */
 	__u32 dma_dir; /* DMA data direction */
-	__u32 dma_trans_ns; /* समय क्रम DMA transmission in ns */
-	__u32 granule;	/* how many PAGE_SIZE will करो map/unmap once a समय */
+	__u32 dma_trans_ns; /* time for DMA transmission in ns */
+	__u32 granule;	/* how many PAGE_SIZE will do map/unmap once a time */
 	__u8 expansion[76];	/* For future use */
-पूर्ण;
+};
 
-काष्ठा map_benchmark_data अणु
-	काष्ठा map_benchmark bparam;
-	काष्ठा device *dev;
-	काष्ठा dentry  *debugfs;
-	क्रमागत dma_data_direction dir;
+struct map_benchmark_data {
+	struct map_benchmark bparam;
+	struct device *dev;
+	struct dentry  *debugfs;
+	enum dma_data_direction dir;
 	atomic64_t sum_map_100ns;
 	atomic64_t sum_unmap_100ns;
 	atomic64_t sum_sq_map;
 	atomic64_t sum_sq_unmap;
 	atomic64_t loops;
-पूर्ण;
+};
 
-अटल पूर्णांक map_benchmark_thपढ़ो(व्योम *data)
-अणु
-	व्योम *buf;
+static int map_benchmark_thread(void *data)
+{
+	void *buf;
 	dma_addr_t dma_addr;
-	काष्ठा map_benchmark_data *map = data;
-	पूर्णांक npages = map->bparam.granule;
+	struct map_benchmark_data *map = data;
+	int npages = map->bparam.granule;
 	u64 size = npages * PAGE_SIZE;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	buf = alloc_pages_exact(size, GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	if (!buf)
+		return -ENOMEM;
 
-	जबतक (!kthपढ़ो_should_stop())  अणु
+	while (!kthread_should_stop())  {
 		u64 map_100ns, unmap_100ns, map_sq, unmap_sq;
-		kसमय_प्रकार map_sसमय, map_eसमय, unmap_sसमय, unmap_eसमय;
-		kसमय_प्रकार map_delta, unmap_delta;
+		ktime_t map_stime, map_etime, unmap_stime, unmap_etime;
+		ktime_t map_delta, unmap_delta;
 
 		/*
-		 * क्रम a non-coherent device, अगर we करोn't stain them in the
+		 * for a non-coherent device, if we don't stain them in the
 		 * cache, this will give an underestimate of the real-world
-		 * overhead of BIसूचीECTIONAL or TO_DEVICE mappings;
+		 * overhead of BIDIRECTIONAL or TO_DEVICE mappings;
 		 * 66 means evertything goes well! 66 is lucky.
 		 */
-		अगर (map->dir != DMA_FROM_DEVICE)
-			स_रखो(buf, 0x66, size);
+		if (map->dir != DMA_FROM_DEVICE)
+			memset(buf, 0x66, size);
 
-		map_sसमय = kसमय_get();
+		map_stime = ktime_get();
 		dma_addr = dma_map_single(map->dev, buf, size, map->dir);
-		अगर (unlikely(dma_mapping_error(map->dev, dma_addr))) अणु
+		if (unlikely(dma_mapping_error(map->dev, dma_addr))) {
 			pr_err("dma_map_single failed on %s\n",
 				dev_name(map->dev));
 			ret = -ENOMEM;
-			जाओ out;
-		पूर्ण
-		map_eसमय = kसमय_get();
-		map_delta = kसमय_sub(map_eसमय, map_sसमय);
+			goto out;
+		}
+		map_etime = ktime_get();
+		map_delta = ktime_sub(map_etime, map_stime);
 
 		/* Pretend DMA is transmitting */
 		ndelay(map->bparam.dma_trans_ns);
 
-		unmap_sसमय = kसमय_get();
+		unmap_stime = ktime_get();
 		dma_unmap_single(map->dev, dma_addr, size, map->dir);
-		unmap_eसमय = kसमय_get();
-		unmap_delta = kसमय_sub(unmap_eसमय, unmap_sसमय);
+		unmap_etime = ktime_get();
+		unmap_delta = ktime_sub(unmap_etime, unmap_stime);
 
 		/* calculate sum and sum of squares */
 
-		map_100ns = भाग64_ul(map_delta,  100);
-		unmap_100ns = भाग64_ul(unmap_delta, 100);
+		map_100ns = div64_ul(map_delta,  100);
+		unmap_100ns = div64_ul(unmap_delta, 100);
 		map_sq = map_100ns * map_100ns;
 		unmap_sq = unmap_100ns * unmap_100ns;
 
@@ -113,41 +112,41 @@
 		atomic64_add(map_sq, &map->sum_sq_map);
 		atomic64_add(unmap_sq, &map->sum_sq_unmap);
 		atomic64_inc(&map->loops);
-	पूर्ण
+	}
 
 out:
-	मुक्त_pages_exact(buf, size);
-	वापस ret;
-पूर्ण
+	free_pages_exact(buf, size);
+	return ret;
+}
 
-अटल पूर्णांक करो_map_benchmark(काष्ठा map_benchmark_data *map)
-अणु
-	काष्ठा task_काष्ठा **tsk;
-	पूर्णांक thपढ़ोs = map->bparam.thपढ़ोs;
-	पूर्णांक node = map->bparam.node;
-	स्थिर cpumask_t *cpu_mask = cpumask_of_node(node);
+static int do_map_benchmark(struct map_benchmark_data *map)
+{
+	struct task_struct **tsk;
+	int threads = map->bparam.threads;
+	int node = map->bparam.node;
+	const cpumask_t *cpu_mask = cpumask_of_node(node);
 	u64 loops;
-	पूर्णांक ret = 0;
-	पूर्णांक i;
+	int ret = 0;
+	int i;
 
-	tsk = kदो_स्मृति_array(thपढ़ोs, माप(*tsk), GFP_KERNEL);
-	अगर (!tsk)
-		वापस -ENOMEM;
+	tsk = kmalloc_array(threads, sizeof(*tsk), GFP_KERNEL);
+	if (!tsk)
+		return -ENOMEM;
 
 	get_device(map->dev);
 
-	क्रम (i = 0; i < thपढ़ोs; i++) अणु
-		tsk[i] = kthपढ़ो_create_on_node(map_benchmark_thपढ़ो, map,
+	for (i = 0; i < threads; i++) {
+		tsk[i] = kthread_create_on_node(map_benchmark_thread, map,
 				map->bparam.node, "dma-map-benchmark/%d", i);
-		अगर (IS_ERR(tsk[i])) अणु
+		if (IS_ERR(tsk[i])) {
 			pr_err("create dma_map thread failed\n");
 			ret = PTR_ERR(tsk[i]);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		अगर (node != NUMA_NO_NODE)
-			kthपढ़ो_bind_mask(tsk[i], cpu_mask);
-	पूर्ण
+		if (node != NUMA_NO_NODE)
+			kthread_bind_mask(tsk[i], cpu_mask);
+	}
 
 	/* clear the old value in the previous benchmark */
 	atomic64_set(&map->sum_map_100ns, 0);
@@ -156,118 +155,118 @@ out:
 	atomic64_set(&map->sum_sq_unmap, 0);
 	atomic64_set(&map->loops, 0);
 
-	क्रम (i = 0; i < thपढ़ोs; i++) अणु
-		get_task_काष्ठा(tsk[i]);
+	for (i = 0; i < threads; i++) {
+		get_task_struct(tsk[i]);
 		wake_up_process(tsk[i]);
-	पूर्ण
+	}
 
-	msleep_पूर्णांकerruptible(map->bparam.seconds * 1000);
+	msleep_interruptible(map->bparam.seconds * 1000);
 
-	/* रुको क्रम the completion of benchmark thपढ़ोs */
-	क्रम (i = 0; i < thपढ़ोs; i++) अणु
-		ret = kthपढ़ो_stop(tsk[i]);
-		अगर (ret)
-			जाओ out;
-	पूर्ण
+	/* wait for the completion of benchmark threads */
+	for (i = 0; i < threads; i++) {
+		ret = kthread_stop(tsk[i]);
+		if (ret)
+			goto out;
+	}
 
-	loops = atomic64_पढ़ो(&map->loops);
-	अगर (likely(loops > 0)) अणु
+	loops = atomic64_read(&map->loops);
+	if (likely(loops > 0)) {
 		u64 map_variance, unmap_variance;
-		u64 sum_map = atomic64_पढ़ो(&map->sum_map_100ns);
-		u64 sum_unmap = atomic64_पढ़ो(&map->sum_unmap_100ns);
-		u64 sum_sq_map = atomic64_पढ़ो(&map->sum_sq_map);
-		u64 sum_sq_unmap = atomic64_पढ़ो(&map->sum_sq_unmap);
+		u64 sum_map = atomic64_read(&map->sum_map_100ns);
+		u64 sum_unmap = atomic64_read(&map->sum_unmap_100ns);
+		u64 sum_sq_map = atomic64_read(&map->sum_sq_map);
+		u64 sum_sq_unmap = atomic64_read(&map->sum_sq_unmap);
 
 		/* average latency */
-		map->bparam.avg_map_100ns = भाग64_u64(sum_map, loops);
-		map->bparam.avg_unmap_100ns = भाग64_u64(sum_unmap, loops);
+		map->bparam.avg_map_100ns = div64_u64(sum_map, loops);
+		map->bparam.avg_unmap_100ns = div64_u64(sum_unmap, loops);
 
 		/* standard deviation of latency */
-		map_variance = भाग64_u64(sum_sq_map, loops) -
+		map_variance = div64_u64(sum_sq_map, loops) -
 				map->bparam.avg_map_100ns *
 				map->bparam.avg_map_100ns;
-		unmap_variance = भाग64_u64(sum_sq_unmap, loops) -
+		unmap_variance = div64_u64(sum_sq_unmap, loops) -
 				map->bparam.avg_unmap_100ns *
 				map->bparam.avg_unmap_100ns;
-		map->bparam.map_stddev = पूर्णांक_वर्ग_मूल64(map_variance);
-		map->bparam.unmap_stddev = पूर्णांक_वर्ग_मूल64(unmap_variance);
-	पूर्ण
+		map->bparam.map_stddev = int_sqrt64(map_variance);
+		map->bparam.unmap_stddev = int_sqrt64(unmap_variance);
+	}
 
 out:
-	क्रम (i = 0; i < thपढ़ोs; i++)
-		put_task_काष्ठा(tsk[i]);
+	for (i = 0; i < threads; i++)
+		put_task_struct(tsk[i]);
 	put_device(map->dev);
-	kमुक्त(tsk);
-	वापस ret;
-पूर्ण
+	kfree(tsk);
+	return ret;
+}
 
-अटल दीर्घ map_benchmark_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
-		अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा map_benchmark_data *map = file->निजी_data;
-	व्योम __user *argp = (व्योम __user *)arg;
+static long map_benchmark_ioctl(struct file *file, unsigned int cmd,
+		unsigned long arg)
+{
+	struct map_benchmark_data *map = file->private_data;
+	void __user *argp = (void __user *)arg;
 	u64 old_dma_mask;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (copy_from_user(&map->bparam, argp, माप(map->bparam)))
-		वापस -EFAULT;
+	if (copy_from_user(&map->bparam, argp, sizeof(map->bparam)))
+		return -EFAULT;
 
-	चयन (cmd) अणु
-	हाल DMA_MAP_BENCHMARK:
-		अगर (map->bparam.thपढ़ोs == 0 ||
-		    map->bparam.thपढ़ोs > DMA_MAP_MAX_THREADS) अणु
+	switch (cmd) {
+	case DMA_MAP_BENCHMARK:
+		if (map->bparam.threads == 0 ||
+		    map->bparam.threads > DMA_MAP_MAX_THREADS) {
 			pr_err("invalid thread number\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगर (map->bparam.seconds == 0 ||
-		    map->bparam.seconds > DMA_MAP_MAX_SECONDS) अणु
+		if (map->bparam.seconds == 0 ||
+		    map->bparam.seconds > DMA_MAP_MAX_SECONDS) {
 			pr_err("invalid duration seconds\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगर (map->bparam.dma_trans_ns > DMA_MAP_MAX_TRANS_DELAY) अणु
+		if (map->bparam.dma_trans_ns > DMA_MAP_MAX_TRANS_DELAY) {
 			pr_err("invalid transmission delay\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगर (map->bparam.node != NUMA_NO_NODE &&
-		    !node_possible(map->bparam.node)) अणु
+		if (map->bparam.node != NUMA_NO_NODE &&
+		    !node_possible(map->bparam.node)) {
 			pr_err("invalid numa node\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगर (map->bparam.granule < 1 || map->bparam.granule > 1024) अणु
+		if (map->bparam.granule < 1 || map->bparam.granule > 1024) {
 			pr_err("invalid granule size\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		चयन (map->bparam.dma_dir) अणु
-		हाल DMA_MAP_BIसूचीECTIONAL:
-			map->dir = DMA_BIसूचीECTIONAL;
-			अवरोध;
-		हाल DMA_MAP_FROM_DEVICE:
+		switch (map->bparam.dma_dir) {
+		case DMA_MAP_BIDIRECTIONAL:
+			map->dir = DMA_BIDIRECTIONAL;
+			break;
+		case DMA_MAP_FROM_DEVICE:
 			map->dir = DMA_FROM_DEVICE;
-			अवरोध;
-		हाल DMA_MAP_TO_DEVICE:
+			break;
+		case DMA_MAP_TO_DEVICE:
 			map->dir = DMA_TO_DEVICE;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			pr_err("invalid DMA direction\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		old_dma_mask = dma_get_mask(map->dev);
 
 		ret = dma_set_mask(map->dev,
 				   DMA_BIT_MASK(map->bparam.dma_bits));
-		अगर (ret) अणु
+		if (ret) {
 			pr_err("failed to set dma_mask on device %s\n",
 				dev_name(map->dev));
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		ret = करो_map_benchmark(map);
+		ret = do_map_benchmark(map);
 
 		/*
 		 * restore the original dma_mask as many devices' dma_mask are
@@ -276,107 +275,107 @@ out:
 		 * dma_mask changed by benchmark
 		 */
 		dma_set_mask(map->dev, old_dma_mask);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	अगर (copy_to_user(argp, &map->bparam, माप(map->bparam)))
-		वापस -EFAULT;
+	if (copy_to_user(argp, &map->bparam, sizeof(map->bparam)))
+		return -EFAULT;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा file_operations map_benchmark_fops = अणु
-	.खोलो			= simple_खोलो,
+static const struct file_operations map_benchmark_fops = {
+	.open			= simple_open,
 	.unlocked_ioctl		= map_benchmark_ioctl,
-पूर्ण;
+};
 
-अटल व्योम map_benchmark_हटाओ_debugfs(व्योम *data)
-अणु
-	काष्ठा map_benchmark_data *map = (काष्ठा map_benchmark_data *)data;
+static void map_benchmark_remove_debugfs(void *data)
+{
+	struct map_benchmark_data *map = (struct map_benchmark_data *)data;
 
-	debugfs_हटाओ(map->debugfs);
-पूर्ण
+	debugfs_remove(map->debugfs);
+}
 
-अटल पूर्णांक __map_benchmark_probe(काष्ठा device *dev)
-अणु
-	काष्ठा dentry *entry;
-	काष्ठा map_benchmark_data *map;
-	पूर्णांक ret;
+static int __map_benchmark_probe(struct device *dev)
+{
+	struct dentry *entry;
+	struct map_benchmark_data *map;
+	int ret;
 
-	map = devm_kzalloc(dev, माप(*map), GFP_KERNEL);
-	अगर (!map)
-		वापस -ENOMEM;
+	map = devm_kzalloc(dev, sizeof(*map), GFP_KERNEL);
+	if (!map)
+		return -ENOMEM;
 	map->dev = dev;
 
-	ret = devm_add_action(dev, map_benchmark_हटाओ_debugfs, map);
-	अगर (ret) अणु
+	ret = devm_add_action(dev, map_benchmark_remove_debugfs, map);
+	if (ret) {
 		pr_err("Can't add debugfs remove action\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/*
 	 * we only permit a device bound with this driver, 2nd probe
 	 * will fail
 	 */
-	entry = debugfs_create_file("dma_map_benchmark", 0600, शून्य, map,
+	entry = debugfs_create_file("dma_map_benchmark", 0600, NULL, map,
 			&map_benchmark_fops);
-	अगर (IS_ERR(entry))
-		वापस PTR_ERR(entry);
+	if (IS_ERR(entry))
+		return PTR_ERR(entry);
 	map->debugfs = entry;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक map_benchmark_platक्रमm_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	वापस __map_benchmark_probe(&pdev->dev);
-पूर्ण
+static int map_benchmark_platform_probe(struct platform_device *pdev)
+{
+	return __map_benchmark_probe(&pdev->dev);
+}
 
-अटल काष्ठा platक्रमm_driver map_benchmark_platक्रमm_driver = अणु
-	.driver		= अणु
+static struct platform_driver map_benchmark_platform_driver = {
+	.driver		= {
 		.name	= "dma_map_benchmark",
-	पूर्ण,
-	.probe = map_benchmark_platक्रमm_probe,
-पूर्ण;
+	},
+	.probe = map_benchmark_platform_probe,
+};
 
-अटल पूर्णांक
-map_benchmark_pci_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *id)
-अणु
-	वापस __map_benchmark_probe(&pdev->dev);
-पूर्ण
+static int
+map_benchmark_pci_probe(struct pci_dev *pdev, const struct pci_device_id *id)
+{
+	return __map_benchmark_probe(&pdev->dev);
+}
 
-अटल काष्ठा pci_driver map_benchmark_pci_driver = अणु
+static struct pci_driver map_benchmark_pci_driver = {
 	.name	= "dma_map_benchmark",
 	.probe	= map_benchmark_pci_probe,
-पूर्ण;
+};
 
-अटल पूर्णांक __init map_benchmark_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init map_benchmark_init(void)
+{
+	int ret;
 
-	ret = pci_रेजिस्टर_driver(&map_benchmark_pci_driver);
-	अगर (ret)
-		वापस ret;
+	ret = pci_register_driver(&map_benchmark_pci_driver);
+	if (ret)
+		return ret;
 
-	ret = platक्रमm_driver_रेजिस्टर(&map_benchmark_platक्रमm_driver);
-	अगर (ret) अणु
-		pci_unरेजिस्टर_driver(&map_benchmark_pci_driver);
-		वापस ret;
-	पूर्ण
+	ret = platform_driver_register(&map_benchmark_platform_driver);
+	if (ret) {
+		pci_unregister_driver(&map_benchmark_pci_driver);
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास map_benchmark_cleanup(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&map_benchmark_platक्रमm_driver);
-	pci_unरेजिस्टर_driver(&map_benchmark_pci_driver);
-पूर्ण
+static void __exit map_benchmark_cleanup(void)
+{
+	platform_driver_unregister(&map_benchmark_platform_driver);
+	pci_unregister_driver(&map_benchmark_pci_driver);
+}
 
 module_init(map_benchmark_init);
-module_निकास(map_benchmark_cleanup);
+module_exit(map_benchmark_cleanup);
 
 MODULE_AUTHOR("Barry Song <song.bao.hua@hisilicon.com>");
 MODULE_DESCRIPTION("dma_map benchmark driver");

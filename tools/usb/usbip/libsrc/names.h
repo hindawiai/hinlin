@@ -1,27 +1,26 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  *      names.h  --  USB name database manipulation routines
  *
- *      Copyright (C) 1999, 2000  Thomas Sailer (sailer@अगरe.ee.ethz.ch)
+ *      Copyright (C) 1999, 2000  Thomas Sailer (sailer@ife.ee.ethz.ch)
  *
  *	Copyright (C) 2005 Takahiro Hirofuchi
- *	       - names_मुक्त() is added.
+ *	       - names_free() is added.
  */
 
-#अगर_अघोषित _NAMES_H
-#घोषणा _NAMES_H
+#ifndef _NAMES_H
+#define _NAMES_H
 
-#समावेश <sys/types.h>
+#include <sys/types.h>
 
 /* used by usbip_common.c */
-बाह्य स्थिर अक्षर *names_venकरोr(u_पूर्णांक16_t venकरोrid);
-बाह्य स्थिर अक्षर *names_product(u_पूर्णांक16_t venकरोrid, u_पूर्णांक16_t productid);
-बाह्य स्थिर अक्षर *names_class(u_पूर्णांक8_t classid);
-बाह्य स्थिर अक्षर *names_subclass(u_पूर्णांक8_t classid, u_पूर्णांक8_t subclassid);
-बाह्य स्थिर अक्षर *names_protocol(u_पूर्णांक8_t classid, u_पूर्णांक8_t subclassid,
-				  u_पूर्णांक8_t protocolid);
-बाह्य पूर्णांक  names_init(अक्षर *n);
-बाह्य व्योम names_मुक्त(व्योम);
+extern const char *names_vendor(u_int16_t vendorid);
+extern const char *names_product(u_int16_t vendorid, u_int16_t productid);
+extern const char *names_class(u_int8_t classid);
+extern const char *names_subclass(u_int8_t classid, u_int8_t subclassid);
+extern const char *names_protocol(u_int8_t classid, u_int8_t subclassid,
+				  u_int8_t protocolid);
+extern int  names_init(char *n);
+extern void names_free(void);
 
-#पूर्ण_अगर /* _NAMES_H */
+#endif /* _NAMES_H */

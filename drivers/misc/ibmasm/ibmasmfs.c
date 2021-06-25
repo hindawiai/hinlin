@@ -1,11 +1,10 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * IBM ASM Service Processor Device Driver
  *
  * Copyright (C) IBM Corporation, 2004
  *
- * Author: Max Asbथघck <amax@us.ibm.com>
+ * Author: Max Asböck <amax@us.ibm.com>
  */
 
 /*
@@ -15,10 +14,10 @@
 
 
 /*
- * The IBMASM file भव fileप्रणाली. It creates the following hierarchy
+ * The IBMASM file virtual filesystem. It creates the following hierarchy
  * dynamically when mounted from user space:
  *
- *    /ibmयंत्र
+ *    /ibmasm
  *    |-- 0
  *    |   |-- command
  *    |   |-- event
@@ -41,564 +40,564 @@
  *
  * For each service processor the following files are created:
  *
- * command: execute करोt commands
- *	ग_लिखो: execute a करोt command on the service processor
- *	पढ़ो: वापस the result of a previously executed करोt command
+ * command: execute dot commands
+ *	write: execute a dot command on the service processor
+ *	read: return the result of a previously executed dot command
  *
- * events: listen क्रम service processor events
- *	पढ़ो: sleep (पूर्णांकerruptible) until an event occurs
- *      ग_लिखो: wakeup sleeping event listener
+ * events: listen for service processor events
+ *	read: sleep (interruptible) until an event occurs
+ *      write: wakeup sleeping event listener
  *
  * reverse_heartbeat: send a heartbeat to the service processor
- *	पढ़ो: sleep (पूर्णांकerruptible) until the reverse heartbeat fails
- *      ग_लिखो: wakeup sleeping heartbeat listener
+ *	read: sleep (interruptible) until the reverse heartbeat fails
+ *      write: wakeup sleeping heartbeat listener
  *
  * remote_video/width
  * remote_video/height
  * remote_video/width: control remote display settings
- *	ग_लिखो: set value
- *	पढ़ो: पढ़ो value
+ *	write: set value
+ *	read: read value
  */
 
-#समावेश <linux/fs.h>
-#समावेश <linux/fs_context.h>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/पन.स>
-#समावेश "ibmasm.h"
-#समावेश "remote.h"
-#समावेश "dot_command.h"
+#include <linux/fs.h>
+#include <linux/fs_context.h>
+#include <linux/pagemap.h>
+#include <linux/slab.h>
+#include <linux/uaccess.h>
+#include <asm/io.h>
+#include "ibmasm.h"
+#include "remote.h"
+#include "dot_command.h"
 
-#घोषणा IBMASMFS_MAGIC 0x66726f67
+#define IBMASMFS_MAGIC 0x66726f67
 
-अटल LIST_HEAD(service_processors);
+static LIST_HEAD(service_processors);
 
-अटल काष्ठा inode *ibmयंत्रfs_make_inode(काष्ठा super_block *sb, पूर्णांक mode);
-अटल व्योम ibmयंत्रfs_create_files (काष्ठा super_block *sb);
-अटल पूर्णांक ibmयंत्रfs_fill_super(काष्ठा super_block *sb, काष्ठा fs_context *fc);
+static struct inode *ibmasmfs_make_inode(struct super_block *sb, int mode);
+static void ibmasmfs_create_files (struct super_block *sb);
+static int ibmasmfs_fill_super(struct super_block *sb, struct fs_context *fc);
 
-अटल पूर्णांक ibmयंत्रfs_get_tree(काष्ठा fs_context *fc)
-अणु
-	वापस get_tree_single(fc, ibmयंत्रfs_fill_super);
-पूर्ण
+static int ibmasmfs_get_tree(struct fs_context *fc)
+{
+	return get_tree_single(fc, ibmasmfs_fill_super);
+}
 
-अटल स्थिर काष्ठा fs_context_operations ibmयंत्रfs_context_ops = अणु
-	.get_tree	= ibmयंत्रfs_get_tree,
-पूर्ण;
+static const struct fs_context_operations ibmasmfs_context_ops = {
+	.get_tree	= ibmasmfs_get_tree,
+};
 
-अटल पूर्णांक ibmयंत्रfs_init_fs_context(काष्ठा fs_context *fc)
-अणु
-	fc->ops = &ibmयंत्रfs_context_ops;
-	वापस 0;
-पूर्ण
+static int ibmasmfs_init_fs_context(struct fs_context *fc)
+{
+	fc->ops = &ibmasmfs_context_ops;
+	return 0;
+}
 
-अटल स्थिर काष्ठा super_operations ibmयंत्रfs_s_ops = अणु
+static const struct super_operations ibmasmfs_s_ops = {
 	.statfs		= simple_statfs,
 	.drop_inode	= generic_delete_inode,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा file_operations *ibmयंत्रfs_dir_ops = &simple_dir_operations;
+static const struct file_operations *ibmasmfs_dir_ops = &simple_dir_operations;
 
-अटल काष्ठा file_प्रणाली_type ibmयंत्रfs_type = अणु
+static struct file_system_type ibmasmfs_type = {
 	.owner          = THIS_MODULE,
 	.name           = "ibmasmfs",
-	.init_fs_context = ibmयंत्रfs_init_fs_context,
-	.समाप्त_sb        = समाप्त_litter_super,
-पूर्ण;
+	.init_fs_context = ibmasmfs_init_fs_context,
+	.kill_sb        = kill_litter_super,
+};
 MODULE_ALIAS_FS("ibmasmfs");
 
-अटल पूर्णांक ibmयंत्रfs_fill_super(काष्ठा super_block *sb, काष्ठा fs_context *fc)
-अणु
-	काष्ठा inode *root;
+static int ibmasmfs_fill_super(struct super_block *sb, struct fs_context *fc)
+{
+	struct inode *root;
 
 	sb->s_blocksize = PAGE_SIZE;
 	sb->s_blocksize_bits = PAGE_SHIFT;
 	sb->s_magic = IBMASMFS_MAGIC;
-	sb->s_op = &ibmयंत्रfs_s_ops;
-	sb->s_समय_gran = 1;
+	sb->s_op = &ibmasmfs_s_ops;
+	sb->s_time_gran = 1;
 
-	root = ibmयंत्रfs_make_inode (sb, S_IFसूची | 0500);
-	अगर (!root)
-		वापस -ENOMEM;
+	root = ibmasmfs_make_inode (sb, S_IFDIR | 0500);
+	if (!root)
+		return -ENOMEM;
 
 	root->i_op = &simple_dir_inode_operations;
-	root->i_fop = ibmयंत्रfs_dir_ops;
+	root->i_fop = ibmasmfs_dir_ops;
 
 	sb->s_root = d_make_root(root);
-	अगर (!sb->s_root)
-		वापस -ENOMEM;
+	if (!sb->s_root)
+		return -ENOMEM;
 
-	ibmयंत्रfs_create_files(sb);
-	वापस 0;
-पूर्ण
+	ibmasmfs_create_files(sb);
+	return 0;
+}
 
-अटल काष्ठा inode *ibmयंत्रfs_make_inode(काष्ठा super_block *sb, पूर्णांक mode)
-अणु
-	काष्ठा inode *ret = new_inode(sb);
+static struct inode *ibmasmfs_make_inode(struct super_block *sb, int mode)
+{
+	struct inode *ret = new_inode(sb);
 
-	अगर (ret) अणु
+	if (ret) {
 		ret->i_ino = get_next_ino();
 		ret->i_mode = mode;
-		ret->i_aसमय = ret->i_mसमय = ret->i_स_समय = current_समय(ret);
-	पूर्ण
-	वापस ret;
-पूर्ण
+		ret->i_atime = ret->i_mtime = ret->i_ctime = current_time(ret);
+	}
+	return ret;
+}
 
-अटल काष्ठा dentry *ibmयंत्रfs_create_file(काष्ठा dentry *parent,
-			स्थिर अक्षर *name,
-			स्थिर काष्ठा file_operations *fops,
-			व्योम *data,
-			पूर्णांक mode)
-अणु
-	काष्ठा dentry *dentry;
-	काष्ठा inode *inode;
+static struct dentry *ibmasmfs_create_file(struct dentry *parent,
+			const char *name,
+			const struct file_operations *fops,
+			void *data,
+			int mode)
+{
+	struct dentry *dentry;
+	struct inode *inode;
 
 	dentry = d_alloc_name(parent, name);
-	अगर (!dentry)
-		वापस शून्य;
+	if (!dentry)
+		return NULL;
 
-	inode = ibmयंत्रfs_make_inode(parent->d_sb, S_IFREG | mode);
-	अगर (!inode) अणु
+	inode = ibmasmfs_make_inode(parent->d_sb, S_IFREG | mode);
+	if (!inode) {
 		dput(dentry);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	inode->i_fop = fops;
-	inode->i_निजी = data;
+	inode->i_private = data;
 
 	d_add(dentry, inode);
-	वापस dentry;
-पूर्ण
+	return dentry;
+}
 
-अटल काष्ठा dentry *ibmयंत्रfs_create_dir(काष्ठा dentry *parent,
-				स्थिर अक्षर *name)
-अणु
-	काष्ठा dentry *dentry;
-	काष्ठा inode *inode;
+static struct dentry *ibmasmfs_create_dir(struct dentry *parent,
+				const char *name)
+{
+	struct dentry *dentry;
+	struct inode *inode;
 
 	dentry = d_alloc_name(parent, name);
-	अगर (!dentry)
-		वापस शून्य;
+	if (!dentry)
+		return NULL;
 
-	inode = ibmयंत्रfs_make_inode(parent->d_sb, S_IFसूची | 0500);
-	अगर (!inode) अणु
+	inode = ibmasmfs_make_inode(parent->d_sb, S_IFDIR | 0500);
+	if (!inode) {
 		dput(dentry);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	inode->i_op = &simple_dir_inode_operations;
-	inode->i_fop = ibmयंत्रfs_dir_ops;
+	inode->i_fop = ibmasmfs_dir_ops;
 
 	d_add(dentry, inode);
-	वापस dentry;
-पूर्ण
+	return dentry;
+}
 
-पूर्णांक ibmयंत्रfs_रेजिस्टर(व्योम)
-अणु
-	वापस रेजिस्टर_fileप्रणाली(&ibmयंत्रfs_type);
-पूर्ण
+int ibmasmfs_register(void)
+{
+	return register_filesystem(&ibmasmfs_type);
+}
 
-व्योम ibmयंत्रfs_unरेजिस्टर(व्योम)
-अणु
-	unरेजिस्टर_fileप्रणाली(&ibmयंत्रfs_type);
-पूर्ण
+void ibmasmfs_unregister(void)
+{
+	unregister_filesystem(&ibmasmfs_type);
+}
 
-व्योम ibmयंत्रfs_add_sp(काष्ठा service_processor *sp)
-अणु
+void ibmasmfs_add_sp(struct service_processor *sp)
+{
 	list_add(&sp->node, &service_processors);
-पूर्ण
+}
 
-/* काष्ठा to save state between command file operations */
-काष्ठा ibmयंत्रfs_command_data अणु
-	काष्ठा service_processor	*sp;
-	काष्ठा command			*command;
-पूर्ण;
+/* struct to save state between command file operations */
+struct ibmasmfs_command_data {
+	struct service_processor	*sp;
+	struct command			*command;
+};
 
-/* काष्ठा to save state between event file operations */
-काष्ठा ibmयंत्रfs_event_data अणु
-	काष्ठा service_processor	*sp;
-	काष्ठा event_पढ़ोer		पढ़ोer;
-	पूर्णांक				active;
-पूर्ण;
+/* struct to save state between event file operations */
+struct ibmasmfs_event_data {
+	struct service_processor	*sp;
+	struct event_reader		reader;
+	int				active;
+};
 
-/* काष्ठा to save state between reverse heartbeat file operations */
-काष्ठा ibmयंत्रfs_heartbeat_data अणु
-	काष्ठा service_processor	*sp;
-	काष्ठा reverse_heartbeat	heartbeat;
-	पूर्णांक				active;
-पूर्ण;
+/* struct to save state between reverse heartbeat file operations */
+struct ibmasmfs_heartbeat_data {
+	struct service_processor	*sp;
+	struct reverse_heartbeat	heartbeat;
+	int				active;
+};
 
-अटल पूर्णांक command_file_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा ibmयंत्रfs_command_data *command_data;
+static int command_file_open(struct inode *inode, struct file *file)
+{
+	struct ibmasmfs_command_data *command_data;
 
-	अगर (!inode->i_निजी)
-		वापस -ENODEV;
+	if (!inode->i_private)
+		return -ENODEV;
 
-	command_data = kदो_स्मृति(माप(काष्ठा ibmयंत्रfs_command_data), GFP_KERNEL);
-	अगर (!command_data)
-		वापस -ENOMEM;
+	command_data = kmalloc(sizeof(struct ibmasmfs_command_data), GFP_KERNEL);
+	if (!command_data)
+		return -ENOMEM;
 
-	command_data->command = शून्य;
-	command_data->sp = inode->i_निजी;
-	file->निजी_data = command_data;
-	वापस 0;
-पूर्ण
+	command_data->command = NULL;
+	command_data->sp = inode->i_private;
+	file->private_data = command_data;
+	return 0;
+}
 
-अटल पूर्णांक command_file_बंद(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा ibmयंत्रfs_command_data *command_data = file->निजी_data;
+static int command_file_close(struct inode *inode, struct file *file)
+{
+	struct ibmasmfs_command_data *command_data = file->private_data;
 
-	अगर (command_data->command)
+	if (command_data->command)
 		command_put(command_data->command);
 
-	kमुक्त(command_data);
-	वापस 0;
-पूर्ण
+	kfree(command_data);
+	return 0;
+}
 
-अटल sमाप_प्रकार command_file_पढ़ो(काष्ठा file *file, अक्षर __user *buf, माप_प्रकार count, loff_t *offset)
-अणु
-	काष्ठा ibmयंत्रfs_command_data *command_data = file->निजी_data;
-	काष्ठा command *cmd;
-	पूर्णांक len;
-	अचिन्हित दीर्घ flags;
+static ssize_t command_file_read(struct file *file, char __user *buf, size_t count, loff_t *offset)
+{
+	struct ibmasmfs_command_data *command_data = file->private_data;
+	struct command *cmd;
+	int len;
+	unsigned long flags;
 
-	अगर (*offset < 0)
-		वापस -EINVAL;
-	अगर (count == 0 || count > IBMASM_CMD_MAX_BUFFER_SIZE)
-		वापस 0;
-	अगर (*offset != 0)
-		वापस 0;
+	if (*offset < 0)
+		return -EINVAL;
+	if (count == 0 || count > IBMASM_CMD_MAX_BUFFER_SIZE)
+		return 0;
+	if (*offset != 0)
+		return 0;
 
 	spin_lock_irqsave(&command_data->sp->lock, flags);
 	cmd = command_data->command;
-	अगर (cmd == शून्य) अणु
+	if (cmd == NULL) {
 		spin_unlock_irqrestore(&command_data->sp->lock, flags);
-		वापस 0;
-	पूर्ण
-	command_data->command = शून्य;
+		return 0;
+	}
+	command_data->command = NULL;
 	spin_unlock_irqrestore(&command_data->sp->lock, flags);
 
-	अगर (cmd->status != IBMASM_CMD_COMPLETE) अणु
+	if (cmd->status != IBMASM_CMD_COMPLETE) {
 		command_put(cmd);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 	len = min(count, cmd->buffer_size);
-	अगर (copy_to_user(buf, cmd->buffer, len)) अणु
+	if (copy_to_user(buf, cmd->buffer, len)) {
 		command_put(cmd);
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 	command_put(cmd);
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल sमाप_प्रकार command_file_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *ubuff, माप_प्रकार count, loff_t *offset)
-अणु
-	काष्ठा ibmयंत्रfs_command_data *command_data = file->निजी_data;
-	काष्ठा command *cmd;
-	अचिन्हित दीर्घ flags;
+static ssize_t command_file_write(struct file *file, const char __user *ubuff, size_t count, loff_t *offset)
+{
+	struct ibmasmfs_command_data *command_data = file->private_data;
+	struct command *cmd;
+	unsigned long flags;
 
-	अगर (*offset < 0)
-		वापस -EINVAL;
-	अगर (count == 0 || count > IBMASM_CMD_MAX_BUFFER_SIZE)
-		वापस 0;
-	अगर (*offset != 0)
-		वापस 0;
+	if (*offset < 0)
+		return -EINVAL;
+	if (count == 0 || count > IBMASM_CMD_MAX_BUFFER_SIZE)
+		return 0;
+	if (*offset != 0)
+		return 0;
 
-	/* commands are executed sequentially, only one command at a समय */
-	अगर (command_data->command)
-		वापस -EAGAIN;
+	/* commands are executed sequentially, only one command at a time */
+	if (command_data->command)
+		return -EAGAIN;
 
-	cmd = ibmयंत्र_new_command(command_data->sp, count);
-	अगर (!cmd)
-		वापस -ENOMEM;
+	cmd = ibmasm_new_command(command_data->sp, count);
+	if (!cmd)
+		return -ENOMEM;
 
-	अगर (copy_from_user(cmd->buffer, ubuff, count)) अणु
+	if (copy_from_user(cmd->buffer, ubuff, count)) {
 		command_put(cmd);
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
 	spin_lock_irqsave(&command_data->sp->lock, flags);
-	अगर (command_data->command) अणु
+	if (command_data->command) {
 		spin_unlock_irqrestore(&command_data->sp->lock, flags);
 		command_put(cmd);
-		वापस -EAGAIN;
-	पूर्ण
+		return -EAGAIN;
+	}
 	command_data->command = cmd;
 	spin_unlock_irqrestore(&command_data->sp->lock, flags);
 
-	ibmयंत्र_exec_command(command_data->sp, cmd);
-	ibmयंत्र_रुको_क्रम_response(cmd, get_करोt_command_समयout(cmd->buffer));
+	ibmasm_exec_command(command_data->sp, cmd);
+	ibmasm_wait_for_response(cmd, get_dot_command_timeout(cmd->buffer));
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल पूर्णांक event_file_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा ibmयंत्रfs_event_data *event_data;
-	काष्ठा service_processor *sp;
+static int event_file_open(struct inode *inode, struct file *file)
+{
+	struct ibmasmfs_event_data *event_data;
+	struct service_processor *sp;
 
-	अगर (!inode->i_निजी)
-		वापस -ENODEV;
+	if (!inode->i_private)
+		return -ENODEV;
 
-	sp = inode->i_निजी;
+	sp = inode->i_private;
 
-	event_data = kदो_स्मृति(माप(काष्ठा ibmयंत्रfs_event_data), GFP_KERNEL);
-	अगर (!event_data)
-		वापस -ENOMEM;
+	event_data = kmalloc(sizeof(struct ibmasmfs_event_data), GFP_KERNEL);
+	if (!event_data)
+		return -ENOMEM;
 
-	ibmयंत्र_event_पढ़ोer_रेजिस्टर(sp, &event_data->पढ़ोer);
+	ibmasm_event_reader_register(sp, &event_data->reader);
 
 	event_data->sp = sp;
 	event_data->active = 0;
-	file->निजी_data = event_data;
-	वापस 0;
-पूर्ण
+	file->private_data = event_data;
+	return 0;
+}
 
-अटल पूर्णांक event_file_बंद(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा ibmयंत्रfs_event_data *event_data = file->निजी_data;
+static int event_file_close(struct inode *inode, struct file *file)
+{
+	struct ibmasmfs_event_data *event_data = file->private_data;
 
-	ibmयंत्र_event_पढ़ोer_unरेजिस्टर(event_data->sp, &event_data->पढ़ोer);
-	kमुक्त(event_data);
-	वापस 0;
-पूर्ण
+	ibmasm_event_reader_unregister(event_data->sp, &event_data->reader);
+	kfree(event_data);
+	return 0;
+}
 
-अटल sमाप_प्रकार event_file_पढ़ो(काष्ठा file *file, अक्षर __user *buf, माप_प्रकार count, loff_t *offset)
-अणु
-	काष्ठा ibmयंत्रfs_event_data *event_data = file->निजी_data;
-	काष्ठा event_पढ़ोer *पढ़ोer = &event_data->पढ़ोer;
-	काष्ठा service_processor *sp = event_data->sp;
-	पूर्णांक ret;
-	अचिन्हित दीर्घ flags;
+static ssize_t event_file_read(struct file *file, char __user *buf, size_t count, loff_t *offset)
+{
+	struct ibmasmfs_event_data *event_data = file->private_data;
+	struct event_reader *reader = &event_data->reader;
+	struct service_processor *sp = event_data->sp;
+	int ret;
+	unsigned long flags;
 
-	अगर (*offset < 0)
-		वापस -EINVAL;
-	अगर (count == 0 || count > IBMASM_EVENT_MAX_SIZE)
-		वापस 0;
-	अगर (*offset != 0)
-		वापस 0;
+	if (*offset < 0)
+		return -EINVAL;
+	if (count == 0 || count > IBMASM_EVENT_MAX_SIZE)
+		return 0;
+	if (*offset != 0)
+		return 0;
 
 	spin_lock_irqsave(&sp->lock, flags);
-	अगर (event_data->active) अणु
+	if (event_data->active) {
 		spin_unlock_irqrestore(&sp->lock, flags);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 	event_data->active = 1;
 	spin_unlock_irqrestore(&sp->lock, flags);
 
-	ret = ibmयंत्र_get_next_event(sp, पढ़ोer);
-	अगर (ret <= 0)
-		जाओ out;
+	ret = ibmasm_get_next_event(sp, reader);
+	if (ret <= 0)
+		goto out;
 
-	अगर (count < पढ़ोer->data_size) अणु
+	if (count < reader->data_size) {
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-        अगर (copy_to_user(buf, पढ़ोer->data, पढ़ोer->data_size)) अणु
+        if (copy_to_user(buf, reader->data, reader->data_size)) {
 		ret = -EFAULT;
-		जाओ out;
-	पूर्ण
-	ret = पढ़ोer->data_size;
+		goto out;
+	}
+	ret = reader->data_size;
 
 out:
 	event_data->active = 0;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार event_file_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf, माप_प्रकार count, loff_t *offset)
-अणु
-	काष्ठा ibmयंत्रfs_event_data *event_data = file->निजी_data;
+static ssize_t event_file_write(struct file *file, const char __user *buf, size_t count, loff_t *offset)
+{
+	struct ibmasmfs_event_data *event_data = file->private_data;
 
-	अगर (*offset < 0)
-		वापस -EINVAL;
-	अगर (count != 1)
-		वापस 0;
-	अगर (*offset != 0)
-		वापस 0;
+	if (*offset < 0)
+		return -EINVAL;
+	if (count != 1)
+		return 0;
+	if (*offset != 0)
+		return 0;
 
-	ibmयंत्र_cancel_next_event(&event_data->पढ़ोer);
-	वापस 0;
-पूर्ण
+	ibmasm_cancel_next_event(&event_data->reader);
+	return 0;
+}
 
-अटल पूर्णांक r_heartbeat_file_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा ibmयंत्रfs_heartbeat_data *rhbeat;
+static int r_heartbeat_file_open(struct inode *inode, struct file *file)
+{
+	struct ibmasmfs_heartbeat_data *rhbeat;
 
-	अगर (!inode->i_निजी)
-		वापस -ENODEV;
+	if (!inode->i_private)
+		return -ENODEV;
 
-	rhbeat = kदो_स्मृति(माप(काष्ठा ibmयंत्रfs_heartbeat_data), GFP_KERNEL);
-	अगर (!rhbeat)
-		वापस -ENOMEM;
+	rhbeat = kmalloc(sizeof(struct ibmasmfs_heartbeat_data), GFP_KERNEL);
+	if (!rhbeat)
+		return -ENOMEM;
 
-	rhbeat->sp = inode->i_निजी;
+	rhbeat->sp = inode->i_private;
 	rhbeat->active = 0;
-	ibmयंत्र_init_reverse_heartbeat(rhbeat->sp, &rhbeat->heartbeat);
-	file->निजी_data = rhbeat;
-	वापस 0;
-पूर्ण
+	ibmasm_init_reverse_heartbeat(rhbeat->sp, &rhbeat->heartbeat);
+	file->private_data = rhbeat;
+	return 0;
+}
 
-अटल पूर्णांक r_heartbeat_file_बंद(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा ibmयंत्रfs_heartbeat_data *rhbeat = file->निजी_data;
+static int r_heartbeat_file_close(struct inode *inode, struct file *file)
+{
+	struct ibmasmfs_heartbeat_data *rhbeat = file->private_data;
 
-	kमुक्त(rhbeat);
-	वापस 0;
-पूर्ण
+	kfree(rhbeat);
+	return 0;
+}
 
-अटल sमाप_प्रकार r_heartbeat_file_पढ़ो(काष्ठा file *file, अक्षर __user *buf, माप_प्रकार count, loff_t *offset)
-अणु
-	काष्ठा ibmयंत्रfs_heartbeat_data *rhbeat = file->निजी_data;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक result;
+static ssize_t r_heartbeat_file_read(struct file *file, char __user *buf, size_t count, loff_t *offset)
+{
+	struct ibmasmfs_heartbeat_data *rhbeat = file->private_data;
+	unsigned long flags;
+	int result;
 
-	अगर (*offset < 0)
-		वापस -EINVAL;
-	अगर (count == 0 || count > 1024)
-		वापस 0;
-	अगर (*offset != 0)
-		वापस 0;
+	if (*offset < 0)
+		return -EINVAL;
+	if (count == 0 || count > 1024)
+		return 0;
+	if (*offset != 0)
+		return 0;
 
 	/* allow only one reverse heartbeat per process */
 	spin_lock_irqsave(&rhbeat->sp->lock, flags);
-	अगर (rhbeat->active) अणु
+	if (rhbeat->active) {
 		spin_unlock_irqrestore(&rhbeat->sp->lock, flags);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 	rhbeat->active = 1;
 	spin_unlock_irqrestore(&rhbeat->sp->lock, flags);
 
-	result = ibmयंत्र_start_reverse_heartbeat(rhbeat->sp, &rhbeat->heartbeat);
+	result = ibmasm_start_reverse_heartbeat(rhbeat->sp, &rhbeat->heartbeat);
 	rhbeat->active = 0;
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल sमाप_प्रकार r_heartbeat_file_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf, माप_प्रकार count, loff_t *offset)
-अणु
-	काष्ठा ibmयंत्रfs_heartbeat_data *rhbeat = file->निजी_data;
+static ssize_t r_heartbeat_file_write(struct file *file, const char __user *buf, size_t count, loff_t *offset)
+{
+	struct ibmasmfs_heartbeat_data *rhbeat = file->private_data;
 
-	अगर (*offset < 0)
-		वापस -EINVAL;
-	अगर (count != 1)
-		वापस 0;
-	अगर (*offset != 0)
-		वापस 0;
+	if (*offset < 0)
+		return -EINVAL;
+	if (count != 1)
+		return 0;
+	if (*offset != 0)
+		return 0;
 
-	अगर (rhbeat->active)
-		ibmयंत्र_stop_reverse_heartbeat(&rhbeat->heartbeat);
+	if (rhbeat->active)
+		ibmasm_stop_reverse_heartbeat(&rhbeat->heartbeat);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक remote_settings_file_बंद(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस 0;
-पूर्ण
+static int remote_settings_file_close(struct inode *inode, struct file *file)
+{
+	return 0;
+}
 
-अटल sमाप_प्रकार remote_settings_file_पढ़ो(काष्ठा file *file, अक्षर __user *buf, माप_प्रकार count, loff_t *offset)
-अणु
-	व्योम __iomem *address = (व्योम __iomem *)file->निजी_data;
-	पूर्णांक len = 0;
-	अचिन्हित पूर्णांक value;
-	अक्षर lbuf[20];
+static ssize_t remote_settings_file_read(struct file *file, char __user *buf, size_t count, loff_t *offset)
+{
+	void __iomem *address = (void __iomem *)file->private_data;
+	int len = 0;
+	unsigned int value;
+	char lbuf[20];
 
-	value = पढ़ोl(address);
-	len = snम_लिखो(lbuf, माप(lbuf), "%d\n", value);
+	value = readl(address);
+	len = snprintf(lbuf, sizeof(lbuf), "%d\n", value);
 
-	वापस simple_पढ़ो_from_buffer(buf, count, offset, lbuf, len);
-पूर्ण
+	return simple_read_from_buffer(buf, count, offset, lbuf, len);
+}
 
-अटल sमाप_प्रकार remote_settings_file_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *ubuff, माप_प्रकार count, loff_t *offset)
-अणु
-	व्योम __iomem *address = (व्योम __iomem *)file->निजी_data;
-	अक्षर *buff;
-	अचिन्हित पूर्णांक value;
+static ssize_t remote_settings_file_write(struct file *file, const char __user *ubuff, size_t count, loff_t *offset)
+{
+	void __iomem *address = (void __iomem *)file->private_data;
+	char *buff;
+	unsigned int value;
 
-	अगर (*offset < 0)
-		वापस -EINVAL;
-	अगर (count == 0 || count > 1024)
-		वापस 0;
-	अगर (*offset != 0)
-		वापस 0;
+	if (*offset < 0)
+		return -EINVAL;
+	if (count == 0 || count > 1024)
+		return 0;
+	if (*offset != 0)
+		return 0;
 
 	buff = kzalloc (count + 1, GFP_KERNEL);
-	अगर (!buff)
-		वापस -ENOMEM;
+	if (!buff)
+		return -ENOMEM;
 
 
-	अगर (copy_from_user(buff, ubuff, count)) अणु
-		kमुक्त(buff);
-		वापस -EFAULT;
-	पूर्ण
+	if (copy_from_user(buff, ubuff, count)) {
+		kfree(buff);
+		return -EFAULT;
+	}
 
-	value = simple_म_से_अदीर्घ(buff, शून्य, 10);
-	ग_लिखोl(value, address);
-	kमुक्त(buff);
+	value = simple_strtoul(buff, NULL, 10);
+	writel(value, address);
+	kfree(buff);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल स्थिर काष्ठा file_operations command_fops = अणु
-	.खोलो =		command_file_खोलो,
-	.release =	command_file_बंद,
-	.पढ़ो =		command_file_पढ़ो,
-	.ग_लिखो =	command_file_ग_लिखो,
+static const struct file_operations command_fops = {
+	.open =		command_file_open,
+	.release =	command_file_close,
+	.read =		command_file_read,
+	.write =	command_file_write,
 	.llseek =	generic_file_llseek,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा file_operations event_fops = अणु
-	.खोलो =		event_file_खोलो,
-	.release =	event_file_बंद,
-	.पढ़ो =		event_file_पढ़ो,
-	.ग_लिखो =	event_file_ग_लिखो,
+static const struct file_operations event_fops = {
+	.open =		event_file_open,
+	.release =	event_file_close,
+	.read =		event_file_read,
+	.write =	event_file_write,
 	.llseek =	generic_file_llseek,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा file_operations r_heartbeat_fops = अणु
-	.खोलो =		r_heartbeat_file_खोलो,
-	.release =	r_heartbeat_file_बंद,
-	.पढ़ो =		r_heartbeat_file_पढ़ो,
-	.ग_लिखो =	r_heartbeat_file_ग_लिखो,
+static const struct file_operations r_heartbeat_fops = {
+	.open =		r_heartbeat_file_open,
+	.release =	r_heartbeat_file_close,
+	.read =		r_heartbeat_file_read,
+	.write =	r_heartbeat_file_write,
 	.llseek =	generic_file_llseek,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा file_operations remote_settings_fops = अणु
-	.खोलो =		simple_खोलो,
-	.release =	remote_settings_file_बंद,
-	.पढ़ो =		remote_settings_file_पढ़ो,
-	.ग_लिखो =	remote_settings_file_ग_लिखो,
+static const struct file_operations remote_settings_fops = {
+	.open =		simple_open,
+	.release =	remote_settings_file_close,
+	.read =		remote_settings_file_read,
+	.write =	remote_settings_file_write,
 	.llseek =	generic_file_llseek,
-पूर्ण;
+};
 
 
-अटल व्योम ibmयंत्रfs_create_files (काष्ठा super_block *sb)
-अणु
-	काष्ठा list_head *entry;
-	काष्ठा service_processor *sp;
+static void ibmasmfs_create_files (struct super_block *sb)
+{
+	struct list_head *entry;
+	struct service_processor *sp;
 
-	list_क्रम_each(entry, &service_processors) अणु
-		काष्ठा dentry *dir;
-		काष्ठा dentry *remote_dir;
-		sp = list_entry(entry, काष्ठा service_processor, node);
-		dir = ibmयंत्रfs_create_dir(sb->s_root, sp->स_नाम);
-		अगर (!dir)
-			जारी;
+	list_for_each(entry, &service_processors) {
+		struct dentry *dir;
+		struct dentry *remote_dir;
+		sp = list_entry(entry, struct service_processor, node);
+		dir = ibmasmfs_create_dir(sb->s_root, sp->dirname);
+		if (!dir)
+			continue;
 
-		ibmयंत्रfs_create_file(dir, "command", &command_fops, sp, S_IRUSR|S_IWUSR);
-		ibmयंत्रfs_create_file(dir, "event", &event_fops, sp, S_IRUSR|S_IWUSR);
-		ibmयंत्रfs_create_file(dir, "reverse_heartbeat", &r_heartbeat_fops, sp, S_IRUSR|S_IWUSR);
+		ibmasmfs_create_file(dir, "command", &command_fops, sp, S_IRUSR|S_IWUSR);
+		ibmasmfs_create_file(dir, "event", &event_fops, sp, S_IRUSR|S_IWUSR);
+		ibmasmfs_create_file(dir, "reverse_heartbeat", &r_heartbeat_fops, sp, S_IRUSR|S_IWUSR);
 
-		remote_dir = ibmयंत्रfs_create_dir(dir, "remote_video");
-		अगर (!remote_dir)
-			जारी;
+		remote_dir = ibmasmfs_create_dir(dir, "remote_video");
+		if (!remote_dir)
+			continue;
 
-		ibmयंत्रfs_create_file(remote_dir, "width", &remote_settings_fops, (व्योम *)display_width(sp), S_IRUSR|S_IWUSR);
-		ibmयंत्रfs_create_file(remote_dir, "height", &remote_settings_fops, (व्योम *)display_height(sp), S_IRUSR|S_IWUSR);
-		ibmयंत्रfs_create_file(remote_dir, "depth", &remote_settings_fops, (व्योम *)display_depth(sp), S_IRUSR|S_IWUSR);
-	पूर्ण
-पूर्ण
+		ibmasmfs_create_file(remote_dir, "width", &remote_settings_fops, (void *)display_width(sp), S_IRUSR|S_IWUSR);
+		ibmasmfs_create_file(remote_dir, "height", &remote_settings_fops, (void *)display_height(sp), S_IRUSR|S_IWUSR);
+		ibmasmfs_create_file(remote_dir, "depth", &remote_settings_fops, (void *)display_depth(sp), S_IRUSR|S_IWUSR);
+	}
+}

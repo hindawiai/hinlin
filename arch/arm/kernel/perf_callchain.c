@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * ARM callchain support
  *
@@ -8,131 +7,131 @@
  *
  * This code is based on the ARM OProfile backtrace code.
  */
-#समावेश <linux/perf_event.h>
-#समावेश <linux/uaccess.h>
+#include <linux/perf_event.h>
+#include <linux/uaccess.h>
 
-#समावेश <यंत्र/stacktrace.h>
+#include <asm/stacktrace.h>
 
 /*
- * The रेजिस्टरs we're पूर्णांकerested in are at the end of the variable
- * length saved रेजिस्टर काष्ठाure. The fp poपूर्णांकs at the end of this
- * काष्ठाure so the address of this काष्ठा is:
- * (काष्ठा frame_tail *)(xxx->fp)-1
+ * The registers we're interested in are at the end of the variable
+ * length saved register structure. The fp points at the end of this
+ * structure so the address of this struct is:
+ * (struct frame_tail *)(xxx->fp)-1
  *
  * This code has been adapted from the ARM OProfile support.
  */
-काष्ठा frame_tail अणु
-	काष्ठा frame_tail __user *fp;
-	अचिन्हित दीर्घ sp;
-	अचिन्हित दीर्घ lr;
-पूर्ण __attribute__((packed));
+struct frame_tail {
+	struct frame_tail __user *fp;
+	unsigned long sp;
+	unsigned long lr;
+} __attribute__((packed));
 
 /*
- * Get the वापस address क्रम a single stackframe and वापस a poपूर्णांकer to the
+ * Get the return address for a single stackframe and return a pointer to the
  * next frame tail.
  */
-अटल काष्ठा frame_tail __user *
-user_backtrace(काष्ठा frame_tail __user *tail,
-	       काष्ठा perf_callchain_entry_ctx *entry)
-अणु
-	काष्ठा frame_tail buftail;
-	अचिन्हित दीर्घ err;
+static struct frame_tail __user *
+user_backtrace(struct frame_tail __user *tail,
+	       struct perf_callchain_entry_ctx *entry)
+{
+	struct frame_tail buftail;
+	unsigned long err;
 
-	अगर (!access_ok(tail, माप(buftail)))
-		वापस शून्य;
+	if (!access_ok(tail, sizeof(buftail)))
+		return NULL;
 
 	pagefault_disable();
-	err = __copy_from_user_inatomic(&buftail, tail, माप(buftail));
+	err = __copy_from_user_inatomic(&buftail, tail, sizeof(buftail));
 	pagefault_enable();
 
-	अगर (err)
-		वापस शून्य;
+	if (err)
+		return NULL;
 
 	perf_callchain_store(entry, buftail.lr);
 
 	/*
-	 * Frame poपूर्णांकers should strictly progress back up the stack
+	 * Frame pointers should strictly progress back up the stack
 	 * (towards higher addresses).
 	 */
-	अगर (tail + 1 >= buftail.fp)
-		वापस शून्य;
+	if (tail + 1 >= buftail.fp)
+		return NULL;
 
-	वापस buftail.fp - 1;
-पूर्ण
+	return buftail.fp - 1;
+}
 
-व्योम
-perf_callchain_user(काष्ठा perf_callchain_entry_ctx *entry, काष्ठा pt_regs *regs)
-अणु
-	काष्ठा frame_tail __user *tail;
+void
+perf_callchain_user(struct perf_callchain_entry_ctx *entry, struct pt_regs *regs)
+{
+	struct frame_tail __user *tail;
 
-	अगर (perf_guest_cbs && perf_guest_cbs->is_in_guest()) अणु
-		/* We करोn't support guest os callchain now */
-		वापस;
-	पूर्ण
+	if (perf_guest_cbs && perf_guest_cbs->is_in_guest()) {
+		/* We don't support guest os callchain now */
+		return;
+	}
 
 	perf_callchain_store(entry, regs->ARM_pc);
 
-	अगर (!current->mm)
-		वापस;
+	if (!current->mm)
+		return;
 
-	tail = (काष्ठा frame_tail __user *)regs->ARM_fp - 1;
+	tail = (struct frame_tail __user *)regs->ARM_fp - 1;
 
-	जबतक ((entry->nr < entry->max_stack) &&
-	       tail && !((अचिन्हित दीर्घ)tail & 0x3))
+	while ((entry->nr < entry->max_stack) &&
+	       tail && !((unsigned long)tail & 0x3))
 		tail = user_backtrace(tail, entry);
-पूर्ण
+}
 
 /*
- * Gets called by walk_stackframe() क्रम every stackframe. This will be called
- * whist unwinding the stackframe and is like a subroutine वापस so we use
+ * Gets called by walk_stackframe() for every stackframe. This will be called
+ * whist unwinding the stackframe and is like a subroutine return so we use
  * the PC.
  */
-अटल पूर्णांक
-callchain_trace(काष्ठा stackframe *fr,
-		व्योम *data)
-अणु
-	काष्ठा perf_callchain_entry_ctx *entry = data;
+static int
+callchain_trace(struct stackframe *fr,
+		void *data)
+{
+	struct perf_callchain_entry_ctx *entry = data;
 	perf_callchain_store(entry, fr->pc);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम
-perf_callchain_kernel(काष्ठा perf_callchain_entry_ctx *entry, काष्ठा pt_regs *regs)
-अणु
-	काष्ठा stackframe fr;
+void
+perf_callchain_kernel(struct perf_callchain_entry_ctx *entry, struct pt_regs *regs)
+{
+	struct stackframe fr;
 
-	अगर (perf_guest_cbs && perf_guest_cbs->is_in_guest()) अणु
-		/* We करोn't support guest os callchain now */
-		वापस;
-	पूर्ण
+	if (perf_guest_cbs && perf_guest_cbs->is_in_guest()) {
+		/* We don't support guest os callchain now */
+		return;
+	}
 
 	arm_get_current_stackframe(regs, &fr);
 	walk_stackframe(&fr, callchain_trace, entry);
-पूर्ण
+}
 
-अचिन्हित दीर्घ perf_inकाष्ठाion_poपूर्णांकer(काष्ठा pt_regs *regs)
-अणु
-	अगर (perf_guest_cbs && perf_guest_cbs->is_in_guest())
-		वापस perf_guest_cbs->get_guest_ip();
+unsigned long perf_instruction_pointer(struct pt_regs *regs)
+{
+	if (perf_guest_cbs && perf_guest_cbs->is_in_guest())
+		return perf_guest_cbs->get_guest_ip();
 
-	वापस inकाष्ठाion_poपूर्णांकer(regs);
-पूर्ण
+	return instruction_pointer(regs);
+}
 
-अचिन्हित दीर्घ perf_misc_flags(काष्ठा pt_regs *regs)
-अणु
-	पूर्णांक misc = 0;
+unsigned long perf_misc_flags(struct pt_regs *regs)
+{
+	int misc = 0;
 
-	अगर (perf_guest_cbs && perf_guest_cbs->is_in_guest()) अणु
-		अगर (perf_guest_cbs->is_user_mode())
+	if (perf_guest_cbs && perf_guest_cbs->is_in_guest()) {
+		if (perf_guest_cbs->is_user_mode())
 			misc |= PERF_RECORD_MISC_GUEST_USER;
-		अन्यथा
+		else
 			misc |= PERF_RECORD_MISC_GUEST_KERNEL;
-	पूर्ण अन्यथा अणु
-		अगर (user_mode(regs))
+	} else {
+		if (user_mode(regs))
 			misc |= PERF_RECORD_MISC_USER;
-		अन्यथा
+		else
 			misc |= PERF_RECORD_MISC_KERNEL;
-	पूर्ण
+	}
 
-	वापस misc;
-पूर्ण
+	return misc;
+}

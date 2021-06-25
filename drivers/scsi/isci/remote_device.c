@@ -1,24 +1,23 @@
-<शैली गुरु>
 /*
  * This file is provided under a dual BSD/GPLv2 license.  When using or
- * redistributing this file, you may करो so under either license.
+ * redistributing this file, you may do so under either license.
  *
  * GPL LICENSE SUMMARY
  *
  * Copyright(c) 2008 - 2011 Intel Corporation. All rights reserved.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy
+ * This program is free software; you can redistribute it and/or modify
  * it under the terms of version 2 of the GNU General Public License as
  * published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License क्रम more details.
+ * General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * aदीर्घ with this program; अगर not, ग_लिखो to the Free Software
- * Foundation, Inc., 51 Franklin St - Fअगरth Floor, Boston, MA 02110-1301 USA.
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St - Fifth Floor, Boston, MA 02110-1301 USA.
  * The full GNU General Public License is included in this distribution
  * in the file called LICENSE.GPL.
  *
@@ -27,25 +26,25 @@
  * Copyright(c) 2008 - 2011 Intel Corporation. All rights reserved.
  * All rights reserved.
  *
- * Redistribution and use in source and binary क्रमms, with or without
- * modअगरication, are permitted provided that the following conditions
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
  * are met:
  *
  *   * Redistributions of source code must retain the above copyright
  *     notice, this list of conditions and the following disclaimer.
- *   * Redistributions in binary क्रमm must reproduce the above copyright
+ *   * Redistributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in
- *     the करोcumentation and/or other materials provided with the
+ *     the documentation and/or other materials provided with the
  *     distribution.
  *   * Neither the name of Intel Corporation nor the names of its
- *     contributors may be used to enकरोrse or promote products derived
- *     from this software without specअगरic prior written permission.
+ *     contributors may be used to endorse or promote products derived
+ *     from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL,
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
  * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -53,62 +52,62 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#समावेश <scsi/sas.h>
-#समावेश <linux/bitops.h>
-#समावेश "isci.h"
-#समावेश "port.h"
-#समावेश "remote_device.h"
-#समावेश "request.h"
-#समावेश "remote_node_context.h"
-#समावेश "scu_event_codes.h"
-#समावेश "task.h"
+#include <scsi/sas.h>
+#include <linux/bitops.h>
+#include "isci.h"
+#include "port.h"
+#include "remote_device.h"
+#include "request.h"
+#include "remote_node_context.h"
+#include "scu_event_codes.h"
+#include "task.h"
 
-#अघोषित C
-#घोषणा C(a) (#a)
-स्थिर अक्षर *dev_state_name(क्रमागत sci_remote_device_states state)
-अणु
-	अटल स्थिर अक्षर * स्थिर strings[] = REMOTE_DEV_STATES;
+#undef C
+#define C(a) (#a)
+const char *dev_state_name(enum sci_remote_device_states state)
+{
+	static const char * const strings[] = REMOTE_DEV_STATES;
 
-	वापस strings[state];
-पूर्ण
-#अघोषित C
+	return strings[state];
+}
+#undef C
 
-क्रमागत sci_status sci_remote_device_suspend(काष्ठा isci_remote_device *idev,
-					  क्रमागत sci_remote_node_suspension_reasons reason)
-अणु
-	वापस sci_remote_node_context_suspend(&idev->rnc, reason,
+enum sci_status sci_remote_device_suspend(struct isci_remote_device *idev,
+					  enum sci_remote_node_suspension_reasons reason)
+{
+	return sci_remote_node_context_suspend(&idev->rnc, reason,
 					       SCI_SOFTWARE_SUSPEND_EXPECTED_EVENT);
-पूर्ण
+}
 
 /**
- * isci_remote_device_पढ़ोy() - This function is called by the ihost when the
- *    remote device is पढ़ोy. We mark the isci device as पढ़ोy and संकेत the
- *    रुकोing proccess.
+ * isci_remote_device_ready() - This function is called by the ihost when the
+ *    remote device is ready. We mark the isci device as ready and signal the
+ *    waiting proccess.
  * @ihost: our valid isci_host
  * @idev: remote device
  *
  */
-अटल व्योम isci_remote_device_पढ़ोy(काष्ठा isci_host *ihost, काष्ठा isci_remote_device *idev)
-अणु
+static void isci_remote_device_ready(struct isci_host *ihost, struct isci_remote_device *idev)
+{
 	dev_dbg(&ihost->pdev->dev,
 		"%s: idev = %p\n", __func__, idev);
 
 	clear_bit(IDEV_IO_NCQERROR, &idev->flags);
 	set_bit(IDEV_IO_READY, &idev->flags);
-	अगर (test_and_clear_bit(IDEV_START_PENDING, &idev->flags))
+	if (test_and_clear_bit(IDEV_START_PENDING, &idev->flags))
 		wake_up(&ihost->eventq);
-पूर्ण
+}
 
-अटल क्रमागत sci_status sci_remote_device_terminate_req(
-	काष्ठा isci_host *ihost,
-	काष्ठा isci_remote_device *idev,
-	पूर्णांक check_पात,
-	काष्ठा isci_request *ireq)
-अणु
-	अगर (!test_bit(IREQ_ACTIVE, &ireq->flags) ||
+static enum sci_status sci_remote_device_terminate_req(
+	struct isci_host *ihost,
+	struct isci_remote_device *idev,
+	int check_abort,
+	struct isci_request *ireq)
+{
+	if (!test_bit(IREQ_ACTIVE, &ireq->flags) ||
 	    (ireq->target_device != idev) ||
-	    (check_पात && !test_bit(IREQ_PENDING_ABORT, &ireq->flags)))
-		वापस SCI_SUCCESS;
+	    (check_abort && !test_bit(IREQ_PENDING_ABORT, &ireq->flags)))
+		return SCI_SUCCESS;
 
 	dev_dbg(&ihost->pdev->dev,
 		"%s: idev=%p; flags=%lx; req=%p; req target=%p\n",
@@ -116,48 +115,48 @@
 
 	set_bit(IREQ_ABORT_PATH_ACTIVE, &ireq->flags);
 
-	वापस sci_controller_terminate_request(ihost, idev, ireq);
-पूर्ण
+	return sci_controller_terminate_request(ihost, idev, ireq);
+}
 
-अटल क्रमागत sci_status sci_remote_device_terminate_reqs_checkपात(
-	काष्ठा isci_remote_device *idev,
-	पूर्णांक chk)
-अणु
-	काष्ठा isci_host *ihost = idev->owning_port->owning_controller;
-	क्रमागत sci_status status  = SCI_SUCCESS;
+static enum sci_status sci_remote_device_terminate_reqs_checkabort(
+	struct isci_remote_device *idev,
+	int chk)
+{
+	struct isci_host *ihost = idev->owning_port->owning_controller;
+	enum sci_status status  = SCI_SUCCESS;
 	u32 i;
 
-	क्रम (i = 0; i < SCI_MAX_IO_REQUESTS; i++) अणु
-		काष्ठा isci_request *ireq = ihost->reqs[i];
-		क्रमागत sci_status s;
+	for (i = 0; i < SCI_MAX_IO_REQUESTS; i++) {
+		struct isci_request *ireq = ihost->reqs[i];
+		enum sci_status s;
 
 		s = sci_remote_device_terminate_req(ihost, idev, chk, ireq);
-		अगर (s != SCI_SUCCESS)
+		if (s != SCI_SUCCESS)
 			status = s;
-	पूर्ण
-	वापस status;
-पूर्ण
+	}
+	return status;
+}
 
-अटल bool isci_compare_suspendcount(
-	काष्ठा isci_remote_device *idev,
+static bool isci_compare_suspendcount(
+	struct isci_remote_device *idev,
 	u32 localcount)
-अणु
+{
 	smp_rmb();
 
-	/* Check क्रम a change in the suspend count, or the RNC
+	/* Check for a change in the suspend count, or the RNC
 	 * being destroyed.
 	 */
-	वापस (localcount != idev->rnc.suspend_count)
+	return (localcount != idev->rnc.suspend_count)
 	    || sci_remote_node_context_is_being_destroyed(&idev->rnc);
-पूर्ण
+}
 
-अटल bool isci_check_reqterm(
-	काष्ठा isci_host *ihost,
-	काष्ठा isci_remote_device *idev,
-	काष्ठा isci_request *ireq,
+static bool isci_check_reqterm(
+	struct isci_host *ihost,
+	struct isci_remote_device *idev,
+	struct isci_request *ireq,
 	u32 localcount)
-अणु
-	अचिन्हित दीर्घ flags;
+{
+	unsigned long flags;
 	bool res;
 
 	spin_lock_irqsave(&ihost->scic_lock, flags);
@@ -165,15 +164,15 @@
 		&& !test_bit(IREQ_ABORT_PATH_ACTIVE, &ireq->flags);
 	spin_unlock_irqrestore(&ihost->scic_lock, flags);
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल bool isci_check_devempty(
-	काष्ठा isci_host *ihost,
-	काष्ठा isci_remote_device *idev,
+static bool isci_check_devempty(
+	struct isci_host *ihost,
+	struct isci_remote_device *idev,
 	u32 localcount)
-अणु
-	अचिन्हित दीर्घ flags;
+{
+	unsigned long flags;
 	bool res;
 
 	spin_lock_irqsave(&ihost->scic_lock, flags);
@@ -181,27 +180,27 @@
 		&& idev->started_request_count == 0;
 	spin_unlock_irqrestore(&ihost->scic_lock, flags);
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
-क्रमागत sci_status isci_remote_device_terminate_requests(
-	काष्ठा isci_host *ihost,
-	काष्ठा isci_remote_device *idev,
-	काष्ठा isci_request *ireq)
-अणु
-	क्रमागत sci_status status = SCI_SUCCESS;
-	अचिन्हित दीर्घ flags;
+enum sci_status isci_remote_device_terminate_requests(
+	struct isci_host *ihost,
+	struct isci_remote_device *idev,
+	struct isci_request *ireq)
+{
+	enum sci_status status = SCI_SUCCESS;
+	unsigned long flags;
 	u32 rnc_suspend_count;
 
 	spin_lock_irqsave(&ihost->scic_lock, flags);
 
-	अगर (isci_get_device(idev) == शून्य) अणु
+	if (isci_get_device(idev) == NULL) {
 		dev_dbg(&ihost->pdev->dev, "%s: failed isci_get_device(idev=%p)\n",
 			__func__, idev);
 		spin_unlock_irqrestore(&ihost->scic_lock, flags);
 		status = SCI_FAILURE;
-	पूर्ण अन्यथा अणु
-		/* If alपढ़ोy suspended, करोn't रुको क्रम another suspension. */
+	} else {
+		/* If already suspended, don't wait for another suspension. */
 		smp_rmb();
 		rnc_suspend_count
 			= sci_remote_node_context_is_suspended(&idev->rnc)
@@ -214,16 +213,16 @@
 			__func__, idev, ireq, idev->started_request_count,
 			rnc_suspend_count, idev->rnc.suspend_count);
 
-		#घोषणा MAX_SUSPEND_MSECS 10000
-		अगर (ireq) अणु
-			/* Terminate a specअगरic TC. */
+		#define MAX_SUSPEND_MSECS 10000
+		if (ireq) {
+			/* Terminate a specific TC. */
 			set_bit(IREQ_NO_AUTO_FREE_TAG, &ireq->flags);
 			sci_remote_device_terminate_req(ihost, idev, 0, ireq);
 			spin_unlock_irqrestore(&ihost->scic_lock, flags);
-			अगर (!रुको_event_समयout(ihost->eventq,
+			if (!wait_event_timeout(ihost->eventq,
 						isci_check_reqterm(ihost, idev, ireq,
 								   rnc_suspend_count),
-						msecs_to_jअगरfies(MAX_SUSPEND_MSECS))) अणु
+						msecs_to_jiffies(MAX_SUSPEND_MSECS))) {
 
 				dev_warn(&ihost->pdev->dev, "%s host%d timeout single\n",
 					 __func__, ihost->id);
@@ -243,20 +242,20 @@
 					 idev->rnc.suspend_type,
 					 idev->rnc.destination_state,
 					 ireq, ireq->flags);
-			पूर्ण
+			}
 			spin_lock_irqsave(&ihost->scic_lock, flags);
 			clear_bit(IREQ_NO_AUTO_FREE_TAG, &ireq->flags);
-			अगर (!test_bit(IREQ_ABORT_PATH_ACTIVE, &ireq->flags))
-				isci_मुक्त_tag(ihost, ireq->io_tag);
+			if (!test_bit(IREQ_ABORT_PATH_ACTIVE, &ireq->flags))
+				isci_free_tag(ihost, ireq->io_tag);
 			spin_unlock_irqrestore(&ihost->scic_lock, flags);
-		पूर्ण अन्यथा अणु
+		} else {
 			/* Terminate all TCs. */
 			sci_remote_device_terminate_requests(idev);
 			spin_unlock_irqrestore(&ihost->scic_lock, flags);
-			अगर (!रुको_event_समयout(ihost->eventq,
+			if (!wait_event_timeout(ihost->eventq,
 						isci_check_devempty(ihost, idev,
 								    rnc_suspend_count),
-						msecs_to_jअगरfies(MAX_SUSPEND_MSECS))) अणु
+						msecs_to_jiffies(MAX_SUSPEND_MSECS))) {
 
 				dev_warn(&ihost->pdev->dev, "%s host%d timeout all\n",
 					 __func__, ihost->id);
@@ -276,311 +275,311 @@
 					idev->rnc.suspend_count,
 					idev->rnc.suspend_type,
 					idev->rnc.destination_state);
-			पूर्ण
-		पूर्ण
+			}
+		}
 		dev_dbg(&ihost->pdev->dev, "%s: idev=%p, wait done\n",
 			__func__, idev);
 		isci_put_device(idev);
-	पूर्ण
-	वापस status;
-पूर्ण
+	}
+	return status;
+}
 
 /**
-* isci_remote_device_not_पढ़ोy() - This function is called by the ihost when
-*    the remote device is not पढ़ोy. We mark the isci device as पढ़ोy (not
-*    "ready_for_io") and संकेत the रुकोing proccess.
-* @ihost: This parameter specअगरies the isci host object.
-* @idev: This parameter specअगरies the remote device
-* @reason: Reason to चयन on
+* isci_remote_device_not_ready() - This function is called by the ihost when
+*    the remote device is not ready. We mark the isci device as ready (not
+*    "ready_for_io") and signal the waiting proccess.
+* @ihost: This parameter specifies the isci host object.
+* @idev: This parameter specifies the remote device
+* @reason: Reason to switch on
 *
 * sci_lock is held on entrance to this function.
 */
-अटल व्योम isci_remote_device_not_पढ़ोy(काष्ठा isci_host *ihost,
-					 काष्ठा isci_remote_device *idev,
+static void isci_remote_device_not_ready(struct isci_host *ihost,
+					 struct isci_remote_device *idev,
 					 u32 reason)
-अणु
+{
 	dev_dbg(&ihost->pdev->dev,
 		"%s: isci_device = %p; reason = %d\n", __func__, idev, reason);
 
-	चयन (reason) अणु
-	हाल SCIC_REMOTE_DEVICE_NOT_READY_SATA_SDB_ERROR_FIS_RECEIVED:
+	switch (reason) {
+	case SCIC_REMOTE_DEVICE_NOT_READY_SATA_SDB_ERROR_FIS_RECEIVED:
 		set_bit(IDEV_IO_NCQERROR, &idev->flags);
 
 		/* Suspend the remote device so the I/O can be terminated. */
 		sci_remote_device_suspend(idev, SCI_SW_SUSPEND_NORMAL);
 
-		/* Kill all outstanding requests क्रम the device. */
+		/* Kill all outstanding requests for the device. */
 		sci_remote_device_terminate_requests(idev);
 
-		fallthrough;	/* पूर्णांकo the शेष हाल */
-	शेष:
+		fallthrough;	/* into the default case */
+	default:
 		clear_bit(IDEV_IO_READY, &idev->flags);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-/* called once the remote node context is पढ़ोy to be मुक्तd.
+/* called once the remote node context is ready to be freed.
  * The remote device can now report that its stop operation is complete. none
  */
-अटल व्योम rnc_deकाष्ठा_करोne(व्योम *_dev)
-अणु
-	काष्ठा isci_remote_device *idev = _dev;
+static void rnc_destruct_done(void *_dev)
+{
+	struct isci_remote_device *idev = _dev;
 
 	BUG_ON(idev->started_request_count != 0);
 	sci_change_state(&idev->sm, SCI_DEV_STOPPED);
-पूर्ण
+}
 
-क्रमागत sci_status sci_remote_device_terminate_requests(
-	काष्ठा isci_remote_device *idev)
-अणु
-	वापस sci_remote_device_terminate_reqs_checkपात(idev, 0);
-पूर्ण
+enum sci_status sci_remote_device_terminate_requests(
+	struct isci_remote_device *idev)
+{
+	return sci_remote_device_terminate_reqs_checkabort(idev, 0);
+}
 
-क्रमागत sci_status sci_remote_device_stop(काष्ठा isci_remote_device *idev,
-					u32 समयout)
-अणु
-	काष्ठा sci_base_state_machine *sm = &idev->sm;
-	क्रमागत sci_remote_device_states state = sm->current_state_id;
+enum sci_status sci_remote_device_stop(struct isci_remote_device *idev,
+					u32 timeout)
+{
+	struct sci_base_state_machine *sm = &idev->sm;
+	enum sci_remote_device_states state = sm->current_state_id;
 
-	चयन (state) अणु
-	हाल SCI_DEV_INITIAL:
-	हाल SCI_DEV_FAILED:
-	हाल SCI_DEV_FINAL:
-	शेष:
+	switch (state) {
+	case SCI_DEV_INITIAL:
+	case SCI_DEV_FAILED:
+	case SCI_DEV_FINAL:
+	default:
 		dev_warn(scirdev_to_dev(idev), "%s: in wrong state: %s\n",
 			 __func__, dev_state_name(state));
-		वापस SCI_FAILURE_INVALID_STATE;
-	हाल SCI_DEV_STOPPED:
-		वापस SCI_SUCCESS;
-	हाल SCI_DEV_STARTING:
+		return SCI_FAILURE_INVALID_STATE;
+	case SCI_DEV_STOPPED:
+		return SCI_SUCCESS;
+	case SCI_DEV_STARTING:
 		/* device not started so there had better be no requests */
 		BUG_ON(idev->started_request_count != 0);
-		sci_remote_node_context_deकाष्ठा(&idev->rnc,
-						      rnc_deकाष्ठा_करोne, idev);
-		/* Transition to the stopping state and रुको क्रम the
+		sci_remote_node_context_destruct(&idev->rnc,
+						      rnc_destruct_done, idev);
+		/* Transition to the stopping state and wait for the
 		 * remote node to complete being posted and invalidated.
 		 */
 		sci_change_state(sm, SCI_DEV_STOPPING);
-		वापस SCI_SUCCESS;
-	हाल SCI_DEV_READY:
-	हाल SCI_STP_DEV_IDLE:
-	हाल SCI_STP_DEV_CMD:
-	हाल SCI_STP_DEV_NCQ:
-	हाल SCI_STP_DEV_NCQ_ERROR:
-	हाल SCI_STP_DEV_AWAIT_RESET:
-	हाल SCI_SMP_DEV_IDLE:
-	हाल SCI_SMP_DEV_CMD:
+		return SCI_SUCCESS;
+	case SCI_DEV_READY:
+	case SCI_STP_DEV_IDLE:
+	case SCI_STP_DEV_CMD:
+	case SCI_STP_DEV_NCQ:
+	case SCI_STP_DEV_NCQ_ERROR:
+	case SCI_STP_DEV_AWAIT_RESET:
+	case SCI_SMP_DEV_IDLE:
+	case SCI_SMP_DEV_CMD:
 		sci_change_state(sm, SCI_DEV_STOPPING);
-		अगर (idev->started_request_count == 0)
-			sci_remote_node_context_deकाष्ठा(&idev->rnc,
-							 rnc_deकाष्ठा_करोne,
+		if (idev->started_request_count == 0)
+			sci_remote_node_context_destruct(&idev->rnc,
+							 rnc_destruct_done,
 							 idev);
-		अन्यथा अणु
+		else {
 			sci_remote_device_suspend(
 				idev, SCI_SW_SUSPEND_LINKHANG_DETECT);
 			sci_remote_device_terminate_requests(idev);
-		पूर्ण
-		वापस SCI_SUCCESS;
-	हाल SCI_DEV_STOPPING:
-		/* All requests should have been terminated, but अगर there is an
-		 * attempt to stop a device alपढ़ोy in the stopping state, then
+		}
+		return SCI_SUCCESS;
+	case SCI_DEV_STOPPING:
+		/* All requests should have been terminated, but if there is an
+		 * attempt to stop a device already in the stopping state, then
 		 * try again to terminate.
 		 */
-		वापस sci_remote_device_terminate_requests(idev);
-	हाल SCI_DEV_RESETTING:
+		return sci_remote_device_terminate_requests(idev);
+	case SCI_DEV_RESETTING:
 		sci_change_state(sm, SCI_DEV_STOPPING);
-		वापस SCI_SUCCESS;
-	पूर्ण
-पूर्ण
+		return SCI_SUCCESS;
+	}
+}
 
-क्रमागत sci_status sci_remote_device_reset(काष्ठा isci_remote_device *idev)
-अणु
-	काष्ठा sci_base_state_machine *sm = &idev->sm;
-	क्रमागत sci_remote_device_states state = sm->current_state_id;
+enum sci_status sci_remote_device_reset(struct isci_remote_device *idev)
+{
+	struct sci_base_state_machine *sm = &idev->sm;
+	enum sci_remote_device_states state = sm->current_state_id;
 
-	चयन (state) अणु
-	हाल SCI_DEV_INITIAL:
-	हाल SCI_DEV_STOPPED:
-	हाल SCI_DEV_STARTING:
-	हाल SCI_SMP_DEV_IDLE:
-	हाल SCI_SMP_DEV_CMD:
-	हाल SCI_DEV_STOPPING:
-	हाल SCI_DEV_FAILED:
-	हाल SCI_DEV_RESETTING:
-	हाल SCI_DEV_FINAL:
-	शेष:
+	switch (state) {
+	case SCI_DEV_INITIAL:
+	case SCI_DEV_STOPPED:
+	case SCI_DEV_STARTING:
+	case SCI_SMP_DEV_IDLE:
+	case SCI_SMP_DEV_CMD:
+	case SCI_DEV_STOPPING:
+	case SCI_DEV_FAILED:
+	case SCI_DEV_RESETTING:
+	case SCI_DEV_FINAL:
+	default:
 		dev_warn(scirdev_to_dev(idev), "%s: in wrong state: %s\n",
 			 __func__, dev_state_name(state));
-		वापस SCI_FAILURE_INVALID_STATE;
-	हाल SCI_DEV_READY:
-	हाल SCI_STP_DEV_IDLE:
-	हाल SCI_STP_DEV_CMD:
-	हाल SCI_STP_DEV_NCQ:
-	हाल SCI_STP_DEV_NCQ_ERROR:
-	हाल SCI_STP_DEV_AWAIT_RESET:
+		return SCI_FAILURE_INVALID_STATE;
+	case SCI_DEV_READY:
+	case SCI_STP_DEV_IDLE:
+	case SCI_STP_DEV_CMD:
+	case SCI_STP_DEV_NCQ:
+	case SCI_STP_DEV_NCQ_ERROR:
+	case SCI_STP_DEV_AWAIT_RESET:
 		sci_change_state(sm, SCI_DEV_RESETTING);
-		वापस SCI_SUCCESS;
-	पूर्ण
-पूर्ण
+		return SCI_SUCCESS;
+	}
+}
 
-क्रमागत sci_status sci_remote_device_reset_complete(काष्ठा isci_remote_device *idev)
-अणु
-	काष्ठा sci_base_state_machine *sm = &idev->sm;
-	क्रमागत sci_remote_device_states state = sm->current_state_id;
+enum sci_status sci_remote_device_reset_complete(struct isci_remote_device *idev)
+{
+	struct sci_base_state_machine *sm = &idev->sm;
+	enum sci_remote_device_states state = sm->current_state_id;
 
-	अगर (state != SCI_DEV_RESETTING) अणु
+	if (state != SCI_DEV_RESETTING) {
 		dev_warn(scirdev_to_dev(idev), "%s: in wrong state: %s\n",
 			 __func__, dev_state_name(state));
-		वापस SCI_FAILURE_INVALID_STATE;
-	पूर्ण
+		return SCI_FAILURE_INVALID_STATE;
+	}
 
 	sci_change_state(sm, SCI_DEV_READY);
-	वापस SCI_SUCCESS;
-पूर्ण
+	return SCI_SUCCESS;
+}
 
-क्रमागत sci_status sci_remote_device_frame_handler(काष्ठा isci_remote_device *idev,
+enum sci_status sci_remote_device_frame_handler(struct isci_remote_device *idev,
 						     u32 frame_index)
-अणु
-	काष्ठा sci_base_state_machine *sm = &idev->sm;
-	क्रमागत sci_remote_device_states state = sm->current_state_id;
-	काष्ठा isci_host *ihost = idev->owning_port->owning_controller;
-	क्रमागत sci_status status;
+{
+	struct sci_base_state_machine *sm = &idev->sm;
+	enum sci_remote_device_states state = sm->current_state_id;
+	struct isci_host *ihost = idev->owning_port->owning_controller;
+	enum sci_status status;
 
-	चयन (state) अणु
-	हाल SCI_DEV_INITIAL:
-	हाल SCI_DEV_STOPPED:
-	हाल SCI_DEV_STARTING:
-	हाल SCI_STP_DEV_IDLE:
-	हाल SCI_SMP_DEV_IDLE:
-	हाल SCI_DEV_FINAL:
-	शेष:
+	switch (state) {
+	case SCI_DEV_INITIAL:
+	case SCI_DEV_STOPPED:
+	case SCI_DEV_STARTING:
+	case SCI_STP_DEV_IDLE:
+	case SCI_SMP_DEV_IDLE:
+	case SCI_DEV_FINAL:
+	default:
 		dev_warn(scirdev_to_dev(idev), "%s: in wrong state: %s\n",
 			 __func__, dev_state_name(state));
 		/* Return the frame back to the controller */
 		sci_controller_release_frame(ihost, frame_index);
-		वापस SCI_FAILURE_INVALID_STATE;
-	हाल SCI_DEV_READY:
-	हाल SCI_STP_DEV_NCQ_ERROR:
-	हाल SCI_STP_DEV_AWAIT_RESET:
-	हाल SCI_DEV_STOPPING:
-	हाल SCI_DEV_FAILED:
-	हाल SCI_DEV_RESETTING: अणु
-		काष्ठा isci_request *ireq;
-		काष्ठा ssp_frame_hdr hdr;
-		व्योम *frame_header;
-		sमाप_प्रकार word_cnt;
+		return SCI_FAILURE_INVALID_STATE;
+	case SCI_DEV_READY:
+	case SCI_STP_DEV_NCQ_ERROR:
+	case SCI_STP_DEV_AWAIT_RESET:
+	case SCI_DEV_STOPPING:
+	case SCI_DEV_FAILED:
+	case SCI_DEV_RESETTING: {
+		struct isci_request *ireq;
+		struct ssp_frame_hdr hdr;
+		void *frame_header;
+		ssize_t word_cnt;
 
 		status = sci_unsolicited_frame_control_get_header(&ihost->uf_control,
 								       frame_index,
 								       &frame_header);
-		अगर (status != SCI_SUCCESS)
-			वापस status;
+		if (status != SCI_SUCCESS)
+			return status;
 
-		word_cnt = माप(hdr) / माप(u32);
+		word_cnt = sizeof(hdr) / sizeof(u32);
 		sci_swab32_cpy(&hdr, frame_header, word_cnt);
 
 		ireq = sci_request_by_tag(ihost, be16_to_cpu(hdr.tag));
-		अगर (ireq && ireq->target_device == idev) अणु
-			/* The IO request is now in अक्षरge of releasing the frame */
+		if (ireq && ireq->target_device == idev) {
+			/* The IO request is now in charge of releasing the frame */
 			status = sci_io_request_frame_handler(ireq, frame_index);
-		पूर्ण अन्यथा अणु
+		} else {
 			/* We could not map this tag to a valid IO
-			 * request Just toss the frame and जारी
+			 * request Just toss the frame and continue
 			 */
 			sci_controller_release_frame(ihost, frame_index);
-		पूर्ण
-		अवरोध;
-	पूर्ण
-	हाल SCI_STP_DEV_NCQ: अणु
-		काष्ठा dev_to_host_fis *hdr;
+		}
+		break;
+	}
+	case SCI_STP_DEV_NCQ: {
+		struct dev_to_host_fis *hdr;
 
 		status = sci_unsolicited_frame_control_get_header(&ihost->uf_control,
 								       frame_index,
-								       (व्योम **)&hdr);
-		अगर (status != SCI_SUCCESS)
-			वापस status;
+								       (void **)&hdr);
+		if (status != SCI_SUCCESS)
+			return status;
 
-		अगर (hdr->fis_type == FIS_SETDEVBITS &&
-		    (hdr->status & ATA_ERR)) अणु
-			idev->not_पढ़ोy_reason = SCIC_REMOTE_DEVICE_NOT_READY_SATA_SDB_ERROR_FIS_RECEIVED;
+		if (hdr->fis_type == FIS_SETDEVBITS &&
+		    (hdr->status & ATA_ERR)) {
+			idev->not_ready_reason = SCIC_REMOTE_DEVICE_NOT_READY_SATA_SDB_ERROR_FIS_RECEIVED;
 
-			/* TODO Check sactive and complete associated IO अगर any. */
+			/* TODO Check sactive and complete associated IO if any. */
 			sci_change_state(sm, SCI_STP_DEV_NCQ_ERROR);
-		पूर्ण अन्यथा अगर (hdr->fis_type == FIS_REGD2H &&
-			   (hdr->status & ATA_ERR)) अणु
+		} else if (hdr->fis_type == FIS_REGD2H &&
+			   (hdr->status & ATA_ERR)) {
 			/*
-			 * Some devices वापस D2H FIS when an NCQ error is detected.
-			 * Treat this like an SDB error FIS पढ़ोy reason.
+			 * Some devices return D2H FIS when an NCQ error is detected.
+			 * Treat this like an SDB error FIS ready reason.
 			 */
-			idev->not_पढ़ोy_reason = SCIC_REMOTE_DEVICE_NOT_READY_SATA_SDB_ERROR_FIS_RECEIVED;
+			idev->not_ready_reason = SCIC_REMOTE_DEVICE_NOT_READY_SATA_SDB_ERROR_FIS_RECEIVED;
 			sci_change_state(&idev->sm, SCI_STP_DEV_NCQ_ERROR);
-		पूर्ण अन्यथा
+		} else
 			status = SCI_FAILURE;
 
 		sci_controller_release_frame(ihost, frame_index);
-		अवरोध;
-	पूर्ण
-	हाल SCI_STP_DEV_CMD:
-	हाल SCI_SMP_DEV_CMD:
-		/* The device करोes not process any UF received from the hardware जबतक
-		 * in this state.  All unsolicited frames are क्रमwarded to the io request
+		break;
+	}
+	case SCI_STP_DEV_CMD:
+	case SCI_SMP_DEV_CMD:
+		/* The device does not process any UF received from the hardware while
+		 * in this state.  All unsolicited frames are forwarded to the io request
 		 * object.
 		 */
 		status = sci_io_request_frame_handler(idev->working_request, frame_index);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल bool is_remote_device_पढ़ोy(काष्ठा isci_remote_device *idev)
-अणु
+static bool is_remote_device_ready(struct isci_remote_device *idev)
+{
 
-	काष्ठा sci_base_state_machine *sm = &idev->sm;
-	क्रमागत sci_remote_device_states state = sm->current_state_id;
+	struct sci_base_state_machine *sm = &idev->sm;
+	enum sci_remote_device_states state = sm->current_state_id;
 
-	चयन (state) अणु
-	हाल SCI_DEV_READY:
-	हाल SCI_STP_DEV_IDLE:
-	हाल SCI_STP_DEV_CMD:
-	हाल SCI_STP_DEV_NCQ:
-	हाल SCI_STP_DEV_NCQ_ERROR:
-	हाल SCI_STP_DEV_AWAIT_RESET:
-	हाल SCI_SMP_DEV_IDLE:
-	हाल SCI_SMP_DEV_CMD:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+	switch (state) {
+	case SCI_DEV_READY:
+	case SCI_STP_DEV_IDLE:
+	case SCI_STP_DEV_CMD:
+	case SCI_STP_DEV_NCQ:
+	case SCI_STP_DEV_NCQ_ERROR:
+	case SCI_STP_DEV_AWAIT_RESET:
+	case SCI_SMP_DEV_IDLE:
+	case SCI_SMP_DEV_CMD:
+		return true;
+	default:
+		return false;
+	}
+}
 
 /*
- * called once the remote node context has transisitioned to a पढ़ोy
+ * called once the remote node context has transisitioned to a ready
  * state (after suspending RX and/or TX due to early D2H fis)
  */
-अटल व्योम atapi_remote_device_resume_करोne(व्योम *_dev)
-अणु
-	काष्ठा isci_remote_device *idev = _dev;
-	काष्ठा isci_request *ireq = idev->working_request;
+static void atapi_remote_device_resume_done(void *_dev)
+{
+	struct isci_remote_device *idev = _dev;
+	struct isci_request *ireq = idev->working_request;
 
 	sci_change_state(&ireq->sm, SCI_REQ_COMPLETED);
-पूर्ण
+}
 
-क्रमागत sci_status sci_remote_device_event_handler(काष्ठा isci_remote_device *idev,
+enum sci_status sci_remote_device_event_handler(struct isci_remote_device *idev,
 						     u32 event_code)
-अणु
-	क्रमागत sci_status status;
-	काष्ठा sci_base_state_machine *sm = &idev->sm;
-	क्रमागत sci_remote_device_states state = sm->current_state_id;
+{
+	enum sci_status status;
+	struct sci_base_state_machine *sm = &idev->sm;
+	enum sci_remote_device_states state = sm->current_state_id;
 
-	चयन (scu_get_event_type(event_code)) अणु
-	हाल SCU_EVENT_TYPE_RNC_OPS_MISC:
-	हाल SCU_EVENT_TYPE_RNC_SUSPEND_TX:
-	हाल SCU_EVENT_TYPE_RNC_SUSPEND_TX_RX:
+	switch (scu_get_event_type(event_code)) {
+	case SCU_EVENT_TYPE_RNC_OPS_MISC:
+	case SCU_EVENT_TYPE_RNC_SUSPEND_TX:
+	case SCU_EVENT_TYPE_RNC_SUSPEND_TX_RX:
 		status = sci_remote_node_context_event_handler(&idev->rnc, event_code);
-		अवरोध;
-	हाल SCU_EVENT_TYPE_PTX_SCHEDULE_EVENT:
-		अगर (scu_get_event_code(event_code) == SCU_EVENT_IT_NEXUS_TIMEOUT) अणु
+		break;
+	case SCU_EVENT_TYPE_PTX_SCHEDULE_EVENT:
+		if (scu_get_event_code(event_code) == SCU_EVENT_IT_NEXUS_TIMEOUT) {
 			status = SCI_SUCCESS;
 
 			/* Suspend the associated RNC */
@@ -589,322 +588,322 @@
 			dev_dbg(scirdev_to_dev(idev),
 				"%s: device: %p event code: %x: %s\n",
 				__func__, idev, event_code,
-				is_remote_device_पढ़ोy(idev)
+				is_remote_device_ready(idev)
 				? "I_T_Nexus_Timeout event"
 				: "I_T_Nexus_Timeout event in wrong state");
 
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		fallthrough;	/* and treat as unhandled */
-	शेष:
+	default:
 		dev_dbg(scirdev_to_dev(idev),
 			"%s: device: %p event code: %x: %s\n",
 			__func__, idev, event_code,
-			is_remote_device_पढ़ोy(idev)
+			is_remote_device_ready(idev)
 			? "unexpected event"
 			: "unexpected event in wrong state");
 		status = SCI_FAILURE_INVALID_STATE;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (status != SCI_SUCCESS)
-		वापस status;
+	if (status != SCI_SUCCESS)
+		return status;
 
-	/* Decode device-specअगरic states that may require an RNC resume during
-	 * normal operation.  When the पात path is active, these resumes are
-	 * managed when the पात path निकासs.
+	/* Decode device-specific states that may require an RNC resume during
+	 * normal operation.  When the abort path is active, these resumes are
+	 * managed when the abort path exits.
 	 */
-	अगर (state == SCI_STP_DEV_ATAPI_ERROR) अणु
+	if (state == SCI_STP_DEV_ATAPI_ERROR) {
 		/* For ATAPI error state resume the RNC right away. */
-		अगर (scu_get_event_type(event_code) == SCU_EVENT_TYPE_RNC_SUSPEND_TX ||
-		    scu_get_event_type(event_code) == SCU_EVENT_TYPE_RNC_SUSPEND_TX_RX) अणु
-			वापस sci_remote_node_context_resume(&idev->rnc,
-							      atapi_remote_device_resume_करोne,
+		if (scu_get_event_type(event_code) == SCU_EVENT_TYPE_RNC_SUSPEND_TX ||
+		    scu_get_event_type(event_code) == SCU_EVENT_TYPE_RNC_SUSPEND_TX_RX) {
+			return sci_remote_node_context_resume(&idev->rnc,
+							      atapi_remote_device_resume_done,
 							      idev);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (state == SCI_STP_DEV_IDLE) अणु
+	if (state == SCI_STP_DEV_IDLE) {
 
-		/* We pick up suspension events to handle specअगरically to this
+		/* We pick up suspension events to handle specifically to this
 		 * state. We resume the RNC right away.
 		 */
-		अगर (scu_get_event_type(event_code) == SCU_EVENT_TYPE_RNC_SUSPEND_TX ||
+		if (scu_get_event_type(event_code) == SCU_EVENT_TYPE_RNC_SUSPEND_TX ||
 		    scu_get_event_type(event_code) == SCU_EVENT_TYPE_RNC_SUSPEND_TX_RX)
-			status = sci_remote_node_context_resume(&idev->rnc, शून्य, शून्य);
-	पूर्ण
+			status = sci_remote_node_context_resume(&idev->rnc, NULL, NULL);
+	}
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल व्योम sci_remote_device_start_request(काष्ठा isci_remote_device *idev,
-						 काष्ठा isci_request *ireq,
-						 क्रमागत sci_status status)
-अणु
-	काष्ठा isci_port *iport = idev->owning_port;
+static void sci_remote_device_start_request(struct isci_remote_device *idev,
+						 struct isci_request *ireq,
+						 enum sci_status status)
+{
+	struct isci_port *iport = idev->owning_port;
 
 	/* cleanup requests that failed after starting on the port */
-	अगर (status != SCI_SUCCESS)
+	if (status != SCI_SUCCESS)
 		sci_port_complete_io(iport, idev, ireq);
-	अन्यथा अणु
+	else {
 		kref_get(&idev->kref);
 		idev->started_request_count++;
-	पूर्ण
-पूर्ण
+	}
+}
 
-क्रमागत sci_status sci_remote_device_start_io(काष्ठा isci_host *ihost,
-						काष्ठा isci_remote_device *idev,
-						काष्ठा isci_request *ireq)
-अणु
-	काष्ठा sci_base_state_machine *sm = &idev->sm;
-	क्रमागत sci_remote_device_states state = sm->current_state_id;
-	काष्ठा isci_port *iport = idev->owning_port;
-	क्रमागत sci_status status;
+enum sci_status sci_remote_device_start_io(struct isci_host *ihost,
+						struct isci_remote_device *idev,
+						struct isci_request *ireq)
+{
+	struct sci_base_state_machine *sm = &idev->sm;
+	enum sci_remote_device_states state = sm->current_state_id;
+	struct isci_port *iport = idev->owning_port;
+	enum sci_status status;
 
-	चयन (state) अणु
-	हाल SCI_DEV_INITIAL:
-	हाल SCI_DEV_STOPPED:
-	हाल SCI_DEV_STARTING:
-	हाल SCI_STP_DEV_NCQ_ERROR:
-	हाल SCI_DEV_STOPPING:
-	हाल SCI_DEV_FAILED:
-	हाल SCI_DEV_RESETTING:
-	हाल SCI_DEV_FINAL:
-	शेष:
+	switch (state) {
+	case SCI_DEV_INITIAL:
+	case SCI_DEV_STOPPED:
+	case SCI_DEV_STARTING:
+	case SCI_STP_DEV_NCQ_ERROR:
+	case SCI_DEV_STOPPING:
+	case SCI_DEV_FAILED:
+	case SCI_DEV_RESETTING:
+	case SCI_DEV_FINAL:
+	default:
 		dev_warn(scirdev_to_dev(idev), "%s: in wrong state: %s\n",
 			 __func__, dev_state_name(state));
-		वापस SCI_FAILURE_INVALID_STATE;
-	हाल SCI_DEV_READY:
-		/* attempt to start an io request क्रम this device object. The remote
-		 * device object will issue the start request क्रम the io and अगर
-		 * successful it will start the request क्रम the port object then
+		return SCI_FAILURE_INVALID_STATE;
+	case SCI_DEV_READY:
+		/* attempt to start an io request for this device object. The remote
+		 * device object will issue the start request for the io and if
+		 * successful it will start the request for the port object then
 		 * increment its own request count.
 		 */
 		status = sci_port_start_io(iport, idev, ireq);
-		अगर (status != SCI_SUCCESS)
-			वापस status;
+		if (status != SCI_SUCCESS)
+			return status;
 
 		status = sci_remote_node_context_start_io(&idev->rnc, ireq);
-		अगर (status != SCI_SUCCESS)
-			अवरोध;
+		if (status != SCI_SUCCESS)
+			break;
 
 		status = sci_request_start(ireq);
-		अवरोध;
-	हाल SCI_STP_DEV_IDLE: अणु
-		/* handle the start io operation क्रम a sata device that is in
+		break;
+	case SCI_STP_DEV_IDLE: {
+		/* handle the start io operation for a sata device that is in
 		 * the command idle state. - Evalute the type of IO request to
 		 * be started - If its an NCQ request change to NCQ substate -
 		 * If its any other command change to the CMD substate
 		 *
-		 * If this is a softreset we may want to have a dअगरferent
+		 * If this is a softreset we may want to have a different
 		 * substate.
 		 */
-		क्रमागत sci_remote_device_states new_state;
-		काष्ठा sas_task *task = isci_request_access_task(ireq);
+		enum sci_remote_device_states new_state;
+		struct sas_task *task = isci_request_access_task(ireq);
 
 		status = sci_port_start_io(iport, idev, ireq);
-		अगर (status != SCI_SUCCESS)
-			वापस status;
+		if (status != SCI_SUCCESS)
+			return status;
 
 		status = sci_remote_node_context_start_io(&idev->rnc, ireq);
-		अगर (status != SCI_SUCCESS)
-			अवरोध;
+		if (status != SCI_SUCCESS)
+			break;
 
 		status = sci_request_start(ireq);
-		अगर (status != SCI_SUCCESS)
-			अवरोध;
+		if (status != SCI_SUCCESS)
+			break;
 
-		अगर (task->ata_task.use_ncq)
+		if (task->ata_task.use_ncq)
 			new_state = SCI_STP_DEV_NCQ;
-		अन्यथा अणु
+		else {
 			idev->working_request = ireq;
 			new_state = SCI_STP_DEV_CMD;
-		पूर्ण
+		}
 		sci_change_state(sm, new_state);
-		अवरोध;
-	पूर्ण
-	हाल SCI_STP_DEV_NCQ: अणु
-		काष्ठा sas_task *task = isci_request_access_task(ireq);
+		break;
+	}
+	case SCI_STP_DEV_NCQ: {
+		struct sas_task *task = isci_request_access_task(ireq);
 
-		अगर (task->ata_task.use_ncq) अणु
+		if (task->ata_task.use_ncq) {
 			status = sci_port_start_io(iport, idev, ireq);
-			अगर (status != SCI_SUCCESS)
-				वापस status;
+			if (status != SCI_SUCCESS)
+				return status;
 
 			status = sci_remote_node_context_start_io(&idev->rnc, ireq);
-			अगर (status != SCI_SUCCESS)
-				अवरोध;
+			if (status != SCI_SUCCESS)
+				break;
 
 			status = sci_request_start(ireq);
-		पूर्ण अन्यथा
-			वापस SCI_FAILURE_INVALID_STATE;
-		अवरोध;
-	पूर्ण
-	हाल SCI_STP_DEV_AWAIT_RESET:
-		वापस SCI_FAILURE_REMOTE_DEVICE_RESET_REQUIRED;
-	हाल SCI_SMP_DEV_IDLE:
+		} else
+			return SCI_FAILURE_INVALID_STATE;
+		break;
+	}
+	case SCI_STP_DEV_AWAIT_RESET:
+		return SCI_FAILURE_REMOTE_DEVICE_RESET_REQUIRED;
+	case SCI_SMP_DEV_IDLE:
 		status = sci_port_start_io(iport, idev, ireq);
-		अगर (status != SCI_SUCCESS)
-			वापस status;
+		if (status != SCI_SUCCESS)
+			return status;
 
 		status = sci_remote_node_context_start_io(&idev->rnc, ireq);
-		अगर (status != SCI_SUCCESS)
-			अवरोध;
+		if (status != SCI_SUCCESS)
+			break;
 
 		status = sci_request_start(ireq);
-		अगर (status != SCI_SUCCESS)
-			अवरोध;
+		if (status != SCI_SUCCESS)
+			break;
 
 		idev->working_request = ireq;
 		sci_change_state(&idev->sm, SCI_SMP_DEV_CMD);
-		अवरोध;
-	हाल SCI_STP_DEV_CMD:
-	हाल SCI_SMP_DEV_CMD:
-		/* device is alपढ़ोy handling a command it can not accept new commands
+		break;
+	case SCI_STP_DEV_CMD:
+	case SCI_SMP_DEV_CMD:
+		/* device is already handling a command it can not accept new commands
 		 * until this one is complete.
 		 */
-		वापस SCI_FAILURE_INVALID_STATE;
-	पूर्ण
+		return SCI_FAILURE_INVALID_STATE;
+	}
 
 	sci_remote_device_start_request(idev, ireq, status);
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल क्रमागत sci_status common_complete_io(काष्ठा isci_port *iport,
-					  काष्ठा isci_remote_device *idev,
-					  काष्ठा isci_request *ireq)
-अणु
-	क्रमागत sci_status status;
+static enum sci_status common_complete_io(struct isci_port *iport,
+					  struct isci_remote_device *idev,
+					  struct isci_request *ireq)
+{
+	enum sci_status status;
 
 	status = sci_request_complete(ireq);
-	अगर (status != SCI_SUCCESS)
-		वापस status;
+	if (status != SCI_SUCCESS)
+		return status;
 
 	status = sci_port_complete_io(iport, idev, ireq);
-	अगर (status != SCI_SUCCESS)
-		वापस status;
+	if (status != SCI_SUCCESS)
+		return status;
 
 	sci_remote_device_decrement_request_count(idev);
-	वापस status;
-पूर्ण
+	return status;
+}
 
-क्रमागत sci_status sci_remote_device_complete_io(काष्ठा isci_host *ihost,
-						   काष्ठा isci_remote_device *idev,
-						   काष्ठा isci_request *ireq)
-अणु
-	काष्ठा sci_base_state_machine *sm = &idev->sm;
-	क्रमागत sci_remote_device_states state = sm->current_state_id;
-	काष्ठा isci_port *iport = idev->owning_port;
-	क्रमागत sci_status status;
+enum sci_status sci_remote_device_complete_io(struct isci_host *ihost,
+						   struct isci_remote_device *idev,
+						   struct isci_request *ireq)
+{
+	struct sci_base_state_machine *sm = &idev->sm;
+	enum sci_remote_device_states state = sm->current_state_id;
+	struct isci_port *iport = idev->owning_port;
+	enum sci_status status;
 
-	चयन (state) अणु
-	हाल SCI_DEV_INITIAL:
-	हाल SCI_DEV_STOPPED:
-	हाल SCI_DEV_STARTING:
-	हाल SCI_STP_DEV_IDLE:
-	हाल SCI_SMP_DEV_IDLE:
-	हाल SCI_DEV_FAILED:
-	हाल SCI_DEV_FINAL:
-	शेष:
+	switch (state) {
+	case SCI_DEV_INITIAL:
+	case SCI_DEV_STOPPED:
+	case SCI_DEV_STARTING:
+	case SCI_STP_DEV_IDLE:
+	case SCI_SMP_DEV_IDLE:
+	case SCI_DEV_FAILED:
+	case SCI_DEV_FINAL:
+	default:
 		dev_warn(scirdev_to_dev(idev), "%s: in wrong state: %s\n",
 			 __func__, dev_state_name(state));
-		वापस SCI_FAILURE_INVALID_STATE;
-	हाल SCI_DEV_READY:
-	हाल SCI_STP_DEV_AWAIT_RESET:
-	हाल SCI_DEV_RESETTING:
+		return SCI_FAILURE_INVALID_STATE;
+	case SCI_DEV_READY:
+	case SCI_STP_DEV_AWAIT_RESET:
+	case SCI_DEV_RESETTING:
 		status = common_complete_io(iport, idev, ireq);
-		अवरोध;
-	हाल SCI_STP_DEV_CMD:
-	हाल SCI_STP_DEV_NCQ:
-	हाल SCI_STP_DEV_NCQ_ERROR:
-	हाल SCI_STP_DEV_ATAPI_ERROR:
+		break;
+	case SCI_STP_DEV_CMD:
+	case SCI_STP_DEV_NCQ:
+	case SCI_STP_DEV_NCQ_ERROR:
+	case SCI_STP_DEV_ATAPI_ERROR:
 		status = common_complete_io(iport, idev, ireq);
-		अगर (status != SCI_SUCCESS)
-			अवरोध;
+		if (status != SCI_SUCCESS)
+			break;
 
-		अगर (ireq->sci_status == SCI_FAILURE_REMOTE_DEVICE_RESET_REQUIRED) अणु
+		if (ireq->sci_status == SCI_FAILURE_REMOTE_DEVICE_RESET_REQUIRED) {
 			/* This request causes hardware error, device needs to be Lun Reset.
-			 * So here we क्रमce the state machine to IDLE state so the rest IOs
+			 * So here we force the state machine to IDLE state so the rest IOs
 			 * can reach RNC state handler, these IOs will be completed by RNC with
 			 * status of "DEVICE_RESET_REQUIRED", instead of "INVALID STATE".
 			 */
 			sci_change_state(sm, SCI_STP_DEV_AWAIT_RESET);
-		पूर्ण अन्यथा अगर (idev->started_request_count == 0)
+		} else if (idev->started_request_count == 0)
 			sci_change_state(sm, SCI_STP_DEV_IDLE);
-		अवरोध;
-	हाल SCI_SMP_DEV_CMD:
+		break;
+	case SCI_SMP_DEV_CMD:
 		status = common_complete_io(iport, idev, ireq);
-		अगर (status != SCI_SUCCESS)
-			अवरोध;
+		if (status != SCI_SUCCESS)
+			break;
 		sci_change_state(sm, SCI_SMP_DEV_IDLE);
-		अवरोध;
-	हाल SCI_DEV_STOPPING:
+		break;
+	case SCI_DEV_STOPPING:
 		status = common_complete_io(iport, idev, ireq);
-		अगर (status != SCI_SUCCESS)
-			अवरोध;
+		if (status != SCI_SUCCESS)
+			break;
 
-		अगर (idev->started_request_count == 0)
-			sci_remote_node_context_deकाष्ठा(&idev->rnc,
-							 rnc_deकाष्ठा_करोne,
+		if (idev->started_request_count == 0)
+			sci_remote_node_context_destruct(&idev->rnc,
+							 rnc_destruct_done,
 							 idev);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (status != SCI_SUCCESS)
+	if (status != SCI_SUCCESS)
 		dev_err(scirdev_to_dev(idev),
 			"%s: Port:0x%p Device:0x%p Request:0x%p Status:0x%x "
 			"could not complete\n", __func__, iport,
 			idev, ireq, status);
-	अन्यथा
+	else
 		isci_put_device(idev);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल व्योम sci_remote_device_जारी_request(व्योम *dev)
-अणु
-	काष्ठा isci_remote_device *idev = dev;
+static void sci_remote_device_continue_request(void *dev)
+{
+	struct isci_remote_device *idev = dev;
 
-	/* we need to check अगर this request is still valid to जारी. */
-	अगर (idev->working_request)
-		sci_controller_जारी_io(idev->working_request);
-पूर्ण
+	/* we need to check if this request is still valid to continue. */
+	if (idev->working_request)
+		sci_controller_continue_io(idev->working_request);
+}
 
-क्रमागत sci_status sci_remote_device_start_task(काष्ठा isci_host *ihost,
-						  काष्ठा isci_remote_device *idev,
-						  काष्ठा isci_request *ireq)
-अणु
-	काष्ठा sci_base_state_machine *sm = &idev->sm;
-	क्रमागत sci_remote_device_states state = sm->current_state_id;
-	काष्ठा isci_port *iport = idev->owning_port;
-	क्रमागत sci_status status;
+enum sci_status sci_remote_device_start_task(struct isci_host *ihost,
+						  struct isci_remote_device *idev,
+						  struct isci_request *ireq)
+{
+	struct sci_base_state_machine *sm = &idev->sm;
+	enum sci_remote_device_states state = sm->current_state_id;
+	struct isci_port *iport = idev->owning_port;
+	enum sci_status status;
 
-	चयन (state) अणु
-	हाल SCI_DEV_INITIAL:
-	हाल SCI_DEV_STOPPED:
-	हाल SCI_DEV_STARTING:
-	हाल SCI_SMP_DEV_IDLE:
-	हाल SCI_SMP_DEV_CMD:
-	हाल SCI_DEV_STOPPING:
-	हाल SCI_DEV_FAILED:
-	हाल SCI_DEV_RESETTING:
-	हाल SCI_DEV_FINAL:
-	शेष:
+	switch (state) {
+	case SCI_DEV_INITIAL:
+	case SCI_DEV_STOPPED:
+	case SCI_DEV_STARTING:
+	case SCI_SMP_DEV_IDLE:
+	case SCI_SMP_DEV_CMD:
+	case SCI_DEV_STOPPING:
+	case SCI_DEV_FAILED:
+	case SCI_DEV_RESETTING:
+	case SCI_DEV_FINAL:
+	default:
 		dev_warn(scirdev_to_dev(idev), "%s: in wrong state: %s\n",
 			 __func__, dev_state_name(state));
-		वापस SCI_FAILURE_INVALID_STATE;
-	हाल SCI_STP_DEV_IDLE:
-	हाल SCI_STP_DEV_CMD:
-	हाल SCI_STP_DEV_NCQ:
-	हाल SCI_STP_DEV_NCQ_ERROR:
-	हाल SCI_STP_DEV_AWAIT_RESET:
+		return SCI_FAILURE_INVALID_STATE;
+	case SCI_STP_DEV_IDLE:
+	case SCI_STP_DEV_CMD:
+	case SCI_STP_DEV_NCQ:
+	case SCI_STP_DEV_NCQ_ERROR:
+	case SCI_STP_DEV_AWAIT_RESET:
 		status = sci_port_start_io(iport, idev, ireq);
-		अगर (status != SCI_SUCCESS)
-			वापस status;
+		if (status != SCI_SUCCESS)
+			return status;
 
 		status = sci_request_start(ireq);
-		अगर (status != SCI_SUCCESS)
-			जाओ out;
+		if (status != SCI_SUCCESS)
+			goto out;
 
 		/* Note: If the remote device state is not IDLE this will
 		 * replace the request that probably resulted in the task
@@ -914,9 +913,9 @@
 		sci_change_state(sm, SCI_STP_DEV_CMD);
 
 		/* The remote node context must cleanup the TCi to NCQ mapping
-		 * table.  The only way to करो this correctly is to either ग_लिखो
-		 * to the TLCR रेजिस्टर or to invalidate and repost the RNC. In
-		 * either हाल the remote node context state machine will take
+		 * table.  The only way to do this correctly is to either write
+		 * to the TLCR register or to invalidate and repost the RNC. In
+		 * either case the remote node context state machine will take
 		 * the correct action when the remote node context is suspended
 		 * and later resumed.
 		 */
@@ -924,37 +923,37 @@
 					  SCI_SW_SUSPEND_LINKHANG_DETECT);
 
 		status = sci_remote_node_context_start_task(&idev->rnc, ireq,
-				sci_remote_device_जारी_request, idev);
+				sci_remote_device_continue_request, idev);
 
 	out:
 		sci_remote_device_start_request(idev, ireq, status);
 		/* We need to let the controller start request handler know that
 		 * it can't post TC yet. We will provide a callback function to
-		 * post TC when RNC माला_लो resumed.
+		 * post TC when RNC gets resumed.
 		 */
-		वापस SCI_FAILURE_RESET_DEVICE_PARTIAL_SUCCESS;
-	हाल SCI_DEV_READY:
+		return SCI_FAILURE_RESET_DEVICE_PARTIAL_SUCCESS;
+	case SCI_DEV_READY:
 		status = sci_port_start_io(iport, idev, ireq);
-		अगर (status != SCI_SUCCESS)
-			वापस status;
+		if (status != SCI_SUCCESS)
+			return status;
 
 		/* Resume the RNC as needed: */
 		status = sci_remote_node_context_start_task(&idev->rnc, ireq,
-							    शून्य, शून्य);
-		अगर (status != SCI_SUCCESS)
-			अवरोध;
+							    NULL, NULL);
+		if (status != SCI_SUCCESS)
+			break;
 
 		status = sci_request_start(ireq);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	sci_remote_device_start_request(idev, ireq, status);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-व्योम sci_remote_device_post_request(काष्ठा isci_remote_device *idev, u32 request)
-अणु
-	काष्ठा isci_port *iport = idev->owning_port;
+void sci_remote_device_post_request(struct isci_remote_device *idev, u32 request)
+{
+	struct isci_port *iport = idev->owning_port;
 	u32 context;
 
 	context = request |
@@ -963,85 +962,85 @@
 		  idev->rnc.remote_node_index;
 
 	sci_controller_post_request(iport->owning_controller, context);
-पूर्ण
+}
 
 /* called once the remote node context has transisitioned to a
- * पढ़ोy state.  This is the indication that the remote device object can also
- * transition to पढ़ोy.
+ * ready state.  This is the indication that the remote device object can also
+ * transition to ready.
  */
-अटल व्योम remote_device_resume_करोne(व्योम *_dev)
-अणु
-	काष्ठा isci_remote_device *idev = _dev;
+static void remote_device_resume_done(void *_dev)
+{
+	struct isci_remote_device *idev = _dev;
 
-	अगर (is_remote_device_पढ़ोy(idev))
-		वापस;
+	if (is_remote_device_ready(idev))
+		return;
 
-	/* go 'ready' अगर we are not alपढ़ोy in a पढ़ोy state */
+	/* go 'ready' if we are not already in a ready state */
 	sci_change_state(&idev->sm, SCI_DEV_READY);
-पूर्ण
+}
 
-अटल व्योम sci_stp_remote_device_पढ़ोy_idle_substate_resume_complete_handler(व्योम *_dev)
-अणु
-	काष्ठा isci_remote_device *idev = _dev;
-	काष्ठा isci_host *ihost = idev->owning_port->owning_controller;
+static void sci_stp_remote_device_ready_idle_substate_resume_complete_handler(void *_dev)
+{
+	struct isci_remote_device *idev = _dev;
+	struct isci_host *ihost = idev->owning_port->owning_controller;
 
-	/* For NCQ operation we करो not issue a isci_remote_device_not_पढ़ोy().
-	 * As a result, aव्योम sending the पढ़ोy notअगरication.
+	/* For NCQ operation we do not issue a isci_remote_device_not_ready().
+	 * As a result, avoid sending the ready notification.
 	 */
-	अगर (idev->sm.previous_state_id != SCI_STP_DEV_NCQ)
-		isci_remote_device_पढ़ोy(ihost, idev);
-पूर्ण
+	if (idev->sm.previous_state_id != SCI_STP_DEV_NCQ)
+		isci_remote_device_ready(ihost, idev);
+}
 
-अटल व्योम sci_remote_device_initial_state_enter(काष्ठा sci_base_state_machine *sm)
-अणु
-	काष्ठा isci_remote_device *idev = container_of(sm, typeof(*idev), sm);
+static void sci_remote_device_initial_state_enter(struct sci_base_state_machine *sm)
+{
+	struct isci_remote_device *idev = container_of(sm, typeof(*idev), sm);
 
 	/* Initial state is a transitional state to the stopped state */
 	sci_change_state(&idev->sm, SCI_DEV_STOPPED);
-पूर्ण
+}
 
 /**
- * sci_remote_device_deकाष्ठा() - मुक्त remote node context and deकाष्ठा
- * @idev: This parameter specअगरies the remote device to be deकाष्ठाed.
+ * sci_remote_device_destruct() - free remote node context and destruct
+ * @idev: This parameter specifies the remote device to be destructed.
  *
  * Remote device objects are a limited resource.  As such, they must be
- * रक्षित.  Thus calls to स्थिरruct and deकाष्ठा are mutually exclusive and
- * non-reentrant. The वापस value shall indicate अगर the device was
- * successfully deकाष्ठाed or अगर some failure occurred. क्रमागत sci_status This value
- * is वापसed अगर the device is successfully deकाष्ठाed.
- * SCI_FAILURE_INVALID_REMOTE_DEVICE This value is वापसed अगर the supplied
+ * protected.  Thus calls to construct and destruct are mutually exclusive and
+ * non-reentrant. The return value shall indicate if the device was
+ * successfully destructed or if some failure occurred. enum sci_status This value
+ * is returned if the device is successfully destructed.
+ * SCI_FAILURE_INVALID_REMOTE_DEVICE This value is returned if the supplied
  * device isn't valid (e.g. it's already been destoryed, the handle isn't
  * valid, etc.).
  */
-अटल क्रमागत sci_status sci_remote_device_deकाष्ठा(काष्ठा isci_remote_device *idev)
-अणु
-	काष्ठा sci_base_state_machine *sm = &idev->sm;
-	क्रमागत sci_remote_device_states state = sm->current_state_id;
-	काष्ठा isci_host *ihost;
+static enum sci_status sci_remote_device_destruct(struct isci_remote_device *idev)
+{
+	struct sci_base_state_machine *sm = &idev->sm;
+	enum sci_remote_device_states state = sm->current_state_id;
+	struct isci_host *ihost;
 
-	अगर (state != SCI_DEV_STOPPED) अणु
+	if (state != SCI_DEV_STOPPED) {
 		dev_warn(scirdev_to_dev(idev), "%s: in wrong state: %s\n",
 			 __func__, dev_state_name(state));
-		वापस SCI_FAILURE_INVALID_STATE;
-	पूर्ण
+		return SCI_FAILURE_INVALID_STATE;
+	}
 
 	ihost = idev->owning_port->owning_controller;
-	sci_controller_मुक्त_remote_node_context(ihost, idev,
+	sci_controller_free_remote_node_context(ihost, idev,
 						     idev->rnc.remote_node_index);
 	idev->rnc.remote_node_index = SCIC_SDS_REMOTE_NODE_CONTEXT_INVALID_INDEX;
 	sci_change_state(sm, SCI_DEV_FINAL);
 
-	वापस SCI_SUCCESS;
-पूर्ण
+	return SCI_SUCCESS;
+}
 
 /**
- * isci_remote_device_deस्थिरruct() - This function मुक्तs an isci_remote_device.
- * @ihost: This parameter specअगरies the isci host object.
- * @idev: This parameter specअगरies the remote device to be मुक्तd.
+ * isci_remote_device_deconstruct() - This function frees an isci_remote_device.
+ * @ihost: This parameter specifies the isci host object.
+ * @idev: This parameter specifies the remote device to be freed.
  *
  */
-अटल व्योम isci_remote_device_deस्थिरruct(काष्ठा isci_host *ihost, काष्ठा isci_remote_device *idev)
-अणु
+static void isci_remote_device_deconstruct(struct isci_host *ihost, struct isci_remote_device *idev)
+{
 	dev_dbg(&ihost->pdev->dev,
 		"%s: isci_device = %p\n", __func__, idev);
 
@@ -1051,556 +1050,556 @@
 	 * io requests in process */
 	BUG_ON(idev->started_request_count > 0);
 
-	sci_remote_device_deकाष्ठा(idev);
+	sci_remote_device_destruct(idev);
 	list_del_init(&idev->node);
 	isci_put_device(idev);
-पूर्ण
+}
 
-अटल व्योम sci_remote_device_stopped_state_enter(काष्ठा sci_base_state_machine *sm)
-अणु
-	काष्ठा isci_remote_device *idev = container_of(sm, typeof(*idev), sm);
-	काष्ठा isci_host *ihost = idev->owning_port->owning_controller;
+static void sci_remote_device_stopped_state_enter(struct sci_base_state_machine *sm)
+{
+	struct isci_remote_device *idev = container_of(sm, typeof(*idev), sm);
+	struct isci_host *ihost = idev->owning_port->owning_controller;
 	u32 prev_state;
 
 	/* If we are entering from the stopping state let the SCI User know that
 	 * the stop operation has completed.
 	 */
 	prev_state = idev->sm.previous_state_id;
-	अगर (prev_state == SCI_DEV_STOPPING)
-		isci_remote_device_deस्थिरruct(ihost, idev);
+	if (prev_state == SCI_DEV_STOPPING)
+		isci_remote_device_deconstruct(ihost, idev);
 
 	sci_controller_remote_device_stopped(ihost, idev);
-पूर्ण
+}
 
-अटल व्योम sci_remote_device_starting_state_enter(काष्ठा sci_base_state_machine *sm)
-अणु
-	काष्ठा isci_remote_device *idev = container_of(sm, typeof(*idev), sm);
-	काष्ठा isci_host *ihost = idev->owning_port->owning_controller;
+static void sci_remote_device_starting_state_enter(struct sci_base_state_machine *sm)
+{
+	struct isci_remote_device *idev = container_of(sm, typeof(*idev), sm);
+	struct isci_host *ihost = idev->owning_port->owning_controller;
 
-	isci_remote_device_not_पढ़ोy(ihost, idev,
+	isci_remote_device_not_ready(ihost, idev,
 				     SCIC_REMOTE_DEVICE_NOT_READY_START_REQUESTED);
-पूर्ण
+}
 
-अटल व्योम sci_remote_device_पढ़ोy_state_enter(काष्ठा sci_base_state_machine *sm)
-अणु
-	काष्ठा isci_remote_device *idev = container_of(sm, typeof(*idev), sm);
-	काष्ठा isci_host *ihost = idev->owning_port->owning_controller;
-	काष्ठा करोमुख्य_device *dev = idev->करोमुख्य_dev;
+static void sci_remote_device_ready_state_enter(struct sci_base_state_machine *sm)
+{
+	struct isci_remote_device *idev = container_of(sm, typeof(*idev), sm);
+	struct isci_host *ihost = idev->owning_port->owning_controller;
+	struct domain_device *dev = idev->domain_dev;
 
-	अगर (dev->dev_type == SAS_SATA_DEV || (dev->tproto & SAS_PROTOCOL_SATA)) अणु
+	if (dev->dev_type == SAS_SATA_DEV || (dev->tproto & SAS_PROTOCOL_SATA)) {
 		sci_change_state(&idev->sm, SCI_STP_DEV_IDLE);
-	पूर्ण अन्यथा अगर (dev_is_expander(dev->dev_type)) अणु
+	} else if (dev_is_expander(dev->dev_type)) {
 		sci_change_state(&idev->sm, SCI_SMP_DEV_IDLE);
-	पूर्ण अन्यथा
-		isci_remote_device_पढ़ोy(ihost, idev);
-पूर्ण
+	} else
+		isci_remote_device_ready(ihost, idev);
+}
 
-अटल व्योम sci_remote_device_पढ़ोy_state_निकास(काष्ठा sci_base_state_machine *sm)
-अणु
-	काष्ठा isci_remote_device *idev = container_of(sm, typeof(*idev), sm);
-	काष्ठा करोमुख्य_device *dev = idev->करोमुख्य_dev;
+static void sci_remote_device_ready_state_exit(struct sci_base_state_machine *sm)
+{
+	struct isci_remote_device *idev = container_of(sm, typeof(*idev), sm);
+	struct domain_device *dev = idev->domain_dev;
 
-	अगर (dev->dev_type == SAS_END_DEVICE) अणु
-		काष्ठा isci_host *ihost = idev->owning_port->owning_controller;
+	if (dev->dev_type == SAS_END_DEVICE) {
+		struct isci_host *ihost = idev->owning_port->owning_controller;
 
-		isci_remote_device_not_पढ़ोy(ihost, idev,
+		isci_remote_device_not_ready(ihost, idev,
 					     SCIC_REMOTE_DEVICE_NOT_READY_STOP_REQUESTED);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम sci_remote_device_resetting_state_enter(काष्ठा sci_base_state_machine *sm)
-अणु
-	काष्ठा isci_remote_device *idev = container_of(sm, typeof(*idev), sm);
-	काष्ठा isci_host *ihost = idev->owning_port->owning_controller;
+static void sci_remote_device_resetting_state_enter(struct sci_base_state_machine *sm)
+{
+	struct isci_remote_device *idev = container_of(sm, typeof(*idev), sm);
+	struct isci_host *ihost = idev->owning_port->owning_controller;
 
 	dev_dbg(&ihost->pdev->dev,
 		"%s: isci_device = %p\n", __func__, idev);
 
 	sci_remote_device_suspend(idev, SCI_SW_SUSPEND_LINKHANG_DETECT);
-पूर्ण
+}
 
-अटल व्योम sci_remote_device_resetting_state_निकास(काष्ठा sci_base_state_machine *sm)
-अणु
-	काष्ठा isci_remote_device *idev = container_of(sm, typeof(*idev), sm);
-	काष्ठा isci_host *ihost = idev->owning_port->owning_controller;
+static void sci_remote_device_resetting_state_exit(struct sci_base_state_machine *sm)
+{
+	struct isci_remote_device *idev = container_of(sm, typeof(*idev), sm);
+	struct isci_host *ihost = idev->owning_port->owning_controller;
 
 	dev_dbg(&ihost->pdev->dev,
 		"%s: isci_device = %p\n", __func__, idev);
 
-	sci_remote_node_context_resume(&idev->rnc, शून्य, शून्य);
-पूर्ण
+	sci_remote_node_context_resume(&idev->rnc, NULL, NULL);
+}
 
-अटल व्योम sci_stp_remote_device_पढ़ोy_idle_substate_enter(काष्ठा sci_base_state_machine *sm)
-अणु
-	काष्ठा isci_remote_device *idev = container_of(sm, typeof(*idev), sm);
+static void sci_stp_remote_device_ready_idle_substate_enter(struct sci_base_state_machine *sm)
+{
+	struct isci_remote_device *idev = container_of(sm, typeof(*idev), sm);
 
-	idev->working_request = शून्य;
-	अगर (sci_remote_node_context_is_पढ़ोy(&idev->rnc)) अणु
+	idev->working_request = NULL;
+	if (sci_remote_node_context_is_ready(&idev->rnc)) {
 		/*
-		 * Since the RNC is पढ़ोy, it's alright to finish completion
-		 * processing (e.g. संकेत the remote device is पढ़ोy). */
-		sci_stp_remote_device_पढ़ोy_idle_substate_resume_complete_handler(idev);
-	पूर्ण अन्यथा अणु
+		 * Since the RNC is ready, it's alright to finish completion
+		 * processing (e.g. signal the remote device is ready). */
+		sci_stp_remote_device_ready_idle_substate_resume_complete_handler(idev);
+	} else {
 		sci_remote_node_context_resume(&idev->rnc,
-			sci_stp_remote_device_पढ़ोy_idle_substate_resume_complete_handler,
+			sci_stp_remote_device_ready_idle_substate_resume_complete_handler,
 			idev);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम sci_stp_remote_device_पढ़ोy_cmd_substate_enter(काष्ठा sci_base_state_machine *sm)
-अणु
-	काष्ठा isci_remote_device *idev = container_of(sm, typeof(*idev), sm);
-	काष्ठा isci_host *ihost = idev->owning_port->owning_controller;
+static void sci_stp_remote_device_ready_cmd_substate_enter(struct sci_base_state_machine *sm)
+{
+	struct isci_remote_device *idev = container_of(sm, typeof(*idev), sm);
+	struct isci_host *ihost = idev->owning_port->owning_controller;
 
-	BUG_ON(idev->working_request == शून्य);
+	BUG_ON(idev->working_request == NULL);
 
-	isci_remote_device_not_पढ़ोy(ihost, idev,
+	isci_remote_device_not_ready(ihost, idev,
 				     SCIC_REMOTE_DEVICE_NOT_READY_SATA_REQUEST_STARTED);
-पूर्ण
+}
 
-अटल व्योम sci_stp_remote_device_पढ़ोy_ncq_error_substate_enter(काष्ठा sci_base_state_machine *sm)
-अणु
-	काष्ठा isci_remote_device *idev = container_of(sm, typeof(*idev), sm);
-	काष्ठा isci_host *ihost = idev->owning_port->owning_controller;
+static void sci_stp_remote_device_ready_ncq_error_substate_enter(struct sci_base_state_machine *sm)
+{
+	struct isci_remote_device *idev = container_of(sm, typeof(*idev), sm);
+	struct isci_host *ihost = idev->owning_port->owning_controller;
 
-	अगर (idev->not_पढ़ोy_reason == SCIC_REMOTE_DEVICE_NOT_READY_SATA_SDB_ERROR_FIS_RECEIVED)
-		isci_remote_device_not_पढ़ोy(ihost, idev,
-					     idev->not_पढ़ोy_reason);
-पूर्ण
+	if (idev->not_ready_reason == SCIC_REMOTE_DEVICE_NOT_READY_SATA_SDB_ERROR_FIS_RECEIVED)
+		isci_remote_device_not_ready(ihost, idev,
+					     idev->not_ready_reason);
+}
 
-अटल व्योम sci_smp_remote_device_पढ़ोy_idle_substate_enter(काष्ठा sci_base_state_machine *sm)
-अणु
-	काष्ठा isci_remote_device *idev = container_of(sm, typeof(*idev), sm);
-	काष्ठा isci_host *ihost = idev->owning_port->owning_controller;
+static void sci_smp_remote_device_ready_idle_substate_enter(struct sci_base_state_machine *sm)
+{
+	struct isci_remote_device *idev = container_of(sm, typeof(*idev), sm);
+	struct isci_host *ihost = idev->owning_port->owning_controller;
 
-	isci_remote_device_पढ़ोy(ihost, idev);
-पूर्ण
+	isci_remote_device_ready(ihost, idev);
+}
 
-अटल व्योम sci_smp_remote_device_पढ़ोy_cmd_substate_enter(काष्ठा sci_base_state_machine *sm)
-अणु
-	काष्ठा isci_remote_device *idev = container_of(sm, typeof(*idev), sm);
-	काष्ठा isci_host *ihost = idev->owning_port->owning_controller;
+static void sci_smp_remote_device_ready_cmd_substate_enter(struct sci_base_state_machine *sm)
+{
+	struct isci_remote_device *idev = container_of(sm, typeof(*idev), sm);
+	struct isci_host *ihost = idev->owning_port->owning_controller;
 
-	BUG_ON(idev->working_request == शून्य);
+	BUG_ON(idev->working_request == NULL);
 
-	isci_remote_device_not_पढ़ोy(ihost, idev,
+	isci_remote_device_not_ready(ihost, idev,
 				     SCIC_REMOTE_DEVICE_NOT_READY_SMP_REQUEST_STARTED);
-पूर्ण
+}
 
-अटल व्योम sci_smp_remote_device_पढ़ोy_cmd_substate_निकास(काष्ठा sci_base_state_machine *sm)
-अणु
-	काष्ठा isci_remote_device *idev = container_of(sm, typeof(*idev), sm);
+static void sci_smp_remote_device_ready_cmd_substate_exit(struct sci_base_state_machine *sm)
+{
+	struct isci_remote_device *idev = container_of(sm, typeof(*idev), sm);
 
-	idev->working_request = शून्य;
-पूर्ण
+	idev->working_request = NULL;
+}
 
-अटल स्थिर काष्ठा sci_base_state sci_remote_device_state_table[] = अणु
-	[SCI_DEV_INITIAL] = अणु
+static const struct sci_base_state sci_remote_device_state_table[] = {
+	[SCI_DEV_INITIAL] = {
 		.enter_state = sci_remote_device_initial_state_enter,
-	पूर्ण,
-	[SCI_DEV_STOPPED] = अणु
+	},
+	[SCI_DEV_STOPPED] = {
 		.enter_state = sci_remote_device_stopped_state_enter,
-	पूर्ण,
-	[SCI_DEV_STARTING] = अणु
+	},
+	[SCI_DEV_STARTING] = {
 		.enter_state = sci_remote_device_starting_state_enter,
-	पूर्ण,
-	[SCI_DEV_READY] = अणु
-		.enter_state = sci_remote_device_पढ़ोy_state_enter,
-		.निकास_state  = sci_remote_device_पढ़ोy_state_निकास
-	पूर्ण,
-	[SCI_STP_DEV_IDLE] = अणु
-		.enter_state = sci_stp_remote_device_पढ़ोy_idle_substate_enter,
-	पूर्ण,
-	[SCI_STP_DEV_CMD] = अणु
-		.enter_state = sci_stp_remote_device_पढ़ोy_cmd_substate_enter,
-	पूर्ण,
-	[SCI_STP_DEV_NCQ] = अणु पूर्ण,
-	[SCI_STP_DEV_NCQ_ERROR] = अणु
-		.enter_state = sci_stp_remote_device_पढ़ोy_ncq_error_substate_enter,
-	पूर्ण,
-	[SCI_STP_DEV_ATAPI_ERROR] = अणु पूर्ण,
-	[SCI_STP_DEV_AWAIT_RESET] = अणु पूर्ण,
-	[SCI_SMP_DEV_IDLE] = अणु
-		.enter_state = sci_smp_remote_device_पढ़ोy_idle_substate_enter,
-	पूर्ण,
-	[SCI_SMP_DEV_CMD] = अणु
-		.enter_state = sci_smp_remote_device_पढ़ोy_cmd_substate_enter,
-		.निकास_state  = sci_smp_remote_device_पढ़ोy_cmd_substate_निकास,
-	पूर्ण,
-	[SCI_DEV_STOPPING] = अणु पूर्ण,
-	[SCI_DEV_FAILED] = अणु पूर्ण,
-	[SCI_DEV_RESETTING] = अणु
+	},
+	[SCI_DEV_READY] = {
+		.enter_state = sci_remote_device_ready_state_enter,
+		.exit_state  = sci_remote_device_ready_state_exit
+	},
+	[SCI_STP_DEV_IDLE] = {
+		.enter_state = sci_stp_remote_device_ready_idle_substate_enter,
+	},
+	[SCI_STP_DEV_CMD] = {
+		.enter_state = sci_stp_remote_device_ready_cmd_substate_enter,
+	},
+	[SCI_STP_DEV_NCQ] = { },
+	[SCI_STP_DEV_NCQ_ERROR] = {
+		.enter_state = sci_stp_remote_device_ready_ncq_error_substate_enter,
+	},
+	[SCI_STP_DEV_ATAPI_ERROR] = { },
+	[SCI_STP_DEV_AWAIT_RESET] = { },
+	[SCI_SMP_DEV_IDLE] = {
+		.enter_state = sci_smp_remote_device_ready_idle_substate_enter,
+	},
+	[SCI_SMP_DEV_CMD] = {
+		.enter_state = sci_smp_remote_device_ready_cmd_substate_enter,
+		.exit_state  = sci_smp_remote_device_ready_cmd_substate_exit,
+	},
+	[SCI_DEV_STOPPING] = { },
+	[SCI_DEV_FAILED] = { },
+	[SCI_DEV_RESETTING] = {
 		.enter_state = sci_remote_device_resetting_state_enter,
-		.निकास_state  = sci_remote_device_resetting_state_निकास
-	पूर्ण,
-	[SCI_DEV_FINAL] = अणु पूर्ण,
-पूर्ण;
+		.exit_state  = sci_remote_device_resetting_state_exit
+	},
+	[SCI_DEV_FINAL] = { },
+};
 
 /**
- * sci_remote_device_स्थिरruct() - common स्थिरruction
+ * sci_remote_device_construct() - common construction
  * @iport: SAS/SATA port through which this device is accessed.
- * @idev: remote device to स्थिरruct
+ * @idev: remote device to construct
  *
- * This routine just perक्रमms benign initialization and करोes not
+ * This routine just performs benign initialization and does not
  * allocate the remote_node_context which is left to
- * sci_remote_device_[de]a_स्थिरruct().  sci_remote_device_deकाष्ठा()
- * मुक्तs the remote_node_context(s) क्रम the device.
+ * sci_remote_device_[de]a_construct().  sci_remote_device_destruct()
+ * frees the remote_node_context(s) for the device.
  */
-अटल व्योम sci_remote_device_स्थिरruct(काष्ठा isci_port *iport,
-				  काष्ठा isci_remote_device *idev)
-अणु
+static void sci_remote_device_construct(struct isci_port *iport,
+				  struct isci_remote_device *idev)
+{
 	idev->owning_port = iport;
 	idev->started_request_count = 0;
 
 	sci_init_sm(&idev->sm, sci_remote_device_state_table, SCI_DEV_INITIAL);
 
-	sci_remote_node_context_स्थिरruct(&idev->rnc,
+	sci_remote_node_context_construct(&idev->rnc,
 					       SCIC_SDS_REMOTE_NODE_CONTEXT_INVALID_INDEX);
-पूर्ण
+}
 
 /*
- * sci_remote_device_da_स्थिरruct() - स्थिरruct direct attached device.
+ * sci_remote_device_da_construct() - construct direct attached device.
  *
- * The inक्रमmation (e.g. IAF, Signature FIS, etc.) necessary to build
+ * The information (e.g. IAF, Signature FIS, etc.) necessary to build
  * the device is known to the SCI Core since it is contained in the
  * sci_phy object.  Remote node context(s) is/are a global resource
- * allocated by this routine, मुक्तd by sci_remote_device_deकाष्ठा().
+ * allocated by this routine, freed by sci_remote_device_destruct().
  *
  * Returns:
- * SCI_FAILURE_DEVICE_EXISTS - device has alपढ़ोy been स्थिरructed.
+ * SCI_FAILURE_DEVICE_EXISTS - device has already been constructed.
  * SCI_FAILURE_UNSUPPORTED_PROTOCOL - e.g. sas device attached to
  * sata-only controller instance.
  * SCI_FAILURE_INSUFFICIENT_RESOURCES - remote node contexts exhausted.
  */
-अटल क्रमागत sci_status sci_remote_device_da_स्थिरruct(काष्ठा isci_port *iport,
-						       काष्ठा isci_remote_device *idev)
-अणु
-	क्रमागत sci_status status;
-	काष्ठा sci_port_properties properties;
+static enum sci_status sci_remote_device_da_construct(struct isci_port *iport,
+						       struct isci_remote_device *idev)
+{
+	enum sci_status status;
+	struct sci_port_properties properties;
 
-	sci_remote_device_स्थिरruct(iport, idev);
+	sci_remote_device_construct(iport, idev);
 
 	sci_port_get_properties(iport, &properties);
-	/* Get accurate port width from port's phy mask क्रम a DA device. */
+	/* Get accurate port width from port's phy mask for a DA device. */
 	idev->device_port_width = hweight32(properties.phy_mask);
 
 	status = sci_controller_allocate_remote_node_context(iport->owning_controller,
 							     idev,
 							     &idev->rnc.remote_node_index);
 
-	अगर (status != SCI_SUCCESS)
-		वापस status;
+	if (status != SCI_SUCCESS)
+		return status;
 
 	idev->connection_rate = sci_port_get_max_allowed_speed(iport);
 
-	वापस SCI_SUCCESS;
-पूर्ण
+	return SCI_SUCCESS;
+}
 
 /*
- * sci_remote_device_ea_स्थिरruct() - स्थिरruct expander attached device
+ * sci_remote_device_ea_construct() - construct expander attached device
  *
  * Remote node context(s) is/are a global resource allocated by this
- * routine, मुक्तd by sci_remote_device_deकाष्ठा().
+ * routine, freed by sci_remote_device_destruct().
  *
  * Returns:
- * SCI_FAILURE_DEVICE_EXISTS - device has alपढ़ोy been स्थिरructed.
+ * SCI_FAILURE_DEVICE_EXISTS - device has already been constructed.
  * SCI_FAILURE_UNSUPPORTED_PROTOCOL - e.g. sas device attached to
  * sata-only controller instance.
  * SCI_FAILURE_INSUFFICIENT_RESOURCES - remote node contexts exhausted.
  */
-अटल क्रमागत sci_status sci_remote_device_ea_स्थिरruct(काष्ठा isci_port *iport,
-						       काष्ठा isci_remote_device *idev)
-अणु
-	काष्ठा करोमुख्य_device *dev = idev->करोमुख्य_dev;
-	क्रमागत sci_status status;
+static enum sci_status sci_remote_device_ea_construct(struct isci_port *iport,
+						       struct isci_remote_device *idev)
+{
+	struct domain_device *dev = idev->domain_dev;
+	enum sci_status status;
 
-	sci_remote_device_स्थिरruct(iport, idev);
+	sci_remote_device_construct(iport, idev);
 
 	status = sci_controller_allocate_remote_node_context(iport->owning_controller,
 								  idev,
 								  &idev->rnc.remote_node_index);
-	अगर (status != SCI_SUCCESS)
-		वापस status;
+	if (status != SCI_SUCCESS)
+		return status;
 
 	/* For SAS-2 the physical link rate is actually a logical link
-	 * rate that incorporates multiplexing.  The SCU करोesn't
-	 * incorporate multiplexing and क्रम the purposes of the
+	 * rate that incorporates multiplexing.  The SCU doesn't
+	 * incorporate multiplexing and for the purposes of the
 	 * connection the logical link rate is that same as the
 	 * physical.  Furthermore, the SAS-2 and SAS-1.1 fields overlay
-	 * one another, so this code works क्रम both situations.
+	 * one another, so this code works for both situations.
 	 */
 	idev->connection_rate = min_t(u16, sci_port_get_max_allowed_speed(iport),
 					 dev->linkrate);
 
-	/* / @toकरो Should I assign the port width by पढ़ोing all of the phys on the port? */
+	/* / @todo Should I assign the port width by reading all of the phys on the port? */
 	idev->device_port_width = 1;
 
-	वापस SCI_SUCCESS;
-पूर्ण
+	return SCI_SUCCESS;
+}
 
-क्रमागत sci_status sci_remote_device_resume(
-	काष्ठा isci_remote_device *idev,
+enum sci_status sci_remote_device_resume(
+	struct isci_remote_device *idev,
 	scics_sds_remote_node_context_callback cb_fn,
-	व्योम *cb_p)
-अणु
-	क्रमागत sci_status status;
+	void *cb_p)
+{
+	enum sci_status status;
 
 	status = sci_remote_node_context_resume(&idev->rnc, cb_fn, cb_p);
-	अगर (status != SCI_SUCCESS)
+	if (status != SCI_SUCCESS)
 		dev_dbg(scirdev_to_dev(idev), "%s: failed to resume: %d\n",
 			__func__, status);
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल व्योम isci_remote_device_resume_from_पात_complete(व्योम *cbparam)
-अणु
-	काष्ठा isci_remote_device *idev = cbparam;
-	काष्ठा isci_host *ihost = idev->owning_port->owning_controller;
-	scics_sds_remote_node_context_callback पात_resume_cb =
-		idev->पात_resume_cb;
+static void isci_remote_device_resume_from_abort_complete(void *cbparam)
+{
+	struct isci_remote_device *idev = cbparam;
+	struct isci_host *ihost = idev->owning_port->owning_controller;
+	scics_sds_remote_node_context_callback abort_resume_cb =
+		idev->abort_resume_cb;
 
 	dev_dbg(scirdev_to_dev(idev), "%s: passing-along resume: %p\n",
-		__func__, पात_resume_cb);
+		__func__, abort_resume_cb);
 
-	अगर (पात_resume_cb != शून्य) अणु
-		idev->पात_resume_cb = शून्य;
-		पात_resume_cb(idev->पात_resume_cbparam);
-	पूर्ण
+	if (abort_resume_cb != NULL) {
+		idev->abort_resume_cb = NULL;
+		abort_resume_cb(idev->abort_resume_cbparam);
+	}
 	clear_bit(IDEV_ABORT_PATH_RESUME_PENDING, &idev->flags);
 	wake_up(&ihost->eventq);
-पूर्ण
+}
 
-अटल bool isci_remote_device_test_resume_करोne(
-	काष्ठा isci_host *ihost,
-	काष्ठा isci_remote_device *idev)
-अणु
-	अचिन्हित दीर्घ flags;
-	bool करोne;
+static bool isci_remote_device_test_resume_done(
+	struct isci_host *ihost,
+	struct isci_remote_device *idev)
+{
+	unsigned long flags;
+	bool done;
 
 	spin_lock_irqsave(&ihost->scic_lock, flags);
-	करोne = !test_bit(IDEV_ABORT_PATH_RESUME_PENDING, &idev->flags)
+	done = !test_bit(IDEV_ABORT_PATH_RESUME_PENDING, &idev->flags)
 		|| test_bit(IDEV_STOP_PENDING, &idev->flags)
 		|| sci_remote_node_context_is_being_destroyed(&idev->rnc);
 	spin_unlock_irqrestore(&ihost->scic_lock, flags);
 
-	वापस करोne;
-पूर्ण
+	return done;
+}
 
-अटल व्योम isci_remote_device_रुको_क्रम_resume_from_पात(
-	काष्ठा isci_host *ihost,
-	काष्ठा isci_remote_device *idev)
-अणु
+static void isci_remote_device_wait_for_resume_from_abort(
+	struct isci_host *ihost,
+	struct isci_remote_device *idev)
+{
 	dev_dbg(&ihost->pdev->dev, "%s: starting resume wait: %p\n",
 		 __func__, idev);
 
-	#घोषणा MAX_RESUME_MSECS 10000
-	अगर (!रुको_event_समयout(ihost->eventq,
-				isci_remote_device_test_resume_करोne(ihost, idev),
-				msecs_to_jअगरfies(MAX_RESUME_MSECS))) अणु
+	#define MAX_RESUME_MSECS 10000
+	if (!wait_event_timeout(ihost->eventq,
+				isci_remote_device_test_resume_done(ihost, idev),
+				msecs_to_jiffies(MAX_RESUME_MSECS))) {
 
 		dev_warn(&ihost->pdev->dev, "%s: #### Timeout waiting for "
 			 "resume: %p\n", __func__, idev);
-	पूर्ण
+	}
 	clear_bit(IDEV_ABORT_PATH_RESUME_PENDING, &idev->flags);
 
 	dev_dbg(&ihost->pdev->dev, "%s: resume wait done: %p\n",
 		 __func__, idev);
-पूर्ण
+}
 
-क्रमागत sci_status isci_remote_device_resume_from_पात(
-	काष्ठा isci_host *ihost,
-	काष्ठा isci_remote_device *idev)
-अणु
-	अचिन्हित दीर्घ flags;
-	क्रमागत sci_status status = SCI_SUCCESS;
-	पूर्णांक destroyed;
+enum sci_status isci_remote_device_resume_from_abort(
+	struct isci_host *ihost,
+	struct isci_remote_device *idev)
+{
+	unsigned long flags;
+	enum sci_status status = SCI_SUCCESS;
+	int destroyed;
 
 	spin_lock_irqsave(&ihost->scic_lock, flags);
-	/* Preserve any current resume callbacks, क्रम instance from other
+	/* Preserve any current resume callbacks, for instance from other
 	 * resumptions.
 	 */
-	idev->पात_resume_cb = idev->rnc.user_callback;
-	idev->पात_resume_cbparam = idev->rnc.user_cookie;
+	idev->abort_resume_cb = idev->rnc.user_callback;
+	idev->abort_resume_cbparam = idev->rnc.user_cookie;
 	set_bit(IDEV_ABORT_PATH_RESUME_PENDING, &idev->flags);
 	clear_bit(IDEV_ABORT_PATH_ACTIVE, &idev->flags);
 	destroyed = sci_remote_node_context_is_being_destroyed(&idev->rnc);
-	अगर (!destroyed)
+	if (!destroyed)
 		status = sci_remote_device_resume(
-			idev, isci_remote_device_resume_from_पात_complete,
+			idev, isci_remote_device_resume_from_abort_complete,
 			idev);
 	spin_unlock_irqrestore(&ihost->scic_lock, flags);
-	अगर (!destroyed && (status == SCI_SUCCESS))
-		isci_remote_device_रुको_क्रम_resume_from_पात(ihost, idev);
-	अन्यथा
+	if (!destroyed && (status == SCI_SUCCESS))
+		isci_remote_device_wait_for_resume_from_abort(ihost, idev);
+	else
 		clear_bit(IDEV_ABORT_PATH_RESUME_PENDING, &idev->flags);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /**
  * sci_remote_device_start() - This method will start the supplied remote
  *    device.  This method enables normal IO requests to flow through to the
  *    remote device.
- * @idev: This parameter specअगरies the device to be started.
- * @समयout: This parameter specअगरies the number of milliseconds in which the
+ * @idev: This parameter specifies the device to be started.
+ * @timeout: This parameter specifies the number of milliseconds in which the
  *    start operation should complete.
  *
  * An indication of whether the device was successfully started. SCI_SUCCESS
- * This value is वापसed अगर the device was successfully started.
- * SCI_FAILURE_INVALID_PHY This value is वापसed अगर the user attempts to start
+ * This value is returned if the device was successfully started.
+ * SCI_FAILURE_INVALID_PHY This value is returned if the user attempts to start
  * the device when there have been no phys added to it.
  */
-अटल क्रमागत sci_status sci_remote_device_start(काष्ठा isci_remote_device *idev,
-					       u32 समयout)
-अणु
-	काष्ठा sci_base_state_machine *sm = &idev->sm;
-	क्रमागत sci_remote_device_states state = sm->current_state_id;
-	क्रमागत sci_status status;
+static enum sci_status sci_remote_device_start(struct isci_remote_device *idev,
+					       u32 timeout)
+{
+	struct sci_base_state_machine *sm = &idev->sm;
+	enum sci_remote_device_states state = sm->current_state_id;
+	enum sci_status status;
 
-	अगर (state != SCI_DEV_STOPPED) अणु
+	if (state != SCI_DEV_STOPPED) {
 		dev_warn(scirdev_to_dev(idev), "%s: in wrong state: %s\n",
 			 __func__, dev_state_name(state));
-		वापस SCI_FAILURE_INVALID_STATE;
-	पूर्ण
+		return SCI_FAILURE_INVALID_STATE;
+	}
 
-	status = sci_remote_device_resume(idev, remote_device_resume_करोne,
+	status = sci_remote_device_resume(idev, remote_device_resume_done,
 					  idev);
-	अगर (status != SCI_SUCCESS)
-		वापस status;
+	if (status != SCI_SUCCESS)
+		return status;
 
 	sci_change_state(sm, SCI_DEV_STARTING);
 
-	वापस SCI_SUCCESS;
-पूर्ण
+	return SCI_SUCCESS;
+}
 
-अटल क्रमागत sci_status isci_remote_device_स्थिरruct(काष्ठा isci_port *iport,
-						    काष्ठा isci_remote_device *idev)
-अणु
-	काष्ठा isci_host *ihost = iport->isci_host;
-	काष्ठा करोमुख्य_device *dev = idev->करोमुख्य_dev;
-	क्रमागत sci_status status;
+static enum sci_status isci_remote_device_construct(struct isci_port *iport,
+						    struct isci_remote_device *idev)
+{
+	struct isci_host *ihost = iport->isci_host;
+	struct domain_device *dev = idev->domain_dev;
+	enum sci_status status;
 
-	अगर (dev->parent && dev_is_expander(dev->parent->dev_type))
-		status = sci_remote_device_ea_स्थिरruct(iport, idev);
-	अन्यथा
-		status = sci_remote_device_da_स्थिरruct(iport, idev);
+	if (dev->parent && dev_is_expander(dev->parent->dev_type))
+		status = sci_remote_device_ea_construct(iport, idev);
+	else
+		status = sci_remote_device_da_construct(iport, idev);
 
-	अगर (status != SCI_SUCCESS) अणु
+	if (status != SCI_SUCCESS) {
 		dev_dbg(&ihost->pdev->dev, "%s: construct failed: %d\n",
 			__func__, status);
 
-		वापस status;
-	पूर्ण
+		return status;
+	}
 
 	/* start the device. */
 	status = sci_remote_device_start(idev, ISCI_REMOTE_DEVICE_START_TIMEOUT);
 
-	अगर (status != SCI_SUCCESS)
+	if (status != SCI_SUCCESS)
 		dev_warn(&ihost->pdev->dev, "remote device start failed: %d\n",
 			 status);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /**
  * isci_remote_device_alloc()
  * This function builds the isci_remote_device when a libsas dev_found message
  *    is received.
- * @ihost: This parameter specअगरies the isci host object.
- * @iport: This parameter specअगरies the isci_port connected to this device.
+ * @ihost: This parameter specifies the isci host object.
+ * @iport: This parameter specifies the isci_port connected to this device.
  *
- * poपूर्णांकer to new isci_remote_device.
+ * pointer to new isci_remote_device.
  */
-अटल काष्ठा isci_remote_device *
-isci_remote_device_alloc(काष्ठा isci_host *ihost, काष्ठा isci_port *iport)
-अणु
-	काष्ठा isci_remote_device *idev;
-	पूर्णांक i;
+static struct isci_remote_device *
+isci_remote_device_alloc(struct isci_host *ihost, struct isci_port *iport)
+{
+	struct isci_remote_device *idev;
+	int i;
 
-	क्रम (i = 0; i < SCI_MAX_REMOTE_DEVICES; i++) अणु
+	for (i = 0; i < SCI_MAX_REMOTE_DEVICES; i++) {
 		idev = &ihost->devices[i];
-		अगर (!test_and_set_bit(IDEV_ALLOCATED, &idev->flags))
-			अवरोध;
-	पूर्ण
+		if (!test_and_set_bit(IDEV_ALLOCATED, &idev->flags))
+			break;
+	}
 
-	अगर (i >= SCI_MAX_REMOTE_DEVICES) अणु
+	if (i >= SCI_MAX_REMOTE_DEVICES) {
 		dev_warn(&ihost->pdev->dev, "%s: failed\n", __func__);
-		वापस शून्य;
-	पूर्ण
-	अगर (WARN_ONCE(!list_empty(&idev->node), "found non-idle remote device\n"))
-		वापस शून्य;
+		return NULL;
+	}
+	if (WARN_ONCE(!list_empty(&idev->node), "found non-idle remote device\n"))
+		return NULL;
 
-	वापस idev;
-पूर्ण
+	return idev;
+}
 
-व्योम isci_remote_device_release(काष्ठा kref *kref)
-अणु
-	काष्ठा isci_remote_device *idev = container_of(kref, typeof(*idev), kref);
-	काष्ठा isci_host *ihost = idev->isci_port->isci_host;
+void isci_remote_device_release(struct kref *kref)
+{
+	struct isci_remote_device *idev = container_of(kref, typeof(*idev), kref);
+	struct isci_host *ihost = idev->isci_port->isci_host;
 
-	idev->करोमुख्य_dev = शून्य;
-	idev->isci_port = शून्य;
+	idev->domain_dev = NULL;
+	idev->isci_port = NULL;
 	clear_bit(IDEV_START_PENDING, &idev->flags);
 	clear_bit(IDEV_STOP_PENDING, &idev->flags);
 	clear_bit(IDEV_IO_READY, &idev->flags);
 	clear_bit(IDEV_GONE, &idev->flags);
-	smp_mb__beक्रमe_atomic();
+	smp_mb__before_atomic();
 	clear_bit(IDEV_ALLOCATED, &idev->flags);
 	wake_up(&ihost->eventq);
-पूर्ण
+}
 
 /**
- * isci_remote_device_stop() - This function is called पूर्णांकernally to stop the
+ * isci_remote_device_stop() - This function is called internally to stop the
  *    remote device.
- * @ihost: This parameter specअगरies the isci host object.
- * @idev: This parameter specअगरies the remote device.
+ * @ihost: This parameter specifies the isci host object.
+ * @idev: This parameter specifies the remote device.
  *
  * The status of the ihost request to stop.
  */
-क्रमागत sci_status isci_remote_device_stop(काष्ठा isci_host *ihost, काष्ठा isci_remote_device *idev)
-अणु
-	क्रमागत sci_status status;
-	अचिन्हित दीर्घ flags;
+enum sci_status isci_remote_device_stop(struct isci_host *ihost, struct isci_remote_device *idev)
+{
+	enum sci_status status;
+	unsigned long flags;
 
 	dev_dbg(&ihost->pdev->dev,
 		"%s: isci_device = %p\n", __func__, idev);
 
 	spin_lock_irqsave(&ihost->scic_lock, flags);
-	idev->करोमुख्य_dev->lldd_dev = शून्य; /* disable new lookups */
+	idev->domain_dev->lldd_dev = NULL; /* disable new lookups */
 	set_bit(IDEV_GONE, &idev->flags);
 
 	set_bit(IDEV_STOP_PENDING, &idev->flags);
 	status = sci_remote_device_stop(idev, 50);
 	spin_unlock_irqrestore(&ihost->scic_lock, flags);
 
-	/* Wait क्रम the stop complete callback. */
-	अगर (WARN_ONCE(status != SCI_SUCCESS, "failed to stop device\n"))
-		/* nothing to रुको क्रम */;
-	अन्यथा
-		रुको_क्रम_device_stop(ihost, idev);
+	/* Wait for the stop complete callback. */
+	if (WARN_ONCE(status != SCI_SUCCESS, "failed to stop device\n"))
+		/* nothing to wait for */;
+	else
+		wait_for_device_stop(ihost, idev);
 
 	dev_dbg(&ihost->pdev->dev,
 		"%s: isci_device = %p, waiting done.\n", __func__, idev);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /**
- * isci_remote_device_gone() - This function is called by libsas when a करोमुख्य
- *    device is हटाओd.
- * @dev: This parameter specअगरies the libsas करोमुख्य device.
+ * isci_remote_device_gone() - This function is called by libsas when a domain
+ *    device is removed.
+ * @dev: This parameter specifies the libsas domain device.
  */
-व्योम isci_remote_device_gone(काष्ठा करोमुख्य_device *dev)
-अणु
-	काष्ठा isci_host *ihost = dev_to_ihost(dev);
-	काष्ठा isci_remote_device *idev = dev->lldd_dev;
+void isci_remote_device_gone(struct domain_device *dev)
+{
+	struct isci_host *ihost = dev_to_ihost(dev);
+	struct isci_remote_device *idev = dev->lldd_dev;
 
 	dev_dbg(&ihost->pdev->dev,
 		"%s: domain_device = %p, isci_device = %p, isci_port = %p\n",
 		__func__, dev, idev, idev->isci_port);
 
 	isci_remote_device_stop(ihost, idev);
-पूर्ण
+}
 
 
 /**
@@ -1608,121 +1607,121 @@ isci_remote_device_alloc(काष्ठा isci_host *ihost, काष्ठा
  *    device is discovered. A remote device object is created and started. the
  *    function then sleeps until the sci core device started message is
  *    received.
- * @dev: This parameter specअगरies the libsas करोमुख्य device.
+ * @dev: This parameter specifies the libsas domain device.
  *
  * status, zero indicates success.
  */
-पूर्णांक isci_remote_device_found(काष्ठा करोमुख्य_device *dev)
-अणु
-	काष्ठा isci_host *isci_host = dev_to_ihost(dev);
-	काष्ठा isci_port *isci_port = dev->port->lldd_port;
-	काष्ठा isci_remote_device *isci_device;
-	क्रमागत sci_status status;
+int isci_remote_device_found(struct domain_device *dev)
+{
+	struct isci_host *isci_host = dev_to_ihost(dev);
+	struct isci_port *isci_port = dev->port->lldd_port;
+	struct isci_remote_device *isci_device;
+	enum sci_status status;
 
 	dev_dbg(&isci_host->pdev->dev,
 		"%s: domain_device = %p\n", __func__, dev);
 
-	अगर (!isci_port)
-		वापस -ENODEV;
+	if (!isci_port)
+		return -ENODEV;
 
 	isci_device = isci_remote_device_alloc(isci_host, isci_port);
-	अगर (!isci_device)
-		वापस -ENODEV;
+	if (!isci_device)
+		return -ENODEV;
 
 	kref_init(&isci_device->kref);
 	INIT_LIST_HEAD(&isci_device->node);
 
 	spin_lock_irq(&isci_host->scic_lock);
-	isci_device->करोमुख्य_dev = dev;
+	isci_device->domain_dev = dev;
 	isci_device->isci_port = isci_port;
 	list_add_tail(&isci_device->node, &isci_port->remote_dev_list);
 
 	set_bit(IDEV_START_PENDING, &isci_device->flags);
-	status = isci_remote_device_स्थिरruct(isci_port, isci_device);
+	status = isci_remote_device_construct(isci_port, isci_device);
 
 	dev_dbg(&isci_host->pdev->dev,
 		"%s: isci_device = %p\n",
 		__func__, isci_device);
 
-	अगर (status == SCI_SUCCESS) अणु
+	if (status == SCI_SUCCESS) {
 		/* device came up, advertise it to the world */
 		dev->lldd_dev = isci_device;
-	पूर्ण अन्यथा
+	} else
 		isci_put_device(isci_device);
 	spin_unlock_irq(&isci_host->scic_lock);
 
-	/* रुको क्रम the device पढ़ोy callback. */
-	रुको_क्रम_device_start(isci_host, isci_device);
+	/* wait for the device ready callback. */
+	wait_for_device_start(isci_host, isci_device);
 
-	वापस status == SCI_SUCCESS ? 0 : -ENODEV;
-पूर्ण
+	return status == SCI_SUCCESS ? 0 : -ENODEV;
+}
 
-क्रमागत sci_status isci_remote_device_suspend_terminate(
-	काष्ठा isci_host *ihost,
-	काष्ठा isci_remote_device *idev,
-	काष्ठा isci_request *ireq)
-अणु
-	अचिन्हित दीर्घ flags;
-	क्रमागत sci_status status;
+enum sci_status isci_remote_device_suspend_terminate(
+	struct isci_host *ihost,
+	struct isci_remote_device *idev,
+	struct isci_request *ireq)
+{
+	unsigned long flags;
+	enum sci_status status;
 
-	/* Put the device पूर्णांकo suspension. */
+	/* Put the device into suspension. */
 	spin_lock_irqsave(&ihost->scic_lock, flags);
 	set_bit(IDEV_ABORT_PATH_ACTIVE, &idev->flags);
 	sci_remote_device_suspend(idev, SCI_SW_SUSPEND_LINKHANG_DETECT);
 	spin_unlock_irqrestore(&ihost->scic_lock, flags);
 
-	/* Terminate and रुको क्रम the completions. */
+	/* Terminate and wait for the completions. */
 	status = isci_remote_device_terminate_requests(ihost, idev, ireq);
-	अगर (status != SCI_SUCCESS)
+	if (status != SCI_SUCCESS)
 		dev_dbg(&ihost->pdev->dev,
 			"%s: isci_remote_device_terminate_requests(%p) "
 				"returned %d!\n",
 			__func__, idev, status);
 
 	/* NOTE: RNC resumption is left to the caller! */
-	वापस status;
-पूर्ण
+	return status;
+}
 
-पूर्णांक isci_remote_device_is_safe_to_पात(
-	काष्ठा isci_remote_device *idev)
-अणु
-	वापस sci_remote_node_context_is_safe_to_पात(&idev->rnc);
-पूर्ण
+int isci_remote_device_is_safe_to_abort(
+	struct isci_remote_device *idev)
+{
+	return sci_remote_node_context_is_safe_to_abort(&idev->rnc);
+}
 
-क्रमागत sci_status sci_remote_device_पात_requests_pending_पात(
-	काष्ठा isci_remote_device *idev)
-अणु
-	वापस sci_remote_device_terminate_reqs_checkपात(idev, 1);
-पूर्ण
+enum sci_status sci_remote_device_abort_requests_pending_abort(
+	struct isci_remote_device *idev)
+{
+	return sci_remote_device_terminate_reqs_checkabort(idev, 1);
+}
 
-क्रमागत sci_status isci_remote_device_reset_complete(
-	काष्ठा isci_host *ihost,
-	काष्ठा isci_remote_device *idev)
-अणु
-	अचिन्हित दीर्घ flags;
-	क्रमागत sci_status status;
+enum sci_status isci_remote_device_reset_complete(
+	struct isci_host *ihost,
+	struct isci_remote_device *idev)
+{
+	unsigned long flags;
+	enum sci_status status;
 
 	spin_lock_irqsave(&ihost->scic_lock, flags);
 	status = sci_remote_device_reset_complete(idev);
 	spin_unlock_irqrestore(&ihost->scic_lock, flags);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-व्योम isci_dev_set_hang_detection_समयout(
-	काष्ठा isci_remote_device *idev,
-	u32 समयout)
-अणु
-	अगर (dev_is_sata(idev->करोमुख्य_dev)) अणु
-		अगर (समयout) अणु
-			अगर (test_and_set_bit(IDEV_RNC_LLHANG_ENABLED,
+void isci_dev_set_hang_detection_timeout(
+	struct isci_remote_device *idev,
+	u32 timeout)
+{
+	if (dev_is_sata(idev->domain_dev)) {
+		if (timeout) {
+			if (test_and_set_bit(IDEV_RNC_LLHANG_ENABLED,
 					     &idev->flags))
-				वापस;  /* Alपढ़ोy enabled. */
-		पूर्ण अन्यथा अगर (!test_and_clear_bit(IDEV_RNC_LLHANG_ENABLED,
+				return;  /* Already enabled. */
+		} else if (!test_and_clear_bit(IDEV_RNC_LLHANG_ENABLED,
 					       &idev->flags))
-			वापस;  /* Not enabled. */
+			return;  /* Not enabled. */
 
-		sci_port_set_hang_detection_समयout(idev->owning_port,
-						    समयout);
-	पूर्ण
-पूर्ण
+		sci_port_set_hang_detection_timeout(idev->owning_port,
+						    timeout);
+	}
+}

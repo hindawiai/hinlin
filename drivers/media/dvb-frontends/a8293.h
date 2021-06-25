@@ -1,15 +1,14 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Allegro A8293 SEC driver
  *
  * Copyright (C) 2011 Antti Palosaari <crope@iki.fi>
  */
 
-#अगर_अघोषित A8293_H
-#घोषणा A8293_H
+#ifndef A8293_H
+#define A8293_H
 
-#समावेश <media/dvb_frontend.h>
+#include <media/dvb_frontend.h>
 
 /*
  * I2C address
@@ -17,11 +16,11 @@
  */
 
 /**
- * काष्ठा a8293_platक्रमm_data - Platक्रमm data क्रम the a8293 driver
+ * struct a8293_platform_data - Platform data for the a8293 driver
  * @dvb_frontend: DVB frontend.
  */
-काष्ठा a8293_platक्रमm_data अणु
-	काष्ठा dvb_frontend *dvb_frontend;
-पूर्ण;
+struct a8293_platform_data {
+	struct dvb_frontend *dvb_frontend;
+};
 
-#पूर्ण_अगर /* A8293_H */
+#endif /* A8293_H */

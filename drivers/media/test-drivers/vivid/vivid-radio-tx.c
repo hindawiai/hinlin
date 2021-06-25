@@ -1,110 +1,109 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * vivid-radio-tx.c - radio transmitter support functions.
  *
  * Copyright 2014 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  */
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/delay.h>
-#समावेश <linux/videodev2.h>
-#समावेश <linux/v4l2-dv-timings.h>
-#समावेश <media/v4l2-common.h>
-#समावेश <media/v4l2-event.h>
-#समावेश <media/v4l2-dv-timings.h>
+#include <linux/errno.h>
+#include <linux/kernel.h>
+#include <linux/sched/signal.h>
+#include <linux/delay.h>
+#include <linux/videodev2.h>
+#include <linux/v4l2-dv-timings.h>
+#include <media/v4l2-common.h>
+#include <media/v4l2-event.h>
+#include <media/v4l2-dv-timings.h>
 
-#समावेश "vivid-core.h"
-#समावेश "vivid-ctrls.h"
-#समावेश "vivid-radio-common.h"
-#समावेश "vivid-radio-tx.h"
+#include "vivid-core.h"
+#include "vivid-ctrls.h"
+#include "vivid-radio-common.h"
+#include "vivid-radio-tx.h"
 
-sमाप_प्रकार vivid_radio_tx_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
-			  माप_प्रकार size, loff_t *offset)
-अणु
-	काष्ठा vivid_dev *dev = video_drvdata(file);
-	काष्ठा v4l2_rds_data *data = dev->rds_gen.data;
-	kसमय_प्रकार बारtamp;
-	अचिन्हित blk;
-	पूर्णांक i;
+ssize_t vivid_radio_tx_write(struct file *file, const char __user *buf,
+			  size_t size, loff_t *offset)
+{
+	struct vivid_dev *dev = video_drvdata(file);
+	struct v4l2_rds_data *data = dev->rds_gen.data;
+	ktime_t timestamp;
+	unsigned blk;
+	int i;
 
-	अगर (dev->radio_tx_rds_controls)
-		वापस -EINVAL;
+	if (dev->radio_tx_rds_controls)
+		return -EINVAL;
 
-	अगर (size < माप(*data))
-		वापस -EINVAL;
-	size = माप(*data) * (size / माप(*data));
+	if (size < sizeof(*data))
+		return -EINVAL;
+	size = sizeof(*data) * (size / sizeof(*data));
 
-	अगर (mutex_lock_पूर्णांकerruptible(&dev->mutex))
-		वापस -ERESTARTSYS;
-	अगर (dev->radio_tx_rds_owner &&
-	    file->निजी_data != dev->radio_tx_rds_owner) अणु
+	if (mutex_lock_interruptible(&dev->mutex))
+		return -ERESTARTSYS;
+	if (dev->radio_tx_rds_owner &&
+	    file->private_data != dev->radio_tx_rds_owner) {
 		mutex_unlock(&dev->mutex);
-		वापस -EBUSY;
-	पूर्ण
-	dev->radio_tx_rds_owner = file->निजी_data;
+		return -EBUSY;
+	}
+	dev->radio_tx_rds_owner = file->private_data;
 
 retry:
-	बारtamp = kसमय_sub(kसमय_get(), dev->radio_rds_init_समय);
-	blk = kसमय_भागns(बारtamp, VIVID_RDS_NSEC_PER_BLK);
-	अगर (blk - VIVID_RDS_GEN_BLOCKS >= dev->radio_tx_rds_last_block)
+	timestamp = ktime_sub(ktime_get(), dev->radio_rds_init_time);
+	blk = ktime_divns(timestamp, VIVID_RDS_NSEC_PER_BLK);
+	if (blk - VIVID_RDS_GEN_BLOCKS >= dev->radio_tx_rds_last_block)
 		dev->radio_tx_rds_last_block = blk - VIVID_RDS_GEN_BLOCKS + 1;
 
 	/*
-	 * No data is available अगर there hasn't been समय to get new data,
-	 * or अगर the RDS receiver has been disabled, or अगर we use the data
+	 * No data is available if there hasn't been time to get new data,
+	 * or if the RDS receiver has been disabled, or if we use the data
 	 * from the RDS transmitter and that RDS transmitter has been disabled,
-	 * or अगर the संकेत quality is too weak.
+	 * or if the signal quality is too weak.
 	 */
-	अगर (blk == dev->radio_tx_rds_last_block ||
-	    !(dev->radio_tx_subchans & V4L2_TUNER_SUB_RDS)) अणु
+	if (blk == dev->radio_tx_rds_last_block ||
+	    !(dev->radio_tx_subchans & V4L2_TUNER_SUB_RDS)) {
 		mutex_unlock(&dev->mutex);
-		अगर (file->f_flags & O_NONBLOCK)
-			वापस -EWOULDBLOCK;
-		अगर (msleep_पूर्णांकerruptible(20) && संकेत_pending(current))
-			वापस -EINTR;
-		अगर (mutex_lock_पूर्णांकerruptible(&dev->mutex))
-			वापस -ERESTARTSYS;
-		जाओ retry;
-	पूर्ण
+		if (file->f_flags & O_NONBLOCK)
+			return -EWOULDBLOCK;
+		if (msleep_interruptible(20) && signal_pending(current))
+			return -EINTR;
+		if (mutex_lock_interruptible(&dev->mutex))
+			return -ERESTARTSYS;
+		goto retry;
+	}
 
-	क्रम (i = 0; i < size && blk > dev->radio_tx_rds_last_block;
-			dev->radio_tx_rds_last_block++) अणु
-		अचिन्हित data_blk = dev->radio_tx_rds_last_block % VIVID_RDS_GEN_BLOCKS;
-		काष्ठा v4l2_rds_data rds;
+	for (i = 0; i < size && blk > dev->radio_tx_rds_last_block;
+			dev->radio_tx_rds_last_block++) {
+		unsigned data_blk = dev->radio_tx_rds_last_block % VIVID_RDS_GEN_BLOCKS;
+		struct v4l2_rds_data rds;
 
-		अगर (copy_from_user(&rds, buf + i, माप(rds))) अणु
+		if (copy_from_user(&rds, buf + i, sizeof(rds))) {
 			i = -EFAULT;
-			अवरोध;
-		पूर्ण
-		i += माप(rds);
-		अगर (!dev->radio_rds_loop)
-			जारी;
-		अगर ((rds.block & V4L2_RDS_BLOCK_MSK) == V4L2_RDS_BLOCK_INVALID ||
+			break;
+		}
+		i += sizeof(rds);
+		if (!dev->radio_rds_loop)
+			continue;
+		if ((rds.block & V4L2_RDS_BLOCK_MSK) == V4L2_RDS_BLOCK_INVALID ||
 		    (rds.block & V4L2_RDS_BLOCK_ERROR))
-			जारी;
+			continue;
 		rds.block &= V4L2_RDS_BLOCK_MSK;
 		data[data_blk] = rds;
-	पूर्ण
+	}
 	mutex_unlock(&dev->mutex);
-	वापस i;
-पूर्ण
+	return i;
+}
 
-__poll_t vivid_radio_tx_poll(काष्ठा file *file, काष्ठा poll_table_काष्ठा *रुको)
-अणु
-	वापस EPOLLOUT | EPOLLWRNORM | v4l2_ctrl_poll(file, रुको);
-पूर्ण
+__poll_t vivid_radio_tx_poll(struct file *file, struct poll_table_struct *wait)
+{
+	return EPOLLOUT | EPOLLWRNORM | v4l2_ctrl_poll(file, wait);
+}
 
-पूर्णांक vidioc_g_modulator(काष्ठा file *file, व्योम *fh, काष्ठा v4l2_modulator *a)
-अणु
-	काष्ठा vivid_dev *dev = video_drvdata(file);
+int vidioc_g_modulator(struct file *file, void *fh, struct v4l2_modulator *a)
+{
+	struct vivid_dev *dev = video_drvdata(file);
 
-	अगर (a->index > 0)
-		वापस -EINVAL;
+	if (a->index > 0)
+		return -EINVAL;
 
-	strscpy(a->name, "AM/FM/SW Transmitter", माप(a->name));
+	strscpy(a->name, "AM/FM/SW Transmitter", sizeof(a->name));
 	a->capability = V4L2_TUNER_CAP_LOW | V4L2_TUNER_CAP_STEREO |
 			V4L2_TUNER_CAP_FREQ_BANDS | V4L2_TUNER_CAP_RDS |
 			(dev->radio_tx_rds_controls ?
@@ -113,17 +112,17 @@ __poll_t vivid_radio_tx_poll(काष्ठा file *file, काष्ठा p
 	a->rangelow = AM_FREQ_RANGE_LOW;
 	a->rangehigh = FM_FREQ_RANGE_HIGH;
 	a->txsubchans = dev->radio_tx_subchans;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक vidioc_s_modulator(काष्ठा file *file, व्योम *fh, स्थिर काष्ठा v4l2_modulator *a)
-अणु
-	काष्ठा vivid_dev *dev = video_drvdata(file);
+int vidioc_s_modulator(struct file *file, void *fh, const struct v4l2_modulator *a)
+{
+	struct vivid_dev *dev = video_drvdata(file);
 
-	अगर (a->index)
-		वापस -EINVAL;
-	अगर (a->txsubchans & ~0x13)
-		वापस -EINVAL;
+	if (a->index)
+		return -EINVAL;
+	if (a->txsubchans & ~0x13)
+		return -EINVAL;
 	dev->radio_tx_subchans = a->txsubchans;
-	वापस 0;
-पूर्ण
+	return 0;
+}

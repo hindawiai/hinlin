@@ -1,97 +1,96 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *
  * Copyright (C) Jonathan Naylor G4KLX (g4klx@g4klx.demon.co.uk)
  * Copyright (C) Terry Dawson VK2KTJ (terry@animats.net)
  */
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/types.h>
-#समावेश <linux/socket.h>
-#समावेश <linux/in.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/sockios.h>
-#समावेश <linux/net.h>
-#समावेश <linux/slab.h>
-#समावेश <net/ax25.h>
-#समावेश <linux/inet.h>
-#समावेश <linux/netdevice.h>
-#समावेश <net/arp.h>
-#समावेश <linux/अगर_arp.h>
-#समावेश <linux/skbuff.h>
-#समावेश <net/sock.h>
-#समावेश <net/tcp_states.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/fcntl.h>
-#समावेश <linux/termios.h>	/* For TIOCINQ/OUTQ */
-#समावेश <linux/mm.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/init.h>
-#समावेश <net/rose.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/export.h>
+#include <linux/errno.h>
+#include <linux/types.h>
+#include <linux/socket.h>
+#include <linux/in.h>
+#include <linux/kernel.h>
+#include <linux/timer.h>
+#include <linux/string.h>
+#include <linux/sockios.h>
+#include <linux/net.h>
+#include <linux/slab.h>
+#include <net/ax25.h>
+#include <linux/inet.h>
+#include <linux/netdevice.h>
+#include <net/arp.h>
+#include <linux/if_arp.h>
+#include <linux/skbuff.h>
+#include <net/sock.h>
+#include <net/tcp_states.h>
+#include <linux/uaccess.h>
+#include <linux/fcntl.h>
+#include <linux/termios.h>	/* For TIOCINQ/OUTQ */
+#include <linux/mm.h>
+#include <linux/interrupt.h>
+#include <linux/notifier.h>
+#include <linux/init.h>
+#include <net/rose.h>
+#include <linux/seq_file.h>
+#include <linux/export.h>
 
-अटल अचिन्हित पूर्णांक rose_neigh_no = 1;
+static unsigned int rose_neigh_no = 1;
 
-अटल काष्ठा rose_node  *rose_node_list;
-अटल DEFINE_SPINLOCK(rose_node_list_lock);
-अटल काष्ठा rose_neigh *rose_neigh_list;
-अटल DEFINE_SPINLOCK(rose_neigh_list_lock);
-अटल काष्ठा rose_route *rose_route_list;
-अटल DEFINE_SPINLOCK(rose_route_list_lock);
+static struct rose_node  *rose_node_list;
+static DEFINE_SPINLOCK(rose_node_list_lock);
+static struct rose_neigh *rose_neigh_list;
+static DEFINE_SPINLOCK(rose_neigh_list_lock);
+static struct rose_route *rose_route_list;
+static DEFINE_SPINLOCK(rose_route_list_lock);
 
-काष्ठा rose_neigh *rose_loopback_neigh;
+struct rose_neigh *rose_loopback_neigh;
 
 /*
  *	Add a new route to a node, and in the process add the node and the
- *	neighbour अगर it is new.
+ *	neighbour if it is new.
  */
-अटल पूर्णांक __must_check rose_add_node(काष्ठा rose_route_काष्ठा *rose_route,
-	काष्ठा net_device *dev)
-अणु
-	काष्ठा rose_node  *rose_node, *rose_पंचांगpn, *rose_पंचांगpp;
-	काष्ठा rose_neigh *rose_neigh;
-	पूर्णांक i, res = 0;
+static int __must_check rose_add_node(struct rose_route_struct *rose_route,
+	struct net_device *dev)
+{
+	struct rose_node  *rose_node, *rose_tmpn, *rose_tmpp;
+	struct rose_neigh *rose_neigh;
+	int i, res = 0;
 
 	spin_lock_bh(&rose_node_list_lock);
 	spin_lock_bh(&rose_neigh_list_lock);
 
 	rose_node = rose_node_list;
-	जबतक (rose_node != शून्य) अणु
-		अगर ((rose_node->mask == rose_route->mask) &&
+	while (rose_node != NULL) {
+		if ((rose_node->mask == rose_route->mask) &&
 		    (rosecmpm(&rose_route->address, &rose_node->address,
 			      rose_route->mask) == 0))
-			अवरोध;
+			break;
 		rose_node = rose_node->next;
-	पूर्ण
+	}
 
-	अगर (rose_node != शून्य && rose_node->loopback) अणु
+	if (rose_node != NULL && rose_node->loopback) {
 		res = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	rose_neigh = rose_neigh_list;
-	जबतक (rose_neigh != शून्य) अणु
-		अगर (ax25cmp(&rose_route->neighbour,
+	while (rose_neigh != NULL) {
+		if (ax25cmp(&rose_route->neighbour,
 			    &rose_neigh->callsign) == 0 &&
 		    rose_neigh->dev == dev)
-			अवरोध;
+			break;
 		rose_neigh = rose_neigh->next;
-	पूर्ण
+	}
 
-	अगर (rose_neigh == शून्य) अणु
-		rose_neigh = kदो_स्मृति(माप(*rose_neigh), GFP_ATOMIC);
-		अगर (rose_neigh == शून्य) अणु
+	if (rose_neigh == NULL) {
+		rose_neigh = kmalloc(sizeof(*rose_neigh), GFP_ATOMIC);
+		if (rose_neigh == NULL) {
 			res = -ENOMEM;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		rose_neigh->callsign  = rose_route->neighbour;
-		rose_neigh->digipeat  = शून्य;
-		rose_neigh->ax25      = शून्य;
+		rose_neigh->digipeat  = NULL;
+		rose_neigh->ax25      = NULL;
 		rose_neigh->dev       = dev;
 		rose_neigh->count     = 0;
 		rose_neigh->use       = 0;
@@ -102,58 +101,58 @@
 
 		skb_queue_head_init(&rose_neigh->queue);
 
-		समयr_setup(&rose_neigh->fसमयr, शून्य, 0);
-		समयr_setup(&rose_neigh->t0समयr, शून्य, 0);
+		timer_setup(&rose_neigh->ftimer, NULL, 0);
+		timer_setup(&rose_neigh->t0timer, NULL, 0);
 
-		अगर (rose_route->ndigis != 0) अणु
+		if (rose_route->ndigis != 0) {
 			rose_neigh->digipeat =
-				kदो_स्मृति(माप(ax25_digi), GFP_ATOMIC);
-			अगर (rose_neigh->digipeat == शून्य) अणु
-				kमुक्त(rose_neigh);
+				kmalloc(sizeof(ax25_digi), GFP_ATOMIC);
+			if (rose_neigh->digipeat == NULL) {
+				kfree(rose_neigh);
 				res = -ENOMEM;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 
 			rose_neigh->digipeat->ndigi      = rose_route->ndigis;
 			rose_neigh->digipeat->lastrepeat = -1;
 
-			क्रम (i = 0; i < rose_route->ndigis; i++) अणु
+			for (i = 0; i < rose_route->ndigis; i++) {
 				rose_neigh->digipeat->calls[i]    =
 					rose_route->digipeaters[i];
 				rose_neigh->digipeat->repeated[i] = 0;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		rose_neigh->next = rose_neigh_list;
 		rose_neigh_list  = rose_neigh;
-	पूर्ण
+	}
 
 	/*
-	 * This is a new node to be inserted पूर्णांकo the list. Find where it needs
-	 * to be inserted पूर्णांकo the list, and insert it. We want to be sure
+	 * This is a new node to be inserted into the list. Find where it needs
+	 * to be inserted into the list, and insert it. We want to be sure
 	 * to order the list in descending order of mask size to ensure that
 	 * later when we are searching this list the first match will be the
 	 * best match.
 	 */
-	अगर (rose_node == शून्य) अणु
-		rose_पंचांगpn = rose_node_list;
-		rose_पंचांगpp = शून्य;
+	if (rose_node == NULL) {
+		rose_tmpn = rose_node_list;
+		rose_tmpp = NULL;
 
-		जबतक (rose_पंचांगpn != शून्य) अणु
-			अगर (rose_पंचांगpn->mask > rose_route->mask) अणु
-				rose_पंचांगpp = rose_पंचांगpn;
-				rose_पंचांगpn = rose_पंचांगpn->next;
-			पूर्ण अन्यथा अणु
-				अवरोध;
-			पूर्ण
-		पूर्ण
+		while (rose_tmpn != NULL) {
+			if (rose_tmpn->mask > rose_route->mask) {
+				rose_tmpp = rose_tmpn;
+				rose_tmpn = rose_tmpn->next;
+			} else {
+				break;
+			}
+		}
 
 		/* create new node */
-		rose_node = kदो_स्मृति(माप(*rose_node), GFP_ATOMIC);
-		अगर (rose_node == शून्य) अणु
+		rose_node = kmalloc(sizeof(*rose_node), GFP_ATOMIC);
+		if (rose_node == NULL) {
 			res = -ENOMEM;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		rose_node->address      = rose_route->address;
 		rose_node->mask         = rose_route->mask;
@@ -161,226 +160,226 @@
 		rose_node->loopback     = 0;
 		rose_node->neighbour[0] = rose_neigh;
 
-		अगर (rose_पंचांगpn == शून्य) अणु
-			अगर (rose_पंचांगpp == शून्य) अणु	/* Empty list */
+		if (rose_tmpn == NULL) {
+			if (rose_tmpp == NULL) {	/* Empty list */
 				rose_node_list  = rose_node;
-				rose_node->next = शून्य;
-			पूर्ण अन्यथा अणु
-				rose_पंचांगpp->next = rose_node;
-				rose_node->next = शून्य;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (rose_पंचांगpp == शून्य) अणु	/* 1st node */
+				rose_node->next = NULL;
+			} else {
+				rose_tmpp->next = rose_node;
+				rose_node->next = NULL;
+			}
+		} else {
+			if (rose_tmpp == NULL) {	/* 1st node */
 				rose_node->next = rose_node_list;
 				rose_node_list  = rose_node;
-			पूर्ण अन्यथा अणु
-				rose_पंचांगpp->next = rose_node;
-				rose_node->next = rose_पंचांगpn;
-			पूर्ण
-		पूर्ण
+			} else {
+				rose_tmpp->next = rose_node;
+				rose_node->next = rose_tmpn;
+			}
+		}
 		rose_neigh->count++;
 
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* We have space, slot it in */
-	अगर (rose_node->count < 3) अणु
+	if (rose_node->count < 3) {
 		rose_node->neighbour[rose_node->count] = rose_neigh;
 		rose_node->count++;
 		rose_neigh->count++;
-	पूर्ण
+	}
 
 out:
 	spin_unlock_bh(&rose_neigh_list_lock);
 	spin_unlock_bh(&rose_node_list_lock);
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
 /*
  * Caller is holding rose_node_list_lock.
  */
-अटल व्योम rose_हटाओ_node(काष्ठा rose_node *rose_node)
-अणु
-	काष्ठा rose_node *s;
+static void rose_remove_node(struct rose_node *rose_node)
+{
+	struct rose_node *s;
 
-	अगर ((s = rose_node_list) == rose_node) अणु
+	if ((s = rose_node_list) == rose_node) {
 		rose_node_list = rose_node->next;
-		kमुक्त(rose_node);
-		वापस;
-	पूर्ण
+		kfree(rose_node);
+		return;
+	}
 
-	जबतक (s != शून्य && s->next != शून्य) अणु
-		अगर (s->next == rose_node) अणु
+	while (s != NULL && s->next != NULL) {
+		if (s->next == rose_node) {
 			s->next = rose_node->next;
-			kमुक्त(rose_node);
-			वापस;
-		पूर्ण
+			kfree(rose_node);
+			return;
+		}
 
 		s = s->next;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Caller is holding rose_neigh_list_lock.
  */
-अटल व्योम rose_हटाओ_neigh(काष्ठा rose_neigh *rose_neigh)
-अणु
-	काष्ठा rose_neigh *s;
+static void rose_remove_neigh(struct rose_neigh *rose_neigh)
+{
+	struct rose_neigh *s;
 
-	rose_stop_fसमयr(rose_neigh);
-	rose_stop_t0समयr(rose_neigh);
+	rose_stop_ftimer(rose_neigh);
+	rose_stop_t0timer(rose_neigh);
 
 	skb_queue_purge(&rose_neigh->queue);
 
-	अगर ((s = rose_neigh_list) == rose_neigh) अणु
+	if ((s = rose_neigh_list) == rose_neigh) {
 		rose_neigh_list = rose_neigh->next;
-		अगर (rose_neigh->ax25)
+		if (rose_neigh->ax25)
 			ax25_cb_put(rose_neigh->ax25);
-		kमुक्त(rose_neigh->digipeat);
-		kमुक्त(rose_neigh);
-		वापस;
-	पूर्ण
+		kfree(rose_neigh->digipeat);
+		kfree(rose_neigh);
+		return;
+	}
 
-	जबतक (s != शून्य && s->next != शून्य) अणु
-		अगर (s->next == rose_neigh) अणु
+	while (s != NULL && s->next != NULL) {
+		if (s->next == rose_neigh) {
 			s->next = rose_neigh->next;
-			अगर (rose_neigh->ax25)
+			if (rose_neigh->ax25)
 				ax25_cb_put(rose_neigh->ax25);
-			kमुक्त(rose_neigh->digipeat);
-			kमुक्त(rose_neigh);
-			वापस;
-		पूर्ण
+			kfree(rose_neigh->digipeat);
+			kfree(rose_neigh);
+			return;
+		}
 
 		s = s->next;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Caller is holding rose_route_list_lock.
  */
-अटल व्योम rose_हटाओ_route(काष्ठा rose_route *rose_route)
-अणु
-	काष्ठा rose_route *s;
+static void rose_remove_route(struct rose_route *rose_route)
+{
+	struct rose_route *s;
 
-	अगर (rose_route->neigh1 != शून्य)
+	if (rose_route->neigh1 != NULL)
 		rose_route->neigh1->use--;
 
-	अगर (rose_route->neigh2 != शून्य)
+	if (rose_route->neigh2 != NULL)
 		rose_route->neigh2->use--;
 
-	अगर ((s = rose_route_list) == rose_route) अणु
+	if ((s = rose_route_list) == rose_route) {
 		rose_route_list = rose_route->next;
-		kमुक्त(rose_route);
-		वापस;
-	पूर्ण
+		kfree(rose_route);
+		return;
+	}
 
-	जबतक (s != शून्य && s->next != शून्य) अणु
-		अगर (s->next == rose_route) अणु
+	while (s != NULL && s->next != NULL) {
+		if (s->next == rose_route) {
 			s->next = rose_route->next;
-			kमुक्त(rose_route);
-			वापस;
-		पूर्ण
+			kfree(rose_route);
+			return;
+		}
 
 		s = s->next;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- *	"Delete" a node. Strictly speaking हटाओ a route to a node. The node
- *	is only deleted अगर no routes are left to it.
+ *	"Delete" a node. Strictly speaking remove a route to a node. The node
+ *	is only deleted if no routes are left to it.
  */
-अटल पूर्णांक rose_del_node(काष्ठा rose_route_काष्ठा *rose_route,
-	काष्ठा net_device *dev)
-अणु
-	काष्ठा rose_node  *rose_node;
-	काष्ठा rose_neigh *rose_neigh;
-	पूर्णांक i, err = 0;
+static int rose_del_node(struct rose_route_struct *rose_route,
+	struct net_device *dev)
+{
+	struct rose_node  *rose_node;
+	struct rose_neigh *rose_neigh;
+	int i, err = 0;
 
 	spin_lock_bh(&rose_node_list_lock);
 	spin_lock_bh(&rose_neigh_list_lock);
 
 	rose_node = rose_node_list;
-	जबतक (rose_node != शून्य) अणु
-		अगर ((rose_node->mask == rose_route->mask) &&
+	while (rose_node != NULL) {
+		if ((rose_node->mask == rose_route->mask) &&
 		    (rosecmpm(&rose_route->address, &rose_node->address,
 			      rose_route->mask) == 0))
-			अवरोध;
+			break;
 		rose_node = rose_node->next;
-	पूर्ण
+	}
 
-	अगर (rose_node == शून्य || rose_node->loopback) अणु
+	if (rose_node == NULL || rose_node->loopback) {
 		err = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	rose_neigh = rose_neigh_list;
-	जबतक (rose_neigh != शून्य) अणु
-		अगर (ax25cmp(&rose_route->neighbour,
+	while (rose_neigh != NULL) {
+		if (ax25cmp(&rose_route->neighbour,
 			    &rose_neigh->callsign) == 0 &&
 		    rose_neigh->dev == dev)
-			अवरोध;
+			break;
 		rose_neigh = rose_neigh->next;
-	पूर्ण
+	}
 
-	अगर (rose_neigh == शून्य) अणु
+	if (rose_neigh == NULL) {
 		err = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	क्रम (i = 0; i < rose_node->count; i++) अणु
-		अगर (rose_node->neighbour[i] == rose_neigh) अणु
+	for (i = 0; i < rose_node->count; i++) {
+		if (rose_node->neighbour[i] == rose_neigh) {
 			rose_neigh->count--;
 
-			अगर (rose_neigh->count == 0 && rose_neigh->use == 0)
-				rose_हटाओ_neigh(rose_neigh);
+			if (rose_neigh->count == 0 && rose_neigh->use == 0)
+				rose_remove_neigh(rose_neigh);
 
 			rose_node->count--;
 
-			अगर (rose_node->count == 0) अणु
-				rose_हटाओ_node(rose_node);
-			पूर्ण अन्यथा अणु
-				चयन (i) अणु
-				हाल 0:
+			if (rose_node->count == 0) {
+				rose_remove_node(rose_node);
+			} else {
+				switch (i) {
+				case 0:
 					rose_node->neighbour[0] =
 						rose_node->neighbour[1];
 					fallthrough;
-				हाल 1:
+				case 1:
 					rose_node->neighbour[1] =
 						rose_node->neighbour[2];
-					अवरोध;
-				हाल 2:
-					अवरोध;
-				पूर्ण
-			पूर्ण
-			जाओ out;
-		पूर्ण
-	पूर्ण
+					break;
+				case 2:
+					break;
+				}
+			}
+			goto out;
+		}
+	}
 	err = -EINVAL;
 
 out:
 	spin_unlock_bh(&rose_neigh_list_lock);
 	spin_unlock_bh(&rose_node_list_lock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
  *	Add the loopback neighbour.
  */
-व्योम rose_add_loopback_neigh(व्योम)
-अणु
-	काष्ठा rose_neigh *sn;
+void rose_add_loopback_neigh(void)
+{
+	struct rose_neigh *sn;
 
-	rose_loopback_neigh = kदो_स्मृति(माप(काष्ठा rose_neigh), GFP_KERNEL);
-	अगर (!rose_loopback_neigh)
-		वापस;
+	rose_loopback_neigh = kmalloc(sizeof(struct rose_neigh), GFP_KERNEL);
+	if (!rose_loopback_neigh)
+		return;
 	sn = rose_loopback_neigh;
 
 	sn->callsign  = null_ax25_address;
-	sn->digipeat  = शून्य;
-	sn->ax25      = शून्य;
-	sn->dev       = शून्य;
+	sn->digipeat  = NULL;
+	sn->ax25      = NULL;
+	sn->dev       = NULL;
 	sn->count     = 0;
 	sn->use       = 0;
 	sn->dce_mode  = 1;
@@ -390,41 +389,41 @@ out:
 
 	skb_queue_head_init(&sn->queue);
 
-	समयr_setup(&sn->fसमयr, शून्य, 0);
-	समयr_setup(&sn->t0समयr, शून्य, 0);
+	timer_setup(&sn->ftimer, NULL, 0);
+	timer_setup(&sn->t0timer, NULL, 0);
 
 	spin_lock_bh(&rose_neigh_list_lock);
 	sn->next = rose_neigh_list;
 	rose_neigh_list           = sn;
 	spin_unlock_bh(&rose_neigh_list_lock);
-पूर्ण
+}
 
 /*
  *	Add a loopback node.
  */
-पूर्णांक rose_add_loopback_node(rose_address *address)
-अणु
-	काष्ठा rose_node *rose_node;
-	पूर्णांक err = 0;
+int rose_add_loopback_node(rose_address *address)
+{
+	struct rose_node *rose_node;
+	int err = 0;
 
 	spin_lock_bh(&rose_node_list_lock);
 
 	rose_node = rose_node_list;
-	जबतक (rose_node != शून्य) अणु
-		अगर ((rose_node->mask == 10) &&
+	while (rose_node != NULL) {
+		if ((rose_node->mask == 10) &&
 		     (rosecmpm(address, &rose_node->address, 10) == 0) &&
 		     rose_node->loopback)
-			अवरोध;
+			break;
 		rose_node = rose_node->next;
-	पूर्ण
+	}
 
-	अगर (rose_node != शून्य)
-		जाओ out;
+	if (rose_node != NULL)
+		goto out;
 
-	अगर ((rose_node = kदो_स्मृति(माप(*rose_node), GFP_ATOMIC)) == शून्य) अणु
+	if ((rose_node = kmalloc(sizeof(*rose_node), GFP_ATOMIC)) == NULL) {
 		err = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	rose_node->address      = *address;
 	rose_node->mask         = 10;
@@ -441,121 +440,121 @@ out:
 out:
 	spin_unlock_bh(&rose_node_list_lock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
  *	Delete a loopback node.
  */
-व्योम rose_del_loopback_node(rose_address *address)
-अणु
-	काष्ठा rose_node *rose_node;
+void rose_del_loopback_node(rose_address *address)
+{
+	struct rose_node *rose_node;
 
 	spin_lock_bh(&rose_node_list_lock);
 
 	rose_node = rose_node_list;
-	जबतक (rose_node != शून्य) अणु
-		अगर ((rose_node->mask == 10) &&
+	while (rose_node != NULL) {
+		if ((rose_node->mask == 10) &&
 		    (rosecmpm(address, &rose_node->address, 10) == 0) &&
 		    rose_node->loopback)
-			अवरोध;
+			break;
 		rose_node = rose_node->next;
-	पूर्ण
+	}
 
-	अगर (rose_node == शून्य)
-		जाओ out;
+	if (rose_node == NULL)
+		goto out;
 
-	rose_हटाओ_node(rose_node);
+	rose_remove_node(rose_node);
 
 	rose_loopback_neigh->count--;
 
 out:
 	spin_unlock_bh(&rose_node_list_lock);
-पूर्ण
+}
 
 /*
- *	A device has been हटाओd. Remove its routes and neighbours.
+ *	A device has been removed. Remove its routes and neighbours.
  */
-व्योम rose_rt_device_करोwn(काष्ठा net_device *dev)
-अणु
-	काष्ठा rose_neigh *s, *rose_neigh;
-	काष्ठा rose_node  *t, *rose_node;
-	पूर्णांक i;
+void rose_rt_device_down(struct net_device *dev)
+{
+	struct rose_neigh *s, *rose_neigh;
+	struct rose_node  *t, *rose_node;
+	int i;
 
 	spin_lock_bh(&rose_node_list_lock);
 	spin_lock_bh(&rose_neigh_list_lock);
 	rose_neigh = rose_neigh_list;
-	जबतक (rose_neigh != शून्य) अणु
+	while (rose_neigh != NULL) {
 		s          = rose_neigh;
 		rose_neigh = rose_neigh->next;
 
-		अगर (s->dev != dev)
-			जारी;
+		if (s->dev != dev)
+			continue;
 
 		rose_node = rose_node_list;
 
-		जबतक (rose_node != शून्य) अणु
+		while (rose_node != NULL) {
 			t         = rose_node;
 			rose_node = rose_node->next;
 
-			क्रम (i = 0; i < t->count; i++) अणु
-				अगर (t->neighbour[i] != s)
-					जारी;
+			for (i = 0; i < t->count; i++) {
+				if (t->neighbour[i] != s)
+					continue;
 
 				t->count--;
 
-				चयन (i) अणु
-				हाल 0:
+				switch (i) {
+				case 0:
 					t->neighbour[0] = t->neighbour[1];
 					fallthrough;
-				हाल 1:
+				case 1:
 					t->neighbour[1] = t->neighbour[2];
-					अवरोध;
-				हाल 2:
-					अवरोध;
-				पूर्ण
-			पूर्ण
+					break;
+				case 2:
+					break;
+				}
+			}
 
-			अगर (t->count <= 0)
-				rose_हटाओ_node(t);
-		पूर्ण
+			if (t->count <= 0)
+				rose_remove_node(t);
+		}
 
-		rose_हटाओ_neigh(s);
-	पूर्ण
+		rose_remove_neigh(s);
+	}
 	spin_unlock_bh(&rose_neigh_list_lock);
 	spin_unlock_bh(&rose_node_list_lock);
-पूर्ण
+}
 
-#अगर 0 /* Currently unused */
+#if 0 /* Currently unused */
 /*
- *	A device has been हटाओd. Remove its links.
+ *	A device has been removed. Remove its links.
  */
-व्योम rose_route_device_करोwn(काष्ठा net_device *dev)
-अणु
-	काष्ठा rose_route *s, *rose_route;
+void rose_route_device_down(struct net_device *dev)
+{
+	struct rose_route *s, *rose_route;
 
 	spin_lock_bh(&rose_route_list_lock);
 	rose_route = rose_route_list;
-	जबतक (rose_route != शून्य) अणु
+	while (rose_route != NULL) {
 		s          = rose_route;
 		rose_route = rose_route->next;
 
-		अगर (s->neigh1->dev == dev || s->neigh2->dev == dev)
-			rose_हटाओ_route(s);
-	पूर्ण
+		if (s->neigh1->dev == dev || s->neigh2->dev == dev)
+			rose_remove_route(s);
+	}
 	spin_unlock_bh(&rose_route_list_lock);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
 /*
- *	Clear all nodes and neighbours out, except क्रम neighbours with
+ *	Clear all nodes and neighbours out, except for neighbours with
  *	active connections going through them.
  *  Do not clear loopback neighbour and nodes.
  */
-अटल पूर्णांक rose_clear_routes(व्योम)
-अणु
-	काष्ठा rose_neigh *s, *rose_neigh;
-	काष्ठा rose_node  *t, *rose_node;
+static int rose_clear_routes(void)
+{
+	struct rose_neigh *s, *rose_neigh;
+	struct rose_node  *t, *rose_node;
 
 	spin_lock_bh(&rose_node_list_lock);
 	spin_lock_bh(&rose_neigh_list_lock);
@@ -563,213 +562,213 @@ out:
 	rose_neigh = rose_neigh_list;
 	rose_node  = rose_node_list;
 
-	जबतक (rose_node != शून्य) अणु
+	while (rose_node != NULL) {
 		t         = rose_node;
 		rose_node = rose_node->next;
-		अगर (!t->loopback)
-			rose_हटाओ_node(t);
-	पूर्ण
+		if (!t->loopback)
+			rose_remove_node(t);
+	}
 
-	जबतक (rose_neigh != शून्य) अणु
+	while (rose_neigh != NULL) {
 		s          = rose_neigh;
 		rose_neigh = rose_neigh->next;
 
-		अगर (s->use == 0 && !s->loopback) अणु
+		if (s->use == 0 && !s->loopback) {
 			s->count = 0;
-			rose_हटाओ_neigh(s);
-		पूर्ण
-	पूर्ण
+			rose_remove_neigh(s);
+		}
+	}
 
 	spin_unlock_bh(&rose_neigh_list_lock);
 	spin_unlock_bh(&rose_node_list_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- *	Check that the device given is a valid AX.25 पूर्णांकerface that is "up".
+ *	Check that the device given is a valid AX.25 interface that is "up".
  * 	called with RTNL
  */
-अटल काष्ठा net_device *rose_ax25_dev_find(अक्षर *devname)
-अणु
-	काष्ठा net_device *dev;
+static struct net_device *rose_ax25_dev_find(char *devname)
+{
+	struct net_device *dev;
 
-	अगर ((dev = __dev_get_by_name(&init_net, devname)) == शून्य)
-		वापस शून्य;
+	if ((dev = __dev_get_by_name(&init_net, devname)) == NULL)
+		return NULL;
 
-	अगर ((dev->flags & IFF_UP) && dev->type == ARPHRD_AX25)
-		वापस dev;
+	if ((dev->flags & IFF_UP) && dev->type == ARPHRD_AX25)
+		return dev;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /*
  *	Find the first active ROSE device, usually "rose0".
  */
-काष्ठा net_device *rose_dev_first(व्योम)
-अणु
-	काष्ठा net_device *dev, *first = शून्य;
+struct net_device *rose_dev_first(void)
+{
+	struct net_device *dev, *first = NULL;
 
-	rcu_पढ़ो_lock();
-	क्रम_each_netdev_rcu(&init_net, dev) अणु
-		अगर ((dev->flags & IFF_UP) && dev->type == ARPHRD_ROSE)
-			अगर (first == शून्य || म_भेदन(dev->name, first->name, 3) < 0)
+	rcu_read_lock();
+	for_each_netdev_rcu(&init_net, dev) {
+		if ((dev->flags & IFF_UP) && dev->type == ARPHRD_ROSE)
+			if (first == NULL || strncmp(dev->name, first->name, 3) < 0)
 				first = dev;
-	पूर्ण
-	rcu_पढ़ो_unlock();
+	}
+	rcu_read_unlock();
 
-	वापस first;
-पूर्ण
+	return first;
+}
 
 /*
- *	Find the ROSE device क्रम the given address.
+ *	Find the ROSE device for the given address.
  */
-काष्ठा net_device *rose_dev_get(rose_address *addr)
-अणु
-	काष्ठा net_device *dev;
+struct net_device *rose_dev_get(rose_address *addr)
+{
+	struct net_device *dev;
 
-	rcu_पढ़ो_lock();
-	क्रम_each_netdev_rcu(&init_net, dev) अणु
-		अगर ((dev->flags & IFF_UP) && dev->type == ARPHRD_ROSE && rosecmp(addr, (rose_address *)dev->dev_addr) == 0) अणु
+	rcu_read_lock();
+	for_each_netdev_rcu(&init_net, dev) {
+		if ((dev->flags & IFF_UP) && dev->type == ARPHRD_ROSE && rosecmp(addr, (rose_address *)dev->dev_addr) == 0) {
 			dev_hold(dev);
-			जाओ out;
-		पूर्ण
-	पूर्ण
-	dev = शून्य;
+			goto out;
+		}
+	}
+	dev = NULL;
 out:
-	rcu_पढ़ो_unlock();
-	वापस dev;
-पूर्ण
+	rcu_read_unlock();
+	return dev;
+}
 
-अटल पूर्णांक rose_dev_exists(rose_address *addr)
-अणु
-	काष्ठा net_device *dev;
+static int rose_dev_exists(rose_address *addr)
+{
+	struct net_device *dev;
 
-	rcu_पढ़ो_lock();
-	क्रम_each_netdev_rcu(&init_net, dev) अणु
-		अगर ((dev->flags & IFF_UP) && dev->type == ARPHRD_ROSE && rosecmp(addr, (rose_address *)dev->dev_addr) == 0)
-			जाओ out;
-	पूर्ण
-	dev = शून्य;
+	rcu_read_lock();
+	for_each_netdev_rcu(&init_net, dev) {
+		if ((dev->flags & IFF_UP) && dev->type == ARPHRD_ROSE && rosecmp(addr, (rose_address *)dev->dev_addr) == 0)
+			goto out;
+	}
+	dev = NULL;
 out:
-	rcu_पढ़ो_unlock();
-	वापस dev != शून्य;
-पूर्ण
+	rcu_read_unlock();
+	return dev != NULL;
+}
 
 
 
 
-काष्ठा rose_route *rose_route_मुक्त_lci(अचिन्हित पूर्णांक lci, काष्ठा rose_neigh *neigh)
-अणु
-	काष्ठा rose_route *rose_route;
+struct rose_route *rose_route_free_lci(unsigned int lci, struct rose_neigh *neigh)
+{
+	struct rose_route *rose_route;
 
-	क्रम (rose_route = rose_route_list; rose_route != शून्य; rose_route = rose_route->next)
-		अगर ((rose_route->neigh1 == neigh && rose_route->lci1 == lci) ||
+	for (rose_route = rose_route_list; rose_route != NULL; rose_route = rose_route->next)
+		if ((rose_route->neigh1 == neigh && rose_route->lci1 == lci) ||
 		    (rose_route->neigh2 == neigh && rose_route->lci2 == lci))
-			वापस rose_route;
+			return rose_route;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /*
  *	Find a neighbour or a route given a ROSE address.
  */
-काष्ठा rose_neigh *rose_get_neigh(rose_address *addr, अचिन्हित अक्षर *cause,
-	अचिन्हित अक्षर *diagnostic, पूर्णांक route_frame)
-अणु
-	काष्ठा rose_neigh *res = शून्य;
-	काष्ठा rose_node *node;
-	पूर्णांक failed = 0;
-	पूर्णांक i;
+struct rose_neigh *rose_get_neigh(rose_address *addr, unsigned char *cause,
+	unsigned char *diagnostic, int route_frame)
+{
+	struct rose_neigh *res = NULL;
+	struct rose_node *node;
+	int failed = 0;
+	int i;
 
-	अगर (!route_frame) spin_lock_bh(&rose_node_list_lock);
-	क्रम (node = rose_node_list; node != शून्य; node = node->next) अणु
-		अगर (rosecmpm(addr, &node->address, node->mask) == 0) अणु
-			क्रम (i = 0; i < node->count; i++) अणु
-				अगर (node->neighbour[i]->restarted) अणु
+	if (!route_frame) spin_lock_bh(&rose_node_list_lock);
+	for (node = rose_node_list; node != NULL; node = node->next) {
+		if (rosecmpm(addr, &node->address, node->mask) == 0) {
+			for (i = 0; i < node->count; i++) {
+				if (node->neighbour[i]->restarted) {
 					res = node->neighbour[i];
-					जाओ out;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	अगर (!route_frame) अणु /* connect request */
-		क्रम (node = rose_node_list; node != शून्य; node = node->next) अणु
-			अगर (rosecmpm(addr, &node->address, node->mask) == 0) अणु
-				क्रम (i = 0; i < node->count; i++) अणु
-					अगर (!rose_fसमयr_running(node->neighbour[i])) अणु
+					goto out;
+				}
+			}
+		}
+	}
+	if (!route_frame) { /* connect request */
+		for (node = rose_node_list; node != NULL; node = node->next) {
+			if (rosecmpm(addr, &node->address, node->mask) == 0) {
+				for (i = 0; i < node->count; i++) {
+					if (!rose_ftimer_running(node->neighbour[i])) {
 						res = node->neighbour[i];
-						जाओ out;
-					पूर्ण
+						goto out;
+					}
 					failed = 1;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				}
+			}
+		}
+	}
 
-	अगर (failed) अणु
+	if (failed) {
 		*cause      = ROSE_OUT_OF_ORDER;
 		*diagnostic = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		*cause      = ROSE_NOT_OBTAINABLE;
 		*diagnostic = 0;
-	पूर्ण
+	}
 
 out:
-	अगर (!route_frame) spin_unlock_bh(&rose_node_list_lock);
-	वापस res;
-पूर्ण
+	if (!route_frame) spin_unlock_bh(&rose_node_list_lock);
+	return res;
+}
 
 /*
  *	Handle the ioctls that control the routing functions.
  */
-पूर्णांक rose_rt_ioctl(अचिन्हित पूर्णांक cmd, व्योम __user *arg)
-अणु
-	काष्ठा rose_route_काष्ठा rose_route;
-	काष्ठा net_device *dev;
-	पूर्णांक err;
+int rose_rt_ioctl(unsigned int cmd, void __user *arg)
+{
+	struct rose_route_struct rose_route;
+	struct net_device *dev;
+	int err;
 
-	चयन (cmd) अणु
-	हाल SIOCADDRT:
-		अगर (copy_from_user(&rose_route, arg, माप(काष्ठा rose_route_काष्ठा)))
-			वापस -EFAULT;
-		अगर ((dev = rose_ax25_dev_find(rose_route.device)) == शून्य)
-			वापस -EINVAL;
-		अगर (rose_dev_exists(&rose_route.address)) /* Can't add routes to ourself */
-			वापस -EINVAL;
-		अगर (rose_route.mask > 10) /* Mask can't be more than 10 digits */
-			वापस -EINVAL;
-		अगर (rose_route.ndigis > AX25_MAX_DIGIS)
-			वापस -EINVAL;
+	switch (cmd) {
+	case SIOCADDRT:
+		if (copy_from_user(&rose_route, arg, sizeof(struct rose_route_struct)))
+			return -EFAULT;
+		if ((dev = rose_ax25_dev_find(rose_route.device)) == NULL)
+			return -EINVAL;
+		if (rose_dev_exists(&rose_route.address)) /* Can't add routes to ourself */
+			return -EINVAL;
+		if (rose_route.mask > 10) /* Mask can't be more than 10 digits */
+			return -EINVAL;
+		if (rose_route.ndigis > AX25_MAX_DIGIS)
+			return -EINVAL;
 		err = rose_add_node(&rose_route, dev);
-		वापस err;
+		return err;
 
-	हाल SIOCDELRT:
-		अगर (copy_from_user(&rose_route, arg, माप(काष्ठा rose_route_काष्ठा)))
-			वापस -EFAULT;
-		अगर ((dev = rose_ax25_dev_find(rose_route.device)) == शून्य)
-			वापस -EINVAL;
+	case SIOCDELRT:
+		if (copy_from_user(&rose_route, arg, sizeof(struct rose_route_struct)))
+			return -EFAULT;
+		if ((dev = rose_ax25_dev_find(rose_route.device)) == NULL)
+			return -EINVAL;
 		err = rose_del_node(&rose_route, dev);
-		वापस err;
+		return err;
 
-	हाल SIOCRSCLRRT:
-		वापस rose_clear_routes();
+	case SIOCRSCLRRT:
+		return rose_clear_routes();
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम rose_del_route_by_neigh(काष्ठा rose_neigh *rose_neigh)
-अणु
-	काष्ठा rose_route *rose_route, *s;
+static void rose_del_route_by_neigh(struct rose_neigh *rose_neigh)
+{
+	struct rose_route *rose_route, *s;
 
 	rose_neigh->restarted = 0;
 
-	rose_stop_t0समयr(rose_neigh);
-	rose_start_fसमयr(rose_neigh);
+	rose_stop_t0timer(rose_neigh);
+	rose_start_ftimer(rose_neigh);
 
 	skb_queue_purge(&rose_neigh->queue);
 
@@ -777,107 +776,107 @@ out:
 
 	rose_route = rose_route_list;
 
-	जबतक (rose_route != शून्य) अणु
-		अगर ((rose_route->neigh1 == rose_neigh && rose_route->neigh2 == rose_neigh) ||
-		    (rose_route->neigh1 == rose_neigh && rose_route->neigh2 == शून्य)       ||
-		    (rose_route->neigh2 == rose_neigh && rose_route->neigh1 == शून्य)) अणु
+	while (rose_route != NULL) {
+		if ((rose_route->neigh1 == rose_neigh && rose_route->neigh2 == rose_neigh) ||
+		    (rose_route->neigh1 == rose_neigh && rose_route->neigh2 == NULL)       ||
+		    (rose_route->neigh2 == rose_neigh && rose_route->neigh1 == NULL)) {
 			s = rose_route->next;
-			rose_हटाओ_route(rose_route);
+			rose_remove_route(rose_route);
 			rose_route = s;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (rose_route->neigh1 == rose_neigh) अणु
+		if (rose_route->neigh1 == rose_neigh) {
 			rose_route->neigh1->use--;
-			rose_route->neigh1 = शून्य;
+			rose_route->neigh1 = NULL;
 			rose_transmit_clear_request(rose_route->neigh2, rose_route->lci2, ROSE_OUT_OF_ORDER, 0);
-		पूर्ण
+		}
 
-		अगर (rose_route->neigh2 == rose_neigh) अणु
+		if (rose_route->neigh2 == rose_neigh) {
 			rose_route->neigh2->use--;
-			rose_route->neigh2 = शून्य;
+			rose_route->neigh2 = NULL;
 			rose_transmit_clear_request(rose_route->neigh1, rose_route->lci1, ROSE_OUT_OF_ORDER, 0);
-		पूर्ण
+		}
 
 		rose_route = rose_route->next;
-	पूर्ण
+	}
 	spin_unlock_bh(&rose_route_list_lock);
-पूर्ण
+}
 
 /*
- * 	A level 2 link has समयd out, thereक्रमe it appears to be a poor link,
- *	then करोn't use that neighbour until it is reset. Blow away all through
+ * 	A level 2 link has timed out, therefore it appears to be a poor link,
+ *	then don't use that neighbour until it is reset. Blow away all through
  *	routes and connections using this route.
  */
-व्योम rose_link_failed(ax25_cb *ax25, पूर्णांक reason)
-अणु
-	काष्ठा rose_neigh *rose_neigh;
+void rose_link_failed(ax25_cb *ax25, int reason)
+{
+	struct rose_neigh *rose_neigh;
 
 	spin_lock_bh(&rose_neigh_list_lock);
 	rose_neigh = rose_neigh_list;
-	जबतक (rose_neigh != शून्य) अणु
-		अगर (rose_neigh->ax25 == ax25)
-			अवरोध;
+	while (rose_neigh != NULL) {
+		if (rose_neigh->ax25 == ax25)
+			break;
 		rose_neigh = rose_neigh->next;
-	पूर्ण
+	}
 
-	अगर (rose_neigh != शून्य) अणु
-		rose_neigh->ax25 = शून्य;
+	if (rose_neigh != NULL) {
+		rose_neigh->ax25 = NULL;
 		ax25_cb_put(ax25);
 
 		rose_del_route_by_neigh(rose_neigh);
-		rose_समाप्त_by_neigh(rose_neigh);
-	पूर्ण
+		rose_kill_by_neigh(rose_neigh);
+	}
 	spin_unlock_bh(&rose_neigh_list_lock);
-पूर्ण
+}
 
 /*
- * 	A device has been "downed" हटाओ its link status. Blow away all
+ * 	A device has been "downed" remove its link status. Blow away all
  *	through routes and connections that use this device.
  */
-व्योम rose_link_device_करोwn(काष्ठा net_device *dev)
-अणु
-	काष्ठा rose_neigh *rose_neigh;
+void rose_link_device_down(struct net_device *dev)
+{
+	struct rose_neigh *rose_neigh;
 
-	क्रम (rose_neigh = rose_neigh_list; rose_neigh != शून्य; rose_neigh = rose_neigh->next) अणु
-		अगर (rose_neigh->dev == dev) अणु
+	for (rose_neigh = rose_neigh_list; rose_neigh != NULL; rose_neigh = rose_neigh->next) {
+		if (rose_neigh->dev == dev) {
 			rose_del_route_by_neigh(rose_neigh);
-			rose_समाप्त_by_neigh(rose_neigh);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			rose_kill_by_neigh(rose_neigh);
+		}
+	}
+}
 
 /*
  *	Route a frame to an appropriate AX.25 connection.
- *	A शून्य ax25_cb indicates an पूर्णांकernally generated frame.
+ *	A NULL ax25_cb indicates an internally generated frame.
  */
-पूर्णांक rose_route_frame(काष्ठा sk_buff *skb, ax25_cb *ax25)
-अणु
-	काष्ठा rose_neigh *rose_neigh, *new_neigh;
-	काष्ठा rose_route *rose_route;
-	काष्ठा rose_facilities_काष्ठा facilities;
+int rose_route_frame(struct sk_buff *skb, ax25_cb *ax25)
+{
+	struct rose_neigh *rose_neigh, *new_neigh;
+	struct rose_route *rose_route;
+	struct rose_facilities_struct facilities;
 	rose_address *src_addr, *dest_addr;
-	काष्ठा sock *sk;
-	अचिन्हित लघु frametype;
-	अचिन्हित पूर्णांक lci, new_lci;
-	अचिन्हित अक्षर cause, diagnostic;
-	काष्ठा net_device *dev;
-	पूर्णांक res = 0;
-	अक्षर buf[11];
+	struct sock *sk;
+	unsigned short frametype;
+	unsigned int lci, new_lci;
+	unsigned char cause, diagnostic;
+	struct net_device *dev;
+	int res = 0;
+	char buf[11];
 
-	अगर (skb->len < ROSE_MIN_LEN)
-		वापस res;
+	if (skb->len < ROSE_MIN_LEN)
+		return res;
 
-	अगर (!ax25)
-		वापस rose_loopback_queue(skb, शून्य);
+	if (!ax25)
+		return rose_loopback_queue(skb, NULL);
 
 	frametype = skb->data[2];
 	lci = ((skb->data[0] << 8) & 0xF00) + ((skb->data[1] << 0) & 0x0FF);
-	अगर (frametype == ROSE_CALL_REQUEST &&
+	if (frametype == ROSE_CALL_REQUEST &&
 	    (skb->len <= ROSE_CALL_REQ_FACILITIES_OFF ||
 	     skb->data[ROSE_CALL_REQ_ADDR_LEN_OFF] !=
 	     ROSE_CALL_REQ_ADDR_LEN_VAL))
-		वापस res;
+		return res;
 	src_addr  = (rose_address *)(skb->data + ROSE_CALL_REQ_SRC_ADDR_OFF);
 	dest_addr = (rose_address *)(skb->data + ROSE_CALL_REQ_DEST_ADDR_OFF);
 
@@ -885,183 +884,183 @@ out:
 	spin_lock_bh(&rose_route_list_lock);
 
 	rose_neigh = rose_neigh_list;
-	जबतक (rose_neigh != शून्य) अणु
-		अगर (ax25cmp(&ax25->dest_addr, &rose_neigh->callsign) == 0 &&
+	while (rose_neigh != NULL) {
+		if (ax25cmp(&ax25->dest_addr, &rose_neigh->callsign) == 0 &&
 		    ax25->ax25_dev->dev == rose_neigh->dev)
-			अवरोध;
+			break;
 		rose_neigh = rose_neigh->next;
-	पूर्ण
+	}
 
-	अगर (rose_neigh == शून्य) अणु
-		prपूर्णांकk("rose_route : unknown neighbour or device %s\n",
+	if (rose_neigh == NULL) {
+		printk("rose_route : unknown neighbour or device %s\n",
 		       ax2asc(buf, &ax25->dest_addr));
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
-	 *	Obviously the link is working, halt the fसमयr.
+	 *	Obviously the link is working, halt the ftimer.
 	 */
-	rose_stop_fसमयr(rose_neigh);
+	rose_stop_ftimer(rose_neigh);
 
 	/*
-	 *	LCI of zero is always क्रम us, and its always a restart
+	 *	LCI of zero is always for us, and its always a restart
 	 * 	frame.
 	 */
-	अगर (lci == 0) अणु
+	if (lci == 0) {
 		rose_link_rx_restart(skb, rose_neigh, frametype);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
 	 *	Find an existing socket.
 	 */
-	अगर ((sk = rose_find_socket(lci, rose_neigh)) != शून्य) अणु
-		अगर (frametype == ROSE_CALL_REQUEST) अणु
-			काष्ठा rose_sock *rose = rose_sk(sk);
+	if ((sk = rose_find_socket(lci, rose_neigh)) != NULL) {
+		if (frametype == ROSE_CALL_REQUEST) {
+			struct rose_sock *rose = rose_sk(sk);
 
 			/* Remove an existing unused socket */
 			rose_clear_queues(sk);
 			rose->cause	 = ROSE_NETWORK_CONGESTION;
 			rose->diagnostic = 0;
 			rose->neighbour->use--;
-			rose->neighbour	 = शून्य;
+			rose->neighbour	 = NULL;
 			rose->lci	 = 0;
 			rose->state	 = ROSE_STATE_0;
 			sk->sk_state	 = TCP_CLOSE;
 			sk->sk_err	 = 0;
-			sk->sk_shutकरोwn	 |= SEND_SHUTDOWN;
-			अगर (!sock_flag(sk, SOCK_DEAD)) अणु
+			sk->sk_shutdown	 |= SEND_SHUTDOWN;
+			if (!sock_flag(sk, SOCK_DEAD)) {
 				sk->sk_state_change(sk);
 				sock_set_flag(sk, SOCK_DEAD);
-			पूर्ण
-		पूर्ण
-		अन्यथा अणु
+			}
+		}
+		else {
 			skb_reset_transport_header(skb);
 			res = rose_process_rx_frame(sk, skb);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 	/*
-	 *	Is is a Call Request and is it क्रम us ?
+	 *	Is is a Call Request and is it for us ?
 	 */
-	अगर (frametype == ROSE_CALL_REQUEST)
-		अगर ((dev = rose_dev_get(dest_addr)) != शून्य) अणु
+	if (frametype == ROSE_CALL_REQUEST)
+		if ((dev = rose_dev_get(dest_addr)) != NULL) {
 			res = rose_rx_call_request(skb, dev, rose_neigh, lci);
 			dev_put(dev);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-	अगर (!sysctl_rose_routing_control) अणु
+	if (!sysctl_rose_routing_control) {
 		rose_transmit_clear_request(rose_neigh, lci, ROSE_NOT_OBTAINABLE, 0);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
-	 *	Route it to the next in line अगर we have an entry क्रम it.
+	 *	Route it to the next in line if we have an entry for it.
 	 */
 	rose_route = rose_route_list;
-	जबतक (rose_route != शून्य) अणु
-		अगर (rose_route->lci1 == lci &&
-		    rose_route->neigh1 == rose_neigh) अणु
-			अगर (frametype == ROSE_CALL_REQUEST) अणु
+	while (rose_route != NULL) {
+		if (rose_route->lci1 == lci &&
+		    rose_route->neigh1 == rose_neigh) {
+			if (frametype == ROSE_CALL_REQUEST) {
 				/* F6FBB - Remove an existing unused route */
-				rose_हटाओ_route(rose_route);
-				अवरोध;
-			पूर्ण अन्यथा अगर (rose_route->neigh2 != शून्य) अणु
+				rose_remove_route(rose_route);
+				break;
+			} else if (rose_route->neigh2 != NULL) {
 				skb->data[0] &= 0xF0;
 				skb->data[0] |= (rose_route->lci2 >> 8) & 0x0F;
 				skb->data[1]  = (rose_route->lci2 >> 0) & 0xFF;
 				rose_transmit_link(skb, rose_route->neigh2);
-				अगर (frametype == ROSE_CLEAR_CONFIRMATION)
-					rose_हटाओ_route(rose_route);
+				if (frametype == ROSE_CLEAR_CONFIRMATION)
+					rose_remove_route(rose_route);
 				res = 1;
-				जाओ out;
-			पूर्ण अन्यथा अणु
-				अगर (frametype == ROSE_CLEAR_CONFIRMATION)
-					rose_हटाओ_route(rose_route);
-				जाओ out;
-			पूर्ण
-		पूर्ण
-		अगर (rose_route->lci2 == lci &&
-		    rose_route->neigh2 == rose_neigh) अणु
-			अगर (frametype == ROSE_CALL_REQUEST) अणु
+				goto out;
+			} else {
+				if (frametype == ROSE_CLEAR_CONFIRMATION)
+					rose_remove_route(rose_route);
+				goto out;
+			}
+		}
+		if (rose_route->lci2 == lci &&
+		    rose_route->neigh2 == rose_neigh) {
+			if (frametype == ROSE_CALL_REQUEST) {
 				/* F6FBB - Remove an existing unused route */
-				rose_हटाओ_route(rose_route);
-				अवरोध;
-			पूर्ण अन्यथा अगर (rose_route->neigh1 != शून्य) अणु
+				rose_remove_route(rose_route);
+				break;
+			} else if (rose_route->neigh1 != NULL) {
 				skb->data[0] &= 0xF0;
 				skb->data[0] |= (rose_route->lci1 >> 8) & 0x0F;
 				skb->data[1]  = (rose_route->lci1 >> 0) & 0xFF;
 				rose_transmit_link(skb, rose_route->neigh1);
-				अगर (frametype == ROSE_CLEAR_CONFIRMATION)
-					rose_हटाओ_route(rose_route);
+				if (frametype == ROSE_CLEAR_CONFIRMATION)
+					rose_remove_route(rose_route);
 				res = 1;
-				जाओ out;
-			पूर्ण अन्यथा अणु
-				अगर (frametype == ROSE_CLEAR_CONFIRMATION)
-					rose_हटाओ_route(rose_route);
-				जाओ out;
-			पूर्ण
-		पूर्ण
+				goto out;
+			} else {
+				if (frametype == ROSE_CLEAR_CONFIRMATION)
+					rose_remove_route(rose_route);
+				goto out;
+			}
+		}
 		rose_route = rose_route->next;
-	पूर्ण
+	}
 
 	/*
 	 *	We know that:
-	 *	1. The frame isn't क्रम us,
+	 *	1. The frame isn't for us,
 	 *	2. It isn't "owned" by any existing route.
 	 */
-	अगर (frametype != ROSE_CALL_REQUEST) अणु	/* XXX */
+	if (frametype != ROSE_CALL_REQUEST) {	/* XXX */
 		res = 0;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	स_रखो(&facilities, 0x00, माप(काष्ठा rose_facilities_काष्ठा));
+	memset(&facilities, 0x00, sizeof(struct rose_facilities_struct));
 
-	अगर (!rose_parse_facilities(skb->data + ROSE_CALL_REQ_FACILITIES_OFF,
+	if (!rose_parse_facilities(skb->data + ROSE_CALL_REQ_FACILITIES_OFF,
 				   skb->len - ROSE_CALL_REQ_FACILITIES_OFF,
-				   &facilities)) अणु
+				   &facilities)) {
 		rose_transmit_clear_request(rose_neigh, lci, ROSE_INVALID_FACILITY, 76);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
-	 *	Check क्रम routing loops.
+	 *	Check for routing loops.
 	 */
 	rose_route = rose_route_list;
-	जबतक (rose_route != शून्य) अणु
-		अगर (rose_route->अक्रम == facilities.अक्रम &&
+	while (rose_route != NULL) {
+		if (rose_route->rand == facilities.rand &&
 		    rosecmp(src_addr, &rose_route->src_addr) == 0 &&
 		    ax25cmp(&facilities.dest_call, &rose_route->src_call) == 0 &&
-		    ax25cmp(&facilities.source_call, &rose_route->dest_call) == 0) अणु
+		    ax25cmp(&facilities.source_call, &rose_route->dest_call) == 0) {
 			rose_transmit_clear_request(rose_neigh, lci, ROSE_NOT_OBTAINABLE, 120);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		rose_route = rose_route->next;
-	पूर्ण
+	}
 
-	अगर ((new_neigh = rose_get_neigh(dest_addr, &cause, &diagnostic, 1)) == शून्य) अणु
+	if ((new_neigh = rose_get_neigh(dest_addr, &cause, &diagnostic, 1)) == NULL) {
 		rose_transmit_clear_request(rose_neigh, lci, cause, diagnostic);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर ((new_lci = rose_new_lci(new_neigh)) == 0) अणु
+	if ((new_lci = rose_new_lci(new_neigh)) == 0) {
 		rose_transmit_clear_request(rose_neigh, lci, ROSE_NETWORK_CONGESTION, 71);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर ((rose_route = kदो_स्मृति(माप(*rose_route), GFP_ATOMIC)) == शून्य) अणु
+	if ((rose_route = kmalloc(sizeof(*rose_route), GFP_ATOMIC)) == NULL) {
 		rose_transmit_clear_request(rose_neigh, lci, ROSE_NETWORK_CONGESTION, 120);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	rose_route->lci1      = lci;
 	rose_route->src_addr  = *src_addr;
 	rose_route->dest_addr = *dest_addr;
 	rose_route->src_call  = facilities.dest_call;
 	rose_route->dest_call = facilities.source_call;
-	rose_route->अक्रम      = facilities.अक्रम;
+	rose_route->rand      = facilities.rand;
 	rose_route->neigh1    = rose_neigh;
 	rose_route->lci2      = new_lci;
 	rose_route->neigh2    = new_neigh;
@@ -1083,120 +1082,120 @@ out:
 	spin_unlock_bh(&rose_route_list_lock);
 	spin_unlock_bh(&rose_neigh_list_lock);
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
-#अगर_घोषित CONFIG_PROC_FS
+#ifdef CONFIG_PROC_FS
 
-अटल व्योम *rose_node_start(काष्ठा seq_file *seq, loff_t *pos)
+static void *rose_node_start(struct seq_file *seq, loff_t *pos)
 	__acquires(rose_node_list_lock)
-अणु
-	काष्ठा rose_node *rose_node;
-	पूर्णांक i = 1;
+{
+	struct rose_node *rose_node;
+	int i = 1;
 
 	spin_lock_bh(&rose_node_list_lock);
-	अगर (*pos == 0)
-		वापस SEQ_START_TOKEN;
+	if (*pos == 0)
+		return SEQ_START_TOKEN;
 
-	क्रम (rose_node = rose_node_list; rose_node && i < *pos;
+	for (rose_node = rose_node_list; rose_node && i < *pos;
 	     rose_node = rose_node->next, ++i);
 
-	वापस (i == *pos) ? rose_node : शून्य;
-पूर्ण
+	return (i == *pos) ? rose_node : NULL;
+}
 
-अटल व्योम *rose_node_next(काष्ठा seq_file *seq, व्योम *v, loff_t *pos)
-अणु
+static void *rose_node_next(struct seq_file *seq, void *v, loff_t *pos)
+{
 	++*pos;
 
-	वापस (v == SEQ_START_TOKEN) ? rose_node_list
-		: ((काष्ठा rose_node *)v)->next;
-पूर्ण
+	return (v == SEQ_START_TOKEN) ? rose_node_list
+		: ((struct rose_node *)v)->next;
+}
 
-अटल व्योम rose_node_stop(काष्ठा seq_file *seq, व्योम *v)
+static void rose_node_stop(struct seq_file *seq, void *v)
 	__releases(rose_node_list_lock)
-अणु
+{
 	spin_unlock_bh(&rose_node_list_lock);
-पूर्ण
+}
 
-अटल पूर्णांक rose_node_show(काष्ठा seq_file *seq, व्योम *v)
-अणु
-	अक्षर rsbuf[11];
-	पूर्णांक i;
+static int rose_node_show(struct seq_file *seq, void *v)
+{
+	char rsbuf[11];
+	int i;
 
-	अगर (v == SEQ_START_TOKEN)
-		seq_माला_दो(seq, "address    mask n neigh neigh neigh\n");
-	अन्यथा अणु
-		स्थिर काष्ठा rose_node *rose_node = v;
-		/* अगर (rose_node->loopback) अणु
-			seq_म_लिखो(seq, "%-10s %04d 1 loopback\n",
+	if (v == SEQ_START_TOKEN)
+		seq_puts(seq, "address    mask n neigh neigh neigh\n");
+	else {
+		const struct rose_node *rose_node = v;
+		/* if (rose_node->loopback) {
+			seq_printf(seq, "%-10s %04d 1 loopback\n",
 				   rose2asc(rsbuf, &rose_node->address),
 				   rose_node->mask);
-		पूर्ण अन्यथा अणु */
-			seq_म_लिखो(seq, "%-10s %04d %d",
+		} else { */
+			seq_printf(seq, "%-10s %04d %d",
 				   rose2asc(rsbuf, &rose_node->address),
 				   rose_node->mask,
 				   rose_node->count);
 
-			क्रम (i = 0; i < rose_node->count; i++)
-				seq_म_लिखो(seq, " %05d",
+			for (i = 0; i < rose_node->count; i++)
+				seq_printf(seq, " %05d",
 					rose_node->neighbour[i]->number);
 
-			seq_माला_दो(seq, "\n");
-		/* पूर्ण */
-	पूर्ण
-	वापस 0;
-पूर्ण
+			seq_puts(seq, "\n");
+		/* } */
+	}
+	return 0;
+}
 
-स्थिर काष्ठा seq_operations rose_node_seqops = अणु
+const struct seq_operations rose_node_seqops = {
 	.start = rose_node_start,
 	.next = rose_node_next,
 	.stop = rose_node_stop,
 	.show = rose_node_show,
-पूर्ण;
+};
 
-अटल व्योम *rose_neigh_start(काष्ठा seq_file *seq, loff_t *pos)
+static void *rose_neigh_start(struct seq_file *seq, loff_t *pos)
 	__acquires(rose_neigh_list_lock)
-अणु
-	काष्ठा rose_neigh *rose_neigh;
-	पूर्णांक i = 1;
+{
+	struct rose_neigh *rose_neigh;
+	int i = 1;
 
 	spin_lock_bh(&rose_neigh_list_lock);
-	अगर (*pos == 0)
-		वापस SEQ_START_TOKEN;
+	if (*pos == 0)
+		return SEQ_START_TOKEN;
 
-	क्रम (rose_neigh = rose_neigh_list; rose_neigh && i < *pos;
+	for (rose_neigh = rose_neigh_list; rose_neigh && i < *pos;
 	     rose_neigh = rose_neigh->next, ++i);
 
-	वापस (i == *pos) ? rose_neigh : शून्य;
-पूर्ण
+	return (i == *pos) ? rose_neigh : NULL;
+}
 
-अटल व्योम *rose_neigh_next(काष्ठा seq_file *seq, व्योम *v, loff_t *pos)
-अणु
+static void *rose_neigh_next(struct seq_file *seq, void *v, loff_t *pos)
+{
 	++*pos;
 
-	वापस (v == SEQ_START_TOKEN) ? rose_neigh_list
-		: ((काष्ठा rose_neigh *)v)->next;
-पूर्ण
+	return (v == SEQ_START_TOKEN) ? rose_neigh_list
+		: ((struct rose_neigh *)v)->next;
+}
 
-अटल व्योम rose_neigh_stop(काष्ठा seq_file *seq, व्योम *v)
+static void rose_neigh_stop(struct seq_file *seq, void *v)
 	__releases(rose_neigh_list_lock)
-अणु
+{
 	spin_unlock_bh(&rose_neigh_list_lock);
-पूर्ण
+}
 
-अटल पूर्णांक rose_neigh_show(काष्ठा seq_file *seq, व्योम *v)
-अणु
-	अक्षर buf[11];
-	पूर्णांक i;
+static int rose_neigh_show(struct seq_file *seq, void *v)
+{
+	char buf[11];
+	int i;
 
-	अगर (v == SEQ_START_TOKEN)
-		seq_माला_दो(seq,
+	if (v == SEQ_START_TOKEN)
+		seq_puts(seq,
 			 "addr  callsign  dev  count use mode restart  t0  tf digipeaters\n");
-	अन्यथा अणु
-		काष्ठा rose_neigh *rose_neigh = v;
+	else {
+		struct rose_neigh *rose_neigh = v;
 
-		/* अगर (!rose_neigh->loopback) अणु */
-		seq_म_लिखो(seq, "%05d %-9s %-4s   %3d %3d  %3s     %3s %3lu %3lu",
+		/* if (!rose_neigh->loopback) { */
+		seq_printf(seq, "%05d %-9s %-4s   %3d %3d  %3s     %3s %3lu %3lu",
 			   rose_neigh->number,
 			   (rose_neigh->loopback) ? "RSLOOP-0" : ax2asc(buf, &rose_neigh->callsign),
 			   rose_neigh->dev ? rose_neigh->dev->name : "???",
@@ -1204,127 +1203,127 @@ out:
 			   rose_neigh->use,
 			   (rose_neigh->dce_mode) ? "DCE" : "DTE",
 			   (rose_neigh->restarted) ? "yes" : "no",
-			   ax25_display_समयr(&rose_neigh->t0समयr) / HZ,
-			   ax25_display_समयr(&rose_neigh->fसमयr)  / HZ);
+			   ax25_display_timer(&rose_neigh->t0timer) / HZ,
+			   ax25_display_timer(&rose_neigh->ftimer)  / HZ);
 
-		अगर (rose_neigh->digipeat != शून्य) अणु
-			क्रम (i = 0; i < rose_neigh->digipeat->ndigi; i++)
-				seq_म_लिखो(seq, " %s", ax2asc(buf, &rose_neigh->digipeat->calls[i]));
-		पूर्ण
+		if (rose_neigh->digipeat != NULL) {
+			for (i = 0; i < rose_neigh->digipeat->ndigi; i++)
+				seq_printf(seq, " %s", ax2asc(buf, &rose_neigh->digipeat->calls[i]));
+		}
 
-		seq_माला_दो(seq, "\n");
-	पूर्ण
-	वापस 0;
-पूर्ण
+		seq_puts(seq, "\n");
+	}
+	return 0;
+}
 
 
-स्थिर काष्ठा seq_operations rose_neigh_seqops = अणु
+const struct seq_operations rose_neigh_seqops = {
 	.start = rose_neigh_start,
 	.next = rose_neigh_next,
 	.stop = rose_neigh_stop,
 	.show = rose_neigh_show,
-पूर्ण;
+};
 
-अटल व्योम *rose_route_start(काष्ठा seq_file *seq, loff_t *pos)
+static void *rose_route_start(struct seq_file *seq, loff_t *pos)
 	__acquires(rose_route_list_lock)
-अणु
-	काष्ठा rose_route *rose_route;
-	पूर्णांक i = 1;
+{
+	struct rose_route *rose_route;
+	int i = 1;
 
 	spin_lock_bh(&rose_route_list_lock);
-	अगर (*pos == 0)
-		वापस SEQ_START_TOKEN;
+	if (*pos == 0)
+		return SEQ_START_TOKEN;
 
-	क्रम (rose_route = rose_route_list; rose_route && i < *pos;
+	for (rose_route = rose_route_list; rose_route && i < *pos;
 	     rose_route = rose_route->next, ++i);
 
-	वापस (i == *pos) ? rose_route : शून्य;
-पूर्ण
+	return (i == *pos) ? rose_route : NULL;
+}
 
-अटल व्योम *rose_route_next(काष्ठा seq_file *seq, व्योम *v, loff_t *pos)
-अणु
+static void *rose_route_next(struct seq_file *seq, void *v, loff_t *pos)
+{
 	++*pos;
 
-	वापस (v == SEQ_START_TOKEN) ? rose_route_list
-		: ((काष्ठा rose_route *)v)->next;
-पूर्ण
+	return (v == SEQ_START_TOKEN) ? rose_route_list
+		: ((struct rose_route *)v)->next;
+}
 
-अटल व्योम rose_route_stop(काष्ठा seq_file *seq, व्योम *v)
+static void rose_route_stop(struct seq_file *seq, void *v)
 	__releases(rose_route_list_lock)
-अणु
+{
 	spin_unlock_bh(&rose_route_list_lock);
-पूर्ण
+}
 
-अटल पूर्णांक rose_route_show(काष्ठा seq_file *seq, व्योम *v)
-अणु
-	अक्षर buf[11], rsbuf[11];
+static int rose_route_show(struct seq_file *seq, void *v)
+{
+	char buf[11], rsbuf[11];
 
-	अगर (v == SEQ_START_TOKEN)
-		seq_माला_दो(seq,
+	if (v == SEQ_START_TOKEN)
+		seq_puts(seq,
 			 "lci  address     callsign   neigh  <-> lci  address     callsign   neigh\n");
-	अन्यथा अणु
-		काष्ठा rose_route *rose_route = v;
+	else {
+		struct rose_route *rose_route = v;
 
-		अगर (rose_route->neigh1)
-			seq_म_लिखो(seq,
+		if (rose_route->neigh1)
+			seq_printf(seq,
 				   "%3.3X  %-10s  %-9s  %05d      ",
 				   rose_route->lci1,
 				   rose2asc(rsbuf, &rose_route->src_addr),
 				   ax2asc(buf, &rose_route->src_call),
 				   rose_route->neigh1->number);
-		अन्यथा
-			seq_माला_दो(seq,
+		else
+			seq_puts(seq,
 				 "000  *           *          00000      ");
 
-		अगर (rose_route->neigh2)
-			seq_म_लिखो(seq,
+		if (rose_route->neigh2)
+			seq_printf(seq,
 				   "%3.3X  %-10s  %-9s  %05d\n",
 				   rose_route->lci2,
 				   rose2asc(rsbuf, &rose_route->dest_addr),
 				   ax2asc(buf, &rose_route->dest_call),
 				   rose_route->neigh2->number);
-		 अन्यथा
-			 seq_माला_दो(seq,
+		 else
+			 seq_puts(seq,
 				  "000  *           *          00000\n");
-		पूर्ण
-	वापस 0;
-पूर्ण
+		}
+	return 0;
+}
 
-काष्ठा seq_operations rose_route_seqops = अणु
+struct seq_operations rose_route_seqops = {
 	.start = rose_route_start,
 	.next = rose_route_next,
 	.stop = rose_route_stop,
 	.show = rose_route_show,
-पूर्ण;
-#पूर्ण_अगर /* CONFIG_PROC_FS */
+};
+#endif /* CONFIG_PROC_FS */
 
 /*
- *	Release all memory associated with ROSE routing काष्ठाures.
+ *	Release all memory associated with ROSE routing structures.
  */
-व्योम __निकास rose_rt_मुक्त(व्योम)
-अणु
-	काष्ठा rose_neigh *s, *rose_neigh = rose_neigh_list;
-	काष्ठा rose_node  *t, *rose_node  = rose_node_list;
-	काष्ठा rose_route *u, *rose_route = rose_route_list;
+void __exit rose_rt_free(void)
+{
+	struct rose_neigh *s, *rose_neigh = rose_neigh_list;
+	struct rose_node  *t, *rose_node  = rose_node_list;
+	struct rose_route *u, *rose_route = rose_route_list;
 
-	जबतक (rose_neigh != शून्य) अणु
+	while (rose_neigh != NULL) {
 		s          = rose_neigh;
 		rose_neigh = rose_neigh->next;
 
-		rose_हटाओ_neigh(s);
-	पूर्ण
+		rose_remove_neigh(s);
+	}
 
-	जबतक (rose_node != शून्य) अणु
+	while (rose_node != NULL) {
 		t         = rose_node;
 		rose_node = rose_node->next;
 
-		rose_हटाओ_node(t);
-	पूर्ण
+		rose_remove_node(t);
+	}
 
-	जबतक (rose_route != शून्य) अणु
+	while (rose_route != NULL) {
 		u          = rose_route;
 		rose_route = rose_route->next;
 
-		rose_हटाओ_route(u);
-	पूर्ण
-पूर्ण
+		rose_remove_route(u);
+	}
+}

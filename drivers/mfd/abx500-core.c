@@ -1,151 +1,150 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2007-2010 ST-Ericsson
- * Register access functions क्रम the ABX500 Mixed Signal IC family.
+ * Register access functions for the ABX500 Mixed Signal IC family.
  * Author: Mattias Wallin <mattias.wallin@stericsson.com>
  */
 
-#समावेश <linux/list.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/err.h>
-#समावेश <linux/init.h>
-#समावेश <linux/export.h>
-#समावेश <linux/mfd/abx500.h>
+#include <linux/list.h>
+#include <linux/slab.h>
+#include <linux/err.h>
+#include <linux/init.h>
+#include <linux/export.h>
+#include <linux/mfd/abx500.h>
 
-अटल LIST_HEAD(abx500_list);
+static LIST_HEAD(abx500_list);
 
-काष्ठा abx500_device_entry अणु
-	काष्ठा list_head list;
-	काष्ठा abx500_ops ops;
-	काष्ठा device *dev;
-पूर्ण;
+struct abx500_device_entry {
+	struct list_head list;
+	struct abx500_ops ops;
+	struct device *dev;
+};
 
-अटल व्योम lookup_ops(काष्ठा device *dev, काष्ठा abx500_ops **ops)
-अणु
-	काष्ठा abx500_device_entry *dev_entry;
+static void lookup_ops(struct device *dev, struct abx500_ops **ops)
+{
+	struct abx500_device_entry *dev_entry;
 
-	*ops = शून्य;
-	list_क्रम_each_entry(dev_entry, &abx500_list, list) अणु
-		अगर (dev_entry->dev == dev) अणु
+	*ops = NULL;
+	list_for_each_entry(dev_entry, &abx500_list, list) {
+		if (dev_entry->dev == dev) {
 			*ops = &dev_entry->ops;
-			वापस;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			return;
+		}
+	}
+}
 
-पूर्णांक abx500_रेजिस्टर_ops(काष्ठा device *dev, काष्ठा abx500_ops *ops)
-अणु
-	काष्ठा abx500_device_entry *dev_entry;
+int abx500_register_ops(struct device *dev, struct abx500_ops *ops)
+{
+	struct abx500_device_entry *dev_entry;
 
-	dev_entry = devm_kzalloc(dev, माप(*dev_entry), GFP_KERNEL);
-	अगर (!dev_entry)
-		वापस -ENOMEM;
+	dev_entry = devm_kzalloc(dev, sizeof(*dev_entry), GFP_KERNEL);
+	if (!dev_entry)
+		return -ENOMEM;
 
 	dev_entry->dev = dev;
-	स_नकल(&dev_entry->ops, ops, माप(*ops));
+	memcpy(&dev_entry->ops, ops, sizeof(*ops));
 
 	list_add_tail(&dev_entry->list, &abx500_list);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(abx500_रेजिस्टर_ops);
+	return 0;
+}
+EXPORT_SYMBOL(abx500_register_ops);
 
-व्योम abx500_हटाओ_ops(काष्ठा device *dev)
-अणु
-	काष्ठा abx500_device_entry *dev_entry, *पंचांगp;
+void abx500_remove_ops(struct device *dev)
+{
+	struct abx500_device_entry *dev_entry, *tmp;
 
-	list_क्रम_each_entry_safe(dev_entry, पंचांगp, &abx500_list, list)
-		अगर (dev_entry->dev == dev)
+	list_for_each_entry_safe(dev_entry, tmp, &abx500_list, list)
+		if (dev_entry->dev == dev)
 			list_del(&dev_entry->list);
-पूर्ण
-EXPORT_SYMBOL(abx500_हटाओ_ops);
+}
+EXPORT_SYMBOL(abx500_remove_ops);
 
-पूर्णांक abx500_set_रेजिस्टर_पूर्णांकerruptible(काष्ठा device *dev, u8 bank, u8 reg,
+int abx500_set_register_interruptible(struct device *dev, u8 bank, u8 reg,
 	u8 value)
-अणु
-	काष्ठा abx500_ops *ops;
+{
+	struct abx500_ops *ops;
 
 	lookup_ops(dev->parent, &ops);
-	अगर (ops && ops->set_रेजिस्टर)
-		वापस ops->set_रेजिस्टर(dev, bank, reg, value);
-	अन्यथा
-		वापस -ENOTSUPP;
-पूर्ण
-EXPORT_SYMBOL(abx500_set_रेजिस्टर_पूर्णांकerruptible);
+	if (ops && ops->set_register)
+		return ops->set_register(dev, bank, reg, value);
+	else
+		return -ENOTSUPP;
+}
+EXPORT_SYMBOL(abx500_set_register_interruptible);
 
-पूर्णांक abx500_get_रेजिस्टर_पूर्णांकerruptible(काष्ठा device *dev, u8 bank, u8 reg,
+int abx500_get_register_interruptible(struct device *dev, u8 bank, u8 reg,
 	u8 *value)
-अणु
-	काष्ठा abx500_ops *ops;
+{
+	struct abx500_ops *ops;
 
 	lookup_ops(dev->parent, &ops);
-	अगर (ops && ops->get_रेजिस्टर)
-		वापस ops->get_रेजिस्टर(dev, bank, reg, value);
-	अन्यथा
-		वापस -ENOTSUPP;
-पूर्ण
-EXPORT_SYMBOL(abx500_get_रेजिस्टर_पूर्णांकerruptible);
+	if (ops && ops->get_register)
+		return ops->get_register(dev, bank, reg, value);
+	else
+		return -ENOTSUPP;
+}
+EXPORT_SYMBOL(abx500_get_register_interruptible);
 
-पूर्णांक abx500_get_रेजिस्टर_page_पूर्णांकerruptible(काष्ठा device *dev, u8 bank,
+int abx500_get_register_page_interruptible(struct device *dev, u8 bank,
 	u8 first_reg, u8 *regvals, u8 numregs)
-अणु
-	काष्ठा abx500_ops *ops;
+{
+	struct abx500_ops *ops;
 
 	lookup_ops(dev->parent, &ops);
-	अगर (ops && ops->get_रेजिस्टर_page)
-		वापस ops->get_रेजिस्टर_page(dev, bank,
+	if (ops && ops->get_register_page)
+		return ops->get_register_page(dev, bank,
 			first_reg, regvals, numregs);
-	अन्यथा
-		वापस -ENOTSUPP;
-पूर्ण
-EXPORT_SYMBOL(abx500_get_रेजिस्टर_page_पूर्णांकerruptible);
+	else
+		return -ENOTSUPP;
+}
+EXPORT_SYMBOL(abx500_get_register_page_interruptible);
 
-पूर्णांक abx500_mask_and_set_रेजिस्टर_पूर्णांकerruptible(काष्ठा device *dev, u8 bank,
-	u8 reg, u8 biपंचांगask, u8 bitvalues)
-अणु
-	काष्ठा abx500_ops *ops;
-
-	lookup_ops(dev->parent, &ops);
-	अगर (ops && ops->mask_and_set_रेजिस्टर)
-		वापस ops->mask_and_set_रेजिस्टर(dev, bank,
-			reg, biपंचांगask, bitvalues);
-	अन्यथा
-		वापस -ENOTSUPP;
-पूर्ण
-EXPORT_SYMBOL(abx500_mask_and_set_रेजिस्टर_पूर्णांकerruptible);
-
-पूर्णांक abx500_get_chip_id(काष्ठा device *dev)
-अणु
-	काष्ठा abx500_ops *ops;
+int abx500_mask_and_set_register_interruptible(struct device *dev, u8 bank,
+	u8 reg, u8 bitmask, u8 bitvalues)
+{
+	struct abx500_ops *ops;
 
 	lookup_ops(dev->parent, &ops);
-	अगर (ops && ops->get_chip_id)
-		वापस ops->get_chip_id(dev);
-	अन्यथा
-		वापस -ENOTSUPP;
-पूर्ण
+	if (ops && ops->mask_and_set_register)
+		return ops->mask_and_set_register(dev, bank,
+			reg, bitmask, bitvalues);
+	else
+		return -ENOTSUPP;
+}
+EXPORT_SYMBOL(abx500_mask_and_set_register_interruptible);
+
+int abx500_get_chip_id(struct device *dev)
+{
+	struct abx500_ops *ops;
+
+	lookup_ops(dev->parent, &ops);
+	if (ops && ops->get_chip_id)
+		return ops->get_chip_id(dev);
+	else
+		return -ENOTSUPP;
+}
 EXPORT_SYMBOL(abx500_get_chip_id);
 
-पूर्णांक abx500_event_रेजिस्टरs_startup_state_get(काष्ठा device *dev, u8 *event)
-अणु
-	काष्ठा abx500_ops *ops;
+int abx500_event_registers_startup_state_get(struct device *dev, u8 *event)
+{
+	struct abx500_ops *ops;
 
 	lookup_ops(dev->parent, &ops);
-	अगर (ops && ops->event_रेजिस्टरs_startup_state_get)
-		वापस ops->event_रेजिस्टरs_startup_state_get(dev, event);
-	अन्यथा
-		वापस -ENOTSUPP;
-पूर्ण
-EXPORT_SYMBOL(abx500_event_रेजिस्टरs_startup_state_get);
+	if (ops && ops->event_registers_startup_state_get)
+		return ops->event_registers_startup_state_get(dev, event);
+	else
+		return -ENOTSUPP;
+}
+EXPORT_SYMBOL(abx500_event_registers_startup_state_get);
 
-पूर्णांक abx500_startup_irq_enabled(काष्ठा device *dev, अचिन्हित पूर्णांक irq)
-अणु
-	काष्ठा abx500_ops *ops;
+int abx500_startup_irq_enabled(struct device *dev, unsigned int irq)
+{
+	struct abx500_ops *ops;
 
 	lookup_ops(dev->parent, &ops);
-	अगर (ops && ops->startup_irq_enabled)
-		वापस ops->startup_irq_enabled(dev, irq);
-	अन्यथा
-		वापस -ENOTSUPP;
-पूर्ण
+	if (ops && ops->startup_irq_enabled)
+		return ops->startup_irq_enabled(dev, irq);
+	else
+		return -ENOTSUPP;
+}
 EXPORT_SYMBOL(abx500_startup_irq_enabled);

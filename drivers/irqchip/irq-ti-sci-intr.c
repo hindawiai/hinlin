@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Texas Instruments' K3 Interrupt Router irqchip driver
  *
@@ -7,35 +6,35 @@
  *	Lokesh Vutla <lokeshvutla@ti.com>
  */
 
-#समावेश <linux/err.h>
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/irqchip.h>
-#समावेश <linux/irqकरोमुख्य.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/soc/ti/ti_sci_protocol.h>
+#include <linux/err.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/io.h>
+#include <linux/irqchip.h>
+#include <linux/irqdomain.h>
+#include <linux/of_platform.h>
+#include <linux/of_address.h>
+#include <linux/of_irq.h>
+#include <linux/soc/ti/ti_sci_protocol.h>
 
 /**
- * काष्ठा ti_sci_पूर्णांकr_irq_करोमुख्य - Structure representing a TISCI based
- *				   Interrupt Router IRQ करोमुख्य.
- * @sci:	Poपूर्णांकer to TISCI handle
- * @out_irqs:	TISCI resource poपूर्णांकer representing INTR irqs.
- * @dev:	Struct device poपूर्णांकer.
- * @ti_sci_id:	TI-SCI device identअगरier
- * @type:	Specअगरies the trigger type supported by this Interrupt Router
+ * struct ti_sci_intr_irq_domain - Structure representing a TISCI based
+ *				   Interrupt Router IRQ domain.
+ * @sci:	Pointer to TISCI handle
+ * @out_irqs:	TISCI resource pointer representing INTR irqs.
+ * @dev:	Struct device pointer.
+ * @ti_sci_id:	TI-SCI device identifier
+ * @type:	Specifies the trigger type supported by this Interrupt Router
  */
-काष्ठा ti_sci_पूर्णांकr_irq_करोमुख्य अणु
-	स्थिर काष्ठा ti_sci_handle *sci;
-	काष्ठा ti_sci_resource *out_irqs;
-	काष्ठा device *dev;
+struct ti_sci_intr_irq_domain {
+	const struct ti_sci_handle *sci;
+	struct ti_sci_resource *out_irqs;
+	struct device *dev;
 	u32 ti_sci_id;
 	u32 type;
-पूर्ण;
+};
 
-अटल काष्ठा irq_chip ti_sci_पूर्णांकr_irq_chip = अणु
+static struct irq_chip ti_sci_intr_irq_chip = {
 	.name			= "INTR",
 	.irq_eoi		= irq_chip_eoi_parent,
 	.irq_mask		= irq_chip_mask_parent,
@@ -43,263 +42,263 @@
 	.irq_set_type		= irq_chip_set_type_parent,
 	.irq_retrigger		= irq_chip_retrigger_hierarchy,
 	.irq_set_affinity	= irq_chip_set_affinity_parent,
-पूर्ण;
+};
 
 /**
- * ti_sci_पूर्णांकr_irq_करोमुख्य_translate() - Retrieve hwirq and type from
- *					IRQ firmware specअगरic handler.
- * @करोमुख्य:	Poपूर्णांकer to IRQ करोमुख्य
- * @fwspec:	Poपूर्णांकer to IRQ specअगरic firmware काष्ठाure
- * @hwirq:	IRQ number identअगरied by hardware
+ * ti_sci_intr_irq_domain_translate() - Retrieve hwirq and type from
+ *					IRQ firmware specific handler.
+ * @domain:	Pointer to IRQ domain
+ * @fwspec:	Pointer to IRQ specific firmware structure
+ * @hwirq:	IRQ number identified by hardware
  * @type:	IRQ type
  *
- * Return 0 अगर all went ok अन्यथा appropriate error.
+ * Return 0 if all went ok else appropriate error.
  */
-अटल पूर्णांक ti_sci_पूर्णांकr_irq_करोमुख्य_translate(काष्ठा irq_करोमुख्य *करोमुख्य,
-					    काष्ठा irq_fwspec *fwspec,
-					    अचिन्हित दीर्घ *hwirq,
-					    अचिन्हित पूर्णांक *type)
-अणु
-	काष्ठा ti_sci_पूर्णांकr_irq_करोमुख्य *पूर्णांकr = करोमुख्य->host_data;
+static int ti_sci_intr_irq_domain_translate(struct irq_domain *domain,
+					    struct irq_fwspec *fwspec,
+					    unsigned long *hwirq,
+					    unsigned int *type)
+{
+	struct ti_sci_intr_irq_domain *intr = domain->host_data;
 
-	अगर (fwspec->param_count != 1)
-		वापस -EINVAL;
+	if (fwspec->param_count != 1)
+		return -EINVAL;
 
 	*hwirq = fwspec->param[0];
-	*type = पूर्णांकr->type;
+	*type = intr->type;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * ti_sci_पूर्णांकr_xlate_irq() - Translate hwirq to parent's hwirq.
- * @पूर्णांकr:	IRQ करोमुख्य corresponding to Interrupt Router
- * @irq:	Hardware irq corresponding to the above irq करोमुख्य
+ * ti_sci_intr_xlate_irq() - Translate hwirq to parent's hwirq.
+ * @intr:	IRQ domain corresponding to Interrupt Router
+ * @irq:	Hardware irq corresponding to the above irq domain
  *
- * Return parent irq number अगर translation is available अन्यथा -ENOENT.
+ * Return parent irq number if translation is available else -ENOENT.
  */
-अटल पूर्णांक ti_sci_पूर्णांकr_xlate_irq(काष्ठा ti_sci_पूर्णांकr_irq_करोमुख्य *पूर्णांकr, u32 irq)
-अणु
-	काष्ठा device_node *np = dev_of_node(पूर्णांकr->dev);
+static int ti_sci_intr_xlate_irq(struct ti_sci_intr_irq_domain *intr, u32 irq)
+{
+	struct device_node *np = dev_of_node(intr->dev);
 	u32 base, pbase, size, len;
-	स्थिर __be32 *range;
+	const __be32 *range;
 
 	range = of_get_property(np, "ti,interrupt-ranges", &len);
-	अगर (!range)
-		वापस irq;
+	if (!range)
+		return irq;
 
-	क्रम (len /= माप(*range); len >= 3; len -= 3) अणु
+	for (len /= sizeof(*range); len >= 3; len -= 3) {
 		base = be32_to_cpu(*range++);
 		pbase = be32_to_cpu(*range++);
 		size = be32_to_cpu(*range++);
 
-		अगर (base <= irq && irq < base + size)
-			वापस irq - base + pbase;
-	पूर्ण
+		if (base <= irq && irq < base + size)
+			return irq - base + pbase;
+	}
 
-	वापस -ENOENT;
-पूर्ण
+	return -ENOENT;
+}
 
 /**
- * ti_sci_पूर्णांकr_irq_करोमुख्य_मुक्त() - Free the specअगरied IRQs from the करोमुख्य.
- * @करोमुख्य:	Doमुख्य to which the irqs beदीर्घ
- * @virq:	Linux भव IRQ to be मुक्तd.
- * @nr_irqs:	Number of continuous irqs to be मुक्तd
+ * ti_sci_intr_irq_domain_free() - Free the specified IRQs from the domain.
+ * @domain:	Domain to which the irqs belong
+ * @virq:	Linux virtual IRQ to be freed.
+ * @nr_irqs:	Number of continuous irqs to be freed
  */
-अटल व्योम ti_sci_पूर्णांकr_irq_करोमुख्य_मुक्त(काष्ठा irq_करोमुख्य *करोमुख्य,
-					अचिन्हित पूर्णांक virq, अचिन्हित पूर्णांक nr_irqs)
-अणु
-	काष्ठा ti_sci_पूर्णांकr_irq_करोमुख्य *पूर्णांकr = करोमुख्य->host_data;
-	काष्ठा irq_data *data;
-	पूर्णांक out_irq;
+static void ti_sci_intr_irq_domain_free(struct irq_domain *domain,
+					unsigned int virq, unsigned int nr_irqs)
+{
+	struct ti_sci_intr_irq_domain *intr = domain->host_data;
+	struct irq_data *data;
+	int out_irq;
 
-	data = irq_करोमुख्य_get_irq_data(करोमुख्य, virq);
-	out_irq = (uपूर्णांकptr_t)data->chip_data;
+	data = irq_domain_get_irq_data(domain, virq);
+	out_irq = (uintptr_t)data->chip_data;
 
-	पूर्णांकr->sci->ops.rm_irq_ops.मुक्त_irq(पूर्णांकr->sci,
-					   पूर्णांकr->ti_sci_id, data->hwirq,
-					   पूर्णांकr->ti_sci_id, out_irq);
-	ti_sci_release_resource(पूर्णांकr->out_irqs, out_irq);
-	irq_करोमुख्य_मुक्त_irqs_parent(करोमुख्य, virq, 1);
-	irq_करोमुख्य_reset_irq_data(data);
-पूर्ण
+	intr->sci->ops.rm_irq_ops.free_irq(intr->sci,
+					   intr->ti_sci_id, data->hwirq,
+					   intr->ti_sci_id, out_irq);
+	ti_sci_release_resource(intr->out_irqs, out_irq);
+	irq_domain_free_irqs_parent(domain, virq, 1);
+	irq_domain_reset_irq_data(data);
+}
 
 /**
- * ti_sci_पूर्णांकr_alloc_parent_irq() - Allocate parent IRQ
- * @करोमुख्य:	Poपूर्णांकer to the पूर्णांकerrupt router IRQ करोमुख्य
- * @virq:	Corresponding Linux भव IRQ number
- * @hwirq:	Corresponding hwirq क्रम the IRQ within this IRQ करोमुख्य
+ * ti_sci_intr_alloc_parent_irq() - Allocate parent IRQ
+ * @domain:	Pointer to the interrupt router IRQ domain
+ * @virq:	Corresponding Linux virtual IRQ number
+ * @hwirq:	Corresponding hwirq for the IRQ within this IRQ domain
  *
- * Returns पूर्णांकr output irq अगर all went well अन्यथा appropriate error poपूर्णांकer.
+ * Returns intr output irq if all went well else appropriate error pointer.
  */
-अटल पूर्णांक ti_sci_पूर्णांकr_alloc_parent_irq(काष्ठा irq_करोमुख्य *करोमुख्य,
-					अचिन्हित पूर्णांक virq, u32 hwirq)
-अणु
-	काष्ठा ti_sci_पूर्णांकr_irq_करोमुख्य *पूर्णांकr = करोमुख्य->host_data;
-	काष्ठा device_node *parent_node;
-	काष्ठा irq_fwspec fwspec;
-	पूर्णांक p_hwirq, err = 0;
+static int ti_sci_intr_alloc_parent_irq(struct irq_domain *domain,
+					unsigned int virq, u32 hwirq)
+{
+	struct ti_sci_intr_irq_domain *intr = domain->host_data;
+	struct device_node *parent_node;
+	struct irq_fwspec fwspec;
+	int p_hwirq, err = 0;
 	u16 out_irq;
 
-	out_irq = ti_sci_get_मुक्त_resource(पूर्णांकr->out_irqs);
-	अगर (out_irq == TI_SCI_RESOURCE_शून्य)
-		वापस -EINVAL;
+	out_irq = ti_sci_get_free_resource(intr->out_irqs);
+	if (out_irq == TI_SCI_RESOURCE_NULL)
+		return -EINVAL;
 
-	p_hwirq = ti_sci_पूर्णांकr_xlate_irq(पूर्णांकr, out_irq);
-	अगर (p_hwirq < 0)
-		जाओ err_irqs;
+	p_hwirq = ti_sci_intr_xlate_irq(intr, out_irq);
+	if (p_hwirq < 0)
+		goto err_irqs;
 
-	parent_node = of_irq_find_parent(dev_of_node(पूर्णांकr->dev));
+	parent_node = of_irq_find_parent(dev_of_node(intr->dev));
 	fwspec.fwnode = of_node_to_fwnode(parent_node);
 
-	अगर (of_device_is_compatible(parent_node, "arm,gic-v3")) अणु
+	if (of_device_is_compatible(parent_node, "arm,gic-v3")) {
 		/* Parent is GIC */
 		fwspec.param_count = 3;
 		fwspec.param[0] = 0;	/* SPI */
 		fwspec.param[1] = p_hwirq - 32; /* SPI offset */
-		fwspec.param[2] = पूर्णांकr->type;
-	पूर्ण अन्यथा अणु
+		fwspec.param[2] = intr->type;
+	} else {
 		/* Parent is Interrupt Router */
 		fwspec.param_count = 1;
 		fwspec.param[0] = p_hwirq;
-	पूर्ण
+	}
 
-	err = irq_करोमुख्य_alloc_irqs_parent(करोमुख्य, virq, 1, &fwspec);
-	अगर (err)
-		जाओ err_irqs;
+	err = irq_domain_alloc_irqs_parent(domain, virq, 1, &fwspec);
+	if (err)
+		goto err_irqs;
 
-	err = पूर्णांकr->sci->ops.rm_irq_ops.set_irq(पूर्णांकr->sci,
-						पूर्णांकr->ti_sci_id, hwirq,
-						पूर्णांकr->ti_sci_id, out_irq);
-	अगर (err)
-		जाओ err_msg;
+	err = intr->sci->ops.rm_irq_ops.set_irq(intr->sci,
+						intr->ti_sci_id, hwirq,
+						intr->ti_sci_id, out_irq);
+	if (err)
+		goto err_msg;
 
-	वापस out_irq;
+	return out_irq;
 
 err_msg:
-	irq_करोमुख्य_मुक्त_irqs_parent(करोमुख्य, virq, 1);
+	irq_domain_free_irqs_parent(domain, virq, 1);
 err_irqs:
-	ti_sci_release_resource(पूर्णांकr->out_irqs, out_irq);
-	वापस err;
-पूर्ण
+	ti_sci_release_resource(intr->out_irqs, out_irq);
+	return err;
+}
 
 /**
- * ti_sci_पूर्णांकr_irq_करोमुख्य_alloc() - Allocate Interrupt router IRQs
- * @करोमुख्य:	Poपूर्णांक to the पूर्णांकerrupt router IRQ करोमुख्य
- * @virq:	Corresponding Linux भव IRQ number
+ * ti_sci_intr_irq_domain_alloc() - Allocate Interrupt router IRQs
+ * @domain:	Point to the interrupt router IRQ domain
+ * @virq:	Corresponding Linux virtual IRQ number
  * @nr_irqs:	Continuous irqs to be allocated
- * @data:	Poपूर्णांकer to firmware specअगरier
+ * @data:	Pointer to firmware specifier
  *
- * Return 0 अगर all went well अन्यथा appropriate error value.
+ * Return 0 if all went well else appropriate error value.
  */
-अटल पूर्णांक ti_sci_पूर्णांकr_irq_करोमुख्य_alloc(काष्ठा irq_करोमुख्य *करोमुख्य,
-					अचिन्हित पूर्णांक virq, अचिन्हित पूर्णांक nr_irqs,
-					व्योम *data)
-अणु
-	काष्ठा irq_fwspec *fwspec = data;
-	अचिन्हित दीर्घ hwirq;
-	अचिन्हित पूर्णांक flags;
-	पूर्णांक err, out_irq;
+static int ti_sci_intr_irq_domain_alloc(struct irq_domain *domain,
+					unsigned int virq, unsigned int nr_irqs,
+					void *data)
+{
+	struct irq_fwspec *fwspec = data;
+	unsigned long hwirq;
+	unsigned int flags;
+	int err, out_irq;
 
-	err = ti_sci_पूर्णांकr_irq_करोमुख्य_translate(करोमुख्य, fwspec, &hwirq, &flags);
-	अगर (err)
-		वापस err;
+	err = ti_sci_intr_irq_domain_translate(domain, fwspec, &hwirq, &flags);
+	if (err)
+		return err;
 
-	out_irq = ti_sci_पूर्णांकr_alloc_parent_irq(करोमुख्य, virq, hwirq);
-	अगर (out_irq < 0)
-		वापस out_irq;
+	out_irq = ti_sci_intr_alloc_parent_irq(domain, virq, hwirq);
+	if (out_irq < 0)
+		return out_irq;
 
-	irq_करोमुख्य_set_hwirq_and_chip(करोमुख्य, virq, hwirq,
-				      &ti_sci_पूर्णांकr_irq_chip,
-				      (व्योम *)(uपूर्णांकptr_t)out_irq);
+	irq_domain_set_hwirq_and_chip(domain, virq, hwirq,
+				      &ti_sci_intr_irq_chip,
+				      (void *)(uintptr_t)out_irq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा irq_करोमुख्य_ops ti_sci_पूर्णांकr_irq_करोमुख्य_ops = अणु
-	.मुक्त		= ti_sci_पूर्णांकr_irq_करोमुख्य_मुक्त,
-	.alloc		= ti_sci_पूर्णांकr_irq_करोमुख्य_alloc,
-	.translate	= ti_sci_पूर्णांकr_irq_करोमुख्य_translate,
-पूर्ण;
+static const struct irq_domain_ops ti_sci_intr_irq_domain_ops = {
+	.free		= ti_sci_intr_irq_domain_free,
+	.alloc		= ti_sci_intr_irq_domain_alloc,
+	.translate	= ti_sci_intr_irq_domain_translate,
+};
 
-अटल पूर्णांक ti_sci_पूर्णांकr_irq_करोमुख्य_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा irq_करोमुख्य *parent_करोमुख्य, *करोमुख्य;
-	काष्ठा ti_sci_पूर्णांकr_irq_करोमुख्य *पूर्णांकr;
-	काष्ठा device_node *parent_node;
-	काष्ठा device *dev = &pdev->dev;
-	पूर्णांक ret;
+static int ti_sci_intr_irq_domain_probe(struct platform_device *pdev)
+{
+	struct irq_domain *parent_domain, *domain;
+	struct ti_sci_intr_irq_domain *intr;
+	struct device_node *parent_node;
+	struct device *dev = &pdev->dev;
+	int ret;
 
 	parent_node = of_irq_find_parent(dev_of_node(dev));
-	अगर (!parent_node) अणु
+	if (!parent_node) {
 		dev_err(dev, "Failed to get IRQ parent node\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	parent_करोमुख्य = irq_find_host(parent_node);
-	अगर (!parent_करोमुख्य) अणु
+	parent_domain = irq_find_host(parent_node);
+	if (!parent_domain) {
 		dev_err(dev, "Failed to find IRQ parent domain\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	पूर्णांकr = devm_kzalloc(dev, माप(*पूर्णांकr), GFP_KERNEL);
-	अगर (!पूर्णांकr)
-		वापस -ENOMEM;
+	intr = devm_kzalloc(dev, sizeof(*intr), GFP_KERNEL);
+	if (!intr)
+		return -ENOMEM;
 
-	पूर्णांकr->dev = dev;
-	ret = of_property_पढ़ो_u32(dev_of_node(dev), "ti,intr-trigger-type",
-				   &पूर्णांकr->type);
-	अगर (ret) अणु
+	intr->dev = dev;
+	ret = of_property_read_u32(dev_of_node(dev), "ti,intr-trigger-type",
+				   &intr->type);
+	if (ret) {
 		dev_err(dev, "missing ti,intr-trigger-type property\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	पूर्णांकr->sci = devm_ti_sci_get_by_phandle(dev, "ti,sci");
-	अगर (IS_ERR(पूर्णांकr->sci))
-		वापस dev_err_probe(dev, PTR_ERR(पूर्णांकr->sci),
+	intr->sci = devm_ti_sci_get_by_phandle(dev, "ti,sci");
+	if (IS_ERR(intr->sci))
+		return dev_err_probe(dev, PTR_ERR(intr->sci),
 				     "ti,sci read fail\n");
 
-	ret = of_property_पढ़ो_u32(dev_of_node(dev), "ti,sci-dev-id",
-				   &पूर्णांकr->ti_sci_id);
-	अगर (ret) अणु
+	ret = of_property_read_u32(dev_of_node(dev), "ti,sci-dev-id",
+				   &intr->ti_sci_id);
+	if (ret) {
 		dev_err(dev, "missing 'ti,sci-dev-id' property\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	पूर्णांकr->out_irqs = devm_ti_sci_get_resource(पूर्णांकr->sci, dev,
-						  पूर्णांकr->ti_sci_id,
+	intr->out_irqs = devm_ti_sci_get_resource(intr->sci, dev,
+						  intr->ti_sci_id,
 						  TI_SCI_RESASG_SUBTYPE_IR_OUTPUT);
-	अगर (IS_ERR(पूर्णांकr->out_irqs)) अणु
+	if (IS_ERR(intr->out_irqs)) {
 		dev_err(dev, "Destination irq resource allocation failed\n");
-		वापस PTR_ERR(पूर्णांकr->out_irqs);
-	पूर्ण
+		return PTR_ERR(intr->out_irqs);
+	}
 
-	करोमुख्य = irq_करोमुख्य_add_hierarchy(parent_करोमुख्य, 0, 0, dev_of_node(dev),
-					  &ti_sci_पूर्णांकr_irq_करोमुख्य_ops, पूर्णांकr);
-	अगर (!करोमुख्य) अणु
+	domain = irq_domain_add_hierarchy(parent_domain, 0, 0, dev_of_node(dev),
+					  &ti_sci_intr_irq_domain_ops, intr);
+	if (!domain) {
 		dev_err(dev, "Failed to allocate IRQ domain\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	dev_info(dev, "Interrupt Router %d domain created\n", पूर्णांकr->ti_sci_id);
+	dev_info(dev, "Interrupt Router %d domain created\n", intr->ti_sci_id);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id ti_sci_पूर्णांकr_irq_करोमुख्य_of_match[] = अणु
-	अणु .compatible = "ti,sci-intr", पूर्ण,
-	अणु /* sentinel */ पूर्ण,
-पूर्ण;
-MODULE_DEVICE_TABLE(of, ti_sci_पूर्णांकr_irq_करोमुख्य_of_match);
+static const struct of_device_id ti_sci_intr_irq_domain_of_match[] = {
+	{ .compatible = "ti,sci-intr", },
+	{ /* sentinel */ },
+};
+MODULE_DEVICE_TABLE(of, ti_sci_intr_irq_domain_of_match);
 
-अटल काष्ठा platक्रमm_driver ti_sci_पूर्णांकr_irq_करोमुख्य_driver = अणु
-	.probe = ti_sci_पूर्णांकr_irq_करोमुख्य_probe,
-	.driver = अणु
+static struct platform_driver ti_sci_intr_irq_domain_driver = {
+	.probe = ti_sci_intr_irq_domain_probe,
+	.driver = {
 		.name = "ti-sci-intr",
-		.of_match_table = ti_sci_पूर्णांकr_irq_करोमुख्य_of_match,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(ti_sci_पूर्णांकr_irq_करोमुख्य_driver);
+		.of_match_table = ti_sci_intr_irq_domain_of_match,
+	},
+};
+module_platform_driver(ti_sci_intr_irq_domain_driver);
 
 MODULE_AUTHOR("Lokesh Vutla <lokeshvutla@ticom>");
 MODULE_DESCRIPTION("K3 Interrupt Router driver over TI SCI protocol");

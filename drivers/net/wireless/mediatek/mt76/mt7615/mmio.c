@@ -1,18 +1,17 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: ISC
+// SPDX-License-Identifier: ISC
 /* Copyright (C) 2020 MediaTek Inc. */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pci.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/pci.h>
 
-#समावेश "mt7615.h"
-#समावेश "regs.h"
-#समावेश "mac.h"
-#समावेश "../trace.h"
+#include "mt7615.h"
+#include "regs.h"
+#include "mac.h"
+#include "../trace.h"
 
-स्थिर u32 mt7615e_reg_map[] = अणु
+const u32 mt7615e_reg_map[] = {
 	[MT_TOP_CFG_BASE]	= 0x01000,
 	[MT_HW_BASE]		= 0x01000,
 	[MT_PCIE_REMAP_2]	= 0x02504,
@@ -35,9 +34,9 @@
 	[MT_PCIE_REMAP_BASE2]	= 0x80000,
 	[MT_TOP_MISC_BASE]	= 0xc0000,
 	[MT_EFUSE_ADDR_BASE]	= 0x81070000,
-पूर्ण;
+};
 
-स्थिर u32 mt7663e_reg_map[] = अणु
+const u32 mt7663e_reg_map[] = {
 	[MT_TOP_CFG_BASE]	= 0x01000,
 	[MT_HW_BASE]		= 0x02000,
 	[MT_DMA_SHDL_BASE]	= 0x06000,
@@ -62,131 +61,131 @@
 	[MT_PCIE_REMAP_BASE2]	= 0x90000,
 	[MT_TOP_MISC_BASE]	= 0xc0000,
 	[MT_EFUSE_ADDR_BASE]	= 0x78011000,
-पूर्ण;
+};
 
-u32 mt7615_reg_map(काष्ठा mt7615_dev *dev, u32 addr)
-अणु
+u32 mt7615_reg_map(struct mt7615_dev *dev, u32 addr)
+{
 	u32 base, offset;
 
-	अगर (is_mt7663(&dev->mt76)) अणु
+	if (is_mt7663(&dev->mt76)) {
 		base = addr & MT7663_MCU_PCIE_REMAP_2_BASE;
 		offset = addr & MT7663_MCU_PCIE_REMAP_2_OFFSET;
-	पूर्ण अन्यथा अणु
+	} else {
 		base = addr & MT_MCU_PCIE_REMAP_2_BASE;
 		offset = addr & MT_MCU_PCIE_REMAP_2_OFFSET;
-	पूर्ण
+	}
 	mt76_wr(dev, MT_MCU_PCIE_REMAP_2, base);
 
-	वापस MT_PCIE_REMAP_BASE_2 + offset;
-पूर्ण
+	return MT_PCIE_REMAP_BASE_2 + offset;
+}
 
-अटल व्योम
-mt7615_rx_poll_complete(काष्ठा mt76_dev *mdev, क्रमागत mt76_rxq_id q)
-अणु
-	काष्ठा mt7615_dev *dev = container_of(mdev, काष्ठा mt7615_dev, mt76);
+static void
+mt7615_rx_poll_complete(struct mt76_dev *mdev, enum mt76_rxq_id q)
+{
+	struct mt7615_dev *dev = container_of(mdev, struct mt7615_dev, mt76);
 
 	mt7615_irq_enable(dev, MT_INT_RX_DONE(q));
-पूर्ण
+}
 
-अटल irqवापस_t mt7615_irq_handler(पूर्णांक irq, व्योम *dev_instance)
-अणु
-	काष्ठा mt7615_dev *dev = dev_instance;
+static irqreturn_t mt7615_irq_handler(int irq, void *dev_instance)
+{
+	struct mt7615_dev *dev = dev_instance;
 
 	mt76_wr(dev, MT_INT_MASK_CSR, 0);
 
-	अगर (!test_bit(MT76_STATE_INITIALIZED, &dev->mphy.state))
-		वापस IRQ_NONE;
+	if (!test_bit(MT76_STATE_INITIALIZED, &dev->mphy.state))
+		return IRQ_NONE;
 
 	tasklet_schedule(&dev->irq_tasklet);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम mt7615_irq_tasklet(काष्ठा tasklet_काष्ठा *t)
-अणु
-	काष्ठा mt7615_dev *dev = from_tasklet(dev, t, irq_tasklet);
-	u32 पूर्णांकr, mask = 0, tx_mcu_mask = mt7615_tx_mcu_पूर्णांक_mask(dev);
-	u32 mcu_पूर्णांक;
+static void mt7615_irq_tasklet(struct tasklet_struct *t)
+{
+	struct mt7615_dev *dev = from_tasklet(dev, t, irq_tasklet);
+	u32 intr, mask = 0, tx_mcu_mask = mt7615_tx_mcu_int_mask(dev);
+	u32 mcu_int;
 
 	mt76_wr(dev, MT_INT_MASK_CSR, 0);
 
-	पूर्णांकr = mt76_rr(dev, MT_INT_SOURCE_CSR);
-	पूर्णांकr &= dev->mt76.mmio.irqmask;
-	mt76_wr(dev, MT_INT_SOURCE_CSR, पूर्णांकr);
+	intr = mt76_rr(dev, MT_INT_SOURCE_CSR);
+	intr &= dev->mt76.mmio.irqmask;
+	mt76_wr(dev, MT_INT_SOURCE_CSR, intr);
 
-	trace_dev_irq(&dev->mt76, पूर्णांकr, dev->mt76.mmio.irqmask);
+	trace_dev_irq(&dev->mt76, intr, dev->mt76.mmio.irqmask);
 
-	mask |= पूर्णांकr & MT_INT_RX_DONE_ALL;
-	अगर (पूर्णांकr & tx_mcu_mask)
+	mask |= intr & MT_INT_RX_DONE_ALL;
+	if (intr & tx_mcu_mask)
 		mask |= tx_mcu_mask;
 	mt76_set_irq_mask(&dev->mt76, MT_INT_MASK_CSR, mask, 0);
 
-	अगर (पूर्णांकr & tx_mcu_mask)
+	if (intr & tx_mcu_mask)
 		napi_schedule(&dev->mt76.tx_napi);
 
-	अगर (पूर्णांकr & MT_INT_RX_DONE(0))
+	if (intr & MT_INT_RX_DONE(0))
 		napi_schedule(&dev->mt76.napi[0]);
 
-	अगर (पूर्णांकr & MT_INT_RX_DONE(1))
+	if (intr & MT_INT_RX_DONE(1))
 		napi_schedule(&dev->mt76.napi[1]);
 
-	अगर (!(पूर्णांकr & (MT_INT_MCU_CMD | MT7663_INT_MCU_CMD)))
-		वापस;
+	if (!(intr & (MT_INT_MCU_CMD | MT7663_INT_MCU_CMD)))
+		return;
 
-	अगर (is_mt7663(&dev->mt76)) अणु
-		mcu_पूर्णांक = mt76_rr(dev, MT_MCU2HOST_INT_STATUS);
-		mcu_पूर्णांक &= MT7663_MCU_CMD_ERROR_MASK;
-	पूर्ण अन्यथा अणु
-		mcu_पूर्णांक = mt76_rr(dev, MT_MCU_CMD);
-		mcu_पूर्णांक &= MT_MCU_CMD_ERROR_MASK;
-	पूर्ण
+	if (is_mt7663(&dev->mt76)) {
+		mcu_int = mt76_rr(dev, MT_MCU2HOST_INT_STATUS);
+		mcu_int &= MT7663_MCU_CMD_ERROR_MASK;
+	} else {
+		mcu_int = mt76_rr(dev, MT_MCU_CMD);
+		mcu_int &= MT_MCU_CMD_ERROR_MASK;
+	}
 
-	अगर (!mcu_पूर्णांक)
-		वापस;
+	if (!mcu_int)
+		return;
 
-	dev->reset_state = mcu_पूर्णांक;
+	dev->reset_state = mcu_int;
 	ieee80211_queue_work(mt76_hw(dev), &dev->reset_work);
-	wake_up(&dev->reset_रुको);
-पूर्ण
+	wake_up(&dev->reset_wait);
+}
 
-अटल u32 __mt7615_reg_addr(काष्ठा mt7615_dev *dev, u32 addr)
-अणु
-	अगर (addr < 0x100000)
-		वापस addr;
+static u32 __mt7615_reg_addr(struct mt7615_dev *dev, u32 addr)
+{
+	if (addr < 0x100000)
+		return addr;
 
-	वापस mt7615_reg_map(dev, addr);
-पूर्ण
+	return mt7615_reg_map(dev, addr);
+}
 
-अटल u32 mt7615_rr(काष्ठा mt76_dev *mdev, u32 offset)
-अणु
-	काष्ठा mt7615_dev *dev = container_of(mdev, काष्ठा mt7615_dev, mt76);
+static u32 mt7615_rr(struct mt76_dev *mdev, u32 offset)
+{
+	struct mt7615_dev *dev = container_of(mdev, struct mt7615_dev, mt76);
 	u32 addr = __mt7615_reg_addr(dev, offset);
 
-	वापस dev->bus_ops->rr(mdev, addr);
-पूर्ण
+	return dev->bus_ops->rr(mdev, addr);
+}
 
-अटल व्योम mt7615_wr(काष्ठा mt76_dev *mdev, u32 offset, u32 val)
-अणु
-	काष्ठा mt7615_dev *dev = container_of(mdev, काष्ठा mt7615_dev, mt76);
+static void mt7615_wr(struct mt76_dev *mdev, u32 offset, u32 val)
+{
+	struct mt7615_dev *dev = container_of(mdev, struct mt7615_dev, mt76);
 	u32 addr = __mt7615_reg_addr(dev, offset);
 
 	dev->bus_ops->wr(mdev, addr, val);
-पूर्ण
+}
 
-अटल u32 mt7615_rmw(काष्ठा mt76_dev *mdev, u32 offset, u32 mask, u32 val)
-अणु
-	काष्ठा mt7615_dev *dev = container_of(mdev, काष्ठा mt7615_dev, mt76);
+static u32 mt7615_rmw(struct mt76_dev *mdev, u32 offset, u32 mask, u32 val)
+{
+	struct mt7615_dev *dev = container_of(mdev, struct mt7615_dev, mt76);
 	u32 addr = __mt7615_reg_addr(dev, offset);
 
-	वापस dev->bus_ops->rmw(mdev, addr, mask, val);
-पूर्ण
+	return dev->bus_ops->rmw(mdev, addr, mask, val);
+}
 
-पूर्णांक mt7615_mmio_probe(काष्ठा device *pdev, व्योम __iomem *mem_base,
-		      पूर्णांक irq, स्थिर u32 *map)
-अणु
-	अटल स्थिर काष्ठा mt76_driver_ops drv_ops = अणु
+int mt7615_mmio_probe(struct device *pdev, void __iomem *mem_base,
+		      int irq, const u32 *map)
+{
+	static const struct mt76_driver_ops drv_ops = {
 		/* txwi_size = txd size + txp size */
-		.txwi_size = MT_TXD_SIZE + माप(काष्ठा mt7615_txp_common),
+		.txwi_size = MT_TXD_SIZE + sizeof(struct mt7615_txp_common),
 		.drv_flags = MT_DRV_TXWI_NO_FREE | MT_DRV_HW_MGMT_TXQ,
 		.survey_flags = SURVEY_INFO_TIME_TX |
 				SURVEY_INFO_TIME_RX |
@@ -198,24 +197,24 @@ mt7615_rx_poll_complete(काष्ठा mt76_dev *mdev, क्रमागत
 		.rx_poll_complete = mt7615_rx_poll_complete,
 		.sta_ps = mt7615_sta_ps,
 		.sta_add = mt7615_mac_sta_add,
-		.sta_हटाओ = mt7615_mac_sta_हटाओ,
+		.sta_remove = mt7615_mac_sta_remove,
 		.update_survey = mt7615_update_channel,
-	पूर्ण;
-	काष्ठा mt76_bus_ops *bus_ops;
-	काष्ठा ieee80211_ops *ops;
-	काष्ठा mt7615_dev *dev;
-	काष्ठा mt76_dev *mdev;
-	पूर्णांक ret;
+	};
+	struct mt76_bus_ops *bus_ops;
+	struct ieee80211_ops *ops;
+	struct mt7615_dev *dev;
+	struct mt76_dev *mdev;
+	int ret;
 
-	ops = devm_kmemdup(pdev, &mt7615_ops, माप(mt7615_ops), GFP_KERNEL);
-	अगर (!ops)
-		वापस -ENOMEM;
+	ops = devm_kmemdup(pdev, &mt7615_ops, sizeof(mt7615_ops), GFP_KERNEL);
+	if (!ops)
+		return -ENOMEM;
 
-	mdev = mt76_alloc_device(pdev, माप(*dev), ops, &drv_ops);
-	अगर (!mdev)
-		वापस -ENOMEM;
+	mdev = mt76_alloc_device(pdev, sizeof(*dev), ops, &drv_ops);
+	if (!mdev)
+		return -ENOMEM;
 
-	dev = container_of(mdev, काष्ठा mt7615_dev, mt76);
+	dev = container_of(mdev, struct mt7615_dev, mt76);
 	mt76_mmio_init(&dev->mt76, mem_base);
 	tasklet_setup(&dev->irq_tasklet, mt7615_irq_tasklet);
 
@@ -226,12 +225,12 @@ mt7615_rx_poll_complete(काष्ठा mt76_dev *mdev, क्रमागत
 	dev_dbg(mdev->dev, "ASIC revision: %04x\n", mdev->rev);
 
 	dev->bus_ops = dev->mt76.bus;
-	bus_ops = devm_kmemdup(dev->mt76.dev, dev->bus_ops, माप(*bus_ops),
+	bus_ops = devm_kmemdup(dev->mt76.dev, dev->bus_ops, sizeof(*bus_ops),
 			       GFP_KERNEL);
-	अगर (!bus_ops) अणु
+	if (!bus_ops) {
 		ret = -ENOMEM;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	bus_ops->rr = mt7615_rr;
 	bus_ops->wr = mt7615_wr;
@@ -242,47 +241,47 @@ mt7615_rx_poll_complete(काष्ठा mt76_dev *mdev, क्रमागत
 
 	ret = devm_request_irq(mdev->dev, irq, mt7615_irq_handler,
 			       IRQF_SHARED, KBUILD_MODNAME, dev);
-	अगर (ret)
-		जाओ error;
+	if (ret)
+		goto error;
 
-	अगर (is_mt7663(mdev))
+	if (is_mt7663(mdev))
 		mt76_wr(dev, MT_PCIE_IRQ_ENABLE, 1);
 
-	ret = mt7615_रेजिस्टर_device(dev);
-	अगर (ret)
-		जाओ error;
+	ret = mt7615_register_device(dev);
+	if (ret)
+		goto error;
 
-	वापस 0;
+	return 0;
 error:
-	mt76_मुक्त_device(&dev->mt76);
+	mt76_free_device(&dev->mt76);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक __init mt7615_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init mt7615_init(void)
+{
+	int ret;
 
-	ret = pci_रेजिस्टर_driver(&mt7615_pci_driver);
-	अगर (ret)
-		वापस ret;
+	ret = pci_register_driver(&mt7615_pci_driver);
+	if (ret)
+		return ret;
 
-	अगर (IS_ENABLED(CONFIG_MT7622_WMAC)) अणु
-		ret = platक्रमm_driver_रेजिस्टर(&mt7622_wmac_driver);
-		अगर (ret)
-			pci_unरेजिस्टर_driver(&mt7615_pci_driver);
-	पूर्ण
+	if (IS_ENABLED(CONFIG_MT7622_WMAC)) {
+		ret = platform_driver_register(&mt7622_wmac_driver);
+		if (ret)
+			pci_unregister_driver(&mt7615_pci_driver);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम __निकास mt7615_निकास(व्योम)
-अणु
-	अगर (IS_ENABLED(CONFIG_MT7622_WMAC))
-		platक्रमm_driver_unरेजिस्टर(&mt7622_wmac_driver);
-	pci_unरेजिस्टर_driver(&mt7615_pci_driver);
-पूर्ण
+static void __exit mt7615_exit(void)
+{
+	if (IS_ENABLED(CONFIG_MT7622_WMAC))
+		platform_driver_unregister(&mt7622_wmac_driver);
+	pci_unregister_driver(&mt7615_pci_driver);
+}
 
 module_init(mt7615_init);
-module_निकास(mt7615_निकास);
+module_exit(mt7615_exit);
 MODULE_LICENSE("Dual BSD/GPL");

@@ -1,62 +1,61 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * BMI160 - Bosch IMU, SPI bits
  *
  * Copyright (c) 2016, Intel Corporation.
  *
  */
-#समावेश <linux/acpi.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/spi/spi.h>
+#include <linux/acpi.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/regmap.h>
+#include <linux/spi/spi.h>
 
-#समावेश "bmi160.h"
+#include "bmi160.h"
 
-अटल पूर्णांक bmi160_spi_probe(काष्ठा spi_device *spi)
-अणु
-	काष्ठा regmap *regmap;
-	स्थिर काष्ठा spi_device_id *id = spi_get_device_id(spi);
+static int bmi160_spi_probe(struct spi_device *spi)
+{
+	struct regmap *regmap;
+	const struct spi_device_id *id = spi_get_device_id(spi);
 
 	regmap = devm_regmap_init_spi(spi, &bmi160_regmap_config);
-	अगर (IS_ERR(regmap)) अणु
+	if (IS_ERR(regmap)) {
 		dev_err(&spi->dev, "Failed to register spi regmap: %pe\n",
 			regmap);
-		वापस PTR_ERR(regmap);
-	पूर्ण
-	वापस bmi160_core_probe(&spi->dev, regmap, id->name, true);
-पूर्ण
+		return PTR_ERR(regmap);
+	}
+	return bmi160_core_probe(&spi->dev, regmap, id->name, true);
+}
 
-अटल स्थिर काष्ठा spi_device_id bmi160_spi_id[] = अणु
-	अणु"bmi160", 0पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct spi_device_id bmi160_spi_id[] = {
+	{"bmi160", 0},
+	{}
+};
 MODULE_DEVICE_TABLE(spi, bmi160_spi_id);
 
-अटल स्थिर काष्ठा acpi_device_id bmi160_acpi_match[] = अणु
-	अणु"BMI0160", 0पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct acpi_device_id bmi160_acpi_match[] = {
+	{"BMI0160", 0},
+	{ },
+};
 MODULE_DEVICE_TABLE(acpi, bmi160_acpi_match);
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा of_device_id bmi160_of_match[] = अणु
-	अणु .compatible = "bosch,bmi160" पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+#ifdef CONFIG_OF
+static const struct of_device_id bmi160_of_match[] = {
+	{ .compatible = "bosch,bmi160" },
+	{ },
+};
 MODULE_DEVICE_TABLE(of, bmi160_of_match);
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा spi_driver bmi160_spi_driver = अणु
+static struct spi_driver bmi160_spi_driver = {
 	.probe		= bmi160_spi_probe,
 	.id_table	= bmi160_spi_id,
-	.driver = अणु
+	.driver = {
 		.acpi_match_table	= ACPI_PTR(bmi160_acpi_match),
 		.of_match_table		= of_match_ptr(bmi160_of_match),
 		.name			= "bmi160_spi",
-	पूर्ण,
-पूर्ण;
+	},
+};
 module_spi_driver(bmi160_spi_driver);
 
 MODULE_AUTHOR("Daniel Baluta <daniel.baluta@intel.com");

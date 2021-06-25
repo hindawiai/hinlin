@@ -1,14 +1,13 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * drivers/ata/pata_palmld.c
  *
- * Driver क्रम IDE channel in Palm LअगरeDrive
+ * Driver for IDE channel in Palm LifeDrive
  *
  * Based on research of:
  *		Alex Osborne <ato@meshy.org>
  *
- * Reग_लिखो क्रम मुख्यline:
+ * Rewrite for mainline:
  *		Marek Vasut <marek.vasut@gmail.com>
  *
  * Rewritten version based on pata_ixp4xx_cf.c:
@@ -17,66 +16,66 @@
  * Author: Alessandro Zummo <a.zummo@towertech.it>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/libata.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/gpio/consumer.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/libata.h>
+#include <linux/irq.h>
+#include <linux/platform_device.h>
+#include <linux/delay.h>
+#include <linux/gpio/consumer.h>
 
-#समावेश <scsi/scsi_host.h>
-#समावेश <mach/palmld.h>
+#include <scsi/scsi_host.h>
+#include <mach/palmld.h>
 
-#घोषणा DRV_NAME "pata_palmld"
+#define DRV_NAME "pata_palmld"
 
-काष्ठा palmld_pata अणु
-	काष्ठा ata_host *host;
-	काष्ठा gpio_desc *घातer;
-	काष्ठा gpio_desc *reset;
-पूर्ण;
+struct palmld_pata {
+	struct ata_host *host;
+	struct gpio_desc *power;
+	struct gpio_desc *reset;
+};
 
-अटल काष्ठा scsi_host_ढाँचा palmld_sht = अणु
+static struct scsi_host_template palmld_sht = {
 	ATA_PIO_SHT(DRV_NAME),
-पूर्ण;
+};
 
-अटल काष्ठा ata_port_operations palmld_port_ops = अणु
+static struct ata_port_operations palmld_port_ops = {
 	.inherits		= &ata_sff_port_ops,
 	.sff_data_xfer		= ata_sff_data_xfer32,
 	.cable_detect		= ata_cable_40wire,
-पूर्ण;
+};
 
-अटल पूर्णांक palmld_pata_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा palmld_pata *lda;
-	काष्ठा ata_port *ap;
-	व्योम __iomem *mem;
-	काष्ठा device *dev = &pdev->dev;
-	पूर्णांक ret;
+static int palmld_pata_probe(struct platform_device *pdev)
+{
+	struct palmld_pata *lda;
+	struct ata_port *ap;
+	void __iomem *mem;
+	struct device *dev = &pdev->dev;
+	int ret;
 
-	lda = devm_kzalloc(dev, माप(*lda), GFP_KERNEL);
-	अगर (!lda)
-		वापस -ENOMEM;
+	lda = devm_kzalloc(dev, sizeof(*lda), GFP_KERNEL);
+	if (!lda)
+		return -ENOMEM;
 
 	/* allocate host */
 	lda->host = ata_host_alloc(dev, 1);
-	अगर (!lda->host)
-		वापस -ENOMEM;
+	if (!lda->host)
+		return -ENOMEM;
 
 	/* remap drive's physical memory address */
 	mem = devm_ioremap(dev, PALMLD_IDE_PHYS, 0x1000);
-	अगर (!mem)
-		वापस -ENOMEM;
+	if (!mem)
+		return -ENOMEM;
 
-	/* request and activate घातer and reset GPIOs */
-	lda->घातer = devm_gpiod_get(dev, "power", GPIOD_OUT_HIGH);
-	अगर (IS_ERR(lda->घातer))
-		वापस PTR_ERR(lda->घातer);
+	/* request and activate power and reset GPIOs */
+	lda->power = devm_gpiod_get(dev, "power", GPIOD_OUT_HIGH);
+	if (IS_ERR(lda->power))
+		return PTR_ERR(lda->power);
 	lda->reset = devm_gpiod_get(dev, "reset", GPIOD_OUT_HIGH);
-	अगर (IS_ERR(lda->reset)) अणु
-		gpiod_set_value(lda->घातer, 0);
-		वापस PTR_ERR(lda->reset);
-	पूर्ण
+	if (IS_ERR(lda->reset)) {
+		gpiod_set_value(lda->power, 0);
+		return PTR_ERR(lda->reset);
+	}
 
 	/* Assert reset to reset the drive */
 	gpiod_set_value(lda->reset, 1);
@@ -90,7 +89,7 @@
 	ap->pio_mask = ATA_PIO4;
 	ap->flags |= ATA_FLAG_PIO_POLLING;
 
-	/* memory mapping vooकरोo */
+	/* memory mapping voodoo */
 	ap->ioaddr.cmd_addr = mem + 0x10;
 	ap->ioaddr.altstatus_addr = mem + 0xe;
 	ap->ioaddr.ctl_addr = mem + 0xe;
@@ -99,39 +98,39 @@
 	ata_sff_std_ports(&ap->ioaddr);
 
 	/* activate host */
-	ret = ata_host_activate(lda->host, 0, शून्य, IRQF_TRIGGER_RISING,
+	ret = ata_host_activate(lda->host, 0, NULL, IRQF_TRIGGER_RISING,
 				&palmld_sht);
-	/* घातer करोwn on failure */
-	अगर (ret) अणु
-		gpiod_set_value(lda->घातer, 0);
-		वापस ret;
-	पूर्ण
+	/* power down on failure */
+	if (ret) {
+		gpiod_set_value(lda->power, 0);
+		return ret;
+	}
 
-	platक्रमm_set_drvdata(pdev, lda);
-	वापस 0;
-पूर्ण
+	platform_set_drvdata(pdev, lda);
+	return 0;
+}
 
-अटल पूर्णांक palmld_pata_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा palmld_pata *lda = platक्रमm_get_drvdata(pdev);
+static int palmld_pata_remove(struct platform_device *pdev)
+{
+	struct palmld_pata *lda = platform_get_drvdata(pdev);
 
-	ata_platक्रमm_हटाओ_one(pdev);
+	ata_platform_remove_one(pdev);
 
-	/* घातer करोwn the HDD */
-	gpiod_set_value(lda->घातer, 0);
+	/* power down the HDD */
+	gpiod_set_value(lda->power, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver palmld_pata_platक्रमm_driver = अणु
-	.driver	 = अणु
+static struct platform_driver palmld_pata_platform_driver = {
+	.driver	 = {
 		.name   = DRV_NAME,
-	पूर्ण,
+	},
 	.probe		= palmld_pata_probe,
-	.हटाओ		= palmld_pata_हटाओ,
-पूर्ण;
+	.remove		= palmld_pata_remove,
+};
 
-module_platक्रमm_driver(palmld_pata_platक्रमm_driver);
+module_platform_driver(palmld_pata_platform_driver);
 
 MODULE_AUTHOR("Marek Vasut <marek.vasut@gmail.com>");
 MODULE_DESCRIPTION("PalmLD PATA driver");

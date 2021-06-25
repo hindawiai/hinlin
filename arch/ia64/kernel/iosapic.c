@@ -1,243 +1,242 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * I/O SAPIC support.
  *
  * Copyright (C) 1999 Intel Corp.
- * Copyright (C) 1999 Asit Mallick <asit.k.mallick@पूर्णांकel.com>
- * Copyright (C) 2000-2002 J.I. Lee <jung-ik.lee@पूर्णांकel.com>
+ * Copyright (C) 1999 Asit Mallick <asit.k.mallick@intel.com>
+ * Copyright (C) 2000-2002 J.I. Lee <jung-ik.lee@intel.com>
  * Copyright (C) 1999-2000, 2002-2003 Hewlett-Packard Co.
  *	David Mosberger-Tang <davidm@hpl.hp.com>
  * Copyright (C) 1999 VA Linux Systems
  * Copyright (C) 1999,2000 Walt Drummond <drummond@valinux.com>
  *
- * 00/04/19	D. Mosberger	Rewritten to mirror more बंदly the x86 I/O
+ * 00/04/19	D. Mosberger	Rewritten to mirror more closely the x86 I/O
  *				APIC code.  In particular, we now have separate
- *				handlers क्रम edge and level triggered
- *				पूर्णांकerrupts.
- * 00/10/27	Asit Mallick, Goutham Rao <goutham.rao@पूर्णांकel.com> IRQ vector
+ *				handlers for edge and level triggered
+ *				interrupts.
+ * 00/10/27	Asit Mallick, Goutham Rao <goutham.rao@intel.com> IRQ vector
  *				allocation PCI to vector mapping, shared PCI
- *				पूर्णांकerrupts.
+ *				interrupts.
  * 00/10/27	D. Mosberger	Document things a bit more to make them more
  *				understandable.  Clean up much of the old
  *				IOSAPIC cruft.
- * 01/07/27	J.I. Lee	PCI irq routing, Platक्रमm/Legacy पूर्णांकerrupts
- *				and fixes क्रम ACPI S5(SoftOff) support.
- * 02/01/23	J.I. Lee	iosapic pgm fixes क्रम PCI irq routing from _PRT
- * 02/01/07     E. Focht        <efocht@ess.nec.de> Redirectable पूर्णांकerrupt
+ * 01/07/27	J.I. Lee	PCI irq routing, Platform/Legacy interrupts
+ *				and fixes for ACPI S5(SoftOff) support.
+ * 02/01/23	J.I. Lee	iosapic pgm fixes for PCI irq routing from _PRT
+ * 02/01/07     E. Focht        <efocht@ess.nec.de> Redirectable interrupt
  *				vectors in iosapic_set_affinity(),
- *				initializations क्रम /proc/irq/#/smp_affinity
+ *				initializations for /proc/irq/#/smp_affinity
  * 02/04/02	P. Diefenbaugh	Cleaned up ACPI PCI IRQ routing.
  * 02/04/18	J.I. Lee	bug fix in iosapic_init_pci_irq
  * 02/04/30	J.I. Lee	bug fix in find_iosapic to fix ACPI PCI IRQ to
  *				IOSAPIC mapping error
- * 02/07/29	T. Kochi	Allocate पूर्णांकerrupt vectors dynamically
- * 02/08/04	T. Kochi	Cleaned up terminology (irq, global प्रणाली
- *				पूर्णांकerrupt, vector, etc.)
- * 02/09/20	D. Mosberger	Simplअगरied by taking advantage of ACPI's
+ * 02/07/29	T. Kochi	Allocate interrupt vectors dynamically
+ * 02/08/04	T. Kochi	Cleaned up terminology (irq, global system
+ *				interrupt, vector, etc.)
+ * 02/09/20	D. Mosberger	Simplified by taking advantage of ACPI's
  *				pci_irq code.
- * 03/02/19	B. Helgaas	Make pcat_compat प्रणाली-wide, not per-IOSAPIC.
+ * 03/02/19	B. Helgaas	Make pcat_compat system-wide, not per-IOSAPIC.
  *				Remove iosapic_address & gsi_base from
- *				बाह्यal पूर्णांकerfaces.  Rationalize
+ *				external interfaces.  Rationalize
  *				__init/__devinit attributes.
- * 04/12/04 Ashok Raj	<ashok.raj@पूर्णांकel.com> Intel Corporation 2004
+ * 04/12/04 Ashok Raj	<ashok.raj@intel.com> Intel Corporation 2004
  *				Updated to work with irq migration necessary
- *				क्रम CPU Hotplug
+ *				for CPU Hotplug
  */
 /*
- * Here is what the पूर्णांकerrupt logic between a PCI device and the kernel looks
+ * Here is what the interrupt logic between a PCI device and the kernel looks
  * like:
  *
- * (1) A PCI device उठाओs one of the four पूर्णांकerrupt pins (INTA, INTB, INTC,
- *     INTD).  The device is uniquely identअगरied by its bus-, and slot-number
- *     (the function number करोes not matter here because all functions share
- *     the same पूर्णांकerrupt lines).
+ * (1) A PCI device raises one of the four interrupt pins (INTA, INTB, INTC,
+ *     INTD).  The device is uniquely identified by its bus-, and slot-number
+ *     (the function number does not matter here because all functions share
+ *     the same interrupt lines).
  *
- * (2) The motherboard routes the पूर्णांकerrupt line to a pin on a IOSAPIC
- *     controller.  Multiple पूर्णांकerrupt lines may have to share the same
- *     IOSAPIC pin (अगर they're level triggered and use the same polarity).
- *     Each पूर्णांकerrupt line has a unique Global System Interrupt (GSI) number
+ * (2) The motherboard routes the interrupt line to a pin on a IOSAPIC
+ *     controller.  Multiple interrupt lines may have to share the same
+ *     IOSAPIC pin (if they're level triggered and use the same polarity).
+ *     Each interrupt line has a unique Global System Interrupt (GSI) number
  *     which can be calculated as the sum of the controller's base GSI number
  *     and the IOSAPIC pin number to which the line connects.
  *
- * (3) The IOSAPIC uses an पूर्णांकernal routing table entries (RTEs) to map the
- * IOSAPIC pin पूर्णांकo the IA-64 पूर्णांकerrupt vector.  This पूर्णांकerrupt vector is then
+ * (3) The IOSAPIC uses an internal routing table entries (RTEs) to map the
+ * IOSAPIC pin into the IA-64 interrupt vector.  This interrupt vector is then
  * sent to the CPU.
  *
- * (4) The kernel recognizes an पूर्णांकerrupt as an IRQ.  The IRQ पूर्णांकerface is
- *     used as architecture-independent पूर्णांकerrupt handling mechanism in Linux.
+ * (4) The kernel recognizes an interrupt as an IRQ.  The IRQ interface is
+ *     used as architecture-independent interrupt handling mechanism in Linux.
  *     As an IRQ is a number, we have to have
- *     IA-64 पूर्णांकerrupt vector number <-> IRQ number mapping.  On smaller
- *     प्रणालीs, we use one-to-one mapping between IA-64 vector and IRQ.
+ *     IA-64 interrupt vector number <-> IRQ number mapping.  On smaller
+ *     systems, we use one-to-one mapping between IA-64 vector and IRQ.
  *
  * To sum up, there are three levels of mappings involved:
  *
- *	PCI pin -> global प्रणाली पूर्णांकerrupt (GSI) -> IA-64 vector <-> IRQ
+ *	PCI pin -> global system interrupt (GSI) -> IA-64 vector <-> IRQ
  *
  * Note: The term "IRQ" is loosely used everywhere in Linux kernel to
- * describe पूर्णांकerrupts.  Now we use "IRQ" only क्रम Linux IRQ's.  ISA IRQ
+ * describe interrupts.  Now we use "IRQ" only for Linux IRQ's.  ISA IRQ
  * (isa_irq) is the only exception in this source code.
  */
 
-#समावेश <linux/acpi.h>
-#समावेश <linux/init.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/list.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/memblock.h>
+#include <linux/acpi.h>
+#include <linux/init.h>
+#include <linux/irq.h>
+#include <linux/kernel.h>
+#include <linux/list.h>
+#include <linux/pci.h>
+#include <linux/slab.h>
+#include <linux/smp.h>
+#include <linux/string.h>
+#include <linux/memblock.h>
 
-#समावेश <यंत्र/delay.h>
-#समावेश <यंत्र/hw_irq.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/iosapic.h>
-#समावेश <यंत्र/processor.h>
-#समावेश <यंत्र/ptrace.h>
-#समावेश <यंत्र/xtp.h>
+#include <asm/delay.h>
+#include <asm/hw_irq.h>
+#include <asm/io.h>
+#include <asm/iosapic.h>
+#include <asm/processor.h>
+#include <asm/ptrace.h>
+#include <asm/xtp.h>
 
-#अघोषित DEBUG_INTERRUPT_ROUTING
+#undef DEBUG_INTERRUPT_ROUTING
 
-#अगर_घोषित DEBUG_INTERRUPT_ROUTING
-#घोषणा DBG(fmt...)	prपूर्णांकk(fmt)
-#अन्यथा
-#घोषणा DBG(fmt...)
-#पूर्ण_अगर
+#ifdef DEBUG_INTERRUPT_ROUTING
+#define DBG(fmt...)	printk(fmt)
+#else
+#define DBG(fmt...)
+#endif
 
-अटल DEFINE_SPINLOCK(iosapic_lock);
+static DEFINE_SPINLOCK(iosapic_lock);
 
 /*
  * These tables map IA-64 vectors to the IOSAPIC pin that generates this
  * vector.
  */
 
-#घोषणा NO_REF_RTE	0
+#define NO_REF_RTE	0
 
-अटल काष्ठा iosapic अणु
-	अक्षर __iomem	*addr;		/* base address of IOSAPIC */
-	अचिन्हित पूर्णांक	gsi_base;	/* GSI base */
-	अचिन्हित लघु	num_rte;	/* # of RTEs on this IOSAPIC */
-	पूर्णांक		rtes_inuse;	/* # of RTEs in use on this IOSAPIC */
-#अगर_घोषित CONFIG_NUMA
-	अचिन्हित लघु	node;		/* numa node association via pxm */
-#पूर्ण_अगर
-	spinlock_t	lock;		/* lock क्रम indirect reg access */
-पूर्ण iosapic_lists[NR_IOSAPICS];
+static struct iosapic {
+	char __iomem	*addr;		/* base address of IOSAPIC */
+	unsigned int	gsi_base;	/* GSI base */
+	unsigned short	num_rte;	/* # of RTEs on this IOSAPIC */
+	int		rtes_inuse;	/* # of RTEs in use on this IOSAPIC */
+#ifdef CONFIG_NUMA
+	unsigned short	node;		/* numa node association via pxm */
+#endif
+	spinlock_t	lock;		/* lock for indirect reg access */
+} iosapic_lists[NR_IOSAPICS];
 
-काष्ठा iosapic_rte_info अणु
-	काष्ठा list_head rte_list;	/* RTEs sharing the same vector */
-	अक्षर		rte_index;	/* IOSAPIC RTE index */
-	पूर्णांक		refcnt;		/* reference counter */
-	काष्ठा iosapic	*iosapic;
-पूर्ण ____cacheline_aligned;
+struct iosapic_rte_info {
+	struct list_head rte_list;	/* RTEs sharing the same vector */
+	char		rte_index;	/* IOSAPIC RTE index */
+	int		refcnt;		/* reference counter */
+	struct iosapic	*iosapic;
+} ____cacheline_aligned;
 
-अटल काष्ठा iosapic_पूर्णांकr_info अणु
-	काष्ठा list_head rtes;		/* RTEs using this vector (empty =>
-					 * not an IOSAPIC पूर्णांकerrupt) */
-	पूर्णांक		count;		/* # of रेजिस्टरed RTEs */
+static struct iosapic_intr_info {
+	struct list_head rtes;		/* RTEs using this vector (empty =>
+					 * not an IOSAPIC interrupt) */
+	int		count;		/* # of registered RTEs */
 	u32		low32;		/* current value of low word of
 					 * Redirection table entry */
-	अचिन्हित पूर्णांक	dest;		/* destination CPU physical ID */
-	अचिन्हित अक्षर	dmode	: 3;	/* delivery mode (see iosapic.h) */
-	अचिन्हित अक्षर 	polarity: 1;	/* पूर्णांकerrupt polarity
+	unsigned int	dest;		/* destination CPU physical ID */
+	unsigned char	dmode	: 3;	/* delivery mode (see iosapic.h) */
+	unsigned char 	polarity: 1;	/* interrupt polarity
 					 * (see iosapic.h) */
-	अचिन्हित अक्षर	trigger	: 1;	/* trigger mode (see iosapic.h) */
-पूर्ण iosapic_पूर्णांकr_info[NR_IRQS];
+	unsigned char	trigger	: 1;	/* trigger mode (see iosapic.h) */
+} iosapic_intr_info[NR_IRQS];
 
-अटल अचिन्हित अक्षर pcat_compat;	/* 8259 compatibility flag */
+static unsigned char pcat_compat;	/* 8259 compatibility flag */
 
-अटल अंतरभूत व्योम
-iosapic_ग_लिखो(काष्ठा iosapic *iosapic, अचिन्हित पूर्णांक reg, u32 val)
-अणु
-	अचिन्हित दीर्घ flags;
+static inline void
+iosapic_write(struct iosapic *iosapic, unsigned int reg, u32 val)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&iosapic->lock, flags);
-	__iosapic_ग_लिखो(iosapic->addr, reg, val);
+	__iosapic_write(iosapic->addr, reg, val);
 	spin_unlock_irqrestore(&iosapic->lock, flags);
-पूर्ण
+}
 
 /*
  * Find an IOSAPIC associated with a GSI
  */
-अटल अंतरभूत पूर्णांक
-find_iosapic (अचिन्हित पूर्णांक gsi)
-अणु
-	पूर्णांक i;
+static inline int
+find_iosapic (unsigned int gsi)
+{
+	int i;
 
-	क्रम (i = 0; i < NR_IOSAPICS; i++) अणु
-		अगर ((अचिन्हित) (gsi - iosapic_lists[i].gsi_base) <
+	for (i = 0; i < NR_IOSAPICS; i++) {
+		if ((unsigned) (gsi - iosapic_lists[i].gsi_base) <
 		    iosapic_lists[i].num_rte)
-			वापस i;
-	पूर्ण
+			return i;
+	}
 
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल अंतरभूत पूर्णांक __gsi_to_irq(अचिन्हित पूर्णांक gsi)
-अणु
-	पूर्णांक irq;
-	काष्ठा iosapic_पूर्णांकr_info *info;
-	काष्ठा iosapic_rte_info *rte;
+static inline int __gsi_to_irq(unsigned int gsi)
+{
+	int irq;
+	struct iosapic_intr_info *info;
+	struct iosapic_rte_info *rte;
 
-	क्रम (irq = 0; irq < NR_IRQS; irq++) अणु
-		info = &iosapic_पूर्णांकr_info[irq];
-		list_क्रम_each_entry(rte, &info->rtes, rte_list)
-			अगर (rte->iosapic->gsi_base + rte->rte_index == gsi)
-				वापस irq;
-	पूर्ण
-	वापस -1;
-पूर्ण
+	for (irq = 0; irq < NR_IRQS; irq++) {
+		info = &iosapic_intr_info[irq];
+		list_for_each_entry(rte, &info->rtes, rte_list)
+			if (rte->iosapic->gsi_base + rte->rte_index == gsi)
+				return irq;
+	}
+	return -1;
+}
 
-पूर्णांक
-gsi_to_irq (अचिन्हित पूर्णांक gsi)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक irq;
+int
+gsi_to_irq (unsigned int gsi)
+{
+	unsigned long flags;
+	int irq;
 
 	spin_lock_irqsave(&iosapic_lock, flags);
 	irq = __gsi_to_irq(gsi);
 	spin_unlock_irqrestore(&iosapic_lock, flags);
-	वापस irq;
-पूर्ण
+	return irq;
+}
 
-अटल काष्ठा iosapic_rte_info *find_rte(अचिन्हित पूर्णांक irq, अचिन्हित पूर्णांक gsi)
-अणु
-	काष्ठा iosapic_rte_info *rte;
+static struct iosapic_rte_info *find_rte(unsigned int irq, unsigned int gsi)
+{
+	struct iosapic_rte_info *rte;
 
-	list_क्रम_each_entry(rte, &iosapic_पूर्णांकr_info[irq].rtes, rte_list)
-		अगर (rte->iosapic->gsi_base + rte->rte_index == gsi)
-			वापस rte;
-	वापस शून्य;
-पूर्ण
+	list_for_each_entry(rte, &iosapic_intr_info[irq].rtes, rte_list)
+		if (rte->iosapic->gsi_base + rte->rte_index == gsi)
+			return rte;
+	return NULL;
+}
 
-अटल व्योम
-set_rte (अचिन्हित पूर्णांक gsi, अचिन्हित पूर्णांक irq, अचिन्हित पूर्णांक dest, पूर्णांक mask)
-अणु
-	अचिन्हित दीर्घ pol, trigger, dmode;
+static void
+set_rte (unsigned int gsi, unsigned int irq, unsigned int dest, int mask)
+{
+	unsigned long pol, trigger, dmode;
 	u32 low32, high32;
-	पूर्णांक rte_index;
-	अक्षर redir;
-	काष्ठा iosapic_rte_info *rte;
+	int rte_index;
+	char redir;
+	struct iosapic_rte_info *rte;
 	ia64_vector vector = irq_to_vector(irq);
 
 	DBG(KERN_DEBUG"IOSAPIC: routing vector %d to 0x%x\n", vector, dest);
 
 	rte = find_rte(irq, gsi);
-	अगर (!rte)
-		वापस;		/* not an IOSAPIC पूर्णांकerrupt */
+	if (!rte)
+		return;		/* not an IOSAPIC interrupt */
 
 	rte_index = rte->rte_index;
-	pol     = iosapic_पूर्णांकr_info[irq].polarity;
-	trigger = iosapic_पूर्णांकr_info[irq].trigger;
-	dmode   = iosapic_पूर्णांकr_info[irq].dmode;
+	pol     = iosapic_intr_info[irq].polarity;
+	trigger = iosapic_intr_info[irq].trigger;
+	dmode   = iosapic_intr_info[irq].dmode;
 
 	redir = (dmode == IOSAPIC_LOWEST_PRIORITY) ? 1 : 0;
 
-#अगर_घोषित CONFIG_SMP
-	set_irq_affinity_info(irq, (पूर्णांक)(dest & 0xffff), redir);
-#पूर्ण_अगर
+#ifdef CONFIG_SMP
+	set_irq_affinity_info(irq, (int)(dest & 0xffff), redir);
+#endif
 
 	low32 = ((pol << IOSAPIC_POLARITY_SHIFT) |
 		 (trigger << IOSAPIC_TRIGGER_SHIFT) |
@@ -248,526 +247,526 @@ set_rte (अचिन्हित पूर्णांक gsi, अचिन्�
 	/* dest contains both id and eid */
 	high32 = (dest << IOSAPIC_DEST_SHIFT);
 
-	iosapic_ग_लिखो(rte->iosapic, IOSAPIC_RTE_HIGH(rte_index), high32);
-	iosapic_ग_लिखो(rte->iosapic, IOSAPIC_RTE_LOW(rte_index), low32);
-	iosapic_पूर्णांकr_info[irq].low32 = low32;
-	iosapic_पूर्णांकr_info[irq].dest = dest;
-पूर्ण
+	iosapic_write(rte->iosapic, IOSAPIC_RTE_HIGH(rte_index), high32);
+	iosapic_write(rte->iosapic, IOSAPIC_RTE_LOW(rte_index), low32);
+	iosapic_intr_info[irq].low32 = low32;
+	iosapic_intr_info[irq].dest = dest;
+}
 
-अटल व्योम
-iosapic_nop (काष्ठा irq_data *data)
-अणु
-	/* करो nothing... */
-पूर्ण
+static void
+iosapic_nop (struct irq_data *data)
+{
+	/* do nothing... */
+}
 
 
-#अगर_घोषित CONFIG_KEXEC
-व्योम
-kexec_disable_iosapic(व्योम)
-अणु
-	काष्ठा iosapic_पूर्णांकr_info *info;
-	काष्ठा iosapic_rte_info *rte;
+#ifdef CONFIG_KEXEC
+void
+kexec_disable_iosapic(void)
+{
+	struct iosapic_intr_info *info;
+	struct iosapic_rte_info *rte;
 	ia64_vector vec;
-	पूर्णांक irq;
+	int irq;
 
-	क्रम (irq = 0; irq < NR_IRQS; irq++) अणु
-		info = &iosapic_पूर्णांकr_info[irq];
+	for (irq = 0; irq < NR_IRQS; irq++) {
+		info = &iosapic_intr_info[irq];
 		vec = irq_to_vector(irq);
-		list_क्रम_each_entry(rte, &info->rtes,
-				rte_list) अणु
-			iosapic_ग_लिखो(rte->iosapic,
+		list_for_each_entry(rte, &info->rtes,
+				rte_list) {
+			iosapic_write(rte->iosapic,
 					IOSAPIC_RTE_LOW(rte->rte_index),
 					IOSAPIC_MASK|vec);
 			iosapic_eoi(rte->iosapic->addr, vec);
-		पूर्ण
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर
+		}
+	}
+}
+#endif
 
-अटल व्योम
-mask_irq (काष्ठा irq_data *data)
-अणु
-	अचिन्हित पूर्णांक irq = data->irq;
+static void
+mask_irq (struct irq_data *data)
+{
+	unsigned int irq = data->irq;
 	u32 low32;
-	पूर्णांक rte_index;
-	काष्ठा iosapic_rte_info *rte;
+	int rte_index;
+	struct iosapic_rte_info *rte;
 
-	अगर (!iosapic_पूर्णांकr_info[irq].count)
-		वापस;			/* not an IOSAPIC पूर्णांकerrupt! */
+	if (!iosapic_intr_info[irq].count)
+		return;			/* not an IOSAPIC interrupt! */
 
 	/* set only the mask bit */
-	low32 = iosapic_पूर्णांकr_info[irq].low32 |= IOSAPIC_MASK;
-	list_क्रम_each_entry(rte, &iosapic_पूर्णांकr_info[irq].rtes, rte_list) अणु
+	low32 = iosapic_intr_info[irq].low32 |= IOSAPIC_MASK;
+	list_for_each_entry(rte, &iosapic_intr_info[irq].rtes, rte_list) {
 		rte_index = rte->rte_index;
-		iosapic_ग_लिखो(rte->iosapic, IOSAPIC_RTE_LOW(rte_index), low32);
-	पूर्ण
-पूर्ण
+		iosapic_write(rte->iosapic, IOSAPIC_RTE_LOW(rte_index), low32);
+	}
+}
 
-अटल व्योम
-unmask_irq (काष्ठा irq_data *data)
-अणु
-	अचिन्हित पूर्णांक irq = data->irq;
+static void
+unmask_irq (struct irq_data *data)
+{
+	unsigned int irq = data->irq;
 	u32 low32;
-	पूर्णांक rte_index;
-	काष्ठा iosapic_rte_info *rte;
+	int rte_index;
+	struct iosapic_rte_info *rte;
 
-	अगर (!iosapic_पूर्णांकr_info[irq].count)
-		वापस;			/* not an IOSAPIC पूर्णांकerrupt! */
+	if (!iosapic_intr_info[irq].count)
+		return;			/* not an IOSAPIC interrupt! */
 
-	low32 = iosapic_पूर्णांकr_info[irq].low32 &= ~IOSAPIC_MASK;
-	list_क्रम_each_entry(rte, &iosapic_पूर्णांकr_info[irq].rtes, rte_list) अणु
+	low32 = iosapic_intr_info[irq].low32 &= ~IOSAPIC_MASK;
+	list_for_each_entry(rte, &iosapic_intr_info[irq].rtes, rte_list) {
 		rte_index = rte->rte_index;
-		iosapic_ग_लिखो(rte->iosapic, IOSAPIC_RTE_LOW(rte_index), low32);
-	पूर्ण
-पूर्ण
+		iosapic_write(rte->iosapic, IOSAPIC_RTE_LOW(rte_index), low32);
+	}
+}
 
 
-अटल पूर्णांक
-iosapic_set_affinity(काष्ठा irq_data *data, स्थिर काष्ठा cpumask *mask,
-		     bool क्रमce)
-अणु
-#अगर_घोषित CONFIG_SMP
-	अचिन्हित पूर्णांक irq = data->irq;
+static int
+iosapic_set_affinity(struct irq_data *data, const struct cpumask *mask,
+		     bool force)
+{
+#ifdef CONFIG_SMP
+	unsigned int irq = data->irq;
 	u32 high32, low32;
-	पूर्णांक cpu, dest, rte_index;
-	पूर्णांक redir = (irq & IA64_IRQ_REसूचीECTED) ? 1 : 0;
-	काष्ठा iosapic_rte_info *rte;
-	काष्ठा iosapic *iosapic;
+	int cpu, dest, rte_index;
+	int redir = (irq & IA64_IRQ_REDIRECTED) ? 1 : 0;
+	struct iosapic_rte_info *rte;
+	struct iosapic *iosapic;
 
-	irq &= (~IA64_IRQ_REसूचीECTED);
+	irq &= (~IA64_IRQ_REDIRECTED);
 
 	cpu = cpumask_first_and(cpu_online_mask, mask);
-	अगर (cpu >= nr_cpu_ids)
-		वापस -1;
+	if (cpu >= nr_cpu_ids)
+		return -1;
 
-	अगर (irq_prepare_move(irq, cpu))
-		वापस -1;
+	if (irq_prepare_move(irq, cpu))
+		return -1;
 
 	dest = cpu_physical_id(cpu);
 
-	अगर (!iosapic_पूर्णांकr_info[irq].count)
-		वापस -1;			/* not an IOSAPIC पूर्णांकerrupt */
+	if (!iosapic_intr_info[irq].count)
+		return -1;			/* not an IOSAPIC interrupt */
 
 	set_irq_affinity_info(irq, dest, redir);
 
 	/* dest contains both id and eid */
 	high32 = dest << IOSAPIC_DEST_SHIFT;
 
-	low32 = iosapic_पूर्णांकr_info[irq].low32 & ~(7 << IOSAPIC_DELIVERY_SHIFT);
-	अगर (redir)
+	low32 = iosapic_intr_info[irq].low32 & ~(7 << IOSAPIC_DELIVERY_SHIFT);
+	if (redir)
 		/* change delivery mode to lowest priority */
 		low32 |= (IOSAPIC_LOWEST_PRIORITY << IOSAPIC_DELIVERY_SHIFT);
-	अन्यथा
+	else
 		/* change delivery mode to fixed */
 		low32 |= (IOSAPIC_FIXED << IOSAPIC_DELIVERY_SHIFT);
 	low32 &= IOSAPIC_VECTOR_MASK;
 	low32 |= irq_to_vector(irq);
 
-	iosapic_पूर्णांकr_info[irq].low32 = low32;
-	iosapic_पूर्णांकr_info[irq].dest = dest;
-	list_क्रम_each_entry(rte, &iosapic_पूर्णांकr_info[irq].rtes, rte_list) अणु
+	iosapic_intr_info[irq].low32 = low32;
+	iosapic_intr_info[irq].dest = dest;
+	list_for_each_entry(rte, &iosapic_intr_info[irq].rtes, rte_list) {
 		iosapic = rte->iosapic;
 		rte_index = rte->rte_index;
-		iosapic_ग_लिखो(iosapic, IOSAPIC_RTE_HIGH(rte_index), high32);
-		iosapic_ग_लिखो(iosapic, IOSAPIC_RTE_LOW(rte_index), low32);
-	पूर्ण
+		iosapic_write(iosapic, IOSAPIC_RTE_HIGH(rte_index), high32);
+		iosapic_write(iosapic, IOSAPIC_RTE_LOW(rte_index), low32);
+	}
 
-#पूर्ण_अगर
-	वापस 0;
-पूर्ण
+#endif
+	return 0;
+}
 
 /*
- * Handlers क्रम level-triggered पूर्णांकerrupts.
+ * Handlers for level-triggered interrupts.
  */
 
-अटल अचिन्हित पूर्णांक
-iosapic_startup_level_irq (काष्ठा irq_data *data)
-अणु
+static unsigned int
+iosapic_startup_level_irq (struct irq_data *data)
+{
 	unmask_irq(data);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-iosapic_unmask_level_irq (काष्ठा irq_data *data)
-अणु
-	अचिन्हित पूर्णांक irq = data->irq;
+static void
+iosapic_unmask_level_irq (struct irq_data *data)
+{
+	unsigned int irq = data->irq;
 	ia64_vector vec = irq_to_vector(irq);
-	काष्ठा iosapic_rte_info *rte;
-	पूर्णांक करो_unmask_irq = 0;
+	struct iosapic_rte_info *rte;
+	int do_unmask_irq = 0;
 
 	irq_complete_move(irq);
-	अगर (unlikely(irqd_is_setaffinity_pending(data))) अणु
-		करो_unmask_irq = 1;
+	if (unlikely(irqd_is_setaffinity_pending(data))) {
+		do_unmask_irq = 1;
 		mask_irq(data);
-	पूर्ण अन्यथा
+	} else
 		unmask_irq(data);
 
-	list_क्रम_each_entry(rte, &iosapic_पूर्णांकr_info[irq].rtes, rte_list)
+	list_for_each_entry(rte, &iosapic_intr_info[irq].rtes, rte_list)
 		iosapic_eoi(rte->iosapic->addr, vec);
 
-	अगर (unlikely(करो_unmask_irq)) अणु
+	if (unlikely(do_unmask_irq)) {
 		irq_move_masked_irq(data);
 		unmask_irq(data);
-	पूर्ण
-पूर्ण
+	}
+}
 
-#घोषणा iosapic_shutकरोwn_level_irq	mask_irq
-#घोषणा iosapic_enable_level_irq	unmask_irq
-#घोषणा iosapic_disable_level_irq	mask_irq
-#घोषणा iosapic_ack_level_irq		iosapic_nop
+#define iosapic_shutdown_level_irq	mask_irq
+#define iosapic_enable_level_irq	unmask_irq
+#define iosapic_disable_level_irq	mask_irq
+#define iosapic_ack_level_irq		iosapic_nop
 
-अटल काष्ठा irq_chip irq_type_iosapic_level = अणु
+static struct irq_chip irq_type_iosapic_level = {
 	.name =			"IO-SAPIC-level",
 	.irq_startup =		iosapic_startup_level_irq,
-	.irq_shutकरोwn =		iosapic_shutकरोwn_level_irq,
+	.irq_shutdown =		iosapic_shutdown_level_irq,
 	.irq_enable =		iosapic_enable_level_irq,
 	.irq_disable =		iosapic_disable_level_irq,
 	.irq_ack =		iosapic_ack_level_irq,
 	.irq_mask =		mask_irq,
 	.irq_unmask =		iosapic_unmask_level_irq,
 	.irq_set_affinity =	iosapic_set_affinity
-पूर्ण;
+};
 
 /*
- * Handlers क्रम edge-triggered पूर्णांकerrupts.
+ * Handlers for edge-triggered interrupts.
  */
 
-अटल अचिन्हित पूर्णांक
-iosapic_startup_edge_irq (काष्ठा irq_data *data)
-अणु
+static unsigned int
+iosapic_startup_edge_irq (struct irq_data *data)
+{
 	unmask_irq(data);
 	/*
-	 * IOSAPIC simply drops पूर्णांकerrupts pended जबतक the
-	 * corresponding pin was masked, so we can't know अगर an
-	 * पूर्णांकerrupt is pending alपढ़ोy.  Let's hope not...
+	 * IOSAPIC simply drops interrupts pended while the
+	 * corresponding pin was masked, so we can't know if an
+	 * interrupt is pending already.  Let's hope not...
 	 */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-iosapic_ack_edge_irq (काष्ठा irq_data *data)
-अणु
+static void
+iosapic_ack_edge_irq (struct irq_data *data)
+{
 	irq_complete_move(data->irq);
 	irq_move_irq(data);
-पूर्ण
+}
 
-#घोषणा iosapic_enable_edge_irq		unmask_irq
-#घोषणा iosapic_disable_edge_irq	iosapic_nop
+#define iosapic_enable_edge_irq		unmask_irq
+#define iosapic_disable_edge_irq	iosapic_nop
 
-अटल काष्ठा irq_chip irq_type_iosapic_edge = अणु
+static struct irq_chip irq_type_iosapic_edge = {
 	.name =			"IO-SAPIC-edge",
 	.irq_startup =		iosapic_startup_edge_irq,
-	.irq_shutकरोwn =		iosapic_disable_edge_irq,
+	.irq_shutdown =		iosapic_disable_edge_irq,
 	.irq_enable =		iosapic_enable_edge_irq,
 	.irq_disable =		iosapic_disable_edge_irq,
 	.irq_ack =		iosapic_ack_edge_irq,
 	.irq_mask =		mask_irq,
 	.irq_unmask =		unmask_irq,
 	.irq_set_affinity =	iosapic_set_affinity
-पूर्ण;
+};
 
-अटल अचिन्हित पूर्णांक
-iosapic_version (अक्षर __iomem *addr)
-अणु
+static unsigned int
+iosapic_version (char __iomem *addr)
+{
 	/*
-	 * IOSAPIC Version Register वापस 32 bit काष्ठाure like:
-	 * अणु
-	 *	अचिन्हित पूर्णांक version   : 8;
-	 *	अचिन्हित पूर्णांक reserved1 : 8;
-	 *	अचिन्हित पूर्णांक max_redir : 8;
-	 *	अचिन्हित पूर्णांक reserved2 : 8;
-	 * पूर्ण
+	 * IOSAPIC Version Register return 32 bit structure like:
+	 * {
+	 *	unsigned int version   : 8;
+	 *	unsigned int reserved1 : 8;
+	 *	unsigned int max_redir : 8;
+	 *	unsigned int reserved2 : 8;
+	 * }
 	 */
-	वापस __iosapic_पढ़ो(addr, IOSAPIC_VERSION);
-पूर्ण
+	return __iosapic_read(addr, IOSAPIC_VERSION);
+}
 
-अटल पूर्णांक iosapic_find_sharable_irq(अचिन्हित दीर्घ trigger, अचिन्हित दीर्घ pol)
-अणु
-	पूर्णांक i, irq = -ENOSPC, min_count = -1;
-	काष्ठा iosapic_पूर्णांकr_info *info;
+static int iosapic_find_sharable_irq(unsigned long trigger, unsigned long pol)
+{
+	int i, irq = -ENOSPC, min_count = -1;
+	struct iosapic_intr_info *info;
 
 	/*
-	 * shared vectors क्रम edge-triggered पूर्णांकerrupts are not
+	 * shared vectors for edge-triggered interrupts are not
 	 * supported yet
 	 */
-	अगर (trigger == IOSAPIC_EDGE)
-		वापस -EINVAL;
+	if (trigger == IOSAPIC_EDGE)
+		return -EINVAL;
 
-	क्रम (i = 0; i < NR_IRQS; i++) अणु
-		info = &iosapic_पूर्णांकr_info[i];
-		अगर (info->trigger == trigger && info->polarity == pol &&
+	for (i = 0; i < NR_IRQS; i++) {
+		info = &iosapic_intr_info[i];
+		if (info->trigger == trigger && info->polarity == pol &&
 		    (info->dmode == IOSAPIC_FIXED ||
 		     info->dmode == IOSAPIC_LOWEST_PRIORITY) &&
-		    can_request_irq(i, IRQF_SHARED)) अणु
-			अगर (min_count == -1 || info->count < min_count) अणु
+		    can_request_irq(i, IRQF_SHARED)) {
+			if (min_count == -1 || info->count < min_count) {
 				irq = i;
 				min_count = info->count;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	वापस irq;
-पूर्ण
+			}
+		}
+	}
+	return irq;
+}
 
 /*
- * अगर the given vector is alपढ़ोy owned by other,
- *  assign a new vector क्रम the other and make the vector available
+ * if the given vector is already owned by other,
+ *  assign a new vector for the other and make the vector available
  */
-अटल व्योम __init
-iosapic_reassign_vector (पूर्णांक irq)
-अणु
-	पूर्णांक new_irq;
+static void __init
+iosapic_reassign_vector (int irq)
+{
+	int new_irq;
 
-	अगर (iosapic_पूर्णांकr_info[irq].count) अणु
+	if (iosapic_intr_info[irq].count) {
 		new_irq = create_irq();
-		अगर (new_irq < 0)
+		if (new_irq < 0)
 			panic("%s: out of interrupt vectors!\n", __func__);
-		prपूर्णांकk(KERN_INFO "Reassigning vector %d to %d\n",
+		printk(KERN_INFO "Reassigning vector %d to %d\n",
 		       irq_to_vector(irq), irq_to_vector(new_irq));
-		स_नकल(&iosapic_पूर्णांकr_info[new_irq], &iosapic_पूर्णांकr_info[irq],
-		       माप(काष्ठा iosapic_पूर्णांकr_info));
-		INIT_LIST_HEAD(&iosapic_पूर्णांकr_info[new_irq].rtes);
-		list_move(iosapic_पूर्णांकr_info[irq].rtes.next,
-			  &iosapic_पूर्णांकr_info[new_irq].rtes);
-		स_रखो(&iosapic_पूर्णांकr_info[irq], 0,
-		       माप(काष्ठा iosapic_पूर्णांकr_info));
-		iosapic_पूर्णांकr_info[irq].low32 = IOSAPIC_MASK;
-		INIT_LIST_HEAD(&iosapic_पूर्णांकr_info[irq].rtes);
-	पूर्ण
-पूर्ण
+		memcpy(&iosapic_intr_info[new_irq], &iosapic_intr_info[irq],
+		       sizeof(struct iosapic_intr_info));
+		INIT_LIST_HEAD(&iosapic_intr_info[new_irq].rtes);
+		list_move(iosapic_intr_info[irq].rtes.next,
+			  &iosapic_intr_info[new_irq].rtes);
+		memset(&iosapic_intr_info[irq], 0,
+		       sizeof(struct iosapic_intr_info));
+		iosapic_intr_info[irq].low32 = IOSAPIC_MASK;
+		INIT_LIST_HEAD(&iosapic_intr_info[irq].rtes);
+	}
+}
 
-अटल अंतरभूत पूर्णांक irq_is_shared (पूर्णांक irq)
-अणु
-	वापस (iosapic_पूर्णांकr_info[irq].count > 1);
-पूर्ण
+static inline int irq_is_shared (int irq)
+{
+	return (iosapic_intr_info[irq].count > 1);
+}
 
-काष्ठा irq_chip*
-ia64_native_iosapic_get_irq_chip(अचिन्हित दीर्घ trigger)
-अणु
-	अगर (trigger == IOSAPIC_EDGE)
-		वापस &irq_type_iosapic_edge;
-	अन्यथा
-		वापस &irq_type_iosapic_level;
-पूर्ण
+struct irq_chip*
+ia64_native_iosapic_get_irq_chip(unsigned long trigger)
+{
+	if (trigger == IOSAPIC_EDGE)
+		return &irq_type_iosapic_edge;
+	else
+		return &irq_type_iosapic_level;
+}
 
-अटल पूर्णांक
-रेजिस्टर_पूर्णांकr (अचिन्हित पूर्णांक gsi, पूर्णांक irq, अचिन्हित अक्षर delivery,
-	       अचिन्हित दीर्घ polarity, अचिन्हित दीर्घ trigger)
-अणु
-	काष्ठा irq_chip *chip, *irq_type;
-	पूर्णांक index;
-	काष्ठा iosapic_rte_info *rte;
+static int
+register_intr (unsigned int gsi, int irq, unsigned char delivery,
+	       unsigned long polarity, unsigned long trigger)
+{
+	struct irq_chip *chip, *irq_type;
+	int index;
+	struct iosapic_rte_info *rte;
 
 	index = find_iosapic(gsi);
-	अगर (index < 0) अणु
-		prपूर्णांकk(KERN_WARNING "%s: No IOSAPIC for GSI %u\n",
+	if (index < 0) {
+		printk(KERN_WARNING "%s: No IOSAPIC for GSI %u\n",
 		       __func__, gsi);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	rte = find_rte(irq, gsi);
-	अगर (!rte) अणु
-		rte = kzalloc(माप (*rte), GFP_ATOMIC);
-		अगर (!rte) अणु
-			prपूर्णांकk(KERN_WARNING "%s: cannot allocate memory\n",
+	if (!rte) {
+		rte = kzalloc(sizeof (*rte), GFP_ATOMIC);
+		if (!rte) {
+			printk(KERN_WARNING "%s: cannot allocate memory\n",
 			       __func__);
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 
 		rte->iosapic	= &iosapic_lists[index];
 		rte->rte_index	= gsi - rte->iosapic->gsi_base;
 		rte->refcnt++;
-		list_add_tail(&rte->rte_list, &iosapic_पूर्णांकr_info[irq].rtes);
-		iosapic_पूर्णांकr_info[irq].count++;
+		list_add_tail(&rte->rte_list, &iosapic_intr_info[irq].rtes);
+		iosapic_intr_info[irq].count++;
 		iosapic_lists[index].rtes_inuse++;
-	पूर्ण
-	अन्यथा अगर (rte->refcnt == NO_REF_RTE) अणु
-		काष्ठा iosapic_पूर्णांकr_info *info = &iosapic_पूर्णांकr_info[irq];
-		अगर (info->count > 0 &&
-		    (info->trigger != trigger || info->polarity != polarity))अणु
-			prपूर्णांकk (KERN_WARNING
+	}
+	else if (rte->refcnt == NO_REF_RTE) {
+		struct iosapic_intr_info *info = &iosapic_intr_info[irq];
+		if (info->count > 0 &&
+		    (info->trigger != trigger || info->polarity != polarity)){
+			printk (KERN_WARNING
 				"%s: cannot override the interrupt\n",
 				__func__);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		rte->refcnt++;
-		iosapic_पूर्णांकr_info[irq].count++;
+		iosapic_intr_info[irq].count++;
 		iosapic_lists[index].rtes_inuse++;
-	पूर्ण
+	}
 
-	iosapic_पूर्णांकr_info[irq].polarity = polarity;
-	iosapic_पूर्णांकr_info[irq].dmode    = delivery;
-	iosapic_पूर्णांकr_info[irq].trigger  = trigger;
+	iosapic_intr_info[irq].polarity = polarity;
+	iosapic_intr_info[irq].dmode    = delivery;
+	iosapic_intr_info[irq].trigger  = trigger;
 
 	irq_type = iosapic_get_irq_chip(trigger);
 
 	chip = irq_get_chip(irq);
-	अगर (irq_type != शून्य && chip != irq_type) अणु
-		अगर (chip != &no_irq_chip)
-			prपूर्णांकk(KERN_WARNING
+	if (irq_type != NULL && chip != irq_type) {
+		if (chip != &no_irq_chip)
+			printk(KERN_WARNING
 			       "%s: changing vector %d from %s to %s\n",
 			       __func__, irq_to_vector(irq),
 			       chip->name, irq_type->name);
 		chip = irq_type;
-	पूर्ण
+	}
 	irq_set_chip_handler_name_locked(irq_get_irq_data(irq), chip,
 		trigger == IOSAPIC_EDGE ? handle_edge_irq : handle_level_irq,
-		शून्य);
-	वापस 0;
-पूर्ण
+		NULL);
+	return 0;
+}
 
-अटल अचिन्हित पूर्णांक
-get_target_cpu (अचिन्हित पूर्णांक gsi, पूर्णांक irq)
-अणु
-#अगर_घोषित CONFIG_SMP
-	अटल पूर्णांक cpu = -1;
-	बाह्य पूर्णांक cpe_vector;
-	cpumask_t करोमुख्य = irq_to_करोमुख्य(irq);
+static unsigned int
+get_target_cpu (unsigned int gsi, int irq)
+{
+#ifdef CONFIG_SMP
+	static int cpu = -1;
+	extern int cpe_vector;
+	cpumask_t domain = irq_to_domain(irq);
 
 	/*
-	 * In हाल of vector shared by multiple RTEs, all RTEs that
+	 * In case of vector shared by multiple RTEs, all RTEs that
 	 * share the vector need to use the same destination CPU.
 	 */
-	अगर (iosapic_पूर्णांकr_info[irq].count)
-		वापस iosapic_पूर्णांकr_info[irq].dest;
+	if (iosapic_intr_info[irq].count)
+		return iosapic_intr_info[irq].dest;
 
 	/*
-	 * If the platक्रमm supports redirection via XTP, let it
-	 * distribute पूर्णांकerrupts.
+	 * If the platform supports redirection via XTP, let it
+	 * distribute interrupts.
 	 */
-	अगर (smp_पूर्णांक_redirect & SMP_IRQ_REसूचीECTION)
-		वापस cpu_physical_id(smp_processor_id());
+	if (smp_int_redirect & SMP_IRQ_REDIRECTION)
+		return cpu_physical_id(smp_processor_id());
 
 	/*
-	 * Some पूर्णांकerrupts (ACPI SCI, क्रम instance) are रेजिस्टरed
-	 * beक्रमe the BSP is marked as online.
+	 * Some interrupts (ACPI SCI, for instance) are registered
+	 * before the BSP is marked as online.
 	 */
-	अगर (!cpu_online(smp_processor_id()))
-		वापस cpu_physical_id(smp_processor_id());
+	if (!cpu_online(smp_processor_id()))
+		return cpu_physical_id(smp_processor_id());
 
-	अगर (cpe_vector > 0 && irq_to_vector(irq) == IA64_CPEP_VECTOR)
-		वापस get_cpei_target_cpu();
+	if (cpe_vector > 0 && irq_to_vector(irq) == IA64_CPEP_VECTOR)
+		return get_cpei_target_cpu();
 
-#अगर_घोषित CONFIG_NUMA
-	अणु
-		पूर्णांक num_cpus, cpu_index, iosapic_index, numa_cpu, i = 0;
-		स्थिर काष्ठा cpumask *cpu_mask;
+#ifdef CONFIG_NUMA
+	{
+		int num_cpus, cpu_index, iosapic_index, numa_cpu, i = 0;
+		const struct cpumask *cpu_mask;
 
 		iosapic_index = find_iosapic(gsi);
-		अगर (iosapic_index < 0 ||
+		if (iosapic_index < 0 ||
 		    iosapic_lists[iosapic_index].node == MAX_NUMNODES)
-			जाओ skip_numa_setup;
+			goto skip_numa_setup;
 
 		cpu_mask = cpumask_of_node(iosapic_lists[iosapic_index].node);
 		num_cpus = 0;
-		क्रम_each_cpu_and(numa_cpu, cpu_mask, &करोमुख्य) अणु
-			अगर (cpu_online(numa_cpu))
+		for_each_cpu_and(numa_cpu, cpu_mask, &domain) {
+			if (cpu_online(numa_cpu))
 				num_cpus++;
-		पूर्ण
+		}
 
-		अगर (!num_cpus)
-			जाओ skip_numa_setup;
+		if (!num_cpus)
+			goto skip_numa_setup;
 
 		/* Use irq assignment to distribute across cpus in node */
 		cpu_index = irq % num_cpus;
 
-		क्रम_each_cpu_and(numa_cpu, cpu_mask, &करोमुख्य)
-			अगर (cpu_online(numa_cpu) && i++ >= cpu_index)
-				अवरोध;
+		for_each_cpu_and(numa_cpu, cpu_mask, &domain)
+			if (cpu_online(numa_cpu) && i++ >= cpu_index)
+				break;
 
-		अगर (numa_cpu < nr_cpu_ids)
-			वापस cpu_physical_id(numa_cpu);
-	पूर्ण
+		if (numa_cpu < nr_cpu_ids)
+			return cpu_physical_id(numa_cpu);
+	}
 skip_numa_setup:
-#पूर्ण_अगर
+#endif
 	/*
-	 * Otherwise, round-robin पूर्णांकerrupt vectors across all the
-	 * processors.  (It'd be nice अगर we could be smarter in the
-	 * हाल of NUMA.)
+	 * Otherwise, round-robin interrupt vectors across all the
+	 * processors.  (It'd be nice if we could be smarter in the
+	 * case of NUMA.)
 	 */
-	करो अणु
-		अगर (++cpu >= nr_cpu_ids)
+	do {
+		if (++cpu >= nr_cpu_ids)
 			cpu = 0;
-	पूर्ण जबतक (!cpu_online(cpu) || !cpumask_test_cpu(cpu, &करोमुख्य));
+	} while (!cpu_online(cpu) || !cpumask_test_cpu(cpu, &domain));
 
-	वापस cpu_physical_id(cpu);
-#अन्यथा  /* CONFIG_SMP */
-	वापस cpu_physical_id(smp_processor_id());
-#पूर्ण_अगर
-पूर्ण
+	return cpu_physical_id(cpu);
+#else  /* CONFIG_SMP */
+	return cpu_physical_id(smp_processor_id());
+#endif
+}
 
-अटल अंतरभूत अचिन्हित अक्षर choose_dmode(व्योम)
-अणु
-#अगर_घोषित CONFIG_SMP
-	अगर (smp_पूर्णांक_redirect & SMP_IRQ_REसूचीECTION)
-		वापस IOSAPIC_LOWEST_PRIORITY;
-#पूर्ण_अगर
-	वापस IOSAPIC_FIXED;
-पूर्ण
+static inline unsigned char choose_dmode(void)
+{
+#ifdef CONFIG_SMP
+	if (smp_int_redirect & SMP_IRQ_REDIRECTION)
+		return IOSAPIC_LOWEST_PRIORITY;
+#endif
+	return IOSAPIC_FIXED;
+}
 
 /*
- * ACPI can describe IOSAPIC पूर्णांकerrupts via अटल tables and namespace
- * methods.  This provides an पूर्णांकerface to रेजिस्टर those पूर्णांकerrupts and
+ * ACPI can describe IOSAPIC interrupts via static tables and namespace
+ * methods.  This provides an interface to register those interrupts and
  * program the IOSAPIC RTE.
  */
-पूर्णांक
-iosapic_रेजिस्टर_पूर्णांकr (अचिन्हित पूर्णांक gsi,
-		       अचिन्हित दीर्घ polarity, अचिन्हित दीर्घ trigger)
-अणु
-	पूर्णांक irq, mask = 1, err;
-	अचिन्हित पूर्णांक dest;
-	अचिन्हित दीर्घ flags;
-	काष्ठा iosapic_rte_info *rte;
+int
+iosapic_register_intr (unsigned int gsi,
+		       unsigned long polarity, unsigned long trigger)
+{
+	int irq, mask = 1, err;
+	unsigned int dest;
+	unsigned long flags;
+	struct iosapic_rte_info *rte;
 	u32 low32;
-	अचिन्हित अक्षर dmode;
-	काष्ठा irq_desc *desc;
+	unsigned char dmode;
+	struct irq_desc *desc;
 
 	/*
-	 * If this GSI has alपढ़ोy been रेजिस्टरed (i.e., it's a
-	 * shared पूर्णांकerrupt, or we lost a race to रेजिस्टर it),
-	 * करोn't touch the RTE.
+	 * If this GSI has already been registered (i.e., it's a
+	 * shared interrupt, or we lost a race to register it),
+	 * don't touch the RTE.
 	 */
 	spin_lock_irqsave(&iosapic_lock, flags);
 	irq = __gsi_to_irq(gsi);
-	अगर (irq > 0) अणु
+	if (irq > 0) {
 		rte = find_rte(irq, gsi);
-		अगर(iosapic_पूर्णांकr_info[irq].count == 0) अणु
+		if(iosapic_intr_info[irq].count == 0) {
 			assign_irq_vector(irq);
 			irq_init_desc(irq);
-		पूर्ण अन्यथा अगर (rte->refcnt != NO_REF_RTE) अणु
+		} else if (rte->refcnt != NO_REF_RTE) {
 			rte->refcnt++;
-			जाओ unlock_iosapic_lock;
-		पूर्ण
-	पूर्ण अन्यथा
+			goto unlock_iosapic_lock;
+		}
+	} else
 		irq = create_irq();
 
 	/* If vector is running out, we try to find a sharable vector */
-	अगर (irq < 0) अणु
+	if (irq < 0) {
 		irq = iosapic_find_sharable_irq(trigger, polarity);
-		अगर (irq < 0)
-			जाओ unlock_iosapic_lock;
-	पूर्ण
+		if (irq < 0)
+			goto unlock_iosapic_lock;
+	}
 
 	desc = irq_to_desc(irq);
 	raw_spin_lock(&desc->lock);
 	dest = get_target_cpu(gsi, irq);
 	dmode = choose_dmode();
-	err = रेजिस्टर_पूर्णांकr(gsi, irq, dmode, polarity, trigger);
-	अगर (err < 0) अणु
+	err = register_intr(gsi, irq, dmode, polarity, trigger);
+	if (err < 0) {
 		raw_spin_unlock(&desc->lock);
 		irq = err;
-		जाओ unlock_iosapic_lock;
-	पूर्ण
+		goto unlock_iosapic_lock;
+	}
 
 	/*
-	 * If the vector is shared and alपढ़ोy unmasked क्रम other
-	 * पूर्णांकerrupt sources, करोn't mask it.
+	 * If the vector is shared and already unmasked for other
+	 * interrupt sources, don't mask it.
 	 */
-	low32 = iosapic_पूर्णांकr_info[irq].low32;
-	अगर (irq_is_shared(irq) && !(low32 & IOSAPIC_MASK))
+	low32 = iosapic_intr_info[irq].low32;
+	if (irq_is_shared(irq) && !(low32 & IOSAPIC_MASK))
 		mask = 0;
 	set_rte(gsi, irq, dest, mask);
 
-	prपूर्णांकk(KERN_INFO "GSI %u (%s, %s) -> CPU %d (0x%04x) vector %d\n",
+	printk(KERN_INFO "GSI %u (%s, %s) -> CPU %d (0x%04x) vector %d\n",
 	       gsi, (trigger == IOSAPIC_EDGE ? "edge" : "level"),
 	       (polarity == IOSAPIC_POL_HIGH ? "high" : "low"),
 	       cpu_logical_id(dest), dest, irq_to_vector(irq));
@@ -775,97 +774,97 @@ iosapic_रेजिस्टर_पूर्णांकr (अचिन्ह�
 	raw_spin_unlock(&desc->lock);
  unlock_iosapic_lock:
 	spin_unlock_irqrestore(&iosapic_lock, flags);
-	वापस irq;
-पूर्ण
+	return irq;
+}
 
-व्योम
-iosapic_unरेजिस्टर_पूर्णांकr (अचिन्हित पूर्णांक gsi)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक irq, index;
+void
+iosapic_unregister_intr (unsigned int gsi)
+{
+	unsigned long flags;
+	int irq, index;
 	u32 low32;
-	अचिन्हित दीर्घ trigger, polarity;
-	अचिन्हित पूर्णांक dest;
-	काष्ठा iosapic_rte_info *rte;
+	unsigned long trigger, polarity;
+	unsigned int dest;
+	struct iosapic_rte_info *rte;
 
 	/*
 	 * If the irq associated with the gsi is not found,
-	 * iosapic_unरेजिस्टर_पूर्णांकr() is unbalanced. We need to check
+	 * iosapic_unregister_intr() is unbalanced. We need to check
 	 * this again after getting locks.
 	 */
 	irq = gsi_to_irq(gsi);
-	अगर (irq < 0) अणु
-		prपूर्णांकk(KERN_ERR "iosapic_unregister_intr(%u) unbalanced\n",
+	if (irq < 0) {
+		printk(KERN_ERR "iosapic_unregister_intr(%u) unbalanced\n",
 		       gsi);
 		WARN_ON(1);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	spin_lock_irqsave(&iosapic_lock, flags);
-	अगर ((rte = find_rte(irq, gsi)) == शून्य) अणु
-		prपूर्णांकk(KERN_ERR "iosapic_unregister_intr(%u) unbalanced\n",
+	if ((rte = find_rte(irq, gsi)) == NULL) {
+		printk(KERN_ERR "iosapic_unregister_intr(%u) unbalanced\n",
 		       gsi);
 		WARN_ON(1);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (--rte->refcnt > 0)
-		जाओ out;
+	if (--rte->refcnt > 0)
+		goto out;
 
 	rte->refcnt = NO_REF_RTE;
 
-	/* Mask the पूर्णांकerrupt */
-	low32 = iosapic_पूर्णांकr_info[irq].low32 | IOSAPIC_MASK;
-	iosapic_ग_लिखो(rte->iosapic, IOSAPIC_RTE_LOW(rte->rte_index), low32);
+	/* Mask the interrupt */
+	low32 = iosapic_intr_info[irq].low32 | IOSAPIC_MASK;
+	iosapic_write(rte->iosapic, IOSAPIC_RTE_LOW(rte->rte_index), low32);
 
-	iosapic_पूर्णांकr_info[irq].count--;
+	iosapic_intr_info[irq].count--;
 	index = find_iosapic(gsi);
 	iosapic_lists[index].rtes_inuse--;
 	WARN_ON(iosapic_lists[index].rtes_inuse < 0);
 
-	trigger  = iosapic_पूर्णांकr_info[irq].trigger;
-	polarity = iosapic_पूर्णांकr_info[irq].polarity;
-	dest     = iosapic_पूर्णांकr_info[irq].dest;
-	prपूर्णांकk(KERN_INFO
+	trigger  = iosapic_intr_info[irq].trigger;
+	polarity = iosapic_intr_info[irq].polarity;
+	dest     = iosapic_intr_info[irq].dest;
+	printk(KERN_INFO
 	       "GSI %u (%s, %s) -> CPU %d (0x%04x) vector %d unregistered\n",
 	       gsi, (trigger == IOSAPIC_EDGE ? "edge" : "level"),
 	       (polarity == IOSAPIC_POL_HIGH ? "high" : "low"),
 	       cpu_logical_id(dest), dest, irq_to_vector(irq));
 
-	अगर (iosapic_पूर्णांकr_info[irq].count == 0) अणु
-#अगर_घोषित CONFIG_SMP
+	if (iosapic_intr_info[irq].count == 0) {
+#ifdef CONFIG_SMP
 		/* Clear affinity */
 		cpumask_setall(irq_get_affinity_mask(irq));
-#पूर्ण_अगर
-		/* Clear the पूर्णांकerrupt inक्रमmation */
-		iosapic_पूर्णांकr_info[irq].dest = 0;
-		iosapic_पूर्णांकr_info[irq].dmode = 0;
-		iosapic_पूर्णांकr_info[irq].polarity = 0;
-		iosapic_पूर्णांकr_info[irq].trigger = 0;
-		iosapic_पूर्णांकr_info[irq].low32 |= IOSAPIC_MASK;
+#endif
+		/* Clear the interrupt information */
+		iosapic_intr_info[irq].dest = 0;
+		iosapic_intr_info[irq].dmode = 0;
+		iosapic_intr_info[irq].polarity = 0;
+		iosapic_intr_info[irq].trigger = 0;
+		iosapic_intr_info[irq].low32 |= IOSAPIC_MASK;
 
 		/* Destroy and reserve IRQ */
 		destroy_and_reserve_irq(irq);
-	पूर्ण
+	}
  out:
 	spin_unlock_irqrestore(&iosapic_lock, flags);
-पूर्ण
+}
 
 /*
- * ACPI calls this when it finds an entry क्रम a platक्रमm पूर्णांकerrupt.
+ * ACPI calls this when it finds an entry for a platform interrupt.
  */
-पूर्णांक __init
-iosapic_रेजिस्टर_platक्रमm_पूर्णांकr (u32 पूर्णांक_type, अचिन्हित पूर्णांक gsi,
-				पूर्णांक iosapic_vector, u16 eid, u16 id,
-				अचिन्हित दीर्घ polarity, अचिन्हित दीर्घ trigger)
-अणु
-	अटल स्थिर अक्षर * स्थिर name[] = अणु"unknown", "PMI", "INIT", "CPEI"पूर्ण;
-	अचिन्हित अक्षर delivery;
-	पूर्णांक irq, vector, mask = 0;
-	अचिन्हित पूर्णांक dest = ((id << 8) | eid) & 0xffff;
+int __init
+iosapic_register_platform_intr (u32 int_type, unsigned int gsi,
+				int iosapic_vector, u16 eid, u16 id,
+				unsigned long polarity, unsigned long trigger)
+{
+	static const char * const name[] = {"unknown", "PMI", "INIT", "CPEI"};
+	unsigned char delivery;
+	int irq, vector, mask = 0;
+	unsigned int dest = ((id << 8) | eid) & 0xffff;
 
-	चयन (पूर्णांक_type) अणु
-	      हाल ACPI_INTERRUPT_PMI:
+	switch (int_type) {
+	      case ACPI_INTERRUPT_PMI:
 		irq = vector = iosapic_vector;
 		bind_irq_vector(irq, vector, CPU_MASK_ALL);
 		/*
@@ -874,54 +873,54 @@ iosapic_रेजिस्टर_platक्रमm_पूर्णांकr (u3
 		 */
 		iosapic_reassign_vector(irq);
 		delivery = IOSAPIC_PMI;
-		अवरोध;
-	      हाल ACPI_INTERRUPT_INIT:
+		break;
+	      case ACPI_INTERRUPT_INIT:
 		irq = create_irq();
-		अगर (irq < 0)
+		if (irq < 0)
 			panic("%s: out of interrupt vectors!\n", __func__);
 		vector = irq_to_vector(irq);
 		delivery = IOSAPIC_INIT;
-		अवरोध;
-	      हाल ACPI_INTERRUPT_CPEI:
+		break;
+	      case ACPI_INTERRUPT_CPEI:
 		irq = vector = IA64_CPE_VECTOR;
 		BUG_ON(bind_irq_vector(irq, vector, CPU_MASK_ALL));
 		delivery = IOSAPIC_FIXED;
 		mask = 1;
-		अवरोध;
-	      शेष:
-		prपूर्णांकk(KERN_ERR "%s: invalid int type 0x%x\n", __func__,
-		       पूर्णांक_type);
-		वापस -1;
-	पूर्ण
+		break;
+	      default:
+		printk(KERN_ERR "%s: invalid int type 0x%x\n", __func__,
+		       int_type);
+		return -1;
+	}
 
-	रेजिस्टर_पूर्णांकr(gsi, irq, delivery, polarity, trigger);
+	register_intr(gsi, irq, delivery, polarity, trigger);
 
-	prपूर्णांकk(KERN_INFO
+	printk(KERN_INFO
 	       "PLATFORM int %s (0x%x): GSI %u (%s, %s) -> CPU %d (0x%04x)"
 	       " vector %d\n",
-	       पूर्णांक_type < ARRAY_SIZE(name) ? name[पूर्णांक_type] : "unknown",
-	       पूर्णांक_type, gsi, (trigger == IOSAPIC_EDGE ? "edge" : "level"),
+	       int_type < ARRAY_SIZE(name) ? name[int_type] : "unknown",
+	       int_type, gsi, (trigger == IOSAPIC_EDGE ? "edge" : "level"),
 	       (polarity == IOSAPIC_POL_HIGH ? "high" : "low"),
 	       cpu_logical_id(dest), dest, vector);
 
 	set_rte(gsi, irq, dest, mask);
-	वापस vector;
-पूर्ण
+	return vector;
+}
 
 /*
- * ACPI calls this when it finds an entry क्रम a legacy ISA IRQ override.
+ * ACPI calls this when it finds an entry for a legacy ISA IRQ override.
  */
-व्योम iosapic_override_isa_irq(अचिन्हित पूर्णांक isa_irq, अचिन्हित पूर्णांक gsi,
-			      अचिन्हित दीर्घ polarity, अचिन्हित दीर्घ trigger)
-अणु
-	पूर्णांक vector, irq;
-	अचिन्हित पूर्णांक dest = cpu_physical_id(smp_processor_id());
-	अचिन्हित अक्षर dmode;
+void iosapic_override_isa_irq(unsigned int isa_irq, unsigned int gsi,
+			      unsigned long polarity, unsigned long trigger)
+{
+	int vector, irq;
+	unsigned int dest = cpu_physical_id(smp_processor_id());
+	unsigned char dmode;
 
 	irq = vector = isa_irq_to_vector(isa_irq);
 	BUG_ON(bind_irq_vector(irq, vector, CPU_MASK_ALL));
 	dmode = choose_dmode();
-	रेजिस्टर_पूर्णांकr(gsi, irq, dmode, polarity, trigger);
+	register_intr(gsi, irq, dmode, polarity, trigger);
 
 	DBG("ISA: IRQ %u -> GSI %u (%s,%s) -> CPU %d (0x%04x) vector %d\n",
 	    isa_irq, gsi, trigger == IOSAPIC_EDGE ? "edge" : "level",
@@ -929,133 +928,133 @@ iosapic_रेजिस्टर_platक्रमm_पूर्णांकr (u3
 	    cpu_logical_id(dest), dest, vector);
 
 	set_rte(gsi, irq, dest, 1);
-पूर्ण
+}
 
-व्योम __init
-ia64_native_iosapic_pcat_compat_init(व्योम)
-अणु
-	अगर (pcat_compat) अणु
+void __init
+ia64_native_iosapic_pcat_compat_init(void)
+{
+	if (pcat_compat) {
 		/*
-		 * Disable the compatibility mode पूर्णांकerrupts (8259 style),
+		 * Disable the compatibility mode interrupts (8259 style),
 		 * needs IN/OUT support enabled.
 		 */
-		prपूर्णांकk(KERN_INFO
+		printk(KERN_INFO
 		       "%s: Disabling PC-AT compatible 8259 interrupts\n",
 		       __func__);
 		outb(0xff, 0xA1);
 		outb(0xff, 0x21);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम __init
-iosapic_प्रणाली_init (पूर्णांक प्रणाली_pcat_compat)
-अणु
-	पूर्णांक irq;
+void __init
+iosapic_system_init (int system_pcat_compat)
+{
+	int irq;
 
-	क्रम (irq = 0; irq < NR_IRQS; ++irq) अणु
-		iosapic_पूर्णांकr_info[irq].low32 = IOSAPIC_MASK;
+	for (irq = 0; irq < NR_IRQS; ++irq) {
+		iosapic_intr_info[irq].low32 = IOSAPIC_MASK;
 		/* mark as unused */
-		INIT_LIST_HEAD(&iosapic_पूर्णांकr_info[irq].rtes);
+		INIT_LIST_HEAD(&iosapic_intr_info[irq].rtes);
 
-		iosapic_पूर्णांकr_info[irq].count = 0;
-	पूर्ण
+		iosapic_intr_info[irq].count = 0;
+	}
 
-	pcat_compat = प्रणाली_pcat_compat;
-	अगर (pcat_compat)
+	pcat_compat = system_pcat_compat;
+	if (pcat_compat)
 		iosapic_pcat_compat_init();
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक
-iosapic_alloc (व्योम)
-अणु
-	पूर्णांक index;
+static inline int
+iosapic_alloc (void)
+{
+	int index;
 
-	क्रम (index = 0; index < NR_IOSAPICS; index++)
-		अगर (!iosapic_lists[index].addr)
-			वापस index;
+	for (index = 0; index < NR_IOSAPICS; index++)
+		if (!iosapic_lists[index].addr)
+			return index;
 
-	prपूर्णांकk(KERN_WARNING "%s: failed to allocate iosapic\n", __func__);
-	वापस -1;
-पूर्ण
+	printk(KERN_WARNING "%s: failed to allocate iosapic\n", __func__);
+	return -1;
+}
 
-अटल अंतरभूत व्योम
-iosapic_मुक्त (पूर्णांक index)
-अणु
-	स_रखो(&iosapic_lists[index], 0, माप(iosapic_lists[0]));
-पूर्ण
+static inline void
+iosapic_free (int index)
+{
+	memset(&iosapic_lists[index], 0, sizeof(iosapic_lists[0]));
+}
 
-अटल अंतरभूत पूर्णांक
-iosapic_check_gsi_range (अचिन्हित पूर्णांक gsi_base, अचिन्हित पूर्णांक ver)
-अणु
-	पूर्णांक index;
-	अचिन्हित पूर्णांक gsi_end, base, end;
+static inline int
+iosapic_check_gsi_range (unsigned int gsi_base, unsigned int ver)
+{
+	int index;
+	unsigned int gsi_end, base, end;
 
 	/* check gsi range */
 	gsi_end = gsi_base + ((ver >> 16) & 0xff);
-	क्रम (index = 0; index < NR_IOSAPICS; index++) अणु
-		अगर (!iosapic_lists[index].addr)
-			जारी;
+	for (index = 0; index < NR_IOSAPICS; index++) {
+		if (!iosapic_lists[index].addr)
+			continue;
 
 		base = iosapic_lists[index].gsi_base;
 		end  = base + iosapic_lists[index].num_rte - 1;
 
-		अगर (gsi_end < base || end < gsi_base)
-			जारी; /* OK */
+		if (gsi_end < base || end < gsi_base)
+			continue; /* OK */
 
-		वापस -EBUSY;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EBUSY;
+	}
+	return 0;
+}
 
-अटल पूर्णांक
-iosapic_delete_rte(अचिन्हित पूर्णांक irq, अचिन्हित पूर्णांक gsi)
-अणु
-	काष्ठा iosapic_rte_info *rte, *temp;
+static int
+iosapic_delete_rte(unsigned int irq, unsigned int gsi)
+{
+	struct iosapic_rte_info *rte, *temp;
 
-	list_क्रम_each_entry_safe(rte, temp, &iosapic_पूर्णांकr_info[irq].rtes,
-								rte_list) अणु
-		अगर (rte->iosapic->gsi_base + rte->rte_index == gsi) अणु
-			अगर (rte->refcnt)
-				वापस -EBUSY;
+	list_for_each_entry_safe(rte, temp, &iosapic_intr_info[irq].rtes,
+								rte_list) {
+		if (rte->iosapic->gsi_base + rte->rte_index == gsi) {
+			if (rte->refcnt)
+				return -EBUSY;
 
 			list_del(&rte->rte_list);
-			kमुक्त(rte);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			kfree(rte);
+			return 0;
+		}
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-पूर्णांक iosapic_init(अचिन्हित दीर्घ phys_addr, अचिन्हित पूर्णांक gsi_base)
-अणु
-	पूर्णांक num_rte, err, index;
-	अचिन्हित पूर्णांक isa_irq, ver;
-	अक्षर __iomem *addr;
-	अचिन्हित दीर्घ flags;
+int iosapic_init(unsigned long phys_addr, unsigned int gsi_base)
+{
+	int num_rte, err, index;
+	unsigned int isa_irq, ver;
+	char __iomem *addr;
+	unsigned long flags;
 
 	spin_lock_irqsave(&iosapic_lock, flags);
 	index = find_iosapic(gsi_base);
-	अगर (index >= 0) अणु
+	if (index >= 0) {
 		spin_unlock_irqrestore(&iosapic_lock, flags);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	addr = ioremap(phys_addr, 0);
-	अगर (addr == शून्य) अणु
+	if (addr == NULL) {
 		spin_unlock_irqrestore(&iosapic_lock, flags);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	ver = iosapic_version(addr);
-	अगर ((err = iosapic_check_gsi_range(gsi_base, ver))) अणु
+	if ((err = iosapic_check_gsi_range(gsi_base, ver))) {
 		iounmap(addr);
 		spin_unlock_irqrestore(&iosapic_lock, flags);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	/*
-	 * The MAX_REसूची रेजिस्टर holds the highest input pin number
-	 * (starting from 0).  We add 1 so that we can use it क्रम
+	 * The MAX_REDIR register holds the highest input pin number
+	 * (starting from 0).  We add 1 so that we can use it for
 	 * number of pins (= RTEs)
 	 */
 	num_rte = ((ver >> 16) & 0xff) + 1;
@@ -1064,75 +1063,75 @@ iosapic_delete_rte(अचिन्हित पूर्णांक irq, अच
 	iosapic_lists[index].addr = addr;
 	iosapic_lists[index].gsi_base = gsi_base;
 	iosapic_lists[index].num_rte = num_rte;
-#अगर_घोषित CONFIG_NUMA
+#ifdef CONFIG_NUMA
 	iosapic_lists[index].node = MAX_NUMNODES;
-#पूर्ण_अगर
+#endif
 	spin_lock_init(&iosapic_lists[index].lock);
 	spin_unlock_irqrestore(&iosapic_lock, flags);
 
-	अगर ((gsi_base == 0) && pcat_compat) अणु
+	if ((gsi_base == 0) && pcat_compat) {
 		/*
-		 * Map the legacy ISA devices पूर्णांकo the IOSAPIC data.  Some of
+		 * Map the legacy ISA devices into the IOSAPIC data.  Some of
 		 * these may get reprogrammed later on with data from the ACPI
 		 * Interrupt Source Override table.
 		 */
-		क्रम (isa_irq = 0; isa_irq < 16; ++isa_irq)
+		for (isa_irq = 0; isa_irq < 16; ++isa_irq)
 			iosapic_override_isa_irq(isa_irq, isa_irq,
 						 IOSAPIC_POL_HIGH,
 						 IOSAPIC_EDGE);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-पूर्णांक iosapic_हटाओ(अचिन्हित पूर्णांक gsi_base)
-अणु
-	पूर्णांक i, irq, index, err = 0;
-	अचिन्हित दीर्घ flags;
+int iosapic_remove(unsigned int gsi_base)
+{
+	int i, irq, index, err = 0;
+	unsigned long flags;
 
 	spin_lock_irqsave(&iosapic_lock, flags);
 	index = find_iosapic(gsi_base);
-	अगर (index < 0) अणु
-		prपूर्णांकk(KERN_WARNING "%s: No IOSAPIC for GSI base %u\n",
+	if (index < 0) {
+		printk(KERN_WARNING "%s: No IOSAPIC for GSI base %u\n",
 		       __func__, gsi_base);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (iosapic_lists[index].rtes_inuse) अणु
+	if (iosapic_lists[index].rtes_inuse) {
 		err = -EBUSY;
-		prपूर्णांकk(KERN_WARNING "%s: IOSAPIC for GSI base %u is busy\n",
+		printk(KERN_WARNING "%s: IOSAPIC for GSI base %u is busy\n",
 		       __func__, gsi_base);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	क्रम (i = gsi_base; i < gsi_base + iosapic_lists[index].num_rte; i++) अणु
+	for (i = gsi_base; i < gsi_base + iosapic_lists[index].num_rte; i++) {
 		irq = __gsi_to_irq(i);
-		अगर (irq < 0)
-			जारी;
+		if (irq < 0)
+			continue;
 
 		err = iosapic_delete_rte(irq, i);
-		अगर (err)
-			जाओ out;
-	पूर्ण
+		if (err)
+			goto out;
+	}
 
 	iounmap(iosapic_lists[index].addr);
-	iosapic_मुक्त(index);
+	iosapic_free(index);
  out:
 	spin_unlock_irqrestore(&iosapic_lock, flags);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-#अगर_घोषित CONFIG_NUMA
-व्योम map_iosapic_to_node(अचिन्हित पूर्णांक gsi_base, पूर्णांक node)
-अणु
-	पूर्णांक index;
+#ifdef CONFIG_NUMA
+void map_iosapic_to_node(unsigned int gsi_base, int node)
+{
+	int index;
 
 	index = find_iosapic(gsi_base);
-	अगर (index < 0) अणु
-		prपूर्णांकk(KERN_WARNING "%s: No IOSAPIC for GSI %u\n",
+	if (index < 0) {
+		printk(KERN_WARNING "%s: No IOSAPIC for GSI %u\n",
 		       __func__, gsi_base);
-		वापस;
-	पूर्ण
+		return;
+	}
 	iosapic_lists[index].node = node;
-	वापस;
-पूर्ण
-#पूर्ण_अगर
+	return;
+}
+#endif

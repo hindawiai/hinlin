@@ -1,9 +1,8 @@
-<शैली गुरु>
 /*
- * 1,2 and 4 byte cmpxchg and xchg implementations क्रम OpenRISC.
+ * 1,2 and 4 byte cmpxchg and xchg implementations for OpenRISC.
  *
  * Copyright (C) 2014 Stefan Kristiansson <stefan.kristiansson@saunalahti.fi>
- * Copyright (C) 2017 Stafक्रमd Horne <shorne@gmail.com>
+ * Copyright (C) 2017 Stafford Horne <shorne@gmail.com>
  *
  * This file is licensed under the terms of the GNU General Public License
  * version 2.  This program is licensed "as is" without any warranty of any
@@ -14,19 +13,19 @@
  * byte cmpxchg is sourced heavily from the sh and mips implementations.
  */
 
-#अगर_अघोषित __ASM_OPENRISC_CMPXCHG_H
-#घोषणा __ASM_OPENRISC_CMPXCHG_H
+#ifndef __ASM_OPENRISC_CMPXCHG_H
+#define __ASM_OPENRISC_CMPXCHG_H
 
-#समावेश  <linux/bits.h>
-#समावेश  <linux/compiler.h>
-#समावेश  <linux/types.h>
+#include  <linux/bits.h>
+#include  <linux/compiler.h>
+#include  <linux/types.h>
 
-#घोषणा __HAVE_ARCH_CMPXCHG 1
+#define __HAVE_ARCH_CMPXCHG 1
 
-अटल अंतरभूत अचिन्हित दीर्घ cmpxchg_u32(अस्थिर व्योम *ptr,
-		अचिन्हित दीर्घ old, अचिन्हित दीर्घ new)
-अणु
-	__यंत्र__ __अस्थिर__(
+static inline unsigned long cmpxchg_u32(volatile void *ptr,
+		unsigned long old, unsigned long new)
+{
+	__asm__ __volatile__(
 		"1:	l.lwa %0, 0(%1)		\n"
 		"	l.sfeq %0, %2		\n"
 		"	l.bnf 2f		\n"
@@ -39,13 +38,13 @@
 		: "r"(ptr), "r"(old), "r"(new)
 		: "cc", "memory");
 
-	वापस old;
-पूर्ण
+	return old;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ xchg_u32(अस्थिर व्योम *ptr,
-		अचिन्हित दीर्घ val)
-अणु
-	__यंत्र__ __अस्थिर__(
+static inline unsigned long xchg_u32(volatile void *ptr,
+		unsigned long val)
+{
+	__asm__ __volatile__(
 		"1:	l.lwa %0, 0(%1)		\n"
 		"	l.swa 0(%1), %2		\n"
 		"	l.bnf 1b		\n"
@@ -54,119 +53,119 @@
 		: "r"(ptr), "r"(val)
 		: "cc", "memory");
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल अंतरभूत u32 cmpxchg_small(अस्थिर व्योम *ptr, u32 old, u32 new,
-				पूर्णांक size)
-अणु
-	पूर्णांक off = (अचिन्हित दीर्घ)ptr % माप(u32);
-	अस्थिर u32 *p = ptr - off;
-#अगर_घोषित __BIG_ENDIAN
-	पूर्णांक bitoff = (माप(u32) - size - off) * BITS_PER_BYTE;
-#अन्यथा
-	पूर्णांक bitoff = off * BITS_PER_BYTE;
-#पूर्ण_अगर
-	u32 biपंचांगask = ((0x1 << size * BITS_PER_BYTE) - 1) << bitoff;
+static inline u32 cmpxchg_small(volatile void *ptr, u32 old, u32 new,
+				int size)
+{
+	int off = (unsigned long)ptr % sizeof(u32);
+	volatile u32 *p = ptr - off;
+#ifdef __BIG_ENDIAN
+	int bitoff = (sizeof(u32) - size - off) * BITS_PER_BYTE;
+#else
+	int bitoff = off * BITS_PER_BYTE;
+#endif
+	u32 bitmask = ((0x1 << size * BITS_PER_BYTE) - 1) << bitoff;
 	u32 load32, old32, new32;
 	u32 ret;
 
 	load32 = READ_ONCE(*p);
 
-	जबतक (true) अणु
-		ret = (load32 & biपंचांगask) >> bitoff;
-		अगर (old != ret)
-			वापस ret;
+	while (true) {
+		ret = (load32 & bitmask) >> bitoff;
+		if (old != ret)
+			return ret;
 
-		old32 = (load32 & ~biपंचांगask) | (old << bitoff);
-		new32 = (load32 & ~biपंचांगask) | (new << bitoff);
+		old32 = (load32 & ~bitmask) | (old << bitoff);
+		new32 = (load32 & ~bitmask) | (new << bitoff);
 
 		/* Do 32 bit cmpxchg */
 		load32 = cmpxchg_u32(p, old32, new32);
-		अगर (load32 == old32)
-			वापस old;
-	पूर्ण
-पूर्ण
+		if (load32 == old32)
+			return old;
+	}
+}
 
 /* xchg */
 
-अटल अंतरभूत u32 xchg_small(अस्थिर व्योम *ptr, u32 x, पूर्णांक size)
-अणु
-	पूर्णांक off = (अचिन्हित दीर्घ)ptr % माप(u32);
-	अस्थिर u32 *p = ptr - off;
-#अगर_घोषित __BIG_ENDIAN
-	पूर्णांक bitoff = (माप(u32) - size - off) * BITS_PER_BYTE;
-#अन्यथा
-	पूर्णांक bitoff = off * BITS_PER_BYTE;
-#पूर्ण_अगर
-	u32 biपंचांगask = ((0x1 << size * BITS_PER_BYTE) - 1) << bitoff;
+static inline u32 xchg_small(volatile void *ptr, u32 x, int size)
+{
+	int off = (unsigned long)ptr % sizeof(u32);
+	volatile u32 *p = ptr - off;
+#ifdef __BIG_ENDIAN
+	int bitoff = (sizeof(u32) - size - off) * BITS_PER_BYTE;
+#else
+	int bitoff = off * BITS_PER_BYTE;
+#endif
+	u32 bitmask = ((0x1 << size * BITS_PER_BYTE) - 1) << bitoff;
 	u32 oldv, newv;
 	u32 ret;
 
-	करो अणु
+	do {
 		oldv = READ_ONCE(*p);
-		ret = (oldv & biपंचांगask) >> bitoff;
-		newv = (oldv & ~biपंचांगask) | (x << bitoff);
-	पूर्ण जबतक (cmpxchg_u32(p, oldv, newv) != oldv);
+		ret = (oldv & bitmask) >> bitoff;
+		newv = (oldv & ~bitmask) | (x << bitoff);
+	} while (cmpxchg_u32(p, oldv, newv) != oldv);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * This function करोesn't exist, so you'll get a linker error
- * अगर something tries to करो an invalid cmpxchg().
+ * This function doesn't exist, so you'll get a linker error
+ * if something tries to do an invalid cmpxchg().
  */
-बाह्य अचिन्हित दीर्घ __cmpxchg_called_with_bad_poपूर्णांकer(व्योम)
-	__compileसमय_error("Bad argument size for cmpxchg");
+extern unsigned long __cmpxchg_called_with_bad_pointer(void)
+	__compiletime_error("Bad argument size for cmpxchg");
 
-अटल अंतरभूत अचिन्हित दीर्घ __cmpxchg(अस्थिर व्योम *ptr, अचिन्हित दीर्घ old,
-		अचिन्हित दीर्घ new, पूर्णांक size)
-अणु
-	चयन (size) अणु
-	हाल 1:
-	हाल 2:
-		वापस cmpxchg_small(ptr, old, new, size);
-	हाल 4:
-		वापस cmpxchg_u32(ptr, old, new);
-	शेष:
-		वापस __cmpxchg_called_with_bad_poपूर्णांकer();
-	पूर्ण
-पूर्ण
+static inline unsigned long __cmpxchg(volatile void *ptr, unsigned long old,
+		unsigned long new, int size)
+{
+	switch (size) {
+	case 1:
+	case 2:
+		return cmpxchg_small(ptr, old, new, size);
+	case 4:
+		return cmpxchg_u32(ptr, old, new);
+	default:
+		return __cmpxchg_called_with_bad_pointer();
+	}
+}
 
-#घोषणा cmpxchg(ptr, o, n)						\
-	(अणु								\
+#define cmpxchg(ptr, o, n)						\
+	({								\
 		(__typeof__(*(ptr))) __cmpxchg((ptr),			\
-					       (अचिन्हित दीर्घ)(o),	\
-					       (अचिन्हित दीर्घ)(n),	\
-					       माप(*(ptr)));		\
-	पूर्ण)
+					       (unsigned long)(o),	\
+					       (unsigned long)(n),	\
+					       sizeof(*(ptr)));		\
+	})
 
 /*
- * This function करोesn't exist, so you'll get a linker error अगर
- * something tries to करो an invalidly-sized xchg().
+ * This function doesn't exist, so you'll get a linker error if
+ * something tries to do an invalidly-sized xchg().
  */
-बाह्य अचिन्हित दीर्घ __xchg_called_with_bad_poपूर्णांकer(व्योम)
-	__compileसमय_error("Bad argument size for xchg");
+extern unsigned long __xchg_called_with_bad_pointer(void)
+	__compiletime_error("Bad argument size for xchg");
 
-अटल अंतरभूत अचिन्हित दीर्घ __xchg(अस्थिर व्योम *ptr, अचिन्हित दीर्घ with,
-		पूर्णांक size)
-अणु
-	चयन (size) अणु
-	हाल 1:
-	हाल 2:
-		वापस xchg_small(ptr, with, size);
-	हाल 4:
-		वापस xchg_u32(ptr, with);
-	शेष:
-		वापस __xchg_called_with_bad_poपूर्णांकer();
-	पूर्ण
-पूर्ण
+static inline unsigned long __xchg(volatile void *ptr, unsigned long with,
+		int size)
+{
+	switch (size) {
+	case 1:
+	case 2:
+		return xchg_small(ptr, with, size);
+	case 4:
+		return xchg_u32(ptr, with);
+	default:
+		return __xchg_called_with_bad_pointer();
+	}
+}
 
-#घोषणा xchg(ptr, with) 						\
-	(अणु								\
+#define xchg(ptr, with) 						\
+	({								\
 		(__typeof__(*(ptr))) __xchg((ptr),			\
-					    (अचिन्हित दीर्घ)(with),	\
-					    माप(*(ptr)));		\
-	पूर्ण)
+					    (unsigned long)(with),	\
+					    sizeof(*(ptr)));		\
+	})
 
-#पूर्ण_अगर /* __ASM_OPENRISC_CMPXCHG_H */
+#endif /* __ASM_OPENRISC_CMPXCHG_H */

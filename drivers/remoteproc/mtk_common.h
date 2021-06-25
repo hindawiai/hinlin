@@ -1,136 +1,135 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (c) 2019 MediaTek Inc.
  */
 
-#अगर_अघोषित __RPROC_MTK_COMMON_H
-#घोषणा __RPROC_MTK_COMMON_H
+#ifndef __RPROC_MTK_COMMON_H
+#define __RPROC_MTK_COMMON_H
 
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/remoteproc.h>
-#समावेश <linux/remoteproc/mtk_scp.h>
+#include <linux/interrupt.h>
+#include <linux/kernel.h>
+#include <linux/platform_device.h>
+#include <linux/remoteproc.h>
+#include <linux/remoteproc/mtk_scp.h>
 
-#घोषणा MT8183_SW_RSTN			0x0
-#घोषणा MT8183_SW_RSTN_BIT		BIT(0)
-#घोषणा MT8183_SCP_TO_HOST		0x1C
-#घोषणा MT8183_SCP_IPC_INT_BIT		BIT(0)
-#घोषणा MT8183_SCP_WDT_INT_BIT		BIT(8)
-#घोषणा MT8183_HOST_TO_SCP		0x28
-#घोषणा MT8183_HOST_IPC_INT_BIT		BIT(0)
-#घोषणा MT8183_WDT_CFG			0x84
-#घोषणा MT8183_SCP_CLK_SW_SEL		0x4000
-#घोषणा MT8183_SCP_CLK_DIV_SEL		0x4024
-#घोषणा MT8183_SCP_SRAM_PDN		0x402C
-#घोषणा MT8183_SCP_L1_SRAM_PD		0x4080
-#घोषणा MT8183_SCP_TCM_TAIL_SRAM_PD	0x4094
+#define MT8183_SW_RSTN			0x0
+#define MT8183_SW_RSTN_BIT		BIT(0)
+#define MT8183_SCP_TO_HOST		0x1C
+#define MT8183_SCP_IPC_INT_BIT		BIT(0)
+#define MT8183_SCP_WDT_INT_BIT		BIT(8)
+#define MT8183_HOST_TO_SCP		0x28
+#define MT8183_HOST_IPC_INT_BIT		BIT(0)
+#define MT8183_WDT_CFG			0x84
+#define MT8183_SCP_CLK_SW_SEL		0x4000
+#define MT8183_SCP_CLK_DIV_SEL		0x4024
+#define MT8183_SCP_SRAM_PDN		0x402C
+#define MT8183_SCP_L1_SRAM_PD		0x4080
+#define MT8183_SCP_TCM_TAIL_SRAM_PD	0x4094
 
-#घोषणा MT8183_SCP_CACHE_SEL(x)		(0x14000 + (x) * 0x3000)
-#घोषणा MT8183_SCP_CACHE_CON		MT8183_SCP_CACHE_SEL(0)
-#घोषणा MT8183_SCP_DCACHE_CON		MT8183_SCP_CACHE_SEL(1)
-#घोषणा MT8183_SCP_CACHESIZE_8KB	BIT(8)
-#घोषणा MT8183_SCP_CACHE_CON_WAYEN	BIT(10)
+#define MT8183_SCP_CACHE_SEL(x)		(0x14000 + (x) * 0x3000)
+#define MT8183_SCP_CACHE_CON		MT8183_SCP_CACHE_SEL(0)
+#define MT8183_SCP_DCACHE_CON		MT8183_SCP_CACHE_SEL(1)
+#define MT8183_SCP_CACHESIZE_8KB	BIT(8)
+#define MT8183_SCP_CACHE_CON_WAYEN	BIT(10)
 
-#घोषणा MT8192_L2TCM_SRAM_PD_0		0x10C0
-#घोषणा MT8192_L2TCM_SRAM_PD_1		0x10C4
-#घोषणा MT8192_L2TCM_SRAM_PD_2		0x10C8
-#घोषणा MT8192_L1TCM_SRAM_PDN		0x102C
-#घोषणा MT8192_CPU0_SRAM_PD		0x1080
+#define MT8192_L2TCM_SRAM_PD_0		0x10C0
+#define MT8192_L2TCM_SRAM_PD_1		0x10C4
+#define MT8192_L2TCM_SRAM_PD_2		0x10C8
+#define MT8192_L1TCM_SRAM_PDN		0x102C
+#define MT8192_CPU0_SRAM_PD		0x1080
 
-#घोषणा MT8192_SCP2APMCU_IPC_SET	0x4080
-#घोषणा MT8192_SCP2APMCU_IPC_CLR	0x4084
-#घोषणा MT8192_SCP_IPC_INT_BIT		BIT(0)
-#घोषणा MT8192_SCP2SPM_IPC_CLR		0x4094
-#घोषणा MT8192_GIPC_IN_SET		0x4098
-#घोषणा MT8192_HOST_IPC_INT_BIT		BIT(0)
+#define MT8192_SCP2APMCU_IPC_SET	0x4080
+#define MT8192_SCP2APMCU_IPC_CLR	0x4084
+#define MT8192_SCP_IPC_INT_BIT		BIT(0)
+#define MT8192_SCP2SPM_IPC_CLR		0x4094
+#define MT8192_GIPC_IN_SET		0x4098
+#define MT8192_HOST_IPC_INT_BIT		BIT(0)
 
-#घोषणा MT8192_CORE0_SW_RSTN_CLR	0x10000
-#घोषणा MT8192_CORE0_SW_RSTN_SET	0x10004
-#घोषणा MT8192_CORE0_MEM_ATT_PREDEF	0x10008
-#घोषणा MT8192_CORE0_WDT_IRQ		0x10030
-#घोषणा MT8192_CORE0_WDT_CFG		0x10034
+#define MT8192_CORE0_SW_RSTN_CLR	0x10000
+#define MT8192_CORE0_SW_RSTN_SET	0x10004
+#define MT8192_CORE0_MEM_ATT_PREDEF	0x10008
+#define MT8192_CORE0_WDT_IRQ		0x10030
+#define MT8192_CORE0_WDT_CFG		0x10034
 
-#घोषणा SCP_FW_VER_LEN			32
-#घोषणा SCP_SHARE_BUFFER_SIZE		288
+#define SCP_FW_VER_LEN			32
+#define SCP_SHARE_BUFFER_SIZE		288
 
-काष्ठा scp_run अणु
-	u32 संकेतed;
+struct scp_run {
+	u32 signaled;
 	s8 fw_ver[SCP_FW_VER_LEN];
 	u32 dec_capability;
 	u32 enc_capability;
-	रुको_queue_head_t wq;
-पूर्ण;
+	wait_queue_head_t wq;
+};
 
-काष्ठा scp_ipi_desc अणु
+struct scp_ipi_desc {
 	/* For protecting handler. */
-	काष्ठा mutex lock;
+	struct mutex lock;
 	scp_ipi_handler_t handler;
-	व्योम *priv;
-पूर्ण;
+	void *priv;
+};
 
-काष्ठा mtk_scp;
+struct mtk_scp;
 
-काष्ठा mtk_scp_of_data अणु
-	पूर्णांक (*scp_beक्रमe_load)(काष्ठा mtk_scp *scp);
-	व्योम (*scp_irq_handler)(काष्ठा mtk_scp *scp);
-	व्योम (*scp_reset_निश्चित)(काष्ठा mtk_scp *scp);
-	व्योम (*scp_reset_deनिश्चित)(काष्ठा mtk_scp *scp);
-	व्योम (*scp_stop)(काष्ठा mtk_scp *scp);
-	व्योम *(*scp_da_to_va)(काष्ठा mtk_scp *scp, u64 da, माप_प्रकार len);
+struct mtk_scp_of_data {
+	int (*scp_before_load)(struct mtk_scp *scp);
+	void (*scp_irq_handler)(struct mtk_scp *scp);
+	void (*scp_reset_assert)(struct mtk_scp *scp);
+	void (*scp_reset_deassert)(struct mtk_scp *scp);
+	void (*scp_stop)(struct mtk_scp *scp);
+	void *(*scp_da_to_va)(struct mtk_scp *scp, u64 da, size_t len);
 
 	u32 host_to_scp_reg;
-	u32 host_to_scp_पूर्णांक_bit;
+	u32 host_to_scp_int_bit;
 
-	माप_प्रकार ipi_buf_offset;
-पूर्ण;
+	size_t ipi_buf_offset;
+};
 
-काष्ठा mtk_scp अणु
-	काष्ठा device *dev;
-	काष्ठा rproc *rproc;
-	काष्ठा clk *clk;
-	व्योम __iomem *reg_base;
-	व्योम __iomem *sram_base;
-	माप_प्रकार sram_size;
+struct mtk_scp {
+	struct device *dev;
+	struct rproc *rproc;
+	struct clk *clk;
+	void __iomem *reg_base;
+	void __iomem *sram_base;
+	size_t sram_size;
 	phys_addr_t sram_phys;
-	व्योम __iomem *l1tcm_base;
-	माप_प्रकार l1tcm_size;
+	void __iomem *l1tcm_base;
+	size_t l1tcm_size;
 	phys_addr_t l1tcm_phys;
 
-	स्थिर काष्ठा mtk_scp_of_data *data;
+	const struct mtk_scp_of_data *data;
 
-	काष्ठा mtk_share_obj __iomem *recv_buf;
-	काष्ठा mtk_share_obj __iomem *send_buf;
-	काष्ठा scp_run run;
+	struct mtk_share_obj __iomem *recv_buf;
+	struct mtk_share_obj __iomem *send_buf;
+	struct scp_run run;
 	/* To prevent multiple ipi_send run concurrently. */
-	काष्ठा mutex send_lock;
-	काष्ठा scp_ipi_desc ipi_desc[SCP_IPI_MAX];
+	struct mutex send_lock;
+	struct scp_ipi_desc ipi_desc[SCP_IPI_MAX];
 	bool ipi_id_ack[SCP_IPI_MAX];
-	रुको_queue_head_t ack_wq;
+	wait_queue_head_t ack_wq;
 
-	व्योम *cpu_addr;
+	void *cpu_addr;
 	dma_addr_t dma_addr;
-	माप_प्रकार dram_size;
+	size_t dram_size;
 
-	काष्ठा rproc_subdev *rpmsg_subdev;
-पूर्ण;
+	struct rproc_subdev *rpmsg_subdev;
+};
 
 /**
- * काष्ठा mtk_share_obj - SRAM buffer shared with AP and SCP
+ * struct mtk_share_obj - SRAM buffer shared with AP and SCP
  *
  * @id:		IPI id
  * @len:	share buffer length
  * @share_buf:	share buffer data
  */
-काष्ठा mtk_share_obj अणु
+struct mtk_share_obj {
 	u32 id;
 	u32 len;
 	u8 share_buf[SCP_SHARE_BUFFER_SIZE];
-पूर्ण;
+};
 
-व्योम scp_स_नकल_aligned(व्योम __iomem *dst, स्थिर व्योम *src, अचिन्हित पूर्णांक len);
-व्योम scp_ipi_lock(काष्ठा mtk_scp *scp, u32 id);
-व्योम scp_ipi_unlock(काष्ठा mtk_scp *scp, u32 id);
+void scp_memcpy_aligned(void __iomem *dst, const void *src, unsigned int len);
+void scp_ipi_lock(struct mtk_scp *scp, u32 id);
+void scp_ipi_unlock(struct mtk_scp *scp, u32 id);
 
-#पूर्ण_अगर
+#endif

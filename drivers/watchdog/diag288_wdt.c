@@ -1,58 +1,57 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Watchकरोg driver क्रम z/VM and LPAR using the diag 288 पूर्णांकerface.
+ * Watchdog driver for z/VM and LPAR using the diag 288 interface.
  *
- * Under z/VM, expiration of the watchकरोg will send a "system restart" command
+ * Under z/VM, expiration of the watchdog will send a "system restart" command
  * to CP.
  *
  * The command can be altered using the module parameter "cmd". This is
  * not recommended because it's only supported on z/VM but not whith LPAR.
  *
- * On LPAR, the watchकरोg will always trigger a प्रणाली restart. the module
+ * On LPAR, the watchdog will always trigger a system restart. the module
  * paramter cmd is meaningless here.
  *
  *
  * Copyright IBM Corp. 2004, 2013
  * Author(s): Arnd Bergmann (arndb@de.ibm.com)
- *	      Philipp Hachपंचांगann (phacht@de.ibm.com)
+ *	      Philipp Hachtmann (phacht@de.ibm.com)
  *
  */
 
-#घोषणा KMSG_COMPONENT "diag288_wdt"
-#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#define KMSG_COMPONENT "diag288_wdt"
+#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/watchकरोg.h>
-#समावेश <linux/suspend.h>
-#समावेश <यंत्र/ebcdic.h>
-#समावेश <यंत्र/diag.h>
-#समावेश <linux/पन.स>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/slab.h>
+#include <linux/watchdog.h>
+#include <linux/suspend.h>
+#include <asm/ebcdic.h>
+#include <asm/diag.h>
+#include <linux/io.h>
 
-#घोषणा MAX_CMDLEN 240
-#घोषणा DEFAULT_CMD "SYSTEM RESTART"
+#define MAX_CMDLEN 240
+#define DEFAULT_CMD "SYSTEM RESTART"
 
-#घोषणा MIN_INTERVAL 15     /* Minimal समय supported by diag88 */
-#घोषणा MAX_INTERVAL 3600   /* One hour should be enough - pure estimation */
+#define MIN_INTERVAL 15     /* Minimal time supported by diag88 */
+#define MAX_INTERVAL 3600   /* One hour should be enough - pure estimation */
 
-#घोषणा WDT_DEFAULT_TIMEOUT 30
+#define WDT_DEFAULT_TIMEOUT 30
 
 /* Function codes - init, change, cancel */
-#घोषणा WDT_FUNC_INIT 0
-#घोषणा WDT_FUNC_CHANGE 1
-#घोषणा WDT_FUNC_CANCEL 2
-#घोषणा WDT_FUNC_CONCEAL 0x80000000
+#define WDT_FUNC_INIT 0
+#define WDT_FUNC_CHANGE 1
+#define WDT_FUNC_CANCEL 2
+#define WDT_FUNC_CONCEAL 0x80000000
 
-/* Action codes क्रम LPAR watchकरोg */
-#घोषणा LPARWDT_RESTART 0
+/* Action codes for LPAR watchdog */
+#define LPARWDT_RESTART 0
 
-अटल अक्षर wdt_cmd[MAX_CMDLEN] = DEFAULT_CMD;
-अटल bool conceal_on;
-अटल bool nowayout_info = WATCHDOG_NOWAYOUT;
+static char wdt_cmd[MAX_CMDLEN] = DEFAULT_CMD;
+static bool conceal_on;
+static bool nowayout_info = WATCHDOG_NOWAYOUT;
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Arnd Bergmann <arndb@de.ibm.com>");
@@ -71,245 +70,245 @@ MODULE_PARM_DESC(nowayout, "Watchdog cannot be stopped once started (default = C
 
 MODULE_ALIAS("vmwatchdog");
 
-अटल पूर्णांक __diag288(अचिन्हित पूर्णांक func, अचिन्हित पूर्णांक समयout,
-		     अचिन्हित दीर्घ action, अचिन्हित पूर्णांक len)
-अणु
-	रेजिस्टर अचिन्हित दीर्घ __func यंत्र("2") = func;
-	रेजिस्टर अचिन्हित दीर्घ __समयout यंत्र("3") = समयout;
-	रेजिस्टर अचिन्हित दीर्घ __action यंत्र("4") = action;
-	रेजिस्टर अचिन्हित दीर्घ __len यंत्र("5") = len;
-	पूर्णांक err;
+static int __diag288(unsigned int func, unsigned int timeout,
+		     unsigned long action, unsigned int len)
+{
+	register unsigned long __func asm("2") = func;
+	register unsigned long __timeout asm("3") = timeout;
+	register unsigned long __action asm("4") = action;
+	register unsigned long __len asm("5") = len;
+	int err;
 
 	err = -EINVAL;
-	यंत्र अस्थिर(
+	asm volatile(
 		"	diag	%1, %3, 0x288\n"
 		"0:	la	%0, 0\n"
 		"1:\n"
 		EX_TABLE(0b, 1b)
-		: "+d" (err) : "d"(__func), "d"(__समयout),
+		: "+d" (err) : "d"(__func), "d"(__timeout),
 		  "d"(__action), "d"(__len) : "1", "cc");
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक __diag288_vm(अचिन्हित पूर्णांक  func, अचिन्हित पूर्णांक समयout,
-			अक्षर *cmd, माप_प्रकार len)
-अणु
+static int __diag288_vm(unsigned int  func, unsigned int timeout,
+			char *cmd, size_t len)
+{
 	diag_stat_inc(DIAG_STAT_X288);
-	वापस __diag288(func, समयout, virt_to_phys(cmd), len);
-पूर्ण
+	return __diag288(func, timeout, virt_to_phys(cmd), len);
+}
 
-अटल पूर्णांक __diag288_lpar(अचिन्हित पूर्णांक func, अचिन्हित पूर्णांक समयout,
-			  अचिन्हित दीर्घ action)
-अणु
+static int __diag288_lpar(unsigned int func, unsigned int timeout,
+			  unsigned long action)
+{
 	diag_stat_inc(DIAG_STAT_X288);
-	वापस __diag288(func, समयout, action, 0);
-पूर्ण
+	return __diag288(func, timeout, action, 0);
+}
 
-अटल अचिन्हित दीर्घ wdt_status;
+static unsigned long wdt_status;
 
-#घोषणा DIAG_WDOG_BUSY	0
+#define DIAG_WDOG_BUSY	0
 
-अटल पूर्णांक wdt_start(काष्ठा watchकरोg_device *dev)
-अणु
-	अक्षर *ebc_cmd;
-	माप_प्रकार len;
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक func;
+static int wdt_start(struct watchdog_device *dev)
+{
+	char *ebc_cmd;
+	size_t len;
+	int ret;
+	unsigned int func;
 
-	अगर (test_and_set_bit(DIAG_WDOG_BUSY, &wdt_status))
-		वापस -EBUSY;
+	if (test_and_set_bit(DIAG_WDOG_BUSY, &wdt_status))
+		return -EBUSY;
 
 	ret = -ENODEV;
 
-	अगर (MACHINE_IS_VM) अणु
-		ebc_cmd = kदो_स्मृति(MAX_CMDLEN, GFP_KERNEL);
-		अगर (!ebc_cmd) अणु
+	if (MACHINE_IS_VM) {
+		ebc_cmd = kmalloc(MAX_CMDLEN, GFP_KERNEL);
+		if (!ebc_cmd) {
 			clear_bit(DIAG_WDOG_BUSY, &wdt_status);
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 		len = strlcpy(ebc_cmd, wdt_cmd, MAX_CMDLEN);
 		ASCEBC(ebc_cmd, MAX_CMDLEN);
 		EBC_TOUPPER(ebc_cmd, MAX_CMDLEN);
 
 		func = conceal_on ? (WDT_FUNC_INIT | WDT_FUNC_CONCEAL)
 			: WDT_FUNC_INIT;
-		ret = __diag288_vm(func, dev->समयout, ebc_cmd, len);
+		ret = __diag288_vm(func, dev->timeout, ebc_cmd, len);
 		WARN_ON(ret != 0);
-		kमुक्त(ebc_cmd);
-	पूर्ण अन्यथा अणु
+		kfree(ebc_cmd);
+	} else {
 		ret = __diag288_lpar(WDT_FUNC_INIT,
-				     dev->समयout, LPARWDT_RESTART);
-	पूर्ण
+				     dev->timeout, LPARWDT_RESTART);
+	}
 
-	अगर (ret) अणु
+	if (ret) {
 		pr_err("The watchdog cannot be activated\n");
 		clear_bit(DIAG_WDOG_BUSY, &wdt_status);
-		वापस ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return ret;
+	}
+	return 0;
+}
 
-अटल पूर्णांक wdt_stop(काष्ठा watchकरोg_device *dev)
-अणु
-	पूर्णांक ret;
+static int wdt_stop(struct watchdog_device *dev)
+{
+	int ret;
 
 	diag_stat_inc(DIAG_STAT_X288);
 	ret = __diag288(WDT_FUNC_CANCEL, 0, 0, 0);
 
 	clear_bit(DIAG_WDOG_BUSY, &wdt_status);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक wdt_ping(काष्ठा watchकरोg_device *dev)
-अणु
-	अक्षर *ebc_cmd;
-	माप_प्रकार len;
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक func;
+static int wdt_ping(struct watchdog_device *dev)
+{
+	char *ebc_cmd;
+	size_t len;
+	int ret;
+	unsigned int func;
 
 	ret = -ENODEV;
 
-	अगर (MACHINE_IS_VM) अणु
-		ebc_cmd = kदो_स्मृति(MAX_CMDLEN, GFP_KERNEL);
-		अगर (!ebc_cmd)
-			वापस -ENOMEM;
+	if (MACHINE_IS_VM) {
+		ebc_cmd = kmalloc(MAX_CMDLEN, GFP_KERNEL);
+		if (!ebc_cmd)
+			return -ENOMEM;
 		len = strlcpy(ebc_cmd, wdt_cmd, MAX_CMDLEN);
 		ASCEBC(ebc_cmd, MAX_CMDLEN);
 		EBC_TOUPPER(ebc_cmd, MAX_CMDLEN);
 
 		/*
 		 * It seems to be ok to z/VM to use the init function to
-		 * retrigger the watchकरोg. On LPAR WDT_FUNC_CHANGE must
-		 * be used when the watchकरोg is running.
+		 * retrigger the watchdog. On LPAR WDT_FUNC_CHANGE must
+		 * be used when the watchdog is running.
 		 */
 		func = conceal_on ? (WDT_FUNC_INIT | WDT_FUNC_CONCEAL)
 			: WDT_FUNC_INIT;
 
-		ret = __diag288_vm(func, dev->समयout, ebc_cmd, len);
+		ret = __diag288_vm(func, dev->timeout, ebc_cmd, len);
 		WARN_ON(ret != 0);
-		kमुक्त(ebc_cmd);
-	पूर्ण अन्यथा अणु
-		ret = __diag288_lpar(WDT_FUNC_CHANGE, dev->समयout, 0);
-	पूर्ण
+		kfree(ebc_cmd);
+	} else {
+		ret = __diag288_lpar(WDT_FUNC_CHANGE, dev->timeout, 0);
+	}
 
-	अगर (ret)
+	if (ret)
 		pr_err("The watchdog timer cannot be started or reset\n");
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक wdt_set_समयout(काष्ठा watchकरोg_device * dev, अचिन्हित पूर्णांक new_to)
-अणु
-	dev->समयout = new_to;
-	वापस wdt_ping(dev);
-पूर्ण
+static int wdt_set_timeout(struct watchdog_device * dev, unsigned int new_to)
+{
+	dev->timeout = new_to;
+	return wdt_ping(dev);
+}
 
-अटल स्थिर काष्ठा watchकरोg_ops wdt_ops = अणु
+static const struct watchdog_ops wdt_ops = {
 	.owner = THIS_MODULE,
 	.start = wdt_start,
 	.stop = wdt_stop,
 	.ping = wdt_ping,
-	.set_समयout = wdt_set_समयout,
-पूर्ण;
+	.set_timeout = wdt_set_timeout,
+};
 
-अटल स्थिर काष्ठा watchकरोg_info wdt_info = अणु
+static const struct watchdog_info wdt_info = {
 	.options = WDIOF_SETTIMEOUT | WDIOF_KEEPALIVEPING | WDIOF_MAGICCLOSE,
 	.firmware_version = 0,
 	.identity = "z Watchdog",
-पूर्ण;
+};
 
-अटल काष्ठा watchकरोg_device wdt_dev = अणु
-	.parent = शून्य,
+static struct watchdog_device wdt_dev = {
+	.parent = NULL,
 	.info = &wdt_info,
 	.ops = &wdt_ops,
 	.bootstatus = 0,
-	.समयout = WDT_DEFAULT_TIMEOUT,
-	.min_समयout = MIN_INTERVAL,
-	.max_समयout = MAX_INTERVAL,
-पूर्ण;
+	.timeout = WDT_DEFAULT_TIMEOUT,
+	.min_timeout = MIN_INTERVAL,
+	.max_timeout = MAX_INTERVAL,
+};
 
 /*
- * It makes no sense to go पूर्णांकo suspend जबतक the watchकरोg is running.
- * Depending on the memory size, the watchकरोg might trigger, जबतक we
+ * It makes no sense to go into suspend while the watchdog is running.
+ * Depending on the memory size, the watchdog might trigger, while we
  * are still saving the memory.
  */
-अटल पूर्णांक wdt_suspend(व्योम)
-अणु
-	अगर (test_and_set_bit(DIAG_WDOG_BUSY, &wdt_status)) अणु
+static int wdt_suspend(void)
+{
+	if (test_and_set_bit(DIAG_WDOG_BUSY, &wdt_status)) {
 		pr_err("Linux cannot be suspended while the watchdog is in use\n");
-		वापस notअगरier_from_त्रुटि_सं(-EBUSY);
-	पूर्ण
-	वापस NOTIFY_DONE;
-पूर्ण
+		return notifier_from_errno(-EBUSY);
+	}
+	return NOTIFY_DONE;
+}
 
-अटल पूर्णांक wdt_resume(व्योम)
-अणु
+static int wdt_resume(void)
+{
 	clear_bit(DIAG_WDOG_BUSY, &wdt_status);
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
-अटल पूर्णांक wdt_घातer_event(काष्ठा notअगरier_block *this, अचिन्हित दीर्घ event,
-			   व्योम *ptr)
-अणु
-	चयन (event) अणु
-	हाल PM_POST_HIBERNATION:
-	हाल PM_POST_SUSPEND:
-		वापस wdt_resume();
-	हाल PM_HIBERNATION_PREPARE:
-	हाल PM_SUSPEND_PREPARE:
-		वापस wdt_suspend();
-	शेष:
-		वापस NOTIFY_DONE;
-	पूर्ण
-पूर्ण
+static int wdt_power_event(struct notifier_block *this, unsigned long event,
+			   void *ptr)
+{
+	switch (event) {
+	case PM_POST_HIBERNATION:
+	case PM_POST_SUSPEND:
+		return wdt_resume();
+	case PM_HIBERNATION_PREPARE:
+	case PM_SUSPEND_PREPARE:
+		return wdt_suspend();
+	default:
+		return NOTIFY_DONE;
+	}
+}
 
-अटल काष्ठा notअगरier_block wdt_घातer_notअगरier = अणु
-	.notअगरier_call = wdt_घातer_event,
-पूर्ण;
+static struct notifier_block wdt_power_notifier = {
+	.notifier_call = wdt_power_event,
+};
 
-अटल पूर्णांक __init diag288_init(व्योम)
-अणु
-	पूर्णांक ret;
-	अक्षर ebc_begin[] = अणु
+static int __init diag288_init(void)
+{
+	int ret;
+	char ebc_begin[] = {
 		194, 197, 199, 201, 213
-	पूर्ण;
+	};
 
-	watchकरोg_set_nowayout(&wdt_dev, nowayout_info);
+	watchdog_set_nowayout(&wdt_dev, nowayout_info);
 
-	अगर (MACHINE_IS_VM) अणु
-		अगर (__diag288_vm(WDT_FUNC_INIT, 15,
-				 ebc_begin, माप(ebc_begin)) != 0) अणु
+	if (MACHINE_IS_VM) {
+		if (__diag288_vm(WDT_FUNC_INIT, 15,
+				 ebc_begin, sizeof(ebc_begin)) != 0) {
 			pr_err("The watchdog cannot be initialized\n");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (__diag288_lpar(WDT_FUNC_INIT, 30, LPARWDT_RESTART)) अणु
+			return -EINVAL;
+		}
+	} else {
+		if (__diag288_lpar(WDT_FUNC_INIT, 30, LPARWDT_RESTART)) {
 			pr_err("The watchdog cannot be initialized\n");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	अगर (__diag288_lpar(WDT_FUNC_CANCEL, 0, 0)) अणु
+	if (__diag288_lpar(WDT_FUNC_CANCEL, 0, 0)) {
 		pr_err("The watchdog cannot be deactivated\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ret = रेजिस्टर_pm_notअगरier(&wdt_घातer_notअगरier);
-	अगर (ret)
-		वापस ret;
+	ret = register_pm_notifier(&wdt_power_notifier);
+	if (ret)
+		return ret;
 
-	ret = watchकरोg_रेजिस्टर_device(&wdt_dev);
-	अगर (ret)
-		unरेजिस्टर_pm_notअगरier(&wdt_घातer_notअगरier);
+	ret = watchdog_register_device(&wdt_dev);
+	if (ret)
+		unregister_pm_notifier(&wdt_power_notifier);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम __निकास diag288_निकास(व्योम)
-अणु
-	watchकरोg_unरेजिस्टर_device(&wdt_dev);
-	unरेजिस्टर_pm_notअगरier(&wdt_घातer_notअगरier);
-पूर्ण
+static void __exit diag288_exit(void)
+{
+	watchdog_unregister_device(&wdt_dev);
+	unregister_pm_notifier(&wdt_power_notifier);
+}
 
 module_init(diag288_init);
-module_निकास(diag288_निकास);
+module_exit(diag288_exit);

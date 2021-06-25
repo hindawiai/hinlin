@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,391 +22,391 @@
  */
 
 
-#अगर_अघोषित _FIJI_PP_SMC_H_
-#घोषणा _FIJI_PP_SMC_H_
+#ifndef _FIJI_PP_SMC_H_
+#define _FIJI_PP_SMC_H_
 
-#आशय pack(push, 1)
+#pragma pack(push, 1)
 
-#घोषणा PPSMC_SWSTATE_FLAG_DC                           0x01
-#घोषणा PPSMC_SWSTATE_FLAG_UVD                          0x02
-#घोषणा PPSMC_SWSTATE_FLAG_VCE                          0x04
+#define PPSMC_SWSTATE_FLAG_DC                           0x01
+#define PPSMC_SWSTATE_FLAG_UVD                          0x02
+#define PPSMC_SWSTATE_FLAG_VCE                          0x04
 
-#घोषणा PPSMC_THERMAL_PROTECT_TYPE_INTERNAL             0x00
-#घोषणा PPSMC_THERMAL_PROTECT_TYPE_EXTERNAL             0x01
-#घोषणा PPSMC_THERMAL_PROTECT_TYPE_NONE                 0xff
+#define PPSMC_THERMAL_PROTECT_TYPE_INTERNAL             0x00
+#define PPSMC_THERMAL_PROTECT_TYPE_EXTERNAL             0x01
+#define PPSMC_THERMAL_PROTECT_TYPE_NONE                 0xff
 
-#घोषणा PPSMC_SYSTEMFLAG_GPIO_DC                        0x01
-#घोषणा PPSMC_SYSTEMFLAG_STEPVDDC                       0x02
-#घोषणा PPSMC_SYSTEMFLAG_GDDR5                          0x04
+#define PPSMC_SYSTEMFLAG_GPIO_DC                        0x01
+#define PPSMC_SYSTEMFLAG_STEPVDDC                       0x02
+#define PPSMC_SYSTEMFLAG_GDDR5                          0x04
 
-#घोषणा PPSMC_SYSTEMFLAG_DISABLE_BABYSTEP               0x08
+#define PPSMC_SYSTEMFLAG_DISABLE_BABYSTEP               0x08
 
-#घोषणा PPSMC_SYSTEMFLAG_REGULATOR_HOT                  0x10
-#घोषणा PPSMC_SYSTEMFLAG_REGULATOR_HOT_ANALOG           0x20
+#define PPSMC_SYSTEMFLAG_REGULATOR_HOT                  0x10
+#define PPSMC_SYSTEMFLAG_REGULATOR_HOT_ANALOG           0x20
 
-#घोषणा PPSMC_EXTRAFLAGS_AC2DC_ACTION_MASK              0x07
-#घोषणा PPSMC_EXTRAFLAGS_AC2DC_DONT_WAIT_FOR_VBLANK     0x08
+#define PPSMC_EXTRAFLAGS_AC2DC_ACTION_MASK              0x07
+#define PPSMC_EXTRAFLAGS_AC2DC_DONT_WAIT_FOR_VBLANK     0x08
 
-#घोषणा PPSMC_EXTRAFLAGS_AC2DC_ACTION_GOTODPMLOWSTATE   0x00
-#घोषणा PPSMC_EXTRAFLAGS_AC2DC_ACTION_GOTOINITIALSTATE  0x01
+#define PPSMC_EXTRAFLAGS_AC2DC_ACTION_GOTODPMLOWSTATE   0x00
+#define PPSMC_EXTRAFLAGS_AC2DC_ACTION_GOTOINITIALSTATE  0x01
 
-/* Defines क्रम DPM 2.0 */
-#घोषणा PPSMC_DPM2FLAGS_TDPCLMP                         0x01
-#घोषणा PPSMC_DPM2FLAGS_PWRSHFT                         0x02
-#घोषणा PPSMC_DPM2FLAGS_OCP                             0x04
+/* Defines for DPM 2.0 */
+#define PPSMC_DPM2FLAGS_TDPCLMP                         0x01
+#define PPSMC_DPM2FLAGS_PWRSHFT                         0x02
+#define PPSMC_DPM2FLAGS_OCP                             0x04
 
-/* Defines क्रम display watermark level */
-#घोषणा PPSMC_DISPLAY_WATERMARK_LOW                     0
-#घोषणा PPSMC_DISPLAY_WATERMARK_HIGH                    1
+/* Defines for display watermark level */
+#define PPSMC_DISPLAY_WATERMARK_LOW                     0
+#define PPSMC_DISPLAY_WATERMARK_HIGH                    1
 
-/* In the HW perक्रमmance level's state flags: */
-#घोषणा PPSMC_STATEFLAG_AUTO_PULSE_SKIP    0x01
-#घोषणा PPSMC_STATEFLAG_POWERBOOST         0x02
-#घोषणा PPSMC_STATEFLAG_PSKIP_ON_TDP_FAULT 0x04
-#घोषणा PPSMC_STATEFLAG_POWERSHIFT         0x08
-#घोषणा PPSMC_STATEFLAG_SLOW_READ_MARGIN   0x10
-#घोषणा PPSMC_STATEFLAG_DEEPSLEEP_THROTTLE 0x20
-#घोषणा PPSMC_STATEFLAG_DEEPSLEEP_BYPASS   0x40
+/* In the HW performance level's state flags: */
+#define PPSMC_STATEFLAG_AUTO_PULSE_SKIP    0x01
+#define PPSMC_STATEFLAG_POWERBOOST         0x02
+#define PPSMC_STATEFLAG_PSKIP_ON_TDP_FAULT 0x04
+#define PPSMC_STATEFLAG_POWERSHIFT         0x08
+#define PPSMC_STATEFLAG_SLOW_READ_MARGIN   0x10
+#define PPSMC_STATEFLAG_DEEPSLEEP_THROTTLE 0x20
+#define PPSMC_STATEFLAG_DEEPSLEEP_BYPASS   0x40
 
 /* Fan control algorithm: */
-#घोषणा FDO_MODE_HARDWARE 0
-#घोषणा FDO_MODE_PIECE_WISE_LINEAR 1
+#define FDO_MODE_HARDWARE 0
+#define FDO_MODE_PIECE_WISE_LINEAR 1
 
-क्रमागत FAN_CONTROL अणु
+enum FAN_CONTROL {
   FAN_CONTROL_FUZZY,
   FAN_CONTROL_TABLE
-पूर्ण;
+};
 
 /* Gemini Modes*/
-#घोषणा PPSMC_GeminiModeNone   0  /*Single GPU board*/
-#घोषणा PPSMC_GeminiModeMaster 1  /*Master GPU on a Gemini board*/
-#घोषणा PPSMC_GeminiModeSlave  2  /*Slave GPU on a Gemini board*/
+#define PPSMC_GeminiModeNone   0  /*Single GPU board*/
+#define PPSMC_GeminiModeMaster 1  /*Master GPU on a Gemini board*/
+#define PPSMC_GeminiModeSlave  2  /*Slave GPU on a Gemini board*/
 
 
-/* Return codes क्रम driver to SMC communication. */
-#घोषणा PPSMC_Result_OK             ((uपूर्णांक16_t)0x01)
-#घोषणा PPSMC_Result_NoMore         ((uपूर्णांक16_t)0x02)
+/* Return codes for driver to SMC communication. */
+#define PPSMC_Result_OK             ((uint16_t)0x01)
+#define PPSMC_Result_NoMore         ((uint16_t)0x02)
 
-#घोषणा PPSMC_Result_NotNow         ((uपूर्णांक16_t)0x03)
+#define PPSMC_Result_NotNow         ((uint16_t)0x03)
 
-#घोषणा PPSMC_Result_Failed         ((uपूर्णांक16_t)0xFF)
-#घोषणा PPSMC_Result_UnknownCmd     ((uपूर्णांक16_t)0xFE)
-#घोषणा PPSMC_Result_UnknownVT      ((uपूर्णांक16_t)0xFD)
+#define PPSMC_Result_Failed         ((uint16_t)0xFF)
+#define PPSMC_Result_UnknownCmd     ((uint16_t)0xFE)
+#define PPSMC_Result_UnknownVT      ((uint16_t)0xFD)
 
-#घोषणा PPSMC_isERROR(x) ((uपूर्णांक16_t)0x80 & (x))
+#define PPSMC_isERROR(x) ((uint16_t)0x80 & (x))
 
 
-#घोषणा PPSMC_MSG_Halt                      ((uपूर्णांक16_t)0x10)
-#घोषणा PPSMC_MSG_Resume                    ((uपूर्णांक16_t)0x11)
-#घोषणा PPSMC_MSG_EnableDPMLevel            ((uपूर्णांक16_t)0x12)
-#घोषणा PPSMC_MSG_ZeroLevelsDisabled        ((uपूर्णांक16_t)0x13)
-#घोषणा PPSMC_MSG_OneLevelsDisabled         ((uपूर्णांक16_t)0x14)
-#घोषणा PPSMC_MSG_TwoLevelsDisabled         ((uपूर्णांक16_t)0x15)
-#घोषणा PPSMC_MSG_EnableThermalInterrupt    ((uपूर्णांक16_t)0x16)
-#घोषणा PPSMC_MSG_RunningOnAC               ((uपूर्णांक16_t)0x17)
-#घोषणा PPSMC_MSG_LevelUp                   ((uपूर्णांक16_t)0x18)
-#घोषणा PPSMC_MSG_LevelDown                 ((uपूर्णांक16_t)0x19)
-#घोषणा PPSMC_MSG_ResetDPMCounters          ((uपूर्णांक16_t)0x1a)
-#घोषणा PPSMC_MSG_SwitchToSwState           ((uपूर्णांक16_t)0x20)
+#define PPSMC_MSG_Halt                      ((uint16_t)0x10)
+#define PPSMC_MSG_Resume                    ((uint16_t)0x11)
+#define PPSMC_MSG_EnableDPMLevel            ((uint16_t)0x12)
+#define PPSMC_MSG_ZeroLevelsDisabled        ((uint16_t)0x13)
+#define PPSMC_MSG_OneLevelsDisabled         ((uint16_t)0x14)
+#define PPSMC_MSG_TwoLevelsDisabled         ((uint16_t)0x15)
+#define PPSMC_MSG_EnableThermalInterrupt    ((uint16_t)0x16)
+#define PPSMC_MSG_RunningOnAC               ((uint16_t)0x17)
+#define PPSMC_MSG_LevelUp                   ((uint16_t)0x18)
+#define PPSMC_MSG_LevelDown                 ((uint16_t)0x19)
+#define PPSMC_MSG_ResetDPMCounters          ((uint16_t)0x1a)
+#define PPSMC_MSG_SwitchToSwState           ((uint16_t)0x20)
 
-#घोषणा PPSMC_MSG_SwitchToSwStateLast       ((uपूर्णांक16_t)0x3f)
-#घोषणा PPSMC_MSG_SwitchToInitialState      ((uपूर्णांक16_t)0x40)
-#घोषणा PPSMC_MSG_NoForcedLevel             ((uपूर्णांक16_t)0x41)
-#घोषणा PPSMC_MSG_ForceHigh                 ((uपूर्णांक16_t)0x42)
-#घोषणा PPSMC_MSG_ForceMediumOrHigh         ((uपूर्णांक16_t)0x43)
+#define PPSMC_MSG_SwitchToSwStateLast       ((uint16_t)0x3f)
+#define PPSMC_MSG_SwitchToInitialState      ((uint16_t)0x40)
+#define PPSMC_MSG_NoForcedLevel             ((uint16_t)0x41)
+#define PPSMC_MSG_ForceHigh                 ((uint16_t)0x42)
+#define PPSMC_MSG_ForceMediumOrHigh         ((uint16_t)0x43)
 
-#घोषणा PPSMC_MSG_SwitchToMinimumPower      ((uपूर्णांक16_t)0x51)
-#घोषणा PPSMC_MSG_ResumeFromMinimumPower    ((uपूर्णांक16_t)0x52)
-#घोषणा PPSMC_MSG_EnableCac                 ((uपूर्णांक16_t)0x53)
-#घोषणा PPSMC_MSG_DisableCac                ((uपूर्णांक16_t)0x54)
-#घोषणा PPSMC_DPMStateHistoryStart          ((uपूर्णांक16_t)0x55)
-#घोषणा PPSMC_DPMStateHistoryStop           ((uपूर्णांक16_t)0x56)
-#घोषणा PPSMC_CACHistoryStart               ((uपूर्णांक16_t)0x57)
-#घोषणा PPSMC_CACHistoryStop                ((uपूर्णांक16_t)0x58)
-#घोषणा PPSMC_TDPClampingActive             ((uपूर्णांक16_t)0x59)
-#घोषणा PPSMC_TDPClampingInactive           ((uपूर्णांक16_t)0x5A)
-#घोषणा PPSMC_StartFanControl               ((uपूर्णांक16_t)0x5B)
-#घोषणा PPSMC_StopFanControl                ((uपूर्णांक16_t)0x5C)
-#घोषणा PPSMC_NoDisplay                     ((uपूर्णांक16_t)0x5D)
-#घोषणा PPSMC_HasDisplay                    ((uपूर्णांक16_t)0x5E)
-#घोषणा PPSMC_MSG_UVDPowerOFF               ((uपूर्णांक16_t)0x60)
-#घोषणा PPSMC_MSG_UVDPowerON                ((uपूर्णांक16_t)0x61)
-#घोषणा PPSMC_MSG_EnableULV                 ((uपूर्णांक16_t)0x62)
-#घोषणा PPSMC_MSG_DisableULV                ((uपूर्णांक16_t)0x63)
-#घोषणा PPSMC_MSG_EnterULV                  ((uपूर्णांक16_t)0x64)
-#घोषणा PPSMC_MSG_ExitULV                   ((uपूर्णांक16_t)0x65)
-#घोषणा PPSMC_PowerShअगरtActive              ((uपूर्णांक16_t)0x6A)
-#घोषणा PPSMC_PowerShअगरtInactive            ((uपूर्णांक16_t)0x6B)
-#घोषणा PPSMC_OCPActive                     ((uपूर्णांक16_t)0x6C)
-#घोषणा PPSMC_OCPInactive                   ((uपूर्णांक16_t)0x6D)
-#घोषणा PPSMC_CACLongTermAvgEnable          ((uपूर्णांक16_t)0x6E)
-#घोषणा PPSMC_CACLongTermAvgDisable         ((uपूर्णांक16_t)0x6F)
-#घोषणा PPSMC_MSG_InferredStateSweep_Start  ((uपूर्णांक16_t)0x70)
-#घोषणा PPSMC_MSG_InferredStateSweep_Stop   ((uपूर्णांक16_t)0x71)
-#घोषणा PPSMC_MSG_SwitchToLowestInfState    ((uपूर्णांक16_t)0x72)
-#घोषणा PPSMC_MSG_SwitchToNonInfState       ((uपूर्णांक16_t)0x73)
-#घोषणा PPSMC_MSG_AllStateSweep_Start       ((uपूर्णांक16_t)0x74)
-#घोषणा PPSMC_MSG_AllStateSweep_Stop        ((uपूर्णांक16_t)0x75)
-#घोषणा PPSMC_MSG_SwitchNextLowerInfState   ((uपूर्णांक16_t)0x76)
-#घोषणा PPSMC_MSG_SwitchNextHigherInfState  ((uपूर्णांक16_t)0x77)
-#घोषणा PPSMC_MSG_MclkRetrainingTest        ((uपूर्णांक16_t)0x78)
-#घोषणा PPSMC_MSG_ForceTDPClamping          ((uपूर्णांक16_t)0x79)
-#घोषणा PPSMC_MSG_CollectCAC_PowerCorreln   ((uपूर्णांक16_t)0x7A)
-#घोषणा PPSMC_MSG_CollectCAC_WeightCalib    ((uपूर्णांक16_t)0x7B)
-#घोषणा PPSMC_MSG_CollectCAC_SQonly         ((uपूर्णांक16_t)0x7C)
-#घोषणा PPSMC_MSG_CollectCAC_TemperaturePwr ((uपूर्णांक16_t)0x7D)
+#define PPSMC_MSG_SwitchToMinimumPower      ((uint16_t)0x51)
+#define PPSMC_MSG_ResumeFromMinimumPower    ((uint16_t)0x52)
+#define PPSMC_MSG_EnableCac                 ((uint16_t)0x53)
+#define PPSMC_MSG_DisableCac                ((uint16_t)0x54)
+#define PPSMC_DPMStateHistoryStart          ((uint16_t)0x55)
+#define PPSMC_DPMStateHistoryStop           ((uint16_t)0x56)
+#define PPSMC_CACHistoryStart               ((uint16_t)0x57)
+#define PPSMC_CACHistoryStop                ((uint16_t)0x58)
+#define PPSMC_TDPClampingActive             ((uint16_t)0x59)
+#define PPSMC_TDPClampingInactive           ((uint16_t)0x5A)
+#define PPSMC_StartFanControl               ((uint16_t)0x5B)
+#define PPSMC_StopFanControl                ((uint16_t)0x5C)
+#define PPSMC_NoDisplay                     ((uint16_t)0x5D)
+#define PPSMC_HasDisplay                    ((uint16_t)0x5E)
+#define PPSMC_MSG_UVDPowerOFF               ((uint16_t)0x60)
+#define PPSMC_MSG_UVDPowerON                ((uint16_t)0x61)
+#define PPSMC_MSG_EnableULV                 ((uint16_t)0x62)
+#define PPSMC_MSG_DisableULV                ((uint16_t)0x63)
+#define PPSMC_MSG_EnterULV                  ((uint16_t)0x64)
+#define PPSMC_MSG_ExitULV                   ((uint16_t)0x65)
+#define PPSMC_PowerShiftActive              ((uint16_t)0x6A)
+#define PPSMC_PowerShiftInactive            ((uint16_t)0x6B)
+#define PPSMC_OCPActive                     ((uint16_t)0x6C)
+#define PPSMC_OCPInactive                   ((uint16_t)0x6D)
+#define PPSMC_CACLongTermAvgEnable          ((uint16_t)0x6E)
+#define PPSMC_CACLongTermAvgDisable         ((uint16_t)0x6F)
+#define PPSMC_MSG_InferredStateSweep_Start  ((uint16_t)0x70)
+#define PPSMC_MSG_InferredStateSweep_Stop   ((uint16_t)0x71)
+#define PPSMC_MSG_SwitchToLowestInfState    ((uint16_t)0x72)
+#define PPSMC_MSG_SwitchToNonInfState       ((uint16_t)0x73)
+#define PPSMC_MSG_AllStateSweep_Start       ((uint16_t)0x74)
+#define PPSMC_MSG_AllStateSweep_Stop        ((uint16_t)0x75)
+#define PPSMC_MSG_SwitchNextLowerInfState   ((uint16_t)0x76)
+#define PPSMC_MSG_SwitchNextHigherInfState  ((uint16_t)0x77)
+#define PPSMC_MSG_MclkRetrainingTest        ((uint16_t)0x78)
+#define PPSMC_MSG_ForceTDPClamping          ((uint16_t)0x79)
+#define PPSMC_MSG_CollectCAC_PowerCorreln   ((uint16_t)0x7A)
+#define PPSMC_MSG_CollectCAC_WeightCalib    ((uint16_t)0x7B)
+#define PPSMC_MSG_CollectCAC_SQonly         ((uint16_t)0x7C)
+#define PPSMC_MSG_CollectCAC_TemperaturePwr ((uint16_t)0x7D)
 
-#घोषणा PPSMC_MSG_ExtremitiesTest_Start     ((uपूर्णांक16_t)0x7E)
-#घोषणा PPSMC_MSG_ExtremitiesTest_Stop      ((uपूर्णांक16_t)0x7F)
-#घोषणा PPSMC_FlushDataCache                ((uपूर्णांक16_t)0x80)
-#घोषणा PPSMC_FlushInstrCache               ((uपूर्णांक16_t)0x81)
+#define PPSMC_MSG_ExtremitiesTest_Start     ((uint16_t)0x7E)
+#define PPSMC_MSG_ExtremitiesTest_Stop      ((uint16_t)0x7F)
+#define PPSMC_FlushDataCache                ((uint16_t)0x80)
+#define PPSMC_FlushInstrCache               ((uint16_t)0x81)
 
-#घोषणा PPSMC_MSG_SetEnabledLevels          ((uपूर्णांक16_t)0x82)
-#घोषणा PPSMC_MSG_SetForcedLevels           ((uपूर्णांक16_t)0x83)
+#define PPSMC_MSG_SetEnabledLevels          ((uint16_t)0x82)
+#define PPSMC_MSG_SetForcedLevels           ((uint16_t)0x83)
 
-#घोषणा PPSMC_MSG_ResetToDefaults           ((uपूर्णांक16_t)0x84)
+#define PPSMC_MSG_ResetToDefaults           ((uint16_t)0x84)
 
-#घोषणा PPSMC_MSG_SetForcedLevelsAndJump      ((uपूर्णांक16_t)0x85)
-#घोषणा PPSMC_MSG_SetCACHistoryMode           ((uपूर्णांक16_t)0x86)
-#घोषणा PPSMC_MSG_EnableDTE                   ((uपूर्णांक16_t)0x87)
-#घोषणा PPSMC_MSG_DisableDTE                  ((uपूर्णांक16_t)0x88)
+#define PPSMC_MSG_SetForcedLevelsAndJump      ((uint16_t)0x85)
+#define PPSMC_MSG_SetCACHistoryMode           ((uint16_t)0x86)
+#define PPSMC_MSG_EnableDTE                   ((uint16_t)0x87)
+#define PPSMC_MSG_DisableDTE                  ((uint16_t)0x88)
 
-#घोषणा PPSMC_MSG_SmcSpaceSetAddress          ((uपूर्णांक16_t)0x89)
+#define PPSMC_MSG_SmcSpaceSetAddress          ((uint16_t)0x89)
 
-#घोषणा PPSMC_MSG_BREAK                       ((uपूर्णांक16_t)0xF8)
+#define PPSMC_MSG_BREAK                       ((uint16_t)0xF8)
 
-/* Trinity Specअगरic Messages*/
-#घोषणा PPSMC_MSG_Test                        ((uपूर्णांक16_t) 0x100)
-#घोषणा PPSMC_MSG_DPM_Voltage_Pwrmgt          ((uपूर्णांक16_t) 0x101)
-#घोषणा PPSMC_MSG_DPM_Config                  ((uपूर्णांक16_t) 0x102)
-#घोषणा PPSMC_MSG_PM_Controller_Start         ((uपूर्णांक16_t) 0x103)
-#घोषणा PPSMC_MSG_DPM_ForceState              ((uपूर्णांक16_t) 0x104)
-#घोषणा PPSMC_MSG_PG_PowerDownSIMD            ((uपूर्णांक16_t) 0x105)
-#घोषणा PPSMC_MSG_PG_PowerUpSIMD              ((uपूर्णांक16_t) 0x106)
-#घोषणा PPSMC_MSG_PM_Controller_Stop          ((uपूर्णांक16_t) 0x107)
-#घोषणा PPSMC_MSG_PG_SIMD_Config              ((uपूर्णांक16_t) 0x108)
-#घोषणा PPSMC_MSG_Voltage_Cntl_Enable         ((uपूर्णांक16_t) 0x109)
-#घोषणा PPSMC_MSG_Thermal_Cntl_Enable         ((uपूर्णांक16_t) 0x10a)
-#घोषणा PPSMC_MSG_Reset_Service               ((uपूर्णांक16_t) 0x10b)
-#घोषणा PPSMC_MSG_VCEPowerOFF                 ((uपूर्णांक16_t) 0x10e)
-#घोषणा PPSMC_MSG_VCEPowerON                  ((uपूर्णांक16_t) 0x10f)
-#घोषणा PPSMC_MSG_DPM_Disable_VCE_HS          ((uपूर्णांक16_t) 0x110)
-#घोषणा PPSMC_MSG_DPM_Enable_VCE_HS           ((uपूर्णांक16_t) 0x111)
-#घोषणा PPSMC_MSG_DPM_N_LevelsDisabled        ((uपूर्णांक16_t) 0x112)
-#घोषणा PPSMC_MSG_DCEPowerOFF                 ((uपूर्णांक16_t) 0x113)
-#घोषणा PPSMC_MSG_DCEPowerON                  ((uपूर्णांक16_t) 0x114)
-#घोषणा PPSMC_MSG_PCIE_DDIPowerDown           ((uपूर्णांक16_t) 0x117)
-#घोषणा PPSMC_MSG_PCIE_DDIPowerUp             ((uपूर्णांक16_t) 0x118)
-#घोषणा PPSMC_MSG_PCIE_CascadePLLPowerDown    ((uपूर्णांक16_t) 0x119)
-#घोषणा PPSMC_MSG_PCIE_CascadePLLPowerUp      ((uपूर्णांक16_t) 0x11a)
-#घोषणा PPSMC_MSG_SYSPLLPowerOff              ((uपूर्णांक16_t) 0x11b)
-#घोषणा PPSMC_MSG_SYSPLLPowerOn               ((uपूर्णांक16_t) 0x11c)
-#घोषणा PPSMC_MSG_DCE_RemoveVoltageAdjusपंचांगent ((uपूर्णांक16_t) 0x11d)
-#घोषणा PPSMC_MSG_DCE_AllowVoltageAdjusपंचांगent  ((uपूर्णांक16_t) 0x11e)
-#घोषणा PPSMC_MSG_DISPLAYPHYStatusNotअगरy      ((uपूर्णांक16_t) 0x11f)
-#घोषणा PPSMC_MSG_EnableBAPM                  ((uपूर्णांक16_t) 0x120)
-#घोषणा PPSMC_MSG_DisableBAPM                 ((uपूर्णांक16_t) 0x121)
-#घोषणा PPSMC_MSG_Spmi_Enable                 ((uपूर्णांक16_t) 0x122)
-#घोषणा PPSMC_MSG_Spmi_Timer                  ((uपूर्णांक16_t) 0x123)
-#घोषणा PPSMC_MSG_LCLK_DPM_Config             ((uपूर्णांक16_t) 0x124)
-#घोषणा PPSMC_MSG_VddNB_Request               ((uपूर्णांक16_t) 0x125)
-#घोषणा PPSMC_MSG_PCIE_DDIPhyPowerDown        ((uपूर्णांक32_t) 0x126)
-#घोषणा PPSMC_MSG_PCIE_DDIPhyPowerUp          ((uपूर्णांक32_t) 0x127)
-#घोषणा PPSMC_MSG_MCLKDPM_Config              ((uपूर्णांक16_t) 0x128)
+/* Trinity Specific Messages*/
+#define PPSMC_MSG_Test                        ((uint16_t) 0x100)
+#define PPSMC_MSG_DPM_Voltage_Pwrmgt          ((uint16_t) 0x101)
+#define PPSMC_MSG_DPM_Config                  ((uint16_t) 0x102)
+#define PPSMC_MSG_PM_Controller_Start         ((uint16_t) 0x103)
+#define PPSMC_MSG_DPM_ForceState              ((uint16_t) 0x104)
+#define PPSMC_MSG_PG_PowerDownSIMD            ((uint16_t) 0x105)
+#define PPSMC_MSG_PG_PowerUpSIMD              ((uint16_t) 0x106)
+#define PPSMC_MSG_PM_Controller_Stop          ((uint16_t) 0x107)
+#define PPSMC_MSG_PG_SIMD_Config              ((uint16_t) 0x108)
+#define PPSMC_MSG_Voltage_Cntl_Enable         ((uint16_t) 0x109)
+#define PPSMC_MSG_Thermal_Cntl_Enable         ((uint16_t) 0x10a)
+#define PPSMC_MSG_Reset_Service               ((uint16_t) 0x10b)
+#define PPSMC_MSG_VCEPowerOFF                 ((uint16_t) 0x10e)
+#define PPSMC_MSG_VCEPowerON                  ((uint16_t) 0x10f)
+#define PPSMC_MSG_DPM_Disable_VCE_HS          ((uint16_t) 0x110)
+#define PPSMC_MSG_DPM_Enable_VCE_HS           ((uint16_t) 0x111)
+#define PPSMC_MSG_DPM_N_LevelsDisabled        ((uint16_t) 0x112)
+#define PPSMC_MSG_DCEPowerOFF                 ((uint16_t) 0x113)
+#define PPSMC_MSG_DCEPowerON                  ((uint16_t) 0x114)
+#define PPSMC_MSG_PCIE_DDIPowerDown           ((uint16_t) 0x117)
+#define PPSMC_MSG_PCIE_DDIPowerUp             ((uint16_t) 0x118)
+#define PPSMC_MSG_PCIE_CascadePLLPowerDown    ((uint16_t) 0x119)
+#define PPSMC_MSG_PCIE_CascadePLLPowerUp      ((uint16_t) 0x11a)
+#define PPSMC_MSG_SYSPLLPowerOff              ((uint16_t) 0x11b)
+#define PPSMC_MSG_SYSPLLPowerOn               ((uint16_t) 0x11c)
+#define PPSMC_MSG_DCE_RemoveVoltageAdjustment ((uint16_t) 0x11d)
+#define PPSMC_MSG_DCE_AllowVoltageAdjustment  ((uint16_t) 0x11e)
+#define PPSMC_MSG_DISPLAYPHYStatusNotify      ((uint16_t) 0x11f)
+#define PPSMC_MSG_EnableBAPM                  ((uint16_t) 0x120)
+#define PPSMC_MSG_DisableBAPM                 ((uint16_t) 0x121)
+#define PPSMC_MSG_Spmi_Enable                 ((uint16_t) 0x122)
+#define PPSMC_MSG_Spmi_Timer                  ((uint16_t) 0x123)
+#define PPSMC_MSG_LCLK_DPM_Config             ((uint16_t) 0x124)
+#define PPSMC_MSG_VddNB_Request               ((uint16_t) 0x125)
+#define PPSMC_MSG_PCIE_DDIPhyPowerDown        ((uint32_t) 0x126)
+#define PPSMC_MSG_PCIE_DDIPhyPowerUp          ((uint32_t) 0x127)
+#define PPSMC_MSG_MCLKDPM_Config              ((uint16_t) 0x128)
 
-#घोषणा PPSMC_MSG_UVDDPM_Config               ((uपूर्णांक16_t) 0x129)
-#घोषणा PPSMC_MSG_VCEDPM_Config               ((uपूर्णांक16_t) 0x12A)
-#घोषणा PPSMC_MSG_ACPDPM_Config               ((uपूर्णांक16_t) 0x12B)
-#घोषणा PPSMC_MSG_SAMUDPM_Config              ((uपूर्णांक16_t) 0x12C)
-#घोषणा PPSMC_MSG_UVDDPM_SetEnabledMask       ((uपूर्णांक16_t) 0x12D)
-#घोषणा PPSMC_MSG_VCEDPM_SetEnabledMask       ((uपूर्णांक16_t) 0x12E)
-#घोषणा PPSMC_MSG_ACPDPM_SetEnabledMask       ((uपूर्णांक16_t) 0x12F)
-#घोषणा PPSMC_MSG_SAMUDPM_SetEnabledMask      ((uपूर्णांक16_t) 0x130)
-#घोषणा PPSMC_MSG_MCLKDPM_ForceState          ((uपूर्णांक16_t) 0x131)
-#घोषणा PPSMC_MSG_MCLKDPM_NoForcedLevel       ((uपूर्णांक16_t) 0x132)
-#घोषणा PPSMC_MSG_Thermal_Cntl_Disable        ((uपूर्णांक16_t) 0x133)
-#घोषणा PPSMC_MSG_SetTDPLimit                 ((uपूर्णांक16_t) 0x134)
-#घोषणा PPSMC_MSG_Voltage_Cntl_Disable        ((uपूर्णांक16_t) 0x135)
-#घोषणा PPSMC_MSG_PCIeDPM_Enable              ((uपूर्णांक16_t) 0x136)
-#घोषणा PPSMC_MSG_ACPPowerOFF                 ((uपूर्णांक16_t) 0x137)
-#घोषणा PPSMC_MSG_ACPPowerON                  ((uपूर्णांक16_t) 0x138)
-#घोषणा PPSMC_MSG_SAMPowerOFF                 ((uपूर्णांक16_t) 0x139)
-#घोषणा PPSMC_MSG_SAMPowerON                  ((uपूर्णांक16_t) 0x13a)
-#घोषणा PPSMC_MSG_SDMAPowerOFF                ((uपूर्णांक16_t) 0x13b)
-#घोषणा PPSMC_MSG_SDMAPowerON                 ((uपूर्णांक16_t) 0x13c)
-#घोषणा PPSMC_MSG_PCIeDPM_Disable             ((uपूर्णांक16_t) 0x13d)
-#घोषणा PPSMC_MSG_IOMMUPowerOFF               ((uपूर्णांक16_t) 0x13e)
-#घोषणा PPSMC_MSG_IOMMUPowerON                ((uपूर्णांक16_t) 0x13f)
-#घोषणा PPSMC_MSG_NBDPM_Enable                ((uपूर्णांक16_t) 0x140)
-#घोषणा PPSMC_MSG_NBDPM_Disable               ((uपूर्णांक16_t) 0x141)
-#घोषणा PPSMC_MSG_NBDPM_ForceNominal          ((uपूर्णांक16_t) 0x142)
-#घोषणा PPSMC_MSG_NBDPM_ForcePerक्रमmance      ((uपूर्णांक16_t) 0x143)
-#घोषणा PPSMC_MSG_NBDPM_UnForce               ((uपूर्णांक16_t) 0x144)
-#घोषणा PPSMC_MSG_SCLKDPM_SetEnabledMask      ((uपूर्णांक16_t) 0x145)
-#घोषणा PPSMC_MSG_MCLKDPM_SetEnabledMask      ((uपूर्णांक16_t) 0x146)
-#घोषणा PPSMC_MSG_PCIeDPM_ForceLevel          ((uपूर्णांक16_t) 0x147)
-#घोषणा PPSMC_MSG_PCIeDPM_UnForceLevel        ((uपूर्णांक16_t) 0x148)
-#घोषणा PPSMC_MSG_EnableACDCGPIOInterrupt     ((uपूर्णांक16_t) 0x149)
-#घोषणा PPSMC_MSG_EnableVRHotGPIOInterrupt    ((uपूर्णांक16_t) 0x14a)
-#घोषणा PPSMC_MSG_SwitchToAC                  ((uपूर्णांक16_t) 0x14b)
+#define PPSMC_MSG_UVDDPM_Config               ((uint16_t) 0x129)
+#define PPSMC_MSG_VCEDPM_Config               ((uint16_t) 0x12A)
+#define PPSMC_MSG_ACPDPM_Config               ((uint16_t) 0x12B)
+#define PPSMC_MSG_SAMUDPM_Config              ((uint16_t) 0x12C)
+#define PPSMC_MSG_UVDDPM_SetEnabledMask       ((uint16_t) 0x12D)
+#define PPSMC_MSG_VCEDPM_SetEnabledMask       ((uint16_t) 0x12E)
+#define PPSMC_MSG_ACPDPM_SetEnabledMask       ((uint16_t) 0x12F)
+#define PPSMC_MSG_SAMUDPM_SetEnabledMask      ((uint16_t) 0x130)
+#define PPSMC_MSG_MCLKDPM_ForceState          ((uint16_t) 0x131)
+#define PPSMC_MSG_MCLKDPM_NoForcedLevel       ((uint16_t) 0x132)
+#define PPSMC_MSG_Thermal_Cntl_Disable        ((uint16_t) 0x133)
+#define PPSMC_MSG_SetTDPLimit                 ((uint16_t) 0x134)
+#define PPSMC_MSG_Voltage_Cntl_Disable        ((uint16_t) 0x135)
+#define PPSMC_MSG_PCIeDPM_Enable              ((uint16_t) 0x136)
+#define PPSMC_MSG_ACPPowerOFF                 ((uint16_t) 0x137)
+#define PPSMC_MSG_ACPPowerON                  ((uint16_t) 0x138)
+#define PPSMC_MSG_SAMPowerOFF                 ((uint16_t) 0x139)
+#define PPSMC_MSG_SAMPowerON                  ((uint16_t) 0x13a)
+#define PPSMC_MSG_SDMAPowerOFF                ((uint16_t) 0x13b)
+#define PPSMC_MSG_SDMAPowerON                 ((uint16_t) 0x13c)
+#define PPSMC_MSG_PCIeDPM_Disable             ((uint16_t) 0x13d)
+#define PPSMC_MSG_IOMMUPowerOFF               ((uint16_t) 0x13e)
+#define PPSMC_MSG_IOMMUPowerON                ((uint16_t) 0x13f)
+#define PPSMC_MSG_NBDPM_Enable                ((uint16_t) 0x140)
+#define PPSMC_MSG_NBDPM_Disable               ((uint16_t) 0x141)
+#define PPSMC_MSG_NBDPM_ForceNominal          ((uint16_t) 0x142)
+#define PPSMC_MSG_NBDPM_ForcePerformance      ((uint16_t) 0x143)
+#define PPSMC_MSG_NBDPM_UnForce               ((uint16_t) 0x144)
+#define PPSMC_MSG_SCLKDPM_SetEnabledMask      ((uint16_t) 0x145)
+#define PPSMC_MSG_MCLKDPM_SetEnabledMask      ((uint16_t) 0x146)
+#define PPSMC_MSG_PCIeDPM_ForceLevel          ((uint16_t) 0x147)
+#define PPSMC_MSG_PCIeDPM_UnForceLevel        ((uint16_t) 0x148)
+#define PPSMC_MSG_EnableACDCGPIOInterrupt     ((uint16_t) 0x149)
+#define PPSMC_MSG_EnableVRHotGPIOInterrupt    ((uint16_t) 0x14a)
+#define PPSMC_MSG_SwitchToAC                  ((uint16_t) 0x14b)
 
-#घोषणा PPSMC_MSG_XDMAPowerOFF                ((uपूर्णांक16_t) 0x14c)
-#घोषणा PPSMC_MSG_XDMAPowerON                 ((uपूर्णांक16_t) 0x14d)
+#define PPSMC_MSG_XDMAPowerOFF                ((uint16_t) 0x14c)
+#define PPSMC_MSG_XDMAPowerON                 ((uint16_t) 0x14d)
 
-#घोषणा PPSMC_MSG_DPM_Enable                  ((uपूर्णांक16_t) 0x14e)
-#घोषणा PPSMC_MSG_DPM_Disable                 ((uपूर्णांक16_t) 0x14f)
-#घोषणा PPSMC_MSG_MCLKDPM_Enable              ((uपूर्णांक16_t) 0x150)
-#घोषणा PPSMC_MSG_MCLKDPM_Disable             ((uपूर्णांक16_t) 0x151)
-#घोषणा PPSMC_MSG_LCLKDPM_Enable              ((uपूर्णांक16_t) 0x152)
-#घोषणा PPSMC_MSG_LCLKDPM_Disable             ((uपूर्णांक16_t) 0x153)
-#घोषणा PPSMC_MSG_UVDDPM_Enable               ((uपूर्णांक16_t) 0x154)
-#घोषणा PPSMC_MSG_UVDDPM_Disable              ((uपूर्णांक16_t) 0x155)
-#घोषणा PPSMC_MSG_SAMUDPM_Enable              ((uपूर्णांक16_t) 0x156)
-#घोषणा PPSMC_MSG_SAMUDPM_Disable             ((uपूर्णांक16_t) 0x157)
-#घोषणा PPSMC_MSG_ACPDPM_Enable               ((uपूर्णांक16_t) 0x158)
-#घोषणा PPSMC_MSG_ACPDPM_Disable              ((uपूर्णांक16_t) 0x159)
-#घोषणा PPSMC_MSG_VCEDPM_Enable               ((uपूर्णांक16_t) 0x15a)
-#घोषणा PPSMC_MSG_VCEDPM_Disable              ((uपूर्णांक16_t) 0x15b)
-#घोषणा PPSMC_MSG_LCLKDPM_SetEnabledMask      ((uपूर्णांक16_t) 0x15c)
-#घोषणा PPSMC_MSG_DPM_FPS_Mode                ((uपूर्णांक16_t) 0x15d)
-#घोषणा PPSMC_MSG_DPM_Activity_Mode           ((uपूर्णांक16_t) 0x15e)
-#घोषणा PPSMC_MSG_VddC_Request                ((uपूर्णांक16_t) 0x15f)
-#घोषणा PPSMC_MSG_MCLKDPM_GetEnabledMask      ((uपूर्णांक16_t) 0x160)
-#घोषणा PPSMC_MSG_LCLKDPM_GetEnabledMask      ((uपूर्णांक16_t) 0x161)
-#घोषणा PPSMC_MSG_SCLKDPM_GetEnabledMask      ((uपूर्णांक16_t) 0x162)
-#घोषणा PPSMC_MSG_UVDDPM_GetEnabledMask       ((uपूर्णांक16_t) 0x163)
-#घोषणा PPSMC_MSG_SAMUDPM_GetEnabledMask      ((uपूर्णांक16_t) 0x164)
-#घोषणा PPSMC_MSG_ACPDPM_GetEnabledMask       ((uपूर्णांक16_t) 0x165)
-#घोषणा PPSMC_MSG_VCEDPM_GetEnabledMask       ((uपूर्णांक16_t) 0x166)
-#घोषणा PPSMC_MSG_PCIeDPM_SetEnabledMask      ((uपूर्णांक16_t) 0x167)
-#घोषणा PPSMC_MSG_PCIeDPM_GetEnabledMask      ((uपूर्णांक16_t) 0x168)
-#घोषणा PPSMC_MSG_TDCLimitEnable              ((uपूर्णांक16_t) 0x169)
-#घोषणा PPSMC_MSG_TDCLimitDisable             ((uपूर्णांक16_t) 0x16a)
-#घोषणा PPSMC_MSG_DPM_AutoRotate_Mode         ((uपूर्णांक16_t) 0x16b)
-#घोषणा PPSMC_MSG_DISPCLK_FROM_FCH            ((uपूर्णांक16_t) 0x16c)
-#घोषणा PPSMC_MSG_DISPCLK_FROM_DFS            ((uपूर्णांक16_t) 0x16d)
-#घोषणा PPSMC_MSG_DPREFCLK_FROM_FCH           ((uपूर्णांक16_t) 0x16e)
-#घोषणा PPSMC_MSG_DPREFCLK_FROM_DFS           ((uपूर्णांक16_t) 0x16f)
-#घोषणा PPSMC_MSG_PmStatusLogStart            ((uपूर्णांक16_t) 0x170)
-#घोषणा PPSMC_MSG_PmStatusLogSample           ((uपूर्णांक16_t) 0x171)
-#घोषणा PPSMC_MSG_SCLK_AutoDPM_ON             ((uपूर्णांक16_t) 0x172)
-#घोषणा PPSMC_MSG_MCLK_AutoDPM_ON             ((uपूर्णांक16_t) 0x173)
-#घोषणा PPSMC_MSG_LCLK_AutoDPM_ON             ((uपूर्णांक16_t) 0x174)
-#घोषणा PPSMC_MSG_UVD_AutoDPM_ON              ((uपूर्णांक16_t) 0x175)
-#घोषणा PPSMC_MSG_SAMU_AutoDPM_ON             ((uपूर्णांक16_t) 0x176)
-#घोषणा PPSMC_MSG_ACP_AutoDPM_ON              ((uपूर्णांक16_t) 0x177)
-#घोषणा PPSMC_MSG_VCE_AutoDPM_ON              ((uपूर्णांक16_t) 0x178)
-#घोषणा PPSMC_MSG_PCIe_AutoDPM_ON             ((uपूर्णांक16_t) 0x179)
-#घोषणा PPSMC_MSG_MASTER_AutoDPM_ON           ((uपूर्णांक16_t) 0x17a)
-#घोषणा PPSMC_MSG_MASTER_AutoDPM_OFF          ((uपूर्णांक16_t) 0x17b)
-#घोषणा PPSMC_MSG_DYNAMICDISPPHYPOWER         ((uपूर्णांक16_t) 0x17c)
-#घोषणा PPSMC_MSG_CAC_COLLECTION_ON           ((uपूर्णांक16_t) 0x17d)
-#घोषणा PPSMC_MSG_CAC_COLLECTION_OFF          ((uपूर्णांक16_t) 0x17e)
-#घोषणा PPSMC_MSG_CAC_CORRELATION_ON          ((uपूर्णांक16_t) 0x17f)
-#घोषणा PPSMC_MSG_CAC_CORRELATION_OFF         ((uपूर्णांक16_t) 0x180)
-#घोषणा PPSMC_MSG_PM_STATUS_TO_DRAM_ON        ((uपूर्णांक16_t) 0x181)
-#घोषणा PPSMC_MSG_PM_STATUS_TO_DRAM_OFF       ((uपूर्णांक16_t) 0x182)
-#घोषणा PPSMC_MSG_ALLOW_LOWSCLK_INTERRUPT     ((uपूर्णांक16_t) 0x184)
-#घोषणा PPSMC_MSG_PkgPwrLimitEnable           ((uपूर्णांक16_t) 0x185)
-#घोषणा PPSMC_MSG_PkgPwrLimitDisable          ((uपूर्णांक16_t) 0x186)
-#घोषणा PPSMC_MSG_PkgPwrSetLimit              ((uपूर्णांक16_t) 0x187)
-#घोषणा PPSMC_MSG_OverDriveSetTargetTdp       ((uपूर्णांक16_t) 0x188)
-#घोषणा PPSMC_MSG_SCLKDPM_FreezeLevel         ((uपूर्णांक16_t) 0x189)
-#घोषणा PPSMC_MSG_SCLKDPM_Unमुक्तzeLevel       ((uपूर्णांक16_t) 0x18A)
-#घोषणा PPSMC_MSG_MCLKDPM_FreezeLevel         ((uपूर्णांक16_t) 0x18B)
-#घोषणा PPSMC_MSG_MCLKDPM_Unमुक्तzeLevel       ((uपूर्णांक16_t) 0x18C)
-#घोषणा PPSMC_MSG_START_DRAM_LOGGING          ((uपूर्णांक16_t) 0x18D)
-#घोषणा PPSMC_MSG_STOP_DRAM_LOGGING           ((uपूर्णांक16_t) 0x18E)
-#घोषणा PPSMC_MSG_MASTER_DeepSleep_ON         ((uपूर्णांक16_t) 0x18F)
-#घोषणा PPSMC_MSG_MASTER_DeepSleep_OFF        ((uपूर्णांक16_t) 0x190)
-#घोषणा PPSMC_MSG_Remove_DC_Clamp             ((uपूर्णांक16_t) 0x191)
-#घोषणा PPSMC_MSG_DisableACDCGPIOInterrupt    ((uपूर्णांक16_t) 0x192)
-#घोषणा PPSMC_MSG_OverrideVoltageControl_SetVddc       ((uपूर्णांक16_t) 0x193)
-#घोषणा PPSMC_MSG_OverrideVoltageControl_SetVddci      ((uपूर्णांक16_t) 0x194)
-#घोषणा PPSMC_MSG_SetVidOffset_1              ((uपूर्णांक16_t) 0x195)
-#घोषणा PPSMC_MSG_SetVidOffset_2              ((uपूर्णांक16_t) 0x207)
-#घोषणा PPSMC_MSG_GetVidOffset_1              ((uपूर्णांक16_t) 0x196)
-#घोषणा PPSMC_MSG_GetVidOffset_2              ((uपूर्णांक16_t) 0x208)
-#घोषणा PPSMC_MSG_THERMAL_OVERDRIVE_Enable    ((uपूर्णांक16_t) 0x197)
-#घोषणा PPSMC_MSG_THERMAL_OVERDRIVE_Disable   ((uपूर्णांक16_t) 0x198)
-#घोषणा PPSMC_MSG_SetTjMax                    ((uपूर्णांक16_t) 0x199)
-#घोषणा PPSMC_MSG_SetFanPwmMax                ((uपूर्णांक16_t) 0x19A)
-#घोषणा PPSMC_MSG_WaitForMclkSwitchFinish     ((uपूर्णांक16_t) 0x19B)
-#घोषणा PPSMC_MSG_ENABLE_THERMAL_DPM          ((uपूर्णांक16_t) 0x19C)
-#घोषणा PPSMC_MSG_DISABLE_THERMAL_DPM         ((uपूर्णांक16_t) 0x19D)
+#define PPSMC_MSG_DPM_Enable                  ((uint16_t) 0x14e)
+#define PPSMC_MSG_DPM_Disable                 ((uint16_t) 0x14f)
+#define PPSMC_MSG_MCLKDPM_Enable              ((uint16_t) 0x150)
+#define PPSMC_MSG_MCLKDPM_Disable             ((uint16_t) 0x151)
+#define PPSMC_MSG_LCLKDPM_Enable              ((uint16_t) 0x152)
+#define PPSMC_MSG_LCLKDPM_Disable             ((uint16_t) 0x153)
+#define PPSMC_MSG_UVDDPM_Enable               ((uint16_t) 0x154)
+#define PPSMC_MSG_UVDDPM_Disable              ((uint16_t) 0x155)
+#define PPSMC_MSG_SAMUDPM_Enable              ((uint16_t) 0x156)
+#define PPSMC_MSG_SAMUDPM_Disable             ((uint16_t) 0x157)
+#define PPSMC_MSG_ACPDPM_Enable               ((uint16_t) 0x158)
+#define PPSMC_MSG_ACPDPM_Disable              ((uint16_t) 0x159)
+#define PPSMC_MSG_VCEDPM_Enable               ((uint16_t) 0x15a)
+#define PPSMC_MSG_VCEDPM_Disable              ((uint16_t) 0x15b)
+#define PPSMC_MSG_LCLKDPM_SetEnabledMask      ((uint16_t) 0x15c)
+#define PPSMC_MSG_DPM_FPS_Mode                ((uint16_t) 0x15d)
+#define PPSMC_MSG_DPM_Activity_Mode           ((uint16_t) 0x15e)
+#define PPSMC_MSG_VddC_Request                ((uint16_t) 0x15f)
+#define PPSMC_MSG_MCLKDPM_GetEnabledMask      ((uint16_t) 0x160)
+#define PPSMC_MSG_LCLKDPM_GetEnabledMask      ((uint16_t) 0x161)
+#define PPSMC_MSG_SCLKDPM_GetEnabledMask      ((uint16_t) 0x162)
+#define PPSMC_MSG_UVDDPM_GetEnabledMask       ((uint16_t) 0x163)
+#define PPSMC_MSG_SAMUDPM_GetEnabledMask      ((uint16_t) 0x164)
+#define PPSMC_MSG_ACPDPM_GetEnabledMask       ((uint16_t) 0x165)
+#define PPSMC_MSG_VCEDPM_GetEnabledMask       ((uint16_t) 0x166)
+#define PPSMC_MSG_PCIeDPM_SetEnabledMask      ((uint16_t) 0x167)
+#define PPSMC_MSG_PCIeDPM_GetEnabledMask      ((uint16_t) 0x168)
+#define PPSMC_MSG_TDCLimitEnable              ((uint16_t) 0x169)
+#define PPSMC_MSG_TDCLimitDisable             ((uint16_t) 0x16a)
+#define PPSMC_MSG_DPM_AutoRotate_Mode         ((uint16_t) 0x16b)
+#define PPSMC_MSG_DISPCLK_FROM_FCH            ((uint16_t) 0x16c)
+#define PPSMC_MSG_DISPCLK_FROM_DFS            ((uint16_t) 0x16d)
+#define PPSMC_MSG_DPREFCLK_FROM_FCH           ((uint16_t) 0x16e)
+#define PPSMC_MSG_DPREFCLK_FROM_DFS           ((uint16_t) 0x16f)
+#define PPSMC_MSG_PmStatusLogStart            ((uint16_t) 0x170)
+#define PPSMC_MSG_PmStatusLogSample           ((uint16_t) 0x171)
+#define PPSMC_MSG_SCLK_AutoDPM_ON             ((uint16_t) 0x172)
+#define PPSMC_MSG_MCLK_AutoDPM_ON             ((uint16_t) 0x173)
+#define PPSMC_MSG_LCLK_AutoDPM_ON             ((uint16_t) 0x174)
+#define PPSMC_MSG_UVD_AutoDPM_ON              ((uint16_t) 0x175)
+#define PPSMC_MSG_SAMU_AutoDPM_ON             ((uint16_t) 0x176)
+#define PPSMC_MSG_ACP_AutoDPM_ON              ((uint16_t) 0x177)
+#define PPSMC_MSG_VCE_AutoDPM_ON              ((uint16_t) 0x178)
+#define PPSMC_MSG_PCIe_AutoDPM_ON             ((uint16_t) 0x179)
+#define PPSMC_MSG_MASTER_AutoDPM_ON           ((uint16_t) 0x17a)
+#define PPSMC_MSG_MASTER_AutoDPM_OFF          ((uint16_t) 0x17b)
+#define PPSMC_MSG_DYNAMICDISPPHYPOWER         ((uint16_t) 0x17c)
+#define PPSMC_MSG_CAC_COLLECTION_ON           ((uint16_t) 0x17d)
+#define PPSMC_MSG_CAC_COLLECTION_OFF          ((uint16_t) 0x17e)
+#define PPSMC_MSG_CAC_CORRELATION_ON          ((uint16_t) 0x17f)
+#define PPSMC_MSG_CAC_CORRELATION_OFF         ((uint16_t) 0x180)
+#define PPSMC_MSG_PM_STATUS_TO_DRAM_ON        ((uint16_t) 0x181)
+#define PPSMC_MSG_PM_STATUS_TO_DRAM_OFF       ((uint16_t) 0x182)
+#define PPSMC_MSG_ALLOW_LOWSCLK_INTERRUPT     ((uint16_t) 0x184)
+#define PPSMC_MSG_PkgPwrLimitEnable           ((uint16_t) 0x185)
+#define PPSMC_MSG_PkgPwrLimitDisable          ((uint16_t) 0x186)
+#define PPSMC_MSG_PkgPwrSetLimit              ((uint16_t) 0x187)
+#define PPSMC_MSG_OverDriveSetTargetTdp       ((uint16_t) 0x188)
+#define PPSMC_MSG_SCLKDPM_FreezeLevel         ((uint16_t) 0x189)
+#define PPSMC_MSG_SCLKDPM_UnfreezeLevel       ((uint16_t) 0x18A)
+#define PPSMC_MSG_MCLKDPM_FreezeLevel         ((uint16_t) 0x18B)
+#define PPSMC_MSG_MCLKDPM_UnfreezeLevel       ((uint16_t) 0x18C)
+#define PPSMC_MSG_START_DRAM_LOGGING          ((uint16_t) 0x18D)
+#define PPSMC_MSG_STOP_DRAM_LOGGING           ((uint16_t) 0x18E)
+#define PPSMC_MSG_MASTER_DeepSleep_ON         ((uint16_t) 0x18F)
+#define PPSMC_MSG_MASTER_DeepSleep_OFF        ((uint16_t) 0x190)
+#define PPSMC_MSG_Remove_DC_Clamp             ((uint16_t) 0x191)
+#define PPSMC_MSG_DisableACDCGPIOInterrupt    ((uint16_t) 0x192)
+#define PPSMC_MSG_OverrideVoltageControl_SetVddc       ((uint16_t) 0x193)
+#define PPSMC_MSG_OverrideVoltageControl_SetVddci      ((uint16_t) 0x194)
+#define PPSMC_MSG_SetVidOffset_1              ((uint16_t) 0x195)
+#define PPSMC_MSG_SetVidOffset_2              ((uint16_t) 0x207)
+#define PPSMC_MSG_GetVidOffset_1              ((uint16_t) 0x196)
+#define PPSMC_MSG_GetVidOffset_2              ((uint16_t) 0x208)
+#define PPSMC_MSG_THERMAL_OVERDRIVE_Enable    ((uint16_t) 0x197)
+#define PPSMC_MSG_THERMAL_OVERDRIVE_Disable   ((uint16_t) 0x198)
+#define PPSMC_MSG_SetTjMax                    ((uint16_t) 0x199)
+#define PPSMC_MSG_SetFanPwmMax                ((uint16_t) 0x19A)
+#define PPSMC_MSG_WaitForMclkSwitchFinish     ((uint16_t) 0x19B)
+#define PPSMC_MSG_ENABLE_THERMAL_DPM          ((uint16_t) 0x19C)
+#define PPSMC_MSG_DISABLE_THERMAL_DPM         ((uint16_t) 0x19D)
 
-#घोषणा PPSMC_MSG_API_GetSclkFrequency        ((uपूर्णांक16_t) 0x200)
-#घोषणा PPSMC_MSG_API_GetMclkFrequency        ((uपूर्णांक16_t) 0x201)
-#घोषणा PPSMC_MSG_API_GetSclkBusy             ((uपूर्णांक16_t) 0x202)
-#घोषणा PPSMC_MSG_API_GetMclkBusy             ((uपूर्णांक16_t) 0x203)
-#घोषणा PPSMC_MSG_API_GetAsicPower            ((uपूर्णांक16_t) 0x204)
-#घोषणा PPSMC_MSG_SetFanRpmMax                ((uपूर्णांक16_t) 0x205)
-#घोषणा PPSMC_MSG_SetFanSclkTarget            ((uपूर्णांक16_t) 0x206)
-#घोषणा PPSMC_MSG_SetFanMinPwm                ((uपूर्णांक16_t) 0x209)
-#घोषणा PPSMC_MSG_SetFanTemperatureTarget     ((uपूर्णांक16_t) 0x20A)
+#define PPSMC_MSG_API_GetSclkFrequency        ((uint16_t) 0x200)
+#define PPSMC_MSG_API_GetMclkFrequency        ((uint16_t) 0x201)
+#define PPSMC_MSG_API_GetSclkBusy             ((uint16_t) 0x202)
+#define PPSMC_MSG_API_GetMclkBusy             ((uint16_t) 0x203)
+#define PPSMC_MSG_API_GetAsicPower            ((uint16_t) 0x204)
+#define PPSMC_MSG_SetFanRpmMax                ((uint16_t) 0x205)
+#define PPSMC_MSG_SetFanSclkTarget            ((uint16_t) 0x206)
+#define PPSMC_MSG_SetFanMinPwm                ((uint16_t) 0x209)
+#define PPSMC_MSG_SetFanTemperatureTarget     ((uint16_t) 0x20A)
 
-#घोषणा PPSMC_MSG_BACO_StartMonitor           ((uपूर्णांक16_t) 0x240)
-#घोषणा PPSMC_MSG_BACO_Cancel                 ((uपूर्णांक16_t) 0x241)
-#घोषणा PPSMC_MSG_EnableVddGfx                ((uपूर्णांक16_t) 0x242)
-#घोषणा PPSMC_MSG_DisableVddGfx               ((uपूर्णांक16_t) 0x243)
-#घोषणा PPSMC_MSG_UcodeAddressLow             ((uपूर्णांक16_t) 0x244)
-#घोषणा PPSMC_MSG_UcodeAddressHigh            ((uपूर्णांक16_t) 0x245)
-#घोषणा PPSMC_MSG_UcodeLoadStatus             ((uपूर्णांक16_t) 0x246)
+#define PPSMC_MSG_BACO_StartMonitor           ((uint16_t) 0x240)
+#define PPSMC_MSG_BACO_Cancel                 ((uint16_t) 0x241)
+#define PPSMC_MSG_EnableVddGfx                ((uint16_t) 0x242)
+#define PPSMC_MSG_DisableVddGfx               ((uint16_t) 0x243)
+#define PPSMC_MSG_UcodeAddressLow             ((uint16_t) 0x244)
+#define PPSMC_MSG_UcodeAddressHigh            ((uint16_t) 0x245)
+#define PPSMC_MSG_UcodeLoadStatus             ((uint16_t) 0x246)
 
-#घोषणा PPSMC_MSG_DRV_DRAM_ADDR_HI            ((uपूर्णांक16_t) 0x250)
-#घोषणा PPSMC_MSG_DRV_DRAM_ADDR_LO            ((uपूर्णांक16_t) 0x251)
-#घोषणा PPSMC_MSG_SMU_DRAM_ADDR_HI            ((uपूर्णांक16_t) 0x252)
-#घोषणा PPSMC_MSG_SMU_DRAM_ADDR_LO            ((uपूर्णांक16_t) 0x253)
-#घोषणा PPSMC_MSG_LoadUcodes                  ((uपूर्णांक16_t) 0x254)
-#घोषणा PPSMC_MSG_PowerStateNotअगरy            ((uपूर्णांक16_t) 0x255)
-#घोषणा PPSMC_MSG_COND_EXEC_DRAM_ADDR_HI      ((uपूर्णांक16_t) 0x256)
-#घोषणा PPSMC_MSG_COND_EXEC_DRAM_ADDR_LO      ((uपूर्णांक16_t) 0x257)
-#घोषणा PPSMC_MSG_VBIOS_DRAM_ADDR_HI          ((uपूर्णांक16_t) 0x258)
-#घोषणा PPSMC_MSG_VBIOS_DRAM_ADDR_LO          ((uपूर्णांक16_t) 0x259)
-#घोषणा PPSMC_MSG_LoadVBios                   ((uपूर्णांक16_t) 0x25A)
-#घोषणा PPSMC_MSG_GetUcodeVersion             ((uपूर्णांक16_t) 0x25B)
-#घोषणा DMCUSMC_MSG_PSREntry                  ((uपूर्णांक16_t) 0x25C)
-#घोषणा DMCUSMC_MSG_PSRExit                   ((uपूर्णांक16_t) 0x25D)
-#घोषणा PPSMC_MSG_EnableClockGatingFeature    ((uपूर्णांक16_t) 0x260)
-#घोषणा PPSMC_MSG_DisableClockGatingFeature   ((uपूर्णांक16_t) 0x261)
-#घोषणा PPSMC_MSG_IsDeviceRunning             ((uपूर्णांक16_t) 0x262)
-#घोषणा PPSMC_MSG_LoadMetaData                ((uपूर्णांक16_t) 0x263)
-#घोषणा PPSMC_MSG_TMON_AutoCaliberate_Enable  ((uपूर्णांक16_t) 0x264)
-#घोषणा PPSMC_MSG_TMON_AutoCaliberate_Disable ((uपूर्णांक16_t) 0x265)
-#घोषणा PPSMC_MSG_GetTelemetry1Slope          ((uपूर्णांक16_t) 0x266)
-#घोषणा PPSMC_MSG_GetTelemetry1Offset         ((uपूर्णांक16_t) 0x267)
-#घोषणा PPSMC_MSG_GetTelemetry2Slope          ((uपूर्णांक16_t) 0x268)
-#घोषणा PPSMC_MSG_GetTelemetry2Offset         ((uपूर्णांक16_t) 0x269)
-#घोषणा PPSMC_MSG_EnableAvfs                  ((uपूर्णांक16_t) 0x26A)
-#घोषणा PPSMC_MSG_DisableAvfs                 ((uपूर्णांक16_t) 0x26B)
-#घोषणा PPSMC_MSG_Perक्रमmBtc                  ((uपूर्णांक16_t) 0x26C)
-#घोषणा PPSMC_MSG_GetHbmCode                  ((uपूर्णांक16_t) 0x26D)
-#घोषणा PPSMC_MSG_GetVrVddcTemperature        ((uपूर्णांक16_t) 0x26E)
-#घोषणा PPSMC_MSG_GetVrMvddTemperature        ((uपूर्णांक16_t) 0x26F)
-#घोषणा PPSMC_MSG_GetLiquidTemperature        ((uपूर्णांक16_t) 0x270)
-#घोषणा PPSMC_MSG_GetPlxTemperature           ((uपूर्णांक16_t) 0x271)
-#घोषणा PPSMC_MSG_RequestI2CControl           ((uपूर्णांक16_t) 0x272)
-#घोषणा PPSMC_MSG_ReleaseI2CControl           ((uपूर्णांक16_t) 0x273)
-#घोषणा PPSMC_MSG_LedConfig                   ((uपूर्णांक16_t) 0x274)
-#घोषणा PPSMC_MSG_SetHbmFanCode               ((uपूर्णांक16_t) 0x275)
-#घोषणा PPSMC_MSG_SetHbmThrottleCode          ((uपूर्णांक16_t) 0x276)
+#define PPSMC_MSG_DRV_DRAM_ADDR_HI            ((uint16_t) 0x250)
+#define PPSMC_MSG_DRV_DRAM_ADDR_LO            ((uint16_t) 0x251)
+#define PPSMC_MSG_SMU_DRAM_ADDR_HI            ((uint16_t) 0x252)
+#define PPSMC_MSG_SMU_DRAM_ADDR_LO            ((uint16_t) 0x253)
+#define PPSMC_MSG_LoadUcodes                  ((uint16_t) 0x254)
+#define PPSMC_MSG_PowerStateNotify            ((uint16_t) 0x255)
+#define PPSMC_MSG_COND_EXEC_DRAM_ADDR_HI      ((uint16_t) 0x256)
+#define PPSMC_MSG_COND_EXEC_DRAM_ADDR_LO      ((uint16_t) 0x257)
+#define PPSMC_MSG_VBIOS_DRAM_ADDR_HI          ((uint16_t) 0x258)
+#define PPSMC_MSG_VBIOS_DRAM_ADDR_LO          ((uint16_t) 0x259)
+#define PPSMC_MSG_LoadVBios                   ((uint16_t) 0x25A)
+#define PPSMC_MSG_GetUcodeVersion             ((uint16_t) 0x25B)
+#define DMCUSMC_MSG_PSREntry                  ((uint16_t) 0x25C)
+#define DMCUSMC_MSG_PSRExit                   ((uint16_t) 0x25D)
+#define PPSMC_MSG_EnableClockGatingFeature    ((uint16_t) 0x260)
+#define PPSMC_MSG_DisableClockGatingFeature   ((uint16_t) 0x261)
+#define PPSMC_MSG_IsDeviceRunning             ((uint16_t) 0x262)
+#define PPSMC_MSG_LoadMetaData                ((uint16_t) 0x263)
+#define PPSMC_MSG_TMON_AutoCaliberate_Enable  ((uint16_t) 0x264)
+#define PPSMC_MSG_TMON_AutoCaliberate_Disable ((uint16_t) 0x265)
+#define PPSMC_MSG_GetTelemetry1Slope          ((uint16_t) 0x266)
+#define PPSMC_MSG_GetTelemetry1Offset         ((uint16_t) 0x267)
+#define PPSMC_MSG_GetTelemetry2Slope          ((uint16_t) 0x268)
+#define PPSMC_MSG_GetTelemetry2Offset         ((uint16_t) 0x269)
+#define PPSMC_MSG_EnableAvfs                  ((uint16_t) 0x26A)
+#define PPSMC_MSG_DisableAvfs                 ((uint16_t) 0x26B)
+#define PPSMC_MSG_PerformBtc                  ((uint16_t) 0x26C)
+#define PPSMC_MSG_GetHbmCode                  ((uint16_t) 0x26D)
+#define PPSMC_MSG_GetVrVddcTemperature        ((uint16_t) 0x26E)
+#define PPSMC_MSG_GetVrMvddTemperature        ((uint16_t) 0x26F)
+#define PPSMC_MSG_GetLiquidTemperature        ((uint16_t) 0x270)
+#define PPSMC_MSG_GetPlxTemperature           ((uint16_t) 0x271)
+#define PPSMC_MSG_RequestI2CControl           ((uint16_t) 0x272)
+#define PPSMC_MSG_ReleaseI2CControl           ((uint16_t) 0x273)
+#define PPSMC_MSG_LedConfig                   ((uint16_t) 0x274)
+#define PPSMC_MSG_SetHbmFanCode               ((uint16_t) 0x275)
+#define PPSMC_MSG_SetHbmThrottleCode          ((uint16_t) 0x276)
 
-#घोषणा PPSMC_MSG_GetEnabledPsm               ((uपूर्णांक16_t) 0x400)
-#घोषणा PPSMC_MSG_AgmStartPsm                 ((uपूर्णांक16_t) 0x401)
-#घोषणा PPSMC_MSG_AgmReadPsm                  ((uपूर्णांक16_t) 0x402)
-#घोषणा PPSMC_MSG_AgmResetPsm                 ((uपूर्णांक16_t) 0x403)
-#घोषणा PPSMC_MSG_ReadVftCell                 ((uपूर्णांक16_t) 0x404)
+#define PPSMC_MSG_GetEnabledPsm               ((uint16_t) 0x400)
+#define PPSMC_MSG_AgmStartPsm                 ((uint16_t) 0x401)
+#define PPSMC_MSG_AgmReadPsm                  ((uint16_t) 0x402)
+#define PPSMC_MSG_AgmResetPsm                 ((uint16_t) 0x403)
+#define PPSMC_MSG_ReadVftCell                 ((uint16_t) 0x404)
 
 /* AVFS Only - Remove Later */
-#घोषणा PPSMC_MSG_VftTableIsValid             ((uपूर्णांक16_t) 0x666)
+#define PPSMC_MSG_VftTableIsValid             ((uint16_t) 0x666)
 
-/* If the SMC firmware has an event status soft रेजिस्टर this is what the inभागidual bits mean.*/
-#घोषणा PPSMC_EVENT_STATUS_THERMAL          0x00000001
-#घोषणा PPSMC_EVENT_STATUS_REGULATORHOT     0x00000002
-#घोषणा PPSMC_EVENT_STATUS_DC               0x00000004
+/* If the SMC firmware has an event status soft register this is what the individual bits mean.*/
+#define PPSMC_EVENT_STATUS_THERMAL          0x00000001
+#define PPSMC_EVENT_STATUS_REGULATORHOT     0x00000002
+#define PPSMC_EVENT_STATUS_DC               0x00000004
 
-प्रकार uपूर्णांक16_t PPSMC_Msg;
+typedef uint16_t PPSMC_Msg;
 
-#आशय pack(pop)
+#pragma pack(pop)
 
-#पूर्ण_अगर
+#endif

@@ -1,58 +1,57 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
-/* ZD1211 USB-WLAN driver क्रम Linux
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+/* ZD1211 USB-WLAN driver for Linux
  *
  * Copyright (C) 2005-2007 Ulrich Kunitz <kune@deine-taler.de>
  * Copyright (C) 2006-2007 Daniel Drake <dsd@gentoo.org>
  */
 
-#अगर_अघोषित _ZD_DEF_H
-#घोषणा _ZD_DEF_H
+#ifndef _ZD_DEF_H
+#define _ZD_DEF_H
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/stringअगरy.h>
-#समावेश <linux/device.h>
+#include <linux/kernel.h>
+#include <linux/stringify.h>
+#include <linux/device.h>
 
-प्रकार u16 __nocast zd_addr_t;
+typedef u16 __nocast zd_addr_t;
 
-#घोषणा dev_prपूर्णांकk_f(level, dev, fmt, args...) \
-	dev_prपूर्णांकk(level, dev, "%s() " fmt, __func__, ##args)
+#define dev_printk_f(level, dev, fmt, args...) \
+	dev_printk(level, dev, "%s() " fmt, __func__, ##args)
 
-#अगर_घोषित DEBUG
+#ifdef DEBUG
 #  define dev_dbg_f(dev, fmt, args...) \
-	  dev_prपूर्णांकk_f(KERN_DEBUG, dev, fmt, ## args)
-#  define dev_dbg_f_limit(dev, fmt, args...) करो अणु \
-	अगर (net_ratelimit()) \
-		dev_prपूर्णांकk_f(KERN_DEBUG, dev, fmt, ## args); \
-पूर्ण जबतक (0)
-#  define dev_dbg_f_cond(dev, cond, fmt, args...) (अणु \
+	  dev_printk_f(KERN_DEBUG, dev, fmt, ## args)
+#  define dev_dbg_f_limit(dev, fmt, args...) do { \
+	if (net_ratelimit()) \
+		dev_printk_f(KERN_DEBUG, dev, fmt, ## args); \
+} while (0)
+#  define dev_dbg_f_cond(dev, cond, fmt, args...) ({ \
 	bool __cond = !!(cond); \
-	अगर (unlikely(__cond)) \
-		dev_prपूर्णांकk_f(KERN_DEBUG, dev, fmt, ## args); \
-पूर्ण)
-#अन्यथा
-#  define dev_dbg_f(dev, fmt, args...) करो अणु (व्योम)(dev); पूर्ण जबतक (0)
-#  define dev_dbg_f_limit(dev, fmt, args...) करो अणु (व्योम)(dev); पूर्ण जबतक (0)
-#  define dev_dbg_f_cond(dev, cond, fmt, args...) करो अणु (व्योम)(dev); पूर्ण जबतक (0)
-#पूर्ण_अगर /* DEBUG */
+	if (unlikely(__cond)) \
+		dev_printk_f(KERN_DEBUG, dev, fmt, ## args); \
+})
+#else
+#  define dev_dbg_f(dev, fmt, args...) do { (void)(dev); } while (0)
+#  define dev_dbg_f_limit(dev, fmt, args...) do { (void)(dev); } while (0)
+#  define dev_dbg_f_cond(dev, cond, fmt, args...) do { (void)(dev); } while (0)
+#endif /* DEBUG */
 
-#अगर_घोषित DEBUG
+#ifdef DEBUG
 #  define ZD_ASSERT(x) \
-करो अणु \
-	अगर (unlikely(!(x))) अणु \
+do { \
+	if (unlikely(!(x))) { \
 		pr_debug("%s:%d ASSERT %s VIOLATED!\n", \
-			__खाता__, __LINE__, __stringअगरy(x)); \
+			__FILE__, __LINE__, __stringify(x)); \
 		dump_stack(); \
-	पूर्ण \
-पूर्ण जबतक (0)
-#अन्यथा
-#  define ZD_ASSERT(x) करो अणु पूर्ण जबतक (0)
-#पूर्ण_अगर
+	} \
+} while (0)
+#else
+#  define ZD_ASSERT(x) do { } while (0)
+#endif
 
-#अगर_घोषित DEBUG
-#  define ZD_MEMCLEAR(poपूर्णांकer, size) स_रखो((poपूर्णांकer), 0xff, (size))
-#अन्यथा
-#  define ZD_MEMCLEAR(poपूर्णांकer, size) करो अणु पूर्ण जबतक (0)
-#पूर्ण_अगर
+#ifdef DEBUG
+#  define ZD_MEMCLEAR(pointer, size) memset((pointer), 0xff, (size))
+#else
+#  define ZD_MEMCLEAR(pointer, size) do { } while (0)
+#endif
 
-#पूर्ण_अगर /* _ZD_DEF_H */
+#endif /* _ZD_DEF_H */

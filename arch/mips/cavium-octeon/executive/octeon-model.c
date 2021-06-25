@@ -1,4 +1,3 @@
-<शैली गुरु>
 /***********************license start***************
  * Author: Cavium Networks
  *
@@ -7,495 +6,495 @@
  *
  * Copyright (c) 2003-2017 Cavium, Inc.
  *
- * This file is मुक्त software; you can redistribute it and/or modअगरy
+ * This file is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, Version 2, as
  * published by the Free Software Foundation.
  *
  * This file is distributed in the hope that it will be useful, but
  * AS-IS and WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE, TITLE, or
- * NONINFRINGEMENT.  See the GNU General Public License क्रम more
+ * NONINFRINGEMENT.  See the GNU General Public License for more
  * details.
  *
  * You should have received a copy of the GNU General Public License
- * aदीर्घ with this file; अगर not, ग_लिखो to the Free Software
- * Foundation, Inc., 51 Franklin St, Fअगरth Floor, Boston, MA 02110-1301 USA
+ * along with this file; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  * or visit http://www.gnu.org/licenses/.
  *
- * This file may also be available under a dअगरferent license from Cavium.
- * Contact Cavium Networks क्रम more inक्रमmation
+ * This file may also be available under a different license from Cavium.
+ * Contact Cavium Networks for more information
  ***********************license end**************************************/
 
-#समावेश <यंत्र/octeon/octeon.h>
+#include <asm/octeon/octeon.h>
 
-क्रमागत octeon_feature_bits __octeon_feature_bits __पढ़ो_mostly;
+enum octeon_feature_bits __octeon_feature_bits __read_mostly;
 EXPORT_SYMBOL_GPL(__octeon_feature_bits);
 
 /**
  * Read a byte of fuse data
- * @byte_addr:	 address to पढ़ो
+ * @byte_addr:	 address to read
  *
  * Returns fuse value: 0 or 1
  */
-अटल uपूर्णांक8_t __init cvmx_fuse_पढ़ो_byte(पूर्णांक byte_addr)
-अणु
-	जोड़ cvmx_mio_fus_rcmd पढ़ो_cmd;
+static uint8_t __init cvmx_fuse_read_byte(int byte_addr)
+{
+	union cvmx_mio_fus_rcmd read_cmd;
 
-	पढ़ो_cmd.u64 = 0;
-	पढ़ो_cmd.s.addr = byte_addr;
-	पढ़ो_cmd.s.pend = 1;
-	cvmx_ग_लिखो_csr(CVMX_MIO_FUS_RCMD, पढ़ो_cmd.u64);
-	जबतक ((पढ़ो_cmd.u64 = cvmx_पढ़ो_csr(CVMX_MIO_FUS_RCMD))
-	       && पढ़ो_cmd.s.pend)
+	read_cmd.u64 = 0;
+	read_cmd.s.addr = byte_addr;
+	read_cmd.s.pend = 1;
+	cvmx_write_csr(CVMX_MIO_FUS_RCMD, read_cmd.u64);
+	while ((read_cmd.u64 = cvmx_read_csr(CVMX_MIO_FUS_RCMD))
+	       && read_cmd.s.pend)
 		;
-	वापस पढ़ो_cmd.s.dat;
-पूर्ण
+	return read_cmd.s.dat;
+}
 
 /*
  * Version of octeon_model_get_string() that takes buffer as argument,
- * as running early in u-boot अटल/global variables करोn't work when
+ * as running early in u-boot static/global variables don't work when
  * running from flash.
  */
-अटल स्थिर अक्षर *__init octeon_model_get_string_buffer(uपूर्णांक32_t chip_id,
-							 अक्षर *buffer)
-अणु
-	स्थिर अक्षर *family;
-	स्थिर अक्षर *core_model;
-	अक्षर pass[4];
-	पूर्णांक घड़ी_mhz;
-	स्थिर अक्षर *suffix;
-	पूर्णांक num_cores;
-	जोड़ cvmx_mio_fus_dat2 fus_dat2;
-	जोड़ cvmx_mio_fus_dat3 fus_dat3;
-	अक्षर fuse_model[10];
-	uपूर्णांक32_t fuse_data = 0;
-	uपूर्णांक64_t l2d_fus3 = 0;
+static const char *__init octeon_model_get_string_buffer(uint32_t chip_id,
+							 char *buffer)
+{
+	const char *family;
+	const char *core_model;
+	char pass[4];
+	int clock_mhz;
+	const char *suffix;
+	int num_cores;
+	union cvmx_mio_fus_dat2 fus_dat2;
+	union cvmx_mio_fus_dat3 fus_dat3;
+	char fuse_model[10];
+	uint32_t fuse_data = 0;
+	uint64_t l2d_fus3 = 0;
 
-	अगर (OCTEON_IS_MODEL(OCTEON_CN3XXX) || OCTEON_IS_MODEL(OCTEON_CN5XXX))
-		l2d_fus3 = (cvmx_पढ़ो_csr(CVMX_L2D_FUS3) >> 34) & 0x3;
-	fus_dat2.u64 = cvmx_पढ़ो_csr(CVMX_MIO_FUS_DAT2);
-	fus_dat3.u64 = cvmx_पढ़ो_csr(CVMX_MIO_FUS_DAT3);
+	if (OCTEON_IS_MODEL(OCTEON_CN3XXX) || OCTEON_IS_MODEL(OCTEON_CN5XXX))
+		l2d_fus3 = (cvmx_read_csr(CVMX_L2D_FUS3) >> 34) & 0x3;
+	fus_dat2.u64 = cvmx_read_csr(CVMX_MIO_FUS_DAT2);
+	fus_dat3.u64 = cvmx_read_csr(CVMX_MIO_FUS_DAT3);
 	num_cores = cvmx_octeon_num_cores();
 
 	/* Make sure the non existent devices look disabled */
-	चयन ((chip_id >> 8) & 0xff) अणु
-	हाल 6:		/* CN50XX */
-	हाल 2:		/* CN30XX */
+	switch ((chip_id >> 8) & 0xff) {
+	case 6:		/* CN50XX */
+	case 2:		/* CN30XX */
 		fus_dat3.s.nodfa_dte = 1;
 		fus_dat3.s.nozip = 1;
-		अवरोध;
-	हाल 4:		/* CN57XX or CN56XX */
+		break;
+	case 4:		/* CN57XX or CN56XX */
 		fus_dat3.s.nodfa_dte = 1;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
 	/* Make a guess at the suffix */
 	/* NSP = everything */
 	/* EXP = No crypto */
 	/* SCP = No DFA, No zip */
 	/* CP = No DFA, No crypto, No zip */
-	अगर (fus_dat3.s.nodfa_dte) अणु
-		अगर (fus_dat2.s.nocrypto)
+	if (fus_dat3.s.nodfa_dte) {
+		if (fus_dat2.s.nocrypto)
 			suffix = "CP";
-		अन्यथा
+		else
 			suffix = "SCP";
-	पूर्ण अन्यथा अगर (fus_dat2.s.nocrypto)
+	} else if (fus_dat2.s.nocrypto)
 		suffix = "EXP";
-	अन्यथा
+	else
 		suffix = "NSP";
 
-	अगर (!fus_dat2.s.nocrypto)
+	if (!fus_dat2.s.nocrypto)
 		__octeon_feature_bits |= OCTEON_HAS_CRYPTO;
 
 	/*
 	 * Assume pass number is encoded using <5:3><2:0>. Exceptions
 	 * will be fixed later.
 	 */
-	प्र_लिखो(pass, "%d.%d", (पूर्णांक)((chip_id >> 3) & 7) + 1, (पूर्णांक)chip_id & 7);
+	sprintf(pass, "%d.%d", (int)((chip_id >> 3) & 7) + 1, (int)chip_id & 7);
 
 	/*
 	 * Use the number of cores to determine the last 2 digits of
 	 * the model number. There are some exceptions that are fixed
 	 * later.
 	 */
-	चयन (num_cores) अणु
-	हाल 48:
+	switch (num_cores) {
+	case 48:
 		core_model = "90";
-		अवरोध;
-	हाल 44:
+		break;
+	case 44:
 		core_model = "88";
-		अवरोध;
-	हाल 40:
+		break;
+	case 40:
 		core_model = "85";
-		अवरोध;
-	हाल 32:
+		break;
+	case 32:
 		core_model = "80";
-		अवरोध;
-	हाल 24:
+		break;
+	case 24:
 		core_model = "70";
-		अवरोध;
-	हाल 16:
+		break;
+	case 16:
 		core_model = "60";
-		अवरोध;
-	हाल 15:
+		break;
+	case 15:
 		core_model = "58";
-		अवरोध;
-	हाल 14:
+		break;
+	case 14:
 		core_model = "55";
-		अवरोध;
-	हाल 13:
+		break;
+	case 13:
 		core_model = "52";
-		अवरोध;
-	हाल 12:
+		break;
+	case 12:
 		core_model = "50";
-		अवरोध;
-	हाल 11:
+		break;
+	case 11:
 		core_model = "48";
-		अवरोध;
-	हाल 10:
+		break;
+	case 10:
 		core_model = "45";
-		अवरोध;
-	हाल 9:
+		break;
+	case 9:
 		core_model = "42";
-		अवरोध;
-	हाल 8:
+		break;
+	case 8:
 		core_model = "40";
-		अवरोध;
-	हाल 7:
+		break;
+	case 7:
 		core_model = "38";
-		अवरोध;
-	हाल 6:
+		break;
+	case 6:
 		core_model = "34";
-		अवरोध;
-	हाल 5:
+		break;
+	case 5:
 		core_model = "32";
-		अवरोध;
-	हाल 4:
+		break;
+	case 4:
 		core_model = "30";
-		अवरोध;
-	हाल 3:
+		break;
+	case 3:
 		core_model = "25";
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		core_model = "20";
-		अवरोध;
-	हाल 1:
+		break;
+	case 1:
 		core_model = "10";
-		अवरोध;
-	शेष:
+		break;
+	default:
 		core_model = "XX";
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	/* Now figure out the family, the first two digits */
-	चयन ((chip_id >> 8) & 0xff) अणु
-	हाल 0:		/* CN38XX, CN37XX or CN36XX */
-		अगर (l2d_fus3) अणु
+	switch ((chip_id >> 8) & 0xff) {
+	case 0:		/* CN38XX, CN37XX or CN36XX */
+		if (l2d_fus3) {
 			/*
 			 * For some unknown reason, the 16 core one is
 			 * called 37 instead of 36.
 			 */
-			अगर (num_cores >= 16)
+			if (num_cores >= 16)
 				family = "37";
-			अन्यथा
+			else
 				family = "36";
-		पूर्ण अन्यथा
+		} else
 			family = "38";
 		/*
 		 * This series of chips didn't follow the standard
 		 * pass numbering.
 		 */
-		चयन (chip_id & 0xf) अणु
-		हाल 0:
-			म_नकल(pass, "1.X");
-			अवरोध;
-		हाल 1:
-			म_नकल(pass, "2.X");
-			अवरोध;
-		हाल 3:
-			म_नकल(pass, "3.X");
-			अवरोध;
-		शेष:
-			म_नकल(pass, "X.X");
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल 1:		/* CN31XX or CN3020 */
-		अगर ((chip_id & 0x10) || l2d_fus3)
+		switch (chip_id & 0xf) {
+		case 0:
+			strcpy(pass, "1.X");
+			break;
+		case 1:
+			strcpy(pass, "2.X");
+			break;
+		case 3:
+			strcpy(pass, "3.X");
+			break;
+		default:
+			strcpy(pass, "X.X");
+			break;
+		}
+		break;
+	case 1:		/* CN31XX or CN3020 */
+		if ((chip_id & 0x10) || l2d_fus3)
 			family = "30";
-		अन्यथा
+		else
 			family = "31";
 		/*
 		 * This series of chips didn't follow the standard
 		 * pass numbering.
 		 */
-		चयन (chip_id & 0xf) अणु
-		हाल 0:
-			म_नकल(pass, "1.0");
-			अवरोध;
-		हाल 2:
-			म_नकल(pass, "1.1");
-			अवरोध;
-		शेष:
-			म_नकल(pass, "X.X");
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल 2:		/* CN3010 or CN3005 */
+		switch (chip_id & 0xf) {
+		case 0:
+			strcpy(pass, "1.0");
+			break;
+		case 2:
+			strcpy(pass, "1.1");
+			break;
+		default:
+			strcpy(pass, "X.X");
+			break;
+		}
+		break;
+	case 2:		/* CN3010 or CN3005 */
 		family = "30";
 		/* A chip with half cache is an 05 */
-		अगर (l2d_fus3)
+		if (l2d_fus3)
 			core_model = "05";
 		/*
 		 * This series of chips didn't follow the standard
 		 * pass numbering.
 		 */
-		चयन (chip_id & 0xf) अणु
-		हाल 0:
-			म_नकल(pass, "1.0");
-			अवरोध;
-		हाल 2:
-			म_नकल(pass, "1.1");
-			अवरोध;
-		शेष:
-			म_नकल(pass, "X.X");
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल 3:		/* CN58XX */
+		switch (chip_id & 0xf) {
+		case 0:
+			strcpy(pass, "1.0");
+			break;
+		case 2:
+			strcpy(pass, "1.1");
+			break;
+		default:
+			strcpy(pass, "X.X");
+			break;
+		}
+		break;
+	case 3:		/* CN58XX */
 		family = "58";
-		/* Special हाल. 4 core, half cache (CP with half cache) */
-		अगर ((num_cores == 4) && l2d_fus3 && !म_भेदन(suffix, "CP", 2))
+		/* Special case. 4 core, half cache (CP with half cache) */
+		if ((num_cores == 4) && l2d_fus3 && !strncmp(suffix, "CP", 2))
 			core_model = "29";
 
-		/* Pass 1 uses dअगरferent encodings क्रम pass numbers */
-		अगर ((chip_id & 0xFF) < 0x8) अणु
-			चयन (chip_id & 0x3) अणु
-			हाल 0:
-				म_नकल(pass, "1.0");
-				अवरोध;
-			हाल 1:
-				म_नकल(pass, "1.1");
-				अवरोध;
-			हाल 3:
-				म_नकल(pass, "1.2");
-				अवरोध;
-			शेष:
-				म_नकल(pass, "1.X");
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		अवरोध;
-	हाल 4:		/* CN57XX, CN56XX, CN55XX, CN54XX */
-		अगर (fus_dat2.cn56xx.raid_en) अणु
-			अगर (l2d_fus3)
+		/* Pass 1 uses different encodings for pass numbers */
+		if ((chip_id & 0xFF) < 0x8) {
+			switch (chip_id & 0x3) {
+			case 0:
+				strcpy(pass, "1.0");
+				break;
+			case 1:
+				strcpy(pass, "1.1");
+				break;
+			case 3:
+				strcpy(pass, "1.2");
+				break;
+			default:
+				strcpy(pass, "1.X");
+				break;
+			}
+		}
+		break;
+	case 4:		/* CN57XX, CN56XX, CN55XX, CN54XX */
+		if (fus_dat2.cn56xx.raid_en) {
+			if (l2d_fus3)
 				family = "55";
-			अन्यथा
+			else
 				family = "57";
-			अगर (fus_dat2.cn56xx.nocrypto)
+			if (fus_dat2.cn56xx.nocrypto)
 				suffix = "SP";
-			अन्यथा
+			else
 				suffix = "SSP";
-		पूर्ण अन्यथा अणु
-			अगर (fus_dat2.cn56xx.nocrypto)
+		} else {
+			if (fus_dat2.cn56xx.nocrypto)
 				suffix = "CP";
-			अन्यथा अणु
+			else {
 				suffix = "NSP";
-				अगर (fus_dat3.s.nozip)
+				if (fus_dat3.s.nozip)
 					suffix = "SCP";
 
-				अगर (fus_dat3.cn38xx.bar2_en)
+				if (fus_dat3.cn38xx.bar2_en)
 					suffix = "NSPB2";
-			पूर्ण
-			अगर (l2d_fus3)
+			}
+			if (l2d_fus3)
 				family = "54";
-			अन्यथा
+			else
 				family = "56";
-		पूर्ण
-		अवरोध;
-	हाल 6:		/* CN50XX */
+		}
+		break;
+	case 6:		/* CN50XX */
 		family = "50";
-		अवरोध;
-	हाल 7:		/* CN52XX */
-		अगर (l2d_fus3)
+		break;
+	case 7:		/* CN52XX */
+		if (l2d_fus3)
 			family = "51";
-		अन्यथा
+		else
 			family = "52";
-		अवरोध;
-	हाल 0x93:		/* CN61XX */
+		break;
+	case 0x93:		/* CN61XX */
 		family = "61";
-		अगर (fus_dat2.cn61xx.nocrypto && fus_dat2.cn61xx.करोrm_crypto)
+		if (fus_dat2.cn61xx.nocrypto && fus_dat2.cn61xx.dorm_crypto)
 			suffix = "AP";
-		अगर (fus_dat2.cn61xx.nocrypto)
+		if (fus_dat2.cn61xx.nocrypto)
 			suffix = "CP";
-		अन्यथा अगर (fus_dat2.cn61xx.करोrm_crypto)
+		else if (fus_dat2.cn61xx.dorm_crypto)
 			suffix = "DAP";
-		अन्यथा अगर (fus_dat3.cn61xx.nozip)
+		else if (fus_dat3.cn61xx.nozip)
 			suffix = "SCP";
-		अवरोध;
-	हाल 0x90:		/* CN63XX */
+		break;
+	case 0x90:		/* CN63XX */
 		family = "63";
-		अगर (fus_dat3.s.l2c_crip == 2)
+		if (fus_dat3.s.l2c_crip == 2)
 			family = "62";
-		अगर (num_cores == 6)	/* Other core counts match generic */
+		if (num_cores == 6)	/* Other core counts match generic */
 			core_model = "35";
-		अगर (fus_dat2.cn63xx.nocrypto)
+		if (fus_dat2.cn63xx.nocrypto)
 			suffix = "CP";
-		अन्यथा अगर (fus_dat2.cn63xx.करोrm_crypto)
+		else if (fus_dat2.cn63xx.dorm_crypto)
 			suffix = "DAP";
-		अन्यथा अगर (fus_dat3.cn61xx.nozip)
+		else if (fus_dat3.cn61xx.nozip)
 			suffix = "SCP";
-		अन्यथा
+		else
 			suffix = "AAP";
-		अवरोध;
-	हाल 0x92:		/* CN66XX */
+		break;
+	case 0x92:		/* CN66XX */
 		family = "66";
-		अगर (num_cores == 6)	/* Other core counts match generic */
+		if (num_cores == 6)	/* Other core counts match generic */
 			core_model = "35";
-		अगर (fus_dat2.cn66xx.nocrypto && fus_dat2.cn66xx.करोrm_crypto)
+		if (fus_dat2.cn66xx.nocrypto && fus_dat2.cn66xx.dorm_crypto)
 			suffix = "AP";
-		अगर (fus_dat2.cn66xx.nocrypto)
+		if (fus_dat2.cn66xx.nocrypto)
 			suffix = "CP";
-		अन्यथा अगर (fus_dat2.cn66xx.करोrm_crypto)
+		else if (fus_dat2.cn66xx.dorm_crypto)
 			suffix = "DAP";
-		अन्यथा अगर (fus_dat3.cn61xx.nozip)
+		else if (fus_dat3.cn61xx.nozip)
 			suffix = "SCP";
-		अन्यथा
+		else
 			suffix = "AAP";
-		अवरोध;
-	हाल 0x91:		/* CN68XX */
+		break;
+	case 0x91:		/* CN68XX */
 		family = "68";
-		अगर (fus_dat2.cn68xx.nocrypto && fus_dat3.cn61xx.nozip)
+		if (fus_dat2.cn68xx.nocrypto && fus_dat3.cn61xx.nozip)
 			suffix = "CP";
-		अन्यथा अगर (fus_dat2.cn68xx.करोrm_crypto)
+		else if (fus_dat2.cn68xx.dorm_crypto)
 			suffix = "DAP";
-		अन्यथा अगर (fus_dat3.cn61xx.nozip)
+		else if (fus_dat3.cn61xx.nozip)
 			suffix = "SCP";
-		अन्यथा अगर (fus_dat2.cn68xx.nocrypto)
+		else if (fus_dat2.cn68xx.nocrypto)
 			suffix = "SP";
-		अन्यथा
+		else
 			suffix = "AAP";
-		अवरोध;
-	हाल 0x94:		/* CNF71XX */
+		break;
+	case 0x94:		/* CNF71XX */
 		family = "F71";
-		अगर (fus_dat3.cn61xx.nozip)
+		if (fus_dat3.cn61xx.nozip)
 			suffix = "SCP";
-		अन्यथा
+		else
 			suffix = "AAP";
-		अवरोध;
-	हाल 0x95:		/* CN78XX */
-		अगर (num_cores == 6)	/* Other core counts match generic */
+		break;
+	case 0x95:		/* CN78XX */
+		if (num_cores == 6)	/* Other core counts match generic */
 			core_model = "35";
-		अगर (OCTEON_IS_MODEL(OCTEON_CN76XX))
+		if (OCTEON_IS_MODEL(OCTEON_CN76XX))
 			family = "76";
-		अन्यथा
+		else
 			family = "78";
-		अगर (fus_dat3.cn78xx.l2c_crip == 2)
+		if (fus_dat3.cn78xx.l2c_crip == 2)
 			family = "77";
-		अगर (fus_dat3.cn78xx.nozip
+		if (fus_dat3.cn78xx.nozip
 		    && fus_dat3.cn78xx.nodfa_dte
-		    && fus_dat3.cn78xx.nohna_dte) अणु
-			अगर (fus_dat3.cn78xx.nozip &&
+		    && fus_dat3.cn78xx.nohna_dte) {
+			if (fus_dat3.cn78xx.nozip &&
 				!fus_dat2.cn78xx.raid_en &&
-				fus_dat3.cn78xx.nohna_dte) अणु
+				fus_dat3.cn78xx.nohna_dte) {
 				suffix = "CP";
-			पूर्ण अन्यथा अणु
+			} else {
 				suffix = "SCP";
-			पूर्ण
-		पूर्ण अन्यथा अगर (fus_dat2.cn78xx.raid_en == 0)
+			}
+		} else if (fus_dat2.cn78xx.raid_en == 0)
 			suffix = "HCP";
-		अन्यथा
+		else
 			suffix = "AAP";
-		अवरोध;
-	हाल 0x96:		/* CN70XX */
+		break;
+	case 0x96:		/* CN70XX */
 		family = "70";
-		अगर (cvmx_पढ़ो_csr(CVMX_MIO_FUS_PDF) & (0x1ULL << 32))
+		if (cvmx_read_csr(CVMX_MIO_FUS_PDF) & (0x1ULL << 32))
 			family = "71";
-		अगर (fus_dat2.cn70xx.nocrypto)
+		if (fus_dat2.cn70xx.nocrypto)
 			suffix = "CP";
-		अन्यथा अगर (fus_dat3.cn70xx.nodfa_dte)
+		else if (fus_dat3.cn70xx.nodfa_dte)
 			suffix = "SCP";
-		अन्यथा
+		else
 			suffix = "AAP";
-		अवरोध;
-	हाल 0x97:		/* CN73XX */
-		अगर (num_cores == 6)	/* Other core counts match generic */
+		break;
+	case 0x97:		/* CN73XX */
+		if (num_cores == 6)	/* Other core counts match generic */
 			core_model = "35";
 		family = "73";
-		अगर (fus_dat3.cn73xx.l2c_crip == 2)
+		if (fus_dat3.cn73xx.l2c_crip == 2)
 			family = "72";
-		अगर (fus_dat3.cn73xx.nozip
+		if (fus_dat3.cn73xx.nozip
 				&& fus_dat3.cn73xx.nodfa_dte
-				&& fus_dat3.cn73xx.nohna_dte) अणु
-			अगर (!fus_dat2.cn73xx.raid_en)
+				&& fus_dat3.cn73xx.nohna_dte) {
+			if (!fus_dat2.cn73xx.raid_en)
 				suffix = "CP";
-			अन्यथा
+			else
 				suffix = "SCP";
-		पूर्ण अन्यथा
+		} else
 			suffix = "AAP";
-		अवरोध;
-	हाल 0x98:		/* CN75XX */
+		break;
+	case 0x98:		/* CN75XX */
 		family = "F75";
-		अगर (fus_dat3.cn78xx.nozip
+		if (fus_dat3.cn78xx.nozip
 		    && fus_dat3.cn78xx.nodfa_dte
 		    && fus_dat3.cn78xx.nohna_dte)
 			suffix = "SCP";
-		अन्यथा
+		else
 			suffix = "AAP";
-		अवरोध;
-	शेष:
+		break;
+	default:
 		family = "XX";
 		core_model = "XX";
-		म_नकल(pass, "X.X");
+		strcpy(pass, "X.X");
 		suffix = "XXX";
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	घड़ी_mhz = octeon_get_घड़ी_rate() / 1000000;
-	अगर (family[0] != '3') अणु
-		पूर्णांक fuse_base = 384 / 8;
-		अगर (family[0] == '6')
+	clock_mhz = octeon_get_clock_rate() / 1000000;
+	if (family[0] != '3') {
+		int fuse_base = 384 / 8;
+		if (family[0] == '6')
 			fuse_base = 832 / 8;
 
-		/* Check क्रम model in fuses, overrides normal decode */
-		/* This is _not_ valid क्रम Octeon CN3XXX models */
-		fuse_data |= cvmx_fuse_पढ़ो_byte(fuse_base + 3);
+		/* Check for model in fuses, overrides normal decode */
+		/* This is _not_ valid for Octeon CN3XXX models */
+		fuse_data |= cvmx_fuse_read_byte(fuse_base + 3);
 		fuse_data = fuse_data << 8;
-		fuse_data |= cvmx_fuse_पढ़ो_byte(fuse_base + 2);
+		fuse_data |= cvmx_fuse_read_byte(fuse_base + 2);
 		fuse_data = fuse_data << 8;
-		fuse_data |= cvmx_fuse_पढ़ो_byte(fuse_base + 1);
+		fuse_data |= cvmx_fuse_read_byte(fuse_base + 1);
 		fuse_data = fuse_data << 8;
-		fuse_data |= cvmx_fuse_पढ़ो_byte(fuse_base);
-		अगर (fuse_data & 0x7ffff) अणु
-			पूर्णांक model = fuse_data & 0x3fff;
-			पूर्णांक suffix = (fuse_data >> 14) & 0x1f;
-			अगर (suffix && model) अणु
+		fuse_data |= cvmx_fuse_read_byte(fuse_base);
+		if (fuse_data & 0x7ffff) {
+			int model = fuse_data & 0x3fff;
+			int suffix = (fuse_data >> 14) & 0x1f;
+			if (suffix && model) {
 				/* Have both number and suffix in fuses, so both */
-				प्र_लिखो(fuse_model, "%d%c", model, 'A' + suffix - 1);
+				sprintf(fuse_model, "%d%c", model, 'A' + suffix - 1);
 				core_model = "";
 				family = fuse_model;
-			पूर्ण अन्यथा अगर (suffix && !model) अणु
+			} else if (suffix && !model) {
 				/* Only have suffix, so add suffix to 'normal' model number */
-				प्र_लिखो(fuse_model, "%s%c", core_model, 'A' + suffix - 1);
+				sprintf(fuse_model, "%s%c", core_model, 'A' + suffix - 1);
 				core_model = fuse_model;
-			पूर्ण अन्यथा अणु
+			} else {
 				/* Don't have suffix, so just use model from fuses */
-				प्र_लिखो(fuse_model, "%d", model);
+				sprintf(fuse_model, "%d", model);
 				core_model = "";
 				family = fuse_model;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	प्र_लिखो(buffer, "CN%s%sp%s-%d-%s", family, core_model, pass, घड़ी_mhz, suffix);
-	वापस buffer;
-पूर्ण
+			}
+		}
+	}
+	sprintf(buffer, "CN%s%sp%s-%d-%s", family, core_model, pass, clock_mhz, suffix);
+	return buffer;
+}
 
 /**
- * Given the chip processor ID from COP0, this function वापसs a
+ * Given the chip processor ID from COP0, this function returns a
  * string representing the chip model number. The string is of the
- * क्रमm CNXXXXpX.X-FREQ-SUFFIX.
+ * form CNXXXXpX.X-FREQ-SUFFIX.
  * - XXXX = The chip model number
  * - X.X = Chip pass number
  * - FREQ = Current frequency in Mhz
@@ -505,8 +504,8 @@ EXPORT_SYMBOL_GPL(__octeon_feature_bits);
  *
  * Returns Model string
  */
-स्थिर अक्षर *__init octeon_model_get_string(uपूर्णांक32_t chip_id)
-अणु
-	अटल अक्षर buffer[32];
-	वापस octeon_model_get_string_buffer(chip_id, buffer);
-पूर्ण
+const char *__init octeon_model_get_string(uint32_t chip_id)
+{
+	static char buffer[32];
+	return octeon_model_get_string_buffer(chip_id, buffer);
+}

@@ -1,10 +1,9 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _DIACR_H
-#घोषणा _DIACR_H
-#समावेश <linux/kd.h>
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _DIACR_H
+#define _DIACR_H
+#include <linux/kd.h>
 
-बाह्य काष्ठा kbdiacruc accent_table[];
-बाह्य अचिन्हित पूर्णांक accent_table_size;
+extern struct kbdiacruc accent_table[];
+extern unsigned int accent_table_size;
 
-#पूर्ण_अगर /* _DIACR_H */
+#endif /* _DIACR_H */

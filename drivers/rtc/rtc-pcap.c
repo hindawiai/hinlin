@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- *  pcap rtc code क्रम Motorola EZX phones
+ *  pcap rtc code for Motorola EZX phones
  *
  *  Copyright (c) 2008 guiming zhuo <gmzhuo@gmail.com>
  *  Copyright (c) 2009 Daniel Ribeiro <drwyrm@gmail.com>
@@ -9,177 +8,177 @@
  *  Based on Motorola's rtc.c Copyright (c) 2003-2005 Motorola
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/mfd/ezx-pcap.h>
-#समावेश <linux/rtc.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/mfd/ezx-pcap.h>
+#include <linux/rtc.h>
+#include <linux/slab.h>
+#include <linux/platform_device.h>
 
-काष्ठा pcap_rtc अणु
-	काष्ठा pcap_chip *pcap;
-	काष्ठा rtc_device *rtc;
-पूर्ण;
+struct pcap_rtc {
+	struct pcap_chip *pcap;
+	struct rtc_device *rtc;
+};
 
-अटल irqवापस_t pcap_rtc_irq(पूर्णांक irq, व्योम *_pcap_rtc)
-अणु
-	काष्ठा pcap_rtc *pcap_rtc = _pcap_rtc;
-	अचिन्हित दीर्घ rtc_events;
+static irqreturn_t pcap_rtc_irq(int irq, void *_pcap_rtc)
+{
+	struct pcap_rtc *pcap_rtc = _pcap_rtc;
+	unsigned long rtc_events;
 
-	अगर (irq == pcap_to_irq(pcap_rtc->pcap, PCAP_IRQ_1HZ))
+	if (irq == pcap_to_irq(pcap_rtc->pcap, PCAP_IRQ_1HZ))
 		rtc_events = RTC_IRQF | RTC_UF;
-	अन्यथा अगर (irq == pcap_to_irq(pcap_rtc->pcap, PCAP_IRQ_TODA))
+	else if (irq == pcap_to_irq(pcap_rtc->pcap, PCAP_IRQ_TODA))
 		rtc_events = RTC_IRQF | RTC_AF;
-	अन्यथा
+	else
 		rtc_events = 0;
 
 	rtc_update_irq(pcap_rtc->rtc, 1, rtc_events);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक pcap_rtc_पढ़ो_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alrm)
-अणु
-	काष्ठा pcap_rtc *pcap_rtc = dev_get_drvdata(dev);
-	काष्ठा rtc_समय *पंचांग = &alrm->समय;
-	अचिन्हित दीर्घ secs;
-	u32 tod;	/* समय of day, seconds since midnight */
+static int pcap_rtc_read_alarm(struct device *dev, struct rtc_wkalrm *alrm)
+{
+	struct pcap_rtc *pcap_rtc = dev_get_drvdata(dev);
+	struct rtc_time *tm = &alrm->time;
+	unsigned long secs;
+	u32 tod;	/* time of day, seconds since midnight */
 	u32 days;	/* days since 1/1/1970 */
 
-	ezx_pcap_पढ़ो(pcap_rtc->pcap, PCAP_REG_RTC_TODA, &tod);
+	ezx_pcap_read(pcap_rtc->pcap, PCAP_REG_RTC_TODA, &tod);
 	secs = tod & PCAP_RTC_TOD_MASK;
 
-	ezx_pcap_पढ़ो(pcap_rtc->pcap, PCAP_REG_RTC_DAYA, &days);
+	ezx_pcap_read(pcap_rtc->pcap, PCAP_REG_RTC_DAYA, &days);
 	secs += (days & PCAP_RTC_DAY_MASK) * SEC_PER_DAY;
 
-	rtc_समय64_to_पंचांग(secs, पंचांग);
+	rtc_time64_to_tm(secs, tm);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pcap_rtc_set_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alrm)
-अणु
-	काष्ठा pcap_rtc *pcap_rtc = dev_get_drvdata(dev);
-	अचिन्हित दीर्घ secs = rtc_पंचांग_to_समय64(&alrm->समय);
+static int pcap_rtc_set_alarm(struct device *dev, struct rtc_wkalrm *alrm)
+{
+	struct pcap_rtc *pcap_rtc = dev_get_drvdata(dev);
+	unsigned long secs = rtc_tm_to_time64(&alrm->time);
 	u32 tod, days;
 
 	tod = secs % SEC_PER_DAY;
-	ezx_pcap_ग_लिखो(pcap_rtc->pcap, PCAP_REG_RTC_TODA, tod);
+	ezx_pcap_write(pcap_rtc->pcap, PCAP_REG_RTC_TODA, tod);
 
 	days = secs / SEC_PER_DAY;
-	ezx_pcap_ग_लिखो(pcap_rtc->pcap, PCAP_REG_RTC_DAYA, days);
+	ezx_pcap_write(pcap_rtc->pcap, PCAP_REG_RTC_DAYA, days);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pcap_rtc_पढ़ो_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
-अणु
-	काष्ठा pcap_rtc *pcap_rtc = dev_get_drvdata(dev);
-	अचिन्हित दीर्घ secs;
+static int pcap_rtc_read_time(struct device *dev, struct rtc_time *tm)
+{
+	struct pcap_rtc *pcap_rtc = dev_get_drvdata(dev);
+	unsigned long secs;
 	u32 tod, days;
 
-	ezx_pcap_पढ़ो(pcap_rtc->pcap, PCAP_REG_RTC_TOD, &tod);
+	ezx_pcap_read(pcap_rtc->pcap, PCAP_REG_RTC_TOD, &tod);
 	secs = tod & PCAP_RTC_TOD_MASK;
 
-	ezx_pcap_पढ़ो(pcap_rtc->pcap, PCAP_REG_RTC_DAY, &days);
+	ezx_pcap_read(pcap_rtc->pcap, PCAP_REG_RTC_DAY, &days);
 	secs += (days & PCAP_RTC_DAY_MASK) * SEC_PER_DAY;
 
-	rtc_समय64_to_पंचांग(secs, पंचांग);
+	rtc_time64_to_tm(secs, tm);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pcap_rtc_set_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
-अणु
-	काष्ठा pcap_rtc *pcap_rtc = dev_get_drvdata(dev);
-	अचिन्हित दीर्घ secs = rtc_पंचांग_to_समय64(पंचांग);
+static int pcap_rtc_set_time(struct device *dev, struct rtc_time *tm)
+{
+	struct pcap_rtc *pcap_rtc = dev_get_drvdata(dev);
+	unsigned long secs = rtc_tm_to_time64(tm);
 	u32 tod, days;
 
 	tod = secs % SEC_PER_DAY;
-	ezx_pcap_ग_लिखो(pcap_rtc->pcap, PCAP_REG_RTC_TOD, tod);
+	ezx_pcap_write(pcap_rtc->pcap, PCAP_REG_RTC_TOD, tod);
 
 	days = secs / SEC_PER_DAY;
-	ezx_pcap_ग_लिखो(pcap_rtc->pcap, PCAP_REG_RTC_DAY, days);
+	ezx_pcap_write(pcap_rtc->pcap, PCAP_REG_RTC_DAY, days);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pcap_rtc_irq_enable(काष्ठा device *dev, पूर्णांक pirq, अचिन्हित पूर्णांक en)
-अणु
-	काष्ठा pcap_rtc *pcap_rtc = dev_get_drvdata(dev);
+static int pcap_rtc_irq_enable(struct device *dev, int pirq, unsigned int en)
+{
+	struct pcap_rtc *pcap_rtc = dev_get_drvdata(dev);
 
-	अगर (en)
+	if (en)
 		enable_irq(pcap_to_irq(pcap_rtc->pcap, pirq));
-	अन्यथा
+	else
 		disable_irq(pcap_to_irq(pcap_rtc->pcap, pirq));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pcap_rtc_alarm_irq_enable(काष्ठा device *dev, अचिन्हित पूर्णांक en)
-अणु
-	वापस pcap_rtc_irq_enable(dev, PCAP_IRQ_TODA, en);
-पूर्ण
+static int pcap_rtc_alarm_irq_enable(struct device *dev, unsigned int en)
+{
+	return pcap_rtc_irq_enable(dev, PCAP_IRQ_TODA, en);
+}
 
-अटल स्थिर काष्ठा rtc_class_ops pcap_rtc_ops = अणु
-	.पढ़ो_समय = pcap_rtc_पढ़ो_समय,
-	.set_समय = pcap_rtc_set_समय,
-	.पढ़ो_alarm = pcap_rtc_पढ़ो_alarm,
+static const struct rtc_class_ops pcap_rtc_ops = {
+	.read_time = pcap_rtc_read_time,
+	.set_time = pcap_rtc_set_time,
+	.read_alarm = pcap_rtc_read_alarm,
 	.set_alarm = pcap_rtc_set_alarm,
 	.alarm_irq_enable = pcap_rtc_alarm_irq_enable,
-पूर्ण;
+};
 
-अटल पूर्णांक __init pcap_rtc_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा pcap_rtc *pcap_rtc;
-	पूर्णांक समयr_irq, alarm_irq;
-	पूर्णांक err = -ENOMEM;
+static int __init pcap_rtc_probe(struct platform_device *pdev)
+{
+	struct pcap_rtc *pcap_rtc;
+	int timer_irq, alarm_irq;
+	int err = -ENOMEM;
 
-	pcap_rtc = devm_kzalloc(&pdev->dev, माप(काष्ठा pcap_rtc),
+	pcap_rtc = devm_kzalloc(&pdev->dev, sizeof(struct pcap_rtc),
 				GFP_KERNEL);
-	अगर (!pcap_rtc)
-		वापस err;
+	if (!pcap_rtc)
+		return err;
 
 	pcap_rtc->pcap = dev_get_drvdata(pdev->dev.parent);
 
-	platक्रमm_set_drvdata(pdev, pcap_rtc);
+	platform_set_drvdata(pdev, pcap_rtc);
 
 	pcap_rtc->rtc = devm_rtc_allocate_device(&pdev->dev);
-	अगर (IS_ERR(pcap_rtc->rtc))
-		वापस PTR_ERR(pcap_rtc->rtc);
+	if (IS_ERR(pcap_rtc->rtc))
+		return PTR_ERR(pcap_rtc->rtc);
 
 	pcap_rtc->rtc->ops = &pcap_rtc_ops;
 	pcap_rtc->rtc->range_max = (1 << 14) * 86400ULL - 1;
 
-	समयr_irq = pcap_to_irq(pcap_rtc->pcap, PCAP_IRQ_1HZ);
+	timer_irq = pcap_to_irq(pcap_rtc->pcap, PCAP_IRQ_1HZ);
 	alarm_irq = pcap_to_irq(pcap_rtc->pcap, PCAP_IRQ_TODA);
 
-	err = devm_request_irq(&pdev->dev, समयr_irq, pcap_rtc_irq, 0,
+	err = devm_request_irq(&pdev->dev, timer_irq, pcap_rtc_irq, 0,
 				"RTC Timer", pcap_rtc);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = devm_request_irq(&pdev->dev, alarm_irq, pcap_rtc_irq, 0,
 				"RTC Alarm", pcap_rtc);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	वापस devm_rtc_रेजिस्टर_device(pcap_rtc->rtc);
-पूर्ण
+	return devm_rtc_register_device(pcap_rtc->rtc);
+}
 
-अटल पूर्णांक __निकास pcap_rtc_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	वापस 0;
-पूर्ण
+static int __exit pcap_rtc_remove(struct platform_device *pdev)
+{
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver pcap_rtc_driver = अणु
-	.हटाओ = __निकास_p(pcap_rtc_हटाओ),
-	.driver = अणु
+static struct platform_driver pcap_rtc_driver = {
+	.remove = __exit_p(pcap_rtc_remove),
+	.driver = {
 		.name  = "pcap-rtc",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver_probe(pcap_rtc_driver, pcap_rtc_probe);
+module_platform_driver_probe(pcap_rtc_driver, pcap_rtc_probe);
 
 MODULE_DESCRIPTION("Motorola pcap rtc driver");
 MODULE_AUTHOR("guiming zhuo <gmzhuo@gmail.com>");

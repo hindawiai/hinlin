@@ -1,24 +1,23 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2014 MediaTek Inc.
  * Author: Flora Fu, MediaTek
  */
 
-#अगर_अघोषित __MFD_MT6397_CORE_H__
-#घोषणा __MFD_MT6397_CORE_H__
+#ifndef __MFD_MT6397_CORE_H__
+#define __MFD_MT6397_CORE_H__
 
-#समावेश <linux/mutex.h>
-#समावेश <linux/notअगरier.h>
+#include <linux/mutex.h>
+#include <linux/notifier.h>
 
-क्रमागत chip_id अणु
+enum chip_id {
 	MT6323_CHIP_ID = 0x23,
 	MT6358_CHIP_ID = 0x58,
 	MT6391_CHIP_ID = 0x91,
 	MT6397_CHIP_ID = 0x97,
-पूर्ण;
+};
 
-क्रमागत mt6397_irq_numbers अणु
+enum mt6397_irq_numbers {
 	MT6397_IRQ_SPKL_AB = 0,
 	MT6397_IRQ_SPKR_AB,
 	MT6397_IRQ_SPKL,
@@ -52,25 +51,25 @@
 	MT6397_IRQ_VSRMCA7,
 	MT6397_IRQ_VDRM,
 	MT6397_IRQ_NR,
-पूर्ण;
+};
 
-काष्ठा mt6397_chip अणु
-	काष्ठा device *dev;
-	काष्ठा regmap *regmap;
-	काष्ठा notअगरier_block pm_nb;
-	पूर्णांक irq;
-	काष्ठा irq_करोमुख्य *irq_करोमुख्य;
-	काष्ठा mutex irqlock;
+struct mt6397_chip {
+	struct device *dev;
+	struct regmap *regmap;
+	struct notifier_block pm_nb;
+	int irq;
+	struct irq_domain *irq_domain;
+	struct mutex irqlock;
 	u16 wake_mask[2];
 	u16 irq_masks_cur[2];
 	u16 irq_masks_cache[2];
-	u16 पूर्णांक_con[2];
-	u16 पूर्णांक_status[2];
+	u16 int_con[2];
+	u16 int_status[2];
 	u16 chip_id;
-	व्योम *irq_data;
-पूर्ण;
+	void *irq_data;
+};
 
-पूर्णांक mt6358_irq_init(काष्ठा mt6397_chip *chip);
-पूर्णांक mt6397_irq_init(काष्ठा mt6397_chip *chip);
+int mt6358_irq_init(struct mt6397_chip *chip);
+int mt6397_irq_init(struct mt6397_chip *chip);
 
-#पूर्ण_अगर /* __MFD_MT6397_CORE_H__ */
+#endif /* __MFD_MT6397_CORE_H__ */

@@ -1,117 +1,116 @@
-<शैली गुरु>
 /*
  * linux/arch/m68k/amiga/amisound.c
  *
- * amiga sound driver क्रम Linux/m68k
+ * amiga sound driver for Linux/m68k
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file COPYING in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file COPYING in the main directory of this archive
+ * for more details.
  */
 
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/init.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/module.h>
+#include <linux/jiffies.h>
+#include <linux/timer.h>
+#include <linux/init.h>
+#include <linux/string.h>
+#include <linux/module.h>
 
-#समावेश <यंत्र/amigahw.h>
+#include <asm/amigahw.h>
 
-अटल अचिन्हित लघु *snd_data;
-अटल स्थिर चिन्हित अक्षर sine_data[] = अणु
+static unsigned short *snd_data;
+static const signed char sine_data[] = {
 	0,  39,  75,  103,  121,  127,  121,  103,  75,  39,
 	0, -39, -75, -103, -121, -127, -121, -103, -75, -39
-पूर्ण;
-#घोषणा DATA_SIZE	ARRAY_SIZE(sine_data)
+};
+#define DATA_SIZE	ARRAY_SIZE(sine_data)
 
-#घोषणा custom amiga_custom
+#define custom amiga_custom
 
     /*
-     * The minimum period क्रम audio may be modअगरied by the frame buffer
-     * device since it depends on htotal (क्रम OCS/ECS/AGA)
+     * The minimum period for audio may be modified by the frame buffer
+     * device since it depends on htotal (for OCS/ECS/AGA)
      */
 
-अस्थिर अचिन्हित लघु amiga_audio_min_period = 124; /* Default क्रम pre-OCS */
+volatile unsigned short amiga_audio_min_period = 124; /* Default for pre-OCS */
 EXPORT_SYMBOL(amiga_audio_min_period);
 
-#घोषणा MAX_PERIOD	(65535)
+#define MAX_PERIOD	(65535)
 
 
     /*
      *	Current period (set by dmasound.c)
      */
 
-अचिन्हित लघु amiga_audio_period = MAX_PERIOD;
+unsigned short amiga_audio_period = MAX_PERIOD;
 EXPORT_SYMBOL(amiga_audio_period);
 
-अटल अचिन्हित दीर्घ घड़ी_स्थिरant;
+static unsigned long clock_constant;
 
-व्योम __init amiga_init_sound(व्योम)
-अणु
-	अटल काष्ठा resource beep_res = अणु .name = "Beep" पूर्ण;
+void __init amiga_init_sound(void)
+{
+	static struct resource beep_res = { .name = "Beep" };
 
-	snd_data = amiga_chip_alloc_res(माप(sine_data), &beep_res);
-	अगर (!snd_data) अणु
+	snd_data = amiga_chip_alloc_res(sizeof(sine_data), &beep_res);
+	if (!snd_data) {
 		pr_crit("amiga init_sound: failed to allocate chipmem\n");
-		वापस;
-	पूर्ण
-	स_नकल (snd_data, sine_data, माप(sine_data));
+		return;
+	}
+	memcpy (snd_data, sine_data, sizeof(sine_data));
 
-	/* setup भागisor */
-	घड़ी_स्थिरant = (amiga_colorघड़ी+DATA_SIZE/2)/DATA_SIZE;
+	/* setup divisor */
+	clock_constant = (amiga_colorclock+DATA_SIZE/2)/DATA_SIZE;
 
-	/* without amअगरb, turn video off and enable high quality sound */
-#अगर_अघोषित CONFIG_FB_AMIGA
-	amअगरb_video_off();
-#पूर्ण_अगर
-पूर्ण
+	/* without amifb, turn video off and enable high quality sound */
+#ifndef CONFIG_FB_AMIGA
+	amifb_video_off();
+#endif
+}
 
-अटल व्योम nosound(काष्ठा समयr_list *unused);
-अटल DEFINE_TIMER(sound_समयr, nosound);
+static void nosound(struct timer_list *unused);
+static DEFINE_TIMER(sound_timer, nosound);
 
-व्योम amiga_mksound( अचिन्हित पूर्णांक hz, अचिन्हित पूर्णांक ticks )
-अणु
-	अचिन्हित दीर्घ flags;
+void amiga_mksound( unsigned int hz, unsigned int ticks )
+{
+	unsigned long flags;
 
-	अगर (!snd_data)
-		वापस;
+	if (!snd_data)
+		return;
 
 	local_irq_save(flags);
-	del_समयr( &sound_समयr );
+	del_timer( &sound_timer );
 
-	अगर (hz > 20 && hz < 32767) अणु
-		अचिन्हित दीर्घ period = (घड़ी_स्थिरant / hz);
+	if (hz > 20 && hz < 32767) {
+		unsigned long period = (clock_constant / hz);
 
-		अगर (period < amiga_audio_min_period)
+		if (period < amiga_audio_min_period)
 			period = amiga_audio_min_period;
-		अगर (period > MAX_PERIOD)
+		if (period > MAX_PERIOD)
 			period = MAX_PERIOD;
 
-		/* setup poपूर्णांकer to data, period, length and volume */
+		/* setup pointer to data, period, length and volume */
 		custom.aud[2].audlc = snd_data;
-		custom.aud[2].audlen = माप(sine_data)/2;
-		custom.aud[2].audper = (अचिन्हित लघु)period;
+		custom.aud[2].audlen = sizeof(sine_data)/2;
+		custom.aud[2].audper = (unsigned short)period;
 		custom.aud[2].audvol = 32; /* 50% of maxvol */
 
-		अगर (ticks) अणु
-			sound_समयr.expires = jअगरfies + ticks;
-			add_समयr( &sound_समयr );
-		पूर्ण
+		if (ticks) {
+			sound_timer.expires = jiffies + ticks;
+			add_timer( &sound_timer );
+		}
 
-		/* turn on DMA क्रम audio channel 2 */
+		/* turn on DMA for audio channel 2 */
 		custom.dmacon = DMAF_SETCLR | DMAF_AUD2;
 
-	पूर्ण अन्यथा
+	} else
 		nosound( 0 );
 
 	local_irq_restore(flags);
-पूर्ण
+}
 
 
-अटल व्योम nosound(काष्ठा समयr_list *unused)
-अणु
-	/* turn off DMA क्रम audio channel 2 */
+static void nosound(struct timer_list *unused)
+{
+	/* turn off DMA for audio channel 2 */
 	custom.dmacon = DMAF_AUD2;
 	/* restore period to previous value after beeping */
 	custom.aud[2].audper = amiga_audio_period;
-पूर्ण
+}

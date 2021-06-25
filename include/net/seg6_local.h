@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  *  SR-IPv6 implementation
  *
@@ -8,23 +7,23 @@
  *  eBPF support: Mathieu Xhonneux <m.xhonneux@gmail.com>
  */
 
-#अगर_अघोषित _NET_SEG6_LOCAL_H
-#घोषणा _NET_SEG6_LOCAL_H
+#ifndef _NET_SEG6_LOCAL_H
+#define _NET_SEG6_LOCAL_H
 
-#समावेश <linux/percpu.h>
-#समावेश <linux/net.h>
-#समावेश <linux/ipv6.h>
+#include <linux/percpu.h>
+#include <linux/net.h>
+#include <linux/ipv6.h>
 
-बाह्य पूर्णांक seg6_lookup_nexthop(काष्ठा sk_buff *skb, काष्ठा in6_addr *nhaddr,
+extern int seg6_lookup_nexthop(struct sk_buff *skb, struct in6_addr *nhaddr,
 			       u32 tbl_id);
-बाह्य bool seg6_bpf_has_valid_srh(काष्ठा sk_buff *skb);
+extern bool seg6_bpf_has_valid_srh(struct sk_buff *skb);
 
-काष्ठा seg6_bpf_srh_state अणु
-	काष्ठा ipv6_sr_hdr *srh;
+struct seg6_bpf_srh_state {
+	struct ipv6_sr_hdr *srh;
 	u16 hdrlen;
 	bool valid;
-पूर्ण;
+};
 
-DECLARE_PER_CPU(काष्ठा seg6_bpf_srh_state, seg6_bpf_srh_states);
+DECLARE_PER_CPU(struct seg6_bpf_srh_state, seg6_bpf_srh_states);
 
-#पूर्ण_अगर
+#endif

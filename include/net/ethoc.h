@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * linux/include/net/ethoc.h
  *
@@ -8,14 +7,14 @@
  * Written by Thierry Reding <thierry.reding@avionic-design.de>
  */
 
-#अगर_अघोषित LINUX_NET_ETHOC_H
-#घोषणा LINUX_NET_ETHOC_H 1
+#ifndef LINUX_NET_ETHOC_H
+#define LINUX_NET_ETHOC_H 1
 
-काष्ठा ethoc_platक्रमm_data अणु
+struct ethoc_platform_data {
 	u8 hwaddr[IFHWADDRLEN];
 	s8 phy_id;
 	u32 eth_clkfreq;
 	bool big_endian;
-पूर्ण;
+};
 
-#पूर्ण_अगर /* !LINUX_NET_ETHOC_H */
+#endif /* !LINUX_NET_ETHOC_H */

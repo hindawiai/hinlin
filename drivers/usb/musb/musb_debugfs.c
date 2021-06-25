@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * MUSB OTG driver debugfs support
  *
@@ -7,324 +6,324 @@
  * Contact: Felipe Balbi <felipe.balbi@nokia.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/seq_file.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/debugfs.h>
+#include <linux/seq_file.h>
 
-#समावेश <linux/uaccess.h>
+#include <linux/uaccess.h>
 
-#समावेश "musb_core.h"
-#समावेश "musb_debug.h"
+#include "musb_core.h"
+#include "musb_debug.h"
 
-काष्ठा musb_रेजिस्टर_map अणु
-	अक्षर			*name;
-	अचिन्हित		offset;
-	अचिन्हित		size;
-पूर्ण;
+struct musb_register_map {
+	char			*name;
+	unsigned		offset;
+	unsigned		size;
+};
 
-अटल स्थिर काष्ठा musb_रेजिस्टर_map musb_regmap[] = अणु
-	अणु "FAddr",	MUSB_FADDR,	8 पूर्ण,
-	अणु "Power",	MUSB_POWER,	8 पूर्ण,
-	अणु "Frame",	MUSB_FRAME,	16 पूर्ण,
-	अणु "Index",	MUSB_INDEX,	8 पूर्ण,
-	अणु "Testmode",	MUSB_TESTMODE,	8 पूर्ण,
-	अणु "TxMaxPp",	MUSB_TXMAXP,	16 पूर्ण,
-	अणु "TxCSRp",	MUSB_TXCSR,	16 पूर्ण,
-	अणु "RxMaxPp",	MUSB_RXMAXP,	16 पूर्ण,
-	अणु "RxCSR",	MUSB_RXCSR,	16 पूर्ण,
-	अणु "RxCount",	MUSB_RXCOUNT,	16 पूर्ण,
-	अणु "IntrRxE",	MUSB_INTRRXE,	16 पूर्ण,
-	अणु "IntrTxE",	MUSB_INTRTXE,	16 पूर्ण,
-	अणु "IntrUsbE",	MUSB_INTRUSBE,	8 पूर्ण,
-	अणु "DevCtl",	MUSB_DEVCTL,	8 पूर्ण,
-	अणु "VControl",	0x68,		32 पूर्ण,
-	अणु "HWVers",	0x69,		16 पूर्ण,
-	अणु "LinkInfo",	MUSB_LINKINFO,	8 पूर्ण,
-	अणु "VPLen",	MUSB_VPLEN,	8 पूर्ण,
-	अणु "HS_EOF1",	MUSB_HS_खातापूर्ण1,	8 पूर्ण,
-	अणु "FS_EOF1",	MUSB_FS_खातापूर्ण1,	8 पूर्ण,
-	अणु "LS_EOF1",	MUSB_LS_खातापूर्ण1,	8 पूर्ण,
-	अणु "SOFT_RST",	0x7F,		8 पूर्ण,
-	अणु "DMA_CNTLch0",	0x204,	16 पूर्ण,
-	अणु "DMA_ADDRch0",	0x208,	32 पूर्ण,
-	अणु "DMA_COUNTch0",	0x20C,	32 पूर्ण,
-	अणु "DMA_CNTLch1",	0x214,	16 पूर्ण,
-	अणु "DMA_ADDRch1",	0x218,	32 पूर्ण,
-	अणु "DMA_COUNTch1",	0x21C,	32 पूर्ण,
-	अणु "DMA_CNTLch2",	0x224,	16 पूर्ण,
-	अणु "DMA_ADDRch2",	0x228,	32 पूर्ण,
-	अणु "DMA_COUNTch2",	0x22C,	32 पूर्ण,
-	अणु "DMA_CNTLch3",	0x234,	16 पूर्ण,
-	अणु "DMA_ADDRch3",	0x238,	32 पूर्ण,
-	अणु "DMA_COUNTch3",	0x23C,	32 पूर्ण,
-	अणु "DMA_CNTLch4",	0x244,	16 पूर्ण,
-	अणु "DMA_ADDRch4",	0x248,	32 पूर्ण,
-	अणु "DMA_COUNTch4",	0x24C,	32 पूर्ण,
-	अणु "DMA_CNTLch5",	0x254,	16 पूर्ण,
-	अणु "DMA_ADDRch5",	0x258,	32 पूर्ण,
-	अणु "DMA_COUNTch5",	0x25C,	32 पूर्ण,
-	अणु "DMA_CNTLch6",	0x264,	16 पूर्ण,
-	अणु "DMA_ADDRch6",	0x268,	32 पूर्ण,
-	अणु "DMA_COUNTch6",	0x26C,	32 पूर्ण,
-	अणु "DMA_CNTLch7",	0x274,	16 पूर्ण,
-	अणु "DMA_ADDRch7",	0x278,	32 पूर्ण,
-	अणु "DMA_COUNTch7",	0x27C,	32 पूर्ण,
-	अणु "ConfigData",	MUSB_CONFIGDATA,8 पूर्ण,
-	अणु "BabbleCtl",	MUSB_BABBLE_CTL,8 पूर्ण,
-	अणु "TxFIFOsz",	MUSB_TXFIFOSZ,	8 पूर्ण,
-	अणु "RxFIFOsz",	MUSB_RXFIFOSZ,	8 पूर्ण,
-	अणु "TxFIFOadd",	MUSB_TXFIFOADD,	16 पूर्ण,
-	अणु "RxFIFOadd",	MUSB_RXFIFOADD,	16 पूर्ण,
-	अणु "EPInfo",	MUSB_EPINFO,	8 पूर्ण,
-	अणु "RAMInfo",	MUSB_RAMINFO,	8 पूर्ण,
-	अणु  पूर्ण	/* Terminating Entry */
-पूर्ण;
+static const struct musb_register_map musb_regmap[] = {
+	{ "FAddr",	MUSB_FADDR,	8 },
+	{ "Power",	MUSB_POWER,	8 },
+	{ "Frame",	MUSB_FRAME,	16 },
+	{ "Index",	MUSB_INDEX,	8 },
+	{ "Testmode",	MUSB_TESTMODE,	8 },
+	{ "TxMaxPp",	MUSB_TXMAXP,	16 },
+	{ "TxCSRp",	MUSB_TXCSR,	16 },
+	{ "RxMaxPp",	MUSB_RXMAXP,	16 },
+	{ "RxCSR",	MUSB_RXCSR,	16 },
+	{ "RxCount",	MUSB_RXCOUNT,	16 },
+	{ "IntrRxE",	MUSB_INTRRXE,	16 },
+	{ "IntrTxE",	MUSB_INTRTXE,	16 },
+	{ "IntrUsbE",	MUSB_INTRUSBE,	8 },
+	{ "DevCtl",	MUSB_DEVCTL,	8 },
+	{ "VControl",	0x68,		32 },
+	{ "HWVers",	0x69,		16 },
+	{ "LinkInfo",	MUSB_LINKINFO,	8 },
+	{ "VPLen",	MUSB_VPLEN,	8 },
+	{ "HS_EOF1",	MUSB_HS_EOF1,	8 },
+	{ "FS_EOF1",	MUSB_FS_EOF1,	8 },
+	{ "LS_EOF1",	MUSB_LS_EOF1,	8 },
+	{ "SOFT_RST",	0x7F,		8 },
+	{ "DMA_CNTLch0",	0x204,	16 },
+	{ "DMA_ADDRch0",	0x208,	32 },
+	{ "DMA_COUNTch0",	0x20C,	32 },
+	{ "DMA_CNTLch1",	0x214,	16 },
+	{ "DMA_ADDRch1",	0x218,	32 },
+	{ "DMA_COUNTch1",	0x21C,	32 },
+	{ "DMA_CNTLch2",	0x224,	16 },
+	{ "DMA_ADDRch2",	0x228,	32 },
+	{ "DMA_COUNTch2",	0x22C,	32 },
+	{ "DMA_CNTLch3",	0x234,	16 },
+	{ "DMA_ADDRch3",	0x238,	32 },
+	{ "DMA_COUNTch3",	0x23C,	32 },
+	{ "DMA_CNTLch4",	0x244,	16 },
+	{ "DMA_ADDRch4",	0x248,	32 },
+	{ "DMA_COUNTch4",	0x24C,	32 },
+	{ "DMA_CNTLch5",	0x254,	16 },
+	{ "DMA_ADDRch5",	0x258,	32 },
+	{ "DMA_COUNTch5",	0x25C,	32 },
+	{ "DMA_CNTLch6",	0x264,	16 },
+	{ "DMA_ADDRch6",	0x268,	32 },
+	{ "DMA_COUNTch6",	0x26C,	32 },
+	{ "DMA_CNTLch7",	0x274,	16 },
+	{ "DMA_ADDRch7",	0x278,	32 },
+	{ "DMA_COUNTch7",	0x27C,	32 },
+	{ "ConfigData",	MUSB_CONFIGDATA,8 },
+	{ "BabbleCtl",	MUSB_BABBLE_CTL,8 },
+	{ "TxFIFOsz",	MUSB_TXFIFOSZ,	8 },
+	{ "RxFIFOsz",	MUSB_RXFIFOSZ,	8 },
+	{ "TxFIFOadd",	MUSB_TXFIFOADD,	16 },
+	{ "RxFIFOadd",	MUSB_RXFIFOADD,	16 },
+	{ "EPInfo",	MUSB_EPINFO,	8 },
+	{ "RAMInfo",	MUSB_RAMINFO,	8 },
+	{  }	/* Terminating Entry */
+};
 
-अटल पूर्णांक musb_regdump_show(काष्ठा seq_file *s, व्योम *unused)
-अणु
-	काष्ठा musb		*musb = s->निजी;
-	अचिन्हित		i;
+static int musb_regdump_show(struct seq_file *s, void *unused)
+{
+	struct musb		*musb = s->private;
+	unsigned		i;
 
-	seq_म_लिखो(s, "MUSB (M)HDRC Register Dump\n");
-	pm_runसमय_get_sync(musb->controller);
+	seq_printf(s, "MUSB (M)HDRC Register Dump\n");
+	pm_runtime_get_sync(musb->controller);
 
-	क्रम (i = 0; i < ARRAY_SIZE(musb_regmap); i++) अणु
-		चयन (musb_regmap[i].size) अणु
-		हाल 8:
-			seq_म_लिखो(s, "%-12s: %02x\n", musb_regmap[i].name,
-					musb_पढ़ोb(musb->mregs, musb_regmap[i].offset));
-			अवरोध;
-		हाल 16:
-			seq_म_लिखो(s, "%-12s: %04x\n", musb_regmap[i].name,
-					musb_पढ़ोw(musb->mregs, musb_regmap[i].offset));
-			अवरोध;
-		हाल 32:
-			seq_म_लिखो(s, "%-12s: %08x\n", musb_regmap[i].name,
-					musb_पढ़ोl(musb->mregs, musb_regmap[i].offset));
-			अवरोध;
-		पूर्ण
-	पूर्ण
+	for (i = 0; i < ARRAY_SIZE(musb_regmap); i++) {
+		switch (musb_regmap[i].size) {
+		case 8:
+			seq_printf(s, "%-12s: %02x\n", musb_regmap[i].name,
+					musb_readb(musb->mregs, musb_regmap[i].offset));
+			break;
+		case 16:
+			seq_printf(s, "%-12s: %04x\n", musb_regmap[i].name,
+					musb_readw(musb->mregs, musb_regmap[i].offset));
+			break;
+		case 32:
+			seq_printf(s, "%-12s: %08x\n", musb_regmap[i].name,
+					musb_readl(musb->mregs, musb_regmap[i].offset));
+			break;
+		}
+	}
 
-	pm_runसमय_mark_last_busy(musb->controller);
-	pm_runसमय_put_स्वतःsuspend(musb->controller);
-	वापस 0;
-पूर्ण
+	pm_runtime_mark_last_busy(musb->controller);
+	pm_runtime_put_autosuspend(musb->controller);
+	return 0;
+}
 DEFINE_SHOW_ATTRIBUTE(musb_regdump);
 
-अटल पूर्णांक musb_test_mode_show(काष्ठा seq_file *s, व्योम *unused)
-अणु
-	काष्ठा musb		*musb = s->निजी;
-	अचिन्हित		test;
+static int musb_test_mode_show(struct seq_file *s, void *unused)
+{
+	struct musb		*musb = s->private;
+	unsigned		test;
 
-	pm_runसमय_get_sync(musb->controller);
-	test = musb_पढ़ोb(musb->mregs, MUSB_TESTMODE);
-	pm_runसमय_mark_last_busy(musb->controller);
-	pm_runसमय_put_स्वतःsuspend(musb->controller);
+	pm_runtime_get_sync(musb->controller);
+	test = musb_readb(musb->mregs, MUSB_TESTMODE);
+	pm_runtime_mark_last_busy(musb->controller);
+	pm_runtime_put_autosuspend(musb->controller);
 
-	अगर (test == (MUSB_TEST_FORCE_HOST | MUSB_TEST_FORCE_FS))
-		seq_म_लिखो(s, "force host full-speed\n");
+	if (test == (MUSB_TEST_FORCE_HOST | MUSB_TEST_FORCE_FS))
+		seq_printf(s, "force host full-speed\n");
 
-	अन्यथा अगर (test == (MUSB_TEST_FORCE_HOST | MUSB_TEST_FORCE_HS))
-		seq_म_लिखो(s, "force host high-speed\n");
+	else if (test == (MUSB_TEST_FORCE_HOST | MUSB_TEST_FORCE_HS))
+		seq_printf(s, "force host high-speed\n");
 
-	अन्यथा अगर (test == MUSB_TEST_FORCE_HOST)
-		seq_म_लिखो(s, "force host\n");
+	else if (test == MUSB_TEST_FORCE_HOST)
+		seq_printf(s, "force host\n");
 
-	अन्यथा अगर (test == MUSB_TEST_FIFO_ACCESS)
-		seq_म_लिखो(s, "fifo access\n");
+	else if (test == MUSB_TEST_FIFO_ACCESS)
+		seq_printf(s, "fifo access\n");
 
-	अन्यथा अगर (test == MUSB_TEST_FORCE_FS)
-		seq_म_लिखो(s, "force full-speed\n");
+	else if (test == MUSB_TEST_FORCE_FS)
+		seq_printf(s, "force full-speed\n");
 
-	अन्यथा अगर (test == MUSB_TEST_FORCE_HS)
-		seq_म_लिखो(s, "force high-speed\n");
+	else if (test == MUSB_TEST_FORCE_HS)
+		seq_printf(s, "force high-speed\n");
 
-	अन्यथा अगर (test == MUSB_TEST_PACKET)
-		seq_म_लिखो(s, "test packet\n");
+	else if (test == MUSB_TEST_PACKET)
+		seq_printf(s, "test packet\n");
 
-	अन्यथा अगर (test == MUSB_TEST_K)
-		seq_म_लिखो(s, "test K\n");
+	else if (test == MUSB_TEST_K)
+		seq_printf(s, "test K\n");
 
-	अन्यथा अगर (test == MUSB_TEST_J)
-		seq_म_लिखो(s, "test J\n");
+	else if (test == MUSB_TEST_J)
+		seq_printf(s, "test J\n");
 
-	अन्यथा अगर (test == MUSB_TEST_SE0_NAK)
-		seq_म_लिखो(s, "test SE0 NAK\n");
+	else if (test == MUSB_TEST_SE0_NAK)
+		seq_printf(s, "test SE0 NAK\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक musb_test_mode_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस single_खोलो(file, musb_test_mode_show, inode->i_निजी);
-पूर्ण
+static int musb_test_mode_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, musb_test_mode_show, inode->i_private);
+}
 
-अटल sमाप_प्रकार musb_test_mode_ग_लिखो(काष्ठा file *file,
-		स्थिर अक्षर __user *ubuf, माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा seq_file		*s = file->निजी_data;
-	काष्ठा musb		*musb = s->निजी;
+static ssize_t musb_test_mode_write(struct file *file,
+		const char __user *ubuf, size_t count, loff_t *ppos)
+{
+	struct seq_file		*s = file->private_data;
+	struct musb		*musb = s->private;
 	u8			test;
-	अक्षर			buf[24];
+	char			buf[24];
 
-	स_रखो(buf, 0x00, माप(buf));
+	memset(buf, 0x00, sizeof(buf));
 
-	अगर (copy_from_user(buf, ubuf, min_t(माप_प्रकार, माप(buf) - 1, count)))
-		वापस -EFAULT;
+	if (copy_from_user(buf, ubuf, min_t(size_t, sizeof(buf) - 1, count)))
+		return -EFAULT;
 
-	pm_runसमय_get_sync(musb->controller);
-	test = musb_पढ़ोb(musb->mregs, MUSB_TESTMODE);
-	अगर (test) अणु
+	pm_runtime_get_sync(musb->controller);
+	test = musb_readb(musb->mregs, MUSB_TESTMODE);
+	if (test) {
 		dev_err(musb->controller, "Error: test mode is already set. "
 			"Please do USB Bus Reset to start a new test.\n");
-		जाओ ret;
-	पूर्ण
+		goto ret;
+	}
 
-	अगर (strstarts(buf, "force host full-speed"))
+	if (strstarts(buf, "force host full-speed"))
 		test = MUSB_TEST_FORCE_HOST | MUSB_TEST_FORCE_FS;
 
-	अन्यथा अगर (strstarts(buf, "force host high-speed"))
+	else if (strstarts(buf, "force host high-speed"))
 		test = MUSB_TEST_FORCE_HOST | MUSB_TEST_FORCE_HS;
 
-	अन्यथा अगर (strstarts(buf, "force host"))
+	else if (strstarts(buf, "force host"))
 		test = MUSB_TEST_FORCE_HOST;
 
-	अन्यथा अगर (strstarts(buf, "fifo access"))
+	else if (strstarts(buf, "fifo access"))
 		test = MUSB_TEST_FIFO_ACCESS;
 
-	अन्यथा अगर (strstarts(buf, "force full-speed"))
+	else if (strstarts(buf, "force full-speed"))
 		test = MUSB_TEST_FORCE_FS;
 
-	अन्यथा अगर (strstarts(buf, "force high-speed"))
+	else if (strstarts(buf, "force high-speed"))
 		test = MUSB_TEST_FORCE_HS;
 
-	अन्यथा अगर (strstarts(buf, "test packet")) अणु
+	else if (strstarts(buf, "test packet")) {
 		test = MUSB_TEST_PACKET;
 		musb_load_testpacket(musb);
-	पूर्ण
+	}
 
-	अन्यथा अगर (strstarts(buf, "test K"))
+	else if (strstarts(buf, "test K"))
 		test = MUSB_TEST_K;
 
-	अन्यथा अगर (strstarts(buf, "test J"))
+	else if (strstarts(buf, "test J"))
 		test = MUSB_TEST_J;
 
-	अन्यथा अगर (strstarts(buf, "test SE0 NAK"))
+	else if (strstarts(buf, "test SE0 NAK"))
 		test = MUSB_TEST_SE0_NAK;
 
-	musb_ग_लिखोb(musb->mregs, MUSB_TESTMODE, test);
+	musb_writeb(musb->mregs, MUSB_TESTMODE, test);
 
 ret:
-	pm_runसमय_mark_last_busy(musb->controller);
-	pm_runसमय_put_स्वतःsuspend(musb->controller);
-	वापस count;
-पूर्ण
+	pm_runtime_mark_last_busy(musb->controller);
+	pm_runtime_put_autosuspend(musb->controller);
+	return count;
+}
 
-अटल स्थिर काष्ठा file_operations musb_test_mode_fops = अणु
-	.खोलो			= musb_test_mode_खोलो,
-	.ग_लिखो			= musb_test_mode_ग_लिखो,
-	.पढ़ो			= seq_पढ़ो,
+static const struct file_operations musb_test_mode_fops = {
+	.open			= musb_test_mode_open,
+	.write			= musb_test_mode_write,
+	.read			= seq_read,
 	.llseek			= seq_lseek,
 	.release		= single_release,
-पूर्ण;
+};
 
-अटल पूर्णांक musb_softconnect_show(काष्ठा seq_file *s, व्योम *unused)
-अणु
-	काष्ठा musb	*musb = s->निजी;
+static int musb_softconnect_show(struct seq_file *s, void *unused)
+{
+	struct musb	*musb = s->private;
 	u8		reg;
-	पूर्णांक		connect;
+	int		connect;
 
-	चयन (musb->xceiv->otg->state) अणु
-	हाल OTG_STATE_A_HOST:
-	हाल OTG_STATE_A_WAIT_BCON:
-		pm_runसमय_get_sync(musb->controller);
+	switch (musb->xceiv->otg->state) {
+	case OTG_STATE_A_HOST:
+	case OTG_STATE_A_WAIT_BCON:
+		pm_runtime_get_sync(musb->controller);
 
-		reg = musb_पढ़ोb(musb->mregs, MUSB_DEVCTL);
+		reg = musb_readb(musb->mregs, MUSB_DEVCTL);
 		connect = reg & MUSB_DEVCTL_SESSION ? 1 : 0;
 
-		pm_runसमय_mark_last_busy(musb->controller);
-		pm_runसमय_put_स्वतःsuspend(musb->controller);
-		अवरोध;
-	शेष:
+		pm_runtime_mark_last_busy(musb->controller);
+		pm_runtime_put_autosuspend(musb->controller);
+		break;
+	default:
 		connect = -1;
-	पूर्ण
+	}
 
-	seq_म_लिखो(s, "%d\n", connect);
+	seq_printf(s, "%d\n", connect);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक musb_softconnect_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस single_खोलो(file, musb_softconnect_show, inode->i_निजी);
-पूर्ण
+static int musb_softconnect_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, musb_softconnect_show, inode->i_private);
+}
 
-अटल sमाप_प्रकार musb_softconnect_ग_लिखो(काष्ठा file *file,
-		स्थिर अक्षर __user *ubuf, माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा seq_file		*s = file->निजी_data;
-	काष्ठा musb		*musb = s->निजी;
-	अक्षर			buf[2];
+static ssize_t musb_softconnect_write(struct file *file,
+		const char __user *ubuf, size_t count, loff_t *ppos)
+{
+	struct seq_file		*s = file->private_data;
+	struct musb		*musb = s->private;
+	char			buf[2];
 	u8			reg;
 
-	स_रखो(buf, 0x00, माप(buf));
+	memset(buf, 0x00, sizeof(buf));
 
-	अगर (copy_from_user(&buf, ubuf, min_t(माप_प्रकार, माप(buf) - 1, count)))
-		वापस -EFAULT;
+	if (copy_from_user(&buf, ubuf, min_t(size_t, sizeof(buf) - 1, count)))
+		return -EFAULT;
 
-	pm_runसमय_get_sync(musb->controller);
-	अगर (!म_भेदन(buf, "0", 1)) अणु
-		चयन (musb->xceiv->otg->state) अणु
-		हाल OTG_STATE_A_HOST:
+	pm_runtime_get_sync(musb->controller);
+	if (!strncmp(buf, "0", 1)) {
+		switch (musb->xceiv->otg->state) {
+		case OTG_STATE_A_HOST:
 			musb_root_disconnect(musb);
-			reg = musb_पढ़ोb(musb->mregs, MUSB_DEVCTL);
+			reg = musb_readb(musb->mregs, MUSB_DEVCTL);
 			reg &= ~MUSB_DEVCTL_SESSION;
-			musb_ग_लिखोb(musb->mregs, MUSB_DEVCTL, reg);
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण अन्यथा अगर (!म_भेदन(buf, "1", 1)) अणु
-		चयन (musb->xceiv->otg->state) अणु
-		हाल OTG_STATE_A_WAIT_BCON:
+			musb_writeb(musb->mregs, MUSB_DEVCTL, reg);
+			break;
+		default:
+			break;
+		}
+	} else if (!strncmp(buf, "1", 1)) {
+		switch (musb->xceiv->otg->state) {
+		case OTG_STATE_A_WAIT_BCON:
 			/*
-			 * musb_save_context() called in musb_runसमय_suspend()
+			 * musb_save_context() called in musb_runtime_suspend()
 			 * might cache devctl with SESSION bit cleared during
-			 * soft-disconnect, so specअगरically set SESSION bit
-			 * here to preserve it क्रम musb_runसमय_resume().
+			 * soft-disconnect, so specifically set SESSION bit
+			 * here to preserve it for musb_runtime_resume().
 			 */
 			musb->context.devctl |= MUSB_DEVCTL_SESSION;
-			reg = musb_पढ़ोb(musb->mregs, MUSB_DEVCTL);
+			reg = musb_readb(musb->mregs, MUSB_DEVCTL);
 			reg |= MUSB_DEVCTL_SESSION;
-			musb_ग_लिखोb(musb->mregs, MUSB_DEVCTL, reg);
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			musb_writeb(musb->mregs, MUSB_DEVCTL, reg);
+			break;
+		default:
+			break;
+		}
+	}
 
-	pm_runसमय_mark_last_busy(musb->controller);
-	pm_runसमय_put_स्वतःsuspend(musb->controller);
-	वापस count;
-पूर्ण
+	pm_runtime_mark_last_busy(musb->controller);
+	pm_runtime_put_autosuspend(musb->controller);
+	return count;
+}
 
 /*
  * In host mode, connect/disconnect the bus without physically
- * हटाओ the devices.
+ * remove the devices.
  */
-अटल स्थिर काष्ठा file_operations musb_softconnect_fops = अणु
-	.खोलो			= musb_softconnect_खोलो,
-	.ग_लिखो			= musb_softconnect_ग_लिखो,
-	.पढ़ो			= seq_पढ़ो,
+static const struct file_operations musb_softconnect_fops = {
+	.open			= musb_softconnect_open,
+	.write			= musb_softconnect_write,
+	.read			= seq_read,
 	.llseek			= seq_lseek,
 	.release		= single_release,
-पूर्ण;
+};
 
-व्योम musb_init_debugfs(काष्ठा musb *musb)
-अणु
-	काष्ठा dentry *root;
+void musb_init_debugfs(struct musb *musb)
+{
+	struct dentry *root;
 
 	root = debugfs_create_dir(dev_name(musb->controller), usb_debug_root);
 	musb->debugfs_root = root;
@@ -334,9 +333,9 @@ ret:
 			    &musb_test_mode_fops);
 	debugfs_create_file("softconnect", S_IRUGO | S_IWUSR, root, musb,
 			    &musb_softconnect_fops);
-पूर्ण
+}
 
-व्योम /* __init_or_निकास */ musb_निकास_debugfs(काष्ठा musb *musb)
-अणु
-	debugfs_हटाओ_recursive(musb->debugfs_root);
-पूर्ण
+void /* __init_or_exit */ musb_exit_debugfs(struct musb *musb)
+{
+	debugfs_remove_recursive(musb->debugfs_root);
+}

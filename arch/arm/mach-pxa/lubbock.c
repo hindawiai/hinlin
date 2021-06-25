@@ -1,65 +1,64 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  linux/arch/arm/mach-pxa/lubbock.c
  *
- *  Support क्रम the Intel DBPXA250 Development Platक्रमm.
+ *  Support for the Intel DBPXA250 Development Platform.
  *
  *  Author:	Nicolas Pitre
  *  Created:	Jun 15, 2001
  *  Copyright:	MontaVista Software Inc.
  */
-#समावेश <linux/clkdev.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/gpio/gpio-reg.h>
-#समावेश <linux/gpio/machine.h>
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/syscore_ops.h>
-#समावेश <linux/major.h>
-#समावेश <linux/fb.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/mtd/mtd.h>
-#समावेश <linux/mtd/partitions.h>
-#समावेश <linux/smc91x.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/leds.h>
+#include <linux/clkdev.h>
+#include <linux/gpio.h>
+#include <linux/gpio/gpio-reg.h>
+#include <linux/gpio/machine.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/io.h>
+#include <linux/platform_device.h>
+#include <linux/syscore_ops.h>
+#include <linux/major.h>
+#include <linux/fb.h>
+#include <linux/interrupt.h>
+#include <linux/mtd/mtd.h>
+#include <linux/mtd/partitions.h>
+#include <linux/smc91x.h>
+#include <linux/slab.h>
+#include <linux/leds.h>
 
-#समावेश <linux/spi/spi.h>
-#समावेश <linux/spi/ads7846.h>
-#समावेश <linux/spi/pxa2xx_spi.h>
+#include <linux/spi/spi.h>
+#include <linux/spi/ads7846.h>
+#include <linux/spi/pxa2xx_spi.h>
 
-#समावेश <यंत्र/setup.h>
-#समावेश <यंत्र/memory.h>
-#समावेश <यंत्र/mach-types.h>
-#समावेश <mach/hardware.h>
-#समावेश <यंत्र/irq.h>
-#समावेश <linux/sizes.h>
+#include <asm/setup.h>
+#include <asm/memory.h>
+#include <asm/mach-types.h>
+#include <mach/hardware.h>
+#include <asm/irq.h>
+#include <linux/sizes.h>
 
-#समावेश <यंत्र/mach/arch.h>
-#समावेश <यंत्र/mach/map.h>
-#समावेश <यंत्र/mach/irq.h>
-#समावेश <यंत्र/mach/flash.h>
+#include <asm/mach/arch.h>
+#include <asm/mach/map.h>
+#include <asm/mach/irq.h>
+#include <asm/mach/flash.h>
 
-#समावेश <यंत्र/hardware/sa1111.h>
+#include <asm/hardware/sa1111.h>
 
-#समावेश "pxa25x.h"
-#समावेश <mach/audपन.स>
-#समावेश <mach/lubbock.h>
-#समावेश "udc.h"
-#समावेश <linux/platक्रमm_data/irda-pxaficp.h>
-#समावेश <linux/platक्रमm_data/video-pxafb.h>
-#समावेश <linux/platक्रमm_data/mmc-pxamci.h>
-#समावेश "pm.h"
-#समावेश <mach/smemc.h>
+#include "pxa25x.h"
+#include <mach/audio.h>
+#include <mach/lubbock.h>
+#include "udc.h"
+#include <linux/platform_data/irda-pxaficp.h>
+#include <linux/platform_data/video-pxafb.h>
+#include <linux/platform_data/mmc-pxamci.h>
+#include "pm.h"
+#include <mach/smemc.h>
 
-#समावेश "generic.h"
-#समावेश "devices.h"
+#include "generic.h"
+#include "devices.h"
 
-अटल अचिन्हित दीर्घ lubbock_pin_config[] __initdata = अणु
+static unsigned long lubbock_pin_config[] __initdata = {
 	GPIO15_nCS_1,	/* CS1 - Flash */
 	GPIO78_nCS_2,	/* CS2 - Baseboard FGPA */
 	GPIO79_nCS_3,	/* CS3 - SMC ethernet */
@@ -106,269 +105,269 @@
 
 	/* wakeup */
 	GPIO1_GPIO | WAKEUP_ON_EDGE_RISE,
-पूर्ण;
+};
 
-#घोषणा LUB_HEXLED		__LUB_REG(LUBBOCK_FPGA_PHYS + 0x010)
+#define LUB_HEXLED		__LUB_REG(LUBBOCK_FPGA_PHYS + 0x010)
 
-व्योम lubbock_set_hexled(uपूर्णांक32_t value)
-अणु
+void lubbock_set_hexled(uint32_t value)
+{
 	LUB_HEXLED = value;
-पूर्ण
+}
 
-अटल काष्ठा gpio_chip *lubbock_misc_wr_gc;
+static struct gpio_chip *lubbock_misc_wr_gc;
 
-अटल व्योम lubbock_set_misc_wr(अचिन्हित पूर्णांक mask, अचिन्हित पूर्णांक set)
-अणु
-	अचिन्हित दीर्घ m = mask, v = set;
+static void lubbock_set_misc_wr(unsigned int mask, unsigned int set)
+{
+	unsigned long m = mask, v = set;
 	lubbock_misc_wr_gc->set_multiple(lubbock_misc_wr_gc, &m, &v);
-पूर्ण
+}
 
-अटल पूर्णांक lubbock_udc_is_connected(व्योम)
-अणु
-	वापस (LUB_MISC_RD & (1 << 9)) == 0;
-पूर्ण
+static int lubbock_udc_is_connected(void)
+{
+	return (LUB_MISC_RD & (1 << 9)) == 0;
+}
 
-अटल काष्ठा pxa2xx_udc_mach_info udc_info __initdata = अणु
+static struct pxa2xx_udc_mach_info udc_info __initdata = {
 	.udc_is_connected	= lubbock_udc_is_connected,
 	// no D+ pullup; lubbock can't connect/disconnect in software
-पूर्ण;
+};
 
-/* GPIOs क्रम SA1111 PCMCIA */
-अटल काष्ठा gpiod_lookup_table sa1111_pcmcia_gpio_table = अणु
+/* GPIOs for SA1111 PCMCIA */
+static struct gpiod_lookup_table sa1111_pcmcia_gpio_table = {
 	.dev_id = "1800",
-	.table = अणु
-		अणु "sa1111", 0, "a0vpp", GPIO_ACTIVE_HIGH पूर्ण,
-		अणु "sa1111", 1, "a1vpp", GPIO_ACTIVE_HIGH पूर्ण,
-		अणु "sa1111", 2, "a0vcc", GPIO_ACTIVE_HIGH पूर्ण,
-		अणु "sa1111", 3, "a1vcc", GPIO_ACTIVE_HIGH पूर्ण,
-		अणु "lubbock", 14, "b0vcc", GPIO_ACTIVE_HIGH पूर्ण,
-		अणु "lubbock", 15, "b1vcc", GPIO_ACTIVE_HIGH पूर्ण,
-		अणु पूर्ण,
-	पूर्ण,
-पूर्ण;
+	.table = {
+		{ "sa1111", 0, "a0vpp", GPIO_ACTIVE_HIGH },
+		{ "sa1111", 1, "a1vpp", GPIO_ACTIVE_HIGH },
+		{ "sa1111", 2, "a0vcc", GPIO_ACTIVE_HIGH },
+		{ "sa1111", 3, "a1vcc", GPIO_ACTIVE_HIGH },
+		{ "lubbock", 14, "b0vcc", GPIO_ACTIVE_HIGH },
+		{ "lubbock", 15, "b1vcc", GPIO_ACTIVE_HIGH },
+		{ },
+	},
+};
 
-अटल व्योम lubbock_init_pcmcia(व्योम)
-अणु
-	काष्ठा clk *clk;
+static void lubbock_init_pcmcia(void)
+{
+	struct clk *clk;
 
 	gpiod_add_lookup_table(&sa1111_pcmcia_gpio_table);
 
-	/* Add an alias क्रम the SA1111 PCMCIA घड़ी */
-	clk = clk_get_sys("pxa2xx-pcmcia", शून्य);
-	अगर (!IS_ERR(clk)) अणु
-		clkdev_create(clk, शून्य, "1800");
+	/* Add an alias for the SA1111 PCMCIA clock */
+	clk = clk_get_sys("pxa2xx-pcmcia", NULL);
+	if (!IS_ERR(clk)) {
+		clkdev_create(clk, NULL, "1800");
 		clk_put(clk);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल काष्ठा resource sa1111_resources[] = अणु
-	[0] = अणु
+static struct resource sa1111_resources[] = {
+	[0] = {
 		.start	= 0x10000000,
 		.end	= 0x10001fff,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-	[1] = अणु
+	},
+	[1] = {
 		.start	= LUBBOCK_SA1111_IRQ,
 		.end	= LUBBOCK_SA1111_IRQ,
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा sa1111_platक्रमm_data sa1111_info = अणु
+static struct sa1111_platform_data sa1111_info = {
 	.irq_base	= LUBBOCK_SA1111_IRQ_BASE,
 	.disable_devs	= SA1111_DEVID_SAC,
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device sa1111_device = अणु
+static struct platform_device sa1111_device = {
 	.name		= "sa1111",
 	.id		= -1,
 	.num_resources	= ARRAY_SIZE(sa1111_resources),
 	.resource	= sa1111_resources,
-	.dev		= अणु
-		.platक्रमm_data	= &sa1111_info,
-	पूर्ण,
-पूर्ण;
+	.dev		= {
+		.platform_data	= &sa1111_info,
+	},
+};
 
-/* ADS7846 is connected through SSP ... and अगर your board has J5 populated,
- * you can select it to replace the ucb1400 by चयनing the touchscreen cable
- * (to J5) and poking board रेजिस्टरs (as करोne below).  Else it's only useful
- * क्रम the temperature sensors.
+/* ADS7846 is connected through SSP ... and if your board has J5 populated,
+ * you can select it to replace the ucb1400 by switching the touchscreen cable
+ * (to J5) and poking board registers (as done below).  Else it's only useful
+ * for the temperature sensors.
  */
-अटल काष्ठा pxa2xx_spi_controller pxa_ssp_master_info = अणु
+static struct pxa2xx_spi_controller pxa_ssp_master_info = {
 	.num_chipselect	= 1,
-पूर्ण;
+};
 
-अटल पूर्णांक lubbock_ads7846_penकरोwn_state(व्योम)
-अणु
-	/* TS_BUSY is bit 8 in LUB_MISC_RD, but penकरोwn is irq-only */
-	वापस 0;
-पूर्ण
+static int lubbock_ads7846_pendown_state(void)
+{
+	/* TS_BUSY is bit 8 in LUB_MISC_RD, but pendown is irq-only */
+	return 0;
+}
 
-अटल काष्ठा ads7846_platक्रमm_data ads_info = अणु
+static struct ads7846_platform_data ads_info = {
 	.model			= 7846,
-	.vref_delay_usecs	= 100,		/* पूर्णांकernal, no cap */
-	.get_penकरोwn_state	= lubbock_ads7846_penकरोwn_state,
+	.vref_delay_usecs	= 100,		/* internal, no cap */
+	.get_pendown_state	= lubbock_ads7846_pendown_state,
 	// .x_plate_ohms		= 500,	/* GUESS! */
 	// .y_plate_ohms		= 500,	/* GUESS! */
-पूर्ण;
+};
 
-अटल व्योम ads7846_cs(u32 command)
-अणु
-	अटल स्थिर अचिन्हित	TS_nCS = 1 << 11;
+static void ads7846_cs(u32 command)
+{
+	static const unsigned	TS_nCS = 1 << 11;
 	lubbock_set_misc_wr(TS_nCS, (command == PXA2XX_CS_ASSERT) ? 0 : TS_nCS);
-पूर्ण
+}
 
-अटल काष्ठा pxa2xx_spi_chip ads_hw = अणु
+static struct pxa2xx_spi_chip ads_hw = {
 	.tx_threshold		= 1,
 	.rx_threshold		= 2,
 	.cs_control		= ads7846_cs,
-पूर्ण;
+};
 
-अटल काष्ठा spi_board_info spi_board_info[] __initdata = अणु अणु
+static struct spi_board_info spi_board_info[] __initdata = { {
 	.modalias	= "ads7846",
-	.platक्रमm_data	= &ads_info,
+	.platform_data	= &ads_info,
 	.controller_data = &ads_hw,
 	.irq		= LUBBOCK_BB_IRQ,
 	.max_speed_hz	= 120000 /* max sample rate at 3V */
 				* 26 /* command + data + overhead */,
 	.bus_num	= 1,
 	.chip_select	= 0,
-पूर्ण,
-पूर्ण;
+},
+};
 
-अटल काष्ठा resource smc91x_resources[] = अणु
-	[0] = अणु
+static struct resource smc91x_resources[] = {
+	[0] = {
 		.name	= "smc91x-regs",
 		.start	= 0x0c000c00,
 		.end	= 0x0c0fffff,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-	[1] = अणु
+	},
+	[1] = {
 		.start	= LUBBOCK_ETH_IRQ,
 		.end	= LUBBOCK_ETH_IRQ,
 		.flags	= IORESOURCE_IRQ | IORESOURCE_IRQ_HIGHEDGE,
-	पूर्ण,
-	[2] = अणु
+	},
+	[2] = {
 		.name	= "smc91x-attrib",
 		.start	= 0x0e000000,
 		.end	= 0x0e0fffff,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा smc91x_platdata lubbock_smc91x_info = अणु
+static struct smc91x_platdata lubbock_smc91x_info = {
 	.flags	= SMC91X_USE_16BIT | SMC91X_NOWAIT | SMC91X_IO_SHIFT_2,
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device smc91x_device = अणु
+static struct platform_device smc91x_device = {
 	.name		= "smc91x",
 	.id		= -1,
 	.num_resources	= ARRAY_SIZE(smc91x_resources),
 	.resource	= smc91x_resources,
-	.dev		= अणु
-		.platक्रमm_data = &lubbock_smc91x_info,
-	पूर्ण,
-पूर्ण;
+	.dev		= {
+		.platform_data = &lubbock_smc91x_info,
+	},
+};
 
-अटल काष्ठा resource flash_resources[] = अणु
-	[0] = अणु
+static struct resource flash_resources[] = {
+	[0] = {
 		.start	= 0x00000000,
 		.end	= SZ_64M - 1,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-	[1] = अणु
+	},
+	[1] = {
 		.start	= 0x04000000,
 		.end	= 0x04000000 + SZ_64M - 1,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा mtd_partition lubbock_partitions[] = अणु
-	अणु
+static struct mtd_partition lubbock_partitions[] = {
+	{
 		.name =		"Bootloader",
 		.size =		0x00040000,
 		.offset =	0,
-		.mask_flags =	MTD_WRITEABLE  /* क्रमce पढ़ो-only */
-	पूर्ण,अणु
+		.mask_flags =	MTD_WRITEABLE  /* force read-only */
+	},{
 		.name =		"Kernel",
 		.size =		0x00100000,
 		.offset =	0x00040000,
-	पूर्ण,अणु
+	},{
 		.name =		"Filesystem",
 		.size =		MTDPART_SIZ_FULL,
 		.offset =	0x00140000
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल काष्ठा flash_platक्रमm_data lubbock_flash_data[2] = अणु
-	अणु
+static struct flash_platform_data lubbock_flash_data[2] = {
+	{
 		.map_name	= "cfi_probe",
 		.parts		= lubbock_partitions,
 		.nr_parts	= ARRAY_SIZE(lubbock_partitions),
-	पूर्ण, अणु
+	}, {
 		.map_name	= "cfi_probe",
-		.parts		= शून्य,
+		.parts		= NULL,
 		.nr_parts	= 0,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल काष्ठा platक्रमm_device lubbock_flash_device[2] = अणु
-	अणु
+static struct platform_device lubbock_flash_device[2] = {
+	{
 		.name		= "pxa2xx-flash",
 		.id		= 0,
-		.dev = अणु
-			.platक्रमm_data = &lubbock_flash_data[0],
-		पूर्ण,
+		.dev = {
+			.platform_data = &lubbock_flash_data[0],
+		},
 		.resource = &flash_resources[0],
 		.num_resources = 1,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name		= "pxa2xx-flash",
 		.id		= 1,
-		.dev = अणु
-			.platक्रमm_data = &lubbock_flash_data[1],
-		पूर्ण,
+		.dev = {
+			.platform_data = &lubbock_flash_data[1],
+		},
 		.resource = &flash_resources[1],
 		.num_resources = 1,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा resource lubbock_cplds_resources[] = अणु
-	[0] = अणु
+static struct resource lubbock_cplds_resources[] = {
+	[0] = {
 		.start	= LUBBOCK_FPGA_PHYS + 0xc0,
 		.end	= LUBBOCK_FPGA_PHYS + 0xe0 - 1,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-	[1] = अणु
+	},
+	[1] = {
 		.start	= PXA_GPIO_TO_IRQ(0),
 		.end	= PXA_GPIO_TO_IRQ(0),
 		.flags	= IORESOURCE_IRQ | IORESOURCE_IRQ_LOWEDGE,
-	पूर्ण,
-	[2] = अणु
+	},
+	[2] = {
 		.start	= LUBBOCK_IRQ(0),
 		.end	= LUBBOCK_IRQ(6),
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा platक्रमm_device lubbock_cplds_device = अणु
+static struct platform_device lubbock_cplds_device = {
 	.name		= "pxa_cplds_irqs",
 	.id		= -1,
 	.resource	= &lubbock_cplds_resources[0],
 	.num_resources	= 3,
-पूर्ण;
+};
 
 
-अटल काष्ठा platक्रमm_device *devices[] __initdata = अणु
+static struct platform_device *devices[] __initdata = {
 	&sa1111_device,
 	&smc91x_device,
 	&lubbock_flash_device[0],
 	&lubbock_flash_device[1],
 	&lubbock_cplds_device,
-पूर्ण;
+};
 
-अटल काष्ठा pxafb_mode_info sharp_lm8v31_mode = अणु
-	.pixघड़ी	= 270000,
+static struct pxafb_mode_info sharp_lm8v31_mode = {
+	.pixclock	= 270000,
 	.xres		= 640,
 	.yres		= 480,
 	.bpp		= 16,
@@ -380,259 +379,259 @@
 	.lower_margin	= 0,
 	.sync		= FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
 	.cmap_greyscale	= 0,
-पूर्ण;
+};
 
-अटल काष्ठा pxafb_mach_info sharp_lm8v31 = अणु
+static struct pxafb_mach_info sharp_lm8v31 = {
 	.modes		= &sharp_lm8v31_mode,
 	.num_modes	= 1,
 	.cmap_inverse	= 0,
-	.cmap_अटल	= 0,
+	.cmap_static	= 0,
 	.lcd_conn	= LCD_COLOR_DSTN_16BPP | LCD_PCLK_EDGE_FALL |
 			  LCD_AC_BIAS_FREQ(255),
-पूर्ण;
+};
 
-#घोषणा	MMC_POLL_RATE		msecs_to_jअगरfies(1000)
+#define	MMC_POLL_RATE		msecs_to_jiffies(1000)
 
-अटल irq_handler_t mmc_detect_पूर्णांक;
-अटल व्योम *mmc_detect_पूर्णांक_data;
-अटल काष्ठा समयr_list mmc_समयr;
+static irq_handler_t mmc_detect_int;
+static void *mmc_detect_int_data;
+static struct timer_list mmc_timer;
 
-अटल व्योम lubbock_mmc_poll(काष्ठा समयr_list *unused)
-अणु
-	अचिन्हित दीर्घ flags;
+static void lubbock_mmc_poll(struct timer_list *unused)
+{
+	unsigned long flags;
 
 	/* clear any previous irq state, then ... */
 	local_irq_save(flags);
 	LUB_IRQ_SET_CLR &= ~(1 << 0);
 	local_irq_restore(flags);
 
-	/* poll until mmc/sd card is हटाओd */
-	अगर (LUB_IRQ_SET_CLR & (1 << 0))
-		mod_समयr(&mmc_समयr, jअगरfies + MMC_POLL_RATE);
-	अन्यथा अणु
-		(व्योम) mmc_detect_पूर्णांक(LUBBOCK_SD_IRQ, mmc_detect_पूर्णांक_data);
+	/* poll until mmc/sd card is removed */
+	if (LUB_IRQ_SET_CLR & (1 << 0))
+		mod_timer(&mmc_timer, jiffies + MMC_POLL_RATE);
+	else {
+		(void) mmc_detect_int(LUBBOCK_SD_IRQ, mmc_detect_int_data);
 		enable_irq(LUBBOCK_SD_IRQ);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल irqवापस_t lubbock_detect_पूर्णांक(पूर्णांक irq, व्योम *data)
-अणु
-	/* IRQ is level triggered; disable, and poll क्रम removal */
+static irqreturn_t lubbock_detect_int(int irq, void *data)
+{
+	/* IRQ is level triggered; disable, and poll for removal */
 	disable_irq(irq);
-	mod_समयr(&mmc_समयr, jअगरfies + MMC_POLL_RATE);
+	mod_timer(&mmc_timer, jiffies + MMC_POLL_RATE);
 
-	वापस mmc_detect_पूर्णांक(irq, data);
-पूर्ण
+	return mmc_detect_int(irq, data);
+}
 
-अटल पूर्णांक lubbock_mci_init(काष्ठा device *dev,
-		irq_handler_t detect_पूर्णांक,
-		व्योम *data)
-अणु
+static int lubbock_mci_init(struct device *dev,
+		irq_handler_t detect_int,
+		void *data)
+{
 	/* detect card insert/eject */
-	mmc_detect_पूर्णांक = detect_पूर्णांक;
-	mmc_detect_पूर्णांक_data = data;
-	समयr_setup(&mmc_समयr, lubbock_mmc_poll, 0);
-	वापस request_irq(LUBBOCK_SD_IRQ, lubbock_detect_पूर्णांक,
+	mmc_detect_int = detect_int;
+	mmc_detect_int_data = data;
+	timer_setup(&mmc_timer, lubbock_mmc_poll, 0);
+	return request_irq(LUBBOCK_SD_IRQ, lubbock_detect_int,
 			   0, "lubbock-sd-detect", data);
-पूर्ण
+}
 
-अटल पूर्णांक lubbock_mci_get_ro(काष्ठा device *dev)
-अणु
-	वापस (LUB_MISC_RD & (1 << 2)) != 0;
-पूर्ण
+static int lubbock_mci_get_ro(struct device *dev)
+{
+	return (LUB_MISC_RD & (1 << 2)) != 0;
+}
 
-अटल व्योम lubbock_mci_निकास(काष्ठा device *dev, व्योम *data)
-अणु
-	मुक्त_irq(LUBBOCK_SD_IRQ, data);
-	del_समयr_sync(&mmc_समयr);
-पूर्ण
+static void lubbock_mci_exit(struct device *dev, void *data)
+{
+	free_irq(LUBBOCK_SD_IRQ, data);
+	del_timer_sync(&mmc_timer);
+}
 
-अटल काष्ठा pxamci_platक्रमm_data lubbock_mci_platक्रमm_data = अणु
+static struct pxamci_platform_data lubbock_mci_platform_data = {
 	.ocr_mask		= MMC_VDD_32_33|MMC_VDD_33_34,
 	.detect_delay_ms	= 10,
 	.init 			= lubbock_mci_init,
 	.get_ro			= lubbock_mci_get_ro,
-	.निकास 			= lubbock_mci_निकास,
-पूर्ण;
+	.exit 			= lubbock_mci_exit,
+};
 
-अटल व्योम lubbock_irda_transceiver_mode(काष्ठा device *dev, पूर्णांक mode)
-अणु
-	अचिन्हित दीर्घ flags;
+static void lubbock_irda_transceiver_mode(struct device *dev, int mode)
+{
+	unsigned long flags;
 
 	local_irq_save(flags);
-	अगर (mode & IR_SIRMODE) अणु
+	if (mode & IR_SIRMODE) {
 		lubbock_set_misc_wr(BIT(4), 0);
-	पूर्ण अन्यथा अगर (mode & IR_FIRMODE) अणु
+	} else if (mode & IR_FIRMODE) {
 		lubbock_set_misc_wr(BIT(4), BIT(4));
-	पूर्ण
+	}
 	pxa2xx_transceiver_mode(dev, mode);
 	local_irq_restore(flags);
-पूर्ण
+}
 
-अटल काष्ठा pxaficp_platक्रमm_data lubbock_ficp_platक्रमm_data = अणु
-	.gpio_pwकरोwn		= -1,
+static struct pxaficp_platform_data lubbock_ficp_platform_data = {
+	.gpio_pwdown		= -1,
 	.transceiver_cap	= IR_SIRMODE | IR_FIRMODE,
 	.transceiver_mode	= lubbock_irda_transceiver_mode,
-पूर्ण;
+};
 
-अटल व्योम __init lubbock_init(व्योम)
-अणु
-	पूर्णांक flashboot = (LUB_CONF_SWITCHES & 1);
+static void __init lubbock_init(void)
+{
+	int flashboot = (LUB_CONF_SWITCHES & 1);
 
 	pxa2xx_mfp_config(ARRAY_AND_SIZE(lubbock_pin_config));
 
-	lubbock_misc_wr_gc = gpio_reg_init(शून्य, (व्योम *)&LUB_MISC_WR,
+	lubbock_misc_wr_gc = gpio_reg_init(NULL, (void *)&LUB_MISC_WR,
 					   -1, 16, "lubbock", 0, LUB_MISC_WR,
-					   शून्य, शून्य, शून्य);
-	अगर (IS_ERR(lubbock_misc_wr_gc)) अणु
+					   NULL, NULL, NULL);
+	if (IS_ERR(lubbock_misc_wr_gc)) {
 		pr_err("Lubbock: unable to register lubbock GPIOs: %ld\n",
 		       PTR_ERR(lubbock_misc_wr_gc));
-		lubbock_misc_wr_gc = शून्य;
-	पूर्ण
+		lubbock_misc_wr_gc = NULL;
+	}
 
-	pxa_set_ffuart_info(शून्य);
-	pxa_set_btuart_info(शून्य);
-	pxa_set_stuart_info(शून्य);
+	pxa_set_ffuart_info(NULL);
+	pxa_set_btuart_info(NULL);
+	pxa_set_stuart_info(NULL);
 
 	lubbock_init_pcmcia();
 
-	clk_add_alias("SA1111_CLK", शून्य, "GPIO11_CLK", शून्य);
+	clk_add_alias("SA1111_CLK", NULL, "GPIO11_CLK", NULL);
 	pxa_set_udc_info(&udc_info);
-	pxa_set_fb_info(शून्य, &sharp_lm8v31);
-	pxa_set_mci_info(&lubbock_mci_platक्रमm_data);
-	pxa_set_ficp_info(&lubbock_ficp_platक्रमm_data);
-	pxa_set_ac97_info(शून्य);
+	pxa_set_fb_info(NULL, &sharp_lm8v31);
+	pxa_set_mci_info(&lubbock_mci_platform_data);
+	pxa_set_ficp_info(&lubbock_ficp_platform_data);
+	pxa_set_ac97_info(NULL);
 
 	lubbock_flash_data[0].width = lubbock_flash_data[1].width =
-		(__raw_पढ़ोl(BOOT_DEF) & 1) ? 2 : 4;
-	/* Compensate क्रम the nROMBT चयन which swaps the flash banks */
-	prपूर्णांकk(KERN_NOTICE "Lubbock configured to boot from %s (bank %d)\n",
+		(__raw_readl(BOOT_DEF) & 1) ? 2 : 4;
+	/* Compensate for the nROMBT switch which swaps the flash banks */
+	printk(KERN_NOTICE "Lubbock configured to boot from %s (bank %d)\n",
 	       flashboot?"Flash":"ROM", flashboot);
 
 	lubbock_flash_data[flashboot^1].name = "application-flash";
 	lubbock_flash_data[flashboot].name = "boot-rom";
-	(व्योम) platक्रमm_add_devices(devices, ARRAY_SIZE(devices));
+	(void) platform_add_devices(devices, ARRAY_SIZE(devices));
 
 	pxa2xx_set_spi_info(1, &pxa_ssp_master_info);
-	spi_रेजिस्टर_board_info(spi_board_info, ARRAY_SIZE(spi_board_info));
-पूर्ण
+	spi_register_board_info(spi_board_info, ARRAY_SIZE(spi_board_info));
+}
 
-अटल काष्ठा map_desc lubbock_io_desc[] __initdata = अणु
-  	अणु	/* CPLD */
-		.भव	=  LUBBOCK_FPGA_VIRT,
+static struct map_desc lubbock_io_desc[] __initdata = {
+  	{	/* CPLD */
+		.virtual	=  LUBBOCK_FPGA_VIRT,
 		.pfn		= __phys_to_pfn(LUBBOCK_FPGA_PHYS),
 		.length		= 0x00100000,
 		.type		= MT_DEVICE
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल व्योम __init lubbock_map_io(व्योम)
-अणु
+static void __init lubbock_map_io(void)
+{
 	pxa25x_map_io();
 	iotable_init(lubbock_io_desc, ARRAY_SIZE(lubbock_io_desc));
 
 	PCFR |= PCFR_OPDE;
-पूर्ण
+}
 
 /*
- * Driver क्रम the 8 discrete LEDs available क्रम general use:
+ * Driver for the 8 discrete LEDs available for general use:
  * Note: bits [15-8] are used to enable/blank the 8 7 segment hex displays
  * so be sure to not monkey with them here.
  */
 
-#अगर defined(CONFIG_NEW_LEDS) && defined(CONFIG_LEDS_CLASS)
-काष्ठा lubbock_led अणु
-	काष्ठा led_classdev	cdev;
+#if defined(CONFIG_NEW_LEDS) && defined(CONFIG_LEDS_CLASS)
+struct lubbock_led {
+	struct led_classdev	cdev;
 	u8			mask;
-पूर्ण;
+};
 
 /*
- * The triggers lines up below will only be used अगर the
+ * The triggers lines up below will only be used if the
  * LED triggers are compiled in.
  */
-अटल स्थिर काष्ठा अणु
-	स्थिर अक्षर *name;
-	स्थिर अक्षर *trigger;
-पूर्ण lubbock_leds[] = अणु
-	अणु "lubbock:D28", "default-on", पूर्ण,
-	अणु "lubbock:D27", "cpu0", पूर्ण,
-	अणु "lubbock:D26", "heartbeat" पूर्ण,
-	अणु "lubbock:D25", पूर्ण,
-	अणु "lubbock:D24", पूर्ण,
-	अणु "lubbock:D23", पूर्ण,
-	अणु "lubbock:D22", पूर्ण,
-	अणु "lubbock:D21", पूर्ण,
-पूर्ण;
+static const struct {
+	const char *name;
+	const char *trigger;
+} lubbock_leds[] = {
+	{ "lubbock:D28", "default-on", },
+	{ "lubbock:D27", "cpu0", },
+	{ "lubbock:D26", "heartbeat" },
+	{ "lubbock:D25", },
+	{ "lubbock:D24", },
+	{ "lubbock:D23", },
+	{ "lubbock:D22", },
+	{ "lubbock:D21", },
+};
 
-अटल व्योम lubbock_led_set(काष्ठा led_classdev *cdev,
-			      क्रमागत led_brightness b)
-अणु
-	काष्ठा lubbock_led *led = container_of(cdev,
-					 काष्ठा lubbock_led, cdev);
+static void lubbock_led_set(struct led_classdev *cdev,
+			      enum led_brightness b)
+{
+	struct lubbock_led *led = container_of(cdev,
+					 struct lubbock_led, cdev);
 	u32 reg = LUB_DISC_BLNK_LED;
 
-	अगर (b != LED_OFF)
+	if (b != LED_OFF)
 		reg |= led->mask;
-	अन्यथा
+	else
 		reg &= ~led->mask;
 
 	LUB_DISC_BLNK_LED = reg;
-पूर्ण
+}
 
-अटल क्रमागत led_brightness lubbock_led_get(काष्ठा led_classdev *cdev)
-अणु
-	काष्ठा lubbock_led *led = container_of(cdev,
-					 काष्ठा lubbock_led, cdev);
+static enum led_brightness lubbock_led_get(struct led_classdev *cdev)
+{
+	struct lubbock_led *led = container_of(cdev,
+					 struct lubbock_led, cdev);
 	u32 reg = LUB_DISC_BLNK_LED;
 
-	वापस (reg & led->mask) ? LED_FULL : LED_OFF;
-पूर्ण
+	return (reg & led->mask) ? LED_FULL : LED_OFF;
+}
 
-अटल पूर्णांक __init lubbock_leds_init(व्योम)
-अणु
-	पूर्णांक i;
+static int __init lubbock_leds_init(void)
+{
+	int i;
 
-	अगर (!machine_is_lubbock())
-		वापस -ENODEV;
+	if (!machine_is_lubbock())
+		return -ENODEV;
 
 	/* All ON */
 	LUB_DISC_BLNK_LED |= 0xff;
-	क्रम (i = 0; i < ARRAY_SIZE(lubbock_leds); i++) अणु
-		काष्ठा lubbock_led *led;
+	for (i = 0; i < ARRAY_SIZE(lubbock_leds); i++) {
+		struct lubbock_led *led;
 
-		led = kzalloc(माप(*led), GFP_KERNEL);
-		अगर (!led)
-			अवरोध;
+		led = kzalloc(sizeof(*led), GFP_KERNEL);
+		if (!led)
+			break;
 
 		led->cdev.name = lubbock_leds[i].name;
 		led->cdev.brightness_set = lubbock_led_set;
 		led->cdev.brightness_get = lubbock_led_get;
-		led->cdev.शेष_trigger = lubbock_leds[i].trigger;
+		led->cdev.default_trigger = lubbock_leds[i].trigger;
 		led->mask = BIT(i);
 
-		अगर (led_classdev_रेजिस्टर(शून्य, &led->cdev) < 0) अणु
-			kमुक्त(led);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+		if (led_classdev_register(NULL, &led->cdev) < 0) {
+			kfree(led);
+			break;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Since we may have triggers on any subप्रणाली, defer registration
- * until after subप्रणाली_init.
+ * Since we may have triggers on any subsystem, defer registration
+ * until after subsystem_init.
  */
 fs_initcall(lubbock_leds_init);
-#पूर्ण_अगर
+#endif
 
 MACHINE_START(LUBBOCK, "Intel DBPXA250 Development Platform (aka Lubbock)")
-	/* Maपूर्णांकainer: MontaVista Software Inc. */
+	/* Maintainer: MontaVista Software Inc. */
 	.map_io		= lubbock_map_io,
 	.nr_irqs	= LUBBOCK_NR_IRQS,
 	.init_irq	= pxa25x_init_irq,
 	.handle_irq	= pxa25x_handle_irq,
-	.init_समय	= pxa_समयr_init,
+	.init_time	= pxa_timer_init,
 	.init_machine	= lubbock_init,
 	.restart	= pxa_restart,
 MACHINE_END

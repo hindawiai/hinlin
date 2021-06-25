@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ WITH Linux-syscall-note */
+/* SPDX-License-Identifier: GPL-2.0+ WITH Linux-syscall-note */
 /*
  * Copyright 2008 Red Hat, Inc. All rights reserved.
  * Copyright 2008 Ian Kent <raven@themaw.net>
@@ -9,120 +8,120 @@
  * option, any later version, incorporated herein by reference.
  */
 
-#अगर_अघोषित _UAPI_LINUX_AUTO_DEV_IOCTL_H
-#घोषणा _UAPI_LINUX_AUTO_DEV_IOCTL_H
+#ifndef _UAPI_LINUX_AUTO_DEV_IOCTL_H
+#define _UAPI_LINUX_AUTO_DEV_IOCTL_H
 
-#समावेश <linux/स्वतः_fs.h>
-#समावेश <linux/माला.स>
+#include <linux/auto_fs.h>
+#include <linux/string.h>
 
-#घोषणा AUTOFS_DEVICE_NAME		"autofs"
+#define AUTOFS_DEVICE_NAME		"autofs"
 
-#घोषणा AUTOFS_DEV_IOCTL_VERSION_MAJOR	1
-#घोषणा AUTOFS_DEV_IOCTL_VERSION_MINOR	1
+#define AUTOFS_DEV_IOCTL_VERSION_MAJOR	1
+#define AUTOFS_DEV_IOCTL_VERSION_MINOR	1
 
-#घोषणा AUTOFS_DEV_IOCTL_SIZE		माप(काष्ठा स्वतःfs_dev_ioctl)
+#define AUTOFS_DEV_IOCTL_SIZE		sizeof(struct autofs_dev_ioctl)
 
 /*
- * An ioctl पूर्णांकerface क्रम स्वतःfs mount poपूर्णांक control.
+ * An ioctl interface for autofs mount point control.
  */
 
-काष्ठा args_protover अणु
+struct args_protover {
 	__u32	version;
-पूर्ण;
+};
 
-काष्ठा args_protosubver अणु
+struct args_protosubver {
 	__u32	sub_version;
-पूर्ण;
+};
 
-काष्ठा args_खोलोmount अणु
+struct args_openmount {
 	__u32	devid;
-पूर्ण;
+};
 
-काष्ठा args_पढ़ोy अणु
+struct args_ready {
 	__u32	token;
-पूर्ण;
+};
 
-काष्ठा args_fail अणु
+struct args_fail {
 	__u32	token;
 	__s32	status;
-पूर्ण;
+};
 
-काष्ठा args_setpipefd अणु
+struct args_setpipefd {
 	__s32	pipefd;
-पूर्ण;
+};
 
-काष्ठा args_समयout अणु
-	__u64	समयout;
-पूर्ण;
+struct args_timeout {
+	__u64	timeout;
+};
 
-काष्ठा args_requester अणु
+struct args_requester {
 	__u32	uid;
 	__u32	gid;
-पूर्ण;
+};
 
-काष्ठा args_expire अणु
+struct args_expire {
 	__u32	how;
-पूर्ण;
+};
 
-काष्ठा args_askumount अणु
+struct args_askumount {
 	__u32	may_umount;
-पूर्ण;
+};
 
-काष्ठा args_ismountpoपूर्णांक अणु
-	जोड़ अणु
-		काष्ठा args_in अणु
+struct args_ismountpoint {
+	union {
+		struct args_in {
 			__u32	type;
-		पूर्ण in;
-		काष्ठा args_out अणु
+		} in;
+		struct args_out {
 			__u32	devid;
 			__u32	magic;
-		पूर्ण out;
-	पूर्ण;
-पूर्ण;
+		} out;
+	};
+};
 
 /*
- * All the ioctls use this काष्ठाure.
- * When sending a path size must account क्रम the total length
+ * All the ioctls use this structure.
+ * When sending a path size must account for the total length
  * of the chunk of memory otherwise it is the size of the
- * काष्ठाure.
+ * structure.
  */
 
-काष्ठा स्वतःfs_dev_ioctl अणु
+struct autofs_dev_ioctl {
 	__u32 ver_major;
 	__u32 ver_minor;
 	__u32 size;		/* total size of data passed in
-				 * including this काष्ठा */
-	__s32 ioctlfd;		/* स्वतःmount command fd */
+				 * including this struct */
+	__s32 ioctlfd;		/* automount command fd */
 
 	/* Command parameters */
 
-	जोड़ अणु
-		काष्ठा args_protover		protover;
-		काष्ठा args_protosubver		protosubver;
-		काष्ठा args_खोलोmount		खोलोmount;
-		काष्ठा args_पढ़ोy		पढ़ोy;
-		काष्ठा args_fail		fail;
-		काष्ठा args_setpipefd		setpipefd;
-		काष्ठा args_समयout		समयout;
-		काष्ठा args_requester		requester;
-		काष्ठा args_expire		expire;
-		काष्ठा args_askumount		askumount;
-		काष्ठा args_ismountpoपूर्णांक	ismountpoपूर्णांक;
-	पूर्ण;
+	union {
+		struct args_protover		protover;
+		struct args_protosubver		protosubver;
+		struct args_openmount		openmount;
+		struct args_ready		ready;
+		struct args_fail		fail;
+		struct args_setpipefd		setpipefd;
+		struct args_timeout		timeout;
+		struct args_requester		requester;
+		struct args_expire		expire;
+		struct args_askumount		askumount;
+		struct args_ismountpoint	ismountpoint;
+	};
 
-	अक्षर path[0];
-पूर्ण;
+	char path[0];
+};
 
-अटल अंतरभूत व्योम init_स्वतःfs_dev_ioctl(काष्ठा स्वतःfs_dev_ioctl *in)
-अणु
-	स_रखो(in, 0, AUTOFS_DEV_IOCTL_SIZE);
+static inline void init_autofs_dev_ioctl(struct autofs_dev_ioctl *in)
+{
+	memset(in, 0, AUTOFS_DEV_IOCTL_SIZE);
 	in->ver_major = AUTOFS_DEV_IOCTL_VERSION_MAJOR;
 	in->ver_minor = AUTOFS_DEV_IOCTL_VERSION_MINOR;
 	in->size = AUTOFS_DEV_IOCTL_SIZE;
 	in->ioctlfd = -1;
-पूर्ण
+}
 
-क्रमागत अणु
+enum {
 	/* Get various version info */
 	AUTOFS_DEV_IOCTL_VERSION_CMD = 0x71,
 	AUTOFS_DEV_IOCTL_PROTOVER_CMD,
@@ -134,84 +133,84 @@
 	/* Close mount ioctl fd */
 	AUTOFS_DEV_IOCTL_CLOSEMOUNT_CMD,
 
-	/* Mount/expire status वापसs */
+	/* Mount/expire status returns */
 	AUTOFS_DEV_IOCTL_READY_CMD,
 	AUTOFS_DEV_IOCTL_FAIL_CMD,
 
-	/* Activate/deactivate स्वतःfs mount */
+	/* Activate/deactivate autofs mount */
 	AUTOFS_DEV_IOCTL_SETPIPEFD_CMD,
 	AUTOFS_DEV_IOCTL_CATATONIC_CMD,
 
-	/* Expiry समयout */
+	/* Expiry timeout */
 	AUTOFS_DEV_IOCTL_TIMEOUT_CMD,
 
 	/* Get mount last requesting uid and gid */
 	AUTOFS_DEV_IOCTL_REQUESTER_CMD,
 
-	/* Check क्रम eligible expire candidates */
+	/* Check for eligible expire candidates */
 	AUTOFS_DEV_IOCTL_EXPIRE_CMD,
 
 	/* Request busy status */
 	AUTOFS_DEV_IOCTL_ASKUMOUNT_CMD,
 
-	/* Check अगर path is a mountpoपूर्णांक */
+	/* Check if path is a mountpoint */
 	AUTOFS_DEV_IOCTL_ISMOUNTPOINT_CMD,
-पूर्ण;
+};
 
-#घोषणा AUTOFS_DEV_IOCTL_VERSION \
+#define AUTOFS_DEV_IOCTL_VERSION \
 	_IOWR(AUTOFS_IOCTL, \
-	      AUTOFS_DEV_IOCTL_VERSION_CMD, काष्ठा स्वतःfs_dev_ioctl)
+	      AUTOFS_DEV_IOCTL_VERSION_CMD, struct autofs_dev_ioctl)
 
-#घोषणा AUTOFS_DEV_IOCTL_PROTOVER \
+#define AUTOFS_DEV_IOCTL_PROTOVER \
 	_IOWR(AUTOFS_IOCTL, \
-	      AUTOFS_DEV_IOCTL_PROTOVER_CMD, काष्ठा स्वतःfs_dev_ioctl)
+	      AUTOFS_DEV_IOCTL_PROTOVER_CMD, struct autofs_dev_ioctl)
 
-#घोषणा AUTOFS_DEV_IOCTL_PROTOSUBVER \
+#define AUTOFS_DEV_IOCTL_PROTOSUBVER \
 	_IOWR(AUTOFS_IOCTL, \
-	      AUTOFS_DEV_IOCTL_PROTOSUBVER_CMD, काष्ठा स्वतःfs_dev_ioctl)
+	      AUTOFS_DEV_IOCTL_PROTOSUBVER_CMD, struct autofs_dev_ioctl)
 
-#घोषणा AUTOFS_DEV_IOCTL_OPENMOUNT \
+#define AUTOFS_DEV_IOCTL_OPENMOUNT \
 	_IOWR(AUTOFS_IOCTL, \
-	      AUTOFS_DEV_IOCTL_OPENMOUNT_CMD, काष्ठा स्वतःfs_dev_ioctl)
+	      AUTOFS_DEV_IOCTL_OPENMOUNT_CMD, struct autofs_dev_ioctl)
 
-#घोषणा AUTOFS_DEV_IOCTL_CLOSEMOUNT \
+#define AUTOFS_DEV_IOCTL_CLOSEMOUNT \
 	_IOWR(AUTOFS_IOCTL, \
-	      AUTOFS_DEV_IOCTL_CLOSEMOUNT_CMD, काष्ठा स्वतःfs_dev_ioctl)
+	      AUTOFS_DEV_IOCTL_CLOSEMOUNT_CMD, struct autofs_dev_ioctl)
 
-#घोषणा AUTOFS_DEV_IOCTL_READY \
+#define AUTOFS_DEV_IOCTL_READY \
 	_IOWR(AUTOFS_IOCTL, \
-	      AUTOFS_DEV_IOCTL_READY_CMD, काष्ठा स्वतःfs_dev_ioctl)
+	      AUTOFS_DEV_IOCTL_READY_CMD, struct autofs_dev_ioctl)
 
-#घोषणा AUTOFS_DEV_IOCTL_FAIL \
+#define AUTOFS_DEV_IOCTL_FAIL \
 	_IOWR(AUTOFS_IOCTL, \
-	      AUTOFS_DEV_IOCTL_FAIL_CMD, काष्ठा स्वतःfs_dev_ioctl)
+	      AUTOFS_DEV_IOCTL_FAIL_CMD, struct autofs_dev_ioctl)
 
-#घोषणा AUTOFS_DEV_IOCTL_SETPIPEFD \
+#define AUTOFS_DEV_IOCTL_SETPIPEFD \
 	_IOWR(AUTOFS_IOCTL, \
-	      AUTOFS_DEV_IOCTL_SETPIPEFD_CMD, काष्ठा स्वतःfs_dev_ioctl)
+	      AUTOFS_DEV_IOCTL_SETPIPEFD_CMD, struct autofs_dev_ioctl)
 
-#घोषणा AUTOFS_DEV_IOCTL_CATATONIC \
+#define AUTOFS_DEV_IOCTL_CATATONIC \
 	_IOWR(AUTOFS_IOCTL, \
-	      AUTOFS_DEV_IOCTL_CATATONIC_CMD, काष्ठा स्वतःfs_dev_ioctl)
+	      AUTOFS_DEV_IOCTL_CATATONIC_CMD, struct autofs_dev_ioctl)
 
-#घोषणा AUTOFS_DEV_IOCTL_TIMEOUT \
+#define AUTOFS_DEV_IOCTL_TIMEOUT \
 	_IOWR(AUTOFS_IOCTL, \
-	      AUTOFS_DEV_IOCTL_TIMEOUT_CMD, काष्ठा स्वतःfs_dev_ioctl)
+	      AUTOFS_DEV_IOCTL_TIMEOUT_CMD, struct autofs_dev_ioctl)
 
-#घोषणा AUTOFS_DEV_IOCTL_REQUESTER \
+#define AUTOFS_DEV_IOCTL_REQUESTER \
 	_IOWR(AUTOFS_IOCTL, \
-	      AUTOFS_DEV_IOCTL_REQUESTER_CMD, काष्ठा स्वतःfs_dev_ioctl)
+	      AUTOFS_DEV_IOCTL_REQUESTER_CMD, struct autofs_dev_ioctl)
 
-#घोषणा AUTOFS_DEV_IOCTL_EXPIRE \
+#define AUTOFS_DEV_IOCTL_EXPIRE \
 	_IOWR(AUTOFS_IOCTL, \
-	      AUTOFS_DEV_IOCTL_EXPIRE_CMD, काष्ठा स्वतःfs_dev_ioctl)
+	      AUTOFS_DEV_IOCTL_EXPIRE_CMD, struct autofs_dev_ioctl)
 
-#घोषणा AUTOFS_DEV_IOCTL_ASKUMOUNT \
+#define AUTOFS_DEV_IOCTL_ASKUMOUNT \
 	_IOWR(AUTOFS_IOCTL, \
-	      AUTOFS_DEV_IOCTL_ASKUMOUNT_CMD, काष्ठा स्वतःfs_dev_ioctl)
+	      AUTOFS_DEV_IOCTL_ASKUMOUNT_CMD, struct autofs_dev_ioctl)
 
-#घोषणा AUTOFS_DEV_IOCTL_ISMOUNTPOINT \
+#define AUTOFS_DEV_IOCTL_ISMOUNTPOINT \
 	_IOWR(AUTOFS_IOCTL, \
-	      AUTOFS_DEV_IOCTL_ISMOUNTPOINT_CMD, काष्ठा स्वतःfs_dev_ioctl)
+	      AUTOFS_DEV_IOCTL_ISMOUNTPOINT_CMD, struct autofs_dev_ioctl)
 
-#पूर्ण_अगर	/* _UAPI_LINUX_AUTO_DEV_IOCTL_H */
+#endif	/* _UAPI_LINUX_AUTO_DEV_IOCTL_H */

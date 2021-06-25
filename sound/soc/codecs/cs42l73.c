@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * cs42l73.c  --  CS42L73 ALSA Soc Audio driver
  *
@@ -9,287 +8,287 @@
  *	    Brian Austin, Cirrus Logic Inc, <brian.austin@cirrus.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/of_gpपन.स>
-#समावेश <linux/pm.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/slab.h>
-#समावेश <sound/core.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/pcm_params.h>
-#समावेश <sound/soc.h>
-#समावेश <sound/soc-dapm.h>
-#समावेश <sound/initval.h>
-#समावेश <sound/tlv.h>
-#समावेश <sound/cs42l73.h>
-#समावेश "cs42l73.h"
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/delay.h>
+#include <linux/of_gpio.h>
+#include <linux/pm.h>
+#include <linux/i2c.h>
+#include <linux/regmap.h>
+#include <linux/slab.h>
+#include <sound/core.h>
+#include <sound/pcm.h>
+#include <sound/pcm_params.h>
+#include <sound/soc.h>
+#include <sound/soc-dapm.h>
+#include <sound/initval.h>
+#include <sound/tlv.h>
+#include <sound/cs42l73.h>
+#include "cs42l73.h"
 
-काष्ठा sp_config अणु
+struct sp_config {
 	u8 spc, mmcc, spfs;
 	u32 srate;
-पूर्ण;
-काष्ठा  cs42l73_निजी अणु
-	काष्ठा cs42l73_platक्रमm_data pdata;
-	काष्ठा sp_config config[3];
-	काष्ठा regmap *regmap;
+};
+struct  cs42l73_private {
+	struct cs42l73_platform_data pdata;
+	struct sp_config config[3];
+	struct regmap *regmap;
 	u32 sysclk;
 	u8 mclksel;
 	u32 mclk;
-	पूर्णांक shutdwn_delay;
-पूर्ण;
+	int shutdwn_delay;
+};
 
-अटल स्थिर काष्ठा reg_शेष cs42l73_reg_शेषs[] = अणु
-	अणु 6, 0xF1 पूर्ण,	/* r06	- Power Ctl 1 */
-	अणु 7, 0xDF पूर्ण,	/* r07	- Power Ctl 2 */
-	अणु 8, 0x3F पूर्ण,	/* r08	- Power Ctl 3 */
-	अणु 9, 0x50 पूर्ण,	/* r09	- Charge Pump Freq */
-	अणु 10, 0x53 पूर्ण,	/* r0A	- Output Load MicBias Short Detect */
-	अणु 11, 0x00 पूर्ण,	/* r0B	- DMIC Master Clock Ctl */
-	अणु 12, 0x00 पूर्ण,	/* r0C	- Aux PCM Ctl */
-	अणु 13, 0x15 पूर्ण,	/* r0D	- Aux PCM Master Clock Ctl */
-	अणु 14, 0x00 पूर्ण,	/* r0E	- Audio PCM Ctl */
-	अणु 15, 0x15 पूर्ण,	/* r0F	- Audio PCM Master Clock Ctl */
-	अणु 16, 0x00 पूर्ण,	/* r10	- Voice PCM Ctl */
-	अणु 17, 0x15 पूर्ण,	/* r11	- Voice PCM Master Clock Ctl */
-	अणु 18, 0x00 पूर्ण,	/* r12	- Voice/Aux Sample Rate */
-	अणु 19, 0x06 पूर्ण,	/* r13	- Misc I/O Path Ctl */
-	अणु 20, 0x00 पूर्ण,	/* r14	- ADC Input Path Ctl */
-	अणु 21, 0x00 पूर्ण,	/* r15	- MICA Preamp, PGA Volume */
-	अणु 22, 0x00 पूर्ण,	/* r16	- MICB Preamp, PGA Volume */
-	अणु 23, 0x00 पूर्ण,	/* r17	- Input Path A Digital Volume */
-	अणु 24, 0x00 पूर्ण,	/* r18	- Input Path B Digital Volume */
-	अणु 25, 0x00 पूर्ण,	/* r19	- Playback Digital Ctl */
-	अणु 26, 0x00 पूर्ण,	/* r1A	- HP/LO Left Digital Volume */
-	अणु 27, 0x00 पूर्ण,	/* r1B	- HP/LO Right Digital Volume */
-	अणु 28, 0x00 पूर्ण,	/* r1C	- Speakerphone Digital Volume */
-	अणु 29, 0x00 पूर्ण,	/* r1D	- Ear/SPKLO Digital Volume */
-	अणु 30, 0x00 पूर्ण,	/* r1E	- HP Left Analog Volume */
-	अणु 31, 0x00 पूर्ण,	/* r1F	- HP Right Analog Volume */
-	अणु 32, 0x00 पूर्ण,	/* r20	- LO Left Analog Volume */
-	अणु 33, 0x00 पूर्ण,	/* r21	- LO Right Analog Volume */
-	अणु 34, 0x00 पूर्ण,	/* r22	- Stereo Input Path Advisory Volume */
-	अणु 35, 0x00 पूर्ण,	/* r23	- Aux PCM Input Advisory Volume */
-	अणु 36, 0x00 पूर्ण,	/* r24	- Audio PCM Input Advisory Volume */
-	अणु 37, 0x00 पूर्ण,	/* r25	- Voice PCM Input Advisory Volume */
-	अणु 38, 0x00 पूर्ण,	/* r26	- Limiter Attack Rate HP/LO */
-	अणु 39, 0x7F पूर्ण,	/* r27	- Limter Ctl, Release Rate HP/LO */
-	अणु 40, 0x00 पूर्ण,	/* r28	- Limter Threshold HP/LO */
-	अणु 41, 0x00 पूर्ण,	/* r29	- Limiter Attack Rate Speakerphone */
-	अणु 42, 0x3F पूर्ण,	/* r2A	- Limter Ctl, Release Rate Speakerphone */
-	अणु 43, 0x00 पूर्ण,	/* r2B	- Limter Threshold Speakerphone */
-	अणु 44, 0x00 पूर्ण,	/* r2C	- Limiter Attack Rate Ear/SPKLO */
-	अणु 45, 0x3F पूर्ण,	/* r2D	- Limter Ctl, Release Rate Ear/SPKLO */
-	अणु 46, 0x00 पूर्ण,	/* r2E	- Limter Threshold Ear/SPKLO */
-	अणु 47, 0x00 पूर्ण,	/* r2F	- ALC Enable, Attack Rate Left/Right */
-	अणु 48, 0x3F पूर्ण,	/* r30	- ALC Release Rate Left/Right */
-	अणु 49, 0x00 पूर्ण,	/* r31	- ALC Threshold Left/Right */
-	अणु 50, 0x00 पूर्ण,	/* r32	- Noise Gate Ctl Left/Right */
-	अणु 51, 0x00 पूर्ण,	/* r33	- ALC/NG Misc Ctl */
-	अणु 52, 0x18 पूर्ण,	/* r34	- Mixer Ctl */
-	अणु 53, 0x3F पूर्ण,	/* r35	- HP/LO Left Mixer Input Path Volume */
-	अणु 54, 0x3F पूर्ण,	/* r36	- HP/LO Right Mixer Input Path Volume */
-	अणु 55, 0x3F पूर्ण,	/* r37	- HP/LO Left Mixer Aux PCM Volume */
-	अणु 56, 0x3F पूर्ण,	/* r38	- HP/LO Right Mixer Aux PCM Volume */
-	अणु 57, 0x3F पूर्ण,	/* r39	- HP/LO Left Mixer Audio PCM Volume */
-	अणु 58, 0x3F पूर्ण,	/* r3A	- HP/LO Right Mixer Audio PCM Volume */
-	अणु 59, 0x3F पूर्ण,	/* r3B	- HP/LO Left Mixer Voice PCM Mono Volume */
-	अणु 60, 0x3F पूर्ण,	/* r3C	- HP/LO Right Mixer Voice PCM Mono Volume */
-	अणु 61, 0x3F पूर्ण,	/* r3D	- Aux PCM Left Mixer Input Path Volume */
-	अणु 62, 0x3F पूर्ण,	/* r3E	- Aux PCM Right Mixer Input Path Volume */
-	अणु 63, 0x3F पूर्ण,	/* r3F	- Aux PCM Left Mixer Volume */
-	अणु 64, 0x3F पूर्ण,	/* r40	- Aux PCM Left Mixer Volume */
-	अणु 65, 0x3F पूर्ण,	/* r41	- Aux PCM Left Mixer Audio PCM L Volume */
-	अणु 66, 0x3F पूर्ण,	/* r42	- Aux PCM Right Mixer Audio PCM R Volume */
-	अणु 67, 0x3F पूर्ण,	/* r43	- Aux PCM Left Mixer Voice PCM Volume */
-	अणु 68, 0x3F पूर्ण,	/* r44	- Aux PCM Right Mixer Voice PCM Volume */
-	अणु 69, 0x3F पूर्ण,	/* r45	- Audio PCM Left Input Path Volume */
-	अणु 70, 0x3F पूर्ण,	/* r46	- Audio PCM Right Input Path Volume */
-	अणु 71, 0x3F पूर्ण,	/* r47	- Audio PCM Left Mixer Aux PCM L Volume */
-	अणु 72, 0x3F पूर्ण,	/* r48	- Audio PCM Right Mixer Aux PCM R Volume */
-	अणु 73, 0x3F पूर्ण,	/* r49	- Audio PCM Left Mixer Volume */
-	अणु 74, 0x3F पूर्ण,	/* r4A	- Audio PCM Right Mixer Volume */
-	अणु 75, 0x3F पूर्ण,	/* r4B	- Audio PCM Left Mixer Voice PCM Volume */
-	अणु 76, 0x3F पूर्ण,	/* r4C	- Audio PCM Right Mixer Voice PCM Volume */
-	अणु 77, 0x3F पूर्ण,	/* r4D	- Voice PCM Left Input Path Volume */
-	अणु 78, 0x3F पूर्ण,	/* r4E	- Voice PCM Right Input Path Volume */
-	अणु 79, 0x3F पूर्ण,	/* r4F	- Voice PCM Left Mixer Aux PCM L Volume */
-	अणु 80, 0x3F पूर्ण,	/* r50	- Voice PCM Right Mixer Aux PCM R Volume */
-	अणु 81, 0x3F पूर्ण,	/* r51	- Voice PCM Left Mixer Audio PCM L Volume */
-	अणु 82, 0x3F पूर्ण,	/* r52	- Voice PCM Right Mixer Audio PCM R Volume */
-	अणु 83, 0x3F पूर्ण,	/* r53	- Voice PCM Left Mixer Voice PCM Volume */
-	अणु 84, 0x3F पूर्ण,	/* r54	- Voice PCM Right Mixer Voice PCM Volume */
-	अणु 85, 0xAA पूर्ण,	/* r55	- Mono Mixer Ctl */
-	अणु 86, 0x3F पूर्ण,	/* r56	- SPK Mono Mixer Input Path Volume */
-	अणु 87, 0x3F पूर्ण,	/* r57	- SPK Mono Mixer Aux PCM Mono/L/R Volume */
-	अणु 88, 0x3F पूर्ण,	/* r58	- SPK Mono Mixer Audio PCM Mono/L/R Volume */
-	अणु 89, 0x3F पूर्ण,	/* r59	- SPK Mono Mixer Voice PCM Mono Volume */
-	अणु 90, 0x3F पूर्ण,	/* r5A	- SPKLO Mono Mixer Input Path Mono Volume */
-	अणु 91, 0x3F पूर्ण,	/* r5B	- SPKLO Mono Mixer Aux Mono/L/R Volume */
-	अणु 92, 0x3F पूर्ण,	/* r5C	- SPKLO Mono Mixer Audio Mono/L/R Volume */
-	अणु 93, 0x3F पूर्ण,	/* r5D	- SPKLO Mono Mixer Voice Mono Volume */
-	अणु 94, 0x00 पूर्ण,	/* r5E	- Interrupt Mask 1 */
-	अणु 95, 0x00 पूर्ण,	/* r5F	- Interrupt Mask 2 */
-पूर्ण;
+static const struct reg_default cs42l73_reg_defaults[] = {
+	{ 6, 0xF1 },	/* r06	- Power Ctl 1 */
+	{ 7, 0xDF },	/* r07	- Power Ctl 2 */
+	{ 8, 0x3F },	/* r08	- Power Ctl 3 */
+	{ 9, 0x50 },	/* r09	- Charge Pump Freq */
+	{ 10, 0x53 },	/* r0A	- Output Load MicBias Short Detect */
+	{ 11, 0x00 },	/* r0B	- DMIC Master Clock Ctl */
+	{ 12, 0x00 },	/* r0C	- Aux PCM Ctl */
+	{ 13, 0x15 },	/* r0D	- Aux PCM Master Clock Ctl */
+	{ 14, 0x00 },	/* r0E	- Audio PCM Ctl */
+	{ 15, 0x15 },	/* r0F	- Audio PCM Master Clock Ctl */
+	{ 16, 0x00 },	/* r10	- Voice PCM Ctl */
+	{ 17, 0x15 },	/* r11	- Voice PCM Master Clock Ctl */
+	{ 18, 0x00 },	/* r12	- Voice/Aux Sample Rate */
+	{ 19, 0x06 },	/* r13	- Misc I/O Path Ctl */
+	{ 20, 0x00 },	/* r14	- ADC Input Path Ctl */
+	{ 21, 0x00 },	/* r15	- MICA Preamp, PGA Volume */
+	{ 22, 0x00 },	/* r16	- MICB Preamp, PGA Volume */
+	{ 23, 0x00 },	/* r17	- Input Path A Digital Volume */
+	{ 24, 0x00 },	/* r18	- Input Path B Digital Volume */
+	{ 25, 0x00 },	/* r19	- Playback Digital Ctl */
+	{ 26, 0x00 },	/* r1A	- HP/LO Left Digital Volume */
+	{ 27, 0x00 },	/* r1B	- HP/LO Right Digital Volume */
+	{ 28, 0x00 },	/* r1C	- Speakerphone Digital Volume */
+	{ 29, 0x00 },	/* r1D	- Ear/SPKLO Digital Volume */
+	{ 30, 0x00 },	/* r1E	- HP Left Analog Volume */
+	{ 31, 0x00 },	/* r1F	- HP Right Analog Volume */
+	{ 32, 0x00 },	/* r20	- LO Left Analog Volume */
+	{ 33, 0x00 },	/* r21	- LO Right Analog Volume */
+	{ 34, 0x00 },	/* r22	- Stereo Input Path Advisory Volume */
+	{ 35, 0x00 },	/* r23	- Aux PCM Input Advisory Volume */
+	{ 36, 0x00 },	/* r24	- Audio PCM Input Advisory Volume */
+	{ 37, 0x00 },	/* r25	- Voice PCM Input Advisory Volume */
+	{ 38, 0x00 },	/* r26	- Limiter Attack Rate HP/LO */
+	{ 39, 0x7F },	/* r27	- Limter Ctl, Release Rate HP/LO */
+	{ 40, 0x00 },	/* r28	- Limter Threshold HP/LO */
+	{ 41, 0x00 },	/* r29	- Limiter Attack Rate Speakerphone */
+	{ 42, 0x3F },	/* r2A	- Limter Ctl, Release Rate Speakerphone */
+	{ 43, 0x00 },	/* r2B	- Limter Threshold Speakerphone */
+	{ 44, 0x00 },	/* r2C	- Limiter Attack Rate Ear/SPKLO */
+	{ 45, 0x3F },	/* r2D	- Limter Ctl, Release Rate Ear/SPKLO */
+	{ 46, 0x00 },	/* r2E	- Limter Threshold Ear/SPKLO */
+	{ 47, 0x00 },	/* r2F	- ALC Enable, Attack Rate Left/Right */
+	{ 48, 0x3F },	/* r30	- ALC Release Rate Left/Right */
+	{ 49, 0x00 },	/* r31	- ALC Threshold Left/Right */
+	{ 50, 0x00 },	/* r32	- Noise Gate Ctl Left/Right */
+	{ 51, 0x00 },	/* r33	- ALC/NG Misc Ctl */
+	{ 52, 0x18 },	/* r34	- Mixer Ctl */
+	{ 53, 0x3F },	/* r35	- HP/LO Left Mixer Input Path Volume */
+	{ 54, 0x3F },	/* r36	- HP/LO Right Mixer Input Path Volume */
+	{ 55, 0x3F },	/* r37	- HP/LO Left Mixer Aux PCM Volume */
+	{ 56, 0x3F },	/* r38	- HP/LO Right Mixer Aux PCM Volume */
+	{ 57, 0x3F },	/* r39	- HP/LO Left Mixer Audio PCM Volume */
+	{ 58, 0x3F },	/* r3A	- HP/LO Right Mixer Audio PCM Volume */
+	{ 59, 0x3F },	/* r3B	- HP/LO Left Mixer Voice PCM Mono Volume */
+	{ 60, 0x3F },	/* r3C	- HP/LO Right Mixer Voice PCM Mono Volume */
+	{ 61, 0x3F },	/* r3D	- Aux PCM Left Mixer Input Path Volume */
+	{ 62, 0x3F },	/* r3E	- Aux PCM Right Mixer Input Path Volume */
+	{ 63, 0x3F },	/* r3F	- Aux PCM Left Mixer Volume */
+	{ 64, 0x3F },	/* r40	- Aux PCM Left Mixer Volume */
+	{ 65, 0x3F },	/* r41	- Aux PCM Left Mixer Audio PCM L Volume */
+	{ 66, 0x3F },	/* r42	- Aux PCM Right Mixer Audio PCM R Volume */
+	{ 67, 0x3F },	/* r43	- Aux PCM Left Mixer Voice PCM Volume */
+	{ 68, 0x3F },	/* r44	- Aux PCM Right Mixer Voice PCM Volume */
+	{ 69, 0x3F },	/* r45	- Audio PCM Left Input Path Volume */
+	{ 70, 0x3F },	/* r46	- Audio PCM Right Input Path Volume */
+	{ 71, 0x3F },	/* r47	- Audio PCM Left Mixer Aux PCM L Volume */
+	{ 72, 0x3F },	/* r48	- Audio PCM Right Mixer Aux PCM R Volume */
+	{ 73, 0x3F },	/* r49	- Audio PCM Left Mixer Volume */
+	{ 74, 0x3F },	/* r4A	- Audio PCM Right Mixer Volume */
+	{ 75, 0x3F },	/* r4B	- Audio PCM Left Mixer Voice PCM Volume */
+	{ 76, 0x3F },	/* r4C	- Audio PCM Right Mixer Voice PCM Volume */
+	{ 77, 0x3F },	/* r4D	- Voice PCM Left Input Path Volume */
+	{ 78, 0x3F },	/* r4E	- Voice PCM Right Input Path Volume */
+	{ 79, 0x3F },	/* r4F	- Voice PCM Left Mixer Aux PCM L Volume */
+	{ 80, 0x3F },	/* r50	- Voice PCM Right Mixer Aux PCM R Volume */
+	{ 81, 0x3F },	/* r51	- Voice PCM Left Mixer Audio PCM L Volume */
+	{ 82, 0x3F },	/* r52	- Voice PCM Right Mixer Audio PCM R Volume */
+	{ 83, 0x3F },	/* r53	- Voice PCM Left Mixer Voice PCM Volume */
+	{ 84, 0x3F },	/* r54	- Voice PCM Right Mixer Voice PCM Volume */
+	{ 85, 0xAA },	/* r55	- Mono Mixer Ctl */
+	{ 86, 0x3F },	/* r56	- SPK Mono Mixer Input Path Volume */
+	{ 87, 0x3F },	/* r57	- SPK Mono Mixer Aux PCM Mono/L/R Volume */
+	{ 88, 0x3F },	/* r58	- SPK Mono Mixer Audio PCM Mono/L/R Volume */
+	{ 89, 0x3F },	/* r59	- SPK Mono Mixer Voice PCM Mono Volume */
+	{ 90, 0x3F },	/* r5A	- SPKLO Mono Mixer Input Path Mono Volume */
+	{ 91, 0x3F },	/* r5B	- SPKLO Mono Mixer Aux Mono/L/R Volume */
+	{ 92, 0x3F },	/* r5C	- SPKLO Mono Mixer Audio Mono/L/R Volume */
+	{ 93, 0x3F },	/* r5D	- SPKLO Mono Mixer Voice Mono Volume */
+	{ 94, 0x00 },	/* r5E	- Interrupt Mask 1 */
+	{ 95, 0x00 },	/* r5F	- Interrupt Mask 2 */
+};
 
-अटल bool cs42l73_अस्थिर_रेजिस्टर(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	हाल CS42L73_IS1:
-	हाल CS42L73_IS2:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool cs42l73_volatile_register(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case CS42L73_IS1:
+	case CS42L73_IS2:
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल bool cs42l73_पढ़ोable_रेजिस्टर(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	हाल CS42L73_DEVID_AB ... CS42L73_DEVID_E:
-	हाल CS42L73_REVID ... CS42L73_IM2:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool cs42l73_readable_register(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case CS42L73_DEVID_AB ... CS42L73_DEVID_E:
+	case CS42L73_REVID ... CS42L73_IM2:
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल स्थिर DECLARE_TLV_DB_RANGE(hpaloa_tlv,
+static const DECLARE_TLV_DB_RANGE(hpaloa_tlv,
 	0, 13, TLV_DB_SCALE_ITEM(-7600, 200, 0),
 	14, 75, TLV_DB_SCALE_ITEM(-4900, 100, 0)
 );
 
-अटल DECLARE_TLV_DB_SCALE(adc_boost_tlv, 0, 2500, 0);
+static DECLARE_TLV_DB_SCALE(adc_boost_tlv, 0, 2500, 0);
 
-अटल DECLARE_TLV_DB_SCALE(hl_tlv, -10200, 50, 0);
+static DECLARE_TLV_DB_SCALE(hl_tlv, -10200, 50, 0);
 
-अटल DECLARE_TLV_DB_SCALE(ipd_tlv, -9600, 100, 0);
+static DECLARE_TLV_DB_SCALE(ipd_tlv, -9600, 100, 0);
 
-अटल DECLARE_TLV_DB_SCALE(micpga_tlv, -600, 50, 0);
+static DECLARE_TLV_DB_SCALE(micpga_tlv, -600, 50, 0);
 
-अटल स्थिर DECLARE_TLV_DB_RANGE(limiter_tlv,
+static const DECLARE_TLV_DB_RANGE(limiter_tlv,
 	0, 2, TLV_DB_SCALE_ITEM(-3000, 600, 0),
 	3, 7, TLV_DB_SCALE_ITEM(-1200, 300, 0)
 );
 
-अटल स्थिर DECLARE_TLV_DB_SCALE(attn_tlv, -6300, 100, 1);
+static const DECLARE_TLV_DB_SCALE(attn_tlv, -6300, 100, 1);
 
-अटल स्थिर अक्षर * स्थिर cs42l73_pgaa_text[] = अणु "Line A", "Mic 1" पूर्ण;
-अटल स्थिर अक्षर * स्थिर cs42l73_pgab_text[] = अणु "Line B", "Mic 2" पूर्ण;
+static const char * const cs42l73_pgaa_text[] = { "Line A", "Mic 1" };
+static const char * const cs42l73_pgab_text[] = { "Line B", "Mic 2" };
 
-अटल SOC_ENUM_SINGLE_DECL(pgaa_क्रमागत,
+static SOC_ENUM_SINGLE_DECL(pgaa_enum,
 			    CS42L73_ADCIPC, 3,
 			    cs42l73_pgaa_text);
 
-अटल SOC_ENUM_SINGLE_DECL(pgab_क्रमागत,
+static SOC_ENUM_SINGLE_DECL(pgab_enum,
 			    CS42L73_ADCIPC, 7,
 			    cs42l73_pgab_text);
 
-अटल स्थिर काष्ठा snd_kcontrol_new pgaa_mux =
-	SOC_DAPM_ENUM("Left Analog Input Capture Mux", pgaa_क्रमागत);
+static const struct snd_kcontrol_new pgaa_mux =
+	SOC_DAPM_ENUM("Left Analog Input Capture Mux", pgaa_enum);
 
-अटल स्थिर काष्ठा snd_kcontrol_new pgab_mux =
-	SOC_DAPM_ENUM("Right Analog Input Capture Mux", pgab_क्रमागत);
+static const struct snd_kcontrol_new pgab_mux =
+	SOC_DAPM_ENUM("Right Analog Input Capture Mux", pgab_enum);
 
-अटल स्थिर काष्ठा snd_kcontrol_new input_left_mixer[] = अणु
+static const struct snd_kcontrol_new input_left_mixer[] = {
 	SOC_DAPM_SINGLE("ADC Left Input", CS42L73_PWRCTL1,
 			5, 1, 1),
 	SOC_DAPM_SINGLE("DMIC Left Input", CS42L73_PWRCTL1,
 			4, 1, 1),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_kcontrol_new input_right_mixer[] = अणु
+static const struct snd_kcontrol_new input_right_mixer[] = {
 	SOC_DAPM_SINGLE("ADC Right Input", CS42L73_PWRCTL1,
 			7, 1, 1),
 	SOC_DAPM_SINGLE("DMIC Right Input", CS42L73_PWRCTL1,
 			6, 1, 1),
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर cs42l73_ng_delay_text[] = अणु
-	"50ms", "100ms", "150ms", "200ms" पूर्ण;
+static const char * const cs42l73_ng_delay_text[] = {
+	"50ms", "100ms", "150ms", "200ms" };
 
-अटल SOC_ENUM_SINGLE_DECL(ng_delay_क्रमागत,
+static SOC_ENUM_SINGLE_DECL(ng_delay_enum,
 			    CS42L73_NGCAB, 0,
 			    cs42l73_ng_delay_text);
 
-अटल स्थिर अक्षर * स्थिर cs42l73_mono_mix_texts[] = अणु
-	"Left", "Right", "Mono Mix"पूर्ण;
+static const char * const cs42l73_mono_mix_texts[] = {
+	"Left", "Right", "Mono Mix"};
 
-अटल स्थिर अचिन्हित पूर्णांक cs42l73_mono_mix_values[] = अणु 0, 1, 2 पूर्ण;
+static const unsigned int cs42l73_mono_mix_values[] = { 0, 1, 2 };
 
-अटल स्थिर काष्ठा soc_क्रमागत spk_asp_क्रमागत =
+static const struct soc_enum spk_asp_enum =
 	SOC_VALUE_ENUM_SINGLE(CS42L73_MMIXCTL, 6, 3,
 			      ARRAY_SIZE(cs42l73_mono_mix_texts),
 			      cs42l73_mono_mix_texts,
 			      cs42l73_mono_mix_values);
 
-अटल स्थिर काष्ठा snd_kcontrol_new spk_asp_mixer =
-	SOC_DAPM_ENUM("Route", spk_asp_क्रमागत);
+static const struct snd_kcontrol_new spk_asp_mixer =
+	SOC_DAPM_ENUM("Route", spk_asp_enum);
 
-अटल स्थिर काष्ठा soc_क्रमागत spk_xsp_क्रमागत =
+static const struct soc_enum spk_xsp_enum =
 	SOC_VALUE_ENUM_SINGLE(CS42L73_MMIXCTL, 4, 3,
 			      ARRAY_SIZE(cs42l73_mono_mix_texts),
 			      cs42l73_mono_mix_texts,
 			      cs42l73_mono_mix_values);
 
-अटल स्थिर काष्ठा snd_kcontrol_new spk_xsp_mixer =
-	SOC_DAPM_ENUM("Route", spk_xsp_क्रमागत);
+static const struct snd_kcontrol_new spk_xsp_mixer =
+	SOC_DAPM_ENUM("Route", spk_xsp_enum);
 
-अटल स्थिर काष्ठा soc_क्रमागत esl_asp_क्रमागत =
+static const struct soc_enum esl_asp_enum =
 	SOC_VALUE_ENUM_SINGLE(CS42L73_MMIXCTL, 2, 3,
 			      ARRAY_SIZE(cs42l73_mono_mix_texts),
 			      cs42l73_mono_mix_texts,
 			      cs42l73_mono_mix_values);
 
-अटल स्थिर काष्ठा snd_kcontrol_new esl_asp_mixer =
-	SOC_DAPM_ENUM("Route", esl_asp_क्रमागत);
+static const struct snd_kcontrol_new esl_asp_mixer =
+	SOC_DAPM_ENUM("Route", esl_asp_enum);
 
-अटल स्थिर काष्ठा soc_क्रमागत esl_xsp_क्रमागत =
+static const struct soc_enum esl_xsp_enum =
 	SOC_VALUE_ENUM_SINGLE(CS42L73_MMIXCTL, 0, 3,
 			      ARRAY_SIZE(cs42l73_mono_mix_texts),
 			      cs42l73_mono_mix_texts,
 			      cs42l73_mono_mix_values);
 
-अटल स्थिर काष्ठा snd_kcontrol_new esl_xsp_mixer =
-	SOC_DAPM_ENUM("Route", esl_xsp_क्रमागत);
+static const struct snd_kcontrol_new esl_xsp_mixer =
+	SOC_DAPM_ENUM("Route", esl_xsp_enum);
 
-अटल स्थिर अक्षर * स्थिर cs42l73_ip_swap_text[] = अणु
-	"Stereo", "Mono A", "Mono B", "Swap A-B"पूर्ण;
+static const char * const cs42l73_ip_swap_text[] = {
+	"Stereo", "Mono A", "Mono B", "Swap A-B"};
 
-अटल SOC_ENUM_SINGLE_DECL(ip_swap_क्रमागत,
+static SOC_ENUM_SINGLE_DECL(ip_swap_enum,
 			    CS42L73_MIOPC, 6,
 			    cs42l73_ip_swap_text);
 
-अटल स्थिर अक्षर * स्थिर cs42l73_spo_mixer_text[] = अणु"Mono", "Stereo"पूर्ण;
+static const char * const cs42l73_spo_mixer_text[] = {"Mono", "Stereo"};
 
-अटल SOC_ENUM_SINGLE_DECL(vsp_output_mux_क्रमागत,
+static SOC_ENUM_SINGLE_DECL(vsp_output_mux_enum,
 			    CS42L73_MIXERCTL, 5,
 			    cs42l73_spo_mixer_text);
 
-अटल SOC_ENUM_SINGLE_DECL(xsp_output_mux_क्रमागत,
+static SOC_ENUM_SINGLE_DECL(xsp_output_mux_enum,
 			    CS42L73_MIXERCTL, 4,
 			    cs42l73_spo_mixer_text);
 
-अटल स्थिर काष्ठा snd_kcontrol_new hp_amp_ctl =
+static const struct snd_kcontrol_new hp_amp_ctl =
 	SOC_DAPM_SINGLE("Switch", CS42L73_PWRCTL3, 0, 1, 1);
 
-अटल स्थिर काष्ठा snd_kcontrol_new lo_amp_ctl =
+static const struct snd_kcontrol_new lo_amp_ctl =
 	SOC_DAPM_SINGLE("Switch", CS42L73_PWRCTL3, 1, 1, 1);
 
-अटल स्थिर काष्ठा snd_kcontrol_new spk_amp_ctl =
+static const struct snd_kcontrol_new spk_amp_ctl =
 	SOC_DAPM_SINGLE("Switch", CS42L73_PWRCTL3, 2, 1, 1);
 
-अटल स्थिर काष्ठा snd_kcontrol_new spklo_amp_ctl =
+static const struct snd_kcontrol_new spklo_amp_ctl =
 	SOC_DAPM_SINGLE("Switch", CS42L73_PWRCTL3, 4, 1, 1);
 
-अटल स्थिर काष्ठा snd_kcontrol_new ear_amp_ctl =
+static const struct snd_kcontrol_new ear_amp_ctl =
 	SOC_DAPM_SINGLE("Switch", CS42L73_PWRCTL3, 3, 1, 1);
 
-अटल स्थिर काष्ठा snd_kcontrol_new cs42l73_snd_controls[] = अणु
+static const struct snd_kcontrol_new cs42l73_snd_controls[] = {
 	SOC_DOUBLE_R_SX_TLV("Headphone Analog Playback Volume",
 			CS42L73_HPAAVOL, CS42L73_HPBAVOL, 0,
 			0x41, 0x4B, hpaloa_tlv),
@@ -397,10 +396,10 @@
 	/*
 	    NG Threshold depends on NG_BOOTSAB, which selects
 	    between two threshold scales in decibels.
-	    Set linear values क्रम now ..
+	    Set linear values for now ..
 	*/
 	SOC_SINGLE("NG Threshold", CS42L73_NGCAB, 2, 7, 0),
-	SOC_ENUM("NG Delay", ng_delay_क्रमागत),
+	SOC_ENUM("NG Delay", ng_delay_enum),
 
 	SOC_DOUBLE_R_TLV("XSP-IP Volume",
 			CS42L73_XSPAIPAA, CS42L73_XSPBIPBA, 0, 0x3F, 1,
@@ -472,94 +471,94 @@
 	SOC_SINGLE_TLV("ESL-VSP Mono Volume",
 			CS42L73_ESLMVSPMA, 0, 0x3F, 1, attn_tlv),
 
-	SOC_ENUM("IP Digital Swap/Mono Select", ip_swap_क्रमागत),
+	SOC_ENUM("IP Digital Swap/Mono Select", ip_swap_enum),
 
-	SOC_ENUM("VSPOUT Mono/Stereo Select", vsp_output_mux_क्रमागत),
-	SOC_ENUM("XSPOUT Mono/Stereo Select", xsp_output_mux_क्रमागत),
-पूर्ण;
+	SOC_ENUM("VSPOUT Mono/Stereo Select", vsp_output_mux_enum),
+	SOC_ENUM("XSPOUT Mono/Stereo Select", xsp_output_mux_enum),
+};
 
-अटल पूर्णांक cs42l73_spklo_spk_amp_event(काष्ठा snd_soc_dapm_widget *w,
-	काष्ठा snd_kcontrol *kcontrol, पूर्णांक event)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
-	काष्ठा cs42l73_निजी *priv = snd_soc_component_get_drvdata(component);
-	चयन (event) अणु
-	हाल SND_SOC_DAPM_POST_PMD:
+static int cs42l73_spklo_spk_amp_event(struct snd_soc_dapm_widget *w,
+	struct snd_kcontrol *kcontrol, int event)
+{
+	struct snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
+	struct cs42l73_private *priv = snd_soc_component_get_drvdata(component);
+	switch (event) {
+	case SND_SOC_DAPM_POST_PMD:
 		/* 150 ms delay between setting PDN and MCLKDIS */
 		priv->shutdwn_delay = 150;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		pr_err("Invalid event = 0x%x\n", event);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक cs42l73_ear_amp_event(काष्ठा snd_soc_dapm_widget *w,
-	काष्ठा snd_kcontrol *kcontrol, पूर्णांक event)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
-	काष्ठा cs42l73_निजी *priv = snd_soc_component_get_drvdata(component);
-	चयन (event) अणु
-	हाल SND_SOC_DAPM_POST_PMD:
+static int cs42l73_ear_amp_event(struct snd_soc_dapm_widget *w,
+	struct snd_kcontrol *kcontrol, int event)
+{
+	struct snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
+	struct cs42l73_private *priv = snd_soc_component_get_drvdata(component);
+	switch (event) {
+	case SND_SOC_DAPM_POST_PMD:
 		/* 50 ms delay between setting PDN and MCLKDIS */
-		अगर (priv->shutdwn_delay < 50)
+		if (priv->shutdwn_delay < 50)
 			priv->shutdwn_delay = 50;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		pr_err("Invalid event = 0x%x\n", event);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 
-अटल पूर्णांक cs42l73_hp_amp_event(काष्ठा snd_soc_dapm_widget *w,
-	काष्ठा snd_kcontrol *kcontrol, पूर्णांक event)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
-	काष्ठा cs42l73_निजी *priv = snd_soc_component_get_drvdata(component);
-	चयन (event) अणु
-	हाल SND_SOC_DAPM_POST_PMD:
+static int cs42l73_hp_amp_event(struct snd_soc_dapm_widget *w,
+	struct snd_kcontrol *kcontrol, int event)
+{
+	struct snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
+	struct cs42l73_private *priv = snd_soc_component_get_drvdata(component);
+	switch (event) {
+	case SND_SOC_DAPM_POST_PMD:
 		/* 30 ms delay between setting PDN and MCLKDIS */
-		अगर (priv->shutdwn_delay < 30)
+		if (priv->shutdwn_delay < 30)
 			priv->shutdwn_delay = 30;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		pr_err("Invalid event = 0x%x\n", event);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल स्थिर काष्ठा snd_soc_dapm_widget cs42l73_dapm_widमाला_लो[] = अणु
+static const struct snd_soc_dapm_widget cs42l73_dapm_widgets[] = {
 	SND_SOC_DAPM_INPUT("DMICA"),
 	SND_SOC_DAPM_INPUT("DMICB"),
 	SND_SOC_DAPM_INPUT("LINEINA"),
 	SND_SOC_DAPM_INPUT("LINEINB"),
 	SND_SOC_DAPM_INPUT("MIC1"),
-	SND_SOC_DAPM_SUPPLY("MIC1 Bias", CS42L73_PWRCTL2, 6, 1, शून्य, 0),
+	SND_SOC_DAPM_SUPPLY("MIC1 Bias", CS42L73_PWRCTL2, 6, 1, NULL, 0),
 	SND_SOC_DAPM_INPUT("MIC2"),
-	SND_SOC_DAPM_SUPPLY("MIC2 Bias", CS42L73_PWRCTL2, 7, 1, शून्य, 0),
+	SND_SOC_DAPM_SUPPLY("MIC2 Bias", CS42L73_PWRCTL2, 7, 1, NULL, 0),
 
-	SND_SOC_DAPM_AIF_OUT("XSPOUTL", शून्य,  0,
+	SND_SOC_DAPM_AIF_OUT("XSPOUTL", NULL,  0,
 			CS42L73_PWRCTL2, 1, 1),
-	SND_SOC_DAPM_AIF_OUT("XSPOUTR", शून्य,  0,
+	SND_SOC_DAPM_AIF_OUT("XSPOUTR", NULL,  0,
 			CS42L73_PWRCTL2, 1, 1),
-	SND_SOC_DAPM_AIF_OUT("ASPOUTL", शून्य,  0,
+	SND_SOC_DAPM_AIF_OUT("ASPOUTL", NULL,  0,
 			CS42L73_PWRCTL2, 3, 1),
-	SND_SOC_DAPM_AIF_OUT("ASPOUTR", शून्य,  0,
+	SND_SOC_DAPM_AIF_OUT("ASPOUTR", NULL,  0,
 			CS42L73_PWRCTL2, 3, 1),
-	SND_SOC_DAPM_AIF_OUT("VSPINOUT", शून्य,  0,
+	SND_SOC_DAPM_AIF_OUT("VSPINOUT", NULL,  0,
 			CS42L73_PWRCTL2, 4, 1),
 
-	SND_SOC_DAPM_PGA("PGA Left", SND_SOC_NOPM, 0, 0, शून्य, 0),
-	SND_SOC_DAPM_PGA("PGA Right", SND_SOC_NOPM, 0, 0, शून्य, 0),
+	SND_SOC_DAPM_PGA("PGA Left", SND_SOC_NOPM, 0, 0, NULL, 0),
+	SND_SOC_DAPM_PGA("PGA Right", SND_SOC_NOPM, 0, 0, NULL, 0),
 
 	SND_SOC_DAPM_MUX("PGA Left Mux", SND_SOC_NOPM, 0, 0, &pgaa_mux),
 	SND_SOC_DAPM_MUX("PGA Right Mux", SND_SOC_NOPM, 0, 0, &pgab_mux),
 
-	SND_SOC_DAPM_ADC("ADC Left", शून्य, CS42L73_PWRCTL1, 7, 1),
-	SND_SOC_DAPM_ADC("ADC Right", शून्य, CS42L73_PWRCTL1, 5, 1),
-	SND_SOC_DAPM_ADC("DMIC Left", शून्य, CS42L73_PWRCTL1, 6, 1),
-	SND_SOC_DAPM_ADC("DMIC Right", शून्य, CS42L73_PWRCTL1, 4, 1),
+	SND_SOC_DAPM_ADC("ADC Left", NULL, CS42L73_PWRCTL1, 7, 1),
+	SND_SOC_DAPM_ADC("ADC Right", NULL, CS42L73_PWRCTL1, 5, 1),
+	SND_SOC_DAPM_ADC("DMIC Left", NULL, CS42L73_PWRCTL1, 6, 1),
+	SND_SOC_DAPM_ADC("DMIC Right", NULL, CS42L73_PWRCTL1, 4, 1),
 
 	SND_SOC_DAPM_MIXER_NAMED_CTL("Input Left Capture", SND_SOC_NOPM,
 			 0, 0, input_left_mixer,
@@ -569,33 +568,33 @@
 			0, 0, input_right_mixer,
 			ARRAY_SIZE(input_right_mixer)),
 
-	SND_SOC_DAPM_MIXER("ASPL Output Mixer", SND_SOC_NOPM, 0, 0, शून्य, 0),
-	SND_SOC_DAPM_MIXER("ASPR Output Mixer", SND_SOC_NOPM, 0, 0, शून्य, 0),
-	SND_SOC_DAPM_MIXER("XSPL Output Mixer", SND_SOC_NOPM, 0, 0, शून्य, 0),
-	SND_SOC_DAPM_MIXER("XSPR Output Mixer", SND_SOC_NOPM, 0, 0, शून्य, 0),
-	SND_SOC_DAPM_MIXER("VSP Output Mixer", SND_SOC_NOPM, 0, 0, शून्य, 0),
+	SND_SOC_DAPM_MIXER("ASPL Output Mixer", SND_SOC_NOPM, 0, 0, NULL, 0),
+	SND_SOC_DAPM_MIXER("ASPR Output Mixer", SND_SOC_NOPM, 0, 0, NULL, 0),
+	SND_SOC_DAPM_MIXER("XSPL Output Mixer", SND_SOC_NOPM, 0, 0, NULL, 0),
+	SND_SOC_DAPM_MIXER("XSPR Output Mixer", SND_SOC_NOPM, 0, 0, NULL, 0),
+	SND_SOC_DAPM_MIXER("VSP Output Mixer", SND_SOC_NOPM, 0, 0, NULL, 0),
 
-	SND_SOC_DAPM_AIF_IN("XSPINL", शून्य, 0,
+	SND_SOC_DAPM_AIF_IN("XSPINL", NULL, 0,
 				CS42L73_PWRCTL2, 0, 1),
-	SND_SOC_DAPM_AIF_IN("XSPINR", शून्य, 0,
+	SND_SOC_DAPM_AIF_IN("XSPINR", NULL, 0,
 				CS42L73_PWRCTL2, 0, 1),
-	SND_SOC_DAPM_AIF_IN("XSPINM", शून्य, 0,
+	SND_SOC_DAPM_AIF_IN("XSPINM", NULL, 0,
 				CS42L73_PWRCTL2, 0, 1),
 
-	SND_SOC_DAPM_AIF_IN("ASPINL", शून्य, 0,
+	SND_SOC_DAPM_AIF_IN("ASPINL", NULL, 0,
 				CS42L73_PWRCTL2, 2, 1),
-	SND_SOC_DAPM_AIF_IN("ASPINR", शून्य, 0,
+	SND_SOC_DAPM_AIF_IN("ASPINR", NULL, 0,
 				CS42L73_PWRCTL2, 2, 1),
-	SND_SOC_DAPM_AIF_IN("ASPINM", शून्य, 0,
+	SND_SOC_DAPM_AIF_IN("ASPINM", NULL, 0,
 				CS42L73_PWRCTL2, 2, 1),
 
-	SND_SOC_DAPM_AIF_IN("VSPINOUT", शून्य, 0,
+	SND_SOC_DAPM_AIF_IN("VSPINOUT", NULL, 0,
 				CS42L73_PWRCTL2, 4, 1),
 
-	SND_SOC_DAPM_MIXER("HL Left Mixer", SND_SOC_NOPM, 0, 0, शून्य, 0),
-	SND_SOC_DAPM_MIXER("HL Right Mixer", SND_SOC_NOPM, 0, 0, शून्य, 0),
-	SND_SOC_DAPM_MIXER("SPK Mixer", SND_SOC_NOPM, 0, 0, शून्य, 0),
-	SND_SOC_DAPM_MIXER("ESL Mixer", SND_SOC_NOPM, 0, 0, शून्य, 0),
+	SND_SOC_DAPM_MIXER("HL Left Mixer", SND_SOC_NOPM, 0, 0, NULL, 0),
+	SND_SOC_DAPM_MIXER("HL Right Mixer", SND_SOC_NOPM, 0, 0, NULL, 0),
+	SND_SOC_DAPM_MIXER("SPK Mixer", SND_SOC_NOPM, 0, 0, NULL, 0),
+	SND_SOC_DAPM_MIXER("ESL Mixer", SND_SOC_NOPM, 0, 0, NULL, 0),
 
 	SND_SOC_DAPM_MUX("ESL-XSP Mux", SND_SOC_NOPM,
 			 0, 0, &esl_xsp_mixer),
@@ -609,10 +608,10 @@
 	SND_SOC_DAPM_MUX("SPK-XSP Mux", SND_SOC_NOPM,
 			 0, 0, &spk_xsp_mixer),
 
-	SND_SOC_DAPM_PGA("HL Left DAC", SND_SOC_NOPM, 0, 0, शून्य, 0),
-	SND_SOC_DAPM_PGA("HL Right DAC", SND_SOC_NOPM, 0, 0, शून्य, 0),
-	SND_SOC_DAPM_PGA("SPK DAC", SND_SOC_NOPM, 0, 0, शून्य, 0),
-	SND_SOC_DAPM_PGA("ESL DAC", SND_SOC_NOPM, 0, 0, शून्य, 0),
+	SND_SOC_DAPM_PGA("HL Left DAC", SND_SOC_NOPM, 0, 0, NULL, 0),
+	SND_SOC_DAPM_PGA("HL Right DAC", SND_SOC_NOPM, 0, 0, NULL, 0),
+	SND_SOC_DAPM_PGA("SPK DAC", SND_SOC_NOPM, 0, 0, NULL, 0),
+	SND_SOC_DAPM_PGA("ESL DAC", SND_SOC_NOPM, 0, 0, NULL, 0),
 
 	SND_SOC_DAPM_SWITCH_E("HP Amp",  CS42L73_PWRCTL3, 0, 1,
 			    &hp_amp_ctl, cs42l73_hp_amp_event,
@@ -636,256 +635,256 @@
 	SND_SOC_DAPM_OUTPUT("EAROUT"),
 	SND_SOC_DAPM_OUTPUT("SPKOUT"),
 	SND_SOC_DAPM_OUTPUT("SPKLINEOUT"),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_soc_dapm_route cs42l73_audio_map[] = अणु
+static const struct snd_soc_dapm_route cs42l73_audio_map[] = {
 
 	/* SPKLO EARSPK Paths */
-	अणु"EAROUT", शून्य, "EAR Amp"पूर्ण,
-	अणु"SPKLINEOUT", शून्य, "SPKLO Amp"पूर्ण,
+	{"EAROUT", NULL, "EAR Amp"},
+	{"SPKLINEOUT", NULL, "SPKLO Amp"},
 
-	अणु"EAR Amp", "Switch", "ESL DAC"पूर्ण,
-	अणु"SPKLO Amp", "Switch", "ESL DAC"पूर्ण,
+	{"EAR Amp", "Switch", "ESL DAC"},
+	{"SPKLO Amp", "Switch", "ESL DAC"},
 
-	अणु"ESL DAC", "ESL-ASP Mono Volume", "ESL Mixer"पूर्ण,
-	अणु"ESL DAC", "ESL-XSP Mono Volume", "ESL Mixer"पूर्ण,
-	अणु"ESL DAC", "ESL-VSP Mono Volume", "VSPINOUT"पूर्ण,
+	{"ESL DAC", "ESL-ASP Mono Volume", "ESL Mixer"},
+	{"ESL DAC", "ESL-XSP Mono Volume", "ESL Mixer"},
+	{"ESL DAC", "ESL-VSP Mono Volume", "VSPINOUT"},
 	/* Loopback */
-	अणु"ESL DAC", "ESL-IP Mono Volume", "Input Left Capture"पूर्ण,
-	अणु"ESL DAC", "ESL-IP Mono Volume", "Input Right Capture"पूर्ण,
+	{"ESL DAC", "ESL-IP Mono Volume", "Input Left Capture"},
+	{"ESL DAC", "ESL-IP Mono Volume", "Input Right Capture"},
 
-	अणु"ESL Mixer", शून्य, "ESL-ASP Mux"पूर्ण,
-	अणु"ESL Mixer", शून्य, "ESL-XSP Mux"पूर्ण,
+	{"ESL Mixer", NULL, "ESL-ASP Mux"},
+	{"ESL Mixer", NULL, "ESL-XSP Mux"},
 
-	अणु"ESL-ASP Mux", "Left", "ASPINL"पूर्ण,
-	अणु"ESL-ASP Mux", "Right", "ASPINR"पूर्ण,
-	अणु"ESL-ASP Mux", "Mono Mix", "ASPINM"पूर्ण,
+	{"ESL-ASP Mux", "Left", "ASPINL"},
+	{"ESL-ASP Mux", "Right", "ASPINR"},
+	{"ESL-ASP Mux", "Mono Mix", "ASPINM"},
 
-	अणु"ESL-XSP Mux", "Left", "XSPINL"पूर्ण,
-	अणु"ESL-XSP Mux", "Right", "XSPINR"पूर्ण,
-	अणु"ESL-XSP Mux", "Mono Mix", "XSPINM"पूर्ण,
+	{"ESL-XSP Mux", "Left", "XSPINL"},
+	{"ESL-XSP Mux", "Right", "XSPINR"},
+	{"ESL-XSP Mux", "Mono Mix", "XSPINM"},
 
 	/* Speakerphone Paths */
-	अणु"SPKOUT", शून्य, "SPK Amp"पूर्ण,
-	अणु"SPK Amp", "Switch", "SPK DAC"पूर्ण,
+	{"SPKOUT", NULL, "SPK Amp"},
+	{"SPK Amp", "Switch", "SPK DAC"},
 
-	अणु"SPK DAC", "SPK-ASP Mono Volume", "SPK Mixer"पूर्ण,
-	अणु"SPK DAC", "SPK-XSP Mono Volume", "SPK Mixer"पूर्ण,
-	अणु"SPK DAC", "SPK-VSP Mono Volume", "VSPINOUT"पूर्ण,
+	{"SPK DAC", "SPK-ASP Mono Volume", "SPK Mixer"},
+	{"SPK DAC", "SPK-XSP Mono Volume", "SPK Mixer"},
+	{"SPK DAC", "SPK-VSP Mono Volume", "VSPINOUT"},
 	/* Loopback */
-	अणु"SPK DAC", "SPK-IP Mono Volume", "Input Left Capture"पूर्ण,
-	अणु"SPK DAC", "SPK-IP Mono Volume", "Input Right Capture"पूर्ण,
+	{"SPK DAC", "SPK-IP Mono Volume", "Input Left Capture"},
+	{"SPK DAC", "SPK-IP Mono Volume", "Input Right Capture"},
 
-	अणु"SPK Mixer", शून्य, "SPK-ASP Mux"पूर्ण,
-	अणु"SPK Mixer", शून्य, "SPK-XSP Mux"पूर्ण,
+	{"SPK Mixer", NULL, "SPK-ASP Mux"},
+	{"SPK Mixer", NULL, "SPK-XSP Mux"},
 
-	अणु"SPK-ASP Mux", "Left", "ASPINL"पूर्ण,
-	अणु"SPK-ASP Mux", "Mono Mix", "ASPINM"पूर्ण,
-	अणु"SPK-ASP Mux", "Right", "ASPINR"पूर्ण,
+	{"SPK-ASP Mux", "Left", "ASPINL"},
+	{"SPK-ASP Mux", "Mono Mix", "ASPINM"},
+	{"SPK-ASP Mux", "Right", "ASPINR"},
 
-	अणु"SPK-XSP Mux", "Left", "XSPINL"पूर्ण,
-	अणु"SPK-XSP Mux", "Mono Mix", "XSPINM"पूर्ण,
-	अणु"SPK-XSP Mux", "Right", "XSPINR"पूर्ण,
+	{"SPK-XSP Mux", "Left", "XSPINL"},
+	{"SPK-XSP Mux", "Mono Mix", "XSPINM"},
+	{"SPK-XSP Mux", "Right", "XSPINR"},
 
 	/* HP LineOUT Paths */
-	अणु"HPOUTA", शून्य, "HP Amp"पूर्ण,
-	अणु"HPOUTB", शून्य, "HP Amp"पूर्ण,
-	अणु"LINEOUTA", शून्य, "LO Amp"पूर्ण,
-	अणु"LINEOUTB", शून्य, "LO Amp"पूर्ण,
+	{"HPOUTA", NULL, "HP Amp"},
+	{"HPOUTB", NULL, "HP Amp"},
+	{"LINEOUTA", NULL, "LO Amp"},
+	{"LINEOUTB", NULL, "LO Amp"},
 
-	अणु"HP Amp", "Switch", "HL Left DAC"पूर्ण,
-	अणु"HP Amp", "Switch", "HL Right DAC"पूर्ण,
-	अणु"LO Amp", "Switch", "HL Left DAC"पूर्ण,
-	अणु"LO Amp", "Switch", "HL Right DAC"पूर्ण,
+	{"HP Amp", "Switch", "HL Left DAC"},
+	{"HP Amp", "Switch", "HL Right DAC"},
+	{"LO Amp", "Switch", "HL Left DAC"},
+	{"LO Amp", "Switch", "HL Right DAC"},
 
-	अणु"HL Left DAC", "HL-XSP Volume", "HL Left Mixer"पूर्ण,
-	अणु"HL Right DAC", "HL-XSP Volume", "HL Right Mixer"पूर्ण,
-	अणु"HL Left DAC", "HL-ASP Volume", "HL Left Mixer"पूर्ण,
-	अणु"HL Right DAC", "HL-ASP Volume", "HL Right Mixer"पूर्ण,
-	अणु"HL Left DAC", "HL-VSP Volume", "HL Left Mixer"पूर्ण,
-	अणु"HL Right DAC", "HL-VSP Volume", "HL Right Mixer"पूर्ण,
+	{"HL Left DAC", "HL-XSP Volume", "HL Left Mixer"},
+	{"HL Right DAC", "HL-XSP Volume", "HL Right Mixer"},
+	{"HL Left DAC", "HL-ASP Volume", "HL Left Mixer"},
+	{"HL Right DAC", "HL-ASP Volume", "HL Right Mixer"},
+	{"HL Left DAC", "HL-VSP Volume", "HL Left Mixer"},
+	{"HL Right DAC", "HL-VSP Volume", "HL Right Mixer"},
 	/* Loopback */
-	अणु"HL Left DAC", "HL-IP Volume", "HL Left Mixer"पूर्ण,
-	अणु"HL Right DAC", "HL-IP Volume", "HL Right Mixer"पूर्ण,
-	अणु"HL Left Mixer", शून्य, "Input Left Capture"पूर्ण,
-	अणु"HL Right Mixer", शून्य, "Input Right Capture"पूर्ण,
+	{"HL Left DAC", "HL-IP Volume", "HL Left Mixer"},
+	{"HL Right DAC", "HL-IP Volume", "HL Right Mixer"},
+	{"HL Left Mixer", NULL, "Input Left Capture"},
+	{"HL Right Mixer", NULL, "Input Right Capture"},
 
-	अणु"HL Left Mixer", शून्य, "ASPINL"पूर्ण,
-	अणु"HL Right Mixer", शून्य, "ASPINR"पूर्ण,
-	अणु"HL Left Mixer", शून्य, "XSPINL"पूर्ण,
-	अणु"HL Right Mixer", शून्य, "XSPINR"पूर्ण,
-	अणु"HL Left Mixer", शून्य, "VSPINOUT"पूर्ण,
-	अणु"HL Right Mixer", शून्य, "VSPINOUT"पूर्ण,
+	{"HL Left Mixer", NULL, "ASPINL"},
+	{"HL Right Mixer", NULL, "ASPINR"},
+	{"HL Left Mixer", NULL, "XSPINL"},
+	{"HL Right Mixer", NULL, "XSPINR"},
+	{"HL Left Mixer", NULL, "VSPINOUT"},
+	{"HL Right Mixer", NULL, "VSPINOUT"},
 
-	अणु"ASPINL", शून्य, "ASP Playback"पूर्ण,
-	अणु"ASPINM", शून्य, "ASP Playback"पूर्ण,
-	अणु"ASPINR", शून्य, "ASP Playback"पूर्ण,
-	अणु"XSPINL", शून्य, "XSP Playback"पूर्ण,
-	अणु"XSPINM", शून्य, "XSP Playback"पूर्ण,
-	अणु"XSPINR", शून्य, "XSP Playback"पूर्ण,
-	अणु"VSPINOUT", शून्य, "VSP Playback"पूर्ण,
+	{"ASPINL", NULL, "ASP Playback"},
+	{"ASPINM", NULL, "ASP Playback"},
+	{"ASPINR", NULL, "ASP Playback"},
+	{"XSPINL", NULL, "XSP Playback"},
+	{"XSPINM", NULL, "XSP Playback"},
+	{"XSPINR", NULL, "XSP Playback"},
+	{"VSPINOUT", NULL, "VSP Playback"},
 
 	/* Capture Paths */
-	अणु"MIC1", शून्य, "MIC1 Bias"पूर्ण,
-	अणु"PGA Left Mux", "Mic 1", "MIC1"पूर्ण,
-	अणु"MIC2", शून्य, "MIC2 Bias"पूर्ण,
-	अणु"PGA Right Mux", "Mic 2", "MIC2"पूर्ण,
+	{"MIC1", NULL, "MIC1 Bias"},
+	{"PGA Left Mux", "Mic 1", "MIC1"},
+	{"MIC2", NULL, "MIC2 Bias"},
+	{"PGA Right Mux", "Mic 2", "MIC2"},
 
-	अणु"PGA Left Mux", "Line A", "LINEINA"पूर्ण,
-	अणु"PGA Right Mux", "Line B", "LINEINB"पूर्ण,
+	{"PGA Left Mux", "Line A", "LINEINA"},
+	{"PGA Right Mux", "Line B", "LINEINB"},
 
-	अणु"PGA Left", शून्य, "PGA Left Mux"पूर्ण,
-	अणु"PGA Right", शून्य, "PGA Right Mux"पूर्ण,
+	{"PGA Left", NULL, "PGA Left Mux"},
+	{"PGA Right", NULL, "PGA Right Mux"},
 
-	अणु"ADC Left", शून्य, "PGA Left"पूर्ण,
-	अणु"ADC Right", शून्य, "PGA Right"पूर्ण,
-	अणु"DMIC Left", शून्य, "DMICA"पूर्ण,
-	अणु"DMIC Right", शून्य, "DMICB"पूर्ण,
+	{"ADC Left", NULL, "PGA Left"},
+	{"ADC Right", NULL, "PGA Right"},
+	{"DMIC Left", NULL, "DMICA"},
+	{"DMIC Right", NULL, "DMICB"},
 
-	अणु"Input Left Capture", "ADC Left Input", "ADC Left"पूर्ण,
-	अणु"Input Right Capture", "ADC Right Input", "ADC Right"पूर्ण,
-	अणु"Input Left Capture", "DMIC Left Input", "DMIC Left"पूर्ण,
-	अणु"Input Right Capture", "DMIC Right Input", "DMIC Right"पूर्ण,
+	{"Input Left Capture", "ADC Left Input", "ADC Left"},
+	{"Input Right Capture", "ADC Right Input", "ADC Right"},
+	{"Input Left Capture", "DMIC Left Input", "DMIC Left"},
+	{"Input Right Capture", "DMIC Right Input", "DMIC Right"},
 
 	/* Audio Capture */
-	अणु"ASPL Output Mixer", शून्य, "Input Left Capture"पूर्ण,
-	अणु"ASPR Output Mixer", शून्य, "Input Right Capture"पूर्ण,
+	{"ASPL Output Mixer", NULL, "Input Left Capture"},
+	{"ASPR Output Mixer", NULL, "Input Right Capture"},
 
-	अणु"ASPOUTL", "ASP-IP Volume", "ASPL Output Mixer"पूर्ण,
-	अणु"ASPOUTR", "ASP-IP Volume", "ASPR Output Mixer"पूर्ण,
+	{"ASPOUTL", "ASP-IP Volume", "ASPL Output Mixer"},
+	{"ASPOUTR", "ASP-IP Volume", "ASPR Output Mixer"},
 
 	/* Auxillary Capture */
-	अणु"XSPL Output Mixer", शून्य, "Input Left Capture"पूर्ण,
-	अणु"XSPR Output Mixer", शून्य, "Input Right Capture"पूर्ण,
+	{"XSPL Output Mixer", NULL, "Input Left Capture"},
+	{"XSPR Output Mixer", NULL, "Input Right Capture"},
 
-	अणु"XSPOUTL", "XSP-IP Volume", "XSPL Output Mixer"पूर्ण,
-	अणु"XSPOUTR", "XSP-IP Volume", "XSPR Output Mixer"पूर्ण,
+	{"XSPOUTL", "XSP-IP Volume", "XSPL Output Mixer"},
+	{"XSPOUTR", "XSP-IP Volume", "XSPR Output Mixer"},
 
-	अणु"XSPOUTL", शून्य, "XSPL Output Mixer"पूर्ण,
-	अणु"XSPOUTR", शून्य, "XSPR Output Mixer"पूर्ण,
+	{"XSPOUTL", NULL, "XSPL Output Mixer"},
+	{"XSPOUTR", NULL, "XSPR Output Mixer"},
 
 	/* Voice Capture */
-	अणु"VSP Output Mixer", शून्य, "Input Left Capture"पूर्ण,
-	अणु"VSP Output Mixer", शून्य, "Input Right Capture"पूर्ण,
+	{"VSP Output Mixer", NULL, "Input Left Capture"},
+	{"VSP Output Mixer", NULL, "Input Right Capture"},
 
-	अणु"VSPINOUT", "VSP-IP Volume", "VSP Output Mixer"पूर्ण,
+	{"VSPINOUT", "VSP-IP Volume", "VSP Output Mixer"},
 
-	अणु"VSPINOUT", शून्य, "VSP Output Mixer"पूर्ण,
+	{"VSPINOUT", NULL, "VSP Output Mixer"},
 
-	अणु"ASP Capture", शून्य, "ASPOUTL"पूर्ण,
-	अणु"ASP Capture", शून्य, "ASPOUTR"पूर्ण,
-	अणु"XSP Capture", शून्य, "XSPOUTL"पूर्ण,
-	अणु"XSP Capture", शून्य, "XSPOUTR"पूर्ण,
-	अणु"VSP Capture", शून्य, "VSPINOUT"पूर्ण,
-पूर्ण;
+	{"ASP Capture", NULL, "ASPOUTL"},
+	{"ASP Capture", NULL, "ASPOUTR"},
+	{"XSP Capture", NULL, "XSPOUTL"},
+	{"XSP Capture", NULL, "XSPOUTR"},
+	{"VSP Capture", NULL, "VSPINOUT"},
+};
 
-काष्ठा cs42l73_mclk_भाग अणु
+struct cs42l73_mclk_div {
 	u32 mclk;
 	u32 srate;
 	u8 mmcc;
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा cs42l73_mclk_भाग cs42l73_mclk_coeffs[] = अणु
+static const struct cs42l73_mclk_div cs42l73_mclk_coeffs[] = {
 	/* MCLK, Sample Rate, xMMCC[5:0] */
-	अणु5644800, 11025, 0x30पूर्ण,
-	अणु5644800, 22050, 0x20पूर्ण,
-	अणु5644800, 44100, 0x10पूर्ण,
+	{5644800, 11025, 0x30},
+	{5644800, 22050, 0x20},
+	{5644800, 44100, 0x10},
 
-	अणु6000000,  8000, 0x39पूर्ण,
-	अणु6000000, 11025, 0x33पूर्ण,
-	अणु6000000, 12000, 0x31पूर्ण,
-	अणु6000000, 16000, 0x29पूर्ण,
-	अणु6000000, 22050, 0x23पूर्ण,
-	अणु6000000, 24000, 0x21पूर्ण,
-	अणु6000000, 32000, 0x19पूर्ण,
-	अणु6000000, 44100, 0x13पूर्ण,
-	अणु6000000, 48000, 0x11पूर्ण,
+	{6000000,  8000, 0x39},
+	{6000000, 11025, 0x33},
+	{6000000, 12000, 0x31},
+	{6000000, 16000, 0x29},
+	{6000000, 22050, 0x23},
+	{6000000, 24000, 0x21},
+	{6000000, 32000, 0x19},
+	{6000000, 44100, 0x13},
+	{6000000, 48000, 0x11},
 
-	अणु6144000,  8000, 0x38पूर्ण,
-	अणु6144000, 12000, 0x30पूर्ण,
-	अणु6144000, 16000, 0x28पूर्ण,
-	अणु6144000, 24000, 0x20पूर्ण,
-	अणु6144000, 32000, 0x18पूर्ण,
-	अणु6144000, 48000, 0x10पूर्ण,
+	{6144000,  8000, 0x38},
+	{6144000, 12000, 0x30},
+	{6144000, 16000, 0x28},
+	{6144000, 24000, 0x20},
+	{6144000, 32000, 0x18},
+	{6144000, 48000, 0x10},
 
-	अणु6500000,  8000, 0x3Cपूर्ण,
-	अणु6500000, 11025, 0x35पूर्ण,
-	अणु6500000, 12000, 0x34पूर्ण,
-	अणु6500000, 16000, 0x2Cपूर्ण,
-	अणु6500000, 22050, 0x25पूर्ण,
-	अणु6500000, 24000, 0x24पूर्ण,
-	अणु6500000, 32000, 0x1Cपूर्ण,
-	अणु6500000, 44100, 0x15पूर्ण,
-	अणु6500000, 48000, 0x14पूर्ण,
+	{6500000,  8000, 0x3C},
+	{6500000, 11025, 0x35},
+	{6500000, 12000, 0x34},
+	{6500000, 16000, 0x2C},
+	{6500000, 22050, 0x25},
+	{6500000, 24000, 0x24},
+	{6500000, 32000, 0x1C},
+	{6500000, 44100, 0x15},
+	{6500000, 48000, 0x14},
 
-	अणु6400000,  8000, 0x3Eपूर्ण,
-	अणु6400000, 11025, 0x37पूर्ण,
-	अणु6400000, 12000, 0x36पूर्ण,
-	अणु6400000, 16000, 0x2Eपूर्ण,
-	अणु6400000, 22050, 0x27पूर्ण,
-	अणु6400000, 24000, 0x26पूर्ण,
-	अणु6400000, 32000, 0x1Eपूर्ण,
-	अणु6400000, 44100, 0x17पूर्ण,
-	अणु6400000, 48000, 0x16पूर्ण,
-पूर्ण;
+	{6400000,  8000, 0x3E},
+	{6400000, 11025, 0x37},
+	{6400000, 12000, 0x36},
+	{6400000, 16000, 0x2E},
+	{6400000, 22050, 0x27},
+	{6400000, 24000, 0x26},
+	{6400000, 32000, 0x1E},
+	{6400000, 44100, 0x17},
+	{6400000, 48000, 0x16},
+};
 
-काष्ठा cs42l73_mclkx_भाग अणु
+struct cs42l73_mclkx_div {
 	u32 mclkx;
 	u8 ratio;
-	u8 mclkभाग;
-पूर्ण;
+	u8 mclkdiv;
+};
 
-अटल स्थिर काष्ठा cs42l73_mclkx_भाग cs42l73_mclkx_coeffs[] = अणु
-	अणु5644800,  1, 0पूर्ण,	/* 5644800 */
-	अणु6000000,  1, 0पूर्ण,	/* 6000000 */
-	अणु6144000,  1, 0पूर्ण,	/* 6144000 */
-	अणु11289600, 2, 2पूर्ण,	/* 5644800 */
-	अणु12288000, 2, 2पूर्ण,	/* 6144000 */
-	अणु12000000, 2, 2पूर्ण,	/* 6000000 */
-	अणु13000000, 2, 2पूर्ण,	/* 6500000 */
-	अणु19200000, 3, 3पूर्ण,	/* 6400000 */
-	अणु24000000, 4, 4पूर्ण,	/* 6000000 */
-	अणु26000000, 4, 4पूर्ण,	/* 6500000 */
-	अणु38400000, 6, 5पूर्ण	/* 6400000 */
-पूर्ण;
+static const struct cs42l73_mclkx_div cs42l73_mclkx_coeffs[] = {
+	{5644800,  1, 0},	/* 5644800 */
+	{6000000,  1, 0},	/* 6000000 */
+	{6144000,  1, 0},	/* 6144000 */
+	{11289600, 2, 2},	/* 5644800 */
+	{12288000, 2, 2},	/* 6144000 */
+	{12000000, 2, 2},	/* 6000000 */
+	{13000000, 2, 2},	/* 6500000 */
+	{19200000, 3, 3},	/* 6400000 */
+	{24000000, 4, 4},	/* 6000000 */
+	{26000000, 4, 4},	/* 6500000 */
+	{38400000, 6, 5}	/* 6400000 */
+};
 
-अटल पूर्णांक cs42l73_get_mclkx_coeff(पूर्णांक mclkx)
-अणु
-	पूर्णांक i;
+static int cs42l73_get_mclkx_coeff(int mclkx)
+{
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(cs42l73_mclkx_coeffs); i++) अणु
-		अगर (cs42l73_mclkx_coeffs[i].mclkx == mclkx)
-			वापस i;
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+	for (i = 0; i < ARRAY_SIZE(cs42l73_mclkx_coeffs); i++) {
+		if (cs42l73_mclkx_coeffs[i].mclkx == mclkx)
+			return i;
+	}
+	return -EINVAL;
+}
 
-अटल पूर्णांक cs42l73_get_mclk_coeff(पूर्णांक mclk, पूर्णांक srate)
-अणु
-	पूर्णांक i;
+static int cs42l73_get_mclk_coeff(int mclk, int srate)
+{
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(cs42l73_mclk_coeffs); i++) अणु
-		अगर (cs42l73_mclk_coeffs[i].mclk == mclk &&
+	for (i = 0; i < ARRAY_SIZE(cs42l73_mclk_coeffs); i++) {
+		if (cs42l73_mclk_coeffs[i].mclk == mclk &&
 		    cs42l73_mclk_coeffs[i].srate == srate)
-			वापस i;
-	पूर्ण
-	वापस -EINVAL;
+			return i;
+	}
+	return -EINVAL;
 
-पूर्ण
+}
 
-अटल पूर्णांक cs42l73_set_mclk(काष्ठा snd_soc_dai *dai, अचिन्हित पूर्णांक freq)
-अणु
-	काष्ठा snd_soc_component *component = dai->component;
-	काष्ठा cs42l73_निजी *priv = snd_soc_component_get_drvdata(component);
+static int cs42l73_set_mclk(struct snd_soc_dai *dai, unsigned int freq)
+{
+	struct snd_soc_component *component = dai->component;
+	struct cs42l73_private *priv = snd_soc_component_get_drvdata(component);
 
-	पूर्णांक mclkx_coeff;
+	int mclkx_coeff;
 	u32 mclk = 0;
 	u8 dmmcc = 0;
 
 	/* MCLKX -> MCLK */
 	mclkx_coeff = cs42l73_get_mclkx_coeff(freq);
-	अगर (mclkx_coeff < 0)
-		वापस mclkx_coeff;
+	if (mclkx_coeff < 0)
+		return mclkx_coeff;
 
 	mclk = cs42l73_mclkx_coeffs[mclkx_coeff].mclkx /
 		cs42l73_mclkx_coeffs[mclkx_coeff].ratio;
@@ -895,171 +894,171 @@
 		 mclk);
 
 	dmmcc = (priv->mclksel << 4) |
-		(cs42l73_mclkx_coeffs[mclkx_coeff].mclkभाग << 1);
+		(cs42l73_mclkx_coeffs[mclkx_coeff].mclkdiv << 1);
 
-	snd_soc_component_ग_लिखो(component, CS42L73_DMMCC, dmmcc);
+	snd_soc_component_write(component, CS42L73_DMMCC, dmmcc);
 
 	priv->sysclk = mclkx_coeff;
 	priv->mclk = mclk;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cs42l73_set_sysclk(काष्ठा snd_soc_dai *dai,
-			      पूर्णांक clk_id, अचिन्हित पूर्णांक freq, पूर्णांक dir)
-अणु
-	काष्ठा snd_soc_component *component = dai->component;
-	काष्ठा cs42l73_निजी *priv = snd_soc_component_get_drvdata(component);
+static int cs42l73_set_sysclk(struct snd_soc_dai *dai,
+			      int clk_id, unsigned int freq, int dir)
+{
+	struct snd_soc_component *component = dai->component;
+	struct cs42l73_private *priv = snd_soc_component_get_drvdata(component);
 
-	चयन (clk_id) अणु
-	हाल CS42L73_CLKID_MCLK1:
-		अवरोध;
-	हाल CS42L73_CLKID_MCLK2:
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	switch (clk_id) {
+	case CS42L73_CLKID_MCLK1:
+		break;
+	case CS42L73_CLKID_MCLK2:
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	अगर ((cs42l73_set_mclk(dai, freq)) < 0) अणु
+	if ((cs42l73_set_mclk(dai, freq)) < 0) {
 		dev_err(component->dev, "Unable to set MCLK for dai %s\n",
 			dai->name);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	priv->mclksel = clk_id;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cs42l73_set_dai_fmt(काष्ठा snd_soc_dai *codec_dai, अचिन्हित पूर्णांक fmt)
-अणु
-	काष्ठा snd_soc_component *component = codec_dai->component;
-	काष्ठा cs42l73_निजी *priv = snd_soc_component_get_drvdata(component);
+static int cs42l73_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
+{
+	struct snd_soc_component *component = codec_dai->component;
+	struct cs42l73_private *priv = snd_soc_component_get_drvdata(component);
 	u8 id = codec_dai->id;
-	अचिन्हित पूर्णांक inv, क्रमmat;
+	unsigned int inv, format;
 	u8 spc, mmcc;
 
-	spc = snd_soc_component_पढ़ो(component, CS42L73_SPC(id));
-	mmcc = snd_soc_component_पढ़ो(component, CS42L73_MMCC(id));
+	spc = snd_soc_component_read(component, CS42L73_SPC(id));
+	mmcc = snd_soc_component_read(component, CS42L73_MMCC(id));
 
-	चयन (fmt & SND_SOC_DAIFMT_MASTER_MASK) अणु
-	हाल SND_SOC_DAIFMT_CBM_CFM:
+	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
+	case SND_SOC_DAIFMT_CBM_CFM:
 		mmcc |= CS42L73_MS_MASTER;
-		अवरोध;
+		break;
 
-	हाल SND_SOC_DAIFMT_CBS_CFS:
+	case SND_SOC_DAIFMT_CBS_CFS:
 		mmcc &= ~CS42L73_MS_MASTER;
-		अवरोध;
+		break;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		return -EINVAL;
+	}
 
-	क्रमmat = (fmt & SND_SOC_DAIFMT_FORMAT_MASK);
+	format = (fmt & SND_SOC_DAIFMT_FORMAT_MASK);
 	inv = (fmt & SND_SOC_DAIFMT_INV_MASK);
 
-	चयन (क्रमmat) अणु
-	हाल SND_SOC_DAIFMT_I2S:
+	switch (format) {
+	case SND_SOC_DAIFMT_I2S:
 		spc &= ~CS42L73_SPDIF_PCM;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_DSP_A:
-	हाल SND_SOC_DAIFMT_DSP_B:
-		अगर (mmcc & CS42L73_MS_MASTER) अणु
+		break;
+	case SND_SOC_DAIFMT_DSP_A:
+	case SND_SOC_DAIFMT_DSP_B:
+		if (mmcc & CS42L73_MS_MASTER) {
 			dev_err(component->dev,
 				"PCM format in slave mode only\n");
-			वापस -EINVAL;
-		पूर्ण
-		अगर (id == CS42L73_ASP) अणु
+			return -EINVAL;
+		}
+		if (id == CS42L73_ASP) {
 			dev_err(component->dev,
 				"PCM format is not supported on ASP port\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		spc |= CS42L73_SPDIF_PCM;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	अगर (spc & CS42L73_SPDIF_PCM) अणु
-		/* Clear PCM mode, clear PCM_BIT_ORDER bit क्रम MSB->LSB */
+	if (spc & CS42L73_SPDIF_PCM) {
+		/* Clear PCM mode, clear PCM_BIT_ORDER bit for MSB->LSB */
 		spc &= ~(CS42L73_PCM_MODE_MASK | CS42L73_PCM_BIT_ORDER);
-		चयन (क्रमmat) अणु
-		हाल SND_SOC_DAIFMT_DSP_B:
-			अगर (inv == SND_SOC_DAIFMT_IB_IF)
+		switch (format) {
+		case SND_SOC_DAIFMT_DSP_B:
+			if (inv == SND_SOC_DAIFMT_IB_IF)
 				spc |= CS42L73_PCM_MODE0;
-			अगर (inv == SND_SOC_DAIFMT_IB_NF)
+			if (inv == SND_SOC_DAIFMT_IB_NF)
 				spc |= CS42L73_PCM_MODE1;
-		अवरोध;
-		हाल SND_SOC_DAIFMT_DSP_A:
-			अगर (inv == SND_SOC_DAIFMT_IB_IF)
+		break;
+		case SND_SOC_DAIFMT_DSP_A:
+			if (inv == SND_SOC_DAIFMT_IB_IF)
 				spc |= CS42L73_PCM_MODE1;
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			break;
+		default:
+			return -EINVAL;
+		}
+	}
 
 	priv->config[id].spc = spc;
 	priv->config[id].mmcc = mmcc;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर अचिन्हित पूर्णांक cs42l73_asrc_rates[] = अणु
+static const unsigned int cs42l73_asrc_rates[] = {
 	8000, 11025, 12000, 16000, 22050,
 	24000, 32000, 44100, 48000
-पूर्ण;
+};
 
-अटल अचिन्हित पूर्णांक cs42l73_get_xspfs_coeff(u32 rate)
-अणु
-	पूर्णांक i;
-	क्रम (i = 0; i < ARRAY_SIZE(cs42l73_asrc_rates); i++) अणु
-		अगर (cs42l73_asrc_rates[i] == rate)
-			वापस i + 1;
-	पूर्ण
-	वापस 0;		/* 0 = Don't know */
-पूर्ण
+static unsigned int cs42l73_get_xspfs_coeff(u32 rate)
+{
+	int i;
+	for (i = 0; i < ARRAY_SIZE(cs42l73_asrc_rates); i++) {
+		if (cs42l73_asrc_rates[i] == rate)
+			return i + 1;
+	}
+	return 0;		/* 0 = Don't know */
+}
 
-अटल व्योम cs42l73_update_asrc(काष्ठा snd_soc_component *component, पूर्णांक id, पूर्णांक srate)
-अणु
+static void cs42l73_update_asrc(struct snd_soc_component *component, int id, int srate)
+{
 	u8 spfs = 0;
 
-	अगर (srate > 0)
+	if (srate > 0)
 		spfs = cs42l73_get_xspfs_coeff(srate);
 
-	चयन (id) अणु
-	हाल CS42L73_XSP:
+	switch (id) {
+	case CS42L73_XSP:
 		snd_soc_component_update_bits(component, CS42L73_VXSPFS, 0x0f, spfs);
-	अवरोध;
-	हाल CS42L73_ASP:
+	break;
+	case CS42L73_ASP:
 		snd_soc_component_update_bits(component, CS42L73_ASPC, 0x3c, spfs << 2);
-	अवरोध;
-	हाल CS42L73_VSP:
+	break;
+	case CS42L73_VSP:
 		snd_soc_component_update_bits(component, CS42L73_VXSPFS, 0xf0, spfs << 4);
-	अवरोध;
-	शेष:
-	अवरोध;
-	पूर्ण
-पूर्ण
+	break;
+	default:
+	break;
+	}
+}
 
-अटल पूर्णांक cs42l73_pcm_hw_params(काष्ठा snd_pcm_substream *substream,
-				 काष्ठा snd_pcm_hw_params *params,
-				 काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा snd_soc_component *component = dai->component;
-	काष्ठा cs42l73_निजी *priv = snd_soc_component_get_drvdata(component);
-	पूर्णांक id = dai->id;
-	पूर्णांक mclk_coeff;
-	पूर्णांक srate = params_rate(params);
+static int cs42l73_pcm_hw_params(struct snd_pcm_substream *substream,
+				 struct snd_pcm_hw_params *params,
+				 struct snd_soc_dai *dai)
+{
+	struct snd_soc_component *component = dai->component;
+	struct cs42l73_private *priv = snd_soc_component_get_drvdata(component);
+	int id = dai->id;
+	int mclk_coeff;
+	int srate = params_rate(params);
 
-	अगर (priv->config[id].mmcc & CS42L73_MS_MASTER) अणु
+	if (priv->config[id].mmcc & CS42L73_MS_MASTER) {
 		/* CS42L73 Master */
 		/* MCLK -> srate */
 		mclk_coeff =
 		    cs42l73_get_mclk_coeff(priv->mclk, srate);
 
-		अगर (mclk_coeff < 0)
-			वापस -EINVAL;
+		if (mclk_coeff < 0)
+			return -EINVAL;
 
 		dev_dbg(component->dev,
 			 "DAI[%d]: MCLK %u, srate %u, MMCC[5:0] = %x\n",
@@ -1069,169 +1068,169 @@
 		priv->config[id].mmcc &= 0xC0;
 		priv->config[id].mmcc |= cs42l73_mclk_coeffs[mclk_coeff].mmcc;
 		priv->config[id].spc &= 0xFC;
-		/* Use SCLK=64*Fs अगर पूर्णांकernal MCLK >= 6.4MHz */
-		अगर (priv->mclk >= 6400000)
+		/* Use SCLK=64*Fs if internal MCLK >= 6.4MHz */
+		if (priv->mclk >= 6400000)
 			priv->config[id].spc |= CS42L73_MCK_SCLK_64FS;
-		अन्यथा
+		else
 			priv->config[id].spc |= CS42L73_MCK_SCLK_MCLK;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* CS42L73 Slave */
 		priv->config[id].spc &= 0xFC;
 		priv->config[id].spc |= CS42L73_MCK_SCLK_64FS;
-	पूर्ण
+	}
 	/* Update ASRCs */
 	priv->config[id].srate = srate;
 
-	snd_soc_component_ग_लिखो(component, CS42L73_SPC(id), priv->config[id].spc);
-	snd_soc_component_ग_लिखो(component, CS42L73_MMCC(id), priv->config[id].mmcc);
+	snd_soc_component_write(component, CS42L73_SPC(id), priv->config[id].spc);
+	snd_soc_component_write(component, CS42L73_MMCC(id), priv->config[id].mmcc);
 
 	cs42l73_update_asrc(component, id, srate);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cs42l73_set_bias_level(काष्ठा snd_soc_component *component,
-				  क्रमागत snd_soc_bias_level level)
-अणु
-	काष्ठा cs42l73_निजी *cs42l73 = snd_soc_component_get_drvdata(component);
+static int cs42l73_set_bias_level(struct snd_soc_component *component,
+				  enum snd_soc_bias_level level)
+{
+	struct cs42l73_private *cs42l73 = snd_soc_component_get_drvdata(component);
 
-	चयन (level) अणु
-	हाल SND_SOC_BIAS_ON:
+	switch (level) {
+	case SND_SOC_BIAS_ON:
 		snd_soc_component_update_bits(component, CS42L73_DMMCC, CS42L73_MCLKDIS, 0);
 		snd_soc_component_update_bits(component, CS42L73_PWRCTL1, CS42L73_PDN, 0);
-		अवरोध;
+		break;
 
-	हाल SND_SOC_BIAS_PREPARE:
-		अवरोध;
+	case SND_SOC_BIAS_PREPARE:
+		break;
 
-	हाल SND_SOC_BIAS_STANDBY:
-		अगर (snd_soc_component_get_bias_level(component) == SND_SOC_BIAS_OFF) अणु
+	case SND_SOC_BIAS_STANDBY:
+		if (snd_soc_component_get_bias_level(component) == SND_SOC_BIAS_OFF) {
 			regcache_cache_only(cs42l73->regmap, false);
 			regcache_sync(cs42l73->regmap);
-		पूर्ण
+		}
 		snd_soc_component_update_bits(component, CS42L73_PWRCTL1, CS42L73_PDN, 1);
-		अवरोध;
+		break;
 
-	हाल SND_SOC_BIAS_OFF:
+	case SND_SOC_BIAS_OFF:
 		snd_soc_component_update_bits(component, CS42L73_PWRCTL1, CS42L73_PDN, 1);
-		अगर (cs42l73->shutdwn_delay > 0) अणु
+		if (cs42l73->shutdwn_delay > 0) {
 			mdelay(cs42l73->shutdwn_delay);
 			cs42l73->shutdwn_delay = 0;
-		पूर्ण अन्यथा अणु
-			mdelay(15); /* Min amount of समय requred to घातer
-				     * करोwn.
+		} else {
+			mdelay(15); /* Min amount of time requred to power
+				     * down.
 				     */
-		पूर्ण
+		}
 		snd_soc_component_update_bits(component, CS42L73_DMMCC, CS42L73_MCLKDIS, 1);
-		अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		break;
+	}
+	return 0;
+}
 
-अटल पूर्णांक cs42l73_set_tristate(काष्ठा snd_soc_dai *dai, पूर्णांक tristate)
-अणु
-	काष्ठा snd_soc_component *component = dai->component;
-	पूर्णांक id = dai->id;
+static int cs42l73_set_tristate(struct snd_soc_dai *dai, int tristate)
+{
+	struct snd_soc_component *component = dai->component;
+	int id = dai->id;
 
-	वापस snd_soc_component_update_bits(component, CS42L73_SPC(id), CS42L73_SP_3ST,
+	return snd_soc_component_update_bits(component, CS42L73_SPC(id), CS42L73_SP_3ST,
 				   tristate << 7);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा snd_pcm_hw_स्थिरraपूर्णांक_list स्थिरraपूर्णांकs_12_24 = अणु
+static const struct snd_pcm_hw_constraint_list constraints_12_24 = {
 	.count  = ARRAY_SIZE(cs42l73_asrc_rates),
 	.list   = cs42l73_asrc_rates,
-पूर्ण;
+};
 
-अटल पूर्णांक cs42l73_pcm_startup(काष्ठा snd_pcm_substream *substream,
-			       काष्ठा snd_soc_dai *dai)
-अणु
-	snd_pcm_hw_स्थिरraपूर्णांक_list(substream->runसमय, 0,
+static int cs42l73_pcm_startup(struct snd_pcm_substream *substream,
+			       struct snd_soc_dai *dai)
+{
+	snd_pcm_hw_constraint_list(substream->runtime, 0,
 					SNDRV_PCM_HW_PARAM_RATE,
-					&स्थिरraपूर्णांकs_12_24);
-	वापस 0;
-पूर्ण
+					&constraints_12_24);
+	return 0;
+}
 
 
-#घोषणा CS42L73_FORMATS (SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S20_3LE |\
+#define CS42L73_FORMATS (SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S20_3LE |\
 	SNDRV_PCM_FMTBIT_S24_LE)
 
-अटल स्थिर काष्ठा snd_soc_dai_ops cs42l73_ops = अणु
+static const struct snd_soc_dai_ops cs42l73_ops = {
 	.startup = cs42l73_pcm_startup,
 	.hw_params = cs42l73_pcm_hw_params,
 	.set_fmt = cs42l73_set_dai_fmt,
 	.set_sysclk = cs42l73_set_sysclk,
 	.set_tristate = cs42l73_set_tristate,
-पूर्ण;
+};
 
-अटल काष्ठा snd_soc_dai_driver cs42l73_dai[] = अणु
-	अणु
+static struct snd_soc_dai_driver cs42l73_dai[] = {
+	{
 		.name = "cs42l73-xsp",
 		.id = CS42L73_XSP,
-		.playback = अणु
+		.playback = {
 			.stream_name = "XSP Playback",
 			.channels_min = 1,
 			.channels_max = 2,
 			.rates = SNDRV_PCM_RATE_KNOT,
-			.क्रमmats = CS42L73_FORMATS,
-		पूर्ण,
-		.capture = अणु
+			.formats = CS42L73_FORMATS,
+		},
+		.capture = {
 			.stream_name = "XSP Capture",
 			.channels_min = 1,
 			.channels_max = 2,
 			.rates = SNDRV_PCM_RATE_KNOT,
-			.क्रमmats = CS42L73_FORMATS,
-		पूर्ण,
+			.formats = CS42L73_FORMATS,
+		},
 		.ops = &cs42l73_ops,
 		.symmetric_rate = 1,
-	 पूर्ण,
-	अणु
+	 },
+	{
 		.name = "cs42l73-asp",
 		.id = CS42L73_ASP,
-		.playback = अणु
+		.playback = {
 			.stream_name = "ASP Playback",
 			.channels_min = 2,
 			.channels_max = 2,
 			.rates = SNDRV_PCM_RATE_KNOT,
-			.क्रमmats = CS42L73_FORMATS,
-		पूर्ण,
-		.capture = अणु
+			.formats = CS42L73_FORMATS,
+		},
+		.capture = {
 			.stream_name = "ASP Capture",
 			.channels_min = 2,
 			.channels_max = 2,
 			.rates = SNDRV_PCM_RATE_KNOT,
-			.क्रमmats = CS42L73_FORMATS,
-		पूर्ण,
+			.formats = CS42L73_FORMATS,
+		},
 		.ops = &cs42l73_ops,
 		.symmetric_rate = 1,
-	 पूर्ण,
-	अणु
+	 },
+	{
 		.name = "cs42l73-vsp",
 		.id = CS42L73_VSP,
-		.playback = अणु
+		.playback = {
 			.stream_name = "VSP Playback",
 			.channels_min = 1,
 			.channels_max = 2,
 			.rates = SNDRV_PCM_RATE_KNOT,
-			.क्रमmats = CS42L73_FORMATS,
-		पूर्ण,
-		.capture = अणु
+			.formats = CS42L73_FORMATS,
+		},
+		.capture = {
 			.stream_name = "VSP Capture",
 			.channels_min = 1,
 			.channels_max = 2,
 			.rates = SNDRV_PCM_RATE_KNOT,
-			.क्रमmats = CS42L73_FORMATS,
-		पूर्ण,
+			.formats = CS42L73_FORMATS,
+		},
 		.ops = &cs42l73_ops,
 		.symmetric_rate = 1,
-	 पूर्ण
-पूर्ण;
+	 }
+};
 
-अटल पूर्णांक cs42l73_probe(काष्ठा snd_soc_component *component)
-अणु
-	काष्ठा cs42l73_निजी *cs42l73 = snd_soc_component_get_drvdata(component);
+static int cs42l73_probe(struct snd_soc_component *component)
+{
+	struct cs42l73_private *cs42l73 = snd_soc_component_get_drvdata(component);
 
 	/* Set Charge Pump Frequency */
-	अगर (cs42l73->pdata.chgfreq)
+	if (cs42l73->pdata.chgfreq)
 		snd_soc_component_update_bits(component, CS42L73_CPFCHC,
 				    CS42L73_CHARGEPUMP_MASK,
 					cs42l73->pdata.chgfreq << 4);
@@ -1240,152 +1239,152 @@
 	cs42l73->mclksel = CS42L73_CLKID_MCLK1;
 	cs42l73->mclk = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा snd_soc_component_driver soc_component_dev_cs42l73 = अणु
+static const struct snd_soc_component_driver soc_component_dev_cs42l73 = {
 	.probe			= cs42l73_probe,
 	.set_bias_level		= cs42l73_set_bias_level,
 	.controls		= cs42l73_snd_controls,
 	.num_controls		= ARRAY_SIZE(cs42l73_snd_controls),
-	.dapm_widमाला_लो		= cs42l73_dapm_widमाला_लो,
-	.num_dapm_widमाला_लो	= ARRAY_SIZE(cs42l73_dapm_widमाला_लो),
+	.dapm_widgets		= cs42l73_dapm_widgets,
+	.num_dapm_widgets	= ARRAY_SIZE(cs42l73_dapm_widgets),
 	.dapm_routes		= cs42l73_audio_map,
 	.num_dapm_routes	= ARRAY_SIZE(cs42l73_audio_map),
 	.suspend_bias_off	= 1,
 	.idle_bias_on		= 1,
-	.use_pmकरोwn_समय	= 1,
+	.use_pmdown_time	= 1,
 	.endianness		= 1,
 	.non_legacy_dai_naming	= 1,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा regmap_config cs42l73_regmap = अणु
+static const struct regmap_config cs42l73_regmap = {
 	.reg_bits = 8,
 	.val_bits = 8,
 
-	.max_रेजिस्टर = CS42L73_MAX_REGISTER,
-	.reg_शेषs = cs42l73_reg_शेषs,
-	.num_reg_शेषs = ARRAY_SIZE(cs42l73_reg_शेषs),
-	.अस्थिर_reg = cs42l73_अस्थिर_रेजिस्टर,
-	.पढ़ोable_reg = cs42l73_पढ़ोable_रेजिस्टर,
+	.max_register = CS42L73_MAX_REGISTER,
+	.reg_defaults = cs42l73_reg_defaults,
+	.num_reg_defaults = ARRAY_SIZE(cs42l73_reg_defaults),
+	.volatile_reg = cs42l73_volatile_register,
+	.readable_reg = cs42l73_readable_register,
 	.cache_type = REGCACHE_RBTREE,
 
-	.use_single_पढ़ो = true,
-	.use_single_ग_लिखो = true,
-पूर्ण;
+	.use_single_read = true,
+	.use_single_write = true,
+};
 
-अटल पूर्णांक cs42l73_i2c_probe(काष्ठा i2c_client *i2c_client,
-			     स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा cs42l73_निजी *cs42l73;
-	काष्ठा cs42l73_platक्रमm_data *pdata = dev_get_platdata(&i2c_client->dev);
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक devid = 0;
-	अचिन्हित पूर्णांक reg;
+static int cs42l73_i2c_probe(struct i2c_client *i2c_client,
+			     const struct i2c_device_id *id)
+{
+	struct cs42l73_private *cs42l73;
+	struct cs42l73_platform_data *pdata = dev_get_platdata(&i2c_client->dev);
+	int ret;
+	unsigned int devid = 0;
+	unsigned int reg;
 	u32 val32;
 
-	cs42l73 = devm_kzalloc(&i2c_client->dev, माप(*cs42l73), GFP_KERNEL);
-	अगर (!cs42l73)
-		वापस -ENOMEM;
+	cs42l73 = devm_kzalloc(&i2c_client->dev, sizeof(*cs42l73), GFP_KERNEL);
+	if (!cs42l73)
+		return -ENOMEM;
 
 	cs42l73->regmap = devm_regmap_init_i2c(i2c_client, &cs42l73_regmap);
-	अगर (IS_ERR(cs42l73->regmap)) अणु
+	if (IS_ERR(cs42l73->regmap)) {
 		ret = PTR_ERR(cs42l73->regmap);
 		dev_err(&i2c_client->dev, "regmap_init() failed: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (pdata) अणु
+	if (pdata) {
 		cs42l73->pdata = *pdata;
-	पूर्ण अन्यथा अणु
-		pdata = devm_kzalloc(&i2c_client->dev, माप(*pdata),
+	} else {
+		pdata = devm_kzalloc(&i2c_client->dev, sizeof(*pdata),
 				     GFP_KERNEL);
-		अगर (!pdata)
-			वापस -ENOMEM;
+		if (!pdata)
+			return -ENOMEM;
 
-		अगर (i2c_client->dev.of_node) अणु
-			अगर (of_property_पढ़ो_u32(i2c_client->dev.of_node,
+		if (i2c_client->dev.of_node) {
+			if (of_property_read_u32(i2c_client->dev.of_node,
 				"chgfreq", &val32) >= 0)
 				pdata->chgfreq = val32;
-		पूर्ण
+		}
 		pdata->reset_gpio = of_get_named_gpio(i2c_client->dev.of_node,
 						"reset-gpio", 0);
 		cs42l73->pdata = *pdata;
-	पूर्ण
+	}
 
 	i2c_set_clientdata(i2c_client, cs42l73);
 
-	अगर (cs42l73->pdata.reset_gpio) अणु
+	if (cs42l73->pdata.reset_gpio) {
 		ret = devm_gpio_request_one(&i2c_client->dev,
 					    cs42l73->pdata.reset_gpio,
 					    GPIOF_OUT_INIT_HIGH,
 					    "CS42L73 /RST");
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(&i2c_client->dev, "Failed to request /RST %d: %d\n",
 				cs42l73->pdata.reset_gpio, ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		gpio_set_value_cansleep(cs42l73->pdata.reset_gpio, 0);
 		gpio_set_value_cansleep(cs42l73->pdata.reset_gpio, 1);
-	पूर्ण
+	}
 
 	/* initialize codec */
-	ret = regmap_पढ़ो(cs42l73->regmap, CS42L73_DEVID_AB, &reg);
+	ret = regmap_read(cs42l73->regmap, CS42L73_DEVID_AB, &reg);
 	devid = (reg & 0xFF) << 12;
 
-	ret = regmap_पढ़ो(cs42l73->regmap, CS42L73_DEVID_CD, &reg);
+	ret = regmap_read(cs42l73->regmap, CS42L73_DEVID_CD, &reg);
 	devid |= (reg & 0xFF) << 4;
 
-	ret = regmap_पढ़ो(cs42l73->regmap, CS42L73_DEVID_E, &reg);
+	ret = regmap_read(cs42l73->regmap, CS42L73_DEVID_E, &reg);
 	devid |= (reg & 0xF0) >> 4;
 
-	अगर (devid != CS42L73_DEVID) अणु
+	if (devid != CS42L73_DEVID) {
 		ret = -ENODEV;
 		dev_err(&i2c_client->dev,
 			"CS42L73 Device ID (%X). Expected %X\n",
 			devid, CS42L73_DEVID);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = regmap_पढ़ो(cs42l73->regmap, CS42L73_REVID, &reg);
-	अगर (ret < 0) अणु
+	ret = regmap_read(cs42l73->regmap, CS42L73_REVID, &reg);
+	if (ret < 0) {
 		dev_err(&i2c_client->dev, "Get Revision ID failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	dev_info(&i2c_client->dev,
 		 "Cirrus Logic CS42L73, Revision: %02X\n", reg & 0xFF);
 
-	ret = devm_snd_soc_रेजिस्टर_component(&i2c_client->dev,
+	ret = devm_snd_soc_register_component(&i2c_client->dev,
 			&soc_component_dev_cs42l73, cs42l73_dai,
 			ARRAY_SIZE(cs42l73_dai));
-	अगर (ret < 0)
-		वापस ret;
-	वापस 0;
-पूर्ण
+	if (ret < 0)
+		return ret;
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id cs42l73_of_match[] = अणु
-	अणु .compatible = "cirrus,cs42l73", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id cs42l73_of_match[] = {
+	{ .compatible = "cirrus,cs42l73", },
+	{},
+};
 MODULE_DEVICE_TABLE(of, cs42l73_of_match);
 
-अटल स्थिर काष्ठा i2c_device_id cs42l73_id[] = अणु
-	अणु"cs42l73", 0पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct i2c_device_id cs42l73_id[] = {
+	{"cs42l73", 0},
+	{}
+};
 
 MODULE_DEVICE_TABLE(i2c, cs42l73_id);
 
-अटल काष्ठा i2c_driver cs42l73_i2c_driver = अणु
-	.driver = अणु
+static struct i2c_driver cs42l73_i2c_driver = {
+	.driver = {
 		   .name = "cs42l73",
 		   .of_match_table = cs42l73_of_match,
-		   पूर्ण,
+		   },
 	.id_table = cs42l73_id,
 	.probe = cs42l73_i2c_probe,
 
-पूर्ण;
+};
 
 module_i2c_driver(cs42l73_i2c_driver);
 

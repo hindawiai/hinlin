@@ -1,73 +1,72 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *	Driver क्रम the Macपूर्णांकosh 68K onboard MACE controller with PSC
+ *	Driver for the Macintosh 68K onboard MACE controller with PSC
  *	driven DMA. The MACE driver code is derived from mace.c. The
  *	Mac68k theory of operation is courtesy of the MacBSD wizards.
  *
  *	Copyright (C) 1996 Paul Mackerras.
  *	Copyright (C) 1998 Alan Cox <alan@lxorguk.ukuu.org.uk>
  *
- *	Modअगरied heavily by Joshua M. Thompson based on Dave Huang's NetBSD driver
+ *	Modified heavily by Joshua M. Thompson based on Dave Huang's NetBSD driver
  *
  *	Copyright (C) 2007 Finn Thain
  *
- *	Converted to DMA API, converted to unअगरied driver model,
+ *	Converted to DMA API, converted to unified driver model,
  *	sync'd some routines with mace.c and fixed various bugs.
  */
 
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/crc32.h>
-#समावेश <linux/bitrev.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/gfp.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/macपूर्णांकs.h>
-#समावेश <यंत्र/mac_psc.h>
-#समावेश <यंत्र/page.h>
-#समावेश "mace.h"
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/netdevice.h>
+#include <linux/etherdevice.h>
+#include <linux/delay.h>
+#include <linux/string.h>
+#include <linux/crc32.h>
+#include <linux/bitrev.h>
+#include <linux/dma-mapping.h>
+#include <linux/platform_device.h>
+#include <linux/gfp.h>
+#include <linux/interrupt.h>
+#include <asm/io.h>
+#include <asm/macints.h>
+#include <asm/mac_psc.h>
+#include <asm/page.h>
+#include "mace.h"
 
-अटल अक्षर mac_mace_string[] = "macmace";
+static char mac_mace_string[] = "macmace";
 
-#घोषणा N_TX_BUFF_ORDER	0
-#घोषणा N_TX_RING	(1 << N_TX_BUFF_ORDER)
-#घोषणा N_RX_BUFF_ORDER	3
-#घोषणा N_RX_RING	(1 << N_RX_BUFF_ORDER)
+#define N_TX_BUFF_ORDER	0
+#define N_TX_RING	(1 << N_TX_BUFF_ORDER)
+#define N_RX_BUFF_ORDER	3
+#define N_RX_RING	(1 << N_RX_BUFF_ORDER)
 
-#घोषणा TX_TIMEOUT	HZ
+#define TX_TIMEOUT	HZ
 
-#घोषणा MACE_BUFF_SIZE	0x800
+#define MACE_BUFF_SIZE	0x800
 
 /* Chip rev needs workaround on HW & multicast addr change */
-#घोषणा BROKEN_ADDRCHG_REV	0x0941
+#define BROKEN_ADDRCHG_REV	0x0941
 
-/* The MACE is simply wired करोwn on a Mac68K box */
+/* The MACE is simply wired down on a Mac68K box */
 
-#घोषणा MACE_BASE	(व्योम *)(0x50F1C000)
-#घोषणा MACE_PROM	(व्योम *)(0x50F08001)
+#define MACE_BASE	(void *)(0x50F1C000)
+#define MACE_PROM	(void *)(0x50F08001)
 
-काष्ठा mace_data अणु
-	अस्थिर काष्ठा mace *mace;
-	अचिन्हित अक्षर *tx_ring;
+struct mace_data {
+	volatile struct mace *mace;
+	unsigned char *tx_ring;
 	dma_addr_t tx_ring_phys;
-	अचिन्हित अक्षर *rx_ring;
+	unsigned char *rx_ring;
 	dma_addr_t rx_ring_phys;
-	पूर्णांक dma_पूर्णांकr;
-	पूर्णांक rx_slot, rx_tail;
-	पूर्णांक tx_slot, tx_sloti, tx_count;
-	पूर्णांक chipid;
-	काष्ठा device *device;
-पूर्ण;
+	int dma_intr;
+	int rx_slot, rx_tail;
+	int tx_slot, tx_sloti, tx_count;
+	int chipid;
+	struct device *device;
+};
 
-काष्ठा mace_frame अणु
+struct mace_frame {
 	u8	rcvcnt;
 	u8	pad1;
 	u8	rcvsts;
@@ -79,75 +78,75 @@
 	u32	pad5;
 	u32	pad6;
 	u8	data[1];
-	/* And frame जारीs.. */
-पूर्ण;
+	/* And frame continues.. */
+};
 
-#घोषणा PRIV_BYTES	माप(काष्ठा mace_data)
+#define PRIV_BYTES	sizeof(struct mace_data)
 
-अटल पूर्णांक mace_खोलो(काष्ठा net_device *dev);
-अटल पूर्णांक mace_बंद(काष्ठा net_device *dev);
-अटल netdev_tx_t mace_xmit_start(काष्ठा sk_buff *skb, काष्ठा net_device *dev);
-अटल व्योम mace_set_multicast(काष्ठा net_device *dev);
-अटल पूर्णांक mace_set_address(काष्ठा net_device *dev, व्योम *addr);
-अटल व्योम mace_reset(काष्ठा net_device *dev);
-अटल irqवापस_t mace_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id);
-अटल irqवापस_t mace_dma_पूर्णांकr(पूर्णांक irq, व्योम *dev_id);
-अटल व्योम mace_tx_समयout(काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue);
-अटल व्योम __mace_set_address(काष्ठा net_device *dev, व्योम *addr);
+static int mace_open(struct net_device *dev);
+static int mace_close(struct net_device *dev);
+static netdev_tx_t mace_xmit_start(struct sk_buff *skb, struct net_device *dev);
+static void mace_set_multicast(struct net_device *dev);
+static int mace_set_address(struct net_device *dev, void *addr);
+static void mace_reset(struct net_device *dev);
+static irqreturn_t mace_interrupt(int irq, void *dev_id);
+static irqreturn_t mace_dma_intr(int irq, void *dev_id);
+static void mace_tx_timeout(struct net_device *dev, unsigned int txqueue);
+static void __mace_set_address(struct net_device *dev, void *addr);
 
 /*
  * Load a receive DMA channel with a base address and ring length
  */
 
-अटल व्योम mace_load_rxdma_base(काष्ठा net_device *dev, पूर्णांक set)
-अणु
-	काष्ठा mace_data *mp = netdev_priv(dev);
+static void mace_load_rxdma_base(struct net_device *dev, int set)
+{
+	struct mace_data *mp = netdev_priv(dev);
 
-	psc_ग_लिखो_word(PSC_ENETRD_CMD + set, 0x0100);
-	psc_ग_लिखो_दीर्घ(PSC_ENETRD_ADDR + set, (u32) mp->rx_ring_phys);
-	psc_ग_लिखो_दीर्घ(PSC_ENETRD_LEN + set, N_RX_RING);
-	psc_ग_लिखो_word(PSC_ENETRD_CMD + set, 0x9800);
+	psc_write_word(PSC_ENETRD_CMD + set, 0x0100);
+	psc_write_long(PSC_ENETRD_ADDR + set, (u32) mp->rx_ring_phys);
+	psc_write_long(PSC_ENETRD_LEN + set, N_RX_RING);
+	psc_write_word(PSC_ENETRD_CMD + set, 0x9800);
 	mp->rx_tail = 0;
-पूर्ण
+}
 
 /*
- * Reset the receive DMA subप्रणाली
+ * Reset the receive DMA subsystem
  */
 
-अटल व्योम mace_rxdma_reset(काष्ठा net_device *dev)
-अणु
-	काष्ठा mace_data *mp = netdev_priv(dev);
-	अस्थिर काष्ठा mace *mace = mp->mace;
+static void mace_rxdma_reset(struct net_device *dev)
+{
+	struct mace_data *mp = netdev_priv(dev);
+	volatile struct mace *mace = mp->mace;
 	u8 maccc = mace->maccc;
 
 	mace->maccc = maccc & ~ENRCV;
 
-	psc_ग_लिखो_word(PSC_ENETRD_CTL, 0x8800);
+	psc_write_word(PSC_ENETRD_CTL, 0x8800);
 	mace_load_rxdma_base(dev, 0x00);
-	psc_ग_लिखो_word(PSC_ENETRD_CTL, 0x0400);
+	psc_write_word(PSC_ENETRD_CTL, 0x0400);
 
-	psc_ग_लिखो_word(PSC_ENETRD_CTL, 0x8800);
+	psc_write_word(PSC_ENETRD_CTL, 0x8800);
 	mace_load_rxdma_base(dev, 0x10);
-	psc_ग_लिखो_word(PSC_ENETRD_CTL, 0x0400);
+	psc_write_word(PSC_ENETRD_CTL, 0x0400);
 
 	mace->maccc = maccc;
 	mp->rx_slot = 0;
 
-	psc_ग_लिखो_word(PSC_ENETRD_CMD + PSC_SET0, 0x9800);
-	psc_ग_लिखो_word(PSC_ENETRD_CMD + PSC_SET1, 0x9800);
-पूर्ण
+	psc_write_word(PSC_ENETRD_CMD + PSC_SET0, 0x9800);
+	psc_write_word(PSC_ENETRD_CMD + PSC_SET1, 0x9800);
+}
 
 /*
- * Reset the transmit DMA subप्रणाली
+ * Reset the transmit DMA subsystem
  */
 
-अटल व्योम mace_txdma_reset(काष्ठा net_device *dev)
-अणु
-	काष्ठा mace_data *mp = netdev_priv(dev);
-	अस्थिर काष्ठा mace *mace = mp->mace;
+static void mace_txdma_reset(struct net_device *dev)
+{
+	struct mace_data *mp = netdev_priv(dev);
+	volatile struct mace *mace = mp->mace;
 	u8 maccc;
 
-	psc_ग_लिखो_word(PSC_ENETWR_CTL, 0x8800);
+	psc_write_word(PSC_ENETWR_CTL, 0x8800);
 
 	maccc = mace->maccc;
 	mace->maccc = maccc & ~ENXMT;
@@ -155,66 +154,66 @@
 	mp->tx_slot = mp->tx_sloti = 0;
 	mp->tx_count = N_TX_RING;
 
-	psc_ग_लिखो_word(PSC_ENETWR_CTL, 0x0400);
+	psc_write_word(PSC_ENETWR_CTL, 0x0400);
 	mace->maccc = maccc;
-पूर्ण
+}
 
 /*
  * Disable DMA
  */
 
-अटल व्योम mace_dma_off(काष्ठा net_device *dev)
-अणु
-	psc_ग_लिखो_word(PSC_ENETRD_CTL, 0x8800);
-	psc_ग_लिखो_word(PSC_ENETRD_CTL, 0x1000);
-	psc_ग_लिखो_word(PSC_ENETRD_CMD + PSC_SET0, 0x1100);
-	psc_ग_लिखो_word(PSC_ENETRD_CMD + PSC_SET1, 0x1100);
+static void mace_dma_off(struct net_device *dev)
+{
+	psc_write_word(PSC_ENETRD_CTL, 0x8800);
+	psc_write_word(PSC_ENETRD_CTL, 0x1000);
+	psc_write_word(PSC_ENETRD_CMD + PSC_SET0, 0x1100);
+	psc_write_word(PSC_ENETRD_CMD + PSC_SET1, 0x1100);
 
-	psc_ग_लिखो_word(PSC_ENETWR_CTL, 0x8800);
-	psc_ग_लिखो_word(PSC_ENETWR_CTL, 0x1000);
-	psc_ग_लिखो_word(PSC_ENETWR_CMD + PSC_SET0, 0x1100);
-	psc_ग_लिखो_word(PSC_ENETWR_CMD + PSC_SET1, 0x1100);
-पूर्ण
+	psc_write_word(PSC_ENETWR_CTL, 0x8800);
+	psc_write_word(PSC_ENETWR_CTL, 0x1000);
+	psc_write_word(PSC_ENETWR_CMD + PSC_SET0, 0x1100);
+	psc_write_word(PSC_ENETWR_CMD + PSC_SET1, 0x1100);
+}
 
-अटल स्थिर काष्ठा net_device_ops mace_netdev_ops = अणु
-	.nकरो_खोलो		= mace_खोलो,
-	.nकरो_stop		= mace_बंद,
-	.nकरो_start_xmit		= mace_xmit_start,
-	.nकरो_tx_समयout		= mace_tx_समयout,
-	.nकरो_set_rx_mode	= mace_set_multicast,
-	.nकरो_set_mac_address	= mace_set_address,
-	.nकरो_validate_addr	= eth_validate_addr,
-पूर्ण;
+static const struct net_device_ops mace_netdev_ops = {
+	.ndo_open		= mace_open,
+	.ndo_stop		= mace_close,
+	.ndo_start_xmit		= mace_xmit_start,
+	.ndo_tx_timeout		= mace_tx_timeout,
+	.ndo_set_rx_mode	= mace_set_multicast,
+	.ndo_set_mac_address	= mace_set_address,
+	.ndo_validate_addr	= eth_validate_addr,
+};
 
 /*
- * Not really much of a probe. The hardware table tells us अगर this
- * model of Macपूर्णांकrash has a MACE (AV macपूर्णांकoshes)
+ * Not really much of a probe. The hardware table tells us if this
+ * model of Macintrash has a MACE (AV macintoshes)
  */
 
-अटल पूर्णांक mace_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक j;
-	काष्ठा mace_data *mp;
-	अचिन्हित अक्षर *addr;
-	काष्ठा net_device *dev;
-	अचिन्हित अक्षर checksum = 0;
-	पूर्णांक err;
+static int mace_probe(struct platform_device *pdev)
+{
+	int j;
+	struct mace_data *mp;
+	unsigned char *addr;
+	struct net_device *dev;
+	unsigned char checksum = 0;
+	int err;
 
 	dev = alloc_etherdev(PRIV_BYTES);
-	अगर (!dev)
-		वापस -ENOMEM;
+	if (!dev)
+		return -ENOMEM;
 
 	mp = netdev_priv(dev);
 
 	mp->device = &pdev->dev;
-	platक्रमm_set_drvdata(pdev, dev);
+	platform_set_drvdata(pdev, dev);
 	SET_NETDEV_DEV(dev, &pdev->dev);
 
 	dev->base_addr = (u32)MACE_BASE;
 	mp->mace = MACE_BASE;
 
 	dev->irq = IRQ_MAC_MACE;
-	mp->dma_पूर्णांकr = IRQ_MAC_MACE_DMA;
+	mp->dma_intr = IRQ_MAC_MACE_DMA;
 
 	mp->chipid = mp->mace->chipid_hi << 8 | mp->mace->chipid_lo;
 
@@ -227,121 +226,121 @@
 
 	addr = MACE_PROM;
 
-	क्रम (j = 0; j < 6; ++j) अणु
+	for (j = 0; j < 6; ++j) {
 		u8 v = bitrev8(addr[j<<4]);
 		checksum ^= v;
 		dev->dev_addr[j] = v;
-	पूर्ण
-	क्रम (; j < 8; ++j) अणु
+	}
+	for (; j < 8; ++j) {
 		checksum ^= bitrev8(addr[j<<4]);
-	पूर्ण
+	}
 
-	अगर (checksum != 0xFF) अणु
-		मुक्त_netdev(dev);
-		वापस -ENODEV;
-	पूर्ण
+	if (checksum != 0xFF) {
+		free_netdev(dev);
+		return -ENODEV;
+	}
 
 	dev->netdev_ops		= &mace_netdev_ops;
-	dev->watchकरोg_समयo	= TX_TIMEOUT;
+	dev->watchdog_timeo	= TX_TIMEOUT;
 
 	pr_info("Onboard MACE, hardware address %pM, chip revision 0x%04X\n",
 		dev->dev_addr, mp->chipid);
 
-	err = रेजिस्टर_netdev(dev);
-	अगर (!err)
-		वापस 0;
+	err = register_netdev(dev);
+	if (!err)
+		return 0;
 
-	मुक्त_netdev(dev);
-	वापस err;
-पूर्ण
+	free_netdev(dev);
+	return err;
+}
 
 /*
  * Reset the chip.
  */
 
-अटल व्योम mace_reset(काष्ठा net_device *dev)
-अणु
-	काष्ठा mace_data *mp = netdev_priv(dev);
-	अस्थिर काष्ठा mace *mb = mp->mace;
-	पूर्णांक i;
+static void mace_reset(struct net_device *dev)
+{
+	struct mace_data *mp = netdev_priv(dev);
+	volatile struct mace *mb = mp->mace;
+	int i;
 
 	/* soft-reset the chip */
 	i = 200;
-	जबतक (--i) अणु
+	while (--i) {
 		mb->biucc = SWRST;
-		अगर (mb->biucc & SWRST) अणु
+		if (mb->biucc & SWRST) {
 			udelay(10);
-			जारी;
-		पूर्ण
-		अवरोध;
-	पूर्ण
-	अगर (!i) अणु
-		prपूर्णांकk(KERN_ERR "macmace: cannot reset chip!\n");
-		वापस;
-	पूर्ण
+			continue;
+		}
+		break;
+	}
+	if (!i) {
+		printk(KERN_ERR "macmace: cannot reset chip!\n");
+		return;
+	}
 
 	mb->maccc = 0;	/* turn off tx, rx */
-	mb->imr = 0xFF;	/* disable all पूर्णांकrs क्रम now */
+	mb->imr = 0xFF;	/* disable all intrs for now */
 	i = mb->ir;
 
 	mb->biucc = XMTSP_64;
 	mb->utr = RTRD;
-	mb->fअगरocc = XMTFW_8 | RCVFW_64 | XMTFWU | RCVFWU;
+	mb->fifocc = XMTFW_8 | RCVFW_64 | XMTFWU | RCVFWU;
 
-	mb->xmtfc = AUTO_PAD_XMIT; /* स्वतः-pad लघु frames */
+	mb->xmtfc = AUTO_PAD_XMIT; /* auto-pad short frames */
 	mb->rcvfc = 0;
 
 	/* load up the hardware address */
 	__mace_set_address(dev, dev->dev_addr);
 
 	/* clear the multicast filter */
-	अगर (mp->chipid == BROKEN_ADDRCHG_REV)
+	if (mp->chipid == BROKEN_ADDRCHG_REV)
 		mb->iac = LOGADDR;
-	अन्यथा अणु
+	else {
 		mb->iac = ADDRCHG | LOGADDR;
-		जबतक ((mb->iac & ADDRCHG) != 0)
+		while ((mb->iac & ADDRCHG) != 0)
 			;
-	पूर्ण
-	क्रम (i = 0; i < 8; ++i)
+	}
+	for (i = 0; i < 8; ++i)
 		mb->ladrf = 0;
 
-	/* करोne changing address */
-	अगर (mp->chipid != BROKEN_ADDRCHG_REV)
+	/* done changing address */
+	if (mp->chipid != BROKEN_ADDRCHG_REV)
 		mb->iac = 0;
 
 	mb->plscc = PORTSEL_AUI;
-पूर्ण
+}
 
 /*
  * Load the address on a mace controller.
  */
 
-अटल व्योम __mace_set_address(काष्ठा net_device *dev, व्योम *addr)
-अणु
-	काष्ठा mace_data *mp = netdev_priv(dev);
-	अस्थिर काष्ठा mace *mb = mp->mace;
-	अचिन्हित अक्षर *p = addr;
-	पूर्णांक i;
+static void __mace_set_address(struct net_device *dev, void *addr)
+{
+	struct mace_data *mp = netdev_priv(dev);
+	volatile struct mace *mb = mp->mace;
+	unsigned char *p = addr;
+	int i;
 
 	/* load up the hardware address */
-	अगर (mp->chipid == BROKEN_ADDRCHG_REV)
+	if (mp->chipid == BROKEN_ADDRCHG_REV)
 		mb->iac = PHYADDR;
-	अन्यथा अणु
+	else {
 		mb->iac = ADDRCHG | PHYADDR;
-		जबतक ((mb->iac & ADDRCHG) != 0)
+		while ((mb->iac & ADDRCHG) != 0)
 			;
-	पूर्ण
-	क्रम (i = 0; i < 6; ++i)
+	}
+	for (i = 0; i < 6; ++i)
 		mb->padr = dev->dev_addr[i] = p[i];
-	अगर (mp->chipid != BROKEN_ADDRCHG_REV)
+	if (mp->chipid != BROKEN_ADDRCHG_REV)
 		mb->iac = 0;
-पूर्ण
+}
 
-अटल पूर्णांक mace_set_address(काष्ठा net_device *dev, व्योम *addr)
-अणु
-	काष्ठा mace_data *mp = netdev_priv(dev);
-	अस्थिर काष्ठा mace *mb = mp->mace;
-	अचिन्हित दीर्घ flags;
+static int mace_set_address(struct net_device *dev, void *addr)
+{
+	struct mace_data *mp = netdev_priv(dev);
+	volatile struct mace *mb = mp->mace;
+	unsigned long flags;
 	u8 maccc;
 
 	local_irq_save(flags);
@@ -354,264 +353,264 @@
 
 	local_irq_restore(flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Open the Macपूर्णांकosh MACE. Most of this is playing with the DMA
- * engine. The ethernet chip is quite मित्रly.
+ * Open the Macintosh MACE. Most of this is playing with the DMA
+ * engine. The ethernet chip is quite friendly.
  */
 
-अटल पूर्णांक mace_खोलो(काष्ठा net_device *dev)
-अणु
-	काष्ठा mace_data *mp = netdev_priv(dev);
-	अस्थिर काष्ठा mace *mb = mp->mace;
+static int mace_open(struct net_device *dev)
+{
+	struct mace_data *mp = netdev_priv(dev);
+	volatile struct mace *mb = mp->mace;
 
 	/* reset the chip */
 	mace_reset(dev);
 
-	अगर (request_irq(dev->irq, mace_पूर्णांकerrupt, 0, dev->name, dev)) अणु
-		prपूर्णांकk(KERN_ERR "%s: can't get irq %d\n", dev->name, dev->irq);
-		वापस -EAGAIN;
-	पूर्ण
-	अगर (request_irq(mp->dma_पूर्णांकr, mace_dma_पूर्णांकr, 0, dev->name, dev)) अणु
-		prपूर्णांकk(KERN_ERR "%s: can't get irq %d\n", dev->name, mp->dma_पूर्णांकr);
-		मुक्त_irq(dev->irq, dev);
-		वापस -EAGAIN;
-	पूर्ण
+	if (request_irq(dev->irq, mace_interrupt, 0, dev->name, dev)) {
+		printk(KERN_ERR "%s: can't get irq %d\n", dev->name, dev->irq);
+		return -EAGAIN;
+	}
+	if (request_irq(mp->dma_intr, mace_dma_intr, 0, dev->name, dev)) {
+		printk(KERN_ERR "%s: can't get irq %d\n", dev->name, mp->dma_intr);
+		free_irq(dev->irq, dev);
+		return -EAGAIN;
+	}
 
 	/* Allocate the DMA ring buffers */
 
 	mp->tx_ring = dma_alloc_coherent(mp->device,
 					 N_TX_RING * MACE_BUFF_SIZE,
 					 &mp->tx_ring_phys, GFP_KERNEL);
-	अगर (mp->tx_ring == शून्य)
-		जाओ out1;
+	if (mp->tx_ring == NULL)
+		goto out1;
 
 	mp->rx_ring = dma_alloc_coherent(mp->device,
 					 N_RX_RING * MACE_BUFF_SIZE,
 					 &mp->rx_ring_phys, GFP_KERNEL);
-	अगर (mp->rx_ring == शून्य)
-		जाओ out2;
+	if (mp->rx_ring == NULL)
+		goto out2;
 
 	mace_dma_off(dev);
 
-	/* Not sure what these करो */
+	/* Not sure what these do */
 
-	psc_ग_लिखो_word(PSC_ENETWR_CTL, 0x9000);
-	psc_ग_लिखो_word(PSC_ENETRD_CTL, 0x9000);
-	psc_ग_लिखो_word(PSC_ENETWR_CTL, 0x0400);
-	psc_ग_लिखो_word(PSC_ENETRD_CTL, 0x0400);
+	psc_write_word(PSC_ENETWR_CTL, 0x9000);
+	psc_write_word(PSC_ENETRD_CTL, 0x9000);
+	psc_write_word(PSC_ENETWR_CTL, 0x0400);
+	psc_write_word(PSC_ENETRD_CTL, 0x0400);
 
 	mace_rxdma_reset(dev);
 	mace_txdma_reset(dev);
 
 	/* turn it on! */
 	mb->maccc = ENXMT | ENRCV;
-	/* enable all पूर्णांकerrupts except receive पूर्णांकerrupts */
+	/* enable all interrupts except receive interrupts */
 	mb->imr = RCVINT;
-	वापस 0;
+	return 0;
 
 out2:
-	dma_मुक्त_coherent(mp->device, N_TX_RING * MACE_BUFF_SIZE,
+	dma_free_coherent(mp->device, N_TX_RING * MACE_BUFF_SIZE,
 	                  mp->tx_ring, mp->tx_ring_phys);
 out1:
-	मुक्त_irq(dev->irq, dev);
-	मुक्त_irq(mp->dma_पूर्णांकr, dev);
-	वापस -ENOMEM;
-पूर्ण
+	free_irq(dev->irq, dev);
+	free_irq(mp->dma_intr, dev);
+	return -ENOMEM;
+}
 
 /*
- * Shut करोwn the mace and its पूर्णांकerrupt channel
+ * Shut down the mace and its interrupt channel
  */
 
-अटल पूर्णांक mace_बंद(काष्ठा net_device *dev)
-अणु
-	काष्ठा mace_data *mp = netdev_priv(dev);
-	अस्थिर काष्ठा mace *mb = mp->mace;
+static int mace_close(struct net_device *dev)
+{
+	struct mace_data *mp = netdev_priv(dev);
+	volatile struct mace *mb = mp->mace;
 
 	mb->maccc = 0;		/* disable rx and tx	 */
 	mb->imr = 0xFF;		/* disable all irqs	 */
 	mace_dma_off(dev);	/* disable rx and tx dma */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Transmit a frame
  */
 
-अटल netdev_tx_t mace_xmit_start(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
-अणु
-	काष्ठा mace_data *mp = netdev_priv(dev);
-	अचिन्हित दीर्घ flags;
+static netdev_tx_t mace_xmit_start(struct sk_buff *skb, struct net_device *dev)
+{
+	struct mace_data *mp = netdev_priv(dev);
+	unsigned long flags;
 
 	/* Stop the queue since there's only the one buffer */
 
 	local_irq_save(flags);
-	netअगर_stop_queue(dev);
-	अगर (!mp->tx_count) अणु
-		prपूर्णांकk(KERN_ERR "macmace: tx queue running but no free buffers.\n");
+	netif_stop_queue(dev);
+	if (!mp->tx_count) {
+		printk(KERN_ERR "macmace: tx queue running but no free buffers.\n");
 		local_irq_restore(flags);
-		वापस NETDEV_TX_BUSY;
-	पूर्ण
+		return NETDEV_TX_BUSY;
+	}
 	mp->tx_count--;
 	local_irq_restore(flags);
 
 	dev->stats.tx_packets++;
 	dev->stats.tx_bytes += skb->len;
 
-	/* We need to copy पूर्णांकo our xmit buffer to take care of alignment and caching issues */
+	/* We need to copy into our xmit buffer to take care of alignment and caching issues */
 	skb_copy_from_linear_data(skb, mp->tx_ring, skb->len);
 
 	/* load the Tx DMA and fire it off */
 
-	psc_ग_लिखो_दीर्घ(PSC_ENETWR_ADDR + mp->tx_slot, (u32)  mp->tx_ring_phys);
-	psc_ग_लिखो_दीर्घ(PSC_ENETWR_LEN + mp->tx_slot, skb->len);
-	psc_ग_लिखो_word(PSC_ENETWR_CMD + mp->tx_slot, 0x9800);
+	psc_write_long(PSC_ENETWR_ADDR + mp->tx_slot, (u32)  mp->tx_ring_phys);
+	psc_write_long(PSC_ENETWR_LEN + mp->tx_slot, skb->len);
+	psc_write_word(PSC_ENETWR_CMD + mp->tx_slot, 0x9800);
 
 	mp->tx_slot ^= 0x10;
 
-	dev_kमुक्त_skb(skb);
+	dev_kfree_skb(skb);
 
-	वापस NETDEV_TX_OK;
-पूर्ण
+	return NETDEV_TX_OK;
+}
 
-अटल व्योम mace_set_multicast(काष्ठा net_device *dev)
-अणु
-	काष्ठा mace_data *mp = netdev_priv(dev);
-	अस्थिर काष्ठा mace *mb = mp->mace;
-	पूर्णांक i;
+static void mace_set_multicast(struct net_device *dev)
+{
+	struct mace_data *mp = netdev_priv(dev);
+	volatile struct mace *mb = mp->mace;
+	int i;
 	u32 crc;
 	u8 maccc;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	local_irq_save(flags);
 	maccc = mb->maccc;
 	mb->maccc &= ~PROM;
 
-	अगर (dev->flags & IFF_PROMISC) अणु
+	if (dev->flags & IFF_PROMISC) {
 		mb->maccc |= PROM;
-	पूर्ण अन्यथा अणु
-		अचिन्हित अक्षर multicast_filter[8];
-		काष्ठा netdev_hw_addr *ha;
+	} else {
+		unsigned char multicast_filter[8];
+		struct netdev_hw_addr *ha;
 
-		अगर (dev->flags & IFF_ALLMULTI) अणु
-			क्रम (i = 0; i < 8; i++) अणु
+		if (dev->flags & IFF_ALLMULTI) {
+			for (i = 0; i < 8; i++) {
 				multicast_filter[i] = 0xFF;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			क्रम (i = 0; i < 8; i++)
+			}
+		} else {
+			for (i = 0; i < 8; i++)
 				multicast_filter[i] = 0;
-			netdev_क्रम_each_mc_addr(ha, dev) अणु
+			netdev_for_each_mc_addr(ha, dev) {
 				crc = ether_crc_le(6, ha->addr);
 				/* bit number in multicast_filter */
 				i = crc >> 26;
 				multicast_filter[i >> 3] |= 1 << (i & 7);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अगर (mp->chipid == BROKEN_ADDRCHG_REV)
+		if (mp->chipid == BROKEN_ADDRCHG_REV)
 			mb->iac = LOGADDR;
-		अन्यथा अणु
+		else {
 			mb->iac = ADDRCHG | LOGADDR;
-			जबतक ((mb->iac & ADDRCHG) != 0)
+			while ((mb->iac & ADDRCHG) != 0)
 				;
-		पूर्ण
-		क्रम (i = 0; i < 8; ++i)
+		}
+		for (i = 0; i < 8; ++i)
 			mb->ladrf = multicast_filter[i];
-		अगर (mp->chipid != BROKEN_ADDRCHG_REV)
+		if (mp->chipid != BROKEN_ADDRCHG_REV)
 			mb->iac = 0;
-	पूर्ण
+	}
 
 	mb->maccc = maccc;
 	local_irq_restore(flags);
-पूर्ण
+}
 
-अटल व्योम mace_handle_misc_पूर्णांकrs(काष्ठा net_device *dev, पूर्णांक पूर्णांकr)
-अणु
-	काष्ठा mace_data *mp = netdev_priv(dev);
-	अस्थिर काष्ठा mace *mb = mp->mace;
-	अटल पूर्णांक mace_babbles, mace_jabbers;
+static void mace_handle_misc_intrs(struct net_device *dev, int intr)
+{
+	struct mace_data *mp = netdev_priv(dev);
+	volatile struct mace *mb = mp->mace;
+	static int mace_babbles, mace_jabbers;
 
-	अगर (पूर्णांकr & MPCO)
+	if (intr & MPCO)
 		dev->stats.rx_missed_errors += 256;
-	dev->stats.rx_missed_errors += mb->mpc;   /* पढ़ोing clears it */
-	अगर (पूर्णांकr & RNTPCO)
+	dev->stats.rx_missed_errors += mb->mpc;   /* reading clears it */
+	if (intr & RNTPCO)
 		dev->stats.rx_length_errors += 256;
-	dev->stats.rx_length_errors += mb->rntpc; /* पढ़ोing clears it */
-	अगर (पूर्णांकr & CERR)
+	dev->stats.rx_length_errors += mb->rntpc; /* reading clears it */
+	if (intr & CERR)
 		++dev->stats.tx_heartbeat_errors;
-	अगर (पूर्णांकr & BABBLE)
-		अगर (mace_babbles++ < 4)
-			prपूर्णांकk(KERN_DEBUG "macmace: babbling transmitter\n");
-	अगर (पूर्णांकr & JABBER)
-		अगर (mace_jabbers++ < 4)
-			prपूर्णांकk(KERN_DEBUG "macmace: jabbering transceiver\n");
-पूर्ण
+	if (intr & BABBLE)
+		if (mace_babbles++ < 4)
+			printk(KERN_DEBUG "macmace: babbling transmitter\n");
+	if (intr & JABBER)
+		if (mace_jabbers++ < 4)
+			printk(KERN_DEBUG "macmace: jabbering transceiver\n");
+}
 
-अटल irqवापस_t mace_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा net_device *dev = (काष्ठा net_device *) dev_id;
-	काष्ठा mace_data *mp = netdev_priv(dev);
-	अस्थिर काष्ठा mace *mb = mp->mace;
-	पूर्णांक पूर्णांकr, fs;
-	अचिन्हित दीर्घ flags;
+static irqreturn_t mace_interrupt(int irq, void *dev_id)
+{
+	struct net_device *dev = (struct net_device *) dev_id;
+	struct mace_data *mp = netdev_priv(dev);
+	volatile struct mace *mb = mp->mace;
+	int intr, fs;
+	unsigned long flags;
 
-	/* करोn't want the dma पूर्णांकerrupt handler to fire */
+	/* don't want the dma interrupt handler to fire */
 	local_irq_save(flags);
 
-	पूर्णांकr = mb->ir; /* पढ़ो पूर्णांकerrupt रेजिस्टर */
-	mace_handle_misc_पूर्णांकrs(dev, पूर्णांकr);
+	intr = mb->ir; /* read interrupt register */
+	mace_handle_misc_intrs(dev, intr);
 
-	अगर (पूर्णांकr & XMTINT) अणु
+	if (intr & XMTINT) {
 		fs = mb->xmtfs;
-		अगर ((fs & XMTSV) == 0) अणु
-			prपूर्णांकk(KERN_ERR "macmace: xmtfs not valid! (fs=%x)\n", fs);
+		if ((fs & XMTSV) == 0) {
+			printk(KERN_ERR "macmace: xmtfs not valid! (fs=%x)\n", fs);
 			mace_reset(dev);
 			/*
 			 * XXX mace likes to hang the machine after a xmtfs error.
 			 * This is hard to reproduce, resetting *may* help
 			 */
-		पूर्ण
+		}
 		/* dma should have finished */
-		अगर (!mp->tx_count) अणु
-			prपूर्णांकk(KERN_DEBUG "macmace: tx ring ran out? (fs=%x)\n", fs);
-		पूर्ण
+		if (!mp->tx_count) {
+			printk(KERN_DEBUG "macmace: tx ring ran out? (fs=%x)\n", fs);
+		}
 		/* Update stats */
-		अगर (fs & (UFLO|LCOL|LCAR|RTRY)) अणु
+		if (fs & (UFLO|LCOL|LCAR|RTRY)) {
 			++dev->stats.tx_errors;
-			अगर (fs & LCAR)
+			if (fs & LCAR)
 				++dev->stats.tx_carrier_errors;
-			अन्यथा अगर (fs & (UFLO|LCOL|RTRY)) अणु
-				++dev->stats.tx_पातed_errors;
-				अगर (mb->xmtfs & UFLO) अणु
-					dev->stats.tx_fअगरo_errors++;
+			else if (fs & (UFLO|LCOL|RTRY)) {
+				++dev->stats.tx_aborted_errors;
+				if (mb->xmtfs & UFLO) {
+					dev->stats.tx_fifo_errors++;
 					mace_txdma_reset(dev);
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				}
+			}
+		}
+	}
 
-	अगर (mp->tx_count)
-		netअगर_wake_queue(dev);
+	if (mp->tx_count)
+		netif_wake_queue(dev);
 
 	local_irq_restore(flags);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम mace_tx_समयout(काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue)
-अणु
-	काष्ठा mace_data *mp = netdev_priv(dev);
-	अस्थिर काष्ठा mace *mb = mp->mace;
-	अचिन्हित दीर्घ flags;
+static void mace_tx_timeout(struct net_device *dev, unsigned int txqueue)
+{
+	struct mace_data *mp = netdev_priv(dev);
+	volatile struct mace *mb = mp->mace;
+	unsigned long flags;
 
 	local_irq_save(flags);
 
 	/* turn off both tx and rx and reset the chip */
 	mb->maccc = 0;
-	prपूर्णांकk(KERN_ERR "macmace: transmit timeout - resetting\n");
+	printk(KERN_ERR "macmace: transmit timeout - resetting\n");
 	mace_txdma_reset(dev);
 	mace_reset(dev);
 
@@ -619,149 +618,149 @@ out1:
 	mace_rxdma_reset(dev);
 
 	mp->tx_count = N_TX_RING;
-	netअगर_wake_queue(dev);
+	netif_wake_queue(dev);
 
 	/* turn it on! */
 	mb->maccc = ENXMT | ENRCV;
-	/* enable all पूर्णांकerrupts except receive पूर्णांकerrupts */
+	/* enable all interrupts except receive interrupts */
 	mb->imr = RCVINT;
 
 	local_irq_restore(flags);
-पूर्ण
+}
 
 /*
  * Handle a newly arrived frame
  */
 
-अटल व्योम mace_dma_rx_frame(काष्ठा net_device *dev, काष्ठा mace_frame *mf)
-अणु
-	काष्ठा sk_buff *skb;
-	अचिन्हित पूर्णांक frame_status = mf->rcvsts;
+static void mace_dma_rx_frame(struct net_device *dev, struct mace_frame *mf)
+{
+	struct sk_buff *skb;
+	unsigned int frame_status = mf->rcvsts;
 
-	अगर (frame_status & (RS_OFLO | RS_CLSN | RS_FRAMERR | RS_FCSERR)) अणु
+	if (frame_status & (RS_OFLO | RS_CLSN | RS_FRAMERR | RS_FCSERR)) {
 		dev->stats.rx_errors++;
-		अगर (frame_status & RS_OFLO)
-			dev->stats.rx_fअगरo_errors++;
-		अगर (frame_status & RS_CLSN)
+		if (frame_status & RS_OFLO)
+			dev->stats.rx_fifo_errors++;
+		if (frame_status & RS_CLSN)
 			dev->stats.collisions++;
-		अगर (frame_status & RS_FRAMERR)
+		if (frame_status & RS_FRAMERR)
 			dev->stats.rx_frame_errors++;
-		अगर (frame_status & RS_FCSERR)
+		if (frame_status & RS_FCSERR)
 			dev->stats.rx_crc_errors++;
-	पूर्ण अन्यथा अणु
-		अचिन्हित पूर्णांक frame_length = mf->rcvcnt + ((frame_status & 0x0F) << 8 );
+	} else {
+		unsigned int frame_length = mf->rcvcnt + ((frame_status & 0x0F) << 8 );
 
 		skb = netdev_alloc_skb(dev, frame_length + 2);
-		अगर (!skb) अणु
+		if (!skb) {
 			dev->stats.rx_dropped++;
-			वापस;
-		पूर्ण
+			return;
+		}
 		skb_reserve(skb, 2);
 		skb_put_data(skb, mf->data, frame_length);
 
 		skb->protocol = eth_type_trans(skb, dev);
-		netअगर_rx(skb);
+		netif_rx(skb);
 		dev->stats.rx_packets++;
 		dev->stats.rx_bytes += frame_length;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * The PSC has passed us a DMA पूर्णांकerrupt event.
+ * The PSC has passed us a DMA interrupt event.
  */
 
-अटल irqवापस_t mace_dma_पूर्णांकr(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा net_device *dev = (काष्ठा net_device *) dev_id;
-	काष्ठा mace_data *mp = netdev_priv(dev);
-	पूर्णांक left, head;
+static irqreturn_t mace_dma_intr(int irq, void *dev_id)
+{
+	struct net_device *dev = (struct net_device *) dev_id;
+	struct mace_data *mp = netdev_priv(dev);
+	int left, head;
 	u16 status;
 	u32 baka;
 
-	/* Not sure what this करोes */
+	/* Not sure what this does */
 
-	जबतक ((baka = psc_पढ़ो_दीर्घ(PSC_MYSTERY)) != psc_पढ़ो_दीर्घ(PSC_MYSTERY));
-	अगर (!(baka & 0x60000000)) वापस IRQ_NONE;
+	while ((baka = psc_read_long(PSC_MYSTERY)) != psc_read_long(PSC_MYSTERY));
+	if (!(baka & 0x60000000)) return IRQ_NONE;
 
 	/*
-	 * Process the पढ़ो queue
+	 * Process the read queue
 	 */
 
-	status = psc_पढ़ो_word(PSC_ENETRD_CTL);
+	status = psc_read_word(PSC_ENETRD_CTL);
 
-	अगर (status & 0x2000) अणु
+	if (status & 0x2000) {
 		mace_rxdma_reset(dev);
-	पूर्ण अन्यथा अगर (status & 0x0100) अणु
-		psc_ग_लिखो_word(PSC_ENETRD_CMD + mp->rx_slot, 0x1100);
+	} else if (status & 0x0100) {
+		psc_write_word(PSC_ENETRD_CMD + mp->rx_slot, 0x1100);
 
-		left = psc_पढ़ो_दीर्घ(PSC_ENETRD_LEN + mp->rx_slot);
+		left = psc_read_long(PSC_ENETRD_LEN + mp->rx_slot);
 		head = N_RX_RING - left;
 
 		/* Loop through the ring buffer and process new packages */
 
-		जबतक (mp->rx_tail < head) अणु
-			mace_dma_rx_frame(dev, (काष्ठा mace_frame*) (mp->rx_ring
+		while (mp->rx_tail < head) {
+			mace_dma_rx_frame(dev, (struct mace_frame*) (mp->rx_ring
 				+ (mp->rx_tail * MACE_BUFF_SIZE)));
 			mp->rx_tail++;
-		पूर्ण
+		}
 
-		/* If we're out of buffers in this ring then चयन to */
+		/* If we're out of buffers in this ring then switch to */
 		/* the other set, otherwise just reactivate this one.  */
 
-		अगर (!left) अणु
+		if (!left) {
 			mace_load_rxdma_base(dev, mp->rx_slot);
 			mp->rx_slot ^= 0x10;
-		पूर्ण अन्यथा अणु
-			psc_ग_लिखो_word(PSC_ENETRD_CMD + mp->rx_slot, 0x9800);
-		पूर्ण
-	पूर्ण
+		} else {
+			psc_write_word(PSC_ENETRD_CMD + mp->rx_slot, 0x9800);
+		}
+	}
 
 	/*
-	 * Process the ग_लिखो queue
+	 * Process the write queue
 	 */
 
-	status = psc_पढ़ो_word(PSC_ENETWR_CTL);
+	status = psc_read_word(PSC_ENETWR_CTL);
 
-	अगर (status & 0x2000) अणु
+	if (status & 0x2000) {
 		mace_txdma_reset(dev);
-	पूर्ण अन्यथा अगर (status & 0x0100) अणु
-		psc_ग_लिखो_word(PSC_ENETWR_CMD + mp->tx_sloti, 0x0100);
+	} else if (status & 0x0100) {
+		psc_write_word(PSC_ENETWR_CMD + mp->tx_sloti, 0x0100);
 		mp->tx_sloti ^= 0x10;
 		mp->tx_count++;
-	पूर्ण
-	वापस IRQ_HANDLED;
-पूर्ण
+	}
+	return IRQ_HANDLED;
+}
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Macintosh MACE ethernet driver");
 MODULE_ALIAS("platform:macmace");
 
-अटल पूर्णांक mac_mace_device_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा net_device *dev = platक्रमm_get_drvdata(pdev);
-	काष्ठा mace_data *mp = netdev_priv(dev);
+static int mac_mace_device_remove(struct platform_device *pdev)
+{
+	struct net_device *dev = platform_get_drvdata(pdev);
+	struct mace_data *mp = netdev_priv(dev);
 
-	unरेजिस्टर_netdev(dev);
+	unregister_netdev(dev);
 
-	मुक्त_irq(dev->irq, dev);
-	मुक्त_irq(IRQ_MAC_MACE_DMA, dev);
+	free_irq(dev->irq, dev);
+	free_irq(IRQ_MAC_MACE_DMA, dev);
 
-	dma_मुक्त_coherent(mp->device, N_RX_RING * MACE_BUFF_SIZE,
+	dma_free_coherent(mp->device, N_RX_RING * MACE_BUFF_SIZE,
 	                  mp->rx_ring, mp->rx_ring_phys);
-	dma_मुक्त_coherent(mp->device, N_TX_RING * MACE_BUFF_SIZE,
+	dma_free_coherent(mp->device, N_TX_RING * MACE_BUFF_SIZE,
 	                  mp->tx_ring, mp->tx_ring_phys);
 
-	मुक्त_netdev(dev);
+	free_netdev(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver mac_mace_driver = अणु
+static struct platform_driver mac_mace_driver = {
 	.probe  = mace_probe,
-	.हटाओ = mac_mace_device_हटाओ,
-	.driver	= अणु
+	.remove = mac_mace_device_remove,
+	.driver	= {
 		.name	= mac_mace_string,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(mac_mace_driver);
+module_platform_driver(mac_mace_driver);

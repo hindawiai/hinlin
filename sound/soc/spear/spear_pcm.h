@@ -1,14 +1,13 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2013, NVIDIA CORPORATION.  All rights reserved.
  */
 
-#अगर_अघोषित __SPEAR_PCM_H__
-#घोषणा __SPEAR_PCM_H__
+#ifndef __SPEAR_PCM_H__
+#define __SPEAR_PCM_H__
 
-पूर्णांक devm_spear_pcm_platक्रमm_रेजिस्टर(काष्ठा device *dev,
-			काष्ठा snd_dmaengine_pcm_config *config,
-			bool (*filter)(काष्ठा dma_chan *chan, व्योम *slave));
+int devm_spear_pcm_platform_register(struct device *dev,
+			struct snd_dmaengine_pcm_config *config,
+			bool (*filter)(struct dma_chan *chan, void *slave));
 
-#पूर्ण_अगर
+#endif

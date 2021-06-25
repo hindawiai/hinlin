@@ -1,101 +1,100 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Some non-अंतरभूत ceph helpers
+ * Some non-inline ceph helpers
  */
-#समावेश <linux/module.h>
-#समावेश <linux/ceph/types.h>
+#include <linux/module.h>
+#include <linux/ceph/types.h>
 
 /*
- * वापस true अगर @layout appears to be valid
+ * return true if @layout appears to be valid
  */
-पूर्णांक ceph_file_layout_is_valid(स्थिर काष्ठा ceph_file_layout *layout)
-अणु
+int ceph_file_layout_is_valid(const struct ceph_file_layout *layout)
+{
 	__u32 su = layout->stripe_unit;
 	__u32 sc = layout->stripe_count;
 	__u32 os = layout->object_size;
 
 	/* stripe unit, object size must be non-zero, 64k increment */
-	अगर (!su || (su & (CEPH_MIN_STRIPE_UNIT-1)))
-		वापस 0;
-	अगर (!os || (os & (CEPH_MIN_STRIPE_UNIT-1)))
-		वापस 0;
+	if (!su || (su & (CEPH_MIN_STRIPE_UNIT-1)))
+		return 0;
+	if (!os || (os & (CEPH_MIN_STRIPE_UNIT-1)))
+		return 0;
 	/* object size must be a multiple of stripe unit */
-	अगर (os < su || os % su)
-		वापस 0;
+	if (os < su || os % su)
+		return 0;
 	/* stripe count must be non-zero */
-	अगर (!sc)
-		वापस 0;
-	वापस 1;
-पूर्ण
+	if (!sc)
+		return 0;
+	return 1;
+}
 
-व्योम ceph_file_layout_from_legacy(काष्ठा ceph_file_layout *fl,
-				  काष्ठा ceph_file_layout_legacy *legacy)
-अणु
+void ceph_file_layout_from_legacy(struct ceph_file_layout *fl,
+				  struct ceph_file_layout_legacy *legacy)
+{
 	fl->stripe_unit = le32_to_cpu(legacy->fl_stripe_unit);
 	fl->stripe_count = le32_to_cpu(legacy->fl_stripe_count);
 	fl->object_size = le32_to_cpu(legacy->fl_object_size);
 	fl->pool_id = le32_to_cpu(legacy->fl_pg_pool);
-	अगर (fl->pool_id == 0 && fl->stripe_unit == 0 &&
+	if (fl->pool_id == 0 && fl->stripe_unit == 0 &&
 	    fl->stripe_count == 0 && fl->object_size == 0)
 		fl->pool_id = -1;
-पूर्ण
+}
 
-व्योम ceph_file_layout_to_legacy(काष्ठा ceph_file_layout *fl,
-				काष्ठा ceph_file_layout_legacy *legacy)
-अणु
+void ceph_file_layout_to_legacy(struct ceph_file_layout *fl,
+				struct ceph_file_layout_legacy *legacy)
+{
 	legacy->fl_stripe_unit = cpu_to_le32(fl->stripe_unit);
 	legacy->fl_stripe_count = cpu_to_le32(fl->stripe_count);
 	legacy->fl_object_size = cpu_to_le32(fl->object_size);
-	अगर (fl->pool_id >= 0)
+	if (fl->pool_id >= 0)
 		legacy->fl_pg_pool = cpu_to_le32(fl->pool_id);
-	अन्यथा
+	else
 		legacy->fl_pg_pool = 0;
-पूर्ण
+}
 
-पूर्णांक ceph_flags_to_mode(पूर्णांक flags)
-अणु
-	पूर्णांक mode;
+int ceph_flags_to_mode(int flags)
+{
+	int mode;
 
-#अगर_घोषित O_सूचीECTORY  /* fixme */
-	अगर ((flags & O_सूचीECTORY) == O_सूचीECTORY)
-		वापस CEPH_खाता_MODE_PIN;
-#पूर्ण_अगर
+#ifdef O_DIRECTORY  /* fixme */
+	if ((flags & O_DIRECTORY) == O_DIRECTORY)
+		return CEPH_FILE_MODE_PIN;
+#endif
 
-	चयन (flags & O_ACCMODE) अणु
-	हाल O_WRONLY:
-		mode = CEPH_खाता_MODE_WR;
-		अवरोध;
-	हाल O_RDONLY:
-		mode = CEPH_खाता_MODE_RD;
-		अवरोध;
-	हाल O_RDWR:
-	हाल O_ACCMODE: /* this is what the VFS करोes */
-		mode = CEPH_खाता_MODE_RDWR;
-		अवरोध;
-	पूर्ण
-#अगर_घोषित O_LAZY
-	अगर (flags & O_LAZY)
-		mode |= CEPH_खाता_MODE_LAZY;
-#पूर्ण_अगर
+	switch (flags & O_ACCMODE) {
+	case O_WRONLY:
+		mode = CEPH_FILE_MODE_WR;
+		break;
+	case O_RDONLY:
+		mode = CEPH_FILE_MODE_RD;
+		break;
+	case O_RDWR:
+	case O_ACCMODE: /* this is what the VFS does */
+		mode = CEPH_FILE_MODE_RDWR;
+		break;
+	}
+#ifdef O_LAZY
+	if (flags & O_LAZY)
+		mode |= CEPH_FILE_MODE_LAZY;
+#endif
 
-	वापस mode;
-पूर्ण
+	return mode;
+}
 
-पूर्णांक ceph_caps_क्रम_mode(पूर्णांक mode)
-अणु
-	पूर्णांक caps = CEPH_CAP_PIN;
+int ceph_caps_for_mode(int mode)
+{
+	int caps = CEPH_CAP_PIN;
 
-	अगर (mode & CEPH_खाता_MODE_RD)
-		caps |= CEPH_CAP_खाता_SHARED |
-			CEPH_CAP_खाता_RD | CEPH_CAP_खाता_CACHE;
-	अगर (mode & CEPH_खाता_MODE_WR)
-		caps |= CEPH_CAP_खाता_EXCL |
-			CEPH_CAP_खाता_WR | CEPH_CAP_खाता_BUFFER |
+	if (mode & CEPH_FILE_MODE_RD)
+		caps |= CEPH_CAP_FILE_SHARED |
+			CEPH_CAP_FILE_RD | CEPH_CAP_FILE_CACHE;
+	if (mode & CEPH_FILE_MODE_WR)
+		caps |= CEPH_CAP_FILE_EXCL |
+			CEPH_CAP_FILE_WR | CEPH_CAP_FILE_BUFFER |
 			CEPH_CAP_AUTH_SHARED | CEPH_CAP_AUTH_EXCL |
 			CEPH_CAP_XATTR_SHARED | CEPH_CAP_XATTR_EXCL;
-	अगर (mode & CEPH_खाता_MODE_LAZY)
-		caps |= CEPH_CAP_खाता_LAZYIO;
+	if (mode & CEPH_FILE_MODE_LAZY)
+		caps |= CEPH_CAP_FILE_LAZYIO;
 
-	वापस caps;
-पूर्ण
+	return caps;
+}

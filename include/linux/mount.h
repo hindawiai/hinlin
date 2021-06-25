@@ -1,124 +1,123 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  *
- * Definitions क्रम mount पूर्णांकerface. This describes the in the kernel build 
- * linkedlist with mounted fileप्रणालीs.
+ * Definitions for mount interface. This describes the in the kernel build 
+ * linkedlist with mounted filesystems.
  *
  * Author:  Marco van Wieringen <mvw@planets.elm.net>
  *
  */
-#अगर_अघोषित _LINUX_MOUNT_H
-#घोषणा _LINUX_MOUNT_H
+#ifndef _LINUX_MOUNT_H
+#define _LINUX_MOUNT_H
 
-#समावेश <linux/types.h>
-#समावेश <linux/list.h>
-#समावेश <linux/nodemask.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/seqlock.h>
-#समावेश <linux/atomic.h>
+#include <linux/types.h>
+#include <linux/list.h>
+#include <linux/nodemask.h>
+#include <linux/spinlock.h>
+#include <linux/seqlock.h>
+#include <linux/atomic.h>
 
-काष्ठा super_block;
-काष्ठा vfsmount;
-काष्ठा dentry;
-काष्ठा mnt_namespace;
-काष्ठा fs_context;
+struct super_block;
+struct vfsmount;
+struct dentry;
+struct mnt_namespace;
+struct fs_context;
 
-#घोषणा MNT_NOSUID	0x01
-#घोषणा MNT_NODEV	0x02
-#घोषणा MNT_NOEXEC	0x04
-#घोषणा MNT_NOATIME	0x08
-#घोषणा MNT_NOसूचीATIME	0x10
-#घोषणा MNT_RELATIME	0x20
-#घोषणा MNT_READONLY	0x40	/* करोes the user want this to be r/o? */
-#घोषणा MNT_NOSYMFOLLOW	0x80
+#define MNT_NOSUID	0x01
+#define MNT_NODEV	0x02
+#define MNT_NOEXEC	0x04
+#define MNT_NOATIME	0x08
+#define MNT_NODIRATIME	0x10
+#define MNT_RELATIME	0x20
+#define MNT_READONLY	0x40	/* does the user want this to be r/o? */
+#define MNT_NOSYMFOLLOW	0x80
 
-#घोषणा MNT_SHRINKABLE	0x100
-#घोषणा MNT_WRITE_HOLD	0x200
+#define MNT_SHRINKABLE	0x100
+#define MNT_WRITE_HOLD	0x200
 
-#घोषणा MNT_SHARED	0x1000	/* अगर the vfsmount is a shared mount */
-#घोषणा MNT_UNBINDABLE	0x2000	/* अगर the vfsmount is a unbindable mount */
+#define MNT_SHARED	0x1000	/* if the vfsmount is a shared mount */
+#define MNT_UNBINDABLE	0x2000	/* if the vfsmount is a unbindable mount */
 /*
  * MNT_SHARED_MASK is the set of flags that should be cleared when a
  * mount becomes shared.  Currently, this is only the flag that says a
  * mount cannot be bind mounted, since this is how we create a mount
  * that shares events with another mount.  If you add a new MNT_*
- * flag, consider how it पूर्णांकeracts with shared mounts.
+ * flag, consider how it interacts with shared mounts.
  */
-#घोषणा MNT_SHARED_MASK	(MNT_UNBINDABLE)
-#घोषणा MNT_USER_SETTABLE_MASK  (MNT_NOSUID | MNT_NODEV | MNT_NOEXEC \
-				 | MNT_NOATIME | MNT_NOसूचीATIME | MNT_RELATIME \
+#define MNT_SHARED_MASK	(MNT_UNBINDABLE)
+#define MNT_USER_SETTABLE_MASK  (MNT_NOSUID | MNT_NODEV | MNT_NOEXEC \
+				 | MNT_NOATIME | MNT_NODIRATIME | MNT_RELATIME \
 				 | MNT_READONLY | MNT_NOSYMFOLLOW)
-#घोषणा MNT_ATIME_MASK (MNT_NOATIME | MNT_NOसूचीATIME | MNT_RELATIME )
+#define MNT_ATIME_MASK (MNT_NOATIME | MNT_NODIRATIME | MNT_RELATIME )
 
-#घोषणा MNT_INTERNAL_FLAGS (MNT_SHARED | MNT_WRITE_HOLD | MNT_INTERNAL | \
+#define MNT_INTERNAL_FLAGS (MNT_SHARED | MNT_WRITE_HOLD | MNT_INTERNAL | \
 			    MNT_DOOMED | MNT_SYNC_UMOUNT | MNT_MARKED | \
 			    MNT_CURSOR)
 
-#घोषणा MNT_INTERNAL	0x4000
+#define MNT_INTERNAL	0x4000
 
-#घोषणा MNT_LOCK_ATIME		0x040000
-#घोषणा MNT_LOCK_NOEXEC		0x080000
-#घोषणा MNT_LOCK_NOSUID		0x100000
-#घोषणा MNT_LOCK_NODEV		0x200000
-#घोषणा MNT_LOCK_READONLY	0x400000
-#घोषणा MNT_LOCKED		0x800000
-#घोषणा MNT_DOOMED		0x1000000
-#घोषणा MNT_SYNC_UMOUNT		0x2000000
-#घोषणा MNT_MARKED		0x4000000
-#घोषणा MNT_UMOUNT		0x8000000
-#घोषणा MNT_CURSOR		0x10000000
+#define MNT_LOCK_ATIME		0x040000
+#define MNT_LOCK_NOEXEC		0x080000
+#define MNT_LOCK_NOSUID		0x100000
+#define MNT_LOCK_NODEV		0x200000
+#define MNT_LOCK_READONLY	0x400000
+#define MNT_LOCKED		0x800000
+#define MNT_DOOMED		0x1000000
+#define MNT_SYNC_UMOUNT		0x2000000
+#define MNT_MARKED		0x4000000
+#define MNT_UMOUNT		0x8000000
+#define MNT_CURSOR		0x10000000
 
-काष्ठा vfsmount अणु
-	काष्ठा dentry *mnt_root;	/* root of the mounted tree */
-	काष्ठा super_block *mnt_sb;	/* poपूर्णांकer to superblock */
-	पूर्णांक mnt_flags;
-	काष्ठा user_namespace *mnt_userns;
-पूर्ण __अक्रमomize_layout;
+struct vfsmount {
+	struct dentry *mnt_root;	/* root of the mounted tree */
+	struct super_block *mnt_sb;	/* pointer to superblock */
+	int mnt_flags;
+	struct user_namespace *mnt_userns;
+} __randomize_layout;
 
-अटल अंतरभूत काष्ठा user_namespace *mnt_user_ns(स्थिर काष्ठा vfsmount *mnt)
-अणु
-	/* Pairs with smp_store_release() in करो_idmap_mount(). */
-	वापस smp_load_acquire(&mnt->mnt_userns);
-पूर्ण
+static inline struct user_namespace *mnt_user_ns(const struct vfsmount *mnt)
+{
+	/* Pairs with smp_store_release() in do_idmap_mount(). */
+	return smp_load_acquire(&mnt->mnt_userns);
+}
 
-काष्ठा file; /* क्रमward dec */
-काष्ठा path;
+struct file; /* forward dec */
+struct path;
 
-बाह्य पूर्णांक mnt_want_ग_लिखो(काष्ठा vfsmount *mnt);
-बाह्य पूर्णांक mnt_want_ग_लिखो_file(काष्ठा file *file);
-बाह्य व्योम mnt_drop_ग_लिखो(काष्ठा vfsmount *mnt);
-बाह्य व्योम mnt_drop_ग_लिखो_file(काष्ठा file *file);
-बाह्य व्योम mntput(काष्ठा vfsmount *mnt);
-बाह्य काष्ठा vfsmount *mntget(काष्ठा vfsmount *mnt);
-बाह्य काष्ठा vfsmount *mnt_clone_पूर्णांकernal(स्थिर काष्ठा path *path);
-बाह्य bool __mnt_is_पढ़ोonly(काष्ठा vfsmount *mnt);
-बाह्य bool mnt_may_suid(काष्ठा vfsmount *mnt);
+extern int mnt_want_write(struct vfsmount *mnt);
+extern int mnt_want_write_file(struct file *file);
+extern void mnt_drop_write(struct vfsmount *mnt);
+extern void mnt_drop_write_file(struct file *file);
+extern void mntput(struct vfsmount *mnt);
+extern struct vfsmount *mntget(struct vfsmount *mnt);
+extern struct vfsmount *mnt_clone_internal(const struct path *path);
+extern bool __mnt_is_readonly(struct vfsmount *mnt);
+extern bool mnt_may_suid(struct vfsmount *mnt);
 
-काष्ठा path;
-बाह्य काष्ठा vfsmount *clone_निजी_mount(स्थिर काष्ठा path *path);
-बाह्य पूर्णांक __mnt_want_ग_लिखो(काष्ठा vfsmount *);
-बाह्य व्योम __mnt_drop_ग_लिखो(काष्ठा vfsmount *);
+struct path;
+extern struct vfsmount *clone_private_mount(const struct path *path);
+extern int __mnt_want_write(struct vfsmount *);
+extern void __mnt_drop_write(struct vfsmount *);
 
-काष्ठा file_प्रणाली_type;
-बाह्य काष्ठा vfsmount *fc_mount(काष्ठा fs_context *fc);
-बाह्य काष्ठा vfsmount *vfs_create_mount(काष्ठा fs_context *fc);
-बाह्य काष्ठा vfsmount *vfs_kern_mount(काष्ठा file_प्रणाली_type *type,
-				      पूर्णांक flags, स्थिर अक्षर *name,
-				      व्योम *data);
-बाह्य काष्ठा vfsmount *vfs_submount(स्थिर काष्ठा dentry *mountpoपूर्णांक,
-				     काष्ठा file_प्रणाली_type *type,
-				     स्थिर अक्षर *name, व्योम *data);
+struct file_system_type;
+extern struct vfsmount *fc_mount(struct fs_context *fc);
+extern struct vfsmount *vfs_create_mount(struct fs_context *fc);
+extern struct vfsmount *vfs_kern_mount(struct file_system_type *type,
+				      int flags, const char *name,
+				      void *data);
+extern struct vfsmount *vfs_submount(const struct dentry *mountpoint,
+				     struct file_system_type *type,
+				     const char *name, void *data);
 
-बाह्य व्योम mnt_set_expiry(काष्ठा vfsmount *mnt, काष्ठा list_head *expiry_list);
-बाह्य व्योम mark_mounts_क्रम_expiry(काष्ठा list_head *mounts);
+extern void mnt_set_expiry(struct vfsmount *mnt, struct list_head *expiry_list);
+extern void mark_mounts_for_expiry(struct list_head *mounts);
 
-बाह्य dev_t name_to_dev_t(स्थिर अक्षर *name);
+extern dev_t name_to_dev_t(const char *name);
 
-बाह्य अचिन्हित पूर्णांक sysctl_mount_max;
+extern unsigned int sysctl_mount_max;
 
-बाह्य bool path_is_mountpoपूर्णांक(स्थिर काष्ठा path *path);
+extern bool path_is_mountpoint(const struct path *path);
 
-बाह्य व्योम kern_unmount_array(काष्ठा vfsmount *mnt[], अचिन्हित पूर्णांक num);
+extern void kern_unmount_array(struct vfsmount *mnt[], unsigned int num);
 
-#पूर्ण_अगर /* _LINUX_MOUNT_H */
+#endif /* _LINUX_MOUNT_H */

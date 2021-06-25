@@ -1,6 +1,5 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
-/* Internal definitions क्रम FS-Cache
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+/* Internal definitions for FS-Cache
  *
  * Copyright (C) 2004-2007 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
@@ -8,488 +7,488 @@
 
 /*
  * Lock order, in the order in which multiple locks should be obtained:
- * - fscache_addहटाओ_sem
+ * - fscache_addremove_sem
  * - cookie->lock
  * - cookie->parent->lock
  * - cache->object_list_lock
  * - object->lock
  * - object->parent->lock
  * - cookie->stores_lock
- * - fscache_thपढ़ो_lock
+ * - fscache_thread_lock
  *
  */
 
-#अगर_घोषित pr_fmt
-#अघोषित pr_fmt
-#पूर्ण_अगर
+#ifdef pr_fmt
+#undef pr_fmt
+#endif
 
-#घोषणा pr_fmt(fmt) "FS-Cache: " fmt
+#define pr_fmt(fmt) "FS-Cache: " fmt
 
-#समावेश <linux/fscache-cache.h>
-#समावेश <trace/events/fscache.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/seq_file.h>
+#include <linux/fscache-cache.h>
+#include <trace/events/fscache.h>
+#include <linux/sched.h>
+#include <linux/seq_file.h>
 
-#घोषणा FSCACHE_MIN_THREADS	4
-#घोषणा FSCACHE_MAX_THREADS	32
+#define FSCACHE_MIN_THREADS	4
+#define FSCACHE_MAX_THREADS	32
 
 /*
  * cache.c
  */
-बाह्य काष्ठा list_head fscache_cache_list;
-बाह्य काष्ठा rw_semaphore fscache_addहटाओ_sem;
+extern struct list_head fscache_cache_list;
+extern struct rw_semaphore fscache_addremove_sem;
 
-बाह्य काष्ठा fscache_cache *fscache_select_cache_क्रम_object(
-	काष्ठा fscache_cookie *);
+extern struct fscache_cache *fscache_select_cache_for_object(
+	struct fscache_cookie *);
 
 /*
  * cookie.c
  */
-बाह्य काष्ठा kmem_cache *fscache_cookie_jar;
+extern struct kmem_cache *fscache_cookie_jar;
 
-बाह्य व्योम fscache_मुक्त_cookie(काष्ठा fscache_cookie *);
-बाह्य काष्ठा fscache_cookie *fscache_alloc_cookie(काष्ठा fscache_cookie *,
-						   स्थिर काष्ठा fscache_cookie_def *,
-						   स्थिर व्योम *, माप_प्रकार,
-						   स्थिर व्योम *, माप_प्रकार,
-						   व्योम *, loff_t);
-बाह्य काष्ठा fscache_cookie *fscache_hash_cookie(काष्ठा fscache_cookie *);
-बाह्य व्योम fscache_cookie_put(काष्ठा fscache_cookie *,
-			       क्रमागत fscache_cookie_trace);
+extern void fscache_free_cookie(struct fscache_cookie *);
+extern struct fscache_cookie *fscache_alloc_cookie(struct fscache_cookie *,
+						   const struct fscache_cookie_def *,
+						   const void *, size_t,
+						   const void *, size_t,
+						   void *, loff_t);
+extern struct fscache_cookie *fscache_hash_cookie(struct fscache_cookie *);
+extern void fscache_cookie_put(struct fscache_cookie *,
+			       enum fscache_cookie_trace);
 
 /*
  * fsdef.c
  */
-बाह्य काष्ठा fscache_cookie fscache_fsdef_index;
-बाह्य काष्ठा fscache_cookie_def fscache_fsdef_netfs_def;
+extern struct fscache_cookie fscache_fsdef_index;
+extern struct fscache_cookie_def fscache_fsdef_netfs_def;
 
 /*
  * histogram.c
  */
-#अगर_घोषित CONFIG_FSCACHE_HISTOGRAM
-बाह्य atomic_t fscache_obj_instantiate_histogram[HZ];
-बाह्य atomic_t fscache_objs_histogram[HZ];
-बाह्य atomic_t fscache_ops_histogram[HZ];
-बाह्य atomic_t fscache_retrieval_delay_histogram[HZ];
-बाह्य atomic_t fscache_retrieval_histogram[HZ];
+#ifdef CONFIG_FSCACHE_HISTOGRAM
+extern atomic_t fscache_obj_instantiate_histogram[HZ];
+extern atomic_t fscache_objs_histogram[HZ];
+extern atomic_t fscache_ops_histogram[HZ];
+extern atomic_t fscache_retrieval_delay_histogram[HZ];
+extern atomic_t fscache_retrieval_histogram[HZ];
 
-अटल अंतरभूत व्योम fscache_hist(atomic_t histogram[], अचिन्हित दीर्घ start_jअगर)
-अणु
-	अचिन्हित दीर्घ jअगर = jअगरfies - start_jअगर;
-	अगर (jअगर >= HZ)
-		jअगर = HZ - 1;
-	atomic_inc(&histogram[jअगर]);
-पूर्ण
+static inline void fscache_hist(atomic_t histogram[], unsigned long start_jif)
+{
+	unsigned long jif = jiffies - start_jif;
+	if (jif >= HZ)
+		jif = HZ - 1;
+	atomic_inc(&histogram[jif]);
+}
 
-बाह्य स्थिर काष्ठा seq_operations fscache_histogram_ops;
+extern const struct seq_operations fscache_histogram_ops;
 
-#अन्यथा
-#घोषणा fscache_hist(hist, start_jअगर) करो अणुपूर्ण जबतक (0)
-#पूर्ण_अगर
+#else
+#define fscache_hist(hist, start_jif) do {} while (0)
+#endif
 
 /*
- * मुख्य.c
+ * main.c
  */
-बाह्य अचिन्हित fscache_defer_lookup;
-बाह्य अचिन्हित fscache_defer_create;
-बाह्य अचिन्हित fscache_debug;
-बाह्य काष्ठा kobject *fscache_root;
-बाह्य काष्ठा workqueue_काष्ठा *fscache_object_wq;
-बाह्य काष्ठा workqueue_काष्ठा *fscache_op_wq;
-DECLARE_PER_CPU(रुको_queue_head_t, fscache_object_cong_रुको);
+extern unsigned fscache_defer_lookup;
+extern unsigned fscache_defer_create;
+extern unsigned fscache_debug;
+extern struct kobject *fscache_root;
+extern struct workqueue_struct *fscache_object_wq;
+extern struct workqueue_struct *fscache_op_wq;
+DECLARE_PER_CPU(wait_queue_head_t, fscache_object_cong_wait);
 
-अटल अंतरभूत bool fscache_object_congested(व्योम)
-अणु
-	वापस workqueue_congested(WORK_CPU_UNBOUND, fscache_object_wq);
-पूर्ण
+static inline bool fscache_object_congested(void)
+{
+	return workqueue_congested(WORK_CPU_UNBOUND, fscache_object_wq);
+}
 
 /*
  * object.c
  */
-बाह्य व्योम fscache_enqueue_object(काष्ठा fscache_object *);
+extern void fscache_enqueue_object(struct fscache_object *);
 
 /*
  * object-list.c
  */
-#अगर_घोषित CONFIG_FSCACHE_OBJECT_LIST
-बाह्य स्थिर काष्ठा proc_ops fscache_objlist_proc_ops;
+#ifdef CONFIG_FSCACHE_OBJECT_LIST
+extern const struct proc_ops fscache_objlist_proc_ops;
 
-बाह्य व्योम fscache_objlist_add(काष्ठा fscache_object *);
-बाह्य व्योम fscache_objlist_हटाओ(काष्ठा fscache_object *);
-#अन्यथा
-#घोषणा fscache_objlist_add(object) करो अणुपूर्ण जबतक(0)
-#घोषणा fscache_objlist_हटाओ(object) करो अणुपूर्ण जबतक(0)
-#पूर्ण_अगर
+extern void fscache_objlist_add(struct fscache_object *);
+extern void fscache_objlist_remove(struct fscache_object *);
+#else
+#define fscache_objlist_add(object) do {} while(0)
+#define fscache_objlist_remove(object) do {} while(0)
+#endif
 
 /*
  * operation.c
  */
-बाह्य पूर्णांक fscache_submit_exclusive_op(काष्ठा fscache_object *,
-				       काष्ठा fscache_operation *);
-बाह्य पूर्णांक fscache_submit_op(काष्ठा fscache_object *,
-			     काष्ठा fscache_operation *);
-बाह्य पूर्णांक fscache_cancel_op(काष्ठा fscache_operation *, bool);
-बाह्य व्योम fscache_cancel_all_ops(काष्ठा fscache_object *);
-बाह्य व्योम fscache_पात_object(काष्ठा fscache_object *);
-बाह्य व्योम fscache_start_operations(काष्ठा fscache_object *);
-बाह्य व्योम fscache_operation_gc(काष्ठा work_काष्ठा *);
+extern int fscache_submit_exclusive_op(struct fscache_object *,
+				       struct fscache_operation *);
+extern int fscache_submit_op(struct fscache_object *,
+			     struct fscache_operation *);
+extern int fscache_cancel_op(struct fscache_operation *, bool);
+extern void fscache_cancel_all_ops(struct fscache_object *);
+extern void fscache_abort_object(struct fscache_object *);
+extern void fscache_start_operations(struct fscache_object *);
+extern void fscache_operation_gc(struct work_struct *);
 
 /*
  * page.c
  */
-बाह्य पूर्णांक fscache_रुको_क्रम_deferred_lookup(काष्ठा fscache_cookie *);
-बाह्य पूर्णांक fscache_रुको_क्रम_operation_activation(काष्ठा fscache_object *,
-						 काष्ठा fscache_operation *,
+extern int fscache_wait_for_deferred_lookup(struct fscache_cookie *);
+extern int fscache_wait_for_operation_activation(struct fscache_object *,
+						 struct fscache_operation *,
 						 atomic_t *,
 						 atomic_t *);
-बाह्य व्योम fscache_invalidate_ग_लिखोs(काष्ठा fscache_cookie *);
-काष्ठा fscache_retrieval *fscache_alloc_retrieval(काष्ठा fscache_cookie *cookie,
-						  काष्ठा address_space *mapping,
+extern void fscache_invalidate_writes(struct fscache_cookie *);
+struct fscache_retrieval *fscache_alloc_retrieval(struct fscache_cookie *cookie,
+						  struct address_space *mapping,
 						  fscache_rw_complete_t end_io_func,
-						  व्योम *context);
+						  void *context);
 
 /*
  * proc.c
  */
-#अगर_घोषित CONFIG_PROC_FS
-बाह्य पूर्णांक __init fscache_proc_init(व्योम);
-बाह्य व्योम fscache_proc_cleanup(व्योम);
-#अन्यथा
-#घोषणा fscache_proc_init()	(0)
-#घोषणा fscache_proc_cleanup()	करो अणुपूर्ण जबतक (0)
-#पूर्ण_अगर
+#ifdef CONFIG_PROC_FS
+extern int __init fscache_proc_init(void);
+extern void fscache_proc_cleanup(void);
+#else
+#define fscache_proc_init()	(0)
+#define fscache_proc_cleanup()	do {} while (0)
+#endif
 
 /*
  * stats.c
  */
-#अगर_घोषित CONFIG_FSCACHE_STATS
-बाह्य atomic_t fscache_n_ops_processed[FSCACHE_MAX_THREADS];
-बाह्य atomic_t fscache_n_objs_processed[FSCACHE_MAX_THREADS];
+#ifdef CONFIG_FSCACHE_STATS
+extern atomic_t fscache_n_ops_processed[FSCACHE_MAX_THREADS];
+extern atomic_t fscache_n_objs_processed[FSCACHE_MAX_THREADS];
 
-बाह्य atomic_t fscache_n_op_pend;
-बाह्य atomic_t fscache_n_op_run;
-बाह्य atomic_t fscache_n_op_enqueue;
-बाह्य atomic_t fscache_n_op_deferred_release;
-बाह्य atomic_t fscache_n_op_initialised;
-बाह्य atomic_t fscache_n_op_release;
-बाह्य atomic_t fscache_n_op_gc;
-बाह्य atomic_t fscache_n_op_cancelled;
-बाह्य atomic_t fscache_n_op_rejected;
+extern atomic_t fscache_n_op_pend;
+extern atomic_t fscache_n_op_run;
+extern atomic_t fscache_n_op_enqueue;
+extern atomic_t fscache_n_op_deferred_release;
+extern atomic_t fscache_n_op_initialised;
+extern atomic_t fscache_n_op_release;
+extern atomic_t fscache_n_op_gc;
+extern atomic_t fscache_n_op_cancelled;
+extern atomic_t fscache_n_op_rejected;
 
-बाह्य atomic_t fscache_n_attr_changed;
-बाह्य atomic_t fscache_n_attr_changed_ok;
-बाह्य atomic_t fscache_n_attr_changed_nobufs;
-बाह्य atomic_t fscache_n_attr_changed_nomem;
-बाह्य atomic_t fscache_n_attr_changed_calls;
+extern atomic_t fscache_n_attr_changed;
+extern atomic_t fscache_n_attr_changed_ok;
+extern atomic_t fscache_n_attr_changed_nobufs;
+extern atomic_t fscache_n_attr_changed_nomem;
+extern atomic_t fscache_n_attr_changed_calls;
 
-बाह्य atomic_t fscache_n_allocs;
-बाह्य atomic_t fscache_n_allocs_ok;
-बाह्य atomic_t fscache_n_allocs_रुको;
-बाह्य atomic_t fscache_n_allocs_nobufs;
-बाह्य atomic_t fscache_n_allocs_पूर्णांकr;
-बाह्य atomic_t fscache_n_allocs_object_dead;
-बाह्य atomic_t fscache_n_alloc_ops;
-बाह्य atomic_t fscache_n_alloc_op_रुकोs;
+extern atomic_t fscache_n_allocs;
+extern atomic_t fscache_n_allocs_ok;
+extern atomic_t fscache_n_allocs_wait;
+extern atomic_t fscache_n_allocs_nobufs;
+extern atomic_t fscache_n_allocs_intr;
+extern atomic_t fscache_n_allocs_object_dead;
+extern atomic_t fscache_n_alloc_ops;
+extern atomic_t fscache_n_alloc_op_waits;
 
-बाह्य atomic_t fscache_n_retrievals;
-बाह्य atomic_t fscache_n_retrievals_ok;
-बाह्य atomic_t fscache_n_retrievals_रुको;
-बाह्य atomic_t fscache_n_retrievals_nodata;
-बाह्य atomic_t fscache_n_retrievals_nobufs;
-बाह्य atomic_t fscache_n_retrievals_पूर्णांकr;
-बाह्य atomic_t fscache_n_retrievals_nomem;
-बाह्य atomic_t fscache_n_retrievals_object_dead;
-बाह्य atomic_t fscache_n_retrieval_ops;
-बाह्य atomic_t fscache_n_retrieval_op_रुकोs;
+extern atomic_t fscache_n_retrievals;
+extern atomic_t fscache_n_retrievals_ok;
+extern atomic_t fscache_n_retrievals_wait;
+extern atomic_t fscache_n_retrievals_nodata;
+extern atomic_t fscache_n_retrievals_nobufs;
+extern atomic_t fscache_n_retrievals_intr;
+extern atomic_t fscache_n_retrievals_nomem;
+extern atomic_t fscache_n_retrievals_object_dead;
+extern atomic_t fscache_n_retrieval_ops;
+extern atomic_t fscache_n_retrieval_op_waits;
 
-बाह्य atomic_t fscache_n_stores;
-बाह्य atomic_t fscache_n_stores_ok;
-बाह्य atomic_t fscache_n_stores_again;
-बाह्य atomic_t fscache_n_stores_nobufs;
-बाह्य atomic_t fscache_n_stores_oom;
-बाह्य atomic_t fscache_n_store_ops;
-बाह्य atomic_t fscache_n_store_calls;
-बाह्य atomic_t fscache_n_store_pages;
-बाह्य atomic_t fscache_n_store_radix_deletes;
-बाह्य atomic_t fscache_n_store_pages_over_limit;
+extern atomic_t fscache_n_stores;
+extern atomic_t fscache_n_stores_ok;
+extern atomic_t fscache_n_stores_again;
+extern atomic_t fscache_n_stores_nobufs;
+extern atomic_t fscache_n_stores_oom;
+extern atomic_t fscache_n_store_ops;
+extern atomic_t fscache_n_store_calls;
+extern atomic_t fscache_n_store_pages;
+extern atomic_t fscache_n_store_radix_deletes;
+extern atomic_t fscache_n_store_pages_over_limit;
 
-बाह्य atomic_t fscache_n_store_vmscan_not_storing;
-बाह्य atomic_t fscache_n_store_vmscan_gone;
-बाह्य atomic_t fscache_n_store_vmscan_busy;
-बाह्य atomic_t fscache_n_store_vmscan_cancelled;
-बाह्य atomic_t fscache_n_store_vmscan_रुको;
+extern atomic_t fscache_n_store_vmscan_not_storing;
+extern atomic_t fscache_n_store_vmscan_gone;
+extern atomic_t fscache_n_store_vmscan_busy;
+extern atomic_t fscache_n_store_vmscan_cancelled;
+extern atomic_t fscache_n_store_vmscan_wait;
 
-बाह्य atomic_t fscache_n_marks;
-बाह्य atomic_t fscache_n_uncaches;
+extern atomic_t fscache_n_marks;
+extern atomic_t fscache_n_uncaches;
 
-बाह्य atomic_t fscache_n_acquires;
-बाह्य atomic_t fscache_n_acquires_null;
-बाह्य atomic_t fscache_n_acquires_no_cache;
-बाह्य atomic_t fscache_n_acquires_ok;
-बाह्य atomic_t fscache_n_acquires_nobufs;
-बाह्य atomic_t fscache_n_acquires_oom;
+extern atomic_t fscache_n_acquires;
+extern atomic_t fscache_n_acquires_null;
+extern atomic_t fscache_n_acquires_no_cache;
+extern atomic_t fscache_n_acquires_ok;
+extern atomic_t fscache_n_acquires_nobufs;
+extern atomic_t fscache_n_acquires_oom;
 
-बाह्य atomic_t fscache_n_invalidates;
-बाह्य atomic_t fscache_n_invalidates_run;
+extern atomic_t fscache_n_invalidates;
+extern atomic_t fscache_n_invalidates_run;
 
-बाह्य atomic_t fscache_n_updates;
-बाह्य atomic_t fscache_n_updates_null;
-बाह्य atomic_t fscache_n_updates_run;
+extern atomic_t fscache_n_updates;
+extern atomic_t fscache_n_updates_null;
+extern atomic_t fscache_n_updates_run;
 
-बाह्य atomic_t fscache_n_relinquishes;
-बाह्य atomic_t fscache_n_relinquishes_null;
-बाह्य atomic_t fscache_n_relinquishes_रुकोcrt;
-बाह्य atomic_t fscache_n_relinquishes_retire;
+extern atomic_t fscache_n_relinquishes;
+extern atomic_t fscache_n_relinquishes_null;
+extern atomic_t fscache_n_relinquishes_waitcrt;
+extern atomic_t fscache_n_relinquishes_retire;
 
-बाह्य atomic_t fscache_n_cookie_index;
-बाह्य atomic_t fscache_n_cookie_data;
-बाह्य atomic_t fscache_n_cookie_special;
+extern atomic_t fscache_n_cookie_index;
+extern atomic_t fscache_n_cookie_data;
+extern atomic_t fscache_n_cookie_special;
 
-बाह्य atomic_t fscache_n_object_alloc;
-बाह्य atomic_t fscache_n_object_no_alloc;
-बाह्य atomic_t fscache_n_object_lookups;
-बाह्य atomic_t fscache_n_object_lookups_negative;
-बाह्य atomic_t fscache_n_object_lookups_positive;
-बाह्य atomic_t fscache_n_object_lookups_समयd_out;
-बाह्य atomic_t fscache_n_object_created;
-बाह्य atomic_t fscache_n_object_avail;
-बाह्य atomic_t fscache_n_object_dead;
+extern atomic_t fscache_n_object_alloc;
+extern atomic_t fscache_n_object_no_alloc;
+extern atomic_t fscache_n_object_lookups;
+extern atomic_t fscache_n_object_lookups_negative;
+extern atomic_t fscache_n_object_lookups_positive;
+extern atomic_t fscache_n_object_lookups_timed_out;
+extern atomic_t fscache_n_object_created;
+extern atomic_t fscache_n_object_avail;
+extern atomic_t fscache_n_object_dead;
 
-बाह्य atomic_t fscache_n_checkaux_none;
-बाह्य atomic_t fscache_n_checkaux_okay;
-बाह्य atomic_t fscache_n_checkaux_update;
-बाह्य atomic_t fscache_n_checkaux_obsolete;
+extern atomic_t fscache_n_checkaux_none;
+extern atomic_t fscache_n_checkaux_okay;
+extern atomic_t fscache_n_checkaux_update;
+extern atomic_t fscache_n_checkaux_obsolete;
 
-बाह्य atomic_t fscache_n_cop_alloc_object;
-बाह्य atomic_t fscache_n_cop_lookup_object;
-बाह्य atomic_t fscache_n_cop_lookup_complete;
-बाह्य atomic_t fscache_n_cop_grab_object;
-बाह्य atomic_t fscache_n_cop_invalidate_object;
-बाह्य atomic_t fscache_n_cop_update_object;
-बाह्य atomic_t fscache_n_cop_drop_object;
-बाह्य atomic_t fscache_n_cop_put_object;
-बाह्य atomic_t fscache_n_cop_sync_cache;
-बाह्य atomic_t fscache_n_cop_attr_changed;
-बाह्य atomic_t fscache_n_cop_पढ़ो_or_alloc_page;
-बाह्य atomic_t fscache_n_cop_पढ़ो_or_alloc_pages;
-बाह्य atomic_t fscache_n_cop_allocate_page;
-बाह्य atomic_t fscache_n_cop_allocate_pages;
-बाह्य atomic_t fscache_n_cop_ग_लिखो_page;
-बाह्य atomic_t fscache_n_cop_uncache_page;
-बाह्य atomic_t fscache_n_cop_dissociate_pages;
+extern atomic_t fscache_n_cop_alloc_object;
+extern atomic_t fscache_n_cop_lookup_object;
+extern atomic_t fscache_n_cop_lookup_complete;
+extern atomic_t fscache_n_cop_grab_object;
+extern atomic_t fscache_n_cop_invalidate_object;
+extern atomic_t fscache_n_cop_update_object;
+extern atomic_t fscache_n_cop_drop_object;
+extern atomic_t fscache_n_cop_put_object;
+extern atomic_t fscache_n_cop_sync_cache;
+extern atomic_t fscache_n_cop_attr_changed;
+extern atomic_t fscache_n_cop_read_or_alloc_page;
+extern atomic_t fscache_n_cop_read_or_alloc_pages;
+extern atomic_t fscache_n_cop_allocate_page;
+extern atomic_t fscache_n_cop_allocate_pages;
+extern atomic_t fscache_n_cop_write_page;
+extern atomic_t fscache_n_cop_uncache_page;
+extern atomic_t fscache_n_cop_dissociate_pages;
 
-बाह्य atomic_t fscache_n_cache_no_space_reject;
-बाह्य atomic_t fscache_n_cache_stale_objects;
-बाह्य atomic_t fscache_n_cache_retired_objects;
-बाह्य atomic_t fscache_n_cache_culled_objects;
+extern atomic_t fscache_n_cache_no_space_reject;
+extern atomic_t fscache_n_cache_stale_objects;
+extern atomic_t fscache_n_cache_retired_objects;
+extern atomic_t fscache_n_cache_culled_objects;
 
-अटल अंतरभूत व्योम fscache_stat(atomic_t *stat)
-अणु
+static inline void fscache_stat(atomic_t *stat)
+{
 	atomic_inc(stat);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम fscache_stat_d(atomic_t *stat)
-अणु
+static inline void fscache_stat_d(atomic_t *stat)
+{
 	atomic_dec(stat);
-पूर्ण
+}
 
-#घोषणा __fscache_stat(stat) (stat)
+#define __fscache_stat(stat) (stat)
 
-पूर्णांक fscache_stats_show(काष्ठा seq_file *m, व्योम *v);
-#अन्यथा
+int fscache_stats_show(struct seq_file *m, void *v);
+#else
 
-#घोषणा __fscache_stat(stat) (शून्य)
-#घोषणा fscache_stat(stat) करो अणुपूर्ण जबतक (0)
-#घोषणा fscache_stat_d(stat) करो अणुपूर्ण जबतक (0)
-#पूर्ण_अगर
+#define __fscache_stat(stat) (NULL)
+#define fscache_stat(stat) do {} while (0)
+#define fscache_stat_d(stat) do {} while (0)
+#endif
 
 /*
- * उठाओ an event on an object
- * - अगर the event is not masked क्रम that object, then the object is
- *   queued क्रम attention by the thपढ़ो pool.
+ * raise an event on an object
+ * - if the event is not masked for that object, then the object is
+ *   queued for attention by the thread pool.
  */
-अटल अंतरभूत व्योम fscache_उठाओ_event(काष्ठा fscache_object *object,
-				       अचिन्हित event)
-अणु
+static inline void fscache_raise_event(struct fscache_object *object,
+				       unsigned event)
+{
 	BUG_ON(event >= NR_FSCACHE_OBJECT_EVENTS);
-#अगर 0
-	prपूर्णांकk("*** fscache_raise_event(OBJ%d{%lx},%x)\n",
+#if 0
+	printk("*** fscache_raise_event(OBJ%d{%lx},%x)\n",
 	       object->debug_id, object->event_mask, (1 << event));
-#पूर्ण_अगर
-	अगर (!test_and_set_bit(event, &object->events) &&
+#endif
+	if (!test_and_set_bit(event, &object->events) &&
 	    test_bit(event, &object->event_mask))
 		fscache_enqueue_object(object);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम fscache_cookie_get(काष्ठा fscache_cookie *cookie,
-				      क्रमागत fscache_cookie_trace where)
-अणु
-	पूर्णांक usage = atomic_inc_वापस(&cookie->usage);
+static inline void fscache_cookie_get(struct fscache_cookie *cookie,
+				      enum fscache_cookie_trace where)
+{
+	int usage = atomic_inc_return(&cookie->usage);
 
 	trace_fscache_cookie(cookie, where, usage);
-पूर्ण
+}
 
 /*
  * get an extra reference to a netfs retrieval context
  */
-अटल अंतरभूत
-व्योम *fscache_get_context(काष्ठा fscache_cookie *cookie, व्योम *context)
-अणु
-	अगर (cookie->def->get_context)
+static inline
+void *fscache_get_context(struct fscache_cookie *cookie, void *context)
+{
+	if (cookie->def->get_context)
 		cookie->def->get_context(cookie->netfs_data, context);
-	वापस context;
-पूर्ण
+	return context;
+}
 
 /*
  * release a reference to a netfs retrieval context
  */
-अटल अंतरभूत
-व्योम fscache_put_context(काष्ठा fscache_cookie *cookie, व्योम *context)
-अणु
-	अगर (cookie->def->put_context)
+static inline
+void fscache_put_context(struct fscache_cookie *cookie, void *context)
+{
+	if (cookie->def->put_context)
 		cookie->def->put_context(cookie->netfs_data, context);
-पूर्ण
+}
 
 /*
  * Update the auxiliary data on a cookie.
  */
-अटल अंतरभूत
-व्योम fscache_update_aux(काष्ठा fscache_cookie *cookie, स्थिर व्योम *aux_data)
-अणु
-	व्योम *p;
+static inline
+void fscache_update_aux(struct fscache_cookie *cookie, const void *aux_data)
+{
+	void *p;
 
-	अगर (!aux_data)
-		वापस;
-	अगर (cookie->aux_len <= माप(cookie->अंतरभूत_aux))
-		p = cookie->अंतरभूत_aux;
-	अन्यथा
+	if (!aux_data)
+		return;
+	if (cookie->aux_len <= sizeof(cookie->inline_aux))
+		p = cookie->inline_aux;
+	else
 		p = cookie->aux;
 
-	अगर (स_भेद(p, aux_data, cookie->aux_len) != 0) अणु
-		स_नकल(p, aux_data, cookie->aux_len);
+	if (memcmp(p, aux_data, cookie->aux_len) != 0) {
+		memcpy(p, aux_data, cookie->aux_len);
 		set_bit(FSCACHE_COOKIE_AUX_UPDATED, &cookie->flags);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*****************************************************************************/
 /*
  * debug tracing
  */
-#घोषणा dbgprपूर्णांकk(FMT, ...) \
-	prपूर्णांकk(KERN_DEBUG "[%-6.6s] "FMT"\n", current->comm, ##__VA_ARGS__)
+#define dbgprintk(FMT, ...) \
+	printk(KERN_DEBUG "[%-6.6s] "FMT"\n", current->comm, ##__VA_ARGS__)
 
-#घोषणा kenter(FMT, ...) dbgprपूर्णांकk("==> %s("FMT")", __func__, ##__VA_ARGS__)
-#घोषणा kleave(FMT, ...) dbgprपूर्णांकk("<== %s()"FMT"", __func__, ##__VA_ARGS__)
-#घोषणा kdebug(FMT, ...) dbgprपूर्णांकk(FMT, ##__VA_ARGS__)
+#define kenter(FMT, ...) dbgprintk("==> %s("FMT")", __func__, ##__VA_ARGS__)
+#define kleave(FMT, ...) dbgprintk("<== %s()"FMT"", __func__, ##__VA_ARGS__)
+#define kdebug(FMT, ...) dbgprintk(FMT, ##__VA_ARGS__)
 
-#घोषणा kjournal(FMT, ...) no_prपूर्णांकk(FMT, ##__VA_ARGS__)
+#define kjournal(FMT, ...) no_printk(FMT, ##__VA_ARGS__)
 
-#अगर_घोषित __KDEBUG
-#घोषणा _enter(FMT, ...) kenter(FMT, ##__VA_ARGS__)
-#घोषणा _leave(FMT, ...) kleave(FMT, ##__VA_ARGS__)
-#घोषणा _debug(FMT, ...) kdebug(FMT, ##__VA_ARGS__)
+#ifdef __KDEBUG
+#define _enter(FMT, ...) kenter(FMT, ##__VA_ARGS__)
+#define _leave(FMT, ...) kleave(FMT, ##__VA_ARGS__)
+#define _debug(FMT, ...) kdebug(FMT, ##__VA_ARGS__)
 
-#या_अगर defined(CONFIG_FSCACHE_DEBUG)
-#घोषणा _enter(FMT, ...)			\
-करो अणु						\
-	अगर (__करो_kdebug(ENTER))			\
+#elif defined(CONFIG_FSCACHE_DEBUG)
+#define _enter(FMT, ...)			\
+do {						\
+	if (__do_kdebug(ENTER))			\
 		kenter(FMT, ##__VA_ARGS__);	\
-पूर्ण जबतक (0)
+} while (0)
 
-#घोषणा _leave(FMT, ...)			\
-करो अणु						\
-	अगर (__करो_kdebug(LEAVE))			\
+#define _leave(FMT, ...)			\
+do {						\
+	if (__do_kdebug(LEAVE))			\
 		kleave(FMT, ##__VA_ARGS__);	\
-पूर्ण जबतक (0)
+} while (0)
 
-#घोषणा _debug(FMT, ...)			\
-करो अणु						\
-	अगर (__करो_kdebug(DEBUG))			\
+#define _debug(FMT, ...)			\
+do {						\
+	if (__do_kdebug(DEBUG))			\
 		kdebug(FMT, ##__VA_ARGS__);	\
-पूर्ण जबतक (0)
+} while (0)
 
-#अन्यथा
-#घोषणा _enter(FMT, ...) no_prपूर्णांकk("==> %s("FMT")", __func__, ##__VA_ARGS__)
-#घोषणा _leave(FMT, ...) no_prपूर्णांकk("<== %s()"FMT"", __func__, ##__VA_ARGS__)
-#घोषणा _debug(FMT, ...) no_prपूर्णांकk(FMT, ##__VA_ARGS__)
-#पूर्ण_अगर
+#else
+#define _enter(FMT, ...) no_printk("==> %s("FMT")", __func__, ##__VA_ARGS__)
+#define _leave(FMT, ...) no_printk("<== %s()"FMT"", __func__, ##__VA_ARGS__)
+#define _debug(FMT, ...) no_printk(FMT, ##__VA_ARGS__)
+#endif
 
 /*
- * determine whether a particular optional debugging poपूर्णांक should be logged
+ * determine whether a particular optional debugging point should be logged
  * - we need to go through three steps to persuade cpp to correctly join the
- *   लघुhand in FSCACHE_DEBUG_LEVEL with its prefix
+ *   shorthand in FSCACHE_DEBUG_LEVEL with its prefix
  */
-#घोषणा ____करो_kdebug(LEVEL, POINT) \
+#define ____do_kdebug(LEVEL, POINT) \
 	unlikely((fscache_debug & \
 		  (FSCACHE_POINT_##POINT << (FSCACHE_DEBUG_ ## LEVEL * 3))))
-#घोषणा ___करो_kdebug(LEVEL, POINT) \
-	____करो_kdebug(LEVEL, POINT)
-#घोषणा __करो_kdebug(POINT) \
-	___करो_kdebug(FSCACHE_DEBUG_LEVEL, POINT)
+#define ___do_kdebug(LEVEL, POINT) \
+	____do_kdebug(LEVEL, POINT)
+#define __do_kdebug(POINT) \
+	___do_kdebug(FSCACHE_DEBUG_LEVEL, POINT)
 
-#घोषणा FSCACHE_DEBUG_CACHE	0
-#घोषणा FSCACHE_DEBUG_COOKIE	1
-#घोषणा FSCACHE_DEBUG_PAGE	2
-#घोषणा FSCACHE_DEBUG_OPERATION	3
+#define FSCACHE_DEBUG_CACHE	0
+#define FSCACHE_DEBUG_COOKIE	1
+#define FSCACHE_DEBUG_PAGE	2
+#define FSCACHE_DEBUG_OPERATION	3
 
-#घोषणा FSCACHE_POINT_ENTER	1
-#घोषणा FSCACHE_POINT_LEAVE	2
-#घोषणा FSCACHE_POINT_DEBUG	4
+#define FSCACHE_POINT_ENTER	1
+#define FSCACHE_POINT_LEAVE	2
+#define FSCACHE_POINT_DEBUG	4
 
-#अगर_अघोषित FSCACHE_DEBUG_LEVEL
-#घोषणा FSCACHE_DEBUG_LEVEL CACHE
-#पूर्ण_अगर
+#ifndef FSCACHE_DEBUG_LEVEL
+#define FSCACHE_DEBUG_LEVEL CACHE
+#endif
 
 /*
- * निश्चितions
+ * assertions
  */
-#अगर 1 /* defined(__KDEBUGALL) */
+#if 1 /* defined(__KDEBUGALL) */
 
-#घोषणा ASSERT(X)							\
-करो अणु									\
-	अगर (unlikely(!(X))) अणु						\
+#define ASSERT(X)							\
+do {									\
+	if (unlikely(!(X))) {						\
 		pr_err("\n");					\
 		pr_err("Assertion failed\n");	\
 		BUG();							\
-	पूर्ण								\
-पूर्ण जबतक (0)
+	}								\
+} while (0)
 
-#घोषणा ASSERTCMP(X, OP, Y)						\
-करो अणु									\
-	अगर (unlikely(!((X) OP (Y)))) अणु					\
-		pr_err("\n");					\
-		pr_err("Assertion failed\n");	\
-		pr_err("%lx " #OP " %lx is false\n",		\
-		       (अचिन्हित दीर्घ)(X), (अचिन्हित दीर्घ)(Y));		\
-		BUG();							\
-	पूर्ण								\
-पूर्ण जबतक (0)
-
-#घोषणा ASSERTIF(C, X)							\
-करो अणु									\
-	अगर (unlikely((C) && !(X))) अणु					\
-		pr_err("\n");					\
-		pr_err("Assertion failed\n");	\
-		BUG();							\
-	पूर्ण								\
-पूर्ण जबतक (0)
-
-#घोषणा ASSERTIFCMP(C, X, OP, Y)					\
-करो अणु									\
-	अगर (unlikely((C) && !((X) OP (Y)))) अणु				\
+#define ASSERTCMP(X, OP, Y)						\
+do {									\
+	if (unlikely(!((X) OP (Y)))) {					\
 		pr_err("\n");					\
 		pr_err("Assertion failed\n");	\
 		pr_err("%lx " #OP " %lx is false\n",		\
-		       (अचिन्हित दीर्घ)(X), (अचिन्हित दीर्घ)(Y));		\
+		       (unsigned long)(X), (unsigned long)(Y));		\
 		BUG();							\
-	पूर्ण								\
-पूर्ण जबतक (0)
+	}								\
+} while (0)
 
-#अन्यथा
+#define ASSERTIF(C, X)							\
+do {									\
+	if (unlikely((C) && !(X))) {					\
+		pr_err("\n");					\
+		pr_err("Assertion failed\n");	\
+		BUG();							\
+	}								\
+} while (0)
 
-#घोषणा ASSERT(X)			करो अणुपूर्ण जबतक (0)
-#घोषणा ASSERTCMP(X, OP, Y)		करो अणुपूर्ण जबतक (0)
-#घोषणा ASSERTIF(C, X)			करो अणुपूर्ण जबतक (0)
-#घोषणा ASSERTIFCMP(C, X, OP, Y)	करो अणुपूर्ण जबतक (0)
+#define ASSERTIFCMP(C, X, OP, Y)					\
+do {									\
+	if (unlikely((C) && !((X) OP (Y)))) {				\
+		pr_err("\n");					\
+		pr_err("Assertion failed\n");	\
+		pr_err("%lx " #OP " %lx is false\n",		\
+		       (unsigned long)(X), (unsigned long)(Y));		\
+		BUG();							\
+	}								\
+} while (0)
 
-#पूर्ण_अगर /* निश्चित or not */
+#else
+
+#define ASSERT(X)			do {} while (0)
+#define ASSERTCMP(X, OP, Y)		do {} while (0)
+#define ASSERTIF(C, X)			do {} while (0)
+#define ASSERTIFCMP(C, X, OP, Y)	do {} while (0)
+
+#endif /* assert or not */

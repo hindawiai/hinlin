@@ -1,104 +1,103 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 OR BSD-3-Clause */
+/* SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause */
 /*
  * Copyright (C) 2018-2020 Intel Corporation
  */
-#अगर_अघोषित __iwl_io_h__
-#घोषणा __iwl_io_h__
+#ifndef __iwl_io_h__
+#define __iwl_io_h__
 
-#समावेश "iwl-devtrace.h"
-#समावेश "iwl-trans.h"
+#include "iwl-devtrace.h"
+#include "iwl-trans.h"
 
-व्योम iwl_ग_लिखो8(काष्ठा iwl_trans *trans, u32 ofs, u8 val);
-व्योम iwl_ग_लिखो32(काष्ठा iwl_trans *trans, u32 ofs, u32 val);
-व्योम iwl_ग_लिखो64(काष्ठा iwl_trans *trans, u64 ofs, u64 val);
-u32 iwl_पढ़ो32(काष्ठा iwl_trans *trans, u32 ofs);
+void iwl_write8(struct iwl_trans *trans, u32 ofs, u8 val);
+void iwl_write32(struct iwl_trans *trans, u32 ofs, u32 val);
+void iwl_write64(struct iwl_trans *trans, u64 ofs, u64 val);
+u32 iwl_read32(struct iwl_trans *trans, u32 ofs);
 
-अटल अंतरभूत व्योम iwl_set_bit(काष्ठा iwl_trans *trans, u32 reg, u32 mask)
-अणु
+static inline void iwl_set_bit(struct iwl_trans *trans, u32 reg, u32 mask)
+{
 	iwl_trans_set_bits_mask(trans, reg, mask, mask);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम iwl_clear_bit(काष्ठा iwl_trans *trans, u32 reg, u32 mask)
-अणु
+static inline void iwl_clear_bit(struct iwl_trans *trans, u32 reg, u32 mask)
+{
 	iwl_trans_set_bits_mask(trans, reg, mask, 0);
-पूर्ण
+}
 
-पूर्णांक iwl_poll_bit(काष्ठा iwl_trans *trans, u32 addr,
-		 u32 bits, u32 mask, पूर्णांक समयout);
-पूर्णांक iwl_poll_direct_bit(काष्ठा iwl_trans *trans, u32 addr, u32 mask,
-			पूर्णांक समयout);
+int iwl_poll_bit(struct iwl_trans *trans, u32 addr,
+		 u32 bits, u32 mask, int timeout);
+int iwl_poll_direct_bit(struct iwl_trans *trans, u32 addr, u32 mask,
+			int timeout);
 
-u32 iwl_पढ़ो_direct32(काष्ठा iwl_trans *trans, u32 reg);
-व्योम iwl_ग_लिखो_direct32(काष्ठा iwl_trans *trans, u32 reg, u32 value);
-व्योम iwl_ग_लिखो_direct64(काष्ठा iwl_trans *trans, u64 reg, u64 value);
+u32 iwl_read_direct32(struct iwl_trans *trans, u32 reg);
+void iwl_write_direct32(struct iwl_trans *trans, u32 reg, u32 value);
+void iwl_write_direct64(struct iwl_trans *trans, u64 reg, u64 value);
 
 
-u32 iwl_पढ़ो_prph_no_grab(काष्ठा iwl_trans *trans, u32 ofs);
-u32 iwl_पढ़ो_prph(काष्ठा iwl_trans *trans, u32 ofs);
-व्योम iwl_ग_लिखो_prph_no_grab(काष्ठा iwl_trans *trans, u32 ofs, u32 val);
-व्योम iwl_ग_लिखो_prph64_no_grab(काष्ठा iwl_trans *trans, u64 ofs, u64 val);
-व्योम iwl_ग_लिखो_prph_delay(काष्ठा iwl_trans *trans, u32 ofs,
+u32 iwl_read_prph_no_grab(struct iwl_trans *trans, u32 ofs);
+u32 iwl_read_prph(struct iwl_trans *trans, u32 ofs);
+void iwl_write_prph_no_grab(struct iwl_trans *trans, u32 ofs, u32 val);
+void iwl_write_prph64_no_grab(struct iwl_trans *trans, u64 ofs, u64 val);
+void iwl_write_prph_delay(struct iwl_trans *trans, u32 ofs,
 			  u32 val, u32 delay_ms);
-अटल अंतरभूत व्योम iwl_ग_लिखो_prph(काष्ठा iwl_trans *trans, u32 ofs, u32 val)
-अणु
-	iwl_ग_लिखो_prph_delay(trans, ofs, val, 0);
-पूर्ण
+static inline void iwl_write_prph(struct iwl_trans *trans, u32 ofs, u32 val)
+{
+	iwl_write_prph_delay(trans, ofs, val, 0);
+}
 
-पूर्णांक iwl_poll_prph_bit(काष्ठा iwl_trans *trans, u32 addr,
-		      u32 bits, u32 mask, पूर्णांक समयout);
-व्योम iwl_set_bits_prph(काष्ठा iwl_trans *trans, u32 ofs, u32 mask);
-व्योम iwl_set_bits_mask_prph(काष्ठा iwl_trans *trans, u32 ofs,
+int iwl_poll_prph_bit(struct iwl_trans *trans, u32 addr,
+		      u32 bits, u32 mask, int timeout);
+void iwl_set_bits_prph(struct iwl_trans *trans, u32 ofs, u32 mask);
+void iwl_set_bits_mask_prph(struct iwl_trans *trans, u32 ofs,
 			    u32 bits, u32 mask);
-व्योम iwl_clear_bits_prph(काष्ठा iwl_trans *trans, u32 ofs, u32 mask);
-व्योम iwl_क्रमce_nmi(काष्ठा iwl_trans *trans);
+void iwl_clear_bits_prph(struct iwl_trans *trans, u32 ofs, u32 mask);
+void iwl_force_nmi(struct iwl_trans *trans);
 
-पूर्णांक iwl_finish_nic_init(काष्ठा iwl_trans *trans,
-			स्थिर काष्ठा iwl_cfg_trans_params *cfg_trans);
+int iwl_finish_nic_init(struct iwl_trans *trans,
+			const struct iwl_cfg_trans_params *cfg_trans);
 
 /* Error handling */
-पूर्णांक iwl_dump_fh(काष्ठा iwl_trans *trans, अक्षर **buf);
+int iwl_dump_fh(struct iwl_trans *trans, char **buf);
 
 /*
  * UMAC periphery address space changed from 0xA00000 to 0xD00000 starting from
  * device family AX200. So peripheries used in families above and below AX200
  * should go through iwl_..._umac_..._prph.
  */
-अटल अंतरभूत u32 iwl_umac_prph(काष्ठा iwl_trans *trans, u32 ofs)
-अणु
-	वापस ofs + trans->trans_cfg->umac_prph_offset;
-पूर्ण
+static inline u32 iwl_umac_prph(struct iwl_trans *trans, u32 ofs)
+{
+	return ofs + trans->trans_cfg->umac_prph_offset;
+}
 
-अटल अंतरभूत u32 iwl_पढ़ो_umac_prph_no_grab(काष्ठा iwl_trans *trans, u32 ofs)
-अणु
-	वापस iwl_पढ़ो_prph_no_grab(trans, ofs +
+static inline u32 iwl_read_umac_prph_no_grab(struct iwl_trans *trans, u32 ofs)
+{
+	return iwl_read_prph_no_grab(trans, ofs +
 				     trans->trans_cfg->umac_prph_offset);
-पूर्ण
+}
 
-अटल अंतरभूत u32 iwl_पढ़ो_umac_prph(काष्ठा iwl_trans *trans, u32 ofs)
-अणु
-	वापस iwl_पढ़ो_prph(trans, ofs + trans->trans_cfg->umac_prph_offset);
-पूर्ण
+static inline u32 iwl_read_umac_prph(struct iwl_trans *trans, u32 ofs)
+{
+	return iwl_read_prph(trans, ofs + trans->trans_cfg->umac_prph_offset);
+}
 
-अटल अंतरभूत व्योम iwl_ग_लिखो_umac_prph_no_grab(काष्ठा iwl_trans *trans, u32 ofs,
+static inline void iwl_write_umac_prph_no_grab(struct iwl_trans *trans, u32 ofs,
 					       u32 val)
-अणु
-	iwl_ग_लिखो_prph_no_grab(trans,  ofs + trans->trans_cfg->umac_prph_offset,
+{
+	iwl_write_prph_no_grab(trans,  ofs + trans->trans_cfg->umac_prph_offset,
 			       val);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम iwl_ग_लिखो_umac_prph(काष्ठा iwl_trans *trans, u32 ofs,
+static inline void iwl_write_umac_prph(struct iwl_trans *trans, u32 ofs,
 				       u32 val)
-अणु
-	iwl_ग_लिखो_prph(trans,  ofs + trans->trans_cfg->umac_prph_offset, val);
-पूर्ण
+{
+	iwl_write_prph(trans,  ofs + trans->trans_cfg->umac_prph_offset, val);
+}
 
-अटल अंतरभूत पूर्णांक iwl_poll_umac_prph_bit(काष्ठा iwl_trans *trans, u32 addr,
-					 u32 bits, u32 mask, पूर्णांक समयout)
-अणु
-	वापस iwl_poll_prph_bit(trans, addr +
+static inline int iwl_poll_umac_prph_bit(struct iwl_trans *trans, u32 addr,
+					 u32 bits, u32 mask, int timeout)
+{
+	return iwl_poll_prph_bit(trans, addr +
 				 trans->trans_cfg->umac_prph_offset,
-				 bits, mask, समयout);
-पूर्ण
+				 bits, mask, timeout);
+}
 
-#पूर्ण_अगर
+#endif

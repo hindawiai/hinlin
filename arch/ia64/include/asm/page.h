@@ -1,7 +1,6 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_IA64_PAGE_H
-#घोषणा _ASM_IA64_PAGE_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_IA64_PAGE_H
+#define _ASM_IA64_PAGE_H
 /*
  * Pagetable related stuff.
  *
@@ -9,182 +8,182 @@
  *	David Mosberger-Tang <davidm@hpl.hp.com>
  */
 
-#समावेश <यंत्र/पूर्णांकrinsics.h>
-#समावेश <यंत्र/types.h>
+#include <asm/intrinsics.h>
+#include <asm/types.h>
 
 /*
  * The top three bits of an IA64 address are its Region Number.
- * Dअगरferent regions are asचिन्हित to dअगरferent purposes.
+ * Different regions are assigned to different purposes.
  */
-#घोषणा RGN_SHIFT	(61)
-#घोषणा RGN_BASE(r)	(__IA64_UL_CONST(r)<<RGN_SHIFT)
-#घोषणा RGN_BITS	(RGN_BASE(-1))
+#define RGN_SHIFT	(61)
+#define RGN_BASE(r)	(__IA64_UL_CONST(r)<<RGN_SHIFT)
+#define RGN_BITS	(RGN_BASE(-1))
 
-#घोषणा RGN_KERNEL	7	/* Identity mapped region */
-#घोषणा RGN_UNCACHED    6	/* Identity mapped I/O region */
-#घोषणा RGN_GATE	5	/* Gate page, Kernel text, etc */
-#घोषणा RGN_HPAGE	4	/* For Huge TLB pages */
+#define RGN_KERNEL	7	/* Identity mapped region */
+#define RGN_UNCACHED    6	/* Identity mapped I/O region */
+#define RGN_GATE	5	/* Gate page, Kernel text, etc */
+#define RGN_HPAGE	4	/* For Huge TLB pages */
 
 /*
  * PAGE_SHIFT determines the actual kernel page size.
  */
-#अगर defined(CONFIG_IA64_PAGE_SIZE_4KB)
+#if defined(CONFIG_IA64_PAGE_SIZE_4KB)
 # define PAGE_SHIFT	12
-#या_अगर defined(CONFIG_IA64_PAGE_SIZE_8KB)
+#elif defined(CONFIG_IA64_PAGE_SIZE_8KB)
 # define PAGE_SHIFT	13
-#या_अगर defined(CONFIG_IA64_PAGE_SIZE_16KB)
+#elif defined(CONFIG_IA64_PAGE_SIZE_16KB)
 # define PAGE_SHIFT	14
-#या_अगर defined(CONFIG_IA64_PAGE_SIZE_64KB)
+#elif defined(CONFIG_IA64_PAGE_SIZE_64KB)
 # define PAGE_SHIFT	16
-#अन्यथा
+#else
 # error Unsupported page size!
-#पूर्ण_अगर
+#endif
 
-#घोषणा PAGE_SIZE		(__IA64_UL_CONST(1) << PAGE_SHIFT)
-#घोषणा PAGE_MASK		(~(PAGE_SIZE - 1))
+#define PAGE_SIZE		(__IA64_UL_CONST(1) << PAGE_SHIFT)
+#define PAGE_MASK		(~(PAGE_SIZE - 1))
 
-#घोषणा PERCPU_PAGE_SHIFT	18	/* log2() of max. size of per-CPU area */
-#घोषणा PERCPU_PAGE_SIZE	(__IA64_UL_CONST(1) << PERCPU_PAGE_SHIFT)
+#define PERCPU_PAGE_SHIFT	18	/* log2() of max. size of per-CPU area */
+#define PERCPU_PAGE_SIZE	(__IA64_UL_CONST(1) << PERCPU_PAGE_SHIFT)
 
 
-#अगर_घोषित CONFIG_HUGETLB_PAGE
+#ifdef CONFIG_HUGETLB_PAGE
 # define HPAGE_REGION_BASE	RGN_BASE(RGN_HPAGE)
-# define HPAGE_SHIFT		hpage_shअगरt
-# define HPAGE_SHIFT_DEFAULT	28	/* check ia64 SDM क्रम architecture supported size */
+# define HPAGE_SHIFT		hpage_shift
+# define HPAGE_SHIFT_DEFAULT	28	/* check ia64 SDM for architecture supported size */
 # define HPAGE_SIZE		(__IA64_UL_CONST(1) << HPAGE_SHIFT)
 # define HPAGE_MASK		(~(HPAGE_SIZE - 1))
 
 # define HAVE_ARCH_HUGETLB_UNMAPPED_AREA
-#पूर्ण_अगर /* CONFIG_HUGETLB_PAGE */
+#endif /* CONFIG_HUGETLB_PAGE */
 
-#अगर_घोषित __ASSEMBLY__
+#ifdef __ASSEMBLY__
 # define __pa(x)		((x) - PAGE_OFFSET)
 # define __va(x)		((x) + PAGE_OFFSET)
-#अन्यथा /* !__ASSEMBLY */
+#else /* !__ASSEMBLY */
 #  define STRICT_MM_TYPECHECKS
 
-बाह्य व्योम clear_page (व्योम *page);
-बाह्य व्योम copy_page (व्योम *to, व्योम *from);
+extern void clear_page (void *page);
+extern void copy_page (void *to, void *from);
 
 /*
- * clear_user_page() and copy_user_page() can't be अंतरभूत functions because
+ * clear_user_page() and copy_user_page() can't be inline functions because
  * flush_dcache_page() can't be defined until later...
  */
-#घोषणा clear_user_page(addr, vaddr, page)	\
-करो अणु						\
+#define clear_user_page(addr, vaddr, page)	\
+do {						\
 	clear_page(addr);			\
 	flush_dcache_page(page);		\
-पूर्ण जबतक (0)
+} while (0)
 
-#घोषणा copy_user_page(to, from, vaddr, page)	\
-करो अणु						\
+#define copy_user_page(to, from, vaddr, page)	\
+do {						\
 	copy_page((to), (from));		\
 	flush_dcache_page(page);		\
-पूर्ण जबतक (0)
+} while (0)
 
 
-#घोषणा __alloc_zeroed_user_highpage(movableflags, vma, vaddr)		\
-(अणु									\
-	काष्ठा page *page = alloc_page_vma(				\
+#define __alloc_zeroed_user_highpage(movableflags, vma, vaddr)		\
+({									\
+	struct page *page = alloc_page_vma(				\
 		GFP_HIGHUSER | __GFP_ZERO | movableflags, vma, vaddr);	\
-	अगर (page)							\
+	if (page)							\
  		flush_dcache_page(page);				\
 	page;								\
-पूर्ण)
+})
 
-#घोषणा __HAVE_ARCH_ALLOC_ZEROED_USER_HIGHPAGE
+#define __HAVE_ARCH_ALLOC_ZEROED_USER_HIGHPAGE
 
-#घोषणा virt_addr_valid(kaddr)	pfn_valid(__pa(kaddr) >> PAGE_SHIFT)
+#define virt_addr_valid(kaddr)	pfn_valid(__pa(kaddr) >> PAGE_SHIFT)
 
-#समावेश <यंत्र-generic/memory_model.h>
+#include <asm-generic/memory_model.h>
 
-#अगर_घोषित CONFIG_FLATMEM
+#ifdef CONFIG_FLATMEM
 # define pfn_valid(pfn)		((pfn) < max_mapnr)
-#पूर्ण_अगर
+#endif
 
-#घोषणा page_to_phys(page)	(page_to_pfn(page) << PAGE_SHIFT)
-#घोषणा virt_to_page(kaddr)	pfn_to_page(__pa(kaddr) >> PAGE_SHIFT)
-#घोषणा pfn_to_kaddr(pfn)	__va((pfn) << PAGE_SHIFT)
+#define page_to_phys(page)	(page_to_pfn(page) << PAGE_SHIFT)
+#define virt_to_page(kaddr)	pfn_to_page(__pa(kaddr) >> PAGE_SHIFT)
+#define pfn_to_kaddr(pfn)	__va((pfn) << PAGE_SHIFT)
 
-प्रकार जोड़ ia64_va अणु
-	काष्ठा अणु
-		अचिन्हित दीर्घ off : 61;		/* पूर्णांकra-region offset */
-		अचिन्हित दीर्घ reg :  3;		/* region number */
-	पूर्ण f;
-	अचिन्हित दीर्घ l;
-	व्योम *p;
-पूर्ण ia64_va;
+typedef union ia64_va {
+	struct {
+		unsigned long off : 61;		/* intra-region offset */
+		unsigned long reg :  3;		/* region number */
+	} f;
+	unsigned long l;
+	void *p;
+} ia64_va;
 
 /*
  * Note: These macros depend on the fact that PAGE_OFFSET has all
  * region bits set to 1 and all other bits set to zero.  They are
  * expressed in this way to ensure they result in a single "dep"
- * inकाष्ठाion.
+ * instruction.
  */
-#घोषणा __pa(x)		(अणुia64_va _v; _v.l = (दीर्घ) (x); _v.f.reg = 0; _v.l;पूर्ण)
-#घोषणा __va(x)		(अणुia64_va _v; _v.l = (दीर्घ) (x); _v.f.reg = -1; _v.p;पूर्ण)
+#define __pa(x)		({ia64_va _v; _v.l = (long) (x); _v.f.reg = 0; _v.l;})
+#define __va(x)		({ia64_va _v; _v.l = (long) (x); _v.f.reg = -1; _v.p;})
 
-#घोषणा REGION_NUMBER(x)	(अणुia64_va _v; _v.l = (दीर्घ) (x); _v.f.reg;पूर्ण)
-#घोषणा REGION_OFFSET(x)	(अणुia64_va _v; _v.l = (दीर्घ) (x); _v.f.off;पूर्ण)
+#define REGION_NUMBER(x)	({ia64_va _v; _v.l = (long) (x); _v.f.reg;})
+#define REGION_OFFSET(x)	({ia64_va _v; _v.l = (long) (x); _v.f.off;})
 
-#अगर_घोषित CONFIG_HUGETLB_PAGE
-# define htlbpage_to_page(x)	(((अचिन्हित दीर्घ) REGION_NUMBER(x) << 61)			\
+#ifdef CONFIG_HUGETLB_PAGE
+# define htlbpage_to_page(x)	(((unsigned long) REGION_NUMBER(x) << 61)			\
 				 | (REGION_OFFSET(x) >> (HPAGE_SHIFT-PAGE_SHIFT)))
 # define HUGETLB_PAGE_ORDER	(HPAGE_SHIFT - PAGE_SHIFT)
-बाह्य अचिन्हित पूर्णांक hpage_shअगरt;
-#पूर्ण_अगर
+extern unsigned int hpage_shift;
+#endif
 
-अटल __अंतरभूत__ पूर्णांक
-get_order (अचिन्हित दीर्घ size)
-अणु
-	दीर्घ द्विगुन d = size - 1;
-	दीर्घ order;
+static __inline__ int
+get_order (unsigned long size)
+{
+	long double d = size - 1;
+	long order;
 
 	order = ia64_getf_exp(d);
 	order = order - PAGE_SHIFT - 0xffff + 1;
-	अगर (order < 0)
+	if (order < 0)
 		order = 0;
-	वापस order;
-पूर्ण
+	return order;
+}
 
-#पूर्ण_अगर /* !__ASSEMBLY__ */
+#endif /* !__ASSEMBLY__ */
 
-#अगर_घोषित STRICT_MM_TYPECHECKS
+#ifdef STRICT_MM_TYPECHECKS
   /*
    * These are used to make use of C type-checking..
    */
-  प्रकार काष्ठा अणु अचिन्हित दीर्घ pte; पूर्ण pte_t;
-  प्रकार काष्ठा अणु अचिन्हित दीर्घ pmd; पूर्ण pmd_t;
-#अगर CONFIG_PGTABLE_LEVELS == 4
-  प्रकार काष्ठा अणु अचिन्हित दीर्घ pud; पूर्ण pud_t;
-#पूर्ण_अगर
-  प्रकार काष्ठा अणु अचिन्हित दीर्घ pgd; पूर्ण pgd_t;
-  प्रकार काष्ठा अणु अचिन्हित दीर्घ pgprot; पूर्ण pgprot_t;
-  प्रकार काष्ठा page *pgtable_t;
+  typedef struct { unsigned long pte; } pte_t;
+  typedef struct { unsigned long pmd; } pmd_t;
+#if CONFIG_PGTABLE_LEVELS == 4
+  typedef struct { unsigned long pud; } pud_t;
+#endif
+  typedef struct { unsigned long pgd; } pgd_t;
+  typedef struct { unsigned long pgprot; } pgprot_t;
+  typedef struct page *pgtable_t;
 
 # define pte_val(x)	((x).pte)
 # define pmd_val(x)	((x).pmd)
-#अगर CONFIG_PGTABLE_LEVELS == 4
+#if CONFIG_PGTABLE_LEVELS == 4
 # define pud_val(x)	((x).pud)
-#पूर्ण_अगर
+#endif
 # define pgd_val(x)	((x).pgd)
 # define pgprot_val(x)	((x).pgprot)
 
-# define __pte(x)	((pte_t) अणु (x) पूर्ण )
-# define __pmd(x)	((pmd_t) अणु (x) पूर्ण )
-# define __pgprot(x)	((pgprot_t) अणु (x) पूर्ण )
+# define __pte(x)	((pte_t) { (x) } )
+# define __pmd(x)	((pmd_t) { (x) } )
+# define __pgprot(x)	((pgprot_t) { (x) } )
 
-#अन्यथा /* !STRICT_MM_TYPECHECKS */
+#else /* !STRICT_MM_TYPECHECKS */
   /*
-   * .. जबतक these make it easier on the compiler
+   * .. while these make it easier on the compiler
    */
-# अगरndef __ASSEMBLY__
-    प्रकार अचिन्हित दीर्घ pte_t;
-    प्रकार अचिन्हित दीर्घ pmd_t;
-    प्रकार अचिन्हित दीर्घ pgd_t;
-    प्रकार अचिन्हित दीर्घ pgprot_t;
-    प्रकार काष्ठा page *pgtable_t;
-# endअगर
+# ifndef __ASSEMBLY__
+    typedef unsigned long pte_t;
+    typedef unsigned long pmd_t;
+    typedef unsigned long pgd_t;
+    typedef unsigned long pgprot_t;
+    typedef struct page *pgtable_t;
+# endif
 
 # define pte_val(x)	(x)
 # define pmd_val(x)	(x)
@@ -194,22 +193,22 @@ get_order (अचिन्हित दीर्घ size)
 # define __pte(x)	(x)
 # define __pgd(x)	(x)
 # define __pgprot(x)	(x)
-#पूर्ण_अगर /* !STRICT_MM_TYPECHECKS */
+#endif /* !STRICT_MM_TYPECHECKS */
 
-#घोषणा PAGE_OFFSET			RGN_BASE(RGN_KERNEL)
+#define PAGE_OFFSET			RGN_BASE(RGN_KERNEL)
 
-#घोषणा VM_DATA_DEFAULT_FLAGS	VM_DATA_FLAGS_TSK_EXEC
+#define VM_DATA_DEFAULT_FLAGS	VM_DATA_FLAGS_TSK_EXEC
 
-#घोषणा GATE_ADDR		RGN_BASE(RGN_GATE)
+#define GATE_ADDR		RGN_BASE(RGN_GATE)
 
 /*
  * 0xa000000000000000+2*PERCPU_PAGE_SIZE
- * - 0xa000000000000000+3*PERCPU_PAGE_SIZE reमुख्य unmapped (guard page)
+ * - 0xa000000000000000+3*PERCPU_PAGE_SIZE remain unmapped (guard page)
  */
-#घोषणा KERNEL_START		 (GATE_ADDR+__IA64_UL_CONST(0x100000000))
-#घोषणा PERCPU_ADDR		(-PERCPU_PAGE_SIZE)
-#घोषणा LOAD_OFFSET		(KERNEL_START - KERNEL_TR_PAGE_SIZE)
+#define KERNEL_START		 (GATE_ADDR+__IA64_UL_CONST(0x100000000))
+#define PERCPU_ADDR		(-PERCPU_PAGE_SIZE)
+#define LOAD_OFFSET		(KERNEL_START - KERNEL_TR_PAGE_SIZE)
 
-#घोषणा __HAVE_ARCH_GATE_AREA	1
+#define __HAVE_ARCH_GATE_AREA	1
 
-#पूर्ण_अगर /* _ASM_IA64_PAGE_H */
+#endif /* _ASM_IA64_PAGE_H */

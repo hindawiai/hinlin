@@ -1,49 +1,48 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (BSD-3-Clause OR GPL-2.0-only)
+// SPDX-License-Identifier: (BSD-3-Clause OR GPL-2.0-only)
 /* Copyright(c) 2015 - 2020 Intel Corporation */
-#समावेश "adf_accel_devices.h"
-#समावेश "adf_common_drv.h"
-#समावेश "adf_pf2vf_msg.h"
+#include "adf_accel_devices.h"
+#include "adf_common_drv.h"
+#include "adf_pf2vf_msg.h"
 
 /**
  * adf_vf2pf_init() - send init msg to PF
- * @accel_dev:  Poपूर्णांकer to acceleration VF device.
+ * @accel_dev:  Pointer to acceleration VF device.
  *
  * Function sends an init message from the VF to a PF
  *
  * Return: 0 on success, error code otherwise.
  */
-पूर्णांक adf_vf2pf_init(काष्ठा adf_accel_dev *accel_dev)
-अणु
+int adf_vf2pf_init(struct adf_accel_dev *accel_dev)
+{
 	u32 msg = (ADF_VF2PF_MSGORIGIN_SYSTEM |
 		(ADF_VF2PF_MSGTYPE_INIT << ADF_VF2PF_MSGTYPE_SHIFT));
 
-	अगर (adf_iov_puपंचांगsg(accel_dev, msg, 0)) अणु
+	if (adf_iov_putmsg(accel_dev, msg, 0)) {
 		dev_err(&GET_DEV(accel_dev),
 			"Failed to send Init event to PF\n");
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 	set_bit(ADF_STATUS_PF_RUNNING, &accel_dev->status);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(adf_vf2pf_init);
 
 /**
- * adf_vf2pf_shutकरोwn() - send shutकरोwn msg to PF
- * @accel_dev:  Poपूर्णांकer to acceleration VF device.
+ * adf_vf2pf_shutdown() - send shutdown msg to PF
+ * @accel_dev:  Pointer to acceleration VF device.
  *
- * Function sends a shutकरोwn message from the VF to a PF
+ * Function sends a shutdown message from the VF to a PF
  *
- * Return: व्योम
+ * Return: void
  */
-व्योम adf_vf2pf_shutकरोwn(काष्ठा adf_accel_dev *accel_dev)
-अणु
+void adf_vf2pf_shutdown(struct adf_accel_dev *accel_dev)
+{
 	u32 msg = (ADF_VF2PF_MSGORIGIN_SYSTEM |
 	    (ADF_VF2PF_MSGTYPE_SHUTDOWN << ADF_VF2PF_MSGTYPE_SHIFT));
 
-	अगर (test_bit(ADF_STATUS_PF_RUNNING, &accel_dev->status))
-		अगर (adf_iov_puपंचांगsg(accel_dev, msg, 0))
+	if (test_bit(ADF_STATUS_PF_RUNNING, &accel_dev->status))
+		if (adf_iov_putmsg(accel_dev, msg, 0))
 			dev_err(&GET_DEV(accel_dev),
 				"Failed to send Shutdown event to PF\n");
-पूर्ण
-EXPORT_SYMBOL_GPL(adf_vf2pf_shutकरोwn);
+}
+EXPORT_SYMBOL_GPL(adf_vf2pf_shutdown);

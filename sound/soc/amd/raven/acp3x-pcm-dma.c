@@ -1,30 +1,29 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 //
 // AMD ALSA SoC PCM Driver
 //
 //Copyright 2016 Advanced Micro Devices, Inc.
 
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/module.h>
-#समावेश <linux/err.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <sound/pcm_params.h>
-#समावेश <sound/soc.h>
-#समावेश <sound/soc-dai.h>
+#include <linux/platform_device.h>
+#include <linux/module.h>
+#include <linux/err.h>
+#include <linux/io.h>
+#include <linux/pm_runtime.h>
+#include <sound/pcm_params.h>
+#include <sound/soc.h>
+#include <sound/soc-dai.h>
 
-#समावेश "acp3x.h"
+#include "acp3x.h"
 
-#घोषणा DRV_NAME "acp3x_rv_i2s_dma"
+#define DRV_NAME "acp3x_rv_i2s_dma"
 
-अटल स्थिर काष्ठा snd_pcm_hardware acp3x_pcm_hardware_playback = अणु
+static const struct snd_pcm_hardware acp3x_pcm_hardware_playback = {
 	.info = SNDRV_PCM_INFO_INTERLEAVED |
 		SNDRV_PCM_INFO_BLOCK_TRANSFER |
 		SNDRV_PCM_INFO_BATCH |
 		SNDRV_PCM_INFO_MMAP | SNDRV_PCM_INFO_MMAP_VALID |
 		SNDRV_PCM_INFO_PAUSE | SNDRV_PCM_INFO_RESUME,
-	.क्रमmats = SNDRV_PCM_FMTBIT_S16_LE |  SNDRV_PCM_FMTBIT_S8 |
+	.formats = SNDRV_PCM_FMTBIT_S16_LE |  SNDRV_PCM_FMTBIT_S8 |
 		   SNDRV_PCM_FMTBIT_U8 | SNDRV_PCM_FMTBIT_S32_LE,
 	.channels_min = 2,
 	.channels_max = 8,
@@ -36,15 +35,15 @@
 	.period_bytes_max = PLAYBACK_MAX_PERIOD_SIZE,
 	.periods_min = PLAYBACK_MIN_NUM_PERIODS,
 	.periods_max = PLAYBACK_MAX_NUM_PERIODS,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_pcm_hardware acp3x_pcm_hardware_capture = अणु
+static const struct snd_pcm_hardware acp3x_pcm_hardware_capture = {
 	.info = SNDRV_PCM_INFO_INTERLEAVED |
 		SNDRV_PCM_INFO_BLOCK_TRANSFER |
 		SNDRV_PCM_INFO_BATCH |
 		SNDRV_PCM_INFO_MMAP | SNDRV_PCM_INFO_MMAP_VALID |
 		SNDRV_PCM_INFO_PAUSE | SNDRV_PCM_INFO_RESUME,
-	.क्रमmats = SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S8 |
+	.formats = SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S8 |
 		   SNDRV_PCM_FMTBIT_U8 | SNDRV_PCM_FMTBIT_S32_LE,
 	.channels_min = 2,
 	.channels_max = 2,
@@ -56,479 +55,479 @@
 	.period_bytes_max = CAPTURE_MAX_PERIOD_SIZE,
 	.periods_min = CAPTURE_MIN_NUM_PERIODS,
 	.periods_max = CAPTURE_MAX_NUM_PERIODS,
-पूर्ण;
+};
 
-अटल irqवापस_t i2s_irq_handler(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा i2s_dev_data *rv_i2s_data;
+static irqreturn_t i2s_irq_handler(int irq, void *dev_id)
+{
+	struct i2s_dev_data *rv_i2s_data;
 	u16 play_flag, cap_flag;
 	u32 val;
 
 	rv_i2s_data = dev_id;
-	अगर (!rv_i2s_data)
-		वापस IRQ_NONE;
+	if (!rv_i2s_data)
+		return IRQ_NONE;
 
 	play_flag = 0;
 	cap_flag = 0;
-	val = rv_पढ़ोl(rv_i2s_data->acp3x_base + mmACP_EXTERNAL_INTR_STAT);
-	अगर ((val & BIT(BT_TX_THRESHOLD)) && rv_i2s_data->play_stream) अणु
-		rv_ग_लिखोl(BIT(BT_TX_THRESHOLD), rv_i2s_data->acp3x_base +
+	val = rv_readl(rv_i2s_data->acp3x_base + mmACP_EXTERNAL_INTR_STAT);
+	if ((val & BIT(BT_TX_THRESHOLD)) && rv_i2s_data->play_stream) {
+		rv_writel(BIT(BT_TX_THRESHOLD), rv_i2s_data->acp3x_base +
 			  mmACP_EXTERNAL_INTR_STAT);
 		snd_pcm_period_elapsed(rv_i2s_data->play_stream);
 		play_flag = 1;
-	पूर्ण
-	अगर ((val & BIT(I2S_TX_THRESHOLD)) &&
-				rv_i2s_data->i2ssp_play_stream) अणु
-		rv_ग_लिखोl(BIT(I2S_TX_THRESHOLD),
+	}
+	if ((val & BIT(I2S_TX_THRESHOLD)) &&
+				rv_i2s_data->i2ssp_play_stream) {
+		rv_writel(BIT(I2S_TX_THRESHOLD),
 			rv_i2s_data->acp3x_base	+ mmACP_EXTERNAL_INTR_STAT);
 		snd_pcm_period_elapsed(rv_i2s_data->i2ssp_play_stream);
 		play_flag = 1;
-	पूर्ण
+	}
 
-	अगर ((val & BIT(BT_RX_THRESHOLD)) && rv_i2s_data->capture_stream) अणु
-		rv_ग_लिखोl(BIT(BT_RX_THRESHOLD), rv_i2s_data->acp3x_base +
+	if ((val & BIT(BT_RX_THRESHOLD)) && rv_i2s_data->capture_stream) {
+		rv_writel(BIT(BT_RX_THRESHOLD), rv_i2s_data->acp3x_base +
 			  mmACP_EXTERNAL_INTR_STAT);
 		snd_pcm_period_elapsed(rv_i2s_data->capture_stream);
 		cap_flag = 1;
-	पूर्ण
-	अगर ((val & BIT(I2S_RX_THRESHOLD)) &&
-				rv_i2s_data->i2ssp_capture_stream) अणु
-		rv_ग_लिखोl(BIT(I2S_RX_THRESHOLD),
+	}
+	if ((val & BIT(I2S_RX_THRESHOLD)) &&
+				rv_i2s_data->i2ssp_capture_stream) {
+		rv_writel(BIT(I2S_RX_THRESHOLD),
 			 rv_i2s_data->acp3x_base + mmACP_EXTERNAL_INTR_STAT);
 		snd_pcm_period_elapsed(rv_i2s_data->i2ssp_capture_stream);
 		cap_flag = 1;
-	पूर्ण
+	}
 
-	अगर (play_flag | cap_flag)
-		वापस IRQ_HANDLED;
-	अन्यथा
-		वापस IRQ_NONE;
-पूर्ण
+	if (play_flag | cap_flag)
+		return IRQ_HANDLED;
+	else
+		return IRQ_NONE;
+}
 
-अटल व्योम config_acp3x_dma(काष्ठा i2s_stream_instance *rtd, पूर्णांक direction)
-अणु
+static void config_acp3x_dma(struct i2s_stream_instance *rtd, int direction)
+{
 	u16 page_idx;
-	u32 low, high, val, acp_fअगरo_addr, reg_fअगरo_addr;
-	u32 reg_dma_size, reg_fअगरo_size;
+	u32 low, high, val, acp_fifo_addr, reg_fifo_addr;
+	u32 reg_dma_size, reg_fifo_size;
 	dma_addr_t addr;
 
 	addr = rtd->dma_addr;
 
-	अगर (direction == SNDRV_PCM_STREAM_PLAYBACK) अणु
-		चयन (rtd->i2s_instance) अणु
-		हाल I2S_BT_INSTANCE:
+	if (direction == SNDRV_PCM_STREAM_PLAYBACK) {
+		switch (rtd->i2s_instance) {
+		case I2S_BT_INSTANCE:
 			val = ACP_SRAM_BT_PB_PTE_OFFSET;
-			अवरोध;
-		हाल I2S_SP_INSTANCE:
-		शेष:
+			break;
+		case I2S_SP_INSTANCE:
+		default:
 			val = ACP_SRAM_SP_PB_PTE_OFFSET;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		चयन (rtd->i2s_instance) अणु
-		हाल I2S_BT_INSTANCE:
+		}
+	} else {
+		switch (rtd->i2s_instance) {
+		case I2S_BT_INSTANCE:
 			val = ACP_SRAM_BT_CP_PTE_OFFSET;
-			अवरोध;
-		हाल I2S_SP_INSTANCE:
-		शेष:
+			break;
+		case I2S_SP_INSTANCE:
+		default:
 			val = ACP_SRAM_SP_CP_PTE_OFFSET;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	/* Group Enable */
-	rv_ग_लिखोl(ACP_SRAM_PTE_OFFSET | BIT(31), rtd->acp3x_base +
+	rv_writel(ACP_SRAM_PTE_OFFSET | BIT(31), rtd->acp3x_base +
 		  mmACPAXI2AXI_ATU_BASE_ADDR_GRP_1);
-	rv_ग_लिखोl(PAGE_SIZE_4K_ENABLE, rtd->acp3x_base +
+	rv_writel(PAGE_SIZE_4K_ENABLE, rtd->acp3x_base +
 		  mmACPAXI2AXI_ATU_PAGE_SIZE_GRP_1);
 
-	क्रम (page_idx = 0; page_idx < rtd->num_pages; page_idx++) अणु
-		/* Load the low address of page पूर्णांक ACP SRAM through SRBM */
+	for (page_idx = 0; page_idx < rtd->num_pages; page_idx++) {
+		/* Load the low address of page int ACP SRAM through SRBM */
 		low = lower_32_bits(addr);
 		high = upper_32_bits(addr);
 
-		rv_ग_लिखोl(low, rtd->acp3x_base + mmACP_SCRATCH_REG_0 + val);
+		rv_writel(low, rtd->acp3x_base + mmACP_SCRATCH_REG_0 + val);
 		high |= BIT(31);
-		rv_ग_लिखोl(high, rtd->acp3x_base + mmACP_SCRATCH_REG_0 + val
+		rv_writel(high, rtd->acp3x_base + mmACP_SCRATCH_REG_0 + val
 				+ 4);
 		/* Move to next physically contiguos page */
 		val += 8;
 		addr += PAGE_SIZE;
-	पूर्ण
+	}
 
-	अगर (direction == SNDRV_PCM_STREAM_PLAYBACK) अणु
-		चयन (rtd->i2s_instance) अणु
-		हाल I2S_BT_INSTANCE:
+	if (direction == SNDRV_PCM_STREAM_PLAYBACK) {
+		switch (rtd->i2s_instance) {
+		case I2S_BT_INSTANCE:
 			reg_dma_size = mmACP_BT_TX_DMA_SIZE;
-			acp_fअगरo_addr = ACP_SRAM_PTE_OFFSET +
+			acp_fifo_addr = ACP_SRAM_PTE_OFFSET +
 						BT_PB_FIFO_ADDR_OFFSET;
-			reg_fअगरo_addr = mmACP_BT_TX_FIFOADDR;
-			reg_fअगरo_size = mmACP_BT_TX_FIFOSIZE;
-			rv_ग_लिखोl(I2S_BT_TX_MEM_WINDOW_START,
+			reg_fifo_addr = mmACP_BT_TX_FIFOADDR;
+			reg_fifo_size = mmACP_BT_TX_FIFOSIZE;
+			rv_writel(I2S_BT_TX_MEM_WINDOW_START,
 				rtd->acp3x_base + mmACP_BT_TX_RINGBUFADDR);
-			अवरोध;
+			break;
 
-		हाल I2S_SP_INSTANCE:
-		शेष:
+		case I2S_SP_INSTANCE:
+		default:
 			reg_dma_size = mmACP_I2S_TX_DMA_SIZE;
-			acp_fअगरo_addr = ACP_SRAM_PTE_OFFSET +
+			acp_fifo_addr = ACP_SRAM_PTE_OFFSET +
 						SP_PB_FIFO_ADDR_OFFSET;
-			reg_fअगरo_addr =	mmACP_I2S_TX_FIFOADDR;
-			reg_fअगरo_size = mmACP_I2S_TX_FIFOSIZE;
-			rv_ग_लिखोl(I2S_SP_TX_MEM_WINDOW_START,
+			reg_fifo_addr =	mmACP_I2S_TX_FIFOADDR;
+			reg_fifo_size = mmACP_I2S_TX_FIFOSIZE;
+			rv_writel(I2S_SP_TX_MEM_WINDOW_START,
 				rtd->acp3x_base + mmACP_I2S_TX_RINGBUFADDR);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		चयन (rtd->i2s_instance) अणु
-		हाल I2S_BT_INSTANCE:
+		}
+	} else {
+		switch (rtd->i2s_instance) {
+		case I2S_BT_INSTANCE:
 			reg_dma_size = mmACP_BT_RX_DMA_SIZE;
-			acp_fअगरo_addr = ACP_SRAM_PTE_OFFSET +
+			acp_fifo_addr = ACP_SRAM_PTE_OFFSET +
 						BT_CAPT_FIFO_ADDR_OFFSET;
-			reg_fअगरo_addr = mmACP_BT_RX_FIFOADDR;
-			reg_fअगरo_size = mmACP_BT_RX_FIFOSIZE;
-			rv_ग_लिखोl(I2S_BT_RX_MEM_WINDOW_START,
+			reg_fifo_addr = mmACP_BT_RX_FIFOADDR;
+			reg_fifo_size = mmACP_BT_RX_FIFOSIZE;
+			rv_writel(I2S_BT_RX_MEM_WINDOW_START,
 				rtd->acp3x_base + mmACP_BT_RX_RINGBUFADDR);
-			अवरोध;
+			break;
 
-		हाल I2S_SP_INSTANCE:
-		शेष:
+		case I2S_SP_INSTANCE:
+		default:
 			reg_dma_size = mmACP_I2S_RX_DMA_SIZE;
-			acp_fअगरo_addr = ACP_SRAM_PTE_OFFSET +
+			acp_fifo_addr = ACP_SRAM_PTE_OFFSET +
 						SP_CAPT_FIFO_ADDR_OFFSET;
-			reg_fअगरo_addr = mmACP_I2S_RX_FIFOADDR;
-			reg_fअगरo_size = mmACP_I2S_RX_FIFOSIZE;
-			rv_ग_लिखोl(I2S_SP_RX_MEM_WINDOW_START,
+			reg_fifo_addr = mmACP_I2S_RX_FIFOADDR;
+			reg_fifo_size = mmACP_I2S_RX_FIFOSIZE;
+			rv_writel(I2S_SP_RX_MEM_WINDOW_START,
 				rtd->acp3x_base + mmACP_I2S_RX_RINGBUFADDR);
-		पूर्ण
-	पूर्ण
-	rv_ग_लिखोl(DMA_SIZE, rtd->acp3x_base + reg_dma_size);
-	rv_ग_लिखोl(acp_fअगरo_addr, rtd->acp3x_base + reg_fअगरo_addr);
-	rv_ग_लिखोl(FIFO_SIZE, rtd->acp3x_base + reg_fअगरo_size);
-	rv_ग_लिखोl(BIT(I2S_RX_THRESHOLD) | BIT(BT_RX_THRESHOLD)
+		}
+	}
+	rv_writel(DMA_SIZE, rtd->acp3x_base + reg_dma_size);
+	rv_writel(acp_fifo_addr, rtd->acp3x_base + reg_fifo_addr);
+	rv_writel(FIFO_SIZE, rtd->acp3x_base + reg_fifo_size);
+	rv_writel(BIT(I2S_RX_THRESHOLD) | BIT(BT_RX_THRESHOLD)
 		| BIT(I2S_TX_THRESHOLD) | BIT(BT_TX_THRESHOLD),
 		rtd->acp3x_base + mmACP_EXTERNAL_INTR_CNTL);
-पूर्ण
+}
 
-अटल पूर्णांक acp3x_dma_खोलो(काष्ठा snd_soc_component *component,
-			  काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय;
-	काष्ठा snd_soc_pcm_runसमय *prtd;
-	काष्ठा i2s_dev_data *adata;
-	काष्ठा i2s_stream_instance *i2s_data;
-	पूर्णांक ret;
+static int acp3x_dma_open(struct snd_soc_component *component,
+			  struct snd_pcm_substream *substream)
+{
+	struct snd_pcm_runtime *runtime;
+	struct snd_soc_pcm_runtime *prtd;
+	struct i2s_dev_data *adata;
+	struct i2s_stream_instance *i2s_data;
+	int ret;
 
-	runसमय = substream->runसमय;
+	runtime = substream->runtime;
 	prtd = asoc_substream_to_rtd(substream);
 	component = snd_soc_rtdcom_lookup(prtd, DRV_NAME);
 	adata = dev_get_drvdata(component->dev);
-	i2s_data = kzalloc(माप(*i2s_data), GFP_KERNEL);
-	अगर (!i2s_data)
-		वापस -EINVAL;
+	i2s_data = kzalloc(sizeof(*i2s_data), GFP_KERNEL);
+	if (!i2s_data)
+		return -EINVAL;
 
-	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
-		runसमय->hw = acp3x_pcm_hardware_playback;
-	अन्यथा
-		runसमय->hw = acp3x_pcm_hardware_capture;
+	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+		runtime->hw = acp3x_pcm_hardware_playback;
+	else
+		runtime->hw = acp3x_pcm_hardware_capture;
 
-	ret = snd_pcm_hw_स्थिरraपूर्णांक_पूर्णांकeger(runसमय,
+	ret = snd_pcm_hw_constraint_integer(runtime,
 					    SNDRV_PCM_HW_PARAM_PERIODS);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(component->dev, "set integer constraint failed\n");
-		kमुक्त(i2s_data);
-		वापस ret;
-	पूर्ण
+		kfree(i2s_data);
+		return ret;
+	}
 
 	i2s_data->acp3x_base = adata->acp3x_base;
-	runसमय->निजी_data = i2s_data;
-	वापस ret;
-पूर्ण
+	runtime->private_data = i2s_data;
+	return ret;
+}
 
 
-अटल पूर्णांक acp3x_dma_hw_params(काष्ठा snd_soc_component *component,
-			       काष्ठा snd_pcm_substream *substream,
-			       काष्ठा snd_pcm_hw_params *params)
-अणु
-	काष्ठा i2s_stream_instance *rtd;
-	काष्ठा snd_soc_pcm_runसमय *prtd;
-	काष्ठा snd_soc_card *card;
-	काष्ठा acp3x_platक्रमm_info *pinfo;
-	काष्ठा i2s_dev_data *adata;
+static int acp3x_dma_hw_params(struct snd_soc_component *component,
+			       struct snd_pcm_substream *substream,
+			       struct snd_pcm_hw_params *params)
+{
+	struct i2s_stream_instance *rtd;
+	struct snd_soc_pcm_runtime *prtd;
+	struct snd_soc_card *card;
+	struct acp3x_platform_info *pinfo;
+	struct i2s_dev_data *adata;
 	u64 size;
 
 	prtd = asoc_substream_to_rtd(substream);
 	card = prtd->card;
 	pinfo = snd_soc_card_get_drvdata(card);
 	adata = dev_get_drvdata(component->dev);
-	rtd = substream->runसमय->निजी_data;
-	अगर (!rtd)
-		वापस -EINVAL;
+	rtd = substream->runtime->private_data;
+	if (!rtd)
+		return -EINVAL;
 
-	अगर (pinfo) अणु
-		अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) अणु
+	if (pinfo) {
+		if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
 			rtd->i2s_instance = pinfo->play_i2s_instance;
-			चयन (rtd->i2s_instance) अणु
-			हाल I2S_BT_INSTANCE:
+			switch (rtd->i2s_instance) {
+			case I2S_BT_INSTANCE:
 				adata->play_stream = substream;
-				अवरोध;
-			हाल I2S_SP_INSTANCE:
-			शेष:
+				break;
+			case I2S_SP_INSTANCE:
+			default:
 				adata->i2ssp_play_stream = substream;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			rtd->i2s_instance = pinfo->cap_i2s_instance;
-			चयन (rtd->i2s_instance) अणु
-			हाल I2S_BT_INSTANCE:
+			switch (rtd->i2s_instance) {
+			case I2S_BT_INSTANCE:
 				adata->capture_stream = substream;
-				अवरोध;
-			हाल I2S_SP_INSTANCE:
-			शेष:
+				break;
+			case I2S_SP_INSTANCE:
+			default:
 				adata->i2ssp_capture_stream = substream;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			}
+		}
+	} else {
 		pr_err("pinfo failed\n");
-	पूर्ण
+	}
 	size = params_buffer_bytes(params);
 	rtd->dma_addr = substream->dma_buffer.addr;
 	rtd->num_pages = (PAGE_ALIGN(size) >> PAGE_SHIFT);
 	config_acp3x_dma(rtd, substream->stream);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल snd_pcm_uframes_t acp3x_dma_poपूर्णांकer(काष्ठा snd_soc_component *component,
-					   काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा i2s_stream_instance *rtd;
+static snd_pcm_uframes_t acp3x_dma_pointer(struct snd_soc_component *component,
+					   struct snd_pcm_substream *substream)
+{
+	struct i2s_stream_instance *rtd;
 	u32 pos;
 	u32 buffersize;
 	u64 bytescount;
 
-	rtd = substream->runसमय->निजी_data;
+	rtd = substream->runtime->private_data;
 
-	buffersize = frames_to_bytes(substream->runसमय,
-				     substream->runसमय->buffer_size);
+	buffersize = frames_to_bytes(substream->runtime,
+				     substream->runtime->buffer_size);
 	bytescount = acp_get_byte_count(rtd, substream->stream);
-	अगर (bytescount > rtd->bytescount)
+	if (bytescount > rtd->bytescount)
 		bytescount -= rtd->bytescount;
-	pos = करो_भाग(bytescount, buffersize);
-	वापस bytes_to_frames(substream->runसमय, pos);
-पूर्ण
+	pos = do_div(bytescount, buffersize);
+	return bytes_to_frames(substream->runtime, pos);
+}
 
-अटल पूर्णांक acp3x_dma_new(काष्ठा snd_soc_component *component,
-			 काष्ठा snd_soc_pcm_runसमय *rtd)
-अणु
-	काष्ठा device *parent = component->dev->parent;
+static int acp3x_dma_new(struct snd_soc_component *component,
+			 struct snd_soc_pcm_runtime *rtd)
+{
+	struct device *parent = component->dev->parent;
 	snd_pcm_set_managed_buffer_all(rtd->pcm, SNDRV_DMA_TYPE_DEV,
 				       parent, MIN_BUFFER, MAX_BUFFER);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक acp3x_dma_mmap(काष्ठा snd_soc_component *component,
-			  काष्ठा snd_pcm_substream *substream,
-			  काष्ठा vm_area_काष्ठा *vma)
-अणु
-	वापस snd_pcm_lib_शेष_mmap(substream, vma);
-पूर्ण
+static int acp3x_dma_mmap(struct snd_soc_component *component,
+			  struct snd_pcm_substream *substream,
+			  struct vm_area_struct *vma)
+{
+	return snd_pcm_lib_default_mmap(substream, vma);
+}
 
-अटल पूर्णांक acp3x_dma_बंद(काष्ठा snd_soc_component *component,
-			   काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_soc_pcm_runसमय *prtd;
-	काष्ठा i2s_dev_data *adata;
-	काष्ठा i2s_stream_instance *ins;
+static int acp3x_dma_close(struct snd_soc_component *component,
+			   struct snd_pcm_substream *substream)
+{
+	struct snd_soc_pcm_runtime *prtd;
+	struct i2s_dev_data *adata;
+	struct i2s_stream_instance *ins;
 
 	prtd = asoc_substream_to_rtd(substream);
 	component = snd_soc_rtdcom_lookup(prtd, DRV_NAME);
 	adata = dev_get_drvdata(component->dev);
-	ins = substream->runसमय->निजी_data;
-	अगर (!ins)
-		वापस -EINVAL;
+	ins = substream->runtime->private_data;
+	if (!ins)
+		return -EINVAL;
 
-	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) अणु
-		चयन (ins->i2s_instance) अणु
-		हाल I2S_BT_INSTANCE:
-			adata->play_stream = शून्य;
-			अवरोध;
-		हाल I2S_SP_INSTANCE:
-		शेष:
-			adata->i2ssp_play_stream = शून्य;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		चयन (ins->i2s_instance) अणु
-		हाल I2S_BT_INSTANCE:
-			adata->capture_stream = शून्य;
-			अवरोध;
-		हाल I2S_SP_INSTANCE:
-		शेष:
-			adata->i2ssp_capture_stream = शून्य;
-		पूर्ण
-	पूर्ण
+	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
+		switch (ins->i2s_instance) {
+		case I2S_BT_INSTANCE:
+			adata->play_stream = NULL;
+			break;
+		case I2S_SP_INSTANCE:
+		default:
+			adata->i2ssp_play_stream = NULL;
+		}
+	} else {
+		switch (ins->i2s_instance) {
+		case I2S_BT_INSTANCE:
+			adata->capture_stream = NULL;
+			break;
+		case I2S_SP_INSTANCE:
+		default:
+			adata->i2ssp_capture_stream = NULL;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा snd_soc_component_driver acp3x_i2s_component = अणु
+static const struct snd_soc_component_driver acp3x_i2s_component = {
 	.name		= DRV_NAME,
-	.खोलो		= acp3x_dma_खोलो,
-	.बंद		= acp3x_dma_बंद,
+	.open		= acp3x_dma_open,
+	.close		= acp3x_dma_close,
 	.hw_params	= acp3x_dma_hw_params,
-	.poपूर्णांकer	= acp3x_dma_poपूर्णांकer,
+	.pointer	= acp3x_dma_pointer,
 	.mmap		= acp3x_dma_mmap,
-	.pcm_स्थिरruct	= acp3x_dma_new,
-पूर्ण;
+	.pcm_construct	= acp3x_dma_new,
+};
 
-अटल पूर्णांक acp3x_audio_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा resource *res;
-	काष्ठा i2s_dev_data *adata;
-	अचिन्हित पूर्णांक irqflags;
-	पूर्णांक status;
+static int acp3x_audio_probe(struct platform_device *pdev)
+{
+	struct resource *res;
+	struct i2s_dev_data *adata;
+	unsigned int irqflags;
+	int status;
 
-	अगर (!pdev->dev.platक्रमm_data) अणु
+	if (!pdev->dev.platform_data) {
 		dev_err(&pdev->dev, "platform_data not retrieved\n");
-		वापस -ENODEV;
-	पूर्ण
-	irqflags = *((अचिन्हित पूर्णांक *)(pdev->dev.platक्रमm_data));
+		return -ENODEV;
+	}
+	irqflags = *((unsigned int *)(pdev->dev.platform_data));
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (!res) अणु
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (!res) {
 		dev_err(&pdev->dev, "IORESOURCE_MEM FAILED\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	adata = devm_kzalloc(&pdev->dev, माप(*adata), GFP_KERNEL);
-	अगर (!adata)
-		वापस -ENOMEM;
+	adata = devm_kzalloc(&pdev->dev, sizeof(*adata), GFP_KERNEL);
+	if (!adata)
+		return -ENOMEM;
 
 	adata->acp3x_base = devm_ioremap(&pdev->dev, res->start,
 					 resource_size(res));
-	अगर (!adata->acp3x_base)
-		वापस -ENOMEM;
+	if (!adata->acp3x_base)
+		return -ENOMEM;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_IRQ, 0);
-	अगर (!res) अणु
+	res = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
+	if (!res) {
 		dev_err(&pdev->dev, "IORESOURCE_IRQ FAILED\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	adata->i2s_irq = res->start;
 
 	dev_set_drvdata(&pdev->dev, adata);
-	status = devm_snd_soc_रेजिस्टर_component(&pdev->dev,
+	status = devm_snd_soc_register_component(&pdev->dev,
 						 &acp3x_i2s_component,
-						 शून्य, 0);
-	अगर (status) अणु
+						 NULL, 0);
+	if (status) {
 		dev_err(&pdev->dev, "Fail to register acp i2s component\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 	status = devm_request_irq(&pdev->dev, adata->i2s_irq, i2s_irq_handler,
 				  irqflags, "ACP3x_I2S_IRQ", adata);
-	अगर (status) अणु
+	if (status) {
 		dev_err(&pdev->dev, "ACP3x I2S IRQ request failed\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	pm_runसमय_set_स्वतःsuspend_delay(&pdev->dev, 2000);
-	pm_runसमय_use_स्वतःsuspend(&pdev->dev);
-	pm_runसमय_enable(&pdev->dev);
-	pm_runसमय_allow(&pdev->dev);
-	वापस 0;
-पूर्ण
+	pm_runtime_set_autosuspend_delay(&pdev->dev, 2000);
+	pm_runtime_use_autosuspend(&pdev->dev);
+	pm_runtime_enable(&pdev->dev);
+	pm_runtime_allow(&pdev->dev);
+	return 0;
+}
 
-अटल पूर्णांक acp3x_audio_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	pm_runसमय_disable(&pdev->dev);
-	वापस 0;
-पूर्ण
+static int acp3x_audio_remove(struct platform_device *pdev)
+{
+	pm_runtime_disable(&pdev->dev);
+	return 0;
+}
 
-अटल पूर्णांक acp3x_resume(काष्ठा device *dev)
-अणु
-	काष्ठा i2s_dev_data *adata;
+static int acp3x_resume(struct device *dev)
+{
+	struct i2s_dev_data *adata;
 	u32 val, reg_val, frmt_val;
 
 	reg_val = 0;
 	frmt_val = 0;
 	adata = dev_get_drvdata(dev);
 
-	अगर (adata->play_stream && adata->play_stream->runसमय) अणु
-		काष्ठा i2s_stream_instance *rtd =
-			adata->play_stream->runसमय->निजी_data;
+	if (adata->play_stream && adata->play_stream->runtime) {
+		struct i2s_stream_instance *rtd =
+			adata->play_stream->runtime->private_data;
 		config_acp3x_dma(rtd, SNDRV_PCM_STREAM_PLAYBACK);
-		चयन (rtd->i2s_instance) अणु
-		हाल I2S_BT_INSTANCE:
+		switch (rtd->i2s_instance) {
+		case I2S_BT_INSTANCE:
 			reg_val = mmACP_BTTDM_ITER;
 			frmt_val = mmACP_BTTDM_TXFRMT;
-			अवरोध;
-		हाल I2S_SP_INSTANCE:
-		शेष:
+			break;
+		case I2S_SP_INSTANCE:
+		default:
 			reg_val = mmACP_I2STDM_ITER;
 			frmt_val = mmACP_I2STDM_TXFRMT;
-		पूर्ण
-		rv_ग_लिखोl((rtd->xfer_resolution  << 3),
+		}
+		rv_writel((rtd->xfer_resolution  << 3),
 			  rtd->acp3x_base + reg_val);
-	पूर्ण
-	अगर (adata->capture_stream && adata->capture_stream->runसमय) अणु
-		काष्ठा i2s_stream_instance *rtd =
-			adata->capture_stream->runसमय->निजी_data;
+	}
+	if (adata->capture_stream && adata->capture_stream->runtime) {
+		struct i2s_stream_instance *rtd =
+			adata->capture_stream->runtime->private_data;
 		config_acp3x_dma(rtd, SNDRV_PCM_STREAM_CAPTURE);
-		चयन (rtd->i2s_instance) अणु
-		हाल I2S_BT_INSTANCE:
+		switch (rtd->i2s_instance) {
+		case I2S_BT_INSTANCE:
 			reg_val = mmACP_BTTDM_IRER;
 			frmt_val = mmACP_BTTDM_RXFRMT;
-			अवरोध;
-		हाल I2S_SP_INSTANCE:
-		शेष:
+			break;
+		case I2S_SP_INSTANCE:
+		default:
 			reg_val = mmACP_I2STDM_IRER;
 			frmt_val = mmACP_I2STDM_RXFRMT;
-		पूर्ण
-		rv_ग_लिखोl((rtd->xfer_resolution  << 3),
+		}
+		rv_writel((rtd->xfer_resolution  << 3),
 			  rtd->acp3x_base + reg_val);
-	पूर्ण
-	अगर (adata->tdm_mode == TDM_ENABLE) अणु
-		rv_ग_लिखोl(adata->tdm_fmt, adata->acp3x_base + frmt_val);
-		val = rv_पढ़ोl(adata->acp3x_base + reg_val);
-		rv_ग_लिखोl(val | 0x2, adata->acp3x_base + reg_val);
-	पूर्ण
-	rv_ग_लिखोl(1, adata->acp3x_base + mmACP_EXTERNAL_INTR_ENB);
-	वापस 0;
-पूर्ण
+	}
+	if (adata->tdm_mode == TDM_ENABLE) {
+		rv_writel(adata->tdm_fmt, adata->acp3x_base + frmt_val);
+		val = rv_readl(adata->acp3x_base + reg_val);
+		rv_writel(val | 0x2, adata->acp3x_base + reg_val);
+	}
+	rv_writel(1, adata->acp3x_base + mmACP_EXTERNAL_INTR_ENB);
+	return 0;
+}
 
 
-अटल पूर्णांक acp3x_pcm_runसमय_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा i2s_dev_data *adata;
-
-	adata = dev_get_drvdata(dev);
-
-	rv_ग_लिखोl(0, adata->acp3x_base + mmACP_EXTERNAL_INTR_ENB);
-
-	वापस 0;
-पूर्ण
-
-अटल पूर्णांक acp3x_pcm_runसमय_resume(काष्ठा device *dev)
-अणु
-	काष्ठा i2s_dev_data *adata;
+static int acp3x_pcm_runtime_suspend(struct device *dev)
+{
+	struct i2s_dev_data *adata;
 
 	adata = dev_get_drvdata(dev);
 
-	rv_ग_लिखोl(1, adata->acp3x_base + mmACP_EXTERNAL_INTR_ENB);
-	वापस 0;
-पूर्ण
+	rv_writel(0, adata->acp3x_base + mmACP_EXTERNAL_INTR_ENB);
 
-अटल स्थिर काष्ठा dev_pm_ops acp3x_pm_ops = अणु
-	.runसमय_suspend = acp3x_pcm_runसमय_suspend,
-	.runसमय_resume = acp3x_pcm_runसमय_resume,
+	return 0;
+}
+
+static int acp3x_pcm_runtime_resume(struct device *dev)
+{
+	struct i2s_dev_data *adata;
+
+	adata = dev_get_drvdata(dev);
+
+	rv_writel(1, adata->acp3x_base + mmACP_EXTERNAL_INTR_ENB);
+	return 0;
+}
+
+static const struct dev_pm_ops acp3x_pm_ops = {
+	.runtime_suspend = acp3x_pcm_runtime_suspend,
+	.runtime_resume = acp3x_pcm_runtime_resume,
 	.resume = acp3x_resume,
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_driver acp3x_dma_driver = अणु
+static struct platform_driver acp3x_dma_driver = {
 	.probe = acp3x_audio_probe,
-	.हटाओ = acp3x_audio_हटाओ,
-	.driver = अणु
+	.remove = acp3x_audio_remove,
+	.driver = {
 		.name = "acp3x_rv_i2s_dma",
 		.pm = &acp3x_pm_ops,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(acp3x_dma_driver);
+module_platform_driver(acp3x_dma_driver);
 
 MODULE_AUTHOR("Vishnuvardhanrao.Ravulapati@amd.com");
 MODULE_AUTHOR("Maruthi.Bayyavarapu@amd.com");

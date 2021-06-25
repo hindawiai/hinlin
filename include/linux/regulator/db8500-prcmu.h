@@ -1,18 +1,17 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) ST-Ericsson SA 2010
  *
- * Author: Bengt Jonsson <bengt.g.jonsson@stericsson.com> क्रम ST-Ericsson
+ * Author: Bengt Jonsson <bengt.g.jonsson@stericsson.com> for ST-Ericsson
  *
- * Interface to घातer करोमुख्य regulators on DB8500
+ * Interface to power domain regulators on DB8500
  */
 
-#अगर_अघोषित __REGULATOR_H__
-#घोषणा __REGULATOR_H__
+#ifndef __REGULATOR_H__
+#define __REGULATOR_H__
 
-/* Number of DB8500 regulators and regulator क्रमागतeration */
-क्रमागत db8500_regulator_id अणु
+/* Number of DB8500 regulators and regulator enumeration */
+enum db8500_regulator_id {
 	DB8500_REGULATOR_VAPE,
 	DB8500_REGULATOR_VARM,
 	DB8500_REGULATOR_VMODEM,
@@ -34,12 +33,12 @@
 	DB8500_REGULATOR_SWITCH_ESRAM34,
 	DB8500_REGULATOR_SWITCH_ESRAM34RET,
 	DB8500_NUM_REGULATORS
-पूर्ण;
+};
 
 /*
- * Exported पूर्णांकerface क्रम CPUIdle only. This function is called with all
- * पूर्णांकerrupts turned off.
+ * Exported interface for CPUIdle only. This function is called with all
+ * interrupts turned off.
  */
-पूर्णांक घातer_state_active_is_enabled(व्योम);
+int power_state_active_is_enabled(void);
 
-#पूर्ण_अगर
+#endif

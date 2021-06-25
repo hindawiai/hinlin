@@ -1,190 +1,189 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2012 Avionic Design GmbH
  * Copyright (C) 2012 NVIDIA CORPORATION.  All rights reserved.
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/iommu.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/reset.h>
+#include <linux/clk.h>
+#include <linux/debugfs.h>
+#include <linux/delay.h>
+#include <linux/iommu.h>
+#include <linux/module.h>
+#include <linux/of_device.h>
+#include <linux/pm_runtime.h>
+#include <linux/reset.h>
 
-#समावेश <soc/tegra/pmc.h>
+#include <soc/tegra/pmc.h>
 
-#समावेश <drm/drm_atomic.h>
-#समावेश <drm/drm_atomic_helper.h>
-#समावेश <drm/drm_debugfs.h>
-#समावेश <drm/drm_fourcc.h>
-#समावेश <drm/drm_plane_helper.h>
-#समावेश <drm/drm_vblank.h>
+#include <drm/drm_atomic.h>
+#include <drm/drm_atomic_helper.h>
+#include <drm/drm_debugfs.h>
+#include <drm/drm_fourcc.h>
+#include <drm/drm_plane_helper.h>
+#include <drm/drm_vblank.h>
 
-#समावेश "dc.h"
-#समावेश "drm.h"
-#समावेश "gem.h"
-#समावेश "hub.h"
-#समावेश "plane.h"
+#include "dc.h"
+#include "drm.h"
+#include "gem.h"
+#include "hub.h"
+#include "plane.h"
 
-अटल व्योम tegra_crtc_atomic_destroy_state(काष्ठा drm_crtc *crtc,
-					    काष्ठा drm_crtc_state *state);
+static void tegra_crtc_atomic_destroy_state(struct drm_crtc *crtc,
+					    struct drm_crtc_state *state);
 
-अटल व्योम tegra_dc_stats_reset(काष्ठा tegra_dc_stats *stats)
-अणु
+static void tegra_dc_stats_reset(struct tegra_dc_stats *stats)
+{
 	stats->frames = 0;
 	stats->vblank = 0;
 	stats->underflow = 0;
 	stats->overflow = 0;
-पूर्ण
+}
 
-/* Reads the active copy of a रेजिस्टर. */
-अटल u32 tegra_dc_पढ़ोl_active(काष्ठा tegra_dc *dc, अचिन्हित दीर्घ offset)
-अणु
+/* Reads the active copy of a register. */
+static u32 tegra_dc_readl_active(struct tegra_dc *dc, unsigned long offset)
+{
 	u32 value;
 
-	tegra_dc_ग_लिखोl(dc, READ_MUX, DC_CMD_STATE_ACCESS);
-	value = tegra_dc_पढ़ोl(dc, offset);
-	tegra_dc_ग_लिखोl(dc, 0, DC_CMD_STATE_ACCESS);
+	tegra_dc_writel(dc, READ_MUX, DC_CMD_STATE_ACCESS);
+	value = tegra_dc_readl(dc, offset);
+	tegra_dc_writel(dc, 0, DC_CMD_STATE_ACCESS);
 
-	वापस value;
-पूर्ण
+	return value;
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक tegra_plane_offset(काष्ठा tegra_plane *plane,
-					      अचिन्हित पूर्णांक offset)
-अणु
-	अगर (offset >= 0x500 && offset <= 0x638) अणु
+static inline unsigned int tegra_plane_offset(struct tegra_plane *plane,
+					      unsigned int offset)
+{
+	if (offset >= 0x500 && offset <= 0x638) {
 		offset = 0x000 + (offset - 0x500);
-		वापस plane->offset + offset;
-	पूर्ण
+		return plane->offset + offset;
+	}
 
-	अगर (offset >= 0x700 && offset <= 0x719) अणु
+	if (offset >= 0x700 && offset <= 0x719) {
 		offset = 0x180 + (offset - 0x700);
-		वापस plane->offset + offset;
-	पूर्ण
+		return plane->offset + offset;
+	}
 
-	अगर (offset >= 0x800 && offset <= 0x839) अणु
+	if (offset >= 0x800 && offset <= 0x839) {
 		offset = 0x1c0 + (offset - 0x800);
-		वापस plane->offset + offset;
-	पूर्ण
+		return plane->offset + offset;
+	}
 
 	dev_WARN(plane->dc->dev, "invalid offset: %x\n", offset);
 
-	वापस plane->offset + offset;
-पूर्ण
+	return plane->offset + offset;
+}
 
-अटल अंतरभूत u32 tegra_plane_पढ़ोl(काष्ठा tegra_plane *plane,
-				    अचिन्हित पूर्णांक offset)
-अणु
-	वापस tegra_dc_पढ़ोl(plane->dc, tegra_plane_offset(plane, offset));
-पूर्ण
+static inline u32 tegra_plane_readl(struct tegra_plane *plane,
+				    unsigned int offset)
+{
+	return tegra_dc_readl(plane->dc, tegra_plane_offset(plane, offset));
+}
 
-अटल अंतरभूत व्योम tegra_plane_ग_लिखोl(काष्ठा tegra_plane *plane, u32 value,
-				      अचिन्हित पूर्णांक offset)
-अणु
-	tegra_dc_ग_लिखोl(plane->dc, value, tegra_plane_offset(plane, offset));
-पूर्ण
+static inline void tegra_plane_writel(struct tegra_plane *plane, u32 value,
+				      unsigned int offset)
+{
+	tegra_dc_writel(plane->dc, value, tegra_plane_offset(plane, offset));
+}
 
-bool tegra_dc_has_output(काष्ठा tegra_dc *dc, काष्ठा device *dev)
-अणु
-	काष्ठा device_node *np = dc->dev->of_node;
-	काष्ठा of_phandle_iterator it;
-	पूर्णांक err;
+bool tegra_dc_has_output(struct tegra_dc *dc, struct device *dev)
+{
+	struct device_node *np = dc->dev->of_node;
+	struct of_phandle_iterator it;
+	int err;
 
-	of_क्रम_each_phandle(&it, err, np, "nvidia,outputs", शून्य, 0)
-		अगर (it.node == dev->of_node)
-			वापस true;
+	of_for_each_phandle(&it, err, np, "nvidia,outputs", NULL, 0)
+		if (it.node == dev->of_node)
+			return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /*
- * Double-buffered रेजिस्टरs have two copies: ASSEMBLY and ACTIVE. When the
- * *_ACT_REQ bits are set the ASSEMBLY copy is latched पूर्णांकo the ACTIVE copy.
- * Latching happens mmediately अगर the display controller is in STOP mode or
+ * Double-buffered registers have two copies: ASSEMBLY and ACTIVE. When the
+ * *_ACT_REQ bits are set the ASSEMBLY copy is latched into the ACTIVE copy.
+ * Latching happens mmediately if the display controller is in STOP mode or
  * on the next frame boundary otherwise.
  *
- * Triple-buffered रेजिस्टरs have three copies: ASSEMBLY, ARM and ACTIVE. The
- * ASSEMBLY copy is latched पूर्णांकo the ARM copy immediately after *_UPDATE bits
+ * Triple-buffered registers have three copies: ASSEMBLY, ARM and ACTIVE. The
+ * ASSEMBLY copy is latched into the ARM copy immediately after *_UPDATE bits
  * are written. When the *_ACT_REQ bits are written, the ARM copy is latched
- * पूर्णांकo the ACTIVE copy, either immediately अगर the display controller is in
+ * into the ACTIVE copy, either immediately if the display controller is in
  * STOP mode, or at the next frame boundary otherwise.
  */
-व्योम tegra_dc_commit(काष्ठा tegra_dc *dc)
-अणु
-	tegra_dc_ग_लिखोl(dc, GENERAL_ACT_REQ << 8, DC_CMD_STATE_CONTROL);
-	tegra_dc_ग_लिखोl(dc, GENERAL_ACT_REQ, DC_CMD_STATE_CONTROL);
-पूर्ण
+void tegra_dc_commit(struct tegra_dc *dc)
+{
+	tegra_dc_writel(dc, GENERAL_ACT_REQ << 8, DC_CMD_STATE_CONTROL);
+	tegra_dc_writel(dc, GENERAL_ACT_REQ, DC_CMD_STATE_CONTROL);
+}
 
-अटल अंतरभूत u32 compute_dda_inc(अचिन्हित पूर्णांक in, अचिन्हित पूर्णांक out, bool v,
-				  अचिन्हित पूर्णांक bpp)
-अणु
+static inline u32 compute_dda_inc(unsigned int in, unsigned int out, bool v,
+				  unsigned int bpp)
+{
 	fixed20_12 outf = dfixed_init(out);
 	fixed20_12 inf = dfixed_init(in);
 	u32 dda_inc;
-	पूर्णांक max;
+	int max;
 
-	अगर (v)
+	if (v)
 		max = 15;
-	अन्यथा अणु
-		चयन (bpp) अणु
-		हाल 2:
+	else {
+		switch (bpp) {
+		case 2:
 			max = 8;
-			अवरोध;
+			break;
 
-		शेष:
+		default:
 			WARN_ON_ONCE(1);
 			fallthrough;
-		हाल 4:
+		case 4:
 			max = 4;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	outf.full = max_t(u32, outf.full - dfixed_स्थिर(1), dfixed_स्थिर(1));
-	inf.full -= dfixed_स्थिर(1);
+	outf.full = max_t(u32, outf.full - dfixed_const(1), dfixed_const(1));
+	inf.full -= dfixed_const(1);
 
-	dda_inc = dfixed_भाग(inf, outf);
-	dda_inc = min_t(u32, dda_inc, dfixed_स्थिर(max));
+	dda_inc = dfixed_div(inf, outf);
+	dda_inc = min_t(u32, dda_inc, dfixed_const(max));
 
-	वापस dda_inc;
-पूर्ण
+	return dda_inc;
+}
 
-अटल अंतरभूत u32 compute_initial_dda(अचिन्हित पूर्णांक in)
-अणु
+static inline u32 compute_initial_dda(unsigned int in)
+{
 	fixed20_12 inf = dfixed_init(in);
-	वापस dfixed_frac(inf);
-पूर्ण
+	return dfixed_frac(inf);
+}
 
-अटल व्योम tegra_plane_setup_blending_legacy(काष्ठा tegra_plane *plane)
-अणु
-	u32 background[3] = अणु
+static void tegra_plane_setup_blending_legacy(struct tegra_plane *plane)
+{
+	u32 background[3] = {
 		BLEND_WEIGHT1(0) | BLEND_WEIGHT0(0) | BLEND_COLOR_KEY_NONE,
 		BLEND_WEIGHT1(0) | BLEND_WEIGHT0(0) | BLEND_COLOR_KEY_NONE,
 		BLEND_WEIGHT1(0) | BLEND_WEIGHT0(0) | BLEND_COLOR_KEY_NONE,
-	पूर्ण;
-	u32 क्रमeground = BLEND_WEIGHT1(255) | BLEND_WEIGHT0(255) |
+	};
+	u32 foreground = BLEND_WEIGHT1(255) | BLEND_WEIGHT0(255) |
 			 BLEND_COLOR_KEY_NONE;
 	u32 blendnokey = BLEND_WEIGHT1(255) | BLEND_WEIGHT0(255);
-	काष्ठा tegra_plane_state *state;
+	struct tegra_plane_state *state;
 	u32 blending[2];
-	अचिन्हित पूर्णांक i;
+	unsigned int i;
 
-	/* disable blending क्रम non-overlapping हाल */
-	tegra_plane_ग_लिखोl(plane, blendnokey, DC_WIN_BLEND_NOKEY);
-	tegra_plane_ग_लिखोl(plane, क्रमeground, DC_WIN_BLEND_1WIN);
+	/* disable blending for non-overlapping case */
+	tegra_plane_writel(plane, blendnokey, DC_WIN_BLEND_NOKEY);
+	tegra_plane_writel(plane, foreground, DC_WIN_BLEND_1WIN);
 
 	state = to_tegra_plane_state(plane->base.state);
 
-	अगर (state->opaque) अणु
+	if (state->opaque) {
 		/*
 		 * Since custom fix-weight blending isn't utilized and weight
-		 * of top winकरोw is set to max, we can enक्रमce dependent
-		 * blending which in this हाल results in transparent bottom
-		 * winकरोw अगर top winकरोw is opaque and अगर top winकरोw enables
-		 * alpha blending, then bottom winकरोw is getting alpha value
+		 * of top window is set to max, we can enforce dependent
+		 * blending which in this case results in transparent bottom
+		 * window if top window is opaque and if top window enables
+		 * alpha blending, then bottom window is getting alpha value
 		 * of 1 minus the sum of alpha components of the overlapping
 		 * plane.
 		 */
@@ -192,361 +191,361 @@ bool tegra_dc_has_output(काष्ठा tegra_dc *dc, काष्ठा dev
 		background[1] |= BLEND_CONTROL_DEPENDENT;
 
 		/*
-		 * The region where three winकरोws overlap is the पूर्णांकersection
-		 * of the two regions where two winकरोws overlap. It contributes
-		 * to the area अगर all of the winकरोws on top of it have an alpha
+		 * The region where three windows overlap is the intersection
+		 * of the two regions where two windows overlap. It contributes
+		 * to the area if all of the windows on top of it have an alpha
 		 * component.
 		 */
-		चयन (state->base.normalized_zpos) अणु
-		हाल 0:
-			अगर (state->blending[0].alpha &&
+		switch (state->base.normalized_zpos) {
+		case 0:
+			if (state->blending[0].alpha &&
 			    state->blending[1].alpha)
 				background[2] |= BLEND_CONTROL_DEPENDENT;
-			अवरोध;
+			break;
 
-		हाल 1:
+		case 1:
 			background[2] |= BLEND_CONTROL_DEPENDENT;
-			अवरोध;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			break;
+		}
+	} else {
 		/*
-		 * Enable alpha blending अगर pixel क्रमmat has an alpha
+		 * Enable alpha blending if pixel format has an alpha
 		 * component.
 		 */
-		क्रमeground |= BLEND_CONTROL_ALPHA;
+		foreground |= BLEND_CONTROL_ALPHA;
 
 		/*
-		 * If any of the winकरोws on top of this winकरोw is opaque, it
-		 * will completely conceal this winकरोw within that area. If
-		 * top winकरोw has an alpha component, it is blended over the
-		 * bottom winकरोw.
+		 * If any of the windows on top of this window is opaque, it
+		 * will completely conceal this window within that area. If
+		 * top window has an alpha component, it is blended over the
+		 * bottom window.
 		 */
-		क्रम (i = 0; i < 2; i++) अणु
-			अगर (state->blending[i].alpha &&
+		for (i = 0; i < 2; i++) {
+			if (state->blending[i].alpha &&
 			    state->blending[i].top)
 				background[i] |= BLEND_CONTROL_DEPENDENT;
-		पूर्ण
+		}
 
-		चयन (state->base.normalized_zpos) अणु
-		हाल 0:
-			अगर (state->blending[0].alpha &&
+		switch (state->base.normalized_zpos) {
+		case 0:
+			if (state->blending[0].alpha &&
 			    state->blending[1].alpha)
 				background[2] |= BLEND_CONTROL_DEPENDENT;
-			अवरोध;
+			break;
 
-		हाल 1:
+		case 1:
 			/*
-			 * When both middle and topmost winकरोws have an alpha,
-			 * these winकरोws a mixed together and then the result
-			 * is blended over the bottom winकरोw.
+			 * When both middle and topmost windows have an alpha,
+			 * these windows a mixed together and then the result
+			 * is blended over the bottom window.
 			 */
-			अगर (state->blending[0].alpha &&
+			if (state->blending[0].alpha &&
 			    state->blending[0].top)
 				background[2] |= BLEND_CONTROL_ALPHA;
 
-			अगर (state->blending[1].alpha &&
+			if (state->blending[1].alpha &&
 			    state->blending[1].top)
 				background[2] |= BLEND_CONTROL_ALPHA;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	चयन (state->base.normalized_zpos) अणु
-	हाल 0:
-		tegra_plane_ग_लिखोl(plane, background[0], DC_WIN_BLEND_2WIN_X);
-		tegra_plane_ग_लिखोl(plane, background[1], DC_WIN_BLEND_2WIN_Y);
-		tegra_plane_ग_लिखोl(plane, background[2], DC_WIN_BLEND_3WIN_XY);
-		अवरोध;
+	switch (state->base.normalized_zpos) {
+	case 0:
+		tegra_plane_writel(plane, background[0], DC_WIN_BLEND_2WIN_X);
+		tegra_plane_writel(plane, background[1], DC_WIN_BLEND_2WIN_Y);
+		tegra_plane_writel(plane, background[2], DC_WIN_BLEND_3WIN_XY);
+		break;
 
-	हाल 1:
+	case 1:
 		/*
-		 * If winकरोw B / C is topmost, then X / Y रेजिस्टरs are
+		 * If window B / C is topmost, then X / Y registers are
 		 * matching the order of blending[...] state indices,
 		 * otherwise a swap is required.
 		 */
-		अगर (!state->blending[0].top && state->blending[1].top) अणु
-			blending[0] = क्रमeground;
+		if (!state->blending[0].top && state->blending[1].top) {
+			blending[0] = foreground;
 			blending[1] = background[1];
-		पूर्ण अन्यथा अणु
+		} else {
 			blending[0] = background[0];
-			blending[1] = क्रमeground;
-		पूर्ण
+			blending[1] = foreground;
+		}
 
-		tegra_plane_ग_लिखोl(plane, blending[0], DC_WIN_BLEND_2WIN_X);
-		tegra_plane_ग_लिखोl(plane, blending[1], DC_WIN_BLEND_2WIN_Y);
-		tegra_plane_ग_लिखोl(plane, background[2], DC_WIN_BLEND_3WIN_XY);
-		अवरोध;
+		tegra_plane_writel(plane, blending[0], DC_WIN_BLEND_2WIN_X);
+		tegra_plane_writel(plane, blending[1], DC_WIN_BLEND_2WIN_Y);
+		tegra_plane_writel(plane, background[2], DC_WIN_BLEND_3WIN_XY);
+		break;
 
-	हाल 2:
-		tegra_plane_ग_लिखोl(plane, क्रमeground, DC_WIN_BLEND_2WIN_X);
-		tegra_plane_ग_लिखोl(plane, क्रमeground, DC_WIN_BLEND_2WIN_Y);
-		tegra_plane_ग_लिखोl(plane, क्रमeground, DC_WIN_BLEND_3WIN_XY);
-		अवरोध;
-	पूर्ण
-पूर्ण
+	case 2:
+		tegra_plane_writel(plane, foreground, DC_WIN_BLEND_2WIN_X);
+		tegra_plane_writel(plane, foreground, DC_WIN_BLEND_2WIN_Y);
+		tegra_plane_writel(plane, foreground, DC_WIN_BLEND_3WIN_XY);
+		break;
+	}
+}
 
-अटल व्योम tegra_plane_setup_blending(काष्ठा tegra_plane *plane,
-				       स्थिर काष्ठा tegra_dc_winकरोw *winकरोw)
-अणु
+static void tegra_plane_setup_blending(struct tegra_plane *plane,
+				       const struct tegra_dc_window *window)
+{
 	u32 value;
 
 	value = BLEND_FACTOR_DST_ALPHA_ZERO | BLEND_FACTOR_SRC_ALPHA_K2 |
 		BLEND_FACTOR_DST_COLOR_NEG_K1_TIMES_SRC |
 		BLEND_FACTOR_SRC_COLOR_K1_TIMES_SRC;
-	tegra_plane_ग_लिखोl(plane, value, DC_WIN_BLEND_MATCH_SELECT);
+	tegra_plane_writel(plane, value, DC_WIN_BLEND_MATCH_SELECT);
 
 	value = BLEND_FACTOR_DST_ALPHA_ZERO | BLEND_FACTOR_SRC_ALPHA_K2 |
 		BLEND_FACTOR_DST_COLOR_NEG_K1_TIMES_SRC |
 		BLEND_FACTOR_SRC_COLOR_K1_TIMES_SRC;
-	tegra_plane_ग_लिखोl(plane, value, DC_WIN_BLEND_NOMATCH_SELECT);
+	tegra_plane_writel(plane, value, DC_WIN_BLEND_NOMATCH_SELECT);
 
-	value = K2(255) | K1(255) | WINDOW_LAYER_DEPTH(255 - winकरोw->zpos);
-	tegra_plane_ग_लिखोl(plane, value, DC_WIN_BLEND_LAYER_CONTROL);
-पूर्ण
+	value = K2(255) | K1(255) | WINDOW_LAYER_DEPTH(255 - window->zpos);
+	tegra_plane_writel(plane, value, DC_WIN_BLEND_LAYER_CONTROL);
+}
 
-अटल bool
-tegra_plane_use_horizontal_filtering(काष्ठा tegra_plane *plane,
-				     स्थिर काष्ठा tegra_dc_winकरोw *winकरोw)
-अणु
-	काष्ठा tegra_dc *dc = plane->dc;
+static bool
+tegra_plane_use_horizontal_filtering(struct tegra_plane *plane,
+				     const struct tegra_dc_window *window)
+{
+	struct tegra_dc *dc = plane->dc;
 
-	अगर (winकरोw->src.w == winकरोw->dst.w)
-		वापस false;
+	if (window->src.w == window->dst.w)
+		return false;
 
-	अगर (plane->index == 0 && dc->soc->has_win_a_without_filters)
-		वापस false;
+	if (plane->index == 0 && dc->soc->has_win_a_without_filters)
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool
-tegra_plane_use_vertical_filtering(काष्ठा tegra_plane *plane,
-				   स्थिर काष्ठा tegra_dc_winकरोw *winकरोw)
-अणु
-	काष्ठा tegra_dc *dc = plane->dc;
+static bool
+tegra_plane_use_vertical_filtering(struct tegra_plane *plane,
+				   const struct tegra_dc_window *window)
+{
+	struct tegra_dc *dc = plane->dc;
 
-	अगर (winकरोw->src.h == winकरोw->dst.h)
-		वापस false;
+	if (window->src.h == window->dst.h)
+		return false;
 
-	अगर (plane->index == 0 && dc->soc->has_win_a_without_filters)
-		वापस false;
+	if (plane->index == 0 && dc->soc->has_win_a_without_filters)
+		return false;
 
-	अगर (plane->index == 2 && dc->soc->has_win_c_without_vert_filter)
-		वापस false;
+	if (plane->index == 2 && dc->soc->has_win_c_without_vert_filter)
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल व्योम tegra_dc_setup_winकरोw(काष्ठा tegra_plane *plane,
-				  स्थिर काष्ठा tegra_dc_winकरोw *winकरोw)
-अणु
-	अचिन्हित h_offset, v_offset, h_size, v_size, h_dda, v_dda, bpp;
-	काष्ठा tegra_dc *dc = plane->dc;
+static void tegra_dc_setup_window(struct tegra_plane *plane,
+				  const struct tegra_dc_window *window)
+{
+	unsigned h_offset, v_offset, h_size, v_size, h_dda, v_dda, bpp;
+	struct tegra_dc *dc = plane->dc;
 	bool yuv, planar;
 	u32 value;
 
 	/*
-	 * For YUV planar modes, the number of bytes per pixel takes पूर्णांकo
-	 * account only the luma component and thereक्रमe is 1.
+	 * For YUV planar modes, the number of bytes per pixel takes into
+	 * account only the luma component and therefore is 1.
 	 */
-	yuv = tegra_plane_क्रमmat_is_yuv(winकरोw->क्रमmat, &planar);
-	अगर (!yuv)
-		bpp = winकरोw->bits_per_pixel / 8;
-	अन्यथा
+	yuv = tegra_plane_format_is_yuv(window->format, &planar);
+	if (!yuv)
+		bpp = window->bits_per_pixel / 8;
+	else
 		bpp = planar ? 1 : 2;
 
-	tegra_plane_ग_लिखोl(plane, winकरोw->क्रमmat, DC_WIN_COLOR_DEPTH);
-	tegra_plane_ग_लिखोl(plane, winकरोw->swap, DC_WIN_BYTE_SWAP);
+	tegra_plane_writel(plane, window->format, DC_WIN_COLOR_DEPTH);
+	tegra_plane_writel(plane, window->swap, DC_WIN_BYTE_SWAP);
 
-	value = V_POSITION(winकरोw->dst.y) | H_POSITION(winकरोw->dst.x);
-	tegra_plane_ग_लिखोl(plane, value, DC_WIN_POSITION);
+	value = V_POSITION(window->dst.y) | H_POSITION(window->dst.x);
+	tegra_plane_writel(plane, value, DC_WIN_POSITION);
 
-	value = V_SIZE(winकरोw->dst.h) | H_SIZE(winकरोw->dst.w);
-	tegra_plane_ग_लिखोl(plane, value, DC_WIN_SIZE);
+	value = V_SIZE(window->dst.h) | H_SIZE(window->dst.w);
+	tegra_plane_writel(plane, value, DC_WIN_SIZE);
 
-	h_offset = winकरोw->src.x * bpp;
-	v_offset = winकरोw->src.y;
-	h_size = winकरोw->src.w * bpp;
-	v_size = winकरोw->src.h;
+	h_offset = window->src.x * bpp;
+	v_offset = window->src.y;
+	h_size = window->src.w * bpp;
+	v_size = window->src.h;
 
-	अगर (winकरोw->reflect_x)
-		h_offset += (winकरोw->src.w - 1) * bpp;
+	if (window->reflect_x)
+		h_offset += (window->src.w - 1) * bpp;
 
-	अगर (winकरोw->reflect_y)
-		v_offset += winकरोw->src.h - 1;
+	if (window->reflect_y)
+		v_offset += window->src.h - 1;
 
 	value = V_PRESCALED_SIZE(v_size) | H_PRESCALED_SIZE(h_size);
-	tegra_plane_ग_लिखोl(plane, value, DC_WIN_PRESCALED_SIZE);
+	tegra_plane_writel(plane, value, DC_WIN_PRESCALED_SIZE);
 
 	/*
-	 * For DDA computations the number of bytes per pixel क्रम YUV planar
-	 * modes needs to take पूर्णांकo account all Y, U and V components.
+	 * For DDA computations the number of bytes per pixel for YUV planar
+	 * modes needs to take into account all Y, U and V components.
 	 */
-	अगर (yuv && planar)
+	if (yuv && planar)
 		bpp = 2;
 
-	h_dda = compute_dda_inc(winकरोw->src.w, winकरोw->dst.w, false, bpp);
-	v_dda = compute_dda_inc(winकरोw->src.h, winकरोw->dst.h, true, bpp);
+	h_dda = compute_dda_inc(window->src.w, window->dst.w, false, bpp);
+	v_dda = compute_dda_inc(window->src.h, window->dst.h, true, bpp);
 
 	value = V_DDA_INC(v_dda) | H_DDA_INC(h_dda);
-	tegra_plane_ग_लिखोl(plane, value, DC_WIN_DDA_INC);
+	tegra_plane_writel(plane, value, DC_WIN_DDA_INC);
 
-	h_dda = compute_initial_dda(winकरोw->src.x);
-	v_dda = compute_initial_dda(winकरोw->src.y);
+	h_dda = compute_initial_dda(window->src.x);
+	v_dda = compute_initial_dda(window->src.y);
 
-	tegra_plane_ग_लिखोl(plane, h_dda, DC_WIN_H_INITIAL_DDA);
-	tegra_plane_ग_लिखोl(plane, v_dda, DC_WIN_V_INITIAL_DDA);
+	tegra_plane_writel(plane, h_dda, DC_WIN_H_INITIAL_DDA);
+	tegra_plane_writel(plane, v_dda, DC_WIN_V_INITIAL_DDA);
 
-	tegra_plane_ग_लिखोl(plane, 0, DC_WIN_UV_BUF_STRIDE);
-	tegra_plane_ग_लिखोl(plane, 0, DC_WIN_BUF_STRIDE);
+	tegra_plane_writel(plane, 0, DC_WIN_UV_BUF_STRIDE);
+	tegra_plane_writel(plane, 0, DC_WIN_BUF_STRIDE);
 
-	tegra_plane_ग_लिखोl(plane, winकरोw->base[0], DC_WINBUF_START_ADDR);
+	tegra_plane_writel(plane, window->base[0], DC_WINBUF_START_ADDR);
 
-	अगर (yuv && planar) अणु
-		tegra_plane_ग_लिखोl(plane, winकरोw->base[1], DC_WINBUF_START_ADDR_U);
-		tegra_plane_ग_लिखोl(plane, winकरोw->base[2], DC_WINBUF_START_ADDR_V);
-		value = winकरोw->stride[1] << 16 | winकरोw->stride[0];
-		tegra_plane_ग_लिखोl(plane, value, DC_WIN_LINE_STRIDE);
-	पूर्ण अन्यथा अणु
-		tegra_plane_ग_लिखोl(plane, winकरोw->stride[0], DC_WIN_LINE_STRIDE);
-	पूर्ण
+	if (yuv && planar) {
+		tegra_plane_writel(plane, window->base[1], DC_WINBUF_START_ADDR_U);
+		tegra_plane_writel(plane, window->base[2], DC_WINBUF_START_ADDR_V);
+		value = window->stride[1] << 16 | window->stride[0];
+		tegra_plane_writel(plane, value, DC_WIN_LINE_STRIDE);
+	} else {
+		tegra_plane_writel(plane, window->stride[0], DC_WIN_LINE_STRIDE);
+	}
 
-	tegra_plane_ग_लिखोl(plane, h_offset, DC_WINBUF_ADDR_H_OFFSET);
-	tegra_plane_ग_लिखोl(plane, v_offset, DC_WINBUF_ADDR_V_OFFSET);
+	tegra_plane_writel(plane, h_offset, DC_WINBUF_ADDR_H_OFFSET);
+	tegra_plane_writel(plane, v_offset, DC_WINBUF_ADDR_V_OFFSET);
 
-	अगर (dc->soc->supports_block_linear) अणु
-		अचिन्हित दीर्घ height = winकरोw->tiling.value;
+	if (dc->soc->supports_block_linear) {
+		unsigned long height = window->tiling.value;
 
-		चयन (winकरोw->tiling.mode) अणु
-		हाल TEGRA_BO_TILING_MODE_PITCH:
+		switch (window->tiling.mode) {
+		case TEGRA_BO_TILING_MODE_PITCH:
 			value = DC_WINBUF_SURFACE_KIND_PITCH;
-			अवरोध;
+			break;
 
-		हाल TEGRA_BO_TILING_MODE_TILED:
+		case TEGRA_BO_TILING_MODE_TILED:
 			value = DC_WINBUF_SURFACE_KIND_TILED;
-			अवरोध;
+			break;
 
-		हाल TEGRA_BO_TILING_MODE_BLOCK:
+		case TEGRA_BO_TILING_MODE_BLOCK:
 			value = DC_WINBUF_SURFACE_KIND_BLOCK_HEIGHT(height) |
 				DC_WINBUF_SURFACE_KIND_BLOCK;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		tegra_plane_ग_लिखोl(plane, value, DC_WINBUF_SURFACE_KIND);
-	पूर्ण अन्यथा अणु
-		चयन (winकरोw->tiling.mode) अणु
-		हाल TEGRA_BO_TILING_MODE_PITCH:
+		tegra_plane_writel(plane, value, DC_WINBUF_SURFACE_KIND);
+	} else {
+		switch (window->tiling.mode) {
+		case TEGRA_BO_TILING_MODE_PITCH:
 			value = DC_WIN_BUFFER_ADDR_MODE_LINEAR_UV |
 				DC_WIN_BUFFER_ADDR_MODE_LINEAR;
-			अवरोध;
+			break;
 
-		हाल TEGRA_BO_TILING_MODE_TILED:
+		case TEGRA_BO_TILING_MODE_TILED:
 			value = DC_WIN_BUFFER_ADDR_MODE_TILE_UV |
 				DC_WIN_BUFFER_ADDR_MODE_TILE;
-			अवरोध;
+			break;
 
-		हाल TEGRA_BO_TILING_MODE_BLOCK:
+		case TEGRA_BO_TILING_MODE_BLOCK:
 			/*
 			 * No need to handle this here because ->atomic_check
-			 * will alपढ़ोy have filtered it out.
+			 * will already have filtered it out.
 			 */
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		tegra_plane_ग_लिखोl(plane, value, DC_WIN_BUFFER_ADDR_MODE);
-	पूर्ण
+		tegra_plane_writel(plane, value, DC_WIN_BUFFER_ADDR_MODE);
+	}
 
 	value = WIN_ENABLE;
 
-	अगर (yuv) अणु
-		/* setup शेष colorspace conversion coefficients */
-		tegra_plane_ग_लिखोl(plane, 0x00f0, DC_WIN_CSC_YOF);
-		tegra_plane_ग_लिखोl(plane, 0x012a, DC_WIN_CSC_KYRGB);
-		tegra_plane_ग_लिखोl(plane, 0x0000, DC_WIN_CSC_KUR);
-		tegra_plane_ग_लिखोl(plane, 0x0198, DC_WIN_CSC_KVR);
-		tegra_plane_ग_लिखोl(plane, 0x039b, DC_WIN_CSC_KUG);
-		tegra_plane_ग_लिखोl(plane, 0x032f, DC_WIN_CSC_KVG);
-		tegra_plane_ग_लिखोl(plane, 0x0204, DC_WIN_CSC_KUB);
-		tegra_plane_ग_लिखोl(plane, 0x0000, DC_WIN_CSC_KVB);
+	if (yuv) {
+		/* setup default colorspace conversion coefficients */
+		tegra_plane_writel(plane, 0x00f0, DC_WIN_CSC_YOF);
+		tegra_plane_writel(plane, 0x012a, DC_WIN_CSC_KYRGB);
+		tegra_plane_writel(plane, 0x0000, DC_WIN_CSC_KUR);
+		tegra_plane_writel(plane, 0x0198, DC_WIN_CSC_KVR);
+		tegra_plane_writel(plane, 0x039b, DC_WIN_CSC_KUG);
+		tegra_plane_writel(plane, 0x032f, DC_WIN_CSC_KVG);
+		tegra_plane_writel(plane, 0x0204, DC_WIN_CSC_KUB);
+		tegra_plane_writel(plane, 0x0000, DC_WIN_CSC_KVB);
 
 		value |= CSC_ENABLE;
-	पूर्ण अन्यथा अगर (winकरोw->bits_per_pixel < 24) अणु
+	} else if (window->bits_per_pixel < 24) {
 		value |= COLOR_EXPAND;
-	पूर्ण
+	}
 
-	अगर (winकरोw->reflect_x)
-		value |= H_सूचीECTION;
+	if (window->reflect_x)
+		value |= H_DIRECTION;
 
-	अगर (winकरोw->reflect_y)
-		value |= V_सूचीECTION;
+	if (window->reflect_y)
+		value |= V_DIRECTION;
 
-	अगर (tegra_plane_use_horizontal_filtering(plane, winकरोw)) अणु
+	if (tegra_plane_use_horizontal_filtering(plane, window)) {
 		/*
 		 * Enable horizontal 6-tap filter and set filtering
-		 * coefficients to the शेष values defined in TRM.
+		 * coefficients to the default values defined in TRM.
 		 */
-		tegra_plane_ग_लिखोl(plane, 0x00008000, DC_WIN_H_FILTER_P(0));
-		tegra_plane_ग_लिखोl(plane, 0x3e087ce1, DC_WIN_H_FILTER_P(1));
-		tegra_plane_ग_लिखोl(plane, 0x3b117ac1, DC_WIN_H_FILTER_P(2));
-		tegra_plane_ग_लिखोl(plane, 0x591b73aa, DC_WIN_H_FILTER_P(3));
-		tegra_plane_ग_लिखोl(plane, 0x57256d9a, DC_WIN_H_FILTER_P(4));
-		tegra_plane_ग_लिखोl(plane, 0x552f668b, DC_WIN_H_FILTER_P(5));
-		tegra_plane_ग_लिखोl(plane, 0x73385e8b, DC_WIN_H_FILTER_P(6));
-		tegra_plane_ग_लिखोl(plane, 0x72435583, DC_WIN_H_FILTER_P(7));
-		tegra_plane_ग_लिखोl(plane, 0x714c4c8b, DC_WIN_H_FILTER_P(8));
-		tegra_plane_ग_लिखोl(plane, 0x70554393, DC_WIN_H_FILTER_P(9));
-		tegra_plane_ग_लिखोl(plane, 0x715e389b, DC_WIN_H_FILTER_P(10));
-		tegra_plane_ग_लिखोl(plane, 0x71662faa, DC_WIN_H_FILTER_P(11));
-		tegra_plane_ग_लिखोl(plane, 0x536d25ba, DC_WIN_H_FILTER_P(12));
-		tegra_plane_ग_लिखोl(plane, 0x55731bca, DC_WIN_H_FILTER_P(13));
-		tegra_plane_ग_लिखोl(plane, 0x387a11d9, DC_WIN_H_FILTER_P(14));
-		tegra_plane_ग_लिखोl(plane, 0x3c7c08f1, DC_WIN_H_FILTER_P(15));
+		tegra_plane_writel(plane, 0x00008000, DC_WIN_H_FILTER_P(0));
+		tegra_plane_writel(plane, 0x3e087ce1, DC_WIN_H_FILTER_P(1));
+		tegra_plane_writel(plane, 0x3b117ac1, DC_WIN_H_FILTER_P(2));
+		tegra_plane_writel(plane, 0x591b73aa, DC_WIN_H_FILTER_P(3));
+		tegra_plane_writel(plane, 0x57256d9a, DC_WIN_H_FILTER_P(4));
+		tegra_plane_writel(plane, 0x552f668b, DC_WIN_H_FILTER_P(5));
+		tegra_plane_writel(plane, 0x73385e8b, DC_WIN_H_FILTER_P(6));
+		tegra_plane_writel(plane, 0x72435583, DC_WIN_H_FILTER_P(7));
+		tegra_plane_writel(plane, 0x714c4c8b, DC_WIN_H_FILTER_P(8));
+		tegra_plane_writel(plane, 0x70554393, DC_WIN_H_FILTER_P(9));
+		tegra_plane_writel(plane, 0x715e389b, DC_WIN_H_FILTER_P(10));
+		tegra_plane_writel(plane, 0x71662faa, DC_WIN_H_FILTER_P(11));
+		tegra_plane_writel(plane, 0x536d25ba, DC_WIN_H_FILTER_P(12));
+		tegra_plane_writel(plane, 0x55731bca, DC_WIN_H_FILTER_P(13));
+		tegra_plane_writel(plane, 0x387a11d9, DC_WIN_H_FILTER_P(14));
+		tegra_plane_writel(plane, 0x3c7c08f1, DC_WIN_H_FILTER_P(15));
 
 		value |= H_FILTER;
-	पूर्ण
+	}
 
-	अगर (tegra_plane_use_vertical_filtering(plane, winकरोw)) अणु
-		अचिन्हित पूर्णांक i, k;
+	if (tegra_plane_use_vertical_filtering(plane, window)) {
+		unsigned int i, k;
 
 		/*
 		 * Enable vertical 2-tap filter and set filtering
-		 * coefficients to the शेष values defined in TRM.
+		 * coefficients to the default values defined in TRM.
 		 */
-		क्रम (i = 0, k = 128; i < 16; i++, k -= 8)
-			tegra_plane_ग_लिखोl(plane, k, DC_WIN_V_FILTER_P(i));
+		for (i = 0, k = 128; i < 16; i++, k -= 8)
+			tegra_plane_writel(plane, k, DC_WIN_V_FILTER_P(i));
 
 		value |= V_FILTER;
-	पूर्ण
+	}
 
-	tegra_plane_ग_लिखोl(plane, value, DC_WIN_WIN_OPTIONS);
+	tegra_plane_writel(plane, value, DC_WIN_WIN_OPTIONS);
 
-	अगर (dc->soc->has_legacy_blending)
+	if (dc->soc->has_legacy_blending)
 		tegra_plane_setup_blending_legacy(plane);
-	अन्यथा
-		tegra_plane_setup_blending(plane, winकरोw);
-पूर्ण
+	else
+		tegra_plane_setup_blending(plane, window);
+}
 
-अटल स्थिर u32 tegra20_primary_क्रमmats[] = अणु
+static const u32 tegra20_primary_formats[] = {
 	DRM_FORMAT_ARGB4444,
 	DRM_FORMAT_ARGB1555,
 	DRM_FORMAT_RGB565,
 	DRM_FORMAT_RGBA5551,
 	DRM_FORMAT_ABGR8888,
 	DRM_FORMAT_ARGB8888,
-	/* non-native क्रमmats */
+	/* non-native formats */
 	DRM_FORMAT_XRGB1555,
 	DRM_FORMAT_RGBX5551,
 	DRM_FORMAT_XBGR8888,
 	DRM_FORMAT_XRGB8888,
-पूर्ण;
+};
 
-अटल स्थिर u64 tegra20_modअगरiers[] = अणु
+static const u64 tegra20_modifiers[] = {
 	DRM_FORMAT_MOD_LINEAR,
 	DRM_FORMAT_MOD_NVIDIA_TEGRA_TILED,
 	DRM_FORMAT_MOD_INVALID
-पूर्ण;
+};
 
-अटल स्थिर u32 tegra114_primary_क्रमmats[] = अणु
+static const u32 tegra114_primary_formats[] = {
 	DRM_FORMAT_ARGB4444,
 	DRM_FORMAT_ARGB1555,
 	DRM_FORMAT_RGB565,
@@ -566,9 +565,9 @@ tegra_plane_use_vertical_filtering(काष्ठा tegra_plane *plane,
 	DRM_FORMAT_RGBA8888,
 	DRM_FORMAT_XRGB8888,
 	DRM_FORMAT_XBGR8888,
-पूर्ण;
+};
 
-अटल स्थिर u32 tegra124_primary_क्रमmats[] = अणु
+static const u32 tegra124_primary_formats[] = {
 	DRM_FORMAT_ARGB4444,
 	DRM_FORMAT_ARGB1555,
 	DRM_FORMAT_RGB565,
@@ -591,9 +590,9 @@ tegra_plane_use_vertical_filtering(काष्ठा tegra_plane *plane,
 	/* new on Tegra124 */
 	DRM_FORMAT_RGBX8888,
 	DRM_FORMAT_BGRX8888,
-पूर्ण;
+};
 
-अटल स्थिर u64 tegra124_modअगरiers[] = अणु
+static const u64 tegra124_modifiers[] = {
 	DRM_FORMAT_MOD_LINEAR,
 	DRM_FORMAT_MOD_NVIDIA_16BX2_BLOCK(0),
 	DRM_FORMAT_MOD_NVIDIA_16BX2_BLOCK(1),
@@ -602,220 +601,220 @@ tegra_plane_use_vertical_filtering(काष्ठा tegra_plane *plane,
 	DRM_FORMAT_MOD_NVIDIA_16BX2_BLOCK(4),
 	DRM_FORMAT_MOD_NVIDIA_16BX2_BLOCK(5),
 	DRM_FORMAT_MOD_INVALID
-पूर्ण;
+};
 
-अटल पूर्णांक tegra_plane_atomic_check(काष्ठा drm_plane *plane,
-				    काष्ठा drm_atomic_state *state)
-अणु
-	काष्ठा drm_plane_state *new_plane_state = drm_atomic_get_new_plane_state(state,
+static int tegra_plane_atomic_check(struct drm_plane *plane,
+				    struct drm_atomic_state *state)
+{
+	struct drm_plane_state *new_plane_state = drm_atomic_get_new_plane_state(state,
 										 plane);
-	काष्ठा tegra_plane_state *plane_state = to_tegra_plane_state(new_plane_state);
-	अचिन्हित पूर्णांक supported_rotation = DRM_MODE_ROTATE_0 |
+	struct tegra_plane_state *plane_state = to_tegra_plane_state(new_plane_state);
+	unsigned int supported_rotation = DRM_MODE_ROTATE_0 |
 					  DRM_MODE_REFLECT_X |
 					  DRM_MODE_REFLECT_Y;
-	अचिन्हित पूर्णांक rotation = new_plane_state->rotation;
-	काष्ठा tegra_bo_tiling *tiling = &plane_state->tiling;
-	काष्ठा tegra_plane *tegra = to_tegra_plane(plane);
-	काष्ठा tegra_dc *dc = to_tegra_dc(new_plane_state->crtc);
-	पूर्णांक err;
+	unsigned int rotation = new_plane_state->rotation;
+	struct tegra_bo_tiling *tiling = &plane_state->tiling;
+	struct tegra_plane *tegra = to_tegra_plane(plane);
+	struct tegra_dc *dc = to_tegra_dc(new_plane_state->crtc);
+	int err;
 
-	/* no need क्रम further checks अगर the plane is being disabled */
-	अगर (!new_plane_state->crtc)
-		वापस 0;
+	/* no need for further checks if the plane is being disabled */
+	if (!new_plane_state->crtc)
+		return 0;
 
-	err = tegra_plane_क्रमmat(new_plane_state->fb->क्रमmat->क्रमmat,
-				 &plane_state->क्रमmat,
+	err = tegra_plane_format(new_plane_state->fb->format->format,
+				 &plane_state->format,
 				 &plane_state->swap);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	/*
-	 * Tegra20 and Tegra30 are special हालs here because they support
-	 * only variants of specअगरic क्रमmats with an alpha component, but not
-	 * the corresponding opaque क्रमmats. However, the opaque क्रमmats can
-	 * be emulated by disabling alpha blending क्रम the plane.
+	 * Tegra20 and Tegra30 are special cases here because they support
+	 * only variants of specific formats with an alpha component, but not
+	 * the corresponding opaque formats. However, the opaque formats can
+	 * be emulated by disabling alpha blending for the plane.
 	 */
-	अगर (dc->soc->has_legacy_blending) अणु
+	if (dc->soc->has_legacy_blending) {
 		err = tegra_plane_setup_legacy_state(tegra, plane_state);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+		if (err < 0)
+			return err;
+	}
 
 	err = tegra_fb_get_tiling(new_plane_state->fb, tiling);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	अगर (tiling->mode == TEGRA_BO_TILING_MODE_BLOCK &&
-	    !dc->soc->supports_block_linear) अणु
+	if (tiling->mode == TEGRA_BO_TILING_MODE_BLOCK &&
+	    !dc->soc->supports_block_linear) {
 		DRM_ERROR("hardware doesn't support block linear mode\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/*
-	 * Older userspace used custom BO flag in order to specअगरy the Y
-	 * reflection, जबतक modern userspace uses the generic DRM rotation
+	 * Older userspace used custom BO flag in order to specify the Y
+	 * reflection, while modern userspace uses the generic DRM rotation
 	 * property in order to achieve the same result.  The legacy BO flag
 	 * duplicates the DRM rotation property when both are set.
 	 */
-	अगर (tegra_fb_is_bottom_up(new_plane_state->fb))
+	if (tegra_fb_is_bottom_up(new_plane_state->fb))
 		rotation |= DRM_MODE_REFLECT_Y;
 
-	rotation = drm_rotation_simplअगरy(rotation, supported_rotation);
+	rotation = drm_rotation_simplify(rotation, supported_rotation);
 
-	अगर (rotation & DRM_MODE_REFLECT_X)
+	if (rotation & DRM_MODE_REFLECT_X)
 		plane_state->reflect_x = true;
-	अन्यथा
+	else
 		plane_state->reflect_x = false;
 
-	अगर (rotation & DRM_MODE_REFLECT_Y)
+	if (rotation & DRM_MODE_REFLECT_Y)
 		plane_state->reflect_y = true;
-	अन्यथा
+	else
 		plane_state->reflect_y = false;
 
 	/*
-	 * Tegra करोesn't support dअगरferent strides क्रम U and V planes so we
-	 * error out अगर the user tries to display a framebuffer with such a
+	 * Tegra doesn't support different strides for U and V planes so we
+	 * error out if the user tries to display a framebuffer with such a
 	 * configuration.
 	 */
-	अगर (new_plane_state->fb->क्रमmat->num_planes > 2) अणु
-		अगर (new_plane_state->fb->pitches[2] != new_plane_state->fb->pitches[1]) अणु
+	if (new_plane_state->fb->format->num_planes > 2) {
+		if (new_plane_state->fb->pitches[2] != new_plane_state->fb->pitches[1]) {
 			DRM_ERROR("unsupported UV-plane configuration\n");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
 	err = tegra_plane_state_add(tegra, new_plane_state);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tegra_plane_atomic_disable(काष्ठा drm_plane *plane,
-				       काष्ठा drm_atomic_state *state)
-अणु
-	काष्ठा drm_plane_state *old_state = drm_atomic_get_old_plane_state(state,
+static void tegra_plane_atomic_disable(struct drm_plane *plane,
+				       struct drm_atomic_state *state)
+{
+	struct drm_plane_state *old_state = drm_atomic_get_old_plane_state(state,
 									   plane);
-	काष्ठा tegra_plane *p = to_tegra_plane(plane);
+	struct tegra_plane *p = to_tegra_plane(plane);
 	u32 value;
 
 	/* rien ne va plus */
-	अगर (!old_state || !old_state->crtc)
-		वापस;
+	if (!old_state || !old_state->crtc)
+		return;
 
-	value = tegra_plane_पढ़ोl(p, DC_WIN_WIN_OPTIONS);
+	value = tegra_plane_readl(p, DC_WIN_WIN_OPTIONS);
 	value &= ~WIN_ENABLE;
-	tegra_plane_ग_लिखोl(p, value, DC_WIN_WIN_OPTIONS);
-पूर्ण
+	tegra_plane_writel(p, value, DC_WIN_WIN_OPTIONS);
+}
 
-अटल व्योम tegra_plane_atomic_update(काष्ठा drm_plane *plane,
-				      काष्ठा drm_atomic_state *state)
-अणु
-	काष्ठा drm_plane_state *new_state = drm_atomic_get_new_plane_state(state,
+static void tegra_plane_atomic_update(struct drm_plane *plane,
+				      struct drm_atomic_state *state)
+{
+	struct drm_plane_state *new_state = drm_atomic_get_new_plane_state(state,
 									   plane);
-	काष्ठा tegra_plane_state *tegra_plane_state = to_tegra_plane_state(new_state);
-	काष्ठा drm_framebuffer *fb = new_state->fb;
-	काष्ठा tegra_plane *p = to_tegra_plane(plane);
-	काष्ठा tegra_dc_winकरोw winकरोw;
-	अचिन्हित पूर्णांक i;
+	struct tegra_plane_state *tegra_plane_state = to_tegra_plane_state(new_state);
+	struct drm_framebuffer *fb = new_state->fb;
+	struct tegra_plane *p = to_tegra_plane(plane);
+	struct tegra_dc_window window;
+	unsigned int i;
 
 	/* rien ne va plus */
-	अगर (!new_state->crtc || !new_state->fb)
-		वापस;
+	if (!new_state->crtc || !new_state->fb)
+		return;
 
-	अगर (!new_state->visible)
-		वापस tegra_plane_atomic_disable(plane, state);
+	if (!new_state->visible)
+		return tegra_plane_atomic_disable(plane, state);
 
-	स_रखो(&winकरोw, 0, माप(winकरोw));
-	winकरोw.src.x = new_state->src.x1 >> 16;
-	winकरोw.src.y = new_state->src.y1 >> 16;
-	winकरोw.src.w = drm_rect_width(&new_state->src) >> 16;
-	winकरोw.src.h = drm_rect_height(&new_state->src) >> 16;
-	winकरोw.dst.x = new_state->dst.x1;
-	winकरोw.dst.y = new_state->dst.y1;
-	winकरोw.dst.w = drm_rect_width(&new_state->dst);
-	winकरोw.dst.h = drm_rect_height(&new_state->dst);
-	winकरोw.bits_per_pixel = fb->क्रमmat->cpp[0] * 8;
-	winकरोw.reflect_x = tegra_plane_state->reflect_x;
-	winकरोw.reflect_y = tegra_plane_state->reflect_y;
+	memset(&window, 0, sizeof(window));
+	window.src.x = new_state->src.x1 >> 16;
+	window.src.y = new_state->src.y1 >> 16;
+	window.src.w = drm_rect_width(&new_state->src) >> 16;
+	window.src.h = drm_rect_height(&new_state->src) >> 16;
+	window.dst.x = new_state->dst.x1;
+	window.dst.y = new_state->dst.y1;
+	window.dst.w = drm_rect_width(&new_state->dst);
+	window.dst.h = drm_rect_height(&new_state->dst);
+	window.bits_per_pixel = fb->format->cpp[0] * 8;
+	window.reflect_x = tegra_plane_state->reflect_x;
+	window.reflect_y = tegra_plane_state->reflect_y;
 
 	/* copy from state */
-	winकरोw.zpos = new_state->normalized_zpos;
-	winकरोw.tiling = tegra_plane_state->tiling;
-	winकरोw.क्रमmat = tegra_plane_state->क्रमmat;
-	winकरोw.swap = tegra_plane_state->swap;
+	window.zpos = new_state->normalized_zpos;
+	window.tiling = tegra_plane_state->tiling;
+	window.format = tegra_plane_state->format;
+	window.swap = tegra_plane_state->swap;
 
-	क्रम (i = 0; i < fb->क्रमmat->num_planes; i++) अणु
-		winकरोw.base[i] = tegra_plane_state->iova[i] + fb->offsets[i];
+	for (i = 0; i < fb->format->num_planes; i++) {
+		window.base[i] = tegra_plane_state->iova[i] + fb->offsets[i];
 
 		/*
-		 * Tegra uses a shared stride क्रम UV planes. Framebuffers are
-		 * alपढ़ोy checked क्रम this in the tegra_plane_atomic_check()
+		 * Tegra uses a shared stride for UV planes. Framebuffers are
+		 * already checked for this in the tegra_plane_atomic_check()
 		 * function, so it's safe to ignore the V-plane pitch here.
 		 */
-		अगर (i < 2)
-			winकरोw.stride[i] = fb->pitches[i];
-	पूर्ण
+		if (i < 2)
+			window.stride[i] = fb->pitches[i];
+	}
 
-	tegra_dc_setup_winकरोw(p, &winकरोw);
-पूर्ण
+	tegra_dc_setup_window(p, &window);
+}
 
-अटल स्थिर काष्ठा drm_plane_helper_funcs tegra_plane_helper_funcs = अणु
+static const struct drm_plane_helper_funcs tegra_plane_helper_funcs = {
 	.prepare_fb = tegra_plane_prepare_fb,
 	.cleanup_fb = tegra_plane_cleanup_fb,
 	.atomic_check = tegra_plane_atomic_check,
 	.atomic_disable = tegra_plane_atomic_disable,
 	.atomic_update = tegra_plane_atomic_update,
-पूर्ण;
+};
 
-अटल अचिन्हित दीर्घ tegra_plane_get_possible_crtcs(काष्ठा drm_device *drm)
-अणु
+static unsigned long tegra_plane_get_possible_crtcs(struct drm_device *drm)
+{
 	/*
 	 * Ideally this would use drm_crtc_mask(), but that would require the
-	 * CRTC to alपढ़ोy be in the mode_config's list of CRTCs. However, it
+	 * CRTC to already be in the mode_config's list of CRTCs. However, it
 	 * will only be added to that list in the drm_crtc_init_with_planes()
 	 * (in tegra_dc_init()), which in turn requires registration of these
 	 * planes. So we have ourselves a nice little chicken and egg problem
 	 * here.
 	 *
 	 * We work around this by manually creating the mask from the number
-	 * of CRTCs that have been रेजिस्टरed, and should thereक्रमe always be
+	 * of CRTCs that have been registered, and should therefore always be
 	 * the same as drm_crtc_index() after registration.
 	 */
-	वापस 1 << drm->mode_config.num_crtc;
-पूर्ण
+	return 1 << drm->mode_config.num_crtc;
+}
 
-अटल काष्ठा drm_plane *tegra_primary_plane_create(काष्ठा drm_device *drm,
-						    काष्ठा tegra_dc *dc)
-अणु
-	अचिन्हित दीर्घ possible_crtcs = tegra_plane_get_possible_crtcs(drm);
-	क्रमागत drm_plane_type type = DRM_PLANE_TYPE_PRIMARY;
-	काष्ठा tegra_plane *plane;
-	अचिन्हित पूर्णांक num_क्रमmats;
-	स्थिर u64 *modअगरiers;
-	स्थिर u32 *क्रमmats;
-	पूर्णांक err;
+static struct drm_plane *tegra_primary_plane_create(struct drm_device *drm,
+						    struct tegra_dc *dc)
+{
+	unsigned long possible_crtcs = tegra_plane_get_possible_crtcs(drm);
+	enum drm_plane_type type = DRM_PLANE_TYPE_PRIMARY;
+	struct tegra_plane *plane;
+	unsigned int num_formats;
+	const u64 *modifiers;
+	const u32 *formats;
+	int err;
 
-	plane = kzalloc(माप(*plane), GFP_KERNEL);
-	अगर (!plane)
-		वापस ERR_PTR(-ENOMEM);
+	plane = kzalloc(sizeof(*plane), GFP_KERNEL);
+	if (!plane)
+		return ERR_PTR(-ENOMEM);
 
-	/* Always use winकरोw A as primary winकरोw */
+	/* Always use window A as primary window */
 	plane->offset = 0xa00;
 	plane->index = 0;
 	plane->dc = dc;
 
-	num_क्रमmats = dc->soc->num_primary_क्रमmats;
-	क्रमmats = dc->soc->primary_क्रमmats;
-	modअगरiers = dc->soc->modअगरiers;
+	num_formats = dc->soc->num_primary_formats;
+	formats = dc->soc->primary_formats;
+	modifiers = dc->soc->modifiers;
 
 	err = drm_universal_plane_init(drm, &plane->base, possible_crtcs,
-				       &tegra_plane_funcs, क्रमmats,
-				       num_क्रमmats, modअगरiers, type, शून्य);
-	अगर (err < 0) अणु
-		kमुक्त(plane);
-		वापस ERR_PTR(err);
-	पूर्ण
+				       &tegra_plane_funcs, formats,
+				       num_formats, modifiers, type, NULL);
+	if (err < 0) {
+		kfree(plane);
+		return ERR_PTR(err);
+	}
 
 	drm_plane_helper_add(&plane->base, &tegra_plane_helper_funcs);
 	drm_plane_create_zpos_property(&plane->base, plane->index, 0, 255);
@@ -826,246 +825,246 @@ tegra_plane_use_vertical_filtering(काष्ठा tegra_plane *plane,
 						 DRM_MODE_ROTATE_180 |
 						 DRM_MODE_REFLECT_X |
 						 DRM_MODE_REFLECT_Y);
-	अगर (err < 0)
+	if (err < 0)
 		dev_err(dc->dev, "failed to create rotation property: %d\n",
 			err);
 
-	वापस &plane->base;
-पूर्ण
+	return &plane->base;
+}
 
-अटल स्थिर u32 tegra_legacy_cursor_plane_क्रमmats[] = अणु
+static const u32 tegra_legacy_cursor_plane_formats[] = {
 	DRM_FORMAT_RGBA8888,
-पूर्ण;
+};
 
-अटल स्थिर u32 tegra_cursor_plane_क्रमmats[] = अणु
+static const u32 tegra_cursor_plane_formats[] = {
 	DRM_FORMAT_ARGB8888,
-पूर्ण;
+};
 
-अटल पूर्णांक tegra_cursor_atomic_check(काष्ठा drm_plane *plane,
-				     काष्ठा drm_atomic_state *state)
-अणु
-	काष्ठा drm_plane_state *new_plane_state = drm_atomic_get_new_plane_state(state,
+static int tegra_cursor_atomic_check(struct drm_plane *plane,
+				     struct drm_atomic_state *state)
+{
+	struct drm_plane_state *new_plane_state = drm_atomic_get_new_plane_state(state,
 										 plane);
-	काष्ठा tegra_plane *tegra = to_tegra_plane(plane);
-	पूर्णांक err;
+	struct tegra_plane *tegra = to_tegra_plane(plane);
+	int err;
 
-	/* no need क्रम further checks अगर the plane is being disabled */
-	अगर (!new_plane_state->crtc)
-		वापस 0;
+	/* no need for further checks if the plane is being disabled */
+	if (!new_plane_state->crtc)
+		return 0;
 
-	/* scaling not supported क्रम cursor */
-	अगर ((new_plane_state->src_w >> 16 != new_plane_state->crtc_w) ||
+	/* scaling not supported for cursor */
+	if ((new_plane_state->src_w >> 16 != new_plane_state->crtc_w) ||
 	    (new_plane_state->src_h >> 16 != new_plane_state->crtc_h))
-		वापस -EINVAL;
+		return -EINVAL;
 
 	/* only square cursors supported */
-	अगर (new_plane_state->src_w != new_plane_state->src_h)
-		वापस -EINVAL;
+	if (new_plane_state->src_w != new_plane_state->src_h)
+		return -EINVAL;
 
-	अगर (new_plane_state->crtc_w != 32 && new_plane_state->crtc_w != 64 &&
+	if (new_plane_state->crtc_w != 32 && new_plane_state->crtc_w != 64 &&
 	    new_plane_state->crtc_w != 128 && new_plane_state->crtc_w != 256)
-		वापस -EINVAL;
+		return -EINVAL;
 
 	err = tegra_plane_state_add(tegra, new_plane_state);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tegra_cursor_atomic_update(काष्ठा drm_plane *plane,
-				       काष्ठा drm_atomic_state *state)
-अणु
-	काष्ठा drm_plane_state *new_state = drm_atomic_get_new_plane_state(state,
+static void tegra_cursor_atomic_update(struct drm_plane *plane,
+				       struct drm_atomic_state *state)
+{
+	struct drm_plane_state *new_state = drm_atomic_get_new_plane_state(state,
 									   plane);
-	काष्ठा tegra_plane_state *tegra_plane_state = to_tegra_plane_state(new_state);
-	काष्ठा tegra_dc *dc = to_tegra_dc(new_state->crtc);
-	काष्ठा tegra_drm *tegra = plane->dev->dev_निजी;
-#अगर_घोषित CONFIG_ARCH_DMA_ADDR_T_64BIT
+	struct tegra_plane_state *tegra_plane_state = to_tegra_plane_state(new_state);
+	struct tegra_dc *dc = to_tegra_dc(new_state->crtc);
+	struct tegra_drm *tegra = plane->dev->dev_private;
+#ifdef CONFIG_ARCH_DMA_ADDR_T_64BIT
 	u64 dma_mask = *dc->dev->dma_mask;
-#पूर्ण_अगर
-	अचिन्हित पूर्णांक x, y;
+#endif
+	unsigned int x, y;
 	u32 value = 0;
 
 	/* rien ne va plus */
-	अगर (!new_state->crtc || !new_state->fb)
-		वापस;
+	if (!new_state->crtc || !new_state->fb)
+		return;
 
 	/*
 	 * Legacy display supports hardware clipping of the cursor, but
 	 * nvdisplay relies on software to clip the cursor to the screen.
 	 */
-	अगर (!dc->soc->has_nvdisplay)
+	if (!dc->soc->has_nvdisplay)
 		value |= CURSOR_CLIP_DISPLAY;
 
-	चयन (new_state->crtc_w) अणु
-	हाल 32:
+	switch (new_state->crtc_w) {
+	case 32:
 		value |= CURSOR_SIZE_32x32;
-		अवरोध;
+		break;
 
-	हाल 64:
+	case 64:
 		value |= CURSOR_SIZE_64x64;
-		अवरोध;
+		break;
 
-	हाल 128:
+	case 128:
 		value |= CURSOR_SIZE_128x128;
-		अवरोध;
+		break;
 
-	हाल 256:
+	case 256:
 		value |= CURSOR_SIZE_256x256;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		WARN(1, "cursor size %ux%u not supported\n",
 		     new_state->crtc_w, new_state->crtc_h);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	value |= (tegra_plane_state->iova[0] >> 10) & 0x3fffff;
-	tegra_dc_ग_लिखोl(dc, value, DC_DISP_CURSOR_START_ADDR);
+	tegra_dc_writel(dc, value, DC_DISP_CURSOR_START_ADDR);
 
-#अगर_घोषित CONFIG_ARCH_DMA_ADDR_T_64BIT
+#ifdef CONFIG_ARCH_DMA_ADDR_T_64BIT
 	value = (tegra_plane_state->iova[0] >> 32) & (dma_mask >> 32);
-	tegra_dc_ग_लिखोl(dc, value, DC_DISP_CURSOR_START_ADDR_HI);
-#पूर्ण_अगर
+	tegra_dc_writel(dc, value, DC_DISP_CURSOR_START_ADDR_HI);
+#endif
 
 	/* enable cursor and set blend mode */
-	value = tegra_dc_पढ़ोl(dc, DC_DISP_DISP_WIN_OPTIONS);
+	value = tegra_dc_readl(dc, DC_DISP_DISP_WIN_OPTIONS);
 	value |= CURSOR_ENABLE;
-	tegra_dc_ग_लिखोl(dc, value, DC_DISP_DISP_WIN_OPTIONS);
+	tegra_dc_writel(dc, value, DC_DISP_DISP_WIN_OPTIONS);
 
-	value = tegra_dc_पढ़ोl(dc, DC_DISP_BLEND_CURSOR_CONTROL);
+	value = tegra_dc_readl(dc, DC_DISP_BLEND_CURSOR_CONTROL);
 	value &= ~CURSOR_DST_BLEND_MASK;
 	value &= ~CURSOR_SRC_BLEND_MASK;
 
-	अगर (dc->soc->has_nvdisplay)
+	if (dc->soc->has_nvdisplay)
 		value &= ~CURSOR_COMPOSITION_MODE_XOR;
-	अन्यथा
+	else
 		value |= CURSOR_MODE_NORMAL;
 
 	value |= CURSOR_DST_BLEND_NEG_K1_TIMES_SRC;
 	value |= CURSOR_SRC_BLEND_K1_TIMES_SRC;
 	value |= CURSOR_ALPHA;
-	tegra_dc_ग_लिखोl(dc, value, DC_DISP_BLEND_CURSOR_CONTROL);
+	tegra_dc_writel(dc, value, DC_DISP_BLEND_CURSOR_CONTROL);
 
-	/* nvdisplay relies on software क्रम clipping */
-	अगर (dc->soc->has_nvdisplay) अणु
-		काष्ठा drm_rect src;
+	/* nvdisplay relies on software for clipping */
+	if (dc->soc->has_nvdisplay) {
+		struct drm_rect src;
 
 		x = new_state->dst.x1;
 		y = new_state->dst.y1;
 
-		drm_rect_fp_to_पूर्णांक(&src, &new_state->src);
+		drm_rect_fp_to_int(&src, &new_state->src);
 
 		value = (src.y1 & tegra->vmask) << 16 | (src.x1 & tegra->hmask);
-		tegra_dc_ग_लिखोl(dc, value, DC_DISP_PCALC_HEAD_SET_CROPPED_POINT_IN_CURSOR);
+		tegra_dc_writel(dc, value, DC_DISP_PCALC_HEAD_SET_CROPPED_POINT_IN_CURSOR);
 
 		value = (drm_rect_height(&src) & tegra->vmask) << 16 |
 			(drm_rect_width(&src) & tegra->hmask);
-		tegra_dc_ग_लिखोl(dc, value, DC_DISP_PCALC_HEAD_SET_CROPPED_SIZE_IN_CURSOR);
-	पूर्ण अन्यथा अणु
+		tegra_dc_writel(dc, value, DC_DISP_PCALC_HEAD_SET_CROPPED_SIZE_IN_CURSOR);
+	} else {
 		x = new_state->crtc_x;
 		y = new_state->crtc_y;
-	पूर्ण
+	}
 
 	/* position the cursor */
 	value = ((y & tegra->vmask) << 16) | (x & tegra->hmask);
-	tegra_dc_ग_लिखोl(dc, value, DC_DISP_CURSOR_POSITION);
-पूर्ण
+	tegra_dc_writel(dc, value, DC_DISP_CURSOR_POSITION);
+}
 
-अटल व्योम tegra_cursor_atomic_disable(काष्ठा drm_plane *plane,
-					काष्ठा drm_atomic_state *state)
-अणु
-	काष्ठा drm_plane_state *old_state = drm_atomic_get_old_plane_state(state,
+static void tegra_cursor_atomic_disable(struct drm_plane *plane,
+					struct drm_atomic_state *state)
+{
+	struct drm_plane_state *old_state = drm_atomic_get_old_plane_state(state,
 									   plane);
-	काष्ठा tegra_dc *dc;
+	struct tegra_dc *dc;
 	u32 value;
 
 	/* rien ne va plus */
-	अगर (!old_state || !old_state->crtc)
-		वापस;
+	if (!old_state || !old_state->crtc)
+		return;
 
 	dc = to_tegra_dc(old_state->crtc);
 
-	value = tegra_dc_पढ़ोl(dc, DC_DISP_DISP_WIN_OPTIONS);
+	value = tegra_dc_readl(dc, DC_DISP_DISP_WIN_OPTIONS);
 	value &= ~CURSOR_ENABLE;
-	tegra_dc_ग_लिखोl(dc, value, DC_DISP_DISP_WIN_OPTIONS);
-पूर्ण
+	tegra_dc_writel(dc, value, DC_DISP_DISP_WIN_OPTIONS);
+}
 
-अटल स्थिर काष्ठा drm_plane_helper_funcs tegra_cursor_plane_helper_funcs = अणु
+static const struct drm_plane_helper_funcs tegra_cursor_plane_helper_funcs = {
 	.prepare_fb = tegra_plane_prepare_fb,
 	.cleanup_fb = tegra_plane_cleanup_fb,
 	.atomic_check = tegra_cursor_atomic_check,
 	.atomic_update = tegra_cursor_atomic_update,
 	.atomic_disable = tegra_cursor_atomic_disable,
-पूर्ण;
+};
 
-अटल काष्ठा drm_plane *tegra_dc_cursor_plane_create(काष्ठा drm_device *drm,
-						      काष्ठा tegra_dc *dc)
-अणु
-	अचिन्हित दीर्घ possible_crtcs = tegra_plane_get_possible_crtcs(drm);
-	काष्ठा tegra_plane *plane;
-	अचिन्हित पूर्णांक num_क्रमmats;
-	स्थिर u32 *क्रमmats;
-	पूर्णांक err;
+static struct drm_plane *tegra_dc_cursor_plane_create(struct drm_device *drm,
+						      struct tegra_dc *dc)
+{
+	unsigned long possible_crtcs = tegra_plane_get_possible_crtcs(drm);
+	struct tegra_plane *plane;
+	unsigned int num_formats;
+	const u32 *formats;
+	int err;
 
-	plane = kzalloc(माप(*plane), GFP_KERNEL);
-	अगर (!plane)
-		वापस ERR_PTR(-ENOMEM);
+	plane = kzalloc(sizeof(*plane), GFP_KERNEL);
+	if (!plane)
+		return ERR_PTR(-ENOMEM);
 
 	/*
 	 * This index is kind of fake. The cursor isn't a regular plane, but
-	 * its update and activation request bits in DC_CMD_STATE_CONTROL करो
+	 * its update and activation request bits in DC_CMD_STATE_CONTROL do
 	 * use the same programming. Setting this fake index here allows the
-	 * code in tegra_add_plane_state() to करो the right thing without the
+	 * code in tegra_add_plane_state() to do the right thing without the
 	 * need to special-casing the cursor plane.
 	 */
 	plane->index = 6;
 	plane->dc = dc;
 
-	अगर (!dc->soc->has_nvdisplay) अणु
-		num_क्रमmats = ARRAY_SIZE(tegra_legacy_cursor_plane_क्रमmats);
-		क्रमmats = tegra_legacy_cursor_plane_क्रमmats;
-	पूर्ण अन्यथा अणु
-		num_क्रमmats = ARRAY_SIZE(tegra_cursor_plane_क्रमmats);
-		क्रमmats = tegra_cursor_plane_क्रमmats;
-	पूर्ण
+	if (!dc->soc->has_nvdisplay) {
+		num_formats = ARRAY_SIZE(tegra_legacy_cursor_plane_formats);
+		formats = tegra_legacy_cursor_plane_formats;
+	} else {
+		num_formats = ARRAY_SIZE(tegra_cursor_plane_formats);
+		formats = tegra_cursor_plane_formats;
+	}
 
 	err = drm_universal_plane_init(drm, &plane->base, possible_crtcs,
-				       &tegra_plane_funcs, क्रमmats,
-				       num_क्रमmats, शून्य,
-				       DRM_PLANE_TYPE_CURSOR, शून्य);
-	अगर (err < 0) अणु
-		kमुक्त(plane);
-		वापस ERR_PTR(err);
-	पूर्ण
+				       &tegra_plane_funcs, formats,
+				       num_formats, NULL,
+				       DRM_PLANE_TYPE_CURSOR, NULL);
+	if (err < 0) {
+		kfree(plane);
+		return ERR_PTR(err);
+	}
 
 	drm_plane_helper_add(&plane->base, &tegra_cursor_plane_helper_funcs);
 	drm_plane_create_zpos_immutable_property(&plane->base, 255);
 
-	वापस &plane->base;
-पूर्ण
+	return &plane->base;
+}
 
-अटल स्थिर u32 tegra20_overlay_क्रमmats[] = अणु
+static const u32 tegra20_overlay_formats[] = {
 	DRM_FORMAT_ARGB4444,
 	DRM_FORMAT_ARGB1555,
 	DRM_FORMAT_RGB565,
 	DRM_FORMAT_RGBA5551,
 	DRM_FORMAT_ABGR8888,
 	DRM_FORMAT_ARGB8888,
-	/* non-native क्रमmats */
+	/* non-native formats */
 	DRM_FORMAT_XRGB1555,
 	DRM_FORMAT_RGBX5551,
 	DRM_FORMAT_XBGR8888,
 	DRM_FORMAT_XRGB8888,
-	/* planar क्रमmats */
+	/* planar formats */
 	DRM_FORMAT_UYVY,
 	DRM_FORMAT_YUYV,
 	DRM_FORMAT_YUV420,
 	DRM_FORMAT_YUV422,
-पूर्ण;
+};
 
-अटल स्थिर u32 tegra114_overlay_क्रमmats[] = अणु
+static const u32 tegra114_overlay_formats[] = {
 	DRM_FORMAT_ARGB4444,
 	DRM_FORMAT_ARGB1555,
 	DRM_FORMAT_RGB565,
@@ -1085,14 +1084,14 @@ tegra_plane_use_vertical_filtering(काष्ठा tegra_plane *plane,
 	DRM_FORMAT_RGBA8888,
 	DRM_FORMAT_XRGB8888,
 	DRM_FORMAT_XBGR8888,
-	/* planar क्रमmats */
+	/* planar formats */
 	DRM_FORMAT_UYVY,
 	DRM_FORMAT_YUYV,
 	DRM_FORMAT_YUV420,
 	DRM_FORMAT_YUV422,
-पूर्ण;
+};
 
-अटल स्थिर u32 tegra124_overlay_क्रमmats[] = अणु
+static const u32 tegra124_overlay_formats[] = {
 	DRM_FORMAT_ARGB4444,
 	DRM_FORMAT_ARGB1555,
 	DRM_FORMAT_RGB565,
@@ -1115,48 +1114,48 @@ tegra_plane_use_vertical_filtering(काष्ठा tegra_plane *plane,
 	/* new on Tegra124 */
 	DRM_FORMAT_RGBX8888,
 	DRM_FORMAT_BGRX8888,
-	/* planar क्रमmats */
+	/* planar formats */
 	DRM_FORMAT_UYVY,
 	DRM_FORMAT_YUYV,
 	DRM_FORMAT_YUV420,
 	DRM_FORMAT_YUV422,
-पूर्ण;
+};
 
-अटल काष्ठा drm_plane *tegra_dc_overlay_plane_create(काष्ठा drm_device *drm,
-						       काष्ठा tegra_dc *dc,
-						       अचिन्हित पूर्णांक index,
+static struct drm_plane *tegra_dc_overlay_plane_create(struct drm_device *drm,
+						       struct tegra_dc *dc,
+						       unsigned int index,
 						       bool cursor)
-अणु
-	अचिन्हित दीर्घ possible_crtcs = tegra_plane_get_possible_crtcs(drm);
-	काष्ठा tegra_plane *plane;
-	अचिन्हित पूर्णांक num_क्रमmats;
-	क्रमागत drm_plane_type type;
-	स्थिर u32 *क्रमmats;
-	पूर्णांक err;
+{
+	unsigned long possible_crtcs = tegra_plane_get_possible_crtcs(drm);
+	struct tegra_plane *plane;
+	unsigned int num_formats;
+	enum drm_plane_type type;
+	const u32 *formats;
+	int err;
 
-	plane = kzalloc(माप(*plane), GFP_KERNEL);
-	अगर (!plane)
-		वापस ERR_PTR(-ENOMEM);
+	plane = kzalloc(sizeof(*plane), GFP_KERNEL);
+	if (!plane)
+		return ERR_PTR(-ENOMEM);
 
 	plane->offset = 0xa00 + 0x200 * index;
 	plane->index = index;
 	plane->dc = dc;
 
-	num_क्रमmats = dc->soc->num_overlay_क्रमmats;
-	क्रमmats = dc->soc->overlay_क्रमmats;
+	num_formats = dc->soc->num_overlay_formats;
+	formats = dc->soc->overlay_formats;
 
-	अगर (!cursor)
+	if (!cursor)
 		type = DRM_PLANE_TYPE_OVERLAY;
-	अन्यथा
+	else
 		type = DRM_PLANE_TYPE_CURSOR;
 
 	err = drm_universal_plane_init(drm, &plane->base, possible_crtcs,
-				       &tegra_plane_funcs, क्रमmats,
-				       num_क्रमmats, शून्य, type, शून्य);
-	अगर (err < 0) अणु
-		kमुक्त(plane);
-		वापस ERR_PTR(err);
-	पूर्ण
+				       &tegra_plane_funcs, formats,
+				       num_formats, NULL, type, NULL);
+	if (err < 0) {
+		kfree(plane);
+		return ERR_PTR(err);
+	}
 
 	drm_plane_helper_add(&plane->base, &tegra_plane_helper_funcs);
 	drm_plane_create_zpos_property(&plane->base, plane->index, 0, 255);
@@ -1167,125 +1166,125 @@ tegra_plane_use_vertical_filtering(काष्ठा tegra_plane *plane,
 						 DRM_MODE_ROTATE_180 |
 						 DRM_MODE_REFLECT_X |
 						 DRM_MODE_REFLECT_Y);
-	अगर (err < 0)
+	if (err < 0)
 		dev_err(dc->dev, "failed to create rotation property: %d\n",
 			err);
 
-	वापस &plane->base;
-पूर्ण
+	return &plane->base;
+}
 
-अटल काष्ठा drm_plane *tegra_dc_add_shared_planes(काष्ठा drm_device *drm,
-						    काष्ठा tegra_dc *dc)
-अणु
-	काष्ठा drm_plane *plane, *primary = शून्य;
-	अचिन्हित पूर्णांक i, j;
+static struct drm_plane *tegra_dc_add_shared_planes(struct drm_device *drm,
+						    struct tegra_dc *dc)
+{
+	struct drm_plane *plane, *primary = NULL;
+	unsigned int i, j;
 
-	क्रम (i = 0; i < dc->soc->num_wgrps; i++) अणु
-		स्थिर काष्ठा tegra_winकरोwgroup_soc *wgrp = &dc->soc->wgrps[i];
+	for (i = 0; i < dc->soc->num_wgrps; i++) {
+		const struct tegra_windowgroup_soc *wgrp = &dc->soc->wgrps[i];
 
-		अगर (wgrp->dc == dc->pipe) अणु
-			क्रम (j = 0; j < wgrp->num_winकरोws; j++) अणु
-				अचिन्हित पूर्णांक index = wgrp->winकरोws[j];
+		if (wgrp->dc == dc->pipe) {
+			for (j = 0; j < wgrp->num_windows; j++) {
+				unsigned int index = wgrp->windows[j];
 
 				plane = tegra_shared_plane_create(drm, dc,
 								  wgrp->index,
 								  index);
-				अगर (IS_ERR(plane))
-					वापस plane;
+				if (IS_ERR(plane))
+					return plane;
 
 				/*
 				 * Choose the first shared plane owned by this
 				 * head as the primary plane.
 				 */
-				अगर (!primary) अणु
+				if (!primary) {
 					plane->type = DRM_PLANE_TYPE_PRIMARY;
 					primary = plane;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				}
+			}
+		}
+	}
 
-	वापस primary;
-पूर्ण
+	return primary;
+}
 
-अटल काष्ठा drm_plane *tegra_dc_add_planes(काष्ठा drm_device *drm,
-					     काष्ठा tegra_dc *dc)
-अणु
-	काष्ठा drm_plane *planes[2], *primary;
-	अचिन्हित पूर्णांक planes_num;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक err;
+static struct drm_plane *tegra_dc_add_planes(struct drm_device *drm,
+					     struct tegra_dc *dc)
+{
+	struct drm_plane *planes[2], *primary;
+	unsigned int planes_num;
+	unsigned int i;
+	int err;
 
 	primary = tegra_primary_plane_create(drm, dc);
-	अगर (IS_ERR(primary))
-		वापस primary;
+	if (IS_ERR(primary))
+		return primary;
 
-	अगर (dc->soc->supports_cursor)
+	if (dc->soc->supports_cursor)
 		planes_num = 2;
-	अन्यथा
+	else
 		planes_num = 1;
 
-	क्रम (i = 0; i < planes_num; i++) अणु
+	for (i = 0; i < planes_num; i++) {
 		planes[i] = tegra_dc_overlay_plane_create(drm, dc, 1 + i,
 							  false);
-		अगर (IS_ERR(planes[i])) अणु
+		if (IS_ERR(planes[i])) {
 			err = PTR_ERR(planes[i]);
 
-			जबतक (i--)
+			while (i--)
 				tegra_plane_funcs.destroy(planes[i]);
 
 			tegra_plane_funcs.destroy(primary);
-			वापस ERR_PTR(err);
-		पूर्ण
-	पूर्ण
+			return ERR_PTR(err);
+		}
+	}
 
-	वापस primary;
-पूर्ण
+	return primary;
+}
 
-अटल व्योम tegra_dc_destroy(काष्ठा drm_crtc *crtc)
-अणु
+static void tegra_dc_destroy(struct drm_crtc *crtc)
+{
 	drm_crtc_cleanup(crtc);
-पूर्ण
+}
 
-अटल व्योम tegra_crtc_reset(काष्ठा drm_crtc *crtc)
-अणु
-	काष्ठा tegra_dc_state *state = kzalloc(माप(*state), GFP_KERNEL);
+static void tegra_crtc_reset(struct drm_crtc *crtc)
+{
+	struct tegra_dc_state *state = kzalloc(sizeof(*state), GFP_KERNEL);
 
-	अगर (crtc->state)
+	if (crtc->state)
 		tegra_crtc_atomic_destroy_state(crtc, crtc->state);
 
 	__drm_atomic_helper_crtc_reset(crtc, &state->base);
-पूर्ण
+}
 
-अटल काष्ठा drm_crtc_state *
-tegra_crtc_atomic_duplicate_state(काष्ठा drm_crtc *crtc)
-अणु
-	काष्ठा tegra_dc_state *state = to_dc_state(crtc->state);
-	काष्ठा tegra_dc_state *copy;
+static struct drm_crtc_state *
+tegra_crtc_atomic_duplicate_state(struct drm_crtc *crtc)
+{
+	struct tegra_dc_state *state = to_dc_state(crtc->state);
+	struct tegra_dc_state *copy;
 
-	copy = kदो_स्मृति(माप(*copy), GFP_KERNEL);
-	अगर (!copy)
-		वापस शून्य;
+	copy = kmalloc(sizeof(*copy), GFP_KERNEL);
+	if (!copy)
+		return NULL;
 
 	__drm_atomic_helper_crtc_duplicate_state(crtc, &copy->base);
 	copy->clk = state->clk;
 	copy->pclk = state->pclk;
-	copy->भाग = state->भाग;
+	copy->div = state->div;
 	copy->planes = state->planes;
 
-	वापस &copy->base;
-पूर्ण
+	return &copy->base;
+}
 
-अटल व्योम tegra_crtc_atomic_destroy_state(काष्ठा drm_crtc *crtc,
-					    काष्ठा drm_crtc_state *state)
-अणु
+static void tegra_crtc_atomic_destroy_state(struct drm_crtc *crtc,
+					    struct drm_crtc_state *state)
+{
 	__drm_atomic_helper_crtc_destroy_state(state);
-	kमुक्त(state);
-पूर्ण
+	kfree(state);
+}
 
-#घोषणा DEBUGFS_REG32(_name) अणु .name = #_name, .offset = _name पूर्ण
+#define DEBUGFS_REG32(_name) { .name = #_name, .offset = _name }
 
-अटल स्थिर काष्ठा debugfs_reg32 tegra_dc_regs[] = अणु
+static const struct debugfs_reg32 tegra_dc_regs[] = {
 	DEBUGFS_REG32(DC_CMD_GENERAL_INCR_SYNCPT),
 	DEBUGFS_REG32(DC_CMD_GENERAL_INCR_SYNCPT_CNTRL),
 	DEBUGFS_REG32(DC_CMD_GENERAL_INCR_SYNCPT_ERROR),
@@ -1498,671 +1497,671 @@ tegra_crtc_atomic_duplicate_state(काष्ठा drm_crtc *crtc)
 	DEBUGFS_REG32(DC_WINBUF_AD_UFLOW_STATUS),
 	DEBUGFS_REG32(DC_WINBUF_BD_UFLOW_STATUS),
 	DEBUGFS_REG32(DC_WINBUF_CD_UFLOW_STATUS),
-पूर्ण;
+};
 
-अटल पूर्णांक tegra_dc_show_regs(काष्ठा seq_file *s, व्योम *data)
-अणु
-	काष्ठा drm_info_node *node = s->निजी;
-	काष्ठा tegra_dc *dc = node->info_ent->data;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक err = 0;
+static int tegra_dc_show_regs(struct seq_file *s, void *data)
+{
+	struct drm_info_node *node = s->private;
+	struct tegra_dc *dc = node->info_ent->data;
+	unsigned int i;
+	int err = 0;
 
-	drm_modeset_lock(&dc->base.mutex, शून्य);
+	drm_modeset_lock(&dc->base.mutex, NULL);
 
-	अगर (!dc->base.state->active) अणु
+	if (!dc->base.state->active) {
 		err = -EBUSY;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(tegra_dc_regs); i++) अणु
-		अचिन्हित पूर्णांक offset = tegra_dc_regs[i].offset;
+	for (i = 0; i < ARRAY_SIZE(tegra_dc_regs); i++) {
+		unsigned int offset = tegra_dc_regs[i].offset;
 
-		seq_म_लिखो(s, "%-40s %#05x %08x\n", tegra_dc_regs[i].name,
-			   offset, tegra_dc_पढ़ोl(dc, offset));
-	पूर्ण
+		seq_printf(s, "%-40s %#05x %08x\n", tegra_dc_regs[i].name,
+			   offset, tegra_dc_readl(dc, offset));
+	}
 
 unlock:
 	drm_modeset_unlock(&dc->base.mutex);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक tegra_dc_show_crc(काष्ठा seq_file *s, व्योम *data)
-अणु
-	काष्ठा drm_info_node *node = s->निजी;
-	काष्ठा tegra_dc *dc = node->info_ent->data;
-	पूर्णांक err = 0;
+static int tegra_dc_show_crc(struct seq_file *s, void *data)
+{
+	struct drm_info_node *node = s->private;
+	struct tegra_dc *dc = node->info_ent->data;
+	int err = 0;
 	u32 value;
 
-	drm_modeset_lock(&dc->base.mutex, शून्य);
+	drm_modeset_lock(&dc->base.mutex, NULL);
 
-	अगर (!dc->base.state->active) अणु
+	if (!dc->base.state->active) {
 		err = -EBUSY;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	value = DC_COM_CRC_CONTROL_ACTIVE_DATA | DC_COM_CRC_CONTROL_ENABLE;
-	tegra_dc_ग_लिखोl(dc, value, DC_COM_CRC_CONTROL);
+	tegra_dc_writel(dc, value, DC_COM_CRC_CONTROL);
 	tegra_dc_commit(dc);
 
-	drm_crtc_रुको_one_vblank(&dc->base);
-	drm_crtc_रुको_one_vblank(&dc->base);
+	drm_crtc_wait_one_vblank(&dc->base);
+	drm_crtc_wait_one_vblank(&dc->base);
 
-	value = tegra_dc_पढ़ोl(dc, DC_COM_CRC_CHECKSUM);
-	seq_म_लिखो(s, "%08x\n", value);
+	value = tegra_dc_readl(dc, DC_COM_CRC_CHECKSUM);
+	seq_printf(s, "%08x\n", value);
 
-	tegra_dc_ग_लिखोl(dc, 0, DC_COM_CRC_CONTROL);
+	tegra_dc_writel(dc, 0, DC_COM_CRC_CONTROL);
 
 unlock:
 	drm_modeset_unlock(&dc->base.mutex);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक tegra_dc_show_stats(काष्ठा seq_file *s, व्योम *data)
-अणु
-	काष्ठा drm_info_node *node = s->निजी;
-	काष्ठा tegra_dc *dc = node->info_ent->data;
+static int tegra_dc_show_stats(struct seq_file *s, void *data)
+{
+	struct drm_info_node *node = s->private;
+	struct tegra_dc *dc = node->info_ent->data;
 
-	seq_म_लिखो(s, "frames: %lu\n", dc->stats.frames);
-	seq_म_लिखो(s, "vblank: %lu\n", dc->stats.vblank);
-	seq_म_लिखो(s, "underflow: %lu\n", dc->stats.underflow);
-	seq_म_लिखो(s, "overflow: %lu\n", dc->stats.overflow);
+	seq_printf(s, "frames: %lu\n", dc->stats.frames);
+	seq_printf(s, "vblank: %lu\n", dc->stats.vblank);
+	seq_printf(s, "underflow: %lu\n", dc->stats.underflow);
+	seq_printf(s, "overflow: %lu\n", dc->stats.overflow);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा drm_info_list debugfs_files[] = अणु
-	अणु "regs", tegra_dc_show_regs, 0, शून्य पूर्ण,
-	अणु "crc", tegra_dc_show_crc, 0, शून्य पूर्ण,
-	अणु "stats", tegra_dc_show_stats, 0, शून्य पूर्ण,
-पूर्ण;
+static struct drm_info_list debugfs_files[] = {
+	{ "regs", tegra_dc_show_regs, 0, NULL },
+	{ "crc", tegra_dc_show_crc, 0, NULL },
+	{ "stats", tegra_dc_show_stats, 0, NULL },
+};
 
-अटल पूर्णांक tegra_dc_late_रेजिस्टर(काष्ठा drm_crtc *crtc)
-अणु
-	अचिन्हित पूर्णांक i, count = ARRAY_SIZE(debugfs_files);
-	काष्ठा drm_minor *minor = crtc->dev->primary;
-	काष्ठा dentry *root;
-	काष्ठा tegra_dc *dc = to_tegra_dc(crtc);
+static int tegra_dc_late_register(struct drm_crtc *crtc)
+{
+	unsigned int i, count = ARRAY_SIZE(debugfs_files);
+	struct drm_minor *minor = crtc->dev->primary;
+	struct dentry *root;
+	struct tegra_dc *dc = to_tegra_dc(crtc);
 
-#अगर_घोषित CONFIG_DEBUG_FS
+#ifdef CONFIG_DEBUG_FS
 	root = crtc->debugfs_entry;
-#अन्यथा
-	root = शून्य;
-#पूर्ण_अगर
+#else
+	root = NULL;
+#endif
 
-	dc->debugfs_files = kmemdup(debugfs_files, माप(debugfs_files),
+	dc->debugfs_files = kmemdup(debugfs_files, sizeof(debugfs_files),
 				    GFP_KERNEL);
-	अगर (!dc->debugfs_files)
-		वापस -ENOMEM;
+	if (!dc->debugfs_files)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < count; i++)
+	for (i = 0; i < count; i++)
 		dc->debugfs_files[i].data = dc;
 
 	drm_debugfs_create_files(dc->debugfs_files, count, root, minor);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tegra_dc_early_unरेजिस्टर(काष्ठा drm_crtc *crtc)
-अणु
-	अचिन्हित पूर्णांक count = ARRAY_SIZE(debugfs_files);
-	काष्ठा drm_minor *minor = crtc->dev->primary;
-	काष्ठा tegra_dc *dc = to_tegra_dc(crtc);
+static void tegra_dc_early_unregister(struct drm_crtc *crtc)
+{
+	unsigned int count = ARRAY_SIZE(debugfs_files);
+	struct drm_minor *minor = crtc->dev->primary;
+	struct tegra_dc *dc = to_tegra_dc(crtc);
 
-	drm_debugfs_हटाओ_files(dc->debugfs_files, count, minor);
-	kमुक्त(dc->debugfs_files);
-	dc->debugfs_files = शून्य;
-पूर्ण
+	drm_debugfs_remove_files(dc->debugfs_files, count, minor);
+	kfree(dc->debugfs_files);
+	dc->debugfs_files = NULL;
+}
 
-अटल u32 tegra_dc_get_vblank_counter(काष्ठा drm_crtc *crtc)
-अणु
-	काष्ठा tegra_dc *dc = to_tegra_dc(crtc);
+static u32 tegra_dc_get_vblank_counter(struct drm_crtc *crtc)
+{
+	struct tegra_dc *dc = to_tegra_dc(crtc);
 
-	/* XXX vblank syncpoपूर्णांकs करोn't work with nvdisplay yet */
-	अगर (dc->syncpt && !dc->soc->has_nvdisplay)
-		वापस host1x_syncpt_पढ़ो(dc->syncpt);
+	/* XXX vblank syncpoints don't work with nvdisplay yet */
+	if (dc->syncpt && !dc->soc->has_nvdisplay)
+		return host1x_syncpt_read(dc->syncpt);
 
 	/* fallback to software emulated VBLANK counter */
-	वापस (u32)drm_crtc_vblank_count(&dc->base);
-पूर्ण
+	return (u32)drm_crtc_vblank_count(&dc->base);
+}
 
-अटल पूर्णांक tegra_dc_enable_vblank(काष्ठा drm_crtc *crtc)
-अणु
-	काष्ठा tegra_dc *dc = to_tegra_dc(crtc);
+static int tegra_dc_enable_vblank(struct drm_crtc *crtc)
+{
+	struct tegra_dc *dc = to_tegra_dc(crtc);
 	u32 value;
 
-	value = tegra_dc_पढ़ोl(dc, DC_CMD_INT_MASK);
+	value = tegra_dc_readl(dc, DC_CMD_INT_MASK);
 	value |= VBLANK_INT;
-	tegra_dc_ग_लिखोl(dc, value, DC_CMD_INT_MASK);
+	tegra_dc_writel(dc, value, DC_CMD_INT_MASK);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tegra_dc_disable_vblank(काष्ठा drm_crtc *crtc)
-अणु
-	काष्ठा tegra_dc *dc = to_tegra_dc(crtc);
+static void tegra_dc_disable_vblank(struct drm_crtc *crtc)
+{
+	struct tegra_dc *dc = to_tegra_dc(crtc);
 	u32 value;
 
-	value = tegra_dc_पढ़ोl(dc, DC_CMD_INT_MASK);
+	value = tegra_dc_readl(dc, DC_CMD_INT_MASK);
 	value &= ~VBLANK_INT;
-	tegra_dc_ग_लिखोl(dc, value, DC_CMD_INT_MASK);
-पूर्ण
+	tegra_dc_writel(dc, value, DC_CMD_INT_MASK);
+}
 
-अटल स्थिर काष्ठा drm_crtc_funcs tegra_crtc_funcs = अणु
+static const struct drm_crtc_funcs tegra_crtc_funcs = {
 	.page_flip = drm_atomic_helper_page_flip,
 	.set_config = drm_atomic_helper_set_config,
 	.destroy = tegra_dc_destroy,
 	.reset = tegra_crtc_reset,
 	.atomic_duplicate_state = tegra_crtc_atomic_duplicate_state,
 	.atomic_destroy_state = tegra_crtc_atomic_destroy_state,
-	.late_रेजिस्टर = tegra_dc_late_रेजिस्टर,
-	.early_unरेजिस्टर = tegra_dc_early_unरेजिस्टर,
+	.late_register = tegra_dc_late_register,
+	.early_unregister = tegra_dc_early_unregister,
 	.get_vblank_counter = tegra_dc_get_vblank_counter,
 	.enable_vblank = tegra_dc_enable_vblank,
 	.disable_vblank = tegra_dc_disable_vblank,
-पूर्ण;
+};
 
-अटल पूर्णांक tegra_dc_set_timings(काष्ठा tegra_dc *dc,
-				काष्ठा drm_display_mode *mode)
-अणु
-	अचिन्हित पूर्णांक h_ref_to_sync = 1;
-	अचिन्हित पूर्णांक v_ref_to_sync = 1;
-	अचिन्हित दीर्घ value;
+static int tegra_dc_set_timings(struct tegra_dc *dc,
+				struct drm_display_mode *mode)
+{
+	unsigned int h_ref_to_sync = 1;
+	unsigned int v_ref_to_sync = 1;
+	unsigned long value;
 
-	अगर (!dc->soc->has_nvdisplay) अणु
-		tegra_dc_ग_लिखोl(dc, 0x0, DC_DISP_DISP_TIMING_OPTIONS);
+	if (!dc->soc->has_nvdisplay) {
+		tegra_dc_writel(dc, 0x0, DC_DISP_DISP_TIMING_OPTIONS);
 
 		value = (v_ref_to_sync << 16) | h_ref_to_sync;
-		tegra_dc_ग_लिखोl(dc, value, DC_DISP_REF_TO_SYNC);
-	पूर्ण
+		tegra_dc_writel(dc, value, DC_DISP_REF_TO_SYNC);
+	}
 
 	value = ((mode->vsync_end - mode->vsync_start) << 16) |
 		((mode->hsync_end - mode->hsync_start) <<  0);
-	tegra_dc_ग_लिखोl(dc, value, DC_DISP_SYNC_WIDTH);
+	tegra_dc_writel(dc, value, DC_DISP_SYNC_WIDTH);
 
 	value = ((mode->vtotal - mode->vsync_end) << 16) |
 		((mode->htotal - mode->hsync_end) <<  0);
-	tegra_dc_ग_लिखोl(dc, value, DC_DISP_BACK_PORCH);
+	tegra_dc_writel(dc, value, DC_DISP_BACK_PORCH);
 
 	value = ((mode->vsync_start - mode->vdisplay) << 16) |
 		((mode->hsync_start - mode->hdisplay) <<  0);
-	tegra_dc_ग_लिखोl(dc, value, DC_DISP_FRONT_PORCH);
+	tegra_dc_writel(dc, value, DC_DISP_FRONT_PORCH);
 
 	value = (mode->vdisplay << 16) | mode->hdisplay;
-	tegra_dc_ग_लिखोl(dc, value, DC_DISP_ACTIVE);
+	tegra_dc_writel(dc, value, DC_DISP_ACTIVE);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * tegra_dc_state_setup_घड़ी - check घड़ी settings and store them in atomic
+ * tegra_dc_state_setup_clock - check clock settings and store them in atomic
  *     state
  * @dc: display controller
  * @crtc_state: CRTC atomic state
- * @clk: parent घड़ी क्रम display controller
- * @pclk: pixel घड़ी
- * @भाग: shअगरt घड़ी भागider
+ * @clk: parent clock for display controller
+ * @pclk: pixel clock
+ * @div: shift clock divider
  *
  * Returns:
  * 0 on success or a negative error-code on failure.
  */
-पूर्णांक tegra_dc_state_setup_घड़ी(काष्ठा tegra_dc *dc,
-			       काष्ठा drm_crtc_state *crtc_state,
-			       काष्ठा clk *clk, अचिन्हित दीर्घ pclk,
-			       अचिन्हित पूर्णांक भाग)
-अणु
-	काष्ठा tegra_dc_state *state = to_dc_state(crtc_state);
+int tegra_dc_state_setup_clock(struct tegra_dc *dc,
+			       struct drm_crtc_state *crtc_state,
+			       struct clk *clk, unsigned long pclk,
+			       unsigned int div)
+{
+	struct tegra_dc_state *state = to_dc_state(crtc_state);
 
-	अगर (!clk_has_parent(dc->clk, clk))
-		वापस -EINVAL;
+	if (!clk_has_parent(dc->clk, clk))
+		return -EINVAL;
 
 	state->clk = clk;
 	state->pclk = pclk;
-	state->भाग = भाग;
+	state->div = div;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tegra_dc_commit_state(काष्ठा tegra_dc *dc,
-				  काष्ठा tegra_dc_state *state)
-अणु
+static void tegra_dc_commit_state(struct tegra_dc *dc,
+				  struct tegra_dc_state *state)
+{
 	u32 value;
-	पूर्णांक err;
+	int err;
 
 	err = clk_set_parent(dc->clk, state->clk);
-	अगर (err < 0)
+	if (err < 0)
 		dev_err(dc->dev, "failed to set parent clock: %d\n", err);
 
 	/*
-	 * Outमाला_दो may not want to change the parent घड़ी rate. This is only
+	 * Outputs may not want to change the parent clock rate. This is only
 	 * relevant to Tegra20 where only a single display PLL is available.
-	 * Since that PLL would typically be used क्रम HDMI, an पूर्णांकernal LVDS
-	 * panel would need to be driven by some other घड़ी such as PLL_P
-	 * which is shared with other peripherals. Changing the घड़ी rate
-	 * should thereक्रमe be aव्योमed.
+	 * Since that PLL would typically be used for HDMI, an internal LVDS
+	 * panel would need to be driven by some other clock such as PLL_P
+	 * which is shared with other peripherals. Changing the clock rate
+	 * should therefore be avoided.
 	 */
-	अगर (state->pclk > 0) अणु
+	if (state->pclk > 0) {
 		err = clk_set_rate(state->clk, state->pclk);
-		अगर (err < 0)
+		if (err < 0)
 			dev_err(dc->dev,
 				"failed to set clock rate to %lu Hz\n",
 				state->pclk);
 
 		err = clk_set_rate(dc->clk, state->pclk);
-		अगर (err < 0)
+		if (err < 0)
 			dev_err(dc->dev, "failed to set clock %pC to %lu Hz: %d\n",
 				dc->clk, state->pclk, err);
-	पूर्ण
+	}
 
 	DRM_DEBUG_KMS("rate: %lu, div: %u\n", clk_get_rate(dc->clk),
-		      state->भाग);
+		      state->div);
 	DRM_DEBUG_KMS("pclk: %lu\n", state->pclk);
 
-	अगर (!dc->soc->has_nvdisplay) अणु
-		value = SHIFT_CLK_DIVIDER(state->भाग) | PIXEL_CLK_DIVIDER_PCD1;
-		tegra_dc_ग_लिखोl(dc, value, DC_DISP_DISP_CLOCK_CONTROL);
-	पूर्ण
-पूर्ण
+	if (!dc->soc->has_nvdisplay) {
+		value = SHIFT_CLK_DIVIDER(state->div) | PIXEL_CLK_DIVIDER_PCD1;
+		tegra_dc_writel(dc, value, DC_DISP_DISP_CLOCK_CONTROL);
+	}
+}
 
-अटल व्योम tegra_dc_stop(काष्ठा tegra_dc *dc)
-अणु
+static void tegra_dc_stop(struct tegra_dc *dc)
+{
 	u32 value;
 
 	/* stop the display controller */
-	value = tegra_dc_पढ़ोl(dc, DC_CMD_DISPLAY_COMMAND);
+	value = tegra_dc_readl(dc, DC_CMD_DISPLAY_COMMAND);
 	value &= ~DISP_CTRL_MODE_MASK;
-	tegra_dc_ग_लिखोl(dc, value, DC_CMD_DISPLAY_COMMAND);
+	tegra_dc_writel(dc, value, DC_CMD_DISPLAY_COMMAND);
 
 	tegra_dc_commit(dc);
-पूर्ण
+}
 
-अटल bool tegra_dc_idle(काष्ठा tegra_dc *dc)
-अणु
+static bool tegra_dc_idle(struct tegra_dc *dc)
+{
 	u32 value;
 
-	value = tegra_dc_पढ़ोl_active(dc, DC_CMD_DISPLAY_COMMAND);
+	value = tegra_dc_readl_active(dc, DC_CMD_DISPLAY_COMMAND);
 
-	वापस (value & DISP_CTRL_MODE_MASK) == 0;
-पूर्ण
+	return (value & DISP_CTRL_MODE_MASK) == 0;
+}
 
-अटल पूर्णांक tegra_dc_रुको_idle(काष्ठा tegra_dc *dc, अचिन्हित दीर्घ समयout)
-अणु
-	समयout = jअगरfies + msecs_to_jअगरfies(समयout);
+static int tegra_dc_wait_idle(struct tegra_dc *dc, unsigned long timeout)
+{
+	timeout = jiffies + msecs_to_jiffies(timeout);
 
-	जबतक (समय_beक्रमe(jअगरfies, समयout)) अणु
-		अगर (tegra_dc_idle(dc))
-			वापस 0;
+	while (time_before(jiffies, timeout)) {
+		if (tegra_dc_idle(dc))
+			return 0;
 
 		usleep_range(1000, 2000);
-	पूर्ण
+	}
 
 	dev_dbg(dc->dev, "timeout waiting for DC to become idle\n");
-	वापस -ETIMEDOUT;
-पूर्ण
+	return -ETIMEDOUT;
+}
 
-अटल व्योम tegra_crtc_atomic_disable(काष्ठा drm_crtc *crtc,
-				      काष्ठा drm_atomic_state *state)
-अणु
-	काष्ठा tegra_dc *dc = to_tegra_dc(crtc);
+static void tegra_crtc_atomic_disable(struct drm_crtc *crtc,
+				      struct drm_atomic_state *state)
+{
+	struct tegra_dc *dc = to_tegra_dc(crtc);
 	u32 value;
-	पूर्णांक err;
+	int err;
 
-	अगर (!tegra_dc_idle(dc)) अणु
+	if (!tegra_dc_idle(dc)) {
 		tegra_dc_stop(dc);
 
 		/*
-		 * Ignore the वापस value, there isn't anything useful to करो
-		 * in हाल this fails.
+		 * Ignore the return value, there isn't anything useful to do
+		 * in case this fails.
 		 */
-		tegra_dc_रुको_idle(dc, 100);
-	पूर्ण
+		tegra_dc_wait_idle(dc, 100);
+	}
 
 	/*
 	 * This should really be part of the RGB encoder driver, but clearing
 	 * these bits has the side-effect of stopping the display controller.
-	 * When that happens no VBLANK पूर्णांकerrupts will be उठाओd. At the same
-	 * समय the encoder is disabled beक्रमe the display controller, so the
-	 * above code is always going to समयout रुकोing क्रम the controller
+	 * When that happens no VBLANK interrupts will be raised. At the same
+	 * time the encoder is disabled before the display controller, so the
+	 * above code is always going to timeout waiting for the controller
 	 * to go idle.
 	 *
-	 * Given the बंद coupling between the RGB encoder and the display
-	 * controller करोing it here is still kind of okay. None of the other
+	 * Given the close coupling between the RGB encoder and the display
+	 * controller doing it here is still kind of okay. None of the other
 	 * encoder drivers require these bits to be cleared.
 	 *
-	 * XXX: Perhaps given that the display controller is चयनed off at
-	 * this poपूर्णांक anyway maybe clearing these bits isn't even useful क्रम
+	 * XXX: Perhaps given that the display controller is switched off at
+	 * this point anyway maybe clearing these bits isn't even useful for
 	 * the RGB encoder?
 	 */
-	अगर (dc->rgb) अणु
-		value = tegra_dc_पढ़ोl(dc, DC_CMD_DISPLAY_POWER_CONTROL);
+	if (dc->rgb) {
+		value = tegra_dc_readl(dc, DC_CMD_DISPLAY_POWER_CONTROL);
 		value &= ~(PW0_ENABLE | PW1_ENABLE | PW2_ENABLE | PW3_ENABLE |
 			   PW4_ENABLE | PM0_ENABLE | PM1_ENABLE);
-		tegra_dc_ग_लिखोl(dc, value, DC_CMD_DISPLAY_POWER_CONTROL);
-	पूर्ण
+		tegra_dc_writel(dc, value, DC_CMD_DISPLAY_POWER_CONTROL);
+	}
 
 	tegra_dc_stats_reset(&dc->stats);
 	drm_crtc_vblank_off(crtc);
 
 	spin_lock_irq(&crtc->dev->event_lock);
 
-	अगर (crtc->state->event) अणु
+	if (crtc->state->event) {
 		drm_crtc_send_vblank_event(crtc, crtc->state->event);
-		crtc->state->event = शून्य;
-	पूर्ण
+		crtc->state->event = NULL;
+	}
 
 	spin_unlock_irq(&crtc->dev->event_lock);
 
 	err = host1x_client_suspend(&dc->client);
-	अगर (err < 0)
+	if (err < 0)
 		dev_err(dc->dev, "failed to suspend: %d\n", err);
-पूर्ण
+}
 
-अटल व्योम tegra_crtc_atomic_enable(काष्ठा drm_crtc *crtc,
-				     काष्ठा drm_atomic_state *state)
-अणु
-	काष्ठा drm_display_mode *mode = &crtc->state->adjusted_mode;
-	काष्ठा tegra_dc_state *crtc_state = to_dc_state(crtc->state);
-	काष्ठा tegra_dc *dc = to_tegra_dc(crtc);
+static void tegra_crtc_atomic_enable(struct drm_crtc *crtc,
+				     struct drm_atomic_state *state)
+{
+	struct drm_display_mode *mode = &crtc->state->adjusted_mode;
+	struct tegra_dc_state *crtc_state = to_dc_state(crtc->state);
+	struct tegra_dc *dc = to_tegra_dc(crtc);
 	u32 value;
-	पूर्णांक err;
+	int err;
 
 	err = host1x_client_resume(&dc->client);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		dev_err(dc->dev, "failed to resume: %d\n", err);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* initialize display controller */
-	अगर (dc->syncpt) अणु
+	if (dc->syncpt) {
 		u32 syncpt = host1x_syncpt_id(dc->syncpt), enable;
 
-		अगर (dc->soc->has_nvdisplay)
+		if (dc->soc->has_nvdisplay)
 			enable = 1 << 31;
-		अन्यथा
+		else
 			enable = 1 << 8;
 
 		value = SYNCPT_CNTRL_NO_STALL;
-		tegra_dc_ग_लिखोl(dc, value, DC_CMD_GENERAL_INCR_SYNCPT_CNTRL);
+		tegra_dc_writel(dc, value, DC_CMD_GENERAL_INCR_SYNCPT_CNTRL);
 
 		value = enable | syncpt;
-		tegra_dc_ग_लिखोl(dc, value, DC_CMD_CONT_SYNCPT_VSYNC);
-	पूर्ण
+		tegra_dc_writel(dc, value, DC_CMD_CONT_SYNCPT_VSYNC);
+	}
 
-	अगर (dc->soc->has_nvdisplay) अणु
+	if (dc->soc->has_nvdisplay) {
 		value = DSC_TO_UF_INT | DSC_BBUF_UF_INT | DSC_RBUF_UF_INT |
 			DSC_OBUF_UF_INT;
-		tegra_dc_ग_लिखोl(dc, value, DC_CMD_INT_TYPE);
+		tegra_dc_writel(dc, value, DC_CMD_INT_TYPE);
 
 		value = DSC_TO_UF_INT | DSC_BBUF_UF_INT | DSC_RBUF_UF_INT |
 			DSC_OBUF_UF_INT | SD3_BUCKET_WALK_DONE_INT |
 			HEAD_UF_INT | MSF_INT | REG_TMOUT_INT |
 			REGION_CRC_INT | V_PULSE2_INT | V_PULSE3_INT |
 			VBLANK_INT | FRAME_END_INT;
-		tegra_dc_ग_लिखोl(dc, value, DC_CMD_INT_POLARITY);
+		tegra_dc_writel(dc, value, DC_CMD_INT_POLARITY);
 
 		value = SD3_BUCKET_WALK_DONE_INT | HEAD_UF_INT | VBLANK_INT |
 			FRAME_END_INT;
-		tegra_dc_ग_लिखोl(dc, value, DC_CMD_INT_ENABLE);
+		tegra_dc_writel(dc, value, DC_CMD_INT_ENABLE);
 
 		value = HEAD_UF_INT | REG_TMOUT_INT | FRAME_END_INT;
-		tegra_dc_ग_लिखोl(dc, value, DC_CMD_INT_MASK);
+		tegra_dc_writel(dc, value, DC_CMD_INT_MASK);
 
-		tegra_dc_ग_लिखोl(dc, READ_MUX, DC_CMD_STATE_ACCESS);
-	पूर्ण अन्यथा अणु
+		tegra_dc_writel(dc, READ_MUX, DC_CMD_STATE_ACCESS);
+	} else {
 		value = WIN_A_UF_INT | WIN_B_UF_INT | WIN_C_UF_INT |
 			WIN_A_OF_INT | WIN_B_OF_INT | WIN_C_OF_INT;
-		tegra_dc_ग_लिखोl(dc, value, DC_CMD_INT_TYPE);
+		tegra_dc_writel(dc, value, DC_CMD_INT_TYPE);
 
 		value = WIN_A_UF_INT | WIN_B_UF_INT | WIN_C_UF_INT |
 			WIN_A_OF_INT | WIN_B_OF_INT | WIN_C_OF_INT;
-		tegra_dc_ग_लिखोl(dc, value, DC_CMD_INT_POLARITY);
+		tegra_dc_writel(dc, value, DC_CMD_INT_POLARITY);
 
-		/* initialize समयr */
+		/* initialize timer */
 		value = CURSOR_THRESHOLD(0) | WINDOW_A_THRESHOLD(0x20) |
 			WINDOW_B_THRESHOLD(0x20) | WINDOW_C_THRESHOLD(0x20);
-		tegra_dc_ग_लिखोl(dc, value, DC_DISP_DISP_MEM_HIGH_PRIORITY);
+		tegra_dc_writel(dc, value, DC_DISP_DISP_MEM_HIGH_PRIORITY);
 
 		value = CURSOR_THRESHOLD(0) | WINDOW_A_THRESHOLD(1) |
 			WINDOW_B_THRESHOLD(1) | WINDOW_C_THRESHOLD(1);
-		tegra_dc_ग_लिखोl(dc, value, DC_DISP_DISP_MEM_HIGH_PRIORITY_TIMER);
+		tegra_dc_writel(dc, value, DC_DISP_DISP_MEM_HIGH_PRIORITY_TIMER);
 
 		value = VBLANK_INT | WIN_A_UF_INT | WIN_B_UF_INT | WIN_C_UF_INT |
 			WIN_A_OF_INT | WIN_B_OF_INT | WIN_C_OF_INT;
-		tegra_dc_ग_लिखोl(dc, value, DC_CMD_INT_ENABLE);
+		tegra_dc_writel(dc, value, DC_CMD_INT_ENABLE);
 
 		value = WIN_A_UF_INT | WIN_B_UF_INT | WIN_C_UF_INT |
 			WIN_A_OF_INT | WIN_B_OF_INT | WIN_C_OF_INT;
-		tegra_dc_ग_लिखोl(dc, value, DC_CMD_INT_MASK);
-	पूर्ण
+		tegra_dc_writel(dc, value, DC_CMD_INT_MASK);
+	}
 
-	अगर (dc->soc->supports_background_color)
-		tegra_dc_ग_लिखोl(dc, 0, DC_DISP_BLEND_BACKGROUND_COLOR);
-	अन्यथा
-		tegra_dc_ग_लिखोl(dc, 0, DC_DISP_BORDER_COLOR);
+	if (dc->soc->supports_background_color)
+		tegra_dc_writel(dc, 0, DC_DISP_BLEND_BACKGROUND_COLOR);
+	else
+		tegra_dc_writel(dc, 0, DC_DISP_BORDER_COLOR);
 
-	/* apply PLL and pixel घड़ी changes */
+	/* apply PLL and pixel clock changes */
 	tegra_dc_commit_state(dc, crtc_state);
 
 	/* program display mode */
 	tegra_dc_set_timings(dc, mode);
 
-	/* पूर्णांकerlacing isn't supported yet, so disable it */
-	अगर (dc->soc->supports_पूर्णांकerlacing) अणु
-		value = tegra_dc_पढ़ोl(dc, DC_DISP_INTERLACE_CONTROL);
+	/* interlacing isn't supported yet, so disable it */
+	if (dc->soc->supports_interlacing) {
+		value = tegra_dc_readl(dc, DC_DISP_INTERLACE_CONTROL);
 		value &= ~INTERLACE_ENABLE;
-		tegra_dc_ग_लिखोl(dc, value, DC_DISP_INTERLACE_CONTROL);
-	पूर्ण
+		tegra_dc_writel(dc, value, DC_DISP_INTERLACE_CONTROL);
+	}
 
-	value = tegra_dc_पढ़ोl(dc, DC_CMD_DISPLAY_COMMAND);
+	value = tegra_dc_readl(dc, DC_CMD_DISPLAY_COMMAND);
 	value &= ~DISP_CTRL_MODE_MASK;
 	value |= DISP_CTRL_MODE_C_DISPLAY;
-	tegra_dc_ग_लिखोl(dc, value, DC_CMD_DISPLAY_COMMAND);
+	tegra_dc_writel(dc, value, DC_CMD_DISPLAY_COMMAND);
 
-	अगर (!dc->soc->has_nvdisplay) अणु
-		value = tegra_dc_पढ़ोl(dc, DC_CMD_DISPLAY_POWER_CONTROL);
+	if (!dc->soc->has_nvdisplay) {
+		value = tegra_dc_readl(dc, DC_CMD_DISPLAY_POWER_CONTROL);
 		value |= PW0_ENABLE | PW1_ENABLE | PW2_ENABLE | PW3_ENABLE |
 			 PW4_ENABLE | PM0_ENABLE | PM1_ENABLE;
-		tegra_dc_ग_लिखोl(dc, value, DC_CMD_DISPLAY_POWER_CONTROL);
-	पूर्ण
+		tegra_dc_writel(dc, value, DC_CMD_DISPLAY_POWER_CONTROL);
+	}
 
-	/* enable underflow reporting and display red क्रम missing pixels */
-	अगर (dc->soc->has_nvdisplay) अणु
+	/* enable underflow reporting and display red for missing pixels */
+	if (dc->soc->has_nvdisplay) {
 		value = UNDERFLOW_MODE_RED | UNDERFLOW_REPORT_ENABLE;
-		tegra_dc_ग_लिखोl(dc, value, DC_COM_RG_UNDERFLOW);
-	पूर्ण
+		tegra_dc_writel(dc, value, DC_COM_RG_UNDERFLOW);
+	}
 
 	tegra_dc_commit(dc);
 
 	drm_crtc_vblank_on(crtc);
-पूर्ण
+}
 
-अटल व्योम tegra_crtc_atomic_begin(काष्ठा drm_crtc *crtc,
-				    काष्ठा drm_atomic_state *state)
-अणु
-	अचिन्हित दीर्घ flags;
+static void tegra_crtc_atomic_begin(struct drm_crtc *crtc,
+				    struct drm_atomic_state *state)
+{
+	unsigned long flags;
 
-	अगर (crtc->state->event) अणु
+	if (crtc->state->event) {
 		spin_lock_irqsave(&crtc->dev->event_lock, flags);
 
-		अगर (drm_crtc_vblank_get(crtc) != 0)
+		if (drm_crtc_vblank_get(crtc) != 0)
 			drm_crtc_send_vblank_event(crtc, crtc->state->event);
-		अन्यथा
+		else
 			drm_crtc_arm_vblank_event(crtc, crtc->state->event);
 
 		spin_unlock_irqrestore(&crtc->dev->event_lock, flags);
 
-		crtc->state->event = शून्य;
-	पूर्ण
-पूर्ण
+		crtc->state->event = NULL;
+	}
+}
 
-अटल व्योम tegra_crtc_atomic_flush(काष्ठा drm_crtc *crtc,
-				    काष्ठा drm_atomic_state *state)
-अणु
-	काष्ठा drm_crtc_state *crtc_state = drm_atomic_get_new_crtc_state(state,
+static void tegra_crtc_atomic_flush(struct drm_crtc *crtc,
+				    struct drm_atomic_state *state)
+{
+	struct drm_crtc_state *crtc_state = drm_atomic_get_new_crtc_state(state,
 									  crtc);
-	काष्ठा tegra_dc_state *dc_state = to_dc_state(crtc_state);
-	काष्ठा tegra_dc *dc = to_tegra_dc(crtc);
+	struct tegra_dc_state *dc_state = to_dc_state(crtc_state);
+	struct tegra_dc *dc = to_tegra_dc(crtc);
 	u32 value;
 
 	value = dc_state->planes << 8 | GENERAL_UPDATE;
-	tegra_dc_ग_लिखोl(dc, value, DC_CMD_STATE_CONTROL);
-	value = tegra_dc_पढ़ोl(dc, DC_CMD_STATE_CONTROL);
+	tegra_dc_writel(dc, value, DC_CMD_STATE_CONTROL);
+	value = tegra_dc_readl(dc, DC_CMD_STATE_CONTROL);
 
 	value = dc_state->planes | GENERAL_ACT_REQ;
-	tegra_dc_ग_लिखोl(dc, value, DC_CMD_STATE_CONTROL);
-	value = tegra_dc_पढ़ोl(dc, DC_CMD_STATE_CONTROL);
-पूर्ण
+	tegra_dc_writel(dc, value, DC_CMD_STATE_CONTROL);
+	value = tegra_dc_readl(dc, DC_CMD_STATE_CONTROL);
+}
 
-अटल स्थिर काष्ठा drm_crtc_helper_funcs tegra_crtc_helper_funcs = अणु
+static const struct drm_crtc_helper_funcs tegra_crtc_helper_funcs = {
 	.atomic_begin = tegra_crtc_atomic_begin,
 	.atomic_flush = tegra_crtc_atomic_flush,
 	.atomic_enable = tegra_crtc_atomic_enable,
 	.atomic_disable = tegra_crtc_atomic_disable,
-पूर्ण;
+};
 
-अटल irqवापस_t tegra_dc_irq(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा tegra_dc *dc = data;
-	अचिन्हित दीर्घ status;
+static irqreturn_t tegra_dc_irq(int irq, void *data)
+{
+	struct tegra_dc *dc = data;
+	unsigned long status;
 
-	status = tegra_dc_पढ़ोl(dc, DC_CMD_INT_STATUS);
-	tegra_dc_ग_लिखोl(dc, status, DC_CMD_INT_STATUS);
+	status = tegra_dc_readl(dc, DC_CMD_INT_STATUS);
+	tegra_dc_writel(dc, status, DC_CMD_INT_STATUS);
 
-	अगर (status & FRAME_END_INT) अणु
+	if (status & FRAME_END_INT) {
 		/*
 		dev_dbg(dc->dev, "%s(): frame end\n", __func__);
 		*/
 		dc->stats.frames++;
-	पूर्ण
+	}
 
-	अगर (status & VBLANK_INT) अणु
+	if (status & VBLANK_INT) {
 		/*
 		dev_dbg(dc->dev, "%s(): vertical blank\n", __func__);
 		*/
 		drm_crtc_handle_vblank(&dc->base);
 		dc->stats.vblank++;
-	पूर्ण
+	}
 
-	अगर (status & (WIN_A_UF_INT | WIN_B_UF_INT | WIN_C_UF_INT)) अणु
+	if (status & (WIN_A_UF_INT | WIN_B_UF_INT | WIN_C_UF_INT)) {
 		/*
 		dev_dbg(dc->dev, "%s(): underflow\n", __func__);
 		*/
 		dc->stats.underflow++;
-	पूर्ण
+	}
 
-	अगर (status & (WIN_A_OF_INT | WIN_B_OF_INT | WIN_C_OF_INT)) अणु
+	if (status & (WIN_A_OF_INT | WIN_B_OF_INT | WIN_C_OF_INT)) {
 		/*
 		dev_dbg(dc->dev, "%s(): overflow\n", __func__);
 		*/
 		dc->stats.overflow++;
-	पूर्ण
+	}
 
-	अगर (status & HEAD_UF_INT) अणु
+	if (status & HEAD_UF_INT) {
 		dev_dbg_ratelimited(dc->dev, "%s(): head underflow\n", __func__);
 		dc->stats.underflow++;
-	पूर्ण
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल bool tegra_dc_has_winकरोw_groups(काष्ठा tegra_dc *dc)
-अणु
-	अचिन्हित पूर्णांक i;
+static bool tegra_dc_has_window_groups(struct tegra_dc *dc)
+{
+	unsigned int i;
 
-	अगर (!dc->soc->wgrps)
-		वापस true;
+	if (!dc->soc->wgrps)
+		return true;
 
-	क्रम (i = 0; i < dc->soc->num_wgrps; i++) अणु
-		स्थिर काष्ठा tegra_winकरोwgroup_soc *wgrp = &dc->soc->wgrps[i];
+	for (i = 0; i < dc->soc->num_wgrps; i++) {
+		const struct tegra_windowgroup_soc *wgrp = &dc->soc->wgrps[i];
 
-		अगर (wgrp->dc == dc->pipe && wgrp->num_winकरोws > 0)
-			वापस true;
-	पूर्ण
+		if (wgrp->dc == dc->pipe && wgrp->num_windows > 0)
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल पूर्णांक tegra_dc_early_init(काष्ठा host1x_client *client)
-अणु
-	काष्ठा drm_device *drm = dev_get_drvdata(client->host);
-	काष्ठा tegra_drm *tegra = drm->dev_निजी;
+static int tegra_dc_early_init(struct host1x_client *client)
+{
+	struct drm_device *drm = dev_get_drvdata(client->host);
+	struct tegra_drm *tegra = drm->dev_private;
 
 	tegra->num_crtcs++;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tegra_dc_init(काष्ठा host1x_client *client)
-अणु
-	काष्ठा drm_device *drm = dev_get_drvdata(client->host);
-	अचिन्हित दीर्घ flags = HOST1X_SYNCPT_CLIENT_MANAGED;
-	काष्ठा tegra_dc *dc = host1x_client_to_dc(client);
-	काष्ठा tegra_drm *tegra = drm->dev_निजी;
-	काष्ठा drm_plane *primary = शून्य;
-	काष्ठा drm_plane *cursor = शून्य;
-	पूर्णांक err;
+static int tegra_dc_init(struct host1x_client *client)
+{
+	struct drm_device *drm = dev_get_drvdata(client->host);
+	unsigned long flags = HOST1X_SYNCPT_CLIENT_MANAGED;
+	struct tegra_dc *dc = host1x_client_to_dc(client);
+	struct tegra_drm *tegra = drm->dev_private;
+	struct drm_plane *primary = NULL;
+	struct drm_plane *cursor = NULL;
+	int err;
 
 	/*
-	 * DC has been reset by now, so VBLANK syncpoपूर्णांक can be released
-	 * क्रम general use.
+	 * DC has been reset by now, so VBLANK syncpoint can be released
+	 * for general use.
 	 */
 	host1x_syncpt_release_vblank_reservation(client, 26 + dc->pipe);
 
 	/*
-	 * XXX करो not रेजिस्टर DCs with no winकरोw groups because we cannot
+	 * XXX do not register DCs with no window groups because we cannot
 	 * assign a primary plane to them, which in turn will cause KMS to
 	 * crash.
 	 */
-	अगर (!tegra_dc_has_winकरोw_groups(dc))
-		वापस 0;
+	if (!tegra_dc_has_window_groups(dc))
+		return 0;
 
 	/*
-	 * Set the display hub as the host1x client parent क्रम the display
-	 * controller. This is needed क्रम the runसमय reference counting that
-	 * ensures the display hub is always घातered when any of the display
+	 * Set the display hub as the host1x client parent for the display
+	 * controller. This is needed for the runtime reference counting that
+	 * ensures the display hub is always powered when any of the display
 	 * controllers are.
 	 */
-	अगर (dc->soc->has_nvdisplay)
+	if (dc->soc->has_nvdisplay)
 		client->parent = &tegra->hub->client;
 
 	dc->syncpt = host1x_syncpt_request(client, flags);
-	अगर (!dc->syncpt)
+	if (!dc->syncpt)
 		dev_warn(dc->dev, "failed to allocate syncpoint\n");
 
 	err = host1x_client_iommu_attach(client);
-	अगर (err < 0 && err != -ENODEV) अणु
+	if (err < 0 && err != -ENODEV) {
 		dev_err(client->dev, "failed to attach to domain: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	अगर (dc->soc->wgrps)
+	if (dc->soc->wgrps)
 		primary = tegra_dc_add_shared_planes(drm, dc);
-	अन्यथा
+	else
 		primary = tegra_dc_add_planes(drm, dc);
 
-	अगर (IS_ERR(primary)) अणु
+	if (IS_ERR(primary)) {
 		err = PTR_ERR(primary);
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 
-	अगर (dc->soc->supports_cursor) अणु
+	if (dc->soc->supports_cursor) {
 		cursor = tegra_dc_cursor_plane_create(drm, dc);
-		अगर (IS_ERR(cursor)) अणु
+		if (IS_ERR(cursor)) {
 			err = PTR_ERR(cursor);
-			जाओ cleanup;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			goto cleanup;
+		}
+	} else {
 		/* dedicate one overlay to mouse cursor */
 		cursor = tegra_dc_overlay_plane_create(drm, dc, 2, true);
-		अगर (IS_ERR(cursor)) अणु
+		if (IS_ERR(cursor)) {
 			err = PTR_ERR(cursor);
-			जाओ cleanup;
-		पूर्ण
-	पूर्ण
+			goto cleanup;
+		}
+	}
 
 	err = drm_crtc_init_with_planes(drm, &dc->base, primary, cursor,
-					&tegra_crtc_funcs, शून्य);
-	अगर (err < 0)
-		जाओ cleanup;
+					&tegra_crtc_funcs, NULL);
+	if (err < 0)
+		goto cleanup;
 
 	drm_crtc_helper_add(&dc->base, &tegra_crtc_helper_funcs);
 
@@ -2170,28 +2169,28 @@ unlock:
 	 * Keep track of the minimum pitch alignment across all display
 	 * controllers.
 	 */
-	अगर (dc->soc->pitch_align > tegra->pitch_align)
+	if (dc->soc->pitch_align > tegra->pitch_align)
 		tegra->pitch_align = dc->soc->pitch_align;
 
 	/* track maximum resolution */
-	अगर (dc->soc->has_nvdisplay)
+	if (dc->soc->has_nvdisplay)
 		drm->mode_config.max_width = drm->mode_config.max_height = 16384;
-	अन्यथा
+	else
 		drm->mode_config.max_width = drm->mode_config.max_height = 4096;
 
 	err = tegra_dc_rgb_init(drm, dc);
-	अगर (err < 0 && err != -ENODEV) अणु
+	if (err < 0 && err != -ENODEV) {
 		dev_err(dc->dev, "failed to initialize RGB output: %d\n", err);
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 
 	err = devm_request_irq(dc->dev, dc->irq, tegra_dc_irq, 0,
 			       dev_name(dc->dev), dc);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		dev_err(dc->dev, "failed to request IRQ#%u: %d\n", dc->irq,
 			err);
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 
 	/*
 	 * Inherit the DMA parameters (such as maximum segment size) from the
@@ -2199,362 +2198,362 @@ unlock:
 	 */
 	client->dev->dma_parms = client->host->dma_parms;
 
-	वापस 0;
+	return 0;
 
 cleanup:
-	अगर (!IS_ERR_OR_शून्य(cursor))
+	if (!IS_ERR_OR_NULL(cursor))
 		drm_plane_cleanup(cursor);
 
-	अगर (!IS_ERR(primary))
+	if (!IS_ERR(primary))
 		drm_plane_cleanup(primary);
 
 	host1x_client_iommu_detach(client);
 	host1x_syncpt_put(dc->syncpt);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक tegra_dc_निकास(काष्ठा host1x_client *client)
-अणु
-	काष्ठा tegra_dc *dc = host1x_client_to_dc(client);
-	पूर्णांक err;
+static int tegra_dc_exit(struct host1x_client *client)
+{
+	struct tegra_dc *dc = host1x_client_to_dc(client);
+	int err;
 
-	अगर (!tegra_dc_has_winकरोw_groups(dc))
-		वापस 0;
+	if (!tegra_dc_has_window_groups(dc))
+		return 0;
 
-	/* aव्योम a dangling poपूर्णांकer just in हाल this disappears */
-	client->dev->dma_parms = शून्य;
+	/* avoid a dangling pointer just in case this disappears */
+	client->dev->dma_parms = NULL;
 
-	devm_मुक्त_irq(dc->dev, dc->irq, dc);
+	devm_free_irq(dc->dev, dc->irq, dc);
 
-	err = tegra_dc_rgb_निकास(dc);
-	अगर (err) अणु
+	err = tegra_dc_rgb_exit(dc);
+	if (err) {
 		dev_err(dc->dev, "failed to shutdown RGB output: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	host1x_client_iommu_detach(client);
 	host1x_syncpt_put(dc->syncpt);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tegra_dc_late_निकास(काष्ठा host1x_client *client)
-अणु
-	काष्ठा drm_device *drm = dev_get_drvdata(client->host);
-	काष्ठा tegra_drm *tegra = drm->dev_निजी;
+static int tegra_dc_late_exit(struct host1x_client *client)
+{
+	struct drm_device *drm = dev_get_drvdata(client->host);
+	struct tegra_drm *tegra = drm->dev_private;
 
 	tegra->num_crtcs--;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tegra_dc_runसमय_suspend(काष्ठा host1x_client *client)
-अणु
-	काष्ठा tegra_dc *dc = host1x_client_to_dc(client);
-	काष्ठा device *dev = client->dev;
-	पूर्णांक err;
+static int tegra_dc_runtime_suspend(struct host1x_client *client)
+{
+	struct tegra_dc *dc = host1x_client_to_dc(client);
+	struct device *dev = client->dev;
+	int err;
 
-	err = reset_control_निश्चित(dc->rst);
-	अगर (err < 0) अणु
+	err = reset_control_assert(dc->rst);
+	if (err < 0) {
 		dev_err(dev, "failed to assert reset: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	अगर (dc->soc->has_घातergate)
-		tegra_घातergate_घातer_off(dc->घातergate);
+	if (dc->soc->has_powergate)
+		tegra_powergate_power_off(dc->powergate);
 
 	clk_disable_unprepare(dc->clk);
-	pm_runसमय_put_sync(dev);
+	pm_runtime_put_sync(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tegra_dc_runसमय_resume(काष्ठा host1x_client *client)
-अणु
-	काष्ठा tegra_dc *dc = host1x_client_to_dc(client);
-	काष्ठा device *dev = client->dev;
-	पूर्णांक err;
+static int tegra_dc_runtime_resume(struct host1x_client *client)
+{
+	struct tegra_dc *dc = host1x_client_to_dc(client);
+	struct device *dev = client->dev;
+	int err;
 
-	err = pm_runसमय_resume_and_get(dev);
-	अगर (err < 0) अणु
+	err = pm_runtime_resume_and_get(dev);
+	if (err < 0) {
 		dev_err(dev, "failed to get runtime PM: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	अगर (dc->soc->has_घातergate) अणु
-		err = tegra_घातergate_sequence_घातer_up(dc->घातergate, dc->clk,
+	if (dc->soc->has_powergate) {
+		err = tegra_powergate_sequence_power_up(dc->powergate, dc->clk,
 							dc->rst);
-		अगर (err < 0) अणु
+		if (err < 0) {
 			dev_err(dev, "failed to power partition: %d\n", err);
-			जाओ put_rpm;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			goto put_rpm;
+		}
+	} else {
 		err = clk_prepare_enable(dc->clk);
-		अगर (err < 0) अणु
+		if (err < 0) {
 			dev_err(dev, "failed to enable clock: %d\n", err);
-			जाओ put_rpm;
-		पूर्ण
+			goto put_rpm;
+		}
 
-		err = reset_control_deनिश्चित(dc->rst);
-		अगर (err < 0) अणु
+		err = reset_control_deassert(dc->rst);
+		if (err < 0) {
 			dev_err(dev, "failed to deassert reset: %d\n", err);
-			जाओ disable_clk;
-		पूर्ण
-	पूर्ण
+			goto disable_clk;
+		}
+	}
 
-	वापस 0;
+	return 0;
 
 disable_clk:
 	clk_disable_unprepare(dc->clk);
 put_rpm:
-	pm_runसमय_put_sync(dev);
-	वापस err;
-पूर्ण
+	pm_runtime_put_sync(dev);
+	return err;
+}
 
-अटल स्थिर काष्ठा host1x_client_ops dc_client_ops = अणु
+static const struct host1x_client_ops dc_client_ops = {
 	.early_init = tegra_dc_early_init,
 	.init = tegra_dc_init,
-	.निकास = tegra_dc_निकास,
-	.late_निकास = tegra_dc_late_निकास,
-	.suspend = tegra_dc_runसमय_suspend,
-	.resume = tegra_dc_runसमय_resume,
-पूर्ण;
+	.exit = tegra_dc_exit,
+	.late_exit = tegra_dc_late_exit,
+	.suspend = tegra_dc_runtime_suspend,
+	.resume = tegra_dc_runtime_resume,
+};
 
-अटल स्थिर काष्ठा tegra_dc_soc_info tegra20_dc_soc_info = अणु
+static const struct tegra_dc_soc_info tegra20_dc_soc_info = {
 	.supports_background_color = false,
-	.supports_पूर्णांकerlacing = false,
+	.supports_interlacing = false,
 	.supports_cursor = false,
 	.supports_block_linear = false,
 	.supports_sector_layout = false,
 	.has_legacy_blending = true,
 	.pitch_align = 8,
-	.has_घातergate = false,
+	.has_powergate = false,
 	.coupled_pm = true,
 	.has_nvdisplay = false,
-	.num_primary_क्रमmats = ARRAY_SIZE(tegra20_primary_क्रमmats),
-	.primary_क्रमmats = tegra20_primary_क्रमmats,
-	.num_overlay_क्रमmats = ARRAY_SIZE(tegra20_overlay_क्रमmats),
-	.overlay_क्रमmats = tegra20_overlay_क्रमmats,
-	.modअगरiers = tegra20_modअगरiers,
+	.num_primary_formats = ARRAY_SIZE(tegra20_primary_formats),
+	.primary_formats = tegra20_primary_formats,
+	.num_overlay_formats = ARRAY_SIZE(tegra20_overlay_formats),
+	.overlay_formats = tegra20_overlay_formats,
+	.modifiers = tegra20_modifiers,
 	.has_win_a_without_filters = true,
 	.has_win_c_without_vert_filter = true,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा tegra_dc_soc_info tegra30_dc_soc_info = अणु
+static const struct tegra_dc_soc_info tegra30_dc_soc_info = {
 	.supports_background_color = false,
-	.supports_पूर्णांकerlacing = false,
+	.supports_interlacing = false,
 	.supports_cursor = false,
 	.supports_block_linear = false,
 	.supports_sector_layout = false,
 	.has_legacy_blending = true,
 	.pitch_align = 8,
-	.has_घातergate = false,
+	.has_powergate = false,
 	.coupled_pm = false,
 	.has_nvdisplay = false,
-	.num_primary_क्रमmats = ARRAY_SIZE(tegra20_primary_क्रमmats),
-	.primary_क्रमmats = tegra20_primary_क्रमmats,
-	.num_overlay_क्रमmats = ARRAY_SIZE(tegra20_overlay_क्रमmats),
-	.overlay_क्रमmats = tegra20_overlay_क्रमmats,
-	.modअगरiers = tegra20_modअगरiers,
+	.num_primary_formats = ARRAY_SIZE(tegra20_primary_formats),
+	.primary_formats = tegra20_primary_formats,
+	.num_overlay_formats = ARRAY_SIZE(tegra20_overlay_formats),
+	.overlay_formats = tegra20_overlay_formats,
+	.modifiers = tegra20_modifiers,
 	.has_win_a_without_filters = false,
 	.has_win_c_without_vert_filter = false,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा tegra_dc_soc_info tegra114_dc_soc_info = अणु
+static const struct tegra_dc_soc_info tegra114_dc_soc_info = {
 	.supports_background_color = false,
-	.supports_पूर्णांकerlacing = false,
+	.supports_interlacing = false,
 	.supports_cursor = false,
 	.supports_block_linear = false,
 	.supports_sector_layout = false,
 	.has_legacy_blending = true,
 	.pitch_align = 64,
-	.has_घातergate = true,
+	.has_powergate = true,
 	.coupled_pm = false,
 	.has_nvdisplay = false,
-	.num_primary_क्रमmats = ARRAY_SIZE(tegra114_primary_क्रमmats),
-	.primary_क्रमmats = tegra114_primary_क्रमmats,
-	.num_overlay_क्रमmats = ARRAY_SIZE(tegra114_overlay_क्रमmats),
-	.overlay_क्रमmats = tegra114_overlay_क्रमmats,
-	.modअगरiers = tegra20_modअगरiers,
+	.num_primary_formats = ARRAY_SIZE(tegra114_primary_formats),
+	.primary_formats = tegra114_primary_formats,
+	.num_overlay_formats = ARRAY_SIZE(tegra114_overlay_formats),
+	.overlay_formats = tegra114_overlay_formats,
+	.modifiers = tegra20_modifiers,
 	.has_win_a_without_filters = false,
 	.has_win_c_without_vert_filter = false,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा tegra_dc_soc_info tegra124_dc_soc_info = अणु
+static const struct tegra_dc_soc_info tegra124_dc_soc_info = {
 	.supports_background_color = true,
-	.supports_पूर्णांकerlacing = true,
+	.supports_interlacing = true,
 	.supports_cursor = true,
 	.supports_block_linear = true,
 	.supports_sector_layout = false,
 	.has_legacy_blending = false,
 	.pitch_align = 64,
-	.has_घातergate = true,
+	.has_powergate = true,
 	.coupled_pm = false,
 	.has_nvdisplay = false,
-	.num_primary_क्रमmats = ARRAY_SIZE(tegra124_primary_क्रमmats),
-	.primary_क्रमmats = tegra124_primary_क्रमmats,
-	.num_overlay_क्रमmats = ARRAY_SIZE(tegra124_overlay_क्रमmats),
-	.overlay_क्रमmats = tegra124_overlay_क्रमmats,
-	.modअगरiers = tegra124_modअगरiers,
+	.num_primary_formats = ARRAY_SIZE(tegra124_primary_formats),
+	.primary_formats = tegra124_primary_formats,
+	.num_overlay_formats = ARRAY_SIZE(tegra124_overlay_formats),
+	.overlay_formats = tegra124_overlay_formats,
+	.modifiers = tegra124_modifiers,
 	.has_win_a_without_filters = false,
 	.has_win_c_without_vert_filter = false,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा tegra_dc_soc_info tegra210_dc_soc_info = अणु
+static const struct tegra_dc_soc_info tegra210_dc_soc_info = {
 	.supports_background_color = true,
-	.supports_पूर्णांकerlacing = true,
+	.supports_interlacing = true,
 	.supports_cursor = true,
 	.supports_block_linear = true,
 	.supports_sector_layout = false,
 	.has_legacy_blending = false,
 	.pitch_align = 64,
-	.has_घातergate = true,
+	.has_powergate = true,
 	.coupled_pm = false,
 	.has_nvdisplay = false,
-	.num_primary_क्रमmats = ARRAY_SIZE(tegra114_primary_क्रमmats),
-	.primary_क्रमmats = tegra114_primary_क्रमmats,
-	.num_overlay_क्रमmats = ARRAY_SIZE(tegra114_overlay_क्रमmats),
-	.overlay_क्रमmats = tegra114_overlay_क्रमmats,
-	.modअगरiers = tegra124_modअगरiers,
+	.num_primary_formats = ARRAY_SIZE(tegra114_primary_formats),
+	.primary_formats = tegra114_primary_formats,
+	.num_overlay_formats = ARRAY_SIZE(tegra114_overlay_formats),
+	.overlay_formats = tegra114_overlay_formats,
+	.modifiers = tegra124_modifiers,
 	.has_win_a_without_filters = false,
 	.has_win_c_without_vert_filter = false,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा tegra_winकरोwgroup_soc tegra186_dc_wgrps[] = अणु
-	अणु
+static const struct tegra_windowgroup_soc tegra186_dc_wgrps[] = {
+	{
 		.index = 0,
 		.dc = 0,
-		.winकरोws = (स्थिर अचिन्हित पूर्णांक[]) अणु 0 पूर्ण,
-		.num_winकरोws = 1,
-	पूर्ण, अणु
+		.windows = (const unsigned int[]) { 0 },
+		.num_windows = 1,
+	}, {
 		.index = 1,
 		.dc = 1,
-		.winकरोws = (स्थिर अचिन्हित पूर्णांक[]) अणु 1 पूर्ण,
-		.num_winकरोws = 1,
-	पूर्ण, अणु
+		.windows = (const unsigned int[]) { 1 },
+		.num_windows = 1,
+	}, {
 		.index = 2,
 		.dc = 1,
-		.winकरोws = (स्थिर अचिन्हित पूर्णांक[]) अणु 2 पूर्ण,
-		.num_winकरोws = 1,
-	पूर्ण, अणु
+		.windows = (const unsigned int[]) { 2 },
+		.num_windows = 1,
+	}, {
 		.index = 3,
 		.dc = 2,
-		.winकरोws = (स्थिर अचिन्हित पूर्णांक[]) अणु 3 पूर्ण,
-		.num_winकरोws = 1,
-	पूर्ण, अणु
+		.windows = (const unsigned int[]) { 3 },
+		.num_windows = 1,
+	}, {
 		.index = 4,
 		.dc = 2,
-		.winकरोws = (स्थिर अचिन्हित पूर्णांक[]) अणु 4 पूर्ण,
-		.num_winकरोws = 1,
-	पूर्ण, अणु
+		.windows = (const unsigned int[]) { 4 },
+		.num_windows = 1,
+	}, {
 		.index = 5,
 		.dc = 2,
-		.winकरोws = (स्थिर अचिन्हित पूर्णांक[]) अणु 5 पूर्ण,
-		.num_winकरोws = 1,
-	पूर्ण,
-पूर्ण;
+		.windows = (const unsigned int[]) { 5 },
+		.num_windows = 1,
+	},
+};
 
-अटल स्थिर काष्ठा tegra_dc_soc_info tegra186_dc_soc_info = अणु
+static const struct tegra_dc_soc_info tegra186_dc_soc_info = {
 	.supports_background_color = true,
-	.supports_पूर्णांकerlacing = true,
+	.supports_interlacing = true,
 	.supports_cursor = true,
 	.supports_block_linear = true,
 	.supports_sector_layout = false,
 	.has_legacy_blending = false,
 	.pitch_align = 64,
-	.has_घातergate = false,
+	.has_powergate = false,
 	.coupled_pm = false,
 	.has_nvdisplay = true,
 	.wgrps = tegra186_dc_wgrps,
 	.num_wgrps = ARRAY_SIZE(tegra186_dc_wgrps),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा tegra_winकरोwgroup_soc tegra194_dc_wgrps[] = अणु
-	अणु
+static const struct tegra_windowgroup_soc tegra194_dc_wgrps[] = {
+	{
 		.index = 0,
 		.dc = 0,
-		.winकरोws = (स्थिर अचिन्हित पूर्णांक[]) अणु 0 पूर्ण,
-		.num_winकरोws = 1,
-	पूर्ण, अणु
+		.windows = (const unsigned int[]) { 0 },
+		.num_windows = 1,
+	}, {
 		.index = 1,
 		.dc = 1,
-		.winकरोws = (स्थिर अचिन्हित पूर्णांक[]) अणु 1 पूर्ण,
-		.num_winकरोws = 1,
-	पूर्ण, अणु
+		.windows = (const unsigned int[]) { 1 },
+		.num_windows = 1,
+	}, {
 		.index = 2,
 		.dc = 1,
-		.winकरोws = (स्थिर अचिन्हित पूर्णांक[]) अणु 2 पूर्ण,
-		.num_winकरोws = 1,
-	पूर्ण, अणु
+		.windows = (const unsigned int[]) { 2 },
+		.num_windows = 1,
+	}, {
 		.index = 3,
 		.dc = 2,
-		.winकरोws = (स्थिर अचिन्हित पूर्णांक[]) अणु 3 पूर्ण,
-		.num_winकरोws = 1,
-	पूर्ण, अणु
+		.windows = (const unsigned int[]) { 3 },
+		.num_windows = 1,
+	}, {
 		.index = 4,
 		.dc = 2,
-		.winकरोws = (स्थिर अचिन्हित पूर्णांक[]) अणु 4 पूर्ण,
-		.num_winकरोws = 1,
-	पूर्ण, अणु
+		.windows = (const unsigned int[]) { 4 },
+		.num_windows = 1,
+	}, {
 		.index = 5,
 		.dc = 2,
-		.winकरोws = (स्थिर अचिन्हित पूर्णांक[]) अणु 5 पूर्ण,
-		.num_winकरोws = 1,
-	पूर्ण,
-पूर्ण;
+		.windows = (const unsigned int[]) { 5 },
+		.num_windows = 1,
+	},
+};
 
-अटल स्थिर काष्ठा tegra_dc_soc_info tegra194_dc_soc_info = अणु
+static const struct tegra_dc_soc_info tegra194_dc_soc_info = {
 	.supports_background_color = true,
-	.supports_पूर्णांकerlacing = true,
+	.supports_interlacing = true,
 	.supports_cursor = true,
 	.supports_block_linear = true,
 	.supports_sector_layout = true,
 	.has_legacy_blending = false,
 	.pitch_align = 64,
-	.has_घातergate = false,
+	.has_powergate = false,
 	.coupled_pm = false,
 	.has_nvdisplay = true,
 	.wgrps = tegra194_dc_wgrps,
 	.num_wgrps = ARRAY_SIZE(tegra194_dc_wgrps),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id tegra_dc_of_match[] = अणु
-	अणु
+static const struct of_device_id tegra_dc_of_match[] = {
+	{
 		.compatible = "nvidia,tegra194-dc",
 		.data = &tegra194_dc_soc_info,
-	पूर्ण, अणु
+	}, {
 		.compatible = "nvidia,tegra186-dc",
 		.data = &tegra186_dc_soc_info,
-	पूर्ण, अणु
+	}, {
 		.compatible = "nvidia,tegra210-dc",
 		.data = &tegra210_dc_soc_info,
-	पूर्ण, अणु
+	}, {
 		.compatible = "nvidia,tegra124-dc",
 		.data = &tegra124_dc_soc_info,
-	पूर्ण, अणु
+	}, {
 		.compatible = "nvidia,tegra114-dc",
 		.data = &tegra114_dc_soc_info,
-	पूर्ण, अणु
+	}, {
 		.compatible = "nvidia,tegra30-dc",
 		.data = &tegra30_dc_soc_info,
-	पूर्ण, अणु
+	}, {
 		.compatible = "nvidia,tegra20-dc",
 		.data = &tegra20_dc_soc_info,
-	पूर्ण, अणु
+	}, {
 		/* sentinel */
-	पूर्ण
-पूर्ण;
+	}
+};
 MODULE_DEVICE_TABLE(of, tegra_dc_of_match);
 
-अटल पूर्णांक tegra_dc_parse_dt(काष्ठा tegra_dc *dc)
-अणु
-	काष्ठा device_node *np;
+static int tegra_dc_parse_dt(struct tegra_dc *dc)
+{
+	struct device_node *np;
 	u32 value = 0;
-	पूर्णांक err;
+	int err;
 
-	err = of_property_पढ़ो_u32(dc->dev->of_node, "nvidia,head", &value);
-	अगर (err < 0) अणु
+	err = of_property_read_u32(dc->dev->of_node, "nvidia,head", &value);
+	if (err < 0) {
 		dev_err(dc->dev, "missing \"nvidia,head\" property\n");
 
 		/*
@@ -2562,76 +2561,76 @@ MODULE_DEVICE_TABLE(of, tegra_dc_of_match);
 		 * correct head number by looking up the position of this
 		 * display controller's node within the device tree. Assuming
 		 * that the nodes are ordered properly in the DTS file and
-		 * that the translation पूर्णांकo a flattened device tree blob
+		 * that the translation into a flattened device tree blob
 		 * preserves that ordering this will actually yield the right
 		 * head number.
 		 *
-		 * If those assumptions करोn't hold, this will still work क्रम
-		 * हालs where only a single display controller is used.
+		 * If those assumptions don't hold, this will still work for
+		 * cases where only a single display controller is used.
 		 */
-		क्रम_each_matching_node(np, tegra_dc_of_match) अणु
-			अगर (np == dc->dev->of_node) अणु
+		for_each_matching_node(np, tegra_dc_of_match) {
+			if (np == dc->dev->of_node) {
 				of_node_put(np);
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
 			value++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	dc->pipe = value;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tegra_dc_match_by_pipe(काष्ठा device *dev, स्थिर व्योम *data)
-अणु
-	काष्ठा tegra_dc *dc = dev_get_drvdata(dev);
-	अचिन्हित पूर्णांक pipe = (अचिन्हित दीर्घ)(व्योम *)data;
+static int tegra_dc_match_by_pipe(struct device *dev, const void *data)
+{
+	struct tegra_dc *dc = dev_get_drvdata(dev);
+	unsigned int pipe = (unsigned long)(void *)data;
 
-	वापस dc->pipe == pipe;
-पूर्ण
+	return dc->pipe == pipe;
+}
 
-अटल पूर्णांक tegra_dc_couple(काष्ठा tegra_dc *dc)
-अणु
+static int tegra_dc_couple(struct tegra_dc *dc)
+{
 	/*
 	 * On Tegra20, DC1 requires DC0 to be taken out of reset in order to
 	 * be enabled, otherwise CPU hangs on writing to CMD_DISPLAY_COMMAND /
-	 * POWER_CONTROL रेजिस्टरs during CRTC enabling.
+	 * POWER_CONTROL registers during CRTC enabling.
 	 */
-	अगर (dc->soc->coupled_pm && dc->pipe == 1) अणु
-		काष्ठा device *companion;
-		काष्ठा tegra_dc *parent;
+	if (dc->soc->coupled_pm && dc->pipe == 1) {
+		struct device *companion;
+		struct tegra_dc *parent;
 
-		companion = driver_find_device(dc->dev->driver, शून्य, (स्थिर व्योम *)0,
+		companion = driver_find_device(dc->dev->driver, NULL, (const void *)0,
 					       tegra_dc_match_by_pipe);
-		अगर (!companion)
-			वापस -EPROBE_DEFER;
+		if (!companion)
+			return -EPROBE_DEFER;
 
 		parent = dev_get_drvdata(companion);
 		dc->client.parent = &parent->client;
 
 		dev_dbg(dc->dev, "coupled to %s\n", dev_name(companion));
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tegra_dc_probe(काष्ठा platक्रमm_device *pdev)
-अणु
+static int tegra_dc_probe(struct platform_device *pdev)
+{
 	u64 dma_mask = dma_get_mask(pdev->dev.parent);
-	काष्ठा tegra_dc *dc;
-	पूर्णांक err;
+	struct tegra_dc *dc;
+	int err;
 
 	err = dma_coerce_mask_and_coherent(&pdev->dev, dma_mask);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		dev_err(&pdev->dev, "failed to set DMA mask: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	dc = devm_kzalloc(&pdev->dev, माप(*dc), GFP_KERNEL);
-	अगर (!dc)
-		वापस -ENOMEM;
+	dc = devm_kzalloc(&pdev->dev, sizeof(*dc), GFP_KERNEL);
+	if (!dc)
+		return -ENOMEM;
 
 	dc->soc = of_device_get_match_data(&pdev->dev);
 
@@ -2639,120 +2638,120 @@ MODULE_DEVICE_TABLE(of, tegra_dc_of_match);
 	dc->dev = &pdev->dev;
 
 	err = tegra_dc_parse_dt(dc);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	err = tegra_dc_couple(dc);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	dc->clk = devm_clk_get(&pdev->dev, शून्य);
-	अगर (IS_ERR(dc->clk)) अणु
+	dc->clk = devm_clk_get(&pdev->dev, NULL);
+	if (IS_ERR(dc->clk)) {
 		dev_err(&pdev->dev, "failed to get clock\n");
-		वापस PTR_ERR(dc->clk);
-	पूर्ण
+		return PTR_ERR(dc->clk);
+	}
 
 	dc->rst = devm_reset_control_get(&pdev->dev, "dc");
-	अगर (IS_ERR(dc->rst)) अणु
+	if (IS_ERR(dc->rst)) {
 		dev_err(&pdev->dev, "failed to get reset\n");
-		वापस PTR_ERR(dc->rst);
-	पूर्ण
+		return PTR_ERR(dc->rst);
+	}
 
-	/* निश्चित reset and disable घड़ी */
+	/* assert reset and disable clock */
 	err = clk_prepare_enable(dc->clk);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	usleep_range(2000, 4000);
 
-	err = reset_control_निश्चित(dc->rst);
-	अगर (err < 0)
-		वापस err;
+	err = reset_control_assert(dc->rst);
+	if (err < 0)
+		return err;
 
 	usleep_range(2000, 4000);
 
 	clk_disable_unprepare(dc->clk);
 
-	अगर (dc->soc->has_घातergate) अणु
-		अगर (dc->pipe == 0)
-			dc->घातergate = TEGRA_POWERGATE_DIS;
-		अन्यथा
-			dc->घातergate = TEGRA_POWERGATE_DISB;
+	if (dc->soc->has_powergate) {
+		if (dc->pipe == 0)
+			dc->powergate = TEGRA_POWERGATE_DIS;
+		else
+			dc->powergate = TEGRA_POWERGATE_DISB;
 
-		tegra_घातergate_घातer_off(dc->घातergate);
-	पूर्ण
+		tegra_powergate_power_off(dc->powergate);
+	}
 
-	dc->regs = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(dc->regs))
-		वापस PTR_ERR(dc->regs);
+	dc->regs = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(dc->regs))
+		return PTR_ERR(dc->regs);
 
-	dc->irq = platक्रमm_get_irq(pdev, 0);
-	अगर (dc->irq < 0)
-		वापस -ENXIO;
+	dc->irq = platform_get_irq(pdev, 0);
+	if (dc->irq < 0)
+		return -ENXIO;
 
 	err = tegra_dc_rgb_probe(dc);
-	अगर (err < 0 && err != -ENODEV) अणु
-		स्थिर अक्षर *level = KERN_ERR;
+	if (err < 0 && err != -ENODEV) {
+		const char *level = KERN_ERR;
 
-		अगर (err == -EPROBE_DEFER)
+		if (err == -EPROBE_DEFER)
 			level = KERN_DEBUG;
 
-		dev_prपूर्णांकk(level, dc->dev, "failed to probe RGB output: %d\n",
+		dev_printk(level, dc->dev, "failed to probe RGB output: %d\n",
 			   err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	platक्रमm_set_drvdata(pdev, dc);
-	pm_runसमय_enable(&pdev->dev);
+	platform_set_drvdata(pdev, dc);
+	pm_runtime_enable(&pdev->dev);
 
 	INIT_LIST_HEAD(&dc->client.list);
 	dc->client.ops = &dc_client_ops;
 	dc->client.dev = &pdev->dev;
 
-	err = host1x_client_रेजिस्टर(&dc->client);
-	अगर (err < 0) अणु
+	err = host1x_client_register(&dc->client);
+	if (err < 0) {
 		dev_err(&pdev->dev, "failed to register host1x client: %d\n",
 			err);
-		जाओ disable_pm;
-	पूर्ण
+		goto disable_pm;
+	}
 
-	वापस 0;
+	return 0;
 
 disable_pm:
-	pm_runसमय_disable(&pdev->dev);
-	tegra_dc_rgb_हटाओ(dc);
+	pm_runtime_disable(&pdev->dev);
+	tegra_dc_rgb_remove(dc);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक tegra_dc_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा tegra_dc *dc = platक्रमm_get_drvdata(pdev);
-	पूर्णांक err;
+static int tegra_dc_remove(struct platform_device *pdev)
+{
+	struct tegra_dc *dc = platform_get_drvdata(pdev);
+	int err;
 
-	err = host1x_client_unरेजिस्टर(&dc->client);
-	अगर (err < 0) अणु
+	err = host1x_client_unregister(&dc->client);
+	if (err < 0) {
 		dev_err(&pdev->dev, "failed to unregister host1x client: %d\n",
 			err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	err = tegra_dc_rgb_हटाओ(dc);
-	अगर (err < 0) अणु
+	err = tegra_dc_rgb_remove(dc);
+	if (err < 0) {
 		dev_err(&pdev->dev, "failed to remove RGB output: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	pm_runसमय_disable(&pdev->dev);
+	pm_runtime_disable(&pdev->dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा platक्रमm_driver tegra_dc_driver = अणु
-	.driver = अणु
+struct platform_driver tegra_dc_driver = {
+	.driver = {
 		.name = "tegra-dc",
 		.of_match_table = tegra_dc_of_match,
-	पूर्ण,
+	},
 	.probe = tegra_dc_probe,
-	.हटाओ = tegra_dc_हटाओ,
-पूर्ण;
+	.remove = tegra_dc_remove,
+};

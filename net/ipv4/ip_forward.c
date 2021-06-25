@@ -1,176 +1,175 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * INET		An implementation of the TCP/IP protocol suite क्रम the LINUX
- *		operating प्रणाली.  INET is implemented using the  BSD Socket
- *		पूर्णांकerface as the means of communication with the user level.
+ * INET		An implementation of the TCP/IP protocol suite for the LINUX
+ *		operating system.  INET is implemented using the  BSD Socket
+ *		interface as the means of communication with the user level.
  *
- *		The IP क्रमwarding functionality.
+ *		The IP forwarding functionality.
  *
  * Authors:	see ip.c
  *
  * Fixes:
- *		Many		:	Split from ip.c , see ip_input.c क्रम
+ *		Many		:	Split from ip.c , see ip_input.c for
  *					history.
- *		Dave Gregorich	:	शून्य ip_rt_put fix क्रम multicast
+ *		Dave Gregorich	:	NULL ip_rt_put fix for multicast
  *					routing.
- *		Jos Vos		:	Add call_out_firewall beक्रमe sending,
- *					use output device क्रम accounting.
- *		Jos Vos		:	Call क्रमward firewall after routing
+ *		Jos Vos		:	Add call_out_firewall before sending,
+ *					use output device for accounting.
+ *		Jos Vos		:	Call forward firewall after routing
  *					(always use output device).
  *		Mike McLagan	:	Routing by source
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/ip.h>
-#समावेश <linux/icmp.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/slab.h>
-#समावेश <net/sock.h>
-#समावेश <net/ip.h>
-#समावेश <net/tcp.h>
-#समावेश <net/udp.h>
-#समावेश <net/icmp.h>
-#समावेश <linux/tcp.h>
-#समावेश <linux/udp.h>
-#समावेश <linux/netfilter_ipv4.h>
-#समावेश <net/checksum.h>
-#समावेश <linux/route.h>
-#समावेश <net/route.h>
-#समावेश <net/xfrm.h>
+#include <linux/types.h>
+#include <linux/mm.h>
+#include <linux/skbuff.h>
+#include <linux/ip.h>
+#include <linux/icmp.h>
+#include <linux/netdevice.h>
+#include <linux/slab.h>
+#include <net/sock.h>
+#include <net/ip.h>
+#include <net/tcp.h>
+#include <net/udp.h>
+#include <net/icmp.h>
+#include <linux/tcp.h>
+#include <linux/udp.h>
+#include <linux/netfilter_ipv4.h>
+#include <net/checksum.h>
+#include <linux/route.h>
+#include <net/route.h>
+#include <net/xfrm.h>
 
-अटल bool ip_exceeds_mtu(स्थिर काष्ठा sk_buff *skb, अचिन्हित पूर्णांक mtu)
-अणु
-	अगर (skb->len <= mtu)
-		वापस false;
+static bool ip_exceeds_mtu(const struct sk_buff *skb, unsigned int mtu)
+{
+	if (skb->len <= mtu)
+		return false;
 
-	अगर (unlikely((ip_hdr(skb)->frag_off & htons(IP_DF)) == 0))
-		वापस false;
+	if (unlikely((ip_hdr(skb)->frag_off & htons(IP_DF)) == 0))
+		return false;
 
 	/* original fragment exceeds mtu and DF is set */
-	अगर (unlikely(IPCB(skb)->frag_max_size > mtu))
-		वापस true;
+	if (unlikely(IPCB(skb)->frag_max_size > mtu))
+		return true;
 
-	अगर (skb->ignore_df)
-		वापस false;
+	if (skb->ignore_df)
+		return false;
 
-	अगर (skb_is_gso(skb) && skb_gso_validate_network_len(skb, mtu))
-		वापस false;
+	if (skb_is_gso(skb) && skb_gso_validate_network_len(skb, mtu))
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 
-अटल पूर्णांक ip_क्रमward_finish(काष्ठा net *net, काष्ठा sock *sk, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा ip_options *opt	= &(IPCB(skb)->opt);
+static int ip_forward_finish(struct net *net, struct sock *sk, struct sk_buff *skb)
+{
+	struct ip_options *opt	= &(IPCB(skb)->opt);
 
 	__IP_INC_STATS(net, IPSTATS_MIB_OUTFORWDATAGRAMS);
 	__IP_ADD_STATS(net, IPSTATS_MIB_OUTOCTETS, skb->len);
 
-#अगर_घोषित CONFIG_NET_SWITCHDEV
-	अगर (skb->offload_l3_fwd_mark) अणु
+#ifdef CONFIG_NET_SWITCHDEV
+	if (skb->offload_l3_fwd_mark) {
 		consume_skb(skb);
-		वापस 0;
-	पूर्ण
-#पूर्ण_अगर
+		return 0;
+	}
+#endif
 
-	अगर (unlikely(opt->optlen))
-		ip_क्रमward_options(skb);
+	if (unlikely(opt->optlen))
+		ip_forward_options(skb);
 
 	skb->tstamp = 0;
-	वापस dst_output(net, sk, skb);
-पूर्ण
+	return dst_output(net, sk, skb);
+}
 
-पूर्णांक ip_क्रमward(काष्ठा sk_buff *skb)
-अणु
+int ip_forward(struct sk_buff *skb)
+{
 	u32 mtu;
-	काष्ठा iphdr *iph;	/* Our header */
-	काष्ठा rtable *rt;	/* Route we use */
-	काष्ठा ip_options *opt	= &(IPCB(skb)->opt);
-	काष्ठा net *net;
+	struct iphdr *iph;	/* Our header */
+	struct rtable *rt;	/* Route we use */
+	struct ip_options *opt	= &(IPCB(skb)->opt);
+	struct net *net;
 
 	/* that should never happen */
-	अगर (skb->pkt_type != PACKET_HOST)
-		जाओ drop;
+	if (skb->pkt_type != PACKET_HOST)
+		goto drop;
 
-	अगर (unlikely(skb->sk))
-		जाओ drop;
+	if (unlikely(skb->sk))
+		goto drop;
 
-	अगर (skb_warn_अगर_lro(skb))
-		जाओ drop;
+	if (skb_warn_if_lro(skb))
+		goto drop;
 
-	अगर (!xfrm4_policy_check(शून्य, XFRM_POLICY_FWD, skb))
-		जाओ drop;
+	if (!xfrm4_policy_check(NULL, XFRM_POLICY_FWD, skb))
+		goto drop;
 
-	अगर (IPCB(skb)->opt.router_alert && ip_call_ra_chain(skb))
-		वापस NET_RX_SUCCESS;
+	if (IPCB(skb)->opt.router_alert && ip_call_ra_chain(skb))
+		return NET_RX_SUCCESS;
 
-	skb_क्रमward_csum(skb);
+	skb_forward_csum(skb);
 	net = dev_net(skb->dev);
 
 	/*
 	 *	According to the RFC, we must first decrease the TTL field. If
 	 *	that reaches zero, we must reply an ICMP control message telling
-	 *	that the packet's lअगरeसमय expired.
+	 *	that the packet's lifetime expired.
 	 */
-	अगर (ip_hdr(skb)->ttl <= 1)
-		जाओ too_many_hops;
+	if (ip_hdr(skb)->ttl <= 1)
+		goto too_many_hops;
 
-	अगर (!xfrm4_route_क्रमward(skb))
-		जाओ drop;
+	if (!xfrm4_route_forward(skb))
+		goto drop;
 
 	rt = skb_rtable(skb);
 
-	अगर (opt->is_strictroute && rt->rt_uses_gateway)
-		जाओ sr_failed;
+	if (opt->is_strictroute && rt->rt_uses_gateway)
+		goto sr_failed;
 
 	IPCB(skb)->flags |= IPSKB_FORWARDED;
-	mtu = ip_dst_mtu_maybe_क्रमward(&rt->dst, true);
-	अगर (ip_exceeds_mtu(skb, mtu)) अणु
+	mtu = ip_dst_mtu_maybe_forward(&rt->dst, true);
+	if (ip_exceeds_mtu(skb, mtu)) {
 		IP_INC_STATS(net, IPSTATS_MIB_FRAGFAILS);
 		icmp_send(skb, ICMP_DEST_UNREACH, ICMP_FRAG_NEEDED,
 			  htonl(mtu));
-		जाओ drop;
-	पूर्ण
+		goto drop;
+	}
 
 	/* We are about to mangle packet. Copy it! */
-	अगर (skb_cow(skb, LL_RESERVED_SPACE(rt->dst.dev)+rt->dst.header_len))
-		जाओ drop;
+	if (skb_cow(skb, LL_RESERVED_SPACE(rt->dst.dev)+rt->dst.header_len))
+		goto drop;
 	iph = ip_hdr(skb);
 
-	/* Decrease ttl after skb cow करोne */
+	/* Decrease ttl after skb cow done */
 	ip_decrease_ttl(iph);
 
 	/*
-	 *	We now generate an ICMP HOST REसूचीECT giving the route
+	 *	We now generate an ICMP HOST REDIRECT giving the route
 	 *	we calculated.
 	 */
-	अगर (IPCB(skb)->flags & IPSKB_DOREसूचीECT && !opt->srr &&
+	if (IPCB(skb)->flags & IPSKB_DOREDIRECT && !opt->srr &&
 	    !skb_sec_path(skb))
 		ip_rt_send_redirect(skb);
 
-	अगर (net->ipv4.sysctl_ip_fwd_update_priority)
+	if (net->ipv4.sysctl_ip_fwd_update_priority)
 		skb->priority = rt_tos2priority(iph->tos);
 
-	वापस NF_HOOK(NFPROTO_IPV4, NF_INET_FORWARD,
-		       net, शून्य, skb, skb->dev, rt->dst.dev,
-		       ip_क्रमward_finish);
+	return NF_HOOK(NFPROTO_IPV4, NF_INET_FORWARD,
+		       net, NULL, skb, skb->dev, rt->dst.dev,
+		       ip_forward_finish);
 
 sr_failed:
 	/*
 	 *	Strict routing permits no gatewaying
 	 */
 	 icmp_send(skb, ICMP_DEST_UNREACH, ICMP_SR_FAILED, 0);
-	 जाओ drop;
+	 goto drop;
 
 too_many_hops:
 	/* Tell the sender its packet died... */
 	__IP_INC_STATS(net, IPSTATS_MIB_INHDRERRORS);
 	icmp_send(skb, ICMP_TIME_EXCEEDED, ICMP_EXC_TTL, 0);
 drop:
-	kमुक्त_skb(skb);
-	वापस NET_RX_DROP;
-पूर्ण
+	kfree_skb(skb);
+	return NET_RX_DROP;
+}

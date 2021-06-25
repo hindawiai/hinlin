@@ -1,120 +1,119 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 
-#समावेश <linux/dma-resv.h>
+#include <linux/dma-resv.h>
 
-#समावेश <drm/drm_atomic_state_helper.h>
-#समावेश <drm/drm_atomic_uapi.h>
-#समावेश <drm/drm_gem.h>
-#समावेश <drm/drm_gem_atomic_helper.h>
-#समावेश <drm/drm_gem_framebuffer_helper.h>
-#समावेश <drm/drm_simple_kms_helper.h>
+#include <drm/drm_atomic_state_helper.h>
+#include <drm/drm_atomic_uapi.h>
+#include <drm/drm_gem.h>
+#include <drm/drm_gem_atomic_helper.h>
+#include <drm/drm_gem_framebuffer_helper.h>
+#include <drm/drm_simple_kms_helper.h>
 
-#समावेश "drm_internal.h"
+#include "drm_internal.h"
 
 /**
  * DOC: overview
  *
  * The GEM atomic helpers library implements generic atomic-commit
- * functions क्रम drivers that use GEM objects. Currently, it provides
+ * functions for drivers that use GEM objects. Currently, it provides
  * synchronization helpers, and plane state and framebuffer BO mappings
- * क्रम planes with shaकरोw buffers.
+ * for planes with shadow buffers.
  *
- * Beक्रमe scanout, a plane's framebuffer needs to be synchronized with
- * possible ग_लिखोrs that draw पूर्णांकo the framebuffer. All drivers should
+ * Before scanout, a plane's framebuffer needs to be synchronized with
+ * possible writers that draw into the framebuffer. All drivers should
  * call drm_gem_plane_helper_prepare_fb() from their implementation of
- * काष्ठा &drm_plane_helper.prepare_fb . It sets the plane's fence from
- * the framebuffer so that the DRM core can synchronize access स्वतःmatically.
+ * struct &drm_plane_helper.prepare_fb . It sets the plane's fence from
+ * the framebuffer so that the DRM core can synchronize access automatically.
  *
  * drm_gem_plane_helper_prepare_fb() can also be used directly as
  * implementation of prepare_fb. For drivers based on
- * काष्ठा drm_simple_display_pipe, drm_gem_simple_display_pipe_prepare_fb()
+ * struct drm_simple_display_pipe, drm_gem_simple_display_pipe_prepare_fb()
  * provides equivalent functionality.
  *
  * .. code-block:: c
  *
- *	#समावेश <drm/drm_gem_atomic_helper.h>
+ *	#include <drm/drm_gem_atomic_helper.h>
  *
- *	काष्ठा drm_plane_helper_funcs driver_plane_helper_funcs = अणु
+ *	struct drm_plane_helper_funcs driver_plane_helper_funcs = {
  *		...,
  *		. prepare_fb = drm_gem_plane_helper_prepare_fb,
- *	पूर्ण;
+ *	};
  *
- *	काष्ठा drm_simple_display_pipe_funcs driver_pipe_funcs = अणु
+ *	struct drm_simple_display_pipe_funcs driver_pipe_funcs = {
  *		...,
  *		. prepare_fb = drm_gem_simple_display_pipe_prepare_fb,
- *	पूर्ण;
+ *	};
  *
- * A driver using a shaकरोw buffer copies the content of the shaकरोw buffers
- * पूर्णांकo the HW's framebuffer memory during an atomic update. This requires
- * a mapping of the shaकरोw buffer पूर्णांकo kernel address space. The mappings
+ * A driver using a shadow buffer copies the content of the shadow buffers
+ * into the HW's framebuffer memory during an atomic update. This requires
+ * a mapping of the shadow buffer into kernel address space. The mappings
  * cannot be established by commit-tail functions, such as atomic_update,
  * as this would violate locking rules around dma_buf_vmap().
  *
- * The helpers क्रम shaकरोw-buffered planes establish and release mappings,
- * and provide काष्ठा drm_shaकरोw_plane_state, which stores the plane's mapping
- * क्रम commit-tail functons.
+ * The helpers for shadow-buffered planes establish and release mappings,
+ * and provide struct drm_shadow_plane_state, which stores the plane's mapping
+ * for commit-tail functons.
  *
- * Shaकरोw-buffered planes can easily be enabled by using the provided macros
+ * Shadow-buffered planes can easily be enabled by using the provided macros
  * %DRM_GEM_SHADOW_PLANE_FUNCS and %DRM_GEM_SHADOW_PLANE_HELPER_FUNCS.
- * These macros set up the plane and plane-helper callbacks to poपूर्णांक to the
- * shaकरोw-buffer helpers.
+ * These macros set up the plane and plane-helper callbacks to point to the
+ * shadow-buffer helpers.
  *
  * .. code-block:: c
  *
- *	#समावेश <drm/drm_gem_atomic_helper.h>
+ *	#include <drm/drm_gem_atomic_helper.h>
  *
- *	काष्ठा drm_plane_funcs driver_plane_funcs = अणु
+ *	struct drm_plane_funcs driver_plane_funcs = {
  *		...,
  *		DRM_GEM_SHADOW_PLANE_FUNCS,
- *	पूर्ण;
+ *	};
  *
- *	काष्ठा drm_plane_helper_funcs driver_plane_helper_funcs = अणु
+ *	struct drm_plane_helper_funcs driver_plane_helper_funcs = {
  *		...,
  *		DRM_GEM_SHADOW_PLANE_HELPER_FUNCS,
- *	पूर्ण;
+ *	};
  *
- * In the driver's atomic-update function, shaकरोw-buffer mappings are available
- * from the plane state. Use to_drm_shaकरोw_plane_state() to upcast from
- * काष्ठा drm_plane_state.
+ * In the driver's atomic-update function, shadow-buffer mappings are available
+ * from the plane state. Use to_drm_shadow_plane_state() to upcast from
+ * struct drm_plane_state.
  *
  * .. code-block:: c
  *
- *	व्योम driver_plane_atomic_update(काष्ठा drm_plane *plane,
- *					काष्ठा drm_plane_state *old_plane_state)
- *	अणु
- *		काष्ठा drm_plane_state *plane_state = plane->state;
- *		काष्ठा drm_shaकरोw_plane_state *shaकरोw_plane_state =
- *			to_drm_shaकरोw_plane_state(plane_state);
+ *	void driver_plane_atomic_update(struct drm_plane *plane,
+ *					struct drm_plane_state *old_plane_state)
+ *	{
+ *		struct drm_plane_state *plane_state = plane->state;
+ *		struct drm_shadow_plane_state *shadow_plane_state =
+ *			to_drm_shadow_plane_state(plane_state);
  *
- *		// access shaकरोw buffer via shaकरोw_plane_state->map
- *	पूर्ण
+ *		// access shadow buffer via shadow_plane_state->map
+ *	}
  *
- * A mapping address क्रम each of the framebuffer's buffer object is stored in
- * काष्ठा &drm_shaकरोw_plane_state.map. The mappings are valid जबतक the state
+ * A mapping address for each of the framebuffer's buffer object is stored in
+ * struct &drm_shadow_plane_state.map. The mappings are valid while the state
  * is being used.
  *
- * Drivers that use काष्ठा drm_simple_display_pipe can use
+ * Drivers that use struct drm_simple_display_pipe can use
  * %DRM_GEM_SIMPLE_DISPLAY_PIPE_SHADOW_PLANE_FUNCS to initialize the rsp
- * callbacks. Access to shaकरोw-buffer mappings is similar to regular
+ * callbacks. Access to shadow-buffer mappings is similar to regular
  * atomic_update.
  *
  * .. code-block:: c
  *
- *	काष्ठा drm_simple_display_pipe_funcs driver_pipe_funcs = अणु
+ *	struct drm_simple_display_pipe_funcs driver_pipe_funcs = {
  *		...,
  *		DRM_GEM_SIMPLE_DISPLAY_PIPE_SHADOW_PLANE_FUNCS,
- *	पूर्ण;
+ *	};
  *
- *	व्योम driver_pipe_enable(काष्ठा drm_simple_display_pipe *pipe,
- *				काष्ठा drm_crtc_state *crtc_state,
- *				काष्ठा drm_plane_state *plane_state)
- *	अणु
- *		काष्ठा drm_shaकरोw_plane_state *shaकरोw_plane_state =
- *			to_drm_shaकरोw_plane_state(plane_state);
+ *	void driver_pipe_enable(struct drm_simple_display_pipe *pipe,
+ *				struct drm_crtc_state *crtc_state,
+ *				struct drm_plane_state *plane_state)
+ *	{
+ *		struct drm_shadow_plane_state *shadow_plane_state =
+ *			to_drm_shadow_plane_state(plane_state);
  *
- *		// access shaकरोw buffer via shaकरोw_plane_state->map
- *	पूर्ण
+ *		// access shadow buffer via shadow_plane_state->map
+ *	}
  */
 
 /*
@@ -127,307 +126,307 @@
  * @state: Plane state the fence will be attached to
  *
  * This function extracts the exclusive fence from &drm_gem_object.resv and
- * attaches it to plane state क्रम the atomic helper to रुको on. This is
- * necessary to correctly implement implicit synchronization क्रम any buffers
- * shared as a काष्ठा &dma_buf. This function can be used as the
+ * attaches it to plane state for the atomic helper to wait on. This is
+ * necessary to correctly implement implicit synchronization for any buffers
+ * shared as a struct &dma_buf. This function can be used as the
  * &drm_plane_helper_funcs.prepare_fb callback.
  *
- * There is no need क्रम &drm_plane_helper_funcs.cleanup_fb hook क्रम simple
+ * There is no need for &drm_plane_helper_funcs.cleanup_fb hook for simple
  * GEM based framebuffer drivers which have their buffers always pinned in
  * memory.
  *
- * See drm_atomic_set_fence_क्रम_plane() क्रम a discussion of implicit and
+ * See drm_atomic_set_fence_for_plane() for a discussion of implicit and
  * explicit fencing in atomic modeset updates.
  */
-पूर्णांक drm_gem_plane_helper_prepare_fb(काष्ठा drm_plane *plane, काष्ठा drm_plane_state *state)
-अणु
-	काष्ठा drm_gem_object *obj;
-	काष्ठा dma_fence *fence;
+int drm_gem_plane_helper_prepare_fb(struct drm_plane *plane, struct drm_plane_state *state)
+{
+	struct drm_gem_object *obj;
+	struct dma_fence *fence;
 
-	अगर (!state->fb)
-		वापस 0;
+	if (!state->fb)
+		return 0;
 
 	obj = drm_gem_fb_get_obj(state->fb, 0);
 	fence = dma_resv_get_excl_rcu(obj->resv);
-	drm_atomic_set_fence_क्रम_plane(state, fence);
+	drm_atomic_set_fence_for_plane(state, fence);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(drm_gem_plane_helper_prepare_fb);
 
 /**
- * drm_gem_simple_display_pipe_prepare_fb - prepare_fb helper क्रम &drm_simple_display_pipe
+ * drm_gem_simple_display_pipe_prepare_fb - prepare_fb helper for &drm_simple_display_pipe
  * @pipe: Simple display pipe
  * @plane_state: Plane state
  *
  * This function uses drm_gem_plane_helper_prepare_fb() to extract the exclusive fence
- * from &drm_gem_object.resv and attaches it to plane state क्रम the atomic
- * helper to रुको on. This is necessary to correctly implement implicit
- * synchronization क्रम any buffers shared as a काष्ठा &dma_buf. Drivers can use
+ * from &drm_gem_object.resv and attaches it to plane state for the atomic
+ * helper to wait on. This is necessary to correctly implement implicit
+ * synchronization for any buffers shared as a struct &dma_buf. Drivers can use
  * this as their &drm_simple_display_pipe_funcs.prepare_fb callback.
  *
- * See drm_atomic_set_fence_क्रम_plane() क्रम a discussion of implicit and
+ * See drm_atomic_set_fence_for_plane() for a discussion of implicit and
  * explicit fencing in atomic modeset updates.
  */
-पूर्णांक drm_gem_simple_display_pipe_prepare_fb(काष्ठा drm_simple_display_pipe *pipe,
-					   काष्ठा drm_plane_state *plane_state)
-अणु
-	वापस drm_gem_plane_helper_prepare_fb(&pipe->plane, plane_state);
-पूर्ण
+int drm_gem_simple_display_pipe_prepare_fb(struct drm_simple_display_pipe *pipe,
+					   struct drm_plane_state *plane_state)
+{
+	return drm_gem_plane_helper_prepare_fb(&pipe->plane, plane_state);
+}
 EXPORT_SYMBOL(drm_gem_simple_display_pipe_prepare_fb);
 
 /*
- * Shaकरोw-buffered Planes
+ * Shadow-buffered Planes
  */
 
 /**
- * drm_gem_duplicate_shaकरोw_plane_state - duplicates shaकरोw-buffered plane state
+ * drm_gem_duplicate_shadow_plane_state - duplicates shadow-buffered plane state
  * @plane: the plane
  *
- * This function implements काष्ठा &drm_plane_funcs.atomic_duplicate_state क्रम
- * shaकरोw-buffered planes. It assumes the existing state to be of type
- * काष्ठा drm_shaकरोw_plane_state and it allocates the new state to be of this
+ * This function implements struct &drm_plane_funcs.atomic_duplicate_state for
+ * shadow-buffered planes. It assumes the existing state to be of type
+ * struct drm_shadow_plane_state and it allocates the new state to be of this
  * type.
  *
- * The function करोes not duplicate existing mappings of the shaकरोw buffers.
- * Mappings are मुख्यtained during the atomic commit by the plane's prepare_fb
- * and cleanup_fb helpers. See drm_gem_prepare_shaकरोw_fb() and drm_gem_cleanup_shaकरोw_fb()
- * क्रम corresponding helpers.
+ * The function does not duplicate existing mappings of the shadow buffers.
+ * Mappings are maintained during the atomic commit by the plane's prepare_fb
+ * and cleanup_fb helpers. See drm_gem_prepare_shadow_fb() and drm_gem_cleanup_shadow_fb()
+ * for corresponding helpers.
  *
  * Returns:
- * A poपूर्णांकer to a new plane state on success, or शून्य otherwise.
+ * A pointer to a new plane state on success, or NULL otherwise.
  */
-काष्ठा drm_plane_state *
-drm_gem_duplicate_shaकरोw_plane_state(काष्ठा drm_plane *plane)
-अणु
-	काष्ठा drm_plane_state *plane_state = plane->state;
-	काष्ठा drm_shaकरोw_plane_state *new_shaकरोw_plane_state;
+struct drm_plane_state *
+drm_gem_duplicate_shadow_plane_state(struct drm_plane *plane)
+{
+	struct drm_plane_state *plane_state = plane->state;
+	struct drm_shadow_plane_state *new_shadow_plane_state;
 
-	अगर (!plane_state)
-		वापस शून्य;
+	if (!plane_state)
+		return NULL;
 
-	new_shaकरोw_plane_state = kzalloc(माप(*new_shaकरोw_plane_state), GFP_KERNEL);
-	अगर (!new_shaकरोw_plane_state)
-		वापस शून्य;
-	__drm_atomic_helper_plane_duplicate_state(plane, &new_shaकरोw_plane_state->base);
+	new_shadow_plane_state = kzalloc(sizeof(*new_shadow_plane_state), GFP_KERNEL);
+	if (!new_shadow_plane_state)
+		return NULL;
+	__drm_atomic_helper_plane_duplicate_state(plane, &new_shadow_plane_state->base);
 
-	वापस &new_shaकरोw_plane_state->base;
-पूर्ण
-EXPORT_SYMBOL(drm_gem_duplicate_shaकरोw_plane_state);
+	return &new_shadow_plane_state->base;
+}
+EXPORT_SYMBOL(drm_gem_duplicate_shadow_plane_state);
 
 /**
- * drm_gem_destroy_shaकरोw_plane_state - deletes shaकरोw-buffered plane state
+ * drm_gem_destroy_shadow_plane_state - deletes shadow-buffered plane state
  * @plane: the plane
- * @plane_state: the plane state of type काष्ठा drm_shaकरोw_plane_state
+ * @plane_state: the plane state of type struct drm_shadow_plane_state
  *
- * This function implements काष्ठा &drm_plane_funcs.atomic_destroy_state
- * क्रम shaकरोw-buffered planes. It expects that mappings of shaकरोw buffers
- * have been released alपढ़ोy.
+ * This function implements struct &drm_plane_funcs.atomic_destroy_state
+ * for shadow-buffered planes. It expects that mappings of shadow buffers
+ * have been released already.
  */
-व्योम drm_gem_destroy_shaकरोw_plane_state(काष्ठा drm_plane *plane,
-					काष्ठा drm_plane_state *plane_state)
-अणु
-	काष्ठा drm_shaकरोw_plane_state *shaकरोw_plane_state =
-		to_drm_shaकरोw_plane_state(plane_state);
+void drm_gem_destroy_shadow_plane_state(struct drm_plane *plane,
+					struct drm_plane_state *plane_state)
+{
+	struct drm_shadow_plane_state *shadow_plane_state =
+		to_drm_shadow_plane_state(plane_state);
 
-	__drm_atomic_helper_plane_destroy_state(&shaकरोw_plane_state->base);
-	kमुक्त(shaकरोw_plane_state);
-पूर्ण
-EXPORT_SYMBOL(drm_gem_destroy_shaकरोw_plane_state);
+	__drm_atomic_helper_plane_destroy_state(&shadow_plane_state->base);
+	kfree(shadow_plane_state);
+}
+EXPORT_SYMBOL(drm_gem_destroy_shadow_plane_state);
 
 /**
- * drm_gem_reset_shaकरोw_plane - resets a shaकरोw-buffered plane
+ * drm_gem_reset_shadow_plane - resets a shadow-buffered plane
  * @plane: the plane
  *
- * This function implements काष्ठा &drm_plane_funcs.reset_plane क्रम
- * shaकरोw-buffered planes. It assumes the current plane state to be
- * of type काष्ठा drm_shaकरोw_plane and it allocates the new state of
+ * This function implements struct &drm_plane_funcs.reset_plane for
+ * shadow-buffered planes. It assumes the current plane state to be
+ * of type struct drm_shadow_plane and it allocates the new state of
  * this type.
  */
-व्योम drm_gem_reset_shaकरोw_plane(काष्ठा drm_plane *plane)
-अणु
-	काष्ठा drm_shaकरोw_plane_state *shaकरोw_plane_state;
+void drm_gem_reset_shadow_plane(struct drm_plane *plane)
+{
+	struct drm_shadow_plane_state *shadow_plane_state;
 
-	अगर (plane->state) अणु
-		drm_gem_destroy_shaकरोw_plane_state(plane, plane->state);
-		plane->state = शून्य; /* must be set to शून्य here */
-	पूर्ण
+	if (plane->state) {
+		drm_gem_destroy_shadow_plane_state(plane, plane->state);
+		plane->state = NULL; /* must be set to NULL here */
+	}
 
-	shaकरोw_plane_state = kzalloc(माप(*shaकरोw_plane_state), GFP_KERNEL);
-	अगर (!shaकरोw_plane_state)
-		वापस;
-	__drm_atomic_helper_plane_reset(plane, &shaकरोw_plane_state->base);
-पूर्ण
-EXPORT_SYMBOL(drm_gem_reset_shaकरोw_plane);
+	shadow_plane_state = kzalloc(sizeof(*shadow_plane_state), GFP_KERNEL);
+	if (!shadow_plane_state)
+		return;
+	__drm_atomic_helper_plane_reset(plane, &shadow_plane_state->base);
+}
+EXPORT_SYMBOL(drm_gem_reset_shadow_plane);
 
 /**
- * drm_gem_prepare_shaकरोw_fb - prepares shaकरोw framebuffers
+ * drm_gem_prepare_shadow_fb - prepares shadow framebuffers
  * @plane: the plane
- * @plane_state: the plane state of type काष्ठा drm_shaकरोw_plane_state
+ * @plane_state: the plane state of type struct drm_shadow_plane_state
  *
- * This function implements काष्ठा &drm_plane_helper_funcs.prepare_fb. It
- * maps all buffer objects of the plane's framebuffer पूर्णांकo kernel address
- * space and stores them in &काष्ठा drm_shaकरोw_plane_state.map. The
+ * This function implements struct &drm_plane_helper_funcs.prepare_fb. It
+ * maps all buffer objects of the plane's framebuffer into kernel address
+ * space and stores them in &struct drm_shadow_plane_state.map. The
  * framebuffer will be synchronized as part of the atomic commit.
  *
- * See drm_gem_cleanup_shaकरोw_fb() क्रम cleanup.
+ * See drm_gem_cleanup_shadow_fb() for cleanup.
  *
  * Returns:
- * 0 on success, or a negative त्रुटि_सं code otherwise.
+ * 0 on success, or a negative errno code otherwise.
  */
-पूर्णांक drm_gem_prepare_shaकरोw_fb(काष्ठा drm_plane *plane, काष्ठा drm_plane_state *plane_state)
-अणु
-	काष्ठा drm_shaकरोw_plane_state *shaकरोw_plane_state = to_drm_shaकरोw_plane_state(plane_state);
-	काष्ठा drm_framebuffer *fb = plane_state->fb;
-	काष्ठा drm_gem_object *obj;
-	काष्ठा dma_buf_map map;
-	पूर्णांक ret;
-	माप_प्रकार i;
+int drm_gem_prepare_shadow_fb(struct drm_plane *plane, struct drm_plane_state *plane_state)
+{
+	struct drm_shadow_plane_state *shadow_plane_state = to_drm_shadow_plane_state(plane_state);
+	struct drm_framebuffer *fb = plane_state->fb;
+	struct drm_gem_object *obj;
+	struct dma_buf_map map;
+	int ret;
+	size_t i;
 
-	अगर (!fb)
-		वापस 0;
+	if (!fb)
+		return 0;
 
 	ret = drm_gem_plane_helper_prepare_fb(plane, plane_state);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	क्रम (i = 0; i < ARRAY_SIZE(shaकरोw_plane_state->map); ++i) अणु
+	for (i = 0; i < ARRAY_SIZE(shadow_plane_state->map); ++i) {
 		obj = drm_gem_fb_get_obj(fb, i);
-		अगर (!obj)
-			जारी;
+		if (!obj)
+			continue;
 		ret = drm_gem_vmap(obj, &map);
-		अगर (ret)
-			जाओ err_drm_gem_vunmap;
-		shaकरोw_plane_state->map[i] = map;
-	पूर्ण
+		if (ret)
+			goto err_drm_gem_vunmap;
+		shadow_plane_state->map[i] = map;
+	}
 
-	वापस 0;
+	return 0;
 
 err_drm_gem_vunmap:
-	जबतक (i) अणु
+	while (i) {
 		--i;
 		obj = drm_gem_fb_get_obj(fb, i);
-		अगर (!obj)
-			जारी;
-		drm_gem_vunmap(obj, &shaकरोw_plane_state->map[i]);
-	पूर्ण
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(drm_gem_prepare_shaकरोw_fb);
+		if (!obj)
+			continue;
+		drm_gem_vunmap(obj, &shadow_plane_state->map[i]);
+	}
+	return ret;
+}
+EXPORT_SYMBOL(drm_gem_prepare_shadow_fb);
 
 /**
- * drm_gem_cleanup_shaकरोw_fb - releases shaकरोw framebuffers
+ * drm_gem_cleanup_shadow_fb - releases shadow framebuffers
  * @plane: the plane
- * @plane_state: the plane state of type काष्ठा drm_shaकरोw_plane_state
+ * @plane_state: the plane state of type struct drm_shadow_plane_state
  *
- * This function implements काष्ठा &drm_plane_helper_funcs.cleanup_fb.
+ * This function implements struct &drm_plane_helper_funcs.cleanup_fb.
  * This function unmaps all buffer objects of the plane's framebuffer.
  *
- * See drm_gem_prepare_shaकरोw_fb() क्रम more inक्रमamtion.
+ * See drm_gem_prepare_shadow_fb() for more inforamtion.
  */
-व्योम drm_gem_cleanup_shaकरोw_fb(काष्ठा drm_plane *plane, काष्ठा drm_plane_state *plane_state)
-अणु
-	काष्ठा drm_shaकरोw_plane_state *shaकरोw_plane_state = to_drm_shaकरोw_plane_state(plane_state);
-	काष्ठा drm_framebuffer *fb = plane_state->fb;
-	माप_प्रकार i = ARRAY_SIZE(shaकरोw_plane_state->map);
-	काष्ठा drm_gem_object *obj;
+void drm_gem_cleanup_shadow_fb(struct drm_plane *plane, struct drm_plane_state *plane_state)
+{
+	struct drm_shadow_plane_state *shadow_plane_state = to_drm_shadow_plane_state(plane_state);
+	struct drm_framebuffer *fb = plane_state->fb;
+	size_t i = ARRAY_SIZE(shadow_plane_state->map);
+	struct drm_gem_object *obj;
 
-	अगर (!fb)
-		वापस;
+	if (!fb)
+		return;
 
-	जबतक (i) अणु
+	while (i) {
 		--i;
 		obj = drm_gem_fb_get_obj(fb, i);
-		अगर (!obj)
-			जारी;
-		drm_gem_vunmap(obj, &shaकरोw_plane_state->map[i]);
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL(drm_gem_cleanup_shaकरोw_fb);
+		if (!obj)
+			continue;
+		drm_gem_vunmap(obj, &shadow_plane_state->map[i]);
+	}
+}
+EXPORT_SYMBOL(drm_gem_cleanup_shadow_fb);
 
 /**
- * drm_gem_simple_kms_prepare_shaकरोw_fb - prepares shaकरोw framebuffers
+ * drm_gem_simple_kms_prepare_shadow_fb - prepares shadow framebuffers
  * @pipe: the simple display pipe
- * @plane_state: the plane state of type काष्ठा drm_shaकरोw_plane_state
+ * @plane_state: the plane state of type struct drm_shadow_plane_state
  *
- * This function implements काष्ठा drm_simple_display_funcs.prepare_fb. It
- * maps all buffer objects of the plane's framebuffer पूर्णांकo kernel address
- * space and stores them in काष्ठा drm_shaकरोw_plane_state.map. The
+ * This function implements struct drm_simple_display_funcs.prepare_fb. It
+ * maps all buffer objects of the plane's framebuffer into kernel address
+ * space and stores them in struct drm_shadow_plane_state.map. The
  * framebuffer will be synchronized as part of the atomic commit.
  *
- * See drm_gem_simple_kms_cleanup_shaकरोw_fb() क्रम cleanup.
+ * See drm_gem_simple_kms_cleanup_shadow_fb() for cleanup.
  *
  * Returns:
- * 0 on success, or a negative त्रुटि_सं code otherwise.
+ * 0 on success, or a negative errno code otherwise.
  */
-पूर्णांक drm_gem_simple_kms_prepare_shaकरोw_fb(काष्ठा drm_simple_display_pipe *pipe,
-					 काष्ठा drm_plane_state *plane_state)
-अणु
-	वापस drm_gem_prepare_shaकरोw_fb(&pipe->plane, plane_state);
-पूर्ण
-EXPORT_SYMBOL(drm_gem_simple_kms_prepare_shaकरोw_fb);
+int drm_gem_simple_kms_prepare_shadow_fb(struct drm_simple_display_pipe *pipe,
+					 struct drm_plane_state *plane_state)
+{
+	return drm_gem_prepare_shadow_fb(&pipe->plane, plane_state);
+}
+EXPORT_SYMBOL(drm_gem_simple_kms_prepare_shadow_fb);
 
 /**
- * drm_gem_simple_kms_cleanup_shaकरोw_fb - releases shaकरोw framebuffers
+ * drm_gem_simple_kms_cleanup_shadow_fb - releases shadow framebuffers
  * @pipe: the simple display pipe
- * @plane_state: the plane state of type काष्ठा drm_shaकरोw_plane_state
+ * @plane_state: the plane state of type struct drm_shadow_plane_state
  *
- * This function implements काष्ठा drm_simple_display_funcs.cleanup_fb.
+ * This function implements struct drm_simple_display_funcs.cleanup_fb.
  * This function unmaps all buffer objects of the plane's framebuffer.
  *
- * See drm_gem_simple_kms_prepare_shaकरोw_fb().
+ * See drm_gem_simple_kms_prepare_shadow_fb().
  */
-व्योम drm_gem_simple_kms_cleanup_shaकरोw_fb(काष्ठा drm_simple_display_pipe *pipe,
-					  काष्ठा drm_plane_state *plane_state)
-अणु
-	drm_gem_cleanup_shaकरोw_fb(&pipe->plane, plane_state);
-पूर्ण
-EXPORT_SYMBOL(drm_gem_simple_kms_cleanup_shaकरोw_fb);
+void drm_gem_simple_kms_cleanup_shadow_fb(struct drm_simple_display_pipe *pipe,
+					  struct drm_plane_state *plane_state)
+{
+	drm_gem_cleanup_shadow_fb(&pipe->plane, plane_state);
+}
+EXPORT_SYMBOL(drm_gem_simple_kms_cleanup_shadow_fb);
 
 /**
- * drm_gem_simple_kms_reset_shaकरोw_plane - resets a shaकरोw-buffered plane
+ * drm_gem_simple_kms_reset_shadow_plane - resets a shadow-buffered plane
  * @pipe: the simple display pipe
  *
- * This function implements काष्ठा drm_simple_display_funcs.reset_plane
- * क्रम shaकरोw-buffered planes.
+ * This function implements struct drm_simple_display_funcs.reset_plane
+ * for shadow-buffered planes.
  */
-व्योम drm_gem_simple_kms_reset_shaकरोw_plane(काष्ठा drm_simple_display_pipe *pipe)
-अणु
-	drm_gem_reset_shaकरोw_plane(&pipe->plane);
-पूर्ण
-EXPORT_SYMBOL(drm_gem_simple_kms_reset_shaकरोw_plane);
+void drm_gem_simple_kms_reset_shadow_plane(struct drm_simple_display_pipe *pipe)
+{
+	drm_gem_reset_shadow_plane(&pipe->plane);
+}
+EXPORT_SYMBOL(drm_gem_simple_kms_reset_shadow_plane);
 
 /**
- * drm_gem_simple_kms_duplicate_shaकरोw_plane_state - duplicates shaकरोw-buffered plane state
+ * drm_gem_simple_kms_duplicate_shadow_plane_state - duplicates shadow-buffered plane state
  * @pipe: the simple display pipe
  *
- * This function implements काष्ठा drm_simple_display_funcs.duplicate_plane_state
- * क्रम shaकरोw-buffered planes. It करोes not duplicate existing mappings of the shaकरोw
- * buffers. Mappings are मुख्यtained during the atomic commit by the plane's prepare_fb
+ * This function implements struct drm_simple_display_funcs.duplicate_plane_state
+ * for shadow-buffered planes. It does not duplicate existing mappings of the shadow
+ * buffers. Mappings are maintained during the atomic commit by the plane's prepare_fb
  * and cleanup_fb helpers.
  *
  * Returns:
- * A poपूर्णांकer to a new plane state on success, or शून्य otherwise.
+ * A pointer to a new plane state on success, or NULL otherwise.
  */
-काष्ठा drm_plane_state *
-drm_gem_simple_kms_duplicate_shaकरोw_plane_state(काष्ठा drm_simple_display_pipe *pipe)
-अणु
-	वापस drm_gem_duplicate_shaकरोw_plane_state(&pipe->plane);
-पूर्ण
-EXPORT_SYMBOL(drm_gem_simple_kms_duplicate_shaकरोw_plane_state);
+struct drm_plane_state *
+drm_gem_simple_kms_duplicate_shadow_plane_state(struct drm_simple_display_pipe *pipe)
+{
+	return drm_gem_duplicate_shadow_plane_state(&pipe->plane);
+}
+EXPORT_SYMBOL(drm_gem_simple_kms_duplicate_shadow_plane_state);
 
 /**
- * drm_gem_simple_kms_destroy_shaकरोw_plane_state - resets shaकरोw-buffered plane state
+ * drm_gem_simple_kms_destroy_shadow_plane_state - resets shadow-buffered plane state
  * @pipe: the simple display pipe
- * @plane_state: the plane state of type काष्ठा drm_shaकरोw_plane_state
+ * @plane_state: the plane state of type struct drm_shadow_plane_state
  *
- * This function implements काष्ठा drm_simple_display_funcs.destroy_plane_state
- * क्रम shaकरोw-buffered planes. It expects that mappings of shaकरोw buffers
- * have been released alपढ़ोy.
+ * This function implements struct drm_simple_display_funcs.destroy_plane_state
+ * for shadow-buffered planes. It expects that mappings of shadow buffers
+ * have been released already.
  */
-व्योम drm_gem_simple_kms_destroy_shaकरोw_plane_state(काष्ठा drm_simple_display_pipe *pipe,
-						   काष्ठा drm_plane_state *plane_state)
-अणु
-	drm_gem_destroy_shaकरोw_plane_state(&pipe->plane, plane_state);
-पूर्ण
-EXPORT_SYMBOL(drm_gem_simple_kms_destroy_shaकरोw_plane_state);
+void drm_gem_simple_kms_destroy_shadow_plane_state(struct drm_simple_display_pipe *pipe,
+						   struct drm_plane_state *plane_state)
+{
+	drm_gem_destroy_shadow_plane_state(&pipe->plane, plane_state);
+}
+EXPORT_SYMBOL(drm_gem_simple_kms_destroy_shadow_plane_state);

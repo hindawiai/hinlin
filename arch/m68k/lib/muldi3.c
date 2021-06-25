@@ -1,11 +1,10 @@
-<शैली गुरु>
 /* muldi3.c extracted from gcc-2.7.2.3/libgcc2.c and 
-			   gcc-2.7.2.3/दीर्घदीर्घ.h which is: */
+			   gcc-2.7.2.3/longlong.h which is: */
 /* Copyright (C) 1989, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
-GNU CC is मुक्त software; you can redistribute it and/or modअगरy
+GNU CC is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2, or (at your option)
 any later version.
@@ -13,21 +12,21 @@ any later version.
 GNU CC is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License क्रम more details. */
+GNU General Public License for more details. */
 
-#समावेश <linux/compiler.h>
-#समावेश <linux/export.h>
+#include <linux/compiler.h>
+#include <linux/export.h>
 
-#अगर_घोषित CONFIG_CPU_HAS_NO_MULDIV64
+#ifdef CONFIG_CPU_HAS_NO_MULDIV64
 
-#घोषणा SI_TYPE_SIZE 32
-#घोषणा __BITS4 (SI_TYPE_SIZE / 4)
-#घोषणा __ll_B (1L << (SI_TYPE_SIZE / 2))
-#घोषणा __ll_lowpart(t) ((USItype) (t) % __ll_B)
-#घोषणा __ll_highpart(t) ((USItype) (t) / __ll_B)
+#define SI_TYPE_SIZE 32
+#define __BITS4 (SI_TYPE_SIZE / 4)
+#define __ll_B (1L << (SI_TYPE_SIZE / 2))
+#define __ll_lowpart(t) ((USItype) (t) % __ll_B)
+#define __ll_highpart(t) ((USItype) (t) / __ll_B)
 
-#घोषणा umul_ppmm(w1, w0, u, v)						\
-  करो अणु									\
+#define umul_ppmm(w1, w0, u, v)						\
+  do {									\
     USItype __x0, __x1, __x2, __x3;					\
     USItype __ul, __vl, __uh, __vh;					\
 									\
@@ -43,47 +42,47 @@ GNU General Public License क्रम more details. */
 									\
     __x1 += __ll_highpart (__x0);/* this can't give carry */		\
     __x1 += __x2;		/* but this indeed can */		\
-    अगर (__x1 < __x2)		/* did we get it? */			\
+    if (__x1 < __x2)		/* did we get it? */			\
       __x3 += __ll_B;		/* yes, add it in the proper pos. */	\
 									\
     (w1) = __x3 + __ll_highpart (__x1);					\
     (w0) = __ll_lowpart (__x1) * __ll_B + __ll_lowpart (__x0);		\
-  पूर्ण जबतक (0)
+  } while (0)
 
-#अन्यथा
+#else
 
-#घोषणा umul_ppmm(w1, w0, u, v) \
-  __यंत्र__ ("mulu%.l %3,%1:%0"						\
+#define umul_ppmm(w1, w0, u, v) \
+  __asm__ ("mulu%.l %3,%1:%0"						\
            : "=d" ((USItype)(w0)),					\
              "=d" ((USItype)(w1))					\
            : "%0" ((USItype)(u)),					\
              "dmi" ((USItype)(v)))
 
-#पूर्ण_अगर
+#endif
 
-#घोषणा __umulsidi3(u, v) \
-  (अणुDIजोड़ __w;							\
+#define __umulsidi3(u, v) \
+  ({DIunion __w;							\
     umul_ppmm (__w.s.high, __w.s.low, u, v);				\
-    __w.ll; पूर्ण)
+    __w.ll; })
 
-प्रकार 	 पूर्णांक SItype	__mode(SI);
-प्रकार अचिन्हित पूर्णांक USItype	__mode(SI);
-प्रकार		 पूर्णांक DItype	__mode(DI);
-प्रकार पूर्णांक word_type           __mode(__word__);
+typedef 	 int SItype	__mode(SI);
+typedef unsigned int USItype	__mode(SI);
+typedef		 int DItype	__mode(DI);
+typedef int word_type           __mode(__word__);
 
-काष्ठा DIकाष्ठा अणुSItype high, low;पूर्ण;
+struct DIstruct {SItype high, low;};
 
-प्रकार जोड़
-अणु
-  काष्ठा DIकाष्ठा s;
+typedef union
+{
+  struct DIstruct s;
   DItype ll;
-पूर्ण DIजोड़;
+} DIunion;
 
 DItype
 __muldi3 (DItype u, DItype v)
-अणु
-  DIजोड़ w;
-  DIजोड़ uu, vv;
+{
+  DIunion w;
+  DIunion uu, vv;
 
   uu.ll = u,
   vv.ll = v;
@@ -92,6 +91,6 @@ __muldi3 (DItype u, DItype v)
   w.s.high += ((USItype) uu.s.low * (USItype) vv.s.high
 	       + (USItype) uu.s.high * (USItype) vv.s.low);
 
-  वापस w.ll;
-पूर्ण
+  return w.ll;
+}
 EXPORT_SYMBOL(__muldi3);

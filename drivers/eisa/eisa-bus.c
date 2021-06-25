@@ -1,205 +1,204 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * EISA bus support functions क्रम sysfs.
+ * EISA bus support functions for sysfs.
  *
  * (C) 2002, 2003 Marc Zyngier <maz@wild-wind.fr.eu.org>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/device.h>
-#समावेश <linux/eisa.h>
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/ioport.h>
-#समावेश <यंत्र/पन.स>
+#include <linux/kernel.h>
+#include <linux/device.h>
+#include <linux/eisa.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/ioport.h>
+#include <asm/io.h>
 
-#घोषणा SLOT_ADDRESS(r,n) (r->bus_base_addr + (0x1000 * n))
+#define SLOT_ADDRESS(r,n) (r->bus_base_addr + (0x1000 * n))
 
-#घोषणा EISA_DEVINFO(i,s) अणु .id = अणु .sig = i पूर्ण, .name = s पूर्ण
+#define EISA_DEVINFO(i,s) { .id = { .sig = i }, .name = s }
 
-काष्ठा eisa_device_info अणु
-	काष्ठा eisa_device_id id;
-	अक्षर name[50];
-पूर्ण;
+struct eisa_device_info {
+	struct eisa_device_id id;
+	char name[50];
+};
 
-#अगर_घोषित CONFIG_EISA_NAMES
-अटल काष्ठा eisa_device_info __initdata eisa_table[] = अणु
-#समावेश "devlist.h"
-पूर्ण;
-#घोषणा EISA_INFOS (माप (eisa_table) / (माप (काष्ठा eisa_device_info)))
-#पूर्ण_अगर
+#ifdef CONFIG_EISA_NAMES
+static struct eisa_device_info __initdata eisa_table[] = {
+#include "devlist.h"
+};
+#define EISA_INFOS (sizeof (eisa_table) / (sizeof (struct eisa_device_info)))
+#endif
 
-#घोषणा EISA_MAX_FORCED_DEV 16
+#define EISA_MAX_FORCED_DEV 16
 
-अटल पूर्णांक enable_dev[EISA_MAX_FORCED_DEV];
-अटल अचिन्हित पूर्णांक enable_dev_count;
-अटल पूर्णांक disable_dev[EISA_MAX_FORCED_DEV];
-अटल अचिन्हित पूर्णांक disable_dev_count;
+static int enable_dev[EISA_MAX_FORCED_DEV];
+static unsigned int enable_dev_count;
+static int disable_dev[EISA_MAX_FORCED_DEV];
+static unsigned int disable_dev_count;
 
-अटल पूर्णांक is_क्रमced_dev(पूर्णांक *क्रमced_tab,
-			 पूर्णांक क्रमced_count,
-			 काष्ठा eisa_root_device *root,
-			 काष्ठा eisa_device *edev)
-अणु
-	पूर्णांक i, x;
+static int is_forced_dev(int *forced_tab,
+			 int forced_count,
+			 struct eisa_root_device *root,
+			 struct eisa_device *edev)
+{
+	int i, x;
 
-	क्रम (i = 0; i < क्रमced_count; i++) अणु
+	for (i = 0; i < forced_count; i++) {
 		x = (root->bus_nr << 8) | edev->slot;
-		अगर (क्रमced_tab[i] == x)
-			वापस 1;
-	पूर्ण
+		if (forced_tab[i] == x)
+			return 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __init eisa_name_device(काष्ठा eisa_device *edev)
-अणु
-#अगर_घोषित CONFIG_EISA_NAMES
-	पूर्णांक i;
-	क्रम (i = 0; i < EISA_INFOS; i++) अणु
-		अगर (!म_भेद(edev->id.sig, eisa_table[i].id.sig)) अणु
+static void __init eisa_name_device(struct eisa_device *edev)
+{
+#ifdef CONFIG_EISA_NAMES
+	int i;
+	for (i = 0; i < EISA_INFOS; i++) {
+		if (!strcmp(edev->id.sig, eisa_table[i].id.sig)) {
 			strlcpy(edev->pretty_name,
 				eisa_table[i].name,
-				माप(edev->pretty_name));
-			वापस;
-		पूर्ण
-	पूर्ण
+				sizeof(edev->pretty_name));
+			return;
+		}
+	}
 
 	/* No name was found */
-	प्र_लिखो(edev->pretty_name, "EISA device %.7s", edev->id.sig);
-#पूर्ण_अगर
-पूर्ण
+	sprintf(edev->pretty_name, "EISA device %.7s", edev->id.sig);
+#endif
+}
 
-अटल अक्षर __init *decode_eisa_sig(अचिन्हित दीर्घ addr)
-अणु
-	अटल अक्षर sig_str[EISA_SIG_LEN];
+static char __init *decode_eisa_sig(unsigned long addr)
+{
+	static char sig_str[EISA_SIG_LEN];
 	u8 sig[4];
 	u16 rev;
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < 4; i++) अणु
-#अगर_घोषित CONFIG_EISA_VLB_PRIMING
+	for (i = 0; i < 4; i++) {
+#ifdef CONFIG_EISA_VLB_PRIMING
 		/*
 		 * This ugly stuff is used to wake up VL-bus cards
 		 * (AHA-284x is the only known example), so we can
-		 * पढ़ो the EISA id.
+		 * read the EISA id.
 		 *
 		 * Thankfully, this only exists on x86...
 		 */
 		outb(0x80 + i, addr);
-#पूर्ण_अगर
+#endif
 		sig[i] = inb(addr + i);
 
-		अगर (!i && (sig[0] & 0x80))
-			वापस शून्य;
-	पूर्ण
+		if (!i && (sig[0] & 0x80))
+			return NULL;
+	}
 
 	sig_str[0] = ((sig[0] >> 2) & 0x1f) + ('A' - 1);
 	sig_str[1] = (((sig[0] & 3) << 3) | (sig[1] >> 5)) + ('A' - 1);
 	sig_str[2] = (sig[1] & 0x1f) + ('A' - 1);
 	rev = (sig[2] << 8) | sig[3];
-	प्र_लिखो(sig_str + 3, "%04X", rev);
+	sprintf(sig_str + 3, "%04X", rev);
 
-	वापस sig_str;
-पूर्ण
+	return sig_str;
+}
 
-अटल पूर्णांक eisa_bus_match(काष्ठा device *dev, काष्ठा device_driver *drv)
-अणु
-	काष्ठा eisa_device *edev = to_eisa_device(dev);
-	काष्ठा eisa_driver *edrv = to_eisa_driver(drv);
-	स्थिर काष्ठा eisa_device_id *eids = edrv->id_table;
+static int eisa_bus_match(struct device *dev, struct device_driver *drv)
+{
+	struct eisa_device *edev = to_eisa_device(dev);
+	struct eisa_driver *edrv = to_eisa_driver(drv);
+	const struct eisa_device_id *eids = edrv->id_table;
 
-	अगर (!eids)
-		वापस 0;
+	if (!eids)
+		return 0;
 
-	जबतक (म_माप(eids->sig)) अणु
-		अगर (!म_भेद(eids->sig, edev->id.sig) &&
-		    edev->state & EISA_CONFIG_ENABLED) अणु
+	while (strlen(eids->sig)) {
+		if (!strcmp(eids->sig, edev->id.sig) &&
+		    edev->state & EISA_CONFIG_ENABLED) {
 			edev->id.driver_data = eids->driver_data;
-			वापस 1;
-		पूर्ण
+			return 1;
+		}
 
 		eids++;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक eisa_bus_uevent(काष्ठा device *dev, काष्ठा kobj_uevent_env *env)
-अणु
-	काष्ठा eisa_device *edev = to_eisa_device(dev);
+static int eisa_bus_uevent(struct device *dev, struct kobj_uevent_env *env)
+{
+	struct eisa_device *edev = to_eisa_device(dev);
 
 	add_uevent_var(env, "MODALIAS=" EISA_DEVICE_MODALIAS_FMT, edev->id.sig);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा bus_type eisa_bus_type = अणु
+struct bus_type eisa_bus_type = {
 	.name  = "eisa",
 	.match = eisa_bus_match,
 	.uevent = eisa_bus_uevent,
-पूर्ण;
+};
 EXPORT_SYMBOL(eisa_bus_type);
 
-पूर्णांक eisa_driver_रेजिस्टर(काष्ठा eisa_driver *edrv)
-अणु
+int eisa_driver_register(struct eisa_driver *edrv)
+{
 	edrv->driver.bus = &eisa_bus_type;
-	वापस driver_रेजिस्टर(&edrv->driver);
-पूर्ण
-EXPORT_SYMBOL(eisa_driver_रेजिस्टर);
+	return driver_register(&edrv->driver);
+}
+EXPORT_SYMBOL(eisa_driver_register);
 
-व्योम eisa_driver_unरेजिस्टर(काष्ठा eisa_driver *edrv)
-अणु
-	driver_unरेजिस्टर(&edrv->driver);
-पूर्ण
-EXPORT_SYMBOL(eisa_driver_unरेजिस्टर);
+void eisa_driver_unregister(struct eisa_driver *edrv)
+{
+	driver_unregister(&edrv->driver);
+}
+EXPORT_SYMBOL(eisa_driver_unregister);
 
-अटल sमाप_प्रकार eisa_show_sig(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			     अक्षर *buf)
-अणु
-	काष्ठा eisa_device *edev = to_eisa_device(dev);
-	वापस प्र_लिखो(buf, "%s\n", edev->id.sig);
-पूर्ण
+static ssize_t eisa_show_sig(struct device *dev, struct device_attribute *attr,
+			     char *buf)
+{
+	struct eisa_device *edev = to_eisa_device(dev);
+	return sprintf(buf, "%s\n", edev->id.sig);
+}
 
-अटल DEVICE_ATTR(signature, S_IRUGO, eisa_show_sig, शून्य);
+static DEVICE_ATTR(signature, S_IRUGO, eisa_show_sig, NULL);
 
-अटल sमाप_प्रकार eisa_show_state(काष्ठा device *dev,
-			       काष्ठा device_attribute *attr,
-			       अक्षर *buf)
-अणु
-	काष्ठा eisa_device *edev = to_eisa_device(dev);
-	वापस प्र_लिखो(buf, "%d\n", edev->state & EISA_CONFIG_ENABLED);
-पूर्ण
+static ssize_t eisa_show_state(struct device *dev,
+			       struct device_attribute *attr,
+			       char *buf)
+{
+	struct eisa_device *edev = to_eisa_device(dev);
+	return sprintf(buf, "%d\n", edev->state & EISA_CONFIG_ENABLED);
+}
 
-अटल DEVICE_ATTR(enabled, S_IRUGO, eisa_show_state, शून्य);
+static DEVICE_ATTR(enabled, S_IRUGO, eisa_show_state, NULL);
 
-अटल sमाप_प्रकार eisa_show_modalias(काष्ठा device *dev,
-				  काष्ठा device_attribute *attr,
-				  अक्षर *buf)
-अणु
-	काष्ठा eisa_device *edev = to_eisa_device(dev);
-	वापस प्र_लिखो(buf, EISA_DEVICE_MODALIAS_FMT "\n", edev->id.sig);
-पूर्ण
+static ssize_t eisa_show_modalias(struct device *dev,
+				  struct device_attribute *attr,
+				  char *buf)
+{
+	struct eisa_device *edev = to_eisa_device(dev);
+	return sprintf(buf, EISA_DEVICE_MODALIAS_FMT "\n", edev->id.sig);
+}
 
-अटल DEVICE_ATTR(modalias, S_IRUGO, eisa_show_modalias, शून्य);
+static DEVICE_ATTR(modalias, S_IRUGO, eisa_show_modalias, NULL);
 
-अटल पूर्णांक __init eisa_init_device(काष्ठा eisa_root_device *root,
-				   काष्ठा eisa_device *edev,
-				   पूर्णांक slot)
-अणु
-	अक्षर *sig;
-	अचिन्हित दीर्घ sig_addr;
-	पूर्णांक i;
+static int __init eisa_init_device(struct eisa_root_device *root,
+				   struct eisa_device *edev,
+				   int slot)
+{
+	char *sig;
+	unsigned long sig_addr;
+	int i;
 
 	sig_addr = SLOT_ADDRESS(root, slot) + EISA_VENDOR_ID_OFFSET;
 
 	sig = decode_eisa_sig(sig_addr);
-	अगर (!sig)
-		वापस -1;	/* No EISA device here */
+	if (!sig)
+		return -1;	/* No EISA device here */
 
-	स_नकल(edev->id.sig, sig, EISA_SIG_LEN);
+	memcpy(edev->id.sig, sig, EISA_SIG_LEN);
 	edev->slot = slot;
 	edev->state = inb(SLOT_ADDRESS(root, slot) + EISA_CONFIG_OFFSET)
 		      & EISA_CONFIG_ENABLED;
@@ -212,178 +211,178 @@ EXPORT_SYMBOL(eisa_driver_unरेजिस्टर);
 	edev->dev.coherent_dma_mask = edev->dma_mask;
 	dev_set_name(&edev->dev, "%02X:%02X", root->bus_nr, slot);
 
-	क्रम (i = 0; i < EISA_MAX_RESOURCES; i++) अणु
-#अगर_घोषित CONFIG_EISA_NAMES
+	for (i = 0; i < EISA_MAX_RESOURCES; i++) {
+#ifdef CONFIG_EISA_NAMES
 		edev->res[i].name = edev->pretty_name;
-#अन्यथा
+#else
 		edev->res[i].name = edev->id.sig;
-#पूर्ण_अगर
-	पूर्ण
+#endif
+	}
 
-	अगर (is_क्रमced_dev(enable_dev, enable_dev_count, root, edev))
+	if (is_forced_dev(enable_dev, enable_dev_count, root, edev))
 		edev->state = EISA_CONFIG_ENABLED | EISA_CONFIG_FORCED;
 
-	अगर (is_क्रमced_dev(disable_dev, disable_dev_count, root, edev))
+	if (is_forced_dev(disable_dev, disable_dev_count, root, edev))
 		edev->state = EISA_CONFIG_FORCED;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __init eisa_रेजिस्टर_device(काष्ठा eisa_device *edev)
-अणु
-	पूर्णांक rc = device_रेजिस्टर(&edev->dev);
-	अगर (rc) अणु
+static int __init eisa_register_device(struct eisa_device *edev)
+{
+	int rc = device_register(&edev->dev);
+	if (rc) {
 		put_device(&edev->dev);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
 	rc = device_create_file(&edev->dev, &dev_attr_signature);
-	अगर (rc)
-		जाओ err_devreg;
+	if (rc)
+		goto err_devreg;
 	rc = device_create_file(&edev->dev, &dev_attr_enabled);
-	अगर (rc)
-		जाओ err_sig;
+	if (rc)
+		goto err_sig;
 	rc = device_create_file(&edev->dev, &dev_attr_modalias);
-	अगर (rc)
-		जाओ err_enab;
+	if (rc)
+		goto err_enab;
 
-	वापस 0;
+	return 0;
 
 err_enab:
-	device_हटाओ_file(&edev->dev, &dev_attr_enabled);
+	device_remove_file(&edev->dev, &dev_attr_enabled);
 err_sig:
-	device_हटाओ_file(&edev->dev, &dev_attr_signature);
+	device_remove_file(&edev->dev, &dev_attr_signature);
 err_devreg:
-	device_unरेजिस्टर(&edev->dev);
-	वापस rc;
-पूर्ण
+	device_unregister(&edev->dev);
+	return rc;
+}
 
-अटल पूर्णांक __init eisa_request_resources(काष्ठा eisa_root_device *root,
-					 काष्ठा eisa_device *edev,
-					 पूर्णांक slot)
-अणु
-	पूर्णांक i;
+static int __init eisa_request_resources(struct eisa_root_device *root,
+					 struct eisa_device *edev,
+					 int slot)
+{
+	int i;
 
-	क्रम (i = 0; i < EISA_MAX_RESOURCES; i++) अणु
-		/* Don't रेजिस्टर resource क्रम slot 0, since this is
+	for (i = 0; i < EISA_MAX_RESOURCES; i++) {
+		/* Don't register resource for slot 0, since this is
 		 * very likely to fail... :-( Instead, grab the EISA
 		 * id, now we can display something in /proc/ioports.
 		 */
 
-		/* Only one region क्रम मुख्यboard */
-		अगर (!slot && i > 0) अणु
+		/* Only one region for mainboard */
+		if (!slot && i > 0) {
 			edev->res[i].start = edev->res[i].end = 0;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (slot) अणु
-			edev->res[i].name  = शून्य;
+		if (slot) {
+			edev->res[i].name  = NULL;
 			edev->res[i].start = SLOT_ADDRESS(root, slot)
 					     + (i * 0x400);
 			edev->res[i].end   = edev->res[i].start + 0xff;
 			edev->res[i].flags = IORESOURCE_IO;
-		पूर्ण अन्यथा अणु
-			edev->res[i].name  = शून्य;
+		} else {
+			edev->res[i].name  = NULL;
 			edev->res[i].start = SLOT_ADDRESS(root, slot)
 					     + EISA_VENDOR_ID_OFFSET;
 			edev->res[i].end   = edev->res[i].start + 3;
 			edev->res[i].flags = IORESOURCE_IO | IORESOURCE_BUSY;
-		पूर्ण
+		}
 
-		अगर (request_resource(root->res, &edev->res[i]))
-			जाओ failed;
-	पूर्ण
+		if (request_resource(root->res, &edev->res[i]))
+			goto failed;
+	}
 
-	वापस 0;
+	return 0;
 
  failed:
-	जबतक (--i >= 0)
+	while (--i >= 0)
 		release_resource(&edev->res[i]);
 
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल व्योम __init eisa_release_resources(काष्ठा eisa_device *edev)
-अणु
-	पूर्णांक i;
+static void __init eisa_release_resources(struct eisa_device *edev)
+{
+	int i;
 
-	क्रम (i = 0; i < EISA_MAX_RESOURCES; i++)
-		अगर (edev->res[i].start || edev->res[i].end)
+	for (i = 0; i < EISA_MAX_RESOURCES; i++)
+		if (edev->res[i].start || edev->res[i].end)
 			release_resource(&edev->res[i]);
-पूर्ण
+}
 
-अटल पूर्णांक __init eisa_probe(काष्ठा eisa_root_device *root)
-अणु
-	पूर्णांक i, c;
-	काष्ठा eisa_device *edev;
-	अक्षर *enabled_str;
+static int __init eisa_probe(struct eisa_root_device *root)
+{
+	int i, c;
+	struct eisa_device *edev;
+	char *enabled_str;
 
 	dev_info(root->dev, "Probing EISA bus %d\n", root->bus_nr);
 
 	/* First try to get hold of slot 0. If there is no device
-	 * here, simply fail, unless root->क्रमce_probe is set. */
+	 * here, simply fail, unless root->force_probe is set. */
 
-	edev = kzalloc(माप(*edev), GFP_KERNEL);
-	अगर (!edev)
-		वापस -ENOMEM;
+	edev = kzalloc(sizeof(*edev), GFP_KERNEL);
+	if (!edev)
+		return -ENOMEM;
 
-	अगर (eisa_request_resources(root, edev, 0)) अणु
+	if (eisa_request_resources(root, edev, 0)) {
 		dev_warn(root->dev,
 			 "EISA: Cannot allocate resource for mainboard\n");
-		kमुक्त(edev);
-		अगर (!root->क्रमce_probe)
-			वापस -EBUSY;
-		जाओ क्रमce_probe;
-	पूर्ण
+		kfree(edev);
+		if (!root->force_probe)
+			return -EBUSY;
+		goto force_probe;
+	}
 
-	अगर (eisa_init_device(root, edev, 0)) अणु
+	if (eisa_init_device(root, edev, 0)) {
 		eisa_release_resources(edev);
-		kमुक्त(edev);
-		अगर (!root->क्रमce_probe)
-			वापस -ENODEV;
-		जाओ क्रमce_probe;
-	पूर्ण
+		kfree(edev);
+		if (!root->force_probe)
+			return -ENODEV;
+		goto force_probe;
+	}
 
 	dev_info(&edev->dev, "EISA: Mainboard %s detected\n", edev->id.sig);
 
-	अगर (eisa_रेजिस्टर_device(edev)) अणु
+	if (eisa_register_device(edev)) {
 		dev_err(&edev->dev, "EISA: Failed to register %s\n",
 			edev->id.sig);
 		eisa_release_resources(edev);
-		kमुक्त(edev);
-	पूर्ण
+		kfree(edev);
+	}
 
- क्रमce_probe:
+ force_probe:
 
-	क्रम (c = 0, i = 1; i <= root->slots; i++) अणु
-		edev = kzalloc(माप(*edev), GFP_KERNEL);
-		अगर (!edev) अणु
+	for (c = 0, i = 1; i <= root->slots; i++) {
+		edev = kzalloc(sizeof(*edev), GFP_KERNEL);
+		if (!edev) {
 			dev_err(root->dev, "EISA: Out of memory for slot %d\n",
 				i);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (eisa_request_resources(root, edev, i)) अणु
+		if (eisa_request_resources(root, edev, i)) {
 			dev_warn(root->dev,
 				 "Cannot allocate resource for EISA slot %d\n",
 				 i);
-			kमुक्त(edev);
-			जारी;
-		पूर्ण
+			kfree(edev);
+			continue;
+		}
 
-		अगर (eisa_init_device(root, edev, i)) अणु
+		if (eisa_init_device(root, edev, i)) {
 			eisa_release_resources(edev);
-			kमुक्त(edev);
-			जारी;
-		पूर्ण
+			kfree(edev);
+			continue;
+		}
 
-		अगर (edev->state == (EISA_CONFIG_ENABLED | EISA_CONFIG_FORCED))
+		if (edev->state == (EISA_CONFIG_ENABLED | EISA_CONFIG_FORCED))
 			enabled_str = " (forced enabled)";
-		अन्यथा अगर (edev->state == EISA_CONFIG_FORCED)
+		else if (edev->state == EISA_CONFIG_FORCED)
 			enabled_str = " (forced disabled)";
-		अन्यथा अगर (edev->state == 0)
+		else if (edev->state == 0)
 			enabled_str = " (disabled)";
-		अन्यथा
+		else
 			enabled_str = "";
 
 		dev_info(&edev->dev, "EISA: slot %d: %s detected%s\n", i,
@@ -391,34 +390,34 @@ err_devreg:
 
 		c++;
 
-		अगर (eisa_रेजिस्टर_device(edev)) अणु
+		if (eisa_register_device(edev)) {
 			dev_err(&edev->dev, "EISA: Failed to register %s\n",
 				edev->id.sig);
 			eisa_release_resources(edev);
-			kमुक्त(edev);
-		पूर्ण
-	पूर्ण
+			kfree(edev);
+		}
+	}
 
 	dev_info(root->dev, "EISA: Detected %d card%s\n", c, c == 1 ? "" : "s");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा resource eisa_root_res = अणु
+static struct resource eisa_root_res = {
 	.name  = "EISA root resource",
 	.start = 0,
 	.end   = 0xffffffff,
 	.flags = IORESOURCE_IO,
-पूर्ण;
+};
 
-अटल पूर्णांक eisa_bus_count;
+static int eisa_bus_count;
 
-पूर्णांक __init eisa_root_रेजिस्टर(काष्ठा eisa_root_device *root)
-अणु
-	पूर्णांक err;
+int __init eisa_root_register(struct eisa_root_device *root)
+{
+	int err;
 
-	/* Use our own resources to check अगर this bus base address has
-	 * been alपढ़ोy रेजिस्टरed. This prevents the भव root
-	 * device from रेजिस्टरing after the real one has, क्रम
+	/* Use our own resources to check if this bus base address has
+	 * been already registered. This prevents the virtual root
+	 * device from registering after the real one has, for
 	 * example... */
 
 	root->eisa_root_res.name  = eisa_root_res.name;
@@ -427,34 +426,34 @@ err_devreg:
 	root->eisa_root_res.flags = IORESOURCE_BUSY;
 
 	err = request_resource(&eisa_root_res, &root->eisa_root_res);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	root->bus_nr = eisa_bus_count++;
 
 	err = eisa_probe(root);
-	अगर (err)
+	if (err)
 		release_resource(&root->eisa_root_res);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक __init eisa_init(व्योम)
-अणु
-	पूर्णांक r;
+static int __init eisa_init(void)
+{
+	int r;
 
-	r = bus_रेजिस्टर(&eisa_bus_type);
-	अगर (r)
-		वापस r;
+	r = bus_register(&eisa_bus_type);
+	if (r)
+		return r;
 
-	prपूर्णांकk(KERN_INFO "EISA bus registered\n");
-	वापस 0;
-पूर्ण
+	printk(KERN_INFO "EISA bus registered\n");
+	return 0;
+}
 
-module_param_array(enable_dev, पूर्णांक, &enable_dev_count, 0444);
-module_param_array(disable_dev, पूर्णांक, &disable_dev_count, 0444);
+module_param_array(enable_dev, int, &enable_dev_count, 0444);
+module_param_array(disable_dev, int, &disable_dev_count, 0444);
 
 postcore_initcall(eisa_init);
 
-पूर्णांक EISA_bus;		/* क्रम legacy drivers */
+int EISA_bus;		/* for legacy drivers */
 EXPORT_SYMBOL(EISA_bus);

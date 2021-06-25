@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* This file is part of the Emulex RoCE Device Driver क्रम
+/* This file is part of the Emulex RoCE Device Driver for
  * RoCE (RDMA over Converged Ethernet) adapters.
  * Copyright (C) 2012-2015 Emulex. All rights reserved.
  * EMULEX and SLI are trademarks of Emulex.
@@ -7,25 +6,25 @@
  *
  * This software is available to you under a choice of one of two licenses.
  * You may choose to be licensed under the terms of the GNU General Public
- * License (GPL) Version 2, available from the file COPYING in the मुख्य
+ * License (GPL) Version 2, available from the file COPYING in the main
  * directory of this source tree, or the BSD license below:
  *
- * Redistribution and use in source and binary क्रमms, with or without
- * modअगरication, are permitted provided that the following conditions
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
  * are met:
  *
  * - Redistributions of source code must retain the above copyright notice,
  *   this list of conditions and the following disclaimer.
  *
- * - Redistributions in binary क्रमm must reproduce the above copyright
+ * - Redistributions in binary form must reproduce the above copyright
  *   notice, this list of conditions and the following disclaimer in
- *   the करोcumentation and/or other materials provided with the distribution.
+ *   the documentation and/or other materials provided with the distribution.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
  * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
@@ -33,7 +32,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Contact Inक्रमmation:
+ * Contact Information:
  * linux-drivers@emulex.com
  *
  * Emulex
@@ -41,22 +40,22 @@
  * Costa Mesa, CA 92626
  */
 
-#अगर_अघोषित __OCRDMA_SLI_H__
-#घोषणा __OCRDMA_SLI_H__
+#ifndef __OCRDMA_SLI_H__
+#define __OCRDMA_SLI_H__
 
-क्रमागत अणु
+enum {
 	OCRDMA_ASIC_GEN_SKH_R = 0x04,
 	OCRDMA_ASIC_GEN_LANCER = 0x0B
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	OCRDMA_ASIC_REV_A0 = 0x00,
 	OCRDMA_ASIC_REV_B0 = 0x10,
 	OCRDMA_ASIC_REV_C0 = 0x20
-पूर्ण;
+};
 
-#घोषणा OCRDMA_SUBSYS_ROCE 10
-क्रमागत अणु
+#define OCRDMA_SUBSYS_ROCE 10
+enum {
 	OCRDMA_CMD_QUERY_CONFIG = 1,
 	OCRDMA_CMD_ALLOC_PD = 2,
 	OCRDMA_CMD_DEALLOC_PD = 3,
@@ -95,10 +94,10 @@
 	OCRDMA_CMD_DEALLOC_PD_RANGE = 29,
 
 	OCRDMA_CMD_MAX
-पूर्ण;
+};
 
-#घोषणा OCRDMA_SUBSYS_COMMON 1
-क्रमागत अणु
+#define OCRDMA_SUBSYS_COMMON 1
+enum {
 	OCRDMA_CMD_QUERY_NTWK_LINK_CONFIG_V1 = 5,
 	OCRDMA_CMD_CREATE_CQ		= 12,
 	OCRDMA_CMD_CREATE_EQ		= 13,
@@ -112,21 +111,21 @@
 	OCRDMA_CMD_GET_FW_CONFIG	= 58,
 	OCRDMA_CMD_CREATE_MQ_EXT	= 90,
 	OCRDMA_CMD_PHY_DETAILS		= 102
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	QTYPE_EQ	= 1,
 	QTYPE_CQ	= 2,
 	QTYPE_MCCQ	= 3
-पूर्ण;
+};
 
-#घोषणा OCRDMA_MAX_SGID		16
+#define OCRDMA_MAX_SGID		16
 
-#घोषणा OCRDMA_MAX_QP    2048
-#घोषणा OCRDMA_MAX_CQ    2048
-#घोषणा OCRDMA_MAX_STAG 16384
+#define OCRDMA_MAX_QP    2048
+#define OCRDMA_MAX_CQ    2048
+#define OCRDMA_MAX_STAG 16384
 
-क्रमागत अणु
+enum {
 	OCRDMA_DB_RQ_OFFSET		= 0xE0,
 	OCRDMA_DB_GEN2_RQ_OFFSET        = 0x100,
 	OCRDMA_DB_SQ_OFFSET		= 0x60,
@@ -139,50 +138,50 @@
 
 	OCRDMA_DB_SQ_SHIFT		= 16,
 	OCRDMA_DB_RQ_SHIFT		= 24
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	OCRDMA_L3_TYPE_IB_GRH   = 0x00,
 	OCRDMA_L3_TYPE_IPV4     = 0x01,
 	OCRDMA_L3_TYPE_IPV6     = 0x02
-पूर्ण;
+};
 
-#घोषणा OCRDMA_DB_CQ_RING_ID_MASK       0x3FF	/* bits 0 - 9 */
-#घोषणा OCRDMA_DB_CQ_RING_ID_EXT_MASK  0x0C00	/* bits 10-11 of qid at 12-11 */
+#define OCRDMA_DB_CQ_RING_ID_MASK       0x3FF	/* bits 0 - 9 */
+#define OCRDMA_DB_CQ_RING_ID_EXT_MASK  0x0C00	/* bits 10-11 of qid at 12-11 */
 /* qid #2 msbits at 12-11 */
-#घोषणा OCRDMA_DB_CQ_RING_ID_EXT_MASK_SHIFT  0x1
-#घोषणा OCRDMA_DB_CQ_NUM_POPPED_SHIFT	16	/* bits 16 - 28 */
+#define OCRDMA_DB_CQ_RING_ID_EXT_MASK_SHIFT  0x1
+#define OCRDMA_DB_CQ_NUM_POPPED_SHIFT	16	/* bits 16 - 28 */
 /* Rearm bit */
-#घोषणा OCRDMA_DB_CQ_REARM_SHIFT	29	/* bit 29 */
+#define OCRDMA_DB_CQ_REARM_SHIFT	29	/* bit 29 */
 /* solicited bit */
-#घोषणा OCRDMA_DB_CQ_SOLICIT_SHIFT	31	/* bit 31 */
+#define OCRDMA_DB_CQ_SOLICIT_SHIFT	31	/* bit 31 */
 
-#घोषणा OCRDMA_EQ_ID_MASK		0x1FF	/* bits 0 - 8 */
-#घोषणा OCRDMA_EQ_ID_EXT_MASK		0x3e00	/* bits 9-13 */
-#घोषणा OCRDMA_EQ_ID_EXT_MASK_SHIFT	2	/* qid bits 9-13 at 11-15 */
+#define OCRDMA_EQ_ID_MASK		0x1FF	/* bits 0 - 8 */
+#define OCRDMA_EQ_ID_EXT_MASK		0x3e00	/* bits 9-13 */
+#define OCRDMA_EQ_ID_EXT_MASK_SHIFT	2	/* qid bits 9-13 at 11-15 */
 
-/* Clear the पूर्णांकerrupt क्रम this eq */
-#घोषणा OCRDMA_EQ_CLR_SHIFT		9	/* bit 9 */
+/* Clear the interrupt for this eq */
+#define OCRDMA_EQ_CLR_SHIFT		9	/* bit 9 */
 /* Must be 1 */
-#घोषणा OCRDMA_EQ_TYPE_SHIFT		10	/* bit 10 */
+#define OCRDMA_EQ_TYPE_SHIFT		10	/* bit 10 */
 /* Number of event entries processed */
-#घोषणा OCRDMA_NUM_EQE_SHIFT		16	/* bits 16 - 28 */
+#define OCRDMA_NUM_EQE_SHIFT		16	/* bits 16 - 28 */
 /* Rearm bit */
-#घोषणा OCRDMA_REARM_SHIFT		29	/* bit 29 */
+#define OCRDMA_REARM_SHIFT		29	/* bit 29 */
 
-#घोषणा OCRDMA_MQ_ID_MASK		0x7FF	/* bits 0 - 10 */
+#define OCRDMA_MQ_ID_MASK		0x7FF	/* bits 0 - 10 */
 /* Number of entries posted */
-#घोषणा OCRDMA_MQ_NUM_MQE_SHIFT	16	/* bits 16 - 29 */
+#define OCRDMA_MQ_NUM_MQE_SHIFT	16	/* bits 16 - 29 */
 
-#घोषणा OCRDMA_MIN_HPAGE_SIZE	4096
+#define OCRDMA_MIN_HPAGE_SIZE	4096
 
-#घोषणा OCRDMA_MIN_Q_PAGE_SIZE	4096
-#घोषणा OCRDMA_MAX_Q_PAGES	8
+#define OCRDMA_MIN_Q_PAGE_SIZE	4096
+#define OCRDMA_MAX_Q_PAGES	8
 
-#घोषणा OCRDMA_SLI_ASIC_ID_OFFSET	0x9C
-#घोषणा OCRDMA_SLI_ASIC_REV_MASK	0x000000FF
-#घोषणा OCRDMA_SLI_ASIC_GEN_NUM_MASK	0x0000FF00
-#घोषणा OCRDMA_SLI_ASIC_GEN_NUM_SHIFT	0x08
+#define OCRDMA_SLI_ASIC_ID_OFFSET	0x9C
+#define OCRDMA_SLI_ASIC_REV_MASK	0x000000FF
+#define OCRDMA_SLI_ASIC_GEN_NUM_MASK	0x0000FF00
+#define OCRDMA_SLI_ASIC_GEN_NUM_SHIFT	0x08
 /*
 # 0: 4K Bytes
 # 1: 8K Bytes
@@ -193,42 +192,42 @@
 # 6: 256K Bytes
 # 7: 512K Bytes
 */
-#घोषणा OCRDMA_MAX_Q_PAGE_SIZE_CNT	8
-#घोषणा OCRDMA_Q_PAGE_BASE_SIZE (OCRDMA_MIN_Q_PAGE_SIZE * OCRDMA_MAX_Q_PAGES)
+#define OCRDMA_MAX_Q_PAGE_SIZE_CNT	8
+#define OCRDMA_Q_PAGE_BASE_SIZE (OCRDMA_MIN_Q_PAGE_SIZE * OCRDMA_MAX_Q_PAGES)
 
-#घोषणा MAX_OCRDMA_QP_PAGES		8
-#घोषणा OCRDMA_MAX_WQE_MEM_SIZE (MAX_OCRDMA_QP_PAGES * OCRDMA_MIN_HQ_PAGE_SIZE)
+#define MAX_OCRDMA_QP_PAGES		8
+#define OCRDMA_MAX_WQE_MEM_SIZE (MAX_OCRDMA_QP_PAGES * OCRDMA_MIN_HQ_PAGE_SIZE)
 
-#घोषणा OCRDMA_CREATE_CQ_MAX_PAGES	4
-#घोषणा OCRDMA_DPP_CQE_SIZE		4
+#define OCRDMA_CREATE_CQ_MAX_PAGES	4
+#define OCRDMA_DPP_CQE_SIZE		4
 
-#घोषणा OCRDMA_GEN2_MAX_CQE 1024
-#घोषणा OCRDMA_GEN2_CQ_PAGE_SIZE 4096
-#घोषणा OCRDMA_GEN2_WQE_SIZE 256
-#घोषणा OCRDMA_MAX_CQE  4095
-#घोषणा OCRDMA_CQ_PAGE_SIZE 16384
-#घोषणा OCRDMA_WQE_SIZE 128
-#घोषणा OCRDMA_WQE_STRIDE 8
-#घोषणा OCRDMA_WQE_ALIGN_BYTES 16
+#define OCRDMA_GEN2_MAX_CQE 1024
+#define OCRDMA_GEN2_CQ_PAGE_SIZE 4096
+#define OCRDMA_GEN2_WQE_SIZE 256
+#define OCRDMA_MAX_CQE  4095
+#define OCRDMA_CQ_PAGE_SIZE 16384
+#define OCRDMA_WQE_SIZE 128
+#define OCRDMA_WQE_STRIDE 8
+#define OCRDMA_WQE_ALIGN_BYTES 16
 
-#घोषणा MAX_OCRDMA_SRQ_PAGES MAX_OCRDMA_QP_PAGES
+#define MAX_OCRDMA_SRQ_PAGES MAX_OCRDMA_QP_PAGES
 
-क्रमागत अणु
+enum {
 	OCRDMA_MCH_OPCODE_SHIFT	= 0,
 	OCRDMA_MCH_OPCODE_MASK	= 0xFF,
 	OCRDMA_MCH_SUBSYS_SHIFT	= 8,
 	OCRDMA_MCH_SUBSYS_MASK	= 0xFF00
-पूर्ण;
+};
 
 /* mailbox cmd header */
-काष्ठा ocrdma_mbx_hdr अणु
+struct ocrdma_mbx_hdr {
 	u32 subsys_op;
-	u32 समयout;		/* in seconds */
+	u32 timeout;		/* in seconds */
 	u32 cmd_len;
 	u32 rsvd_version;
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	OCRDMA_MBX_RSP_OPCODE_SHIFT	= 0,
 	OCRDMA_MBX_RSP_OPCODE_MASK	= 0xFF,
 	OCRDMA_MBX_RSP_SUBSYS_SHIFT	= 8,
@@ -238,131 +237,131 @@
 	OCRDMA_MBX_RSP_STATUS_MASK	= 0xFF,
 	OCRDMA_MBX_RSP_ASTATUS_SHIFT	= 8,
 	OCRDMA_MBX_RSP_ASTATUS_MASK	= 0xFF << OCRDMA_MBX_RSP_ASTATUS_SHIFT
-पूर्ण;
+};
 
 /* mailbox cmd response */
-काष्ठा ocrdma_mbx_rsp अणु
+struct ocrdma_mbx_rsp {
 	u32 subsys_op;
 	u32 status;
 	u32 rsp_len;
 	u32 add_rsp_len;
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	OCRDMA_MQE_EMBEDDED	= 1,
 	OCRDMA_MQE_NONEMBEDDED	= 0
-पूर्ण;
+};
 
-काष्ठा ocrdma_mqe_sge अणु
+struct ocrdma_mqe_sge {
 	u32 pa_lo;
 	u32 pa_hi;
 	u32 len;
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	OCRDMA_MQE_HDR_EMB_SHIFT	= 0,
 	OCRDMA_MQE_HDR_EMB_MASK		= BIT(0),
 	OCRDMA_MQE_HDR_SGE_CNT_SHIFT	= 3,
 	OCRDMA_MQE_HDR_SGE_CNT_MASK	= 0x1F << OCRDMA_MQE_HDR_SGE_CNT_SHIFT,
 	OCRDMA_MQE_HDR_SPECIAL_SHIFT	= 24,
 	OCRDMA_MQE_HDR_SPECIAL_MASK	= 0xFF << OCRDMA_MQE_HDR_SPECIAL_SHIFT
-पूर्ण;
+};
 
-काष्ठा ocrdma_mqe_hdr अणु
+struct ocrdma_mqe_hdr {
 	u32 spcl_sge_cnt_emb;
 	u32 pyld_len;
 	u32 tag_lo;
 	u32 tag_hi;
 	u32 rsvd3;
-पूर्ण;
+};
 
-काष्ठा ocrdma_mqe_emb_cmd अणु
-	काष्ठा ocrdma_mbx_hdr mch;
+struct ocrdma_mqe_emb_cmd {
+	struct ocrdma_mbx_hdr mch;
 	u8 pyld[220];
-पूर्ण;
+};
 
-काष्ठा ocrdma_mqe अणु
-	काष्ठा ocrdma_mqe_hdr hdr;
-	जोड़ अणु
-		काष्ठा ocrdma_mqe_emb_cmd emb_req;
-		काष्ठा अणु
-			काष्ठा ocrdma_mqe_sge sge[19];
-		पूर्ण nonemb_req;
+struct ocrdma_mqe {
+	struct ocrdma_mqe_hdr hdr;
+	union {
+		struct ocrdma_mqe_emb_cmd emb_req;
+		struct {
+			struct ocrdma_mqe_sge sge[19];
+		} nonemb_req;
 		u8 cmd[236];
-		काष्ठा ocrdma_mbx_rsp rsp;
-	पूर्ण u;
-पूर्ण;
+		struct ocrdma_mbx_rsp rsp;
+	} u;
+};
 
-#घोषणा OCRDMA_EQ_LEN       4096
-#घोषणा OCRDMA_MQ_CQ_LEN    256
-#घोषणा OCRDMA_MQ_LEN       128
+#define OCRDMA_EQ_LEN       4096
+#define OCRDMA_MQ_CQ_LEN    256
+#define OCRDMA_MQ_LEN       128
 
-#घोषणा PAGE_SHIFT_4K		12
-#घोषणा PAGE_SIZE_4K		(1 << PAGE_SHIFT_4K)
+#define PAGE_SHIFT_4K		12
+#define PAGE_SIZE_4K		(1 << PAGE_SHIFT_4K)
 
 /* Returns number of pages spanned by the data starting at the given addr */
-#घोषणा PAGES_4K_SPANNED(_address, size) \
-	((u32)((((माप_प्रकार)(_address) & (PAGE_SIZE_4K - 1)) +	\
+#define PAGES_4K_SPANNED(_address, size) \
+	((u32)((((size_t)(_address) & (PAGE_SIZE_4K - 1)) +	\
 			(size) + (PAGE_SIZE_4K - 1)) >> PAGE_SHIFT_4K))
 
-काष्ठा ocrdma_delete_q_req अणु
-	काष्ठा ocrdma_mbx_hdr req;
+struct ocrdma_delete_q_req {
+	struct ocrdma_mbx_hdr req;
 	u32 id;
-पूर्ण;
+};
 
-काष्ठा ocrdma_pa अणु
+struct ocrdma_pa {
 	u32 lo;
 	u32 hi;
-पूर्ण;
+};
 
-#घोषणा MAX_OCRDMA_EQ_PAGES	8
-काष्ठा ocrdma_create_eq_req अणु
-	काष्ठा ocrdma_mbx_hdr req;
+#define MAX_OCRDMA_EQ_PAGES	8
+struct ocrdma_create_eq_req {
+	struct ocrdma_mbx_hdr req;
 	u32 num_pages;
 	u32 valid;
 	u32 cnt;
 	u32 delay;
 	u32 rsvd;
-	काष्ठा ocrdma_pa pa[MAX_OCRDMA_EQ_PAGES];
-पूर्ण;
+	struct ocrdma_pa pa[MAX_OCRDMA_EQ_PAGES];
+};
 
-क्रमागत अणु
+enum {
 	OCRDMA_CREATE_EQ_VALID	= BIT(29),
 	OCRDMA_CREATE_EQ_CNT_SHIFT	= 26,
 	OCRDMA_CREATE_CQ_DELAY_SHIFT	= 13,
-पूर्ण;
+};
 
-काष्ठा ocrdma_create_eq_rsp अणु
-	काष्ठा ocrdma_mbx_rsp rsp;
+struct ocrdma_create_eq_rsp {
+	struct ocrdma_mbx_rsp rsp;
 	u32 vector_eqid;
-पूर्ण;
+};
 
-#घोषणा OCRDMA_EQ_MINOR_OTHER	0x1
+#define OCRDMA_EQ_MINOR_OTHER	0x1
 
-काष्ठा ocrmda_set_eqd अणु
+struct ocrmda_set_eqd {
 	u32 eq_id;
 	u32 phase;
 	u32 delay_multiplier;
-पूर्ण;
+};
 
-काष्ठा ocrdma_modअगरy_eqd_cmd अणु
-	काष्ठा ocrdma_mbx_hdr req;
+struct ocrdma_modify_eqd_cmd {
+	struct ocrdma_mbx_hdr req;
 	u32 num_eq;
-	काष्ठा ocrmda_set_eqd set_eqd[8];
-पूर्ण __packed;
+	struct ocrmda_set_eqd set_eqd[8];
+} __packed;
 
-काष्ठा ocrdma_modअगरy_eqd_req अणु
-	काष्ठा ocrdma_mqe_hdr hdr;
-	काष्ठा ocrdma_modअगरy_eqd_cmd cmd;
-पूर्ण;
+struct ocrdma_modify_eqd_req {
+	struct ocrdma_mqe_hdr hdr;
+	struct ocrdma_modify_eqd_cmd cmd;
+};
 
 
-काष्ठा ocrdma_modअगरy_eq_delay_rsp अणु
-	काष्ठा ocrdma_mbx_rsp hdr;
+struct ocrdma_modify_eq_delay_rsp {
+	struct ocrdma_mbx_rsp hdr;
 	u32 rsvd0;
-पूर्ण __packed;
+} __packed;
 
-क्रमागत अणु
+enum {
 	OCRDMA_MCQE_STATUS_SHIFT	= 0,
 	OCRDMA_MCQE_STATUS_MASK		= 0xFFFF,
 	OCRDMA_MCQE_ESTATUS_SHIFT	= 16,
@@ -375,16 +374,16 @@
 	OCRDMA_MCQE_AE_MASK		= BIT(30),
 	OCRDMA_MCQE_VALID_SHIFT		= 31,
 	OCRDMA_MCQE_VALID_MASK		= BIT(31)
-पूर्ण;
+};
 
-काष्ठा ocrdma_mcqe अणु
+struct ocrdma_mcqe {
 	u32 status;
 	u32 tag_lo;
 	u32 tag_hi;
 	u32 valid_ae_cmpl_cons;
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	OCRDMA_AE_MCQE_QPVALID		= BIT(31),
 	OCRDMA_AE_MCQE_QPID_MASK	= 0xFFFF,
 
@@ -398,29 +397,29 @@
 	OCRDMA_AE_MCQE_EVENT_CODE_SHIFT	= 8,
 	OCRDMA_AE_MCQE_EVENT_CODE_MASK	=
 					0xFF << OCRDMA_AE_MCQE_EVENT_CODE_SHIFT
-पूर्ण;
-काष्ठा ocrdma_ae_mcqe अणु
+};
+struct ocrdma_ae_mcqe {
 	u32 qpvalid_qpid;
 	u32 cqvalid_cqid;
 	u32 evt_tag;
 	u32 valid_ae_event;
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	OCRDMA_AE_PVID_MCQE_ENABLED_SHIFT = 0,
 	OCRDMA_AE_PVID_MCQE_ENABLED_MASK  = 0xFF,
 	OCRDMA_AE_PVID_MCQE_TAG_SHIFT = 16,
 	OCRDMA_AE_PVID_MCQE_TAG_MASK = 0xFFFF << OCRDMA_AE_PVID_MCQE_TAG_SHIFT
-पूर्ण;
+};
 
-काष्ठा ocrdma_ae_pvid_mcqe अणु
+struct ocrdma_ae_pvid_mcqe {
 	u32 tag_enabled;
 	u32 event_tag;
 	u32 rsvd1;
 	u32 rsvd2;
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	OCRDMA_AE_MPA_MCQE_REQ_ID_SHIFT		= 16,
 	OCRDMA_AE_MPA_MCQE_REQ_ID_MASK		= 0xFFFF <<
 					OCRDMA_AE_MPA_MCQE_REQ_ID_SHIFT,
@@ -435,16 +434,16 @@
 	OCRDMA_AE_MPA_MCQE_EVENT_AE_MASK	= BIT(30),
 	OCRDMA_AE_MPA_MCQE_EVENT_VALID_SHIFT	= 31,
 	OCRDMA_AE_MPA_MCQE_EVENT_VALID_MASK	= BIT(31)
-पूर्ण;
+};
 
-काष्ठा ocrdma_ae_mpa_mcqe अणु
+struct ocrdma_ae_mpa_mcqe {
 	u32 req_id;
 	u32 w1;
 	u32 w2;
 	u32 valid_ae_event;
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	OCRDMA_AE_QP_MCQE_NEW_QP_STATE_SHIFT	= 0,
 	OCRDMA_AE_QP_MCQE_NEW_QP_STATE_MASK	= 0xFFFF,
 	OCRDMA_AE_QP_MCQE_QP_ID_SHIFT		= 16,
@@ -461,28 +460,28 @@
 	OCRDMA_AE_QP_MCQE_EVENT_AE_MASK		= BIT(30),
 	OCRDMA_AE_QP_MCQE_EVENT_VALID_SHIFT	= 31,
 	OCRDMA_AE_QP_MCQE_EVENT_VALID_MASK	= BIT(31)
-पूर्ण;
+};
 
-काष्ठा ocrdma_ae_qp_mcqe अणु
+struct ocrdma_ae_qp_mcqe {
 	u32 qp_id_state;
 	u32 w1;
 	u32 w2;
 	u32 valid_ae_event;
-पूर्ण;
+};
 
-क्रमागत ocrdma_async_event_code अणु
+enum ocrdma_async_event_code {
 	OCRDMA_ASYNC_LINK_EVE_CODE	= 0x01,
 	OCRDMA_ASYNC_GRP5_EVE_CODE	= 0x05,
 	OCRDMA_ASYNC_RDMA_EVE_CODE	= 0x14
-पूर्ण;
+};
 
-क्रमागत ocrdma_async_grp5_events अणु
+enum ocrdma_async_grp5_events {
 	OCRDMA_ASYNC_EVENT_QOS_VALUE	= 0x01,
 	OCRDMA_ASYNC_EVENT_COS_VALUE	= 0x02,
 	OCRDMA_ASYNC_EVENT_PVID_STATE	= 0x03
-पूर्ण;
+};
 
-क्रमागत OCRDMA_ASYNC_EVENT_TYPE अणु
+enum OCRDMA_ASYNC_EVENT_TYPE {
 	OCRDMA_CQ_ERROR			= 0x00,
 	OCRDMA_CQ_OVERRUN_ERROR		= 0x01,
 	OCRDMA_CQ_QPCAT_ERROR		= 0x02,
@@ -495,16 +494,16 @@
 	OCRDMA_QP_LAST_WQE_EVENT	= 0x10,
 
 	OCRDMA_MAX_ASYNC_ERRORS
-पूर्ण;
+};
 
-काष्ठा ocrdma_ae_lnkst_mcqe अणु
+struct ocrdma_ae_lnkst_mcqe {
 	u32 speed_state_ptn;
 	u32 qos_reason_falut;
 	u32 evt_tag;
 	u32 valid_ae_event;
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	OCRDMA_AE_LSC_PORT_NUM_MASK	= 0x3F,
 	OCRDMA_AE_LSC_PT_SHIFT		= 0x06,
 	OCRDMA_AE_LSC_PT_MASK		= (0x03 <<
@@ -525,18 +524,18 @@
 	OCRDMA_AE_LSC_QOS_SHIFT		= 0x10,
 	OCRDMA_AE_LSC_QOS_MASK		= (0xFFFF <<
 			OCRDMA_AE_LSC_QOS_SHIFT)
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	OCRDMA_AE_LSC_PLINK_DOWN	= 0x00,
 	OCRDMA_AE_LSC_PLINK_UP		= 0x01,
 	OCRDMA_AE_LSC_LLINK_DOWN	= 0x02,
 	OCRDMA_AE_LSC_LLINK_MASK	= 0x02,
 	OCRDMA_AE_LSC_LLINK_UP		= 0x03
-पूर्ण;
+};
 
 /* mailbox command request and responses */
-क्रमागत अणु
+enum {
 	OCRDMA_MBX_QUERY_CFG_CQ_OVERFLOW_SHIFT		= 2,
 	OCRDMA_MBX_QUERY_CFG_CQ_OVERFLOW_MASK		= BIT(2),
 	OCRDMA_MBX_QUERY_CFG_SRQ_SUPPORTED_SHIFT	= 3,
@@ -615,11 +614,11 @@
 				OCRDMA_MBX_QUERY_CFG_MAX_SRQ_SGE_OFFSET,
 	OCRDMA_MBX_QUERY_CFG_MAX_RD_SGE_SHIFT		= 0,
 	OCRDMA_MBX_QUERY_CFG_MAX_RD_SGE_MASK		= 0xFFFF,
-पूर्ण;
+};
 
-काष्ठा ocrdma_mbx_query_config अणु
-	काष्ठा ocrdma_mqe_hdr hdr;
-	काष्ठा ocrdma_mbx_rsp rsp;
+struct ocrdma_mbx_query_config {
+	struct ocrdma_mqe_hdr hdr;
+	struct ocrdma_mbx_rsp rsp;
 	u32 qp_srq_cq_ird_ord;
 	u32 max_pd_ca_ack_delay;
 	u32 max_recv_send_sge;
@@ -644,24 +643,24 @@
 	u32 max_srq_rqe_sge;
 	u32 max_wr_rd_sge;
 	u32 ird_pgsz_num_pages;
-पूर्ण;
+};
 
-काष्ठा ocrdma_fw_ver_rsp अणु
-	काष्ठा ocrdma_mqe_hdr hdr;
-	काष्ठा ocrdma_mbx_rsp rsp;
+struct ocrdma_fw_ver_rsp {
+	struct ocrdma_mqe_hdr hdr;
+	struct ocrdma_mbx_rsp rsp;
 
 	u8 running_ver[32];
-पूर्ण;
+};
 
-काष्ठा ocrdma_fw_conf_rsp अणु
-	काष्ठा ocrdma_mqe_hdr hdr;
-	काष्ठा ocrdma_mbx_rsp rsp;
+struct ocrdma_fw_conf_rsp {
+	struct ocrdma_mqe_hdr hdr;
+	struct ocrdma_mbx_rsp rsp;
 
 	u32 config_num;
 	u32 asic_revision;
 	u32 phy_port;
 	u32 fn_mode;
-	काष्ठा अणु
+	struct {
 		u32 mode;
 		u32 nic_wqid_base;
 		u32 nic_wq_tot;
@@ -670,20 +669,20 @@
 		u32 prot_rqid_base;
 		u32 prot_rqid_tot;
 		u32 rsvd[6];
-	पूर्ण ulp[2];
+	} ulp[2];
 	u32 fn_capabilities;
 	u32 rsvd1;
 	u32 rsvd2;
 	u32 base_eqid;
 	u32 max_eq;
 
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	OCRDMA_FN_MODE_RDMA	= 0x4
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	OCRDMA_IF_TYPE_MASK		= 0xFFFF0000,
 	OCRDMA_IF_TYPE_SHIFT		= 0x10,
 	OCRDMA_PHY_TYPE_MASK		= 0x0000FFFF,
@@ -693,29 +692,29 @@
 	OCRDMA_FSPEED_SUPP_MASK		= 0xFFFF0000,
 	OCRDMA_FSPEED_SUPP_SHIFT	= 0x10,
 	OCRDMA_ASPEED_SUPP_MASK		= 0x0000FFFF
-पूर्ण;
+};
 
-काष्ठा ocrdma_get_phy_info_rsp अणु
-	काष्ठा ocrdma_mqe_hdr hdr;
-	काष्ठा ocrdma_mbx_rsp rsp;
+struct ocrdma_get_phy_info_rsp {
+	struct ocrdma_mqe_hdr hdr;
+	struct ocrdma_mbx_rsp rsp;
 
 	u32 ityp_ptyp;
 	u32 misc_params;
 	u32 ftrdtl_exphydtl;
 	u32 fspeed_aspeed;
 	u32 future_use[2];
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	OCRDMA_PHY_SPEED_ZERO = 0x0,
 	OCRDMA_PHY_SPEED_10MBPS = 0x1,
 	OCRDMA_PHY_SPEED_100MBPS = 0x2,
 	OCRDMA_PHY_SPEED_1GBPS = 0x4,
 	OCRDMA_PHY_SPEED_10GBPS = 0x8,
 	OCRDMA_PHY_SPEED_40GBPS = 0x20
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	OCRDMA_PORT_NUM_MASK	= 0x3F,
 	OCRDMA_PT_MASK		= 0xC0,
 	OCRDMA_PT_SHIFT		= 0x6,
@@ -734,18 +733,18 @@
 	OCRDMA_PLRFC_SHIFT	= 0x8,
 	OCRDMA_PLTFC_MASK	= 0x00000100,
 	OCRDMA_PLTFC_SHIFT	= 0x8
-पूर्ण;
+};
 
-काष्ठा ocrdma_get_link_speed_rsp अणु
-	काष्ठा ocrdma_mqe_hdr hdr;
-	काष्ठा ocrdma_mbx_rsp rsp;
+struct ocrdma_get_link_speed_rsp {
+	struct ocrdma_mqe_hdr hdr;
+	struct ocrdma_mbx_rsp rsp;
 
 	u32 pflt_pps_ld_pnum;
 	u32 qos_lsp;
 	u32 res_lnk_st;
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	OCRDMA_PHYS_LINK_SPEED_ZERO = 0x0,
 	OCRDMA_PHYS_LINK_SPEED_10MBPS = 0x1,
 	OCRDMA_PHYS_LINK_SPEED_100MBPS = 0x2,
@@ -755,9 +754,9 @@
 	OCRDMA_PHYS_LINK_SPEED_25GBPS = 0x6,
 	OCRDMA_PHYS_LINK_SPEED_40GBPS = 0x7,
 	OCRDMA_PHYS_LINK_SPEED_100GBPS = 0x8
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	OCRDMA_CREATE_CQ_VER2			= 2,
 	OCRDMA_CREATE_CQ_VER3			= 3,
 
@@ -772,9 +771,9 @@
 
 	OCRDMA_CREATE_CQ_EQ_ID_MASK		= 0xFFFF,
 	OCRDMA_CREATE_CQ_CQE_COUNT_MASK		= 0xFFFF
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	OCRDMA_CREATE_CQ_VER0			= 0,
 	OCRDMA_CREATE_CQ_DPP			= 1,
 	OCRDMA_CREATE_CQ_TYPE_SHIFT		= 24,
@@ -786,92 +785,92 @@
 	OCRDMA_CREATE_CQ_DEF_FLAGS		= OCRDMA_CREATE_CQ_FLAGS_VALID |
 					OCRDMA_CREATE_CQ_FLAGS_EVENTABLE |
 					OCRDMA_CREATE_CQ_FLAGS_NODELAY
-पूर्ण;
+};
 
-काष्ठा ocrdma_create_cq_cmd अणु
-	काष्ठा ocrdma_mbx_hdr req;
+struct ocrdma_create_cq_cmd {
+	struct ocrdma_mbx_hdr req;
 	u32 pgsz_pgcnt;
 	u32 ev_cnt_flags;
 	u32 eqn;
 	u32 pdid_cqecnt;
 	u32 rsvd6;
-	काष्ठा ocrdma_pa pa[OCRDMA_CREATE_CQ_MAX_PAGES];
-पूर्ण;
+	struct ocrdma_pa pa[OCRDMA_CREATE_CQ_MAX_PAGES];
+};
 
-काष्ठा ocrdma_create_cq अणु
-	काष्ठा ocrdma_mqe_hdr hdr;
-	काष्ठा ocrdma_create_cq_cmd cmd;
-पूर्ण;
+struct ocrdma_create_cq {
+	struct ocrdma_mqe_hdr hdr;
+	struct ocrdma_create_cq_cmd cmd;
+};
 
-क्रमागत अणु
+enum {
 	OCRDMA_CREATE_CQ_CMD_PDID_SHIFT	= 0x10
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	OCRDMA_CREATE_CQ_RSP_CQ_ID_MASK	= 0xFFFF
-पूर्ण;
+};
 
-काष्ठा ocrdma_create_cq_cmd_rsp अणु
-	काष्ठा ocrdma_mbx_rsp rsp;
+struct ocrdma_create_cq_cmd_rsp {
+	struct ocrdma_mbx_rsp rsp;
 	u32 cq_id;
-पूर्ण;
+};
 
-काष्ठा ocrdma_create_cq_rsp अणु
-	काष्ठा ocrdma_mqe_hdr hdr;
-	काष्ठा ocrdma_create_cq_cmd_rsp rsp;
-पूर्ण;
+struct ocrdma_create_cq_rsp {
+	struct ocrdma_mqe_hdr hdr;
+	struct ocrdma_create_cq_cmd_rsp rsp;
+};
 
-क्रमागत अणु
+enum {
 	OCRDMA_CREATE_MQ_V0_CQ_ID_SHIFT		= 22,
 	OCRDMA_CREATE_MQ_CQ_ID_SHIFT		= 16,
 	OCRDMA_CREATE_MQ_RING_SIZE_SHIFT	= 16,
 	OCRDMA_CREATE_MQ_VALID			= BIT(31),
 	OCRDMA_CREATE_MQ_ASYNC_CQ_VALID		= BIT(0)
-पूर्ण;
+};
 
-काष्ठा ocrdma_create_mq_req अणु
-	काष्ठा ocrdma_mbx_hdr req;
+struct ocrdma_create_mq_req {
+	struct ocrdma_mbx_hdr req;
 	u32 cqid_pages;
-	u32 async_event_biपंचांगap;
+	u32 async_event_bitmap;
 	u32 async_cqid_ringsize;
 	u32 valid;
 	u32 async_cqid_valid;
 	u32 rsvd;
-	काष्ठा ocrdma_pa pa[8];
-पूर्ण;
+	struct ocrdma_pa pa[8];
+};
 
-काष्ठा ocrdma_create_mq_rsp अणु
-	काष्ठा ocrdma_mbx_rsp rsp;
+struct ocrdma_create_mq_rsp {
+	struct ocrdma_mbx_rsp rsp;
 	u32 id;
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	OCRDMA_DESTROY_CQ_QID_SHIFT			= 0,
 	OCRDMA_DESTROY_CQ_QID_MASK			= 0xFFFF,
 	OCRDMA_DESTROY_CQ_QID_BYPASS_FLUSH_SHIFT	= 16,
 	OCRDMA_DESTROY_CQ_QID_BYPASS_FLUSH_MASK		= 0xFFFF <<
 				OCRDMA_DESTROY_CQ_QID_BYPASS_FLUSH_SHIFT
-पूर्ण;
+};
 
-काष्ठा ocrdma_destroy_cq अणु
-	काष्ठा ocrdma_mqe_hdr hdr;
-	काष्ठा ocrdma_mbx_hdr req;
+struct ocrdma_destroy_cq {
+	struct ocrdma_mqe_hdr hdr;
+	struct ocrdma_mbx_hdr req;
 
 	u32 bypass_flush_qid;
-पूर्ण;
+};
 
-काष्ठा ocrdma_destroy_cq_rsp अणु
-	काष्ठा ocrdma_mqe_hdr hdr;
-	काष्ठा ocrdma_mbx_rsp rsp;
-पूर्ण;
+struct ocrdma_destroy_cq_rsp {
+	struct ocrdma_mqe_hdr hdr;
+	struct ocrdma_mbx_rsp rsp;
+};
 
-क्रमागत अणु
+enum {
 	OCRDMA_QPT_GSI	= 1,
 	OCRDMA_QPT_RC	= 2,
 	OCRDMA_QPT_UD	= 4,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	OCRDMA_CREATE_QP_REQ_PD_ID_SHIFT	= 0,
 	OCRDMA_CREATE_QP_REQ_PD_ID_MASK		= 0xFFFF,
 	OCRDMA_CREATE_QP_REQ_SQ_PAGE_SIZE_SHIFT	= 16,
@@ -942,24 +941,24 @@
 	OCRDMA_CREATE_QP_REQ_DPP_CREDIT_SHIFT		= 16,
 	OCRDMA_CREATE_QP_REQ_DPP_CREDIT_MASK		= 0xFFFF <<
 				OCRDMA_CREATE_QP_REQ_DPP_CREDIT_SHIFT
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	OCRDMA_CREATE_QP_REQ_DPP_CREDIT_LIMIT	= 16,
 	OCRDMA_CREATE_QP_RSP_DPP_PAGE_SHIFT	= 1
-पूर्ण;
+};
 
-#घोषणा MAX_OCRDMA_IRD_PAGES 4
+#define MAX_OCRDMA_IRD_PAGES 4
 
-क्रमागत ocrdma_qp_flags अणु
+enum ocrdma_qp_flags {
 	OCRDMA_QP_MW_BIND	= 1,
 	OCRDMA_QP_LKEY0		= (1 << 1),
 	OCRDMA_QP_FAST_REG	= (1 << 2),
 	OCRDMA_QP_INB_RD	= (1 << 6),
 	OCRDMA_QP_INB_WR	= (1 << 7),
-पूर्ण;
+};
 
-क्रमागत ocrdma_qp_state अणु
+enum ocrdma_qp_state {
 	OCRDMA_QPS_RST		= 0,
 	OCRDMA_QPS_INIT		= 1,
 	OCRDMA_QPS_RTR		= 2,
@@ -968,28 +967,28 @@
 	OCRDMA_QPS_SQ_DRAINING	= 5,
 	OCRDMA_QPS_ERR		= 6,
 	OCRDMA_QPS_SQD		= 7
-पूर्ण;
+};
 
-काष्ठा ocrdma_create_qp_req अणु
-	काष्ठा ocrdma_mqe_hdr hdr;
-	काष्ठा ocrdma_mbx_hdr req;
+struct ocrdma_create_qp_req {
+	struct ocrdma_mqe_hdr hdr;
+	struct ocrdma_mbx_hdr req;
 
 	u32 type_pgsz_pdn;
 	u32 max_wqe_rqe;
-	u32 max_sge_send_ग_लिखो;
+	u32 max_sge_send_write;
 	u32 max_sge_recv_flags;
 	u32 max_ord_ird;
 	u32 num_wq_rq_pages;
 	u32 wqe_rqe_size;
 	u32 wq_rq_cqid;
-	काष्ठा ocrdma_pa wq_addr[MAX_OCRDMA_QP_PAGES];
-	काष्ठा ocrdma_pa rq_addr[MAX_OCRDMA_QP_PAGES];
+	struct ocrdma_pa wq_addr[MAX_OCRDMA_QP_PAGES];
+	struct ocrdma_pa rq_addr[MAX_OCRDMA_QP_PAGES];
 	u32 dpp_credits_cqid;
 	u32 rpir_lkey;
-	काष्ठा ocrdma_pa ird_addr[MAX_OCRDMA_IRD_PAGES];
-पूर्ण;
+	struct ocrdma_pa ird_addr[MAX_OCRDMA_IRD_PAGES];
+};
 
-क्रमागत अणु
+enum {
 	OCRDMA_CREATE_QP_RSP_QP_ID_SHIFT		= 0,
 	OCRDMA_CREATE_QP_RSP_QP_ID_MASK			= 0xFFFF,
 
@@ -1028,33 +1027,33 @@
 	OCRDMA_CREATE_QP_RSP_DPP_CREDITS_SHIFT		= 16,
 	OCRDMA_CREATE_QP_RSP_DPP_CREDITS_MASK		= 0xFFFF <<
 				OCRDMA_CREATE_QP_RSP_DPP_CREDITS_SHIFT,
-पूर्ण;
+};
 
-काष्ठा ocrdma_create_qp_rsp अणु
-	काष्ठा ocrdma_mqe_hdr hdr;
-	काष्ठा ocrdma_mbx_rsp rsp;
+struct ocrdma_create_qp_rsp {
+	struct ocrdma_mqe_hdr hdr;
+	struct ocrdma_mbx_rsp rsp;
 
 	u32 qp_id;
 	u32 max_wqe_rqe;
-	u32 max_sge_send_ग_लिखो;
+	u32 max_sge_send_write;
 	u32 max_sge_recv;
 	u32 max_ord_ird;
 	u32 sq_rq_id;
 	u32 dpp_response;
-पूर्ण;
+};
 
-काष्ठा ocrdma_destroy_qp अणु
-	काष्ठा ocrdma_mqe_hdr hdr;
-	काष्ठा ocrdma_mbx_hdr req;
+struct ocrdma_destroy_qp {
+	struct ocrdma_mqe_hdr hdr;
+	struct ocrdma_mbx_hdr req;
 	u32 qp_id;
-पूर्ण;
+};
 
-काष्ठा ocrdma_destroy_qp_rsp अणु
-	काष्ठा ocrdma_mqe_hdr hdr;
-	काष्ठा ocrdma_mbx_rsp rsp;
-पूर्ण;
+struct ocrdma_destroy_qp_rsp {
+	struct ocrdma_mqe_hdr hdr;
+	struct ocrdma_mbx_rsp rsp;
+};
 
-क्रमागत अणु
+enum {
 	OCRDMA_MODIFY_QP_ID_SHIFT	= 0,
 	OCRDMA_MODIFY_QP_ID_MASK	= 0xFFFF,
 
@@ -1090,9 +1089,9 @@
 	OCRDMA_MODIFY_QP_FLAGS_WR	= BIT(1),
 	OCRDMA_MODIFY_QP_FLAGS_SEND	= BIT(2),
 	OCRDMA_MODIFY_QP_FLAGS_ATOMIC	= BIT(3)
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	OCRDMA_QP_PARAMS_SRQ_ID_SHIFT		= 0,
 	OCRDMA_QP_PARAMS_SRQ_ID_MASK		= 0xFFFF,
 
@@ -1179,12 +1178,12 @@
 	OCRDMA_QP_PARAMS_VLAN_SHIFT		= 16,
 	OCRDMA_QP_PARAMS_VLAN_MASK		= 0xFFFF <<
 					OCRDMA_QP_PARAMS_VLAN_SHIFT
-पूर्ण;
+};
 
-काष्ठा ocrdma_qp_params अणु
+struct ocrdma_qp_params {
 	u32 id;
 	u32 max_wqe_rqe;
-	u32 max_sge_send_ग_लिखो;
+	u32 max_sge_send_write;
 	u32 max_sge_recv_flags;
 	u32 max_ord_ird;
 	u32 wq_rq_cqid;
@@ -1198,20 +1197,20 @@
 	u32 dmac_b0_to_b3;
 	u32 vlan_dmac_b4_to_b5;
 	u32 qkey;
-पूर्ण;
+};
 
 
-काष्ठा ocrdma_modअगरy_qp अणु
-	काष्ठा ocrdma_mqe_hdr hdr;
-	काष्ठा ocrdma_mbx_hdr req;
+struct ocrdma_modify_qp {
+	struct ocrdma_mqe_hdr hdr;
+	struct ocrdma_mbx_hdr req;
 
-	काष्ठा ocrdma_qp_params params;
+	struct ocrdma_qp_params params;
 	u32 flags;
 	u32 rdma_flags;
 	u32 num_outstanding_atomic_rd;
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	OCRDMA_MODIFY_QP_RSP_MAX_RQE_SHIFT	= 0,
 	OCRDMA_MODIFY_QP_RSP_MAX_RQE_MASK	= 0xFFFF,
 	OCRDMA_MODIFY_QP_RSP_MAX_WQE_SHIFT	= 16,
@@ -1223,34 +1222,34 @@
 	OCRDMA_MODIFY_QP_RSP_MAX_ORD_SHIFT	= 16,
 	OCRDMA_MODIFY_QP_RSP_MAX_ORD_MASK	= 0xFFFF <<
 					OCRDMA_MODIFY_QP_RSP_MAX_ORD_SHIFT
-पूर्ण;
+};
 
-काष्ठा ocrdma_modअगरy_qp_rsp अणु
-	काष्ठा ocrdma_mqe_hdr hdr;
-	काष्ठा ocrdma_mbx_rsp rsp;
+struct ocrdma_modify_qp_rsp {
+	struct ocrdma_mqe_hdr hdr;
+	struct ocrdma_mbx_rsp rsp;
 
 	u32 max_wqe_rqe;
 	u32 max_ord_ird;
-पूर्ण;
+};
 
-काष्ठा ocrdma_query_qp अणु
-	काष्ठा ocrdma_mqe_hdr hdr;
-	काष्ठा ocrdma_mbx_hdr req;
+struct ocrdma_query_qp {
+	struct ocrdma_mqe_hdr hdr;
+	struct ocrdma_mbx_hdr req;
 
-#घोषणा OCRDMA_QUERY_UP_QP_ID_SHIFT	0
-#घोषणा OCRDMA_QUERY_UP_QP_ID_MASK	0xFFFFFF
+#define OCRDMA_QUERY_UP_QP_ID_SHIFT	0
+#define OCRDMA_QUERY_UP_QP_ID_MASK	0xFFFFFF
 	u32 qp_id;
-पूर्ण;
+};
 
-काष्ठा ocrdma_query_qp_rsp अणु
-	काष्ठा ocrdma_mqe_hdr hdr;
-	काष्ठा ocrdma_mbx_rsp rsp;
-	काष्ठा ocrdma_qp_params params;
+struct ocrdma_query_qp_rsp {
+	struct ocrdma_mqe_hdr hdr;
+	struct ocrdma_mbx_rsp rsp;
+	struct ocrdma_qp_params params;
 	u32 dpp_credits_cqid;
 	u32 rbq_id;
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	OCRDMA_CREATE_SRQ_PD_ID_SHIFT		= 0,
 	OCRDMA_CREATE_SRQ_PD_ID_MASK		= 0xFFFF,
 	OCRDMA_CREATE_SRQ_PG_SZ_SHIFT		= 16,
@@ -1267,19 +1266,19 @@
 	OCRDMA_CREATE_SRQ_NUM_RQ_PAGES_SHIFT	= 16,
 	OCRDMA_CREATE_SRQ_NUM_RQ_PAGES_MASK	= 0xFFFF <<
 					OCRDMA_CREATE_SRQ_NUM_RQ_PAGES_SHIFT
-पूर्ण;
+};
 
-काष्ठा ocrdma_create_srq अणु
-	काष्ठा ocrdma_mqe_hdr hdr;
-	काष्ठा ocrdma_mbx_hdr req;
+struct ocrdma_create_srq {
+	struct ocrdma_mqe_hdr hdr;
+	struct ocrdma_mbx_hdr req;
 
 	u32 pgsz_pdid;
 	u32 max_sge_rqe;
 	u32 pages_rqe_sz;
-	काष्ठा ocrdma_pa rq_addr[MAX_OCRDMA_SRQ_PAGES];
-पूर्ण;
+	struct ocrdma_pa rq_addr[MAX_OCRDMA_SRQ_PAGES];
+};
 
-क्रमागत अणु
+enum {
 	OCRDMA_CREATE_SRQ_RSP_SRQ_ID_SHIFT			= 0,
 	OCRDMA_CREATE_SRQ_RSP_SRQ_ID_MASK			= 0xFFFFFF,
 
@@ -1288,17 +1287,17 @@
 	OCRDMA_CREATE_SRQ_RSP_MAX_SGE_RECV_ALLOCATED_SHIFT	= 16,
 	OCRDMA_CREATE_SRQ_RSP_MAX_SGE_RECV_ALLOCATED_MASK	= 0xFFFF <<
 			OCRDMA_CREATE_SRQ_RSP_MAX_SGE_RECV_ALLOCATED_SHIFT
-पूर्ण;
+};
 
-काष्ठा ocrdma_create_srq_rsp अणु
-	काष्ठा ocrdma_mqe_hdr hdr;
-	काष्ठा ocrdma_mbx_rsp rsp;
+struct ocrdma_create_srq_rsp {
+	struct ocrdma_mqe_hdr hdr;
+	struct ocrdma_mbx_rsp rsp;
 
 	u32 id;
 	u32 max_sge_rqe_allocated;
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	OCRDMA_MODIFY_SRQ_ID_SHIFT	= 0,
 	OCRDMA_MODIFY_SRQ_ID_MASK	= 0xFFFFFF,
 
@@ -1307,29 +1306,29 @@
 	OCRDMA_MODIFY_SRQ_LIMIT_SHIFT	= 16,
 	OCRDMA_MODIFY_SRQ__LIMIT_MASK	= 0xFFFF <<
 					OCRDMA_MODIFY_SRQ_LIMIT_SHIFT
-पूर्ण;
+};
 
-काष्ठा ocrdma_modअगरy_srq अणु
-	काष्ठा ocrdma_mqe_hdr hdr;
-	काष्ठा ocrdma_mbx_rsp rep;
+struct ocrdma_modify_srq {
+	struct ocrdma_mqe_hdr hdr;
+	struct ocrdma_mbx_rsp rep;
 
 	u32 id;
 	u32 limit_max_rqe;
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	OCRDMA_QUERY_SRQ_ID_SHIFT	= 0,
 	OCRDMA_QUERY_SRQ_ID_MASK	= 0xFFFFFF
-पूर्ण;
+};
 
-काष्ठा ocrdma_query_srq अणु
-	काष्ठा ocrdma_mqe_hdr hdr;
-	काष्ठा ocrdma_mbx_rsp req;
+struct ocrdma_query_srq {
+	struct ocrdma_mqe_hdr hdr;
+	struct ocrdma_mbx_rsp req;
 
 	u32 id;
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	OCRDMA_QUERY_SRQ_RSP_PD_ID_SHIFT	= 0,
 	OCRDMA_QUERY_SRQ_RSP_PD_ID_MASK		= 0xFFFF,
 	OCRDMA_QUERY_SRQ_RSP_MAX_RQE_SHIFT	= 16,
@@ -1341,99 +1340,99 @@
 	OCRDMA_QUERY_SRQ_RSP_SRQ_LIMIT_SHIFT	= 16,
 	OCRDMA_QUERY_SRQ_RSP_SRQ_LIMIT_MASK	= 0xFFFF <<
 					OCRDMA_QUERY_SRQ_RSP_SRQ_LIMIT_SHIFT
-पूर्ण;
+};
 
-काष्ठा ocrdma_query_srq_rsp अणु
-	काष्ठा ocrdma_mqe_hdr hdr;
-	काष्ठा ocrdma_mbx_rsp req;
+struct ocrdma_query_srq_rsp {
+	struct ocrdma_mqe_hdr hdr;
+	struct ocrdma_mbx_rsp req;
 
 	u32 max_rqe_pdid;
 	u32 srq_lmt_max_sge;
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	OCRDMA_DESTROY_SRQ_ID_SHIFT	= 0,
 	OCRDMA_DESTROY_SRQ_ID_MASK	= 0xFFFFFF
-पूर्ण;
+};
 
-काष्ठा ocrdma_destroy_srq अणु
-	काष्ठा ocrdma_mqe_hdr hdr;
-	काष्ठा ocrdma_mbx_rsp req;
+struct ocrdma_destroy_srq {
+	struct ocrdma_mqe_hdr hdr;
+	struct ocrdma_mbx_rsp req;
 
 	u32 id;
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	OCRDMA_ALLOC_PD_ENABLE_DPP	= BIT(16),
 	OCRDMA_DPP_PAGE_SIZE		= 4096
-पूर्ण;
+};
 
-काष्ठा ocrdma_alloc_pd अणु
-	काष्ठा ocrdma_mqe_hdr hdr;
-	काष्ठा ocrdma_mbx_hdr req;
+struct ocrdma_alloc_pd {
+	struct ocrdma_mqe_hdr hdr;
+	struct ocrdma_mbx_hdr req;
 	u32 enable_dpp_rsvd;
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	OCRDMA_ALLOC_PD_RSP_DPP			= BIT(16),
 	OCRDMA_ALLOC_PD_RSP_DPP_PAGE_SHIFT	= 20,
 	OCRDMA_ALLOC_PD_RSP_PDID_MASK		= 0xFFFF,
-पूर्ण;
+};
 
-काष्ठा ocrdma_alloc_pd_rsp अणु
-	काष्ठा ocrdma_mqe_hdr hdr;
-	काष्ठा ocrdma_mbx_rsp rsp;
+struct ocrdma_alloc_pd_rsp {
+	struct ocrdma_mqe_hdr hdr;
+	struct ocrdma_mbx_rsp rsp;
 	u32 dpp_page_pdid;
-पूर्ण;
+};
 
-काष्ठा ocrdma_dealloc_pd अणु
-	काष्ठा ocrdma_mqe_hdr hdr;
-	काष्ठा ocrdma_mbx_hdr req;
+struct ocrdma_dealloc_pd {
+	struct ocrdma_mqe_hdr hdr;
+	struct ocrdma_mbx_hdr req;
 	u32 id;
-पूर्ण;
+};
 
-काष्ठा ocrdma_dealloc_pd_rsp अणु
-	काष्ठा ocrdma_mqe_hdr hdr;
-	काष्ठा ocrdma_mbx_rsp rsp;
-पूर्ण;
+struct ocrdma_dealloc_pd_rsp {
+	struct ocrdma_mqe_hdr hdr;
+	struct ocrdma_mbx_rsp rsp;
+};
 
-काष्ठा ocrdma_alloc_pd_range अणु
-	काष्ठा ocrdma_mqe_hdr hdr;
-	काष्ठा ocrdma_mbx_hdr req;
+struct ocrdma_alloc_pd_range {
+	struct ocrdma_mqe_hdr hdr;
+	struct ocrdma_mbx_hdr req;
 	u32 enable_dpp_rsvd;
 	u32 pd_count;
-पूर्ण;
+};
 
-काष्ठा ocrdma_alloc_pd_range_rsp अणु
-	काष्ठा ocrdma_mqe_hdr hdr;
-	काष्ठा ocrdma_mbx_rsp rsp;
+struct ocrdma_alloc_pd_range_rsp {
+	struct ocrdma_mqe_hdr hdr;
+	struct ocrdma_mbx_rsp rsp;
 	u32 dpp_page_pdid;
 	u32 pd_count;
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	OCRDMA_ALLOC_PD_RNG_RSP_START_PDID_MASK = 0xFFFF,
-पूर्ण;
+};
 
-काष्ठा ocrdma_dealloc_pd_range अणु
-	काष्ठा ocrdma_mqe_hdr hdr;
-	काष्ठा ocrdma_mbx_hdr req;
+struct ocrdma_dealloc_pd_range {
+	struct ocrdma_mqe_hdr hdr;
+	struct ocrdma_mbx_hdr req;
 	u32 start_pd_id;
 	u32 pd_count;
-पूर्ण;
+};
 
-काष्ठा ocrdma_dealloc_pd_range_rsp अणु
-	काष्ठा ocrdma_mqe_hdr hdr;
-	काष्ठा ocrdma_mbx_hdr req;
+struct ocrdma_dealloc_pd_range_rsp {
+	struct ocrdma_mqe_hdr hdr;
+	struct ocrdma_mbx_hdr req;
 	u32 rsvd;
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	OCRDMA_ADDR_CHECK_ENABLE	= 1,
 	OCRDMA_ADDR_CHECK_DISABLE	= 0
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	OCRDMA_ALLOC_LKEY_PD_ID_SHIFT		= 0,
 	OCRDMA_ALLOC_LKEY_PD_ID_MASK		= 0xFFFF,
 
@@ -1454,42 +1453,42 @@
 	OCRDMA_ALLOC_LKEY_PBL_SIZE_SHIFT	= 16,
 	OCRDMA_ALLOC_LKEY_PBL_SIZE_MASK		= 0xFFFF <<
 						OCRDMA_ALLOC_LKEY_PBL_SIZE_SHIFT
-पूर्ण;
+};
 
-काष्ठा ocrdma_alloc_lkey अणु
-	काष्ठा ocrdma_mqe_hdr hdr;
-	काष्ठा ocrdma_mbx_hdr req;
+struct ocrdma_alloc_lkey {
+	struct ocrdma_mqe_hdr hdr;
+	struct ocrdma_mbx_hdr req;
 
 	u32 pdid;
 	u32 pbl_sz_flags;
-पूर्ण;
+};
 
-काष्ठा ocrdma_alloc_lkey_rsp अणु
-	काष्ठा ocrdma_mqe_hdr hdr;
-	काष्ठा ocrdma_mbx_rsp rsp;
+struct ocrdma_alloc_lkey_rsp {
+	struct ocrdma_mqe_hdr hdr;
+	struct ocrdma_mbx_rsp rsp;
 
 	u32 lrkey;
 	u32 num_pbl_rsvd;
-पूर्ण;
+};
 
-काष्ठा ocrdma_dealloc_lkey अणु
-	काष्ठा ocrdma_mqe_hdr hdr;
-	काष्ठा ocrdma_mbx_hdr req;
+struct ocrdma_dealloc_lkey {
+	struct ocrdma_mqe_hdr hdr;
+	struct ocrdma_mbx_hdr req;
 
 	u32 lkey;
 	u32 rsvd_frmr;
-पूर्ण;
+};
 
-काष्ठा ocrdma_dealloc_lkey_rsp अणु
-	काष्ठा ocrdma_mqe_hdr hdr;
-	काष्ठा ocrdma_mbx_rsp rsp;
-पूर्ण;
+struct ocrdma_dealloc_lkey_rsp {
+	struct ocrdma_mqe_hdr hdr;
+	struct ocrdma_mbx_rsp rsp;
+};
 
-#घोषणा MAX_OCRDMA_NSMR_PBL    (u32)22
-#घोषणा MAX_OCRDMA_PBL_SIZE     65536
-#घोषणा MAX_OCRDMA_PBL_PER_LKEY	32767
+#define MAX_OCRDMA_NSMR_PBL    (u32)22
+#define MAX_OCRDMA_PBL_SIZE     65536
+#define MAX_OCRDMA_PBL_PER_LKEY	32767
 
-क्रमागत अणु
+enum {
 	OCRDMA_REG_NSMR_LRKEY_INDEX_SHIFT	= 0,
 	OCRDMA_REG_NSMR_LRKEY_INDEX_MASK	= 0xFFFFFF,
 	OCRDMA_REG_NSMR_LRKEY_SHIFT		= 24,
@@ -1523,11 +1522,11 @@
 	OCRDMA_REG_NSMR_REMOTE_ATOMIC_MASK	= BIT(30),
 	OCRDMA_REG_NSMR_LAST_SHIFT		= 31,
 	OCRDMA_REG_NSMR_LAST_MASK		= BIT(31)
-पूर्ण;
+};
 
-काष्ठा ocrdma_reg_nsmr अणु
-	काष्ठा ocrdma_mqe_hdr hdr;
-	काष्ठा ocrdma_mbx_hdr cmd;
+struct ocrdma_reg_nsmr {
+	struct ocrdma_mqe_hdr hdr;
+	struct ocrdma_mbx_hdr cmd;
 
 	u32 fr_mr;
 	u32 num_pbl_pdid;
@@ -1538,10 +1537,10 @@
 	u32 fbo_high;
 	u32 va_loaddr;
 	u32 va_hiaddr;
-	काष्ठा ocrdma_pa pbl[MAX_OCRDMA_NSMR_PBL];
-पूर्ण;
+	struct ocrdma_pa pbl[MAX_OCRDMA_NSMR_PBL];
+};
 
-क्रमागत अणु
+enum {
 	OCRDMA_REG_NSMR_CONT_PBL_SHIFT		= 0,
 	OCRDMA_REG_NSMR_CONT_PBL_SHIFT_MASK	= 0xFFFF,
 	OCRDMA_REG_NSMR_CONT_NUM_PBL_SHIFT	= 16,
@@ -1550,37 +1549,37 @@
 
 	OCRDMA_REG_NSMR_CONT_LAST_SHIFT		= 31,
 	OCRDMA_REG_NSMR_CONT_LAST_MASK		= BIT(31)
-पूर्ण;
+};
 
-काष्ठा ocrdma_reg_nsmr_cont अणु
-	काष्ठा ocrdma_mqe_hdr hdr;
-	काष्ठा ocrdma_mbx_hdr cmd;
+struct ocrdma_reg_nsmr_cont {
+	struct ocrdma_mqe_hdr hdr;
+	struct ocrdma_mbx_hdr cmd;
 
 	u32 lrkey;
 	u32 num_pbl_offset;
 	u32 last;
 
-	काष्ठा ocrdma_pa pbl[MAX_OCRDMA_NSMR_PBL];
-पूर्ण;
+	struct ocrdma_pa pbl[MAX_OCRDMA_NSMR_PBL];
+};
 
-काष्ठा ocrdma_pbe अणु
+struct ocrdma_pbe {
 	u32 pa_hi;
 	u32 pa_lo;
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	OCRDMA_REG_NSMR_RSP_NUM_PBL_SHIFT	= 16,
 	OCRDMA_REG_NSMR_RSP_NUM_PBL_MASK	= 0xFFFF0000
-पूर्ण;
-काष्ठा ocrdma_reg_nsmr_rsp अणु
-	काष्ठा ocrdma_mqe_hdr hdr;
-	काष्ठा ocrdma_mbx_rsp rsp;
+};
+struct ocrdma_reg_nsmr_rsp {
+	struct ocrdma_mqe_hdr hdr;
+	struct ocrdma_mbx_rsp rsp;
 
 	u32 lrkey;
 	u32 num_pbl;
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	OCRDMA_REG_NSMR_CONT_RSP_LRKEY_INDEX_SHIFT	= 0,
 	OCRDMA_REG_NSMR_CONT_RSP_LRKEY_INDEX_MASK	= 0xFFFFFF,
 	OCRDMA_REG_NSMR_CONT_RSP_LRKEY_SHIFT		= 24,
@@ -1590,69 +1589,69 @@
 	OCRDMA_REG_NSMR_CONT_RSP_NUM_PBL_SHIFT		= 16,
 	OCRDMA_REG_NSMR_CONT_RSP_NUM_PBL_MASK		= 0xFFFF <<
 					OCRDMA_REG_NSMR_CONT_RSP_NUM_PBL_SHIFT
-पूर्ण;
+};
 
-काष्ठा ocrdma_reg_nsmr_cont_rsp अणु
-	काष्ठा ocrdma_mqe_hdr hdr;
-	काष्ठा ocrdma_mbx_rsp rsp;
+struct ocrdma_reg_nsmr_cont_rsp {
+	struct ocrdma_mqe_hdr hdr;
+	struct ocrdma_mbx_rsp rsp;
 
 	u32 lrkey_key_index;
 	u32 num_pbl;
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	OCRDMA_ALLOC_MW_PD_ID_SHIFT	= 0,
 	OCRDMA_ALLOC_MW_PD_ID_MASK	= 0xFFFF
-पूर्ण;
+};
 
-काष्ठा ocrdma_alloc_mw अणु
-	काष्ठा ocrdma_mqe_hdr hdr;
-	काष्ठा ocrdma_mbx_hdr req;
+struct ocrdma_alloc_mw {
+	struct ocrdma_mqe_hdr hdr;
+	struct ocrdma_mbx_hdr req;
 
 	u32 pdid;
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	OCRDMA_ALLOC_MW_RSP_LRKEY_INDEX_SHIFT	= 0,
 	OCRDMA_ALLOC_MW_RSP_LRKEY_INDEX_MASK	= 0xFFFFFF
-पूर्ण;
+};
 
-काष्ठा ocrdma_alloc_mw_rsp अणु
-	काष्ठा ocrdma_mqe_hdr hdr;
-	काष्ठा ocrdma_mbx_rsp rsp;
+struct ocrdma_alloc_mw_rsp {
+	struct ocrdma_mqe_hdr hdr;
+	struct ocrdma_mbx_rsp rsp;
 
 	u32 lrkey_index;
-पूर्ण;
+};
 
-काष्ठा ocrdma_attach_mcast अणु
-	काष्ठा ocrdma_mqe_hdr hdr;
-	काष्ठा ocrdma_mbx_hdr req;
+struct ocrdma_attach_mcast {
+	struct ocrdma_mqe_hdr hdr;
+	struct ocrdma_mbx_hdr req;
 	u32 qp_id;
 	u8 mgid[16];
 	u32 mac_b0_to_b3;
 	u32 vlan_mac_b4_to_b5;
-पूर्ण;
+};
 
-काष्ठा ocrdma_attach_mcast_rsp अणु
-	काष्ठा ocrdma_mqe_hdr hdr;
-	काष्ठा ocrdma_mbx_rsp rsp;
-पूर्ण;
+struct ocrdma_attach_mcast_rsp {
+	struct ocrdma_mqe_hdr hdr;
+	struct ocrdma_mbx_rsp rsp;
+};
 
-काष्ठा ocrdma_detach_mcast अणु
-	काष्ठा ocrdma_mqe_hdr hdr;
-	काष्ठा ocrdma_mbx_hdr req;
+struct ocrdma_detach_mcast {
+	struct ocrdma_mqe_hdr hdr;
+	struct ocrdma_mbx_hdr req;
 	u32 qp_id;
 	u8 mgid[16];
 	u32 mac_b0_to_b3;
 	u32 vlan_mac_b4_to_b5;
-पूर्ण;
+};
 
-काष्ठा ocrdma_detach_mcast_rsp अणु
-	काष्ठा ocrdma_mqe_hdr hdr;
-	काष्ठा ocrdma_mbx_rsp rsp;
-पूर्ण;
+struct ocrdma_detach_mcast_rsp {
+	struct ocrdma_mqe_hdr hdr;
+	struct ocrdma_mbx_rsp rsp;
+};
 
-क्रमागत अणु
+enum {
 	OCRDMA_CREATE_AH_NUM_PAGES_SHIFT	= 19,
 	OCRDMA_CREATE_AH_NUM_PAGES_MASK		= 0xF <<
 					OCRDMA_CREATE_AH_NUM_PAGES_SHIFT,
@@ -1664,36 +1663,36 @@
 	OCRDMA_CREATE_AH_ENTRY_SIZE_SHIFT	= 23,
 	OCRDMA_CREATE_AH_ENTRY_SIZE_MASK	= 0x1FF <<
 					OCRDMA_CREATE_AH_ENTRY_SIZE_SHIFT,
-पूर्ण;
+};
 
-#घोषणा OCRDMA_AH_TBL_PAGES 8
+#define OCRDMA_AH_TBL_PAGES 8
 
-काष्ठा ocrdma_create_ah_tbl अणु
-	काष्ठा ocrdma_mqe_hdr hdr;
-	काष्ठा ocrdma_mbx_hdr req;
+struct ocrdma_create_ah_tbl {
+	struct ocrdma_mqe_hdr hdr;
+	struct ocrdma_mbx_hdr req;
 
 	u32 ah_conf;
-	काष्ठा ocrdma_pa tbl_addr[8];
-पूर्ण;
+	struct ocrdma_pa tbl_addr[8];
+};
 
-काष्ठा ocrdma_create_ah_tbl_rsp अणु
-	काष्ठा ocrdma_mqe_hdr hdr;
-	काष्ठा ocrdma_mbx_rsp rsp;
+struct ocrdma_create_ah_tbl_rsp {
+	struct ocrdma_mqe_hdr hdr;
+	struct ocrdma_mbx_rsp rsp;
 	u32 ahid;
-पूर्ण;
+};
 
-काष्ठा ocrdma_delete_ah_tbl अणु
-	काष्ठा ocrdma_mqe_hdr hdr;
-	काष्ठा ocrdma_mbx_hdr req;
+struct ocrdma_delete_ah_tbl {
+	struct ocrdma_mqe_hdr hdr;
+	struct ocrdma_mbx_hdr req;
 	u32 ahid;
-पूर्ण;
+};
 
-काष्ठा ocrdma_delete_ah_tbl_rsp अणु
-	काष्ठा ocrdma_mqe_hdr hdr;
-	काष्ठा ocrdma_mbx_rsp rsp;
-पूर्ण;
+struct ocrdma_delete_ah_tbl_rsp {
+	struct ocrdma_mqe_hdr hdr;
+	struct ocrdma_mbx_rsp rsp;
+};
 
-क्रमागत अणु
+enum {
 	OCRDMA_EQE_VALID_SHIFT		= 0,
 	OCRDMA_EQE_VALID_MASK		= BIT(0),
 	OCRDMA_EQE_MAJOR_CODE_MASK      = 0x0E,
@@ -1702,18 +1701,18 @@
 	OCRDMA_EQE_RESOURCE_ID_SHIFT	= 16,
 	OCRDMA_EQE_RESOURCE_ID_MASK	= 0xFFFF <<
 				OCRDMA_EQE_RESOURCE_ID_SHIFT,
-पूर्ण;
+};
 
-क्रमागत major_code अणु
+enum major_code {
 	OCRDMA_MAJOR_CODE_COMPLETION    = 0x00,
 	OCRDMA_MAJOR_CODE_SENTINAL      = 0x01
-पूर्ण;
+};
 
-काष्ठा ocrdma_eqe अणु
+struct ocrdma_eqe {
 	u32 id_valid;
-पूर्ण;
+};
 
-क्रमागत OCRDMA_CQE_STATUS अणु
+enum OCRDMA_CQE_STATUS {
 	OCRDMA_CQE_SUCCESS = 0,
 	OCRDMA_CQE_LOC_LEN_ERR,
 	OCRDMA_CQE_LOC_QP_OP_ERR,
@@ -1738,9 +1737,9 @@
 	OCRDMA_CQE_GENERAL_ERR,
 
 	OCRDMA_MAX_CQE_ERR
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	/* w0 */
 	OCRDMA_CQE_WQEIDX_SHIFT		= 0,
 	OCRDMA_CQE_WQEIDX_MASK		= 0xFFFF,
@@ -1773,43 +1772,43 @@
 	OCRDMA_CQE_QTYPE_SQ		= 0,
 	OCRDMA_CQE_QTYPE_RQ		= 1,
 	OCRDMA_CQE_SRCQP_MASK		= 0xFFFFFF
-पूर्ण;
+};
 
-काष्ठा ocrdma_cqe अणु
-	जोड़ अणु
+struct ocrdma_cqe {
+	union {
 		/* w0 to w2 */
-		काष्ठा अणु
+		struct {
 			u32 wqeidx;
 			u32 bytes_xfered;
 			u32 qpn;
-		पूर्ण wq;
-		काष्ठा अणु
+		} wq;
+		struct {
 			u32 lkey_immdt;
 			u32 rxlen;
 			u32 buftag_qpn;
-		पूर्ण rq;
-		काष्ठा अणु
+		} rq;
+		struct {
 			u32 lkey_immdt;
 			u32 rxlen_pkey;
 			u32 buftag_qpn;
-		पूर्ण ud;
-		काष्ठा अणु
+		} ud;
+		struct {
 			u32 word_0;
 			u32 word_1;
 			u32 qpn;
-		पूर्ण cmn;
-	पूर्ण;
+		} cmn;
+	};
 	u32 flags_status_srcqpn;	/* w3 */
-पूर्ण;
+};
 
-काष्ठा ocrdma_sge अणु
+struct ocrdma_sge {
 	u32 addr_hi;
 	u32 addr_lo;
 	u32 lrkey;
 	u32 len;
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	OCRDMA_FLAG_SIG		= 0x1,
 	OCRDMA_FLAG_INV		= 0x2,
 	OCRDMA_FLAG_FENCE_L	= 0x4,
@@ -1823,9 +1822,9 @@
 	OCRDMA_LKEY_FLAG_REMOTE_RD	= 0x2,
 	OCRDMA_LKEY_FLAG_REMOTE_WR	= 0x4,
 	OCRDMA_LKEY_FLAG_VATO		= 0x8,
-पूर्ण;
+};
 
-क्रमागत OCRDMA_WQE_OPCODE अणु
+enum OCRDMA_WQE_OPCODE {
 	OCRDMA_WRITE		= 0x06,
 	OCRDMA_READ		= 0x0C,
 	OCRDMA_RESV0		= 0x02,
@@ -1837,14 +1836,14 @@
 	OCRDMA_LKEY_INV		= 0x15,
 	OCRDMA_FETCH_ADD	= 0x13,
 	OCRDMA_POST_RQ		= 0x12
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	OCRDMA_TYPE_INLINE	= 0x0,
 	OCRDMA_TYPE_LKEY	= 0x1,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	OCRDMA_WQE_OPCODE_SHIFT		= 0,
 	OCRDMA_WQE_OPCODE_MASK		= 0x0000001F,
 	OCRDMA_WQE_FLAGS_SHIFT		= 5,
@@ -1856,31 +1855,31 @@
 
 	OCRDMA_WQE_LKEY_FLAGS_SHIFT	= 0,
 	OCRDMA_WQE_LKEY_FLAGS_MASK	= 0xF
-पूर्ण;
+};
 
-/* header WQE क्रम all the SQ and RQ operations */
-काष्ठा ocrdma_hdr_wqe अणु
+/* header WQE for all the SQ and RQ operations */
+struct ocrdma_hdr_wqe {
 	u32 cw;
-	जोड़ अणु
+	union {
 		u32 rsvd_tag;
 		u32 rsvd_lkey_flags;
-	पूर्ण;
-	जोड़ अणु
+	};
+	union {
 		u32 immdt;
 		u32 lkey;
-	पूर्ण;
+	};
 	u32 total_len;
-पूर्ण;
+};
 
-काष्ठा ocrdma_ewqe_ud_hdr अणु
+struct ocrdma_ewqe_ud_hdr {
 	u32 rsvd_dest_qpn;
 	u32 qkey;
 	u32 rsvd_ahid;
 	u32 hdr_type;
-पूर्ण;
+};
 
-/* extended wqe followed by hdr_wqe क्रम Fast Memory रेजिस्टर */
-काष्ठा ocrdma_ewqe_fr अणु
+/* extended wqe followed by hdr_wqe for Fast Memory register */
+struct ocrdma_ewqe_fr {
 	u32 va_hi;
 	u32 va_lo;
 	u32 fbo_hi;
@@ -1889,40 +1888,40 @@
 	u32 num_sges;
 	u32 rsvd;
 	u32 rsvd2;
-पूर्ण;
+};
 
-काष्ठा ocrdma_eth_basic अणु
+struct ocrdma_eth_basic {
 	u8 dmac[6];
 	u8 smac[6];
 	__be16 eth_type;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा ocrdma_eth_vlan अणु
+struct ocrdma_eth_vlan {
 	u8 dmac[6];
 	u8 smac[6];
 	__be16 eth_type;
 	__be16 vlan_tag;
 	__be16 roce_eth_type;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा ocrdma_grh अणु
+struct ocrdma_grh {
 	__be32	tclass_flow;
 	__be32	pdid_hoplimit;
 	u8	sgid[16];
 	u8	dgid[16];
 	u16	rsvd;
-पूर्ण __packed;
+} __packed;
 
-#घोषणा OCRDMA_AV_VALID		BIT(7)
-#घोषणा OCRDMA_AV_VLAN_VALID	BIT(1)
+#define OCRDMA_AV_VALID		BIT(7)
+#define OCRDMA_AV_VLAN_VALID	BIT(1)
 
-काष्ठा ocrdma_av अणु
-	काष्ठा ocrdma_eth_vlan eth_hdr;
-	काष्ठा ocrdma_grh grh;
+struct ocrdma_av {
+	struct ocrdma_eth_vlan eth_hdr;
+	struct ocrdma_grh grh;
 	u32 valid;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा ocrdma_rsrc_stats अणु
+struct ocrdma_rsrc_stats {
 	u32 dpp_pds;
 	u32 non_dpp_pds;
 	u32 rc_dpp_qps;
@@ -1951,24 +1950,24 @@
 	u32 phy_mr;
 	u32 mw;
 	u32 rsvd2[7];
-पूर्ण;
+};
 
-काष्ठा ocrdma_db_err_stats अणु
-	u32 sq_करोorbell_errors;
-	u32 cq_करोorbell_errors;
-	u32 rq_srq_करोorbell_errors;
+struct ocrdma_db_err_stats {
+	u32 sq_doorbell_errors;
+	u32 cq_doorbell_errors;
+	u32 rq_srq_doorbell_errors;
 	u32 cq_overflow_errors;
 	u32 rsvd[4];
-पूर्ण;
+};
 
-काष्ठा ocrdma_wqe_stats अणु
+struct ocrdma_wqe_stats {
 	u32 large_send_rc_wqes_lo;
 	u32 large_send_rc_wqes_hi;
-	u32 large_ग_लिखो_rc_wqes_lo;
-	u32 large_ग_लिखो_rc_wqes_hi;
+	u32 large_write_rc_wqes_lo;
+	u32 large_write_rc_wqes_hi;
 	u32 rsvd[4];
-	u32 पढ़ो_wqes_lo;
-	u32 पढ़ो_wqes_hi;
+	u32 read_wqes_lo;
+	u32 read_wqes_hi;
 	u32 frmr_wqes_lo;
 	u32 frmr_wqes_hi;
 	u32 mw_bind_wqes_lo;
@@ -1978,42 +1977,42 @@
 	u32 rsvd1[2];
 	u32 dpp_wqe_drops;
 	u32 rsvd2[5];
-पूर्ण;
+};
 
-काष्ठा ocrdma_tx_stats अणु
+struct ocrdma_tx_stats {
 	u32 send_pkts_lo;
 	u32 send_pkts_hi;
-	u32 ग_लिखो_pkts_lo;
-	u32 ग_लिखो_pkts_hi;
-	u32 पढ़ो_pkts_lo;
-	u32 पढ़ो_pkts_hi;
-	u32 पढ़ो_rsp_pkts_lo;
-	u32 पढ़ो_rsp_pkts_hi;
+	u32 write_pkts_lo;
+	u32 write_pkts_hi;
+	u32 read_pkts_lo;
+	u32 read_pkts_hi;
+	u32 read_rsp_pkts_lo;
+	u32 read_rsp_pkts_hi;
 	u32 ack_pkts_lo;
 	u32 ack_pkts_hi;
 	u32 send_bytes_lo;
 	u32 send_bytes_hi;
-	u32 ग_लिखो_bytes_lo;
-	u32 ग_लिखो_bytes_hi;
-	u32 पढ़ो_req_bytes_lo;
-	u32 पढ़ो_req_bytes_hi;
-	u32 पढ़ो_rsp_bytes_lo;
-	u32 पढ़ो_rsp_bytes_hi;
-	u32 ack_समयouts;
+	u32 write_bytes_lo;
+	u32 write_bytes_hi;
+	u32 read_req_bytes_lo;
+	u32 read_req_bytes_hi;
+	u32 read_rsp_bytes_lo;
+	u32 read_rsp_bytes_hi;
+	u32 ack_timeouts;
 	u32 rsvd[5];
-पूर्ण;
+};
 
 
-काष्ठा ocrdma_tx_qp_err_stats अणु
+struct ocrdma_tx_qp_err_stats {
 	u32 local_length_errors;
 	u32 local_protection_errors;
 	u32 local_qp_operation_errors;
 	u32 retry_count_exceeded_errors;
 	u32 rnr_retry_count_exceeded_errors;
 	u32 rsvd[3];
-पूर्ण;
+};
 
-काष्ठा ocrdma_rx_stats अणु
+struct ocrdma_rx_stats {
 	u32 roce_frame_bytes_lo;
 	u32 roce_frame_bytes_hi;
 	u32 roce_frame_icrc_drops;
@@ -2022,7 +2021,7 @@
 	u32 qp1_drops;
 	u32 psn_error_request_packets;
 	u32 psn_error_resp_packets;
-	u32 rnr_nak_समयouts;
+	u32 rnr_nak_timeouts;
 	u32 rnr_nak_receives;
 	u32 roce_frame_rxmt_drops;
 	u32 nak_count_psn_sequence_errors;
@@ -2032,9 +2031,9 @@
 	u32 roce_frames_lo;
 	u32 roce_frames_hi;
 	u32 rsvd;
-पूर्ण;
+};
 
-काष्ठा ocrdma_rx_qp_err_stats अणु
+struct ocrdma_rx_qp_err_stats {
 	u32 nak_invalid_request_errors;
 	u32 nak_remote_operation_errors;
 	u32 nak_count_remote_access_errors;
@@ -2042,37 +2041,37 @@
 	u32 local_protection_errors;
 	u32 local_qp_operation_errors;
 	u32 rsvd[2];
-पूर्ण;
+};
 
-काष्ठा ocrdma_tx_dbg_stats अणु
+struct ocrdma_tx_dbg_stats {
 	u32 data[100];
-पूर्ण;
+};
 
-काष्ठा ocrdma_rx_dbg_stats अणु
+struct ocrdma_rx_dbg_stats {
 	u32 data[200];
-पूर्ण;
+};
 
-काष्ठा ocrdma_rdma_stats_req अणु
-	काष्ठा ocrdma_mbx_hdr hdr;
+struct ocrdma_rdma_stats_req {
+	struct ocrdma_mbx_hdr hdr;
 	u8 reset_stats;
 	u8 rsvd[3];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा ocrdma_rdma_stats_resp अणु
-	काष्ठा ocrdma_mbx_hdr hdr;
-	काष्ठा ocrdma_rsrc_stats act_rsrc_stats;
-	काष्ठा ocrdma_rsrc_stats th_rsrc_stats;
-	काष्ठा ocrdma_db_err_stats	db_err_stats;
-	काष्ठा ocrdma_wqe_stats		wqe_stats;
-	काष्ठा ocrdma_tx_stats		tx_stats;
-	काष्ठा ocrdma_tx_qp_err_stats	tx_qp_err_stats;
-	काष्ठा ocrdma_rx_stats		rx_stats;
-	काष्ठा ocrdma_rx_qp_err_stats	rx_qp_err_stats;
-	काष्ठा ocrdma_tx_dbg_stats	tx_dbg_stats;
-	काष्ठा ocrdma_rx_dbg_stats	rx_dbg_stats;
-पूर्ण __packed;
+struct ocrdma_rdma_stats_resp {
+	struct ocrdma_mbx_hdr hdr;
+	struct ocrdma_rsrc_stats act_rsrc_stats;
+	struct ocrdma_rsrc_stats th_rsrc_stats;
+	struct ocrdma_db_err_stats	db_err_stats;
+	struct ocrdma_wqe_stats		wqe_stats;
+	struct ocrdma_tx_stats		tx_stats;
+	struct ocrdma_tx_qp_err_stats	tx_qp_err_stats;
+	struct ocrdma_rx_stats		rx_stats;
+	struct ocrdma_rx_qp_err_stats	rx_qp_err_stats;
+	struct ocrdma_tx_dbg_stats	tx_dbg_stats;
+	struct ocrdma_rx_dbg_stats	rx_dbg_stats;
+} __packed;
 
-क्रमागत अणु
+enum {
 	OCRDMA_HBA_ATTRB_EPROM_VER_LO_MASK	= 0xFF,
 	OCRDMA_HBA_ATTRB_EPROM_VER_HI_MASK	= 0xFF00,
 	OCRDMA_HBA_ATTRB_EPROM_VER_HI_SHIFT	= 0x08,
@@ -2119,9 +2118,9 @@
 	OCRDMA_HBA_ATTRB_IF_TYPE_MASK		= 0xFF000000,
 	OCRDMA_HBA_ATTRB_IF_TYPE_SHIFT		= 0x18,
 	OCRDMA_HBA_ATTRB_NETFIL_MASK		=0xFF
-पूर्ण;
+};
 
-काष्ठा mgmt_hba_attribs अणु
+struct mgmt_hba_attribs {
 	u8 flashrom_version_string[32];
 	u8 manufacturer_name[32];
 	u32 supported_modes;
@@ -2129,7 +2128,7 @@
 	u32 mbx_ds_ver;
 	u32 epfw_ds_ver;
 	u8 ncsi_ver_string[12];
-	u32 शेष_extended_समयout;
+	u32 default_extended_timeout;
 	u8 controller_model_number[32];
 	u8 controller_description[64];
 	u8 controller_serial_number[32];
@@ -2144,15 +2143,15 @@
 	u8 generational_guid[12];
 	u32 portcnt_guid15;
 	u32 mfuncdev_iscsi_ldtout;
-	u32 ptpnum_maxकरोms_hbast_cv;
+	u32 ptpnum_maxdoms_hbast_cv;
 	u32 firmware_post_status;
 	u32 hba_mtu[8];
 	u32 res_asicgen_iscsi_feaures;
 	u32 rsvd1[3];
-पूर्ण;
+};
 
-काष्ठा mgmt_controller_attrib अणु
-	काष्ठा mgmt_hba_attribs hba_attribs;
+struct mgmt_controller_attrib {
+	struct mgmt_hba_attribs hba_attribs;
 	u32 pci_did_vid;
 	u32 pci_ssid_svid;
 	u32 ityp_fnum_devnum_bnum;
@@ -2160,62 +2159,62 @@
 	u32 uid_lo;
 	u32 res_nnetfil;
 	u32 rsvd0[4];
-पूर्ण;
+};
 
-काष्ठा ocrdma_get_ctrl_attribs_rsp अणु
-	काष्ठा ocrdma_mbx_hdr hdr;
-	काष्ठा mgmt_controller_attrib ctrl_attribs;
-पूर्ण;
+struct ocrdma_get_ctrl_attribs_rsp {
+	struct ocrdma_mbx_hdr hdr;
+	struct mgmt_controller_attrib ctrl_attribs;
+};
 
-#घोषणा OCRDMA_SUBSYS_DCBX 0x10
+#define OCRDMA_SUBSYS_DCBX 0x10
 
-क्रमागत OCRDMA_DCBX_OPCODE अणु
+enum OCRDMA_DCBX_OPCODE {
 	OCRDMA_CMD_GET_DCBX_CONFIG = 0x01
-पूर्ण;
+};
 
-क्रमागत OCRDMA_DCBX_PARAM_TYPE अणु
+enum OCRDMA_DCBX_PARAM_TYPE {
 	OCRDMA_PARAMETER_TYPE_ADMIN	= 0x00,
 	OCRDMA_PARAMETER_TYPE_OPER	= 0x01,
 	OCRDMA_PARAMETER_TYPE_PEER	= 0x02
-पूर्ण;
+};
 
-क्रमागत OCRDMA_DCBX_PROTO अणु
+enum OCRDMA_DCBX_PROTO {
 	OCRDMA_PROTO_SELECT_L2	= 0x00,
 	OCRDMA_PROTO_SELECT_L4	= 0x01
-पूर्ण;
+};
 
-क्रमागत OCRDMA_DCBX_APP_PARAM अणु
+enum OCRDMA_DCBX_APP_PARAM {
 	OCRDMA_APP_PARAM_APP_PROTO_MASK = 0xFFFF,
 	OCRDMA_APP_PARAM_PROTO_SEL_MASK = 0xFF,
 	OCRDMA_APP_PARAM_PROTO_SEL_SHIFT = 0x10,
 	OCRDMA_APP_PARAM_VALID_MASK	= 0xFF,
 	OCRDMA_APP_PARAM_VALID_SHIFT	= 0x18
-पूर्ण;
+};
 
-क्रमागत OCRDMA_DCBX_STATE_FLAGS अणु
+enum OCRDMA_DCBX_STATE_FLAGS {
 	OCRDMA_STATE_FLAG_ENABLED	= 0x01,
 	OCRDMA_STATE_FLAG_ADDVERTISED	= 0x02,
 	OCRDMA_STATE_FLAG_WILLING	= 0x04,
 	OCRDMA_STATE_FLAG_SYNC		= 0x08,
 	OCRDMA_STATE_FLAG_UNSUPPORTED	= 0x40000000,
 	OCRDMA_STATE_FLAG_NEG_FAILD	= 0x80000000
-पूर्ण;
+};
 
-क्रमागत OCRDMA_TCV_AEV_OPV_ST अणु
+enum OCRDMA_TCV_AEV_OPV_ST {
 	OCRDMA_DCBX_TC_SUPPORT_MASK	= 0xFF,
 	OCRDMA_DCBX_TC_SUPPORT_SHIFT	= 0x18,
 	OCRDMA_DCBX_APP_ENTRY_SHIFT	= 0x10,
 	OCRDMA_DCBX_OP_PARAM_SHIFT	= 0x08,
 	OCRDMA_DCBX_STATE_MASK		= 0xFF
-पूर्ण;
+};
 
-काष्ठा ocrdma_app_parameter अणु
+struct ocrdma_app_parameter {
 	u32 valid_proto_app;
 	u32 oui;
 	u32 app_prio[2];
-पूर्ण;
+};
 
-काष्ठा ocrdma_dcbx_cfg अणु
+struct ocrdma_dcbx_cfg {
 	u32 tcv_aev_opv_st;
 	u32 tc_state;
 	u32 pfc_state;
@@ -2225,17 +2224,17 @@
 	u32 tc_bw[2];
 	u32 tc_prio[8];
 	u32 pfc_prio[2];
-	काष्ठा ocrdma_app_parameter app_param[15];
-पूर्ण;
+	struct ocrdma_app_parameter app_param[15];
+};
 
-काष्ठा ocrdma_get_dcbx_cfg_req अणु
-	काष्ठा ocrdma_mbx_hdr hdr;
+struct ocrdma_get_dcbx_cfg_req {
+	struct ocrdma_mbx_hdr hdr;
 	u32 param_type;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा ocrdma_get_dcbx_cfg_rsp अणु
-	काष्ठा ocrdma_mbx_rsp hdr;
-	काष्ठा ocrdma_dcbx_cfg cfg;
-पूर्ण __packed;
+struct ocrdma_get_dcbx_cfg_rsp {
+	struct ocrdma_mbx_rsp hdr;
+	struct ocrdma_dcbx_cfg cfg;
+} __packed;
 
-#पूर्ण_अगर				/* __OCRDMA_SLI_H__ */
+#endif				/* __OCRDMA_SLI_H__ */

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * This file is part of wl1271
  *
@@ -8,166 +7,166 @@
  * Contact: Luciano Coelho <luciano.coelho@nokia.com>
  */
 
-#समावेश "ps.h"
-#समावेश "io.h"
-#समावेश "tx.h"
-#समावेश "debug.h"
+#include "ps.h"
+#include "io.h"
+#include "tx.h"
+#include "debug.h"
 
-पूर्णांक wl1271_ps_set_mode(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर,
-		       क्रमागत wl1271_cmd_ps_mode mode)
-अणु
-	पूर्णांक ret;
-	u16 समयout = wl->conf.conn.dynamic_ps_समयout;
+int wl1271_ps_set_mode(struct wl1271 *wl, struct wl12xx_vif *wlvif,
+		       enum wl1271_cmd_ps_mode mode)
+{
+	int ret;
+	u16 timeout = wl->conf.conn.dynamic_ps_timeout;
 
-	चयन (mode) अणु
-	हाल STATION_AUTO_PS_MODE:
-	हाल STATION_POWER_SAVE_MODE:
+	switch (mode) {
+	case STATION_AUTO_PS_MODE:
+	case STATION_POWER_SAVE_MODE:
 		wl1271_debug(DEBUG_PSM, "entering psm (mode=%d,timeout=%u)",
-			     mode, समयout);
+			     mode, timeout);
 
-		ret = wl1271_acx_wake_up_conditions(wl, wlvअगर,
+		ret = wl1271_acx_wake_up_conditions(wl, wlvif,
 					    wl->conf.conn.wake_up_event,
-					    wl->conf.conn.listen_पूर्णांकerval);
-		अगर (ret < 0) अणु
+					    wl->conf.conn.listen_interval);
+		if (ret < 0) {
 			wl1271_error("couldn't set wake up conditions");
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
-		ret = wl1271_cmd_ps_mode(wl, wlvअगर, mode, समयout);
-		अगर (ret < 0)
-			वापस ret;
+		ret = wl1271_cmd_ps_mode(wl, wlvif, mode, timeout);
+		if (ret < 0)
+			return ret;
 
-		set_bit(WLVIF_FLAG_IN_PS, &wlvअगर->flags);
+		set_bit(WLVIF_FLAG_IN_PS, &wlvif->flags);
 
 		/*
 		 * enable beacon early termination.
-		 * Not relevant क्रम 5GHz and क्रम high rates.
+		 * Not relevant for 5GHz and for high rates.
 		 */
-		अगर ((wlvअगर->band == NL80211_BAND_2GHZ) &&
-		    (wlvअगर->basic_rate < CONF_HW_BIT_RATE_9MBPS)) अणु
-			ret = wl1271_acx_bet_enable(wl, wlvअगर, true);
-			अगर (ret < 0)
-				वापस ret;
-		पूर्ण
-		अवरोध;
-	हाल STATION_ACTIVE_MODE:
+		if ((wlvif->band == NL80211_BAND_2GHZ) &&
+		    (wlvif->basic_rate < CONF_HW_BIT_RATE_9MBPS)) {
+			ret = wl1271_acx_bet_enable(wl, wlvif, true);
+			if (ret < 0)
+				return ret;
+		}
+		break;
+	case STATION_ACTIVE_MODE:
 		wl1271_debug(DEBUG_PSM, "leaving psm");
 
 		/* disable beacon early termination */
-		अगर ((wlvअगर->band == NL80211_BAND_2GHZ) &&
-		    (wlvअगर->basic_rate < CONF_HW_BIT_RATE_9MBPS)) अणु
-			ret = wl1271_acx_bet_enable(wl, wlvअगर, false);
-			अगर (ret < 0)
-				वापस ret;
-		पूर्ण
+		if ((wlvif->band == NL80211_BAND_2GHZ) &&
+		    (wlvif->basic_rate < CONF_HW_BIT_RATE_9MBPS)) {
+			ret = wl1271_acx_bet_enable(wl, wlvif, false);
+			if (ret < 0)
+				return ret;
+		}
 
-		ret = wl1271_cmd_ps_mode(wl, wlvअगर, mode, 0);
-		अगर (ret < 0)
-			वापस ret;
+		ret = wl1271_cmd_ps_mode(wl, wlvif, mode, 0);
+		if (ret < 0)
+			return ret;
 
-		clear_bit(WLVIF_FLAG_IN_PS, &wlvअगर->flags);
-		अवरोध;
-	शेष:
+		clear_bit(WLVIF_FLAG_IN_PS, &wlvif->flags);
+		break;
+	default:
 		wl1271_warning("trying to set ps to unsupported mode %d", mode);
 		ret = -EINVAL;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम wl1271_ps_filter_frames(काष्ठा wl1271 *wl, u8 hlid)
-अणु
-	पूर्णांक i;
-	काष्ठा sk_buff *skb;
-	काष्ठा ieee80211_tx_info *info;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक filtered[NUM_TX_QUEUES];
-	काष्ठा wl1271_link *lnk = &wl->links[hlid];
+static void wl1271_ps_filter_frames(struct wl1271 *wl, u8 hlid)
+{
+	int i;
+	struct sk_buff *skb;
+	struct ieee80211_tx_info *info;
+	unsigned long flags;
+	int filtered[NUM_TX_QUEUES];
+	struct wl1271_link *lnk = &wl->links[hlid];
 
-	/* filter all frames currently in the low level queues क्रम this hlid */
-	क्रम (i = 0; i < NUM_TX_QUEUES; i++) अणु
+	/* filter all frames currently in the low level queues for this hlid */
+	for (i = 0; i < NUM_TX_QUEUES; i++) {
 		filtered[i] = 0;
-		जबतक ((skb = skb_dequeue(&lnk->tx_queue[i]))) अणु
+		while ((skb = skb_dequeue(&lnk->tx_queue[i]))) {
 			filtered[i]++;
 
-			अगर (WARN_ON(wl12xx_is_dummy_packet(wl, skb)))
-				जारी;
+			if (WARN_ON(wl12xx_is_dummy_packet(wl, skb)))
+				continue;
 
 			info = IEEE80211_SKB_CB(skb);
 			info->flags |= IEEE80211_TX_STAT_TX_FILTERED;
 			info->status.rates[0].idx = -1;
 			ieee80211_tx_status_ni(wl->hw, skb);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	spin_lock_irqsave(&wl->wl_lock, flags);
-	क्रम (i = 0; i < NUM_TX_QUEUES; i++) अणु
+	for (i = 0; i < NUM_TX_QUEUES; i++) {
 		wl->tx_queue_count[i] -= filtered[i];
-		अगर (lnk->wlvअगर)
-			lnk->wlvअगर->tx_queue_count[i] -= filtered[i];
-	पूर्ण
+		if (lnk->wlvif)
+			lnk->wlvif->tx_queue_count[i] -= filtered[i];
+	}
 	spin_unlock_irqrestore(&wl->wl_lock, flags);
 
 	wl1271_handle_tx_low_watermark(wl);
-पूर्ण
+}
 
-व्योम wl12xx_ps_link_start(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर,
+void wl12xx_ps_link_start(struct wl1271 *wl, struct wl12xx_vif *wlvif,
 			  u8 hlid, bool clean_queues)
-अणु
-	काष्ठा ieee80211_sta *sta;
-	काष्ठा ieee80211_vअगर *vअगर = wl12xx_wlvअगर_to_vअगर(wlvअगर);
+{
+	struct ieee80211_sta *sta;
+	struct ieee80211_vif *vif = wl12xx_wlvif_to_vif(wlvif);
 
-	अगर (WARN_ON_ONCE(wlvअगर->bss_type != BSS_TYPE_AP_BSS))
-		वापस;
+	if (WARN_ON_ONCE(wlvif->bss_type != BSS_TYPE_AP_BSS))
+		return;
 
-	अगर (!test_bit(hlid, wlvअगर->ap.sta_hlid_map) ||
+	if (!test_bit(hlid, wlvif->ap.sta_hlid_map) ||
 	    test_bit(hlid, &wl->ap_ps_map))
-		वापस;
+		return;
 
 	wl1271_debug(DEBUG_PSM, "start mac80211 PSM on hlid %d pkts %d "
 		     "clean_queues %d", hlid, wl->links[hlid].allocated_pkts,
 		     clean_queues);
 
-	rcu_पढ़ो_lock();
-	sta = ieee80211_find_sta(vअगर, wl->links[hlid].addr);
-	अगर (!sta) अणु
+	rcu_read_lock();
+	sta = ieee80211_find_sta(vif, wl->links[hlid].addr);
+	if (!sta) {
 		wl1271_error("could not find sta %pM for starting ps",
 			     wl->links[hlid].addr);
-		rcu_पढ़ो_unlock();
-		वापस;
-	पूर्ण
+		rcu_read_unlock();
+		return;
+	}
 
 	ieee80211_sta_ps_transition_ni(sta, true);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	/* करो we want to filter all frames from this link's queues? */
-	अगर (clean_queues)
+	/* do we want to filter all frames from this link's queues? */
+	if (clean_queues)
 		wl1271_ps_filter_frames(wl, hlid);
 
 	__set_bit(hlid, &wl->ap_ps_map);
-पूर्ण
+}
 
-व्योम wl12xx_ps_link_end(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर, u8 hlid)
-अणु
-	काष्ठा ieee80211_sta *sta;
-	काष्ठा ieee80211_vअगर *vअगर = wl12xx_wlvअगर_to_vअगर(wlvअगर);
+void wl12xx_ps_link_end(struct wl1271 *wl, struct wl12xx_vif *wlvif, u8 hlid)
+{
+	struct ieee80211_sta *sta;
+	struct ieee80211_vif *vif = wl12xx_wlvif_to_vif(wlvif);
 
-	अगर (!test_bit(hlid, &wl->ap_ps_map))
-		वापस;
+	if (!test_bit(hlid, &wl->ap_ps_map))
+		return;
 
 	wl1271_debug(DEBUG_PSM, "end mac80211 PSM on hlid %d", hlid);
 
 	__clear_bit(hlid, &wl->ap_ps_map);
 
-	rcu_पढ़ो_lock();
-	sta = ieee80211_find_sta(vअगर, wl->links[hlid].addr);
-	अगर (!sta) अणु
+	rcu_read_lock();
+	sta = ieee80211_find_sta(vif, wl->links[hlid].addr);
+	if (!sta) {
 		wl1271_error("could not find sta %pM for ending ps",
 			     wl->links[hlid].addr);
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
 	ieee80211_sta_ps_transition_ni(sta, false);
 end:
-	rcu_पढ़ो_unlock();
-पूर्ण
+	rcu_read_unlock();
+}

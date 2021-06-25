@@ -1,14 +1,13 @@
-<शैली गुरु>
 /*
  * Copyright 2008 Jerome Glisse.
  * All Rights Reserved.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -23,283 +22,283 @@
  * DEALINGS IN THE SOFTWARE.
  *
  * Authors:
- *    Jerome Glisse <glisse@मुक्तdesktop.org>
+ *    Jerome Glisse <glisse@freedesktop.org>
  */
 
-#समावेश <linux/file.h>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/sync_file.h>
-#समावेश <linux/dma-buf.h>
+#include <linux/file.h>
+#include <linux/pagemap.h>
+#include <linux/sync_file.h>
+#include <linux/dma-buf.h>
 
-#समावेश <drm/amdgpu_drm.h>
-#समावेश <drm/drm_syncobj.h>
-#समावेश "amdgpu.h"
-#समावेश "amdgpu_trace.h"
-#समावेश "amdgpu_gmc.h"
-#समावेश "amdgpu_gem.h"
-#समावेश "amdgpu_ras.h"
+#include <drm/amdgpu_drm.h>
+#include <drm/drm_syncobj.h>
+#include "amdgpu.h"
+#include "amdgpu_trace.h"
+#include "amdgpu_gmc.h"
+#include "amdgpu_gem.h"
+#include "amdgpu_ras.h"
 
-अटल पूर्णांक amdgpu_cs_user_fence_chunk(काष्ठा amdgpu_cs_parser *p,
-				      काष्ठा drm_amdgpu_cs_chunk_fence *data,
-				      uपूर्णांक32_t *offset)
-अणु
-	काष्ठा drm_gem_object *gobj;
-	काष्ठा amdgpu_bo *bo;
-	अचिन्हित दीर्घ size;
-	पूर्णांक r;
+static int amdgpu_cs_user_fence_chunk(struct amdgpu_cs_parser *p,
+				      struct drm_amdgpu_cs_chunk_fence *data,
+				      uint32_t *offset)
+{
+	struct drm_gem_object *gobj;
+	struct amdgpu_bo *bo;
+	unsigned long size;
+	int r;
 
 	gobj = drm_gem_object_lookup(p->filp, data->handle);
-	अगर (gobj == शून्य)
-		वापस -EINVAL;
+	if (gobj == NULL)
+		return -EINVAL;
 
 	bo = amdgpu_bo_ref(gem_to_amdgpu_bo(gobj));
 	p->uf_entry.priority = 0;
 	p->uf_entry.tv.bo = &bo->tbo;
-	/* One क्रम TTM and one क्रम the CS job */
+	/* One for TTM and one for the CS job */
 	p->uf_entry.tv.num_shared = 2;
 
 	drm_gem_object_put(gobj);
 
 	size = amdgpu_bo_size(bo);
-	अगर (size != PAGE_SIZE || (data->offset + 8) > size) अणु
+	if (size != PAGE_SIZE || (data->offset + 8) > size) {
 		r = -EINVAL;
-		जाओ error_unref;
-	पूर्ण
+		goto error_unref;
+	}
 
-	अगर (amdgpu_tपंचांग_tt_get_usermm(bo->tbo.tपंचांग)) अणु
+	if (amdgpu_ttm_tt_get_usermm(bo->tbo.ttm)) {
 		r = -EINVAL;
-		जाओ error_unref;
-	पूर्ण
+		goto error_unref;
+	}
 
 	*offset = data->offset;
 
-	वापस 0;
+	return 0;
 
 error_unref:
 	amdgpu_bo_unref(&bo);
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक amdgpu_cs_bo_handles_chunk(काष्ठा amdgpu_cs_parser *p,
-				      काष्ठा drm_amdgpu_bo_list_in *data)
-अणु
-	पूर्णांक r;
-	काष्ठा drm_amdgpu_bo_list_entry *info = शून्य;
+static int amdgpu_cs_bo_handles_chunk(struct amdgpu_cs_parser *p,
+				      struct drm_amdgpu_bo_list_in *data)
+{
+	int r;
+	struct drm_amdgpu_bo_list_entry *info = NULL;
 
 	r = amdgpu_bo_create_list_entry_array(data, &info);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
 	r = amdgpu_bo_list_create(p->adev, p->filp, info, data->bo_number,
 				  &p->bo_list);
-	अगर (r)
-		जाओ error_मुक्त;
+	if (r)
+		goto error_free;
 
-	kvमुक्त(info);
-	वापस 0;
+	kvfree(info);
+	return 0;
 
-error_मुक्त:
-	kvमुक्त(info);
+error_free:
+	kvfree(info);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक amdgpu_cs_parser_init(काष्ठा amdgpu_cs_parser *p, जोड़ drm_amdgpu_cs *cs)
-अणु
-	काष्ठा amdgpu_fpriv *fpriv = p->filp->driver_priv;
-	काष्ठा amdgpu_vm *vm = &fpriv->vm;
-	uपूर्णांक64_t *chunk_array_user;
-	uपूर्णांक64_t *chunk_array;
-	अचिन्हित size, num_ibs = 0;
-	uपूर्णांक32_t uf_offset = 0;
-	पूर्णांक i;
-	पूर्णांक ret;
+static int amdgpu_cs_parser_init(struct amdgpu_cs_parser *p, union drm_amdgpu_cs *cs)
+{
+	struct amdgpu_fpriv *fpriv = p->filp->driver_priv;
+	struct amdgpu_vm *vm = &fpriv->vm;
+	uint64_t *chunk_array_user;
+	uint64_t *chunk_array;
+	unsigned size, num_ibs = 0;
+	uint32_t uf_offset = 0;
+	int i;
+	int ret;
 
-	अगर (cs->in.num_chunks == 0)
-		वापस 0;
+	if (cs->in.num_chunks == 0)
+		return 0;
 
-	chunk_array = kvदो_स्मृति_array(cs->in.num_chunks, माप(uपूर्णांक64_t), GFP_KERNEL);
-	अगर (!chunk_array)
-		वापस -ENOMEM;
+	chunk_array = kvmalloc_array(cs->in.num_chunks, sizeof(uint64_t), GFP_KERNEL);
+	if (!chunk_array)
+		return -ENOMEM;
 
 	p->ctx = amdgpu_ctx_get(fpriv, cs->in.ctx_id);
-	अगर (!p->ctx) अणु
+	if (!p->ctx) {
 		ret = -EINVAL;
-		जाओ मुक्त_chunk;
-	पूर्ण
+		goto free_chunk;
+	}
 
 	mutex_lock(&p->ctx->lock);
 
 	/* skip guilty context job */
-	अगर (atomic_पढ़ो(&p->ctx->guilty) == 1) अणु
+	if (atomic_read(&p->ctx->guilty) == 1) {
 		ret = -ECANCELED;
-		जाओ मुक्त_chunk;
-	पूर्ण
+		goto free_chunk;
+	}
 
 	/* get chunks */
 	chunk_array_user = u64_to_user_ptr(cs->in.chunks);
-	अगर (copy_from_user(chunk_array, chunk_array_user,
-			   माप(uपूर्णांक64_t)*cs->in.num_chunks)) अणु
+	if (copy_from_user(chunk_array, chunk_array_user,
+			   sizeof(uint64_t)*cs->in.num_chunks)) {
 		ret = -EFAULT;
-		जाओ मुक्त_chunk;
-	पूर्ण
+		goto free_chunk;
+	}
 
 	p->nchunks = cs->in.num_chunks;
-	p->chunks = kvदो_स्मृति_array(p->nchunks, माप(काष्ठा amdgpu_cs_chunk),
+	p->chunks = kvmalloc_array(p->nchunks, sizeof(struct amdgpu_cs_chunk),
 			    GFP_KERNEL);
-	अगर (!p->chunks) अणु
+	if (!p->chunks) {
 		ret = -ENOMEM;
-		जाओ मुक्त_chunk;
-	पूर्ण
+		goto free_chunk;
+	}
 
-	क्रम (i = 0; i < p->nchunks; i++) अणु
-		काष्ठा drm_amdgpu_cs_chunk __user **chunk_ptr = शून्य;
-		काष्ठा drm_amdgpu_cs_chunk user_chunk;
-		uपूर्णांक32_t __user *cdata;
+	for (i = 0; i < p->nchunks; i++) {
+		struct drm_amdgpu_cs_chunk __user **chunk_ptr = NULL;
+		struct drm_amdgpu_cs_chunk user_chunk;
+		uint32_t __user *cdata;
 
 		chunk_ptr = u64_to_user_ptr(chunk_array[i]);
-		अगर (copy_from_user(&user_chunk, chunk_ptr,
-				       माप(काष्ठा drm_amdgpu_cs_chunk))) अणु
+		if (copy_from_user(&user_chunk, chunk_ptr,
+				       sizeof(struct drm_amdgpu_cs_chunk))) {
 			ret = -EFAULT;
 			i--;
-			जाओ मुक्त_partial_kdata;
-		पूर्ण
+			goto free_partial_kdata;
+		}
 		p->chunks[i].chunk_id = user_chunk.chunk_id;
 		p->chunks[i].length_dw = user_chunk.length_dw;
 
 		size = p->chunks[i].length_dw;
 		cdata = u64_to_user_ptr(user_chunk.chunk_data);
 
-		p->chunks[i].kdata = kvदो_स्मृति_array(size, माप(uपूर्णांक32_t), GFP_KERNEL);
-		अगर (p->chunks[i].kdata == शून्य) अणु
+		p->chunks[i].kdata = kvmalloc_array(size, sizeof(uint32_t), GFP_KERNEL);
+		if (p->chunks[i].kdata == NULL) {
 			ret = -ENOMEM;
 			i--;
-			जाओ मुक्त_partial_kdata;
-		पूर्ण
-		size *= माप(uपूर्णांक32_t);
-		अगर (copy_from_user(p->chunks[i].kdata, cdata, size)) अणु
+			goto free_partial_kdata;
+		}
+		size *= sizeof(uint32_t);
+		if (copy_from_user(p->chunks[i].kdata, cdata, size)) {
 			ret = -EFAULT;
-			जाओ मुक्त_partial_kdata;
-		पूर्ण
+			goto free_partial_kdata;
+		}
 
-		चयन (p->chunks[i].chunk_id) अणु
-		हाल AMDGPU_CHUNK_ID_IB:
+		switch (p->chunks[i].chunk_id) {
+		case AMDGPU_CHUNK_ID_IB:
 			++num_ibs;
-			अवरोध;
+			break;
 
-		हाल AMDGPU_CHUNK_ID_FENCE:
-			size = माप(काष्ठा drm_amdgpu_cs_chunk_fence);
-			अगर (p->chunks[i].length_dw * माप(uपूर्णांक32_t) < size) अणु
+		case AMDGPU_CHUNK_ID_FENCE:
+			size = sizeof(struct drm_amdgpu_cs_chunk_fence);
+			if (p->chunks[i].length_dw * sizeof(uint32_t) < size) {
 				ret = -EINVAL;
-				जाओ मुक्त_partial_kdata;
-			पूर्ण
+				goto free_partial_kdata;
+			}
 
 			ret = amdgpu_cs_user_fence_chunk(p, p->chunks[i].kdata,
 							 &uf_offset);
-			अगर (ret)
-				जाओ मुक्त_partial_kdata;
+			if (ret)
+				goto free_partial_kdata;
 
-			अवरोध;
+			break;
 
-		हाल AMDGPU_CHUNK_ID_BO_HANDLES:
-			size = माप(काष्ठा drm_amdgpu_bo_list_in);
-			अगर (p->chunks[i].length_dw * माप(uपूर्णांक32_t) < size) अणु
+		case AMDGPU_CHUNK_ID_BO_HANDLES:
+			size = sizeof(struct drm_amdgpu_bo_list_in);
+			if (p->chunks[i].length_dw * sizeof(uint32_t) < size) {
 				ret = -EINVAL;
-				जाओ मुक्त_partial_kdata;
-			पूर्ण
+				goto free_partial_kdata;
+			}
 
 			ret = amdgpu_cs_bo_handles_chunk(p, p->chunks[i].kdata);
-			अगर (ret)
-				जाओ मुक्त_partial_kdata;
+			if (ret)
+				goto free_partial_kdata;
 
-			अवरोध;
+			break;
 
-		हाल AMDGPU_CHUNK_ID_DEPENDENCIES:
-		हाल AMDGPU_CHUNK_ID_SYNCOBJ_IN:
-		हाल AMDGPU_CHUNK_ID_SYNCOBJ_OUT:
-		हाल AMDGPU_CHUNK_ID_SCHEDULED_DEPENDENCIES:
-		हाल AMDGPU_CHUNK_ID_SYNCOBJ_TIMELINE_WAIT:
-		हाल AMDGPU_CHUNK_ID_SYNCOBJ_TIMELINE_SIGNAL:
-			अवरोध;
+		case AMDGPU_CHUNK_ID_DEPENDENCIES:
+		case AMDGPU_CHUNK_ID_SYNCOBJ_IN:
+		case AMDGPU_CHUNK_ID_SYNCOBJ_OUT:
+		case AMDGPU_CHUNK_ID_SCHEDULED_DEPENDENCIES:
+		case AMDGPU_CHUNK_ID_SYNCOBJ_TIMELINE_WAIT:
+		case AMDGPU_CHUNK_ID_SYNCOBJ_TIMELINE_SIGNAL:
+			break;
 
-		शेष:
+		default:
 			ret = -EINVAL;
-			जाओ मुक्त_partial_kdata;
-		पूर्ण
-	पूर्ण
+			goto free_partial_kdata;
+		}
+	}
 
 	ret = amdgpu_job_alloc(p->adev, num_ibs, &p->job, vm);
-	अगर (ret)
-		जाओ मुक्त_all_kdata;
+	if (ret)
+		goto free_all_kdata;
 
-	अगर (p->ctx->vram_lost_counter != p->job->vram_lost_counter) अणु
+	if (p->ctx->vram_lost_counter != p->job->vram_lost_counter) {
 		ret = -ECANCELED;
-		जाओ मुक्त_all_kdata;
-	पूर्ण
+		goto free_all_kdata;
+	}
 
-	अगर (p->uf_entry.tv.bo)
+	if (p->uf_entry.tv.bo)
 		p->job->uf_addr = uf_offset;
-	kvमुक्त(chunk_array);
+	kvfree(chunk_array);
 
-	/* Use this opportunity to fill in task info क्रम the vm */
+	/* Use this opportunity to fill in task info for the vm */
 	amdgpu_vm_set_task_info(vm);
 
-	वापस 0;
+	return 0;
 
-मुक्त_all_kdata:
+free_all_kdata:
 	i = p->nchunks - 1;
-मुक्त_partial_kdata:
-	क्रम (; i >= 0; i--)
-		kvमुक्त(p->chunks[i].kdata);
-	kvमुक्त(p->chunks);
-	p->chunks = शून्य;
+free_partial_kdata:
+	for (; i >= 0; i--)
+		kvfree(p->chunks[i].kdata);
+	kvfree(p->chunks);
+	p->chunks = NULL;
 	p->nchunks = 0;
-मुक्त_chunk:
-	kvमुक्त(chunk_array);
+free_chunk:
+	kvfree(chunk_array);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* Convert microseconds to bytes. */
-अटल u64 us_to_bytes(काष्ठा amdgpu_device *adev, s64 us)
-अणु
-	अगर (us <= 0 || !adev->mm_stats.log2_max_MBps)
-		वापस 0;
+static u64 us_to_bytes(struct amdgpu_device *adev, s64 us)
+{
+	if (us <= 0 || !adev->mm_stats.log2_max_MBps)
+		return 0;
 
 	/* Since accum_us is incremented by a million per second, just
 	 * multiply it by the number of MB/s to get the number of bytes.
 	 */
-	वापस us << adev->mm_stats.log2_max_MBps;
-पूर्ण
+	return us << adev->mm_stats.log2_max_MBps;
+}
 
-अटल s64 bytes_to_us(काष्ठा amdgpu_device *adev, u64 bytes)
-अणु
-	अगर (!adev->mm_stats.log2_max_MBps)
-		वापस 0;
+static s64 bytes_to_us(struct amdgpu_device *adev, u64 bytes)
+{
+	if (!adev->mm_stats.log2_max_MBps)
+		return 0;
 
-	वापस bytes >> adev->mm_stats.log2_max_MBps;
-पूर्ण
+	return bytes >> adev->mm_stats.log2_max_MBps;
+}
 
 /* Returns how many bytes TTM can move right now. If no bytes can be moved,
- * it वापसs 0. If it वापसs non-zero, it's OK to move at least one buffer,
+ * it returns 0. If it returns non-zero, it's OK to move at least one buffer,
  * which means it can go over the threshold once. If that happens, the driver
- * will be in debt and no other buffer migrations can be करोne until that debt
+ * will be in debt and no other buffer migrations can be done until that debt
  * is repaid.
  *
  * This approach allows moving a buffer of any size (it's important to allow
  * that).
  *
- * The currency is simply समय in microseconds and it increases as the घड़ी
+ * The currency is simply time in microseconds and it increases as the clock
  * ticks. The accumulated microseconds (us) are converted to bytes and
- * वापसed.
+ * returned.
  */
-अटल व्योम amdgpu_cs_get_threshold_क्रम_moves(काष्ठा amdgpu_device *adev,
+static void amdgpu_cs_get_threshold_for_moves(struct amdgpu_device *adev,
 					      u64 *max_bytes,
 					      u64 *max_vis_bytes)
-अणु
-	s64 समय_us, increment_us;
-	u64 मुक्त_vram, total_vram, used_vram;
-	काष्ठा tपंचांग_resource_manager *vram_man = tपंचांग_manager_type(&adev->mman.bdev, TTM_PL_VRAM);
+{
+	s64 time_us, increment_us;
+	u64 free_vram, total_vram, used_vram;
+	struct ttm_resource_manager *vram_man = ttm_manager_type(&adev->mman.bdev, TTM_PL_VRAM);
 	/* Allow a maximum of 200 accumulated ms. This is basically per-IB
 	 * throttling.
 	 *
@@ -307,236 +306,236 @@ error_मुक्त:
 	 * second must be submitted and not more than 200ms apart from each
 	 * other.
 	 */
-	स्थिर s64 us_upper_bound = 200000;
+	const s64 us_upper_bound = 200000;
 
-	अगर (!adev->mm_stats.log2_max_MBps) अणु
+	if (!adev->mm_stats.log2_max_MBps) {
 		*max_bytes = 0;
 		*max_vis_bytes = 0;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	total_vram = adev->gmc.real_vram_size - atomic64_पढ़ो(&adev->vram_pin_size);
+	total_vram = adev->gmc.real_vram_size - atomic64_read(&adev->vram_pin_size);
 	used_vram = amdgpu_vram_mgr_usage(vram_man);
-	मुक्त_vram = used_vram >= total_vram ? 0 : total_vram - used_vram;
+	free_vram = used_vram >= total_vram ? 0 : total_vram - used_vram;
 
 	spin_lock(&adev->mm_stats.lock);
 
 	/* Increase the amount of accumulated us. */
-	समय_us = kसमय_प्रकारo_us(kसमय_get());
-	increment_us = समय_us - adev->mm_stats.last_update_us;
-	adev->mm_stats.last_update_us = समय_us;
+	time_us = ktime_to_us(ktime_get());
+	increment_us = time_us - adev->mm_stats.last_update_us;
+	adev->mm_stats.last_update_us = time_us;
 	adev->mm_stats.accum_us = min(adev->mm_stats.accum_us + increment_us,
 				      us_upper_bound);
 
-	/* This prevents the लघु period of low perक्रमmance when the VRAM
-	 * usage is low and the driver is in debt or करोesn't have enough
+	/* This prevents the short period of low performance when the VRAM
+	 * usage is low and the driver is in debt or doesn't have enough
 	 * accumulated us to fill VRAM quickly.
 	 *
-	 * The situation can occur in these हालs:
-	 * - a lot of VRAM is मुक्तd by userspace
+	 * The situation can occur in these cases:
+	 * - a lot of VRAM is freed by userspace
 	 * - the presence of a big buffer causes a lot of evictions
-	 *   (solution: split buffers पूर्णांकo smaller ones)
+	 *   (solution: split buffers into smaller ones)
 	 *
-	 * If 128 MB or 1/8th of VRAM is मुक्त, start filling it now by setting
+	 * If 128 MB or 1/8th of VRAM is free, start filling it now by setting
 	 * accum_us to a positive number.
 	 */
-	अगर (मुक्त_vram >= 128 * 1024 * 1024 || मुक्त_vram >= total_vram / 8) अणु
+	if (free_vram >= 128 * 1024 * 1024 || free_vram >= total_vram / 8) {
 		s64 min_us;
 
-		/* Be more aggresive on dGPUs. Try to fill a portion of मुक्त
+		/* Be more aggresive on dGPUs. Try to fill a portion of free
 		 * VRAM now.
 		 */
-		अगर (!(adev->flags & AMD_IS_APU))
-			min_us = bytes_to_us(adev, मुक्त_vram / 4);
-		अन्यथा
+		if (!(adev->flags & AMD_IS_APU))
+			min_us = bytes_to_us(adev, free_vram / 4);
+		else
 			min_us = 0; /* Reset accum_us on APUs. */
 
 		adev->mm_stats.accum_us = max(min_us, adev->mm_stats.accum_us);
-	पूर्ण
+	}
 
-	/* This is set to 0 अगर the driver is in debt to disallow (optional)
+	/* This is set to 0 if the driver is in debt to disallow (optional)
 	 * buffer moves.
 	 */
 	*max_bytes = us_to_bytes(adev, adev->mm_stats.accum_us);
 
-	/* Do the same क्रम visible VRAM अगर half of it is मुक्त */
-	अगर (!amdgpu_gmc_vram_full_visible(&adev->gmc)) अणु
+	/* Do the same for visible VRAM if half of it is free */
+	if (!amdgpu_gmc_vram_full_visible(&adev->gmc)) {
 		u64 total_vis_vram = adev->gmc.visible_vram_size;
 		u64 used_vis_vram =
 		  amdgpu_vram_mgr_vis_usage(vram_man);
 
-		अगर (used_vis_vram < total_vis_vram) अणु
-			u64 मुक्त_vis_vram = total_vis_vram - used_vis_vram;
+		if (used_vis_vram < total_vis_vram) {
+			u64 free_vis_vram = total_vis_vram - used_vis_vram;
 			adev->mm_stats.accum_us_vis = min(adev->mm_stats.accum_us_vis +
 							  increment_us, us_upper_bound);
 
-			अगर (मुक्त_vis_vram >= total_vis_vram / 2)
+			if (free_vis_vram >= total_vis_vram / 2)
 				adev->mm_stats.accum_us_vis =
-					max(bytes_to_us(adev, मुक्त_vis_vram / 2),
+					max(bytes_to_us(adev, free_vis_vram / 2),
 					    adev->mm_stats.accum_us_vis);
-		पूर्ण
+		}
 
 		*max_vis_bytes = us_to_bytes(adev, adev->mm_stats.accum_us_vis);
-	पूर्ण अन्यथा अणु
+	} else {
 		*max_vis_bytes = 0;
-	पूर्ण
+	}
 
 	spin_unlock(&adev->mm_stats.lock);
-पूर्ण
+}
 
-/* Report how many bytes have really been moved क्रम the last command
+/* Report how many bytes have really been moved for the last command
  * submission. This can result in a debt that can stop buffer migrations
  * temporarily.
  */
-व्योम amdgpu_cs_report_moved_bytes(काष्ठा amdgpu_device *adev, u64 num_bytes,
+void amdgpu_cs_report_moved_bytes(struct amdgpu_device *adev, u64 num_bytes,
 				  u64 num_vis_bytes)
-अणु
+{
 	spin_lock(&adev->mm_stats.lock);
 	adev->mm_stats.accum_us -= bytes_to_us(adev, num_bytes);
 	adev->mm_stats.accum_us_vis -= bytes_to_us(adev, num_vis_bytes);
 	spin_unlock(&adev->mm_stats.lock);
-पूर्ण
+}
 
-अटल पूर्णांक amdgpu_cs_bo_validate(काष्ठा amdgpu_cs_parser *p,
-				 काष्ठा amdgpu_bo *bo)
-अणु
-	काष्ठा amdgpu_device *adev = amdgpu_tपंचांग_adev(bo->tbo.bdev);
-	काष्ठा tपंचांग_operation_ctx ctx = अणु
-		.पूर्णांकerruptible = true,
-		.no_रुको_gpu = false,
+static int amdgpu_cs_bo_validate(struct amdgpu_cs_parser *p,
+				 struct amdgpu_bo *bo)
+{
+	struct amdgpu_device *adev = amdgpu_ttm_adev(bo->tbo.bdev);
+	struct ttm_operation_ctx ctx = {
+		.interruptible = true,
+		.no_wait_gpu = false,
 		.resv = bo->tbo.base.resv
-	पूर्ण;
-	uपूर्णांक32_t करोमुख्य;
-	पूर्णांक r;
+	};
+	uint32_t domain;
+	int r;
 
-	अगर (bo->tbo.pin_count)
-		वापस 0;
+	if (bo->tbo.pin_count)
+		return 0;
 
-	/* Don't move this buffer अगर we have depleted our allowance
-	 * to move it. Don't move anything अगर the threshold is zero.
+	/* Don't move this buffer if we have depleted our allowance
+	 * to move it. Don't move anything if the threshold is zero.
 	 */
-	अगर (p->bytes_moved < p->bytes_moved_threshold &&
+	if (p->bytes_moved < p->bytes_moved_threshold &&
 	    (!bo->tbo.base.dma_buf ||
-	    list_empty(&bo->tbo.base.dma_buf->attachments))) अणु
-		अगर (!amdgpu_gmc_vram_full_visible(&adev->gmc) &&
-		    (bo->flags & AMDGPU_GEM_CREATE_CPU_ACCESS_REQUIRED)) अणु
-			/* And करोn't move a CPU_ACCESS_REQUIRED BO to limited
-			 * visible VRAM अगर we've depleted our allowance to करो
+	    list_empty(&bo->tbo.base.dma_buf->attachments))) {
+		if (!amdgpu_gmc_vram_full_visible(&adev->gmc) &&
+		    (bo->flags & AMDGPU_GEM_CREATE_CPU_ACCESS_REQUIRED)) {
+			/* And don't move a CPU_ACCESS_REQUIRED BO to limited
+			 * visible VRAM if we've depleted our allowance to do
 			 * that.
 			 */
-			अगर (p->bytes_moved_vis < p->bytes_moved_vis_threshold)
-				करोमुख्य = bo->preferred_करोमुख्यs;
-			अन्यथा
-				करोमुख्य = bo->allowed_करोमुख्यs;
-		पूर्ण अन्यथा अणु
-			करोमुख्य = bo->preferred_करोमुख्यs;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		करोमुख्य = bo->allowed_करोमुख्यs;
-	पूर्ण
+			if (p->bytes_moved_vis < p->bytes_moved_vis_threshold)
+				domain = bo->preferred_domains;
+			else
+				domain = bo->allowed_domains;
+		} else {
+			domain = bo->preferred_domains;
+		}
+	} else {
+		domain = bo->allowed_domains;
+	}
 
 retry:
-	amdgpu_bo_placement_from_करोमुख्य(bo, करोमुख्य);
-	r = tपंचांग_bo_validate(&bo->tbo, &bo->placement, &ctx);
+	amdgpu_bo_placement_from_domain(bo, domain);
+	r = ttm_bo_validate(&bo->tbo, &bo->placement, &ctx);
 
 	p->bytes_moved += ctx.bytes_moved;
-	अगर (!amdgpu_gmc_vram_full_visible(&adev->gmc) &&
+	if (!amdgpu_gmc_vram_full_visible(&adev->gmc) &&
 	    amdgpu_bo_in_cpu_visible_vram(bo))
 		p->bytes_moved_vis += ctx.bytes_moved;
 
-	अगर (unlikely(r == -ENOMEM) && करोमुख्य != bo->allowed_करोमुख्यs) अणु
-		करोमुख्य = bo->allowed_करोमुख्यs;
-		जाओ retry;
-	पूर्ण
+	if (unlikely(r == -ENOMEM) && domain != bo->allowed_domains) {
+		domain = bo->allowed_domains;
+		goto retry;
+	}
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक amdgpu_cs_validate(व्योम *param, काष्ठा amdgpu_bo *bo)
-अणु
-	काष्ठा amdgpu_cs_parser *p = param;
-	पूर्णांक r;
+static int amdgpu_cs_validate(void *param, struct amdgpu_bo *bo)
+{
+	struct amdgpu_cs_parser *p = param;
+	int r;
 
 	r = amdgpu_cs_bo_validate(p, bo);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
-	अगर (bo->shaकरोw)
-		r = amdgpu_cs_bo_validate(p, bo->shaकरोw);
+	if (bo->shadow)
+		r = amdgpu_cs_bo_validate(p, bo->shadow);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक amdgpu_cs_list_validate(काष्ठा amdgpu_cs_parser *p,
-			    काष्ठा list_head *validated)
-अणु
-	काष्ठा tपंचांग_operation_ctx ctx = अणु true, false पूर्ण;
-	काष्ठा amdgpu_bo_list_entry *lobj;
-	पूर्णांक r;
+static int amdgpu_cs_list_validate(struct amdgpu_cs_parser *p,
+			    struct list_head *validated)
+{
+	struct ttm_operation_ctx ctx = { true, false };
+	struct amdgpu_bo_list_entry *lobj;
+	int r;
 
-	list_क्रम_each_entry(lobj, validated, tv.head) अणु
-		काष्ठा amdgpu_bo *bo = tपंचांग_to_amdgpu_bo(lobj->tv.bo);
-		काष्ठा mm_काष्ठा *usermm;
+	list_for_each_entry(lobj, validated, tv.head) {
+		struct amdgpu_bo *bo = ttm_to_amdgpu_bo(lobj->tv.bo);
+		struct mm_struct *usermm;
 
-		usermm = amdgpu_tपंचांग_tt_get_usermm(bo->tbo.tपंचांग);
-		अगर (usermm && usermm != current->mm)
-			वापस -EPERM;
+		usermm = amdgpu_ttm_tt_get_usermm(bo->tbo.ttm);
+		if (usermm && usermm != current->mm)
+			return -EPERM;
 
-		अगर (amdgpu_tपंचांग_tt_is_userptr(bo->tbo.tपंचांग) &&
-		    lobj->user_invalidated && lobj->user_pages) अणु
-			amdgpu_bo_placement_from_करोमुख्य(bo,
+		if (amdgpu_ttm_tt_is_userptr(bo->tbo.ttm) &&
+		    lobj->user_invalidated && lobj->user_pages) {
+			amdgpu_bo_placement_from_domain(bo,
 							AMDGPU_GEM_DOMAIN_CPU);
-			r = tपंचांग_bo_validate(&bo->tbo, &bo->placement, &ctx);
-			अगर (r)
-				वापस r;
+			r = ttm_bo_validate(&bo->tbo, &bo->placement, &ctx);
+			if (r)
+				return r;
 
-			amdgpu_tपंचांग_tt_set_user_pages(bo->tbo.tपंचांग,
+			amdgpu_ttm_tt_set_user_pages(bo->tbo.ttm,
 						     lobj->user_pages);
-		पूर्ण
+		}
 
 		r = amdgpu_cs_validate(p, bo);
-		अगर (r)
-			वापस r;
+		if (r)
+			return r;
 
-		kvमुक्त(lobj->user_pages);
-		lobj->user_pages = शून्य;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		kvfree(lobj->user_pages);
+		lobj->user_pages = NULL;
+	}
+	return 0;
+}
 
-अटल पूर्णांक amdgpu_cs_parser_bos(काष्ठा amdgpu_cs_parser *p,
-				जोड़ drm_amdgpu_cs *cs)
-अणु
-	काष्ठा amdgpu_fpriv *fpriv = p->filp->driver_priv;
-	काष्ठा amdgpu_vm *vm = &fpriv->vm;
-	काष्ठा amdgpu_bo_list_entry *e;
-	काष्ठा list_head duplicates;
-	काष्ठा amdgpu_bo *gds;
-	काष्ठा amdgpu_bo *gws;
-	काष्ठा amdgpu_bo *oa;
-	पूर्णांक r;
+static int amdgpu_cs_parser_bos(struct amdgpu_cs_parser *p,
+				union drm_amdgpu_cs *cs)
+{
+	struct amdgpu_fpriv *fpriv = p->filp->driver_priv;
+	struct amdgpu_vm *vm = &fpriv->vm;
+	struct amdgpu_bo_list_entry *e;
+	struct list_head duplicates;
+	struct amdgpu_bo *gds;
+	struct amdgpu_bo *gws;
+	struct amdgpu_bo *oa;
+	int r;
 
 	INIT_LIST_HEAD(&p->validated);
 
-	/* p->bo_list could alपढ़ोy be asचिन्हित अगर AMDGPU_CHUNK_ID_BO_HANDLES is present */
-	अगर (cs->in.bo_list_handle) अणु
-		अगर (p->bo_list)
-			वापस -EINVAL;
+	/* p->bo_list could already be assigned if AMDGPU_CHUNK_ID_BO_HANDLES is present */
+	if (cs->in.bo_list_handle) {
+		if (p->bo_list)
+			return -EINVAL;
 
 		r = amdgpu_bo_list_get(fpriv, cs->in.bo_list_handle,
 				       &p->bo_list);
-		अगर (r)
-			वापस r;
-	पूर्ण अन्यथा अगर (!p->bo_list) अणु
+		if (r)
+			return r;
+	} else if (!p->bo_list) {
 		/* Create a empty bo_list when no handle is provided */
-		r = amdgpu_bo_list_create(p->adev, p->filp, शून्य, 0,
+		r = amdgpu_bo_list_create(p->adev, p->filp, NULL, 0,
 					  &p->bo_list);
-		अगर (r)
-			वापस r;
-	पूर्ण
+		if (r)
+			return r;
+	}
 
-	/* One क्रम TTM and one क्रम the CS job */
-	amdgpu_bo_list_क्रम_each_entry(e, p->bo_list)
+	/* One for TTM and one for the CS job */
+	amdgpu_bo_list_for_each_entry(e, p->bo_list)
 		e->tv.num_shared = 2;
 
 	amdgpu_bo_list_get_list(p->bo_list, &p->validated);
@@ -544,69 +543,69 @@ retry:
 	INIT_LIST_HEAD(&duplicates);
 	amdgpu_vm_get_pd_bo(&fpriv->vm, &p->validated, &p->vm_pd);
 
-	अगर (p->uf_entry.tv.bo && !tपंचांग_to_amdgpu_bo(p->uf_entry.tv.bo)->parent)
+	if (p->uf_entry.tv.bo && !ttm_to_amdgpu_bo(p->uf_entry.tv.bo)->parent)
 		list_add(&p->uf_entry.tv.head, &p->validated);
 
-	/* Get userptr backing pages. If pages are updated after रेजिस्टरed
-	 * in amdgpu_gem_userptr_ioctl(), amdgpu_cs_list_validate() will करो
-	 * amdgpu_tपंचांग_backend_bind() to flush and invalidate new pages
+	/* Get userptr backing pages. If pages are updated after registered
+	 * in amdgpu_gem_userptr_ioctl(), amdgpu_cs_list_validate() will do
+	 * amdgpu_ttm_backend_bind() to flush and invalidate new pages
 	 */
-	amdgpu_bo_list_क्रम_each_userptr_entry(e, p->bo_list) अणु
-		काष्ठा amdgpu_bo *bo = tपंचांग_to_amdgpu_bo(e->tv.bo);
+	amdgpu_bo_list_for_each_userptr_entry(e, p->bo_list) {
+		struct amdgpu_bo *bo = ttm_to_amdgpu_bo(e->tv.bo);
 		bool userpage_invalidated = false;
-		पूर्णांक i;
+		int i;
 
-		e->user_pages = kvदो_स्मृति_array(bo->tbo.tपंचांग->num_pages,
-					माप(काष्ठा page *),
+		e->user_pages = kvmalloc_array(bo->tbo.ttm->num_pages,
+					sizeof(struct page *),
 					GFP_KERNEL | __GFP_ZERO);
-		अगर (!e->user_pages) अणु
+		if (!e->user_pages) {
 			DRM_ERROR("kvmalloc_array failure\n");
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 
-		r = amdgpu_tपंचांग_tt_get_user_pages(bo, e->user_pages);
-		अगर (r) अणु
-			kvमुक्त(e->user_pages);
-			e->user_pages = शून्य;
-			वापस r;
-		पूर्ण
+		r = amdgpu_ttm_tt_get_user_pages(bo, e->user_pages);
+		if (r) {
+			kvfree(e->user_pages);
+			e->user_pages = NULL;
+			return r;
+		}
 
-		क्रम (i = 0; i < bo->tbo.tपंचांग->num_pages; i++) अणु
-			अगर (bo->tbo.tपंचांग->pages[i] != e->user_pages[i]) अणु
+		for (i = 0; i < bo->tbo.ttm->num_pages; i++) {
+			if (bo->tbo.ttm->pages[i] != e->user_pages[i]) {
 				userpage_invalidated = true;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 		e->user_invalidated = userpage_invalidated;
-	पूर्ण
+	}
 
-	r = tपंचांग_eu_reserve_buffers(&p->ticket, &p->validated, true,
+	r = ttm_eu_reserve_buffers(&p->ticket, &p->validated, true,
 				   &duplicates);
-	अगर (unlikely(r != 0)) अणु
-		अगर (r != -ERESTARTSYS)
+	if (unlikely(r != 0)) {
+		if (r != -ERESTARTSYS)
 			DRM_ERROR("ttm_eu_reserve_buffers failed.\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	amdgpu_cs_get_threshold_क्रम_moves(p->adev, &p->bytes_moved_threshold,
+	amdgpu_cs_get_threshold_for_moves(p->adev, &p->bytes_moved_threshold,
 					  &p->bytes_moved_vis_threshold);
 	p->bytes_moved = 0;
 	p->bytes_moved_vis = 0;
 
 	r = amdgpu_vm_validate_pt_bos(p->adev, &fpriv->vm,
 				      amdgpu_cs_validate, p);
-	अगर (r) अणु
+	if (r) {
 		DRM_ERROR("amdgpu_vm_validate_pt_bos() failed.\n");
-		जाओ error_validate;
-	पूर्ण
+		goto error_validate;
+	}
 
 	r = amdgpu_cs_list_validate(p, &duplicates);
-	अगर (r)
-		जाओ error_validate;
+	if (r)
+		goto error_validate;
 
 	r = amdgpu_cs_list_validate(p, &p->validated);
-	अगर (r)
-		जाओ error_validate;
+	if (r)
+		goto error_validate;
 
 	amdgpu_cs_report_moved_bytes(p->adev, p->bytes_moved,
 				     p->bytes_moved_vis);
@@ -615,310 +614,310 @@ retry:
 	gws = p->bo_list->gws_obj;
 	oa = p->bo_list->oa_obj;
 
-	amdgpu_bo_list_क्रम_each_entry(e, p->bo_list) अणु
-		काष्ठा amdgpu_bo *bo = tपंचांग_to_amdgpu_bo(e->tv.bo);
+	amdgpu_bo_list_for_each_entry(e, p->bo_list) {
+		struct amdgpu_bo *bo = ttm_to_amdgpu_bo(e->tv.bo);
 
-		/* Make sure we use the exclusive slot क्रम shared BOs */
-		अगर (bo->prime_shared_count)
+		/* Make sure we use the exclusive slot for shared BOs */
+		if (bo->prime_shared_count)
 			e->tv.num_shared = 0;
 		e->bo_va = amdgpu_vm_bo_find(vm, bo);
-	पूर्ण
+	}
 
-	अगर (gds) अणु
+	if (gds) {
 		p->job->gds_base = amdgpu_bo_gpu_offset(gds) >> PAGE_SHIFT;
 		p->job->gds_size = amdgpu_bo_size(gds) >> PAGE_SHIFT;
-	पूर्ण
-	अगर (gws) अणु
+	}
+	if (gws) {
 		p->job->gws_base = amdgpu_bo_gpu_offset(gws) >> PAGE_SHIFT;
 		p->job->gws_size = amdgpu_bo_size(gws) >> PAGE_SHIFT;
-	पूर्ण
-	अगर (oa) अणु
+	}
+	if (oa) {
 		p->job->oa_base = amdgpu_bo_gpu_offset(oa) >> PAGE_SHIFT;
 		p->job->oa_size = amdgpu_bo_size(oa) >> PAGE_SHIFT;
-	पूर्ण
+	}
 
-	अगर (!r && p->uf_entry.tv.bo) अणु
-		काष्ठा amdgpu_bo *uf = tपंचांग_to_amdgpu_bo(p->uf_entry.tv.bo);
+	if (!r && p->uf_entry.tv.bo) {
+		struct amdgpu_bo *uf = ttm_to_amdgpu_bo(p->uf_entry.tv.bo);
 
-		r = amdgpu_tपंचांग_alloc_gart(&uf->tbo);
+		r = amdgpu_ttm_alloc_gart(&uf->tbo);
 		p->job->uf_addr += amdgpu_bo_gpu_offset(uf);
-	पूर्ण
+	}
 
 error_validate:
-	अगर (r)
-		tपंचांग_eu_backoff_reservation(&p->ticket, &p->validated);
+	if (r)
+		ttm_eu_backoff_reservation(&p->ticket, &p->validated);
 out:
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक amdgpu_cs_sync_rings(काष्ठा amdgpu_cs_parser *p)
-अणु
-	काष्ठा amdgpu_fpriv *fpriv = p->filp->driver_priv;
-	काष्ठा amdgpu_bo_list_entry *e;
-	पूर्णांक r;
+static int amdgpu_cs_sync_rings(struct amdgpu_cs_parser *p)
+{
+	struct amdgpu_fpriv *fpriv = p->filp->driver_priv;
+	struct amdgpu_bo_list_entry *e;
+	int r;
 
-	list_क्रम_each_entry(e, &p->validated, tv.head) अणु
-		काष्ठा amdgpu_bo *bo = tपंचांग_to_amdgpu_bo(e->tv.bo);
-		काष्ठा dma_resv *resv = bo->tbo.base.resv;
-		क्रमागत amdgpu_sync_mode sync_mode;
+	list_for_each_entry(e, &p->validated, tv.head) {
+		struct amdgpu_bo *bo = ttm_to_amdgpu_bo(e->tv.bo);
+		struct dma_resv *resv = bo->tbo.base.resv;
+		enum amdgpu_sync_mode sync_mode;
 
 		sync_mode = amdgpu_bo_explicit_sync(bo) ?
 			AMDGPU_SYNC_EXPLICIT : AMDGPU_SYNC_NE_OWNER;
 		r = amdgpu_sync_resv(p->adev, &p->job->sync, resv, sync_mode,
 				     &fpriv->vm);
-		अगर (r)
-			वापस r;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (r)
+			return r;
+	}
+	return 0;
+}
 
 /**
  * cs_parser_fini() - clean parser states
- * @parser:	parser काष्ठाure holding parsing context.
+ * @parser:	parser structure holding parsing context.
  * @error:	error number
  * @backoff:	indicator to backoff the reservation
  *
- * If error is set than unvalidate buffer, otherwise just मुक्त memory
+ * If error is set than unvalidate buffer, otherwise just free memory
  * used by parsing context.
  **/
-अटल व्योम amdgpu_cs_parser_fini(काष्ठा amdgpu_cs_parser *parser, पूर्णांक error,
+static void amdgpu_cs_parser_fini(struct amdgpu_cs_parser *parser, int error,
 				  bool backoff)
-अणु
-	अचिन्हित i;
+{
+	unsigned i;
 
-	अगर (error && backoff)
-		tपंचांग_eu_backoff_reservation(&parser->ticket,
+	if (error && backoff)
+		ttm_eu_backoff_reservation(&parser->ticket,
 					   &parser->validated);
 
-	क्रम (i = 0; i < parser->num_post_deps; i++) अणु
+	for (i = 0; i < parser->num_post_deps; i++) {
 		drm_syncobj_put(parser->post_deps[i].syncobj);
-		kमुक्त(parser->post_deps[i].chain);
-	पूर्ण
-	kमुक्त(parser->post_deps);
+		kfree(parser->post_deps[i].chain);
+	}
+	kfree(parser->post_deps);
 
 	dma_fence_put(parser->fence);
 
-	अगर (parser->ctx) अणु
+	if (parser->ctx) {
 		mutex_unlock(&parser->ctx->lock);
 		amdgpu_ctx_put(parser->ctx);
-	पूर्ण
-	अगर (parser->bo_list)
+	}
+	if (parser->bo_list)
 		amdgpu_bo_list_put(parser->bo_list);
 
-	क्रम (i = 0; i < parser->nchunks; i++)
-		kvमुक्त(parser->chunks[i].kdata);
-	kvमुक्त(parser->chunks);
-	अगर (parser->job)
-		amdgpu_job_मुक्त(parser->job);
-	अगर (parser->uf_entry.tv.bo) अणु
-		काष्ठा amdgpu_bo *uf = tपंचांग_to_amdgpu_bo(parser->uf_entry.tv.bo);
+	for (i = 0; i < parser->nchunks; i++)
+		kvfree(parser->chunks[i].kdata);
+	kvfree(parser->chunks);
+	if (parser->job)
+		amdgpu_job_free(parser->job);
+	if (parser->uf_entry.tv.bo) {
+		struct amdgpu_bo *uf = ttm_to_amdgpu_bo(parser->uf_entry.tv.bo);
 
 		amdgpu_bo_unref(&uf);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक amdgpu_cs_vm_handling(काष्ठा amdgpu_cs_parser *p)
-अणु
-	काष्ठा amdgpu_ring *ring = to_amdgpu_ring(p->entity->rq->sched);
-	काष्ठा amdgpu_fpriv *fpriv = p->filp->driver_priv;
-	काष्ठा amdgpu_device *adev = p->adev;
-	काष्ठा amdgpu_vm *vm = &fpriv->vm;
-	काष्ठा amdgpu_bo_list_entry *e;
-	काष्ठा amdgpu_bo_va *bo_va;
-	काष्ठा amdgpu_bo *bo;
-	पूर्णांक r;
+static int amdgpu_cs_vm_handling(struct amdgpu_cs_parser *p)
+{
+	struct amdgpu_ring *ring = to_amdgpu_ring(p->entity->rq->sched);
+	struct amdgpu_fpriv *fpriv = p->filp->driver_priv;
+	struct amdgpu_device *adev = p->adev;
+	struct amdgpu_vm *vm = &fpriv->vm;
+	struct amdgpu_bo_list_entry *e;
+	struct amdgpu_bo_va *bo_va;
+	struct amdgpu_bo *bo;
+	int r;
 
-	/* Only क्रम UVD/VCE VM emulation */
-	अगर (ring->funcs->parse_cs || ring->funcs->patch_cs_in_place) अणु
-		अचिन्हित i, j;
+	/* Only for UVD/VCE VM emulation */
+	if (ring->funcs->parse_cs || ring->funcs->patch_cs_in_place) {
+		unsigned i, j;
 
-		क्रम (i = 0, j = 0; i < p->nchunks && j < p->job->num_ibs; i++) अणु
-			काष्ठा drm_amdgpu_cs_chunk_ib *chunk_ib;
-			काष्ठा amdgpu_bo_va_mapping *m;
-			काष्ठा amdgpu_bo *aobj = शून्य;
-			काष्ठा amdgpu_cs_chunk *chunk;
-			uपूर्णांक64_t offset, बहु_शुरू;
-			काष्ठा amdgpu_ib *ib;
-			uपूर्णांक8_t *kptr;
+		for (i = 0, j = 0; i < p->nchunks && j < p->job->num_ibs; i++) {
+			struct drm_amdgpu_cs_chunk_ib *chunk_ib;
+			struct amdgpu_bo_va_mapping *m;
+			struct amdgpu_bo *aobj = NULL;
+			struct amdgpu_cs_chunk *chunk;
+			uint64_t offset, va_start;
+			struct amdgpu_ib *ib;
+			uint8_t *kptr;
 
 			chunk = &p->chunks[i];
 			ib = &p->job->ibs[j];
 			chunk_ib = chunk->kdata;
 
-			अगर (chunk->chunk_id != AMDGPU_CHUNK_ID_IB)
-				जारी;
+			if (chunk->chunk_id != AMDGPU_CHUNK_ID_IB)
+				continue;
 
-			बहु_शुरू = chunk_ib->बहु_शुरू & AMDGPU_GMC_HOLE_MASK;
-			r = amdgpu_cs_find_mapping(p, बहु_शुरू, &aobj, &m);
-			अगर (r) अणु
+			va_start = chunk_ib->va_start & AMDGPU_GMC_HOLE_MASK;
+			r = amdgpu_cs_find_mapping(p, va_start, &aobj, &m);
+			if (r) {
 				DRM_ERROR("IB va_start is invalid\n");
-				वापस r;
-			पूर्ण
+				return r;
+			}
 
-			अगर ((बहु_शुरू + chunk_ib->ib_bytes) >
-			    (m->last + 1) * AMDGPU_GPU_PAGE_SIZE) अणु
+			if ((va_start + chunk_ib->ib_bytes) >
+			    (m->last + 1) * AMDGPU_GPU_PAGE_SIZE) {
 				DRM_ERROR("IB va_start+ib_bytes is invalid\n");
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 
-			/* the IB should be reserved at this poपूर्णांक */
-			r = amdgpu_bo_kmap(aobj, (व्योम **)&kptr);
-			अगर (r) अणु
-				वापस r;
-			पूर्ण
+			/* the IB should be reserved at this point */
+			r = amdgpu_bo_kmap(aobj, (void **)&kptr);
+			if (r) {
+				return r;
+			}
 
 			offset = m->start * AMDGPU_GPU_PAGE_SIZE;
-			kptr += बहु_शुरू - offset;
+			kptr += va_start - offset;
 
-			अगर (ring->funcs->parse_cs) अणु
-				स_नकल(ib->ptr, kptr, chunk_ib->ib_bytes);
+			if (ring->funcs->parse_cs) {
+				memcpy(ib->ptr, kptr, chunk_ib->ib_bytes);
 				amdgpu_bo_kunmap(aobj);
 
 				r = amdgpu_ring_parse_cs(ring, p, j);
-				अगर (r)
-					वापस r;
-			पूर्ण अन्यथा अणु
-				ib->ptr = (uपूर्णांक32_t *)kptr;
+				if (r)
+					return r;
+			} else {
+				ib->ptr = (uint32_t *)kptr;
 				r = amdgpu_ring_patch_cs_in_place(ring, p, j);
 				amdgpu_bo_kunmap(aobj);
-				अगर (r)
-					वापस r;
-			पूर्ण
+				if (r)
+					return r;
+			}
 
 			j++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!p->job->vm)
-		वापस amdgpu_cs_sync_rings(p);
+	if (!p->job->vm)
+		return amdgpu_cs_sync_rings(p);
 
 
-	r = amdgpu_vm_clear_मुक्तd(adev, vm, शून्य);
-	अगर (r)
-		वापस r;
+	r = amdgpu_vm_clear_freed(adev, vm, NULL);
+	if (r)
+		return r;
 
 	r = amdgpu_vm_bo_update(adev, fpriv->prt_va, false);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
 	r = amdgpu_sync_vm_fence(&p->job->sync, fpriv->prt_va->last_pt_update);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
-	अगर (amdgpu_mcbp || amdgpu_sriov_vf(adev)) अणु
+	if (amdgpu_mcbp || amdgpu_sriov_vf(adev)) {
 		bo_va = fpriv->csa_va;
 		BUG_ON(!bo_va);
 		r = amdgpu_vm_bo_update(adev, bo_va, false);
-		अगर (r)
-			वापस r;
+		if (r)
+			return r;
 
 		r = amdgpu_sync_vm_fence(&p->job->sync, bo_va->last_pt_update);
-		अगर (r)
-			वापस r;
-	पूर्ण
+		if (r)
+			return r;
+	}
 
-	amdgpu_bo_list_क्रम_each_entry(e, p->bo_list) अणु
+	amdgpu_bo_list_for_each_entry(e, p->bo_list) {
 		/* ignore duplicates */
-		bo = tपंचांग_to_amdgpu_bo(e->tv.bo);
-		अगर (!bo)
-			जारी;
+		bo = ttm_to_amdgpu_bo(e->tv.bo);
+		if (!bo)
+			continue;
 
 		bo_va = e->bo_va;
-		अगर (bo_va == शून्य)
-			जारी;
+		if (bo_va == NULL)
+			continue;
 
 		r = amdgpu_vm_bo_update(adev, bo_va, false);
-		अगर (r)
-			वापस r;
+		if (r)
+			return r;
 
 		r = amdgpu_sync_vm_fence(&p->job->sync, bo_va->last_pt_update);
-		अगर (r)
-			वापस r;
-	पूर्ण
+		if (r)
+			return r;
+	}
 
 	r = amdgpu_vm_handle_moved(adev, vm);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
 	r = amdgpu_vm_update_pdes(adev, vm, false);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
 	r = amdgpu_sync_vm_fence(&p->job->sync, vm->last_update);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
 	p->job->vm_pd_addr = amdgpu_gmc_pd_addr(vm->root.base.bo);
 
-	अगर (amdgpu_vm_debug) अणु
-		/* Invalidate all BOs to test क्रम userspace bugs */
-		amdgpu_bo_list_क्रम_each_entry(e, p->bo_list) अणु
-			काष्ठा amdgpu_bo *bo = tपंचांग_to_amdgpu_bo(e->tv.bo);
+	if (amdgpu_vm_debug) {
+		/* Invalidate all BOs to test for userspace bugs */
+		amdgpu_bo_list_for_each_entry(e, p->bo_list) {
+			struct amdgpu_bo *bo = ttm_to_amdgpu_bo(e->tv.bo);
 
 			/* ignore duplicates */
-			अगर (!bo)
-				जारी;
+			if (!bo)
+				continue;
 
 			amdgpu_vm_bo_invalidate(adev, bo, false);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस amdgpu_cs_sync_rings(p);
-पूर्ण
+	return amdgpu_cs_sync_rings(p);
+}
 
-अटल पूर्णांक amdgpu_cs_ib_fill(काष्ठा amdgpu_device *adev,
-			     काष्ठा amdgpu_cs_parser *parser)
-अणु
-	काष्ठा amdgpu_fpriv *fpriv = parser->filp->driver_priv;
-	काष्ठा amdgpu_vm *vm = &fpriv->vm;
-	पूर्णांक r, ce_preempt = 0, de_preempt = 0;
-	काष्ठा amdgpu_ring *ring;
-	पूर्णांक i, j;
+static int amdgpu_cs_ib_fill(struct amdgpu_device *adev,
+			     struct amdgpu_cs_parser *parser)
+{
+	struct amdgpu_fpriv *fpriv = parser->filp->driver_priv;
+	struct amdgpu_vm *vm = &fpriv->vm;
+	int r, ce_preempt = 0, de_preempt = 0;
+	struct amdgpu_ring *ring;
+	int i, j;
 
-	क्रम (i = 0, j = 0; i < parser->nchunks && j < parser->job->num_ibs; i++) अणु
-		काष्ठा amdgpu_cs_chunk *chunk;
-		काष्ठा amdgpu_ib *ib;
-		काष्ठा drm_amdgpu_cs_chunk_ib *chunk_ib;
-		काष्ठा drm_sched_entity *entity;
+	for (i = 0, j = 0; i < parser->nchunks && j < parser->job->num_ibs; i++) {
+		struct amdgpu_cs_chunk *chunk;
+		struct amdgpu_ib *ib;
+		struct drm_amdgpu_cs_chunk_ib *chunk_ib;
+		struct drm_sched_entity *entity;
 
 		chunk = &parser->chunks[i];
 		ib = &parser->job->ibs[j];
-		chunk_ib = (काष्ठा drm_amdgpu_cs_chunk_ib *)chunk->kdata;
+		chunk_ib = (struct drm_amdgpu_cs_chunk_ib *)chunk->kdata;
 
-		अगर (chunk->chunk_id != AMDGPU_CHUNK_ID_IB)
-			जारी;
+		if (chunk->chunk_id != AMDGPU_CHUNK_ID_IB)
+			continue;
 
-		अगर (chunk_ib->ip_type == AMDGPU_HW_IP_GFX &&
-		    (amdgpu_mcbp || amdgpu_sriov_vf(adev))) अणु
-			अगर (chunk_ib->flags & AMDGPU_IB_FLAG_PREEMPT) अणु
-				अगर (chunk_ib->flags & AMDGPU_IB_FLAG_CE)
+		if (chunk_ib->ip_type == AMDGPU_HW_IP_GFX &&
+		    (amdgpu_mcbp || amdgpu_sriov_vf(adev))) {
+			if (chunk_ib->flags & AMDGPU_IB_FLAG_PREEMPT) {
+				if (chunk_ib->flags & AMDGPU_IB_FLAG_CE)
 					ce_preempt++;
-				अन्यथा
+				else
 					de_preempt++;
-			पूर्ण
+			}
 
-			/* each GFX command submit allows 0 or 1 IB preemptible क्रम CE & DE */
-			अगर (ce_preempt > 1 || de_preempt > 1)
-				वापस -EINVAL;
-		पूर्ण
+			/* each GFX command submit allows 0 or 1 IB preemptible for CE & DE */
+			if (ce_preempt > 1 || de_preempt > 1)
+				return -EINVAL;
+		}
 
 		r = amdgpu_ctx_get_entity(parser->ctx, chunk_ib->ip_type,
 					  chunk_ib->ip_instance, chunk_ib->ring,
 					  &entity);
-		अगर (r)
-			वापस r;
+		if (r)
+			return r;
 
-		अगर (chunk_ib->flags & AMDGPU_IB_FLAG_PREAMBLE)
+		if (chunk_ib->flags & AMDGPU_IB_FLAG_PREAMBLE)
 			parser->job->preamble_status |=
 				AMDGPU_PREAMBLE_IB_PRESENT;
 
-		अगर (parser->entity && parser->entity != entity)
-			वापस -EINVAL;
+		if (parser->entity && parser->entity != entity)
+			return -EINVAL;
 
-		/* Return अगर there is no run queue associated with this entity.
+		/* Return if there is no run queue associated with this entity.
 		 * Possibly because of disabled HW IP*/
-		अगर (entity->rq == शून्य)
-			वापस -EINVAL;
+		if (entity->rq == NULL)
+			return -EINVAL;
 
 		parser->entity = entity;
 
@@ -926,334 +925,334 @@ out:
 		r =  amdgpu_ib_get(adev, vm, ring->funcs->parse_cs ?
 				   chunk_ib->ib_bytes : 0,
 				   AMDGPU_IB_POOL_DELAYED, ib);
-		अगर (r) अणु
+		if (r) {
 			DRM_ERROR("Failed to get ib !\n");
-			वापस r;
-		पूर्ण
+			return r;
+		}
 
-		ib->gpu_addr = chunk_ib->बहु_शुरू;
+		ib->gpu_addr = chunk_ib->va_start;
 		ib->length_dw = chunk_ib->ib_bytes / 4;
 		ib->flags = chunk_ib->flags;
 
 		j++;
-	पूर्ण
+	}
 
-	/* MM engine करोesn't support user fences */
+	/* MM engine doesn't support user fences */
 	ring = to_amdgpu_ring(parser->entity->rq->sched);
-	अगर (parser->job->uf_addr && ring->funcs->no_user_fence)
-		वापस -EINVAL;
+	if (parser->job->uf_addr && ring->funcs->no_user_fence)
+		return -EINVAL;
 
-	वापस amdgpu_ctx_रुको_prev_fence(parser->ctx, parser->entity);
-पूर्ण
+	return amdgpu_ctx_wait_prev_fence(parser->ctx, parser->entity);
+}
 
-अटल पूर्णांक amdgpu_cs_process_fence_dep(काष्ठा amdgpu_cs_parser *p,
-				       काष्ठा amdgpu_cs_chunk *chunk)
-अणु
-	काष्ठा amdgpu_fpriv *fpriv = p->filp->driver_priv;
-	अचिन्हित num_deps;
-	पूर्णांक i, r;
-	काष्ठा drm_amdgpu_cs_chunk_dep *deps;
+static int amdgpu_cs_process_fence_dep(struct amdgpu_cs_parser *p,
+				       struct amdgpu_cs_chunk *chunk)
+{
+	struct amdgpu_fpriv *fpriv = p->filp->driver_priv;
+	unsigned num_deps;
+	int i, r;
+	struct drm_amdgpu_cs_chunk_dep *deps;
 
-	deps = (काष्ठा drm_amdgpu_cs_chunk_dep *)chunk->kdata;
+	deps = (struct drm_amdgpu_cs_chunk_dep *)chunk->kdata;
 	num_deps = chunk->length_dw * 4 /
-		माप(काष्ठा drm_amdgpu_cs_chunk_dep);
+		sizeof(struct drm_amdgpu_cs_chunk_dep);
 
-	क्रम (i = 0; i < num_deps; ++i) अणु
-		काष्ठा amdgpu_ctx *ctx;
-		काष्ठा drm_sched_entity *entity;
-		काष्ठा dma_fence *fence;
+	for (i = 0; i < num_deps; ++i) {
+		struct amdgpu_ctx *ctx;
+		struct drm_sched_entity *entity;
+		struct dma_fence *fence;
 
 		ctx = amdgpu_ctx_get(fpriv, deps[i].ctx_id);
-		अगर (ctx == शून्य)
-			वापस -EINVAL;
+		if (ctx == NULL)
+			return -EINVAL;
 
 		r = amdgpu_ctx_get_entity(ctx, deps[i].ip_type,
 					  deps[i].ip_instance,
 					  deps[i].ring, &entity);
-		अगर (r) अणु
+		if (r) {
 			amdgpu_ctx_put(ctx);
-			वापस r;
-		पूर्ण
+			return r;
+		}
 
 		fence = amdgpu_ctx_get_fence(ctx, entity, deps[i].handle);
 		amdgpu_ctx_put(ctx);
 
-		अगर (IS_ERR(fence))
-			वापस PTR_ERR(fence);
-		अन्यथा अगर (!fence)
-			जारी;
+		if (IS_ERR(fence))
+			return PTR_ERR(fence);
+		else if (!fence)
+			continue;
 
-		अगर (chunk->chunk_id == AMDGPU_CHUNK_ID_SCHEDULED_DEPENDENCIES) अणु
-			काष्ठा drm_sched_fence *s_fence;
-			काष्ठा dma_fence *old = fence;
+		if (chunk->chunk_id == AMDGPU_CHUNK_ID_SCHEDULED_DEPENDENCIES) {
+			struct drm_sched_fence *s_fence;
+			struct dma_fence *old = fence;
 
 			s_fence = to_drm_sched_fence(fence);
 			fence = dma_fence_get(&s_fence->scheduled);
 			dma_fence_put(old);
-		पूर्ण
+		}
 
 		r = amdgpu_sync_fence(&p->job->sync, fence);
 		dma_fence_put(fence);
-		अगर (r)
-			वापस r;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (r)
+			return r;
+	}
+	return 0;
+}
 
-अटल पूर्णांक amdgpu_syncobj_lookup_and_add_to_sync(काष्ठा amdgpu_cs_parser *p,
-						 uपूर्णांक32_t handle, u64 poपूर्णांक,
+static int amdgpu_syncobj_lookup_and_add_to_sync(struct amdgpu_cs_parser *p,
+						 uint32_t handle, u64 point,
 						 u64 flags)
-अणु
-	काष्ठा dma_fence *fence;
-	पूर्णांक r;
+{
+	struct dma_fence *fence;
+	int r;
 
-	r = drm_syncobj_find_fence(p->filp, handle, poपूर्णांक, flags, &fence);
-	अगर (r) अणु
+	r = drm_syncobj_find_fence(p->filp, handle, point, flags, &fence);
+	if (r) {
 		DRM_ERROR("syncobj %u failed to find fence @ %llu (%d)!\n",
-			  handle, poपूर्णांक, r);
-		वापस r;
-	पूर्ण
+			  handle, point, r);
+		return r;
+	}
 
 	r = amdgpu_sync_fence(&p->job->sync, fence);
 	dma_fence_put(fence);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक amdgpu_cs_process_syncobj_in_dep(काष्ठा amdgpu_cs_parser *p,
-					    काष्ठा amdgpu_cs_chunk *chunk)
-अणु
-	काष्ठा drm_amdgpu_cs_chunk_sem *deps;
-	अचिन्हित num_deps;
-	पूर्णांक i, r;
+static int amdgpu_cs_process_syncobj_in_dep(struct amdgpu_cs_parser *p,
+					    struct amdgpu_cs_chunk *chunk)
+{
+	struct drm_amdgpu_cs_chunk_sem *deps;
+	unsigned num_deps;
+	int i, r;
 
-	deps = (काष्ठा drm_amdgpu_cs_chunk_sem *)chunk->kdata;
+	deps = (struct drm_amdgpu_cs_chunk_sem *)chunk->kdata;
 	num_deps = chunk->length_dw * 4 /
-		माप(काष्ठा drm_amdgpu_cs_chunk_sem);
-	क्रम (i = 0; i < num_deps; ++i) अणु
+		sizeof(struct drm_amdgpu_cs_chunk_sem);
+	for (i = 0; i < num_deps; ++i) {
 		r = amdgpu_syncobj_lookup_and_add_to_sync(p, deps[i].handle,
 							  0, 0);
-		अगर (r)
-			वापस r;
-	पूर्ण
+		if (r)
+			return r;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक amdgpu_cs_process_syncobj_समयline_in_dep(काष्ठा amdgpu_cs_parser *p,
-						     काष्ठा amdgpu_cs_chunk *chunk)
-अणु
-	काष्ठा drm_amdgpu_cs_chunk_syncobj *syncobj_deps;
-	अचिन्हित num_deps;
-	पूर्णांक i, r;
+static int amdgpu_cs_process_syncobj_timeline_in_dep(struct amdgpu_cs_parser *p,
+						     struct amdgpu_cs_chunk *chunk)
+{
+	struct drm_amdgpu_cs_chunk_syncobj *syncobj_deps;
+	unsigned num_deps;
+	int i, r;
 
-	syncobj_deps = (काष्ठा drm_amdgpu_cs_chunk_syncobj *)chunk->kdata;
+	syncobj_deps = (struct drm_amdgpu_cs_chunk_syncobj *)chunk->kdata;
 	num_deps = chunk->length_dw * 4 /
-		माप(काष्ठा drm_amdgpu_cs_chunk_syncobj);
-	क्रम (i = 0; i < num_deps; ++i) अणु
+		sizeof(struct drm_amdgpu_cs_chunk_syncobj);
+	for (i = 0; i < num_deps; ++i) {
 		r = amdgpu_syncobj_lookup_and_add_to_sync(p,
 							  syncobj_deps[i].handle,
-							  syncobj_deps[i].poपूर्णांक,
+							  syncobj_deps[i].point,
 							  syncobj_deps[i].flags);
-		अगर (r)
-			वापस r;
-	पूर्ण
+		if (r)
+			return r;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक amdgpu_cs_process_syncobj_out_dep(काष्ठा amdgpu_cs_parser *p,
-					     काष्ठा amdgpu_cs_chunk *chunk)
-अणु
-	काष्ठा drm_amdgpu_cs_chunk_sem *deps;
-	अचिन्हित num_deps;
-	पूर्णांक i;
+static int amdgpu_cs_process_syncobj_out_dep(struct amdgpu_cs_parser *p,
+					     struct amdgpu_cs_chunk *chunk)
+{
+	struct drm_amdgpu_cs_chunk_sem *deps;
+	unsigned num_deps;
+	int i;
 
-	deps = (काष्ठा drm_amdgpu_cs_chunk_sem *)chunk->kdata;
+	deps = (struct drm_amdgpu_cs_chunk_sem *)chunk->kdata;
 	num_deps = chunk->length_dw * 4 /
-		माप(काष्ठा drm_amdgpu_cs_chunk_sem);
+		sizeof(struct drm_amdgpu_cs_chunk_sem);
 
-	अगर (p->post_deps)
-		वापस -EINVAL;
+	if (p->post_deps)
+		return -EINVAL;
 
-	p->post_deps = kदो_स्मृति_array(num_deps, माप(*p->post_deps),
+	p->post_deps = kmalloc_array(num_deps, sizeof(*p->post_deps),
 				     GFP_KERNEL);
 	p->num_post_deps = 0;
 
-	अगर (!p->post_deps)
-		वापस -ENOMEM;
+	if (!p->post_deps)
+		return -ENOMEM;
 
 
-	क्रम (i = 0; i < num_deps; ++i) अणु
+	for (i = 0; i < num_deps; ++i) {
 		p->post_deps[i].syncobj =
 			drm_syncobj_find(p->filp, deps[i].handle);
-		अगर (!p->post_deps[i].syncobj)
-			वापस -EINVAL;
-		p->post_deps[i].chain = शून्य;
-		p->post_deps[i].poपूर्णांक = 0;
+		if (!p->post_deps[i].syncobj)
+			return -EINVAL;
+		p->post_deps[i].chain = NULL;
+		p->post_deps[i].point = 0;
 		p->num_post_deps++;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक amdgpu_cs_process_syncobj_समयline_out_dep(काष्ठा amdgpu_cs_parser *p,
-						      काष्ठा amdgpu_cs_chunk *chunk)
-अणु
-	काष्ठा drm_amdgpu_cs_chunk_syncobj *syncobj_deps;
-	अचिन्हित num_deps;
-	पूर्णांक i;
+static int amdgpu_cs_process_syncobj_timeline_out_dep(struct amdgpu_cs_parser *p,
+						      struct amdgpu_cs_chunk *chunk)
+{
+	struct drm_amdgpu_cs_chunk_syncobj *syncobj_deps;
+	unsigned num_deps;
+	int i;
 
-	syncobj_deps = (काष्ठा drm_amdgpu_cs_chunk_syncobj *)chunk->kdata;
+	syncobj_deps = (struct drm_amdgpu_cs_chunk_syncobj *)chunk->kdata;
 	num_deps = chunk->length_dw * 4 /
-		माप(काष्ठा drm_amdgpu_cs_chunk_syncobj);
+		sizeof(struct drm_amdgpu_cs_chunk_syncobj);
 
-	अगर (p->post_deps)
-		वापस -EINVAL;
+	if (p->post_deps)
+		return -EINVAL;
 
-	p->post_deps = kदो_स्मृति_array(num_deps, माप(*p->post_deps),
+	p->post_deps = kmalloc_array(num_deps, sizeof(*p->post_deps),
 				     GFP_KERNEL);
 	p->num_post_deps = 0;
 
-	अगर (!p->post_deps)
-		वापस -ENOMEM;
+	if (!p->post_deps)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < num_deps; ++i) अणु
-		काष्ठा amdgpu_cs_post_dep *dep = &p->post_deps[i];
+	for (i = 0; i < num_deps; ++i) {
+		struct amdgpu_cs_post_dep *dep = &p->post_deps[i];
 
-		dep->chain = शून्य;
-		अगर (syncobj_deps[i].poपूर्णांक) अणु
-			dep->chain = kदो_स्मृति(माप(*dep->chain), GFP_KERNEL);
-			अगर (!dep->chain)
-				वापस -ENOMEM;
-		पूर्ण
+		dep->chain = NULL;
+		if (syncobj_deps[i].point) {
+			dep->chain = kmalloc(sizeof(*dep->chain), GFP_KERNEL);
+			if (!dep->chain)
+				return -ENOMEM;
+		}
 
 		dep->syncobj = drm_syncobj_find(p->filp,
 						syncobj_deps[i].handle);
-		अगर (!dep->syncobj) अणु
-			kमुक्त(dep->chain);
-			वापस -EINVAL;
-		पूर्ण
-		dep->poपूर्णांक = syncobj_deps[i].poपूर्णांक;
+		if (!dep->syncobj) {
+			kfree(dep->chain);
+			return -EINVAL;
+		}
+		dep->point = syncobj_deps[i].point;
 		p->num_post_deps++;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक amdgpu_cs_dependencies(काष्ठा amdgpu_device *adev,
-				  काष्ठा amdgpu_cs_parser *p)
-अणु
-	पूर्णांक i, r;
+static int amdgpu_cs_dependencies(struct amdgpu_device *adev,
+				  struct amdgpu_cs_parser *p)
+{
+	int i, r;
 
-	क्रम (i = 0; i < p->nchunks; ++i) अणु
-		काष्ठा amdgpu_cs_chunk *chunk;
+	for (i = 0; i < p->nchunks; ++i) {
+		struct amdgpu_cs_chunk *chunk;
 
 		chunk = &p->chunks[i];
 
-		चयन (chunk->chunk_id) अणु
-		हाल AMDGPU_CHUNK_ID_DEPENDENCIES:
-		हाल AMDGPU_CHUNK_ID_SCHEDULED_DEPENDENCIES:
+		switch (chunk->chunk_id) {
+		case AMDGPU_CHUNK_ID_DEPENDENCIES:
+		case AMDGPU_CHUNK_ID_SCHEDULED_DEPENDENCIES:
 			r = amdgpu_cs_process_fence_dep(p, chunk);
-			अगर (r)
-				वापस r;
-			अवरोध;
-		हाल AMDGPU_CHUNK_ID_SYNCOBJ_IN:
+			if (r)
+				return r;
+			break;
+		case AMDGPU_CHUNK_ID_SYNCOBJ_IN:
 			r = amdgpu_cs_process_syncobj_in_dep(p, chunk);
-			अगर (r)
-				वापस r;
-			अवरोध;
-		हाल AMDGPU_CHUNK_ID_SYNCOBJ_OUT:
+			if (r)
+				return r;
+			break;
+		case AMDGPU_CHUNK_ID_SYNCOBJ_OUT:
 			r = amdgpu_cs_process_syncobj_out_dep(p, chunk);
-			अगर (r)
-				वापस r;
-			अवरोध;
-		हाल AMDGPU_CHUNK_ID_SYNCOBJ_TIMELINE_WAIT:
-			r = amdgpu_cs_process_syncobj_समयline_in_dep(p, chunk);
-			अगर (r)
-				वापस r;
-			अवरोध;
-		हाल AMDGPU_CHUNK_ID_SYNCOBJ_TIMELINE_SIGNAL:
-			r = amdgpu_cs_process_syncobj_समयline_out_dep(p, chunk);
-			अगर (r)
-				वापस r;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			if (r)
+				return r;
+			break;
+		case AMDGPU_CHUNK_ID_SYNCOBJ_TIMELINE_WAIT:
+			r = amdgpu_cs_process_syncobj_timeline_in_dep(p, chunk);
+			if (r)
+				return r;
+			break;
+		case AMDGPU_CHUNK_ID_SYNCOBJ_TIMELINE_SIGNAL:
+			r = amdgpu_cs_process_syncobj_timeline_out_dep(p, chunk);
+			if (r)
+				return r;
+			break;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम amdgpu_cs_post_dependencies(काष्ठा amdgpu_cs_parser *p)
-अणु
-	पूर्णांक i;
+static void amdgpu_cs_post_dependencies(struct amdgpu_cs_parser *p)
+{
+	int i;
 
-	क्रम (i = 0; i < p->num_post_deps; ++i) अणु
-		अगर (p->post_deps[i].chain && p->post_deps[i].poपूर्णांक) अणु
-			drm_syncobj_add_poपूर्णांक(p->post_deps[i].syncobj,
+	for (i = 0; i < p->num_post_deps; ++i) {
+		if (p->post_deps[i].chain && p->post_deps[i].point) {
+			drm_syncobj_add_point(p->post_deps[i].syncobj,
 					      p->post_deps[i].chain,
-					      p->fence, p->post_deps[i].poपूर्णांक);
-			p->post_deps[i].chain = शून्य;
-		पूर्ण अन्यथा अणु
+					      p->fence, p->post_deps[i].point);
+			p->post_deps[i].chain = NULL;
+		} else {
 			drm_syncobj_replace_fence(p->post_deps[i].syncobj,
 						  p->fence);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल पूर्णांक amdgpu_cs_submit(काष्ठा amdgpu_cs_parser *p,
-			    जोड़ drm_amdgpu_cs *cs)
-अणु
-	काष्ठा amdgpu_fpriv *fpriv = p->filp->driver_priv;
-	काष्ठा drm_sched_entity *entity = p->entity;
-	काष्ठा amdgpu_bo_list_entry *e;
-	काष्ठा amdgpu_job *job;
-	uपूर्णांक64_t seq;
-	पूर्णांक r;
+static int amdgpu_cs_submit(struct amdgpu_cs_parser *p,
+			    union drm_amdgpu_cs *cs)
+{
+	struct amdgpu_fpriv *fpriv = p->filp->driver_priv;
+	struct drm_sched_entity *entity = p->entity;
+	struct amdgpu_bo_list_entry *e;
+	struct amdgpu_job *job;
+	uint64_t seq;
+	int r;
 
 	job = p->job;
-	p->job = शून्य;
+	p->job = NULL;
 
 	r = drm_sched_job_init(&job->base, entity, &fpriv->vm);
-	अगर (r)
-		जाओ error_unlock;
+	if (r)
+		goto error_unlock;
 
-	/* No memory allocation is allowed जबतक holding the notअगरier lock.
+	/* No memory allocation is allowed while holding the notifier lock.
 	 * The lock is held until amdgpu_cs_submit is finished and fence is
 	 * added to BOs.
 	 */
-	mutex_lock(&p->adev->notअगरier_lock);
+	mutex_lock(&p->adev->notifier_lock);
 
-	/* If userptr are invalidated after amdgpu_cs_parser_bos(), वापस
+	/* If userptr are invalidated after amdgpu_cs_parser_bos(), return
 	 * -EAGAIN, drmIoctl in libdrm will restart the amdgpu_cs_ioctl.
 	 */
-	amdgpu_bo_list_क्रम_each_userptr_entry(e, p->bo_list) अणु
-		काष्ठा amdgpu_bo *bo = tपंचांग_to_amdgpu_bo(e->tv.bo);
+	amdgpu_bo_list_for_each_userptr_entry(e, p->bo_list) {
+		struct amdgpu_bo *bo = ttm_to_amdgpu_bo(e->tv.bo);
 
-		r |= !amdgpu_tपंचांग_tt_get_user_pages_करोne(bo->tbo.tपंचांग);
-	पूर्ण
-	अगर (r) अणु
+		r |= !amdgpu_ttm_tt_get_user_pages_done(bo->tbo.ttm);
+	}
+	if (r) {
 		r = -EAGAIN;
-		जाओ error_पात;
-	पूर्ण
+		goto error_abort;
+	}
 
 	p->fence = dma_fence_get(&job->base.s_fence->finished);
 
 	amdgpu_ctx_add_fence(p->ctx, entity, p->fence, &seq);
 	amdgpu_cs_post_dependencies(p);
 
-	अगर ((job->preamble_status & AMDGPU_PREAMBLE_IB_PRESENT) &&
-	    !p->ctx->preamble_presented) अणु
+	if ((job->preamble_status & AMDGPU_PREAMBLE_IB_PRESENT) &&
+	    !p->ctx->preamble_presented) {
 		job->preamble_status |= AMDGPU_PREAMBLE_IB_PRESENT_FIRST;
 		p->ctx->preamble_presented = true;
-	पूर्ण
+	}
 
 	cs->out.handle = seq;
 	job->uf_sequence = seq;
 
-	amdgpu_job_मुक्त_resources(job);
+	amdgpu_job_free_resources(job);
 
 	trace_amdgpu_cs_ioctl(job);
 	amdgpu_vm_bo_trace_cs(&fpriv->vm, &p->ticket);
@@ -1261,426 +1260,426 @@ out:
 
 	amdgpu_vm_move_to_lru_tail(p->adev, &fpriv->vm);
 
-	tपंचांग_eu_fence_buffer_objects(&p->ticket, &p->validated, p->fence);
-	mutex_unlock(&p->adev->notअगरier_lock);
+	ttm_eu_fence_buffer_objects(&p->ticket, &p->validated, p->fence);
+	mutex_unlock(&p->adev->notifier_lock);
 
-	वापस 0;
+	return 0;
 
-error_पात:
+error_abort:
 	drm_sched_job_cleanup(&job->base);
-	mutex_unlock(&p->adev->notअगरier_lock);
+	mutex_unlock(&p->adev->notifier_lock);
 
 error_unlock:
-	amdgpu_job_मुक्त(job);
-	वापस r;
-पूर्ण
+	amdgpu_job_free(job);
+	return r;
+}
 
-अटल व्योम trace_amdgpu_cs_ibs(काष्ठा amdgpu_cs_parser *parser)
-अणु
-	पूर्णांक i;
+static void trace_amdgpu_cs_ibs(struct amdgpu_cs_parser *parser)
+{
+	int i;
 
-	अगर (!trace_amdgpu_cs_enabled())
-		वापस;
+	if (!trace_amdgpu_cs_enabled())
+		return;
 
-	क्रम (i = 0; i < parser->job->num_ibs; i++)
+	for (i = 0; i < parser->job->num_ibs; i++)
 		trace_amdgpu_cs(parser, i);
-पूर्ण
+}
 
-पूर्णांक amdgpu_cs_ioctl(काष्ठा drm_device *dev, व्योम *data, काष्ठा drm_file *filp)
-अणु
-	काष्ठा amdgpu_device *adev = drm_to_adev(dev);
-	जोड़ drm_amdgpu_cs *cs = data;
-	काष्ठा amdgpu_cs_parser parser = अणुपूर्ण;
+int amdgpu_cs_ioctl(struct drm_device *dev, void *data, struct drm_file *filp)
+{
+	struct amdgpu_device *adev = drm_to_adev(dev);
+	union drm_amdgpu_cs *cs = data;
+	struct amdgpu_cs_parser parser = {};
 	bool reserved_buffers = false;
-	पूर्णांक r;
+	int r;
 
-	अगर (amdgpu_ras_पूर्णांकr_triggered())
-		वापस -EHWPOISON;
+	if (amdgpu_ras_intr_triggered())
+		return -EHWPOISON;
 
-	अगर (!adev->accel_working)
-		वापस -EBUSY;
+	if (!adev->accel_working)
+		return -EBUSY;
 
 	parser.adev = adev;
 	parser.filp = filp;
 
 	r = amdgpu_cs_parser_init(&parser, data);
-	अगर (r) अणु
-		अगर (prपूर्णांकk_ratelimit())
+	if (r) {
+		if (printk_ratelimit())
 			DRM_ERROR("Failed to initialize parser %d!\n", r);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	r = amdgpu_cs_ib_fill(adev, &parser);
-	अगर (r)
-		जाओ out;
+	if (r)
+		goto out;
 
 	r = amdgpu_cs_dependencies(adev, &parser);
-	अगर (r) अणु
+	if (r) {
 		DRM_ERROR("Failed in the dependencies handling %d!\n", r);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	r = amdgpu_cs_parser_bos(&parser, data);
-	अगर (r) अणु
-		अगर (r == -ENOMEM)
+	if (r) {
+		if (r == -ENOMEM)
 			DRM_ERROR("Not enough memory for command submission!\n");
-		अन्यथा अगर (r != -ERESTARTSYS && r != -EAGAIN)
+		else if (r != -ERESTARTSYS && r != -EAGAIN)
 			DRM_ERROR("Failed to process the buffer list %d!\n", r);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	reserved_buffers = true;
 
 	trace_amdgpu_cs_ibs(&parser);
 
 	r = amdgpu_cs_vm_handling(&parser);
-	अगर (r)
-		जाओ out;
+	if (r)
+		goto out;
 
 	r = amdgpu_cs_submit(&parser, cs);
 
 out:
 	amdgpu_cs_parser_fini(&parser, r, reserved_buffers);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
 /**
- * amdgpu_cs_रुको_ioctl - रुको क्रम a command submission to finish
+ * amdgpu_cs_wait_ioctl - wait for a command submission to finish
  *
  * @dev: drm device
  * @data: data from userspace
- * @filp: file निजी
+ * @filp: file private
  *
- * Wait क्रम the command submission identअगरied by handle to finish.
+ * Wait for the command submission identified by handle to finish.
  */
-पूर्णांक amdgpu_cs_रुको_ioctl(काष्ठा drm_device *dev, व्योम *data,
-			 काष्ठा drm_file *filp)
-अणु
-	जोड़ drm_amdgpu_रुको_cs *रुको = data;
-	अचिन्हित दीर्घ समयout = amdgpu_gem_समयout(रुको->in.समयout);
-	काष्ठा drm_sched_entity *entity;
-	काष्ठा amdgpu_ctx *ctx;
-	काष्ठा dma_fence *fence;
-	दीर्घ r;
+int amdgpu_cs_wait_ioctl(struct drm_device *dev, void *data,
+			 struct drm_file *filp)
+{
+	union drm_amdgpu_wait_cs *wait = data;
+	unsigned long timeout = amdgpu_gem_timeout(wait->in.timeout);
+	struct drm_sched_entity *entity;
+	struct amdgpu_ctx *ctx;
+	struct dma_fence *fence;
+	long r;
 
-	ctx = amdgpu_ctx_get(filp->driver_priv, रुको->in.ctx_id);
-	अगर (ctx == शून्य)
-		वापस -EINVAL;
+	ctx = amdgpu_ctx_get(filp->driver_priv, wait->in.ctx_id);
+	if (ctx == NULL)
+		return -EINVAL;
 
-	r = amdgpu_ctx_get_entity(ctx, रुको->in.ip_type, रुको->in.ip_instance,
-				  रुको->in.ring, &entity);
-	अगर (r) अणु
+	r = amdgpu_ctx_get_entity(ctx, wait->in.ip_type, wait->in.ip_instance,
+				  wait->in.ring, &entity);
+	if (r) {
 		amdgpu_ctx_put(ctx);
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
-	fence = amdgpu_ctx_get_fence(ctx, entity, रुको->in.handle);
-	अगर (IS_ERR(fence))
+	fence = amdgpu_ctx_get_fence(ctx, entity, wait->in.handle);
+	if (IS_ERR(fence))
 		r = PTR_ERR(fence);
-	अन्यथा अगर (fence) अणु
-		r = dma_fence_रुको_समयout(fence, true, समयout);
-		अगर (r > 0 && fence->error)
+	else if (fence) {
+		r = dma_fence_wait_timeout(fence, true, timeout);
+		if (r > 0 && fence->error)
 			r = fence->error;
 		dma_fence_put(fence);
-	पूर्ण अन्यथा
+	} else
 		r = 1;
 
 	amdgpu_ctx_put(ctx);
-	अगर (r < 0)
-		वापस r;
+	if (r < 0)
+		return r;
 
-	स_रखो(रुको, 0, माप(*रुको));
-	रुको->out.status = (r == 0);
+	memset(wait, 0, sizeof(*wait));
+	wait->out.status = (r == 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * amdgpu_cs_get_fence - helper to get fence from drm_amdgpu_fence
  *
  * @adev: amdgpu device
- * @filp: file निजी
+ * @filp: file private
  * @user: drm_amdgpu_fence copied from user space
  */
-अटल काष्ठा dma_fence *amdgpu_cs_get_fence(काष्ठा amdgpu_device *adev,
-					     काष्ठा drm_file *filp,
-					     काष्ठा drm_amdgpu_fence *user)
-अणु
-	काष्ठा drm_sched_entity *entity;
-	काष्ठा amdgpu_ctx *ctx;
-	काष्ठा dma_fence *fence;
-	पूर्णांक r;
+static struct dma_fence *amdgpu_cs_get_fence(struct amdgpu_device *adev,
+					     struct drm_file *filp,
+					     struct drm_amdgpu_fence *user)
+{
+	struct drm_sched_entity *entity;
+	struct amdgpu_ctx *ctx;
+	struct dma_fence *fence;
+	int r;
 
 	ctx = amdgpu_ctx_get(filp->driver_priv, user->ctx_id);
-	अगर (ctx == शून्य)
-		वापस ERR_PTR(-EINVAL);
+	if (ctx == NULL)
+		return ERR_PTR(-EINVAL);
 
 	r = amdgpu_ctx_get_entity(ctx, user->ip_type, user->ip_instance,
 				  user->ring, &entity);
-	अगर (r) अणु
+	if (r) {
 		amdgpu_ctx_put(ctx);
-		वापस ERR_PTR(r);
-	पूर्ण
+		return ERR_PTR(r);
+	}
 
 	fence = amdgpu_ctx_get_fence(ctx, entity, user->seq_no);
 	amdgpu_ctx_put(ctx);
 
-	वापस fence;
-पूर्ण
+	return fence;
+}
 
-पूर्णांक amdgpu_cs_fence_to_handle_ioctl(काष्ठा drm_device *dev, व्योम *data,
-				    काष्ठा drm_file *filp)
-अणु
-	काष्ठा amdgpu_device *adev = drm_to_adev(dev);
-	जोड़ drm_amdgpu_fence_to_handle *info = data;
-	काष्ठा dma_fence *fence;
-	काष्ठा drm_syncobj *syncobj;
-	काष्ठा sync_file *sync_file;
-	पूर्णांक fd, r;
+int amdgpu_cs_fence_to_handle_ioctl(struct drm_device *dev, void *data,
+				    struct drm_file *filp)
+{
+	struct amdgpu_device *adev = drm_to_adev(dev);
+	union drm_amdgpu_fence_to_handle *info = data;
+	struct dma_fence *fence;
+	struct drm_syncobj *syncobj;
+	struct sync_file *sync_file;
+	int fd, r;
 
 	fence = amdgpu_cs_get_fence(adev, filp, &info->in.fence);
-	अगर (IS_ERR(fence))
-		वापस PTR_ERR(fence);
+	if (IS_ERR(fence))
+		return PTR_ERR(fence);
 
-	अगर (!fence)
+	if (!fence)
 		fence = dma_fence_get_stub();
 
-	चयन (info->in.what) अणु
-	हाल AMDGPU_FENCE_TO_HANDLE_GET_SYNCOBJ:
+	switch (info->in.what) {
+	case AMDGPU_FENCE_TO_HANDLE_GET_SYNCOBJ:
 		r = drm_syncobj_create(&syncobj, 0, fence);
 		dma_fence_put(fence);
-		अगर (r)
-			वापस r;
+		if (r)
+			return r;
 		r = drm_syncobj_get_handle(filp, syncobj, &info->out.handle);
 		drm_syncobj_put(syncobj);
-		वापस r;
+		return r;
 
-	हाल AMDGPU_FENCE_TO_HANDLE_GET_SYNCOBJ_FD:
+	case AMDGPU_FENCE_TO_HANDLE_GET_SYNCOBJ_FD:
 		r = drm_syncobj_create(&syncobj, 0, fence);
 		dma_fence_put(fence);
-		अगर (r)
-			वापस r;
-		r = drm_syncobj_get_fd(syncobj, (पूर्णांक *)&info->out.handle);
+		if (r)
+			return r;
+		r = drm_syncobj_get_fd(syncobj, (int *)&info->out.handle);
 		drm_syncobj_put(syncobj);
-		वापस r;
+		return r;
 
-	हाल AMDGPU_FENCE_TO_HANDLE_GET_SYNC_खाता_FD:
+	case AMDGPU_FENCE_TO_HANDLE_GET_SYNC_FILE_FD:
 		fd = get_unused_fd_flags(O_CLOEXEC);
-		अगर (fd < 0) अणु
+		if (fd < 0) {
 			dma_fence_put(fence);
-			वापस fd;
-		पूर्ण
+			return fd;
+		}
 
 		sync_file = sync_file_create(fence);
 		dma_fence_put(fence);
-		अगर (!sync_file) अणु
+		if (!sync_file) {
 			put_unused_fd(fd);
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 
 		fd_install(fd, sync_file->file);
 		info->out.handle = fd;
-		वापस 0;
+		return 0;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+	default:
+		return -EINVAL;
+	}
+}
 
 /**
- * amdgpu_cs_रुको_all_fence - रुको on all fences to संकेत
+ * amdgpu_cs_wait_all_fence - wait on all fences to signal
  *
  * @adev: amdgpu device
- * @filp: file निजी
- * @रुको: रुको parameters
+ * @filp: file private
+ * @wait: wait parameters
  * @fences: array of drm_amdgpu_fence
  */
-अटल पूर्णांक amdgpu_cs_रुको_all_fences(काष्ठा amdgpu_device *adev,
-				     काष्ठा drm_file *filp,
-				     जोड़ drm_amdgpu_रुको_fences *रुको,
-				     काष्ठा drm_amdgpu_fence *fences)
-अणु
-	uपूर्णांक32_t fence_count = रुको->in.fence_count;
-	अचिन्हित पूर्णांक i;
-	दीर्घ r = 1;
+static int amdgpu_cs_wait_all_fences(struct amdgpu_device *adev,
+				     struct drm_file *filp,
+				     union drm_amdgpu_wait_fences *wait,
+				     struct drm_amdgpu_fence *fences)
+{
+	uint32_t fence_count = wait->in.fence_count;
+	unsigned int i;
+	long r = 1;
 
-	क्रम (i = 0; i < fence_count; i++) अणु
-		काष्ठा dma_fence *fence;
-		अचिन्हित दीर्घ समयout = amdgpu_gem_समयout(रुको->in.समयout_ns);
+	for (i = 0; i < fence_count; i++) {
+		struct dma_fence *fence;
+		unsigned long timeout = amdgpu_gem_timeout(wait->in.timeout_ns);
 
 		fence = amdgpu_cs_get_fence(adev, filp, &fences[i]);
-		अगर (IS_ERR(fence))
-			वापस PTR_ERR(fence);
-		अन्यथा अगर (!fence)
-			जारी;
+		if (IS_ERR(fence))
+			return PTR_ERR(fence);
+		else if (!fence)
+			continue;
 
-		r = dma_fence_रुको_समयout(fence, true, समयout);
+		r = dma_fence_wait_timeout(fence, true, timeout);
 		dma_fence_put(fence);
-		अगर (r < 0)
-			वापस r;
+		if (r < 0)
+			return r;
 
-		अगर (r == 0)
-			अवरोध;
+		if (r == 0)
+			break;
 
-		अगर (fence->error)
-			वापस fence->error;
-	पूर्ण
+		if (fence->error)
+			return fence->error;
+	}
 
-	स_रखो(रुको, 0, माप(*रुको));
-	रुको->out.status = (r > 0);
+	memset(wait, 0, sizeof(*wait));
+	wait->out.status = (r > 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * amdgpu_cs_रुको_any_fence - रुको on any fence to संकेत
+ * amdgpu_cs_wait_any_fence - wait on any fence to signal
  *
  * @adev: amdgpu device
- * @filp: file निजी
- * @रुको: रुको parameters
+ * @filp: file private
+ * @wait: wait parameters
  * @fences: array of drm_amdgpu_fence
  */
-अटल पूर्णांक amdgpu_cs_रुको_any_fence(काष्ठा amdgpu_device *adev,
-				    काष्ठा drm_file *filp,
-				    जोड़ drm_amdgpu_रुको_fences *रुको,
-				    काष्ठा drm_amdgpu_fence *fences)
-अणु
-	अचिन्हित दीर्घ समयout = amdgpu_gem_समयout(रुको->in.समयout_ns);
-	uपूर्णांक32_t fence_count = रुको->in.fence_count;
-	uपूर्णांक32_t first = ~0;
-	काष्ठा dma_fence **array;
-	अचिन्हित पूर्णांक i;
-	दीर्घ r;
+static int amdgpu_cs_wait_any_fence(struct amdgpu_device *adev,
+				    struct drm_file *filp,
+				    union drm_amdgpu_wait_fences *wait,
+				    struct drm_amdgpu_fence *fences)
+{
+	unsigned long timeout = amdgpu_gem_timeout(wait->in.timeout_ns);
+	uint32_t fence_count = wait->in.fence_count;
+	uint32_t first = ~0;
+	struct dma_fence **array;
+	unsigned int i;
+	long r;
 
 	/* Prepare the fence array */
-	array = kसुस्मृति(fence_count, माप(काष्ठा dma_fence *), GFP_KERNEL);
+	array = kcalloc(fence_count, sizeof(struct dma_fence *), GFP_KERNEL);
 
-	अगर (array == शून्य)
-		वापस -ENOMEM;
+	if (array == NULL)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < fence_count; i++) अणु
-		काष्ठा dma_fence *fence;
+	for (i = 0; i < fence_count; i++) {
+		struct dma_fence *fence;
 
 		fence = amdgpu_cs_get_fence(adev, filp, &fences[i]);
-		अगर (IS_ERR(fence)) अणु
+		if (IS_ERR(fence)) {
 			r = PTR_ERR(fence);
-			जाओ err_मुक्त_fence_array;
-		पूर्ण अन्यथा अगर (fence) अणु
+			goto err_free_fence_array;
+		} else if (fence) {
 			array[i] = fence;
-		पूर्ण अन्यथा अणु /* शून्य, the fence has been alपढ़ोy संकेतed */
+		} else { /* NULL, the fence has been already signaled */
 			r = 1;
 			first = i;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
-	r = dma_fence_रुको_any_समयout(array, fence_count, true, समयout,
+	r = dma_fence_wait_any_timeout(array, fence_count, true, timeout,
 				       &first);
-	अगर (r < 0)
-		जाओ err_मुक्त_fence_array;
+	if (r < 0)
+		goto err_free_fence_array;
 
 out:
-	स_रखो(रुको, 0, माप(*रुको));
-	रुको->out.status = (r > 0);
-	रुको->out.first_संकेतed = first;
+	memset(wait, 0, sizeof(*wait));
+	wait->out.status = (r > 0);
+	wait->out.first_signaled = first;
 
-	अगर (first < fence_count && array[first])
+	if (first < fence_count && array[first])
 		r = array[first]->error;
-	अन्यथा
+	else
 		r = 0;
 
-err_मुक्त_fence_array:
-	क्रम (i = 0; i < fence_count; i++)
+err_free_fence_array:
+	for (i = 0; i < fence_count; i++)
 		dma_fence_put(array[i]);
-	kमुक्त(array);
+	kfree(array);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
 /**
- * amdgpu_cs_रुको_fences_ioctl - रुको क्रम multiple command submissions to finish
+ * amdgpu_cs_wait_fences_ioctl - wait for multiple command submissions to finish
  *
  * @dev: drm device
  * @data: data from userspace
- * @filp: file निजी
+ * @filp: file private
  */
-पूर्णांक amdgpu_cs_रुको_fences_ioctl(काष्ठा drm_device *dev, व्योम *data,
-				काष्ठा drm_file *filp)
-अणु
-	काष्ठा amdgpu_device *adev = drm_to_adev(dev);
-	जोड़ drm_amdgpu_रुको_fences *रुको = data;
-	uपूर्णांक32_t fence_count = रुको->in.fence_count;
-	काष्ठा drm_amdgpu_fence *fences_user;
-	काष्ठा drm_amdgpu_fence *fences;
-	पूर्णांक r;
+int amdgpu_cs_wait_fences_ioctl(struct drm_device *dev, void *data,
+				struct drm_file *filp)
+{
+	struct amdgpu_device *adev = drm_to_adev(dev);
+	union drm_amdgpu_wait_fences *wait = data;
+	uint32_t fence_count = wait->in.fence_count;
+	struct drm_amdgpu_fence *fences_user;
+	struct drm_amdgpu_fence *fences;
+	int r;
 
 	/* Get the fences from userspace */
-	fences = kदो_स्मृति_array(fence_count, माप(काष्ठा drm_amdgpu_fence),
+	fences = kmalloc_array(fence_count, sizeof(struct drm_amdgpu_fence),
 			GFP_KERNEL);
-	अगर (fences == शून्य)
-		वापस -ENOMEM;
+	if (fences == NULL)
+		return -ENOMEM;
 
-	fences_user = u64_to_user_ptr(रुको->in.fences);
-	अगर (copy_from_user(fences, fences_user,
-		माप(काष्ठा drm_amdgpu_fence) * fence_count)) अणु
+	fences_user = u64_to_user_ptr(wait->in.fences);
+	if (copy_from_user(fences, fences_user,
+		sizeof(struct drm_amdgpu_fence) * fence_count)) {
 		r = -EFAULT;
-		जाओ err_मुक्त_fences;
-	पूर्ण
+		goto err_free_fences;
+	}
 
-	अगर (रुको->in.रुको_all)
-		r = amdgpu_cs_रुको_all_fences(adev, filp, रुको, fences);
-	अन्यथा
-		r = amdgpu_cs_रुको_any_fence(adev, filp, रुको, fences);
+	if (wait->in.wait_all)
+		r = amdgpu_cs_wait_all_fences(adev, filp, wait, fences);
+	else
+		r = amdgpu_cs_wait_any_fence(adev, filp, wait, fences);
 
-err_मुक्त_fences:
-	kमुक्त(fences);
+err_free_fences:
+	kfree(fences);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
 /**
- * amdgpu_cs_find_bo_va - find bo_va क्रम VM address
+ * amdgpu_cs_find_bo_va - find bo_va for VM address
  *
  * @parser: command submission parser context
  * @addr: VM address
  * @bo: resulting BO of the mapping found
- * @map: Placeholder to वापस found BO mapping
+ * @map: Placeholder to return found BO mapping
  *
- * Search the buffer objects in the command submission context क्रम a certain
- * भव memory address. Returns allocation काष्ठाure when found, शून्य
+ * Search the buffer objects in the command submission context for a certain
+ * virtual memory address. Returns allocation structure when found, NULL
  * otherwise.
  */
-पूर्णांक amdgpu_cs_find_mapping(काष्ठा amdgpu_cs_parser *parser,
-			   uपूर्णांक64_t addr, काष्ठा amdgpu_bo **bo,
-			   काष्ठा amdgpu_bo_va_mapping **map)
-अणु
-	काष्ठा amdgpu_fpriv *fpriv = parser->filp->driver_priv;
-	काष्ठा tपंचांग_operation_ctx ctx = अणु false, false पूर्ण;
-	काष्ठा amdgpu_vm *vm = &fpriv->vm;
-	काष्ठा amdgpu_bo_va_mapping *mapping;
-	पूर्णांक r;
+int amdgpu_cs_find_mapping(struct amdgpu_cs_parser *parser,
+			   uint64_t addr, struct amdgpu_bo **bo,
+			   struct amdgpu_bo_va_mapping **map)
+{
+	struct amdgpu_fpriv *fpriv = parser->filp->driver_priv;
+	struct ttm_operation_ctx ctx = { false, false };
+	struct amdgpu_vm *vm = &fpriv->vm;
+	struct amdgpu_bo_va_mapping *mapping;
+	int r;
 
 	addr /= AMDGPU_GPU_PAGE_SIZE;
 
 	mapping = amdgpu_vm_bo_lookup_mapping(vm, addr);
-	अगर (!mapping || !mapping->bo_va || !mapping->bo_va->base.bo)
-		वापस -EINVAL;
+	if (!mapping || !mapping->bo_va || !mapping->bo_va->base.bo)
+		return -EINVAL;
 
 	*bo = mapping->bo_va->base.bo;
 	*map = mapping;
 
 	/* Double check that the BO is reserved by this CS */
-	अगर (dma_resv_locking_ctx((*bo)->tbo.base.resv) != &parser->ticket)
-		वापस -EINVAL;
+	if (dma_resv_locking_ctx((*bo)->tbo.base.resv) != &parser->ticket)
+		return -EINVAL;
 
-	अगर (!((*bo)->flags & AMDGPU_GEM_CREATE_VRAM_CONTIGUOUS)) अणु
+	if (!((*bo)->flags & AMDGPU_GEM_CREATE_VRAM_CONTIGUOUS)) {
 		(*bo)->flags |= AMDGPU_GEM_CREATE_VRAM_CONTIGUOUS;
-		amdgpu_bo_placement_from_करोमुख्य(*bo, (*bo)->allowed_करोमुख्यs);
-		r = tपंचांग_bo_validate(&(*bo)->tbo, &(*bo)->placement, &ctx);
-		अगर (r)
-			वापस r;
-	पूर्ण
+		amdgpu_bo_placement_from_domain(*bo, (*bo)->allowed_domains);
+		r = ttm_bo_validate(&(*bo)->tbo, &(*bo)->placement, &ctx);
+		if (r)
+			return r;
+	}
 
-	वापस amdgpu_tपंचांग_alloc_gart(&(*bo)->tbo);
-पूर्ण
+	return amdgpu_ttm_alloc_gart(&(*bo)->tbo);
+}

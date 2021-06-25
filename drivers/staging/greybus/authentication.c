@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Greybus Component Authentication Protocol (CAP) Driver.
  *
@@ -7,240 +6,240 @@
  * Copyright 2016 Linaro Ltd.
  */
 
-#समावेश <linux/greybus.h>
-#समावेश <linux/cdev.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/ioctl.h>
-#समावेश <linux/uaccess.h>
+#include <linux/greybus.h>
+#include <linux/cdev.h>
+#include <linux/fs.h>
+#include <linux/ioctl.h>
+#include <linux/uaccess.h>
 
-#समावेश "greybus_authentication.h"
-#समावेश "firmware.h"
+#include "greybus_authentication.h"
+#include "firmware.h"
 
-#घोषणा CAP_TIMEOUT_MS		1000
+#define CAP_TIMEOUT_MS		1000
 
 /*
  * Number of minor devices this driver supports.
  * There will be exactly one required per Interface.
  */
-#घोषणा NUM_MINORS		U8_MAX
+#define NUM_MINORS		U8_MAX
 
-काष्ठा gb_cap अणु
-	काष्ठा device		*parent;
-	काष्ठा gb_connection	*connection;
-	काष्ठा kref		kref;
-	काष्ठा list_head	node;
+struct gb_cap {
+	struct device		*parent;
+	struct gb_connection	*connection;
+	struct kref		kref;
+	struct list_head	node;
 	bool			disabled; /* connection getting disabled */
 
-	काष्ठा mutex		mutex;
-	काष्ठा cdev		cdev;
-	काष्ठा device		*class_device;
+	struct mutex		mutex;
+	struct cdev		cdev;
+	struct device		*class_device;
 	dev_t			dev_num;
-पूर्ण;
+};
 
-अटल काष्ठा class *cap_class;
-अटल dev_t cap_dev_num;
-अटल DEFINE_IDA(cap_minors_map);
-अटल LIST_HEAD(cap_list);
-अटल DEFINE_MUTEX(list_mutex);
+static struct class *cap_class;
+static dev_t cap_dev_num;
+static DEFINE_IDA(cap_minors_map);
+static LIST_HEAD(cap_list);
+static DEFINE_MUTEX(list_mutex);
 
-अटल व्योम cap_kref_release(काष्ठा kref *kref)
-अणु
-	काष्ठा gb_cap *cap = container_of(kref, काष्ठा gb_cap, kref);
+static void cap_kref_release(struct kref *kref)
+{
+	struct gb_cap *cap = container_of(kref, struct gb_cap, kref);
 
-	kमुक्त(cap);
-पूर्ण
+	kfree(cap);
+}
 
 /*
- * All users of cap take a reference (from within list_mutex lock), beक्रमe
- * they get a poपूर्णांकer to play with. And the काष्ठाure will be मुक्तd only after
+ * All users of cap take a reference (from within list_mutex lock), before
+ * they get a pointer to play with. And the structure will be freed only after
  * the last user has put the reference to it.
  */
-अटल व्योम put_cap(काष्ठा gb_cap *cap)
-अणु
+static void put_cap(struct gb_cap *cap)
+{
 	kref_put(&cap->kref, cap_kref_release);
-पूर्ण
+}
 
-/* Caller must call put_cap() after using काष्ठा gb_cap */
-अटल काष्ठा gb_cap *get_cap(काष्ठा cdev *cdev)
-अणु
-	काष्ठा gb_cap *cap;
+/* Caller must call put_cap() after using struct gb_cap */
+static struct gb_cap *get_cap(struct cdev *cdev)
+{
+	struct gb_cap *cap;
 
 	mutex_lock(&list_mutex);
 
-	list_क्रम_each_entry(cap, &cap_list, node) अणु
-		अगर (&cap->cdev == cdev) अणु
+	list_for_each_entry(cap, &cap_list, node) {
+		if (&cap->cdev == cdev) {
 			kref_get(&cap->kref);
-			जाओ unlock;
-		पूर्ण
-	पूर्ण
+			goto unlock;
+		}
+	}
 
-	cap = शून्य;
+	cap = NULL;
 
 unlock:
 	mutex_unlock(&list_mutex);
 
-	वापस cap;
-पूर्ण
+	return cap;
+}
 
-अटल पूर्णांक cap_get_endpoपूर्णांक_uid(काष्ठा gb_cap *cap, u8 *euid)
-अणु
-	काष्ठा gb_connection *connection = cap->connection;
-	काष्ठा gb_cap_get_endpoपूर्णांक_uid_response response;
-	पूर्णांक ret;
+static int cap_get_endpoint_uid(struct gb_cap *cap, u8 *euid)
+{
+	struct gb_connection *connection = cap->connection;
+	struct gb_cap_get_endpoint_uid_response response;
+	int ret;
 
-	ret = gb_operation_sync(connection, GB_CAP_TYPE_GET_ENDPOINT_UID, शून्य,
-				0, &response, माप(response));
-	अगर (ret) अणु
+	ret = gb_operation_sync(connection, GB_CAP_TYPE_GET_ENDPOINT_UID, NULL,
+				0, &response, sizeof(response));
+	if (ret) {
 		dev_err(cap->parent, "failed to get endpoint uid (%d)\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	स_नकल(euid, response.uid, माप(response.uid));
+	memcpy(euid, response.uid, sizeof(response.uid));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cap_get_ims_certअगरicate(काष्ठा gb_cap *cap, u32 class, u32 id,
-				   u8 *certअगरicate, u32 *size, u8 *result)
-अणु
-	काष्ठा gb_connection *connection = cap->connection;
-	काष्ठा gb_cap_get_ims_certअगरicate_request *request;
-	काष्ठा gb_cap_get_ims_certअगरicate_response *response;
-	माप_प्रकार max_size = gb_operation_get_payload_size_max(connection);
-	काष्ठा gb_operation *op;
-	पूर्णांक ret;
+static int cap_get_ims_certificate(struct gb_cap *cap, u32 class, u32 id,
+				   u8 *certificate, u32 *size, u8 *result)
+{
+	struct gb_connection *connection = cap->connection;
+	struct gb_cap_get_ims_certificate_request *request;
+	struct gb_cap_get_ims_certificate_response *response;
+	size_t max_size = gb_operation_get_payload_size_max(connection);
+	struct gb_operation *op;
+	int ret;
 
 	op = gb_operation_create_flags(connection,
 				       GB_CAP_TYPE_GET_IMS_CERTIFICATE,
-				       माप(*request), max_size,
+				       sizeof(*request), max_size,
 				       GB_OPERATION_FLAG_SHORT_RESPONSE,
 				       GFP_KERNEL);
-	अगर (!op)
-		वापस -ENOMEM;
+	if (!op)
+		return -ENOMEM;
 
 	request = op->request->payload;
-	request->certअगरicate_class = cpu_to_le32(class);
-	request->certअगरicate_id = cpu_to_le32(id);
+	request->certificate_class = cpu_to_le32(class);
+	request->certificate_id = cpu_to_le32(id);
 
 	ret = gb_operation_request_send_sync(op);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(cap->parent, "failed to get certificate (%d)\n", ret);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	response = op->response->payload;
 	*result = response->result_code;
-	*size = op->response->payload_size - माप(*response);
-	स_नकल(certअगरicate, response->certअगरicate, *size);
+	*size = op->response->payload_size - sizeof(*response);
+	memcpy(certificate, response->certificate, *size);
 
-करोne:
+done:
 	gb_operation_put(op);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक cap_authenticate(काष्ठा gb_cap *cap, u32 auth_type, u8 *uid,
+static int cap_authenticate(struct gb_cap *cap, u32 auth_type, u8 *uid,
 			    u8 *challenge, u8 *result, u8 *auth_response,
 			    u32 *signature_size, u8 *signature)
-अणु
-	काष्ठा gb_connection *connection = cap->connection;
-	काष्ठा gb_cap_authenticate_request *request;
-	काष्ठा gb_cap_authenticate_response *response;
-	माप_प्रकार max_size = gb_operation_get_payload_size_max(connection);
-	काष्ठा gb_operation *op;
-	पूर्णांक ret;
+{
+	struct gb_connection *connection = cap->connection;
+	struct gb_cap_authenticate_request *request;
+	struct gb_cap_authenticate_response *response;
+	size_t max_size = gb_operation_get_payload_size_max(connection);
+	struct gb_operation *op;
+	int ret;
 
 	op = gb_operation_create_flags(connection, GB_CAP_TYPE_AUTHENTICATE,
-				       माप(*request), max_size,
+				       sizeof(*request), max_size,
 				       GB_OPERATION_FLAG_SHORT_RESPONSE,
 				       GFP_KERNEL);
-	अगर (!op)
-		वापस -ENOMEM;
+	if (!op)
+		return -ENOMEM;
 
 	request = op->request->payload;
 	request->auth_type = cpu_to_le32(auth_type);
-	स_नकल(request->uid, uid, माप(request->uid));
-	स_नकल(request->challenge, challenge, माप(request->challenge));
+	memcpy(request->uid, uid, sizeof(request->uid));
+	memcpy(request->challenge, challenge, sizeof(request->challenge));
 
 	ret = gb_operation_request_send_sync(op);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(cap->parent, "failed to authenticate (%d)\n", ret);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	response = op->response->payload;
 	*result = response->result_code;
-	*signature_size = op->response->payload_size - माप(*response);
-	स_नकल(auth_response, response->response, माप(response->response));
-	स_नकल(signature, response->signature, *signature_size);
+	*signature_size = op->response->payload_size - sizeof(*response);
+	memcpy(auth_response, response->response, sizeof(response->response));
+	memcpy(signature, response->signature, *signature_size);
 
-करोne:
+done:
 	gb_operation_put(op);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* Char device fops */
 
-अटल पूर्णांक cap_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा gb_cap *cap = get_cap(inode->i_cdev);
+static int cap_open(struct inode *inode, struct file *file)
+{
+	struct gb_cap *cap = get_cap(inode->i_cdev);
 
-	/* cap काष्ठाure can't get मुक्तd until file descriptor is बंदd */
-	अगर (cap) अणु
-		file->निजी_data = cap;
-		वापस 0;
-	पूर्ण
+	/* cap structure can't get freed until file descriptor is closed */
+	if (cap) {
+		file->private_data = cap;
+		return 0;
+	}
 
-	वापस -ENODEV;
-पूर्ण
+	return -ENODEV;
+}
 
-अटल पूर्णांक cap_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा gb_cap *cap = file->निजी_data;
+static int cap_release(struct inode *inode, struct file *file)
+{
+	struct gb_cap *cap = file->private_data;
 
 	put_cap(cap);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cap_ioctl(काष्ठा gb_cap *cap, अचिन्हित पूर्णांक cmd,
-		     व्योम __user *buf)
-अणु
-	काष्ठा cap_ioc_get_endpoपूर्णांक_uid endpoपूर्णांक_uid;
-	काष्ठा cap_ioc_get_ims_certअगरicate *ims_cert;
-	काष्ठा cap_ioc_authenticate *authenticate;
-	माप_प्रकार size;
-	पूर्णांक ret;
+static int cap_ioctl(struct gb_cap *cap, unsigned int cmd,
+		     void __user *buf)
+{
+	struct cap_ioc_get_endpoint_uid endpoint_uid;
+	struct cap_ioc_get_ims_certificate *ims_cert;
+	struct cap_ioc_authenticate *authenticate;
+	size_t size;
+	int ret;
 
-	चयन (cmd) अणु
-	हाल CAP_IOC_GET_ENDPOINT_UID:
-		ret = cap_get_endpoपूर्णांक_uid(cap, endpoपूर्णांक_uid.uid);
-		अगर (ret)
-			वापस ret;
+	switch (cmd) {
+	case CAP_IOC_GET_ENDPOINT_UID:
+		ret = cap_get_endpoint_uid(cap, endpoint_uid.uid);
+		if (ret)
+			return ret;
 
-		अगर (copy_to_user(buf, &endpoपूर्णांक_uid, माप(endpoपूर्णांक_uid)))
-			वापस -EFAULT;
+		if (copy_to_user(buf, &endpoint_uid, sizeof(endpoint_uid)))
+			return -EFAULT;
 
-		वापस 0;
-	हाल CAP_IOC_GET_IMS_CERTIFICATE:
-		size = माप(*ims_cert);
+		return 0;
+	case CAP_IOC_GET_IMS_CERTIFICATE:
+		size = sizeof(*ims_cert);
 		ims_cert = memdup_user(buf, size);
-		अगर (IS_ERR(ims_cert))
-			वापस PTR_ERR(ims_cert);
+		if (IS_ERR(ims_cert))
+			return PTR_ERR(ims_cert);
 
-		ret = cap_get_ims_certअगरicate(cap, ims_cert->certअगरicate_class,
-					      ims_cert->certअगरicate_id,
-					      ims_cert->certअगरicate,
+		ret = cap_get_ims_certificate(cap, ims_cert->certificate_class,
+					      ims_cert->certificate_id,
+					      ims_cert->certificate,
 					      &ims_cert->cert_size,
 					      &ims_cert->result_code);
-		अगर (!ret && copy_to_user(buf, ims_cert, size))
+		if (!ret && copy_to_user(buf, ims_cert, size))
 			ret = -EFAULT;
-		kमुक्त(ims_cert);
+		kfree(ims_cert);
 
-		वापस ret;
-	हाल CAP_IOC_AUTHENTICATE:
-		size = माप(*authenticate);
+		return ret;
+	case CAP_IOC_AUTHENTICATE:
+		size = sizeof(*authenticate);
 		authenticate = memdup_user(buf, size);
-		अगर (IS_ERR(authenticate))
-			वापस PTR_ERR(authenticate);
+		if (IS_ERR(authenticate))
+			return PTR_ERR(authenticate);
 
 		ret = cap_authenticate(cap, authenticate->auth_type,
 				       authenticate->uid,
@@ -249,64 +248,64 @@ unlock:
 				       authenticate->response,
 				       &authenticate->signature_size,
 				       authenticate->signature);
-		अगर (!ret && copy_to_user(buf, authenticate, size))
+		if (!ret && copy_to_user(buf, authenticate, size))
 			ret = -EFAULT;
-		kमुक्त(authenticate);
+		kfree(authenticate);
 
-		वापस ret;
-	शेष:
-		वापस -ENOTTY;
-	पूर्ण
-पूर्ण
+		return ret;
+	default:
+		return -ENOTTY;
+	}
+}
 
-अटल दीर्घ cap_ioctl_unlocked(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
-			       अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा gb_cap *cap = file->निजी_data;
-	काष्ठा gb_bundle *bundle = cap->connection->bundle;
-	पूर्णांक ret = -ENODEV;
+static long cap_ioctl_unlocked(struct file *file, unsigned int cmd,
+			       unsigned long arg)
+{
+	struct gb_cap *cap = file->private_data;
+	struct gb_bundle *bundle = cap->connection->bundle;
+	int ret = -ENODEV;
 
 	/*
 	 * Serialize ioctls.
 	 *
-	 * We करोn't want the user to करो multiple authentication operations in
+	 * We don't want the user to do multiple authentication operations in
 	 * parallel.
 	 *
-	 * This is also used to protect ->disabled, which is used to check अगर
-	 * the connection is getting disconnected, so that we करोn't start any
+	 * This is also used to protect ->disabled, which is used to check if
+	 * the connection is getting disconnected, so that we don't start any
 	 * new operations.
 	 */
 	mutex_lock(&cap->mutex);
-	अगर (!cap->disabled) अणु
-		ret = gb_pm_runसमय_get_sync(bundle);
-		अगर (!ret) अणु
-			ret = cap_ioctl(cap, cmd, (व्योम __user *)arg);
-			gb_pm_runसमय_put_स्वतःsuspend(bundle);
-		पूर्ण
-	पूर्ण
+	if (!cap->disabled) {
+		ret = gb_pm_runtime_get_sync(bundle);
+		if (!ret) {
+			ret = cap_ioctl(cap, cmd, (void __user *)arg);
+			gb_pm_runtime_put_autosuspend(bundle);
+		}
+	}
 	mutex_unlock(&cap->mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा file_operations cap_fops = अणु
+static const struct file_operations cap_fops = {
 	.owner		= THIS_MODULE,
-	.खोलो		= cap_खोलो,
+	.open		= cap_open,
 	.release	= cap_release,
 	.unlocked_ioctl	= cap_ioctl_unlocked,
-पूर्ण;
+};
 
-पूर्णांक gb_cap_connection_init(काष्ठा gb_connection *connection)
-अणु
-	काष्ठा gb_cap *cap;
-	पूर्णांक ret, minor;
+int gb_cap_connection_init(struct gb_connection *connection)
+{
+	struct gb_cap *cap;
+	int ret, minor;
 
-	अगर (!connection)
-		वापस 0;
+	if (!connection)
+		return 0;
 
-	cap = kzalloc(माप(*cap), GFP_KERNEL);
-	अगर (!cap)
-		वापस -ENOMEM;
+	cap = kzalloc(sizeof(*cap), GFP_KERNEL);
+	if (!cap)
+		return -ENOMEM;
 
 	cap->parent = &connection->bundle->dev;
 	cap->connection = connection;
@@ -319,37 +318,37 @@ unlock:
 	mutex_unlock(&list_mutex);
 
 	ret = gb_connection_enable(connection);
-	अगर (ret)
-		जाओ err_list_del;
+	if (ret)
+		goto err_list_del;
 
 	minor = ida_simple_get(&cap_minors_map, 0, NUM_MINORS, GFP_KERNEL);
-	अगर (minor < 0) अणु
+	if (minor < 0) {
 		ret = minor;
-		जाओ err_connection_disable;
-	पूर्ण
+		goto err_connection_disable;
+	}
 
-	/* Add a अक्षर device to allow userspace to पूर्णांकeract with cap */
+	/* Add a char device to allow userspace to interact with cap */
 	cap->dev_num = MKDEV(MAJOR(cap_dev_num), minor);
 	cdev_init(&cap->cdev, &cap_fops);
 
 	ret = cdev_add(&cap->cdev, cap->dev_num, 1);
-	अगर (ret)
-		जाओ err_हटाओ_ida;
+	if (ret)
+		goto err_remove_ida;
 
-	/* Add a soft link to the previously added अक्षर-dev within the bundle */
+	/* Add a soft link to the previously added char-dev within the bundle */
 	cap->class_device = device_create(cap_class, cap->parent, cap->dev_num,
-					  शून्य, "gb-authenticate-%d", minor);
-	अगर (IS_ERR(cap->class_device)) अणु
+					  NULL, "gb-authenticate-%d", minor);
+	if (IS_ERR(cap->class_device)) {
 		ret = PTR_ERR(cap->class_device);
-		जाओ err_del_cdev;
-	पूर्ण
+		goto err_del_cdev;
+	}
 
-	वापस 0;
+	return 0;
 
 err_del_cdev:
 	cdev_del(&cap->cdev);
-err_हटाओ_ida:
-	ida_simple_हटाओ(&cap_minors_map, minor);
+err_remove_ida:
+	ida_simple_remove(&cap_minors_map, minor);
 err_connection_disable:
 	gb_connection_disable(connection);
 err_list_del:
@@ -359,24 +358,24 @@ err_list_del:
 
 	put_cap(cap);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम gb_cap_connection_निकास(काष्ठा gb_connection *connection)
-अणु
-	काष्ठा gb_cap *cap;
+void gb_cap_connection_exit(struct gb_connection *connection)
+{
+	struct gb_cap *cap;
 
-	अगर (!connection)
-		वापस;
+	if (!connection)
+		return;
 
 	cap = gb_connection_get_data(connection);
 
 	device_destroy(cap_class, cap->dev_num);
 	cdev_del(&cap->cdev);
-	ida_simple_हटाओ(&cap_minors_map, MINOR(cap->dev_num));
+	ida_simple_remove(&cap_minors_map, MINOR(cap->dev_num));
 
 	/*
-	 * Disallow any new ioctl operations on the अक्षर device and रुको क्रम
+	 * Disallow any new ioctl operations on the char device and wait for
 	 * existing ones to finish.
 	 */
 	mutex_lock(&cap->mutex);
@@ -386,42 +385,42 @@ err_list_del:
 	/* All pending greybus operations should have finished by now */
 	gb_connection_disable(cap->connection);
 
-	/* Disallow new users to get access to the cap काष्ठाure */
+	/* Disallow new users to get access to the cap structure */
 	mutex_lock(&list_mutex);
 	list_del(&cap->node);
 	mutex_unlock(&list_mutex);
 
 	/*
 	 * All current users of cap would have taken a reference to it by
-	 * now, we can drop our reference and रुको the last user will get
-	 * cap मुक्तd.
+	 * now, we can drop our reference and wait the last user will get
+	 * cap freed.
 	 */
 	put_cap(cap);
-पूर्ण
+}
 
-पूर्णांक cap_init(व्योम)
-अणु
-	पूर्णांक ret;
+int cap_init(void)
+{
+	int ret;
 
 	cap_class = class_create(THIS_MODULE, "gb_authenticate");
-	अगर (IS_ERR(cap_class))
-		वापस PTR_ERR(cap_class);
+	if (IS_ERR(cap_class))
+		return PTR_ERR(cap_class);
 
 	ret = alloc_chrdev_region(&cap_dev_num, 0, NUM_MINORS,
 				  "gb_authenticate");
-	अगर (ret)
-		जाओ err_हटाओ_class;
+	if (ret)
+		goto err_remove_class;
 
-	वापस 0;
+	return 0;
 
-err_हटाओ_class:
+err_remove_class:
 	class_destroy(cap_class);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम cap_निकास(व्योम)
-अणु
-	unरेजिस्टर_chrdev_region(cap_dev_num, NUM_MINORS);
+void cap_exit(void)
+{
+	unregister_chrdev_region(cap_dev_num, NUM_MINORS);
 	class_destroy(cap_class);
 	ida_destroy(&cap_minors_map);
-पूर्ण
+}

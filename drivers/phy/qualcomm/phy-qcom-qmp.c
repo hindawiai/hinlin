@@ -1,126 +1,125 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2017, The Linux Foundation. All rights reserved.
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/err.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/iopoll.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/phy/phy.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regulator/consumer.h>
-#समावेश <linux/reset.h>
-#समावेश <linux/slab.h>
+#include <linux/clk.h>
+#include <linux/clk-provider.h>
+#include <linux/delay.h>
+#include <linux/err.h>
+#include <linux/io.h>
+#include <linux/iopoll.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/of_address.h>
+#include <linux/phy/phy.h>
+#include <linux/platform_device.h>
+#include <linux/regulator/consumer.h>
+#include <linux/reset.h>
+#include <linux/slab.h>
 
-#समावेश <dt-bindings/phy/phy.h>
+#include <dt-bindings/phy/phy.h>
 
-#समावेश "phy-qcom-qmp.h"
+#include "phy-qcom-qmp.h"
 
 /* QPHY_SW_RESET bit */
-#घोषणा SW_RESET				BIT(0)
+#define SW_RESET				BIT(0)
 /* QPHY_POWER_DOWN_CONTROL */
-#घोषणा SW_PWRDN				BIT(0)
-#घोषणा REFCLK_DRV_DSBL				BIT(1)
+#define SW_PWRDN				BIT(0)
+#define REFCLK_DRV_DSBL				BIT(1)
 /* QPHY_START_CONTROL bits */
-#घोषणा SERDES_START				BIT(0)
-#घोषणा PCS_START				BIT(1)
-#घोषणा PLL_READY_GATE_EN			BIT(3)
+#define SERDES_START				BIT(0)
+#define PCS_START				BIT(1)
+#define PLL_READY_GATE_EN			BIT(3)
 /* QPHY_PCS_STATUS bit */
-#घोषणा PHYSTATUS				BIT(6)
+#define PHYSTATUS				BIT(6)
 /* QPHY_PCS_READY_STATUS & QPHY_COM_PCS_READY_STATUS bit */
-#घोषणा PCS_READY				BIT(0)
+#define PCS_READY				BIT(0)
 
-/* QPHY_V3_DP_COM_RESET_OVRD_CTRL रेजिस्टर bits */
+/* QPHY_V3_DP_COM_RESET_OVRD_CTRL register bits */
 /* DP PHY soft reset */
-#घोषणा SW_DPPHY_RESET				BIT(0)
+#define SW_DPPHY_RESET				BIT(0)
 /* mux to select DP PHY reset control, 0:HW control, 1: software reset */
-#घोषणा SW_DPPHY_RESET_MUX			BIT(1)
+#define SW_DPPHY_RESET_MUX			BIT(1)
 /* USB3 PHY soft reset */
-#घोषणा SW_USB3PHY_RESET			BIT(2)
+#define SW_USB3PHY_RESET			BIT(2)
 /* mux to select USB3 PHY reset control, 0:HW control, 1: software reset */
-#घोषणा SW_USB3PHY_RESET_MUX			BIT(3)
+#define SW_USB3PHY_RESET_MUX			BIT(3)
 
-/* QPHY_V3_DP_COM_PHY_MODE_CTRL रेजिस्टर bits */
-#घोषणा USB3_MODE				BIT(0) /* enables USB3 mode */
-#घोषणा DP_MODE					BIT(1) /* enables DP mode */
+/* QPHY_V3_DP_COM_PHY_MODE_CTRL register bits */
+#define USB3_MODE				BIT(0) /* enables USB3 mode */
+#define DP_MODE					BIT(1) /* enables DP mode */
 
-/* QPHY_PCS_AUTONOMOUS_MODE_CTRL रेजिस्टर bits */
-#घोषणा ARCVR_DTCT_EN				BIT(0)
-#घोषणा ALFPS_DTCT_EN				BIT(1)
-#घोषणा ARCVR_DTCT_EVENT_SEL			BIT(4)
+/* QPHY_PCS_AUTONOMOUS_MODE_CTRL register bits */
+#define ARCVR_DTCT_EN				BIT(0)
+#define ALFPS_DTCT_EN				BIT(1)
+#define ARCVR_DTCT_EVENT_SEL			BIT(4)
 
-/* QPHY_PCS_LFPS_RXTERM_IRQ_CLEAR रेजिस्टर bits */
-#घोषणा IRQ_CLEAR				BIT(0)
+/* QPHY_PCS_LFPS_RXTERM_IRQ_CLEAR register bits */
+#define IRQ_CLEAR				BIT(0)
 
-/* QPHY_PCS_LFPS_RXTERM_IRQ_STATUS रेजिस्टर bits */
-#घोषणा RCVR_DETECT				BIT(0)
+/* QPHY_PCS_LFPS_RXTERM_IRQ_STATUS register bits */
+#define RCVR_DETECT				BIT(0)
 
-/* QPHY_V3_PCS_MISC_CLAMP_ENABLE रेजिस्टर bits */
-#घोषणा CLAMP_EN				BIT(0) /* enables i/o clamp_n */
+/* QPHY_V3_PCS_MISC_CLAMP_ENABLE register bits */
+#define CLAMP_EN				BIT(0) /* enables i/o clamp_n */
 
-#घोषणा PHY_INIT_COMPLETE_TIMEOUT		10000
-#घोषणा POWER_DOWN_DELAY_US_MIN			10
-#घोषणा POWER_DOWN_DELAY_US_MAX			11
+#define PHY_INIT_COMPLETE_TIMEOUT		10000
+#define POWER_DOWN_DELAY_US_MIN			10
+#define POWER_DOWN_DELAY_US_MAX			11
 
-#घोषणा MAX_PROP_NAME				32
+#define MAX_PROP_NAME				32
 
-/* Define the assumed distance between lanes क्रम underspecअगरied device trees. */
-#घोषणा QMP_PHY_LEGACY_LANE_STRIDE		0x400
+/* Define the assumed distance between lanes for underspecified device trees. */
+#define QMP_PHY_LEGACY_LANE_STRIDE		0x400
 
-काष्ठा qmp_phy_init_tbl अणु
-	अचिन्हित पूर्णांक offset;
-	अचिन्हित पूर्णांक val;
+struct qmp_phy_init_tbl {
+	unsigned int offset;
+	unsigned int val;
 	/*
-	 * रेजिस्टर part of layout ?
-	 * अगर yes, then offset gives index in the reg-layout
+	 * register part of layout ?
+	 * if yes, then offset gives index in the reg-layout
 	 */
 	bool in_layout;
 	/*
-	 * mask of lanes क्रम which this रेजिस्टर is written
-	 * क्रम हालs when second lane needs dअगरferent values
+	 * mask of lanes for which this register is written
+	 * for cases when second lane needs different values
 	 */
 	u8 lane_mask;
-पूर्ण;
+};
 
-#घोषणा QMP_PHY_INIT_CFG(o, v)		\
-	अणु				\
+#define QMP_PHY_INIT_CFG(o, v)		\
+	{				\
 		.offset = o,		\
 		.val = v,		\
 		.lane_mask = 0xff,	\
-	पूर्ण
+	}
 
-#घोषणा QMP_PHY_INIT_CFG_L(o, v)	\
-	अणु				\
+#define QMP_PHY_INIT_CFG_L(o, v)	\
+	{				\
 		.offset = o,		\
 		.val = v,		\
 		.in_layout = true,	\
 		.lane_mask = 0xff,	\
-	पूर्ण
+	}
 
-#घोषणा QMP_PHY_INIT_CFG_LANE(o, v, l)	\
-	अणु				\
+#define QMP_PHY_INIT_CFG_LANE(o, v, l)	\
+	{				\
 		.offset = o,		\
 		.val = v,		\
 		.lane_mask = l,		\
-	पूर्ण
+	}
 
-/* set of रेजिस्टरs with offsets dअगरferent per-PHY */
-क्रमागत qphy_reg_layout अणु
-	/* Common block control रेजिस्टरs */
+/* set of registers with offsets different per-PHY */
+enum qphy_reg_layout {
+	/* Common block control registers */
 	QPHY_COM_SW_RESET,
 	QPHY_COM_POWER_DOWN_CONTROL,
 	QPHY_COM_START_CONTROL,
 	QPHY_COM_PCS_READY_STATUS,
-	/* PCS रेजिस्टरs */
+	/* PCS registers */
 	QPHY_PLL_LOCK_CHK_DLY_TIME,
 	QPHY_FLL_CNTRL1,
 	QPHY_FLL_CNTRL2,
@@ -137,14 +136,14 @@
 	QPHY_PCS_POWER_DOWN_CONTROL,
 	/* Keep last to ensure regs_layout arrays are properly initialized */
 	QPHY_LAYOUT_SIZE
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक msm8996_ufsphy_regs_layout[QPHY_LAYOUT_SIZE] = अणु
+static const unsigned int msm8996_ufsphy_regs_layout[QPHY_LAYOUT_SIZE] = {
 	[QPHY_START_CTRL]		= 0x00,
 	[QPHY_PCS_READY_STATUS]		= 0x168,
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक pciephy_regs_layout[QPHY_LAYOUT_SIZE] = अणु
+static const unsigned int pciephy_regs_layout[QPHY_LAYOUT_SIZE] = {
 	[QPHY_COM_SW_RESET]		= 0x400,
 	[QPHY_COM_POWER_DOWN_CONTROL]	= 0x404,
 	[QPHY_COM_START_CONTROL]	= 0x408,
@@ -158,9 +157,9 @@
 	[QPHY_SW_RESET]			= 0x00,
 	[QPHY_START_CTRL]		= 0x08,
 	[QPHY_PCS_STATUS]		= 0x174,
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक usb3phy_regs_layout[QPHY_LAYOUT_SIZE] = अणु
+static const unsigned int usb3phy_regs_layout[QPHY_LAYOUT_SIZE] = {
 	[QPHY_FLL_CNTRL1]		= 0xc0,
 	[QPHY_FLL_CNTRL2]		= 0xc4,
 	[QPHY_FLL_CNT_VAL_L]		= 0xc8,
@@ -172,75 +171,75 @@
 	[QPHY_PCS_AUTONOMOUS_MODE_CTRL]	= 0x0d4,
 	[QPHY_PCS_LFPS_RXTERM_IRQ_CLEAR]  = 0x0d8,
 	[QPHY_PCS_LFPS_RXTERM_IRQ_STATUS] = 0x178,
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक qmp_v3_usb3phy_regs_layout[QPHY_LAYOUT_SIZE] = अणु
+static const unsigned int qmp_v3_usb3phy_regs_layout[QPHY_LAYOUT_SIZE] = {
 	[QPHY_SW_RESET]			= 0x00,
 	[QPHY_START_CTRL]		= 0x08,
 	[QPHY_PCS_STATUS]		= 0x174,
 	[QPHY_PCS_AUTONOMOUS_MODE_CTRL]	= 0x0d8,
 	[QPHY_PCS_LFPS_RXTERM_IRQ_CLEAR]  = 0x0dc,
 	[QPHY_PCS_LFPS_RXTERM_IRQ_STATUS] = 0x170,
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक sdm845_qmp_pciephy_regs_layout[QPHY_LAYOUT_SIZE] = अणु
+static const unsigned int sdm845_qmp_pciephy_regs_layout[QPHY_LAYOUT_SIZE] = {
 	[QPHY_SW_RESET]			= 0x00,
 	[QPHY_START_CTRL]		= 0x08,
 	[QPHY_PCS_STATUS]		= 0x174,
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक sdm845_qhp_pciephy_regs_layout[QPHY_LAYOUT_SIZE] = अणु
+static const unsigned int sdm845_qhp_pciephy_regs_layout[QPHY_LAYOUT_SIZE] = {
 	[QPHY_SW_RESET]			= 0x00,
 	[QPHY_START_CTRL]		= 0x08,
 	[QPHY_PCS_STATUS]		= 0x2ac,
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक qmp_v4_usb3phy_regs_layout[QPHY_LAYOUT_SIZE] = अणु
+static const unsigned int qmp_v4_usb3phy_regs_layout[QPHY_LAYOUT_SIZE] = {
 	[QPHY_SW_RESET]			= 0x00,
 	[QPHY_START_CTRL]		= 0x44,
 	[QPHY_PCS_STATUS]		= 0x14,
 	[QPHY_PCS_POWER_DOWN_CONTROL]	= 0x40,
 	[QPHY_PCS_AUTONOMOUS_MODE_CTRL]	= 0x308,
 	[QPHY_PCS_LFPS_RXTERM_IRQ_CLEAR] = 0x314,
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक qmp_v4_usb3_uniphy_regs_layout[QPHY_LAYOUT_SIZE] = अणु
+static const unsigned int qmp_v4_usb3_uniphy_regs_layout[QPHY_LAYOUT_SIZE] = {
 	[QPHY_SW_RESET]			= 0x00,
 	[QPHY_START_CTRL]		= 0x44,
 	[QPHY_PCS_STATUS]		= 0x14,
 	[QPHY_PCS_POWER_DOWN_CONTROL]	= 0x40,
 	[QPHY_PCS_AUTONOMOUS_MODE_CTRL]	= 0x608,
 	[QPHY_PCS_LFPS_RXTERM_IRQ_CLEAR]  = 0x614,
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक sm8350_usb3_uniphy_regs_layout[QPHY_LAYOUT_SIZE] = अणु
+static const unsigned int sm8350_usb3_uniphy_regs_layout[QPHY_LAYOUT_SIZE] = {
 	[QPHY_SW_RESET]			= 0x00,
 	[QPHY_START_CTRL]		= 0x44,
 	[QPHY_PCS_STATUS]		= 0x14,
 	[QPHY_PCS_POWER_DOWN_CONTROL]	= 0x40,
 	[QPHY_PCS_AUTONOMOUS_MODE_CTRL]	= 0x1008,
 	[QPHY_PCS_LFPS_RXTERM_IRQ_CLEAR]  = 0x1014,
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक sdm845_ufsphy_regs_layout[QPHY_LAYOUT_SIZE] = अणु
+static const unsigned int sdm845_ufsphy_regs_layout[QPHY_LAYOUT_SIZE] = {
 	[QPHY_START_CTRL]		= 0x00,
 	[QPHY_PCS_READY_STATUS]		= 0x160,
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक sm8250_pcie_regs_layout[QPHY_LAYOUT_SIZE] = अणु
+static const unsigned int sm8250_pcie_regs_layout[QPHY_LAYOUT_SIZE] = {
 	[QPHY_SW_RESET]			= 0x00,
 	[QPHY_START_CTRL]		= 0x44,
 	[QPHY_PCS_STATUS]		= 0x14,
 	[QPHY_PCS_POWER_DOWN_CONTROL]	= 0x40,
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक sm8150_ufsphy_regs_layout[QPHY_LAYOUT_SIZE] = अणु
+static const unsigned int sm8150_ufsphy_regs_layout[QPHY_LAYOUT_SIZE] = {
 	[QPHY_START_CTRL]		= QPHY_V4_PCS_UFS_PHY_START,
 	[QPHY_PCS_READY_STATUS]		= QPHY_V4_PCS_UFS_READY_STATUS,
 	[QPHY_SW_RESET]			= QPHY_V4_PCS_UFS_SW_RESET,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl ipq8074_usb3_serdes_tbl[] = अणु
+static const struct qmp_phy_init_tbl ipq8074_usb3_serdes_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_COM_SYSCLK_EN_SEL, 0x1a),
 	QMP_PHY_INIT_CFG(QSERDES_COM_BIAS_EN_CLKBUFLR_EN, 0x08),
 	QMP_PHY_INIT_CFG(QSERDES_COM_CLK_SELECT, 0x30),
@@ -275,9 +274,9 @@
 	QMP_PHY_INIT_CFG(QSERDES_COM_SSC_ADJ_PER2, 0x00),
 	QMP_PHY_INIT_CFG(QSERDES_COM_SSC_STEP_SIZE1, 0xde),
 	QMP_PHY_INIT_CFG(QSERDES_COM_SSC_STEP_SIZE2, 0x07),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl ipq8074_usb3_rx_tbl[] = अणु
+static const struct qmp_phy_init_tbl ipq8074_usb3_rx_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_RX_UCDR_SO_GAIN, 0x06),
 	QMP_PHY_INIT_CFG(QSERDES_RX_RX_EQU_ADAPTOR_CNTRL2, 0x02),
 	QMP_PHY_INIT_CFG(QSERDES_RX_RX_EQU_ADAPTOR_CNTRL3, 0x4c),
@@ -287,9 +286,9 @@
 	QMP_PHY_INIT_CFG(QSERDES_RX_SIGDET_CNTRL, 0x03),
 	QMP_PHY_INIT_CFG(QSERDES_RX_SIGDET_DEGLITCH_CNTRL, 0x16),
 	QMP_PHY_INIT_CFG(QSERDES_RX_SIGDET_ENABLES, 0x0),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl ipq8074_usb3_pcs_tbl[] = अणु
+static const struct qmp_phy_init_tbl ipq8074_usb3_pcs_tbl[] = {
 	QMP_PHY_INIT_CFG(QPHY_V3_PCS_TXDEEMPH_M6DB_V0, 0x15),
 	QMP_PHY_INIT_CFG(QPHY_V3_PCS_TXDEEMPH_M3P5DB_V0, 0x0e),
 	QMP_PHY_INIT_CFG(QPHY_V3_PCS_FLL_CNTRL2, 0x83),
@@ -313,9 +312,9 @@
 	QMP_PHY_INIT_CFG(QPHY_V3_PCS_RX_SIGDET_LVL, 0x88),
 	QMP_PHY_INIT_CFG(QPHY_V3_PCS_TXDEEMPH_M6DB_V0, 0x17),
 	QMP_PHY_INIT_CFG(QPHY_V3_PCS_TXDEEMPH_M3P5DB_V0, 0x0f),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl msm8996_pcie_serdes_tbl[] = अणु
+static const struct qmp_phy_init_tbl msm8996_pcie_serdes_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_COM_BIAS_EN_CLKBUFLR_EN, 0x1c),
 	QMP_PHY_INIT_CFG(QSERDES_COM_CLK_ENABLE1, 0x10),
 	QMP_PHY_INIT_CFG(QSERDES_COM_CLK_SELECT, 0x33),
@@ -359,14 +358,14 @@
 	QMP_PHY_INIT_CFG(QSERDES_COM_CLK_ENABLE1, 0x10),
 	QMP_PHY_INIT_CFG(QSERDES_COM_HSCLK_SEL, 0x00),
 	QMP_PHY_INIT_CFG(QSERDES_COM_RESCODE_DIV_NUM, 0x40),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl msm8996_pcie_tx_tbl[] = अणु
+static const struct qmp_phy_init_tbl msm8996_pcie_tx_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_TX_HIGHZ_TRANSCEIVEREN_BIAS_DRVR_EN, 0x45),
 	QMP_PHY_INIT_CFG(QSERDES_TX_LANE_MODE, 0x06),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl msm8996_pcie_rx_tbl[] = अणु
+static const struct qmp_phy_init_tbl msm8996_pcie_rx_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_RX_SIGDET_ENABLES, 0x1c),
 	QMP_PHY_INIT_CFG(QSERDES_RX_RX_EQU_ADAPTOR_CNTRL2, 0x01),
 	QMP_PHY_INIT_CFG(QSERDES_RX_RX_EQU_ADAPTOR_CNTRL3, 0x00),
@@ -377,9 +376,9 @@
 	QMP_PHY_INIT_CFG(QSERDES_RX_UCDR_SO_SATURATION_AND_ENABLE, 0x4b),
 	QMP_PHY_INIT_CFG(QSERDES_RX_SIGDET_DEGLITCH_CNTRL, 0x14),
 	QMP_PHY_INIT_CFG(QSERDES_RX_SIGDET_LVL, 0x19),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl msm8996_pcie_pcs_tbl[] = अणु
+static const struct qmp_phy_init_tbl msm8996_pcie_pcs_tbl[] = {
 	QMP_PHY_INIT_CFG(QPHY_RX_IDLE_DTCT_CNTRL, 0x4c),
 	QMP_PHY_INIT_CFG(QPHY_PWRUP_RESET_DLY_TIME_AUXCLK, 0x00),
 	QMP_PHY_INIT_CFG(QPHY_LP_WAKEUP_DLY_TIME_AUXCLK, 0x01),
@@ -391,9 +390,9 @@
 	QMP_PHY_INIT_CFG(QPHY_POWER_STATE_CONFIG4, 0x00),
 	QMP_PHY_INIT_CFG(QPHY_POWER_STATE_CONFIG1, 0xa3),
 	QMP_PHY_INIT_CFG(QPHY_TXDEEMPH_M3P5DB_V0, 0x0e),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl msm8998_pcie_serdes_tbl[] = अणु
+static const struct qmp_phy_init_tbl msm8998_pcie_serdes_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_BIAS_EN_CLKBUFLR_EN, 0x14),
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_CLK_SELECT, 0x30),
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_PLL_IVCO, 0x0f),
@@ -436,16 +435,16 @@
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_SSC_ADJ_PER2, 0x00),
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_SSC_STEP_SIZE1, 0x7e),
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_SSC_STEP_SIZE2, 0x15),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl msm8998_pcie_tx_tbl[] = अणु
+static const struct qmp_phy_init_tbl msm8998_pcie_tx_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V3_TX_RES_CODE_LANE_OFFSET_TX, 0x02),
 	QMP_PHY_INIT_CFG(QSERDES_V3_TX_RCV_DETECT_LVL_2, 0x12),
 	QMP_PHY_INIT_CFG(QSERDES_V3_TX_HIGHZ_DRVR_EN, 0x10),
 	QMP_PHY_INIT_CFG(QSERDES_V3_TX_LANE_MODE_1, 0x06),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl msm8998_pcie_rx_tbl[] = अणु
+static const struct qmp_phy_init_tbl msm8998_pcie_rx_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V3_RX_SIGDET_CNTRL, 0x03),
 	QMP_PHY_INIT_CFG(QSERDES_V3_RX_SIGDET_ENABLES, 0x1c),
 	QMP_PHY_INIT_CFG(QSERDES_V3_RX_SIGDET_DEGLITCH_CNTRL, 0x14),
@@ -460,9 +459,9 @@
 	QMP_PHY_INIT_CFG(QSERDES_V3_RX_RX_INTERFACE_MODE, 0x40),
 	QMP_PHY_INIT_CFG(QSERDES_V3_RX_UCDR_PI_CONTROLS, 0x71),
 	QMP_PHY_INIT_CFG(QSERDES_V3_RX_UCDR_FASTLOCK_COUNT_LOW, 0x40),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl msm8998_pcie_pcs_tbl[] = अणु
+static const struct qmp_phy_init_tbl msm8998_pcie_pcs_tbl[] = {
 	QMP_PHY_INIT_CFG(QPHY_V3_PCS_ENDPOINT_REFCLK_DRIVE, 0x04),
 	QMP_PHY_INIT_CFG(QPHY_V3_PCS_OSC_DTCT_ACTIONS, 0x00),
 	QMP_PHY_INIT_CFG(QPHY_V3_PCS_PWRUP_RESET_DLY_TIME_AUXCLK, 0x01),
@@ -473,9 +472,9 @@
 	QMP_PHY_INIT_CFG(QPHY_V3_PCS_PLL_LOCK_CHK_DLY_TIME, 0x73),
 	QMP_PHY_INIT_CFG(QPHY_V3_PCS_RX_SIGDET_LVL, 0x99),
 	QMP_PHY_INIT_CFG(QPHY_V3_PCS_SIGDET_CNTRL, 0x03),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl msm8996_ufs_serdes_tbl[] = अणु
+static const struct qmp_phy_init_tbl msm8996_ufs_serdes_tbl[] = {
 	QMP_PHY_INIT_CFG(QPHY_POWER_DOWN_CONTROL, 0x01),
 	QMP_PHY_INIT_CFG(QSERDES_COM_CMN_CONFIG, 0x0e),
 	QMP_PHY_INIT_CFG(QSERDES_COM_SYSCLK_EN_SEL, 0xd7),
@@ -523,14 +522,14 @@
 	QMP_PHY_INIT_CFG(QSERDES_COM_LOCK_CMP1_MODE1, 0x32),
 	QMP_PHY_INIT_CFG(QSERDES_COM_LOCK_CMP2_MODE1, 0x0f),
 	QMP_PHY_INIT_CFG(QSERDES_COM_LOCK_CMP3_MODE1, 0x00),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl msm8996_ufs_tx_tbl[] = अणु
+static const struct qmp_phy_init_tbl msm8996_ufs_tx_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_TX_HIGHZ_TRANSCEIVEREN_BIAS_DRVR_EN, 0x45),
 	QMP_PHY_INIT_CFG(QSERDES_TX_LANE_MODE, 0x02),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl msm8996_ufs_rx_tbl[] = अणु
+static const struct qmp_phy_init_tbl msm8996_ufs_rx_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_RX_SIGDET_LVL, 0x24),
 	QMP_PHY_INIT_CFG(QSERDES_RX_SIGDET_CNTRL, 0x02),
 	QMP_PHY_INIT_CFG(QSERDES_RX_RX_INTERFACE_MODE, 0x00),
@@ -542,9 +541,9 @@
 	QMP_PHY_INIT_CFG(QSERDES_RX_RX_EQ_GAIN2_LSB, 0xff),
 	QMP_PHY_INIT_CFG(QSERDES_RX_RX_EQ_GAIN2_MSB, 0x0f),
 	QMP_PHY_INIT_CFG(QSERDES_RX_RX_EQU_ADAPTOR_CNTRL2, 0x0E),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl msm8996_usb3_serdes_tbl[] = अणु
+static const struct qmp_phy_init_tbl msm8996_usb3_serdes_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_COM_SYSCLK_EN_SEL, 0x14),
 	QMP_PHY_INIT_CFG(QSERDES_COM_BIAS_EN_CLKBUFLR_EN, 0x08),
 	QMP_PHY_INIT_CFG(QSERDES_COM_CLK_SELECT, 0x30),
@@ -579,15 +578,15 @@
 	QMP_PHY_INIT_CFG(QSERDES_COM_SSC_ADJ_PER2, 0x00),
 	QMP_PHY_INIT_CFG(QSERDES_COM_SSC_STEP_SIZE1, 0xde),
 	QMP_PHY_INIT_CFG(QSERDES_COM_SSC_STEP_SIZE2, 0x07),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl msm8996_usb3_tx_tbl[] = अणु
+static const struct qmp_phy_init_tbl msm8996_usb3_tx_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_TX_HIGHZ_TRANSCEIVEREN_BIAS_DRVR_EN, 0x45),
 	QMP_PHY_INIT_CFG(QSERDES_TX_RCV_DETECT_LVL_2, 0x12),
 	QMP_PHY_INIT_CFG(QSERDES_TX_LANE_MODE, 0x06),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl msm8996_usb3_rx_tbl[] = अणु
+static const struct qmp_phy_init_tbl msm8996_usb3_rx_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_RX_UCDR_FASTLOCK_FO_GAIN, 0x0b),
 	QMP_PHY_INIT_CFG(QSERDES_RX_UCDR_SO_GAIN, 0x04),
 	QMP_PHY_INIT_CFG(QSERDES_RX_RX_EQU_ADAPTOR_CNTRL2, 0x02),
@@ -598,9 +597,9 @@
 	QMP_PHY_INIT_CFG(QSERDES_RX_SIGDET_CNTRL, 0x03),
 	QMP_PHY_INIT_CFG(QSERDES_RX_SIGDET_LVL, 0x18),
 	QMP_PHY_INIT_CFG(QSERDES_RX_SIGDET_DEGLITCH_CNTRL, 0x16),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl msm8996_usb3_pcs_tbl[] = अणु
+static const struct qmp_phy_init_tbl msm8996_usb3_pcs_tbl[] = {
 	/* FLL settings */
 	QMP_PHY_INIT_CFG_L(QPHY_FLL_CNTRL2, 0x03),
 	QMP_PHY_INIT_CFG_L(QPHY_FLL_CNTRL1, 0x02),
@@ -613,9 +612,9 @@
 	QMP_PHY_INIT_CFG(QPHY_LOCK_DETECT_CONFIG2, 0x1f),
 	QMP_PHY_INIT_CFG(QPHY_LOCK_DETECT_CONFIG3, 0x47),
 	QMP_PHY_INIT_CFG(QPHY_POWER_STATE_CONFIG2, 0x08),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl ipq8074_pcie_serdes_tbl[] = अणु
+static const struct qmp_phy_init_tbl ipq8074_pcie_serdes_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_COM_BIAS_EN_CLKBUFLR_EN, 0x18),
 	QMP_PHY_INIT_CFG(QSERDES_COM_CLK_ENABLE1, 0x10),
 	QMP_PHY_INIT_CFG(QSERDES_COM_BG_TRIM, 0xf),
@@ -656,18 +655,18 @@
 	QMP_PHY_INIT_CFG(QSERDES_COM_SSC_STEP_SIZE1, 0x2f),
 	QMP_PHY_INIT_CFG(QSERDES_COM_SSC_STEP_SIZE2, 0x19),
 	QMP_PHY_INIT_CFG(QSERDES_COM_CLK_EP_DIV, 0x19),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl ipq8074_pcie_tx_tbl[] = अणु
+static const struct qmp_phy_init_tbl ipq8074_pcie_tx_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_TX_HIGHZ_TRANSCEIVEREN_BIAS_DRVR_EN, 0x45),
 	QMP_PHY_INIT_CFG(QSERDES_TX_LANE_MODE, 0x6),
 	QMP_PHY_INIT_CFG(QSERDES_TX_RES_CODE_LANE_OFFSET, 0x2),
 	QMP_PHY_INIT_CFG(QSERDES_TX_RCV_DETECT_LVL_2, 0x12),
 	QMP_PHY_INIT_CFG(QSERDES_TX_EMP_POST1_LVL, 0x36),
 	QMP_PHY_INIT_CFG(QSERDES_TX_SLEW_CNTL, 0x0a),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl ipq8074_pcie_rx_tbl[] = अणु
+static const struct qmp_phy_init_tbl ipq8074_pcie_rx_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_RX_SIGDET_ENABLES, 0x1c),
 	QMP_PHY_INIT_CFG(QSERDES_RX_SIGDET_DEGLITCH_CNTRL, 0x14),
 	QMP_PHY_INIT_CFG(QSERDES_RX_RX_EQU_ADAPTOR_CNTRL2, 0x1),
@@ -675,9 +674,9 @@
 	QMP_PHY_INIT_CFG(QSERDES_RX_RX_EQU_ADAPTOR_CNTRL4, 0xdb),
 	QMP_PHY_INIT_CFG(QSERDES_RX_UCDR_SO_SATURATION_AND_ENABLE, 0x4b),
 	QMP_PHY_INIT_CFG(QSERDES_RX_UCDR_SO_GAIN, 0x4),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl ipq8074_pcie_pcs_tbl[] = अणु
+static const struct qmp_phy_init_tbl ipq8074_pcie_pcs_tbl[] = {
 	QMP_PHY_INIT_CFG(QPHY_ENDPOINT_REFCLK_DRIVE, 0x4),
 	QMP_PHY_INIT_CFG(QPHY_OSC_DTCT_ACTIONS, 0x0),
 	QMP_PHY_INIT_CFG(QPHY_PWRUP_RESET_DLY_TIME_AUXCLK, 0x40),
@@ -691,9 +690,9 @@
 	QMP_PHY_INIT_CFG(QPHY_TXDEEMPH_M3P5DB_V0, 0xe),
 	QMP_PHY_INIT_CFG_L(QPHY_SW_RESET, 0x0),
 	QMP_PHY_INIT_CFG_L(QPHY_START_CTRL, 0x3),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sdm845_qmp_pcie_serdes_tbl[] = अणु
+static const struct qmp_phy_init_tbl sdm845_qmp_pcie_serdes_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_BIAS_EN_CLKBUFLR_EN, 0x14),
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_CLK_SELECT, 0x30),
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_PLL_IVCO, 0x007),
@@ -736,16 +735,16 @@
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_SSC_ADJ_PER2, 0x00),
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_SSC_STEP_SIZE1, 0x7e),
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_SSC_STEP_SIZE2, 0x15),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sdm845_qmp_pcie_tx_tbl[] = अणु
+static const struct qmp_phy_init_tbl sdm845_qmp_pcie_tx_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V3_TX_RES_CODE_LANE_OFFSET_TX, 0x02),
 	QMP_PHY_INIT_CFG(QSERDES_V3_TX_RCV_DETECT_LVL_2, 0x12),
 	QMP_PHY_INIT_CFG(QSERDES_V3_TX_HIGHZ_DRVR_EN, 0x10),
 	QMP_PHY_INIT_CFG(QSERDES_V3_TX_LANE_MODE_1, 0x06),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sdm845_qmp_pcie_rx_tbl[] = अणु
+static const struct qmp_phy_init_tbl sdm845_qmp_pcie_rx_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V3_RX_SIGDET_CNTRL, 0x03),
 	QMP_PHY_INIT_CFG(QSERDES_V3_RX_SIGDET_ENABLES, 0x10),
 	QMP_PHY_INIT_CFG(QSERDES_V3_RX_SIGDET_DEGLITCH_CNTRL, 0x14),
@@ -762,9 +761,9 @@
 	QMP_PHY_INIT_CFG(QSERDES_V3_RX_RX_INTERFACE_MODE, 0x40),
 	QMP_PHY_INIT_CFG(QSERDES_V3_RX_UCDR_PI_CONTROLS, 0x71),
 	QMP_PHY_INIT_CFG(QSERDES_V3_RX_UCDR_FASTLOCK_COUNT_LOW, 0x40),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sdm845_qmp_pcie_pcs_tbl[] = अणु
+static const struct qmp_phy_init_tbl sdm845_qmp_pcie_pcs_tbl[] = {
 	QMP_PHY_INIT_CFG(QPHY_V3_PCS_ENDPOINT_REFCLK_DRIVE, 0x04),
 
 	QMP_PHY_INIT_CFG(QPHY_V3_PCS_FLL_CNTRL2, 0x83),
@@ -786,17 +785,17 @@
 	QMP_PHY_INIT_CFG(QPHY_V3_PCS_REFGEN_REQ_CONFIG1, 0x0d),
 
 	QMP_PHY_INIT_CFG(QPHY_V3_PCS_POWER_STATE_CONFIG4, 0x00),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sdm845_qmp_pcie_pcs_misc_tbl[] = अणु
+static const struct qmp_phy_init_tbl sdm845_qmp_pcie_pcs_misc_tbl[] = {
 	QMP_PHY_INIT_CFG(QPHY_V3_PCS_MISC_OSC_DTCT_CONFIG2, 0x52),
 	QMP_PHY_INIT_CFG(QPHY_V3_PCS_MISC_OSC_DTCT_MODE2_CONFIG2, 0x10),
 	QMP_PHY_INIT_CFG(QPHY_V3_PCS_MISC_OSC_DTCT_MODE2_CONFIG4, 0x1a),
 	QMP_PHY_INIT_CFG(QPHY_V3_PCS_MISC_OSC_DTCT_MODE2_CONFIG5, 0x06),
 	QMP_PHY_INIT_CFG(QPHY_V3_PCS_MISC_PCIE_INT_AUX_CLK_CONFIG1, 0x00),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sdm845_qhp_pcie_serdes_tbl[] = अणु
+static const struct qmp_phy_init_tbl sdm845_qhp_pcie_serdes_tbl[] = {
 	QMP_PHY_INIT_CFG(PCIE_GEN3_QHP_COM_SYSCLK_EN_SEL, 0x27),
 	QMP_PHY_INIT_CFG(PCIE_GEN3_QHP_COM_SSC_EN_CENTER, 0x01),
 	QMP_PHY_INIT_CFG(PCIE_GEN3_QHP_COM_SSC_PER1, 0x31),
@@ -842,9 +841,9 @@
 	QMP_PHY_INIT_CFG(PCIE_GEN3_QHP_COM_VREGCLK_DIV2, 0x00),
 	QMP_PHY_INIT_CFG(PCIE_GEN3_QHP_COM_BGV_TRIM, 0x20),
 	QMP_PHY_INIT_CFG(PCIE_GEN3_QHP_COM_BG_CTRL, 0x07),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sdm845_qhp_pcie_tx_tbl[] = अणु
+static const struct qmp_phy_init_tbl sdm845_qhp_pcie_tx_tbl[] = {
 	QMP_PHY_INIT_CFG(PCIE_GEN3_QHP_L0_DRVR_CTRL0, 0x00),
 	QMP_PHY_INIT_CFG(PCIE_GEN3_QHP_L0_DRVR_TAP_EN, 0x0d),
 	QMP_PHY_INIT_CFG(PCIE_GEN3_QHP_L0_TX_BAND_MODE, 0x01),
@@ -901,12 +900,12 @@
 	QMP_PHY_INIT_CFG(PCIE_GEN3_QHP_L0_RX_RESETCODE_OFFSET, 0x04),
 	QMP_PHY_INIT_CFG(PCIE_GEN3_QHP_L0_VGA_INITVAL, 0x20),
 	QMP_PHY_INIT_CFG(PCIE_GEN3_QHP_L0_RSM_START, 0x01),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sdm845_qhp_pcie_rx_tbl[] = अणु
-पूर्ण;
+static const struct qmp_phy_init_tbl sdm845_qhp_pcie_rx_tbl[] = {
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sdm845_qhp_pcie_pcs_tbl[] = अणु
+static const struct qmp_phy_init_tbl sdm845_qhp_pcie_pcs_tbl[] = {
 	QMP_PHY_INIT_CFG(PCIE_GEN3_QHP_PHY_POWER_STATE_CONFIG, 0x3f),
 	QMP_PHY_INIT_CFG(PCIE_GEN3_QHP_PHY_PCS_TX_RX_CONFIG, 0x50),
 	QMP_PHY_INIT_CFG(PCIE_GEN3_QHP_PHY_TXMGN_MAIN_V0_M3P5DB, 0x19),
@@ -914,9 +913,9 @@
 	QMP_PHY_INIT_CFG(PCIE_GEN3_QHP_PHY_TXMGN_MAIN_V0_M6DB, 0x17),
 	QMP_PHY_INIT_CFG(PCIE_GEN3_QHP_PHY_TXMGN_POST_V0_M6DB, 0x09),
 	QMP_PHY_INIT_CFG(PCIE_GEN3_QHP_PHY_POWER_STATE_CONFIG5, 0x9f),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl qmp_v3_usb3_serdes_tbl[] = अणु
+static const struct qmp_phy_init_tbl qmp_v3_usb3_serdes_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_PLL_IVCO, 0x07),
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_SYSCLK_EN_SEL, 0x14),
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_BIAS_EN_CLKBUFLR_EN, 0x08),
@@ -953,17 +952,17 @@
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_SSC_ADJ_PER2, 0x00),
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_SSC_STEP_SIZE1, 0x85),
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_SSC_STEP_SIZE2, 0x07),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl qmp_v3_usb3_tx_tbl[] = अणु
+static const struct qmp_phy_init_tbl qmp_v3_usb3_tx_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V3_TX_HIGHZ_DRVR_EN, 0x10),
 	QMP_PHY_INIT_CFG(QSERDES_V3_TX_RCV_DETECT_LVL_2, 0x12),
 	QMP_PHY_INIT_CFG(QSERDES_V3_TX_LANE_MODE_1, 0x16),
 	QMP_PHY_INIT_CFG(QSERDES_V3_TX_RES_CODE_LANE_OFFSET_RX, 0x09),
 	QMP_PHY_INIT_CFG(QSERDES_V3_TX_RES_CODE_LANE_OFFSET_TX, 0x06),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl qmp_v3_dp_serdes_tbl[] = अणु
+static const struct qmp_phy_init_tbl qmp_v3_dp_serdes_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_SVS_MODE_CLK_SEL, 0x01),
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_SYSCLK_EN_SEL, 0x37),
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_SYS_CLK_CTRL, 0x02),
@@ -985,9 +984,9 @@
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_PLL_CCTRL_MODE0, 0x36),
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_PLL_RCTRL_MODE0, 0x16),
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_CP_CTRL_MODE0, 0x06),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl qmp_v3_dp_serdes_tbl_rbr[] = अणु
+static const struct qmp_phy_init_tbl qmp_v3_dp_serdes_tbl_rbr[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_HSCLK_SEL, 0x0c),
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_DEC_START_MODE0, 0x69),
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_DIV_FRAC_START2_MODE0, 0x80),
@@ -995,9 +994,9 @@
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_LOCK_CMP1_MODE0, 0x6f),
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_LOCK_CMP2_MODE0, 0x08),
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_LOCK_CMP_EN, 0x00),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl qmp_v3_dp_serdes_tbl_hbr[] = अणु
+static const struct qmp_phy_init_tbl qmp_v3_dp_serdes_tbl_hbr[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_HSCLK_SEL, 0x04),
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_DEC_START_MODE0, 0x69),
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_DIV_FRAC_START2_MODE0, 0x80),
@@ -1005,9 +1004,9 @@
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_LOCK_CMP1_MODE0, 0x0f),
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_LOCK_CMP2_MODE0, 0x0e),
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_LOCK_CMP_EN, 0x00),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl qmp_v3_dp_serdes_tbl_hbr2[] = अणु
+static const struct qmp_phy_init_tbl qmp_v3_dp_serdes_tbl_hbr2[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_HSCLK_SEL, 0x00),
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_DEC_START_MODE0, 0x8c),
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_DIV_FRAC_START2_MODE0, 0x00),
@@ -1015,9 +1014,9 @@
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_LOCK_CMP1_MODE0, 0x1f),
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_LOCK_CMP2_MODE0, 0x1c),
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_LOCK_CMP_EN, 0x00),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl qmp_v3_dp_serdes_tbl_hbr3[] = अणु
+static const struct qmp_phy_init_tbl qmp_v3_dp_serdes_tbl_hbr3[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_HSCLK_SEL, 0x03),
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_DEC_START_MODE0, 0x69),
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_DIV_FRAC_START2_MODE0, 0x80),
@@ -1025,9 +1024,9 @@
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_LOCK_CMP1_MODE0, 0x2f),
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_LOCK_CMP2_MODE0, 0x2a),
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_LOCK_CMP_EN, 0x08),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl qmp_v3_dp_tx_tbl[] = अणु
+static const struct qmp_phy_init_tbl qmp_v3_dp_tx_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V3_TX_TRANSCEIVER_BIAS_EN, 0x1a),
 	QMP_PHY_INIT_CFG(QSERDES_V3_TX_VMODE_CTRL1, 0x40),
 	QMP_PHY_INIT_CFG(QSERDES_V3_TX_PRE_STALL_LDO_BOOST_EN, 0x30),
@@ -1043,9 +1042,9 @@
 	QMP_PHY_INIT_CFG(QSERDES_V3_TX_TX_EMP_POST1_LVL, 0x20),
 	QMP_PHY_INIT_CFG(QSERDES_V3_TX_RES_CODE_LANE_OFFSET_TX, 0x06),
 	QMP_PHY_INIT_CFG(QSERDES_V3_TX_RES_CODE_LANE_OFFSET_RX, 0x07),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl qmp_v3_usb3_rx_tbl[] = अणु
+static const struct qmp_phy_init_tbl qmp_v3_usb3_rx_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V3_RX_UCDR_FASTLOCK_FO_GAIN, 0x0b),
 	QMP_PHY_INIT_CFG(QSERDES_V3_RX_RX_EQU_ADAPTOR_CNTRL2, 0x0f),
 	QMP_PHY_INIT_CFG(QSERDES_V3_RX_RX_EQU_ADAPTOR_CNTRL3, 0x4e),
@@ -1055,9 +1054,9 @@
 	QMP_PHY_INIT_CFG(QSERDES_V3_RX_SIGDET_CNTRL, 0x03),
 	QMP_PHY_INIT_CFG(QSERDES_V3_RX_SIGDET_DEGLITCH_CNTRL, 0x16),
 	QMP_PHY_INIT_CFG(QSERDES_V3_RX_UCDR_SO_SATURATION_AND_ENABLE, 0x75),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl qmp_v3_usb3_pcs_tbl[] = अणु
+static const struct qmp_phy_init_tbl qmp_v3_usb3_pcs_tbl[] = {
 	/* FLL settings */
 	QMP_PHY_INIT_CFG(QPHY_V3_PCS_FLL_CNTRL2, 0x83),
 	QMP_PHY_INIT_CFG(QPHY_V3_PCS_FLL_CNT_VAL_L, 0x09),
@@ -1102,9 +1101,9 @@
 	QMP_PHY_INIT_CFG(QPHY_V3_PCS_RXEQTRAINING_WAIT_TIME, 0x75),
 	QMP_PHY_INIT_CFG(QPHY_V3_PCS_LFPS_TX_ECSTART_EQTLOCK, 0x86),
 	QMP_PHY_INIT_CFG(QPHY_V3_PCS_RXEQTRAINING_RUN_TIME, 0x13),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl qmp_v3_usb3_uniphy_serdes_tbl[] = अणु
+static const struct qmp_phy_init_tbl qmp_v3_usb3_uniphy_serdes_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_PLL_IVCO, 0x07),
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_SYSCLK_EN_SEL, 0x14),
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_BIAS_EN_CLKBUFLR_EN, 0x04),
@@ -1141,17 +1140,17 @@
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_SSC_ADJ_PER2, 0x00),
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_SSC_STEP_SIZE1, 0x85),
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_SSC_STEP_SIZE2, 0x07),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl qmp_v3_usb3_uniphy_tx_tbl[] = अणु
+static const struct qmp_phy_init_tbl qmp_v3_usb3_uniphy_tx_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V3_TX_HIGHZ_DRVR_EN, 0x10),
 	QMP_PHY_INIT_CFG(QSERDES_V3_TX_RCV_DETECT_LVL_2, 0x12),
 	QMP_PHY_INIT_CFG(QSERDES_V3_TX_LANE_MODE_1, 0xc6),
 	QMP_PHY_INIT_CFG(QSERDES_V3_TX_RES_CODE_LANE_OFFSET_RX, 0x06),
 	QMP_PHY_INIT_CFG(QSERDES_V3_TX_RES_CODE_LANE_OFFSET_TX, 0x06),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl qmp_v3_usb3_uniphy_rx_tbl[] = अणु
+static const struct qmp_phy_init_tbl qmp_v3_usb3_uniphy_rx_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V3_RX_VGA_CAL_CNTRL2, 0x0c),
 	QMP_PHY_INIT_CFG(QSERDES_V3_RX_RX_MODE_00, 0x50),
 	QMP_PHY_INIT_CFG(QSERDES_V3_RX_UCDR_FASTLOCK_FO_GAIN, 0x0b),
@@ -1163,9 +1162,9 @@
 	QMP_PHY_INIT_CFG(QSERDES_V3_RX_SIGDET_CNTRL, 0x03),
 	QMP_PHY_INIT_CFG(QSERDES_V3_RX_SIGDET_DEGLITCH_CNTRL, 0x1c),
 	QMP_PHY_INIT_CFG(QSERDES_V3_RX_UCDR_SO_SATURATION_AND_ENABLE, 0x75),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl qmp_v3_usb3_uniphy_pcs_tbl[] = अणु
+static const struct qmp_phy_init_tbl qmp_v3_usb3_uniphy_pcs_tbl[] = {
 	/* FLL settings */
 	QMP_PHY_INIT_CFG(QPHY_V3_PCS_FLL_CNTRL2, 0x83),
 	QMP_PHY_INIT_CFG(QPHY_V3_PCS_FLL_CNT_VAL_L, 0x09),
@@ -1213,9 +1212,9 @@
 
 	QMP_PHY_INIT_CFG(QPHY_V3_PCS_REFGEN_REQ_CONFIG1, 0x21),
 	QMP_PHY_INIT_CFG(QPHY_V3_PCS_REFGEN_REQ_CONFIG2, 0x60),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sdm845_ufsphy_serdes_tbl[] = अणु
+static const struct qmp_phy_init_tbl sdm845_ufsphy_serdes_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_SYS_CLK_CTRL, 0x02),
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_BIAS_EN_CLKBUFLR_EN, 0x04),
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_BG_TIMER, 0x0a),
@@ -1255,15 +1254,15 @@
 
 	/* Rate B */
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_VCO_TUNE_MAP, 0x44),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sdm845_ufsphy_tx_tbl[] = अणु
+static const struct qmp_phy_init_tbl sdm845_ufsphy_tx_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V3_TX_LANE_MODE_1, 0x06),
 	QMP_PHY_INIT_CFG(QSERDES_V3_TX_RES_CODE_LANE_OFFSET_TX, 0x04),
 	QMP_PHY_INIT_CFG(QSERDES_V3_TX_RES_CODE_LANE_OFFSET_RX, 0x07),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sdm845_ufsphy_rx_tbl[] = अणु
+static const struct qmp_phy_init_tbl sdm845_ufsphy_rx_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V3_RX_SIGDET_LVL, 0x24),
 	QMP_PHY_INIT_CFG(QSERDES_V3_RX_SIGDET_CNTRL, 0x0f),
 	QMP_PHY_INIT_CFG(QSERDES_V3_RX_SIGDET_DEGLITCH_CNTRL, 0x1e),
@@ -1280,9 +1279,9 @@
 	QMP_PHY_INIT_CFG(QSERDES_V3_RX_UCDR_PI_CONTROLS, 0x81),
 	QMP_PHY_INIT_CFG(QSERDES_V3_RX_UCDR_FASTLOCK_COUNT_LOW, 0x80),
 	QMP_PHY_INIT_CFG(QSERDES_V3_RX_RX_MODE_00, 0x59),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sdm845_ufsphy_pcs_tbl[] = अणु
+static const struct qmp_phy_init_tbl sdm845_ufsphy_pcs_tbl[] = {
 	QMP_PHY_INIT_CFG(QPHY_V3_PCS_RX_SIGDET_CTRL2, 0x6e),
 	QMP_PHY_INIT_CFG(QPHY_V3_PCS_TX_LARGE_AMP_DRV_LVL, 0x0a),
 	QMP_PHY_INIT_CFG(QPHY_V3_PCS_TX_SMALL_AMP_DRV_LVL, 0x02),
@@ -1291,9 +1290,9 @@
 	QMP_PHY_INIT_CFG(QPHY_V3_PCS_RX_SIGDET_CTRL1, 0x0f),
 	QMP_PHY_INIT_CFG(QPHY_V3_PCS_RX_MIN_HIBERN8_TIME, 0x9a),
 	QMP_PHY_INIT_CFG(QPHY_V3_PCS_MULTI_LANE_CTRL1, 0x02),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl msm8998_usb3_serdes_tbl[] = अणु
+static const struct qmp_phy_init_tbl msm8998_usb3_serdes_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_CLK_SELECT, 0x30),
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_BIAS_EN_CLKBUFLR_EN, 0x04),
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_SYSCLK_EN_SEL, 0x14),
@@ -1332,16 +1331,16 @@
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_SSC_ADJ_PER2, 0x00),
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_SSC_STEP_SIZE1, 0x85),
 	QMP_PHY_INIT_CFG(QSERDES_V3_COM_SSC_STEP_SIZE2, 0x07),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl msm8998_usb3_tx_tbl[] = अणु
+static const struct qmp_phy_init_tbl msm8998_usb3_tx_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V3_TX_HIGHZ_DRVR_EN, 0x10),
 	QMP_PHY_INIT_CFG(QSERDES_V3_TX_RCV_DETECT_LVL_2, 0x12),
 	QMP_PHY_INIT_CFG(QSERDES_V3_TX_LANE_MODE_1, 0x16),
 	QMP_PHY_INIT_CFG(QSERDES_V3_TX_RES_CODE_LANE_OFFSET_TX, 0x00),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl msm8998_usb3_rx_tbl[] = अणु
+static const struct qmp_phy_init_tbl msm8998_usb3_rx_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V3_RX_UCDR_FASTLOCK_FO_GAIN, 0x0b),
 	QMP_PHY_INIT_CFG(QSERDES_V3_RX_RX_EQU_ADAPTOR_CNTRL2, 0x0f),
 	QMP_PHY_INIT_CFG(QSERDES_V3_RX_RX_EQU_ADAPTOR_CNTRL3, 0x4e),
@@ -1359,9 +1358,9 @@
 	QMP_PHY_INIT_CFG(QSERDES_V3_RX_SIGDET_ENABLES, 0x00),
 	QMP_PHY_INIT_CFG(QSERDES_V3_RX_VGA_CAL_CNTRL2, 0x03),
 	QMP_PHY_INIT_CFG(QSERDES_V3_RX_RX_MODE_00, 0x05),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl msm8998_usb3_pcs_tbl[] = अणु
+static const struct qmp_phy_init_tbl msm8998_usb3_pcs_tbl[] = {
 	QMP_PHY_INIT_CFG(QPHY_V3_PCS_FLL_CNTRL2, 0x83),
 	QMP_PHY_INIT_CFG(QPHY_V3_PCS_FLL_CNT_VAL_L, 0x09),
 	QMP_PHY_INIT_CFG(QPHY_V3_PCS_FLL_CNT_VAL_H_TOL, 0xa2),
@@ -1400,9 +1399,9 @@
 	QMP_PHY_INIT_CFG(QPHY_V3_PCS_RXEQTRAINING_WAIT_TIME, 0x75),
 	QMP_PHY_INIT_CFG(QPHY_V3_PCS_LFPS_TX_ECSTART_EQTLOCK, 0x86),
 	QMP_PHY_INIT_CFG(QPHY_V3_PCS_RXEQTRAINING_RUN_TIME, 0x13),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sm8150_ufsphy_serdes_tbl[] = अणु
+static const struct qmp_phy_init_tbl sm8150_ufsphy_serdes_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V4_COM_SYSCLK_EN_SEL, 0xd9),
 	QMP_PHY_INIT_CFG(QSERDES_V4_COM_HSCLK_SEL, 0x11),
 	QMP_PHY_INIT_CFG(QSERDES_V4_COM_HSCLK_HS_SWITCH_SEL, 0x00),
@@ -1430,18 +1429,18 @@
 
 	/* Rate B */
 	QMP_PHY_INIT_CFG(QSERDES_V4_COM_VCO_TUNE_MAP, 0x06),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sm8150_ufsphy_tx_tbl[] = अणु
+static const struct qmp_phy_init_tbl sm8150_ufsphy_tx_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V4_TX_PWM_GEAR_1_DIVIDER_BAND0_1, 0x06),
 	QMP_PHY_INIT_CFG(QSERDES_V4_TX_PWM_GEAR_2_DIVIDER_BAND0_1, 0x03),
 	QMP_PHY_INIT_CFG(QSERDES_V4_TX_PWM_GEAR_3_DIVIDER_BAND0_1, 0x01),
 	QMP_PHY_INIT_CFG(QSERDES_V4_TX_PWM_GEAR_4_DIVIDER_BAND0_1, 0x00),
 	QMP_PHY_INIT_CFG(QSERDES_V4_TX_LANE_MODE_1, 0x05),
 	QMP_PHY_INIT_CFG(QSERDES_V4_TX_TRAN_DRVR_EMP_EN, 0x0c),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sm8150_ufsphy_rx_tbl[] = अणु
+static const struct qmp_phy_init_tbl sm8150_ufsphy_rx_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V4_RX_SIGDET_LVL, 0x24),
 	QMP_PHY_INIT_CFG(QSERDES_V4_RX_SIGDET_CNTRL, 0x0f),
 	QMP_PHY_INIT_CFG(QSERDES_V4_RX_SIGDET_DEGLITCH_CNTRL, 0x1e),
@@ -1477,9 +1476,9 @@
 	QMP_PHY_INIT_CFG(QSERDES_V4_RX_RX_MODE_10_HIGH3, 0x3b),
 	QMP_PHY_INIT_CFG(QSERDES_V4_RX_RX_MODE_10_HIGH4, 0xb1),
 
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sm8150_ufsphy_pcs_tbl[] = अणु
+static const struct qmp_phy_init_tbl sm8150_ufsphy_pcs_tbl[] = {
 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_UFS_RX_SIGDET_CTRL2, 0x6d),
 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_UFS_TX_LARGE_AMP_DRV_LVL, 0x0a),
 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_UFS_TX_SMALL_AMP_DRV_LVL, 0x02),
@@ -1487,9 +1486,9 @@
 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_UFS_DEBUG_BUS_CLKSEL, 0x1f),
 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_UFS_RX_MIN_HIBERN8_TIME, 0xff),
 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_UFS_MULTI_LANE_CTRL1, 0x02),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sm8150_usb3_serdes_tbl[] = अणु
+static const struct qmp_phy_init_tbl sm8150_usb3_serdes_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V4_COM_SSC_EN_CENTER, 0x01),
 	QMP_PHY_INIT_CFG(QSERDES_V4_COM_SSC_PER1, 0x31),
 	QMP_PHY_INIT_CFG(QSERDES_V4_COM_SSC_PER2, 0x01),
@@ -1530,17 +1529,17 @@
 	QMP_PHY_INIT_CFG(QSERDES_V4_COM_BIN_VCOCAL_CMP_CODE1_MODE1, 0xca),
 	QMP_PHY_INIT_CFG(QSERDES_V4_COM_BIN_VCOCAL_CMP_CODE2_MODE1, 0x1e),
 	QMP_PHY_INIT_CFG(QSERDES_V4_COM_BIN_VCOCAL_HSCLK_SEL, 0x11),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sm8150_usb3_tx_tbl[] = अणु
+static const struct qmp_phy_init_tbl sm8150_usb3_tx_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V4_TX_RES_CODE_LANE_TX, 0x00),
 	QMP_PHY_INIT_CFG(QSERDES_V4_TX_RES_CODE_LANE_RX, 0x00),
 	QMP_PHY_INIT_CFG(QSERDES_V4_TX_LANE_MODE_1, 0xd5),
 	QMP_PHY_INIT_CFG(QSERDES_V4_TX_RCV_DETECT_LVL_2, 0x12),
 	QMP_PHY_INIT_CFG(QSERDES_V4_TX_PI_QEC_CTRL, 0x20),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sm8150_usb3_rx_tbl[] = अणु
+static const struct qmp_phy_init_tbl sm8150_usb3_rx_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V4_RX_UCDR_SO_GAIN, 0x05),
 	QMP_PHY_INIT_CFG(QSERDES_V4_RX_UCDR_FASTLOCK_FO_GAIN, 0x2f),
 	QMP_PHY_INIT_CFG(QSERDES_V4_RX_UCDR_SO_SATURATION_AND_ENABLE, 0x7f),
@@ -1577,9 +1576,9 @@
 	QMP_PHY_INIT_CFG(QSERDES_V4_RX_DCC_CTRL1, 0x0c),
 	QMP_PHY_INIT_CFG(QSERDES_V4_RX_GM_CAL, 0x1f),
 	QMP_PHY_INIT_CFG(QSERDES_V4_RX_VTH_CODE, 0x10),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sm8150_usb3_pcs_tbl[] = अणु
+static const struct qmp_phy_init_tbl sm8150_usb3_pcs_tbl[] = {
 	/* Lock Det settings */
 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_LOCK_DETECT_CONFIG1, 0xd0),
 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_LOCK_DETECT_CONFIG2, 0x07),
@@ -1595,9 +1594,9 @@
 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_EQ_CONFIG5, 0x10),
 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_USB3_LFPS_DET_HIGH_COUNT_VAL, 0xf8),
 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_USB3_RXEQTRAINING_DFE_TIME_S2, 0x07),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sm8150_usb3_uniphy_serdes_tbl[] = अणु
+static const struct qmp_phy_init_tbl sm8150_usb3_uniphy_serdes_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V4_COM_SYSCLK_EN_SEL, 0x1a),
 	QMP_PHY_INIT_CFG(QSERDES_V4_COM_BIN_VCOCAL_HSCLK_SEL, 0x11),
 	QMP_PHY_INIT_CFG(QSERDES_V4_COM_HSCLK_SEL, 0x01),
@@ -1638,16 +1637,16 @@
 	QMP_PHY_INIT_CFG(QSERDES_V4_COM_SSC_STEP_SIZE1_MODE0, 0xde),
 	QMP_PHY_INIT_CFG(QSERDES_V4_COM_SSC_STEP_SIZE2_MODE0, 0x07),
 	QMP_PHY_INIT_CFG(QSERDES_V4_COM_VCO_TUNE_MAP, 0x02),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sm8150_usb3_uniphy_tx_tbl[] = अणु
+static const struct qmp_phy_init_tbl sm8150_usb3_uniphy_tx_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V4_TX_RCV_DETECT_LVL_2, 0x12),
 	QMP_PHY_INIT_CFG(QSERDES_V4_TX_LANE_MODE_1, 0x95),
 	QMP_PHY_INIT_CFG(QSERDES_V4_TX_PI_QEC_CTRL, 0x40),
 	QMP_PHY_INIT_CFG(QSERDES_V4_TX_RES_CODE_LANE_OFFSET_TX, 0x05),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sm8150_usb3_uniphy_rx_tbl[] = अणु
+static const struct qmp_phy_init_tbl sm8150_usb3_uniphy_rx_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V4_RX_RX_MODE_00_HIGH4, 0xb8),
 	QMP_PHY_INIT_CFG(QSERDES_V4_RX_RX_MODE_00_HIGH3, 0x7f),
 	QMP_PHY_INIT_CFG(QSERDES_V4_RX_RX_MODE_00_HIGH2, 0x37),
@@ -1684,9 +1683,9 @@
 	QMP_PHY_INIT_CFG(QSERDES_V4_RX_DFE_CTLE_POST_CAL_OFFSET, 0x20),
 	QMP_PHY_INIT_CFG(QSERDES_V4_RX_UCDR_SO_GAIN, 0x04),
 	QMP_PHY_INIT_CFG(QSERDES_V4_RX_DCC_CTRL1, 0x0c),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sm8150_usb3_uniphy_pcs_tbl[] = अणु
+static const struct qmp_phy_init_tbl sm8150_usb3_uniphy_pcs_tbl[] = {
 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_LOCK_DETECT_CONFIG1, 0xd0),
 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_LOCK_DETECT_CONFIG2, 0x07),
 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_LOCK_DETECT_CONFIG3, 0x20),
@@ -1703,9 +1702,9 @@
 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_EQ_CONFIG5, 0x10),
 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_REFGEN_REQ_CONFIG1, 0x21),
 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_PCS_TX_RX_CONFIG, 0x0c),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sm8250_usb3_tx_tbl[] = अणु
+static const struct qmp_phy_init_tbl sm8250_usb3_tx_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V4_TX_RES_CODE_LANE_TX, 0x60),
 	QMP_PHY_INIT_CFG(QSERDES_V4_TX_RES_CODE_LANE_RX, 0x60),
 	QMP_PHY_INIT_CFG(QSERDES_V4_TX_RES_CODE_LANE_OFFSET_TX, 0x11),
@@ -1714,9 +1713,9 @@
 	QMP_PHY_INIT_CFG(QSERDES_V4_TX_RCV_DETECT_LVL_2, 0x12),
 	QMP_PHY_INIT_CFG_LANE(QSERDES_V4_TX_PI_QEC_CTRL, 0x40, 1),
 	QMP_PHY_INIT_CFG_LANE(QSERDES_V4_TX_PI_QEC_CTRL, 0x54, 2),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sm8250_usb3_rx_tbl[] = अणु
+static const struct qmp_phy_init_tbl sm8250_usb3_rx_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V4_RX_UCDR_SO_GAIN, 0x06),
 	QMP_PHY_INIT_CFG(QSERDES_V4_RX_UCDR_FASTLOCK_FO_GAIN, 0x2f),
 	QMP_PHY_INIT_CFG(QSERDES_V4_RX_UCDR_SO_SATURATION_AND_ENABLE, 0x7f),
@@ -1755,9 +1754,9 @@
 	QMP_PHY_INIT_CFG(QSERDES_V4_RX_DCC_CTRL1, 0x0c),
 	QMP_PHY_INIT_CFG(QSERDES_V4_RX_GM_CAL, 0x1f),
 	QMP_PHY_INIT_CFG(QSERDES_V4_RX_VTH_CODE, 0x10),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sm8250_usb3_pcs_tbl[] = अणु
+static const struct qmp_phy_init_tbl sm8250_usb3_pcs_tbl[] = {
 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_LOCK_DETECT_CONFIG1, 0xd0),
 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_LOCK_DETECT_CONFIG2, 0x07),
 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_LOCK_DETECT_CONFIG3, 0x20),
@@ -1772,18 +1771,18 @@
 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_EQ_CONFIG5, 0x10),
 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_USB3_LFPS_DET_HIGH_COUNT_VAL, 0xf8),
 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_USB3_RXEQTRAINING_DFE_TIME_S2, 0x07),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sm8250_usb3_uniphy_tx_tbl[] = अणु
+static const struct qmp_phy_init_tbl sm8250_usb3_uniphy_tx_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V4_TX_RCV_DETECT_LVL_2, 0x12),
 	QMP_PHY_INIT_CFG(QSERDES_V4_TX_LANE_MODE_1, 0xd5),
 	QMP_PHY_INIT_CFG(QSERDES_V4_TX_LANE_MODE_2, 0x82),
 	QMP_PHY_INIT_CFG(QSERDES_V4_TX_PI_QEC_CTRL, 0x40),
 	QMP_PHY_INIT_CFG(QSERDES_V4_TX_RES_CODE_LANE_OFFSET_TX, 0x11),
 	QMP_PHY_INIT_CFG(QSERDES_V4_TX_RES_CODE_LANE_OFFSET_RX, 0x02),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sm8250_usb3_uniphy_rx_tbl[] = अणु
+static const struct qmp_phy_init_tbl sm8250_usb3_uniphy_rx_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V4_RX_RX_MODE_00_HIGH4, 0xb8),
 	QMP_PHY_INIT_CFG(QSERDES_V4_RX_RX_MODE_00_HIGH3, 0xff),
 	QMP_PHY_INIT_CFG(QSERDES_V4_RX_RX_MODE_00_HIGH2, 0xbf),
@@ -1820,9 +1819,9 @@
 	QMP_PHY_INIT_CFG(QSERDES_V4_RX_UCDR_SO_GAIN, 0x06),
 	QMP_PHY_INIT_CFG(QSERDES_V4_RX_DCC_CTRL1, 0x0c),
 	QMP_PHY_INIT_CFG(QSERDES_V4_RX_GM_CAL, 0x1f),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sm8250_usb3_uniphy_pcs_tbl[] = अणु
+static const struct qmp_phy_init_tbl sm8250_usb3_uniphy_pcs_tbl[] = {
 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_LOCK_DETECT_CONFIG1, 0xd0),
 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_LOCK_DETECT_CONFIG2, 0x07),
 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_LOCK_DETECT_CONFIG3, 0x20),
@@ -1839,9 +1838,9 @@
 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_EQ_CONFIG1, 0x4b),
 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_EQ_CONFIG5, 0x10),
 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_REFGEN_REQ_CONFIG1, 0x21),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl qmp_v4_dp_serdes_tbl[] = अणु
+static const struct qmp_phy_init_tbl qmp_v4_dp_serdes_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V4_COM_SVS_MODE_CLK_SEL, 0x05),
 	QMP_PHY_INIT_CFG(QSERDES_V4_COM_SYSCLK_EN_SEL, 0x3b),
 	QMP_PHY_INIT_CFG(QSERDES_V4_COM_SYS_CLK_CTRL, 0x02),
@@ -1862,9 +1861,9 @@
 	QMP_PHY_INIT_CFG(QSERDES_V4_COM_VCO_TUNE_CTRL, 0x00),
 	QMP_PHY_INIT_CFG(QSERDES_V4_COM_BIAS_EN_CLKBUFLR_EN, 0x17),
 	QMP_PHY_INIT_CFG(QSERDES_V4_COM_CORE_CLK_EN, 0x1f),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl qmp_v4_dp_serdes_tbl_rbr[] = अणु
+static const struct qmp_phy_init_tbl qmp_v4_dp_serdes_tbl_rbr[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V4_COM_HSCLK_SEL, 0x05),
 	QMP_PHY_INIT_CFG(QSERDES_V4_COM_DEC_START_MODE0, 0x69),
 	QMP_PHY_INIT_CFG(QSERDES_V4_COM_DIV_FRAC_START2_MODE0, 0x80),
@@ -1872,9 +1871,9 @@
 	QMP_PHY_INIT_CFG(QSERDES_V4_COM_LOCK_CMP1_MODE0, 0x6f),
 	QMP_PHY_INIT_CFG(QSERDES_V4_COM_LOCK_CMP2_MODE0, 0x08),
 	QMP_PHY_INIT_CFG(QSERDES_V4_COM_LOCK_CMP_EN, 0x04),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl qmp_v4_dp_serdes_tbl_hbr[] = अणु
+static const struct qmp_phy_init_tbl qmp_v4_dp_serdes_tbl_hbr[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V4_COM_HSCLK_SEL, 0x03),
 	QMP_PHY_INIT_CFG(QSERDES_V4_COM_DEC_START_MODE0, 0x69),
 	QMP_PHY_INIT_CFG(QSERDES_V4_COM_DIV_FRAC_START2_MODE0, 0x80),
@@ -1882,9 +1881,9 @@
 	QMP_PHY_INIT_CFG(QSERDES_V4_COM_LOCK_CMP1_MODE0, 0x0f),
 	QMP_PHY_INIT_CFG(QSERDES_V4_COM_LOCK_CMP2_MODE0, 0x0e),
 	QMP_PHY_INIT_CFG(QSERDES_V4_COM_LOCK_CMP_EN, 0x08),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl qmp_v4_dp_serdes_tbl_hbr2[] = अणु
+static const struct qmp_phy_init_tbl qmp_v4_dp_serdes_tbl_hbr2[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V4_COM_HSCLK_SEL, 0x01),
 	QMP_PHY_INIT_CFG(QSERDES_V4_COM_DEC_START_MODE0, 0x8c),
 	QMP_PHY_INIT_CFG(QSERDES_V4_COM_DIV_FRAC_START2_MODE0, 0x00),
@@ -1892,9 +1891,9 @@
 	QMP_PHY_INIT_CFG(QSERDES_V4_COM_LOCK_CMP1_MODE0, 0x1f),
 	QMP_PHY_INIT_CFG(QSERDES_V4_COM_LOCK_CMP2_MODE0, 0x1c),
 	QMP_PHY_INIT_CFG(QSERDES_V4_COM_LOCK_CMP_EN, 0x08),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl qmp_v4_dp_serdes_tbl_hbr3[] = अणु
+static const struct qmp_phy_init_tbl qmp_v4_dp_serdes_tbl_hbr3[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V4_COM_HSCLK_SEL, 0x00),
 	QMP_PHY_INIT_CFG(QSERDES_V4_COM_DEC_START_MODE0, 0x69),
 	QMP_PHY_INIT_CFG(QSERDES_V4_COM_DIV_FRAC_START2_MODE0, 0x80),
@@ -1902,9 +1901,9 @@
 	QMP_PHY_INIT_CFG(QSERDES_V4_COM_LOCK_CMP1_MODE0, 0x2f),
 	QMP_PHY_INIT_CFG(QSERDES_V4_COM_LOCK_CMP2_MODE0, 0x2a),
 	QMP_PHY_INIT_CFG(QSERDES_V4_COM_LOCK_CMP_EN, 0x08),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl qmp_v4_dp_tx_tbl[] = अणु
+static const struct qmp_phy_init_tbl qmp_v4_dp_tx_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V4_TX_VMODE_CTRL1, 0x40),
 	QMP_PHY_INIT_CFG(QSERDES_V4_TX_PRE_STALL_LDO_BOOST_EN, 0x30),
 	QMP_PHY_INIT_CFG(QSERDES_V4_TX_INTERFACE_SELECT, 0x3b),
@@ -1919,9 +1918,9 @@
 	QMP_PHY_INIT_CFG(QSERDES_V4_TX_TX_POL_INV, 0x0a),
 	QMP_PHY_INIT_CFG(QSERDES_V4_TX_TX_DRV_LVL, 0x2a),
 	QMP_PHY_INIT_CFG(QSERDES_V4_TX_TX_EMP_POST1_LVL, 0x20),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sm8250_qmp_pcie_serdes_tbl[] = अणु
+static const struct qmp_phy_init_tbl sm8250_qmp_pcie_serdes_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V4_COM_SYSCLK_EN_SEL, 0x08),
 	QMP_PHY_INIT_CFG(QSERDES_V4_COM_CLK_SELECT, 0x34),
 	QMP_PHY_INIT_CFG(QSERDES_V4_COM_CORECLK_DIV_MODE1, 0x08),
@@ -1963,19 +1962,19 @@
 	QMP_PHY_INIT_CFG(QSERDES_V4_COM_SSC_STEP_SIZE1_MODE1, 0x4c),
 	QMP_PHY_INIT_CFG(QSERDES_V4_COM_SSC_STEP_SIZE2_MODE1, 0x06),
 	QMP_PHY_INIT_CFG(QSERDES_V4_COM_CLK_ENABLE1, 0x90),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sm8250_qmp_gen3x1_pcie_serdes_tbl[] = अणु
+static const struct qmp_phy_init_tbl sm8250_qmp_gen3x1_pcie_serdes_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V4_COM_SYSCLK_BUF_ENABLE, 0x07),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sm8250_qmp_pcie_tx_tbl[] = अणु
+static const struct qmp_phy_init_tbl sm8250_qmp_pcie_tx_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V4_TX_RCV_DETECT_LVL_2, 0x12),
 	QMP_PHY_INIT_CFG(QSERDES_V4_TX_LANE_MODE_1, 0x35),
 	QMP_PHY_INIT_CFG(QSERDES_V4_TX_RES_CODE_LANE_OFFSET_TX, 0x11),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sm8250_qmp_pcie_rx_tbl[] = अणु
+static const struct qmp_phy_init_tbl sm8250_qmp_pcie_rx_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V4_RX_UCDR_FO_GAIN, 0x0c),
 	QMP_PHY_INIT_CFG(QSERDES_V4_RX_UCDR_SO_GAIN, 0x03),
 	QMP_PHY_INIT_CFG(QSERDES_V4_RX_GM_CAL, 0x1b),
@@ -2006,29 +2005,29 @@
 	QMP_PHY_INIT_CFG(QSERDES_V4_RX_RX_MODE_01_HIGH2, 0xec),
 	QMP_PHY_INIT_CFG(QSERDES_V4_RX_RX_MODE_01_HIGH3, 0x3b),
 	QMP_PHY_INIT_CFG(QSERDES_V4_RX_RX_MODE_01_HIGH4, 0x36),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sm8250_qmp_gen3x1_pcie_rx_tbl[] = अणु
+static const struct qmp_phy_init_tbl sm8250_qmp_gen3x1_pcie_rx_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V4_RX_RCLK_AUXDATA_SEL, 0x00),
 	QMP_PHY_INIT_CFG(QSERDES_V4_RX_RX_EQU_ADAPTOR_CNTRL1, 0x00),
 	QMP_PHY_INIT_CFG(QSERDES_V4_RX_DFE_EN_TIMER, 0x04),
 	QMP_PHY_INIT_CFG(QSERDES_V4_RX_RX_MODE_00_LOW, 0x3f),
 	QMP_PHY_INIT_CFG(QSERDES_V4_RX_RX_MODE_00_HIGH4, 0x14),
 	QMP_PHY_INIT_CFG(QSERDES_V4_RX_DFE_CTLE_POST_CAL_OFFSET, 0x30),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sm8250_qmp_pcie_pcs_tbl[] = अणु
+static const struct qmp_phy_init_tbl sm8250_qmp_pcie_pcs_tbl[] = {
 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_P2U3_WAKEUP_DLY_TIME_AUXCLK_L, 0x01),
 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_RX_SIGDET_LVL, 0x77),
 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_RATE_SLEW_CNTRL1, 0x0b),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sm8250_qmp_gen3x1_pcie_pcs_tbl[] = अणु
+static const struct qmp_phy_init_tbl sm8250_qmp_gen3x1_pcie_pcs_tbl[] = {
 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_REFGEN_REQ_CONFIG1, 0x0d),
 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_EQ_CONFIG5, 0x12),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sm8250_qmp_pcie_pcs_misc_tbl[] = अणु
+static const struct qmp_phy_init_tbl sm8250_qmp_pcie_pcs_misc_tbl[] = {
 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_PCIE_OSC_DTCT_ACTIONS, 0x00),
 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_PCIE_L1P1_WAKEUP_DLY_TIME_AUXCLK_L, 0x01),
 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_PCIE_L1P2_WAKEUP_DLY_TIME_AUXCLK_L, 0x01),
@@ -2036,43 +2035,43 @@
 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_PCIE_PRESET_P10_PRE, 0x00),
 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_PCIE_PRESET_P10_POST, 0x58),
 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_PCIE_ENDPOINT_REFCLK_DRIVE, 0xc1),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sm8250_qmp_gen3x1_pcie_pcs_misc_tbl[] = अणु
+static const struct qmp_phy_init_tbl sm8250_qmp_gen3x1_pcie_pcs_misc_tbl[] = {
 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_PCIE_INT_AUX_CLK_CONFIG1, 0x00),
 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_PCIE_EQ_CONFIG2, 0x0f),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sm8250_qmp_gen3x2_pcie_tx_tbl[] = अणु
+static const struct qmp_phy_init_tbl sm8250_qmp_gen3x2_pcie_tx_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V4_TX_PI_QEC_CTRL, 0x20),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sm8250_qmp_gen3x2_pcie_rx_tbl[] = अणु
+static const struct qmp_phy_init_tbl sm8250_qmp_gen3x2_pcie_rx_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V4_RX_RX_EQU_ADAPTOR_CNTRL1, 0x04),
 	QMP_PHY_INIT_CFG(QSERDES_V4_RX_RX_MODE_00_LOW, 0xbf),
 	QMP_PHY_INIT_CFG(QSERDES_V4_RX_RX_MODE_00_HIGH4, 0x15),
 	QMP_PHY_INIT_CFG(QSERDES_V4_RX_DFE_CTLE_POST_CAL_OFFSET, 0x38),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sm8250_qmp_gen3x2_pcie_pcs_tbl[] = अणु
+static const struct qmp_phy_init_tbl sm8250_qmp_gen3x2_pcie_pcs_tbl[] = {
 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_REFGEN_REQ_CONFIG1, 0x05),
 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_EQ_CONFIG2, 0x0f),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sm8250_qmp_gen3x2_pcie_pcs_misc_tbl[] = अणु
+static const struct qmp_phy_init_tbl sm8250_qmp_gen3x2_pcie_pcs_misc_tbl[] = {
 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_PCIE_POWER_STATE_CONFIG2, 0x0d),
 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_PCIE_POWER_STATE_CONFIG4, 0x07),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sdx55_usb3_uniphy_tx_tbl[] = अणु
+static const struct qmp_phy_init_tbl sdx55_usb3_uniphy_tx_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V4_TX_RCV_DETECT_LVL_2, 0x12),
 	QMP_PHY_INIT_CFG(QSERDES_V4_TX_LANE_MODE_1, 0xd5),
 	QMP_PHY_INIT_CFG(QSERDES_V4_TX_LANE_MODE_2, 0x80),
 	QMP_PHY_INIT_CFG(QSERDES_V4_TX_PI_QEC_CTRL, 0x20),
 	QMP_PHY_INIT_CFG(QSERDES_V4_TX_RES_CODE_LANE_OFFSET_TX, 0x08),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sdx55_usb3_uniphy_rx_tbl[] = अणु
+static const struct qmp_phy_init_tbl sdx55_usb3_uniphy_rx_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V4_RX_RX_MODE_00_HIGH4, 0x26),
 	QMP_PHY_INIT_CFG(QSERDES_V4_RX_RX_MODE_00_HIGH3, 0x7f),
 	QMP_PHY_INIT_CFG(QSERDES_V4_RX_RX_MODE_00_HIGH2, 0xbf),
@@ -2109,9 +2108,9 @@
 	QMP_PHY_INIT_CFG(QSERDES_V4_RX_UCDR_SO_GAIN, 0x05),
 	QMP_PHY_INIT_CFG(QSERDES_V4_RX_DCC_CTRL1, 0x0c),
 	QMP_PHY_INIT_CFG(QSERDES_V4_RX_GM_CAL, 0x1f),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sm8350_ufsphy_serdes_tbl[] = अणु
+static const struct qmp_phy_init_tbl sm8350_ufsphy_serdes_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V5_COM_SYSCLK_EN_SEL, 0xd9),
 	QMP_PHY_INIT_CFG(QSERDES_V5_COM_HSCLK_SEL, 0x11),
 	QMP_PHY_INIT_CFG(QSERDES_V5_COM_HSCLK_HS_SWITCH_SEL, 0x00),
@@ -2139,9 +2138,9 @@
 
 	/* Rate B */
 	QMP_PHY_INIT_CFG(QSERDES_V5_COM_VCO_TUNE_MAP, 0x06),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sm8350_ufsphy_tx_tbl[] = अणु
+static const struct qmp_phy_init_tbl sm8350_ufsphy_tx_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V5_TX_PWM_GEAR_1_DIVIDER_BAND0_1, 0x06),
 	QMP_PHY_INIT_CFG(QSERDES_V5_TX_PWM_GEAR_2_DIVIDER_BAND0_1, 0x03),
 	QMP_PHY_INIT_CFG(QSERDES_V5_TX_PWM_GEAR_3_DIVIDER_BAND0_1, 0x01),
@@ -2151,9 +2150,9 @@
 	QMP_PHY_INIT_CFG(QSERDES_V5_TX_RES_CODE_LANE_OFFSET_TX, 0x09),
 	QMP_PHY_INIT_CFG(QSERDES_V5_TX_RES_CODE_LANE_OFFSET_RX, 0x09),
 	QMP_PHY_INIT_CFG(QSERDES_V5_TX_TRAN_DRVR_EMP_EN, 0x0c),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sm8350_ufsphy_rx_tbl[] = अणु
+static const struct qmp_phy_init_tbl sm8350_ufsphy_rx_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V5_RX_SIGDET_LVL, 0x24),
 	QMP_PHY_INIT_CFG(QSERDES_V5_RX_SIGDET_CNTRL, 0x0f),
 	QMP_PHY_INIT_CFG(QSERDES_V5_RX_SIGDET_DEGLITCH_CNTRL, 0x1e),
@@ -2191,9 +2190,9 @@
 	QMP_PHY_INIT_CFG(QSERDES_V5_RX_RX_MODE_10_HIGH3, 0x3b),
 	QMP_PHY_INIT_CFG(QSERDES_V5_RX_RX_MODE_10_HIGH4, 0xb7),
 	QMP_PHY_INIT_CFG(QSERDES_V5_RX_DCC_CTRL1, 0x0c),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sm8350_ufsphy_pcs_tbl[] = अणु
+static const struct qmp_phy_init_tbl sm8350_ufsphy_pcs_tbl[] = {
 	QMP_PHY_INIT_CFG(QPHY_V5_PCS_UFS_RX_SIGDET_CTRL2, 0x6d),
 	QMP_PHY_INIT_CFG(QPHY_V5_PCS_UFS_TX_LARGE_AMP_DRV_LVL, 0x0a),
 	QMP_PHY_INIT_CFG(QPHY_V5_PCS_UFS_TX_SMALL_AMP_DRV_LVL, 0x02),
@@ -2209,9 +2208,9 @@
 	QMP_PHY_INIT_CFG(QPHY_V5_PCS_UFS_RX_HSGEAR_CAPABILITY, 0x03),
 	QMP_PHY_INIT_CFG(QPHY_V5_PCS_UFS_RX_SIGDET_CTRL1, 0x0e),
 	QMP_PHY_INIT_CFG(QPHY_V5_PCS_UFS_MULTI_LANE_CTRL1, 0x02),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sm8350_usb3_tx_tbl[] = अणु
+static const struct qmp_phy_init_tbl sm8350_usb3_tx_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V5_TX_RES_CODE_LANE_TX, 0x00),
 	QMP_PHY_INIT_CFG(QSERDES_V5_TX_RES_CODE_LANE_RX, 0x00),
 	QMP_PHY_INIT_CFG(QSERDES_V5_TX_RES_CODE_LANE_OFFSET_TX, 0x16),
@@ -2222,9 +2221,9 @@
 	QMP_PHY_INIT_CFG(QSERDES_V5_TX_LANE_MODE_5, 0x3f),
 	QMP_PHY_INIT_CFG(QSERDES_V5_TX_RCV_DETECT_LVL_2, 0x12),
 	QMP_PHY_INIT_CFG(QSERDES_V5_TX_PI_QEC_CTRL, 0x21),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sm8350_usb3_rx_tbl[] = अणु
+static const struct qmp_phy_init_tbl sm8350_usb3_rx_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V5_RX_UCDR_FO_GAIN, 0x0a),
 	QMP_PHY_INIT_CFG(QSERDES_V5_RX_UCDR_SO_GAIN, 0x05),
 	QMP_PHY_INIT_CFG(QSERDES_V5_RX_UCDR_FASTLOCK_FO_GAIN, 0x2f),
@@ -2263,9 +2262,9 @@
 	QMP_PHY_INIT_CFG(QSERDES_V5_RX_DCC_CTRL1, 0x0c),
 	QMP_PHY_INIT_CFG(QSERDES_V5_RX_GM_CAL, 0x00),
 	QMP_PHY_INIT_CFG(QSERDES_V5_RX_VTH_CODE, 0x10),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sm8350_usb3_pcs_tbl[] = अणु
+static const struct qmp_phy_init_tbl sm8350_usb3_pcs_tbl[] = {
 	QMP_PHY_INIT_CFG(QPHY_V5_PCS_USB3_RCVR_DTCT_DLY_U3_L, 0x40),
 	QMP_PHY_INIT_CFG(QPHY_V5_PCS_USB3_RCVR_DTCT_DLY_U3_H, 0x00),
 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_RCVR_DTCT_DLY_P1U2_L, 0xe7),
@@ -2284,9 +2283,9 @@
 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_EQ_CONFIG5, 0x10),
 	QMP_PHY_INIT_CFG(QPHY_V5_PCS_USB3_LFPS_DET_HIGH_COUNT_VAL, 0xf8),
 	QMP_PHY_INIT_CFG(QPHY_V5_PCS_USB3_RXEQTRAINING_DFE_TIME_S2, 0x07),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sm8350_usb3_uniphy_tx_tbl[] = अणु
+static const struct qmp_phy_init_tbl sm8350_usb3_uniphy_tx_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V5_TX_LANE_MODE_1, 0xa5),
 	QMP_PHY_INIT_CFG(QSERDES_V5_TX_LANE_MODE_2, 0x82),
 	QMP_PHY_INIT_CFG(QSERDES_V5_TX_LANE_MODE_3, 0x3f),
@@ -2294,9 +2293,9 @@
 	QMP_PHY_INIT_CFG(QSERDES_V5_TX_PI_QEC_CTRL, 0x21),
 	QMP_PHY_INIT_CFG(QSERDES_V5_TX_RES_CODE_LANE_OFFSET_TX, 0x10),
 	QMP_PHY_INIT_CFG(QSERDES_V5_TX_RES_CODE_LANE_OFFSET_RX, 0x0e),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sm8350_usb3_uniphy_rx_tbl[] = अणु
+static const struct qmp_phy_init_tbl sm8350_usb3_uniphy_rx_tbl[] = {
 	QMP_PHY_INIT_CFG(QSERDES_V5_RX_RX_MODE_00_HIGH4, 0xdc),
 	QMP_PHY_INIT_CFG(QSERDES_V5_RX_RX_MODE_00_HIGH3, 0xbd),
 	QMP_PHY_INIT_CFG(QSERDES_V5_RX_RX_MODE_00_HIGH2, 0xff),
@@ -2328,9 +2327,9 @@
 	QMP_PHY_INIT_CFG(QSERDES_V5_RX_UCDR_SO_GAIN, 0x05),
 	QMP_PHY_INIT_CFG(QSERDES_V5_RX_GM_CAL, 0x00),
 	QMP_PHY_INIT_CFG(QSERDES_V5_RX_SIGDET_ENABLES, 0x00),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_init_tbl sm8350_usb3_uniphy_pcs_tbl[] = अणु
+static const struct qmp_phy_init_tbl sm8350_usb3_uniphy_pcs_tbl[] = {
 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_LOCK_DETECT_CONFIG1, 0xd0),
 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_LOCK_DETECT_CONFIG2, 0x07),
 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_LOCK_DETECT_CONFIG3, 0x20),
@@ -2347,263 +2346,263 @@
 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_EQ_CONFIG1, 0x4b),
 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_EQ_CONFIG5, 0x10),
 	QMP_PHY_INIT_CFG(QPHY_V4_PCS_REFGEN_REQ_CONFIG1, 0x21),
-पूर्ण;
+};
 
-काष्ठा qmp_phy;
+struct qmp_phy;
 
-/* काष्ठा qmp_phy_cfg - per-PHY initialization config */
-काष्ठा qmp_phy_cfg अणु
+/* struct qmp_phy_cfg - per-PHY initialization config */
+struct qmp_phy_cfg {
 	/* phy-type - PCIE/UFS/USB */
-	अचिन्हित पूर्णांक type;
+	unsigned int type;
 	/* number of lanes provided by phy */
-	पूर्णांक nlanes;
+	int nlanes;
 
-	/* Init sequence क्रम PHY blocks - serdes, tx, rx, pcs */
-	स्थिर काष्ठा qmp_phy_init_tbl *serdes_tbl;
-	पूर्णांक serdes_tbl_num;
-	स्थिर काष्ठा qmp_phy_init_tbl *serdes_tbl_sec;
-	पूर्णांक serdes_tbl_num_sec;
-	स्थिर काष्ठा qmp_phy_init_tbl *tx_tbl;
-	पूर्णांक tx_tbl_num;
-	स्थिर काष्ठा qmp_phy_init_tbl *tx_tbl_sec;
-	पूर्णांक tx_tbl_num_sec;
-	स्थिर काष्ठा qmp_phy_init_tbl *rx_tbl;
-	पूर्णांक rx_tbl_num;
-	स्थिर काष्ठा qmp_phy_init_tbl *rx_tbl_sec;
-	पूर्णांक rx_tbl_num_sec;
-	स्थिर काष्ठा qmp_phy_init_tbl *pcs_tbl;
-	पूर्णांक pcs_tbl_num;
-	स्थिर काष्ठा qmp_phy_init_tbl *pcs_tbl_sec;
-	पूर्णांक pcs_tbl_num_sec;
-	स्थिर काष्ठा qmp_phy_init_tbl *pcs_misc_tbl;
-	पूर्णांक pcs_misc_tbl_num;
-	स्थिर काष्ठा qmp_phy_init_tbl *pcs_misc_tbl_sec;
-	पूर्णांक pcs_misc_tbl_num_sec;
+	/* Init sequence for PHY blocks - serdes, tx, rx, pcs */
+	const struct qmp_phy_init_tbl *serdes_tbl;
+	int serdes_tbl_num;
+	const struct qmp_phy_init_tbl *serdes_tbl_sec;
+	int serdes_tbl_num_sec;
+	const struct qmp_phy_init_tbl *tx_tbl;
+	int tx_tbl_num;
+	const struct qmp_phy_init_tbl *tx_tbl_sec;
+	int tx_tbl_num_sec;
+	const struct qmp_phy_init_tbl *rx_tbl;
+	int rx_tbl_num;
+	const struct qmp_phy_init_tbl *rx_tbl_sec;
+	int rx_tbl_num_sec;
+	const struct qmp_phy_init_tbl *pcs_tbl;
+	int pcs_tbl_num;
+	const struct qmp_phy_init_tbl *pcs_tbl_sec;
+	int pcs_tbl_num_sec;
+	const struct qmp_phy_init_tbl *pcs_misc_tbl;
+	int pcs_misc_tbl_num;
+	const struct qmp_phy_init_tbl *pcs_misc_tbl_sec;
+	int pcs_misc_tbl_num_sec;
 
-	/* Init sequence क्रम DP PHY block link rates */
-	स्थिर काष्ठा qmp_phy_init_tbl *serdes_tbl_rbr;
-	पूर्णांक serdes_tbl_rbr_num;
-	स्थिर काष्ठा qmp_phy_init_tbl *serdes_tbl_hbr;
-	पूर्णांक serdes_tbl_hbr_num;
-	स्थिर काष्ठा qmp_phy_init_tbl *serdes_tbl_hbr2;
-	पूर्णांक serdes_tbl_hbr2_num;
-	स्थिर काष्ठा qmp_phy_init_tbl *serdes_tbl_hbr3;
-	पूर्णांक serdes_tbl_hbr3_num;
+	/* Init sequence for DP PHY block link rates */
+	const struct qmp_phy_init_tbl *serdes_tbl_rbr;
+	int serdes_tbl_rbr_num;
+	const struct qmp_phy_init_tbl *serdes_tbl_hbr;
+	int serdes_tbl_hbr_num;
+	const struct qmp_phy_init_tbl *serdes_tbl_hbr2;
+	int serdes_tbl_hbr2_num;
+	const struct qmp_phy_init_tbl *serdes_tbl_hbr3;
+	int serdes_tbl_hbr3_num;
 
 	/* DP PHY callbacks */
-	पूर्णांक (*configure_dp_phy)(काष्ठा qmp_phy *qphy);
-	व्योम (*configure_dp_tx)(काष्ठा qmp_phy *qphy);
-	पूर्णांक (*calibrate_dp_phy)(काष्ठा qmp_phy *qphy);
-	व्योम (*dp_aux_init)(काष्ठा qmp_phy *qphy);
+	int (*configure_dp_phy)(struct qmp_phy *qphy);
+	void (*configure_dp_tx)(struct qmp_phy *qphy);
+	int (*calibrate_dp_phy)(struct qmp_phy *qphy);
+	void (*dp_aux_init)(struct qmp_phy *qphy);
 
-	/* घड़ी ids to be requested */
-	स्थिर अक्षर * स्थिर *clk_list;
-	पूर्णांक num_clks;
+	/* clock ids to be requested */
+	const char * const *clk_list;
+	int num_clks;
 	/* resets to be requested */
-	स्थिर अक्षर * स्थिर *reset_list;
-	पूर्णांक num_resets;
+	const char * const *reset_list;
+	int num_resets;
 	/* regulators to be requested */
-	स्थिर अक्षर * स्थिर *vreg_list;
-	पूर्णांक num_vregs;
+	const char * const *vreg_list;
+	int num_vregs;
 
-	/* array of रेजिस्टरs with dअगरferent offsets */
-	स्थिर अचिन्हित पूर्णांक *regs;
+	/* array of registers with different offsets */
+	const unsigned int *regs;
 
-	अचिन्हित पूर्णांक start_ctrl;
-	अचिन्हित पूर्णांक pwrdn_ctrl;
-	अचिन्हित पूर्णांक mask_com_pcs_पढ़ोy;
+	unsigned int start_ctrl;
+	unsigned int pwrdn_ctrl;
+	unsigned int mask_com_pcs_ready;
 
-	/* true, अगर PHY has a separate PHY_COM control block */
+	/* true, if PHY has a separate PHY_COM control block */
 	bool has_phy_com_ctrl;
-	/* true, अगर PHY has a reset क्रम inभागidual lanes */
+	/* true, if PHY has a reset for individual lanes */
 	bool has_lane_rst;
-	/* true, अगर PHY needs delay after POWER_DOWN */
+	/* true, if PHY needs delay after POWER_DOWN */
 	bool has_pwrdn_delay;
-	/* घातer_करोwn delay in usec */
-	पूर्णांक pwrdn_delay_min;
-	पूर्णांक pwrdn_delay_max;
+	/* power_down delay in usec */
+	int pwrdn_delay_min;
+	int pwrdn_delay_max;
 
-	/* true, अगर PHY has a separate DP_COM control block */
+	/* true, if PHY has a separate DP_COM control block */
 	bool has_phy_dp_com_ctrl;
-	/* true, अगर PHY has secondary tx/rx lanes to be configured */
+	/* true, if PHY has secondary tx/rx lanes to be configured */
 	bool is_dual_lane_phy;
 
-	/* true, अगर PCS block has no separate SW_RESET रेजिस्टर */
+	/* true, if PCS block has no separate SW_RESET register */
 	bool no_pcs_sw_reset;
-पूर्ण;
+};
 
-काष्ठा qmp_phy_combo_cfg अणु
-	स्थिर काष्ठा qmp_phy_cfg *usb_cfg;
-	स्थिर काष्ठा qmp_phy_cfg *dp_cfg;
-पूर्ण;
+struct qmp_phy_combo_cfg {
+	const struct qmp_phy_cfg *usb_cfg;
+	const struct qmp_phy_cfg *dp_cfg;
+};
 
 /**
- * काष्ठा qmp_phy - per-lane phy descriptor
+ * struct qmp_phy - per-lane phy descriptor
  *
  * @phy: generic phy
- * @cfg: phy specअगरic configuration
- * @serdes: iomapped memory space क्रम phy's serdes (i.e. PLL)
- * @tx: iomapped memory space क्रम lane's tx
- * @rx: iomapped memory space क्रम lane's rx
- * @pcs: iomapped memory space क्रम lane's pcs
- * @tx2: iomapped memory space क्रम second lane's tx (in dual lane PHYs)
- * @rx2: iomapped memory space क्रम second lane's rx (in dual lane PHYs)
- * @pcs_misc: iomapped memory space क्रम lane's pcs_misc
+ * @cfg: phy specific configuration
+ * @serdes: iomapped memory space for phy's serdes (i.e. PLL)
+ * @tx: iomapped memory space for lane's tx
+ * @rx: iomapped memory space for lane's rx
+ * @pcs: iomapped memory space for lane's pcs
+ * @tx2: iomapped memory space for second lane's tx (in dual lane PHYs)
+ * @rx2: iomapped memory space for second lane's rx (in dual lane PHYs)
+ * @pcs_misc: iomapped memory space for lane's pcs_misc
  * @pipe_clk: pipe lock
  * @index: lane index
- * @qmp: QMP phy to which this lane beदीर्घs
+ * @qmp: QMP phy to which this lane belongs
  * @lane_rst: lane's reset controller
  * @mode: current PHY mode
  */
-काष्ठा qmp_phy अणु
-	काष्ठा phy *phy;
-	स्थिर काष्ठा qmp_phy_cfg *cfg;
-	व्योम __iomem *serdes;
-	व्योम __iomem *tx;
-	व्योम __iomem *rx;
-	व्योम __iomem *pcs;
-	व्योम __iomem *tx2;
-	व्योम __iomem *rx2;
-	व्योम __iomem *pcs_misc;
-	काष्ठा clk *pipe_clk;
-	अचिन्हित पूर्णांक index;
-	काष्ठा qcom_qmp *qmp;
-	काष्ठा reset_control *lane_rst;
-	क्रमागत phy_mode mode;
-	अचिन्हित पूर्णांक dp_aux_cfg;
-	काष्ठा phy_configure_opts_dp dp_opts;
-	काष्ठा qmp_phy_dp_clks *dp_clks;
-पूर्ण;
+struct qmp_phy {
+	struct phy *phy;
+	const struct qmp_phy_cfg *cfg;
+	void __iomem *serdes;
+	void __iomem *tx;
+	void __iomem *rx;
+	void __iomem *pcs;
+	void __iomem *tx2;
+	void __iomem *rx2;
+	void __iomem *pcs_misc;
+	struct clk *pipe_clk;
+	unsigned int index;
+	struct qcom_qmp *qmp;
+	struct reset_control *lane_rst;
+	enum phy_mode mode;
+	unsigned int dp_aux_cfg;
+	struct phy_configure_opts_dp dp_opts;
+	struct qmp_phy_dp_clks *dp_clks;
+};
 
-काष्ठा qmp_phy_dp_clks अणु
-	काष्ठा qmp_phy *qphy;
-	काष्ठा clk_hw dp_link_hw;
-	काष्ठा clk_hw dp_pixel_hw;
-पूर्ण;
+struct qmp_phy_dp_clks {
+	struct qmp_phy *qphy;
+	struct clk_hw dp_link_hw;
+	struct clk_hw dp_pixel_hw;
+};
 
 /**
- * काष्ठा qcom_qmp - काष्ठाure holding QMP phy block attributes
+ * struct qcom_qmp - structure holding QMP phy block attributes
  *
  * @dev: device
- * @dp_com: iomapped memory space क्रम phy's dp_com control block
+ * @dp_com: iomapped memory space for phy's dp_com control block
  *
- * @clks: array of घड़ीs required by phy
+ * @clks: array of clocks required by phy
  * @resets: array of resets required by phy
  * @vregs: regulator supplies bulk data
  *
  * @phys: array of per-lane phy descriptors
- * @phy_mutex: mutex lock क्रम PHY common block initialization
+ * @phy_mutex: mutex lock for PHY common block initialization
  * @init_count: phy common block initialization count
  * @ufs_reset: optional UFS PHY reset handle
  */
-काष्ठा qcom_qmp अणु
-	काष्ठा device *dev;
-	व्योम __iomem *dp_com;
+struct qcom_qmp {
+	struct device *dev;
+	void __iomem *dp_com;
 
-	काष्ठा clk_bulk_data *clks;
-	काष्ठा reset_control **resets;
-	काष्ठा regulator_bulk_data *vregs;
+	struct clk_bulk_data *clks;
+	struct reset_control **resets;
+	struct regulator_bulk_data *vregs;
 
-	काष्ठा qmp_phy **phys;
+	struct qmp_phy **phys;
 
-	काष्ठा mutex phy_mutex;
-	पूर्णांक init_count;
+	struct mutex phy_mutex;
+	int init_count;
 
-	काष्ठा reset_control *ufs_reset;
-पूर्ण;
+	struct reset_control *ufs_reset;
+};
 
-अटल व्योम qcom_qmp_v3_phy_dp_aux_init(काष्ठा qmp_phy *qphy);
-अटल व्योम qcom_qmp_v3_phy_configure_dp_tx(काष्ठा qmp_phy *qphy);
-अटल पूर्णांक qcom_qmp_v3_phy_configure_dp_phy(काष्ठा qmp_phy *qphy);
-अटल पूर्णांक qcom_qmp_v3_dp_phy_calibrate(काष्ठा qmp_phy *qphy);
+static void qcom_qmp_v3_phy_dp_aux_init(struct qmp_phy *qphy);
+static void qcom_qmp_v3_phy_configure_dp_tx(struct qmp_phy *qphy);
+static int qcom_qmp_v3_phy_configure_dp_phy(struct qmp_phy *qphy);
+static int qcom_qmp_v3_dp_phy_calibrate(struct qmp_phy *qphy);
 
-अटल व्योम qcom_qmp_v4_phy_dp_aux_init(काष्ठा qmp_phy *qphy);
-अटल व्योम qcom_qmp_v4_phy_configure_dp_tx(काष्ठा qmp_phy *qphy);
-अटल पूर्णांक qcom_qmp_v4_phy_configure_dp_phy(काष्ठा qmp_phy *qphy);
-अटल पूर्णांक qcom_qmp_v4_dp_phy_calibrate(काष्ठा qmp_phy *qphy);
+static void qcom_qmp_v4_phy_dp_aux_init(struct qmp_phy *qphy);
+static void qcom_qmp_v4_phy_configure_dp_tx(struct qmp_phy *qphy);
+static int qcom_qmp_v4_phy_configure_dp_phy(struct qmp_phy *qphy);
+static int qcom_qmp_v4_dp_phy_calibrate(struct qmp_phy *qphy);
 
-अटल अंतरभूत व्योम qphy_setbits(व्योम __iomem *base, u32 offset, u32 val)
-अणु
+static inline void qphy_setbits(void __iomem *base, u32 offset, u32 val)
+{
 	u32 reg;
 
-	reg = पढ़ोl(base + offset);
+	reg = readl(base + offset);
 	reg |= val;
-	ग_लिखोl(reg, base + offset);
+	writel(reg, base + offset);
 
-	/* ensure that above ग_लिखो is through */
-	पढ़ोl(base + offset);
-पूर्ण
+	/* ensure that above write is through */
+	readl(base + offset);
+}
 
-अटल अंतरभूत व्योम qphy_clrbits(व्योम __iomem *base, u32 offset, u32 val)
-अणु
+static inline void qphy_clrbits(void __iomem *base, u32 offset, u32 val)
+{
 	u32 reg;
 
-	reg = पढ़ोl(base + offset);
+	reg = readl(base + offset);
 	reg &= ~val;
-	ग_लिखोl(reg, base + offset);
+	writel(reg, base + offset);
 
-	/* ensure that above ग_लिखो is through */
-	पढ़ोl(base + offset);
-पूर्ण
+	/* ensure that above write is through */
+	readl(base + offset);
+}
 
-/* list of घड़ीs required by phy */
-अटल स्थिर अक्षर * स्थिर msm8996_phy_clk_l[] = अणु
+/* list of clocks required by phy */
+static const char * const msm8996_phy_clk_l[] = {
 	"aux", "cfg_ahb", "ref",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर msm8996_ufs_phy_clk_l[] = अणु
+static const char * const msm8996_ufs_phy_clk_l[] = {
 	"ref",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर qmp_v3_phy_clk_l[] = अणु
+static const char * const qmp_v3_phy_clk_l[] = {
 	"aux", "cfg_ahb", "ref", "com_aux",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर sdm845_pciephy_clk_l[] = अणु
+static const char * const sdm845_pciephy_clk_l[] = {
 	"aux", "cfg_ahb", "ref", "refgen",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर qmp_v4_phy_clk_l[] = अणु
+static const char * const qmp_v4_phy_clk_l[] = {
 	"aux", "ref_clk_src", "ref", "com_aux",
-पूर्ण;
+};
 
-/* the primary usb3 phy on sm8250 करोesn't have a ref घड़ी */
-अटल स्थिर अक्षर * स्थिर qmp_v4_sm8250_usbphy_clk_l[] = अणु
+/* the primary usb3 phy on sm8250 doesn't have a ref clock */
+static const char * const qmp_v4_sm8250_usbphy_clk_l[] = {
 	"aux", "ref_clk_src", "com_aux"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर sdm845_ufs_phy_clk_l[] = अणु
+static const char * const sdm845_ufs_phy_clk_l[] = {
 	"ref", "ref_aux",
-पूर्ण;
+};
 
-/* usb3 phy on sdx55 करोesn't have com_aux घड़ी */
-अटल स्थिर अक्षर * स्थिर qmp_v4_sdx55_usbphy_clk_l[] = अणु
+/* usb3 phy on sdx55 doesn't have com_aux clock */
+static const char * const qmp_v4_sdx55_usbphy_clk_l[] = {
 	"aux", "cfg_ahb", "ref"
-पूर्ण;
+};
 
 /* list of resets */
-अटल स्थिर अक्षर * स्थिर msm8996_pciephy_reset_l[] = अणु
+static const char * const msm8996_pciephy_reset_l[] = {
 	"phy", "common", "cfg",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर msm8996_usb3phy_reset_l[] = अणु
+static const char * const msm8996_usb3phy_reset_l[] = {
 	"phy", "common",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर sc7180_usb3phy_reset_l[] = अणु
+static const char * const sc7180_usb3phy_reset_l[] = {
 	"phy",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर sdm845_pciephy_reset_l[] = अणु
+static const char * const sdm845_pciephy_reset_l[] = {
 	"phy",
-पूर्ण;
+};
 
 /* list of regulators */
-अटल स्थिर अक्षर * स्थिर qmp_phy_vreg_l[] = अणु
+static const char * const qmp_phy_vreg_l[] = {
 	"vdda-phy", "vdda-pll",
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_cfg ipq8074_usb3phy_cfg = अणु
+static const struct qmp_phy_cfg ipq8074_usb3phy_cfg = {
 	.type			= PHY_TYPE_USB3,
 	.nlanes			= 1,
 
@@ -2625,9 +2624,9 @@
 
 	.start_ctrl		= SERDES_START | PCS_START,
 	.pwrdn_ctrl		= SW_PWRDN,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_cfg msm8996_pciephy_cfg = अणु
+static const struct qmp_phy_cfg msm8996_pciephy_cfg = {
 	.type			= PHY_TYPE_PCIE,
 	.nlanes			= 3,
 
@@ -2649,16 +2648,16 @@
 
 	.start_ctrl		= PCS_START | PLL_READY_GATE_EN,
 	.pwrdn_ctrl		= SW_PWRDN | REFCLK_DRV_DSBL,
-	.mask_com_pcs_पढ़ोy	= PCS_READY,
+	.mask_com_pcs_ready	= PCS_READY,
 
 	.has_phy_com_ctrl	= true,
 	.has_lane_rst		= true,
 	.has_pwrdn_delay	= true,
 	.pwrdn_delay_min	= POWER_DOWN_DELAY_US_MIN,
 	.pwrdn_delay_max	= POWER_DOWN_DELAY_US_MAX,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_cfg msm8996_ufs_cfg = अणु
+static const struct qmp_phy_cfg msm8996_ufs_cfg = {
 	.type			= PHY_TYPE_UFS,
 	.nlanes			= 1,
 
@@ -2681,9 +2680,9 @@
 	.pwrdn_ctrl		= SW_PWRDN,
 
 	.no_pcs_sw_reset	= true,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_cfg msm8996_usb3phy_cfg = अणु
+static const struct qmp_phy_cfg msm8996_usb3phy_cfg = {
 	.type			= PHY_TYPE_USB3,
 	.nlanes			= 1,
 
@@ -2705,17 +2704,17 @@
 
 	.start_ctrl		= SERDES_START | PCS_START,
 	.pwrdn_ctrl		= SW_PWRDN,
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर ipq8074_pciephy_clk_l[] = अणु
+static const char * const ipq8074_pciephy_clk_l[] = {
 	"aux", "cfg_ahb",
-पूर्ण;
+};
 /* list of resets */
-अटल स्थिर अक्षर * स्थिर ipq8074_pciephy_reset_l[] = अणु
+static const char * const ipq8074_pciephy_reset_l[] = {
 	"phy", "common",
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_cfg ipq8074_pciephy_cfg = अणु
+static const struct qmp_phy_cfg ipq8074_pciephy_cfg = {
 	.type			= PHY_TYPE_PCIE,
 	.nlanes			= 1,
 
@@ -2731,7 +2730,7 @@
 	.num_clks		= ARRAY_SIZE(ipq8074_pciephy_clk_l),
 	.reset_list		= ipq8074_pciephy_reset_l,
 	.num_resets		= ARRAY_SIZE(ipq8074_pciephy_reset_l),
-	.vreg_list		= शून्य,
+	.vreg_list		= NULL,
 	.num_vregs		= 0,
 	.regs			= pciephy_regs_layout,
 
@@ -2743,9 +2742,9 @@
 	.has_pwrdn_delay	= true,
 	.pwrdn_delay_min	= 995,		/* us */
 	.pwrdn_delay_max	= 1005,		/* us */
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_cfg sdm845_qmp_pciephy_cfg = अणु
+static const struct qmp_phy_cfg sdm845_qmp_pciephy_cfg = {
 	.type = PHY_TYPE_PCIE,
 	.nlanes = 1,
 
@@ -2773,9 +2772,9 @@
 	.has_pwrdn_delay	= true,
 	.pwrdn_delay_min	= 995,		/* us */
 	.pwrdn_delay_max	= 1005,		/* us */
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_cfg sdm845_qhp_pciephy_cfg = अणु
+static const struct qmp_phy_cfg sdm845_qhp_pciephy_cfg = {
 	.type = PHY_TYPE_PCIE,
 	.nlanes = 1,
 
@@ -2801,9 +2800,9 @@
 	.has_pwrdn_delay	= true,
 	.pwrdn_delay_min	= 995,		/* us */
 	.pwrdn_delay_max	= 1005,		/* us */
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_cfg sm8250_qmp_gen3x1_pciephy_cfg = अणु
+static const struct qmp_phy_cfg sm8250_qmp_gen3x1_pciephy_cfg = {
 	.type = PHY_TYPE_PCIE,
 	.nlanes = 1,
 
@@ -2839,9 +2838,9 @@
 	.has_pwrdn_delay	= true,
 	.pwrdn_delay_min	= 995,		/* us */
 	.pwrdn_delay_max	= 1005,		/* us */
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_cfg sm8250_qmp_gen3x2_pciephy_cfg = अणु
+static const struct qmp_phy_cfg sm8250_qmp_gen3x2_pciephy_cfg = {
 	.type = PHY_TYPE_PCIE,
 	.nlanes = 2,
 
@@ -2878,9 +2877,9 @@
 	.has_pwrdn_delay	= true,
 	.pwrdn_delay_min	= 995,		/* us */
 	.pwrdn_delay_max	= 1005,		/* us */
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_cfg qmp_v3_usb3phy_cfg = अणु
+static const struct qmp_phy_cfg qmp_v3_usb3phy_cfg = {
 	.type			= PHY_TYPE_USB3,
 	.nlanes			= 1,
 
@@ -2909,9 +2908,9 @@
 
 	.has_phy_dp_com_ctrl	= true,
 	.is_dual_lane_phy	= true,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_cfg sc7180_usb3phy_cfg = अणु
+static const struct qmp_phy_cfg sc7180_usb3phy_cfg = {
 	.type			= PHY_TYPE_USB3,
 	.nlanes			= 1,
 
@@ -2940,9 +2939,9 @@
 
 	.has_phy_dp_com_ctrl	= true,
 	.is_dual_lane_phy	= true,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_cfg sc7180_dpphy_cfg = अणु
+static const struct qmp_phy_cfg sc7180_dpphy_cfg = {
 	.type			= PHY_TYPE_DP,
 	.nlanes			= 1,
 
@@ -2975,14 +2974,14 @@
 	.configure_dp_tx = qcom_qmp_v3_phy_configure_dp_tx,
 	.configure_dp_phy = qcom_qmp_v3_phy_configure_dp_phy,
 	.calibrate_dp_phy = qcom_qmp_v3_dp_phy_calibrate,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_combo_cfg sc7180_usb3dpphy_cfg = अणु
+static const struct qmp_phy_combo_cfg sc7180_usb3dpphy_cfg = {
 	.usb_cfg		= &sc7180_usb3phy_cfg,
 	.dp_cfg			= &sc7180_dpphy_cfg,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_cfg qmp_v3_usb3_uniphy_cfg = अणु
+static const struct qmp_phy_cfg qmp_v3_usb3_uniphy_cfg = {
 	.type			= PHY_TYPE_USB3,
 	.nlanes			= 1,
 
@@ -3008,9 +3007,9 @@
 	.has_pwrdn_delay	= true,
 	.pwrdn_delay_min	= POWER_DOWN_DELAY_US_MIN,
 	.pwrdn_delay_max	= POWER_DOWN_DELAY_US_MAX,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_cfg sdm845_ufsphy_cfg = अणु
+static const struct qmp_phy_cfg sdm845_ufsphy_cfg = {
 	.type			= PHY_TYPE_UFS,
 	.nlanes			= 2,
 
@@ -3033,9 +3032,9 @@
 
 	.is_dual_lane_phy	= true,
 	.no_pcs_sw_reset	= true,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_cfg msm8998_pciephy_cfg = अणु
+static const struct qmp_phy_cfg msm8998_pciephy_cfg = {
 	.type			= PHY_TYPE_PCIE,
 	.nlanes			= 1,
 
@@ -3057,9 +3056,9 @@
 
 	.start_ctrl             = SERDES_START | PCS_START,
 	.pwrdn_ctrl		= SW_PWRDN | REFCLK_DRV_DSBL,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_cfg msm8998_usb3phy_cfg = अणु
+static const struct qmp_phy_cfg msm8998_usb3phy_cfg = {
 	.type                   = PHY_TYPE_USB3,
 	.nlanes                 = 1,
 
@@ -3083,9 +3082,9 @@
 	.pwrdn_ctrl             = SW_PWRDN,
 
 	.is_dual_lane_phy       = true,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_cfg sm8150_ufsphy_cfg = अणु
+static const struct qmp_phy_cfg sm8150_ufsphy_cfg = {
 	.type			= PHY_TYPE_UFS,
 	.nlanes			= 2,
 
@@ -3107,9 +3106,9 @@
 	.pwrdn_ctrl		= SW_PWRDN,
 
 	.is_dual_lane_phy	= true,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_cfg sm8150_usb3phy_cfg = अणु
+static const struct qmp_phy_cfg sm8150_usb3phy_cfg = {
 	.type			= PHY_TYPE_USB3,
 	.nlanes			= 1,
 
@@ -3138,9 +3137,9 @@
 
 	.has_phy_dp_com_ctrl	= true,
 	.is_dual_lane_phy	= true,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_cfg sm8150_usb3_uniphy_cfg = अणु
+static const struct qmp_phy_cfg sm8150_usb3_uniphy_cfg = {
 	.type			= PHY_TYPE_USB3,
 	.nlanes			= 1,
 
@@ -3166,9 +3165,9 @@
 	.has_pwrdn_delay	= true,
 	.pwrdn_delay_min	= POWER_DOWN_DELAY_US_MIN,
 	.pwrdn_delay_max	= POWER_DOWN_DELAY_US_MAX,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_cfg sm8250_usb3phy_cfg = अणु
+static const struct qmp_phy_cfg sm8250_usb3phy_cfg = {
 	.type			= PHY_TYPE_USB3,
 	.nlanes			= 1,
 
@@ -3197,9 +3196,9 @@
 
 	.has_phy_dp_com_ctrl	= true,
 	.is_dual_lane_phy	= true,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_cfg sm8250_usb3_uniphy_cfg = अणु
+static const struct qmp_phy_cfg sm8250_usb3_uniphy_cfg = {
 	.type			= PHY_TYPE_USB3,
 	.nlanes			= 1,
 
@@ -3225,9 +3224,9 @@
 	.has_pwrdn_delay	= true,
 	.pwrdn_delay_min	= POWER_DOWN_DELAY_US_MIN,
 	.pwrdn_delay_max	= POWER_DOWN_DELAY_US_MAX,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_cfg sm8250_dpphy_cfg = अणु
+static const struct qmp_phy_cfg sm8250_dpphy_cfg = {
 	.type			= PHY_TYPE_DP,
 	.nlanes			= 1,
 
@@ -3260,14 +3259,14 @@
 	.configure_dp_tx = qcom_qmp_v4_phy_configure_dp_tx,
 	.configure_dp_phy = qcom_qmp_v4_phy_configure_dp_phy,
 	.calibrate_dp_phy = qcom_qmp_v4_dp_phy_calibrate,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_combo_cfg sm8250_usb3dpphy_cfg = अणु
+static const struct qmp_phy_combo_cfg sm8250_usb3dpphy_cfg = {
 	.usb_cfg		= &sm8250_usb3phy_cfg,
 	.dp_cfg			= &sm8250_dpphy_cfg,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_cfg sdx55_usb3_uniphy_cfg = अणु
+static const struct qmp_phy_cfg sdx55_usb3_uniphy_cfg = {
 	.type			= PHY_TYPE_USB3,
 	.nlanes			= 1,
 
@@ -3293,9 +3292,9 @@
 	.has_pwrdn_delay	= true,
 	.pwrdn_delay_min	= POWER_DOWN_DELAY_US_MIN,
 	.pwrdn_delay_max	= POWER_DOWN_DELAY_US_MAX,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_cfg sm8350_ufsphy_cfg = अणु
+static const struct qmp_phy_cfg sm8350_ufsphy_cfg = {
 	.type			= PHY_TYPE_UFS,
 	.nlanes			= 2,
 
@@ -3317,9 +3316,9 @@
 	.pwrdn_ctrl		= SW_PWRDN,
 
 	.is_dual_lane_phy	= true,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_cfg sm8350_usb3phy_cfg = अणु
+static const struct qmp_phy_cfg sm8350_usb3phy_cfg = {
 	.type			= PHY_TYPE_USB3,
 	.nlanes			= 1,
 
@@ -3348,9 +3347,9 @@
 
 	.has_phy_dp_com_ctrl	= true,
 	.is_dual_lane_phy	= true,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qmp_phy_cfg sm8350_usb3_uniphy_cfg = अणु
+static const struct qmp_phy_cfg sm8350_usb3_uniphy_cfg = {
 	.type			= PHY_TYPE_USB3,
 	.nlanes			= 1,
 
@@ -3376,240 +3375,240 @@
 	.has_pwrdn_delay	= true,
 	.pwrdn_delay_min	= POWER_DOWN_DELAY_US_MIN,
 	.pwrdn_delay_max	= POWER_DOWN_DELAY_US_MAX,
-पूर्ण;
+};
 
-अटल व्योम qcom_qmp_phy_configure_lane(व्योम __iomem *base,
-					स्थिर अचिन्हित पूर्णांक *regs,
-					स्थिर काष्ठा qmp_phy_init_tbl tbl[],
-					पूर्णांक num,
+static void qcom_qmp_phy_configure_lane(void __iomem *base,
+					const unsigned int *regs,
+					const struct qmp_phy_init_tbl tbl[],
+					int num,
 					u8 lane_mask)
-अणु
-	पूर्णांक i;
-	स्थिर काष्ठा qmp_phy_init_tbl *t = tbl;
+{
+	int i;
+	const struct qmp_phy_init_tbl *t = tbl;
 
-	अगर (!t)
-		वापस;
+	if (!t)
+		return;
 
-	क्रम (i = 0; i < num; i++, t++) अणु
-		अगर (!(t->lane_mask & lane_mask))
-			जारी;
+	for (i = 0; i < num; i++, t++) {
+		if (!(t->lane_mask & lane_mask))
+			continue;
 
-		अगर (t->in_layout)
-			ग_लिखोl(t->val, base + regs[t->offset]);
-		अन्यथा
-			ग_लिखोl(t->val, base + t->offset);
-	पूर्ण
-पूर्ण
+		if (t->in_layout)
+			writel(t->val, base + regs[t->offset]);
+		else
+			writel(t->val, base + t->offset);
+	}
+}
 
-अटल व्योम qcom_qmp_phy_configure(व्योम __iomem *base,
-				   स्थिर अचिन्हित पूर्णांक *regs,
-				   स्थिर काष्ठा qmp_phy_init_tbl tbl[],
-				   पूर्णांक num)
-अणु
+static void qcom_qmp_phy_configure(void __iomem *base,
+				   const unsigned int *regs,
+				   const struct qmp_phy_init_tbl tbl[],
+				   int num)
+{
 	qcom_qmp_phy_configure_lane(base, regs, tbl, num, 0xff);
-पूर्ण
+}
 
-अटल पूर्णांक qcom_qmp_phy_serdes_init(काष्ठा qmp_phy *qphy)
-अणु
-	काष्ठा qcom_qmp *qmp = qphy->qmp;
-	स्थिर काष्ठा qmp_phy_cfg *cfg = qphy->cfg;
-	व्योम __iomem *serdes = qphy->serdes;
-	स्थिर काष्ठा phy_configure_opts_dp *dp_opts = &qphy->dp_opts;
-	स्थिर काष्ठा qmp_phy_init_tbl *serdes_tbl = cfg->serdes_tbl;
-	पूर्णांक serdes_tbl_num = cfg->serdes_tbl_num;
-	पूर्णांक ret;
+static int qcom_qmp_phy_serdes_init(struct qmp_phy *qphy)
+{
+	struct qcom_qmp *qmp = qphy->qmp;
+	const struct qmp_phy_cfg *cfg = qphy->cfg;
+	void __iomem *serdes = qphy->serdes;
+	const struct phy_configure_opts_dp *dp_opts = &qphy->dp_opts;
+	const struct qmp_phy_init_tbl *serdes_tbl = cfg->serdes_tbl;
+	int serdes_tbl_num = cfg->serdes_tbl_num;
+	int ret;
 
 	qcom_qmp_phy_configure(serdes, cfg->regs, serdes_tbl, serdes_tbl_num);
-	अगर (cfg->serdes_tbl_sec)
+	if (cfg->serdes_tbl_sec)
 		qcom_qmp_phy_configure(serdes, cfg->regs, cfg->serdes_tbl_sec,
 				       cfg->serdes_tbl_num_sec);
 
-	अगर (cfg->type == PHY_TYPE_DP) अणु
-		चयन (dp_opts->link_rate) अणु
-		हाल 1620:
+	if (cfg->type == PHY_TYPE_DP) {
+		switch (dp_opts->link_rate) {
+		case 1620:
 			qcom_qmp_phy_configure(serdes, cfg->regs,
 					       cfg->serdes_tbl_rbr,
 					       cfg->serdes_tbl_rbr_num);
-			अवरोध;
-		हाल 2700:
+			break;
+		case 2700:
 			qcom_qmp_phy_configure(serdes, cfg->regs,
 					       cfg->serdes_tbl_hbr,
 					       cfg->serdes_tbl_hbr_num);
-			अवरोध;
-		हाल 5400:
+			break;
+		case 5400:
 			qcom_qmp_phy_configure(serdes, cfg->regs,
 					       cfg->serdes_tbl_hbr2,
 					       cfg->serdes_tbl_hbr2_num);
-			अवरोध;
-		हाल 8100:
+			break;
+		case 8100:
 			qcom_qmp_phy_configure(serdes, cfg->regs,
 					       cfg->serdes_tbl_hbr3,
 					       cfg->serdes_tbl_hbr3_num);
-			अवरोध;
-		शेष:
+			break;
+		default:
 			/* Other link rates aren't supported */
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
 
-	अगर (cfg->has_phy_com_ctrl) अणु
-		व्योम __iomem *status;
-		अचिन्हित पूर्णांक mask, val;
+	if (cfg->has_phy_com_ctrl) {
+		void __iomem *status;
+		unsigned int mask, val;
 
 		qphy_clrbits(serdes, cfg->regs[QPHY_COM_SW_RESET], SW_RESET);
 		qphy_setbits(serdes, cfg->regs[QPHY_COM_START_CONTROL],
 			     SERDES_START | PCS_START);
 
 		status = serdes + cfg->regs[QPHY_COM_PCS_READY_STATUS];
-		mask = cfg->mask_com_pcs_पढ़ोy;
+		mask = cfg->mask_com_pcs_ready;
 
-		ret = पढ़ोl_poll_समयout(status, val, (val & mask), 10,
+		ret = readl_poll_timeout(status, val, (val & mask), 10,
 					 PHY_INIT_COMPLETE_TIMEOUT);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(qmp->dev,
 				"phy common block init timed-out\n");
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम qcom_qmp_v3_phy_dp_aux_init(काष्ठा qmp_phy *qphy)
-अणु
-	ग_लिखोl(DP_PHY_PD_CTL_PWRDN | DP_PHY_PD_CTL_AUX_PWRDN |
+static void qcom_qmp_v3_phy_dp_aux_init(struct qmp_phy *qphy)
+{
+	writel(DP_PHY_PD_CTL_PWRDN | DP_PHY_PD_CTL_AUX_PWRDN |
 	       DP_PHY_PD_CTL_PLL_PWRDN | DP_PHY_PD_CTL_DP_CLAMP_EN,
 	       qphy->pcs + QSERDES_DP_PHY_PD_CTL);
 
-	/* Turn on BIAS current क्रम PHY/PLL */
-	ग_लिखोl(QSERDES_V3_COM_BIAS_EN | QSERDES_V3_COM_BIAS_EN_MUX |
+	/* Turn on BIAS current for PHY/PLL */
+	writel(QSERDES_V3_COM_BIAS_EN | QSERDES_V3_COM_BIAS_EN_MUX |
 	       QSERDES_V3_COM_CLKBUF_L_EN | QSERDES_V3_COM_EN_SYSCLK_TX_SEL,
 	       qphy->serdes + QSERDES_V3_COM_BIAS_EN_CLKBUFLR_EN);
 
-	ग_लिखोl(DP_PHY_PD_CTL_PSR_PWRDN, qphy->pcs + QSERDES_DP_PHY_PD_CTL);
+	writel(DP_PHY_PD_CTL_PSR_PWRDN, qphy->pcs + QSERDES_DP_PHY_PD_CTL);
 
-	ग_लिखोl(DP_PHY_PD_CTL_PWRDN | DP_PHY_PD_CTL_AUX_PWRDN |
+	writel(DP_PHY_PD_CTL_PWRDN | DP_PHY_PD_CTL_AUX_PWRDN |
 	       DP_PHY_PD_CTL_LANE_0_1_PWRDN |
 	       DP_PHY_PD_CTL_LANE_2_3_PWRDN | DP_PHY_PD_CTL_PLL_PWRDN |
 	       DP_PHY_PD_CTL_DP_CLAMP_EN,
 	       qphy->pcs + QSERDES_DP_PHY_PD_CTL);
 
-	ग_लिखोl(QSERDES_V3_COM_BIAS_EN |
+	writel(QSERDES_V3_COM_BIAS_EN |
 	       QSERDES_V3_COM_BIAS_EN_MUX | QSERDES_V3_COM_CLKBUF_R_EN |
 	       QSERDES_V3_COM_CLKBUF_L_EN | QSERDES_V3_COM_EN_SYSCLK_TX_SEL |
 	       QSERDES_V3_COM_CLKBUF_RX_DRIVE_L,
 	       qphy->serdes + QSERDES_V3_COM_BIAS_EN_CLKBUFLR_EN);
 
-	ग_लिखोl(0x00, qphy->pcs + QSERDES_DP_PHY_AUX_CFG0);
-	ग_लिखोl(0x13, qphy->pcs + QSERDES_DP_PHY_AUX_CFG1);
-	ग_लिखोl(0x24, qphy->pcs + QSERDES_DP_PHY_AUX_CFG2);
-	ग_लिखोl(0x00, qphy->pcs + QSERDES_DP_PHY_AUX_CFG3);
-	ग_लिखोl(0x0a, qphy->pcs + QSERDES_DP_PHY_AUX_CFG4);
-	ग_लिखोl(0x26, qphy->pcs + QSERDES_DP_PHY_AUX_CFG5);
-	ग_लिखोl(0x0a, qphy->pcs + QSERDES_DP_PHY_AUX_CFG6);
-	ग_लिखोl(0x03, qphy->pcs + QSERDES_DP_PHY_AUX_CFG7);
-	ग_लिखोl(0xbb, qphy->pcs + QSERDES_DP_PHY_AUX_CFG8);
-	ग_लिखोl(0x03, qphy->pcs + QSERDES_DP_PHY_AUX_CFG9);
+	writel(0x00, qphy->pcs + QSERDES_DP_PHY_AUX_CFG0);
+	writel(0x13, qphy->pcs + QSERDES_DP_PHY_AUX_CFG1);
+	writel(0x24, qphy->pcs + QSERDES_DP_PHY_AUX_CFG2);
+	writel(0x00, qphy->pcs + QSERDES_DP_PHY_AUX_CFG3);
+	writel(0x0a, qphy->pcs + QSERDES_DP_PHY_AUX_CFG4);
+	writel(0x26, qphy->pcs + QSERDES_DP_PHY_AUX_CFG5);
+	writel(0x0a, qphy->pcs + QSERDES_DP_PHY_AUX_CFG6);
+	writel(0x03, qphy->pcs + QSERDES_DP_PHY_AUX_CFG7);
+	writel(0xbb, qphy->pcs + QSERDES_DP_PHY_AUX_CFG8);
+	writel(0x03, qphy->pcs + QSERDES_DP_PHY_AUX_CFG9);
 	qphy->dp_aux_cfg = 0;
 
-	ग_लिखोl(PHY_AUX_STOP_ERR_MASK | PHY_AUX_DEC_ERR_MASK |
+	writel(PHY_AUX_STOP_ERR_MASK | PHY_AUX_DEC_ERR_MASK |
 	       PHY_AUX_SYNC_ERR_MASK | PHY_AUX_ALIGN_ERR_MASK |
 	       PHY_AUX_REQ_ERR_MASK,
 	       qphy->pcs + QSERDES_V3_DP_PHY_AUX_INTERRUPT_MASK);
-पूर्ण
+}
 
-अटल स्थिर u8 qmp_dp_v3_pre_emphasis_hbr3_hbr2[4][4] = अणु
-	अणु 0x00, 0x0c, 0x15, 0x1a पूर्ण,
-	अणु 0x02, 0x0e, 0x16, 0xff पूर्ण,
-	अणु 0x02, 0x11, 0xff, 0xff पूर्ण,
-	अणु 0x04, 0xff, 0xff, 0xff पूर्ण
-पूर्ण;
+static const u8 qmp_dp_v3_pre_emphasis_hbr3_hbr2[4][4] = {
+	{ 0x00, 0x0c, 0x15, 0x1a },
+	{ 0x02, 0x0e, 0x16, 0xff },
+	{ 0x02, 0x11, 0xff, 0xff },
+	{ 0x04, 0xff, 0xff, 0xff }
+};
 
-अटल स्थिर u8 qmp_dp_v3_voltage_swing_hbr3_hbr2[4][4] = अणु
-	अणु 0x02, 0x12, 0x16, 0x1a पूर्ण,
-	अणु 0x09, 0x19, 0x1f, 0xff पूर्ण,
-	अणु 0x10, 0x1f, 0xff, 0xff पूर्ण,
-	अणु 0x1f, 0xff, 0xff, 0xff पूर्ण
-पूर्ण;
+static const u8 qmp_dp_v3_voltage_swing_hbr3_hbr2[4][4] = {
+	{ 0x02, 0x12, 0x16, 0x1a },
+	{ 0x09, 0x19, 0x1f, 0xff },
+	{ 0x10, 0x1f, 0xff, 0xff },
+	{ 0x1f, 0xff, 0xff, 0xff }
+};
 
-अटल स्थिर u8 qmp_dp_v3_pre_emphasis_hbr_rbr[4][4] = अणु
-	अणु 0x00, 0x0c, 0x14, 0x19 पूर्ण,
-	अणु 0x00, 0x0b, 0x12, 0xff पूर्ण,
-	अणु 0x00, 0x0b, 0xff, 0xff पूर्ण,
-	अणु 0x04, 0xff, 0xff, 0xff पूर्ण
-पूर्ण;
+static const u8 qmp_dp_v3_pre_emphasis_hbr_rbr[4][4] = {
+	{ 0x00, 0x0c, 0x14, 0x19 },
+	{ 0x00, 0x0b, 0x12, 0xff },
+	{ 0x00, 0x0b, 0xff, 0xff },
+	{ 0x04, 0xff, 0xff, 0xff }
+};
 
-अटल स्थिर u8 qmp_dp_v3_voltage_swing_hbr_rbr[4][4] = अणु
-	अणु 0x08, 0x0f, 0x16, 0x1f पूर्ण,
-	अणु 0x11, 0x1e, 0x1f, 0xff पूर्ण,
-	अणु 0x19, 0x1f, 0xff, 0xff पूर्ण,
-	अणु 0x1f, 0xff, 0xff, 0xff पूर्ण
-पूर्ण;
+static const u8 qmp_dp_v3_voltage_swing_hbr_rbr[4][4] = {
+	{ 0x08, 0x0f, 0x16, 0x1f },
+	{ 0x11, 0x1e, 0x1f, 0xff },
+	{ 0x19, 0x1f, 0xff, 0xff },
+	{ 0x1f, 0xff, 0xff, 0xff }
+};
 
-अटल पूर्णांक qcom_qmp_phy_configure_dp_swing(काष्ठा qmp_phy *qphy,
-		अचिन्हित पूर्णांक drv_lvl_reg, अचिन्हित पूर्णांक emp_post_reg)
-अणु
-	स्थिर काष्ठा phy_configure_opts_dp *dp_opts = &qphy->dp_opts;
-	अचिन्हित पूर्णांक v_level = 0, p_level = 0;
+static int qcom_qmp_phy_configure_dp_swing(struct qmp_phy *qphy,
+		unsigned int drv_lvl_reg, unsigned int emp_post_reg)
+{
+	const struct phy_configure_opts_dp *dp_opts = &qphy->dp_opts;
+	unsigned int v_level = 0, p_level = 0;
 	u8 voltage_swing_cfg, pre_emphasis_cfg;
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < dp_opts->lanes; i++) अणु
+	for (i = 0; i < dp_opts->lanes; i++) {
 		v_level = max(v_level, dp_opts->voltage[i]);
 		p_level = max(p_level, dp_opts->pre[i]);
-	पूर्ण
+	}
 
-	अगर (dp_opts->link_rate <= 2700) अणु
+	if (dp_opts->link_rate <= 2700) {
 		voltage_swing_cfg = qmp_dp_v3_voltage_swing_hbr_rbr[v_level][p_level];
 		pre_emphasis_cfg = qmp_dp_v3_pre_emphasis_hbr_rbr[v_level][p_level];
-	पूर्ण अन्यथा अणु
+	} else {
 		voltage_swing_cfg = qmp_dp_v3_voltage_swing_hbr3_hbr2[v_level][p_level];
 		pre_emphasis_cfg = qmp_dp_v3_pre_emphasis_hbr3_hbr2[v_level][p_level];
-	पूर्ण
+	}
 
 	/* TODO: Move check to config check */
-	अगर (voltage_swing_cfg == 0xFF && pre_emphasis_cfg == 0xFF)
-		वापस -EINVAL;
+	if (voltage_swing_cfg == 0xFF && pre_emphasis_cfg == 0xFF)
+		return -EINVAL;
 
-	/* Enable MUX to use Cursor values from these रेजिस्टरs */
+	/* Enable MUX to use Cursor values from these registers */
 	voltage_swing_cfg |= DP_PHY_TXn_TX_DRV_LVL_MUX_EN;
 	pre_emphasis_cfg |= DP_PHY_TXn_TX_EMP_POST1_LVL_MUX_EN;
 
-	ग_लिखोl(voltage_swing_cfg, qphy->tx + drv_lvl_reg);
-	ग_लिखोl(pre_emphasis_cfg, qphy->tx + emp_post_reg);
-	ग_लिखोl(voltage_swing_cfg, qphy->tx2 + drv_lvl_reg);
-	ग_लिखोl(pre_emphasis_cfg, qphy->tx2 + emp_post_reg);
+	writel(voltage_swing_cfg, qphy->tx + drv_lvl_reg);
+	writel(pre_emphasis_cfg, qphy->tx + emp_post_reg);
+	writel(voltage_swing_cfg, qphy->tx2 + drv_lvl_reg);
+	writel(pre_emphasis_cfg, qphy->tx2 + emp_post_reg);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम qcom_qmp_v3_phy_configure_dp_tx(काष्ठा qmp_phy *qphy)
-अणु
-	स्थिर काष्ठा phy_configure_opts_dp *dp_opts = &qphy->dp_opts;
+static void qcom_qmp_v3_phy_configure_dp_tx(struct qmp_phy *qphy)
+{
+	const struct phy_configure_opts_dp *dp_opts = &qphy->dp_opts;
 	u32 bias_en, drvr_en;
 
-	अगर (qcom_qmp_phy_configure_dp_swing(qphy,
+	if (qcom_qmp_phy_configure_dp_swing(qphy,
 				QSERDES_V3_TX_TX_DRV_LVL,
 				QSERDES_V3_TX_TX_EMP_POST1_LVL) < 0)
-		वापस;
+		return;
 
-	अगर (dp_opts->lanes == 1) अणु
+	if (dp_opts->lanes == 1) {
 		bias_en = 0x3e;
 		drvr_en = 0x13;
-	पूर्ण अन्यथा अणु
+	} else {
 		bias_en = 0x3f;
 		drvr_en = 0x10;
-	पूर्ण
+	}
 
-	ग_लिखोl(drvr_en, qphy->tx + QSERDES_V3_TX_HIGHZ_DRVR_EN);
-	ग_लिखोl(bias_en, qphy->tx + QSERDES_V3_TX_TRANSCEIVER_BIAS_EN);
-	ग_लिखोl(drvr_en, qphy->tx2 + QSERDES_V3_TX_HIGHZ_DRVR_EN);
-	ग_लिखोl(bias_en, qphy->tx2 + QSERDES_V3_TX_TRANSCEIVER_BIAS_EN);
-पूर्ण
+	writel(drvr_en, qphy->tx + QSERDES_V3_TX_HIGHZ_DRVR_EN);
+	writel(bias_en, qphy->tx + QSERDES_V3_TX_TRANSCEIVER_BIAS_EN);
+	writel(drvr_en, qphy->tx2 + QSERDES_V3_TX_HIGHZ_DRVR_EN);
+	writel(bias_en, qphy->tx2 + QSERDES_V3_TX_TRANSCEIVER_BIAS_EN);
+}
 
-अटल bool qcom_qmp_phy_configure_dp_mode(काष्ठा qmp_phy *qphy)
-अणु
+static bool qcom_qmp_phy_configure_dp_mode(struct qmp_phy *qphy)
+{
 	u32 val;
 	bool reverse = false;
 
@@ -3617,392 +3616,392 @@
 	      DP_PHY_PD_CTL_PLL_PWRDN | DP_PHY_PD_CTL_DP_CLAMP_EN;
 
 	/*
-	 * TODO: Assume orientation is CC1 क्रम now and two lanes, need to
+	 * TODO: Assume orientation is CC1 for now and two lanes, need to
 	 * use type-c connector to understand orientation and lanes.
 	 *
-	 * Otherwise val changes to be like below अगर this code understood
+	 * Otherwise val changes to be like below if this code understood
 	 * the orientation of the type-c cable.
 	 *
-	 * अगर (lane_cnt == 4 || orientation == ORIENTATION_CC2)
+	 * if (lane_cnt == 4 || orientation == ORIENTATION_CC2)
 	 *	val |= DP_PHY_PD_CTL_LANE_0_1_PWRDN;
-	 * अगर (lane_cnt == 4 || orientation == ORIENTATION_CC1)
+	 * if (lane_cnt == 4 || orientation == ORIENTATION_CC1)
 	 *	val |= DP_PHY_PD_CTL_LANE_2_3_PWRDN;
-	 * अगर (orientation == ORIENTATION_CC2)
-	 *	ग_लिखोl(0x4c, qphy->pcs + QSERDES_V3_DP_PHY_MODE);
+	 * if (orientation == ORIENTATION_CC2)
+	 *	writel(0x4c, qphy->pcs + QSERDES_V3_DP_PHY_MODE);
 	 */
 	val |= DP_PHY_PD_CTL_LANE_2_3_PWRDN;
-	ग_लिखोl(val, qphy->pcs + QSERDES_DP_PHY_PD_CTL);
+	writel(val, qphy->pcs + QSERDES_DP_PHY_PD_CTL);
 
-	ग_लिखोl(0x5c, qphy->pcs + QSERDES_DP_PHY_MODE);
+	writel(0x5c, qphy->pcs + QSERDES_DP_PHY_MODE);
 
-	वापस reverse;
-पूर्ण
+	return reverse;
+}
 
-अटल पूर्णांक qcom_qmp_v3_phy_configure_dp_phy(काष्ठा qmp_phy *qphy)
-अणु
-	स्थिर काष्ठा qmp_phy_dp_clks *dp_clks = qphy->dp_clks;
-	स्थिर काष्ठा phy_configure_opts_dp *dp_opts = &qphy->dp_opts;
-	u32 phy_vco_भाग, status;
-	अचिन्हित दीर्घ pixel_freq;
+static int qcom_qmp_v3_phy_configure_dp_phy(struct qmp_phy *qphy)
+{
+	const struct qmp_phy_dp_clks *dp_clks = qphy->dp_clks;
+	const struct phy_configure_opts_dp *dp_opts = &qphy->dp_opts;
+	u32 phy_vco_div, status;
+	unsigned long pixel_freq;
 
 	qcom_qmp_phy_configure_dp_mode(qphy);
 
-	ग_लिखोl(0x05, qphy->pcs + QSERDES_V3_DP_PHY_TX0_TX1_LANE_CTL);
-	ग_लिखोl(0x05, qphy->pcs + QSERDES_V3_DP_PHY_TX2_TX3_LANE_CTL);
+	writel(0x05, qphy->pcs + QSERDES_V3_DP_PHY_TX0_TX1_LANE_CTL);
+	writel(0x05, qphy->pcs + QSERDES_V3_DP_PHY_TX2_TX3_LANE_CTL);
 
-	चयन (dp_opts->link_rate) अणु
-	हाल 1620:
-		phy_vco_भाग = 0x1;
+	switch (dp_opts->link_rate) {
+	case 1620:
+		phy_vco_div = 0x1;
 		pixel_freq = 1620000000UL / 2;
-		अवरोध;
-	हाल 2700:
-		phy_vco_भाग = 0x1;
+		break;
+	case 2700:
+		phy_vco_div = 0x1;
 		pixel_freq = 2700000000UL / 2;
-		अवरोध;
-	हाल 5400:
-		phy_vco_भाग = 0x2;
+		break;
+	case 5400:
+		phy_vco_div = 0x2;
 		pixel_freq = 5400000000UL / 4;
-		अवरोध;
-	हाल 8100:
-		phy_vco_भाग = 0x0;
+		break;
+	case 8100:
+		phy_vco_div = 0x0;
 		pixel_freq = 8100000000UL / 6;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		/* Other link rates aren't supported */
-		वापस -EINVAL;
-	पूर्ण
-	ग_लिखोl(phy_vco_भाग, qphy->pcs + QSERDES_V3_DP_PHY_VCO_DIV);
+		return -EINVAL;
+	}
+	writel(phy_vco_div, qphy->pcs + QSERDES_V3_DP_PHY_VCO_DIV);
 
 	clk_set_rate(dp_clks->dp_link_hw.clk, dp_opts->link_rate * 100000);
 	clk_set_rate(dp_clks->dp_pixel_hw.clk, pixel_freq);
 
-	ग_लिखोl(0x04, qphy->pcs + QSERDES_DP_PHY_AUX_CFG2);
-	ग_लिखोl(0x01, qphy->pcs + QSERDES_DP_PHY_CFG);
-	ग_लिखोl(0x05, qphy->pcs + QSERDES_DP_PHY_CFG);
-	ग_लिखोl(0x01, qphy->pcs + QSERDES_DP_PHY_CFG);
-	ग_लिखोl(0x09, qphy->pcs + QSERDES_DP_PHY_CFG);
+	writel(0x04, qphy->pcs + QSERDES_DP_PHY_AUX_CFG2);
+	writel(0x01, qphy->pcs + QSERDES_DP_PHY_CFG);
+	writel(0x05, qphy->pcs + QSERDES_DP_PHY_CFG);
+	writel(0x01, qphy->pcs + QSERDES_DP_PHY_CFG);
+	writel(0x09, qphy->pcs + QSERDES_DP_PHY_CFG);
 
-	ग_लिखोl(0x20, qphy->serdes + QSERDES_V3_COM_RESETSM_CNTRL);
+	writel(0x20, qphy->serdes + QSERDES_V3_COM_RESETSM_CNTRL);
 
-	अगर (पढ़ोl_poll_समयout(qphy->serdes + QSERDES_V3_COM_C_READY_STATUS,
+	if (readl_poll_timeout(qphy->serdes + QSERDES_V3_COM_C_READY_STATUS,
 			status,
 			((status & BIT(0)) > 0),
 			500,
 			10000))
-		वापस -ETIMEDOUT;
+		return -ETIMEDOUT;
 
-	ग_लिखोl(0x19, qphy->pcs + QSERDES_DP_PHY_CFG);
+	writel(0x19, qphy->pcs + QSERDES_DP_PHY_CFG);
 
-	अगर (पढ़ोl_poll_समयout(qphy->pcs + QSERDES_V3_DP_PHY_STATUS,
+	if (readl_poll_timeout(qphy->pcs + QSERDES_V3_DP_PHY_STATUS,
 			status,
 			((status & BIT(1)) > 0),
 			500,
 			10000))
-		वापस -ETIMEDOUT;
+		return -ETIMEDOUT;
 
-	ग_लिखोl(0x18, qphy->pcs + QSERDES_DP_PHY_CFG);
+	writel(0x18, qphy->pcs + QSERDES_DP_PHY_CFG);
 	udelay(2000);
-	ग_लिखोl(0x19, qphy->pcs + QSERDES_DP_PHY_CFG);
+	writel(0x19, qphy->pcs + QSERDES_DP_PHY_CFG);
 
-	वापस पढ़ोl_poll_समयout(qphy->pcs + QSERDES_V3_DP_PHY_STATUS,
+	return readl_poll_timeout(qphy->pcs + QSERDES_V3_DP_PHY_STATUS,
 			status,
 			((status & BIT(1)) > 0),
 			500,
 			10000);
-पूर्ण
+}
 
 /*
- * We need to calibrate the aux setting here as many बार
+ * We need to calibrate the aux setting here as many times
  * as the caller tries
  */
-अटल पूर्णांक qcom_qmp_v3_dp_phy_calibrate(काष्ठा qmp_phy *qphy)
-अणु
-	अटल स्थिर u8 cfg1_settings[] = अणु 0x13, 0x23, 0x1d पूर्ण;
+static int qcom_qmp_v3_dp_phy_calibrate(struct qmp_phy *qphy)
+{
+	static const u8 cfg1_settings[] = { 0x13, 0x23, 0x1d };
 	u8 val;
 
 	qphy->dp_aux_cfg++;
 	qphy->dp_aux_cfg %= ARRAY_SIZE(cfg1_settings);
 	val = cfg1_settings[qphy->dp_aux_cfg];
 
-	ग_लिखोl(val, qphy->pcs + QSERDES_DP_PHY_AUX_CFG1);
+	writel(val, qphy->pcs + QSERDES_DP_PHY_AUX_CFG1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम qcom_qmp_v4_phy_dp_aux_init(काष्ठा qmp_phy *qphy)
-अणु
-	ग_लिखोl(DP_PHY_PD_CTL_PWRDN | DP_PHY_PD_CTL_PSR_PWRDN | DP_PHY_PD_CTL_AUX_PWRDN |
+static void qcom_qmp_v4_phy_dp_aux_init(struct qmp_phy *qphy)
+{
+	writel(DP_PHY_PD_CTL_PWRDN | DP_PHY_PD_CTL_PSR_PWRDN | DP_PHY_PD_CTL_AUX_PWRDN |
 	       DP_PHY_PD_CTL_PLL_PWRDN | DP_PHY_PD_CTL_DP_CLAMP_EN,
 	       qphy->pcs + QSERDES_DP_PHY_PD_CTL);
 
-	/* Turn on BIAS current क्रम PHY/PLL */
-	ग_लिखोl(0x17, qphy->serdes + QSERDES_V4_COM_BIAS_EN_CLKBUFLR_EN);
+	/* Turn on BIAS current for PHY/PLL */
+	writel(0x17, qphy->serdes + QSERDES_V4_COM_BIAS_EN_CLKBUFLR_EN);
 
-	ग_लिखोl(0x00, qphy->pcs + QSERDES_DP_PHY_AUX_CFG0);
-	ग_लिखोl(0x13, qphy->pcs + QSERDES_DP_PHY_AUX_CFG1);
-	ग_लिखोl(0xa4, qphy->pcs + QSERDES_DP_PHY_AUX_CFG2);
-	ग_लिखोl(0x00, qphy->pcs + QSERDES_DP_PHY_AUX_CFG3);
-	ग_लिखोl(0x0a, qphy->pcs + QSERDES_DP_PHY_AUX_CFG4);
-	ग_लिखोl(0x26, qphy->pcs + QSERDES_DP_PHY_AUX_CFG5);
-	ग_लिखोl(0x0a, qphy->pcs + QSERDES_DP_PHY_AUX_CFG6);
-	ग_लिखोl(0x03, qphy->pcs + QSERDES_DP_PHY_AUX_CFG7);
-	ग_लिखोl(0xb7, qphy->pcs + QSERDES_DP_PHY_AUX_CFG8);
-	ग_लिखोl(0x03, qphy->pcs + QSERDES_DP_PHY_AUX_CFG9);
+	writel(0x00, qphy->pcs + QSERDES_DP_PHY_AUX_CFG0);
+	writel(0x13, qphy->pcs + QSERDES_DP_PHY_AUX_CFG1);
+	writel(0xa4, qphy->pcs + QSERDES_DP_PHY_AUX_CFG2);
+	writel(0x00, qphy->pcs + QSERDES_DP_PHY_AUX_CFG3);
+	writel(0x0a, qphy->pcs + QSERDES_DP_PHY_AUX_CFG4);
+	writel(0x26, qphy->pcs + QSERDES_DP_PHY_AUX_CFG5);
+	writel(0x0a, qphy->pcs + QSERDES_DP_PHY_AUX_CFG6);
+	writel(0x03, qphy->pcs + QSERDES_DP_PHY_AUX_CFG7);
+	writel(0xb7, qphy->pcs + QSERDES_DP_PHY_AUX_CFG8);
+	writel(0x03, qphy->pcs + QSERDES_DP_PHY_AUX_CFG9);
 	qphy->dp_aux_cfg = 0;
 
-	ग_लिखोl(PHY_AUX_STOP_ERR_MASK | PHY_AUX_DEC_ERR_MASK |
+	writel(PHY_AUX_STOP_ERR_MASK | PHY_AUX_DEC_ERR_MASK |
 	       PHY_AUX_SYNC_ERR_MASK | PHY_AUX_ALIGN_ERR_MASK |
 	       PHY_AUX_REQ_ERR_MASK,
 	       qphy->pcs + QSERDES_V4_DP_PHY_AUX_INTERRUPT_MASK);
-पूर्ण
+}
 
-अटल व्योम qcom_qmp_v4_phy_configure_dp_tx(काष्ठा qmp_phy *qphy)
-अणु
-	/* Program शेष values beक्रमe writing proper values */
-	ग_लिखोl(0x27, qphy->tx + QSERDES_V4_TX_TX_DRV_LVL);
-	ग_लिखोl(0x27, qphy->tx2 + QSERDES_V4_TX_TX_DRV_LVL);
+static void qcom_qmp_v4_phy_configure_dp_tx(struct qmp_phy *qphy)
+{
+	/* Program default values before writing proper values */
+	writel(0x27, qphy->tx + QSERDES_V4_TX_TX_DRV_LVL);
+	writel(0x27, qphy->tx2 + QSERDES_V4_TX_TX_DRV_LVL);
 
-	ग_लिखोl(0x20, qphy->tx + QSERDES_V4_TX_TX_EMP_POST1_LVL);
-	ग_लिखोl(0x20, qphy->tx2 + QSERDES_V4_TX_TX_EMP_POST1_LVL);
+	writel(0x20, qphy->tx + QSERDES_V4_TX_TX_EMP_POST1_LVL);
+	writel(0x20, qphy->tx2 + QSERDES_V4_TX_TX_EMP_POST1_LVL);
 
 	qcom_qmp_phy_configure_dp_swing(qphy,
 			QSERDES_V4_TX_TX_DRV_LVL,
 			QSERDES_V4_TX_TX_EMP_POST1_LVL);
-पूर्ण
+}
 
-अटल पूर्णांक qcom_qmp_v4_phy_configure_dp_phy(काष्ठा qmp_phy *qphy)
-अणु
-	स्थिर काष्ठा qmp_phy_dp_clks *dp_clks = qphy->dp_clks;
-	स्थिर काष्ठा phy_configure_opts_dp *dp_opts = &qphy->dp_opts;
-	u32 phy_vco_भाग, status;
-	अचिन्हित दीर्घ pixel_freq;
+static int qcom_qmp_v4_phy_configure_dp_phy(struct qmp_phy *qphy)
+{
+	const struct qmp_phy_dp_clks *dp_clks = qphy->dp_clks;
+	const struct phy_configure_opts_dp *dp_opts = &qphy->dp_opts;
+	u32 phy_vco_div, status;
+	unsigned long pixel_freq;
 	u32 bias0_en, drvr0_en, bias1_en, drvr1_en;
 	bool reverse;
 
-	ग_लिखोl(0x0f, qphy->pcs + QSERDES_V4_DP_PHY_CFG_1);
+	writel(0x0f, qphy->pcs + QSERDES_V4_DP_PHY_CFG_1);
 
 	reverse = qcom_qmp_phy_configure_dp_mode(qphy);
 
-	ग_लिखोl(0x13, qphy->pcs + QSERDES_DP_PHY_AUX_CFG1);
-	ग_लिखोl(0xa4, qphy->pcs + QSERDES_DP_PHY_AUX_CFG2);
+	writel(0x13, qphy->pcs + QSERDES_DP_PHY_AUX_CFG1);
+	writel(0xa4, qphy->pcs + QSERDES_DP_PHY_AUX_CFG2);
 
-	ग_लिखोl(0x05, qphy->pcs + QSERDES_V4_DP_PHY_TX0_TX1_LANE_CTL);
-	ग_लिखोl(0x05, qphy->pcs + QSERDES_V4_DP_PHY_TX2_TX3_LANE_CTL);
+	writel(0x05, qphy->pcs + QSERDES_V4_DP_PHY_TX0_TX1_LANE_CTL);
+	writel(0x05, qphy->pcs + QSERDES_V4_DP_PHY_TX2_TX3_LANE_CTL);
 
-	चयन (dp_opts->link_rate) अणु
-	हाल 1620:
-		phy_vco_भाग = 0x1;
+	switch (dp_opts->link_rate) {
+	case 1620:
+		phy_vco_div = 0x1;
 		pixel_freq = 1620000000UL / 2;
-		अवरोध;
-	हाल 2700:
-		phy_vco_भाग = 0x1;
+		break;
+	case 2700:
+		phy_vco_div = 0x1;
 		pixel_freq = 2700000000UL / 2;
-		अवरोध;
-	हाल 5400:
-		phy_vco_भाग = 0x2;
+		break;
+	case 5400:
+		phy_vco_div = 0x2;
 		pixel_freq = 5400000000UL / 4;
-		अवरोध;
-	हाल 8100:
-		phy_vco_भाग = 0x0;
+		break;
+	case 8100:
+		phy_vco_div = 0x0;
 		pixel_freq = 8100000000UL / 6;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		/* Other link rates aren't supported */
-		वापस -EINVAL;
-	पूर्ण
-	ग_लिखोl(phy_vco_भाग, qphy->pcs + QSERDES_V4_DP_PHY_VCO_DIV);
+		return -EINVAL;
+	}
+	writel(phy_vco_div, qphy->pcs + QSERDES_V4_DP_PHY_VCO_DIV);
 
 	clk_set_rate(dp_clks->dp_link_hw.clk, dp_opts->link_rate * 100000);
 	clk_set_rate(dp_clks->dp_pixel_hw.clk, pixel_freq);
 
-	ग_लिखोl(0x01, qphy->pcs + QSERDES_DP_PHY_CFG);
-	ग_लिखोl(0x05, qphy->pcs + QSERDES_DP_PHY_CFG);
-	ग_लिखोl(0x01, qphy->pcs + QSERDES_DP_PHY_CFG);
-	ग_लिखोl(0x09, qphy->pcs + QSERDES_DP_PHY_CFG);
+	writel(0x01, qphy->pcs + QSERDES_DP_PHY_CFG);
+	writel(0x05, qphy->pcs + QSERDES_DP_PHY_CFG);
+	writel(0x01, qphy->pcs + QSERDES_DP_PHY_CFG);
+	writel(0x09, qphy->pcs + QSERDES_DP_PHY_CFG);
 
-	ग_लिखोl(0x20, qphy->serdes + QSERDES_V4_COM_RESETSM_CNTRL);
+	writel(0x20, qphy->serdes + QSERDES_V4_COM_RESETSM_CNTRL);
 
-	अगर (पढ़ोl_poll_समयout(qphy->serdes + QSERDES_V4_COM_C_READY_STATUS,
+	if (readl_poll_timeout(qphy->serdes + QSERDES_V4_COM_C_READY_STATUS,
 			status,
 			((status & BIT(0)) > 0),
 			500,
 			10000))
-		वापस -ETIMEDOUT;
+		return -ETIMEDOUT;
 
-	अगर (पढ़ोl_poll_समयout(qphy->serdes + QSERDES_V4_COM_CMN_STATUS,
+	if (readl_poll_timeout(qphy->serdes + QSERDES_V4_COM_CMN_STATUS,
 			status,
 			((status & BIT(0)) > 0),
 			500,
 			10000))
-		वापस -ETIMEDOUT;
+		return -ETIMEDOUT;
 
-	अगर (पढ़ोl_poll_समयout(qphy->serdes + QSERDES_V4_COM_CMN_STATUS,
+	if (readl_poll_timeout(qphy->serdes + QSERDES_V4_COM_CMN_STATUS,
 			status,
 			((status & BIT(1)) > 0),
 			500,
 			10000))
-		वापस -ETIMEDOUT;
+		return -ETIMEDOUT;
 
-	ग_लिखोl(0x19, qphy->pcs + QSERDES_DP_PHY_CFG);
+	writel(0x19, qphy->pcs + QSERDES_DP_PHY_CFG);
 
-	अगर (पढ़ोl_poll_समयout(qphy->pcs + QSERDES_V4_DP_PHY_STATUS,
+	if (readl_poll_timeout(qphy->pcs + QSERDES_V4_DP_PHY_STATUS,
 			status,
 			((status & BIT(0)) > 0),
 			500,
 			10000))
-		वापस -ETIMEDOUT;
+		return -ETIMEDOUT;
 
-	अगर (पढ़ोl_poll_समयout(qphy->pcs + QSERDES_V4_DP_PHY_STATUS,
+	if (readl_poll_timeout(qphy->pcs + QSERDES_V4_DP_PHY_STATUS,
 			status,
 			((status & BIT(1)) > 0),
 			500,
 			10000))
-		वापस -ETIMEDOUT;
+		return -ETIMEDOUT;
 
 	/*
-	 * At least क्रम 7nm DP PHY this has to be करोne after enabling link
-	 * घड़ी.
+	 * At least for 7nm DP PHY this has to be done after enabling link
+	 * clock.
 	 */
 
-	अगर (dp_opts->lanes == 1) अणु
+	if (dp_opts->lanes == 1) {
 		bias0_en = reverse ? 0x3e : 0x15;
 		bias1_en = reverse ? 0x15 : 0x3e;
 		drvr0_en = reverse ? 0x13 : 0x10;
 		drvr1_en = reverse ? 0x10 : 0x13;
-	पूर्ण अन्यथा अगर (dp_opts->lanes == 2) अणु
+	} else if (dp_opts->lanes == 2) {
 		bias0_en = reverse ? 0x3f : 0x15;
 		bias1_en = reverse ? 0x15 : 0x3f;
 		drvr0_en = 0x10;
 		drvr1_en = 0x10;
-	पूर्ण अन्यथा अणु
+	} else {
 		bias0_en = 0x3f;
 		bias1_en = 0x3f;
 		drvr0_en = 0x10;
 		drvr1_en = 0x10;
-	पूर्ण
+	}
 
-	ग_लिखोl(drvr0_en, qphy->tx + QSERDES_V4_TX_HIGHZ_DRVR_EN);
-	ग_लिखोl(bias0_en, qphy->tx + QSERDES_V4_TX_TRANSCEIVER_BIAS_EN);
-	ग_लिखोl(drvr1_en, qphy->tx2 + QSERDES_V4_TX_HIGHZ_DRVR_EN);
-	ग_लिखोl(bias1_en, qphy->tx2 + QSERDES_V4_TX_TRANSCEIVER_BIAS_EN);
+	writel(drvr0_en, qphy->tx + QSERDES_V4_TX_HIGHZ_DRVR_EN);
+	writel(bias0_en, qphy->tx + QSERDES_V4_TX_TRANSCEIVER_BIAS_EN);
+	writel(drvr1_en, qphy->tx2 + QSERDES_V4_TX_HIGHZ_DRVR_EN);
+	writel(bias1_en, qphy->tx2 + QSERDES_V4_TX_TRANSCEIVER_BIAS_EN);
 
-	ग_लिखोl(0x18, qphy->pcs + QSERDES_DP_PHY_CFG);
+	writel(0x18, qphy->pcs + QSERDES_DP_PHY_CFG);
 	udelay(2000);
-	ग_लिखोl(0x19, qphy->pcs + QSERDES_DP_PHY_CFG);
+	writel(0x19, qphy->pcs + QSERDES_DP_PHY_CFG);
 
-	अगर (पढ़ोl_poll_समयout(qphy->pcs + QSERDES_V4_DP_PHY_STATUS,
+	if (readl_poll_timeout(qphy->pcs + QSERDES_V4_DP_PHY_STATUS,
 			status,
 			((status & BIT(1)) > 0),
 			500,
 			10000))
-		वापस -ETIMEDOUT;
+		return -ETIMEDOUT;
 
-	ग_लिखोl(0x0a, qphy->tx + QSERDES_V4_TX_TX_POL_INV);
-	ग_लिखोl(0x0a, qphy->tx2 + QSERDES_V4_TX_TX_POL_INV);
+	writel(0x0a, qphy->tx + QSERDES_V4_TX_TX_POL_INV);
+	writel(0x0a, qphy->tx2 + QSERDES_V4_TX_TX_POL_INV);
 
-	ग_लिखोl(0x27, qphy->tx + QSERDES_V4_TX_TX_DRV_LVL);
-	ग_लिखोl(0x27, qphy->tx2 + QSERDES_V4_TX_TX_DRV_LVL);
+	writel(0x27, qphy->tx + QSERDES_V4_TX_TX_DRV_LVL);
+	writel(0x27, qphy->tx2 + QSERDES_V4_TX_TX_DRV_LVL);
 
-	ग_लिखोl(0x20, qphy->tx + QSERDES_V4_TX_TX_EMP_POST1_LVL);
-	ग_लिखोl(0x20, qphy->tx2 + QSERDES_V4_TX_TX_EMP_POST1_LVL);
+	writel(0x20, qphy->tx + QSERDES_V4_TX_TX_EMP_POST1_LVL);
+	writel(0x20, qphy->tx2 + QSERDES_V4_TX_TX_EMP_POST1_LVL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * We need to calibrate the aux setting here as many बार
+ * We need to calibrate the aux setting here as many times
  * as the caller tries
  */
-अटल पूर्णांक qcom_qmp_v4_dp_phy_calibrate(काष्ठा qmp_phy *qphy)
-अणु
-	अटल स्थिर u8 cfg1_settings[] = अणु 0x20, 0x13, 0x23, 0x1d पूर्ण;
+static int qcom_qmp_v4_dp_phy_calibrate(struct qmp_phy *qphy)
+{
+	static const u8 cfg1_settings[] = { 0x20, 0x13, 0x23, 0x1d };
 	u8 val;
 
 	qphy->dp_aux_cfg++;
 	qphy->dp_aux_cfg %= ARRAY_SIZE(cfg1_settings);
 	val = cfg1_settings[qphy->dp_aux_cfg];
 
-	ग_लिखोl(val, qphy->pcs + QSERDES_DP_PHY_AUX_CFG1);
+	writel(val, qphy->pcs + QSERDES_DP_PHY_AUX_CFG1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक qcom_qmp_dp_phy_configure(काष्ठा phy *phy, जोड़ phy_configure_opts *opts)
-अणु
-	स्थिर काष्ठा phy_configure_opts_dp *dp_opts = &opts->dp;
-	काष्ठा qmp_phy *qphy = phy_get_drvdata(phy);
-	स्थिर काष्ठा qmp_phy_cfg *cfg = qphy->cfg;
+static int qcom_qmp_dp_phy_configure(struct phy *phy, union phy_configure_opts *opts)
+{
+	const struct phy_configure_opts_dp *dp_opts = &opts->dp;
+	struct qmp_phy *qphy = phy_get_drvdata(phy);
+	const struct qmp_phy_cfg *cfg = qphy->cfg;
 
-	स_नकल(&qphy->dp_opts, dp_opts, माप(*dp_opts));
-	अगर (qphy->dp_opts.set_voltages) अणु
+	memcpy(&qphy->dp_opts, dp_opts, sizeof(*dp_opts));
+	if (qphy->dp_opts.set_voltages) {
 		cfg->configure_dp_tx(qphy);
 		qphy->dp_opts.set_voltages = 0;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक qcom_qmp_dp_phy_calibrate(काष्ठा phy *phy)
-अणु
-	काष्ठा qmp_phy *qphy = phy_get_drvdata(phy);
-	स्थिर काष्ठा qmp_phy_cfg *cfg = qphy->cfg;
+static int qcom_qmp_dp_phy_calibrate(struct phy *phy)
+{
+	struct qmp_phy *qphy = phy_get_drvdata(phy);
+	const struct qmp_phy_cfg *cfg = qphy->cfg;
 
-	अगर (cfg->calibrate_dp_phy)
-		वापस cfg->calibrate_dp_phy(qphy);
+	if (cfg->calibrate_dp_phy)
+		return cfg->calibrate_dp_phy(qphy);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक qcom_qmp_phy_com_init(काष्ठा qmp_phy *qphy)
-अणु
-	काष्ठा qcom_qmp *qmp = qphy->qmp;
-	स्थिर काष्ठा qmp_phy_cfg *cfg = qphy->cfg;
-	व्योम __iomem *serdes = qphy->serdes;
-	व्योम __iomem *pcs = qphy->pcs;
-	व्योम __iomem *dp_com = qmp->dp_com;
-	पूर्णांक ret, i;
+static int qcom_qmp_phy_com_init(struct qmp_phy *qphy)
+{
+	struct qcom_qmp *qmp = qphy->qmp;
+	const struct qmp_phy_cfg *cfg = qphy->cfg;
+	void __iomem *serdes = qphy->serdes;
+	void __iomem *pcs = qphy->pcs;
+	void __iomem *dp_com = qmp->dp_com;
+	int ret, i;
 
 	mutex_lock(&qmp->phy_mutex);
-	अगर (qmp->init_count++) अणु
+	if (qmp->init_count++) {
 		mutex_unlock(&qmp->phy_mutex);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* turn on regulator supplies */
 	ret = regulator_bulk_enable(cfg->num_vregs, qmp->vregs);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(qmp->dev, "failed to enable regulators, err=%d\n", ret);
-		जाओ err_reg_enable;
-	पूर्ण
+		goto err_reg_enable;
+	}
 
-	क्रम (i = 0; i < cfg->num_resets; i++) अणु
-		ret = reset_control_निश्चित(qmp->resets[i]);
-		अगर (ret) अणु
+	for (i = 0; i < cfg->num_resets; i++) {
+		ret = reset_control_assert(qmp->resets[i]);
+		if (ret) {
 			dev_err(qmp->dev, "%s reset assert failed\n",
 				cfg->reset_list[i]);
-			जाओ err_rst_निश्चित;
-		पूर्ण
-	पूर्ण
+			goto err_rst_assert;
+		}
+	}
 
-	क्रम (i = cfg->num_resets - 1; i >= 0; i--) अणु
-		ret = reset_control_deनिश्चित(qmp->resets[i]);
-		अगर (ret) अणु
+	for (i = cfg->num_resets - 1; i >= 0; i--) {
+		ret = reset_control_deassert(qmp->resets[i]);
+		if (ret) {
 			dev_err(qmp->dev, "%s reset deassert failed\n",
 				qphy->cfg->reset_list[i]);
-			जाओ err_rst;
-		पूर्ण
-	पूर्ण
+			goto err_rst;
+		}
+	}
 
 	ret = clk_bulk_prepare_enable(cfg->num_clks, qmp->clks);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(qmp->dev, "failed to enable clks, err=%d\n", ret);
-		जाओ err_rst;
-	पूर्ण
+		goto err_rst;
+	}
 
-	अगर (cfg->has_phy_dp_com_ctrl) अणु
+	if (cfg->has_phy_dp_com_ctrl) {
 		qphy_setbits(dp_com, QPHY_V3_DP_COM_POWER_DOWN_CTRL,
 			     SW_PWRDN);
-		/* override hardware control क्रम reset of qmp phy */
+		/* override hardware control for reset of qmp phy */
 		qphy_setbits(dp_com, QPHY_V3_DP_COM_RESET_OVRD_CTRL,
 			     SW_DPPHY_RESET_MUX | SW_DPPHY_RESET |
 			     SW_USB3PHY_RESET_MUX | SW_USB3PHY_RESET);
@@ -4020,61 +4019,61 @@
 
 		qphy_clrbits(dp_com, QPHY_V3_DP_COM_SWI_CTRL, 0x03);
 		qphy_clrbits(dp_com, QPHY_V3_DP_COM_SW_RESET, SW_RESET);
-	पूर्ण
+	}
 
-	अगर (cfg->has_phy_com_ctrl) अणु
+	if (cfg->has_phy_com_ctrl) {
 		qphy_setbits(serdes, cfg->regs[QPHY_COM_POWER_DOWN_CONTROL],
 			     SW_PWRDN);
-	पूर्ण अन्यथा अणु
-		अगर (cfg->regs[QPHY_PCS_POWER_DOWN_CONTROL])
+	} else {
+		if (cfg->regs[QPHY_PCS_POWER_DOWN_CONTROL])
 			qphy_setbits(pcs,
 					cfg->regs[QPHY_PCS_POWER_DOWN_CONTROL],
 					cfg->pwrdn_ctrl);
-		अन्यथा
+		else
 			qphy_setbits(pcs, QPHY_POWER_DOWN_CONTROL,
 					cfg->pwrdn_ctrl);
-	पूर्ण
+	}
 
 	mutex_unlock(&qmp->phy_mutex);
 
-	वापस 0;
+	return 0;
 
 err_rst:
-	जबतक (++i < cfg->num_resets)
-		reset_control_निश्चित(qmp->resets[i]);
-err_rst_निश्चित:
+	while (++i < cfg->num_resets)
+		reset_control_assert(qmp->resets[i]);
+err_rst_assert:
 	regulator_bulk_disable(cfg->num_vregs, qmp->vregs);
 err_reg_enable:
 	mutex_unlock(&qmp->phy_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक qcom_qmp_phy_com_निकास(काष्ठा qmp_phy *qphy)
-अणु
-	काष्ठा qcom_qmp *qmp = qphy->qmp;
-	स्थिर काष्ठा qmp_phy_cfg *cfg = qphy->cfg;
-	व्योम __iomem *serdes = qphy->serdes;
-	पूर्णांक i = cfg->num_resets;
+static int qcom_qmp_phy_com_exit(struct qmp_phy *qphy)
+{
+	struct qcom_qmp *qmp = qphy->qmp;
+	const struct qmp_phy_cfg *cfg = qphy->cfg;
+	void __iomem *serdes = qphy->serdes;
+	int i = cfg->num_resets;
 
 	mutex_lock(&qmp->phy_mutex);
-	अगर (--qmp->init_count) अणु
+	if (--qmp->init_count) {
 		mutex_unlock(&qmp->phy_mutex);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	reset_control_निश्चित(qmp->ufs_reset);
-	अगर (cfg->has_phy_com_ctrl) अणु
+	reset_control_assert(qmp->ufs_reset);
+	if (cfg->has_phy_com_ctrl) {
 		qphy_setbits(serdes, cfg->regs[QPHY_COM_START_CONTROL],
 			     SERDES_START | PCS_START);
 		qphy_clrbits(serdes, cfg->regs[QPHY_COM_SW_RESET],
 			     SW_RESET);
 		qphy_setbits(serdes, cfg->regs[QPHY_COM_POWER_DOWN_CONTROL],
 			     SW_PWRDN);
-	पूर्ण
+	}
 
-	जबतक (--i >= 0)
-		reset_control_निश्चित(qmp->resets[i]);
+	while (--i >= 0)
+		reset_control_assert(qmp->resets[i]);
 
 	clk_bulk_disable_unprepare(cfg->num_clks, qmp->clks);
 
@@ -4082,441 +4081,441 @@ err_reg_enable:
 
 	mutex_unlock(&qmp->phy_mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक qcom_qmp_phy_init(काष्ठा phy *phy)
-अणु
-	काष्ठा qmp_phy *qphy = phy_get_drvdata(phy);
-	काष्ठा qcom_qmp *qmp = qphy->qmp;
-	स्थिर काष्ठा qmp_phy_cfg *cfg = qphy->cfg;
-	पूर्णांक ret;
+static int qcom_qmp_phy_init(struct phy *phy)
+{
+	struct qmp_phy *qphy = phy_get_drvdata(phy);
+	struct qcom_qmp *qmp = qphy->qmp;
+	const struct qmp_phy_cfg *cfg = qphy->cfg;
+	int ret;
 	dev_vdbg(qmp->dev, "Initializing QMP phy\n");
 
-	अगर (cfg->no_pcs_sw_reset) अणु
+	if (cfg->no_pcs_sw_reset) {
 		/*
-		 * Get UFS reset, which is delayed until now to aव्योम a
+		 * Get UFS reset, which is delayed until now to avoid a
 		 * circular dependency where UFS needs its PHY, but the PHY
 		 * needs this UFS reset.
 		 */
-		अगर (!qmp->ufs_reset) अणु
+		if (!qmp->ufs_reset) {
 			qmp->ufs_reset =
 				devm_reset_control_get_exclusive(qmp->dev,
 								 "ufsphy");
 
-			अगर (IS_ERR(qmp->ufs_reset)) अणु
+			if (IS_ERR(qmp->ufs_reset)) {
 				ret = PTR_ERR(qmp->ufs_reset);
 				dev_err(qmp->dev,
 					"failed to get UFS reset: %d\n",
 					ret);
 
-				qmp->ufs_reset = शून्य;
-				वापस ret;
-			पूर्ण
-		पूर्ण
+				qmp->ufs_reset = NULL;
+				return ret;
+			}
+		}
 
-		ret = reset_control_निश्चित(qmp->ufs_reset);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		ret = reset_control_assert(qmp->ufs_reset);
+		if (ret)
+			return ret;
+	}
 
 	ret = qcom_qmp_phy_com_init(qphy);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (cfg->type == PHY_TYPE_DP)
+	if (cfg->type == PHY_TYPE_DP)
 		cfg->dp_aux_init(qphy);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक qcom_qmp_phy_घातer_on(काष्ठा phy *phy)
-अणु
-	काष्ठा qmp_phy *qphy = phy_get_drvdata(phy);
-	काष्ठा qcom_qmp *qmp = qphy->qmp;
-	स्थिर काष्ठा qmp_phy_cfg *cfg = qphy->cfg;
-	व्योम __iomem *tx = qphy->tx;
-	व्योम __iomem *rx = qphy->rx;
-	व्योम __iomem *pcs = qphy->pcs;
-	व्योम __iomem *pcs_misc = qphy->pcs_misc;
-	व्योम __iomem *status;
-	अचिन्हित पूर्णांक mask, val, पढ़ोy;
-	पूर्णांक ret;
+static int qcom_qmp_phy_power_on(struct phy *phy)
+{
+	struct qmp_phy *qphy = phy_get_drvdata(phy);
+	struct qcom_qmp *qmp = qphy->qmp;
+	const struct qmp_phy_cfg *cfg = qphy->cfg;
+	void __iomem *tx = qphy->tx;
+	void __iomem *rx = qphy->rx;
+	void __iomem *pcs = qphy->pcs;
+	void __iomem *pcs_misc = qphy->pcs_misc;
+	void __iomem *status;
+	unsigned int mask, val, ready;
+	int ret;
 
 	qcom_qmp_phy_serdes_init(qphy);
 
-	अगर (cfg->has_lane_rst) अणु
-		ret = reset_control_deनिश्चित(qphy->lane_rst);
-		अगर (ret) अणु
+	if (cfg->has_lane_rst) {
+		ret = reset_control_deassert(qphy->lane_rst);
+		if (ret) {
 			dev_err(qmp->dev, "lane%d reset deassert failed\n",
 				qphy->index);
-			जाओ err_lane_rst;
-		पूर्ण
-	पूर्ण
+			goto err_lane_rst;
+		}
+	}
 
 	ret = clk_prepare_enable(qphy->pipe_clk);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(qmp->dev, "pipe_clk enable failed err=%d\n", ret);
-		जाओ err_clk_enable;
-	पूर्ण
+		goto err_clk_enable;
+	}
 
 	/* Tx, Rx, and PCS configurations */
 	qcom_qmp_phy_configure_lane(tx, cfg->regs,
 				    cfg->tx_tbl, cfg->tx_tbl_num, 1);
-	अगर (cfg->tx_tbl_sec)
+	if (cfg->tx_tbl_sec)
 		qcom_qmp_phy_configure_lane(tx, cfg->regs, cfg->tx_tbl_sec,
 					    cfg->tx_tbl_num_sec, 1);
 
-	/* Configuration क्रम other LANE क्रम USB-DP combo PHY */
-	अगर (cfg->is_dual_lane_phy) अणु
+	/* Configuration for other LANE for USB-DP combo PHY */
+	if (cfg->is_dual_lane_phy) {
 		qcom_qmp_phy_configure_lane(qphy->tx2, cfg->regs,
 					    cfg->tx_tbl, cfg->tx_tbl_num, 2);
-		अगर (cfg->tx_tbl_sec)
+		if (cfg->tx_tbl_sec)
 			qcom_qmp_phy_configure_lane(qphy->tx2, cfg->regs,
 						    cfg->tx_tbl_sec,
 						    cfg->tx_tbl_num_sec, 2);
-	पूर्ण
+	}
 
 	/* Configure special DP tx tunings */
-	अगर (cfg->type == PHY_TYPE_DP)
+	if (cfg->type == PHY_TYPE_DP)
 		cfg->configure_dp_tx(qphy);
 
 	qcom_qmp_phy_configure_lane(rx, cfg->regs,
 				    cfg->rx_tbl, cfg->rx_tbl_num, 1);
-	अगर (cfg->rx_tbl_sec)
+	if (cfg->rx_tbl_sec)
 		qcom_qmp_phy_configure_lane(rx, cfg->regs,
 					    cfg->rx_tbl_sec, cfg->rx_tbl_num_sec, 1);
 
-	अगर (cfg->is_dual_lane_phy) अणु
+	if (cfg->is_dual_lane_phy) {
 		qcom_qmp_phy_configure_lane(qphy->rx2, cfg->regs,
 					    cfg->rx_tbl, cfg->rx_tbl_num, 2);
-		अगर (cfg->rx_tbl_sec)
+		if (cfg->rx_tbl_sec)
 			qcom_qmp_phy_configure_lane(qphy->rx2, cfg->regs,
 						    cfg->rx_tbl_sec,
 						    cfg->rx_tbl_num_sec, 2);
-	पूर्ण
+	}
 
 	/* Configure link rate, swing, etc. */
-	अगर (cfg->type == PHY_TYPE_DP) अणु
+	if (cfg->type == PHY_TYPE_DP) {
 		cfg->configure_dp_phy(qphy);
-	पूर्ण अन्यथा अणु
+	} else {
 		qcom_qmp_phy_configure(pcs, cfg->regs, cfg->pcs_tbl, cfg->pcs_tbl_num);
-		अगर (cfg->pcs_tbl_sec)
+		if (cfg->pcs_tbl_sec)
 			qcom_qmp_phy_configure(pcs, cfg->regs, cfg->pcs_tbl_sec,
 					       cfg->pcs_tbl_num_sec);
-	पूर्ण
+	}
 
-	ret = reset_control_deनिश्चित(qmp->ufs_reset);
-	अगर (ret)
-		जाओ err_lane_rst;
+	ret = reset_control_deassert(qmp->ufs_reset);
+	if (ret)
+		goto err_lane_rst;
 
 	qcom_qmp_phy_configure(pcs_misc, cfg->regs, cfg->pcs_misc_tbl,
 			       cfg->pcs_misc_tbl_num);
-	अगर (cfg->pcs_misc_tbl_sec)
+	if (cfg->pcs_misc_tbl_sec)
 		qcom_qmp_phy_configure(pcs_misc, cfg->regs, cfg->pcs_misc_tbl_sec,
 				       cfg->pcs_misc_tbl_num_sec);
 
 	/*
 	 * Pull out PHY from POWER DOWN state.
-	 * This is active low enable संकेत to घातer-करोwn PHY.
+	 * This is active low enable signal to power-down PHY.
 	 */
-	अगर(cfg->type == PHY_TYPE_PCIE)
+	if(cfg->type == PHY_TYPE_PCIE)
 		qphy_setbits(pcs, QPHY_POWER_DOWN_CONTROL, cfg->pwrdn_ctrl);
 
-	अगर (cfg->has_pwrdn_delay)
+	if (cfg->has_pwrdn_delay)
 		usleep_range(cfg->pwrdn_delay_min, cfg->pwrdn_delay_max);
 
-	अगर (cfg->type != PHY_TYPE_DP) अणु
+	if (cfg->type != PHY_TYPE_DP) {
 		/* Pull PHY out of reset state */
-		अगर (!cfg->no_pcs_sw_reset)
+		if (!cfg->no_pcs_sw_reset)
 			qphy_clrbits(pcs, cfg->regs[QPHY_SW_RESET], SW_RESET);
 		/* start SerDes and Phy-Coding-Sublayer */
 		qphy_setbits(pcs, cfg->regs[QPHY_START_CTRL], cfg->start_ctrl);
 
-		अगर (cfg->type == PHY_TYPE_UFS) अणु
+		if (cfg->type == PHY_TYPE_UFS) {
 			status = pcs + cfg->regs[QPHY_PCS_READY_STATUS];
 			mask = PCS_READY;
-			पढ़ोy = PCS_READY;
-		पूर्ण अन्यथा अणु
+			ready = PCS_READY;
+		} else {
 			status = pcs + cfg->regs[QPHY_PCS_STATUS];
 			mask = PHYSTATUS;
-			पढ़ोy = 0;
-		पूर्ण
+			ready = 0;
+		}
 
-		ret = पढ़ोl_poll_समयout(status, val, (val & mask) == पढ़ोy, 10,
+		ret = readl_poll_timeout(status, val, (val & mask) == ready, 10,
 					 PHY_INIT_COMPLETE_TIMEOUT);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(qmp->dev, "phy initialization timed-out\n");
-			जाओ err_pcs_पढ़ोy;
-		पूर्ण
-	पूर्ण
-	वापस 0;
+			goto err_pcs_ready;
+		}
+	}
+	return 0;
 
-err_pcs_पढ़ोy:
+err_pcs_ready:
 	clk_disable_unprepare(qphy->pipe_clk);
 err_clk_enable:
-	अगर (cfg->has_lane_rst)
-		reset_control_निश्चित(qphy->lane_rst);
+	if (cfg->has_lane_rst)
+		reset_control_assert(qphy->lane_rst);
 err_lane_rst:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक qcom_qmp_phy_घातer_off(काष्ठा phy *phy)
-अणु
-	काष्ठा qmp_phy *qphy = phy_get_drvdata(phy);
-	स्थिर काष्ठा qmp_phy_cfg *cfg = qphy->cfg;
+static int qcom_qmp_phy_power_off(struct phy *phy)
+{
+	struct qmp_phy *qphy = phy_get_drvdata(phy);
+	const struct qmp_phy_cfg *cfg = qphy->cfg;
 
 	clk_disable_unprepare(qphy->pipe_clk);
 
-	अगर (cfg->type == PHY_TYPE_DP) अणु
-		/* Assert DP PHY घातer करोwn */
-		ग_लिखोl(DP_PHY_PD_CTL_PSR_PWRDN, qphy->pcs + QSERDES_DP_PHY_PD_CTL);
-	पूर्ण अन्यथा अणु
+	if (cfg->type == PHY_TYPE_DP) {
+		/* Assert DP PHY power down */
+		writel(DP_PHY_PD_CTL_PSR_PWRDN, qphy->pcs + QSERDES_DP_PHY_PD_CTL);
+	} else {
 		/* PHY reset */
-		अगर (!cfg->no_pcs_sw_reset)
+		if (!cfg->no_pcs_sw_reset)
 			qphy_setbits(qphy->pcs, cfg->regs[QPHY_SW_RESET], SW_RESET);
 
 		/* stop SerDes and Phy-Coding-Sublayer */
 		qphy_clrbits(qphy->pcs, cfg->regs[QPHY_START_CTRL], cfg->start_ctrl);
 
-		/* Put PHY पूर्णांकo POWER DOWN state: active low */
-		अगर (cfg->regs[QPHY_PCS_POWER_DOWN_CONTROL]) अणु
+		/* Put PHY into POWER DOWN state: active low */
+		if (cfg->regs[QPHY_PCS_POWER_DOWN_CONTROL]) {
 			qphy_clrbits(qphy->pcs, cfg->regs[QPHY_PCS_POWER_DOWN_CONTROL],
 				     cfg->pwrdn_ctrl);
-		पूर्ण अन्यथा अणु
+		} else {
 			qphy_clrbits(qphy->pcs, QPHY_POWER_DOWN_CONTROL,
 					cfg->pwrdn_ctrl);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक qcom_qmp_phy_निकास(काष्ठा phy *phy)
-अणु
-	काष्ठा qmp_phy *qphy = phy_get_drvdata(phy);
-	स्थिर काष्ठा qmp_phy_cfg *cfg = qphy->cfg;
+static int qcom_qmp_phy_exit(struct phy *phy)
+{
+	struct qmp_phy *qphy = phy_get_drvdata(phy);
+	const struct qmp_phy_cfg *cfg = qphy->cfg;
 
-	अगर (cfg->has_lane_rst)
-		reset_control_निश्चित(qphy->lane_rst);
+	if (cfg->has_lane_rst)
+		reset_control_assert(qphy->lane_rst);
 
-	qcom_qmp_phy_com_निकास(qphy);
+	qcom_qmp_phy_com_exit(qphy);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक qcom_qmp_phy_enable(काष्ठा phy *phy)
-अणु
-	पूर्णांक ret;
+static int qcom_qmp_phy_enable(struct phy *phy)
+{
+	int ret;
 
 	ret = qcom_qmp_phy_init(phy);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = qcom_qmp_phy_घातer_on(phy);
-	अगर (ret)
-		qcom_qmp_phy_निकास(phy);
+	ret = qcom_qmp_phy_power_on(phy);
+	if (ret)
+		qcom_qmp_phy_exit(phy);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक qcom_qmp_phy_disable(काष्ठा phy *phy)
-अणु
-	पूर्णांक ret;
+static int qcom_qmp_phy_disable(struct phy *phy)
+{
+	int ret;
 
-	ret = qcom_qmp_phy_घातer_off(phy);
-	अगर (ret)
-		वापस ret;
-	वापस qcom_qmp_phy_निकास(phy);
-पूर्ण
+	ret = qcom_qmp_phy_power_off(phy);
+	if (ret)
+		return ret;
+	return qcom_qmp_phy_exit(phy);
+}
 
-अटल पूर्णांक qcom_qmp_phy_set_mode(काष्ठा phy *phy,
-				 क्रमागत phy_mode mode, पूर्णांक submode)
-अणु
-	काष्ठा qmp_phy *qphy = phy_get_drvdata(phy);
+static int qcom_qmp_phy_set_mode(struct phy *phy,
+				 enum phy_mode mode, int submode)
+{
+	struct qmp_phy *qphy = phy_get_drvdata(phy);
 
 	qphy->mode = mode;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम qcom_qmp_phy_enable_स्वतःnomous_mode(काष्ठा qmp_phy *qphy)
-अणु
-	स्थिर काष्ठा qmp_phy_cfg *cfg = qphy->cfg;
-	व्योम __iomem *pcs = qphy->pcs;
-	व्योम __iomem *pcs_misc = qphy->pcs_misc;
-	u32 पूर्णांकr_mask;
+static void qcom_qmp_phy_enable_autonomous_mode(struct qmp_phy *qphy)
+{
+	const struct qmp_phy_cfg *cfg = qphy->cfg;
+	void __iomem *pcs = qphy->pcs;
+	void __iomem *pcs_misc = qphy->pcs_misc;
+	u32 intr_mask;
 
-	अगर (qphy->mode == PHY_MODE_USB_HOST_SS ||
+	if (qphy->mode == PHY_MODE_USB_HOST_SS ||
 	    qphy->mode == PHY_MODE_USB_DEVICE_SS)
-		पूर्णांकr_mask = ARCVR_DTCT_EN | ALFPS_DTCT_EN;
-	अन्यथा
-		पूर्णांकr_mask = ARCVR_DTCT_EN | ARCVR_DTCT_EVENT_SEL;
+		intr_mask = ARCVR_DTCT_EN | ALFPS_DTCT_EN;
+	else
+		intr_mask = ARCVR_DTCT_EN | ARCVR_DTCT_EVENT_SEL;
 
-	/* Clear any pending पूर्णांकerrupts status */
+	/* Clear any pending interrupts status */
 	qphy_setbits(pcs, cfg->regs[QPHY_PCS_LFPS_RXTERM_IRQ_CLEAR], IRQ_CLEAR);
-	/* Writing 1 followed by 0 clears the पूर्णांकerrupt */
+	/* Writing 1 followed by 0 clears the interrupt */
 	qphy_clrbits(pcs, cfg->regs[QPHY_PCS_LFPS_RXTERM_IRQ_CLEAR], IRQ_CLEAR);
 
 	qphy_clrbits(pcs, cfg->regs[QPHY_PCS_AUTONOMOUS_MODE_CTRL],
 		     ARCVR_DTCT_EN | ALFPS_DTCT_EN | ARCVR_DTCT_EVENT_SEL);
 
-	/* Enable required PHY स्वतःnomous mode पूर्णांकerrupts */
-	qphy_setbits(pcs, cfg->regs[QPHY_PCS_AUTONOMOUS_MODE_CTRL], पूर्णांकr_mask);
+	/* Enable required PHY autonomous mode interrupts */
+	qphy_setbits(pcs, cfg->regs[QPHY_PCS_AUTONOMOUS_MODE_CTRL], intr_mask);
 
-	/* Enable i/o clamp_n क्रम स्वतःnomous mode */
-	अगर (pcs_misc)
+	/* Enable i/o clamp_n for autonomous mode */
+	if (pcs_misc)
 		qphy_clrbits(pcs_misc, QPHY_V3_PCS_MISC_CLAMP_ENABLE, CLAMP_EN);
-पूर्ण
+}
 
-अटल व्योम qcom_qmp_phy_disable_स्वतःnomous_mode(काष्ठा qmp_phy *qphy)
-अणु
-	स्थिर काष्ठा qmp_phy_cfg *cfg = qphy->cfg;
-	व्योम __iomem *pcs = qphy->pcs;
-	व्योम __iomem *pcs_misc = qphy->pcs_misc;
+static void qcom_qmp_phy_disable_autonomous_mode(struct qmp_phy *qphy)
+{
+	const struct qmp_phy_cfg *cfg = qphy->cfg;
+	void __iomem *pcs = qphy->pcs;
+	void __iomem *pcs_misc = qphy->pcs_misc;
 
-	/* Disable i/o clamp_n on resume क्रम normal mode */
-	अगर (pcs_misc)
+	/* Disable i/o clamp_n on resume for normal mode */
+	if (pcs_misc)
 		qphy_setbits(pcs_misc, QPHY_V3_PCS_MISC_CLAMP_ENABLE, CLAMP_EN);
 
 	qphy_clrbits(pcs, cfg->regs[QPHY_PCS_AUTONOMOUS_MODE_CTRL],
 		     ARCVR_DTCT_EN | ARCVR_DTCT_EVENT_SEL | ALFPS_DTCT_EN);
 
 	qphy_setbits(pcs, cfg->regs[QPHY_PCS_LFPS_RXTERM_IRQ_CLEAR], IRQ_CLEAR);
-	/* Writing 1 followed by 0 clears the पूर्णांकerrupt */
+	/* Writing 1 followed by 0 clears the interrupt */
 	qphy_clrbits(pcs, cfg->regs[QPHY_PCS_LFPS_RXTERM_IRQ_CLEAR], IRQ_CLEAR);
-पूर्ण
+}
 
-अटल पूर्णांक __maybe_unused qcom_qmp_phy_runसमय_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा qcom_qmp *qmp = dev_get_drvdata(dev);
-	काष्ठा qmp_phy *qphy = qmp->phys[0];
-	स्थिर काष्ठा qmp_phy_cfg *cfg = qphy->cfg;
+static int __maybe_unused qcom_qmp_phy_runtime_suspend(struct device *dev)
+{
+	struct qcom_qmp *qmp = dev_get_drvdata(dev);
+	struct qmp_phy *qphy = qmp->phys[0];
+	const struct qmp_phy_cfg *cfg = qphy->cfg;
 
 	dev_vdbg(dev, "Suspending QMP phy, mode:%d\n", qphy->mode);
 
-	/* Supported only क्रम USB3 PHY and luckily USB3 is the first phy */
-	अगर (cfg->type != PHY_TYPE_USB3)
-		वापस 0;
+	/* Supported only for USB3 PHY and luckily USB3 is the first phy */
+	if (cfg->type != PHY_TYPE_USB3)
+		return 0;
 
-	अगर (!qmp->init_count) अणु
+	if (!qmp->init_count) {
 		dev_vdbg(dev, "PHY not initialized, bailing out\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	qcom_qmp_phy_enable_स्वतःnomous_mode(qphy);
+	qcom_qmp_phy_enable_autonomous_mode(qphy);
 
 	clk_disable_unprepare(qphy->pipe_clk);
 	clk_bulk_disable_unprepare(cfg->num_clks, qmp->clks);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused qcom_qmp_phy_runसमय_resume(काष्ठा device *dev)
-अणु
-	काष्ठा qcom_qmp *qmp = dev_get_drvdata(dev);
-	काष्ठा qmp_phy *qphy = qmp->phys[0];
-	स्थिर काष्ठा qmp_phy_cfg *cfg = qphy->cfg;
-	पूर्णांक ret = 0;
+static int __maybe_unused qcom_qmp_phy_runtime_resume(struct device *dev)
+{
+	struct qcom_qmp *qmp = dev_get_drvdata(dev);
+	struct qmp_phy *qphy = qmp->phys[0];
+	const struct qmp_phy_cfg *cfg = qphy->cfg;
+	int ret = 0;
 
 	dev_vdbg(dev, "Resuming QMP phy, mode:%d\n", qphy->mode);
 
-	/* Supported only क्रम USB3 PHY and luckily USB3 is the first phy */
-	अगर (cfg->type != PHY_TYPE_USB3)
-		वापस 0;
+	/* Supported only for USB3 PHY and luckily USB3 is the first phy */
+	if (cfg->type != PHY_TYPE_USB3)
+		return 0;
 
-	अगर (!qmp->init_count) अणु
+	if (!qmp->init_count) {
 		dev_vdbg(dev, "PHY not initialized, bailing out\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	ret = clk_bulk_prepare_enable(cfg->num_clks, qmp->clks);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(qmp->dev, "failed to enable clks, err=%d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = clk_prepare_enable(qphy->pipe_clk);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "pipe_clk enable failed, err=%d\n", ret);
 		clk_bulk_disable_unprepare(cfg->num_clks, qmp->clks);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	qcom_qmp_phy_disable_स्वतःnomous_mode(qphy);
+	qcom_qmp_phy_disable_autonomous_mode(qphy);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक qcom_qmp_phy_vreg_init(काष्ठा device *dev, स्थिर काष्ठा qmp_phy_cfg *cfg)
-अणु
-	काष्ठा qcom_qmp *qmp = dev_get_drvdata(dev);
-	पूर्णांक num = cfg->num_vregs;
-	पूर्णांक i;
+static int qcom_qmp_phy_vreg_init(struct device *dev, const struct qmp_phy_cfg *cfg)
+{
+	struct qcom_qmp *qmp = dev_get_drvdata(dev);
+	int num = cfg->num_vregs;
+	int i;
 
-	qmp->vregs = devm_kसुस्मृति(dev, num, माप(*qmp->vregs), GFP_KERNEL);
-	अगर (!qmp->vregs)
-		वापस -ENOMEM;
+	qmp->vregs = devm_kcalloc(dev, num, sizeof(*qmp->vregs), GFP_KERNEL);
+	if (!qmp->vregs)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < num; i++)
+	for (i = 0; i < num; i++)
 		qmp->vregs[i].supply = cfg->vreg_list[i];
 
-	वापस devm_regulator_bulk_get(dev, num, qmp->vregs);
-पूर्ण
+	return devm_regulator_bulk_get(dev, num, qmp->vregs);
+}
 
-अटल पूर्णांक qcom_qmp_phy_reset_init(काष्ठा device *dev, स्थिर काष्ठा qmp_phy_cfg *cfg)
-अणु
-	काष्ठा qcom_qmp *qmp = dev_get_drvdata(dev);
-	पूर्णांक i;
+static int qcom_qmp_phy_reset_init(struct device *dev, const struct qmp_phy_cfg *cfg)
+{
+	struct qcom_qmp *qmp = dev_get_drvdata(dev);
+	int i;
 
-	qmp->resets = devm_kसुस्मृति(dev, cfg->num_resets,
-				   माप(*qmp->resets), GFP_KERNEL);
-	अगर (!qmp->resets)
-		वापस -ENOMEM;
+	qmp->resets = devm_kcalloc(dev, cfg->num_resets,
+				   sizeof(*qmp->resets), GFP_KERNEL);
+	if (!qmp->resets)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < cfg->num_resets; i++) अणु
-		काष्ठा reset_control *rst;
-		स्थिर अक्षर *name = cfg->reset_list[i];
+	for (i = 0; i < cfg->num_resets; i++) {
+		struct reset_control *rst;
+		const char *name = cfg->reset_list[i];
 
 		rst = devm_reset_control_get(dev, name);
-		अगर (IS_ERR(rst)) अणु
+		if (IS_ERR(rst)) {
 			dev_err(dev, "failed to get %s reset\n", name);
-			वापस PTR_ERR(rst);
-		पूर्ण
+			return PTR_ERR(rst);
+		}
 		qmp->resets[i] = rst;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक qcom_qmp_phy_clk_init(काष्ठा device *dev, स्थिर काष्ठा qmp_phy_cfg *cfg)
-अणु
-	काष्ठा qcom_qmp *qmp = dev_get_drvdata(dev);
-	पूर्णांक num = cfg->num_clks;
-	पूर्णांक i;
+static int qcom_qmp_phy_clk_init(struct device *dev, const struct qmp_phy_cfg *cfg)
+{
+	struct qcom_qmp *qmp = dev_get_drvdata(dev);
+	int num = cfg->num_clks;
+	int i;
 
-	qmp->clks = devm_kसुस्मृति(dev, num, माप(*qmp->clks), GFP_KERNEL);
-	अगर (!qmp->clks)
-		वापस -ENOMEM;
+	qmp->clks = devm_kcalloc(dev, num, sizeof(*qmp->clks), GFP_KERNEL);
+	if (!qmp->clks)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < num; i++)
+	for (i = 0; i < num; i++)
 		qmp->clks[i].id = cfg->clk_list[i];
 
-	वापस devm_clk_bulk_get(dev, num, qmp->clks);
-पूर्ण
+	return devm_clk_bulk_get(dev, num, qmp->clks);
+}
 
-अटल व्योम phy_clk_release_provider(व्योम *res)
-अणु
+static void phy_clk_release_provider(void *res)
+{
 	of_clk_del_provider(res);
-पूर्ण
+}
 
 /*
- * Register a fixed rate pipe घड़ी.
+ * Register a fixed rate pipe clock.
  *
  * The <s>_pipe_clksrc generated by PHY goes to the GCC that gate
  * controls it. The <s>_pipe_clk coming out of the GCC is requested
- * by the PHY driver क्रम its operations.
- * We रेजिस्टर the <s>_pipe_clksrc here. The gcc driver takes care
+ * by the PHY driver for its operations.
+ * We register the <s>_pipe_clksrc here. The gcc driver takes care
  * of assigning this <s>_pipe_clksrc as parent to <s>_pipe_clk.
  * Below picture shows this relationship.
  *
@@ -4528,49 +4527,49 @@ err_lane_rst:
  *    clk  |   +-------+   |                   +-----+
  *         +---------------+
  */
-अटल पूर्णांक phy_pipe_clk_रेजिस्टर(काष्ठा qcom_qmp *qmp, काष्ठा device_node *np)
-अणु
-	काष्ठा clk_fixed_rate *fixed;
-	काष्ठा clk_init_data init = अणु पूर्ण;
-	पूर्णांक ret;
+static int phy_pipe_clk_register(struct qcom_qmp *qmp, struct device_node *np)
+{
+	struct clk_fixed_rate *fixed;
+	struct clk_init_data init = { };
+	int ret;
 
-	ret = of_property_पढ़ो_string(np, "clock-output-names", &init.name);
-	अगर (ret) अणु
+	ret = of_property_read_string(np, "clock-output-names", &init.name);
+	if (ret) {
 		dev_err(qmp->dev, "%pOFn: No clock-output-names\n", np);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	fixed = devm_kzalloc(qmp->dev, माप(*fixed), GFP_KERNEL);
-	अगर (!fixed)
-		वापस -ENOMEM;
+	fixed = devm_kzalloc(qmp->dev, sizeof(*fixed), GFP_KERNEL);
+	if (!fixed)
+		return -ENOMEM;
 
 	init.ops = &clk_fixed_rate_ops;
 
-	/* controllers using QMP phys use 125MHz pipe घड़ी पूर्णांकerface */
+	/* controllers using QMP phys use 125MHz pipe clock interface */
 	fixed->fixed_rate = 125000000;
 	fixed->hw.init = &init;
 
-	ret = devm_clk_hw_रेजिस्टर(qmp->dev, &fixed->hw);
-	अगर (ret)
-		वापस ret;
+	ret = devm_clk_hw_register(qmp->dev, &fixed->hw);
+	if (ret)
+		return ret;
 
 	ret = of_clk_add_hw_provider(np, of_clk_hw_simple_get, &fixed->hw);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/*
-	 * Roll a devm action because the घड़ी provider is the child node, but
+	 * Roll a devm action because the clock provider is the child node, but
 	 * the child node is not actually a device.
 	 */
 	ret = devm_add_action(qmp->dev, phy_clk_release_provider, np);
-	अगर (ret)
+	if (ret)
 		phy_clk_release_provider(np);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Display Port PLL driver block diagram क्रम branch घड़ीs
+ * Display Port PLL driver block diagram for branch clocks
  *
  *              +------------------------------+
  *              |         DP_VCO_CLK           |
@@ -4580,7 +4579,7 @@ err_lane_rst:
  *              |    +---------+---------+     |
  *              |              v               |
  *              |   +----------+-----------+   |
- *              |   | hsclk_भागsel_clk_src |   |
+ *              |   | hsclk_divsel_clk_src |   |
  *              |   +----------+-----------+   |
  *              +------------------------------+
  *                              |
@@ -4594,141 +4593,141 @@ err_lane_rst:
  *          |                                           |
  *          v                                           v
  * Input to DISPCC block                                |
- * क्रम link clk, crypto clk                             |
- * and पूर्णांकerface घड़ी                                  |
+ * for link clk, crypto clk                             |
+ * and interface clock                                  |
  *                                                      |
  *                                                      |
  *      +--------<------------+-----------------+---<---+
  *      |                     |                 |
  * +----v---------+  +--------v-----+  +--------v------+
- * | vco_भागided  |  | vco_भागided  |  | vco_भागided   |
+ * | vco_divided  |  | vco_divided  |  | vco_divided   |
  * |    _clk_src  |  |    _clk_src  |  |    _clk_src   |
  * |              |  |              |  |               |
- * |भागsel_six    |  |  भागsel_two  |  |  भागsel_four  |
+ * |divsel_six    |  |  divsel_two  |  |  divsel_four  |
  * +-------+------+  +-----+--------+  +--------+------+
  *         |                 |                  |
  *         v---->----------v-------------<------v
  *                         |
  *              +----------+-----------------+
- *              |   dp_phy_pll_vco_भाग_clk   |
+ *              |   dp_phy_pll_vco_div_clk   |
  *              +---------+------------------+
  *                        |
  *                        v
  *              Input to DISPCC block
- *              क्रम DP pixel घड़ी
+ *              for DP pixel clock
  *
  */
-अटल पूर्णांक qcom_qmp_dp_pixel_clk_determine_rate(काष्ठा clk_hw *hw,
-						काष्ठा clk_rate_request *req)
-अणु
-	चयन (req->rate) अणु
-	हाल 1620000000UL / 2:
-	हाल 2700000000UL / 2:
-	/* 5.4 and 8.1 GHz are same link rate as 2.7GHz, i.e. भाग 4 and भाग 6 */
-		वापस 0;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+static int qcom_qmp_dp_pixel_clk_determine_rate(struct clk_hw *hw,
+						struct clk_rate_request *req)
+{
+	switch (req->rate) {
+	case 1620000000UL / 2:
+	case 2700000000UL / 2:
+	/* 5.4 and 8.1 GHz are same link rate as 2.7GHz, i.e. div 4 and div 6 */
+		return 0;
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल अचिन्हित दीर्घ
-qcom_qmp_dp_pixel_clk_recalc_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ parent_rate)
-अणु
-	स्थिर काष्ठा qmp_phy_dp_clks *dp_clks;
-	स्थिर काष्ठा qmp_phy *qphy;
-	स्थिर काष्ठा phy_configure_opts_dp *dp_opts;
+static unsigned long
+qcom_qmp_dp_pixel_clk_recalc_rate(struct clk_hw *hw, unsigned long parent_rate)
+{
+	const struct qmp_phy_dp_clks *dp_clks;
+	const struct qmp_phy *qphy;
+	const struct phy_configure_opts_dp *dp_opts;
 
-	dp_clks = container_of(hw, काष्ठा qmp_phy_dp_clks, dp_pixel_hw);
+	dp_clks = container_of(hw, struct qmp_phy_dp_clks, dp_pixel_hw);
 	qphy = dp_clks->qphy;
 	dp_opts = &qphy->dp_opts;
 
-	चयन (dp_opts->link_rate) अणु
-	हाल 1620:
-		वापस 1620000000UL / 2;
-	हाल 2700:
-		वापस 2700000000UL / 2;
-	हाल 5400:
-		वापस 5400000000UL / 4;
-	हाल 8100:
-		वापस 8100000000UL / 6;
-	शेष:
-		वापस 0;
-	पूर्ण
-पूर्ण
+	switch (dp_opts->link_rate) {
+	case 1620:
+		return 1620000000UL / 2;
+	case 2700:
+		return 2700000000UL / 2;
+	case 5400:
+		return 5400000000UL / 4;
+	case 8100:
+		return 8100000000UL / 6;
+	default:
+		return 0;
+	}
+}
 
-अटल स्थिर काष्ठा clk_ops qcom_qmp_dp_pixel_clk_ops = अणु
+static const struct clk_ops qcom_qmp_dp_pixel_clk_ops = {
 	.determine_rate = qcom_qmp_dp_pixel_clk_determine_rate,
 	.recalc_rate = qcom_qmp_dp_pixel_clk_recalc_rate,
-पूर्ण;
+};
 
-अटल पूर्णांक qcom_qmp_dp_link_clk_determine_rate(काष्ठा clk_hw *hw,
-					       काष्ठा clk_rate_request *req)
-अणु
-	चयन (req->rate) अणु
-	हाल 162000000:
-	हाल 270000000:
-	हाल 540000000:
-	हाल 810000000:
-		वापस 0;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+static int qcom_qmp_dp_link_clk_determine_rate(struct clk_hw *hw,
+					       struct clk_rate_request *req)
+{
+	switch (req->rate) {
+	case 162000000:
+	case 270000000:
+	case 540000000:
+	case 810000000:
+		return 0;
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल अचिन्हित दीर्घ
-qcom_qmp_dp_link_clk_recalc_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ parent_rate)
-अणु
-	स्थिर काष्ठा qmp_phy_dp_clks *dp_clks;
-	स्थिर काष्ठा qmp_phy *qphy;
-	स्थिर काष्ठा phy_configure_opts_dp *dp_opts;
+static unsigned long
+qcom_qmp_dp_link_clk_recalc_rate(struct clk_hw *hw, unsigned long parent_rate)
+{
+	const struct qmp_phy_dp_clks *dp_clks;
+	const struct qmp_phy *qphy;
+	const struct phy_configure_opts_dp *dp_opts;
 
-	dp_clks = container_of(hw, काष्ठा qmp_phy_dp_clks, dp_link_hw);
+	dp_clks = container_of(hw, struct qmp_phy_dp_clks, dp_link_hw);
 	qphy = dp_clks->qphy;
 	dp_opts = &qphy->dp_opts;
 
-	चयन (dp_opts->link_rate) अणु
-	हाल 1620:
-	हाल 2700:
-	हाल 5400:
-	हाल 8100:
-		वापस dp_opts->link_rate * 100000;
-	शेष:
-		वापस 0;
-	पूर्ण
-पूर्ण
+	switch (dp_opts->link_rate) {
+	case 1620:
+	case 2700:
+	case 5400:
+	case 8100:
+		return dp_opts->link_rate * 100000;
+	default:
+		return 0;
+	}
+}
 
-अटल स्थिर काष्ठा clk_ops qcom_qmp_dp_link_clk_ops = अणु
+static const struct clk_ops qcom_qmp_dp_link_clk_ops = {
 	.determine_rate = qcom_qmp_dp_link_clk_determine_rate,
 	.recalc_rate = qcom_qmp_dp_link_clk_recalc_rate,
-पूर्ण;
+};
 
-अटल काष्ठा clk_hw *
-qcom_qmp_dp_clks_hw_get(काष्ठा of_phandle_args *clkspec, व्योम *data)
-अणु
-	काष्ठा qmp_phy_dp_clks *dp_clks = data;
-	अचिन्हित पूर्णांक idx = clkspec->args[0];
+static struct clk_hw *
+qcom_qmp_dp_clks_hw_get(struct of_phandle_args *clkspec, void *data)
+{
+	struct qmp_phy_dp_clks *dp_clks = data;
+	unsigned int idx = clkspec->args[0];
 
-	अगर (idx >= 2) अणु
+	if (idx >= 2) {
 		pr_err("%s: invalid index %u\n", __func__, idx);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	अगर (idx == 0)
-		वापस &dp_clks->dp_link_hw;
+	if (idx == 0)
+		return &dp_clks->dp_link_hw;
 
-	वापस &dp_clks->dp_pixel_hw;
-पूर्ण
+	return &dp_clks->dp_pixel_hw;
+}
 
-अटल पूर्णांक phy_dp_clks_रेजिस्टर(काष्ठा qcom_qmp *qmp, काष्ठा qmp_phy *qphy,
-				काष्ठा device_node *np)
-अणु
-	काष्ठा clk_init_data init = अणु पूर्ण;
-	काष्ठा qmp_phy_dp_clks *dp_clks;
-	पूर्णांक ret;
+static int phy_dp_clks_register(struct qcom_qmp *qmp, struct qmp_phy *qphy,
+				struct device_node *np)
+{
+	struct clk_init_data init = { };
+	struct qmp_phy_dp_clks *dp_clks;
+	int ret;
 
-	dp_clks = devm_kzalloc(qmp->dev, माप(*dp_clks), GFP_KERNEL);
-	अगर (!dp_clks)
-		वापस -ENOMEM;
+	dp_clks = devm_kzalloc(qmp->dev, sizeof(*dp_clks), GFP_KERNEL);
+	if (!dp_clks)
+		return -ENOMEM;
 
 	dp_clks->qphy = qphy;
 	qphy->dp_clks = dp_clks;
@@ -4736,102 +4735,102 @@ qcom_qmp_dp_clks_hw_get(काष्ठा of_phandle_args *clkspec, व्य�
 	init.ops = &qcom_qmp_dp_link_clk_ops;
 	init.name = "qmp_dp_phy_pll_link_clk";
 	dp_clks->dp_link_hw.init = &init;
-	ret = devm_clk_hw_रेजिस्टर(qmp->dev, &dp_clks->dp_link_hw);
-	अगर (ret)
-		वापस ret;
+	ret = devm_clk_hw_register(qmp->dev, &dp_clks->dp_link_hw);
+	if (ret)
+		return ret;
 
 	init.ops = &qcom_qmp_dp_pixel_clk_ops;
 	init.name = "qmp_dp_phy_pll_vco_div_clk";
 	dp_clks->dp_pixel_hw.init = &init;
-	ret = devm_clk_hw_रेजिस्टर(qmp->dev, &dp_clks->dp_pixel_hw);
-	अगर (ret)
-		वापस ret;
+	ret = devm_clk_hw_register(qmp->dev, &dp_clks->dp_pixel_hw);
+	if (ret)
+		return ret;
 
 	ret = of_clk_add_hw_provider(np, qcom_qmp_dp_clks_hw_get, dp_clks);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/*
-	 * Roll a devm action because the घड़ी provider is the child node, but
+	 * Roll a devm action because the clock provider is the child node, but
 	 * the child node is not actually a device.
 	 */
 	ret = devm_add_action(qmp->dev, phy_clk_release_provider, np);
-	अगर (ret)
+	if (ret)
 		phy_clk_release_provider(np);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा phy_ops qcom_qmp_phy_gen_ops = अणु
+static const struct phy_ops qcom_qmp_phy_gen_ops = {
 	.init		= qcom_qmp_phy_enable,
-	.निकास		= qcom_qmp_phy_disable,
+	.exit		= qcom_qmp_phy_disable,
 	.set_mode	= qcom_qmp_phy_set_mode,
 	.owner		= THIS_MODULE,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा phy_ops qcom_qmp_phy_dp_ops = अणु
+static const struct phy_ops qcom_qmp_phy_dp_ops = {
 	.init		= qcom_qmp_phy_init,
 	.configure	= qcom_qmp_dp_phy_configure,
-	.घातer_on	= qcom_qmp_phy_घातer_on,
+	.power_on	= qcom_qmp_phy_power_on,
 	.calibrate	= qcom_qmp_dp_phy_calibrate,
-	.घातer_off	= qcom_qmp_phy_घातer_off,
-	.निकास		= qcom_qmp_phy_निकास,
+	.power_off	= qcom_qmp_phy_power_off,
+	.exit		= qcom_qmp_phy_exit,
 	.set_mode	= qcom_qmp_phy_set_mode,
 	.owner		= THIS_MODULE,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा phy_ops qcom_qmp_pcie_ufs_ops = अणु
-	.घातer_on	= qcom_qmp_phy_enable,
-	.घातer_off	= qcom_qmp_phy_disable,
+static const struct phy_ops qcom_qmp_pcie_ufs_ops = {
+	.power_on	= qcom_qmp_phy_enable,
+	.power_off	= qcom_qmp_phy_disable,
 	.set_mode	= qcom_qmp_phy_set_mode,
 	.owner		= THIS_MODULE,
-पूर्ण;
+};
 
-अटल
-पूर्णांक qcom_qmp_phy_create(काष्ठा device *dev, काष्ठा device_node *np, पूर्णांक id,
-			व्योम __iomem *serdes, स्थिर काष्ठा qmp_phy_cfg *cfg)
-अणु
-	काष्ठा qcom_qmp *qmp = dev_get_drvdata(dev);
-	काष्ठा phy *generic_phy;
-	काष्ठा qmp_phy *qphy;
-	स्थिर काष्ठा phy_ops *ops;
-	अक्षर prop_name[MAX_PROP_NAME];
-	पूर्णांक ret;
+static
+int qcom_qmp_phy_create(struct device *dev, struct device_node *np, int id,
+			void __iomem *serdes, const struct qmp_phy_cfg *cfg)
+{
+	struct qcom_qmp *qmp = dev_get_drvdata(dev);
+	struct phy *generic_phy;
+	struct qmp_phy *qphy;
+	const struct phy_ops *ops;
+	char prop_name[MAX_PROP_NAME];
+	int ret;
 
-	qphy = devm_kzalloc(dev, माप(*qphy), GFP_KERNEL);
-	अगर (!qphy)
-		वापस -ENOMEM;
+	qphy = devm_kzalloc(dev, sizeof(*qphy), GFP_KERNEL);
+	if (!qphy)
+		return -ENOMEM;
 
 	qphy->cfg = cfg;
 	qphy->serdes = serdes;
 	/*
-	 * Get memory resources क्रम each phy lane:
+	 * Get memory resources for each phy lane:
 	 * Resources are indexed as: tx -> 0; rx -> 1; pcs -> 2.
 	 * For dual lane PHYs: tx2 -> 3, rx2 -> 4, pcs_misc (optional) -> 5
 	 * For single lane PHYs: pcs_misc (optional) -> 3.
 	 */
 	qphy->tx = of_iomap(np, 0);
-	अगर (!qphy->tx)
-		वापस -ENOMEM;
+	if (!qphy->tx)
+		return -ENOMEM;
 
 	qphy->rx = of_iomap(np, 1);
-	अगर (!qphy->rx)
-		वापस -ENOMEM;
+	if (!qphy->rx)
+		return -ENOMEM;
 
 	qphy->pcs = of_iomap(np, 2);
-	अगर (!qphy->pcs)
-		वापस -ENOMEM;
+	if (!qphy->pcs)
+		return -ENOMEM;
 
 	/*
-	 * If this is a dual-lane PHY, then there should be रेजिस्टरs क्रम the
-	 * second lane. Some old device trees did not specअगरy this, so fall
+	 * If this is a dual-lane PHY, then there should be registers for the
+	 * second lane. Some old device trees did not specify this, so fall
 	 * back to old legacy behavior of assuming they can be reached at an
 	 * offset from the first lane.
 	 */
-	अगर (cfg->is_dual_lane_phy) अणु
+	if (cfg->is_dual_lane_phy) {
 		qphy->tx2 = of_iomap(np, 3);
 		qphy->rx2 = of_iomap(np, 4);
-		अगर (!qphy->tx2 || !qphy->rx2) अणु
+		if (!qphy->tx2 || !qphy->rx2) {
 			dev_warn(dev,
 				 "Underspecified device tree, falling back to legacy register regions\n");
 
@@ -4840,62 +4839,62 @@ qcom_qmp_dp_clks_hw_get(काष्ठा of_phandle_args *clkspec, व्य�
 			qphy->tx2 = qphy->tx + QMP_PHY_LEGACY_LANE_STRIDE;
 			qphy->rx2 = qphy->rx + QMP_PHY_LEGACY_LANE_STRIDE;
 
-		पूर्ण अन्यथा अणु
+		} else {
 			qphy->pcs_misc = of_iomap(np, 5);
-		पूर्ण
+		}
 
-	पूर्ण अन्यथा अणु
+	} else {
 		qphy->pcs_misc = of_iomap(np, 3);
-	पूर्ण
+	}
 
-	अगर (!qphy->pcs_misc)
+	if (!qphy->pcs_misc)
 		dev_vdbg(dev, "PHY pcs_misc-reg not used\n");
 
 	/*
-	 * Get PHY's Pipe घड़ी, अगर any. USB3 and PCIe are PIPE3
-	 * based phys, so they essentially have pipe घड़ी. So,
-	 * we वापस error in हाल phy is USB3 or PIPE type.
-	 * Otherwise, we initialize pipe घड़ी to शून्य क्रम
-	 * all phys that करोn't need this.
+	 * Get PHY's Pipe clock, if any. USB3 and PCIe are PIPE3
+	 * based phys, so they essentially have pipe clock. So,
+	 * we return error in case phy is USB3 or PIPE type.
+	 * Otherwise, we initialize pipe clock to NULL for
+	 * all phys that don't need this.
 	 */
-	snम_लिखो(prop_name, माप(prop_name), "pipe%d", id);
+	snprintf(prop_name, sizeof(prop_name), "pipe%d", id);
 	qphy->pipe_clk = of_clk_get_by_name(np, prop_name);
-	अगर (IS_ERR(qphy->pipe_clk)) अणु
-		अगर (cfg->type == PHY_TYPE_PCIE ||
-		    cfg->type == PHY_TYPE_USB3) अणु
+	if (IS_ERR(qphy->pipe_clk)) {
+		if (cfg->type == PHY_TYPE_PCIE ||
+		    cfg->type == PHY_TYPE_USB3) {
 			ret = PTR_ERR(qphy->pipe_clk);
-			अगर (ret != -EPROBE_DEFER)
+			if (ret != -EPROBE_DEFER)
 				dev_err(dev,
 					"failed to get lane%d pipe_clk, %d\n",
 					id, ret);
-			वापस ret;
-		पूर्ण
-		qphy->pipe_clk = शून्य;
-	पूर्ण
+			return ret;
+		}
+		qphy->pipe_clk = NULL;
+	}
 
-	/* Get lane reset, अगर any */
-	अगर (cfg->has_lane_rst) अणु
-		snम_लिखो(prop_name, माप(prop_name), "lane%d", id);
+	/* Get lane reset, if any */
+	if (cfg->has_lane_rst) {
+		snprintf(prop_name, sizeof(prop_name), "lane%d", id);
 		qphy->lane_rst = of_reset_control_get(np, prop_name);
-		अगर (IS_ERR(qphy->lane_rst)) अणु
+		if (IS_ERR(qphy->lane_rst)) {
 			dev_err(dev, "failed to get lane%d reset\n", id);
-			वापस PTR_ERR(qphy->lane_rst);
-		पूर्ण
-	पूर्ण
+			return PTR_ERR(qphy->lane_rst);
+		}
+	}
 
-	अगर (cfg->type == PHY_TYPE_UFS || cfg->type == PHY_TYPE_PCIE)
+	if (cfg->type == PHY_TYPE_UFS || cfg->type == PHY_TYPE_PCIE)
 		ops = &qcom_qmp_pcie_ufs_ops;
-	अन्यथा अगर (cfg->type == PHY_TYPE_DP)
+	else if (cfg->type == PHY_TYPE_DP)
 		ops = &qcom_qmp_phy_dp_ops;
-	अन्यथा
+	else
 		ops = &qcom_qmp_phy_gen_ops;
 
 	generic_phy = devm_phy_create(dev, np, ops);
-	अगर (IS_ERR(generic_phy)) अणु
+	if (IS_ERR(generic_phy)) {
 		ret = PTR_ERR(generic_phy);
 		dev_err(dev, "failed to create qphy %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	qphy->phy = generic_phy;
 	qphy->index = id;
@@ -4903,288 +4902,288 @@ qcom_qmp_dp_clks_hw_get(काष्ठा of_phandle_args *clkspec, व्य�
 	qmp->phys[id] = qphy;
 	phy_set_drvdata(generic_phy, qphy);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id qcom_qmp_phy_of_match_table[] = अणु
-	अणु
+static const struct of_device_id qcom_qmp_phy_of_match_table[] = {
+	{
 		.compatible = "qcom,ipq8074-qmp-usb3-phy",
 		.data = &ipq8074_usb3phy_cfg,
-	पूर्ण, अणु
+	}, {
 		.compatible = "qcom,msm8996-qmp-pcie-phy",
 		.data = &msm8996_pciephy_cfg,
-	पूर्ण, अणु
+	}, {
 		.compatible = "qcom,msm8996-qmp-ufs-phy",
 		.data = &msm8996_ufs_cfg,
-	पूर्ण, अणु
+	}, {
 		.compatible = "qcom,msm8996-qmp-usb3-phy",
 		.data = &msm8996_usb3phy_cfg,
-	पूर्ण, अणु
+	}, {
 		.compatible = "qcom,msm8998-qmp-pcie-phy",
 		.data = &msm8998_pciephy_cfg,
-	पूर्ण, अणु
+	}, {
 		.compatible = "qcom,msm8998-qmp-ufs-phy",
 		.data = &sdm845_ufsphy_cfg,
-	पूर्ण, अणु
+	}, {
 		.compatible = "qcom,ipq8074-qmp-pcie-phy",
 		.data = &ipq8074_pciephy_cfg,
-	पूर्ण, अणु
+	}, {
 		.compatible = "qcom,sc7180-qmp-usb3-phy",
 		.data = &sc7180_usb3phy_cfg,
-	पूर्ण, अणु
+	}, {
 		.compatible = "qcom,sc7180-qmp-usb3-dp-phy",
 		/* It's a combo phy */
-	पूर्ण, अणु
+	}, {
 		.compatible = "qcom,sc8180x-qmp-ufs-phy",
 		.data = &sm8150_ufsphy_cfg,
-	पूर्ण, अणु
+	}, {
 		.compatible = "qcom,sc8180x-qmp-usb3-phy",
 		.data = &sm8150_usb3phy_cfg,
-	पूर्ण, अणु
+	}, {
 		.compatible = "qcom,sdm845-qhp-pcie-phy",
 		.data = &sdm845_qhp_pciephy_cfg,
-	पूर्ण, अणु
+	}, {
 		.compatible = "qcom,sdm845-qmp-pcie-phy",
 		.data = &sdm845_qmp_pciephy_cfg,
-	पूर्ण, अणु
+	}, {
 		.compatible = "qcom,sdm845-qmp-usb3-phy",
 		.data = &qmp_v3_usb3phy_cfg,
-	पूर्ण, अणु
+	}, {
 		.compatible = "qcom,sdm845-qmp-usb3-uni-phy",
 		.data = &qmp_v3_usb3_uniphy_cfg,
-	पूर्ण, अणु
+	}, {
 		.compatible = "qcom,sdm845-qmp-ufs-phy",
 		.data = &sdm845_ufsphy_cfg,
-	पूर्ण, अणु
+	}, {
 		.compatible = "qcom,msm8998-qmp-usb3-phy",
 		.data = &msm8998_usb3phy_cfg,
-	पूर्ण, अणु
+	}, {
 		.compatible = "qcom,sm8150-qmp-ufs-phy",
 		.data = &sm8150_ufsphy_cfg,
-	पूर्ण, अणु
+	}, {
 		.compatible = "qcom,sm8250-qmp-ufs-phy",
 		.data = &sm8150_ufsphy_cfg,
-	पूर्ण, अणु
+	}, {
 		.compatible = "qcom,sm8150-qmp-usb3-phy",
 		.data = &sm8150_usb3phy_cfg,
-	पूर्ण, अणु
+	}, {
 		.compatible = "qcom,sm8150-qmp-usb3-uni-phy",
 		.data = &sm8150_usb3_uniphy_cfg,
-	पूर्ण, अणु
+	}, {
 		.compatible = "qcom,sm8250-qmp-usb3-phy",
 		.data = &sm8250_usb3phy_cfg,
-	पूर्ण, अणु
+	}, {
 		.compatible = "qcom,sm8250-qmp-usb3-dp-phy",
 		/* It's a combo phy */
-	पूर्ण, अणु
+	}, {
 		.compatible = "qcom,sm8250-qmp-usb3-uni-phy",
 		.data = &sm8250_usb3_uniphy_cfg,
-	पूर्ण, अणु
+	}, {
 		.compatible = "qcom,sm8250-qmp-gen3x1-pcie-phy",
 		.data = &sm8250_qmp_gen3x1_pciephy_cfg,
-	पूर्ण, अणु
+	}, {
 		.compatible = "qcom,sm8250-qmp-gen3x2-pcie-phy",
 		.data = &sm8250_qmp_gen3x2_pciephy_cfg,
-	पूर्ण, अणु
+	}, {
 		.compatible = "qcom,sm8350-qmp-ufs-phy",
 		.data = &sm8350_ufsphy_cfg,
-	पूर्ण, अणु
+	}, {
 		.compatible = "qcom,sm8250-qmp-modem-pcie-phy",
 		.data = &sm8250_qmp_gen3x2_pciephy_cfg,
-	पूर्ण, अणु
+	}, {
 		.compatible = "qcom,sdx55-qmp-usb3-uni-phy",
 		.data = &sdx55_usb3_uniphy_cfg,
-	पूर्ण, अणु
+	}, {
 		.compatible = "qcom,sm8350-qmp-usb3-phy",
 		.data = &sm8350_usb3phy_cfg,
-	पूर्ण, अणु
+	}, {
 		.compatible = "qcom,sm8350-qmp-usb3-uni-phy",
 		.data = &sm8350_usb3_uniphy_cfg,
-	पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+	},
+	{ },
+};
 MODULE_DEVICE_TABLE(of, qcom_qmp_phy_of_match_table);
 
-अटल स्थिर काष्ठा of_device_id qcom_qmp_combo_phy_of_match_table[] = अणु
-	अणु
+static const struct of_device_id qcom_qmp_combo_phy_of_match_table[] = {
+	{
 		.compatible = "qcom,sc7180-qmp-usb3-dp-phy",
 		.data = &sc7180_usb3dpphy_cfg,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "qcom,sm8250-qmp-usb3-dp-phy",
 		.data = &sm8250_usb3dpphy_cfg,
-	पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+	},
+	{ }
+};
 
-अटल स्थिर काष्ठा dev_pm_ops qcom_qmp_phy_pm_ops = अणु
-	SET_RUNTIME_PM_OPS(qcom_qmp_phy_runसमय_suspend,
-			   qcom_qmp_phy_runसमय_resume, शून्य)
-पूर्ण;
+static const struct dev_pm_ops qcom_qmp_phy_pm_ops = {
+	SET_RUNTIME_PM_OPS(qcom_qmp_phy_runtime_suspend,
+			   qcom_qmp_phy_runtime_resume, NULL)
+};
 
-अटल पूर्णांक qcom_qmp_phy_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा qcom_qmp *qmp;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा device_node *child;
-	काष्ठा phy_provider *phy_provider;
-	व्योम __iomem *serdes;
-	व्योम __iomem *usb_serdes;
-	व्योम __iomem *dp_serdes = शून्य;
-	स्थिर काष्ठा qmp_phy_combo_cfg *combo_cfg = शून्य;
-	स्थिर काष्ठा qmp_phy_cfg *cfg = शून्य;
-	स्थिर काष्ठा qmp_phy_cfg *usb_cfg = शून्य;
-	स्थिर काष्ठा qmp_phy_cfg *dp_cfg = शून्य;
-	पूर्णांक num, id, expected_phys;
-	पूर्णांक ret;
+static int qcom_qmp_phy_probe(struct platform_device *pdev)
+{
+	struct qcom_qmp *qmp;
+	struct device *dev = &pdev->dev;
+	struct device_node *child;
+	struct phy_provider *phy_provider;
+	void __iomem *serdes;
+	void __iomem *usb_serdes;
+	void __iomem *dp_serdes = NULL;
+	const struct qmp_phy_combo_cfg *combo_cfg = NULL;
+	const struct qmp_phy_cfg *cfg = NULL;
+	const struct qmp_phy_cfg *usb_cfg = NULL;
+	const struct qmp_phy_cfg *dp_cfg = NULL;
+	int num, id, expected_phys;
+	int ret;
 
-	qmp = devm_kzalloc(dev, माप(*qmp), GFP_KERNEL);
-	अगर (!qmp)
-		वापस -ENOMEM;
+	qmp = devm_kzalloc(dev, sizeof(*qmp), GFP_KERNEL);
+	if (!qmp)
+		return -ENOMEM;
 
 	qmp->dev = dev;
 	dev_set_drvdata(dev, qmp);
 
-	/* Get the specअगरic init parameters of QMP phy */
+	/* Get the specific init parameters of QMP phy */
 	cfg = of_device_get_match_data(dev);
-	अगर (!cfg) अणु
-		स्थिर काष्ठा of_device_id *match;
+	if (!cfg) {
+		const struct of_device_id *match;
 
 		match = of_match_device(qcom_qmp_combo_phy_of_match_table, dev);
-		अगर (!match)
-			वापस -EINVAL;
+		if (!match)
+			return -EINVAL;
 
 		combo_cfg = match->data;
-		अगर (!combo_cfg)
-			वापस -EINVAL;
+		if (!combo_cfg)
+			return -EINVAL;
 
 		usb_cfg = combo_cfg->usb_cfg;
 		cfg = usb_cfg; /* Setup clks and regulators */
-	पूर्ण
+	}
 
 	/* per PHY serdes; usually located at base address */
-	usb_serdes = serdes = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(serdes))
-		वापस PTR_ERR(serdes);
+	usb_serdes = serdes = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(serdes))
+		return PTR_ERR(serdes);
 
-	/* per PHY dp_com; अगर PHY has dp_com control block */
-	अगर (combo_cfg || cfg->has_phy_dp_com_ctrl) अणु
-		qmp->dp_com = devm_platक्रमm_ioremap_resource(pdev, 1);
-		अगर (IS_ERR(qmp->dp_com))
-			वापस PTR_ERR(qmp->dp_com);
-	पूर्ण
+	/* per PHY dp_com; if PHY has dp_com control block */
+	if (combo_cfg || cfg->has_phy_dp_com_ctrl) {
+		qmp->dp_com = devm_platform_ioremap_resource(pdev, 1);
+		if (IS_ERR(qmp->dp_com))
+			return PTR_ERR(qmp->dp_com);
+	}
 
-	अगर (combo_cfg) अणु
-		/* Only two serdes क्रम combo PHY */
-		dp_serdes = devm_platक्रमm_ioremap_resource(pdev, 2);
-		अगर (IS_ERR(dp_serdes))
-			वापस PTR_ERR(dp_serdes);
+	if (combo_cfg) {
+		/* Only two serdes for combo PHY */
+		dp_serdes = devm_platform_ioremap_resource(pdev, 2);
+		if (IS_ERR(dp_serdes))
+			return PTR_ERR(dp_serdes);
 
 		dp_cfg = combo_cfg->dp_cfg;
 		expected_phys = 2;
-	पूर्ण अन्यथा अणु
+	} else {
 		expected_phys = cfg->nlanes;
-	पूर्ण
+	}
 
 	mutex_init(&qmp->phy_mutex);
 
 	ret = qcom_qmp_phy_clk_init(dev, cfg);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = qcom_qmp_phy_reset_init(dev, cfg);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = qcom_qmp_phy_vreg_init(dev, cfg);
-	अगर (ret) अणु
-		अगर (ret != -EPROBE_DEFER)
+	if (ret) {
+		if (ret != -EPROBE_DEFER)
 			dev_err(dev, "failed to get regulator supplies: %d\n",
 				ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	num = of_get_available_child_count(dev->of_node);
-	/* करो we have a rogue child node ? */
-	अगर (num > expected_phys)
-		वापस -EINVAL;
+	/* do we have a rogue child node ? */
+	if (num > expected_phys)
+		return -EINVAL;
 
-	qmp->phys = devm_kसुस्मृति(dev, num, माप(*qmp->phys), GFP_KERNEL);
-	अगर (!qmp->phys)
-		वापस -ENOMEM;
+	qmp->phys = devm_kcalloc(dev, num, sizeof(*qmp->phys), GFP_KERNEL);
+	if (!qmp->phys)
+		return -ENOMEM;
 
-	pm_runसमय_set_active(dev);
-	pm_runसमय_enable(dev);
+	pm_runtime_set_active(dev);
+	pm_runtime_enable(dev);
 	/*
-	 * Prevent runसमय pm from being ON by शेष. Users can enable
-	 * it using घातer/control in sysfs.
+	 * Prevent runtime pm from being ON by default. Users can enable
+	 * it using power/control in sysfs.
 	 */
-	pm_runसमय_क्रमbid(dev);
+	pm_runtime_forbid(dev);
 
 	id = 0;
-	क्रम_each_available_child_of_node(dev->of_node, child) अणु
-		अगर (of_node_name_eq(child, "dp-phy")) अणु
+	for_each_available_child_of_node(dev->of_node, child) {
+		if (of_node_name_eq(child, "dp-phy")) {
 			cfg = dp_cfg;
 			serdes = dp_serdes;
-		पूर्ण अन्यथा अगर (of_node_name_eq(child, "usb3-phy")) अणु
+		} else if (of_node_name_eq(child, "usb3-phy")) {
 			cfg = usb_cfg;
 			serdes = usb_serdes;
-		पूर्ण
+		}
 
 		/* Create per-lane phy */
 		ret = qcom_qmp_phy_create(dev, child, id, serdes, cfg);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev, "failed to create lane%d phy, %d\n",
 				id, ret);
-			जाओ err_node_put;
-		पूर्ण
+			goto err_node_put;
+		}
 
 		/*
-		 * Register the pipe घड़ी provided by phy.
-		 * See function description to see details of this pipe घड़ी.
+		 * Register the pipe clock provided by phy.
+		 * See function description to see details of this pipe clock.
 		 */
-		अगर (cfg->type == PHY_TYPE_USB3 || cfg->type == PHY_TYPE_PCIE) अणु
-			ret = phy_pipe_clk_रेजिस्टर(qmp, child);
-			अगर (ret) अणु
+		if (cfg->type == PHY_TYPE_USB3 || cfg->type == PHY_TYPE_PCIE) {
+			ret = phy_pipe_clk_register(qmp, child);
+			if (ret) {
 				dev_err(qmp->dev,
 					"failed to register pipe clock source\n");
-				जाओ err_node_put;
-			पूर्ण
-		पूर्ण अन्यथा अगर (cfg->type == PHY_TYPE_DP) अणु
-			ret = phy_dp_clks_रेजिस्टर(qmp, qmp->phys[id], child);
-			अगर (ret) अणु
+				goto err_node_put;
+			}
+		} else if (cfg->type == PHY_TYPE_DP) {
+			ret = phy_dp_clks_register(qmp, qmp->phys[id], child);
+			if (ret) {
 				dev_err(qmp->dev,
 					"failed to register DP clock source\n");
-				जाओ err_node_put;
-			पूर्ण
-		पूर्ण
+				goto err_node_put;
+			}
+		}
 		id++;
-	पूर्ण
+	}
 
-	phy_provider = devm_of_phy_provider_रेजिस्टर(dev, of_phy_simple_xlate);
-	अगर (!IS_ERR(phy_provider))
+	phy_provider = devm_of_phy_provider_register(dev, of_phy_simple_xlate);
+	if (!IS_ERR(phy_provider))
 		dev_info(dev, "Registered Qcom-QMP phy\n");
-	अन्यथा
-		pm_runसमय_disable(dev);
+	else
+		pm_runtime_disable(dev);
 
-	वापस PTR_ERR_OR_ZERO(phy_provider);
+	return PTR_ERR_OR_ZERO(phy_provider);
 
 err_node_put:
-	pm_runसमय_disable(dev);
+	pm_runtime_disable(dev);
 	of_node_put(child);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा platक्रमm_driver qcom_qmp_phy_driver = अणु
+static struct platform_driver qcom_qmp_phy_driver = {
 	.probe		= qcom_qmp_phy_probe,
-	.driver = अणु
+	.driver = {
 		.name	= "qcom-qmp-phy",
 		.pm	= &qcom_qmp_phy_pm_ops,
 		.of_match_table = qcom_qmp_phy_of_match_table,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(qcom_qmp_phy_driver);
+module_platform_driver(qcom_qmp_phy_driver);
 
 MODULE_AUTHOR("Vivek Gautam <vivek.gautam@codeaurora.org>");
 MODULE_DESCRIPTION("Qualcomm QMP PHY driver");

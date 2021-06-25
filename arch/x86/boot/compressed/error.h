@@ -1,11 +1,10 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित BOOT_COMPRESSED_ERROR_H
-#घोषणा BOOT_COMPRESSED_ERROR_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef BOOT_COMPRESSED_ERROR_H
+#define BOOT_COMPRESSED_ERROR_H
 
-#समावेश <linux/compiler.h>
+#include <linux/compiler.h>
 
-व्योम warn(अक्षर *m);
-व्योम error(अक्षर *m) __noवापस;
+void warn(char *m);
+void error(char *m) __noreturn;
 
-#पूर्ण_अगर /* BOOT_COMPRESSED_ERROR_H */
+#endif /* BOOT_COMPRESSED_ERROR_H */

@@ -1,21 +1,20 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Generic PXA PATA driver
  *
  * Copyright (C) 2010 Marek Vasut <marek.vasut@gmail.com>
  */
 
-#अगर_अघोषित	__MACH_PATA_PXA_H__
-#घोषणा	__MACH_PATA_PXA_H__
+#ifndef	__MACH_PATA_PXA_H__
+#define	__MACH_PATA_PXA_H__
 
-काष्ठा pata_pxa_pdata अणु
+struct pata_pxa_pdata {
 	/* PXA DMA DREQ<0:2> pin */
-	uपूर्णांक32_t	dma_dreq;
-	/* Register shअगरt */
-	uपूर्णांक32_t	reg_shअगरt;
+	uint32_t	dma_dreq;
+	/* Register shift */
+	uint32_t	reg_shift;
 	/* IRQ flags */
-	uपूर्णांक32_t	irq_flags;
-पूर्ण;
+	uint32_t	irq_flags;
+};
 
-#पूर्ण_अगर	/* __MACH_PATA_PXA_H__ */
+#endif	/* __MACH_PATA_PXA_H__ */

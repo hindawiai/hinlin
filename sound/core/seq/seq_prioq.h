@@ -1,46 +1,45 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  *   ALSA sequencer Priority Queue
  *   Copyright (c) 1998 by Frank van de Pol <fvdpol@coil.demon.nl>
  */
-#अगर_अघोषित __SND_SEQ_PRIOQ_H
-#घोषणा __SND_SEQ_PRIOQ_H
+#ifndef __SND_SEQ_PRIOQ_H
+#define __SND_SEQ_PRIOQ_H
 
-#समावेश "seq_memory.h"
+#include "seq_memory.h"
 
 
 /* === PRIOQ === */
 
-काष्ठा snd_seq_prioq अणु
-	काष्ठा snd_seq_event_cell *head;      /* poपूर्णांकer to head of prioq */
-	काष्ठा snd_seq_event_cell *tail;      /* poपूर्णांकer to tail of prioq */
-	पूर्णांक cells;
+struct snd_seq_prioq {
+	struct snd_seq_event_cell *head;      /* pointer to head of prioq */
+	struct snd_seq_event_cell *tail;      /* pointer to tail of prioq */
+	int cells;
 	spinlock_t lock;
-पूर्ण;
+};
 
 
-/* create new prioq (स्थिरructor) */
-काष्ठा snd_seq_prioq *snd_seq_prioq_new(व्योम);
+/* create new prioq (constructor) */
+struct snd_seq_prioq *snd_seq_prioq_new(void);
 
-/* delete prioq (deकाष्ठाor) */
-व्योम snd_seq_prioq_delete(काष्ठा snd_seq_prioq **fअगरo);
+/* delete prioq (destructor) */
+void snd_seq_prioq_delete(struct snd_seq_prioq **fifo);
 
 /* enqueue cell to prioq */
-पूर्णांक snd_seq_prioq_cell_in(काष्ठा snd_seq_prioq *f, काष्ठा snd_seq_event_cell *cell);
+int snd_seq_prioq_cell_in(struct snd_seq_prioq *f, struct snd_seq_event_cell *cell);
 
 /* dequeue cell from prioq */ 
-काष्ठा snd_seq_event_cell *snd_seq_prioq_cell_out(काष्ठा snd_seq_prioq *f,
-						  व्योम *current_समय);
+struct snd_seq_event_cell *snd_seq_prioq_cell_out(struct snd_seq_prioq *f,
+						  void *current_time);
 
-/* वापस number of events available in prioq */
-पूर्णांक snd_seq_prioq_avail(काष्ठा snd_seq_prioq *f);
+/* return number of events available in prioq */
+int snd_seq_prioq_avail(struct snd_seq_prioq *f);
 
 /* client left queue */
-व्योम snd_seq_prioq_leave(काष्ठा snd_seq_prioq *f, पूर्णांक client, पूर्णांक बारtamp);        
+void snd_seq_prioq_leave(struct snd_seq_prioq *f, int client, int timestamp);        
 
 /* Remove events */
-व्योम snd_seq_prioq_हटाओ_events(काष्ठा snd_seq_prioq *f, पूर्णांक client,
-				 काष्ठा snd_seq_हटाओ_events *info);
+void snd_seq_prioq_remove_events(struct snd_seq_prioq *f, int client,
+				 struct snd_seq_remove_events *info);
 
-#पूर्ण_अगर
+#endif

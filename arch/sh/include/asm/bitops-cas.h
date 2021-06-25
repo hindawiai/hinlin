@@ -1,95 +1,94 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ASM_SH_BITOPS_CAS_H
-#घोषणा __ASM_SH_BITOPS_CAS_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ASM_SH_BITOPS_CAS_H
+#define __ASM_SH_BITOPS_CAS_H
 
-अटल अंतरभूत अचिन्हित __bo_cas(अस्थिर अचिन्हित *p, अचिन्हित old, अचिन्हित new)
-अणु
-	__यंत्र__ __अस्थिर__("cas.l %1,%0,@r0"
+static inline unsigned __bo_cas(volatile unsigned *p, unsigned old, unsigned new)
+{
+	__asm__ __volatile__("cas.l %1,%0,@r0"
 		: "+r"(new)
 		: "r"(old), "z"(p)
 		: "t", "memory" );
-	वापस new;
-पूर्ण
+	return new;
+}
 
-अटल अंतरभूत व्योम set_bit(पूर्णांक nr, अस्थिर व्योम *addr)
-अणु
-	अचिन्हित mask, old;
-	अस्थिर अचिन्हित *a = addr;
-
-	a += nr >> 5;
-	mask = 1U << (nr & 0x1f);
-
-	करो old = *a;
-	जबतक (__bo_cas(a, old, old|mask) != old);
-पूर्ण
-
-अटल अंतरभूत व्योम clear_bit(पूर्णांक nr, अस्थिर व्योम *addr)
-अणु
-	अचिन्हित mask, old;
-	अस्थिर अचिन्हित *a = addr;
+static inline void set_bit(int nr, volatile void *addr)
+{
+	unsigned mask, old;
+	volatile unsigned *a = addr;
 
 	a += nr >> 5;
 	mask = 1U << (nr & 0x1f);
 
-	करो old = *a;
-	जबतक (__bo_cas(a, old, old&~mask) != old);
-पूर्ण
+	do old = *a;
+	while (__bo_cas(a, old, old|mask) != old);
+}
 
-अटल अंतरभूत व्योम change_bit(पूर्णांक nr, अस्थिर व्योम *addr)
-अणु
-	अचिन्हित mask, old;
-	अस्थिर अचिन्हित *a = addr;
-
-	a += nr >> 5;
-	mask = 1U << (nr & 0x1f);
-
-	करो old = *a;
-	जबतक (__bo_cas(a, old, old^mask) != old);
-पूर्ण
-
-अटल अंतरभूत पूर्णांक test_and_set_bit(पूर्णांक nr, अस्थिर व्योम *addr)
-अणु
-	अचिन्हित mask, old;
-	अस्थिर अचिन्हित *a = addr;
+static inline void clear_bit(int nr, volatile void *addr)
+{
+	unsigned mask, old;
+	volatile unsigned *a = addr;
 
 	a += nr >> 5;
 	mask = 1U << (nr & 0x1f);
 
-	करो old = *a;
-	जबतक (__bo_cas(a, old, old|mask) != old);
+	do old = *a;
+	while (__bo_cas(a, old, old&~mask) != old);
+}
 
-	वापस !!(old & mask);
-पूर्ण
-
-अटल अंतरभूत पूर्णांक test_and_clear_bit(पूर्णांक nr, अस्थिर व्योम *addr)
-अणु
-	अचिन्हित mask, old;
-	अस्थिर अचिन्हित *a = addr;
+static inline void change_bit(int nr, volatile void *addr)
+{
+	unsigned mask, old;
+	volatile unsigned *a = addr;
 
 	a += nr >> 5;
 	mask = 1U << (nr & 0x1f);
 
-	करो old = *a;
-	जबतक (__bo_cas(a, old, old&~mask) != old);
+	do old = *a;
+	while (__bo_cas(a, old, old^mask) != old);
+}
 
-	वापस !!(old & mask);
-पूर्ण
-
-अटल अंतरभूत पूर्णांक test_and_change_bit(पूर्णांक nr, अस्थिर व्योम *addr)
-अणु
-	अचिन्हित mask, old;
-	अस्थिर अचिन्हित *a = addr;
+static inline int test_and_set_bit(int nr, volatile void *addr)
+{
+	unsigned mask, old;
+	volatile unsigned *a = addr;
 
 	a += nr >> 5;
 	mask = 1U << (nr & 0x1f);
 
-	करो old = *a;
-	जबतक (__bo_cas(a, old, old^mask) != old);
+	do old = *a;
+	while (__bo_cas(a, old, old|mask) != old);
 
-	वापस !!(old & mask);
-पूर्ण
+	return !!(old & mask);
+}
 
-#समावेश <यंत्र-generic/bitops/non-atomic.h>
+static inline int test_and_clear_bit(int nr, volatile void *addr)
+{
+	unsigned mask, old;
+	volatile unsigned *a = addr;
 
-#पूर्ण_अगर /* __ASM_SH_BITOPS_CAS_H */
+	a += nr >> 5;
+	mask = 1U << (nr & 0x1f);
+
+	do old = *a;
+	while (__bo_cas(a, old, old&~mask) != old);
+
+	return !!(old & mask);
+}
+
+static inline int test_and_change_bit(int nr, volatile void *addr)
+{
+	unsigned mask, old;
+	volatile unsigned *a = addr;
+
+	a += nr >> 5;
+	mask = 1U << (nr & 0x1f);
+
+	do old = *a;
+	while (__bo_cas(a, old, old^mask) != old);
+
+	return !!(old & mask);
+}
+
+#include <asm-generic/bitops/non-atomic.h>
+
+#endif /* __ASM_SH_BITOPS_CAS_H */

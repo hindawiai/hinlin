@@ -1,69 +1,68 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * linux/arch/m68k/sun3/dvma.c
  *
  * Written by Sam Creasey
  *
- * Sun3 IOMMU routines used क्रम dvma accesses.
+ * Sun3 IOMMU routines used for dvma accesses.
  *
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/memblock.h>
-#समावेश <linux/list.h>
-#समावेश <यंत्र/page.h>
-#समावेश <यंत्र/sun3mmu.h>
-#समावेश <यंत्र/dvma.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/mm.h>
+#include <linux/memblock.h>
+#include <linux/list.h>
+#include <asm/page.h>
+#include <asm/sun3mmu.h>
+#include <asm/dvma.h>
 
 
-अटल अचिन्हित दीर्घ ptelist[120];
+static unsigned long ptelist[120];
 
-अटल अचिन्हित दीर्घ dvma_page(अचिन्हित दीर्घ kaddr, अचिन्हित दीर्घ vaddr)
-अणु
-	अचिन्हित दीर्घ pte;
-	अचिन्हित दीर्घ j;
+static unsigned long dvma_page(unsigned long kaddr, unsigned long vaddr)
+{
+	unsigned long pte;
+	unsigned long j;
 	pte_t ptep;
 
-	j = *(अस्थिर अचिन्हित दीर्घ *)kaddr;
-	*(अस्थिर अचिन्हित दीर्घ *)kaddr = j;
+	j = *(volatile unsigned long *)kaddr;
+	*(volatile unsigned long *)kaddr = j;
 
 	ptep = pfn_pte(virt_to_pfn(kaddr), PAGE_KERNEL);
 	pte = pte_val(ptep);
 //	pr_info("dvma_remap: addr %lx -> %lx pte %08lx\n", kaddr, vaddr, pte);
-	अगर(ptelist[(vaddr & 0xff000) >> PAGE_SHIFT] != pte) अणु
+	if(ptelist[(vaddr & 0xff000) >> PAGE_SHIFT] != pte) {
 		sun3_put_pte(vaddr, pte);
 		ptelist[(vaddr & 0xff000) >> PAGE_SHIFT] = pte;
-	पूर्ण
+	}
 
-	वापस (vaddr + (kaddr & ~PAGE_MASK));
+	return (vaddr + (kaddr & ~PAGE_MASK));
 
-पूर्ण
+}
 
-पूर्णांक dvma_map_iommu(अचिन्हित दीर्घ kaddr, अचिन्हित दीर्घ baddr,
-			      पूर्णांक len)
-अणु
+int dvma_map_iommu(unsigned long kaddr, unsigned long baddr,
+			      int len)
+{
 
-	अचिन्हित दीर्घ end;
-	अचिन्हित दीर्घ vaddr;
+	unsigned long end;
+	unsigned long vaddr;
 
 	vaddr = dvma_btov(baddr);
 
 	end = vaddr + len;
 
-	जबतक(vaddr < end) अणु
+	while(vaddr < end) {
 		dvma_page(kaddr, vaddr);
 		kaddr += PAGE_SIZE;
 		vaddr += PAGE_SIZE;
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
-पूर्ण
+}
 
-व्योम __init sun3_dvma_init(व्योम)
-अणु
-	स_रखो(ptelist, 0, माप(ptelist));
-पूर्ण
+void __init sun3_dvma_init(void)
+{
+	memset(ptelist, 0, sizeof(ptelist));
+}

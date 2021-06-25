@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,28 +21,28 @@
  *
  */
 
-#समावेश <linux/math64.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/seq_file.h>
+#include <linux/math64.h>
+#include <linux/pci.h>
+#include <linux/seq_file.h>
 
-#समावेश "atom.h"
-#समावेश "evergreen.h"
-#समावेश "ni_dpm.h"
-#समावेश "nid.h"
-#समावेश "r600_dpm.h"
-#समावेश "rv770.h"
-#समावेश "radeon.h"
-#समावेश "radeon_asic.h"
+#include "atom.h"
+#include "evergreen.h"
+#include "ni_dpm.h"
+#include "nid.h"
+#include "r600_dpm.h"
+#include "rv770.h"
+#include "radeon.h"
+#include "radeon_asic.h"
 
-#घोषणा MC_CG_ARB_FREQ_F0           0x0a
-#घोषणा MC_CG_ARB_FREQ_F1           0x0b
-#घोषणा MC_CG_ARB_FREQ_F2           0x0c
-#घोषणा MC_CG_ARB_FREQ_F3           0x0d
+#define MC_CG_ARB_FREQ_F0           0x0a
+#define MC_CG_ARB_FREQ_F1           0x0b
+#define MC_CG_ARB_FREQ_F2           0x0c
+#define MC_CG_ARB_FREQ_F3           0x0d
 
-#घोषणा SMC_RAM_END 0xC000
+#define SMC_RAM_END 0xC000
 
-अटल स्थिर काष्ठा ni_cac_weights cac_weights_cayman_xt =
-अणु
+static const struct ni_cac_weights cac_weights_cayman_xt =
+{
 	0x15,
 	0x2,
 	0x19,
@@ -106,13 +105,13 @@
 	5,
 	7,
 	0,
-	अणु 0, 0, 0, 0, 0, 0, 0, 0 पूर्ण,
-	अणु 0, 0, 0, 0 पूर्ण,
+	{ 0, 0, 0, 0, 0, 0, 0, 0 },
+	{ 0, 0, 0, 0 },
 	true
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा ni_cac_weights cac_weights_cayman_pro =
-अणु
+static const struct ni_cac_weights cac_weights_cayman_pro =
+{
 	0x16,
 	0x4,
 	0x10,
@@ -175,13 +174,13 @@
 	6,
 	6,
 	0,
-	अणु 0, 0, 0, 0, 0, 0, 0, 0 पूर्ण,
-	अणु 0, 0, 0, 0 पूर्ण,
+	{ 0, 0, 0, 0, 0, 0, 0, 0 },
+	{ 0, 0, 0, 0 },
 	true
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा ni_cac_weights cac_weights_cayman_le =
-अणु
+static const struct ni_cac_weights cac_weights_cayman_le =
+{
 	0x7,
 	0xE,
 	0x1,
@@ -244,15 +243,15 @@
 	6,
 	6,
 	0,
-	अणु 0, 0, 0, 0, 0, 0, 0, 0 पूर्ण,
-	अणु 0, 0, 0, 0 पूर्ण,
+	{ 0, 0, 0, 0, 0, 0, 0, 0 },
+	{ 0, 0, 0, 0 },
 	true
-पूर्ण;
+};
 
-#घोषणा NISLANDS_MGCG_SEQUENCE  300
+#define NISLANDS_MGCG_SEQUENCE  300
 
-अटल स्थिर u32 cayman_cgcg_cgls_शेष[] =
-अणु
+static const u32 cayman_cgcg_cgls_default[] =
+{
 	0x000008f8, 0x00000010, 0xffffffff,
 	0x000008fc, 0x00000000, 0xffffffff,
 	0x000008f8, 0x00000011, 0xffffffff,
@@ -301,11 +300,11 @@
 	0x000008fc, 0x00000000, 0xffffffff,
 	0x000008f8, 0x0000002b, 0xffffffff,
 	0x000008fc, 0x00000000, 0xffffffff
-पूर्ण;
-#घोषणा CAYMAN_CGCG_CGLS_DEFAULT_LENGTH माप(cayman_cgcg_cgls_शेष) / (3 * माप(u32))
+};
+#define CAYMAN_CGCG_CGLS_DEFAULT_LENGTH sizeof(cayman_cgcg_cgls_default) / (3 * sizeof(u32))
 
-अटल स्थिर u32 cayman_cgcg_cgls_disable[] =
-अणु
+static const u32 cayman_cgcg_cgls_disable[] =
+{
 	0x000008f8, 0x00000010, 0xffffffff,
 	0x000008fc, 0xffffffff, 0xffffffff,
 	0x000008f8, 0x00000011, 0xffffffff,
@@ -356,11 +355,11 @@
 	0x000008fc, 0x00000000, 0xffffffff,
 	0x00000644, 0x000f7902, 0x001f4180,
 	0x00000644, 0x000f3802, 0x001f4180
-पूर्ण;
-#घोषणा CAYMAN_CGCG_CGLS_DISABLE_LENGTH माप(cayman_cgcg_cgls_disable) / (3 * माप(u32))
+};
+#define CAYMAN_CGCG_CGLS_DISABLE_LENGTH sizeof(cayman_cgcg_cgls_disable) / (3 * sizeof(u32))
 
-अटल स्थिर u32 cayman_cgcg_cgls_enable[] =
-अणु
+static const u32 cayman_cgcg_cgls_enable[] =
+{
 	0x00000644, 0x000f7882, 0x001f4080,
 	0x000008f8, 0x00000010, 0xffffffff,
 	0x000008fc, 0x00000000, 0xffffffff,
@@ -410,11 +409,11 @@
 	0x000008fc, 0xffffffff, 0xffffffff,
 	0x000008f8, 0x0000002b, 0xffffffff,
 	0x000008fc, 0xffffffff, 0xffffffff
-पूर्ण;
-#घोषणा CAYMAN_CGCG_CGLS_ENABLE_LENGTH  माप(cayman_cgcg_cgls_enable) / (3 * माप(u32))
+};
+#define CAYMAN_CGCG_CGLS_ENABLE_LENGTH  sizeof(cayman_cgcg_cgls_enable) / (3 * sizeof(u32))
 
-अटल स्थिर u32 cayman_mgcg_शेष[] =
-अणु
+static const u32 cayman_mgcg_default[] =
+{
 	0x0000802c, 0xc0000000, 0xffffffff,
 	0x00003fc4, 0xc0000000, 0xffffffff,
 	0x00005448, 0x00000100, 0xffffffff,
@@ -615,11 +614,11 @@
 	0x000008fc, 0x00000000, 0xffffffff,
 	0x000008f8, 0x0000001b, 0xffffffff,
 	0x000008fc, 0x00000000, 0xffffffff
-पूर्ण;
-#घोषणा CAYMAN_MGCG_DEFAULT_LENGTH माप(cayman_mgcg_शेष) / (3 * माप(u32))
+};
+#define CAYMAN_MGCG_DEFAULT_LENGTH sizeof(cayman_mgcg_default) / (3 * sizeof(u32))
 
-अटल स्थिर u32 cayman_mgcg_disable[] =
-अणु
+static const u32 cayman_mgcg_disable[] =
+{
 	0x0000802c, 0xc0000000, 0xffffffff,
 	0x000008f8, 0x00000000, 0xffffffff,
 	0x000008fc, 0xffffffff, 0xffffffff,
@@ -630,11 +629,11 @@
 	0x000008f8, 0x00000003, 0xffffffff,
 	0x000008fc, 0xffffffff, 0xffffffff,
 	0x00009150, 0x00600000, 0xffffffff
-पूर्ण;
-#घोषणा CAYMAN_MGCG_DISABLE_LENGTH   माप(cayman_mgcg_disable) / (3 * माप(u32))
+};
+#define CAYMAN_MGCG_DISABLE_LENGTH   sizeof(cayman_mgcg_disable) / (3 * sizeof(u32))
 
-अटल स्थिर u32 cayman_mgcg_enable[] =
-अणु
+static const u32 cayman_mgcg_enable[] =
+{
 	0x0000802c, 0xc0000000, 0xffffffff,
 	0x000008f8, 0x00000000, 0xffffffff,
 	0x000008fc, 0x00000000, 0xffffffff,
@@ -645,14 +644,14 @@
 	0x000008f8, 0x00000003, 0xffffffff,
 	0x000008fc, 0x00000000, 0xffffffff,
 	0x00009150, 0x96944200, 0xffffffff
-पूर्ण;
+};
 
-#घोषणा CAYMAN_MGCG_ENABLE_LENGTH   माप(cayman_mgcg_enable) / (3 * माप(u32))
+#define CAYMAN_MGCG_ENABLE_LENGTH   sizeof(cayman_mgcg_enable) / (3 * sizeof(u32))
 
-#घोषणा NISLANDS_SYSLS_SEQUENCE  100
+#define NISLANDS_SYSLS_SEQUENCE  100
 
-अटल स्थिर u32 cayman_sysls_शेष[] =
-अणु
+static const u32 cayman_sysls_default[] =
+{
 	/* Register,   Value,     Mask bits */
 	0x000055e8, 0x00000000, 0xffffffff,
 	0x0000d0bc, 0x00000000, 0xffffffff,
@@ -671,11 +670,11 @@
 	0x000064ec, 0x00000000, 0xffffffff,
 	0x00000c7c, 0x00000000, 0xffffffff,
 	0x00008dfc, 0x00000000, 0xffffffff
-पूर्ण;
-#घोषणा CAYMAN_SYSLS_DEFAULT_LENGTH माप(cayman_sysls_शेष) / (3 * माप(u32))
+};
+#define CAYMAN_SYSLS_DEFAULT_LENGTH sizeof(cayman_sysls_default) / (3 * sizeof(u32))
 
-अटल स्थिर u32 cayman_sysls_disable[] =
-अणु
+static const u32 cayman_sysls_disable[] =
+{
 	/* Register,   Value,     Mask bits */
 	0x0000d0c0, 0x00000000, 0xffffffff,
 	0x0000d8c0, 0x00000000, 0xffffffff,
@@ -696,11 +695,11 @@
 	0x000064ec, 0x00007ffd, 0xffffffff,
 	0x00000c7c, 0x0000ff00, 0xffffffff,
 	0x00008dfc, 0x0000007f, 0xffffffff
-पूर्ण;
-#घोषणा CAYMAN_SYSLS_DISABLE_LENGTH माप(cayman_sysls_disable) / (3 * माप(u32))
+};
+#define CAYMAN_SYSLS_DISABLE_LENGTH sizeof(cayman_sysls_disable) / (3 * sizeof(u32))
 
-अटल स्थिर u32 cayman_sysls_enable[] =
-अणु
+static const u32 cayman_sysls_enable[] =
+{
 	/* Register,   Value,     Mask bits */
 	0x000055e8, 0x00000001, 0xffffffff,
 	0x0000d0bc, 0x00000100, 0xffffffff,
@@ -719,902 +718,902 @@
 	0x000064ec, 0x00000000, 0xffffffff,
 	0x00000c7c, 0x00000000, 0xffffffff,
 	0x00008dfc, 0x00000000, 0xffffffff
-पूर्ण;
-#घोषणा CAYMAN_SYSLS_ENABLE_LENGTH माप(cayman_sysls_enable) / (3 * माप(u32))
+};
+#define CAYMAN_SYSLS_ENABLE_LENGTH sizeof(cayman_sysls_enable) / (3 * sizeof(u32))
 
-बाह्य पूर्णांक ni_mc_load_microcode(काष्ठा radeon_device *rdev);
+extern int ni_mc_load_microcode(struct radeon_device *rdev);
 
-काष्ठा ni_घातer_info *ni_get_pi(काष्ठा radeon_device *rdev)
-अणु
-	काष्ठा ni_घातer_info *pi = rdev->pm.dpm.priv;
+struct ni_power_info *ni_get_pi(struct radeon_device *rdev)
+{
+	struct ni_power_info *pi = rdev->pm.dpm.priv;
 
-	वापस pi;
-पूर्ण
+	return pi;
+}
 
-काष्ठा ni_ps *ni_get_ps(काष्ठा radeon_ps *rps)
-अणु
-	काष्ठा ni_ps *ps = rps->ps_priv;
+struct ni_ps *ni_get_ps(struct radeon_ps *rps)
+{
+	struct ni_ps *ps = rps->ps_priv;
 
-	वापस ps;
-पूर्ण
+	return ps;
+}
 
-अटल व्योम ni_calculate_leakage_क्रम_v_and_t_क्रमmula(स्थिर काष्ठा ni_leakage_coeffients *coeff,
+static void ni_calculate_leakage_for_v_and_t_formula(const struct ni_leakage_coeffients *coeff,
 						     u16 v, s32 t,
 						     u32 ileakage,
 						     u32 *leakage)
-अणु
+{
 	s64 kt, kv, leakage_w, i_leakage, vddc, temperature;
 
-	i_leakage = भाग64_s64(drm_पूर्णांक2fixp(ileakage), 1000);
-	vddc = भाग64_s64(drm_पूर्णांक2fixp(v), 1000);
-	temperature = भाग64_s64(drm_पूर्णांक2fixp(t), 1000);
+	i_leakage = div64_s64(drm_int2fixp(ileakage), 1000);
+	vddc = div64_s64(drm_int2fixp(v), 1000);
+	temperature = div64_s64(drm_int2fixp(t), 1000);
 
-	kt = drm_fixp_mul(भाग64_s64(drm_पूर्णांक2fixp(coeff->at), 1000),
-			  drm_fixp_exp(drm_fixp_mul(भाग64_s64(drm_पूर्णांक2fixp(coeff->bt), 1000), temperature)));
-	kv = drm_fixp_mul(भाग64_s64(drm_पूर्णांक2fixp(coeff->av), 1000),
-			  drm_fixp_exp(drm_fixp_mul(भाग64_s64(drm_पूर्णांक2fixp(coeff->bv), 1000), vddc)));
+	kt = drm_fixp_mul(div64_s64(drm_int2fixp(coeff->at), 1000),
+			  drm_fixp_exp(drm_fixp_mul(div64_s64(drm_int2fixp(coeff->bt), 1000), temperature)));
+	kv = drm_fixp_mul(div64_s64(drm_int2fixp(coeff->av), 1000),
+			  drm_fixp_exp(drm_fixp_mul(div64_s64(drm_int2fixp(coeff->bv), 1000), vddc)));
 
 	leakage_w = drm_fixp_mul(drm_fixp_mul(drm_fixp_mul(i_leakage, kt), kv), vddc);
 
-	*leakage = drm_fixp2पूर्णांक(leakage_w * 1000);
-पूर्ण
+	*leakage = drm_fixp2int(leakage_w * 1000);
+}
 
-अटल व्योम ni_calculate_leakage_क्रम_v_and_t(काष्ठा radeon_device *rdev,
-					     स्थिर काष्ठा ni_leakage_coeffients *coeff,
+static void ni_calculate_leakage_for_v_and_t(struct radeon_device *rdev,
+					     const struct ni_leakage_coeffients *coeff,
 					     u16 v,
 					     s32 t,
 					     u32 i_leakage,
 					     u32 *leakage)
-अणु
-	ni_calculate_leakage_क्रम_v_and_t_क्रमmula(coeff, v, t, i_leakage, leakage);
-पूर्ण
+{
+	ni_calculate_leakage_for_v_and_t_formula(coeff, v, t, i_leakage, leakage);
+}
 
-bool ni_dpm_vblank_too_लघु(काष्ठा radeon_device *rdev)
-अणु
-	काष्ठा rv7xx_घातer_info *pi = rv770_get_pi(rdev);
-	u32 vblank_समय = r600_dpm_get_vblank_समय(rdev);
+bool ni_dpm_vblank_too_short(struct radeon_device *rdev)
+{
+	struct rv7xx_power_info *pi = rv770_get_pi(rdev);
+	u32 vblank_time = r600_dpm_get_vblank_time(rdev);
 	/* we never hit the non-gddr5 limit so disable it */
-	u32 चयन_limit = pi->mem_gddr5 ? 450 : 0;
+	u32 switch_limit = pi->mem_gddr5 ? 450 : 0;
 
-	अगर (vblank_समय < चयन_limit)
-		वापस true;
-	अन्यथा
-		वापस false;
+	if (vblank_time < switch_limit)
+		return true;
+	else
+		return false;
 
-पूर्ण
+}
 
-अटल व्योम ni_apply_state_adjust_rules(काष्ठा radeon_device *rdev,
-					काष्ठा radeon_ps *rps)
-अणु
-	काष्ठा ni_ps *ps = ni_get_ps(rps);
-	काष्ठा radeon_घड़ी_and_voltage_limits *max_limits;
-	bool disable_mclk_चयनing;
+static void ni_apply_state_adjust_rules(struct radeon_device *rdev,
+					struct radeon_ps *rps)
+{
+	struct ni_ps *ps = ni_get_ps(rps);
+	struct radeon_clock_and_voltage_limits *max_limits;
+	bool disable_mclk_switching;
 	u32 mclk;
 	u16 vddci;
-	पूर्णांक i;
+	int i;
 
-	अगर ((rdev->pm.dpm.new_active_crtc_count > 1) ||
-	    ni_dpm_vblank_too_लघु(rdev))
-		disable_mclk_चयनing = true;
-	अन्यथा
-		disable_mclk_चयनing = false;
+	if ((rdev->pm.dpm.new_active_crtc_count > 1) ||
+	    ni_dpm_vblank_too_short(rdev))
+		disable_mclk_switching = true;
+	else
+		disable_mclk_switching = false;
 
-	अगर (rdev->pm.dpm.ac_घातer)
-		max_limits = &rdev->pm.dpm.dyn_state.max_घड़ी_voltage_on_ac;
-	अन्यथा
-		max_limits = &rdev->pm.dpm.dyn_state.max_घड़ी_voltage_on_dc;
+	if (rdev->pm.dpm.ac_power)
+		max_limits = &rdev->pm.dpm.dyn_state.max_clock_voltage_on_ac;
+	else
+		max_limits = &rdev->pm.dpm.dyn_state.max_clock_voltage_on_dc;
 
-	अगर (rdev->pm.dpm.ac_घातer == false) अणु
-		क्रम (i = 0; i < ps->perक्रमmance_level_count; i++) अणु
-			अगर (ps->perक्रमmance_levels[i].mclk > max_limits->mclk)
-				ps->perक्रमmance_levels[i].mclk = max_limits->mclk;
-			अगर (ps->perक्रमmance_levels[i].sclk > max_limits->sclk)
-				ps->perक्रमmance_levels[i].sclk = max_limits->sclk;
-			अगर (ps->perक्रमmance_levels[i].vddc > max_limits->vddc)
-				ps->perक्रमmance_levels[i].vddc = max_limits->vddc;
-			अगर (ps->perक्रमmance_levels[i].vddci > max_limits->vddci)
-				ps->perक्रमmance_levels[i].vddci = max_limits->vddci;
-		पूर्ण
-	पूर्ण
+	if (rdev->pm.dpm.ac_power == false) {
+		for (i = 0; i < ps->performance_level_count; i++) {
+			if (ps->performance_levels[i].mclk > max_limits->mclk)
+				ps->performance_levels[i].mclk = max_limits->mclk;
+			if (ps->performance_levels[i].sclk > max_limits->sclk)
+				ps->performance_levels[i].sclk = max_limits->sclk;
+			if (ps->performance_levels[i].vddc > max_limits->vddc)
+				ps->performance_levels[i].vddc = max_limits->vddc;
+			if (ps->performance_levels[i].vddci > max_limits->vddci)
+				ps->performance_levels[i].vddci = max_limits->vddci;
+		}
+	}
 
-	/* XXX validate the min घड़ीs required क्रम display */
+	/* XXX validate the min clocks required for display */
 
 	/* adjust low state */
-	अगर (disable_mclk_चयनing) अणु
-		ps->perक्रमmance_levels[0].mclk =
-			ps->perक्रमmance_levels[ps->perक्रमmance_level_count - 1].mclk;
-		ps->perक्रमmance_levels[0].vddci =
-			ps->perक्रमmance_levels[ps->perक्रमmance_level_count - 1].vddci;
-	पूर्ण
+	if (disable_mclk_switching) {
+		ps->performance_levels[0].mclk =
+			ps->performance_levels[ps->performance_level_count - 1].mclk;
+		ps->performance_levels[0].vddci =
+			ps->performance_levels[ps->performance_level_count - 1].vddci;
+	}
 
-	btc_skip_blacklist_घड़ीs(rdev, max_limits->sclk, max_limits->mclk,
-				  &ps->perक्रमmance_levels[0].sclk,
-				  &ps->perक्रमmance_levels[0].mclk);
+	btc_skip_blacklist_clocks(rdev, max_limits->sclk, max_limits->mclk,
+				  &ps->performance_levels[0].sclk,
+				  &ps->performance_levels[0].mclk);
 
-	क्रम (i = 1; i < ps->perक्रमmance_level_count; i++) अणु
-		अगर (ps->perक्रमmance_levels[i].sclk < ps->perक्रमmance_levels[i - 1].sclk)
-			ps->perक्रमmance_levels[i].sclk = ps->perक्रमmance_levels[i - 1].sclk;
-		अगर (ps->perक्रमmance_levels[i].vddc < ps->perक्रमmance_levels[i - 1].vddc)
-			ps->perक्रमmance_levels[i].vddc = ps->perक्रमmance_levels[i - 1].vddc;
-	पूर्ण
+	for (i = 1; i < ps->performance_level_count; i++) {
+		if (ps->performance_levels[i].sclk < ps->performance_levels[i - 1].sclk)
+			ps->performance_levels[i].sclk = ps->performance_levels[i - 1].sclk;
+		if (ps->performance_levels[i].vddc < ps->performance_levels[i - 1].vddc)
+			ps->performance_levels[i].vddc = ps->performance_levels[i - 1].vddc;
+	}
 
-	/* adjust reमुख्यing states */
-	अगर (disable_mclk_चयनing) अणु
-		mclk = ps->perक्रमmance_levels[0].mclk;
-		vddci = ps->perक्रमmance_levels[0].vddci;
-		क्रम (i = 1; i < ps->perक्रमmance_level_count; i++) अणु
-			अगर (mclk < ps->perक्रमmance_levels[i].mclk)
-				mclk = ps->perक्रमmance_levels[i].mclk;
-			अगर (vddci < ps->perक्रमmance_levels[i].vddci)
-				vddci = ps->perक्रमmance_levels[i].vddci;
-		पूर्ण
-		क्रम (i = 0; i < ps->perक्रमmance_level_count; i++) अणु
-			ps->perक्रमmance_levels[i].mclk = mclk;
-			ps->perक्रमmance_levels[i].vddci = vddci;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		क्रम (i = 1; i < ps->perक्रमmance_level_count; i++) अणु
-			अगर (ps->perक्रमmance_levels[i].mclk < ps->perक्रमmance_levels[i - 1].mclk)
-				ps->perक्रमmance_levels[i].mclk = ps->perक्रमmance_levels[i - 1].mclk;
-			अगर (ps->perक्रमmance_levels[i].vddci < ps->perक्रमmance_levels[i - 1].vddci)
-				ps->perक्रमmance_levels[i].vddci = ps->perक्रमmance_levels[i - 1].vddci;
-		पूर्ण
-	पूर्ण
+	/* adjust remaining states */
+	if (disable_mclk_switching) {
+		mclk = ps->performance_levels[0].mclk;
+		vddci = ps->performance_levels[0].vddci;
+		for (i = 1; i < ps->performance_level_count; i++) {
+			if (mclk < ps->performance_levels[i].mclk)
+				mclk = ps->performance_levels[i].mclk;
+			if (vddci < ps->performance_levels[i].vddci)
+				vddci = ps->performance_levels[i].vddci;
+		}
+		for (i = 0; i < ps->performance_level_count; i++) {
+			ps->performance_levels[i].mclk = mclk;
+			ps->performance_levels[i].vddci = vddci;
+		}
+	} else {
+		for (i = 1; i < ps->performance_level_count; i++) {
+			if (ps->performance_levels[i].mclk < ps->performance_levels[i - 1].mclk)
+				ps->performance_levels[i].mclk = ps->performance_levels[i - 1].mclk;
+			if (ps->performance_levels[i].vddci < ps->performance_levels[i - 1].vddci)
+				ps->performance_levels[i].vddci = ps->performance_levels[i - 1].vddci;
+		}
+	}
 
-	क्रम (i = 1; i < ps->perक्रमmance_level_count; i++)
-		btc_skip_blacklist_घड़ीs(rdev, max_limits->sclk, max_limits->mclk,
-					  &ps->perक्रमmance_levels[i].sclk,
-					  &ps->perक्रमmance_levels[i].mclk);
+	for (i = 1; i < ps->performance_level_count; i++)
+		btc_skip_blacklist_clocks(rdev, max_limits->sclk, max_limits->mclk,
+					  &ps->performance_levels[i].sclk,
+					  &ps->performance_levels[i].mclk);
 
-	क्रम (i = 0; i < ps->perक्रमmance_level_count; i++)
-		btc_adjust_घड़ी_combinations(rdev, max_limits,
-					      &ps->perक्रमmance_levels[i]);
+	for (i = 0; i < ps->performance_level_count; i++)
+		btc_adjust_clock_combinations(rdev, max_limits,
+					      &ps->performance_levels[i]);
 
-	क्रम (i = 0; i < ps->perक्रमmance_level_count; i++) अणु
+	for (i = 0; i < ps->performance_level_count; i++) {
 		btc_apply_voltage_dependency_rules(&rdev->pm.dpm.dyn_state.vddc_dependency_on_sclk,
-						   ps->perक्रमmance_levels[i].sclk,
-						   max_limits->vddc,  &ps->perक्रमmance_levels[i].vddc);
+						   ps->performance_levels[i].sclk,
+						   max_limits->vddc,  &ps->performance_levels[i].vddc);
 		btc_apply_voltage_dependency_rules(&rdev->pm.dpm.dyn_state.vddci_dependency_on_mclk,
-						   ps->perक्रमmance_levels[i].mclk,
-						   max_limits->vddci, &ps->perक्रमmance_levels[i].vddci);
+						   ps->performance_levels[i].mclk,
+						   max_limits->vddci, &ps->performance_levels[i].vddci);
 		btc_apply_voltage_dependency_rules(&rdev->pm.dpm.dyn_state.vddc_dependency_on_mclk,
-						   ps->perक्रमmance_levels[i].mclk,
-						   max_limits->vddc,  &ps->perक्रमmance_levels[i].vddc);
+						   ps->performance_levels[i].mclk,
+						   max_limits->vddc,  &ps->performance_levels[i].vddc);
 		btc_apply_voltage_dependency_rules(&rdev->pm.dpm.dyn_state.vddc_dependency_on_dispclk,
-						   rdev->घड़ी.current_dispclk,
-						   max_limits->vddc,  &ps->perक्रमmance_levels[i].vddc);
-	पूर्ण
+						   rdev->clock.current_dispclk,
+						   max_limits->vddc,  &ps->performance_levels[i].vddc);
+	}
 
-	क्रम (i = 0; i < ps->perक्रमmance_level_count; i++) अणु
+	for (i = 0; i < ps->performance_level_count; i++) {
 		btc_apply_voltage_delta_rules(rdev,
 					      max_limits->vddc, max_limits->vddci,
-					      &ps->perक्रमmance_levels[i].vddc,
-					      &ps->perक्रमmance_levels[i].vddci);
-	पूर्ण
+					      &ps->performance_levels[i].vddc,
+					      &ps->performance_levels[i].vddci);
+	}
 
 	ps->dc_compatible = true;
-	क्रम (i = 0; i < ps->perक्रमmance_level_count; i++) अणु
-		अगर (ps->perक्रमmance_levels[i].vddc > rdev->pm.dpm.dyn_state.max_घड़ी_voltage_on_dc.vddc)
+	for (i = 0; i < ps->performance_level_count; i++) {
+		if (ps->performance_levels[i].vddc > rdev->pm.dpm.dyn_state.max_clock_voltage_on_dc.vddc)
 			ps->dc_compatible = false;
 
-		अगर (ps->perक्रमmance_levels[i].vddc < rdev->pm.dpm.dyn_state.min_vddc_क्रम_pcie_gen2)
-			ps->perक्रमmance_levels[i].flags &= ~ATOM_PPLIB_R600_FLAGS_PCIEGEN2;
-	पूर्ण
-पूर्ण
+		if (ps->performance_levels[i].vddc < rdev->pm.dpm.dyn_state.min_vddc_for_pcie_gen2)
+			ps->performance_levels[i].flags &= ~ATOM_PPLIB_R600_FLAGS_PCIEGEN2;
+	}
+}
 
-अटल व्योम ni_cg_घड़ीgating_शेष(काष्ठा radeon_device *rdev)
-अणु
+static void ni_cg_clockgating_default(struct radeon_device *rdev)
+{
 	u32 count;
-	स्थिर u32 *ps = शून्य;
+	const u32 *ps = NULL;
 
-	ps = (स्थिर u32 *)&cayman_cgcg_cgls_शेष;
+	ps = (const u32 *)&cayman_cgcg_cgls_default;
 	count = CAYMAN_CGCG_CGLS_DEFAULT_LENGTH;
 
 	btc_program_mgcg_hw_sequence(rdev, ps, count);
-पूर्ण
+}
 
-अटल व्योम ni_gfx_घड़ीgating_enable(काष्ठा radeon_device *rdev,
+static void ni_gfx_clockgating_enable(struct radeon_device *rdev,
 				      bool enable)
-अणु
+{
 	u32 count;
-	स्थिर u32 *ps = शून्य;
+	const u32 *ps = NULL;
 
-	अगर (enable) अणु
-		ps = (स्थिर u32 *)&cayman_cgcg_cgls_enable;
+	if (enable) {
+		ps = (const u32 *)&cayman_cgcg_cgls_enable;
 		count = CAYMAN_CGCG_CGLS_ENABLE_LENGTH;
-	पूर्ण अन्यथा अणु
-		ps = (स्थिर u32 *)&cayman_cgcg_cgls_disable;
+	} else {
+		ps = (const u32 *)&cayman_cgcg_cgls_disable;
 		count = CAYMAN_CGCG_CGLS_DISABLE_LENGTH;
-	पूर्ण
+	}
 
 	btc_program_mgcg_hw_sequence(rdev, ps, count);
-पूर्ण
+}
 
-अटल व्योम ni_mg_घड़ीgating_शेष(काष्ठा radeon_device *rdev)
-अणु
+static void ni_mg_clockgating_default(struct radeon_device *rdev)
+{
 	u32 count;
-	स्थिर u32 *ps = शून्य;
+	const u32 *ps = NULL;
 
-	ps = (स्थिर u32 *)&cayman_mgcg_शेष;
+	ps = (const u32 *)&cayman_mgcg_default;
 	count = CAYMAN_MGCG_DEFAULT_LENGTH;
 
 	btc_program_mgcg_hw_sequence(rdev, ps, count);
-पूर्ण
+}
 
-अटल व्योम ni_mg_घड़ीgating_enable(काष्ठा radeon_device *rdev,
+static void ni_mg_clockgating_enable(struct radeon_device *rdev,
 				     bool enable)
-अणु
+{
 	u32 count;
-	स्थिर u32 *ps = शून्य;
+	const u32 *ps = NULL;
 
-	अगर (enable) अणु
-		ps = (स्थिर u32 *)&cayman_mgcg_enable;
+	if (enable) {
+		ps = (const u32 *)&cayman_mgcg_enable;
 		count = CAYMAN_MGCG_ENABLE_LENGTH;
-	पूर्ण अन्यथा अणु
-		ps = (स्थिर u32 *)&cayman_mgcg_disable;
+	} else {
+		ps = (const u32 *)&cayman_mgcg_disable;
 		count = CAYMAN_MGCG_DISABLE_LENGTH;
-	पूर्ण
+	}
 
 	btc_program_mgcg_hw_sequence(rdev, ps, count);
-पूर्ण
+}
 
-अटल व्योम ni_ls_घड़ीgating_शेष(काष्ठा radeon_device *rdev)
-अणु
+static void ni_ls_clockgating_default(struct radeon_device *rdev)
+{
 	u32 count;
-	स्थिर u32 *ps = शून्य;
+	const u32 *ps = NULL;
 
-	ps = (स्थिर u32 *)&cayman_sysls_शेष;
+	ps = (const u32 *)&cayman_sysls_default;
 	count = CAYMAN_SYSLS_DEFAULT_LENGTH;
 
 	btc_program_mgcg_hw_sequence(rdev, ps, count);
-पूर्ण
+}
 
-अटल व्योम ni_ls_घड़ीgating_enable(काष्ठा radeon_device *rdev,
+static void ni_ls_clockgating_enable(struct radeon_device *rdev,
 				     bool enable)
-अणु
+{
 	u32 count;
-	स्थिर u32 *ps = शून्य;
+	const u32 *ps = NULL;
 
-	अगर (enable) अणु
-		ps = (स्थिर u32 *)&cayman_sysls_enable;
+	if (enable) {
+		ps = (const u32 *)&cayman_sysls_enable;
 		count = CAYMAN_SYSLS_ENABLE_LENGTH;
-	पूर्ण अन्यथा अणु
-		ps = (स्थिर u32 *)&cayman_sysls_disable;
+	} else {
+		ps = (const u32 *)&cayman_sysls_disable;
 		count = CAYMAN_SYSLS_DISABLE_LENGTH;
-	पूर्ण
+	}
 
 	btc_program_mgcg_hw_sequence(rdev, ps, count);
 
-पूर्ण
+}
 
-अटल पूर्णांक ni_patch_single_dependency_table_based_on_leakage(काष्ठा radeon_device *rdev,
-							     काष्ठा radeon_घड़ी_voltage_dependency_table *table)
-अणु
-	काष्ठा rv7xx_घातer_info *pi = rv770_get_pi(rdev);
+static int ni_patch_single_dependency_table_based_on_leakage(struct radeon_device *rdev,
+							     struct radeon_clock_voltage_dependency_table *table)
+{
+	struct rv7xx_power_info *pi = rv770_get_pi(rdev);
 	u32 i;
 
-	अगर (table) अणु
-		क्रम (i = 0; i < table->count; i++) अणु
-			अगर (0xff01 == table->entries[i].v) अणु
-				अगर (pi->max_vddc == 0)
-					वापस -EINVAL;
+	if (table) {
+		for (i = 0; i < table->count; i++) {
+			if (0xff01 == table->entries[i].v) {
+				if (pi->max_vddc == 0)
+					return -EINVAL;
 				table->entries[i].v = pi->max_vddc;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			}
+		}
+	}
+	return 0;
+}
 
-अटल पूर्णांक ni_patch_dependency_tables_based_on_leakage(काष्ठा radeon_device *rdev)
-अणु
-	पूर्णांक ret = 0;
+static int ni_patch_dependency_tables_based_on_leakage(struct radeon_device *rdev)
+{
+	int ret = 0;
 
 	ret = ni_patch_single_dependency_table_based_on_leakage(rdev,
 								&rdev->pm.dpm.dyn_state.vddc_dependency_on_sclk);
 
 	ret = ni_patch_single_dependency_table_based_on_leakage(rdev,
 								&rdev->pm.dpm.dyn_state.vddc_dependency_on_mclk);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम ni_stop_dpm(काष्ठा radeon_device *rdev)
-अणु
+static void ni_stop_dpm(struct radeon_device *rdev)
+{
 	WREG32_P(GENERAL_PWRMGT, 0, ~GLOBAL_PWRMGT_EN);
-पूर्ण
+}
 
-#अगर 0
-अटल पूर्णांक ni_notअगरy_hw_of_घातer_source(काष्ठा radeon_device *rdev,
-					bool ac_घातer)
-अणु
-	अगर (ac_घातer)
-		वापस (rv770_send_msg_to_smc(rdev, PPSMC_MSG_RunningOnAC) == PPSMC_Result_OK) ?
+#if 0
+static int ni_notify_hw_of_power_source(struct radeon_device *rdev,
+					bool ac_power)
+{
+	if (ac_power)
+		return (rv770_send_msg_to_smc(rdev, PPSMC_MSG_RunningOnAC) == PPSMC_Result_OK) ?
 			0 : -EINVAL;
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल PPSMC_Result ni_send_msg_to_smc_with_parameter(काष्ठा radeon_device *rdev,
+static PPSMC_Result ni_send_msg_to_smc_with_parameter(struct radeon_device *rdev,
 						      PPSMC_Msg msg, u32 parameter)
-अणु
+{
 	WREG32(SMC_SCRATCH0, parameter);
-	वापस rv770_send_msg_to_smc(rdev, msg);
-पूर्ण
+	return rv770_send_msg_to_smc(rdev, msg);
+}
 
-अटल पूर्णांक ni_restrict_perक्रमmance_levels_beक्रमe_चयन(काष्ठा radeon_device *rdev)
-अणु
-	अगर (rv770_send_msg_to_smc(rdev, PPSMC_MSG_NoForcedLevel) != PPSMC_Result_OK)
-		वापस -EINVAL;
+static int ni_restrict_performance_levels_before_switch(struct radeon_device *rdev)
+{
+	if (rv770_send_msg_to_smc(rdev, PPSMC_MSG_NoForcedLevel) != PPSMC_Result_OK)
+		return -EINVAL;
 
-	वापस (ni_send_msg_to_smc_with_parameter(rdev, PPSMC_MSG_SetEnabledLevels, 1) == PPSMC_Result_OK) ?
+	return (ni_send_msg_to_smc_with_parameter(rdev, PPSMC_MSG_SetEnabledLevels, 1) == PPSMC_Result_OK) ?
 		0 : -EINVAL;
-पूर्ण
+}
 
-पूर्णांक ni_dpm_क्रमce_perक्रमmance_level(काष्ठा radeon_device *rdev,
-				   क्रमागत radeon_dpm_क्रमced_level level)
-अणु
-	अगर (level == RADEON_DPM_FORCED_LEVEL_HIGH) अणु
-		अगर (ni_send_msg_to_smc_with_parameter(rdev, PPSMC_MSG_SetEnabledLevels, 0) != PPSMC_Result_OK)
-			वापस -EINVAL;
+int ni_dpm_force_performance_level(struct radeon_device *rdev,
+				   enum radeon_dpm_forced_level level)
+{
+	if (level == RADEON_DPM_FORCED_LEVEL_HIGH) {
+		if (ni_send_msg_to_smc_with_parameter(rdev, PPSMC_MSG_SetEnabledLevels, 0) != PPSMC_Result_OK)
+			return -EINVAL;
 
-		अगर (ni_send_msg_to_smc_with_parameter(rdev, PPSMC_MSG_SetForcedLevels, 1) != PPSMC_Result_OK)
-			वापस -EINVAL;
-	पूर्ण अन्यथा अगर (level == RADEON_DPM_FORCED_LEVEL_LOW) अणु
-		अगर (ni_send_msg_to_smc_with_parameter(rdev, PPSMC_MSG_SetForcedLevels, 0) != PPSMC_Result_OK)
-			वापस -EINVAL;
+		if (ni_send_msg_to_smc_with_parameter(rdev, PPSMC_MSG_SetForcedLevels, 1) != PPSMC_Result_OK)
+			return -EINVAL;
+	} else if (level == RADEON_DPM_FORCED_LEVEL_LOW) {
+		if (ni_send_msg_to_smc_with_parameter(rdev, PPSMC_MSG_SetForcedLevels, 0) != PPSMC_Result_OK)
+			return -EINVAL;
 
-		अगर (ni_send_msg_to_smc_with_parameter(rdev, PPSMC_MSG_SetEnabledLevels, 1) != PPSMC_Result_OK)
-			वापस -EINVAL;
-	पूर्ण अन्यथा अगर (level == RADEON_DPM_FORCED_LEVEL_AUTO) अणु
-		अगर (ni_send_msg_to_smc_with_parameter(rdev, PPSMC_MSG_SetForcedLevels, 0) != PPSMC_Result_OK)
-			वापस -EINVAL;
+		if (ni_send_msg_to_smc_with_parameter(rdev, PPSMC_MSG_SetEnabledLevels, 1) != PPSMC_Result_OK)
+			return -EINVAL;
+	} else if (level == RADEON_DPM_FORCED_LEVEL_AUTO) {
+		if (ni_send_msg_to_smc_with_parameter(rdev, PPSMC_MSG_SetForcedLevels, 0) != PPSMC_Result_OK)
+			return -EINVAL;
 
-		अगर (ni_send_msg_to_smc_with_parameter(rdev, PPSMC_MSG_SetEnabledLevels, 0) != PPSMC_Result_OK)
-			वापस -EINVAL;
-	पूर्ण
+		if (ni_send_msg_to_smc_with_parameter(rdev, PPSMC_MSG_SetEnabledLevels, 0) != PPSMC_Result_OK)
+			return -EINVAL;
+	}
 
-	rdev->pm.dpm.क्रमced_level = level;
+	rdev->pm.dpm.forced_level = level;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ni_stop_smc(काष्ठा radeon_device *rdev)
-अणु
-	u32 पंचांगp;
-	पूर्णांक i;
+static void ni_stop_smc(struct radeon_device *rdev)
+{
+	u32 tmp;
+	int i;
 
-	क्रम (i = 0; i < rdev->usec_समयout; i++) अणु
-		पंचांगp = RREG32(LB_SYNC_RESET_SEL) & LB_SYNC_RESET_SEL_MASK;
-		अगर (पंचांगp != 1)
-			अवरोध;
+	for (i = 0; i < rdev->usec_timeout; i++) {
+		tmp = RREG32(LB_SYNC_RESET_SEL) & LB_SYNC_RESET_SEL_MASK;
+		if (tmp != 1)
+			break;
 		udelay(1);
-	पूर्ण
+	}
 
 	udelay(100);
 
 	r7xx_stop_smc(rdev);
-पूर्ण
+}
 
-अटल पूर्णांक ni_process_firmware_header(काष्ठा radeon_device *rdev)
-अणु
-	काष्ठा rv7xx_घातer_info *pi = rv770_get_pi(rdev);
-	काष्ठा evergreen_घातer_info *eg_pi = evergreen_get_pi(rdev);
-	काष्ठा ni_घातer_info *ni_pi = ni_get_pi(rdev);
-	u32 पंचांगp;
-	पूर्णांक ret;
+static int ni_process_firmware_header(struct radeon_device *rdev)
+{
+	struct rv7xx_power_info *pi = rv770_get_pi(rdev);
+	struct evergreen_power_info *eg_pi = evergreen_get_pi(rdev);
+	struct ni_power_info *ni_pi = ni_get_pi(rdev);
+	u32 tmp;
+	int ret;
 
-	ret = rv770_पढ़ो_smc_sram_dword(rdev,
+	ret = rv770_read_smc_sram_dword(rdev,
 					NISLANDS_SMC_FIRMWARE_HEADER_LOCATION +
 					NISLANDS_SMC_FIRMWARE_HEADER_stateTable,
-					&पंचांगp, pi->sram_end);
+					&tmp, pi->sram_end);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	pi->state_table_start = (u16)पंचांगp;
+	pi->state_table_start = (u16)tmp;
 
-	ret = rv770_पढ़ो_smc_sram_dword(rdev,
+	ret = rv770_read_smc_sram_dword(rdev,
 					NISLANDS_SMC_FIRMWARE_HEADER_LOCATION +
 					NISLANDS_SMC_FIRMWARE_HEADER_softRegisters,
-					&पंचांगp, pi->sram_end);
+					&tmp, pi->sram_end);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	pi->soft_regs_start = (u16)पंचांगp;
+	pi->soft_regs_start = (u16)tmp;
 
-	ret = rv770_पढ़ो_smc_sram_dword(rdev,
+	ret = rv770_read_smc_sram_dword(rdev,
 					NISLANDS_SMC_FIRMWARE_HEADER_LOCATION +
 					NISLANDS_SMC_FIRMWARE_HEADER_mcRegisterTable,
-					&पंचांगp, pi->sram_end);
+					&tmp, pi->sram_end);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	eg_pi->mc_reg_table_start = (u16)पंचांगp;
+	eg_pi->mc_reg_table_start = (u16)tmp;
 
-	ret = rv770_पढ़ो_smc_sram_dword(rdev,
+	ret = rv770_read_smc_sram_dword(rdev,
 					NISLANDS_SMC_FIRMWARE_HEADER_LOCATION +
 					NISLANDS_SMC_FIRMWARE_HEADER_fanTable,
-					&पंचांगp, pi->sram_end);
+					&tmp, pi->sram_end);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ni_pi->fan_table_start = (u16)पंचांगp;
+	ni_pi->fan_table_start = (u16)tmp;
 
-	ret = rv770_पढ़ो_smc_sram_dword(rdev,
+	ret = rv770_read_smc_sram_dword(rdev,
 					NISLANDS_SMC_FIRMWARE_HEADER_LOCATION +
 					NISLANDS_SMC_FIRMWARE_HEADER_mcArbDramAutoRefreshTable,
-					&पंचांगp, pi->sram_end);
+					&tmp, pi->sram_end);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ni_pi->arb_table_start = (u16)पंचांगp;
+	ni_pi->arb_table_start = (u16)tmp;
 
-	ret = rv770_पढ़ो_smc_sram_dword(rdev,
+	ret = rv770_read_smc_sram_dword(rdev,
 					NISLANDS_SMC_FIRMWARE_HEADER_LOCATION +
 					NISLANDS_SMC_FIRMWARE_HEADER_cacTable,
-					&पंचांगp, pi->sram_end);
+					&tmp, pi->sram_end);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ni_pi->cac_table_start = (u16)पंचांगp;
+	ni_pi->cac_table_start = (u16)tmp;
 
-	ret = rv770_पढ़ो_smc_sram_dword(rdev,
+	ret = rv770_read_smc_sram_dword(rdev,
 					NISLANDS_SMC_FIRMWARE_HEADER_LOCATION +
 					NISLANDS_SMC_FIRMWARE_HEADER_spllTable,
-					&पंचांगp, pi->sram_end);
+					&tmp, pi->sram_end);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ni_pi->spll_table_start = (u16)पंचांगp;
+	ni_pi->spll_table_start = (u16)tmp;
 
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम ni_पढ़ो_घड़ी_रेजिस्टरs(काष्ठा radeon_device *rdev)
-अणु
-	काष्ठा ni_घातer_info *ni_pi = ni_get_pi(rdev);
+static void ni_read_clock_registers(struct radeon_device *rdev)
+{
+	struct ni_power_info *ni_pi = ni_get_pi(rdev);
 
-	ni_pi->घड़ी_रेजिस्टरs.cg_spll_func_cntl = RREG32(CG_SPLL_FUNC_CNTL);
-	ni_pi->घड़ी_रेजिस्टरs.cg_spll_func_cntl_2 = RREG32(CG_SPLL_FUNC_CNTL_2);
-	ni_pi->घड़ी_रेजिस्टरs.cg_spll_func_cntl_3 = RREG32(CG_SPLL_FUNC_CNTL_3);
-	ni_pi->घड़ी_रेजिस्टरs.cg_spll_func_cntl_4 = RREG32(CG_SPLL_FUNC_CNTL_4);
-	ni_pi->घड़ी_रेजिस्टरs.cg_spll_spपढ़ो_spectrum = RREG32(CG_SPLL_SPREAD_SPECTRUM);
-	ni_pi->घड़ी_रेजिस्टरs.cg_spll_spपढ़ो_spectrum_2 = RREG32(CG_SPLL_SPREAD_SPECTRUM_2);
-	ni_pi->घड़ी_रेजिस्टरs.mpll_ad_func_cntl = RREG32(MPLL_AD_FUNC_CNTL);
-	ni_pi->घड़ी_रेजिस्टरs.mpll_ad_func_cntl_2 = RREG32(MPLL_AD_FUNC_CNTL_2);
-	ni_pi->घड़ी_रेजिस्टरs.mpll_dq_func_cntl = RREG32(MPLL_DQ_FUNC_CNTL);
-	ni_pi->घड़ी_रेजिस्टरs.mpll_dq_func_cntl_2 = RREG32(MPLL_DQ_FUNC_CNTL_2);
-	ni_pi->घड़ी_रेजिस्टरs.mclk_pwrmgt_cntl = RREG32(MCLK_PWRMGT_CNTL);
-	ni_pi->घड़ी_रेजिस्टरs.dll_cntl = RREG32(DLL_CNTL);
-	ni_pi->घड़ी_रेजिस्टरs.mpll_ss1 = RREG32(MPLL_SS1);
-	ni_pi->घड़ी_रेजिस्टरs.mpll_ss2 = RREG32(MPLL_SS2);
-पूर्ण
+	ni_pi->clock_registers.cg_spll_func_cntl = RREG32(CG_SPLL_FUNC_CNTL);
+	ni_pi->clock_registers.cg_spll_func_cntl_2 = RREG32(CG_SPLL_FUNC_CNTL_2);
+	ni_pi->clock_registers.cg_spll_func_cntl_3 = RREG32(CG_SPLL_FUNC_CNTL_3);
+	ni_pi->clock_registers.cg_spll_func_cntl_4 = RREG32(CG_SPLL_FUNC_CNTL_4);
+	ni_pi->clock_registers.cg_spll_spread_spectrum = RREG32(CG_SPLL_SPREAD_SPECTRUM);
+	ni_pi->clock_registers.cg_spll_spread_spectrum_2 = RREG32(CG_SPLL_SPREAD_SPECTRUM_2);
+	ni_pi->clock_registers.mpll_ad_func_cntl = RREG32(MPLL_AD_FUNC_CNTL);
+	ni_pi->clock_registers.mpll_ad_func_cntl_2 = RREG32(MPLL_AD_FUNC_CNTL_2);
+	ni_pi->clock_registers.mpll_dq_func_cntl = RREG32(MPLL_DQ_FUNC_CNTL);
+	ni_pi->clock_registers.mpll_dq_func_cntl_2 = RREG32(MPLL_DQ_FUNC_CNTL_2);
+	ni_pi->clock_registers.mclk_pwrmgt_cntl = RREG32(MCLK_PWRMGT_CNTL);
+	ni_pi->clock_registers.dll_cntl = RREG32(DLL_CNTL);
+	ni_pi->clock_registers.mpll_ss1 = RREG32(MPLL_SS1);
+	ni_pi->clock_registers.mpll_ss2 = RREG32(MPLL_SS2);
+}
 
-#अगर 0
-अटल पूर्णांक ni_enter_ulp_state(काष्ठा radeon_device *rdev)
-अणु
-	काष्ठा rv7xx_घातer_info *pi = rv770_get_pi(rdev);
+#if 0
+static int ni_enter_ulp_state(struct radeon_device *rdev)
+{
+	struct rv7xx_power_info *pi = rv770_get_pi(rdev);
 
-	अगर (pi->gfx_घड़ी_gating) अणु
+	if (pi->gfx_clock_gating) {
 		WREG32_P(SCLK_PWRMGT_CNTL, 0, ~DYN_GFX_CLK_OFF_EN);
 		WREG32_P(SCLK_PWRMGT_CNTL, GFX_CLK_FORCE_ON, ~GFX_CLK_FORCE_ON);
 		WREG32_P(SCLK_PWRMGT_CNTL, 0, ~GFX_CLK_FORCE_ON);
 		RREG32(GB_ADDR_CONFIG);
-	पूर्ण
+	}
 
 	WREG32_P(SMC_MSG, HOST_SMC_MSG(PPSMC_MSG_SwitchToMinimumPower),
 		 ~HOST_SMC_MSG_MASK);
 
 	udelay(25000);
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल व्योम ni_program_response_बार(काष्ठा radeon_device *rdev)
-अणु
-	u32 voltage_response_समय, backbias_response_समय, acpi_delay_समय, vbi_समय_out;
-	u32 vddc_dly, bb_dly, acpi_dly, vbi_dly, mclk_चयन_limit;
-	u32 reference_घड़ी;
+static void ni_program_response_times(struct radeon_device *rdev)
+{
+	u32 voltage_response_time, backbias_response_time, acpi_delay_time, vbi_time_out;
+	u32 vddc_dly, bb_dly, acpi_dly, vbi_dly, mclk_switch_limit;
+	u32 reference_clock;
 
-	rv770_ग_लिखो_smc_soft_रेजिस्टर(rdev, NI_SMC_SOFT_REGISTER_mvdd_chg_समय, 1);
+	rv770_write_smc_soft_register(rdev, NI_SMC_SOFT_REGISTER_mvdd_chg_time, 1);
 
-	voltage_response_समय = (u32)rdev->pm.dpm.voltage_response_समय;
-	backbias_response_समय = (u32)rdev->pm.dpm.backbias_response_समय;
+	voltage_response_time = (u32)rdev->pm.dpm.voltage_response_time;
+	backbias_response_time = (u32)rdev->pm.dpm.backbias_response_time;
 
-	अगर (voltage_response_समय == 0)
-		voltage_response_समय = 1000;
+	if (voltage_response_time == 0)
+		voltage_response_time = 1000;
 
-	अगर (backbias_response_समय == 0)
-		backbias_response_समय = 1000;
+	if (backbias_response_time == 0)
+		backbias_response_time = 1000;
 
-	acpi_delay_समय = 15000;
-	vbi_समय_out = 100000;
+	acpi_delay_time = 15000;
+	vbi_time_out = 100000;
 
-	reference_घड़ी = radeon_get_xclk(rdev);
+	reference_clock = radeon_get_xclk(rdev);
 
-	vddc_dly = (voltage_response_समय  * reference_घड़ी) / 1600;
-	bb_dly   = (backbias_response_समय * reference_घड़ी) / 1600;
-	acpi_dly = (acpi_delay_समय * reference_घड़ी) / 1600;
-	vbi_dly  = (vbi_समय_out * reference_घड़ी) / 1600;
+	vddc_dly = (voltage_response_time  * reference_clock) / 1600;
+	bb_dly   = (backbias_response_time * reference_clock) / 1600;
+	acpi_dly = (acpi_delay_time * reference_clock) / 1600;
+	vbi_dly  = (vbi_time_out * reference_clock) / 1600;
 
-	mclk_चयन_limit = (460 * reference_घड़ी) / 100;
+	mclk_switch_limit = (460 * reference_clock) / 100;
 
-	rv770_ग_लिखो_smc_soft_रेजिस्टर(rdev, NI_SMC_SOFT_REGISTER_delay_vreg,  vddc_dly);
-	rv770_ग_लिखो_smc_soft_रेजिस्टर(rdev, NI_SMC_SOFT_REGISTER_delay_bbias, bb_dly);
-	rv770_ग_लिखो_smc_soft_रेजिस्टर(rdev, NI_SMC_SOFT_REGISTER_delay_acpi,  acpi_dly);
-	rv770_ग_लिखो_smc_soft_रेजिस्टर(rdev, NI_SMC_SOFT_REGISTER_mclk_chg_समयout, vbi_dly);
-	rv770_ग_लिखो_smc_soft_रेजिस्टर(rdev, NI_SMC_SOFT_REGISTER_mc_block_delay, 0xAA);
-	rv770_ग_लिखो_smc_soft_रेजिस्टर(rdev, NI_SMC_SOFT_REGISTER_mclk_चयन_lim, mclk_चयन_limit);
-पूर्ण
+	rv770_write_smc_soft_register(rdev, NI_SMC_SOFT_REGISTER_delay_vreg,  vddc_dly);
+	rv770_write_smc_soft_register(rdev, NI_SMC_SOFT_REGISTER_delay_bbias, bb_dly);
+	rv770_write_smc_soft_register(rdev, NI_SMC_SOFT_REGISTER_delay_acpi,  acpi_dly);
+	rv770_write_smc_soft_register(rdev, NI_SMC_SOFT_REGISTER_mclk_chg_timeout, vbi_dly);
+	rv770_write_smc_soft_register(rdev, NI_SMC_SOFT_REGISTER_mc_block_delay, 0xAA);
+	rv770_write_smc_soft_register(rdev, NI_SMC_SOFT_REGISTER_mclk_switch_lim, mclk_switch_limit);
+}
 
-अटल व्योम ni_populate_smc_voltage_table(काष्ठा radeon_device *rdev,
-					  काष्ठा atom_voltage_table *voltage_table,
+static void ni_populate_smc_voltage_table(struct radeon_device *rdev,
+					  struct atom_voltage_table *voltage_table,
 					  NISLANDS_SMC_STATETABLE *table)
-अणु
-	अचिन्हित पूर्णांक i;
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < voltage_table->count; i++) अणु
+	for (i = 0; i < voltage_table->count; i++) {
 		table->highSMIO[i] = 0;
 		table->lowSMIO[i] |= cpu_to_be32(voltage_table->entries[i].smio_low);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम ni_populate_smc_voltage_tables(काष्ठा radeon_device *rdev,
+static void ni_populate_smc_voltage_tables(struct radeon_device *rdev,
 					   NISLANDS_SMC_STATETABLE *table)
-अणु
-	काष्ठा rv7xx_घातer_info *pi = rv770_get_pi(rdev);
-	काष्ठा evergreen_घातer_info *eg_pi = evergreen_get_pi(rdev);
-	अचिन्हित अक्षर i;
+{
+	struct rv7xx_power_info *pi = rv770_get_pi(rdev);
+	struct evergreen_power_info *eg_pi = evergreen_get_pi(rdev);
+	unsigned char i;
 
-	अगर (eg_pi->vddc_voltage_table.count) अणु
+	if (eg_pi->vddc_voltage_table.count) {
 		ni_populate_smc_voltage_table(rdev, &eg_pi->vddc_voltage_table, table);
 		table->voltageMaskTable.highMask[NISLANDS_SMC_VOLTAGEMASK_VDDC] = 0;
 		table->voltageMaskTable.lowMask[NISLANDS_SMC_VOLTAGEMASK_VDDC] =
 			cpu_to_be32(eg_pi->vddc_voltage_table.mask_low);
 
-		क्रम (i = 0; i < eg_pi->vddc_voltage_table.count; i++) अणु
-			अगर (pi->max_vddc_in_table <= eg_pi->vddc_voltage_table.entries[i].value) अणु
+		for (i = 0; i < eg_pi->vddc_voltage_table.count; i++) {
+			if (pi->max_vddc_in_table <= eg_pi->vddc_voltage_table.entries[i].value) {
 				table->maxVDDCIndexInPPTable = i;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				break;
+			}
+		}
+	}
 
-	अगर (eg_pi->vddci_voltage_table.count) अणु
+	if (eg_pi->vddci_voltage_table.count) {
 		ni_populate_smc_voltage_table(rdev, &eg_pi->vddci_voltage_table, table);
 
 		table->voltageMaskTable.highMask[NISLANDS_SMC_VOLTAGEMASK_VDDCI] = 0;
 		table->voltageMaskTable.lowMask[NISLANDS_SMC_VOLTAGEMASK_VDDCI] =
 			cpu_to_be32(eg_pi->vddci_voltage_table.mask_low);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक ni_populate_voltage_value(काष्ठा radeon_device *rdev,
-				     काष्ठा atom_voltage_table *table,
+static int ni_populate_voltage_value(struct radeon_device *rdev,
+				     struct atom_voltage_table *table,
 				     u16 value,
 				     NISLANDS_SMC_VOLTAGE_VALUE *voltage)
-अणु
-	अचिन्हित पूर्णांक i;
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < table->count; i++) अणु
-		अगर (value <= table->entries[i].value) अणु
+	for (i = 0; i < table->count; i++) {
+		if (value <= table->entries[i].value) {
 			voltage->index = (u8)i;
 			voltage->value = cpu_to_be16(table->entries[i].value);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (i >= table->count)
-		वापस -EINVAL;
+	if (i >= table->count)
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ni_populate_mvdd_value(काष्ठा radeon_device *rdev,
+static void ni_populate_mvdd_value(struct radeon_device *rdev,
 				   u32 mclk,
 				   NISLANDS_SMC_VOLTAGE_VALUE *voltage)
-अणु
-	काष्ठा rv7xx_घातer_info *pi = rv770_get_pi(rdev);
-	काष्ठा evergreen_घातer_info *eg_pi = evergreen_get_pi(rdev);
+{
+	struct rv7xx_power_info *pi = rv770_get_pi(rdev);
+	struct evergreen_power_info *eg_pi = evergreen_get_pi(rdev);
 
-	अगर (!pi->mvdd_control) अणु
+	if (!pi->mvdd_control) {
 		voltage->index = eg_pi->mvdd_high_index;
 		voltage->value = cpu_to_be16(MVDD_HIGH_VALUE);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (mclk <= pi->mvdd_split_frequency) अणु
+	if (mclk <= pi->mvdd_split_frequency) {
 		voltage->index = eg_pi->mvdd_low_index;
 		voltage->value = cpu_to_be16(MVDD_LOW_VALUE);
-	पूर्ण अन्यथा अणु
+	} else {
 		voltage->index = eg_pi->mvdd_high_index;
 		voltage->value = cpu_to_be16(MVDD_HIGH_VALUE);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक ni_get_std_voltage_value(काष्ठा radeon_device *rdev,
+static int ni_get_std_voltage_value(struct radeon_device *rdev,
 				    NISLANDS_SMC_VOLTAGE_VALUE *voltage,
 				    u16 *std_voltage)
-अणु
-	अगर (rdev->pm.dpm.dyn_state.cac_leakage_table.entries &&
+{
+	if (rdev->pm.dpm.dyn_state.cac_leakage_table.entries &&
 	    ((u32)voltage->index < rdev->pm.dpm.dyn_state.cac_leakage_table.count))
 		*std_voltage = rdev->pm.dpm.dyn_state.cac_leakage_table.entries[voltage->index].vddc;
-	अन्यथा
+	else
 		*std_voltage = be16_to_cpu(voltage->value);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ni_populate_std_voltage_value(काष्ठा radeon_device *rdev,
+static void ni_populate_std_voltage_value(struct radeon_device *rdev,
 					  u16 value, u8 index,
 					  NISLANDS_SMC_VOLTAGE_VALUE *voltage)
-अणु
+{
 	voltage->index = index;
 	voltage->value = cpu_to_be16(value);
-पूर्ण
+}
 
-अटल u32 ni_get_smc_घातer_scaling_factor(काष्ठा radeon_device *rdev)
-अणु
+static u32 ni_get_smc_power_scaling_factor(struct radeon_device *rdev)
+{
 	u32 xclk_period;
 	u32 xclk = radeon_get_xclk(rdev);
-	u32 पंचांगp = RREG32(CG_CAC_CTRL) & TID_CNT_MASK;
+	u32 tmp = RREG32(CG_CAC_CTRL) & TID_CNT_MASK;
 
 	xclk_period = (1000000000UL / xclk);
 	xclk_period /= 10000UL;
 
-	वापस पंचांगp * xclk_period;
-पूर्ण
+	return tmp * xclk_period;
+}
 
-अटल u32 ni_scale_घातer_क्रम_smc(u32 घातer_in_watts, u32 scaling_factor)
-अणु
-	वापस (घातer_in_watts * scaling_factor) << 2;
-पूर्ण
+static u32 ni_scale_power_for_smc(u32 power_in_watts, u32 scaling_factor)
+{
+	return (power_in_watts * scaling_factor) << 2;
+}
 
-अटल u32 ni_calculate_घातer_boost_limit(काष्ठा radeon_device *rdev,
-					  काष्ठा radeon_ps *radeon_state,
+static u32 ni_calculate_power_boost_limit(struct radeon_device *rdev,
+					  struct radeon_ps *radeon_state,
 					  u32 near_tdp_limit)
-अणु
-	काष्ठा ni_ps *state = ni_get_ps(radeon_state);
-	काष्ठा evergreen_घातer_info *eg_pi = evergreen_get_pi(rdev);
-	काष्ठा ni_घातer_info *ni_pi = ni_get_pi(rdev);
-	u32 घातer_boost_limit = 0;
-	पूर्णांक ret;
+{
+	struct ni_ps *state = ni_get_ps(radeon_state);
+	struct evergreen_power_info *eg_pi = evergreen_get_pi(rdev);
+	struct ni_power_info *ni_pi = ni_get_pi(rdev);
+	u32 power_boost_limit = 0;
+	int ret;
 
-	अगर (ni_pi->enable_घातer_containment &&
-	    ni_pi->use_घातer_boost_limit) अणु
+	if (ni_pi->enable_power_containment &&
+	    ni_pi->use_power_boost_limit) {
 		NISLANDS_SMC_VOLTAGE_VALUE vddc;
 		u16 std_vddc_med;
 		u16 std_vddc_high;
-		u64 पंचांगp, n, d;
+		u64 tmp, n, d;
 
-		अगर (state->perक्रमmance_level_count < 3)
-			वापस 0;
+		if (state->performance_level_count < 3)
+			return 0;
 
 		ret = ni_populate_voltage_value(rdev, &eg_pi->vddc_voltage_table,
-						state->perक्रमmance_levels[state->perक्रमmance_level_count - 2].vddc,
+						state->performance_levels[state->performance_level_count - 2].vddc,
 						&vddc);
-		अगर (ret)
-			वापस 0;
+		if (ret)
+			return 0;
 
 		ret = ni_get_std_voltage_value(rdev, &vddc, &std_vddc_med);
-		अगर (ret)
-			वापस 0;
+		if (ret)
+			return 0;
 
 		ret = ni_populate_voltage_value(rdev, &eg_pi->vddc_voltage_table,
-						state->perक्रमmance_levels[state->perक्रमmance_level_count - 1].vddc,
+						state->performance_levels[state->performance_level_count - 1].vddc,
 						&vddc);
-		अगर (ret)
-			वापस 0;
+		if (ret)
+			return 0;
 
 		ret = ni_get_std_voltage_value(rdev, &vddc, &std_vddc_high);
-		अगर (ret)
-			वापस 0;
+		if (ret)
+			return 0;
 
 		n = ((u64)near_tdp_limit * ((u64)std_vddc_med * (u64)std_vddc_med) * 90);
 		d = ((u64)std_vddc_high * (u64)std_vddc_high * 100);
-		पंचांगp = भाग64_u64(n, d);
+		tmp = div64_u64(n, d);
 
-		अगर (पंचांगp >> 32)
-			वापस 0;
-		घातer_boost_limit = (u32)पंचांगp;
-	पूर्ण
+		if (tmp >> 32)
+			return 0;
+		power_boost_limit = (u32)tmp;
+	}
 
-	वापस घातer_boost_limit;
-पूर्ण
+	return power_boost_limit;
+}
 
-अटल पूर्णांक ni_calculate_adjusted_tdp_limits(काष्ठा radeon_device *rdev,
+static int ni_calculate_adjusted_tdp_limits(struct radeon_device *rdev,
 					    bool adjust_polarity,
-					    u32 tdp_adjusपंचांगent,
+					    u32 tdp_adjustment,
 					    u32 *tdp_limit,
 					    u32 *near_tdp_limit)
-अणु
-	अगर (tdp_adjusपंचांगent > (u32)rdev->pm.dpm.tdp_od_limit)
-		वापस -EINVAL;
+{
+	if (tdp_adjustment > (u32)rdev->pm.dpm.tdp_od_limit)
+		return -EINVAL;
 
-	अगर (adjust_polarity) अणु
-		*tdp_limit = ((100 + tdp_adjusपंचांगent) * rdev->pm.dpm.tdp_limit) / 100;
+	if (adjust_polarity) {
+		*tdp_limit = ((100 + tdp_adjustment) * rdev->pm.dpm.tdp_limit) / 100;
 		*near_tdp_limit = rdev->pm.dpm.near_tdp_limit + (*tdp_limit - rdev->pm.dpm.tdp_limit);
-	पूर्ण अन्यथा अणु
-		*tdp_limit = ((100 - tdp_adjusपंचांगent) * rdev->pm.dpm.tdp_limit) / 100;
+	} else {
+		*tdp_limit = ((100 - tdp_adjustment) * rdev->pm.dpm.tdp_limit) / 100;
 		*near_tdp_limit = rdev->pm.dpm.near_tdp_limit - (rdev->pm.dpm.tdp_limit - *tdp_limit);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ni_populate_smc_tdp_limits(काष्ठा radeon_device *rdev,
-				      काष्ठा radeon_ps *radeon_state)
-अणु
-	काष्ठा rv7xx_घातer_info *pi = rv770_get_pi(rdev);
-	काष्ठा ni_घातer_info *ni_pi = ni_get_pi(rdev);
+static int ni_populate_smc_tdp_limits(struct radeon_device *rdev,
+				      struct radeon_ps *radeon_state)
+{
+	struct rv7xx_power_info *pi = rv770_get_pi(rdev);
+	struct ni_power_info *ni_pi = ni_get_pi(rdev);
 
-	अगर (ni_pi->enable_घातer_containment) अणु
+	if (ni_pi->enable_power_containment) {
 		NISLANDS_SMC_STATETABLE *smc_table = &ni_pi->smc_statetable;
-		u32 scaling_factor = ni_get_smc_घातer_scaling_factor(rdev);
+		u32 scaling_factor = ni_get_smc_power_scaling_factor(rdev);
 		u32 tdp_limit;
 		u32 near_tdp_limit;
-		u32 घातer_boost_limit;
-		पूर्णांक ret;
+		u32 power_boost_limit;
+		int ret;
 
-		अगर (scaling_factor == 0)
-			वापस -EINVAL;
+		if (scaling_factor == 0)
+			return -EINVAL;
 
-		स_रखो(smc_table, 0, माप(NISLANDS_SMC_STATETABLE));
+		memset(smc_table, 0, sizeof(NISLANDS_SMC_STATETABLE));
 
 		ret = ni_calculate_adjusted_tdp_limits(rdev,
 						       false, /* ??? */
-						       rdev->pm.dpm.tdp_adjusपंचांगent,
+						       rdev->pm.dpm.tdp_adjustment,
 						       &tdp_limit,
 						       &near_tdp_limit);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-		घातer_boost_limit = ni_calculate_घातer_boost_limit(rdev, radeon_state,
+		power_boost_limit = ni_calculate_power_boost_limit(rdev, radeon_state,
 								   near_tdp_limit);
 
 		smc_table->dpm2Params.TDPLimit =
-			cpu_to_be32(ni_scale_घातer_क्रम_smc(tdp_limit, scaling_factor));
+			cpu_to_be32(ni_scale_power_for_smc(tdp_limit, scaling_factor));
 		smc_table->dpm2Params.NearTDPLimit =
-			cpu_to_be32(ni_scale_घातer_क्रम_smc(near_tdp_limit, scaling_factor));
+			cpu_to_be32(ni_scale_power_for_smc(near_tdp_limit, scaling_factor));
 		smc_table->dpm2Params.SafePowerLimit =
-			cpu_to_be32(ni_scale_घातer_क्रम_smc((near_tdp_limit * NISLANDS_DPM2_TDP_SAFE_LIMIT_PERCENT) / 100,
+			cpu_to_be32(ni_scale_power_for_smc((near_tdp_limit * NISLANDS_DPM2_TDP_SAFE_LIMIT_PERCENT) / 100,
 							   scaling_factor));
 		smc_table->dpm2Params.PowerBoostLimit =
-			cpu_to_be32(ni_scale_घातer_क्रम_smc(घातer_boost_limit, scaling_factor));
+			cpu_to_be32(ni_scale_power_for_smc(power_boost_limit, scaling_factor));
 
 		ret = rv770_copy_bytes_to_smc(rdev,
-					      (u16)(pi->state_table_start + दुरत्व(NISLANDS_SMC_STATETABLE, dpm2Params) +
-						    दुरत्व(PP_NIslands_DPM2Parameters, TDPLimit)),
+					      (u16)(pi->state_table_start + offsetof(NISLANDS_SMC_STATETABLE, dpm2Params) +
+						    offsetof(PP_NIslands_DPM2Parameters, TDPLimit)),
 					      (u8 *)(&smc_table->dpm2Params.TDPLimit),
-					      माप(u32) * 4, pi->sram_end);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+					      sizeof(u32) * 4, pi->sram_end);
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक ni_copy_and_चयन_arb_sets(काष्ठा radeon_device *rdev,
+int ni_copy_and_switch_arb_sets(struct radeon_device *rdev,
 				u32 arb_freq_src, u32 arb_freq_dest)
-अणु
+{
 	u32 mc_arb_dram_timing;
 	u32 mc_arb_dram_timing2;
-	u32 burst_समय;
+	u32 burst_time;
 	u32 mc_cg_config;
 
-	चयन (arb_freq_src) अणु
-	हाल MC_CG_ARB_FREQ_F0:
+	switch (arb_freq_src) {
+	case MC_CG_ARB_FREQ_F0:
 		mc_arb_dram_timing  = RREG32(MC_ARB_DRAM_TIMING);
 		mc_arb_dram_timing2 = RREG32(MC_ARB_DRAM_TIMING2);
-		burst_समय = (RREG32(MC_ARB_BURST_TIME) & STATE0_MASK) >> STATE0_SHIFT;
-		अवरोध;
-	हाल MC_CG_ARB_FREQ_F1:
+		burst_time = (RREG32(MC_ARB_BURST_TIME) & STATE0_MASK) >> STATE0_SHIFT;
+		break;
+	case MC_CG_ARB_FREQ_F1:
 		mc_arb_dram_timing  = RREG32(MC_ARB_DRAM_TIMING_1);
 		mc_arb_dram_timing2 = RREG32(MC_ARB_DRAM_TIMING2_1);
-		burst_समय = (RREG32(MC_ARB_BURST_TIME) & STATE1_MASK) >> STATE1_SHIFT;
-		अवरोध;
-	हाल MC_CG_ARB_FREQ_F2:
+		burst_time = (RREG32(MC_ARB_BURST_TIME) & STATE1_MASK) >> STATE1_SHIFT;
+		break;
+	case MC_CG_ARB_FREQ_F2:
 		mc_arb_dram_timing  = RREG32(MC_ARB_DRAM_TIMING_2);
 		mc_arb_dram_timing2 = RREG32(MC_ARB_DRAM_TIMING2_2);
-		burst_समय = (RREG32(MC_ARB_BURST_TIME) & STATE2_MASK) >> STATE2_SHIFT;
-		अवरोध;
-	हाल MC_CG_ARB_FREQ_F3:
+		burst_time = (RREG32(MC_ARB_BURST_TIME) & STATE2_MASK) >> STATE2_SHIFT;
+		break;
+	case MC_CG_ARB_FREQ_F3:
 		mc_arb_dram_timing  = RREG32(MC_ARB_DRAM_TIMING_3);
 		mc_arb_dram_timing2 = RREG32(MC_ARB_DRAM_TIMING2_3);
-		burst_समय = (RREG32(MC_ARB_BURST_TIME) & STATE3_MASK) >> STATE3_SHIFT;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		burst_time = (RREG32(MC_ARB_BURST_TIME) & STATE3_MASK) >> STATE3_SHIFT;
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	चयन (arb_freq_dest) अणु
-	हाल MC_CG_ARB_FREQ_F0:
+	switch (arb_freq_dest) {
+	case MC_CG_ARB_FREQ_F0:
 		WREG32(MC_ARB_DRAM_TIMING, mc_arb_dram_timing);
 		WREG32(MC_ARB_DRAM_TIMING2, mc_arb_dram_timing2);
-		WREG32_P(MC_ARB_BURST_TIME, STATE0(burst_समय), ~STATE0_MASK);
-		अवरोध;
-	हाल MC_CG_ARB_FREQ_F1:
+		WREG32_P(MC_ARB_BURST_TIME, STATE0(burst_time), ~STATE0_MASK);
+		break;
+	case MC_CG_ARB_FREQ_F1:
 		WREG32(MC_ARB_DRAM_TIMING_1, mc_arb_dram_timing);
 		WREG32(MC_ARB_DRAM_TIMING2_1, mc_arb_dram_timing2);
-		WREG32_P(MC_ARB_BURST_TIME, STATE1(burst_समय), ~STATE1_MASK);
-		अवरोध;
-	हाल MC_CG_ARB_FREQ_F2:
+		WREG32_P(MC_ARB_BURST_TIME, STATE1(burst_time), ~STATE1_MASK);
+		break;
+	case MC_CG_ARB_FREQ_F2:
 		WREG32(MC_ARB_DRAM_TIMING_2, mc_arb_dram_timing);
 		WREG32(MC_ARB_DRAM_TIMING2_2, mc_arb_dram_timing2);
-		WREG32_P(MC_ARB_BURST_TIME, STATE2(burst_समय), ~STATE2_MASK);
-		अवरोध;
-	हाल MC_CG_ARB_FREQ_F3:
+		WREG32_P(MC_ARB_BURST_TIME, STATE2(burst_time), ~STATE2_MASK);
+		break;
+	case MC_CG_ARB_FREQ_F3:
 		WREG32(MC_ARB_DRAM_TIMING_3, mc_arb_dram_timing);
 		WREG32(MC_ARB_DRAM_TIMING2_3, mc_arb_dram_timing2);
-		WREG32_P(MC_ARB_BURST_TIME, STATE3(burst_समय), ~STATE3_MASK);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		WREG32_P(MC_ARB_BURST_TIME, STATE3(burst_time), ~STATE3_MASK);
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	mc_cg_config = RREG32(MC_CG_CONFIG) | 0x0000000F;
 	WREG32(MC_CG_CONFIG, mc_cg_config);
 	WREG32_P(MC_ARB_CG, CG_ARB_REQ(arb_freq_dest), ~CG_ARB_REQ_MASK);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ni_init_arb_table_index(काष्ठा radeon_device *rdev)
-अणु
-	काष्ठा rv7xx_घातer_info *pi = rv770_get_pi(rdev);
-	काष्ठा ni_घातer_info *ni_pi = ni_get_pi(rdev);
-	u32 पंचांगp;
-	पूर्णांक ret;
+static int ni_init_arb_table_index(struct radeon_device *rdev)
+{
+	struct rv7xx_power_info *pi = rv770_get_pi(rdev);
+	struct ni_power_info *ni_pi = ni_get_pi(rdev);
+	u32 tmp;
+	int ret;
 
-	ret = rv770_पढ़ो_smc_sram_dword(rdev, ni_pi->arb_table_start,
-					&पंचांगp, pi->sram_end);
-	अगर (ret)
-		वापस ret;
+	ret = rv770_read_smc_sram_dword(rdev, ni_pi->arb_table_start,
+					&tmp, pi->sram_end);
+	if (ret)
+		return ret;
 
-	पंचांगp &= 0x00FFFFFF;
-	पंचांगp |= ((u32)MC_CG_ARB_FREQ_F1) << 24;
+	tmp &= 0x00FFFFFF;
+	tmp |= ((u32)MC_CG_ARB_FREQ_F1) << 24;
 
-	वापस rv770_ग_लिखो_smc_sram_dword(rdev, ni_pi->arb_table_start,
-					  पंचांगp, pi->sram_end);
-पूर्ण
+	return rv770_write_smc_sram_dword(rdev, ni_pi->arb_table_start,
+					  tmp, pi->sram_end);
+}
 
-अटल पूर्णांक ni_initial_चयन_from_arb_f0_to_f1(काष्ठा radeon_device *rdev)
-अणु
-	वापस ni_copy_and_चयन_arb_sets(rdev, MC_CG_ARB_FREQ_F0, MC_CG_ARB_FREQ_F1);
-पूर्ण
+static int ni_initial_switch_from_arb_f0_to_f1(struct radeon_device *rdev)
+{
+	return ni_copy_and_switch_arb_sets(rdev, MC_CG_ARB_FREQ_F0, MC_CG_ARB_FREQ_F1);
+}
 
-अटल पूर्णांक ni_क्रमce_चयन_to_arb_f0(काष्ठा radeon_device *rdev)
-अणु
-	काष्ठा rv7xx_घातer_info *pi = rv770_get_pi(rdev);
-	काष्ठा ni_घातer_info *ni_pi = ni_get_pi(rdev);
-	u32 पंचांगp;
-	पूर्णांक ret;
+static int ni_force_switch_to_arb_f0(struct radeon_device *rdev)
+{
+	struct rv7xx_power_info *pi = rv770_get_pi(rdev);
+	struct ni_power_info *ni_pi = ni_get_pi(rdev);
+	u32 tmp;
+	int ret;
 
-	ret = rv770_पढ़ो_smc_sram_dword(rdev, ni_pi->arb_table_start,
-					&पंचांगp, pi->sram_end);
-	अगर (ret)
-		वापस ret;
+	ret = rv770_read_smc_sram_dword(rdev, ni_pi->arb_table_start,
+					&tmp, pi->sram_end);
+	if (ret)
+		return ret;
 
-	पंचांगp = (पंचांगp >> 24) & 0xff;
+	tmp = (tmp >> 24) & 0xff;
 
-	अगर (पंचांगp == MC_CG_ARB_FREQ_F0)
-		वापस 0;
+	if (tmp == MC_CG_ARB_FREQ_F0)
+		return 0;
 
-	वापस ni_copy_and_चयन_arb_sets(rdev, पंचांगp, MC_CG_ARB_FREQ_F0);
-पूर्ण
+	return ni_copy_and_switch_arb_sets(rdev, tmp, MC_CG_ARB_FREQ_F0);
+}
 
-अटल पूर्णांक ni_populate_memory_timing_parameters(काष्ठा radeon_device *rdev,
-						काष्ठा rv7xx_pl *pl,
+static int ni_populate_memory_timing_parameters(struct radeon_device *rdev,
+						struct rv7xx_pl *pl,
 						SMC_NIslands_MCArbDramTimingRegisterSet *arb_regs)
-अणु
+{
 	u32 dram_timing;
 	u32 dram_timing2;
 
@@ -1630,121 +1629,121 @@ bool ni_dpm_vblank_too_लघु(काष्ठा radeon_device *rdev)
 	arb_regs->mc_arb_dram_timing  = cpu_to_be32(dram_timing);
 	arb_regs->mc_arb_dram_timing2 = cpu_to_be32(dram_timing2);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ni_करो_program_memory_timing_parameters(काष्ठा radeon_device *rdev,
-						  काष्ठा radeon_ps *radeon_state,
-						  अचिन्हित पूर्णांक first_arb_set)
-अणु
-	काष्ठा rv7xx_घातer_info *pi = rv770_get_pi(rdev);
-	काष्ठा ni_घातer_info *ni_pi = ni_get_pi(rdev);
-	काष्ठा ni_ps *state = ni_get_ps(radeon_state);
-	SMC_NIslands_MCArbDramTimingRegisterSet arb_regs = अणु 0 पूर्ण;
-	पूर्णांक i, ret = 0;
+static int ni_do_program_memory_timing_parameters(struct radeon_device *rdev,
+						  struct radeon_ps *radeon_state,
+						  unsigned int first_arb_set)
+{
+	struct rv7xx_power_info *pi = rv770_get_pi(rdev);
+	struct ni_power_info *ni_pi = ni_get_pi(rdev);
+	struct ni_ps *state = ni_get_ps(radeon_state);
+	SMC_NIslands_MCArbDramTimingRegisterSet arb_regs = { 0 };
+	int i, ret = 0;
 
-	क्रम (i = 0; i < state->perक्रमmance_level_count; i++) अणु
-		ret = ni_populate_memory_timing_parameters(rdev, &state->perक्रमmance_levels[i], &arb_regs);
-		अगर (ret)
-			अवरोध;
+	for (i = 0; i < state->performance_level_count; i++) {
+		ret = ni_populate_memory_timing_parameters(rdev, &state->performance_levels[i], &arb_regs);
+		if (ret)
+			break;
 
 		ret = rv770_copy_bytes_to_smc(rdev,
 					      (u16)(ni_pi->arb_table_start +
-						    दुरत्व(SMC_NIslands_MCArbDramTimingRegisters, data) +
-						    माप(SMC_NIslands_MCArbDramTimingRegisterSet) * (first_arb_set + i)),
+						    offsetof(SMC_NIslands_MCArbDramTimingRegisters, data) +
+						    sizeof(SMC_NIslands_MCArbDramTimingRegisterSet) * (first_arb_set + i)),
 					      (u8 *)&arb_regs,
-					      (u16)माप(SMC_NIslands_MCArbDramTimingRegisterSet),
+					      (u16)sizeof(SMC_NIslands_MCArbDramTimingRegisterSet),
 					      pi->sram_end);
-		अगर (ret)
-			अवरोध;
-	पूर्ण
-	वापस ret;
-पूर्ण
+		if (ret)
+			break;
+	}
+	return ret;
+}
 
-अटल पूर्णांक ni_program_memory_timing_parameters(काष्ठा radeon_device *rdev,
-					       काष्ठा radeon_ps *radeon_new_state)
-अणु
-	वापस ni_करो_program_memory_timing_parameters(rdev, radeon_new_state,
+static int ni_program_memory_timing_parameters(struct radeon_device *rdev,
+					       struct radeon_ps *radeon_new_state)
+{
+	return ni_do_program_memory_timing_parameters(rdev, radeon_new_state,
 						      NISLANDS_DRIVER_STATE_ARB_INDEX);
-पूर्ण
+}
 
-अटल व्योम ni_populate_initial_mvdd_value(काष्ठा radeon_device *rdev,
-					   काष्ठा NISLANDS_SMC_VOLTAGE_VALUE *voltage)
-अणु
-	काष्ठा evergreen_घातer_info *eg_pi = evergreen_get_pi(rdev);
+static void ni_populate_initial_mvdd_value(struct radeon_device *rdev,
+					   struct NISLANDS_SMC_VOLTAGE_VALUE *voltage)
+{
+	struct evergreen_power_info *eg_pi = evergreen_get_pi(rdev);
 
 	voltage->index = eg_pi->mvdd_high_index;
 	voltage->value = cpu_to_be16(MVDD_HIGH_VALUE);
-पूर्ण
+}
 
-अटल पूर्णांक ni_populate_smc_initial_state(काष्ठा radeon_device *rdev,
-					 काष्ठा radeon_ps *radeon_initial_state,
+static int ni_populate_smc_initial_state(struct radeon_device *rdev,
+					 struct radeon_ps *radeon_initial_state,
 					 NISLANDS_SMC_STATETABLE *table)
-अणु
-	काष्ठा ni_ps *initial_state = ni_get_ps(radeon_initial_state);
-	काष्ठा rv7xx_घातer_info *pi = rv770_get_pi(rdev);
-	काष्ठा evergreen_घातer_info *eg_pi = evergreen_get_pi(rdev);
-	काष्ठा ni_घातer_info *ni_pi = ni_get_pi(rdev);
+{
+	struct ni_ps *initial_state = ni_get_ps(radeon_initial_state);
+	struct rv7xx_power_info *pi = rv770_get_pi(rdev);
+	struct evergreen_power_info *eg_pi = evergreen_get_pi(rdev);
+	struct ni_power_info *ni_pi = ni_get_pi(rdev);
 	u32 reg;
-	पूर्णांक ret;
+	int ret;
 
 	table->initialState.level.mclk.vMPLL_AD_FUNC_CNTL =
-		cpu_to_be32(ni_pi->घड़ी_रेजिस्टरs.mpll_ad_func_cntl);
+		cpu_to_be32(ni_pi->clock_registers.mpll_ad_func_cntl);
 	table->initialState.level.mclk.vMPLL_AD_FUNC_CNTL_2 =
-		cpu_to_be32(ni_pi->घड़ी_रेजिस्टरs.mpll_ad_func_cntl_2);
+		cpu_to_be32(ni_pi->clock_registers.mpll_ad_func_cntl_2);
 	table->initialState.level.mclk.vMPLL_DQ_FUNC_CNTL =
-		cpu_to_be32(ni_pi->घड़ी_रेजिस्टरs.mpll_dq_func_cntl);
+		cpu_to_be32(ni_pi->clock_registers.mpll_dq_func_cntl);
 	table->initialState.level.mclk.vMPLL_DQ_FUNC_CNTL_2 =
-		cpu_to_be32(ni_pi->घड़ी_रेजिस्टरs.mpll_dq_func_cntl_2);
+		cpu_to_be32(ni_pi->clock_registers.mpll_dq_func_cntl_2);
 	table->initialState.level.mclk.vMCLK_PWRMGT_CNTL =
-		cpu_to_be32(ni_pi->घड़ी_रेजिस्टरs.mclk_pwrmgt_cntl);
+		cpu_to_be32(ni_pi->clock_registers.mclk_pwrmgt_cntl);
 	table->initialState.level.mclk.vDLL_CNTL =
-		cpu_to_be32(ni_pi->घड़ी_रेजिस्टरs.dll_cntl);
+		cpu_to_be32(ni_pi->clock_registers.dll_cntl);
 	table->initialState.level.mclk.vMPLL_SS =
-		cpu_to_be32(ni_pi->घड़ी_रेजिस्टरs.mpll_ss1);
+		cpu_to_be32(ni_pi->clock_registers.mpll_ss1);
 	table->initialState.level.mclk.vMPLL_SS2 =
-		cpu_to_be32(ni_pi->घड़ी_रेजिस्टरs.mpll_ss2);
+		cpu_to_be32(ni_pi->clock_registers.mpll_ss2);
 	table->initialState.level.mclk.mclk_value =
-		cpu_to_be32(initial_state->perक्रमmance_levels[0].mclk);
+		cpu_to_be32(initial_state->performance_levels[0].mclk);
 
 	table->initialState.level.sclk.vCG_SPLL_FUNC_CNTL =
-		cpu_to_be32(ni_pi->घड़ी_रेजिस्टरs.cg_spll_func_cntl);
+		cpu_to_be32(ni_pi->clock_registers.cg_spll_func_cntl);
 	table->initialState.level.sclk.vCG_SPLL_FUNC_CNTL_2 =
-		cpu_to_be32(ni_pi->घड़ी_रेजिस्टरs.cg_spll_func_cntl_2);
+		cpu_to_be32(ni_pi->clock_registers.cg_spll_func_cntl_2);
 	table->initialState.level.sclk.vCG_SPLL_FUNC_CNTL_3 =
-		cpu_to_be32(ni_pi->घड़ी_रेजिस्टरs.cg_spll_func_cntl_3);
+		cpu_to_be32(ni_pi->clock_registers.cg_spll_func_cntl_3);
 	table->initialState.level.sclk.vCG_SPLL_FUNC_CNTL_4 =
-		cpu_to_be32(ni_pi->घड़ी_रेजिस्टरs.cg_spll_func_cntl_4);
+		cpu_to_be32(ni_pi->clock_registers.cg_spll_func_cntl_4);
 	table->initialState.level.sclk.vCG_SPLL_SPREAD_SPECTRUM =
-		cpu_to_be32(ni_pi->घड़ी_रेजिस्टरs.cg_spll_spपढ़ो_spectrum);
+		cpu_to_be32(ni_pi->clock_registers.cg_spll_spread_spectrum);
 	table->initialState.level.sclk.vCG_SPLL_SPREAD_SPECTRUM_2 =
-		cpu_to_be32(ni_pi->घड़ी_रेजिस्टरs.cg_spll_spपढ़ो_spectrum_2);
+		cpu_to_be32(ni_pi->clock_registers.cg_spll_spread_spectrum_2);
 	table->initialState.level.sclk.sclk_value =
-		cpu_to_be32(initial_state->perक्रमmance_levels[0].sclk);
+		cpu_to_be32(initial_state->performance_levels[0].sclk);
 	table->initialState.level.arbRefreshState =
 		NISLANDS_INITIAL_STATE_ARB_INDEX;
 
 	table->initialState.level.ACIndex = 0;
 
 	ret = ni_populate_voltage_value(rdev, &eg_pi->vddc_voltage_table,
-					initial_state->perक्रमmance_levels[0].vddc,
+					initial_state->performance_levels[0].vddc,
 					&table->initialState.level.vddc);
-	अगर (!ret) अणु
+	if (!ret) {
 		u16 std_vddc;
 
 		ret = ni_get_std_voltage_value(rdev,
 					       &table->initialState.level.vddc,
 					       &std_vddc);
-		अगर (!ret)
+		if (!ret)
 			ni_populate_std_voltage_value(rdev, std_vddc,
 						      table->initialState.level.vddc.index,
 						      &table->initialState.level.std_vddc);
-	पूर्ण
+	}
 
-	अगर (eg_pi->vddci_control)
+	if (eg_pi->vddci_control)
 		ni_populate_voltage_value(rdev,
 					  &eg_pi->vddci_voltage_table,
-					  initial_state->perक्रमmance_levels[0].vddci,
+					  initial_state->performance_levels[0].vddci,
 					  &table->initialState.level.vddci);
 
 	ni_populate_initial_mvdd_value(rdev, &table->initialState.level.mvdd);
@@ -1754,21 +1753,21 @@ bool ni_dpm_vblank_too_लघु(काष्ठा radeon_device *rdev)
 
 	table->initialState.level.bSP = cpu_to_be32(pi->dsp);
 
-	अगर (pi->boot_in_gen2)
+	if (pi->boot_in_gen2)
 		table->initialState.level.gen2PCIE = 1;
-	अन्यथा
+	else
 		table->initialState.level.gen2PCIE = 0;
 
-	अगर (pi->mem_gddr5) अणु
+	if (pi->mem_gddr5) {
 		table->initialState.level.strobeMode =
 			cypress_get_strobe_mode_settings(rdev,
-							 initial_state->perक्रमmance_levels[0].mclk);
+							 initial_state->performance_levels[0].mclk);
 
-		अगर (initial_state->perक्रमmance_levels[0].mclk > pi->mclk_edc_enable_threshold)
+		if (initial_state->performance_levels[0].mclk > pi->mclk_edc_enable_threshold)
 			table->initialState.level.mcFlags = NISLANDS_SMC_MC_EDC_RD_FLAG | NISLANDS_SMC_MC_EDC_WR_FLAG;
-		अन्यथा
+		else
 			table->initialState.level.mcFlags =  0;
-	पूर्ण
+	}
 
 	table->initialState.levelCount = 1;
 
@@ -1785,88 +1784,88 @@ bool ni_dpm_vblank_too_लघु(काष्ठा radeon_device *rdev)
 	reg = MAX_POWER_DELTA_MASK | STI_SIZE_MASK | LTI_RATIO_MASK;
 	table->initialState.level.SQPowerThrottle_2 = cpu_to_be32(reg);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ni_populate_smc_acpi_state(काष्ठा radeon_device *rdev,
+static int ni_populate_smc_acpi_state(struct radeon_device *rdev,
 				      NISLANDS_SMC_STATETABLE *table)
-अणु
-	काष्ठा rv7xx_घातer_info *pi = rv770_get_pi(rdev);
-	काष्ठा evergreen_घातer_info *eg_pi = evergreen_get_pi(rdev);
-	काष्ठा ni_घातer_info *ni_pi = ni_get_pi(rdev);
-	u32 mpll_ad_func_cntl   = ni_pi->घड़ी_रेजिस्टरs.mpll_ad_func_cntl;
-	u32 mpll_ad_func_cntl_2 = ni_pi->घड़ी_रेजिस्टरs.mpll_ad_func_cntl_2;
-	u32 mpll_dq_func_cntl   = ni_pi->घड़ी_रेजिस्टरs.mpll_dq_func_cntl;
-	u32 mpll_dq_func_cntl_2 = ni_pi->घड़ी_रेजिस्टरs.mpll_dq_func_cntl_2;
-	u32 spll_func_cntl      = ni_pi->घड़ी_रेजिस्टरs.cg_spll_func_cntl;
-	u32 spll_func_cntl_2    = ni_pi->घड़ी_रेजिस्टरs.cg_spll_func_cntl_2;
-	u32 spll_func_cntl_3    = ni_pi->घड़ी_रेजिस्टरs.cg_spll_func_cntl_3;
-	u32 spll_func_cntl_4    = ni_pi->घड़ी_रेजिस्टरs.cg_spll_func_cntl_4;
-	u32 mclk_pwrmgt_cntl    = ni_pi->घड़ी_रेजिस्टरs.mclk_pwrmgt_cntl;
-	u32 dll_cntl            = ni_pi->घड़ी_रेजिस्टरs.dll_cntl;
+{
+	struct rv7xx_power_info *pi = rv770_get_pi(rdev);
+	struct evergreen_power_info *eg_pi = evergreen_get_pi(rdev);
+	struct ni_power_info *ni_pi = ni_get_pi(rdev);
+	u32 mpll_ad_func_cntl   = ni_pi->clock_registers.mpll_ad_func_cntl;
+	u32 mpll_ad_func_cntl_2 = ni_pi->clock_registers.mpll_ad_func_cntl_2;
+	u32 mpll_dq_func_cntl   = ni_pi->clock_registers.mpll_dq_func_cntl;
+	u32 mpll_dq_func_cntl_2 = ni_pi->clock_registers.mpll_dq_func_cntl_2;
+	u32 spll_func_cntl      = ni_pi->clock_registers.cg_spll_func_cntl;
+	u32 spll_func_cntl_2    = ni_pi->clock_registers.cg_spll_func_cntl_2;
+	u32 spll_func_cntl_3    = ni_pi->clock_registers.cg_spll_func_cntl_3;
+	u32 spll_func_cntl_4    = ni_pi->clock_registers.cg_spll_func_cntl_4;
+	u32 mclk_pwrmgt_cntl    = ni_pi->clock_registers.mclk_pwrmgt_cntl;
+	u32 dll_cntl            = ni_pi->clock_registers.dll_cntl;
 	u32 reg;
-	पूर्णांक ret;
+	int ret;
 
 	table->ACPIState = table->initialState;
 
 	table->ACPIState.flags &= ~PPSMC_SWSTATE_FLAG_DC;
 
-	अगर (pi->acpi_vddc) अणु
+	if (pi->acpi_vddc) {
 		ret = ni_populate_voltage_value(rdev,
 						&eg_pi->vddc_voltage_table,
 						pi->acpi_vddc, &table->ACPIState.level.vddc);
-		अगर (!ret) अणु
+		if (!ret) {
 			u16 std_vddc;
 
 			ret = ni_get_std_voltage_value(rdev,
 						       &table->ACPIState.level.vddc, &std_vddc);
-			अगर (!ret)
+			if (!ret)
 				ni_populate_std_voltage_value(rdev, std_vddc,
 							      table->ACPIState.level.vddc.index,
 							      &table->ACPIState.level.std_vddc);
-		पूर्ण
+		}
 
-		अगर (pi->pcie_gen2) अणु
-			अगर (pi->acpi_pcie_gen2)
+		if (pi->pcie_gen2) {
+			if (pi->acpi_pcie_gen2)
 				table->ACPIState.level.gen2PCIE = 1;
-			अन्यथा
+			else
 				table->ACPIState.level.gen2PCIE = 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			table->ACPIState.level.gen2PCIE = 0;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		ret = ni_populate_voltage_value(rdev,
 						&eg_pi->vddc_voltage_table,
 						pi->min_vddc_in_table,
 						&table->ACPIState.level.vddc);
-		अगर (!ret) अणु
+		if (!ret) {
 			u16 std_vddc;
 
 			ret = ni_get_std_voltage_value(rdev,
 						       &table->ACPIState.level.vddc,
 						       &std_vddc);
-			अगर (!ret)
+			if (!ret)
 				ni_populate_std_voltage_value(rdev, std_vddc,
 							      table->ACPIState.level.vddc.index,
 							      &table->ACPIState.level.std_vddc);
-		पूर्ण
+		}
 		table->ACPIState.level.gen2PCIE = 0;
-	पूर्ण
+	}
 
-	अगर (eg_pi->acpi_vddci) अणु
-		अगर (eg_pi->vddci_control)
+	if (eg_pi->acpi_vddci) {
+		if (eg_pi->vddci_control)
 			ni_populate_voltage_value(rdev,
 						  &eg_pi->vddci_voltage_table,
 						  eg_pi->acpi_vddci,
 						  &table->ACPIState.level.vddci);
-	पूर्ण
+	}
 
 
 	mpll_ad_func_cntl &= ~PDNB;
 
 	mpll_ad_func_cntl_2 |= BIAS_GEN_PDNB | RESET_EN;
 
-	अगर (pi->mem_gddr5)
+	if (pi->mem_gddr5)
 		mpll_dq_func_cntl &= ~PDNB;
 	mpll_dq_func_cntl_2 |= BIAS_GEN_PDNB | RESET_EN | BYPASS;
 
@@ -1919,7 +1918,7 @@ bool ni_dpm_vblank_too_लघु(काष्ठा radeon_device *rdev)
 
 	ni_populate_mvdd_value(rdev, 0, &table->ACPIState.level.mvdd);
 
-	अगर (eg_pi->dynamic_ac_timing)
+	if (eg_pi->dynamic_ac_timing)
 		table->ACPIState.level.ACIndex = 1;
 
 	table->ACPIState.level.dpm2.MaxPS = 0;
@@ -1933,53 +1932,53 @@ bool ni_dpm_vblank_too_लघु(काष्ठा radeon_device *rdev)
 	reg = MAX_POWER_DELTA_MASK | STI_SIZE_MASK | LTI_RATIO_MASK;
 	table->ACPIState.level.SQPowerThrottle_2 = cpu_to_be32(reg);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ni_init_smc_table(काष्ठा radeon_device *rdev)
-अणु
-	काष्ठा rv7xx_घातer_info *pi = rv770_get_pi(rdev);
-	काष्ठा ni_घातer_info *ni_pi = ni_get_pi(rdev);
-	पूर्णांक ret;
-	काष्ठा radeon_ps *radeon_boot_state = rdev->pm.dpm.boot_ps;
+static int ni_init_smc_table(struct radeon_device *rdev)
+{
+	struct rv7xx_power_info *pi = rv770_get_pi(rdev);
+	struct ni_power_info *ni_pi = ni_get_pi(rdev);
+	int ret;
+	struct radeon_ps *radeon_boot_state = rdev->pm.dpm.boot_ps;
 	NISLANDS_SMC_STATETABLE *table = &ni_pi->smc_statetable;
 
-	स_रखो(table, 0, माप(NISLANDS_SMC_STATETABLE));
+	memset(table, 0, sizeof(NISLANDS_SMC_STATETABLE));
 
 	ni_populate_smc_voltage_tables(rdev, table);
 
-	चयन (rdev->pm.पूर्णांक_thermal_type) अणु
-	हाल THERMAL_TYPE_NI:
-	हाल THERMAL_TYPE_EMC2103_WITH_INTERNAL:
+	switch (rdev->pm.int_thermal_type) {
+	case THERMAL_TYPE_NI:
+	case THERMAL_TYPE_EMC2103_WITH_INTERNAL:
 		table->thermalProtectType = PPSMC_THERMAL_PROTECT_TYPE_INTERNAL;
-		अवरोध;
-	हाल THERMAL_TYPE_NONE:
+		break;
+	case THERMAL_TYPE_NONE:
 		table->thermalProtectType = PPSMC_THERMAL_PROTECT_TYPE_NONE;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		table->thermalProtectType = PPSMC_THERMAL_PROTECT_TYPE_EXTERNAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (rdev->pm.dpm.platक्रमm_caps & ATOM_PP_PLATFORM_CAP_HARDWAREDC)
-		table->प्रणालीFlags |= PPSMC_SYSTEMFLAG_GPIO_DC;
+	if (rdev->pm.dpm.platform_caps & ATOM_PP_PLATFORM_CAP_HARDWAREDC)
+		table->systemFlags |= PPSMC_SYSTEMFLAG_GPIO_DC;
 
-	अगर (rdev->pm.dpm.platक्रमm_caps & ATOM_PP_PLATFORM_CAP_REGULATOR_HOT)
-		table->प्रणालीFlags |= PPSMC_SYSTEMFLAG_REGULATOR_HOT;
+	if (rdev->pm.dpm.platform_caps & ATOM_PP_PLATFORM_CAP_REGULATOR_HOT)
+		table->systemFlags |= PPSMC_SYSTEMFLAG_REGULATOR_HOT;
 
-	अगर (rdev->pm.dpm.platक्रमm_caps & ATOM_PP_PLATFORM_CAP_STEPVDDC)
-		table->प्रणालीFlags |= PPSMC_SYSTEMFLAG_STEPVDDC;
+	if (rdev->pm.dpm.platform_caps & ATOM_PP_PLATFORM_CAP_STEPVDDC)
+		table->systemFlags |= PPSMC_SYSTEMFLAG_STEPVDDC;
 
-	अगर (pi->mem_gddr5)
-		table->प्रणालीFlags |= PPSMC_SYSTEMFLAG_GDDR5;
+	if (pi->mem_gddr5)
+		table->systemFlags |= PPSMC_SYSTEMFLAG_GDDR5;
 
 	ret = ni_populate_smc_initial_state(rdev, radeon_boot_state, table);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = ni_populate_smc_acpi_state(rdev, table);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	table->driverState.flags = table->initialState.flags;
 	table->driverState.levelCount = table->initialState.levelCount;
@@ -1987,279 +1986,279 @@ bool ni_dpm_vblank_too_लघु(काष्ठा radeon_device *rdev)
 
 	table->ULVState = table->initialState;
 
-	ret = ni_करो_program_memory_timing_parameters(rdev, radeon_boot_state,
+	ret = ni_do_program_memory_timing_parameters(rdev, radeon_boot_state,
 						     NISLANDS_INITIAL_STATE_ARB_INDEX);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस rv770_copy_bytes_to_smc(rdev, pi->state_table_start, (u8 *)table,
-				       माप(NISLANDS_SMC_STATETABLE), pi->sram_end);
-पूर्ण
+	return rv770_copy_bytes_to_smc(rdev, pi->state_table_start, (u8 *)table,
+				       sizeof(NISLANDS_SMC_STATETABLE), pi->sram_end);
+}
 
-अटल पूर्णांक ni_calculate_sclk_params(काष्ठा radeon_device *rdev,
-				    u32 engine_घड़ी,
+static int ni_calculate_sclk_params(struct radeon_device *rdev,
+				    u32 engine_clock,
 				    NISLANDS_SMC_SCLK_VALUE *sclk)
-अणु
-	काष्ठा rv7xx_घातer_info *pi = rv770_get_pi(rdev);
-	काष्ठा ni_घातer_info *ni_pi = ni_get_pi(rdev);
-	काष्ठा atom_घड़ी_भागiders भागiders;
-	u32 spll_func_cntl = ni_pi->घड़ी_रेजिस्टरs.cg_spll_func_cntl;
-	u32 spll_func_cntl_2 = ni_pi->घड़ी_रेजिस्टरs.cg_spll_func_cntl_2;
-	u32 spll_func_cntl_3 = ni_pi->घड़ी_रेजिस्टरs.cg_spll_func_cntl_3;
-	u32 spll_func_cntl_4 = ni_pi->घड़ी_रेजिस्टरs.cg_spll_func_cntl_4;
-	u32 cg_spll_spपढ़ो_spectrum = ni_pi->घड़ी_रेजिस्टरs.cg_spll_spपढ़ो_spectrum;
-	u32 cg_spll_spपढ़ो_spectrum_2 = ni_pi->घड़ी_रेजिस्टरs.cg_spll_spपढ़ो_spectrum_2;
-	u64 पंचांगp;
-	u32 reference_घड़ी = rdev->घड़ी.spll.reference_freq;
-	u32 reference_भागider;
-	u32 fbभाग;
-	पूर्णांक ret;
+{
+	struct rv7xx_power_info *pi = rv770_get_pi(rdev);
+	struct ni_power_info *ni_pi = ni_get_pi(rdev);
+	struct atom_clock_dividers dividers;
+	u32 spll_func_cntl = ni_pi->clock_registers.cg_spll_func_cntl;
+	u32 spll_func_cntl_2 = ni_pi->clock_registers.cg_spll_func_cntl_2;
+	u32 spll_func_cntl_3 = ni_pi->clock_registers.cg_spll_func_cntl_3;
+	u32 spll_func_cntl_4 = ni_pi->clock_registers.cg_spll_func_cntl_4;
+	u32 cg_spll_spread_spectrum = ni_pi->clock_registers.cg_spll_spread_spectrum;
+	u32 cg_spll_spread_spectrum_2 = ni_pi->clock_registers.cg_spll_spread_spectrum_2;
+	u64 tmp;
+	u32 reference_clock = rdev->clock.spll.reference_freq;
+	u32 reference_divider;
+	u32 fbdiv;
+	int ret;
 
-	ret = radeon_atom_get_घड़ी_भागiders(rdev, COMPUTE_ENGINE_PLL_PARAM,
-					     engine_घड़ी, false, &भागiders);
-	अगर (ret)
-		वापस ret;
+	ret = radeon_atom_get_clock_dividers(rdev, COMPUTE_ENGINE_PLL_PARAM,
+					     engine_clock, false, &dividers);
+	if (ret)
+		return ret;
 
-	reference_भागider = 1 + भागiders.ref_भाग;
+	reference_divider = 1 + dividers.ref_div;
 
 
-	पंचांगp = (u64) engine_घड़ी * reference_भागider * भागiders.post_भाग * 16834;
-	करो_भाग(पंचांगp, reference_घड़ी);
-	fbभाग = (u32) पंचांगp;
+	tmp = (u64) engine_clock * reference_divider * dividers.post_div * 16834;
+	do_div(tmp, reference_clock);
+	fbdiv = (u32) tmp;
 
 	spll_func_cntl &= ~(SPLL_PDIV_A_MASK | SPLL_REF_DIV_MASK);
-	spll_func_cntl |= SPLL_REF_DIV(भागiders.ref_भाग);
-	spll_func_cntl |= SPLL_PDIV_A(भागiders.post_भाग);
+	spll_func_cntl |= SPLL_REF_DIV(dividers.ref_div);
+	spll_func_cntl |= SPLL_PDIV_A(dividers.post_div);
 
 	spll_func_cntl_2 &= ~SCLK_MUX_SEL_MASK;
 	spll_func_cntl_2 |= SCLK_MUX_SEL(2);
 
 	spll_func_cntl_3 &= ~SPLL_FB_DIV_MASK;
-	spll_func_cntl_3 |= SPLL_FB_DIV(fbभाग);
+	spll_func_cntl_3 |= SPLL_FB_DIV(fbdiv);
 	spll_func_cntl_3 |= SPLL_DITHEN;
 
-	अगर (pi->sclk_ss) अणु
-		काष्ठा radeon_atom_ss ss;
-		u32 vco_freq = engine_घड़ी * भागiders.post_भाग;
+	if (pi->sclk_ss) {
+		struct radeon_atom_ss ss;
+		u32 vco_freq = engine_clock * dividers.post_div;
 
-		अगर (radeon_atombios_get_asic_ss_info(rdev, &ss,
-						     ASIC_INTERNAL_ENGINE_SS, vco_freq)) अणु
-			u32 clk_s = reference_घड़ी * 5 / (reference_भागider * ss.rate);
-			u32 clk_v = 4 * ss.percentage * fbभाग / (clk_s * 10000);
+		if (radeon_atombios_get_asic_ss_info(rdev, &ss,
+						     ASIC_INTERNAL_ENGINE_SS, vco_freq)) {
+			u32 clk_s = reference_clock * 5 / (reference_divider * ss.rate);
+			u32 clk_v = 4 * ss.percentage * fbdiv / (clk_s * 10000);
 
-			cg_spll_spपढ़ो_spectrum &= ~CLK_S_MASK;
-			cg_spll_spपढ़ो_spectrum |= CLK_S(clk_s);
-			cg_spll_spपढ़ो_spectrum |= SSEN;
+			cg_spll_spread_spectrum &= ~CLK_S_MASK;
+			cg_spll_spread_spectrum |= CLK_S(clk_s);
+			cg_spll_spread_spectrum |= SSEN;
 
-			cg_spll_spपढ़ो_spectrum_2 &= ~CLK_V_MASK;
-			cg_spll_spपढ़ो_spectrum_2 |= CLK_V(clk_v);
-		पूर्ण
-	पूर्ण
+			cg_spll_spread_spectrum_2 &= ~CLK_V_MASK;
+			cg_spll_spread_spectrum_2 |= CLK_V(clk_v);
+		}
+	}
 
-	sclk->sclk_value = engine_घड़ी;
+	sclk->sclk_value = engine_clock;
 	sclk->vCG_SPLL_FUNC_CNTL = spll_func_cntl;
 	sclk->vCG_SPLL_FUNC_CNTL_2 = spll_func_cntl_2;
 	sclk->vCG_SPLL_FUNC_CNTL_3 = spll_func_cntl_3;
 	sclk->vCG_SPLL_FUNC_CNTL_4 = spll_func_cntl_4;
-	sclk->vCG_SPLL_SPREAD_SPECTRUM = cg_spll_spपढ़ो_spectrum;
-	sclk->vCG_SPLL_SPREAD_SPECTRUM_2 = cg_spll_spपढ़ो_spectrum_2;
+	sclk->vCG_SPLL_SPREAD_SPECTRUM = cg_spll_spread_spectrum;
+	sclk->vCG_SPLL_SPREAD_SPECTRUM_2 = cg_spll_spread_spectrum_2;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ni_populate_sclk_value(काष्ठा radeon_device *rdev,
-				  u32 engine_घड़ी,
+static int ni_populate_sclk_value(struct radeon_device *rdev,
+				  u32 engine_clock,
 				  NISLANDS_SMC_SCLK_VALUE *sclk)
-अणु
-	NISLANDS_SMC_SCLK_VALUE sclk_पंचांगp;
-	पूर्णांक ret;
+{
+	NISLANDS_SMC_SCLK_VALUE sclk_tmp;
+	int ret;
 
-	ret = ni_calculate_sclk_params(rdev, engine_घड़ी, &sclk_पंचांगp);
-	अगर (!ret) अणु
-		sclk->sclk_value = cpu_to_be32(sclk_पंचांगp.sclk_value);
-		sclk->vCG_SPLL_FUNC_CNTL = cpu_to_be32(sclk_पंचांगp.vCG_SPLL_FUNC_CNTL);
-		sclk->vCG_SPLL_FUNC_CNTL_2 = cpu_to_be32(sclk_पंचांगp.vCG_SPLL_FUNC_CNTL_2);
-		sclk->vCG_SPLL_FUNC_CNTL_3 = cpu_to_be32(sclk_पंचांगp.vCG_SPLL_FUNC_CNTL_3);
-		sclk->vCG_SPLL_FUNC_CNTL_4 = cpu_to_be32(sclk_पंचांगp.vCG_SPLL_FUNC_CNTL_4);
-		sclk->vCG_SPLL_SPREAD_SPECTRUM = cpu_to_be32(sclk_पंचांगp.vCG_SPLL_SPREAD_SPECTRUM);
-		sclk->vCG_SPLL_SPREAD_SPECTRUM_2 = cpu_to_be32(sclk_पंचांगp.vCG_SPLL_SPREAD_SPECTRUM_2);
-	पूर्ण
+	ret = ni_calculate_sclk_params(rdev, engine_clock, &sclk_tmp);
+	if (!ret) {
+		sclk->sclk_value = cpu_to_be32(sclk_tmp.sclk_value);
+		sclk->vCG_SPLL_FUNC_CNTL = cpu_to_be32(sclk_tmp.vCG_SPLL_FUNC_CNTL);
+		sclk->vCG_SPLL_FUNC_CNTL_2 = cpu_to_be32(sclk_tmp.vCG_SPLL_FUNC_CNTL_2);
+		sclk->vCG_SPLL_FUNC_CNTL_3 = cpu_to_be32(sclk_tmp.vCG_SPLL_FUNC_CNTL_3);
+		sclk->vCG_SPLL_FUNC_CNTL_4 = cpu_to_be32(sclk_tmp.vCG_SPLL_FUNC_CNTL_4);
+		sclk->vCG_SPLL_SPREAD_SPECTRUM = cpu_to_be32(sclk_tmp.vCG_SPLL_SPREAD_SPECTRUM);
+		sclk->vCG_SPLL_SPREAD_SPECTRUM_2 = cpu_to_be32(sclk_tmp.vCG_SPLL_SPREAD_SPECTRUM_2);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ni_init_smc_spll_table(काष्ठा radeon_device *rdev)
-अणु
-	काष्ठा rv7xx_घातer_info *pi = rv770_get_pi(rdev);
-	काष्ठा ni_घातer_info *ni_pi = ni_get_pi(rdev);
+static int ni_init_smc_spll_table(struct radeon_device *rdev)
+{
+	struct rv7xx_power_info *pi = rv770_get_pi(rdev);
+	struct ni_power_info *ni_pi = ni_get_pi(rdev);
 	SMC_NISLANDS_SPLL_DIV_TABLE *spll_table;
 	NISLANDS_SMC_SCLK_VALUE sclk_params;
-	u32 fb_भाग;
-	u32 p_भाग;
+	u32 fb_div;
+	u32 p_div;
 	u32 clk_s;
 	u32 clk_v;
 	u32 sclk = 0;
-	पूर्णांक i, ret;
-	u32 पंचांगp;
+	int i, ret;
+	u32 tmp;
 
-	अगर (ni_pi->spll_table_start == 0)
-		वापस -EINVAL;
+	if (ni_pi->spll_table_start == 0)
+		return -EINVAL;
 
-	spll_table = kzalloc(माप(SMC_NISLANDS_SPLL_DIV_TABLE), GFP_KERNEL);
-	अगर (spll_table == शून्य)
-		वापस -ENOMEM;
+	spll_table = kzalloc(sizeof(SMC_NISLANDS_SPLL_DIV_TABLE), GFP_KERNEL);
+	if (spll_table == NULL)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < 256; i++) अणु
+	for (i = 0; i < 256; i++) {
 		ret = ni_calculate_sclk_params(rdev, sclk, &sclk_params);
-		अगर (ret)
-			अवरोध;
+		if (ret)
+			break;
 
-		p_भाग = (sclk_params.vCG_SPLL_FUNC_CNTL & SPLL_PDIV_A_MASK) >> SPLL_PDIV_A_SHIFT;
-		fb_भाग = (sclk_params.vCG_SPLL_FUNC_CNTL_3 & SPLL_FB_DIV_MASK) >> SPLL_FB_DIV_SHIFT;
+		p_div = (sclk_params.vCG_SPLL_FUNC_CNTL & SPLL_PDIV_A_MASK) >> SPLL_PDIV_A_SHIFT;
+		fb_div = (sclk_params.vCG_SPLL_FUNC_CNTL_3 & SPLL_FB_DIV_MASK) >> SPLL_FB_DIV_SHIFT;
 		clk_s = (sclk_params.vCG_SPLL_SPREAD_SPECTRUM & CLK_S_MASK) >> CLK_S_SHIFT;
 		clk_v = (sclk_params.vCG_SPLL_SPREAD_SPECTRUM_2 & CLK_V_MASK) >> CLK_V_SHIFT;
 
-		fb_भाग &= ~0x00001FFF;
-		fb_भाग >>= 1;
+		fb_div &= ~0x00001FFF;
+		fb_div >>= 1;
 		clk_v >>= 6;
 
-		अगर (p_भाग & ~(SMC_NISLANDS_SPLL_DIV_TABLE_PDIV_MASK >> SMC_NISLANDS_SPLL_DIV_TABLE_PDIV_SHIFT))
+		if (p_div & ~(SMC_NISLANDS_SPLL_DIV_TABLE_PDIV_MASK >> SMC_NISLANDS_SPLL_DIV_TABLE_PDIV_SHIFT))
 			ret = -EINVAL;
 
-		अगर (clk_s & ~(SMC_NISLANDS_SPLL_DIV_TABLE_CLKS_MASK >> SMC_NISLANDS_SPLL_DIV_TABLE_CLKS_SHIFT))
+		if (clk_s & ~(SMC_NISLANDS_SPLL_DIV_TABLE_CLKS_MASK >> SMC_NISLANDS_SPLL_DIV_TABLE_CLKS_SHIFT))
 			ret = -EINVAL;
 
-		अगर (fb_भाग & ~(SMC_NISLANDS_SPLL_DIV_TABLE_FBDIV_MASK >> SMC_NISLANDS_SPLL_DIV_TABLE_FBDIV_SHIFT))
+		if (fb_div & ~(SMC_NISLANDS_SPLL_DIV_TABLE_FBDIV_MASK >> SMC_NISLANDS_SPLL_DIV_TABLE_FBDIV_SHIFT))
 			ret = -EINVAL;
 
-		अगर (clk_v & ~(SMC_NISLANDS_SPLL_DIV_TABLE_CLKV_MASK >> SMC_NISLANDS_SPLL_DIV_TABLE_CLKV_SHIFT))
+		if (clk_v & ~(SMC_NISLANDS_SPLL_DIV_TABLE_CLKV_MASK >> SMC_NISLANDS_SPLL_DIV_TABLE_CLKV_SHIFT))
 			ret = -EINVAL;
 
-		अगर (ret)
-			अवरोध;
+		if (ret)
+			break;
 
-		पंचांगp = ((fb_भाग << SMC_NISLANDS_SPLL_DIV_TABLE_FBDIV_SHIFT) & SMC_NISLANDS_SPLL_DIV_TABLE_FBDIV_MASK) |
-			((p_भाग << SMC_NISLANDS_SPLL_DIV_TABLE_PDIV_SHIFT) & SMC_NISLANDS_SPLL_DIV_TABLE_PDIV_MASK);
-		spll_table->freq[i] = cpu_to_be32(पंचांगp);
+		tmp = ((fb_div << SMC_NISLANDS_SPLL_DIV_TABLE_FBDIV_SHIFT) & SMC_NISLANDS_SPLL_DIV_TABLE_FBDIV_MASK) |
+			((p_div << SMC_NISLANDS_SPLL_DIV_TABLE_PDIV_SHIFT) & SMC_NISLANDS_SPLL_DIV_TABLE_PDIV_MASK);
+		spll_table->freq[i] = cpu_to_be32(tmp);
 
-		पंचांगp = ((clk_v << SMC_NISLANDS_SPLL_DIV_TABLE_CLKV_SHIFT) & SMC_NISLANDS_SPLL_DIV_TABLE_CLKV_MASK) |
+		tmp = ((clk_v << SMC_NISLANDS_SPLL_DIV_TABLE_CLKV_SHIFT) & SMC_NISLANDS_SPLL_DIV_TABLE_CLKV_MASK) |
 			((clk_s << SMC_NISLANDS_SPLL_DIV_TABLE_CLKS_SHIFT) & SMC_NISLANDS_SPLL_DIV_TABLE_CLKS_MASK);
-		spll_table->ss[i] = cpu_to_be32(पंचांगp);
+		spll_table->ss[i] = cpu_to_be32(tmp);
 
 		sclk += 512;
-	पूर्ण
+	}
 
-	अगर (!ret)
+	if (!ret)
 		ret = rv770_copy_bytes_to_smc(rdev, ni_pi->spll_table_start, (u8 *)spll_table,
-					      माप(SMC_NISLANDS_SPLL_DIV_TABLE), pi->sram_end);
+					      sizeof(SMC_NISLANDS_SPLL_DIV_TABLE), pi->sram_end);
 
-	kमुक्त(spll_table);
+	kfree(spll_table);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ni_populate_mclk_value(काष्ठा radeon_device *rdev,
-				  u32 engine_घड़ी,
-				  u32 memory_घड़ी,
+static int ni_populate_mclk_value(struct radeon_device *rdev,
+				  u32 engine_clock,
+				  u32 memory_clock,
 				  NISLANDS_SMC_MCLK_VALUE *mclk,
 				  bool strobe_mode,
 				  bool dll_state_on)
-अणु
-	काष्ठा rv7xx_घातer_info *pi = rv770_get_pi(rdev);
-	काष्ठा ni_घातer_info *ni_pi = ni_get_pi(rdev);
-	u32 mpll_ad_func_cntl = ni_pi->घड़ी_रेजिस्टरs.mpll_ad_func_cntl;
-	u32 mpll_ad_func_cntl_2 = ni_pi->घड़ी_रेजिस्टरs.mpll_ad_func_cntl_2;
-	u32 mpll_dq_func_cntl = ni_pi->घड़ी_रेजिस्टरs.mpll_dq_func_cntl;
-	u32 mpll_dq_func_cntl_2 = ni_pi->घड़ी_रेजिस्टरs.mpll_dq_func_cntl_2;
-	u32 mclk_pwrmgt_cntl = ni_pi->घड़ी_रेजिस्टरs.mclk_pwrmgt_cntl;
-	u32 dll_cntl = ni_pi->घड़ी_रेजिस्टरs.dll_cntl;
-	u32 mpll_ss1 = ni_pi->घड़ी_रेजिस्टरs.mpll_ss1;
-	u32 mpll_ss2 = ni_pi->घड़ी_रेजिस्टरs.mpll_ss2;
-	काष्ठा atom_घड़ी_भागiders भागiders;
+{
+	struct rv7xx_power_info *pi = rv770_get_pi(rdev);
+	struct ni_power_info *ni_pi = ni_get_pi(rdev);
+	u32 mpll_ad_func_cntl = ni_pi->clock_registers.mpll_ad_func_cntl;
+	u32 mpll_ad_func_cntl_2 = ni_pi->clock_registers.mpll_ad_func_cntl_2;
+	u32 mpll_dq_func_cntl = ni_pi->clock_registers.mpll_dq_func_cntl;
+	u32 mpll_dq_func_cntl_2 = ni_pi->clock_registers.mpll_dq_func_cntl_2;
+	u32 mclk_pwrmgt_cntl = ni_pi->clock_registers.mclk_pwrmgt_cntl;
+	u32 dll_cntl = ni_pi->clock_registers.dll_cntl;
+	u32 mpll_ss1 = ni_pi->clock_registers.mpll_ss1;
+	u32 mpll_ss2 = ni_pi->clock_registers.mpll_ss2;
+	struct atom_clock_dividers dividers;
 	u32 ibias;
 	u32 dll_speed;
-	पूर्णांक ret;
+	int ret;
 	u32 mc_seq_misc7;
 
-	ret = radeon_atom_get_घड़ी_भागiders(rdev, COMPUTE_MEMORY_PLL_PARAM,
-					     memory_घड़ी, strobe_mode, &भागiders);
-	अगर (ret)
-		वापस ret;
+	ret = radeon_atom_get_clock_dividers(rdev, COMPUTE_MEMORY_PLL_PARAM,
+					     memory_clock, strobe_mode, &dividers);
+	if (ret)
+		return ret;
 
-	अगर (!strobe_mode) अणु
+	if (!strobe_mode) {
 		mc_seq_misc7 = RREG32(MC_SEQ_MISC7);
 
-		अगर (mc_seq_misc7 & 0x8000000)
-			भागiders.post_भाग = 1;
-	पूर्ण
+		if (mc_seq_misc7 & 0x8000000)
+			dividers.post_div = 1;
+	}
 
-	ibias = cypress_map_clkf_to_ibias(rdev, भागiders.whole_fb_भाग);
+	ibias = cypress_map_clkf_to_ibias(rdev, dividers.whole_fb_div);
 
 	mpll_ad_func_cntl &= ~(CLKR_MASK |
 			       YCLK_POST_DIV_MASK |
 			       CLKF_MASK |
 			       CLKFRAC_MASK |
 			       IBIAS_MASK);
-	mpll_ad_func_cntl |= CLKR(भागiders.ref_भाग);
-	mpll_ad_func_cntl |= YCLK_POST_DIV(भागiders.post_भाग);
-	mpll_ad_func_cntl |= CLKF(भागiders.whole_fb_भाग);
-	mpll_ad_func_cntl |= CLKFRAC(भागiders.frac_fb_भाग);
+	mpll_ad_func_cntl |= CLKR(dividers.ref_div);
+	mpll_ad_func_cntl |= YCLK_POST_DIV(dividers.post_div);
+	mpll_ad_func_cntl |= CLKF(dividers.whole_fb_div);
+	mpll_ad_func_cntl |= CLKFRAC(dividers.frac_fb_div);
 	mpll_ad_func_cntl |= IBIAS(ibias);
 
-	अगर (भागiders.vco_mode)
+	if (dividers.vco_mode)
 		mpll_ad_func_cntl_2 |= VCO_MODE;
-	अन्यथा
+	else
 		mpll_ad_func_cntl_2 &= ~VCO_MODE;
 
-	अगर (pi->mem_gddr5) अणु
+	if (pi->mem_gddr5) {
 		mpll_dq_func_cntl &= ~(CLKR_MASK |
 				       YCLK_POST_DIV_MASK |
 				       CLKF_MASK |
 				       CLKFRAC_MASK |
 				       IBIAS_MASK);
-		mpll_dq_func_cntl |= CLKR(भागiders.ref_भाग);
-		mpll_dq_func_cntl |= YCLK_POST_DIV(भागiders.post_भाग);
-		mpll_dq_func_cntl |= CLKF(भागiders.whole_fb_भाग);
-		mpll_dq_func_cntl |= CLKFRAC(भागiders.frac_fb_भाग);
+		mpll_dq_func_cntl |= CLKR(dividers.ref_div);
+		mpll_dq_func_cntl |= YCLK_POST_DIV(dividers.post_div);
+		mpll_dq_func_cntl |= CLKF(dividers.whole_fb_div);
+		mpll_dq_func_cntl |= CLKFRAC(dividers.frac_fb_div);
 		mpll_dq_func_cntl |= IBIAS(ibias);
 
-		अगर (strobe_mode)
+		if (strobe_mode)
 			mpll_dq_func_cntl &= ~PDNB;
-		अन्यथा
+		else
 			mpll_dq_func_cntl |= PDNB;
 
-		अगर (भागiders.vco_mode)
+		if (dividers.vco_mode)
 			mpll_dq_func_cntl_2 |= VCO_MODE;
-		अन्यथा
+		else
 			mpll_dq_func_cntl_2 &= ~VCO_MODE;
-	पूर्ण
+	}
 
-	अगर (pi->mclk_ss) अणु
-		काष्ठा radeon_atom_ss ss;
-		u32 vco_freq = memory_घड़ी * भागiders.post_भाग;
+	if (pi->mclk_ss) {
+		struct radeon_atom_ss ss;
+		u32 vco_freq = memory_clock * dividers.post_div;
 
-		अगर (radeon_atombios_get_asic_ss_info(rdev, &ss,
-						     ASIC_INTERNAL_MEMORY_SS, vco_freq)) अणु
-			u32 reference_घड़ी = rdev->घड़ी.mpll.reference_freq;
-			u32 decoded_ref = rv740_get_decoded_reference_भागider(भागiders.ref_भाग);
-			u32 clk_s = reference_घड़ी * 5 / (decoded_ref * ss.rate);
+		if (radeon_atombios_get_asic_ss_info(rdev, &ss,
+						     ASIC_INTERNAL_MEMORY_SS, vco_freq)) {
+			u32 reference_clock = rdev->clock.mpll.reference_freq;
+			u32 decoded_ref = rv740_get_decoded_reference_divider(dividers.ref_div);
+			u32 clk_s = reference_clock * 5 / (decoded_ref * ss.rate);
 			u32 clk_v = ss.percentage *
-				(0x4000 * भागiders.whole_fb_भाग + 0x800 * भागiders.frac_fb_भाग) / (clk_s * 625);
+				(0x4000 * dividers.whole_fb_div + 0x800 * dividers.frac_fb_div) / (clk_s * 625);
 
 			mpll_ss1 &= ~CLKV_MASK;
 			mpll_ss1 |= CLKV(clk_v);
 
 			mpll_ss2 &= ~CLKS_MASK;
 			mpll_ss2 |= CLKS(clk_s);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	dll_speed = rv740_get_dll_speed(pi->mem_gddr5,
-					memory_घड़ी);
+					memory_clock);
 
 	mclk_pwrmgt_cntl &= ~DLL_SPEED_MASK;
 	mclk_pwrmgt_cntl |= DLL_SPEED(dll_speed);
-	अगर (dll_state_on)
+	if (dll_state_on)
 		mclk_pwrmgt_cntl |= (MRDCKA0_PDNB |
 				     MRDCKA1_PDNB |
 				     MRDCKB0_PDNB |
@@ -2268,7 +2267,7 @@ bool ni_dpm_vblank_too_लघु(काष्ठा radeon_device *rdev)
 				     MRDCKC1_PDNB |
 				     MRDCKD0_PDNB |
 				     MRDCKD1_PDNB);
-	अन्यथा
+	else
 		mclk_pwrmgt_cntl &= ~(MRDCKA0_PDNB |
 				      MRDCKA1_PDNB |
 				      MRDCKB0_PDNB |
@@ -2279,7 +2278,7 @@ bool ni_dpm_vblank_too_लघु(काष्ठा radeon_device *rdev)
 				      MRDCKD1_PDNB);
 
 
-	mclk->mclk_value = cpu_to_be32(memory_घड़ी);
+	mclk->mclk_value = cpu_to_be32(memory_clock);
 	mclk->vMPLL_AD_FUNC_CNTL = cpu_to_be32(mpll_ad_func_cntl);
 	mclk->vMPLL_AD_FUNC_CNTL_2 = cpu_to_be32(mpll_ad_func_cntl_2);
 	mclk->vMPLL_DQ_FUNC_CNTL = cpu_to_be32(mpll_dq_func_cntl);
@@ -2289,237 +2288,237 @@ bool ni_dpm_vblank_too_लघु(काष्ठा radeon_device *rdev)
 	mclk->vMPLL_SS = cpu_to_be32(mpll_ss1);
 	mclk->vMPLL_SS2 = cpu_to_be32(mpll_ss2);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ni_populate_smc_sp(काष्ठा radeon_device *rdev,
-			       काष्ठा radeon_ps *radeon_state,
+static void ni_populate_smc_sp(struct radeon_device *rdev,
+			       struct radeon_ps *radeon_state,
 			       NISLANDS_SMC_SWSTATE *smc_state)
-अणु
-	काष्ठा ni_ps *ps = ni_get_ps(radeon_state);
-	काष्ठा rv7xx_घातer_info *pi = rv770_get_pi(rdev);
-	पूर्णांक i;
+{
+	struct ni_ps *ps = ni_get_ps(radeon_state);
+	struct rv7xx_power_info *pi = rv770_get_pi(rdev);
+	int i;
 
-	क्रम (i = 0; i < ps->perक्रमmance_level_count - 1; i++)
+	for (i = 0; i < ps->performance_level_count - 1; i++)
 		smc_state->levels[i].bSP = cpu_to_be32(pi->dsp);
 
-	smc_state->levels[ps->perक्रमmance_level_count - 1].bSP =
+	smc_state->levels[ps->performance_level_count - 1].bSP =
 		cpu_to_be32(pi->psp);
-पूर्ण
+}
 
-अटल पूर्णांक ni_convert_घातer_level_to_smc(काष्ठा radeon_device *rdev,
-					 काष्ठा rv7xx_pl *pl,
+static int ni_convert_power_level_to_smc(struct radeon_device *rdev,
+					 struct rv7xx_pl *pl,
 					 NISLANDS_SMC_HW_PERFORMANCE_LEVEL *level)
-अणु
-	काष्ठा rv7xx_घातer_info *pi = rv770_get_pi(rdev);
-	काष्ठा evergreen_घातer_info *eg_pi = evergreen_get_pi(rdev);
-	काष्ठा ni_घातer_info *ni_pi = ni_get_pi(rdev);
-	पूर्णांक ret;
+{
+	struct rv7xx_power_info *pi = rv770_get_pi(rdev);
+	struct evergreen_power_info *eg_pi = evergreen_get_pi(rdev);
+	struct ni_power_info *ni_pi = ni_get_pi(rdev);
+	int ret;
 	bool dll_state_on;
 	u16 std_vddc;
-	u32 पंचांगp = RREG32(DC_STUTTER_CNTL);
+	u32 tmp = RREG32(DC_STUTTER_CNTL);
 
 	level->gen2PCIE = pi->pcie_gen2 ?
 		((pl->flags & ATOM_PPLIB_R600_FLAGS_PCIEGEN2) ? 1 : 0) : 0;
 
 	ret = ni_populate_sclk_value(rdev, pl->sclk, &level->sclk);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	level->mcFlags =  0;
-	अगर (pi->mclk_stutter_mode_threshold &&
+	if (pi->mclk_stutter_mode_threshold &&
 	    (pl->mclk <= pi->mclk_stutter_mode_threshold) &&
 	    !eg_pi->uvd_enabled &&
-	    (पंचांगp & DC_STUTTER_ENABLE_A) &&
-	    (पंचांगp & DC_STUTTER_ENABLE_B))
+	    (tmp & DC_STUTTER_ENABLE_A) &&
+	    (tmp & DC_STUTTER_ENABLE_B))
 		level->mcFlags |= NISLANDS_SMC_MC_STUTTER_EN;
 
-	अगर (pi->mem_gddr5) अणु
-		अगर (pl->mclk > pi->mclk_edc_enable_threshold)
+	if (pi->mem_gddr5) {
+		if (pl->mclk > pi->mclk_edc_enable_threshold)
 			level->mcFlags |= NISLANDS_SMC_MC_EDC_RD_FLAG;
-		अगर (pl->mclk > eg_pi->mclk_edc_wr_enable_threshold)
+		if (pl->mclk > eg_pi->mclk_edc_wr_enable_threshold)
 			level->mcFlags |= NISLANDS_SMC_MC_EDC_WR_FLAG;
 
 		level->strobeMode = cypress_get_strobe_mode_settings(rdev, pl->mclk);
 
-		अगर (level->strobeMode & NISLANDS_SMC_STROBE_ENABLE) अणु
-			अगर (cypress_get_mclk_frequency_ratio(rdev, pl->mclk, true) >=
+		if (level->strobeMode & NISLANDS_SMC_STROBE_ENABLE) {
+			if (cypress_get_mclk_frequency_ratio(rdev, pl->mclk, true) >=
 			    ((RREG32(MC_SEQ_MISC7) >> 16) & 0xf))
 				dll_state_on = ((RREG32(MC_SEQ_MISC5) >> 1) & 0x1) ? true : false;
-			अन्यथा
+			else
 				dll_state_on = ((RREG32(MC_SEQ_MISC6) >> 1) & 0x1) ? true : false;
-		पूर्ण अन्यथा अणु
+		} else {
 			dll_state_on = false;
-			अगर (pl->mclk > ni_pi->mclk_rtt_mode_threshold)
+			if (pl->mclk > ni_pi->mclk_rtt_mode_threshold)
 				level->mcFlags |= NISLANDS_SMC_MC_RTT_ENABLE;
-		पूर्ण
+		}
 
 		ret = ni_populate_mclk_value(rdev, pl->sclk, pl->mclk,
 					     &level->mclk,
 					     (level->strobeMode & NISLANDS_SMC_STROBE_ENABLE) != 0,
 					     dll_state_on);
-	पूर्ण अन्यथा
+	} else
 		ret = ni_populate_mclk_value(rdev, pl->sclk, pl->mclk, &level->mclk, 1, 1);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = ni_populate_voltage_value(rdev, &eg_pi->vddc_voltage_table,
 					pl->vddc, &level->vddc);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = ni_get_std_voltage_value(rdev, &level->vddc, &std_vddc);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ni_populate_std_voltage_value(rdev, std_vddc,
 				      level->vddc.index, &level->std_vddc);
 
-	अगर (eg_pi->vddci_control) अणु
+	if (eg_pi->vddci_control) {
 		ret = ni_populate_voltage_value(rdev, &eg_pi->vddci_voltage_table,
 						pl->vddci, &level->vddci);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	ni_populate_mvdd_value(rdev, pl->mclk, &level->mvdd);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ni_populate_smc_t(काष्ठा radeon_device *rdev,
-			     काष्ठा radeon_ps *radeon_state,
+static int ni_populate_smc_t(struct radeon_device *rdev,
+			     struct radeon_ps *radeon_state,
 			     NISLANDS_SMC_SWSTATE *smc_state)
-अणु
-	काष्ठा rv7xx_घातer_info *pi = rv770_get_pi(rdev);
-	काष्ठा evergreen_घातer_info *eg_pi = evergreen_get_pi(rdev);
-	काष्ठा ni_ps *state = ni_get_ps(radeon_state);
+{
+	struct rv7xx_power_info *pi = rv770_get_pi(rdev);
+	struct evergreen_power_info *eg_pi = evergreen_get_pi(rdev);
+	struct ni_ps *state = ni_get_ps(radeon_state);
 	u32 a_t;
 	u32 t_l, t_h;
 	u32 high_bsp;
-	पूर्णांक i, ret;
+	int i, ret;
 
-	अगर (state->perक्रमmance_level_count >= 9)
-		वापस -EINVAL;
+	if (state->performance_level_count >= 9)
+		return -EINVAL;
 
-	अगर (state->perक्रमmance_level_count < 2) अणु
+	if (state->performance_level_count < 2) {
 		a_t = CG_R(0xffff) | CG_L(0);
 		smc_state->levels[0].aT = cpu_to_be32(a_t);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	smc_state->levels[0].aT = cpu_to_be32(0);
 
-	क्रम (i = 0; i <= state->perक्रमmance_level_count - 2; i++) अणु
-		अगर (eg_pi->uvd_enabled)
+	for (i = 0; i <= state->performance_level_count - 2; i++) {
+		if (eg_pi->uvd_enabled)
 			ret = r600_calculate_at(
 				1000 * (i * (eg_pi->smu_uvd_hs ? 2 : 8) + 2),
 				100 * R600_AH_DFLT,
-				state->perक्रमmance_levels[i + 1].sclk,
-				state->perक्रमmance_levels[i].sclk,
+				state->performance_levels[i + 1].sclk,
+				state->performance_levels[i].sclk,
 				&t_l,
 				&t_h);
-		अन्यथा
+		else
 			ret = r600_calculate_at(
 				1000 * (i + 1),
 				100 * R600_AH_DFLT,
-				state->perक्रमmance_levels[i + 1].sclk,
-				state->perक्रमmance_levels[i].sclk,
+				state->performance_levels[i + 1].sclk,
+				state->performance_levels[i].sclk,
 				&t_l,
 				&t_h);
 
-		अगर (ret) अणु
+		if (ret) {
 			t_h = (i + 1) * 1000 - 50 * R600_AH_DFLT;
 			t_l = (i + 1) * 1000 + 50 * R600_AH_DFLT;
-		पूर्ण
+		}
 
 		a_t = be32_to_cpu(smc_state->levels[i].aT) & ~CG_R_MASK;
 		a_t |= CG_R(t_l * pi->bsp / 20000);
 		smc_state->levels[i].aT = cpu_to_be32(a_t);
 
-		high_bsp = (i == state->perक्रमmance_level_count - 2) ?
+		high_bsp = (i == state->performance_level_count - 2) ?
 			pi->pbsp : pi->bsp;
 
 		a_t = CG_R(0xffff) | CG_L(t_h * high_bsp / 20000);
 		smc_state->levels[i + 1].aT = cpu_to_be32(a_t);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ni_populate_घातer_containment_values(काष्ठा radeon_device *rdev,
-						काष्ठा radeon_ps *radeon_state,
+static int ni_populate_power_containment_values(struct radeon_device *rdev,
+						struct radeon_ps *radeon_state,
 						NISLANDS_SMC_SWSTATE *smc_state)
-अणु
-	काष्ठा rv7xx_घातer_info *pi = rv770_get_pi(rdev);
-	काष्ठा evergreen_घातer_info *eg_pi = evergreen_get_pi(rdev);
-	काष्ठा ni_घातer_info *ni_pi = ni_get_pi(rdev);
-	काष्ठा ni_ps *state = ni_get_ps(radeon_state);
+{
+	struct rv7xx_power_info *pi = rv770_get_pi(rdev);
+	struct evergreen_power_info *eg_pi = evergreen_get_pi(rdev);
+	struct ni_power_info *ni_pi = ni_get_pi(rdev);
+	struct ni_ps *state = ni_get_ps(radeon_state);
 	u32 prev_sclk;
 	u32 max_sclk;
 	u32 min_sclk;
-	पूर्णांक i, ret;
+	int i, ret;
 	u32 tdp_limit;
 	u32 near_tdp_limit;
-	u32 घातer_boost_limit;
+	u32 power_boost_limit;
 	u8 max_ps_percent;
 
-	अगर (ni_pi->enable_घातer_containment == false)
-		वापस 0;
+	if (ni_pi->enable_power_containment == false)
+		return 0;
 
-	अगर (state->perक्रमmance_level_count == 0)
-		वापस -EINVAL;
+	if (state->performance_level_count == 0)
+		return -EINVAL;
 
-	अगर (smc_state->levelCount != state->perक्रमmance_level_count)
-		वापस -EINVAL;
+	if (smc_state->levelCount != state->performance_level_count)
+		return -EINVAL;
 
 	ret = ni_calculate_adjusted_tdp_limits(rdev,
 					       false, /* ??? */
-					       rdev->pm.dpm.tdp_adjusपंचांगent,
+					       rdev->pm.dpm.tdp_adjustment,
 					       &tdp_limit,
 					       &near_tdp_limit);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	घातer_boost_limit = ni_calculate_घातer_boost_limit(rdev, radeon_state, near_tdp_limit);
+	power_boost_limit = ni_calculate_power_boost_limit(rdev, radeon_state, near_tdp_limit);
 
-	ret = rv770_ग_लिखो_smc_sram_dword(rdev,
+	ret = rv770_write_smc_sram_dword(rdev,
 					 pi->state_table_start +
-					 दुरत्व(NISLANDS_SMC_STATETABLE, dpm2Params) +
-					 दुरत्व(PP_NIslands_DPM2Parameters, PowerBoostLimit),
-					 ni_scale_घातer_क्रम_smc(घातer_boost_limit, ni_get_smc_घातer_scaling_factor(rdev)),
+					 offsetof(NISLANDS_SMC_STATETABLE, dpm2Params) +
+					 offsetof(PP_NIslands_DPM2Parameters, PowerBoostLimit),
+					 ni_scale_power_for_smc(power_boost_limit, ni_get_smc_power_scaling_factor(rdev)),
 					 pi->sram_end);
-	अगर (ret)
-		घातer_boost_limit = 0;
+	if (ret)
+		power_boost_limit = 0;
 
 	smc_state->levels[0].dpm2.MaxPS = 0;
 	smc_state->levels[0].dpm2.NearTDPDec = 0;
 	smc_state->levels[0].dpm2.AboveSafeInc = 0;
 	smc_state->levels[0].dpm2.BelowSafeInc = 0;
-	smc_state->levels[0].stateFlags |= घातer_boost_limit ? PPSMC_STATEFLAG_POWERBOOST : 0;
+	smc_state->levels[0].stateFlags |= power_boost_limit ? PPSMC_STATEFLAG_POWERBOOST : 0;
 
-	क्रम (i = 1; i < state->perक्रमmance_level_count; i++) अणु
-		prev_sclk = state->perक्रमmance_levels[i-1].sclk;
-		max_sclk  = state->perक्रमmance_levels[i].sclk;
-		max_ps_percent = (i != (state->perक्रमmance_level_count - 1)) ?
+	for (i = 1; i < state->performance_level_count; i++) {
+		prev_sclk = state->performance_levels[i-1].sclk;
+		max_sclk  = state->performance_levels[i].sclk;
+		max_ps_percent = (i != (state->performance_level_count - 1)) ?
 			NISLANDS_DPM2_MAXPS_PERCENT_M : NISLANDS_DPM2_MAXPS_PERCENT_H;
 
-		अगर (max_sclk < prev_sclk)
-			वापस -EINVAL;
+		if (max_sclk < prev_sclk)
+			return -EINVAL;
 
-		अगर ((max_ps_percent == 0) || (prev_sclk == max_sclk) || eg_pi->uvd_enabled)
+		if ((max_ps_percent == 0) || (prev_sclk == max_sclk) || eg_pi->uvd_enabled)
 			min_sclk = max_sclk;
-		अन्यथा अगर (1 == i)
+		else if (1 == i)
 			min_sclk = prev_sclk;
-		अन्यथा
+		else
 			min_sclk = (prev_sclk * (u32)max_ps_percent) / 100;
 
-		अगर (min_sclk < state->perक्रमmance_levels[0].sclk)
-			min_sclk = state->perक्रमmance_levels[0].sclk;
+		if (min_sclk < state->performance_levels[0].sclk)
+			min_sclk = state->performance_levels[0].sclk;
 
-		अगर (min_sclk == 0)
-			वापस -EINVAL;
+		if (min_sclk == 0)
+			return -EINVAL;
 
 		smc_state->levels[i].dpm2.MaxPS =
 			(u8)((NISLANDS_DPM2_MAX_PULSE_SKIP * (max_sclk - min_sclk)) / max_sclk);
@@ -2527,360 +2526,360 @@ bool ni_dpm_vblank_too_लघु(काष्ठा radeon_device *rdev)
 		smc_state->levels[i].dpm2.AboveSafeInc = NISLANDS_DPM2_ABOVE_SAFE_INC;
 		smc_state->levels[i].dpm2.BelowSafeInc = NISLANDS_DPM2_BELOW_SAFE_INC;
 		smc_state->levels[i].stateFlags |=
-			((i != (state->perक्रमmance_level_count - 1)) && घातer_boost_limit) ?
+			((i != (state->performance_level_count - 1)) && power_boost_limit) ?
 			PPSMC_STATEFLAG_POWERBOOST : 0;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ni_populate_sq_ramping_values(काष्ठा radeon_device *rdev,
-					 काष्ठा radeon_ps *radeon_state,
+static int ni_populate_sq_ramping_values(struct radeon_device *rdev,
+					 struct radeon_ps *radeon_state,
 					 NISLANDS_SMC_SWSTATE *smc_state)
-अणु
-	काष्ठा ni_घातer_info *ni_pi = ni_get_pi(rdev);
-	काष्ठा ni_ps *state = ni_get_ps(radeon_state);
-	u32 sq_घातer_throttle;
-	u32 sq_घातer_throttle2;
+{
+	struct ni_power_info *ni_pi = ni_get_pi(rdev);
+	struct ni_ps *state = ni_get_ps(radeon_state);
+	u32 sq_power_throttle;
+	u32 sq_power_throttle2;
 	bool enable_sq_ramping = ni_pi->enable_sq_ramping;
-	पूर्णांक i;
+	int i;
 
-	अगर (state->perक्रमmance_level_count == 0)
-		वापस -EINVAL;
+	if (state->performance_level_count == 0)
+		return -EINVAL;
 
-	अगर (smc_state->levelCount != state->perक्रमmance_level_count)
-		वापस -EINVAL;
+	if (smc_state->levelCount != state->performance_level_count)
+		return -EINVAL;
 
-	अगर (rdev->pm.dpm.sq_ramping_threshold == 0)
-		वापस -EINVAL;
+	if (rdev->pm.dpm.sq_ramping_threshold == 0)
+		return -EINVAL;
 
-	अगर (NISLANDS_DPM2_SQ_RAMP_MAX_POWER > (MAX_POWER_MASK >> MAX_POWER_SHIFT))
+	if (NISLANDS_DPM2_SQ_RAMP_MAX_POWER > (MAX_POWER_MASK >> MAX_POWER_SHIFT))
 		enable_sq_ramping = false;
 
-	अगर (NISLANDS_DPM2_SQ_RAMP_MIN_POWER > (MIN_POWER_MASK >> MIN_POWER_SHIFT))
+	if (NISLANDS_DPM2_SQ_RAMP_MIN_POWER > (MIN_POWER_MASK >> MIN_POWER_SHIFT))
 		enable_sq_ramping = false;
 
-	अगर (NISLANDS_DPM2_SQ_RAMP_MAX_POWER_DELTA > (MAX_POWER_DELTA_MASK >> MAX_POWER_DELTA_SHIFT))
+	if (NISLANDS_DPM2_SQ_RAMP_MAX_POWER_DELTA > (MAX_POWER_DELTA_MASK >> MAX_POWER_DELTA_SHIFT))
 		enable_sq_ramping = false;
 
-	अगर (NISLANDS_DPM2_SQ_RAMP_STI_SIZE > (STI_SIZE_MASK >> STI_SIZE_SHIFT))
+	if (NISLANDS_DPM2_SQ_RAMP_STI_SIZE > (STI_SIZE_MASK >> STI_SIZE_SHIFT))
 		enable_sq_ramping = false;
 
-	अगर (NISLANDS_DPM2_SQ_RAMP_LTI_RATIO > (LTI_RATIO_MASK >> LTI_RATIO_SHIFT))
+	if (NISLANDS_DPM2_SQ_RAMP_LTI_RATIO > (LTI_RATIO_MASK >> LTI_RATIO_SHIFT))
 		enable_sq_ramping = false;
 
-	क्रम (i = 0; i < state->perक्रमmance_level_count; i++) अणु
-		sq_घातer_throttle  = 0;
-		sq_घातer_throttle2 = 0;
+	for (i = 0; i < state->performance_level_count; i++) {
+		sq_power_throttle  = 0;
+		sq_power_throttle2 = 0;
 
-		अगर ((state->perक्रमmance_levels[i].sclk >= rdev->pm.dpm.sq_ramping_threshold) &&
-		    enable_sq_ramping) अणु
-			sq_घातer_throttle |= MAX_POWER(NISLANDS_DPM2_SQ_RAMP_MAX_POWER);
-			sq_घातer_throttle |= MIN_POWER(NISLANDS_DPM2_SQ_RAMP_MIN_POWER);
-			sq_घातer_throttle2 |= MAX_POWER_DELTA(NISLANDS_DPM2_SQ_RAMP_MAX_POWER_DELTA);
-			sq_घातer_throttle2 |= STI_SIZE(NISLANDS_DPM2_SQ_RAMP_STI_SIZE);
-			sq_घातer_throttle2 |= LTI_RATIO(NISLANDS_DPM2_SQ_RAMP_LTI_RATIO);
-		पूर्ण अन्यथा अणु
-			sq_घातer_throttle |= MAX_POWER_MASK | MIN_POWER_MASK;
-			sq_घातer_throttle2 |= MAX_POWER_DELTA_MASK | STI_SIZE_MASK | LTI_RATIO_MASK;
-		पूर्ण
+		if ((state->performance_levels[i].sclk >= rdev->pm.dpm.sq_ramping_threshold) &&
+		    enable_sq_ramping) {
+			sq_power_throttle |= MAX_POWER(NISLANDS_DPM2_SQ_RAMP_MAX_POWER);
+			sq_power_throttle |= MIN_POWER(NISLANDS_DPM2_SQ_RAMP_MIN_POWER);
+			sq_power_throttle2 |= MAX_POWER_DELTA(NISLANDS_DPM2_SQ_RAMP_MAX_POWER_DELTA);
+			sq_power_throttle2 |= STI_SIZE(NISLANDS_DPM2_SQ_RAMP_STI_SIZE);
+			sq_power_throttle2 |= LTI_RATIO(NISLANDS_DPM2_SQ_RAMP_LTI_RATIO);
+		} else {
+			sq_power_throttle |= MAX_POWER_MASK | MIN_POWER_MASK;
+			sq_power_throttle2 |= MAX_POWER_DELTA_MASK | STI_SIZE_MASK | LTI_RATIO_MASK;
+		}
 
-		smc_state->levels[i].SQPowerThrottle   = cpu_to_be32(sq_घातer_throttle);
-		smc_state->levels[i].SQPowerThrottle_2 = cpu_to_be32(sq_घातer_throttle2);
-	पूर्ण
+		smc_state->levels[i].SQPowerThrottle   = cpu_to_be32(sq_power_throttle);
+		smc_state->levels[i].SQPowerThrottle_2 = cpu_to_be32(sq_power_throttle2);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ni_enable_घातer_containment(काष्ठा radeon_device *rdev,
-				       काष्ठा radeon_ps *radeon_new_state,
+static int ni_enable_power_containment(struct radeon_device *rdev,
+				       struct radeon_ps *radeon_new_state,
 				       bool enable)
-अणु
-	काष्ठा ni_घातer_info *ni_pi = ni_get_pi(rdev);
+{
+	struct ni_power_info *ni_pi = ni_get_pi(rdev);
 	PPSMC_Result smc_result;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	अगर (ni_pi->enable_घातer_containment) अणु
-		अगर (enable) अणु
-			अगर (!r600_is_uvd_state(radeon_new_state->class, radeon_new_state->class2)) अणु
+	if (ni_pi->enable_power_containment) {
+		if (enable) {
+			if (!r600_is_uvd_state(radeon_new_state->class, radeon_new_state->class2)) {
 				smc_result = rv770_send_msg_to_smc(rdev, PPSMC_TDPClampingActive);
-				अगर (smc_result != PPSMC_Result_OK) अणु
+				if (smc_result != PPSMC_Result_OK) {
 					ret = -EINVAL;
 					ni_pi->pc_enabled = false;
-				पूर्ण अन्यथा अणु
+				} else {
 					ni_pi->pc_enabled = true;
-				पूर्ण
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				}
+			}
+		} else {
 			smc_result = rv770_send_msg_to_smc(rdev, PPSMC_TDPClampingInactive);
-			अगर (smc_result != PPSMC_Result_OK)
+			if (smc_result != PPSMC_Result_OK)
 				ret = -EINVAL;
 			ni_pi->pc_enabled = false;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ni_convert_घातer_state_to_smc(काष्ठा radeon_device *rdev,
-					 काष्ठा radeon_ps *radeon_state,
+static int ni_convert_power_state_to_smc(struct radeon_device *rdev,
+					 struct radeon_ps *radeon_state,
 					 NISLANDS_SMC_SWSTATE *smc_state)
-अणु
-	काष्ठा evergreen_घातer_info *eg_pi = evergreen_get_pi(rdev);
-	काष्ठा ni_घातer_info *ni_pi = ni_get_pi(rdev);
-	काष्ठा ni_ps *state = ni_get_ps(radeon_state);
-	पूर्णांक i, ret;
-	u32 threshold = state->perक्रमmance_levels[state->perक्रमmance_level_count - 1].sclk * 100 / 100;
+{
+	struct evergreen_power_info *eg_pi = evergreen_get_pi(rdev);
+	struct ni_power_info *ni_pi = ni_get_pi(rdev);
+	struct ni_ps *state = ni_get_ps(radeon_state);
+	int i, ret;
+	u32 threshold = state->performance_levels[state->performance_level_count - 1].sclk * 100 / 100;
 
-	अगर (!(radeon_state->caps & ATOM_PPLIB_DISALLOW_ON_DC))
+	if (!(radeon_state->caps & ATOM_PPLIB_DISALLOW_ON_DC))
 		smc_state->flags |= PPSMC_SWSTATE_FLAG_DC;
 
 	smc_state->levelCount = 0;
 
-	अगर (state->perक्रमmance_level_count > NISLANDS_MAX_SMC_PERFORMANCE_LEVELS_PER_SWSTATE)
-		वापस -EINVAL;
+	if (state->performance_level_count > NISLANDS_MAX_SMC_PERFORMANCE_LEVELS_PER_SWSTATE)
+		return -EINVAL;
 
-	क्रम (i = 0; i < state->perक्रमmance_level_count; i++) अणु
-		ret = ni_convert_घातer_level_to_smc(rdev, &state->perक्रमmance_levels[i],
+	for (i = 0; i < state->performance_level_count; i++) {
+		ret = ni_convert_power_level_to_smc(rdev, &state->performance_levels[i],
 						    &smc_state->levels[i]);
 		smc_state->levels[i].arbRefreshState =
 			(u8)(NISLANDS_DRIVER_STATE_ARB_INDEX + i);
 
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-		अगर (ni_pi->enable_घातer_containment)
+		if (ni_pi->enable_power_containment)
 			smc_state->levels[i].displayWatermark =
-				(state->perक्रमmance_levels[i].sclk < threshold) ?
+				(state->performance_levels[i].sclk < threshold) ?
 				PPSMC_DISPLAY_WATERMARK_LOW : PPSMC_DISPLAY_WATERMARK_HIGH;
-		अन्यथा
+		else
 			smc_state->levels[i].displayWatermark = (i < 2) ?
 				PPSMC_DISPLAY_WATERMARK_LOW : PPSMC_DISPLAY_WATERMARK_HIGH;
 
-		अगर (eg_pi->dynamic_ac_timing)
+		if (eg_pi->dynamic_ac_timing)
 			smc_state->levels[i].ACIndex = NISLANDS_MCREGISTERTABLE_FIRST_DRIVERSTATE_SLOT + i;
-		अन्यथा
+		else
 			smc_state->levels[i].ACIndex = 0;
 
 		smc_state->levelCount++;
-	पूर्ण
+	}
 
-	rv770_ग_लिखो_smc_soft_रेजिस्टर(rdev, NI_SMC_SOFT_REGISTER_watermark_threshold,
+	rv770_write_smc_soft_register(rdev, NI_SMC_SOFT_REGISTER_watermark_threshold,
 				      cpu_to_be32(threshold / 512));
 
 	ni_populate_smc_sp(rdev, radeon_state, smc_state);
 
-	ret = ni_populate_घातer_containment_values(rdev, radeon_state, smc_state);
-	अगर (ret)
-		ni_pi->enable_घातer_containment = false;
+	ret = ni_populate_power_containment_values(rdev, radeon_state, smc_state);
+	if (ret)
+		ni_pi->enable_power_containment = false;
 
 	ret = ni_populate_sq_ramping_values(rdev, radeon_state, smc_state);
-	अगर (ret)
+	if (ret)
 		ni_pi->enable_sq_ramping = false;
 
-	वापस ni_populate_smc_t(rdev, radeon_state, smc_state);
-पूर्ण
+	return ni_populate_smc_t(rdev, radeon_state, smc_state);
+}
 
-अटल पूर्णांक ni_upload_sw_state(काष्ठा radeon_device *rdev,
-			      काष्ठा radeon_ps *radeon_new_state)
-अणु
-	काष्ठा rv7xx_घातer_info *pi = rv770_get_pi(rdev);
+static int ni_upload_sw_state(struct radeon_device *rdev,
+			      struct radeon_ps *radeon_new_state)
+{
+	struct rv7xx_power_info *pi = rv770_get_pi(rdev);
 	u16 address = pi->state_table_start +
-		दुरत्व(NISLANDS_SMC_STATETABLE, driverState);
+		offsetof(NISLANDS_SMC_STATETABLE, driverState);
 	NISLANDS_SMC_SWSTATE *smc_state;
-	माप_प्रकार state_size = काष्ठा_size(smc_state, levels,
+	size_t state_size = struct_size(smc_state, levels,
 			NISLANDS_MAX_SMC_PERFORMANCE_LEVELS_PER_SWSTATE);
-	पूर्णांक ret;
+	int ret;
 
 	smc_state = kzalloc(state_size, GFP_KERNEL);
-	अगर (smc_state == शून्य)
-		वापस -ENOMEM;
+	if (smc_state == NULL)
+		return -ENOMEM;
 
-	ret = ni_convert_घातer_state_to_smc(rdev, radeon_new_state, smc_state);
-	अगर (ret)
-		जाओ करोne;
+	ret = ni_convert_power_state_to_smc(rdev, radeon_new_state, smc_state);
+	if (ret)
+		goto done;
 
 	ret = rv770_copy_bytes_to_smc(rdev, address, (u8 *)smc_state, state_size, pi->sram_end);
 
-करोne:
-	kमुक्त(smc_state);
+done:
+	kfree(smc_state);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ni_set_mc_special_रेजिस्टरs(काष्ठा radeon_device *rdev,
-				       काष्ठा ni_mc_reg_table *table)
-अणु
-	काष्ठा rv7xx_घातer_info *pi = rv770_get_pi(rdev);
+static int ni_set_mc_special_registers(struct radeon_device *rdev,
+				       struct ni_mc_reg_table *table)
+{
+	struct rv7xx_power_info *pi = rv770_get_pi(rdev);
 	u8 i, j, k;
 	u32 temp_reg;
 
-	क्रम (i = 0, j = table->last; i < table->last; i++) अणु
-		चयन (table->mc_reg_address[i].s1) अणु
-		हाल MC_SEQ_MISC1 >> 2:
-			अगर (j >= SMC_NISLANDS_MC_REGISTER_ARRAY_SIZE)
-				वापस -EINVAL;
+	for (i = 0, j = table->last; i < table->last; i++) {
+		switch (table->mc_reg_address[i].s1) {
+		case MC_SEQ_MISC1 >> 2:
+			if (j >= SMC_NISLANDS_MC_REGISTER_ARRAY_SIZE)
+				return -EINVAL;
 			temp_reg = RREG32(MC_PMG_CMD_EMRS);
 			table->mc_reg_address[j].s1 = MC_PMG_CMD_EMRS >> 2;
 			table->mc_reg_address[j].s0 = MC_SEQ_PMG_CMD_EMRS_LP >> 2;
-			क्रम (k = 0; k < table->num_entries; k++)
+			for (k = 0; k < table->num_entries; k++)
 				table->mc_reg_table_entry[k].mc_data[j] =
 					((temp_reg & 0xffff0000)) |
 					((table->mc_reg_table_entry[k].mc_data[i] & 0xffff0000) >> 16);
 			j++;
-			अगर (j >= SMC_NISLANDS_MC_REGISTER_ARRAY_SIZE)
-				वापस -EINVAL;
+			if (j >= SMC_NISLANDS_MC_REGISTER_ARRAY_SIZE)
+				return -EINVAL;
 
 			temp_reg = RREG32(MC_PMG_CMD_MRS);
 			table->mc_reg_address[j].s1 = MC_PMG_CMD_MRS >> 2;
 			table->mc_reg_address[j].s0 = MC_SEQ_PMG_CMD_MRS_LP >> 2;
-			क्रम(k = 0; k < table->num_entries; k++) अणु
+			for(k = 0; k < table->num_entries; k++) {
 				table->mc_reg_table_entry[k].mc_data[j] =
 					(temp_reg & 0xffff0000) |
 					(table->mc_reg_table_entry[k].mc_data[i] & 0x0000ffff);
-				अगर (!pi->mem_gddr5)
+				if (!pi->mem_gddr5)
 					table->mc_reg_table_entry[k].mc_data[j] |= 0x100;
-			पूर्ण
+			}
 			j++;
-			अगर (j > SMC_NISLANDS_MC_REGISTER_ARRAY_SIZE)
-				वापस -EINVAL;
-			अवरोध;
-		हाल MC_SEQ_RESERVE_M >> 2:
+			if (j > SMC_NISLANDS_MC_REGISTER_ARRAY_SIZE)
+				return -EINVAL;
+			break;
+		case MC_SEQ_RESERVE_M >> 2:
 			temp_reg = RREG32(MC_PMG_CMD_MRS1);
 			table->mc_reg_address[j].s1 = MC_PMG_CMD_MRS1 >> 2;
 			table->mc_reg_address[j].s0 = MC_SEQ_PMG_CMD_MRS1_LP >> 2;
-			क्रम (k = 0; k < table->num_entries; k++)
+			for (k = 0; k < table->num_entries; k++)
 				table->mc_reg_table_entry[k].mc_data[j] =
 					(temp_reg & 0xffff0000) |
 					(table->mc_reg_table_entry[k].mc_data[i] & 0x0000ffff);
 			j++;
-			अगर (j > SMC_NISLANDS_MC_REGISTER_ARRAY_SIZE)
-				वापस -EINVAL;
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			if (j > SMC_NISLANDS_MC_REGISTER_ARRAY_SIZE)
+				return -EINVAL;
+			break;
+		default:
+			break;
+		}
+	}
 
 	table->last = j;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool ni_check_s0_mc_reg_index(u16 in_reg, u16 *out_reg)
-अणु
+static bool ni_check_s0_mc_reg_index(u16 in_reg, u16 *out_reg)
+{
 	bool result = true;
 
-	चयन (in_reg) अणु
-	हाल  MC_SEQ_RAS_TIMING >> 2:
+	switch (in_reg) {
+	case  MC_SEQ_RAS_TIMING >> 2:
 		*out_reg = MC_SEQ_RAS_TIMING_LP >> 2;
-		अवरोध;
-	हाल MC_SEQ_CAS_TIMING >> 2:
+		break;
+	case MC_SEQ_CAS_TIMING >> 2:
 		*out_reg = MC_SEQ_CAS_TIMING_LP >> 2;
-		अवरोध;
-	हाल MC_SEQ_MISC_TIMING >> 2:
+		break;
+	case MC_SEQ_MISC_TIMING >> 2:
 		*out_reg = MC_SEQ_MISC_TIMING_LP >> 2;
-		अवरोध;
-	हाल MC_SEQ_MISC_TIMING2 >> 2:
+		break;
+	case MC_SEQ_MISC_TIMING2 >> 2:
 		*out_reg = MC_SEQ_MISC_TIMING2_LP >> 2;
-		अवरोध;
-	हाल MC_SEQ_RD_CTL_D0 >> 2:
+		break;
+	case MC_SEQ_RD_CTL_D0 >> 2:
 		*out_reg = MC_SEQ_RD_CTL_D0_LP >> 2;
-		अवरोध;
-	हाल MC_SEQ_RD_CTL_D1 >> 2:
+		break;
+	case MC_SEQ_RD_CTL_D1 >> 2:
 		*out_reg = MC_SEQ_RD_CTL_D1_LP >> 2;
-		अवरोध;
-	हाल MC_SEQ_WR_CTL_D0 >> 2:
+		break;
+	case MC_SEQ_WR_CTL_D0 >> 2:
 		*out_reg = MC_SEQ_WR_CTL_D0_LP >> 2;
-		अवरोध;
-	हाल MC_SEQ_WR_CTL_D1 >> 2:
+		break;
+	case MC_SEQ_WR_CTL_D1 >> 2:
 		*out_reg = MC_SEQ_WR_CTL_D1_LP >> 2;
-		अवरोध;
-	हाल MC_PMG_CMD_EMRS >> 2:
+		break;
+	case MC_PMG_CMD_EMRS >> 2:
 		*out_reg = MC_SEQ_PMG_CMD_EMRS_LP >> 2;
-		अवरोध;
-	हाल MC_PMG_CMD_MRS >> 2:
+		break;
+	case MC_PMG_CMD_MRS >> 2:
 		*out_reg = MC_SEQ_PMG_CMD_MRS_LP >> 2;
-		अवरोध;
-	हाल MC_PMG_CMD_MRS1 >> 2:
+		break;
+	case MC_PMG_CMD_MRS1 >> 2:
 		*out_reg = MC_SEQ_PMG_CMD_MRS1_LP >> 2;
-		अवरोध;
-	हाल MC_SEQ_PMG_TIMING >> 2:
+		break;
+	case MC_SEQ_PMG_TIMING >> 2:
 		*out_reg = MC_SEQ_PMG_TIMING_LP >> 2;
-		अवरोध;
-	हाल MC_PMG_CMD_MRS2 >> 2:
+		break;
+	case MC_PMG_CMD_MRS2 >> 2:
 		*out_reg = MC_SEQ_PMG_CMD_MRS2_LP >> 2;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		result = false;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल व्योम ni_set_valid_flag(काष्ठा ni_mc_reg_table *table)
-अणु
+static void ni_set_valid_flag(struct ni_mc_reg_table *table)
+{
 	u8 i, j;
 
-	क्रम (i = 0; i < table->last; i++) अणु
-		क्रम (j = 1; j < table->num_entries; j++) अणु
-			अगर (table->mc_reg_table_entry[j-1].mc_data[i] != table->mc_reg_table_entry[j].mc_data[i]) अणु
+	for (i = 0; i < table->last; i++) {
+		for (j = 1; j < table->num_entries; j++) {
+			if (table->mc_reg_table_entry[j-1].mc_data[i] != table->mc_reg_table_entry[j].mc_data[i]) {
 				table->valid_flag |= 1 << i;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+				break;
+			}
+		}
+	}
+}
 
-अटल व्योम ni_set_s0_mc_reg_index(काष्ठा ni_mc_reg_table *table)
-अणु
+static void ni_set_s0_mc_reg_index(struct ni_mc_reg_table *table)
+{
 	u32 i;
 	u16 address;
 
-	क्रम (i = 0; i < table->last; i++)
+	for (i = 0; i < table->last; i++)
 		table->mc_reg_address[i].s0 =
 			ni_check_s0_mc_reg_index(table->mc_reg_address[i].s1, &address) ?
 			address : table->mc_reg_address[i].s1;
-पूर्ण
+}
 
-अटल पूर्णांक ni_copy_vbios_mc_reg_table(काष्ठा atom_mc_reg_table *table,
-				      काष्ठा ni_mc_reg_table *ni_table)
-अणु
+static int ni_copy_vbios_mc_reg_table(struct atom_mc_reg_table *table,
+				      struct ni_mc_reg_table *ni_table)
+{
 	u8 i, j;
 
-	अगर (table->last > SMC_NISLANDS_MC_REGISTER_ARRAY_SIZE)
-		वापस -EINVAL;
-	अगर (table->num_entries > MAX_AC_TIMING_ENTRIES)
-		वापस -EINVAL;
+	if (table->last > SMC_NISLANDS_MC_REGISTER_ARRAY_SIZE)
+		return -EINVAL;
+	if (table->num_entries > MAX_AC_TIMING_ENTRIES)
+		return -EINVAL;
 
-	क्रम (i = 0; i < table->last; i++)
+	for (i = 0; i < table->last; i++)
 		ni_table->mc_reg_address[i].s1 = table->mc_reg_address[i].s1;
 	ni_table->last = table->last;
 
-	क्रम (i = 0; i < table->num_entries; i++) अणु
+	for (i = 0; i < table->num_entries; i++) {
 		ni_table->mc_reg_table_entry[i].mclk_max =
 			table->mc_reg_table_entry[i].mclk_max;
-		क्रम (j = 0; j < table->last; j++)
+		for (j = 0; j < table->last; j++)
 			ni_table->mc_reg_table_entry[i].mc_data[j] =
 				table->mc_reg_table_entry[i].mc_data[j];
-	पूर्ण
+	}
 	ni_table->num_entries = table->num_entries;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ni_initialize_mc_reg_table(काष्ठा radeon_device *rdev)
-अणु
-	काष्ठा ni_घातer_info *ni_pi = ni_get_pi(rdev);
-	पूर्णांक ret;
-	काष्ठा atom_mc_reg_table *table;
-	काष्ठा ni_mc_reg_table *ni_table = &ni_pi->mc_reg_table;
+static int ni_initialize_mc_reg_table(struct radeon_device *rdev)
+{
+	struct ni_power_info *ni_pi = ni_get_pi(rdev);
+	int ret;
+	struct atom_mc_reg_table *table;
+	struct ni_mc_reg_table *ni_table = &ni_pi->mc_reg_table;
 	u8 module_index = rv770_get_memory_module_index(rdev);
 
-	table = kzalloc(माप(काष्ठा atom_mc_reg_table), GFP_KERNEL);
-	अगर (!table)
-		वापस -ENOMEM;
+	table = kzalloc(sizeof(struct atom_mc_reg_table), GFP_KERNEL);
+	if (!table)
+		return -ENOMEM;
 
 	WREG32(MC_SEQ_RAS_TIMING_LP, RREG32(MC_SEQ_RAS_TIMING));
 	WREG32(MC_SEQ_CAS_TIMING_LP, RREG32(MC_SEQ_CAS_TIMING));
@@ -2898,294 +2897,294 @@ bool ni_dpm_vblank_too_लघु(काष्ठा radeon_device *rdev)
 
 	ret = radeon_atom_init_mc_reg_table(rdev, module_index, table);
 
-	अगर (ret)
-		जाओ init_mc_करोne;
+	if (ret)
+		goto init_mc_done;
 
 	ret = ni_copy_vbios_mc_reg_table(table, ni_table);
 
-	अगर (ret)
-		जाओ init_mc_करोne;
+	if (ret)
+		goto init_mc_done;
 
 	ni_set_s0_mc_reg_index(ni_table);
 
-	ret = ni_set_mc_special_रेजिस्टरs(rdev, ni_table);
+	ret = ni_set_mc_special_registers(rdev, ni_table);
 
-	अगर (ret)
-		जाओ init_mc_करोne;
+	if (ret)
+		goto init_mc_done;
 
 	ni_set_valid_flag(ni_table);
 
-init_mc_करोne:
-	kमुक्त(table);
+init_mc_done:
+	kfree(table);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम ni_populate_mc_reg_addresses(काष्ठा radeon_device *rdev,
+static void ni_populate_mc_reg_addresses(struct radeon_device *rdev,
 					 SMC_NIslands_MCRegisters *mc_reg_table)
-अणु
-	काष्ठा ni_घातer_info *ni_pi = ni_get_pi(rdev);
+{
+	struct ni_power_info *ni_pi = ni_get_pi(rdev);
 	u32 i, j;
 
-	क्रम (i = 0, j = 0; j < ni_pi->mc_reg_table.last; j++) अणु
-		अगर (ni_pi->mc_reg_table.valid_flag & (1 << j)) अणु
-			अगर (i >= SMC_NISLANDS_MC_REGISTER_ARRAY_SIZE)
-				अवरोध;
+	for (i = 0, j = 0; j < ni_pi->mc_reg_table.last; j++) {
+		if (ni_pi->mc_reg_table.valid_flag & (1 << j)) {
+			if (i >= SMC_NISLANDS_MC_REGISTER_ARRAY_SIZE)
+				break;
 			mc_reg_table->address[i].s0 =
 				cpu_to_be16(ni_pi->mc_reg_table.mc_reg_address[j].s0);
 			mc_reg_table->address[i].s1 =
 				cpu_to_be16(ni_pi->mc_reg_table.mc_reg_address[j].s1);
 			i++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	mc_reg_table->last = (u8)i;
-पूर्ण
+}
 
 
-अटल व्योम ni_convert_mc_रेजिस्टरs(काष्ठा ni_mc_reg_entry *entry,
+static void ni_convert_mc_registers(struct ni_mc_reg_entry *entry,
 				    SMC_NIslands_MCRegisterSet *data,
 				    u32 num_entries, u32 valid_flag)
-अणु
+{
 	u32 i, j;
 
-	क्रम (i = 0, j = 0; j < num_entries; j++) अणु
-		अगर (valid_flag & (1 << j)) अणु
+	for (i = 0, j = 0; j < num_entries; j++) {
+		if (valid_flag & (1 << j)) {
 			data->value[i] = cpu_to_be32(entry->mc_data[j]);
 			i++;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम ni_convert_mc_reg_table_entry_to_smc(काष्ठा radeon_device *rdev,
-						 काष्ठा rv7xx_pl *pl,
+static void ni_convert_mc_reg_table_entry_to_smc(struct radeon_device *rdev,
+						 struct rv7xx_pl *pl,
 						 SMC_NIslands_MCRegisterSet *mc_reg_table_data)
-अणु
-	काष्ठा ni_घातer_info *ni_pi = ni_get_pi(rdev);
+{
+	struct ni_power_info *ni_pi = ni_get_pi(rdev);
 	u32 i = 0;
 
-	क्रम (i = 0; i < ni_pi->mc_reg_table.num_entries; i++) अणु
-		अगर (pl->mclk <= ni_pi->mc_reg_table.mc_reg_table_entry[i].mclk_max)
-			अवरोध;
-	पूर्ण
+	for (i = 0; i < ni_pi->mc_reg_table.num_entries; i++) {
+		if (pl->mclk <= ni_pi->mc_reg_table.mc_reg_table_entry[i].mclk_max)
+			break;
+	}
 
-	अगर ((i == ni_pi->mc_reg_table.num_entries) && (i > 0))
+	if ((i == ni_pi->mc_reg_table.num_entries) && (i > 0))
 		--i;
 
-	ni_convert_mc_रेजिस्टरs(&ni_pi->mc_reg_table.mc_reg_table_entry[i],
+	ni_convert_mc_registers(&ni_pi->mc_reg_table.mc_reg_table_entry[i],
 				mc_reg_table_data,
 				ni_pi->mc_reg_table.last,
 				ni_pi->mc_reg_table.valid_flag);
-पूर्ण
+}
 
-अटल व्योम ni_convert_mc_reg_table_to_smc(काष्ठा radeon_device *rdev,
-					   काष्ठा radeon_ps *radeon_state,
+static void ni_convert_mc_reg_table_to_smc(struct radeon_device *rdev,
+					   struct radeon_ps *radeon_state,
 					   SMC_NIslands_MCRegisters *mc_reg_table)
-अणु
-	काष्ठा ni_ps *state = ni_get_ps(radeon_state);
-	पूर्णांक i;
+{
+	struct ni_ps *state = ni_get_ps(radeon_state);
+	int i;
 
-	क्रम (i = 0; i < state->perक्रमmance_level_count; i++) अणु
+	for (i = 0; i < state->performance_level_count; i++) {
 		ni_convert_mc_reg_table_entry_to_smc(rdev,
-						     &state->perक्रमmance_levels[i],
+						     &state->performance_levels[i],
 						     &mc_reg_table->data[NISLANDS_MCREGISTERTABLE_FIRST_DRIVERSTATE_SLOT + i]);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक ni_populate_mc_reg_table(काष्ठा radeon_device *rdev,
-				    काष्ठा radeon_ps *radeon_boot_state)
-अणु
-	काष्ठा rv7xx_घातer_info *pi = rv770_get_pi(rdev);
-	काष्ठा evergreen_घातer_info *eg_pi = evergreen_get_pi(rdev);
-	काष्ठा ni_घातer_info *ni_pi = ni_get_pi(rdev);
-	काष्ठा ni_ps *boot_state = ni_get_ps(radeon_boot_state);
+static int ni_populate_mc_reg_table(struct radeon_device *rdev,
+				    struct radeon_ps *radeon_boot_state)
+{
+	struct rv7xx_power_info *pi = rv770_get_pi(rdev);
+	struct evergreen_power_info *eg_pi = evergreen_get_pi(rdev);
+	struct ni_power_info *ni_pi = ni_get_pi(rdev);
+	struct ni_ps *boot_state = ni_get_ps(radeon_boot_state);
 	SMC_NIslands_MCRegisters *mc_reg_table = &ni_pi->smc_mc_reg_table;
 
-	स_रखो(mc_reg_table, 0, माप(SMC_NIslands_MCRegisters));
+	memset(mc_reg_table, 0, sizeof(SMC_NIslands_MCRegisters));
 
-	rv770_ग_लिखो_smc_soft_रेजिस्टर(rdev, NI_SMC_SOFT_REGISTER_seq_index, 1);
+	rv770_write_smc_soft_register(rdev, NI_SMC_SOFT_REGISTER_seq_index, 1);
 
 	ni_populate_mc_reg_addresses(rdev, mc_reg_table);
 
-	ni_convert_mc_reg_table_entry_to_smc(rdev, &boot_state->perक्रमmance_levels[0],
+	ni_convert_mc_reg_table_entry_to_smc(rdev, &boot_state->performance_levels[0],
 					     &mc_reg_table->data[0]);
 
-	ni_convert_mc_रेजिस्टरs(&ni_pi->mc_reg_table.mc_reg_table_entry[0],
+	ni_convert_mc_registers(&ni_pi->mc_reg_table.mc_reg_table_entry[0],
 				&mc_reg_table->data[1],
 				ni_pi->mc_reg_table.last,
 				ni_pi->mc_reg_table.valid_flag);
 
 	ni_convert_mc_reg_table_to_smc(rdev, radeon_boot_state, mc_reg_table);
 
-	वापस rv770_copy_bytes_to_smc(rdev, eg_pi->mc_reg_table_start,
+	return rv770_copy_bytes_to_smc(rdev, eg_pi->mc_reg_table_start,
 				       (u8 *)mc_reg_table,
-				       माप(SMC_NIslands_MCRegisters),
+				       sizeof(SMC_NIslands_MCRegisters),
 				       pi->sram_end);
-पूर्ण
+}
 
-अटल पूर्णांक ni_upload_mc_reg_table(काष्ठा radeon_device *rdev,
-				  काष्ठा radeon_ps *radeon_new_state)
-अणु
-	काष्ठा rv7xx_घातer_info *pi = rv770_get_pi(rdev);
-	काष्ठा evergreen_घातer_info *eg_pi = evergreen_get_pi(rdev);
-	काष्ठा ni_घातer_info *ni_pi = ni_get_pi(rdev);
-	काष्ठा ni_ps *ni_new_state = ni_get_ps(radeon_new_state);
+static int ni_upload_mc_reg_table(struct radeon_device *rdev,
+				  struct radeon_ps *radeon_new_state)
+{
+	struct rv7xx_power_info *pi = rv770_get_pi(rdev);
+	struct evergreen_power_info *eg_pi = evergreen_get_pi(rdev);
+	struct ni_power_info *ni_pi = ni_get_pi(rdev);
+	struct ni_ps *ni_new_state = ni_get_ps(radeon_new_state);
 	SMC_NIslands_MCRegisters *mc_reg_table = &ni_pi->smc_mc_reg_table;
 	u16 address;
 
-	स_रखो(mc_reg_table, 0, माप(SMC_NIslands_MCRegisters));
+	memset(mc_reg_table, 0, sizeof(SMC_NIslands_MCRegisters));
 
 	ni_convert_mc_reg_table_to_smc(rdev, radeon_new_state, mc_reg_table);
 
 	address = eg_pi->mc_reg_table_start +
-		(u16)दुरत्व(SMC_NIslands_MCRegisters, data[NISLANDS_MCREGISTERTABLE_FIRST_DRIVERSTATE_SLOT]);
+		(u16)offsetof(SMC_NIslands_MCRegisters, data[NISLANDS_MCREGISTERTABLE_FIRST_DRIVERSTATE_SLOT]);
 
-	वापस rv770_copy_bytes_to_smc(rdev, address,
+	return rv770_copy_bytes_to_smc(rdev, address,
 				       (u8 *)&mc_reg_table->data[NISLANDS_MCREGISTERTABLE_FIRST_DRIVERSTATE_SLOT],
-				       माप(SMC_NIslands_MCRegisterSet) * ni_new_state->perक्रमmance_level_count,
+				       sizeof(SMC_NIslands_MCRegisterSet) * ni_new_state->performance_level_count,
 				       pi->sram_end);
-पूर्ण
+}
 
-अटल पूर्णांक ni_init_driver_calculated_leakage_table(काष्ठा radeon_device *rdev,
+static int ni_init_driver_calculated_leakage_table(struct radeon_device *rdev,
 						   PP_NIslands_CACTABLES *cac_tables)
-अणु
-	काष्ठा ni_घातer_info *ni_pi = ni_get_pi(rdev);
-	काष्ठा evergreen_घातer_info *eg_pi = evergreen_get_pi(rdev);
+{
+	struct ni_power_info *ni_pi = ni_get_pi(rdev);
+	struct evergreen_power_info *eg_pi = evergreen_get_pi(rdev);
 	u32 leakage = 0;
-	अचिन्हित पूर्णांक i, j, table_size;
+	unsigned int i, j, table_size;
 	s32 t;
 	u32 smc_leakage, max_leakage = 0;
 	u32 scaling_factor;
 
 	table_size = eg_pi->vddc_voltage_table.count;
 
-	अगर (SMC_NISLANDS_LKGE_LUT_NUM_OF_VOLT_ENTRIES < table_size)
+	if (SMC_NISLANDS_LKGE_LUT_NUM_OF_VOLT_ENTRIES < table_size)
 		table_size = SMC_NISLANDS_LKGE_LUT_NUM_OF_VOLT_ENTRIES;
 
-	scaling_factor = ni_get_smc_घातer_scaling_factor(rdev);
+	scaling_factor = ni_get_smc_power_scaling_factor(rdev);
 
-	क्रम (i = 0; i < SMC_NISLANDS_LKGE_LUT_NUM_OF_TEMP_ENTRIES; i++) अणु
-		क्रम (j = 0; j < table_size; j++) अणु
+	for (i = 0; i < SMC_NISLANDS_LKGE_LUT_NUM_OF_TEMP_ENTRIES; i++) {
+		for (j = 0; j < table_size; j++) {
 			t = (1000 * ((i + 1) * 8));
 
-			अगर (t < ni_pi->cac_data.leakage_minimum_temperature)
+			if (t < ni_pi->cac_data.leakage_minimum_temperature)
 				t = ni_pi->cac_data.leakage_minimum_temperature;
 
-			ni_calculate_leakage_क्रम_v_and_t(rdev,
+			ni_calculate_leakage_for_v_and_t(rdev,
 							 &ni_pi->cac_data.leakage_coefficients,
 							 eg_pi->vddc_voltage_table.entries[j].value,
 							 t,
 							 ni_pi->cac_data.i_leakage,
 							 &leakage);
 
-			smc_leakage = ni_scale_घातer_क्रम_smc(leakage, scaling_factor) / 1000;
-			अगर (smc_leakage > max_leakage)
+			smc_leakage = ni_scale_power_for_smc(leakage, scaling_factor) / 1000;
+			if (smc_leakage > max_leakage)
 				max_leakage = smc_leakage;
 
 			cac_tables->cac_lkge_lut[i][j] = cpu_to_be32(smc_leakage);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	क्रम (j = table_size; j < SMC_NISLANDS_LKGE_LUT_NUM_OF_VOLT_ENTRIES; j++) अणु
-		क्रम (i = 0; i < SMC_NISLANDS_LKGE_LUT_NUM_OF_TEMP_ENTRIES; i++)
+	for (j = table_size; j < SMC_NISLANDS_LKGE_LUT_NUM_OF_VOLT_ENTRIES; j++) {
+		for (i = 0; i < SMC_NISLANDS_LKGE_LUT_NUM_OF_TEMP_ENTRIES; i++)
 			cac_tables->cac_lkge_lut[i][j] = cpu_to_be32(max_leakage);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक ni_init_simplअगरied_leakage_table(काष्ठा radeon_device *rdev,
+static int ni_init_simplified_leakage_table(struct radeon_device *rdev,
 					    PP_NIslands_CACTABLES *cac_tables)
-अणु
-	काष्ठा evergreen_घातer_info *eg_pi = evergreen_get_pi(rdev);
-	काष्ठा radeon_cac_leakage_table *leakage_table =
+{
+	struct evergreen_power_info *eg_pi = evergreen_get_pi(rdev);
+	struct radeon_cac_leakage_table *leakage_table =
 		&rdev->pm.dpm.dyn_state.cac_leakage_table;
 	u32 i, j, table_size;
 	u32 smc_leakage, max_leakage = 0;
 	u32 scaling_factor;
 
-	अगर (!leakage_table)
-		वापस -EINVAL;
+	if (!leakage_table)
+		return -EINVAL;
 
 	table_size = leakage_table->count;
 
-	अगर (eg_pi->vddc_voltage_table.count != table_size)
+	if (eg_pi->vddc_voltage_table.count != table_size)
 		table_size = (eg_pi->vddc_voltage_table.count < leakage_table->count) ?
 			eg_pi->vddc_voltage_table.count : leakage_table->count;
 
-	अगर (SMC_NISLANDS_LKGE_LUT_NUM_OF_VOLT_ENTRIES < table_size)
+	if (SMC_NISLANDS_LKGE_LUT_NUM_OF_VOLT_ENTRIES < table_size)
 		table_size = SMC_NISLANDS_LKGE_LUT_NUM_OF_VOLT_ENTRIES;
 
-	अगर (table_size == 0)
-		वापस -EINVAL;
+	if (table_size == 0)
+		return -EINVAL;
 
-	scaling_factor = ni_get_smc_घातer_scaling_factor(rdev);
+	scaling_factor = ni_get_smc_power_scaling_factor(rdev);
 
-	क्रम (j = 0; j < table_size; j++) अणु
+	for (j = 0; j < table_size; j++) {
 		smc_leakage = leakage_table->entries[j].leakage;
 
-		अगर (smc_leakage > max_leakage)
+		if (smc_leakage > max_leakage)
 			max_leakage = smc_leakage;
 
-		क्रम (i = 0; i < SMC_NISLANDS_LKGE_LUT_NUM_OF_TEMP_ENTRIES; i++)
+		for (i = 0; i < SMC_NISLANDS_LKGE_LUT_NUM_OF_TEMP_ENTRIES; i++)
 			cac_tables->cac_lkge_lut[i][j] =
-				cpu_to_be32(ni_scale_घातer_क्रम_smc(smc_leakage, scaling_factor));
-	पूर्ण
+				cpu_to_be32(ni_scale_power_for_smc(smc_leakage, scaling_factor));
+	}
 
-	क्रम (j = table_size; j < SMC_NISLANDS_LKGE_LUT_NUM_OF_VOLT_ENTRIES; j++) अणु
-		क्रम (i = 0; i < SMC_NISLANDS_LKGE_LUT_NUM_OF_TEMP_ENTRIES; i++)
+	for (j = table_size; j < SMC_NISLANDS_LKGE_LUT_NUM_OF_VOLT_ENTRIES; j++) {
+		for (i = 0; i < SMC_NISLANDS_LKGE_LUT_NUM_OF_TEMP_ENTRIES; i++)
 			cac_tables->cac_lkge_lut[i][j] =
-				cpu_to_be32(ni_scale_घातer_क्रम_smc(max_leakage, scaling_factor));
-	पूर्ण
-	वापस 0;
-पूर्ण
+				cpu_to_be32(ni_scale_power_for_smc(max_leakage, scaling_factor));
+	}
+	return 0;
+}
 
-अटल पूर्णांक ni_initialize_smc_cac_tables(काष्ठा radeon_device *rdev)
-अणु
-	काष्ठा rv7xx_घातer_info *pi = rv770_get_pi(rdev);
-	काष्ठा ni_घातer_info *ni_pi = ni_get_pi(rdev);
-	PP_NIslands_CACTABLES *cac_tables = शून्य;
-	पूर्णांक i, ret;
+static int ni_initialize_smc_cac_tables(struct radeon_device *rdev)
+{
+	struct rv7xx_power_info *pi = rv770_get_pi(rdev);
+	struct ni_power_info *ni_pi = ni_get_pi(rdev);
+	PP_NIslands_CACTABLES *cac_tables = NULL;
+	int i, ret;
 	u32 reg;
 
-	अगर (ni_pi->enable_cac == false)
-		वापस 0;
+	if (ni_pi->enable_cac == false)
+		return 0;
 
-	cac_tables = kzalloc(माप(PP_NIslands_CACTABLES), GFP_KERNEL);
-	अगर (!cac_tables)
-		वापस -ENOMEM;
+	cac_tables = kzalloc(sizeof(PP_NIslands_CACTABLES), GFP_KERNEL);
+	if (!cac_tables)
+		return -ENOMEM;
 
 	reg = RREG32(CG_CAC_CTRL) & ~(TID_CNT_MASK | TID_UNIT_MASK);
 	reg |= (TID_CNT(ni_pi->cac_weights->tid_cnt) |
 		TID_UNIT(ni_pi->cac_weights->tid_unit));
 	WREG32(CG_CAC_CTRL, reg);
 
-	क्रम (i = 0; i < NISLANDS_DCCAC_MAX_LEVELS; i++)
+	for (i = 0; i < NISLANDS_DCCAC_MAX_LEVELS; i++)
 		ni_pi->dc_cac_table[i] = ni_pi->cac_weights->dc_cac[i];
 
-	क्रम (i = 0; i < SMC_NISLANDS_BIF_LUT_NUM_OF_ENTRIES; i++)
-		cac_tables->cac_bअगर_lut[i] = ni_pi->cac_weights->pcie_cac[i];
+	for (i = 0; i < SMC_NISLANDS_BIF_LUT_NUM_OF_ENTRIES; i++)
+		cac_tables->cac_bif_lut[i] = ni_pi->cac_weights->pcie_cac[i];
 
 	ni_pi->cac_data.i_leakage = rdev->pm.dpm.cac_leakage;
-	ni_pi->cac_data.pwr_स्थिर = 0;
+	ni_pi->cac_data.pwr_const = 0;
 	ni_pi->cac_data.dc_cac_value = ni_pi->dc_cac_table[NISLANDS_DCCAC_LEVEL_0];
-	ni_pi->cac_data.bअगर_cac_value = 0;
-	ni_pi->cac_data.mc_wr_weight = ni_pi->cac_weights->mc_ग_लिखो_weight;
-	ni_pi->cac_data.mc_rd_weight = ni_pi->cac_weights->mc_पढ़ो_weight;
+	ni_pi->cac_data.bif_cac_value = 0;
+	ni_pi->cac_data.mc_wr_weight = ni_pi->cac_weights->mc_write_weight;
+	ni_pi->cac_data.mc_rd_weight = ni_pi->cac_weights->mc_read_weight;
 	ni_pi->cac_data.allow_ovrflw = 0;
-	ni_pi->cac_data.l2num_win_tdp = ni_pi->lta_winकरोw_size;
+	ni_pi->cac_data.l2num_win_tdp = ni_pi->lta_window_size;
 	ni_pi->cac_data.num_win_tdp = 0;
 	ni_pi->cac_data.lts_truncate_n = ni_pi->lts_truncate;
 
-	अगर (ni_pi->driver_calculate_cac_leakage)
+	if (ni_pi->driver_calculate_cac_leakage)
 		ret = ni_init_driver_calculated_leakage_table(rdev, cac_tables);
-	अन्यथा
-		ret = ni_init_simplअगरied_leakage_table(rdev, cac_tables);
+	else
+		ret = ni_init_simplified_leakage_table(rdev, cac_tables);
 
-	अगर (ret)
-		जाओ करोne_मुक्त;
+	if (ret)
+		goto done_free;
 
-	cac_tables->pwr_स्थिर      = cpu_to_be32(ni_pi->cac_data.pwr_स्थिर);
+	cac_tables->pwr_const      = cpu_to_be32(ni_pi->cac_data.pwr_const);
 	cac_tables->dc_cacValue    = cpu_to_be32(ni_pi->cac_data.dc_cac_value);
-	cac_tables->bअगर_cacValue   = cpu_to_be32(ni_pi->cac_data.bअगर_cac_value);
+	cac_tables->bif_cacValue   = cpu_to_be32(ni_pi->cac_data.bif_cac_value);
 	cac_tables->AllowOvrflw    = ni_pi->cac_data.allow_ovrflw;
 	cac_tables->MCWrWeight     = ni_pi->cac_data.mc_wr_weight;
 	cac_tables->MCRdWeight     = ni_pi->cac_data.mc_rd_weight;
@@ -3194,30 +3193,30 @@ init_mc_करोne:
 	cac_tables->lts_truncate_n = ni_pi->cac_data.lts_truncate_n;
 
 	ret = rv770_copy_bytes_to_smc(rdev, ni_pi->cac_table_start, (u8 *)cac_tables,
-				      माप(PP_NIslands_CACTABLES), pi->sram_end);
+				      sizeof(PP_NIslands_CACTABLES), pi->sram_end);
 
-करोne_मुक्त:
-	अगर (ret) अणु
+done_free:
+	if (ret) {
 		ni_pi->enable_cac = false;
-		ni_pi->enable_घातer_containment = false;
-	पूर्ण
+		ni_pi->enable_power_containment = false;
+	}
 
-	kमुक्त(cac_tables);
+	kfree(cac_tables);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ni_initialize_hardware_cac_manager(काष्ठा radeon_device *rdev)
-अणु
-	काष्ठा ni_घातer_info *ni_pi = ni_get_pi(rdev);
+static int ni_initialize_hardware_cac_manager(struct radeon_device *rdev)
+{
+	struct ni_power_info *ni_pi = ni_get_pi(rdev);
 	u32 reg;
 
-	अगर (!ni_pi->enable_cac ||
+	if (!ni_pi->enable_cac ||
 	    !ni_pi->cac_configuration_required)
-		वापस 0;
+		return 0;
 
-	अगर (ni_pi->cac_weights == शून्य)
-		वापस -EINVAL;
+	if (ni_pi->cac_weights == NULL)
+		return -EINVAL;
 
 	reg = RREG32_CG(CG_CAC_REGION_1_WEIGHT_0) & ~(WEIGHT_TCP_SIG0_MASK |
 						      WEIGHT_TCP_SIG1_MASK |
@@ -3302,7 +3301,7 @@ init_mc_करोne:
 						      WEIGHT_PA_SIG0_MASK |
 						      WEIGHT_PA_SIG1_MASK |
 						      WEIGHT_VGT_SIG0_MASK);
-	reg |= (WEIGHT_BIF(ni_pi->cac_weights->weight_bअगर) |
+	reg |= (WEIGHT_BIF(ni_pi->cac_weights->weight_bif) |
 		WEIGHT_CP(ni_pi->cac_weights->weight_cp) |
 		WEIGHT_PA_SIG0(ni_pi->cac_weights->weight_pa_sig0) |
 		WEIGHT_PA_SIG1(ni_pi->cac_weights->weight_pa_sig1) |
@@ -3368,253 +3367,253 @@ init_mc_करोne:
 	       INDEX(0x09D4));
 	WREG32(MC_CG_CONFIG, reg);
 
-	reg = (READ_WEIGHT(ni_pi->cac_weights->mc_पढ़ो_weight) |
-	       WRITE_WEIGHT(ni_pi->cac_weights->mc_ग_लिखो_weight) |
+	reg = (READ_WEIGHT(ni_pi->cac_weights->mc_read_weight) |
+	       WRITE_WEIGHT(ni_pi->cac_weights->mc_write_weight) |
 	       ALLOW_OVERFLOW);
 	WREG32(MC_CG_DATAPORT, reg);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ni_enable_smc_cac(काष्ठा radeon_device *rdev,
-			     काष्ठा radeon_ps *radeon_new_state,
+static int ni_enable_smc_cac(struct radeon_device *rdev,
+			     struct radeon_ps *radeon_new_state,
 			     bool enable)
-अणु
-	काष्ठा ni_घातer_info *ni_pi = ni_get_pi(rdev);
-	पूर्णांक ret = 0;
+{
+	struct ni_power_info *ni_pi = ni_get_pi(rdev);
+	int ret = 0;
 	PPSMC_Result smc_result;
 
-	अगर (ni_pi->enable_cac) अणु
-		अगर (enable) अणु
-			अगर (!r600_is_uvd_state(radeon_new_state->class, radeon_new_state->class2)) अणु
+	if (ni_pi->enable_cac) {
+		if (enable) {
+			if (!r600_is_uvd_state(radeon_new_state->class, radeon_new_state->class2)) {
 				smc_result = rv770_send_msg_to_smc(rdev, PPSMC_MSG_CollectCAC_PowerCorreln);
 
-				अगर (ni_pi->support_cac_दीर्घ_term_average) अणु
+				if (ni_pi->support_cac_long_term_average) {
 					smc_result = rv770_send_msg_to_smc(rdev, PPSMC_CACLongTermAvgEnable);
-					अगर (PPSMC_Result_OK != smc_result)
-						ni_pi->support_cac_दीर्घ_term_average = false;
-				पूर्ण
+					if (PPSMC_Result_OK != smc_result)
+						ni_pi->support_cac_long_term_average = false;
+				}
 
 				smc_result = rv770_send_msg_to_smc(rdev, PPSMC_MSG_EnableCac);
-				अगर (PPSMC_Result_OK != smc_result)
+				if (PPSMC_Result_OK != smc_result)
 					ret = -EINVAL;
 
 				ni_pi->cac_enabled = (PPSMC_Result_OK == smc_result) ? true : false;
-			पूर्ण
-		पूर्ण अन्यथा अगर (ni_pi->cac_enabled) अणु
+			}
+		} else if (ni_pi->cac_enabled) {
 			smc_result = rv770_send_msg_to_smc(rdev, PPSMC_MSG_DisableCac);
 
 			ni_pi->cac_enabled = false;
 
-			अगर (ni_pi->support_cac_दीर्घ_term_average) अणु
+			if (ni_pi->support_cac_long_term_average) {
 				smc_result = rv770_send_msg_to_smc(rdev, PPSMC_CACLongTermAvgDisable);
-				अगर (PPSMC_Result_OK != smc_result)
-					ni_pi->support_cac_दीर्घ_term_average = false;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				if (PPSMC_Result_OK != smc_result)
+					ni_pi->support_cac_long_term_average = false;
+			}
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ni_pcie_perक्रमmance_request(काष्ठा radeon_device *rdev,
+static int ni_pcie_performance_request(struct radeon_device *rdev,
 				       u8 perf_req, bool advertise)
-अणु
-#अगर defined(CONFIG_ACPI)
-	काष्ठा evergreen_घातer_info *eg_pi = evergreen_get_pi(rdev);
+{
+#if defined(CONFIG_ACPI)
+	struct evergreen_power_info *eg_pi = evergreen_get_pi(rdev);
 
-	अगर ((perf_req == PCIE_PERF_REQ_PECI_GEN1) ||
-	    (perf_req == PCIE_PERF_REQ_PECI_GEN2)) अणु
-		अगर (eg_pi->pcie_perक्रमmance_request_रेजिस्टरed == false)
-			radeon_acpi_pcie_notअगरy_device_पढ़ोy(rdev);
-		eg_pi->pcie_perक्रमmance_request_रेजिस्टरed = true;
-		वापस radeon_acpi_pcie_perक्रमmance_request(rdev, perf_req, advertise);
-	पूर्ण अन्यथा अगर ((perf_req == PCIE_PERF_REQ_REMOVE_REGISTRY) &&
-		    eg_pi->pcie_perक्रमmance_request_रेजिस्टरed) अणु
-		eg_pi->pcie_perक्रमmance_request_रेजिस्टरed = false;
-		वापस radeon_acpi_pcie_perक्रमmance_request(rdev, perf_req, advertise);
-	पूर्ण
-#पूर्ण_अगर
-	वापस 0;
-पूर्ण
+	if ((perf_req == PCIE_PERF_REQ_PECI_GEN1) ||
+	    (perf_req == PCIE_PERF_REQ_PECI_GEN2)) {
+		if (eg_pi->pcie_performance_request_registered == false)
+			radeon_acpi_pcie_notify_device_ready(rdev);
+		eg_pi->pcie_performance_request_registered = true;
+		return radeon_acpi_pcie_performance_request(rdev, perf_req, advertise);
+	} else if ((perf_req == PCIE_PERF_REQ_REMOVE_REGISTRY) &&
+		    eg_pi->pcie_performance_request_registered) {
+		eg_pi->pcie_performance_request_registered = false;
+		return radeon_acpi_pcie_performance_request(rdev, perf_req, advertise);
+	}
+#endif
+	return 0;
+}
 
-अटल पूर्णांक ni_advertise_gen2_capability(काष्ठा radeon_device *rdev)
-अणु
-	काष्ठा rv7xx_घातer_info *pi = rv770_get_pi(rdev);
-	u32 पंचांगp;
+static int ni_advertise_gen2_capability(struct radeon_device *rdev)
+{
+	struct rv7xx_power_info *pi = rv770_get_pi(rdev);
+	u32 tmp;
 
-	पंचांगp = RREG32_PCIE_PORT(PCIE_LC_SPEED_CNTL);
+	tmp = RREG32_PCIE_PORT(PCIE_LC_SPEED_CNTL);
 
-	अगर ((पंचांगp & LC_OTHER_SIDE_EVER_SENT_GEN2) &&
-	    (पंचांगp & LC_OTHER_SIDE_SUPPORTS_GEN2))
+	if ((tmp & LC_OTHER_SIDE_EVER_SENT_GEN2) &&
+	    (tmp & LC_OTHER_SIDE_SUPPORTS_GEN2))
 		pi->pcie_gen2 = true;
-	अन्यथा
+	else
 		pi->pcie_gen2 = false;
 
-	अगर (!pi->pcie_gen2)
-		ni_pcie_perक्रमmance_request(rdev, PCIE_PERF_REQ_PECI_GEN2, true);
+	if (!pi->pcie_gen2)
+		ni_pcie_performance_request(rdev, PCIE_PERF_REQ_PECI_GEN2, true);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ni_enable_bअगर_dynamic_pcie_gen2(काष्ठा radeon_device *rdev,
+static void ni_enable_bif_dynamic_pcie_gen2(struct radeon_device *rdev,
 					    bool enable)
-अणु
-	काष्ठा rv7xx_घातer_info *pi = rv770_get_pi(rdev);
-	u32 पंचांगp, bअगर;
+{
+	struct rv7xx_power_info *pi = rv770_get_pi(rdev);
+	u32 tmp, bif;
 
-	पंचांगp = RREG32_PCIE_PORT(PCIE_LC_SPEED_CNTL);
+	tmp = RREG32_PCIE_PORT(PCIE_LC_SPEED_CNTL);
 
-	अगर ((पंचांगp & LC_OTHER_SIDE_EVER_SENT_GEN2) &&
-	    (पंचांगp & LC_OTHER_SIDE_SUPPORTS_GEN2)) अणु
-		अगर (enable) अणु
-			अगर (!pi->boot_in_gen2) अणु
-				bअगर = RREG32(CG_BIF_REQ_AND_RSP) & ~CG_CLIENT_REQ_MASK;
-				bअगर |= CG_CLIENT_REQ(0xd);
-				WREG32(CG_BIF_REQ_AND_RSP, bअगर);
-			पूर्ण
-			पंचांगp &= ~LC_HW_VOLTAGE_IF_CONTROL_MASK;
-			पंचांगp |= LC_HW_VOLTAGE_IF_CONTROL(1);
-			पंचांगp |= LC_GEN2_EN_STRAP;
+	if ((tmp & LC_OTHER_SIDE_EVER_SENT_GEN2) &&
+	    (tmp & LC_OTHER_SIDE_SUPPORTS_GEN2)) {
+		if (enable) {
+			if (!pi->boot_in_gen2) {
+				bif = RREG32(CG_BIF_REQ_AND_RSP) & ~CG_CLIENT_REQ_MASK;
+				bif |= CG_CLIENT_REQ(0xd);
+				WREG32(CG_BIF_REQ_AND_RSP, bif);
+			}
+			tmp &= ~LC_HW_VOLTAGE_IF_CONTROL_MASK;
+			tmp |= LC_HW_VOLTAGE_IF_CONTROL(1);
+			tmp |= LC_GEN2_EN_STRAP;
 
-			पंचांगp |= LC_CLR_FAILED_SPD_CHANGE_CNT;
-			WREG32_PCIE_PORT(PCIE_LC_SPEED_CNTL, पंचांगp);
+			tmp |= LC_CLR_FAILED_SPD_CHANGE_CNT;
+			WREG32_PCIE_PORT(PCIE_LC_SPEED_CNTL, tmp);
 			udelay(10);
-			पंचांगp &= ~LC_CLR_FAILED_SPD_CHANGE_CNT;
-			WREG32_PCIE_PORT(PCIE_LC_SPEED_CNTL, पंचांगp);
-		पूर्ण अन्यथा अणु
-			अगर (!pi->boot_in_gen2) अणु
-				bअगर = RREG32(CG_BIF_REQ_AND_RSP) & ~CG_CLIENT_REQ_MASK;
-				bअगर |= CG_CLIENT_REQ(0xd);
-				WREG32(CG_BIF_REQ_AND_RSP, bअगर);
+			tmp &= ~LC_CLR_FAILED_SPD_CHANGE_CNT;
+			WREG32_PCIE_PORT(PCIE_LC_SPEED_CNTL, tmp);
+		} else {
+			if (!pi->boot_in_gen2) {
+				bif = RREG32(CG_BIF_REQ_AND_RSP) & ~CG_CLIENT_REQ_MASK;
+				bif |= CG_CLIENT_REQ(0xd);
+				WREG32(CG_BIF_REQ_AND_RSP, bif);
 
-				पंचांगp &= ~LC_HW_VOLTAGE_IF_CONTROL_MASK;
-				पंचांगp &= ~LC_GEN2_EN_STRAP;
-			पूर्ण
-			WREG32_PCIE_PORT(PCIE_LC_SPEED_CNTL, पंचांगp);
-		पूर्ण
-	पूर्ण
-पूर्ण
+				tmp &= ~LC_HW_VOLTAGE_IF_CONTROL_MASK;
+				tmp &= ~LC_GEN2_EN_STRAP;
+			}
+			WREG32_PCIE_PORT(PCIE_LC_SPEED_CNTL, tmp);
+		}
+	}
+}
 
-अटल व्योम ni_enable_dynamic_pcie_gen2(काष्ठा radeon_device *rdev,
+static void ni_enable_dynamic_pcie_gen2(struct radeon_device *rdev,
 					bool enable)
-अणु
-	ni_enable_bअगर_dynamic_pcie_gen2(rdev, enable);
+{
+	ni_enable_bif_dynamic_pcie_gen2(rdev, enable);
 
-	अगर (enable)
+	if (enable)
 		WREG32_P(GENERAL_PWRMGT, ENABLE_GEN2PCIE, ~ENABLE_GEN2PCIE);
-	अन्यथा
+	else
 		WREG32_P(GENERAL_PWRMGT, 0, ~ENABLE_GEN2PCIE);
-पूर्ण
+}
 
-व्योम ni_set_uvd_घड़ी_beक्रमe_set_eng_घड़ी(काष्ठा radeon_device *rdev,
-					   काष्ठा radeon_ps *new_ps,
-					   काष्ठा radeon_ps *old_ps)
-अणु
-	काष्ठा ni_ps *new_state = ni_get_ps(new_ps);
-	काष्ठा ni_ps *current_state = ni_get_ps(old_ps);
+void ni_set_uvd_clock_before_set_eng_clock(struct radeon_device *rdev,
+					   struct radeon_ps *new_ps,
+					   struct radeon_ps *old_ps)
+{
+	struct ni_ps *new_state = ni_get_ps(new_ps);
+	struct ni_ps *current_state = ni_get_ps(old_ps);
 
-	अगर ((new_ps->vclk == old_ps->vclk) &&
+	if ((new_ps->vclk == old_ps->vclk) &&
 	    (new_ps->dclk == old_ps->dclk))
-		वापस;
+		return;
 
-	अगर (new_state->perक्रमmance_levels[new_state->perक्रमmance_level_count - 1].sclk >=
-	    current_state->perक्रमmance_levels[current_state->perक्रमmance_level_count - 1].sclk)
-		वापस;
+	if (new_state->performance_levels[new_state->performance_level_count - 1].sclk >=
+	    current_state->performance_levels[current_state->performance_level_count - 1].sclk)
+		return;
 
-	radeon_set_uvd_घड़ीs(rdev, new_ps->vclk, new_ps->dclk);
-पूर्ण
+	radeon_set_uvd_clocks(rdev, new_ps->vclk, new_ps->dclk);
+}
 
-व्योम ni_set_uvd_घड़ी_after_set_eng_घड़ी(काष्ठा radeon_device *rdev,
-					  काष्ठा radeon_ps *new_ps,
-					  काष्ठा radeon_ps *old_ps)
-अणु
-	काष्ठा ni_ps *new_state = ni_get_ps(new_ps);
-	काष्ठा ni_ps *current_state = ni_get_ps(old_ps);
+void ni_set_uvd_clock_after_set_eng_clock(struct radeon_device *rdev,
+					  struct radeon_ps *new_ps,
+					  struct radeon_ps *old_ps)
+{
+	struct ni_ps *new_state = ni_get_ps(new_ps);
+	struct ni_ps *current_state = ni_get_ps(old_ps);
 
-	अगर ((new_ps->vclk == old_ps->vclk) &&
+	if ((new_ps->vclk == old_ps->vclk) &&
 	    (new_ps->dclk == old_ps->dclk))
-		वापस;
+		return;
 
-	अगर (new_state->perक्रमmance_levels[new_state->perक्रमmance_level_count - 1].sclk <
-	    current_state->perक्रमmance_levels[current_state->perक्रमmance_level_count - 1].sclk)
-		वापस;
+	if (new_state->performance_levels[new_state->performance_level_count - 1].sclk <
+	    current_state->performance_levels[current_state->performance_level_count - 1].sclk)
+		return;
 
-	radeon_set_uvd_घड़ीs(rdev, new_ps->vclk, new_ps->dclk);
-पूर्ण
+	radeon_set_uvd_clocks(rdev, new_ps->vclk, new_ps->dclk);
+}
 
-व्योम ni_dpm_setup_asic(काष्ठा radeon_device *rdev)
-अणु
-	काष्ठा evergreen_घातer_info *eg_pi = evergreen_get_pi(rdev);
-	पूर्णांक r;
+void ni_dpm_setup_asic(struct radeon_device *rdev)
+{
+	struct evergreen_power_info *eg_pi = evergreen_get_pi(rdev);
+	int r;
 
 	r = ni_mc_load_microcode(rdev);
-	अगर (r)
+	if (r)
 		DRM_ERROR("Failed to load MC firmware!\n");
-	ni_पढ़ो_घड़ी_रेजिस्टरs(rdev);
-	btc_पढ़ो_arb_रेजिस्टरs(rdev);
+	ni_read_clock_registers(rdev);
+	btc_read_arb_registers(rdev);
 	rv770_get_memory_type(rdev);
-	अगर (eg_pi->pcie_perक्रमmance_request)
+	if (eg_pi->pcie_performance_request)
 		ni_advertise_gen2_capability(rdev);
 	rv770_get_pcie_gen2_status(rdev);
 	rv770_enable_acpi_pm(rdev);
-पूर्ण
+}
 
-व्योम ni_update_current_ps(काष्ठा radeon_device *rdev,
-			  काष्ठा radeon_ps *rps)
-अणु
-	काष्ठा ni_ps *new_ps = ni_get_ps(rps);
-	काष्ठा evergreen_घातer_info *eg_pi = evergreen_get_pi(rdev);
-	काष्ठा ni_घातer_info *ni_pi = ni_get_pi(rdev);
+void ni_update_current_ps(struct radeon_device *rdev,
+			  struct radeon_ps *rps)
+{
+	struct ni_ps *new_ps = ni_get_ps(rps);
+	struct evergreen_power_info *eg_pi = evergreen_get_pi(rdev);
+	struct ni_power_info *ni_pi = ni_get_pi(rdev);
 
 	eg_pi->current_rps = *rps;
 	ni_pi->current_ps = *new_ps;
 	eg_pi->current_rps.ps_priv = &ni_pi->current_ps;
-पूर्ण
+}
 
-व्योम ni_update_requested_ps(काष्ठा radeon_device *rdev,
-			    काष्ठा radeon_ps *rps)
-अणु
-	काष्ठा ni_ps *new_ps = ni_get_ps(rps);
-	काष्ठा evergreen_घातer_info *eg_pi = evergreen_get_pi(rdev);
-	काष्ठा ni_घातer_info *ni_pi = ni_get_pi(rdev);
+void ni_update_requested_ps(struct radeon_device *rdev,
+			    struct radeon_ps *rps)
+{
+	struct ni_ps *new_ps = ni_get_ps(rps);
+	struct evergreen_power_info *eg_pi = evergreen_get_pi(rdev);
+	struct ni_power_info *ni_pi = ni_get_pi(rdev);
 
 	eg_pi->requested_rps = *rps;
 	ni_pi->requested_ps = *new_ps;
 	eg_pi->requested_rps.ps_priv = &ni_pi->requested_ps;
-पूर्ण
+}
 
-पूर्णांक ni_dpm_enable(काष्ठा radeon_device *rdev)
-अणु
-	काष्ठा rv7xx_घातer_info *pi = rv770_get_pi(rdev);
-	काष्ठा evergreen_घातer_info *eg_pi = evergreen_get_pi(rdev);
-	काष्ठा radeon_ps *boot_ps = rdev->pm.dpm.boot_ps;
-	पूर्णांक ret;
+int ni_dpm_enable(struct radeon_device *rdev)
+{
+	struct rv7xx_power_info *pi = rv770_get_pi(rdev);
+	struct evergreen_power_info *eg_pi = evergreen_get_pi(rdev);
+	struct radeon_ps *boot_ps = rdev->pm.dpm.boot_ps;
+	int ret;
 
-	अगर (pi->gfx_घड़ी_gating)
-		ni_cg_घड़ीgating_शेष(rdev);
-	अगर (btc_dpm_enabled(rdev))
-		वापस -EINVAL;
-	अगर (pi->mg_घड़ी_gating)
-		ni_mg_घड़ीgating_शेष(rdev);
-	अगर (eg_pi->ls_घड़ी_gating)
-		ni_ls_घड़ीgating_शेष(rdev);
-	अगर (pi->voltage_control) अणु
+	if (pi->gfx_clock_gating)
+		ni_cg_clockgating_default(rdev);
+	if (btc_dpm_enabled(rdev))
+		return -EINVAL;
+	if (pi->mg_clock_gating)
+		ni_mg_clockgating_default(rdev);
+	if (eg_pi->ls_clock_gating)
+		ni_ls_clockgating_default(rdev);
+	if (pi->voltage_control) {
 		rv770_enable_voltage_control(rdev, true);
-		ret = cypress_स्थिरruct_voltage_tables(rdev);
-		अगर (ret) अणु
+		ret = cypress_construct_voltage_tables(rdev);
+		if (ret) {
 			DRM_ERROR("cypress_construct_voltage_tables failed\n");
-			वापस ret;
-		पूर्ण
-	पूर्ण
-	अगर (eg_pi->dynamic_ac_timing) अणु
+			return ret;
+		}
+	}
+	if (eg_pi->dynamic_ac_timing) {
 		ret = ni_initialize_mc_reg_table(rdev);
-		अगर (ret)
+		if (ret)
 			eg_pi->dynamic_ac_timing = false;
-	पूर्ण
-	अगर (pi->dynamic_ss)
-		cypress_enable_spपढ़ो_spectrum(rdev, true);
-	अगर (pi->thermal_protection)
+	}
+	if (pi->dynamic_ss)
+		cypress_enable_spread_spectrum(rdev, true);
+	if (pi->thermal_protection)
 		rv770_enable_thermal_protection(rdev, true);
 	rv770_setup_bsp(rdev);
 	rv770_program_git(rdev);
@@ -3623,439 +3622,439 @@ init_mc_करोne:
 	rv770_program_sstp(rdev);
 	cypress_enable_display_gap(rdev);
 	rv770_program_vc(rdev);
-	अगर (pi->dynamic_pcie_gen2)
+	if (pi->dynamic_pcie_gen2)
 		ni_enable_dynamic_pcie_gen2(rdev, true);
 	ret = rv770_upload_firmware(rdev);
-	अगर (ret) अणु
+	if (ret) {
 		DRM_ERROR("rv770_upload_firmware failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	ret = ni_process_firmware_header(rdev);
-	अगर (ret) अणु
+	if (ret) {
 		DRM_ERROR("ni_process_firmware_header failed\n");
-		वापस ret;
-	पूर्ण
-	ret = ni_initial_चयन_from_arb_f0_to_f1(rdev);
-	अगर (ret) अणु
+		return ret;
+	}
+	ret = ni_initial_switch_from_arb_f0_to_f1(rdev);
+	if (ret) {
 		DRM_ERROR("ni_initial_switch_from_arb_f0_to_f1 failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	ret = ni_init_smc_table(rdev);
-	अगर (ret) अणु
+	if (ret) {
 		DRM_ERROR("ni_init_smc_table failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	ret = ni_init_smc_spll_table(rdev);
-	अगर (ret) अणु
+	if (ret) {
 		DRM_ERROR("ni_init_smc_spll_table failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	ret = ni_init_arb_table_index(rdev);
-	अगर (ret) अणु
+	if (ret) {
 		DRM_ERROR("ni_init_arb_table_index failed\n");
-		वापस ret;
-	पूर्ण
-	अगर (eg_pi->dynamic_ac_timing) अणु
+		return ret;
+	}
+	if (eg_pi->dynamic_ac_timing) {
 		ret = ni_populate_mc_reg_table(rdev, boot_ps);
-		अगर (ret) अणु
+		if (ret) {
 			DRM_ERROR("ni_populate_mc_reg_table failed\n");
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 	ret = ni_initialize_smc_cac_tables(rdev);
-	अगर (ret) अणु
+	if (ret) {
 		DRM_ERROR("ni_initialize_smc_cac_tables failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	ret = ni_initialize_hardware_cac_manager(rdev);
-	अगर (ret) अणु
+	if (ret) {
 		DRM_ERROR("ni_initialize_hardware_cac_manager failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	ret = ni_populate_smc_tdp_limits(rdev, boot_ps);
-	अगर (ret) अणु
+	if (ret) {
 		DRM_ERROR("ni_populate_smc_tdp_limits failed\n");
-		वापस ret;
-	पूर्ण
-	ni_program_response_बार(rdev);
+		return ret;
+	}
+	ni_program_response_times(rdev);
 	r7xx_start_smc(rdev);
-	ret = cypress_notअगरy_smc_display_change(rdev, false);
-	अगर (ret) अणु
+	ret = cypress_notify_smc_display_change(rdev, false);
+	if (ret) {
 		DRM_ERROR("cypress_notify_smc_display_change failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	cypress_enable_sclk_control(rdev, true);
-	अगर (eg_pi->memory_transition)
+	if (eg_pi->memory_transition)
 		cypress_enable_mclk_control(rdev, true);
 	cypress_start_dpm(rdev);
-	अगर (pi->gfx_घड़ी_gating)
-		ni_gfx_घड़ीgating_enable(rdev, true);
-	अगर (pi->mg_घड़ी_gating)
-		ni_mg_घड़ीgating_enable(rdev, true);
-	अगर (eg_pi->ls_घड़ी_gating)
-		ni_ls_घड़ीgating_enable(rdev, true);
+	if (pi->gfx_clock_gating)
+		ni_gfx_clockgating_enable(rdev, true);
+	if (pi->mg_clock_gating)
+		ni_mg_clockgating_enable(rdev, true);
+	if (eg_pi->ls_clock_gating)
+		ni_ls_clockgating_enable(rdev, true);
 
-	rv770_enable_स्वतः_throttle_source(rdev, RADEON_DPM_AUTO_THROTTLE_SRC_THERMAL, true);
+	rv770_enable_auto_throttle_source(rdev, RADEON_DPM_AUTO_THROTTLE_SRC_THERMAL, true);
 
 	ni_update_current_ps(rdev, boot_ps);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम ni_dpm_disable(काष्ठा radeon_device *rdev)
-अणु
-	काष्ठा rv7xx_घातer_info *pi = rv770_get_pi(rdev);
-	काष्ठा evergreen_घातer_info *eg_pi = evergreen_get_pi(rdev);
-	काष्ठा radeon_ps *boot_ps = rdev->pm.dpm.boot_ps;
+void ni_dpm_disable(struct radeon_device *rdev)
+{
+	struct rv7xx_power_info *pi = rv770_get_pi(rdev);
+	struct evergreen_power_info *eg_pi = evergreen_get_pi(rdev);
+	struct radeon_ps *boot_ps = rdev->pm.dpm.boot_ps;
 
-	अगर (!btc_dpm_enabled(rdev))
-		वापस;
+	if (!btc_dpm_enabled(rdev))
+		return;
 	rv770_clear_vc(rdev);
-	अगर (pi->thermal_protection)
+	if (pi->thermal_protection)
 		rv770_enable_thermal_protection(rdev, false);
-	ni_enable_घातer_containment(rdev, boot_ps, false);
+	ni_enable_power_containment(rdev, boot_ps, false);
 	ni_enable_smc_cac(rdev, boot_ps, false);
-	cypress_enable_spपढ़ो_spectrum(rdev, false);
-	rv770_enable_स्वतः_throttle_source(rdev, RADEON_DPM_AUTO_THROTTLE_SRC_THERMAL, false);
-	अगर (pi->dynamic_pcie_gen2)
+	cypress_enable_spread_spectrum(rdev, false);
+	rv770_enable_auto_throttle_source(rdev, RADEON_DPM_AUTO_THROTTLE_SRC_THERMAL, false);
+	if (pi->dynamic_pcie_gen2)
 		ni_enable_dynamic_pcie_gen2(rdev, false);
 
-	अगर (rdev->irq.installed &&
-	    r600_is_पूर्णांकernal_thermal_sensor(rdev->pm.पूर्णांक_thermal_type)) अणु
+	if (rdev->irq.installed &&
+	    r600_is_internal_thermal_sensor(rdev->pm.int_thermal_type)) {
 		rdev->irq.dpm_thermal = false;
 		radeon_irq_set(rdev);
-	पूर्ण
+	}
 
-	अगर (pi->gfx_घड़ी_gating)
-		ni_gfx_घड़ीgating_enable(rdev, false);
-	अगर (pi->mg_घड़ी_gating)
-		ni_mg_घड़ीgating_enable(rdev, false);
-	अगर (eg_pi->ls_घड़ी_gating)
-		ni_ls_घड़ीgating_enable(rdev, false);
+	if (pi->gfx_clock_gating)
+		ni_gfx_clockgating_enable(rdev, false);
+	if (pi->mg_clock_gating)
+		ni_mg_clockgating_enable(rdev, false);
+	if (eg_pi->ls_clock_gating)
+		ni_ls_clockgating_enable(rdev, false);
 	ni_stop_dpm(rdev);
-	btc_reset_to_शेष(rdev);
+	btc_reset_to_default(rdev);
 	ni_stop_smc(rdev);
-	ni_क्रमce_चयन_to_arb_f0(rdev);
+	ni_force_switch_to_arb_f0(rdev);
 
 	ni_update_current_ps(rdev, boot_ps);
-पूर्ण
+}
 
-अटल पूर्णांक ni_घातer_control_set_level(काष्ठा radeon_device *rdev)
-अणु
-	काष्ठा radeon_ps *new_ps = rdev->pm.dpm.requested_ps;
-	पूर्णांक ret;
+static int ni_power_control_set_level(struct radeon_device *rdev)
+{
+	struct radeon_ps *new_ps = rdev->pm.dpm.requested_ps;
+	int ret;
 
-	ret = ni_restrict_perक्रमmance_levels_beक्रमe_चयन(rdev);
-	अगर (ret)
-		वापस ret;
+	ret = ni_restrict_performance_levels_before_switch(rdev);
+	if (ret)
+		return ret;
 	ret = rv770_halt_smc(rdev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	ret = ni_populate_smc_tdp_limits(rdev, new_ps);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	ret = rv770_resume_smc(rdev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	ret = rv770_set_sw_state(rdev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक ni_dpm_pre_set_घातer_state(काष्ठा radeon_device *rdev)
-अणु
-	काष्ठा evergreen_घातer_info *eg_pi = evergreen_get_pi(rdev);
-	काष्ठा radeon_ps requested_ps = *rdev->pm.dpm.requested_ps;
-	काष्ठा radeon_ps *new_ps = &requested_ps;
+int ni_dpm_pre_set_power_state(struct radeon_device *rdev)
+{
+	struct evergreen_power_info *eg_pi = evergreen_get_pi(rdev);
+	struct radeon_ps requested_ps = *rdev->pm.dpm.requested_ps;
+	struct radeon_ps *new_ps = &requested_ps;
 
 	ni_update_requested_ps(rdev, new_ps);
 
 	ni_apply_state_adjust_rules(rdev, &eg_pi->requested_rps);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक ni_dpm_set_घातer_state(काष्ठा radeon_device *rdev)
-अणु
-	काष्ठा evergreen_घातer_info *eg_pi = evergreen_get_pi(rdev);
-	काष्ठा radeon_ps *new_ps = &eg_pi->requested_rps;
-	काष्ठा radeon_ps *old_ps = &eg_pi->current_rps;
-	पूर्णांक ret;
+int ni_dpm_set_power_state(struct radeon_device *rdev)
+{
+	struct evergreen_power_info *eg_pi = evergreen_get_pi(rdev);
+	struct radeon_ps *new_ps = &eg_pi->requested_rps;
+	struct radeon_ps *old_ps = &eg_pi->current_rps;
+	int ret;
 
-	ret = ni_restrict_perक्रमmance_levels_beक्रमe_चयन(rdev);
-	अगर (ret) अणु
+	ret = ni_restrict_performance_levels_before_switch(rdev);
+	if (ret) {
 		DRM_ERROR("ni_restrict_performance_levels_before_switch failed\n");
-		वापस ret;
-	पूर्ण
-	ni_set_uvd_घड़ी_beक्रमe_set_eng_घड़ी(rdev, new_ps, old_ps);
-	ret = ni_enable_घातer_containment(rdev, new_ps, false);
-	अगर (ret) अणु
+		return ret;
+	}
+	ni_set_uvd_clock_before_set_eng_clock(rdev, new_ps, old_ps);
+	ret = ni_enable_power_containment(rdev, new_ps, false);
+	if (ret) {
 		DRM_ERROR("ni_enable_power_containment failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	ret = ni_enable_smc_cac(rdev, new_ps, false);
-	अगर (ret) अणु
+	if (ret) {
 		DRM_ERROR("ni_enable_smc_cac failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	ret = rv770_halt_smc(rdev);
-	अगर (ret) अणु
+	if (ret) {
 		DRM_ERROR("rv770_halt_smc failed\n");
-		वापस ret;
-	पूर्ण
-	अगर (eg_pi->smu_uvd_hs)
-		btc_notअगरy_uvd_to_smc(rdev, new_ps);
+		return ret;
+	}
+	if (eg_pi->smu_uvd_hs)
+		btc_notify_uvd_to_smc(rdev, new_ps);
 	ret = ni_upload_sw_state(rdev, new_ps);
-	अगर (ret) अणु
+	if (ret) {
 		DRM_ERROR("ni_upload_sw_state failed\n");
-		वापस ret;
-	पूर्ण
-	अगर (eg_pi->dynamic_ac_timing) अणु
+		return ret;
+	}
+	if (eg_pi->dynamic_ac_timing) {
 		ret = ni_upload_mc_reg_table(rdev, new_ps);
-		अगर (ret) अणु
+		if (ret) {
 			DRM_ERROR("ni_upload_mc_reg_table failed\n");
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 	ret = ni_program_memory_timing_parameters(rdev, new_ps);
-	अगर (ret) अणु
+	if (ret) {
 		DRM_ERROR("ni_program_memory_timing_parameters failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	ret = rv770_resume_smc(rdev);
-	अगर (ret) अणु
+	if (ret) {
 		DRM_ERROR("rv770_resume_smc failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	ret = rv770_set_sw_state(rdev);
-	अगर (ret) अणु
+	if (ret) {
 		DRM_ERROR("rv770_set_sw_state failed\n");
-		वापस ret;
-	पूर्ण
-	ni_set_uvd_घड़ी_after_set_eng_घड़ी(rdev, new_ps, old_ps);
+		return ret;
+	}
+	ni_set_uvd_clock_after_set_eng_clock(rdev, new_ps, old_ps);
 	ret = ni_enable_smc_cac(rdev, new_ps, true);
-	अगर (ret) अणु
+	if (ret) {
 		DRM_ERROR("ni_enable_smc_cac failed\n");
-		वापस ret;
-	पूर्ण
-	ret = ni_enable_घातer_containment(rdev, new_ps, true);
-	अगर (ret) अणु
+		return ret;
+	}
+	ret = ni_enable_power_containment(rdev, new_ps, true);
+	if (ret) {
 		DRM_ERROR("ni_enable_power_containment failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* update tdp */
-	ret = ni_घातer_control_set_level(rdev);
-	अगर (ret) अणु
+	ret = ni_power_control_set_level(rdev);
+	if (ret) {
 		DRM_ERROR("ni_power_control_set_level failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम ni_dpm_post_set_घातer_state(काष्ठा radeon_device *rdev)
-अणु
-	काष्ठा evergreen_घातer_info *eg_pi = evergreen_get_pi(rdev);
-	काष्ठा radeon_ps *new_ps = &eg_pi->requested_rps;
+void ni_dpm_post_set_power_state(struct radeon_device *rdev)
+{
+	struct evergreen_power_info *eg_pi = evergreen_get_pi(rdev);
+	struct radeon_ps *new_ps = &eg_pi->requested_rps;
 
 	ni_update_current_ps(rdev, new_ps);
-पूर्ण
+}
 
-#अगर 0
-व्योम ni_dpm_reset_asic(काष्ठा radeon_device *rdev)
-अणु
-	ni_restrict_perक्रमmance_levels_beक्रमe_चयन(rdev);
+#if 0
+void ni_dpm_reset_asic(struct radeon_device *rdev)
+{
+	ni_restrict_performance_levels_before_switch(rdev);
 	rv770_set_boot_state(rdev);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-जोड़ घातer_info अणु
-	काष्ठा _ATOM_POWERPLAY_INFO info;
-	काष्ठा _ATOM_POWERPLAY_INFO_V2 info_2;
-	काष्ठा _ATOM_POWERPLAY_INFO_V3 info_3;
-	काष्ठा _ATOM_PPLIB_POWERPLAYTABLE pplib;
-	काष्ठा _ATOM_PPLIB_POWERPLAYTABLE2 pplib2;
-	काष्ठा _ATOM_PPLIB_POWERPLAYTABLE3 pplib3;
-पूर्ण;
+union power_info {
+	struct _ATOM_POWERPLAY_INFO info;
+	struct _ATOM_POWERPLAY_INFO_V2 info_2;
+	struct _ATOM_POWERPLAY_INFO_V3 info_3;
+	struct _ATOM_PPLIB_POWERPLAYTABLE pplib;
+	struct _ATOM_PPLIB_POWERPLAYTABLE2 pplib2;
+	struct _ATOM_PPLIB_POWERPLAYTABLE3 pplib3;
+};
 
-जोड़ pplib_घड़ी_info अणु
-	काष्ठा _ATOM_PPLIB_R600_CLOCK_INFO r600;
-	काष्ठा _ATOM_PPLIB_RS780_CLOCK_INFO rs780;
-	काष्ठा _ATOM_PPLIB_EVERGREEN_CLOCK_INFO evergreen;
-	काष्ठा _ATOM_PPLIB_SUMO_CLOCK_INFO sumo;
-पूर्ण;
+union pplib_clock_info {
+	struct _ATOM_PPLIB_R600_CLOCK_INFO r600;
+	struct _ATOM_PPLIB_RS780_CLOCK_INFO rs780;
+	struct _ATOM_PPLIB_EVERGREEN_CLOCK_INFO evergreen;
+	struct _ATOM_PPLIB_SUMO_CLOCK_INFO sumo;
+};
 
-जोड़ pplib_घातer_state अणु
-	काष्ठा _ATOM_PPLIB_STATE v1;
-	काष्ठा _ATOM_PPLIB_STATE_V2 v2;
-पूर्ण;
+union pplib_power_state {
+	struct _ATOM_PPLIB_STATE v1;
+	struct _ATOM_PPLIB_STATE_V2 v2;
+};
 
-अटल व्योम ni_parse_pplib_non_घड़ी_info(काष्ठा radeon_device *rdev,
-					  काष्ठा radeon_ps *rps,
-					  काष्ठा _ATOM_PPLIB_NONCLOCK_INFO *non_घड़ी_info,
+static void ni_parse_pplib_non_clock_info(struct radeon_device *rdev,
+					  struct radeon_ps *rps,
+					  struct _ATOM_PPLIB_NONCLOCK_INFO *non_clock_info,
 					  u8 table_rev)
-अणु
-	rps->caps = le32_to_cpu(non_घड़ी_info->ulCapsAndSettings);
-	rps->class = le16_to_cpu(non_घड़ी_info->usClassअगरication);
-	rps->class2 = le16_to_cpu(non_घड़ी_info->usClassअगरication2);
+{
+	rps->caps = le32_to_cpu(non_clock_info->ulCapsAndSettings);
+	rps->class = le16_to_cpu(non_clock_info->usClassification);
+	rps->class2 = le16_to_cpu(non_clock_info->usClassification2);
 
-	अगर (ATOM_PPLIB_NONCLOCKINFO_VER1 < table_rev) अणु
-		rps->vclk = le32_to_cpu(non_घड़ी_info->ulVCLK);
-		rps->dclk = le32_to_cpu(non_घड़ी_info->ulDCLK);
-	पूर्ण अन्यथा अगर (r600_is_uvd_state(rps->class, rps->class2)) अणु
+	if (ATOM_PPLIB_NONCLOCKINFO_VER1 < table_rev) {
+		rps->vclk = le32_to_cpu(non_clock_info->ulVCLK);
+		rps->dclk = le32_to_cpu(non_clock_info->ulDCLK);
+	} else if (r600_is_uvd_state(rps->class, rps->class2)) {
 		rps->vclk = RV770_DEFAULT_VCLK_FREQ;
 		rps->dclk = RV770_DEFAULT_DCLK_FREQ;
-	पूर्ण अन्यथा अणु
+	} else {
 		rps->vclk = 0;
 		rps->dclk = 0;
-	पूर्ण
+	}
 
-	अगर (rps->class & ATOM_PPLIB_CLASSIFICATION_BOOT)
+	if (rps->class & ATOM_PPLIB_CLASSIFICATION_BOOT)
 		rdev->pm.dpm.boot_ps = rps;
-	अगर (rps->class & ATOM_PPLIB_CLASSIFICATION_UVDSTATE)
+	if (rps->class & ATOM_PPLIB_CLASSIFICATION_UVDSTATE)
 		rdev->pm.dpm.uvd_ps = rps;
-पूर्ण
+}
 
-अटल व्योम ni_parse_pplib_घड़ी_info(काष्ठा radeon_device *rdev,
-				      काष्ठा radeon_ps *rps, पूर्णांक index,
-				      जोड़ pplib_घड़ी_info *घड़ी_info)
-अणु
-	काष्ठा rv7xx_घातer_info *pi = rv770_get_pi(rdev);
-	काष्ठा evergreen_घातer_info *eg_pi = evergreen_get_pi(rdev);
-	काष्ठा ni_ps *ps = ni_get_ps(rps);
-	काष्ठा rv7xx_pl *pl = &ps->perक्रमmance_levels[index];
+static void ni_parse_pplib_clock_info(struct radeon_device *rdev,
+				      struct radeon_ps *rps, int index,
+				      union pplib_clock_info *clock_info)
+{
+	struct rv7xx_power_info *pi = rv770_get_pi(rdev);
+	struct evergreen_power_info *eg_pi = evergreen_get_pi(rdev);
+	struct ni_ps *ps = ni_get_ps(rps);
+	struct rv7xx_pl *pl = &ps->performance_levels[index];
 
-	ps->perक्रमmance_level_count = index + 1;
+	ps->performance_level_count = index + 1;
 
-	pl->sclk = le16_to_cpu(घड़ी_info->evergreen.usEngineClockLow);
-	pl->sclk |= घड़ी_info->evergreen.ucEngineClockHigh << 16;
-	pl->mclk = le16_to_cpu(घड़ी_info->evergreen.usMemoryClockLow);
-	pl->mclk |= घड़ी_info->evergreen.ucMemoryClockHigh << 16;
+	pl->sclk = le16_to_cpu(clock_info->evergreen.usEngineClockLow);
+	pl->sclk |= clock_info->evergreen.ucEngineClockHigh << 16;
+	pl->mclk = le16_to_cpu(clock_info->evergreen.usMemoryClockLow);
+	pl->mclk |= clock_info->evergreen.ucMemoryClockHigh << 16;
 
-	pl->vddc = le16_to_cpu(घड़ी_info->evergreen.usVDDC);
-	pl->vddci = le16_to_cpu(घड़ी_info->evergreen.usVDDCI);
-	pl->flags = le32_to_cpu(घड़ी_info->evergreen.ulFlags);
+	pl->vddc = le16_to_cpu(clock_info->evergreen.usVDDC);
+	pl->vddci = le16_to_cpu(clock_info->evergreen.usVDDCI);
+	pl->flags = le32_to_cpu(clock_info->evergreen.ulFlags);
 
-	/* patch up vddc अगर necessary */
-	अगर (pl->vddc == 0xff01) अणु
-		अगर (pi->max_vddc)
+	/* patch up vddc if necessary */
+	if (pl->vddc == 0xff01) {
+		if (pi->max_vddc)
 			pl->vddc = pi->max_vddc;
-	पूर्ण
+	}
 
-	अगर (rps->class & ATOM_PPLIB_CLASSIFICATION_ACPI) अणु
+	if (rps->class & ATOM_PPLIB_CLASSIFICATION_ACPI) {
 		pi->acpi_vddc = pl->vddc;
 		eg_pi->acpi_vddci = pl->vddci;
-		अगर (ps->perक्रमmance_levels[0].flags & ATOM_PPLIB_R600_FLAGS_PCIEGEN2)
+		if (ps->performance_levels[0].flags & ATOM_PPLIB_R600_FLAGS_PCIEGEN2)
 			pi->acpi_pcie_gen2 = true;
-		अन्यथा
+		else
 			pi->acpi_pcie_gen2 = false;
-	पूर्ण
+	}
 
-	अगर (rps->class2 & ATOM_PPLIB_CLASSIFICATION2_ULV) अणु
+	if (rps->class2 & ATOM_PPLIB_CLASSIFICATION2_ULV) {
 		eg_pi->ulv.supported = true;
 		eg_pi->ulv.pl = pl;
-	पूर्ण
+	}
 
-	अगर (pi->min_vddc_in_table > pl->vddc)
+	if (pi->min_vddc_in_table > pl->vddc)
 		pi->min_vddc_in_table = pl->vddc;
 
-	अगर (pi->max_vddc_in_table < pl->vddc)
+	if (pi->max_vddc_in_table < pl->vddc)
 		pi->max_vddc_in_table = pl->vddc;
 
 	/* patch up boot state */
-	अगर (rps->class & ATOM_PPLIB_CLASSIFICATION_BOOT) अणु
+	if (rps->class & ATOM_PPLIB_CLASSIFICATION_BOOT) {
 		u16 vddc, vddci, mvdd;
-		radeon_atombios_get_शेष_voltages(rdev, &vddc, &vddci, &mvdd);
-		pl->mclk = rdev->घड़ी.शेष_mclk;
-		pl->sclk = rdev->घड़ी.शेष_sclk;
+		radeon_atombios_get_default_voltages(rdev, &vddc, &vddci, &mvdd);
+		pl->mclk = rdev->clock.default_mclk;
+		pl->sclk = rdev->clock.default_sclk;
 		pl->vddc = vddc;
 		pl->vddci = vddci;
-	पूर्ण
+	}
 
-	अगर ((rps->class & ATOM_PPLIB_CLASSIFICATION_UI_MASK) ==
-	    ATOM_PPLIB_CLASSIFICATION_UI_PERFORMANCE) अणु
-		rdev->pm.dpm.dyn_state.max_घड़ी_voltage_on_ac.sclk = pl->sclk;
-		rdev->pm.dpm.dyn_state.max_घड़ी_voltage_on_ac.mclk = pl->mclk;
-		rdev->pm.dpm.dyn_state.max_घड़ी_voltage_on_ac.vddc = pl->vddc;
-		rdev->pm.dpm.dyn_state.max_घड़ी_voltage_on_ac.vddci = pl->vddci;
-	पूर्ण
-पूर्ण
+	if ((rps->class & ATOM_PPLIB_CLASSIFICATION_UI_MASK) ==
+	    ATOM_PPLIB_CLASSIFICATION_UI_PERFORMANCE) {
+		rdev->pm.dpm.dyn_state.max_clock_voltage_on_ac.sclk = pl->sclk;
+		rdev->pm.dpm.dyn_state.max_clock_voltage_on_ac.mclk = pl->mclk;
+		rdev->pm.dpm.dyn_state.max_clock_voltage_on_ac.vddc = pl->vddc;
+		rdev->pm.dpm.dyn_state.max_clock_voltage_on_ac.vddci = pl->vddci;
+	}
+}
 
-अटल पूर्णांक ni_parse_घातer_table(काष्ठा radeon_device *rdev)
-अणु
-	काष्ठा radeon_mode_info *mode_info = &rdev->mode_info;
-	काष्ठा _ATOM_PPLIB_NONCLOCK_INFO *non_घड़ी_info;
-	जोड़ pplib_घातer_state *घातer_state;
-	पूर्णांक i, j;
-	जोड़ pplib_घड़ी_info *घड़ी_info;
-	जोड़ घातer_info *घातer_info;
-	पूर्णांक index = GetIndexIntoMasterTable(DATA, PowerPlayInfo);
+static int ni_parse_power_table(struct radeon_device *rdev)
+{
+	struct radeon_mode_info *mode_info = &rdev->mode_info;
+	struct _ATOM_PPLIB_NONCLOCK_INFO *non_clock_info;
+	union pplib_power_state *power_state;
+	int i, j;
+	union pplib_clock_info *clock_info;
+	union power_info *power_info;
+	int index = GetIndexIntoMasterTable(DATA, PowerPlayInfo);
 	u16 data_offset;
 	u8 frev, crev;
-	काष्ठा ni_ps *ps;
+	struct ni_ps *ps;
 
-	अगर (!atom_parse_data_header(mode_info->atom_context, index, शून्य,
+	if (!atom_parse_data_header(mode_info->atom_context, index, NULL,
 				   &frev, &crev, &data_offset))
-		वापस -EINVAL;
-	घातer_info = (जोड़ घातer_info *)(mode_info->atom_context->bios + data_offset);
+		return -EINVAL;
+	power_info = (union power_info *)(mode_info->atom_context->bios + data_offset);
 
-	rdev->pm.dpm.ps = kसुस्मृति(घातer_info->pplib.ucNumStates,
-				  माप(काष्ठा radeon_ps),
+	rdev->pm.dpm.ps = kcalloc(power_info->pplib.ucNumStates,
+				  sizeof(struct radeon_ps),
 				  GFP_KERNEL);
-	अगर (!rdev->pm.dpm.ps)
-		वापस -ENOMEM;
+	if (!rdev->pm.dpm.ps)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < घातer_info->pplib.ucNumStates; i++) अणु
-		घातer_state = (जोड़ pplib_घातer_state *)
+	for (i = 0; i < power_info->pplib.ucNumStates; i++) {
+		power_state = (union pplib_power_state *)
 			(mode_info->atom_context->bios + data_offset +
-			 le16_to_cpu(घातer_info->pplib.usStateArrayOffset) +
-			 i * घातer_info->pplib.ucStateEntrySize);
-		non_घड़ी_info = (काष्ठा _ATOM_PPLIB_NONCLOCK_INFO *)
+			 le16_to_cpu(power_info->pplib.usStateArrayOffset) +
+			 i * power_info->pplib.ucStateEntrySize);
+		non_clock_info = (struct _ATOM_PPLIB_NONCLOCK_INFO *)
 			(mode_info->atom_context->bios + data_offset +
-			 le16_to_cpu(घातer_info->pplib.usNonClockInfoArrayOffset) +
-			 (घातer_state->v1.ucNonClockStateIndex *
-			  घातer_info->pplib.ucNonClockSize));
-		अगर (घातer_info->pplib.ucStateEntrySize - 1) अणु
+			 le16_to_cpu(power_info->pplib.usNonClockInfoArrayOffset) +
+			 (power_state->v1.ucNonClockStateIndex *
+			  power_info->pplib.ucNonClockSize));
+		if (power_info->pplib.ucStateEntrySize - 1) {
 			u8 *idx;
-			ps = kzalloc(माप(काष्ठा ni_ps), GFP_KERNEL);
-			अगर (ps == शून्य) अणु
-				kमुक्त(rdev->pm.dpm.ps);
-				वापस -ENOMEM;
-			पूर्ण
+			ps = kzalloc(sizeof(struct ni_ps), GFP_KERNEL);
+			if (ps == NULL) {
+				kfree(rdev->pm.dpm.ps);
+				return -ENOMEM;
+			}
 			rdev->pm.dpm.ps[i].ps_priv = ps;
-			ni_parse_pplib_non_घड़ी_info(rdev, &rdev->pm.dpm.ps[i],
-							 non_घड़ी_info,
-							 घातer_info->pplib.ucNonClockSize);
-			idx = (u8 *)&घातer_state->v1.ucClockStateIndices[0];
-			क्रम (j = 0; j < (घातer_info->pplib.ucStateEntrySize - 1); j++) अणु
-				घड़ी_info = (जोड़ pplib_घड़ी_info *)
+			ni_parse_pplib_non_clock_info(rdev, &rdev->pm.dpm.ps[i],
+							 non_clock_info,
+							 power_info->pplib.ucNonClockSize);
+			idx = (u8 *)&power_state->v1.ucClockStateIndices[0];
+			for (j = 0; j < (power_info->pplib.ucStateEntrySize - 1); j++) {
+				clock_info = (union pplib_clock_info *)
 					(mode_info->atom_context->bios + data_offset +
-					 le16_to_cpu(घातer_info->pplib.usClockInfoArrayOffset) +
-					 (idx[j] * घातer_info->pplib.ucClockInfoSize));
-				ni_parse_pplib_घड़ी_info(rdev,
+					 le16_to_cpu(power_info->pplib.usClockInfoArrayOffset) +
+					 (idx[j] * power_info->pplib.ucClockInfoSize));
+				ni_parse_pplib_clock_info(rdev,
 							  &rdev->pm.dpm.ps[i], j,
-							  घड़ी_info);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	rdev->pm.dpm.num_ps = घातer_info->pplib.ucNumStates;
-	वापस 0;
-पूर्ण
+							  clock_info);
+			}
+		}
+	}
+	rdev->pm.dpm.num_ps = power_info->pplib.ucNumStates;
+	return 0;
+}
 
-पूर्णांक ni_dpm_init(काष्ठा radeon_device *rdev)
-अणु
-	काष्ठा rv7xx_घातer_info *pi;
-	काष्ठा evergreen_घातer_info *eg_pi;
-	काष्ठा ni_घातer_info *ni_pi;
-	काष्ठा atom_घड़ी_भागiders भागiders;
-	पूर्णांक ret;
+int ni_dpm_init(struct radeon_device *rdev)
+{
+	struct rv7xx_power_info *pi;
+	struct evergreen_power_info *eg_pi;
+	struct ni_power_info *ni_pi;
+	struct atom_clock_dividers dividers;
+	int ret;
 
-	ni_pi = kzalloc(माप(काष्ठा ni_घातer_info), GFP_KERNEL);
-	अगर (ni_pi == शून्य)
-		वापस -ENOMEM;
+	ni_pi = kzalloc(sizeof(struct ni_power_info), GFP_KERNEL);
+	if (ni_pi == NULL)
+		return -ENOMEM;
 	rdev->pm.dpm.priv = ni_pi;
 	eg_pi = &ni_pi->eg;
 	pi = &eg_pi->rv7xx;
@@ -4068,25 +4067,25 @@ init_mc_करोne:
 	pi->min_vddc_in_table = 0;
 	pi->max_vddc_in_table = 0;
 
-	ret = r600_get_platक्रमm_caps(rdev);
-	अगर (ret)
-		वापस ret;
+	ret = r600_get_platform_caps(rdev);
+	if (ret)
+		return ret;
 
-	ret = ni_parse_घातer_table(rdev);
-	अगर (ret)
-		वापस ret;
-	ret = r600_parse_extended_घातer_table(rdev);
-	अगर (ret)
-		वापस ret;
+	ret = ni_parse_power_table(rdev);
+	if (ret)
+		return ret;
+	ret = r600_parse_extended_power_table(rdev);
+	if (ret)
+		return ret;
 
 	rdev->pm.dpm.dyn_state.vddc_dependency_on_dispclk.entries =
-		kसुस्मृति(4,
-			माप(काष्ठा radeon_घड़ी_voltage_dependency_entry),
+		kcalloc(4,
+			sizeof(struct radeon_clock_voltage_dependency_entry),
 			GFP_KERNEL);
-	अगर (!rdev->pm.dpm.dyn_state.vddc_dependency_on_dispclk.entries) अणु
-		r600_मुक्त_extended_घातer_table(rdev);
-		वापस -ENOMEM;
-	पूर्ण
+	if (!rdev->pm.dpm.dyn_state.vddc_dependency_on_dispclk.entries) {
+		r600_free_extended_power_table(rdev);
+		return -ENOMEM;
+	}
 	rdev->pm.dpm.dyn_state.vddc_dependency_on_dispclk.count = 4;
 	rdev->pm.dpm.dyn_state.vddc_dependency_on_dispclk.entries[0].clk = 0;
 	rdev->pm.dpm.dyn_state.vddc_dependency_on_dispclk.entries[0].v = 0;
@@ -4099,17 +4098,17 @@ init_mc_करोne:
 
 	ni_patch_dependency_tables_based_on_leakage(rdev);
 
-	अगर (rdev->pm.dpm.voltage_response_समय == 0)
-		rdev->pm.dpm.voltage_response_समय = R600_VOLTAGERESPONSETIME_DFLT;
-	अगर (rdev->pm.dpm.backbias_response_समय == 0)
-		rdev->pm.dpm.backbias_response_समय = R600_BACKBIASRESPONSETIME_DFLT;
+	if (rdev->pm.dpm.voltage_response_time == 0)
+		rdev->pm.dpm.voltage_response_time = R600_VOLTAGERESPONSETIME_DFLT;
+	if (rdev->pm.dpm.backbias_response_time == 0)
+		rdev->pm.dpm.backbias_response_time = R600_BACKBIASRESPONSETIME_DFLT;
 
-	ret = radeon_atom_get_घड़ी_भागiders(rdev, COMPUTE_ENGINE_PLL_PARAM,
-					     0, false, &भागiders);
-	अगर (ret)
-		pi->ref_भाग = भागiders.ref_भाग + 1;
-	अन्यथा
-		pi->ref_भाग = R600_REFERENCEDIVIDER_DFLT;
+	ret = radeon_atom_get_clock_dividers(rdev, COMPUTE_ENGINE_PLL_PARAM,
+					     0, false, &dividers);
+	if (ret)
+		pi->ref_div = dividers.ref_div + 1;
+	else
+		pi->ref_div = R600_REFERENCEDIVIDER_DFLT;
 
 	pi->rlp = RV770_RLP_DFLT;
 	pi->rmp = RV770_RMP_DFLT;
@@ -4128,15 +4127,15 @@ init_mc_करोne:
 
 	eg_pi->smu_uvd_hs = true;
 
-	अगर (rdev->pdev->device == 0x6707) अणु
+	if (rdev->pdev->device == 0x6707) {
 		pi->mclk_strobe_mode_threshold = 55000;
 		pi->mclk_edc_enable_threshold = 55000;
 		eg_pi->mclk_edc_wr_enable_threshold = 55000;
-	पूर्ण अन्यथा अणु
+	} else {
 		pi->mclk_strobe_mode_threshold = 40000;
 		pi->mclk_edc_enable_threshold = 40000;
 		eg_pi->mclk_edc_wr_enable_threshold = 40000;
-	पूर्ण
+	}
 	ni_pi->mclk_rtt_mode_threshold = eg_pi->mclk_edc_wr_enable_threshold;
 
 	pi->voltage_control =
@@ -4154,20 +4153,20 @@ init_mc_करोne:
 	pi->pasi = CYPRESS_HASI_DFLT;
 	pi->vrc = CYPRESS_VRC_DFLT;
 
-	pi->घातer_gating = false;
+	pi->power_gating = false;
 
-	pi->gfx_घड़ी_gating = true;
+	pi->gfx_clock_gating = true;
 
-	pi->mg_घड़ी_gating = true;
+	pi->mg_clock_gating = true;
 	pi->mgcgtssm = true;
-	eg_pi->ls_घड़ी_gating = false;
+	eg_pi->ls_clock_gating = false;
 	eg_pi->sclk_deep_sleep = false;
 
 	pi->dynamic_pcie_gen2 = true;
 
-	अगर (rdev->pm.पूर्णांक_thermal_type != THERMAL_TYPE_NONE)
+	if (rdev->pm.int_thermal_type != THERMAL_TYPE_NONE)
 		pi->thermal_protection = true;
-	अन्यथा
+	else
 		pi->thermal_protection = false;
 
 	pi->display_gap = true;
@@ -4181,14 +4180,14 @@ init_mc_करोne:
 	eg_pi->mcls = true;
 	eg_pi->light_sleep = true;
 	eg_pi->memory_transition = true;
-#अगर defined(CONFIG_ACPI)
-	eg_pi->pcie_perक्रमmance_request =
-		radeon_acpi_is_pcie_perक्रमmance_request_supported(rdev);
-#अन्यथा
-	eg_pi->pcie_perक्रमmance_request = false;
-#पूर्ण_अगर
+#if defined(CONFIG_ACPI)
+	eg_pi->pcie_performance_request =
+		radeon_acpi_is_pcie_performance_request_supported(rdev);
+#else
+	eg_pi->pcie_performance_request = false;
+#endif
 
-	eg_pi->dll_शेष_on = false;
+	eg_pi->dll_default_on = false;
 
 	eg_pi->sclk_deep_sleep = false;
 
@@ -4198,11 +4197,11 @@ init_mc_करोne:
 
 	rdev->pm.dpm.dyn_state.mclk_sclk_ratio = 3;
 	rdev->pm.dpm.dyn_state.vddc_vddci_delta = 200;
-	rdev->pm.dpm.dyn_state.min_vddc_क्रम_pcie_gen2 = 900;
+	rdev->pm.dpm.dyn_state.min_vddc_for_pcie_gen2 = 900;
 	rdev->pm.dpm.dyn_state.valid_sclk_values.count = ARRAY_SIZE(btc_valid_sclk);
 	rdev->pm.dpm.dyn_state.valid_sclk_values.values = btc_valid_sclk;
 	rdev->pm.dpm.dyn_state.valid_mclk_values.count = 0;
-	rdev->pm.dpm.dyn_state.valid_mclk_values.values = शून्य;
+	rdev->pm.dpm.dyn_state.valid_mclk_values.values = NULL;
 	rdev->pm.dpm.dyn_state.sclk_mclk_delta = 12500;
 
 	ni_pi->cac_data.leakage_coefficients.at = 516;
@@ -4210,175 +4209,175 @@ init_mc_करोne:
 	ni_pi->cac_data.leakage_coefficients.av = 51;
 	ni_pi->cac_data.leakage_coefficients.bv = 2957;
 
-	चयन (rdev->pdev->device) अणु
-	हाल 0x6700:
-	हाल 0x6701:
-	हाल 0x6702:
-	हाल 0x6703:
-	हाल 0x6718:
+	switch (rdev->pdev->device) {
+	case 0x6700:
+	case 0x6701:
+	case 0x6702:
+	case 0x6703:
+	case 0x6718:
 		ni_pi->cac_weights = &cac_weights_cayman_xt;
-		अवरोध;
-	हाल 0x6705:
-	हाल 0x6719:
-	हाल 0x671D:
-	हाल 0x671C:
-	शेष:
+		break;
+	case 0x6705:
+	case 0x6719:
+	case 0x671D:
+	case 0x671C:
+	default:
 		ni_pi->cac_weights = &cac_weights_cayman_pro;
-		अवरोध;
-	हाल 0x6704:
-	हाल 0x6706:
-	हाल 0x6707:
-	हाल 0x6708:
-	हाल 0x6709:
+		break;
+	case 0x6704:
+	case 0x6706:
+	case 0x6707:
+	case 0x6708:
+	case 0x6709:
 		ni_pi->cac_weights = &cac_weights_cayman_le;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (ni_pi->cac_weights->enable_घातer_containment_by_शेष) अणु
-		ni_pi->enable_घातer_containment = true;
+	if (ni_pi->cac_weights->enable_power_containment_by_default) {
+		ni_pi->enable_power_containment = true;
 		ni_pi->enable_cac = true;
 		ni_pi->enable_sq_ramping = true;
-	पूर्ण अन्यथा अणु
-		ni_pi->enable_घातer_containment = false;
+	} else {
+		ni_pi->enable_power_containment = false;
 		ni_pi->enable_cac = false;
 		ni_pi->enable_sq_ramping = false;
-	पूर्ण
+	}
 
 	ni_pi->driver_calculate_cac_leakage = false;
 	ni_pi->cac_configuration_required = true;
 
-	अगर (ni_pi->cac_configuration_required) अणु
-		ni_pi->support_cac_दीर्घ_term_average = true;
-		ni_pi->lta_winकरोw_size = ni_pi->cac_weights->l2_lta_winकरोw_size;
+	if (ni_pi->cac_configuration_required) {
+		ni_pi->support_cac_long_term_average = true;
+		ni_pi->lta_window_size = ni_pi->cac_weights->l2_lta_window_size;
 		ni_pi->lts_truncate = ni_pi->cac_weights->lts_truncate;
-	पूर्ण अन्यथा अणु
-		ni_pi->support_cac_दीर्घ_term_average = false;
-		ni_pi->lta_winकरोw_size = 0;
+	} else {
+		ni_pi->support_cac_long_term_average = false;
+		ni_pi->lta_window_size = 0;
 		ni_pi->lts_truncate = 0;
-	पूर्ण
+	}
 
-	ni_pi->use_घातer_boost_limit = true;
+	ni_pi->use_power_boost_limit = true;
 
 	/* make sure dc limits are valid */
-	अगर ((rdev->pm.dpm.dyn_state.max_घड़ी_voltage_on_dc.sclk == 0) ||
-	    (rdev->pm.dpm.dyn_state.max_घड़ी_voltage_on_dc.mclk == 0))
-		rdev->pm.dpm.dyn_state.max_घड़ी_voltage_on_dc =
-			rdev->pm.dpm.dyn_state.max_घड़ी_voltage_on_ac;
+	if ((rdev->pm.dpm.dyn_state.max_clock_voltage_on_dc.sclk == 0) ||
+	    (rdev->pm.dpm.dyn_state.max_clock_voltage_on_dc.mclk == 0))
+		rdev->pm.dpm.dyn_state.max_clock_voltage_on_dc =
+			rdev->pm.dpm.dyn_state.max_clock_voltage_on_ac;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम ni_dpm_fini(काष्ठा radeon_device *rdev)
-अणु
-	पूर्णांक i;
+void ni_dpm_fini(struct radeon_device *rdev)
+{
+	int i;
 
-	क्रम (i = 0; i < rdev->pm.dpm.num_ps; i++) अणु
-		kमुक्त(rdev->pm.dpm.ps[i].ps_priv);
-	पूर्ण
-	kमुक्त(rdev->pm.dpm.ps);
-	kमुक्त(rdev->pm.dpm.priv);
-	kमुक्त(rdev->pm.dpm.dyn_state.vddc_dependency_on_dispclk.entries);
-	r600_मुक्त_extended_घातer_table(rdev);
-पूर्ण
+	for (i = 0; i < rdev->pm.dpm.num_ps; i++) {
+		kfree(rdev->pm.dpm.ps[i].ps_priv);
+	}
+	kfree(rdev->pm.dpm.ps);
+	kfree(rdev->pm.dpm.priv);
+	kfree(rdev->pm.dpm.dyn_state.vddc_dependency_on_dispclk.entries);
+	r600_free_extended_power_table(rdev);
+}
 
-व्योम ni_dpm_prपूर्णांक_घातer_state(काष्ठा radeon_device *rdev,
-			      काष्ठा radeon_ps *rps)
-अणु
-	काष्ठा ni_ps *ps = ni_get_ps(rps);
-	काष्ठा rv7xx_pl *pl;
-	पूर्णांक i;
+void ni_dpm_print_power_state(struct radeon_device *rdev,
+			      struct radeon_ps *rps)
+{
+	struct ni_ps *ps = ni_get_ps(rps);
+	struct rv7xx_pl *pl;
+	int i;
 
-	r600_dpm_prपूर्णांक_class_info(rps->class, rps->class2);
-	r600_dpm_prपूर्णांक_cap_info(rps->caps);
-	prपूर्णांकk("\tuvd    vclk: %d dclk: %d\n", rps->vclk, rps->dclk);
-	क्रम (i = 0; i < ps->perक्रमmance_level_count; i++) अणु
-		pl = &ps->perक्रमmance_levels[i];
-		अगर (rdev->family >= CHIP_TAHITI)
-			prपूर्णांकk("\t\tpower level %d    sclk: %u mclk: %u vddc: %u vddci: %u pcie gen: %u\n",
+	r600_dpm_print_class_info(rps->class, rps->class2);
+	r600_dpm_print_cap_info(rps->caps);
+	printk("\tuvd    vclk: %d dclk: %d\n", rps->vclk, rps->dclk);
+	for (i = 0; i < ps->performance_level_count; i++) {
+		pl = &ps->performance_levels[i];
+		if (rdev->family >= CHIP_TAHITI)
+			printk("\t\tpower level %d    sclk: %u mclk: %u vddc: %u vddci: %u pcie gen: %u\n",
 			       i, pl->sclk, pl->mclk, pl->vddc, pl->vddci, pl->pcie_gen + 1);
-		अन्यथा
-			prपूर्णांकk("\t\tpower level %d    sclk: %u mclk: %u vddc: %u vddci: %u\n",
+		else
+			printk("\t\tpower level %d    sclk: %u mclk: %u vddc: %u vddci: %u\n",
 			       i, pl->sclk, pl->mclk, pl->vddc, pl->vddci);
-	पूर्ण
-	r600_dpm_prपूर्णांक_ps_status(rdev, rps);
-पूर्ण
+	}
+	r600_dpm_print_ps_status(rdev, rps);
+}
 
-व्योम ni_dpm_debugfs_prपूर्णांक_current_perक्रमmance_level(काष्ठा radeon_device *rdev,
-						    काष्ठा seq_file *m)
-अणु
-	काष्ठा evergreen_घातer_info *eg_pi = evergreen_get_pi(rdev);
-	काष्ठा radeon_ps *rps = &eg_pi->current_rps;
-	काष्ठा ni_ps *ps = ni_get_ps(rps);
-	काष्ठा rv7xx_pl *pl;
+void ni_dpm_debugfs_print_current_performance_level(struct radeon_device *rdev,
+						    struct seq_file *m)
+{
+	struct evergreen_power_info *eg_pi = evergreen_get_pi(rdev);
+	struct radeon_ps *rps = &eg_pi->current_rps;
+	struct ni_ps *ps = ni_get_ps(rps);
+	struct rv7xx_pl *pl;
 	u32 current_index =
-		(RREG32(TARGET_AND_CURRENT_PROखाता_INDEX) & CURRENT_STATE_INDEX_MASK) >>
+		(RREG32(TARGET_AND_CURRENT_PROFILE_INDEX) & CURRENT_STATE_INDEX_MASK) >>
 		CURRENT_STATE_INDEX_SHIFT;
 
-	अगर (current_index >= ps->perक्रमmance_level_count) अणु
-		seq_म_लिखो(m, "invalid dpm profile %d\n", current_index);
-	पूर्ण अन्यथा अणु
-		pl = &ps->perक्रमmance_levels[current_index];
-		seq_म_लिखो(m, "uvd    vclk: %d dclk: %d\n", rps->vclk, rps->dclk);
-		seq_म_लिखो(m, "power level %d    sclk: %u mclk: %u vddc: %u vddci: %u\n",
+	if (current_index >= ps->performance_level_count) {
+		seq_printf(m, "invalid dpm profile %d\n", current_index);
+	} else {
+		pl = &ps->performance_levels[current_index];
+		seq_printf(m, "uvd    vclk: %d dclk: %d\n", rps->vclk, rps->dclk);
+		seq_printf(m, "power level %d    sclk: %u mclk: %u vddc: %u vddci: %u\n",
 			   current_index, pl->sclk, pl->mclk, pl->vddc, pl->vddci);
-	पूर्ण
-पूर्ण
+	}
+}
 
-u32 ni_dpm_get_current_sclk(काष्ठा radeon_device *rdev)
-अणु
-	काष्ठा evergreen_घातer_info *eg_pi = evergreen_get_pi(rdev);
-	काष्ठा radeon_ps *rps = &eg_pi->current_rps;
-	काष्ठा ni_ps *ps = ni_get_ps(rps);
-	काष्ठा rv7xx_pl *pl;
+u32 ni_dpm_get_current_sclk(struct radeon_device *rdev)
+{
+	struct evergreen_power_info *eg_pi = evergreen_get_pi(rdev);
+	struct radeon_ps *rps = &eg_pi->current_rps;
+	struct ni_ps *ps = ni_get_ps(rps);
+	struct rv7xx_pl *pl;
 	u32 current_index =
-		(RREG32(TARGET_AND_CURRENT_PROखाता_INDEX) & CURRENT_STATE_INDEX_MASK) >>
+		(RREG32(TARGET_AND_CURRENT_PROFILE_INDEX) & CURRENT_STATE_INDEX_MASK) >>
 		CURRENT_STATE_INDEX_SHIFT;
 
-	अगर (current_index >= ps->perक्रमmance_level_count) अणु
-		वापस 0;
-	पूर्ण अन्यथा अणु
-		pl = &ps->perक्रमmance_levels[current_index];
-		वापस pl->sclk;
-	पूर्ण
-पूर्ण
+	if (current_index >= ps->performance_level_count) {
+		return 0;
+	} else {
+		pl = &ps->performance_levels[current_index];
+		return pl->sclk;
+	}
+}
 
-u32 ni_dpm_get_current_mclk(काष्ठा radeon_device *rdev)
-अणु
-	काष्ठा evergreen_घातer_info *eg_pi = evergreen_get_pi(rdev);
-	काष्ठा radeon_ps *rps = &eg_pi->current_rps;
-	काष्ठा ni_ps *ps = ni_get_ps(rps);
-	काष्ठा rv7xx_pl *pl;
+u32 ni_dpm_get_current_mclk(struct radeon_device *rdev)
+{
+	struct evergreen_power_info *eg_pi = evergreen_get_pi(rdev);
+	struct radeon_ps *rps = &eg_pi->current_rps;
+	struct ni_ps *ps = ni_get_ps(rps);
+	struct rv7xx_pl *pl;
 	u32 current_index =
-		(RREG32(TARGET_AND_CURRENT_PROखाता_INDEX) & CURRENT_STATE_INDEX_MASK) >>
+		(RREG32(TARGET_AND_CURRENT_PROFILE_INDEX) & CURRENT_STATE_INDEX_MASK) >>
 		CURRENT_STATE_INDEX_SHIFT;
 
-	अगर (current_index >= ps->perक्रमmance_level_count) अणु
-		वापस 0;
-	पूर्ण अन्यथा अणु
-		pl = &ps->perक्रमmance_levels[current_index];
-		वापस pl->mclk;
-	पूर्ण
-पूर्ण
+	if (current_index >= ps->performance_level_count) {
+		return 0;
+	} else {
+		pl = &ps->performance_levels[current_index];
+		return pl->mclk;
+	}
+}
 
-u32 ni_dpm_get_sclk(काष्ठा radeon_device *rdev, bool low)
-अणु
-	काष्ठा evergreen_घातer_info *eg_pi = evergreen_get_pi(rdev);
-	काष्ठा ni_ps *requested_state = ni_get_ps(&eg_pi->requested_rps);
+u32 ni_dpm_get_sclk(struct radeon_device *rdev, bool low)
+{
+	struct evergreen_power_info *eg_pi = evergreen_get_pi(rdev);
+	struct ni_ps *requested_state = ni_get_ps(&eg_pi->requested_rps);
 
-	अगर (low)
-		वापस requested_state->perक्रमmance_levels[0].sclk;
-	अन्यथा
-		वापस requested_state->perक्रमmance_levels[requested_state->perक्रमmance_level_count - 1].sclk;
-पूर्ण
+	if (low)
+		return requested_state->performance_levels[0].sclk;
+	else
+		return requested_state->performance_levels[requested_state->performance_level_count - 1].sclk;
+}
 
-u32 ni_dpm_get_mclk(काष्ठा radeon_device *rdev, bool low)
-अणु
-	काष्ठा evergreen_घातer_info *eg_pi = evergreen_get_pi(rdev);
-	काष्ठा ni_ps *requested_state = ni_get_ps(&eg_pi->requested_rps);
+u32 ni_dpm_get_mclk(struct radeon_device *rdev, bool low)
+{
+	struct evergreen_power_info *eg_pi = evergreen_get_pi(rdev);
+	struct ni_ps *requested_state = ni_get_ps(&eg_pi->requested_rps);
 
-	अगर (low)
-		वापस requested_state->perक्रमmance_levels[0].mclk;
-	अन्यथा
-		वापस requested_state->perक्रमmance_levels[requested_state->perक्रमmance_level_count - 1].mclk;
-पूर्ण
+	if (low)
+		return requested_state->performance_levels[0].mclk;
+	else
+		return requested_state->performance_levels[requested_state->performance_level_count - 1].mclk;
+}
 

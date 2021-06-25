@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,26 +21,26 @@
  *
  * Authors: Ben Skeggs
  */
-#समावेश "nouveau_drv.h"
-#समावेश "nouveau_dma.h"
-#समावेश "nouveau_fence.h"
+#include "nouveau_drv.h"
+#include "nouveau_dma.h"
+#include "nouveau_fence.h"
 
-#समावेश "nv50_display.h"
+#include "nv50_display.h"
 
-#समावेश <nvअगर/push906f.h>
+#include <nvif/push906f.h>
 
-#समावेश <nvhw/class/cl906f.h>
+#include <nvhw/class/cl906f.h>
 
-अटल पूर्णांक
-nvc0_fence_emit32(काष्ठा nouveau_channel *chan, u64 भव, u32 sequence)
-अणु
-	काष्ठा nvअगर_push *push = chan->chan.push;
-	पूर्णांक ret = PUSH_WAIT(push, 6);
-	अगर (ret == 0) अणु
+static int
+nvc0_fence_emit32(struct nouveau_channel *chan, u64 virtual, u32 sequence)
+{
+	struct nvif_push *push = chan->chan.push;
+	int ret = PUSH_WAIT(push, 6);
+	if (ret == 0) {
 		PUSH_MTHD(push, NV906F, SEMAPHOREA,
-			  NVVAL(NV906F, SEMAPHOREA, OFFSET_UPPER, upper_32_bits(भव)),
+			  NVVAL(NV906F, SEMAPHOREA, OFFSET_UPPER, upper_32_bits(virtual)),
 
-					SEMAPHOREB, lower_32_bits(भव),
+					SEMAPHOREB, lower_32_bits(virtual),
 					SEMAPHOREC, sequence,
 
 					SEMAPHORED,
@@ -51,49 +50,49 @@ nvc0_fence_emit32(काष्ठा nouveau_channel *chan, u64 भव, u32 sequ
 
 					NON_STALL_INTERRUPT, 0);
 		PUSH_KICK(push);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल पूर्णांक
-nvc0_fence_sync32(काष्ठा nouveau_channel *chan, u64 भव, u32 sequence)
-अणु
-	काष्ठा nvअगर_push *push = chan->chan.push;
-	पूर्णांक ret = PUSH_WAIT(push, 5);
-	अगर (ret == 0) अणु
+static int
+nvc0_fence_sync32(struct nouveau_channel *chan, u64 virtual, u32 sequence)
+{
+	struct nvif_push *push = chan->chan.push;
+	int ret = PUSH_WAIT(push, 5);
+	if (ret == 0) {
 		PUSH_MTHD(push, NV906F, SEMAPHOREA,
-			  NVVAL(NV906F, SEMAPHOREA, OFFSET_UPPER, upper_32_bits(भव)),
+			  NVVAL(NV906F, SEMAPHOREA, OFFSET_UPPER, upper_32_bits(virtual)),
 
-					SEMAPHOREB, lower_32_bits(भव),
+					SEMAPHOREB, lower_32_bits(virtual),
 					SEMAPHOREC, sequence,
 
 					SEMAPHORED,
 			  NVDEF(NV906F, SEMAPHORED, OPERATION, ACQ_GEQ) |
 			  NVDEF(NV906F, SEMAPHORED, ACQUIRE_SWITCH, ENABLED));
 		PUSH_KICK(push);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल पूर्णांक
-nvc0_fence_context_new(काष्ठा nouveau_channel *chan)
-अणु
-	पूर्णांक ret = nv84_fence_context_new(chan);
-	अगर (ret == 0) अणु
-		काष्ठा nv84_fence_chan *fctx = chan->fence;
+static int
+nvc0_fence_context_new(struct nouveau_channel *chan)
+{
+	int ret = nv84_fence_context_new(chan);
+	if (ret == 0) {
+		struct nv84_fence_chan *fctx = chan->fence;
 		fctx->base.emit32 = nvc0_fence_emit32;
 		fctx->base.sync32 = nvc0_fence_sync32;
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-पूर्णांक
-nvc0_fence_create(काष्ठा nouveau_drm *drm)
-अणु
-	पूर्णांक ret = nv84_fence_create(drm);
-	अगर (ret == 0) अणु
-		काष्ठा nv84_fence_priv *priv = drm->fence;
+int
+nvc0_fence_create(struct nouveau_drm *drm)
+{
+	int ret = nv84_fence_create(drm);
+	if (ret == 0) {
+		struct nv84_fence_priv *priv = drm->fence;
 		priv->base.context_new = nvc0_fence_context_new;
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}

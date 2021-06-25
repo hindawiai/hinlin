@@ -1,19 +1,18 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /* Copyright 2019 Collabora Ltd */
-#अगर_अघोषित __PANFROST_PERFCNT_H__
-#घोषणा __PANFROST_PERFCNT_H__
+#ifndef __PANFROST_PERFCNT_H__
+#define __PANFROST_PERFCNT_H__
 
-#समावेश "panfrost_device.h"
+#include "panfrost_device.h"
 
-व्योम panfrost_perfcnt_sample_करोne(काष्ठा panfrost_device *pfdev);
-व्योम panfrost_perfcnt_clean_cache_करोne(काष्ठा panfrost_device *pfdev);
-पूर्णांक panfrost_perfcnt_init(काष्ठा panfrost_device *pfdev);
-व्योम panfrost_perfcnt_fini(काष्ठा panfrost_device *pfdev);
-व्योम panfrost_perfcnt_बंद(काष्ठा drm_file *file_priv);
-पूर्णांक panfrost_ioctl_perfcnt_enable(काष्ठा drm_device *dev, व्योम *data,
-				  काष्ठा drm_file *file_priv);
-पूर्णांक panfrost_ioctl_perfcnt_dump(काष्ठा drm_device *dev, व्योम *data,
-				काष्ठा drm_file *file_priv);
+void panfrost_perfcnt_sample_done(struct panfrost_device *pfdev);
+void panfrost_perfcnt_clean_cache_done(struct panfrost_device *pfdev);
+int panfrost_perfcnt_init(struct panfrost_device *pfdev);
+void panfrost_perfcnt_fini(struct panfrost_device *pfdev);
+void panfrost_perfcnt_close(struct drm_file *file_priv);
+int panfrost_ioctl_perfcnt_enable(struct drm_device *dev, void *data,
+				  struct drm_file *file_priv);
+int panfrost_ioctl_perfcnt_dump(struct drm_device *dev, void *data,
+				struct drm_file *file_priv);
 
-#पूर्ण_अगर
+#endif

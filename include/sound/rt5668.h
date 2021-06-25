@@ -1,38 +1,37 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * linux/sound/rt5668.h -- Platक्रमm data क्रम RT5668
+ * linux/sound/rt5668.h -- Platform data for RT5668
  *
  * Copyright 2018 Realtek Microelectronics
  */
 
-#अगर_अघोषित __LINUX_SND_RT5668_H
-#घोषणा __LINUX_SND_RT5668_H
+#ifndef __LINUX_SND_RT5668_H
+#define __LINUX_SND_RT5668_H
 
-क्रमागत rt5668_dmic1_data_pin अणु
-	RT5668_DMIC1_शून्य,
+enum rt5668_dmic1_data_pin {
+	RT5668_DMIC1_NULL,
 	RT5668_DMIC1_DATA_GPIO2,
 	RT5668_DMIC1_DATA_GPIO5,
-पूर्ण;
+};
 
-क्रमागत rt5668_dmic1_clk_pin अणु
+enum rt5668_dmic1_clk_pin {
 	RT5668_DMIC1_CLK_GPIO1,
 	RT5668_DMIC1_CLK_GPIO3,
-पूर्ण;
+};
 
-क्रमागत rt5668_jd_src अणु
-	RT5668_JD_शून्य,
+enum rt5668_jd_src {
+	RT5668_JD_NULL,
 	RT5668_JD1,
-पूर्ण;
+};
 
-काष्ठा rt5668_platक्रमm_data अणु
+struct rt5668_platform_data {
 
-	पूर्णांक lकरो1_en; /* GPIO क्रम LDO1_EN */
+	int ldo1_en; /* GPIO for LDO1_EN */
 
-	क्रमागत rt5668_dmic1_data_pin dmic1_data_pin;
-	क्रमागत rt5668_dmic1_clk_pin dmic1_clk_pin;
-	क्रमागत rt5668_jd_src jd_src;
-पूर्ण;
+	enum rt5668_dmic1_data_pin dmic1_data_pin;
+	enum rt5668_dmic1_clk_pin dmic1_clk_pin;
+	enum rt5668_jd_src jd_src;
+};
 
-#पूर्ण_अगर
+#endif
 

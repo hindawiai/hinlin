@@ -1,200 +1,199 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2010-2011 Atheros Communications Inc.
  * Copyright (c) 2011-2012 Qualcomm Atheros, Inc.
  *
- * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 /*
- * This file contains the definitions of the WMI protocol specअगरied in the
+ * This file contains the definitions of the WMI protocol specified in the
  * Wireless Module Interface (WMI).  It includes definitions of all the
  * commands and events. Commands are messages from the host to the WM.
  * Events and Replies are messages from the WM to the host.
  */
 
-#अगर_अघोषित WMI_H
-#घोषणा WMI_H
+#ifndef WMI_H
+#define WMI_H
 
-#समावेश <linux/ieee80211.h>
+#include <linux/ieee80211.h>
 
-#समावेश "htc.h"
+#include "htc.h"
 
-#घोषणा HTC_PROTOCOL_VERSION		0x0002
-#घोषणा WMI_PROTOCOL_VERSION		0x0002
-#घोषणा WMI_CONTROL_MSG_MAX_LEN		256
-#घोषणा is_ethertype(type_or_len)	((type_or_len) >= 0x0600)
+#define HTC_PROTOCOL_VERSION		0x0002
+#define WMI_PROTOCOL_VERSION		0x0002
+#define WMI_CONTROL_MSG_MAX_LEN		256
+#define is_ethertype(type_or_len)	((type_or_len) >= 0x0600)
 
-#घोषणा IP_ETHERTYPE		0x0800
+#define IP_ETHERTYPE		0x0800
 
-#घोषणा WMI_IMPLICIT_PSTREAM	0xFF
-#घोषणा WMI_MAX_THINSTREAM	15
+#define WMI_IMPLICIT_PSTREAM	0xFF
+#define WMI_MAX_THINSTREAM	15
 
-#घोषणा SSID_IE_LEN_INDEX	13
+#define SSID_IE_LEN_INDEX	13
 
-/* Host side link management data काष्ठाures */
-#घोषणा SIG_QUALITY_THRESH_LVLS		6
-#घोषणा SIG_QUALITY_UPPER_THRESH_LVLS	SIG_QUALITY_THRESH_LVLS
-#घोषणा SIG_QUALITY_LOWER_THRESH_LVLS	SIG_QUALITY_THRESH_LVLS
+/* Host side link management data structures */
+#define SIG_QUALITY_THRESH_LVLS		6
+#define SIG_QUALITY_UPPER_THRESH_LVLS	SIG_QUALITY_THRESH_LVLS
+#define SIG_QUALITY_LOWER_THRESH_LVLS	SIG_QUALITY_THRESH_LVLS
 
-#घोषणा A_BAND_24GHZ           0
-#घोषणा A_BAND_5GHZ            1
-#घोषणा ATH6KL_NUM_BANDS       2
+#define A_BAND_24GHZ           0
+#define A_BAND_5GHZ            1
+#define ATH6KL_NUM_BANDS       2
 
 /* in ms */
-#घोषणा WMI_IMPLICIT_PSTREAM_INACTIVITY_INT 5000
+#define WMI_IMPLICIT_PSTREAM_INACTIVITY_INT 5000
 
 /*
- * There are no चिन्हित versions of __le16 and __le32, so क्रम a temporary
+ * There are no signed versions of __le16 and __le32, so for a temporary
  * solution come up with our own version. The idea is from fs/ntfs/types.h.
  *
- * Use a_ prefix so that it करोesn't conflict अगर we get proper support to
+ * Use a_ prefix so that it doesn't conflict if we get proper support to
  * linux/types.h.
  */
-प्रकार __s16 __bitwise a_sle16;
-प्रकार __s32 __bitwise a_sle32;
+typedef __s16 __bitwise a_sle16;
+typedef __s32 __bitwise a_sle32;
 
-अटल अंतरभूत a_sle32 a_cpu_to_sle32(s32 val)
-अणु
-	वापस (__क्रमce a_sle32) cpu_to_le32(val);
-पूर्ण
+static inline a_sle32 a_cpu_to_sle32(s32 val)
+{
+	return (__force a_sle32) cpu_to_le32(val);
+}
 
-अटल अंतरभूत s32 a_sle32_to_cpu(a_sle32 val)
-अणु
-	वापस le32_to_cpu((__क्रमce __le32) val);
-पूर्ण
+static inline s32 a_sle32_to_cpu(a_sle32 val)
+{
+	return le32_to_cpu((__force __le32) val);
+}
 
-अटल अंतरभूत a_sle16 a_cpu_to_sle16(s16 val)
-अणु
-	वापस (__क्रमce a_sle16) cpu_to_le16(val);
-पूर्ण
+static inline a_sle16 a_cpu_to_sle16(s16 val)
+{
+	return (__force a_sle16) cpu_to_le16(val);
+}
 
-अटल अंतरभूत s16 a_sle16_to_cpu(a_sle16 val)
-अणु
-	वापस le16_to_cpu((__क्रमce __le16) val);
-पूर्ण
+static inline s16 a_sle16_to_cpu(a_sle16 val)
+{
+	return le16_to_cpu((__force __le16) val);
+}
 
-काष्ठा sq_threshold_params अणु
+struct sq_threshold_params {
 	s16 upper_threshold[SIG_QUALITY_UPPER_THRESH_LVLS];
 	s16 lower_threshold[SIG_QUALITY_LOWER_THRESH_LVLS];
 	u32 upper_threshold_valid_count;
 	u32 lower_threshold_valid_count;
-	u32 polling_पूर्णांकerval;
+	u32 polling_interval;
 	u8 weight;
 	u8 last_rssi;
 	u8 last_rssi_poll_event;
-पूर्ण;
+};
 
-काष्ठा wmi_data_sync_bufs अणु
+struct wmi_data_sync_bufs {
 	u8 traffic_class;
-	काष्ठा sk_buff *skb;
-पूर्ण;
+	struct sk_buff *skb;
+};
 
 /* WMM stream classes */
-#घोषणा WMM_NUM_AC  4
-#घोषणा WMM_AC_BE   0		/* best efक्रमt */
-#घोषणा WMM_AC_BK   1		/* background */
-#घोषणा WMM_AC_VI   2		/* video */
-#घोषणा WMM_AC_VO   3		/* voice */
+#define WMM_NUM_AC  4
+#define WMM_AC_BE   0		/* best effort */
+#define WMM_AC_BK   1		/* background */
+#define WMM_AC_VI   2		/* video */
+#define WMM_AC_VO   3		/* voice */
 
-#घोषणा WMI_VOICE_USER_PRIORITY		0x7
+#define WMI_VOICE_USER_PRIORITY		0x7
 
-काष्ठा wmi अणु
-	u16 stream_exist_क्रम_ac[WMM_NUM_AC];
+struct wmi {
+	u16 stream_exist_for_ac[WMM_NUM_AC];
 	u8 fat_pipe_exist;
-	काष्ठा ath6kl *parent_dev;
+	struct ath6kl *parent_dev;
 	u8 pwr_mode;
 
-	/* protects fat_pipe_exist and stream_exist_क्रम_ac */
+	/* protects fat_pipe_exist and stream_exist_for_ac */
 	spinlock_t lock;
-	क्रमागत htc_endpoपूर्णांक_id ep_id;
-	काष्ठा sq_threshold_params
+	enum htc_endpoint_id ep_id;
+	struct sq_threshold_params
 	    sq_threshld[SIGNAL_QUALITY_METRICS_NUM_MAX];
 	bool is_wmm_enabled;
 	u8 traffic_class;
 	bool is_probe_ssid;
 
 	u8 *last_mgmt_tx_frame;
-	माप_प्रकार last_mgmt_tx_frame_len;
+	size_t last_mgmt_tx_frame_len;
 	u8 saved_pwr_mode;
-पूर्ण;
+};
 
-काष्ठा host_app_area अणु
+struct host_app_area {
 	__le32 wmi_protocol_ver;
-पूर्ण __packed;
+} __packed;
 
-क्रमागत wmi_msg_type अणु
+enum wmi_msg_type {
 	DATA_MSGTYPE = 0x0,
 	CNTL_MSGTYPE,
 	SYNC_MSGTYPE,
 	OPT_MSGTYPE,
-पूर्ण;
+};
 
 /*
- * Macros क्रम operating on WMI_DATA_HDR (info) field
+ * Macros for operating on WMI_DATA_HDR (info) field
  */
 
-#घोषणा WMI_DATA_HDR_MSG_TYPE_MASK  0x03
-#घोषणा WMI_DATA_HDR_MSG_TYPE_SHIFT 0
-#घोषणा WMI_DATA_HDR_UP_MASK        0x07
-#घोषणा WMI_DATA_HDR_UP_SHIFT       2
+#define WMI_DATA_HDR_MSG_TYPE_MASK  0x03
+#define WMI_DATA_HDR_MSG_TYPE_SHIFT 0
+#define WMI_DATA_HDR_UP_MASK        0x07
+#define WMI_DATA_HDR_UP_SHIFT       2
 
 /* In AP mode, the same bit (b5) is used to indicate Power save state in
  * the Rx dir and More data bit state in the tx direction.
  */
-#घोषणा WMI_DATA_HDR_PS_MASK        0x1
-#घोषणा WMI_DATA_HDR_PS_SHIFT       5
+#define WMI_DATA_HDR_PS_MASK        0x1
+#define WMI_DATA_HDR_PS_SHIFT       5
 
-#घोषणा WMI_DATA_HDR_MORE	0x20
+#define WMI_DATA_HDR_MORE	0x20
 
-क्रमागत wmi_data_hdr_data_type अणु
+enum wmi_data_hdr_data_type {
 	WMI_DATA_HDR_DATA_TYPE_802_3 = 0,
 	WMI_DATA_HDR_DATA_TYPE_802_11,
 
-	/* used to be used क्रम the PAL */
+	/* used to be used for the PAL */
 	WMI_DATA_HDR_DATA_TYPE_ACL,
-पूर्ण;
+};
 
-/* Biपंचांगap of data header flags */
-क्रमागत wmi_data_hdr_flags अणु
+/* Bitmap of data header flags */
+enum wmi_data_hdr_flags {
 	WMI_DATA_HDR_FLAGS_MORE = 0x1,
 	WMI_DATA_HDR_FLAGS_EOSP = 0x2,
 	WMI_DATA_HDR_FLAGS_UAPSD = 0x4,
-पूर्ण;
+};
 
-#घोषणा WMI_DATA_HDR_DATA_TYPE_MASK     0x3
-#घोषणा WMI_DATA_HDR_DATA_TYPE_SHIFT    6
+#define WMI_DATA_HDR_DATA_TYPE_MASK     0x3
+#define WMI_DATA_HDR_DATA_TYPE_SHIFT    6
 
-/* Macros क्रम operating on WMI_DATA_HDR (info2) field */
-#घोषणा WMI_DATA_HDR_SEQNO_MASK     0xFFF
-#घोषणा WMI_DATA_HDR_SEQNO_SHIFT    0
+/* Macros for operating on WMI_DATA_HDR (info2) field */
+#define WMI_DATA_HDR_SEQNO_MASK     0xFFF
+#define WMI_DATA_HDR_SEQNO_SHIFT    0
 
-#घोषणा WMI_DATA_HDR_AMSDU_MASK     0x1
-#घोषणा WMI_DATA_HDR_AMSDU_SHIFT    12
+#define WMI_DATA_HDR_AMSDU_MASK     0x1
+#define WMI_DATA_HDR_AMSDU_SHIFT    12
 
-#घोषणा WMI_DATA_HDR_META_MASK      0x7
-#घोषणा WMI_DATA_HDR_META_SHIFT     13
+#define WMI_DATA_HDR_META_MASK      0x7
+#define WMI_DATA_HDR_META_SHIFT     13
 
-#घोषणा WMI_DATA_HDR_PAD_BEFORE_DATA_MASK               0xFF
-#घोषणा WMI_DATA_HDR_PAD_BEFORE_DATA_SHIFT              0x8
+#define WMI_DATA_HDR_PAD_BEFORE_DATA_MASK               0xFF
+#define WMI_DATA_HDR_PAD_BEFORE_DATA_SHIFT              0x8
 
-/* Macros क्रम operating on WMI_DATA_HDR (info3) field */
-#घोषणा WMI_DATA_HDR_IF_IDX_MASK    0xF
+/* Macros for operating on WMI_DATA_HDR (info3) field */
+#define WMI_DATA_HDR_IF_IDX_MASK    0xF
 
-#घोषणा WMI_DATA_HDR_TRIG	    0x10
-#घोषणा WMI_DATA_HDR_EOSP	    0x10
+#define WMI_DATA_HDR_TRIG	    0x10
+#define WMI_DATA_HDR_EOSP	    0x10
 
-काष्ठा wmi_data_hdr अणु
+struct wmi_data_hdr {
 	s8 rssi;
 
 	/*
@@ -226,71 +225,71 @@
 	 * b15:b5	- Reserved
 	 */
 	__le16 info3;
-पूर्ण __packed;
+} __packed;
 
-अटल अंतरभूत u8 wmi_data_hdr_get_up(काष्ठा wmi_data_hdr *dhdr)
-अणु
-	वापस (dhdr->info >> WMI_DATA_HDR_UP_SHIFT) & WMI_DATA_HDR_UP_MASK;
-पूर्ण
+static inline u8 wmi_data_hdr_get_up(struct wmi_data_hdr *dhdr)
+{
+	return (dhdr->info >> WMI_DATA_HDR_UP_SHIFT) & WMI_DATA_HDR_UP_MASK;
+}
 
-अटल अंतरभूत व्योम wmi_data_hdr_set_up(काष्ठा wmi_data_hdr *dhdr,
+static inline void wmi_data_hdr_set_up(struct wmi_data_hdr *dhdr,
 				       u8 usr_pri)
-अणु
+{
 	dhdr->info &= ~(WMI_DATA_HDR_UP_MASK << WMI_DATA_HDR_UP_SHIFT);
 	dhdr->info |= usr_pri << WMI_DATA_HDR_UP_SHIFT;
-पूर्ण
+}
 
-अटल अंतरभूत u8 wmi_data_hdr_get_करोt11(काष्ठा wmi_data_hdr *dhdr)
-अणु
+static inline u8 wmi_data_hdr_get_dot11(struct wmi_data_hdr *dhdr)
+{
 	u8 data_type;
 
 	data_type = (dhdr->info >> WMI_DATA_HDR_DATA_TYPE_SHIFT) &
 				   WMI_DATA_HDR_DATA_TYPE_MASK;
-	वापस (data_type == WMI_DATA_HDR_DATA_TYPE_802_11);
-पूर्ण
+	return (data_type == WMI_DATA_HDR_DATA_TYPE_802_11);
+}
 
-अटल अंतरभूत u16 wmi_data_hdr_get_seqno(काष्ठा wmi_data_hdr *dhdr)
-अणु
-	वापस (le16_to_cpu(dhdr->info2) >> WMI_DATA_HDR_SEQNO_SHIFT) &
+static inline u16 wmi_data_hdr_get_seqno(struct wmi_data_hdr *dhdr)
+{
+	return (le16_to_cpu(dhdr->info2) >> WMI_DATA_HDR_SEQNO_SHIFT) &
 				WMI_DATA_HDR_SEQNO_MASK;
-पूर्ण
+}
 
-अटल अंतरभूत u8 wmi_data_hdr_is_amsdu(काष्ठा wmi_data_hdr *dhdr)
-अणु
-	वापस (le16_to_cpu(dhdr->info2) >> WMI_DATA_HDR_AMSDU_SHIFT) &
+static inline u8 wmi_data_hdr_is_amsdu(struct wmi_data_hdr *dhdr)
+{
+	return (le16_to_cpu(dhdr->info2) >> WMI_DATA_HDR_AMSDU_SHIFT) &
 			       WMI_DATA_HDR_AMSDU_MASK;
-पूर्ण
+}
 
-अटल अंतरभूत u8 wmi_data_hdr_get_meta(काष्ठा wmi_data_hdr *dhdr)
-अणु
-	वापस (le16_to_cpu(dhdr->info2) >> WMI_DATA_HDR_META_SHIFT) &
+static inline u8 wmi_data_hdr_get_meta(struct wmi_data_hdr *dhdr)
+{
+	return (le16_to_cpu(dhdr->info2) >> WMI_DATA_HDR_META_SHIFT) &
 			       WMI_DATA_HDR_META_MASK;
-पूर्ण
+}
 
-अटल अंतरभूत u8 wmi_data_hdr_get_अगर_idx(काष्ठा wmi_data_hdr *dhdr)
-अणु
-	वापस le16_to_cpu(dhdr->info3) & WMI_DATA_HDR_IF_IDX_MASK;
-पूर्ण
+static inline u8 wmi_data_hdr_get_if_idx(struct wmi_data_hdr *dhdr)
+{
+	return le16_to_cpu(dhdr->info3) & WMI_DATA_HDR_IF_IDX_MASK;
+}
 
 /* Tx meta version definitions */
-#घोषणा WMI_MAX_TX_META_SZ	12
-#घोषणा WMI_META_VERSION_1	0x01
-#घोषणा WMI_META_VERSION_2	0x02
+#define WMI_MAX_TX_META_SZ	12
+#define WMI_META_VERSION_1	0x01
+#define WMI_META_VERSION_2	0x02
 
-/* Flag to संकेत to FW to calculate TCP checksum */
-#घोषणा WMI_META_V2_FLAG_CSUM_OFFLOAD 0x01
+/* Flag to signal to FW to calculate TCP checksum */
+#define WMI_META_V2_FLAG_CSUM_OFFLOAD 0x01
 
-काष्ठा wmi_tx_meta_v1 अणु
-	/* packet ID to identअगरy the tx request */
+struct wmi_tx_meta_v1 {
+	/* packet ID to identify the tx request */
 	u8 pkt_id;
 
-	/* rate policy to be used क्रम the tx of this frame */
+	/* rate policy to be used for the tx of this frame */
 	u8 rate_plcy_id;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_tx_meta_v2 अणु
+struct wmi_tx_meta_v2 {
 	/*
-	 * Offset from start of the WMI header क्रम csum calculation to
+	 * Offset from start of the WMI header for csum calculation to
 	 * begin.
 	 */
 	u8 csum_start;
@@ -300,9 +299,9 @@
 
 	/* no of bytes over which csum is calculated */
 	u8 csum_flags;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_rx_meta_v1 अणु
+struct wmi_rx_meta_v1 {
 	u8 status;
 
 	/* rate index mapped to rate at which this packet was received. */
@@ -315,19 +314,19 @@
 	u8 channel;
 
 	__le16 flags;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_rx_meta_v2 अणु
+struct wmi_rx_meta_v2 {
 	__le16 csum;
 
 	/* bit 0 set -partial csum valid bit 1 set -test mode */
 	u8 csum_flags;
-पूर्ण __packed;
+} __packed;
 
-#घोषणा WMI_CMD_HDR_IF_ID_MASK 0xF
+#define WMI_CMD_HDR_IF_ID_MASK 0xF
 
 /* Control Path */
-काष्ठा wmi_cmd_hdr अणु
+struct wmi_cmd_hdr {
 	__le16 cmd_id;
 
 	/* info1 - 16 bits
@@ -335,17 +334,17 @@
 	 * b15:b04 - unused */
 	__le16 info1;
 
-	/* क्रम alignment */
+	/* for alignment */
 	__le16 reserved;
-पूर्ण __packed;
+} __packed;
 
-अटल अंतरभूत u8 wmi_cmd_hdr_get_अगर_idx(काष्ठा wmi_cmd_hdr *chdr)
-अणु
-	वापस le16_to_cpu(chdr->info1) & WMI_CMD_HDR_IF_ID_MASK;
-पूर्ण
+static inline u8 wmi_cmd_hdr_get_if_idx(struct wmi_cmd_hdr *chdr)
+{
+	return le16_to_cpu(chdr->info1) & WMI_CMD_HDR_IF_ID_MASK;
+}
 
 /* List of WMI commands */
-क्रमागत wmi_cmd_id अणु
+enum wmi_cmd_id {
 	WMI_CONNECT_CMDID = 0x0001,
 	WMI_RECONNECT_CMDID,
 	WMI_DISCONNECT_CMDID,
@@ -354,7 +353,7 @@
 	WMI_DELETE_PSTREAM_CMDID,
 	/* WMI_START_SCAN_CMDID is to be deprecated. Use
 	 * WMI_BEGIN_SCAN_CMDID instead. The new cmd supports P2P mgmt
-	 * operations using station पूर्णांकerface.
+	 * operations using station interface.
 	 */
 	WMI_START_SCAN_CMDID,
 	WMI_SET_SCAN_PARAMS_CMDID,
@@ -432,7 +431,7 @@
 	WMI_SET_IE_CMDID,
 
 	/* WMI_THIN_RESERVED_... mark the start and end
-	 * values क्रम WMI_THIN_RESERVED command IDs. These
+	 * values for WMI_THIN_RESERVED command IDs. These
 	 * command IDs can be found in wmi_thin.h */
 	WMI_THIN_RESERVED_START = 0x8000,
 	WMI_THIN_RESERVED_END = 0x8fff,
@@ -534,7 +533,7 @@
 	/* ACS command, consists of sub-commands */
 	WMI_ACS_CTRL_CMDID,
 	WMI_SET_EXCESS_TX_RETRY_THRES_CMDID,
-	WMI_SET_TBD_TIME_CMDID, /*added क्रम wmiconfig command क्रम TBD */
+	WMI_SET_TBD_TIME_CMDID, /*added for wmiconfig command for TBD */
 
 	/* Pktlog cmds */
 	WMI_PKTLOG_ENABLE_CMDID,
@@ -557,7 +556,7 @@
 	WMI_P2P_SDPD_TX_CMDID, /* F05C */
 	WMI_P2P_STOP_SDPD_CMDID,
 	WMI_P2P_CANCEL_CMDID,
-	/* Ultra low घातer store / recall commands */
+	/* Ultra low power store / recall commands */
 	WMI_STORERECALL_CONFIGURE_CMDID,
 	WMI_STORERECALL_RECALL_CMDID,
 	WMI_STORERECALL_HOST_READY_CMDID,
@@ -572,7 +571,7 @@
 	WMI_CANCEL_REMAIN_ON_CHNL_CMDID,
 	/* WMI_SEND_ACTION_CMDID is to be deprecated. Use
 	 * WMI_SEND_MGMT_CMDID instead. The new cmd supports P2P mgmt
-	 * operations using station पूर्णांकerface.
+	 * operations using station interface.
 	 */
 	WMI_SEND_ACTION_CMDID,
 	WMI_PROBE_REQ_REPORT_CMDID,
@@ -584,7 +583,7 @@
 	WMI_SMPS_ENABLE_CMDID,
 	WMI_SMPS_CONFIG_CMDID,
 	WMI_SET_RATECTRL_PARM_CMDID,
-	/*  LPL specअगरic commands*/
+	/*  LPL specific commands*/
 	WMI_LPL_FORCE_ENABLE_CMDID,
 	WMI_LPL_SET_POLICY_CMDID,
 	WMI_LPL_GET_POLICY_CMDID,
@@ -594,7 +593,7 @@
 
 	WMI_SET_BUNDLE_PARAM_CMDID,
 
-	/*GreenTx specअगरic commands*/
+	/*GreenTx specific commands*/
 
 	WMI_GREENTX_PARAMS_CMDID,
 
@@ -643,47 +642,47 @@
 	WMI_SET_RECOVERY_TEST_PARAMETER_CMDID, /*0xf094*/
 
 	WMI_ENABLE_SCHED_SCAN_CMDID,
-पूर्ण;
+};
 
-क्रमागत wmi_mgmt_frame_type अणु
+enum wmi_mgmt_frame_type {
 	WMI_FRAME_BEACON = 0,
 	WMI_FRAME_PROBE_REQ,
 	WMI_FRAME_PROBE_RESP,
 	WMI_FRAME_ASSOC_REQ,
 	WMI_FRAME_ASSOC_RESP,
 	WMI_NUM_MGMT_FRAME
-पूर्ण;
+};
 
-क्रमागत wmi_ie_field_type अणु
+enum wmi_ie_field_type {
 	WMI_RSN_IE_CAPB	= 0x1,
 	WMI_IE_FULL	= 0xFF,  /* indicats full IE */
-पूर्ण;
+};
 
 /* WMI_CONNECT_CMDID  */
-क्रमागत network_type अणु
+enum network_type {
 	INFRA_NETWORK = 0x01,
 	ADHOC_NETWORK = 0x02,
 	ADHOC_CREATOR = 0x04,
 	AP_NETWORK = 0x10,
-पूर्ण;
+};
 
-क्रमागत network_subtype अणु
+enum network_subtype {
 	SUBTYPE_NONE,
 	SUBTYPE_BT,
 	SUBTYPE_P2PDEV,
 	SUBTYPE_P2PCLIENT,
 	SUBTYPE_P2PGO,
-पूर्ण;
+};
 
-क्रमागत करोt11_auth_mode अणु
+enum dot11_auth_mode {
 	OPEN_AUTH = 0x01,
 	SHARED_AUTH = 0x02,
 
-	/* dअगरferent from IEEE_AUTH_MODE definitions */
+	/* different from IEEE_AUTH_MODE definitions */
 	LEAP_AUTH = 0x04,
-पूर्ण;
+};
 
-क्रमागत auth_mode अणु
+enum auth_mode {
 	NONE_AUTH = 0x01,
 	WPA_AUTH = 0x02,
 	WPA2_AUTH = 0x04,
@@ -691,51 +690,51 @@
 	WPA2_PSK_AUTH = 0x10,
 	WPA_AUTH_CCKM = 0x20,
 	WPA2_AUTH_CCKM = 0x40,
-पूर्ण;
+};
 
-#घोषणा WMI_MAX_KEY_INDEX   3
+#define WMI_MAX_KEY_INDEX   3
 
-#घोषणा WMI_MAX_KEY_LEN     32
+#define WMI_MAX_KEY_LEN     32
 
 /*
  * NB: these values are ordered carefully; there are lots of
  * of implications in any reordering.  In particular beware
- * that 4 is not used to aव्योम conflicting with IEEE80211_F_PRIVACY.
+ * that 4 is not used to avoid conflicting with IEEE80211_F_PRIVACY.
  */
-#घोषणा ATH6KL_CIPHER_WEP            0
-#घोषणा ATH6KL_CIPHER_TKIP           1
-#घोषणा ATH6KL_CIPHER_AES_OCB        2
-#घोषणा ATH6KL_CIPHER_AES_CCM        3
-#घोषणा ATH6KL_CIPHER_CKIP           5
-#घोषणा ATH6KL_CIPHER_CCKM_KRK       6
-#घोषणा ATH6KL_CIPHER_NONE           7 /* pseuकरो value */
+#define ATH6KL_CIPHER_WEP            0
+#define ATH6KL_CIPHER_TKIP           1
+#define ATH6KL_CIPHER_AES_OCB        2
+#define ATH6KL_CIPHER_AES_CCM        3
+#define ATH6KL_CIPHER_CKIP           5
+#define ATH6KL_CIPHER_CCKM_KRK       6
+#define ATH6KL_CIPHER_NONE           7 /* pseudo value */
 
 /*
  * 802.11 rate set.
  */
-#घोषणा ATH6KL_RATE_MAXSIZE  15	/* max rates we'll handle */
+#define ATH6KL_RATE_MAXSIZE  15	/* max rates we'll handle */
 
-#घोषणा ATH_OUI_TYPE            0x01
-#घोषणा WPA_OUI_TYPE            0x01
-#घोषणा WMM_PARAM_OUI_SUBTYPE   0x01
-#घोषणा WMM_OUI_TYPE            0x02
-#घोषणा WSC_OUT_TYPE            0x04
+#define ATH_OUI_TYPE            0x01
+#define WPA_OUI_TYPE            0x01
+#define WMM_PARAM_OUI_SUBTYPE   0x01
+#define WMM_OUI_TYPE            0x02
+#define WSC_OUT_TYPE            0x04
 
-क्रमागत wmi_connect_ctrl_flags_bits अणु
+enum wmi_connect_ctrl_flags_bits {
 	CONNECT_ASSOC_POLICY_USER = 0x0001,
 	CONNECT_SEND_REASSOC = 0x0002,
 	CONNECT_IGNORE_WPAx_GROUP_CIPHER = 0x0004,
-	CONNECT_PROखाता_MATCH_DONE = 0x0008,
+	CONNECT_PROFILE_MATCH_DONE = 0x0008,
 	CONNECT_IGNORE_AAC_BEACON = 0x0010,
 	CONNECT_CSA_FOLLOW_BSS = 0x0020,
 	CONNECT_DO_WPA_OFFLOAD = 0x0040,
 	CONNECT_DO_NOT_DEAUTH = 0x0080,
 	CONNECT_WPS_FLAG = 0x0100,
-पूर्ण;
+};
 
-काष्ठा wmi_connect_cmd अणु
+struct wmi_connect_cmd {
 	u8 nw_type;
-	u8 करोt11_auth_mode;
+	u8 dot11_auth_mode;
 	u8 auth_mode;
 	u8 prwise_crypto_type;
 	u8 prwise_crypto_len;
@@ -747,42 +746,42 @@
 	u8 bssid[ETH_ALEN];
 	__le32 ctrl_flags;
 	u8 nw_subtype;
-पूर्ण __packed;
+} __packed;
 
 /* WMI_RECONNECT_CMDID */
-काष्ठा wmi_reconnect_cmd अणु
-	/* channel hपूर्णांक */
+struct wmi_reconnect_cmd {
+	/* channel hint */
 	__le16 channel;
 
-	/* mandatory अगर set */
+	/* mandatory if set */
 	u8 bssid[ETH_ALEN];
-पूर्ण __packed;
+} __packed;
 
 /* WMI_ADD_CIPHER_KEY_CMDID */
-क्रमागत key_usage अणु
+enum key_usage {
 	PAIRWISE_USAGE = 0x00,
 	GROUP_USAGE = 0x01,
 
-	/* शेष Tx Key - अटल WEP only */
+	/* default Tx Key - static WEP only */
 	TX_USAGE = 0x02,
-पूर्ण;
+};
 
 /*
  * Bit Flag
- * Bit 0 - Initialise TSC - शेष is Initialize
+ * Bit 0 - Initialise TSC - default is Initialize
  */
-#घोषणा KEY_OP_INIT_TSC     0x01
-#घोषणा KEY_OP_INIT_RSC     0x02
+#define KEY_OP_INIT_TSC     0x01
+#define KEY_OP_INIT_RSC     0x02
 
-/* शेष initialise the TSC & RSC */
-#घोषणा KEY_OP_INIT_VAL     0x03
-#घोषणा KEY_OP_VALID_MASK   0x03
+/* default initialise the TSC & RSC */
+#define KEY_OP_INIT_VAL     0x03
+#define KEY_OP_VALID_MASK   0x03
 
-काष्ठा wmi_add_cipher_key_cmd अणु
+struct wmi_add_cipher_key_cmd {
 	u8 key_index;
 	u8 key_type;
 
-	/* क्रमागत key_usage */
+	/* enum key_usage */
 	u8 key_usage;
 
 	u8 key_len;
@@ -796,94 +795,94 @@
 	u8 key_op_ctrl;
 
 	u8 key_mac_addr[ETH_ALEN];
-पूर्ण __packed;
+} __packed;
 
 /* WMI_DELETE_CIPHER_KEY_CMDID */
-काष्ठा wmi_delete_cipher_key_cmd अणु
+struct wmi_delete_cipher_key_cmd {
 	u8 key_index;
-पूर्ण __packed;
+} __packed;
 
-#घोषणा WMI_KRK_LEN     16
+#define WMI_KRK_LEN     16
 
 /* WMI_ADD_KRK_CMDID */
-काष्ठा wmi_add_krk_cmd अणु
+struct wmi_add_krk_cmd {
 	u8 krk[WMI_KRK_LEN];
-पूर्ण __packed;
+} __packed;
 
 /* WMI_SETPMKID_CMDID */
 
-#घोषणा WMI_PMKID_LEN 16
+#define WMI_PMKID_LEN 16
 
-क्रमागत pmkid_enable_flg अणु
+enum pmkid_enable_flg {
 	PMKID_DISABLE = 0,
 	PMKID_ENABLE = 1,
-पूर्ण;
+};
 
-काष्ठा wmi_setpmkid_cmd अणु
+struct wmi_setpmkid_cmd {
 	u8 bssid[ETH_ALEN];
 
-	/* क्रमागत pmkid_enable_flg */
+	/* enum pmkid_enable_flg */
 	u8 enable;
 
 	u8 pmkid[WMI_PMKID_LEN];
-पूर्ण __packed;
+} __packed;
 
 /* WMI_START_SCAN_CMD */
-क्रमागत wmi_scan_type अणु
+enum wmi_scan_type {
 	WMI_LONG_SCAN = 0,
 	WMI_SHORT_SCAN = 1,
-पूर्ण;
+};
 
-काष्ठा wmi_supp_rates अणु
+struct wmi_supp_rates {
 	u8 nrates;
 	u8 rates[ATH6KL_RATE_MAXSIZE];
-पूर्ण;
+};
 
-काष्ठा wmi_begin_scan_cmd अणु
-	__le32 क्रमce_fg_scan;
+struct wmi_begin_scan_cmd {
+	__le32 force_fg_scan;
 
-	/* क्रम legacy cisco AP compatibility */
+	/* for legacy cisco AP compatibility */
 	__le32 is_legacy;
 
 	/* max duration in the home channel(msec) */
-	__le32 home_dwell_समय;
+	__le32 home_dwell_time;
 
-	/* समय पूर्णांकerval between scans (msec) */
-	__le32 क्रमce_scan_पूर्णांकvl;
+	/* time interval between scans (msec) */
+	__le32 force_scan_intvl;
 
 	/* no CCK rates */
 	__le32 no_cck;
 
-	/* क्रमागत wmi_scan_type */
+	/* enum wmi_scan_type */
 	u8 scan_type;
 
 	/* Supported rates to advertise in the probe request frames */
-	काष्ठा wmi_supp_rates supp_rates[ATH6KL_NUM_BANDS];
+	struct wmi_supp_rates supp_rates[ATH6KL_NUM_BANDS];
 
 	/* how many channels follow */
 	u8 num_ch;
 
 	/* channels in Mhz */
 	__le16 ch_list[1];
-पूर्ण __packed;
+} __packed;
 
 /* wmi_start_scan_cmd is to be deprecated. Use
- * wmi_begin_scan_cmd instead. The new काष्ठाure supports P2P mgmt
- * operations using station पूर्णांकerface.
+ * wmi_begin_scan_cmd instead. The new structure supports P2P mgmt
+ * operations using station interface.
  */
-काष्ठा wmi_start_scan_cmd अणु
-	__le32 क्रमce_fg_scan;
+struct wmi_start_scan_cmd {
+	__le32 force_fg_scan;
 
-	/* क्रम legacy cisco AP compatibility */
+	/* for legacy cisco AP compatibility */
 	__le32 is_legacy;
 
 	/* max duration in the home channel(msec) */
-	__le32 home_dwell_समय;
+	__le32 home_dwell_time;
 
-	/* समय पूर्णांकerval between scans (msec) */
-	__le32 क्रमce_scan_पूर्णांकvl;
+	/* time interval between scans (msec) */
+	__le32 force_scan_intvl;
 
-	/* क्रमागत wmi_scan_type */
+	/* enum wmi_scan_type */
 	u8 scan_type;
 
 	/* how many channels follow */
@@ -891,40 +890,40 @@
 
 	/* channels in Mhz */
 	__le16 ch_list[1];
-पूर्ण __packed;
+} __packed;
 
 /*
  *  Warning: scan control flag value of 0xFF is used to disable
  *  all flags in WMI_SCAN_PARAMS_CMD. Do not add any more
  *  flags here
  */
-क्रमागत wmi_scan_ctrl_flags_bits अणु
-	/* set अगर can scan in the connect cmd */
+enum wmi_scan_ctrl_flags_bits {
+	/* set if can scan in the connect cmd */
 	CONNECT_SCAN_CTRL_FLAGS = 0x01,
 
-	/* set अगर scan क्रम the SSID it is alपढ़ोy connected to */
+	/* set if scan for the SSID it is already connected to */
 	SCAN_CONNECTED_CTRL_FLAGS = 0x02,
 
-	/* set अगर enable active scan */
+	/* set if enable active scan */
 	ACTIVE_SCAN_CTRL_FLAGS = 0x04,
 
-	/* set अगर enable roam scan when bmiss and lowrssi */
+	/* set if enable roam scan when bmiss and lowrssi */
 	ROAM_SCAN_CTRL_FLAGS = 0x08,
 
-	/* set अगर follows customer BSSINFO reporting rule */
+	/* set if follows customer BSSINFO reporting rule */
 	REPORT_BSSINFO_CTRL_FLAGS = 0x10,
 
-	/* अगर disabled, target करोesn't scan after a disconnect event  */
+	/* if disabled, target doesn't scan after a disconnect event  */
 	ENABLE_AUTO_CTRL_FLAGS = 0x20,
 
 	/*
 	 * Scan complete event with canceled status will be generated when
-	 * a scan is prempted beक्रमe it माला_लो completed.
+	 * a scan is prempted before it gets completed.
 	 */
 	ENABLE_SCAN_ABORT_EVENT = 0x40
-पूर्ण;
+};
 
-काष्ठा wmi_scan_params_cmd अणु
+struct wmi_scan_params_cmd {
 	  /* sec */
 	__le16 fg_start_period;
 
@@ -935,44 +934,44 @@
 	__le16 bg_period;
 
 	/* msec */
-	__le16 maxact_chdwell_समय;
+	__le16 maxact_chdwell_time;
 
 	/* msec */
-	__le16 pas_chdwell_समय;
+	__le16 pas_chdwell_time;
 
-	  /* how many लघुs scan क्रम one दीर्घ */
-	u8 लघु_scan_ratio;
+	  /* how many shorts scan for one long */
+	u8 short_scan_ratio;
 
 	u8 scan_ctrl_flags;
 
 	/* msec */
-	__le16 minact_chdwell_समय;
+	__le16 minact_chdwell_time;
 
 	/* max active scans per ssid */
 	__le16 maxact_scan_per_ssid;
 
 	/* msecs */
-	__le32 max_dfsch_act_समय;
-पूर्ण __packed;
+	__le32 max_dfsch_act_time;
+} __packed;
 
 /* WMI_ENABLE_SCHED_SCAN_CMDID */
-काष्ठा wmi_enable_sched_scan_cmd अणु
+struct wmi_enable_sched_scan_cmd {
 	u8 enable;
-पूर्ण __packed;
+} __packed;
 
 /* WMI_SET_BSS_FILTER_CMDID */
-क्रमागत wmi_bss_filter अणु
-	/* no beacons क्रमwarded */
+enum wmi_bss_filter {
+	/* no beacons forwarded */
 	NONE_BSS_FILTER = 0x0,
 
-	/* all beacons क्रमwarded */
+	/* all beacons forwarded */
 	ALL_BSS_FILTER,
 
 	/* only beacons matching profile */
-	PROखाता_FILTER,
+	PROFILE_FILTER,
 
 	/* all but beacons matching profile */
-	ALL_BUT_PROखाता_FILTER,
+	ALL_BUT_PROFILE_FILTER,
 
 	/* only beacons matching current BSS */
 	CURRENT_BSS_FILTER,
@@ -988,95 +987,95 @@
 
 	/* marker only */
 	LAST_BSS_FILTER,
-पूर्ण;
+};
 
-काष्ठा wmi_bss_filter_cmd अणु
-	/* see, क्रमागत wmi_bss_filter */
+struct wmi_bss_filter_cmd {
+	/* see, enum wmi_bss_filter */
 	u8 bss_filter;
 
-	/* क्रम alignment */
+	/* for alignment */
 	u8 reserved1;
 
-	/* क्रम alignment */
+	/* for alignment */
 	__le16 reserved2;
 
 	__le32 ie_mask;
-पूर्ण __packed;
+} __packed;
 
 /* WMI_SET_PROBED_SSID_CMDID */
-#घोषणा MAX_PROBED_SSIDS   16
+#define MAX_PROBED_SSIDS   16
 
-क्रमागत wmi_ssid_flag अणु
+enum wmi_ssid_flag {
 	/* disables entry */
 	DISABLE_SSID_FLAG = 0,
 
-	/* probes specअगरied ssid */
+	/* probes specified ssid */
 	SPECIFIC_SSID_FLAG = 0x01,
 
-	/* probes क्रम any ssid */
+	/* probes for any ssid */
 	ANY_SSID_FLAG = 0x02,
 
-	/* match क्रम ssid */
+	/* match for ssid */
 	MATCH_SSID_FLAG = 0x08,
-पूर्ण;
+};
 
-काष्ठा wmi_probed_ssid_cmd अणु
+struct wmi_probed_ssid_cmd {
 	/* 0 to MAX_PROBED_SSIDS - 1 */
 	u8 entry_index;
 
-	/* see, क्रमागत wmi_ssid_flg */
+	/* see, enum wmi_ssid_flg */
 	u8 flag;
 
 	u8 ssid_len;
 	u8 ssid[IEEE80211_MAX_SSID_LEN];
-पूर्ण __packed;
+} __packed;
 
 /*
  * WMI_SET_LISTEN_INT_CMDID
- * The Listen पूर्णांकerval is between 15 and 3000 TUs
+ * The Listen interval is between 15 and 3000 TUs
  */
-काष्ठा wmi_listen_पूर्णांक_cmd अणु
-	__le16 listen_पूर्णांकvl;
+struct wmi_listen_int_cmd {
+	__le16 listen_intvl;
 	__le16 num_beacons;
-पूर्ण __packed;
+} __packed;
 
 /* WMI_SET_BMISS_TIME_CMDID */
-काष्ठा wmi_bmiss_समय_cmd अणु
-	__le16 bmiss_समय;
+struct wmi_bmiss_time_cmd {
+	__le16 bmiss_time;
 	__le16 num_beacons;
-पूर्ण;
+};
 
 /* WMI_STA_ENHANCE_BMISS_CMDID */
-काष्ठा wmi_sta_bmiss_enhance_cmd अणु
+struct wmi_sta_bmiss_enhance_cmd {
 	u8 enable;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_set_regकरोमुख्य_cmd अणु
+struct wmi_set_regdomain_cmd {
 	u8 length;
 	u8 iso_name[2];
-पूर्ण __packed;
+} __packed;
 
 /* WMI_SET_POWER_MODE_CMDID */
-क्रमागत wmi_घातer_mode अणु
+enum wmi_power_mode {
 	REC_POWER = 0x01,
 	MAX_PERF_POWER,
-पूर्ण;
+};
 
-काष्ठा wmi_घातer_mode_cmd अणु
-	/* see, क्रमागत wmi_घातer_mode */
+struct wmi_power_mode_cmd {
+	/* see, enum wmi_power_mode */
 	u8 pwr_mode;
-पूर्ण __packed;
+} __packed;
 
 /*
- * Policy to determine whether घातer save failure event should be sent to
+ * Policy to determine whether power save failure event should be sent to
  * host during scanning
  */
-क्रमागत घातer_save_fail_event_policy अणु
+enum power_save_fail_event_policy {
 	SEND_POWER_SAVE_FAIL_EVENT_ALWAYS = 1,
 	IGNORE_PS_FAIL_DURING_SCAN = 2,
-पूर्ण;
+};
 
-काष्ठा wmi_घातer_params_cmd अणु
+struct wmi_power_params_cmd {
 	/* msec */
 	__le16 idle_period;
 
@@ -1085,17 +1084,17 @@
 	__le16 tx_wakeup_policy;
 	__le16 num_tx_to_wakeup;
 	__le16 ps_fail_event_policy;
-पूर्ण __packed;
+} __packed;
 
 /*
- * Ratemask क्रम below modes should be passed
+ * Ratemask for below modes should be passed
  * to WMI_SET_TX_SELECT_RATES_CMDID.
- * AR6003 has 32 bit mask क्रम each modes.
- * First 12 bits क्रम legacy rates, 13 to 20
- * bits क्रम HT 20 rates and 21 to 28 bits क्रम
+ * AR6003 has 32 bit mask for each modes.
+ * First 12 bits for legacy rates, 13 to 20
+ * bits for HT 20 rates and 21 to 28 bits for
  * HT 40 rates
  */
-क्रमागत wmi_mode_phy अणु
+enum wmi_mode_phy {
 	WMI_RATES_MODE_11A = 0,
 	WMI_RATES_MODE_11G,
 	WMI_RATES_MODE_11B,
@@ -1105,61 +1104,61 @@
 	WMI_RATES_MODE_11A_HT40,
 	WMI_RATES_MODE_11G_HT40,
 	WMI_RATES_MODE_MAX
-पूर्ण;
+};
 
 /* WMI_SET_TX_SELECT_RATES_CMDID */
-काष्ठा wmi_set_tx_select_rates32_cmd अणु
+struct wmi_set_tx_select_rates32_cmd {
 	__le32 ratemask[WMI_RATES_MODE_MAX];
-पूर्ण __packed;
+} __packed;
 
 /* WMI_SET_TX_SELECT_RATES_CMDID */
-काष्ठा wmi_set_tx_select_rates64_cmd अणु
+struct wmi_set_tx_select_rates64_cmd {
 	__le64 ratemask[WMI_RATES_MODE_MAX];
-पूर्ण __packed;
+} __packed;
 
 /* WMI_SET_DISC_TIMEOUT_CMDID */
-काष्ठा wmi_disc_समयout_cmd अणु
+struct wmi_disc_timeout_cmd {
 	/* seconds */
-	u8 discon_समयout;
-पूर्ण __packed;
+	u8 discon_timeout;
+} __packed;
 
-क्रमागत dir_type अणु
+enum dir_type {
 	UPLINK_TRAFFIC = 0,
 	DNLINK_TRAFFIC = 1,
-	BIसूची_TRAFFIC = 2,
-पूर्ण;
+	BIDIR_TRAFFIC = 2,
+};
 
-क्रमागत voiceps_cap_type अणु
+enum voiceps_cap_type {
 	DISABLE_FOR_THIS_AC = 0,
 	ENABLE_FOR_THIS_AC = 1,
 	ENABLE_FOR_ALL_AC = 2,
-पूर्ण;
+};
 
-क्रमागत traffic_type अणु
+enum traffic_type {
 	TRAFFIC_TYPE_APERIODIC = 0,
 	TRAFFIC_TYPE_PERIODIC = 1,
-पूर्ण;
+};
 
 /* WMI_SYNCHRONIZE_CMDID */
-काष्ठा wmi_sync_cmd अणु
+struct wmi_sync_cmd {
 	u8 data_sync_map;
-पूर्ण __packed;
+} __packed;
 
 /* WMI_CREATE_PSTREAM_CMDID */
-काष्ठा wmi_create_pstream_cmd अणु
+struct wmi_create_pstream_cmd {
 	/* msec */
-	__le32 min_service_पूर्णांक;
+	__le32 min_service_int;
 
 	/* msec */
-	__le32 max_service_पूर्णांक;
+	__le32 max_service_int;
 
 	/* msec */
-	__le32 inactivity_पूर्णांक;
+	__le32 inactivity_int;
 
 	/* msec */
-	__le32 suspension_पूर्णांक;
+	__le32 suspension_int;
 
-	__le32 service_start_समय;
+	__le32 service_start_time;
 
 	/* in bps */
 	__le32 min_data_rate;
@@ -1177,7 +1176,7 @@
 	__le32 min_phy_rate;
 
 	__le32 sba;
-	__le32 medium_समय;
+	__le32 medium_time;
 
 	/* in octects */
 	__le16 nominal_msdu;
@@ -1187,15 +1186,15 @@
 
 	u8 traffic_class;
 
-	/* see, क्रमागत dir_type */
+	/* see, enum dir_type */
 	u8 traffic_direc;
 
 	u8 rx_queue_num;
 
-	/* see, क्रमागत traffic_type */
+	/* see, enum traffic_type */
 	u8 traffic_type;
 
-	/* see, क्रमागत voiceps_cap_type */
+	/* see, enum voiceps_cap_type */
 	u8 voice_psc_cap;
 	u8 tsid;
 
@@ -1204,40 +1203,40 @@
 
 	/* nominal phy rate */
 	u8 nominal_phy;
-पूर्ण __packed;
+} __packed;
 
 /* WMI_DELETE_PSTREAM_CMDID */
-काष्ठा wmi_delete_pstream_cmd अणु
+struct wmi_delete_pstream_cmd {
 	u8 tx_queue_num;
 	u8 rx_queue_num;
 	u8 traffic_direc;
 	u8 traffic_class;
 	u8 tsid;
-पूर्ण __packed;
+} __packed;
 
 /* WMI_SET_CHANNEL_PARAMS_CMDID */
-क्रमागत wmi_phy_mode अणु
+enum wmi_phy_mode {
 	WMI_11A_MODE = 0x1,
 	WMI_11G_MODE = 0x2,
 	WMI_11AG_MODE = 0x3,
 	WMI_11B_MODE = 0x4,
 	WMI_11GONLY_MODE = 0x5,
 	WMI_11G_HT20	= 0x6,
-पूर्ण;
+};
 
-#घोषणा WMI_MAX_CHANNELS        32
+#define WMI_MAX_CHANNELS        32
 
 /*
  *  WMI_RSSI_THRESHOLD_PARAMS_CMDID
- *  Setting the pollसमय to 0 would disable polling. Threshold values are
+ *  Setting the polltime to 0 would disable polling. Threshold values are
  *  in the ascending order, and should agree to:
  *  (lowThreshold_lowerVal < lowThreshold_upperVal < highThreshold_lowerVal
  *   < highThreshold_upperVal)
  */
 
-काष्ठा wmi_rssi_threshold_params_cmd अणु
-	/* polling समय as a factor of LI */
-	__le32 poll_समय;
+struct wmi_rssi_threshold_params_cmd {
+	/* polling time as a factor of LI */
+	__le32 poll_time;
 
 	/* lowest of upper */
 	a_sle16 thresh_above1_val;
@@ -1265,16 +1264,16 @@
 	u8 weight;
 
 	u8 reserved[3];
-पूर्ण __packed;
+} __packed;
 
 /*
  *  WMI_SNR_THRESHOLD_PARAMS_CMDID
- *  Setting the pollसमय to 0 would disable polling.
+ *  Setting the polltime to 0 would disable polling.
  */
 
-काष्ठा wmi_snr_threshold_params_cmd अणु
-	/* polling समय as a factor of LI */
-	__le32 poll_समय;
+struct wmi_snr_threshold_params_cmd {
+	/* polling time as a factor of LI */
+	__le32 poll_time;
 
 	/* "alpha" */
 	u8 weight;
@@ -1298,76 +1297,76 @@
 	u8 thresh_below4_val;
 
 	u8 reserved[3];
-पूर्ण __packed;
+} __packed;
 
-/* Don't report BSSs with संकेत (RSSI) below this threshold */
-काष्ठा wmi_set_rssi_filter_cmd अणु
+/* Don't report BSSs with signal (RSSI) below this threshold */
+struct wmi_set_rssi_filter_cmd {
 	s8 rssi;
-पूर्ण __packed;
+} __packed;
 
-क्रमागत wmi_preamble_policy अणु
+enum wmi_preamble_policy {
 	WMI_IGNORE_BARKER_IN_ERP = 0,
 	WMI_FOLLOW_BARKER_IN_ERP,
-पूर्ण;
+};
 
-काष्ठा wmi_set_lpreamble_cmd अणु
+struct wmi_set_lpreamble_cmd {
 	u8 status;
 	u8 preamble_policy;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_set_rts_cmd अणु
+struct wmi_set_rts_cmd {
 	__le16 threshold;
-पूर्ण __packed;
+} __packed;
 
 /* WMI_SET_TX_PWR_CMDID */
-काष्ठा wmi_set_tx_pwr_cmd अणु
+struct wmi_set_tx_pwr_cmd {
 	/* in dbM units */
 	u8 dbM;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_tx_pwr_reply अणु
+struct wmi_tx_pwr_reply {
 	/* in dbM units */
 	u8 dbM;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_report_sleep_state_event अणु
+struct wmi_report_sleep_state_event {
 	__le32 sleep_state;
-पूर्ण;
+};
 
-क्रमागत wmi_report_sleep_status अणु
+enum wmi_report_sleep_status {
 	WMI_REPORT_SLEEP_STATUS_IS_DEEP_SLEEP = 0,
 	WMI_REPORT_SLEEP_STATUS_IS_AWAKE
-पूर्ण;
-क्रमागत target_event_report_config अणु
-	/* शेष */
+};
+enum target_event_report_config {
+	/* default */
 	DISCONN_EVT_IN_RECONN = 0,
 
 	NO_DISCONN_EVT_IN_RECONN
-पूर्ण;
+};
 
-काष्ठा wmi_mcast_filter_cmd अणु
+struct wmi_mcast_filter_cmd {
 	u8 mcast_all_enable;
-पूर्ण __packed;
+} __packed;
 
-#घोषणा ATH6KL_MCAST_FILTER_MAC_ADDR_SIZE 6
-काष्ठा wmi_mcast_filter_add_del_cmd अणु
+#define ATH6KL_MCAST_FILTER_MAC_ADDR_SIZE 6
+struct wmi_mcast_filter_add_del_cmd {
 	u8 mcast_mac[ATH6KL_MCAST_FILTER_MAC_ADDR_SIZE];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_set_htcap_cmd अणु
+struct wmi_set_htcap_cmd {
 	u8 band;
 	u8 ht_enable;
 	u8 ht40_supported;
 	u8 ht20_sgi;
 	u8 ht40_sgi;
-	u8 पूर्णांकolerant_40mhz;
+	u8 intolerant_40mhz;
 	u8 max_ampdu_len_exp;
-पूर्ण __packed;
+} __packed;
 
 /* Command Replies */
 
 /* WMI_GET_CHANNEL_LIST_CMDID reply */
-काष्ठा wmi_channel_list_reply अणु
+struct wmi_channel_list_reply {
 	u8 reserved;
 
 	/* number of channels in reply */
@@ -1375,10 +1374,10 @@
 
 	/* channel in Mhz */
 	__le16 ch_list[1];
-पूर्ण __packed;
+} __packed;
 
 /* List of Events (target to host) */
-क्रमागत wmi_event_id अणु
+enum wmi_event_id {
 	WMI_READY_EVENTID = 0x1001,
 	WMI_CONNECT_EVENTID,
 	WMI_DISCONNECT_EVENTID,
@@ -1465,7 +1464,7 @@
 	WMI_SET_HOST_SLEEP_MODE_CMD_PROCESSED_EVENTID = 0x1047,
 
 	WMI_THIN_RESERVED_START_EVENTID = 0x8000,
-	/* Events in this range are reserved क्रम thinmode */
+	/* Events in this range are reserved for thinmode */
 	WMI_THIN_RESERVED_END_EVENTID = 0x8fff,
 
 	WMI_SET_CHANNEL_EVENTID,
@@ -1487,7 +1486,7 @@
 
 	/* WPS Events */
 	WMI_WPS_GET_STATUS_EVENTID,
-	WMI_WPS_PROखाता_EVENTID,
+	WMI_WPS_PROFILE_EVENTID,
 
 	/* more P2P events */
 	WMI_NOA_INFO_EVENTID,
@@ -1498,36 +1497,36 @@
 	WMI_GET_RSN_CAP_EVENTID,
 
 	WMI_TXE_NOTIFY_EVENTID,
-पूर्ण;
+};
 
-काष्ठा wmi_पढ़ोy_event_2 अणु
+struct wmi_ready_event_2 {
 	__le32 sw_version;
 	__le32 abi_version;
 	u8 mac_addr[ETH_ALEN];
 	u8 phy_cap;
-पूर्ण __packed;
+} __packed;
 
 /* WMI_PHY_CAPABILITY */
-क्रमागत wmi_phy_cap अणु
+enum wmi_phy_cap {
 	WMI_11A_CAP = 0x01,
 	WMI_11G_CAP = 0x02,
 	WMI_11AG_CAP = 0x03,
 	WMI_11AN_CAP = 0x04,
 	WMI_11GN_CAP = 0x05,
 	WMI_11AGN_CAP = 0x06,
-पूर्ण;
+};
 
 /* Connect Event */
-काष्ठा wmi_connect_event अणु
-	जोड़ अणु
-		काष्ठा अणु
+struct wmi_connect_event {
+	union {
+		struct {
 			__le16 ch;
 			u8 bssid[ETH_ALEN];
-			__le16 listen_पूर्णांकvl;
-			__le16 beacon_पूर्णांकvl;
+			__le16 listen_intvl;
+			__le16 beacon_intvl;
 			__le32 nw_type;
-		पूर्ण sta;
-		काष्ठा अणु
+		} sta;
+		struct {
 			u8 aid;
 			u8 phymode;
 			u8 mac_addr[ETH_ALEN];
@@ -1536,21 +1535,21 @@
 			__le16 cipher;
 			u8 apsd_info;
 			u8 unused[3];
-		पूर्ण ap_sta;
-		काष्ठा अणु
+		} ap_sta;
+		struct {
 			__le16 ch;
 			u8 bssid[ETH_ALEN];
 			u8 unused[8];
-		पूर्ण ap_bss;
-	पूर्ण u;
+		} ap_bss;
+	} u;
 	u8 beacon_ie_len;
 	u8 assoc_req_len;
 	u8 assoc_resp_len;
 	u8 assoc_info[1];
-पूर्ण __packed;
+} __packed;
 
 /* Disconnect Event */
-क्रमागत wmi_disconnect_reason अणु
+enum wmi_disconnect_reason {
 	NO_NETWORK_AVAIL = 0x01,
 
 	/* bmiss */
@@ -1562,15 +1561,15 @@
 	ASSOC_FAILED = 0x06,
 	NO_RESOURCES_AVAIL = 0x07,
 	CSERV_DISCONNECT = 0x08,
-	INVALID_PROखाता = 0x0a,
+	INVALID_PROFILE = 0x0a,
 	DOT11H_CHANNEL_SWITCH = 0x0b,
-	PROखाता_MISMATCH = 0x0c,
+	PROFILE_MISMATCH = 0x0c,
 	CONNECTION_EVICTED = 0x0d,
 	IBSS_MERGE = 0xe,
-पूर्ण;
+};
 
 /* AP mode disconnect proto_reasons */
-क्रमागत ap_disconnect_reason अणु
+enum ap_disconnect_reason {
 	WMI_AP_REASON_STA_LEFT		= 101,
 	WMI_AP_REASON_FROM_HOST		= 102,
 	WMI_AP_REASON_COMM_TIMEOUT	= 103,
@@ -1578,19 +1577,19 @@
 	WMI_AP_REASON_ACL		= 105,
 	WMI_AP_REASON_STA_ROAM		= 106,
 	WMI_AP_REASON_DFS_CHANNEL	= 107,
-पूर्ण;
+};
 
-#घोषणा ATH6KL_COUNTRY_RD_SHIFT        16
+#define ATH6KL_COUNTRY_RD_SHIFT        16
 
-काष्ठा ath6kl_wmi_regकरोमुख्य अणु
+struct ath6kl_wmi_regdomain {
 	__le32 reg_code;
-पूर्ण;
+};
 
-काष्ठा wmi_disconnect_event अणु
+struct wmi_disconnect_event {
 	/* reason code, see 802.11 spec. */
 	__le16 proto_reason_status;
 
-	/* set अगर known */
+	/* set if known */
 	u8 bssid[ETH_ALEN];
 
 	/* see WMI_DISCONNECT_REASON */
@@ -1598,165 +1597,165 @@
 
 	u8 assoc_resp_len;
 	u8 assoc_info[1];
-पूर्ण __packed;
+} __packed;
 
 /*
  * BSS Info Event.
- * Mechanism used to inक्रमm host of the presence and अक्षरacteristic of
+ * Mechanism used to inform host of the presence and characteristic of
  * wireless networks present.  Consists of bss info header followed by
  * the beacon or probe-response frame body.  The 802.11 header is no included.
  */
-क्रमागत wmi_bi_ftype अणु
+enum wmi_bi_ftype {
 	BEACON_FTYPE = 0x1,
 	PROBERESP_FTYPE,
 	ACTION_MGMT_FTYPE,
 	PROBEREQ_FTYPE,
-पूर्ण;
+};
 
-#घोषणा DEF_LRSSI_SCAN_PERIOD		 5
-#घोषणा DEF_LRSSI_ROAM_THRESHOLD	20
-#घोषणा DEF_LRSSI_ROAM_FLOOR		60
-#घोषणा DEF_SCAN_FOR_ROAM_INTVL		 2
+#define DEF_LRSSI_SCAN_PERIOD		 5
+#define DEF_LRSSI_ROAM_THRESHOLD	20
+#define DEF_LRSSI_ROAM_FLOOR		60
+#define DEF_SCAN_FOR_ROAM_INTVL		 2
 
-क्रमागत wmi_roam_ctrl अणु
+enum wmi_roam_ctrl {
 	WMI_FORCE_ROAM = 1,
 	WMI_SET_ROAM_MODE,
 	WMI_SET_HOST_BIAS,
 	WMI_SET_LRSSI_SCAN_PARAMS,
-पूर्ण;
+};
 
-क्रमागत wmi_roam_mode अणु
+enum wmi_roam_mode {
 	WMI_DEFAULT_ROAM_MODE = 1, /* RSSI based roam */
 	WMI_HOST_BIAS_ROAM_MODE = 2, /* Host bias based roam */
 	WMI_LOCK_BSS_MODE = 3, /* Lock to the current BSS */
-पूर्ण;
+};
 
-काष्ठा bss_bias अणु
+struct bss_bias {
 	u8 bssid[ETH_ALEN];
 	s8 bias;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा bss_bias_info अणु
+struct bss_bias_info {
 	u8 num_bss;
-	काष्ठा bss_bias bss_bias[0];
-पूर्ण __packed;
+	struct bss_bias bss_bias[0];
+} __packed;
 
-काष्ठा low_rssi_scan_params अणु
+struct low_rssi_scan_params {
 	__le16 lrssi_scan_period;
 	a_sle16 lrssi_scan_threshold;
 	a_sle16 lrssi_roam_threshold;
-	u8 roam_rssi_न्यूनमान;
+	u8 roam_rssi_floor;
 	u8 reserved[1];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा roam_ctrl_cmd अणु
-	जोड़ अणु
+struct roam_ctrl_cmd {
+	union {
 		u8 bssid[ETH_ALEN]; /* WMI_FORCE_ROAM */
 		u8 roam_mode; /* WMI_SET_ROAM_MODE */
-		काष्ठा bss_bias_info bss; /* WMI_SET_HOST_BIAS */
-		काष्ठा low_rssi_scan_params params; /* WMI_SET_LRSSI_SCAN_PARAMS
+		struct bss_bias_info bss; /* WMI_SET_HOST_BIAS */
+		struct low_rssi_scan_params params; /* WMI_SET_LRSSI_SCAN_PARAMS
 						     */
-	पूर्ण __packed info;
+	} __packed info;
 	u8 roam_ctrl;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा set_beacon_पूर्णांक_cmd अणु
-	__le32 beacon_पूर्णांकvl;
-पूर्ण __packed;
+struct set_beacon_int_cmd {
+	__le32 beacon_intvl;
+} __packed;
 
-काष्ठा set_dtim_cmd अणु
+struct set_dtim_cmd {
 	__le32 dtim_period;
-पूर्ण __packed;
+} __packed;
 
 /* BSS INFO HDR version 2.0 */
-काष्ठा wmi_bss_info_hdr2 अणु
+struct wmi_bss_info_hdr2 {
 	__le16 ch; /* frequency in MHz */
 
-	/* see, क्रमागत wmi_bi_ftype */
+	/* see, enum wmi_bi_ftype */
 	u8 frame_type;
 
 	u8 snr; /* note: rssi = snr - 95 dBm */
 	u8 bssid[ETH_ALEN];
 	__le16 ie_mask;
-पूर्ण __packed;
+} __packed;
 
 /* Command Error Event */
-क्रमागत wmi_error_code अणु
+enum wmi_error_code {
 	INVALID_PARAM = 0x01,
 	ILLEGAL_STATE = 0x02,
 	INTERNAL_ERROR = 0x03,
-पूर्ण;
+};
 
-काष्ठा wmi_cmd_error_event अणु
+struct wmi_cmd_error_event {
 	__le16 cmd_id;
 	u8 err_code;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_pstream_समयout_event अणु
+struct wmi_pstream_timeout_event {
 	u8 tx_queue_num;
 	u8 rx_queue_num;
 	u8 traffic_direc;
 	u8 traffic_class;
-पूर्ण __packed;
+} __packed;
 
 /*
- * The WMI_NEIGHBOR_REPORT Event is generated by the target to inक्रमm
+ * The WMI_NEIGHBOR_REPORT Event is generated by the target to inform
  * the host of BSS's it has found that matches the current profile.
  * It can be used by the host to cache PMKs and/to initiate pre-authentication
- * अगर the BSS supports it.  The first bssid is always the current associated
+ * if the BSS supports it.  The first bssid is always the current associated
  * BSS.
- * The bssid and bssFlags inक्रमmation repeats according to the number
+ * The bssid and bssFlags information repeats according to the number
  * or APs reported.
  */
-क्रमागत wmi_bss_flags अणु
+enum wmi_bss_flags {
 	WMI_DEFAULT_BSS_FLAGS = 0x00,
 	WMI_PREAUTH_CAPABLE_BSS = 0x01,
 	WMI_PMKID_VALID_BSS = 0x02,
-पूर्ण;
+};
 
-काष्ठा wmi_neighbor_info अणु
+struct wmi_neighbor_info {
 	u8 bssid[ETH_ALEN];
-	u8 bss_flags; /* क्रमागत wmi_bss_flags */
-पूर्ण __packed;
+	u8 bss_flags; /* enum wmi_bss_flags */
+} __packed;
 
-काष्ठा wmi_neighbor_report_event अणु
+struct wmi_neighbor_report_event {
 	u8 num_neighbors;
-	काष्ठा wmi_neighbor_info neighbor[0];
-पूर्ण __packed;
+	struct wmi_neighbor_info neighbor[0];
+} __packed;
 
 /* TKIP MIC Error Event */
-काष्ठा wmi_tkip_micerr_event अणु
+struct wmi_tkip_micerr_event {
 	u8 key_id;
 	u8 is_mcast;
-पूर्ण __packed;
+} __packed;
 
-क्रमागत wmi_scan_status अणु
+enum wmi_scan_status {
 	WMI_SCAN_STATUS_SUCCESS = 0,
-पूर्ण;
+};
 
 /* WMI_SCAN_COMPLETE_EVENTID */
-काष्ठा wmi_scan_complete_event अणु
+struct wmi_scan_complete_event {
 	a_sle32 status;
-पूर्ण __packed;
+} __packed;
 
-#घोषणा MAX_OPT_DATA_LEN 1400
+#define MAX_OPT_DATA_LEN 1400
 
 /*
  * Special frame receive Event.
- * Mechanism used to inक्रमm host of the receiption of the special frames.
+ * Mechanism used to inform host of the receiption of the special frames.
  * Consists of special frame info header followed by special frame body.
  * The 802.11 header is not included.
  */
-काष्ठा wmi_opt_rx_info_hdr अणु
+struct wmi_opt_rx_info_hdr {
 	__le16 ch;
 	u8 frame_type;
 	s8 snr;
 	u8 src_addr[ETH_ALEN];
 	u8 bssid[ETH_ALEN];
-पूर्ण __packed;
+} __packed;
 
 /* Reporting statistic */
-काष्ठा tx_stats अणु
+struct tx_stats {
 	__le32 pkt;
 	__le32 byte;
 	__le32 ucast_pkt;
@@ -1775,9 +1774,9 @@
 	__le32 mult_retry_cnt;
 	__le32 rts_fail_cnt;
 	a_sle32 ucast_rate;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा rx_stats अणु
+struct rx_stats {
 	__le32 pkt;
 	__le32 byte;
 	__le32 ucast_pkt;
@@ -1794,29 +1793,29 @@
 	__le32 decrypt_err;
 	__le32 dupl_frame;
 	a_sle32 ucast_rate;
-पूर्ण __packed;
+} __packed;
 
-#घोषणा RATE_INDEX_WITHOUT_SGI_MASK     0x7f
-#घोषणा RATE_INDEX_MSB     0x80
+#define RATE_INDEX_WITHOUT_SGI_MASK     0x7f
+#define RATE_INDEX_MSB     0x80
 
-काष्ठा tkip_ccmp_stats अणु
+struct tkip_ccmp_stats {
 	__le32 tkip_local_mic_fail;
 	__le32 tkip_cnter_measures_invoked;
 	__le32 tkip_replays;
 	__le32 tkip_fmt_err;
 	__le32 ccmp_fmt_err;
 	__le32 ccmp_replays;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा pm_stats अणु
+struct pm_stats {
 	__le32 pwr_save_failure_cnt;
 	__le16 stop_tx_failure_cnt;
 	__le16 atim_tx_failure_cnt;
 	__le16 atim_rx_failure_cnt;
 	__le16 bcn_rx_failure_cnt;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा cserv_stats अणु
+struct cserv_stats {
 	__le32 cs_bmiss_cnt;
 	__le32 cs_low_rssi_cnt;
 	__le16 cs_connect_cnt;
@@ -1827,43 +1826,43 @@
 	u8 cs_snr;
 	u8 cs_ave_beacon_snr;
 	u8 cs_last_roam_msec;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wlan_net_stats अणु
-	काष्ठा tx_stats tx;
-	काष्ठा rx_stats rx;
-	काष्ठा tkip_ccmp_stats tkip_ccmp_stats;
-पूर्ण __packed;
+struct wlan_net_stats {
+	struct tx_stats tx;
+	struct rx_stats rx;
+	struct tkip_ccmp_stats tkip_ccmp_stats;
+} __packed;
 
-काष्ठा arp_stats अणु
+struct arp_stats {
 	__le32 arp_received;
 	__le32 arp_matched;
 	__le32 arp_replied;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wlan_wow_stats अणु
+struct wlan_wow_stats {
 	__le32 wow_pkt_dropped;
 	__le16 wow_evt_discarded;
 	u8 wow_host_pkt_wakeups;
 	u8 wow_host_evt_wakeups;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_target_stats अणु
+struct wmi_target_stats {
 	__le32 lq_val;
-	a_sle32 noise_न्यूनमान_calib;
-	काष्ठा pm_stats pm_stats;
-	काष्ठा wlan_net_stats stats;
-	काष्ठा wlan_wow_stats wow_stats;
-	काष्ठा arp_stats arp_stats;
-	काष्ठा cserv_stats cserv_stats;
-पूर्ण __packed;
+	a_sle32 noise_floor_calib;
+	struct pm_stats pm_stats;
+	struct wlan_net_stats stats;
+	struct wlan_wow_stats wow_stats;
+	struct arp_stats arp_stats;
+	struct cserv_stats cserv_stats;
+} __packed;
 
 /*
  * WMI_RSSI_THRESHOLD_EVENTID.
  * Indicate the RSSI events to host. Events are indicated when we breach a
  * thresold value.
  */
-क्रमागत wmi_rssi_threshold_val अणु
+enum wmi_rssi_threshold_val {
 	WMI_RSSI_THRESHOLD1_ABOVE = 0,
 	WMI_RSSI_THRESHOLD2_ABOVE,
 	WMI_RSSI_THRESHOLD3_ABOVE,
@@ -1876,14 +1875,14 @@
 	WMI_RSSI_THRESHOLD4_BELOW,
 	WMI_RSSI_THRESHOLD5_BELOW,
 	WMI_RSSI_THRESHOLD6_BELOW
-पूर्ण;
+};
 
-काष्ठा wmi_rssi_threshold_event अणु
+struct wmi_rssi_threshold_event {
 	a_sle16 rssi;
 	u8 range;
-पूर्ण __packed;
+} __packed;
 
-क्रमागत wmi_snr_threshold_val अणु
+enum wmi_snr_threshold_val {
 	WMI_SNR_THRESHOLD1_ABOVE = 1,
 	WMI_SNR_THRESHOLD1_BELOW,
 	WMI_SNR_THRESHOLD2_ABOVE,
@@ -1892,19 +1891,19 @@
 	WMI_SNR_THRESHOLD3_BELOW,
 	WMI_SNR_THRESHOLD4_ABOVE,
 	WMI_SNR_THRESHOLD4_BELOW
-पूर्ण;
+};
 
-काष्ठा wmi_snr_threshold_event अणु
-	/* see, क्रमागत wmi_snr_threshold_val */
+struct wmi_snr_threshold_event {
+	/* see, enum wmi_snr_threshold_val */
 	u8 range;
 
 	u8 snr;
-पूर्ण __packed;
+} __packed;
 
 /* WMI_REPORT_ROAM_TBL_EVENTID */
-#घोषणा MAX_ROAM_TBL_CAND   5
+#define MAX_ROAM_TBL_CAND   5
 
-काष्ठा wmi_bss_roam_info अणु
+struct wmi_bss_roam_info {
 	a_sle32 roam_util;
 	u8 bssid[ETH_ALEN];
 	s8 rssi;
@@ -1913,53 +1912,53 @@
 	s8 util;
 	s8 bias;
 
-	/* क्रम alignment */
+	/* for alignment */
 	u8 reserved;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_target_roam_tbl अणु
+struct wmi_target_roam_tbl {
 	__le16 roam_mode;
 	__le16 num_entries;
-	काष्ठा wmi_bss_roam_info info[];
-पूर्ण __packed;
+	struct wmi_bss_roam_info info[];
+} __packed;
 
 /* WMI_CAC_EVENTID */
-क्रमागत cac_indication अणु
+enum cac_indication {
 	CAC_INDICATION_ADMISSION = 0x00,
 	CAC_INDICATION_ADMISSION_RESP = 0x01,
 	CAC_INDICATION_DELETE = 0x02,
 	CAC_INDICATION_NO_RESP = 0x03,
-पूर्ण;
+};
 
-#घोषणा WMM_TSPEC_IE_LEN   63
+#define WMM_TSPEC_IE_LEN   63
 
-काष्ठा wmi_cac_event अणु
+struct wmi_cac_event {
 	u8 ac;
 	u8 cac_indication;
 	u8 status_code;
 	u8 tspec_suggestion[WMM_TSPEC_IE_LEN];
-पूर्ण __packed;
+} __packed;
 
 /* WMI_APLIST_EVENTID */
 
-क्रमागत aplist_ver अणु
+enum aplist_ver {
 	APLIST_VER1 = 1,
-पूर्ण;
+};
 
-काष्ठा wmi_ap_info_v1 अणु
+struct wmi_ap_info_v1 {
 	u8 bssid[ETH_ALEN];
 	__le16 channel;
-पूर्ण __packed;
+} __packed;
 
-जोड़ wmi_ap_info अणु
-	काष्ठा wmi_ap_info_v1 ap_info_v1;
-पूर्ण __packed;
+union wmi_ap_info {
+	struct wmi_ap_info_v1 ap_info_v1;
+} __packed;
 
-काष्ठा wmi_aplist_event अणु
+struct wmi_aplist_event {
 	u8 ap_list_ver;
 	u8 num_ap;
-	जोड़ wmi_ap_info ap_list[1];
-पूर्ण __packed;
+	union wmi_ap_info ap_list[1];
+} __packed;
 
 /* Developer Commands */
 
@@ -1968,7 +1967,7 @@
  *
  * Get bit rate cmd uses same definition as set bit rate cmd
  */
-क्रमागत wmi_bit_rate अणु
+enum wmi_bit_rate {
 	RATE_AUTO = -1,
 	RATE_1Mb = 0,
 	RATE_2Mb = 1,
@@ -1998,97 +1997,97 @@
 	RATE_MCS_5_40 = 25,
 	RATE_MCS_6_40 = 26,
 	RATE_MCS_7_40 = 27,
-पूर्ण;
+};
 
-काष्ठा wmi_bit_rate_reply अणु
-	/* see, क्रमागत wmi_bit_rate */
+struct wmi_bit_rate_reply {
+	/* see, enum wmi_bit_rate */
 	s8 rate_index;
-पूर्ण __packed;
+} __packed;
 
 /*
  * WMI_SET_FIXRATES_CMDID
  *
  * Get fix rates cmd uses same definition as set fix rates cmd
  */
-काष्ठा wmi_fix_rates_reply अणु
+struct wmi_fix_rates_reply {
 	/* see wmi_bit_rate */
 	__le32 fix_rate_mask;
-पूर्ण __packed;
+} __packed;
 
-क्रमागत roam_data_type अणु
-	/* get the roam समय data */
+enum roam_data_type {
+	/* get the roam time data */
 	ROAM_DATA_TIME = 1,
-पूर्ण;
+};
 
-काष्ठा wmi_target_roam_समय अणु
-	__le32 disassoc_समय;
-	__le32 no_txrx_समय;
-	__le32 assoc_समय;
-	__le32 allow_txrx_समय;
+struct wmi_target_roam_time {
+	__le32 disassoc_time;
+	__le32 no_txrx_time;
+	__le32 assoc_time;
+	__le32 allow_txrx_time;
 	u8 disassoc_bssid[ETH_ALEN];
 	s8 disassoc_bss_rssi;
 	u8 assoc_bssid[ETH_ALEN];
 	s8 assoc_bss_rssi;
-पूर्ण __packed;
+} __packed;
 
-क्रमागत wmi_txop_cfg अणु
+enum wmi_txop_cfg {
 	WMI_TXOP_DISABLED = 0,
 	WMI_TXOP_ENABLED
-पूर्ण;
+};
 
-काष्ठा wmi_set_wmm_txop_cmd अणु
+struct wmi_set_wmm_txop_cmd {
 	u8 txop_enable;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_set_keepalive_cmd अणु
-	u8 keep_alive_पूर्णांकvl;
-पूर्ण __packed;
+struct wmi_set_keepalive_cmd {
+	u8 keep_alive_intvl;
+} __packed;
 
-काष्ठा wmi_get_keepalive_cmd अणु
+struct wmi_get_keepalive_cmd {
 	__le32 configured;
-	u8 keep_alive_पूर्णांकvl;
-पूर्ण __packed;
+	u8 keep_alive_intvl;
+} __packed;
 
-काष्ठा wmi_set_appie_cmd अणु
-	u8 mgmt_frm_type; /* क्रमागत wmi_mgmt_frame_type */
+struct wmi_set_appie_cmd {
+	u8 mgmt_frm_type; /* enum wmi_mgmt_frame_type */
 	u8 ie_len;
 	u8 ie_info[0];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_set_ie_cmd अणु
+struct wmi_set_ie_cmd {
 	u8 ie_id;
-	u8 ie_field;	/* क्रमागत wmi_ie_field_type */
+	u8 ie_field;	/* enum wmi_ie_field_type */
 	u8 ie_len;
 	u8 reserved;
 	u8 ie_info[0];
-पूर्ण __packed;
+} __packed;
 
-/* Notअगरy the WSC registration status to the target */
-#घोषणा WSC_REG_ACTIVE     1
-#घोषणा WSC_REG_INACTIVE   0
+/* Notify the WSC registration status to the target */
+#define WSC_REG_ACTIVE     1
+#define WSC_REG_INACTIVE   0
 
-#घोषणा WOW_MAX_FILTERS_PER_LIST 4
-#घोषणा WOW_PATTERN_SIZE	 64
+#define WOW_MAX_FILTERS_PER_LIST 4
+#define WOW_PATTERN_SIZE	 64
 
-#घोषणा MAC_MAX_FILTERS_PER_LIST 4
+#define MAC_MAX_FILTERS_PER_LIST 4
 
-काष्ठा wow_filter अणु
+struct wow_filter {
 	u8 wow_valid_filter;
 	u8 wow_filter_id;
 	u8 wow_filter_size;
 	u8 wow_filter_offset;
 	u8 wow_filter_mask[WOW_PATTERN_SIZE];
 	u8 wow_filter_pattern[WOW_PATTERN_SIZE];
-पूर्ण __packed;
+} __packed;
 
-#घोषणा MAX_IP_ADDRS  2
+#define MAX_IP_ADDRS  2
 
-काष्ठा wmi_set_ip_cmd अणु
+struct wmi_set_ip_cmd {
 	/* IP in network byte order */
 	__be32 ips[MAX_IP_ADDRS];
-पूर्ण __packed;
+} __packed;
 
-क्रमागत ath6kl_wow_filters अणु
+enum ath6kl_wow_filters {
 	WOW_FILTER_SSID			= BIT(1),
 	WOW_FILTER_OPTION_MAGIC_PACKET  = BIT(2),
 	WOW_FILTER_OPTION_EAP_REQ	= BIT(3),
@@ -2101,79 +2100,79 @@
 	WOW_FILTER_OPTION_NWK_DISASSOC	= BIT(10),
 	WOW_FILTER_OPTION_GTK_ERROR	= BIT(11),
 	WOW_FILTER_OPTION_TEST_MODE	= BIT(15),
-पूर्ण;
+};
 
-क्रमागत ath6kl_host_mode अणु
+enum ath6kl_host_mode {
 	ATH6KL_HOST_MODE_AWAKE,
 	ATH6KL_HOST_MODE_ASLEEP,
-पूर्ण;
+};
 
-काष्ठा wmi_set_host_sleep_mode_cmd अणु
+struct wmi_set_host_sleep_mode_cmd {
 	__le32 awake;
 	__le32 asleep;
-पूर्ण __packed;
+} __packed;
 
-क्रमागत ath6kl_wow_mode अणु
+enum ath6kl_wow_mode {
 	ATH6KL_WOW_MODE_DISABLE,
 	ATH6KL_WOW_MODE_ENABLE,
-पूर्ण;
+};
 
-काष्ठा wmi_set_wow_mode_cmd अणु
+struct wmi_set_wow_mode_cmd {
 	__le32 enable_wow;
 	__le32 filter;
 	__le16 host_req_delay;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_add_wow_pattern_cmd अणु
+struct wmi_add_wow_pattern_cmd {
 	u8 filter_list_id;
 	u8 filter_size;
 	u8 filter_offset;
 	u8 filter[0];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_del_wow_pattern_cmd अणु
+struct wmi_del_wow_pattern_cmd {
 	__le16 filter_list_id;
 	__le16 filter_id;
-पूर्ण __packed;
+} __packed;
 
 /* WMI_SET_TXE_NOTIFY_CMDID */
-काष्ठा wmi_txe_notअगरy_cmd अणु
+struct wmi_txe_notify_cmd {
 	__le32 rate;
 	__le32 pkts;
-	__le32 पूर्णांकvl;
-पूर्ण __packed;
+	__le32 intvl;
+} __packed;
 
 /* WMI_TXE_NOTIFY_EVENTID */
-काष्ठा wmi_txe_notअगरy_event अणु
+struct wmi_txe_notify_event {
 	__le32 rate;
 	__le32 pkts;
-पूर्ण __packed;
+} __packed;
 
 /* WMI_SET_AKMP_PARAMS_CMD */
 
-काष्ठा wmi_pmkid अणु
+struct wmi_pmkid {
 	u8 pmkid[WMI_PMKID_LEN];
-पूर्ण __packed;
+} __packed;
 
 /* WMI_GET_PMKID_LIST_CMD  Reply */
-काष्ठा wmi_pmkid_list_reply अणु
+struct wmi_pmkid_list_reply {
 	__le32 num_pmkid;
 	u8 bssid_list[ETH_ALEN][1];
-	काष्ठा wmi_pmkid pmkid_list[1];
-पूर्ण __packed;
+	struct wmi_pmkid pmkid_list[1];
+} __packed;
 
 /* WMI_ADDBA_REQ_EVENTID */
-काष्ठा wmi_addba_req_event अणु
+struct wmi_addba_req_event {
 	u8 tid;
 	u8 win_sz;
 	__le16 st_seq_no;
 
-	/* f/w response क्रम ADDBA Req; OK (0) or failure (!=0) */
+	/* f/w response for ADDBA Req; OK (0) or failure (!=0) */
 	u8 status;
-पूर्ण __packed;
+} __packed;
 
 /* WMI_ADDBA_RESP_EVENTID */
-काष्ठा wmi_addba_resp_event अणु
+struct wmi_addba_resp_event {
 	u8 tid;
 
 	/* OK (0), failure (!=0) */
@@ -2181,41 +2180,41 @@
 
 	/* three values: not supported(0), 3839, 8k */
 	__le16 amsdu_sz;
-पूर्ण __packed;
+} __packed;
 
 /* WMI_DELBA_EVENTID
- * f/w received a DELBA क्रम peer and processed it.
- * Host is notअगरied of this
+ * f/w received a DELBA for peer and processed it.
+ * Host is notified of this
  */
-काष्ठा wmi_delba_event अणु
+struct wmi_delba_event {
 	u8 tid;
 	u8 is_peer_initiator;
 	__le16 reason_code;
-पूर्ण __packed;
+} __packed;
 
-#घोषणा PEER_NODE_JOIN_EVENT		0x00
-#घोषणा PEER_NODE_LEAVE_EVENT		0x01
-#घोषणा PEER_FIRST_NODE_JOIN_EVENT	0x10
-#घोषणा PEER_LAST_NODE_LEAVE_EVENT	0x11
+#define PEER_NODE_JOIN_EVENT		0x00
+#define PEER_NODE_LEAVE_EVENT		0x01
+#define PEER_FIRST_NODE_JOIN_EVENT	0x10
+#define PEER_LAST_NODE_LEAVE_EVENT	0x11
 
-काष्ठा wmi_peer_node_event अणु
+struct wmi_peer_node_event {
 	u8 event_code;
 	u8 peer_mac_addr[ETH_ALEN];
-पूर्ण __packed;
+} __packed;
 
-/* Transmit complete event data काष्ठाure(s) */
+/* Transmit complete event data structure(s) */
 
 /* version 1 of tx complete msg */
-काष्ठा tx_complete_msg_v1 अणु
-#घोषणा TX_COMPLETE_STATUS_SUCCESS 0
-#घोषणा TX_COMPLETE_STATUS_RETRIES 1
-#घोषणा TX_COMPLETE_STATUS_NOLINK  2
-#घोषणा TX_COMPLETE_STATUS_TIMEOUT 3
-#घोषणा TX_COMPLETE_STATUS_OTHER   4
+struct tx_complete_msg_v1 {
+#define TX_COMPLETE_STATUS_SUCCESS 0
+#define TX_COMPLETE_STATUS_RETRIES 1
+#define TX_COMPLETE_STATUS_NOLINK  2
+#define TX_COMPLETE_STATUS_TIMEOUT 3
+#define TX_COMPLETE_STATUS_OTHER   4
 
 	u8 status;
 
-	/* packet ID to identअगरy parent packet */
+	/* packet ID to identify parent packet */
 	u8 pkt_id;
 
 	/* rate index on successful transmission */
@@ -2223,21 +2222,21 @@
 
 	/* number of ACK failures in tx attempt */
 	u8 ack_failures;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_tx_complete_event अणु
-	/* no of tx comp msgs following this काष्ठा */
+struct wmi_tx_complete_event {
+	/* no of tx comp msgs following this struct */
 	u8 num_msg;
 
-	/* length in bytes क्रम each inभागidual msg following this काष्ठा */
+	/* length in bytes for each individual msg following this struct */
 	u8 msg_len;
 
-	/* version of tx complete msg data following this काष्ठा */
+	/* version of tx complete msg data following this struct */
 	u8 msg_type;
 
-	/* inभागidual messages follow this header */
+	/* individual messages follow this header */
 	u8 reserved;
-पूर्ण __packed;
+} __packed;
 
 /*
  * ------- AP Mode definitions --------------
@@ -2247,12 +2246,12 @@
  * !!! Warning !!!
  * -Changing the following values needs compilation of both driver and firmware
  */
-#घोषणा AP_MAX_NUM_STA          10
+#define AP_MAX_NUM_STA          10
 
 /* Spl. AID used to set DTIM flag in the beacons */
-#घोषणा MCAST_AID               0xFF
+#define MCAST_AID               0xFF
 
-#घोषणा DEF_AP_COUNTRY_CODE     "US "
+#define DEF_AP_COUNTRY_CODE     "US "
 
 /* Used with WMI_AP_SET_NUM_STA_CMDID */
 
@@ -2261,74 +2260,74 @@
  */
 
 /* MLME Commands */
-#घोषणा WMI_AP_MLME_ASSOC       1   /* associate station */
-#घोषणा WMI_AP_DISASSOC         2   /* disassociate station */
-#घोषणा WMI_AP_DEAUTH           3   /* deauthenticate station */
-#घोषणा WMI_AP_MLME_AUTHORIZE   4   /* authorize station */
-#घोषणा WMI_AP_MLME_UNAUTHORIZE 5   /* unauthorize station */
+#define WMI_AP_MLME_ASSOC       1   /* associate station */
+#define WMI_AP_DISASSOC         2   /* disassociate station */
+#define WMI_AP_DEAUTH           3   /* deauthenticate station */
+#define WMI_AP_MLME_AUTHORIZE   4   /* authorize station */
+#define WMI_AP_MLME_UNAUTHORIZE 5   /* unauthorize station */
 
-काष्ठा wmi_ap_set_mlme_cmd अणु
+struct wmi_ap_set_mlme_cmd {
 	u8 mac[ETH_ALEN];
 	__le16 reason;		/* 802.11 reason code */
-	u8 cmd;			/* operation to perक्रमm (WMI_AP_*) */
-पूर्ण __packed;
+	u8 cmd;			/* operation to perform (WMI_AP_*) */
+} __packed;
 
-काष्ठा wmi_ap_set_pvb_cmd अणु
+struct wmi_ap_set_pvb_cmd {
 	__le32 flag;
 	__le16 rsvd;
 	__le16 aid;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_rx_frame_क्रमmat_cmd अणु
-	/* version of meta data क्रम rx packets <0 = शेष> (0-7 = valid) */
+struct wmi_rx_frame_format_cmd {
+	/* version of meta data for rx packets <0 = default> (0-7 = valid) */
 	u8 meta_ver;
 
 	/*
-	 * 1 == leave .11 header पूर्णांकact,
-	 * 0 == replace .11 header with .3 <शेष>
+	 * 1 == leave .11 header intact,
+	 * 0 == replace .11 header with .3 <default>
 	 */
-	u8 करोt11_hdr;
+	u8 dot11_hdr;
 
 	/*
-	 * 1 == defragmentation is perक्रमmed by host,
-	 * 0 == perक्रमmed by target <शेष>
+	 * 1 == defragmentation is performed by host,
+	 * 0 == performed by target <default>
 	 */
 	u8 defrag_on_host;
 
-	/* क्रम alignment */
+	/* for alignment */
 	u8 reserved[1];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_ap_hidden_ssid_cmd अणु
+struct wmi_ap_hidden_ssid_cmd {
 	u8 hidden_ssid;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_set_inact_period_cmd अणु
+struct wmi_set_inact_period_cmd {
 	__le32 inact_period;
 	u8 num_null_func;
-पूर्ण __packed;
+} __packed;
 
 /* AP mode events */
-काष्ठा wmi_ap_set_apsd_cmd अणु
+struct wmi_ap_set_apsd_cmd {
 	u8 enable;
-पूर्ण __packed;
+} __packed;
 
-क्रमागत wmi_ap_apsd_buffered_traffic_flags अणु
+enum wmi_ap_apsd_buffered_traffic_flags {
 	WMI_AP_APSD_NO_DELIVERY_FRAMES =  0x1,
-पूर्ण;
+};
 
-काष्ठा wmi_ap_apsd_buffered_traffic_cmd अणु
+struct wmi_ap_apsd_buffered_traffic_cmd {
 	__le16 aid;
-	__le16 biपंचांगap;
+	__le16 bitmap;
 	__le32 flags;
-पूर्ण __packed;
+} __packed;
 
 /* WMI_PS_POLL_EVENT */
-काष्ठा wmi_pspoll_event अणु
+struct wmi_pspoll_event {
 	__le16 aid;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_per_sta_stat अणु
+struct wmi_per_sta_stat {
 	__le32 tx_bytes;
 	__le32 tx_pkts;
 	__le32 tx_error;
@@ -2338,121 +2337,121 @@
 	__le32 rx_error;
 	__le32 rx_discard;
 	__le32 aid;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_ap_mode_stat अणु
+struct wmi_ap_mode_stat {
 	__le32 action;
-	काष्ठा wmi_per_sta_stat sta[AP_MAX_NUM_STA + 1];
-पूर्ण __packed;
+	struct wmi_per_sta_stat sta[AP_MAX_NUM_STA + 1];
+} __packed;
 
 /* End of AP mode definitions */
 
-काष्ठा wmi_reमुख्य_on_chnl_cmd अणु
+struct wmi_remain_on_chnl_cmd {
 	__le32 freq;
 	__le32 duration;
-पूर्ण __packed;
+} __packed;
 
 /* wmi_send_action_cmd is to be deprecated. Use
- * wmi_send_mgmt_cmd instead. The new काष्ठाure supports P2P mgmt
- * operations using station पूर्णांकerface.
+ * wmi_send_mgmt_cmd instead. The new structure supports P2P mgmt
+ * operations using station interface.
  */
-काष्ठा wmi_send_action_cmd अणु
+struct wmi_send_action_cmd {
 	__le32 id;
 	__le32 freq;
-	__le32 रुको;
+	__le32 wait;
 	__le16 len;
 	u8 data[0];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_send_mgmt_cmd अणु
+struct wmi_send_mgmt_cmd {
 	__le32 id;
 	__le32 freq;
-	__le32 रुको;
+	__le32 wait;
 	__le32 no_cck;
 	__le16 len;
 	u8 data[0];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_tx_status_event अणु
+struct wmi_tx_status_event {
 	__le32 id;
 	u8 ack_status;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_probe_req_report_cmd अणु
+struct wmi_probe_req_report_cmd {
 	u8 enable;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_disable_11b_rates_cmd अणु
+struct wmi_disable_11b_rates_cmd {
 	u8 disable;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_set_appie_extended_cmd अणु
+struct wmi_set_appie_extended_cmd {
 	u8 role_id;
 	u8 mgmt_frm_type;
 	u8 ie_len;
 	u8 ie_info[0];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_reमुख्य_on_chnl_event अणु
+struct wmi_remain_on_chnl_event {
 	__le32 freq;
 	__le32 duration;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_cancel_reमुख्य_on_chnl_event अणु
+struct wmi_cancel_remain_on_chnl_event {
 	__le32 freq;
 	__le32 duration;
 	u8 status;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_rx_action_event अणु
+struct wmi_rx_action_event {
 	__le32 freq;
 	__le16 len;
 	u8 data[0];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_p2p_capabilities_event अणु
+struct wmi_p2p_capabilities_event {
 	__le16 len;
 	u8 data[0];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_p2p_rx_probe_req_event अणु
+struct wmi_p2p_rx_probe_req_event {
 	__le32 freq;
 	__le16 len;
 	u8 data[0];
-पूर्ण __packed;
+} __packed;
 
-#घोषणा P2P_FLAG_CAPABILITIES_REQ   (0x00000001)
-#घोषणा P2P_FLAG_MACADDR_REQ        (0x00000002)
-#घोषणा P2P_FLAG_HMODEL_REQ         (0x00000002)
+#define P2P_FLAG_CAPABILITIES_REQ   (0x00000001)
+#define P2P_FLAG_MACADDR_REQ        (0x00000002)
+#define P2P_FLAG_HMODEL_REQ         (0x00000002)
 
-काष्ठा wmi_get_p2p_info अणु
+struct wmi_get_p2p_info {
 	__le32 info_req_flags;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_p2p_info_event अणु
+struct wmi_p2p_info_event {
 	__le32 info_req_flags;
 	__le16 len;
 	u8 data[0];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_p2p_capabilities अणु
-	u8 go_घातer_save;
-पूर्ण __packed;
+struct wmi_p2p_capabilities {
+	u8 go_power_save;
+} __packed;
 
-काष्ठा wmi_p2p_macaddr अणु
+struct wmi_p2p_macaddr {
 	u8 mac_addr[ETH_ALEN];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_p2p_hmodel अणु
+struct wmi_p2p_hmodel {
 	u8 p2p_model;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_p2p_probe_response_cmd अणु
+struct wmi_p2p_probe_response_cmd {
 	__le32 freq;
 	u8 destination_addr[ETH_ALEN];
 	__le16 len;
 	u8 data[0];
-पूर्ण __packed;
+} __packed;
 
 /* Extended WMI (WMIX)
  *
@@ -2461,16 +2460,16 @@
  *
  * Extended WMI commands are those that are needed during wireless
  * operation, but which are not really wireless commands.  This allows,
- * क्रम instance, platक्रमm-specअगरic commands.  Extended WMI commands are
+ * for instance, platform-specific commands.  Extended WMI commands are
  * embedded in a WMI command message with WMI_COMMAND_ID=WMI_EXTENSION_CMDID.
  * Extended WMI events are similarly embedded in a WMI event message with
  * WMI_EVENT_ID=WMI_EXTENSION_EVENTID.
  */
-काष्ठा wmix_cmd_hdr अणु
+struct wmix_cmd_hdr {
 	__le32 cmd_id;
-पूर्ण __packed;
+} __packed;
 
-क्रमागत wmix_command_id अणु
+enum wmix_command_id {
 	WMIX_DSETOPEN_REPLY_CMDID = 0x2001,
 	WMIX_DSETDATA_REPLY_CMDID,
 	WMIX_GPIO_OUTPUT_SET_CMDID,
@@ -2485,9 +2484,9 @@
 	WMIX_PROF_START_CMDID,
 	WMIX_PROF_STOP_CMDID,
 	WMIX_PROF_COUNT_GET_CMDID,
-पूर्ण;
+};
 
-क्रमागत wmix_event_id अणु
+enum wmix_event_id {
 	WMIX_DSETOPENREQ_EVENTID = 0x3001,
 	WMIX_DSETCLOSE_EVENTID,
 	WMIX_DSETDATAREQ_EVENTID,
@@ -2497,7 +2496,7 @@
 	WMIX_HB_CHALLENGE_RESP_EVENTID,
 	WMIX_DBGLOG_EVENTID,
 	WMIX_PROF_COUNT_EVENTID,
-पूर्ण;
+};
 
 /*
  * ------Error Detection support-------
@@ -2507,226 +2506,226 @@
  * WMIX_HB_CHALLENGE_RESP_CMDID
  * Heartbeat Challenge Response command
  */
-काष्ठा wmix_hb_challenge_resp_cmd अणु
+struct wmix_hb_challenge_resp_cmd {
 	__le32 cookie;
 	__le32 source;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा ath6kl_wmix_dbglog_cfg_module_cmd अणु
+struct ath6kl_wmix_dbglog_cfg_module_cmd {
 	__le32 valid;
 	__le32 config;
-पूर्ण __packed;
+} __packed;
 
 /* End of Extended WMI (WMIX) */
 
-क्रमागत wmi_sync_flag अणु
+enum wmi_sync_flag {
 	NO_SYNC_WMIFLAG = 0,
 
-	/* transmit all queued data beक्रमe cmd */
+	/* transmit all queued data before cmd */
 	SYNC_BEFORE_WMIFLAG,
 
-	/* any new data रुकोs until cmd execs */
+	/* any new data waits until cmd execs */
 	SYNC_AFTER_WMIFLAG,
 
 	SYNC_BOTH_WMIFLAG,
 
 	/* end marker */
 	END_WMIFLAG
-पूर्ण;
+};
 
-क्रमागत htc_endpoपूर्णांक_id ath6kl_wmi_get_control_ep(काष्ठा wmi *wmi);
-व्योम ath6kl_wmi_set_control_ep(काष्ठा wmi *wmi, क्रमागत htc_endpoपूर्णांक_id ep_id);
-पूर्णांक ath6kl_wmi_dix_2_करोt3(काष्ठा wmi *wmi, काष्ठा sk_buff *skb);
-पूर्णांक ath6kl_wmi_data_hdr_add(काष्ठा wmi *wmi, काष्ठा sk_buff *skb,
+enum htc_endpoint_id ath6kl_wmi_get_control_ep(struct wmi *wmi);
+void ath6kl_wmi_set_control_ep(struct wmi *wmi, enum htc_endpoint_id ep_id);
+int ath6kl_wmi_dix_2_dot3(struct wmi *wmi, struct sk_buff *skb);
+int ath6kl_wmi_data_hdr_add(struct wmi *wmi, struct sk_buff *skb,
 			    u8 msg_type, u32 flags,
-			    क्रमागत wmi_data_hdr_data_type data_type,
-			    u8 meta_ver, व्योम *tx_meta_info, u8 अगर_idx);
+			    enum wmi_data_hdr_data_type data_type,
+			    u8 meta_ver, void *tx_meta_info, u8 if_idx);
 
-पूर्णांक ath6kl_wmi_करोt11_hdr_हटाओ(काष्ठा wmi *wmi, काष्ठा sk_buff *skb);
-पूर्णांक ath6kl_wmi_करोt3_2_dix(काष्ठा sk_buff *skb);
-पूर्णांक ath6kl_wmi_implicit_create_pstream(काष्ठा wmi *wmi, u8 अगर_idx,
-				       काष्ठा sk_buff *skb, u32 layer2_priority,
+int ath6kl_wmi_dot11_hdr_remove(struct wmi *wmi, struct sk_buff *skb);
+int ath6kl_wmi_dot3_2_dix(struct sk_buff *skb);
+int ath6kl_wmi_implicit_create_pstream(struct wmi *wmi, u8 if_idx,
+				       struct sk_buff *skb, u32 layer2_priority,
 				       bool wmm_enabled, u8 *ac);
 
-पूर्णांक ath6kl_wmi_control_rx(काष्ठा wmi *wmi, काष्ठा sk_buff *skb);
+int ath6kl_wmi_control_rx(struct wmi *wmi, struct sk_buff *skb);
 
-पूर्णांक ath6kl_wmi_cmd_send(काष्ठा wmi *wmi, u8 अगर_idx, काष्ठा sk_buff *skb,
-			क्रमागत wmi_cmd_id cmd_id, क्रमागत wmi_sync_flag sync_flag);
+int ath6kl_wmi_cmd_send(struct wmi *wmi, u8 if_idx, struct sk_buff *skb,
+			enum wmi_cmd_id cmd_id, enum wmi_sync_flag sync_flag);
 
-पूर्णांक ath6kl_wmi_connect_cmd(काष्ठा wmi *wmi, u8 अगर_idx,
-			   क्रमागत network_type nw_type,
-			   क्रमागत करोt11_auth_mode करोt11_auth_mode,
-			   क्रमागत auth_mode auth_mode,
-			   क्रमागत ath6kl_crypto_type pairwise_crypto,
+int ath6kl_wmi_connect_cmd(struct wmi *wmi, u8 if_idx,
+			   enum network_type nw_type,
+			   enum dot11_auth_mode dot11_auth_mode,
+			   enum auth_mode auth_mode,
+			   enum ath6kl_crypto_type pairwise_crypto,
 			   u8 pairwise_crypto_len,
-			   क्रमागत ath6kl_crypto_type group_crypto,
-			   u8 group_crypto_len, पूर्णांक ssid_len, u8 *ssid,
+			   enum ath6kl_crypto_type group_crypto,
+			   u8 group_crypto_len, int ssid_len, u8 *ssid,
 			   u8 *bssid, u16 channel, u32 ctrl_flags,
 			   u8 nw_subtype);
 
-पूर्णांक ath6kl_wmi_reconnect_cmd(काष्ठा wmi *wmi, u8 अगर_idx, u8 *bssid,
+int ath6kl_wmi_reconnect_cmd(struct wmi *wmi, u8 if_idx, u8 *bssid,
 			     u16 channel);
-पूर्णांक ath6kl_wmi_disconnect_cmd(काष्ठा wmi *wmi, u8 अगर_idx);
+int ath6kl_wmi_disconnect_cmd(struct wmi *wmi, u8 if_idx);
 
-पूर्णांक ath6kl_wmi_beginscan_cmd(काष्ठा wmi *wmi, u8 अगर_idx,
-			     क्रमागत wmi_scan_type scan_type,
-			     u32 क्रमce_fgscan, u32 is_legacy,
-			     u32 home_dwell_समय, u32 क्रमce_scan_पूर्णांकerval,
+int ath6kl_wmi_beginscan_cmd(struct wmi *wmi, u8 if_idx,
+			     enum wmi_scan_type scan_type,
+			     u32 force_fgscan, u32 is_legacy,
+			     u32 home_dwell_time, u32 force_scan_interval,
 			     s8 num_chan, u16 *ch_list, u32 no_cck,
 			     u32 *rates);
-पूर्णांक ath6kl_wmi_enable_sched_scan_cmd(काष्ठा wmi *wmi, u8 अगर_idx, bool enable);
+int ath6kl_wmi_enable_sched_scan_cmd(struct wmi *wmi, u8 if_idx, bool enable);
 
-पूर्णांक ath6kl_wmi_scanparams_cmd(काष्ठा wmi *wmi, u8 अगर_idx, u16 fg_start_sec,
+int ath6kl_wmi_scanparams_cmd(struct wmi *wmi, u8 if_idx, u16 fg_start_sec,
 			      u16 fg_end_sec, u16 bg_sec,
 			      u16 minact_chdw_msec, u16 maxact_chdw_msec,
-			      u16 pas_chdw_msec, u8 लघु_scan_ratio,
-			      u8 scan_ctrl_flag, u32 max_dfsch_act_समय,
+			      u16 pas_chdw_msec, u8 short_scan_ratio,
+			      u8 scan_ctrl_flag, u32 max_dfsch_act_time,
 			      u16 maxact_scan_per_ssid);
-पूर्णांक ath6kl_wmi_bssfilter_cmd(काष्ठा wmi *wmi, u8 अगर_idx, u8 filter,
+int ath6kl_wmi_bssfilter_cmd(struct wmi *wmi, u8 if_idx, u8 filter,
 			     u32 ie_mask);
-पूर्णांक ath6kl_wmi_probedssid_cmd(काष्ठा wmi *wmi, u8 अगर_idx, u8 index, u8 flag,
+int ath6kl_wmi_probedssid_cmd(struct wmi *wmi, u8 if_idx, u8 index, u8 flag,
 			      u8 ssid_len, u8 *ssid);
-पूर्णांक ath6kl_wmi_listenपूर्णांकerval_cmd(काष्ठा wmi *wmi, u8 अगर_idx,
-				  u16 listen_पूर्णांकerval,
+int ath6kl_wmi_listeninterval_cmd(struct wmi *wmi, u8 if_idx,
+				  u16 listen_interval,
 				  u16 listen_beacons);
-पूर्णांक ath6kl_wmi_bmissसमय_cmd(काष्ठा wmi *wmi, u8 अगर_idx,
-			     u16 bmiss_समय, u16 num_beacons);
-पूर्णांक ath6kl_wmi_घातermode_cmd(काष्ठा wmi *wmi, u8 अगर_idx, u8 pwr_mode);
-पूर्णांक ath6kl_wmi_pmparams_cmd(काष्ठा wmi *wmi, u8 अगर_idx, u16 idle_period,
+int ath6kl_wmi_bmisstime_cmd(struct wmi *wmi, u8 if_idx,
+			     u16 bmiss_time, u16 num_beacons);
+int ath6kl_wmi_powermode_cmd(struct wmi *wmi, u8 if_idx, u8 pwr_mode);
+int ath6kl_wmi_pmparams_cmd(struct wmi *wmi, u8 if_idx, u16 idle_period,
 			    u16 ps_poll_num, u16 dtim_policy,
 			    u16 tx_wakup_policy, u16 num_tx_to_wakeup,
 			    u16 ps_fail_event_policy);
-पूर्णांक ath6kl_wmi_create_pstream_cmd(काष्ठा wmi *wmi, u8 अगर_idx,
-				  काष्ठा wmi_create_pstream_cmd *pstream);
-पूर्णांक ath6kl_wmi_delete_pstream_cmd(काष्ठा wmi *wmi, u8 अगर_idx, u8 traffic_class,
+int ath6kl_wmi_create_pstream_cmd(struct wmi *wmi, u8 if_idx,
+				  struct wmi_create_pstream_cmd *pstream);
+int ath6kl_wmi_delete_pstream_cmd(struct wmi *wmi, u8 if_idx, u8 traffic_class,
 				  u8 tsid);
-पूर्णांक ath6kl_wmi_disस_समयout_cmd(काष्ठा wmi *wmi, u8 अगर_idx, u8 समयout);
+int ath6kl_wmi_disctimeout_cmd(struct wmi *wmi, u8 if_idx, u8 timeout);
 
-पूर्णांक ath6kl_wmi_set_rts_cmd(काष्ठा wmi *wmi, u16 threshold);
-पूर्णांक ath6kl_wmi_set_lpreamble_cmd(काष्ठा wmi *wmi, u8 अगर_idx, u8 status,
+int ath6kl_wmi_set_rts_cmd(struct wmi *wmi, u16 threshold);
+int ath6kl_wmi_set_lpreamble_cmd(struct wmi *wmi, u8 if_idx, u8 status,
 				 u8 preamble_policy);
 
-पूर्णांक ath6kl_wmi_get_challenge_resp_cmd(काष्ठा wmi *wmi, u32 cookie, u32 source);
-पूर्णांक ath6kl_wmi_config_debug_module_cmd(काष्ठा wmi *wmi, u32 valid, u32 config);
+int ath6kl_wmi_get_challenge_resp_cmd(struct wmi *wmi, u32 cookie, u32 source);
+int ath6kl_wmi_config_debug_module_cmd(struct wmi *wmi, u32 valid, u32 config);
 
-पूर्णांक ath6kl_wmi_get_stats_cmd(काष्ठा wmi *wmi, u8 अगर_idx);
-पूर्णांक ath6kl_wmi_addkey_cmd(काष्ठा wmi *wmi, u8 अगर_idx, u8 key_index,
-			  क्रमागत ath6kl_crypto_type key_type,
+int ath6kl_wmi_get_stats_cmd(struct wmi *wmi, u8 if_idx);
+int ath6kl_wmi_addkey_cmd(struct wmi *wmi, u8 if_idx, u8 key_index,
+			  enum ath6kl_crypto_type key_type,
 			  u8 key_usage, u8 key_len,
-			  u8 *key_rsc, अचिन्हित पूर्णांक key_rsc_len,
+			  u8 *key_rsc, unsigned int key_rsc_len,
 			  u8 *key_material,
 			  u8 key_op_ctrl, u8 *mac_addr,
-			  क्रमागत wmi_sync_flag sync_flag);
-पूर्णांक ath6kl_wmi_add_krk_cmd(काष्ठा wmi *wmi, u8 अगर_idx, स्थिर u8 *krk);
-पूर्णांक ath6kl_wmi_deletekey_cmd(काष्ठा wmi *wmi, u8 अगर_idx, u8 key_index);
-पूर्णांक ath6kl_wmi_setpmkid_cmd(काष्ठा wmi *wmi, u8 अगर_idx, स्थिर u8 *bssid,
-			    स्थिर u8 *pmkid, bool set);
-पूर्णांक ath6kl_wmi_set_tx_pwr_cmd(काष्ठा wmi *wmi, u8 अगर_idx, u8 dbM);
-पूर्णांक ath6kl_wmi_get_tx_pwr_cmd(काष्ठा wmi *wmi, u8 अगर_idx);
-पूर्णांक ath6kl_wmi_get_roam_tbl_cmd(काष्ठा wmi *wmi);
+			  enum wmi_sync_flag sync_flag);
+int ath6kl_wmi_add_krk_cmd(struct wmi *wmi, u8 if_idx, const u8 *krk);
+int ath6kl_wmi_deletekey_cmd(struct wmi *wmi, u8 if_idx, u8 key_index);
+int ath6kl_wmi_setpmkid_cmd(struct wmi *wmi, u8 if_idx, const u8 *bssid,
+			    const u8 *pmkid, bool set);
+int ath6kl_wmi_set_tx_pwr_cmd(struct wmi *wmi, u8 if_idx, u8 dbM);
+int ath6kl_wmi_get_tx_pwr_cmd(struct wmi *wmi, u8 if_idx);
+int ath6kl_wmi_get_roam_tbl_cmd(struct wmi *wmi);
 
-पूर्णांक ath6kl_wmi_set_wmm_txop(काष्ठा wmi *wmi, u8 अगर_idx, क्रमागत wmi_txop_cfg cfg);
-पूर्णांक ath6kl_wmi_set_keepalive_cmd(काष्ठा wmi *wmi, u8 अगर_idx,
-				 u8 keep_alive_पूर्णांकvl);
-पूर्णांक ath6kl_wmi_set_htcap_cmd(काष्ठा wmi *wmi, u8 अगर_idx,
-			     क्रमागत nl80211_band band,
-			     काष्ठा ath6kl_htcap *htcap);
-पूर्णांक ath6kl_wmi_test_cmd(काष्ठा wmi *wmi, व्योम *buf, माप_प्रकार len);
+int ath6kl_wmi_set_wmm_txop(struct wmi *wmi, u8 if_idx, enum wmi_txop_cfg cfg);
+int ath6kl_wmi_set_keepalive_cmd(struct wmi *wmi, u8 if_idx,
+				 u8 keep_alive_intvl);
+int ath6kl_wmi_set_htcap_cmd(struct wmi *wmi, u8 if_idx,
+			     enum nl80211_band band,
+			     struct ath6kl_htcap *htcap);
+int ath6kl_wmi_test_cmd(struct wmi *wmi, void *buf, size_t len);
 
-s32 ath6kl_wmi_get_rate(काष्ठा wmi *wmi, s8 rate_index);
+s32 ath6kl_wmi_get_rate(struct wmi *wmi, s8 rate_index);
 
-पूर्णांक ath6kl_wmi_set_ip_cmd(काष्ठा wmi *wmi, u8 अगर_idx,
+int ath6kl_wmi_set_ip_cmd(struct wmi *wmi, u8 if_idx,
 			  __be32 ips0, __be32 ips1);
-पूर्णांक ath6kl_wmi_set_host_sleep_mode_cmd(काष्ठा wmi *wmi, u8 अगर_idx,
-				       क्रमागत ath6kl_host_mode host_mode);
-पूर्णांक ath6kl_wmi_set_bitrate_mask(काष्ठा wmi *wmi, u8 अगर_idx,
-				स्थिर काष्ठा cfg80211_bitrate_mask *mask);
-पूर्णांक ath6kl_wmi_set_wow_mode_cmd(काष्ठा wmi *wmi, u8 अगर_idx,
-				क्रमागत ath6kl_wow_mode wow_mode,
+int ath6kl_wmi_set_host_sleep_mode_cmd(struct wmi *wmi, u8 if_idx,
+				       enum ath6kl_host_mode host_mode);
+int ath6kl_wmi_set_bitrate_mask(struct wmi *wmi, u8 if_idx,
+				const struct cfg80211_bitrate_mask *mask);
+int ath6kl_wmi_set_wow_mode_cmd(struct wmi *wmi, u8 if_idx,
+				enum ath6kl_wow_mode wow_mode,
 				u32 filter, u16 host_req_delay);
-पूर्णांक ath6kl_wmi_add_wow_pattern_cmd(काष्ठा wmi *wmi, u8 अगर_idx,
+int ath6kl_wmi_add_wow_pattern_cmd(struct wmi *wmi, u8 if_idx,
 				   u8 list_id, u8 filter_size,
-				   u8 filter_offset, स्थिर u8 *filter,
-				   स्थिर u8 *mask);
-पूर्णांक ath6kl_wmi_del_wow_pattern_cmd(काष्ठा wmi *wmi, u8 अगर_idx,
+				   u8 filter_offset, const u8 *filter,
+				   const u8 *mask);
+int ath6kl_wmi_del_wow_pattern_cmd(struct wmi *wmi, u8 if_idx,
 				   u16 list_id, u16 filter_id);
-पूर्णांक ath6kl_wmi_set_rssi_filter_cmd(काष्ठा wmi *wmi, u8 अगर_idx, s8 rssi);
-पूर्णांक ath6kl_wmi_set_roam_lrssi_cmd(काष्ठा wmi *wmi, u8 lrssi);
-पूर्णांक ath6kl_wmi_ap_set_dtim_cmd(काष्ठा wmi *wmi, u8 अगर_idx, u32 dtim_period);
-पूर्णांक ath6kl_wmi_ap_set_beacon_पूर्णांकvl_cmd(काष्ठा wmi *wmi, u8 अगर_idx,
-				       u32 beacon_पूर्णांकerval);
-पूर्णांक ath6kl_wmi_क्रमce_roam_cmd(काष्ठा wmi *wmi, स्थिर u8 *bssid);
-पूर्णांक ath6kl_wmi_set_roam_mode_cmd(काष्ठा wmi *wmi, क्रमागत wmi_roam_mode mode);
-पूर्णांक ath6kl_wmi_mcast_filter_cmd(काष्ठा wmi *wmi, u8 अगर_idx, bool mc_all_on);
-पूर्णांक ath6kl_wmi_add_del_mcast_filter_cmd(काष्ठा wmi *wmi, u8 अगर_idx,
+int ath6kl_wmi_set_rssi_filter_cmd(struct wmi *wmi, u8 if_idx, s8 rssi);
+int ath6kl_wmi_set_roam_lrssi_cmd(struct wmi *wmi, u8 lrssi);
+int ath6kl_wmi_ap_set_dtim_cmd(struct wmi *wmi, u8 if_idx, u32 dtim_period);
+int ath6kl_wmi_ap_set_beacon_intvl_cmd(struct wmi *wmi, u8 if_idx,
+				       u32 beacon_interval);
+int ath6kl_wmi_force_roam_cmd(struct wmi *wmi, const u8 *bssid);
+int ath6kl_wmi_set_roam_mode_cmd(struct wmi *wmi, enum wmi_roam_mode mode);
+int ath6kl_wmi_mcast_filter_cmd(struct wmi *wmi, u8 if_idx, bool mc_all_on);
+int ath6kl_wmi_add_del_mcast_filter_cmd(struct wmi *wmi, u8 if_idx,
 					u8 *filter, bool add_filter);
-पूर्णांक ath6kl_wmi_sta_bmiss_enhance_cmd(काष्ठा wmi *wmi, u8 अगर_idx, bool enable);
-पूर्णांक ath6kl_wmi_set_txe_notअगरy(काष्ठा wmi *wmi, u8 idx,
-			      u32 rate, u32 pkts, u32 पूर्णांकvl);
-पूर्णांक ath6kl_wmi_set_regकरोमुख्य_cmd(काष्ठा wmi *wmi, स्थिर अक्षर *alpha2);
+int ath6kl_wmi_sta_bmiss_enhance_cmd(struct wmi *wmi, u8 if_idx, bool enable);
+int ath6kl_wmi_set_txe_notify(struct wmi *wmi, u8 idx,
+			      u32 rate, u32 pkts, u32 intvl);
+int ath6kl_wmi_set_regdomain_cmd(struct wmi *wmi, const char *alpha2);
 
 /* AP mode uAPSD */
-पूर्णांक ath6kl_wmi_ap_set_apsd(काष्ठा wmi *wmi, u8 अगर_idx, u8 enable);
+int ath6kl_wmi_ap_set_apsd(struct wmi *wmi, u8 if_idx, u8 enable);
 
-पूर्णांक ath6kl_wmi_set_apsd_bfrd_traf(काष्ठा wmi *wmi,
-						u8 अगर_idx, u16 aid,
-						u16 biपंचांगap, u32 flags);
+int ath6kl_wmi_set_apsd_bfrd_traf(struct wmi *wmi,
+						u8 if_idx, u16 aid,
+						u16 bitmap, u32 flags);
 
 u8 ath6kl_wmi_get_traffic_class(u8 user_priority);
 
 u8 ath6kl_wmi_determine_user_priority(u8 *pkt, u32 layer2_pri);
 /* AP mode */
-पूर्णांक ath6kl_wmi_ap_hidden_ssid(काष्ठा wmi *wmi, u8 अगर_idx, bool enable);
-पूर्णांक ath6kl_wmi_ap_profile_commit(काष्ठा wmi *wmip, u8 अगर_idx,
-				 काष्ठा wmi_connect_cmd *p);
+int ath6kl_wmi_ap_hidden_ssid(struct wmi *wmi, u8 if_idx, bool enable);
+int ath6kl_wmi_ap_profile_commit(struct wmi *wmip, u8 if_idx,
+				 struct wmi_connect_cmd *p);
 
-पूर्णांक ath6kl_wmi_ap_set_mlme(काष्ठा wmi *wmip, u8 अगर_idx, u8 cmd,
-			   स्थिर u8 *mac, u16 reason);
+int ath6kl_wmi_ap_set_mlme(struct wmi *wmip, u8 if_idx, u8 cmd,
+			   const u8 *mac, u16 reason);
 
-पूर्णांक ath6kl_wmi_set_pvb_cmd(काष्ठा wmi *wmi, u8 अगर_idx, u16 aid, bool flag);
+int ath6kl_wmi_set_pvb_cmd(struct wmi *wmi, u8 if_idx, u16 aid, bool flag);
 
-पूर्णांक ath6kl_wmi_set_rx_frame_क्रमmat_cmd(काष्ठा wmi *wmi, u8 अगर_idx,
+int ath6kl_wmi_set_rx_frame_format_cmd(struct wmi *wmi, u8 if_idx,
 				       u8 rx_meta_version,
-				       bool rx_करोt11_hdr, bool defrag_on_host);
+				       bool rx_dot11_hdr, bool defrag_on_host);
 
-पूर्णांक ath6kl_wmi_set_appie_cmd(काष्ठा wmi *wmi, u8 अगर_idx, u8 mgmt_frm_type,
-			     स्थिर u8 *ie, u8 ie_len);
+int ath6kl_wmi_set_appie_cmd(struct wmi *wmi, u8 if_idx, u8 mgmt_frm_type,
+			     const u8 *ie, u8 ie_len);
 
-पूर्णांक ath6kl_wmi_set_ie_cmd(काष्ठा wmi *wmi, u8 अगर_idx, u8 ie_id, u8 ie_field,
-			  स्थिर u8 *ie_info, u8 ie_len);
+int ath6kl_wmi_set_ie_cmd(struct wmi *wmi, u8 if_idx, u8 ie_id, u8 ie_field,
+			  const u8 *ie_info, u8 ie_len);
 
 /* P2P */
-पूर्णांक ath6kl_wmi_disable_11b_rates_cmd(काष्ठा wmi *wmi, bool disable);
+int ath6kl_wmi_disable_11b_rates_cmd(struct wmi *wmi, bool disable);
 
-पूर्णांक ath6kl_wmi_reमुख्य_on_chnl_cmd(काष्ठा wmi *wmi, u8 अगर_idx, u32 freq,
+int ath6kl_wmi_remain_on_chnl_cmd(struct wmi *wmi, u8 if_idx, u32 freq,
 				  u32 dur);
 
-पूर्णांक ath6kl_wmi_send_mgmt_cmd(काष्ठा wmi *wmi, u8 अगर_idx, u32 id, u32 freq,
-			       u32 रुको, स्थिर u8 *data, u16 data_len,
+int ath6kl_wmi_send_mgmt_cmd(struct wmi *wmi, u8 if_idx, u32 id, u32 freq,
+			       u32 wait, const u8 *data, u16 data_len,
 			       u32 no_cck);
 
-पूर्णांक ath6kl_wmi_send_probe_response_cmd(काष्ठा wmi *wmi, u8 अगर_idx, u32 freq,
-				       स्थिर u8 *dst, स्थिर u8 *data,
+int ath6kl_wmi_send_probe_response_cmd(struct wmi *wmi, u8 if_idx, u32 freq,
+				       const u8 *dst, const u8 *data,
 				       u16 data_len);
 
-पूर्णांक ath6kl_wmi_probe_report_req_cmd(काष्ठा wmi *wmi, u8 अगर_idx, bool enable);
+int ath6kl_wmi_probe_report_req_cmd(struct wmi *wmi, u8 if_idx, bool enable);
 
-पूर्णांक ath6kl_wmi_info_req_cmd(काष्ठा wmi *wmi, u8 अगर_idx, u32 info_req_flags);
+int ath6kl_wmi_info_req_cmd(struct wmi *wmi, u8 if_idx, u32 info_req_flags);
 
-पूर्णांक ath6kl_wmi_cancel_reमुख्य_on_chnl_cmd(काष्ठा wmi *wmi, u8 अगर_idx);
+int ath6kl_wmi_cancel_remain_on_chnl_cmd(struct wmi *wmi, u8 if_idx);
 
-पूर्णांक ath6kl_wmi_set_appie_cmd(काष्ठा wmi *wmi, u8 अगर_idx, u8 mgmt_frm_type,
-			     स्थिर u8 *ie, u8 ie_len);
+int ath6kl_wmi_set_appie_cmd(struct wmi *wmi, u8 if_idx, u8 mgmt_frm_type,
+			     const u8 *ie, u8 ie_len);
 
-पूर्णांक ath6kl_wmi_set_inact_period(काष्ठा wmi *wmi, u8 अगर_idx, पूर्णांक inact_समयout);
+int ath6kl_wmi_set_inact_period(struct wmi *wmi, u8 if_idx, int inact_timeout);
 
-व्योम ath6kl_wmi_sscan_समयr(काष्ठा समयr_list *t);
+void ath6kl_wmi_sscan_timer(struct timer_list *t);
 
-पूर्णांक ath6kl_wmi_get_challenge_resp_cmd(काष्ठा wmi *wmi, u32 cookie, u32 source);
+int ath6kl_wmi_get_challenge_resp_cmd(struct wmi *wmi, u32 cookie, u32 source);
 
-काष्ठा ath6kl_vअगर *ath6kl_get_vअगर_by_index(काष्ठा ath6kl *ar, u8 अगर_idx);
-व्योम *ath6kl_wmi_init(काष्ठा ath6kl *devt);
-व्योम ath6kl_wmi_shutकरोwn(काष्ठा wmi *wmi);
-व्योम ath6kl_wmi_reset(काष्ठा wmi *wmi);
+struct ath6kl_vif *ath6kl_get_vif_by_index(struct ath6kl *ar, u8 if_idx);
+void *ath6kl_wmi_init(struct ath6kl *devt);
+void ath6kl_wmi_shutdown(struct wmi *wmi);
+void ath6kl_wmi_reset(struct wmi *wmi);
 
-#पूर्ण_अगर /* WMI_H */
+#endif /* WMI_H */

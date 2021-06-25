@@ -1,68 +1,67 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2011 Google, Inc.
  */
 
-#समावेश <linux/export.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/iopoll.h>
-#समावेश <linux/usb/otg.h>
-#समावेश <linux/usb/ulpi.h>
+#include <linux/export.h>
+#include <linux/kernel.h>
+#include <linux/usb.h>
+#include <linux/io.h>
+#include <linux/iopoll.h>
+#include <linux/usb/otg.h>
+#include <linux/usb/ulpi.h>
 
-#घोषणा ULPI_VIEW_WAKEUP	(1 << 31)
-#घोषणा ULPI_VIEW_RUN		(1 << 30)
-#घोषणा ULPI_VIEW_WRITE		(1 << 29)
-#घोषणा ULPI_VIEW_READ		(0 << 29)
-#घोषणा ULPI_VIEW_ADDR(x)	(((x) & 0xff) << 16)
-#घोषणा ULPI_VIEW_DATA_READ(x)	(((x) >> 8) & 0xff)
-#घोषणा ULPI_VIEW_DATA_WRITE(x)	((x) & 0xff)
+#define ULPI_VIEW_WAKEUP	(1 << 31)
+#define ULPI_VIEW_RUN		(1 << 30)
+#define ULPI_VIEW_WRITE		(1 << 29)
+#define ULPI_VIEW_READ		(0 << 29)
+#define ULPI_VIEW_ADDR(x)	(((x) & 0xff) << 16)
+#define ULPI_VIEW_DATA_READ(x)	(((x) >> 8) & 0xff)
+#define ULPI_VIEW_DATA_WRITE(x)	((x) & 0xff)
 
-अटल पूर्णांक ulpi_viewport_रुको(व्योम __iomem *view, u32 mask)
-अणु
+static int ulpi_viewport_wait(void __iomem *view, u32 mask)
+{
 	u32 val;
 
-	वापस पढ़ोl_poll_समयout_atomic(view, val, !(val & mask), 1, 2000);
-पूर्ण
+	return readl_poll_timeout_atomic(view, val, !(val & mask), 1, 2000);
+}
 
-अटल पूर्णांक ulpi_viewport_पढ़ो(काष्ठा usb_phy *otg, u32 reg)
-अणु
-	पूर्णांक ret;
-	व्योम __iomem *view = otg->io_priv;
+static int ulpi_viewport_read(struct usb_phy *otg, u32 reg)
+{
+	int ret;
+	void __iomem *view = otg->io_priv;
 
-	ग_लिखोl(ULPI_VIEW_WAKEUP | ULPI_VIEW_WRITE, view);
-	ret = ulpi_viewport_रुको(view, ULPI_VIEW_WAKEUP);
-	अगर (ret)
-		वापस ret;
+	writel(ULPI_VIEW_WAKEUP | ULPI_VIEW_WRITE, view);
+	ret = ulpi_viewport_wait(view, ULPI_VIEW_WAKEUP);
+	if (ret)
+		return ret;
 
-	ग_लिखोl(ULPI_VIEW_RUN | ULPI_VIEW_READ | ULPI_VIEW_ADDR(reg), view);
-	ret = ulpi_viewport_रुको(view, ULPI_VIEW_RUN);
-	अगर (ret)
-		वापस ret;
+	writel(ULPI_VIEW_RUN | ULPI_VIEW_READ | ULPI_VIEW_ADDR(reg), view);
+	ret = ulpi_viewport_wait(view, ULPI_VIEW_RUN);
+	if (ret)
+		return ret;
 
-	वापस ULPI_VIEW_DATA_READ(पढ़ोl(view));
-पूर्ण
+	return ULPI_VIEW_DATA_READ(readl(view));
+}
 
-अटल पूर्णांक ulpi_viewport_ग_लिखो(काष्ठा usb_phy *otg, u32 val, u32 reg)
-अणु
-	पूर्णांक ret;
-	व्योम __iomem *view = otg->io_priv;
+static int ulpi_viewport_write(struct usb_phy *otg, u32 val, u32 reg)
+{
+	int ret;
+	void __iomem *view = otg->io_priv;
 
-	ग_लिखोl(ULPI_VIEW_WAKEUP | ULPI_VIEW_WRITE, view);
-	ret = ulpi_viewport_रुको(view, ULPI_VIEW_WAKEUP);
-	अगर (ret)
-		वापस ret;
+	writel(ULPI_VIEW_WAKEUP | ULPI_VIEW_WRITE, view);
+	ret = ulpi_viewport_wait(view, ULPI_VIEW_WAKEUP);
+	if (ret)
+		return ret;
 
-	ग_लिखोl(ULPI_VIEW_RUN | ULPI_VIEW_WRITE | ULPI_VIEW_DATA_WRITE(val) |
+	writel(ULPI_VIEW_RUN | ULPI_VIEW_WRITE | ULPI_VIEW_DATA_WRITE(val) |
 						 ULPI_VIEW_ADDR(reg), view);
 
-	वापस ulpi_viewport_रुको(view, ULPI_VIEW_RUN);
-पूर्ण
+	return ulpi_viewport_wait(view, ULPI_VIEW_RUN);
+}
 
-काष्ठा usb_phy_io_ops ulpi_viewport_access_ops = अणु
-	.पढ़ो	= ulpi_viewport_पढ़ो,
-	.ग_लिखो	= ulpi_viewport_ग_लिखो,
-पूर्ण;
+struct usb_phy_io_ops ulpi_viewport_access_ops = {
+	.read	= ulpi_viewport_read,
+	.write	= ulpi_viewport_write,
+};
 EXPORT_SYMBOL_GPL(ulpi_viewport_access_ops);

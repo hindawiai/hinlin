@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *    Copyright IBM Corp. 2007
  *    Author(s): Frank Pavlic <fpavlic@de.ibm.com>,
@@ -7,27 +6,27 @@
  *		 Frank Blaschka <frank.blaschka@de.ibm.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <यंत्र/cपन.स>
-#समावेश "qeth_core_mpc.h"
+#include <linux/module.h>
+#include <asm/cio.h>
+#include "qeth_core_mpc.h"
 
-स्थिर अचिन्हित अक्षर IDX_ACTIVATE_READ[] = अणु
+const unsigned char IDX_ACTIVATE_READ[] = {
 	0x00, 0x00, 0x80, 0x00,  0x00, 0x00, 0x00, 0x00,
 	0x19, 0x01, 0x01, 0x80,  0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0xc8, 0xc1,
 	0xd3, 0xd3, 0xd6, 0xd3,  0xc5, 0x40, 0x00, 0x00,
 	0x00, 0x00
-पूर्ण;
+};
 
-स्थिर अचिन्हित अक्षर IDX_ACTIVATE_WRITE[] = अणु
+const unsigned char IDX_ACTIVATE_WRITE[] = {
 	0x00, 0x00, 0x80, 0x00,  0x00, 0x00, 0x00, 0x00,
 	0x15, 0x01, 0x01, 0x80,  0x00, 0x00, 0x00, 0x00,
 	0xff, 0xff, 0x00, 0x00,  0x00, 0x00, 0xc8, 0xc1,
 	0xd3, 0xd3, 0xd6, 0xd3,  0xc5, 0x40, 0x00, 0x00,
 	0x00, 0x00
-पूर्ण;
+};
 
-स्थिर अचिन्हित अक्षर CM_ENABLE[] = अणु
+const unsigned char CM_ENABLE[] = {
 	0x00, 0xe0, 0x00, 0x00,  0x00, 0x00, 0x00, 0x01,
 	0x00, 0x00, 0x00, 0x14,  0x00, 0x00, 0x00, 0x63,
 	0x10, 0x00, 0x00, 0x01,
@@ -44,9 +43,9 @@
 	0x00,
 	0x0c, 0x04, 0x02, 0xff,  0xff, 0xff, 0xff, 0xff,
 	0xff, 0xff, 0xff
-पूर्ण;
+};
 
-स्थिर अचिन्हित अक्षर CM_SETUP[] = अणु
+const unsigned char CM_SETUP[] = {
 	0x00, 0xe0, 0x00, 0x00,  0x00, 0x00, 0x00, 0x02,
 	0x00, 0x00, 0x00, 0x14,  0x00, 0x00, 0x00, 0x64,
 	0x10, 0x00, 0x00, 0x01,
@@ -64,9 +63,9 @@
 	0x05, 0x05, 0x00, 0x00,  0x00, 0x00,
 	0x00, 0x06,
 	0x04, 0x06, 0xc8, 0x00
-पूर्ण;
+};
 
-स्थिर अचिन्हित अक्षर ULP_ENABLE[] = अणु
+const unsigned char ULP_ENABLE[] = {
 	0x00, 0xe0, 0x00, 0x00,  0x00, 0x00, 0x00, 0x03,
 	0x00, 0x00, 0x00, 0x14,  0x00, 0x00, 0x00, 0x6b,
 	0x10, 0x00, 0x00, 0x01,
@@ -84,9 +83,9 @@
 	0x14, 0x04, 0x0a, 0x00,  0x20, 0x00, 0x00, 0xff,
 	0xff, 0x00, 0x08, 0xc8,  0xe8, 0xc4, 0xf1, 0xc7,
 	0xf1, 0x00, 0x00
-पूर्ण;
+};
 
-स्थिर अचिन्हित अक्षर ULP_SETUP[] = अणु
+const unsigned char ULP_SETUP[] = {
 	0x00, 0xe0, 0x00, 0x00,  0x00, 0x00, 0x00, 0x04,
 	0x00, 0x00, 0x00, 0x14,  0x00, 0x00, 0x00, 0x6c,
 	0x10, 0x00, 0x00, 0x01,
@@ -106,9 +105,9 @@
 	0x04, 0x06, 0x40, 0x00,
 	0x00, 0x08, 0x04, 0x0b,
 	0x00, 0x00, 0x00, 0x00
-पूर्ण;
+};
 
-स्थिर अचिन्हित अक्षर DM_ACT[] = अणु
+const unsigned char DM_ACT[] = {
 	0x00, 0xe0, 0x00, 0x00,  0x00, 0x00, 0x00, 0x05,
 	0x00, 0x00, 0x00, 0x14,  0x00, 0x00, 0x00, 0x55,
 	0x10, 0x00, 0x00, 0x01,
@@ -122,9 +121,9 @@
 	0x00, 0x00, 0x00, 0x00,
 	0x00, 0x09, 0x04, 0x04,
 	0x05, 0x40, 0x01, 0x01,  0x00
-पूर्ण;
+};
 
-स्थिर अचिन्हित अक्षर IPA_PDU_HEADER[] = अणु
+const unsigned char IPA_PDU_HEADER[] = {
 	0x00, 0xe0, 0x00, 0x00,  0x77, 0x77, 0x77, 0x77,
 	0x00, 0x00, 0x00, 0x14,  0x00, 0x00, 0x00, 0x00,
 	0x10, 0x00, 0x00, 0x01,  0x00, 0x00, 0x00, 0x00,
@@ -133,133 +132,133 @@
 	0x00, 0x00, 0x00, 0x05,  0x77, 0x77, 0x77, 0x77,
 	0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,
 	0x01, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x40,
-पूर्ण;
+};
 
-काष्ठा ipa_rc_msg अणु
-	क्रमागत qeth_ipa_वापस_codes rc;
-	स्थिर अक्षर *msg;
-पूर्ण;
+struct ipa_rc_msg {
+	enum qeth_ipa_return_codes rc;
+	const char *msg;
+};
 
-अटल स्थिर काष्ठा ipa_rc_msg qeth_ipa_rc_msg[] = अणु
-	अणुIPA_RC_SUCCESS,		"success"पूर्ण,
-	अणुIPA_RC_NOTSUPP,		"Command not supported"पूर्ण,
-	अणुIPA_RC_IP_TABLE_FULL,		"Add Addr IP Table Full - ipv6"पूर्ण,
-	अणुIPA_RC_UNKNOWN_ERROR,		"IPA command failed - reason unknown"पूर्ण,
-	अणुIPA_RC_UNSUPPORTED_COMMAND,	"Command not supported"पूर्ण,
-	अणुIPA_RC_VNICC_OOSEQ,		"Command issued out of sequence"पूर्ण,
-	अणुIPA_RC_INVALID_FORMAT,		"invalid format or length"पूर्ण,
-	अणुIPA_RC_DUP_IPV6_REMOTE, "ipv6 address already registered remote"पूर्ण,
-	अणुIPA_RC_SBP_IQD_NOT_CONFIGURED,	"Not configured for bridgeport"पूर्ण,
-	अणुIPA_RC_DUP_IPV6_HOME,		"ipv6 address already registered"पूर्ण,
-	अणुIPA_RC_UNREGISTERED_ADDR,	"Address not registered"पूर्ण,
-	अणुIPA_RC_NO_ID_AVAILABLE,	"No identifiers available"पूर्ण,
-	अणुIPA_RC_ID_NOT_FOUND,		"Identifier not found"पूर्ण,
-	अणुIPA_RC_SBP_IQD_ANO_DEV_PRIMARY, "Primary bridgeport exists already"पूर्ण,
-	अणुIPA_RC_SBP_IQD_CURRENT_SECOND,	"Bridgeport is currently secondary"पूर्ण,
-	अणुIPA_RC_SBP_IQD_LIMIT_SECOND, "Limit of secondary bridgeports reached"पूर्ण,
-	अणुIPA_RC_INVALID_IP_VERSION,	"IP version incorrect"पूर्ण,
-	अणुIPA_RC_SBP_IQD_CURRENT_PRIMARY, "Bridgeport is currently primary"पूर्ण,
-	अणुIPA_RC_LAN_FRAME_MISMATCH,	"LAN and frame mismatch"पूर्ण,
-	अणुIPA_RC_SBP_IQD_NO_QDIO_QUEUES,	"QDIO queues not established"पूर्ण,
-	अणुIPA_RC_L2_UNSUPPORTED_CMD,	"Unsupported layer 2 command"पूर्ण,
-	अणुIPA_RC_L2_DUP_MAC,		"Duplicate MAC address"पूर्ण,
-	अणुIPA_RC_L2_ADDR_TABLE_FULL,	"Layer2 address table full"पूर्ण,
-	अणुIPA_RC_L2_DUP_LAYER3_MAC,	"Duplicate with layer 3 MAC"पूर्ण,
-	अणुIPA_RC_L2_GMAC_NOT_FOUND,	"GMAC not found"पूर्ण,
-	अणुIPA_RC_L2_MAC_NOT_AUTH_BY_HYP,	"L2 mac not authorized by hypervisor"पूर्ण,
-	अणुIPA_RC_L2_MAC_NOT_AUTH_BY_ADP,	"L2 mac not authorized by adapter"पूर्ण,
-	अणुIPA_RC_L2_MAC_NOT_FOUND,	"L2 mac address not found"पूर्ण,
-	अणुIPA_RC_L2_INVALID_VLAN_ID,	"L2 invalid vlan id"पूर्ण,
-	अणुIPA_RC_L2_DUP_VLAN_ID,		"L2 duplicate vlan id"पूर्ण,
-	अणुIPA_RC_L2_VLAN_ID_NOT_FOUND,	"L2 vlan id not found"पूर्ण,
-	अणुIPA_RC_VNICC_VNICBP,		"VNIC is BridgePort"पूर्ण,
-	अणुIPA_RC_SBP_OSA_NOT_CONFIGURED,	"Not configured for bridgeport"पूर्ण,
-	अणुIPA_RC_SBP_OSA_OS_MISMATCH,	"OS mismatch"पूर्ण,
-	अणुIPA_RC_SBP_OSA_ANO_DEV_PRIMARY, "Primary bridgeport exists already"पूर्ण,
-	अणुIPA_RC_SBP_OSA_CURRENT_SECOND,	"Bridgeport is currently secondary"पूर्ण,
-	अणुIPA_RC_SBP_OSA_LIMIT_SECOND, "Limit of secondary bridgeports reached"पूर्ण,
-	अणुIPA_RC_SBP_OSA_NOT_AUTHD_BY_ZMAN, "Not authorized by zManager"पूर्ण,
-	अणुIPA_RC_SBP_OSA_CURRENT_PRIMARY, "Bridgeport is currently primary"पूर्ण,
-	अणुIPA_RC_SBP_OSA_NO_QDIO_QUEUES,	"QDIO queues not established"पूर्ण,
-	अणुIPA_RC_DATA_MISMATCH,		"Data field mismatch (v4/v6 mixed)"पूर्ण,
-	अणुIPA_RC_INVALID_MTU_SIZE,	"Invalid MTU size"पूर्ण,
-	अणुIPA_RC_INVALID_LANTYPE,	"Invalid LAN type"पूर्ण,
-	अणुIPA_RC_INVALID_LANNUM,		"Invalid LAN num"पूर्ण,
-	अणुIPA_RC_DUPLICATE_IP_ADDRESS,	"Address already registered"पूर्ण,
-	अणुIPA_RC_IP_ADDR_TABLE_FULL,	"IP address table full"पूर्ण,
-	अणुIPA_RC_LAN_PORT_STATE_ERROR,	"LAN port state error"पूर्ण,
-	अणुIPA_RC_SETIP_NO_STARTLAN,	"Setip no startlan received"पूर्ण,
-	अणुIPA_RC_SETIP_ALREADY_RECEIVED,	"Setip already received"पूर्ण,
-	अणुIPA_RC_IP_ADDR_ALREADY_USED,	"IP address already in use on LAN"पूर्ण,
-	अणुIPA_RC_MC_ADDR_NOT_FOUND,	"Multicast address not found"पूर्ण,
-	अणुIPA_RC_SETIP_INVALID_VERSION,	"SETIP invalid IP version"पूर्ण,
-	अणुIPA_RC_UNSUPPORTED_SUBCMD,	"Unsupported assist subcommand"पूर्ण,
-	अणुIPA_RC_ARP_ASSIST_NO_ENABLE,	"Only partial success, no enable"पूर्ण,
-	अणुIPA_RC_PRIMARY_ALREADY_DEFINED, "Primary already defined"पूर्ण,
-	अणुIPA_RC_SECOND_ALREADY_DEFINED,	"Secondary already defined"पूर्ण,
-	अणुIPA_RC_INVALID_SETRTG_INDICATOR, "Invalid SETRTG indicator"पूर्ण,
-	अणुIPA_RC_MC_ADDR_ALREADY_DEFINED, "Multicast address already defined"पूर्ण,
-	अणुIPA_RC_LAN_OFFLINE,		"STRTLAN_LAN_DISABLED - LAN offline"पूर्ण,
-	अणुIPA_RC_VEPA_TO_VEB_TRANSITION,	"Adj. switch disabled port mode RR"पूर्ण,
-	अणुIPA_RC_INVALID_IP_VERSION2,	"Invalid IP version"पूर्ण,
-	/* शेष क्रम qeth_get_ipa_msg(): */
-	अणुIPA_RC_FFFF,			"Unknown Error"पूर्ण
-पूर्ण;
+static const struct ipa_rc_msg qeth_ipa_rc_msg[] = {
+	{IPA_RC_SUCCESS,		"success"},
+	{IPA_RC_NOTSUPP,		"Command not supported"},
+	{IPA_RC_IP_TABLE_FULL,		"Add Addr IP Table Full - ipv6"},
+	{IPA_RC_UNKNOWN_ERROR,		"IPA command failed - reason unknown"},
+	{IPA_RC_UNSUPPORTED_COMMAND,	"Command not supported"},
+	{IPA_RC_VNICC_OOSEQ,		"Command issued out of sequence"},
+	{IPA_RC_INVALID_FORMAT,		"invalid format or length"},
+	{IPA_RC_DUP_IPV6_REMOTE, "ipv6 address already registered remote"},
+	{IPA_RC_SBP_IQD_NOT_CONFIGURED,	"Not configured for bridgeport"},
+	{IPA_RC_DUP_IPV6_HOME,		"ipv6 address already registered"},
+	{IPA_RC_UNREGISTERED_ADDR,	"Address not registered"},
+	{IPA_RC_NO_ID_AVAILABLE,	"No identifiers available"},
+	{IPA_RC_ID_NOT_FOUND,		"Identifier not found"},
+	{IPA_RC_SBP_IQD_ANO_DEV_PRIMARY, "Primary bridgeport exists already"},
+	{IPA_RC_SBP_IQD_CURRENT_SECOND,	"Bridgeport is currently secondary"},
+	{IPA_RC_SBP_IQD_LIMIT_SECOND, "Limit of secondary bridgeports reached"},
+	{IPA_RC_INVALID_IP_VERSION,	"IP version incorrect"},
+	{IPA_RC_SBP_IQD_CURRENT_PRIMARY, "Bridgeport is currently primary"},
+	{IPA_RC_LAN_FRAME_MISMATCH,	"LAN and frame mismatch"},
+	{IPA_RC_SBP_IQD_NO_QDIO_QUEUES,	"QDIO queues not established"},
+	{IPA_RC_L2_UNSUPPORTED_CMD,	"Unsupported layer 2 command"},
+	{IPA_RC_L2_DUP_MAC,		"Duplicate MAC address"},
+	{IPA_RC_L2_ADDR_TABLE_FULL,	"Layer2 address table full"},
+	{IPA_RC_L2_DUP_LAYER3_MAC,	"Duplicate with layer 3 MAC"},
+	{IPA_RC_L2_GMAC_NOT_FOUND,	"GMAC not found"},
+	{IPA_RC_L2_MAC_NOT_AUTH_BY_HYP,	"L2 mac not authorized by hypervisor"},
+	{IPA_RC_L2_MAC_NOT_AUTH_BY_ADP,	"L2 mac not authorized by adapter"},
+	{IPA_RC_L2_MAC_NOT_FOUND,	"L2 mac address not found"},
+	{IPA_RC_L2_INVALID_VLAN_ID,	"L2 invalid vlan id"},
+	{IPA_RC_L2_DUP_VLAN_ID,		"L2 duplicate vlan id"},
+	{IPA_RC_L2_VLAN_ID_NOT_FOUND,	"L2 vlan id not found"},
+	{IPA_RC_VNICC_VNICBP,		"VNIC is BridgePort"},
+	{IPA_RC_SBP_OSA_NOT_CONFIGURED,	"Not configured for bridgeport"},
+	{IPA_RC_SBP_OSA_OS_MISMATCH,	"OS mismatch"},
+	{IPA_RC_SBP_OSA_ANO_DEV_PRIMARY, "Primary bridgeport exists already"},
+	{IPA_RC_SBP_OSA_CURRENT_SECOND,	"Bridgeport is currently secondary"},
+	{IPA_RC_SBP_OSA_LIMIT_SECOND, "Limit of secondary bridgeports reached"},
+	{IPA_RC_SBP_OSA_NOT_AUTHD_BY_ZMAN, "Not authorized by zManager"},
+	{IPA_RC_SBP_OSA_CURRENT_PRIMARY, "Bridgeport is currently primary"},
+	{IPA_RC_SBP_OSA_NO_QDIO_QUEUES,	"QDIO queues not established"},
+	{IPA_RC_DATA_MISMATCH,		"Data field mismatch (v4/v6 mixed)"},
+	{IPA_RC_INVALID_MTU_SIZE,	"Invalid MTU size"},
+	{IPA_RC_INVALID_LANTYPE,	"Invalid LAN type"},
+	{IPA_RC_INVALID_LANNUM,		"Invalid LAN num"},
+	{IPA_RC_DUPLICATE_IP_ADDRESS,	"Address already registered"},
+	{IPA_RC_IP_ADDR_TABLE_FULL,	"IP address table full"},
+	{IPA_RC_LAN_PORT_STATE_ERROR,	"LAN port state error"},
+	{IPA_RC_SETIP_NO_STARTLAN,	"Setip no startlan received"},
+	{IPA_RC_SETIP_ALREADY_RECEIVED,	"Setip already received"},
+	{IPA_RC_IP_ADDR_ALREADY_USED,	"IP address already in use on LAN"},
+	{IPA_RC_MC_ADDR_NOT_FOUND,	"Multicast address not found"},
+	{IPA_RC_SETIP_INVALID_VERSION,	"SETIP invalid IP version"},
+	{IPA_RC_UNSUPPORTED_SUBCMD,	"Unsupported assist subcommand"},
+	{IPA_RC_ARP_ASSIST_NO_ENABLE,	"Only partial success, no enable"},
+	{IPA_RC_PRIMARY_ALREADY_DEFINED, "Primary already defined"},
+	{IPA_RC_SECOND_ALREADY_DEFINED,	"Secondary already defined"},
+	{IPA_RC_INVALID_SETRTG_INDICATOR, "Invalid SETRTG indicator"},
+	{IPA_RC_MC_ADDR_ALREADY_DEFINED, "Multicast address already defined"},
+	{IPA_RC_LAN_OFFLINE,		"STRTLAN_LAN_DISABLED - LAN offline"},
+	{IPA_RC_VEPA_TO_VEB_TRANSITION,	"Adj. switch disabled port mode RR"},
+	{IPA_RC_INVALID_IP_VERSION2,	"Invalid IP version"},
+	/* default for qeth_get_ipa_msg(): */
+	{IPA_RC_FFFF,			"Unknown Error"}
+};
 
-स्थिर अक्षर *qeth_get_ipa_msg(क्रमागत qeth_ipa_वापस_codes rc)
-अणु
-	पूर्णांक x;
+const char *qeth_get_ipa_msg(enum qeth_ipa_return_codes rc)
+{
+	int x;
 
-	क्रम (x = 0; x < ARRAY_SIZE(qeth_ipa_rc_msg) - 1; x++)
-		अगर (qeth_ipa_rc_msg[x].rc == rc)
-			वापस qeth_ipa_rc_msg[x].msg;
-	वापस qeth_ipa_rc_msg[x].msg;
-पूर्ण
+	for (x = 0; x < ARRAY_SIZE(qeth_ipa_rc_msg) - 1; x++)
+		if (qeth_ipa_rc_msg[x].rc == rc)
+			return qeth_ipa_rc_msg[x].msg;
+	return qeth_ipa_rc_msg[x].msg;
+}
 
 
-काष्ठा ipa_cmd_names अणु
-	क्रमागत qeth_ipa_cmds cmd;
-	स्थिर अक्षर *name;
-पूर्ण;
+struct ipa_cmd_names {
+	enum qeth_ipa_cmds cmd;
+	const char *name;
+};
 
-अटल स्थिर काष्ठा ipa_cmd_names qeth_ipa_cmd_names[] = अणु
-	अणुIPA_CMD_STARTLAN,	"startlan"पूर्ण,
-	अणुIPA_CMD_STOPLAN,	"stoplan"पूर्ण,
-	अणुIPA_CMD_SETVMAC,	"setvmac"पूर्ण,
-	अणुIPA_CMD_DELVMAC,	"delvmac"पूर्ण,
-	अणुIPA_CMD_SETGMAC,	"setgmac"पूर्ण,
-	अणुIPA_CMD_DELGMAC,	"delgmac"पूर्ण,
-	अणुIPA_CMD_SETVLAN,	"setvlan"पूर्ण,
-	अणुIPA_CMD_DELVLAN,	"delvlan"पूर्ण,
-	अणुIPA_CMD_VNICC,		"vnic_characteristics"पूर्ण,
-	अणुIPA_CMD_SETBRIDGEPORT_OSA,	"set_bridge_port(osa)"पूर्ण,
-	अणुIPA_CMD_SETCCID,	"setccid"पूर्ण,
-	अणुIPA_CMD_DELCCID,	"delccid"पूर्ण,
-	अणुIPA_CMD_MODCCID,	"modccid"पूर्ण,
-	अणुIPA_CMD_SETIP,		"setip"पूर्ण,
-	अणुIPA_CMD_QIPASSIST,	"qipassist"पूर्ण,
-	अणुIPA_CMD_SETASSPARMS,	"setassparms"पूर्ण,
-	अणुIPA_CMD_SETIPM,	"setipm"पूर्ण,
-	अणुIPA_CMD_DELIPM,	"delipm"पूर्ण,
-	अणुIPA_CMD_SETRTG,	"setrtg"पूर्ण,
-	अणुIPA_CMD_DELIP,		"delip"पूर्ण,
-	अणुIPA_CMD_SETADAPTERPARMS, "setadapterparms"पूर्ण,
-	अणुIPA_CMD_SET_DIAG_ASS,	"set_diag_ass"पूर्ण,
-	अणुIPA_CMD_SETBRIDGEPORT_IQD,	"set_bridge_port(hs)"पूर्ण,
-	अणुIPA_CMD_CREATE_ADDR,	"create_addr"पूर्ण,
-	अणुIPA_CMD_DESTROY_ADDR,	"destroy_addr"पूर्ण,
-	अणुIPA_CMD_REGISTER_LOCAL_ADDR,	"register_local_addr"पूर्ण,
-	अणुIPA_CMD_UNREGISTER_LOCAL_ADDR,	"unregister_local_addr"पूर्ण,
-	अणुIPA_CMD_ADDRESS_CHANGE_NOTIF, "address_change_notification"पूर्ण,
-	अणुIPA_CMD_UNKNOWN,	"unknown"पूर्ण,
-पूर्ण;
+static const struct ipa_cmd_names qeth_ipa_cmd_names[] = {
+	{IPA_CMD_STARTLAN,	"startlan"},
+	{IPA_CMD_STOPLAN,	"stoplan"},
+	{IPA_CMD_SETVMAC,	"setvmac"},
+	{IPA_CMD_DELVMAC,	"delvmac"},
+	{IPA_CMD_SETGMAC,	"setgmac"},
+	{IPA_CMD_DELGMAC,	"delgmac"},
+	{IPA_CMD_SETVLAN,	"setvlan"},
+	{IPA_CMD_DELVLAN,	"delvlan"},
+	{IPA_CMD_VNICC,		"vnic_characteristics"},
+	{IPA_CMD_SETBRIDGEPORT_OSA,	"set_bridge_port(osa)"},
+	{IPA_CMD_SETCCID,	"setccid"},
+	{IPA_CMD_DELCCID,	"delccid"},
+	{IPA_CMD_MODCCID,	"modccid"},
+	{IPA_CMD_SETIP,		"setip"},
+	{IPA_CMD_QIPASSIST,	"qipassist"},
+	{IPA_CMD_SETASSPARMS,	"setassparms"},
+	{IPA_CMD_SETIPM,	"setipm"},
+	{IPA_CMD_DELIPM,	"delipm"},
+	{IPA_CMD_SETRTG,	"setrtg"},
+	{IPA_CMD_DELIP,		"delip"},
+	{IPA_CMD_SETADAPTERPARMS, "setadapterparms"},
+	{IPA_CMD_SET_DIAG_ASS,	"set_diag_ass"},
+	{IPA_CMD_SETBRIDGEPORT_IQD,	"set_bridge_port(hs)"},
+	{IPA_CMD_CREATE_ADDR,	"create_addr"},
+	{IPA_CMD_DESTROY_ADDR,	"destroy_addr"},
+	{IPA_CMD_REGISTER_LOCAL_ADDR,	"register_local_addr"},
+	{IPA_CMD_UNREGISTER_LOCAL_ADDR,	"unregister_local_addr"},
+	{IPA_CMD_ADDRESS_CHANGE_NOTIF, "address_change_notification"},
+	{IPA_CMD_UNKNOWN,	"unknown"},
+};
 
-स्थिर अक्षर *qeth_get_ipa_cmd_name(क्रमागत qeth_ipa_cmds cmd)
-अणु
-	पूर्णांक x;
+const char *qeth_get_ipa_cmd_name(enum qeth_ipa_cmds cmd)
+{
+	int x;
 
-	क्रम (x = 0; x < ARRAY_SIZE(qeth_ipa_cmd_names) - 1; x++)
-		अगर (qeth_ipa_cmd_names[x].cmd == cmd)
-			वापस qeth_ipa_cmd_names[x].name;
-	वापस qeth_ipa_cmd_names[x].name;
-पूर्ण
+	for (x = 0; x < ARRAY_SIZE(qeth_ipa_cmd_names) - 1; x++)
+		if (qeth_ipa_cmd_names[x].cmd == cmd)
+			return qeth_ipa_cmd_names[x].name;
+	return qeth_ipa_cmd_names[x].name;
+}

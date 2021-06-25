@@ -1,52 +1,51 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __SOUND_HDAUDIO_EXT_H
-#घोषणा __SOUND_HDAUDIO_EXT_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __SOUND_HDAUDIO_EXT_H
+#define __SOUND_HDAUDIO_EXT_H
 
-#समावेश <sound/hdaudपन.स>
+#include <sound/hdaudio.h>
 
-पूर्णांक snd_hdac_ext_bus_init(काष्ठा hdac_bus *bus, काष्ठा device *dev,
-		      स्थिर काष्ठा hdac_bus_ops *ops,
-		      स्थिर काष्ठा hdac_ext_bus_ops *ext_ops);
+int snd_hdac_ext_bus_init(struct hdac_bus *bus, struct device *dev,
+		      const struct hdac_bus_ops *ops,
+		      const struct hdac_ext_bus_ops *ext_ops);
 
-व्योम snd_hdac_ext_bus_निकास(काष्ठा hdac_bus *bus);
-पूर्णांक snd_hdac_ext_bus_device_init(काष्ठा hdac_bus *bus, पूर्णांक addr,
-				काष्ठा hdac_device *hdev, पूर्णांक type);
-व्योम snd_hdac_ext_bus_device_निकास(काष्ठा hdac_device *hdev);
-व्योम snd_hdac_ext_bus_device_हटाओ(काष्ठा hdac_bus *bus);
+void snd_hdac_ext_bus_exit(struct hdac_bus *bus);
+int snd_hdac_ext_bus_device_init(struct hdac_bus *bus, int addr,
+				struct hdac_device *hdev, int type);
+void snd_hdac_ext_bus_device_exit(struct hdac_device *hdev);
+void snd_hdac_ext_bus_device_remove(struct hdac_bus *bus);
 
-#घोषणा HDA_CODEC_REV_EXT_ENTRY(_vid, _rev, _name, drv_data) \
-	अणु .venकरोr_id = (_vid), .rev_id = (_rev), .name = (_name), \
+#define HDA_CODEC_REV_EXT_ENTRY(_vid, _rev, _name, drv_data) \
+	{ .vendor_id = (_vid), .rev_id = (_rev), .name = (_name), \
 	  .api_version = HDA_DEV_ASOC, \
-	  .driver_data = (अचिन्हित दीर्घ)(drv_data) पूर्ण
-#घोषणा HDA_CODEC_EXT_ENTRY(_vid, _revid, _name, _drv_data) \
+	  .driver_data = (unsigned long)(drv_data) }
+#define HDA_CODEC_EXT_ENTRY(_vid, _revid, _name, _drv_data) \
 	HDA_CODEC_REV_EXT_ENTRY(_vid, _revid, _name, _drv_data)
 
-व्योम snd_hdac_ext_bus_ppcap_enable(काष्ठा hdac_bus *chip, bool enable);
-व्योम snd_hdac_ext_bus_ppcap_पूर्णांक_enable(काष्ठा hdac_bus *chip, bool enable);
+void snd_hdac_ext_bus_ppcap_enable(struct hdac_bus *chip, bool enable);
+void snd_hdac_ext_bus_ppcap_int_enable(struct hdac_bus *chip, bool enable);
 
-व्योम snd_hdac_ext_stream_spbcap_enable(काष्ठा hdac_bus *chip,
-				 bool enable, पूर्णांक index);
+void snd_hdac_ext_stream_spbcap_enable(struct hdac_bus *chip,
+				 bool enable, int index);
 
-पूर्णांक snd_hdac_ext_bus_get_ml_capabilities(काष्ठा hdac_bus *bus);
-काष्ठा hdac_ext_link *snd_hdac_ext_bus_get_link(काष्ठा hdac_bus *bus,
-						स्थिर अक्षर *codec_name);
+int snd_hdac_ext_bus_get_ml_capabilities(struct hdac_bus *bus);
+struct hdac_ext_link *snd_hdac_ext_bus_get_link(struct hdac_bus *bus,
+						const char *codec_name);
 
-क्रमागत hdac_ext_stream_type अणु
+enum hdac_ext_stream_type {
 	HDAC_EXT_STREAM_TYPE_COUPLED = 0,
 	HDAC_EXT_STREAM_TYPE_HOST,
 	HDAC_EXT_STREAM_TYPE_LINK
-पूर्ण;
+};
 
 /**
- * hdac_ext_stream: HDAC extended stream क्रम extended HDA caps
+ * hdac_ext_stream: HDAC extended stream for extended HDA caps
  *
  * @hstream: hdac_stream
- * @pphc_addr: processing pipe host stream poपूर्णांकer
- * @pplc_addr: processing pipe link stream poपूर्णांकer
- * @spib_addr: software position in buffers stream poपूर्णांकer
- * @fअगरo_addr: software position Max fअगरos stream poपूर्णांकer
- * @dpibr_addr: DMA position in buffer resume poपूर्णांकer
+ * @pphc_addr: processing pipe host stream pointer
+ * @pplc_addr: processing pipe link stream pointer
+ * @spib_addr: software position in buffers stream pointer
+ * @fifo_addr: software position Max fifos stream pointer
+ * @dpibr_addr: DMA position in buffer resume pointer
  * @dpib: DMA position in buffer
  * @lpib: Linear position in buffer
  * @decoupled: stream host and link is decoupled
@@ -54,16 +53,16 @@
  * @link_prepared: link is prepared
  * link_substream: link substream
  */
-काष्ठा hdac_ext_stream अणु
-	काष्ठा hdac_stream hstream;
+struct hdac_ext_stream {
+	struct hdac_stream hstream;
 
-	व्योम __iomem *pphc_addr;
-	व्योम __iomem *pplc_addr;
+	void __iomem *pphc_addr;
+	void __iomem *pplc_addr;
 
-	व्योम __iomem *spib_addr;
-	व्योम __iomem *fअगरo_addr;
+	void __iomem *spib_addr;
+	void __iomem *fifo_addr;
 
-	व्योम __iomem *dpibr_addr;
+	void __iomem *dpibr_addr;
 
 	u32 dpib;
 	u32 lpib;
@@ -71,100 +70,100 @@
 	bool link_locked:1;
 	bool link_prepared;
 
-	काष्ठा snd_pcm_substream *link_substream;
-पूर्ण;
+	struct snd_pcm_substream *link_substream;
+};
 
-#घोषणा hdac_stream(s)		(&(s)->hstream)
-#घोषणा stream_to_hdac_ext_stream(s) \
-	container_of(s, काष्ठा hdac_ext_stream, hstream)
+#define hdac_stream(s)		(&(s)->hstream)
+#define stream_to_hdac_ext_stream(s) \
+	container_of(s, struct hdac_ext_stream, hstream)
 
-व्योम snd_hdac_ext_stream_init(काष्ठा hdac_bus *bus,
-				काष्ठा hdac_ext_stream *stream, पूर्णांक idx,
-				पूर्णांक direction, पूर्णांक tag);
-पूर्णांक snd_hdac_ext_stream_init_all(काष्ठा hdac_bus *bus, पूर्णांक start_idx,
-		पूर्णांक num_stream, पूर्णांक dir);
-व्योम snd_hdac_stream_मुक्त_all(काष्ठा hdac_bus *bus);
-व्योम snd_hdac_link_मुक्त_all(काष्ठा hdac_bus *bus);
-काष्ठा hdac_ext_stream *snd_hdac_ext_stream_assign(काष्ठा hdac_bus *bus,
-					   काष्ठा snd_pcm_substream *substream,
-					   पूर्णांक type);
-व्योम snd_hdac_ext_stream_release(काष्ठा hdac_ext_stream *azx_dev, पूर्णांक type);
-व्योम snd_hdac_ext_stream_decouple(काष्ठा hdac_bus *bus,
-				काष्ठा hdac_ext_stream *azx_dev, bool decouple);
-व्योम snd_hdac_ext_stop_streams(काष्ठा hdac_bus *bus);
+void snd_hdac_ext_stream_init(struct hdac_bus *bus,
+				struct hdac_ext_stream *stream, int idx,
+				int direction, int tag);
+int snd_hdac_ext_stream_init_all(struct hdac_bus *bus, int start_idx,
+		int num_stream, int dir);
+void snd_hdac_stream_free_all(struct hdac_bus *bus);
+void snd_hdac_link_free_all(struct hdac_bus *bus);
+struct hdac_ext_stream *snd_hdac_ext_stream_assign(struct hdac_bus *bus,
+					   struct snd_pcm_substream *substream,
+					   int type);
+void snd_hdac_ext_stream_release(struct hdac_ext_stream *azx_dev, int type);
+void snd_hdac_ext_stream_decouple(struct hdac_bus *bus,
+				struct hdac_ext_stream *azx_dev, bool decouple);
+void snd_hdac_ext_stop_streams(struct hdac_bus *bus);
 
-पूर्णांक snd_hdac_ext_stream_set_spib(काष्ठा hdac_bus *bus,
-				 काष्ठा hdac_ext_stream *stream, u32 value);
-पूर्णांक snd_hdac_ext_stream_get_spbmaxfअगरo(काष्ठा hdac_bus *bus,
-				 काष्ठा hdac_ext_stream *stream);
-व्योम snd_hdac_ext_stream_drsm_enable(काष्ठा hdac_bus *bus,
-				bool enable, पूर्णांक index);
-पूर्णांक snd_hdac_ext_stream_set_dpibr(काष्ठा hdac_bus *bus,
-				काष्ठा hdac_ext_stream *stream, u32 value);
-पूर्णांक snd_hdac_ext_stream_set_lpib(काष्ठा hdac_ext_stream *stream, u32 value);
+int snd_hdac_ext_stream_set_spib(struct hdac_bus *bus,
+				 struct hdac_ext_stream *stream, u32 value);
+int snd_hdac_ext_stream_get_spbmaxfifo(struct hdac_bus *bus,
+				 struct hdac_ext_stream *stream);
+void snd_hdac_ext_stream_drsm_enable(struct hdac_bus *bus,
+				bool enable, int index);
+int snd_hdac_ext_stream_set_dpibr(struct hdac_bus *bus,
+				struct hdac_ext_stream *stream, u32 value);
+int snd_hdac_ext_stream_set_lpib(struct hdac_ext_stream *stream, u32 value);
 
-व्योम snd_hdac_ext_link_stream_start(काष्ठा hdac_ext_stream *hstream);
-व्योम snd_hdac_ext_link_stream_clear(काष्ठा hdac_ext_stream *hstream);
-व्योम snd_hdac_ext_link_stream_reset(काष्ठा hdac_ext_stream *hstream);
-पूर्णांक snd_hdac_ext_link_stream_setup(काष्ठा hdac_ext_stream *stream, पूर्णांक fmt);
+void snd_hdac_ext_link_stream_start(struct hdac_ext_stream *hstream);
+void snd_hdac_ext_link_stream_clear(struct hdac_ext_stream *hstream);
+void snd_hdac_ext_link_stream_reset(struct hdac_ext_stream *hstream);
+int snd_hdac_ext_link_stream_setup(struct hdac_ext_stream *stream, int fmt);
 
-काष्ठा hdac_ext_link अणु
-	काष्ठा hdac_bus *bus;
-	पूर्णांक index;
-	व्योम __iomem *ml_addr; /* link output stream reg poपूर्णांकer */
+struct hdac_ext_link {
+	struct hdac_bus *bus;
+	int index;
+	void __iomem *ml_addr; /* link output stream reg pointer */
 	u32 lcaps;   /* link capablities */
-	u16 lsdiid;  /* link sdi identअगरier */
+	u16 lsdiid;  /* link sdi identifier */
 
-	पूर्णांक ref_count;
+	int ref_count;
 
-	काष्ठा list_head list;
-पूर्ण;
+	struct list_head list;
+};
 
-पूर्णांक snd_hdac_ext_bus_link_घातer_up(काष्ठा hdac_ext_link *link);
-पूर्णांक snd_hdac_ext_bus_link_घातer_करोwn(काष्ठा hdac_ext_link *link);
-पूर्णांक snd_hdac_ext_bus_link_घातer_up_all(काष्ठा hdac_bus *bus);
-पूर्णांक snd_hdac_ext_bus_link_घातer_करोwn_all(काष्ठा hdac_bus *bus);
-व्योम snd_hdac_ext_link_set_stream_id(काष्ठा hdac_ext_link *link,
-				 पूर्णांक stream);
-व्योम snd_hdac_ext_link_clear_stream_id(काष्ठा hdac_ext_link *link,
-				 पूर्णांक stream);
+int snd_hdac_ext_bus_link_power_up(struct hdac_ext_link *link);
+int snd_hdac_ext_bus_link_power_down(struct hdac_ext_link *link);
+int snd_hdac_ext_bus_link_power_up_all(struct hdac_bus *bus);
+int snd_hdac_ext_bus_link_power_down_all(struct hdac_bus *bus);
+void snd_hdac_ext_link_set_stream_id(struct hdac_ext_link *link,
+				 int stream);
+void snd_hdac_ext_link_clear_stream_id(struct hdac_ext_link *link,
+				 int stream);
 
-पूर्णांक snd_hdac_ext_bus_link_get(काष्ठा hdac_bus *bus, काष्ठा hdac_ext_link *link);
-पूर्णांक snd_hdac_ext_bus_link_put(काष्ठा hdac_bus *bus, काष्ठा hdac_ext_link *link);
+int snd_hdac_ext_bus_link_get(struct hdac_bus *bus, struct hdac_ext_link *link);
+int snd_hdac_ext_bus_link_put(struct hdac_bus *bus, struct hdac_ext_link *link);
 
-व्योम snd_hdac_ext_bus_link_घातer(काष्ठा hdac_device *codec, bool enable);
+void snd_hdac_ext_bus_link_power(struct hdac_device *codec, bool enable);
 
-/* update रेजिस्टर macro */
-#घोषणा snd_hdac_updatel(addr, reg, mask, val)		\
-	ग_लिखोl(((पढ़ोl(addr + reg) & ~(mask)) | (val)), \
+/* update register macro */
+#define snd_hdac_updatel(addr, reg, mask, val)		\
+	writel(((readl(addr + reg) & ~(mask)) | (val)), \
 		addr + reg)
 
-#घोषणा snd_hdac_updatew(addr, reg, mask, val)		\
-	ग_लिखोw(((पढ़ोw(addr + reg) & ~(mask)) | (val)), \
+#define snd_hdac_updatew(addr, reg, mask, val)		\
+	writew(((readw(addr + reg) & ~(mask)) | (val)), \
 		addr + reg)
 
 
-काष्ठा hdac_ext_device;
+struct hdac_ext_device;
 
 /* ops common to all codec drivers */
-काष्ठा hdac_ext_codec_ops अणु
-	पूर्णांक (*build_controls)(काष्ठा hdac_ext_device *dev);
-	पूर्णांक (*init)(काष्ठा hdac_ext_device *dev);
-	व्योम (*मुक्त)(काष्ठा hdac_ext_device *dev);
-पूर्ण;
+struct hdac_ext_codec_ops {
+	int (*build_controls)(struct hdac_ext_device *dev);
+	int (*init)(struct hdac_ext_device *dev);
+	void (*free)(struct hdac_ext_device *dev);
+};
 
-काष्ठा hda_dai_map अणु
-	अक्षर *dai_name;
+struct hda_dai_map {
+	char *dai_name;
 	hda_nid_t nid;
 	u32	maxbps;
-पूर्ण;
+};
 
-काष्ठा hdac_ext_dma_params अणु
-	u32 क्रमmat;
+struct hdac_ext_dma_params {
+	u32 format;
 	u8 stream_tag;
-पूर्ण;
+};
 
-पूर्णांक snd_hda_ext_driver_रेजिस्टर(काष्ठा hdac_driver *drv);
-व्योम snd_hda_ext_driver_unरेजिस्टर(काष्ठा hdac_driver *drv);
+int snd_hda_ext_driver_register(struct hdac_driver *drv);
+void snd_hda_ext_driver_unregister(struct hdac_driver *drv);
 
-#पूर्ण_अगर /* __SOUND_HDAUDIO_EXT_H */
+#endif /* __SOUND_HDAUDIO_EXT_H */

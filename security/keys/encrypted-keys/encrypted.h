@@ -1,68 +1,67 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ENCRYPTED_KEY_H
-#घोषणा __ENCRYPTED_KEY_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ENCRYPTED_KEY_H
+#define __ENCRYPTED_KEY_H
 
-#घोषणा ENCRYPTED_DEBUG 0
-#अगर defined(CONFIG_TRUSTED_KEYS) || \
+#define ENCRYPTED_DEBUG 0
+#if defined(CONFIG_TRUSTED_KEYS) || \
   (defined(CONFIG_TRUSTED_KEYS_MODULE) && defined(CONFIG_ENCRYPTED_KEYS_MODULE))
-बाह्य काष्ठा key *request_trusted_key(स्थिर अक्षर *trusted_desc,
-				       स्थिर u8 **master_key, माप_प्रकार *master_keylen);
-#अन्यथा
-अटल अंतरभूत काष्ठा key *request_trusted_key(स्थिर अक्षर *trusted_desc,
-					      स्थिर u8 **master_key,
-					      माप_प्रकार *master_keylen)
-अणु
-	वापस ERR_PTR(-EOPNOTSUPP);
-पूर्ण
-#पूर्ण_अगर
+extern struct key *request_trusted_key(const char *trusted_desc,
+				       const u8 **master_key, size_t *master_keylen);
+#else
+static inline struct key *request_trusted_key(const char *trusted_desc,
+					      const u8 **master_key,
+					      size_t *master_keylen)
+{
+	return ERR_PTR(-EOPNOTSUPP);
+}
+#endif
 
-#अगर ENCRYPTED_DEBUG
-अटल अंतरभूत व्योम dump_master_key(स्थिर u8 *master_key, माप_प्रकार master_keylen)
-अणु
-	prपूर्णांक_hex_dump(KERN_ERR, "master key: ", DUMP_PREFIX_NONE, 32, 1,
+#if ENCRYPTED_DEBUG
+static inline void dump_master_key(const u8 *master_key, size_t master_keylen)
+{
+	print_hex_dump(KERN_ERR, "master key: ", DUMP_PREFIX_NONE, 32, 1,
 		       master_key, master_keylen, 0);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम dump_decrypted_data(काष्ठा encrypted_key_payload *epayload)
-अणु
-	prपूर्णांक_hex_dump(KERN_ERR, "decrypted data: ", DUMP_PREFIX_NONE, 32, 1,
+static inline void dump_decrypted_data(struct encrypted_key_payload *epayload)
+{
+	print_hex_dump(KERN_ERR, "decrypted data: ", DUMP_PREFIX_NONE, 32, 1,
 		       epayload->decrypted_data,
 		       epayload->decrypted_datalen, 0);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम dump_encrypted_data(काष्ठा encrypted_key_payload *epayload,
-				       अचिन्हित पूर्णांक encrypted_datalen)
-अणु
-	prपूर्णांक_hex_dump(KERN_ERR, "encrypted data: ", DUMP_PREFIX_NONE, 32, 1,
+static inline void dump_encrypted_data(struct encrypted_key_payload *epayload,
+				       unsigned int encrypted_datalen)
+{
+	print_hex_dump(KERN_ERR, "encrypted data: ", DUMP_PREFIX_NONE, 32, 1,
 		       epayload->encrypted_data, encrypted_datalen, 0);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम dump_hmac(स्थिर अक्षर *str, स्थिर u8 *digest,
-			     अचिन्हित पूर्णांक hmac_size)
-अणु
-	अगर (str)
+static inline void dump_hmac(const char *str, const u8 *digest,
+			     unsigned int hmac_size)
+{
+	if (str)
 		pr_info("encrypted_key: %s", str);
-	prपूर्णांक_hex_dump(KERN_ERR, "hmac: ", DUMP_PREFIX_NONE, 32, 1, digest,
+	print_hex_dump(KERN_ERR, "hmac: ", DUMP_PREFIX_NONE, 32, 1, digest,
 		       hmac_size, 0);
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम dump_master_key(स्थिर u8 *master_key, माप_प्रकार master_keylen)
-अणु
-पूर्ण
+}
+#else
+static inline void dump_master_key(const u8 *master_key, size_t master_keylen)
+{
+}
 
-अटल अंतरभूत व्योम dump_decrypted_data(काष्ठा encrypted_key_payload *epayload)
-अणु
-पूर्ण
+static inline void dump_decrypted_data(struct encrypted_key_payload *epayload)
+{
+}
 
-अटल अंतरभूत व्योम dump_encrypted_data(काष्ठा encrypted_key_payload *epayload,
-				       अचिन्हित पूर्णांक encrypted_datalen)
-अणु
-पूर्ण
+static inline void dump_encrypted_data(struct encrypted_key_payload *epayload,
+				       unsigned int encrypted_datalen)
+{
+}
 
-अटल अंतरभूत व्योम dump_hmac(स्थिर अक्षर *str, स्थिर u8 *digest,
-			     अचिन्हित पूर्णांक hmac_size)
-अणु
-पूर्ण
-#पूर्ण_अगर
-#पूर्ण_अगर
+static inline void dump_hmac(const char *str, const u8 *digest,
+			     unsigned int hmac_size)
+{
+}
+#endif
+#endif

@@ -1,97 +1,96 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 1999 - 2006 Intel Corporation. */
 
-/* ethtool support क्रम e1000 */
+/* ethtool support for e1000 */
 
-#समावेश "e1000.h"
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/uaccess.h>
+#include "e1000.h"
+#include <linux/jiffies.h>
+#include <linux/uaccess.h>
 
-क्रमागत अणुNETDEV_STATS, E1000_STATSपूर्ण;
+enum {NETDEV_STATS, E1000_STATS};
 
-काष्ठा e1000_stats अणु
-	अक्षर stat_string[ETH_GSTRING_LEN];
-	पूर्णांक type;
-	पूर्णांक माप_stat;
-	पूर्णांक stat_offset;
-पूर्ण;
+struct e1000_stats {
+	char stat_string[ETH_GSTRING_LEN];
+	int type;
+	int sizeof_stat;
+	int stat_offset;
+};
 
-#घोषणा E1000_STAT(m)		E1000_STATS, \
-				माप(((काष्ठा e1000_adapter *)0)->m), \
-				दुरत्व(काष्ठा e1000_adapter, m)
-#घोषणा E1000_NETDEV_STAT(m)	NETDEV_STATS, \
-				माप(((काष्ठा net_device *)0)->m), \
-				दुरत्व(काष्ठा net_device, m)
+#define E1000_STAT(m)		E1000_STATS, \
+				sizeof(((struct e1000_adapter *)0)->m), \
+				offsetof(struct e1000_adapter, m)
+#define E1000_NETDEV_STAT(m)	NETDEV_STATS, \
+				sizeof(((struct net_device *)0)->m), \
+				offsetof(struct net_device, m)
 
-अटल स्थिर काष्ठा e1000_stats e1000_gstrings_stats[] = अणु
-	अणु "rx_packets", E1000_STAT(stats.gprc) पूर्ण,
-	अणु "tx_packets", E1000_STAT(stats.gptc) पूर्ण,
-	अणु "rx_bytes", E1000_STAT(stats.gorcl) पूर्ण,
-	अणु "tx_bytes", E1000_STAT(stats.gotcl) पूर्ण,
-	अणु "rx_broadcast", E1000_STAT(stats.bprc) पूर्ण,
-	अणु "tx_broadcast", E1000_STAT(stats.bptc) पूर्ण,
-	अणु "rx_multicast", E1000_STAT(stats.mprc) पूर्ण,
-	अणु "tx_multicast", E1000_STAT(stats.mptc) पूर्ण,
-	अणु "rx_errors", E1000_STAT(stats.rxerrc) पूर्ण,
-	अणु "tx_errors", E1000_STAT(stats.txerrc) पूर्ण,
-	अणु "tx_dropped", E1000_NETDEV_STAT(stats.tx_dropped) पूर्ण,
-	अणु "multicast", E1000_STAT(stats.mprc) पूर्ण,
-	अणु "collisions", E1000_STAT(stats.colc) पूर्ण,
-	अणु "rx_length_errors", E1000_STAT(stats.rlerrc) पूर्ण,
-	अणु "rx_over_errors", E1000_NETDEV_STAT(stats.rx_over_errors) पूर्ण,
-	अणु "rx_crc_errors", E1000_STAT(stats.crcerrs) पूर्ण,
-	अणु "rx_frame_errors", E1000_NETDEV_STAT(stats.rx_frame_errors) पूर्ण,
-	अणु "rx_no_buffer_count", E1000_STAT(stats.rnbc) पूर्ण,
-	अणु "rx_missed_errors", E1000_STAT(stats.mpc) पूर्ण,
-	अणु "tx_aborted_errors", E1000_STAT(stats.ecol) पूर्ण,
-	अणु "tx_carrier_errors", E1000_STAT(stats.tncrs) पूर्ण,
-	अणु "tx_fifo_errors", E1000_NETDEV_STAT(stats.tx_fअगरo_errors) पूर्ण,
-	अणु "tx_heartbeat_errors", E1000_NETDEV_STAT(stats.tx_heartbeat_errors) पूर्ण,
-	अणु "tx_window_errors", E1000_STAT(stats.latecol) पूर्ण,
-	अणु "tx_abort_late_coll", E1000_STAT(stats.latecol) पूर्ण,
-	अणु "tx_deferred_ok", E1000_STAT(stats.dc) पूर्ण,
-	अणु "tx_single_coll_ok", E1000_STAT(stats.scc) पूर्ण,
-	अणु "tx_multi_coll_ok", E1000_STAT(stats.mcc) पूर्ण,
-	अणु "tx_timeout_count", E1000_STAT(tx_समयout_count) पूर्ण,
-	अणु "tx_restart_queue", E1000_STAT(restart_queue) पूर्ण,
-	अणु "rx_long_length_errors", E1000_STAT(stats.roc) पूर्ण,
-	अणु "rx_short_length_errors", E1000_STAT(stats.ruc) पूर्ण,
-	अणु "rx_align_errors", E1000_STAT(stats.algnerrc) पूर्ण,
-	अणु "tx_tcp_seg_good", E1000_STAT(stats.tsctc) पूर्ण,
-	अणु "tx_tcp_seg_failed", E1000_STAT(stats.tsctfc) पूर्ण,
-	अणु "rx_flow_control_xon", E1000_STAT(stats.xonrxc) पूर्ण,
-	अणु "rx_flow_control_xoff", E1000_STAT(stats.xoffrxc) पूर्ण,
-	अणु "tx_flow_control_xon", E1000_STAT(stats.xontxc) पूर्ण,
-	अणु "tx_flow_control_xoff", E1000_STAT(stats.xofftxc) पूर्ण,
-	अणु "rx_long_byte_count", E1000_STAT(stats.gorcl) पूर्ण,
-	अणु "rx_csum_offload_good", E1000_STAT(hw_csum_good) पूर्ण,
-	अणु "rx_csum_offload_errors", E1000_STAT(hw_csum_err) पूर्ण,
-	अणु "alloc_rx_buff_failed", E1000_STAT(alloc_rx_buff_failed) पूर्ण,
-	अणु "tx_smbus", E1000_STAT(stats.mgptc) पूर्ण,
-	अणु "rx_smbus", E1000_STAT(stats.mgprc) पूर्ण,
-	अणु "dropped_smbus", E1000_STAT(stats.mgpdc) पूर्ण,
-पूर्ण;
+static const struct e1000_stats e1000_gstrings_stats[] = {
+	{ "rx_packets", E1000_STAT(stats.gprc) },
+	{ "tx_packets", E1000_STAT(stats.gptc) },
+	{ "rx_bytes", E1000_STAT(stats.gorcl) },
+	{ "tx_bytes", E1000_STAT(stats.gotcl) },
+	{ "rx_broadcast", E1000_STAT(stats.bprc) },
+	{ "tx_broadcast", E1000_STAT(stats.bptc) },
+	{ "rx_multicast", E1000_STAT(stats.mprc) },
+	{ "tx_multicast", E1000_STAT(stats.mptc) },
+	{ "rx_errors", E1000_STAT(stats.rxerrc) },
+	{ "tx_errors", E1000_STAT(stats.txerrc) },
+	{ "tx_dropped", E1000_NETDEV_STAT(stats.tx_dropped) },
+	{ "multicast", E1000_STAT(stats.mprc) },
+	{ "collisions", E1000_STAT(stats.colc) },
+	{ "rx_length_errors", E1000_STAT(stats.rlerrc) },
+	{ "rx_over_errors", E1000_NETDEV_STAT(stats.rx_over_errors) },
+	{ "rx_crc_errors", E1000_STAT(stats.crcerrs) },
+	{ "rx_frame_errors", E1000_NETDEV_STAT(stats.rx_frame_errors) },
+	{ "rx_no_buffer_count", E1000_STAT(stats.rnbc) },
+	{ "rx_missed_errors", E1000_STAT(stats.mpc) },
+	{ "tx_aborted_errors", E1000_STAT(stats.ecol) },
+	{ "tx_carrier_errors", E1000_STAT(stats.tncrs) },
+	{ "tx_fifo_errors", E1000_NETDEV_STAT(stats.tx_fifo_errors) },
+	{ "tx_heartbeat_errors", E1000_NETDEV_STAT(stats.tx_heartbeat_errors) },
+	{ "tx_window_errors", E1000_STAT(stats.latecol) },
+	{ "tx_abort_late_coll", E1000_STAT(stats.latecol) },
+	{ "tx_deferred_ok", E1000_STAT(stats.dc) },
+	{ "tx_single_coll_ok", E1000_STAT(stats.scc) },
+	{ "tx_multi_coll_ok", E1000_STAT(stats.mcc) },
+	{ "tx_timeout_count", E1000_STAT(tx_timeout_count) },
+	{ "tx_restart_queue", E1000_STAT(restart_queue) },
+	{ "rx_long_length_errors", E1000_STAT(stats.roc) },
+	{ "rx_short_length_errors", E1000_STAT(stats.ruc) },
+	{ "rx_align_errors", E1000_STAT(stats.algnerrc) },
+	{ "tx_tcp_seg_good", E1000_STAT(stats.tsctc) },
+	{ "tx_tcp_seg_failed", E1000_STAT(stats.tsctfc) },
+	{ "rx_flow_control_xon", E1000_STAT(stats.xonrxc) },
+	{ "rx_flow_control_xoff", E1000_STAT(stats.xoffrxc) },
+	{ "tx_flow_control_xon", E1000_STAT(stats.xontxc) },
+	{ "tx_flow_control_xoff", E1000_STAT(stats.xofftxc) },
+	{ "rx_long_byte_count", E1000_STAT(stats.gorcl) },
+	{ "rx_csum_offload_good", E1000_STAT(hw_csum_good) },
+	{ "rx_csum_offload_errors", E1000_STAT(hw_csum_err) },
+	{ "alloc_rx_buff_failed", E1000_STAT(alloc_rx_buff_failed) },
+	{ "tx_smbus", E1000_STAT(stats.mgptc) },
+	{ "rx_smbus", E1000_STAT(stats.mgprc) },
+	{ "dropped_smbus", E1000_STAT(stats.mgpdc) },
+};
 
-#घोषणा E1000_QUEUE_STATS_LEN 0
-#घोषणा E1000_GLOBAL_STATS_LEN ARRAY_SIZE(e1000_gstrings_stats)
-#घोषणा E1000_STATS_LEN (E1000_GLOBAL_STATS_LEN + E1000_QUEUE_STATS_LEN)
-अटल स्थिर अक्षर e1000_gstrings_test[][ETH_GSTRING_LEN] = अणु
+#define E1000_QUEUE_STATS_LEN 0
+#define E1000_GLOBAL_STATS_LEN ARRAY_SIZE(e1000_gstrings_stats)
+#define E1000_STATS_LEN (E1000_GLOBAL_STATS_LEN + E1000_QUEUE_STATS_LEN)
+static const char e1000_gstrings_test[][ETH_GSTRING_LEN] = {
 	"Register test  (offline)", "Eeprom test    (offline)",
 	"Interrupt test (offline)", "Loopback test  (offline)",
 	"Link test   (on/offline)"
-पूर्ण;
+};
 
-#घोषणा E1000_TEST_LEN	ARRAY_SIZE(e1000_gstrings_test)
+#define E1000_TEST_LEN	ARRAY_SIZE(e1000_gstrings_test)
 
-अटल पूर्णांक e1000_get_link_ksettings(काष्ठा net_device *netdev,
-				    काष्ठा ethtool_link_ksettings *cmd)
-अणु
-	काष्ठा e1000_adapter *adapter = netdev_priv(netdev);
-	काष्ठा e1000_hw *hw = &adapter->hw;
+static int e1000_get_link_ksettings(struct net_device *netdev,
+				    struct ethtool_link_ksettings *cmd)
+{
+	struct e1000_adapter *adapter = netdev_priv(netdev);
+	struct e1000_hw *hw = &adapter->hw;
 	u32 supported, advertising;
 
-	अगर (hw->media_type == e1000_media_type_copper) अणु
+	if (hw->media_type == e1000_media_type_copper) {
 		supported = (SUPPORTED_10baseT_Half |
 			     SUPPORTED_10baseT_Full |
 			     SUPPORTED_100baseT_Half |
@@ -101,15 +100,15 @@
 			     SUPPORTED_TP);
 		advertising = ADVERTISED_TP;
 
-		अगर (hw->स्वतःneg == 1) अणु
+		if (hw->autoneg == 1) {
 			advertising |= ADVERTISED_Autoneg;
-			/* the e1000 स्वतःneg seems to match ethtool nicely */
-			advertising |= hw->स्वतःneg_advertised;
-		पूर्ण
+			/* the e1000 autoneg seems to match ethtool nicely */
+			advertising |= hw->autoneg_advertised;
+		}
 
 		cmd->base.port = PORT_TP;
 		cmd->base.phy_address = hw->phy_addr;
-	पूर्ण अन्यथा अणु
+	} else {
 		supported   = (SUPPORTED_1000baseT_Full |
 			       SUPPORTED_FIBRE |
 			       SUPPORTED_Autoneg);
@@ -119,39 +118,39 @@
 			       ADVERTISED_Autoneg);
 
 		cmd->base.port = PORT_FIBRE;
-	पूर्ण
+	}
 
-	अगर (er32(STATUS) & E1000_STATUS_LU) अणु
+	if (er32(STATUS) & E1000_STATUS_LU) {
 		e1000_get_speed_and_duplex(hw, &adapter->link_speed,
 					   &adapter->link_duplex);
 		cmd->base.speed = adapter->link_speed;
 
-		/* unक्रमtunately FULL_DUPLEX != DUPLEX_FULL
+		/* unfortunately FULL_DUPLEX != DUPLEX_FULL
 		 * and HALF_DUPLEX != DUPLEX_HALF
 		 */
-		अगर (adapter->link_duplex == FULL_DUPLEX)
+		if (adapter->link_duplex == FULL_DUPLEX)
 			cmd->base.duplex = DUPLEX_FULL;
-		अन्यथा
+		else
 			cmd->base.duplex = DUPLEX_HALF;
-	पूर्ण अन्यथा अणु
+	} else {
 		cmd->base.speed = SPEED_UNKNOWN;
 		cmd->base.duplex = DUPLEX_UNKNOWN;
-	पूर्ण
+	}
 
-	cmd->base.स्वतःneg = ((hw->media_type == e1000_media_type_fiber) ||
-			 hw->स्वतःneg) ? AUTONEG_ENABLE : AUTONEG_DISABLE;
+	cmd->base.autoneg = ((hw->media_type == e1000_media_type_fiber) ||
+			 hw->autoneg) ? AUTONEG_ENABLE : AUTONEG_DISABLE;
 
 	/* MDI-X => 1; MDI => 0 */
-	अगर ((hw->media_type == e1000_media_type_copper) &&
-	    netअगर_carrier_ok(netdev))
+	if ((hw->media_type == e1000_media_type_copper) &&
+	    netif_carrier_ok(netdev))
 		cmd->base.eth_tp_mdix = (!!adapter->phy_info.mdix_mode ?
 				     ETH_TP_MDI_X : ETH_TP_MDI);
-	अन्यथा
+	else
 		cmd->base.eth_tp_mdix = ETH_TP_MDI_INVALID;
 
-	अगर (hw->mdix == AUTO_ALL_MODES)
+	if (hw->mdix == AUTO_ALL_MODES)
 		cmd->base.eth_tp_mdix_ctrl = ETH_TP_MDI_AUTO;
-	अन्यथा
+	else
 		cmd->base.eth_tp_mdix_ctrl = hw->mdix;
 
 	ethtool_convert_legacy_u32_to_link_mode(cmd->link_modes.supported,
@@ -159,178 +158,178 @@
 	ethtool_convert_legacy_u32_to_link_mode(cmd->link_modes.advertising,
 						advertising);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक e1000_set_link_ksettings(काष्ठा net_device *netdev,
-				    स्थिर काष्ठा ethtool_link_ksettings *cmd)
-अणु
-	काष्ठा e1000_adapter *adapter = netdev_priv(netdev);
-	काष्ठा e1000_hw *hw = &adapter->hw;
+static int e1000_set_link_ksettings(struct net_device *netdev,
+				    const struct ethtool_link_ksettings *cmd)
+{
+	struct e1000_adapter *adapter = netdev_priv(netdev);
+	struct e1000_hw *hw = &adapter->hw;
 	u32 advertising;
 
 	ethtool_convert_link_mode_to_legacy_u32(&advertising,
 						cmd->link_modes.advertising);
 
-	/* MDI setting is only allowed when स्वतःneg enabled because
-	 * some hardware करोesn't allow MDI setting when speed or
-	 * duplex is क्रमced.
+	/* MDI setting is only allowed when autoneg enabled because
+	 * some hardware doesn't allow MDI setting when speed or
+	 * duplex is forced.
 	 */
-	अगर (cmd->base.eth_tp_mdix_ctrl) अणु
-		अगर (hw->media_type != e1000_media_type_copper)
-			वापस -EOPNOTSUPP;
+	if (cmd->base.eth_tp_mdix_ctrl) {
+		if (hw->media_type != e1000_media_type_copper)
+			return -EOPNOTSUPP;
 
-		अगर ((cmd->base.eth_tp_mdix_ctrl != ETH_TP_MDI_AUTO) &&
-		    (cmd->base.स्वतःneg != AUTONEG_ENABLE)) अणु
+		if ((cmd->base.eth_tp_mdix_ctrl != ETH_TP_MDI_AUTO) &&
+		    (cmd->base.autoneg != AUTONEG_ENABLE)) {
 			e_err(drv, "forcing MDI/MDI-X state is not supported when link speed and/or duplex are forced\n");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	जबतक (test_and_set_bit(__E1000_RESETTING, &adapter->flags))
+	while (test_and_set_bit(__E1000_RESETTING, &adapter->flags))
 		msleep(1);
 
-	अगर (cmd->base.स्वतःneg == AUTONEG_ENABLE) अणु
-		hw->स्वतःneg = 1;
-		अगर (hw->media_type == e1000_media_type_fiber)
-			hw->स्वतःneg_advertised = ADVERTISED_1000baseT_Full |
+	if (cmd->base.autoneg == AUTONEG_ENABLE) {
+		hw->autoneg = 1;
+		if (hw->media_type == e1000_media_type_fiber)
+			hw->autoneg_advertised = ADVERTISED_1000baseT_Full |
 						 ADVERTISED_FIBRE |
 						 ADVERTISED_Autoneg;
-		अन्यथा
-			hw->स्वतःneg_advertised = advertising |
+		else
+			hw->autoneg_advertised = advertising |
 						 ADVERTISED_TP |
 						 ADVERTISED_Autoneg;
-	पूर्ण अन्यथा अणु
+	} else {
 		u32 speed = cmd->base.speed;
-		/* calling this overrides क्रमced MDI setting */
-		अगर (e1000_set_spd_dplx(adapter, speed, cmd->base.duplex)) अणु
+		/* calling this overrides forced MDI setting */
+		if (e1000_set_spd_dplx(adapter, speed, cmd->base.duplex)) {
 			clear_bit(__E1000_RESETTING, &adapter->flags);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
 	/* MDI-X => 2; MDI => 1; Auto => 3 */
-	अगर (cmd->base.eth_tp_mdix_ctrl) अणु
-		अगर (cmd->base.eth_tp_mdix_ctrl == ETH_TP_MDI_AUTO)
+	if (cmd->base.eth_tp_mdix_ctrl) {
+		if (cmd->base.eth_tp_mdix_ctrl == ETH_TP_MDI_AUTO)
 			hw->mdix = AUTO_ALL_MODES;
-		अन्यथा
+		else
 			hw->mdix = cmd->base.eth_tp_mdix_ctrl;
-	पूर्ण
+	}
 
 	/* reset the link */
 
-	अगर (netअगर_running(adapter->netdev)) अणु
-		e1000_करोwn(adapter);
+	if (netif_running(adapter->netdev)) {
+		e1000_down(adapter);
 		e1000_up(adapter);
-	पूर्ण अन्यथा अणु
+	} else {
 		e1000_reset(adapter);
-	पूर्ण
+	}
 	clear_bit(__E1000_RESETTING, &adapter->flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u32 e1000_get_link(काष्ठा net_device *netdev)
-अणु
-	काष्ठा e1000_adapter *adapter = netdev_priv(netdev);
+static u32 e1000_get_link(struct net_device *netdev)
+{
+	struct e1000_adapter *adapter = netdev_priv(netdev);
 
-	/* If the link is not reported up to netdev, पूर्णांकerrupts are disabled,
+	/* If the link is not reported up to netdev, interrupts are disabled,
 	 * and so the physical link state may have changed since we last
 	 * looked. Set get_link_status to make sure that the true link
-	 * state is पूर्णांकerrogated, rather than pulling a cached and possibly
+	 * state is interrogated, rather than pulling a cached and possibly
 	 * stale link state from the driver.
 	 */
-	अगर (!netअगर_carrier_ok(netdev))
+	if (!netif_carrier_ok(netdev))
 		adapter->hw.get_link_status = 1;
 
-	वापस e1000_has_link(adapter);
-पूर्ण
+	return e1000_has_link(adapter);
+}
 
-अटल व्योम e1000_get_छोड़ोparam(काष्ठा net_device *netdev,
-				 काष्ठा ethtool_छोड़ोparam *छोड़ो)
-अणु
-	काष्ठा e1000_adapter *adapter = netdev_priv(netdev);
-	काष्ठा e1000_hw *hw = &adapter->hw;
+static void e1000_get_pauseparam(struct net_device *netdev,
+				 struct ethtool_pauseparam *pause)
+{
+	struct e1000_adapter *adapter = netdev_priv(netdev);
+	struct e1000_hw *hw = &adapter->hw;
 
-	छोड़ो->स्वतःneg =
-		(adapter->fc_स्वतःneg ? AUTONEG_ENABLE : AUTONEG_DISABLE);
+	pause->autoneg =
+		(adapter->fc_autoneg ? AUTONEG_ENABLE : AUTONEG_DISABLE);
 
-	अगर (hw->fc == E1000_FC_RX_PAUSE) अणु
-		छोड़ो->rx_छोड़ो = 1;
-	पूर्ण अन्यथा अगर (hw->fc == E1000_FC_TX_PAUSE) अणु
-		छोड़ो->tx_छोड़ो = 1;
-	पूर्ण अन्यथा अगर (hw->fc == E1000_FC_FULL) अणु
-		छोड़ो->rx_छोड़ो = 1;
-		छोड़ो->tx_छोड़ो = 1;
-	पूर्ण
-पूर्ण
+	if (hw->fc == E1000_FC_RX_PAUSE) {
+		pause->rx_pause = 1;
+	} else if (hw->fc == E1000_FC_TX_PAUSE) {
+		pause->tx_pause = 1;
+	} else if (hw->fc == E1000_FC_FULL) {
+		pause->rx_pause = 1;
+		pause->tx_pause = 1;
+	}
+}
 
-अटल पूर्णांक e1000_set_छोड़ोparam(काष्ठा net_device *netdev,
-				काष्ठा ethtool_छोड़ोparam *छोड़ो)
-अणु
-	काष्ठा e1000_adapter *adapter = netdev_priv(netdev);
-	काष्ठा e1000_hw *hw = &adapter->hw;
-	पूर्णांक retval = 0;
+static int e1000_set_pauseparam(struct net_device *netdev,
+				struct ethtool_pauseparam *pause)
+{
+	struct e1000_adapter *adapter = netdev_priv(netdev);
+	struct e1000_hw *hw = &adapter->hw;
+	int retval = 0;
 
-	adapter->fc_स्वतःneg = छोड़ो->स्वतःneg;
+	adapter->fc_autoneg = pause->autoneg;
 
-	जबतक (test_and_set_bit(__E1000_RESETTING, &adapter->flags))
+	while (test_and_set_bit(__E1000_RESETTING, &adapter->flags))
 		msleep(1);
 
-	अगर (छोड़ो->rx_छोड़ो && छोड़ो->tx_छोड़ो)
+	if (pause->rx_pause && pause->tx_pause)
 		hw->fc = E1000_FC_FULL;
-	अन्यथा अगर (छोड़ो->rx_छोड़ो && !छोड़ो->tx_छोड़ो)
+	else if (pause->rx_pause && !pause->tx_pause)
 		hw->fc = E1000_FC_RX_PAUSE;
-	अन्यथा अगर (!छोड़ो->rx_छोड़ो && छोड़ो->tx_छोड़ो)
+	else if (!pause->rx_pause && pause->tx_pause)
 		hw->fc = E1000_FC_TX_PAUSE;
-	अन्यथा अगर (!छोड़ो->rx_छोड़ो && !छोड़ो->tx_छोड़ो)
+	else if (!pause->rx_pause && !pause->tx_pause)
 		hw->fc = E1000_FC_NONE;
 
 	hw->original_fc = hw->fc;
 
-	अगर (adapter->fc_स्वतःneg == AUTONEG_ENABLE) अणु
-		अगर (netअगर_running(adapter->netdev)) अणु
-			e1000_करोwn(adapter);
+	if (adapter->fc_autoneg == AUTONEG_ENABLE) {
+		if (netif_running(adapter->netdev)) {
+			e1000_down(adapter);
 			e1000_up(adapter);
-		पूर्ण अन्यथा अणु
+		} else {
 			e1000_reset(adapter);
-		पूर्ण
-	पूर्ण अन्यथा
+		}
+	} else
 		retval = ((hw->media_type == e1000_media_type_fiber) ?
-			  e1000_setup_link(hw) : e1000_क्रमce_mac_fc(hw));
+			  e1000_setup_link(hw) : e1000_force_mac_fc(hw));
 
 	clear_bit(__E1000_RESETTING, &adapter->flags);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल u32 e1000_get_msglevel(काष्ठा net_device *netdev)
-अणु
-	काष्ठा e1000_adapter *adapter = netdev_priv(netdev);
+static u32 e1000_get_msglevel(struct net_device *netdev)
+{
+	struct e1000_adapter *adapter = netdev_priv(netdev);
 
-	वापस adapter->msg_enable;
-पूर्ण
+	return adapter->msg_enable;
+}
 
-अटल व्योम e1000_set_msglevel(काष्ठा net_device *netdev, u32 data)
-अणु
-	काष्ठा e1000_adapter *adapter = netdev_priv(netdev);
+static void e1000_set_msglevel(struct net_device *netdev, u32 data)
+{
+	struct e1000_adapter *adapter = netdev_priv(netdev);
 
 	adapter->msg_enable = data;
-पूर्ण
+}
 
-अटल पूर्णांक e1000_get_regs_len(काष्ठा net_device *netdev)
-अणु
-#घोषणा E1000_REGS_LEN 32
-	वापस E1000_REGS_LEN * माप(u32);
-पूर्ण
+static int e1000_get_regs_len(struct net_device *netdev)
+{
+#define E1000_REGS_LEN 32
+	return E1000_REGS_LEN * sizeof(u32);
+}
 
-अटल व्योम e1000_get_regs(काष्ठा net_device *netdev, काष्ठा ethtool_regs *regs,
-			   व्योम *p)
-अणु
-	काष्ठा e1000_adapter *adapter = netdev_priv(netdev);
-	काष्ठा e1000_hw *hw = &adapter->hw;
+static void e1000_get_regs(struct net_device *netdev, struct ethtool_regs *regs,
+			   void *p)
+{
+	struct e1000_adapter *adapter = netdev_priv(netdev);
+	struct e1000_hw *hw = &adapter->hw;
 	u32 *regs_buff = p;
 	u16 phy_data;
 
-	स_रखो(p, 0, E1000_REGS_LEN * माप(u32));
+	memset(p, 0, E1000_REGS_LEN * sizeof(u32));
 
 	regs->version = (1 << 24) | (hw->revision_id << 16) | hw->device_id;
 
@@ -350,48 +349,48 @@
 	regs_buff[11] = er32(TIDV);
 
 	regs_buff[12] = hw->phy_type;  /* PHY type (IGP=1, M88=0) */
-	अगर (hw->phy_type == e1000_phy_igp) अणु
-		e1000_ग_लिखो_phy_reg(hw, IGP01E1000_PHY_PAGE_SELECT,
+	if (hw->phy_type == e1000_phy_igp) {
+		e1000_write_phy_reg(hw, IGP01E1000_PHY_PAGE_SELECT,
 				    IGP01E1000_PHY_AGC_A);
-		e1000_पढ़ो_phy_reg(hw, IGP01E1000_PHY_AGC_A &
+		e1000_read_phy_reg(hw, IGP01E1000_PHY_AGC_A &
 				   IGP01E1000_PHY_PAGE_SELECT, &phy_data);
 		regs_buff[13] = (u32)phy_data; /* cable length */
-		e1000_ग_लिखो_phy_reg(hw, IGP01E1000_PHY_PAGE_SELECT,
+		e1000_write_phy_reg(hw, IGP01E1000_PHY_PAGE_SELECT,
 				    IGP01E1000_PHY_AGC_B);
-		e1000_पढ़ो_phy_reg(hw, IGP01E1000_PHY_AGC_B &
+		e1000_read_phy_reg(hw, IGP01E1000_PHY_AGC_B &
 				   IGP01E1000_PHY_PAGE_SELECT, &phy_data);
 		regs_buff[14] = (u32)phy_data; /* cable length */
-		e1000_ग_लिखो_phy_reg(hw, IGP01E1000_PHY_PAGE_SELECT,
+		e1000_write_phy_reg(hw, IGP01E1000_PHY_PAGE_SELECT,
 				    IGP01E1000_PHY_AGC_C);
-		e1000_पढ़ो_phy_reg(hw, IGP01E1000_PHY_AGC_C &
+		e1000_read_phy_reg(hw, IGP01E1000_PHY_AGC_C &
 				   IGP01E1000_PHY_PAGE_SELECT, &phy_data);
 		regs_buff[15] = (u32)phy_data; /* cable length */
-		e1000_ग_लिखो_phy_reg(hw, IGP01E1000_PHY_PAGE_SELECT,
+		e1000_write_phy_reg(hw, IGP01E1000_PHY_PAGE_SELECT,
 				    IGP01E1000_PHY_AGC_D);
-		e1000_पढ़ो_phy_reg(hw, IGP01E1000_PHY_AGC_D &
+		e1000_read_phy_reg(hw, IGP01E1000_PHY_AGC_D &
 				   IGP01E1000_PHY_PAGE_SELECT, &phy_data);
 		regs_buff[16] = (u32)phy_data; /* cable length */
 		regs_buff[17] = 0; /* extended 10bt distance (not needed) */
-		e1000_ग_लिखो_phy_reg(hw, IGP01E1000_PHY_PAGE_SELECT, 0x0);
-		e1000_पढ़ो_phy_reg(hw, IGP01E1000_PHY_PORT_STATUS &
+		e1000_write_phy_reg(hw, IGP01E1000_PHY_PAGE_SELECT, 0x0);
+		e1000_read_phy_reg(hw, IGP01E1000_PHY_PORT_STATUS &
 				   IGP01E1000_PHY_PAGE_SELECT, &phy_data);
 		regs_buff[18] = (u32)phy_data; /* cable polarity */
-		e1000_ग_लिखो_phy_reg(hw, IGP01E1000_PHY_PAGE_SELECT,
+		e1000_write_phy_reg(hw, IGP01E1000_PHY_PAGE_SELECT,
 				    IGP01E1000_PHY_PCS_INIT_REG);
-		e1000_पढ़ो_phy_reg(hw, IGP01E1000_PHY_PCS_INIT_REG &
+		e1000_read_phy_reg(hw, IGP01E1000_PHY_PCS_INIT_REG &
 				   IGP01E1000_PHY_PAGE_SELECT, &phy_data);
 		regs_buff[19] = (u32)phy_data; /* cable polarity */
 		regs_buff[20] = 0; /* polarity correction enabled (always) */
 		regs_buff[22] = 0; /* phy receive errors (unavailable) */
 		regs_buff[23] = regs_buff[18]; /* mdix mode */
-		e1000_ग_लिखो_phy_reg(hw, IGP01E1000_PHY_PAGE_SELECT, 0x0);
-	पूर्ण अन्यथा अणु
-		e1000_पढ़ो_phy_reg(hw, M88E1000_PHY_SPEC_STATUS, &phy_data);
+		e1000_write_phy_reg(hw, IGP01E1000_PHY_PAGE_SELECT, 0x0);
+	} else {
+		e1000_read_phy_reg(hw, M88E1000_PHY_SPEC_STATUS, &phy_data);
 		regs_buff[13] = (u32)phy_data; /* cable length */
 		regs_buff[14] = 0;  /* Dummy (to align w/ IGP phy reg dump) */
 		regs_buff[15] = 0;  /* Dummy (to align w/ IGP phy reg dump) */
 		regs_buff[16] = 0;  /* Dummy (to align w/ IGP phy reg dump) */
-		e1000_पढ़ो_phy_reg(hw, M88E1000_PHY_SPEC_CTRL, &phy_data);
+		e1000_read_phy_reg(hw, M88E1000_PHY_SPEC_CTRL, &phy_data);
 		regs_buff[17] = (u32)phy_data; /* extended 10bt distance */
 		regs_buff[18] = regs_buff[13]; /* cable polarity */
 		regs_buff[19] = 0;  /* Dummy (to align w/ IGP phy reg dump) */
@@ -399,154 +398,154 @@
 		/* phy receive errors */
 		regs_buff[22] = adapter->phy_stats.receive_errors;
 		regs_buff[23] = regs_buff[13]; /* mdix mode */
-	पूर्ण
+	}
 	regs_buff[21] = adapter->phy_stats.idle_errors;  /* phy idle errors */
-	e1000_पढ़ो_phy_reg(hw, PHY_1000T_STATUS, &phy_data);
+	e1000_read_phy_reg(hw, PHY_1000T_STATUS, &phy_data);
 	regs_buff[24] = (u32)phy_data;  /* phy local receiver status */
 	regs_buff[25] = regs_buff[24];  /* phy remote receiver status */
-	अगर (hw->mac_type >= e1000_82540 &&
-	    hw->media_type == e1000_media_type_copper) अणु
+	if (hw->mac_type >= e1000_82540 &&
+	    hw->media_type == e1000_media_type_copper) {
 		regs_buff[26] = er32(MANC);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक e1000_get_eeprom_len(काष्ठा net_device *netdev)
-अणु
-	काष्ठा e1000_adapter *adapter = netdev_priv(netdev);
-	काष्ठा e1000_hw *hw = &adapter->hw;
+static int e1000_get_eeprom_len(struct net_device *netdev)
+{
+	struct e1000_adapter *adapter = netdev_priv(netdev);
+	struct e1000_hw *hw = &adapter->hw;
 
-	वापस hw->eeprom.word_size * 2;
-पूर्ण
+	return hw->eeprom.word_size * 2;
+}
 
-अटल पूर्णांक e1000_get_eeprom(काष्ठा net_device *netdev,
-			    काष्ठा ethtool_eeprom *eeprom, u8 *bytes)
-अणु
-	काष्ठा e1000_adapter *adapter = netdev_priv(netdev);
-	काष्ठा e1000_hw *hw = &adapter->hw;
+static int e1000_get_eeprom(struct net_device *netdev,
+			    struct ethtool_eeprom *eeprom, u8 *bytes)
+{
+	struct e1000_adapter *adapter = netdev_priv(netdev);
+	struct e1000_hw *hw = &adapter->hw;
 	u16 *eeprom_buff;
-	पूर्णांक first_word, last_word;
-	पूर्णांक ret_val = 0;
+	int first_word, last_word;
+	int ret_val = 0;
 	u16 i;
 
-	अगर (eeprom->len == 0)
-		वापस -EINVAL;
+	if (eeprom->len == 0)
+		return -EINVAL;
 
-	eeprom->magic = hw->venकरोr_id | (hw->device_id << 16);
+	eeprom->magic = hw->vendor_id | (hw->device_id << 16);
 
 	first_word = eeprom->offset >> 1;
 	last_word = (eeprom->offset + eeprom->len - 1) >> 1;
 
-	eeprom_buff = kदो_स्मृति_array(last_word - first_word + 1, माप(u16),
+	eeprom_buff = kmalloc_array(last_word - first_word + 1, sizeof(u16),
 				    GFP_KERNEL);
-	अगर (!eeprom_buff)
-		वापस -ENOMEM;
+	if (!eeprom_buff)
+		return -ENOMEM;
 
-	अगर (hw->eeprom.type == e1000_eeprom_spi)
-		ret_val = e1000_पढ़ो_eeprom(hw, first_word,
+	if (hw->eeprom.type == e1000_eeprom_spi)
+		ret_val = e1000_read_eeprom(hw, first_word,
 					    last_word - first_word + 1,
 					    eeprom_buff);
-	अन्यथा अणु
-		क्रम (i = 0; i < last_word - first_word + 1; i++) अणु
-			ret_val = e1000_पढ़ो_eeprom(hw, first_word + i, 1,
+	else {
+		for (i = 0; i < last_word - first_word + 1; i++) {
+			ret_val = e1000_read_eeprom(hw, first_word + i, 1,
 						    &eeprom_buff[i]);
-			अगर (ret_val)
-				अवरोध;
-		पूर्ण
-	पूर्ण
+			if (ret_val)
+				break;
+		}
+	}
 
 	/* Device's eeprom is always little-endian, word addressable */
-	क्रम (i = 0; i < last_word - first_word + 1; i++)
+	for (i = 0; i < last_word - first_word + 1; i++)
 		le16_to_cpus(&eeprom_buff[i]);
 
-	स_नकल(bytes, (u8 *)eeprom_buff + (eeprom->offset & 1),
+	memcpy(bytes, (u8 *)eeprom_buff + (eeprom->offset & 1),
 	       eeprom->len);
-	kमुक्त(eeprom_buff);
+	kfree(eeprom_buff);
 
-	वापस ret_val;
-पूर्ण
+	return ret_val;
+}
 
-अटल पूर्णांक e1000_set_eeprom(काष्ठा net_device *netdev,
-			    काष्ठा ethtool_eeprom *eeprom, u8 *bytes)
-अणु
-	काष्ठा e1000_adapter *adapter = netdev_priv(netdev);
-	काष्ठा e1000_hw *hw = &adapter->hw;
+static int e1000_set_eeprom(struct net_device *netdev,
+			    struct ethtool_eeprom *eeprom, u8 *bytes)
+{
+	struct e1000_adapter *adapter = netdev_priv(netdev);
+	struct e1000_hw *hw = &adapter->hw;
 	u16 *eeprom_buff;
-	व्योम *ptr;
-	पूर्णांक max_len, first_word, last_word, ret_val = 0;
+	void *ptr;
+	int max_len, first_word, last_word, ret_val = 0;
 	u16 i;
 
-	अगर (eeprom->len == 0)
-		वापस -EOPNOTSUPP;
+	if (eeprom->len == 0)
+		return -EOPNOTSUPP;
 
-	अगर (eeprom->magic != (hw->venकरोr_id | (hw->device_id << 16)))
-		वापस -EFAULT;
+	if (eeprom->magic != (hw->vendor_id | (hw->device_id << 16)))
+		return -EFAULT;
 
 	max_len = hw->eeprom.word_size * 2;
 
 	first_word = eeprom->offset >> 1;
 	last_word = (eeprom->offset + eeprom->len - 1) >> 1;
-	eeprom_buff = kदो_स्मृति(max_len, GFP_KERNEL);
-	अगर (!eeprom_buff)
-		वापस -ENOMEM;
+	eeprom_buff = kmalloc(max_len, GFP_KERNEL);
+	if (!eeprom_buff)
+		return -ENOMEM;
 
-	ptr = (व्योम *)eeprom_buff;
+	ptr = (void *)eeprom_buff;
 
-	अगर (eeprom->offset & 1) अणु
-		/* need पढ़ो/modअगरy/ग_लिखो of first changed EEPROM word
-		 * only the second byte of the word is being modअगरied
+	if (eeprom->offset & 1) {
+		/* need read/modify/write of first changed EEPROM word
+		 * only the second byte of the word is being modified
 		 */
-		ret_val = e1000_पढ़ो_eeprom(hw, first_word, 1,
+		ret_val = e1000_read_eeprom(hw, first_word, 1,
 					    &eeprom_buff[0]);
 		ptr++;
-	पूर्ण
-	अगर (((eeprom->offset + eeprom->len) & 1) && (ret_val == 0)) अणु
-		/* need पढ़ो/modअगरy/ग_लिखो of last changed EEPROM word
-		 * only the first byte of the word is being modअगरied
+	}
+	if (((eeprom->offset + eeprom->len) & 1) && (ret_val == 0)) {
+		/* need read/modify/write of last changed EEPROM word
+		 * only the first byte of the word is being modified
 		 */
-		ret_val = e1000_पढ़ो_eeprom(hw, last_word, 1,
+		ret_val = e1000_read_eeprom(hw, last_word, 1,
 					    &eeprom_buff[last_word - first_word]);
-	पूर्ण
+	}
 
 	/* Device's eeprom is always little-endian, word addressable */
-	क्रम (i = 0; i < last_word - first_word + 1; i++)
+	for (i = 0; i < last_word - first_word + 1; i++)
 		le16_to_cpus(&eeprom_buff[i]);
 
-	स_नकल(ptr, bytes, eeprom->len);
+	memcpy(ptr, bytes, eeprom->len);
 
-	क्रम (i = 0; i < last_word - first_word + 1; i++)
+	for (i = 0; i < last_word - first_word + 1; i++)
 		eeprom_buff[i] = cpu_to_le16(eeprom_buff[i]);
 
-	ret_val = e1000_ग_लिखो_eeprom(hw, first_word,
+	ret_val = e1000_write_eeprom(hw, first_word,
 				     last_word - first_word + 1, eeprom_buff);
 
-	/* Update the checksum over the first part of the EEPROM अगर needed */
-	अगर ((ret_val == 0) && (first_word <= EEPROM_CHECKSUM_REG))
+	/* Update the checksum over the first part of the EEPROM if needed */
+	if ((ret_val == 0) && (first_word <= EEPROM_CHECKSUM_REG))
 		e1000_update_eeprom_checksum(hw);
 
-	kमुक्त(eeprom_buff);
-	वापस ret_val;
-पूर्ण
+	kfree(eeprom_buff);
+	return ret_val;
+}
 
-अटल व्योम e1000_get_drvinfo(काष्ठा net_device *netdev,
-			      काष्ठा ethtool_drvinfo *drvinfo)
-अणु
-	काष्ठा e1000_adapter *adapter = netdev_priv(netdev);
+static void e1000_get_drvinfo(struct net_device *netdev,
+			      struct ethtool_drvinfo *drvinfo)
+{
+	struct e1000_adapter *adapter = netdev_priv(netdev);
 
 	strlcpy(drvinfo->driver,  e1000_driver_name,
-		माप(drvinfo->driver));
+		sizeof(drvinfo->driver));
 
 	strlcpy(drvinfo->bus_info, pci_name(adapter->pdev),
-		माप(drvinfo->bus_info));
-पूर्ण
+		sizeof(drvinfo->bus_info));
+}
 
-अटल व्योम e1000_get_ringparam(काष्ठा net_device *netdev,
-				काष्ठा ethtool_ringparam *ring)
-अणु
-	काष्ठा e1000_adapter *adapter = netdev_priv(netdev);
-	काष्ठा e1000_hw *hw = &adapter->hw;
+static void e1000_get_ringparam(struct net_device *netdev,
+				struct ethtool_ringparam *ring)
+{
+	struct e1000_adapter *adapter = netdev_priv(netdev);
+	struct e1000_hw *hw = &adapter->hw;
 	e1000_mac_type mac_type = hw->mac_type;
-	काष्ठा e1000_tx_ring *txdr = adapter->tx_ring;
-	काष्ठा e1000_rx_ring *rxdr = adapter->rx_ring;
+	struct e1000_tx_ring *txdr = adapter->tx_ring;
+	struct e1000_rx_ring *rxdr = adapter->rx_ring;
 
 	ring->rx_max_pending = (mac_type < e1000_82544) ? E1000_MAX_RXD :
 		E1000_MAX_82544_RXD;
@@ -554,40 +553,40 @@
 		E1000_MAX_82544_TXD;
 	ring->rx_pending = rxdr->count;
 	ring->tx_pending = txdr->count;
-पूर्ण
+}
 
-अटल पूर्णांक e1000_set_ringparam(काष्ठा net_device *netdev,
-			       काष्ठा ethtool_ringparam *ring)
-अणु
-	काष्ठा e1000_adapter *adapter = netdev_priv(netdev);
-	काष्ठा e1000_hw *hw = &adapter->hw;
+static int e1000_set_ringparam(struct net_device *netdev,
+			       struct ethtool_ringparam *ring)
+{
+	struct e1000_adapter *adapter = netdev_priv(netdev);
+	struct e1000_hw *hw = &adapter->hw;
 	e1000_mac_type mac_type = hw->mac_type;
-	काष्ठा e1000_tx_ring *txdr, *tx_old;
-	काष्ठा e1000_rx_ring *rxdr, *rx_old;
-	पूर्णांक i, err;
+	struct e1000_tx_ring *txdr, *tx_old;
+	struct e1000_rx_ring *rxdr, *rx_old;
+	int i, err;
 
-	अगर ((ring->rx_mini_pending) || (ring->rx_jumbo_pending))
-		वापस -EINVAL;
+	if ((ring->rx_mini_pending) || (ring->rx_jumbo_pending))
+		return -EINVAL;
 
-	जबतक (test_and_set_bit(__E1000_RESETTING, &adapter->flags))
+	while (test_and_set_bit(__E1000_RESETTING, &adapter->flags))
 		msleep(1);
 
-	अगर (netअगर_running(adapter->netdev))
-		e1000_करोwn(adapter);
+	if (netif_running(adapter->netdev))
+		e1000_down(adapter);
 
 	tx_old = adapter->tx_ring;
 	rx_old = adapter->rx_ring;
 
 	err = -ENOMEM;
-	txdr = kसुस्मृति(adapter->num_tx_queues, माप(काष्ठा e1000_tx_ring),
+	txdr = kcalloc(adapter->num_tx_queues, sizeof(struct e1000_tx_ring),
 		       GFP_KERNEL);
-	अगर (!txdr)
-		जाओ err_alloc_tx;
+	if (!txdr)
+		goto err_alloc_tx;
 
-	rxdr = kसुस्मृति(adapter->num_rx_queues, माप(काष्ठा e1000_rx_ring),
+	rxdr = kcalloc(adapter->num_rx_queues, sizeof(struct e1000_rx_ring),
 		       GFP_KERNEL);
-	अगर (!rxdr)
-		जाओ err_alloc_rx;
+	if (!rxdr)
+		goto err_alloc_rx;
 
 	adapter->tx_ring = txdr;
 	adapter->rx_ring = rxdr;
@@ -601,141 +600,141 @@
 			  E1000_MAX_TXD : E1000_MAX_82544_TXD));
 	txdr->count = ALIGN(txdr->count, REQ_TX_DESCRIPTOR_MULTIPLE);
 
-	क्रम (i = 0; i < adapter->num_tx_queues; i++)
+	for (i = 0; i < adapter->num_tx_queues; i++)
 		txdr[i].count = txdr->count;
-	क्रम (i = 0; i < adapter->num_rx_queues; i++)
+	for (i = 0; i < adapter->num_rx_queues; i++)
 		rxdr[i].count = rxdr->count;
 
 	err = 0;
-	अगर (netअगर_running(adapter->netdev)) अणु
-		/* Try to get new resources beक्रमe deleting old */
+	if (netif_running(adapter->netdev)) {
+		/* Try to get new resources before deleting old */
 		err = e1000_setup_all_rx_resources(adapter);
-		अगर (err)
-			जाओ err_setup_rx;
+		if (err)
+			goto err_setup_rx;
 		err = e1000_setup_all_tx_resources(adapter);
-		अगर (err)
-			जाओ err_setup_tx;
+		if (err)
+			goto err_setup_tx;
 
-		/* save the new, restore the old in order to मुक्त it,
+		/* save the new, restore the old in order to free it,
 		 * then restore the new back again
 		 */
 
 		adapter->rx_ring = rx_old;
 		adapter->tx_ring = tx_old;
-		e1000_मुक्त_all_rx_resources(adapter);
-		e1000_मुक्त_all_tx_resources(adapter);
+		e1000_free_all_rx_resources(adapter);
+		e1000_free_all_tx_resources(adapter);
 		adapter->rx_ring = rxdr;
 		adapter->tx_ring = txdr;
 		err = e1000_up(adapter);
-	पूर्ण
-	kमुक्त(tx_old);
-	kमुक्त(rx_old);
+	}
+	kfree(tx_old);
+	kfree(rx_old);
 
 	clear_bit(__E1000_RESETTING, &adapter->flags);
-	वापस err;
+	return err;
 
 err_setup_tx:
-	e1000_मुक्त_all_rx_resources(adapter);
+	e1000_free_all_rx_resources(adapter);
 err_setup_rx:
 	adapter->rx_ring = rx_old;
 	adapter->tx_ring = tx_old;
-	kमुक्त(rxdr);
+	kfree(rxdr);
 err_alloc_rx:
-	kमुक्त(txdr);
+	kfree(txdr);
 err_alloc_tx:
-	अगर (netअगर_running(adapter->netdev))
+	if (netif_running(adapter->netdev))
 		e1000_up(adapter);
 	clear_bit(__E1000_RESETTING, &adapter->flags);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल bool reg_pattern_test(काष्ठा e1000_adapter *adapter, u64 *data, पूर्णांक reg,
-			     u32 mask, u32 ग_लिखो)
-अणु
-	काष्ठा e1000_hw *hw = &adapter->hw;
-	अटल स्थिर u32 test[] = अणु
+static bool reg_pattern_test(struct e1000_adapter *adapter, u64 *data, int reg,
+			     u32 mask, u32 write)
+{
+	struct e1000_hw *hw = &adapter->hw;
+	static const u32 test[] = {
 		0x5A5A5A5A, 0xA5A5A5A5, 0x00000000, 0xFFFFFFFF
-	पूर्ण;
+	};
 	u8 __iomem *address = hw->hw_addr + reg;
-	u32 पढ़ो;
-	पूर्णांक i;
+	u32 read;
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(test); i++) अणु
-		ग_लिखोl(ग_लिखो & test[i], address);
-		पढ़ो = पढ़ोl(address);
-		अगर (पढ़ो != (ग_लिखो & test[i] & mask)) अणु
+	for (i = 0; i < ARRAY_SIZE(test); i++) {
+		writel(write & test[i], address);
+		read = readl(address);
+		if (read != (write & test[i] & mask)) {
 			e_err(drv, "pattern test reg %04X failed: "
 			      "got 0x%08X expected 0x%08X\n",
-			      reg, पढ़ो, (ग_लिखो & test[i] & mask));
+			      reg, read, (write & test[i] & mask));
 			*data = reg;
-			वापस true;
-		पूर्ण
-	पूर्ण
-	वापस false;
-पूर्ण
+			return true;
+		}
+	}
+	return false;
+}
 
-अटल bool reg_set_and_check(काष्ठा e1000_adapter *adapter, u64 *data, पूर्णांक reg,
-			      u32 mask, u32 ग_लिखो)
-अणु
-	काष्ठा e1000_hw *hw = &adapter->hw;
+static bool reg_set_and_check(struct e1000_adapter *adapter, u64 *data, int reg,
+			      u32 mask, u32 write)
+{
+	struct e1000_hw *hw = &adapter->hw;
 	u8 __iomem *address = hw->hw_addr + reg;
-	u32 पढ़ो;
+	u32 read;
 
-	ग_लिखोl(ग_लिखो & mask, address);
-	पढ़ो = पढ़ोl(address);
-	अगर ((पढ़ो & mask) != (ग_लिखो & mask)) अणु
+	writel(write & mask, address);
+	read = readl(address);
+	if ((read & mask) != (write & mask)) {
 		e_err(drv, "set/check reg %04X test failed: "
 		      "got 0x%08X expected 0x%08X\n",
-		      reg, (पढ़ो & mask), (ग_लिखो & mask));
+		      reg, (read & mask), (write & mask));
 		*data = reg;
-		वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+		return true;
+	}
+	return false;
+}
 
-#घोषणा REG_PATTERN_TEST(reg, mask, ग_लिखो)			     \
-	करो अणु							     \
-		अगर (reg_pattern_test(adapter, data,		     \
+#define REG_PATTERN_TEST(reg, mask, write)			     \
+	do {							     \
+		if (reg_pattern_test(adapter, data,		     \
 			     (hw->mac_type >= e1000_82543)   \
 			     ? E1000_##reg : E1000_82542_##reg,	     \
-			     mask, ग_लिखो))			     \
-			वापस 1;				     \
-	पूर्ण जबतक (0)
+			     mask, write))			     \
+			return 1;				     \
+	} while (0)
 
-#घोषणा REG_SET_AND_CHECK(reg, mask, ग_लिखो)			     \
-	करो अणु							     \
-		अगर (reg_set_and_check(adapter, data,		     \
+#define REG_SET_AND_CHECK(reg, mask, write)			     \
+	do {							     \
+		if (reg_set_and_check(adapter, data,		     \
 			      (hw->mac_type >= e1000_82543)  \
 			      ? E1000_##reg : E1000_82542_##reg,     \
-			      mask, ग_लिखो))			     \
-			वापस 1;				     \
-	पूर्ण जबतक (0)
+			      mask, write))			     \
+			return 1;				     \
+	} while (0)
 
-अटल पूर्णांक e1000_reg_test(काष्ठा e1000_adapter *adapter, u64 *data)
-अणु
-	u32 value, beक्रमe, after;
+static int e1000_reg_test(struct e1000_adapter *adapter, u64 *data)
+{
+	u32 value, before, after;
 	u32 i, toggle;
-	काष्ठा e1000_hw *hw = &adapter->hw;
+	struct e1000_hw *hw = &adapter->hw;
 
-	/* The status रेजिस्टर is Read Only, so a ग_लिखो should fail.
+	/* The status register is Read Only, so a write should fail.
 	 * Some bits that get toggled are ignored.
 	 */
 
 	/* there are several bits on newer hardware that are r/w */
 	toggle = 0xFFFFF833;
 
-	beक्रमe = er32(STATUS);
+	before = er32(STATUS);
 	value = (er32(STATUS) & toggle);
 	ew32(STATUS, toggle);
 	after = er32(STATUS) & toggle;
-	अगर (value != after) अणु
+	if (value != after) {
 		e_err(drv, "failed STATUS register test got: "
 		      "0x%08X expected: 0x%08X\n", after, value);
 		*data = 1;
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 	/* restore previous status */
-	ew32(STATUS, beक्रमe);
+	ew32(STATUS, before);
 
 	REG_PATTERN_TEST(FCAL, 0xFFFFFFFF, 0xFFFFFFFF);
 	REG_PATTERN_TEST(FCAH, 0x0000FFFF, 0xFFFFFFFF);
@@ -755,110 +754,110 @@ err_alloc_tx:
 
 	REG_SET_AND_CHECK(RCTL, 0xFFFFFFFF, 0x00000000);
 
-	beक्रमe = 0x06DFB3FE;
-	REG_SET_AND_CHECK(RCTL, beक्रमe, 0x003FFFFB);
+	before = 0x06DFB3FE;
+	REG_SET_AND_CHECK(RCTL, before, 0x003FFFFB);
 	REG_SET_AND_CHECK(TCTL, 0xFFFFFFFF, 0x00000000);
 
-	अगर (hw->mac_type >= e1000_82543) अणु
-		REG_SET_AND_CHECK(RCTL, beक्रमe, 0xFFFFFFFF);
+	if (hw->mac_type >= e1000_82543) {
+		REG_SET_AND_CHECK(RCTL, before, 0xFFFFFFFF);
 		REG_PATTERN_TEST(RDBAL, 0xFFFFFFF0, 0xFFFFFFFF);
 		REG_PATTERN_TEST(TXCW, 0xC000FFFF, 0x0000FFFF);
 		REG_PATTERN_TEST(TDBAL, 0xFFFFFFF0, 0xFFFFFFFF);
 		REG_PATTERN_TEST(TIDV, 0x0000FFFF, 0x0000FFFF);
 		value = E1000_RAR_ENTRIES;
-		क्रम (i = 0; i < value; i++) अणु
+		for (i = 0; i < value; i++) {
 			REG_PATTERN_TEST(RA + (((i << 1) + 1) << 2),
 					 0x8003FFFF, 0xFFFFFFFF);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		REG_SET_AND_CHECK(RCTL, 0xFFFFFFFF, 0x01FFFFFF);
 		REG_PATTERN_TEST(RDBAL, 0xFFFFF000, 0xFFFFFFFF);
 		REG_PATTERN_TEST(TXCW, 0x0000FFFF, 0x0000FFFF);
 		REG_PATTERN_TEST(TDBAL, 0xFFFFF000, 0xFFFFFFFF);
-	पूर्ण
+	}
 
 	value = E1000_MC_TBL_SIZE;
-	क्रम (i = 0; i < value; i++)
+	for (i = 0; i < value; i++)
 		REG_PATTERN_TEST(MTA + (i << 2), 0xFFFFFFFF, 0xFFFFFFFF);
 
 	*data = 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक e1000_eeprom_test(काष्ठा e1000_adapter *adapter, u64 *data)
-अणु
-	काष्ठा e1000_hw *hw = &adapter->hw;
+static int e1000_eeprom_test(struct e1000_adapter *adapter, u64 *data)
+{
+	struct e1000_hw *hw = &adapter->hw;
 	u16 temp;
 	u16 checksum = 0;
 	u16 i;
 
 	*data = 0;
 	/* Read and add up the contents of the EEPROM */
-	क्रम (i = 0; i < (EEPROM_CHECKSUM_REG + 1); i++) अणु
-		अगर ((e1000_पढ़ो_eeprom(hw, i, 1, &temp)) < 0) अणु
+	for (i = 0; i < (EEPROM_CHECKSUM_REG + 1); i++) {
+		if ((e1000_read_eeprom(hw, i, 1, &temp)) < 0) {
 			*data = 1;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		checksum += temp;
-	पूर्ण
+	}
 
-	/* If Checksum is not Correct वापस error अन्यथा test passed */
-	अगर ((checksum != (u16)EEPROM_SUM) && !(*data))
+	/* If Checksum is not Correct return error else test passed */
+	if ((checksum != (u16)EEPROM_SUM) && !(*data))
 		*data = 2;
 
-	वापस *data;
-पूर्ण
+	return *data;
+}
 
-अटल irqवापस_t e1000_test_पूर्णांकr(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा net_device *netdev = (काष्ठा net_device *)data;
-	काष्ठा e1000_adapter *adapter = netdev_priv(netdev);
-	काष्ठा e1000_hw *hw = &adapter->hw;
+static irqreturn_t e1000_test_intr(int irq, void *data)
+{
+	struct net_device *netdev = (struct net_device *)data;
+	struct e1000_adapter *adapter = netdev_priv(netdev);
+	struct e1000_hw *hw = &adapter->hw;
 
 	adapter->test_icr |= er32(ICR);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक e1000_पूर्णांकr_test(काष्ठा e1000_adapter *adapter, u64 *data)
-अणु
-	काष्ठा net_device *netdev = adapter->netdev;
+static int e1000_intr_test(struct e1000_adapter *adapter, u64 *data)
+{
+	struct net_device *netdev = adapter->netdev;
 	u32 mask, i = 0;
-	bool shared_पूर्णांक = true;
+	bool shared_int = true;
 	u32 irq = adapter->pdev->irq;
-	काष्ठा e1000_hw *hw = &adapter->hw;
+	struct e1000_hw *hw = &adapter->hw;
 
 	*data = 0;
 
-	/* NOTE: we करोn't test MSI पूर्णांकerrupts here, yet
-	 * Hook up test पूर्णांकerrupt handler just क्रम this test
+	/* NOTE: we don't test MSI interrupts here, yet
+	 * Hook up test interrupt handler just for this test
 	 */
-	अगर (!request_irq(irq, e1000_test_पूर्णांकr, IRQF_PROBE_SHARED, netdev->name,
+	if (!request_irq(irq, e1000_test_intr, IRQF_PROBE_SHARED, netdev->name,
 			 netdev))
-		shared_पूर्णांक = false;
-	अन्यथा अगर (request_irq(irq, e1000_test_पूर्णांकr, IRQF_SHARED,
-			     netdev->name, netdev)) अणु
+		shared_int = false;
+	else if (request_irq(irq, e1000_test_intr, IRQF_SHARED,
+			     netdev->name, netdev)) {
 		*data = 1;
-		वापस -1;
-	पूर्ण
-	e_info(hw, "testing %s interrupt\n", (shared_पूर्णांक ?
+		return -1;
+	}
+	e_info(hw, "testing %s interrupt\n", (shared_int ?
 	       "shared" : "unshared"));
 
-	/* Disable all the पूर्णांकerrupts */
+	/* Disable all the interrupts */
 	ew32(IMC, 0xFFFFFFFF);
 	E1000_WRITE_FLUSH();
 	msleep(10);
 
-	/* Test each पूर्णांकerrupt */
-	क्रम (; i < 10; i++) अणु
+	/* Test each interrupt */
+	for (; i < 10; i++) {
 		/* Interrupt to test */
 		mask = 1 << i;
 
-		अगर (!shared_पूर्णांक) अणु
-			/* Disable the पूर्णांकerrupt to be reported in
-			 * the cause रेजिस्टर and then क्रमce the same
-			 * पूर्णांकerrupt and see अगर one माला_लो posted.  If
-			 * an पूर्णांकerrupt was posted to the bus, the
+		if (!shared_int) {
+			/* Disable the interrupt to be reported in
+			 * the cause register and then force the same
+			 * interrupt and see if one gets posted.  If
+			 * an interrupt was posted to the bus, the
 			 * test failed.
 			 */
 			adapter->test_icr = 0;
@@ -867,16 +866,16 @@ err_alloc_tx:
 			E1000_WRITE_FLUSH();
 			msleep(10);
 
-			अगर (adapter->test_icr & mask) अणु
+			if (adapter->test_icr & mask) {
 				*data = 3;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 
-		/* Enable the पूर्णांकerrupt to be reported in
-		 * the cause रेजिस्टर and then क्रमce the same
-		 * पूर्णांकerrupt and see अगर one माला_लो posted.  If
-		 * an पूर्णांकerrupt was not posted to the bus, the
+		/* Enable the interrupt to be reported in
+		 * the cause register and then force the same
+		 * interrupt and see if one gets posted.  If
+		 * an interrupt was not posted to the bus, the
 		 * test failed.
 		 */
 		adapter->test_icr = 0;
@@ -885,16 +884,16 @@ err_alloc_tx:
 		E1000_WRITE_FLUSH();
 		msleep(10);
 
-		अगर (!(adapter->test_icr & mask)) अणु
+		if (!(adapter->test_icr & mask)) {
 			*data = 4;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (!shared_पूर्णांक) अणु
-			/* Disable the other पूर्णांकerrupts to be reported in
-			 * the cause रेजिस्टर and then क्रमce the other
-			 * पूर्णांकerrupts and see अगर any get posted.  If
-			 * an पूर्णांकerrupt was posted to the bus, the
+		if (!shared_int) {
+			/* Disable the other interrupts to be reported in
+			 * the cause register and then force the other
+			 * interrupts and see if any get posted.  If
+			 * an interrupt was posted to the bus, the
 			 * test failed.
 			 */
 			adapter->test_icr = 0;
@@ -903,157 +902,157 @@ err_alloc_tx:
 			E1000_WRITE_FLUSH();
 			msleep(10);
 
-			अगर (adapter->test_icr) अणु
+			if (adapter->test_icr) {
 				*data = 5;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				break;
+			}
+		}
+	}
 
-	/* Disable all the पूर्णांकerrupts */
+	/* Disable all the interrupts */
 	ew32(IMC, 0xFFFFFFFF);
 	E1000_WRITE_FLUSH();
 	msleep(10);
 
-	/* Unhook test पूर्णांकerrupt handler */
-	मुक्त_irq(irq, netdev);
+	/* Unhook test interrupt handler */
+	free_irq(irq, netdev);
 
-	वापस *data;
-पूर्ण
+	return *data;
+}
 
-अटल व्योम e1000_मुक्त_desc_rings(काष्ठा e1000_adapter *adapter)
-अणु
-	काष्ठा e1000_tx_ring *txdr = &adapter->test_tx_ring;
-	काष्ठा e1000_rx_ring *rxdr = &adapter->test_rx_ring;
-	काष्ठा pci_dev *pdev = adapter->pdev;
-	पूर्णांक i;
+static void e1000_free_desc_rings(struct e1000_adapter *adapter)
+{
+	struct e1000_tx_ring *txdr = &adapter->test_tx_ring;
+	struct e1000_rx_ring *rxdr = &adapter->test_rx_ring;
+	struct pci_dev *pdev = adapter->pdev;
+	int i;
 
-	अगर (txdr->desc && txdr->buffer_info) अणु
-		क्रम (i = 0; i < txdr->count; i++) अणु
-			अगर (txdr->buffer_info[i].dma)
+	if (txdr->desc && txdr->buffer_info) {
+		for (i = 0; i < txdr->count; i++) {
+			if (txdr->buffer_info[i].dma)
 				dma_unmap_single(&pdev->dev,
 						 txdr->buffer_info[i].dma,
 						 txdr->buffer_info[i].length,
 						 DMA_TO_DEVICE);
-			dev_kमुक्त_skb(txdr->buffer_info[i].skb);
-		पूर्ण
-	पूर्ण
+			dev_kfree_skb(txdr->buffer_info[i].skb);
+		}
+	}
 
-	अगर (rxdr->desc && rxdr->buffer_info) अणु
-		क्रम (i = 0; i < rxdr->count; i++) अणु
-			अगर (rxdr->buffer_info[i].dma)
+	if (rxdr->desc && rxdr->buffer_info) {
+		for (i = 0; i < rxdr->count; i++) {
+			if (rxdr->buffer_info[i].dma)
 				dma_unmap_single(&pdev->dev,
 						 rxdr->buffer_info[i].dma,
 						 E1000_RXBUFFER_2048,
 						 DMA_FROM_DEVICE);
-			kमुक्त(rxdr->buffer_info[i].rxbuf.data);
-		पूर्ण
-	पूर्ण
+			kfree(rxdr->buffer_info[i].rxbuf.data);
+		}
+	}
 
-	अगर (txdr->desc) अणु
-		dma_मुक्त_coherent(&pdev->dev, txdr->size, txdr->desc,
+	if (txdr->desc) {
+		dma_free_coherent(&pdev->dev, txdr->size, txdr->desc,
 				  txdr->dma);
-		txdr->desc = शून्य;
-	पूर्ण
-	अगर (rxdr->desc) अणु
-		dma_मुक्त_coherent(&pdev->dev, rxdr->size, rxdr->desc,
+		txdr->desc = NULL;
+	}
+	if (rxdr->desc) {
+		dma_free_coherent(&pdev->dev, rxdr->size, rxdr->desc,
 				  rxdr->dma);
-		rxdr->desc = शून्य;
-	पूर्ण
+		rxdr->desc = NULL;
+	}
 
-	kमुक्त(txdr->buffer_info);
-	txdr->buffer_info = शून्य;
-	kमुक्त(rxdr->buffer_info);
-	rxdr->buffer_info = शून्य;
-पूर्ण
+	kfree(txdr->buffer_info);
+	txdr->buffer_info = NULL;
+	kfree(rxdr->buffer_info);
+	rxdr->buffer_info = NULL;
+}
 
-अटल पूर्णांक e1000_setup_desc_rings(काष्ठा e1000_adapter *adapter)
-अणु
-	काष्ठा e1000_hw *hw = &adapter->hw;
-	काष्ठा e1000_tx_ring *txdr = &adapter->test_tx_ring;
-	काष्ठा e1000_rx_ring *rxdr = &adapter->test_rx_ring;
-	काष्ठा pci_dev *pdev = adapter->pdev;
+static int e1000_setup_desc_rings(struct e1000_adapter *adapter)
+{
+	struct e1000_hw *hw = &adapter->hw;
+	struct e1000_tx_ring *txdr = &adapter->test_tx_ring;
+	struct e1000_rx_ring *rxdr = &adapter->test_rx_ring;
+	struct pci_dev *pdev = adapter->pdev;
 	u32 rctl;
-	पूर्णांक i, ret_val;
+	int i, ret_val;
 
 	/* Setup Tx descriptor ring and Tx buffers */
 
-	अगर (!txdr->count)
+	if (!txdr->count)
 		txdr->count = E1000_DEFAULT_TXD;
 
-	txdr->buffer_info = kसुस्मृति(txdr->count, माप(काष्ठा e1000_tx_buffer),
+	txdr->buffer_info = kcalloc(txdr->count, sizeof(struct e1000_tx_buffer),
 				    GFP_KERNEL);
-	अगर (!txdr->buffer_info) अणु
+	if (!txdr->buffer_info) {
 		ret_val = 1;
-		जाओ err_nomem;
-	पूर्ण
+		goto err_nomem;
+	}
 
-	txdr->size = txdr->count * माप(काष्ठा e1000_tx_desc);
+	txdr->size = txdr->count * sizeof(struct e1000_tx_desc);
 	txdr->size = ALIGN(txdr->size, 4096);
 	txdr->desc = dma_alloc_coherent(&pdev->dev, txdr->size, &txdr->dma,
 					GFP_KERNEL);
-	अगर (!txdr->desc) अणु
+	if (!txdr->desc) {
 		ret_val = 2;
-		जाओ err_nomem;
-	पूर्ण
+		goto err_nomem;
+	}
 	txdr->next_to_use = txdr->next_to_clean = 0;
 
 	ew32(TDBAL, ((u64)txdr->dma & 0x00000000FFFFFFFF));
 	ew32(TDBAH, ((u64)txdr->dma >> 32));
-	ew32(TDLEN, txdr->count * माप(काष्ठा e1000_tx_desc));
+	ew32(TDLEN, txdr->count * sizeof(struct e1000_tx_desc));
 	ew32(TDH, 0);
 	ew32(TDT, 0);
 	ew32(TCTL, E1000_TCTL_PSP | E1000_TCTL_EN |
 	     E1000_COLLISION_THRESHOLD << E1000_CT_SHIFT |
 	     E1000_FDX_COLLISION_DISTANCE << E1000_COLD_SHIFT);
 
-	क्रम (i = 0; i < txdr->count; i++) अणु
-		काष्ठा e1000_tx_desc *tx_desc = E1000_TX_DESC(*txdr, i);
-		काष्ठा sk_buff *skb;
-		अचिन्हित पूर्णांक size = 1024;
+	for (i = 0; i < txdr->count; i++) {
+		struct e1000_tx_desc *tx_desc = E1000_TX_DESC(*txdr, i);
+		struct sk_buff *skb;
+		unsigned int size = 1024;
 
 		skb = alloc_skb(size, GFP_KERNEL);
-		अगर (!skb) अणु
+		if (!skb) {
 			ret_val = 3;
-			जाओ err_nomem;
-		पूर्ण
+			goto err_nomem;
+		}
 		skb_put(skb, size);
 		txdr->buffer_info[i].skb = skb;
 		txdr->buffer_info[i].length = skb->len;
 		txdr->buffer_info[i].dma =
 			dma_map_single(&pdev->dev, skb->data, skb->len,
 				       DMA_TO_DEVICE);
-		अगर (dma_mapping_error(&pdev->dev, txdr->buffer_info[i].dma)) अणु
+		if (dma_mapping_error(&pdev->dev, txdr->buffer_info[i].dma)) {
 			ret_val = 4;
-			जाओ err_nomem;
-		पूर्ण
+			goto err_nomem;
+		}
 		tx_desc->buffer_addr = cpu_to_le64(txdr->buffer_info[i].dma);
 		tx_desc->lower.data = cpu_to_le32(skb->len);
 		tx_desc->lower.data |= cpu_to_le32(E1000_TXD_CMD_EOP |
 						   E1000_TXD_CMD_IFCS |
 						   E1000_TXD_CMD_RPS);
 		tx_desc->upper.data = 0;
-	पूर्ण
+	}
 
 	/* Setup Rx descriptor ring and Rx buffers */
 
-	अगर (!rxdr->count)
+	if (!rxdr->count)
 		rxdr->count = E1000_DEFAULT_RXD;
 
-	rxdr->buffer_info = kसुस्मृति(rxdr->count, माप(काष्ठा e1000_rx_buffer),
+	rxdr->buffer_info = kcalloc(rxdr->count, sizeof(struct e1000_rx_buffer),
 				    GFP_KERNEL);
-	अगर (!rxdr->buffer_info) अणु
+	if (!rxdr->buffer_info) {
 		ret_val = 5;
-		जाओ err_nomem;
-	पूर्ण
+		goto err_nomem;
+	}
 
-	rxdr->size = rxdr->count * माप(काष्ठा e1000_rx_desc);
+	rxdr->size = rxdr->count * sizeof(struct e1000_rx_desc);
 	rxdr->desc = dma_alloc_coherent(&pdev->dev, rxdr->size, &rxdr->dma,
 					GFP_KERNEL);
-	अगर (!rxdr->desc) अणु
+	if (!rxdr->desc) {
 		ret_val = 6;
-		जाओ err_nomem;
-	पूर्ण
+		goto err_nomem;
+	}
 	rxdr->next_to_use = rxdr->next_to_clean = 0;
 
 	rctl = er32(RCTL);
@@ -1068,76 +1067,76 @@ err_alloc_tx:
 		(hw->mc_filter_type << E1000_RCTL_MO_SHIFT);
 	ew32(RCTL, rctl);
 
-	क्रम (i = 0; i < rxdr->count; i++) अणु
-		काष्ठा e1000_rx_desc *rx_desc = E1000_RX_DESC(*rxdr, i);
+	for (i = 0; i < rxdr->count; i++) {
+		struct e1000_rx_desc *rx_desc = E1000_RX_DESC(*rxdr, i);
 		u8 *buf;
 
 		buf = kzalloc(E1000_RXBUFFER_2048 + NET_SKB_PAD + NET_IP_ALIGN,
 			      GFP_KERNEL);
-		अगर (!buf) अणु
+		if (!buf) {
 			ret_val = 7;
-			जाओ err_nomem;
-		पूर्ण
+			goto err_nomem;
+		}
 		rxdr->buffer_info[i].rxbuf.data = buf;
 
 		rxdr->buffer_info[i].dma =
 			dma_map_single(&pdev->dev,
 				       buf + NET_SKB_PAD + NET_IP_ALIGN,
 				       E1000_RXBUFFER_2048, DMA_FROM_DEVICE);
-		अगर (dma_mapping_error(&pdev->dev, rxdr->buffer_info[i].dma)) अणु
+		if (dma_mapping_error(&pdev->dev, rxdr->buffer_info[i].dma)) {
 			ret_val = 8;
-			जाओ err_nomem;
-		पूर्ण
+			goto err_nomem;
+		}
 		rx_desc->buffer_addr = cpu_to_le64(rxdr->buffer_info[i].dma);
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 err_nomem:
-	e1000_मुक्त_desc_rings(adapter);
-	वापस ret_val;
-पूर्ण
+	e1000_free_desc_rings(adapter);
+	return ret_val;
+}
 
-अटल व्योम e1000_phy_disable_receiver(काष्ठा e1000_adapter *adapter)
-अणु
-	काष्ठा e1000_hw *hw = &adapter->hw;
+static void e1000_phy_disable_receiver(struct e1000_adapter *adapter)
+{
+	struct e1000_hw *hw = &adapter->hw;
 
-	/* Write out to PHY रेजिस्टरs 29 and 30 to disable the Receiver. */
-	e1000_ग_लिखो_phy_reg(hw, 29, 0x001F);
-	e1000_ग_लिखो_phy_reg(hw, 30, 0x8FFC);
-	e1000_ग_लिखो_phy_reg(hw, 29, 0x001A);
-	e1000_ग_लिखो_phy_reg(hw, 30, 0x8FF0);
-पूर्ण
+	/* Write out to PHY registers 29 and 30 to disable the Receiver. */
+	e1000_write_phy_reg(hw, 29, 0x001F);
+	e1000_write_phy_reg(hw, 30, 0x8FFC);
+	e1000_write_phy_reg(hw, 29, 0x001A);
+	e1000_write_phy_reg(hw, 30, 0x8FF0);
+}
 
-अटल व्योम e1000_phy_reset_clk_and_crs(काष्ठा e1000_adapter *adapter)
-अणु
-	काष्ठा e1000_hw *hw = &adapter->hw;
+static void e1000_phy_reset_clk_and_crs(struct e1000_adapter *adapter)
+{
+	struct e1000_hw *hw = &adapter->hw;
 	u16 phy_reg;
 
-	/* Because we reset the PHY above, we need to re-क्रमce TX_CLK in the
-	 * Extended PHY Specअगरic Control Register to 25MHz घड़ी.  This
-	 * value शेषs back to a 2.5MHz घड़ी when the PHY is reset.
+	/* Because we reset the PHY above, we need to re-force TX_CLK in the
+	 * Extended PHY Specific Control Register to 25MHz clock.  This
+	 * value defaults back to a 2.5MHz clock when the PHY is reset.
 	 */
-	e1000_पढ़ो_phy_reg(hw, M88E1000_EXT_PHY_SPEC_CTRL, &phy_reg);
+	e1000_read_phy_reg(hw, M88E1000_EXT_PHY_SPEC_CTRL, &phy_reg);
 	phy_reg |= M88E1000_EPSCR_TX_CLK_25;
-	e1000_ग_लिखो_phy_reg(hw, M88E1000_EXT_PHY_SPEC_CTRL, phy_reg);
+	e1000_write_phy_reg(hw, M88E1000_EXT_PHY_SPEC_CTRL, phy_reg);
 
 	/* In addition, because of the s/w reset above, we need to enable
-	 * CRS on TX.  This must be set क्रम both full and half duplex
+	 * CRS on TX.  This must be set for both full and half duplex
 	 * operation.
 	 */
-	e1000_पढ़ो_phy_reg(hw, M88E1000_PHY_SPEC_CTRL, &phy_reg);
+	e1000_read_phy_reg(hw, M88E1000_PHY_SPEC_CTRL, &phy_reg);
 	phy_reg |= M88E1000_PSCR_ASSERT_CRS_ON_TX;
-	e1000_ग_लिखो_phy_reg(hw, M88E1000_PHY_SPEC_CTRL, phy_reg);
-पूर्ण
+	e1000_write_phy_reg(hw, M88E1000_PHY_SPEC_CTRL, phy_reg);
+}
 
-अटल पूर्णांक e1000_nonपूर्णांकegrated_phy_loopback(काष्ठा e1000_adapter *adapter)
-अणु
-	काष्ठा e1000_hw *hw = &adapter->hw;
+static int e1000_nonintegrated_phy_loopback(struct e1000_adapter *adapter)
+{
+	struct e1000_hw *hw = &adapter->hw;
 	u32 ctrl_reg;
 	u16 phy_reg;
 
-	/* Setup the Device Control Register क्रम PHY loopback test. */
+	/* Setup the Device Control Register for PHY loopback test. */
 
 	ctrl_reg = er32(CTRL);
 	ctrl_reg |= (E1000_CTRL_ILOS |		/* Invert Loss-Of-Signal */
@@ -1148,78 +1147,78 @@ err_nomem:
 
 	ew32(CTRL, ctrl_reg);
 
-	/* Read the PHY Specअगरic Control Register (0x10) */
-	e1000_पढ़ो_phy_reg(hw, M88E1000_PHY_SPEC_CTRL, &phy_reg);
+	/* Read the PHY Specific Control Register (0x10) */
+	e1000_read_phy_reg(hw, M88E1000_PHY_SPEC_CTRL, &phy_reg);
 
-	/* Clear Auto-Crossover bits in PHY Specअगरic Control Register
+	/* Clear Auto-Crossover bits in PHY Specific Control Register
 	 * (bits 6:5).
 	 */
 	phy_reg &= ~M88E1000_PSCR_AUTO_X_MODE;
-	e1000_ग_लिखो_phy_reg(hw, M88E1000_PHY_SPEC_CTRL, phy_reg);
+	e1000_write_phy_reg(hw, M88E1000_PHY_SPEC_CTRL, phy_reg);
 
-	/* Perक्रमm software reset on the PHY */
+	/* Perform software reset on the PHY */
 	e1000_phy_reset(hw);
 
 	/* Have to setup TX_CLK and TX_CRS after software reset */
 	e1000_phy_reset_clk_and_crs(adapter);
 
-	e1000_ग_लिखो_phy_reg(hw, PHY_CTRL, 0x8100);
+	e1000_write_phy_reg(hw, PHY_CTRL, 0x8100);
 
-	/* Wait क्रम reset to complete. */
+	/* Wait for reset to complete. */
 	udelay(500);
 
 	/* Have to setup TX_CLK and TX_CRS after software reset */
 	e1000_phy_reset_clk_and_crs(adapter);
 
-	/* Write out to PHY रेजिस्टरs 29 and 30 to disable the Receiver. */
+	/* Write out to PHY registers 29 and 30 to disable the Receiver. */
 	e1000_phy_disable_receiver(adapter);
 
-	/* Set the loopback bit in the PHY control रेजिस्टर. */
-	e1000_पढ़ो_phy_reg(hw, PHY_CTRL, &phy_reg);
+	/* Set the loopback bit in the PHY control register. */
+	e1000_read_phy_reg(hw, PHY_CTRL, &phy_reg);
 	phy_reg |= MII_CR_LOOPBACK;
-	e1000_ग_लिखो_phy_reg(hw, PHY_CTRL, phy_reg);
+	e1000_write_phy_reg(hw, PHY_CTRL, phy_reg);
 
-	/* Setup TX_CLK and TX_CRS one more समय. */
+	/* Setup TX_CLK and TX_CRS one more time. */
 	e1000_phy_reset_clk_and_crs(adapter);
 
 	/* Check Phy Configuration */
-	e1000_पढ़ो_phy_reg(hw, PHY_CTRL, &phy_reg);
-	अगर (phy_reg != 0x4100)
-		वापस 9;
+	e1000_read_phy_reg(hw, PHY_CTRL, &phy_reg);
+	if (phy_reg != 0x4100)
+		return 9;
 
-	e1000_पढ़ो_phy_reg(hw, M88E1000_EXT_PHY_SPEC_CTRL, &phy_reg);
-	अगर (phy_reg != 0x0070)
-		वापस 10;
+	e1000_read_phy_reg(hw, M88E1000_EXT_PHY_SPEC_CTRL, &phy_reg);
+	if (phy_reg != 0x0070)
+		return 10;
 
-	e1000_पढ़ो_phy_reg(hw, 29, &phy_reg);
-	अगर (phy_reg != 0x001A)
-		वापस 11;
+	e1000_read_phy_reg(hw, 29, &phy_reg);
+	if (phy_reg != 0x001A)
+		return 11;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक e1000_पूर्णांकegrated_phy_loopback(काष्ठा e1000_adapter *adapter)
-अणु
-	काष्ठा e1000_hw *hw = &adapter->hw;
+static int e1000_integrated_phy_loopback(struct e1000_adapter *adapter)
+{
+	struct e1000_hw *hw = &adapter->hw;
 	u32 ctrl_reg = 0;
 	u32 stat_reg = 0;
 
-	hw->स्वतःneg = false;
+	hw->autoneg = false;
 
-	अगर (hw->phy_type == e1000_phy_m88) अणु
+	if (hw->phy_type == e1000_phy_m88) {
 		/* Auto-MDI/MDIX Off */
-		e1000_ग_लिखो_phy_reg(hw,
+		e1000_write_phy_reg(hw,
 				    M88E1000_PHY_SPEC_CTRL, 0x0808);
 		/* reset to update Auto-MDI/MDIX */
-		e1000_ग_लिखो_phy_reg(hw, PHY_CTRL, 0x9140);
-		/* स्वतःneg off */
-		e1000_ग_लिखो_phy_reg(hw, PHY_CTRL, 0x8140);
-	पूर्ण
+		e1000_write_phy_reg(hw, PHY_CTRL, 0x9140);
+		/* autoneg off */
+		e1000_write_phy_reg(hw, PHY_CTRL, 0x8140);
+	}
 
 	ctrl_reg = er32(CTRL);
 
-	/* क्रमce 1000, set loopback */
-	e1000_ग_लिखो_phy_reg(hw, PHY_CTRL, 0x4140);
+	/* force 1000, set loopback */
+	e1000_write_phy_reg(hw, PHY_CTRL, 0x4140);
 
 	/* Now set up the MAC to the same speed/duplex as the PHY. */
 	ctrl_reg = er32(CTRL);
@@ -1229,104 +1228,104 @@ err_nomem:
 			E1000_CTRL_SPD_1000 |/* Force Speed to 1000 */
 			E1000_CTRL_FD); /* Force Duplex to FULL */
 
-	अगर (hw->media_type == e1000_media_type_copper &&
+	if (hw->media_type == e1000_media_type_copper &&
 	    hw->phy_type == e1000_phy_m88)
 		ctrl_reg |= E1000_CTRL_ILOS; /* Invert Loss of Signal */
-	अन्यथा अणु
+	else {
 		/* Set the ILOS bit on the fiber Nic is half
 		 * duplex link is detected.
 		 */
 		stat_reg = er32(STATUS);
-		अगर ((stat_reg & E1000_STATUS_FD) == 0)
+		if ((stat_reg & E1000_STATUS_FD) == 0)
 			ctrl_reg |= (E1000_CTRL_ILOS | E1000_CTRL_SLU);
-	पूर्ण
+	}
 
 	ew32(CTRL, ctrl_reg);
 
 	/* Disable the receiver on the PHY so when a cable is plugged in, the
-	 * PHY करोes not begin to स्वतःneg when a cable is reconnected to the NIC.
+	 * PHY does not begin to autoneg when a cable is reconnected to the NIC.
 	 */
-	अगर (hw->phy_type == e1000_phy_m88)
+	if (hw->phy_type == e1000_phy_m88)
 		e1000_phy_disable_receiver(adapter);
 
 	udelay(500);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक e1000_set_phy_loopback(काष्ठा e1000_adapter *adapter)
-अणु
-	काष्ठा e1000_hw *hw = &adapter->hw;
+static int e1000_set_phy_loopback(struct e1000_adapter *adapter)
+{
+	struct e1000_hw *hw = &adapter->hw;
 	u16 phy_reg = 0;
 	u16 count = 0;
 
-	चयन (hw->mac_type) अणु
-	हाल e1000_82543:
-		अगर (hw->media_type == e1000_media_type_copper) अणु
-			/* Attempt to setup Loopback mode on Non-पूर्णांकegrated PHY.
-			 * Some PHY रेजिस्टरs get corrupted at अक्रमom, so
-			 * attempt this 10 बार.
+	switch (hw->mac_type) {
+	case e1000_82543:
+		if (hw->media_type == e1000_media_type_copper) {
+			/* Attempt to setup Loopback mode on Non-integrated PHY.
+			 * Some PHY registers get corrupted at random, so
+			 * attempt this 10 times.
 			 */
-			जबतक (e1000_nonपूर्णांकegrated_phy_loopback(adapter) &&
+			while (e1000_nonintegrated_phy_loopback(adapter) &&
 			       count++ < 10);
-			अगर (count < 11)
-				वापस 0;
-		पूर्ण
-		अवरोध;
+			if (count < 11)
+				return 0;
+		}
+		break;
 
-	हाल e1000_82544:
-	हाल e1000_82540:
-	हाल e1000_82545:
-	हाल e1000_82545_rev_3:
-	हाल e1000_82546:
-	हाल e1000_82546_rev_3:
-	हाल e1000_82541:
-	हाल e1000_82541_rev_2:
-	हाल e1000_82547:
-	हाल e1000_82547_rev_2:
-		वापस e1000_पूर्णांकegrated_phy_loopback(adapter);
-	शेष:
-		/* Default PHY loopback work is to पढ़ो the MII
-		 * control रेजिस्टर and निश्चित bit 14 (loopback mode).
+	case e1000_82544:
+	case e1000_82540:
+	case e1000_82545:
+	case e1000_82545_rev_3:
+	case e1000_82546:
+	case e1000_82546_rev_3:
+	case e1000_82541:
+	case e1000_82541_rev_2:
+	case e1000_82547:
+	case e1000_82547_rev_2:
+		return e1000_integrated_phy_loopback(adapter);
+	default:
+		/* Default PHY loopback work is to read the MII
+		 * control register and assert bit 14 (loopback mode).
 		 */
-		e1000_पढ़ो_phy_reg(hw, PHY_CTRL, &phy_reg);
+		e1000_read_phy_reg(hw, PHY_CTRL, &phy_reg);
 		phy_reg |= MII_CR_LOOPBACK;
-		e1000_ग_लिखो_phy_reg(hw, PHY_CTRL, phy_reg);
-		वापस 0;
-	पूर्ण
+		e1000_write_phy_reg(hw, PHY_CTRL, phy_reg);
+		return 0;
+	}
 
-	वापस 8;
-पूर्ण
+	return 8;
+}
 
-अटल पूर्णांक e1000_setup_loopback_test(काष्ठा e1000_adapter *adapter)
-अणु
-	काष्ठा e1000_hw *hw = &adapter->hw;
+static int e1000_setup_loopback_test(struct e1000_adapter *adapter)
+{
+	struct e1000_hw *hw = &adapter->hw;
 	u32 rctl;
 
-	अगर (hw->media_type == e1000_media_type_fiber ||
-	    hw->media_type == e1000_media_type_पूर्णांकernal_serdes) अणु
-		चयन (hw->mac_type) अणु
-		हाल e1000_82545:
-		हाल e1000_82546:
-		हाल e1000_82545_rev_3:
-		हाल e1000_82546_rev_3:
-			वापस e1000_set_phy_loopback(adapter);
-		शेष:
+	if (hw->media_type == e1000_media_type_fiber ||
+	    hw->media_type == e1000_media_type_internal_serdes) {
+		switch (hw->mac_type) {
+		case e1000_82545:
+		case e1000_82546:
+		case e1000_82545_rev_3:
+		case e1000_82546_rev_3:
+			return e1000_set_phy_loopback(adapter);
+		default:
 			rctl = er32(RCTL);
 			rctl |= E1000_RCTL_LBM_TCVR;
 			ew32(RCTL, rctl);
-			वापस 0;
-		पूर्ण
-	पूर्ण अन्यथा अगर (hw->media_type == e1000_media_type_copper) अणु
-		वापस e1000_set_phy_loopback(adapter);
-	पूर्ण
+			return 0;
+		}
+	} else if (hw->media_type == e1000_media_type_copper) {
+		return e1000_set_phy_loopback(adapter);
+	}
 
-	वापस 7;
-पूर्ण
+	return 7;
+}
 
-अटल व्योम e1000_loopback_cleanup(काष्ठा e1000_adapter *adapter)
-अणु
-	काष्ठा e1000_hw *hw = &adapter->hw;
+static void e1000_loopback_cleanup(struct e1000_adapter *adapter)
+{
+	struct e1000_hw *hw = &adapter->hw;
 	u32 rctl;
 	u16 phy_reg;
 
@@ -1334,86 +1333,86 @@ err_nomem:
 	rctl &= ~(E1000_RCTL_LBM_TCVR | E1000_RCTL_LBM_MAC);
 	ew32(RCTL, rctl);
 
-	चयन (hw->mac_type) अणु
-	हाल e1000_82545:
-	हाल e1000_82546:
-	हाल e1000_82545_rev_3:
-	हाल e1000_82546_rev_3:
-	शेष:
-		hw->स्वतःneg = true;
-		e1000_पढ़ो_phy_reg(hw, PHY_CTRL, &phy_reg);
-		अगर (phy_reg & MII_CR_LOOPBACK) अणु
+	switch (hw->mac_type) {
+	case e1000_82545:
+	case e1000_82546:
+	case e1000_82545_rev_3:
+	case e1000_82546_rev_3:
+	default:
+		hw->autoneg = true;
+		e1000_read_phy_reg(hw, PHY_CTRL, &phy_reg);
+		if (phy_reg & MII_CR_LOOPBACK) {
 			phy_reg &= ~MII_CR_LOOPBACK;
-			e1000_ग_लिखो_phy_reg(hw, PHY_CTRL, phy_reg);
+			e1000_write_phy_reg(hw, PHY_CTRL, phy_reg);
 			e1000_phy_reset(hw);
-		पूर्ण
-		अवरोध;
-	पूर्ण
-पूर्ण
+		}
+		break;
+	}
+}
 
-अटल व्योम e1000_create_lbtest_frame(काष्ठा sk_buff *skb,
-				      अचिन्हित पूर्णांक frame_size)
-अणु
-	स_रखो(skb->data, 0xFF, frame_size);
+static void e1000_create_lbtest_frame(struct sk_buff *skb,
+				      unsigned int frame_size)
+{
+	memset(skb->data, 0xFF, frame_size);
 	frame_size &= ~1;
-	स_रखो(&skb->data[frame_size / 2], 0xAA, frame_size / 2 - 1);
+	memset(&skb->data[frame_size / 2], 0xAA, frame_size / 2 - 1);
 	skb->data[frame_size / 2 + 10] = 0xBE;
 	skb->data[frame_size / 2 + 12] = 0xAF;
-पूर्ण
+}
 
-अटल पूर्णांक e1000_check_lbtest_frame(स्थिर अचिन्हित अक्षर *data,
-				    अचिन्हित पूर्णांक frame_size)
-अणु
+static int e1000_check_lbtest_frame(const unsigned char *data,
+				    unsigned int frame_size)
+{
 	frame_size &= ~1;
-	अगर (*(data + 3) == 0xFF) अणु
-		अगर ((*(data + frame_size / 2 + 10) == 0xBE) &&
-		    (*(data + frame_size / 2 + 12) == 0xAF)) अणु
-			वापस 0;
-		पूर्ण
-	पूर्ण
-	वापस 13;
-पूर्ण
+	if (*(data + 3) == 0xFF) {
+		if ((*(data + frame_size / 2 + 10) == 0xBE) &&
+		    (*(data + frame_size / 2 + 12) == 0xAF)) {
+			return 0;
+		}
+	}
+	return 13;
+}
 
-अटल पूर्णांक e1000_run_loopback_test(काष्ठा e1000_adapter *adapter)
-अणु
-	काष्ठा e1000_hw *hw = &adapter->hw;
-	काष्ठा e1000_tx_ring *txdr = &adapter->test_tx_ring;
-	काष्ठा e1000_rx_ring *rxdr = &adapter->test_rx_ring;
-	काष्ठा pci_dev *pdev = adapter->pdev;
-	पूर्णांक i, j, k, l, lc, good_cnt, ret_val = 0;
-	अचिन्हित दीर्घ समय;
+static int e1000_run_loopback_test(struct e1000_adapter *adapter)
+{
+	struct e1000_hw *hw = &adapter->hw;
+	struct e1000_tx_ring *txdr = &adapter->test_tx_ring;
+	struct e1000_rx_ring *rxdr = &adapter->test_rx_ring;
+	struct pci_dev *pdev = adapter->pdev;
+	int i, j, k, l, lc, good_cnt, ret_val = 0;
+	unsigned long time;
 
 	ew32(RDT, rxdr->count - 1);
 
 	/* Calculate the loop count based on the largest descriptor ring
-	 * The idea is to wrap the largest ring a number of बार using 64
+	 * The idea is to wrap the largest ring a number of times using 64
 	 * send/receive pairs during each loop
 	 */
 
-	अगर (rxdr->count <= txdr->count)
+	if (rxdr->count <= txdr->count)
 		lc = ((txdr->count / 64) * 2) + 1;
-	अन्यथा
+	else
 		lc = ((rxdr->count / 64) * 2) + 1;
 
 	k = l = 0;
-	क्रम (j = 0; j <= lc; j++) अणु /* loop count loop */
-		क्रम (i = 0; i < 64; i++) अणु /* send the packets */
+	for (j = 0; j <= lc; j++) { /* loop count loop */
+		for (i = 0; i < 64; i++) { /* send the packets */
 			e1000_create_lbtest_frame(txdr->buffer_info[i].skb,
 						  1024);
-			dma_sync_single_क्रम_device(&pdev->dev,
+			dma_sync_single_for_device(&pdev->dev,
 						   txdr->buffer_info[k].dma,
 						   txdr->buffer_info[k].length,
 						   DMA_TO_DEVICE);
-			अगर (unlikely(++k == txdr->count))
+			if (unlikely(++k == txdr->count))
 				k = 0;
-		पूर्ण
+		}
 		ew32(TDT, k);
 		E1000_WRITE_FLUSH();
 		msleep(200);
-		समय = jअगरfies; /* set the start समय क्रम the receive */
+		time = jiffies; /* set the start time for the receive */
 		good_cnt = 0;
-		करो अणु /* receive the sent packets */
-			dma_sync_single_क्रम_cpu(&pdev->dev,
+		do { /* receive the sent packets */
+			dma_sync_single_for_cpu(&pdev->dev,
 						rxdr->buffer_info[l].dma,
 						E1000_RXBUFFER_2048,
 						DMA_FROM_DEVICE);
@@ -1422,435 +1421,435 @@ err_nomem:
 					rxdr->buffer_info[l].rxbuf.data +
 					NET_SKB_PAD + NET_IP_ALIGN,
 					1024);
-			अगर (!ret_val)
+			if (!ret_val)
 				good_cnt++;
-			अगर (unlikely(++l == rxdr->count))
+			if (unlikely(++l == rxdr->count))
 				l = 0;
-			/* समय + 20 msecs (200 msecs on 2.4) is more than
-			 * enough समय to complete the receives, अगर it's
-			 * exceeded, अवरोध and error off
+			/* time + 20 msecs (200 msecs on 2.4) is more than
+			 * enough time to complete the receives, if it's
+			 * exceeded, break and error off
 			 */
-		पूर्ण जबतक (good_cnt < 64 && समय_after(समय + 20, jअगरfies));
+		} while (good_cnt < 64 && time_after(time + 20, jiffies));
 
-		अगर (good_cnt != 64) अणु
+		if (good_cnt != 64) {
 			ret_val = 13; /* ret_val is the same as mis-compare */
-			अवरोध;
-		पूर्ण
-		अगर (समय_after_eq(jअगरfies, समय + 2)) अणु
-			ret_val = 14; /* error code क्रम समय out error */
-			अवरोध;
-		पूर्ण
-	पूर्ण /* end loop count loop */
-	वापस ret_val;
-पूर्ण
+			break;
+		}
+		if (time_after_eq(jiffies, time + 2)) {
+			ret_val = 14; /* error code for time out error */
+			break;
+		}
+	} /* end loop count loop */
+	return ret_val;
+}
 
-अटल पूर्णांक e1000_loopback_test(काष्ठा e1000_adapter *adapter, u64 *data)
-अणु
+static int e1000_loopback_test(struct e1000_adapter *adapter, u64 *data)
+{
 	*data = e1000_setup_desc_rings(adapter);
-	अगर (*data)
-		जाओ out;
+	if (*data)
+		goto out;
 	*data = e1000_setup_loopback_test(adapter);
-	अगर (*data)
-		जाओ err_loopback;
+	if (*data)
+		goto err_loopback;
 	*data = e1000_run_loopback_test(adapter);
 	e1000_loopback_cleanup(adapter);
 
 err_loopback:
-	e1000_मुक्त_desc_rings(adapter);
+	e1000_free_desc_rings(adapter);
 out:
-	वापस *data;
-पूर्ण
+	return *data;
+}
 
-अटल पूर्णांक e1000_link_test(काष्ठा e1000_adapter *adapter, u64 *data)
-अणु
-	काष्ठा e1000_hw *hw = &adapter->hw;
+static int e1000_link_test(struct e1000_adapter *adapter, u64 *data)
+{
+	struct e1000_hw *hw = &adapter->hw;
 	*data = 0;
-	अगर (hw->media_type == e1000_media_type_पूर्णांकernal_serdes) अणु
-		पूर्णांक i = 0;
+	if (hw->media_type == e1000_media_type_internal_serdes) {
+		int i = 0;
 
 		hw->serdes_has_link = false;
 
 		/* On some blade server designs, link establishment
-		 * could take as दीर्घ as 2-3 minutes
+		 * could take as long as 2-3 minutes
 		 */
-		करो अणु
-			e1000_check_क्रम_link(hw);
-			अगर (hw->serdes_has_link)
-				वापस *data;
+		do {
+			e1000_check_for_link(hw);
+			if (hw->serdes_has_link)
+				return *data;
 			msleep(20);
-		पूर्ण जबतक (i++ < 3750);
+		} while (i++ < 3750);
 
 		*data = 1;
-	पूर्ण अन्यथा अणु
-		e1000_check_क्रम_link(hw);
-		अगर (hw->स्वतःneg)  /* अगर स्वतः_neg is set रुको क्रम it */
+	} else {
+		e1000_check_for_link(hw);
+		if (hw->autoneg)  /* if auto_neg is set wait for it */
 			msleep(4000);
 
-		अगर (!(er32(STATUS) & E1000_STATUS_LU))
+		if (!(er32(STATUS) & E1000_STATUS_LU))
 			*data = 1;
-	पूर्ण
-	वापस *data;
-पूर्ण
+	}
+	return *data;
+}
 
-अटल पूर्णांक e1000_get_sset_count(काष्ठा net_device *netdev, पूर्णांक sset)
-अणु
-	चयन (sset) अणु
-	हाल ETH_SS_TEST:
-		वापस E1000_TEST_LEN;
-	हाल ETH_SS_STATS:
-		वापस E1000_STATS_LEN;
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+static int e1000_get_sset_count(struct net_device *netdev, int sset)
+{
+	switch (sset) {
+	case ETH_SS_TEST:
+		return E1000_TEST_LEN;
+	case ETH_SS_STATS:
+		return E1000_STATS_LEN;
+	default:
+		return -EOPNOTSUPP;
+	}
+}
 
-अटल व्योम e1000_diag_test(काष्ठा net_device *netdev,
-			    काष्ठा ethtool_test *eth_test, u64 *data)
-अणु
-	काष्ठा e1000_adapter *adapter = netdev_priv(netdev);
-	काष्ठा e1000_hw *hw = &adapter->hw;
-	bool अगर_running = netअगर_running(netdev);
+static void e1000_diag_test(struct net_device *netdev,
+			    struct ethtool_test *eth_test, u64 *data)
+{
+	struct e1000_adapter *adapter = netdev_priv(netdev);
+	struct e1000_hw *hw = &adapter->hw;
+	bool if_running = netif_running(netdev);
 
 	set_bit(__E1000_TESTING, &adapter->flags);
-	अगर (eth_test->flags == ETH_TEST_FL_OFFLINE) अणु
+	if (eth_test->flags == ETH_TEST_FL_OFFLINE) {
 		/* Offline tests */
 
-		/* save speed, duplex, स्वतःneg settings */
-		u16 स्वतःneg_advertised = hw->स्वतःneg_advertised;
-		u8 क्रमced_speed_duplex = hw->क्रमced_speed_duplex;
-		u8 स्वतःneg = hw->स्वतःneg;
+		/* save speed, duplex, autoneg settings */
+		u16 autoneg_advertised = hw->autoneg_advertised;
+		u8 forced_speed_duplex = hw->forced_speed_duplex;
+		u8 autoneg = hw->autoneg;
 
 		e_info(hw, "offline testing starting\n");
 
-		/* Link test perक्रमmed beक्रमe hardware reset so स्वतःneg करोesn't
-		 * पूर्णांकerfere with test result
+		/* Link test performed before hardware reset so autoneg doesn't
+		 * interfere with test result
 		 */
-		अगर (e1000_link_test(adapter, &data[4]))
+		if (e1000_link_test(adapter, &data[4]))
 			eth_test->flags |= ETH_TEST_FL_FAILED;
 
-		अगर (अगर_running)
+		if (if_running)
 			/* indicate we're in test mode */
-			e1000_बंद(netdev);
-		अन्यथा
+			e1000_close(netdev);
+		else
 			e1000_reset(adapter);
 
-		अगर (e1000_reg_test(adapter, &data[0]))
+		if (e1000_reg_test(adapter, &data[0]))
 			eth_test->flags |= ETH_TEST_FL_FAILED;
 
 		e1000_reset(adapter);
-		अगर (e1000_eeprom_test(adapter, &data[1]))
+		if (e1000_eeprom_test(adapter, &data[1]))
 			eth_test->flags |= ETH_TEST_FL_FAILED;
 
 		e1000_reset(adapter);
-		अगर (e1000_पूर्णांकr_test(adapter, &data[2]))
+		if (e1000_intr_test(adapter, &data[2]))
 			eth_test->flags |= ETH_TEST_FL_FAILED;
 
 		e1000_reset(adapter);
-		/* make sure the phy is घातered up */
-		e1000_घातer_up_phy(adapter);
-		अगर (e1000_loopback_test(adapter, &data[3]))
+		/* make sure the phy is powered up */
+		e1000_power_up_phy(adapter);
+		if (e1000_loopback_test(adapter, &data[3]))
 			eth_test->flags |= ETH_TEST_FL_FAILED;
 
-		/* restore speed, duplex, स्वतःneg settings */
-		hw->स्वतःneg_advertised = स्वतःneg_advertised;
-		hw->क्रमced_speed_duplex = क्रमced_speed_duplex;
-		hw->स्वतःneg = स्वतःneg;
+		/* restore speed, duplex, autoneg settings */
+		hw->autoneg_advertised = autoneg_advertised;
+		hw->forced_speed_duplex = forced_speed_duplex;
+		hw->autoneg = autoneg;
 
 		e1000_reset(adapter);
 		clear_bit(__E1000_TESTING, &adapter->flags);
-		अगर (अगर_running)
-			e1000_खोलो(netdev);
-	पूर्ण अन्यथा अणु
+		if (if_running)
+			e1000_open(netdev);
+	} else {
 		e_info(hw, "online testing starting\n");
 		/* Online tests */
-		अगर (e1000_link_test(adapter, &data[4]))
+		if (e1000_link_test(adapter, &data[4]))
 			eth_test->flags |= ETH_TEST_FL_FAILED;
 
-		/* Online tests aren't run; pass by शेष */
+		/* Online tests aren't run; pass by default */
 		data[0] = 0;
 		data[1] = 0;
 		data[2] = 0;
 		data[3] = 0;
 
 		clear_bit(__E1000_TESTING, &adapter->flags);
-	पूर्ण
-	msleep_पूर्णांकerruptible(4 * 1000);
-पूर्ण
+	}
+	msleep_interruptible(4 * 1000);
+}
 
-अटल पूर्णांक e1000_wol_exclusion(काष्ठा e1000_adapter *adapter,
-			       काष्ठा ethtool_wolinfo *wol)
-अणु
-	काष्ठा e1000_hw *hw = &adapter->hw;
-	पूर्णांक retval = 1; /* fail by शेष */
+static int e1000_wol_exclusion(struct e1000_adapter *adapter,
+			       struct ethtool_wolinfo *wol)
+{
+	struct e1000_hw *hw = &adapter->hw;
+	int retval = 1; /* fail by default */
 
-	चयन (hw->device_id) अणु
-	हाल E1000_DEV_ID_82542:
-	हाल E1000_DEV_ID_82543GC_FIBER:
-	हाल E1000_DEV_ID_82543GC_COPPER:
-	हाल E1000_DEV_ID_82544EI_FIBER:
-	हाल E1000_DEV_ID_82546EB_QUAD_COPPER:
-	हाल E1000_DEV_ID_82545EM_FIBER:
-	हाल E1000_DEV_ID_82545EM_COPPER:
-	हाल E1000_DEV_ID_82546GB_QUAD_COPPER:
-	हाल E1000_DEV_ID_82546GB_PCIE:
-		/* these करोn't support WoL at all */
+	switch (hw->device_id) {
+	case E1000_DEV_ID_82542:
+	case E1000_DEV_ID_82543GC_FIBER:
+	case E1000_DEV_ID_82543GC_COPPER:
+	case E1000_DEV_ID_82544EI_FIBER:
+	case E1000_DEV_ID_82546EB_QUAD_COPPER:
+	case E1000_DEV_ID_82545EM_FIBER:
+	case E1000_DEV_ID_82545EM_COPPER:
+	case E1000_DEV_ID_82546GB_QUAD_COPPER:
+	case E1000_DEV_ID_82546GB_PCIE:
+		/* these don't support WoL at all */
 		wol->supported = 0;
-		अवरोध;
-	हाल E1000_DEV_ID_82546EB_FIBER:
-	हाल E1000_DEV_ID_82546GB_FIBER:
+		break;
+	case E1000_DEV_ID_82546EB_FIBER:
+	case E1000_DEV_ID_82546GB_FIBER:
 		/* Wake events not supported on port B */
-		अगर (er32(STATUS) & E1000_STATUS_FUNC_1) अणु
+		if (er32(STATUS) & E1000_STATUS_FUNC_1) {
 			wol->supported = 0;
-			अवरोध;
-		पूर्ण
-		/* वापस success क्रम non excluded adapter ports */
+			break;
+		}
+		/* return success for non excluded adapter ports */
 		retval = 0;
-		अवरोध;
-	हाल E1000_DEV_ID_82546GB_QUAD_COPPER_KSP3:
+		break;
+	case E1000_DEV_ID_82546GB_QUAD_COPPER_KSP3:
 		/* quad port adapters only support WoL on port A */
-		अगर (!adapter->quad_port_a) अणु
+		if (!adapter->quad_port_a) {
 			wol->supported = 0;
-			अवरोध;
-		पूर्ण
-		/* वापस success क्रम non excluded adapter ports */
+			break;
+		}
+		/* return success for non excluded adapter ports */
 		retval = 0;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		/* dual port cards only support WoL on port A from now on
-		 * unless it was enabled in the eeprom क्रम port B
+		 * unless it was enabled in the eeprom for port B
 		 * so exclude FUNC_1 ports from having WoL enabled
 		 */
-		अगर (er32(STATUS) & E1000_STATUS_FUNC_1 &&
-		    !adapter->eeprom_wol) अणु
+		if (er32(STATUS) & E1000_STATUS_FUNC_1 &&
+		    !adapter->eeprom_wol) {
 			wol->supported = 0;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		retval = 0;
-	पूर्ण
+	}
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल व्योम e1000_get_wol(काष्ठा net_device *netdev,
-			  काष्ठा ethtool_wolinfo *wol)
-अणु
-	काष्ठा e1000_adapter *adapter = netdev_priv(netdev);
-	काष्ठा e1000_hw *hw = &adapter->hw;
+static void e1000_get_wol(struct net_device *netdev,
+			  struct ethtool_wolinfo *wol)
+{
+	struct e1000_adapter *adapter = netdev_priv(netdev);
+	struct e1000_hw *hw = &adapter->hw;
 
 	wol->supported = WAKE_UCAST | WAKE_MCAST | WAKE_BCAST | WAKE_MAGIC;
 	wol->wolopts = 0;
 
-	/* this function will set ->supported = 0 and वापस 1 अगर wol is not
+	/* this function will set ->supported = 0 and return 1 if wol is not
 	 * supported by this hardware
 	 */
-	अगर (e1000_wol_exclusion(adapter, wol) ||
+	if (e1000_wol_exclusion(adapter, wol) ||
 	    !device_can_wakeup(&adapter->pdev->dev))
-		वापस;
+		return;
 
-	/* apply any specअगरic unsupported masks here */
-	चयन (hw->device_id) अणु
-	हाल E1000_DEV_ID_82546GB_QUAD_COPPER_KSP3:
-		/* KSP3 करोes not support UCAST wake-ups */
+	/* apply any specific unsupported masks here */
+	switch (hw->device_id) {
+	case E1000_DEV_ID_82546GB_QUAD_COPPER_KSP3:
+		/* KSP3 does not support UCAST wake-ups */
 		wol->supported &= ~WAKE_UCAST;
 
-		अगर (adapter->wol & E1000_WUFC_EX)
+		if (adapter->wol & E1000_WUFC_EX)
 			e_err(drv, "Interface does not support directed "
 			      "(unicast) frame wake-up packets\n");
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	अगर (adapter->wol & E1000_WUFC_EX)
+	if (adapter->wol & E1000_WUFC_EX)
 		wol->wolopts |= WAKE_UCAST;
-	अगर (adapter->wol & E1000_WUFC_MC)
+	if (adapter->wol & E1000_WUFC_MC)
 		wol->wolopts |= WAKE_MCAST;
-	अगर (adapter->wol & E1000_WUFC_BC)
+	if (adapter->wol & E1000_WUFC_BC)
 		wol->wolopts |= WAKE_BCAST;
-	अगर (adapter->wol & E1000_WUFC_MAG)
+	if (adapter->wol & E1000_WUFC_MAG)
 		wol->wolopts |= WAKE_MAGIC;
-पूर्ण
+}
 
-अटल पूर्णांक e1000_set_wol(काष्ठा net_device *netdev, काष्ठा ethtool_wolinfo *wol)
-अणु
-	काष्ठा e1000_adapter *adapter = netdev_priv(netdev);
-	काष्ठा e1000_hw *hw = &adapter->hw;
+static int e1000_set_wol(struct net_device *netdev, struct ethtool_wolinfo *wol)
+{
+	struct e1000_adapter *adapter = netdev_priv(netdev);
+	struct e1000_hw *hw = &adapter->hw;
 
-	अगर (wol->wolopts & (WAKE_PHY | WAKE_ARP | WAKE_MAGICSECURE))
-		वापस -EOPNOTSUPP;
+	if (wol->wolopts & (WAKE_PHY | WAKE_ARP | WAKE_MAGICSECURE))
+		return -EOPNOTSUPP;
 
-	अगर (e1000_wol_exclusion(adapter, wol) ||
+	if (e1000_wol_exclusion(adapter, wol) ||
 	    !device_can_wakeup(&adapter->pdev->dev))
-		वापस wol->wolopts ? -EOPNOTSUPP : 0;
+		return wol->wolopts ? -EOPNOTSUPP : 0;
 
-	चयन (hw->device_id) अणु
-	हाल E1000_DEV_ID_82546GB_QUAD_COPPER_KSP3:
-		अगर (wol->wolopts & WAKE_UCAST) अणु
+	switch (hw->device_id) {
+	case E1000_DEV_ID_82546GB_QUAD_COPPER_KSP3:
+		if (wol->wolopts & WAKE_UCAST) {
 			e_err(drv, "Interface does not support directed "
 			      "(unicast) frame wake-up packets\n");
-			वापस -EOPNOTSUPP;
-		पूर्ण
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+			return -EOPNOTSUPP;
+		}
+		break;
+	default:
+		break;
+	}
 
 	/* these settings will always override what we currently have */
 	adapter->wol = 0;
 
-	अगर (wol->wolopts & WAKE_UCAST)
+	if (wol->wolopts & WAKE_UCAST)
 		adapter->wol |= E1000_WUFC_EX;
-	अगर (wol->wolopts & WAKE_MCAST)
+	if (wol->wolopts & WAKE_MCAST)
 		adapter->wol |= E1000_WUFC_MC;
-	अगर (wol->wolopts & WAKE_BCAST)
+	if (wol->wolopts & WAKE_BCAST)
 		adapter->wol |= E1000_WUFC_BC;
-	अगर (wol->wolopts & WAKE_MAGIC)
+	if (wol->wolopts & WAKE_MAGIC)
 		adapter->wol |= E1000_WUFC_MAG;
 
 	device_set_wakeup_enable(&adapter->pdev->dev, adapter->wol);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक e1000_set_phys_id(काष्ठा net_device *netdev,
-			     क्रमागत ethtool_phys_id_state state)
-अणु
-	काष्ठा e1000_adapter *adapter = netdev_priv(netdev);
-	काष्ठा e1000_hw *hw = &adapter->hw;
+static int e1000_set_phys_id(struct net_device *netdev,
+			     enum ethtool_phys_id_state state)
+{
+	struct e1000_adapter *adapter = netdev_priv(netdev);
+	struct e1000_hw *hw = &adapter->hw;
 
-	चयन (state) अणु
-	हाल ETHTOOL_ID_ACTIVE:
+	switch (state) {
+	case ETHTOOL_ID_ACTIVE:
 		e1000_setup_led(hw);
-		वापस 2;
+		return 2;
 
-	हाल ETHTOOL_ID_ON:
+	case ETHTOOL_ID_ON:
 		e1000_led_on(hw);
-		अवरोध;
+		break;
 
-	हाल ETHTOOL_ID_OFF:
+	case ETHTOOL_ID_OFF:
 		e1000_led_off(hw);
-		अवरोध;
+		break;
 
-	हाल ETHTOOL_ID_INACTIVE:
+	case ETHTOOL_ID_INACTIVE:
 		e1000_cleanup_led(hw);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक e1000_get_coalesce(काष्ठा net_device *netdev,
-			      काष्ठा ethtool_coalesce *ec)
-अणु
-	काष्ठा e1000_adapter *adapter = netdev_priv(netdev);
+static int e1000_get_coalesce(struct net_device *netdev,
+			      struct ethtool_coalesce *ec)
+{
+	struct e1000_adapter *adapter = netdev_priv(netdev);
 
-	अगर (adapter->hw.mac_type < e1000_82545)
-		वापस -EOPNOTSUPP;
+	if (adapter->hw.mac_type < e1000_82545)
+		return -EOPNOTSUPP;
 
-	अगर (adapter->itr_setting <= 4)
+	if (adapter->itr_setting <= 4)
 		ec->rx_coalesce_usecs = adapter->itr_setting;
-	अन्यथा
+	else
 		ec->rx_coalesce_usecs = 1000000 / adapter->itr_setting;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक e1000_set_coalesce(काष्ठा net_device *netdev,
-			      काष्ठा ethtool_coalesce *ec)
-अणु
-	काष्ठा e1000_adapter *adapter = netdev_priv(netdev);
-	काष्ठा e1000_hw *hw = &adapter->hw;
+static int e1000_set_coalesce(struct net_device *netdev,
+			      struct ethtool_coalesce *ec)
+{
+	struct e1000_adapter *adapter = netdev_priv(netdev);
+	struct e1000_hw *hw = &adapter->hw;
 
-	अगर (hw->mac_type < e1000_82545)
-		वापस -EOPNOTSUPP;
+	if (hw->mac_type < e1000_82545)
+		return -EOPNOTSUPP;
 
-	अगर ((ec->rx_coalesce_usecs > E1000_MAX_ITR_USECS) ||
+	if ((ec->rx_coalesce_usecs > E1000_MAX_ITR_USECS) ||
 	    ((ec->rx_coalesce_usecs > 4) &&
 	     (ec->rx_coalesce_usecs < E1000_MIN_ITR_USECS)) ||
 	    (ec->rx_coalesce_usecs == 2))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर (ec->rx_coalesce_usecs == 4) अणु
+	if (ec->rx_coalesce_usecs == 4) {
 		adapter->itr = adapter->itr_setting = 4;
-	पूर्ण अन्यथा अगर (ec->rx_coalesce_usecs <= 3) अणु
+	} else if (ec->rx_coalesce_usecs <= 3) {
 		adapter->itr = 20000;
 		adapter->itr_setting = ec->rx_coalesce_usecs;
-	पूर्ण अन्यथा अणु
+	} else {
 		adapter->itr = (1000000 / ec->rx_coalesce_usecs);
 		adapter->itr_setting = adapter->itr & ~3;
-	पूर्ण
+	}
 
-	अगर (adapter->itr_setting != 0)
+	if (adapter->itr_setting != 0)
 		ew32(ITR, 1000000000 / (adapter->itr * 256));
-	अन्यथा
+	else
 		ew32(ITR, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक e1000_nway_reset(काष्ठा net_device *netdev)
-अणु
-	काष्ठा e1000_adapter *adapter = netdev_priv(netdev);
+static int e1000_nway_reset(struct net_device *netdev)
+{
+	struct e1000_adapter *adapter = netdev_priv(netdev);
 
-	अगर (netअगर_running(netdev))
+	if (netif_running(netdev))
 		e1000_reinit_locked(adapter);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम e1000_get_ethtool_stats(काष्ठा net_device *netdev,
-				    काष्ठा ethtool_stats *stats, u64 *data)
-अणु
-	काष्ठा e1000_adapter *adapter = netdev_priv(netdev);
-	पूर्णांक i;
-	स्थिर काष्ठा e1000_stats *stat = e1000_gstrings_stats;
+static void e1000_get_ethtool_stats(struct net_device *netdev,
+				    struct ethtool_stats *stats, u64 *data)
+{
+	struct e1000_adapter *adapter = netdev_priv(netdev);
+	int i;
+	const struct e1000_stats *stat = e1000_gstrings_stats;
 
 	e1000_update_stats(adapter);
-	क्रम (i = 0; i < E1000_GLOBAL_STATS_LEN; i++, stat++) अणु
-		अक्षर *p;
+	for (i = 0; i < E1000_GLOBAL_STATS_LEN; i++, stat++) {
+		char *p;
 
-		चयन (stat->type) अणु
-		हाल NETDEV_STATS:
-			p = (अक्षर *)netdev + stat->stat_offset;
-			अवरोध;
-		हाल E1000_STATS:
-			p = (अक्षर *)adapter + stat->stat_offset;
-			अवरोध;
-		शेष:
+		switch (stat->type) {
+		case NETDEV_STATS:
+			p = (char *)netdev + stat->stat_offset;
+			break;
+		case E1000_STATS:
+			p = (char *)adapter + stat->stat_offset;
+			break;
+		default:
 			netdev_WARN_ONCE(netdev, "Invalid E1000 stat type: %u index %d\n",
 					 stat->type, i);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (stat->माप_stat == माप(u64))
+		if (stat->sizeof_stat == sizeof(u64))
 			data[i] = *(u64 *)p;
-		अन्यथा
+		else
 			data[i] = *(u32 *)p;
-	पूर्ण
+	}
 /* BUG_ON(i != E1000_STATS_LEN); */
-पूर्ण
+}
 
-अटल व्योम e1000_get_strings(काष्ठा net_device *netdev, u32 stringset,
+static void e1000_get_strings(struct net_device *netdev, u32 stringset,
 			      u8 *data)
-अणु
+{
 	u8 *p = data;
-	पूर्णांक i;
+	int i;
 
-	चयन (stringset) अणु
-	हाल ETH_SS_TEST:
-		स_नकल(data, e1000_gstrings_test, माप(e1000_gstrings_test));
-		अवरोध;
-	हाल ETH_SS_STATS:
-		क्रम (i = 0; i < E1000_GLOBAL_STATS_LEN; i++) अणु
-			स_नकल(p, e1000_gstrings_stats[i].stat_string,
+	switch (stringset) {
+	case ETH_SS_TEST:
+		memcpy(data, e1000_gstrings_test, sizeof(e1000_gstrings_test));
+		break;
+	case ETH_SS_STATS:
+		for (i = 0; i < E1000_GLOBAL_STATS_LEN; i++) {
+			memcpy(p, e1000_gstrings_stats[i].stat_string,
 			       ETH_GSTRING_LEN);
 			p += ETH_GSTRING_LEN;
-		पूर्ण
+		}
 		/* BUG_ON(p - data != E1000_STATS_LEN * ETH_GSTRING_LEN); */
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल स्थिर काष्ठा ethtool_ops e1000_ethtool_ops = अणु
+static const struct ethtool_ops e1000_ethtool_ops = {
 	.supported_coalesce_params = ETHTOOL_COALESCE_RX_USECS,
 	.get_drvinfo		= e1000_get_drvinfo,
 	.get_regs_len		= e1000_get_regs_len,
@@ -1866,8 +1865,8 @@ out:
 	.set_eeprom		= e1000_set_eeprom,
 	.get_ringparam		= e1000_get_ringparam,
 	.set_ringparam		= e1000_set_ringparam,
-	.get_छोड़ोparam		= e1000_get_छोड़ोparam,
-	.set_छोड़ोparam		= e1000_set_छोड़ोparam,
+	.get_pauseparam		= e1000_get_pauseparam,
+	.set_pauseparam		= e1000_set_pauseparam,
 	.self_test		= e1000_diag_test,
 	.get_strings		= e1000_get_strings,
 	.set_phys_id		= e1000_set_phys_id,
@@ -1878,9 +1877,9 @@ out:
 	.get_ts_info		= ethtool_op_get_ts_info,
 	.get_link_ksettings	= e1000_get_link_ksettings,
 	.set_link_ksettings	= e1000_set_link_ksettings,
-पूर्ण;
+};
 
-व्योम e1000_set_ethtool_ops(काष्ठा net_device *netdev)
-अणु
+void e1000_set_ethtool_ops(struct net_device *netdev)
+{
 	netdev->ethtool_ops = &e1000_ethtool_ops;
-पूर्ण
+}

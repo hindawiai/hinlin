@@ -1,273 +1,272 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _IDE_H
-#घोषणा _IDE_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _IDE_H
+#define _IDE_H
 /*
  *  linux/include/linux/ide.h
  *
  *  Copyright (C) 1994-2002  Linus Torvalds & authors
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/ata.h>
-#समावेश <linux/blk-mq.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/bपन.स>
-#समावेश <linux/pci.h>
-#समावेश <linux/completion.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/mutex.h>
-/* क्रम request_sense */
-#समावेश <linux/cdrom.h>
-#समावेश <scsi/scsi_cmnd.h>
-#समावेश <यंत्र/byteorder.h>
-#समावेश <यंत्र/पन.स>
+#include <linux/init.h>
+#include <linux/ioport.h>
+#include <linux/ata.h>
+#include <linux/blk-mq.h>
+#include <linux/proc_fs.h>
+#include <linux/interrupt.h>
+#include <linux/bitops.h>
+#include <linux/bio.h>
+#include <linux/pci.h>
+#include <linux/completion.h>
+#include <linux/pm.h>
+#include <linux/mutex.h>
+/* for request_sense */
+#include <linux/cdrom.h>
+#include <scsi/scsi_cmnd.h>
+#include <asm/byteorder.h>
+#include <asm/io.h>
 
 /*
  * Probably not wise to fiddle with these
  */
-#घोषणा SUPPORT_VLB_SYNC 1
-#घोषणा IDE_DEFAULT_MAX_FAILURES	1
-#घोषणा ERROR_MAX	8	/* Max पढ़ो/ग_लिखो errors per sector */
-#घोषणा ERROR_RESET	3	/* Reset controller every 4th retry */
-#घोषणा ERROR_RECAL	1	/* Recalibrate every 2nd retry */
+#define SUPPORT_VLB_SYNC 1
+#define IDE_DEFAULT_MAX_FAILURES	1
+#define ERROR_MAX	8	/* Max read/write errors per sector */
+#define ERROR_RESET	3	/* Reset controller every 4th retry */
+#define ERROR_RECAL	1	/* Recalibrate every 2nd retry */
 
-काष्ठा device;
+struct device;
 
-/* values क्रम ide_request.type */
-क्रमागत ata_priv_type अणु
+/* values for ide_request.type */
+enum ata_priv_type {
 	ATA_PRIV_MISC,
-	ATA_PRIV_TASKखाता,
+	ATA_PRIV_TASKFILE,
 	ATA_PRIV_PC,
 	ATA_PRIV_SENSE,		/* sense request */
 	ATA_PRIV_PM_SUSPEND,	/* suspend request */
 	ATA_PRIV_PM_RESUME,	/* resume request */
-पूर्ण;
+};
 
-काष्ठा ide_request अणु
-	काष्ठा scsi_request sreq;
+struct ide_request {
+	struct scsi_request sreq;
 	u8 sense[SCSI_SENSE_BUFFERSIZE];
 	u8 type;
-	व्योम *special;
-पूर्ण;
+	void *special;
+};
 
-अटल अंतरभूत काष्ठा ide_request *ide_req(काष्ठा request *rq)
-अणु
-	वापस blk_mq_rq_to_pdu(rq);
-पूर्ण
+static inline struct ide_request *ide_req(struct request *rq)
+{
+	return blk_mq_rq_to_pdu(rq);
+}
 
-अटल अंतरभूत bool ata_misc_request(काष्ठा request *rq)
-अणु
-	वापस blk_rq_is_निजी(rq) && ide_req(rq)->type == ATA_PRIV_MISC;
-पूर्ण
+static inline bool ata_misc_request(struct request *rq)
+{
+	return blk_rq_is_private(rq) && ide_req(rq)->type == ATA_PRIV_MISC;
+}
 
-अटल अंतरभूत bool ata_taskfile_request(काष्ठा request *rq)
-अणु
-	वापस blk_rq_is_निजी(rq) && ide_req(rq)->type == ATA_PRIV_TASKखाता;
-पूर्ण
+static inline bool ata_taskfile_request(struct request *rq)
+{
+	return blk_rq_is_private(rq) && ide_req(rq)->type == ATA_PRIV_TASKFILE;
+}
 
-अटल अंतरभूत bool ata_pc_request(काष्ठा request *rq)
-अणु
-	वापस blk_rq_is_निजी(rq) && ide_req(rq)->type == ATA_PRIV_PC;
-पूर्ण
+static inline bool ata_pc_request(struct request *rq)
+{
+	return blk_rq_is_private(rq) && ide_req(rq)->type == ATA_PRIV_PC;
+}
 
-अटल अंतरभूत bool ata_sense_request(काष्ठा request *rq)
-अणु
-	वापस blk_rq_is_निजी(rq) && ide_req(rq)->type == ATA_PRIV_SENSE;
-पूर्ण
+static inline bool ata_sense_request(struct request *rq)
+{
+	return blk_rq_is_private(rq) && ide_req(rq)->type == ATA_PRIV_SENSE;
+}
 
-अटल अंतरभूत bool ata_pm_request(काष्ठा request *rq)
-अणु
-	वापस blk_rq_is_निजी(rq) &&
+static inline bool ata_pm_request(struct request *rq)
+{
+	return blk_rq_is_private(rq) &&
 		(ide_req(rq)->type == ATA_PRIV_PM_SUSPEND ||
 		 ide_req(rq)->type == ATA_PRIV_PM_RESUME);
-पूर्ण
+}
 
-/* Error codes वापसed in result to the higher part of the driver. */
-क्रमागत अणु
+/* Error codes returned in result to the higher part of the driver. */
+enum {
 	IDE_DRV_ERROR_GENERAL	= 101,
-	IDE_DRV_ERROR_खाताMARK	= 102,
+	IDE_DRV_ERROR_FILEMARK	= 102,
 	IDE_DRV_ERROR_EOD	= 103,
-पूर्ण;
+};
 
 /*
- * Definitions क्रम accessing IDE controller रेजिस्टरs
+ * Definitions for accessing IDE controller registers
  */
-#घोषणा IDE_NR_PORTS		(10)
+#define IDE_NR_PORTS		(10)
 
-काष्ठा ide_io_ports अणु
-	अचिन्हित दीर्घ	data_addr;
+struct ide_io_ports {
+	unsigned long	data_addr;
 
-	जोड़ अणु
-		अचिन्हित दीर्घ error_addr;	/*   पढ़ो:  error */
-		अचिन्हित दीर्घ feature_addr;	/*  ग_लिखो: feature */
-	पूर्ण;
+	union {
+		unsigned long error_addr;	/*   read:  error */
+		unsigned long feature_addr;	/*  write: feature */
+	};
 
-	अचिन्हित दीर्घ	nsect_addr;
-	अचिन्हित दीर्घ	lbal_addr;
-	अचिन्हित दीर्घ	lbam_addr;
-	अचिन्हित दीर्घ	lbah_addr;
+	unsigned long	nsect_addr;
+	unsigned long	lbal_addr;
+	unsigned long	lbam_addr;
+	unsigned long	lbah_addr;
 
-	अचिन्हित दीर्घ	device_addr;
+	unsigned long	device_addr;
 
-	जोड़ अणु
-		अचिन्हित दीर्घ status_addr;	/* त पढ़ो: status त */
-		अचिन्हित दीर्घ command_addr;	/* ग_लिखो: command */
-	पूर्ण;
+	union {
+		unsigned long status_addr;	/*  read: status  */
+		unsigned long command_addr;	/* write: command */
+	};
 
-	अचिन्हित दीर्घ	ctl_addr;
+	unsigned long	ctl_addr;
 
-	अचिन्हित दीर्घ	irq_addr;
-पूर्ण;
+	unsigned long	irq_addr;
+};
 
-#घोषणा OK_STAT(stat,good,bad)	(((stat)&((good)|(bad)))==(good))
+#define OK_STAT(stat,good,bad)	(((stat)&((good)|(bad)))==(good))
 
-#घोषणा BAD_R_STAT	(ATA_BUSY | ATA_ERR)
-#घोषणा BAD_W_STAT	(BAD_R_STAT | ATA_DF)
-#घोषणा BAD_STAT	(BAD_R_STAT | ATA_DRQ)
-#घोषणा DRIVE_READY	(ATA_DRDY | ATA_DSC)
+#define BAD_R_STAT	(ATA_BUSY | ATA_ERR)
+#define BAD_W_STAT	(BAD_R_STAT | ATA_DF)
+#define BAD_STAT	(BAD_R_STAT | ATA_DRQ)
+#define DRIVE_READY	(ATA_DRDY | ATA_DSC)
 
-#घोषणा BAD_CRC		(ATA_ABORTED | ATA_ICRC)
+#define BAD_CRC		(ATA_ABORTED | ATA_ICRC)
 
-#घोषणा SATA_NR_PORTS		(3)	/* 16 possible ?? */
+#define SATA_NR_PORTS		(3)	/* 16 possible ?? */
 
-#घोषणा SATA_STATUS_OFFSET	(0)
-#घोषणा SATA_ERROR_OFFSET	(1)
-#घोषणा SATA_CONTROL_OFFSET	(2)
+#define SATA_STATUS_OFFSET	(0)
+#define SATA_ERROR_OFFSET	(1)
+#define SATA_CONTROL_OFFSET	(2)
 
 /*
  * Our Physical Region Descriptor (PRD) table should be large enough
  * to handle the biggest I/O request we are likely to see.  Since requests
  * can have no more than 256 sectors, and since the typical blocksize is
- * two or more sectors, we could get by with a limit of 128 entries here क्रम
- * the usual worst हाल.  Most requests seem to include some contiguous blocks,
+ * two or more sectors, we could get by with a limit of 128 entries here for
+ * the usual worst case.  Most requests seem to include some contiguous blocks,
  * further reducing the number of table entries required.
  *
- * The driver reverts to PIO mode क्रम inभागidual requests that exceed
+ * The driver reverts to PIO mode for individual requests that exceed
  * this limit (possible with 512 byte blocksizes, eg. MSDOS f/s), so handling
  * 100% of all crazy scenarios here is not necessary.
  *
- * As it turns out though, we must allocate a full 4KB page क्रम this,
+ * As it turns out though, we must allocate a full 4KB page for this,
  * so the two PRD tables (ide0 & ide1) will each get half of that,
  * allowing each to have about 256 entries (8 bytes each) from this.
  */
-#घोषणा PRD_BYTES       8
-#घोषणा PRD_ENTRIES	256
+#define PRD_BYTES       8
+#define PRD_ENTRIES	256
 
 /*
  * Some more useful definitions
  */
-#घोषणा PARTN_BITS	6	/* number of minor dev bits क्रम partitions */
-#घोषणा MAX_DRIVES	2	/* per पूर्णांकerface; 2 assumed by lots of code */
+#define PARTN_BITS	6	/* number of minor dev bits for partitions */
+#define MAX_DRIVES	2	/* per interface; 2 assumed by lots of code */
 
 /*
- * Timeouts क्रम various operations:
+ * Timeouts for various operations:
  */
-क्रमागत अणु
+enum {
 	/* spec allows up to 20ms, but CF cards and SSD drives need more */
 	WAIT_DRQ	= 1 * HZ,	/* 1s */
 	/* some laptops are very slow */
 	WAIT_READY	= 5 * HZ,	/* 5s */
-	/* should be less than 3ms (?), अगर all ATAPI CD is बंदd at boot */
+	/* should be less than 3ms (?), if all ATAPI CD is closed at boot */
 	WAIT_PIDENTIFY	= 10 * HZ,	/* 10s */
-	/* worst हाल when spinning up */
+	/* worst case when spinning up */
 	WAIT_WORSTCASE	= 30 * HZ,	/* 30s */
-	/* maximum रुको क्रम an IRQ to happen */
+	/* maximum wait for an IRQ to happen */
 	WAIT_CMD	= 10 * HZ,	/* 10s */
-	/* Some drives require a दीर्घer IRQ समयout. */
+	/* Some drives require a longer IRQ timeout. */
 	WAIT_FLOPPY_CMD	= 50 * HZ,	/* 50s */
 	/*
-	 * Some drives (क्रम example, Seagate STT3401A Travan) require a very
-	 * दीर्घ समयout, because they करोn't वापस an पूर्णांकerrupt or clear their
+	 * Some drives (for example, Seagate STT3401A Travan) require a very
+	 * long timeout, because they don't return an interrupt or clear their
 	 * BSY bit until after the command completes (even retension commands).
 	 */
 	WAIT_TAPE_CMD	= 900 * HZ,	/* 900s */
-	/* minimum sleep समय */
+	/* minimum sleep time */
 	WAIT_MIN_SLEEP	= HZ / 50,	/* 20ms */
-पूर्ण;
+};
 
 /*
- * Op codes क्रम special requests to be handled by ide_special_rq().
+ * Op codes for special requests to be handled by ide_special_rq().
  * Values should be in the range of 0x20 to 0x3f.
  */
-#घोषणा REQ_DRIVE_RESET		0x20
-#घोषणा REQ_DEVSET_EXEC		0x21
-#घोषणा REQ_PARK_HEADS		0x22
-#घोषणा REQ_UNPARK_HEADS	0x23
+#define REQ_DRIVE_RESET		0x20
+#define REQ_DEVSET_EXEC		0x21
+#define REQ_PARK_HEADS		0x22
+#define REQ_UNPARK_HEADS	0x23
 
 /*
- * hwअगर_chipset_t is used to keep track of the specअगरic hardware
- * chipset used by each IDE पूर्णांकerface, अगर known.
+ * hwif_chipset_t is used to keep track of the specific hardware
+ * chipset used by each IDE interface, if known.
  */
-क्रमागत अणु		ide_unknown,	ide_generic,	ide_pci,
+enum {		ide_unknown,	ide_generic,	ide_pci,
 		ide_cmd640,	ide_dtc2278,	ide_ali14xx,
 		ide_qd65xx,	ide_umc8672,	ide_ht6560b,
 		ide_4drives,	ide_pmac,	ide_acorn,
 		ide_au1xxx,	ide_palm3710
-पूर्ण;
+};
 
-प्रकार u8 hwअगर_chipset_t;
+typedef u8 hwif_chipset_t;
 
 /*
- * Structure to hold all inक्रमmation about the location of this port
+ * Structure to hold all information about the location of this port
  */
-काष्ठा ide_hw अणु
-	जोड़ अणु
-		काष्ठा ide_io_ports	io_ports;
-		अचिन्हित दीर्घ		io_ports_array[IDE_NR_PORTS];
-	पूर्ण;
+struct ide_hw {
+	union {
+		struct ide_io_ports	io_ports;
+		unsigned long		io_ports_array[IDE_NR_PORTS];
+	};
 
-	पूर्णांक		irq;			/* our irq number */
-	काष्ठा device	*dev, *parent;
-	अचिन्हित दीर्घ	config;
-पूर्ण;
+	int		irq;			/* our irq number */
+	struct device	*dev, *parent;
+	unsigned long	config;
+};
 
-अटल अंतरभूत व्योम ide_std_init_ports(काष्ठा ide_hw *hw,
-				      अचिन्हित दीर्घ io_addr,
-				      अचिन्हित दीर्घ ctl_addr)
-अणु
-	अचिन्हित पूर्णांक i;
+static inline void ide_std_init_ports(struct ide_hw *hw,
+				      unsigned long io_addr,
+				      unsigned long ctl_addr)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i <= 7; i++)
+	for (i = 0; i <= 7; i++)
 		hw->io_ports_array[i] = io_addr++;
 
 	hw->io_ports.ctl_addr = ctl_addr;
-पूर्ण
+}
 
-#घोषणा MAX_HWIFS	10
+#define MAX_HWIFS	10
 
 /*
- * Now क्रम the data we need to मुख्यtain per-drive:  ide_drive_t
+ * Now for the data we need to maintain per-drive:  ide_drive_t
  */
 
-#घोषणा ide_scsi	0x21
-#घोषणा ide_disk	0x20
-#घोषणा ide_optical	0x7
-#घोषणा ide_cdrom	0x5
-#घोषणा ide_tape	0x1
-#घोषणा ide_floppy	0x0
+#define ide_scsi	0x21
+#define ide_disk	0x20
+#define ide_optical	0x7
+#define ide_cdrom	0x5
+#define ide_tape	0x1
+#define ide_floppy	0x0
 
 /*
  * Special Driver Flags
  */
-क्रमागत अणु
+enum {
 	IDE_SFLAG_SET_GEOMETRY		= BIT(0),
 	IDE_SFLAG_RECALIBRATE		= BIT(1),
 	IDE_SFLAG_SET_MULTMODE		= BIT(2),
-पूर्ण;
+};
 
 /*
- * Status वापसed from various ide_ functions
+ * Status returned from various ide_ functions
  */
-प्रकार क्रमागत अणु
+typedef enum {
 	ide_stopped,	/* no drive operation was started */
 	ide_started,	/* a drive operation was started, handler was set */
-पूर्ण ide_startstop_t;
+} ide_startstop_t;
 
-क्रमागत अणु
+enum {
 	IDE_VALID_ERROR 		= BIT(1),
 	IDE_VALID_FEATURE		= IDE_VALID_ERROR,
 	IDE_VALID_NSECT 		= BIT(2),
@@ -287,76 +286,76 @@
 	IDE_VALID_IN_HOB		= IDE_VALID_ERROR |
 					  IDE_VALID_NSECT |
 					  IDE_VALID_LBA,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	IDE_TFLAG_LBA48			= BIT(0),
 	IDE_TFLAG_WRITE			= BIT(1),
 	IDE_TFLAG_CUSTOM_HANDLER	= BIT(2),
 	IDE_TFLAG_DMA_PIO_FALLBACK	= BIT(3),
-	/* क्रमce 16-bit I/O operations */
+	/* force 16-bit I/O operations */
 	IDE_TFLAG_IO_16BIT		= BIT(4),
-	/* काष्ठा ide_cmd was allocated using kदो_स्मृति() */
+	/* struct ide_cmd was allocated using kmalloc() */
 	IDE_TFLAG_DYN			= BIT(5),
 	IDE_TFLAG_FS			= BIT(6),
 	IDE_TFLAG_MULTI_PIO		= BIT(7),
 	IDE_TFLAG_SET_XFER		= BIT(8),
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	IDE_FTFLAG_FLAGGED		= BIT(0),
 	IDE_FTFLAG_SET_IN_FLAGS		= BIT(1),
 	IDE_FTFLAG_OUT_DATA		= BIT(2),
 	IDE_FTFLAG_IN_DATA		= BIT(3),
-पूर्ण;
+};
 
-काष्ठा ide_taskfile अणु
-	u8	data;		/* 0: data byte (क्रम TASKखाता ioctl) */
-	जोड़ अणु			/* 1: */
-		u8 error;	/*  पढ़ो: error */
-		u8 feature;	/* ग_लिखो: feature */
-	पूर्ण;
+struct ide_taskfile {
+	u8	data;		/* 0: data byte (for TASKFILE ioctl) */
+	union {			/* 1: */
+		u8 error;	/*  read: error */
+		u8 feature;	/* write: feature */
+	};
 	u8	nsect;		/* 2: number of sectors */
 	u8	lbal;		/* 3: LBA low */
 	u8	lbam;		/* 4: LBA mid */
 	u8	lbah;		/* 5: LBA high */
 	u8	device;		/* 6: device select */
-	जोड़ अणु			/* 7: */
-		u8 status;	/*  पढ़ो: status */
-		u8 command;	/* ग_लिखो: command */
-	पूर्ण;
-पूर्ण;
+	union {			/* 7: */
+		u8 status;	/*  read: status */
+		u8 command;	/* write: command */
+	};
+};
 
-काष्ठा ide_cmd अणु
-	काष्ठा ide_taskfile	tf;
-	काष्ठा ide_taskfile	hob;
-	काष्ठा अणु
-		काष्ठा अणु
+struct ide_cmd {
+	struct ide_taskfile	tf;
+	struct ide_taskfile	hob;
+	struct {
+		struct {
 			u8		tf;
 			u8		hob;
-		पूर्ण out, in;
-	पूर्ण valid;
+		} out, in;
+	} valid;
 
 	u16			tf_flags;
-	u8			ftf_flags;	/* क्रम TASKखाता ioctl */
-	पूर्णांक			protocol;
+	u8			ftf_flags;	/* for TASKFILE ioctl */
+	int			protocol;
 
-	पूर्णांक			sg_nents;	  /* number of sg entries */
-	पूर्णांक			orig_sg_nents;
-	पूर्णांक			sg_dma_direction; /* DMA transfer direction */
+	int			sg_nents;	  /* number of sg entries */
+	int			orig_sg_nents;
+	int			sg_dma_direction; /* DMA transfer direction */
 
-	अचिन्हित पूर्णांक		nbytes;
-	अचिन्हित पूर्णांक		nleft;
-	अचिन्हित पूर्णांक		last_xfer_len;
+	unsigned int		nbytes;
+	unsigned int		nleft;
+	unsigned int		last_xfer_len;
 
-	काष्ठा scatterlist	*cursg;
-	अचिन्हित पूर्णांक		cursg_ofs;
+	struct scatterlist	*cursg;
+	unsigned int		cursg_ofs;
 
-	काष्ठा request		*rq;		/* copy of request */
-पूर्ण;
+	struct request		*rq;		/* copy of request */
+};
 
 /* ATAPI packet command flags */
-क्रमागत अणु
+enum {
 	/* set when an error is considered normal - no retry (ide-tape) */
 	PC_FLAG_ABORT			= BIT(0),
 	PC_FLAG_SUPPRESS_ERROR		= BIT(1),
@@ -365,61 +364,61 @@
 	PC_FLAG_DMA_IN_PROGRESS		= BIT(4),
 	PC_FLAG_DMA_ERROR		= BIT(5),
 	PC_FLAG_WRITING			= BIT(6),
-पूर्ण;
+};
 
-#घोषणा ATAPI_WAIT_PC		(60 * HZ)
+#define ATAPI_WAIT_PC		(60 * HZ)
 
-काष्ठा ide_atapi_pc अणु
+struct ide_atapi_pc {
 	/* actual packet bytes */
 	u8 c[12];
 	/* incremented on each retry */
-	पूर्णांक retries;
-	पूर्णांक error;
+	int retries;
+	int error;
 
 	/* bytes to transfer */
-	पूर्णांक req_xfer;
+	int req_xfer;
 
 	/* the corresponding request */
-	काष्ठा request *rq;
+	struct request *rq;
 
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	/*
-	 * those are more or less driver-specअगरic and some of them are subject
+	 * those are more or less driver-specific and some of them are subject
 	 * to change/removal later.
 	 */
-	अचिन्हित दीर्घ समयout;
-पूर्ण;
+	unsigned long timeout;
+};
 
-काष्ठा ide_devset;
-काष्ठा ide_driver;
+struct ide_devset;
+struct ide_driver;
 
-#अगर_घोषित CONFIG_BLK_DEV_IDEACPI
-काष्ठा ide_acpi_drive_link;
-काष्ठा ide_acpi_hwअगर_link;
-#पूर्ण_अगर
+#ifdef CONFIG_BLK_DEV_IDEACPI
+struct ide_acpi_drive_link;
+struct ide_acpi_hwif_link;
+#endif
 
-काष्ठा ide_drive_s;
+struct ide_drive_s;
 
-काष्ठा ide_disk_ops अणु
-	पूर्णांक		(*check)(काष्ठा ide_drive_s *, स्थिर अक्षर *);
-	पूर्णांक		(*get_capacity)(काष्ठा ide_drive_s *);
-	व्योम		(*unlock_native_capacity)(काष्ठा ide_drive_s *);
-	व्योम		(*setup)(काष्ठा ide_drive_s *);
-	व्योम		(*flush)(काष्ठा ide_drive_s *);
-	पूर्णांक		(*init_media)(काष्ठा ide_drive_s *, काष्ठा gendisk *);
-	पूर्णांक		(*set_करोorlock)(काष्ठा ide_drive_s *, काष्ठा gendisk *,
-					पूर्णांक);
-	ide_startstop_t	(*करो_request)(काष्ठा ide_drive_s *, काष्ठा request *,
+struct ide_disk_ops {
+	int		(*check)(struct ide_drive_s *, const char *);
+	int		(*get_capacity)(struct ide_drive_s *);
+	void		(*unlock_native_capacity)(struct ide_drive_s *);
+	void		(*setup)(struct ide_drive_s *);
+	void		(*flush)(struct ide_drive_s *);
+	int		(*init_media)(struct ide_drive_s *, struct gendisk *);
+	int		(*set_doorlock)(struct ide_drive_s *, struct gendisk *,
+					int);
+	ide_startstop_t	(*do_request)(struct ide_drive_s *, struct request *,
 				      sector_t);
-	पूर्णांक		(*ioctl)(काष्ठा ide_drive_s *, काष्ठा block_device *,
-				 भ_शेषe_t, अचिन्हित पूर्णांक, अचिन्हित दीर्घ);
-	पूर्णांक		(*compat_ioctl)(काष्ठा ide_drive_s *, काष्ठा block_device *,
-					भ_शेषe_t, अचिन्हित पूर्णांक, अचिन्हित दीर्घ);
-पूर्ण;
+	int		(*ioctl)(struct ide_drive_s *, struct block_device *,
+				 fmode_t, unsigned int, unsigned long);
+	int		(*compat_ioctl)(struct ide_drive_s *, struct block_device *,
+					fmode_t, unsigned int, unsigned long);
+};
 
 /* ATAPI device flags */
-क्रमागत अणु
+enum {
 	IDE_AFLAG_DRQ_INTERRUPT		= BIT(0),
 
 	/* ide-cd */
@@ -431,9 +430,9 @@
 	IDE_AFLAG_TOCADDR_AS_BCD	= BIT(3),
 	/* TOC track numbers are in BCD. */
 	IDE_AFLAG_TOCTRACKS_AS_BCD	= BIT(4),
-	/* Saved TOC inक्रमmation is current. */
+	/* Saved TOC information is current. */
 	IDE_AFLAG_TOC_VALID		= BIT(6),
-	/* We think that the drive करोor is locked. */
+	/* We think that the drive door is locked. */
 	IDE_AFLAG_DOOR_LOCKED		= BIT(7),
 	/* SET_CD_SPEED command is unsupported. */
 	IDE_AFLAG_NO_SPEED_SELECT	= BIT(8),
@@ -445,38 +444,38 @@
 	IDE_AFLAG_LE_SPEED_FIELDS	= BIT(14),
 
 	/* ide-floppy */
-	/* Aव्योम commands not supported in Clik drive */
+	/* Avoid commands not supported in Clik drive */
 	IDE_AFLAG_CLIK_DRIVE		= BIT(15),
-	/* Requires BH algorithm क्रम packets */
+	/* Requires BH algorithm for packets */
 	IDE_AFLAG_ZIP_DRIVE		= BIT(16),
-	/* Supports क्रमmat progress report */
+	/* Supports format progress report */
 	IDE_AFLAG_SRFP			= BIT(17),
 
 	/* ide-tape */
 	IDE_AFLAG_IGNORE_DSC		= BIT(18),
 	/* 0 When the tape position is unknown */
 	IDE_AFLAG_ADDRESS_VALID		= BIT(19),
-	/* Device alपढ़ोy खोलोed */
+	/* Device already opened */
 	IDE_AFLAG_BUSY			= BIT(20),
-	/* Attempt to स्वतः-detect the current user block size */
+	/* Attempt to auto-detect the current user block size */
 	IDE_AFLAG_DETECT_BS		= BIT(21),
 	/* Currently on a filemark */
-	IDE_AFLAG_खाताMARK		= BIT(22),
-	/* 0 = no tape is loaded, so we करोn't शुरुआत after ejecting */
+	IDE_AFLAG_FILEMARK		= BIT(22),
+	/* 0 = no tape is loaded, so we don't rewind after ejecting */
 	IDE_AFLAG_MEDIUM_PRESENT	= BIT(23),
 
 	IDE_AFLAG_NO_AUTOCLOSE		= BIT(24),
-पूर्ण;
+};
 
 /* device flags */
-क्रमागत अणु
+enum {
 	/* restore settings after device reset */
 	IDE_DFLAG_KEEP_SETTINGS		= BIT(0),
-	/* device is using DMA क्रम पढ़ो/ग_लिखो */
+	/* device is using DMA for read/write */
 	IDE_DFLAG_USING_DMA		= BIT(1),
 	/* okay to unmask other IRQs */
 	IDE_DFLAG_UNMASK		= BIT(2),
-	/* करोn't attempt flushes */
+	/* don't attempt flushes */
 	IDE_DFLAG_NOFLUSH		= BIT(3),
 	/* DSC overlap */
 	IDE_DFLAG_DSC_OVERLAP		= BIT(4),
@@ -486,185 +485,185 @@
 	IDE_DFLAG_PRESENT		= BIT(6),
 	/* disable Host Protected Area */
 	IDE_DFLAG_NOHPA			= BIT(7),
-	/* id पढ़ो from device (synthetic अगर not set) */
+	/* id read from device (synthetic if not set) */
 	IDE_DFLAG_ID_READ		= BIT(8),
 	IDE_DFLAG_NOPROBE		= BIT(9),
-	/* need to करो check_media_change() */
+	/* need to do check_media_change() */
 	IDE_DFLAG_REMOVABLE		= BIT(10),
 	IDE_DFLAG_FORCED_GEOM		= BIT(12),
 	/* disallow setting unmask bit */
 	IDE_DFLAG_NO_UNMASK		= BIT(13),
 	/* disallow enabling 32-bit I/O */
 	IDE_DFLAG_NO_IO_32BIT		= BIT(14),
-	/* क्रम removable only: करोor lock/unlock works */
+	/* for removable only: door lock/unlock works */
 	IDE_DFLAG_DOORLOCKING		= BIT(15),
 	/* disallow DMA */
 	IDE_DFLAG_NODMA			= BIT(16),
-	/* घातermanagement told us not to करो anything, so sleep nicely */
+	/* powermanagement told us not to do anything, so sleep nicely */
 	IDE_DFLAG_BLOCKED		= BIT(17),
 	/* sleeping & sleep field valid */
 	IDE_DFLAG_SLEEPING		= BIT(18),
 	IDE_DFLAG_POST_RESET		= BIT(19),
 	IDE_DFLAG_UDMA33_WARNED		= BIT(20),
 	IDE_DFLAG_LBA48			= BIT(21),
-	/* status of ग_लिखो cache */
+	/* status of write cache */
 	IDE_DFLAG_WCACHE		= BIT(22),
-	/* used क्रम ignoring ATA_DF */
+	/* used for ignoring ATA_DF */
 	IDE_DFLAG_NOWERR		= BIT(23),
 	/* retrying in PIO */
 	IDE_DFLAG_DMA_PIO_RETRY		= BIT(24),
 	IDE_DFLAG_LBA			= BIT(25),
-	/* करोn't unload heads */
+	/* don't unload heads */
 	IDE_DFLAG_NO_UNLOAD		= BIT(26),
-	/* heads unloaded, please करोn't reset port */
+	/* heads unloaded, please don't reset port */
 	IDE_DFLAG_PARKED		= BIT(27),
 	IDE_DFLAG_MEDIA_CHANGED		= BIT(28),
-	/* ग_लिखो protect */
+	/* write protect */
 	IDE_DFLAG_WP			= BIT(29),
 	IDE_DFLAG_FORMAT_IN_PROGRESS	= BIT(30),
 	IDE_DFLAG_NIEN_QUIRK		= BIT(31),
-पूर्ण;
+};
 
-काष्ठा ide_drive_s अणु
-	अक्षर		name[4];	/* drive name, such as "hda" */
-        अक्षर            driver_req[10];	/* requests specअगरic driver */
+struct ide_drive_s {
+	char		name[4];	/* drive name, such as "hda" */
+        char            driver_req[10];	/* requests specific driver */
 
-	काष्ठा request_queue	*queue;	/* request queue */
+	struct request_queue	*queue;	/* request queue */
 
-	bool (*prep_rq)(काष्ठा ide_drive_s *, काष्ठा request *);
+	bool (*prep_rq)(struct ide_drive_s *, struct request *);
 
-	काष्ठा blk_mq_tag_set	tag_set;
+	struct blk_mq_tag_set	tag_set;
 
-	काष्ठा request		*rq;	/* current request */
-	व्योम		*driver_data;	/* extra driver data */
-	u16			*id;	/* identअगरication info */
-#अगर_घोषित CONFIG_IDE_PROC_FS
-	काष्ठा proc_dir_entry *proc;	/* /proc/ide/ directory entry */
-	स्थिर काष्ठा ide_proc_devset *settings; /* /proc/ide/ drive settings */
-#पूर्ण_अगर
-	काष्ठा hwअगर_s		*hwअगर;	/* actually (ide_hwअगर_t *) */
+	struct request		*rq;	/* current request */
+	void		*driver_data;	/* extra driver data */
+	u16			*id;	/* identification info */
+#ifdef CONFIG_IDE_PROC_FS
+	struct proc_dir_entry *proc;	/* /proc/ide/ directory entry */
+	const struct ide_proc_devset *settings; /* /proc/ide/ drive settings */
+#endif
+	struct hwif_s		*hwif;	/* actually (ide_hwif_t *) */
 
-	स्थिर काष्ठा ide_disk_ops *disk_ops;
+	const struct ide_disk_ops *disk_ops;
 
-	अचिन्हित दीर्घ dev_flags;
+	unsigned long dev_flags;
 
-	अचिन्हित दीर्घ sleep;		/* sleep until this समय */
-	अचिन्हित दीर्घ समयout;		/* max समय to रुको क्रम irq */
+	unsigned long sleep;		/* sleep until this time */
+	unsigned long timeout;		/* max time to wait for irq */
 
 	u8	special_flags;		/* special action flags */
 
 	u8	select;			/* basic drive/head select reg value */
 	u8	retry_pio;		/* retrying dma capable host in pio */
-	u8	रुकोing_क्रम_dma;	/* dma currently in progress */
+	u8	waiting_for_dma;	/* dma currently in progress */
 	u8	dma;			/* atapi dma flag */
 
         u8	init_speed;	/* transfer rate set at boot */
         u8	current_speed;	/* current transfer rate set */
 	u8	desired_speed;	/* desired transfer rate set */
-	u8	pio_mode;	/* क्रम ->set_pio_mode _only_ */
-	u8	dma_mode;	/* क्रम ->set_dma_mode _only_ */
-	u8	dn;		/* now wide spपढ़ो use */
+	u8	pio_mode;	/* for ->set_pio_mode _only_ */
+	u8	dma_mode;	/* for ->set_dma_mode _only_ */
+	u8	dn;		/* now wide spread use */
 	u8	acoustic;	/* acoustic management */
 	u8	media;		/* disk, cdrom, tape, floppy, ... */
-	u8	पढ़ोy_stat;	/* min status value क्रम drive पढ़ोy */
+	u8	ready_stat;	/* min status value for drive ready */
 	u8	mult_count;	/* current multiple sector setting */
 	u8	mult_req;	/* requested multiple sector setting */
 	u8	io_32bit;	/* 0=16-bit, 1=32-bit, 2/3=32bit+sync */
-	u8	bad_wstat;	/* used क्रम ignoring ATA_DF */
+	u8	bad_wstat;	/* used for ignoring ATA_DF */
 	u8	head;		/* "real" number of heads */
 	u8	sect;		/* "real" sectors per track */
 	u8	bios_head;	/* BIOS/fdisk/LILO number of heads */
 	u8	bios_sect;	/* BIOS/fdisk/LILO sectors per track */
 
-	/* delay this दीर्घ beक्रमe sending packet command */
+	/* delay this long before sending packet command */
 	u8 pc_delay;
 
-	अचिन्हित पूर्णांक	bios_cyl;	/* BIOS/fdisk/LILO number of cyls */
-	अचिन्हित पूर्णांक	cyl;		/* "real" number of cyls */
-	व्योम		*drive_data;	/* used by set_pio_mode/dev_select() */
-	अचिन्हित पूर्णांक	failures;	/* current failure count */
-	अचिन्हित पूर्णांक	max_failures;	/* maximum allowed failure count */
+	unsigned int	bios_cyl;	/* BIOS/fdisk/LILO number of cyls */
+	unsigned int	cyl;		/* "real" number of cyls */
+	void		*drive_data;	/* used by set_pio_mode/dev_select() */
+	unsigned int	failures;	/* current failure count */
+	unsigned int	max_failures;	/* maximum allowed failure count */
 	u64		probed_capacity;/* initial/native media capacity */
 	u64		capacity64;	/* total number of sectors */
 
-	पूर्णांक		lun;		/* logical unit */
-	पूर्णांक		crc_count;	/* crc counter to reduce drive speed */
+	int		lun;		/* logical unit */
+	int		crc_count;	/* crc counter to reduce drive speed */
 
-	अचिन्हित दीर्घ	debug_mask;	/* debugging levels चयन */
+	unsigned long	debug_mask;	/* debugging levels switch */
 
-#अगर_घोषित CONFIG_BLK_DEV_IDEACPI
-	काष्ठा ide_acpi_drive_link *acpidata;
-#पूर्ण_अगर
-	काष्ठा list_head list;
-	काष्ठा device	gendev;
-	काष्ठा completion gendev_rel_comp;	/* to deal with device release() */
+#ifdef CONFIG_BLK_DEV_IDEACPI
+	struct ide_acpi_drive_link *acpidata;
+#endif
+	struct list_head list;
+	struct device	gendev;
+	struct completion gendev_rel_comp;	/* to deal with device release() */
 
 	/* current packet command */
-	काष्ठा ide_atapi_pc *pc;
+	struct ide_atapi_pc *pc;
 
 	/* last failed packet command */
-	काष्ठा ide_atapi_pc *failed_pc;
+	struct ide_atapi_pc *failed_pc;
 
-	/* callback क्रम packet commands */
-	पूर्णांक  (*pc_callback)(काष्ठा ide_drive_s *, पूर्णांक);
+	/* callback for packet commands */
+	int  (*pc_callback)(struct ide_drive_s *, int);
 
-	ide_startstop_t (*irq_handler)(काष्ठा ide_drive_s *);
+	ide_startstop_t (*irq_handler)(struct ide_drive_s *);
 
-	अचिन्हित दीर्घ atapi_flags;
+	unsigned long atapi_flags;
 
-	काष्ठा ide_atapi_pc request_sense_pc;
+	struct ide_atapi_pc request_sense_pc;
 
 	/* current sense rq and buffer */
 	bool sense_rq_armed;
 	bool sense_rq_active;
-	काष्ठा request *sense_rq;
-	काष्ठा request_sense sense_data;
+	struct request *sense_rq;
+	struct request_sense sense_data;
 
 	/* async sense insertion */
-	काष्ठा work_काष्ठा rq_work;
-	काष्ठा list_head rq_list;
-पूर्ण;
+	struct work_struct rq_work;
+	struct list_head rq_list;
+};
 
-प्रकार काष्ठा ide_drive_s ide_drive_t;
+typedef struct ide_drive_s ide_drive_t;
 
-#घोषणा to_ide_device(dev)		container_of(dev, ide_drive_t, gendev)
+#define to_ide_device(dev)		container_of(dev, ide_drive_t, gendev)
 
-#घोषणा to_ide_drv(obj, cont_type)	\
-	container_of(obj, काष्ठा cont_type, dev)
+#define to_ide_drv(obj, cont_type)	\
+	container_of(obj, struct cont_type, dev)
 
-#घोषणा ide_drv_g(disk, cont_type)	\
-	container_of((disk)->निजी_data, काष्ठा cont_type, driver)
+#define ide_drv_g(disk, cont_type)	\
+	container_of((disk)->private_data, struct cont_type, driver)
 
-काष्ठा ide_port_info;
+struct ide_port_info;
 
-काष्ठा ide_tp_ops अणु
-	व्योम	(*exec_command)(काष्ठा hwअगर_s *, u8);
-	u8	(*पढ़ो_status)(काष्ठा hwअगर_s *);
-	u8	(*पढ़ो_altstatus)(काष्ठा hwअगर_s *);
-	व्योम	(*ग_लिखो_devctl)(काष्ठा hwअगर_s *, u8);
+struct ide_tp_ops {
+	void	(*exec_command)(struct hwif_s *, u8);
+	u8	(*read_status)(struct hwif_s *);
+	u8	(*read_altstatus)(struct hwif_s *);
+	void	(*write_devctl)(struct hwif_s *, u8);
 
-	व्योम	(*dev_select)(ide_drive_t *);
-	व्योम	(*tf_load)(ide_drive_t *, काष्ठा ide_taskfile *, u8);
-	व्योम	(*tf_पढ़ो)(ide_drive_t *, काष्ठा ide_taskfile *, u8);
+	void	(*dev_select)(ide_drive_t *);
+	void	(*tf_load)(ide_drive_t *, struct ide_taskfile *, u8);
+	void	(*tf_read)(ide_drive_t *, struct ide_taskfile *, u8);
 
-	व्योम	(*input_data)(ide_drive_t *, काष्ठा ide_cmd *,
-			      व्योम *, अचिन्हित पूर्णांक);
-	व्योम	(*output_data)(ide_drive_t *, काष्ठा ide_cmd *,
-			       व्योम *, अचिन्हित पूर्णांक);
-पूर्ण;
+	void	(*input_data)(ide_drive_t *, struct ide_cmd *,
+			      void *, unsigned int);
+	void	(*output_data)(ide_drive_t *, struct ide_cmd *,
+			       void *, unsigned int);
+};
 
-बाह्य स्थिर काष्ठा ide_tp_ops शेष_tp_ops;
+extern const struct ide_tp_ops default_tp_ops;
 
 /**
- * काष्ठा ide_port_ops - IDE port operations
+ * struct ide_port_ops - IDE port operations
  *
- * @init_dev:		host specअगरic initialization of a device
- * @set_pio_mode:	routine to program host क्रम PIO mode
- * @set_dma_mode:	routine to program host क्रम DMA mode
- * @reset_poll:		chipset polling based on hba specअगरics
- * @pre_reset:		chipset specअगरic changes to शेष क्रम device-hba resets
+ * @init_dev:		host specific initialization of a device
+ * @set_pio_mode:	routine to program host for PIO mode
+ * @set_dma_mode:	routine to program host for DMA mode
+ * @reset_poll:		chipset polling based on hba specifics
+ * @pre_reset:		chipset specific changes to default for device-hba resets
  * @resetproc:		routine to reset controller after a disk reset
- * @maskproc:		special host masking क्रम drive selection
+ * @maskproc:		special host masking for drive selection
  * @quirkproc:		check host's drive quirk list
  * @clear_irq:		clear IRQ
  *
@@ -673,67 +672,67 @@
  *
  * @cable_detect:	detect cable type
  */
-काष्ठा ide_port_ops अणु
-	व्योम	(*init_dev)(ide_drive_t *);
-	व्योम	(*set_pio_mode)(काष्ठा hwअगर_s *, ide_drive_t *);
-	व्योम	(*set_dma_mode)(काष्ठा hwअगर_s *, ide_drive_t *);
+struct ide_port_ops {
+	void	(*init_dev)(ide_drive_t *);
+	void	(*set_pio_mode)(struct hwif_s *, ide_drive_t *);
+	void	(*set_dma_mode)(struct hwif_s *, ide_drive_t *);
 	blk_status_t (*reset_poll)(ide_drive_t *);
-	व्योम	(*pre_reset)(ide_drive_t *);
-	व्योम	(*resetproc)(ide_drive_t *);
-	व्योम	(*maskproc)(ide_drive_t *, पूर्णांक);
-	व्योम	(*quirkproc)(ide_drive_t *);
-	व्योम	(*clear_irq)(ide_drive_t *);
-	पूर्णांक	(*test_irq)(काष्ठा hwअगर_s *);
+	void	(*pre_reset)(ide_drive_t *);
+	void	(*resetproc)(ide_drive_t *);
+	void	(*maskproc)(ide_drive_t *, int);
+	void	(*quirkproc)(ide_drive_t *);
+	void	(*clear_irq)(ide_drive_t *);
+	int	(*test_irq)(struct hwif_s *);
 
 	u8	(*mdma_filter)(ide_drive_t *);
 	u8	(*udma_filter)(ide_drive_t *);
 
-	u8	(*cable_detect)(काष्ठा hwअगर_s *);
-पूर्ण;
+	u8	(*cable_detect)(struct hwif_s *);
+};
 
-काष्ठा ide_dma_ops अणु
-	व्योम	(*dma_host_set)(काष्ठा ide_drive_s *, पूर्णांक);
-	पूर्णांक	(*dma_setup)(काष्ठा ide_drive_s *, काष्ठा ide_cmd *);
-	व्योम	(*dma_start)(काष्ठा ide_drive_s *);
-	पूर्णांक	(*dma_end)(काष्ठा ide_drive_s *);
-	पूर्णांक	(*dma_test_irq)(काष्ठा ide_drive_s *);
-	व्योम	(*dma_lost_irq)(काष्ठा ide_drive_s *);
+struct ide_dma_ops {
+	void	(*dma_host_set)(struct ide_drive_s *, int);
+	int	(*dma_setup)(struct ide_drive_s *, struct ide_cmd *);
+	void	(*dma_start)(struct ide_drive_s *);
+	int	(*dma_end)(struct ide_drive_s *);
+	int	(*dma_test_irq)(struct ide_drive_s *);
+	void	(*dma_lost_irq)(struct ide_drive_s *);
 	/* below ones are optional */
-	पूर्णांक	(*dma_check)(काष्ठा ide_drive_s *, काष्ठा ide_cmd *);
-	पूर्णांक	(*dma_समयr_expiry)(काष्ठा ide_drive_s *);
-	व्योम	(*dma_clear)(काष्ठा ide_drive_s *);
+	int	(*dma_check)(struct ide_drive_s *, struct ide_cmd *);
+	int	(*dma_timer_expiry)(struct ide_drive_s *);
+	void	(*dma_clear)(struct ide_drive_s *);
 	/*
 	 * The following method is optional and only required to be
-	 * implemented क्रम the SFF-8038i compatible controllers.
+	 * implemented for the SFF-8038i compatible controllers.
 	 */
-	u8	(*dma_sff_पढ़ो_status)(काष्ठा hwअगर_s *);
-पूर्ण;
+	u8	(*dma_sff_read_status)(struct hwif_s *);
+};
 
-क्रमागत अणु
+enum {
 	IDE_PFLAG_PROBING		= BIT(0),
-पूर्ण;
+};
 
-काष्ठा ide_host;
+struct ide_host;
 
-प्रकार काष्ठा hwअगर_s अणु
-	काष्ठा hwअगर_s *mate;		/* other hwअगर from same PCI chip */
-	काष्ठा proc_dir_entry *proc;	/* /proc/ide/ directory entry */
+typedef struct hwif_s {
+	struct hwif_s *mate;		/* other hwif from same PCI chip */
+	struct proc_dir_entry *proc;	/* /proc/ide/ directory entry */
 
-	काष्ठा ide_host *host;
+	struct ide_host *host;
 
-	अक्षर name[6];			/* name of पूर्णांकerface, eg. "ide0" */
+	char name[6];			/* name of interface, eg. "ide0" */
 
-	काष्ठा ide_io_ports	io_ports;
+	struct ide_io_ports	io_ports;
 
-	अचिन्हित दीर्घ	sata_scr[SATA_NR_PORTS];
+	unsigned long	sata_scr[SATA_NR_PORTS];
 
 	ide_drive_t	*devices[MAX_DRIVES + 1];
 
-	अचिन्हित दीर्घ	port_flags;
+	unsigned long	port_flags;
 
 	u8 major;	/* our major number */
-	u8 index;	/* 0 क्रम ide0; 1 क्रम ide1; ... */
-	u8 channel;	/* क्रम dual-port chips: 0=primary, 1=secondary */
+	u8 index;	/* 0 for ide0; 1 for ide1; ... */
+	u8 channel;	/* for dual-port chips: 0=primary, 1=secondary */
 
 	u32 host_flags;
 
@@ -745,188 +744,188 @@
 
 	u8 cbl;		/* cable type */
 
-	hwअगर_chipset_t chipset;	/* sub-module क्रम tuning.. */
+	hwif_chipset_t chipset;	/* sub-module for tuning.. */
 
-	काष्ठा device *dev;
+	struct device *dev;
 
-	व्योम (*rw_disk)(ide_drive_t *, काष्ठा request *);
+	void (*rw_disk)(ide_drive_t *, struct request *);
 
-	स्थिर काष्ठा ide_tp_ops		*tp_ops;
-	स्थिर काष्ठा ide_port_ops	*port_ops;
-	स्थिर काष्ठा ide_dma_ops	*dma_ops;
+	const struct ide_tp_ops		*tp_ops;
+	const struct ide_port_ops	*port_ops;
+	const struct ide_dma_ops	*dma_ops;
 
 	/* dma physical region descriptor table (cpu view) */
-	अचिन्हित पूर्णांक	*dmatable_cpu;
+	unsigned int	*dmatable_cpu;
 	/* dma physical region descriptor table (dma view) */
 	dma_addr_t	dmatable_dma;
 
 	/* maximum number of PRD table entries */
-	पूर्णांक prd_max_nents;
+	int prd_max_nents;
 	/* PRD entry size in bytes */
-	पूर्णांक prd_ent_size;
+	int prd_ent_size;
 
 	/* Scatter-gather list used to build the above */
-	काष्ठा scatterlist *sg_table;
-	पूर्णांक sg_max_nents;		/* Maximum number of entries in it */
+	struct scatterlist *sg_table;
+	int sg_max_nents;		/* Maximum number of entries in it */
 
-	काष्ठा ide_cmd cmd;		/* current command */
+	struct ide_cmd cmd;		/* current command */
 
-	पूर्णांक		rqsize;		/* max sectors per request */
-	पूर्णांक		irq;		/* our irq number */
+	int		rqsize;		/* max sectors per request */
+	int		irq;		/* our irq number */
 
-	अचिन्हित दीर्घ	dma_base;	/* base addr क्रम dma ports */
+	unsigned long	dma_base;	/* base addr for dma ports */
 
-	अचिन्हित दीर्घ	config_data;	/* क्रम use by chipset-specअगरic code */
-	अचिन्हित दीर्घ	select_data;	/* क्रम use by chipset-specअगरic code */
+	unsigned long	config_data;	/* for use by chipset-specific code */
+	unsigned long	select_data;	/* for use by chipset-specific code */
 
-	अचिन्हित दीर्घ	extra_base;	/* extra addr क्रम dma ports */
-	अचिन्हित	extra_ports;	/* number of extra dma ports */
+	unsigned long	extra_base;	/* extra addr for dma ports */
+	unsigned	extra_ports;	/* number of extra dma ports */
 
-	अचिन्हित	present    : 1;	/* this पूर्णांकerface exists */
-	अचिन्हित	busy	   : 1; /* serializes devices on a port */
+	unsigned	present    : 1;	/* this interface exists */
+	unsigned	busy	   : 1; /* serializes devices on a port */
 
-	काष्ठा device		gendev;
-	काष्ठा device		*portdev;
+	struct device		gendev;
+	struct device		*portdev;
 
-	काष्ठा completion gendev_rel_comp; /* To deal with device release() */
+	struct completion gendev_rel_comp; /* To deal with device release() */
 
-	व्योम		*hwअगर_data;	/* extra hwअगर data */
+	void		*hwif_data;	/* extra hwif data */
 
-#अगर_घोषित CONFIG_BLK_DEV_IDEACPI
-	काष्ठा ide_acpi_hwअगर_link *acpidata;
-#पूर्ण_अगर
+#ifdef CONFIG_BLK_DEV_IDEACPI
+	struct ide_acpi_hwif_link *acpidata;
+#endif
 
-	/* IRQ handler, अगर active */
+	/* IRQ handler, if active */
 	ide_startstop_t	(*handler)(ide_drive_t *);
 
-	/* BOOL: polling active & poll_समयout field valid */
-	अचिन्हित पूर्णांक polling : 1;
+	/* BOOL: polling active & poll_timeout field valid */
+	unsigned int polling : 1;
 
 	/* current drive */
 	ide_drive_t *cur_dev;
 
 	/* current request */
-	काष्ठा request *rq;
+	struct request *rq;
 
-	/* failsafe समयr */
-	काष्ठा समयr_list समयr;
-	/* समयout value during दीर्घ polls */
-	अचिन्हित दीर्घ poll_समयout;
-	/* queried upon समयouts */
-	पूर्णांक (*expiry)(ide_drive_t *);
+	/* failsafe timer */
+	struct timer_list timer;
+	/* timeout value during long polls */
+	unsigned long poll_timeout;
+	/* queried upon timeouts */
+	int (*expiry)(ide_drive_t *);
 
-	पूर्णांक req_gen;
-	पूर्णांक req_gen_समयr;
+	int req_gen;
+	int req_gen_timer;
 
 	spinlock_t lock;
-पूर्ण ____cacheline_पूर्णांकernodealigned_in_smp ide_hwअगर_t;
+} ____cacheline_internodealigned_in_smp ide_hwif_t;
 
-#घोषणा MAX_HOST_PORTS 4
+#define MAX_HOST_PORTS 4
 
-काष्ठा ide_host अणु
-	ide_hwअगर_t	*ports[MAX_HOST_PORTS + 1];
-	अचिन्हित पूर्णांक	n_ports;
-	काष्ठा device	*dev[2];
+struct ide_host {
+	ide_hwif_t	*ports[MAX_HOST_PORTS + 1];
+	unsigned int	n_ports;
+	struct device	*dev[2];
 
-	पूर्णांक		(*init_chipset)(काष्ठा pci_dev *);
+	int		(*init_chipset)(struct pci_dev *);
 
-	व्योम		(*get_lock)(irq_handler_t, व्योम *);
-	व्योम		(*release_lock)(व्योम);
+	void		(*get_lock)(irq_handler_t, void *);
+	void		(*release_lock)(void);
 
 	irq_handler_t	irq_handler;
 
-	अचिन्हित दीर्घ	host_flags;
+	unsigned long	host_flags;
 
-	पूर्णांक		irq_flags;
+	int		irq_flags;
 
-	व्योम		*host_priv;
-	ide_hwअगर_t	*cur_port;	/* क्रम hosts requiring serialization */
+	void		*host_priv;
+	ide_hwif_t	*cur_port;	/* for hosts requiring serialization */
 
-	/* used क्रम hosts requiring serialization */
-	अस्थिर अचिन्हित दीर्घ	host_busy;
-पूर्ण;
+	/* used for hosts requiring serialization */
+	volatile unsigned long	host_busy;
+};
 
-#घोषणा IDE_HOST_BUSY 0
+#define IDE_HOST_BUSY 0
 
 /*
- *  पूर्णांकernal ide पूर्णांकerrupt handler type
+ *  internal ide interrupt handler type
  */
-प्रकार ide_startstop_t (ide_handler_t)(ide_drive_t *);
-प्रकार पूर्णांक (ide_expiry_t)(ide_drive_t *);
+typedef ide_startstop_t (ide_handler_t)(ide_drive_t *);
+typedef int (ide_expiry_t)(ide_drive_t *);
 
 /* used by ide-cd, ide-floppy, etc. */
-प्रकार व्योम (xfer_func_t)(ide_drive_t *, काष्ठा ide_cmd *, व्योम *, अचिन्हित);
+typedef void (xfer_func_t)(ide_drive_t *, struct ide_cmd *, void *, unsigned);
 
-बाह्य काष्ठा mutex ide_setting_mtx;
+extern struct mutex ide_setting_mtx;
 
 /*
  * configurable drive settings
  */
 
-#घोषणा DS_SYNC	BIT(0)
+#define DS_SYNC	BIT(0)
 
-काष्ठा ide_devset अणु
-	पूर्णांक		(*get)(ide_drive_t *);
-	पूर्णांक		(*set)(ide_drive_t *, पूर्णांक);
-	अचिन्हित पूर्णांक	flags;
-पूर्ण;
+struct ide_devset {
+	int		(*get)(ide_drive_t *);
+	int		(*set)(ide_drive_t *, int);
+	unsigned int	flags;
+};
 
-#घोषणा __DEVSET(_flags, _get, _set) अणु \
+#define __DEVSET(_flags, _get, _set) { \
 	.flags	= _flags, \
 	.get	= _get,	\
 	.set	= _set,	\
-पूर्ण
+}
 
-#घोषणा ide_devset_get(name, field) \
-अटल पूर्णांक get_##name(ide_drive_t *drive) \
-अणु \
-	वापस drive->field; \
-पूर्ण
+#define ide_devset_get(name, field) \
+static int get_##name(ide_drive_t *drive) \
+{ \
+	return drive->field; \
+}
 
-#घोषणा ide_devset_set(name, field) \
-अटल पूर्णांक set_##name(ide_drive_t *drive, पूर्णांक arg) \
-अणु \
+#define ide_devset_set(name, field) \
+static int set_##name(ide_drive_t *drive, int arg) \
+{ \
 	drive->field = arg; \
-	वापस 0; \
-पूर्ण
+	return 0; \
+}
 
-#घोषणा ide_devset_get_flag(name, flag) \
-अटल पूर्णांक get_##name(ide_drive_t *drive) \
-अणु \
-	वापस !!(drive->dev_flags & flag); \
-पूर्ण
+#define ide_devset_get_flag(name, flag) \
+static int get_##name(ide_drive_t *drive) \
+{ \
+	return !!(drive->dev_flags & flag); \
+}
 
-#घोषणा ide_devset_set_flag(name, flag) \
-अटल पूर्णांक set_##name(ide_drive_t *drive, पूर्णांक arg) \
-अणु \
-	अगर (arg) \
+#define ide_devset_set_flag(name, flag) \
+static int set_##name(ide_drive_t *drive, int arg) \
+{ \
+	if (arg) \
 		drive->dev_flags |= flag; \
-	अन्यथा \
+	else \
 		drive->dev_flags &= ~flag; \
-	वापस 0; \
-पूर्ण
+	return 0; \
+}
 
-#घोषणा __IDE_DEVSET(_name, _flags, _get, _set) \
-स्थिर काष्ठा ide_devset ide_devset_##_name = \
+#define __IDE_DEVSET(_name, _flags, _get, _set) \
+const struct ide_devset ide_devset_##_name = \
 	__DEVSET(_flags, _get, _set)
 
-#घोषणा IDE_DEVSET(_name, _flags, _get, _set) \
-अटल __IDE_DEVSET(_name, _flags, _get, _set)
+#define IDE_DEVSET(_name, _flags, _get, _set) \
+static __IDE_DEVSET(_name, _flags, _get, _set)
 
-#घोषणा ide_devset_rw(_name, _func) \
+#define ide_devset_rw(_name, _func) \
 IDE_DEVSET(_name, 0, get_##_func, set_##_func)
 
-#घोषणा ide_devset_w(_name, _func) \
-IDE_DEVSET(_name, 0, शून्य, set_##_func)
+#define ide_devset_w(_name, _func) \
+IDE_DEVSET(_name, 0, NULL, set_##_func)
 
-#घोषणा ide_ext_devset_rw(_name, _func) \
+#define ide_ext_devset_rw(_name, _func) \
 __IDE_DEVSET(_name, 0, get_##_func, set_##_func)
 
-#घोषणा ide_ext_devset_rw_sync(_name, _func) \
+#define ide_ext_devset_rw_sync(_name, _func) \
 __IDE_DEVSET(_name, DS_SYNC, get_##_func, set_##_func)
 
-#घोषणा ide_decl_devset(_name) \
-बाह्य स्थिर काष्ठा ide_devset ide_devset_##_name
+#define ide_decl_devset(_name) \
+extern const struct ide_devset ide_devset_##_name
 
 ide_decl_devset(io_32bit);
 ide_decl_devset(keepsettings);
@@ -934,77 +933,77 @@ ide_decl_devset(pio_mode);
 ide_decl_devset(unmaskirq);
 ide_decl_devset(using_dma);
 
-#अगर_घोषित CONFIG_IDE_PROC_FS
+#ifdef CONFIG_IDE_PROC_FS
 /*
- * /proc/ide पूर्णांकerface
+ * /proc/ide interface
  */
 
-#घोषणा ide_devset_rw_field(_name, _field) \
+#define ide_devset_rw_field(_name, _field) \
 ide_devset_get(_name, _field); \
 ide_devset_set(_name, _field); \
 IDE_DEVSET(_name, DS_SYNC, get_##_name, set_##_name)
 
-#घोषणा ide_devset_ro_field(_name, _field) \
+#define ide_devset_ro_field(_name, _field) \
 ide_devset_get(_name, _field); \
-IDE_DEVSET(_name, 0, get_##_name, शून्य)
+IDE_DEVSET(_name, 0, get_##_name, NULL)
 
-#घोषणा ide_devset_rw_flag(_name, _field) \
+#define ide_devset_rw_flag(_name, _field) \
 ide_devset_get_flag(_name, _field); \
 ide_devset_set_flag(_name, _field); \
 IDE_DEVSET(_name, DS_SYNC, get_##_name, set_##_name)
 
-काष्ठा ide_proc_devset अणु
-	स्थिर अक्षर		*name;
-	स्थिर काष्ठा ide_devset	*setting;
-	पूर्णांक			min, max;
-	पूर्णांक			(*mulf)(ide_drive_t *);
-	पूर्णांक			(*भागf)(ide_drive_t *);
-पूर्ण;
+struct ide_proc_devset {
+	const char		*name;
+	const struct ide_devset	*setting;
+	int			min, max;
+	int			(*mulf)(ide_drive_t *);
+	int			(*divf)(ide_drive_t *);
+};
 
-#घोषणा __IDE_PROC_DEVSET(_name, _min, _max, _mulf, _भागf) अणु \
-	.name = __stringअगरy(_name), \
+#define __IDE_PROC_DEVSET(_name, _min, _max, _mulf, _divf) { \
+	.name = __stringify(_name), \
 	.setting = &ide_devset_##_name, \
 	.min = _min, \
 	.max = _max, \
 	.mulf = _mulf, \
-	.भागf = _भागf, \
-पूर्ण
+	.divf = _divf, \
+}
 
-#घोषणा IDE_PROC_DEVSET(_name, _min, _max) \
-__IDE_PROC_DEVSET(_name, _min, _max, शून्य, शून्य)
+#define IDE_PROC_DEVSET(_name, _min, _max) \
+__IDE_PROC_DEVSET(_name, _min, _max, NULL, NULL)
 
-प्रकार काष्ठा अणु
-	स्थिर अक्षर	*name;
+typedef struct {
+	const char	*name;
 	umode_t		mode;
-	पूर्णांक (*show)(काष्ठा seq_file *, व्योम *);
-पूर्ण ide_proc_entry_t;
+	int (*show)(struct seq_file *, void *);
+} ide_proc_entry_t;
 
-व्योम proc_ide_create(व्योम);
-व्योम proc_ide_destroy(व्योम);
-व्योम ide_proc_रेजिस्टर_port(ide_hwअगर_t *);
-व्योम ide_proc_port_रेजिस्टर_devices(ide_hwअगर_t *);
-व्योम ide_proc_unरेजिस्टर_device(ide_drive_t *);
-व्योम ide_proc_unरेजिस्टर_port(ide_hwअगर_t *);
-व्योम ide_proc_रेजिस्टर_driver(ide_drive_t *, काष्ठा ide_driver *);
-व्योम ide_proc_unरेजिस्टर_driver(ide_drive_t *, काष्ठा ide_driver *);
+void proc_ide_create(void);
+void proc_ide_destroy(void);
+void ide_proc_register_port(ide_hwif_t *);
+void ide_proc_port_register_devices(ide_hwif_t *);
+void ide_proc_unregister_device(ide_drive_t *);
+void ide_proc_unregister_port(ide_hwif_t *);
+void ide_proc_register_driver(ide_drive_t *, struct ide_driver *);
+void ide_proc_unregister_driver(ide_drive_t *, struct ide_driver *);
 
-पूर्णांक ide_capacity_proc_show(काष्ठा seq_file *m, व्योम *v);
-पूर्णांक ide_geometry_proc_show(काष्ठा seq_file *m, व्योम *v);
-#अन्यथा
-अटल अंतरभूत व्योम proc_ide_create(व्योम) अणु ; पूर्ण
-अटल अंतरभूत व्योम proc_ide_destroy(व्योम) अणु ; पूर्ण
-अटल अंतरभूत व्योम ide_proc_रेजिस्टर_port(ide_hwअगर_t *hwअगर) अणु ; पूर्ण
-अटल अंतरभूत व्योम ide_proc_port_रेजिस्टर_devices(ide_hwअगर_t *hwअगर) अणु ; पूर्ण
-अटल अंतरभूत व्योम ide_proc_unरेजिस्टर_device(ide_drive_t *drive) अणु ; पूर्ण
-अटल अंतरभूत व्योम ide_proc_unरेजिस्टर_port(ide_hwअगर_t *hwअगर) अणु ; पूर्ण
-अटल अंतरभूत व्योम ide_proc_रेजिस्टर_driver(ide_drive_t *drive,
-					    काष्ठा ide_driver *driver) अणु ; पूर्ण
-अटल अंतरभूत व्योम ide_proc_unरेजिस्टर_driver(ide_drive_t *drive,
-					      काष्ठा ide_driver *driver) अणु ; पूर्ण
-#पूर्ण_अगर
+int ide_capacity_proc_show(struct seq_file *m, void *v);
+int ide_geometry_proc_show(struct seq_file *m, void *v);
+#else
+static inline void proc_ide_create(void) { ; }
+static inline void proc_ide_destroy(void) { ; }
+static inline void ide_proc_register_port(ide_hwif_t *hwif) { ; }
+static inline void ide_proc_port_register_devices(ide_hwif_t *hwif) { ; }
+static inline void ide_proc_unregister_device(ide_drive_t *drive) { ; }
+static inline void ide_proc_unregister_port(ide_hwif_t *hwif) { ; }
+static inline void ide_proc_register_driver(ide_drive_t *drive,
+					    struct ide_driver *driver) { ; }
+static inline void ide_proc_unregister_driver(ide_drive_t *drive,
+					      struct ide_driver *driver) { ; }
+#endif
 
-क्रमागत अणु
-	/* enter/निकास functions */
+enum {
+	/* enter/exit functions */
 	IDE_DBG_FUNC =			BIT(0),
 	/* sense key/asc handling */
 	IDE_DBG_SENSE =			BIT(1),
@@ -1014,35 +1013,35 @@ __IDE_PROC_DEVSET(_name, _min, _max, शून्य, शून्य)
 	IDE_DBG_RQ =			BIT(3),
 	/* driver probing/setup */
 	IDE_DBG_PROBE =			BIT(4),
-पूर्ण;
+};
 
-/* DRV_NAME has to be defined in the driver beक्रमe using the macro below */
-#घोषणा __ide_debug_log(lvl, fmt, args...)				\
-अणु									\
-	अगर (unlikely(drive->debug_mask & lvl))				\
-		prपूर्णांकk(KERN_INFO DRV_NAME ": %s: " fmt "\n",		\
+/* DRV_NAME has to be defined in the driver before using the macro below */
+#define __ide_debug_log(lvl, fmt, args...)				\
+{									\
+	if (unlikely(drive->debug_mask & lvl))				\
+		printk(KERN_INFO DRV_NAME ": %s: " fmt "\n",		\
 					  __func__, ## args);		\
-पूर्ण
+}
 
 /*
  * Power Management state machine (rq->pm->pm_step).
  *
- * For each step, the core calls ide_start_घातer_step() first.
- * This can वापस:
- *	- ide_stopped :	In this हाल, the core calls us back again unless
- *			step have been set to ide_घातer_state_completed.
- *	- ide_started :	In this हाल, the channel is left busy until an
- *			async event (पूर्णांकerrupt) occurs.
- * Typically, ide_start_घातer_step() will issue a taskfile request with
- * करो_rw_taskfile().
+ * For each step, the core calls ide_start_power_step() first.
+ * This can return:
+ *	- ide_stopped :	In this case, the core calls us back again unless
+ *			step have been set to ide_power_state_completed.
+ *	- ide_started :	In this case, the channel is left busy until an
+ *			async event (interrupt) occurs.
+ * Typically, ide_start_power_step() will issue a taskfile request with
+ * do_rw_taskfile().
  *
- * Upon reception of the पूर्णांकerrupt, the core will call ide_complete_घातer_step()
- * with the error code अगर any. This routine should update the step value
- * and वापस. It should not start a new request. The core will call
- * ide_start_घातer_step() क्रम the new step value, unless step have been
+ * Upon reception of the interrupt, the core will call ide_complete_power_step()
+ * with the error code if any. This routine should update the step value
+ * and return. It should not start a new request. The core will call
+ * ide_start_power_step() for the new step value, unless step have been
  * set to IDE_PM_COMPLETED.
  */
-क्रमागत अणु
+enum {
 	IDE_PM_START_SUSPEND,
 	IDE_PM_FLUSH_CACHE	= IDE_PM_START_SUSPEND,
 	IDE_PM_STANDBY,
@@ -1053,15 +1052,15 @@ __IDE_PROC_DEVSET(_name, _min, _max, शून्य, शून्य)
 	IDE_PM_RESTORE_DMA,
 
 	IDE_PM_COMPLETED,
-पूर्ण;
+};
 
-पूर्णांक generic_ide_suspend(काष्ठा device *, pm_message_t);
-पूर्णांक generic_ide_resume(काष्ठा device *);
+int generic_ide_suspend(struct device *, pm_message_t);
+int generic_ide_resume(struct device *);
 
-व्योम ide_complete_घातer_step(ide_drive_t *, काष्ठा request *);
-ide_startstop_t ide_start_घातer_step(ide_drive_t *, काष्ठा request *);
-व्योम ide_complete_pm_rq(ide_drive_t *, काष्ठा request *);
-व्योम ide_check_pm_state(ide_drive_t *, काष्ठा request *);
+void ide_complete_power_step(ide_drive_t *, struct request *);
+ide_startstop_t ide_start_power_step(ide_drive_t *, struct request *);
+void ide_complete_pm_rq(ide_drive_t *, struct request *);
+void ide_check_pm_state(ide_drive_t *, struct request *);
 
 /*
  * Subdrivers support.
@@ -1069,239 +1068,239 @@ ide_startstop_t ide_start_घातer_step(ide_drive_t *, काष्ठा req
  * The gendriver.owner field should be set to the module owner of this driver.
  * The gendriver.name field should be set to the name of this driver
  */
-काष्ठा ide_driver अणु
-	स्थिर अक्षर			*version;
-	ide_startstop_t	(*करो_request)(ide_drive_t *, काष्ठा request *, sector_t);
-	काष्ठा device_driver	gen_driver;
-	पूर्णांक		(*probe)(ide_drive_t *);
-	व्योम		(*हटाओ)(ide_drive_t *);
-	व्योम		(*resume)(ide_drive_t *);
-	व्योम		(*shutकरोwn)(ide_drive_t *);
-#अगर_घोषित CONFIG_IDE_PROC_FS
+struct ide_driver {
+	const char			*version;
+	ide_startstop_t	(*do_request)(ide_drive_t *, struct request *, sector_t);
+	struct device_driver	gen_driver;
+	int		(*probe)(ide_drive_t *);
+	void		(*remove)(ide_drive_t *);
+	void		(*resume)(ide_drive_t *);
+	void		(*shutdown)(ide_drive_t *);
+#ifdef CONFIG_IDE_PROC_FS
 	ide_proc_entry_t *		(*proc_entries)(ide_drive_t *);
-	स्थिर काष्ठा ide_proc_devset *	(*proc_devsets)(ide_drive_t *);
-#पूर्ण_अगर
-पूर्ण;
+	const struct ide_proc_devset *	(*proc_devsets)(ide_drive_t *);
+#endif
+};
 
-#घोषणा to_ide_driver(drv) container_of(drv, काष्ठा ide_driver, gen_driver)
+#define to_ide_driver(drv) container_of(drv, struct ide_driver, gen_driver)
 
-पूर्णांक ide_device_get(ide_drive_t *);
-व्योम ide_device_put(ide_drive_t *);
+int ide_device_get(ide_drive_t *);
+void ide_device_put(ide_drive_t *);
 
-काष्ठा ide_ioctl_devset अणु
-	अचिन्हित पूर्णांक	get_ioctl;
-	अचिन्हित पूर्णांक	set_ioctl;
-	स्थिर काष्ठा ide_devset *setting;
-पूर्ण;
+struct ide_ioctl_devset {
+	unsigned int	get_ioctl;
+	unsigned int	set_ioctl;
+	const struct ide_devset *setting;
+};
 
-पूर्णांक ide_setting_ioctl(ide_drive_t *, काष्ठा block_device *, अचिन्हित पूर्णांक,
-		      अचिन्हित दीर्घ, स्थिर काष्ठा ide_ioctl_devset *);
+int ide_setting_ioctl(ide_drive_t *, struct block_device *, unsigned int,
+		      unsigned long, const struct ide_ioctl_devset *);
 
-पूर्णांक generic_ide_ioctl(ide_drive_t *, काष्ठा block_device *, अचिन्हित, अचिन्हित दीर्घ);
+int generic_ide_ioctl(ide_drive_t *, struct block_device *, unsigned, unsigned long);
 
-बाह्य पूर्णांक ide_vlb_clk;
-बाह्य पूर्णांक ide_pci_clk;
+extern int ide_vlb_clk;
+extern int ide_pci_clk;
 
-पूर्णांक ide_end_rq(ide_drive_t *, काष्ठा request *, blk_status_t, अचिन्हित पूर्णांक);
-व्योम ide_समाप्त_rq(ide_drive_t *, काष्ठा request *);
-व्योम ide_insert_request_head(ide_drive_t *, काष्ठा request *);
+int ide_end_rq(ide_drive_t *, struct request *, blk_status_t, unsigned int);
+void ide_kill_rq(ide_drive_t *, struct request *);
+void ide_insert_request_head(ide_drive_t *, struct request *);
 
-व्योम __ide_set_handler(ide_drive_t *, ide_handler_t *, अचिन्हित पूर्णांक);
-व्योम ide_set_handler(ide_drive_t *, ide_handler_t *, अचिन्हित पूर्णांक);
+void __ide_set_handler(ide_drive_t *, ide_handler_t *, unsigned int);
+void ide_set_handler(ide_drive_t *, ide_handler_t *, unsigned int);
 
-व्योम ide_execute_command(ide_drive_t *, काष्ठा ide_cmd *, ide_handler_t *,
-			 अचिन्हित पूर्णांक);
+void ide_execute_command(ide_drive_t *, struct ide_cmd *, ide_handler_t *,
+			 unsigned int);
 
-व्योम ide_pad_transfer(ide_drive_t *, पूर्णांक, पूर्णांक);
+void ide_pad_transfer(ide_drive_t *, int, int);
 
-ide_startstop_t ide_error(ide_drive_t *, स्थिर अक्षर *, u8);
+ide_startstop_t ide_error(ide_drive_t *, const char *, u8);
 
-व्योम ide_fix_driveid(u16 *);
+void ide_fix_driveid(u16 *);
 
-बाह्य व्योम ide_fixstring(u8 *, स्थिर पूर्णांक, स्थिर पूर्णांक);
+extern void ide_fixstring(u8 *, const int, const int);
 
-पूर्णांक ide_busy_sleep(ide_drive_t *, अचिन्हित दीर्घ, पूर्णांक);
+int ide_busy_sleep(ide_drive_t *, unsigned long, int);
 
-पूर्णांक __ide_रुको_stat(ide_drive_t *, u8, u8, अचिन्हित दीर्घ, u8 *);
-पूर्णांक ide_रुको_stat(ide_startstop_t *, ide_drive_t *, u8, u8, अचिन्हित दीर्घ);
+int __ide_wait_stat(ide_drive_t *, u8, u8, unsigned long, u8 *);
+int ide_wait_stat(ide_startstop_t *, ide_drive_t *, u8, u8, unsigned long);
 
-ide_startstop_t ide_करो_park_unpark(ide_drive_t *, काष्ठा request *);
-ide_startstop_t ide_करो_devset(ide_drive_t *, काष्ठा request *);
+ide_startstop_t ide_do_park_unpark(ide_drive_t *, struct request *);
+ide_startstop_t ide_do_devset(ide_drive_t *, struct request *);
 
-बाह्य ide_startstop_t ide_करो_reset (ide_drive_t *);
+extern ide_startstop_t ide_do_reset (ide_drive_t *);
 
-बाह्य पूर्णांक ide_devset_execute(ide_drive_t *drive,
-			      स्थिर काष्ठा ide_devset *setting, पूर्णांक arg);
+extern int ide_devset_execute(ide_drive_t *drive,
+			      const struct ide_devset *setting, int arg);
 
-व्योम ide_complete_cmd(ide_drive_t *, काष्ठा ide_cmd *, u8, u8);
-पूर्णांक ide_complete_rq(ide_drive_t *, blk_status_t, अचिन्हित पूर्णांक);
+void ide_complete_cmd(ide_drive_t *, struct ide_cmd *, u8, u8);
+int ide_complete_rq(ide_drive_t *, blk_status_t, unsigned int);
 
-व्योम ide_tf_पढ़ोback(ide_drive_t *drive, काष्ठा ide_cmd *cmd);
-व्योम ide_tf_dump(स्थिर अक्षर *, काष्ठा ide_cmd *);
+void ide_tf_readback(ide_drive_t *drive, struct ide_cmd *cmd);
+void ide_tf_dump(const char *, struct ide_cmd *);
 
-व्योम ide_exec_command(ide_hwअगर_t *, u8);
-u8 ide_पढ़ो_status(ide_hwअगर_t *);
-u8 ide_पढ़ो_altstatus(ide_hwअगर_t *);
-व्योम ide_ग_लिखो_devctl(ide_hwअगर_t *, u8);
+void ide_exec_command(ide_hwif_t *, u8);
+u8 ide_read_status(ide_hwif_t *);
+u8 ide_read_altstatus(ide_hwif_t *);
+void ide_write_devctl(ide_hwif_t *, u8);
 
-व्योम ide_dev_select(ide_drive_t *);
-व्योम ide_tf_load(ide_drive_t *, काष्ठा ide_taskfile *, u8);
-व्योम ide_tf_पढ़ो(ide_drive_t *, काष्ठा ide_taskfile *, u8);
+void ide_dev_select(ide_drive_t *);
+void ide_tf_load(ide_drive_t *, struct ide_taskfile *, u8);
+void ide_tf_read(ide_drive_t *, struct ide_taskfile *, u8);
 
-व्योम ide_input_data(ide_drive_t *, काष्ठा ide_cmd *, व्योम *, अचिन्हित पूर्णांक);
-व्योम ide_output_data(ide_drive_t *, काष्ठा ide_cmd *, व्योम *, अचिन्हित पूर्णांक);
+void ide_input_data(ide_drive_t *, struct ide_cmd *, void *, unsigned int);
+void ide_output_data(ide_drive_t *, struct ide_cmd *, void *, unsigned int);
 
-व्योम SELECT_MASK(ide_drive_t *, पूर्णांक);
+void SELECT_MASK(ide_drive_t *, int);
 
-u8 ide_पढ़ो_error(ide_drive_t *);
-व्योम ide_पढ़ो_bcount_and_ireason(ide_drive_t *, u16 *, u8 *);
+u8 ide_read_error(ide_drive_t *);
+void ide_read_bcount_and_ireason(ide_drive_t *, u16 *, u8 *);
 
-पूर्णांक ide_check_ireason(ide_drive_t *, काष्ठा request *, पूर्णांक, पूर्णांक, पूर्णांक);
+int ide_check_ireason(ide_drive_t *, struct request *, int, int, int);
 
-पूर्णांक ide_check_atapi_device(ide_drive_t *, स्थिर अक्षर *);
+int ide_check_atapi_device(ide_drive_t *, const char *);
 
-व्योम ide_init_pc(काष्ठा ide_atapi_pc *);
+void ide_init_pc(struct ide_atapi_pc *);
 
 /* Disk head parking */
-बाह्य रुको_queue_head_t ide_park_wq;
-sमाप_प्रकार ide_park_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		      अक्षर *buf);
-sमाप_प्रकार ide_park_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		       स्थिर अक्षर *buf, माप_प्रकार len);
+extern wait_queue_head_t ide_park_wq;
+ssize_t ide_park_show(struct device *dev, struct device_attribute *attr,
+		      char *buf);
+ssize_t ide_park_store(struct device *dev, struct device_attribute *attr,
+		       const char *buf, size_t len);
 
 /*
- * Special requests क्रम ide-tape block device strategy routine.
+ * Special requests for ide-tape block device strategy routine.
  *
- * In order to service a अक्षरacter device command, we add special requests to
- * the tail of our block device request queue and रुको क्रम their completion.
+ * In order to service a character device command, we add special requests to
+ * the tail of our block device request queue and wait for their completion.
  */
-क्रमागत अणु
+enum {
 	REQ_IDETAPE_PC1		= BIT(0), /* packet command (first stage) */
 	REQ_IDETAPE_PC2		= BIT(1), /* packet command (second stage) */
 	REQ_IDETAPE_READ	= BIT(2),
 	REQ_IDETAPE_WRITE	= BIT(3),
-पूर्ण;
+};
 
-पूर्णांक ide_queue_pc_tail(ide_drive_t *, काष्ठा gendisk *, काष्ठा ide_atapi_pc *,
-		      व्योम *, अचिन्हित पूर्णांक);
+int ide_queue_pc_tail(ide_drive_t *, struct gendisk *, struct ide_atapi_pc *,
+		      void *, unsigned int);
 
-पूर्णांक ide_करो_test_unit_पढ़ोy(ide_drive_t *, काष्ठा gendisk *);
-पूर्णांक ide_करो_start_stop(ide_drive_t *, काष्ठा gendisk *, पूर्णांक);
-पूर्णांक ide_set_media_lock(ide_drive_t *, काष्ठा gendisk *, पूर्णांक);
-व्योम ide_create_request_sense_cmd(ide_drive_t *, काष्ठा ide_atapi_pc *);
-व्योम ide_retry_pc(ide_drive_t *drive);
+int ide_do_test_unit_ready(ide_drive_t *, struct gendisk *);
+int ide_do_start_stop(ide_drive_t *, struct gendisk *, int);
+int ide_set_media_lock(ide_drive_t *, struct gendisk *, int);
+void ide_create_request_sense_cmd(ide_drive_t *, struct ide_atapi_pc *);
+void ide_retry_pc(ide_drive_t *drive);
 
-व्योम ide_prep_sense(ide_drive_t *drive, काष्ठा request *rq);
-पूर्णांक ide_queue_sense_rq(ide_drive_t *drive, व्योम *special);
+void ide_prep_sense(ide_drive_t *drive, struct request *rq);
+int ide_queue_sense_rq(ide_drive_t *drive, void *special);
 
-पूर्णांक ide_cd_expiry(ide_drive_t *);
+int ide_cd_expiry(ide_drive_t *);
 
-पूर्णांक ide_cd_get_xferlen(काष्ठा request *);
+int ide_cd_get_xferlen(struct request *);
 
-ide_startstop_t ide_issue_pc(ide_drive_t *, काष्ठा ide_cmd *);
+ide_startstop_t ide_issue_pc(ide_drive_t *, struct ide_cmd *);
 
-ide_startstop_t करो_rw_taskfile(ide_drive_t *, काष्ठा ide_cmd *);
+ide_startstop_t do_rw_taskfile(ide_drive_t *, struct ide_cmd *);
 
-व्योम ide_pio_bytes(ide_drive_t *, काष्ठा ide_cmd *, अचिन्हित पूर्णांक, अचिन्हित पूर्णांक);
+void ide_pio_bytes(ide_drive_t *, struct ide_cmd *, unsigned int, unsigned int);
 
-व्योम ide_finish_cmd(ide_drive_t *, काष्ठा ide_cmd *, u8);
+void ide_finish_cmd(ide_drive_t *, struct ide_cmd *, u8);
 
-पूर्णांक ide_raw_taskfile(ide_drive_t *, काष्ठा ide_cmd *, u8 *, u16);
-पूर्णांक ide_no_data_taskfile(ide_drive_t *, काष्ठा ide_cmd *);
+int ide_raw_taskfile(ide_drive_t *, struct ide_cmd *, u8 *, u16);
+int ide_no_data_taskfile(ide_drive_t *, struct ide_cmd *);
 
-पूर्णांक ide_taskfile_ioctl(ide_drive_t *, अचिन्हित दीर्घ);
+int ide_taskfile_ioctl(ide_drive_t *, unsigned long);
 
-पूर्णांक ide_dev_पढ़ो_id(ide_drive_t *, u8, u16 *, पूर्णांक);
+int ide_dev_read_id(ide_drive_t *, u8, u16 *, int);
 
-बाह्य पूर्णांक ide_driveid_update(ide_drive_t *);
-बाह्य पूर्णांक ide_config_drive_speed(ide_drive_t *, u8);
-बाह्य u8 eighty_nपूर्णांकy_three (ide_drive_t *);
-बाह्य पूर्णांक taskfile_lib_get_identअगरy(ide_drive_t *drive, u8 *);
+extern int ide_driveid_update(ide_drive_t *);
+extern int ide_config_drive_speed(ide_drive_t *, u8);
+extern u8 eighty_ninty_three (ide_drive_t *);
+extern int taskfile_lib_get_identify(ide_drive_t *drive, u8 *);
 
-बाह्य पूर्णांक ide_रुको_not_busy(ide_hwअगर_t *hwअगर, अचिन्हित दीर्घ समयout);
+extern int ide_wait_not_busy(ide_hwif_t *hwif, unsigned long timeout);
 
-बाह्य व्योम ide_stall_queue(ide_drive_t *drive, अचिन्हित दीर्घ समयout);
+extern void ide_stall_queue(ide_drive_t *drive, unsigned long timeout);
 
-बाह्य व्योम ide_समयr_expiry(काष्ठा समयr_list *t);
-बाह्य irqवापस_t ide_पूर्णांकr(पूर्णांक irq, व्योम *dev_id);
-बाह्य blk_status_t ide_queue_rq(काष्ठा blk_mq_hw_ctx *, स्थिर काष्ठा blk_mq_queue_data *);
-बाह्य blk_status_t ide_issue_rq(ide_drive_t *, काष्ठा request *, bool);
-बाह्य व्योम ide_requeue_and_plug(ide_drive_t *drive, काष्ठा request *rq);
+extern void ide_timer_expiry(struct timer_list *t);
+extern irqreturn_t ide_intr(int irq, void *dev_id);
+extern blk_status_t ide_queue_rq(struct blk_mq_hw_ctx *, const struct blk_mq_queue_data *);
+extern blk_status_t ide_issue_rq(ide_drive_t *, struct request *, bool);
+extern void ide_requeue_and_plug(ide_drive_t *drive, struct request *rq);
 
-व्योम ide_init_disk(काष्ठा gendisk *, ide_drive_t *);
+void ide_init_disk(struct gendisk *, ide_drive_t *);
 
-#अगर_घोषित CONFIG_IDEPCI_PCIBUS_ORDER
-बाह्य पूर्णांक __ide_pci_रेजिस्टर_driver(काष्ठा pci_driver *driver, काष्ठा module *owner, स्थिर अक्षर *mod_name);
-#घोषणा ide_pci_रेजिस्टर_driver(d) __ide_pci_रेजिस्टर_driver(d, THIS_MODULE, KBUILD_MODNAME)
-#अन्यथा
-#घोषणा ide_pci_रेजिस्टर_driver(d) pci_रेजिस्टर_driver(d)
-#पूर्ण_अगर
+#ifdef CONFIG_IDEPCI_PCIBUS_ORDER
+extern int __ide_pci_register_driver(struct pci_driver *driver, struct module *owner, const char *mod_name);
+#define ide_pci_register_driver(d) __ide_pci_register_driver(d, THIS_MODULE, KBUILD_MODNAME)
+#else
+#define ide_pci_register_driver(d) pci_register_driver(d)
+#endif
 
-अटल अंतरभूत पूर्णांक ide_pci_is_in_compatibility_mode(काष्ठा pci_dev *dev)
-अणु
-	अगर ((dev->class >> 8) == PCI_CLASS_STORAGE_IDE && (dev->class & 5) != 5)
-		वापस 1;
-	वापस 0;
-पूर्ण
+static inline int ide_pci_is_in_compatibility_mode(struct pci_dev *dev)
+{
+	if ((dev->class >> 8) == PCI_CLASS_STORAGE_IDE && (dev->class & 5) != 5)
+		return 1;
+	return 0;
+}
 
-व्योम ide_pci_setup_ports(काष्ठा pci_dev *, स्थिर काष्ठा ide_port_info *,
-			 काष्ठा ide_hw *, काष्ठा ide_hw **);
-व्योम ide_setup_pci_noise(काष्ठा pci_dev *, स्थिर काष्ठा ide_port_info *);
+void ide_pci_setup_ports(struct pci_dev *, const struct ide_port_info *,
+			 struct ide_hw *, struct ide_hw **);
+void ide_setup_pci_noise(struct pci_dev *, const struct ide_port_info *);
 
-#अगर_घोषित CONFIG_BLK_DEV_IDEDMA_PCI
-पूर्णांक ide_pci_set_master(काष्ठा pci_dev *, स्थिर अक्षर *);
-अचिन्हित दीर्घ ide_pci_dma_base(ide_hwअगर_t *, स्थिर काष्ठा ide_port_info *);
-पूर्णांक ide_pci_check_simplex(ide_hwअगर_t *, स्थिर काष्ठा ide_port_info *);
-पूर्णांक ide_hwअगर_setup_dma(ide_hwअगर_t *, स्थिर काष्ठा ide_port_info *);
-#अन्यथा
-अटल अंतरभूत पूर्णांक ide_hwअगर_setup_dma(ide_hwअगर_t *hwअगर,
-				     स्थिर काष्ठा ide_port_info *d)
-अणु
-	वापस -EINVAL;
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_BLK_DEV_IDEDMA_PCI
+int ide_pci_set_master(struct pci_dev *, const char *);
+unsigned long ide_pci_dma_base(ide_hwif_t *, const struct ide_port_info *);
+int ide_pci_check_simplex(ide_hwif_t *, const struct ide_port_info *);
+int ide_hwif_setup_dma(ide_hwif_t *, const struct ide_port_info *);
+#else
+static inline int ide_hwif_setup_dma(ide_hwif_t *hwif,
+				     const struct ide_port_info *d)
+{
+	return -EINVAL;
+}
+#endif
 
-काष्ठा ide_pci_enablebit अणु
+struct ide_pci_enablebit {
 	u8	reg;	/* byte pci reg holding the enable-bit */
 	u8	mask;	/* mask to isolate the enable-bit */
 	u8	val;	/* value of masked reg when "enabled" */
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	/* Uses ISA control ports not PCI ones. */
 	IDE_HFLAG_ISA_PORTS		= BIT(0),
 	/* single port device */
 	IDE_HFLAG_SINGLE		= BIT(1),
-	/* करोn't use legacy PIO blacklist */
+	/* don't use legacy PIO blacklist */
 	IDE_HFLAG_PIO_NO_BLACKLIST	= BIT(2),
-	/* set क्रम the second port of QD65xx */
+	/* set for the second port of QD65xx */
 	IDE_HFLAG_QD_2ND_PORT		= BIT(3),
-	/* use PIO8/9 क्रम prefetch off/on */
+	/* use PIO8/9 for prefetch off/on */
 	IDE_HFLAG_ABUSE_PREFETCH	= BIT(4),
-	/* use PIO6/7 क्रम fast-devsel off/on */
+	/* use PIO6/7 for fast-devsel off/on */
 	IDE_HFLAG_ABUSE_FAST_DEVSEL	= BIT(5),
 	/* use 100-102 and 200-202 PIO values to set DMA modes */
 	IDE_HFLAG_ABUSE_DMA_MODES	= BIT(6),
 	/*
 	 * keep DMA setting when programming PIO mode, may be used only
-	 * क्रम hosts which have separate PIO and DMA timings (ie. PMAC)
+	 * for hosts which have separate PIO and DMA timings (ie. PMAC)
 	 */
 	IDE_HFLAG_SET_PIO_MODE_KEEP_DMA	= BIT(7),
-	/* program host क्रम the transfer mode after programming device */
+	/* program host for the transfer mode after programming device */
 	IDE_HFLAG_POST_SET_MODE		= BIT(8),
-	/* करोn't program host/device क्रम the transfer mode ("smart" hosts) */
+	/* don't program host/device for the transfer mode ("smart" hosts) */
 	IDE_HFLAG_NO_SET_MODE		= BIT(9),
-	/* trust BIOS क्रम programming chipset/device क्रम DMA */
+	/* trust BIOS for programming chipset/device for DMA */
 	IDE_HFLAG_TRUST_BIOS_FOR_DMA	= BIT(10),
 	/* host is CS5510/CS5520 */
 	IDE_HFLAG_CS5520		= BIT(11),
 	/* ATAPI DMA is unsupported */
 	IDE_HFLAG_NO_ATAPI_DMA		= BIT(12),
-	/* set अगर host is a "non-bootable" controller */
+	/* set if host is a "non-bootable" controller */
 	IDE_HFLAG_NON_BOOTABLE		= BIT(13),
-	/* host करोesn't support DMA */
+	/* host doesn't support DMA */
 	IDE_HFLAG_NO_DMA		= BIT(14),
-	/* check अगर host is PCI IDE device beक्रमe allowing DMA */
+	/* check if host is PCI IDE device before allowing DMA */
 	IDE_HFLAG_NO_AUTODMA		= BIT(15),
 	/* host uses MMIO */
 	IDE_HFLAG_MMIO			= BIT(16),
@@ -1324,9 +1323,9 @@ ide_startstop_t करो_rw_taskfile(ide_drive_t *, काष्ठा ide_cmd 
 	/* unmask IRQs */
 	IDE_HFLAG_UNMASK_IRQS		= BIT(25),
 	IDE_HFLAG_BROKEN_ALTSTATUS	= BIT(26),
-	/* serialize ports अगर DMA is possible (क्रम sl82c105) */
+	/* serialize ports if DMA is possible (for sl82c105) */
 	IDE_HFLAG_SERIALIZE_DMA		= BIT(27),
-	/* क्रमce host out of "simplex" mode */
+	/* force host out of "simplex" mode */
 	IDE_HFLAG_CLEAR_SIMPLEX		= BIT(28),
 	/* DSC overlap is unsupported */
 	IDE_HFLAG_NO_DSC		= BIT(29),
@@ -1334,210 +1333,210 @@ ide_startstop_t करो_rw_taskfile(ide_drive_t *, काष्ठा ide_cmd 
 	IDE_HFLAG_NO_IO_32BIT		= BIT(30),
 	/* never unmask IRQs */
 	IDE_HFLAG_NO_UNMASK_IRQS	= BIT(31),
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_BLK_DEV_OFFBOARD
+#ifdef CONFIG_BLK_DEV_OFFBOARD
 # define IDE_HFLAG_OFF_BOARD	0
-#अन्यथा
+#else
 # define IDE_HFLAG_OFF_BOARD	IDE_HFLAG_NON_BOOTABLE
-#पूर्ण_अगर
+#endif
 
-काष्ठा ide_port_info अणु
-	अक्षर			*name;
+struct ide_port_info {
+	char			*name;
 
-	पूर्णांक			(*init_chipset)(काष्ठा pci_dev *);
+	int			(*init_chipset)(struct pci_dev *);
 
-	व्योम			(*get_lock)(irq_handler_t, व्योम *);
-	व्योम			(*release_lock)(व्योम);
+	void			(*get_lock)(irq_handler_t, void *);
+	void			(*release_lock)(void);
 
-	व्योम			(*init_iops)(ide_hwअगर_t *);
-	व्योम                    (*init_hwअगर)(ide_hwअगर_t *);
-	पूर्णांक			(*init_dma)(ide_hwअगर_t *,
-					    स्थिर काष्ठा ide_port_info *);
+	void			(*init_iops)(ide_hwif_t *);
+	void                    (*init_hwif)(ide_hwif_t *);
+	int			(*init_dma)(ide_hwif_t *,
+					    const struct ide_port_info *);
 
-	स्थिर काष्ठा ide_tp_ops		*tp_ops;
-	स्थिर काष्ठा ide_port_ops	*port_ops;
-	स्थिर काष्ठा ide_dma_ops	*dma_ops;
+	const struct ide_tp_ops		*tp_ops;
+	const struct ide_port_ops	*port_ops;
+	const struct ide_dma_ops	*dma_ops;
 
-	काष्ठा ide_pci_enablebit	enablebits[2];
+	struct ide_pci_enablebit	enablebits[2];
 
-	hwअगर_chipset_t		chipset;
+	hwif_chipset_t		chipset;
 
-	u16			max_sectors;	/* अगर < than the शेष one */
+	u16			max_sectors;	/* if < than the default one */
 
 	u32			host_flags;
 
-	पूर्णांक			irq_flags;
+	int			irq_flags;
 
 	u8			pio_mask;
 	u8			swdma_mask;
 	u8			mwdma_mask;
 	u8			udma_mask;
-पूर्ण;
+};
 
 /*
- * State inक्रमmation carried क्रम REQ_TYPE_ATA_PM_SUSPEND and REQ_TYPE_ATA_PM_RESUME
+ * State information carried for REQ_TYPE_ATA_PM_SUSPEND and REQ_TYPE_ATA_PM_RESUME
  * requests.
  */
-काष्ठा ide_pm_state अणु
-	/* PM state machine step value, currently driver specअगरic */
-	पूर्णांक	pm_step;
+struct ide_pm_state {
+	/* PM state machine step value, currently driver specific */
+	int	pm_step;
 	/* requested PM state value (S1, S2, S3, S4, ...) */
 	u32	pm_state;
-	व्योम*	data;		/* क्रम driver use */
-पूर्ण;
+	void*	data;		/* for driver use */
+};
 
 
-पूर्णांक ide_pci_init_one(काष्ठा pci_dev *, स्थिर काष्ठा ide_port_info *, व्योम *);
-पूर्णांक ide_pci_init_two(काष्ठा pci_dev *, काष्ठा pci_dev *,
-		     स्थिर काष्ठा ide_port_info *, व्योम *);
-व्योम ide_pci_हटाओ(काष्ठा pci_dev *);
+int ide_pci_init_one(struct pci_dev *, const struct ide_port_info *, void *);
+int ide_pci_init_two(struct pci_dev *, struct pci_dev *,
+		     const struct ide_port_info *, void *);
+void ide_pci_remove(struct pci_dev *);
 
-#अगर_घोषित CONFIG_PM
-पूर्णांक ide_pci_suspend(काष्ठा pci_dev *, pm_message_t);
-पूर्णांक ide_pci_resume(काष्ठा pci_dev *);
-#अन्यथा
-#घोषणा ide_pci_suspend शून्य
-#घोषणा ide_pci_resume शून्य
-#पूर्ण_अगर
+#ifdef CONFIG_PM
+int ide_pci_suspend(struct pci_dev *, pm_message_t);
+int ide_pci_resume(struct pci_dev *);
+#else
+#define ide_pci_suspend NULL
+#define ide_pci_resume NULL
+#endif
 
-व्योम ide_map_sg(ide_drive_t *, काष्ठा ide_cmd *);
-व्योम ide_init_sg_cmd(काष्ठा ide_cmd *, अचिन्हित पूर्णांक);
+void ide_map_sg(ide_drive_t *, struct ide_cmd *);
+void ide_init_sg_cmd(struct ide_cmd *, unsigned int);
 
-#घोषणा BAD_DMA_DRIVE		0
-#घोषणा GOOD_DMA_DRIVE		1
+#define BAD_DMA_DRIVE		0
+#define GOOD_DMA_DRIVE		1
 
-काष्ठा drive_list_entry अणु
-	स्थिर अक्षर *id_model;
-	स्थिर अक्षर *id_firmware;
-पूर्ण;
+struct drive_list_entry {
+	const char *id_model;
+	const char *id_firmware;
+};
 
-पूर्णांक ide_in_drive_list(u16 *, स्थिर काष्ठा drive_list_entry *);
+int ide_in_drive_list(u16 *, const struct drive_list_entry *);
 
-#अगर_घोषित CONFIG_BLK_DEV_IDEDMA
-पूर्णांक ide_dma_good_drive(ide_drive_t *);
-पूर्णांक __ide_dma_bad_drive(ide_drive_t *);
+#ifdef CONFIG_BLK_DEV_IDEDMA
+int ide_dma_good_drive(ide_drive_t *);
+int __ide_dma_bad_drive(ide_drive_t *);
 
 u8 ide_find_dma_mode(ide_drive_t *, u8);
 
-अटल अंतरभूत u8 ide_max_dma_mode(ide_drive_t *drive)
-अणु
-	वापस ide_find_dma_mode(drive, XFER_UDMA_6);
-पूर्ण
+static inline u8 ide_max_dma_mode(ide_drive_t *drive)
+{
+	return ide_find_dma_mode(drive, XFER_UDMA_6);
+}
 
-व्योम ide_dma_off_quietly(ide_drive_t *);
-व्योम ide_dma_off(ide_drive_t *);
-व्योम ide_dma_on(ide_drive_t *);
-पूर्णांक ide_set_dma(ide_drive_t *);
-व्योम ide_check_dma_crc(ide_drive_t *);
-ide_startstop_t ide_dma_पूर्णांकr(ide_drive_t *);
+void ide_dma_off_quietly(ide_drive_t *);
+void ide_dma_off(ide_drive_t *);
+void ide_dma_on(ide_drive_t *);
+int ide_set_dma(ide_drive_t *);
+void ide_check_dma_crc(ide_drive_t *);
+ide_startstop_t ide_dma_intr(ide_drive_t *);
 
-पूर्णांक ide_allocate_dma_engine(ide_hwअगर_t *);
-व्योम ide_release_dma_engine(ide_hwअगर_t *);
+int ide_allocate_dma_engine(ide_hwif_t *);
+void ide_release_dma_engine(ide_hwif_t *);
 
-पूर्णांक ide_dma_prepare(ide_drive_t *, काष्ठा ide_cmd *);
-व्योम ide_dma_unmap_sg(ide_drive_t *, काष्ठा ide_cmd *);
+int ide_dma_prepare(ide_drive_t *, struct ide_cmd *);
+void ide_dma_unmap_sg(ide_drive_t *, struct ide_cmd *);
 
-#अगर_घोषित CONFIG_BLK_DEV_IDEDMA_SFF
-पूर्णांक config_drive_क्रम_dma(ide_drive_t *);
-पूर्णांक ide_build_dmatable(ide_drive_t *, काष्ठा ide_cmd *);
-व्योम ide_dma_host_set(ide_drive_t *, पूर्णांक);
-पूर्णांक ide_dma_setup(ide_drive_t *, काष्ठा ide_cmd *);
-बाह्य व्योम ide_dma_start(ide_drive_t *);
-पूर्णांक ide_dma_end(ide_drive_t *);
-पूर्णांक ide_dma_test_irq(ide_drive_t *);
-पूर्णांक ide_dma_sff_समयr_expiry(ide_drive_t *);
-u8 ide_dma_sff_पढ़ो_status(ide_hwअगर_t *);
-बाह्य स्थिर काष्ठा ide_dma_ops sff_dma_ops;
-#अन्यथा
-अटल अंतरभूत पूर्णांक config_drive_क्रम_dma(ide_drive_t *drive) अणु वापस 0; पूर्ण
-#पूर्ण_अगर /* CONFIG_BLK_DEV_IDEDMA_SFF */
+#ifdef CONFIG_BLK_DEV_IDEDMA_SFF
+int config_drive_for_dma(ide_drive_t *);
+int ide_build_dmatable(ide_drive_t *, struct ide_cmd *);
+void ide_dma_host_set(ide_drive_t *, int);
+int ide_dma_setup(ide_drive_t *, struct ide_cmd *);
+extern void ide_dma_start(ide_drive_t *);
+int ide_dma_end(ide_drive_t *);
+int ide_dma_test_irq(ide_drive_t *);
+int ide_dma_sff_timer_expiry(ide_drive_t *);
+u8 ide_dma_sff_read_status(ide_hwif_t *);
+extern const struct ide_dma_ops sff_dma_ops;
+#else
+static inline int config_drive_for_dma(ide_drive_t *drive) { return 0; }
+#endif /* CONFIG_BLK_DEV_IDEDMA_SFF */
 
-व्योम ide_dma_lost_irq(ide_drive_t *);
-ide_startstop_t ide_dma_समयout_retry(ide_drive_t *, पूर्णांक);
+void ide_dma_lost_irq(ide_drive_t *);
+ide_startstop_t ide_dma_timeout_retry(ide_drive_t *, int);
 
-#अन्यथा
-अटल अंतरभूत u8 ide_find_dma_mode(ide_drive_t *drive, u8 speed) अणु वापस 0; पूर्ण
-अटल अंतरभूत u8 ide_max_dma_mode(ide_drive_t *drive) अणु वापस 0; पूर्ण
-अटल अंतरभूत व्योम ide_dma_off_quietly(ide_drive_t *drive) अणु ; पूर्ण
-अटल अंतरभूत व्योम ide_dma_off(ide_drive_t *drive) अणु ; पूर्ण
-अटल अंतरभूत व्योम ide_dma_on(ide_drive_t *drive) अणु ; पूर्ण
-अटल अंतरभूत व्योम ide_dma_verbose(ide_drive_t *drive) अणु ; पूर्ण
-अटल अंतरभूत पूर्णांक ide_set_dma(ide_drive_t *drive) अणु वापस 1; पूर्ण
-अटल अंतरभूत व्योम ide_check_dma_crc(ide_drive_t *drive) अणु ; पूर्ण
-अटल अंतरभूत ide_startstop_t ide_dma_पूर्णांकr(ide_drive_t *drive) अणु वापस ide_stopped; पूर्ण
-अटल अंतरभूत ide_startstop_t ide_dma_समयout_retry(ide_drive_t *drive, पूर्णांक error) अणु वापस ide_stopped; पूर्ण
-अटल अंतरभूत व्योम ide_release_dma_engine(ide_hwअगर_t *hwअगर) अणु ; पूर्ण
-अटल अंतरभूत पूर्णांक ide_dma_prepare(ide_drive_t *drive,
-				  काष्ठा ide_cmd *cmd) अणु वापस 1; पूर्ण
-अटल अंतरभूत व्योम ide_dma_unmap_sg(ide_drive_t *drive,
-				    काष्ठा ide_cmd *cmd) अणु ; पूर्ण
-#पूर्ण_अगर /* CONFIG_BLK_DEV_IDEDMA */
+#else
+static inline u8 ide_find_dma_mode(ide_drive_t *drive, u8 speed) { return 0; }
+static inline u8 ide_max_dma_mode(ide_drive_t *drive) { return 0; }
+static inline void ide_dma_off_quietly(ide_drive_t *drive) { ; }
+static inline void ide_dma_off(ide_drive_t *drive) { ; }
+static inline void ide_dma_on(ide_drive_t *drive) { ; }
+static inline void ide_dma_verbose(ide_drive_t *drive) { ; }
+static inline int ide_set_dma(ide_drive_t *drive) { return 1; }
+static inline void ide_check_dma_crc(ide_drive_t *drive) { ; }
+static inline ide_startstop_t ide_dma_intr(ide_drive_t *drive) { return ide_stopped; }
+static inline ide_startstop_t ide_dma_timeout_retry(ide_drive_t *drive, int error) { return ide_stopped; }
+static inline void ide_release_dma_engine(ide_hwif_t *hwif) { ; }
+static inline int ide_dma_prepare(ide_drive_t *drive,
+				  struct ide_cmd *cmd) { return 1; }
+static inline void ide_dma_unmap_sg(ide_drive_t *drive,
+				    struct ide_cmd *cmd) { ; }
+#endif /* CONFIG_BLK_DEV_IDEDMA */
 
-#अगर_घोषित CONFIG_BLK_DEV_IDEACPI
-पूर्णांक ide_acpi_init(व्योम);
-bool ide_port_acpi(ide_hwअगर_t *hwअगर);
-बाह्य पूर्णांक ide_acpi_exec_tfs(ide_drive_t *drive);
-बाह्य व्योम ide_acpi_get_timing(ide_hwअगर_t *hwअगर);
-बाह्य व्योम ide_acpi_push_timing(ide_hwअगर_t *hwअगर);
-व्योम ide_acpi_init_port(ide_hwअगर_t *);
-व्योम ide_acpi_port_init_devices(ide_hwअगर_t *);
-बाह्य व्योम ide_acpi_set_state(ide_hwअगर_t *hwअगर, पूर्णांक on);
-#अन्यथा
-अटल अंतरभूत पूर्णांक ide_acpi_init(व्योम) अणु वापस 0; पूर्ण
-अटल अंतरभूत bool ide_port_acpi(ide_hwअगर_t *hwअगर) अणु वापस 0; पूर्ण
-अटल अंतरभूत पूर्णांक ide_acpi_exec_tfs(ide_drive_t *drive) अणु वापस 0; पूर्ण
-अटल अंतरभूत व्योम ide_acpi_get_timing(ide_hwअगर_t *hwअगर) अणु ; पूर्ण
-अटल अंतरभूत व्योम ide_acpi_push_timing(ide_hwअगर_t *hwअगर) अणु ; पूर्ण
-अटल अंतरभूत व्योम ide_acpi_init_port(ide_hwअगर_t *hwअगर) अणु ; पूर्ण
-अटल अंतरभूत व्योम ide_acpi_port_init_devices(ide_hwअगर_t *hwअगर) अणु ; पूर्ण
-अटल अंतरभूत व्योम ide_acpi_set_state(ide_hwअगर_t *hwअगर, पूर्णांक on) अणुपूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_BLK_DEV_IDEACPI
+int ide_acpi_init(void);
+bool ide_port_acpi(ide_hwif_t *hwif);
+extern int ide_acpi_exec_tfs(ide_drive_t *drive);
+extern void ide_acpi_get_timing(ide_hwif_t *hwif);
+extern void ide_acpi_push_timing(ide_hwif_t *hwif);
+void ide_acpi_init_port(ide_hwif_t *);
+void ide_acpi_port_init_devices(ide_hwif_t *);
+extern void ide_acpi_set_state(ide_hwif_t *hwif, int on);
+#else
+static inline int ide_acpi_init(void) { return 0; }
+static inline bool ide_port_acpi(ide_hwif_t *hwif) { return 0; }
+static inline int ide_acpi_exec_tfs(ide_drive_t *drive) { return 0; }
+static inline void ide_acpi_get_timing(ide_hwif_t *hwif) { ; }
+static inline void ide_acpi_push_timing(ide_hwif_t *hwif) { ; }
+static inline void ide_acpi_init_port(ide_hwif_t *hwif) { ; }
+static inline void ide_acpi_port_init_devices(ide_hwif_t *hwif) { ; }
+static inline void ide_acpi_set_state(ide_hwif_t *hwif, int on) {}
+#endif
 
-व्योम ide_check_nien_quirk_list(ide_drive_t *);
-व्योम ide_undecoded_slave(ide_drive_t *);
+void ide_check_nien_quirk_list(ide_drive_t *);
+void ide_undecoded_slave(ide_drive_t *);
 
-व्योम ide_port_apply_params(ide_hwअगर_t *);
-पूर्णांक ide_sysfs_रेजिस्टर_port(ide_hwअगर_t *);
+void ide_port_apply_params(ide_hwif_t *);
+int ide_sysfs_register_port(ide_hwif_t *);
 
-काष्ठा ide_host *ide_host_alloc(स्थिर काष्ठा ide_port_info *, काष्ठा ide_hw **,
-				अचिन्हित पूर्णांक);
-व्योम ide_host_मुक्त(काष्ठा ide_host *);
-पूर्णांक ide_host_रेजिस्टर(काष्ठा ide_host *, स्थिर काष्ठा ide_port_info *,
-		      काष्ठा ide_hw **);
-पूर्णांक ide_host_add(स्थिर काष्ठा ide_port_info *, काष्ठा ide_hw **, अचिन्हित पूर्णांक,
-		 काष्ठा ide_host **);
-व्योम ide_host_हटाओ(काष्ठा ide_host *);
-पूर्णांक ide_legacy_device_add(स्थिर काष्ठा ide_port_info *, अचिन्हित दीर्घ);
-व्योम ide_port_unरेजिस्टर_devices(ide_hwअगर_t *);
-व्योम ide_port_scan(ide_hwअगर_t *);
+struct ide_host *ide_host_alloc(const struct ide_port_info *, struct ide_hw **,
+				unsigned int);
+void ide_host_free(struct ide_host *);
+int ide_host_register(struct ide_host *, const struct ide_port_info *,
+		      struct ide_hw **);
+int ide_host_add(const struct ide_port_info *, struct ide_hw **, unsigned int,
+		 struct ide_host **);
+void ide_host_remove(struct ide_host *);
+int ide_legacy_device_add(const struct ide_port_info *, unsigned long);
+void ide_port_unregister_devices(ide_hwif_t *);
+void ide_port_scan(ide_hwif_t *);
 
-अटल अंतरभूत व्योम *ide_get_hwअगरdata (ide_hwअगर_t * hwअगर)
-अणु
-	वापस hwअगर->hwअगर_data;
-पूर्ण
+static inline void *ide_get_hwifdata (ide_hwif_t * hwif)
+{
+	return hwif->hwif_data;
+}
 
-अटल अंतरभूत व्योम ide_set_hwअगरdata (ide_hwअगर_t * hwअगर, व्योम *data)
-अणु
-	hwअगर->hwअगर_data = data;
-पूर्ण
+static inline void ide_set_hwifdata (ide_hwif_t * hwif, void *data)
+{
+	hwif->hwif_data = data;
+}
 
-u64 ide_get_lba_addr(काष्ठा ide_cmd *, पूर्णांक);
-u8 ide_dump_status(ide_drive_t *, स्थिर अक्षर *, u8);
+u64 ide_get_lba_addr(struct ide_cmd *, int);
+u8 ide_dump_status(ide_drive_t *, const char *, u8);
 
-काष्ठा ide_timing अणु
+struct ide_timing {
 	u8  mode;
 	u8  setup;	/* t1 */
-	u16 act8b;	/* t2 क्रम 8-bit io */
-	u16 rec8b;	/* t2i क्रम 8-bit io */
-	u16 cyc8b;	/* t0 क्रम 8-bit io */
+	u16 act8b;	/* t2 for 8-bit io */
+	u16 rec8b;	/* t2i for 8-bit io */
+	u16 cyc8b;	/* t0 for 8-bit io */
 	u16 active;	/* t2 or tD */
 	u16 recover;	/* t2i or tK */
 	u16 cycle;	/* t0 */
 	u16 udma;	/* t2CYCTYP/2 */
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	IDE_TIMING_SETUP	= BIT(0),
 	IDE_TIMING_ACT8B	= BIT(1),
 	IDE_TIMING_REC8B	= BIT(2),
@@ -1551,74 +1550,74 @@ u8 ide_dump_status(ide_drive_t *, स्थिर अक्षर *, u8);
 	IDE_TIMING_ALL		= IDE_TIMING_SETUP | IDE_TIMING_8BIT |
 				  IDE_TIMING_ACTIVE | IDE_TIMING_RECOVER |
 				  IDE_TIMING_CYCLE | IDE_TIMING_UDMA,
-पूर्ण;
+};
 
-काष्ठा ide_timing *ide_timing_find_mode(u8);
-u16 ide_pio_cycle_समय(ide_drive_t *, u8);
-व्योम ide_timing_merge(काष्ठा ide_timing *, काष्ठा ide_timing *,
-		      काष्ठा ide_timing *, अचिन्हित पूर्णांक);
-पूर्णांक ide_timing_compute(ide_drive_t *, u8, काष्ठा ide_timing *, पूर्णांक, पूर्णांक);
+struct ide_timing *ide_timing_find_mode(u8);
+u16 ide_pio_cycle_time(ide_drive_t *, u8);
+void ide_timing_merge(struct ide_timing *, struct ide_timing *,
+		      struct ide_timing *, unsigned int);
+int ide_timing_compute(ide_drive_t *, u8, struct ide_timing *, int, int);
 
-#अगर_घोषित CONFIG_IDE_XFER_MODE
-पूर्णांक ide_scan_pio_blacklist(अक्षर *);
-स्थिर अक्षर *ide_xfer_verbose(u8);
-पूर्णांक ide_pio_need_iordy(ide_drive_t *, स्थिर u8);
-पूर्णांक ide_set_pio_mode(ide_drive_t *, u8);
-पूर्णांक ide_set_dma_mode(ide_drive_t *, u8);
-व्योम ide_set_pio(ide_drive_t *, u8);
-पूर्णांक ide_set_xfer_rate(ide_drive_t *, u8);
-#अन्यथा
-अटल अंतरभूत व्योम ide_set_pio(ide_drive_t *drive, u8 pio) अणु ; पूर्ण
-अटल अंतरभूत पूर्णांक ide_set_xfer_rate(ide_drive_t *drive, u8 rate) अणु वापस -1; पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_IDE_XFER_MODE
+int ide_scan_pio_blacklist(char *);
+const char *ide_xfer_verbose(u8);
+int ide_pio_need_iordy(ide_drive_t *, const u8);
+int ide_set_pio_mode(ide_drive_t *, u8);
+int ide_set_dma_mode(ide_drive_t *, u8);
+void ide_set_pio(ide_drive_t *, u8);
+int ide_set_xfer_rate(ide_drive_t *, u8);
+#else
+static inline void ide_set_pio(ide_drive_t *drive, u8 pio) { ; }
+static inline int ide_set_xfer_rate(ide_drive_t *drive, u8 rate) { return -1; }
+#endif
 
-अटल अंतरभूत व्योम ide_set_max_pio(ide_drive_t *drive)
-अणु
+static inline void ide_set_max_pio(ide_drive_t *drive)
+{
 	ide_set_pio(drive, 255);
-पूर्ण
+}
 
-अक्षर *ide_media_string(ide_drive_t *);
+char *ide_media_string(ide_drive_t *);
 
-बाह्य स्थिर काष्ठा attribute_group *ide_dev_groups[];
-बाह्य काष्ठा bus_type ide_bus_type;
-बाह्य काष्ठा class *ide_port_class;
+extern const struct attribute_group *ide_dev_groups[];
+extern struct bus_type ide_bus_type;
+extern struct class *ide_port_class;
 
-अटल अंतरभूत व्योम ide_dump_identअगरy(u8 *id)
-अणु
-	prपूर्णांक_hex_dump(KERN_INFO, "", DUMP_PREFIX_NONE, 16, 2, id, 512, 0);
-पूर्ण
+static inline void ide_dump_identify(u8 *id)
+{
+	print_hex_dump(KERN_INFO, "", DUMP_PREFIX_NONE, 16, 2, id, 512, 0);
+}
 
-अटल अंतरभूत पूर्णांक hwअगर_to_node(ide_hwअगर_t *hwअगर)
-अणु
-	वापस hwअगर->dev ? dev_to_node(hwअगर->dev) : -1;
-पूर्ण
+static inline int hwif_to_node(ide_hwif_t *hwif)
+{
+	return hwif->dev ? dev_to_node(hwif->dev) : -1;
+}
 
-अटल अंतरभूत ide_drive_t *ide_get_pair_dev(ide_drive_t *drive)
-अणु
-	ide_drive_t *peer = drive->hwअगर->devices[(drive->dn ^ 1) & 1];
+static inline ide_drive_t *ide_get_pair_dev(ide_drive_t *drive)
+{
+	ide_drive_t *peer = drive->hwif->devices[(drive->dn ^ 1) & 1];
 
-	वापस (peer->dev_flags & IDE_DFLAG_PRESENT) ? peer : शून्य;
-पूर्ण
+	return (peer->dev_flags & IDE_DFLAG_PRESENT) ? peer : NULL;
+}
 
-अटल अंतरभूत व्योम *ide_get_drivedata(ide_drive_t *drive)
-अणु
-	वापस drive->drive_data;
-पूर्ण
+static inline void *ide_get_drivedata(ide_drive_t *drive)
+{
+	return drive->drive_data;
+}
 
-अटल अंतरभूत व्योम ide_set_drivedata(ide_drive_t *drive, व्योम *data)
-अणु
+static inline void ide_set_drivedata(ide_drive_t *drive, void *data)
+{
 	drive->drive_data = data;
-पूर्ण
+}
 
-#घोषणा ide_port_क्रम_each_dev(i, dev, port) \
-	क्रम ((i) = 0; ((dev) = (port)->devices[i]) || (i) < MAX_DRIVES; (i)++)
+#define ide_port_for_each_dev(i, dev, port) \
+	for ((i) = 0; ((dev) = (port)->devices[i]) || (i) < MAX_DRIVES; (i)++)
 
-#घोषणा ide_port_क्रम_each_present_dev(i, dev, port) \
-	क्रम ((i) = 0; ((dev) = (port)->devices[i]) || (i) < MAX_DRIVES; (i)++) \
-		अगर ((dev)->dev_flags & IDE_DFLAG_PRESENT)
+#define ide_port_for_each_present_dev(i, dev, port) \
+	for ((i) = 0; ((dev) = (port)->devices[i]) || (i) < MAX_DRIVES; (i)++) \
+		if ((dev)->dev_flags & IDE_DFLAG_PRESENT)
 
-#घोषणा ide_host_क्रम_each_port(i, port, host) \
-	क्रम ((i) = 0; ((port) = (host)->ports[i]) || (i) < MAX_HOST_PORTS; (i)++)
+#define ide_host_for_each_port(i, port, host) \
+	for ((i) = 0; ((port) = (host)->ports[i]) || (i) < MAX_HOST_PORTS; (i)++)
 
 
-#पूर्ण_अगर /* _IDE_H */
+#endif /* _IDE_H */

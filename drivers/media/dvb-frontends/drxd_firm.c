@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * drxd_firm.c : DRXD firmware tables
  *
@@ -13,46 +12,46 @@
  * Contains settings from driver 1.4.23
 */
 
-#समावेश "drxd_firm.h"
+#include "drxd_firm.h"
 
-#घोषणा ADDRESS(x)     ((x) & 0xFF), (((x)>>8) & 0xFF), (((x)>>16) & 0xFF), (((x)>>24) & 0xFF)
-#घोषणा LENGTH(x)      ((x) & 0xFF), (((x)>>8) & 0xFF)
+#define ADDRESS(x)     ((x) & 0xFF), (((x)>>8) & 0xFF), (((x)>>16) & 0xFF), (((x)>>24) & 0xFF)
+#define LENGTH(x)      ((x) & 0xFF), (((x)>>8) & 0xFF)
 
-/* Is written via block ग_लिखो, must be little endian */
-#घोषणा DATA16(x)      ((x) & 0xFF), (((x)>>8) & 0xFF)
+/* Is written via block write, must be little endian */
+#define DATA16(x)      ((x) & 0xFF), (((x)>>8) & 0xFF)
 
-#घोषणा WRBLOCK(a, l) ADDRESS(a), LENGTH(l)
-#घोषणा WR16(a, d) ADDRESS(a), LENGTH(1), DATA16(d)
+#define WRBLOCK(a, l) ADDRESS(a), LENGTH(l)
+#define WR16(a, d) ADDRESS(a), LENGTH(1), DATA16(d)
 
-#घोषणा END_OF_TABLE      0xFF, 0xFF, 0xFF, 0xFF
+#define END_OF_TABLE      0xFF, 0xFF, 0xFF, 0xFF
 
 /* HI firmware patches */
 
-#घोषणा HI_TR_FUNC_ADDR HI_IF_RAM_USR_BEGIN__A
-#घोषणा HI_TR_FUNC_SIZE 9	/* size of this function in inकाष्ठाion words */
+#define HI_TR_FUNC_ADDR HI_IF_RAM_USR_BEGIN__A
+#define HI_TR_FUNC_SIZE 9	/* size of this function in instruction words */
 
-u8 DRXD_InitAtomicRead[] = अणु
+u8 DRXD_InitAtomicRead[] = {
 	WRBLOCK(HI_TR_FUNC_ADDR, HI_TR_FUNC_SIZE),
 	0x26, 0x00,		/* 0         -> ring.rdy;           */
 	0x60, 0x04,		/* r0rami.dt -> ring.xba;           */
 	0x61, 0x04,		/* r0rami.dt -> ring.xad;           */
 	0xE3, 0x07,		/* HI_RA_RAM_USR_BEGIN -> ring.iad; */
-	0x40, 0x00,		/* (दीर्घ immediate)                 */
+	0x40, 0x00,		/* (long immediate)                 */
 	0x64, 0x04,		/* r0rami.dt -> ring.len;           */
 	0x65, 0x04,		/* r0rami.dt -> ring.ctl;           */
 	0x26, 0x00,		/* 0         -> ring.rdy;           */
 	0x38, 0x00,		/* 0         -> jumps.ad;           */
 	END_OF_TABLE
-पूर्ण;
+};
 
 /* Pins D0 and D1 of the parallel MPEG output can be used
    to set the I2C address of a device. */
 
-#घोषणा HI_RST_FUNC_ADDR (HI_IF_RAM_USR_BEGIN__A + HI_TR_FUNC_SIZE)
-#घोषणा HI_RST_FUNC_SIZE 54	/* size of this function in inकाष्ठाion words */
+#define HI_RST_FUNC_ADDR (HI_IF_RAM_USR_BEGIN__A + HI_TR_FUNC_SIZE)
+#define HI_RST_FUNC_SIZE 54	/* size of this function in instruction words */
 
 /* D0 Version */
-u8 DRXD_HiI2cPatch_1[] = अणु
+u8 DRXD_HiI2cPatch_1[] = {
 	WRBLOCK(HI_RST_FUNC_ADDR, HI_RST_FUNC_SIZE),
 	0xC8, 0x07, 0x01, 0x00,	/* MASK      -> reg0.dt;                        */
 	0xE0, 0x07, 0x15, 0x02,	/* (EC__BLK << 6) + EC_OC_REG__BNK -> ring.xba; */
@@ -110,10 +109,10 @@ u8 DRXD_HiI2cPatch_1[] = अणु
 	/* Force quick and dirty reset */
 	WR16(B_HI_CT_REG_COMM_STATE__A, 0),
 	END_OF_TABLE
-पूर्ण;
+};
 
 /* D0,D1 Version */
-u8 DRXD_HiI2cPatch_3[] = अणु
+u8 DRXD_HiI2cPatch_3[] = {
 	WRBLOCK(HI_RST_FUNC_ADDR, HI_RST_FUNC_SIZE),
 	0xC8, 0x07, 0x03, 0x00,	/* MASK      -> reg0.dt;                        */
 	0xE0, 0x07, 0x15, 0x02,	/* (EC__BLK << 6) + EC_OC_REG__BNK -> ring.xba; */
@@ -171,9 +170,9 @@ u8 DRXD_HiI2cPatch_3[] = अणु
 	/* Force quick and dirty reset */
 	WR16(B_HI_CT_REG_COMM_STATE__A, 0),
 	END_OF_TABLE
-पूर्ण;
+};
 
-u8 DRXD_ResetCEFR[] = अणु
+u8 DRXD_ResetCEFR[] = {
 	WRBLOCK(CE_REG_FR_TREAL00__A, 57),
 	0x52, 0x00,		/* CE_REG_FR_TREAL00__A */
 	0x00, 0x00,		/* CE_REG_FR_TIMAG00__A */
@@ -238,9 +237,9 @@ u8 DRXD_ResetCEFR[] = अणु
 	0x06, 0x00,		/* CE_REG_FR_TAP_SH__A   */
 
 	END_OF_TABLE
-पूर्ण;
+};
 
-u8 DRXD_InitFEA2_1[] = अणु
+u8 DRXD_InitFEA2_1[] = {
 	WRBLOCK(FE_AD_REG_PD__A, 3),
 	0x00, 0x00,		/* FE_AD_REG_PD__A          */
 	0x01, 0x00,		/* FE_AD_REG_INVEXT__A      */
@@ -269,30 +268,30 @@ u8 DRXD_InitFEA2_1[] = अणु
 	0x00, 0x00,		/* FE_AG_REG_IND_WIN__A     */
 	0x05, 0x00,		/* FE_AG_REG_IND_THD_LOL__A */
 	0x0F, 0x00,		/* FE_AG_REG_IND_THD_HIL__A */
-	0x00, 0x00,		/* FE_AG_REG_IND_DEL__A     करोn't care */
+	0x00, 0x00,		/* FE_AG_REG_IND_DEL__A     don't care */
 	0x1E, 0x00,		/* FE_AG_REG_IND_PD1_WRI__A */
 	0x0C, 0x00,		/* FE_AG_REG_PDA_AUR_CNT__A */
 	0x00, 0x00,		/* FE_AG_REG_PDA_RUR_CNT__A */
-	0x00, 0x00,		/* FE_AG_REG_PDA_AVE_DAT__A करोn't care  */
+	0x00, 0x00,		/* FE_AG_REG_PDA_AVE_DAT__A don't care  */
 	0x00, 0x00,		/* FE_AG_REG_PDC_RUR_CNT__A */
 	0x01, 0x00,		/* FE_AG_REG_PDC_SET_LVL__A */
 	0x02, 0x00,		/* FE_AG_REG_PDC_FLA_RGN__A */
-	0x00, 0x00,		/* FE_AG_REG_PDC_JMP_PSN__A करोn't care  */
+	0x00, 0x00,		/* FE_AG_REG_PDC_JMP_PSN__A don't care  */
 	0xFF, 0xFF,		/* FE_AG_REG_PDC_FLA_STP__A */
 	0xFF, 0xFF,		/* FE_AG_REG_PDC_SLO_STP__A */
-	0x00, 0x1F,		/* FE_AG_REG_PDC_PD2_WRI__A करोn't care  */
-	0x00, 0x00,		/* FE_AG_REG_PDC_MAP_DAT__A करोn't care  */
+	0x00, 0x1F,		/* FE_AG_REG_PDC_PD2_WRI__A don't care  */
+	0x00, 0x00,		/* FE_AG_REG_PDC_MAP_DAT__A don't care  */
 	0x02, 0x00,		/* FE_AG_REG_PDC_MAX__A     */
 	0x0C, 0x00,		/* FE_AG_REG_TGA_AUR_CNT__A */
 	0x00, 0x00,		/* FE_AG_REG_TGA_RUR_CNT__A */
-	0x00, 0x00,		/* FE_AG_REG_TGA_AVE_DAT__A करोn't care  */
+	0x00, 0x00,		/* FE_AG_REG_TGA_AVE_DAT__A don't care  */
 	0x00, 0x00,		/* FE_AG_REG_TGC_RUR_CNT__A */
 	0x22, 0x00,		/* FE_AG_REG_TGC_SET_LVL__A */
 	0x15, 0x00,		/* FE_AG_REG_TGC_FLA_RGN__A */
-	0x00, 0x00,		/* FE_AG_REG_TGC_JMP_PSN__A करोn't care  */
+	0x00, 0x00,		/* FE_AG_REG_TGC_JMP_PSN__A don't care  */
 	0x01, 0x00,		/* FE_AG_REG_TGC_FLA_STP__A */
 	0x0A, 0x00,		/* FE_AG_REG_TGC_SLO_STP__A */
-	0x00, 0x00,		/* FE_AG_REG_TGC_MAP_DAT__A करोn't care  */
+	0x00, 0x00,		/* FE_AG_REG_TGC_MAP_DAT__A don't care  */
 	0x10, 0x00,		/* FE_AG_REG_FGA_AUR_CNT__A */
 	0x10, 0x00,		/* FE_AG_REG_FGA_RUR_CNT__A */
 
@@ -317,7 +316,7 @@ u8 DRXD_InitFEA2_1[] = अणु
 	0x00, 0x00,		/* FE_CU_REG_FRM_CNT_STR__A */
 
 	END_OF_TABLE
-पूर्ण;
+};
 
    /* with PGA */
 /*   WR16COND( DRXD_WITH_PGA, FE_AG_REG_AG_PGA_MODE__A   , 0x0004), */
@@ -326,7 +325,7 @@ u8 DRXD_InitFEA2_1[] = अणु
 /*   WR16(FE_AG_REG_AG_AGC_SIO__A,  (extAttr -> FeAgRegAgAgcSio), 0x0000 );*/
 /*   WR16(FE_AG_REG_AG_PWD__A        ,(extAttr -> FeAgRegAgPwd), 0x0000 );*/
 
-u8 DRXD_InitFEA2_2[] = अणु
+u8 DRXD_InitFEA2_2[] = {
 	WR16(FE_AG_REG_CDR_RUR_CNT__A, 0x0010),
 	WR16(FE_AG_REG_FGM_WRI__A, 48),
 	/* Activate measurement, activate scale */
@@ -342,9 +341,9 @@ u8 DRXD_InitFEA2_2[] = अणु
 	WR16(FE_AG_REG_AG_MODE_LOP__A, 0x895E),
 
 	END_OF_TABLE
-पूर्ण;
+};
 
-u8 DRXD_InitFEB1_1[] = अणु
+u8 DRXD_InitFEB1_1[] = {
 	WR16(B_FE_AD_REG_PD__A, 0x0000),
 	WR16(B_FE_AD_REG_CLKNEG__A, 0x0000),
 	WR16(B_FE_AG_REG_BGC_FGC_WRI__A, 0x0000),
@@ -357,7 +356,7 @@ u8 DRXD_InitFEB1_1[] = अणु
 	WR16(B_FE_CF_REG_IMP_VAL__A, 1),
 	WR16(B_FE_AG_REG_EGC_FLA_RGN__A, 7),
 	END_OF_TABLE
-पूर्ण;
+};
 
 	/* with PGA */
 /*      WR16(B_FE_AG_REG_AG_PGA_MODE__A   , 0x0000, 0x0000); */
@@ -367,7 +366,7 @@ u8 DRXD_InitFEB1_1[] = अणु
 									     /*   WR16(B_FE_AG_REG_AG_AGC_SIO__A,(extAttr -> FeAgRegAgAgcSio), 0x0000 );*//*added HS 23-05-2005 */
 /*   WR16(B_FE_AG_REG_AG_PWD__A    ,(extAttr -> FeAgRegAgPwd), 0x0000 );*/
 
-u8 DRXD_InitFEB1_2[] = अणु
+u8 DRXD_InitFEB1_2[] = {
 	WR16(B_FE_COMM_EXEC__A, 0x0001),
 
 	/* RF-AGC setup */
@@ -387,9 +386,9 @@ u8 DRXD_InitFEB1_2[] = अणु
 	WR16(B_FE_CU_REG_CTR_NFC_OCR__A, 25000),
 	WR16(B_FE_CU_REG_CTR_NFC_ICR__A, 1),
 	END_OF_TABLE
-पूर्ण;
+};
 
-u8 DRXD_InitCPA2[] = अणु
+u8 DRXD_InitCPA2[] = {
 	WRBLOCK(CP_REG_BR_SPL_OFFSET__A, 2),
 	0x07, 0x00,		/* CP_REG_BR_SPL_OFFSET__A  */
 	0x0A, 0x00,		/* CP_REG_BR_STR_DEL__A     */
@@ -417,15 +416,15 @@ u8 DRXD_InitCPA2[] = अणु
 
 	WR16(CP_REG_COMM_EXEC__A, 0x0001),
 	END_OF_TABLE
-पूर्ण;
+};
 
-u8 DRXD_InitCPB1[] = अणु
+u8 DRXD_InitCPB1[] = {
 	WR16(B_CP_REG_BR_SPL_OFFSET__A, 0x0008),
 	WR16(B_CP_COMM_EXEC__A, 0x0001),
 	END_OF_TABLE
-पूर्ण;
+};
 
-u8 DRXD_InitCEA2[] = अणु
+u8 DRXD_InitCEA2[] = {
 	WRBLOCK(CE_REG_AVG_POW__A, 4),
 	0x62, 0x00,		/* CE_REG_AVG_POW__A        */
 	0x78, 0x00,		/* CE_REG_MAX_POW__A        */
@@ -466,16 +465,16 @@ u8 DRXD_InitCEA2[] = अणु
 	WR16(CE_REG_TI_NEXP_OFFS__A, 0x0000),
 
 	END_OF_TABLE
-पूर्ण;
+};
 
-u8 DRXD_InitCEB1[] = अणु
+u8 DRXD_InitCEB1[] = {
 	WR16(B_CE_REG_TI_PHN_ENABLE__A, 0x0001),
 	WR16(B_CE_REG_FR_PM_SET__A, 0x000D),
 
 	END_OF_TABLE
-पूर्ण;
+};
 
-u8 DRXD_InitEQA2[] = अणु
+u8 DRXD_InitEQA2[] = {
 	WRBLOCK(EQ_REG_OT_QNT_THRES0__A, 4),
 	0x1E, 0x00,		/* EQ_REG_OT_QNT_THRES0__A        */
 	0x1F, 0x00,		/* EQ_REG_OT_QNT_THRES1__A        */
@@ -488,14 +487,14 @@ u8 DRXD_InitEQA2[] = अणु
 	WR16(EQ_REG_RC_SEL_CAR__A, 0x0002),
 	WR16(EQ_REG_COMM_EXEC__A, 0x0001),
 	END_OF_TABLE
-पूर्ण;
+};
 
-u8 DRXD_InitEQB1[] = अणु
+u8 DRXD_InitEQB1[] = {
 	WR16(B_EQ_REG_COMM_EXEC__A, 0x0001),
 	END_OF_TABLE
-पूर्ण;
+};
 
-u8 DRXD_ResetECRAM[] = अणु
+u8 DRXD_ResetECRAM[] = {
 	/* Reset packet sync bytes in EC_VD ram */
 	WR16(EC_OD_DEINT_RAM__A + 0x3b7 + (0 * 17), 0x0000),
 	WR16(EC_OD_DEINT_RAM__A + 0x3b7 + (1 * 17), 0x0000),
@@ -513,9 +512,9 @@ u8 DRXD_ResetECRAM[] = अणु
 	WR16(EC_RS_EC_RAM__A, 0x0000),
 	WR16(EC_RS_EC_RAM__A + 204, 0x0000),
 	END_OF_TABLE
-पूर्ण;
+};
 
-u8 DRXD_InitECA2[] = अणु
+u8 DRXD_InitECA2[] = {
 	WRBLOCK(EC_SB_REG_CSI_HI__A, 6),
 	0x1F, 0x00,		/* EC_SB_REG_CSI_HI__A            */
 	0x1E, 0x00,		/* EC_SB_REG_CSI_LO__A            */
@@ -559,7 +558,7 @@ u8 DRXD_InitECA2[] = अणु
 	WR16(EC_OD_REG_SYNC__A, 0x0664),
 	WR16(EC_OC_REG_OC_MON_SIO__A, 0x0000),
 	WR16(EC_OC_REG_SNC_ISC_LVL__A, 0x0D0C),
-	/* Output zero on monitorbus pads, घातer saving */
+	/* Output zero on monitorbus pads, power saving */
 	WR16(EC_OC_REG_OCR_MON_UOS__A,
 	     (EC_OC_REG_OCR_MON_UOS_DAT_0_ENABLE |
 	      EC_OC_REG_OCR_MON_UOS_DAT_1_ENABLE |
@@ -599,9 +598,9 @@ u8 DRXD_InitECA2[] = अणु
 	WR16(EC_OD_REG_COMM_EXEC__A, 0x0001),
 	WR16(EC_RS_REG_COMM_EXEC__A, 0x0001),
 	END_OF_TABLE
-पूर्ण;
+};
 
-u8 DRXD_InitECB1[] = अणु
+u8 DRXD_InitECB1[] = {
 	WR16(B_EC_SB_REG_CSI_OFS0__A, 0x0001),
 	WR16(B_EC_SB_REG_CSI_OFS1__A, 0x0001),
 	WR16(B_EC_SB_REG_CSI_OFS2__A, 0x0001),
@@ -618,7 +617,7 @@ u8 DRXD_InitECB1[] = अणु
 	WR16(B_EC_OC_REG_RCN_GAI_LVL__A, 0x000D),
 	WR16(B_EC_OC_REG_OC_MPG_SIO__A, 0x0000),
 
-	/* Needed because shaकरोw रेजिस्टरs करो not have correct शेष value */
+	/* Needed because shadow registers do not have correct default value */
 	WR16(B_EC_OC_REG_RCN_CST_LOP__A, 0x1000),
 	WR16(B_EC_OC_REG_RCN_CST_HIP__A, 0x0000),
 	WR16(B_EC_OC_REG_RCN_CRA_LOP__A, 0x0000),
@@ -654,9 +653,9 @@ u8 DRXD_InitECB1[] = अणु
 	WR16(B_EC_OD_REG_COMM_EXEC__A, 0x0001),
 	WR16(B_EC_RS_REG_COMM_EXEC__A, 0x0001),
 	END_OF_TABLE
-पूर्ण;
+};
 
-u8 DRXD_ResetECA2[] = अणु
+u8 DRXD_ResetECA2[] = {
 
 	WR16(EC_OC_REG_COMM_EXEC__A, 0x0000),
 	WR16(EC_OD_REG_COMM_EXEC__A, 0x0000),
@@ -688,7 +687,7 @@ u8 DRXD_ResetECA2[] = अणु
 	WR16(EC_OD_REG_SYNC__A, 0x0664),
 	WR16(EC_OC_REG_OC_MON_SIO__A, 0x0000),
 	WR16(EC_OC_REG_SNC_ISC_LVL__A, 0x0D0C),
-	/* Output zero on monitorbus pads, घातer saving */
+	/* Output zero on monitorbus pads, power saving */
 	WR16(EC_OC_REG_OCR_MON_UOS__A,
 	     (EC_OC_REG_OCR_MON_UOS_DAT_0_ENABLE |
 	      EC_OC_REG_OCR_MON_UOS_DAT_1_ENABLE |
@@ -725,24 +724,24 @@ u8 DRXD_ResetECA2[] = अणु
 
 	WR16(EC_OD_REG_COMM_EXEC__A, 0x0001),
 	END_OF_TABLE
-पूर्ण;
+};
 
-u8 DRXD_InitSC[] = अणु
+u8 DRXD_InitSC[] = {
 	WR16(SC_COMM_EXEC__A, 0),
 	WR16(SC_COMM_STATE__A, 0),
 
-#अगर_घोषित COMPILE_FOR_QT
+#ifdef COMPILE_FOR_QT
 	WR16(SC_RA_RAM_BE_OPT_DELAY__A, 0x100),
-#पूर्ण_अगर
+#endif
 
-	/* SC is not started, this is करोne in SetChannels() */
+	/* SC is not started, this is done in SetChannels() */
 	END_OF_TABLE
-पूर्ण;
+};
 
 /* Diversity settings */
 
-u8 DRXD_InitDiversityFront[] = अणु
-	/* Start demod ********* RF in , भागersity out **************************** */
+u8 DRXD_InitDiversityFront[] = {
+	/* Start demod ********* RF in , diversity out **************************** */
 	WR16(B_SC_RA_RAM_CONFIG__A, B_SC_RA_RAM_CONFIG_FR_ENABLE__M |
 	     B_SC_RA_RAM_CONFIG_FREQSCAN__M),
 
@@ -776,11 +775,11 @@ u8 DRXD_InitDiversityFront[] = अणु
 	/*    0x2a ), *//* CE to PASS mux */
 
 	END_OF_TABLE
-पूर्ण;
+};
 
-u8 DRXD_InitDiversityEnd[] = अणु
-	/* End demod *********** combining RF in and भागersity in, MPEG TS out **** */
-	/* disable near/far; चयन on timing slave mode */
+u8 DRXD_InitDiversityEnd[] = {
+	/* End demod *********** combining RF in and diversity in, MPEG TS out **** */
+	/* disable near/far; switch on timing slave mode */
 	WR16(B_SC_RA_RAM_CONFIG__A, B_SC_RA_RAM_CONFIG_FR_ENABLE__M |
 	     B_SC_RA_RAM_CONFIG_FREQSCAN__M |
 	     B_SC_RA_RAM_CONFIG_DIV_ECHO_ENABLE__M |
@@ -788,13 +787,13 @@ u8 DRXD_InitDiversityEnd[] = अणु
 	     B_SC_RA_RAM_CONFIG_DIV_BLANK_ENABLE__M
 /* MV from CtrlDiversity */
 	    ),
-#अगर_घोषित DRXDDIV_SRMM_SLAVING
+#ifdef DRXDDIV_SRMM_SLAVING
 	WR16(SC_RA_RAM_LC_ABS_2K__A, 0x3c7),
 	WR16(SC_RA_RAM_LC_ABS_8K__A, 0x3c7),
-#अन्यथा
+#else
 	WR16(SC_RA_RAM_LC_ABS_2K__A, 0x7),
 	WR16(SC_RA_RAM_LC_ABS_8K__A, 0x7),
-#पूर्ण_अगर
+#endif
 
 	WR16(B_SC_RA_RAM_IR_COARSE_8K_LENGTH__A, IRLEN_COARSE_8K),
 	WR16(B_SC_RA_RAM_IR_COARSE_8K_FREQINC__A, 1 << (11 - IRLEN_COARSE_8K)),
@@ -818,9 +817,9 @@ u8 DRXD_InitDiversityEnd[] = अणु
 
 	WR16(B_CC_REG_DIVERSITY__A, 0x0001),
 	END_OF_TABLE
-पूर्ण;
+};
 
-u8 DRXD_DisableDiversity[] = अणु
+u8 DRXD_DisableDiversity[] = {
 	WR16(B_SC_RA_RAM_LC_ABS_2K__A, B_SC_RA_RAM_LC_ABS_2K__PRE),
 	WR16(B_SC_RA_RAM_LC_ABS_8K__A, B_SC_RA_RAM_LC_ABS_8K__PRE),
 	WR16(B_SC_RA_RAM_IR_COARSE_8K_LENGTH__A,
@@ -859,10 +858,10 @@ u8 DRXD_DisableDiversity[] = अणु
 	WR16(B_EQ_REG_RC_SEL_CAR__A, B_EQ_REG_RC_SEL_CAR_INIT),	/* combining disabled */
 
 	END_OF_TABLE
-पूर्ण;
+};
 
-u8 DRXD_StartDiversityFront[] = अणु
-	/* Start demod, RF in and भागersity out, no combining */
+u8 DRXD_StartDiversityFront[] = {
+	/* Start demod, RF in and diversity out, no combining */
 	WR16(B_FE_CF_REG_IMP_VAL__A, 0x0),
 	WR16(B_FE_AD_REG_FDB_IN__A, 0x0),
 	WR16(B_FE_AD_REG_INVEXT__A, 0x0),
@@ -873,12 +872,12 @@ u8 DRXD_StartDiversityFront[] = अणु
 	WR16(SC_RA_RAM_ECHO_SHIFT_LIM__A, 2),
 
 	END_OF_TABLE
-पूर्ण;
+};
 
-u8 DRXD_StartDiversityEnd[] = अणु
-	/* End demod, combining RF in and भागersity in, MPEG TS out */
+u8 DRXD_StartDiversityEnd[] = {
+	/* End demod, combining RF in and diversity in, MPEG TS out */
 	WR16(B_FE_CF_REG_IMP_VAL__A, 0x0),	/* disable impulse noise cruncher */
-	WR16(B_FE_AD_REG_INVEXT__A, 0x0),	/* घड़ी inversion (क्रम sohard board) */
+	WR16(B_FE_AD_REG_INVEXT__A, 0x0),	/* clock inversion (for sohard board) */
 	WR16(B_CP_REG_BR_STR_DEL__A, 10),	/* apparently no mb delay matching is best */
 
 	WR16(B_EQ_REG_RC_SEL_CAR__A, B_EQ_REG_RC_SEL_CAR_DIV_ON |	/* org = 0x81 combining enabled */
@@ -886,9 +885,9 @@ u8 DRXD_StartDiversityEnd[] = अणु
 	     B_EQ_REG_RC_SEL_CAR_PASS_A_CC | B_EQ_REG_RC_SEL_CAR_LOCAL_A_CC),
 
 	END_OF_TABLE
-पूर्ण;
+};
 
-u8 DRXD_DiversityDelay8MHZ[] = अणु
+u8 DRXD_DiversityDelay8MHZ[] = {
 	WR16(B_SC_RA_RAM_DIVERSITY_DELAY_2K_32__A, 1150 - 50),
 	WR16(B_SC_RA_RAM_DIVERSITY_DELAY_2K_16__A, 1100 - 50),
 	WR16(B_SC_RA_RAM_DIVERSITY_DELAY_2K_8__A, 1000 - 50),
@@ -898,10 +897,10 @@ u8 DRXD_DiversityDelay8MHZ[] = अणु
 	WR16(B_SC_RA_RAM_DIVERSITY_DELAY_8K_8__A, 4800 - 50),
 	WR16(B_SC_RA_RAM_DIVERSITY_DELAY_8K_4__A, 4000 - 50),
 	END_OF_TABLE
-पूर्ण;
+};
 
-u8 DRXD_DiversityDelay6MHZ[] =	/* also used ok क्रम 7 MHz */
-अणु
+u8 DRXD_DiversityDelay6MHZ[] =	/* also used ok for 7 MHz */
+{
 	WR16(B_SC_RA_RAM_DIVERSITY_DELAY_2K_32__A, 1100 - 50),
 	WR16(B_SC_RA_RAM_DIVERSITY_DELAY_2K_16__A, 1000 - 50),
 	WR16(B_SC_RA_RAM_DIVERSITY_DELAY_2K_8__A, 900 - 50),
@@ -911,4 +910,4 @@ u8 DRXD_DiversityDelay6MHZ[] =	/* also used ok क्रम 7 MHz */
 	WR16(B_SC_RA_RAM_DIVERSITY_DELAY_8K_8__A, 4500 - 50),
 	WR16(B_SC_RA_RAM_DIVERSITY_DELAY_8K_4__A, 3500 - 50),
 	END_OF_TABLE
-पूर्ण;
+};

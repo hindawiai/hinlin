@@ -1,237 +1,236 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2003 Bernarकरो Innocenti <bernie@develer.com>
+ * Copyright (C) 2003 Bernardo Innocenti <bernie@develer.com>
  *
- * Based on क्रमmer करो_भाग() implementation from यंत्र-parisc/भाग64.h:
+ * Based on former do_div() implementation from asm-parisc/div64.h:
  *	Copyright (C) 1999 Hewlett-Packard Co
  *	Copyright (C) 1999 David Mosberger-Tang <davidm@hpl.hp.com>
  *
  *
- * Generic C version of 64bit/32bit भागision and modulo, with
- * 64bit result and 32bit reमुख्यder.
+ * Generic C version of 64bit/32bit division and modulo, with
+ * 64bit result and 32bit remainder.
  *
- * The fast हाल क्रम (n>>32 == 0) is handled अंतरभूत by करो_भाग().
+ * The fast case for (n>>32 == 0) is handled inline by do_div().
  *
- * Code generated क्रम this function might be very inefficient
- * क्रम some CPUs. __भाग64_32() can be overridden by linking arch-specअगरic
- * assembly versions such as arch/ppc/lib/भाग64.S and arch/sh/lib/भाग64.S
- * or by defining a preprocessor macro in arch/include/यंत्र/भाग64.h.
+ * Code generated for this function might be very inefficient
+ * for some CPUs. __div64_32() can be overridden by linking arch-specific
+ * assembly versions such as arch/ppc/lib/div64.S and arch/sh/lib/div64.S
+ * or by defining a preprocessor macro in arch/include/asm/div64.h.
  */
 
-#समावेश <linux/bitops.h>
-#समावेश <linux/export.h>
-#समावेश <linux/गणित.स>
-#समावेश <linux/math64.h>
-#समावेश <linux/log2.h>
+#include <linux/bitops.h>
+#include <linux/export.h>
+#include <linux/math.h>
+#include <linux/math64.h>
+#include <linux/log2.h>
 
 /* Not needed on 64bit architectures */
-#अगर BITS_PER_LONG == 32
+#if BITS_PER_LONG == 32
 
-#अगर_अघोषित __भाग64_32
-uपूर्णांक32_t __attribute__((weak)) __भाग64_32(uपूर्णांक64_t *n, uपूर्णांक32_t base)
-अणु
-	uपूर्णांक64_t rem = *n;
-	uपूर्णांक64_t b = base;
-	uपूर्णांक64_t res, d = 1;
-	uपूर्णांक32_t high = rem >> 32;
+#ifndef __div64_32
+uint32_t __attribute__((weak)) __div64_32(uint64_t *n, uint32_t base)
+{
+	uint64_t rem = *n;
+	uint64_t b = base;
+	uint64_t res, d = 1;
+	uint32_t high = rem >> 32;
 
 	/* Reduce the thing a bit first */
 	res = 0;
-	अगर (high >= base) अणु
+	if (high >= base) {
 		high /= base;
-		res = (uपूर्णांक64_t) high << 32;
-		rem -= (uपूर्णांक64_t) (high*base) << 32;
-	पूर्ण
+		res = (uint64_t) high << 32;
+		rem -= (uint64_t) (high*base) << 32;
+	}
 
-	जबतक ((पूर्णांक64_t)b > 0 && b < rem) अणु
+	while ((int64_t)b > 0 && b < rem) {
 		b = b+b;
 		d = d+d;
-	पूर्ण
+	}
 
-	करो अणु
-		अगर (rem >= b) अणु
+	do {
+		if (rem >= b) {
 			rem -= b;
 			res += d;
-		पूर्ण
+		}
 		b >>= 1;
 		d >>= 1;
-	पूर्ण जबतक (d);
+	} while (d);
 
 	*n = res;
-	वापस rem;
-पूर्ण
-EXPORT_SYMBOL(__भाग64_32);
-#पूर्ण_अगर
+	return rem;
+}
+EXPORT_SYMBOL(__div64_32);
+#endif
 
 /**
- * भाग_s64_rem - चिन्हित 64bit भागide with 64bit भागisor and reमुख्यder
- * @भागidend:	64bit भागidend
- * @भागisor:	64bit भागisor
- * @reमुख्यder:  64bit reमुख्यder
+ * div_s64_rem - signed 64bit divide with 64bit divisor and remainder
+ * @dividend:	64bit dividend
+ * @divisor:	64bit divisor
+ * @remainder:  64bit remainder
  */
-#अगर_अघोषित भाग_s64_rem
-s64 भाग_s64_rem(s64 भागidend, s32 भागisor, s32 *reमुख्यder)
-अणु
+#ifndef div_s64_rem
+s64 div_s64_rem(s64 dividend, s32 divisor, s32 *remainder)
+{
 	u64 quotient;
 
-	अगर (भागidend < 0) अणु
-		quotient = भाग_u64_rem(-भागidend, असल(भागisor), (u32 *)reमुख्यder);
-		*reमुख्यder = -*reमुख्यder;
-		अगर (भागisor > 0)
+	if (dividend < 0) {
+		quotient = div_u64_rem(-dividend, abs(divisor), (u32 *)remainder);
+		*remainder = -*remainder;
+		if (divisor > 0)
 			quotient = -quotient;
-	पूर्ण अन्यथा अणु
-		quotient = भाग_u64_rem(भागidend, असल(भागisor), (u32 *)reमुख्यder);
-		अगर (भागisor < 0)
+	} else {
+		quotient = div_u64_rem(dividend, abs(divisor), (u32 *)remainder);
+		if (divisor < 0)
 			quotient = -quotient;
-	पूर्ण
-	वापस quotient;
-पूर्ण
-EXPORT_SYMBOL(भाग_s64_rem);
-#पूर्ण_अगर
+	}
+	return quotient;
+}
+EXPORT_SYMBOL(div_s64_rem);
+#endif
 
 /**
- * भाग64_u64_rem - अचिन्हित 64bit भागide with 64bit भागisor and reमुख्यder
- * @भागidend:	64bit भागidend
- * @भागisor:	64bit भागisor
- * @reमुख्यder:  64bit reमुख्यder
+ * div64_u64_rem - unsigned 64bit divide with 64bit divisor and remainder
+ * @dividend:	64bit dividend
+ * @divisor:	64bit divisor
+ * @remainder:  64bit remainder
  *
- * This implementation is a comparable to algorithm used by भाग64_u64.
- * But this operation, which includes math क्रम calculating the reमुख्यder,
- * is kept distinct to aव्योम slowing करोwn the भाग64_u64 operation on 32bit
- * प्रणालीs.
+ * This implementation is a comparable to algorithm used by div64_u64.
+ * But this operation, which includes math for calculating the remainder,
+ * is kept distinct to avoid slowing down the div64_u64 operation on 32bit
+ * systems.
  */
-#अगर_अघोषित भाग64_u64_rem
-u64 भाग64_u64_rem(u64 भागidend, u64 भागisor, u64 *reमुख्यder)
-अणु
-	u32 high = भागisor >> 32;
+#ifndef div64_u64_rem
+u64 div64_u64_rem(u64 dividend, u64 divisor, u64 *remainder)
+{
+	u32 high = divisor >> 32;
 	u64 quot;
 
-	अगर (high == 0) अणु
+	if (high == 0) {
 		u32 rem32;
-		quot = भाग_u64_rem(भागidend, भागisor, &rem32);
-		*reमुख्यder = rem32;
-	पूर्ण अन्यथा अणु
-		पूर्णांक n = fls(high);
-		quot = भाग_u64(भागidend >> n, भागisor >> n);
+		quot = div_u64_rem(dividend, divisor, &rem32);
+		*remainder = rem32;
+	} else {
+		int n = fls(high);
+		quot = div_u64(dividend >> n, divisor >> n);
 
-		अगर (quot != 0)
+		if (quot != 0)
 			quot--;
 
-		*reमुख्यder = भागidend - quot * भागisor;
-		अगर (*reमुख्यder >= भागisor) अणु
+		*remainder = dividend - quot * divisor;
+		if (*remainder >= divisor) {
 			quot++;
-			*reमुख्यder -= भागisor;
-		पूर्ण
-	पूर्ण
+			*remainder -= divisor;
+		}
+	}
 
-	वापस quot;
-पूर्ण
-EXPORT_SYMBOL(भाग64_u64_rem);
-#पूर्ण_अगर
+	return quot;
+}
+EXPORT_SYMBOL(div64_u64_rem);
+#endif
 
 /**
- * भाग64_u64 - अचिन्हित 64bit भागide with 64bit भागisor
- * @भागidend:	64bit भागidend
- * @भागisor:	64bit भागisor
+ * div64_u64 - unsigned 64bit divide with 64bit divisor
+ * @dividend:	64bit dividend
+ * @divisor:	64bit divisor
  *
- * This implementation is a modअगरied version of the algorithm proposed
+ * This implementation is a modified version of the algorithm proposed
  * by the book 'Hacker's Delight'.  The original source and full proof
- * can be found here and is available क्रम use without restriction.
+ * can be found here and is available for use without restriction.
  *
  * 'http://www.hackersdelight.org/hdcodetxt/divDouble.c.txt'
  */
-#अगर_अघोषित भाग64_u64
-u64 भाग64_u64(u64 भागidend, u64 भागisor)
-अणु
-	u32 high = भागisor >> 32;
+#ifndef div64_u64
+u64 div64_u64(u64 dividend, u64 divisor)
+{
+	u32 high = divisor >> 32;
 	u64 quot;
 
-	अगर (high == 0) अणु
-		quot = भाग_u64(भागidend, भागisor);
-	पूर्ण अन्यथा अणु
-		पूर्णांक n = fls(high);
-		quot = भाग_u64(भागidend >> n, भागisor >> n);
+	if (high == 0) {
+		quot = div_u64(dividend, divisor);
+	} else {
+		int n = fls(high);
+		quot = div_u64(dividend >> n, divisor >> n);
 
-		अगर (quot != 0)
+		if (quot != 0)
 			quot--;
-		अगर ((भागidend - quot * भागisor) >= भागisor)
+		if ((dividend - quot * divisor) >= divisor)
 			quot++;
-	पूर्ण
+	}
 
-	वापस quot;
-पूर्ण
-EXPORT_SYMBOL(भाग64_u64);
-#पूर्ण_अगर
+	return quot;
+}
+EXPORT_SYMBOL(div64_u64);
+#endif
 
 /**
- * भाग64_s64 - चिन्हित 64bit भागide with 64bit भागisor
- * @भागidend:	64bit भागidend
- * @भागisor:	64bit भागisor
+ * div64_s64 - signed 64bit divide with 64bit divisor
+ * @dividend:	64bit dividend
+ * @divisor:	64bit divisor
  */
-#अगर_अघोषित भाग64_s64
-s64 भाग64_s64(s64 भागidend, s64 भागisor)
-अणु
+#ifndef div64_s64
+s64 div64_s64(s64 dividend, s64 divisor)
+{
 	s64 quot, t;
 
-	quot = भाग64_u64(असल(भागidend), असल(भागisor));
-	t = (भागidend ^ भागisor) >> 63;
+	quot = div64_u64(abs(dividend), abs(divisor));
+	t = (dividend ^ divisor) >> 63;
 
-	वापस (quot ^ t) - t;
-पूर्ण
-EXPORT_SYMBOL(भाग64_s64);
-#पूर्ण_अगर
+	return (quot ^ t) - t;
+}
+EXPORT_SYMBOL(div64_s64);
+#endif
 
-#पूर्ण_अगर /* BITS_PER_LONG == 32 */
+#endif /* BITS_PER_LONG == 32 */
 
 /*
- * Iterative भाग/mod क्रम use when भागidend is not expected to be much
- * bigger than भागisor.
+ * Iterative div/mod for use when dividend is not expected to be much
+ * bigger than divisor.
  */
-u32 iter_भाग_u64_rem(u64 भागidend, u32 भागisor, u64 *reमुख्यder)
-अणु
-	वापस __iter_भाग_u64_rem(भागidend, भागisor, reमुख्यder);
-पूर्ण
-EXPORT_SYMBOL(iter_भाग_u64_rem);
+u32 iter_div_u64_rem(u64 dividend, u32 divisor, u64 *remainder)
+{
+	return __iter_div_u64_rem(dividend, divisor, remainder);
+}
+EXPORT_SYMBOL(iter_div_u64_rem);
 
-#अगर_अघोषित mul_u64_u64_भाग_u64
-u64 mul_u64_u64_भाग_u64(u64 a, u64 b, u64 c)
-अणु
-	u64 res = 0, भाग, rem;
-	पूर्णांक shअगरt;
+#ifndef mul_u64_u64_div_u64
+u64 mul_u64_u64_div_u64(u64 a, u64 b, u64 c)
+{
+	u64 res = 0, div, rem;
+	int shift;
 
 	/* can a * b overflow ? */
-	अगर (ilog2(a) + ilog2(b) > 62) अणु
+	if (ilog2(a) + ilog2(b) > 62) {
 		/*
 		 * (b * a) / c is equal to
 		 *
 		 *      (b / c) * a +
 		 *      (b % c) * a / c
 		 *
-		 * अगर nothing overflows. Can the 1st multiplication
-		 * overflow? Yes, but we करो not care: this can only
-		 * happen अगर the end result can't fit in u64 anyway.
+		 * if nothing overflows. Can the 1st multiplication
+		 * overflow? Yes, but we do not care: this can only
+		 * happen if the end result can't fit in u64 anyway.
 		 *
-		 * So the code below करोes
+		 * So the code below does
 		 *
 		 *      res = (b / c) * a;
 		 *      b = b % c;
 		 */
-		भाग = भाग64_u64_rem(b, c, &rem);
-		res = भाग * a;
+		div = div64_u64_rem(b, c, &rem);
+		res = div * a;
 		b = rem;
 
-		shअगरt = ilog2(a) + ilog2(b) - 62;
-		अगर (shअगरt > 0) अणु
+		shift = ilog2(a) + ilog2(b) - 62;
+		if (shift > 0) {
 			/* drop precision */
-			b >>= shअगरt;
-			c >>= shअगरt;
-			अगर (!c)
-				वापस res;
-		पूर्ण
-	पूर्ण
+			b >>= shift;
+			c >>= shift;
+			if (!c)
+				return res;
+		}
+	}
 
-	वापस res + भाग64_u64(a * b, c);
-पूर्ण
-EXPORT_SYMBOL(mul_u64_u64_भाग_u64);
-#पूर्ण_अगर
+	return res + div64_u64(a * b, c);
+}
+EXPORT_SYMBOL(mul_u64_u64_div_u64);
+#endif

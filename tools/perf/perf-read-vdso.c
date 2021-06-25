@@ -1,36 +1,35 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <मानकपन.स>
-#समावेश <माला.स>
+// SPDX-License-Identifier: GPL-2.0
+#include <stdio.h>
+#include <string.h>
 
-#घोषणा VDSO__MAP_NAME "[vdso]"
+#define VDSO__MAP_NAME "[vdso]"
 
 /*
- * Include definition of find_map() also used in util/vdso.c क्रम
+ * Include definition of find_map() also used in util/vdso.c for
  * building perf.
  */
-#समावेश "util/find-map.c"
+#include "util/find-map.c"
 
-पूर्णांक मुख्य(व्योम)
-अणु
-	व्योम *start, *end;
-	माप_प्रकार size, written;
+int main(void)
+{
+	void *start, *end;
+	size_t size, written;
 
-	अगर (find_map(&start, &end, VDSO__MAP_NAME))
-		वापस 1;
+	if (find_map(&start, &end, VDSO__MAP_NAME))
+		return 1;
 
 	size = end - start;
 
-	जबतक (size) अणु
-		written = ख_डालो(start, 1, size, मानक_निकास);
-		अगर (!written)
-			वापस 1;
+	while (size) {
+		written = fwrite(start, 1, size, stdout);
+		if (!written)
+			return 1;
 		start += written;
 		size -= written;
-	पूर्ण
+	}
 
-	अगर (ख_साफ(मानक_निकास))
-		वापस 1;
+	if (fflush(stdout))
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

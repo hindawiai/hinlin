@@ -1,1887 +1,1886 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
-#घोषणा pr_fmt(fmt)  "irq: " fmt
+#define pr_fmt(fmt)  "irq: " fmt
 
-#समावेश <linux/acpi.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/hardirq.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/irqdesc.h>
-#समावेश <linux/irqकरोमुख्य.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/topology.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/fs.h>
+#include <linux/acpi.h>
+#include <linux/debugfs.h>
+#include <linux/hardirq.h>
+#include <linux/interrupt.h>
+#include <linux/irq.h>
+#include <linux/irqdesc.h>
+#include <linux/irqdomain.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/of_irq.h>
+#include <linux/topology.h>
+#include <linux/seq_file.h>
+#include <linux/slab.h>
+#include <linux/smp.h>
+#include <linux/fs.h>
 
-अटल LIST_HEAD(irq_करोमुख्य_list);
-अटल DEFINE_MUTEX(irq_करोमुख्य_mutex);
+static LIST_HEAD(irq_domain_list);
+static DEFINE_MUTEX(irq_domain_mutex);
 
-अटल काष्ठा irq_करोमुख्य *irq_शेष_करोमुख्य;
+static struct irq_domain *irq_default_domain;
 
-अटल व्योम irq_करोमुख्य_check_hierarchy(काष्ठा irq_करोमुख्य *करोमुख्य);
+static void irq_domain_check_hierarchy(struct irq_domain *domain);
 
-काष्ठा irqchip_fwid अणु
-	काष्ठा fwnode_handle	fwnode;
-	अचिन्हित पूर्णांक		type;
-	अक्षर			*name;
+struct irqchip_fwid {
+	struct fwnode_handle	fwnode;
+	unsigned int		type;
+	char			*name;
 	phys_addr_t		*pa;
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_GENERIC_IRQ_DEBUGFS
-अटल व्योम debugfs_add_करोमुख्य_dir(काष्ठा irq_करोमुख्य *d);
-अटल व्योम debugfs_हटाओ_करोमुख्य_dir(काष्ठा irq_करोमुख्य *d);
-#अन्यथा
-अटल अंतरभूत व्योम debugfs_add_करोमुख्य_dir(काष्ठा irq_करोमुख्य *d) अणु पूर्ण
-अटल अंतरभूत व्योम debugfs_हटाओ_करोमुख्य_dir(काष्ठा irq_करोमुख्य *d) अणु पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_GENERIC_IRQ_DEBUGFS
+static void debugfs_add_domain_dir(struct irq_domain *d);
+static void debugfs_remove_domain_dir(struct irq_domain *d);
+#else
+static inline void debugfs_add_domain_dir(struct irq_domain *d) { }
+static inline void debugfs_remove_domain_dir(struct irq_domain *d) { }
+#endif
 
-अटल स्थिर अक्षर *irqchip_fwnode_get_name(स्थिर काष्ठा fwnode_handle *fwnode)
-अणु
-	काष्ठा irqchip_fwid *fwid = container_of(fwnode, काष्ठा irqchip_fwid, fwnode);
+static const char *irqchip_fwnode_get_name(const struct fwnode_handle *fwnode)
+{
+	struct irqchip_fwid *fwid = container_of(fwnode, struct irqchip_fwid, fwnode);
 
-	वापस fwid->name;
-पूर्ण
+	return fwid->name;
+}
 
-स्थिर काष्ठा fwnode_operations irqchip_fwnode_ops = अणु
+const struct fwnode_operations irqchip_fwnode_ops = {
 	.get_name = irqchip_fwnode_get_name,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(irqchip_fwnode_ops);
 
 /**
- * __irq_करोमुख्य_alloc_fwnode - Allocate a fwnode_handle suitable क्रम
- *                           identअगरying an irq करोमुख्य
- * @type:	Type of irqchip_fwnode. See linux/irqकरोमुख्य.h
- * @id:		Optional user provided id अगर name != शून्य
- * @name:	Optional user provided करोमुख्य name
+ * __irq_domain_alloc_fwnode - Allocate a fwnode_handle suitable for
+ *                           identifying an irq domain
+ * @type:	Type of irqchip_fwnode. See linux/irqdomain.h
+ * @id:		Optional user provided id if name != NULL
+ * @name:	Optional user provided domain name
  * @pa:		Optional user-provided physical address
  *
- * Allocate a काष्ठा irqchip_fwid, and वापस a poपूर्णांकer to the embedded
- * fwnode_handle (or शून्य on failure).
+ * Allocate a struct irqchip_fwid, and return a pointer to the embedded
+ * fwnode_handle (or NULL on failure).
  *
  * Note: The types IRQCHIP_FWNODE_NAMED and IRQCHIP_FWNODE_NAMED_ID are
- * solely to transport name inक्रमmation to irqकरोमुख्य creation code. The
- * node is not stored. For other types the poपूर्णांकer is kept in the irq
- * करोमुख्य काष्ठा.
+ * solely to transport name information to irqdomain creation code. The
+ * node is not stored. For other types the pointer is kept in the irq
+ * domain struct.
  */
-काष्ठा fwnode_handle *__irq_करोमुख्य_alloc_fwnode(अचिन्हित पूर्णांक type, पूर्णांक id,
-						स्थिर अक्षर *name,
+struct fwnode_handle *__irq_domain_alloc_fwnode(unsigned int type, int id,
+						const char *name,
 						phys_addr_t *pa)
-अणु
-	काष्ठा irqchip_fwid *fwid;
-	अक्षर *n;
+{
+	struct irqchip_fwid *fwid;
+	char *n;
 
-	fwid = kzalloc(माप(*fwid), GFP_KERNEL);
+	fwid = kzalloc(sizeof(*fwid), GFP_KERNEL);
 
-	चयन (type) अणु
-	हाल IRQCHIP_FWNODE_NAMED:
-		n = kaप्र_लिखो(GFP_KERNEL, "%s", name);
-		अवरोध;
-	हाल IRQCHIP_FWNODE_NAMED_ID:
-		n = kaप्र_लिखो(GFP_KERNEL, "%s-%d", name, id);
-		अवरोध;
-	शेष:
-		n = kaप्र_लिखो(GFP_KERNEL, "irqchip@%pa", pa);
-		अवरोध;
-	पूर्ण
+	switch (type) {
+	case IRQCHIP_FWNODE_NAMED:
+		n = kasprintf(GFP_KERNEL, "%s", name);
+		break;
+	case IRQCHIP_FWNODE_NAMED_ID:
+		n = kasprintf(GFP_KERNEL, "%s-%d", name, id);
+		break;
+	default:
+		n = kasprintf(GFP_KERNEL, "irqchip@%pa", pa);
+		break;
+	}
 
-	अगर (!fwid || !n) अणु
-		kमुक्त(fwid);
-		kमुक्त(n);
-		वापस शून्य;
-	पूर्ण
+	if (!fwid || !n) {
+		kfree(fwid);
+		kfree(n);
+		return NULL;
+	}
 
 	fwid->type = type;
 	fwid->name = n;
 	fwid->pa = pa;
 	fwnode_init(&fwid->fwnode, &irqchip_fwnode_ops);
-	वापस &fwid->fwnode;
-पूर्ण
-EXPORT_SYMBOL_GPL(__irq_करोमुख्य_alloc_fwnode);
+	return &fwid->fwnode;
+}
+EXPORT_SYMBOL_GPL(__irq_domain_alloc_fwnode);
 
 /**
- * irq_करोमुख्य_मुक्त_fwnode - Free a non-OF-backed fwnode_handle
+ * irq_domain_free_fwnode - Free a non-OF-backed fwnode_handle
  *
- * Free a fwnode_handle allocated with irq_करोमुख्य_alloc_fwnode.
+ * Free a fwnode_handle allocated with irq_domain_alloc_fwnode.
  */
-व्योम irq_करोमुख्य_मुक्त_fwnode(काष्ठा fwnode_handle *fwnode)
-अणु
-	काष्ठा irqchip_fwid *fwid;
+void irq_domain_free_fwnode(struct fwnode_handle *fwnode)
+{
+	struct irqchip_fwid *fwid;
 
-	अगर (WARN_ON(!is_fwnode_irqchip(fwnode)))
-		वापस;
+	if (WARN_ON(!is_fwnode_irqchip(fwnode)))
+		return;
 
-	fwid = container_of(fwnode, काष्ठा irqchip_fwid, fwnode);
-	kमुक्त(fwid->name);
-	kमुक्त(fwid);
-पूर्ण
-EXPORT_SYMBOL_GPL(irq_करोमुख्य_मुक्त_fwnode);
+	fwid = container_of(fwnode, struct irqchip_fwid, fwnode);
+	kfree(fwid->name);
+	kfree(fwid);
+}
+EXPORT_SYMBOL_GPL(irq_domain_free_fwnode);
 
 /**
- * __irq_करोमुख्य_add() - Allocate a new irq_करोमुख्य data काष्ठाure
- * @fwnode: firmware node क्रम the पूर्णांकerrupt controller
- * @size: Size of linear map; 0 क्रम radix mapping only
- * @hwirq_max: Maximum number of पूर्णांकerrupts supported by controller
- * @direct_max: Maximum value of direct maps; Use ~0 क्रम no limit; 0 क्रम no
+ * __irq_domain_add() - Allocate a new irq_domain data structure
+ * @fwnode: firmware node for the interrupt controller
+ * @size: Size of linear map; 0 for radix mapping only
+ * @hwirq_max: Maximum number of interrupts supported by controller
+ * @direct_max: Maximum value of direct maps; Use ~0 for no limit; 0 for no
  *              direct mapping
- * @ops: करोमुख्य callbacks
- * @host_data: Controller निजी data poपूर्णांकer
+ * @ops: domain callbacks
+ * @host_data: Controller private data pointer
  *
- * Allocates and initializes an irq_करोमुख्य काष्ठाure.
- * Returns poपूर्णांकer to IRQ करोमुख्य, or शून्य on failure.
+ * Allocates and initializes an irq_domain structure.
+ * Returns pointer to IRQ domain, or NULL on failure.
  */
-काष्ठा irq_करोमुख्य *__irq_करोमुख्य_add(काष्ठा fwnode_handle *fwnode, पूर्णांक size,
-				    irq_hw_number_t hwirq_max, पूर्णांक direct_max,
-				    स्थिर काष्ठा irq_करोमुख्य_ops *ops,
-				    व्योम *host_data)
-अणु
-	काष्ठा irqchip_fwid *fwid;
-	काष्ठा irq_करोमुख्य *करोमुख्य;
+struct irq_domain *__irq_domain_add(struct fwnode_handle *fwnode, int size,
+				    irq_hw_number_t hwirq_max, int direct_max,
+				    const struct irq_domain_ops *ops,
+				    void *host_data)
+{
+	struct irqchip_fwid *fwid;
+	struct irq_domain *domain;
 
-	अटल atomic_t unknown_करोमुख्यs;
+	static atomic_t unknown_domains;
 
-	करोमुख्य = kzalloc_node(माप(*करोमुख्य) + (माप(अचिन्हित पूर्णांक) * size),
+	domain = kzalloc_node(sizeof(*domain) + (sizeof(unsigned int) * size),
 			      GFP_KERNEL, of_node_to_nid(to_of_node(fwnode)));
-	अगर (!करोमुख्य)
-		वापस शून्य;
+	if (!domain)
+		return NULL;
 
-	अगर (is_fwnode_irqchip(fwnode)) अणु
-		fwid = container_of(fwnode, काष्ठा irqchip_fwid, fwnode);
+	if (is_fwnode_irqchip(fwnode)) {
+		fwid = container_of(fwnode, struct irqchip_fwid, fwnode);
 
-		चयन (fwid->type) अणु
-		हाल IRQCHIP_FWNODE_NAMED:
-		हाल IRQCHIP_FWNODE_NAMED_ID:
-			करोमुख्य->fwnode = fwnode;
-			करोमुख्य->name = kstrdup(fwid->name, GFP_KERNEL);
-			अगर (!करोमुख्य->name) अणु
-				kमुक्त(करोमुख्य);
-				वापस शून्य;
-			पूर्ण
-			करोमुख्य->flags |= IRQ_DOMAIN_NAME_ALLOCATED;
-			अवरोध;
-		शेष:
-			करोमुख्य->fwnode = fwnode;
-			करोमुख्य->name = fwid->name;
-			अवरोध;
-		पूर्ण
-	पूर्ण अन्यथा अगर (is_of_node(fwnode) || is_acpi_device_node(fwnode) ||
-		   is_software_node(fwnode)) अणु
-		अक्षर *name;
+		switch (fwid->type) {
+		case IRQCHIP_FWNODE_NAMED:
+		case IRQCHIP_FWNODE_NAMED_ID:
+			domain->fwnode = fwnode;
+			domain->name = kstrdup(fwid->name, GFP_KERNEL);
+			if (!domain->name) {
+				kfree(domain);
+				return NULL;
+			}
+			domain->flags |= IRQ_DOMAIN_NAME_ALLOCATED;
+			break;
+		default:
+			domain->fwnode = fwnode;
+			domain->name = fwid->name;
+			break;
+		}
+	} else if (is_of_node(fwnode) || is_acpi_device_node(fwnode) ||
+		   is_software_node(fwnode)) {
+		char *name;
 
 		/*
 		 * fwnode paths contain '/', which debugfs is legitimately
-		 * unhappy about. Replace them with ':', which करोes
+		 * unhappy about. Replace them with ':', which does
 		 * the trick and is not as offensive as '\'...
 		 */
-		name = kaप्र_लिखो(GFP_KERNEL, "%pfw", fwnode);
-		अगर (!name) अणु
-			kमुक्त(करोमुख्य);
-			वापस शून्य;
-		पूर्ण
+		name = kasprintf(GFP_KERNEL, "%pfw", fwnode);
+		if (!name) {
+			kfree(domain);
+			return NULL;
+		}
 
 		strreplace(name, '/', ':');
 
-		करोमुख्य->name = name;
-		करोमुख्य->fwnode = fwnode;
-		करोमुख्य->flags |= IRQ_DOMAIN_NAME_ALLOCATED;
-	पूर्ण
+		domain->name = name;
+		domain->fwnode = fwnode;
+		domain->flags |= IRQ_DOMAIN_NAME_ALLOCATED;
+	}
 
-	अगर (!करोमुख्य->name) अणु
-		अगर (fwnode)
+	if (!domain->name) {
+		if (fwnode)
 			pr_err("Invalid fwnode type for irqdomain\n");
-		करोमुख्य->name = kaप्र_लिखो(GFP_KERNEL, "unknown-%d",
-					 atomic_inc_वापस(&unknown_करोमुख्यs));
-		अगर (!करोमुख्य->name) अणु
-			kमुक्त(करोमुख्य);
-			वापस शून्य;
-		पूर्ण
-		करोमुख्य->flags |= IRQ_DOMAIN_NAME_ALLOCATED;
-	पूर्ण
+		domain->name = kasprintf(GFP_KERNEL, "unknown-%d",
+					 atomic_inc_return(&unknown_domains));
+		if (!domain->name) {
+			kfree(domain);
+			return NULL;
+		}
+		domain->flags |= IRQ_DOMAIN_NAME_ALLOCATED;
+	}
 
 	fwnode_handle_get(fwnode);
 	fwnode_dev_initialized(fwnode, true);
 
-	/* Fill काष्ठाure */
-	INIT_RADIX_TREE(&करोमुख्य->revmap_tree, GFP_KERNEL);
-	mutex_init(&करोमुख्य->revmap_tree_mutex);
-	करोमुख्य->ops = ops;
-	करोमुख्य->host_data = host_data;
-	करोमुख्य->hwirq_max = hwirq_max;
-	करोमुख्य->revmap_size = size;
-	करोमुख्य->revmap_direct_max_irq = direct_max;
-	irq_करोमुख्य_check_hierarchy(करोमुख्य);
+	/* Fill structure */
+	INIT_RADIX_TREE(&domain->revmap_tree, GFP_KERNEL);
+	mutex_init(&domain->revmap_tree_mutex);
+	domain->ops = ops;
+	domain->host_data = host_data;
+	domain->hwirq_max = hwirq_max;
+	domain->revmap_size = size;
+	domain->revmap_direct_max_irq = direct_max;
+	irq_domain_check_hierarchy(domain);
 
-	mutex_lock(&irq_करोमुख्य_mutex);
-	debugfs_add_करोमुख्य_dir(करोमुख्य);
-	list_add(&करोमुख्य->link, &irq_करोमुख्य_list);
-	mutex_unlock(&irq_करोमुख्य_mutex);
+	mutex_lock(&irq_domain_mutex);
+	debugfs_add_domain_dir(domain);
+	list_add(&domain->link, &irq_domain_list);
+	mutex_unlock(&irq_domain_mutex);
 
-	pr_debug("Added domain %s\n", करोमुख्य->name);
-	वापस करोमुख्य;
-पूर्ण
-EXPORT_SYMBOL_GPL(__irq_करोमुख्य_add);
+	pr_debug("Added domain %s\n", domain->name);
+	return domain;
+}
+EXPORT_SYMBOL_GPL(__irq_domain_add);
 
 /**
- * irq_करोमुख्य_हटाओ() - Remove an irq करोमुख्य.
- * @करोमुख्य: करोमुख्य to हटाओ
+ * irq_domain_remove() - Remove an irq domain.
+ * @domain: domain to remove
  *
- * This routine is used to हटाओ an irq करोमुख्य. The caller must ensure
- * that all mappings within the करोमुख्य have been disposed of prior to
+ * This routine is used to remove an irq domain. The caller must ensure
+ * that all mappings within the domain have been disposed of prior to
  * use, depending on the revmap type.
  */
-व्योम irq_करोमुख्य_हटाओ(काष्ठा irq_करोमुख्य *करोमुख्य)
-अणु
-	mutex_lock(&irq_करोमुख्य_mutex);
-	debugfs_हटाओ_करोमुख्य_dir(करोमुख्य);
+void irq_domain_remove(struct irq_domain *domain)
+{
+	mutex_lock(&irq_domain_mutex);
+	debugfs_remove_domain_dir(domain);
 
-	WARN_ON(!radix_tree_empty(&करोमुख्य->revmap_tree));
+	WARN_ON(!radix_tree_empty(&domain->revmap_tree));
 
-	list_del(&करोमुख्य->link);
+	list_del(&domain->link);
 
 	/*
-	 * If the going away करोमुख्य is the शेष one, reset it.
+	 * If the going away domain is the default one, reset it.
 	 */
-	अगर (unlikely(irq_शेष_करोमुख्य == करोमुख्य))
-		irq_set_शेष_host(शून्य);
+	if (unlikely(irq_default_domain == domain))
+		irq_set_default_host(NULL);
 
-	mutex_unlock(&irq_करोमुख्य_mutex);
+	mutex_unlock(&irq_domain_mutex);
 
-	pr_debug("Removed domain %s\n", करोमुख्य->name);
+	pr_debug("Removed domain %s\n", domain->name);
 
-	fwnode_dev_initialized(करोमुख्य->fwnode, false);
-	fwnode_handle_put(करोमुख्य->fwnode);
-	अगर (करोमुख्य->flags & IRQ_DOMAIN_NAME_ALLOCATED)
-		kमुक्त(करोमुख्य->name);
-	kमुक्त(करोमुख्य);
-पूर्ण
-EXPORT_SYMBOL_GPL(irq_करोमुख्य_हटाओ);
+	fwnode_dev_initialized(domain->fwnode, false);
+	fwnode_handle_put(domain->fwnode);
+	if (domain->flags & IRQ_DOMAIN_NAME_ALLOCATED)
+		kfree(domain->name);
+	kfree(domain);
+}
+EXPORT_SYMBOL_GPL(irq_domain_remove);
 
-व्योम irq_करोमुख्य_update_bus_token(काष्ठा irq_करोमुख्य *करोमुख्य,
-				 क्रमागत irq_करोमुख्य_bus_token bus_token)
-अणु
-	अक्षर *name;
+void irq_domain_update_bus_token(struct irq_domain *domain,
+				 enum irq_domain_bus_token bus_token)
+{
+	char *name;
 
-	अगर (करोमुख्य->bus_token == bus_token)
-		वापस;
+	if (domain->bus_token == bus_token)
+		return;
 
-	mutex_lock(&irq_करोमुख्य_mutex);
+	mutex_lock(&irq_domain_mutex);
 
-	करोमुख्य->bus_token = bus_token;
+	domain->bus_token = bus_token;
 
-	name = kaप्र_लिखो(GFP_KERNEL, "%s-%d", करोमुख्य->name, bus_token);
-	अगर (!name) अणु
-		mutex_unlock(&irq_करोमुख्य_mutex);
-		वापस;
-	पूर्ण
+	name = kasprintf(GFP_KERNEL, "%s-%d", domain->name, bus_token);
+	if (!name) {
+		mutex_unlock(&irq_domain_mutex);
+		return;
+	}
 
-	debugfs_हटाओ_करोमुख्य_dir(करोमुख्य);
+	debugfs_remove_domain_dir(domain);
 
-	अगर (करोमुख्य->flags & IRQ_DOMAIN_NAME_ALLOCATED)
-		kमुक्त(करोमुख्य->name);
-	अन्यथा
-		करोमुख्य->flags |= IRQ_DOMAIN_NAME_ALLOCATED;
+	if (domain->flags & IRQ_DOMAIN_NAME_ALLOCATED)
+		kfree(domain->name);
+	else
+		domain->flags |= IRQ_DOMAIN_NAME_ALLOCATED;
 
-	करोमुख्य->name = name;
-	debugfs_add_करोमुख्य_dir(करोमुख्य);
+	domain->name = name;
+	debugfs_add_domain_dir(domain);
 
-	mutex_unlock(&irq_करोमुख्य_mutex);
-पूर्ण
-EXPORT_SYMBOL_GPL(irq_करोमुख्य_update_bus_token);
+	mutex_unlock(&irq_domain_mutex);
+}
+EXPORT_SYMBOL_GPL(irq_domain_update_bus_token);
 
 /**
- * irq_करोमुख्य_create_simple() - Register an irq_करोमुख्य and optionally map a range of irqs
- * @fwnode: firmware node क्रम the पूर्णांकerrupt controller
+ * irq_domain_create_simple() - Register an irq_domain and optionally map a range of irqs
+ * @fwnode: firmware node for the interrupt controller
  * @size: total number of irqs in mapping
- * @first_irq: first number of irq block asचिन्हित to the करोमुख्य,
+ * @first_irq: first number of irq block assigned to the domain,
  *	pass zero to assign irqs on-the-fly. If first_irq is non-zero, then
- *	pre-map all of the irqs in the करोमुख्य to virqs starting at first_irq.
- * @ops: करोमुख्य callbacks
- * @host_data: Controller निजी data poपूर्णांकer
+ *	pre-map all of the irqs in the domain to virqs starting at first_irq.
+ * @ops: domain callbacks
+ * @host_data: Controller private data pointer
  *
- * Allocates an irq_करोमुख्य, and optionally अगर first_irq is positive then also
+ * Allocates an irq_domain, and optionally if first_irq is positive then also
  * allocate irq_descs and map all of the hwirqs to virqs starting at first_irq.
  *
- * This is पूर्णांकended to implement the expected behaviour क्रम most
- * पूर्णांकerrupt controllers. If device tree is used, then first_irq will be 0 and
- * irqs get mapped dynamically on the fly. However, अगर the controller requires
- * अटल virq assignments (non-DT boot) then it will set that up correctly.
+ * This is intended to implement the expected behaviour for most
+ * interrupt controllers. If device tree is used, then first_irq will be 0 and
+ * irqs get mapped dynamically on the fly. However, if the controller requires
+ * static virq assignments (non-DT boot) then it will set that up correctly.
  */
-काष्ठा irq_करोमुख्य *irq_करोमुख्य_create_simple(काष्ठा fwnode_handle *fwnode,
-					    अचिन्हित पूर्णांक size,
-					    अचिन्हित पूर्णांक first_irq,
-					    स्थिर काष्ठा irq_करोमुख्य_ops *ops,
-					    व्योम *host_data)
-अणु
-	काष्ठा irq_करोमुख्य *करोमुख्य;
+struct irq_domain *irq_domain_create_simple(struct fwnode_handle *fwnode,
+					    unsigned int size,
+					    unsigned int first_irq,
+					    const struct irq_domain_ops *ops,
+					    void *host_data)
+{
+	struct irq_domain *domain;
 
-	करोमुख्य = __irq_करोमुख्य_add(fwnode, size, size, 0, ops, host_data);
-	अगर (!करोमुख्य)
-		वापस शून्य;
+	domain = __irq_domain_add(fwnode, size, size, 0, ops, host_data);
+	if (!domain)
+		return NULL;
 
-	अगर (first_irq > 0) अणु
-		अगर (IS_ENABLED(CONFIG_SPARSE_IRQ)) अणु
+	if (first_irq > 0) {
+		if (IS_ENABLED(CONFIG_SPARSE_IRQ)) {
 			/* attempt to allocated irq_descs */
-			पूर्णांक rc = irq_alloc_descs(first_irq, first_irq, size,
+			int rc = irq_alloc_descs(first_irq, first_irq, size,
 						 of_node_to_nid(to_of_node(fwnode)));
-			अगर (rc < 0)
+			if (rc < 0)
 				pr_info("Cannot allocate irq_descs @ IRQ%d, assuming pre-allocated\n",
 					first_irq);
-		पूर्ण
-		irq_करोमुख्य_associate_many(करोमुख्य, first_irq, 0, size);
-	पूर्ण
+		}
+		irq_domain_associate_many(domain, first_irq, 0, size);
+	}
 
-	वापस करोमुख्य;
-पूर्ण
-EXPORT_SYMBOL_GPL(irq_करोमुख्य_create_simple);
+	return domain;
+}
+EXPORT_SYMBOL_GPL(irq_domain_create_simple);
 
 /**
- * irq_करोमुख्य_add_legacy() - Allocate and रेजिस्टर a legacy revmap irq_करोमुख्य.
- * @of_node: poपूर्णांकer to पूर्णांकerrupt controller's device tree node.
+ * irq_domain_add_legacy() - Allocate and register a legacy revmap irq_domain.
+ * @of_node: pointer to interrupt controller's device tree node.
  * @size: total number of irqs in legacy mapping
- * @first_irq: first number of irq block asचिन्हित to the करोमुख्य
- * @first_hwirq: first hwirq number to use क्रम the translation. Should normally
- *               be '0', but a positive पूर्णांकeger can be used अगर the effective
- *               hwirqs numbering करोes not begin at zero.
- * @ops: map/unmap करोमुख्य callbacks
- * @host_data: Controller निजी data poपूर्णांकer
+ * @first_irq: first number of irq block assigned to the domain
+ * @first_hwirq: first hwirq number to use for the translation. Should normally
+ *               be '0', but a positive integer can be used if the effective
+ *               hwirqs numbering does not begin at zero.
+ * @ops: map/unmap domain callbacks
+ * @host_data: Controller private data pointer
  *
- * Note: the map() callback will be called beक्रमe this function वापसs
- * क्रम all legacy पूर्णांकerrupts except 0 (which is always the invalid irq क्रम
+ * Note: the map() callback will be called before this function returns
+ * for all legacy interrupts except 0 (which is always the invalid irq for
  * a legacy controller).
  */
-काष्ठा irq_करोमुख्य *irq_करोमुख्य_add_legacy(काष्ठा device_node *of_node,
-					 अचिन्हित पूर्णांक size,
-					 अचिन्हित पूर्णांक first_irq,
+struct irq_domain *irq_domain_add_legacy(struct device_node *of_node,
+					 unsigned int size,
+					 unsigned int first_irq,
 					 irq_hw_number_t first_hwirq,
-					 स्थिर काष्ठा irq_करोमुख्य_ops *ops,
-					 व्योम *host_data)
-अणु
-	वापस irq_करोमुख्य_create_legacy(of_node_to_fwnode(of_node), size,
+					 const struct irq_domain_ops *ops,
+					 void *host_data)
+{
+	return irq_domain_create_legacy(of_node_to_fwnode(of_node), size,
 					first_irq, first_hwirq, ops, host_data);
-पूर्ण
-EXPORT_SYMBOL_GPL(irq_करोमुख्य_add_legacy);
+}
+EXPORT_SYMBOL_GPL(irq_domain_add_legacy);
 
-काष्ठा irq_करोमुख्य *irq_करोमुख्य_create_legacy(काष्ठा fwnode_handle *fwnode,
-					 अचिन्हित पूर्णांक size,
-					 अचिन्हित पूर्णांक first_irq,
+struct irq_domain *irq_domain_create_legacy(struct fwnode_handle *fwnode,
+					 unsigned int size,
+					 unsigned int first_irq,
 					 irq_hw_number_t first_hwirq,
-					 स्थिर काष्ठा irq_करोमुख्य_ops *ops,
-					 व्योम *host_data)
-अणु
-	काष्ठा irq_करोमुख्य *करोमुख्य;
+					 const struct irq_domain_ops *ops,
+					 void *host_data)
+{
+	struct irq_domain *domain;
 
-	करोमुख्य = __irq_करोमुख्य_add(fwnode, first_hwirq + size, first_hwirq + size, 0, ops, host_data);
-	अगर (करोमुख्य)
-		irq_करोमुख्य_associate_many(करोमुख्य, first_irq, first_hwirq, size);
+	domain = __irq_domain_add(fwnode, first_hwirq + size, first_hwirq + size, 0, ops, host_data);
+	if (domain)
+		irq_domain_associate_many(domain, first_irq, first_hwirq, size);
 
-	वापस करोमुख्य;
-पूर्ण
-EXPORT_SYMBOL_GPL(irq_करोमुख्य_create_legacy);
+	return domain;
+}
+EXPORT_SYMBOL_GPL(irq_domain_create_legacy);
 
 /**
- * irq_find_matching_fwspec() - Locates a करोमुख्य क्रम a given fwspec
- * @fwspec: FW specअगरier क्रम an पूर्णांकerrupt
- * @bus_token: करोमुख्य-specअगरic data
+ * irq_find_matching_fwspec() - Locates a domain for a given fwspec
+ * @fwspec: FW specifier for an interrupt
+ * @bus_token: domain-specific data
  */
-काष्ठा irq_करोमुख्य *irq_find_matching_fwspec(काष्ठा irq_fwspec *fwspec,
-					    क्रमागत irq_करोमुख्य_bus_token bus_token)
-अणु
-	काष्ठा irq_करोमुख्य *h, *found = शून्य;
-	काष्ठा fwnode_handle *fwnode = fwspec->fwnode;
-	पूर्णांक rc;
+struct irq_domain *irq_find_matching_fwspec(struct irq_fwspec *fwspec,
+					    enum irq_domain_bus_token bus_token)
+{
+	struct irq_domain *h, *found = NULL;
+	struct fwnode_handle *fwnode = fwspec->fwnode;
+	int rc;
 
 	/* We might want to match the legacy controller last since
-	 * it might potentially be set to match all पूर्णांकerrupts in
-	 * the असलence of a device node. This isn't a problem so far
+	 * it might potentially be set to match all interrupts in
+	 * the absence of a device node. This isn't a problem so far
 	 * yet though...
 	 *
-	 * bus_token == DOMAIN_BUS_ANY matches any करोमुख्य, any other
-	 * values must generate an exact match क्रम the करोमुख्य to be
+	 * bus_token == DOMAIN_BUS_ANY matches any domain, any other
+	 * values must generate an exact match for the domain to be
 	 * selected.
 	 */
-	mutex_lock(&irq_करोमुख्य_mutex);
-	list_क्रम_each_entry(h, &irq_करोमुख्य_list, link) अणु
-		अगर (h->ops->select && fwspec->param_count)
+	mutex_lock(&irq_domain_mutex);
+	list_for_each_entry(h, &irq_domain_list, link) {
+		if (h->ops->select && fwspec->param_count)
 			rc = h->ops->select(h, fwspec, bus_token);
-		अन्यथा अगर (h->ops->match)
+		else if (h->ops->match)
 			rc = h->ops->match(h, to_of_node(fwnode), bus_token);
-		अन्यथा
-			rc = ((fwnode != शून्य) && (h->fwnode == fwnode) &&
+		else
+			rc = ((fwnode != NULL) && (h->fwnode == fwnode) &&
 			      ((bus_token == DOMAIN_BUS_ANY) ||
 			       (h->bus_token == bus_token)));
 
-		अगर (rc) अणु
+		if (rc) {
 			found = h;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	mutex_unlock(&irq_करोमुख्य_mutex);
-	वापस found;
-पूर्ण
+			break;
+		}
+	}
+	mutex_unlock(&irq_domain_mutex);
+	return found;
+}
 EXPORT_SYMBOL_GPL(irq_find_matching_fwspec);
 
 /**
- * irq_करोमुख्य_check_msi_remap - Check whether all MSI irq करोमुख्यs implement
+ * irq_domain_check_msi_remap - Check whether all MSI irq domains implement
  * IRQ remapping
  *
- * Return: false अगर any MSI irq करोमुख्य करोes not support IRQ remapping,
- * true otherwise (including अगर there is no MSI irq करोमुख्य)
+ * Return: false if any MSI irq domain does not support IRQ remapping,
+ * true otherwise (including if there is no MSI irq domain)
  */
-bool irq_करोमुख्य_check_msi_remap(व्योम)
-अणु
-	काष्ठा irq_करोमुख्य *h;
+bool irq_domain_check_msi_remap(void)
+{
+	struct irq_domain *h;
 	bool ret = true;
 
-	mutex_lock(&irq_करोमुख्य_mutex);
-	list_क्रम_each_entry(h, &irq_करोमुख्य_list, link) अणु
-		अगर (irq_करोमुख्य_is_msi(h) &&
-		    !irq_करोमुख्य_hierarchical_is_msi_remap(h)) अणु
+	mutex_lock(&irq_domain_mutex);
+	list_for_each_entry(h, &irq_domain_list, link) {
+		if (irq_domain_is_msi(h) &&
+		    !irq_domain_hierarchical_is_msi_remap(h)) {
 			ret = false;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	mutex_unlock(&irq_करोमुख्य_mutex);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(irq_करोमुख्य_check_msi_remap);
+			break;
+		}
+	}
+	mutex_unlock(&irq_domain_mutex);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(irq_domain_check_msi_remap);
 
 /**
- * irq_set_शेष_host() - Set a "default" irq करोमुख्य
- * @करोमुख्य: शेष करोमुख्य poपूर्णांकer
+ * irq_set_default_host() - Set a "default" irq domain
+ * @domain: default domain pointer
  *
- * For convenience, it's possible to set a "default" करोमुख्य that will be used
- * whenever शून्य is passed to irq_create_mapping(). It makes lअगरe easier क्रम
- * platक्रमms that want to manipulate a few hard coded पूर्णांकerrupt numbers that
+ * For convenience, it's possible to set a "default" domain that will be used
+ * whenever NULL is passed to irq_create_mapping(). It makes life easier for
+ * platforms that want to manipulate a few hard coded interrupt numbers that
  * aren't properly represented in the device-tree.
  */
-व्योम irq_set_शेष_host(काष्ठा irq_करोमुख्य *करोमुख्य)
-अणु
-	pr_debug("Default domain set to @0x%p\n", करोमुख्य);
+void irq_set_default_host(struct irq_domain *domain)
+{
+	pr_debug("Default domain set to @0x%p\n", domain);
 
-	irq_शेष_करोमुख्य = करोमुख्य;
-पूर्ण
-EXPORT_SYMBOL_GPL(irq_set_शेष_host);
+	irq_default_domain = domain;
+}
+EXPORT_SYMBOL_GPL(irq_set_default_host);
 
 /**
- * irq_get_शेष_host() - Retrieve the "default" irq करोमुख्य
+ * irq_get_default_host() - Retrieve the "default" irq domain
  *
- * Returns: the शेष करोमुख्य, अगर any.
+ * Returns: the default domain, if any.
  *
  * Modern code should never use this. This should only be used on
- * प्रणालीs that cannot implement a firmware->fwnode mapping (which
+ * systems that cannot implement a firmware->fwnode mapping (which
  * both DT and ACPI provide).
  */
-काष्ठा irq_करोमुख्य *irq_get_शेष_host(व्योम)
-अणु
-	वापस irq_शेष_करोमुख्य;
-पूर्ण
+struct irq_domain *irq_get_default_host(void)
+{
+	return irq_default_domain;
+}
 
-अटल व्योम irq_करोमुख्य_clear_mapping(काष्ठा irq_करोमुख्य *करोमुख्य,
+static void irq_domain_clear_mapping(struct irq_domain *domain,
 				     irq_hw_number_t hwirq)
-अणु
-	अगर (hwirq < करोमुख्य->revmap_size) अणु
-		करोमुख्य->linear_revmap[hwirq] = 0;
-	पूर्ण अन्यथा अणु
-		mutex_lock(&करोमुख्य->revmap_tree_mutex);
-		radix_tree_delete(&करोमुख्य->revmap_tree, hwirq);
-		mutex_unlock(&करोमुख्य->revmap_tree_mutex);
-	पूर्ण
-पूर्ण
+{
+	if (hwirq < domain->revmap_size) {
+		domain->linear_revmap[hwirq] = 0;
+	} else {
+		mutex_lock(&domain->revmap_tree_mutex);
+		radix_tree_delete(&domain->revmap_tree, hwirq);
+		mutex_unlock(&domain->revmap_tree_mutex);
+	}
+}
 
-अटल व्योम irq_करोमुख्य_set_mapping(काष्ठा irq_करोमुख्य *करोमुख्य,
+static void irq_domain_set_mapping(struct irq_domain *domain,
 				   irq_hw_number_t hwirq,
-				   काष्ठा irq_data *irq_data)
-अणु
-	अगर (hwirq < करोमुख्य->revmap_size) अणु
-		करोमुख्य->linear_revmap[hwirq] = irq_data->irq;
-	पूर्ण अन्यथा अणु
-		mutex_lock(&करोमुख्य->revmap_tree_mutex);
-		radix_tree_insert(&करोमुख्य->revmap_tree, hwirq, irq_data);
-		mutex_unlock(&करोमुख्य->revmap_tree_mutex);
-	पूर्ण
-पूर्ण
+				   struct irq_data *irq_data)
+{
+	if (hwirq < domain->revmap_size) {
+		domain->linear_revmap[hwirq] = irq_data->irq;
+	} else {
+		mutex_lock(&domain->revmap_tree_mutex);
+		radix_tree_insert(&domain->revmap_tree, hwirq, irq_data);
+		mutex_unlock(&domain->revmap_tree_mutex);
+	}
+}
 
-अटल व्योम irq_करोमुख्य_disassociate(काष्ठा irq_करोमुख्य *करोमुख्य, अचिन्हित पूर्णांक irq)
-अणु
-	काष्ठा irq_data *irq_data = irq_get_irq_data(irq);
+static void irq_domain_disassociate(struct irq_domain *domain, unsigned int irq)
+{
+	struct irq_data *irq_data = irq_get_irq_data(irq);
 	irq_hw_number_t hwirq;
 
-	अगर (WARN(!irq_data || irq_data->करोमुख्य != करोमुख्य,
+	if (WARN(!irq_data || irq_data->domain != domain,
 		 "virq%i doesn't exist; cannot disassociate\n", irq))
-		वापस;
+		return;
 
 	hwirq = irq_data->hwirq;
 	irq_set_status_flags(irq, IRQ_NOREQUEST);
 
-	/* हटाओ chip and handler */
-	irq_set_chip_and_handler(irq, शून्य, शून्य);
+	/* remove chip and handler */
+	irq_set_chip_and_handler(irq, NULL, NULL);
 
 	/* Make sure it's completed */
 	synchronize_irq(irq);
 
 	/* Tell the PIC about it */
-	अगर (करोमुख्य->ops->unmap)
-		करोमुख्य->ops->unmap(करोमुख्य, irq);
+	if (domain->ops->unmap)
+		domain->ops->unmap(domain, irq);
 	smp_mb();
 
-	irq_data->करोमुख्य = शून्य;
+	irq_data->domain = NULL;
 	irq_data->hwirq = 0;
-	करोमुख्य->mapcount--;
+	domain->mapcount--;
 
-	/* Clear reverse map क्रम this hwirq */
-	irq_करोमुख्य_clear_mapping(करोमुख्य, hwirq);
-पूर्ण
+	/* Clear reverse map for this hwirq */
+	irq_domain_clear_mapping(domain, hwirq);
+}
 
-पूर्णांक irq_करोमुख्य_associate(काष्ठा irq_करोमुख्य *करोमुख्य, अचिन्हित पूर्णांक virq,
+int irq_domain_associate(struct irq_domain *domain, unsigned int virq,
 			 irq_hw_number_t hwirq)
-अणु
-	काष्ठा irq_data *irq_data = irq_get_irq_data(virq);
-	पूर्णांक ret;
+{
+	struct irq_data *irq_data = irq_get_irq_data(virq);
+	int ret;
 
-	अगर (WARN(hwirq >= करोमुख्य->hwirq_max,
-		 "error: hwirq 0x%x is too large for %s\n", (पूर्णांक)hwirq, करोमुख्य->name))
-		वापस -EINVAL;
-	अगर (WARN(!irq_data, "error: virq%i is not allocated", virq))
-		वापस -EINVAL;
-	अगर (WARN(irq_data->करोमुख्य, "error: virq%i is already associated", virq))
-		वापस -EINVAL;
+	if (WARN(hwirq >= domain->hwirq_max,
+		 "error: hwirq 0x%x is too large for %s\n", (int)hwirq, domain->name))
+		return -EINVAL;
+	if (WARN(!irq_data, "error: virq%i is not allocated", virq))
+		return -EINVAL;
+	if (WARN(irq_data->domain, "error: virq%i is already associated", virq))
+		return -EINVAL;
 
-	mutex_lock(&irq_करोमुख्य_mutex);
+	mutex_lock(&irq_domain_mutex);
 	irq_data->hwirq = hwirq;
-	irq_data->करोमुख्य = करोमुख्य;
-	अगर (करोमुख्य->ops->map) अणु
-		ret = करोमुख्य->ops->map(करोमुख्य, virq, hwirq);
-		अगर (ret != 0) अणु
+	irq_data->domain = domain;
+	if (domain->ops->map) {
+		ret = domain->ops->map(domain, virq, hwirq);
+		if (ret != 0) {
 			/*
-			 * If map() वापसs -EPERM, this पूर्णांकerrupt is रक्षित
+			 * If map() returns -EPERM, this interrupt is protected
 			 * by the firmware or some other service and shall not
 			 * be mapped. Don't bother telling the user about it.
 			 */
-			अगर (ret != -EPERM) अणु
+			if (ret != -EPERM) {
 				pr_info("%s didn't like hwirq-0x%lx to VIRQ%i mapping (rc=%d)\n",
-				       करोमुख्य->name, hwirq, virq, ret);
-			पूर्ण
-			irq_data->करोमुख्य = शून्य;
+				       domain->name, hwirq, virq, ret);
+			}
+			irq_data->domain = NULL;
 			irq_data->hwirq = 0;
-			mutex_unlock(&irq_करोमुख्य_mutex);
-			वापस ret;
-		पूर्ण
+			mutex_unlock(&irq_domain_mutex);
+			return ret;
+		}
 
-		/* If not alपढ़ोy asचिन्हित, give the करोमुख्य the chip's name */
-		अगर (!करोमुख्य->name && irq_data->chip)
-			करोमुख्य->name = irq_data->chip->name;
-	पूर्ण
+		/* If not already assigned, give the domain the chip's name */
+		if (!domain->name && irq_data->chip)
+			domain->name = irq_data->chip->name;
+	}
 
-	करोमुख्य->mapcount++;
-	irq_करोमुख्य_set_mapping(करोमुख्य, hwirq, irq_data);
-	mutex_unlock(&irq_करोमुख्य_mutex);
+	domain->mapcount++;
+	irq_domain_set_mapping(domain, hwirq, irq_data);
+	mutex_unlock(&irq_domain_mutex);
 
 	irq_clear_status_flags(virq, IRQ_NOREQUEST);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(irq_करोमुख्य_associate);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(irq_domain_associate);
 
-व्योम irq_करोमुख्य_associate_many(काष्ठा irq_करोमुख्य *करोमुख्य, अचिन्हित पूर्णांक irq_base,
-			       irq_hw_number_t hwirq_base, पूर्णांक count)
-अणु
-	काष्ठा device_node *of_node;
-	पूर्णांक i;
+void irq_domain_associate_many(struct irq_domain *domain, unsigned int irq_base,
+			       irq_hw_number_t hwirq_base, int count)
+{
+	struct device_node *of_node;
+	int i;
 
-	of_node = irq_करोमुख्य_get_of_node(करोमुख्य);
+	of_node = irq_domain_get_of_node(domain);
 	pr_debug("%s(%s, irqbase=%i, hwbase=%i, count=%i)\n", __func__,
-		of_node_full_name(of_node), irq_base, (पूर्णांक)hwirq_base, count);
+		of_node_full_name(of_node), irq_base, (int)hwirq_base, count);
 
-	क्रम (i = 0; i < count; i++) अणु
-		irq_करोमुख्य_associate(करोमुख्य, irq_base + i, hwirq_base + i);
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL_GPL(irq_करोमुख्य_associate_many);
+	for (i = 0; i < count; i++) {
+		irq_domain_associate(domain, irq_base + i, hwirq_base + i);
+	}
+}
+EXPORT_SYMBOL_GPL(irq_domain_associate_many);
 
 /**
- * irq_create_direct_mapping() - Allocate an irq क्रम direct mapping
- * @करोमुख्य: करोमुख्य to allocate the irq क्रम or शून्य क्रम शेष करोमुख्य
+ * irq_create_direct_mapping() - Allocate an irq for direct mapping
+ * @domain: domain to allocate the irq for or NULL for default domain
  *
- * This routine is used क्रम irq controllers which can choose the hardware
- * पूर्णांकerrupt numbers they generate. In such a हाल it's simplest to use
- * the linux irq as the hardware पूर्णांकerrupt number. It still uses the linear
+ * This routine is used for irq controllers which can choose the hardware
+ * interrupt numbers they generate. In such a case it's simplest to use
+ * the linux irq as the hardware interrupt number. It still uses the linear
  * or radix tree to store the mapping, but the irq controller can optimize
  * the revmap path by using the hwirq directly.
  */
-अचिन्हित पूर्णांक irq_create_direct_mapping(काष्ठा irq_करोमुख्य *करोमुख्य)
-अणु
-	काष्ठा device_node *of_node;
-	अचिन्हित पूर्णांक virq;
+unsigned int irq_create_direct_mapping(struct irq_domain *domain)
+{
+	struct device_node *of_node;
+	unsigned int virq;
 
-	अगर (करोमुख्य == शून्य)
-		करोमुख्य = irq_शेष_करोमुख्य;
+	if (domain == NULL)
+		domain = irq_default_domain;
 
-	of_node = irq_करोमुख्य_get_of_node(करोमुख्य);
+	of_node = irq_domain_get_of_node(domain);
 	virq = irq_alloc_desc_from(1, of_node_to_nid(of_node));
-	अगर (!virq) अणु
+	if (!virq) {
 		pr_debug("create_direct virq allocation failed\n");
-		वापस 0;
-	पूर्ण
-	अगर (virq >= करोमुख्य->revmap_direct_max_irq) अणु
+		return 0;
+	}
+	if (virq >= domain->revmap_direct_max_irq) {
 		pr_err("ERROR: no free irqs available below %i maximum\n",
-			करोमुख्य->revmap_direct_max_irq);
-		irq_मुक्त_desc(virq);
-		वापस 0;
-	पूर्ण
+			domain->revmap_direct_max_irq);
+		irq_free_desc(virq);
+		return 0;
+	}
 	pr_debug("create_direct obtained virq %d\n", virq);
 
-	अगर (irq_करोमुख्य_associate(करोमुख्य, virq, virq)) अणु
-		irq_मुक्त_desc(virq);
-		वापस 0;
-	पूर्ण
+	if (irq_domain_associate(domain, virq, virq)) {
+		irq_free_desc(virq);
+		return 0;
+	}
 
-	वापस virq;
-पूर्ण
+	return virq;
+}
 EXPORT_SYMBOL_GPL(irq_create_direct_mapping);
 
 /**
- * irq_create_mapping_affinity() - Map a hardware पूर्णांकerrupt पूर्णांकo linux irq space
- * @करोमुख्य: करोमुख्य owning this hardware पूर्णांकerrupt or शून्य क्रम शेष करोमुख्य
- * @hwirq: hardware irq number in that करोमुख्य space
+ * irq_create_mapping_affinity() - Map a hardware interrupt into linux irq space
+ * @domain: domain owning this hardware interrupt or NULL for default domain
+ * @hwirq: hardware irq number in that domain space
  * @affinity: irq affinity
  *
- * Only one mapping per hardware पूर्णांकerrupt is permitted. Returns a linux
+ * Only one mapping per hardware interrupt is permitted. Returns a linux
  * irq number.
- * If the sense/trigger is to be specअगरied, set_irq_type() should be called
- * on the number वापसed from that call.
+ * If the sense/trigger is to be specified, set_irq_type() should be called
+ * on the number returned from that call.
  */
-अचिन्हित पूर्णांक irq_create_mapping_affinity(काष्ठा irq_करोमुख्य *करोमुख्य,
+unsigned int irq_create_mapping_affinity(struct irq_domain *domain,
 				       irq_hw_number_t hwirq,
-				       स्थिर काष्ठा irq_affinity_desc *affinity)
-अणु
-	काष्ठा device_node *of_node;
-	पूर्णांक virq;
+				       const struct irq_affinity_desc *affinity)
+{
+	struct device_node *of_node;
+	int virq;
 
-	pr_debug("irq_create_mapping(0x%p, 0x%lx)\n", करोमुख्य, hwirq);
+	pr_debug("irq_create_mapping(0x%p, 0x%lx)\n", domain, hwirq);
 
-	/* Look क्रम शेष करोमुख्य अगर necessary */
-	अगर (करोमुख्य == शून्य)
-		करोमुख्य = irq_शेष_करोमुख्य;
-	अगर (करोमुख्य == शून्य) अणु
+	/* Look for default domain if necessary */
+	if (domain == NULL)
+		domain = irq_default_domain;
+	if (domain == NULL) {
 		WARN(1, "%s(, %lx) called with NULL domain\n", __func__, hwirq);
-		वापस 0;
-	पूर्ण
-	pr_debug("-> using domain @%p\n", करोमुख्य);
+		return 0;
+	}
+	pr_debug("-> using domain @%p\n", domain);
 
-	of_node = irq_करोमुख्य_get_of_node(करोमुख्य);
+	of_node = irq_domain_get_of_node(domain);
 
-	/* Check अगर mapping alपढ़ोy exists */
-	virq = irq_find_mapping(करोमुख्य, hwirq);
-	अगर (virq) अणु
+	/* Check if mapping already exists */
+	virq = irq_find_mapping(domain, hwirq);
+	if (virq) {
 		pr_debug("-> existing mapping on virq %d\n", virq);
-		वापस virq;
-	पूर्ण
+		return virq;
+	}
 
-	/* Allocate a भव पूर्णांकerrupt number */
-	virq = irq_करोमुख्य_alloc_descs(-1, 1, hwirq, of_node_to_nid(of_node),
+	/* Allocate a virtual interrupt number */
+	virq = irq_domain_alloc_descs(-1, 1, hwirq, of_node_to_nid(of_node),
 				      affinity);
-	अगर (virq <= 0) अणु
+	if (virq <= 0) {
 		pr_debug("-> virq allocation failed\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (irq_करोमुख्य_associate(करोमुख्य, virq, hwirq)) अणु
-		irq_मुक्त_desc(virq);
-		वापस 0;
-	पूर्ण
+	if (irq_domain_associate(domain, virq, hwirq)) {
+		irq_free_desc(virq);
+		return 0;
+	}
 
 	pr_debug("irq %lu on domain %s mapped to virtual irq %u\n",
 		hwirq, of_node_full_name(of_node), virq);
 
-	वापस virq;
-पूर्ण
+	return virq;
+}
 EXPORT_SYMBOL_GPL(irq_create_mapping_affinity);
 
-अटल पूर्णांक irq_करोमुख्य_translate(काष्ठा irq_करोमुख्य *d,
-				काष्ठा irq_fwspec *fwspec,
-				irq_hw_number_t *hwirq, अचिन्हित पूर्णांक *type)
-अणु
-#अगर_घोषित CONFIG_IRQ_DOMAIN_HIERARCHY
-	अगर (d->ops->translate)
-		वापस d->ops->translate(d, fwspec, hwirq, type);
-#पूर्ण_अगर
-	अगर (d->ops->xlate)
-		वापस d->ops->xlate(d, to_of_node(fwspec->fwnode),
+static int irq_domain_translate(struct irq_domain *d,
+				struct irq_fwspec *fwspec,
+				irq_hw_number_t *hwirq, unsigned int *type)
+{
+#ifdef CONFIG_IRQ_DOMAIN_HIERARCHY
+	if (d->ops->translate)
+		return d->ops->translate(d, fwspec, hwirq, type);
+#endif
+	if (d->ops->xlate)
+		return d->ops->xlate(d, to_of_node(fwspec->fwnode),
 				     fwspec->param, fwspec->param_count,
 				     hwirq, type);
 
-	/* If करोमुख्य has no translation, then we assume पूर्णांकerrupt line */
+	/* If domain has no translation, then we assume interrupt line */
 	*hwirq = fwspec->param[0];
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम of_phandle_args_to_fwspec(काष्ठा device_node *np, स्थिर u32 *args,
-				      अचिन्हित पूर्णांक count,
-				      काष्ठा irq_fwspec *fwspec)
-अणु
-	पूर्णांक i;
+static void of_phandle_args_to_fwspec(struct device_node *np, const u32 *args,
+				      unsigned int count,
+				      struct irq_fwspec *fwspec)
+{
+	int i;
 
 	fwspec->fwnode = of_node_to_fwnode(np);
 	fwspec->param_count = count;
 
-	क्रम (i = 0; i < count; i++)
+	for (i = 0; i < count; i++)
 		fwspec->param[i] = args[i];
-पूर्ण
+}
 
-अचिन्हित पूर्णांक irq_create_fwspec_mapping(काष्ठा irq_fwspec *fwspec)
-अणु
-	काष्ठा irq_करोमुख्य *करोमुख्य;
-	काष्ठा irq_data *irq_data;
+unsigned int irq_create_fwspec_mapping(struct irq_fwspec *fwspec)
+{
+	struct irq_domain *domain;
+	struct irq_data *irq_data;
 	irq_hw_number_t hwirq;
-	अचिन्हित पूर्णांक type = IRQ_TYPE_NONE;
-	पूर्णांक virq;
+	unsigned int type = IRQ_TYPE_NONE;
+	int virq;
 
-	अगर (fwspec->fwnode) अणु
-		करोमुख्य = irq_find_matching_fwspec(fwspec, DOMAIN_BUS_WIRED);
-		अगर (!करोमुख्य)
-			करोमुख्य = irq_find_matching_fwspec(fwspec, DOMAIN_BUS_ANY);
-	पूर्ण अन्यथा अणु
-		करोमुख्य = irq_शेष_करोमुख्य;
-	पूर्ण
+	if (fwspec->fwnode) {
+		domain = irq_find_matching_fwspec(fwspec, DOMAIN_BUS_WIRED);
+		if (!domain)
+			domain = irq_find_matching_fwspec(fwspec, DOMAIN_BUS_ANY);
+	} else {
+		domain = irq_default_domain;
+	}
 
-	अगर (!करोमुख्य) अणु
+	if (!domain) {
 		pr_warn("no irq domain found for %s !\n",
 			of_node_full_name(to_of_node(fwspec->fwnode)));
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (irq_करोमुख्य_translate(करोमुख्य, fwspec, &hwirq, &type))
-		वापस 0;
+	if (irq_domain_translate(domain, fwspec, &hwirq, &type))
+		return 0;
 
 	/*
-	 * WARN अगर the irqchip वापसs a type with bits
+	 * WARN if the irqchip returns a type with bits
 	 * outside the sense mask set and clear these bits.
 	 */
-	अगर (WARN_ON(type & ~IRQ_TYPE_SENSE_MASK))
+	if (WARN_ON(type & ~IRQ_TYPE_SENSE_MASK))
 		type &= IRQ_TYPE_SENSE_MASK;
 
 	/*
-	 * If we've alपढ़ोy configured this पूर्णांकerrupt,
-	 * करोn't करो it again, or hell will अवरोध loose.
+	 * If we've already configured this interrupt,
+	 * don't do it again, or hell will break loose.
 	 */
-	virq = irq_find_mapping(करोमुख्य, hwirq);
-	अगर (virq) अणु
+	virq = irq_find_mapping(domain, hwirq);
+	if (virq) {
 		/*
-		 * If the trigger type is not specअगरied or matches the
-		 * current trigger type then we are करोne so वापस the
-		 * पूर्णांकerrupt number.
+		 * If the trigger type is not specified or matches the
+		 * current trigger type then we are done so return the
+		 * interrupt number.
 		 */
-		अगर (type == IRQ_TYPE_NONE || type == irq_get_trigger_type(virq))
-			वापस virq;
+		if (type == IRQ_TYPE_NONE || type == irq_get_trigger_type(virq))
+			return virq;
 
 		/*
 		 * If the trigger type has not been set yet, then set
-		 * it now and वापस the पूर्णांकerrupt number.
+		 * it now and return the interrupt number.
 		 */
-		अगर (irq_get_trigger_type(virq) == IRQ_TYPE_NONE) अणु
+		if (irq_get_trigger_type(virq) == IRQ_TYPE_NONE) {
 			irq_data = irq_get_irq_data(virq);
-			अगर (!irq_data)
-				वापस 0;
+			if (!irq_data)
+				return 0;
 
 			irqd_set_trigger_type(irq_data, type);
-			वापस virq;
-		पूर्ण
+			return virq;
+		}
 
 		pr_warn("type mismatch, failed to map hwirq-%lu for %s!\n",
 			hwirq, of_node_full_name(to_of_node(fwspec->fwnode)));
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (irq_करोमुख्य_is_hierarchy(करोमुख्य)) अणु
-		virq = irq_करोमुख्य_alloc_irqs(करोमुख्य, 1, NUMA_NO_NODE, fwspec);
-		अगर (virq <= 0)
-			वापस 0;
-	पूर्ण अन्यथा अणु
+	if (irq_domain_is_hierarchy(domain)) {
+		virq = irq_domain_alloc_irqs(domain, 1, NUMA_NO_NODE, fwspec);
+		if (virq <= 0)
+			return 0;
+	} else {
 		/* Create mapping */
-		virq = irq_create_mapping(करोमुख्य, hwirq);
-		अगर (!virq)
-			वापस virq;
-	पूर्ण
+		virq = irq_create_mapping(domain, hwirq);
+		if (!virq)
+			return virq;
+	}
 
 	irq_data = irq_get_irq_data(virq);
-	अगर (!irq_data) अणु
-		अगर (irq_करोमुख्य_is_hierarchy(करोमुख्य))
-			irq_करोमुख्य_मुक्त_irqs(virq, 1);
-		अन्यथा
+	if (!irq_data) {
+		if (irq_domain_is_hierarchy(domain))
+			irq_domain_free_irqs(virq, 1);
+		else
 			irq_dispose_mapping(virq);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* Store trigger type */
 	irqd_set_trigger_type(irq_data, type);
 
-	वापस virq;
-पूर्ण
+	return virq;
+}
 EXPORT_SYMBOL_GPL(irq_create_fwspec_mapping);
 
-अचिन्हित पूर्णांक irq_create_of_mapping(काष्ठा of_phandle_args *irq_data)
-अणु
-	काष्ठा irq_fwspec fwspec;
+unsigned int irq_create_of_mapping(struct of_phandle_args *irq_data)
+{
+	struct irq_fwspec fwspec;
 
 	of_phandle_args_to_fwspec(irq_data->np, irq_data->args,
 				  irq_data->args_count, &fwspec);
 
-	वापस irq_create_fwspec_mapping(&fwspec);
-पूर्ण
+	return irq_create_fwspec_mapping(&fwspec);
+}
 EXPORT_SYMBOL_GPL(irq_create_of_mapping);
 
 /**
- * irq_dispose_mapping() - Unmap an पूर्णांकerrupt
- * @virq: linux irq number of the पूर्णांकerrupt to unmap
+ * irq_dispose_mapping() - Unmap an interrupt
+ * @virq: linux irq number of the interrupt to unmap
  */
-व्योम irq_dispose_mapping(अचिन्हित पूर्णांक virq)
-अणु
-	काष्ठा irq_data *irq_data = irq_get_irq_data(virq);
-	काष्ठा irq_करोमुख्य *करोमुख्य;
+void irq_dispose_mapping(unsigned int virq)
+{
+	struct irq_data *irq_data = irq_get_irq_data(virq);
+	struct irq_domain *domain;
 
-	अगर (!virq || !irq_data)
-		वापस;
+	if (!virq || !irq_data)
+		return;
 
-	करोमुख्य = irq_data->करोमुख्य;
-	अगर (WARN_ON(करोमुख्य == शून्य))
-		वापस;
+	domain = irq_data->domain;
+	if (WARN_ON(domain == NULL))
+		return;
 
-	अगर (irq_करोमुख्य_is_hierarchy(करोमुख्य)) अणु
-		irq_करोमुख्य_मुक्त_irqs(virq, 1);
-	पूर्ण अन्यथा अणु
-		irq_करोमुख्य_disassociate(करोमुख्य, virq);
-		irq_मुक्त_desc(virq);
-	पूर्ण
-पूर्ण
+	if (irq_domain_is_hierarchy(domain)) {
+		irq_domain_free_irqs(virq, 1);
+	} else {
+		irq_domain_disassociate(domain, virq);
+		irq_free_desc(virq);
+	}
+}
 EXPORT_SYMBOL_GPL(irq_dispose_mapping);
 
 /**
  * irq_find_mapping() - Find a linux irq from a hw irq number.
- * @करोमुख्य: करोमुख्य owning this hardware पूर्णांकerrupt
- * @hwirq: hardware irq number in that करोमुख्य space
+ * @domain: domain owning this hardware interrupt
+ * @hwirq: hardware irq number in that domain space
  */
-अचिन्हित पूर्णांक irq_find_mapping(काष्ठा irq_करोमुख्य *करोमुख्य,
+unsigned int irq_find_mapping(struct irq_domain *domain,
 			      irq_hw_number_t hwirq)
-अणु
-	काष्ठा irq_data *data;
+{
+	struct irq_data *data;
 
-	/* Look क्रम शेष करोमुख्य अगर necessary */
-	अगर (करोमुख्य == शून्य)
-		करोमुख्य = irq_शेष_करोमुख्य;
-	अगर (करोमुख्य == शून्य)
-		वापस 0;
+	/* Look for default domain if necessary */
+	if (domain == NULL)
+		domain = irq_default_domain;
+	if (domain == NULL)
+		return 0;
 
-	अगर (hwirq < करोमुख्य->revmap_direct_max_irq) अणु
-		data = irq_करोमुख्य_get_irq_data(करोमुख्य, hwirq);
-		अगर (data && data->hwirq == hwirq)
-			वापस hwirq;
-	पूर्ण
+	if (hwirq < domain->revmap_direct_max_irq) {
+		data = irq_domain_get_irq_data(domain, hwirq);
+		if (data && data->hwirq == hwirq)
+			return hwirq;
+	}
 
-	/* Check अगर the hwirq is in the linear revmap. */
-	अगर (hwirq < करोमुख्य->revmap_size)
-		वापस करोमुख्य->linear_revmap[hwirq];
+	/* Check if the hwirq is in the linear revmap. */
+	if (hwirq < domain->revmap_size)
+		return domain->linear_revmap[hwirq];
 
-	rcu_पढ़ो_lock();
-	data = radix_tree_lookup(&करोमुख्य->revmap_tree, hwirq);
-	rcu_पढ़ो_unlock();
-	वापस data ? data->irq : 0;
-पूर्ण
+	rcu_read_lock();
+	data = radix_tree_lookup(&domain->revmap_tree, hwirq);
+	rcu_read_unlock();
+	return data ? data->irq : 0;
+}
 EXPORT_SYMBOL_GPL(irq_find_mapping);
 
 /**
- * irq_करोमुख्य_xlate_onecell() - Generic xlate क्रम direct one cell bindings
+ * irq_domain_xlate_onecell() - Generic xlate for direct one cell bindings
  *
- * Device Tree IRQ specअगरier translation function which works with one cell
+ * Device Tree IRQ specifier translation function which works with one cell
  * bindings where the cell value maps directly to the hwirq number.
  */
-पूर्णांक irq_करोमुख्य_xlate_onecell(काष्ठा irq_करोमुख्य *d, काष्ठा device_node *ctrlr,
-			     स्थिर u32 *पूर्णांकspec, अचिन्हित पूर्णांक पूर्णांकsize,
-			     अचिन्हित दीर्घ *out_hwirq, अचिन्हित पूर्णांक *out_type)
-अणु
-	अगर (WARN_ON(पूर्णांकsize < 1))
-		वापस -EINVAL;
-	*out_hwirq = पूर्णांकspec[0];
+int irq_domain_xlate_onecell(struct irq_domain *d, struct device_node *ctrlr,
+			     const u32 *intspec, unsigned int intsize,
+			     unsigned long *out_hwirq, unsigned int *out_type)
+{
+	if (WARN_ON(intsize < 1))
+		return -EINVAL;
+	*out_hwirq = intspec[0];
 	*out_type = IRQ_TYPE_NONE;
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(irq_करोमुख्य_xlate_onecell);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(irq_domain_xlate_onecell);
 
 /**
- * irq_करोमुख्य_xlate_twocell() - Generic xlate क्रम direct two cell bindings
+ * irq_domain_xlate_twocell() - Generic xlate for direct two cell bindings
  *
- * Device Tree IRQ specअगरier translation function which works with two cell
+ * Device Tree IRQ specifier translation function which works with two cell
  * bindings where the cell values map directly to the hwirq number
  * and linux irq flags.
  */
-पूर्णांक irq_करोमुख्य_xlate_twocell(काष्ठा irq_करोमुख्य *d, काष्ठा device_node *ctrlr,
-			स्थिर u32 *पूर्णांकspec, अचिन्हित पूर्णांक पूर्णांकsize,
-			irq_hw_number_t *out_hwirq, अचिन्हित पूर्णांक *out_type)
-अणु
-	काष्ठा irq_fwspec fwspec;
+int irq_domain_xlate_twocell(struct irq_domain *d, struct device_node *ctrlr,
+			const u32 *intspec, unsigned int intsize,
+			irq_hw_number_t *out_hwirq, unsigned int *out_type)
+{
+	struct irq_fwspec fwspec;
 
-	of_phandle_args_to_fwspec(ctrlr, पूर्णांकspec, पूर्णांकsize, &fwspec);
-	वापस irq_करोमुख्य_translate_twocell(d, &fwspec, out_hwirq, out_type);
-पूर्ण
-EXPORT_SYMBOL_GPL(irq_करोमुख्य_xlate_twocell);
+	of_phandle_args_to_fwspec(ctrlr, intspec, intsize, &fwspec);
+	return irq_domain_translate_twocell(d, &fwspec, out_hwirq, out_type);
+}
+EXPORT_SYMBOL_GPL(irq_domain_xlate_twocell);
 
 /**
- * irq_करोमुख्य_xlate_onetwocell() - Generic xlate क्रम one or two cell bindings
+ * irq_domain_xlate_onetwocell() - Generic xlate for one or two cell bindings
  *
- * Device Tree IRQ specअगरier translation function which works with either one
+ * Device Tree IRQ specifier translation function which works with either one
  * or two cell bindings where the cell values map directly to the hwirq number
  * and linux irq flags.
  *
- * Note: करोn't use this function unless your पूर्णांकerrupt controller explicitly
+ * Note: don't use this function unless your interrupt controller explicitly
  * supports both one and two cell bindings.  For the majority of controllers
  * the _onecell() or _twocell() variants above should be used.
  */
-पूर्णांक irq_करोमुख्य_xlate_onetwocell(काष्ठा irq_करोमुख्य *d,
-				काष्ठा device_node *ctrlr,
-				स्थिर u32 *पूर्णांकspec, अचिन्हित पूर्णांक पूर्णांकsize,
-				अचिन्हित दीर्घ *out_hwirq, अचिन्हित पूर्णांक *out_type)
-अणु
-	अगर (WARN_ON(पूर्णांकsize < 1))
-		वापस -EINVAL;
-	*out_hwirq = पूर्णांकspec[0];
-	अगर (पूर्णांकsize > 1)
-		*out_type = पूर्णांकspec[1] & IRQ_TYPE_SENSE_MASK;
-	अन्यथा
+int irq_domain_xlate_onetwocell(struct irq_domain *d,
+				struct device_node *ctrlr,
+				const u32 *intspec, unsigned int intsize,
+				unsigned long *out_hwirq, unsigned int *out_type)
+{
+	if (WARN_ON(intsize < 1))
+		return -EINVAL;
+	*out_hwirq = intspec[0];
+	if (intsize > 1)
+		*out_type = intspec[1] & IRQ_TYPE_SENSE_MASK;
+	else
 		*out_type = IRQ_TYPE_NONE;
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(irq_करोमुख्य_xlate_onetwocell);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(irq_domain_xlate_onetwocell);
 
-स्थिर काष्ठा irq_करोमुख्य_ops irq_करोमुख्य_simple_ops = अणु
-	.xlate = irq_करोमुख्य_xlate_onetwocell,
-पूर्ण;
-EXPORT_SYMBOL_GPL(irq_करोमुख्य_simple_ops);
+const struct irq_domain_ops irq_domain_simple_ops = {
+	.xlate = irq_domain_xlate_onetwocell,
+};
+EXPORT_SYMBOL_GPL(irq_domain_simple_ops);
 
 /**
- * irq_करोमुख्य_translate_onecell() - Generic translate क्रम direct one cell
+ * irq_domain_translate_onecell() - Generic translate for direct one cell
  * bindings
  */
-पूर्णांक irq_करोमुख्य_translate_onecell(काष्ठा irq_करोमुख्य *d,
-				 काष्ठा irq_fwspec *fwspec,
-				 अचिन्हित दीर्घ *out_hwirq,
-				 अचिन्हित पूर्णांक *out_type)
-अणु
-	अगर (WARN_ON(fwspec->param_count < 1))
-		वापस -EINVAL;
+int irq_domain_translate_onecell(struct irq_domain *d,
+				 struct irq_fwspec *fwspec,
+				 unsigned long *out_hwirq,
+				 unsigned int *out_type)
+{
+	if (WARN_ON(fwspec->param_count < 1))
+		return -EINVAL;
 	*out_hwirq = fwspec->param[0];
 	*out_type = IRQ_TYPE_NONE;
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(irq_करोमुख्य_translate_onecell);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(irq_domain_translate_onecell);
 
 /**
- * irq_करोमुख्य_translate_twocell() - Generic translate क्रम direct two cell
+ * irq_domain_translate_twocell() - Generic translate for direct two cell
  * bindings
  *
- * Device Tree IRQ specअगरier translation function which works with two cell
+ * Device Tree IRQ specifier translation function which works with two cell
  * bindings where the cell values map directly to the hwirq number
  * and linux irq flags.
  */
-पूर्णांक irq_करोमुख्य_translate_twocell(काष्ठा irq_करोमुख्य *d,
-				 काष्ठा irq_fwspec *fwspec,
-				 अचिन्हित दीर्घ *out_hwirq,
-				 अचिन्हित पूर्णांक *out_type)
-अणु
-	अगर (WARN_ON(fwspec->param_count < 2))
-		वापस -EINVAL;
+int irq_domain_translate_twocell(struct irq_domain *d,
+				 struct irq_fwspec *fwspec,
+				 unsigned long *out_hwirq,
+				 unsigned int *out_type)
+{
+	if (WARN_ON(fwspec->param_count < 2))
+		return -EINVAL;
 	*out_hwirq = fwspec->param[0];
 	*out_type = fwspec->param[1] & IRQ_TYPE_SENSE_MASK;
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(irq_करोमुख्य_translate_twocell);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(irq_domain_translate_twocell);
 
-पूर्णांक irq_करोमुख्य_alloc_descs(पूर्णांक virq, अचिन्हित पूर्णांक cnt, irq_hw_number_t hwirq,
-			   पूर्णांक node, स्थिर काष्ठा irq_affinity_desc *affinity)
-अणु
-	अचिन्हित पूर्णांक hपूर्णांक;
+int irq_domain_alloc_descs(int virq, unsigned int cnt, irq_hw_number_t hwirq,
+			   int node, const struct irq_affinity_desc *affinity)
+{
+	unsigned int hint;
 
-	अगर (virq >= 0) अणु
+	if (virq >= 0) {
 		virq = __irq_alloc_descs(virq, virq, cnt, node, THIS_MODULE,
 					 affinity);
-	पूर्ण अन्यथा अणु
-		hपूर्णांक = hwirq % nr_irqs;
-		अगर (hपूर्णांक == 0)
-			hपूर्णांक++;
-		virq = __irq_alloc_descs(-1, hपूर्णांक, cnt, node, THIS_MODULE,
+	} else {
+		hint = hwirq % nr_irqs;
+		if (hint == 0)
+			hint++;
+		virq = __irq_alloc_descs(-1, hint, cnt, node, THIS_MODULE,
 					 affinity);
-		अगर (virq <= 0 && hपूर्णांक > 1) अणु
+		if (virq <= 0 && hint > 1) {
 			virq = __irq_alloc_descs(-1, 1, cnt, node, THIS_MODULE,
 						 affinity);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस virq;
-पूर्ण
+	return virq;
+}
 
 /**
- * irq_करोमुख्य_reset_irq_data - Clear hwirq, chip and chip_data in @irq_data
- * @irq_data:	The poपूर्णांकer to irq_data
+ * irq_domain_reset_irq_data - Clear hwirq, chip and chip_data in @irq_data
+ * @irq_data:	The pointer to irq_data
  */
-व्योम irq_करोमुख्य_reset_irq_data(काष्ठा irq_data *irq_data)
-अणु
+void irq_domain_reset_irq_data(struct irq_data *irq_data)
+{
 	irq_data->hwirq = 0;
 	irq_data->chip = &no_irq_chip;
-	irq_data->chip_data = शून्य;
-पूर्ण
-EXPORT_SYMBOL_GPL(irq_करोमुख्य_reset_irq_data);
+	irq_data->chip_data = NULL;
+}
+EXPORT_SYMBOL_GPL(irq_domain_reset_irq_data);
 
-#अगर_घोषित	CONFIG_IRQ_DOMAIN_HIERARCHY
+#ifdef	CONFIG_IRQ_DOMAIN_HIERARCHY
 /**
- * irq_करोमुख्य_create_hierarchy - Add a irqकरोमुख्य पूर्णांकo the hierarchy
- * @parent:	Parent irq करोमुख्य to associate with the new करोमुख्य
- * @flags:	Irq करोमुख्य flags associated to the करोमुख्य
- * @size:	Size of the करोमुख्य. See below
- * @fwnode:	Optional fwnode of the पूर्णांकerrupt controller
- * @ops:	Poपूर्णांकer to the पूर्णांकerrupt करोमुख्य callbacks
- * @host_data:	Controller निजी data poपूर्णांकer
+ * irq_domain_create_hierarchy - Add a irqdomain into the hierarchy
+ * @parent:	Parent irq domain to associate with the new domain
+ * @flags:	Irq domain flags associated to the domain
+ * @size:	Size of the domain. See below
+ * @fwnode:	Optional fwnode of the interrupt controller
+ * @ops:	Pointer to the interrupt domain callbacks
+ * @host_data:	Controller private data pointer
  *
- * If @size is 0 a tree करोमुख्य is created, otherwise a linear करोमुख्य.
+ * If @size is 0 a tree domain is created, otherwise a linear domain.
  *
- * If successful the parent is associated to the new करोमुख्य and the
- * करोमुख्य flags are set.
- * Returns poपूर्णांकer to IRQ करोमुख्य, or शून्य on failure.
+ * If successful the parent is associated to the new domain and the
+ * domain flags are set.
+ * Returns pointer to IRQ domain, or NULL on failure.
  */
-काष्ठा irq_करोमुख्य *irq_करोमुख्य_create_hierarchy(काष्ठा irq_करोमुख्य *parent,
-					    अचिन्हित पूर्णांक flags,
-					    अचिन्हित पूर्णांक size,
-					    काष्ठा fwnode_handle *fwnode,
-					    स्थिर काष्ठा irq_करोमुख्य_ops *ops,
-					    व्योम *host_data)
-अणु
-	काष्ठा irq_करोमुख्य *करोमुख्य;
+struct irq_domain *irq_domain_create_hierarchy(struct irq_domain *parent,
+					    unsigned int flags,
+					    unsigned int size,
+					    struct fwnode_handle *fwnode,
+					    const struct irq_domain_ops *ops,
+					    void *host_data)
+{
+	struct irq_domain *domain;
 
-	अगर (size)
-		करोमुख्य = irq_करोमुख्य_create_linear(fwnode, size, ops, host_data);
-	अन्यथा
-		करोमुख्य = irq_करोमुख्य_create_tree(fwnode, ops, host_data);
-	अगर (करोमुख्य) अणु
-		करोमुख्य->parent = parent;
-		करोमुख्य->flags |= flags;
-	पूर्ण
+	if (size)
+		domain = irq_domain_create_linear(fwnode, size, ops, host_data);
+	else
+		domain = irq_domain_create_tree(fwnode, ops, host_data);
+	if (domain) {
+		domain->parent = parent;
+		domain->flags |= flags;
+	}
 
-	वापस करोमुख्य;
-पूर्ण
-EXPORT_SYMBOL_GPL(irq_करोमुख्य_create_hierarchy);
+	return domain;
+}
+EXPORT_SYMBOL_GPL(irq_domain_create_hierarchy);
 
-अटल व्योम irq_करोमुख्य_insert_irq(पूर्णांक virq)
-अणु
-	काष्ठा irq_data *data;
+static void irq_domain_insert_irq(int virq)
+{
+	struct irq_data *data;
 
-	क्रम (data = irq_get_irq_data(virq); data; data = data->parent_data) अणु
-		काष्ठा irq_करोमुख्य *करोमुख्य = data->करोमुख्य;
+	for (data = irq_get_irq_data(virq); data; data = data->parent_data) {
+		struct irq_domain *domain = data->domain;
 
-		करोमुख्य->mapcount++;
-		irq_करोमुख्य_set_mapping(करोमुख्य, data->hwirq, data);
+		domain->mapcount++;
+		irq_domain_set_mapping(domain, data->hwirq, data);
 
-		/* If not alपढ़ोy asचिन्हित, give the करोमुख्य the chip's name */
-		अगर (!करोमुख्य->name && data->chip)
-			करोमुख्य->name = data->chip->name;
-	पूर्ण
+		/* If not already assigned, give the domain the chip's name */
+		if (!domain->name && data->chip)
+			domain->name = data->chip->name;
+	}
 
 	irq_clear_status_flags(virq, IRQ_NOREQUEST);
-पूर्ण
+}
 
-अटल व्योम irq_करोमुख्य_हटाओ_irq(पूर्णांक virq)
-अणु
-	काष्ठा irq_data *data;
+static void irq_domain_remove_irq(int virq)
+{
+	struct irq_data *data;
 
 	irq_set_status_flags(virq, IRQ_NOREQUEST);
-	irq_set_chip_and_handler(virq, शून्य, शून्य);
+	irq_set_chip_and_handler(virq, NULL, NULL);
 	synchronize_irq(virq);
 	smp_mb();
 
-	क्रम (data = irq_get_irq_data(virq); data; data = data->parent_data) अणु
-		काष्ठा irq_करोमुख्य *करोमुख्य = data->करोमुख्य;
+	for (data = irq_get_irq_data(virq); data; data = data->parent_data) {
+		struct irq_domain *domain = data->domain;
 		irq_hw_number_t hwirq = data->hwirq;
 
-		करोमुख्य->mapcount--;
-		irq_करोमुख्य_clear_mapping(करोमुख्य, hwirq);
-	पूर्ण
-पूर्ण
+		domain->mapcount--;
+		irq_domain_clear_mapping(domain, hwirq);
+	}
+}
 
-अटल काष्ठा irq_data *irq_करोमुख्य_insert_irq_data(काष्ठा irq_करोमुख्य *करोमुख्य,
-						   काष्ठा irq_data *child)
-अणु
-	काष्ठा irq_data *irq_data;
+static struct irq_data *irq_domain_insert_irq_data(struct irq_domain *domain,
+						   struct irq_data *child)
+{
+	struct irq_data *irq_data;
 
-	irq_data = kzalloc_node(माप(*irq_data), GFP_KERNEL,
+	irq_data = kzalloc_node(sizeof(*irq_data), GFP_KERNEL,
 				irq_data_get_node(child));
-	अगर (irq_data) अणु
+	if (irq_data) {
 		child->parent_data = irq_data;
 		irq_data->irq = child->irq;
 		irq_data->common = child->common;
-		irq_data->करोमुख्य = करोमुख्य;
-	पूर्ण
+		irq_data->domain = domain;
+	}
 
-	वापस irq_data;
-पूर्ण
+	return irq_data;
+}
 
-अटल व्योम __irq_करोमुख्य_मुक्त_hierarchy(काष्ठा irq_data *irq_data)
-अणु
-	काष्ठा irq_data *पंचांगp;
+static void __irq_domain_free_hierarchy(struct irq_data *irq_data)
+{
+	struct irq_data *tmp;
 
-	जबतक (irq_data) अणु
-		पंचांगp = irq_data;
+	while (irq_data) {
+		tmp = irq_data;
 		irq_data = irq_data->parent_data;
-		kमुक्त(पंचांगp);
-	पूर्ण
-पूर्ण
+		kfree(tmp);
+	}
+}
 
-अटल व्योम irq_करोमुख्य_मुक्त_irq_data(अचिन्हित पूर्णांक virq, अचिन्हित पूर्णांक nr_irqs)
-अणु
-	काष्ठा irq_data *irq_data, *पंचांगp;
-	पूर्णांक i;
+static void irq_domain_free_irq_data(unsigned int virq, unsigned int nr_irqs)
+{
+	struct irq_data *irq_data, *tmp;
+	int i;
 
-	क्रम (i = 0; i < nr_irqs; i++) अणु
+	for (i = 0; i < nr_irqs; i++) {
 		irq_data = irq_get_irq_data(virq + i);
-		पंचांगp = irq_data->parent_data;
-		irq_data->parent_data = शून्य;
-		irq_data->करोमुख्य = शून्य;
+		tmp = irq_data->parent_data;
+		irq_data->parent_data = NULL;
+		irq_data->domain = NULL;
 
-		__irq_करोमुख्य_मुक्त_hierarchy(पंचांगp);
-	पूर्ण
-पूर्ण
+		__irq_domain_free_hierarchy(tmp);
+	}
+}
 
 /**
- * irq_करोमुख्य_disconnect_hierarchy - Mark the first unused level of a hierarchy
- * @करोमुख्य:	IRQ करोमुख्य from which the hierarchy is to be disconnected
+ * irq_domain_disconnect_hierarchy - Mark the first unused level of a hierarchy
+ * @domain:	IRQ domain from which the hierarchy is to be disconnected
  * @virq:	IRQ number where the hierarchy is to be trimmed
  *
- * Marks the @virq level beदीर्घing to @करोमुख्य as disconnected.
- * Returns -EINVAL अगर @virq करोesn't have a valid irq_data poपूर्णांकing
- * to @करोमुख्य.
+ * Marks the @virq level belonging to @domain as disconnected.
+ * Returns -EINVAL if @virq doesn't have a valid irq_data pointing
+ * to @domain.
  *
- * Its only use is to be able to trim levels of hierarchy that करो not
- * have any real meaning क्रम this पूर्णांकerrupt, and that the driver marks
+ * Its only use is to be able to trim levels of hierarchy that do not
+ * have any real meaning for this interrupt, and that the driver marks
  * as such from its .alloc() callback.
  */
-पूर्णांक irq_करोमुख्य_disconnect_hierarchy(काष्ठा irq_करोमुख्य *करोमुख्य,
-				    अचिन्हित पूर्णांक virq)
-अणु
-	काष्ठा irq_data *irqd;
+int irq_domain_disconnect_hierarchy(struct irq_domain *domain,
+				    unsigned int virq)
+{
+	struct irq_data *irqd;
 
-	irqd = irq_करोमुख्य_get_irq_data(करोमुख्य, virq);
-	अगर (!irqd)
-		वापस -EINVAL;
+	irqd = irq_domain_get_irq_data(domain, virq);
+	if (!irqd)
+		return -EINVAL;
 
 	irqd->chip = ERR_PTR(-ENOTCONN);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक irq_करोमुख्य_trim_hierarchy(अचिन्हित पूर्णांक virq)
-अणु
-	काष्ठा irq_data *tail, *irqd, *irq_data;
+static int irq_domain_trim_hierarchy(unsigned int virq)
+{
+	struct irq_data *tail, *irqd, *irq_data;
 
 	irq_data = irq_get_irq_data(virq);
-	tail = शून्य;
+	tail = NULL;
 
 	/* The first entry must have a valid irqchip */
-	अगर (!irq_data->chip || IS_ERR(irq_data->chip))
-		वापस -EINVAL;
+	if (!irq_data->chip || IS_ERR(irq_data->chip))
+		return -EINVAL;
 
 	/*
 	 * Validate that the irq_data chain is sane in the presence of
 	 * a hierarchy trimming marker.
 	 */
-	क्रम (irqd = irq_data->parent_data; irqd; irq_data = irqd, irqd = irqd->parent_data) अणु
+	for (irqd = irq_data->parent_data; irqd; irq_data = irqd, irqd = irqd->parent_data) {
 		/* Can't have a valid irqchip after a trim marker */
-		अगर (irqd->chip && tail)
-			वापस -EINVAL;
+		if (irqd->chip && tail)
+			return -EINVAL;
 
-		/* Can't have an empty irqchip beक्रमe a trim marker */
-		अगर (!irqd->chip && !tail)
-			वापस -EINVAL;
+		/* Can't have an empty irqchip before a trim marker */
+		if (!irqd->chip && !tail)
+			return -EINVAL;
 
-		अगर (IS_ERR(irqd->chip)) अणु
+		if (IS_ERR(irqd->chip)) {
 			/* Only -ENOTCONN is a valid trim marker */
-			अगर (PTR_ERR(irqd->chip) != -ENOTCONN)
-				वापस -EINVAL;
+			if (PTR_ERR(irqd->chip) != -ENOTCONN)
+				return -EINVAL;
 
 			tail = irq_data;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* No trim marker, nothing to करो */
-	अगर (!tail)
-		वापस 0;
+	/* No trim marker, nothing to do */
+	if (!tail)
+		return 0;
 
 	pr_info("IRQ%d: trimming hierarchy from %s\n",
-		virq, tail->parent_data->करोमुख्य->name);
+		virq, tail->parent_data->domain->name);
 
 	/* Sever the inner part of the hierarchy...  */
 	irqd = tail;
 	tail = tail->parent_data;
-	irqd->parent_data = शून्य;
-	__irq_करोमुख्य_मुक्त_hierarchy(tail);
+	irqd->parent_data = NULL;
+	__irq_domain_free_hierarchy(tail);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक irq_करोमुख्य_alloc_irq_data(काष्ठा irq_करोमुख्य *करोमुख्य,
-				     अचिन्हित पूर्णांक virq, अचिन्हित पूर्णांक nr_irqs)
-अणु
-	काष्ठा irq_data *irq_data;
-	काष्ठा irq_करोमुख्य *parent;
-	पूर्णांक i;
+static int irq_domain_alloc_irq_data(struct irq_domain *domain,
+				     unsigned int virq, unsigned int nr_irqs)
+{
+	struct irq_data *irq_data;
+	struct irq_domain *parent;
+	int i;
 
-	/* The outermost irq_data is embedded in काष्ठा irq_desc */
-	क्रम (i = 0; i < nr_irqs; i++) अणु
+	/* The outermost irq_data is embedded in struct irq_desc */
+	for (i = 0; i < nr_irqs; i++) {
 		irq_data = irq_get_irq_data(virq + i);
-		irq_data->करोमुख्य = करोमुख्य;
+		irq_data->domain = domain;
 
-		क्रम (parent = करोमुख्य->parent; parent; parent = parent->parent) अणु
-			irq_data = irq_करोमुख्य_insert_irq_data(parent, irq_data);
-			अगर (!irq_data) अणु
-				irq_करोमुख्य_मुक्त_irq_data(virq, i + 1);
-				वापस -ENOMEM;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+		for (parent = domain->parent; parent; parent = parent->parent) {
+			irq_data = irq_domain_insert_irq_data(parent, irq_data);
+			if (!irq_data) {
+				irq_domain_free_irq_data(virq, i + 1);
+				return -ENOMEM;
+			}
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * irq_करोमुख्य_get_irq_data - Get irq_data associated with @virq and @करोमुख्य
- * @करोमुख्य:	करोमुख्य to match
+ * irq_domain_get_irq_data - Get irq_data associated with @virq and @domain
+ * @domain:	domain to match
  * @virq:	IRQ number to get irq_data
  */
-काष्ठा irq_data *irq_करोमुख्य_get_irq_data(काष्ठा irq_करोमुख्य *करोमुख्य,
-					 अचिन्हित पूर्णांक virq)
-अणु
-	काष्ठा irq_data *irq_data;
+struct irq_data *irq_domain_get_irq_data(struct irq_domain *domain,
+					 unsigned int virq)
+{
+	struct irq_data *irq_data;
 
-	क्रम (irq_data = irq_get_irq_data(virq); irq_data;
+	for (irq_data = irq_get_irq_data(virq); irq_data;
 	     irq_data = irq_data->parent_data)
-		अगर (irq_data->करोमुख्य == करोमुख्य)
-			वापस irq_data;
+		if (irq_data->domain == domain)
+			return irq_data;
 
-	वापस शून्य;
-पूर्ण
-EXPORT_SYMBOL_GPL(irq_करोमुख्य_get_irq_data);
+	return NULL;
+}
+EXPORT_SYMBOL_GPL(irq_domain_get_irq_data);
 
 /**
- * irq_करोमुख्य_set_hwirq_and_chip - Set hwirq and irqchip of @virq at @करोमुख्य
- * @करोमुख्य:	Interrupt करोमुख्य to match
+ * irq_domain_set_hwirq_and_chip - Set hwirq and irqchip of @virq at @domain
+ * @domain:	Interrupt domain to match
  * @virq:	IRQ number
  * @hwirq:	The hwirq number
- * @chip:	The associated पूर्णांकerrupt chip
+ * @chip:	The associated interrupt chip
  * @chip_data:	The associated chip data
  */
-पूर्णांक irq_करोमुख्य_set_hwirq_and_chip(काष्ठा irq_करोमुख्य *करोमुख्य, अचिन्हित पूर्णांक virq,
-				  irq_hw_number_t hwirq, काष्ठा irq_chip *chip,
-				  व्योम *chip_data)
-अणु
-	काष्ठा irq_data *irq_data = irq_करोमुख्य_get_irq_data(करोमुख्य, virq);
+int irq_domain_set_hwirq_and_chip(struct irq_domain *domain, unsigned int virq,
+				  irq_hw_number_t hwirq, struct irq_chip *chip,
+				  void *chip_data)
+{
+	struct irq_data *irq_data = irq_domain_get_irq_data(domain, virq);
 
-	अगर (!irq_data)
-		वापस -ENOENT;
+	if (!irq_data)
+		return -ENOENT;
 
 	irq_data->hwirq = hwirq;
 	irq_data->chip = chip ? chip : &no_irq_chip;
 	irq_data->chip_data = chip_data;
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(irq_करोमुख्य_set_hwirq_and_chip);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(irq_domain_set_hwirq_and_chip);
 
 /**
- * irq_करोमुख्य_set_info - Set the complete data क्रम a @virq in @करोमुख्य
- * @करोमुख्य:		Interrupt करोमुख्य to match
+ * irq_domain_set_info - Set the complete data for a @virq in @domain
+ * @domain:		Interrupt domain to match
  * @virq:		IRQ number
- * @hwirq:		The hardware पूर्णांकerrupt number
- * @chip:		The associated पूर्णांकerrupt chip
- * @chip_data:		The associated पूर्णांकerrupt chip data
- * @handler:		The पूर्णांकerrupt flow handler
- * @handler_data:	The पूर्णांकerrupt flow handler data
- * @handler_name:	The पूर्णांकerrupt handler name
+ * @hwirq:		The hardware interrupt number
+ * @chip:		The associated interrupt chip
+ * @chip_data:		The associated interrupt chip data
+ * @handler:		The interrupt flow handler
+ * @handler_data:	The interrupt flow handler data
+ * @handler_name:	The interrupt handler name
  */
-व्योम irq_करोमुख्य_set_info(काष्ठा irq_करोमुख्य *करोमुख्य, अचिन्हित पूर्णांक virq,
-			 irq_hw_number_t hwirq, काष्ठा irq_chip *chip,
-			 व्योम *chip_data, irq_flow_handler_t handler,
-			 व्योम *handler_data, स्थिर अक्षर *handler_name)
-अणु
-	irq_करोमुख्य_set_hwirq_and_chip(करोमुख्य, virq, hwirq, chip, chip_data);
+void irq_domain_set_info(struct irq_domain *domain, unsigned int virq,
+			 irq_hw_number_t hwirq, struct irq_chip *chip,
+			 void *chip_data, irq_flow_handler_t handler,
+			 void *handler_data, const char *handler_name)
+{
+	irq_domain_set_hwirq_and_chip(domain, virq, hwirq, chip, chip_data);
 	__irq_set_handler(virq, handler, 0, handler_name);
 	irq_set_handler_data(virq, handler_data);
-पूर्ण
-EXPORT_SYMBOL(irq_करोमुख्य_set_info);
+}
+EXPORT_SYMBOL(irq_domain_set_info);
 
 /**
- * irq_करोमुख्य_मुक्त_irqs_common - Clear irq_data and मुक्त the parent
- * @करोमुख्य:	Interrupt करोमुख्य to match
+ * irq_domain_free_irqs_common - Clear irq_data and free the parent
+ * @domain:	Interrupt domain to match
  * @virq:	IRQ number to start with
- * @nr_irqs:	The number of irqs to मुक्त
+ * @nr_irqs:	The number of irqs to free
  */
-व्योम irq_करोमुख्य_मुक्त_irqs_common(काष्ठा irq_करोमुख्य *करोमुख्य, अचिन्हित पूर्णांक virq,
-				 अचिन्हित पूर्णांक nr_irqs)
-अणु
-	काष्ठा irq_data *irq_data;
-	पूर्णांक i;
+void irq_domain_free_irqs_common(struct irq_domain *domain, unsigned int virq,
+				 unsigned int nr_irqs)
+{
+	struct irq_data *irq_data;
+	int i;
 
-	क्रम (i = 0; i < nr_irqs; i++) अणु
-		irq_data = irq_करोमुख्य_get_irq_data(करोमुख्य, virq + i);
-		अगर (irq_data)
-			irq_करोमुख्य_reset_irq_data(irq_data);
-	पूर्ण
-	irq_करोमुख्य_मुक्त_irqs_parent(करोमुख्य, virq, nr_irqs);
-पूर्ण
-EXPORT_SYMBOL_GPL(irq_करोमुख्य_मुक्त_irqs_common);
+	for (i = 0; i < nr_irqs; i++) {
+		irq_data = irq_domain_get_irq_data(domain, virq + i);
+		if (irq_data)
+			irq_domain_reset_irq_data(irq_data);
+	}
+	irq_domain_free_irqs_parent(domain, virq, nr_irqs);
+}
+EXPORT_SYMBOL_GPL(irq_domain_free_irqs_common);
 
 /**
- * irq_करोमुख्य_मुक्त_irqs_top - Clear handler and handler data, clear irqdata and मुक्त parent
- * @करोमुख्य:	Interrupt करोमुख्य to match
+ * irq_domain_free_irqs_top - Clear handler and handler data, clear irqdata and free parent
+ * @domain:	Interrupt domain to match
  * @virq:	IRQ number to start with
- * @nr_irqs:	The number of irqs to मुक्त
+ * @nr_irqs:	The number of irqs to free
  */
-व्योम irq_करोमुख्य_मुक्त_irqs_top(काष्ठा irq_करोमुख्य *करोमुख्य, अचिन्हित पूर्णांक virq,
-			      अचिन्हित पूर्णांक nr_irqs)
-अणु
-	पूर्णांक i;
+void irq_domain_free_irqs_top(struct irq_domain *domain, unsigned int virq,
+			      unsigned int nr_irqs)
+{
+	int i;
 
-	क्रम (i = 0; i < nr_irqs; i++) अणु
-		irq_set_handler_data(virq + i, शून्य);
-		irq_set_handler(virq + i, शून्य);
-	पूर्ण
-	irq_करोमुख्य_मुक्त_irqs_common(करोमुख्य, virq, nr_irqs);
-पूर्ण
+	for (i = 0; i < nr_irqs; i++) {
+		irq_set_handler_data(virq + i, NULL);
+		irq_set_handler(virq + i, NULL);
+	}
+	irq_domain_free_irqs_common(domain, virq, nr_irqs);
+}
 
-अटल व्योम irq_करोमुख्य_मुक्त_irqs_hierarchy(काष्ठा irq_करोमुख्य *करोमुख्य,
-					   अचिन्हित पूर्णांक irq_base,
-					   अचिन्हित पूर्णांक nr_irqs)
-अणु
-	अचिन्हित पूर्णांक i;
+static void irq_domain_free_irqs_hierarchy(struct irq_domain *domain,
+					   unsigned int irq_base,
+					   unsigned int nr_irqs)
+{
+	unsigned int i;
 
-	अगर (!करोमुख्य->ops->मुक्त)
-		वापस;
+	if (!domain->ops->free)
+		return;
 
-	क्रम (i = 0; i < nr_irqs; i++) अणु
-		अगर (irq_करोमुख्य_get_irq_data(करोमुख्य, irq_base + i))
-			करोमुख्य->ops->मुक्त(करोमुख्य, irq_base + i, 1);
-	पूर्ण
-पूर्ण
+	for (i = 0; i < nr_irqs; i++) {
+		if (irq_domain_get_irq_data(domain, irq_base + i))
+			domain->ops->free(domain, irq_base + i, 1);
+	}
+}
 
-पूर्णांक irq_करोमुख्य_alloc_irqs_hierarchy(काष्ठा irq_करोमुख्य *करोमुख्य,
-				    अचिन्हित पूर्णांक irq_base,
-				    अचिन्हित पूर्णांक nr_irqs, व्योम *arg)
-अणु
-	अगर (!करोमुख्य->ops->alloc) अणु
+int irq_domain_alloc_irqs_hierarchy(struct irq_domain *domain,
+				    unsigned int irq_base,
+				    unsigned int nr_irqs, void *arg)
+{
+	if (!domain->ops->alloc) {
 		pr_debug("domain->ops->alloc() is NULL\n");
-		वापस -ENOSYS;
-	पूर्ण
+		return -ENOSYS;
+	}
 
-	वापस करोमुख्य->ops->alloc(करोमुख्य, irq_base, nr_irqs, arg);
-पूर्ण
+	return domain->ops->alloc(domain, irq_base, nr_irqs, arg);
+}
 
 /**
- * __irq_करोमुख्य_alloc_irqs - Allocate IRQs from करोमुख्य
- * @करोमुख्य:	करोमुख्य to allocate from
- * @irq_base:	allocate specअगरied IRQ number अगर irq_base >= 0
+ * __irq_domain_alloc_irqs - Allocate IRQs from domain
+ * @domain:	domain to allocate from
+ * @irq_base:	allocate specified IRQ number if irq_base >= 0
  * @nr_irqs:	number of IRQs to allocate
- * @node:	NUMA node id क्रम memory allocation
- * @arg:	करोमुख्य specअगरic argument
- * @पुनः_स्मृति:	IRQ descriptors have alपढ़ोy been allocated अगर true
- * @affinity:	Optional irq affinity mask क्रम multiqueue devices
+ * @node:	NUMA node id for memory allocation
+ * @arg:	domain specific argument
+ * @realloc:	IRQ descriptors have already been allocated if true
+ * @affinity:	Optional irq affinity mask for multiqueue devices
  *
- * Allocate IRQ numbers and initialized all data काष्ठाures to support
- * hierarchy IRQ करोमुख्यs.
- * Parameter @पुनः_स्मृति is मुख्यly to support legacy IRQs.
+ * Allocate IRQ numbers and initialized all data structures to support
+ * hierarchy IRQ domains.
+ * Parameter @realloc is mainly to support legacy IRQs.
  * Returns error code or allocated IRQ number
  *
- * The whole process to setup an IRQ has been split पूर्णांकo two steps.
- * The first step, __irq_करोमुख्य_alloc_irqs(), is to allocate IRQ
+ * The whole process to setup an IRQ has been split into two steps.
+ * The first step, __irq_domain_alloc_irqs(), is to allocate IRQ
  * descriptor and required hardware resources. The second step,
- * irq_करोमुख्य_activate_irq(), is to program the hardware with pपुनः_स्मृतिated
+ * irq_domain_activate_irq(), is to program the hardware with preallocated
  * resources. In this way, it's easier to rollback when failing to
  * allocate resources.
  */
-पूर्णांक __irq_करोमुख्य_alloc_irqs(काष्ठा irq_करोमुख्य *करोमुख्य, पूर्णांक irq_base,
-			    अचिन्हित पूर्णांक nr_irqs, पूर्णांक node, व्योम *arg,
-			    bool पुनः_स्मृति, स्थिर काष्ठा irq_affinity_desc *affinity)
-अणु
-	पूर्णांक i, ret, virq;
+int __irq_domain_alloc_irqs(struct irq_domain *domain, int irq_base,
+			    unsigned int nr_irqs, int node, void *arg,
+			    bool realloc, const struct irq_affinity_desc *affinity)
+{
+	int i, ret, virq;
 
-	अगर (करोमुख्य == शून्य) अणु
-		करोमुख्य = irq_शेष_करोमुख्य;
-		अगर (WARN(!करोमुख्य, "domain is NULL; cannot allocate IRQ\n"))
-			वापस -EINVAL;
-	पूर्ण
+	if (domain == NULL) {
+		domain = irq_default_domain;
+		if (WARN(!domain, "domain is NULL; cannot allocate IRQ\n"))
+			return -EINVAL;
+	}
 
-	अगर (पुनः_स्मृति && irq_base >= 0) अणु
+	if (realloc && irq_base >= 0) {
 		virq = irq_base;
-	पूर्ण अन्यथा अणु
-		virq = irq_करोमुख्य_alloc_descs(irq_base, nr_irqs, 0, node,
+	} else {
+		virq = irq_domain_alloc_descs(irq_base, nr_irqs, 0, node,
 					      affinity);
-		अगर (virq < 0) अणु
+		if (virq < 0) {
 			pr_debug("cannot allocate IRQ(base %d, count %d)\n",
 				 irq_base, nr_irqs);
-			वापस virq;
-		पूर्ण
-	पूर्ण
+			return virq;
+		}
+	}
 
-	अगर (irq_करोमुख्य_alloc_irq_data(करोमुख्य, virq, nr_irqs)) अणु
+	if (irq_domain_alloc_irq_data(domain, virq, nr_irqs)) {
 		pr_debug("cannot allocate memory for IRQ%d\n", virq);
 		ret = -ENOMEM;
-		जाओ out_मुक्त_desc;
-	पूर्ण
+		goto out_free_desc;
+	}
 
-	mutex_lock(&irq_करोमुख्य_mutex);
-	ret = irq_करोमुख्य_alloc_irqs_hierarchy(करोमुख्य, virq, nr_irqs, arg);
-	अगर (ret < 0) अणु
-		mutex_unlock(&irq_करोमुख्य_mutex);
-		जाओ out_मुक्त_irq_data;
-	पूर्ण
+	mutex_lock(&irq_domain_mutex);
+	ret = irq_domain_alloc_irqs_hierarchy(domain, virq, nr_irqs, arg);
+	if (ret < 0) {
+		mutex_unlock(&irq_domain_mutex);
+		goto out_free_irq_data;
+	}
 
-	क्रम (i = 0; i < nr_irqs; i++) अणु
-		ret = irq_करोमुख्य_trim_hierarchy(virq + i);
-		अगर (ret) अणु
-			mutex_unlock(&irq_करोमुख्य_mutex);
-			जाओ out_मुक्त_irq_data;
-		पूर्ण
-	पूर्ण
+	for (i = 0; i < nr_irqs; i++) {
+		ret = irq_domain_trim_hierarchy(virq + i);
+		if (ret) {
+			mutex_unlock(&irq_domain_mutex);
+			goto out_free_irq_data;
+		}
+	}
 	
-	क्रम (i = 0; i < nr_irqs; i++)
-		irq_करोमुख्य_insert_irq(virq + i);
-	mutex_unlock(&irq_करोमुख्य_mutex);
+	for (i = 0; i < nr_irqs; i++)
+		irq_domain_insert_irq(virq + i);
+	mutex_unlock(&irq_domain_mutex);
 
-	वापस virq;
+	return virq;
 
-out_मुक्त_irq_data:
-	irq_करोमुख्य_मुक्त_irq_data(virq, nr_irqs);
-out_मुक्त_desc:
-	irq_मुक्त_descs(virq, nr_irqs);
-	वापस ret;
-पूर्ण
+out_free_irq_data:
+	irq_domain_free_irq_data(virq, nr_irqs);
+out_free_desc:
+	irq_free_descs(virq, nr_irqs);
+	return ret;
+}
 
 /* The irq_data was moved, fix the revmap to refer to the new location */
-अटल व्योम irq_करोमुख्य_fix_revmap(काष्ठा irq_data *d)
-अणु
-	व्योम __rcu **slot;
+static void irq_domain_fix_revmap(struct irq_data *d)
+{
+	void __rcu **slot;
 
-	अगर (d->hwirq < d->करोमुख्य->revmap_size)
-		वापस; /* Not using radix tree. */
+	if (d->hwirq < d->domain->revmap_size)
+		return; /* Not using radix tree. */
 
 	/* Fix up the revmap. */
-	mutex_lock(&d->करोमुख्य->revmap_tree_mutex);
-	slot = radix_tree_lookup_slot(&d->करोमुख्य->revmap_tree, d->hwirq);
-	अगर (slot)
-		radix_tree_replace_slot(&d->करोमुख्य->revmap_tree, slot, d);
-	mutex_unlock(&d->करोमुख्य->revmap_tree_mutex);
-पूर्ण
+	mutex_lock(&d->domain->revmap_tree_mutex);
+	slot = radix_tree_lookup_slot(&d->domain->revmap_tree, d->hwirq);
+	if (slot)
+		radix_tree_replace_slot(&d->domain->revmap_tree, slot, d);
+	mutex_unlock(&d->domain->revmap_tree_mutex);
+}
 
 /**
- * irq_करोमुख्य_push_irq() - Push a करोमुख्य in to the top of a hierarchy.
- * @करोमुख्य:	Doमुख्य to push.
- * @virq:	Irq to push the करोमुख्य in to.
- * @arg:	Passed to the irq_करोमुख्य_ops alloc() function.
+ * irq_domain_push_irq() - Push a domain in to the top of a hierarchy.
+ * @domain:	Domain to push.
+ * @virq:	Irq to push the domain in to.
+ * @arg:	Passed to the irq_domain_ops alloc() function.
  *
- * For an alपढ़ोy existing irqकरोमुख्य hierarchy, as might be obtained
- * via a call to pci_enable_msix(), add an additional करोमुख्य to the
- * head of the processing chain.  Must be called beक्रमe request_irq()
+ * For an already existing irqdomain hierarchy, as might be obtained
+ * via a call to pci_enable_msix(), add an additional domain to the
+ * head of the processing chain.  Must be called before request_irq()
  * has been called.
  */
-पूर्णांक irq_करोमुख्य_push_irq(काष्ठा irq_करोमुख्य *करोमुख्य, पूर्णांक virq, व्योम *arg)
-अणु
-	काष्ठा irq_data *child_irq_data;
-	काष्ठा irq_data *root_irq_data = irq_get_irq_data(virq);
-	काष्ठा irq_desc *desc;
-	पूर्णांक rv = 0;
+int irq_domain_push_irq(struct irq_domain *domain, int virq, void *arg)
+{
+	struct irq_data *child_irq_data;
+	struct irq_data *root_irq_data = irq_get_irq_data(virq);
+	struct irq_desc *desc;
+	int rv = 0;
 
 	/*
 	 * Check that no action has been set, which indicates the virq
-	 * is in a state where this function करोesn't have to deal with
-	 * races between पूर्णांकerrupt handling and मुख्यtaining the
+	 * is in a state where this function doesn't have to deal with
+	 * races between interrupt handling and maintaining the
 	 * hierarchy.  This will catch gross misuse.  Attempting to
-	 * make the check race मुक्त would require holding locks across
-	 * calls to काष्ठा irq_करोमुख्य_ops->alloc(), which could lead
-	 * to deadlock, so we just करो a simple check beक्रमe starting.
+	 * make the check race free would require holding locks across
+	 * calls to struct irq_domain_ops->alloc(), which could lead
+	 * to deadlock, so we just do a simple check before starting.
 	 */
 	desc = irq_to_desc(virq);
-	अगर (!desc)
-		वापस -EINVAL;
-	अगर (WARN_ON(desc->action))
-		वापस -EBUSY;
+	if (!desc)
+		return -EINVAL;
+	if (WARN_ON(desc->action))
+		return -EBUSY;
 
-	अगर (करोमुख्य == शून्य)
-		वापस -EINVAL;
+	if (domain == NULL)
+		return -EINVAL;
 
-	अगर (WARN_ON(!irq_करोमुख्य_is_hierarchy(करोमुख्य)))
-		वापस -EINVAL;
+	if (WARN_ON(!irq_domain_is_hierarchy(domain)))
+		return -EINVAL;
 
-	अगर (!root_irq_data)
-		वापस -EINVAL;
+	if (!root_irq_data)
+		return -EINVAL;
 
-	अगर (करोमुख्य->parent != root_irq_data->करोमुख्य)
-		वापस -EINVAL;
+	if (domain->parent != root_irq_data->domain)
+		return -EINVAL;
 
-	child_irq_data = kzalloc_node(माप(*child_irq_data), GFP_KERNEL,
+	child_irq_data = kzalloc_node(sizeof(*child_irq_data), GFP_KERNEL,
 				      irq_data_get_node(root_irq_data));
-	अगर (!child_irq_data)
-		वापस -ENOMEM;
+	if (!child_irq_data)
+		return -ENOMEM;
 
-	mutex_lock(&irq_करोमुख्य_mutex);
+	mutex_lock(&irq_domain_mutex);
 
 	/* Copy the original irq_data. */
 	*child_irq_data = *root_irq_data;
 
 	/*
-	 * Overग_लिखो the root_irq_data, which is embedded in काष्ठा
-	 * irq_desc, with values क्रम this करोमुख्य.
+	 * Overwrite the root_irq_data, which is embedded in struct
+	 * irq_desc, with values for this domain.
 	 */
 	root_irq_data->parent_data = child_irq_data;
-	root_irq_data->करोमुख्य = करोमुख्य;
+	root_irq_data->domain = domain;
 	root_irq_data->mask = 0;
 	root_irq_data->hwirq = 0;
-	root_irq_data->chip = शून्य;
-	root_irq_data->chip_data = शून्य;
+	root_irq_data->chip = NULL;
+	root_irq_data->chip_data = NULL;
 
-	/* May (probably करोes) set hwirq, chip, etc. */
-	rv = irq_करोमुख्य_alloc_irqs_hierarchy(करोमुख्य, virq, 1, arg);
-	अगर (rv) अणु
+	/* May (probably does) set hwirq, chip, etc. */
+	rv = irq_domain_alloc_irqs_hierarchy(domain, virq, 1, arg);
+	if (rv) {
 		/* Restore the original irq_data. */
 		*root_irq_data = *child_irq_data;
-		kमुक्त(child_irq_data);
-		जाओ error;
-	पूर्ण
+		kfree(child_irq_data);
+		goto error;
+	}
 
-	irq_करोमुख्य_fix_revmap(child_irq_data);
-	irq_करोमुख्य_set_mapping(करोमुख्य, root_irq_data->hwirq, root_irq_data);
+	irq_domain_fix_revmap(child_irq_data);
+	irq_domain_set_mapping(domain, root_irq_data->hwirq, root_irq_data);
 
 error:
-	mutex_unlock(&irq_करोमुख्य_mutex);
+	mutex_unlock(&irq_domain_mutex);
 
-	वापस rv;
-पूर्ण
-EXPORT_SYMBOL_GPL(irq_करोमुख्य_push_irq);
+	return rv;
+}
+EXPORT_SYMBOL_GPL(irq_domain_push_irq);
 
 /**
- * irq_करोमुख्य_pop_irq() - Remove a करोमुख्य from the top of a hierarchy.
- * @करोमुख्य:	Doमुख्य to हटाओ.
- * @virq:	Irq to हटाओ the करोमुख्य from.
+ * irq_domain_pop_irq() - Remove a domain from the top of a hierarchy.
+ * @domain:	Domain to remove.
+ * @virq:	Irq to remove the domain from.
  *
- * Unकरो the effects of a call to irq_करोमुख्य_push_irq().  Must be
- * called either beक्रमe request_irq() or after मुक्त_irq().
+ * Undo the effects of a call to irq_domain_push_irq().  Must be
+ * called either before request_irq() or after free_irq().
  */
-पूर्णांक irq_करोमुख्य_pop_irq(काष्ठा irq_करोमुख्य *करोमुख्य, पूर्णांक virq)
-अणु
-	काष्ठा irq_data *root_irq_data = irq_get_irq_data(virq);
-	काष्ठा irq_data *child_irq_data;
-	काष्ठा irq_data *पंचांगp_irq_data;
-	काष्ठा irq_desc *desc;
+int irq_domain_pop_irq(struct irq_domain *domain, int virq)
+{
+	struct irq_data *root_irq_data = irq_get_irq_data(virq);
+	struct irq_data *child_irq_data;
+	struct irq_data *tmp_irq_data;
+	struct irq_desc *desc;
 
 	/*
 	 * Check that no action is set, which indicates the virq is in
-	 * a state where this function करोesn't have to deal with races
-	 * between पूर्णांकerrupt handling and मुख्यtaining the hierarchy.
+	 * a state where this function doesn't have to deal with races
+	 * between interrupt handling and maintaining the hierarchy.
 	 * This will catch gross misuse.  Attempting to make the check
-	 * race मुक्त would require holding locks across calls to
-	 * काष्ठा irq_करोमुख्य_ops->मुक्त(), which could lead to
-	 * deadlock, so we just करो a simple check beक्रमe starting.
+	 * race free would require holding locks across calls to
+	 * struct irq_domain_ops->free(), which could lead to
+	 * deadlock, so we just do a simple check before starting.
 	 */
 	desc = irq_to_desc(virq);
-	अगर (!desc)
-		वापस -EINVAL;
-	अगर (WARN_ON(desc->action))
-		वापस -EBUSY;
+	if (!desc)
+		return -EINVAL;
+	if (WARN_ON(desc->action))
+		return -EBUSY;
 
-	अगर (करोमुख्य == शून्य)
-		वापस -EINVAL;
+	if (domain == NULL)
+		return -EINVAL;
 
-	अगर (!root_irq_data)
-		वापस -EINVAL;
+	if (!root_irq_data)
+		return -EINVAL;
 
-	पंचांगp_irq_data = irq_करोमुख्य_get_irq_data(करोमुख्य, virq);
+	tmp_irq_data = irq_domain_get_irq_data(domain, virq);
 
-	/* We can only "pop" अगर this करोमुख्य is at the top of the list */
-	अगर (WARN_ON(root_irq_data != पंचांगp_irq_data))
-		वापस -EINVAL;
+	/* We can only "pop" if this domain is at the top of the list */
+	if (WARN_ON(root_irq_data != tmp_irq_data))
+		return -EINVAL;
 
-	अगर (WARN_ON(root_irq_data->करोमुख्य != करोमुख्य))
-		वापस -EINVAL;
+	if (WARN_ON(root_irq_data->domain != domain))
+		return -EINVAL;
 
 	child_irq_data = root_irq_data->parent_data;
-	अगर (WARN_ON(!child_irq_data))
-		वापस -EINVAL;
+	if (WARN_ON(!child_irq_data))
+		return -EINVAL;
 
-	mutex_lock(&irq_करोमुख्य_mutex);
+	mutex_lock(&irq_domain_mutex);
 
-	root_irq_data->parent_data = शून्य;
+	root_irq_data->parent_data = NULL;
 
-	irq_करोमुख्य_clear_mapping(करोमुख्य, root_irq_data->hwirq);
-	irq_करोमुख्य_मुक्त_irqs_hierarchy(करोमुख्य, virq, 1);
+	irq_domain_clear_mapping(domain, root_irq_data->hwirq);
+	irq_domain_free_irqs_hierarchy(domain, virq, 1);
 
 	/* Restore the original irq_data. */
 	*root_irq_data = *child_irq_data;
 
-	irq_करोमुख्य_fix_revmap(root_irq_data);
+	irq_domain_fix_revmap(root_irq_data);
 
-	mutex_unlock(&irq_करोमुख्य_mutex);
+	mutex_unlock(&irq_domain_mutex);
 
-	kमुक्त(child_irq_data);
+	kfree(child_irq_data);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(irq_करोमुख्य_pop_irq);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(irq_domain_pop_irq);
 
 /**
- * irq_करोमुख्य_मुक्त_irqs - Free IRQ number and associated data काष्ठाures
+ * irq_domain_free_irqs - Free IRQ number and associated data structures
  * @virq:	base IRQ number
- * @nr_irqs:	number of IRQs to मुक्त
+ * @nr_irqs:	number of IRQs to free
  */
-व्योम irq_करोमुख्य_मुक्त_irqs(अचिन्हित पूर्णांक virq, अचिन्हित पूर्णांक nr_irqs)
-अणु
-	काष्ठा irq_data *data = irq_get_irq_data(virq);
-	पूर्णांक i;
+void irq_domain_free_irqs(unsigned int virq, unsigned int nr_irqs)
+{
+	struct irq_data *data = irq_get_irq_data(virq);
+	int i;
 
-	अगर (WARN(!data || !data->करोमुख्य || !data->करोमुख्य->ops->मुक्त,
+	if (WARN(!data || !data->domain || !data->domain->ops->free,
 		 "NULL pointer, cannot free irq\n"))
-		वापस;
+		return;
 
-	mutex_lock(&irq_करोमुख्य_mutex);
-	क्रम (i = 0; i < nr_irqs; i++)
-		irq_करोमुख्य_हटाओ_irq(virq + i);
-	irq_करोमुख्य_मुक्त_irqs_hierarchy(data->करोमुख्य, virq, nr_irqs);
-	mutex_unlock(&irq_करोमुख्य_mutex);
+	mutex_lock(&irq_domain_mutex);
+	for (i = 0; i < nr_irqs; i++)
+		irq_domain_remove_irq(virq + i);
+	irq_domain_free_irqs_hierarchy(data->domain, virq, nr_irqs);
+	mutex_unlock(&irq_domain_mutex);
 
-	irq_करोमुख्य_मुक्त_irq_data(virq, nr_irqs);
-	irq_मुक्त_descs(virq, nr_irqs);
-पूर्ण
+	irq_domain_free_irq_data(virq, nr_irqs);
+	irq_free_descs(virq, nr_irqs);
+}
 
 /**
- * irq_करोमुख्य_alloc_irqs_parent - Allocate पूर्णांकerrupts from parent करोमुख्य
- * @करोमुख्य:	Doमुख्य below which पूर्णांकerrupts must be allocated
+ * irq_domain_alloc_irqs_parent - Allocate interrupts from parent domain
+ * @domain:	Domain below which interrupts must be allocated
  * @irq_base:	Base IRQ number
  * @nr_irqs:	Number of IRQs to allocate
- * @arg:	Allocation data (arch/करोमुख्य specअगरic)
+ * @arg:	Allocation data (arch/domain specific)
  */
-पूर्णांक irq_करोमुख्य_alloc_irqs_parent(काष्ठा irq_करोमुख्य *करोमुख्य,
-				 अचिन्हित पूर्णांक irq_base, अचिन्हित पूर्णांक nr_irqs,
-				 व्योम *arg)
-अणु
-	अगर (!करोमुख्य->parent)
-		वापस -ENOSYS;
+int irq_domain_alloc_irqs_parent(struct irq_domain *domain,
+				 unsigned int irq_base, unsigned int nr_irqs,
+				 void *arg)
+{
+	if (!domain->parent)
+		return -ENOSYS;
 
-	वापस irq_करोमुख्य_alloc_irqs_hierarchy(करोमुख्य->parent, irq_base,
+	return irq_domain_alloc_irqs_hierarchy(domain->parent, irq_base,
 					       nr_irqs, arg);
-पूर्ण
-EXPORT_SYMBOL_GPL(irq_करोमुख्य_alloc_irqs_parent);
+}
+EXPORT_SYMBOL_GPL(irq_domain_alloc_irqs_parent);
 
 /**
- * irq_करोमुख्य_मुक्त_irqs_parent - Free पूर्णांकerrupts from parent करोमुख्य
- * @करोमुख्य:	Doमुख्य below which पूर्णांकerrupts must be मुक्तd
+ * irq_domain_free_irqs_parent - Free interrupts from parent domain
+ * @domain:	Domain below which interrupts must be freed
  * @irq_base:	Base IRQ number
- * @nr_irqs:	Number of IRQs to मुक्त
+ * @nr_irqs:	Number of IRQs to free
  */
-व्योम irq_करोमुख्य_मुक्त_irqs_parent(काष्ठा irq_करोमुख्य *करोमुख्य,
-				 अचिन्हित पूर्णांक irq_base, अचिन्हित पूर्णांक nr_irqs)
-अणु
-	अगर (!करोमुख्य->parent)
-		वापस;
+void irq_domain_free_irqs_parent(struct irq_domain *domain,
+				 unsigned int irq_base, unsigned int nr_irqs)
+{
+	if (!domain->parent)
+		return;
 
-	irq_करोमुख्य_मुक्त_irqs_hierarchy(करोमुख्य->parent, irq_base, nr_irqs);
-पूर्ण
-EXPORT_SYMBOL_GPL(irq_करोमुख्य_मुक्त_irqs_parent);
+	irq_domain_free_irqs_hierarchy(domain->parent, irq_base, nr_irqs);
+}
+EXPORT_SYMBOL_GPL(irq_domain_free_irqs_parent);
 
-अटल व्योम __irq_करोमुख्य_deactivate_irq(काष्ठा irq_data *irq_data)
-अणु
-	अगर (irq_data && irq_data->करोमुख्य) अणु
-		काष्ठा irq_करोमुख्य *करोमुख्य = irq_data->करोमुख्य;
+static void __irq_domain_deactivate_irq(struct irq_data *irq_data)
+{
+	if (irq_data && irq_data->domain) {
+		struct irq_domain *domain = irq_data->domain;
 
-		अगर (करोमुख्य->ops->deactivate)
-			करोमुख्य->ops->deactivate(करोमुख्य, irq_data);
-		अगर (irq_data->parent_data)
-			__irq_करोमुख्य_deactivate_irq(irq_data->parent_data);
-	पूर्ण
-पूर्ण
+		if (domain->ops->deactivate)
+			domain->ops->deactivate(domain, irq_data);
+		if (irq_data->parent_data)
+			__irq_domain_deactivate_irq(irq_data->parent_data);
+	}
+}
 
-अटल पूर्णांक __irq_करोमुख्य_activate_irq(काष्ठा irq_data *irqd, bool reserve)
-अणु
-	पूर्णांक ret = 0;
+static int __irq_domain_activate_irq(struct irq_data *irqd, bool reserve)
+{
+	int ret = 0;
 
-	अगर (irqd && irqd->करोमुख्य) अणु
-		काष्ठा irq_करोमुख्य *करोमुख्य = irqd->करोमुख्य;
+	if (irqd && irqd->domain) {
+		struct irq_domain *domain = irqd->domain;
 
-		अगर (irqd->parent_data)
-			ret = __irq_करोमुख्य_activate_irq(irqd->parent_data,
+		if (irqd->parent_data)
+			ret = __irq_domain_activate_irq(irqd->parent_data,
 							reserve);
-		अगर (!ret && करोमुख्य->ops->activate) अणु
-			ret = करोमुख्य->ops->activate(करोमुख्य, irqd, reserve);
-			/* Rollback in हाल of error */
-			अगर (ret && irqd->parent_data)
-				__irq_करोमुख्य_deactivate_irq(irqd->parent_data);
-		पूर्ण
-	पूर्ण
-	वापस ret;
-पूर्ण
+		if (!ret && domain->ops->activate) {
+			ret = domain->ops->activate(domain, irqd, reserve);
+			/* Rollback in case of error */
+			if (ret && irqd->parent_data)
+				__irq_domain_deactivate_irq(irqd->parent_data);
+		}
+	}
+	return ret;
+}
 
 /**
- * irq_करोमुख्य_activate_irq - Call करोमुख्य_ops->activate recursively to activate
- *			     पूर्णांकerrupt
- * @irq_data:	Outermost irq_data associated with पूर्णांकerrupt
- * @reserve:	If set only reserve an पूर्णांकerrupt vector instead of assigning one
+ * irq_domain_activate_irq - Call domain_ops->activate recursively to activate
+ *			     interrupt
+ * @irq_data:	Outermost irq_data associated with interrupt
+ * @reserve:	If set only reserve an interrupt vector instead of assigning one
  *
- * This is the second step to call करोमुख्य_ops->activate to program पूर्णांकerrupt
- * controllers, so the पूर्णांकerrupt could actually get delivered.
+ * This is the second step to call domain_ops->activate to program interrupt
+ * controllers, so the interrupt could actually get delivered.
  */
-पूर्णांक irq_करोमुख्य_activate_irq(काष्ठा irq_data *irq_data, bool reserve)
-अणु
-	पूर्णांक ret = 0;
+int irq_domain_activate_irq(struct irq_data *irq_data, bool reserve)
+{
+	int ret = 0;
 
-	अगर (!irqd_is_activated(irq_data))
-		ret = __irq_करोमुख्य_activate_irq(irq_data, reserve);
-	अगर (!ret)
+	if (!irqd_is_activated(irq_data))
+		ret = __irq_domain_activate_irq(irq_data, reserve);
+	if (!ret)
 		irqd_set_activated(irq_data);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * irq_करोमुख्य_deactivate_irq - Call करोमुख्य_ops->deactivate recursively to
- *			       deactivate पूर्णांकerrupt
- * @irq_data: outermost irq_data associated with पूर्णांकerrupt
+ * irq_domain_deactivate_irq - Call domain_ops->deactivate recursively to
+ *			       deactivate interrupt
+ * @irq_data: outermost irq_data associated with interrupt
  *
- * It calls करोमुख्य_ops->deactivate to program पूर्णांकerrupt controllers to disable
- * पूर्णांकerrupt delivery.
+ * It calls domain_ops->deactivate to program interrupt controllers to disable
+ * interrupt delivery.
  */
-व्योम irq_करोमुख्य_deactivate_irq(काष्ठा irq_data *irq_data)
-अणु
-	अगर (irqd_is_activated(irq_data)) अणु
-		__irq_करोमुख्य_deactivate_irq(irq_data);
+void irq_domain_deactivate_irq(struct irq_data *irq_data)
+{
+	if (irqd_is_activated(irq_data)) {
+		__irq_domain_deactivate_irq(irq_data);
 		irqd_clr_activated(irq_data);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम irq_करोमुख्य_check_hierarchy(काष्ठा irq_करोमुख्य *करोमुख्य)
-अणु
-	/* Hierarchy irq_करोमुख्यs must implement callback alloc() */
-	अगर (करोमुख्य->ops->alloc)
-		करोमुख्य->flags |= IRQ_DOMAIN_FLAG_HIERARCHY;
-पूर्ण
+static void irq_domain_check_hierarchy(struct irq_domain *domain)
+{
+	/* Hierarchy irq_domains must implement callback alloc() */
+	if (domain->ops->alloc)
+		domain->flags |= IRQ_DOMAIN_FLAG_HIERARCHY;
+}
 
 /**
- * irq_करोमुख्य_hierarchical_is_msi_remap - Check अगर the करोमुख्य or any
+ * irq_domain_hierarchical_is_msi_remap - Check if the domain or any
  * parent has MSI remapping support
- * @करोमुख्य: करोमुख्य poपूर्णांकer
+ * @domain: domain pointer
  */
-bool irq_करोमुख्य_hierarchical_is_msi_remap(काष्ठा irq_करोमुख्य *करोमुख्य)
-अणु
-	क्रम (; करोमुख्य; करोमुख्य = करोमुख्य->parent) अणु
-		अगर (irq_करोमुख्य_is_msi_remap(करोमुख्य))
-			वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
-#अन्यथा	/* CONFIG_IRQ_DOMAIN_HIERARCHY */
+bool irq_domain_hierarchical_is_msi_remap(struct irq_domain *domain)
+{
+	for (; domain; domain = domain->parent) {
+		if (irq_domain_is_msi_remap(domain))
+			return true;
+	}
+	return false;
+}
+#else	/* CONFIG_IRQ_DOMAIN_HIERARCHY */
 /**
- * irq_करोमुख्य_get_irq_data - Get irq_data associated with @virq and @करोमुख्य
- * @करोमुख्य:	करोमुख्य to match
+ * irq_domain_get_irq_data - Get irq_data associated with @virq and @domain
+ * @domain:	domain to match
  * @virq:	IRQ number to get irq_data
  */
-काष्ठा irq_data *irq_करोमुख्य_get_irq_data(काष्ठा irq_करोमुख्य *करोमुख्य,
-					 अचिन्हित पूर्णांक virq)
-अणु
-	काष्ठा irq_data *irq_data = irq_get_irq_data(virq);
+struct irq_data *irq_domain_get_irq_data(struct irq_domain *domain,
+					 unsigned int virq)
+{
+	struct irq_data *irq_data = irq_get_irq_data(virq);
 
-	वापस (irq_data && irq_data->करोमुख्य == करोमुख्य) ? irq_data : शून्य;
-पूर्ण
-EXPORT_SYMBOL_GPL(irq_करोमुख्य_get_irq_data);
+	return (irq_data && irq_data->domain == domain) ? irq_data : NULL;
+}
+EXPORT_SYMBOL_GPL(irq_domain_get_irq_data);
 
 /**
- * irq_करोमुख्य_set_info - Set the complete data क्रम a @virq in @करोमुख्य
- * @करोमुख्य:		Interrupt करोमुख्य to match
+ * irq_domain_set_info - Set the complete data for a @virq in @domain
+ * @domain:		Interrupt domain to match
  * @virq:		IRQ number
- * @hwirq:		The hardware पूर्णांकerrupt number
- * @chip:		The associated पूर्णांकerrupt chip
- * @chip_data:		The associated पूर्णांकerrupt chip data
- * @handler:		The पूर्णांकerrupt flow handler
- * @handler_data:	The पूर्णांकerrupt flow handler data
- * @handler_name:	The पूर्णांकerrupt handler name
+ * @hwirq:		The hardware interrupt number
+ * @chip:		The associated interrupt chip
+ * @chip_data:		The associated interrupt chip data
+ * @handler:		The interrupt flow handler
+ * @handler_data:	The interrupt flow handler data
+ * @handler_name:	The interrupt handler name
  */
-व्योम irq_करोमुख्य_set_info(काष्ठा irq_करोमुख्य *करोमुख्य, अचिन्हित पूर्णांक virq,
-			 irq_hw_number_t hwirq, काष्ठा irq_chip *chip,
-			 व्योम *chip_data, irq_flow_handler_t handler,
-			 व्योम *handler_data, स्थिर अक्षर *handler_name)
-अणु
+void irq_domain_set_info(struct irq_domain *domain, unsigned int virq,
+			 irq_hw_number_t hwirq, struct irq_chip *chip,
+			 void *chip_data, irq_flow_handler_t handler,
+			 void *handler_data, const char *handler_name)
+{
 	irq_set_chip_and_handler_name(virq, chip, handler, handler_name);
 	irq_set_chip_data(virq, chip_data);
 	irq_set_handler_data(virq, handler_data);
-पूर्ण
+}
 
-अटल व्योम irq_करोमुख्य_check_hierarchy(काष्ठा irq_करोमुख्य *करोमुख्य)
-अणु
-पूर्ण
-#पूर्ण_अगर	/* CONFIG_IRQ_DOMAIN_HIERARCHY */
+static void irq_domain_check_hierarchy(struct irq_domain *domain)
+{
+}
+#endif	/* CONFIG_IRQ_DOMAIN_HIERARCHY */
 
-#अगर_घोषित CONFIG_GENERIC_IRQ_DEBUGFS
-अटल काष्ठा dentry *करोमुख्य_dir;
+#ifdef CONFIG_GENERIC_IRQ_DEBUGFS
+static struct dentry *domain_dir;
 
-अटल व्योम
-irq_करोमुख्य_debug_show_one(काष्ठा seq_file *m, काष्ठा irq_करोमुख्य *d, पूर्णांक ind)
-अणु
-	seq_म_लिखो(m, "%*sname:   %s\n", ind, "", d->name);
-	seq_म_लिखो(m, "%*ssize:   %u\n", ind + 1, "",
+static void
+irq_domain_debug_show_one(struct seq_file *m, struct irq_domain *d, int ind)
+{
+	seq_printf(m, "%*sname:   %s\n", ind, "", d->name);
+	seq_printf(m, "%*ssize:   %u\n", ind + 1, "",
 		   d->revmap_size + d->revmap_direct_max_irq);
-	seq_म_लिखो(m, "%*smapped: %u\n", ind + 1, "", d->mapcount);
-	seq_म_लिखो(m, "%*sflags:  0x%08x\n", ind +1 , "", d->flags);
-	अगर (d->ops && d->ops->debug_show)
-		d->ops->debug_show(m, d, शून्य, ind + 1);
-#अगर_घोषित	CONFIG_IRQ_DOMAIN_HIERARCHY
-	अगर (!d->parent)
-		वापस;
-	seq_म_लिखो(m, "%*sparent: %s\n", ind + 1, "", d->parent->name);
-	irq_करोमुख्य_debug_show_one(m, d->parent, ind + 4);
-#पूर्ण_अगर
-पूर्ण
+	seq_printf(m, "%*smapped: %u\n", ind + 1, "", d->mapcount);
+	seq_printf(m, "%*sflags:  0x%08x\n", ind +1 , "", d->flags);
+	if (d->ops && d->ops->debug_show)
+		d->ops->debug_show(m, d, NULL, ind + 1);
+#ifdef	CONFIG_IRQ_DOMAIN_HIERARCHY
+	if (!d->parent)
+		return;
+	seq_printf(m, "%*sparent: %s\n", ind + 1, "", d->parent->name);
+	irq_domain_debug_show_one(m, d->parent, ind + 4);
+#endif
+}
 
-अटल पूर्णांक irq_करोमुख्य_debug_show(काष्ठा seq_file *m, व्योम *p)
-अणु
-	काष्ठा irq_करोमुख्य *d = m->निजी;
+static int irq_domain_debug_show(struct seq_file *m, void *p)
+{
+	struct irq_domain *d = m->private;
 
-	/* Default करोमुख्य? Might be शून्य */
-	अगर (!d) अणु
-		अगर (!irq_शेष_करोमुख्य)
-			वापस 0;
-		d = irq_शेष_करोमुख्य;
-	पूर्ण
-	irq_करोमुख्य_debug_show_one(m, d, 0);
-	वापस 0;
-पूर्ण
-DEFINE_SHOW_ATTRIBUTE(irq_करोमुख्य_debug);
+	/* Default domain? Might be NULL */
+	if (!d) {
+		if (!irq_default_domain)
+			return 0;
+		d = irq_default_domain;
+	}
+	irq_domain_debug_show_one(m, d, 0);
+	return 0;
+}
+DEFINE_SHOW_ATTRIBUTE(irq_domain_debug);
 
-अटल व्योम debugfs_add_करोमुख्य_dir(काष्ठा irq_करोमुख्य *d)
-अणु
-	अगर (!d->name || !करोमुख्य_dir)
-		वापस;
-	debugfs_create_file(d->name, 0444, करोमुख्य_dir, d,
-			    &irq_करोमुख्य_debug_fops);
-पूर्ण
+static void debugfs_add_domain_dir(struct irq_domain *d)
+{
+	if (!d->name || !domain_dir)
+		return;
+	debugfs_create_file(d->name, 0444, domain_dir, d,
+			    &irq_domain_debug_fops);
+}
 
-अटल व्योम debugfs_हटाओ_करोमुख्य_dir(काष्ठा irq_करोमुख्य *d)
-अणु
-	debugfs_हटाओ(debugfs_lookup(d->name, करोमुख्य_dir));
-पूर्ण
+static void debugfs_remove_domain_dir(struct irq_domain *d)
+{
+	debugfs_remove(debugfs_lookup(d->name, domain_dir));
+}
 
-व्योम __init irq_करोमुख्य_debugfs_init(काष्ठा dentry *root)
-अणु
-	काष्ठा irq_करोमुख्य *d;
+void __init irq_domain_debugfs_init(struct dentry *root)
+{
+	struct irq_domain *d;
 
-	करोमुख्य_dir = debugfs_create_dir("domains", root);
+	domain_dir = debugfs_create_dir("domains", root);
 
-	debugfs_create_file("default", 0444, करोमुख्य_dir, शून्य,
-			    &irq_करोमुख्य_debug_fops);
-	mutex_lock(&irq_करोमुख्य_mutex);
-	list_क्रम_each_entry(d, &irq_करोमुख्य_list, link)
-		debugfs_add_करोमुख्य_dir(d);
-	mutex_unlock(&irq_करोमुख्य_mutex);
-पूर्ण
-#पूर्ण_अगर
+	debugfs_create_file("default", 0444, domain_dir, NULL,
+			    &irq_domain_debug_fops);
+	mutex_lock(&irq_domain_mutex);
+	list_for_each_entry(d, &irq_domain_list, link)
+		debugfs_add_domain_dir(d);
+	mutex_unlock(&irq_domain_mutex);
+}
+#endif

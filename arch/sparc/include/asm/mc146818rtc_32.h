@@ -1,31 +1,30 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Machine dependent access functions क्रम RTC रेजिस्टरs.
+ * Machine dependent access functions for RTC registers.
  */
-#अगर_अघोषित __ASM_SPARC_MC146818RTC_H
-#घोषणा __ASM_SPARC_MC146818RTC_H
+#ifndef __ASM_SPARC_MC146818RTC_H
+#define __ASM_SPARC_MC146818RTC_H
 
-#समावेश <यंत्र/पन.स>
+#include <asm/io.h>
 
-#अगर_अघोषित RTC_PORT
-#घोषणा RTC_PORT(x)	(0x70 + (x))
-#घोषणा RTC_ALWAYS_BCD	1	/* RTC operates in binary mode */
-#पूर्ण_अगर
+#ifndef RTC_PORT
+#define RTC_PORT(x)	(0x70 + (x))
+#define RTC_ALWAYS_BCD	1	/* RTC operates in binary mode */
+#endif
 
 /*
- * The yet supported machines all access the RTC index रेजिस्टर via
- * an ISA port access but the way to access the date रेजिस्टर dअगरfers ...
+ * The yet supported machines all access the RTC index register via
+ * an ISA port access but the way to access the date register differs ...
  */
-#घोषणा CMOS_READ(addr) (अणु \
+#define CMOS_READ(addr) ({ \
 outb_p((addr),RTC_PORT(0)); \
 inb_p(RTC_PORT(1)); \
-पूर्ण)
-#घोषणा CMOS_WRITE(val, addr) (अणु \
+})
+#define CMOS_WRITE(val, addr) ({ \
 outb_p((addr),RTC_PORT(0)); \
 outb_p((val),RTC_PORT(1)); \
-पूर्ण)
+})
 
-#घोषणा RTC_IRQ 8
+#define RTC_IRQ 8
 
-#पूर्ण_अगर /* __ASM_SPARC_MC146818RTC_H */
+#endif /* __ASM_SPARC_MC146818RTC_H */

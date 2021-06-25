@@ -1,15 +1,14 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0
+/* SPDX-License-Identifier: GPL-2.0
  *
- * Copyright 2018 HabanaLअसल, Ltd.
+ * Copyright 2018 HabanaLabs, Ltd.
  * All Rights Reserved.
  *
  */
 
-#अगर_अघोषित __GOYA_ASYNC_EVENTS_H_
-#घोषणा __GOYA_ASYNC_EVENTS_H_
+#ifndef __GOYA_ASYNC_EVENTS_H_
+#define __GOYA_ASYNC_EVENTS_H_
 
-क्रमागत goya_async_event_id अणु
+enum goya_async_event_id {
 	GOYA_ASYNC_EVENT_ID_PCIE_CORE = 32,
 	GOYA_ASYNC_EVENT_ID_PCIE_IF = 33,
 	GOYA_ASYNC_EVENT_ID_PCIE_PHY = 34,
@@ -196,6 +195,6 @@
 	GOYA_ASYNC_EVENT_ID_FIX_THERMAL_ENV_E = 510,
 	GOYA_ASYNC_EVENT_ID_LAST_VALID_ID = 1023,
 	GOYA_ASYNC_EVENT_ID_SIZE
-पूर्ण;
+};
 
-#पूर्ण_अगर /* __GOYA_ASYNC_EVENTS_H_ */
+#endif /* __GOYA_ASYNC_EVENTS_H_ */

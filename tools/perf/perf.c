@@ -1,160 +1,159 @@
-<शैली गुरु>
 /*
  * perf.c
  *
- * Perक्रमmance analysis utility.
+ * Performance analysis utility.
  *
- * This is the मुख्य hub from which the sub-commands (perf stat,
+ * This is the main hub from which the sub-commands (perf stat,
  * perf top, perf record, perf report, etc.) are started.
  */
-#समावेश "builtin.h"
-#समावेश "perf.h"
+#include "builtin.h"
+#include "perf.h"
 
-#समावेश "util/build-id.h"
-#समावेश "util/cache.h"
-#समावेश "util/env.h"
-#समावेश <पूर्णांकernal/lib.h> // page_size
-#समावेश <subcmd/exec-cmd.h>
-#समावेश "util/config.h"
-#समावेश <subcmd/run-command.h>
-#समावेश "util/parse-events.h"
-#समावेश <subcmd/parse-options.h>
-#समावेश "util/bpf-loader.h"
-#समावेश "util/debug.h"
-#समावेश "util/event.h"
-#समावेश "util/util.h" // usage()
-#समावेश "ui/ui.h"
-#समावेश "perf-sys.h"
-#समावेश <api/fs/fs.h>
-#समावेश <api/fs/tracing_path.h>
-#समावेश <perf/core.h>
-#समावेश <त्रुटिसं.स>
-#समावेश <pthपढ़ो.h>
-#समावेश <संकेत.स>
-#समावेश <मानककोष.स>
-#समावेश <समय.स>
-#समावेश <sys/types.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <unistd.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/zभाग.स>
+#include "util/build-id.h"
+#include "util/cache.h"
+#include "util/env.h"
+#include <internal/lib.h> // page_size
+#include <subcmd/exec-cmd.h>
+#include "util/config.h"
+#include <subcmd/run-command.h>
+#include "util/parse-events.h"
+#include <subcmd/parse-options.h>
+#include "util/bpf-loader.h"
+#include "util/debug.h"
+#include "util/event.h"
+#include "util/util.h" // usage()
+#include "ui/ui.h"
+#include "perf-sys.h"
+#include <api/fs/fs.h>
+#include <api/fs/tracing_path.h>
+#include <perf/core.h>
+#include <errno.h>
+#include <pthread.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <time.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <linux/kernel.h>
+#include <linux/string.h>
+#include <linux/zalloc.h>
 
-स्थिर अक्षर perf_usage_string[] =
+const char perf_usage_string[] =
 	"perf [--version] [--help] [OPTIONS] COMMAND [ARGS]";
 
-स्थिर अक्षर perf_more_info_string[] =
+const char perf_more_info_string[] =
 	"See 'perf help COMMAND' for more information on a specific command.";
 
-अटल पूर्णांक use_pager = -1;
-स्थिर अक्षर *input_name;
+static int use_pager = -1;
+const char *input_name;
 
-काष्ठा cmd_काष्ठा अणु
-	स्थिर अक्षर *cmd;
-	पूर्णांक (*fn)(पूर्णांक, स्थिर अक्षर **);
-	पूर्णांक option;
-पूर्ण;
+struct cmd_struct {
+	const char *cmd;
+	int (*fn)(int, const char **);
+	int option;
+};
 
-अटल काष्ठा cmd_काष्ठा commands[] = अणु
-	अणु "buildid-cache", cmd_buildid_cache, 0 पूर्ण,
-	अणु "buildid-list", cmd_buildid_list, 0 पूर्ण,
-	अणु "config",	cmd_config,	0 पूर्ण,
-	अणु "c2c",	cmd_c2c,	0 पूर्ण,
-	अणु "diff",	cmd_dअगरf,	0 पूर्ण,
-	अणु "evlist",	cmd_evlist,	0 पूर्ण,
-	अणु "help",	cmd_help,	0 पूर्ण,
-	अणु "kallsyms",	cmd_kallsyms,	0 पूर्ण,
-	अणु "list",	cmd_list,	0 पूर्ण,
-	अणु "record",	cmd_record,	0 पूर्ण,
-	अणु "report",	cmd_report,	0 पूर्ण,
-	अणु "bench",	cmd_bench,	0 पूर्ण,
-	अणु "stat",	cmd_stat,	0 पूर्ण,
-	अणु "timechart",	cmd_समयअक्षरt,	0 पूर्ण,
-	अणु "top",	cmd_top,	0 पूर्ण,
-	अणु "annotate",	cmd_annotate,	0 पूर्ण,
-	अणु "version",	cmd_version,	0 पूर्ण,
-	अणु "script",	cmd_script,	0 पूर्ण,
-	अणु "sched",	cmd_sched,	0 पूर्ण,
-#अगर_घोषित HAVE_LIBELF_SUPPORT
-	अणु "probe",	cmd_probe,	0 पूर्ण,
-#पूर्ण_अगर
-	अणु "kmem",	cmd_kmem,	0 पूर्ण,
-	अणु "lock",	cmd_lock,	0 पूर्ण,
-	अणु "kvm",	cmd_kvm,	0 पूर्ण,
-	अणु "test",	cmd_test,	0 पूर्ण,
-#अगर defined(HAVE_LIBAUDIT_SUPPORT) || defined(HAVE_SYSCALL_TABLE_SUPPORT)
-	अणु "trace",	cmd_trace,	0 पूर्ण,
-#पूर्ण_अगर
-	अणु "inject",	cmd_inject,	0 पूर्ण,
-	अणु "mem",	cmd_mem,	0 पूर्ण,
-	अणु "data",	cmd_data,	0 पूर्ण,
-	अणु "ftrace",	cmd_ftrace,	0 पूर्ण,
-	अणु "daemon",	cmd_daemon,	0 पूर्ण,
-पूर्ण;
+static struct cmd_struct commands[] = {
+	{ "buildid-cache", cmd_buildid_cache, 0 },
+	{ "buildid-list", cmd_buildid_list, 0 },
+	{ "config",	cmd_config,	0 },
+	{ "c2c",	cmd_c2c,	0 },
+	{ "diff",	cmd_diff,	0 },
+	{ "evlist",	cmd_evlist,	0 },
+	{ "help",	cmd_help,	0 },
+	{ "kallsyms",	cmd_kallsyms,	0 },
+	{ "list",	cmd_list,	0 },
+	{ "record",	cmd_record,	0 },
+	{ "report",	cmd_report,	0 },
+	{ "bench",	cmd_bench,	0 },
+	{ "stat",	cmd_stat,	0 },
+	{ "timechart",	cmd_timechart,	0 },
+	{ "top",	cmd_top,	0 },
+	{ "annotate",	cmd_annotate,	0 },
+	{ "version",	cmd_version,	0 },
+	{ "script",	cmd_script,	0 },
+	{ "sched",	cmd_sched,	0 },
+#ifdef HAVE_LIBELF_SUPPORT
+	{ "probe",	cmd_probe,	0 },
+#endif
+	{ "kmem",	cmd_kmem,	0 },
+	{ "lock",	cmd_lock,	0 },
+	{ "kvm",	cmd_kvm,	0 },
+	{ "test",	cmd_test,	0 },
+#if defined(HAVE_LIBAUDIT_SUPPORT) || defined(HAVE_SYSCALL_TABLE_SUPPORT)
+	{ "trace",	cmd_trace,	0 },
+#endif
+	{ "inject",	cmd_inject,	0 },
+	{ "mem",	cmd_mem,	0 },
+	{ "data",	cmd_data,	0 },
+	{ "ftrace",	cmd_ftrace,	0 },
+	{ "daemon",	cmd_daemon,	0 },
+};
 
-काष्ठा pager_config अणु
-	स्थिर अक्षर *cmd;
-	पूर्णांक val;
-पूर्ण;
+struct pager_config {
+	const char *cmd;
+	int val;
+};
 
-अटल पूर्णांक pager_command_config(स्थिर अक्षर *var, स्थिर अक्षर *value, व्योम *data)
-अणु
-	काष्ठा pager_config *c = data;
-	अगर (strstarts(var, "pager.") && !म_भेद(var + 6, c->cmd))
+static int pager_command_config(const char *var, const char *value, void *data)
+{
+	struct pager_config *c = data;
+	if (strstarts(var, "pager.") && !strcmp(var + 6, c->cmd))
 		c->val = perf_config_bool(var, value);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* वापसs 0 क्रम "no pager", 1 क्रम "use pager", and -1 क्रम "not specified" */
-अटल पूर्णांक check_pager_config(स्थिर अक्षर *cmd)
-अणु
-	पूर्णांक err;
-	काष्ठा pager_config c;
+/* returns 0 for "no pager", 1 for "use pager", and -1 for "not specified" */
+static int check_pager_config(const char *cmd)
+{
+	int err;
+	struct pager_config c;
 	c.cmd = cmd;
 	c.val = -1;
 	err = perf_config(pager_command_config, &c);
-	वापस err ?: c.val;
-पूर्ण
+	return err ?: c.val;
+}
 
-अटल पूर्णांक browser_command_config(स्थिर अक्षर *var, स्थिर अक्षर *value, व्योम *data)
-अणु
-	काष्ठा pager_config *c = data;
-	अगर (strstarts(var, "tui.") && !म_भेद(var + 4, c->cmd))
+static int browser_command_config(const char *var, const char *value, void *data)
+{
+	struct pager_config *c = data;
+	if (strstarts(var, "tui.") && !strcmp(var + 4, c->cmd))
 		c->val = perf_config_bool(var, value);
-	अगर (strstarts(var, "gtk.") && !म_भेद(var + 4, c->cmd))
+	if (strstarts(var, "gtk.") && !strcmp(var + 4, c->cmd))
 		c->val = perf_config_bool(var, value) ? 2 : 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * वापसs 0 क्रम "no tui", 1 क्रम "use tui", 2 क्रम "use gtk",
- * and -1 क्रम "not specified"
+ * returns 0 for "no tui", 1 for "use tui", 2 for "use gtk",
+ * and -1 for "not specified"
  */
-अटल पूर्णांक check_browser_config(स्थिर अक्षर *cmd)
-अणु
-	पूर्णांक err;
-	काष्ठा pager_config c;
+static int check_browser_config(const char *cmd)
+{
+	int err;
+	struct pager_config c;
 	c.cmd = cmd;
 	c.val = -1;
 	err = perf_config(browser_command_config, &c);
-	वापस err ?: c.val;
-पूर्ण
+	return err ?: c.val;
+}
 
-अटल व्योम commit_pager_choice(व्योम)
-अणु
-	चयन (use_pager) अणु
-	हाल 0:
+static void commit_pager_choice(void)
+{
+	switch (use_pager) {
+	case 0:
 		setenv(PERF_PAGER_ENVIRONMENT, "cat", 1);
-		अवरोध;
-	हाल 1:
+		break;
+	case 1:
 		/* setup_pager(); */
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 
-काष्ठा option options[] = अणु
+struct option options[] = {
 	OPT_ARGUMENT("help", "help"),
 	OPT_ARGUMENT("version", "version"),
 	OPT_ARGUMENT("exec-path", "exec-path"),
@@ -167,282 +166,282 @@
 	OPT_ARGUMENT("list-opts", "list-opts"),
 	OPT_ARGUMENT("debug", "debug"),
 	OPT_END()
-पूर्ण;
+};
 
-अटल पूर्णांक handle_options(स्थिर अक्षर ***argv, पूर्णांक *argc, पूर्णांक *envchanged)
-अणु
-	पूर्णांक handled = 0;
+static int handle_options(const char ***argv, int *argc, int *envchanged)
+{
+	int handled = 0;
 
-	जबतक (*argc > 0) अणु
-		स्थिर अक्षर *cmd = (*argv)[0];
-		अगर (cmd[0] != '-')
-			अवरोध;
+	while (*argc > 0) {
+		const char *cmd = (*argv)[0];
+		if (cmd[0] != '-')
+			break;
 
 		/*
 		 * For legacy reasons, the "version" and "help"
 		 * commands can be written with "--" prepended
 		 * to make them look like flags.
 		 */
-		अगर (!म_भेद(cmd, "--help") || !म_भेद(cmd, "--version"))
-			अवरोध;
+		if (!strcmp(cmd, "--help") || !strcmp(cmd, "--version"))
+			break;
 
 		/*
-		 * Shortcut क्रम '-h' and '-v' options to invoke help
+		 * Shortcut for '-h' and '-v' options to invoke help
 		 * and version command.
 		 */
-		अगर (!म_भेद(cmd, "-h")) अणु
+		if (!strcmp(cmd, "-h")) {
 			(*argv)[0] = "--help";
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (!म_भेद(cmd, "-v")) अणु
+		if (!strcmp(cmd, "-v")) {
 			(*argv)[0] = "--version";
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (!म_भेद(cmd, "-vv")) अणु
+		if (!strcmp(cmd, "-vv")) {
 			(*argv)[0] = "version";
 			version_verbose = 1;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		/*
-		 * Check reमुख्यing flags.
+		 * Check remaining flags.
 		 */
-		अगर (strstarts(cmd, CMD_EXEC_PATH)) अणु
-			cmd += म_माप(CMD_EXEC_PATH);
-			अगर (*cmd == '=')
+		if (strstarts(cmd, CMD_EXEC_PATH)) {
+			cmd += strlen(CMD_EXEC_PATH);
+			if (*cmd == '=')
 				set_argv_exec_path(cmd + 1);
-			अन्यथा अणु
-				माला_दो(get_argv_exec_path());
-				निकास(0);
-			पूर्ण
-		पूर्ण अन्यथा अगर (!म_भेद(cmd, "--html-path")) अणु
-			माला_दो(प्रणाली_path(PERF_HTML_PATH));
-			निकास(0);
-		पूर्ण अन्यथा अगर (!म_भेद(cmd, "-p") || !म_भेद(cmd, "--paginate")) अणु
+			else {
+				puts(get_argv_exec_path());
+				exit(0);
+			}
+		} else if (!strcmp(cmd, "--html-path")) {
+			puts(system_path(PERF_HTML_PATH));
+			exit(0);
+		} else if (!strcmp(cmd, "-p") || !strcmp(cmd, "--paginate")) {
 			use_pager = 1;
-		पूर्ण अन्यथा अगर (!म_भेद(cmd, "--no-pager")) अणु
+		} else if (!strcmp(cmd, "--no-pager")) {
 			use_pager = 0;
-			अगर (envchanged)
+			if (envchanged)
 				*envchanged = 1;
-		पूर्ण अन्यथा अगर (!म_भेद(cmd, "--debugfs-dir")) अणु
-			अगर (*argc < 2) अणु
-				ख_लिखो(मानक_त्रुटि, "No directory given for --debugfs-dir.\n");
+		} else if (!strcmp(cmd, "--debugfs-dir")) {
+			if (*argc < 2) {
+				fprintf(stderr, "No directory given for --debugfs-dir.\n");
 				usage(perf_usage_string);
-			पूर्ण
+			}
 			tracing_path_set((*argv)[1]);
-			अगर (envchanged)
+			if (envchanged)
 				*envchanged = 1;
 			(*argv)++;
 			(*argc)--;
-		पूर्ण अन्यथा अगर (!म_भेद(cmd, "--buildid-dir")) अणु
-			अगर (*argc < 2) अणु
-				ख_लिखो(मानक_त्रुटि, "No directory given for --buildid-dir.\n");
+		} else if (!strcmp(cmd, "--buildid-dir")) {
+			if (*argc < 2) {
+				fprintf(stderr, "No directory given for --buildid-dir.\n");
 				usage(perf_usage_string);
-			पूर्ण
+			}
 			set_buildid_dir((*argv)[1]);
-			अगर (envchanged)
+			if (envchanged)
 				*envchanged = 1;
 			(*argv)++;
 			(*argc)--;
-		पूर्ण अन्यथा अगर (strstarts(cmd, CMD_DEBUGFS_सूची)) अणु
-			tracing_path_set(cmd + म_माप(CMD_DEBUGFS_सूची));
-			ख_लिखो(मानक_त्रुटि, "dir: %s\n", tracing_path_mount());
-			अगर (envchanged)
+		} else if (strstarts(cmd, CMD_DEBUGFS_DIR)) {
+			tracing_path_set(cmd + strlen(CMD_DEBUGFS_DIR));
+			fprintf(stderr, "dir: %s\n", tracing_path_mount());
+			if (envchanged)
 				*envchanged = 1;
-		पूर्ण अन्यथा अगर (!म_भेद(cmd, "--list-cmds")) अणु
-			अचिन्हित पूर्णांक i;
+		} else if (!strcmp(cmd, "--list-cmds")) {
+			unsigned int i;
 
-			क्रम (i = 0; i < ARRAY_SIZE(commands); i++) अणु
-				काष्ठा cmd_काष्ठा *p = commands+i;
-				म_लिखो("%s ", p->cmd);
-			पूर्ण
-			अक्षर_दो('\n');
-			निकास(0);
-		पूर्ण अन्यथा अगर (!म_भेद(cmd, "--list-opts")) अणु
-			अचिन्हित पूर्णांक i;
+			for (i = 0; i < ARRAY_SIZE(commands); i++) {
+				struct cmd_struct *p = commands+i;
+				printf("%s ", p->cmd);
+			}
+			putchar('\n');
+			exit(0);
+		} else if (!strcmp(cmd, "--list-opts")) {
+			unsigned int i;
 
-			क्रम (i = 0; i < ARRAY_SIZE(options)-1; i++) अणु
-				काष्ठा option *p = options+i;
-				म_लिखो("--%s ", p->दीर्घ_name);
-			पूर्ण
-			अक्षर_दो('\n');
-			निकास(0);
-		पूर्ण अन्यथा अगर (!म_भेद(cmd, "--debug")) अणु
-			अगर (*argc < 2) अणु
-				ख_लिखो(मानक_त्रुटि, "No variable specified for --debug.\n");
+			for (i = 0; i < ARRAY_SIZE(options)-1; i++) {
+				struct option *p = options+i;
+				printf("--%s ", p->long_name);
+			}
+			putchar('\n');
+			exit(0);
+		} else if (!strcmp(cmd, "--debug")) {
+			if (*argc < 2) {
+				fprintf(stderr, "No variable specified for --debug.\n");
 				usage(perf_usage_string);
-			पूर्ण
-			अगर (perf_debug_option((*argv)[1]))
+			}
+			if (perf_debug_option((*argv)[1]))
 				usage(perf_usage_string);
 
 			(*argv)++;
 			(*argc)--;
-		पूर्ण अन्यथा अणु
-			ख_लिखो(मानक_त्रुटि, "Unknown option: %s\n", cmd);
+		} else {
+			fprintf(stderr, "Unknown option: %s\n", cmd);
 			usage(perf_usage_string);
-		पूर्ण
+		}
 
 		(*argv)++;
 		(*argc)--;
 		handled++;
-	पूर्ण
-	वापस handled;
-पूर्ण
+	}
+	return handled;
+}
 
-#घोषणा RUN_SETUP	(1<<0)
-#घोषणा USE_PAGER	(1<<1)
+#define RUN_SETUP	(1<<0)
+#define USE_PAGER	(1<<1)
 
-अटल पूर्णांक run_builtin(काष्ठा cmd_काष्ठा *p, पूर्णांक argc, स्थिर अक्षर **argv)
-अणु
-	पूर्णांक status;
-	काष्ठा stat st;
-	अक्षर sbuf[STRERR_बफ_मानE];
+static int run_builtin(struct cmd_struct *p, int argc, const char **argv)
+{
+	int status;
+	struct stat st;
+	char sbuf[STRERR_BUFSIZE];
 
-	अगर (use_browser == -1)
+	if (use_browser == -1)
 		use_browser = check_browser_config(p->cmd);
 
-	अगर (use_pager == -1 && p->option & RUN_SETUP)
+	if (use_pager == -1 && p->option & RUN_SETUP)
 		use_pager = check_pager_config(p->cmd);
-	अगर (use_pager == -1 && p->option & USE_PAGER)
+	if (use_pager == -1 && p->option & USE_PAGER)
 		use_pager = 1;
 	commit_pager_choice();
 
 	perf_env__init(&perf_env);
 	perf_env__set_cmdline(&perf_env, argc, argv);
 	status = p->fn(argc, argv);
-	perf_config__निकास();
-	निकास_browser(status);
-	perf_env__निकास(&perf_env);
+	perf_config__exit();
+	exit_browser(status);
+	perf_env__exit(&perf_env);
 	bpf__clear();
 
-	अगर (status)
-		वापस status & 0xff;
+	if (status)
+		return status & 0xff;
 
-	/* Somebody बंदd मानक_निकास? */
-	अगर (ख_स्थिति(fileno(मानक_निकास), &st))
-		वापस 0;
-	/* Ignore ग_लिखो errors क्रम pipes and sockets.. */
-	अगर (S_ISFIFO(st.st_mode) || S_ISSOCK(st.st_mode))
-		वापस 0;
+	/* Somebody closed stdout? */
+	if (fstat(fileno(stdout), &st))
+		return 0;
+	/* Ignore write errors for pipes and sockets.. */
+	if (S_ISFIFO(st.st_mode) || S_ISSOCK(st.st_mode))
+		return 0;
 
 	status = 1;
-	/* Check क्रम ENOSPC and EIO errors.. */
-	अगर (ख_साफ(मानक_निकास)) अणु
-		ख_लिखो(मानक_त्रुटि, "write failure on standard output: %s",
-			str_error_r(त्रुटि_सं, sbuf, माप(sbuf)));
-		जाओ out;
-	पूर्ण
-	अगर (ख_त्रुटि(मानक_निकास)) अणु
-		ख_लिखो(मानक_त्रुटि, "unknown write failure on standard output");
-		जाओ out;
-	पूर्ण
-	अगर (ख_बंद(मानक_निकास)) अणु
-		ख_लिखो(मानक_त्रुटि, "close failed on standard output: %s",
-			str_error_r(त्रुटि_सं, sbuf, माप(sbuf)));
-		जाओ out;
-	पूर्ण
+	/* Check for ENOSPC and EIO errors.. */
+	if (fflush(stdout)) {
+		fprintf(stderr, "write failure on standard output: %s",
+			str_error_r(errno, sbuf, sizeof(sbuf)));
+		goto out;
+	}
+	if (ferror(stdout)) {
+		fprintf(stderr, "unknown write failure on standard output");
+		goto out;
+	}
+	if (fclose(stdout)) {
+		fprintf(stderr, "close failed on standard output: %s",
+			str_error_r(errno, sbuf, sizeof(sbuf)));
+		goto out;
+	}
 	status = 0;
 out:
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल व्योम handle_पूर्णांकernal_command(पूर्णांक argc, स्थिर अक्षर **argv)
-अणु
-	स्थिर अक्षर *cmd = argv[0];
-	अचिन्हित पूर्णांक i;
+static void handle_internal_command(int argc, const char **argv)
+{
+	const char *cmd = argv[0];
+	unsigned int i;
 
-	/* Turn "perf cmd --help" पूर्णांकo "perf help cmd" */
-	अगर (argc > 1 && !म_भेद(argv[1], "--help")) अणु
+	/* Turn "perf cmd --help" into "perf help cmd" */
+	if (argc > 1 && !strcmp(argv[1], "--help")) {
 		argv[1] = argv[0];
 		argv[0] = cmd = "help";
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(commands); i++) अणु
-		काष्ठा cmd_काष्ठा *p = commands+i;
-		अगर (म_भेद(p->cmd, cmd))
-			जारी;
-		निकास(run_builtin(p, argc, argv));
-	पूर्ण
-पूर्ण
+	for (i = 0; i < ARRAY_SIZE(commands); i++) {
+		struct cmd_struct *p = commands+i;
+		if (strcmp(p->cmd, cmd))
+			continue;
+		exit(run_builtin(p, argc, argv));
+	}
+}
 
-अटल व्योम execv_dashed_बाह्यal(स्थिर अक्षर **argv)
-अणु
-	अक्षर *cmd;
-	स्थिर अक्षर *पंचांगp;
-	पूर्णांक status;
+static void execv_dashed_external(const char **argv)
+{
+	char *cmd;
+	const char *tmp;
+	int status;
 
-	अगर (aप्र_लिखो(&cmd, "perf-%s", argv[0]) < 0)
-		जाओ करो_die;
+	if (asprintf(&cmd, "perf-%s", argv[0]) < 0)
+		goto do_die;
 
 	/*
 	 * argv[0] must be the perf command, but the argv array
-	 * beदीर्घs to the caller, and may be reused in
+	 * belongs to the caller, and may be reused in
 	 * subsequent loop iterations. Save argv[0] and
 	 * restore it on error.
 	 */
-	पंचांगp = argv[0];
+	tmp = argv[0];
 	argv[0] = cmd;
 
 	/*
-	 * अगर we fail because the command is not found, it is
-	 * OK to वापस. Otherwise, we just pass aदीर्घ the status code.
+	 * if we fail because the command is not found, it is
+	 * OK to return. Otherwise, we just pass along the status code.
 	 */
 	status = run_command_v_opt(argv, 0);
-	अगर (status != -ERR_RUN_COMMAND_EXEC) अणु
-		अगर (IS_RUN_COMMAND_ERR(status)) अणु
-करो_die:
+	if (status != -ERR_RUN_COMMAND_EXEC) {
+		if (IS_RUN_COMMAND_ERR(status)) {
+do_die:
 			pr_err("FATAL: unable to run '%s'", argv[0]);
 			status = -128;
-		पूर्ण
-		निकास(-status);
-	पूर्ण
-	त्रुटि_सं = ENOENT; /* as अगर we called execvp */
+		}
+		exit(-status);
+	}
+	errno = ENOENT; /* as if we called execvp */
 
-	argv[0] = पंचांगp;
-	zमुक्त(&cmd);
-पूर्ण
+	argv[0] = tmp;
+	zfree(&cmd);
+}
 
-अटल पूर्णांक run_argv(पूर्णांक *argcp, स्थिर अक्षर ***argv)
-अणु
-	/* See अगर it's an पूर्णांकernal command */
-	handle_पूर्णांकernal_command(*argcp, *argv);
+static int run_argv(int *argcp, const char ***argv)
+{
+	/* See if it's an internal command */
+	handle_internal_command(*argcp, *argv);
 
-	/* .. then try the बाह्यal ones */
-	execv_dashed_बाह्यal(*argv);
-	वापस 0;
-पूर्ण
+	/* .. then try the external ones */
+	execv_dashed_external(*argv);
+	return 0;
+}
 
-अटल व्योम pthपढ़ो__block_sigwinch(व्योम)
-अणु
+static void pthread__block_sigwinch(void)
+{
 	sigset_t set;
 
 	sigemptyset(&set);
 	sigaddset(&set, SIGWINCH);
-	pthपढ़ो_sigmask(SIG_BLOCK, &set, शून्य);
-पूर्ण
+	pthread_sigmask(SIG_BLOCK, &set, NULL);
+}
 
-व्योम pthपढ़ो__unblock_sigwinch(व्योम)
-अणु
+void pthread__unblock_sigwinch(void)
+{
 	sigset_t set;
 
 	sigemptyset(&set);
 	sigaddset(&set, SIGWINCH);
-	pthपढ़ो_sigmask(SIG_UNBLOCK, &set, शून्य);
-पूर्ण
+	pthread_sigmask(SIG_UNBLOCK, &set, NULL);
+}
 
-अटल पूर्णांक libperf_prपूर्णांक(क्रमागत libperf_prपूर्णांक_level level,
-			 स्थिर अक्षर *fmt, बहु_सूची ap)
-अणु
-	वापस eम_लिखो(level, verbose, fmt, ap);
-पूर्ण
+static int libperf_print(enum libperf_print_level level,
+			 const char *fmt, va_list ap)
+{
+	return eprintf(level, verbose, fmt, ap);
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, स्थिर अक्षर **argv)
-अणु
-	पूर्णांक err;
-	स्थिर अक्षर *cmd;
-	अक्षर sbuf[STRERR_बफ_मानE];
+int main(int argc, const char **argv)
+{
+	int err;
+	const char *cmd;
+	char sbuf[STRERR_BUFSIZE];
 
 	perf_debug_setup();
 
@@ -450,72 +449,72 @@ out:
 	exec_cmd_init("perf", PREFIX, PERF_EXEC_PATH, EXEC_PATH_ENVIRONMENT);
 	pager_init(PERF_PAGER_ENVIRONMENT);
 
-	libperf_init(libperf_prपूर्णांक);
+	libperf_init(libperf_print);
 
 	cmd = extract_argv0_path(argv[0]);
-	अगर (!cmd)
+	if (!cmd)
 		cmd = "perf-help";
 
-	बेक्रमom(समय(शून्य));
+	srandom(time(NULL));
 
-	/* Setting $PERF_CONFIG makes perf पढ़ो _only_ the given config file. */
-	config_exclusive_filename = दो_पर्या("PERF_CONFIG");
+	/* Setting $PERF_CONFIG makes perf read _only_ the given config file. */
+	config_exclusive_filename = getenv("PERF_CONFIG");
 
-	err = perf_config(perf_शेष_config, शून्य);
-	अगर (err)
-		वापस err;
-	set_buildid_dir(शून्य);
+	err = perf_config(perf_default_config, NULL);
+	if (err)
+		return err;
+	set_buildid_dir(NULL);
 
 	/*
 	 * "perf-xxxx" is the same as "perf xxxx", but we obviously:
 	 *
 	 *  - cannot take flags in between the "perf" and the "xxxx".
-	 *  - cannot execute it बाह्यally (since it would just करो
+	 *  - cannot execute it externally (since it would just do
 	 *    the same thing over again)
 	 *
-	 * So we just directly call the पूर्णांकernal command handler. If that one
-	 * fails to handle this, then maybe we just run a नामd perf binary
+	 * So we just directly call the internal command handler. If that one
+	 * fails to handle this, then maybe we just run a renamed perf binary
 	 * that contains a dash in its name. To handle this scenario, we just
 	 * fall through and ignore the "xxxx" part of the command string.
 	 */
-	अगर (strstarts(cmd, "perf-")) अणु
+	if (strstarts(cmd, "perf-")) {
 		cmd += 5;
 		argv[0] = cmd;
-		handle_पूर्णांकernal_command(argc, argv);
+		handle_internal_command(argc, argv);
 		/*
-		 * If the command is handled, the above function करोes not
-		 * वापस unकरो changes and fall through in such a हाल.
+		 * If the command is handled, the above function does not
+		 * return undo changes and fall through in such a case.
 		 */
 		cmd -= 5;
 		argv[0] = cmd;
-	पूर्ण
-	अगर (strstarts(cmd, "trace")) अणु
-#अगर defined(HAVE_LIBAUDIT_SUPPORT) || defined(HAVE_SYSCALL_TABLE_SUPPORT)
+	}
+	if (strstarts(cmd, "trace")) {
+#if defined(HAVE_LIBAUDIT_SUPPORT) || defined(HAVE_SYSCALL_TABLE_SUPPORT)
 		setup_path();
 		argv[0] = "trace";
-		वापस cmd_trace(argc, argv);
-#अन्यथा
-		ख_लिखो(मानक_त्रुटि,
+		return cmd_trace(argc, argv);
+#else
+		fprintf(stderr,
 			"trace command not available: missing audit-libs devel package at build time.\n");
-		जाओ out;
-#पूर्ण_अगर
-	पूर्ण
-	/* Look क्रम flags.. */
+		goto out;
+#endif
+	}
+	/* Look for flags.. */
 	argv++;
 	argc--;
-	handle_options(&argv, &argc, शून्य);
+	handle_options(&argv, &argc, NULL);
 	commit_pager_choice();
 
-	अगर (argc > 0) अणु
-		अगर (strstarts(argv[0], "--"))
+	if (argc > 0) {
+		if (strstarts(argv[0], "--"))
 			argv[0] += 2;
-	पूर्ण अन्यथा अणु
-		/* The user didn't specअगरy a command; give them help */
-		म_लिखो("\n usage: %s\n\n", perf_usage_string);
+	} else {
+		/* The user didn't specify a command; give them help */
+		printf("\n usage: %s\n\n", perf_usage_string);
 		list_common_cmds_help();
-		म_लिखो("\n %s\n\n", perf_more_info_string);
-		जाओ out;
-	पूर्ण
+		printf("\n %s\n\n", perf_more_info_string);
+		goto out;
+	}
 	cmd = argv[0];
 
 	test_attr__init();
@@ -524,33 +523,33 @@ out:
 	 * We use PATH to find perf commands, but we prepend some higher
 	 * precedence paths: the "--exec-path" option, the PERF_EXEC_PATH
 	 * environment, and the $(perfexecdir) from the Makefile at build
-	 * समय.
+	 * time.
 	 */
 	setup_path();
 	/*
-	 * Block SIGWINCH notअगरications so that the thपढ़ो that wants it can
-	 * unblock and get syscalls like select पूर्णांकerrupted instead of रुकोing
-	 * क्रमever जबतक the संकेत goes to some other non पूर्णांकerested thपढ़ो.
+	 * Block SIGWINCH notifications so that the thread that wants it can
+	 * unblock and get syscalls like select interrupted instead of waiting
+	 * forever while the signal goes to some other non interested thread.
 	 */
-	pthपढ़ो__block_sigwinch();
+	pthread__block_sigwinch();
 
-	जबतक (1) अणु
-		अटल पूर्णांक करोne_help;
+	while (1) {
+		static int done_help;
 
 		run_argv(&argc, &argv);
 
-		अगर (त्रुटि_सं != ENOENT)
-			अवरोध;
+		if (errno != ENOENT)
+			break;
 
-		अगर (!करोne_help) अणु
+		if (!done_help) {
 			cmd = argv[0] = help_unknown_cmd(cmd);
-			करोne_help = 1;
-		पूर्ण अन्यथा
-			अवरोध;
-	पूर्ण
+			done_help = 1;
+		} else
+			break;
+	}
 
-	ख_लिखो(मानक_त्रुटि, "Failed to run command '%s': %s\n",
-		cmd, str_error_r(त्रुटि_सं, sbuf, माप(sbuf)));
+	fprintf(stderr, "Failed to run command '%s': %s\n",
+		cmd, str_error_r(errno, sbuf, sizeof(sbuf)));
 out:
-	वापस 1;
-पूर्ण
+	return 1;
+}

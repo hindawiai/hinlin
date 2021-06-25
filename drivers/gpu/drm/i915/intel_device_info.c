@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
- * Copyright तऊ 2016 Intel Corporation
+ * Copyright © 2016 Intel Corporation
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -23,16 +22,16 @@
  *
  */
 
-#समावेश <drm/drm_prपूर्णांक.h>
-#समावेश <drm/i915_pciids.h>
+#include <drm/drm_print.h>
+#include <drm/i915_pciids.h>
 
-#समावेश "display/intel_cdclk.h"
-#समावेश "display/intel_de.h"
-#समावेश "intel_device_info.h"
-#समावेश "i915_drv.h"
+#include "display/intel_cdclk.h"
+#include "display/intel_de.h"
+#include "intel_device_info.h"
+#include "i915_drv.h"
 
-#घोषणा PLATFORM_NAME(x) [INTEL_##x] = #x
-अटल स्थिर अक्षर * स्थिर platक्रमm_names[] = अणु
+#define PLATFORM_NAME(x) [INTEL_##x] = #x
+static const char * const platform_names[] = {
 	PLATFORM_NAME(I830),
 	PLATFORM_NAME(I845G),
 	PLATFORM_NAME(I85X),
@@ -68,63 +67,63 @@
 	PLATFORM_NAME(ROCKETLAKE),
 	PLATFORM_NAME(DG1),
 	PLATFORM_NAME(ALDERLAKE_S),
-पूर्ण;
-#अघोषित PLATFORM_NAME
+};
+#undef PLATFORM_NAME
 
-स्थिर अक्षर *पूर्णांकel_platक्रमm_name(क्रमागत पूर्णांकel_platक्रमm platक्रमm)
-अणु
-	BUILD_BUG_ON(ARRAY_SIZE(platक्रमm_names) != INTEL_MAX_PLATFORMS);
+const char *intel_platform_name(enum intel_platform platform)
+{
+	BUILD_BUG_ON(ARRAY_SIZE(platform_names) != INTEL_MAX_PLATFORMS);
 
-	अगर (WARN_ON_ONCE(platक्रमm >= ARRAY_SIZE(platक्रमm_names) ||
-			 platक्रमm_names[platक्रमm] == शून्य))
-		वापस "<unknown>";
+	if (WARN_ON_ONCE(platform >= ARRAY_SIZE(platform_names) ||
+			 platform_names[platform] == NULL))
+		return "<unknown>";
 
-	वापस platक्रमm_names[platक्रमm];
-पूर्ण
+	return platform_names[platform];
+}
 
-अटल स्थिर अक्षर *iommu_name(व्योम)
-अणु
-	स्थिर अक्षर *msg = "n/a";
+static const char *iommu_name(void)
+{
+	const char *msg = "n/a";
 
-#अगर_घोषित CONFIG_INTEL_IOMMU
-	msg = enableddisabled(पूर्णांकel_iommu_gfx_mapped);
-#पूर्ण_अगर
+#ifdef CONFIG_INTEL_IOMMU
+	msg = enableddisabled(intel_iommu_gfx_mapped);
+#endif
 
-	वापस msg;
-पूर्ण
+	return msg;
+}
 
-व्योम पूर्णांकel_device_info_prपूर्णांक_अटल(स्थिर काष्ठा पूर्णांकel_device_info *info,
-				    काष्ठा drm_prपूर्णांकer *p)
-अणु
-	drm_म_लिखो(p, "gen: %d\n", info->gen);
-	drm_म_लिखो(p, "gt: %d\n", info->gt);
-	drm_म_लिखो(p, "iommu: %s\n", iommu_name());
-	drm_म_लिखो(p, "memory-regions: %x\n", info->memory_regions);
-	drm_म_लिखो(p, "page-sizes: %x\n", info->page_sizes);
-	drm_म_लिखो(p, "platform: %s\n", पूर्णांकel_platक्रमm_name(info->platक्रमm));
-	drm_म_लिखो(p, "ppgtt-size: %d\n", info->ppgtt_size);
-	drm_म_लिखो(p, "ppgtt-type: %d\n", info->ppgtt_type);
-	drm_म_लिखो(p, "dma_mask_size: %u\n", info->dma_mask_size);
+void intel_device_info_print_static(const struct intel_device_info *info,
+				    struct drm_printer *p)
+{
+	drm_printf(p, "gen: %d\n", info->gen);
+	drm_printf(p, "gt: %d\n", info->gt);
+	drm_printf(p, "iommu: %s\n", iommu_name());
+	drm_printf(p, "memory-regions: %x\n", info->memory_regions);
+	drm_printf(p, "page-sizes: %x\n", info->page_sizes);
+	drm_printf(p, "platform: %s\n", intel_platform_name(info->platform));
+	drm_printf(p, "ppgtt-size: %d\n", info->ppgtt_size);
+	drm_printf(p, "ppgtt-type: %d\n", info->ppgtt_type);
+	drm_printf(p, "dma_mask_size: %u\n", info->dma_mask_size);
 
-#घोषणा PRINT_FLAG(name) drm_म_लिखो(p, "%s: %s\n", #name, yesno(info->name))
+#define PRINT_FLAG(name) drm_printf(p, "%s: %s\n", #name, yesno(info->name))
 	DEV_INFO_FOR_EACH_FLAG(PRINT_FLAG);
-#अघोषित PRINT_FLAG
+#undef PRINT_FLAG
 
-#घोषणा PRINT_FLAG(name) drm_म_लिखो(p, "%s: %s\n", #name, yesno(info->display.name));
+#define PRINT_FLAG(name) drm_printf(p, "%s: %s\n", #name, yesno(info->display.name));
 	DEV_INFO_DISPLAY_FOR_EACH_FLAG(PRINT_FLAG);
-#अघोषित PRINT_FLAG
-पूर्ण
+#undef PRINT_FLAG
+}
 
-व्योम पूर्णांकel_device_info_prपूर्णांक_runसमय(स्थिर काष्ठा पूर्णांकel_runसमय_info *info,
-				     काष्ठा drm_prपूर्णांकer *p)
-अणु
-	drm_म_लिखो(p, "rawclk rate: %u kHz\n", info->rawclk_freq);
-पूर्ण
+void intel_device_info_print_runtime(const struct intel_runtime_info *info,
+				     struct drm_printer *p)
+{
+	drm_printf(p, "rawclk rate: %u kHz\n", info->rawclk_freq);
+}
 
-#अघोषित INTEL_VGA_DEVICE
-#घोषणा INTEL_VGA_DEVICE(id, info) (id)
+#undef INTEL_VGA_DEVICE
+#define INTEL_VGA_DEVICE(id, info) (id)
 
-अटल स्थिर u16 subplatक्रमm_ult_ids[] = अणु
+static const u16 subplatform_ult_ids[] = {
 	INTEL_HSW_ULT_GT1_IDS(0),
 	INTEL_HSW_ULT_GT2_IDS(0),
 	INTEL_HSW_ULT_GT3_IDS(0),
@@ -145,9 +144,9 @@
 	INTEL_WHL_U_GT3_IDS(0),
 	INTEL_CML_U_GT1_IDS(0),
 	INTEL_CML_U_GT2_IDS(0),
-पूर्ण;
+};
 
-अटल स्थिर u16 subplatक्रमm_ulx_ids[] = अणु
+static const u16 subplatform_ulx_ids[] = {
 	INTEL_HSW_ULX_GT1_IDS(0),
 	INTEL_HSW_ULX_GT2_IDS(0),
 	INTEL_BDW_ULX_GT1_IDS(0),
@@ -160,53 +159,53 @@
 	INTEL_KBL_ULX_GT2_IDS(0),
 	INTEL_AML_KBL_GT2_IDS(0),
 	INTEL_AML_CFL_GT2_IDS(0),
-पूर्ण;
+};
 
-अटल स्थिर u16 subplatक्रमm_portf_ids[] = अणु
+static const u16 subplatform_portf_ids[] = {
 	INTEL_CNL_PORT_F_IDS(0),
 	INTEL_ICL_PORT_F_IDS(0),
-पूर्ण;
+};
 
-अटल bool find_devid(u16 id, स्थिर u16 *p, अचिन्हित पूर्णांक num)
-अणु
-	क्रम (; num; num--, p++) अणु
-		अगर (*p == id)
-			वापस true;
-	पूर्ण
+static bool find_devid(u16 id, const u16 *p, unsigned int num)
+{
+	for (; num; num--, p++) {
+		if (*p == id)
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-व्योम पूर्णांकel_device_info_subplatक्रमm_init(काष्ठा drm_i915_निजी *i915)
-अणु
-	स्थिर काष्ठा पूर्णांकel_device_info *info = INTEL_INFO(i915);
-	स्थिर काष्ठा पूर्णांकel_runसमय_info *rinfo = RUNTIME_INFO(i915);
-	स्थिर अचिन्हित पूर्णांक pi = __platक्रमm_mask_index(rinfo, info->platक्रमm);
-	स्थिर अचिन्हित पूर्णांक pb = __platक्रमm_mask_bit(rinfo, info->platक्रमm);
+void intel_device_info_subplatform_init(struct drm_i915_private *i915)
+{
+	const struct intel_device_info *info = INTEL_INFO(i915);
+	const struct intel_runtime_info *rinfo = RUNTIME_INFO(i915);
+	const unsigned int pi = __platform_mask_index(rinfo, info->platform);
+	const unsigned int pb = __platform_mask_bit(rinfo, info->platform);
 	u16 devid = INTEL_DEVID(i915);
 	u32 mask = 0;
 
-	/* Make sure IS_<platक्रमm> checks are working. */
-	RUNTIME_INFO(i915)->platक्रमm_mask[pi] = BIT(pb);
+	/* Make sure IS_<platform> checks are working. */
+	RUNTIME_INFO(i915)->platform_mask[pi] = BIT(pb);
 
-	/* Find and mark subplatक्रमm bits based on the PCI device id. */
-	अगर (find_devid(devid, subplatक्रमm_ult_ids,
-		       ARRAY_SIZE(subplatक्रमm_ult_ids))) अणु
+	/* Find and mark subplatform bits based on the PCI device id. */
+	if (find_devid(devid, subplatform_ult_ids,
+		       ARRAY_SIZE(subplatform_ult_ids))) {
 		mask = BIT(INTEL_SUBPLATFORM_ULT);
-	पूर्ण अन्यथा अगर (find_devid(devid, subplatक्रमm_ulx_ids,
-			      ARRAY_SIZE(subplatक्रमm_ulx_ids))) अणु
+	} else if (find_devid(devid, subplatform_ulx_ids,
+			      ARRAY_SIZE(subplatform_ulx_ids))) {
 		mask = BIT(INTEL_SUBPLATFORM_ULX);
-		अगर (IS_HASWELL(i915) || IS_BROADWELL(i915)) अणु
+		if (IS_HASWELL(i915) || IS_BROADWELL(i915)) {
 			/* ULX machines are also considered ULT. */
 			mask |= BIT(INTEL_SUBPLATFORM_ULT);
-		पूर्ण
-	पूर्ण अन्यथा अगर (find_devid(devid, subplatक्रमm_portf_ids,
-			      ARRAY_SIZE(subplatक्रमm_portf_ids))) अणु
+		}
+	} else if (find_devid(devid, subplatform_portf_ids,
+			      ARRAY_SIZE(subplatform_portf_ids))) {
 		mask = BIT(INTEL_SUBPLATFORM_PORTF);
-	पूर्ण
+	}
 
-	अगर (IS_TIGERLAKE(i915)) अणु
-		काष्ठा pci_dev *root, *pdev = to_pci_dev(i915->drm.dev);
+	if (IS_TIGERLAKE(i915)) {
+		struct pci_dev *root, *pdev = to_pci_dev(i915->drm.dev);
 
 		root = list_first_entry(&pdev->bus->devices, typeof(*root), bus_list);
 
@@ -214,172 +213,172 @@
 		drm_WARN_ON(&i915->drm, (root->device & TGL_ROOT_DEVICE_MASK) !=
 			    TGL_ROOT_DEVICE_ID);
 
-		चयन (root->device & TGL_ROOT_DEVICE_SKU_MASK) अणु
-		हाल TGL_ROOT_DEVICE_SKU_ULX:
+		switch (root->device & TGL_ROOT_DEVICE_SKU_MASK) {
+		case TGL_ROOT_DEVICE_SKU_ULX:
 			mask = BIT(INTEL_SUBPLATFORM_ULX);
-			अवरोध;
-		हाल TGL_ROOT_DEVICE_SKU_ULT:
+			break;
+		case TGL_ROOT_DEVICE_SKU_ULT:
 			mask = BIT(INTEL_SUBPLATFORM_ULT);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	GEM_BUG_ON(mask & ~INTEL_SUBPLATFORM_MASK);
 
-	RUNTIME_INFO(i915)->platक्रमm_mask[pi] |= mask;
-पूर्ण
+	RUNTIME_INFO(i915)->platform_mask[pi] |= mask;
+}
 
 /**
- * पूर्णांकel_device_info_runसमय_init - initialize runसमय info
+ * intel_device_info_runtime_init - initialize runtime info
  * @dev_priv: the i915 device
  *
- * Determine various पूर्णांकel_device_info fields at runसमय.
+ * Determine various intel_device_info fields at runtime.
  *
  * Use it when either:
- *   - it's judged too laborious to fill n अटल काष्ठाures with the limit
- *     when a simple अगर statement करोes the job,
- *   - run-समय checks (eg पढ़ो fuse/strap रेजिस्टरs) are needed.
+ *   - it's judged too laborious to fill n static structures with the limit
+ *     when a simple if statement does the job,
+ *   - run-time checks (eg read fuse/strap registers) are needed.
  *
  * This function needs to be called:
- *   - after the MMIO has been setup as we are पढ़ोing रेजिस्टरs,
+ *   - after the MMIO has been setup as we are reading registers,
  *   - after the PCH has been detected,
- *   - beक्रमe the first usage of the fields it can tweak.
+ *   - before the first usage of the fields it can tweak.
  */
-व्योम पूर्णांकel_device_info_runसमय_init(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	काष्ठा पूर्णांकel_device_info *info = mkग_लिखो_device_info(dev_priv);
-	काष्ठा पूर्णांकel_runसमय_info *runसमय = RUNTIME_INFO(dev_priv);
-	क्रमागत pipe pipe;
+void intel_device_info_runtime_init(struct drm_i915_private *dev_priv)
+{
+	struct intel_device_info *info = mkwrite_device_info(dev_priv);
+	struct intel_runtime_info *runtime = RUNTIME_INFO(dev_priv);
+	enum pipe pipe;
 
 	/* Wa_14011765242: adl-s A0 */
-	अगर (IS_ADLS_DISPLAY_STEP(dev_priv, STEP_A0, STEP_A0))
-		क्रम_each_pipe(dev_priv, pipe)
-			runसमय->num_scalers[pipe] = 0;
-	अन्यथा अगर (INTEL_GEN(dev_priv) >= 10) अणु
-		क्रम_each_pipe(dev_priv, pipe)
-			runसमय->num_scalers[pipe] = 2;
-	पूर्ण अन्यथा अगर (IS_GEN(dev_priv, 9)) अणु
-		runसमय->num_scalers[PIPE_A] = 2;
-		runसमय->num_scalers[PIPE_B] = 2;
-		runसमय->num_scalers[PIPE_C] = 1;
-	पूर्ण
+	if (IS_ADLS_DISPLAY_STEP(dev_priv, STEP_A0, STEP_A0))
+		for_each_pipe(dev_priv, pipe)
+			runtime->num_scalers[pipe] = 0;
+	else if (INTEL_GEN(dev_priv) >= 10) {
+		for_each_pipe(dev_priv, pipe)
+			runtime->num_scalers[pipe] = 2;
+	} else if (IS_GEN(dev_priv, 9)) {
+		runtime->num_scalers[PIPE_A] = 2;
+		runtime->num_scalers[PIPE_B] = 2;
+		runtime->num_scalers[PIPE_C] = 1;
+	}
 
-	BUILD_BUG_ON(BITS_PER_TYPE(पूर्णांकel_engine_mask_t) < I915_NUM_ENGINES);
+	BUILD_BUG_ON(BITS_PER_TYPE(intel_engine_mask_t) < I915_NUM_ENGINES);
 
-	अगर (HAS_D12_PLANE_MINIMIZATION(dev_priv))
-		क्रम_each_pipe(dev_priv, pipe)
-			runसमय->num_sprites[pipe] = 4;
-	अन्यथा अगर (INTEL_GEN(dev_priv) >= 11)
-		क्रम_each_pipe(dev_priv, pipe)
-			runसमय->num_sprites[pipe] = 6;
-	अन्यथा अगर (IS_GEN(dev_priv, 10) || IS_GEMINILAKE(dev_priv))
-		क्रम_each_pipe(dev_priv, pipe)
-			runसमय->num_sprites[pipe] = 3;
-	अन्यथा अगर (IS_BROXTON(dev_priv)) अणु
+	if (HAS_D12_PLANE_MINIMIZATION(dev_priv))
+		for_each_pipe(dev_priv, pipe)
+			runtime->num_sprites[pipe] = 4;
+	else if (INTEL_GEN(dev_priv) >= 11)
+		for_each_pipe(dev_priv, pipe)
+			runtime->num_sprites[pipe] = 6;
+	else if (IS_GEN(dev_priv, 10) || IS_GEMINILAKE(dev_priv))
+		for_each_pipe(dev_priv, pipe)
+			runtime->num_sprites[pipe] = 3;
+	else if (IS_BROXTON(dev_priv)) {
 		/*
-		 * Skylake and Broxton currently करोn't expose the topmost plane as its
+		 * Skylake and Broxton currently don't expose the topmost plane as its
 		 * use is exclusive with the legacy cursor and we only want to expose
 		 * one of those, not both. Until we can safely expose the topmost plane
 		 * as a DRM_PLANE_TYPE_CURSOR with all the features exposed/supported,
-		 * we करोn't expose the topmost plane at all to prevent ABI अवरोधage
-		 * करोwn the line.
+		 * we don't expose the topmost plane at all to prevent ABI breakage
+		 * down the line.
 		 */
 
-		runसमय->num_sprites[PIPE_A] = 2;
-		runसमय->num_sprites[PIPE_B] = 2;
-		runसमय->num_sprites[PIPE_C] = 1;
-	पूर्ण अन्यथा अगर (IS_VALLEYVIEW(dev_priv) || IS_CHERRYVIEW(dev_priv)) अणु
-		क्रम_each_pipe(dev_priv, pipe)
-			runसमय->num_sprites[pipe] = 2;
-	पूर्ण अन्यथा अगर (INTEL_GEN(dev_priv) >= 5 || IS_G4X(dev_priv)) अणु
-		क्रम_each_pipe(dev_priv, pipe)
-			runसमय->num_sprites[pipe] = 1;
-	पूर्ण
+		runtime->num_sprites[PIPE_A] = 2;
+		runtime->num_sprites[PIPE_B] = 2;
+		runtime->num_sprites[PIPE_C] = 1;
+	} else if (IS_VALLEYVIEW(dev_priv) || IS_CHERRYVIEW(dev_priv)) {
+		for_each_pipe(dev_priv, pipe)
+			runtime->num_sprites[pipe] = 2;
+	} else if (INTEL_GEN(dev_priv) >= 5 || IS_G4X(dev_priv)) {
+		for_each_pipe(dev_priv, pipe)
+			runtime->num_sprites[pipe] = 1;
+	}
 
-	अगर (HAS_DISPLAY(dev_priv) && IS_GEN_RANGE(dev_priv, 7, 8) &&
-	    HAS_PCH_SPLIT(dev_priv)) अणु
-		u32 fuse_strap = पूर्णांकel_de_पढ़ो(dev_priv, FUSE_STRAP);
-		u32 sfuse_strap = पूर्णांकel_de_पढ़ो(dev_priv, SFUSE_STRAP);
+	if (HAS_DISPLAY(dev_priv) && IS_GEN_RANGE(dev_priv, 7, 8) &&
+	    HAS_PCH_SPLIT(dev_priv)) {
+		u32 fuse_strap = intel_de_read(dev_priv, FUSE_STRAP);
+		u32 sfuse_strap = intel_de_read(dev_priv, SFUSE_STRAP);
 
 		/*
-		 * SFUSE_STRAP is supposed to have a bit संकेतling the display
-		 * is fused off. Unक्रमtunately it seems that, at least in
-		 * certain हालs, fused off display means that PCH display
-		 * पढ़ोs करोn't land anywhere. In that हाल, we पढ़ो 0s.
+		 * SFUSE_STRAP is supposed to have a bit signalling the display
+		 * is fused off. Unfortunately it seems that, at least in
+		 * certain cases, fused off display means that PCH display
+		 * reads don't land anywhere. In that case, we read 0s.
 		 *
-		 * On CPT/PPT, we can detect this हाल as SFUSE_STRAP_FUSE_LOCK
+		 * On CPT/PPT, we can detect this case as SFUSE_STRAP_FUSE_LOCK
 		 * should be set when taking over after the firmware.
 		 */
-		अगर (fuse_strap & ILK_INTERNAL_DISPLAY_DISABLE ||
+		if (fuse_strap & ILK_INTERNAL_DISPLAY_DISABLE ||
 		    sfuse_strap & SFUSE_STRAP_DISPLAY_DISABLED ||
 		    (HAS_PCH_CPT(dev_priv) &&
-		     !(sfuse_strap & SFUSE_STRAP_FUSE_LOCK))) अणु
+		     !(sfuse_strap & SFUSE_STRAP_FUSE_LOCK))) {
 			drm_info(&dev_priv->drm,
 				 "Display fused off, disabling\n");
 			info->pipe_mask = 0;
 			info->cpu_transcoder_mask = 0;
-		पूर्ण अन्यथा अगर (fuse_strap & IVB_PIPE_C_DISABLE) अणु
+		} else if (fuse_strap & IVB_PIPE_C_DISABLE) {
 			drm_info(&dev_priv->drm, "PipeC fused off\n");
 			info->pipe_mask &= ~BIT(PIPE_C);
 			info->cpu_transcoder_mask &= ~BIT(TRANSCODER_C);
-		पूर्ण
-	पूर्ण अन्यथा अगर (HAS_DISPLAY(dev_priv) && INTEL_GEN(dev_priv) >= 9) अणु
-		u32 dfsm = पूर्णांकel_de_पढ़ो(dev_priv, SKL_DFSM);
+		}
+	} else if (HAS_DISPLAY(dev_priv) && INTEL_GEN(dev_priv) >= 9) {
+		u32 dfsm = intel_de_read(dev_priv, SKL_DFSM);
 
-		अगर (dfsm & SKL_DFSM_PIPE_A_DISABLE) अणु
+		if (dfsm & SKL_DFSM_PIPE_A_DISABLE) {
 			info->pipe_mask &= ~BIT(PIPE_A);
 			info->cpu_transcoder_mask &= ~BIT(TRANSCODER_A);
-		पूर्ण
-		अगर (dfsm & SKL_DFSM_PIPE_B_DISABLE) अणु
+		}
+		if (dfsm & SKL_DFSM_PIPE_B_DISABLE) {
 			info->pipe_mask &= ~BIT(PIPE_B);
 			info->cpu_transcoder_mask &= ~BIT(TRANSCODER_B);
-		पूर्ण
-		अगर (dfsm & SKL_DFSM_PIPE_C_DISABLE) अणु
+		}
+		if (dfsm & SKL_DFSM_PIPE_C_DISABLE) {
 			info->pipe_mask &= ~BIT(PIPE_C);
 			info->cpu_transcoder_mask &= ~BIT(TRANSCODER_C);
-		पूर्ण
-		अगर (INTEL_GEN(dev_priv) >= 12 &&
-		    (dfsm & TGL_DFSM_PIPE_D_DISABLE)) अणु
+		}
+		if (INTEL_GEN(dev_priv) >= 12 &&
+		    (dfsm & TGL_DFSM_PIPE_D_DISABLE)) {
 			info->pipe_mask &= ~BIT(PIPE_D);
 			info->cpu_transcoder_mask &= ~BIT(TRANSCODER_D);
-		पूर्ण
+		}
 
-		अगर (dfsm & SKL_DFSM_DISPLAY_HDCP_DISABLE)
+		if (dfsm & SKL_DFSM_DISPLAY_HDCP_DISABLE)
 			info->display.has_hdcp = 0;
 
-		अगर (dfsm & SKL_DFSM_DISPLAY_PM_DISABLE)
+		if (dfsm & SKL_DFSM_DISPLAY_PM_DISABLE)
 			info->display.has_fbc = 0;
 
-		अगर (INTEL_GEN(dev_priv) >= 11 && (dfsm & ICL_DFSM_DMC_DISABLE))
+		if (INTEL_GEN(dev_priv) >= 11 && (dfsm & ICL_DFSM_DMC_DISABLE))
 			info->display.has_csr = 0;
 
-		अगर (INTEL_GEN(dev_priv) >= 10 &&
+		if (INTEL_GEN(dev_priv) >= 10 &&
 		    (dfsm & CNL_DFSM_DISPLAY_DSC_DISABLE))
 			info->display.has_dsc = 0;
-	पूर्ण
+	}
 
-	अगर (IS_GEN(dev_priv, 6) && पूर्णांकel_vtd_active()) अणु
+	if (IS_GEN(dev_priv, 6) && intel_vtd_active()) {
 		drm_info(&dev_priv->drm,
 			 "Disabling ppGTT for VT-d support\n");
 		info->ppgtt_type = INTEL_PPGTT_NONE;
-	पूर्ण
+	}
 
-	runसमय->rawclk_freq = पूर्णांकel_पढ़ो_rawclk(dev_priv);
-	drm_dbg(&dev_priv->drm, "rawclk rate: %d kHz\n", runसमय->rawclk_freq);
+	runtime->rawclk_freq = intel_read_rawclk(dev_priv);
+	drm_dbg(&dev_priv->drm, "rawclk rate: %d kHz\n", runtime->rawclk_freq);
 
-	अगर (!HAS_DISPLAY(dev_priv)) अणु
+	if (!HAS_DISPLAY(dev_priv)) {
 		dev_priv->drm.driver_features &= ~(DRIVER_MODESET |
 						   DRIVER_ATOMIC);
-		स_रखो(&info->display, 0, माप(info->display));
-		स_रखो(runसमय->num_sprites, 0, माप(runसमय->num_sprites));
-		स_रखो(runसमय->num_scalers, 0, माप(runसमय->num_scalers));
-	पूर्ण
-पूर्ण
+		memset(&info->display, 0, sizeof(info->display));
+		memset(runtime->num_sprites, 0, sizeof(runtime->num_sprites));
+		memset(runtime->num_scalers, 0, sizeof(runtime->num_scalers));
+	}
+}
 
-व्योम पूर्णांकel_driver_caps_prपूर्णांक(स्थिर काष्ठा पूर्णांकel_driver_caps *caps,
-			     काष्ठा drm_prपूर्णांकer *p)
-अणु
-	drm_म_लिखो(p, "Has logical contexts? %s\n",
+void intel_driver_caps_print(const struct intel_driver_caps *caps,
+			     struct drm_printer *p)
+{
+	drm_printf(p, "Has logical contexts? %s\n",
 		   yesno(caps->has_logical_contexts));
-	drm_म_लिखो(p, "scheduler: %x\n", caps->scheduler);
-पूर्ण
+	drm_printf(p, "scheduler: %x\n", caps->scheduler);
+}

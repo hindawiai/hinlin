@@ -1,231 +1,230 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*  Copyright(c) 2016-20 Intel Corporation. */
 
-#समावेश <elf.h>
-#समावेश <त्रुटिसं.स>
-#समावेश <fcntl.h>
-#समावेश <stdbool.h>
-#समावेश <मानकपन.स>
-#समावेश <मानक_निवेशt.h>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <unistd.h>
-#समावेश <sys/ioctl.h>
-#समावेश <sys/mman.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <sys/समय.स>
-#समावेश <sys/types.h>
-#समावेश <sys/auxv.h>
-#समावेश "defines.h"
-#समावेश "main.h"
-#समावेश "../kselftest.h"
+#include <elf.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/ioctl.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <sys/auxv.h>
+#include "defines.h"
+#include "main.h"
+#include "../kselftest.h"
 
-अटल स्थिर uपूर्णांक64_t MAGIC = 0x1122334455667788ULL;
+static const uint64_t MAGIC = 0x1122334455667788ULL;
 vdso_sgx_enter_enclave_t eenter;
 
-काष्ठा vdso_symtab अणु
+struct vdso_symtab {
 	Elf64_Sym *elf_symtab;
-	स्थिर अक्षर *elf_symstrtab;
+	const char *elf_symstrtab;
 	Elf64_Word *elf_hashtab;
-पूर्ण;
+};
 
-अटल Elf64_Dyn *vdso_get_dyntab(व्योम *addr)
-अणु
+static Elf64_Dyn *vdso_get_dyntab(void *addr)
+{
 	Elf64_Ehdr *ehdr = addr;
 	Elf64_Phdr *phdrtab = addr + ehdr->e_phoff;
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < ehdr->e_phnum; i++)
-		अगर (phdrtab[i].p_type == PT_DYNAMIC)
-			वापस addr + phdrtab[i].p_offset;
+	for (i = 0; i < ehdr->e_phnum; i++)
+		if (phdrtab[i].p_type == PT_DYNAMIC)
+			return addr + phdrtab[i].p_offset;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम *vdso_get_dyn(व्योम *addr, Elf64_Dyn *dyntab, Elf64_Sxword tag)
-अणु
-	पूर्णांक i;
+static void *vdso_get_dyn(void *addr, Elf64_Dyn *dyntab, Elf64_Sxword tag)
+{
+	int i;
 
-	क्रम (i = 0; dyntab[i].d_tag != DT_शून्य; i++)
-		अगर (dyntab[i].d_tag == tag)
-			वापस addr + dyntab[i].d_un.d_ptr;
+	for (i = 0; dyntab[i].d_tag != DT_NULL; i++)
+		if (dyntab[i].d_tag == tag)
+			return addr + dyntab[i].d_un.d_ptr;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल bool vdso_get_symtab(व्योम *addr, काष्ठा vdso_symtab *symtab)
-अणु
+static bool vdso_get_symtab(void *addr, struct vdso_symtab *symtab)
+{
 	Elf64_Dyn *dyntab = vdso_get_dyntab(addr);
 
 	symtab->elf_symtab = vdso_get_dyn(addr, dyntab, DT_SYMTAB);
-	अगर (!symtab->elf_symtab)
-		वापस false;
+	if (!symtab->elf_symtab)
+		return false;
 
 	symtab->elf_symstrtab = vdso_get_dyn(addr, dyntab, DT_STRTAB);
-	अगर (!symtab->elf_symstrtab)
-		वापस false;
+	if (!symtab->elf_symstrtab)
+		return false;
 
 	symtab->elf_hashtab = vdso_get_dyn(addr, dyntab, DT_HASH);
-	अगर (!symtab->elf_hashtab)
-		वापस false;
+	if (!symtab->elf_hashtab)
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल अचिन्हित दीर्घ elf_sym_hash(स्थिर अक्षर *name)
-अणु
-	अचिन्हित दीर्घ h = 0, high;
+static unsigned long elf_sym_hash(const char *name)
+{
+	unsigned long h = 0, high;
 
-	जबतक (*name) अणु
+	while (*name) {
 		h = (h << 4) + *name++;
 		high = h & 0xf0000000;
 
-		अगर (high)
+		if (high)
 			h ^= high >> 24;
 
 		h &= ~high;
-	पूर्ण
+	}
 
-	वापस h;
-पूर्ण
+	return h;
+}
 
-अटल Elf64_Sym *vdso_symtab_get(काष्ठा vdso_symtab *symtab, स्थिर अक्षर *name)
-अणु
+static Elf64_Sym *vdso_symtab_get(struct vdso_symtab *symtab, const char *name)
+{
 	Elf64_Word bucketnum = symtab->elf_hashtab[0];
 	Elf64_Word *buckettab = &symtab->elf_hashtab[2];
-	Elf64_Word *chaपूर्णांकab = &symtab->elf_hashtab[2 + bucketnum];
+	Elf64_Word *chaintab = &symtab->elf_hashtab[2 + bucketnum];
 	Elf64_Sym *sym;
 	Elf64_Word i;
 
-	क्रम (i = buckettab[elf_sym_hash(name) % bucketnum]; i != STN_UNDEF;
-	     i = chaपूर्णांकab[i]) अणु
+	for (i = buckettab[elf_sym_hash(name) % bucketnum]; i != STN_UNDEF;
+	     i = chaintab[i]) {
 		sym = &symtab->elf_symtab[i];
-		अगर (!म_भेद(name, &symtab->elf_symstrtab[sym->st_name]))
-			वापस sym;
-	पूर्ण
+		if (!strcmp(name, &symtab->elf_symstrtab[sym->st_name]))
+			return sym;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-bool report_results(काष्ठा sgx_enclave_run *run, पूर्णांक ret, uपूर्णांक64_t result,
-		  स्थिर अक्षर *test)
-अणु
+bool report_results(struct sgx_enclave_run *run, int ret, uint64_t result,
+		  const char *test)
+{
 	bool valid = true;
 
-	अगर (ret) अणु
-		म_लिखो("FAIL: %s() returned: %d\n", test, ret);
+	if (ret) {
+		printf("FAIL: %s() returned: %d\n", test, ret);
 		valid = false;
-	पूर्ण
+	}
 
-	अगर (run->function != EEXIT) अणु
-		म_लिखो("FAIL: %s() function, expected: %u, got: %u\n", test, EEXIT,
+	if (run->function != EEXIT) {
+		printf("FAIL: %s() function, expected: %u, got: %u\n", test, EEXIT,
 		       run->function);
 		valid = false;
-	पूर्ण
+	}
 
-	अगर (result != MAGIC) अणु
-		म_लिखो("FAIL: %s(), expected: 0x%lx, got: 0x%lx\n", test, MAGIC,
+	if (result != MAGIC) {
+		printf("FAIL: %s(), expected: 0x%lx, got: 0x%lx\n", test, MAGIC,
 		       result);
 		valid = false;
-	पूर्ण
+	}
 
-	अगर (run->user_data) अणु
-		म_लिखो("FAIL: %s() user data, expected: 0x0, got: 0x%llx\n",
+	if (run->user_data) {
+		printf("FAIL: %s() user data, expected: 0x0, got: 0x%llx\n",
 		       test, run->user_data);
 		valid = false;
-	पूर्ण
+	}
 
-	वापस valid;
-पूर्ण
+	return valid;
+}
 
-अटल पूर्णांक user_handler(दीर्घ rdi, दीर्घ rsi, दीर्घ rdx, दीर्घ ursp, दीर्घ r8, दीर्घ r9,
-			काष्ठा sgx_enclave_run *run)
-अणु
+static int user_handler(long rdi, long rsi, long rdx, long ursp, long r8, long r9,
+			struct sgx_enclave_run *run)
+{
 	run->user_data = 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
-अणु
-	काष्ठा sgx_enclave_run run;
-	काष्ठा vdso_symtab symtab;
+int main(int argc, char *argv[])
+{
+	struct sgx_enclave_run run;
+	struct vdso_symtab symtab;
 	Elf64_Sym *eenter_sym;
-	uपूर्णांक64_t result = 0;
-	काष्ठा encl encl;
-	अचिन्हित पूर्णांक i;
-	व्योम *addr;
-	पूर्णांक ret;
+	uint64_t result = 0;
+	struct encl encl;
+	unsigned int i;
+	void *addr;
+	int ret;
 
-	स_रखो(&run, 0, माप(run));
+	memset(&run, 0, sizeof(run));
 
-	अगर (!encl_load("test_encl.elf", &encl)) अणु
+	if (!encl_load("test_encl.elf", &encl)) {
 		encl_delete(&encl);
-		ksft_निकास_skip("cannot load enclaves\n");
-	पूर्ण
+		ksft_exit_skip("cannot load enclaves\n");
+	}
 
-	अगर (!encl_measure(&encl))
-		जाओ err;
+	if (!encl_measure(&encl))
+		goto err;
 
-	अगर (!encl_build(&encl))
-		जाओ err;
+	if (!encl_build(&encl))
+		goto err;
 
 	/*
-	 * An enclave consumer only must करो this.
+	 * An enclave consumer only must do this.
 	 */
-	क्रम (i = 0; i < encl.nr_segments; i++) अणु
-		काष्ठा encl_segment *seg = &encl.segment_tbl[i];
+	for (i = 0; i < encl.nr_segments; i++) {
+		struct encl_segment *seg = &encl.segment_tbl[i];
 
-		addr = mmap((व्योम *)encl.encl_base + seg->offset, seg->size,
+		addr = mmap((void *)encl.encl_base + seg->offset, seg->size,
 			    seg->prot, MAP_SHARED | MAP_FIXED, encl.fd, 0);
-		अगर (addr == MAP_FAILED) अणु
-			लिखो_त्रुटि("mmap() segment failed");
-			निकास(KSFT_FAIL);
-		पूर्ण
-	पूर्ण
+		if (addr == MAP_FAILED) {
+			perror("mmap() segment failed");
+			exit(KSFT_FAIL);
+		}
+	}
 
-	स_रखो(&run, 0, माप(run));
+	memset(&run, 0, sizeof(run));
 	run.tcs = encl.encl_base;
 
 	/* Get vDSO base address */
-	addr = (व्योम *)getauxval(AT_SYSINFO_EHDR);
-	अगर (!addr)
-		जाओ err;
+	addr = (void *)getauxval(AT_SYSINFO_EHDR);
+	if (!addr)
+		goto err;
 
-	अगर (!vdso_get_symtab(addr, &symtab))
-		जाओ err;
+	if (!vdso_get_symtab(addr, &symtab))
+		goto err;
 
 	eenter_sym = vdso_symtab_get(&symtab, "__vdso_sgx_enter_enclave");
-	अगर (!eenter_sym)
-		जाओ err;
+	if (!eenter_sym)
+		goto err;
 
 	eenter = addr + eenter_sym->st_value;
 
-	ret = sgx_call_vdso((व्योम *)&MAGIC, &result, 0, EENTER, शून्य, शून्य, &run);
-	अगर (!report_results(&run, ret, result, "sgx_call_vdso"))
-		जाओ err;
+	ret = sgx_call_vdso((void *)&MAGIC, &result, 0, EENTER, NULL, NULL, &run);
+	if (!report_results(&run, ret, result, "sgx_call_vdso"))
+		goto err;
 
 
 	/* Invoke the vDSO directly. */
 	result = 0;
-	ret = eenter((अचिन्हित दीर्घ)&MAGIC, (अचिन्हित दीर्घ)&result, 0, EENTER,
+	ret = eenter((unsigned long)&MAGIC, (unsigned long)&result, 0, EENTER,
 		     0, 0, &run);
-	अगर (!report_results(&run, ret, result, "eenter"))
-		जाओ err;
+	if (!report_results(&run, ret, result, "eenter"))
+		goto err;
 
-	/* And with an निकास handler. */
+	/* And with an exit handler. */
 	run.user_handler = (__u64)user_handler;
 	run.user_data = 0xdeadbeef;
-	ret = eenter((अचिन्हित दीर्घ)&MAGIC, (अचिन्हित दीर्घ)&result, 0, EENTER,
+	ret = eenter((unsigned long)&MAGIC, (unsigned long)&result, 0, EENTER,
 		     0, 0, &run);
-	अगर (!report_results(&run, ret, result, "user_handler"))
-		जाओ err;
+	if (!report_results(&run, ret, result, "user_handler"))
+		goto err;
 
-	म_लिखो("SUCCESS\n");
+	printf("SUCCESS\n");
 	encl_delete(&encl);
-	निकास(KSFT_PASS);
+	exit(KSFT_PASS);
 
 err:
 	encl_delete(&encl);
-	निकास(KSFT_FAIL);
-पूर्ण
+	exit(KSFT_FAIL);
+}

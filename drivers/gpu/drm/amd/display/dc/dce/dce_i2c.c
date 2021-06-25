@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,36 +22,36 @@
  * Authors: AMD
  *
  */
-#समावेश "dce_i2c.h"
-#समावेश "reg_helper.h"
+#include "dce_i2c.h"
+#include "reg_helper.h"
 
 bool dce_i2c_submit_command(
-	काष्ठा resource_pool *pool,
-	काष्ठा ddc *ddc,
-	काष्ठा i2c_command *cmd)
-अणु
-	काष्ठा dce_i2c_hw *dce_i2c_hw;
-	काष्ठा dce_i2c_sw dce_i2c_sw = अणु0पूर्ण;
+	struct resource_pool *pool,
+	struct ddc *ddc,
+	struct i2c_command *cmd)
+{
+	struct dce_i2c_hw *dce_i2c_hw;
+	struct dce_i2c_sw dce_i2c_sw = {0};
 
-	अगर (!ddc) अणु
+	if (!ddc) {
 		BREAK_TO_DEBUGGER();
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	अगर (!cmd) अणु
+	if (!cmd) {
 		BREAK_TO_DEBUGGER();
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
 	dce_i2c_hw = acquire_i2c_hw_engine(pool, ddc);
 
-	अगर (dce_i2c_hw)
-		वापस dce_i2c_submit_command_hw(pool, ddc, cmd, dce_i2c_hw);
+	if (dce_i2c_hw)
+		return dce_i2c_submit_command_hw(pool, ddc, cmd, dce_i2c_hw);
 
 	dce_i2c_sw.ctx = ddc->ctx;
-	अगर (dce_i2c_engine_acquire_sw(&dce_i2c_sw, ddc)) अणु
-		वापस dce_i2c_submit_command_sw(pool, ddc, cmd, &dce_i2c_sw);
-	पूर्ण
+	if (dce_i2c_engine_acquire_sw(&dce_i2c_sw, ddc)) {
+		return dce_i2c_submit_command_sw(pool, ddc, cmd, &dce_i2c_sw);
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}

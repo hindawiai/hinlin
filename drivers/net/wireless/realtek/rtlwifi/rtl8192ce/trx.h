@@ -1,338 +1,337 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /* Copyright(c) 2009-2012  Realtek Corporation.*/
 
-#अगर_अघोषित __RTL92CE_TRX_H__
-#घोषणा __RTL92CE_TRX_H__
+#ifndef __RTL92CE_TRX_H__
+#define __RTL92CE_TRX_H__
 
-#घोषणा TX_DESC_SIZE				64
-#घोषणा TX_DESC_AGGR_SUBFRAME_SIZE		32
+#define TX_DESC_SIZE				64
+#define TX_DESC_AGGR_SUBFRAME_SIZE		32
 
-#घोषणा RX_DESC_SIZE				32
-#घोषणा RX_DRV_INFO_SIZE_UNIT			8
+#define RX_DESC_SIZE				32
+#define RX_DRV_INFO_SIZE_UNIT			8
 
-#घोषणा	TX_DESC_NEXT_DESC_OFFSET		40
-#घोषणा USB_HWDESC_HEADER_LEN			32
-#घोषणा CRCLENGTH				4
+#define	TX_DESC_NEXT_DESC_OFFSET		40
+#define USB_HWDESC_HEADER_LEN			32
+#define CRCLENGTH				4
 
-/* macros to पढ़ो/ग_लिखो various fields in RX or TX descriptors */
+/* macros to read/write various fields in RX or TX descriptors */
 
-अटल अंतरभूत व्योम set_tx_desc_pkt_size(__le32 *__pdesc, u32  __val)
-अणु
+static inline void set_tx_desc_pkt_size(__le32 *__pdesc, u32  __val)
+{
 	le32p_replace_bits(__pdesc, __val, GENMASK(15, 0));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम set_tx_desc_offset(__le32 *__pdesc, u32  __val)
-अणु
+static inline void set_tx_desc_offset(__le32 *__pdesc, u32  __val)
+{
 	le32p_replace_bits(__pdesc, __val, GENMASK(23, 16));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम set_tx_desc_bmc(__le32 *__pdesc, u32  __val)
-अणु
+static inline void set_tx_desc_bmc(__le32 *__pdesc, u32  __val)
+{
 	le32p_replace_bits(__pdesc, __val, BIT(24));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम set_tx_desc_htc(__le32 *__pdesc, u32  __val)
-अणु
+static inline void set_tx_desc_htc(__le32 *__pdesc, u32  __val)
+{
 	le32p_replace_bits(__pdesc, __val, BIT(25));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम set_tx_desc_last_seg(__le32 *__pdesc, u32  __val)
-अणु
+static inline void set_tx_desc_last_seg(__le32 *__pdesc, u32  __val)
+{
 	le32p_replace_bits(__pdesc, __val, BIT(26));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम set_tx_desc_first_seg(__le32 *__pdesc, u32  __val)
-अणु
+static inline void set_tx_desc_first_seg(__le32 *__pdesc, u32  __val)
+{
 	le32p_replace_bits(__pdesc, __val, BIT(27));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम set_tx_desc_linip(__le32 *__pdesc, u32  __val)
-अणु
+static inline void set_tx_desc_linip(__le32 *__pdesc, u32  __val)
+{
 	le32p_replace_bits(__pdesc, __val, BIT(28));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम set_tx_desc_own(__le32 *__pdesc, u32  __val)
-अणु
+static inline void set_tx_desc_own(__le32 *__pdesc, u32  __val)
+{
 	le32p_replace_bits(__pdesc, __val, BIT(31));
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक get_tx_desc_own(__le32 *__pdesc)
-अणु
-	वापस le32_get_bits(*(__pdesc), BIT(31));
-पूर्ण
+static inline int get_tx_desc_own(__le32 *__pdesc)
+{
+	return le32_get_bits(*(__pdesc), BIT(31));
+}
 
-अटल अंतरभूत व्योम set_tx_desc_macid(__le32 *__pdesc, u32  __val)
-अणु
+static inline void set_tx_desc_macid(__le32 *__pdesc, u32  __val)
+{
 	le32p_replace_bits((__pdesc + 1), __val, GENMASK(4, 0));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम set_tx_desc_agg_अवरोध(__le32 *__pdesc, u32  __val)
-अणु
+static inline void set_tx_desc_agg_break(__le32 *__pdesc, u32  __val)
+{
 	le32p_replace_bits((__pdesc + 1), __val, BIT(5));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम set_tx_desc_rdg_enable(__le32 *__pdesc, u32  __val)
-अणु
+static inline void set_tx_desc_rdg_enable(__le32 *__pdesc, u32  __val)
+{
 	le32p_replace_bits((__pdesc + 1), __val, BIT(7));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम set_tx_desc_queue_sel(__le32 *__pdesc, u32  __val)
-अणु
+static inline void set_tx_desc_queue_sel(__le32 *__pdesc, u32  __val)
+{
 	le32p_replace_bits((__pdesc + 1), __val, GENMASK(12, 8));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम set_tx_desc_rate_id(__le32 *__pdesc, u32  __val)
-अणु
+static inline void set_tx_desc_rate_id(__le32 *__pdesc, u32  __val)
+{
 	le32p_replace_bits((__pdesc + 1), __val, GENMASK(19, 16));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम set_tx_desc_sec_type(__le32 *__pdesc, u32  __val)
-अणु
+static inline void set_tx_desc_sec_type(__le32 *__pdesc, u32  __val)
+{
 	le32p_replace_bits((__pdesc + 1), __val, GENMASK(23, 22));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम set_tx_desc_more_frag(__le32 *__pdesc, u32  __val)
-अणु
+static inline void set_tx_desc_more_frag(__le32 *__pdesc, u32  __val)
+{
 	le32p_replace_bits((__pdesc + 2), __val, BIT(17));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम set_tx_desc_ampdu_density(__le32 *__pdesc, u32  __val)
-अणु
+static inline void set_tx_desc_ampdu_density(__le32 *__pdesc, u32  __val)
+{
 	le32p_replace_bits((__pdesc + 2), __val, GENMASK(22, 20));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम set_tx_desc_seq(__le32 *__pdesc, u32  __val)
-अणु
+static inline void set_tx_desc_seq(__le32 *__pdesc, u32  __val)
+{
 	le32p_replace_bits((__pdesc + 3), __val, GENMASK(27, 16));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम set_tx_desc_pkt_id(__le32 *__pdesc, u32  __val)
-अणु
+static inline void set_tx_desc_pkt_id(__le32 *__pdesc, u32  __val)
+{
 	le32p_replace_bits((__pdesc + 3), __val, GENMASK(31, 28));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम set_tx_desc_rts_rate(__le32 *__pdesc, u32  __val)
-अणु
+static inline void set_tx_desc_rts_rate(__le32 *__pdesc, u32  __val)
+{
 	le32p_replace_bits((__pdesc + 4), __val, GENMASK(4, 0));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम set_tx_desc_qos(__le32 *__pdesc, u32  __val)
-अणु
+static inline void set_tx_desc_qos(__le32 *__pdesc, u32  __val)
+{
 	le32p_replace_bits((__pdesc + 4), __val, BIT(6));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम set_tx_desc_hwseq_en(__le32 *__pdesc, u32  __val)
-अणु
+static inline void set_tx_desc_hwseq_en(__le32 *__pdesc, u32  __val)
+{
 	le32p_replace_bits((__pdesc + 4), __val, BIT(7));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम set_tx_desc_use_rate(__le32 *__pdesc, u32  __val)
-अणु
+static inline void set_tx_desc_use_rate(__le32 *__pdesc, u32  __val)
+{
 	le32p_replace_bits((__pdesc + 4), __val, BIT(8));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम set_tx_desc_disable_fb(__le32 *__pdesc, u32  __val)
-अणु
+static inline void set_tx_desc_disable_fb(__le32 *__pdesc, u32  __val)
+{
 	le32p_replace_bits((__pdesc + 4), __val, BIT(10));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम set_tx_desc_cts2self(__le32 *__pdesc, u32  __val)
-अणु
+static inline void set_tx_desc_cts2self(__le32 *__pdesc, u32  __val)
+{
 	le32p_replace_bits((__pdesc + 4), __val, BIT(11));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम set_tx_desc_rts_enable(__le32 *__pdesc, u32  __val)
-अणु
+static inline void set_tx_desc_rts_enable(__le32 *__pdesc, u32  __val)
+{
 	le32p_replace_bits((__pdesc + 4), __val, BIT(12));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम set_tx_desc_hw_rts_enable(__le32 *__pdesc, u32  __val)
-अणु
+static inline void set_tx_desc_hw_rts_enable(__le32 *__pdesc, u32  __val)
+{
 	le32p_replace_bits((__pdesc + 4), __val, BIT(13));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम set_tx_desc_tx_sub_carrier(__le32 *__pdesc, u32  __val)
-अणु
+static inline void set_tx_desc_tx_sub_carrier(__le32 *__pdesc, u32  __val)
+{
 	le32p_replace_bits((__pdesc + 4), __val, GENMASK(21, 20));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम set_tx_desc_data_bw(__le32 *__pdesc, u32  __val)
-अणु
+static inline void set_tx_desc_data_bw(__le32 *__pdesc, u32  __val)
+{
 	le32p_replace_bits((__pdesc + 4), __val, BIT(25));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम set_tx_desc_rts_लघु(__le32 *__pdesc, u32  __val)
-अणु
+static inline void set_tx_desc_rts_short(__le32 *__pdesc, u32  __val)
+{
 	le32p_replace_bits((__pdesc + 4), __val, BIT(26));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम set_tx_desc_rts_bw(__le32 *__pdesc, u32  __val)
-अणु
+static inline void set_tx_desc_rts_bw(__le32 *__pdesc, u32  __val)
+{
 	le32p_replace_bits((__pdesc + 4), __val, BIT(27));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम set_tx_desc_rts_sc(__le32 *__pdesc, u32  __val)
-अणु
+static inline void set_tx_desc_rts_sc(__le32 *__pdesc, u32  __val)
+{
 	le32p_replace_bits((__pdesc + 4), __val, GENMASK(29, 28));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम set_tx_desc_rts_stbc(__le32 *__pdesc, u32  __val)
-अणु
+static inline void set_tx_desc_rts_stbc(__le32 *__pdesc, u32  __val)
+{
 	le32p_replace_bits((__pdesc + 4), __val, GENMASK(31, 30));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम set_tx_desc_tx_rate(__le32 *__pdesc, u32  __val)
-अणु
+static inline void set_tx_desc_tx_rate(__le32 *__pdesc, u32  __val)
+{
 	le32p_replace_bits((__pdesc + 5), __val, GENMASK(5, 0));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम set_tx_desc_data_लघुgi(__le32 *__pdesc, u32  __val)
-अणु
+static inline void set_tx_desc_data_shortgi(__le32 *__pdesc, u32  __val)
+{
 	le32p_replace_bits((__pdesc + 5), __val, BIT(6));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम set_tx_desc_data_rate_fb_limit(__le32 *__pdesc, u32  __val)
-अणु
+static inline void set_tx_desc_data_rate_fb_limit(__le32 *__pdesc, u32  __val)
+{
 	le32p_replace_bits((__pdesc + 5), __val, GENMASK(12, 8));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम set_tx_desc_rts_rate_fb_limit(__le32 *__pdesc, u32  __val)
-अणु
+static inline void set_tx_desc_rts_rate_fb_limit(__le32 *__pdesc, u32  __val)
+{
 	le32p_replace_bits((__pdesc + 5), __val, GENMASK(16, 13));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम set_tx_desc_max_agg_num(__le32 *__pdesc, u32  __val)
-अणु
+static inline void set_tx_desc_max_agg_num(__le32 *__pdesc, u32  __val)
+{
 	le32p_replace_bits((__pdesc + 6), __val, GENMASK(15, 11));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम set_tx_desc_tx_buffer_size(__le32 *__pdesc, u32  __val)
-अणु
+static inline void set_tx_desc_tx_buffer_size(__le32 *__pdesc, u32  __val)
+{
 	le32p_replace_bits((__pdesc + 7), __val, GENMASK(15, 0));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम set_tx_desc_tx_buffer_address(__le32 *__pdesc, u32  __val)
-अणु
+static inline void set_tx_desc_tx_buffer_address(__le32 *__pdesc, u32  __val)
+{
 	*(__pdesc + 8) = cpu_to_le32(__val);
-पूर्ण
+}
 
-अटल अंतरभूत u32 get_tx_desc_tx_buffer_address(__le32 *__pdesc)
-अणु
-	वापस le32_to_cpu(*((__pdesc + 8)));
-पूर्ण
+static inline u32 get_tx_desc_tx_buffer_address(__le32 *__pdesc)
+{
+	return le32_to_cpu(*((__pdesc + 8)));
+}
 
-अटल अंतरभूत व्योम set_tx_desc_next_desc_address(__le32 *__pdesc, u32  __val)
-अणु
+static inline void set_tx_desc_next_desc_address(__le32 *__pdesc, u32  __val)
+{
 	*(__pdesc + 10) = cpu_to_le32(__val);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक get_rx_desc_pkt_len(__le32 *__pdesc)
-अणु
-	वापस le32_get_bits(*(__pdesc), GENMASK(13, 0));
-पूर्ण
+static inline int get_rx_desc_pkt_len(__le32 *__pdesc)
+{
+	return le32_get_bits(*(__pdesc), GENMASK(13, 0));
+}
 
-अटल अंतरभूत पूर्णांक get_rx_desc_crc32(__le32 *__pdesc)
-अणु
-	वापस le32_get_bits(*(__pdesc), BIT(14));
-पूर्ण
+static inline int get_rx_desc_crc32(__le32 *__pdesc)
+{
+	return le32_get_bits(*(__pdesc), BIT(14));
+}
 
-अटल अंतरभूत पूर्णांक get_rx_desc_icv(__le32 *__pdesc)
-अणु
-	वापस le32_get_bits(*(__pdesc), BIT(15));
-पूर्ण
+static inline int get_rx_desc_icv(__le32 *__pdesc)
+{
+	return le32_get_bits(*(__pdesc), BIT(15));
+}
 
-अटल अंतरभूत पूर्णांक get_rx_desc_drv_info_size(__le32 *__pdesc)
-अणु
-	वापस le32_get_bits(*(__pdesc), GENMASK(19, 16));
-पूर्ण
+static inline int get_rx_desc_drv_info_size(__le32 *__pdesc)
+{
+	return le32_get_bits(*(__pdesc), GENMASK(19, 16));
+}
 
-अटल अंतरभूत पूर्णांक get_rx_desc_shअगरt(__le32 *__pdesc)
-अणु
-	वापस le32_get_bits(*(__pdesc), GENMASK(25, 24));
-पूर्ण
+static inline int get_rx_desc_shift(__le32 *__pdesc)
+{
+	return le32_get_bits(*(__pdesc), GENMASK(25, 24));
+}
 
-अटल अंतरभूत पूर्णांक get_rx_desc_physt(__le32 *__pdesc)
-अणु
-	वापस le32_get_bits(*(__pdesc), BIT(26));
-पूर्ण
+static inline int get_rx_desc_physt(__le32 *__pdesc)
+{
+	return le32_get_bits(*(__pdesc), BIT(26));
+}
 
-अटल अंतरभूत पूर्णांक get_rx_desc_swdec(__le32 *__pdesc)
-अणु
-	वापस le32_get_bits(*(__pdesc), BIT(27));
-पूर्ण
+static inline int get_rx_desc_swdec(__le32 *__pdesc)
+{
+	return le32_get_bits(*(__pdesc), BIT(27));
+}
 
-अटल अंतरभूत पूर्णांक get_rx_desc_own(__le32 *__pdesc)
-अणु
-	वापस le32_get_bits(*(__pdesc), BIT(31));
-पूर्ण
+static inline int get_rx_desc_own(__le32 *__pdesc)
+{
+	return le32_get_bits(*(__pdesc), BIT(31));
+}
 
-अटल अंतरभूत व्योम set_rx_desc_pkt_len(__le32 *__pdesc, u32  __val)
-अणु
+static inline void set_rx_desc_pkt_len(__le32 *__pdesc, u32  __val)
+{
 	le32p_replace_bits(__pdesc, __val, GENMASK(13, 0));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम set_rx_desc_eor(__le32 *__pdesc, u32  __val)
-अणु
+static inline void set_rx_desc_eor(__le32 *__pdesc, u32  __val)
+{
 	le32p_replace_bits(__pdesc, __val, BIT(30));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम set_rx_desc_own(__le32 *__pdesc, u32  __val)
-अणु
+static inline void set_rx_desc_own(__le32 *__pdesc, u32  __val)
+{
 	le32p_replace_bits(__pdesc, __val, BIT(31));
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक get_rx_desc_paggr(__le32 *__pdesc)
-अणु
-	वापस le32_get_bits(*((__pdesc + 1)), BIT(14));
-पूर्ण
+static inline int get_rx_desc_paggr(__le32 *__pdesc)
+{
+	return le32_get_bits(*((__pdesc + 1)), BIT(14));
+}
 
-अटल अंतरभूत पूर्णांक get_rx_desc_faggr(__le32 *__pdesc)
-अणु
-	वापस le32_get_bits(*((__pdesc + 1)), BIT(15));
-पूर्ण
+static inline int get_rx_desc_faggr(__le32 *__pdesc)
+{
+	return le32_get_bits(*((__pdesc + 1)), BIT(15));
+}
 
-अटल अंतरभूत पूर्णांक get_rx_desc_rxmcs(__le32 *__pdesc)
-अणु
-	वापस le32_get_bits(*((__pdesc + 3)), GENMASK(5, 0));
-पूर्ण
+static inline int get_rx_desc_rxmcs(__le32 *__pdesc)
+{
+	return le32_get_bits(*((__pdesc + 3)), GENMASK(5, 0));
+}
 
-अटल अंतरभूत पूर्णांक get_rx_desc_rxht(__le32 *__pdesc)
-अणु
-	वापस le32_get_bits(*((__pdesc + 3)), BIT(6));
-पूर्ण
+static inline int get_rx_desc_rxht(__le32 *__pdesc)
+{
+	return le32_get_bits(*((__pdesc + 3)), BIT(6));
+}
 
-अटल अंतरभूत पूर्णांक get_rx_desc_splcp(__le32 *__pdesc)
-अणु
-	वापस le32_get_bits(*((__pdesc + 3)), BIT(8));
-पूर्ण
+static inline int get_rx_desc_splcp(__le32 *__pdesc)
+{
+	return le32_get_bits(*((__pdesc + 3)), BIT(8));
+}
 
-अटल अंतरभूत पूर्णांक get_rx_desc_bw(__le32 *__pdesc)
-अणु
-	वापस le32_get_bits(*((__pdesc + 3)), BIT(9));
-पूर्ण
+static inline int get_rx_desc_bw(__le32 *__pdesc)
+{
+	return le32_get_bits(*((__pdesc + 3)), BIT(9));
+}
 
-अटल अंतरभूत u32 get_rx_desc_tsfl(__le32 *__pdesc)
-अणु
-	वापस le32_to_cpu(*((__pdesc + 5)));
-पूर्ण
+static inline u32 get_rx_desc_tsfl(__le32 *__pdesc)
+{
+	return le32_to_cpu(*((__pdesc + 5)));
+}
 
-अटल अंतरभूत u32 get_rx_desc_buff_addr(__le32 *__pdesc)
-अणु
-	वापस le32_to_cpu(*((__pdesc + 6)));
-पूर्ण
+static inline u32 get_rx_desc_buff_addr(__le32 *__pdesc)
+{
+	return le32_to_cpu(*((__pdesc + 6)));
+}
 
-अटल अंतरभूत व्योम set_rx_desc_buff_addr(__le32 *__pdesc, u32  __val)
-अणु
+static inline void set_rx_desc_buff_addr(__le32 *__pdesc, u32  __val)
+{
 	*(__pdesc + 6) = cpu_to_le32(__val);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम clear_pci_tx_desc_content(__le32 *__pdesc, पूर्णांक _size)
-अणु
-	स_रखो(__pdesc, 0, min_t(माप_प्रकार, _size, TX_DESC_NEXT_DESC_OFFSET));
-पूर्ण
+static inline void clear_pci_tx_desc_content(__le32 *__pdesc, int _size)
+{
+	memset(__pdesc, 0, min_t(size_t, _size, TX_DESC_NEXT_DESC_OFFSET));
+}
 
-काष्ठा rx_fwinfo_92c अणु
+struct rx_fwinfo_92c {
 	u8 gain_trsw[4];
 	u8 pwdb_all;
 	u8 cfosho[4];
@@ -344,13 +343,13 @@
 	u8 csi_target[2];
 	u8 sigevm;
 	u8 max_ex_pwr;
-	u8 ex_पूर्णांकf_flag:1;
+	u8 ex_intf_flag:1;
 	u8 sgi_en:1;
 	u8 rxsc:2;
 	u8 reserve:4;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा tx_desc_92c अणु
+struct tx_desc_92c {
 	u32 pktsize:16;
 	u32 offset:8;
 	u32 bmc:1;
@@ -369,7 +368,7 @@
 	u32 queuesel:5;
 	u32 rd_nav_ext:1;
 	u32 lsig_txop_en:1;
-	u32 pअगरs:1;
+	u32 pifs:1;
 	u32 rateid:4;
 	u32 nav_usehdr:1;
 	u32 en_descid:1;
@@ -409,19 +408,19 @@
 	u32 hwrts_en:1;
 	u32 portid:1;
 	u32 rsvd3:3;
-	u32 रुकोdcts:1;
+	u32 waitdcts:1;
 	u32 cts2ap_en:1;
 	u32 txsc:2;
 	u32 stbc:2;
-	u32 txलघु:1;
+	u32 txshort:1;
 	u32 txbw:1;
-	u32 rtsलघु:1;
+	u32 rtsshort:1;
 	u32 rtsbw:1;
 	u32 rtssc:2;
 	u32 rtsstbc:2;
 
 	u32 txrate:6;
-	u32 लघुgi:1;
+	u32 shortgi:1;
 	u32 ccxt:1;
 	u32 txrate_fb_lmt:5;
 	u32 rtsrate_fb_lmt:4;
@@ -450,16 +449,16 @@
 	u32 nextdescaddress64;
 
 	u32 reserve_pass_pcie_mm_limit[4];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा rx_desc_92c अणु
+struct rx_desc_92c {
 	u32 length:14;
 	u32 crc32:1;
 	u32 icverror:1;
 	u32 drv_infosize:4;
 	u32 security:3;
 	u32 qos:1;
-	u32 shअगरt:2;
+	u32 shift:2;
 	u32 phystatus:1;
 	u32 swdec:1;
 	u32 lastseg:1;
@@ -508,26 +507,26 @@
 	u32 bufferaddress;
 	u32 bufferaddress64;
 
-पूर्ण __packed;
+} __packed;
 
-व्योम rtl92ce_tx_fill_desc(काष्ठा ieee80211_hw *hw,
-			  काष्ठा ieee80211_hdr *hdr, u8 *pdesc,
-			  u8 *pbd_desc_tx, काष्ठा ieee80211_tx_info *info,
-			  काष्ठा ieee80211_sta *sta,
-			  काष्ठा sk_buff *skb, u8 hw_queue,
-			  काष्ठा rtl_tcb_desc *ptcb_desc);
-bool rtl92ce_rx_query_desc(काष्ठा ieee80211_hw *hw,
-			   काष्ठा rtl_stats *stats,
-			   काष्ठा ieee80211_rx_status *rx_status,
-			   u8 *pdesc, काष्ठा sk_buff *skb);
-व्योम rtl92ce_set_desc(काष्ठा ieee80211_hw *hw, u8 *pdesc, bool istx,
+void rtl92ce_tx_fill_desc(struct ieee80211_hw *hw,
+			  struct ieee80211_hdr *hdr, u8 *pdesc,
+			  u8 *pbd_desc_tx, struct ieee80211_tx_info *info,
+			  struct ieee80211_sta *sta,
+			  struct sk_buff *skb, u8 hw_queue,
+			  struct rtl_tcb_desc *ptcb_desc);
+bool rtl92ce_rx_query_desc(struct ieee80211_hw *hw,
+			   struct rtl_stats *stats,
+			   struct ieee80211_rx_status *rx_status,
+			   u8 *pdesc, struct sk_buff *skb);
+void rtl92ce_set_desc(struct ieee80211_hw *hw, u8 *pdesc, bool istx,
 		      u8 desc_name, u8 *val);
-u64 rtl92ce_get_desc(काष्ठा ieee80211_hw *hw, u8 *p_desc,
+u64 rtl92ce_get_desc(struct ieee80211_hw *hw, u8 *p_desc,
 		     bool istx, u8 desc_name);
-bool rtl92ce_is_tx_desc_बंदd(काष्ठा ieee80211_hw *hw,
+bool rtl92ce_is_tx_desc_closed(struct ieee80211_hw *hw,
 			       u8 hw_queue, u16 index);
-व्योम rtl92ce_tx_polling(काष्ठा ieee80211_hw *hw, u8 hw_queue);
-व्योम rtl92ce_tx_fill_cmddesc(काष्ठा ieee80211_hw *hw, u8 *pdesc,
+void rtl92ce_tx_polling(struct ieee80211_hw *hw, u8 hw_queue);
+void rtl92ce_tx_fill_cmddesc(struct ieee80211_hw *hw, u8 *pdesc,
 			     bool b_firstseg, bool b_lastseg,
-			     काष्ठा sk_buff *skb);
-#पूर्ण_अगर
+			     struct sk_buff *skb);
+#endif

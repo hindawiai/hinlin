@@ -1,40 +1,39 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright 2011 Florian Tobias Schandinat <FlorianSchandinat@gmx.de>
  */
 /*
- * driver क्रम Silicon Image SiI 164 PanelLink Transmitter
+ * driver for Silicon Image SiI 164 PanelLink Transmitter
  */
 
-#समावेश <linux/slab.h>
-#समावेश "via_aux.h"
+#include <linux/slab.h>
+#include "via_aux.h"
 
 
-अटल स्थिर अक्षर *name = "SiI 164 PanelLink Transmitter";
+static const char *name = "SiI 164 PanelLink Transmitter";
 
 
-अटल व्योम probe(काष्ठा via_aux_bus *bus, u8 addr)
-अणु
-	काष्ठा via_aux_drv drv = अणु
+static void probe(struct via_aux_bus *bus, u8 addr)
+{
+	struct via_aux_drv drv = {
 		.bus	=	bus,
 		.addr	=	addr,
-		.name	=	nameपूर्ण;
-	/* check venकरोr id and device id */
-	स्थिर u8 id[] = अणु0x01, 0x00, 0x06, 0x00पूर्ण, len = ARRAY_SIZE(id);
-	u8 पंचांगp[ARRAY_SIZE(id)];
+		.name	=	name};
+	/* check vendor id and device id */
+	const u8 id[] = {0x01, 0x00, 0x06, 0x00}, len = ARRAY_SIZE(id);
+	u8 tmp[ARRAY_SIZE(id)];
 
-	अगर (!via_aux_पढ़ो(&drv, 0x00, पंचांगp, len) || स_भेद(id, पंचांगp, len))
-		वापस;
+	if (!via_aux_read(&drv, 0x00, tmp, len) || memcmp(id, tmp, len))
+		return;
 
-	prपूर्णांकk(KERN_INFO "viafb: Found %s at address 0x%x\n", name, addr);
+	printk(KERN_INFO "viafb: Found %s at address 0x%x\n", name, addr);
 	via_aux_add(&drv);
-पूर्ण
+}
 
-व्योम via_aux_sii164_probe(काष्ठा via_aux_bus *bus)
-अणु
+void via_aux_sii164_probe(struct via_aux_bus *bus)
+{
 	u8 i;
 
-	क्रम (i = 0x38; i <= 0x3F; i++)
+	for (i = 0x38; i <= 0x3F; i++)
 		probe(bus, i);
-पूर्ण
+}

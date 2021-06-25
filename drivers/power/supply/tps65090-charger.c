@@ -1,259 +1,258 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Battery अक्षरger driver क्रम TI's tps65090
+ * Battery charger driver for TI's tps65090
  *
  * Copyright (c) 2013, NVIDIA CORPORATION.  All rights reserved.
 
  */
-#समावेश <linux/delay.h>
-#समावेश <linux/err.h>
-#समावेश <linux/मुक्तzer.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/घातer_supply.h>
-#समावेश <linux/slab.h>
+#include <linux/delay.h>
+#include <linux/err.h>
+#include <linux/freezer.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/kernel.h>
+#include <linux/kthread.h>
+#include <linux/module.h>
+#include <linux/of_device.h>
+#include <linux/platform_device.h>
+#include <linux/power_supply.h>
+#include <linux/slab.h>
 
-#समावेश <linux/mfd/tps65090.h>
+#include <linux/mfd/tps65090.h>
 
-#घोषणा TPS65090_CHARGER_ENABLE	BIT(0)
-#घोषणा TPS65090_VACG		BIT(1)
-#घोषणा TPS65090_NOITERM	BIT(5)
+#define TPS65090_CHARGER_ENABLE	BIT(0)
+#define TPS65090_VACG		BIT(1)
+#define TPS65090_NOITERM	BIT(5)
 
-#घोषणा POLL_INTERVAL		(HZ * 2)	/* Used when no irq */
+#define POLL_INTERVAL		(HZ * 2)	/* Used when no irq */
 
-काष्ठा tps65090_अक्षरger अणु
-	काष्ठा	device	*dev;
-	पूर्णांक	ac_online;
-	पूर्णांक	prev_ac_online;
-	पूर्णांक	irq;
-	काष्ठा task_काष्ठा	*poll_task;
+struct tps65090_charger {
+	struct	device	*dev;
+	int	ac_online;
+	int	prev_ac_online;
+	int	irq;
+	struct task_struct	*poll_task;
 	bool			passive_mode;
-	काष्ठा घातer_supply	*ac;
-	काष्ठा tps65090_platक्रमm_data *pdata;
-पूर्ण;
+	struct power_supply	*ac;
+	struct tps65090_platform_data *pdata;
+};
 
-अटल क्रमागत घातer_supply_property tps65090_ac_props[] = अणु
+static enum power_supply_property tps65090_ac_props[] = {
 	POWER_SUPPLY_PROP_ONLINE,
-पूर्ण;
+};
 
-अटल पूर्णांक tps65090_low_chrg_current(काष्ठा tps65090_अक्षरger *अक्षरger)
-अणु
-	पूर्णांक ret;
+static int tps65090_low_chrg_current(struct tps65090_charger *charger)
+{
+	int ret;
 
-	अगर (अक्षरger->passive_mode)
-		वापस 0;
+	if (charger->passive_mode)
+		return 0;
 
-	ret = tps65090_ग_लिखो(अक्षरger->dev->parent, TPS65090_REG_CG_CTRL5,
+	ret = tps65090_write(charger->dev->parent, TPS65090_REG_CG_CTRL5,
 			TPS65090_NOITERM);
-	अगर (ret < 0) अणु
-		dev_err(अक्षरger->dev, "%s(): error reading in register 0x%x\n",
+	if (ret < 0) {
+		dev_err(charger->dev, "%s(): error reading in register 0x%x\n",
 			__func__, TPS65090_REG_CG_CTRL5);
-		वापस ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return ret;
+	}
+	return 0;
+}
 
-अटल पूर्णांक tps65090_enable_अक्षरging(काष्ठा tps65090_अक्षरger *अक्षरger)
-अणु
-	पूर्णांक ret;
-	uपूर्णांक8_t ctrl0 = 0;
+static int tps65090_enable_charging(struct tps65090_charger *charger)
+{
+	int ret;
+	uint8_t ctrl0 = 0;
 
-	अगर (अक्षरger->passive_mode)
-		वापस 0;
+	if (charger->passive_mode)
+		return 0;
 
-	ret = tps65090_पढ़ो(अक्षरger->dev->parent, TPS65090_REG_CG_CTRL0,
+	ret = tps65090_read(charger->dev->parent, TPS65090_REG_CG_CTRL0,
 			    &ctrl0);
-	अगर (ret < 0) अणु
-		dev_err(अक्षरger->dev, "%s(): error reading in register 0x%x\n",
+	if (ret < 0) {
+		dev_err(charger->dev, "%s(): error reading in register 0x%x\n",
 				__func__, TPS65090_REG_CG_CTRL0);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = tps65090_ग_लिखो(अक्षरger->dev->parent, TPS65090_REG_CG_CTRL0,
+	ret = tps65090_write(charger->dev->parent, TPS65090_REG_CG_CTRL0,
 				(ctrl0 | TPS65090_CHARGER_ENABLE));
-	अगर (ret < 0) अणु
-		dev_err(अक्षरger->dev, "%s(): error writing in register 0x%x\n",
+	if (ret < 0) {
+		dev_err(charger->dev, "%s(): error writing in register 0x%x\n",
 				__func__, TPS65090_REG_CG_CTRL0);
-		वापस ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return ret;
+	}
+	return 0;
+}
 
-अटल पूर्णांक tps65090_config_अक्षरger(काष्ठा tps65090_अक्षरger *अक्षरger)
-अणु
-	uपूर्णांक8_t पूर्णांकrmask = 0;
-	पूर्णांक ret;
+static int tps65090_config_charger(struct tps65090_charger *charger)
+{
+	uint8_t intrmask = 0;
+	int ret;
 
-	अगर (अक्षरger->passive_mode)
-		वापस 0;
+	if (charger->passive_mode)
+		return 0;
 
-	अगर (अक्षरger->pdata->enable_low_current_chrg) अणु
-		ret = tps65090_low_chrg_current(अक्षरger);
-		अगर (ret < 0) अणु
-			dev_err(अक्षरger->dev,
+	if (charger->pdata->enable_low_current_chrg) {
+		ret = tps65090_low_chrg_current(charger);
+		if (ret < 0) {
+			dev_err(charger->dev,
 				"error configuring low charge current\n");
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	/* Enable the VACG पूर्णांकerrupt क्रम AC घातer detect */
-	ret = tps65090_पढ़ो(अक्षरger->dev->parent, TPS65090_REG_INTR_MASK,
-			    &पूर्णांकrmask);
-	अगर (ret < 0) अणु
-		dev_err(अक्षरger->dev, "%s(): error reading in register 0x%x\n",
+	/* Enable the VACG interrupt for AC power detect */
+	ret = tps65090_read(charger->dev->parent, TPS65090_REG_INTR_MASK,
+			    &intrmask);
+	if (ret < 0) {
+		dev_err(charger->dev, "%s(): error reading in register 0x%x\n",
 			__func__, TPS65090_REG_INTR_MASK);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = tps65090_ग_लिखो(अक्षरger->dev->parent, TPS65090_REG_INTR_MASK,
-			     (पूर्णांकrmask | TPS65090_VACG));
-	अगर (ret < 0) अणु
-		dev_err(अक्षरger->dev, "%s(): error writing in register 0x%x\n",
+	ret = tps65090_write(charger->dev->parent, TPS65090_REG_INTR_MASK,
+			     (intrmask | TPS65090_VACG));
+	if (ret < 0) {
+		dev_err(charger->dev, "%s(): error writing in register 0x%x\n",
 			__func__, TPS65090_REG_CG_CTRL0);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tps65090_ac_get_property(काष्ठा घातer_supply *psy,
-			क्रमागत घातer_supply_property psp,
-			जोड़ घातer_supply_propval *val)
-अणु
-	काष्ठा tps65090_अक्षरger *अक्षरger = घातer_supply_get_drvdata(psy);
+static int tps65090_ac_get_property(struct power_supply *psy,
+			enum power_supply_property psp,
+			union power_supply_propval *val)
+{
+	struct tps65090_charger *charger = power_supply_get_drvdata(psy);
 
-	अगर (psp == POWER_SUPPLY_PROP_ONLINE) अणु
-		val->पूर्णांकval = अक्षरger->ac_online;
-		अक्षरger->prev_ac_online = अक्षरger->ac_online;
-		वापस 0;
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+	if (psp == POWER_SUPPLY_PROP_ONLINE) {
+		val->intval = charger->ac_online;
+		charger->prev_ac_online = charger->ac_online;
+		return 0;
+	}
+	return -EINVAL;
+}
 
-अटल irqवापस_t tps65090_अक्षरger_isr(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा tps65090_अक्षरger *अक्षरger = dev_id;
-	पूर्णांक ret;
-	uपूर्णांक8_t status1 = 0;
-	uपूर्णांक8_t पूर्णांकrsts = 0;
+static irqreturn_t tps65090_charger_isr(int irq, void *dev_id)
+{
+	struct tps65090_charger *charger = dev_id;
+	int ret;
+	uint8_t status1 = 0;
+	uint8_t intrsts = 0;
 
-	ret = tps65090_पढ़ो(अक्षरger->dev->parent, TPS65090_REG_CG_STATUS1,
+	ret = tps65090_read(charger->dev->parent, TPS65090_REG_CG_STATUS1,
 			    &status1);
-	अगर (ret < 0) अणु
-		dev_err(अक्षरger->dev, "%s(): Error in reading reg 0x%x\n",
+	if (ret < 0) {
+		dev_err(charger->dev, "%s(): Error in reading reg 0x%x\n",
 				__func__, TPS65090_REG_CG_STATUS1);
-		वापस IRQ_HANDLED;
-	पूर्ण
+		return IRQ_HANDLED;
+	}
 	msleep(75);
-	ret = tps65090_पढ़ो(अक्षरger->dev->parent, TPS65090_REG_INTR_STS,
-			    &पूर्णांकrsts);
-	अगर (ret < 0) अणु
-		dev_err(अक्षरger->dev, "%s(): Error in reading reg 0x%x\n",
+	ret = tps65090_read(charger->dev->parent, TPS65090_REG_INTR_STS,
+			    &intrsts);
+	if (ret < 0) {
+		dev_err(charger->dev, "%s(): Error in reading reg 0x%x\n",
 				__func__, TPS65090_REG_INTR_STS);
-		वापस IRQ_HANDLED;
-	पूर्ण
+		return IRQ_HANDLED;
+	}
 
-	अगर (पूर्णांकrsts & TPS65090_VACG) अणु
-		ret = tps65090_enable_अक्षरging(अक्षरger);
-		अगर (ret < 0)
-			वापस IRQ_HANDLED;
-		अक्षरger->ac_online = 1;
-	पूर्ण अन्यथा अणु
-		अक्षरger->ac_online = 0;
-	पूर्ण
+	if (intrsts & TPS65090_VACG) {
+		ret = tps65090_enable_charging(charger);
+		if (ret < 0)
+			return IRQ_HANDLED;
+		charger->ac_online = 1;
+	} else {
+		charger->ac_online = 0;
+	}
 
-	/* Clear पूर्णांकerrupts. */
-	अगर (!अक्षरger->passive_mode) अणु
-		ret = tps65090_ग_लिखो(अक्षरger->dev->parent,
+	/* Clear interrupts. */
+	if (!charger->passive_mode) {
+		ret = tps65090_write(charger->dev->parent,
 				     TPS65090_REG_INTR_STS, 0x00);
-		अगर (ret < 0) अणु
-			dev_err(अक्षरger->dev,
+		if (ret < 0) {
+			dev_err(charger->dev,
 				"%s(): Error in writing reg 0x%x\n",
 				__func__, TPS65090_REG_INTR_STS);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (अक्षरger->prev_ac_online != अक्षरger->ac_online)
-		घातer_supply_changed(अक्षरger->ac);
+	if (charger->prev_ac_online != charger->ac_online)
+		power_supply_changed(charger->ac);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल काष्ठा tps65090_platक्रमm_data *
-		tps65090_parse_dt_अक्षरger_data(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा tps65090_platक्रमm_data *pdata;
-	काष्ठा device_node *np = pdev->dev.of_node;
-	अचिन्हित पूर्णांक prop;
+static struct tps65090_platform_data *
+		tps65090_parse_dt_charger_data(struct platform_device *pdev)
+{
+	struct tps65090_platform_data *pdata;
+	struct device_node *np = pdev->dev.of_node;
+	unsigned int prop;
 
-	pdata = devm_kzalloc(&pdev->dev, माप(*pdata), GFP_KERNEL);
-	अगर (!pdata) अणु
+	pdata = devm_kzalloc(&pdev->dev, sizeof(*pdata), GFP_KERNEL);
+	if (!pdata) {
 		dev_err(&pdev->dev, "Memory alloc for tps65090_pdata failed\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	prop = of_property_पढ़ो_bool(np, "ti,enable-low-current-chrg");
+	prop = of_property_read_bool(np, "ti,enable-low-current-chrg");
 	pdata->enable_low_current_chrg = prop;
 
 	pdata->irq_base = -1;
 
-	वापस pdata;
+	return pdata;
 
-पूर्ण
+}
 
-अटल पूर्णांक tps65090_अक्षरger_poll_task(व्योम *data)
-अणु
-	set_मुक्तzable();
+static int tps65090_charger_poll_task(void *data)
+{
+	set_freezable();
 
-	जबतक (!kthपढ़ो_should_stop()) अणु
-		schedule_समयout_पूर्णांकerruptible(POLL_INTERVAL);
-		try_to_मुक्तze();
-		tps65090_अक्षरger_isr(-1, data);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	while (!kthread_should_stop()) {
+		schedule_timeout_interruptible(POLL_INTERVAL);
+		try_to_freeze();
+		tps65090_charger_isr(-1, data);
+	}
+	return 0;
+}
 
-अटल स्थिर काष्ठा घातer_supply_desc tps65090_अक्षरger_desc = अणु
+static const struct power_supply_desc tps65090_charger_desc = {
 	.name			= "tps65090-ac",
 	.type			= POWER_SUPPLY_TYPE_MAINS,
 	.get_property		= tps65090_ac_get_property,
 	.properties		= tps65090_ac_props,
 	.num_properties		= ARRAY_SIZE(tps65090_ac_props),
-पूर्ण;
+};
 
-अटल पूर्णांक tps65090_अक्षरger_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा tps65090_अक्षरger *cdata;
-	काष्ठा tps65090_platक्रमm_data *pdata;
-	काष्ठा घातer_supply_config psy_cfg = अणुपूर्ण;
-	uपूर्णांक8_t status1 = 0;
-	पूर्णांक ret;
-	पूर्णांक irq;
+static int tps65090_charger_probe(struct platform_device *pdev)
+{
+	struct tps65090_charger *cdata;
+	struct tps65090_platform_data *pdata;
+	struct power_supply_config psy_cfg = {};
+	uint8_t status1 = 0;
+	int ret;
+	int irq;
 
 	pdata = dev_get_platdata(pdev->dev.parent);
 
-	अगर (IS_ENABLED(CONFIG_OF) && !pdata && pdev->dev.of_node)
-		pdata = tps65090_parse_dt_अक्षरger_data(pdev);
+	if (IS_ENABLED(CONFIG_OF) && !pdata && pdev->dev.of_node)
+		pdata = tps65090_parse_dt_charger_data(pdev);
 
-	अगर (!pdata) अणु
+	if (!pdata) {
 		dev_err(&pdev->dev, "%s():no platform data available\n",
 				__func__);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	cdata = devm_kzalloc(&pdev->dev, माप(*cdata), GFP_KERNEL);
-	अगर (!cdata) अणु
+	cdata = devm_kzalloc(&pdev->dev, sizeof(*cdata), GFP_KERNEL);
+	if (!cdata) {
 		dev_err(&pdev->dev, "failed to allocate memory status\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	platक्रमm_set_drvdata(pdev, cdata);
+	platform_set_drvdata(pdev, cdata);
 
 	cdata->dev			= &pdev->dev;
 	cdata->pdata			= pdata;
@@ -263,98 +262,98 @@
 	psy_cfg.of_node			= pdev->dev.of_node;
 	psy_cfg.drv_data		= cdata;
 
-	cdata->ac = घातer_supply_रेजिस्टर(&pdev->dev, &tps65090_अक्षरger_desc,
+	cdata->ac = power_supply_register(&pdev->dev, &tps65090_charger_desc,
 			&psy_cfg);
-	अगर (IS_ERR(cdata->ac)) अणु
+	if (IS_ERR(cdata->ac)) {
 		dev_err(&pdev->dev, "failed: power supply register\n");
-		वापस PTR_ERR(cdata->ac);
-	पूर्ण
+		return PTR_ERR(cdata->ac);
+	}
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq < 0)
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0)
 		irq = -ENXIO;
 	cdata->irq = irq;
 
-	ret = tps65090_config_अक्षरger(cdata);
-	अगर (ret < 0) अणु
+	ret = tps65090_config_charger(cdata);
+	if (ret < 0) {
 		dev_err(&pdev->dev, "charger config failed, err %d\n", ret);
-		जाओ fail_unरेजिस्टर_supply;
-	पूर्ण
+		goto fail_unregister_supply;
+	}
 
-	/* Check क्रम अक्षरger presence */
-	ret = tps65090_पढ़ो(cdata->dev->parent, TPS65090_REG_CG_STATUS1,
+	/* Check for charger presence */
+	ret = tps65090_read(cdata->dev->parent, TPS65090_REG_CG_STATUS1,
 			&status1);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(cdata->dev, "%s(): Error in reading reg 0x%x", __func__,
 			TPS65090_REG_CG_STATUS1);
-		जाओ fail_unरेजिस्टर_supply;
-	पूर्ण
+		goto fail_unregister_supply;
+	}
 
-	अगर (status1 != 0) अणु
-		ret = tps65090_enable_अक्षरging(cdata);
-		अगर (ret < 0) अणु
+	if (status1 != 0) {
+		ret = tps65090_enable_charging(cdata);
+		if (ret < 0) {
 			dev_err(cdata->dev, "error enabling charger\n");
-			जाओ fail_unरेजिस्टर_supply;
-		पूर्ण
+			goto fail_unregister_supply;
+		}
 		cdata->ac_online = 1;
-		घातer_supply_changed(cdata->ac);
-	पूर्ण
+		power_supply_changed(cdata->ac);
+	}
 
-	अगर (irq != -ENXIO) अणु
-		ret = devm_request_thपढ़ोed_irq(&pdev->dev, irq, शून्य,
-			tps65090_अक्षरger_isr, IRQF_ONESHOT, "tps65090-charger", cdata);
-		अगर (ret) अणु
+	if (irq != -ENXIO) {
+		ret = devm_request_threaded_irq(&pdev->dev, irq, NULL,
+			tps65090_charger_isr, IRQF_ONESHOT, "tps65090-charger", cdata);
+		if (ret) {
 			dev_err(cdata->dev,
 				"Unable to register irq %d err %d\n", irq,
 				ret);
-			जाओ fail_unरेजिस्टर_supply;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		cdata->poll_task = kthपढ़ो_run(tps65090_अक्षरger_poll_task,
+			goto fail_unregister_supply;
+		}
+	} else {
+		cdata->poll_task = kthread_run(tps65090_charger_poll_task,
 					      cdata, "ktps65090charger");
 		cdata->passive_mode = true;
-		अगर (IS_ERR(cdata->poll_task)) अणु
+		if (IS_ERR(cdata->poll_task)) {
 			ret = PTR_ERR(cdata->poll_task);
 			dev_err(cdata->dev,
 				"Unable to run kthread err %d\n", ret);
-			जाओ fail_unरेजिस्टर_supply;
-		पूर्ण
-	पूर्ण
+			goto fail_unregister_supply;
+		}
+	}
 
-	वापस 0;
+	return 0;
 
-fail_unरेजिस्टर_supply:
-	घातer_supply_unरेजिस्टर(cdata->ac);
+fail_unregister_supply:
+	power_supply_unregister(cdata->ac);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक tps65090_अक्षरger_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा tps65090_अक्षरger *cdata = platक्रमm_get_drvdata(pdev);
+static int tps65090_charger_remove(struct platform_device *pdev)
+{
+	struct tps65090_charger *cdata = platform_get_drvdata(pdev);
 
-	अगर (cdata->irq == -ENXIO)
-		kthपढ़ो_stop(cdata->poll_task);
-	घातer_supply_unरेजिस्टर(cdata->ac);
+	if (cdata->irq == -ENXIO)
+		kthread_stop(cdata->poll_task);
+	power_supply_unregister(cdata->ac);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id of_tps65090_अक्षरger_match[] = अणु
-	अणु .compatible = "ti,tps65090-charger", पूर्ण,
-	अणु /* end */ पूर्ण
-पूर्ण;
-MODULE_DEVICE_TABLE(of, of_tps65090_अक्षरger_match);
+static const struct of_device_id of_tps65090_charger_match[] = {
+	{ .compatible = "ti,tps65090-charger", },
+	{ /* end */ }
+};
+MODULE_DEVICE_TABLE(of, of_tps65090_charger_match);
 
-अटल काष्ठा platक्रमm_driver tps65090_अक्षरger_driver = अणु
-	.driver	= अणु
+static struct platform_driver tps65090_charger_driver = {
+	.driver	= {
 		.name	= "tps65090-charger",
-		.of_match_table = of_tps65090_अक्षरger_match,
-	पूर्ण,
-	.probe	= tps65090_अक्षरger_probe,
-	.हटाओ = tps65090_अक्षरger_हटाओ,
-पूर्ण;
-module_platक्रमm_driver(tps65090_अक्षरger_driver);
+		.of_match_table = of_tps65090_charger_match,
+	},
+	.probe	= tps65090_charger_probe,
+	.remove = tps65090_charger_remove,
+};
+module_platform_driver(tps65090_charger_driver);
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Syed Rafiuddin <srafiuddin@nvidia.com>");

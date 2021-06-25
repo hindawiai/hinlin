@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Based on arch/arm/kernel/sys_arm.c
  *
@@ -8,113 +7,113 @@
  * Copyright (C) 2012 ARM Ltd.
  */
 
-#समावेश <linux/compat.h>
-#समावेश <linux/cpufeature.h>
-#समावेश <linux/personality.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/syscalls.h>
-#समावेश <linux/uaccess.h>
+#include <linux/compat.h>
+#include <linux/cpufeature.h>
+#include <linux/personality.h>
+#include <linux/sched.h>
+#include <linux/sched/signal.h>
+#include <linux/slab.h>
+#include <linux/syscalls.h>
+#include <linux/uaccess.h>
 
-#समावेश <यंत्र/cacheflush.h>
-#समावेश <यंत्र/प्रणाली_misc.h>
-#समावेश <यंत्र/tlbflush.h>
-#समावेश <यंत्र/unistd.h>
+#include <asm/cacheflush.h>
+#include <asm/system_misc.h>
+#include <asm/tlbflush.h>
+#include <asm/unistd.h>
 
-अटल दीर्घ
-__करो_compat_cache_op(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
-अणु
-	दीर्घ ret;
+static long
+__do_compat_cache_op(unsigned long start, unsigned long end)
+{
+	long ret;
 
-	करो अणु
-		अचिन्हित दीर्घ chunk = min(PAGE_SIZE, end - start);
+	do {
+		unsigned long chunk = min(PAGE_SIZE, end - start);
 
-		अगर (fatal_संकेत_pending(current))
-			वापस 0;
+		if (fatal_signal_pending(current))
+			return 0;
 
-		अगर (cpus_have_स्थिर_cap(ARM64_WORKAROUND_1542419)) अणु
+		if (cpus_have_const_cap(ARM64_WORKAROUND_1542419)) {
 			/*
 			 * The workaround requires an inner-shareable tlbi.
 			 * We pick the reserved-ASID to minimise the impact.
 			 */
 			__tlbi(aside1is, __TLBI_VADDR(0, 0));
 			dsb(ish);
-		पूर्ण
+		}
 
 		ret = __flush_cache_user_range(start, start + chunk);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		cond_resched();
 		start += chunk;
-	पूर्ण जबतक (start < end);
+	} while (start < end);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत दीर्घ
-करो_compat_cache_op(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end, पूर्णांक flags)
-अणु
-	अगर (end < start || flags)
-		वापस -EINVAL;
+static inline long
+do_compat_cache_op(unsigned long start, unsigned long end, int flags)
+{
+	if (end < start || flags)
+		return -EINVAL;
 
-	अगर (!access_ok((स्थिर व्योम __user *)start, end - start))
-		वापस -EFAULT;
+	if (!access_ok((const void __user *)start, end - start))
+		return -EFAULT;
 
-	वापस __करो_compat_cache_op(start, end);
-पूर्ण
+	return __do_compat_cache_op(start, end);
+}
 /*
- * Handle all unrecognised प्रणाली calls.
+ * Handle all unrecognised system calls.
  */
-दीर्घ compat_arm_syscall(काष्ठा pt_regs *regs, पूर्णांक scno)
-अणु
-	अचिन्हित दीर्घ addr;
+long compat_arm_syscall(struct pt_regs *regs, int scno)
+{
+	unsigned long addr;
 
-	चयन (scno) अणु
+	switch (scno) {
 	/*
-	 * Flush a region from भव address 'r0' to virtual address 'r1'
+	 * Flush a region from virtual address 'r0' to virtual address 'r1'
 	 * _exclusive_.  There is no alignment requirement on either address;
-	 * user space करोes not need to know the hardware cache layout.
+	 * user space does not need to know the hardware cache layout.
 	 *
 	 * r2 contains flags.  It should ALWAYS be passed as ZERO until it
-	 * is defined to be something अन्यथा.  For now we ignore it, but may
-	 * the fires of hell burn in your belly अगर you अवरोध this rule. ;)
+	 * is defined to be something else.  For now we ignore it, but may
+	 * the fires of hell burn in your belly if you break this rule. ;)
 	 *
 	 * (at a later date, we may want to allow this call to not flush
 	 * various aspects of the cache.  Passing '0' will guarantee that
-	 * everything necessary माला_लो flushed to मुख्यtain consistency in
-	 * the specअगरied region).
+	 * everything necessary gets flushed to maintain consistency in
+	 * the specified region).
 	 */
-	हाल __ARM_NR_compat_cacheflush:
-		वापस करो_compat_cache_op(regs->regs[0], regs->regs[1], regs->regs[2]);
+	case __ARM_NR_compat_cacheflush:
+		return do_compat_cache_op(regs->regs[0], regs->regs[1], regs->regs[2]);
 
-	हाल __ARM_NR_compat_set_tls:
-		current->thपढ़ो.uw.tp_value = regs->regs[0];
+	case __ARM_NR_compat_set_tls:
+		current->thread.uw.tp_value = regs->regs[0];
 
 		/*
-		 * Protect against रेजिस्टर corruption from context चयन.
-		 * See comment in tls_thपढ़ो_flush.
+		 * Protect against register corruption from context switch.
+		 * See comment in tls_thread_flush.
 		 */
 		barrier();
-		ग_लिखो_sysreg(regs->regs[0], tpidrro_el0);
-		वापस 0;
+		write_sysreg(regs->regs[0], tpidrro_el0);
+		return 0;
 
-	शेष:
+	default:
 		/*
-		 * Calls 0xf0xxx..0xf07ff are defined to वापस -ENOSYS
-		 * अगर not implemented, rather than raising संक_अवैध. This
+		 * Calls 0xf0xxx..0xf07ff are defined to return -ENOSYS
+		 * if not implemented, rather than raising SIGILL. This
 		 * way the calling program can gracefully determine whether
 		 * a feature is supported.
 		 */
-		अगर (scno < __ARM_NR_COMPAT_END)
-			वापस -ENOSYS;
-		अवरोध;
-	पूर्ण
+		if (scno < __ARM_NR_COMPAT_END)
+			return -ENOSYS;
+		break;
+	}
 
-	addr = inकाष्ठाion_poपूर्णांकer(regs) - (compat_thumb_mode(regs) ? 2 : 4);
+	addr = instruction_pointer(regs) - (compat_thumb_mode(regs) ? 2 : 4);
 
-	arm64_notअगरy_die("Oops - bad compat syscall(2)", regs,
-			 संक_अवैध, ILL_ILLTRP, addr, scno);
-	वापस 0;
-पूर्ण
+	arm64_notify_die("Oops - bad compat syscall(2)", regs,
+			 SIGILL, ILL_ILLTRP, addr, scno);
+	return 0;
+}

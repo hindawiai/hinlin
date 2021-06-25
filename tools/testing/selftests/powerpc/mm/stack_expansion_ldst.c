@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Test that loads/stores expand the stack segment, or trigger a SEGV, in
  * various conditions.
@@ -7,197 +6,197 @@
  * Based on test code by Tom Lane.
  */
 
-#अघोषित न_संशोधन
-#समावेश <निश्चित.स>
+#undef NDEBUG
+#include <assert.h>
 
-#समावेश <err.h>
-#समावेश <त्रुटिसं.स>
-#समावेश <मानकपन.स>
-#समावेश <संकेत.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <sys/resource.h>
-#समावेश <sys/समय.स>
-#समावेश <sys/types.h>
-#समावेश <sys/रुको.h>
-#समावेश <unistd.h>
+#include <err.h>
+#include <errno.h>
+#include <stdio.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/resource.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
-#घोषणा _KB (1024)
-#घोषणा _MB (1024 * 1024)
+#define _KB (1024)
+#define _MB (1024 * 1024)
 
-अस्थिर अक्षर *stack_top_ptr;
-अस्थिर अचिन्हित दीर्घ stack_top_sp;
-अस्थिर अक्षर c;
+volatile char *stack_top_ptr;
+volatile unsigned long stack_top_sp;
+volatile char c;
 
-क्रमागत access_type अणु
+enum access_type {
 	LOAD,
 	STORE,
-पूर्ण;
+};
 
 /*
- * Consume stack until the stack poपूर्णांकer is below @target_sp, then करो an access
+ * Consume stack until the stack pointer is below @target_sp, then do an access
  * (load or store) at offset @delta from either the base of the stack or the
- * current stack poपूर्णांकer.
+ * current stack pointer.
  */
-__attribute__ ((noअंतरभूत))
-पूर्णांक consume_stack(अचिन्हित दीर्घ target_sp, अचिन्हित दीर्घ stack_high, पूर्णांक delta, क्रमागत access_type type)
-अणु
-	अचिन्हित दीर्घ target;
-	अक्षर stack_cur;
+__attribute__ ((noinline))
+int consume_stack(unsigned long target_sp, unsigned long stack_high, int delta, enum access_type type)
+{
+	unsigned long target;
+	char stack_cur;
 
-	अगर ((अचिन्हित दीर्घ)&stack_cur > target_sp)
-		वापस consume_stack(target_sp, stack_high, delta, type);
-	अन्यथा अणु
-		// We करोn't really need this, but without it GCC might not
+	if ((unsigned long)&stack_cur > target_sp)
+		return consume_stack(target_sp, stack_high, delta, type);
+	else {
+		// We don't really need this, but without it GCC might not
 		// generate a recursive call above.
 		stack_top_ptr = &stack_cur;
 
-#अगर_घोषित __घातerpc__
-		यंत्र अस्थिर ("mr %[sp], %%r1" : [sp] "=r" (stack_top_sp));
-#अन्यथा
-		यंत्र अस्थिर ("mov %%rsp, %[sp]" : [sp] "=r" (stack_top_sp));
-#पूर्ण_अगर
+#ifdef __powerpc__
+		asm volatile ("mr %[sp], %%r1" : [sp] "=r" (stack_top_sp));
+#else
+		asm volatile ("mov %%rsp, %[sp]" : [sp] "=r" (stack_top_sp));
+#endif
 		target = stack_high - delta + 1;
-		अस्थिर अक्षर *p = (अक्षर *)target;
+		volatile char *p = (char *)target;
 
-		अगर (type == STORE)
+		if (type == STORE)
 			*p = c;
-		अन्यथा
+		else
 			c = *p;
 
 		// Do something to prevent the stack frame being popped prior to
 		// our access above.
 		getpid();
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक search_proc_maps(अक्षर *needle, अचिन्हित दीर्घ *low, अचिन्हित दीर्घ *high)
-अणु
-	अचिन्हित दीर्घ start, end;
-	अटल अक्षर buf[4096];
-	अक्षर name[128];
-	खाता *f;
-	पूर्णांक rc;
+static int search_proc_maps(char *needle, unsigned long *low, unsigned long *high)
+{
+	unsigned long start, end;
+	static char buf[4096];
+	char name[128];
+	FILE *f;
+	int rc;
 
-	f = ख_खोलो("/proc/self/maps", "r");
-	अगर (!f) अणु
-		लिखो_त्रुटि("fopen");
-		वापस -1;
-	पूर्ण
+	f = fopen("/proc/self/maps", "r");
+	if (!f) {
+		perror("fopen");
+		return -1;
+	}
 
-	जबतक (ख_माला_लो(buf, माप(buf), f)) अणु
-		rc = माला_पूछो(buf, "%lx-%lx %*c%*c%*c%*c %*x %*d:%*d %*d %127s\n",
+	while (fgets(buf, sizeof(buf), f)) {
+		rc = sscanf(buf, "%lx-%lx %*c%*c%*c%*c %*x %*d:%*d %*d %127s\n",
 			    &start, &end, name);
-		अगर (rc == 2)
-			जारी;
+		if (rc == 2)
+			continue;
 
-		अगर (rc != 3) अणु
-			म_लिखो("sscanf errored\n");
+		if (rc != 3) {
+			printf("sscanf errored\n");
 			rc = -1;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (म_माला(name, needle)) अणु
+		if (strstr(name, needle)) {
 			*low = start;
 			*high = end - 1;
 			rc = 0;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	ख_बंद(f);
+	fclose(f);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-पूर्णांक child(अचिन्हित पूर्णांक stack_used, पूर्णांक delta, क्रमागत access_type type)
-अणु
-	अचिन्हित दीर्घ low, stack_high;
+int child(unsigned int stack_used, int delta, enum access_type type)
+{
+	unsigned long low, stack_high;
 
-	निश्चित(search_proc_maps("[stack]", &low, &stack_high) == 0);
+	assert(search_proc_maps("[stack]", &low, &stack_high) == 0);
 
-	निश्चित(consume_stack(stack_high - stack_used, stack_high, delta, type) == 0);
+	assert(consume_stack(stack_high - stack_used, stack_high, delta, type) == 0);
 
-	म_लिखो("Access OK: %s delta %-7d used size 0x%06x stack high 0x%lx top_ptr %p top sp 0x%lx actual used 0x%lx\n",
+	printf("Access OK: %s delta %-7d used size 0x%06x stack high 0x%lx top_ptr %p top sp 0x%lx actual used 0x%lx\n",
 	       type == LOAD ? "load" : "store", delta, stack_used, stack_high,
 	       stack_top_ptr, stack_top_sp, stack_high - stack_top_sp + 1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक test_one(अचिन्हित पूर्णांक stack_used, पूर्णांक delta, क्रमागत access_type type)
-अणु
+static int test_one(unsigned int stack_used, int delta, enum access_type type)
+{
 	pid_t pid;
-	पूर्णांक rc;
+	int rc;
 
-	pid = विभाजन();
-	अगर (pid == 0)
-		निकास(child(stack_used, delta, type));
+	pid = fork();
+	if (pid == 0)
+		exit(child(stack_used, delta, type));
 
-	निश्चित(रुकोpid(pid, &rc, 0) != -1);
+	assert(waitpid(pid, &rc, 0) != -1);
 
-	अगर (WIFEXITED(rc) && WEXITSTATUS(rc) == 0)
-		वापस 0;
+	if (WIFEXITED(rc) && WEXITSTATUS(rc) == 0)
+		return 0;
 
-	// We करोn't expect a non-zero exit that's not a संकेत
-	निश्चित(!WIFEXITED(rc));
+	// We don't expect a non-zero exit that's not a signal
+	assert(!WIFEXITED(rc));
 
-	म_लिखो("Faulted:   %s delta %-7d used size 0x%06x signal %d\n",
+	printf("Faulted:   %s delta %-7d used size 0x%06x signal %d\n",
 	       type == LOAD ? "load" : "store", delta, stack_used,
 	       WTERMSIG(rc));
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-// This is fairly arbitrary but is well below any of the tarमाला_लो below,
-// so that the delta between the stack poपूर्णांकer and the target is large.
-#घोषणा DEFAULT_SIZE	(32 * _KB)
+// This is fairly arbitrary but is well below any of the targets below,
+// so that the delta between the stack pointer and the target is large.
+#define DEFAULT_SIZE	(32 * _KB)
 
-अटल व्योम test_one_type(क्रमागत access_type type, अचिन्हित दीर्घ page_size, अचिन्हित दीर्घ rlim_cur)
-अणु
-	अचिन्हित दीर्घ delta;
+static void test_one_type(enum access_type type, unsigned long page_size, unsigned long rlim_cur)
+{
+	unsigned long delta;
 
 	// We should be able to access anywhere within the rlimit
-	क्रम (delta = page_size; delta <= rlim_cur; delta += page_size)
-		निश्चित(test_one(DEFAULT_SIZE, delta, type) == 0);
+	for (delta = page_size; delta <= rlim_cur; delta += page_size)
+		assert(test_one(DEFAULT_SIZE, delta, type) == 0);
 
-	निश्चित(test_one(DEFAULT_SIZE, rlim_cur, type) == 0);
+	assert(test_one(DEFAULT_SIZE, rlim_cur, type) == 0);
 
-	// But अगर we go past the rlimit it should fail
-	निश्चित(test_one(DEFAULT_SIZE, rlim_cur + 1, type) != 0);
-पूर्ण
+	// But if we go past the rlimit it should fail
+	assert(test_one(DEFAULT_SIZE, rlim_cur + 1, type) != 0);
+}
 
-अटल पूर्णांक test(व्योम)
-अणु
-	अचिन्हित दीर्घ page_size;
-	काष्ठा rlimit rlimit;
+static int test(void)
+{
+	unsigned long page_size;
+	struct rlimit rlimit;
 
 	page_size = getpagesize();
 	getrlimit(RLIMIT_STACK, &rlimit);
-	म_लिखो("Stack rlimit is 0x%lx\n", rlimit.rlim_cur);
+	printf("Stack rlimit is 0x%lx\n", rlimit.rlim_cur);
 
-	म_लिखो("Testing loads ...\n");
+	printf("Testing loads ...\n");
 	test_one_type(LOAD, page_size, rlimit.rlim_cur);
-	म_लिखो("Testing stores ...\n");
+	printf("Testing stores ...\n");
 	test_one_type(STORE, page_size, rlimit.rlim_cur);
 
-	म_लिखो("All OK\n");
+	printf("All OK\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित __घातerpc__
-#समावेश "utils.h"
+#ifdef __powerpc__
+#include "utils.h"
 
-पूर्णांक मुख्य(व्योम)
-अणु
-	वापस test_harness(test, "stack_expansion_ldst");
-पूर्ण
-#अन्यथा
-पूर्णांक मुख्य(व्योम)
-अणु
-	वापस test();
-पूर्ण
-#पूर्ण_अगर
+int main(void)
+{
+	return test_harness(test, "stack_expansion_ldst");
+}
+#else
+int main(void)
+{
+	return test();
+}
+#endif

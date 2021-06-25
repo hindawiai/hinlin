@@ -1,426 +1,425 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright 2004-2008 Freescale Semiconductor, Inc.
  * Copyright 2009 Semihalf.
  *
  * Approved as OSADL project by a majority of OSADL members and funded
- * by OSADL membership fees in 2009;  क्रम details see www.osadl.org.
+ * by OSADL membership fees in 2009;  for details see www.osadl.org.
  *
  * Based on original driver from Freescale Semiconductor
- * written by John Rigby <jrigby@मुक्तscale.com> on basis of mxc_nand.c.
+ * written by John Rigby <jrigby@freescale.com> on basis of mxc_nand.c.
  * Reworked and extended by Piotr Ziecik <kosmo@semihalf.com>.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/gfp.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/err.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/mtd/mtd.h>
-#समावेश <linux/mtd/rawnand.h>
-#समावेश <linux/mtd/partitions.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/of_platक्रमm.h>
+#include <linux/module.h>
+#include <linux/clk.h>
+#include <linux/gfp.h>
+#include <linux/delay.h>
+#include <linux/err.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/mtd/mtd.h>
+#include <linux/mtd/rawnand.h>
+#include <linux/mtd/partitions.h>
+#include <linux/of_address.h>
+#include <linux/of_device.h>
+#include <linux/of_irq.h>
+#include <linux/of_platform.h>
 
-#समावेश <यंत्र/mpc5121.h>
+#include <asm/mpc5121.h>
 
-/* Addresses क्रम NFC MAIN RAM BUFFER areas */
-#घोषणा NFC_MAIN_AREA(n)	((n) *  0x200)
+/* Addresses for NFC MAIN RAM BUFFER areas */
+#define NFC_MAIN_AREA(n)	((n) *  0x200)
 
-/* Addresses क्रम NFC SPARE BUFFER areas */
-#घोषणा NFC_SPARE_BUFFERS	8
-#घोषणा NFC_SPARE_LEN		0x40
-#घोषणा NFC_SPARE_AREA(n)	(0x1000 + ((n) * NFC_SPARE_LEN))
+/* Addresses for NFC SPARE BUFFER areas */
+#define NFC_SPARE_BUFFERS	8
+#define NFC_SPARE_LEN		0x40
+#define NFC_SPARE_AREA(n)	(0x1000 + ((n) * NFC_SPARE_LEN))
 
-/* MPC5121 NFC रेजिस्टरs */
-#घोषणा NFC_BUF_ADDR		0x1E04
-#घोषणा NFC_FLASH_ADDR		0x1E06
-#घोषणा NFC_FLASH_CMD		0x1E08
-#घोषणा NFC_CONFIG		0x1E0A
-#घोषणा NFC_ECC_STATUS1		0x1E0C
-#घोषणा NFC_ECC_STATUS2		0x1E0E
-#घोषणा NFC_SPAS		0x1E10
-#घोषणा NFC_WRPROT		0x1E12
-#घोषणा NFC_NF_WRPRST		0x1E18
-#घोषणा NFC_CONFIG1		0x1E1A
-#घोषणा NFC_CONFIG2		0x1E1C
-#घोषणा NFC_UNLOCKSTART_BLK0	0x1E20
-#घोषणा NFC_UNLOCKEND_BLK0	0x1E22
-#घोषणा NFC_UNLOCKSTART_BLK1	0x1E24
-#घोषणा NFC_UNLOCKEND_BLK1	0x1E26
-#घोषणा NFC_UNLOCKSTART_BLK2	0x1E28
-#घोषणा NFC_UNLOCKEND_BLK2	0x1E2A
-#घोषणा NFC_UNLOCKSTART_BLK3	0x1E2C
-#घोषणा NFC_UNLOCKEND_BLK3	0x1E2E
+/* MPC5121 NFC registers */
+#define NFC_BUF_ADDR		0x1E04
+#define NFC_FLASH_ADDR		0x1E06
+#define NFC_FLASH_CMD		0x1E08
+#define NFC_CONFIG		0x1E0A
+#define NFC_ECC_STATUS1		0x1E0C
+#define NFC_ECC_STATUS2		0x1E0E
+#define NFC_SPAS		0x1E10
+#define NFC_WRPROT		0x1E12
+#define NFC_NF_WRPRST		0x1E18
+#define NFC_CONFIG1		0x1E1A
+#define NFC_CONFIG2		0x1E1C
+#define NFC_UNLOCKSTART_BLK0	0x1E20
+#define NFC_UNLOCKEND_BLK0	0x1E22
+#define NFC_UNLOCKSTART_BLK1	0x1E24
+#define NFC_UNLOCKEND_BLK1	0x1E26
+#define NFC_UNLOCKSTART_BLK2	0x1E28
+#define NFC_UNLOCKEND_BLK2	0x1E2A
+#define NFC_UNLOCKSTART_BLK3	0x1E2C
+#define NFC_UNLOCKEND_BLK3	0x1E2E
 
 /* Bit Definitions: NFC_BUF_ADDR */
-#घोषणा NFC_RBA_MASK		(7 << 0)
-#घोषणा NFC_ACTIVE_CS_SHIFT	5
-#घोषणा NFC_ACTIVE_CS_MASK	(3 << NFC_ACTIVE_CS_SHIFT)
+#define NFC_RBA_MASK		(7 << 0)
+#define NFC_ACTIVE_CS_SHIFT	5
+#define NFC_ACTIVE_CS_MASK	(3 << NFC_ACTIVE_CS_SHIFT)
 
 /* Bit Definitions: NFC_CONFIG */
-#घोषणा NFC_BLS_UNLOCKED	(1 << 1)
+#define NFC_BLS_UNLOCKED	(1 << 1)
 
 /* Bit Definitions: NFC_CONFIG1 */
-#घोषणा NFC_ECC_4BIT		(1 << 0)
-#घोषणा NFC_FULL_PAGE_DMA	(1 << 1)
-#घोषणा NFC_SPARE_ONLY		(1 << 2)
-#घोषणा NFC_ECC_ENABLE		(1 << 3)
-#घोषणा NFC_INT_MASK		(1 << 4)
-#घोषणा NFC_BIG_ENDIAN		(1 << 5)
-#घोषणा NFC_RESET		(1 << 6)
-#घोषणा NFC_CE			(1 << 7)
-#घोषणा NFC_ONE_CYCLE		(1 << 8)
-#घोषणा NFC_PPB_32		(0 << 9)
-#घोषणा NFC_PPB_64		(1 << 9)
-#घोषणा NFC_PPB_128		(2 << 9)
-#घोषणा NFC_PPB_256		(3 << 9)
-#घोषणा NFC_PPB_MASK		(3 << 9)
-#घोषणा NFC_FULL_PAGE_INT	(1 << 11)
+#define NFC_ECC_4BIT		(1 << 0)
+#define NFC_FULL_PAGE_DMA	(1 << 1)
+#define NFC_SPARE_ONLY		(1 << 2)
+#define NFC_ECC_ENABLE		(1 << 3)
+#define NFC_INT_MASK		(1 << 4)
+#define NFC_BIG_ENDIAN		(1 << 5)
+#define NFC_RESET		(1 << 6)
+#define NFC_CE			(1 << 7)
+#define NFC_ONE_CYCLE		(1 << 8)
+#define NFC_PPB_32		(0 << 9)
+#define NFC_PPB_64		(1 << 9)
+#define NFC_PPB_128		(2 << 9)
+#define NFC_PPB_256		(3 << 9)
+#define NFC_PPB_MASK		(3 << 9)
+#define NFC_FULL_PAGE_INT	(1 << 11)
 
 /* Bit Definitions: NFC_CONFIG2 */
-#घोषणा NFC_COMMAND		(1 << 0)
-#घोषणा NFC_ADDRESS		(1 << 1)
-#घोषणा NFC_INPUT		(1 << 2)
-#घोषणा NFC_OUTPUT		(1 << 3)
-#घोषणा NFC_ID			(1 << 4)
-#घोषणा NFC_STATUS		(1 << 5)
-#घोषणा NFC_CMD_FAIL		(1 << 15)
-#घोषणा NFC_INT			(1 << 15)
+#define NFC_COMMAND		(1 << 0)
+#define NFC_ADDRESS		(1 << 1)
+#define NFC_INPUT		(1 << 2)
+#define NFC_OUTPUT		(1 << 3)
+#define NFC_ID			(1 << 4)
+#define NFC_STATUS		(1 << 5)
+#define NFC_CMD_FAIL		(1 << 15)
+#define NFC_INT			(1 << 15)
 
 /* Bit Definitions: NFC_WRPROT */
-#घोषणा NFC_WPC_LOCK_TIGHT	(1 << 0)
-#घोषणा NFC_WPC_LOCK		(1 << 1)
-#घोषणा NFC_WPC_UNLOCK		(1 << 2)
+#define NFC_WPC_LOCK_TIGHT	(1 << 0)
+#define NFC_WPC_LOCK		(1 << 1)
+#define NFC_WPC_UNLOCK		(1 << 2)
 
-#घोषणा	DRV_NAME		"mpc5121_nfc"
+#define	DRV_NAME		"mpc5121_nfc"
 
 /* Timeouts */
-#घोषणा NFC_RESET_TIMEOUT	1000		/* 1 ms */
-#घोषणा NFC_TIMEOUT		(HZ / 10)	/* 1/10 s */
+#define NFC_RESET_TIMEOUT	1000		/* 1 ms */
+#define NFC_TIMEOUT		(HZ / 10)	/* 1/10 s */
 
-काष्ठा mpc5121_nfc_prv अणु
-	काष्ठा nand_controller	controller;
-	काष्ठा nand_chip	chip;
-	पूर्णांक			irq;
-	व्योम __iomem		*regs;
-	काष्ठा clk		*clk;
-	रुको_queue_head_t	irq_रुकोq;
-	uपूर्णांक			column;
-	पूर्णांक			spareonly;
-	व्योम __iomem		*csreg;
-	काष्ठा device		*dev;
-पूर्ण;
+struct mpc5121_nfc_prv {
+	struct nand_controller	controller;
+	struct nand_chip	chip;
+	int			irq;
+	void __iomem		*regs;
+	struct clk		*clk;
+	wait_queue_head_t	irq_waitq;
+	uint			column;
+	int			spareonly;
+	void __iomem		*csreg;
+	struct device		*dev;
+};
 
-अटल व्योम mpc5121_nfc_करोne(काष्ठा mtd_info *mtd);
+static void mpc5121_nfc_done(struct mtd_info *mtd);
 
-/* Read NFC रेजिस्टर */
-अटल अंतरभूत u16 nfc_पढ़ो(काष्ठा mtd_info *mtd, uपूर्णांक reg)
-अणु
-	काष्ठा nand_chip *chip = mtd_to_nand(mtd);
-	काष्ठा mpc5121_nfc_prv *prv = nand_get_controller_data(chip);
+/* Read NFC register */
+static inline u16 nfc_read(struct mtd_info *mtd, uint reg)
+{
+	struct nand_chip *chip = mtd_to_nand(mtd);
+	struct mpc5121_nfc_prv *prv = nand_get_controller_data(chip);
 
-	वापस in_be16(prv->regs + reg);
-पूर्ण
+	return in_be16(prv->regs + reg);
+}
 
-/* Write NFC रेजिस्टर */
-अटल अंतरभूत व्योम nfc_ग_लिखो(काष्ठा mtd_info *mtd, uपूर्णांक reg, u16 val)
-अणु
-	काष्ठा nand_chip *chip = mtd_to_nand(mtd);
-	काष्ठा mpc5121_nfc_prv *prv = nand_get_controller_data(chip);
+/* Write NFC register */
+static inline void nfc_write(struct mtd_info *mtd, uint reg, u16 val)
+{
+	struct nand_chip *chip = mtd_to_nand(mtd);
+	struct mpc5121_nfc_prv *prv = nand_get_controller_data(chip);
 
 	out_be16(prv->regs + reg, val);
-पूर्ण
+}
 
-/* Set bits in NFC रेजिस्टर */
-अटल अंतरभूत व्योम nfc_set(काष्ठा mtd_info *mtd, uपूर्णांक reg, u16 bits)
-अणु
-	nfc_ग_लिखो(mtd, reg, nfc_पढ़ो(mtd, reg) | bits);
-पूर्ण
+/* Set bits in NFC register */
+static inline void nfc_set(struct mtd_info *mtd, uint reg, u16 bits)
+{
+	nfc_write(mtd, reg, nfc_read(mtd, reg) | bits);
+}
 
-/* Clear bits in NFC रेजिस्टर */
-अटल अंतरभूत व्योम nfc_clear(काष्ठा mtd_info *mtd, uपूर्णांक reg, u16 bits)
-अणु
-	nfc_ग_लिखो(mtd, reg, nfc_पढ़ो(mtd, reg) & ~bits);
-पूर्ण
+/* Clear bits in NFC register */
+static inline void nfc_clear(struct mtd_info *mtd, uint reg, u16 bits)
+{
+	nfc_write(mtd, reg, nfc_read(mtd, reg) & ~bits);
+}
 
 /* Invoke address cycle */
-अटल अंतरभूत व्योम mpc5121_nfc_send_addr(काष्ठा mtd_info *mtd, u16 addr)
-अणु
-	nfc_ग_लिखो(mtd, NFC_FLASH_ADDR, addr);
-	nfc_ग_लिखो(mtd, NFC_CONFIG2, NFC_ADDRESS);
-	mpc5121_nfc_करोne(mtd);
-पूर्ण
+static inline void mpc5121_nfc_send_addr(struct mtd_info *mtd, u16 addr)
+{
+	nfc_write(mtd, NFC_FLASH_ADDR, addr);
+	nfc_write(mtd, NFC_CONFIG2, NFC_ADDRESS);
+	mpc5121_nfc_done(mtd);
+}
 
 /* Invoke command cycle */
-अटल अंतरभूत व्योम mpc5121_nfc_send_cmd(काष्ठा mtd_info *mtd, u16 cmd)
-अणु
-	nfc_ग_लिखो(mtd, NFC_FLASH_CMD, cmd);
-	nfc_ग_लिखो(mtd, NFC_CONFIG2, NFC_COMMAND);
-	mpc5121_nfc_करोne(mtd);
-पूर्ण
+static inline void mpc5121_nfc_send_cmd(struct mtd_info *mtd, u16 cmd)
+{
+	nfc_write(mtd, NFC_FLASH_CMD, cmd);
+	nfc_write(mtd, NFC_CONFIG2, NFC_COMMAND);
+	mpc5121_nfc_done(mtd);
+}
 
-/* Send data from NFC buffers to न_अंकD flash */
-अटल अंतरभूत व्योम mpc5121_nfc_send_prog_page(काष्ठा mtd_info *mtd)
-अणु
+/* Send data from NFC buffers to NAND flash */
+static inline void mpc5121_nfc_send_prog_page(struct mtd_info *mtd)
+{
 	nfc_clear(mtd, NFC_BUF_ADDR, NFC_RBA_MASK);
-	nfc_ग_लिखो(mtd, NFC_CONFIG2, NFC_INPUT);
-	mpc5121_nfc_करोne(mtd);
-पूर्ण
+	nfc_write(mtd, NFC_CONFIG2, NFC_INPUT);
+	mpc5121_nfc_done(mtd);
+}
 
-/* Receive data from न_अंकD flash */
-अटल अंतरभूत व्योम mpc5121_nfc_send_पढ़ो_page(काष्ठा mtd_info *mtd)
-अणु
+/* Receive data from NAND flash */
+static inline void mpc5121_nfc_send_read_page(struct mtd_info *mtd)
+{
 	nfc_clear(mtd, NFC_BUF_ADDR, NFC_RBA_MASK);
-	nfc_ग_लिखो(mtd, NFC_CONFIG2, NFC_OUTPUT);
-	mpc5121_nfc_करोne(mtd);
-पूर्ण
+	nfc_write(mtd, NFC_CONFIG2, NFC_OUTPUT);
+	mpc5121_nfc_done(mtd);
+}
 
-/* Receive ID from न_अंकD flash */
-अटल अंतरभूत व्योम mpc5121_nfc_send_पढ़ो_id(काष्ठा mtd_info *mtd)
-अणु
+/* Receive ID from NAND flash */
+static inline void mpc5121_nfc_send_read_id(struct mtd_info *mtd)
+{
 	nfc_clear(mtd, NFC_BUF_ADDR, NFC_RBA_MASK);
-	nfc_ग_लिखो(mtd, NFC_CONFIG2, NFC_ID);
-	mpc5121_nfc_करोne(mtd);
-पूर्ण
+	nfc_write(mtd, NFC_CONFIG2, NFC_ID);
+	mpc5121_nfc_done(mtd);
+}
 
-/* Receive status from न_अंकD flash */
-अटल अंतरभूत व्योम mpc5121_nfc_send_पढ़ो_status(काष्ठा mtd_info *mtd)
-अणु
+/* Receive status from NAND flash */
+static inline void mpc5121_nfc_send_read_status(struct mtd_info *mtd)
+{
 	nfc_clear(mtd, NFC_BUF_ADDR, NFC_RBA_MASK);
-	nfc_ग_लिखो(mtd, NFC_CONFIG2, NFC_STATUS);
-	mpc5121_nfc_करोne(mtd);
-पूर्ण
+	nfc_write(mtd, NFC_CONFIG2, NFC_STATUS);
+	mpc5121_nfc_done(mtd);
+}
 
-/* NFC पूर्णांकerrupt handler */
-अटल irqवापस_t mpc5121_nfc_irq(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा mtd_info *mtd = data;
-	काष्ठा nand_chip *chip = mtd_to_nand(mtd);
-	काष्ठा mpc5121_nfc_prv *prv = nand_get_controller_data(chip);
+/* NFC interrupt handler */
+static irqreturn_t mpc5121_nfc_irq(int irq, void *data)
+{
+	struct mtd_info *mtd = data;
+	struct nand_chip *chip = mtd_to_nand(mtd);
+	struct mpc5121_nfc_prv *prv = nand_get_controller_data(chip);
 
 	nfc_set(mtd, NFC_CONFIG1, NFC_INT_MASK);
-	wake_up(&prv->irq_रुकोq);
+	wake_up(&prv->irq_waitq);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-/* Wait क्रम operation complete */
-अटल व्योम mpc5121_nfc_करोne(काष्ठा mtd_info *mtd)
-अणु
-	काष्ठा nand_chip *chip = mtd_to_nand(mtd);
-	काष्ठा mpc5121_nfc_prv *prv = nand_get_controller_data(chip);
-	पूर्णांक rv;
+/* Wait for operation complete */
+static void mpc5121_nfc_done(struct mtd_info *mtd)
+{
+	struct nand_chip *chip = mtd_to_nand(mtd);
+	struct mpc5121_nfc_prv *prv = nand_get_controller_data(chip);
+	int rv;
 
-	अगर ((nfc_पढ़ो(mtd, NFC_CONFIG2) & NFC_INT) == 0) अणु
+	if ((nfc_read(mtd, NFC_CONFIG2) & NFC_INT) == 0) {
 		nfc_clear(mtd, NFC_CONFIG1, NFC_INT_MASK);
-		rv = रुको_event_समयout(prv->irq_रुकोq,
-			(nfc_पढ़ो(mtd, NFC_CONFIG2) & NFC_INT), NFC_TIMEOUT);
+		rv = wait_event_timeout(prv->irq_waitq,
+			(nfc_read(mtd, NFC_CONFIG2) & NFC_INT), NFC_TIMEOUT);
 
-		अगर (!rv)
+		if (!rv)
 			dev_warn(prv->dev,
 				"Timeout while waiting for interrupt.\n");
-	पूर्ण
+	}
 
 	nfc_clear(mtd, NFC_CONFIG2, NFC_INT);
-पूर्ण
+}
 
 /* Do address cycle(s) */
-अटल व्योम mpc5121_nfc_addr_cycle(काष्ठा mtd_info *mtd, पूर्णांक column, पूर्णांक page)
-अणु
-	काष्ठा nand_chip *chip = mtd_to_nand(mtd);
+static void mpc5121_nfc_addr_cycle(struct mtd_info *mtd, int column, int page)
+{
+	struct nand_chip *chip = mtd_to_nand(mtd);
 	u32 pagemask = chip->pagemask;
 
-	अगर (column != -1) अणु
+	if (column != -1) {
 		mpc5121_nfc_send_addr(mtd, column);
-		अगर (mtd->ग_लिखोsize > 512)
+		if (mtd->writesize > 512)
 			mpc5121_nfc_send_addr(mtd, column >> 8);
-	पूर्ण
+	}
 
-	अगर (page != -1) अणु
-		करो अणु
+	if (page != -1) {
+		do {
 			mpc5121_nfc_send_addr(mtd, page & 0xFF);
 			page >>= 8;
 			pagemask >>= 8;
-		पूर्ण जबतक (pagemask);
-	पूर्ण
-पूर्ण
+		} while (pagemask);
+	}
+}
 
-/* Control chip select संकेतs */
-अटल व्योम mpc5121_nfc_select_chip(काष्ठा nand_chip *nand, पूर्णांक chip)
-अणु
-	काष्ठा mtd_info *mtd = nand_to_mtd(nand);
+/* Control chip select signals */
+static void mpc5121_nfc_select_chip(struct nand_chip *nand, int chip)
+{
+	struct mtd_info *mtd = nand_to_mtd(nand);
 
-	अगर (chip < 0) अणु
+	if (chip < 0) {
 		nfc_clear(mtd, NFC_CONFIG1, NFC_CE);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	nfc_clear(mtd, NFC_BUF_ADDR, NFC_ACTIVE_CS_MASK);
 	nfc_set(mtd, NFC_BUF_ADDR, (chip << NFC_ACTIVE_CS_SHIFT) &
 							NFC_ACTIVE_CS_MASK);
 	nfc_set(mtd, NFC_CONFIG1, NFC_CE);
-पूर्ण
+}
 
-/* Init बाह्यal chip select logic on ADS5121 board */
-अटल पूर्णांक ads5121_chipselect_init(काष्ठा mtd_info *mtd)
-अणु
-	काष्ठा nand_chip *chip = mtd_to_nand(mtd);
-	काष्ठा mpc5121_nfc_prv *prv = nand_get_controller_data(chip);
-	काष्ठा device_node *dn;
+/* Init external chip select logic on ADS5121 board */
+static int ads5121_chipselect_init(struct mtd_info *mtd)
+{
+	struct nand_chip *chip = mtd_to_nand(mtd);
+	struct mpc5121_nfc_prv *prv = nand_get_controller_data(chip);
+	struct device_node *dn;
 
-	dn = of_find_compatible_node(शून्य, शून्य, "fsl,mpc5121ads-cpld");
-	अगर (dn) अणु
+	dn = of_find_compatible_node(NULL, NULL, "fsl,mpc5121ads-cpld");
+	if (dn) {
 		prv->csreg = of_iomap(dn, 0);
 		of_node_put(dn);
-		अगर (!prv->csreg)
-			वापस -ENOMEM;
+		if (!prv->csreg)
+			return -ENOMEM;
 
-		/* CPLD Register 9 controls न_अंकD /CE Lines */
+		/* CPLD Register 9 controls NAND /CE Lines */
 		prv->csreg += 9;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-/* Control chips select संकेत on ADS5121 board */
-अटल व्योम ads5121_select_chip(काष्ठा nand_chip *nand, पूर्णांक chip)
-अणु
-	काष्ठा mtd_info *mtd = nand_to_mtd(nand);
-	काष्ठा mpc5121_nfc_prv *prv = nand_get_controller_data(nand);
+/* Control chips select signal on ADS5121 board */
+static void ads5121_select_chip(struct nand_chip *nand, int chip)
+{
+	struct mtd_info *mtd = nand_to_mtd(nand);
+	struct mpc5121_nfc_prv *prv = nand_get_controller_data(nand);
 	u8 v;
 
 	v = in_8(prv->csreg);
 	v |= 0x0F;
 
-	अगर (chip >= 0) अणु
+	if (chip >= 0) {
 		mpc5121_nfc_select_chip(nand, 0);
 		v &= ~(1 << chip);
-	पूर्ण अन्यथा
+	} else
 		mpc5121_nfc_select_chip(nand, -1);
 
 	out_8(prv->csreg, v);
-पूर्ण
+}
 
-/* Read न_अंकD Ready/Busy संकेत */
-अटल पूर्णांक mpc5121_nfc_dev_पढ़ोy(काष्ठा nand_chip *nand)
-अणु
+/* Read NAND Ready/Busy signal */
+static int mpc5121_nfc_dev_ready(struct nand_chip *nand)
+{
 	/*
-	 * NFC handles पढ़ोy/busy संकेत पूर्णांकernally. Thereक्रमe, this function
-	 * always वापसs status as पढ़ोy.
+	 * NFC handles ready/busy signal internally. Therefore, this function
+	 * always returns status as ready.
 	 */
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-/* Write command to न_अंकD flash */
-अटल व्योम mpc5121_nfc_command(काष्ठा nand_chip *chip, अचिन्हित command,
-				पूर्णांक column, पूर्णांक page)
-अणु
-	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
-	काष्ठा mpc5121_nfc_prv *prv = nand_get_controller_data(chip);
+/* Write command to NAND flash */
+static void mpc5121_nfc_command(struct nand_chip *chip, unsigned command,
+				int column, int page)
+{
+	struct mtd_info *mtd = nand_to_mtd(chip);
+	struct mpc5121_nfc_prv *prv = nand_get_controller_data(chip);
 
 	prv->column = (column >= 0) ? column : 0;
 	prv->spareonly = 0;
 
-	चयन (command) अणु
-	हाल न_अंकD_CMD_PAGEPROG:
+	switch (command) {
+	case NAND_CMD_PAGEPROG:
 		mpc5121_nfc_send_prog_page(mtd);
-		अवरोध;
+		break;
 	/*
-	 * NFC करोes not support sub-page पढ़ोs and ग_लिखोs,
+	 * NFC does not support sub-page reads and writes,
 	 * so emulate them using full page transfers.
 	 */
-	हाल न_अंकD_CMD_READ0:
+	case NAND_CMD_READ0:
 		column = 0;
-		अवरोध;
+		break;
 
-	हाल न_अंकD_CMD_READ1:
+	case NAND_CMD_READ1:
 		prv->column += 256;
-		command = न_अंकD_CMD_READ0;
+		command = NAND_CMD_READ0;
 		column = 0;
-		अवरोध;
+		break;
 
-	हाल न_अंकD_CMD_READOOB:
+	case NAND_CMD_READOOB:
 		prv->spareonly = 1;
-		command = न_अंकD_CMD_READ0;
+		command = NAND_CMD_READ0;
 		column = 0;
-		अवरोध;
+		break;
 
-	हाल न_अंकD_CMD_SEQIN:
-		mpc5121_nfc_command(chip, न_अंकD_CMD_READ0, column, page);
+	case NAND_CMD_SEQIN:
+		mpc5121_nfc_command(chip, NAND_CMD_READ0, column, page);
 		column = 0;
-		अवरोध;
+		break;
 
-	हाल न_अंकD_CMD_ERASE1:
-	हाल न_अंकD_CMD_ERASE2:
-	हाल न_अंकD_CMD_READID:
-	हाल न_अंकD_CMD_STATUS:
-		अवरोध;
+	case NAND_CMD_ERASE1:
+	case NAND_CMD_ERASE2:
+	case NAND_CMD_READID:
+	case NAND_CMD_STATUS:
+		break;
 
-	शेष:
-		वापस;
-	पूर्ण
+	default:
+		return;
+	}
 
 	mpc5121_nfc_send_cmd(mtd, command);
 	mpc5121_nfc_addr_cycle(mtd, column, page);
 
-	चयन (command) अणु
-	हाल न_अंकD_CMD_READ0:
-		अगर (mtd->ग_लिखोsize > 512)
-			mpc5121_nfc_send_cmd(mtd, न_अंकD_CMD_READSTART);
-		mpc5121_nfc_send_पढ़ो_page(mtd);
-		अवरोध;
+	switch (command) {
+	case NAND_CMD_READ0:
+		if (mtd->writesize > 512)
+			mpc5121_nfc_send_cmd(mtd, NAND_CMD_READSTART);
+		mpc5121_nfc_send_read_page(mtd);
+		break;
 
-	हाल न_अंकD_CMD_READID:
-		mpc5121_nfc_send_पढ़ो_id(mtd);
-		अवरोध;
+	case NAND_CMD_READID:
+		mpc5121_nfc_send_read_id(mtd);
+		break;
 
-	हाल न_अंकD_CMD_STATUS:
-		mpc5121_nfc_send_पढ़ो_status(mtd);
-		अगर (chip->options & न_अंकD_BUSWIDTH_16)
+	case NAND_CMD_STATUS:
+		mpc5121_nfc_send_read_status(mtd);
+		if (chip->options & NAND_BUSWIDTH_16)
 			prv->column = 1;
-		अन्यथा
+		else
 			prv->column = 0;
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
 /* Copy data from/to NFC spare buffers. */
-अटल व्योम mpc5121_nfc_copy_spare(काष्ठा mtd_info *mtd, uपूर्णांक offset,
-						u8 *buffer, uपूर्णांक size, पूर्णांक wr)
-अणु
-	काष्ठा nand_chip *nand = mtd_to_nand(mtd);
-	काष्ठा mpc5121_nfc_prv *prv = nand_get_controller_data(nand);
-	uपूर्णांक o, s, sbsize, blksize;
+static void mpc5121_nfc_copy_spare(struct mtd_info *mtd, uint offset,
+						u8 *buffer, uint size, int wr)
+{
+	struct nand_chip *nand = mtd_to_nand(mtd);
+	struct mpc5121_nfc_prv *prv = nand_get_controller_data(nand);
+	uint o, s, sbsize, blksize;
 
 	/*
-	 * न_अंकD spare area is available through NFC spare buffers.
-	 * The NFC भागides spare area पूर्णांकo (page_size / 512) chunks.
-	 * Each chunk is placed पूर्णांकo separate spare memory area, using
+	 * NAND spare area is available through NFC spare buffers.
+	 * The NFC divides spare area into (page_size / 512) chunks.
+	 * Each chunk is placed into separate spare memory area, using
 	 * first (spare_size / num_of_chunks) bytes of the buffer.
 	 *
-	 * For न_अंकD device in which the spare area is not भागided fully
+	 * For NAND device in which the spare area is not divided fully
 	 * by the number of chunks, number of used bytes in each spare
-	 * buffer is rounded करोwn to the nearest even number of bytes,
-	 * and all reमुख्यing bytes are added to the last used spare area.
+	 * buffer is rounded down to the nearest even number of bytes,
+	 * and all remaining bytes are added to the last used spare area.
 	 *
-	 * For more inक्रमmation पढ़ो section 26.6.10 of MPC5121e
+	 * For more information read section 26.6.10 of MPC5121e
 	 * Microcontroller Reference Manual, Rev. 3.
 	 */
 
 	/* Calculate number of valid bytes in each spare buffer */
-	sbsize = (mtd->oobsize / (mtd->ग_लिखोsize / 512)) & ~1;
+	sbsize = (mtd->oobsize / (mtd->writesize / 512)) & ~1;
 
-	जबतक (size) अणु
+	while (size) {
 		/* Calculate spare buffer number */
 		s = offset / sbsize;
-		अगर (s > NFC_SPARE_BUFFERS - 1)
+		if (s > NFC_SPARE_BUFFERS - 1)
 			s = NFC_SPARE_BUFFERS - 1;
 
 		/*
@@ -430,115 +429,115 @@
 		o = offset - (s * sbsize);
 		blksize = min(sbsize - o, size);
 
-		अगर (wr)
-			स_नकल_toio(prv->regs + NFC_SPARE_AREA(s) + o,
+		if (wr)
+			memcpy_toio(prv->regs + NFC_SPARE_AREA(s) + o,
 							buffer, blksize);
-		अन्यथा
-			स_नकल_fromio(buffer,
+		else
+			memcpy_fromio(buffer,
 				prv->regs + NFC_SPARE_AREA(s) + o, blksize);
 
 		buffer += blksize;
 		offset += blksize;
 		size -= blksize;
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* Copy data from/to NFC मुख्य and spare buffers */
-अटल व्योम mpc5121_nfc_buf_copy(काष्ठा mtd_info *mtd, u_अक्षर *buf, पूर्णांक len,
-									पूर्णांक wr)
-अणु
-	काष्ठा nand_chip *chip = mtd_to_nand(mtd);
-	काष्ठा mpc5121_nfc_prv *prv = nand_get_controller_data(chip);
-	uपूर्णांक c = prv->column;
-	uपूर्णांक l;
+/* Copy data from/to NFC main and spare buffers */
+static void mpc5121_nfc_buf_copy(struct mtd_info *mtd, u_char *buf, int len,
+									int wr)
+{
+	struct nand_chip *chip = mtd_to_nand(mtd);
+	struct mpc5121_nfc_prv *prv = nand_get_controller_data(chip);
+	uint c = prv->column;
+	uint l;
 
 	/* Handle spare area access */
-	अगर (prv->spareonly || c >= mtd->ग_लिखोsize) अणु
+	if (prv->spareonly || c >= mtd->writesize) {
 		/* Calculate offset from beginning of spare area */
-		अगर (c >= mtd->ग_लिखोsize)
-			c -= mtd->ग_लिखोsize;
+		if (c >= mtd->writesize)
+			c -= mtd->writesize;
 
 		prv->column += len;
 		mpc5121_nfc_copy_spare(mtd, c, buf, len, wr);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
-	 * Handle मुख्य area access - limit copy length to prevent
-	 * crossing मुख्य/spare boundary.
+	 * Handle main area access - limit copy length to prevent
+	 * crossing main/spare boundary.
 	 */
-	l = min((uपूर्णांक)len, mtd->ग_लिखोsize - c);
+	l = min((uint)len, mtd->writesize - c);
 	prv->column += l;
 
-	अगर (wr)
-		स_नकल_toio(prv->regs + NFC_MAIN_AREA(0) + c, buf, l);
-	अन्यथा
-		स_नकल_fromio(buf, prv->regs + NFC_MAIN_AREA(0) + c, l);
+	if (wr)
+		memcpy_toio(prv->regs + NFC_MAIN_AREA(0) + c, buf, l);
+	else
+		memcpy_fromio(buf, prv->regs + NFC_MAIN_AREA(0) + c, l);
 
-	/* Handle crossing मुख्य/spare boundary */
-	अगर (l != len) अणु
+	/* Handle crossing main/spare boundary */
+	if (l != len) {
 		buf += l;
 		len -= l;
 		mpc5121_nfc_buf_copy(mtd, buf, len, wr);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* Read data from NFC buffers */
-अटल व्योम mpc5121_nfc_पढ़ो_buf(काष्ठा nand_chip *chip, u_अक्षर *buf, पूर्णांक len)
-अणु
+static void mpc5121_nfc_read_buf(struct nand_chip *chip, u_char *buf, int len)
+{
 	mpc5121_nfc_buf_copy(nand_to_mtd(chip), buf, len, 0);
-पूर्ण
+}
 
 /* Write data to NFC buffers */
-अटल व्योम mpc5121_nfc_ग_लिखो_buf(काष्ठा nand_chip *chip, स्थिर u_अक्षर *buf,
-				  पूर्णांक len)
-अणु
-	mpc5121_nfc_buf_copy(nand_to_mtd(chip), (u_अक्षर *)buf, len, 1);
-पूर्ण
+static void mpc5121_nfc_write_buf(struct nand_chip *chip, const u_char *buf,
+				  int len)
+{
+	mpc5121_nfc_buf_copy(nand_to_mtd(chip), (u_char *)buf, len, 1);
+}
 
 /* Read byte from NFC buffers */
-अटल u8 mpc5121_nfc_पढ़ो_byte(काष्ठा nand_chip *chip)
-अणु
-	u8 पंचांगp;
+static u8 mpc5121_nfc_read_byte(struct nand_chip *chip)
+{
+	u8 tmp;
 
-	mpc5121_nfc_पढ़ो_buf(chip, &पंचांगp, माप(पंचांगp));
+	mpc5121_nfc_read_buf(chip, &tmp, sizeof(tmp));
 
-	वापस पंचांगp;
-पूर्ण
+	return tmp;
+}
 
 /*
  * Read NFC configuration from Reset Config Word
  *
- * NFC is configured during reset in basis of inक्रमmation stored
- * in Reset Config Word. There is no other way to set न_अंकD block
+ * NFC is configured during reset in basis of information stored
+ * in Reset Config Word. There is no other way to set NAND block
  * size, spare size and bus width.
  */
-अटल पूर्णांक mpc5121_nfc_पढ़ो_hw_config(काष्ठा mtd_info *mtd)
-अणु
-	काष्ठा nand_chip *chip = mtd_to_nand(mtd);
-	काष्ठा mpc5121_nfc_prv *prv = nand_get_controller_data(chip);
-	काष्ठा mpc512x_reset_module *rm;
-	काष्ठा device_node *rmnode;
-	uपूर्णांक rcw_pagesize = 0;
-	uपूर्णांक rcw_sparesize = 0;
-	uपूर्णांक rcw_width;
-	uपूर्णांक rcwh;
-	uपूर्णांक romloc, ps;
-	पूर्णांक ret = 0;
+static int mpc5121_nfc_read_hw_config(struct mtd_info *mtd)
+{
+	struct nand_chip *chip = mtd_to_nand(mtd);
+	struct mpc5121_nfc_prv *prv = nand_get_controller_data(chip);
+	struct mpc512x_reset_module *rm;
+	struct device_node *rmnode;
+	uint rcw_pagesize = 0;
+	uint rcw_sparesize = 0;
+	uint rcw_width;
+	uint rcwh;
+	uint romloc, ps;
+	int ret = 0;
 
-	rmnode = of_find_compatible_node(शून्य, शून्य, "fsl,mpc5121-reset");
-	अगर (!rmnode) अणु
+	rmnode = of_find_compatible_node(NULL, NULL, "fsl,mpc5121-reset");
+	if (!rmnode) {
 		dev_err(prv->dev, "Missing 'fsl,mpc5121-reset' "
 					"node in device tree!\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	rm = of_iomap(rmnode, 0);
-	अगर (!rm) अणु
+	if (!rm) {
 		dev_err(prv->dev, "Error mapping reset module node!\n");
 		ret = -EBUSY;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	rcwh = in_be32(&rm->rcwhr);
 
@@ -552,33 +551,33 @@
 	romloc = (rcwh >> 21) & 0x3;
 
 	/* Decode RCW bits */
-	चयन ((ps << 2) | romloc) अणु
-	हाल 0x00:
-	हाल 0x01:
+	switch ((ps << 2) | romloc) {
+	case 0x00:
+	case 0x01:
 		rcw_pagesize = 512;
 		rcw_sparesize = 16;
-		अवरोध;
-	हाल 0x02:
-	हाल 0x03:
+		break;
+	case 0x02:
+	case 0x03:
 		rcw_pagesize = 4096;
 		rcw_sparesize = 128;
-		अवरोध;
-	हाल 0x04:
-	हाल 0x05:
+		break;
+	case 0x04:
+	case 0x05:
 		rcw_pagesize = 2048;
 		rcw_sparesize = 64;
-		अवरोध;
-	हाल 0x06:
-	हाल 0x07:
+		break;
+	case 0x06:
+	case 0x07:
 		rcw_pagesize = 4096;
 		rcw_sparesize = 218;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	mtd->ग_लिखोsize = rcw_pagesize;
+	mtd->writesize = rcw_pagesize;
 	mtd->oobsize = rcw_sparesize;
-	अगर (rcw_width == 2)
-		chip->options |= न_अंकD_BUSWIDTH_16;
+	if (rcw_width == 2)
+		chip->options |= NAND_BUSWIDTH_16;
 
 	dev_notice(prv->dev, "Configured for "
 				"%u-bit NAND, page size %u "
@@ -588,64 +587,64 @@
 	iounmap(rm);
 out:
 	of_node_put(rmnode);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* Free driver resources */
-अटल व्योम mpc5121_nfc_मुक्त(काष्ठा device *dev, काष्ठा mtd_info *mtd)
-अणु
-	काष्ठा nand_chip *chip = mtd_to_nand(mtd);
-	काष्ठा mpc5121_nfc_prv *prv = nand_get_controller_data(chip);
+static void mpc5121_nfc_free(struct device *dev, struct mtd_info *mtd)
+{
+	struct nand_chip *chip = mtd_to_nand(mtd);
+	struct mpc5121_nfc_prv *prv = nand_get_controller_data(chip);
 
-	अगर (prv->clk)
+	if (prv->clk)
 		clk_disable_unprepare(prv->clk);
 
-	अगर (prv->csreg)
+	if (prv->csreg)
 		iounmap(prv->csreg);
-पूर्ण
+}
 
-अटल पूर्णांक mpc5121_nfc_attach_chip(काष्ठा nand_chip *chip)
-अणु
-	chip->ecc.engine_type = न_अंकD_ECC_ENGINE_TYPE_SOFT;
+static int mpc5121_nfc_attach_chip(struct nand_chip *chip)
+{
+	chip->ecc.engine_type = NAND_ECC_ENGINE_TYPE_SOFT;
 
-	अगर (chip->ecc.algo == न_अंकD_ECC_ALGO_UNKNOWN)
-		chip->ecc.algo = न_अंकD_ECC_ALGO_HAMMING;
+	if (chip->ecc.algo == NAND_ECC_ALGO_UNKNOWN)
+		chip->ecc.algo = NAND_ECC_ALGO_HAMMING;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा nand_controller_ops mpc5121_nfc_ops = अणु
+static const struct nand_controller_ops mpc5121_nfc_ops = {
 	.attach_chip = mpc5121_nfc_attach_chip,
-पूर्ण;
+};
 
-अटल पूर्णांक mpc5121_nfc_probe(काष्ठा platक्रमm_device *op)
-अणु
-	काष्ठा device_node *dn = op->dev.of_node;
-	काष्ठा clk *clk;
-	काष्ठा device *dev = &op->dev;
-	काष्ठा mpc5121_nfc_prv *prv;
-	काष्ठा resource res;
-	काष्ठा mtd_info *mtd;
-	काष्ठा nand_chip *chip;
-	अचिन्हित दीर्घ regs_paddr, regs_size;
-	स्थिर __be32 *chips_no;
-	पूर्णांक reसमय_रखो = 0;
-	पूर्णांक retval = 0;
-	पूर्णांक rev, len;
+static int mpc5121_nfc_probe(struct platform_device *op)
+{
+	struct device_node *dn = op->dev.of_node;
+	struct clk *clk;
+	struct device *dev = &op->dev;
+	struct mpc5121_nfc_prv *prv;
+	struct resource res;
+	struct mtd_info *mtd;
+	struct nand_chip *chip;
+	unsigned long regs_paddr, regs_size;
+	const __be32 *chips_no;
+	int resettime = 0;
+	int retval = 0;
+	int rev, len;
 
 	/*
 	 * Check SoC revision. This driver supports only NFC
 	 * in MPC5121 revision 2 and MPC5123 revision 3.
 	 */
 	rev = (mfspr(SPRN_SVR) >> 4) & 0xF;
-	अगर ((rev != 2) && (rev != 3)) अणु
+	if ((rev != 2) && (rev != 3)) {
 		dev_err(dev, "SoC revision %u is not supported!\n", rev);
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
-	prv = devm_kzalloc(dev, माप(*prv), GFP_KERNEL);
-	अगर (!prv)
-		वापस -ENOMEM;
+	prv = devm_kzalloc(dev, sizeof(*prv), GFP_KERNEL);
+	if (!prv)
+		return -ENOMEM;
 
 	chip = &prv->chip;
 	mtd = nand_to_mtd(chip);
@@ -660,195 +659,195 @@ out:
 	prv->dev = dev;
 
 	/* Read NFC configuration from Reset Config Word */
-	retval = mpc5121_nfc_पढ़ो_hw_config(mtd);
-	अगर (retval) अणु
+	retval = mpc5121_nfc_read_hw_config(mtd);
+	if (retval) {
 		dev_err(dev, "Unable to read NFC config!\n");
-		वापस retval;
-	पूर्ण
+		return retval;
+	}
 
 	prv->irq = irq_of_parse_and_map(dn, 0);
-	अगर (prv->irq == NO_IRQ) अणु
+	if (prv->irq == NO_IRQ) {
 		dev_err(dev, "Error mapping IRQ!\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	retval = of_address_to_resource(dn, 0, &res);
-	अगर (retval) अणु
+	if (retval) {
 		dev_err(dev, "Error parsing memory region!\n");
-		वापस retval;
-	पूर्ण
+		return retval;
+	}
 
 	chips_no = of_get_property(dn, "chips", &len);
-	अगर (!chips_no || len != माप(*chips_no)) अणु
+	if (!chips_no || len != sizeof(*chips_no)) {
 		dev_err(dev, "Invalid/missing 'chips' property!\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	regs_paddr = res.start;
 	regs_size = resource_size(&res);
 
-	अगर (!devm_request_mem_region(dev, regs_paddr, regs_size, DRV_NAME)) अणु
+	if (!devm_request_mem_region(dev, regs_paddr, regs_size, DRV_NAME)) {
 		dev_err(dev, "Error requesting memory region!\n");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	prv->regs = devm_ioremap(dev, regs_paddr, regs_size);
-	अगर (!prv->regs) अणु
+	if (!prv->regs) {
 		dev_err(dev, "Error mapping memory region!\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	mtd->name = "MPC5121 NAND";
-	chip->legacy.dev_पढ़ोy = mpc5121_nfc_dev_पढ़ोy;
+	chip->legacy.dev_ready = mpc5121_nfc_dev_ready;
 	chip->legacy.cmdfunc = mpc5121_nfc_command;
-	chip->legacy.पढ़ो_byte = mpc5121_nfc_पढ़ो_byte;
-	chip->legacy.पढ़ो_buf = mpc5121_nfc_पढ़ो_buf;
-	chip->legacy.ग_लिखो_buf = mpc5121_nfc_ग_लिखो_buf;
+	chip->legacy.read_byte = mpc5121_nfc_read_byte;
+	chip->legacy.read_buf = mpc5121_nfc_read_buf;
+	chip->legacy.write_buf = mpc5121_nfc_write_buf;
 	chip->legacy.select_chip = mpc5121_nfc_select_chip;
 	chip->legacy.set_features = nand_get_set_features_notsupp;
 	chip->legacy.get_features = nand_get_set_features_notsupp;
-	chip->bbt_options = न_अंकD_BBT_USE_FLASH;
+	chip->bbt_options = NAND_BBT_USE_FLASH;
 
-	/* Support बाह्यal chip-select logic on ADS5121 board */
-	अगर (of_machine_is_compatible("fsl,mpc5121ads")) अणु
+	/* Support external chip-select logic on ADS5121 board */
+	if (of_machine_is_compatible("fsl,mpc5121ads")) {
 		retval = ads5121_chipselect_init(mtd);
-		अगर (retval) अणु
+		if (retval) {
 			dev_err(dev, "Chipselect init error!\n");
-			वापस retval;
-		पूर्ण
+			return retval;
+		}
 
 		chip->legacy.select_chip = ads5121_select_chip;
-	पूर्ण
+	}
 
-	/* Enable NFC घड़ी */
+	/* Enable NFC clock */
 	clk = devm_clk_get(dev, "ipg");
-	अगर (IS_ERR(clk)) अणु
+	if (IS_ERR(clk)) {
 		dev_err(dev, "Unable to acquire NFC clock!\n");
 		retval = PTR_ERR(clk);
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 	retval = clk_prepare_enable(clk);
-	अगर (retval) अणु
+	if (retval) {
 		dev_err(dev, "Unable to enable NFC clock!\n");
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 	prv->clk = clk;
 
-	/* Reset न_अंकD Flash controller */
+	/* Reset NAND Flash controller */
 	nfc_set(mtd, NFC_CONFIG1, NFC_RESET);
-	जबतक (nfc_पढ़ो(mtd, NFC_CONFIG1) & NFC_RESET) अणु
-		अगर (reसमय_रखो++ >= NFC_RESET_TIMEOUT) अणु
+	while (nfc_read(mtd, NFC_CONFIG1) & NFC_RESET) {
+		if (resettime++ >= NFC_RESET_TIMEOUT) {
 			dev_err(dev, "Timeout while resetting NFC!\n");
 			retval = -EINVAL;
-			जाओ error;
-		पूर्ण
+			goto error;
+		}
 
 		udelay(1);
-	पूर्ण
+	}
 
-	/* Enable ग_लिखो to NFC memory */
-	nfc_ग_लिखो(mtd, NFC_CONFIG, NFC_BLS_UNLOCKED);
+	/* Enable write to NFC memory */
+	nfc_write(mtd, NFC_CONFIG, NFC_BLS_UNLOCKED);
 
-	/* Enable ग_लिखो to all न_अंकD pages */
-	nfc_ग_लिखो(mtd, NFC_UNLOCKSTART_BLK0, 0x0000);
-	nfc_ग_लिखो(mtd, NFC_UNLOCKEND_BLK0, 0xFFFF);
-	nfc_ग_लिखो(mtd, NFC_WRPROT, NFC_WPC_UNLOCK);
+	/* Enable write to all NAND pages */
+	nfc_write(mtd, NFC_UNLOCKSTART_BLK0, 0x0000);
+	nfc_write(mtd, NFC_UNLOCKEND_BLK0, 0xFFFF);
+	nfc_write(mtd, NFC_WRPROT, NFC_WPC_UNLOCK);
 
 	/*
 	 * Setup NFC:
 	 *	- Big Endian transfers,
-	 *	- Interrupt after full page पढ़ो/ग_लिखो.
+	 *	- Interrupt after full page read/write.
 	 */
-	nfc_ग_लिखो(mtd, NFC_CONFIG1, NFC_BIG_ENDIAN | NFC_INT_MASK |
+	nfc_write(mtd, NFC_CONFIG1, NFC_BIG_ENDIAN | NFC_INT_MASK |
 							NFC_FULL_PAGE_INT);
 
 	/* Set spare area size */
-	nfc_ग_लिखो(mtd, NFC_SPAS, mtd->oobsize >> 1);
+	nfc_write(mtd, NFC_SPAS, mtd->oobsize >> 1);
 
-	init_रुकोqueue_head(&prv->irq_रुकोq);
+	init_waitqueue_head(&prv->irq_waitq);
 	retval = devm_request_irq(dev, prv->irq, &mpc5121_nfc_irq, 0, DRV_NAME,
 									mtd);
-	अगर (retval) अणु
+	if (retval) {
 		dev_err(dev, "Error requesting IRQ!\n");
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	/* Detect न_अंकD chips */
+	/* Detect NAND chips */
 	retval = nand_scan(chip, be32_to_cpup(chips_no));
-	अगर (retval) अणु
+	if (retval) {
 		dev_err(dev, "NAND Flash not found !\n");
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	/* Set erase block size */
-	चयन (mtd->erasesize / mtd->ग_लिखोsize) अणु
-	हाल 32:
+	switch (mtd->erasesize / mtd->writesize) {
+	case 32:
 		nfc_set(mtd, NFC_CONFIG1, NFC_PPB_32);
-		अवरोध;
+		break;
 
-	हाल 64:
+	case 64:
 		nfc_set(mtd, NFC_CONFIG1, NFC_PPB_64);
-		अवरोध;
+		break;
 
-	हाल 128:
+	case 128:
 		nfc_set(mtd, NFC_CONFIG1, NFC_PPB_128);
-		अवरोध;
+		break;
 
-	हाल 256:
+	case 256:
 		nfc_set(mtd, NFC_CONFIG1, NFC_PPB_256);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		dev_err(dev, "Unsupported NAND flash!\n");
 		retval = -ENXIO;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	dev_set_drvdata(dev, mtd);
 
 	/* Register device in MTD */
-	retval = mtd_device_रेजिस्टर(mtd, शून्य, 0);
-	अगर (retval) अणु
+	retval = mtd_device_register(mtd, NULL, 0);
+	if (retval) {
 		dev_err(dev, "Error adding MTD device!\n");
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	वापस 0;
+	return 0;
 error:
-	mpc5121_nfc_मुक्त(dev, mtd);
-	वापस retval;
-पूर्ण
+	mpc5121_nfc_free(dev, mtd);
+	return retval;
+}
 
-अटल पूर्णांक mpc5121_nfc_हटाओ(काष्ठा platक्रमm_device *op)
-अणु
-	काष्ठा device *dev = &op->dev;
-	काष्ठा mtd_info *mtd = dev_get_drvdata(dev);
-	पूर्णांक ret;
+static int mpc5121_nfc_remove(struct platform_device *op)
+{
+	struct device *dev = &op->dev;
+	struct mtd_info *mtd = dev_get_drvdata(dev);
+	int ret;
 
-	ret = mtd_device_unरेजिस्टर(mtd);
+	ret = mtd_device_unregister(mtd);
 	WARN_ON(ret);
 	nand_cleanup(mtd_to_nand(mtd));
-	mpc5121_nfc_मुक्त(dev, mtd);
+	mpc5121_nfc_free(dev, mtd);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id mpc5121_nfc_match[] = अणु
-	अणु .compatible = "fsl,mpc5121-nfc", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id mpc5121_nfc_match[] = {
+	{ .compatible = "fsl,mpc5121-nfc", },
+	{},
+};
 MODULE_DEVICE_TABLE(of, mpc5121_nfc_match);
 
-अटल काष्ठा platक्रमm_driver mpc5121_nfc_driver = अणु
+static struct platform_driver mpc5121_nfc_driver = {
 	.probe		= mpc5121_nfc_probe,
-	.हटाओ		= mpc5121_nfc_हटाओ,
-	.driver		= अणु
+	.remove		= mpc5121_nfc_remove,
+	.driver		= {
 		.name = DRV_NAME,
 		.of_match_table = mpc5121_nfc_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(mpc5121_nfc_driver);
+module_platform_driver(mpc5121_nfc_driver);
 
 MODULE_AUTHOR("Freescale Semiconductor, Inc.");
 MODULE_DESCRIPTION("MPC5121 NAND MTD driver");

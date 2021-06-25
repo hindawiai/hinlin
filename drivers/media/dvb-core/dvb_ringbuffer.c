@@ -1,370 +1,369 @@
-<शैली गुरु>
 /*
  *
- * dvb_ringbuffer.c: ring buffer implementation क्रम the dvb driver
+ * dvb_ringbuffer.c: ring buffer implementation for the dvb driver
  *
  * Copyright (C) 2003 Oliver Endriss
  * Copyright (C) 2004 Andrew de Quincey
  *
  * based on code originally found in av7110.c & dvb_ci.c:
  * Copyright (C) 1999-2003 Ralph  Metzler
- *                       & Marcus Metzler क्रम convergence पूर्णांकegrated media GmbH
+ *                       & Marcus Metzler for convergence integrated media GmbH
  *
- * This program is मुक्त software; you can redistribute it and/or
- * modअगरy it under the terms of the GNU Lesser General Public License
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
  * as published by the Free Software Foundation; either version 2.1
  * of the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License क्रम more details.
+ * GNU Lesser General Public License for more details.
  */
 
 
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/uaccess.h>
+#include <linux/errno.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/sched.h>
+#include <linux/string.h>
+#include <linux/uaccess.h>
 
-#समावेश <media/dvb_ringbuffer.h>
+#include <media/dvb_ringbuffer.h>
 
-#घोषणा PKT_READY 0
-#घोषणा PKT_DISPOSED 1
+#define PKT_READY 0
+#define PKT_DISPOSED 1
 
 
-व्योम dvb_ringbuffer_init(काष्ठा dvb_ringbuffer *rbuf, व्योम *data, माप_प्रकार len)
-अणु
-	rbuf->pपढ़ो=rbuf->pग_लिखो=0;
+void dvb_ringbuffer_init(struct dvb_ringbuffer *rbuf, void *data, size_t len)
+{
+	rbuf->pread=rbuf->pwrite=0;
 	rbuf->data=data;
 	rbuf->size=len;
 	rbuf->error=0;
 
-	init_रुकोqueue_head(&rbuf->queue);
+	init_waitqueue_head(&rbuf->queue);
 
 	spin_lock_init(&(rbuf->lock));
-पूर्ण
+}
 
 
 
-पूर्णांक dvb_ringbuffer_empty(काष्ठा dvb_ringbuffer *rbuf)
-अणु
-	/* smp_load_acquire() to load ग_लिखो poपूर्णांकer on पढ़ोer side
-	 * this pairs with smp_store_release() in dvb_ringbuffer_ग_लिखो(),
-	 * dvb_ringbuffer_ग_लिखो_user(), or dvb_ringbuffer_reset()
+int dvb_ringbuffer_empty(struct dvb_ringbuffer *rbuf)
+{
+	/* smp_load_acquire() to load write pointer on reader side
+	 * this pairs with smp_store_release() in dvb_ringbuffer_write(),
+	 * dvb_ringbuffer_write_user(), or dvb_ringbuffer_reset()
 	 *
-	 * क्रम memory barriers also see Documentation/core-api/circular-buffers.rst
+	 * for memory barriers also see Documentation/core-api/circular-buffers.rst
 	 */
-	वापस (rbuf->pपढ़ो == smp_load_acquire(&rbuf->pग_लिखो));
-पूर्ण
+	return (rbuf->pread == smp_load_acquire(&rbuf->pwrite));
+}
 
 
 
-sमाप_प्रकार dvb_ringbuffer_मुक्त(काष्ठा dvb_ringbuffer *rbuf)
-अणु
-	sमाप_प्रकार मुक्त;
+ssize_t dvb_ringbuffer_free(struct dvb_ringbuffer *rbuf)
+{
+	ssize_t free;
 
-	/* READ_ONCE() to load पढ़ो poपूर्णांकer on ग_लिखोr side
-	 * this pairs with smp_store_release() in dvb_ringbuffer_पढ़ो(),
-	 * dvb_ringbuffer_पढ़ो_user(), dvb_ringbuffer_flush(),
+	/* READ_ONCE() to load read pointer on writer side
+	 * this pairs with smp_store_release() in dvb_ringbuffer_read(),
+	 * dvb_ringbuffer_read_user(), dvb_ringbuffer_flush(),
 	 * or dvb_ringbuffer_reset()
 	 */
-	मुक्त = READ_ONCE(rbuf->pपढ़ो) - rbuf->pग_लिखो;
-	अगर (मुक्त <= 0)
-		मुक्त += rbuf->size;
-	वापस मुक्त-1;
-पूर्ण
+	free = READ_ONCE(rbuf->pread) - rbuf->pwrite;
+	if (free <= 0)
+		free += rbuf->size;
+	return free-1;
+}
 
 
 
-sमाप_प्रकार dvb_ringbuffer_avail(काष्ठा dvb_ringbuffer *rbuf)
-अणु
-	sमाप_प्रकार avail;
+ssize_t dvb_ringbuffer_avail(struct dvb_ringbuffer *rbuf)
+{
+	ssize_t avail;
 
-	/* smp_load_acquire() to load ग_लिखो poपूर्णांकer on पढ़ोer side
-	 * this pairs with smp_store_release() in dvb_ringbuffer_ग_लिखो(),
-	 * dvb_ringbuffer_ग_लिखो_user(), or dvb_ringbuffer_reset()
+	/* smp_load_acquire() to load write pointer on reader side
+	 * this pairs with smp_store_release() in dvb_ringbuffer_write(),
+	 * dvb_ringbuffer_write_user(), or dvb_ringbuffer_reset()
 	 */
-	avail = smp_load_acquire(&rbuf->pग_लिखो) - rbuf->pपढ़ो;
-	अगर (avail < 0)
+	avail = smp_load_acquire(&rbuf->pwrite) - rbuf->pread;
+	if (avail < 0)
 		avail += rbuf->size;
-	वापस avail;
-पूर्ण
+	return avail;
+}
 
 
 
-व्योम dvb_ringbuffer_flush(काष्ठा dvb_ringbuffer *rbuf)
-अणु
-	/* dvb_ringbuffer_flush() counts as पढ़ो operation
-	 * smp_load_acquire() to load ग_लिखो poपूर्णांकer
-	 * smp_store_release() to update पढ़ो poपूर्णांकer, this ensures that the
-	 * correct poपूर्णांकer is visible क्रम subsequent dvb_ringbuffer_मुक्त()
+void dvb_ringbuffer_flush(struct dvb_ringbuffer *rbuf)
+{
+	/* dvb_ringbuffer_flush() counts as read operation
+	 * smp_load_acquire() to load write pointer
+	 * smp_store_release() to update read pointer, this ensures that the
+	 * correct pointer is visible for subsequent dvb_ringbuffer_free()
 	 * calls on other cpu cores
 	 */
-	smp_store_release(&rbuf->pपढ़ो, smp_load_acquire(&rbuf->pग_लिखो));
+	smp_store_release(&rbuf->pread, smp_load_acquire(&rbuf->pwrite));
 	rbuf->error = 0;
-पूर्ण
+}
 EXPORT_SYMBOL(dvb_ringbuffer_flush);
 
-व्योम dvb_ringbuffer_reset(काष्ठा dvb_ringbuffer *rbuf)
-अणु
-	/* dvb_ringbuffer_reset() counts as पढ़ो and ग_लिखो operation
-	 * smp_store_release() to update पढ़ो poपूर्णांकer
+void dvb_ringbuffer_reset(struct dvb_ringbuffer *rbuf)
+{
+	/* dvb_ringbuffer_reset() counts as read and write operation
+	 * smp_store_release() to update read pointer
 	 */
-	smp_store_release(&rbuf->pपढ़ो, 0);
-	/* smp_store_release() to update ग_लिखो poपूर्णांकer */
-	smp_store_release(&rbuf->pग_लिखो, 0);
+	smp_store_release(&rbuf->pread, 0);
+	/* smp_store_release() to update write pointer */
+	smp_store_release(&rbuf->pwrite, 0);
 	rbuf->error = 0;
-पूर्ण
+}
 
-व्योम dvb_ringbuffer_flush_spinlock_wakeup(काष्ठा dvb_ringbuffer *rbuf)
-अणु
-	अचिन्हित दीर्घ flags;
+void dvb_ringbuffer_flush_spinlock_wakeup(struct dvb_ringbuffer *rbuf)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&rbuf->lock, flags);
 	dvb_ringbuffer_flush(rbuf);
 	spin_unlock_irqrestore(&rbuf->lock, flags);
 
 	wake_up(&rbuf->queue);
-पूर्ण
+}
 
-sमाप_प्रकार dvb_ringbuffer_पढ़ो_user(काष्ठा dvb_ringbuffer *rbuf, u8 __user *buf, माप_प्रकार len)
-अणु
-	माप_प्रकार toकरो = len;
-	माप_प्रकार split;
+ssize_t dvb_ringbuffer_read_user(struct dvb_ringbuffer *rbuf, u8 __user *buf, size_t len)
+{
+	size_t todo = len;
+	size_t split;
 
-	split = (rbuf->pपढ़ो + len > rbuf->size) ? rbuf->size - rbuf->pपढ़ो : 0;
-	अगर (split > 0) अणु
-		अगर (copy_to_user(buf, rbuf->data+rbuf->pपढ़ो, split))
-			वापस -EFAULT;
+	split = (rbuf->pread + len > rbuf->size) ? rbuf->size - rbuf->pread : 0;
+	if (split > 0) {
+		if (copy_to_user(buf, rbuf->data+rbuf->pread, split))
+			return -EFAULT;
 		buf += split;
-		toकरो -= split;
-		/* smp_store_release() क्रम पढ़ो poपूर्णांकer update to ensure
-		 * that buf is not overwritten until पढ़ो is complete,
-		 * this pairs with READ_ONCE() in dvb_ringbuffer_मुक्त()
+		todo -= split;
+		/* smp_store_release() for read pointer update to ensure
+		 * that buf is not overwritten until read is complete,
+		 * this pairs with READ_ONCE() in dvb_ringbuffer_free()
 		 */
-		smp_store_release(&rbuf->pपढ़ो, 0);
-	पूर्ण
-	अगर (copy_to_user(buf, rbuf->data+rbuf->pपढ़ो, toकरो))
-		वापस -EFAULT;
+		smp_store_release(&rbuf->pread, 0);
+	}
+	if (copy_to_user(buf, rbuf->data+rbuf->pread, todo))
+		return -EFAULT;
 
-	/* smp_store_release() to update पढ़ो poपूर्णांकer, see above */
-	smp_store_release(&rbuf->pपढ़ो, (rbuf->pपढ़ो + toकरो) % rbuf->size);
+	/* smp_store_release() to update read pointer, see above */
+	smp_store_release(&rbuf->pread, (rbuf->pread + todo) % rbuf->size);
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-व्योम dvb_ringbuffer_पढ़ो(काष्ठा dvb_ringbuffer *rbuf, u8 *buf, माप_प्रकार len)
-अणु
-	माप_प्रकार toकरो = len;
-	माप_प्रकार split;
+void dvb_ringbuffer_read(struct dvb_ringbuffer *rbuf, u8 *buf, size_t len)
+{
+	size_t todo = len;
+	size_t split;
 
-	split = (rbuf->pपढ़ो + len > rbuf->size) ? rbuf->size - rbuf->pपढ़ो : 0;
-	अगर (split > 0) अणु
-		स_नकल(buf, rbuf->data+rbuf->pपढ़ो, split);
+	split = (rbuf->pread + len > rbuf->size) ? rbuf->size - rbuf->pread : 0;
+	if (split > 0) {
+		memcpy(buf, rbuf->data+rbuf->pread, split);
 		buf += split;
-		toकरो -= split;
-		/* smp_store_release() क्रम पढ़ो poपूर्णांकer update to ensure
-		 * that buf is not overwritten until पढ़ो is complete,
-		 * this pairs with READ_ONCE() in dvb_ringbuffer_मुक्त()
+		todo -= split;
+		/* smp_store_release() for read pointer update to ensure
+		 * that buf is not overwritten until read is complete,
+		 * this pairs with READ_ONCE() in dvb_ringbuffer_free()
 		 */
-		smp_store_release(&rbuf->pपढ़ो, 0);
-	पूर्ण
-	स_नकल(buf, rbuf->data+rbuf->pपढ़ो, toकरो);
+		smp_store_release(&rbuf->pread, 0);
+	}
+	memcpy(buf, rbuf->data+rbuf->pread, todo);
 
-	/* smp_store_release() to update पढ़ो poपूर्णांकer, see above */
-	smp_store_release(&rbuf->pपढ़ो, (rbuf->pपढ़ो + toकरो) % rbuf->size);
-पूर्ण
+	/* smp_store_release() to update read pointer, see above */
+	smp_store_release(&rbuf->pread, (rbuf->pread + todo) % rbuf->size);
+}
 
 
-sमाप_प्रकार dvb_ringbuffer_ग_लिखो(काष्ठा dvb_ringbuffer *rbuf, स्थिर u8 *buf, माप_प्रकार len)
-अणु
-	माप_प्रकार toकरो = len;
-	माप_प्रकार split;
+ssize_t dvb_ringbuffer_write(struct dvb_ringbuffer *rbuf, const u8 *buf, size_t len)
+{
+	size_t todo = len;
+	size_t split;
 
-	split = (rbuf->pग_लिखो + len > rbuf->size) ? rbuf->size - rbuf->pग_लिखो : 0;
+	split = (rbuf->pwrite + len > rbuf->size) ? rbuf->size - rbuf->pwrite : 0;
 
-	अगर (split > 0) अणु
-		स_नकल(rbuf->data+rbuf->pग_लिखो, buf, split);
+	if (split > 0) {
+		memcpy(rbuf->data+rbuf->pwrite, buf, split);
 		buf += split;
-		toकरो -= split;
-		/* smp_store_release() क्रम ग_लिखो poपूर्णांकer update to ensure that
-		 * written data is visible on other cpu cores beक्रमe the poपूर्णांकer
+		todo -= split;
+		/* smp_store_release() for write pointer update to ensure that
+		 * written data is visible on other cpu cores before the pointer
 		 * update, this pairs with smp_load_acquire() in
 		 * dvb_ringbuffer_empty() or dvb_ringbuffer_avail()
 		 */
-		smp_store_release(&rbuf->pग_लिखो, 0);
-	पूर्ण
-	स_नकल(rbuf->data+rbuf->pग_लिखो, buf, toकरो);
-	/* smp_store_release() क्रम ग_लिखो poपूर्णांकer update, see above */
-	smp_store_release(&rbuf->pग_लिखो, (rbuf->pग_लिखो + toकरो) % rbuf->size);
+		smp_store_release(&rbuf->pwrite, 0);
+	}
+	memcpy(rbuf->data+rbuf->pwrite, buf, todo);
+	/* smp_store_release() for write pointer update, see above */
+	smp_store_release(&rbuf->pwrite, (rbuf->pwrite + todo) % rbuf->size);
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-sमाप_प्रकार dvb_ringbuffer_ग_लिखो_user(काष्ठा dvb_ringbuffer *rbuf,
-				  स्थिर u8 __user *buf, माप_प्रकार len)
-अणु
-	पूर्णांक status;
-	माप_प्रकार toकरो = len;
-	माप_प्रकार split;
+ssize_t dvb_ringbuffer_write_user(struct dvb_ringbuffer *rbuf,
+				  const u8 __user *buf, size_t len)
+{
+	int status;
+	size_t todo = len;
+	size_t split;
 
-	split = (rbuf->pग_लिखो + len > rbuf->size) ? rbuf->size - rbuf->pग_लिखो : 0;
+	split = (rbuf->pwrite + len > rbuf->size) ? rbuf->size - rbuf->pwrite : 0;
 
-	अगर (split > 0) अणु
-		status = copy_from_user(rbuf->data+rbuf->pग_लिखो, buf, split);
-		अगर (status)
-			वापस len - toकरो;
+	if (split > 0) {
+		status = copy_from_user(rbuf->data+rbuf->pwrite, buf, split);
+		if (status)
+			return len - todo;
 		buf += split;
-		toकरो -= split;
-		/* smp_store_release() क्रम ग_लिखो poपूर्णांकer update to ensure that
-		 * written data is visible on other cpu cores beक्रमe the poपूर्णांकer
+		todo -= split;
+		/* smp_store_release() for write pointer update to ensure that
+		 * written data is visible on other cpu cores before the pointer
 		 * update, this pairs with smp_load_acquire() in
 		 * dvb_ringbuffer_empty() or dvb_ringbuffer_avail()
 		 */
-		smp_store_release(&rbuf->pग_लिखो, 0);
-	पूर्ण
-	status = copy_from_user(rbuf->data+rbuf->pग_लिखो, buf, toकरो);
-	अगर (status)
-		वापस len - toकरो;
-	/* smp_store_release() क्रम ग_लिखो poपूर्णांकer update, see above */
-	smp_store_release(&rbuf->pग_लिखो, (rbuf->pग_लिखो + toकरो) % rbuf->size);
+		smp_store_release(&rbuf->pwrite, 0);
+	}
+	status = copy_from_user(rbuf->data+rbuf->pwrite, buf, todo);
+	if (status)
+		return len - todo;
+	/* smp_store_release() for write pointer update, see above */
+	smp_store_release(&rbuf->pwrite, (rbuf->pwrite + todo) % rbuf->size);
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-sमाप_प्रकार dvb_ringbuffer_pkt_ग_लिखो(काष्ठा dvb_ringbuffer *rbuf, u8* buf, माप_प्रकार len)
-अणु
-	पूर्णांक status;
-	sमाप_प्रकार oldpग_लिखो = rbuf->pग_लिखो;
+ssize_t dvb_ringbuffer_pkt_write(struct dvb_ringbuffer *rbuf, u8* buf, size_t len)
+{
+	int status;
+	ssize_t oldpwrite = rbuf->pwrite;
 
 	DVB_RINGBUFFER_WRITE_BYTE(rbuf, len >> 8);
 	DVB_RINGBUFFER_WRITE_BYTE(rbuf, len & 0xff);
 	DVB_RINGBUFFER_WRITE_BYTE(rbuf, PKT_READY);
-	status = dvb_ringbuffer_ग_लिखो(rbuf, buf, len);
+	status = dvb_ringbuffer_write(rbuf, buf, len);
 
-	अगर (status < 0) rbuf->pग_लिखो = oldpग_लिखो;
-	वापस status;
-पूर्ण
+	if (status < 0) rbuf->pwrite = oldpwrite;
+	return status;
+}
 
-sमाप_प्रकार dvb_ringbuffer_pkt_पढ़ो_user(काष्ठा dvb_ringbuffer *rbuf, माप_प्रकार idx,
-				पूर्णांक offset, u8 __user *buf, माप_प्रकार len)
-अणु
-	माप_प्रकार toकरो;
-	माप_प्रकार split;
-	माप_प्रकार pktlen;
-
-	pktlen = rbuf->data[idx] << 8;
-	pktlen |= rbuf->data[(idx + 1) % rbuf->size];
-	अगर (offset > pktlen) वापस -EINVAL;
-	अगर ((offset + len) > pktlen) len = pktlen - offset;
-
-	idx = (idx + DVB_RINGBUFFER_PKTHDRSIZE + offset) % rbuf->size;
-	toकरो = len;
-	split = ((idx + len) > rbuf->size) ? rbuf->size - idx : 0;
-	अगर (split > 0) अणु
-		अगर (copy_to_user(buf, rbuf->data+idx, split))
-			वापस -EFAULT;
-		buf += split;
-		toकरो -= split;
-		idx = 0;
-	पूर्ण
-	अगर (copy_to_user(buf, rbuf->data+idx, toकरो))
-		वापस -EFAULT;
-
-	वापस len;
-पूर्ण
-
-sमाप_प्रकार dvb_ringbuffer_pkt_पढ़ो(काष्ठा dvb_ringbuffer *rbuf, माप_प्रकार idx,
-				पूर्णांक offset, u8* buf, माप_प्रकार len)
-अणु
-	माप_प्रकार toकरो;
-	माप_प्रकार split;
-	माप_प्रकार pktlen;
+ssize_t dvb_ringbuffer_pkt_read_user(struct dvb_ringbuffer *rbuf, size_t idx,
+				int offset, u8 __user *buf, size_t len)
+{
+	size_t todo;
+	size_t split;
+	size_t pktlen;
 
 	pktlen = rbuf->data[idx] << 8;
 	pktlen |= rbuf->data[(idx + 1) % rbuf->size];
-	अगर (offset > pktlen) वापस -EINVAL;
-	अगर ((offset + len) > pktlen) len = pktlen - offset;
+	if (offset > pktlen) return -EINVAL;
+	if ((offset + len) > pktlen) len = pktlen - offset;
 
 	idx = (idx + DVB_RINGBUFFER_PKTHDRSIZE + offset) % rbuf->size;
-	toकरो = len;
+	todo = len;
 	split = ((idx + len) > rbuf->size) ? rbuf->size - idx : 0;
-	अगर (split > 0) अणु
-		स_नकल(buf, rbuf->data+idx, split);
+	if (split > 0) {
+		if (copy_to_user(buf, rbuf->data+idx, split))
+			return -EFAULT;
 		buf += split;
-		toकरो -= split;
+		todo -= split;
 		idx = 0;
-	पूर्ण
-	स_नकल(buf, rbuf->data+idx, toकरो);
-	वापस len;
-पूर्ण
+	}
+	if (copy_to_user(buf, rbuf->data+idx, todo))
+		return -EFAULT;
 
-व्योम dvb_ringbuffer_pkt_dispose(काष्ठा dvb_ringbuffer *rbuf, माप_प्रकार idx)
-अणु
-	माप_प्रकार pktlen;
+	return len;
+}
+
+ssize_t dvb_ringbuffer_pkt_read(struct dvb_ringbuffer *rbuf, size_t idx,
+				int offset, u8* buf, size_t len)
+{
+	size_t todo;
+	size_t split;
+	size_t pktlen;
+
+	pktlen = rbuf->data[idx] << 8;
+	pktlen |= rbuf->data[(idx + 1) % rbuf->size];
+	if (offset > pktlen) return -EINVAL;
+	if ((offset + len) > pktlen) len = pktlen - offset;
+
+	idx = (idx + DVB_RINGBUFFER_PKTHDRSIZE + offset) % rbuf->size;
+	todo = len;
+	split = ((idx + len) > rbuf->size) ? rbuf->size - idx : 0;
+	if (split > 0) {
+		memcpy(buf, rbuf->data+idx, split);
+		buf += split;
+		todo -= split;
+		idx = 0;
+	}
+	memcpy(buf, rbuf->data+idx, todo);
+	return len;
+}
+
+void dvb_ringbuffer_pkt_dispose(struct dvb_ringbuffer *rbuf, size_t idx)
+{
+	size_t pktlen;
 
 	rbuf->data[(idx + 2) % rbuf->size] = PKT_DISPOSED;
 
 	// clean up disposed packets
-	जबतक(dvb_ringbuffer_avail(rbuf) > DVB_RINGBUFFER_PKTHDRSIZE) अणु
-		अगर (DVB_RINGBUFFER_PEEK(rbuf, 2) == PKT_DISPOSED) अणु
+	while(dvb_ringbuffer_avail(rbuf) > DVB_RINGBUFFER_PKTHDRSIZE) {
+		if (DVB_RINGBUFFER_PEEK(rbuf, 2) == PKT_DISPOSED) {
 			pktlen = DVB_RINGBUFFER_PEEK(rbuf, 0) << 8;
 			pktlen |= DVB_RINGBUFFER_PEEK(rbuf, 1);
 			DVB_RINGBUFFER_SKIP(rbuf, pktlen + DVB_RINGBUFFER_PKTHDRSIZE);
-		पूर्ण अन्यथा अणु
+		} else {
 			// first packet is not disposed, so we stop cleaning now
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			break;
+		}
+	}
+}
 
-sमाप_प्रकार dvb_ringbuffer_pkt_next(काष्ठा dvb_ringbuffer *rbuf, माप_प्रकार idx, माप_प्रकार* pktlen)
-अणु
-	पूर्णांक consumed;
-	पूर्णांक curpktlen;
-	पूर्णांक curpktstatus;
+ssize_t dvb_ringbuffer_pkt_next(struct dvb_ringbuffer *rbuf, size_t idx, size_t* pktlen)
+{
+	int consumed;
+	int curpktlen;
+	int curpktstatus;
 
-	अगर (idx == -1) अणु
-	       idx = rbuf->pपढ़ो;
-	पूर्ण अन्यथा अणु
+	if (idx == -1) {
+	       idx = rbuf->pread;
+	} else {
 		curpktlen = rbuf->data[idx] << 8;
 		curpktlen |= rbuf->data[(idx + 1) % rbuf->size];
 		idx = (idx + curpktlen + DVB_RINGBUFFER_PKTHDRSIZE) % rbuf->size;
-	पूर्ण
+	}
 
-	consumed = (idx - rbuf->pपढ़ो) % rbuf->size;
+	consumed = (idx - rbuf->pread) % rbuf->size;
 
-	जबतक((dvb_ringbuffer_avail(rbuf) - consumed) > DVB_RINGBUFFER_PKTHDRSIZE) अणु
+	while((dvb_ringbuffer_avail(rbuf) - consumed) > DVB_RINGBUFFER_PKTHDRSIZE) {
 
 		curpktlen = rbuf->data[idx] << 8;
 		curpktlen |= rbuf->data[(idx + 1) % rbuf->size];
 		curpktstatus = rbuf->data[(idx + 2) % rbuf->size];
 
-		अगर (curpktstatus == PKT_READY) अणु
+		if (curpktstatus == PKT_READY) {
 			*pktlen = curpktlen;
-			वापस idx;
-		पूर्ण
+			return idx;
+		}
 
 		consumed += curpktlen + DVB_RINGBUFFER_PKTHDRSIZE;
 		idx = (idx + curpktlen + DVB_RINGBUFFER_PKTHDRSIZE) % rbuf->size;
-	पूर्ण
+	}
 
 	// no packets available
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
 
 
 EXPORT_SYMBOL(dvb_ringbuffer_init);
 EXPORT_SYMBOL(dvb_ringbuffer_empty);
-EXPORT_SYMBOL(dvb_ringbuffer_मुक्त);
+EXPORT_SYMBOL(dvb_ringbuffer_free);
 EXPORT_SYMBOL(dvb_ringbuffer_avail);
 EXPORT_SYMBOL(dvb_ringbuffer_flush_spinlock_wakeup);
-EXPORT_SYMBOL(dvb_ringbuffer_पढ़ो_user);
-EXPORT_SYMBOL(dvb_ringbuffer_पढ़ो);
-EXPORT_SYMBOL(dvb_ringbuffer_ग_लिखो);
-EXPORT_SYMBOL(dvb_ringbuffer_ग_लिखो_user);
+EXPORT_SYMBOL(dvb_ringbuffer_read_user);
+EXPORT_SYMBOL(dvb_ringbuffer_read);
+EXPORT_SYMBOL(dvb_ringbuffer_write);
+EXPORT_SYMBOL(dvb_ringbuffer_write_user);

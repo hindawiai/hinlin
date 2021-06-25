@@ -1,179 +1,178 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * xfrm_device.c - IPsec device offloading code.
  *
  * Copyright (c) 2015 secunet Security Networks AG
  *
  * Author:
- * Steffen Klनिश्चित <steffen.klनिश्चित@secunet.com>
+ * Steffen Klassert <steffen.klassert@secunet.com>
  */
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/module.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
-#समावेश <net/dst.h>
-#समावेश <net/xfrm.h>
-#समावेश <linux/notअगरier.h>
+#include <linux/errno.h>
+#include <linux/module.h>
+#include <linux/netdevice.h>
+#include <linux/skbuff.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
+#include <net/dst.h>
+#include <net/xfrm.h>
+#include <linux/notifier.h>
 
-#अगर_घोषित CONFIG_XFRM_OFFLOAD
-अटल व्योम __xfrm_transport_prep(काष्ठा xfrm_state *x, काष्ठा sk_buff *skb,
-				  अचिन्हित पूर्णांक hsize)
-अणु
-	काष्ठा xfrm_offload *xo = xfrm_offload(skb);
+#ifdef CONFIG_XFRM_OFFLOAD
+static void __xfrm_transport_prep(struct xfrm_state *x, struct sk_buff *skb,
+				  unsigned int hsize)
+{
+	struct xfrm_offload *xo = xfrm_offload(skb);
 
 	skb_reset_mac_len(skb);
-	अगर (xo->flags & XFRM_GSO_SEGMENT)
+	if (xo->flags & XFRM_GSO_SEGMENT)
 		skb->transport_header -= x->props.header_len;
 
 	pskb_pull(skb, skb_transport_offset(skb) + x->props.header_len);
-पूर्ण
+}
 
-अटल व्योम __xfrm_mode_tunnel_prep(काष्ठा xfrm_state *x, काष्ठा sk_buff *skb,
-				    अचिन्हित पूर्णांक hsize)
+static void __xfrm_mode_tunnel_prep(struct xfrm_state *x, struct sk_buff *skb,
+				    unsigned int hsize)
 
-अणु
-	काष्ठा xfrm_offload *xo = xfrm_offload(skb);
+{
+	struct xfrm_offload *xo = xfrm_offload(skb);
 
-	अगर (xo->flags & XFRM_GSO_SEGMENT)
+	if (xo->flags & XFRM_GSO_SEGMENT)
 		skb->transport_header = skb->network_header + hsize;
 
 	skb_reset_mac_len(skb);
 	pskb_pull(skb, skb->mac_len + x->props.header_len);
-पूर्ण
+}
 
-अटल व्योम __xfrm_mode_beet_prep(काष्ठा xfrm_state *x, काष्ठा sk_buff *skb,
-				  अचिन्हित पूर्णांक hsize)
-अणु
-	काष्ठा xfrm_offload *xo = xfrm_offload(skb);
-	पूर्णांक phlen = 0;
+static void __xfrm_mode_beet_prep(struct xfrm_state *x, struct sk_buff *skb,
+				  unsigned int hsize)
+{
+	struct xfrm_offload *xo = xfrm_offload(skb);
+	int phlen = 0;
 
-	अगर (xo->flags & XFRM_GSO_SEGMENT)
+	if (xo->flags & XFRM_GSO_SEGMENT)
 		skb->transport_header = skb->network_header + hsize;
 
 	skb_reset_mac_len(skb);
-	अगर (x->sel.family != AF_INET6) अणु
+	if (x->sel.family != AF_INET6) {
 		phlen = IPV4_BEET_PHMAXLEN;
-		अगर (x->outer_mode.family == AF_INET6)
-			phlen += माप(काष्ठा ipv6hdr) - माप(काष्ठा iphdr);
-	पूर्ण
+		if (x->outer_mode.family == AF_INET6)
+			phlen += sizeof(struct ipv6hdr) - sizeof(struct iphdr);
+	}
 
 	pskb_pull(skb, skb->mac_len + hsize + (x->props.header_len - phlen));
-पूर्ण
+}
 
-/* Adjust poपूर्णांकers पूर्णांकo the packet when IPsec is करोne at layer2 */
-अटल व्योम xfrm_outer_mode_prep(काष्ठा xfrm_state *x, काष्ठा sk_buff *skb)
-अणु
-	चयन (x->outer_mode.encap) अणु
-	हाल XFRM_MODE_TUNNEL:
-		अगर (x->outer_mode.family == AF_INET)
-			वापस __xfrm_mode_tunnel_prep(x, skb,
-						       माप(काष्ठा iphdr));
-		अगर (x->outer_mode.family == AF_INET6)
-			वापस __xfrm_mode_tunnel_prep(x, skb,
-						       माप(काष्ठा ipv6hdr));
-		अवरोध;
-	हाल XFRM_MODE_TRANSPORT:
-		अगर (x->outer_mode.family == AF_INET)
-			वापस __xfrm_transport_prep(x, skb,
-						     माप(काष्ठा iphdr));
-		अगर (x->outer_mode.family == AF_INET6)
-			वापस __xfrm_transport_prep(x, skb,
-						     माप(काष्ठा ipv6hdr));
-		अवरोध;
-	हाल XFRM_MODE_BEET:
-		अगर (x->outer_mode.family == AF_INET)
-			वापस __xfrm_mode_beet_prep(x, skb,
-						     माप(काष्ठा iphdr));
-		अगर (x->outer_mode.family == AF_INET6)
-			वापस __xfrm_mode_beet_prep(x, skb,
-						     माप(काष्ठा ipv6hdr));
-		अवरोध;
-	हाल XFRM_MODE_ROUTEOPTIMIZATION:
-	हाल XFRM_MODE_IN_TRIGGER:
-		अवरोध;
-	पूर्ण
-पूर्ण
+/* Adjust pointers into the packet when IPsec is done at layer2 */
+static void xfrm_outer_mode_prep(struct xfrm_state *x, struct sk_buff *skb)
+{
+	switch (x->outer_mode.encap) {
+	case XFRM_MODE_TUNNEL:
+		if (x->outer_mode.family == AF_INET)
+			return __xfrm_mode_tunnel_prep(x, skb,
+						       sizeof(struct iphdr));
+		if (x->outer_mode.family == AF_INET6)
+			return __xfrm_mode_tunnel_prep(x, skb,
+						       sizeof(struct ipv6hdr));
+		break;
+	case XFRM_MODE_TRANSPORT:
+		if (x->outer_mode.family == AF_INET)
+			return __xfrm_transport_prep(x, skb,
+						     sizeof(struct iphdr));
+		if (x->outer_mode.family == AF_INET6)
+			return __xfrm_transport_prep(x, skb,
+						     sizeof(struct ipv6hdr));
+		break;
+	case XFRM_MODE_BEET:
+		if (x->outer_mode.family == AF_INET)
+			return __xfrm_mode_beet_prep(x, skb,
+						     sizeof(struct iphdr));
+		if (x->outer_mode.family == AF_INET6)
+			return __xfrm_mode_beet_prep(x, skb,
+						     sizeof(struct ipv6hdr));
+		break;
+	case XFRM_MODE_ROUTEOPTIMIZATION:
+	case XFRM_MODE_IN_TRIGGER:
+		break;
+	}
+}
 
-काष्ठा sk_buff *validate_xmit_xfrm(काष्ठा sk_buff *skb, netdev_features_t features, bool *again)
-अणु
-	पूर्णांक err;
-	अचिन्हित दीर्घ flags;
-	काष्ठा xfrm_state *x;
-	काष्ठा softnet_data *sd;
-	काष्ठा sk_buff *skb2, *nskb, *pskb = शून्य;
+struct sk_buff *validate_xmit_xfrm(struct sk_buff *skb, netdev_features_t features, bool *again)
+{
+	int err;
+	unsigned long flags;
+	struct xfrm_state *x;
+	struct softnet_data *sd;
+	struct sk_buff *skb2, *nskb, *pskb = NULL;
 	netdev_features_t esp_features = features;
-	काष्ठा xfrm_offload *xo = xfrm_offload(skb);
-	काष्ठा net_device *dev = skb->dev;
-	काष्ठा sec_path *sp;
+	struct xfrm_offload *xo = xfrm_offload(skb);
+	struct net_device *dev = skb->dev;
+	struct sec_path *sp;
 
-	अगर (!xo || (xo->flags & XFRM_XMIT))
-		वापस skb;
+	if (!xo || (xo->flags & XFRM_XMIT))
+		return skb;
 
-	अगर (!(features & NETIF_F_HW_ESP))
+	if (!(features & NETIF_F_HW_ESP))
 		esp_features = features & ~(NETIF_F_SG | NETIF_F_CSUM_MASK);
 
 	sp = skb_sec_path(skb);
 	x = sp->xvec[sp->len - 1];
-	अगर (xo->flags & XFRM_GRO || x->xso.flags & XFRM_OFFLOAD_INBOUND)
-		वापस skb;
+	if (xo->flags & XFRM_GRO || x->xso.flags & XFRM_OFFLOAD_INBOUND)
+		return skb;
 
-	/* This skb was alपढ़ोy validated on the upper/भव dev */
-	अगर ((x->xso.dev != dev) && (x->xso.real_dev == dev))
-		वापस skb;
+	/* This skb was already validated on the upper/virtual dev */
+	if ((x->xso.dev != dev) && (x->xso.real_dev == dev))
+		return skb;
 
 	local_irq_save(flags);
 	sd = this_cpu_ptr(&softnet_data);
 	err = !skb_queue_empty(&sd->xfrm_backlog);
 	local_irq_restore(flags);
 
-	अगर (err) अणु
+	if (err) {
 		*again = true;
-		वापस skb;
-	पूर्ण
+		return skb;
+	}
 
-	अगर (skb_is_gso(skb) && unlikely(x->xso.dev != dev)) अणु
-		काष्ठा sk_buff *segs;
+	if (skb_is_gso(skb) && unlikely(x->xso.dev != dev)) {
+		struct sk_buff *segs;
 
 		/* Packet got rerouted, fixup features and segment it. */
 		esp_features = esp_features & ~(NETIF_F_HW_ESP | NETIF_F_GSO_ESP);
 
 		segs = skb_gso_segment(skb, esp_features);
-		अगर (IS_ERR(segs)) अणु
-			kमुक्त_skb(skb);
-			atomic_दीर्घ_inc(&dev->tx_dropped);
-			वापस शून्य;
-		पूर्ण अन्यथा अणु
+		if (IS_ERR(segs)) {
+			kfree_skb(skb);
+			atomic_long_inc(&dev->tx_dropped);
+			return NULL;
+		} else {
 			consume_skb(skb);
 			skb = segs;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!skb->next) अणु
+	if (!skb->next) {
 		esp_features |= skb->dev->gso_partial_features;
 		xfrm_outer_mode_prep(x, skb);
 
 		xo->flags |= XFRM_DEV_RESUME;
 
 		err = x->type_offload->xmit(x, skb, esp_features);
-		अगर (err) अणु
-			अगर (err == -EINPROGRESS)
-				वापस शून्य;
+		if (err) {
+			if (err == -EINPROGRESS)
+				return NULL;
 
 			XFRM_INC_STATS(xs_net(x), LINUX_MIB_XFRMOUTSTATEPROTOERROR);
-			kमुक्त_skb(skb);
-			वापस शून्य;
-		पूर्ण
+			kfree_skb(skb);
+			return NULL;
+		}
 
 		skb_push(skb, skb->data - skb_mac_header(skb));
 
-		वापस skb;
-	पूर्ण
+		return skb;
+	}
 
-	skb_list_walk_safe(skb, skb2, nskb) अणु
+	skb_list_walk_safe(skb, skb2, nskb) {
 		esp_features |= skb->dev->gso_partial_features;
 		skb_mark_not_on_list(skb2);
 
@@ -183,167 +182,167 @@
 		xfrm_outer_mode_prep(x, skb2);
 
 		err = x->type_offload->xmit(x, skb2, esp_features);
-		अगर (!err) अणु
+		if (!err) {
 			skb2->next = nskb;
-		पूर्ण अन्यथा अगर (err != -EINPROGRESS) अणु
+		} else if (err != -EINPROGRESS) {
 			XFRM_INC_STATS(xs_net(x), LINUX_MIB_XFRMOUTSTATEPROTOERROR);
 			skb2->next = nskb;
-			kमुक्त_skb_list(skb2);
-			वापस शून्य;
-		पूर्ण अन्यथा अणु
-			अगर (skb == skb2)
+			kfree_skb_list(skb2);
+			return NULL;
+		} else {
+			if (skb == skb2)
 				skb = nskb;
-			अन्यथा
+			else
 				pskb->next = nskb;
 
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		skb_push(skb2, skb2->data - skb_mac_header(skb2));
 		pskb = skb2;
-	पूर्ण
+	}
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 EXPORT_SYMBOL_GPL(validate_xmit_xfrm);
 
-पूर्णांक xfrm_dev_state_add(काष्ठा net *net, काष्ठा xfrm_state *x,
-		       काष्ठा xfrm_user_offload *xuo)
-अणु
-	पूर्णांक err;
-	काष्ठा dst_entry *dst;
-	काष्ठा net_device *dev;
-	काष्ठा xfrm_state_offload *xso = &x->xso;
+int xfrm_dev_state_add(struct net *net, struct xfrm_state *x,
+		       struct xfrm_user_offload *xuo)
+{
+	int err;
+	struct dst_entry *dst;
+	struct net_device *dev;
+	struct xfrm_state_offload *xso = &x->xso;
 	xfrm_address_t *saddr;
 	xfrm_address_t *daddr;
 
-	अगर (!x->type_offload)
-		वापस -EINVAL;
+	if (!x->type_offload)
+		return -EINVAL;
 
-	/* We करोn't yet support UDP encapsulation and TFC padding. */
-	अगर (x->encap || x->tfcpad)
-		वापस -EINVAL;
+	/* We don't yet support UDP encapsulation and TFC padding. */
+	if (x->encap || x->tfcpad)
+		return -EINVAL;
 
-	dev = dev_get_by_index(net, xuo->अगरindex);
-	अगर (!dev) अणु
-		अगर (!(xuo->flags & XFRM_OFFLOAD_INBOUND)) अणु
+	dev = dev_get_by_index(net, xuo->ifindex);
+	if (!dev) {
+		if (!(xuo->flags & XFRM_OFFLOAD_INBOUND)) {
 			saddr = &x->props.saddr;
 			daddr = &x->id.daddr;
-		पूर्ण अन्यथा अणु
+		} else {
 			saddr = &x->id.daddr;
 			daddr = &x->props.saddr;
-		पूर्ण
+		}
 
 		dst = __xfrm_dst_lookup(net, 0, 0, saddr, daddr,
 					x->props.family,
 					xfrm_smark_get(0, x));
-		अगर (IS_ERR(dst))
-			वापस 0;
+		if (IS_ERR(dst))
+			return 0;
 
 		dev = dst->dev;
 
 		dev_hold(dev);
 		dst_release(dst);
-	पूर्ण
+	}
 
-	अगर (!dev->xfrmdev_ops || !dev->xfrmdev_ops->xकरो_dev_state_add) अणु
-		xso->dev = शून्य;
+	if (!dev->xfrmdev_ops || !dev->xfrmdev_ops->xdo_dev_state_add) {
+		xso->dev = NULL;
 		dev_put(dev);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (x->props.flags & XFRM_STATE_ESN &&
-	    !dev->xfrmdev_ops->xकरो_dev_state_advance_esn) अणु
-		xso->dev = शून्य;
+	if (x->props.flags & XFRM_STATE_ESN &&
+	    !dev->xfrmdev_ops->xdo_dev_state_advance_esn) {
+		xso->dev = NULL;
 		dev_put(dev);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	xso->dev = dev;
 	xso->real_dev = dev;
 	xso->num_exthdrs = 1;
 	xso->flags = xuo->flags;
 
-	err = dev->xfrmdev_ops->xकरो_dev_state_add(x);
-	अगर (err) अणु
+	err = dev->xfrmdev_ops->xdo_dev_state_add(x);
+	if (err) {
 		xso->num_exthdrs = 0;
 		xso->flags = 0;
-		xso->dev = शून्य;
+		xso->dev = NULL;
 		dev_put(dev);
 
-		अगर (err != -EOPNOTSUPP)
-			वापस err;
-	पूर्ण
+		if (err != -EOPNOTSUPP)
+			return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(xfrm_dev_state_add);
 
-bool xfrm_dev_offload_ok(काष्ठा sk_buff *skb, काष्ठा xfrm_state *x)
-अणु
-	पूर्णांक mtu;
-	काष्ठा dst_entry *dst = skb_dst(skb);
-	काष्ठा xfrm_dst *xdst = (काष्ठा xfrm_dst *)dst;
-	काष्ठा net_device *dev = x->xso.dev;
+bool xfrm_dev_offload_ok(struct sk_buff *skb, struct xfrm_state *x)
+{
+	int mtu;
+	struct dst_entry *dst = skb_dst(skb);
+	struct xfrm_dst *xdst = (struct xfrm_dst *)dst;
+	struct net_device *dev = x->xso.dev;
 
-	अगर (!x->type_offload || x->encap)
-		वापस false;
+	if (!x->type_offload || x->encap)
+		return false;
 
-	अगर ((!dev || (dev == xfrm_dst_path(dst)->dev)) &&
-	    (!xdst->child->xfrm)) अणु
+	if ((!dev || (dev == xfrm_dst_path(dst)->dev)) &&
+	    (!xdst->child->xfrm)) {
 		mtu = xfrm_state_mtu(x, xdst->child_mtu_cached);
-		अगर (skb->len <= mtu)
-			जाओ ok;
+		if (skb->len <= mtu)
+			goto ok;
 
-		अगर (skb_is_gso(skb) && skb_gso_validate_network_len(skb, mtu))
-			जाओ ok;
-	पूर्ण
+		if (skb_is_gso(skb) && skb_gso_validate_network_len(skb, mtu))
+			goto ok;
+	}
 
-	वापस false;
+	return false;
 
 ok:
-	अगर (dev && dev->xfrmdev_ops && dev->xfrmdev_ops->xकरो_dev_offload_ok)
-		वापस x->xso.dev->xfrmdev_ops->xकरो_dev_offload_ok(skb, x);
+	if (dev && dev->xfrmdev_ops && dev->xfrmdev_ops->xdo_dev_offload_ok)
+		return x->xso.dev->xfrmdev_ops->xdo_dev_offload_ok(skb, x);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 EXPORT_SYMBOL_GPL(xfrm_dev_offload_ok);
 
-व्योम xfrm_dev_resume(काष्ठा sk_buff *skb)
-अणु
-	काष्ठा net_device *dev = skb->dev;
-	पूर्णांक ret = NETDEV_TX_BUSY;
-	काष्ठा netdev_queue *txq;
-	काष्ठा softnet_data *sd;
-	अचिन्हित दीर्घ flags;
+void xfrm_dev_resume(struct sk_buff *skb)
+{
+	struct net_device *dev = skb->dev;
+	int ret = NETDEV_TX_BUSY;
+	struct netdev_queue *txq;
+	struct softnet_data *sd;
+	unsigned long flags;
 
-	rcu_पढ़ो_lock();
-	txq = netdev_core_pick_tx(dev, skb, शून्य);
+	rcu_read_lock();
+	txq = netdev_core_pick_tx(dev, skb, NULL);
 
 	HARD_TX_LOCK(dev, txq, smp_processor_id());
-	अगर (!netअगर_xmit_frozen_or_stopped(txq))
+	if (!netif_xmit_frozen_or_stopped(txq))
 		skb = dev_hard_start_xmit(skb, dev, txq, &ret);
 	HARD_TX_UNLOCK(dev, txq);
 
-	अगर (!dev_xmit_complete(ret)) अणु
+	if (!dev_xmit_complete(ret)) {
 		local_irq_save(flags);
 		sd = this_cpu_ptr(&softnet_data);
 		skb_queue_tail(&sd->xfrm_backlog, skb);
-		उठाओ_softirq_irqoff(NET_TX_SOFTIRQ);
+		raise_softirq_irqoff(NET_TX_SOFTIRQ);
 		local_irq_restore(flags);
-	पूर्ण
-	rcu_पढ़ो_unlock();
-पूर्ण
+	}
+	rcu_read_unlock();
+}
 EXPORT_SYMBOL_GPL(xfrm_dev_resume);
 
-व्योम xfrm_dev_backlog(काष्ठा softnet_data *sd)
-अणु
-	काष्ठा sk_buff_head *xfrm_backlog = &sd->xfrm_backlog;
-	काष्ठा sk_buff_head list;
-	काष्ठा sk_buff *skb;
+void xfrm_dev_backlog(struct softnet_data *sd)
+{
+	struct sk_buff_head *xfrm_backlog = &sd->xfrm_backlog;
+	struct sk_buff_head list;
+	struct sk_buff *skb;
 
-	अगर (skb_queue_empty(xfrm_backlog))
-		वापस;
+	if (skb_queue_empty(xfrm_backlog))
+		return;
 
 	__skb_queue_head_init(&list);
 
@@ -351,75 +350,75 @@ EXPORT_SYMBOL_GPL(xfrm_dev_resume);
 	skb_queue_splice_init(xfrm_backlog, &list);
 	spin_unlock(&xfrm_backlog->lock);
 
-	जबतक (!skb_queue_empty(&list)) अणु
+	while (!skb_queue_empty(&list)) {
 		skb = __skb_dequeue(&list);
 		xfrm_dev_resume(skb);
-	पूर्ण
+	}
 
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-अटल पूर्णांक xfrm_api_check(काष्ठा net_device *dev)
-अणु
-#अगर_घोषित CONFIG_XFRM_OFFLOAD
-	अगर ((dev->features & NETIF_F_HW_ESP_TX_CSUM) &&
+static int xfrm_api_check(struct net_device *dev)
+{
+#ifdef CONFIG_XFRM_OFFLOAD
+	if ((dev->features & NETIF_F_HW_ESP_TX_CSUM) &&
 	    !(dev->features & NETIF_F_HW_ESP))
-		वापस NOTIFY_BAD;
+		return NOTIFY_BAD;
 
-	अगर ((dev->features & NETIF_F_HW_ESP) &&
+	if ((dev->features & NETIF_F_HW_ESP) &&
 	    (!(dev->xfrmdev_ops &&
-	       dev->xfrmdev_ops->xकरो_dev_state_add &&
-	       dev->xfrmdev_ops->xकरो_dev_state_delete)))
-		वापस NOTIFY_BAD;
-#अन्यथा
-	अगर (dev->features & (NETIF_F_HW_ESP | NETIF_F_HW_ESP_TX_CSUM))
-		वापस NOTIFY_BAD;
-#पूर्ण_अगर
+	       dev->xfrmdev_ops->xdo_dev_state_add &&
+	       dev->xfrmdev_ops->xdo_dev_state_delete)))
+		return NOTIFY_BAD;
+#else
+	if (dev->features & (NETIF_F_HW_ESP | NETIF_F_HW_ESP_TX_CSUM))
+		return NOTIFY_BAD;
+#endif
 
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
-अटल पूर्णांक xfrm_dev_रेजिस्टर(काष्ठा net_device *dev)
-अणु
-	वापस xfrm_api_check(dev);
-पूर्ण
+static int xfrm_dev_register(struct net_device *dev)
+{
+	return xfrm_api_check(dev);
+}
 
-अटल पूर्णांक xfrm_dev_feat_change(काष्ठा net_device *dev)
-अणु
-	वापस xfrm_api_check(dev);
-पूर्ण
+static int xfrm_dev_feat_change(struct net_device *dev)
+{
+	return xfrm_api_check(dev);
+}
 
-अटल पूर्णांक xfrm_dev_करोwn(काष्ठा net_device *dev)
-अणु
-	अगर (dev->features & NETIF_F_HW_ESP)
+static int xfrm_dev_down(struct net_device *dev)
+{
+	if (dev->features & NETIF_F_HW_ESP)
 		xfrm_dev_state_flush(dev_net(dev), dev, true);
 
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
-अटल पूर्णांक xfrm_dev_event(काष्ठा notअगरier_block *this, अचिन्हित दीर्घ event, व्योम *ptr)
-अणु
-	काष्ठा net_device *dev = netdev_notअगरier_info_to_dev(ptr);
+static int xfrm_dev_event(struct notifier_block *this, unsigned long event, void *ptr)
+{
+	struct net_device *dev = netdev_notifier_info_to_dev(ptr);
 
-	चयन (event) अणु
-	हाल NETDEV_REGISTER:
-		वापस xfrm_dev_रेजिस्टर(dev);
+	switch (event) {
+	case NETDEV_REGISTER:
+		return xfrm_dev_register(dev);
 
-	हाल NETDEV_FEAT_CHANGE:
-		वापस xfrm_dev_feat_change(dev);
+	case NETDEV_FEAT_CHANGE:
+		return xfrm_dev_feat_change(dev);
 
-	हाल NETDEV_DOWN:
-	हाल NETDEV_UNREGISTER:
-		वापस xfrm_dev_करोwn(dev);
-	पूर्ण
-	वापस NOTIFY_DONE;
-पूर्ण
+	case NETDEV_DOWN:
+	case NETDEV_UNREGISTER:
+		return xfrm_dev_down(dev);
+	}
+	return NOTIFY_DONE;
+}
 
-अटल काष्ठा notअगरier_block xfrm_dev_notअगरier = अणु
-	.notअगरier_call	= xfrm_dev_event,
-पूर्ण;
+static struct notifier_block xfrm_dev_notifier = {
+	.notifier_call	= xfrm_dev_event,
+};
 
-व्योम __init xfrm_dev_init(व्योम)
-अणु
-	रेजिस्टर_netdevice_notअगरier(&xfrm_dev_notअगरier);
-पूर्ण
+void __init xfrm_dev_init(void)
+{
+	register_netdevice_notifier(&xfrm_dev_notifier);
+}

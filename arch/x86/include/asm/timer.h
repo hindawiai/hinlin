@@ -1,20 +1,19 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_X86_TIMER_H
-#घोषणा _ASM_X86_TIMER_H
-#समावेश <linux/pm.h>
-#समावेश <linux/percpu.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/math64.h>
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_X86_TIMER_H
+#define _ASM_X86_TIMER_H
+#include <linux/pm.h>
+#include <linux/percpu.h>
+#include <linux/interrupt.h>
+#include <linux/math64.h>
 
-#घोषणा TICK_SIZE (tick_nsec / 1000)
+#define TICK_SIZE (tick_nsec / 1000)
 
-अचिन्हित दीर्घ दीर्घ native_sched_घड़ी(व्योम);
-बाह्य व्योम recalibrate_cpu_khz(व्योम);
+unsigned long long native_sched_clock(void);
+extern void recalibrate_cpu_khz(void);
 
-बाह्य पूर्णांक no_समयr_check;
+extern int no_timer_check;
 
-बाह्य bool using_native_sched_घड़ी(व्योम);
+extern bool using_native_sched_clock(void);
 
 /*
  * We use the full linear equation: f(x) = a + b*x, in order to allow
@@ -25,15 +24,15 @@
  *
  * Without an offset (a) the above would not be possible.
  *
- * See the comment near cycles_2_ns() क्रम details on how we compute (b).
+ * See the comment near cycles_2_ns() for details on how we compute (b).
  */
-काष्ठा cyc2ns_data अणु
+struct cyc2ns_data {
 	u32 cyc2ns_mul;
-	u32 cyc2ns_shअगरt;
+	u32 cyc2ns_shift;
 	u64 cyc2ns_offset;
-पूर्ण; /* 16 bytes */
+}; /* 16 bytes */
 
-बाह्य व्योम cyc2ns_पढ़ो_begin(काष्ठा cyc2ns_data *);
-बाह्य व्योम cyc2ns_पढ़ो_end(व्योम);
+extern void cyc2ns_read_begin(struct cyc2ns_data *);
+extern void cyc2ns_read_end(void);
 
-#पूर्ण_अगर /* _ASM_X86_TIMER_H */
+#endif /* _ASM_X86_TIMER_H */

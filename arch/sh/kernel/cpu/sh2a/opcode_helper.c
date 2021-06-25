@@ -1,24 +1,23 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * arch/sh/kernel/cpu/sh2a/opcode_helper.c
  *
- * Helper क्रम the SH-2A 32-bit opcodes.
+ * Helper for the SH-2A 32-bit opcodes.
  *
  *  Copyright (C) 2007  Paul Mundt
  */
-#समावेश <linux/kernel.h>
+#include <linux/kernel.h>
 
 /*
- * Inकाष्ठाions on SH are generally fixed at 16-bits, however, SH-2A
- * पूर्णांकroduces some 32-bit inकाष्ठाions. Since there are no real
- * स्थिरraपूर्णांकs on their use (and they can be mixed and matched), we need
- * to check the inकाष्ठाion encoding to work out अगर it's a true 32-bit
- * inकाष्ठाion or not.
+ * Instructions on SH are generally fixed at 16-bits, however, SH-2A
+ * introduces some 32-bit instructions. Since there are no real
+ * constraints on their use (and they can be mixed and matched), we need
+ * to check the instruction encoding to work out if it's a true 32-bit
+ * instruction or not.
  *
  * Presently, 32-bit opcodes have only slight variations in what the
- * actual encoding looks like in the first-half of the inकाष्ठाion, which
- * makes it fairly straightक्रमward to dअगरferentiate from the 16-bit ones.
+ * actual encoding looks like in the first-half of the instruction, which
+ * makes it fairly straightforward to differentiate from the 16-bit ones.
  *
  * First 16-bits of encoding		Used by
  *
@@ -32,21 +31,21 @@
  *	0000nnnniiii0000        movi20
  *	0000nnnniiii0001        movi20s
  */
-अचिन्हित पूर्णांक inकाष्ठाion_size(अचिन्हित पूर्णांक insn)
-अणु
-	/* Look क्रम the common हालs */
-	चयन ((insn & 0xf00f)) अणु
-	हाल 0x0000:	/* movi20 */
-	हाल 0x0001:	/* movi20s */
-	हाल 0x3001:	/* 32-bit mov/fmov/movu variants */
-		वापस 4;
-	पूर्ण
+unsigned int instruction_size(unsigned int insn)
+{
+	/* Look for the common cases */
+	switch ((insn & 0xf00f)) {
+	case 0x0000:	/* movi20 */
+	case 0x0001:	/* movi20s */
+	case 0x3001:	/* 32-bit mov/fmov/movu variants */
+		return 4;
+	}
 
-	/* And the special हालs.. */
-	चयन ((insn & 0xf08f)) अणु
-	हाल 0x3009:	/* 32-bit b*.b bit operations */
-		वापस 4;
-	पूर्ण
+	/* And the special cases.. */
+	switch ((insn & 0xf08f)) {
+	case 0x3009:	/* 32-bit b*.b bit operations */
+		return 4;
+	}
 
-	वापस 2;
-पूर्ण
+	return 2;
+}

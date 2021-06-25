@@ -1,266 +1,265 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Intel ACPI functions
  *
  * _DSM related code stolen from nouveau_acpi.c.
  */
 
-#समावेश <linux/pci.h>
-#समावेश <linux/acpi.h>
+#include <linux/pci.h>
+#include <linux/acpi.h>
 
-#समावेश "i915_drv.h"
-#समावेश "intel_acpi.h"
-#समावेश "intel_display_types.h"
+#include "i915_drv.h"
+#include "intel_acpi.h"
+#include "intel_display_types.h"
 
-#घोषणा INTEL_DSM_REVISION_ID 1 /* For Calpella anyway... */
-#घोषणा INTEL_DSM_FN_PLATFORM_MUX_INFO 1 /* No args */
+#define INTEL_DSM_REVISION_ID 1 /* For Calpella anyway... */
+#define INTEL_DSM_FN_PLATFORM_MUX_INFO 1 /* No args */
 
-अटल स्थिर guid_t पूर्णांकel_dsm_guid =
+static const guid_t intel_dsm_guid =
 	GUID_INIT(0x7ed873d3, 0xc2d0, 0x4e4f,
 		  0xa8, 0x54, 0x0f, 0x13, 0x17, 0xb0, 0x1c, 0x2c);
 
-अटल अक्षर *पूर्णांकel_dsm_port_name(u8 id)
-अणु
-	चयन (id) अणु
-	हाल 0:
-		वापस "Reserved";
-	हाल 1:
-		वापस "Analog VGA";
-	हाल 2:
-		वापस "LVDS";
-	हाल 3:
-		वापस "Reserved";
-	हाल 4:
-		वापस "HDMI/DVI_B";
-	हाल 5:
-		वापस "HDMI/DVI_C";
-	हाल 6:
-		वापस "HDMI/DVI_D";
-	हाल 7:
-		वापस "DisplayPort_A";
-	हाल 8:
-		वापस "DisplayPort_B";
-	हाल 9:
-		वापस "DisplayPort_C";
-	हाल 0xa:
-		वापस "DisplayPort_D";
-	हाल 0xb:
-	हाल 0xc:
-	हाल 0xd:
-		वापस "Reserved";
-	हाल 0xe:
-		वापस "WiDi";
-	शेष:
-		वापस "bad type";
-	पूर्ण
-पूर्ण
+static char *intel_dsm_port_name(u8 id)
+{
+	switch (id) {
+	case 0:
+		return "Reserved";
+	case 1:
+		return "Analog VGA";
+	case 2:
+		return "LVDS";
+	case 3:
+		return "Reserved";
+	case 4:
+		return "HDMI/DVI_B";
+	case 5:
+		return "HDMI/DVI_C";
+	case 6:
+		return "HDMI/DVI_D";
+	case 7:
+		return "DisplayPort_A";
+	case 8:
+		return "DisplayPort_B";
+	case 9:
+		return "DisplayPort_C";
+	case 0xa:
+		return "DisplayPort_D";
+	case 0xb:
+	case 0xc:
+	case 0xd:
+		return "Reserved";
+	case 0xe:
+		return "WiDi";
+	default:
+		return "bad type";
+	}
+}
 
-अटल अक्षर *पूर्णांकel_dsm_mux_type(u8 type)
-अणु
-	चयन (type) अणु
-	हाल 0:
-		वापस "unknown";
-	हाल 1:
-		वापस "No MUX, iGPU only";
-	हाल 2:
-		वापस "No MUX, dGPU only";
-	हाल 3:
-		वापस "MUXed between iGPU and dGPU";
-	शेष:
-		वापस "bad type";
-	पूर्ण
-पूर्ण
+static char *intel_dsm_mux_type(u8 type)
+{
+	switch (type) {
+	case 0:
+		return "unknown";
+	case 1:
+		return "No MUX, iGPU only";
+	case 2:
+		return "No MUX, dGPU only";
+	case 3:
+		return "MUXed between iGPU and dGPU";
+	default:
+		return "bad type";
+	}
+}
 
-अटल व्योम पूर्णांकel_dsm_platक्रमm_mux_info(acpi_handle dhandle)
-अणु
-	पूर्णांक i;
-	जोड़ acpi_object *pkg, *connector_count;
+static void intel_dsm_platform_mux_info(acpi_handle dhandle)
+{
+	int i;
+	union acpi_object *pkg, *connector_count;
 
-	pkg = acpi_evaluate_dsm_typed(dhandle, &पूर्णांकel_dsm_guid,
+	pkg = acpi_evaluate_dsm_typed(dhandle, &intel_dsm_guid,
 			INTEL_DSM_REVISION_ID, INTEL_DSM_FN_PLATFORM_MUX_INFO,
-			शून्य, ACPI_TYPE_PACKAGE);
-	अगर (!pkg) अणु
+			NULL, ACPI_TYPE_PACKAGE);
+	if (!pkg) {
 		DRM_DEBUG_DRIVER("failed to evaluate _DSM\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (!pkg->package.count) अणु
+	if (!pkg->package.count) {
 		DRM_DEBUG_DRIVER("no connection in _DSM\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	connector_count = &pkg->package.elements[0];
 	DRM_DEBUG_DRIVER("MUX info connectors: %lld\n",
-		  (अचिन्हित दीर्घ दीर्घ)connector_count->पूर्णांकeger.value);
-	क्रम (i = 1; i < pkg->package.count; i++) अणु
-		जोड़ acpi_object *obj = &pkg->package.elements[i];
-		जोड़ acpi_object *connector_id;
-		जोड़ acpi_object *info;
+		  (unsigned long long)connector_count->integer.value);
+	for (i = 1; i < pkg->package.count; i++) {
+		union acpi_object *obj = &pkg->package.elements[i];
+		union acpi_object *connector_id;
+		union acpi_object *info;
 
-		अगर (obj->type != ACPI_TYPE_PACKAGE || obj->package.count < 2) अणु
+		if (obj->type != ACPI_TYPE_PACKAGE || obj->package.count < 2) {
 			DRM_DEBUG_DRIVER("Invalid object for MUX #%d\n", i);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		connector_id = &obj->package.elements[0];
 		info = &obj->package.elements[1];
-		अगर (info->type != ACPI_TYPE_BUFFER || info->buffer.length < 4) अणु
+		if (info->type != ACPI_TYPE_BUFFER || info->buffer.length < 4) {
 			DRM_DEBUG_DRIVER("Invalid info for MUX obj #%d\n", i);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		DRM_DEBUG_DRIVER("Connector id: 0x%016llx\n",
-			  (अचिन्हित दीर्घ दीर्घ)connector_id->पूर्णांकeger.value);
+			  (unsigned long long)connector_id->integer.value);
 		DRM_DEBUG_DRIVER("  port id: %s\n",
-		       पूर्णांकel_dsm_port_name(info->buffer.poपूर्णांकer[0]));
+		       intel_dsm_port_name(info->buffer.pointer[0]));
 		DRM_DEBUG_DRIVER("  display mux info: %s\n",
-		       पूर्णांकel_dsm_mux_type(info->buffer.poपूर्णांकer[1]));
+		       intel_dsm_mux_type(info->buffer.pointer[1]));
 		DRM_DEBUG_DRIVER("  aux/dc mux info: %s\n",
-		       पूर्णांकel_dsm_mux_type(info->buffer.poपूर्णांकer[2]));
+		       intel_dsm_mux_type(info->buffer.pointer[2]));
 		DRM_DEBUG_DRIVER("  hpd mux info: %s\n",
-		       पूर्णांकel_dsm_mux_type(info->buffer.poपूर्णांकer[3]));
-	पूर्ण
+		       intel_dsm_mux_type(info->buffer.pointer[3]));
+	}
 
 	ACPI_FREE(pkg);
-पूर्ण
+}
 
-अटल acpi_handle पूर्णांकel_dsm_pci_probe(काष्ठा pci_dev *pdev)
-अणु
+static acpi_handle intel_dsm_pci_probe(struct pci_dev *pdev)
+{
 	acpi_handle dhandle;
 
 	dhandle = ACPI_HANDLE(&pdev->dev);
-	अगर (!dhandle)
-		वापस शून्य;
+	if (!dhandle)
+		return NULL;
 
-	अगर (!acpi_check_dsm(dhandle, &पूर्णांकel_dsm_guid, INTEL_DSM_REVISION_ID,
-			    1 << INTEL_DSM_FN_PLATFORM_MUX_INFO)) अणु
+	if (!acpi_check_dsm(dhandle, &intel_dsm_guid, INTEL_DSM_REVISION_ID,
+			    1 << INTEL_DSM_FN_PLATFORM_MUX_INFO)) {
 		DRM_DEBUG_KMS("no _DSM method for intel device\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	पूर्णांकel_dsm_platक्रमm_mux_info(dhandle);
+	intel_dsm_platform_mux_info(dhandle);
 
-	वापस dhandle;
-पूर्ण
+	return dhandle;
+}
 
-अटल bool पूर्णांकel_dsm_detect(व्योम)
-अणु
-	acpi_handle dhandle = शून्य;
-	अक्षर acpi_method_name[255] = अणु 0 पूर्ण;
-	काष्ठा acpi_buffer buffer = अणुमाप(acpi_method_name), acpi_method_nameपूर्ण;
-	काष्ठा pci_dev *pdev = शून्य;
-	पूर्णांक vga_count = 0;
+static bool intel_dsm_detect(void)
+{
+	acpi_handle dhandle = NULL;
+	char acpi_method_name[255] = { 0 };
+	struct acpi_buffer buffer = {sizeof(acpi_method_name), acpi_method_name};
+	struct pci_dev *pdev = NULL;
+	int vga_count = 0;
 
-	जबतक ((pdev = pci_get_class(PCI_CLASS_DISPLAY_VGA << 8, pdev)) != शून्य) अणु
+	while ((pdev = pci_get_class(PCI_CLASS_DISPLAY_VGA << 8, pdev)) != NULL) {
 		vga_count++;
-		dhandle = पूर्णांकel_dsm_pci_probe(pdev) ?: dhandle;
-	पूर्ण
+		dhandle = intel_dsm_pci_probe(pdev) ?: dhandle;
+	}
 
-	अगर (vga_count == 2 && dhandle) अणु
+	if (vga_count == 2 && dhandle) {
 		acpi_get_name(dhandle, ACPI_FULL_PATHNAME, &buffer);
 		DRM_DEBUG_DRIVER("vga_switcheroo: detected DSM switching method %s handle\n",
 				 acpi_method_name);
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-व्योम पूर्णांकel_रेजिस्टर_dsm_handler(व्योम)
-अणु
-	अगर (!पूर्णांकel_dsm_detect())
-		वापस;
-पूर्ण
+void intel_register_dsm_handler(void)
+{
+	if (!intel_dsm_detect())
+		return;
+}
 
-व्योम पूर्णांकel_unरेजिस्टर_dsm_handler(व्योम)
-अणु
-पूर्ण
+void intel_unregister_dsm_handler(void)
+{
+}
 
 /*
- * ACPI Specअगरication, Revision 5.0, Appendix B.3.2 _DOD (Enumerate All Devices
+ * ACPI Specification, Revision 5.0, Appendix B.3.2 _DOD (Enumerate All Devices
  * Attached to the Display Adapter).
  */
-#घोषणा ACPI_DISPLAY_INDEX_SHIFT		0
-#घोषणा ACPI_DISPLAY_INDEX_MASK			(0xf << 0)
-#घोषणा ACPI_DISPLAY_PORT_ATTACHMENT_SHIFT	4
-#घोषणा ACPI_DISPLAY_PORT_ATTACHMENT_MASK	(0xf << 4)
-#घोषणा ACPI_DISPLAY_TYPE_SHIFT			8
-#घोषणा ACPI_DISPLAY_TYPE_MASK			(0xf << 8)
-#घोषणा ACPI_DISPLAY_TYPE_OTHER			(0 << 8)
-#घोषणा ACPI_DISPLAY_TYPE_VGA			(1 << 8)
-#घोषणा ACPI_DISPLAY_TYPE_TV			(2 << 8)
-#घोषणा ACPI_DISPLAY_TYPE_EXTERNAL_DIGITAL	(3 << 8)
-#घोषणा ACPI_DISPLAY_TYPE_INTERNAL_DIGITAL	(4 << 8)
-#घोषणा ACPI_VENDOR_SPECIFIC_SHIFT		12
-#घोषणा ACPI_VENDOR_SPECIFIC_MASK		(0xf << 12)
-#घोषणा ACPI_BIOS_CAN_DETECT			(1 << 16)
-#घोषणा ACPI_DEPENDS_ON_VGA			(1 << 17)
-#घोषणा ACPI_PIPE_ID_SHIFT			18
-#घोषणा ACPI_PIPE_ID_MASK			(7 << 18)
-#घोषणा ACPI_DEVICE_ID_SCHEME			(1ULL << 31)
+#define ACPI_DISPLAY_INDEX_SHIFT		0
+#define ACPI_DISPLAY_INDEX_MASK			(0xf << 0)
+#define ACPI_DISPLAY_PORT_ATTACHMENT_SHIFT	4
+#define ACPI_DISPLAY_PORT_ATTACHMENT_MASK	(0xf << 4)
+#define ACPI_DISPLAY_TYPE_SHIFT			8
+#define ACPI_DISPLAY_TYPE_MASK			(0xf << 8)
+#define ACPI_DISPLAY_TYPE_OTHER			(0 << 8)
+#define ACPI_DISPLAY_TYPE_VGA			(1 << 8)
+#define ACPI_DISPLAY_TYPE_TV			(2 << 8)
+#define ACPI_DISPLAY_TYPE_EXTERNAL_DIGITAL	(3 << 8)
+#define ACPI_DISPLAY_TYPE_INTERNAL_DIGITAL	(4 << 8)
+#define ACPI_VENDOR_SPECIFIC_SHIFT		12
+#define ACPI_VENDOR_SPECIFIC_MASK		(0xf << 12)
+#define ACPI_BIOS_CAN_DETECT			(1 << 16)
+#define ACPI_DEPENDS_ON_VGA			(1 << 17)
+#define ACPI_PIPE_ID_SHIFT			18
+#define ACPI_PIPE_ID_MASK			(7 << 18)
+#define ACPI_DEVICE_ID_SCHEME			(1ULL << 31)
 
-अटल u32 acpi_display_type(काष्ठा पूर्णांकel_connector *connector)
-अणु
+static u32 acpi_display_type(struct intel_connector *connector)
+{
 	u32 display_type;
 
-	चयन (connector->base.connector_type) अणु
-	हाल DRM_MODE_CONNECTOR_VGA:
-	हाल DRM_MODE_CONNECTOR_DVIA:
+	switch (connector->base.connector_type) {
+	case DRM_MODE_CONNECTOR_VGA:
+	case DRM_MODE_CONNECTOR_DVIA:
 		display_type = ACPI_DISPLAY_TYPE_VGA;
-		अवरोध;
-	हाल DRM_MODE_CONNECTOR_Composite:
-	हाल DRM_MODE_CONNECTOR_SVIDEO:
-	हाल DRM_MODE_CONNECTOR_Component:
-	हाल DRM_MODE_CONNECTOR_9PinDIN:
-	हाल DRM_MODE_CONNECTOR_TV:
+		break;
+	case DRM_MODE_CONNECTOR_Composite:
+	case DRM_MODE_CONNECTOR_SVIDEO:
+	case DRM_MODE_CONNECTOR_Component:
+	case DRM_MODE_CONNECTOR_9PinDIN:
+	case DRM_MODE_CONNECTOR_TV:
 		display_type = ACPI_DISPLAY_TYPE_TV;
-		अवरोध;
-	हाल DRM_MODE_CONNECTOR_DVII:
-	हाल DRM_MODE_CONNECTOR_DVID:
-	हाल DRM_MODE_CONNECTOR_DisplayPort:
-	हाल DRM_MODE_CONNECTOR_HDMIA:
-	हाल DRM_MODE_CONNECTOR_HDMIB:
+		break;
+	case DRM_MODE_CONNECTOR_DVII:
+	case DRM_MODE_CONNECTOR_DVID:
+	case DRM_MODE_CONNECTOR_DisplayPort:
+	case DRM_MODE_CONNECTOR_HDMIA:
+	case DRM_MODE_CONNECTOR_HDMIB:
 		display_type = ACPI_DISPLAY_TYPE_EXTERNAL_DIGITAL;
-		अवरोध;
-	हाल DRM_MODE_CONNECTOR_LVDS:
-	हाल DRM_MODE_CONNECTOR_eDP:
-	हाल DRM_MODE_CONNECTOR_DSI:
+		break;
+	case DRM_MODE_CONNECTOR_LVDS:
+	case DRM_MODE_CONNECTOR_eDP:
+	case DRM_MODE_CONNECTOR_DSI:
 		display_type = ACPI_DISPLAY_TYPE_INTERNAL_DIGITAL;
-		अवरोध;
-	हाल DRM_MODE_CONNECTOR_Unknown:
-	हाल DRM_MODE_CONNECTOR_VIRTUAL:
+		break;
+	case DRM_MODE_CONNECTOR_Unknown:
+	case DRM_MODE_CONNECTOR_VIRTUAL:
 		display_type = ACPI_DISPLAY_TYPE_OTHER;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		MISSING_CASE(connector->base.connector_type);
 		display_type = ACPI_DISPLAY_TYPE_OTHER;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस display_type;
-पूर्ण
+	return display_type;
+}
 
-व्योम पूर्णांकel_acpi_device_id_update(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	काष्ठा drm_device *drm_dev = &dev_priv->drm;
-	काष्ठा पूर्णांकel_connector *connector;
-	काष्ठा drm_connector_list_iter conn_iter;
-	u8 display_index[16] = अणुपूर्ण;
+void intel_acpi_device_id_update(struct drm_i915_private *dev_priv)
+{
+	struct drm_device *drm_dev = &dev_priv->drm;
+	struct intel_connector *connector;
+	struct drm_connector_list_iter conn_iter;
+	u8 display_index[16] = {};
 
-	/* Populate the ACPI IDs क्रम all connectors क्रम a given drm_device */
+	/* Populate the ACPI IDs for all connectors for a given drm_device */
 	drm_connector_list_iter_begin(drm_dev, &conn_iter);
-	क्रम_each_पूर्णांकel_connector_iter(connector, &conn_iter) अणु
+	for_each_intel_connector_iter(connector, &conn_iter) {
 		u32 device_id, type;
 
 		device_id = acpi_display_type(connector);
 
-		/* Use display type specअगरic display index. */
+		/* Use display type specific display index. */
 		type = (device_id & ACPI_DISPLAY_TYPE_MASK)
 			>> ACPI_DISPLAY_TYPE_SHIFT;
 		device_id |= display_index[type]++ << ACPI_DISPLAY_INDEX_SHIFT;
 
 		connector->acpi_device_id = device_id;
-	पूर्ण
+	}
 	drm_connector_list_iter_end(&conn_iter);
-पूर्ण
+}

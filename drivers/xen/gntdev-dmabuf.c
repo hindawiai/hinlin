@@ -1,374 +1,373 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
 /*
- * Xen dma-buf functionality क्रम gntdev.
+ * Xen dma-buf functionality for gntdev.
  *
  * DMA buffer implementation is based on drivers/gpu/drm/drm_prime.c.
  *
  * Copyright (c) 2018 Oleksandr Andrushchenko, EPAM Systems Inc.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/dma-buf.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/types.h>
-#समावेश <linux/uaccess.h>
+#include <linux/kernel.h>
+#include <linux/errno.h>
+#include <linux/dma-buf.h>
+#include <linux/slab.h>
+#include <linux/types.h>
+#include <linux/uaccess.h>
 
-#समावेश <xen/xen.h>
-#समावेश <xen/grant_table.h>
+#include <xen/xen.h>
+#include <xen/grant_table.h>
 
-#समावेश "gntdev-common.h"
-#समावेश "gntdev-dmabuf.h"
+#include "gntdev-common.h"
+#include "gntdev-dmabuf.h"
 
-#अगर_अघोषित GRANT_INVALID_REF
+#ifndef GRANT_INVALID_REF
 /*
  * Note on usage of grant reference 0 as invalid grant reference:
  * grant reference 0 is valid, but never exposed to a driver,
- * because of the fact it is alपढ़ोy in use/reserved by the PV console.
+ * because of the fact it is already in use/reserved by the PV console.
  */
-#घोषणा GRANT_INVALID_REF	0
-#पूर्ण_अगर
+#define GRANT_INVALID_REF	0
+#endif
 
-काष्ठा gntdev_dmabuf अणु
-	काष्ठा gntdev_dmabuf_priv *priv;
-	काष्ठा dma_buf *dmabuf;
-	काष्ठा list_head next;
-	पूर्णांक fd;
+struct gntdev_dmabuf {
+	struct gntdev_dmabuf_priv *priv;
+	struct dma_buf *dmabuf;
+	struct list_head next;
+	int fd;
 
-	जोड़ अणु
-		काष्ठा अणु
+	union {
+		struct {
 			/* Exported buffers are reference counted. */
-			काष्ठा kref refcount;
+			struct kref refcount;
 
-			काष्ठा gntdev_priv *priv;
-			काष्ठा gntdev_grant_map *map;
-		पूर्ण exp;
-		काष्ठा अणु
+			struct gntdev_priv *priv;
+			struct gntdev_grant_map *map;
+		} exp;
+		struct {
 			/* Granted references of the imported buffer. */
 			grant_ref_t *refs;
 			/* Scatter-gather table of the imported buffer. */
-			काष्ठा sg_table *sgt;
+			struct sg_table *sgt;
 			/* dma-buf attachment of the imported buffer. */
-			काष्ठा dma_buf_attachment *attach;
-		पूर्ण imp;
-	पूर्ण u;
+			struct dma_buf_attachment *attach;
+		} imp;
+	} u;
 
 	/* Number of pages this buffer has. */
-	पूर्णांक nr_pages;
+	int nr_pages;
 	/* Pages of this buffer. */
-	काष्ठा page **pages;
-पूर्ण;
+	struct page **pages;
+};
 
-काष्ठा gntdev_dmabuf_रुको_obj अणु
-	काष्ठा list_head next;
-	काष्ठा gntdev_dmabuf *gntdev_dmabuf;
-	काष्ठा completion completion;
-पूर्ण;
+struct gntdev_dmabuf_wait_obj {
+	struct list_head next;
+	struct gntdev_dmabuf *gntdev_dmabuf;
+	struct completion completion;
+};
 
-काष्ठा gntdev_dmabuf_attachment अणु
-	काष्ठा sg_table *sgt;
-	क्रमागत dma_data_direction dir;
-पूर्ण;
+struct gntdev_dmabuf_attachment {
+	struct sg_table *sgt;
+	enum dma_data_direction dir;
+};
 
-काष्ठा gntdev_dmabuf_priv अणु
+struct gntdev_dmabuf_priv {
 	/* List of exported DMA buffers. */
-	काष्ठा list_head exp_list;
-	/* List of रुको objects. */
-	काष्ठा list_head exp_रुको_list;
+	struct list_head exp_list;
+	/* List of wait objects. */
+	struct list_head exp_wait_list;
 	/* List of imported DMA buffers. */
-	काष्ठा list_head imp_list;
+	struct list_head imp_list;
 	/* This is the lock which protects dma_buf_xxx lists. */
-	काष्ठा mutex lock;
+	struct mutex lock;
 	/*
-	 * We reference this file जबतक exporting dma-bufs, so
-	 * the grant device context is not destroyed जबतक there are
-	 * बाह्यal users alive.
+	 * We reference this file while exporting dma-bufs, so
+	 * the grant device context is not destroyed while there are
+	 * external users alive.
 	 */
-	काष्ठा file *filp;
-पूर्ण;
+	struct file *filp;
+};
 
 /* DMA buffer export support. */
 
-/* Implementation of रुको क्रम exported DMA buffer to be released. */
+/* Implementation of wait for exported DMA buffer to be released. */
 
-अटल व्योम dmabuf_exp_release(काष्ठा kref *kref);
+static void dmabuf_exp_release(struct kref *kref);
 
-अटल काष्ठा gntdev_dmabuf_रुको_obj *
-dmabuf_exp_रुको_obj_new(काष्ठा gntdev_dmabuf_priv *priv,
-			काष्ठा gntdev_dmabuf *gntdev_dmabuf)
-अणु
-	काष्ठा gntdev_dmabuf_रुको_obj *obj;
+static struct gntdev_dmabuf_wait_obj *
+dmabuf_exp_wait_obj_new(struct gntdev_dmabuf_priv *priv,
+			struct gntdev_dmabuf *gntdev_dmabuf)
+{
+	struct gntdev_dmabuf_wait_obj *obj;
 
-	obj = kzalloc(माप(*obj), GFP_KERNEL);
-	अगर (!obj)
-		वापस ERR_PTR(-ENOMEM);
+	obj = kzalloc(sizeof(*obj), GFP_KERNEL);
+	if (!obj)
+		return ERR_PTR(-ENOMEM);
 
 	init_completion(&obj->completion);
 	obj->gntdev_dmabuf = gntdev_dmabuf;
 
 	mutex_lock(&priv->lock);
-	list_add(&obj->next, &priv->exp_रुको_list);
-	/* Put our reference and रुको क्रम gntdev_dmabuf's release to fire. */
+	list_add(&obj->next, &priv->exp_wait_list);
+	/* Put our reference and wait for gntdev_dmabuf's release to fire. */
 	kref_put(&gntdev_dmabuf->u.exp.refcount, dmabuf_exp_release);
 	mutex_unlock(&priv->lock);
-	वापस obj;
-पूर्ण
+	return obj;
+}
 
-अटल व्योम dmabuf_exp_रुको_obj_मुक्त(काष्ठा gntdev_dmabuf_priv *priv,
-				     काष्ठा gntdev_dmabuf_रुको_obj *obj)
-अणु
+static void dmabuf_exp_wait_obj_free(struct gntdev_dmabuf_priv *priv,
+				     struct gntdev_dmabuf_wait_obj *obj)
+{
 	mutex_lock(&priv->lock);
 	list_del(&obj->next);
 	mutex_unlock(&priv->lock);
-	kमुक्त(obj);
-पूर्ण
+	kfree(obj);
+}
 
-अटल पूर्णांक dmabuf_exp_रुको_obj_रुको(काष्ठा gntdev_dmabuf_रुको_obj *obj,
-				    u32 रुको_to_ms)
-अणु
-	अगर (रुको_क्रम_completion_समयout(&obj->completion,
-			msecs_to_jअगरfies(रुको_to_ms)) <= 0)
-		वापस -ETIMEDOUT;
+static int dmabuf_exp_wait_obj_wait(struct gntdev_dmabuf_wait_obj *obj,
+				    u32 wait_to_ms)
+{
+	if (wait_for_completion_timeout(&obj->completion,
+			msecs_to_jiffies(wait_to_ms)) <= 0)
+		return -ETIMEDOUT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम dmabuf_exp_रुको_obj_संकेत(काष्ठा gntdev_dmabuf_priv *priv,
-				       काष्ठा gntdev_dmabuf *gntdev_dmabuf)
-अणु
-	काष्ठा gntdev_dmabuf_रुको_obj *obj;
+static void dmabuf_exp_wait_obj_signal(struct gntdev_dmabuf_priv *priv,
+				       struct gntdev_dmabuf *gntdev_dmabuf)
+{
+	struct gntdev_dmabuf_wait_obj *obj;
 
-	list_क्रम_each_entry(obj, &priv->exp_रुको_list, next)
-		अगर (obj->gntdev_dmabuf == gntdev_dmabuf) अणु
+	list_for_each_entry(obj, &priv->exp_wait_list, next)
+		if (obj->gntdev_dmabuf == gntdev_dmabuf) {
 			pr_debug("Found gntdev_dmabuf in the wait list, wake\n");
 			complete_all(&obj->completion);
-			अवरोध;
-		पूर्ण
-पूर्ण
+			break;
+		}
+}
 
-अटल काष्ठा gntdev_dmabuf *
-dmabuf_exp_रुको_obj_get_dmabuf(काष्ठा gntdev_dmabuf_priv *priv, पूर्णांक fd)
-अणु
-	काष्ठा gntdev_dmabuf *gntdev_dmabuf, *ret = ERR_PTR(-ENOENT);
+static struct gntdev_dmabuf *
+dmabuf_exp_wait_obj_get_dmabuf(struct gntdev_dmabuf_priv *priv, int fd)
+{
+	struct gntdev_dmabuf *gntdev_dmabuf, *ret = ERR_PTR(-ENOENT);
 
 	mutex_lock(&priv->lock);
-	list_क्रम_each_entry(gntdev_dmabuf, &priv->exp_list, next)
-		अगर (gntdev_dmabuf->fd == fd) अणु
+	list_for_each_entry(gntdev_dmabuf, &priv->exp_list, next)
+		if (gntdev_dmabuf->fd == fd) {
 			pr_debug("Found gntdev_dmabuf in the wait list\n");
 			kref_get(&gntdev_dmabuf->u.exp.refcount);
 			ret = gntdev_dmabuf;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 	mutex_unlock(&priv->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक dmabuf_exp_रुको_released(काष्ठा gntdev_dmabuf_priv *priv, पूर्णांक fd,
-				    पूर्णांक रुको_to_ms)
-अणु
-	काष्ठा gntdev_dmabuf *gntdev_dmabuf;
-	काष्ठा gntdev_dmabuf_रुको_obj *obj;
-	पूर्णांक ret;
+static int dmabuf_exp_wait_released(struct gntdev_dmabuf_priv *priv, int fd,
+				    int wait_to_ms)
+{
+	struct gntdev_dmabuf *gntdev_dmabuf;
+	struct gntdev_dmabuf_wait_obj *obj;
+	int ret;
 
 	pr_debug("Will wait for dma-buf with fd %d\n", fd);
 	/*
-	 * Try to find the DMA buffer: अगर not found means that
-	 * either the buffer has alपढ़ोy been released or file descriptor
+	 * Try to find the DMA buffer: if not found means that
+	 * either the buffer has already been released or file descriptor
 	 * provided is wrong.
 	 */
-	gntdev_dmabuf = dmabuf_exp_रुको_obj_get_dmabuf(priv, fd);
-	अगर (IS_ERR(gntdev_dmabuf))
-		वापस PTR_ERR(gntdev_dmabuf);
+	gntdev_dmabuf = dmabuf_exp_wait_obj_get_dmabuf(priv, fd);
+	if (IS_ERR(gntdev_dmabuf))
+		return PTR_ERR(gntdev_dmabuf);
 
 	/*
 	 * gntdev_dmabuf still exists and is reference count locked by us now,
-	 * so prepare to रुको: allocate रुको object and add it to the रुको list,
+	 * so prepare to wait: allocate wait object and add it to the wait list,
 	 * so we can find it on release.
 	 */
-	obj = dmabuf_exp_रुको_obj_new(priv, gntdev_dmabuf);
-	अगर (IS_ERR(obj))
-		वापस PTR_ERR(obj);
+	obj = dmabuf_exp_wait_obj_new(priv, gntdev_dmabuf);
+	if (IS_ERR(obj))
+		return PTR_ERR(obj);
 
-	ret = dmabuf_exp_रुको_obj_रुको(obj, रुको_to_ms);
-	dmabuf_exp_रुको_obj_मुक्त(priv, obj);
-	वापस ret;
-पूर्ण
+	ret = dmabuf_exp_wait_obj_wait(obj, wait_to_ms);
+	dmabuf_exp_wait_obj_free(priv, obj);
+	return ret;
+}
 
 /* DMA buffer export support. */
 
-अटल काष्ठा sg_table *
-dmabuf_pages_to_sgt(काष्ठा page **pages, अचिन्हित पूर्णांक nr_pages)
-अणु
-	काष्ठा sg_table *sgt;
-	पूर्णांक ret;
+static struct sg_table *
+dmabuf_pages_to_sgt(struct page **pages, unsigned int nr_pages)
+{
+	struct sg_table *sgt;
+	int ret;
 
-	sgt = kदो_स्मृति(माप(*sgt), GFP_KERNEL);
-	अगर (!sgt) अणु
+	sgt = kmalloc(sizeof(*sgt), GFP_KERNEL);
+	if (!sgt) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = sg_alloc_table_from_pages(sgt, pages, nr_pages, 0,
 					nr_pages << PAGE_SHIFT,
 					GFP_KERNEL);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	वापस sgt;
+	return sgt;
 
 out:
-	kमुक्त(sgt);
-	वापस ERR_PTR(ret);
-पूर्ण
+	kfree(sgt);
+	return ERR_PTR(ret);
+}
 
-अटल पूर्णांक dmabuf_exp_ops_attach(काष्ठा dma_buf *dma_buf,
-				 काष्ठा dma_buf_attachment *attach)
-अणु
-	काष्ठा gntdev_dmabuf_attachment *gntdev_dmabuf_attach;
+static int dmabuf_exp_ops_attach(struct dma_buf *dma_buf,
+				 struct dma_buf_attachment *attach)
+{
+	struct gntdev_dmabuf_attachment *gntdev_dmabuf_attach;
 
-	gntdev_dmabuf_attach = kzalloc(माप(*gntdev_dmabuf_attach),
+	gntdev_dmabuf_attach = kzalloc(sizeof(*gntdev_dmabuf_attach),
 				       GFP_KERNEL);
-	अगर (!gntdev_dmabuf_attach)
-		वापस -ENOMEM;
+	if (!gntdev_dmabuf_attach)
+		return -ENOMEM;
 
 	gntdev_dmabuf_attach->dir = DMA_NONE;
 	attach->priv = gntdev_dmabuf_attach;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम dmabuf_exp_ops_detach(काष्ठा dma_buf *dma_buf,
-				  काष्ठा dma_buf_attachment *attach)
-अणु
-	काष्ठा gntdev_dmabuf_attachment *gntdev_dmabuf_attach = attach->priv;
+static void dmabuf_exp_ops_detach(struct dma_buf *dma_buf,
+				  struct dma_buf_attachment *attach)
+{
+	struct gntdev_dmabuf_attachment *gntdev_dmabuf_attach = attach->priv;
 
-	अगर (gntdev_dmabuf_attach) अणु
-		काष्ठा sg_table *sgt = gntdev_dmabuf_attach->sgt;
+	if (gntdev_dmabuf_attach) {
+		struct sg_table *sgt = gntdev_dmabuf_attach->sgt;
 
-		अगर (sgt) अणु
-			अगर (gntdev_dmabuf_attach->dir != DMA_NONE)
+		if (sgt) {
+			if (gntdev_dmabuf_attach->dir != DMA_NONE)
 				dma_unmap_sgtable(attach->dev, sgt,
 						  gntdev_dmabuf_attach->dir,
 						  DMA_ATTR_SKIP_CPU_SYNC);
-			sg_मुक्त_table(sgt);
-		पूर्ण
+			sg_free_table(sgt);
+		}
 
-		kमुक्त(sgt);
-		kमुक्त(gntdev_dmabuf_attach);
-		attach->priv = शून्य;
-	पूर्ण
-पूर्ण
+		kfree(sgt);
+		kfree(gntdev_dmabuf_attach);
+		attach->priv = NULL;
+	}
+}
 
-अटल काष्ठा sg_table *
-dmabuf_exp_ops_map_dma_buf(काष्ठा dma_buf_attachment *attach,
-			   क्रमागत dma_data_direction dir)
-अणु
-	काष्ठा gntdev_dmabuf_attachment *gntdev_dmabuf_attach = attach->priv;
-	काष्ठा gntdev_dmabuf *gntdev_dmabuf = attach->dmabuf->priv;
-	काष्ठा sg_table *sgt;
+static struct sg_table *
+dmabuf_exp_ops_map_dma_buf(struct dma_buf_attachment *attach,
+			   enum dma_data_direction dir)
+{
+	struct gntdev_dmabuf_attachment *gntdev_dmabuf_attach = attach->priv;
+	struct gntdev_dmabuf *gntdev_dmabuf = attach->dmabuf->priv;
+	struct sg_table *sgt;
 
 	pr_debug("Mapping %d pages for dev %p\n", gntdev_dmabuf->nr_pages,
 		 attach->dev);
 
-	अगर (dir == DMA_NONE || !gntdev_dmabuf_attach)
-		वापस ERR_PTR(-EINVAL);
+	if (dir == DMA_NONE || !gntdev_dmabuf_attach)
+		return ERR_PTR(-EINVAL);
 
 	/* Return the cached mapping when possible. */
-	अगर (gntdev_dmabuf_attach->dir == dir)
-		वापस gntdev_dmabuf_attach->sgt;
+	if (gntdev_dmabuf_attach->dir == dir)
+		return gntdev_dmabuf_attach->sgt;
 
 	/*
-	 * Two mappings with dअगरferent directions क्रम the same attachment are
+	 * Two mappings with different directions for the same attachment are
 	 * not allowed.
 	 */
-	अगर (gntdev_dmabuf_attach->dir != DMA_NONE)
-		वापस ERR_PTR(-EBUSY);
+	if (gntdev_dmabuf_attach->dir != DMA_NONE)
+		return ERR_PTR(-EBUSY);
 
 	sgt = dmabuf_pages_to_sgt(gntdev_dmabuf->pages,
 				  gntdev_dmabuf->nr_pages);
-	अगर (!IS_ERR(sgt)) अणु
-		अगर (dma_map_sgtable(attach->dev, sgt, dir,
-				    DMA_ATTR_SKIP_CPU_SYNC)) अणु
-			sg_मुक्त_table(sgt);
-			kमुक्त(sgt);
+	if (!IS_ERR(sgt)) {
+		if (dma_map_sgtable(attach->dev, sgt, dir,
+				    DMA_ATTR_SKIP_CPU_SYNC)) {
+			sg_free_table(sgt);
+			kfree(sgt);
 			sgt = ERR_PTR(-ENOMEM);
-		पूर्ण अन्यथा अणु
+		} else {
 			gntdev_dmabuf_attach->sgt = sgt;
 			gntdev_dmabuf_attach->dir = dir;
-		पूर्ण
-	पूर्ण
-	अगर (IS_ERR(sgt))
+		}
+	}
+	if (IS_ERR(sgt))
 		pr_debug("Failed to map sg table for dev %p\n", attach->dev);
-	वापस sgt;
-पूर्ण
+	return sgt;
+}
 
-अटल व्योम dmabuf_exp_ops_unmap_dma_buf(काष्ठा dma_buf_attachment *attach,
-					 काष्ठा sg_table *sgt,
-					 क्रमागत dma_data_direction dir)
-अणु
-	/* Not implemented. The unmap is करोne at dmabuf_exp_ops_detach(). */
-पूर्ण
+static void dmabuf_exp_ops_unmap_dma_buf(struct dma_buf_attachment *attach,
+					 struct sg_table *sgt,
+					 enum dma_data_direction dir)
+{
+	/* Not implemented. The unmap is done at dmabuf_exp_ops_detach(). */
+}
 
-अटल व्योम dmabuf_exp_release(काष्ठा kref *kref)
-अणु
-	काष्ठा gntdev_dmabuf *gntdev_dmabuf =
-		container_of(kref, काष्ठा gntdev_dmabuf, u.exp.refcount);
+static void dmabuf_exp_release(struct kref *kref)
+{
+	struct gntdev_dmabuf *gntdev_dmabuf =
+		container_of(kref, struct gntdev_dmabuf, u.exp.refcount);
 
-	dmabuf_exp_रुको_obj_संकेत(gntdev_dmabuf->priv, gntdev_dmabuf);
+	dmabuf_exp_wait_obj_signal(gntdev_dmabuf->priv, gntdev_dmabuf);
 	list_del(&gntdev_dmabuf->next);
 	fput(gntdev_dmabuf->priv->filp);
-	kमुक्त(gntdev_dmabuf);
-पूर्ण
+	kfree(gntdev_dmabuf);
+}
 
-अटल व्योम dmabuf_exp_हटाओ_map(काष्ठा gntdev_priv *priv,
-				  काष्ठा gntdev_grant_map *map)
-अणु
+static void dmabuf_exp_remove_map(struct gntdev_priv *priv,
+				  struct gntdev_grant_map *map)
+{
 	mutex_lock(&priv->lock);
 	list_del(&map->next);
-	gntdev_put_map(शून्य /* alपढ़ोy हटाओd */, map);
+	gntdev_put_map(NULL /* already removed */, map);
 	mutex_unlock(&priv->lock);
-पूर्ण
+}
 
-अटल व्योम dmabuf_exp_ops_release(काष्ठा dma_buf *dma_buf)
-अणु
-	काष्ठा gntdev_dmabuf *gntdev_dmabuf = dma_buf->priv;
-	काष्ठा gntdev_dmabuf_priv *priv = gntdev_dmabuf->priv;
+static void dmabuf_exp_ops_release(struct dma_buf *dma_buf)
+{
+	struct gntdev_dmabuf *gntdev_dmabuf = dma_buf->priv;
+	struct gntdev_dmabuf_priv *priv = gntdev_dmabuf->priv;
 
-	dmabuf_exp_हटाओ_map(gntdev_dmabuf->u.exp.priv,
+	dmabuf_exp_remove_map(gntdev_dmabuf->u.exp.priv,
 			      gntdev_dmabuf->u.exp.map);
 	mutex_lock(&priv->lock);
 	kref_put(&gntdev_dmabuf->u.exp.refcount, dmabuf_exp_release);
 	mutex_unlock(&priv->lock);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा dma_buf_ops dmabuf_exp_ops =  अणु
+static const struct dma_buf_ops dmabuf_exp_ops =  {
 	.attach = dmabuf_exp_ops_attach,
 	.detach = dmabuf_exp_ops_detach,
 	.map_dma_buf = dmabuf_exp_ops_map_dma_buf,
 	.unmap_dma_buf = dmabuf_exp_ops_unmap_dma_buf,
 	.release = dmabuf_exp_ops_release,
-पूर्ण;
+};
 
-काष्ठा gntdev_dmabuf_export_args अणु
-	काष्ठा gntdev_priv *priv;
-	काष्ठा gntdev_grant_map *map;
-	काष्ठा gntdev_dmabuf_priv *dmabuf_priv;
-	काष्ठा device *dev;
-	पूर्णांक count;
-	काष्ठा page **pages;
+struct gntdev_dmabuf_export_args {
+	struct gntdev_priv *priv;
+	struct gntdev_grant_map *map;
+	struct gntdev_dmabuf_priv *dmabuf_priv;
+	struct device *dev;
+	int count;
+	struct page **pages;
 	u32 fd;
-पूर्ण;
+};
 
-अटल पूर्णांक dmabuf_exp_from_pages(काष्ठा gntdev_dmabuf_export_args *args)
-अणु
+static int dmabuf_exp_from_pages(struct gntdev_dmabuf_export_args *args)
+{
 	DEFINE_DMA_BUF_EXPORT_INFO(exp_info);
-	काष्ठा gntdev_dmabuf *gntdev_dmabuf;
-	पूर्णांक ret;
+	struct gntdev_dmabuf *gntdev_dmabuf;
+	int ret;
 
-	gntdev_dmabuf = kzalloc(माप(*gntdev_dmabuf), GFP_KERNEL);
-	अगर (!gntdev_dmabuf)
-		वापस -ENOMEM;
+	gntdev_dmabuf = kzalloc(sizeof(*gntdev_dmabuf), GFP_KERNEL);
+	if (!gntdev_dmabuf)
+		return -ENOMEM;
 
 	kref_init(&gntdev_dmabuf->u.exp.refcount);
 
@@ -379,9 +378,9 @@ dmabuf_exp_ops_map_dma_buf(काष्ठा dma_buf_attachment *attach,
 	gntdev_dmabuf->u.exp.map = args->map;
 
 	exp_info.exp_name = KBUILD_MODNAME;
-	अगर (args->dev->driver && args->dev->driver->owner)
+	if (args->dev->driver && args->dev->driver->owner)
 		exp_info.owner = args->dev->driver->owner;
-	अन्यथा
+	else
 		exp_info.owner = THIS_MODULE;
 	exp_info.ops = &dmabuf_exp_ops;
 	exp_info.size = args->count << PAGE_SHIFT;
@@ -389,15 +388,15 @@ dmabuf_exp_ops_map_dma_buf(काष्ठा dma_buf_attachment *attach,
 	exp_info.priv = gntdev_dmabuf;
 
 	gntdev_dmabuf->dmabuf = dma_buf_export(&exp_info);
-	अगर (IS_ERR(gntdev_dmabuf->dmabuf)) अणु
+	if (IS_ERR(gntdev_dmabuf->dmabuf)) {
 		ret = PTR_ERR(gntdev_dmabuf->dmabuf);
-		gntdev_dmabuf->dmabuf = शून्य;
-		जाओ fail;
-	पूर्ण
+		gntdev_dmabuf->dmabuf = NULL;
+		goto fail;
+	}
 
 	ret = dma_buf_fd(gntdev_dmabuf->dmabuf, O_CLOEXEC);
-	अगर (ret < 0)
-		जाओ fail;
+	if (ret < 0)
+		goto fail;
 
 	gntdev_dmabuf->fd = ret;
 	args->fd = ret;
@@ -408,65 +407,65 @@ dmabuf_exp_ops_map_dma_buf(काष्ठा dma_buf_attachment *attach,
 	list_add(&gntdev_dmabuf->next, &args->dmabuf_priv->exp_list);
 	mutex_unlock(&args->dmabuf_priv->lock);
 	get_file(gntdev_dmabuf->priv->filp);
-	वापस 0;
+	return 0;
 
 fail:
-	अगर (gntdev_dmabuf->dmabuf)
+	if (gntdev_dmabuf->dmabuf)
 		dma_buf_put(gntdev_dmabuf->dmabuf);
-	kमुक्त(gntdev_dmabuf);
-	वापस ret;
-पूर्ण
+	kfree(gntdev_dmabuf);
+	return ret;
+}
 
-अटल काष्ठा gntdev_grant_map *
-dmabuf_exp_alloc_backing_storage(काष्ठा gntdev_priv *priv, पूर्णांक dmabuf_flags,
-				 पूर्णांक count)
-अणु
-	काष्ठा gntdev_grant_map *map;
+static struct gntdev_grant_map *
+dmabuf_exp_alloc_backing_storage(struct gntdev_priv *priv, int dmabuf_flags,
+				 int count)
+{
+	struct gntdev_grant_map *map;
 
-	अगर (unlikely(gntdev_test_page_count(count)))
-		वापस ERR_PTR(-EINVAL);
+	if (unlikely(gntdev_test_page_count(count)))
+		return ERR_PTR(-EINVAL);
 
-	अगर ((dmabuf_flags & GNTDEV_DMA_FLAG_WC) &&
-	    (dmabuf_flags & GNTDEV_DMA_FLAG_COHERENT)) अणु
+	if ((dmabuf_flags & GNTDEV_DMA_FLAG_WC) &&
+	    (dmabuf_flags & GNTDEV_DMA_FLAG_COHERENT)) {
 		pr_debug("Wrong dma-buf flags: 0x%x\n", dmabuf_flags);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
 	map = gntdev_alloc_map(priv, count, dmabuf_flags);
-	अगर (!map)
-		वापस ERR_PTR(-ENOMEM);
+	if (!map)
+		return ERR_PTR(-ENOMEM);
 
-	वापस map;
-पूर्ण
+	return map;
+}
 
-अटल पूर्णांक dmabuf_exp_from_refs(काष्ठा gntdev_priv *priv, पूर्णांक flags,
-				पूर्णांक count, u32 करोmid, u32 *refs, u32 *fd)
-अणु
-	काष्ठा gntdev_grant_map *map;
-	काष्ठा gntdev_dmabuf_export_args args;
-	पूर्णांक i, ret;
+static int dmabuf_exp_from_refs(struct gntdev_priv *priv, int flags,
+				int count, u32 domid, u32 *refs, u32 *fd)
+{
+	struct gntdev_grant_map *map;
+	struct gntdev_dmabuf_export_args args;
+	int i, ret;
 
 	map = dmabuf_exp_alloc_backing_storage(priv, flags, count);
-	अगर (IS_ERR(map))
-		वापस PTR_ERR(map);
+	if (IS_ERR(map))
+		return PTR_ERR(map);
 
-	क्रम (i = 0; i < count; i++) अणु
-		map->grants[i].करोmid = करोmid;
+	for (i = 0; i < count; i++) {
+		map->grants[i].domid = domid;
 		map->grants[i].ref = refs[i];
-	पूर्ण
+	}
 
 	mutex_lock(&priv->lock);
 	gntdev_add_map(priv, map);
 	mutex_unlock(&priv->lock);
 
 	map->flags |= GNTMAP_host_map;
-#अगर defined(CONFIG_X86)
+#if defined(CONFIG_X86)
 	map->flags |= GNTMAP_device_map;
-#पूर्ण_अगर
+#endif
 
 	ret = gntdev_map_grant_pages(map);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 
 	args.priv = priv;
 	args.map = map;
@@ -474,185 +473,185 @@ dmabuf_exp_alloc_backing_storage(काष्ठा gntdev_priv *priv, पूर
 	args.dmabuf_priv = priv->dmabuf_priv;
 	args.count = map->count;
 	args.pages = map->pages;
-	args.fd = -1; /* Shut up unnecessary gcc warning क्रम i386 */
+	args.fd = -1; /* Shut up unnecessary gcc warning for i386 */
 
 	ret = dmabuf_exp_from_pages(&args);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 
 	*fd = args.fd;
-	वापस 0;
+	return 0;
 
 out:
-	dmabuf_exp_हटाओ_map(priv, map);
-	वापस ret;
-पूर्ण
+	dmabuf_exp_remove_map(priv, map);
+	return ret;
+}
 
 /* DMA buffer import support. */
 
-अटल पूर्णांक
-dmabuf_imp_grant_क्रमeign_access(काष्ठा page **pages, u32 *refs,
-				पूर्णांक count, पूर्णांक करोmid)
-अणु
+static int
+dmabuf_imp_grant_foreign_access(struct page **pages, u32 *refs,
+				int count, int domid)
+{
 	grant_ref_t priv_gref_head;
-	पूर्णांक i, ret;
+	int i, ret;
 
 	ret = gnttab_alloc_grant_references(count, &priv_gref_head);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		pr_debug("Cannot allocate grant references, ret %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	क्रम (i = 0; i < count; i++) अणु
-		पूर्णांक cur_ref;
+	for (i = 0; i < count; i++) {
+		int cur_ref;
 
 		cur_ref = gnttab_claim_grant_reference(&priv_gref_head);
-		अगर (cur_ref < 0) अणु
+		if (cur_ref < 0) {
 			ret = cur_ref;
 			pr_debug("Cannot claim grant reference, ret %d\n", ret);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		gnttab_grant_क्रमeign_access_ref(cur_ref, करोmid,
+		gnttab_grant_foreign_access_ref(cur_ref, domid,
 						xen_page_to_gfn(pages[i]), 0);
 		refs[i] = cur_ref;
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 out:
-	gnttab_मुक्त_grant_references(priv_gref_head);
-	वापस ret;
-पूर्ण
+	gnttab_free_grant_references(priv_gref_head);
+	return ret;
+}
 
-अटल व्योम dmabuf_imp_end_क्रमeign_access(u32 *refs, पूर्णांक count)
-अणु
-	पूर्णांक i;
+static void dmabuf_imp_end_foreign_access(u32 *refs, int count)
+{
+	int i;
 
-	क्रम (i = 0; i < count; i++)
-		अगर (refs[i] != GRANT_INVALID_REF)
-			gnttab_end_क्रमeign_access(refs[i], 0, 0UL);
-पूर्ण
+	for (i = 0; i < count; i++)
+		if (refs[i] != GRANT_INVALID_REF)
+			gnttab_end_foreign_access(refs[i], 0, 0UL);
+}
 
-अटल व्योम dmabuf_imp_मुक्त_storage(काष्ठा gntdev_dmabuf *gntdev_dmabuf)
-अणु
-	kमुक्त(gntdev_dmabuf->pages);
-	kमुक्त(gntdev_dmabuf->u.imp.refs);
-	kमुक्त(gntdev_dmabuf);
-पूर्ण
+static void dmabuf_imp_free_storage(struct gntdev_dmabuf *gntdev_dmabuf)
+{
+	kfree(gntdev_dmabuf->pages);
+	kfree(gntdev_dmabuf->u.imp.refs);
+	kfree(gntdev_dmabuf);
+}
 
-अटल काष्ठा gntdev_dmabuf *dmabuf_imp_alloc_storage(पूर्णांक count)
-अणु
-	काष्ठा gntdev_dmabuf *gntdev_dmabuf;
-	पूर्णांक i;
+static struct gntdev_dmabuf *dmabuf_imp_alloc_storage(int count)
+{
+	struct gntdev_dmabuf *gntdev_dmabuf;
+	int i;
 
-	gntdev_dmabuf = kzalloc(माप(*gntdev_dmabuf), GFP_KERNEL);
-	अगर (!gntdev_dmabuf)
-		जाओ fail_no_मुक्त;
+	gntdev_dmabuf = kzalloc(sizeof(*gntdev_dmabuf), GFP_KERNEL);
+	if (!gntdev_dmabuf)
+		goto fail_no_free;
 
-	gntdev_dmabuf->u.imp.refs = kसुस्मृति(count,
-					    माप(gntdev_dmabuf->u.imp.refs[0]),
+	gntdev_dmabuf->u.imp.refs = kcalloc(count,
+					    sizeof(gntdev_dmabuf->u.imp.refs[0]),
 					    GFP_KERNEL);
-	अगर (!gntdev_dmabuf->u.imp.refs)
-		जाओ fail;
+	if (!gntdev_dmabuf->u.imp.refs)
+		goto fail;
 
-	gntdev_dmabuf->pages = kसुस्मृति(count,
-				       माप(gntdev_dmabuf->pages[0]),
+	gntdev_dmabuf->pages = kcalloc(count,
+				       sizeof(gntdev_dmabuf->pages[0]),
 				       GFP_KERNEL);
-	अगर (!gntdev_dmabuf->pages)
-		जाओ fail;
+	if (!gntdev_dmabuf->pages)
+		goto fail;
 
 	gntdev_dmabuf->nr_pages = count;
 
-	क्रम (i = 0; i < count; i++)
+	for (i = 0; i < count; i++)
 		gntdev_dmabuf->u.imp.refs[i] = GRANT_INVALID_REF;
 
-	वापस gntdev_dmabuf;
+	return gntdev_dmabuf;
 
 fail:
-	dmabuf_imp_मुक्त_storage(gntdev_dmabuf);
-fail_no_मुक्त:
-	वापस ERR_PTR(-ENOMEM);
-पूर्ण
+	dmabuf_imp_free_storage(gntdev_dmabuf);
+fail_no_free:
+	return ERR_PTR(-ENOMEM);
+}
 
-अटल काष्ठा gntdev_dmabuf *
-dmabuf_imp_to_refs(काष्ठा gntdev_dmabuf_priv *priv, काष्ठा device *dev,
-		   पूर्णांक fd, पूर्णांक count, पूर्णांक करोmid)
-अणु
-	काष्ठा gntdev_dmabuf *gntdev_dmabuf, *ret;
-	काष्ठा dma_buf *dma_buf;
-	काष्ठा dma_buf_attachment *attach;
-	काष्ठा sg_table *sgt;
-	काष्ठा sg_page_iter sg_iter;
-	पूर्णांक i;
+static struct gntdev_dmabuf *
+dmabuf_imp_to_refs(struct gntdev_dmabuf_priv *priv, struct device *dev,
+		   int fd, int count, int domid)
+{
+	struct gntdev_dmabuf *gntdev_dmabuf, *ret;
+	struct dma_buf *dma_buf;
+	struct dma_buf_attachment *attach;
+	struct sg_table *sgt;
+	struct sg_page_iter sg_iter;
+	int i;
 
 	dma_buf = dma_buf_get(fd);
-	अगर (IS_ERR(dma_buf))
-		वापस ERR_CAST(dma_buf);
+	if (IS_ERR(dma_buf))
+		return ERR_CAST(dma_buf);
 
 	gntdev_dmabuf = dmabuf_imp_alloc_storage(count);
-	अगर (IS_ERR(gntdev_dmabuf)) अणु
+	if (IS_ERR(gntdev_dmabuf)) {
 		ret = gntdev_dmabuf;
-		जाओ fail_put;
-	पूर्ण
+		goto fail_put;
+	}
 
 	gntdev_dmabuf->priv = priv;
 	gntdev_dmabuf->fd = fd;
 
 	attach = dma_buf_attach(dma_buf, dev);
-	अगर (IS_ERR(attach)) अणु
+	if (IS_ERR(attach)) {
 		ret = ERR_CAST(attach);
-		जाओ fail_मुक्त_obj;
-	पूर्ण
+		goto fail_free_obj;
+	}
 
 	gntdev_dmabuf->u.imp.attach = attach;
 
-	sgt = dma_buf_map_attachment(attach, DMA_BIसूचीECTIONAL);
-	अगर (IS_ERR(sgt)) अणु
+	sgt = dma_buf_map_attachment(attach, DMA_BIDIRECTIONAL);
+	if (IS_ERR(sgt)) {
 		ret = ERR_CAST(sgt);
-		जाओ fail_detach;
-	पूर्ण
+		goto fail_detach;
+	}
 
 	/* Check that we have zero offset. */
-	अगर (sgt->sgl->offset) अणु
+	if (sgt->sgl->offset) {
 		ret = ERR_PTR(-EINVAL);
 		pr_debug("DMA buffer has %d bytes offset, user-space expects 0\n",
 			 sgt->sgl->offset);
-		जाओ fail_unmap;
-	पूर्ण
+		goto fail_unmap;
+	}
 
 	/* Check number of pages that imported buffer has. */
-	अगर (attach->dmabuf->size != gntdev_dmabuf->nr_pages << PAGE_SHIFT) अणु
+	if (attach->dmabuf->size != gntdev_dmabuf->nr_pages << PAGE_SHIFT) {
 		ret = ERR_PTR(-EINVAL);
 		pr_debug("DMA buffer has %zu pages, user-space expects %d\n",
 			 attach->dmabuf->size, gntdev_dmabuf->nr_pages);
-		जाओ fail_unmap;
-	पूर्ण
+		goto fail_unmap;
+	}
 
 	gntdev_dmabuf->u.imp.sgt = sgt;
 
-	/* Now convert sgt to array of pages and check क्रम page validity. */
+	/* Now convert sgt to array of pages and check for page validity. */
 	i = 0;
-	क्रम_each_sgtable_page(sgt, &sg_iter, 0) अणु
-		काष्ठा page *page = sg_page_iter_page(&sg_iter);
+	for_each_sgtable_page(sgt, &sg_iter, 0) {
+		struct page *page = sg_page_iter_page(&sg_iter);
 		/*
-		 * Check अगर page is valid: this can happen अगर we are given
+		 * Check if page is valid: this can happen if we are given
 		 * a page from VRAM or other resources which are not backed
-		 * by a काष्ठा page.
+		 * by a struct page.
 		 */
-		अगर (!pfn_valid(page_to_pfn(page))) अणु
+		if (!pfn_valid(page_to_pfn(page))) {
 			ret = ERR_PTR(-EINVAL);
-			जाओ fail_unmap;
-		पूर्ण
+			goto fail_unmap;
+		}
 
 		gntdev_dmabuf->pages[i++] = page;
-	पूर्ण
+	}
 
-	ret = ERR_PTR(dmabuf_imp_grant_क्रमeign_access(gntdev_dmabuf->pages,
+	ret = ERR_PTR(dmabuf_imp_grant_foreign_access(gntdev_dmabuf->pages,
 						      gntdev_dmabuf->u.imp.refs,
-						      count, करोmid));
-	अगर (IS_ERR(ret))
-		जाओ fail_end_access;
+						      count, domid));
+	if (IS_ERR(ret))
+		goto fail_end_access;
 
 	pr_debug("Imported DMA buffer with fd %d\n", fd);
 
@@ -660,196 +659,196 @@ dmabuf_imp_to_refs(काष्ठा gntdev_dmabuf_priv *priv, काष्ठ�
 	list_add(&gntdev_dmabuf->next, &priv->imp_list);
 	mutex_unlock(&priv->lock);
 
-	वापस gntdev_dmabuf;
+	return gntdev_dmabuf;
 
 fail_end_access:
-	dmabuf_imp_end_क्रमeign_access(gntdev_dmabuf->u.imp.refs, count);
+	dmabuf_imp_end_foreign_access(gntdev_dmabuf->u.imp.refs, count);
 fail_unmap:
-	dma_buf_unmap_attachment(attach, sgt, DMA_BIसूचीECTIONAL);
+	dma_buf_unmap_attachment(attach, sgt, DMA_BIDIRECTIONAL);
 fail_detach:
 	dma_buf_detach(dma_buf, attach);
-fail_मुक्त_obj:
-	dmabuf_imp_मुक्त_storage(gntdev_dmabuf);
+fail_free_obj:
+	dmabuf_imp_free_storage(gntdev_dmabuf);
 fail_put:
 	dma_buf_put(dma_buf);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Find the hyper dma-buf by its file descriptor and हटाओ
+ * Find the hyper dma-buf by its file descriptor and remove
  * it from the buffer's list.
  */
-अटल काष्ठा gntdev_dmabuf *
-dmabuf_imp_find_unlink(काष्ठा gntdev_dmabuf_priv *priv, पूर्णांक fd)
-अणु
-	काष्ठा gntdev_dmabuf *q, *gntdev_dmabuf, *ret = ERR_PTR(-ENOENT);
+static struct gntdev_dmabuf *
+dmabuf_imp_find_unlink(struct gntdev_dmabuf_priv *priv, int fd)
+{
+	struct gntdev_dmabuf *q, *gntdev_dmabuf, *ret = ERR_PTR(-ENOENT);
 
 	mutex_lock(&priv->lock);
-	list_क्रम_each_entry_safe(gntdev_dmabuf, q, &priv->imp_list, next) अणु
-		अगर (gntdev_dmabuf->fd == fd) अणु
+	list_for_each_entry_safe(gntdev_dmabuf, q, &priv->imp_list, next) {
+		if (gntdev_dmabuf->fd == fd) {
 			pr_debug("Found gntdev_dmabuf in the import list\n");
 			ret = gntdev_dmabuf;
 			list_del(&gntdev_dmabuf->next);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	mutex_unlock(&priv->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक dmabuf_imp_release(काष्ठा gntdev_dmabuf_priv *priv, u32 fd)
-अणु
-	काष्ठा gntdev_dmabuf *gntdev_dmabuf;
-	काष्ठा dma_buf_attachment *attach;
-	काष्ठा dma_buf *dma_buf;
+static int dmabuf_imp_release(struct gntdev_dmabuf_priv *priv, u32 fd)
+{
+	struct gntdev_dmabuf *gntdev_dmabuf;
+	struct dma_buf_attachment *attach;
+	struct dma_buf *dma_buf;
 
 	gntdev_dmabuf = dmabuf_imp_find_unlink(priv, fd);
-	अगर (IS_ERR(gntdev_dmabuf))
-		वापस PTR_ERR(gntdev_dmabuf);
+	if (IS_ERR(gntdev_dmabuf))
+		return PTR_ERR(gntdev_dmabuf);
 
 	pr_debug("Releasing DMA buffer with fd %d\n", fd);
 
-	dmabuf_imp_end_क्रमeign_access(gntdev_dmabuf->u.imp.refs,
+	dmabuf_imp_end_foreign_access(gntdev_dmabuf->u.imp.refs,
 				      gntdev_dmabuf->nr_pages);
 
 	attach = gntdev_dmabuf->u.imp.attach;
 
-	अगर (gntdev_dmabuf->u.imp.sgt)
+	if (gntdev_dmabuf->u.imp.sgt)
 		dma_buf_unmap_attachment(attach, gntdev_dmabuf->u.imp.sgt,
-					 DMA_BIसूचीECTIONAL);
+					 DMA_BIDIRECTIONAL);
 	dma_buf = attach->dmabuf;
 	dma_buf_detach(attach->dmabuf, attach);
 	dma_buf_put(dma_buf);
 
-	dmabuf_imp_मुक्त_storage(gntdev_dmabuf);
-	वापस 0;
-पूर्ण
+	dmabuf_imp_free_storage(gntdev_dmabuf);
+	return 0;
+}
 
-अटल व्योम dmabuf_imp_release_all(काष्ठा gntdev_dmabuf_priv *priv)
-अणु
-	काष्ठा gntdev_dmabuf *q, *gntdev_dmabuf;
+static void dmabuf_imp_release_all(struct gntdev_dmabuf_priv *priv)
+{
+	struct gntdev_dmabuf *q, *gntdev_dmabuf;
 
-	list_क्रम_each_entry_safe(gntdev_dmabuf, q, &priv->imp_list, next)
+	list_for_each_entry_safe(gntdev_dmabuf, q, &priv->imp_list, next)
 		dmabuf_imp_release(priv, gntdev_dmabuf->fd);
-पूर्ण
+}
 
 /* DMA buffer IOCTL support. */
 
-दीर्घ gntdev_ioctl_dmabuf_exp_from_refs(काष्ठा gntdev_priv *priv, पूर्णांक use_ptemod,
-				       काष्ठा ioctl_gntdev_dmabuf_exp_from_refs __user *u)
-अणु
-	काष्ठा ioctl_gntdev_dmabuf_exp_from_refs op;
+long gntdev_ioctl_dmabuf_exp_from_refs(struct gntdev_priv *priv, int use_ptemod,
+				       struct ioctl_gntdev_dmabuf_exp_from_refs __user *u)
+{
+	struct ioctl_gntdev_dmabuf_exp_from_refs op;
 	u32 *refs;
-	दीर्घ ret;
+	long ret;
 
-	अगर (use_ptemod) अणु
+	if (use_ptemod) {
 		pr_debug("Cannot provide dma-buf: use_ptemode %d\n",
 			 use_ptemod);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (copy_from_user(&op, u, माप(op)) != 0)
-		वापस -EFAULT;
+	if (copy_from_user(&op, u, sizeof(op)) != 0)
+		return -EFAULT;
 
-	अगर (unlikely(gntdev_test_page_count(op.count)))
-		वापस -EINVAL;
+	if (unlikely(gntdev_test_page_count(op.count)))
+		return -EINVAL;
 
-	refs = kसुस्मृति(op.count, माप(*refs), GFP_KERNEL);
-	अगर (!refs)
-		वापस -ENOMEM;
+	refs = kcalloc(op.count, sizeof(*refs), GFP_KERNEL);
+	if (!refs)
+		return -ENOMEM;
 
-	अगर (copy_from_user(refs, u->refs, माप(*refs) * op.count) != 0) अणु
+	if (copy_from_user(refs, u->refs, sizeof(*refs) * op.count) != 0) {
 		ret = -EFAULT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = dmabuf_exp_from_refs(priv, op.flags, op.count,
-				   op.करोmid, refs, &op.fd);
-	अगर (ret)
-		जाओ out;
+				   op.domid, refs, &op.fd);
+	if (ret)
+		goto out;
 
-	अगर (copy_to_user(u, &op, माप(op)) != 0)
+	if (copy_to_user(u, &op, sizeof(op)) != 0)
 		ret = -EFAULT;
 
 out:
-	kमुक्त(refs);
-	वापस ret;
-पूर्ण
+	kfree(refs);
+	return ret;
+}
 
-दीर्घ gntdev_ioctl_dmabuf_exp_रुको_released(काष्ठा gntdev_priv *priv,
-					   काष्ठा ioctl_gntdev_dmabuf_exp_रुको_released __user *u)
-अणु
-	काष्ठा ioctl_gntdev_dmabuf_exp_रुको_released op;
+long gntdev_ioctl_dmabuf_exp_wait_released(struct gntdev_priv *priv,
+					   struct ioctl_gntdev_dmabuf_exp_wait_released __user *u)
+{
+	struct ioctl_gntdev_dmabuf_exp_wait_released op;
 
-	अगर (copy_from_user(&op, u, माप(op)) != 0)
-		वापस -EFAULT;
+	if (copy_from_user(&op, u, sizeof(op)) != 0)
+		return -EFAULT;
 
-	वापस dmabuf_exp_रुको_released(priv->dmabuf_priv, op.fd,
-					op.रुको_to_ms);
-पूर्ण
+	return dmabuf_exp_wait_released(priv->dmabuf_priv, op.fd,
+					op.wait_to_ms);
+}
 
-दीर्घ gntdev_ioctl_dmabuf_imp_to_refs(काष्ठा gntdev_priv *priv,
-				     काष्ठा ioctl_gntdev_dmabuf_imp_to_refs __user *u)
-अणु
-	काष्ठा ioctl_gntdev_dmabuf_imp_to_refs op;
-	काष्ठा gntdev_dmabuf *gntdev_dmabuf;
-	दीर्घ ret;
+long gntdev_ioctl_dmabuf_imp_to_refs(struct gntdev_priv *priv,
+				     struct ioctl_gntdev_dmabuf_imp_to_refs __user *u)
+{
+	struct ioctl_gntdev_dmabuf_imp_to_refs op;
+	struct gntdev_dmabuf *gntdev_dmabuf;
+	long ret;
 
-	अगर (copy_from_user(&op, u, माप(op)) != 0)
-		वापस -EFAULT;
+	if (copy_from_user(&op, u, sizeof(op)) != 0)
+		return -EFAULT;
 
-	अगर (unlikely(gntdev_test_page_count(op.count)))
-		वापस -EINVAL;
+	if (unlikely(gntdev_test_page_count(op.count)))
+		return -EINVAL;
 
 	gntdev_dmabuf = dmabuf_imp_to_refs(priv->dmabuf_priv,
 					   priv->dma_dev, op.fd,
-					   op.count, op.करोmid);
-	अगर (IS_ERR(gntdev_dmabuf))
-		वापस PTR_ERR(gntdev_dmabuf);
+					   op.count, op.domid);
+	if (IS_ERR(gntdev_dmabuf))
+		return PTR_ERR(gntdev_dmabuf);
 
-	अगर (copy_to_user(u->refs, gntdev_dmabuf->u.imp.refs,
-			 माप(*u->refs) * op.count) != 0) अणु
+	if (copy_to_user(u->refs, gntdev_dmabuf->u.imp.refs,
+			 sizeof(*u->refs) * op.count) != 0) {
 		ret = -EFAULT;
-		जाओ out_release;
-	पूर्ण
-	वापस 0;
+		goto out_release;
+	}
+	return 0;
 
 out_release:
 	dmabuf_imp_release(priv->dmabuf_priv, op.fd);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-दीर्घ gntdev_ioctl_dmabuf_imp_release(काष्ठा gntdev_priv *priv,
-				     काष्ठा ioctl_gntdev_dmabuf_imp_release __user *u)
-अणु
-	काष्ठा ioctl_gntdev_dmabuf_imp_release op;
+long gntdev_ioctl_dmabuf_imp_release(struct gntdev_priv *priv,
+				     struct ioctl_gntdev_dmabuf_imp_release __user *u)
+{
+	struct ioctl_gntdev_dmabuf_imp_release op;
 
-	अगर (copy_from_user(&op, u, माप(op)) != 0)
-		वापस -EFAULT;
+	if (copy_from_user(&op, u, sizeof(op)) != 0)
+		return -EFAULT;
 
-	वापस dmabuf_imp_release(priv->dmabuf_priv, op.fd);
-पूर्ण
+	return dmabuf_imp_release(priv->dmabuf_priv, op.fd);
+}
 
-काष्ठा gntdev_dmabuf_priv *gntdev_dmabuf_init(काष्ठा file *filp)
-अणु
-	काष्ठा gntdev_dmabuf_priv *priv;
+struct gntdev_dmabuf_priv *gntdev_dmabuf_init(struct file *filp)
+{
+	struct gntdev_dmabuf_priv *priv;
 
-	priv = kzalloc(माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस ERR_PTR(-ENOMEM);
+	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return ERR_PTR(-ENOMEM);
 
 	mutex_init(&priv->lock);
 	INIT_LIST_HEAD(&priv->exp_list);
-	INIT_LIST_HEAD(&priv->exp_रुको_list);
+	INIT_LIST_HEAD(&priv->exp_wait_list);
 	INIT_LIST_HEAD(&priv->imp_list);
 
 	priv->filp = filp;
 
-	वापस priv;
-पूर्ण
+	return priv;
+}
 
-व्योम gntdev_dmabuf_fini(काष्ठा gntdev_dmabuf_priv *priv)
-अणु
+void gntdev_dmabuf_fini(struct gntdev_dmabuf_priv *priv)
+{
 	dmabuf_imp_release_all(priv);
-	kमुक्त(priv);
-पूर्ण
+	kfree(priv);
+}

@@ -1,165 +1,164 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *  MachZ ZF-Logic Watchकरोg Timer driver क्रम Linux
+ *  MachZ ZF-Logic Watchdog Timer driver for Linux
  *
- *  The author करोes NOT admit liability nor provide warranty क्रम
+ *  The author does NOT admit liability nor provide warranty for
  *  any of this software. This material is provided "AS-IS" in
- *  the hope that it may be useful क्रम others.
+ *  the hope that it may be useful for others.
  *
- *  Author: Fernanकरो Fuganti <fuganti@conectiva.com.br>
+ *  Author: Fernando Fuganti <fuganti@conectiva.com.br>
  *
  *  Based on sbc60xxwdt.c by Jakob Oestergaard
  *
- *  We have two समयrs (wd#1, wd#2) driven by a 32 KHz घड़ी with the
+ *  We have two timers (wd#1, wd#2) driven by a 32 KHz clock with the
  *  following periods:
  *      wd#1 - 2 seconds;
  *      wd#2 - 7.2 ms;
  *  After the expiration of wd#1, it can generate a NMI, SCI, SMI, or
- *  a प्रणाली RESET and it starts wd#2 that unconditionally will RESET
- *  the प्रणाली when the counter reaches zero.
+ *  a system RESET and it starts wd#2 that unconditionally will RESET
+ *  the system when the counter reaches zero.
  *
  *  14-Dec-2001 Matt Domsch <Matt_Domsch@dell.com>
  *      Added nowayout module option to override CONFIG_WATCHDOG_NOWAYOUT
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/types.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/watchकरोg.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/reboot.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/uaccess.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/types.h>
+#include <linux/timer.h>
+#include <linux/jiffies.h>
+#include <linux/miscdevice.h>
+#include <linux/watchdog.h>
+#include <linux/fs.h>
+#include <linux/ioport.h>
+#include <linux/notifier.h>
+#include <linux/reboot.h>
+#include <linux/init.h>
+#include <linux/io.h>
+#include <linux/uaccess.h>
 
 
 /* ports */
-#घोषणा ZF_IOBASE	0x218
-#घोषणा INDEX		0x218
-#घोषणा DATA_B		0x219
-#घोषणा DATA_W		0x21A
-#घोषणा DATA_D		0x21A
+#define ZF_IOBASE	0x218
+#define INDEX		0x218
+#define DATA_B		0x219
+#define DATA_W		0x21A
+#define DATA_D		0x21A
 
 /* indexes */			/* size */
-#घोषणा ZFL_VERSION	0x02	/* 16   */
-#घोषणा CONTROL		0x10	/* 16   */
-#घोषणा STATUS		0x12	/* 8    */
-#घोषणा COUNTER_1	0x0C	/* 16   */
-#घोषणा COUNTER_2	0x0E	/* 8    */
-#घोषणा PULSE_LEN	0x0F	/* 8    */
+#define ZFL_VERSION	0x02	/* 16   */
+#define CONTROL		0x10	/* 16   */
+#define STATUS		0x12	/* 8    */
+#define COUNTER_1	0x0C	/* 16   */
+#define COUNTER_2	0x0E	/* 8    */
+#define PULSE_LEN	0x0F	/* 8    */
 
 /* controls */
-#घोषणा ENABLE_WD1	0x0001
-#घोषणा ENABLE_WD2	0x0002
-#घोषणा RESET_WD1	0x0010
-#घोषणा RESET_WD2	0x0020
-#घोषणा GEN_SCI		0x0100
-#घोषणा GEN_NMI		0x0200
-#घोषणा GEN_SMI		0x0400
-#घोषणा GEN_RESET	0x0800
+#define ENABLE_WD1	0x0001
+#define ENABLE_WD2	0x0002
+#define RESET_WD1	0x0010
+#define RESET_WD2	0x0020
+#define GEN_SCI		0x0100
+#define GEN_NMI		0x0200
+#define GEN_SMI		0x0400
+#define GEN_RESET	0x0800
 
 
 /* utilities */
 
-#घोषणा WD1	0
-#घोषणा WD2	1
+#define WD1	0
+#define WD2	1
 
-#घोषणा zf_ग_लिखोw(port, data)  अणु outb(port, INDEX); outw(data, DATA_W); पूर्ण
-#घोषणा zf_ग_लिखोb(port, data)  अणु outb(port, INDEX); outb(data, DATA_B); पूर्ण
-#घोषणा zf_get_ZFL_version()   zf_पढ़ोw(ZFL_VERSION)
+#define zf_writew(port, data)  { outb(port, INDEX); outw(data, DATA_W); }
+#define zf_writeb(port, data)  { outb(port, INDEX); outb(data, DATA_B); }
+#define zf_get_ZFL_version()   zf_readw(ZFL_VERSION)
 
 
-अटल अचिन्हित लघु zf_पढ़ोw(अचिन्हित अक्षर port)
-अणु
+static unsigned short zf_readw(unsigned char port)
+{
 	outb(port, INDEX);
-	वापस inw(DATA_W);
-पूर्ण
+	return inw(DATA_W);
+}
 
 
 MODULE_AUTHOR("Fernando Fuganti <fuganti@conectiva.com.br>");
 MODULE_DESCRIPTION("MachZ ZF-Logic Watchdog driver");
 MODULE_LICENSE("GPL");
 
-अटल bool nowayout = WATCHDOG_NOWAYOUT;
+static bool nowayout = WATCHDOG_NOWAYOUT;
 module_param(nowayout, bool, 0);
 MODULE_PARM_DESC(nowayout,
 		"Watchdog cannot be stopped once started (default="
 				__MODULE_STRING(WATCHDOG_NOWAYOUT) ")");
 
-#घोषणा PFX "machzwd"
+#define PFX "machzwd"
 
-अटल स्थिर काष्ठा watchकरोg_info zf_info = अणु
+static const struct watchdog_info zf_info = {
 	.options		= WDIOF_KEEPALIVEPING | WDIOF_MAGICCLOSE,
 	.firmware_version	= 1,
 	.identity		= "ZF-Logic watchdog",
-पूर्ण;
+};
 
 
 /*
- * action refers to action taken when watchकरोg resets
+ * action refers to action taken when watchdog resets
  * 0 = GEN_RESET
  * 1 = GEN_SMI
  * 2 = GEN_NMI
  * 3 = GEN_SCI
- * शेषs to GEN_RESET (0)
+ * defaults to GEN_RESET (0)
  */
-अटल पूर्णांक action;
-module_param(action, पूर्णांक, 0);
+static int action;
+module_param(action, int, 0);
 MODULE_PARM_DESC(action, "after watchdog resets, generate: "
 				"0 = RESET(*)  1 = SMI  2 = NMI  3 = SCI");
 
-अटल व्योम zf_ping(काष्ठा समयr_list *unused);
+static void zf_ping(struct timer_list *unused);
 
-अटल पूर्णांक zf_action = GEN_RESET;
-अटल अचिन्हित दीर्घ zf_is_खोलो;
-अटल अक्षर zf_expect_बंद;
-अटल DEFINE_SPINLOCK(zf_port_lock);
-अटल DEFINE_TIMER(zf_समयr, zf_ping);
-अटल अचिन्हित दीर्घ next_heartbeat;
-
-
-/* समयout क्रम user land heart beat (10 seconds) */
-#घोषणा ZF_USER_TIMEO (HZ*10)
-
-/* समयout क्रम hardware watchकरोg (~500ms) */
-#घोषणा ZF_HW_TIMEO (HZ/2)
-
-/* number of ticks on WD#1 (driven by a 32KHz घड़ी, 2s) */
-#घोषणा ZF_CTIMEOUT 0xffff
-
-#अगर_अघोषित ZF_DEBUG
-#घोषणा dprपूर्णांकk(क्रमmat, args...)
-#अन्यथा
-#घोषणा dprपूर्णांकk(क्रमmat, args...)					\
-	pr_debug(":%s:%d: " क्रमmat, __func__, __LINE__ , ## args)
-#पूर्ण_अगर
+static int zf_action = GEN_RESET;
+static unsigned long zf_is_open;
+static char zf_expect_close;
+static DEFINE_SPINLOCK(zf_port_lock);
+static DEFINE_TIMER(zf_timer, zf_ping);
+static unsigned long next_heartbeat;
 
 
-अटल अंतरभूत व्योम zf_set_status(अचिन्हित अक्षर new)
-अणु
-	zf_ग_लिखोb(STATUS, new);
-पूर्ण
+/* timeout for user land heart beat (10 seconds) */
+#define ZF_USER_TIMEO (HZ*10)
+
+/* timeout for hardware watchdog (~500ms) */
+#define ZF_HW_TIMEO (HZ/2)
+
+/* number of ticks on WD#1 (driven by a 32KHz clock, 2s) */
+#define ZF_CTIMEOUT 0xffff
+
+#ifndef ZF_DEBUG
+#define dprintk(format, args...)
+#else
+#define dprintk(format, args...)					\
+	pr_debug(":%s:%d: " format, __func__, __LINE__ , ## args)
+#endif
 
 
-/* CONTROL रेजिस्टर functions */
+static inline void zf_set_status(unsigned char new)
+{
+	zf_writeb(STATUS, new);
+}
 
-अटल अंतरभूत अचिन्हित लघु zf_get_control(व्योम)
-अणु
-	वापस zf_पढ़ोw(CONTROL);
-पूर्ण
 
-अटल अंतरभूत व्योम zf_set_control(अचिन्हित लघु new)
-अणु
-	zf_ग_लिखोw(CONTROL, new);
-पूर्ण
+/* CONTROL register functions */
+
+static inline unsigned short zf_get_control(void)
+{
+	return zf_readw(CONTROL);
+}
+
+static inline void zf_set_control(unsigned short new)
+{
+	zf_writew(CONTROL, new);
+}
 
 
 /* WD#? counter functions */
@@ -167,32 +166,32 @@ MODULE_PARM_DESC(action, "after watchdog resets, generate: "
  *	Just set counter value
  */
 
-अटल अंतरभूत व्योम zf_set_समयr(अचिन्हित लघु new, अचिन्हित अक्षर n)
-अणु
-	चयन (n) अणु
-	हाल WD1:
-		zf_ग_लिखोw(COUNTER_1, new);
+static inline void zf_set_timer(unsigned short new, unsigned char n)
+{
+	switch (n) {
+	case WD1:
+		zf_writew(COUNTER_1, new);
 		fallthrough;
-	हाल WD2:
-		zf_ग_लिखोb(COUNTER_2, new > 0xff ? 0xff : new);
-	शेष:
-		वापस;
-	पूर्ण
-पूर्ण
+	case WD2:
+		zf_writeb(COUNTER_2, new > 0xff ? 0xff : new);
+	default:
+		return;
+	}
+}
 
 /*
- * stop hardware समयr
+ * stop hardware timer
  */
-अटल व्योम zf_समयr_off(व्योम)
-अणु
-	अचिन्हित पूर्णांक ctrl_reg = 0;
-	अचिन्हित दीर्घ flags;
+static void zf_timer_off(void)
+{
+	unsigned int ctrl_reg = 0;
+	unsigned long flags;
 
-	/* stop पूर्णांकernal ping */
-	del_समयr_sync(&zf_समयr);
+	/* stop internal ping */
+	del_timer_sync(&zf_timer);
 
 	spin_lock_irqsave(&zf_port_lock, flags);
-	/* stop watchकरोg समयr */
+	/* stop watchdog timer */
 	ctrl_reg = zf_get_control();
 	ctrl_reg |= (ENABLE_WD1|ENABLE_WD2);	/* disable wd1 and wd2 */
 	ctrl_reg &= ~(ENABLE_WD1|ENABLE_WD2);
@@ -200,51 +199,51 @@ MODULE_PARM_DESC(action, "after watchdog resets, generate: "
 	spin_unlock_irqrestore(&zf_port_lock, flags);
 
 	pr_info("Watchdog timer is now disabled\n");
-पूर्ण
+}
 
 
 /*
- * start hardware समयr
+ * start hardware timer
  */
-अटल व्योम zf_समयr_on(व्योम)
-अणु
-	अचिन्हित पूर्णांक ctrl_reg = 0;
-	अचिन्हित दीर्घ flags;
+static void zf_timer_on(void)
+{
+	unsigned int ctrl_reg = 0;
+	unsigned long flags;
 
 	spin_lock_irqsave(&zf_port_lock, flags);
 
-	zf_ग_लिखोb(PULSE_LEN, 0xff);
+	zf_writeb(PULSE_LEN, 0xff);
 
-	zf_set_समयr(ZF_CTIMEOUT, WD1);
+	zf_set_timer(ZF_CTIMEOUT, WD1);
 
 	/* user land ping */
-	next_heartbeat = jअगरfies + ZF_USER_TIMEO;
+	next_heartbeat = jiffies + ZF_USER_TIMEO;
 
-	/* start the समयr क्रम पूर्णांकernal ping */
-	mod_समयr(&zf_समयr, jअगरfies + ZF_HW_TIMEO);
+	/* start the timer for internal ping */
+	mod_timer(&zf_timer, jiffies + ZF_HW_TIMEO);
 
-	/* start watchकरोg समयr */
+	/* start watchdog timer */
 	ctrl_reg = zf_get_control();
 	ctrl_reg |= (ENABLE_WD1|zf_action);
 	zf_set_control(ctrl_reg);
 	spin_unlock_irqrestore(&zf_port_lock, flags);
 
 	pr_info("Watchdog timer is now enabled\n");
-पूर्ण
+}
 
 
-अटल व्योम zf_ping(काष्ठा समयr_list *unused)
-अणु
-	अचिन्हित पूर्णांक ctrl_reg = 0;
-	अचिन्हित दीर्घ flags;
+static void zf_ping(struct timer_list *unused)
+{
+	unsigned int ctrl_reg = 0;
+	unsigned long flags;
 
-	zf_ग_लिखोb(COUNTER_2, 0xff);
+	zf_writeb(COUNTER_2, 0xff);
 
-	अगर (समय_beक्रमe(jअगरfies, next_heartbeat)) अणु
-		dprपूर्णांकk("time_before: %ld\n", next_heartbeat - jअगरfies);
+	if (time_before(jiffies, next_heartbeat)) {
+		dprintk("time_before: %ld\n", next_heartbeat - jiffies);
 		/*
 		 * reset event is activated by transition from 0 to 1 on
-		 * RESET_WD1 bit and we assume that it is alपढ़ोy zero...
+		 * RESET_WD1 bit and we assume that it is already zero...
 		 */
 
 		spin_lock_irqsave(&zf_port_lock, flags);
@@ -257,197 +256,197 @@ MODULE_PARM_DESC(action, "after watchdog resets, generate: "
 		zf_set_control(ctrl_reg);
 		spin_unlock_irqrestore(&zf_port_lock, flags);
 
-		mod_समयr(&zf_समयr, jअगरfies + ZF_HW_TIMEO);
-	पूर्ण अन्यथा
+		mod_timer(&zf_timer, jiffies + ZF_HW_TIMEO);
+	} else
 		pr_crit("I will reset your machine\n");
-पूर्ण
+}
 
-अटल sमाप_प्रकार zf_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf, माप_प्रकार count,
+static ssize_t zf_write(struct file *file, const char __user *buf, size_t count,
 								loff_t *ppos)
-अणु
-	/* See अगर we got the magic अक्षरacter */
-	अगर (count) अणु
+{
+	/* See if we got the magic character */
+	if (count) {
 		/*
-		 * no need to check क्रम बंद confirmation
-		 * no way to disable watchकरोg ;)
+		 * no need to check for close confirmation
+		 * no way to disable watchdog ;)
 		 */
-		अगर (!nowayout) अणु
-			माप_प्रकार ofs;
+		if (!nowayout) {
+			size_t ofs;
 			/*
-			 * note: just in हाल someone wrote the magic अक्षरacter
+			 * note: just in case someone wrote the magic character
 			 * five months ago...
 			 */
-			zf_expect_बंद = 0;
+			zf_expect_close = 0;
 
 			/* now scan */
-			क्रम (ofs = 0; ofs != count; ofs++) अणु
-				अक्षर c;
-				अगर (get_user(c, buf + ofs))
-					वापस -EFAULT;
-				अगर (c == 'V') अणु
-					zf_expect_बंद = 42;
-					dprपूर्णांकk("zf_expect_close = 42\n");
-				पूर्ण
-			पूर्ण
-		पूर्ण
+			for (ofs = 0; ofs != count; ofs++) {
+				char c;
+				if (get_user(c, buf + ofs))
+					return -EFAULT;
+				if (c == 'V') {
+					zf_expect_close = 42;
+					dprintk("zf_expect_close = 42\n");
+				}
+			}
+		}
 
 		/*
 		 * Well, anyhow someone wrote to us,
-		 * we should वापस that favour
+		 * we should return that favour
 		 */
-		next_heartbeat = jअगरfies + ZF_USER_TIMEO;
-		dprपूर्णांकk("user ping at %ld\n", jअगरfies);
-	पूर्ण
-	वापस count;
-पूर्ण
+		next_heartbeat = jiffies + ZF_USER_TIMEO;
+		dprintk("user ping at %ld\n", jiffies);
+	}
+	return count;
+}
 
-अटल दीर्घ zf_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	व्योम __user *argp = (व्योम __user *)arg;
-	पूर्णांक __user *p = argp;
-	चयन (cmd) अणु
-	हाल WDIOC_GETSUPPORT:
-		अगर (copy_to_user(argp, &zf_info, माप(zf_info)))
-			वापस -EFAULT;
-		अवरोध;
-	हाल WDIOC_GETSTATUS:
-	हाल WDIOC_GETBOOTSTATUS:
-		वापस put_user(0, p);
-	हाल WDIOC_KEEPALIVE:
-		zf_ping(शून्य);
-		अवरोध;
-	शेष:
-		वापस -ENOTTY;
-	पूर्ण
-	वापस 0;
-पूर्ण
+static long zf_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+{
+	void __user *argp = (void __user *)arg;
+	int __user *p = argp;
+	switch (cmd) {
+	case WDIOC_GETSUPPORT:
+		if (copy_to_user(argp, &zf_info, sizeof(zf_info)))
+			return -EFAULT;
+		break;
+	case WDIOC_GETSTATUS:
+	case WDIOC_GETBOOTSTATUS:
+		return put_user(0, p);
+	case WDIOC_KEEPALIVE:
+		zf_ping(NULL);
+		break;
+	default:
+		return -ENOTTY;
+	}
+	return 0;
+}
 
-अटल पूर्णांक zf_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	अगर (test_and_set_bit(0, &zf_is_खोलो))
-		वापस -EBUSY;
-	अगर (nowayout)
+static int zf_open(struct inode *inode, struct file *file)
+{
+	if (test_and_set_bit(0, &zf_is_open))
+		return -EBUSY;
+	if (nowayout)
 		__module_get(THIS_MODULE);
-	zf_समयr_on();
-	वापस stream_खोलो(inode, file);
-पूर्ण
+	zf_timer_on();
+	return stream_open(inode, file);
+}
 
-अटल पूर्णांक zf_बंद(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	अगर (zf_expect_बंद == 42)
-		zf_समयr_off();
-	अन्यथा अणु
-		del_समयr(&zf_समयr);
+static int zf_close(struct inode *inode, struct file *file)
+{
+	if (zf_expect_close == 42)
+		zf_timer_off();
+	else {
+		del_timer(&zf_timer);
 		pr_err("device file closed unexpectedly. Will not stop the WDT!\n");
-	पूर्ण
-	clear_bit(0, &zf_is_खोलो);
-	zf_expect_बंद = 0;
-	वापस 0;
-पूर्ण
+	}
+	clear_bit(0, &zf_is_open);
+	zf_expect_close = 0;
+	return 0;
+}
 
 /*
- * Notअगरier क्रम प्रणाली करोwn
+ * Notifier for system down
  */
 
-अटल पूर्णांक zf_notअगरy_sys(काष्ठा notअगरier_block *this, अचिन्हित दीर्घ code,
-								व्योम *unused)
-अणु
-	अगर (code == SYS_DOWN || code == SYS_HALT)
-		zf_समयr_off();
-	वापस NOTIFY_DONE;
-पूर्ण
+static int zf_notify_sys(struct notifier_block *this, unsigned long code,
+								void *unused)
+{
+	if (code == SYS_DOWN || code == SYS_HALT)
+		zf_timer_off();
+	return NOTIFY_DONE;
+}
 
-अटल स्थिर काष्ठा file_operations zf_fops = अणु
+static const struct file_operations zf_fops = {
 	.owner		= THIS_MODULE,
 	.llseek		= no_llseek,
-	.ग_लिखो		= zf_ग_लिखो,
+	.write		= zf_write,
 	.unlocked_ioctl = zf_ioctl,
 	.compat_ioctl	= compat_ptr_ioctl,
-	.खोलो		= zf_खोलो,
-	.release	= zf_बंद,
-पूर्ण;
+	.open		= zf_open,
+	.release	= zf_close,
+};
 
-अटल काष्ठा miscdevice zf_miscdev = अणु
+static struct miscdevice zf_miscdev = {
 	.minor = WATCHDOG_MINOR,
 	.name = "watchdog",
 	.fops = &zf_fops,
-पूर्ण;
+};
 
 
 /*
- * The device needs to learn about soft shutकरोwns in order to
- * turn the समयbomb रेजिस्टरs off.
+ * The device needs to learn about soft shutdowns in order to
+ * turn the timebomb registers off.
  */
-अटल काष्ठा notअगरier_block zf_notअगरier = अणु
-	.notअगरier_call = zf_notअगरy_sys,
-पूर्ण;
+static struct notifier_block zf_notifier = {
+	.notifier_call = zf_notify_sys,
+};
 
-अटल व्योम __init zf_show_action(पूर्णांक act)
-अणु
-	अटल स्थिर अक्षर * स्थिर str[] = अणु "RESET", "SMI", "NMI", "SCI" पूर्ण;
+static void __init zf_show_action(int act)
+{
+	static const char * const str[] = { "RESET", "SMI", "NMI", "SCI" };
 
 	pr_info("Watchdog using action = %s\n", str[act]);
-पूर्ण
+}
 
-अटल पूर्णांक __init zf_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init zf_init(void)
+{
+	int ret;
 
 	pr_info("MachZ ZF-Logic Watchdog driver initializing\n");
 
 	ret = zf_get_ZFL_version();
-	अगर (!ret || ret == 0xffff) अणु
+	if (!ret || ret == 0xffff) {
 		pr_warn("no ZF-Logic found\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (action <= 3 && action >= 0)
+	if (action <= 3 && action >= 0)
 		zf_action = zf_action >> action;
-	अन्यथा
+	else
 		action = 0;
 
 	zf_show_action(action);
 
-	अगर (!request_region(ZF_IOBASE, 3, "MachZ ZFL WDT")) अणु
+	if (!request_region(ZF_IOBASE, 3, "MachZ ZFL WDT")) {
 		pr_err("cannot reserve I/O ports at %d\n", ZF_IOBASE);
 		ret = -EBUSY;
-		जाओ no_region;
-	पूर्ण
+		goto no_region;
+	}
 
-	ret = रेजिस्टर_reboot_notअगरier(&zf_notअगरier);
-	अगर (ret) अणु
+	ret = register_reboot_notifier(&zf_notifier);
+	if (ret) {
 		pr_err("can't register reboot notifier (err=%d)\n", ret);
-		जाओ no_reboot;
-	पूर्ण
+		goto no_reboot;
+	}
 
-	ret = misc_रेजिस्टर(&zf_miscdev);
-	अगर (ret) अणु
+	ret = misc_register(&zf_miscdev);
+	if (ret) {
 		pr_err("can't misc_register on minor=%d\n", WATCHDOG_MINOR);
-		जाओ no_misc;
-	पूर्ण
+		goto no_misc;
+	}
 
 	zf_set_status(0);
 	zf_set_control(0);
 
-	वापस 0;
+	return 0;
 
 no_misc:
-	unरेजिस्टर_reboot_notअगरier(&zf_notअगरier);
+	unregister_reboot_notifier(&zf_notifier);
 no_reboot:
 	release_region(ZF_IOBASE, 3);
 no_region:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
-अटल व्योम __निकास zf_निकास(व्योम)
-अणु
-	zf_समयr_off();
+static void __exit zf_exit(void)
+{
+	zf_timer_off();
 
-	misc_deरेजिस्टर(&zf_miscdev);
-	unरेजिस्टर_reboot_notअगरier(&zf_notअगरier);
+	misc_deregister(&zf_miscdev);
+	unregister_reboot_notifier(&zf_notifier);
 	release_region(ZF_IOBASE, 3);
-पूर्ण
+}
 
 module_init(zf_init);
-module_निकास(zf_निकास);
+module_exit(zf_exit);

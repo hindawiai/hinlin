@@ -1,17 +1,16 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/init.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/slab.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/init.h>
+#include <linux/debugfs.h>
+#include <linux/slab.h>
 
-#समावेश "debugfs.h"
+#include "debugfs.h"
 
-अटल काष्ठा dentry *d_xen_debug;
+static struct dentry *d_xen_debug;
 
-काष्ठा dentry * __init xen_init_debugfs(व्योम)
-अणु
-	अगर (!d_xen_debug)
-		d_xen_debug = debugfs_create_dir("xen", शून्य);
-	वापस d_xen_debug;
-पूर्ण
+struct dentry * __init xen_init_debugfs(void)
+{
+	if (!d_xen_debug)
+		d_xen_debug = debugfs_create_dir("xen", NULL);
+	return d_xen_debug;
+}
 

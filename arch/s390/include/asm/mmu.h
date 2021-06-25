@@ -1,59 +1,58 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __MMU_H
-#घोषणा __MMU_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __MMU_H
+#define __MMU_H
 
-#समावेश <linux/cpumask.h>
-#समावेश <linux/त्रुटिसं.स>
+#include <linux/cpumask.h>
+#include <linux/errno.h>
 
-प्रकार काष्ठा अणु
+typedef struct {
 	spinlock_t lock;
 	cpumask_t cpu_attach_mask;
 	atomic_t flush_count;
-	अचिन्हित पूर्णांक flush_mm;
-	काष्ठा list_head pgtable_list;
-	काष्ठा list_head gmap_list;
-	अचिन्हित दीर्घ gmap_asce;
-	अचिन्हित दीर्घ asce;
-	अचिन्हित दीर्घ asce_limit;
-	अचिन्हित दीर्घ vdso_base;
-	/* The mmu context beदीर्घs to a secure guest. */
-	atomic_t is_रक्षित;
+	unsigned int flush_mm;
+	struct list_head pgtable_list;
+	struct list_head gmap_list;
+	unsigned long gmap_asce;
+	unsigned long asce;
+	unsigned long asce_limit;
+	unsigned long vdso_base;
+	/* The mmu context belongs to a secure guest. */
+	atomic_t is_protected;
 	/*
-	 * The following bitfields need a करोwn_ग_लिखो on the mm
+	 * The following bitfields need a down_write on the mm
 	 * semaphore when they are written to. As they are only
-	 * written once, they can be पढ़ो without a lock.
+	 * written once, they can be read without a lock.
 	 *
 	 * The mmu context allocates 4K page tables.
 	 */
-	अचिन्हित पूर्णांक alloc_pgste:1;
+	unsigned int alloc_pgste:1;
 	/* The mmu context uses extended page tables. */
-	अचिन्हित पूर्णांक has_pgste:1;
+	unsigned int has_pgste:1;
 	/* The mmu context uses storage keys. */
-	अचिन्हित पूर्णांक uses_skeys:1;
+	unsigned int uses_skeys:1;
 	/* The mmu context uses CMM. */
-	अचिन्हित पूर्णांक uses_cmm:1;
+	unsigned int uses_cmm:1;
 	/* The gmaps associated with this context are allowed to use huge pages. */
-	अचिन्हित पूर्णांक allow_gmap_hpage_1m:1;
-पूर्ण mm_context_t;
+	unsigned int allow_gmap_hpage_1m:1;
+} mm_context_t;
 
-#घोषणा INIT_MM_CONTEXT(name)						   \
+#define INIT_MM_CONTEXT(name)						   \
 	.context.lock =	__SPIN_LOCK_UNLOCKED(name.context.lock),	   \
 	.context.pgtable_list = LIST_HEAD_INIT(name.context.pgtable_list), \
 	.context.gmap_list = LIST_HEAD_INIT(name.context.gmap_list),
 
-अटल अंतरभूत पूर्णांक tprot(अचिन्हित दीर्घ addr)
-अणु
-	पूर्णांक rc = -EFAULT;
+static inline int tprot(unsigned long addr)
+{
+	int rc = -EFAULT;
 
-	यंत्र अस्थिर(
+	asm volatile(
 		"	tprot	0(%1),0\n"
 		"0:	ipm	%0\n"
 		"	srl	%0,28\n"
 		"1:\n"
 		EX_TABLE(0b,1b)
 		: "+d" (rc) : "a" (addr) : "cc");
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-#पूर्ण_अगर
+#endif

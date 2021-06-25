@@ -1,71 +1,70 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 
 /*
  * Copyright (C) 2020 Google LLC.
  */
 
-#अगर_अघोषित _LINUX_BPF_LSM_H
-#घोषणा _LINUX_BPF_LSM_H
+#ifndef _LINUX_BPF_LSM_H
+#define _LINUX_BPF_LSM_H
 
-#समावेश <linux/sched.h>
-#समावेश <linux/bpf.h>
-#समावेश <linux/lsm_hooks.h>
+#include <linux/sched.h>
+#include <linux/bpf.h>
+#include <linux/lsm_hooks.h>
 
-#अगर_घोषित CONFIG_BPF_LSM
+#ifdef CONFIG_BPF_LSM
 
-#घोषणा LSM_HOOK(RET, DEFAULT, NAME, ...) \
+#define LSM_HOOK(RET, DEFAULT, NAME, ...) \
 	RET bpf_lsm_##NAME(__VA_ARGS__);
-#समावेश <linux/lsm_hook_defs.h>
-#अघोषित LSM_HOOK
+#include <linux/lsm_hook_defs.h>
+#undef LSM_HOOK
 
-काष्ठा bpf_storage_blob अणु
-	काष्ठा bpf_local_storage __rcu *storage;
-पूर्ण;
+struct bpf_storage_blob {
+	struct bpf_local_storage __rcu *storage;
+};
 
-बाह्य काष्ठा lsm_blob_sizes bpf_lsm_blob_sizes;
+extern struct lsm_blob_sizes bpf_lsm_blob_sizes;
 
-पूर्णांक bpf_lsm_verअगरy_prog(काष्ठा bpf_verअगरier_log *vlog,
-			स्थिर काष्ठा bpf_prog *prog);
+int bpf_lsm_verify_prog(struct bpf_verifier_log *vlog,
+			const struct bpf_prog *prog);
 
 bool bpf_lsm_is_sleepable_hook(u32 btf_id);
 
-अटल अंतरभूत काष्ठा bpf_storage_blob *bpf_inode(
-	स्थिर काष्ठा inode *inode)
-अणु
-	अगर (unlikely(!inode->i_security))
-		वापस शून्य;
+static inline struct bpf_storage_blob *bpf_inode(
+	const struct inode *inode)
+{
+	if (unlikely(!inode->i_security))
+		return NULL;
 
-	वापस inode->i_security + bpf_lsm_blob_sizes.lbs_inode;
-पूर्ण
+	return inode->i_security + bpf_lsm_blob_sizes.lbs_inode;
+}
 
-बाह्य स्थिर काष्ठा bpf_func_proto bpf_inode_storage_get_proto;
-बाह्य स्थिर काष्ठा bpf_func_proto bpf_inode_storage_delete_proto;
-व्योम bpf_inode_storage_मुक्त(काष्ठा inode *inode);
+extern const struct bpf_func_proto bpf_inode_storage_get_proto;
+extern const struct bpf_func_proto bpf_inode_storage_delete_proto;
+void bpf_inode_storage_free(struct inode *inode);
 
-#अन्यथा /* !CONFIG_BPF_LSM */
+#else /* !CONFIG_BPF_LSM */
 
-अटल अंतरभूत bool bpf_lsm_is_sleepable_hook(u32 btf_id)
-अणु
-	वापस false;
-पूर्ण
+static inline bool bpf_lsm_is_sleepable_hook(u32 btf_id)
+{
+	return false;
+}
 
-अटल अंतरभूत पूर्णांक bpf_lsm_verअगरy_prog(काष्ठा bpf_verअगरier_log *vlog,
-				      स्थिर काष्ठा bpf_prog *prog)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+static inline int bpf_lsm_verify_prog(struct bpf_verifier_log *vlog,
+				      const struct bpf_prog *prog)
+{
+	return -EOPNOTSUPP;
+}
 
-अटल अंतरभूत काष्ठा bpf_storage_blob *bpf_inode(
-	स्थिर काष्ठा inode *inode)
-अणु
-	वापस शून्य;
-पूर्ण
+static inline struct bpf_storage_blob *bpf_inode(
+	const struct inode *inode)
+{
+	return NULL;
+}
 
-अटल अंतरभूत व्योम bpf_inode_storage_मुक्त(काष्ठा inode *inode)
-अणु
-पूर्ण
+static inline void bpf_inode_storage_free(struct inode *inode)
+{
+}
 
-#पूर्ण_अगर /* CONFIG_BPF_LSM */
+#endif /* CONFIG_BPF_LSM */
 
-#पूर्ण_अगर /* _LINUX_BPF_LSM_H */
+#endif /* _LINUX_BPF_LSM_H */

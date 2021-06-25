@@ -1,56 +1,55 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * FPGA Manager Driver क्रम Intel Stratix10 SoC
+ * FPGA Manager Driver for Intel Stratix10 SoC
  *
  *  Copyright (C) 2018 Intel Corporation
  */
-#समावेश <linux/completion.h>
-#समावेश <linux/fpga/fpga-mgr.h>
-#समावेश <linux/firmware/पूर्णांकel/stratix10-svc-client.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_platक्रमm.h>
+#include <linux/completion.h>
+#include <linux/fpga/fpga-mgr.h>
+#include <linux/firmware/intel/stratix10-svc-client.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_platform.h>
 
 /*
  * FPGA programming requires a higher level of privilege (EL3), per the SoC
  * design.
  */
-#घोषणा NUM_SVC_BUFS	4
-#घोषणा SVC_BUF_SIZE	SZ_512K
+#define NUM_SVC_BUFS	4
+#define SVC_BUF_SIZE	SZ_512K
 
-/* Indicates buffer is in use अगर set */
-#घोषणा SVC_BUF_LOCK	0
+/* Indicates buffer is in use if set */
+#define SVC_BUF_LOCK	0
 
-#घोषणा S10_BUFFER_TIMEOUT (msecs_to_jअगरfies(SVC_RECONFIG_BUFFER_TIMEOUT_MS))
-#घोषणा S10_RECONFIG_TIMEOUT (msecs_to_jअगरfies(SVC_RECONFIG_REQUEST_TIMEOUT_MS))
+#define S10_BUFFER_TIMEOUT (msecs_to_jiffies(SVC_RECONFIG_BUFFER_TIMEOUT_MS))
+#define S10_RECONFIG_TIMEOUT (msecs_to_jiffies(SVC_RECONFIG_REQUEST_TIMEOUT_MS))
 
 /*
- * काष्ठा s10_svc_buf
- * buf:  भव address of buf provided by service layer
- * lock: locked अगर buffer is in use
+ * struct s10_svc_buf
+ * buf:  virtual address of buf provided by service layer
+ * lock: locked if buffer is in use
  */
-काष्ठा s10_svc_buf अणु
-	अक्षर *buf;
-	अचिन्हित दीर्घ lock;
-पूर्ण;
+struct s10_svc_buf {
+	char *buf;
+	unsigned long lock;
+};
 
-काष्ठा s10_priv अणु
-	काष्ठा stratix10_svc_chan *chan;
-	काष्ठा stratix10_svc_client client;
-	काष्ठा completion status_वापस_completion;
-	काष्ठा s10_svc_buf svc_bufs[NUM_SVC_BUFS];
-	अचिन्हित दीर्घ status;
-पूर्ण;
+struct s10_priv {
+	struct stratix10_svc_chan *chan;
+	struct stratix10_svc_client client;
+	struct completion status_return_completion;
+	struct s10_svc_buf svc_bufs[NUM_SVC_BUFS];
+	unsigned long status;
+};
 
-अटल पूर्णांक s10_svc_send_msg(काष्ठा s10_priv *priv,
-			    क्रमागत stratix10_svc_command_code command,
-			    व्योम *payload, u32 payload_length)
-अणु
-	काष्ठा stratix10_svc_chan *chan = priv->chan;
-	काष्ठा device *dev = priv->client.dev;
-	काष्ठा stratix10_svc_client_msg msg;
-	पूर्णांक ret;
+static int s10_svc_send_msg(struct s10_priv *priv,
+			    enum stratix10_svc_command_code command,
+			    void *payload, u32 payload_length)
+{
+	struct stratix10_svc_chan *chan = priv->chan;
+	struct device *dev = priv->client.dev;
+	struct stratix10_svc_client_msg msg;
+	int ret;
 
 	dev_dbg(dev, "%s cmd=%d payload=%p length=%d\n",
 		__func__, command, payload, payload_length);
@@ -62,90 +61,90 @@
 	ret = stratix10_svc_send(chan, &msg);
 	dev_dbg(dev, "stratix10_svc_send returned status %d\n", ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Free buffers allocated from the service layer's pool that are not in use.
- * Return true when all buffers are मुक्तd.
+ * Return true when all buffers are freed.
  */
-अटल bool s10_मुक्त_buffers(काष्ठा fpga_manager *mgr)
-अणु
-	काष्ठा s10_priv *priv = mgr->priv;
-	uपूर्णांक num_मुक्त = 0;
-	uपूर्णांक i;
+static bool s10_free_buffers(struct fpga_manager *mgr)
+{
+	struct s10_priv *priv = mgr->priv;
+	uint num_free = 0;
+	uint i;
 
-	क्रम (i = 0; i < NUM_SVC_BUFS; i++) अणु
-		अगर (!priv->svc_bufs[i].buf) अणु
-			num_मुक्त++;
-			जारी;
-		पूर्ण
+	for (i = 0; i < NUM_SVC_BUFS; i++) {
+		if (!priv->svc_bufs[i].buf) {
+			num_free++;
+			continue;
+		}
 
-		अगर (!test_and_set_bit_lock(SVC_BUF_LOCK,
-					   &priv->svc_bufs[i].lock)) अणु
-			stratix10_svc_मुक्त_memory(priv->chan,
+		if (!test_and_set_bit_lock(SVC_BUF_LOCK,
+					   &priv->svc_bufs[i].lock)) {
+			stratix10_svc_free_memory(priv->chan,
 						  priv->svc_bufs[i].buf);
-			priv->svc_bufs[i].buf = शून्य;
-			num_मुक्त++;
-		पूर्ण
-	पूर्ण
+			priv->svc_bufs[i].buf = NULL;
+			num_free++;
+		}
+	}
 
-	वापस num_मुक्त == NUM_SVC_BUFS;
-पूर्ण
+	return num_free == NUM_SVC_BUFS;
+}
 
 /*
  * Returns count of how many buffers are not in use.
  */
-अटल uपूर्णांक s10_मुक्त_buffer_count(काष्ठा fpga_manager *mgr)
-अणु
-	काष्ठा s10_priv *priv = mgr->priv;
-	uपूर्णांक num_मुक्त = 0;
-	uपूर्णांक i;
+static uint s10_free_buffer_count(struct fpga_manager *mgr)
+{
+	struct s10_priv *priv = mgr->priv;
+	uint num_free = 0;
+	uint i;
 
-	क्रम (i = 0; i < NUM_SVC_BUFS; i++)
-		अगर (!priv->svc_bufs[i].buf)
-			num_मुक्त++;
+	for (i = 0; i < NUM_SVC_BUFS; i++)
+		if (!priv->svc_bufs[i].buf)
+			num_free++;
 
-	वापस num_मुक्त;
-पूर्ण
+	return num_free;
+}
 
 /*
  * s10_unlock_bufs
- * Given the वापसed buffer address, match that address to our buffer काष्ठा
+ * Given the returned buffer address, match that address to our buffer struct
  * and unlock that buffer.  This marks it as available to be refilled and sent
- * (or मुक्तd).
- * priv: निजी data
- * kaddr: kernel address of buffer that was वापसed from service layer
+ * (or freed).
+ * priv: private data
+ * kaddr: kernel address of buffer that was returned from service layer
  */
-अटल व्योम s10_unlock_bufs(काष्ठा s10_priv *priv, व्योम *kaddr)
-अणु
-	uपूर्णांक i;
+static void s10_unlock_bufs(struct s10_priv *priv, void *kaddr)
+{
+	uint i;
 
-	अगर (!kaddr)
-		वापस;
+	if (!kaddr)
+		return;
 
-	क्रम (i = 0; i < NUM_SVC_BUFS; i++)
-		अगर (priv->svc_bufs[i].buf == kaddr) अणु
+	for (i = 0; i < NUM_SVC_BUFS; i++)
+		if (priv->svc_bufs[i].buf == kaddr) {
 			clear_bit_unlock(SVC_BUF_LOCK,
 					 &priv->svc_bufs[i].lock);
-			वापस;
-		पूर्ण
+			return;
+		}
 
 	WARN(1, "Unknown buffer returned from service layer %p\n", kaddr);
-पूर्ण
+}
 
 /*
- * s10_receive_callback - callback क्रम service layer to use to provide client
+ * s10_receive_callback - callback for service layer to use to provide client
  * (this driver) messages received through the mailbox.
- * client: service layer client काष्ठा
+ * client: service layer client struct
  * data: message from service layer
  */
-अटल व्योम s10_receive_callback(काष्ठा stratix10_svc_client *client,
-				 काष्ठा stratix10_svc_cb_data *data)
-अणु
-	काष्ठा s10_priv *priv = client->priv;
+static void s10_receive_callback(struct stratix10_svc_client *client,
+				 struct stratix10_svc_cb_data *data)
+{
+	struct s10_priv *priv = client->priv;
 	u32 status;
-	पूर्णांक i;
+	int i;
 
 	WARN_ONCE(!data, "%s: stratix10_svc_rc_data = NULL", __func__);
 
@@ -155,262 +154,262 @@
 	 * Here we set status bits as we receive them.  Elsewhere, we always use
 	 * test_and_clear_bit() to check status in priv->status
 	 */
-	क्रम (i = 0; i <= SVC_STATUS_ERROR; i++)
-		अगर (status & (1 << i))
+	for (i = 0; i <= SVC_STATUS_ERROR; i++)
+		if (status & (1 << i))
 			set_bit(i, &priv->status);
 
-	अगर (status & BIT(SVC_STATUS_BUFFER_DONE)) अणु
+	if (status & BIT(SVC_STATUS_BUFFER_DONE)) {
 		s10_unlock_bufs(priv, data->kaddr1);
 		s10_unlock_bufs(priv, data->kaddr2);
 		s10_unlock_bufs(priv, data->kaddr3);
-	पूर्ण
+	}
 
-	complete(&priv->status_वापस_completion);
-पूर्ण
+	complete(&priv->status_return_completion);
+}
 
 /*
- * s10_ops_ग_लिखो_init - prepare क्रम FPGA reconfiguration by requesting
+ * s10_ops_write_init - prepare for FPGA reconfiguration by requesting
  * partial reconfig and allocating buffers from the service layer.
  */
-अटल पूर्णांक s10_ops_ग_लिखो_init(काष्ठा fpga_manager *mgr,
-			      काष्ठा fpga_image_info *info,
-			      स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा s10_priv *priv = mgr->priv;
-	काष्ठा device *dev = priv->client.dev;
-	काष्ठा stratix10_svc_command_config_type ctype;
-	अक्षर *kbuf;
-	uपूर्णांक i;
-	पूर्णांक ret;
+static int s10_ops_write_init(struct fpga_manager *mgr,
+			      struct fpga_image_info *info,
+			      const char *buf, size_t count)
+{
+	struct s10_priv *priv = mgr->priv;
+	struct device *dev = priv->client.dev;
+	struct stratix10_svc_command_config_type ctype;
+	char *kbuf;
+	uint i;
+	int ret;
 
 	ctype.flags = 0;
-	अगर (info->flags & FPGA_MGR_PARTIAL_RECONFIG) अणु
+	if (info->flags & FPGA_MGR_PARTIAL_RECONFIG) {
 		dev_dbg(dev, "Requesting partial reconfiguration.\n");
 		ctype.flags |= BIT(COMMAND_RECONFIG_FLAG_PARTIAL);
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_dbg(dev, "Requesting full reconfiguration.\n");
-	पूर्ण
+	}
 
-	reinit_completion(&priv->status_वापस_completion);
+	reinit_completion(&priv->status_return_completion);
 	ret = s10_svc_send_msg(priv, COMMAND_RECONFIG,
-			       &ctype, माप(ctype));
-	अगर (ret < 0)
-		जाओ init_करोne;
+			       &ctype, sizeof(ctype));
+	if (ret < 0)
+		goto init_done;
 
-	ret = रुको_क्रम_completion_समयout(
-		&priv->status_वापस_completion, S10_RECONFIG_TIMEOUT);
-	अगर (!ret) अणु
+	ret = wait_for_completion_timeout(
+		&priv->status_return_completion, S10_RECONFIG_TIMEOUT);
+	if (!ret) {
 		dev_err(dev, "timeout waiting for RECONFIG_REQUEST\n");
 		ret = -ETIMEDOUT;
-		जाओ init_करोne;
-	पूर्ण
+		goto init_done;
+	}
 
 	ret = 0;
-	अगर (!test_and_clear_bit(SVC_STATUS_OK, &priv->status)) अणु
+	if (!test_and_clear_bit(SVC_STATUS_OK, &priv->status)) {
 		ret = -ETIMEDOUT;
-		जाओ init_करोne;
-	पूर्ण
+		goto init_done;
+	}
 
 	/* Allocate buffers from the service layer's pool. */
-	क्रम (i = 0; i < NUM_SVC_BUFS; i++) अणु
+	for (i = 0; i < NUM_SVC_BUFS; i++) {
 		kbuf = stratix10_svc_allocate_memory(priv->chan, SVC_BUF_SIZE);
-		अगर (!kbuf) अणु
-			s10_मुक्त_buffers(mgr);
+		if (!kbuf) {
+			s10_free_buffers(mgr);
 			ret = -ENOMEM;
-			जाओ init_करोne;
-		पूर्ण
+			goto init_done;
+		}
 
 		priv->svc_bufs[i].buf = kbuf;
 		priv->svc_bufs[i].lock = 0;
-	पूर्ण
+	}
 
-init_करोne:
-	stratix10_svc_करोne(priv->chan);
-	वापस ret;
-पूर्ण
+init_done:
+	stratix10_svc_done(priv->chan);
+	return ret;
+}
 
 /*
  * s10_send_buf - send a buffer to the service layer queue
- * mgr: fpga manager काष्ठा
+ * mgr: fpga manager struct
  * buf: fpga image buffer
  * count: size of buf in bytes
- * Returns # of bytes transferred or -ENOBUFS अगर the all the buffers are in use
- * or अगर the service queue is full. Never वापसs 0.
+ * Returns # of bytes transferred or -ENOBUFS if the all the buffers are in use
+ * or if the service queue is full. Never returns 0.
  */
-अटल पूर्णांक s10_send_buf(काष्ठा fpga_manager *mgr, स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा s10_priv *priv = mgr->priv;
-	काष्ठा device *dev = priv->client.dev;
-	व्योम *svc_buf;
-	माप_प्रकार xfer_sz;
-	पूर्णांक ret;
-	uपूर्णांक i;
+static int s10_send_buf(struct fpga_manager *mgr, const char *buf, size_t count)
+{
+	struct s10_priv *priv = mgr->priv;
+	struct device *dev = priv->client.dev;
+	void *svc_buf;
+	size_t xfer_sz;
+	int ret;
+	uint i;
 
 	/* get/lock a buffer that that's not being used */
-	क्रम (i = 0; i < NUM_SVC_BUFS; i++)
-		अगर (!test_and_set_bit_lock(SVC_BUF_LOCK,
+	for (i = 0; i < NUM_SVC_BUFS; i++)
+		if (!test_and_set_bit_lock(SVC_BUF_LOCK,
 					   &priv->svc_bufs[i].lock))
-			अवरोध;
+			break;
 
-	अगर (i == NUM_SVC_BUFS)
-		वापस -ENOBUFS;
+	if (i == NUM_SVC_BUFS)
+		return -ENOBUFS;
 
 	xfer_sz = count < SVC_BUF_SIZE ? count : SVC_BUF_SIZE;
 
 	svc_buf = priv->svc_bufs[i].buf;
-	स_नकल(svc_buf, buf, xfer_sz);
+	memcpy(svc_buf, buf, xfer_sz);
 	ret = s10_svc_send_msg(priv, COMMAND_RECONFIG_DATA_SUBMIT,
 			       svc_buf, xfer_sz);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev,
 			"Error while sending data to service layer (%d)", ret);
 		clear_bit_unlock(SVC_BUF_LOCK, &priv->svc_bufs[i].lock);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस xfer_sz;
-पूर्ण
+	return xfer_sz;
+}
 
 /*
- * Send a FPGA image to privileged layers to ग_लिखो to the FPGA.  When करोne
- * sending, मुक्त all service layer buffers we allocated in ग_लिखो_init.
+ * Send a FPGA image to privileged layers to write to the FPGA.  When done
+ * sending, free all service layer buffers we allocated in write_init.
  */
-अटल पूर्णांक s10_ops_ग_लिखो(काष्ठा fpga_manager *mgr, स्थिर अक्षर *buf,
-			 माप_प्रकार count)
-अणु
-	काष्ठा s10_priv *priv = mgr->priv;
-	काष्ठा device *dev = priv->client.dev;
-	दीर्घ रुको_status;
-	पूर्णांक sent = 0;
-	पूर्णांक ret = 0;
+static int s10_ops_write(struct fpga_manager *mgr, const char *buf,
+			 size_t count)
+{
+	struct s10_priv *priv = mgr->priv;
+	struct device *dev = priv->client.dev;
+	long wait_status;
+	int sent = 0;
+	int ret = 0;
 
 	/*
-	 * Loop रुकोing क्रम buffers to be वापसed.  When a buffer is वापसed,
-	 * reuse it to send more data or मुक्त अगर अगर all data has been sent.
+	 * Loop waiting for buffers to be returned.  When a buffer is returned,
+	 * reuse it to send more data or free if if all data has been sent.
 	 */
-	जबतक (count > 0 || s10_मुक्त_buffer_count(mgr) != NUM_SVC_BUFS) अणु
-		reinit_completion(&priv->status_वापस_completion);
+	while (count > 0 || s10_free_buffer_count(mgr) != NUM_SVC_BUFS) {
+		reinit_completion(&priv->status_return_completion);
 
-		अगर (count > 0) अणु
+		if (count > 0) {
 			sent = s10_send_buf(mgr, buf, count);
-			अगर (sent < 0)
-				जारी;
+			if (sent < 0)
+				continue;
 
 			count -= sent;
 			buf += sent;
-		पूर्ण अन्यथा अणु
-			अगर (s10_मुक्त_buffers(mgr))
-				वापस 0;
+		} else {
+			if (s10_free_buffers(mgr))
+				return 0;
 
 			ret = s10_svc_send_msg(
 				priv, COMMAND_RECONFIG_DATA_CLAIM,
-				शून्य, 0);
-			अगर (ret < 0)
-				अवरोध;
-		पूर्ण
+				NULL, 0);
+			if (ret < 0)
+				break;
+		}
 
 		/*
-		 * If callback hasn't alपढ़ोy happened, रुको क्रम buffers to be
-		 * वापसed from service layer
+		 * If callback hasn't already happened, wait for buffers to be
+		 * returned from service layer
 		 */
-		रुको_status = 1; /* not समयd out */
-		अगर (!priv->status)
-			रुको_status = रुको_क्रम_completion_समयout(
-				&priv->status_वापस_completion,
+		wait_status = 1; /* not timed out */
+		if (!priv->status)
+			wait_status = wait_for_completion_timeout(
+				&priv->status_return_completion,
 				S10_BUFFER_TIMEOUT);
 
-		अगर (test_and_clear_bit(SVC_STATUS_BUFFER_DONE, &priv->status) ||
+		if (test_and_clear_bit(SVC_STATUS_BUFFER_DONE, &priv->status) ||
 		    test_and_clear_bit(SVC_STATUS_BUFFER_SUBMITTED,
-				       &priv->status)) अणु
+				       &priv->status)) {
 			ret = 0;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (test_and_clear_bit(SVC_STATUS_ERROR, &priv->status)) अणु
+		if (test_and_clear_bit(SVC_STATUS_ERROR, &priv->status)) {
 			dev_err(dev, "ERROR - giving up - SVC_STATUS_ERROR\n");
 			ret = -EFAULT;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (!रुको_status) अणु
+		if (!wait_status) {
 			dev_err(dev, "timeout waiting for svc layer buffers\n");
 			ret = -ETIMEDOUT;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (!s10_मुक्त_buffers(mgr))
+	if (!s10_free_buffers(mgr))
 		dev_err(dev, "%s not all buffers were freed\n", __func__);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक s10_ops_ग_लिखो_complete(काष्ठा fpga_manager *mgr,
-				  काष्ठा fpga_image_info *info)
-अणु
-	काष्ठा s10_priv *priv = mgr->priv;
-	काष्ठा device *dev = priv->client.dev;
-	अचिन्हित दीर्घ समयout;
-	पूर्णांक ret;
+static int s10_ops_write_complete(struct fpga_manager *mgr,
+				  struct fpga_image_info *info)
+{
+	struct s10_priv *priv = mgr->priv;
+	struct device *dev = priv->client.dev;
+	unsigned long timeout;
+	int ret;
 
-	समयout = usecs_to_jअगरfies(info->config_complete_समयout_us);
+	timeout = usecs_to_jiffies(info->config_complete_timeout_us);
 
-	करो अणु
-		reinit_completion(&priv->status_वापस_completion);
+	do {
+		reinit_completion(&priv->status_return_completion);
 
-		ret = s10_svc_send_msg(priv, COMMAND_RECONFIG_STATUS, शून्य, 0);
-		अगर (ret < 0)
-			अवरोध;
+		ret = s10_svc_send_msg(priv, COMMAND_RECONFIG_STATUS, NULL, 0);
+		if (ret < 0)
+			break;
 
-		ret = रुको_क्रम_completion_समयout(
-			&priv->status_वापस_completion, समयout);
-		अगर (!ret) अणु
+		ret = wait_for_completion_timeout(
+			&priv->status_return_completion, timeout);
+		if (!ret) {
 			dev_err(dev,
 				"timeout waiting for RECONFIG_COMPLETED\n");
 			ret = -ETIMEDOUT;
-			अवरोध;
-		पूर्ण
-		/* Not error or समयout, so ret is # of jअगरfies until समयout */
-		समयout = ret;
+			break;
+		}
+		/* Not error or timeout, so ret is # of jiffies until timeout */
+		timeout = ret;
 		ret = 0;
 
-		अगर (test_and_clear_bit(SVC_STATUS_COMPLETED, &priv->status))
-			अवरोध;
+		if (test_and_clear_bit(SVC_STATUS_COMPLETED, &priv->status))
+			break;
 
-		अगर (test_and_clear_bit(SVC_STATUS_ERROR, &priv->status)) अणु
+		if (test_and_clear_bit(SVC_STATUS_ERROR, &priv->status)) {
 			dev_err(dev, "ERROR - giving up - SVC_STATUS_ERROR\n");
 			ret = -EFAULT;
-			अवरोध;
-		पूर्ण
-	पूर्ण जबतक (1);
+			break;
+		}
+	} while (1);
 
-	stratix10_svc_करोne(priv->chan);
+	stratix10_svc_done(priv->chan);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल क्रमागत fpga_mgr_states s10_ops_state(काष्ठा fpga_manager *mgr)
-अणु
-	वापस FPGA_MGR_STATE_UNKNOWN;
-पूर्ण
+static enum fpga_mgr_states s10_ops_state(struct fpga_manager *mgr)
+{
+	return FPGA_MGR_STATE_UNKNOWN;
+}
 
-अटल स्थिर काष्ठा fpga_manager_ops s10_ops = अणु
+static const struct fpga_manager_ops s10_ops = {
 	.state = s10_ops_state,
-	.ग_लिखो_init = s10_ops_ग_लिखो_init,
-	.ग_लिखो = s10_ops_ग_लिखो,
-	.ग_लिखो_complete = s10_ops_ग_लिखो_complete,
-पूर्ण;
+	.write_init = s10_ops_write_init,
+	.write = s10_ops_write,
+	.write_complete = s10_ops_write_complete,
+};
 
-अटल पूर्णांक s10_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा s10_priv *priv;
-	काष्ठा fpga_manager *mgr;
-	पूर्णांक ret;
+static int s10_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct s10_priv *priv;
+	struct fpga_manager *mgr;
+	int ret;
 
-	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
 	priv->client.dev = dev;
 	priv->client.receive_cb = s10_receive_callback;
@@ -418,98 +417,98 @@ init_करोne:
 
 	priv->chan = stratix10_svc_request_channel_byname(&priv->client,
 							  SVC_CLIENT_FPGA);
-	अगर (IS_ERR(priv->chan)) अणु
+	if (IS_ERR(priv->chan)) {
 		dev_err(dev, "couldn't get service channel (%s)\n",
 			SVC_CLIENT_FPGA);
-		वापस PTR_ERR(priv->chan);
-	पूर्ण
+		return PTR_ERR(priv->chan);
+	}
 
-	init_completion(&priv->status_वापस_completion);
+	init_completion(&priv->status_return_completion);
 
 	mgr = fpga_mgr_create(dev, "Stratix10 SOC FPGA Manager",
 			      &s10_ops, priv);
-	अगर (!mgr) अणु
+	if (!mgr) {
 		dev_err(dev, "unable to create FPGA manager\n");
 		ret = -ENOMEM;
-		जाओ probe_err;
-	पूर्ण
+		goto probe_err;
+	}
 
-	ret = fpga_mgr_रेजिस्टर(mgr);
-	अगर (ret) अणु
+	ret = fpga_mgr_register(mgr);
+	if (ret) {
 		dev_err(dev, "unable to register FPGA manager\n");
-		fpga_mgr_मुक्त(mgr);
-		जाओ probe_err;
-	पूर्ण
+		fpga_mgr_free(mgr);
+		goto probe_err;
+	}
 
-	platक्रमm_set_drvdata(pdev, mgr);
-	वापस ret;
+	platform_set_drvdata(pdev, mgr);
+	return ret;
 
 probe_err:
-	stratix10_svc_मुक्त_channel(priv->chan);
-	वापस ret;
-पूर्ण
+	stratix10_svc_free_channel(priv->chan);
+	return ret;
+}
 
-अटल पूर्णांक s10_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा fpga_manager *mgr = platक्रमm_get_drvdata(pdev);
-	काष्ठा s10_priv *priv = mgr->priv;
+static int s10_remove(struct platform_device *pdev)
+{
+	struct fpga_manager *mgr = platform_get_drvdata(pdev);
+	struct s10_priv *priv = mgr->priv;
 
-	fpga_mgr_unरेजिस्टर(mgr);
-	stratix10_svc_मुक्त_channel(priv->chan);
+	fpga_mgr_unregister(mgr);
+	stratix10_svc_free_channel(priv->chan);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id s10_of_match[] = अणु
-	अणु.compatible = "intel,stratix10-soc-fpga-mgr"पूर्ण,
-	अणु.compatible = "intel,agilex-soc-fpga-mgr"पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id s10_of_match[] = {
+	{.compatible = "intel,stratix10-soc-fpga-mgr"},
+	{.compatible = "intel,agilex-soc-fpga-mgr"},
+	{},
+};
 
 MODULE_DEVICE_TABLE(of, s10_of_match);
 
-अटल काष्ठा platक्रमm_driver s10_driver = अणु
+static struct platform_driver s10_driver = {
 	.probe = s10_probe,
-	.हटाओ = s10_हटाओ,
-	.driver = अणु
+	.remove = s10_remove,
+	.driver = {
 		.name	= "Stratix10 SoC FPGA manager",
 		.of_match_table = of_match_ptr(s10_of_match),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init s10_init(व्योम)
-अणु
-	काष्ठा device_node *fw_np;
-	काष्ठा device_node *np;
-	पूर्णांक ret;
+static int __init s10_init(void)
+{
+	struct device_node *fw_np;
+	struct device_node *np;
+	int ret;
 
-	fw_np = of_find_node_by_name(शून्य, "svc");
-	अगर (!fw_np)
-		वापस -ENODEV;
+	fw_np = of_find_node_by_name(NULL, "svc");
+	if (!fw_np)
+		return -ENODEV;
 
 	of_node_get(fw_np);
 	np = of_find_matching_node(fw_np, s10_of_match);
-	अगर (!np) अणु
+	if (!np) {
 		of_node_put(fw_np);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	of_node_put(np);
-	ret = of_platक्रमm_populate(fw_np, s10_of_match, शून्य, शून्य);
+	ret = of_platform_populate(fw_np, s10_of_match, NULL, NULL);
 	of_node_put(fw_np);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस platक्रमm_driver_रेजिस्टर(&s10_driver);
-पूर्ण
+	return platform_driver_register(&s10_driver);
+}
 
-अटल व्योम __निकास s10_निकास(व्योम)
-अणु
-	वापस platक्रमm_driver_unरेजिस्टर(&s10_driver);
-पूर्ण
+static void __exit s10_exit(void)
+{
+	return platform_driver_unregister(&s10_driver);
+}
 
 module_init(s10_init);
-module_निकास(s10_निकास);
+module_exit(s10_exit);
 
 MODULE_AUTHOR("Alan Tull <atull@kernel.org>");
 MODULE_DESCRIPTION("Intel Stratix 10 SOC FPGA Manager");

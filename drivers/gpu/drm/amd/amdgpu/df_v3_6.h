@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,21 +21,21 @@
  *
  */
 
-#अगर_अघोषित __DF_V3_6_H__
-#घोषणा __DF_V3_6_H__
+#ifndef __DF_V3_6_H__
+#define __DF_V3_6_H__
 
-#समावेश "soc15_common.h"
+#include "soc15_common.h"
 
-क्रमागत DF_V3_6_MGCG अणु
+enum DF_V3_6_MGCG {
 	DF_V3_6_MGCG_DISABLE = 0,
 	DF_V3_6_MGCG_ENABLE_00_CYCLE_DELAY = 1,
 	DF_V3_6_MGCG_ENABLE_01_CYCLE_DELAY = 2,
 	DF_V3_6_MGCG_ENABLE_15_CYCLE_DELAY = 13,
 	DF_V3_6_MGCG_ENABLE_31_CYCLE_DELAY = 14,
 	DF_V3_6_MGCG_ENABLE_63_CYCLE_DELAY = 15
-पूर्ण;
+};
 
-बाह्य स्थिर काष्ठा attribute_group *df_v3_6_attr_groups[];
-बाह्य स्थिर काष्ठा amdgpu_df_funcs df_v3_6_funcs;
+extern const struct attribute_group *df_v3_6_attr_groups[];
+extern const struct amdgpu_df_funcs df_v3_6_funcs;
 
-#पूर्ण_अगर
+#endif

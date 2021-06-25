@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modअगरy, merge, publish,
+ * without limitation the rights to use, copy, modify, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to करो so, subject to
+ * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
@@ -27,83 +26,83 @@
  * Authors: Dave Airlie <airlied@redhat.com>
  */
 
-#समावेश <linux/pci.h>
+#include <linux/pci.h>
 
-#समावेश <drm/drm_gem_vram_helper.h>
-#समावेश <drm/drm_managed.h>
-#समावेश <drm/drm_prपूर्णांक.h>
+#include <drm/drm_gem_vram_helper.h>
+#include <drm/drm_managed.h>
+#include <drm/drm_print.h>
 
-#समावेश "ast_drv.h"
+#include "ast_drv.h"
 
-अटल u32 ast_get_vram_size(काष्ठा ast_निजी *ast)
-अणु
+static u32 ast_get_vram_size(struct ast_private *ast)
+{
 	u8 jreg;
 	u32 vram_size;
 
-	ast_खोलो_key(ast);
+	ast_open_key(ast);
 
 	vram_size = AST_VIDMEM_DEFAULT_SIZE;
 	jreg = ast_get_index_reg_mask(ast, AST_IO_CRTC_PORT, 0xaa, 0xff);
-	चयन (jreg & 3) अणु
-	हाल 0:
+	switch (jreg & 3) {
+	case 0:
 		vram_size = AST_VIDMEM_SIZE_8M;
-		अवरोध;
-	हाल 1:
+		break;
+	case 1:
 		vram_size = AST_VIDMEM_SIZE_16M;
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		vram_size = AST_VIDMEM_SIZE_32M;
-		अवरोध;
-	हाल 3:
+		break;
+	case 3:
 		vram_size = AST_VIDMEM_SIZE_64M;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	jreg = ast_get_index_reg_mask(ast, AST_IO_CRTC_PORT, 0x99, 0xff);
-	चयन (jreg & 0x03) अणु
-	हाल 1:
+	switch (jreg & 0x03) {
+	case 1:
 		vram_size -= 0x100000;
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		vram_size -= 0x200000;
-		अवरोध;
-	हाल 3:
+		break;
+	case 3:
 		vram_size -= 0x400000;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस vram_size;
-पूर्ण
+	return vram_size;
+}
 
-अटल व्योम ast_mm_release(काष्ठा drm_device *dev, व्योम *ptr)
-अणु
-	काष्ठा ast_निजी *ast = to_ast_निजी(dev);
-	काष्ठा pci_dev *pdev = to_pci_dev(dev->dev);
+static void ast_mm_release(struct drm_device *dev, void *ptr)
+{
+	struct ast_private *ast = to_ast_private(dev);
+	struct pci_dev *pdev = to_pci_dev(dev->dev);
 
 	arch_phys_wc_del(ast->fb_mtrr);
-	arch_io_मुक्त_memtype_wc(pci_resource_start(pdev, 0),
+	arch_io_free_memtype_wc(pci_resource_start(pdev, 0),
 				pci_resource_len(pdev, 0));
-पूर्ण
+}
 
-पूर्णांक ast_mm_init(काष्ठा ast_निजी *ast)
-अणु
-	काष्ठा drm_device *dev = &ast->base;
-	काष्ठा pci_dev *pdev = to_pci_dev(dev->dev);
+int ast_mm_init(struct ast_private *ast)
+{
+	struct drm_device *dev = &ast->base;
+	struct pci_dev *pdev = to_pci_dev(dev->dev);
 	u32 vram_size;
-	पूर्णांक ret;
+	int ret;
 
 	vram_size = ast_get_vram_size(ast);
 
 	ret = drmm_vram_helper_init(dev, pci_resource_start(pdev, 0), vram_size);
-	अगर (ret) अणु
+	if (ret) {
 		drm_err(dev, "Error initializing VRAM MM; %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	arch_io_reserve_memtype_wc(pci_resource_start(pdev, 0),
 				   pci_resource_len(pdev, 0));
 	ast->fb_mtrr = arch_phys_wc_add(pci_resource_start(pdev, 0),
 					pci_resource_len(pdev, 0));
 
-	वापस drmm_add_action_or_reset(dev, ast_mm_release, शून्य);
-पूर्ण
+	return drmm_add_action_or_reset(dev, ast_mm_release, NULL);
+}

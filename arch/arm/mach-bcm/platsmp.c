@@ -1,92 +1,91 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2014-2015 Broadcom Corporation
  * Copyright 2014 Linaro Limited
  */
 
-#समावेश <linux/cpumask.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/irqchip/irq-bcm2836.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/sched/घड़ी.h>
-#समावेश <linux/smp.h>
+#include <linux/cpumask.h>
+#include <linux/delay.h>
+#include <linux/errno.h>
+#include <linux/init.h>
+#include <linux/io.h>
+#include <linux/irqchip/irq-bcm2836.h>
+#include <linux/jiffies.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/sched.h>
+#include <linux/sched/clock.h>
+#include <linux/smp.h>
 
-#समावेश <यंत्र/cacheflush.h>
-#समावेश <यंत्र/smp.h>
-#समावेश <यंत्र/smp_plat.h>
-#समावेश <यंत्र/smp_scu.h>
+#include <asm/cacheflush.h>
+#include <asm/smp.h>
+#include <asm/smp_plat.h>
+#include <asm/smp_scu.h>
 
-#समावेश "platsmp.h"
+#include "platsmp.h"
 
 /* Size of mapped Cortex A9 SCU address space */
-#घोषणा CORTEX_A9_SCU_SIZE	0x58
+#define CORTEX_A9_SCU_SIZE	0x58
 
-#घोषणा SECONDARY_TIMEOUT_NS	NSEC_PER_MSEC	/* 1 msec (in nanoseconds) */
-#घोषणा BOOT_ADDR_CPUID_MASK	0x3
+#define SECONDARY_TIMEOUT_NS	NSEC_PER_MSEC	/* 1 msec (in nanoseconds) */
+#define BOOT_ADDR_CPUID_MASK	0x3
 
-/* Name of device node property defining secondary boot रेजिस्टर location */
-#घोषणा OF_SECONDARY_BOOT	"secondary-boot-reg"
-#घोषणा MPIDR_CPUID_BITMASK	0x3
+/* Name of device node property defining secondary boot register location */
+#define OF_SECONDARY_BOOT	"secondary-boot-reg"
+#define MPIDR_CPUID_BITMASK	0x3
 
 /*
  * Enable the Cortex A9 Snoop Control Unit
  *
- * By the समय this is called we alपढ़ोy know there are multiple
+ * By the time this is called we already know there are multiple
  * cores present.  We assume we're running on a Cortex A9 processor,
- * so any trouble getting the base address रेजिस्टर or getting the
+ * so any trouble getting the base address register or getting the
  * SCU base is a problem.
  *
- * Return 0 अगर successful or an error code otherwise.
+ * Return 0 if successful or an error code otherwise.
  */
-अटल पूर्णांक __init scu_a9_enable(व्योम)
-अणु
-	अचिन्हित दीर्घ config_base;
-	व्योम __iomem *scu_base;
+static int __init scu_a9_enable(void)
+{
+	unsigned long config_base;
+	void __iomem *scu_base;
 
-	अगर (!scu_a9_has_base()) अणु
+	if (!scu_a9_has_base()) {
 		pr_err("no configuration base address register!\n");
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
-	/* Config base address रेजिस्टर value is zero क्रम uniprocessor */
+	/* Config base address register value is zero for uniprocessor */
 	config_base = scu_a9_get_base();
-	अगर (!config_base) अणु
+	if (!config_base) {
 		pr_err("hardware reports only one core\n");
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
 	scu_base = ioremap((phys_addr_t)config_base, CORTEX_A9_SCU_SIZE);
-	अगर (!scu_base) अणु
+	if (!scu_base) {
 		pr_err("failed to remap config base (%lu/%u) for SCU\n",
 			config_base, CORTEX_A9_SCU_SIZE);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	scu_enable(scu_base);
 
 	iounmap(scu_base);	/* That's the last we'll need of this */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u32 secondary_boot_addr_क्रम(अचिन्हित पूर्णांक cpu)
-अणु
+static u32 secondary_boot_addr_for(unsigned int cpu)
+{
 	u32 secondary_boot_addr = 0;
-	काष्ठा device_node *cpu_node = of_get_cpu_node(cpu, शून्य);
+	struct device_node *cpu_node = of_get_cpu_node(cpu, NULL);
 
-        अगर (!cpu_node) अणु
+        if (!cpu_node) {
 		pr_err("Failed to find device tree node for CPU%u\n", cpu);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (of_property_पढ़ो_u32(cpu_node,
+	if (of_property_read_u32(cpu_node,
 				 OF_SECONDARY_BOOT,
 				 &secondary_boot_addr))
 		pr_err("required secondary boot register not specified for CPU%u\n",
@@ -94,93 +93,93 @@
 
 	of_node_put(cpu_node);
 
-	वापस secondary_boot_addr;
-पूर्ण
+	return secondary_boot_addr;
+}
 
-अटल पूर्णांक nsp_ग_लिखो_lut(अचिन्हित पूर्णांक cpu)
-अणु
-	व्योम __iomem *sku_rom_lut;
+static int nsp_write_lut(unsigned int cpu)
+{
+	void __iomem *sku_rom_lut;
 	phys_addr_t secondary_startup_phy;
-	स्थिर u32 secondary_boot_addr = secondary_boot_addr_क्रम(cpu);
+	const u32 secondary_boot_addr = secondary_boot_addr_for(cpu);
 
-	अगर (!secondary_boot_addr)
-		वापस -EINVAL;
+	if (!secondary_boot_addr)
+		return -EINVAL;
 
 	sku_rom_lut = ioremap((phys_addr_t)secondary_boot_addr,
-				      माप(phys_addr_t));
-	अगर (!sku_rom_lut) अणु
+				      sizeof(phys_addr_t));
+	if (!sku_rom_lut) {
 		pr_warn("unable to ioremap SKU-ROM LUT register for cpu %u\n", cpu);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	secondary_startup_phy = __pa_symbol(secondary_startup);
 	BUG_ON(secondary_startup_phy > (phys_addr_t)U32_MAX);
 
-	ग_लिखोl_relaxed(secondary_startup_phy, sku_rom_lut);
+	writel_relaxed(secondary_startup_phy, sku_rom_lut);
 
-	/* Ensure the ग_लिखो is visible to the secondary core */
+	/* Ensure the write is visible to the secondary core */
 	smp_wmb();
 
 	iounmap(sku_rom_lut);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __init bcm_smp_prepare_cpus(अचिन्हित पूर्णांक max_cpus)
-अणु
-	स्थिर cpumask_t only_cpu_0 = अणु CPU_BITS_CPU0 पूर्ण;
+static void __init bcm_smp_prepare_cpus(unsigned int max_cpus)
+{
+	const cpumask_t only_cpu_0 = { CPU_BITS_CPU0 };
 
 	/* Enable the SCU on Cortex A9 based SoCs */
-	अगर (scu_a9_enable()) अणु
+	if (scu_a9_enable()) {
 		/* Update the CPU present map to reflect uniprocessor mode */
 		pr_warn("failed to enable A9 SCU - disabling SMP\n");
 		init_cpu_present(&only_cpu_0);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * The ROM code has the secondary cores looping, रुकोing क्रम an event.
+ * The ROM code has the secondary cores looping, waiting for an event.
  * When an event occurs each core examines the bottom two bits of the
- * secondary boot रेजिस्टर.  When a core finds those bits contain its
- * own core id, it perक्रमms initialization, including computing its boot
- * address by clearing the boot रेजिस्टर value's bottom two bits.  The
- * core संकेतs that it is beginning its execution by writing its boot
- * address back to the secondary boot रेजिस्टर, and finally jumps to
+ * secondary boot register.  When a core finds those bits contain its
+ * own core id, it performs initialization, including computing its boot
+ * address by clearing the boot register value's bottom two bits.  The
+ * core signals that it is beginning its execution by writing its boot
+ * address back to the secondary boot register, and finally jumps to
  * that address.
  *
  * So to start a core executing we need to:
  * - Encode the (hardware) CPU id with the bottom bits of the secondary
  *   start address.
- * - Write that value पूर्णांकo the secondary boot रेजिस्टर.
+ * - Write that value into the secondary boot register.
  * - Generate an event to wake up the secondary CPU(s).
- * - Wait क्रम the secondary boot रेजिस्टर to be re-written, which
+ * - Wait for the secondary boot register to be re-written, which
  *   indicates the secondary core has started.
  */
-अटल पूर्णांक kona_boot_secondary(अचिन्हित पूर्णांक cpu, काष्ठा task_काष्ठा *idle)
-अणु
-	व्योम __iomem *boot_reg;
+static int kona_boot_secondary(unsigned int cpu, struct task_struct *idle)
+{
+	void __iomem *boot_reg;
 	phys_addr_t boot_func;
-	u64 start_घड़ी;
+	u64 start_clock;
 	u32 cpu_id;
 	u32 boot_val;
-	bool समयout = false;
-	स्थिर u32 secondary_boot_addr = secondary_boot_addr_क्रम(cpu);
+	bool timeout = false;
+	const u32 secondary_boot_addr = secondary_boot_addr_for(cpu);
 
 	cpu_id = cpu_logical_map(cpu);
-	अगर (cpu_id & ~BOOT_ADDR_CPUID_MASK) अणु
+	if (cpu_id & ~BOOT_ADDR_CPUID_MASK) {
 		pr_err("bad cpu id (%u > %u)\n", cpu_id, BOOT_ADDR_CPUID_MASK);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!secondary_boot_addr)
-		वापस -EINVAL;
+	if (!secondary_boot_addr)
+		return -EINVAL;
 
 	boot_reg = ioremap((phys_addr_t)secondary_boot_addr,
-				   माप(phys_addr_t));
-	अगर (!boot_reg) अणु
+				   sizeof(phys_addr_t));
+	if (!boot_reg) {
 		pr_err("unable to map boot register for cpu %u\n", cpu_id);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	/*
 	 * Secondary cores will start in secondary_startup(),
@@ -192,149 +191,149 @@
 
 	/* The core to start is encoded in the low bits */
 	boot_val = (u32)boot_func | cpu_id;
-	ग_लिखोl_relaxed(boot_val, boot_reg);
+	writel_relaxed(boot_val, boot_reg);
 
 	sev();
 
 	/* The low bits will be cleared once the core has started */
-	start_घड़ी = local_घड़ी();
-	जबतक (!समयout && पढ़ोl_relaxed(boot_reg) == boot_val)
-		समयout = local_घड़ी() - start_घड़ी > SECONDARY_TIMEOUT_NS;
+	start_clock = local_clock();
+	while (!timeout && readl_relaxed(boot_reg) == boot_val)
+		timeout = local_clock() - start_clock > SECONDARY_TIMEOUT_NS;
 
 	iounmap(boot_reg);
 
-	अगर (!समयout)
-		वापस 0;
+	if (!timeout)
+		return 0;
 
 	pr_err("timeout waiting for cpu %u to start\n", cpu_id);
 
-	वापस -ENXIO;
-पूर्ण
+	return -ENXIO;
+}
 
-/* Cluster Dormant Control command to bring CPU पूर्णांकo a running state */
-#घोषणा CDC_CMD			6
-#घोषणा CDC_CMD_OFFSET		0
-#घोषणा CDC_CMD_REG(cpu)	(CDC_CMD_OFFSET + 4*(cpu))
+/* Cluster Dormant Control command to bring CPU into a running state */
+#define CDC_CMD			6
+#define CDC_CMD_OFFSET		0
+#define CDC_CMD_REG(cpu)	(CDC_CMD_OFFSET + 4*(cpu))
 
 /*
  * BCM23550 has a Cluster Dormant Control block that keeps the core in
  * idle state. A command needs to be sent to the block to bring the CPU
- * पूर्णांकo running state.
+ * into running state.
  */
-अटल पूर्णांक bcm23550_boot_secondary(अचिन्हित पूर्णांक cpu, काष्ठा task_काष्ठा *idle)
-अणु
-	व्योम __iomem *cdc_base;
-	काष्ठा device_node *dn;
-	अक्षर *name;
-	पूर्णांक ret;
+static int bcm23550_boot_secondary(unsigned int cpu, struct task_struct *idle)
+{
+	void __iomem *cdc_base;
+	struct device_node *dn;
+	char *name;
+	int ret;
 
-	/* Make sure a CDC node exists beक्रमe booting the
+	/* Make sure a CDC node exists before booting the
 	 * secondary core.
 	 */
 	name = "brcm,bcm23550-cdc";
-	dn = of_find_compatible_node(शून्य, शून्य, name);
-	अगर (!dn) अणु
+	dn = of_find_compatible_node(NULL, NULL, name);
+	if (!dn) {
 		pr_err("unable to find cdc node\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	cdc_base = of_iomap(dn, 0);
 	of_node_put(dn);
 
-	अगर (!cdc_base) अणु
+	if (!cdc_base) {
 		pr_err("unable to remap cdc base register\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	/* Boot the secondary core */
 	ret = kona_boot_secondary(cpu, idle);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	/* Bring this CPU to RUN state so that nIRQ nFIQ
-	 * संकेतs are unblocked.
+	 * signals are unblocked.
 	 */
-	ग_लिखोl_relaxed(CDC_CMD, cdc_base + CDC_CMD_REG(cpu));
+	writel_relaxed(CDC_CMD, cdc_base + CDC_CMD_REG(cpu));
 
 out:
 	iounmap(cdc_base);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक nsp_boot_secondary(अचिन्हित पूर्णांक cpu, काष्ठा task_काष्ठा *idle)
-अणु
-	पूर्णांक ret;
+static int nsp_boot_secondary(unsigned int cpu, struct task_struct *idle)
+{
+	int ret;
 
 	/*
 	 * After wake up, secondary core branches to the startup
 	 * address programmed at SKU ROM LUT location.
 	 */
-	ret = nsp_ग_लिखो_lut(cpu);
-	अगर (ret) अणु
+	ret = nsp_write_lut(cpu);
+	if (ret) {
 		pr_err("unable to write startup addr to SKU ROM LUT\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Send a CPU wakeup पूर्णांकerrupt to the secondary core */
+	/* Send a CPU wakeup interrupt to the secondary core */
 	arch_send_wakeup_ipi_mask(cpumask_of(cpu));
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक bcm2836_boot_secondary(अचिन्हित पूर्णांक cpu, काष्ठा task_काष्ठा *idle)
-अणु
-	व्योम __iomem *पूर्णांकc_base;
-	काष्ठा device_node *dn;
-	अक्षर *name;
+static int bcm2836_boot_secondary(unsigned int cpu, struct task_struct *idle)
+{
+	void __iomem *intc_base;
+	struct device_node *dn;
+	char *name;
 
 	name = "brcm,bcm2836-l1-intc";
-	dn = of_find_compatible_node(शून्य, शून्य, name);
-	अगर (!dn) अणु
+	dn = of_find_compatible_node(NULL, NULL, name);
+	if (!dn) {
 		pr_err("unable to find intc node\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	पूर्णांकc_base = of_iomap(dn, 0);
+	intc_base = of_iomap(dn, 0);
 	of_node_put(dn);
 
-	अगर (!पूर्णांकc_base) अणु
+	if (!intc_base) {
 		pr_err("unable to remap intc base register\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	ग_लिखोl(virt_to_phys(secondary_startup),
-	       पूर्णांकc_base + LOCAL_MAILBOX3_SET0 + 16 * cpu);
+	writel(virt_to_phys(secondary_startup),
+	       intc_base + LOCAL_MAILBOX3_SET0 + 16 * cpu);
 
 	dsb(sy);
 	sev();
 
-	iounmap(पूर्णांकc_base);
+	iounmap(intc_base);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा smp_operations kona_smp_ops __initस्थिर = अणु
+static const struct smp_operations kona_smp_ops __initconst = {
 	.smp_prepare_cpus	= bcm_smp_prepare_cpus,
 	.smp_boot_secondary	= kona_boot_secondary,
-पूर्ण;
+};
 CPU_METHOD_OF_DECLARE(bcm_smp_bcm281xx, "brcm,bcm11351-cpu-method",
 			&kona_smp_ops);
 
-अटल स्थिर काष्ठा smp_operations bcm23550_smp_ops __initस्थिर = अणु
+static const struct smp_operations bcm23550_smp_ops __initconst = {
 	.smp_boot_secondary	= bcm23550_boot_secondary,
-पूर्ण;
+};
 CPU_METHOD_OF_DECLARE(bcm_smp_bcm23550, "brcm,bcm23550",
 			&bcm23550_smp_ops);
 
-अटल स्थिर काष्ठा smp_operations nsp_smp_ops __initस्थिर = अणु
+static const struct smp_operations nsp_smp_ops __initconst = {
 	.smp_prepare_cpus	= bcm_smp_prepare_cpus,
 	.smp_boot_secondary	= nsp_boot_secondary,
-पूर्ण;
+};
 CPU_METHOD_OF_DECLARE(bcm_smp_nsp, "brcm,bcm-nsp-smp", &nsp_smp_ops);
 
-स्थिर काष्ठा smp_operations bcm2836_smp_ops __initस्थिर = अणु
+const struct smp_operations bcm2836_smp_ops __initconst = {
 	.smp_boot_secondary	= bcm2836_boot_secondary,
-पूर्ण;
+};
 CPU_METHOD_OF_DECLARE(bcm_smp_bcm2836, "brcm,bcm2836-smp", &bcm2836_smp_ops);

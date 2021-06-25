@@ -1,12 +1,11 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- *	Low-Level PCI Access क्रम i386 machines
+ *	Low-Level PCI Access for i386 machines
  *
  * Copyright 1993, 1994 Drew Eckhardt
  *      Visionary Computing
  *      (Unix and Linux consulting and custom programming)
- *      Drew@Coloraकरो.EDU
+ *      Drew@Colorado.EDU
  *      +1 (303) 786-7975
  *
  * Drew's work was sponsored by:
@@ -16,75 +15,75 @@
  *
  * Copyright 1997--2000 Martin Mares <mj@ucw.cz>
  *
- * For more inक्रमmation, please consult the following manuals (look at
- * http://www.pcisig.com/ क्रम how to get them):
+ * For more information, please consult the following manuals (look at
+ * http://www.pcisig.com/ for how to get them):
  *
- * PCI BIOS Specअगरication
- * PCI Local Bus Specअगरication
- * PCI to PCI Bridge Specअगरication
+ * PCI BIOS Specification
+ * PCI Local Bus Specification
+ * PCI to PCI Bridge Specification
  * PCI System Design Guide
  *
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/export.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/init.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/memblock.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/export.h>
+#include <linux/pci.h>
+#include <linux/init.h>
+#include <linux/ioport.h>
+#include <linux/errno.h>
+#include <linux/memblock.h>
 
-#समावेश <यंत्र/memtype.h>
-#समावेश <यंत्र/e820/api.h>
-#समावेश <यंत्र/pci_x86.h>
-#समावेश <यंत्र/io_apic.h>
+#include <asm/memtype.h>
+#include <asm/e820/api.h>
+#include <asm/pci_x86.h>
+#include <asm/io_apic.h>
 
 
 /*
- * This list of dynamic mappings is क्रम temporarily मुख्यtaining
- * original BIOS BAR addresses क्रम possible reinstatement.
+ * This list of dynamic mappings is for temporarily maintaining
+ * original BIOS BAR addresses for possible reinstatement.
  */
-काष्ठा pcibios_fwaddrmap अणु
-	काष्ठा list_head list;
-	काष्ठा pci_dev *dev;
-	resource_माप_प्रकार fw_addr[DEVICE_COUNT_RESOURCE];
-पूर्ण;
+struct pcibios_fwaddrmap {
+	struct list_head list;
+	struct pci_dev *dev;
+	resource_size_t fw_addr[DEVICE_COUNT_RESOURCE];
+};
 
-अटल LIST_HEAD(pcibios_fwaddrmappings);
-अटल DEFINE_SPINLOCK(pcibios_fwaddrmap_lock);
-अटल bool pcibios_fw_addr_करोne;
+static LIST_HEAD(pcibios_fwaddrmappings);
+static DEFINE_SPINLOCK(pcibios_fwaddrmap_lock);
+static bool pcibios_fw_addr_done;
 
 /* Must be called with 'pcibios_fwaddrmap_lock' lock held. */
-अटल काष्ठा pcibios_fwaddrmap *pcibios_fwaddrmap_lookup(काष्ठा pci_dev *dev)
-अणु
-	काष्ठा pcibios_fwaddrmap *map;
+static struct pcibios_fwaddrmap *pcibios_fwaddrmap_lookup(struct pci_dev *dev)
+{
+	struct pcibios_fwaddrmap *map;
 
-	lockdep_निश्चित_held(&pcibios_fwaddrmap_lock);
+	lockdep_assert_held(&pcibios_fwaddrmap_lock);
 
-	list_क्रम_each_entry(map, &pcibios_fwaddrmappings, list)
-		अगर (map->dev == dev)
-			वापस map;
+	list_for_each_entry(map, &pcibios_fwaddrmappings, list)
+		if (map->dev == dev)
+			return map;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम
-pcibios_save_fw_addr(काष्ठा pci_dev *dev, पूर्णांक idx, resource_माप_प्रकार fw_addr)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा pcibios_fwaddrmap *map;
+static void
+pcibios_save_fw_addr(struct pci_dev *dev, int idx, resource_size_t fw_addr)
+{
+	unsigned long flags;
+	struct pcibios_fwaddrmap *map;
 
-	अगर (pcibios_fw_addr_करोne)
-		वापस;
+	if (pcibios_fw_addr_done)
+		return;
 
 	spin_lock_irqsave(&pcibios_fwaddrmap_lock, flags);
 	map = pcibios_fwaddrmap_lookup(dev);
-	अगर (!map) अणु
+	if (!map) {
 		spin_unlock_irqrestore(&pcibios_fwaddrmap_lock, flags);
-		map = kzalloc(माप(*map), GFP_KERNEL);
-		अगर (!map)
-			वापस;
+		map = kzalloc(sizeof(*map), GFP_KERNEL);
+		if (!map)
+			return;
 
 		map->dev = pci_dev_get(dev);
 		map->fw_addr[idx] = fw_addr;
@@ -92,98 +91,98 @@ pcibios_save_fw_addr(काष्ठा pci_dev *dev, पूर्णांक i
 
 		spin_lock_irqsave(&pcibios_fwaddrmap_lock, flags);
 		list_add_tail(&map->list, &pcibios_fwaddrmappings);
-	पूर्ण अन्यथा
+	} else
 		map->fw_addr[idx] = fw_addr;
 	spin_unlock_irqrestore(&pcibios_fwaddrmap_lock, flags);
-पूर्ण
+}
 
-resource_माप_प्रकार pcibios_retrieve_fw_addr(काष्ठा pci_dev *dev, पूर्णांक idx)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा pcibios_fwaddrmap *map;
-	resource_माप_प्रकार fw_addr = 0;
+resource_size_t pcibios_retrieve_fw_addr(struct pci_dev *dev, int idx)
+{
+	unsigned long flags;
+	struct pcibios_fwaddrmap *map;
+	resource_size_t fw_addr = 0;
 
-	अगर (pcibios_fw_addr_करोne)
-		वापस 0;
+	if (pcibios_fw_addr_done)
+		return 0;
 
 	spin_lock_irqsave(&pcibios_fwaddrmap_lock, flags);
 	map = pcibios_fwaddrmap_lookup(dev);
-	अगर (map)
+	if (map)
 		fw_addr = map->fw_addr[idx];
 	spin_unlock_irqrestore(&pcibios_fwaddrmap_lock, flags);
 
-	वापस fw_addr;
-पूर्ण
+	return fw_addr;
+}
 
-अटल व्योम __init pcibios_fw_addr_list_del(व्योम)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा pcibios_fwaddrmap *entry, *next;
+static void __init pcibios_fw_addr_list_del(void)
+{
+	unsigned long flags;
+	struct pcibios_fwaddrmap *entry, *next;
 
 	spin_lock_irqsave(&pcibios_fwaddrmap_lock, flags);
-	list_क्रम_each_entry_safe(entry, next, &pcibios_fwaddrmappings, list) अणु
+	list_for_each_entry_safe(entry, next, &pcibios_fwaddrmappings, list) {
 		list_del(&entry->list);
 		pci_dev_put(entry->dev);
-		kमुक्त(entry);
-	पूर्ण
+		kfree(entry);
+	}
 	spin_unlock_irqrestore(&pcibios_fwaddrmap_lock, flags);
-	pcibios_fw_addr_करोne = true;
-पूर्ण
+	pcibios_fw_addr_done = true;
+}
 
-अटल पूर्णांक
-skip_isa_ioresource_align(काष्ठा pci_dev *dev) अणु
+static int
+skip_isa_ioresource_align(struct pci_dev *dev) {
 
-	अगर ((pci_probe & PCI_CAN_SKIP_ISA_ALIGN) &&
+	if ((pci_probe & PCI_CAN_SKIP_ISA_ALIGN) &&
 	    !(dev->bus->bridge_ctl & PCI_BRIDGE_CTL_ISA))
-		वापस 1;
-	वापस 0;
-पूर्ण
+		return 1;
+	return 0;
+}
 
 /*
- * We need to aव्योम collisions with `mirrored' VGA ports
+ * We need to avoid collisions with `mirrored' VGA ports
  * and other strange ISA hardware, so we always want the
  * addresses to be allocated in the 0x000-0x0ff region
  * modulo 0x400.
  *
- * Why? Because some silly बाह्यal IO cards only decode
+ * Why? Because some silly external IO cards only decode
  * the low 10 bits of the IO address. The 0x00-0xff region
- * is reserved क्रम motherboard devices that decode all 16
+ * is reserved for motherboard devices that decode all 16
  * bits, so it's ok to allocate at, say, 0x2800-0x28ff,
- * but we want to try to aव्योम allocating at 0x2900-0x2bff
+ * but we want to try to avoid allocating at 0x2900-0x2bff
  * which might have be mirrored at 0x0100-0x03ff..
  */
-resource_माप_प्रकार
-pcibios_align_resource(व्योम *data, स्थिर काष्ठा resource *res,
-			resource_माप_प्रकार size, resource_माप_प्रकार align)
-अणु
-	काष्ठा pci_dev *dev = data;
-	resource_माप_प्रकार start = res->start;
+resource_size_t
+pcibios_align_resource(void *data, const struct resource *res,
+			resource_size_t size, resource_size_t align)
+{
+	struct pci_dev *dev = data;
+	resource_size_t start = res->start;
 
-	अगर (res->flags & IORESOURCE_IO) अणु
-		अगर (skip_isa_ioresource_align(dev))
-			वापस start;
-		अगर (start & 0x300)
+	if (res->flags & IORESOURCE_IO) {
+		if (skip_isa_ioresource_align(dev))
+			return start;
+		if (start & 0x300)
 			start = (start + 0x3ff) & ~0x3ff;
-	पूर्ण अन्यथा अगर (res->flags & IORESOURCE_MEM) अणु
-		/* The low 1MB range is reserved क्रम ISA cards */
-		अगर (start < BIOS_END)
+	} else if (res->flags & IORESOURCE_MEM) {
+		/* The low 1MB range is reserved for ISA cards */
+		if (start < BIOS_END)
 			start = BIOS_END;
-	पूर्ण
-	वापस start;
-पूर्ण
+	}
+	return start;
+}
 EXPORT_SYMBOL(pcibios_align_resource);
 
 /*
  *  Handle resources of PCI devices.  If the world were perfect, we could
- *  just allocate all the resource regions and करो nothing more.  It isn't.
+ *  just allocate all the resource regions and do nothing more.  It isn't.
  *  On the other hand, we cannot just re-allocate all devices, as it would
- *  require us to know lots of host bridge पूर्णांकernals.  So we attempt to
+ *  require us to know lots of host bridge internals.  So we attempt to
  *  keep as much of the original configuration as possible, but tweak it
  *  when it's found to be wrong.
  *
  *  Known BIOS problems we have to work around:
  *	- I/O or memory regions not configured
- *	- regions configured, but not enabled in the command रेजिस्टर
+ *	- regions configured, but not enabled in the command register
  *	- bogus I/O addresses above 64K used
  *	- expansion ROMs left enabled (this may sound harmless, but given
  *	  the fact the PCI specs explicitly allow address decoders to be
@@ -192,14 +191,14 @@ EXPORT_SYMBOL(pcibios_align_resource);
  *	- bad resource sizes or overlaps with other regions
  *
  *  Our solution:
- *	(1) Allocate resources क्रम all buses behind PCI-to-PCI bridges.
+ *	(1) Allocate resources for all buses behind PCI-to-PCI bridges.
  *	    This gives us fixed barriers on where we can allocate.
- *	(2) Allocate resources क्रम all enabled devices.  If there is
+ *	(2) Allocate resources for all enabled devices.  If there is
  *	    a collision, just mark the resource as unallocated. Also
  *	    disable expansion ROMs during this step.
- *	(3) Try to allocate resources क्रम disabled devices.  If the
- *	    resources were asचिन्हित correctly, everything goes well,
- *	    अगर they weren't, they won't disturb allocation of other
+ *	(3) Try to allocate resources for disabled devices.  If the
+ *	    resources were assigned correctly, everything goes well,
+ *	    if they weren't, they won't disturb allocation of other
  *	    resources.
  *	(4) Assign new addresses to resources which were either
  *	    not configured at all or misconfigured.  If explicitly
@@ -207,18 +206,18 @@ EXPORT_SYMBOL(pcibios_align_resource);
  *	    as well.
  */
 
-अटल व्योम pcibios_allocate_bridge_resources(काष्ठा pci_dev *dev)
-अणु
-	पूर्णांक idx;
-	काष्ठा resource *r;
+static void pcibios_allocate_bridge_resources(struct pci_dev *dev)
+{
+	int idx;
+	struct resource *r;
 
-	क्रम (idx = PCI_BRIDGE_RESOURCES; idx < PCI_NUM_RESOURCES; idx++) अणु
+	for (idx = PCI_BRIDGE_RESOURCES; idx < PCI_NUM_RESOURCES; idx++) {
 		r = &dev->resource[idx];
-		अगर (!r->flags)
-			जारी;
-		अगर (r->parent)	/* Alपढ़ोy allocated */
-			जारी;
-		अगर (!r->start || pci_claim_bridge_resource(dev, idx) < 0) अणु
+		if (!r->flags)
+			continue;
+		if (r->parent)	/* Already allocated */
+			continue;
+		if (!r->start || pci_claim_bridge_resource(dev, idx) < 0) {
 			/*
 			 * Something is wrong with the region.
 			 * Invalidate the resource to prevent
@@ -227,145 +226,145 @@ EXPORT_SYMBOL(pcibios_align_resource);
 			 */
 			r->start = r->end = 0;
 			r->flags = 0;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम pcibios_allocate_bus_resources(काष्ठा pci_bus *bus)
-अणु
-	काष्ठा pci_bus *child;
+static void pcibios_allocate_bus_resources(struct pci_bus *bus)
+{
+	struct pci_bus *child;
 
 	/* Depth-First Search on bus tree */
-	अगर (bus->self)
+	if (bus->self)
 		pcibios_allocate_bridge_resources(bus->self);
-	list_क्रम_each_entry(child, &bus->children, node)
+	list_for_each_entry(child, &bus->children, node)
 		pcibios_allocate_bus_resources(child);
-पूर्ण
+}
 
-काष्ठा pci_check_idx_range अणु
-	पूर्णांक start;
-	पूर्णांक end;
-पूर्ण;
+struct pci_check_idx_range {
+	int start;
+	int end;
+};
 
-अटल व्योम pcibios_allocate_dev_resources(काष्ठा pci_dev *dev, पूर्णांक pass)
-अणु
-	पूर्णांक idx, disabled, i;
+static void pcibios_allocate_dev_resources(struct pci_dev *dev, int pass)
+{
+	int idx, disabled, i;
 	u16 command;
-	काष्ठा resource *r;
+	struct resource *r;
 
-	काष्ठा pci_check_idx_range idx_range[] = अणु
-		अणु PCI_STD_RESOURCES, PCI_STD_RESOURCE_END पूर्ण,
-#अगर_घोषित CONFIG_PCI_IOV
-		अणु PCI_IOV_RESOURCES, PCI_IOV_RESOURCE_END पूर्ण,
-#पूर्ण_अगर
-	पूर्ण;
+	struct pci_check_idx_range idx_range[] = {
+		{ PCI_STD_RESOURCES, PCI_STD_RESOURCE_END },
+#ifdef CONFIG_PCI_IOV
+		{ PCI_IOV_RESOURCES, PCI_IOV_RESOURCE_END },
+#endif
+	};
 
-	pci_पढ़ो_config_word(dev, PCI_COMMAND, &command);
-	क्रम (i = 0; i < ARRAY_SIZE(idx_range); i++)
-		क्रम (idx = idx_range[i].start; idx <= idx_range[i].end; idx++) अणु
+	pci_read_config_word(dev, PCI_COMMAND, &command);
+	for (i = 0; i < ARRAY_SIZE(idx_range); i++)
+		for (idx = idx_range[i].start; idx <= idx_range[i].end; idx++) {
 			r = &dev->resource[idx];
-			अगर (r->parent)	/* Alपढ़ोy allocated */
-				जारी;
-			अगर (!r->start)	/* Address not asचिन्हित at all */
-				जारी;
-			अगर (r->flags & IORESOURCE_IO)
+			if (r->parent)	/* Already allocated */
+				continue;
+			if (!r->start)	/* Address not assigned at all */
+				continue;
+			if (r->flags & IORESOURCE_IO)
 				disabled = !(command & PCI_COMMAND_IO);
-			अन्यथा
+			else
 				disabled = !(command & PCI_COMMAND_MEMORY);
-			अगर (pass == disabled) अणु
+			if (pass == disabled) {
 				dev_dbg(&dev->dev,
 					"BAR %d: reserving %pr (d=%d, p=%d)\n",
 					idx, r, disabled, pass);
-				अगर (pci_claim_resource(dev, idx) < 0) अणु
-					अगर (r->flags & IORESOURCE_PCI_FIXED) अणु
+				if (pci_claim_resource(dev, idx) < 0) {
+					if (r->flags & IORESOURCE_PCI_FIXED) {
 						dev_info(&dev->dev, "BAR %d %pR is immovable\n",
 							 idx, r);
-					पूर्ण अन्यथा अणु
+					} else {
 						/* We'll assign a new address later */
 						pcibios_save_fw_addr(dev,
 								idx, r->start);
 						r->end -= r->start;
 						r->start = 0;
-					पूर्ण
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	अगर (!pass) अणु
+					}
+				}
+			}
+		}
+	if (!pass) {
 		r = &dev->resource[PCI_ROM_RESOURCE];
-		अगर (r->flags & IORESOURCE_ROM_ENABLE) अणु
+		if (r->flags & IORESOURCE_ROM_ENABLE) {
 			/* Turn the ROM off, leave the resource region,
-			 * but keep it unरेजिस्टरed. */
+			 * but keep it unregistered. */
 			u32 reg;
 			dev_dbg(&dev->dev, "disabling ROM %pR\n", r);
 			r->flags &= ~IORESOURCE_ROM_ENABLE;
-			pci_पढ़ो_config_dword(dev, dev->rom_base_reg, &reg);
-			pci_ग_लिखो_config_dword(dev, dev->rom_base_reg,
+			pci_read_config_dword(dev, dev->rom_base_reg, &reg);
+			pci_write_config_dword(dev, dev->rom_base_reg,
 						reg & ~PCI_ROM_ADDRESS_ENABLE);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम pcibios_allocate_resources(काष्ठा pci_bus *bus, पूर्णांक pass)
-अणु
-	काष्ठा pci_dev *dev;
-	काष्ठा pci_bus *child;
+static void pcibios_allocate_resources(struct pci_bus *bus, int pass)
+{
+	struct pci_dev *dev;
+	struct pci_bus *child;
 
-	list_क्रम_each_entry(dev, &bus->devices, bus_list) अणु
+	list_for_each_entry(dev, &bus->devices, bus_list) {
 		pcibios_allocate_dev_resources(dev, pass);
 
 		child = dev->subordinate;
-		अगर (child)
+		if (child)
 			pcibios_allocate_resources(child, pass);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम pcibios_allocate_dev_rom_resource(काष्ठा pci_dev *dev)
-अणु
-	काष्ठा resource *r;
+static void pcibios_allocate_dev_rom_resource(struct pci_dev *dev)
+{
+	struct resource *r;
 
 	/*
-	 * Try to use BIOS settings क्रम ROMs, otherwise let
-	 * pci_assign_unasचिन्हित_resources() allocate the new
+	 * Try to use BIOS settings for ROMs, otherwise let
+	 * pci_assign_unassigned_resources() allocate the new
 	 * addresses.
 	 */
 	r = &dev->resource[PCI_ROM_RESOURCE];
-	अगर (!r->flags || !r->start)
-		वापस;
-	अगर (r->parent) /* Alपढ़ोy allocated */
-		वापस;
+	if (!r->flags || !r->start)
+		return;
+	if (r->parent) /* Already allocated */
+		return;
 
-	अगर (pci_claim_resource(dev, PCI_ROM_RESOURCE) < 0) अणु
+	if (pci_claim_resource(dev, PCI_ROM_RESOURCE) < 0) {
 		r->end -= r->start;
 		r->start = 0;
-	पूर्ण
-पूर्ण
-अटल व्योम pcibios_allocate_rom_resources(काष्ठा pci_bus *bus)
-अणु
-	काष्ठा pci_dev *dev;
-	काष्ठा pci_bus *child;
+	}
+}
+static void pcibios_allocate_rom_resources(struct pci_bus *bus)
+{
+	struct pci_dev *dev;
+	struct pci_bus *child;
 
-	list_क्रम_each_entry(dev, &bus->devices, bus_list) अणु
+	list_for_each_entry(dev, &bus->devices, bus_list) {
 		pcibios_allocate_dev_rom_resource(dev);
 
 		child = dev->subordinate;
-		अगर (child)
+		if (child)
 			pcibios_allocate_rom_resources(child);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक __init pcibios_assign_resources(व्योम)
-अणु
-	काष्ठा pci_bus *bus;
+static int __init pcibios_assign_resources(void)
+{
+	struct pci_bus *bus;
 
-	अगर (!(pci_probe & PCI_ASSIGN_ROMS))
-		list_क्रम_each_entry(bus, &pci_root_buses, node)
+	if (!(pci_probe & PCI_ASSIGN_ROMS))
+		list_for_each_entry(bus, &pci_root_buses, node)
 			pcibios_allocate_rom_resources(bus);
 
-	pci_assign_unasचिन्हित_resources();
+	pci_assign_unassigned_resources();
 	pcibios_fw_addr_list_del();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * This is an fs_initcall (one below subsys_initcall) in order to reserve
@@ -373,38 +372,38 @@ EXPORT_SYMBOL(pcibios_align_resource);
  */
 fs_initcall(pcibios_assign_resources);
 
-व्योम pcibios_resource_survey_bus(काष्ठा pci_bus *bus)
-अणु
-	dev_prपूर्णांकk(KERN_DEBUG, &bus->dev, "Allocating resources\n");
+void pcibios_resource_survey_bus(struct pci_bus *bus)
+{
+	dev_printk(KERN_DEBUG, &bus->dev, "Allocating resources\n");
 
 	pcibios_allocate_bus_resources(bus);
 
 	pcibios_allocate_resources(bus, 0);
 	pcibios_allocate_resources(bus, 1);
 
-	अगर (!(pci_probe & PCI_ASSIGN_ROMS))
+	if (!(pci_probe & PCI_ASSIGN_ROMS))
 		pcibios_allocate_rom_resources(bus);
-पूर्ण
+}
 
-व्योम __init pcibios_resource_survey(व्योम)
-अणु
-	काष्ठा pci_bus *bus;
+void __init pcibios_resource_survey(void)
+{
+	struct pci_bus *bus;
 
 	DBG("PCI: Allocating resources\n");
 
-	list_क्रम_each_entry(bus, &pci_root_buses, node)
+	list_for_each_entry(bus, &pci_root_buses, node)
 		pcibios_allocate_bus_resources(bus);
 
-	list_क्रम_each_entry(bus, &pci_root_buses, node)
+	list_for_each_entry(bus, &pci_root_buses, node)
 		pcibios_allocate_resources(bus, 0);
-	list_क्रम_each_entry(bus, &pci_root_buses, node)
+	list_for_each_entry(bus, &pci_root_buses, node)
 		pcibios_allocate_resources(bus, 1);
 
 	e820__reserve_resources_late();
 	/*
 	 * Insert the IO APIC resources after PCI initialization has
 	 * occurred to handle IO APICS that are mapped in on a BAR in
-	 * PCI space, but beक्रमe trying to assign unasचिन्हित pci res.
+	 * PCI space, but before trying to assign unassigned pci res.
 	 */
 	ioapic_insert_resources();
-पूर्ण
+}

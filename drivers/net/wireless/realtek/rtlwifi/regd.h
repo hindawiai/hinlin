@@ -1,20 +1,19 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /* Copyright(c) 2009-2012  Realtek Corporation.*/
 
-#अगर_अघोषित __RTL_REGD_H__
-#घोषणा __RTL_REGD_H__
+#ifndef __RTL_REGD_H__
+#define __RTL_REGD_H__
 
-/* क्रम kernel 3.14 , both value are changed to IEEE80211_CHAN_NO_IR*/
-#घोषणा IEEE80211_CHAN_NO_IBSS IEEE80211_CHAN_NO_IR
-#घोषणा IEEE80211_CHAN_PASSIVE_SCAN IEEE80211_CHAN_NO_IR
+/* for kernel 3.14 , both value are changed to IEEE80211_CHAN_NO_IR*/
+#define IEEE80211_CHAN_NO_IBSS IEEE80211_CHAN_NO_IR
+#define IEEE80211_CHAN_PASSIVE_SCAN IEEE80211_CHAN_NO_IR
 
-काष्ठा country_code_to_क्रमागत_rd अणु
+struct country_code_to_enum_rd {
 	u16 countrycode;
-	स्थिर अक्षर *iso_name;
-पूर्ण;
+	const char *iso_name;
+};
 
-क्रमागत country_code_type_t अणु
+enum country_code_type_t {
 	COUNTRY_CODE_FCC = 0,
 	COUNTRY_CODE_IC = 1,
 	COUNTRY_CODE_ETSI = 2,
@@ -32,11 +31,11 @@
 
 	/*add new channel plan above this line */
 	COUNTRY_CODE_MAX
-पूर्ण;
+};
 
-पूर्णांक rtl_regd_init(काष्ठा ieee80211_hw *hw,
-		  व्योम (*reg_notअगरier) (काष्ठा wiphy *wiphy,
-		  काष्ठा regulatory_request *request));
-व्योम rtl_reg_notअगरier(काष्ठा wiphy *wiphy, काष्ठा regulatory_request *request);
+int rtl_regd_init(struct ieee80211_hw *hw,
+		  void (*reg_notifier) (struct wiphy *wiphy,
+		  struct regulatory_request *request));
+void rtl_reg_notifier(struct wiphy *wiphy, struct regulatory_request *request);
 
-#पूर्ण_अगर
+#endif

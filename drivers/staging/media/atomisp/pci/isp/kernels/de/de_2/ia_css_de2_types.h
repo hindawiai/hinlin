@@ -1,24 +1,23 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Support क्रम Intel Camera Imaging ISP subप्रणाली.
+ * Support for Intel Camera Imaging ISP subsystem.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  */
 
-#अगर_अघोषित __IA_CSS_DE2_TYPES_H
-#घोषणा __IA_CSS_DE2_TYPES_H
+#ifndef __IA_CSS_DE2_TYPES_H
+#define __IA_CSS_DE2_TYPES_H
 
 /* @file
-* CSS-API header file क्रम Demosaicing parameters.
+* CSS-API header file for Demosaicing parameters.
 */
 
 /* Eigen Color Demosaicing configuration.
@@ -27,17 +26,17 @@
  * (ISP1: DE1 is used.)
  *  ISP2: DE2 is used.
  */
-काष्ठा ia_css_ecd_config अणु
+struct ia_css_ecd_config {
 	u16 zip_strength;	/** Strength of zipper reduction.
 				u0.13, [0,8191],
-				शेष 5489(0.67), ineffective 0 */
+				default 5489(0.67), ineffective 0 */
 	u16 fc_strength;	/** Strength of false color reduction.
 				u0.13, [0,8191],
-				शेष 8191(almost 1.0), ineffective 0 */
+				default 8191(almost 1.0), ineffective 0 */
 	u16 fc_debias;	/** Prevent color change
 				     on noise or Gr/Gb imbalance.
 				u0.13, [0,8191],
-				शेष 0, ineffective 0 */
-पूर्ण;
+				default 0, ineffective 0 */
+};
 
-#पूर्ण_अगर /* __IA_CSS_DE2_TYPES_H */
+#endif /* __IA_CSS_DE2_TYPES_H */

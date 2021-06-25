@@ -1,45 +1,44 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Driver क्रम DBRI sound chip found on Sparcs.
- * Copyright (C) 2004, 2005 Martin Habets (mhabets@users.sourceक्रमge.net)
+ * Driver for DBRI sound chip found on Sparcs.
+ * Copyright (C) 2004, 2005 Martin Habets (mhabets@users.sourceforge.net)
  *
  * Converted to ring buffered version by Krzysztof Helt (krzysztof.h1@wp.pl)
  *
  * Based entirely upon drivers/sbus/audio/dbri.c which is:
- * Copyright (C) 1997 Ruकरोlf Koenig (rfkoenig@immd4.inक्रमmatik.uni-erlangen.de)
- * Copyright (C) 1998, 1999 Brent Baccala (baccala@मुक्तsoft.org)
+ * Copyright (C) 1997 Rudolf Koenig (rfkoenig@immd4.informatik.uni-erlangen.de)
+ * Copyright (C) 1998, 1999 Brent Baccala (baccala@freesoft.org)
  *
- * This is the low level driver क्रम the DBRI & MMCODEC duo used क्रम ISDN & AUDIO
+ * This is the low level driver for the DBRI & MMCODEC duo used for ISDN & AUDIO
  * on Sun SPARCStation 10, 20, LX and Voyager models.
  *
  * - DBRI: AT&T T5900FX Dual Basic Rates ISDN Interface. It is a 32 channel
- *   data समय multiplexer with ISDN support (aka T7259)
+ *   data time multiplexer with ISDN support (aka T7259)
  *   Interfaces: SBus,ISDN NT & TE, CHI, 4 bits parallel.
  *   CHI: (spelled ki) Concentration Highway Interface (AT&T or Intel bus ?).
  *   Documentation:
  *   - "STP 4000SBus Dual Basic Rate ISDN (DBRI) Transceiver" from
  *     Sparc Technology Business (courtesy of Sun Support)
  *   - Data sheet of the T7903, a newer but very similar ISA bus equivalent
- *     available from the Lucent (क्रमmerly AT&T microelectronics) home
+ *     available from the Lucent (formerly AT&T microelectronics) home
  *     page.
- *   - https://www.मुक्तsoft.org/Linux/DBRI/
- * - MMCODEC: Crystal Semiconductor CS4215 16 bit Mulसमयdia Audio Codec
+ *   - https://www.freesoft.org/Linux/DBRI/
+ * - MMCODEC: Crystal Semiconductor CS4215 16 bit Multimedia Audio Codec
  *   Interfaces: CHI, Audio In & Out, 2 bits parallel
  *   Documentation: from the Crystal Semiconductor home page.
  *
  * The DBRI is a 32 pipe machine, each pipe can transfer some bits between
- * memory and a serial device (दीर्घ pipes, no. 0-15) or between two serial
- * devices (लघु pipes, no. 16-31), or simply send a fixed data to a serial
- * device (लघु pipes).
- * A बारlot defines the bit-offset and no. of bits पढ़ो from a serial device.
- * The बारlots are linked to 6 circular lists, one क्रम each direction क्रम
- * each serial device (NT,TE,CHI). A बारlot is associated to 1 or 2 pipes
- * (the second one is a monitor/tee pipe, valid only क्रम serial input).
+ * memory and a serial device (long pipes, no. 0-15) or between two serial
+ * devices (short pipes, no. 16-31), or simply send a fixed data to a serial
+ * device (short pipes).
+ * A timeslot defines the bit-offset and no. of bits read from a serial device.
+ * The timeslots are linked to 6 circular lists, one for each direction for
+ * each serial device (NT,TE,CHI). A timeslot is associated to 1 or 2 pipes
+ * (the second one is a monitor/tee pipe, valid only for serial input).
  *
  * The mmcodec is connected via the CHI bus and needs the data & some
- * parameters (volume, output selection) समय multiplexed in 8 byte
- * chunks. It also has a control mode, which serves क्रम audio क्रमmat setting.
+ * parameters (volume, output selection) time multiplexed in 8 byte
+ * chunks. It also has a control mode, which serves for audio format setting.
  *
  * Looking at the CS4215 data sheet it is easy to set up 2 or 4 codecs on
  * the same CHI bus, so I thought perhaps it is possible to use the on-board
@@ -50,151 +49,151 @@
  *
  * I've tried to stick to the following function naming conventions:
  * snd_*	ALSA stuff
- * cs4215_*	CS4215 codec specअगरic stuff
+ * cs4215_*	CS4215 codec specific stuff
  * dbri_*	DBRI high-level stuff
  * other	DBRI low-level stuff
  */
 
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/gfp.h>
+#include <linux/interrupt.h>
+#include <linux/delay.h>
+#include <linux/irq.h>
+#include <linux/io.h>
+#include <linux/dma-mapping.h>
+#include <linux/gfp.h>
 
-#समावेश <sound/core.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/pcm_params.h>
-#समावेश <sound/info.h>
-#समावेश <sound/control.h>
-#समावेश <sound/initval.h>
+#include <sound/core.h>
+#include <sound/pcm.h>
+#include <sound/pcm_params.h>
+#include <sound/info.h>
+#include <sound/control.h>
+#include <sound/initval.h>
 
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/atomic.h>
-#समावेश <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/atomic.h>
+#include <linux/module.h>
 
 MODULE_AUTHOR("Rudolf Koenig, Brent Baccala and Martin Habets");
 MODULE_DESCRIPTION("Sun DBRI");
 MODULE_LICENSE("GPL");
 
-अटल पूर्णांक index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;	/* Index 0-MAX */
-अटल अक्षर *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR;	/* ID क्रम this card */
+static int index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;	/* Index 0-MAX */
+static char *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR;	/* ID for this card */
 /* Enable this card */
-अटल bool enable[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE_PNP;
+static bool enable[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE_PNP;
 
-module_param_array(index, पूर्णांक, शून्य, 0444);
+module_param_array(index, int, NULL, 0444);
 MODULE_PARM_DESC(index, "Index value for Sun DBRI soundcard.");
-module_param_array(id, अक्षरp, शून्य, 0444);
+module_param_array(id, charp, NULL, 0444);
 MODULE_PARM_DESC(id, "ID string for Sun DBRI soundcard.");
-module_param_array(enable, bool, शून्य, 0444);
+module_param_array(enable, bool, NULL, 0444);
 MODULE_PARM_DESC(enable, "Enable Sun DBRI soundcard.");
 
-#अघोषित DBRI_DEBUG
+#undef DBRI_DEBUG
 
-#घोषणा D_INT	(1<<0)
-#घोषणा D_GEN	(1<<1)
-#घोषणा D_CMD	(1<<2)
-#घोषणा D_MM	(1<<3)
-#घोषणा D_USR	(1<<4)
-#घोषणा D_DESC	(1<<5)
+#define D_INT	(1<<0)
+#define D_GEN	(1<<1)
+#define D_CMD	(1<<2)
+#define D_MM	(1<<3)
+#define D_USR	(1<<4)
+#define D_DESC	(1<<5)
 
-अटल पूर्णांक dbri_debug;
-module_param(dbri_debug, पूर्णांक, 0644);
+static int dbri_debug;
+module_param(dbri_debug, int, 0644);
 MODULE_PARM_DESC(dbri_debug, "Debug value for Sun DBRI soundcard.");
 
-#अगर_घोषित DBRI_DEBUG
-अटल स्थिर अक्षर * स्थिर cmds[] = अणु
+#ifdef DBRI_DEBUG
+static const char * const cmds[] = {
 	"WAIT", "PAUSE", "JUMP", "IIQ", "REX", "SDP", "CDP", "DTS",
 	"SSP", "CHI", "NT", "TE", "CDEC", "TEST", "CDM", "RESRV"
-पूर्ण;
+};
 
-#घोषणा dprपूर्णांकk(a, x...) अगर (dbri_debug & a) prपूर्णांकk(KERN_DEBUG x)
+#define dprintk(a, x...) if (dbri_debug & a) printk(KERN_DEBUG x)
 
-#अन्यथा
-#घोषणा dprपूर्णांकk(a, x...) करो अणु पूर्ण जबतक (0)
+#else
+#define dprintk(a, x...) do { } while (0)
 
-#पूर्ण_अगर				/* DBRI_DEBUG */
+#endif				/* DBRI_DEBUG */
 
-#घोषणा DBRI_CMD(cmd, पूर्णांकr, value) ((cmd << 28) |	\
-				    (पूर्णांकr << 27) |	\
+#define DBRI_CMD(cmd, intr, value) ((cmd << 28) |	\
+				    (intr << 27) |	\
 				    value)
 
 /***************************************************************************
-	CS4215 specअगरic definitions and काष्ठाures
+	CS4215 specific definitions and structures
 ****************************************************************************/
 
-काष्ठा cs4215 अणु
+struct cs4215 {
 	__u8 data[4];		/* Data mode: Time slots 5-8 */
 	__u8 ctrl[4];		/* Ctrl mode: Time slots 1-4 */
 	__u8 onboard;
-	__u8 offset;		/* Bit offset from frame sync to समय slot 1 */
-	अस्थिर __u32 status;
-	अस्थिर __u32 version;
+	__u8 offset;		/* Bit offset from frame sync to time slot 1 */
+	volatile __u32 status;
+	volatile __u32 version;
 	__u8 precision;		/* In bits, either 8 or 16 */
 	__u8 channels;		/* 1 or 2 */
-पूर्ण;
+};
 
 /*
  * Control mode first
  */
 
-/* Time Slot 1, Status रेजिस्टर */
-#घोषणा CS4215_CLB	(1<<2)	/* Control Latch Bit */
-#घोषणा CS4215_OLB	(1<<3)	/* 1: line: 2.0V, speaker 4V */
+/* Time Slot 1, Status register */
+#define CS4215_CLB	(1<<2)	/* Control Latch Bit */
+#define CS4215_OLB	(1<<3)	/* 1: line: 2.0V, speaker 4V */
 				/* 0: line: 2.8V, speaker 8V */
-#घोषणा CS4215_MLB	(1<<4)	/* 1: Microphone: 20dB gain disabled */
-#घोषणा CS4215_RSRVD_1  (1<<5)
+#define CS4215_MLB	(1<<4)	/* 1: Microphone: 20dB gain disabled */
+#define CS4215_RSRVD_1  (1<<5)
 
 /* Time Slot 2, Data Format Register */
-#घोषणा CS4215_DFR_LINEAR16	0
-#घोषणा CS4215_DFR_ULAW		1
-#घोषणा CS4215_DFR_ALAW		2
-#घोषणा CS4215_DFR_LINEAR8	3
-#घोषणा CS4215_DFR_STEREO	(1<<2)
-अटल काष्ठा अणु
-	अचिन्हित लघु freq;
-	अचिन्हित अक्षर xtal;
-	अचिन्हित अक्षर csval;
-पूर्ण CS4215_FREQ[] = अणु
-	अणु  8000, (1 << 4), (0 << 3) पूर्ण,
-	अणु 16000, (1 << 4), (1 << 3) पूर्ण,
-	अणु 27429, (1 << 4), (2 << 3) पूर्ण,	/* Actually 24428.57 */
-	अणु 32000, (1 << 4), (3 << 3) पूर्ण,
-     /* अणु    NA, (1 << 4), (4 << 3) पूर्ण, */
-     /* अणु    NA, (1 << 4), (5 << 3) पूर्ण, */
-	अणु 48000, (1 << 4), (6 << 3) पूर्ण,
-	अणु  9600, (1 << 4), (7 << 3) पूर्ण,
-	अणु  5512, (2 << 4), (0 << 3) पूर्ण,	/* Actually 5512.5 */
-	अणु 11025, (2 << 4), (1 << 3) पूर्ण,
-	अणु 18900, (2 << 4), (2 << 3) पूर्ण,
-	अणु 22050, (2 << 4), (3 << 3) पूर्ण,
-	अणु 37800, (2 << 4), (4 << 3) पूर्ण,
-	अणु 44100, (2 << 4), (5 << 3) पूर्ण,
-	अणु 33075, (2 << 4), (6 << 3) पूर्ण,
-	अणु  6615, (2 << 4), (7 << 3) पूर्ण,
-	अणु 0, 0, 0पूर्ण
-पूर्ण;
+#define CS4215_DFR_LINEAR16	0
+#define CS4215_DFR_ULAW		1
+#define CS4215_DFR_ALAW		2
+#define CS4215_DFR_LINEAR8	3
+#define CS4215_DFR_STEREO	(1<<2)
+static struct {
+	unsigned short freq;
+	unsigned char xtal;
+	unsigned char csval;
+} CS4215_FREQ[] = {
+	{  8000, (1 << 4), (0 << 3) },
+	{ 16000, (1 << 4), (1 << 3) },
+	{ 27429, (1 << 4), (2 << 3) },	/* Actually 24428.57 */
+	{ 32000, (1 << 4), (3 << 3) },
+     /* {    NA, (1 << 4), (4 << 3) }, */
+     /* {    NA, (1 << 4), (5 << 3) }, */
+	{ 48000, (1 << 4), (6 << 3) },
+	{  9600, (1 << 4), (7 << 3) },
+	{  5512, (2 << 4), (0 << 3) },	/* Actually 5512.5 */
+	{ 11025, (2 << 4), (1 << 3) },
+	{ 18900, (2 << 4), (2 << 3) },
+	{ 22050, (2 << 4), (3 << 3) },
+	{ 37800, (2 << 4), (4 << 3) },
+	{ 44100, (2 << 4), (5 << 3) },
+	{ 33075, (2 << 4), (6 << 3) },
+	{  6615, (2 << 4), (7 << 3) },
+	{ 0, 0, 0}
+};
 
-#घोषणा CS4215_HPF	(1<<7)	/* High Pass Filter, 1: Enabled */
+#define CS4215_HPF	(1<<7)	/* High Pass Filter, 1: Enabled */
 
-#घोषणा CS4215_12_MASK	0xfcbf	/* Mask off reserved bits in slot 1 & 2 */
+#define CS4215_12_MASK	0xfcbf	/* Mask off reserved bits in slot 1 & 2 */
 
-/* Time Slot 3, Serial Port Control रेजिस्टर */
-#घोषणा CS4215_XEN	(1<<0)	/* 0: Enable serial output */
-#घोषणा CS4215_XCLK	(1<<1)	/* 1: Master mode: Generate SCLK */
-#घोषणा CS4215_BSEL_64	(0<<2)	/* Bitrate: 64 bits per frame */
-#घोषणा CS4215_BSEL_128	(1<<2)
-#घोषणा CS4215_BSEL_256	(2<<2)
-#घोषणा CS4215_MCK_MAST (0<<4)	/* Master घड़ी */
-#घोषणा CS4215_MCK_XTL1 (1<<4)	/* 24.576 MHz घड़ी source */
-#घोषणा CS4215_MCK_XTL2 (2<<4)	/* 16.9344 MHz घड़ी source */
-#घोषणा CS4215_MCK_CLK1 (3<<4)	/* Clockin, 256 x Fs */
-#घोषणा CS4215_MCK_CLK2 (4<<4)	/* Clockin, see DFR */
+/* Time Slot 3, Serial Port Control register */
+#define CS4215_XEN	(1<<0)	/* 0: Enable serial output */
+#define CS4215_XCLK	(1<<1)	/* 1: Master mode: Generate SCLK */
+#define CS4215_BSEL_64	(0<<2)	/* Bitrate: 64 bits per frame */
+#define CS4215_BSEL_128	(1<<2)
+#define CS4215_BSEL_256	(2<<2)
+#define CS4215_MCK_MAST (0<<4)	/* Master clock */
+#define CS4215_MCK_XTL1 (1<<4)	/* 24.576 MHz clock source */
+#define CS4215_MCK_XTL2 (2<<4)	/* 16.9344 MHz clock source */
+#define CS4215_MCK_CLK1 (3<<4)	/* Clockin, 256 x Fs */
+#define CS4215_MCK_CLK2 (4<<4)	/* Clockin, see DFR */
 
 /* Time Slot 4, Test Register */
-#घोषणा CS4215_DAD	(1<<0)	/* 0:Digital-Dig loop, 1:Dig-Analog-Dig loop */
-#घोषणा CS4215_ENL	(1<<1)	/* Enable Loopback Testing */
+#define CS4215_DAD	(1<<0)	/* 0:Digital-Dig loop, 1:Dig-Analog-Dig loop */
+#define CS4215_ENL	(1<<1)	/* Enable Loopback Testing */
 
 /* Time Slot 5, Parallel Port Register */
 /* Read only here and the same as the in data mode */
@@ -202,7 +201,7 @@ MODULE_PARM_DESC(dbri_debug, "Debug value for Sun DBRI soundcard.");
 /* Time Slot 6, Reserved  */
 
 /* Time Slot 7, Version Register  */
-#घोषणा CS4215_VERSION_MASK 0xf	/* Known versions 0/C, 1/D, 2/E */
+#define CS4215_VERSION_MASK 0xf	/* Known versions 0/C, 1/D, 2/E */
 
 /* Time Slot 8, Reserved  */
 
@@ -212,395 +211,395 @@ MODULE_PARM_DESC(dbri_debug, "Debug value for Sun DBRI soundcard.");
 /* Time Slot 1-2: Left Channel Data, 2-3: Right Channel Data  */
 
 /* Time Slot 5, Output Setting  */
-#घोषणा CS4215_LO(v)	v	/* Left Output Attenuation 0x3f: -94.5 dB */
-#घोषणा CS4215_LE	(1<<6)	/* Line Out Enable */
-#घोषणा CS4215_HE	(1<<7)	/* Headphone Enable */
+#define CS4215_LO(v)	v	/* Left Output Attenuation 0x3f: -94.5 dB */
+#define CS4215_LE	(1<<6)	/* Line Out Enable */
+#define CS4215_HE	(1<<7)	/* Headphone Enable */
 
 /* Time Slot 6, Output Setting  */
-#घोषणा CS4215_RO(v)	v	/* Right Output Attenuation 0x3f: -94.5 dB */
-#घोषणा CS4215_SE	(1<<6)	/* Speaker Enable */
-#घोषणा CS4215_ADI	(1<<7)	/* A/D Data Invalid: Busy in calibration */
+#define CS4215_RO(v)	v	/* Right Output Attenuation 0x3f: -94.5 dB */
+#define CS4215_SE	(1<<6)	/* Speaker Enable */
+#define CS4215_ADI	(1<<7)	/* A/D Data Invalid: Busy in calibration */
 
 /* Time Slot 7, Input Setting */
-#घोषणा CS4215_LG(v)	v	/* Left Gain Setting 0xf: 22.5 dB */
-#घोषणा CS4215_IS	(1<<4)	/* Input Select: 1=Microphone, 0=Line */
-#घोषणा CS4215_OVR	(1<<5)	/* 1: Over range condition occurred */
-#घोषणा CS4215_PIO0	(1<<6)	/* Parallel I/O 0 */
-#घोषणा CS4215_PIO1	(1<<7)
+#define CS4215_LG(v)	v	/* Left Gain Setting 0xf: 22.5 dB */
+#define CS4215_IS	(1<<4)	/* Input Select: 1=Microphone, 0=Line */
+#define CS4215_OVR	(1<<5)	/* 1: Over range condition occurred */
+#define CS4215_PIO0	(1<<6)	/* Parallel I/O 0 */
+#define CS4215_PIO1	(1<<7)
 
 /* Time Slot 8, Input Setting */
-#घोषणा CS4215_RG(v)	v	/* Right Gain Setting 0xf: 22.5 dB */
-#घोषणा CS4215_MA(v)	(v<<4)	/* Monitor Path Attenuation 0xf: mute */
+#define CS4215_RG(v)	v	/* Right Gain Setting 0xf: 22.5 dB */
+#define CS4215_MA(v)	(v<<4)	/* Monitor Path Attenuation 0xf: mute */
 
 /***************************************************************************
-		DBRI specअगरic definitions and काष्ठाures
+		DBRI specific definitions and structures
 ****************************************************************************/
 
-/* DBRI मुख्य रेजिस्टरs */
-#घोषणा REG0	0x00		/* Status and Control */
-#घोषणा REG1	0x04		/* Mode and Interrupt */
-#घोषणा REG2	0x08		/* Parallel IO */
-#घोषणा REG3	0x0c		/* Test */
-#घोषणा REG8	0x20		/* Command Queue Poपूर्णांकer */
-#घोषणा REG9	0x24		/* Interrupt Queue Poपूर्णांकer */
+/* DBRI main registers */
+#define REG0	0x00		/* Status and Control */
+#define REG1	0x04		/* Mode and Interrupt */
+#define REG2	0x08		/* Parallel IO */
+#define REG3	0x0c		/* Test */
+#define REG8	0x20		/* Command Queue Pointer */
+#define REG9	0x24		/* Interrupt Queue Pointer */
 
-#घोषणा DBRI_NO_CMDS	64
-#घोषणा DBRI_INT_BLK	64
-#घोषणा DBRI_NO_DESCS	64
-#घोषणा DBRI_NO_PIPES	32
-#घोषणा DBRI_MAX_PIPE	(DBRI_NO_PIPES - 1)
+#define DBRI_NO_CMDS	64
+#define DBRI_INT_BLK	64
+#define DBRI_NO_DESCS	64
+#define DBRI_NO_PIPES	32
+#define DBRI_MAX_PIPE	(DBRI_NO_PIPES - 1)
 
-#घोषणा DBRI_REC	0
-#घोषणा DBRI_PLAY	1
-#घोषणा DBRI_NO_STREAMS	2
+#define DBRI_REC	0
+#define DBRI_PLAY	1
+#define DBRI_NO_STREAMS	2
 
 /* One transmit/receive descriptor */
 /* When ba != 0 descriptor is used */
-काष्ठा dbri_mem अणु
-	अस्थिर __u32 word1;
+struct dbri_mem {
+	volatile __u32 word1;
 	__u32 ba;	/* Transmit/Receive Buffer Address */
 	__u32 nda;	/* Next Descriptor Address */
-	अस्थिर __u32 word4;
-पूर्ण;
+	volatile __u32 word4;
+};
 
-/* This काष्ठाure is in a DMA region where it can accessed by both
+/* This structure is in a DMA region where it can accessed by both
  * the CPU and the DBRI
  */
-काष्ठा dbri_dma अणु
-	s32 cmd[DBRI_NO_CMDS];			/* Place क्रम commands */
-	अस्थिर s32 पूर्णांकr[DBRI_INT_BLK];	/* Interrupt field  */
-	काष्ठा dbri_mem desc[DBRI_NO_DESCS];	/* Xmit/receive descriptors */
-पूर्ण;
+struct dbri_dma {
+	s32 cmd[DBRI_NO_CMDS];			/* Place for commands */
+	volatile s32 intr[DBRI_INT_BLK];	/* Interrupt field  */
+	struct dbri_mem desc[DBRI_NO_DESCS];	/* Xmit/receive descriptors */
+};
 
-#घोषणा dbri_dma_off(member, elem)	\
-	((u32)(अचिन्हित दीर्घ)		\
-	 (&(((काष्ठा dbri_dma *)0)->member[elem])))
+#define dbri_dma_off(member, elem)	\
+	((u32)(unsigned long)		\
+	 (&(((struct dbri_dma *)0)->member[elem])))
 
-क्रमागत in_or_out अणु PIPEinput, PIPEoutput पूर्ण;
+enum in_or_out { PIPEinput, PIPEoutput };
 
-काष्ठा dbri_pipe अणु
+struct dbri_pipe {
 	u32 sdp;		/* SDP command word */
-	पूर्णांक nextpipe;		/* Next pipe in linked list */
-	पूर्णांक length;		/* Length of बारlot (bits) */
-	पूर्णांक first_desc;		/* Index of first descriptor */
-	पूर्णांक desc;		/* Index of active descriptor */
-	अस्थिर __u32 *recv_fixed_ptr;	/* Ptr to receive fixed data */
-पूर्ण;
+	int nextpipe;		/* Next pipe in linked list */
+	int length;		/* Length of timeslot (bits) */
+	int first_desc;		/* Index of first descriptor */
+	int desc;		/* Index of active descriptor */
+	volatile __u32 *recv_fixed_ptr;	/* Ptr to receive fixed data */
+};
 
-/* Per stream (playback or record) inक्रमmation */
-काष्ठा dbri_streaminfo अणु
-	काष्ठा snd_pcm_substream *substream;
+/* Per stream (playback or record) information */
+struct dbri_streaminfo {
+	struct snd_pcm_substream *substream;
 	u32 dvma_buffer;	/* Device view of ALSA DMA buffer */
-	पूर्णांक size;		/* Size of DMA buffer             */
-	माप_प्रकार offset;		/* offset in user buffer          */
-	पूर्णांक pipe;		/* Data pipe used                 */
-	पूर्णांक left_gain;		/* mixer elements                 */
-	पूर्णांक right_gain;
-पूर्ण;
+	int size;		/* Size of DMA buffer             */
+	size_t offset;		/* offset in user buffer          */
+	int pipe;		/* Data pipe used                 */
+	int left_gain;		/* mixer elements                 */
+	int right_gain;
+};
 
-/* This काष्ठाure holds the inक्रमmation क्रम both chips (DBRI & CS4215) */
-काष्ठा snd_dbri अणु
-	पूर्णांक regs_size, irq;	/* Needed क्रम unload */
-	काष्ठा platक्रमm_device *op;	/* OF device info */
+/* This structure holds the information for both chips (DBRI & CS4215) */
+struct snd_dbri {
+	int regs_size, irq;	/* Needed for unload */
+	struct platform_device *op;	/* OF device info */
 	spinlock_t lock;
 
-	काष्ठा dbri_dma *dma;	/* Poपूर्णांकer to our DMA block */
+	struct dbri_dma *dma;	/* Pointer to our DMA block */
 	dma_addr_t dma_dvma;	/* DBRI visible DMA address */
 
-	व्योम __iomem *regs;	/* dbri HW regs */
-	पूर्णांक dbri_irqp;		/* पूर्णांकr queue poपूर्णांकer */
+	void __iomem *regs;	/* dbri HW regs */
+	int dbri_irqp;		/* intr queue pointer */
 
-	काष्ठा dbri_pipe pipes[DBRI_NO_PIPES];	/* DBRI's 32 data pipes */
-	पूर्णांक next_desc[DBRI_NO_DESCS];		/* Index of next desc, or -1 */
+	struct dbri_pipe pipes[DBRI_NO_PIPES];	/* DBRI's 32 data pipes */
+	int next_desc[DBRI_NO_DESCS];		/* Index of next desc, or -1 */
 	spinlock_t cmdlock;	/* Protects cmd queue accesses */
-	s32 *cmdptr;		/* Poपूर्णांकer to the last queued cmd */
+	s32 *cmdptr;		/* Pointer to the last queued cmd */
 
-	पूर्णांक chi_bpf;
+	int chi_bpf;
 
-	काष्ठा cs4215 mm;	/* mmcodec special info */
+	struct cs4215 mm;	/* mmcodec special info */
 				/* per stream (playback/record) info */
-	काष्ठा dbri_streaminfo stream_info[DBRI_NO_STREAMS];
-पूर्ण;
+	struct dbri_streaminfo stream_info[DBRI_NO_STREAMS];
+};
 
-#घोषणा DBRI_MAX_VOLUME		63	/* Output volume */
-#घोषणा DBRI_MAX_GAIN		15	/* Input gain */
+#define DBRI_MAX_VOLUME		63	/* Output volume */
+#define DBRI_MAX_GAIN		15	/* Input gain */
 
 /* DBRI Reg0 - Status Control Register - defines. (Page 17) */
-#घोषणा D_P		(1<<15)	/* Program command & queue poपूर्णांकer valid */
-#घोषणा D_G		(1<<14)	/* Allow 4-Word SBus Burst */
-#घोषणा D_S		(1<<13)	/* Allow 16-Word SBus Burst */
-#घोषणा D_E		(1<<12)	/* Allow 8-Word SBus Burst */
-#घोषणा D_X		(1<<7)	/* Sanity Timer Disable */
-#घोषणा D_T		(1<<6)	/* Permit activation of the TE पूर्णांकerface */
-#घोषणा D_N		(1<<5)	/* Permit activation of the NT पूर्णांकerface */
-#घोषणा D_C		(1<<4)	/* Permit activation of the CHI पूर्णांकerface */
-#घोषणा D_F		(1<<3)	/* Force Sanity Timer Time-Out */
-#घोषणा D_D		(1<<2)	/* Disable Master Mode */
-#घोषणा D_H		(1<<1)	/* Halt क्रम Analysis */
-#घोषणा D_R		(1<<0)	/* Soft Reset */
+#define D_P		(1<<15)	/* Program command & queue pointer valid */
+#define D_G		(1<<14)	/* Allow 4-Word SBus Burst */
+#define D_S		(1<<13)	/* Allow 16-Word SBus Burst */
+#define D_E		(1<<12)	/* Allow 8-Word SBus Burst */
+#define D_X		(1<<7)	/* Sanity Timer Disable */
+#define D_T		(1<<6)	/* Permit activation of the TE interface */
+#define D_N		(1<<5)	/* Permit activation of the NT interface */
+#define D_C		(1<<4)	/* Permit activation of the CHI interface */
+#define D_F		(1<<3)	/* Force Sanity Timer Time-Out */
+#define D_D		(1<<2)	/* Disable Master Mode */
+#define D_H		(1<<1)	/* Halt for Analysis */
+#define D_R		(1<<0)	/* Soft Reset */
 
 /* DBRI Reg1 - Mode and Interrupt Register - defines. (Page 18) */
-#घोषणा D_LITTLE_END	(1<<8)	/* Byte Order */
-#घोषणा D_BIG_END	(0<<8)	/* Byte Order */
-#घोषणा D_MRR		(1<<4)	/* Multiple Error Ack on SBus (पढ़ो only) */
-#घोषणा D_MLE		(1<<3)	/* Multiple Late Error on SBus (पढ़ो only) */
-#घोषणा D_LBG		(1<<2)	/* Lost Bus Grant on SBus (पढ़ो only) */
-#घोषणा D_MBE		(1<<1)	/* Burst Error on SBus (पढ़ो only) */
-#घोषणा D_IR		(1<<0)	/* Interrupt Indicator (पढ़ो only) */
+#define D_LITTLE_END	(1<<8)	/* Byte Order */
+#define D_BIG_END	(0<<8)	/* Byte Order */
+#define D_MRR		(1<<4)	/* Multiple Error Ack on SBus (read only) */
+#define D_MLE		(1<<3)	/* Multiple Late Error on SBus (read only) */
+#define D_LBG		(1<<2)	/* Lost Bus Grant on SBus (read only) */
+#define D_MBE		(1<<1)	/* Burst Error on SBus (read only) */
+#define D_IR		(1<<0)	/* Interrupt Indicator (read only) */
 
 /* DBRI Reg2 - Parallel IO Register - defines. (Page 18) */
-#घोषणा D_ENPIO3	(1<<7)	/* Enable Pin 3 */
-#घोषणा D_ENPIO2	(1<<6)	/* Enable Pin 2 */
-#घोषणा D_ENPIO1	(1<<5)	/* Enable Pin 1 */
-#घोषणा D_ENPIO0	(1<<4)	/* Enable Pin 0 */
-#घोषणा D_ENPIO		(0xf0)	/* Enable all the pins */
-#घोषणा D_PIO3		(1<<3)	/* Pin 3: 1: Data mode, 0: Ctrl mode */
-#घोषणा D_PIO2		(1<<2)	/* Pin 2: 1: Onboard PDN */
-#घोषणा D_PIO1		(1<<1)	/* Pin 1: 0: Reset */
-#घोषणा D_PIO0		(1<<0)	/* Pin 0: 1: Speakerbox PDN */
+#define D_ENPIO3	(1<<7)	/* Enable Pin 3 */
+#define D_ENPIO2	(1<<6)	/* Enable Pin 2 */
+#define D_ENPIO1	(1<<5)	/* Enable Pin 1 */
+#define D_ENPIO0	(1<<4)	/* Enable Pin 0 */
+#define D_ENPIO		(0xf0)	/* Enable all the pins */
+#define D_PIO3		(1<<3)	/* Pin 3: 1: Data mode, 0: Ctrl mode */
+#define D_PIO2		(1<<2)	/* Pin 2: 1: Onboard PDN */
+#define D_PIO1		(1<<1)	/* Pin 1: 0: Reset */
+#define D_PIO0		(1<<0)	/* Pin 0: 1: Speakerbox PDN */
 
 /* DBRI Commands (Page 20) */
-#घोषणा D_WAIT		0x0	/* Stop execution */
-#घोषणा D_PAUSE		0x1	/* Flush दीर्घ pipes */
-#घोषणा D_JUMP		0x2	/* New command queue */
-#घोषणा D_IIQ		0x3	/* Initialize Interrupt Queue */
-#घोषणा D_REX		0x4	/* Report command execution via पूर्णांकerrupt */
-#घोषणा D_SDP		0x5	/* Setup Data Pipe */
-#घोषणा D_CDP		0x6	/* Continue Data Pipe (reपढ़ो शून्य Poपूर्णांकer) */
-#घोषणा D_DTS		0x7	/* Define Time Slot */
-#घोषणा D_SSP		0x8	/* Set लघु Data Pipe */
-#घोषणा D_CHI		0x9	/* Set CHI Global Mode */
-#घोषणा D_NT		0xa	/* NT Command */
-#घोषणा D_TE		0xb	/* TE Command */
-#घोषणा D_CDEC		0xc	/* Codec setup */
-#घोषणा D_TEST		0xd	/* No comment */
-#घोषणा D_CDM		0xe	/* CHI Data mode command */
+#define D_WAIT		0x0	/* Stop execution */
+#define D_PAUSE		0x1	/* Flush long pipes */
+#define D_JUMP		0x2	/* New command queue */
+#define D_IIQ		0x3	/* Initialize Interrupt Queue */
+#define D_REX		0x4	/* Report command execution via interrupt */
+#define D_SDP		0x5	/* Setup Data Pipe */
+#define D_CDP		0x6	/* Continue Data Pipe (reread NULL Pointer) */
+#define D_DTS		0x7	/* Define Time Slot */
+#define D_SSP		0x8	/* Set short Data Pipe */
+#define D_CHI		0x9	/* Set CHI Global Mode */
+#define D_NT		0xa	/* NT Command */
+#define D_TE		0xb	/* TE Command */
+#define D_CDEC		0xc	/* Codec setup */
+#define D_TEST		0xd	/* No comment */
+#define D_CDM		0xe	/* CHI Data mode command */
 
-/* Special bits क्रम some commands */
-#घोषणा D_PIPE(v)      ((v)<<0)	/* Pipe No.: 0-15 दीर्घ, 16-21 लघु */
+/* Special bits for some commands */
+#define D_PIPE(v)      ((v)<<0)	/* Pipe No.: 0-15 long, 16-21 short */
 
 /* Setup Data Pipe */
 /* IRM */
-#घोषणा D_SDP_2SAME	(1<<18)	/* Report 2nd समय in a row value received */
-#घोषणा D_SDP_CHANGE	(2<<18)	/* Report any changes */
-#घोषणा D_SDP_EVERY	(3<<18)	/* Report any changes */
-#घोषणा D_SDP_EOL	(1<<17)	/* EOL पूर्णांकerrupt enable */
-#घोषणा D_SDP_IDLE	(1<<16)	/* HDLC idle पूर्णांकerrupt enable */
+#define D_SDP_2SAME	(1<<18)	/* Report 2nd time in a row value received */
+#define D_SDP_CHANGE	(2<<18)	/* Report any changes */
+#define D_SDP_EVERY	(3<<18)	/* Report any changes */
+#define D_SDP_EOL	(1<<17)	/* EOL interrupt enable */
+#define D_SDP_IDLE	(1<<16)	/* HDLC idle interrupt enable */
 
 /* Pipe data MODE */
-#घोषणा D_SDP_MEM	(0<<13)	/* To/from memory */
-#घोषणा D_SDP_HDLC	(2<<13)
-#घोषणा D_SDP_HDLC_D	(3<<13)	/* D Channel (prio control) */
-#घोषणा D_SDP_SER	(4<<13)	/* Serial to serial */
-#घोषणा D_SDP_FIXED	(6<<13)	/* Short only */
-#घोषणा D_SDP_MODE(v)	((v)&(7<<13))
+#define D_SDP_MEM	(0<<13)	/* To/from memory */
+#define D_SDP_HDLC	(2<<13)
+#define D_SDP_HDLC_D	(3<<13)	/* D Channel (prio control) */
+#define D_SDP_SER	(4<<13)	/* Serial to serial */
+#define D_SDP_FIXED	(6<<13)	/* Short only */
+#define D_SDP_MODE(v)	((v)&(7<<13))
 
-#घोषणा D_SDP_TO_SER	(1<<12)	/* Direction */
-#घोषणा D_SDP_FROM_SER	(0<<12)	/* Direction */
-#घोषणा D_SDP_MSB	(1<<11)	/* Bit order within Byte */
-#घोषणा D_SDP_LSB	(0<<11)	/* Bit order within Byte */
-#घोषणा D_SDP_P		(1<<10)	/* Poपूर्णांकer Valid */
-#घोषणा D_SDP_A		(1<<8)	/* Abort */
-#घोषणा D_SDP_C		(1<<7)	/* Clear */
+#define D_SDP_TO_SER	(1<<12)	/* Direction */
+#define D_SDP_FROM_SER	(0<<12)	/* Direction */
+#define D_SDP_MSB	(1<<11)	/* Bit order within Byte */
+#define D_SDP_LSB	(0<<11)	/* Bit order within Byte */
+#define D_SDP_P		(1<<10)	/* Pointer Valid */
+#define D_SDP_A		(1<<8)	/* Abort */
+#define D_SDP_C		(1<<7)	/* Clear */
 
 /* Define Time Slot */
-#घोषणा D_DTS_VI	(1<<17)	/* Valid Input Time-Slot Descriptor */
-#घोषणा D_DTS_VO	(1<<16)	/* Valid Output Time-Slot Descriptor */
-#घोषणा D_DTS_INS	(1<<15)	/* Insert Time Slot */
-#घोषणा D_DTS_DEL	(0<<15)	/* Delete Time Slot */
-#घोषणा D_DTS_PRVIN(v) ((v)<<10)	/* Previous In Pipe */
-#घोषणा D_DTS_PRVOUT(v)        ((v)<<5)	/* Previous Out Pipe */
+#define D_DTS_VI	(1<<17)	/* Valid Input Time-Slot Descriptor */
+#define D_DTS_VO	(1<<16)	/* Valid Output Time-Slot Descriptor */
+#define D_DTS_INS	(1<<15)	/* Insert Time Slot */
+#define D_DTS_DEL	(0<<15)	/* Delete Time Slot */
+#define D_DTS_PRVIN(v) ((v)<<10)	/* Previous In Pipe */
+#define D_DTS_PRVOUT(v)        ((v)<<5)	/* Previous Out Pipe */
 
 /* Time Slot defines */
-#घोषणा D_TS_LEN(v)	((v)<<24)	/* Number of bits in this समय slot */
-#घोषणा D_TS_CYCLE(v)	((v)<<14)	/* Bit Count at start of TS */
-#घोषणा D_TS_DI		(1<<13)	/* Data Invert */
-#घोषणा D_TS_1CHANNEL	(0<<10)	/* Single Channel / Normal mode */
-#घोषणा D_TS_MONITOR	(2<<10)	/* Monitor pipe */
-#घोषणा D_TS_NONCONTIG	(3<<10)	/* Non contiguous mode */
-#घोषणा D_TS_ANCHOR	(7<<10)	/* Starting लघु pipes */
-#घोषणा D_TS_MON(v)    ((v)<<5)	/* Monitor Pipe */
-#घोषणा D_TS_NEXT(v)   ((v)<<0)	/* Pipe no.: 0-15 दीर्घ, 16-21 लघु */
+#define D_TS_LEN(v)	((v)<<24)	/* Number of bits in this time slot */
+#define D_TS_CYCLE(v)	((v)<<14)	/* Bit Count at start of TS */
+#define D_TS_DI		(1<<13)	/* Data Invert */
+#define D_TS_1CHANNEL	(0<<10)	/* Single Channel / Normal mode */
+#define D_TS_MONITOR	(2<<10)	/* Monitor pipe */
+#define D_TS_NONCONTIG	(3<<10)	/* Non contiguous mode */
+#define D_TS_ANCHOR	(7<<10)	/* Starting short pipes */
+#define D_TS_MON(v)    ((v)<<5)	/* Monitor Pipe */
+#define D_TS_NEXT(v)   ((v)<<0)	/* Pipe no.: 0-15 long, 16-21 short */
 
 /* Concentration Highway Interface Modes */
-#घोषणा D_CHI_CHICM(v)	((v)<<16)	/* Clock mode */
-#घोषणा D_CHI_IR	(1<<15)	/* Immediate Interrupt Report */
-#घोषणा D_CHI_EN	(1<<14)	/* CHIL Interrupt enabled */
-#घोषणा D_CHI_OD	(1<<13)	/* Open Drain Enable */
-#घोषणा D_CHI_FE	(1<<12)	/* Sample CHIFS on Rising Frame Edge */
-#घोषणा D_CHI_FD	(1<<11)	/* Frame Drive */
-#घोषणा D_CHI_BPF(v)	((v)<<0)	/* Bits per Frame */
+#define D_CHI_CHICM(v)	((v)<<16)	/* Clock mode */
+#define D_CHI_IR	(1<<15)	/* Immediate Interrupt Report */
+#define D_CHI_EN	(1<<14)	/* CHIL Interrupt enabled */
+#define D_CHI_OD	(1<<13)	/* Open Drain Enable */
+#define D_CHI_FE	(1<<12)	/* Sample CHIFS on Rising Frame Edge */
+#define D_CHI_FD	(1<<11)	/* Frame Drive */
+#define D_CHI_BPF(v)	((v)<<0)	/* Bits per Frame */
 
-/* NT: These are here क्रम completeness */
-#घोषणा D_NT_FBIT	(1<<17)	/* Frame Bit */
-#घोषणा D_NT_NBF	(1<<16)	/* Number of bad frames to loose framing */
-#घोषणा D_NT_IRM_IMM	(1<<15)	/* Interrupt Report & Mask: Immediate */
-#घोषणा D_NT_IRM_EN	(1<<14)	/* Interrupt Report & Mask: Enable */
-#घोषणा D_NT_ISNT	(1<<13)	/* Configure पूर्णांकerface as NT */
-#घोषणा D_NT_FT		(1<<12)	/* Fixed Timing */
-#घोषणा D_NT_EZ		(1<<11)	/* Echo Channel is Zeros */
-#घोषणा D_NT_IFA	(1<<10)	/* Inhibit Final Activation */
-#घोषणा D_NT_ACT	(1<<9)	/* Activate Interface */
-#घोषणा D_NT_MFE	(1<<8)	/* Multअगरrame Enable */
-#घोषणा D_NT_RLB(v)	((v)<<5)	/* Remote Loopback */
-#घोषणा D_NT_LLB(v)	((v)<<2)	/* Local Loopback */
-#घोषणा D_NT_FACT	(1<<1)	/* Force Activation */
-#घोषणा D_NT_ABV	(1<<0)	/* Activate Bipolar Violation */
+/* NT: These are here for completeness */
+#define D_NT_FBIT	(1<<17)	/* Frame Bit */
+#define D_NT_NBF	(1<<16)	/* Number of bad frames to loose framing */
+#define D_NT_IRM_IMM	(1<<15)	/* Interrupt Report & Mask: Immediate */
+#define D_NT_IRM_EN	(1<<14)	/* Interrupt Report & Mask: Enable */
+#define D_NT_ISNT	(1<<13)	/* Configure interface as NT */
+#define D_NT_FT		(1<<12)	/* Fixed Timing */
+#define D_NT_EZ		(1<<11)	/* Echo Channel is Zeros */
+#define D_NT_IFA	(1<<10)	/* Inhibit Final Activation */
+#define D_NT_ACT	(1<<9)	/* Activate Interface */
+#define D_NT_MFE	(1<<8)	/* Multiframe Enable */
+#define D_NT_RLB(v)	((v)<<5)	/* Remote Loopback */
+#define D_NT_LLB(v)	((v)<<2)	/* Local Loopback */
+#define D_NT_FACT	(1<<1)	/* Force Activation */
+#define D_NT_ABV	(1<<0)	/* Activate Bipolar Violation */
 
 /* Codec Setup */
-#घोषणा D_CDEC_CK(v)	((v)<<24)	/* Clock Select */
-#घोषणा D_CDEC_FED(v)	((v)<<12)	/* FSCOD Falling Edge Delay */
-#घोषणा D_CDEC_RED(v)	((v)<<0)	/* FSCOD Rising Edge Delay */
+#define D_CDEC_CK(v)	((v)<<24)	/* Clock Select */
+#define D_CDEC_FED(v)	((v)<<12)	/* FSCOD Falling Edge Delay */
+#define D_CDEC_RED(v)	((v)<<0)	/* FSCOD Rising Edge Delay */
 
 /* Test */
-#घोषणा D_TEST_RAM(v)	((v)<<16)	/* RAM Poपूर्णांकer */
-#घोषणा D_TEST_SIZE(v)	((v)<<11)	/* */
-#घोषणा D_TEST_ROMONOFF	0x5	/* Toggle ROM opcode monitor on/off */
-#घोषणा D_TEST_PROC	0x6	/* Microprocessor test */
-#घोषणा D_TEST_SER	0x7	/* Serial-Controller test */
-#घोषणा D_TEST_RAMREAD	0x8	/* Copy from Ram to प्रणाली memory */
-#घोषणा D_TEST_RAMWRITE	0x9	/* Copy पूर्णांकo Ram from प्रणाली memory */
-#घोषणा D_TEST_RAMBIST	0xa	/* RAM Built-In Self Test */
-#घोषणा D_TEST_MCBIST	0xb	/* Microcontroller Built-In Self Test */
-#घोषणा D_TEST_DUMP	0xe	/* ROM Dump */
+#define D_TEST_RAM(v)	((v)<<16)	/* RAM Pointer */
+#define D_TEST_SIZE(v)	((v)<<11)	/* */
+#define D_TEST_ROMONOFF	0x5	/* Toggle ROM opcode monitor on/off */
+#define D_TEST_PROC	0x6	/* Microprocessor test */
+#define D_TEST_SER	0x7	/* Serial-Controller test */
+#define D_TEST_RAMREAD	0x8	/* Copy from Ram to system memory */
+#define D_TEST_RAMWRITE	0x9	/* Copy into Ram from system memory */
+#define D_TEST_RAMBIST	0xa	/* RAM Built-In Self Test */
+#define D_TEST_MCBIST	0xb	/* Microcontroller Built-In Self Test */
+#define D_TEST_DUMP	0xe	/* ROM Dump */
 
 /* CHI Data Mode */
-#घोषणा D_CDM_THI	(1 << 8)	/* Transmit Data on CHIDR Pin */
-#घोषणा D_CDM_RHI	(1 << 7)	/* Receive Data on CHIDX Pin */
-#घोषणा D_CDM_RCE	(1 << 6)	/* Receive on Rising Edge of CHICK */
-#घोषणा D_CDM_XCE	(1 << 2) /* Transmit Data on Rising Edge of CHICK */
-#घोषणा D_CDM_XEN	(1 << 1)	/* Transmit Highway Enable */
-#घोषणा D_CDM_REN	(1 << 0)	/* Receive Highway Enable */
+#define D_CDM_THI	(1 << 8)	/* Transmit Data on CHIDR Pin */
+#define D_CDM_RHI	(1 << 7)	/* Receive Data on CHIDX Pin */
+#define D_CDM_RCE	(1 << 6)	/* Receive on Rising Edge of CHICK */
+#define D_CDM_XCE	(1 << 2) /* Transmit Data on Rising Edge of CHICK */
+#define D_CDM_XEN	(1 << 1)	/* Transmit Highway Enable */
+#define D_CDM_REN	(1 << 0)	/* Receive Highway Enable */
 
 /* The Interrupts */
-#घोषणा D_INTR_BRDY	1	/* Buffer Ready क्रम processing */
-#घोषणा D_INTR_MINT	2	/* Marked Interrupt in RD/TD */
-#घोषणा D_INTR_IBEG	3	/* Flag to idle transition detected (HDLC) */
-#घोषणा D_INTR_IEND	4	/* Idle to flag transition detected (HDLC) */
-#घोषणा D_INTR_EOL	5	/* End of List */
-#घोषणा D_INTR_CMDI	6	/* Command has bean पढ़ो */
-#घोषणा D_INTR_XCMP	8	/* Transmission of frame complete */
-#घोषणा D_INTR_SBRI	9	/* BRI status change info */
-#घोषणा D_INTR_FXDT	10	/* Fixed data change */
-#घोषणा D_INTR_CHIL	11	/* CHI lost frame sync (channel 36 only) */
-#घोषणा D_INTR_COLL	11	/* Unrecoverable D-Channel collision */
-#घोषणा D_INTR_DBYT	12	/* Dropped by frame slip */
-#घोषणा D_INTR_RBYT	13	/* Repeated by frame slip */
-#घोषणा D_INTR_LINT	14	/* Lost Interrupt */
-#घोषणा D_INTR_UNDR	15	/* DMA underrun */
+#define D_INTR_BRDY	1	/* Buffer Ready for processing */
+#define D_INTR_MINT	2	/* Marked Interrupt in RD/TD */
+#define D_INTR_IBEG	3	/* Flag to idle transition detected (HDLC) */
+#define D_INTR_IEND	4	/* Idle to flag transition detected (HDLC) */
+#define D_INTR_EOL	5	/* End of List */
+#define D_INTR_CMDI	6	/* Command has bean read */
+#define D_INTR_XCMP	8	/* Transmission of frame complete */
+#define D_INTR_SBRI	9	/* BRI status change info */
+#define D_INTR_FXDT	10	/* Fixed data change */
+#define D_INTR_CHIL	11	/* CHI lost frame sync (channel 36 only) */
+#define D_INTR_COLL	11	/* Unrecoverable D-Channel collision */
+#define D_INTR_DBYT	12	/* Dropped by frame slip */
+#define D_INTR_RBYT	13	/* Repeated by frame slip */
+#define D_INTR_LINT	14	/* Lost Interrupt */
+#define D_INTR_UNDR	15	/* DMA underrun */
 
-#घोषणा D_INTR_TE	32
-#घोषणा D_INTR_NT	34
-#घोषणा D_INTR_CHI	36
-#घोषणा D_INTR_CMD	38
+#define D_INTR_TE	32
+#define D_INTR_NT	34
+#define D_INTR_CHI	36
+#define D_INTR_CMD	38
 
-#घोषणा D_INTR_GETCHAN(v)	(((v) >> 24) & 0x3f)
-#घोषणा D_INTR_GETCODE(v)	(((v) >> 20) & 0xf)
-#घोषणा D_INTR_GETCMD(v)	(((v) >> 16) & 0xf)
-#घोषणा D_INTR_GETVAL(v)	((v) & 0xffff)
-#घोषणा D_INTR_GETRVAL(v)	((v) & 0xfffff)
+#define D_INTR_GETCHAN(v)	(((v) >> 24) & 0x3f)
+#define D_INTR_GETCODE(v)	(((v) >> 20) & 0xf)
+#define D_INTR_GETCMD(v)	(((v) >> 16) & 0xf)
+#define D_INTR_GETVAL(v)	((v) & 0xffff)
+#define D_INTR_GETRVAL(v)	((v) & 0xfffff)
 
-#घोषणा D_P_0		0	/* TE receive anchor */
-#घोषणा D_P_1		1	/* TE transmit anchor */
-#घोषणा D_P_2		2	/* NT transmit anchor */
-#घोषणा D_P_3		3	/* NT receive anchor */
-#घोषणा D_P_4		4	/* CHI send data */
-#घोषणा D_P_5		5	/* CHI receive data */
-#घोषणा D_P_6		6	/* */
-#घोषणा D_P_7		7	/* */
-#घोषणा D_P_8		8	/* */
-#घोषणा D_P_9		9	/* */
-#घोषणा D_P_10		10	/* */
-#घोषणा D_P_11		11	/* */
-#घोषणा D_P_12		12	/* */
-#घोषणा D_P_13		13	/* */
-#घोषणा D_P_14		14	/* */
-#घोषणा D_P_15		15	/* */
-#घोषणा D_P_16		16	/* CHI anchor pipe */
-#घोषणा D_P_17		17	/* CHI send */
-#घोषणा D_P_18		18	/* CHI receive */
-#घोषणा D_P_19		19	/* CHI receive */
-#घोषणा D_P_20		20	/* CHI receive */
-#घोषणा D_P_21		21	/* */
-#घोषणा D_P_22		22	/* */
-#घोषणा D_P_23		23	/* */
-#घोषणा D_P_24		24	/* */
-#घोषणा D_P_25		25	/* */
-#घोषणा D_P_26		26	/* */
-#घोषणा D_P_27		27	/* */
-#घोषणा D_P_28		28	/* */
-#घोषणा D_P_29		29	/* */
-#घोषणा D_P_30		30	/* */
-#घोषणा D_P_31		31	/* */
+#define D_P_0		0	/* TE receive anchor */
+#define D_P_1		1	/* TE transmit anchor */
+#define D_P_2		2	/* NT transmit anchor */
+#define D_P_3		3	/* NT receive anchor */
+#define D_P_4		4	/* CHI send data */
+#define D_P_5		5	/* CHI receive data */
+#define D_P_6		6	/* */
+#define D_P_7		7	/* */
+#define D_P_8		8	/* */
+#define D_P_9		9	/* */
+#define D_P_10		10	/* */
+#define D_P_11		11	/* */
+#define D_P_12		12	/* */
+#define D_P_13		13	/* */
+#define D_P_14		14	/* */
+#define D_P_15		15	/* */
+#define D_P_16		16	/* CHI anchor pipe */
+#define D_P_17		17	/* CHI send */
+#define D_P_18		18	/* CHI receive */
+#define D_P_19		19	/* CHI receive */
+#define D_P_20		20	/* CHI receive */
+#define D_P_21		21	/* */
+#define D_P_22		22	/* */
+#define D_P_23		23	/* */
+#define D_P_24		24	/* */
+#define D_P_25		25	/* */
+#define D_P_26		26	/* */
+#define D_P_27		27	/* */
+#define D_P_28		28	/* */
+#define D_P_29		29	/* */
+#define D_P_30		30	/* */
+#define D_P_31		31	/* */
 
 /* Transmit descriptor defines */
-#घोषणा DBRI_TD_F	(1 << 31)	/* End of Frame */
-#घोषणा DBRI_TD_D	(1 << 30)	/* Do not append CRC */
-#घोषणा DBRI_TD_CNT(v)	((v) << 16) /* Number of valid bytes in the buffer */
-#घोषणा DBRI_TD_B	(1 << 15)	/* Final पूर्णांकerrupt */
-#घोषणा DBRI_TD_M	(1 << 14)	/* Marker पूर्णांकerrupt */
-#घोषणा DBRI_TD_I	(1 << 13)	/* Transmit Idle Characters */
-#घोषणा DBRI_TD_FCNT(v)	(v)		/* Flag Count */
-#घोषणा DBRI_TD_UNR	(1 << 3) /* Underrun: transmitter is out of data */
-#घोषणा DBRI_TD_ABT	(1 << 2)	/* Abort: frame पातed */
-#घोषणा DBRI_TD_TBC	(1 << 0)	/* Transmit buffer Complete */
-#घोषणा DBRI_TD_STATUS(v)       ((v) & 0xff)	/* Transmit status */
+#define DBRI_TD_F	(1 << 31)	/* End of Frame */
+#define DBRI_TD_D	(1 << 30)	/* Do not append CRC */
+#define DBRI_TD_CNT(v)	((v) << 16) /* Number of valid bytes in the buffer */
+#define DBRI_TD_B	(1 << 15)	/* Final interrupt */
+#define DBRI_TD_M	(1 << 14)	/* Marker interrupt */
+#define DBRI_TD_I	(1 << 13)	/* Transmit Idle Characters */
+#define DBRI_TD_FCNT(v)	(v)		/* Flag Count */
+#define DBRI_TD_UNR	(1 << 3) /* Underrun: transmitter is out of data */
+#define DBRI_TD_ABT	(1 << 2)	/* Abort: frame aborted */
+#define DBRI_TD_TBC	(1 << 0)	/* Transmit buffer Complete */
+#define DBRI_TD_STATUS(v)       ((v) & 0xff)	/* Transmit status */
 			/* Maximum buffer size per TD: almost 8KB */
-#घोषणा DBRI_TD_MAXCNT	((1 << 13) - 4)
+#define DBRI_TD_MAXCNT	((1 << 13) - 4)
 
 /* Receive descriptor defines */
-#घोषणा DBRI_RD_F	(1 << 31)	/* End of Frame */
-#घोषणा DBRI_RD_C	(1 << 30)	/* Completed buffer */
-#घोषणा DBRI_RD_B	(1 << 15)	/* Final पूर्णांकerrupt */
-#घोषणा DBRI_RD_M	(1 << 14)	/* Marker पूर्णांकerrupt */
-#घोषणा DBRI_RD_BCNT(v)	(v)		/* Buffer size */
-#घोषणा DBRI_RD_CRC	(1 << 7)	/* 0: CRC is correct */
-#घोषणा DBRI_RD_BBC	(1 << 6)	/* 1: Bad Byte received */
-#घोषणा DBRI_RD_ABT	(1 << 5)	/* Abort: frame पातed */
-#घोषणा DBRI_RD_OVRN	(1 << 3)	/* Overrun: data lost */
-#घोषणा DBRI_RD_STATUS(v)      ((v) & 0xff)	/* Receive status */
-#घोषणा DBRI_RD_CNT(v) (((v) >> 16) & 0x1fff)	/* Valid bytes in the buffer */
+#define DBRI_RD_F	(1 << 31)	/* End of Frame */
+#define DBRI_RD_C	(1 << 30)	/* Completed buffer */
+#define DBRI_RD_B	(1 << 15)	/* Final interrupt */
+#define DBRI_RD_M	(1 << 14)	/* Marker interrupt */
+#define DBRI_RD_BCNT(v)	(v)		/* Buffer size */
+#define DBRI_RD_CRC	(1 << 7)	/* 0: CRC is correct */
+#define DBRI_RD_BBC	(1 << 6)	/* 1: Bad Byte received */
+#define DBRI_RD_ABT	(1 << 5)	/* Abort: frame aborted */
+#define DBRI_RD_OVRN	(1 << 3)	/* Overrun: data lost */
+#define DBRI_RD_STATUS(v)      ((v) & 0xff)	/* Receive status */
+#define DBRI_RD_CNT(v) (((v) >> 16) & 0x1fff)	/* Valid bytes in the buffer */
 
 /* stream_info[] access */
-/* Translate the ALSA direction पूर्णांकo the array index */
-#घोषणा DBRI_STREAMNO(substream)				\
+/* Translate the ALSA direction into the array index */
+#define DBRI_STREAMNO(substream)				\
 		(substream->stream ==				\
 		 SNDRV_PCM_STREAM_PLAYBACK ? DBRI_PLAY: DBRI_REC)
 
-/* Return a poपूर्णांकer to dbri_streaminfo */
-#घोषणा DBRI_STREAM(dbri, substream)	\
+/* Return a pointer to dbri_streaminfo */
+#define DBRI_STREAM(dbri, substream)	\
 		&dbri->stream_info[DBRI_STREAMNO(substream)]
 
 /*
  * Short data pipes transmit LSB first. The CS4215 receives MSB first. Grrr.
  * So we have to reverse the bits. Note: not all bit lengths are supported
  */
-अटल __u32 reverse_bytes(__u32 b, पूर्णांक len)
-अणु
-	चयन (len) अणु
-	हाल 32:
+static __u32 reverse_bytes(__u32 b, int len)
+{
+	switch (len) {
+	case 32:
 		b = ((b & 0xffff0000) >> 16) | ((b & 0x0000ffff) << 16);
 		fallthrough;
-	हाल 16:
+	case 16:
 		b = ((b & 0xff00ff00) >> 8) | ((b & 0x00ff00ff) << 8);
 		fallthrough;
-	हाल 8:
+	case 8:
 		b = ((b & 0xf0f0f0f0) >> 4) | ((b & 0x0f0f0f0f) << 4);
 		fallthrough;
-	हाल 4:
+	case 4:
 		b = ((b & 0xcccccccc) >> 2) | ((b & 0x33333333) << 2);
 		fallthrough;
-	हाल 2:
+	case 2:
 		b = ((b & 0xaaaaaaaa) >> 1) | ((b & 0x55555555) << 1);
-	हाल 1:
-	हाल 0:
-		अवरोध;
-	शेष:
-		prपूर्णांकk(KERN_ERR "DBRI reverse_bytes: unsupported length\n");
-	पूर्ण
+	case 1:
+	case 0:
+		break;
+	default:
+		printk(KERN_ERR "DBRI reverse_bytes: unsupported length\n");
+	}
 
-	वापस b;
-पूर्ण
+	return b;
+}
 
 /*
 ****************************************************************************
@@ -608,176 +607,176 @@ MODULE_PARM_DESC(dbri_debug, "Debug value for Sun DBRI soundcard.");
 ****************************************************************************
 
 Commands are sent to the DBRI by building a list of them in memory,
-then writing the address of the first list item to DBRI रेजिस्टर 8.
+then writing the address of the first list item to DBRI register 8.
 The list is terminated with a WAIT command, which generates a
-CPU पूर्णांकerrupt to संकेत completion.
+CPU interrupt to signal completion.
 
 Since the DBRI can run in parallel with the CPU, several means of
 synchronization present themselves. The method implemented here uses
-the dbri_cmdरुको() to रुको क्रम execution of batch of sent commands.
+the dbri_cmdwait() to wait for execution of batch of sent commands.
 
 A circular command buffer is used here. A new command is being added
-जबतक another can be executed. The scheme works by adding two WAIT commands
+while another can be executed. The scheme works by adding two WAIT commands
 after each sent batch of commands. When the next batch is prepared it is
 added after the WAIT commands then the WAITs are replaced with single JUMP
-command to the new batch. Then the DBRI is क्रमced to reपढ़ो the last WAIT
+command to the new batch. Then the DBRI is forced to reread the last WAIT
 command (replaced by the JUMP by then). If the DBRI is still executing
-previous commands the request to reपढ़ो the WAIT command is ignored.
+previous commands the request to reread the WAIT command is ignored.
 
-Every समय a routine wants to ग_लिखो commands to the DBRI, it must
-first call dbri_cmdlock() and get poपूर्णांकer to a मुक्त space in
+Every time a routine wants to write commands to the DBRI, it must
+first call dbri_cmdlock() and get pointer to a free space in
 dbri->dma->cmd buffer. After this, the commands can be written to
-the buffer, and dbri_cmdsend() is called with the final poपूर्णांकer value
+the buffer, and dbri_cmdsend() is called with the final pointer value
 to send them to the DBRI.
 
 */
 
-#घोषणा MAXLOOPS 20
+#define MAXLOOPS 20
 /*
- * Wait क्रम the current command string to execute
+ * Wait for the current command string to execute
  */
-अटल व्योम dbri_cmdरुको(काष्ठा snd_dbri *dbri)
-अणु
-	पूर्णांक maxloops = MAXLOOPS;
-	अचिन्हित दीर्घ flags;
+static void dbri_cmdwait(struct snd_dbri *dbri)
+{
+	int maxloops = MAXLOOPS;
+	unsigned long flags;
 
-	/* Delay अगर previous commands are still being processed */
+	/* Delay if previous commands are still being processed */
 	spin_lock_irqsave(&dbri->lock, flags);
-	जबतक ((--maxloops) > 0 && (sbus_पढ़ोl(dbri->regs + REG0) & D_P)) अणु
+	while ((--maxloops) > 0 && (sbus_readl(dbri->regs + REG0) & D_P)) {
 		spin_unlock_irqrestore(&dbri->lock, flags);
-		msleep_पूर्णांकerruptible(1);
+		msleep_interruptible(1);
 		spin_lock_irqsave(&dbri->lock, flags);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&dbri->lock, flags);
 
-	अगर (maxloops == 0)
-		prपूर्णांकk(KERN_ERR "DBRI: Chip never completed command buffer\n");
-	अन्यथा
-		dprपूर्णांकk(D_CMD, "Chip completed command buffer (%d)\n",
+	if (maxloops == 0)
+		printk(KERN_ERR "DBRI: Chip never completed command buffer\n");
+	else
+		dprintk(D_CMD, "Chip completed command buffer (%d)\n",
 			MAXLOOPS - maxloops - 1);
-पूर्ण
+}
 /*
- * Lock the command queue and वापस poपूर्णांकer to space क्रम len cmd words
+ * Lock the command queue and return pointer to space for len cmd words
  * It locks the cmdlock spinlock.
  */
-अटल s32 *dbri_cmdlock(काष्ठा snd_dbri *dbri, पूर्णांक len)
-अणु
+static s32 *dbri_cmdlock(struct snd_dbri *dbri, int len)
+{
 	u32 dvma_addr = (u32)dbri->dma_dvma;
 
-	/* Space क्रम 2 WAIT cmds (replaced later by 1 JUMP cmd) */
+	/* Space for 2 WAIT cmds (replaced later by 1 JUMP cmd) */
 	len += 2;
 	spin_lock(&dbri->cmdlock);
-	अगर (dbri->cmdptr - dbri->dma->cmd + len < DBRI_NO_CMDS - 2)
-		वापस dbri->cmdptr + 2;
-	अन्यथा अगर (len < sbus_पढ़ोl(dbri->regs + REG8) - dvma_addr)
-		वापस dbri->dma->cmd;
-	अन्यथा
-		prपूर्णांकk(KERN_ERR "DBRI: no space for commands.");
+	if (dbri->cmdptr - dbri->dma->cmd + len < DBRI_NO_CMDS - 2)
+		return dbri->cmdptr + 2;
+	else if (len < sbus_readl(dbri->regs + REG8) - dvma_addr)
+		return dbri->dma->cmd;
+	else
+		printk(KERN_ERR "DBRI: no space for commands.");
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /*
- * Send prepared cmd string. It works by writing a JUMP cmd पूर्णांकo
- * the last WAIT cmd and क्रमce DBRI to reपढ़ो the cmd.
- * The JUMP cmd poपूर्णांकs to the new cmd string.
+ * Send prepared cmd string. It works by writing a JUMP cmd into
+ * the last WAIT cmd and force DBRI to reread the cmd.
+ * The JUMP cmd points to the new cmd string.
  * It also releases the cmdlock spinlock.
  *
- * Lock must be held beक्रमe calling this.
+ * Lock must be held before calling this.
  */
-अटल व्योम dbri_cmdsend(काष्ठा snd_dbri *dbri, s32 *cmd, पूर्णांक len)
-अणु
+static void dbri_cmdsend(struct snd_dbri *dbri, s32 *cmd, int len)
+{
 	u32 dvma_addr = (u32)dbri->dma_dvma;
-	s32 पंचांगp, addr;
-	अटल पूर्णांक रुको_id = 0;
+	s32 tmp, addr;
+	static int wait_id = 0;
 
-	रुको_id++;
-	रुको_id &= 0xffff;	/* restrict it to a 16 bit counter. */
-	*(cmd) = DBRI_CMD(D_WAIT, 1, रुको_id);
-	*(cmd+1) = DBRI_CMD(D_WAIT, 1, रुको_id);
+	wait_id++;
+	wait_id &= 0xffff;	/* restrict it to a 16 bit counter. */
+	*(cmd) = DBRI_CMD(D_WAIT, 1, wait_id);
+	*(cmd+1) = DBRI_CMD(D_WAIT, 1, wait_id);
 
 	/* Replace the last command with JUMP */
-	addr = dvma_addr + (cmd - len - dbri->dma->cmd) * माप(s32);
+	addr = dvma_addr + (cmd - len - dbri->dma->cmd) * sizeof(s32);
 	*(dbri->cmdptr+1) = addr;
 	*(dbri->cmdptr) = DBRI_CMD(D_JUMP, 0, 0);
 
-#अगर_घोषित DBRI_DEBUG
-	अगर (cmd > dbri->cmdptr) अणु
+#ifdef DBRI_DEBUG
+	if (cmd > dbri->cmdptr) {
 		s32 *ptr;
 
-		क्रम (ptr = dbri->cmdptr; ptr < cmd+2; ptr++)
-			dprपूर्णांकk(D_CMD, "cmd: %lx:%08x\n",
-				(अचिन्हित दीर्घ)ptr, *ptr);
-	पूर्ण अन्यथा अणु
+		for (ptr = dbri->cmdptr; ptr < cmd+2; ptr++)
+			dprintk(D_CMD, "cmd: %lx:%08x\n",
+				(unsigned long)ptr, *ptr);
+	} else {
 		s32 *ptr = dbri->cmdptr;
 
-		dprपूर्णांकk(D_CMD, "cmd: %lx:%08x\n", (अचिन्हित दीर्घ)ptr, *ptr);
+		dprintk(D_CMD, "cmd: %lx:%08x\n", (unsigned long)ptr, *ptr);
 		ptr++;
-		dprपूर्णांकk(D_CMD, "cmd: %lx:%08x\n", (अचिन्हित दीर्घ)ptr, *ptr);
-		क्रम (ptr = dbri->dma->cmd; ptr < cmd+2; ptr++)
-			dprपूर्णांकk(D_CMD, "cmd: %lx:%08x\n",
-				(अचिन्हित दीर्घ)ptr, *ptr);
-	पूर्ण
-#पूर्ण_अगर
+		dprintk(D_CMD, "cmd: %lx:%08x\n", (unsigned long)ptr, *ptr);
+		for (ptr = dbri->dma->cmd; ptr < cmd+2; ptr++)
+			dprintk(D_CMD, "cmd: %lx:%08x\n",
+				(unsigned long)ptr, *ptr);
+	}
+#endif
 
-	/* Reपढ़ो the last command */
-	पंचांगp = sbus_पढ़ोl(dbri->regs + REG0);
-	पंचांगp |= D_P;
-	sbus_ग_लिखोl(पंचांगp, dbri->regs + REG0);
+	/* Reread the last command */
+	tmp = sbus_readl(dbri->regs + REG0);
+	tmp |= D_P;
+	sbus_writel(tmp, dbri->regs + REG0);
 
 	dbri->cmdptr = cmd;
 	spin_unlock(&dbri->cmdlock);
-पूर्ण
+}
 
 /* Lock must be held when calling this */
-अटल व्योम dbri_reset(काष्ठा snd_dbri *dbri)
-अणु
-	पूर्णांक i;
-	u32 पंचांगp;
+static void dbri_reset(struct snd_dbri *dbri)
+{
+	int i;
+	u32 tmp;
 
-	dprपूर्णांकk(D_GEN, "reset 0:%x 2:%x 8:%x 9:%x\n",
-		sbus_पढ़ोl(dbri->regs + REG0),
-		sbus_पढ़ोl(dbri->regs + REG2),
-		sbus_पढ़ोl(dbri->regs + REG8), sbus_पढ़ोl(dbri->regs + REG9));
+	dprintk(D_GEN, "reset 0:%x 2:%x 8:%x 9:%x\n",
+		sbus_readl(dbri->regs + REG0),
+		sbus_readl(dbri->regs + REG2),
+		sbus_readl(dbri->regs + REG8), sbus_readl(dbri->regs + REG9));
 
-	sbus_ग_लिखोl(D_R, dbri->regs + REG0);	/* Soft Reset */
-	क्रम (i = 0; (sbus_पढ़ोl(dbri->regs + REG0) & D_R) && i < 64; i++)
+	sbus_writel(D_R, dbri->regs + REG0);	/* Soft Reset */
+	for (i = 0; (sbus_readl(dbri->regs + REG0) & D_R) && i < 64; i++)
 		udelay(10);
 
 	/* A brute approach - DBRI falls back to working burst size by itself
-	 * On SS20 D_S करोes not work, so करो not try so high. */
-	पंचांगp = sbus_पढ़ोl(dbri->regs + REG0);
-	पंचांगp |= D_G | D_E;
-	पंचांगp &= ~D_S;
-	sbus_ग_लिखोl(पंचांगp, dbri->regs + REG0);
-पूर्ण
+	 * On SS20 D_S does not work, so do not try so high. */
+	tmp = sbus_readl(dbri->regs + REG0);
+	tmp |= D_G | D_E;
+	tmp &= ~D_S;
+	sbus_writel(tmp, dbri->regs + REG0);
+}
 
-/* Lock must not be held beक्रमe calling this */
-अटल व्योम dbri_initialize(काष्ठा snd_dbri *dbri)
-अणु
+/* Lock must not be held before calling this */
+static void dbri_initialize(struct snd_dbri *dbri)
+{
 	u32 dvma_addr = (u32)dbri->dma_dvma;
 	s32 *cmd;
 	u32 dma_addr;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक n;
+	unsigned long flags;
+	int n;
 
 	spin_lock_irqsave(&dbri->lock, flags);
 
 	dbri_reset(dbri);
 
 	/* Initialize pipes */
-	क्रम (n = 0; n < DBRI_NO_PIPES; n++)
+	for (n = 0; n < DBRI_NO_PIPES; n++)
 		dbri->pipes[n].desc = dbri->pipes[n].first_desc = -1;
 
 	spin_lock_init(&dbri->cmdlock);
 	/*
-	 * Initialize the पूर्णांकerrupt ring buffer.
+	 * Initialize the interrupt ring buffer.
 	 */
-	dma_addr = dvma_addr + dbri_dma_off(पूर्णांकr, 0);
-	dbri->dma->पूर्णांकr[0] = dma_addr;
+	dma_addr = dvma_addr + dbri_dma_off(intr, 0);
+	dbri->dma->intr[0] = dma_addr;
 	dbri->dbri_irqp = 1;
 	/*
-	 * Set up the पूर्णांकerrupt queue
+	 * Set up the interrupt queue
 	 */
 	spin_lock(&dbri->cmdlock);
 	cmd = dbri->cmdptr = dbri->dma->cmd;
@@ -788,55 +787,55 @@ to send them to the DBRI.
 	*(cmd++) = DBRI_CMD(D_WAIT, 1, 0);
 	*(cmd++) = DBRI_CMD(D_WAIT, 1, 0);
 	dma_addr = dvma_addr + dbri_dma_off(cmd, 0);
-	sbus_ग_लिखोl(dma_addr, dbri->regs + REG8);
+	sbus_writel(dma_addr, dbri->regs + REG8);
 	spin_unlock(&dbri->cmdlock);
 
 	spin_unlock_irqrestore(&dbri->lock, flags);
-	dbri_cmdरुको(dbri);
-पूर्ण
+	dbri_cmdwait(dbri);
+}
 
 /*
 ****************************************************************************
 ************************** DBRI data pipe management ***********************
 ****************************************************************************
 
-While DBRI control functions use the command and पूर्णांकerrupt buffers, the
-मुख्य data path takes the क्रमm of data pipes, which can be लघु (command
-and पूर्णांकerrupt driven), or दीर्घ (attached to DMA buffers).  These functions
+While DBRI control functions use the command and interrupt buffers, the
+main data path takes the form of data pipes, which can be short (command
+and interrupt driven), or long (attached to DMA buffers).  These functions
 provide a rudimentary means of setting up and managing the DBRI's pipes,
 but the calling functions have to make sure they respect the pipes' linked
 list ordering, among other things.  The transmit and receive functions
-here पूर्णांकerface बंदly with the transmit and receive पूर्णांकerrupt code.
+here interface closely with the transmit and receive interrupt code.
 
 */
-अटल अंतरभूत पूर्णांक pipe_active(काष्ठा snd_dbri *dbri, पूर्णांक pipe)
-अणु
-	वापस ((pipe >= 0) && (dbri->pipes[pipe].desc != -1));
-पूर्ण
+static inline int pipe_active(struct snd_dbri *dbri, int pipe)
+{
+	return ((pipe >= 0) && (dbri->pipes[pipe].desc != -1));
+}
 
 /* reset_pipe(dbri, pipe)
  *
  * Called on an in-use pipe to clear anything being transmitted or received
- * Lock must be held beक्रमe calling this.
+ * Lock must be held before calling this.
  */
-अटल व्योम reset_pipe(काष्ठा snd_dbri *dbri, पूर्णांक pipe)
-अणु
-	पूर्णांक sdp;
-	पूर्णांक desc;
+static void reset_pipe(struct snd_dbri *dbri, int pipe)
+{
+	int sdp;
+	int desc;
 	s32 *cmd;
 
-	अगर (pipe < 0 || pipe > DBRI_MAX_PIPE) अणु
-		prपूर्णांकk(KERN_ERR "DBRI: reset_pipe called with "
+	if (pipe < 0 || pipe > DBRI_MAX_PIPE) {
+		printk(KERN_ERR "DBRI: reset_pipe called with "
 			"illegal pipe number\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	sdp = dbri->pipes[pipe].sdp;
-	अगर (sdp == 0) अणु
-		prपूर्णांकk(KERN_ERR "DBRI: reset_pipe called "
+	if (sdp == 0) {
+		printk(KERN_ERR "DBRI: reset_pipe called "
 			"on uninitialized pipe\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	cmd = dbri_cmdlock(dbri, 3);
 	*(cmd++) = DBRI_CMD(D_SDP, 0, sdp | D_SDP_C | D_SDP_P);
@@ -845,38 +844,38 @@ here पूर्णांकerface बंदly with the transmit and receive �
 	dbri_cmdsend(dbri, cmd, 3);
 
 	desc = dbri->pipes[pipe].first_desc;
-	अगर (desc >= 0)
-		करो अणु
+	if (desc >= 0)
+		do {
 			dbri->dma->desc[desc].ba = 0;
 			dbri->dma->desc[desc].nda = 0;
 			desc = dbri->next_desc[desc];
-		पूर्ण जबतक (desc != -1 && desc != dbri->pipes[pipe].first_desc);
+		} while (desc != -1 && desc != dbri->pipes[pipe].first_desc);
 
 	dbri->pipes[pipe].desc = -1;
 	dbri->pipes[pipe].first_desc = -1;
-पूर्ण
+}
 
 /*
- * Lock must be held beक्रमe calling this.
+ * Lock must be held before calling this.
  */
-अटल व्योम setup_pipe(काष्ठा snd_dbri *dbri, पूर्णांक pipe, पूर्णांक sdp)
-अणु
-	अगर (pipe < 0 || pipe > DBRI_MAX_PIPE) अणु
-		prपूर्णांकk(KERN_ERR "DBRI: setup_pipe called "
+static void setup_pipe(struct snd_dbri *dbri, int pipe, int sdp)
+{
+	if (pipe < 0 || pipe > DBRI_MAX_PIPE) {
+		printk(KERN_ERR "DBRI: setup_pipe called "
 			"with illegal pipe number\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर ((sdp & 0xf800) != sdp) अणु
-		prपूर्णांकk(KERN_ERR "DBRI: setup_pipe called "
+	if ((sdp & 0xf800) != sdp) {
+		printk(KERN_ERR "DBRI: setup_pipe called "
 			"with strange SDP value\n");
 		/* sdp &= 0xf800; */
-	पूर्ण
+	}
 
-	/* If this is a fixed receive pipe, arrange क्रम an पूर्णांकerrupt
-	 * every समय its data changes
+	/* If this is a fixed receive pipe, arrange for an interrupt
+	 * every time its data changes
 	 */
-	अगर (D_SDP_MODE(sdp) == D_SDP_FIXED && !(sdp & D_SDP_TO_SER))
+	if (D_SDP_MODE(sdp) == D_SDP_FIXED && !(sdp & D_SDP_TO_SER))
 		sdp |= D_SDP_CHANGE;
 
 	sdp |= D_PIPE(pipe);
@@ -885,33 +884,33 @@ here पूर्णांकerface बंदly with the transmit and receive �
 	dbri->pipes[pipe].first_desc = -1;
 
 	reset_pipe(dbri, pipe);
-पूर्ण
+}
 
 /*
- * Lock must be held beक्रमe calling this.
+ * Lock must be held before calling this.
  */
-अटल व्योम link_समय_slot(काष्ठा snd_dbri *dbri, पूर्णांक pipe,
-			   पूर्णांक prevpipe, पूर्णांक nextpipe,
-			   पूर्णांक length, पूर्णांक cycle)
-अणु
+static void link_time_slot(struct snd_dbri *dbri, int pipe,
+			   int prevpipe, int nextpipe,
+			   int length, int cycle)
+{
 	s32 *cmd;
-	पूर्णांक val;
+	int val;
 
-	अगर (pipe < 0 || pipe > DBRI_MAX_PIPE
+	if (pipe < 0 || pipe > DBRI_MAX_PIPE
 			|| prevpipe < 0 || prevpipe > DBRI_MAX_PIPE
-			|| nextpipe < 0 || nextpipe > DBRI_MAX_PIPE) अणु
-		prपूर्णांकk(KERN_ERR
+			|| nextpipe < 0 || nextpipe > DBRI_MAX_PIPE) {
+		printk(KERN_ERR
 		    "DBRI: link_time_slot called with illegal pipe number\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (dbri->pipes[pipe].sdp == 0
+	if (dbri->pipes[pipe].sdp == 0
 			|| dbri->pipes[prevpipe].sdp == 0
-			|| dbri->pipes[nextpipe].sdp == 0) अणु
-		prपूर्णांकk(KERN_ERR "DBRI: link_time_slot called "
+			|| dbri->pipes[nextpipe].sdp == 0) {
+		printk(KERN_ERR "DBRI: link_time_slot called "
 			"on uninitialized pipe\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	dbri->pipes[prevpipe].nextpipe = pipe;
 	dbri->pipes[pipe].nextpipe = nextpipe;
@@ -919,13 +918,13 @@ here पूर्णांकerface बंदly with the transmit and receive �
 
 	cmd = dbri_cmdlock(dbri, 4);
 
-	अगर (dbri->pipes[pipe].sdp & D_SDP_TO_SER) अणु
-		/* Deal with CHI special हाल:
+	if (dbri->pipes[pipe].sdp & D_SDP_TO_SER) {
+		/* Deal with CHI special case:
 		 * "If transmission on edges 0 or 1 is desired, then cycle n
-		 *  (where n = # of bit बार per frame...) must be used."
+		 *  (where n = # of bit times per frame...) must be used."
 		 *                  - DBRI data sheet, page 11
 		 */
-		अगर (prevpipe == 16 && cycle == 0)
+		if (prevpipe == 16 && cycle == 0)
 			cycle = dbri->chi_bpf;
 
 		val = D_DTS_VO | D_DTS_INS | D_DTS_PRVOUT(prevpipe) | pipe;
@@ -933,102 +932,102 @@ here पूर्णांकerface बंदly with the transmit and receive �
 		*(cmd++) = 0;
 		*(cmd++) =
 		    D_TS_LEN(length) | D_TS_CYCLE(cycle) | D_TS_NEXT(nextpipe);
-	पूर्ण अन्यथा अणु
+	} else {
 		val = D_DTS_VI | D_DTS_INS | D_DTS_PRVIN(prevpipe) | pipe;
 		*(cmd++) = DBRI_CMD(D_DTS, 0, val);
 		*(cmd++) =
 		    D_TS_LEN(length) | D_TS_CYCLE(cycle) | D_TS_NEXT(nextpipe);
 		*(cmd++) = 0;
-	पूर्ण
+	}
 	*(cmd++) = DBRI_CMD(D_PAUSE, 0, 0);
 
 	dbri_cmdsend(dbri, cmd, 4);
-पूर्ण
+}
 
-#अगर 0
+#if 0
 /*
- * Lock must be held beक्रमe calling this.
+ * Lock must be held before calling this.
  */
-अटल व्योम unlink_समय_slot(काष्ठा snd_dbri *dbri, पूर्णांक pipe,
-			     क्रमागत in_or_out direction, पूर्णांक prevpipe,
-			     पूर्णांक nextpipe)
-अणु
+static void unlink_time_slot(struct snd_dbri *dbri, int pipe,
+			     enum in_or_out direction, int prevpipe,
+			     int nextpipe)
+{
 	s32 *cmd;
-	पूर्णांक val;
+	int val;
 
-	अगर (pipe < 0 || pipe > DBRI_MAX_PIPE
+	if (pipe < 0 || pipe > DBRI_MAX_PIPE
 			|| prevpipe < 0 || prevpipe > DBRI_MAX_PIPE
-			|| nextpipe < 0 || nextpipe > DBRI_MAX_PIPE) अणु
-		prपूर्णांकk(KERN_ERR
+			|| nextpipe < 0 || nextpipe > DBRI_MAX_PIPE) {
+		printk(KERN_ERR
 		    "DBRI: unlink_time_slot called with illegal pipe number\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	cmd = dbri_cmdlock(dbri, 4);
 
-	अगर (direction == PIPEinput) अणु
+	if (direction == PIPEinput) {
 		val = D_DTS_VI | D_DTS_DEL | D_DTS_PRVIN(prevpipe) | pipe;
 		*(cmd++) = DBRI_CMD(D_DTS, 0, val);
 		*(cmd++) = D_TS_NEXT(nextpipe);
 		*(cmd++) = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		val = D_DTS_VO | D_DTS_DEL | D_DTS_PRVOUT(prevpipe) | pipe;
 		*(cmd++) = DBRI_CMD(D_DTS, 0, val);
 		*(cmd++) = 0;
 		*(cmd++) = D_TS_NEXT(nextpipe);
-	पूर्ण
+	}
 	*(cmd++) = DBRI_CMD(D_PAUSE, 0, 0);
 
 	dbri_cmdsend(dbri, cmd, 4);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
 /* xmit_fixed() / recv_fixed()
  *
  * Transmit/receive data on a "fixed" pipe - i.e, one whose contents are not
- * expected to change much, and which we करोn't need to buffer.
- * The DBRI only पूर्णांकerrupts us when the data changes (receive pipes),
+ * expected to change much, and which we don't need to buffer.
+ * The DBRI only interrupts us when the data changes (receive pipes),
  * or only changes the data when this function is called (transmit pipes).
- * Only लघु pipes (numbers 16-31) can be used in fixed data mode.
+ * Only short pipes (numbers 16-31) can be used in fixed data mode.
  *
  * These function operate on a 32-bit field, no matter how large
- * the actual समय slot is.  The पूर्णांकerrupt handler takes care of bit
- * ordering and alignment.  An 8-bit समय slot will always end up
+ * the actual time slot is.  The interrupt handler takes care of bit
+ * ordering and alignment.  An 8-bit time slot will always end up
  * in the low-order 8 bits, filled either MSB-first or LSB-first,
  * depending on the settings passed to setup_pipe().
  *
- * Lock must not be held beक्रमe calling it.
+ * Lock must not be held before calling it.
  */
-अटल व्योम xmit_fixed(काष्ठा snd_dbri *dbri, पूर्णांक pipe, अचिन्हित पूर्णांक data)
-अणु
+static void xmit_fixed(struct snd_dbri *dbri, int pipe, unsigned int data)
+{
 	s32 *cmd;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
-	अगर (pipe < 16 || pipe > DBRI_MAX_PIPE) अणु
-		prपूर्णांकk(KERN_ERR "DBRI: xmit_fixed: Illegal pipe number\n");
-		वापस;
-	पूर्ण
+	if (pipe < 16 || pipe > DBRI_MAX_PIPE) {
+		printk(KERN_ERR "DBRI: xmit_fixed: Illegal pipe number\n");
+		return;
+	}
 
-	अगर (D_SDP_MODE(dbri->pipes[pipe].sdp) == 0) अणु
-		prपूर्णांकk(KERN_ERR "DBRI: xmit_fixed: "
+	if (D_SDP_MODE(dbri->pipes[pipe].sdp) == 0) {
+		printk(KERN_ERR "DBRI: xmit_fixed: "
 			"Uninitialized pipe %d\n", pipe);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (D_SDP_MODE(dbri->pipes[pipe].sdp) != D_SDP_FIXED) अणु
-		prपूर्णांकk(KERN_ERR "DBRI: xmit_fixed: Non-fixed pipe %d\n", pipe);
-		वापस;
-	पूर्ण
+	if (D_SDP_MODE(dbri->pipes[pipe].sdp) != D_SDP_FIXED) {
+		printk(KERN_ERR "DBRI: xmit_fixed: Non-fixed pipe %d\n", pipe);
+		return;
+	}
 
-	अगर (!(dbri->pipes[pipe].sdp & D_SDP_TO_SER)) अणु
-		prपूर्णांकk(KERN_ERR "DBRI: xmit_fixed: Called on receive pipe %d\n",
+	if (!(dbri->pipes[pipe].sdp & D_SDP_TO_SER)) {
+		printk(KERN_ERR "DBRI: xmit_fixed: Called on receive pipe %d\n",
 			pipe);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* DBRI लघु pipes always transmit LSB first */
+	/* DBRI short pipes always transmit LSB first */
 
-	अगर (dbri->pipes[pipe].sdp & D_SDP_MSB)
+	if (dbri->pipes[pipe].sdp & D_SDP_MSB)
 		data = reverse_bytes(data, dbri->pipes[pipe].length);
 
 	cmd = dbri_cmdlock(dbri, 3);
@@ -1040,32 +1039,32 @@ here पूर्णांकerface बंदly with the transmit and receive �
 	spin_lock_irqsave(&dbri->lock, flags);
 	dbri_cmdsend(dbri, cmd, 3);
 	spin_unlock_irqrestore(&dbri->lock, flags);
-	dbri_cmdरुको(dbri);
+	dbri_cmdwait(dbri);
 
-पूर्ण
+}
 
-अटल व्योम recv_fixed(काष्ठा snd_dbri *dbri, पूर्णांक pipe, अस्थिर __u32 *ptr)
-अणु
-	अगर (pipe < 16 || pipe > DBRI_MAX_PIPE) अणु
-		prपूर्णांकk(KERN_ERR "DBRI: recv_fixed called with "
+static void recv_fixed(struct snd_dbri *dbri, int pipe, volatile __u32 *ptr)
+{
+	if (pipe < 16 || pipe > DBRI_MAX_PIPE) {
+		printk(KERN_ERR "DBRI: recv_fixed called with "
 			"illegal pipe number\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (D_SDP_MODE(dbri->pipes[pipe].sdp) != D_SDP_FIXED) अणु
-		prपूर्णांकk(KERN_ERR "DBRI: recv_fixed called on "
+	if (D_SDP_MODE(dbri->pipes[pipe].sdp) != D_SDP_FIXED) {
+		printk(KERN_ERR "DBRI: recv_fixed called on "
 			"non-fixed pipe %d\n", pipe);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (dbri->pipes[pipe].sdp & D_SDP_TO_SER) अणु
-		prपूर्णांकk(KERN_ERR "DBRI: recv_fixed called on "
+	if (dbri->pipes[pipe].sdp & D_SDP_TO_SER) {
+		printk(KERN_ERR "DBRI: recv_fixed called on "
 			"transmit pipe %d\n", pipe);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	dbri->pipes[pipe].recv_fixed_ptr = ptr;
-पूर्ण
+}
 
 /* setup_descs()
  *
@@ -1074,132 +1073,132 @@ here पूर्णांकerface बंदly with the transmit and receive �
  *
  * Only pipe numbers 0-15 can be used in this mode.
  *
- * This function takes a stream number poपूर्णांकing to a data buffer,
- * and work by building chains of descriptors which identअगरy the
- * data buffers.  Buffers too large क्रम a single descriptor will
- * be spपढ़ो across multiple descriptors.
+ * This function takes a stream number pointing to a data buffer,
+ * and work by building chains of descriptors which identify the
+ * data buffers.  Buffers too large for a single descriptor will
+ * be spread across multiple descriptors.
  *
  * All descriptors create a ring buffer.
  *
- * Lock must be held beक्रमe calling this.
+ * Lock must be held before calling this.
  */
-अटल पूर्णांक setup_descs(काष्ठा snd_dbri *dbri, पूर्णांक streamno, अचिन्हित पूर्णांक period)
-अणु
-	काष्ठा dbri_streaminfo *info = &dbri->stream_info[streamno];
+static int setup_descs(struct snd_dbri *dbri, int streamno, unsigned int period)
+{
+	struct dbri_streaminfo *info = &dbri->stream_info[streamno];
 	u32 dvma_addr = (u32)dbri->dma_dvma;
 	__u32 dvma_buffer;
-	पूर्णांक desc;
-	पूर्णांक len;
-	पूर्णांक first_desc = -1;
-	पूर्णांक last_desc = -1;
+	int desc;
+	int len;
+	int first_desc = -1;
+	int last_desc = -1;
 
-	अगर (info->pipe < 0 || info->pipe > 15) अणु
-		prपूर्णांकk(KERN_ERR "DBRI: setup_descs: Illegal pipe number\n");
-		वापस -2;
-	पूर्ण
+	if (info->pipe < 0 || info->pipe > 15) {
+		printk(KERN_ERR "DBRI: setup_descs: Illegal pipe number\n");
+		return -2;
+	}
 
-	अगर (dbri->pipes[info->pipe].sdp == 0) अणु
-		prपूर्णांकk(KERN_ERR "DBRI: setup_descs: Uninitialized pipe %d\n",
+	if (dbri->pipes[info->pipe].sdp == 0) {
+		printk(KERN_ERR "DBRI: setup_descs: Uninitialized pipe %d\n",
 		       info->pipe);
-		वापस -2;
-	पूर्ण
+		return -2;
+	}
 
 	dvma_buffer = info->dvma_buffer;
 	len = info->size;
 
-	अगर (streamno == DBRI_PLAY) अणु
-		अगर (!(dbri->pipes[info->pipe].sdp & D_SDP_TO_SER)) अणु
-			prपूर्णांकk(KERN_ERR "DBRI: setup_descs: "
+	if (streamno == DBRI_PLAY) {
+		if (!(dbri->pipes[info->pipe].sdp & D_SDP_TO_SER)) {
+			printk(KERN_ERR "DBRI: setup_descs: "
 				"Called on receive pipe %d\n", info->pipe);
-			वापस -2;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (dbri->pipes[info->pipe].sdp & D_SDP_TO_SER) अणु
-			prपूर्णांकk(KERN_ERR
+			return -2;
+		}
+	} else {
+		if (dbri->pipes[info->pipe].sdp & D_SDP_TO_SER) {
+			printk(KERN_ERR
 			    "DBRI: setup_descs: Called on transmit pipe %d\n",
 			     info->pipe);
-			वापस -2;
-		पूर्ण
+			return -2;
+		}
 		/* Should be able to queue multiple buffers
 		 * to receive on a pipe
 		 */
-		अगर (pipe_active(dbri, info->pipe)) अणु
-			prपूर्णांकk(KERN_ERR "DBRI: recv_on_pipe: "
+		if (pipe_active(dbri, info->pipe)) {
+			printk(KERN_ERR "DBRI: recv_on_pipe: "
 				"Called on active pipe %d\n", info->pipe);
-			वापस -2;
-		पूर्ण
+			return -2;
+		}
 
 		/* Make sure buffer size is multiple of four */
 		len &= ~3;
-	पूर्ण
+	}
 
-	/* Free descriptors अगर pipe has any */
+	/* Free descriptors if pipe has any */
 	desc = dbri->pipes[info->pipe].first_desc;
-	अगर (desc >= 0)
-		करो अणु
+	if (desc >= 0)
+		do {
 			dbri->dma->desc[desc].ba = 0;
 			dbri->dma->desc[desc].nda = 0;
 			desc = dbri->next_desc[desc];
-		पूर्ण जबतक (desc != -1 &&
+		} while (desc != -1 &&
 			 desc != dbri->pipes[info->pipe].first_desc);
 
 	dbri->pipes[info->pipe].desc = -1;
 	dbri->pipes[info->pipe].first_desc = -1;
 
 	desc = 0;
-	जबतक (len > 0) अणु
-		पूर्णांक mylen;
+	while (len > 0) {
+		int mylen;
 
-		क्रम (; desc < DBRI_NO_DESCS; desc++) अणु
-			अगर (!dbri->dma->desc[desc].ba)
-				अवरोध;
-		पूर्ण
+		for (; desc < DBRI_NO_DESCS; desc++) {
+			if (!dbri->dma->desc[desc].ba)
+				break;
+		}
 
-		अगर (desc == DBRI_NO_DESCS) अणु
-			prपूर्णांकk(KERN_ERR "DBRI: setup_descs: No descriptors\n");
-			वापस -1;
-		पूर्ण
+		if (desc == DBRI_NO_DESCS) {
+			printk(KERN_ERR "DBRI: setup_descs: No descriptors\n");
+			return -1;
+		}
 
-		अगर (len > DBRI_TD_MAXCNT)
+		if (len > DBRI_TD_MAXCNT)
 			mylen = DBRI_TD_MAXCNT;	/* 8KB - 4 */
-		अन्यथा
+		else
 			mylen = len;
 
-		अगर (mylen > period)
+		if (mylen > period)
 			mylen = period;
 
 		dbri->next_desc[desc] = -1;
 		dbri->dma->desc[desc].ba = dvma_buffer;
 		dbri->dma->desc[desc].nda = 0;
 
-		अगर (streamno == DBRI_PLAY) अणु
+		if (streamno == DBRI_PLAY) {
 			dbri->dma->desc[desc].word1 = DBRI_TD_CNT(mylen);
 			dbri->dma->desc[desc].word4 = 0;
 			dbri->dma->desc[desc].word1 |= DBRI_TD_F | DBRI_TD_B;
-		पूर्ण अन्यथा अणु
+		} else {
 			dbri->dma->desc[desc].word1 = 0;
 			dbri->dma->desc[desc].word4 =
 			    DBRI_RD_B | DBRI_RD_BCNT(mylen);
-		पूर्ण
+		}
 
-		अगर (first_desc == -1)
+		if (first_desc == -1)
 			first_desc = desc;
-		अन्यथा अणु
+		else {
 			dbri->next_desc[last_desc] = desc;
 			dbri->dma->desc[last_desc].nda =
 			    dvma_addr + dbri_dma_off(desc, desc);
-		पूर्ण
+		}
 
 		last_desc = desc;
 		dvma_buffer += mylen;
 		len -= mylen;
-	पूर्ण
+	}
 
-	अगर (first_desc == -1 || last_desc == -1) अणु
-		prपूर्णांकk(KERN_ERR "DBRI: setup_descs: "
+	if (first_desc == -1 || last_desc == -1) {
+		printk(KERN_ERR "DBRI: setup_descs: "
 			" Not enough descriptors available\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	dbri->dma->desc[last_desc].nda =
 	    dvma_addr + dbri_dma_off(desc, first_desc);
@@ -1207,43 +1206,43 @@ here पूर्णांकerface बंदly with the transmit and receive �
 	dbri->pipes[info->pipe].first_desc = first_desc;
 	dbri->pipes[info->pipe].desc = first_desc;
 
-#अगर_घोषित DBRI_DEBUG
-	क्रम (desc = first_desc; desc != -1;) अणु
-		dprपूर्णांकk(D_DESC, "DESC %d: %08x %08x %08x %08x\n",
+#ifdef DBRI_DEBUG
+	for (desc = first_desc; desc != -1;) {
+		dprintk(D_DESC, "DESC %d: %08x %08x %08x %08x\n",
 			desc,
 			dbri->dma->desc[desc].word1,
 			dbri->dma->desc[desc].ba,
 			dbri->dma->desc[desc].nda, dbri->dma->desc[desc].word4);
 			desc = dbri->next_desc[desc];
-			अगर (desc == first_desc)
-				अवरोध;
-	पूर्ण
-#पूर्ण_अगर
-	वापस 0;
-पूर्ण
+			if (desc == first_desc)
+				break;
+	}
+#endif
+	return 0;
+}
 
 /*
 ****************************************************************************
-************************** DBRI - CHI पूर्णांकerface ****************************
+************************** DBRI - CHI interface ****************************
 ****************************************************************************
 
-The CHI is a four-wire (घड़ी, frame sync, data in, data out) समय-भागision
-multiplexed serial पूर्णांकerface which the DBRI can operate in either master
-(give घड़ी/frame sync) or slave (take घड़ी/frame sync) mode.
+The CHI is a four-wire (clock, frame sync, data in, data out) time-division
+multiplexed serial interface which the DBRI can operate in either master
+(give clock/frame sync) or slave (take clock/frame sync) mode.
 
 */
 
-क्रमागत master_or_slave अणु CHImaster, CHIslave पूर्ण;
+enum master_or_slave { CHImaster, CHIslave };
 
 /*
- * Lock must not be held beक्रमe calling it.
+ * Lock must not be held before calling it.
  */
-अटल व्योम reset_chi(काष्ठा snd_dbri *dbri,
-		      क्रमागत master_or_slave master_or_slave,
-		      पूर्णांक bits_per_frame)
-अणु
+static void reset_chi(struct snd_dbri *dbri,
+		      enum master_or_slave master_or_slave,
+		      int bits_per_frame)
+{
 	s32 *cmd;
-	पूर्णांक val;
+	int val;
 
 	/* Set CHI Anchor: Pipe 16 */
 
@@ -1261,31 +1260,31 @@ multiplexed serial पूर्णांकerface which the DBRI can operate in 
 
 	cmd = dbri_cmdlock(dbri, 4);
 
-	अगर (master_or_slave == CHIslave) अणु
-		/* Setup DBRI क्रम CHI Slave - receive घड़ी, frame sync (FS)
+	if (master_or_slave == CHIslave) {
+		/* Setup DBRI for CHI Slave - receive clock, frame sync (FS)
 		 *
 		 * CHICM  = 0 (slave mode, 8 kHz frame rate)
-		 * IR     = give immediate CHI status पूर्णांकerrupt
-		 * EN     = give CHI status पूर्णांकerrupt upon change
+		 * IR     = give immediate CHI status interrupt
+		 * EN     = give CHI status interrupt upon change
 		 */
 		*(cmd++) = DBRI_CMD(D_CHI, 0, D_CHI_CHICM(0));
-	पूर्ण अन्यथा अणु
-		/* Setup DBRI क्रम CHI Master - generate घड़ी, FS
+	} else {
+		/* Setup DBRI for CHI Master - generate clock, FS
 		 *
 		 * BPF				=  bits per 8 kHz frame
-		 * 12.288 MHz / CHICM_भागisor	= घड़ी rate
+		 * 12.288 MHz / CHICM_divisor	= clock rate
 		 * FD = 1 - drive CHIFS on rising edge of CHICK
 		 */
-		पूर्णांक घड़ीrate = bits_per_frame * 8;
-		पूर्णांक भागisor = 12288 / घड़ीrate;
+		int clockrate = bits_per_frame * 8;
+		int divisor = 12288 / clockrate;
 
-		अगर (भागisor > 255 || भागisor * घड़ीrate != 12288)
-			prपूर्णांकk(KERN_ERR "DBRI: illegal bits_per_frame "
+		if (divisor > 255 || divisor * clockrate != 12288)
+			printk(KERN_ERR "DBRI: illegal bits_per_frame "
 				"in setup_chi\n");
 
-		*(cmd++) = DBRI_CMD(D_CHI, 0, D_CHI_CHICM(भागisor) | D_CHI_FD
+		*(cmd++) = DBRI_CMD(D_CHI, 0, D_CHI_CHICM(divisor) | D_CHI_FD
 				    | D_CHI_BPF(bits_per_frame));
-	पूर्ण
+	}
 
 	dbri->chi_bpf = bits_per_frame;
 
@@ -1302,7 +1301,7 @@ multiplexed serial पूर्णांकerface which the DBRI can operate in 
 	*(cmd++) = DBRI_CMD(D_PAUSE, 0, 0);
 
 	dbri_cmdsend(dbri, cmd, 4);
-पूर्ण
+}
 
 /*
 ****************************************************************************
@@ -1310,29 +1309,29 @@ multiplexed serial पूर्णांकerface which the DBRI can operate in 
 ****************************************************************************
 
 In the standard SPARC audio configuration, the CS4215 codec is attached
-to the DBRI via the CHI पूर्णांकerface and few of the DBRI's PIO pins.
+to the DBRI via the CHI interface and few of the DBRI's PIO pins.
 
- * Lock must not be held beक्रमe calling it.
+ * Lock must not be held before calling it.
 
 */
-अटल व्योम cs4215_setup_pipes(काष्ठा snd_dbri *dbri)
-अणु
-	अचिन्हित दीर्घ flags;
+static void cs4215_setup_pipes(struct snd_dbri *dbri)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&dbri->lock, flags);
 	/*
 	 * Data mode:
-	 * Pipe  4: Send बारlots 1-4 (audio data)
-	 * Pipe 20: Send बारlots 5-8 (part of ctrl data)
-	 * Pipe  6: Receive बारlots 1-4 (audio data)
-	 * Pipe 21: Receive बारlots 6-7. We can only receive 20 bits via
-	 *          पूर्णांकerrupt, and the rest of the data (slot 5 and 8) is
-	 *          not relevant क्रम us (only क्रम द्विगुनchecking).
+	 * Pipe  4: Send timeslots 1-4 (audio data)
+	 * Pipe 20: Send timeslots 5-8 (part of ctrl data)
+	 * Pipe  6: Receive timeslots 1-4 (audio data)
+	 * Pipe 21: Receive timeslots 6-7. We can only receive 20 bits via
+	 *          interrupt, and the rest of the data (slot 5 and 8) is
+	 *          not relevant for us (only for doublechecking).
 	 *
 	 * Control mode:
-	 * Pipe 17: Send बारlots 1-4 (slots 5-8 are पढ़ो only)
-	 * Pipe 18: Receive बारlot 1 (clb).
-	 * Pipe 19: Receive बारlot 7 (version).
+	 * Pipe 17: Send timeslots 1-4 (slots 5-8 are read only)
+	 * Pipe 18: Receive timeslot 1 (clb).
+	 * Pipe 19: Receive timeslot 7 (version).
 	 */
 
 	setup_pipe(dbri, 4, D_SDP_MEM | D_SDP_TO_SER | D_SDP_MSB);
@@ -1345,11 +1344,11 @@ to the DBRI via the CHI पूर्णांकerface and few of the DBRI's PIO
 	setup_pipe(dbri, 19, D_SDP_FIXED | D_SDP_FROM_SER | D_SDP_MSB);
 	spin_unlock_irqrestore(&dbri->lock, flags);
 
-	dbri_cmdरुको(dbri);
-पूर्ण
+	dbri_cmdwait(dbri);
+}
 
-अटल पूर्णांक cs4215_init_data(काष्ठा cs4215 *mm)
-अणु
+static int cs4215_init_data(struct cs4215 *mm)
+{
 	/*
 	 * No action, memory resetting only.
 	 *
@@ -1366,7 +1365,7 @@ to the DBRI via the CHI पूर्णांकerface and few of the DBRI's PIO
 	 * Control Time Slot 1-4
 	 * 0: Default I/O voltage scale
 	 * 1: 8 bit ulaw, 8kHz, mono, high pass filter disabled
-	 * 2: Serial enable, CHI master, 128 bits per frame, घड़ी 1
+	 * 2: Serial enable, CHI master, 128 bits per frame, clock 1
 	 * 3: Tests disabled
 	 */
 	mm->ctrl[0] = CS4215_RSRVD_1 | CS4215_MLB;
@@ -1379,21 +1378,21 @@ to the DBRI via the CHI पूर्णांकerface and few of the DBRI's PIO
 	mm->precision = 8;	/* For ULAW */
 	mm->channels = 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम cs4215_setdata(काष्ठा snd_dbri *dbri, पूर्णांक muted)
-अणु
-	अगर (muted) अणु
+static void cs4215_setdata(struct snd_dbri *dbri, int muted)
+{
+	if (muted) {
 		dbri->mm.data[0] |= 63;
 		dbri->mm.data[1] |= 63;
 		dbri->mm.data[2] &= ~15;
 		dbri->mm.data[3] &= ~15;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Start by setting the playback attenuation. */
-		काष्ठा dbri_streaminfo *info = &dbri->stream_info[DBRI_PLAY];
-		पूर्णांक left_gain = info->left_gain & 0x3f;
-		पूर्णांक right_gain = info->right_gain & 0x3f;
+		struct dbri_streaminfo *info = &dbri->stream_info[DBRI_PLAY];
+		int left_gain = info->left_gain & 0x3f;
+		int right_gain = info->right_gain & 0x3f;
 
 		dbri->mm.data[0] &= ~0x3f;	/* Reset the volume bits */
 		dbri->mm.data[1] &= ~0x3f;
@@ -1406,25 +1405,25 @@ to the DBRI via the CHI पूर्णांकerface and few of the DBRI's PIO
 		right_gain = info->right_gain & 0xf;
 		dbri->mm.data[2] |= CS4215_LG(left_gain);
 		dbri->mm.data[3] |= CS4215_RG(right_gain);
-	पूर्ण
+	}
 
-	xmit_fixed(dbri, 20, *(पूर्णांक *)dbri->mm.data);
-पूर्ण
+	xmit_fixed(dbri, 20, *(int *)dbri->mm.data);
+}
 
 /*
  * Set the CS4215 to data mode.
  */
-अटल व्योम cs4215_खोलो(काष्ठा snd_dbri *dbri)
-अणु
-	पूर्णांक data_width;
-	u32 पंचांगp;
-	अचिन्हित दीर्घ flags;
+static void cs4215_open(struct snd_dbri *dbri)
+{
+	int data_width;
+	u32 tmp;
+	unsigned long flags;
 
-	dprपूर्णांकk(D_MM, "cs4215_open: %d channels, %d bits\n",
+	dprintk(D_MM, "cs4215_open: %d channels, %d bits\n",
 		dbri->mm.channels, dbri->mm.precision);
 
-	/* Temporarily mute outमाला_दो, and रुको 1/8000 sec (125 us)
-	 * to make sure this takes.  This aव्योमs clicking noises.
+	/* Temporarily mute outputs, and wait 1/8000 sec (125 us)
+	 * to make sure this takes.  This avoids clicking noises.
 	 */
 
 	cs4215_setdata(dbri, 1);
@@ -1432,194 +1431,194 @@ to the DBRI via the CHI पूर्णांकerface and few of the DBRI's PIO
 
 	/*
 	 * Data mode:
-	 * Pipe  4: Send बारlots 1-4 (audio data)
-	 * Pipe 20: Send बारlots 5-8 (part of ctrl data)
-	 * Pipe  6: Receive बारlots 1-4 (audio data)
-	 * Pipe 21: Receive बारlots 6-7. We can only receive 20 bits via
-	 *          पूर्णांकerrupt, and the rest of the data (slot 5 and 8) is
-	 *          not relevant क्रम us (only क्रम द्विगुनchecking).
+	 * Pipe  4: Send timeslots 1-4 (audio data)
+	 * Pipe 20: Send timeslots 5-8 (part of ctrl data)
+	 * Pipe  6: Receive timeslots 1-4 (audio data)
+	 * Pipe 21: Receive timeslots 6-7. We can only receive 20 bits via
+	 *          interrupt, and the rest of the data (slot 5 and 8) is
+	 *          not relevant for us (only for doublechecking).
 	 *
-	 * Just like in control mode, the समय slots are all offset by eight
-	 * bits.  The CS4215, it seems, observes TSIN (the delayed संकेत)
-	 * even अगर it's the CHI master.  Don't ask me...
+	 * Just like in control mode, the time slots are all offset by eight
+	 * bits.  The CS4215, it seems, observes TSIN (the delayed signal)
+	 * even if it's the CHI master.  Don't ask me...
 	 */
 	spin_lock_irqsave(&dbri->lock, flags);
-	पंचांगp = sbus_पढ़ोl(dbri->regs + REG0);
-	पंचांगp &= ~(D_C);		/* Disable CHI */
-	sbus_ग_लिखोl(पंचांगp, dbri->regs + REG0);
+	tmp = sbus_readl(dbri->regs + REG0);
+	tmp &= ~(D_C);		/* Disable CHI */
+	sbus_writel(tmp, dbri->regs + REG0);
 
 	/* Switch CS4215 to data mode - set PIO3 to 1 */
-	sbus_ग_लिखोl(D_ENPIO | D_PIO1 | D_PIO3 |
+	sbus_writel(D_ENPIO | D_PIO1 | D_PIO3 |
 		    (dbri->mm.onboard ? D_PIO0 : D_PIO2), dbri->regs + REG2);
 
 	reset_chi(dbri, CHIslave, 128);
 
-	/* Note: this next करोesn't work क्रम 8-bit stereo, because the two
-	 * channels would be on बारlots 1 and 3, with 2 and 4 idle.
+	/* Note: this next doesn't work for 8-bit stereo, because the two
+	 * channels would be on timeslots 1 and 3, with 2 and 4 idle.
 	 * (See CS4215 datasheet Fig 15)
 	 *
 	 * DBRI non-contiguous mode would be required to make this work.
 	 */
 	data_width = dbri->mm.channels * dbri->mm.precision;
 
-	link_समय_slot(dbri, 4, 16, 16, data_width, dbri->mm.offset);
-	link_समय_slot(dbri, 20, 4, 16, 32, dbri->mm.offset + 32);
-	link_समय_slot(dbri, 6, 16, 16, data_width, dbri->mm.offset);
-	link_समय_slot(dbri, 21, 6, 16, 16, dbri->mm.offset + 40);
+	link_time_slot(dbri, 4, 16, 16, data_width, dbri->mm.offset);
+	link_time_slot(dbri, 20, 4, 16, 32, dbri->mm.offset + 32);
+	link_time_slot(dbri, 6, 16, 16, data_width, dbri->mm.offset);
+	link_time_slot(dbri, 21, 6, 16, 16, dbri->mm.offset + 40);
 
 	/* FIXME: enable CHI after _setdata? */
-	पंचांगp = sbus_पढ़ोl(dbri->regs + REG0);
-	पंचांगp |= D_C;		/* Enable CHI */
-	sbus_ग_लिखोl(पंचांगp, dbri->regs + REG0);
+	tmp = sbus_readl(dbri->regs + REG0);
+	tmp |= D_C;		/* Enable CHI */
+	sbus_writel(tmp, dbri->regs + REG0);
 	spin_unlock_irqrestore(&dbri->lock, flags);
 
 	cs4215_setdata(dbri, 0);
-पूर्ण
+}
 
 /*
- * Send the control inक्रमmation (i.e. audio क्रमmat)
+ * Send the control information (i.e. audio format)
  */
-अटल पूर्णांक cs4215_setctrl(काष्ठा snd_dbri *dbri)
-अणु
-	पूर्णांक i, val;
-	u32 पंचांगp;
-	अचिन्हित दीर्घ flags;
+static int cs4215_setctrl(struct snd_dbri *dbri)
+{
+	int i, val;
+	u32 tmp;
+	unsigned long flags;
 
-	/* FIXME - let the CPU करो something useful during these delays */
+	/* FIXME - let the CPU do something useful during these delays */
 
-	/* Temporarily mute outमाला_दो, and रुको 1/8000 sec (125 us)
-	 * to make sure this takes.  This aव्योमs clicking noises.
+	/* Temporarily mute outputs, and wait 1/8000 sec (125 us)
+	 * to make sure this takes.  This avoids clicking noises.
 	 */
 	cs4215_setdata(dbri, 1);
 	udelay(125);
 
 	/*
-	 * Enable Control mode: Set DBRI's PIO3 (4215's D/~C) to 0, then रुको
+	 * Enable Control mode: Set DBRI's PIO3 (4215's D/~C) to 0, then wait
 	 * 12 cycles <= 12/(5512.5*64) sec = 34.01 usec
 	 */
 	val = D_ENPIO | D_PIO1 | (dbri->mm.onboard ? D_PIO0 : D_PIO2);
-	sbus_ग_लिखोl(val, dbri->regs + REG2);
-	dprपूर्णांकk(D_MM, "cs4215_setctrl: reg2=0x%x\n", val);
+	sbus_writel(val, dbri->regs + REG2);
+	dprintk(D_MM, "cs4215_setctrl: reg2=0x%x\n", val);
 	udelay(34);
 
 	/* In Control mode, the CS4215 is a slave device, so the DBRI must
-	 * operate as CHI master, supplying घड़ीing and frame synchronization.
+	 * operate as CHI master, supplying clocking and frame synchronization.
 	 *
 	 * In Data mode, however, the CS4215 must be CHI master to insure
 	 * that its data stream is synchronous with its codec.
 	 *
-	 * The upshot of all this?  We start by putting the DBRI पूर्णांकo master
-	 * mode, program the CS4215 in Control mode, then चयन the CS4215
-	 * पूर्णांकo Data mode and put the DBRI पूर्णांकo slave mode.  Various timing
-	 * requirements must be observed aदीर्घ the way.
+	 * The upshot of all this?  We start by putting the DBRI into master
+	 * mode, program the CS4215 in Control mode, then switch the CS4215
+	 * into Data mode and put the DBRI into slave mode.  Various timing
+	 * requirements must be observed along the way.
 	 *
 	 * Oh, and one more thing, on a SPARCStation 20 (and maybe
-	 * others?), the addressing of the CS4215's समय slots is
+	 * others?), the addressing of the CS4215's time slots is
 	 * offset by eight bits, so we add eight to all the "cycle"
 	 * values in the Define Time Slot (DTS) commands.  This is
-	 * करोne in hardware by a TI 248 that delays the DBRI->4215
-	 * frame sync संकेत by eight घड़ी cycles.  Anybody know why?
+	 * done in hardware by a TI 248 that delays the DBRI->4215
+	 * frame sync signal by eight clock cycles.  Anybody know why?
 	 */
 	spin_lock_irqsave(&dbri->lock, flags);
-	पंचांगp = sbus_पढ़ोl(dbri->regs + REG0);
-	पंचांगp &= ~D_C;		/* Disable CHI */
-	sbus_ग_लिखोl(पंचांगp, dbri->regs + REG0);
+	tmp = sbus_readl(dbri->regs + REG0);
+	tmp &= ~D_C;		/* Disable CHI */
+	sbus_writel(tmp, dbri->regs + REG0);
 
 	reset_chi(dbri, CHImaster, 128);
 
 	/*
 	 * Control mode:
-	 * Pipe 17: Send बारlots 1-4 (slots 5-8 are पढ़ो only)
-	 * Pipe 18: Receive बारlot 1 (clb).
-	 * Pipe 19: Receive बारlot 7 (version).
+	 * Pipe 17: Send timeslots 1-4 (slots 5-8 are read only)
+	 * Pipe 18: Receive timeslot 1 (clb).
+	 * Pipe 19: Receive timeslot 7 (version).
 	 */
 
-	link_समय_slot(dbri, 17, 16, 16, 32, dbri->mm.offset);
-	link_समय_slot(dbri, 18, 16, 16, 8, dbri->mm.offset);
-	link_समय_slot(dbri, 19, 18, 16, 8, dbri->mm.offset + 48);
+	link_time_slot(dbri, 17, 16, 16, 32, dbri->mm.offset);
+	link_time_slot(dbri, 18, 16, 16, 8, dbri->mm.offset);
+	link_time_slot(dbri, 19, 18, 16, 8, dbri->mm.offset + 48);
 	spin_unlock_irqrestore(&dbri->lock, flags);
 
-	/* Wait क्रम the chip to echo back CLB (Control Latch Bit) as zero */
+	/* Wait for the chip to echo back CLB (Control Latch Bit) as zero */
 	dbri->mm.ctrl[0] &= ~CS4215_CLB;
-	xmit_fixed(dbri, 17, *(पूर्णांक *)dbri->mm.ctrl);
+	xmit_fixed(dbri, 17, *(int *)dbri->mm.ctrl);
 
 	spin_lock_irqsave(&dbri->lock, flags);
-	पंचांगp = sbus_पढ़ोl(dbri->regs + REG0);
-	पंचांगp |= D_C;		/* Enable CHI */
-	sbus_ग_लिखोl(पंचांगp, dbri->regs + REG0);
+	tmp = sbus_readl(dbri->regs + REG0);
+	tmp |= D_C;		/* Enable CHI */
+	sbus_writel(tmp, dbri->regs + REG0);
 	spin_unlock_irqrestore(&dbri->lock, flags);
 
-	क्रम (i = 10; ((dbri->mm.status & 0xe4) != 0x20); --i)
-		msleep_पूर्णांकerruptible(1);
+	for (i = 10; ((dbri->mm.status & 0xe4) != 0x20); --i)
+		msleep_interruptible(1);
 
-	अगर (i == 0) अणु
-		dprपूर्णांकk(D_MM, "CS4215 didn't respond to CLB (0x%02x)\n",
+	if (i == 0) {
+		dprintk(D_MM, "CS4215 didn't respond to CLB (0x%02x)\n",
 			dbri->mm.status);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	/* Disable changes to our copy of the version number, as we are about
 	 * to leave control mode.
 	 */
-	recv_fixed(dbri, 19, शून्य);
+	recv_fixed(dbri, 19, NULL);
 
 	/* Terminate CS4215 control mode - data sheet says
 	 * "Set CLB=1 and send two more frames of valid control info"
 	 */
 	dbri->mm.ctrl[0] |= CS4215_CLB;
-	xmit_fixed(dbri, 17, *(पूर्णांक *)dbri->mm.ctrl);
+	xmit_fixed(dbri, 17, *(int *)dbri->mm.ctrl);
 
 	/* Two frames of control info @ 8kHz frame rate = 250 us delay */
 	udelay(250);
 
 	cs4215_setdata(dbri, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Setup the codec with the sampling rate, audio क्रमmat and number of
+ * Setup the codec with the sampling rate, audio format and number of
  * channels.
- * As part of the process we resend the settings क्रम the data
- * बारlots as well.
+ * As part of the process we resend the settings for the data
+ * timeslots as well.
  */
-अटल पूर्णांक cs4215_prepare(काष्ठा snd_dbri *dbri, अचिन्हित पूर्णांक rate,
-			  snd_pcm_क्रमmat_t क्रमmat, अचिन्हित पूर्णांक channels)
-अणु
-	पूर्णांक freq_idx;
-	पूर्णांक ret = 0;
+static int cs4215_prepare(struct snd_dbri *dbri, unsigned int rate,
+			  snd_pcm_format_t format, unsigned int channels)
+{
+	int freq_idx;
+	int ret = 0;
 
-	/* Lookup index क्रम this rate */
-	क्रम (freq_idx = 0; CS4215_FREQ[freq_idx].freq != 0; freq_idx++) अणु
-		अगर (CS4215_FREQ[freq_idx].freq == rate)
-			अवरोध;
-	पूर्ण
-	अगर (CS4215_FREQ[freq_idx].freq != rate) अणु
-		prपूर्णांकk(KERN_WARNING "DBRI: Unsupported rate %d Hz\n", rate);
-		वापस -1;
-	पूर्ण
+	/* Lookup index for this rate */
+	for (freq_idx = 0; CS4215_FREQ[freq_idx].freq != 0; freq_idx++) {
+		if (CS4215_FREQ[freq_idx].freq == rate)
+			break;
+	}
+	if (CS4215_FREQ[freq_idx].freq != rate) {
+		printk(KERN_WARNING "DBRI: Unsupported rate %d Hz\n", rate);
+		return -1;
+	}
 
-	चयन (क्रमmat) अणु
-	हाल SNDRV_PCM_FORMAT_MU_LAW:
+	switch (format) {
+	case SNDRV_PCM_FORMAT_MU_LAW:
 		dbri->mm.ctrl[1] = CS4215_DFR_ULAW;
 		dbri->mm.precision = 8;
-		अवरोध;
-	हाल SNDRV_PCM_FORMAT_A_LAW:
+		break;
+	case SNDRV_PCM_FORMAT_A_LAW:
 		dbri->mm.ctrl[1] = CS4215_DFR_ALAW;
 		dbri->mm.precision = 8;
-		अवरोध;
-	हाल SNDRV_PCM_FORMAT_U8:
+		break;
+	case SNDRV_PCM_FORMAT_U8:
 		dbri->mm.ctrl[1] = CS4215_DFR_LINEAR8;
 		dbri->mm.precision = 8;
-		अवरोध;
-	हाल SNDRV_PCM_FORMAT_S16_BE:
+		break;
+	case SNDRV_PCM_FORMAT_S16_BE:
 		dbri->mm.ctrl[1] = CS4215_DFR_LINEAR16;
 		dbri->mm.precision = 16;
-		अवरोध;
-	शेष:
-		prपूर्णांकk(KERN_WARNING "DBRI: Unsupported format %d\n", क्रमmat);
-		वापस -1;
-	पूर्ण
+		break;
+	default:
+		printk(KERN_WARNING "DBRI: Unsupported format %d\n", format);
+		return -1;
+	}
 
 	/* Add rate parameters */
 	dbri->mm.ctrl[1] |= CS4215_FREQ[freq_idx].csval;
@@ -1627,105 +1626,105 @@ to the DBRI via the CHI पूर्णांकerface and few of the DBRI's PIO
 	    CS4215_BSEL_128 | CS4215_FREQ[freq_idx].xtal;
 
 	dbri->mm.channels = channels;
-	अगर (channels == 2)
+	if (channels == 2)
 		dbri->mm.ctrl[1] |= CS4215_DFR_STEREO;
 
 	ret = cs4215_setctrl(dbri);
-	अगर (ret == 0)
-		cs4215_खोलो(dbri);	/* set codec to data mode */
+	if (ret == 0)
+		cs4215_open(dbri);	/* set codec to data mode */
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  *
  */
-अटल पूर्णांक cs4215_init(काष्ठा snd_dbri *dbri)
-अणु
-	u32 reg2 = sbus_पढ़ोl(dbri->regs + REG2);
-	dprपूर्णांकk(D_MM, "cs4215_init: reg2=0x%x\n", reg2);
+static int cs4215_init(struct snd_dbri *dbri)
+{
+	u32 reg2 = sbus_readl(dbri->regs + REG2);
+	dprintk(D_MM, "cs4215_init: reg2=0x%x\n", reg2);
 
-	/* Look क्रम the cs4215 chips */
-	अगर (reg2 & D_PIO2) अणु
-		dprपूर्णांकk(D_MM, "Onboard CS4215 detected\n");
+	/* Look for the cs4215 chips */
+	if (reg2 & D_PIO2) {
+		dprintk(D_MM, "Onboard CS4215 detected\n");
 		dbri->mm.onboard = 1;
-	पूर्ण
-	अगर (reg2 & D_PIO0) अणु
-		dprपूर्णांकk(D_MM, "Speakerbox detected\n");
+	}
+	if (reg2 & D_PIO0) {
+		dprintk(D_MM, "Speakerbox detected\n");
 		dbri->mm.onboard = 0;
 
-		अगर (reg2 & D_PIO2) अणु
-			prपूर्णांकk(KERN_INFO "DBRI: Using speakerbox / "
+		if (reg2 & D_PIO2) {
+			printk(KERN_INFO "DBRI: Using speakerbox / "
 			       "ignoring onboard mmcodec.\n");
-			sbus_ग_लिखोl(D_ENPIO2, dbri->regs + REG2);
-		पूर्ण
-	पूर्ण
+			sbus_writel(D_ENPIO2, dbri->regs + REG2);
+		}
+	}
 
-	अगर (!(reg2 & (D_PIO0 | D_PIO2))) अणु
-		prपूर्णांकk(KERN_ERR "DBRI: no mmcodec found.\n");
-		वापस -EIO;
-	पूर्ण
+	if (!(reg2 & (D_PIO0 | D_PIO2))) {
+		printk(KERN_ERR "DBRI: no mmcodec found.\n");
+		return -EIO;
+	}
 
 	cs4215_setup_pipes(dbri);
 	cs4215_init_data(&dbri->mm);
 
-	/* Enable capture of the status & version बारlots. */
+	/* Enable capture of the status & version timeslots. */
 	recv_fixed(dbri, 18, &dbri->mm.status);
 	recv_fixed(dbri, 19, &dbri->mm.version);
 
 	dbri->mm.offset = dbri->mm.onboard ? 0 : 8;
-	अगर (cs4215_setctrl(dbri) == -1 || dbri->mm.version == 0xff) अणु
-		dprपूर्णांकk(D_MM, "CS4215 failed probe at offset %d\n",
+	if (cs4215_setctrl(dbri) == -1 || dbri->mm.version == 0xff) {
+		dprintk(D_MM, "CS4215 failed probe at offset %d\n",
 			dbri->mm.offset);
-		वापस -EIO;
-	पूर्ण
-	dprपूर्णांकk(D_MM, "Found CS4215 at offset %d\n", dbri->mm.offset);
+		return -EIO;
+	}
+	dprintk(D_MM, "Found CS4215 at offset %d\n", dbri->mm.offset);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
 ****************************************************************************
-*************************** DBRI पूर्णांकerrupt handler *************************
+*************************** DBRI interrupt handler *************************
 ****************************************************************************
 
-The DBRI communicates with the CPU मुख्यly via a circular पूर्णांकerrupt
-buffer.  When an पूर्णांकerrupt is संकेतed, the CPU walks through the
-buffer and calls dbri_process_one_पूर्णांकerrupt() क्रम each पूर्णांकerrupt word.
-Complicated पूर्णांकerrupts are handled by dedicated functions (which
-appear first in this file).  Any pending पूर्णांकerrupts can be serviced by
-calling dbri_process_पूर्णांकerrupt_buffer(), which works even अगर the CPU's
-पूर्णांकerrupts are disabled.
+The DBRI communicates with the CPU mainly via a circular interrupt
+buffer.  When an interrupt is signaled, the CPU walks through the
+buffer and calls dbri_process_one_interrupt() for each interrupt word.
+Complicated interrupts are handled by dedicated functions (which
+appear first in this file).  Any pending interrupts can be serviced by
+calling dbri_process_interrupt_buffer(), which works even if the CPU's
+interrupts are disabled.
 
 */
 
 /* xmit_descs()
  *
- * Starts transmitting the current TD's क्रम recording/playing.
+ * Starts transmitting the current TD's for recording/playing.
  * For playback, ALSA has filled the DMA memory with new data (we hope).
  */
-अटल व्योम xmit_descs(काष्ठा snd_dbri *dbri)
-अणु
-	काष्ठा dbri_streaminfo *info;
+static void xmit_descs(struct snd_dbri *dbri)
+{
+	struct dbri_streaminfo *info;
 	u32 dvma_addr;
 	s32 *cmd;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक first_td;
+	unsigned long flags;
+	int first_td;
 
-	अगर (dbri == शून्य)
-		वापस;		/* Disabled */
+	if (dbri == NULL)
+		return;		/* Disabled */
 
 	dvma_addr = (u32)dbri->dma_dvma;
 	info = &dbri->stream_info[DBRI_REC];
 	spin_lock_irqsave(&dbri->lock, flags);
 
-	अगर (info->pipe >= 0) अणु
+	if (info->pipe >= 0) {
 		first_td = dbri->pipes[info->pipe].first_desc;
 
-		dprपूर्णांकk(D_DESC, "xmit_descs rec @ TD %d\n", first_td);
+		dprintk(D_DESC, "xmit_descs rec @ TD %d\n", first_td);
 
-		/* Stream could be बंदd by the समय we run. */
-		अगर (first_td >= 0) अणु
+		/* Stream could be closed by the time we run. */
+		if (first_td >= 0) {
 			cmd = dbri_cmdlock(dbri, 2);
 			*(cmd++) = DBRI_CMD(D_SDP, 0,
 					    dbri->pipes[info->pipe].sdp
@@ -1736,18 +1735,18 @@ calling dbri_process_पूर्णांकerrupt_buffer(), which works even �
 
 			/* Reset our admin of the pipe. */
 			dbri->pipes[info->pipe].desc = first_td;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	info = &dbri->stream_info[DBRI_PLAY];
 
-	अगर (info->pipe >= 0) अणु
+	if (info->pipe >= 0) {
 		first_td = dbri->pipes[info->pipe].first_desc;
 
-		dprपूर्णांकk(D_DESC, "xmit_descs play @ TD %d\n", first_td);
+		dprintk(D_DESC, "xmit_descs play @ TD %d\n", first_td);
 
-		/* Stream could be बंदd by the समय we run. */
-		अगर (first_td >= 0) अणु
+		/* Stream could be closed by the time we run. */
+		if (first_td >= 0) {
 			cmd = dbri_cmdlock(dbri, 2);
 			*(cmd++) = DBRI_CMD(D_SDP, 0,
 					    dbri->pipes[info->pipe].sdp
@@ -1758,127 +1757,127 @@ calling dbri_process_पूर्णांकerrupt_buffer(), which works even �
 
 			/* Reset our admin of the pipe. */
 			dbri->pipes[info->pipe].desc = first_td;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	spin_unlock_irqrestore(&dbri->lock, flags);
-पूर्ण
+}
 
-/* transmission_complete_पूर्णांकr()
+/* transmission_complete_intr()
  *
- * Called by मुख्य पूर्णांकerrupt handler when DBRI संकेतs transmission complete
- * on a pipe (पूर्णांकerrupt triggered by the B bit in a transmit descriptor).
+ * Called by main interrupt handler when DBRI signals transmission complete
+ * on a pipe (interrupt triggered by the B bit in a transmit descriptor).
  *
  * Walks through the pipe's list of transmit buffer descriptors and marks
  * them as available. Stops when the first descriptor is found without
  * TBC (Transmit Buffer Complete) set, or we've run through them all.
  *
- * The DMA buffers are not released. They क्रमm a ring buffer and
- * they are filled by ALSA जबतक others are transmitted by DMA.
+ * The DMA buffers are not released. They form a ring buffer and
+ * they are filled by ALSA while others are transmitted by DMA.
  *
  */
 
-अटल व्योम transmission_complete_पूर्णांकr(काष्ठा snd_dbri *dbri, पूर्णांक pipe)
-अणु
-	काष्ठा dbri_streaminfo *info = &dbri->stream_info[DBRI_PLAY];
-	पूर्णांक td = dbri->pipes[pipe].desc;
-	पूर्णांक status;
+static void transmission_complete_intr(struct snd_dbri *dbri, int pipe)
+{
+	struct dbri_streaminfo *info = &dbri->stream_info[DBRI_PLAY];
+	int td = dbri->pipes[pipe].desc;
+	int status;
 
-	जबतक (td >= 0) अणु
-		अगर (td >= DBRI_NO_DESCS) अणु
-			prपूर्णांकk(KERN_ERR "DBRI: invalid td on pipe %d\n", pipe);
-			वापस;
-		पूर्ण
+	while (td >= 0) {
+		if (td >= DBRI_NO_DESCS) {
+			printk(KERN_ERR "DBRI: invalid td on pipe %d\n", pipe);
+			return;
+		}
 
 		status = DBRI_TD_STATUS(dbri->dma->desc[td].word4);
-		अगर (!(status & DBRI_TD_TBC))
-			अवरोध;
+		if (!(status & DBRI_TD_TBC))
+			break;
 
-		dprपूर्णांकk(D_INT, "TD %d, status 0x%02x\n", td, status);
+		dprintk(D_INT, "TD %d, status 0x%02x\n", td, status);
 
-		dbri->dma->desc[td].word4 = 0;	/* Reset it क्रम next समय. */
+		dbri->dma->desc[td].word4 = 0;	/* Reset it for next time. */
 		info->offset += DBRI_RD_CNT(dbri->dma->desc[td].word1);
 
 		td = dbri->next_desc[td];
 		dbri->pipes[pipe].desc = td;
-	पूर्ण
+	}
 
-	/* Notअगरy ALSA */
+	/* Notify ALSA */
 	spin_unlock(&dbri->lock);
 	snd_pcm_period_elapsed(info->substream);
 	spin_lock(&dbri->lock);
-पूर्ण
+}
 
-अटल व्योम reception_complete_पूर्णांकr(काष्ठा snd_dbri *dbri, पूर्णांक pipe)
-अणु
-	काष्ठा dbri_streaminfo *info;
-	पूर्णांक rd = dbri->pipes[pipe].desc;
+static void reception_complete_intr(struct snd_dbri *dbri, int pipe)
+{
+	struct dbri_streaminfo *info;
+	int rd = dbri->pipes[pipe].desc;
 	s32 status;
 
-	अगर (rd < 0 || rd >= DBRI_NO_DESCS) अणु
-		prपूर्णांकk(KERN_ERR "DBRI: invalid rd on pipe %d\n", pipe);
-		वापस;
-	पूर्ण
+	if (rd < 0 || rd >= DBRI_NO_DESCS) {
+		printk(KERN_ERR "DBRI: invalid rd on pipe %d\n", pipe);
+		return;
+	}
 
 	dbri->pipes[pipe].desc = dbri->next_desc[rd];
 	status = dbri->dma->desc[rd].word1;
-	dbri->dma->desc[rd].word1 = 0;	/* Reset it क्रम next समय. */
+	dbri->dma->desc[rd].word1 = 0;	/* Reset it for next time. */
 
 	info = &dbri->stream_info[DBRI_REC];
 	info->offset += DBRI_RD_CNT(status);
 
 	/* FIXME: Check status */
 
-	dprपूर्णांकk(D_INT, "Recv RD %d, status 0x%02x, len %d\n",
+	dprintk(D_INT, "Recv RD %d, status 0x%02x, len %d\n",
 		rd, DBRI_RD_STATUS(status), DBRI_RD_CNT(status));
 
-	/* Notअगरy ALSA */
+	/* Notify ALSA */
 	spin_unlock(&dbri->lock);
 	snd_pcm_period_elapsed(info->substream);
 	spin_lock(&dbri->lock);
-पूर्ण
+}
 
-अटल व्योम dbri_process_one_पूर्णांकerrupt(काष्ठा snd_dbri *dbri, पूर्णांक x)
-अणु
-	पूर्णांक val = D_INTR_GETVAL(x);
-	पूर्णांक channel = D_INTR_GETCHAN(x);
-	पूर्णांक command = D_INTR_GETCMD(x);
-	पूर्णांक code = D_INTR_GETCODE(x);
-#अगर_घोषित DBRI_DEBUG
-	पूर्णांक rval = D_INTR_GETRVAL(x);
-#पूर्ण_अगर
+static void dbri_process_one_interrupt(struct snd_dbri *dbri, int x)
+{
+	int val = D_INTR_GETVAL(x);
+	int channel = D_INTR_GETCHAN(x);
+	int command = D_INTR_GETCMD(x);
+	int code = D_INTR_GETCODE(x);
+#ifdef DBRI_DEBUG
+	int rval = D_INTR_GETRVAL(x);
+#endif
 
-	अगर (channel == D_INTR_CMD) अणु
-		dprपूर्णांकk(D_CMD, "INTR: Command: %-5s  Value:%d\n",
+	if (channel == D_INTR_CMD) {
+		dprintk(D_CMD, "INTR: Command: %-5s  Value:%d\n",
 			cmds[command], val);
-	पूर्ण अन्यथा अणु
-		dprपूर्णांकk(D_INT, "INTR: Chan:%d Code:%d Val:%#x\n",
+	} else {
+		dprintk(D_INT, "INTR: Chan:%d Code:%d Val:%#x\n",
 			channel, code, rval);
-	पूर्ण
+	}
 
-	चयन (code) अणु
-	हाल D_INTR_CMDI:
-		अगर (command != D_WAIT)
-			prपूर्णांकk(KERN_ERR "DBRI: Command read interrupt\n");
-		अवरोध;
-	हाल D_INTR_BRDY:
-		reception_complete_पूर्णांकr(dbri, channel);
-		अवरोध;
-	हाल D_INTR_XCMP:
-	हाल D_INTR_MINT:
-		transmission_complete_पूर्णांकr(dbri, channel);
-		अवरोध;
-	हाल D_INTR_UNDR:
+	switch (code) {
+	case D_INTR_CMDI:
+		if (command != D_WAIT)
+			printk(KERN_ERR "DBRI: Command read interrupt\n");
+		break;
+	case D_INTR_BRDY:
+		reception_complete_intr(dbri, channel);
+		break;
+	case D_INTR_XCMP:
+	case D_INTR_MINT:
+		transmission_complete_intr(dbri, channel);
+		break;
+	case D_INTR_UNDR:
 		/* UNDR - Transmission underrun
 		 * resend SDP command with clear pipe bit (C) set
 		 */
-		अणु
-	/* FIXME: करो something useful in हाल of underrun */
-			prपूर्णांकk(KERN_ERR "DBRI: Underrun error\n");
-#अगर 0
+		{
+	/* FIXME: do something useful in case of underrun */
+			printk(KERN_ERR "DBRI: Underrun error\n");
+#if 0
 			s32 *cmd;
-			पूर्णांक pipe = channel;
-			पूर्णांक td = dbri->pipes[pipe].desc;
+			int pipe = channel;
+			int td = dbri->pipes[pipe].desc;
 
 			dbri->dma->desc[td].word4 = 0;
 			cmd = dbri_cmdlock(dbri, NoGetLock);
@@ -1887,111 +1886,111 @@ calling dbri_process_पूर्णांकerrupt_buffer(), which works even �
 					    | D_SDP_P | D_SDP_C | D_SDP_2SAME);
 			*(cmd++) = dbri->dma_dvma + dbri_dma_off(desc, td);
 			dbri_cmdsend(dbri, cmd);
-#पूर्ण_अगर
-		पूर्ण
-		अवरोध;
-	हाल D_INTR_FXDT:
+#endif
+		}
+		break;
+	case D_INTR_FXDT:
 		/* FXDT - Fixed data change */
-		अगर (dbri->pipes[channel].sdp & D_SDP_MSB)
+		if (dbri->pipes[channel].sdp & D_SDP_MSB)
 			val = reverse_bytes(val, dbri->pipes[channel].length);
 
-		अगर (dbri->pipes[channel].recv_fixed_ptr)
+		if (dbri->pipes[channel].recv_fixed_ptr)
 			*(dbri->pipes[channel].recv_fixed_ptr) = val;
-		अवरोध;
-	शेष:
-		अगर (channel != D_INTR_CMD)
-			prपूर्णांकk(KERN_WARNING
+		break;
+	default:
+		if (channel != D_INTR_CMD)
+			printk(KERN_WARNING
 			       "DBRI: Ignored Interrupt: %d (0x%x)\n", code, x);
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* dbri_process_पूर्णांकerrupt_buffer advances through the DBRI's पूर्णांकerrupt
- * buffer until it finds a zero word (indicating nothing more to करो
+/* dbri_process_interrupt_buffer advances through the DBRI's interrupt
+ * buffer until it finds a zero word (indicating nothing more to do
  * right now).  Non-zero words require processing and are handed off
- * to dbri_process_one_पूर्णांकerrupt AFTER advancing the poपूर्णांकer.
+ * to dbri_process_one_interrupt AFTER advancing the pointer.
  */
-अटल व्योम dbri_process_पूर्णांकerrupt_buffer(काष्ठा snd_dbri *dbri)
-अणु
+static void dbri_process_interrupt_buffer(struct snd_dbri *dbri)
+{
 	s32 x;
 
-	जबतक ((x = dbri->dma->पूर्णांकr[dbri->dbri_irqp]) != 0) अणु
-		dbri->dma->पूर्णांकr[dbri->dbri_irqp] = 0;
+	while ((x = dbri->dma->intr[dbri->dbri_irqp]) != 0) {
+		dbri->dma->intr[dbri->dbri_irqp] = 0;
 		dbri->dbri_irqp++;
-		अगर (dbri->dbri_irqp == DBRI_INT_BLK)
+		if (dbri->dbri_irqp == DBRI_INT_BLK)
 			dbri->dbri_irqp = 1;
 
-		dbri_process_one_पूर्णांकerrupt(dbri, x);
-	पूर्ण
-पूर्ण
+		dbri_process_one_interrupt(dbri, x);
+	}
+}
 
-अटल irqवापस_t snd_dbri_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा snd_dbri *dbri = dev_id;
-	अटल पूर्णांक errcnt = 0;
-	पूर्णांक x;
+static irqreturn_t snd_dbri_interrupt(int irq, void *dev_id)
+{
+	struct snd_dbri *dbri = dev_id;
+	static int errcnt = 0;
+	int x;
 
-	अगर (dbri == शून्य)
-		वापस IRQ_NONE;
+	if (dbri == NULL)
+		return IRQ_NONE;
 	spin_lock(&dbri->lock);
 
 	/*
-	 * Read it, so the पूर्णांकerrupt goes away.
+	 * Read it, so the interrupt goes away.
 	 */
-	x = sbus_पढ़ोl(dbri->regs + REG1);
+	x = sbus_readl(dbri->regs + REG1);
 
-	अगर (x & (D_MRR | D_MLE | D_LBG | D_MBE)) अणु
-		u32 पंचांगp;
+	if (x & (D_MRR | D_MLE | D_LBG | D_MBE)) {
+		u32 tmp;
 
-		अगर (x & D_MRR)
-			prपूर्णांकk(KERN_ERR
+		if (x & D_MRR)
+			printk(KERN_ERR
 			       "DBRI: Multiple Error Ack on SBus reg1=0x%x\n",
 			       x);
-		अगर (x & D_MLE)
-			prपूर्णांकk(KERN_ERR
+		if (x & D_MLE)
+			printk(KERN_ERR
 			       "DBRI: Multiple Late Error on SBus reg1=0x%x\n",
 			       x);
-		अगर (x & D_LBG)
-			prपूर्णांकk(KERN_ERR
+		if (x & D_LBG)
+			printk(KERN_ERR
 			       "DBRI: Lost Bus Grant on SBus reg1=0x%x\n", x);
-		अगर (x & D_MBE)
-			prपूर्णांकk(KERN_ERR
+		if (x & D_MBE)
+			printk(KERN_ERR
 			       "DBRI: Burst Error on SBus reg1=0x%x\n", x);
 
 		/* Some of these SBus errors cause the chip's SBus circuitry
 		 * to be disabled, so just re-enable and try to keep going.
 		 *
 		 * The only one I've seen is MRR, which will be triggered
-		 * अगर you let a transmit pipe underrun, then try to CDP it.
+		 * if you let a transmit pipe underrun, then try to CDP it.
 		 *
 		 * If these things persist, we reset the chip.
 		 */
-		अगर ((++errcnt) % 10 == 0) अणु
-			dprपूर्णांकk(D_INT, "Interrupt errors exceeded.\n");
+		if ((++errcnt) % 10 == 0) {
+			dprintk(D_INT, "Interrupt errors exceeded.\n");
 			dbri_reset(dbri);
-		पूर्ण अन्यथा अणु
-			पंचांगp = sbus_पढ़ोl(dbri->regs + REG0);
-			पंचांगp &= ~(D_D);
-			sbus_ग_लिखोl(पंचांगp, dbri->regs + REG0);
-		पूर्ण
-	पूर्ण
+		} else {
+			tmp = sbus_readl(dbri->regs + REG0);
+			tmp &= ~(D_D);
+			sbus_writel(tmp, dbri->regs + REG0);
+		}
+	}
 
-	dbri_process_पूर्णांकerrupt_buffer(dbri);
+	dbri_process_interrupt_buffer(dbri);
 
 	spin_unlock(&dbri->lock);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /****************************************************************************
 		PCM Interface
 ****************************************************************************/
-अटल स्थिर काष्ठा snd_pcm_hardware snd_dbri_pcm_hw = अणु
+static const struct snd_pcm_hardware snd_dbri_pcm_hw = {
 	.info		= SNDRV_PCM_INFO_MMAP |
 			  SNDRV_PCM_INFO_INTERLEAVED |
 			  SNDRV_PCM_INFO_BLOCK_TRANSFER |
 			  SNDRV_PCM_INFO_MMAP_VALID |
 			  SNDRV_PCM_INFO_BATCH,
-	.क्रमmats	= SNDRV_PCM_FMTBIT_MU_LAW |
+	.formats	= SNDRV_PCM_FMTBIT_MU_LAW |
 			  SNDRV_PCM_FMTBIT_A_LAW |
 			  SNDRV_PCM_FMTBIT_U8 |
 			  SNDRV_PCM_FMTBIT_S16_BE,
@@ -2005,51 +2004,51 @@ calling dbri_process_पूर्णांकerrupt_buffer(), which works even �
 	.period_bytes_max	= DBRI_TD_MAXCNT,
 	.periods_min		= 1,
 	.periods_max		= 1024,
-पूर्ण;
+};
 
-अटल पूर्णांक snd_hw_rule_क्रमmat(काष्ठा snd_pcm_hw_params *params,
-			      काष्ठा snd_pcm_hw_rule *rule)
-अणु
-	काष्ठा snd_पूर्णांकerval *c = hw_param_पूर्णांकerval(params,
+static int snd_hw_rule_format(struct snd_pcm_hw_params *params,
+			      struct snd_pcm_hw_rule *rule)
+{
+	struct snd_interval *c = hw_param_interval(params,
 				SNDRV_PCM_HW_PARAM_CHANNELS);
-	काष्ठा snd_mask *f = hw_param_mask(params, SNDRV_PCM_HW_PARAM_FORMAT);
-	काष्ठा snd_mask fmt;
+	struct snd_mask *f = hw_param_mask(params, SNDRV_PCM_HW_PARAM_FORMAT);
+	struct snd_mask fmt;
 
 	snd_mask_any(&fmt);
-	अगर (c->min > 1) अणु
+	if (c->min > 1) {
 		fmt.bits[0] &= SNDRV_PCM_FMTBIT_S16_BE;
-		वापस snd_mask_refine(f, &fmt);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return snd_mask_refine(f, &fmt);
+	}
+	return 0;
+}
 
-अटल पूर्णांक snd_hw_rule_channels(काष्ठा snd_pcm_hw_params *params,
-				काष्ठा snd_pcm_hw_rule *rule)
-अणु
-	काष्ठा snd_पूर्णांकerval *c = hw_param_पूर्णांकerval(params,
+static int snd_hw_rule_channels(struct snd_pcm_hw_params *params,
+				struct snd_pcm_hw_rule *rule)
+{
+	struct snd_interval *c = hw_param_interval(params,
 				SNDRV_PCM_HW_PARAM_CHANNELS);
-	काष्ठा snd_mask *f = hw_param_mask(params, SNDRV_PCM_HW_PARAM_FORMAT);
-	काष्ठा snd_पूर्णांकerval ch;
+	struct snd_mask *f = hw_param_mask(params, SNDRV_PCM_HW_PARAM_FORMAT);
+	struct snd_interval ch;
 
-	snd_पूर्णांकerval_any(&ch);
-	अगर (!(f->bits[0] & SNDRV_PCM_FMTBIT_S16_BE)) अणु
+	snd_interval_any(&ch);
+	if (!(f->bits[0] & SNDRV_PCM_FMTBIT_S16_BE)) {
 		ch.min = 1;
 		ch.max = 1;
-		ch.पूर्णांकeger = 1;
-		वापस snd_पूर्णांकerval_refine(c, &ch);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		ch.integer = 1;
+		return snd_interval_refine(c, &ch);
+	}
+	return 0;
+}
 
-अटल पूर्णांक snd_dbri_खोलो(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_dbri *dbri = snd_pcm_substream_chip(substream);
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा dbri_streaminfo *info = DBRI_STREAM(dbri, substream);
-	अचिन्हित दीर्घ flags;
+static int snd_dbri_open(struct snd_pcm_substream *substream)
+{
+	struct snd_dbri *dbri = snd_pcm_substream_chip(substream);
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct dbri_streaminfo *info = DBRI_STREAM(dbri, substream);
+	unsigned long flags;
 
-	dprपूर्णांकk(D_USR, "open audio output.\n");
-	runसमय->hw = snd_dbri_pcm_hw;
+	dprintk(D_USR, "open audio output.\n");
+	runtime->hw = snd_dbri_pcm_hw;
 
 	spin_lock_irqsave(&dbri->lock, flags);
 	info->substream = substream;
@@ -2058,106 +2057,106 @@ calling dbri_process_पूर्णांकerrupt_buffer(), which works even �
 	info->pipe = -1;
 	spin_unlock_irqrestore(&dbri->lock, flags);
 
-	snd_pcm_hw_rule_add(runसमय, 0, SNDRV_PCM_HW_PARAM_CHANNELS,
-			    snd_hw_rule_क्रमmat, शून्य, SNDRV_PCM_HW_PARAM_FORMAT,
+	snd_pcm_hw_rule_add(runtime, 0, SNDRV_PCM_HW_PARAM_CHANNELS,
+			    snd_hw_rule_format, NULL, SNDRV_PCM_HW_PARAM_FORMAT,
 			    -1);
-	snd_pcm_hw_rule_add(runसमय, 0, SNDRV_PCM_HW_PARAM_FORMAT,
-			    snd_hw_rule_channels, शून्य,
+	snd_pcm_hw_rule_add(runtime, 0, SNDRV_PCM_HW_PARAM_FORMAT,
+			    snd_hw_rule_channels, NULL,
 			    SNDRV_PCM_HW_PARAM_CHANNELS,
 			    -1);
 
-	cs4215_खोलो(dbri);
+	cs4215_open(dbri);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_dbri_बंद(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_dbri *dbri = snd_pcm_substream_chip(substream);
-	काष्ठा dbri_streaminfo *info = DBRI_STREAM(dbri, substream);
+static int snd_dbri_close(struct snd_pcm_substream *substream)
+{
+	struct snd_dbri *dbri = snd_pcm_substream_chip(substream);
+	struct dbri_streaminfo *info = DBRI_STREAM(dbri, substream);
 
-	dprपूर्णांकk(D_USR, "close audio output.\n");
-	info->substream = शून्य;
+	dprintk(D_USR, "close audio output.\n");
+	info->substream = NULL;
 	info->offset = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_dbri_hw_params(काष्ठा snd_pcm_substream *substream,
-			      काष्ठा snd_pcm_hw_params *hw_params)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा snd_dbri *dbri = snd_pcm_substream_chip(substream);
-	काष्ठा dbri_streaminfo *info = DBRI_STREAM(dbri, substream);
-	पूर्णांक direction;
-	पूर्णांक ret;
+static int snd_dbri_hw_params(struct snd_pcm_substream *substream,
+			      struct snd_pcm_hw_params *hw_params)
+{
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct snd_dbri *dbri = snd_pcm_substream_chip(substream);
+	struct dbri_streaminfo *info = DBRI_STREAM(dbri, substream);
+	int direction;
+	int ret;
 
-	/* set sampling rate, audio क्रमmat and number of channels */
+	/* set sampling rate, audio format and number of channels */
 	ret = cs4215_prepare(dbri, params_rate(hw_params),
-			     params_क्रमmat(hw_params),
+			     params_format(hw_params),
 			     params_channels(hw_params));
-	अगर (ret != 0)
-		वापस ret;
+	if (ret != 0)
+		return ret;
 
-	/* hw_params can get called multiple बार. Only map the DMA once.
+	/* hw_params can get called multiple times. Only map the DMA once.
 	 */
-	अगर (info->dvma_buffer == 0) अणु
-		अगर (DBRI_STREAMNO(substream) == DBRI_PLAY)
+	if (info->dvma_buffer == 0) {
+		if (DBRI_STREAMNO(substream) == DBRI_PLAY)
 			direction = DMA_TO_DEVICE;
-		अन्यथा
+		else
 			direction = DMA_FROM_DEVICE;
 
 		info->dvma_buffer =
 			dma_map_single(&dbri->op->dev,
-				       runसमय->dma_area,
+				       runtime->dma_area,
 				       params_buffer_bytes(hw_params),
 				       direction);
-	पूर्ण
+	}
 
 	direction = params_buffer_bytes(hw_params);
-	dprपूर्णांकk(D_USR, "hw_params: %d bytes, dvma=%x\n",
+	dprintk(D_USR, "hw_params: %d bytes, dvma=%x\n",
 		direction, info->dvma_buffer);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_dbri_hw_मुक्त(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_dbri *dbri = snd_pcm_substream_chip(substream);
-	काष्ठा dbri_streaminfo *info = DBRI_STREAM(dbri, substream);
-	पूर्णांक direction;
+static int snd_dbri_hw_free(struct snd_pcm_substream *substream)
+{
+	struct snd_dbri *dbri = snd_pcm_substream_chip(substream);
+	struct dbri_streaminfo *info = DBRI_STREAM(dbri, substream);
+	int direction;
 
-	dprपूर्णांकk(D_USR, "hw_free.\n");
+	dprintk(D_USR, "hw_free.\n");
 
-	/* hw_मुक्त can get called multiple बार. Only unmap the DMA once.
+	/* hw_free can get called multiple times. Only unmap the DMA once.
 	 */
-	अगर (info->dvma_buffer) अणु
-		अगर (DBRI_STREAMNO(substream) == DBRI_PLAY)
+	if (info->dvma_buffer) {
+		if (DBRI_STREAMNO(substream) == DBRI_PLAY)
 			direction = DMA_TO_DEVICE;
-		अन्यथा
+		else
 			direction = DMA_FROM_DEVICE;
 
 		dma_unmap_single(&dbri->op->dev, info->dvma_buffer,
-				 substream->runसमय->buffer_size, direction);
+				 substream->runtime->buffer_size, direction);
 		info->dvma_buffer = 0;
-	पूर्ण
-	अगर (info->pipe != -1) अणु
+	}
+	if (info->pipe != -1) {
 		reset_pipe(dbri, info->pipe);
 		info->pipe = -1;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_dbri_prepare(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_dbri *dbri = snd_pcm_substream_chip(substream);
-	काष्ठा dbri_streaminfo *info = DBRI_STREAM(dbri, substream);
-	पूर्णांक ret;
+static int snd_dbri_prepare(struct snd_pcm_substream *substream)
+{
+	struct snd_dbri *dbri = snd_pcm_substream_chip(substream);
+	struct dbri_streaminfo *info = DBRI_STREAM(dbri, substream);
+	int ret;
 
 	info->size = snd_pcm_lib_buffer_bytes(substream);
-	अगर (DBRI_STREAMNO(substream) == DBRI_PLAY)
+	if (DBRI_STREAMNO(substream) == DBRI_PLAY)
 		info->pipe = 4;	/* Send pipe */
-	अन्यथा
+	else
 		info->pipe = 6;	/* Receive pipe */
 
 	spin_lock_irq(&dbri->lock);
@@ -2171,324 +2170,324 @@ calling dbri_process_पूर्णांकerrupt_buffer(), which works even �
 
 	spin_unlock_irq(&dbri->lock);
 
-	dprपूर्णांकk(D_USR, "prepare audio output. %d bytes\n", info->size);
-	वापस ret;
-पूर्ण
+	dprintk(D_USR, "prepare audio output. %d bytes\n", info->size);
+	return ret;
+}
 
-अटल पूर्णांक snd_dbri_trigger(काष्ठा snd_pcm_substream *substream, पूर्णांक cmd)
-अणु
-	काष्ठा snd_dbri *dbri = snd_pcm_substream_chip(substream);
-	काष्ठा dbri_streaminfo *info = DBRI_STREAM(dbri, substream);
-	पूर्णांक ret = 0;
+static int snd_dbri_trigger(struct snd_pcm_substream *substream, int cmd)
+{
+	struct snd_dbri *dbri = snd_pcm_substream_chip(substream);
+	struct dbri_streaminfo *info = DBRI_STREAM(dbri, substream);
+	int ret = 0;
 
-	चयन (cmd) अणु
-	हाल SNDRV_PCM_TRIGGER_START:
-		dprपूर्णांकk(D_USR, "start audio, period is %d bytes\n",
-			(पूर्णांक)snd_pcm_lib_period_bytes(substream));
+	switch (cmd) {
+	case SNDRV_PCM_TRIGGER_START:
+		dprintk(D_USR, "start audio, period is %d bytes\n",
+			(int)snd_pcm_lib_period_bytes(substream));
 		/* Re-submit the TDs. */
 		xmit_descs(dbri);
-		अवरोध;
-	हाल SNDRV_PCM_TRIGGER_STOP:
-		dprपूर्णांकk(D_USR, "stop audio.\n");
+		break;
+	case SNDRV_PCM_TRIGGER_STOP:
+		dprintk(D_USR, "stop audio.\n");
 		reset_pipe(dbri, info->pipe);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EINVAL;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल snd_pcm_uframes_t snd_dbri_poपूर्णांकer(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_dbri *dbri = snd_pcm_substream_chip(substream);
-	काष्ठा dbri_streaminfo *info = DBRI_STREAM(dbri, substream);
+static snd_pcm_uframes_t snd_dbri_pointer(struct snd_pcm_substream *substream)
+{
+	struct snd_dbri *dbri = snd_pcm_substream_chip(substream);
+	struct dbri_streaminfo *info = DBRI_STREAM(dbri, substream);
 	snd_pcm_uframes_t ret;
 
-	ret = bytes_to_frames(substream->runसमय, info->offset)
-		% substream->runसमय->buffer_size;
-	dprपूर्णांकk(D_USR, "I/O pointer: %ld frames of %ld.\n",
-		ret, substream->runसमय->buffer_size);
-	वापस ret;
-पूर्ण
+	ret = bytes_to_frames(substream->runtime, info->offset)
+		% substream->runtime->buffer_size;
+	dprintk(D_USR, "I/O pointer: %ld frames of %ld.\n",
+		ret, substream->runtime->buffer_size);
+	return ret;
+}
 
-अटल स्थिर काष्ठा snd_pcm_ops snd_dbri_ops = अणु
-	.खोलो = snd_dbri_खोलो,
-	.बंद = snd_dbri_बंद,
+static const struct snd_pcm_ops snd_dbri_ops = {
+	.open = snd_dbri_open,
+	.close = snd_dbri_close,
 	.hw_params = snd_dbri_hw_params,
-	.hw_मुक्त = snd_dbri_hw_मुक्त,
+	.hw_free = snd_dbri_hw_free,
 	.prepare = snd_dbri_prepare,
 	.trigger = snd_dbri_trigger,
-	.poपूर्णांकer = snd_dbri_poपूर्णांकer,
-पूर्ण;
+	.pointer = snd_dbri_pointer,
+};
 
-अटल पूर्णांक snd_dbri_pcm(काष्ठा snd_card *card)
-अणु
-	काष्ठा snd_pcm *pcm;
-	पूर्णांक err;
+static int snd_dbri_pcm(struct snd_card *card)
+{
+	struct snd_pcm *pcm;
+	int err;
 
-	अगर ((err = snd_pcm_new(card,
+	if ((err = snd_pcm_new(card,
 			       /* ID */		    "sun_dbri",
 			       /* device */	    0,
 			       /* playback count */ 1,
 			       /* capture count */  1, &pcm)) < 0)
-		वापस err;
+		return err;
 
 	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_PLAYBACK, &snd_dbri_ops);
 	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_CAPTURE, &snd_dbri_ops);
 
-	pcm->निजी_data = card->निजी_data;
+	pcm->private_data = card->private_data;
 	pcm->info_flags = 0;
-	म_नकल(pcm->name, card->लघुname);
+	strcpy(pcm->name, card->shortname);
 
 	snd_pcm_set_managed_buffer_all(pcm, SNDRV_DMA_TYPE_CONTINUOUS,
-				       शून्य, 64 * 1024, 64 * 1024);
-	वापस 0;
-पूर्ण
+				       NULL, 64 * 1024, 64 * 1024);
+	return 0;
+}
 
 /*****************************************************************************
-			Mixer पूर्णांकerface
+			Mixer interface
 *****************************************************************************/
 
-अटल पूर्णांक snd_cs4215_info_volume(काष्ठा snd_kcontrol *kcontrol,
-				  काष्ठा snd_ctl_elem_info *uinfo)
-अणु
+static int snd_cs4215_info_volume(struct snd_kcontrol *kcontrol,
+				  struct snd_ctl_elem_info *uinfo)
+{
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 2;
-	uinfo->value.पूर्णांकeger.min = 0;
-	अगर (kcontrol->निजी_value == DBRI_PLAY)
-		uinfo->value.पूर्णांकeger.max = DBRI_MAX_VOLUME;
-	अन्यथा
-		uinfo->value.पूर्णांकeger.max = DBRI_MAX_GAIN;
-	वापस 0;
-पूर्ण
+	uinfo->value.integer.min = 0;
+	if (kcontrol->private_value == DBRI_PLAY)
+		uinfo->value.integer.max = DBRI_MAX_VOLUME;
+	else
+		uinfo->value.integer.max = DBRI_MAX_GAIN;
+	return 0;
+}
 
-अटल पूर्णांक snd_cs4215_get_volume(काष्ठा snd_kcontrol *kcontrol,
-				 काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_dbri *dbri = snd_kcontrol_chip(kcontrol);
-	काष्ठा dbri_streaminfo *info;
+static int snd_cs4215_get_volume(struct snd_kcontrol *kcontrol,
+				 struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_dbri *dbri = snd_kcontrol_chip(kcontrol);
+	struct dbri_streaminfo *info;
 
-	अगर (snd_BUG_ON(!dbri))
-		वापस -EINVAL;
-	info = &dbri->stream_info[kcontrol->निजी_value];
+	if (snd_BUG_ON(!dbri))
+		return -EINVAL;
+	info = &dbri->stream_info[kcontrol->private_value];
 
-	ucontrol->value.पूर्णांकeger.value[0] = info->left_gain;
-	ucontrol->value.पूर्णांकeger.value[1] = info->right_gain;
-	वापस 0;
-पूर्ण
+	ucontrol->value.integer.value[0] = info->left_gain;
+	ucontrol->value.integer.value[1] = info->right_gain;
+	return 0;
+}
 
-अटल पूर्णांक snd_cs4215_put_volume(काष्ठा snd_kcontrol *kcontrol,
-				 काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_dbri *dbri = snd_kcontrol_chip(kcontrol);
-	काष्ठा dbri_streaminfo *info =
-				&dbri->stream_info[kcontrol->निजी_value];
-	अचिन्हित पूर्णांक vol[2];
-	पूर्णांक changed = 0;
+static int snd_cs4215_put_volume(struct snd_kcontrol *kcontrol,
+				 struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_dbri *dbri = snd_kcontrol_chip(kcontrol);
+	struct dbri_streaminfo *info =
+				&dbri->stream_info[kcontrol->private_value];
+	unsigned int vol[2];
+	int changed = 0;
 
-	vol[0] = ucontrol->value.पूर्णांकeger.value[0];
-	vol[1] = ucontrol->value.पूर्णांकeger.value[1];
-	अगर (kcontrol->निजी_value == DBRI_PLAY) अणु
-		अगर (vol[0] > DBRI_MAX_VOLUME || vol[1] > DBRI_MAX_VOLUME)
-			वापस -EINVAL;
-	पूर्ण अन्यथा अणु
-		अगर (vol[0] > DBRI_MAX_GAIN || vol[1] > DBRI_MAX_GAIN)
-			वापस -EINVAL;
-	पूर्ण
+	vol[0] = ucontrol->value.integer.value[0];
+	vol[1] = ucontrol->value.integer.value[1];
+	if (kcontrol->private_value == DBRI_PLAY) {
+		if (vol[0] > DBRI_MAX_VOLUME || vol[1] > DBRI_MAX_VOLUME)
+			return -EINVAL;
+	} else {
+		if (vol[0] > DBRI_MAX_GAIN || vol[1] > DBRI_MAX_GAIN)
+			return -EINVAL;
+	}
 
-	अगर (info->left_gain != vol[0]) अणु
+	if (info->left_gain != vol[0]) {
 		info->left_gain = vol[0];
 		changed = 1;
-	पूर्ण
-	अगर (info->right_gain != vol[1]) अणु
+	}
+	if (info->right_gain != vol[1]) {
 		info->right_gain = vol[1];
 		changed = 1;
-	पूर्ण
-	अगर (changed) अणु
-		/* First mute outमाला_दो, and रुको 1/8000 sec (125 us)
-		 * to make sure this takes.  This aव्योमs clicking noises.
+	}
+	if (changed) {
+		/* First mute outputs, and wait 1/8000 sec (125 us)
+		 * to make sure this takes.  This avoids clicking noises.
 		 */
 		cs4215_setdata(dbri, 1);
 		udelay(125);
 		cs4215_setdata(dbri, 0);
-	पूर्ण
-	वापस changed;
-पूर्ण
+	}
+	return changed;
+}
 
-अटल पूर्णांक snd_cs4215_info_single(काष्ठा snd_kcontrol *kcontrol,
-				  काष्ठा snd_ctl_elem_info *uinfo)
-अणु
-	पूर्णांक mask = (kcontrol->निजी_value >> 16) & 0xff;
+static int snd_cs4215_info_single(struct snd_kcontrol *kcontrol,
+				  struct snd_ctl_elem_info *uinfo)
+{
+	int mask = (kcontrol->private_value >> 16) & 0xff;
 
 	uinfo->type = (mask == 1) ?
 	    SNDRV_CTL_ELEM_TYPE_BOOLEAN : SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 1;
-	uinfo->value.पूर्णांकeger.min = 0;
-	uinfo->value.पूर्णांकeger.max = mask;
-	वापस 0;
-पूर्ण
+	uinfo->value.integer.min = 0;
+	uinfo->value.integer.max = mask;
+	return 0;
+}
 
-अटल पूर्णांक snd_cs4215_get_single(काष्ठा snd_kcontrol *kcontrol,
-				 काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_dbri *dbri = snd_kcontrol_chip(kcontrol);
-	पूर्णांक elem = kcontrol->निजी_value & 0xff;
-	पूर्णांक shअगरt = (kcontrol->निजी_value >> 8) & 0xff;
-	पूर्णांक mask = (kcontrol->निजी_value >> 16) & 0xff;
-	पूर्णांक invert = (kcontrol->निजी_value >> 24) & 1;
+static int snd_cs4215_get_single(struct snd_kcontrol *kcontrol,
+				 struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_dbri *dbri = snd_kcontrol_chip(kcontrol);
+	int elem = kcontrol->private_value & 0xff;
+	int shift = (kcontrol->private_value >> 8) & 0xff;
+	int mask = (kcontrol->private_value >> 16) & 0xff;
+	int invert = (kcontrol->private_value >> 24) & 1;
 
-	अगर (snd_BUG_ON(!dbri))
-		वापस -EINVAL;
+	if (snd_BUG_ON(!dbri))
+		return -EINVAL;
 
-	अगर (elem < 4)
-		ucontrol->value.पूर्णांकeger.value[0] =
-		    (dbri->mm.data[elem] >> shअगरt) & mask;
-	अन्यथा
-		ucontrol->value.पूर्णांकeger.value[0] =
-		    (dbri->mm.ctrl[elem - 4] >> shअगरt) & mask;
+	if (elem < 4)
+		ucontrol->value.integer.value[0] =
+		    (dbri->mm.data[elem] >> shift) & mask;
+	else
+		ucontrol->value.integer.value[0] =
+		    (dbri->mm.ctrl[elem - 4] >> shift) & mask;
 
-	अगर (invert == 1)
-		ucontrol->value.पूर्णांकeger.value[0] =
-		    mask - ucontrol->value.पूर्णांकeger.value[0];
-	वापस 0;
-पूर्ण
+	if (invert == 1)
+		ucontrol->value.integer.value[0] =
+		    mask - ucontrol->value.integer.value[0];
+	return 0;
+}
 
-अटल पूर्णांक snd_cs4215_put_single(काष्ठा snd_kcontrol *kcontrol,
-				 काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_dbri *dbri = snd_kcontrol_chip(kcontrol);
-	पूर्णांक elem = kcontrol->निजी_value & 0xff;
-	पूर्णांक shअगरt = (kcontrol->निजी_value >> 8) & 0xff;
-	पूर्णांक mask = (kcontrol->निजी_value >> 16) & 0xff;
-	पूर्णांक invert = (kcontrol->निजी_value >> 24) & 1;
-	पूर्णांक changed = 0;
-	अचिन्हित लघु val;
+static int snd_cs4215_put_single(struct snd_kcontrol *kcontrol,
+				 struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_dbri *dbri = snd_kcontrol_chip(kcontrol);
+	int elem = kcontrol->private_value & 0xff;
+	int shift = (kcontrol->private_value >> 8) & 0xff;
+	int mask = (kcontrol->private_value >> 16) & 0xff;
+	int invert = (kcontrol->private_value >> 24) & 1;
+	int changed = 0;
+	unsigned short val;
 
-	अगर (snd_BUG_ON(!dbri))
-		वापस -EINVAL;
+	if (snd_BUG_ON(!dbri))
+		return -EINVAL;
 
-	val = (ucontrol->value.पूर्णांकeger.value[0] & mask);
-	अगर (invert == 1)
+	val = (ucontrol->value.integer.value[0] & mask);
+	if (invert == 1)
 		val = mask - val;
-	val <<= shअगरt;
+	val <<= shift;
 
-	अगर (elem < 4) अणु
+	if (elem < 4) {
 		dbri->mm.data[elem] = (dbri->mm.data[elem] &
-				       ~(mask << shअगरt)) | val;
+				       ~(mask << shift)) | val;
 		changed = (val != dbri->mm.data[elem]);
-	पूर्ण अन्यथा अणु
+	} else {
 		dbri->mm.ctrl[elem - 4] = (dbri->mm.ctrl[elem - 4] &
-					   ~(mask << shअगरt)) | val;
+					   ~(mask << shift)) | val;
 		changed = (val != dbri->mm.ctrl[elem - 4]);
-	पूर्ण
+	}
 
-	dprपूर्णांकk(D_GEN, "put_single: mask=0x%x, changed=%d, "
+	dprintk(D_GEN, "put_single: mask=0x%x, changed=%d, "
 		"mixer-value=%ld, mm-value=0x%x\n",
-		mask, changed, ucontrol->value.पूर्णांकeger.value[0],
+		mask, changed, ucontrol->value.integer.value[0],
 		dbri->mm.data[elem & 3]);
 
-	अगर (changed) अणु
-		/* First mute outमाला_दो, and रुको 1/8000 sec (125 us)
-		 * to make sure this takes.  This aव्योमs clicking noises.
+	if (changed) {
+		/* First mute outputs, and wait 1/8000 sec (125 us)
+		 * to make sure this takes.  This avoids clicking noises.
 		 */
 		cs4215_setdata(dbri, 1);
 		udelay(125);
 		cs4215_setdata(dbri, 0);
-	पूर्ण
-	वापस changed;
-पूर्ण
+	}
+	return changed;
+}
 
-/* Entries 0-3 map to the 4 data बारlots, entries 4-7 map to the 4 control
-   बारlots. Shअगरt is the bit offset in the बारlot, mask defines the
-   number of bits. invert is a boolean क्रम use with attenuation.
+/* Entries 0-3 map to the 4 data timeslots, entries 4-7 map to the 4 control
+   timeslots. Shift is the bit offset in the timeslot, mask defines the
+   number of bits. invert is a boolean for use with attenuation.
  */
-#घोषणा CS4215_SINGLE(xname, entry, shअगरt, mask, invert)	\
-अणु .अगरace = SNDRV_CTL_ELEM_IFACE_MIXER, .name = (xname),		\
+#define CS4215_SINGLE(xname, entry, shift, mask, invert)	\
+{ .iface = SNDRV_CTL_ELEM_IFACE_MIXER, .name = (xname),		\
   .info = snd_cs4215_info_single,				\
   .get = snd_cs4215_get_single, .put = snd_cs4215_put_single,	\
-  .निजी_value = (entry) | ((shअगरt) << 8) | ((mask) << 16) |	\
-			((invert) << 24) पूर्ण,
+  .private_value = (entry) | ((shift) << 8) | ((mask) << 16) |	\
+			((invert) << 24) },
 
-अटल स्थिर काष्ठा snd_kcontrol_new dbri_controls[] = अणु
-	अणु
-	 .अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+static const struct snd_kcontrol_new dbri_controls[] = {
+	{
+	 .iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 	 .name  = "Playback Volume",
 	 .info  = snd_cs4215_info_volume,
 	 .get   = snd_cs4215_get_volume,
 	 .put   = snd_cs4215_put_volume,
-	 .निजी_value = DBRI_PLAY,
-	 पूर्ण,
+	 .private_value = DBRI_PLAY,
+	 },
 	CS4215_SINGLE("Headphone switch", 0, 7, 1, 0)
 	CS4215_SINGLE("Line out switch", 0, 6, 1, 0)
 	CS4215_SINGLE("Speaker switch", 1, 6, 1, 0)
-	अणु
-	 .अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+	{
+	 .iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 	 .name  = "Capture Volume",
 	 .info  = snd_cs4215_info_volume,
 	 .get   = snd_cs4215_get_volume,
 	 .put   = snd_cs4215_put_volume,
-	 .निजी_value = DBRI_REC,
-	 पूर्ण,
-	/* FIXME: mic/line चयन */
+	 .private_value = DBRI_REC,
+	 },
+	/* FIXME: mic/line switch */
 	CS4215_SINGLE("Line in switch", 2, 4, 1, 0)
 	CS4215_SINGLE("High Pass Filter switch", 5, 7, 1, 0)
 	CS4215_SINGLE("Monitor Volume", 3, 4, 0xf, 1)
 	CS4215_SINGLE("Mic boost", 4, 4, 1, 1)
-पूर्ण;
+};
 
-अटल पूर्णांक snd_dbri_mixer(काष्ठा snd_card *card)
-अणु
-	पूर्णांक idx, err;
-	काष्ठा snd_dbri *dbri;
+static int snd_dbri_mixer(struct snd_card *card)
+{
+	int idx, err;
+	struct snd_dbri *dbri;
 
-	अगर (snd_BUG_ON(!card || !card->निजी_data))
-		वापस -EINVAL;
-	dbri = card->निजी_data;
+	if (snd_BUG_ON(!card || !card->private_data))
+		return -EINVAL;
+	dbri = card->private_data;
 
-	म_नकल(card->mixername, card->लघुname);
+	strcpy(card->mixername, card->shortname);
 
-	क्रम (idx = 0; idx < ARRAY_SIZE(dbri_controls); idx++) अणु
+	for (idx = 0; idx < ARRAY_SIZE(dbri_controls); idx++) {
 		err = snd_ctl_add(card,
 				snd_ctl_new1(&dbri_controls[idx], dbri));
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+		if (err < 0)
+			return err;
+	}
 
-	क्रम (idx = DBRI_REC; idx < DBRI_NO_STREAMS; idx++) अणु
+	for (idx = DBRI_REC; idx < DBRI_NO_STREAMS; idx++) {
 		dbri->stream_info[idx].left_gain = 0;
 		dbri->stream_info[idx].right_gain = 0;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /****************************************************************************
-			/proc पूर्णांकerface
+			/proc interface
 ****************************************************************************/
-अटल व्योम dbri_regs_पढ़ो(काष्ठा snd_info_entry *entry,
-			   काष्ठा snd_info_buffer *buffer)
-अणु
-	काष्ठा snd_dbri *dbri = entry->निजी_data;
+static void dbri_regs_read(struct snd_info_entry *entry,
+			   struct snd_info_buffer *buffer)
+{
+	struct snd_dbri *dbri = entry->private_data;
 
-	snd_iम_लिखो(buffer, "REG0: 0x%x\n", sbus_पढ़ोl(dbri->regs + REG0));
-	snd_iम_लिखो(buffer, "REG2: 0x%x\n", sbus_पढ़ोl(dbri->regs + REG2));
-	snd_iम_लिखो(buffer, "REG8: 0x%x\n", sbus_पढ़ोl(dbri->regs + REG8));
-	snd_iम_लिखो(buffer, "REG9: 0x%x\n", sbus_पढ़ोl(dbri->regs + REG9));
-पूर्ण
+	snd_iprintf(buffer, "REG0: 0x%x\n", sbus_readl(dbri->regs + REG0));
+	snd_iprintf(buffer, "REG2: 0x%x\n", sbus_readl(dbri->regs + REG2));
+	snd_iprintf(buffer, "REG8: 0x%x\n", sbus_readl(dbri->regs + REG8));
+	snd_iprintf(buffer, "REG9: 0x%x\n", sbus_readl(dbri->regs + REG9));
+}
 
-#अगर_घोषित DBRI_DEBUG
-अटल व्योम dbri_debug_पढ़ो(काष्ठा snd_info_entry *entry,
-			    काष्ठा snd_info_buffer *buffer)
-अणु
-	काष्ठा snd_dbri *dbri = entry->निजी_data;
-	पूर्णांक pipe;
-	snd_iम_लिखो(buffer, "debug=%d\n", dbri_debug);
+#ifdef DBRI_DEBUG
+static void dbri_debug_read(struct snd_info_entry *entry,
+			    struct snd_info_buffer *buffer)
+{
+	struct snd_dbri *dbri = entry->private_data;
+	int pipe;
+	snd_iprintf(buffer, "debug=%d\n", dbri_debug);
 
-	क्रम (pipe = 0; pipe < 32; pipe++) अणु
-		अगर (pipe_active(dbri, pipe)) अणु
-			काष्ठा dbri_pipe *pptr = &dbri->pipes[pipe];
-			snd_iम_लिखो(buffer,
+	for (pipe = 0; pipe < 32; pipe++) {
+		if (pipe_active(dbri, pipe)) {
+			struct dbri_pipe *pptr = &dbri->pipes[pipe];
+			snd_iprintf(buffer,
 				    "Pipe %d: %s SDP=0x%x desc=%d, "
 				    "len=%d next %d\n",
 				    pipe,
@@ -2496,195 +2495,195 @@ calling dbri_process_पूर्णांकerrupt_buffer(), which works even �
 								 "input",
 				    pptr->sdp, pptr->desc,
 				    pptr->length, pptr->nextpipe);
-		पूर्ण
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर
+		}
+	}
+}
+#endif
 
-अटल व्योम snd_dbri_proc(काष्ठा snd_card *card)
-अणु
-	काष्ठा snd_dbri *dbri = card->निजी_data;
+static void snd_dbri_proc(struct snd_card *card)
+{
+	struct snd_dbri *dbri = card->private_data;
 
-	snd_card_ro_proc_new(card, "regs", dbri, dbri_regs_पढ़ो);
-#अगर_घोषित DBRI_DEBUG
-	snd_card_ro_proc_new(card, "debug", dbri, dbri_debug_पढ़ो);
-#पूर्ण_अगर
-पूर्ण
+	snd_card_ro_proc_new(card, "regs", dbri, dbri_regs_read);
+#ifdef DBRI_DEBUG
+	snd_card_ro_proc_new(card, "debug", dbri, dbri_debug_read);
+#endif
+}
 
 /*
 ****************************************************************************
 **************************** Initialization ********************************
 ****************************************************************************
 */
-अटल व्योम snd_dbri_मुक्त(काष्ठा snd_dbri *dbri);
+static void snd_dbri_free(struct snd_dbri *dbri);
 
-अटल पूर्णांक snd_dbri_create(काष्ठा snd_card *card,
-			   काष्ठा platक्रमm_device *op,
-			   पूर्णांक irq, पूर्णांक dev)
-अणु
-	काष्ठा snd_dbri *dbri = card->निजी_data;
-	पूर्णांक err;
+static int snd_dbri_create(struct snd_card *card,
+			   struct platform_device *op,
+			   int irq, int dev)
+{
+	struct snd_dbri *dbri = card->private_data;
+	int err;
 
 	spin_lock_init(&dbri->lock);
 	dbri->op = op;
 	dbri->irq = irq;
 
-	dbri->dma = dma_alloc_coherent(&op->dev, माप(काष्ठा dbri_dma),
+	dbri->dma = dma_alloc_coherent(&op->dev, sizeof(struct dbri_dma),
 				       &dbri->dma_dvma, GFP_KERNEL);
-	अगर (!dbri->dma)
-		वापस -ENOMEM;
+	if (!dbri->dma)
+		return -ENOMEM;
 
-	dprपूर्णांकk(D_GEN, "DMA Cmd Block 0x%p (%pad)\n",
+	dprintk(D_GEN, "DMA Cmd Block 0x%p (%pad)\n",
 		dbri->dma, dbri->dma_dvma);
 
-	/* Map the रेजिस्टरs पूर्णांकo memory. */
+	/* Map the registers into memory. */
 	dbri->regs_size = resource_size(&op->resource[0]);
 	dbri->regs = of_ioremap(&op->resource[0], 0,
 				dbri->regs_size, "DBRI Registers");
-	अगर (!dbri->regs) अणु
-		prपूर्णांकk(KERN_ERR "DBRI: could not allocate registers\n");
-		dma_मुक्त_coherent(&op->dev, माप(काष्ठा dbri_dma),
-				  (व्योम *)dbri->dma, dbri->dma_dvma);
-		वापस -EIO;
-	पूर्ण
+	if (!dbri->regs) {
+		printk(KERN_ERR "DBRI: could not allocate registers\n");
+		dma_free_coherent(&op->dev, sizeof(struct dbri_dma),
+				  (void *)dbri->dma, dbri->dma_dvma);
+		return -EIO;
+	}
 
-	err = request_irq(dbri->irq, snd_dbri_पूर्णांकerrupt, IRQF_SHARED,
+	err = request_irq(dbri->irq, snd_dbri_interrupt, IRQF_SHARED,
 			  "DBRI audio", dbri);
-	अगर (err) अणु
-		prपूर्णांकk(KERN_ERR "DBRI: Can't get irq %d\n", dbri->irq);
+	if (err) {
+		printk(KERN_ERR "DBRI: Can't get irq %d\n", dbri->irq);
 		of_iounmap(&op->resource[0], dbri->regs, dbri->regs_size);
-		dma_मुक्त_coherent(&op->dev, माप(काष्ठा dbri_dma),
-				  (व्योम *)dbri->dma, dbri->dma_dvma);
-		वापस err;
-	पूर्ण
+		dma_free_coherent(&op->dev, sizeof(struct dbri_dma),
+				  (void *)dbri->dma, dbri->dma_dvma);
+		return err;
+	}
 
 	/* Do low level initialization of the DBRI and CS4215 chips */
 	dbri_initialize(dbri);
 	err = cs4215_init(dbri);
-	अगर (err) अणु
-		snd_dbri_मुक्त(dbri);
-		वापस err;
-	पूर्ण
+	if (err) {
+		snd_dbri_free(dbri);
+		return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम snd_dbri_मुक्त(काष्ठा snd_dbri *dbri)
-अणु
-	dprपूर्णांकk(D_GEN, "snd_dbri_free\n");
+static void snd_dbri_free(struct snd_dbri *dbri)
+{
+	dprintk(D_GEN, "snd_dbri_free\n");
 	dbri_reset(dbri);
 
-	अगर (dbri->irq)
-		मुक्त_irq(dbri->irq, dbri);
+	if (dbri->irq)
+		free_irq(dbri->irq, dbri);
 
-	अगर (dbri->regs)
+	if (dbri->regs)
 		of_iounmap(&dbri->op->resource[0], dbri->regs, dbri->regs_size);
 
-	अगर (dbri->dma)
-		dma_मुक्त_coherent(&dbri->op->dev,
-				  माप(काष्ठा dbri_dma),
-				  (व्योम *)dbri->dma, dbri->dma_dvma);
-पूर्ण
+	if (dbri->dma)
+		dma_free_coherent(&dbri->op->dev,
+				  sizeof(struct dbri_dma),
+				  (void *)dbri->dma, dbri->dma_dvma);
+}
 
-अटल पूर्णांक dbri_probe(काष्ठा platक्रमm_device *op)
-अणु
-	काष्ठा snd_dbri *dbri;
-	काष्ठा resource *rp;
-	काष्ठा snd_card *card;
-	अटल पूर्णांक dev = 0;
-	पूर्णांक irq;
-	पूर्णांक err;
+static int dbri_probe(struct platform_device *op)
+{
+	struct snd_dbri *dbri;
+	struct resource *rp;
+	struct snd_card *card;
+	static int dev = 0;
+	int irq;
+	int err;
 
-	अगर (dev >= SNDRV_CARDS)
-		वापस -ENODEV;
-	अगर (!enable[dev]) अणु
+	if (dev >= SNDRV_CARDS)
+		return -ENODEV;
+	if (!enable[dev]) {
 		dev++;
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
 	irq = op->archdata.irqs[0];
-	अगर (irq <= 0) अणु
-		prपूर्णांकk(KERN_ERR "DBRI-%d: No IRQ.\n", dev);
-		वापस -ENODEV;
-	पूर्ण
+	if (irq <= 0) {
+		printk(KERN_ERR "DBRI-%d: No IRQ.\n", dev);
+		return -ENODEV;
+	}
 
 	err = snd_card_new(&op->dev, index[dev], id[dev], THIS_MODULE,
-			   माप(काष्ठा snd_dbri), &card);
-	अगर (err < 0)
-		वापस err;
+			   sizeof(struct snd_dbri), &card);
+	if (err < 0)
+		return err;
 
-	म_नकल(card->driver, "DBRI");
-	म_नकल(card->लघुname, "Sun DBRI");
+	strcpy(card->driver, "DBRI");
+	strcpy(card->shortname, "Sun DBRI");
 	rp = &op->resource[0];
-	प्र_लिखो(card->दीर्घname, "%s at 0x%02lx:0x%016Lx, irq %d",
-		card->लघुname,
-		rp->flags & 0xffL, (अचिन्हित दीर्घ दीर्घ)rp->start, irq);
+	sprintf(card->longname, "%s at 0x%02lx:0x%016Lx, irq %d",
+		card->shortname,
+		rp->flags & 0xffL, (unsigned long long)rp->start, irq);
 
 	err = snd_dbri_create(card, op, irq, dev);
-	अगर (err < 0) अणु
-		snd_card_मुक्त(card);
-		वापस err;
-	पूर्ण
+	if (err < 0) {
+		snd_card_free(card);
+		return err;
+	}
 
-	dbri = card->निजी_data;
+	dbri = card->private_data;
 	err = snd_dbri_pcm(card);
-	अगर (err < 0)
-		जाओ _err;
+	if (err < 0)
+		goto _err;
 
 	err = snd_dbri_mixer(card);
-	अगर (err < 0)
-		जाओ _err;
+	if (err < 0)
+		goto _err;
 
 	/* /proc file handling */
 	snd_dbri_proc(card);
 	dev_set_drvdata(&op->dev, card);
 
-	err = snd_card_रेजिस्टर(card);
-	अगर (err < 0)
-		जाओ _err;
+	err = snd_card_register(card);
+	if (err < 0)
+		goto _err;
 
-	prपूर्णांकk(KERN_INFO "audio%d at %p (irq %d) is DBRI(%c)+CS4215(%d)\n",
+	printk(KERN_INFO "audio%d at %p (irq %d) is DBRI(%c)+CS4215(%d)\n",
 	       dev, dbri->regs,
 	       dbri->irq, op->dev.of_node->name[9], dbri->mm.version);
 	dev++;
 
-	वापस 0;
+	return 0;
 
 _err:
-	snd_dbri_मुक्त(dbri);
-	snd_card_मुक्त(card);
-	वापस err;
-पूर्ण
+	snd_dbri_free(dbri);
+	snd_card_free(card);
+	return err;
+}
 
-अटल पूर्णांक dbri_हटाओ(काष्ठा platक्रमm_device *op)
-अणु
-	काष्ठा snd_card *card = dev_get_drvdata(&op->dev);
+static int dbri_remove(struct platform_device *op)
+{
+	struct snd_card *card = dev_get_drvdata(&op->dev);
 
-	snd_dbri_मुक्त(card->निजी_data);
-	snd_card_मुक्त(card);
+	snd_dbri_free(card->private_data);
+	snd_card_free(card);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id dbri_match[] = अणु
-	अणु
+static const struct of_device_id dbri_match[] = {
+	{
 		.name = "SUNW,DBRIe",
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "SUNW,DBRIf",
-	पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+	},
+	{},
+};
 
 MODULE_DEVICE_TABLE(of, dbri_match);
 
-अटल काष्ठा platक्रमm_driver dbri_sbus_driver = अणु
-	.driver = अणु
+static struct platform_driver dbri_sbus_driver = {
+	.driver = {
 		.name = "dbri",
 		.of_match_table = dbri_match,
-	पूर्ण,
+	},
 	.probe		= dbri_probe,
-	.हटाओ		= dbri_हटाओ,
-पूर्ण;
+	.remove		= dbri_remove,
+};
 
-module_platक्रमm_driver(dbri_sbus_driver);
+module_platform_driver(dbri_sbus_driver);

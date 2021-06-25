@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  fs/eventpoll.c (Efficient event retrieval implementation)
  *  Copyright (C) 2001,...,2009	 Davide Libenzi
@@ -7,38 +6,38 @@
  *  Davide Libenzi <davidel@xmailserver.org>
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/fs.h>
-#समावेश <linux/file.h>
-#समावेश <linux/संकेत.स>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/mm.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/poll.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/list.h>
-#समावेश <linux/hash.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/syscalls.h>
-#समावेश <linux/rbtree.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/eventpoll.h>
-#समावेश <linux/mount.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/anon_inodes.h>
-#समावेश <linux/device.h>
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/mman.h>
-#समावेश <linux/atomic.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/compat.h>
-#समावेश <linux/rculist.h>
-#समावेश <net/busy_poll.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/sched/signal.h>
+#include <linux/fs.h>
+#include <linux/file.h>
+#include <linux/signal.h>
+#include <linux/errno.h>
+#include <linux/mm.h>
+#include <linux/slab.h>
+#include <linux/poll.h>
+#include <linux/string.h>
+#include <linux/list.h>
+#include <linux/hash.h>
+#include <linux/spinlock.h>
+#include <linux/syscalls.h>
+#include <linux/rbtree.h>
+#include <linux/wait.h>
+#include <linux/eventpoll.h>
+#include <linux/mount.h>
+#include <linux/bitops.h>
+#include <linux/mutex.h>
+#include <linux/anon_inodes.h>
+#include <linux/device.h>
+#include <linux/uaccess.h>
+#include <asm/io.h>
+#include <asm/mman.h>
+#include <linux/atomic.h>
+#include <linux/proc_fs.h>
+#include <linux/seq_file.h>
+#include <linux/compat.h>
+#include <linux/rculist.h>
+#include <net/busy_poll.h>
 
 /*
  * LOCKING:
@@ -59,409 +58,409 @@
  * mutex (ep->mtx). It is acquired during the event transfer loop,
  * during epoll_ctl(EPOLL_CTL_DEL) and during eventpoll_release_file().
  * Then we also need a global mutex to serialize eventpoll_release_file()
- * and ep_मुक्त().
- * This mutex is acquired by ep_मुक्त() during the epoll file
+ * and ep_free().
+ * This mutex is acquired by ep_free() during the epoll file
  * cleanup path and it is also acquired by eventpoll_release_file()
- * अगर a file has been pushed inside an epoll set and it is then
- * बंद()d without a previous call to epoll_ctl(EPOLL_CTL_DEL).
+ * if a file has been pushed inside an epoll set and it is then
+ * close()d without a previous call to epoll_ctl(EPOLL_CTL_DEL).
  * It is also acquired when inserting an epoll fd onto another epoll
- * fd. We करो this so that we walk the epoll tree and ensure that this
- * insertion करोes not create a cycle of epoll file descriptors, which
+ * fd. We do this so that we walk the epoll tree and ensure that this
+ * insertion does not create a cycle of epoll file descriptors, which
  * could lead to deadlock. We need a global mutex to prevent two
- * simultaneous inserts (A पूर्णांकo B and B पूर्णांकo A) from racing and
- * स्थिरructing a cycle without either insert observing that it is
+ * simultaneous inserts (A into B and B into A) from racing and
+ * constructing a cycle without either insert observing that it is
  * going to.
  * It is necessary to acquire multiple "ep->mtx"es at once in the
- * हाल when one epoll fd is added to another. In this हाल, we
+ * case when one epoll fd is added to another. In this case, we
  * always acquire the locks in the order of nesting (i.e. after
  * epoll_ctl(e1, EPOLL_CTL_ADD, e2), e1->mtx will always be acquired
- * beक्रमe e2->mtx). Since we disallow cycles of epoll file
+ * before e2->mtx). Since we disallow cycles of epoll file
  * descriptors, this ensures that the mutexes are well-ordered. In
  * order to communicate this nesting to lockdep, when walking a tree
  * of epoll file descriptors, we use the current recursion depth as
  * the lockdep subkey.
  * It is possible to drop the "ep->mtx" and to use the global
  * mutex "epmutex" (together with "ep->lock") to have it working,
- * but having "ep->mtx" will make the पूर्णांकerface more scalable.
- * Events that require holding "epmutex" are very rare, जबतक क्रम
- * normal operations the epoll निजी "ep->mtx" will guarantee
+ * but having "ep->mtx" will make the interface more scalable.
+ * Events that require holding "epmutex" are very rare, while for
+ * normal operations the epoll private "ep->mtx" will guarantee
  * a better scalability.
  */
 
-/* Epoll निजी bits inside the event mask */
-#घोषणा EP_PRIVATE_BITS (EPOLLWAKEUP | EPOLLONESHOT | EPOLLET | EPOLLEXCLUSIVE)
+/* Epoll private bits inside the event mask */
+#define EP_PRIVATE_BITS (EPOLLWAKEUP | EPOLLONESHOT | EPOLLET | EPOLLEXCLUSIVE)
 
-#घोषणा EPOLLINOUT_BITS (EPOLLIN | EPOLLOUT)
+#define EPOLLINOUT_BITS (EPOLLIN | EPOLLOUT)
 
-#घोषणा EPOLLEXCLUSIVE_OK_BITS (EPOLLINOUT_BITS | EPOLLERR | EPOLLHUP | \
+#define EPOLLEXCLUSIVE_OK_BITS (EPOLLINOUT_BITS | EPOLLERR | EPOLLHUP | \
 				EPOLLWAKEUP | EPOLLET | EPOLLEXCLUSIVE)
 
 /* Maximum number of nesting allowed inside epoll sets */
-#घोषणा EP_MAX_NESTS 4
+#define EP_MAX_NESTS 4
 
-#घोषणा EP_MAX_EVENTS (पूर्णांक_उच्च / माप(काष्ठा epoll_event))
+#define EP_MAX_EVENTS (INT_MAX / sizeof(struct epoll_event))
 
-#घोषणा EP_UNACTIVE_PTR ((व्योम *) -1L)
+#define EP_UNACTIVE_PTR ((void *) -1L)
 
-#घोषणा EP_ITEM_COST (माप(काष्ठा epitem) + माप(काष्ठा eppoll_entry))
+#define EP_ITEM_COST (sizeof(struct epitem) + sizeof(struct eppoll_entry))
 
-काष्ठा epoll_filefd अणु
-	काष्ठा file *file;
-	पूर्णांक fd;
-पूर्ण __packed;
+struct epoll_filefd {
+	struct file *file;
+	int fd;
+} __packed;
 
-/* Wait काष्ठाure used by the poll hooks */
-काष्ठा eppoll_entry अणु
-	/* List header used to link this काष्ठाure to the "struct epitem" */
-	काष्ठा eppoll_entry *next;
+/* Wait structure used by the poll hooks */
+struct eppoll_entry {
+	/* List header used to link this structure to the "struct epitem" */
+	struct eppoll_entry *next;
 
-	/* The "base" poपूर्णांकer is set to the container "struct epitem" */
-	काष्ठा epitem *base;
+	/* The "base" pointer is set to the container "struct epitem" */
+	struct epitem *base;
 
 	/*
-	 * Wait queue item that will be linked to the target file रुको
+	 * Wait queue item that will be linked to the target file wait
 	 * queue head.
 	 */
-	रुको_queue_entry_t रुको;
+	wait_queue_entry_t wait;
 
-	/* The रुको queue head that linked the "wait" रुको queue item */
-	रुको_queue_head_t *whead;
-पूर्ण;
+	/* The wait queue head that linked the "wait" wait queue item */
+	wait_queue_head_t *whead;
+};
 
 /*
- * Each file descriptor added to the eventpoll पूर्णांकerface will
+ * Each file descriptor added to the eventpoll interface will
  * have an entry of this type linked to the "rbr" RB tree.
- * Aव्योम increasing the size of this काष्ठा, there can be many thousands
- * of these on a server and we करो not want this to take another cache line.
+ * Avoid increasing the size of this struct, there can be many thousands
+ * of these on a server and we do not want this to take another cache line.
  */
-काष्ठा epitem अणु
-	जोड़ अणु
-		/* RB tree node links this काष्ठाure to the eventpoll RB tree */
-		काष्ठा rb_node rbn;
-		/* Used to मुक्त the काष्ठा epitem */
-		काष्ठा rcu_head rcu;
-	पूर्ण;
+struct epitem {
+	union {
+		/* RB tree node links this structure to the eventpoll RB tree */
+		struct rb_node rbn;
+		/* Used to free the struct epitem */
+		struct rcu_head rcu;
+	};
 
-	/* List header used to link this काष्ठाure to the eventpoll पढ़ोy list */
-	काष्ठा list_head rdllink;
+	/* List header used to link this structure to the eventpoll ready list */
+	struct list_head rdllink;
 
 	/*
 	 * Works together "struct eventpoll"->ovflist in keeping the
 	 * single linked chain of items.
 	 */
-	काष्ठा epitem *next;
+	struct epitem *next;
 
-	/* The file descriptor inक्रमmation this item refers to */
-	काष्ठा epoll_filefd ffd;
+	/* The file descriptor information this item refers to */
+	struct epoll_filefd ffd;
 
-	/* List containing poll रुको queues */
-	काष्ठा eppoll_entry *pwqlist;
+	/* List containing poll wait queues */
+	struct eppoll_entry *pwqlist;
 
 	/* The "container" of this item */
-	काष्ठा eventpoll *ep;
+	struct eventpoll *ep;
 
 	/* List header used to link this item to the "struct file" items list */
-	काष्ठा hlist_node fllink;
+	struct hlist_node fllink;
 
 	/* wakeup_source used when EPOLLWAKEUP is set */
-	काष्ठा wakeup_source __rcu *ws;
+	struct wakeup_source __rcu *ws;
 
-	/* The काष्ठाure that describe the पूर्णांकerested events and the source fd */
-	काष्ठा epoll_event event;
-पूर्ण;
+	/* The structure that describe the interested events and the source fd */
+	struct epoll_event event;
+};
 
 /*
- * This काष्ठाure is stored inside the "private_data" member of the file
- * काष्ठाure and represents the मुख्य data काष्ठाure क्रम the eventpoll
- * पूर्णांकerface.
+ * This structure is stored inside the "private_data" member of the file
+ * structure and represents the main data structure for the eventpoll
+ * interface.
  */
-काष्ठा eventpoll अणु
+struct eventpoll {
 	/*
-	 * This mutex is used to ensure that files are not हटाओd
-	 * जबतक epoll is using them. This is held during the event
-	 * collection loop, the file cleanup path, the epoll file निकास
+	 * This mutex is used to ensure that files are not removed
+	 * while epoll is using them. This is held during the event
+	 * collection loop, the file cleanup path, the epoll file exit
 	 * code and the ctl operations.
 	 */
-	काष्ठा mutex mtx;
+	struct mutex mtx;
 
-	/* Wait queue used by sys_epoll_रुको() */
-	रुको_queue_head_t wq;
+	/* Wait queue used by sys_epoll_wait() */
+	wait_queue_head_t wq;
 
 	/* Wait queue used by file->poll() */
-	रुको_queue_head_t poll_रुको;
+	wait_queue_head_t poll_wait;
 
-	/* List of पढ़ोy file descriptors */
-	काष्ठा list_head rdllist;
+	/* List of ready file descriptors */
+	struct list_head rdllist;
 
 	/* Lock which protects rdllist and ovflist */
 	rwlock_t lock;
 
-	/* RB tree root used to store monitored fd काष्ठाs */
-	काष्ठा rb_root_cached rbr;
+	/* RB tree root used to store monitored fd structs */
+	struct rb_root_cached rbr;
 
 	/*
 	 * This is a single linked list that chains all the "struct epitem" that
-	 * happened जबतक transferring पढ़ोy events to userspace w/out
+	 * happened while transferring ready events to userspace w/out
 	 * holding ->lock.
 	 */
-	काष्ठा epitem *ovflist;
+	struct epitem *ovflist;
 
-	/* wakeup_source used when ep_scan_पढ़ोy_list is running */
-	काष्ठा wakeup_source *ws;
+	/* wakeup_source used when ep_scan_ready_list is running */
+	struct wakeup_source *ws;
 
 	/* The user that created the eventpoll descriptor */
-	काष्ठा user_काष्ठा *user;
+	struct user_struct *user;
 
-	काष्ठा file *file;
+	struct file *file;
 
 	/* used to optimize loop detection check */
 	u64 gen;
-	काष्ठा hlist_head refs;
+	struct hlist_head refs;
 
-#अगर_घोषित CONFIG_NET_RX_BUSY_POLL
+#ifdef CONFIG_NET_RX_BUSY_POLL
 	/* used to track busy poll napi_id */
-	अचिन्हित पूर्णांक napi_id;
-#पूर्ण_अगर
+	unsigned int napi_id;
+#endif
 
-#अगर_घोषित CONFIG_DEBUG_LOCK_ALLOC
-	/* tracks wakeup nests क्रम lockdep validation */
+#ifdef CONFIG_DEBUG_LOCK_ALLOC
+	/* tracks wakeup nests for lockdep validation */
 	u8 nests;
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-/* Wrapper काष्ठा used by poll queueing */
-काष्ठा ep_pqueue अणु
+/* Wrapper struct used by poll queueing */
+struct ep_pqueue {
 	poll_table pt;
-	काष्ठा epitem *epi;
-पूर्ण;
+	struct epitem *epi;
+};
 
 /*
  * Configuration options available inside /proc/sys/fs/epoll/
  */
 /* Maximum number of epoll watched descriptors, per user */
-अटल दीर्घ max_user_watches __पढ़ो_mostly;
+static long max_user_watches __read_mostly;
 
 /*
- * This mutex is used to serialize ep_मुक्त() and eventpoll_release_file().
+ * This mutex is used to serialize ep_free() and eventpoll_release_file().
  */
-अटल DEFINE_MUTEX(epmutex);
+static DEFINE_MUTEX(epmutex);
 
-अटल u64 loop_check_gen = 0;
+static u64 loop_check_gen = 0;
 
-/* Used to check क्रम epoll file descriptor inclusion loops */
-अटल काष्ठा eventpoll *inserting_पूर्णांकo;
+/* Used to check for epoll file descriptor inclusion loops */
+static struct eventpoll *inserting_into;
 
 /* Slab cache used to allocate "struct epitem" */
-अटल काष्ठा kmem_cache *epi_cache __पढ़ो_mostly;
+static struct kmem_cache *epi_cache __read_mostly;
 
 /* Slab cache used to allocate "struct eppoll_entry" */
-अटल काष्ठा kmem_cache *pwq_cache __पढ़ो_mostly;
+static struct kmem_cache *pwq_cache __read_mostly;
 
 /*
  * List of files with newly added links, where we may need to limit the number
  * of emanating paths. Protected by the epmutex.
  */
-काष्ठा epitems_head अणु
-	काष्ठा hlist_head epitems;
-	काष्ठा epitems_head *next;
-पूर्ण;
-अटल काष्ठा epitems_head *tfile_check_list = EP_UNACTIVE_PTR;
+struct epitems_head {
+	struct hlist_head epitems;
+	struct epitems_head *next;
+};
+static struct epitems_head *tfile_check_list = EP_UNACTIVE_PTR;
 
-अटल काष्ठा kmem_cache *ephead_cache __पढ़ो_mostly;
+static struct kmem_cache *ephead_cache __read_mostly;
 
-अटल अंतरभूत व्योम मुक्त_ephead(काष्ठा epitems_head *head)
-अणु
-	अगर (head)
-		kmem_cache_मुक्त(ephead_cache, head);
-पूर्ण
+static inline void free_ephead(struct epitems_head *head)
+{
+	if (head)
+		kmem_cache_free(ephead_cache, head);
+}
 
-अटल व्योम list_file(काष्ठा file *file)
-अणु
-	काष्ठा epitems_head *head;
+static void list_file(struct file *file)
+{
+	struct epitems_head *head;
 
-	head = container_of(file->f_ep, काष्ठा epitems_head, epitems);
-	अगर (!head->next) अणु
+	head = container_of(file->f_ep, struct epitems_head, epitems);
+	if (!head->next) {
 		head->next = tfile_check_list;
 		tfile_check_list = head;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम unlist_file(काष्ठा epitems_head *head)
-अणु
-	काष्ठा epitems_head *to_मुक्त = head;
-	काष्ठा hlist_node *p = rcu_dereference(hlist_first_rcu(&head->epitems));
-	अगर (p) अणु
-		काष्ठा epitem *epi= container_of(p, काष्ठा epitem, fllink);
+static void unlist_file(struct epitems_head *head)
+{
+	struct epitems_head *to_free = head;
+	struct hlist_node *p = rcu_dereference(hlist_first_rcu(&head->epitems));
+	if (p) {
+		struct epitem *epi= container_of(p, struct epitem, fllink);
 		spin_lock(&epi->ffd.file->f_lock);
-		अगर (!hlist_empty(&head->epitems))
-			to_मुक्त = शून्य;
-		head->next = शून्य;
+		if (!hlist_empty(&head->epitems))
+			to_free = NULL;
+		head->next = NULL;
 		spin_unlock(&epi->ffd.file->f_lock);
-	पूर्ण
-	मुक्त_ephead(to_मुक्त);
-पूर्ण
+	}
+	free_ephead(to_free);
+}
 
-#अगर_घोषित CONFIG_SYSCTL
+#ifdef CONFIG_SYSCTL
 
-#समावेश <linux/sysctl.h>
+#include <linux/sysctl.h>
 
-अटल दीर्घ दीर्घ_zero;
-अटल दीर्घ दीर्घ_max = दीर्घ_उच्च;
+static long long_zero;
+static long long_max = LONG_MAX;
 
-काष्ठा ctl_table epoll_table[] = अणु
-	अणु
+struct ctl_table epoll_table[] = {
+	{
 		.procname	= "max_user_watches",
 		.data		= &max_user_watches,
-		.maxlen		= माप(max_user_watches),
+		.maxlen		= sizeof(max_user_watches),
 		.mode		= 0644,
-		.proc_handler	= proc_करोuदीर्घvec_minmax,
-		.extra1		= &दीर्घ_zero,
-		.extra2		= &दीर्घ_max,
-	पूर्ण,
-	अणु पूर्ण
-पूर्ण;
-#पूर्ण_अगर /* CONFIG_SYSCTL */
+		.proc_handler	= proc_doulongvec_minmax,
+		.extra1		= &long_zero,
+		.extra2		= &long_max,
+	},
+	{ }
+};
+#endif /* CONFIG_SYSCTL */
 
-अटल स्थिर काष्ठा file_operations eventpoll_fops;
+static const struct file_operations eventpoll_fops;
 
-अटल अंतरभूत पूर्णांक is_file_epoll(काष्ठा file *f)
-अणु
-	वापस f->f_op == &eventpoll_fops;
-पूर्ण
+static inline int is_file_epoll(struct file *f)
+{
+	return f->f_op == &eventpoll_fops;
+}
 
-/* Setup the काष्ठाure that is used as key क्रम the RB tree */
-अटल अंतरभूत व्योम ep_set_ffd(काष्ठा epoll_filefd *ffd,
-			      काष्ठा file *file, पूर्णांक fd)
-अणु
+/* Setup the structure that is used as key for the RB tree */
+static inline void ep_set_ffd(struct epoll_filefd *ffd,
+			      struct file *file, int fd)
+{
 	ffd->file = file;
 	ffd->fd = fd;
-पूर्ण
+}
 
 /* Compare RB tree keys */
-अटल अंतरभूत पूर्णांक ep_cmp_ffd(काष्ठा epoll_filefd *p1,
-			     काष्ठा epoll_filefd *p2)
-अणु
-	वापस (p1->file > p2->file ? +1:
+static inline int ep_cmp_ffd(struct epoll_filefd *p1,
+			     struct epoll_filefd *p2)
+{
+	return (p1->file > p2->file ? +1:
 	        (p1->file < p2->file ? -1 : p1->fd - p2->fd));
-पूर्ण
+}
 
-/* Tells us अगर the item is currently linked */
-अटल अंतरभूत पूर्णांक ep_is_linked(काष्ठा epitem *epi)
-अणु
-	वापस !list_empty(&epi->rdllink);
-पूर्ण
+/* Tells us if the item is currently linked */
+static inline int ep_is_linked(struct epitem *epi)
+{
+	return !list_empty(&epi->rdllink);
+}
 
-अटल अंतरभूत काष्ठा eppoll_entry *ep_pwq_from_रुको(रुको_queue_entry_t *p)
-अणु
-	वापस container_of(p, काष्ठा eppoll_entry, रुको);
-पूर्ण
+static inline struct eppoll_entry *ep_pwq_from_wait(wait_queue_entry_t *p)
+{
+	return container_of(p, struct eppoll_entry, wait);
+}
 
-/* Get the "struct epitem" from a रुको queue poपूर्णांकer */
-अटल अंतरभूत काष्ठा epitem *ep_item_from_रुको(रुको_queue_entry_t *p)
-अणु
-	वापस container_of(p, काष्ठा eppoll_entry, रुको)->base;
-पूर्ण
+/* Get the "struct epitem" from a wait queue pointer */
+static inline struct epitem *ep_item_from_wait(wait_queue_entry_t *p)
+{
+	return container_of(p, struct eppoll_entry, wait)->base;
+}
 
 /**
- * ep_events_available - Checks अगर पढ़ोy events might be available.
+ * ep_events_available - Checks if ready events might be available.
  *
- * @ep: Poपूर्णांकer to the eventpoll context.
+ * @ep: Pointer to the eventpoll context.
  *
- * Return: a value dअगरferent than %zero अगर पढ़ोy events are available,
+ * Return: a value different than %zero if ready events are available,
  *          or %zero otherwise.
  */
-अटल अंतरभूत पूर्णांक ep_events_available(काष्ठा eventpoll *ep)
-अणु
-	वापस !list_empty_careful(&ep->rdllist) ||
+static inline int ep_events_available(struct eventpoll *ep)
+{
+	return !list_empty_careful(&ep->rdllist) ||
 		READ_ONCE(ep->ovflist) != EP_UNACTIVE_PTR;
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_NET_RX_BUSY_POLL
-अटल bool ep_busy_loop_end(व्योम *p, अचिन्हित दीर्घ start_समय)
-अणु
-	काष्ठा eventpoll *ep = p;
+#ifdef CONFIG_NET_RX_BUSY_POLL
+static bool ep_busy_loop_end(void *p, unsigned long start_time)
+{
+	struct eventpoll *ep = p;
 
-	वापस ep_events_available(ep) || busy_loop_समयout(start_समय);
-पूर्ण
+	return ep_events_available(ep) || busy_loop_timeout(start_time);
+}
 
 /*
- * Busy poll अगर globally on and supporting sockets found && no events,
- * busy loop will वापस अगर need_resched or ep_events_available.
+ * Busy poll if globally on and supporting sockets found && no events,
+ * busy loop will return if need_resched or ep_events_available.
  *
- * we must करो our busy polling with irqs enabled
+ * we must do our busy polling with irqs enabled
  */
-अटल bool ep_busy_loop(काष्ठा eventpoll *ep, पूर्णांक nonblock)
-अणु
-	अचिन्हित पूर्णांक napi_id = READ_ONCE(ep->napi_id);
+static bool ep_busy_loop(struct eventpoll *ep, int nonblock)
+{
+	unsigned int napi_id = READ_ONCE(ep->napi_id);
 
-	अगर ((napi_id >= MIN_NAPI_ID) && net_busy_loop_on()) अणु
-		napi_busy_loop(napi_id, nonblock ? शून्य : ep_busy_loop_end, ep, false,
+	if ((napi_id >= MIN_NAPI_ID) && net_busy_loop_on()) {
+		napi_busy_loop(napi_id, nonblock ? NULL : ep_busy_loop_end, ep, false,
 			       BUSY_POLL_BUDGET);
-		अगर (ep_events_available(ep))
-			वापस true;
+		if (ep_events_available(ep))
+			return true;
 		/*
-		 * Busy poll समयd out.  Drop NAPI ID क्रम now, we can add
+		 * Busy poll timed out.  Drop NAPI ID for now, we can add
 		 * it back in when we have moved a socket with a valid NAPI
-		 * ID onto the पढ़ोy list.
+		 * ID onto the ready list.
 		 */
 		ep->napi_id = 0;
-		वापस false;
-	पूर्ण
-	वापस false;
-पूर्ण
+		return false;
+	}
+	return false;
+}
 
 /*
  * Set epoll busy poll NAPI ID from sk.
  */
-अटल अंतरभूत व्योम ep_set_busy_poll_napi_id(काष्ठा epitem *epi)
-अणु
-	काष्ठा eventpoll *ep;
-	अचिन्हित पूर्णांक napi_id;
-	काष्ठा socket *sock;
-	काष्ठा sock *sk;
+static inline void ep_set_busy_poll_napi_id(struct epitem *epi)
+{
+	struct eventpoll *ep;
+	unsigned int napi_id;
+	struct socket *sock;
+	struct sock *sk;
 
-	अगर (!net_busy_loop_on())
-		वापस;
+	if (!net_busy_loop_on())
+		return;
 
 	sock = sock_from_file(epi->ffd.file);
-	अगर (!sock)
-		वापस;
+	if (!sock)
+		return;
 
 	sk = sock->sk;
-	अगर (!sk)
-		वापस;
+	if (!sk)
+		return;
 
 	napi_id = READ_ONCE(sk->sk_napi_id);
 	ep = epi->ep;
 
 	/* Non-NAPI IDs can be rejected
 	 *	or
-	 * Nothing to करो अगर we alपढ़ोy have this ID
+	 * Nothing to do if we already have this ID
 	 */
-	अगर (napi_id < MIN_NAPI_ID || napi_id == ep->napi_id)
-		वापस;
+	if (napi_id < MIN_NAPI_ID || napi_id == ep->napi_id)
+		return;
 
-	/* record NAPI ID क्रम use in next busy poll */
+	/* record NAPI ID for use in next busy poll */
 	ep->napi_id = napi_id;
-पूर्ण
+}
 
-#अन्यथा
+#else
 
-अटल अंतरभूत bool ep_busy_loop(काष्ठा eventpoll *ep, पूर्णांक nonblock)
-अणु
-	वापस false;
-पूर्ण
+static inline bool ep_busy_loop(struct eventpoll *ep, int nonblock)
+{
+	return false;
+}
 
-अटल अंतरभूत व्योम ep_set_busy_poll_napi_id(काष्ठा epitem *epi)
-अणु
-पूर्ण
+static inline void ep_set_busy_poll_napi_id(struct epitem *epi)
+{
+}
 
-#पूर्ण_अगर /* CONFIG_NET_RX_BUSY_POLL */
+#endif /* CONFIG_NET_RX_BUSY_POLL */
 
 /*
  * As described in commit 0ccf831cb lockdep: annotate epoll
- * the use of रुको queues used by epoll is करोne in a very controlled
- * manner. Wake ups can nest inside each other, but are never करोne
+ * the use of wait queues used by epoll is done in a very controlled
+ * manner. Wake ups can nest inside each other, but are never done
  * with the same locking. For example:
  *
  *   dfd = socket(...);
@@ -472,180 +471,180 @@
  *
  * When a packet arrives to the device underneath "dfd", the net code will
  * issue a wake_up() on its poll wake list. Epoll (efd1) has installed a
- * callback wakeup entry on that queue, and the wake_up() perक्रमmed by the
- * "dfd" net code will end up in ep_poll_callback(). At this poपूर्णांक epoll
- * (efd1) notices that it may have some event पढ़ोy, so it needs to wake up
- * the रुकोers on its poll रुको list (efd2). So it calls ep_poll_safewake()
+ * callback wakeup entry on that queue, and the wake_up() performed by the
+ * "dfd" net code will end up in ep_poll_callback(). At this point epoll
+ * (efd1) notices that it may have some event ready, so it needs to wake up
+ * the waiters on its poll wait list (efd2). So it calls ep_poll_safewake()
  * that ends up in another wake_up(), after having checked about the
- * recursion स्थिरraपूर्णांकs. That are, no more than EP_MAX_POLLWAKE_NESTS, to
- * aव्योम stack blasting.
+ * recursion constraints. That are, no more than EP_MAX_POLLWAKE_NESTS, to
+ * avoid stack blasting.
  *
  * When CONFIG_DEBUG_LOCK_ALLOC is enabled, make sure lockdep can handle
- * this special हाल of epoll.
+ * this special case of epoll.
  */
-#अगर_घोषित CONFIG_DEBUG_LOCK_ALLOC
+#ifdef CONFIG_DEBUG_LOCK_ALLOC
 
-अटल व्योम ep_poll_safewake(काष्ठा eventpoll *ep, काष्ठा epitem *epi)
-अणु
-	काष्ठा eventpoll *ep_src;
-	अचिन्हित दीर्घ flags;
+static void ep_poll_safewake(struct eventpoll *ep, struct epitem *epi)
+{
+	struct eventpoll *ep_src;
+	unsigned long flags;
 	u8 nests = 0;
 
 	/*
-	 * To set the subclass or nesting level क्रम spin_lock_irqsave_nested()
+	 * To set the subclass or nesting level for spin_lock_irqsave_nested()
 	 * it might be natural to create a per-cpu nest count. However, since
-	 * we can recurse on ep->poll_रुको.lock, and a non-raw spinlock can
-	 * schedule() in the -rt kernel, the per-cpu variable are no दीर्घer
-	 * रक्षित. Thus, we are पूर्णांकroducing a per eventpoll nest field.
-	 * If we are not being call from ep_poll_callback(), epi is शून्य and
+	 * we can recurse on ep->poll_wait.lock, and a non-raw spinlock can
+	 * schedule() in the -rt kernel, the per-cpu variable are no longer
+	 * protected. Thus, we are introducing a per eventpoll nest field.
+	 * If we are not being call from ep_poll_callback(), epi is NULL and
 	 * we are at the first level of nesting, 0. Otherwise, we are being
-	 * called from ep_poll_callback() and अगर a previous wakeup source is
+	 * called from ep_poll_callback() and if a previous wakeup source is
 	 * not an epoll file itself, we are at depth 1 since the wakeup source
 	 * is depth 0. If the wakeup source is a previous epoll file in the
 	 * wakeup chain then we use its nests value and record ours as
 	 * nests + 1. The previous epoll file nests value is stable since its
-	 * alपढ़ोy holding its own poll_रुको.lock.
+	 * already holding its own poll_wait.lock.
 	 */
-	अगर (epi) अणु
-		अगर ((is_file_epoll(epi->ffd.file))) अणु
-			ep_src = epi->ffd.file->निजी_data;
+	if (epi) {
+		if ((is_file_epoll(epi->ffd.file))) {
+			ep_src = epi->ffd.file->private_data;
 			nests = ep_src->nests;
-		पूर्ण अन्यथा अणु
+		} else {
 			nests = 1;
-		पूर्ण
-	पूर्ण
-	spin_lock_irqsave_nested(&ep->poll_रुको.lock, flags, nests);
+		}
+	}
+	spin_lock_irqsave_nested(&ep->poll_wait.lock, flags, nests);
 	ep->nests = nests + 1;
-	wake_up_locked_poll(&ep->poll_रुको, EPOLLIN);
+	wake_up_locked_poll(&ep->poll_wait, EPOLLIN);
 	ep->nests = 0;
-	spin_unlock_irqrestore(&ep->poll_रुको.lock, flags);
-पूर्ण
+	spin_unlock_irqrestore(&ep->poll_wait.lock, flags);
+}
 
-#अन्यथा
+#else
 
-अटल व्योम ep_poll_safewake(काष्ठा eventpoll *ep, काष्ठा epitem *epi)
-अणु
-	wake_up_poll(&ep->poll_रुको, EPOLLIN);
-पूर्ण
+static void ep_poll_safewake(struct eventpoll *ep, struct epitem *epi)
+{
+	wake_up_poll(&ep->poll_wait, EPOLLIN);
+}
 
-#पूर्ण_अगर
+#endif
 
-अटल व्योम ep_हटाओ_रुको_queue(काष्ठा eppoll_entry *pwq)
-अणु
-	रुको_queue_head_t *whead;
+static void ep_remove_wait_queue(struct eppoll_entry *pwq)
+{
+	wait_queue_head_t *whead;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	/*
 	 * If it is cleared by POLLFREE, it should be rcu-safe.
-	 * If we पढ़ो शून्य we need a barrier paired with
+	 * If we read NULL we need a barrier paired with
 	 * smp_store_release() in ep_poll_callback(), otherwise
 	 * we rely on whead->lock.
 	 */
 	whead = smp_load_acquire(&pwq->whead);
-	अगर (whead)
-		हटाओ_रुको_queue(whead, &pwq->रुको);
-	rcu_पढ़ो_unlock();
-पूर्ण
+	if (whead)
+		remove_wait_queue(whead, &pwq->wait);
+	rcu_read_unlock();
+}
 
 /*
- * This function unरेजिस्टरs poll callbacks from the associated file
- * descriptor.  Must be called with "mtx" held (or "epmutex" अगर called from
- * ep_मुक्त).
+ * This function unregisters poll callbacks from the associated file
+ * descriptor.  Must be called with "mtx" held (or "epmutex" if called from
+ * ep_free).
  */
-अटल व्योम ep_unरेजिस्टर_pollरुको(काष्ठा eventpoll *ep, काष्ठा epitem *epi)
-अणु
-	काष्ठा eppoll_entry **p = &epi->pwqlist;
-	काष्ठा eppoll_entry *pwq;
+static void ep_unregister_pollwait(struct eventpoll *ep, struct epitem *epi)
+{
+	struct eppoll_entry **p = &epi->pwqlist;
+	struct eppoll_entry *pwq;
 
-	जबतक ((pwq = *p) != शून्य) अणु
+	while ((pwq = *p) != NULL) {
 		*p = pwq->next;
-		ep_हटाओ_रुको_queue(pwq);
-		kmem_cache_मुक्त(pwq_cache, pwq);
-	पूर्ण
-पूर्ण
+		ep_remove_wait_queue(pwq);
+		kmem_cache_free(pwq_cache, pwq);
+	}
+}
 
 /* call only when ep->mtx is held */
-अटल अंतरभूत काष्ठा wakeup_source *ep_wakeup_source(काष्ठा epitem *epi)
-अणु
-	वापस rcu_dereference_check(epi->ws, lockdep_is_held(&epi->ep->mtx));
-पूर्ण
+static inline struct wakeup_source *ep_wakeup_source(struct epitem *epi)
+{
+	return rcu_dereference_check(epi->ws, lockdep_is_held(&epi->ep->mtx));
+}
 
 /* call only when ep->mtx is held */
-अटल अंतरभूत व्योम ep_pm_stay_awake(काष्ठा epitem *epi)
-अणु
-	काष्ठा wakeup_source *ws = ep_wakeup_source(epi);
+static inline void ep_pm_stay_awake(struct epitem *epi)
+{
+	struct wakeup_source *ws = ep_wakeup_source(epi);
 
-	अगर (ws)
+	if (ws)
 		__pm_stay_awake(ws);
-पूर्ण
+}
 
-अटल अंतरभूत bool ep_has_wakeup_source(काष्ठा epitem *epi)
-अणु
-	वापस rcu_access_poपूर्णांकer(epi->ws) ? true : false;
-पूर्ण
+static inline bool ep_has_wakeup_source(struct epitem *epi)
+{
+	return rcu_access_pointer(epi->ws) ? true : false;
+}
 
 /* call when ep->mtx cannot be held (ep_poll_callback) */
-अटल अंतरभूत व्योम ep_pm_stay_awake_rcu(काष्ठा epitem *epi)
-अणु
-	काष्ठा wakeup_source *ws;
+static inline void ep_pm_stay_awake_rcu(struct epitem *epi)
+{
+	struct wakeup_source *ws;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	ws = rcu_dereference(epi->ws);
-	अगर (ws)
+	if (ws)
 		__pm_stay_awake(ws);
-	rcu_पढ़ो_unlock();
-पूर्ण
+	rcu_read_unlock();
+}
 
 
 /*
  * ep->mutex needs to be held because we could be hit by
  * eventpoll_release_file() and epoll_ctl().
  */
-अटल व्योम ep_start_scan(काष्ठा eventpoll *ep, काष्ठा list_head *txlist)
-अणु
+static void ep_start_scan(struct eventpoll *ep, struct list_head *txlist)
+{
 	/*
-	 * Steal the पढ़ोy list, and re-init the original one to the
-	 * empty list. Also, set ep->ovflist to शून्य so that events
-	 * happening जबतक looping w/out locks, are not lost. We cannot
+	 * Steal the ready list, and re-init the original one to the
+	 * empty list. Also, set ep->ovflist to NULL so that events
+	 * happening while looping w/out locks, are not lost. We cannot
 	 * have the poll callback to queue directly on ep->rdllist,
-	 * because we want the "sproc" callback to be able to करो it
+	 * because we want the "sproc" callback to be able to do it
 	 * in a lockless way.
 	 */
-	lockdep_निश्चित_irqs_enabled();
-	ग_लिखो_lock_irq(&ep->lock);
+	lockdep_assert_irqs_enabled();
+	write_lock_irq(&ep->lock);
 	list_splice_init(&ep->rdllist, txlist);
-	WRITE_ONCE(ep->ovflist, शून्य);
-	ग_लिखो_unlock_irq(&ep->lock);
-पूर्ण
+	WRITE_ONCE(ep->ovflist, NULL);
+	write_unlock_irq(&ep->lock);
+}
 
-अटल व्योम ep_करोne_scan(काष्ठा eventpoll *ep,
-			 काष्ठा list_head *txlist)
-अणु
-	काष्ठा epitem *epi, *nepi;
+static void ep_done_scan(struct eventpoll *ep,
+			 struct list_head *txlist)
+{
+	struct epitem *epi, *nepi;
 
-	ग_लिखो_lock_irq(&ep->lock);
+	write_lock_irq(&ep->lock);
 	/*
-	 * During the समय we spent inside the "sproc" callback, some
+	 * During the time we spent inside the "sproc" callback, some
 	 * other events might have been queued by the poll callback.
-	 * We re-insert them inside the मुख्य पढ़ोy-list here.
+	 * We re-insert them inside the main ready-list here.
 	 */
-	क्रम (nepi = READ_ONCE(ep->ovflist); (epi = nepi) != शून्य;
-	     nepi = epi->next, epi->next = EP_UNACTIVE_PTR) अणु
+	for (nepi = READ_ONCE(ep->ovflist); (epi = nepi) != NULL;
+	     nepi = epi->next, epi->next = EP_UNACTIVE_PTR) {
 		/*
-		 * We need to check अगर the item is alपढ़ोy in the list.
-		 * During the "sproc" callback execution समय, items are
-		 * queued पूर्णांकo ->ovflist but the "txlist" might alपढ़ोy
+		 * We need to check if the item is already in the list.
+		 * During the "sproc" callback execution time, items are
+		 * queued into ->ovflist but the "txlist" might already
 		 * contain them, and the list_splice() below takes care of them.
 		 */
-		अगर (!ep_is_linked(epi)) अणु
+		if (!ep_is_linked(epi)) {
 			/*
 			 * ->ovflist is LIFO, so we have to reverse it in order
 			 * to keep in FIFO.
 			 */
 			list_add(&epi->rdllink, &ep->rdllist);
 			ep_pm_stay_awake(epi);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	/*
 	 * We need to set back ep->ovflist to EP_UNACTIVE_PTR, so that after
 	 * releasing the lock, events will be queued in the normal way inside
@@ -659,290 +658,290 @@
 	list_splice(txlist, &ep->rdllist);
 	__pm_relax(ep->ws);
 
-	अगर (!list_empty(&ep->rdllist)) अणु
-		अगर (रुकोqueue_active(&ep->wq))
+	if (!list_empty(&ep->rdllist)) {
+		if (waitqueue_active(&ep->wq))
 			wake_up(&ep->wq);
-	पूर्ण
+	}
 
-	ग_लिखो_unlock_irq(&ep->lock);
-पूर्ण
+	write_unlock_irq(&ep->lock);
+}
 
-अटल व्योम epi_rcu_मुक्त(काष्ठा rcu_head *head)
-अणु
-	काष्ठा epitem *epi = container_of(head, काष्ठा epitem, rcu);
-	kmem_cache_मुक्त(epi_cache, epi);
-पूर्ण
+static void epi_rcu_free(struct rcu_head *head)
+{
+	struct epitem *epi = container_of(head, struct epitem, rcu);
+	kmem_cache_free(epi_cache, epi);
+}
 
 /*
  * Removes a "struct epitem" from the eventpoll RB tree and deallocates
  * all the associated resources. Must be called with "mtx" held.
  */
-अटल पूर्णांक ep_हटाओ(काष्ठा eventpoll *ep, काष्ठा epitem *epi)
-अणु
-	काष्ठा file *file = epi->ffd.file;
-	काष्ठा epitems_head *to_मुक्त;
-	काष्ठा hlist_head *head;
+static int ep_remove(struct eventpoll *ep, struct epitem *epi)
+{
+	struct file *file = epi->ffd.file;
+	struct epitems_head *to_free;
+	struct hlist_head *head;
 
-	lockdep_निश्चित_irqs_enabled();
+	lockdep_assert_irqs_enabled();
 
 	/*
-	 * Removes poll रुको queue hooks.
+	 * Removes poll wait queue hooks.
 	 */
-	ep_unरेजिस्टर_pollरुको(ep, epi);
+	ep_unregister_pollwait(ep, epi);
 
 	/* Remove the current item from the list of epoll hooks */
 	spin_lock(&file->f_lock);
-	to_मुक्त = शून्य;
+	to_free = NULL;
 	head = file->f_ep;
-	अगर (head->first == &epi->fllink && !epi->fllink.next) अणु
-		file->f_ep = शून्य;
-		अगर (!is_file_epoll(file)) अणु
-			काष्ठा epitems_head *v;
-			v = container_of(head, काष्ठा epitems_head, epitems);
-			अगर (!smp_load_acquire(&v->next))
-				to_मुक्त = v;
-		पूर्ण
-	पूर्ण
+	if (head->first == &epi->fllink && !epi->fllink.next) {
+		file->f_ep = NULL;
+		if (!is_file_epoll(file)) {
+			struct epitems_head *v;
+			v = container_of(head, struct epitems_head, epitems);
+			if (!smp_load_acquire(&v->next))
+				to_free = v;
+		}
+	}
 	hlist_del_rcu(&epi->fllink);
 	spin_unlock(&file->f_lock);
-	मुक्त_ephead(to_मुक्त);
+	free_ephead(to_free);
 
 	rb_erase_cached(&epi->rbn, &ep->rbr);
 
-	ग_लिखो_lock_irq(&ep->lock);
-	अगर (ep_is_linked(epi))
+	write_lock_irq(&ep->lock);
+	if (ep_is_linked(epi))
 		list_del_init(&epi->rdllink);
-	ग_लिखो_unlock_irq(&ep->lock);
+	write_unlock_irq(&ep->lock);
 
-	wakeup_source_unरेजिस्टर(ep_wakeup_source(epi));
+	wakeup_source_unregister(ep_wakeup_source(epi));
 	/*
-	 * At this poपूर्णांक it is safe to मुक्त the eventpoll item. Use the जोड़
+	 * At this point it is safe to free the eventpoll item. Use the union
 	 * field epi->rcu, since we are trying to minimize the size of
-	 * 'struct epitem'. The 'rbn' field is no दीर्घer in use. Protected by
-	 * ep->mtx. The rcu पढ़ो side, reverse_path_check_proc(), करोes not make
+	 * 'struct epitem'. The 'rbn' field is no longer in use. Protected by
+	 * ep->mtx. The rcu read side, reverse_path_check_proc(), does not make
 	 * use of the rbn field.
 	 */
-	call_rcu(&epi->rcu, epi_rcu_मुक्त);
+	call_rcu(&epi->rcu, epi_rcu_free);
 
-	atomic_दीर्घ_dec(&ep->user->epoll_watches);
+	atomic_long_dec(&ep->user->epoll_watches);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ep_मुक्त(काष्ठा eventpoll *ep)
-अणु
-	काष्ठा rb_node *rbp;
-	काष्ठा epitem *epi;
+static void ep_free(struct eventpoll *ep)
+{
+	struct rb_node *rbp;
+	struct epitem *epi;
 
-	/* We need to release all tasks रुकोing क्रम these file */
-	अगर (रुकोqueue_active(&ep->poll_रुको))
-		ep_poll_safewake(ep, शून्य);
+	/* We need to release all tasks waiting for these file */
+	if (waitqueue_active(&ep->poll_wait))
+		ep_poll_safewake(ep, NULL);
 
 	/*
 	 * We need to lock this because we could be hit by
-	 * eventpoll_release_file() जबतक we're मुक्तing the "struct eventpoll".
-	 * We करो not need to hold "ep->mtx" here because the epoll file
-	 * is on the way to be हटाओd and no one has references to it
+	 * eventpoll_release_file() while we're freeing the "struct eventpoll".
+	 * We do not need to hold "ep->mtx" here because the epoll file
+	 * is on the way to be removed and no one has references to it
 	 * anymore. The only hit might come from eventpoll_release_file() but
 	 * holding "epmutex" is sufficient here.
 	 */
 	mutex_lock(&epmutex);
 
 	/*
-	 * Walks through the whole tree by unरेजिस्टरing poll callbacks.
+	 * Walks through the whole tree by unregistering poll callbacks.
 	 */
-	क्रम (rbp = rb_first_cached(&ep->rbr); rbp; rbp = rb_next(rbp)) अणु
-		epi = rb_entry(rbp, काष्ठा epitem, rbn);
+	for (rbp = rb_first_cached(&ep->rbr); rbp; rbp = rb_next(rbp)) {
+		epi = rb_entry(rbp, struct epitem, rbn);
 
-		ep_unरेजिस्टर_pollरुको(ep, epi);
+		ep_unregister_pollwait(ep, epi);
 		cond_resched();
-	पूर्ण
+	}
 
 	/*
-	 * Walks through the whole tree by मुक्तing each "struct epitem". At this
-	 * poपूर्णांक we are sure no poll callbacks will be lingering around, and also by
+	 * Walks through the whole tree by freeing each "struct epitem". At this
+	 * point we are sure no poll callbacks will be lingering around, and also by
 	 * holding "epmutex" we can be sure that no file cleanup code will hit
-	 * us during this operation. So we can aव्योम the lock on "ep->lock".
-	 * We करो not need to lock ep->mtx, either, we only करो it to prevent
+	 * us during this operation. So we can avoid the lock on "ep->lock".
+	 * We do not need to lock ep->mtx, either, we only do it to prevent
 	 * a lockdep warning.
 	 */
 	mutex_lock(&ep->mtx);
-	जबतक ((rbp = rb_first_cached(&ep->rbr)) != शून्य) अणु
-		epi = rb_entry(rbp, काष्ठा epitem, rbn);
-		ep_हटाओ(ep, epi);
+	while ((rbp = rb_first_cached(&ep->rbr)) != NULL) {
+		epi = rb_entry(rbp, struct epitem, rbn);
+		ep_remove(ep, epi);
 		cond_resched();
-	पूर्ण
+	}
 	mutex_unlock(&ep->mtx);
 
 	mutex_unlock(&epmutex);
 	mutex_destroy(&ep->mtx);
-	मुक्त_uid(ep->user);
-	wakeup_source_unरेजिस्टर(ep->ws);
-	kमुक्त(ep);
-पूर्ण
+	free_uid(ep->user);
+	wakeup_source_unregister(ep->ws);
+	kfree(ep);
+}
 
-अटल पूर्णांक ep_eventpoll_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा eventpoll *ep = file->निजी_data;
+static int ep_eventpoll_release(struct inode *inode, struct file *file)
+{
+	struct eventpoll *ep = file->private_data;
 
-	अगर (ep)
-		ep_मुक्त(ep);
+	if (ep)
+		ep_free(ep);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल __poll_t ep_item_poll(स्थिर काष्ठा epitem *epi, poll_table *pt, पूर्णांक depth);
+static __poll_t ep_item_poll(const struct epitem *epi, poll_table *pt, int depth);
 
-अटल __poll_t __ep_eventpoll_poll(काष्ठा file *file, poll_table *रुको, पूर्णांक depth)
-अणु
-	काष्ठा eventpoll *ep = file->निजी_data;
+static __poll_t __ep_eventpoll_poll(struct file *file, poll_table *wait, int depth)
+{
+	struct eventpoll *ep = file->private_data;
 	LIST_HEAD(txlist);
-	काष्ठा epitem *epi, *पंचांगp;
+	struct epitem *epi, *tmp;
 	poll_table pt;
 	__poll_t res = 0;
 
-	init_poll_funcptr(&pt, शून्य);
+	init_poll_funcptr(&pt, NULL);
 
-	/* Insert inside our poll रुको queue */
-	poll_रुको(file, &ep->poll_रुको, रुको);
+	/* Insert inside our poll wait queue */
+	poll_wait(file, &ep->poll_wait, wait);
 
 	/*
-	 * Proceed to find out अगर wanted events are really available inside
-	 * the पढ़ोy list.
+	 * Proceed to find out if wanted events are really available inside
+	 * the ready list.
 	 */
 	mutex_lock_nested(&ep->mtx, depth);
 	ep_start_scan(ep, &txlist);
-	list_क्रम_each_entry_safe(epi, पंचांगp, &txlist, rdllink) अणु
-		अगर (ep_item_poll(epi, &pt, depth + 1)) अणु
+	list_for_each_entry_safe(epi, tmp, &txlist, rdllink) {
+		if (ep_item_poll(epi, &pt, depth + 1)) {
 			res = EPOLLIN | EPOLLRDNORM;
-			अवरोध;
-		पूर्ण अन्यथा अणु
+			break;
+		} else {
 			/*
-			 * Item has been dropped पूर्णांकo the पढ़ोy list by the poll
-			 * callback, but it's not actually पढ़ोy, as far as
-			 * caller requested events goes. We can हटाओ it here.
+			 * Item has been dropped into the ready list by the poll
+			 * callback, but it's not actually ready, as far as
+			 * caller requested events goes. We can remove it here.
 			 */
 			__pm_relax(ep_wakeup_source(epi));
 			list_del_init(&epi->rdllink);
-		पूर्ण
-	पूर्ण
-	ep_करोne_scan(ep, &txlist);
+		}
+	}
+	ep_done_scan(ep, &txlist);
 	mutex_unlock(&ep->mtx);
-	वापस res;
-पूर्ण
+	return res;
+}
 
 /*
- * Dअगरfers from ep_eventpoll_poll() in that पूर्णांकernal callers alपढ़ोy have
+ * Differs from ep_eventpoll_poll() in that internal callers already have
  * the ep->mtx so we need to start from depth=1, such that mutex_lock_nested()
  * is correctly annotated.
  */
-अटल __poll_t ep_item_poll(स्थिर काष्ठा epitem *epi, poll_table *pt,
-				 पूर्णांक depth)
-अणु
-	काष्ठा file *file = epi->ffd.file;
+static __poll_t ep_item_poll(const struct epitem *epi, poll_table *pt,
+				 int depth)
+{
+	struct file *file = epi->ffd.file;
 	__poll_t res;
 
 	pt->_key = epi->event.events;
-	अगर (!is_file_epoll(file))
+	if (!is_file_epoll(file))
 		res = vfs_poll(file, pt);
-	अन्यथा
+	else
 		res = __ep_eventpoll_poll(file, pt, depth);
-	वापस res & epi->event.events;
-पूर्ण
+	return res & epi->event.events;
+}
 
-अटल __poll_t ep_eventpoll_poll(काष्ठा file *file, poll_table *रुको)
-अणु
-	वापस __ep_eventpoll_poll(file, रुको, 0);
-पूर्ण
+static __poll_t ep_eventpoll_poll(struct file *file, poll_table *wait)
+{
+	return __ep_eventpoll_poll(file, wait, 0);
+}
 
-#अगर_घोषित CONFIG_PROC_FS
-अटल व्योम ep_show_fdinfo(काष्ठा seq_file *m, काष्ठा file *f)
-अणु
-	काष्ठा eventpoll *ep = f->निजी_data;
-	काष्ठा rb_node *rbp;
+#ifdef CONFIG_PROC_FS
+static void ep_show_fdinfo(struct seq_file *m, struct file *f)
+{
+	struct eventpoll *ep = f->private_data;
+	struct rb_node *rbp;
 
 	mutex_lock(&ep->mtx);
-	क्रम (rbp = rb_first_cached(&ep->rbr); rbp; rbp = rb_next(rbp)) अणु
-		काष्ठा epitem *epi = rb_entry(rbp, काष्ठा epitem, rbn);
-		काष्ठा inode *inode = file_inode(epi->ffd.file);
+	for (rbp = rb_first_cached(&ep->rbr); rbp; rbp = rb_next(rbp)) {
+		struct epitem *epi = rb_entry(rbp, struct epitem, rbn);
+		struct inode *inode = file_inode(epi->ffd.file);
 
-		seq_म_लिखो(m, "tfd: %8d events: %8x data: %16llx "
+		seq_printf(m, "tfd: %8d events: %8x data: %16llx "
 			   " pos:%lli ino:%lx sdev:%x\n",
 			   epi->ffd.fd, epi->event.events,
-			   (दीर्घ दीर्घ)epi->event.data,
-			   (दीर्घ दीर्घ)epi->ffd.file->f_pos,
+			   (long long)epi->event.data,
+			   (long long)epi->ffd.file->f_pos,
 			   inode->i_ino, inode->i_sb->s_dev);
-		अगर (seq_has_overflowed(m))
-			अवरोध;
-	पूर्ण
+		if (seq_has_overflowed(m))
+			break;
+	}
 	mutex_unlock(&ep->mtx);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
 /* File callbacks that implement the eventpoll file behaviour */
-अटल स्थिर काष्ठा file_operations eventpoll_fops = अणु
-#अगर_घोषित CONFIG_PROC_FS
+static const struct file_operations eventpoll_fops = {
+#ifdef CONFIG_PROC_FS
 	.show_fdinfo	= ep_show_fdinfo,
-#पूर्ण_अगर
+#endif
 	.release	= ep_eventpoll_release,
 	.poll		= ep_eventpoll_poll,
 	.llseek		= noop_llseek,
-पूर्ण;
+};
 
 /*
  * This is called from eventpoll_release() to unlink files from the eventpoll
- * पूर्णांकerface. We need to have this facility to cleanup correctly files that are
- * बंदd without being हटाओd from the eventpoll पूर्णांकerface.
+ * interface. We need to have this facility to cleanup correctly files that are
+ * closed without being removed from the eventpoll interface.
  */
-व्योम eventpoll_release_file(काष्ठा file *file)
-अणु
-	काष्ठा eventpoll *ep;
-	काष्ठा epitem *epi;
-	काष्ठा hlist_node *next;
+void eventpoll_release_file(struct file *file)
+{
+	struct eventpoll *ep;
+	struct epitem *epi;
+	struct hlist_node *next;
 
 	/*
-	 * We करोn't want to get "file->f_lock" because it is not
+	 * We don't want to get "file->f_lock" because it is not
 	 * necessary. It is not necessary because we're in the "struct file"
 	 * cleanup path, and this means that no one is using this file anymore.
-	 * So, क्रम example, epoll_ctl() cannot hit here since अगर we reach this
-	 * poपूर्णांक, the file counter alपढ़ोy went to zero and fget() would fail.
-	 * The only hit might come from ep_मुक्त() but by holding the mutex
-	 * will correctly serialize the operation. We करो need to acquire
-	 * "ep->mtx" after "epmutex" because ep_हटाओ() requires it when called
-	 * from anywhere but ep_मुक्त().
+	 * So, for example, epoll_ctl() cannot hit here since if we reach this
+	 * point, the file counter already went to zero and fget() would fail.
+	 * The only hit might come from ep_free() but by holding the mutex
+	 * will correctly serialize the operation. We do need to acquire
+	 * "ep->mtx" after "epmutex" because ep_remove() requires it when called
+	 * from anywhere but ep_free().
 	 *
-	 * Besides, ep_हटाओ() acquires the lock, so we can't hold it here.
+	 * Besides, ep_remove() acquires the lock, so we can't hold it here.
 	 */
 	mutex_lock(&epmutex);
-	अगर (unlikely(!file->f_ep)) अणु
+	if (unlikely(!file->f_ep)) {
 		mutex_unlock(&epmutex);
-		वापस;
-	पूर्ण
-	hlist_क्रम_each_entry_safe(epi, next, file->f_ep, fllink) अणु
+		return;
+	}
+	hlist_for_each_entry_safe(epi, next, file->f_ep, fllink) {
 		ep = epi->ep;
 		mutex_lock_nested(&ep->mtx, 0);
-		ep_हटाओ(ep, epi);
+		ep_remove(ep, epi);
 		mutex_unlock(&ep->mtx);
-	पूर्ण
+	}
 	mutex_unlock(&epmutex);
-पूर्ण
+}
 
-अटल पूर्णांक ep_alloc(काष्ठा eventpoll **pep)
-अणु
-	पूर्णांक error;
-	काष्ठा user_काष्ठा *user;
-	काष्ठा eventpoll *ep;
+static int ep_alloc(struct eventpoll **pep)
+{
+	int error;
+	struct user_struct *user;
+	struct eventpoll *ep;
 
 	user = get_current_user();
 	error = -ENOMEM;
-	ep = kzalloc(माप(*ep), GFP_KERNEL);
-	अगर (unlikely(!ep))
-		जाओ मुक्त_uid;
+	ep = kzalloc(sizeof(*ep), GFP_KERNEL);
+	if (unlikely(!ep))
+		goto free_uid;
 
 	mutex_init(&ep->mtx);
 	rwlock_init(&ep->lock);
-	init_रुकोqueue_head(&ep->wq);
-	init_रुकोqueue_head(&ep->poll_रुको);
+	init_waitqueue_head(&ep->wq);
+	init_waitqueue_head(&ep->poll_wait);
 	INIT_LIST_HEAD(&ep->rdllist);
 	ep->rbr = RB_ROOT_CACHED;
 	ep->ovflist = EP_UNACTIVE_PTR;
@@ -950,94 +949,94 @@
 
 	*pep = ep;
 
-	वापस 0;
+	return 0;
 
-मुक्त_uid:
-	मुक्त_uid(user);
-	वापस error;
-पूर्ण
+free_uid:
+	free_uid(user);
+	return error;
+}
 
 /*
  * Search the file inside the eventpoll tree. The RB tree operations
- * are रक्षित by the "mtx" mutex, and ep_find() must be called with
+ * are protected by the "mtx" mutex, and ep_find() must be called with
  * "mtx" held.
  */
-अटल काष्ठा epitem *ep_find(काष्ठा eventpoll *ep, काष्ठा file *file, पूर्णांक fd)
-अणु
-	पूर्णांक kcmp;
-	काष्ठा rb_node *rbp;
-	काष्ठा epitem *epi, *epir = शून्य;
-	काष्ठा epoll_filefd ffd;
+static struct epitem *ep_find(struct eventpoll *ep, struct file *file, int fd)
+{
+	int kcmp;
+	struct rb_node *rbp;
+	struct epitem *epi, *epir = NULL;
+	struct epoll_filefd ffd;
 
 	ep_set_ffd(&ffd, file, fd);
-	क्रम (rbp = ep->rbr.rb_root.rb_node; rbp; ) अणु
-		epi = rb_entry(rbp, काष्ठा epitem, rbn);
+	for (rbp = ep->rbr.rb_root.rb_node; rbp; ) {
+		epi = rb_entry(rbp, struct epitem, rbn);
 		kcmp = ep_cmp_ffd(&ffd, &epi->ffd);
-		अगर (kcmp > 0)
+		if (kcmp > 0)
 			rbp = rbp->rb_right;
-		अन्यथा अगर (kcmp < 0)
+		else if (kcmp < 0)
 			rbp = rbp->rb_left;
-		अन्यथा अणु
+		else {
 			epir = epi;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	वापस epir;
-पूर्ण
+	return epir;
+}
 
-#अगर_घोषित CONFIG_KCMP
-अटल काष्ठा epitem *ep_find_tfd(काष्ठा eventpoll *ep, पूर्णांक tfd, अचिन्हित दीर्घ toff)
-अणु
-	काष्ठा rb_node *rbp;
-	काष्ठा epitem *epi;
+#ifdef CONFIG_KCMP
+static struct epitem *ep_find_tfd(struct eventpoll *ep, int tfd, unsigned long toff)
+{
+	struct rb_node *rbp;
+	struct epitem *epi;
 
-	क्रम (rbp = rb_first_cached(&ep->rbr); rbp; rbp = rb_next(rbp)) अणु
-		epi = rb_entry(rbp, काष्ठा epitem, rbn);
-		अगर (epi->ffd.fd == tfd) अणु
-			अगर (toff == 0)
-				वापस epi;
-			अन्यथा
+	for (rbp = rb_first_cached(&ep->rbr); rbp; rbp = rb_next(rbp)) {
+		epi = rb_entry(rbp, struct epitem, rbn);
+		if (epi->ffd.fd == tfd) {
+			if (toff == 0)
+				return epi;
+			else
 				toff--;
-		पूर्ण
+		}
 		cond_resched();
-	पूर्ण
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-काष्ठा file *get_epoll_tfile_raw_ptr(काष्ठा file *file, पूर्णांक tfd,
-				     अचिन्हित दीर्घ toff)
-अणु
-	काष्ठा file *file_raw;
-	काष्ठा eventpoll *ep;
-	काष्ठा epitem *epi;
+struct file *get_epoll_tfile_raw_ptr(struct file *file, int tfd,
+				     unsigned long toff)
+{
+	struct file *file_raw;
+	struct eventpoll *ep;
+	struct epitem *epi;
 
-	अगर (!is_file_epoll(file))
-		वापस ERR_PTR(-EINVAL);
+	if (!is_file_epoll(file))
+		return ERR_PTR(-EINVAL);
 
-	ep = file->निजी_data;
+	ep = file->private_data;
 
 	mutex_lock(&ep->mtx);
 	epi = ep_find_tfd(ep, tfd, toff);
-	अगर (epi)
+	if (epi)
 		file_raw = epi->ffd.file;
-	अन्यथा
+	else
 		file_raw = ERR_PTR(-ENOENT);
 	mutex_unlock(&ep->mtx);
 
-	वापस file_raw;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_KCMP */
+	return file_raw;
+}
+#endif /* CONFIG_KCMP */
 
 /*
  * Adds a new entry to the tail of the list in a lockless way, i.e.
  * multiple CPUs are allowed to call this function concurrently.
  *
- * Beware: it is necessary to prevent any other modअगरications of the
+ * Beware: it is necessary to prevent any other modifications of the
  *         existing list until all changes are completed, in other words
- *         concurrent list_add_tail_lockless() calls should be रक्षित
- *         with a पढ़ो lock, where ग_लिखो lock acts as a barrier which
+ *         concurrent list_add_tail_lockless() calls should be protected
+ *         with a read lock, where write lock acts as a barrier which
  *         makes sure all list_add_tail_lockless() calls are fully
  *         completed.
  *
@@ -1045,13 +1044,13 @@
  *        direction i.e. either to the tail or to the head, otherwise
  *        concurrent access will corrupt the list.
  *
- * Return: %false अगर element has been alपढ़ोy added to the list, %true
+ * Return: %false if element has been already added to the list, %true
  * otherwise.
  */
-अटल अंतरभूत bool list_add_tail_lockless(काष्ठा list_head *new,
-					  काष्ठा list_head *head)
-अणु
-	काष्ठा list_head *prev;
+static inline bool list_add_tail_lockless(struct list_head *new,
+					  struct list_head *head)
+{
+	struct list_head *prev;
 
 	/*
 	 * This is simple 'new->next = head' operation, but cmpxchg()
@@ -1059,402 +1058,402 @@
 	 * added to the list from another CPU: the winner observes
 	 * new->next == new.
 	 */
-	अगर (cmpxchg(&new->next, new, head) != new)
-		वापस false;
+	if (cmpxchg(&new->next, new, head) != new)
+		return false;
 
 	/*
 	 * Initially ->next of a new element must be updated with the head
-	 * (we are inserting to the tail) and only then poपूर्णांकers are atomically
+	 * (we are inserting to the tail) and only then pointers are atomically
 	 * exchanged.  XCHG guarantees memory ordering, thus ->next should be
-	 * updated beक्रमe poपूर्णांकers are actually swapped and poपूर्णांकers are
-	 * swapped beक्रमe prev->next is updated.
+	 * updated before pointers are actually swapped and pointers are
+	 * swapped before prev->next is updated.
 	 */
 
 	prev = xchg(&head->prev, new);
 
 	/*
-	 * It is safe to modअगरy prev->next and new->prev, because a new element
-	 * is added only to the tail and new->next is updated beक्रमe XCHG.
+	 * It is safe to modify prev->next and new->prev, because a new element
+	 * is added only to the tail and new->next is updated before XCHG.
 	 */
 
 	prev->next = new;
 	new->prev = prev;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /*
  * Chains a new epi entry to the tail of the ep->ovflist in a lockless way,
  * i.e. multiple CPUs are allowed to call this function concurrently.
  *
- * Return: %false अगर epi element has been alपढ़ोy chained, %true otherwise.
+ * Return: %false if epi element has been already chained, %true otherwise.
  */
-अटल अंतरभूत bool chain_epi_lockless(काष्ठा epitem *epi)
-अणु
-	काष्ठा eventpoll *ep = epi->ep;
+static inline bool chain_epi_lockless(struct epitem *epi)
+{
+	struct eventpoll *ep = epi->ep;
 
 	/* Fast preliminary check */
-	अगर (epi->next != EP_UNACTIVE_PTR)
-		वापस false;
+	if (epi->next != EP_UNACTIVE_PTR)
+		return false;
 
 	/* Check that the same epi has not been just chained from another CPU */
-	अगर (cmpxchg(&epi->next, EP_UNACTIVE_PTR, शून्य) != EP_UNACTIVE_PTR)
-		वापस false;
+	if (cmpxchg(&epi->next, EP_UNACTIVE_PTR, NULL) != EP_UNACTIVE_PTR)
+		return false;
 
 	/* Atomically exchange tail */
 	epi->next = xchg(&ep->ovflist, epi);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /*
- * This is the callback that is passed to the रुको queue wakeup
+ * This is the callback that is passed to the wait queue wakeup
  * mechanism. It is called by the stored file descriptors when they
  * have events to report.
  *
- * This callback takes a पढ़ो lock in order not to contend with concurrent
- * events from another file descriptor, thus all modअगरications to ->rdllist
- * or ->ovflist are lockless.  Read lock is paired with the ग_लिखो lock from
- * ep_scan_पढ़ोy_list(), which stops all list modअगरications and guarantees
+ * This callback takes a read lock in order not to contend with concurrent
+ * events from another file descriptor, thus all modifications to ->rdllist
+ * or ->ovflist are lockless.  Read lock is paired with the write lock from
+ * ep_scan_ready_list(), which stops all list modifications and guarantees
  * that lists state is seen correctly.
  *
  * Another thing worth to mention is that ep_poll_callback() can be called
- * concurrently क्रम the same @epi from dअगरferent CPUs अगर poll table was inited
- * with several रुको queues entries.  Plural wakeup from dअगरferent CPUs of a
- * single रुको queue is serialized by wq.lock, but the हाल when multiple रुको
+ * concurrently for the same @epi from different CPUs if poll table was inited
+ * with several wait queues entries.  Plural wakeup from different CPUs of a
+ * single wait queue is serialized by wq.lock, but the case when multiple wait
  * queues are used should be detected accordingly.  This is detected using
  * cmpxchg() operation.
  */
-अटल पूर्णांक ep_poll_callback(रुको_queue_entry_t *रुको, अचिन्हित mode, पूर्णांक sync, व्योम *key)
-अणु
-	पूर्णांक pwake = 0;
-	काष्ठा epitem *epi = ep_item_from_रुको(रुको);
-	काष्ठा eventpoll *ep = epi->ep;
+static int ep_poll_callback(wait_queue_entry_t *wait, unsigned mode, int sync, void *key)
+{
+	int pwake = 0;
+	struct epitem *epi = ep_item_from_wait(wait);
+	struct eventpoll *ep = epi->ep;
 	__poll_t pollflags = key_to_poll(key);
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ewake = 0;
+	unsigned long flags;
+	int ewake = 0;
 
-	पढ़ो_lock_irqsave(&ep->lock, flags);
+	read_lock_irqsave(&ep->lock, flags);
 
 	ep_set_busy_poll_napi_id(epi);
 
 	/*
-	 * If the event mask करोes not contain any poll(2) event, we consider the
+	 * If the event mask does not contain any poll(2) event, we consider the
 	 * descriptor to be disabled. This condition is likely the effect of the
 	 * EPOLLONESHOT bit that disables the descriptor when an event is received,
 	 * until the next EPOLL_CTL_MOD will be issued.
 	 */
-	अगर (!(epi->event.events & ~EP_PRIVATE_BITS))
-		जाओ out_unlock;
+	if (!(epi->event.events & ~EP_PRIVATE_BITS))
+		goto out_unlock;
 
 	/*
 	 * Check the events coming with the callback. At this stage, not
 	 * every device reports the events in the "key" parameter of the
-	 * callback. We need to be able to handle both हालs here, hence the
-	 * test क्रम "key" != शून्य beक्रमe the event match test.
+	 * callback. We need to be able to handle both cases here, hence the
+	 * test for "key" != NULL before the event match test.
 	 */
-	अगर (pollflags && !(pollflags & epi->event.events))
-		जाओ out_unlock;
+	if (pollflags && !(pollflags & epi->event.events))
+		goto out_unlock;
 
 	/*
 	 * If we are transferring events to userspace, we can hold no locks
 	 * (because we're accessing user memory, and because of linux f_op->poll()
-	 * semantics). All the events that happen during that period of समय are
+	 * semantics). All the events that happen during that period of time are
 	 * chained in ep->ovflist and requeued later on.
 	 */
-	अगर (READ_ONCE(ep->ovflist) != EP_UNACTIVE_PTR) अणु
-		अगर (chain_epi_lockless(epi))
+	if (READ_ONCE(ep->ovflist) != EP_UNACTIVE_PTR) {
+		if (chain_epi_lockless(epi))
 			ep_pm_stay_awake_rcu(epi);
-	पूर्ण अन्यथा अगर (!ep_is_linked(epi)) अणु
-		/* In the usual हाल, add event to पढ़ोy list. */
-		अगर (list_add_tail_lockless(&epi->rdllink, &ep->rdllist))
+	} else if (!ep_is_linked(epi)) {
+		/* In the usual case, add event to ready list. */
+		if (list_add_tail_lockless(&epi->rdllink, &ep->rdllist))
 			ep_pm_stay_awake_rcu(epi);
-	पूर्ण
+	}
 
 	/*
-	 * Wake up ( अगर active ) both the eventpoll रुको list and the ->poll()
-	 * रुको list.
+	 * Wake up ( if active ) both the eventpoll wait list and the ->poll()
+	 * wait list.
 	 */
-	अगर (रुकोqueue_active(&ep->wq)) अणु
-		अगर ((epi->event.events & EPOLLEXCLUSIVE) &&
-					!(pollflags & POLLFREE)) अणु
-			चयन (pollflags & EPOLLINOUT_BITS) अणु
-			हाल EPOLLIN:
-				अगर (epi->event.events & EPOLLIN)
+	if (waitqueue_active(&ep->wq)) {
+		if ((epi->event.events & EPOLLEXCLUSIVE) &&
+					!(pollflags & POLLFREE)) {
+			switch (pollflags & EPOLLINOUT_BITS) {
+			case EPOLLIN:
+				if (epi->event.events & EPOLLIN)
 					ewake = 1;
-				अवरोध;
-			हाल EPOLLOUT:
-				अगर (epi->event.events & EPOLLOUT)
+				break;
+			case EPOLLOUT:
+				if (epi->event.events & EPOLLOUT)
 					ewake = 1;
-				अवरोध;
-			हाल 0:
+				break;
+			case 0:
 				ewake = 1;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 		wake_up(&ep->wq);
-	पूर्ण
-	अगर (रुकोqueue_active(&ep->poll_रुको))
+	}
+	if (waitqueue_active(&ep->poll_wait))
 		pwake++;
 
 out_unlock:
-	पढ़ो_unlock_irqrestore(&ep->lock, flags);
+	read_unlock_irqrestore(&ep->lock, flags);
 
 	/* We have to call this outside the lock */
-	अगर (pwake)
+	if (pwake)
 		ep_poll_safewake(ep, epi);
 
-	अगर (!(epi->event.events & EPOLLEXCLUSIVE))
+	if (!(epi->event.events & EPOLLEXCLUSIVE))
 		ewake = 1;
 
-	अगर (pollflags & POLLFREE) अणु
+	if (pollflags & POLLFREE) {
 		/*
-		 * If we race with ep_हटाओ_रुको_queue() it can miss
-		 * ->whead = शून्य and करो another हटाओ_रुको_queue() after
-		 * us, so we can't use __हटाओ_रुको_queue().
+		 * If we race with ep_remove_wait_queue() it can miss
+		 * ->whead = NULL and do another remove_wait_queue() after
+		 * us, so we can't use __remove_wait_queue().
 		 */
-		list_del_init(&रुको->entry);
+		list_del_init(&wait->entry);
 		/*
-		 * ->whead != शून्य protects us from the race with ep_मुक्त()
-		 * or ep_हटाओ(), ep_हटाओ_रुको_queue() takes whead->lock
-		 * held by the caller. Once we nullअगरy it, nothing protects
-		 * ep/epi or even रुको.
+		 * ->whead != NULL protects us from the race with ep_free()
+		 * or ep_remove(), ep_remove_wait_queue() takes whead->lock
+		 * held by the caller. Once we nullify it, nothing protects
+		 * ep/epi or even wait.
 		 */
-		smp_store_release(&ep_pwq_from_रुको(रुको)->whead, शून्य);
-	पूर्ण
+		smp_store_release(&ep_pwq_from_wait(wait)->whead, NULL);
+	}
 
-	वापस ewake;
-पूर्ण
+	return ewake;
+}
 
 /*
- * This is the callback that is used to add our रुको queue to the
+ * This is the callback that is used to add our wait queue to the
  * target file wakeup lists.
  */
-अटल व्योम ep_ptable_queue_proc(काष्ठा file *file, रुको_queue_head_t *whead,
+static void ep_ptable_queue_proc(struct file *file, wait_queue_head_t *whead,
 				 poll_table *pt)
-अणु
-	काष्ठा ep_pqueue *epq = container_of(pt, काष्ठा ep_pqueue, pt);
-	काष्ठा epitem *epi = epq->epi;
-	काष्ठा eppoll_entry *pwq;
+{
+	struct ep_pqueue *epq = container_of(pt, struct ep_pqueue, pt);
+	struct epitem *epi = epq->epi;
+	struct eppoll_entry *pwq;
 
-	अगर (unlikely(!epi))	// an earlier allocation has failed
-		वापस;
+	if (unlikely(!epi))	// an earlier allocation has failed
+		return;
 
 	pwq = kmem_cache_alloc(pwq_cache, GFP_KERNEL);
-	अगर (unlikely(!pwq)) अणु
-		epq->epi = शून्य;
-		वापस;
-	पूर्ण
+	if (unlikely(!pwq)) {
+		epq->epi = NULL;
+		return;
+	}
 
-	init_रुकोqueue_func_entry(&pwq->रुको, ep_poll_callback);
+	init_waitqueue_func_entry(&pwq->wait, ep_poll_callback);
 	pwq->whead = whead;
 	pwq->base = epi;
-	अगर (epi->event.events & EPOLLEXCLUSIVE)
-		add_रुको_queue_exclusive(whead, &pwq->रुको);
-	अन्यथा
-		add_रुको_queue(whead, &pwq->रुको);
+	if (epi->event.events & EPOLLEXCLUSIVE)
+		add_wait_queue_exclusive(whead, &pwq->wait);
+	else
+		add_wait_queue(whead, &pwq->wait);
 	pwq->next = epi->pwqlist;
 	epi->pwqlist = pwq;
-पूर्ण
+}
 
-अटल व्योम ep_rbtree_insert(काष्ठा eventpoll *ep, काष्ठा epitem *epi)
-अणु
-	पूर्णांक kcmp;
-	काष्ठा rb_node **p = &ep->rbr.rb_root.rb_node, *parent = शून्य;
-	काष्ठा epitem *epic;
-	bool lefपंचांगost = true;
+static void ep_rbtree_insert(struct eventpoll *ep, struct epitem *epi)
+{
+	int kcmp;
+	struct rb_node **p = &ep->rbr.rb_root.rb_node, *parent = NULL;
+	struct epitem *epic;
+	bool leftmost = true;
 
-	जबतक (*p) अणु
+	while (*p) {
 		parent = *p;
-		epic = rb_entry(parent, काष्ठा epitem, rbn);
+		epic = rb_entry(parent, struct epitem, rbn);
 		kcmp = ep_cmp_ffd(&epi->ffd, &epic->ffd);
-		अगर (kcmp > 0) अणु
+		if (kcmp > 0) {
 			p = &parent->rb_right;
-			lefपंचांगost = false;
-		पूर्ण अन्यथा
+			leftmost = false;
+		} else
 			p = &parent->rb_left;
-	पूर्ण
+	}
 	rb_link_node(&epi->rbn, parent, p);
-	rb_insert_color_cached(&epi->rbn, &ep->rbr, lefपंचांगost);
-पूर्ण
+	rb_insert_color_cached(&epi->rbn, &ep->rbr, leftmost);
+}
 
 
 
-#घोषणा PATH_ARR_SIZE 5
+#define PATH_ARR_SIZE 5
 /*
  * These are the number paths of length 1 to 5, that we are allowing to emanate
- * from a single file of पूर्णांकerest. For example, we allow 1000 paths of length
- * 1, to emanate from each file of पूर्णांकerest. This essentially represents the
- * potential wakeup paths, which need to be limited in order to aव्योम massive
- * uncontrolled wakeup storms. The common use हाल should be a single ep which
- * is connected to n file sources. In this हाल each file source has 1 path
+ * from a single file of interest. For example, we allow 1000 paths of length
+ * 1, to emanate from each file of interest. This essentially represents the
+ * potential wakeup paths, which need to be limited in order to avoid massive
+ * uncontrolled wakeup storms. The common use case should be a single ep which
+ * is connected to n file sources. In this case each file source has 1 path
  * of length 1. Thus, the numbers below should be more than sufficient. These
- * path limits are enक्रमced during an EPOLL_CTL_ADD operation, since a modअगरy
+ * path limits are enforced during an EPOLL_CTL_ADD operation, since a modify
  * and delete can't add additional paths. Protected by the epmutex.
  */
-अटल स्थिर पूर्णांक path_limits[PATH_ARR_SIZE] = अणु 1000, 500, 100, 50, 10 पूर्ण;
-अटल पूर्णांक path_count[PATH_ARR_SIZE];
+static const int path_limits[PATH_ARR_SIZE] = { 1000, 500, 100, 50, 10 };
+static int path_count[PATH_ARR_SIZE];
 
-अटल पूर्णांक path_count_inc(पूर्णांक nests)
-अणु
+static int path_count_inc(int nests)
+{
 	/* Allow an arbitrary number of depth 1 paths */
-	अगर (nests == 0)
-		वापस 0;
+	if (nests == 0)
+		return 0;
 
-	अगर (++path_count[nests] > path_limits[nests])
-		वापस -1;
-	वापस 0;
-पूर्ण
+	if (++path_count[nests] > path_limits[nests])
+		return -1;
+	return 0;
+}
 
-अटल व्योम path_count_init(व्योम)
-अणु
-	पूर्णांक i;
+static void path_count_init(void)
+{
+	int i;
 
-	क्रम (i = 0; i < PATH_ARR_SIZE; i++)
+	for (i = 0; i < PATH_ARR_SIZE; i++)
 		path_count[i] = 0;
-पूर्ण
+}
 
-अटल पूर्णांक reverse_path_check_proc(काष्ठा hlist_head *refs, पूर्णांक depth)
-अणु
-	पूर्णांक error = 0;
-	काष्ठा epitem *epi;
+static int reverse_path_check_proc(struct hlist_head *refs, int depth)
+{
+	int error = 0;
+	struct epitem *epi;
 
-	अगर (depth > EP_MAX_NESTS) /* too deep nesting */
-		वापस -1;
+	if (depth > EP_MAX_NESTS) /* too deep nesting */
+		return -1;
 
-	/* CTL_DEL can हटाओ links here, but that can't increase our count */
-	hlist_क्रम_each_entry_rcu(epi, refs, fllink) अणु
-		काष्ठा hlist_head *refs = &epi->ep->refs;
-		अगर (hlist_empty(refs))
+	/* CTL_DEL can remove links here, but that can't increase our count */
+	hlist_for_each_entry_rcu(epi, refs, fllink) {
+		struct hlist_head *refs = &epi->ep->refs;
+		if (hlist_empty(refs))
 			error = path_count_inc(depth);
-		अन्यथा
+		else
 			error = reverse_path_check_proc(refs, depth + 1);
-		अगर (error != 0)
-			अवरोध;
-	पूर्ण
-	वापस error;
-पूर्ण
+		if (error != 0)
+			break;
+	}
+	return error;
+}
 
 /**
  * reverse_path_check - The tfile_check_list is list of epitem_head, which have
  *                      links that are proposed to be newly added. We need to
- *                      make sure that those added links करोn't add too many
- *                      paths such that we will spend all our समय waking up
+ *                      make sure that those added links don't add too many
+ *                      paths such that we will spend all our time waking up
  *                      eventpoll objects.
  *
- * Return: %zero अगर the proposed links करोn't create too many paths,
+ * Return: %zero if the proposed links don't create too many paths,
  *	    %-1 otherwise.
  */
-अटल पूर्णांक reverse_path_check(व्योम)
-अणु
-	काष्ठा epitems_head *p;
+static int reverse_path_check(void)
+{
+	struct epitems_head *p;
 
-	क्रम (p = tfile_check_list; p != EP_UNACTIVE_PTR; p = p->next) अणु
-		पूर्णांक error;
+	for (p = tfile_check_list; p != EP_UNACTIVE_PTR; p = p->next) {
+		int error;
 		path_count_init();
-		rcu_पढ़ो_lock();
+		rcu_read_lock();
 		error = reverse_path_check_proc(&p->epitems, 0);
-		rcu_पढ़ो_unlock();
-		अगर (error)
-			वापस error;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		rcu_read_unlock();
+		if (error)
+			return error;
+	}
+	return 0;
+}
 
-अटल पूर्णांक ep_create_wakeup_source(काष्ठा epitem *epi)
-अणु
-	काष्ठा name_snapshot n;
-	काष्ठा wakeup_source *ws;
+static int ep_create_wakeup_source(struct epitem *epi)
+{
+	struct name_snapshot n;
+	struct wakeup_source *ws;
 
-	अगर (!epi->ep->ws) अणु
-		epi->ep->ws = wakeup_source_रेजिस्टर(शून्य, "eventpoll");
-		अगर (!epi->ep->ws)
-			वापस -ENOMEM;
-	पूर्ण
+	if (!epi->ep->ws) {
+		epi->ep->ws = wakeup_source_register(NULL, "eventpoll");
+		if (!epi->ep->ws)
+			return -ENOMEM;
+	}
 
 	take_dentry_name_snapshot(&n, epi->ffd.file->f_path.dentry);
-	ws = wakeup_source_रेजिस्टर(शून्य, n.name.name);
+	ws = wakeup_source_register(NULL, n.name.name);
 	release_dentry_name_snapshot(&n);
 
-	अगर (!ws)
-		वापस -ENOMEM;
-	rcu_assign_poपूर्णांकer(epi->ws, ws);
+	if (!ws)
+		return -ENOMEM;
+	rcu_assign_pointer(epi->ws, ws);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* rare code path, only used when EPOLL_CTL_MOD हटाओs a wakeup source */
-अटल noअंतरभूत व्योम ep_destroy_wakeup_source(काष्ठा epitem *epi)
-अणु
-	काष्ठा wakeup_source *ws = ep_wakeup_source(epi);
+/* rare code path, only used when EPOLL_CTL_MOD removes a wakeup source */
+static noinline void ep_destroy_wakeup_source(struct epitem *epi)
+{
+	struct wakeup_source *ws = ep_wakeup_source(epi);
 
-	RCU_INIT_POINTER(epi->ws, शून्य);
+	RCU_INIT_POINTER(epi->ws, NULL);
 
 	/*
-	 * रुको क्रम ep_pm_stay_awake_rcu to finish, synchronize_rcu is
-	 * used पूर्णांकernally by wakeup_source_हटाओ, too (called by
-	 * wakeup_source_unरेजिस्टर), so we cannot use call_rcu
+	 * wait for ep_pm_stay_awake_rcu to finish, synchronize_rcu is
+	 * used internally by wakeup_source_remove, too (called by
+	 * wakeup_source_unregister), so we cannot use call_rcu
 	 */
 	synchronize_rcu();
-	wakeup_source_unरेजिस्टर(ws);
-पूर्ण
+	wakeup_source_unregister(ws);
+}
 
-अटल पूर्णांक attach_epitem(काष्ठा file *file, काष्ठा epitem *epi)
-अणु
-	काष्ठा epitems_head *to_मुक्त = शून्य;
-	काष्ठा hlist_head *head = शून्य;
-	काष्ठा eventpoll *ep = शून्य;
+static int attach_epitem(struct file *file, struct epitem *epi)
+{
+	struct epitems_head *to_free = NULL;
+	struct hlist_head *head = NULL;
+	struct eventpoll *ep = NULL;
 
-	अगर (is_file_epoll(file))
-		ep = file->निजी_data;
+	if (is_file_epoll(file))
+		ep = file->private_data;
 
-	अगर (ep) अणु
+	if (ep) {
 		head = &ep->refs;
-	पूर्ण अन्यथा अगर (!READ_ONCE(file->f_ep)) अणु
+	} else if (!READ_ONCE(file->f_ep)) {
 allocate:
-		to_मुक्त = kmem_cache_zalloc(ephead_cache, GFP_KERNEL);
-		अगर (!to_मुक्त)
-			वापस -ENOMEM;
-		head = &to_मुक्त->epitems;
-	पूर्ण
+		to_free = kmem_cache_zalloc(ephead_cache, GFP_KERNEL);
+		if (!to_free)
+			return -ENOMEM;
+		head = &to_free->epitems;
+	}
 	spin_lock(&file->f_lock);
-	अगर (!file->f_ep) अणु
-		अगर (unlikely(!head)) अणु
+	if (!file->f_ep) {
+		if (unlikely(!head)) {
 			spin_unlock(&file->f_lock);
-			जाओ allocate;
-		पूर्ण
+			goto allocate;
+		}
 		file->f_ep = head;
-		to_मुक्त = शून्य;
-	पूर्ण
+		to_free = NULL;
+	}
 	hlist_add_head_rcu(&epi->fllink, file->f_ep);
 	spin_unlock(&file->f_lock);
-	मुक्त_ephead(to_मुक्त);
-	वापस 0;
-पूर्ण
+	free_ephead(to_free);
+	return 0;
+}
 
 /*
  * Must be called with "mtx" held.
  */
-अटल पूर्णांक ep_insert(काष्ठा eventpoll *ep, स्थिर काष्ठा epoll_event *event,
-		     काष्ठा file *tfile, पूर्णांक fd, पूर्णांक full_check)
-अणु
-	पूर्णांक error, pwake = 0;
+static int ep_insert(struct eventpoll *ep, const struct epoll_event *event,
+		     struct file *tfile, int fd, int full_check)
+{
+	int error, pwake = 0;
 	__poll_t revents;
-	दीर्घ user_watches;
-	काष्ठा epitem *epi;
-	काष्ठा ep_pqueue epq;
-	काष्ठा eventpoll *tep = शून्य;
+	long user_watches;
+	struct epitem *epi;
+	struct ep_pqueue epq;
+	struct eventpoll *tep = NULL;
 
-	अगर (is_file_epoll(tfile))
-		tep = tfile->निजी_data;
+	if (is_file_epoll(tfile))
+		tep = tfile->private_data;
 
-	lockdep_निश्चित_irqs_enabled();
+	lockdep_assert_irqs_enabled();
 
-	user_watches = atomic_दीर्घ_पढ़ो(&ep->user->epoll_watches);
-	अगर (unlikely(user_watches >= max_user_watches))
-		वापस -ENOSPC;
-	अगर (!(epi = kmem_cache_zalloc(epi_cache, GFP_KERNEL)))
-		वापस -ENOMEM;
+	user_watches = atomic_long_read(&ep->user->epoll_watches);
+	if (unlikely(user_watches >= max_user_watches))
+		return -ENOSPC;
+	if (!(epi = kmem_cache_zalloc(epi_cache, GFP_KERNEL)))
+		return -ENOMEM;
 
 	/* Item initialization follow here ... */
 	INIT_LIST_HEAD(&epi->rdllink);
@@ -1463,42 +1462,42 @@ allocate:
 	epi->event = *event;
 	epi->next = EP_UNACTIVE_PTR;
 
-	अगर (tep)
+	if (tep)
 		mutex_lock_nested(&tep->mtx, 1);
-	/* Add the current item to the list of active epoll hook क्रम this file */
-	अगर (unlikely(attach_epitem(tfile, epi) < 0)) अणु
-		kmem_cache_मुक्त(epi_cache, epi);
-		अगर (tep)
+	/* Add the current item to the list of active epoll hook for this file */
+	if (unlikely(attach_epitem(tfile, epi) < 0)) {
+		kmem_cache_free(epi_cache, epi);
+		if (tep)
 			mutex_unlock(&tep->mtx);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	अगर (full_check && !tep)
+	if (full_check && !tep)
 		list_file(tfile);
 
-	atomic_दीर्घ_inc(&ep->user->epoll_watches);
+	atomic_long_inc(&ep->user->epoll_watches);
 
 	/*
 	 * Add the current item to the RB tree. All RB tree operations are
-	 * रक्षित by "mtx", and ep_insert() is called with "mtx" held.
+	 * protected by "mtx", and ep_insert() is called with "mtx" held.
 	 */
 	ep_rbtree_insert(ep, epi);
-	अगर (tep)
+	if (tep)
 		mutex_unlock(&tep->mtx);
 
-	/* now check अगर we've created too many backpaths */
-	अगर (unlikely(full_check && reverse_path_check())) अणु
-		ep_हटाओ(ep, epi);
-		वापस -EINVAL;
-	पूर्ण
+	/* now check if we've created too many backpaths */
+	if (unlikely(full_check && reverse_path_check())) {
+		ep_remove(ep, epi);
+		return -EINVAL;
+	}
 
-	अगर (epi->event.events & EPOLLWAKEUP) अणु
+	if (epi->event.events & EPOLLWAKEUP) {
 		error = ep_create_wakeup_source(epi);
-		अगर (error) अणु
-			ep_हटाओ(ep, epi);
-			वापस error;
-		पूर्ण
-	पूर्ण
+		if (error) {
+			ep_remove(ep, epi);
+			return error;
+		}
+	}
 
 	/* Initialize the poll table using the queue callback */
 	epq.epi = epi;
@@ -1514,153 +1513,153 @@ allocate:
 	revents = ep_item_poll(epi, &epq.pt, 1);
 
 	/*
-	 * We have to check अगर something went wrong during the poll रुको queue
-	 * install process. Namely an allocation क्रम a रुको queue failed due
+	 * We have to check if something went wrong during the poll wait queue
+	 * install process. Namely an allocation for a wait queue failed due
 	 * high memory pressure.
 	 */
-	अगर (unlikely(!epq.epi)) अणु
-		ep_हटाओ(ep, epi);
-		वापस -ENOMEM;
-	पूर्ण
+	if (unlikely(!epq.epi)) {
+		ep_remove(ep, epi);
+		return -ENOMEM;
+	}
 
 	/* We have to drop the new item inside our item list to keep track of it */
-	ग_लिखो_lock_irq(&ep->lock);
+	write_lock_irq(&ep->lock);
 
-	/* record NAPI ID of new item अगर present */
+	/* record NAPI ID of new item if present */
 	ep_set_busy_poll_napi_id(epi);
 
-	/* If the file is alपढ़ोy "ready" we drop it inside the पढ़ोy list */
-	अगर (revents && !ep_is_linked(epi)) अणु
+	/* If the file is already "ready" we drop it inside the ready list */
+	if (revents && !ep_is_linked(epi)) {
 		list_add_tail(&epi->rdllink, &ep->rdllist);
 		ep_pm_stay_awake(epi);
 
-		/* Notअगरy रुकोing tasks that events are available */
-		अगर (रुकोqueue_active(&ep->wq))
+		/* Notify waiting tasks that events are available */
+		if (waitqueue_active(&ep->wq))
 			wake_up(&ep->wq);
-		अगर (रुकोqueue_active(&ep->poll_रुको))
+		if (waitqueue_active(&ep->poll_wait))
 			pwake++;
-	पूर्ण
+	}
 
-	ग_लिखो_unlock_irq(&ep->lock);
+	write_unlock_irq(&ep->lock);
 
 	/* We have to call this outside the lock */
-	अगर (pwake)
-		ep_poll_safewake(ep, शून्य);
+	if (pwake)
+		ep_poll_safewake(ep, NULL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Modअगरy the पूर्णांकerest event mask by dropping an event अगर the new mask
+ * Modify the interest event mask by dropping an event if the new mask
  * has a match in the current file status. Must be called with "mtx" held.
  */
-अटल पूर्णांक ep_modअगरy(काष्ठा eventpoll *ep, काष्ठा epitem *epi,
-		     स्थिर काष्ठा epoll_event *event)
-अणु
-	पूर्णांक pwake = 0;
+static int ep_modify(struct eventpoll *ep, struct epitem *epi,
+		     const struct epoll_event *event)
+{
+	int pwake = 0;
 	poll_table pt;
 
-	lockdep_निश्चित_irqs_enabled();
+	lockdep_assert_irqs_enabled();
 
-	init_poll_funcptr(&pt, शून्य);
+	init_poll_funcptr(&pt, NULL);
 
 	/*
-	 * Set the new event पूर्णांकerest mask beक्रमe calling f_op->poll();
+	 * Set the new event interest mask before calling f_op->poll();
 	 * otherwise we might miss an event that happens between the
-	 * f_op->poll() call and the new event set रेजिस्टरing.
+	 * f_op->poll() call and the new event set registering.
 	 */
 	epi->event.events = event->events; /* need barrier below */
-	epi->event.data = event->data; /* रक्षित by mtx */
-	अगर (epi->event.events & EPOLLWAKEUP) अणु
-		अगर (!ep_has_wakeup_source(epi))
+	epi->event.data = event->data; /* protected by mtx */
+	if (epi->event.events & EPOLLWAKEUP) {
+		if (!ep_has_wakeup_source(epi))
 			ep_create_wakeup_source(epi);
-	पूर्ण अन्यथा अगर (ep_has_wakeup_source(epi)) अणु
+	} else if (ep_has_wakeup_source(epi)) {
 		ep_destroy_wakeup_source(epi);
-	पूर्ण
+	}
 
 	/*
 	 * The following barrier has two effects:
 	 *
 	 * 1) Flush epi changes above to other CPUs.  This ensures
-	 *    we करो not miss events from ep_poll_callback अगर an
+	 *    we do not miss events from ep_poll_callback if an
 	 *    event occurs immediately after we call f_op->poll().
-	 *    We need this because we did not take ep->lock जबतक
-	 *    changing epi above (but ep_poll_callback करोes take
+	 *    We need this because we did not take ep->lock while
+	 *    changing epi above (but ep_poll_callback does take
 	 *    ep->lock).
 	 *
-	 * 2) We also need to ensure we करो not miss _past_ events
+	 * 2) We also need to ensure we do not miss _past_ events
 	 *    when calling f_op->poll().  This barrier also
 	 *    pairs with the barrier in wq_has_sleeper (see
-	 *    comments क्रम wq_has_sleeper).
+	 *    comments for wq_has_sleeper).
 	 *
 	 * This barrier will now guarantee ep_poll_callback or f_op->poll
-	 * (or both) will notice the पढ़ोiness of an item.
+	 * (or both) will notice the readiness of an item.
 	 */
 	smp_mb();
 
 	/*
 	 * Get current event bits. We can safely use the file* here because
 	 * its usage count has been increased by the caller of this function.
-	 * If the item is "hot" and it is not रेजिस्टरed inside the पढ़ोy
+	 * If the item is "hot" and it is not registered inside the ready
 	 * list, push it inside.
 	 */
-	अगर (ep_item_poll(epi, &pt, 1)) अणु
-		ग_लिखो_lock_irq(&ep->lock);
-		अगर (!ep_is_linked(epi)) अणु
+	if (ep_item_poll(epi, &pt, 1)) {
+		write_lock_irq(&ep->lock);
+		if (!ep_is_linked(epi)) {
 			list_add_tail(&epi->rdllink, &ep->rdllist);
 			ep_pm_stay_awake(epi);
 
-			/* Notअगरy रुकोing tasks that events are available */
-			अगर (रुकोqueue_active(&ep->wq))
+			/* Notify waiting tasks that events are available */
+			if (waitqueue_active(&ep->wq))
 				wake_up(&ep->wq);
-			अगर (रुकोqueue_active(&ep->poll_रुको))
+			if (waitqueue_active(&ep->poll_wait))
 				pwake++;
-		पूर्ण
-		ग_लिखो_unlock_irq(&ep->lock);
-	पूर्ण
+		}
+		write_unlock_irq(&ep->lock);
+	}
 
 	/* We have to call this outside the lock */
-	अगर (pwake)
-		ep_poll_safewake(ep, शून्य);
+	if (pwake)
+		ep_poll_safewake(ep, NULL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ep_send_events(काष्ठा eventpoll *ep,
-			  काष्ठा epoll_event __user *events, पूर्णांक maxevents)
-अणु
-	काष्ठा epitem *epi, *पंचांगp;
+static int ep_send_events(struct eventpoll *ep,
+			  struct epoll_event __user *events, int maxevents)
+{
+	struct epitem *epi, *tmp;
 	LIST_HEAD(txlist);
 	poll_table pt;
-	पूर्णांक res = 0;
+	int res = 0;
 
 	/*
-	 * Always लघु-circuit क्रम fatal संकेतs to allow thपढ़ोs to make a
-	 * समयly निकास without the chance of finding more events available and
+	 * Always short-circuit for fatal signals to allow threads to make a
+	 * timely exit without the chance of finding more events available and
 	 * fetching repeatedly.
 	 */
-	अगर (fatal_संकेत_pending(current))
-		वापस -EINTR;
+	if (fatal_signal_pending(current))
+		return -EINTR;
 
-	init_poll_funcptr(&pt, शून्य);
+	init_poll_funcptr(&pt, NULL);
 
 	mutex_lock(&ep->mtx);
 	ep_start_scan(ep, &txlist);
 
 	/*
-	 * We can loop without lock because we are passed a task निजी list.
+	 * We can loop without lock because we are passed a task private list.
 	 * Items cannot vanish during the loop we are holding ep->mtx.
 	 */
-	list_क्रम_each_entry_safe(epi, पंचांगp, &txlist, rdllink) अणु
-		काष्ठा wakeup_source *ws;
+	list_for_each_entry_safe(epi, tmp, &txlist, rdllink) {
+		struct wakeup_source *ws;
 		__poll_t revents;
 
-		अगर (res >= maxevents)
-			अवरोध;
+		if (res >= maxevents)
+			break;
 
 		/*
-		 * Activate ep->ws beक्रमe deactivating epi->ws to prevent
-		 * triggering स्वतः-suspend here (in हाल we reactive epi->ws
+		 * Activate ep->ws before deactivating epi->ws to prevent
+		 * triggering auto-suspend here (in case we reactive epi->ws
 		 * below).
 		 *
 		 * This could be rearranged to delay the deactivation of epi->ws
@@ -1668,456 +1667,456 @@ allocate:
 		 * with ep_is_linked().
 		 */
 		ws = ep_wakeup_source(epi);
-		अगर (ws) अणु
-			अगर (ws->active)
+		if (ws) {
+			if (ws->active)
 				__pm_stay_awake(ep->ws);
 			__pm_relax(ws);
-		पूर्ण
+		}
 
 		list_del_init(&epi->rdllink);
 
 		/*
-		 * If the event mask पूर्णांकersect the caller-requested one,
+		 * If the event mask intersect the caller-requested one,
 		 * deliver the event to userspace. Again, we are holding ep->mtx,
 		 * so no operations coming from userspace can change the item.
 		 */
 		revents = ep_item_poll(epi, &pt, 1);
-		अगर (!revents)
-			जारी;
+		if (!revents)
+			continue;
 
-		अगर (__put_user(revents, &events->events) ||
-		    __put_user(epi->event.data, &events->data)) अणु
+		if (__put_user(revents, &events->events) ||
+		    __put_user(epi->event.data, &events->data)) {
 			list_add(&epi->rdllink, &txlist);
 			ep_pm_stay_awake(epi);
-			अगर (!res)
+			if (!res)
 				res = -EFAULT;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		res++;
 		events++;
-		अगर (epi->event.events & EPOLLONESHOT)
+		if (epi->event.events & EPOLLONESHOT)
 			epi->event.events &= EP_PRIVATE_BITS;
-		अन्यथा अगर (!(epi->event.events & EPOLLET)) अणु
+		else if (!(epi->event.events & EPOLLET)) {
 			/*
 			 * If this file has been added with Level
 			 * Trigger mode, we need to insert back inside
-			 * the पढ़ोy list, so that the next call to
-			 * epoll_रुको() will check again the events
-			 * availability. At this poपूर्णांक, no one can insert
-			 * पूर्णांकo ep->rdllist besides us. The epoll_ctl()
+			 * the ready list, so that the next call to
+			 * epoll_wait() will check again the events
+			 * availability. At this point, no one can insert
+			 * into ep->rdllist besides us. The epoll_ctl()
 			 * callers are locked out by
-			 * ep_scan_पढ़ोy_list() holding "mtx" and the
+			 * ep_scan_ready_list() holding "mtx" and the
 			 * poll callback will queue them in ep->ovflist.
 			 */
 			list_add_tail(&epi->rdllink, &ep->rdllist);
 			ep_pm_stay_awake(epi);
-		पूर्ण
-	पूर्ण
-	ep_करोne_scan(ep, &txlist);
+		}
+	}
+	ep_done_scan(ep, &txlist);
 	mutex_unlock(&ep->mtx);
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल काष्ठा बारpec64 *ep_समयout_to_बारpec(काष्ठा बारpec64 *to, दीर्घ ms)
-अणु
-	काष्ठा बारpec64 now;
+static struct timespec64 *ep_timeout_to_timespec(struct timespec64 *to, long ms)
+{
+	struct timespec64 now;
 
-	अगर (ms < 0)
-		वापस शून्य;
+	if (ms < 0)
+		return NULL;
 
-	अगर (!ms) अणु
+	if (!ms) {
 		to->tv_sec = 0;
 		to->tv_nsec = 0;
-		वापस to;
-	पूर्ण
+		return to;
+	}
 
 	to->tv_sec = ms / MSEC_PER_SEC;
 	to->tv_nsec = NSEC_PER_MSEC * (ms % MSEC_PER_SEC);
 
-	kसमय_get_ts64(&now);
-	*to = बारpec64_add_safe(now, *to);
-	वापस to;
-पूर्ण
+	ktime_get_ts64(&now);
+	*to = timespec64_add_safe(now, *to);
+	return to;
+}
 
 /**
- * ep_poll - Retrieves पढ़ोy events, and delivers them to the caller-supplied
+ * ep_poll - Retrieves ready events, and delivers them to the caller-supplied
  *           event buffer.
  *
- * @ep: Poपूर्णांकer to the eventpoll context.
- * @events: Poपूर्णांकer to the userspace buffer where the पढ़ोy events should be
+ * @ep: Pointer to the eventpoll context.
+ * @events: Pointer to the userspace buffer where the ready events should be
  *          stored.
  * @maxevents: Size (in terms of number of events) of the caller event buffer.
- * @समयout: Maximum समयout क्रम the पढ़ोy events fetch operation, in
- *           बारpec. If the समयout is zero, the function will not block,
- *           जबतक अगर the @समयout ptr is शून्य, the function will block
+ * @timeout: Maximum timeout for the ready events fetch operation, in
+ *           timespec. If the timeout is zero, the function will not block,
+ *           while if the @timeout ptr is NULL, the function will block
  *           until at least one event has been retrieved (or an error
  *           occurred).
  *
- * Return: the number of पढ़ोy events which have been fetched, or an
- *          error code, in हाल of error.
+ * Return: the number of ready events which have been fetched, or an
+ *          error code, in case of error.
  */
-अटल पूर्णांक ep_poll(काष्ठा eventpoll *ep, काष्ठा epoll_event __user *events,
-		   पूर्णांक maxevents, काष्ठा बारpec64 *समयout)
-अणु
-	पूर्णांक res, eavail, समयd_out = 0;
+static int ep_poll(struct eventpoll *ep, struct epoll_event __user *events,
+		   int maxevents, struct timespec64 *timeout)
+{
+	int res, eavail, timed_out = 0;
 	u64 slack = 0;
-	रुको_queue_entry_t रुको;
-	kसमय_प्रकार expires, *to = शून्य;
+	wait_queue_entry_t wait;
+	ktime_t expires, *to = NULL;
 
-	lockdep_निश्चित_irqs_enabled();
+	lockdep_assert_irqs_enabled();
 
-	अगर (समयout && (समयout->tv_sec | समयout->tv_nsec)) अणु
-		slack = select_estimate_accuracy(समयout);
+	if (timeout && (timeout->tv_sec | timeout->tv_nsec)) {
+		slack = select_estimate_accuracy(timeout);
 		to = &expires;
-		*to = बारpec64_to_kसमय(*समयout);
-	पूर्ण अन्यथा अगर (समयout) अणु
+		*to = timespec64_to_ktime(*timeout);
+	} else if (timeout) {
 		/*
-		 * Aव्योम the unnecessary trip to the रुको queue loop, अगर the
-		 * caller specअगरied a non blocking operation.
+		 * Avoid the unnecessary trip to the wait queue loop, if the
+		 * caller specified a non blocking operation.
 		 */
-		समयd_out = 1;
-	पूर्ण
+		timed_out = 1;
+	}
 
 	/*
 	 * This call is racy: We may or may not see events that are being added
-	 * to the पढ़ोy list under the lock (e.g., in IRQ callbacks). For हालs
-	 * with a non-zero समयout, this thपढ़ो will check the पढ़ोy list under
-	 * lock and will add to the रुको queue.  For हालs with a zero
-	 * समयout, the user by definition should not care and will have to
+	 * to the ready list under the lock (e.g., in IRQ callbacks). For cases
+	 * with a non-zero timeout, this thread will check the ready list under
+	 * lock and will add to the wait queue.  For cases with a zero
+	 * timeout, the user by definition should not care and will have to
 	 * recheck again.
 	 */
 	eavail = ep_events_available(ep);
 
-	जबतक (1) अणु
-		अगर (eavail) अणु
+	while (1) {
+		if (eavail) {
 			/*
-			 * Try to transfer events to user space. In हाल we get
-			 * 0 events and there's still समयout left over, we go
+			 * Try to transfer events to user space. In case we get
+			 * 0 events and there's still timeout left over, we go
 			 * trying again in search of more luck.
 			 */
 			res = ep_send_events(ep, events, maxevents);
-			अगर (res)
-				वापस res;
-		पूर्ण
+			if (res)
+				return res;
+		}
 
-		अगर (समयd_out)
-			वापस 0;
+		if (timed_out)
+			return 0;
 
-		eavail = ep_busy_loop(ep, समयd_out);
-		अगर (eavail)
-			जारी;
+		eavail = ep_busy_loop(ep, timed_out);
+		if (eavail)
+			continue;
 
-		अगर (संकेत_pending(current))
-			वापस -EINTR;
+		if (signal_pending(current))
+			return -EINTR;
 
 		/*
-		 * Internally init_रुको() uses स्वतःहटाओ_wake_function(),
-		 * thus रुको entry is हटाओd from the रुको queue on each
-		 * wakeup. Why it is important? In हाल of several रुकोers
-		 * each new wakeup will hit the next रुकोer, giving it the
+		 * Internally init_wait() uses autoremove_wake_function(),
+		 * thus wait entry is removed from the wait queue on each
+		 * wakeup. Why it is important? In case of several waiters
+		 * each new wakeup will hit the next waiter, giving it the
 		 * chance to harvest new event. Otherwise wakeup can be
-		 * lost. This is also good perक्रमmance-wise, because on
-		 * normal wakeup path no need to call __हटाओ_रुको_queue()
+		 * lost. This is also good performance-wise, because on
+		 * normal wakeup path no need to call __remove_wait_queue()
 		 * explicitly, thus ep->lock is not taken, which halts the
 		 * event delivery.
 		 */
-		init_रुको(&रुको);
+		init_wait(&wait);
 
-		ग_लिखो_lock_irq(&ep->lock);
+		write_lock_irq(&ep->lock);
 		/*
-		 * Barrierless variant, रुकोqueue_active() is called under
+		 * Barrierless variant, waitqueue_active() is called under
 		 * the same lock on wakeup ep_poll_callback() side, so it
-		 * is safe to aव्योम an explicit barrier.
+		 * is safe to avoid an explicit barrier.
 		 */
 		__set_current_state(TASK_INTERRUPTIBLE);
 
 		/*
-		 * Do the final check under the lock. ep_scan_पढ़ोy_list()
+		 * Do the final check under the lock. ep_scan_ready_list()
 		 * plays with two lists (->rdllist and ->ovflist) and there
-		 * is always a race when both lists are empty क्रम लघु
-		 * period of समय although events are pending, so lock is
+		 * is always a race when both lists are empty for short
+		 * period of time although events are pending, so lock is
 		 * important.
 		 */
 		eavail = ep_events_available(ep);
-		अगर (!eavail)
-			__add_रुको_queue_exclusive(&ep->wq, &रुको);
+		if (!eavail)
+			__add_wait_queue_exclusive(&ep->wq, &wait);
 
-		ग_लिखो_unlock_irq(&ep->lock);
+		write_unlock_irq(&ep->lock);
 
-		अगर (!eavail)
-			समयd_out = !schedule_hrसमयout_range(to, slack,
+		if (!eavail)
+			timed_out = !schedule_hrtimeout_range(to, slack,
 							      HRTIMER_MODE_ABS);
 		__set_current_state(TASK_RUNNING);
 
 		/*
 		 * We were woken up, thus go and try to harvest some events.
-		 * If समयd out and still on the रुको queue, recheck eavail
+		 * If timed out and still on the wait queue, recheck eavail
 		 * carefully under lock, below.
 		 */
 		eavail = 1;
 
-		अगर (!list_empty_careful(&रुको.entry)) अणु
-			ग_लिखो_lock_irq(&ep->lock);
+		if (!list_empty_careful(&wait.entry)) {
+			write_lock_irq(&ep->lock);
 			/*
-			 * If the thपढ़ो समयd out and is not on the रुको queue,
-			 * it means that the thपढ़ो was woken up after its
-			 * समयout expired beक्रमe it could reacquire the lock.
-			 * Thus, when रुको.entry is empty, it needs to harvest
+			 * If the thread timed out and is not on the wait queue,
+			 * it means that the thread was woken up after its
+			 * timeout expired before it could reacquire the lock.
+			 * Thus, when wait.entry is empty, it needs to harvest
 			 * events.
 			 */
-			अगर (समयd_out)
-				eavail = list_empty(&रुको.entry);
-			__हटाओ_रुको_queue(&ep->wq, &रुको);
-			ग_लिखो_unlock_irq(&ep->lock);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			if (timed_out)
+				eavail = list_empty(&wait.entry);
+			__remove_wait_queue(&ep->wq, &wait);
+			write_unlock_irq(&ep->lock);
+		}
+	}
+}
 
 /**
- * ep_loop_check_proc - verअगरy that adding an epoll file inside another
- *                      epoll काष्ठाure करोes not violate the स्थिरraपूर्णांकs, in
- *                      terms of बंदd loops, or too deep chains (which can
+ * ep_loop_check_proc - verify that adding an epoll file inside another
+ *                      epoll structure does not violate the constraints, in
+ *                      terms of closed loops, or too deep chains (which can
  *                      result in excessive stack usage).
  *
- * @ep: the &काष्ठा eventpoll to be currently checked.
+ * @ep: the &struct eventpoll to be currently checked.
  * @depth: Current depth of the path being checked.
  *
- * Return: %zero अगर adding the epoll @file inside current epoll
- *          काष्ठाure @ep करोes not violate the स्थिरraपूर्णांकs, or %-1 otherwise.
+ * Return: %zero if adding the epoll @file inside current epoll
+ *          structure @ep does not violate the constraints, or %-1 otherwise.
  */
-अटल पूर्णांक ep_loop_check_proc(काष्ठा eventpoll *ep, पूर्णांक depth)
-अणु
-	पूर्णांक error = 0;
-	काष्ठा rb_node *rbp;
-	काष्ठा epitem *epi;
+static int ep_loop_check_proc(struct eventpoll *ep, int depth)
+{
+	int error = 0;
+	struct rb_node *rbp;
+	struct epitem *epi;
 
 	mutex_lock_nested(&ep->mtx, depth + 1);
 	ep->gen = loop_check_gen;
-	क्रम (rbp = rb_first_cached(&ep->rbr); rbp; rbp = rb_next(rbp)) अणु
-		epi = rb_entry(rbp, काष्ठा epitem, rbn);
-		अगर (unlikely(is_file_epoll(epi->ffd.file))) अणु
-			काष्ठा eventpoll *ep_tovisit;
-			ep_tovisit = epi->ffd.file->निजी_data;
-			अगर (ep_tovisit->gen == loop_check_gen)
-				जारी;
-			अगर (ep_tovisit == inserting_पूर्णांकo || depth > EP_MAX_NESTS)
+	for (rbp = rb_first_cached(&ep->rbr); rbp; rbp = rb_next(rbp)) {
+		epi = rb_entry(rbp, struct epitem, rbn);
+		if (unlikely(is_file_epoll(epi->ffd.file))) {
+			struct eventpoll *ep_tovisit;
+			ep_tovisit = epi->ffd.file->private_data;
+			if (ep_tovisit->gen == loop_check_gen)
+				continue;
+			if (ep_tovisit == inserting_into || depth > EP_MAX_NESTS)
 				error = -1;
-			अन्यथा
+			else
 				error = ep_loop_check_proc(ep_tovisit, depth + 1);
-			अगर (error != 0)
-				अवरोध;
-		पूर्ण अन्यथा अणु
+			if (error != 0)
+				break;
+		} else {
 			/*
 			 * If we've reached a file that is not associated with
-			 * an ep, then we need to check अगर the newly added
-			 * links are going to add too many wakeup paths. We करो
-			 * this by adding it to the tfile_check_list, अगर it's
-			 * not alपढ़ोy there, and calling reverse_path_check()
+			 * an ep, then we need to check if the newly added
+			 * links are going to add too many wakeup paths. We do
+			 * this by adding it to the tfile_check_list, if it's
+			 * not already there, and calling reverse_path_check()
 			 * during ep_insert().
 			 */
 			list_file(epi->ffd.file);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	mutex_unlock(&ep->mtx);
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /**
- * ep_loop_check - Perक्रमms a check to verअगरy that adding an epoll file (@to)
- *                 पूर्णांकo another epoll file (represented by @ep) करोes not create
- *                 बंदd loops or too deep chains.
+ * ep_loop_check - Performs a check to verify that adding an epoll file (@to)
+ *                 into another epoll file (represented by @ep) does not create
+ *                 closed loops or too deep chains.
  *
- * @ep: Poपूर्णांकer to the epoll we are inserting पूर्णांकo.
- * @to: Poपूर्णांकer to the epoll to be inserted.
+ * @ep: Pointer to the epoll we are inserting into.
+ * @to: Pointer to the epoll to be inserted.
  *
- * Return: %zero अगर adding the epoll @to inside the epoll @from
- * करोes not violate the स्थिरraपूर्णांकs, or %-1 otherwise.
+ * Return: %zero if adding the epoll @to inside the epoll @from
+ * does not violate the constraints, or %-1 otherwise.
  */
-अटल पूर्णांक ep_loop_check(काष्ठा eventpoll *ep, काष्ठा eventpoll *to)
-अणु
-	inserting_पूर्णांकo = ep;
-	वापस ep_loop_check_proc(to, 0);
-पूर्ण
+static int ep_loop_check(struct eventpoll *ep, struct eventpoll *to)
+{
+	inserting_into = ep;
+	return ep_loop_check_proc(to, 0);
+}
 
-अटल व्योम clear_tfile_check_list(व्योम)
-अणु
-	rcu_पढ़ो_lock();
-	जबतक (tfile_check_list != EP_UNACTIVE_PTR) अणु
-		काष्ठा epitems_head *head = tfile_check_list;
+static void clear_tfile_check_list(void)
+{
+	rcu_read_lock();
+	while (tfile_check_list != EP_UNACTIVE_PTR) {
+		struct epitems_head *head = tfile_check_list;
 		tfile_check_list = head->next;
 		unlist_file(head);
-	पूर्ण
-	rcu_पढ़ो_unlock();
-पूर्ण
+	}
+	rcu_read_unlock();
+}
 
 /*
  * Open an eventpoll file descriptor.
  */
-अटल पूर्णांक करो_epoll_create(पूर्णांक flags)
-अणु
-	पूर्णांक error, fd;
-	काष्ठा eventpoll *ep = शून्य;
-	काष्ठा file *file;
+static int do_epoll_create(int flags)
+{
+	int error, fd;
+	struct eventpoll *ep = NULL;
+	struct file *file;
 
-	/* Check the EPOLL_* स्थिरant क्रम consistency.  */
+	/* Check the EPOLL_* constant for consistency.  */
 	BUILD_BUG_ON(EPOLL_CLOEXEC != O_CLOEXEC);
 
-	अगर (flags & ~EPOLL_CLOEXEC)
-		वापस -EINVAL;
+	if (flags & ~EPOLL_CLOEXEC)
+		return -EINVAL;
 	/*
-	 * Create the पूर्णांकernal data काष्ठाure ("struct eventpoll").
+	 * Create the internal data structure ("struct eventpoll").
 	 */
 	error = ep_alloc(&ep);
-	अगर (error < 0)
-		वापस error;
+	if (error < 0)
+		return error;
 	/*
 	 * Creates all the items needed to setup an eventpoll file. That is,
-	 * a file काष्ठाure and a मुक्त file descriptor.
+	 * a file structure and a free file descriptor.
 	 */
 	fd = get_unused_fd_flags(O_RDWR | (flags & O_CLOEXEC));
-	अगर (fd < 0) अणु
+	if (fd < 0) {
 		error = fd;
-		जाओ out_मुक्त_ep;
-	पूर्ण
+		goto out_free_ep;
+	}
 	file = anon_inode_getfile("[eventpoll]", &eventpoll_fops, ep,
 				 O_RDWR | (flags & O_CLOEXEC));
-	अगर (IS_ERR(file)) अणु
+	if (IS_ERR(file)) {
 		error = PTR_ERR(file);
-		जाओ out_मुक्त_fd;
-	पूर्ण
+		goto out_free_fd;
+	}
 	ep->file = file;
 	fd_install(fd, file);
-	वापस fd;
+	return fd;
 
-out_मुक्त_fd:
+out_free_fd:
 	put_unused_fd(fd);
-out_मुक्त_ep:
-	ep_मुक्त(ep);
-	वापस error;
-पूर्ण
+out_free_ep:
+	ep_free(ep);
+	return error;
+}
 
-SYSCALL_DEFINE1(epoll_create1, पूर्णांक, flags)
-अणु
-	वापस करो_epoll_create(flags);
-पूर्ण
+SYSCALL_DEFINE1(epoll_create1, int, flags)
+{
+	return do_epoll_create(flags);
+}
 
-SYSCALL_DEFINE1(epoll_create, पूर्णांक, size)
-अणु
-	अगर (size <= 0)
-		वापस -EINVAL;
+SYSCALL_DEFINE1(epoll_create, int, size)
+{
+	if (size <= 0)
+		return -EINVAL;
 
-	वापस करो_epoll_create(0);
-पूर्ण
+	return do_epoll_create(0);
+}
 
-अटल अंतरभूत पूर्णांक epoll_mutex_lock(काष्ठा mutex *mutex, पूर्णांक depth,
+static inline int epoll_mutex_lock(struct mutex *mutex, int depth,
 				   bool nonblock)
-अणु
-	अगर (!nonblock) अणु
+{
+	if (!nonblock) {
 		mutex_lock_nested(mutex, depth);
-		वापस 0;
-	पूर्ण
-	अगर (mutex_trylock(mutex))
-		वापस 0;
-	वापस -EAGAIN;
-पूर्ण
+		return 0;
+	}
+	if (mutex_trylock(mutex))
+		return 0;
+	return -EAGAIN;
+}
 
-पूर्णांक करो_epoll_ctl(पूर्णांक epfd, पूर्णांक op, पूर्णांक fd, काष्ठा epoll_event *epds,
+int do_epoll_ctl(int epfd, int op, int fd, struct epoll_event *epds,
 		 bool nonblock)
-अणु
-	पूर्णांक error;
-	पूर्णांक full_check = 0;
-	काष्ठा fd f, tf;
-	काष्ठा eventpoll *ep;
-	काष्ठा epitem *epi;
-	काष्ठा eventpoll *tep = शून्य;
+{
+	int error;
+	int full_check = 0;
+	struct fd f, tf;
+	struct eventpoll *ep;
+	struct epitem *epi;
+	struct eventpoll *tep = NULL;
 
 	error = -EBADF;
 	f = fdget(epfd);
-	अगर (!f.file)
-		जाओ error_वापस;
+	if (!f.file)
+		goto error_return;
 
-	/* Get the "struct file *" क्रम the target file */
+	/* Get the "struct file *" for the target file */
 	tf = fdget(fd);
-	अगर (!tf.file)
-		जाओ error_fput;
+	if (!tf.file)
+		goto error_fput;
 
 	/* The target file descriptor must support poll */
 	error = -EPERM;
-	अगर (!file_can_poll(tf.file))
-		जाओ error_tgt_fput;
+	if (!file_can_poll(tf.file))
+		goto error_tgt_fput;
 
-	/* Check अगर EPOLLWAKEUP is allowed */
-	अगर (ep_op_has_event(op))
+	/* Check if EPOLLWAKEUP is allowed */
+	if (ep_op_has_event(op))
 		ep_take_care_of_epollwakeup(epds);
 
 	/*
-	 * We have to check that the file काष्ठाure underneath the file descriptor
-	 * the user passed to us _is_ an eventpoll file. And also we करो not permit
+	 * We have to check that the file structure underneath the file descriptor
+	 * the user passed to us _is_ an eventpoll file. And also we do not permit
 	 * adding an epoll file descriptor inside itself.
 	 */
 	error = -EINVAL;
-	अगर (f.file == tf.file || !is_file_epoll(f.file))
-		जाओ error_tgt_fput;
+	if (f.file == tf.file || !is_file_epoll(f.file))
+		goto error_tgt_fput;
 
 	/*
-	 * epoll adds to the wakeup queue at EPOLL_CTL_ADD समय only,
-	 * so EPOLLEXCLUSIVE is not allowed क्रम a EPOLL_CTL_MOD operation.
-	 * Also, we करो not currently supported nested exclusive wakeups.
+	 * epoll adds to the wakeup queue at EPOLL_CTL_ADD time only,
+	 * so EPOLLEXCLUSIVE is not allowed for a EPOLL_CTL_MOD operation.
+	 * Also, we do not currently supported nested exclusive wakeups.
 	 */
-	अगर (ep_op_has_event(op) && (epds->events & EPOLLEXCLUSIVE)) अणु
-		अगर (op == EPOLL_CTL_MOD)
-			जाओ error_tgt_fput;
-		अगर (op == EPOLL_CTL_ADD && (is_file_epoll(tf.file) ||
+	if (ep_op_has_event(op) && (epds->events & EPOLLEXCLUSIVE)) {
+		if (op == EPOLL_CTL_MOD)
+			goto error_tgt_fput;
+		if (op == EPOLL_CTL_ADD && (is_file_epoll(tf.file) ||
 				(epds->events & ~EPOLLEXCLUSIVE_OK_BITS)))
-			जाओ error_tgt_fput;
-	पूर्ण
+			goto error_tgt_fput;
+	}
 
 	/*
-	 * At this poपूर्णांक it is safe to assume that the "private_data" contains
-	 * our own data काष्ठाure.
+	 * At this point it is safe to assume that the "private_data" contains
+	 * our own data structure.
 	 */
-	ep = f.file->निजी_data;
+	ep = f.file->private_data;
 
 	/*
 	 * When we insert an epoll file descriptor inside another epoll file
-	 * descriptor, there is the chance of creating बंदd loops, which are
+	 * descriptor, there is the chance of creating closed loops, which are
 	 * better be handled here, than in more critical paths. While we are
-	 * checking क्रम loops we also determine the list of files reachable
+	 * checking for loops we also determine the list of files reachable
 	 * and hang them on the tfile_check_list, so we can check that we
 	 * haven't created too many possible wakeup paths.
 	 *
-	 * We करो not need to take the global 'epumutex' on EPOLL_CTL_ADD when
+	 * We do not need to take the global 'epumutex' on EPOLL_CTL_ADD when
 	 * the epoll file descriptor is attaching directly to a wakeup source,
 	 * unless the epoll file descriptor is nested. The purpose of taking the
 	 * 'epmutex' on add is to prevent complex toplogies such as loops and
-	 * deep wakeup paths from क्रमming in parallel through multiple
+	 * deep wakeup paths from forming in parallel through multiple
 	 * EPOLL_CTL_ADD operations.
 	 */
 	error = epoll_mutex_lock(&ep->mtx, 0, nonblock);
-	अगर (error)
-		जाओ error_tgt_fput;
-	अगर (op == EPOLL_CTL_ADD) अणु
-		अगर (READ_ONCE(f.file->f_ep) || ep->gen == loop_check_gen ||
-		    is_file_epoll(tf.file)) अणु
+	if (error)
+		goto error_tgt_fput;
+	if (op == EPOLL_CTL_ADD) {
+		if (READ_ONCE(f.file->f_ep) || ep->gen == loop_check_gen ||
+		    is_file_epoll(tf.file)) {
 			mutex_unlock(&ep->mtx);
 			error = epoll_mutex_lock(&epmutex, 0, nonblock);
-			अगर (error)
-				जाओ error_tgt_fput;
+			if (error)
+				goto error_tgt_fput;
 			loop_check_gen++;
 			full_check = 1;
-			अगर (is_file_epoll(tf.file)) अणु
-				tep = tf.file->निजी_data;
+			if (is_file_epoll(tf.file)) {
+				tep = tf.file->private_data;
 				error = -ELOOP;
-				अगर (ep_loop_check(ep, tep) != 0)
-					जाओ error_tgt_fput;
-			पूर्ण
+				if (ep_loop_check(ep, tep) != 0)
+					goto error_tgt_fput;
+			}
 			error = epoll_mutex_lock(&ep->mtx, 0, nonblock);
-			अगर (error)
-				जाओ error_tgt_fput;
-		पूर्ण
-	पूर्ण
+			if (error)
+				goto error_tgt_fput;
+		}
+	}
 
 	/*
 	 * Try to lookup the file inside our RB tree. Since we grabbed "mtx"
@@ -2127,239 +2126,239 @@ SYSCALL_DEFINE1(epoll_create, पूर्णांक, size)
 	epi = ep_find(ep, tf.file, fd);
 
 	error = -EINVAL;
-	चयन (op) अणु
-	हाल EPOLL_CTL_ADD:
-		अगर (!epi) अणु
+	switch (op) {
+	case EPOLL_CTL_ADD:
+		if (!epi) {
 			epds->events |= EPOLLERR | EPOLLHUP;
 			error = ep_insert(ep, epds, tf.file, fd, full_check);
-		पूर्ण अन्यथा
+		} else
 			error = -EEXIST;
-		अवरोध;
-	हाल EPOLL_CTL_DEL:
-		अगर (epi)
-			error = ep_हटाओ(ep, epi);
-		अन्यथा
+		break;
+	case EPOLL_CTL_DEL:
+		if (epi)
+			error = ep_remove(ep, epi);
+		else
 			error = -ENOENT;
-		अवरोध;
-	हाल EPOLL_CTL_MOD:
-		अगर (epi) अणु
-			अगर (!(epi->event.events & EPOLLEXCLUSIVE)) अणु
+		break;
+	case EPOLL_CTL_MOD:
+		if (epi) {
+			if (!(epi->event.events & EPOLLEXCLUSIVE)) {
 				epds->events |= EPOLLERR | EPOLLHUP;
-				error = ep_modअगरy(ep, epi, epds);
-			पूर्ण
-		पूर्ण अन्यथा
+				error = ep_modify(ep, epi, epds);
+			}
+		} else
 			error = -ENOENT;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	mutex_unlock(&ep->mtx);
 
 error_tgt_fput:
-	अगर (full_check) अणु
+	if (full_check) {
 		clear_tfile_check_list();
 		loop_check_gen++;
 		mutex_unlock(&epmutex);
-	पूर्ण
+	}
 
 	fdput(tf);
 error_fput:
 	fdput(f);
-error_वापस:
+error_return:
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /*
- * The following function implements the controller पूर्णांकerface क्रम
+ * The following function implements the controller interface for
  * the eventpoll file that enables the insertion/removal/change of
- * file descriptors inside the पूर्णांकerest set.
+ * file descriptors inside the interest set.
  */
-SYSCALL_DEFINE4(epoll_ctl, पूर्णांक, epfd, पूर्णांक, op, पूर्णांक, fd,
-		काष्ठा epoll_event __user *, event)
-अणु
-	काष्ठा epoll_event epds;
+SYSCALL_DEFINE4(epoll_ctl, int, epfd, int, op, int, fd,
+		struct epoll_event __user *, event)
+{
+	struct epoll_event epds;
 
-	अगर (ep_op_has_event(op) &&
-	    copy_from_user(&epds, event, माप(काष्ठा epoll_event)))
-		वापस -EFAULT;
+	if (ep_op_has_event(op) &&
+	    copy_from_user(&epds, event, sizeof(struct epoll_event)))
+		return -EFAULT;
 
-	वापस करो_epoll_ctl(epfd, op, fd, &epds, false);
-पूर्ण
+	return do_epoll_ctl(epfd, op, fd, &epds, false);
+}
 
 /*
- * Implement the event रुको पूर्णांकerface क्रम the eventpoll file. It is the kernel
- * part of the user space epoll_रुको(2).
+ * Implement the event wait interface for the eventpoll file. It is the kernel
+ * part of the user space epoll_wait(2).
  */
-अटल पूर्णांक करो_epoll_रुको(पूर्णांक epfd, काष्ठा epoll_event __user *events,
-			 पूर्णांक maxevents, काष्ठा बारpec64 *to)
-अणु
-	पूर्णांक error;
-	काष्ठा fd f;
-	काष्ठा eventpoll *ep;
+static int do_epoll_wait(int epfd, struct epoll_event __user *events,
+			 int maxevents, struct timespec64 *to)
+{
+	int error;
+	struct fd f;
+	struct eventpoll *ep;
 
 	/* The maximum number of event must be greater than zero */
-	अगर (maxevents <= 0 || maxevents > EP_MAX_EVENTS)
-		वापस -EINVAL;
+	if (maxevents <= 0 || maxevents > EP_MAX_EVENTS)
+		return -EINVAL;
 
-	/* Verअगरy that the area passed by the user is ग_लिखोable */
-	अगर (!access_ok(events, maxevents * माप(काष्ठा epoll_event)))
-		वापस -EFAULT;
+	/* Verify that the area passed by the user is writeable */
+	if (!access_ok(events, maxevents * sizeof(struct epoll_event)))
+		return -EFAULT;
 
-	/* Get the "struct file *" क्रम the eventpoll file */
+	/* Get the "struct file *" for the eventpoll file */
 	f = fdget(epfd);
-	अगर (!f.file)
-		वापस -EBADF;
+	if (!f.file)
+		return -EBADF;
 
 	/*
-	 * We have to check that the file काष्ठाure underneath the fd
+	 * We have to check that the file structure underneath the fd
 	 * the user passed to us _is_ an eventpoll file.
 	 */
 	error = -EINVAL;
-	अगर (!is_file_epoll(f.file))
-		जाओ error_fput;
+	if (!is_file_epoll(f.file))
+		goto error_fput;
 
 	/*
-	 * At this poपूर्णांक it is safe to assume that the "private_data" contains
-	 * our own data काष्ठाure.
+	 * At this point it is safe to assume that the "private_data" contains
+	 * our own data structure.
 	 */
-	ep = f.file->निजी_data;
+	ep = f.file->private_data;
 
-	/* Time to fish क्रम events ... */
+	/* Time to fish for events ... */
 	error = ep_poll(ep, events, maxevents, to);
 
 error_fput:
 	fdput(f);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-SYSCALL_DEFINE4(epoll_रुको, पूर्णांक, epfd, काष्ठा epoll_event __user *, events,
-		पूर्णांक, maxevents, पूर्णांक, समयout)
-अणु
-	काष्ठा बारpec64 to;
+SYSCALL_DEFINE4(epoll_wait, int, epfd, struct epoll_event __user *, events,
+		int, maxevents, int, timeout)
+{
+	struct timespec64 to;
 
-	वापस करो_epoll_रुको(epfd, events, maxevents,
-			     ep_समयout_to_बारpec(&to, समयout));
-पूर्ण
+	return do_epoll_wait(epfd, events, maxevents,
+			     ep_timeout_to_timespec(&to, timeout));
+}
 
 /*
- * Implement the event रुको पूर्णांकerface क्रम the eventpoll file. It is the kernel
- * part of the user space epoll_pरुको(2).
+ * Implement the event wait interface for the eventpoll file. It is the kernel
+ * part of the user space epoll_pwait(2).
  */
-अटल पूर्णांक करो_epoll_pरुको(पूर्णांक epfd, काष्ठा epoll_event __user *events,
-			  पूर्णांक maxevents, काष्ठा बारpec64 *to,
-			  स्थिर sigset_t __user *sigmask, माप_प्रकार sigsetsize)
-अणु
-	पूर्णांक error;
+static int do_epoll_pwait(int epfd, struct epoll_event __user *events,
+			  int maxevents, struct timespec64 *to,
+			  const sigset_t __user *sigmask, size_t sigsetsize)
+{
+	int error;
 
 	/*
-	 * If the caller wants a certain संकेत mask to be set during the रुको,
+	 * If the caller wants a certain signal mask to be set during the wait,
 	 * we apply it here.
 	 */
 	error = set_user_sigmask(sigmask, sigsetsize);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	error = करो_epoll_रुको(epfd, events, maxevents, to);
+	error = do_epoll_wait(epfd, events, maxevents, to);
 
 	restore_saved_sigmask_unless(error == -EINTR);
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-SYSCALL_DEFINE6(epoll_pरुको, पूर्णांक, epfd, काष्ठा epoll_event __user *, events,
-		पूर्णांक, maxevents, पूर्णांक, समयout, स्थिर sigset_t __user *, sigmask,
-		माप_प्रकार, sigsetsize)
-अणु
-	काष्ठा बारpec64 to;
+SYSCALL_DEFINE6(epoll_pwait, int, epfd, struct epoll_event __user *, events,
+		int, maxevents, int, timeout, const sigset_t __user *, sigmask,
+		size_t, sigsetsize)
+{
+	struct timespec64 to;
 
-	वापस करो_epoll_pरुको(epfd, events, maxevents,
-			      ep_समयout_to_बारpec(&to, समयout),
+	return do_epoll_pwait(epfd, events, maxevents,
+			      ep_timeout_to_timespec(&to, timeout),
 			      sigmask, sigsetsize);
-पूर्ण
+}
 
-SYSCALL_DEFINE6(epoll_pरुको2, पूर्णांक, epfd, काष्ठा epoll_event __user *, events,
-		पूर्णांक, maxevents, स्थिर काष्ठा __kernel_बारpec __user *, समयout,
-		स्थिर sigset_t __user *, sigmask, माप_प्रकार, sigsetsize)
-अणु
-	काष्ठा बारpec64 ts, *to = शून्य;
+SYSCALL_DEFINE6(epoll_pwait2, int, epfd, struct epoll_event __user *, events,
+		int, maxevents, const struct __kernel_timespec __user *, timeout,
+		const sigset_t __user *, sigmask, size_t, sigsetsize)
+{
+	struct timespec64 ts, *to = NULL;
 
-	अगर (समयout) अणु
-		अगर (get_बारpec64(&ts, समयout))
-			वापस -EFAULT;
+	if (timeout) {
+		if (get_timespec64(&ts, timeout))
+			return -EFAULT;
 		to = &ts;
-		अगर (poll_select_set_समयout(to, ts.tv_sec, ts.tv_nsec))
-			वापस -EINVAL;
-	पूर्ण
+		if (poll_select_set_timeout(to, ts.tv_sec, ts.tv_nsec))
+			return -EINVAL;
+	}
 
-	वापस करो_epoll_pरुको(epfd, events, maxevents, to,
+	return do_epoll_pwait(epfd, events, maxevents, to,
 			      sigmask, sigsetsize);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_COMPAT
-अटल पूर्णांक करो_compat_epoll_pरुको(पूर्णांक epfd, काष्ठा epoll_event __user *events,
-				 पूर्णांक maxevents, काष्ठा बारpec64 *समयout,
-				 स्थिर compat_sigset_t __user *sigmask,
-				 compat_माप_प्रकार sigsetsize)
-अणु
-	दीर्घ err;
+#ifdef CONFIG_COMPAT
+static int do_compat_epoll_pwait(int epfd, struct epoll_event __user *events,
+				 int maxevents, struct timespec64 *timeout,
+				 const compat_sigset_t __user *sigmask,
+				 compat_size_t sigsetsize)
+{
+	long err;
 
 	/*
-	 * If the caller wants a certain संकेत mask to be set during the रुको,
+	 * If the caller wants a certain signal mask to be set during the wait,
 	 * we apply it here.
 	 */
 	err = set_compat_user_sigmask(sigmask, sigsetsize);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	err = करो_epoll_रुको(epfd, events, maxevents, समयout);
+	err = do_epoll_wait(epfd, events, maxevents, timeout);
 
 	restore_saved_sigmask_unless(err == -EINTR);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-COMPAT_SYSCALL_DEFINE6(epoll_pरुको, पूर्णांक, epfd,
-		       काष्ठा epoll_event __user *, events,
-		       पूर्णांक, maxevents, पूर्णांक, समयout,
-		       स्थिर compat_sigset_t __user *, sigmask,
-		       compat_माप_प्रकार, sigsetsize)
-अणु
-	काष्ठा बारpec64 to;
+COMPAT_SYSCALL_DEFINE6(epoll_pwait, int, epfd,
+		       struct epoll_event __user *, events,
+		       int, maxevents, int, timeout,
+		       const compat_sigset_t __user *, sigmask,
+		       compat_size_t, sigsetsize)
+{
+	struct timespec64 to;
 
-	वापस करो_compat_epoll_pरुको(epfd, events, maxevents,
-				     ep_समयout_to_बारpec(&to, समयout),
+	return do_compat_epoll_pwait(epfd, events, maxevents,
+				     ep_timeout_to_timespec(&to, timeout),
 				     sigmask, sigsetsize);
-पूर्ण
+}
 
-COMPAT_SYSCALL_DEFINE6(epoll_pरुको2, पूर्णांक, epfd,
-		       काष्ठा epoll_event __user *, events,
-		       पूर्णांक, maxevents,
-		       स्थिर काष्ठा __kernel_बारpec __user *, समयout,
-		       स्थिर compat_sigset_t __user *, sigmask,
-		       compat_माप_प्रकार, sigsetsize)
-अणु
-	काष्ठा बारpec64 ts, *to = शून्य;
+COMPAT_SYSCALL_DEFINE6(epoll_pwait2, int, epfd,
+		       struct epoll_event __user *, events,
+		       int, maxevents,
+		       const struct __kernel_timespec __user *, timeout,
+		       const compat_sigset_t __user *, sigmask,
+		       compat_size_t, sigsetsize)
+{
+	struct timespec64 ts, *to = NULL;
 
-	अगर (समयout) अणु
-		अगर (get_बारpec64(&ts, समयout))
-			वापस -EFAULT;
+	if (timeout) {
+		if (get_timespec64(&ts, timeout))
+			return -EFAULT;
 		to = &ts;
-		अगर (poll_select_set_समयout(to, ts.tv_sec, ts.tv_nsec))
-			वापस -EINVAL;
-	पूर्ण
+		if (poll_select_set_timeout(to, ts.tv_sec, ts.tv_nsec))
+			return -EINVAL;
+	}
 
-	वापस करो_compat_epoll_pरुको(epfd, events, maxevents, to,
+	return do_compat_epoll_pwait(epfd, events, maxevents, to,
 				     sigmask, sigsetsize);
-पूर्ण
+}
 
-#पूर्ण_अगर
+#endif
 
-अटल पूर्णांक __init eventpoll_init(व्योम)
-अणु
-	काष्ठा sysinfo si;
+static int __init eventpoll_init(void)
+{
+	struct sysinfo si;
 
 	si_meminfo(&si);
 	/*
-	 * Allows top 4% of lomem to be allocated क्रम epoll watches (per user).
+	 * Allows top 4% of lomem to be allocated for epoll watches (per user).
 	 */
 	max_user_watches = (((si.totalram - si.totalhigh) / 25) << PAGE_SHIFT) /
 		EP_ITEM_COST;
@@ -2369,19 +2368,19 @@ COMPAT_SYSCALL_DEFINE6(epoll_pरुको2, पूर्णांक, epfd,
 	 * We can have many thousands of epitems, so prevent this from
 	 * using an extra cache line on 64-bit (and smaller) CPUs
 	 */
-	BUILD_BUG_ON(माप(व्योम *) <= 8 && माप(काष्ठा epitem) > 128);
+	BUILD_BUG_ON(sizeof(void *) <= 8 && sizeof(struct epitem) > 128);
 
 	/* Allocates slab cache used to allocate "struct epitem" items */
-	epi_cache = kmem_cache_create("eventpoll_epi", माप(काष्ठा epitem),
-			0, SLAB_HWCACHE_ALIGN|SLAB_PANIC|SLAB_ACCOUNT, शून्य);
+	epi_cache = kmem_cache_create("eventpoll_epi", sizeof(struct epitem),
+			0, SLAB_HWCACHE_ALIGN|SLAB_PANIC|SLAB_ACCOUNT, NULL);
 
 	/* Allocates slab cache used to allocate "struct eppoll_entry" */
 	pwq_cache = kmem_cache_create("eventpoll_pwq",
-		माप(काष्ठा eppoll_entry), 0, SLAB_PANIC|SLAB_ACCOUNT, शून्य);
+		sizeof(struct eppoll_entry), 0, SLAB_PANIC|SLAB_ACCOUNT, NULL);
 
 	ephead_cache = kmem_cache_create("ep_head",
-		माप(काष्ठा epitems_head), 0, SLAB_PANIC|SLAB_ACCOUNT, शून्य);
+		sizeof(struct epitems_head), 0, SLAB_PANIC|SLAB_ACCOUNT, NULL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 fs_initcall(eventpoll_init);

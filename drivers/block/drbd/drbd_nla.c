@@ -1,57 +1,56 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/kernel.h>
-#समावेश <net/netlink.h>
-#समावेश <linux/drbd_genl_api.h>
-#समावेश "drbd_nla.h"
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/kernel.h>
+#include <net/netlink.h>
+#include <linux/drbd_genl_api.h>
+#include "drbd_nla.h"
 
-अटल पूर्णांक drbd_nla_check_mandatory(पूर्णांक maxtype, काष्ठा nlattr *nla)
-अणु
-	काष्ठा nlattr *head = nla_data(nla);
-	पूर्णांक len = nla_len(nla);
-	पूर्णांक rem;
+static int drbd_nla_check_mandatory(int maxtype, struct nlattr *nla)
+{
+	struct nlattr *head = nla_data(nla);
+	int len = nla_len(nla);
+	int rem;
 
 	/*
 	 * validate_nla (called from nla_parse_nested) ignores attributes
-	 * beyond maxtype, and करोes not understand the DRBD_GENLA_F_MANDATORY flag.
+	 * beyond maxtype, and does not understand the DRBD_GENLA_F_MANDATORY flag.
 	 * In order to have it validate attributes with the DRBD_GENLA_F_MANDATORY
-	 * flag set also, check and हटाओ that flag beक्रमe calling
+	 * flag set also, check and remove that flag before calling
 	 * nla_parse_nested.
 	 */
 
-	nla_क्रम_each_attr(nla, head, len, rem) अणु
-		अगर (nla->nla_type & DRBD_GENLA_F_MANDATORY) अणु
+	nla_for_each_attr(nla, head, len, rem) {
+		if (nla->nla_type & DRBD_GENLA_F_MANDATORY) {
 			nla->nla_type &= ~DRBD_GENLA_F_MANDATORY;
-			अगर (nla_type(nla) > maxtype)
-				वापस -EOPNOTSUPP;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			if (nla_type(nla) > maxtype)
+				return -EOPNOTSUPP;
+		}
+	}
+	return 0;
+}
 
-पूर्णांक drbd_nla_parse_nested(काष्ठा nlattr *tb[], पूर्णांक maxtype, काष्ठा nlattr *nla,
-			  स्थिर काष्ठा nla_policy *policy)
-अणु
-	पूर्णांक err;
+int drbd_nla_parse_nested(struct nlattr *tb[], int maxtype, struct nlattr *nla,
+			  const struct nla_policy *policy)
+{
+	int err;
 
 	err = drbd_nla_check_mandatory(maxtype, nla);
-	अगर (!err)
+	if (!err)
 		err = nla_parse_nested_deprecated(tb, maxtype, nla, policy,
-						  शून्य);
+						  NULL);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-काष्ठा nlattr *drbd_nla_find_nested(पूर्णांक maxtype, काष्ठा nlattr *nla, पूर्णांक attrtype)
-अणु
-	पूर्णांक err;
+struct nlattr *drbd_nla_find_nested(int maxtype, struct nlattr *nla, int attrtype)
+{
+	int err;
 	/*
 	 * If any nested attribute has the DRBD_GENLA_F_MANDATORY flag set and
-	 * we करोn't know about that attribute, reject all the nested
+	 * we don't know about that attribute, reject all the nested
 	 * attributes.
 	 */
 	err = drbd_nla_check_mandatory(maxtype, nla);
-	अगर (err)
-		वापस ERR_PTR(err);
-	वापस nla_find_nested(nla, attrtype);
-पूर्ण
+	if (err)
+		return ERR_PTR(err);
+	return nla_find_nested(nla, attrtype);
+}

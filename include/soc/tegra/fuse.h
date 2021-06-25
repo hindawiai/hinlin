@@ -1,34 +1,33 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2012, NVIDIA CORPORATION.  All rights reserved.
  */
 
-#अगर_अघोषित __SOC_TEGRA_FUSE_H__
-#घोषणा __SOC_TEGRA_FUSE_H__
+#ifndef __SOC_TEGRA_FUSE_H__
+#define __SOC_TEGRA_FUSE_H__
 
-#घोषणा TEGRA20		0x20
-#घोषणा TEGRA30		0x30
-#घोषणा TEGRA114	0x35
-#घोषणा TEGRA124	0x40
-#घोषणा TEGRA132	0x13
-#घोषणा TEGRA210	0x21
-#घोषणा TEGRA186	0x18
-#घोषणा TEGRA194	0x19
-#घोषणा TEGRA234	0x23
+#define TEGRA20		0x20
+#define TEGRA30		0x30
+#define TEGRA114	0x35
+#define TEGRA124	0x40
+#define TEGRA132	0x13
+#define TEGRA210	0x21
+#define TEGRA186	0x18
+#define TEGRA194	0x19
+#define TEGRA234	0x23
 
-#घोषणा TEGRA_FUSE_SKU_CALIB_0	0xf0
-#घोषणा TEGRA30_FUSE_SATA_CALIB	0x124
-#घोषणा TEGRA_FUSE_USB_CALIB_EXT_0 0x250
+#define TEGRA_FUSE_SKU_CALIB_0	0xf0
+#define TEGRA30_FUSE_SATA_CALIB	0x124
+#define TEGRA_FUSE_USB_CALIB_EXT_0 0x250
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-u32 tegra_पढ़ो_chipid(व्योम);
-u8 tegra_get_chip_id(व्योम);
-u8 tegra_get_platक्रमm(व्योम);
-bool tegra_is_silicon(व्योम);
+u32 tegra_read_chipid(void);
+u8 tegra_get_chip_id(void);
+u8 tegra_get_platform(void);
+bool tegra_is_silicon(void);
 
-क्रमागत tegra_revision अणु
+enum tegra_revision {
 	TEGRA_REVISION_UNKNOWN = 0,
 	TEGRA_REVISION_A01,
 	TEGRA_REVISION_A02,
@@ -36,35 +35,35 @@ bool tegra_is_silicon(व्योम);
 	TEGRA_REVISION_A03p,
 	TEGRA_REVISION_A04,
 	TEGRA_REVISION_MAX,
-पूर्ण;
+};
 
-काष्ठा tegra_sku_info अणु
-	पूर्णांक sku_id;
-	पूर्णांक cpu_process_id;
-	पूर्णांक cpu_speeकरो_id;
-	पूर्णांक cpu_speeकरो_value;
-	पूर्णांक cpu_iddq_value;
-	पूर्णांक soc_process_id;
-	पूर्णांक soc_speeकरो_id;
-	पूर्णांक soc_speeकरो_value;
-	पूर्णांक gpu_process_id;
-	पूर्णांक gpu_speeकरो_id;
-	पूर्णांक gpu_speeकरो_value;
-	क्रमागत tegra_revision revision;
-पूर्ण;
+struct tegra_sku_info {
+	int sku_id;
+	int cpu_process_id;
+	int cpu_speedo_id;
+	int cpu_speedo_value;
+	int cpu_iddq_value;
+	int soc_process_id;
+	int soc_speedo_id;
+	int soc_speedo_value;
+	int gpu_process_id;
+	int gpu_speedo_id;
+	int gpu_speedo_value;
+	enum tegra_revision revision;
+};
 
-u32 tegra_पढ़ो_straps(व्योम);
-u32 tegra_पढ़ो_ram_code(व्योम);
-पूर्णांक tegra_fuse_पढ़ोl(अचिन्हित दीर्घ offset, u32 *value);
+u32 tegra_read_straps(void);
+u32 tegra_read_ram_code(void);
+int tegra_fuse_readl(unsigned long offset, u32 *value);
 
-#अगर_घोषित CONFIG_ARCH_TEGRA
-बाह्य काष्ठा tegra_sku_info tegra_sku_info;
-#अन्यथा
-अटल काष्ठा tegra_sku_info tegra_sku_info __maybe_unused;
-#पूर्ण_अगर
+#ifdef CONFIG_ARCH_TEGRA
+extern struct tegra_sku_info tegra_sku_info;
+#else
+static struct tegra_sku_info tegra_sku_info __maybe_unused;
+#endif
 
-काष्ठा device *tegra_soc_device_रेजिस्टर(व्योम);
+struct device *tegra_soc_device_register(void);
 
-#पूर्ण_अगर /* __ASSEMBLY__ */
+#endif /* __ASSEMBLY__ */
 
-#पूर्ण_अगर /* __SOC_TEGRA_FUSE_H__ */
+#endif /* __SOC_TEGRA_FUSE_H__ */

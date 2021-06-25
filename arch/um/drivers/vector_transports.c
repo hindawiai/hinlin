@@ -1,56 +1,55 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2017 - Cambridge Greys Limited
  * Copyright (C) 2011 - 2014 Cisco Systems Inc
  */
 
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/slab.h>
-#समावेश <यंत्र/byteorder.h>
-#समावेश <uapi/linux/ip.h>
-#समावेश <uapi/linux/virtio_net.h>
-#समावेश <linux/virtio_net.h>
-#समावेश <linux/virtio_byteorder.h>
-#समावेश <linux/netdev_features.h>
-#समावेश "vector_user.h"
-#समावेश "vector_kern.h"
+#include <linux/etherdevice.h>
+#include <linux/netdevice.h>
+#include <linux/skbuff.h>
+#include <linux/slab.h>
+#include <asm/byteorder.h>
+#include <uapi/linux/ip.h>
+#include <uapi/linux/virtio_net.h>
+#include <linux/virtio_net.h>
+#include <linux/virtio_byteorder.h>
+#include <linux/netdev_features.h>
+#include "vector_user.h"
+#include "vector_kern.h"
 
-#घोषणा GOOD_LINEAR 512
-#घोषणा GSO_ERROR "Incoming GSO frames and GRO disabled on the interface"
+#define GOOD_LINEAR 512
+#define GSO_ERROR "Incoming GSO frames and GRO disabled on the interface"
 
-काष्ठा gre_minimal_header अणु
-	uपूर्णांक16_t header;
-	uपूर्णांक16_t arptype;
-पूर्ण;
+struct gre_minimal_header {
+	uint16_t header;
+	uint16_t arptype;
+};
 
 
-काष्ठा uml_gre_data अणु
-	uपूर्णांक32_t rx_key;
-	uपूर्णांक32_t tx_key;
-	uपूर्णांक32_t sequence;
+struct uml_gre_data {
+	uint32_t rx_key;
+	uint32_t tx_key;
+	uint32_t sequence;
 
 	bool ipv6;
 	bool has_sequence;
 	bool pin_sequence;
 	bool checksum;
 	bool key;
-	काष्ठा gre_minimal_header expected_header;
+	struct gre_minimal_header expected_header;
 
-	uपूर्णांक32_t checksum_offset;
-	uपूर्णांक32_t key_offset;
-	uपूर्णांक32_t sequence_offset;
+	uint32_t checksum_offset;
+	uint32_t key_offset;
+	uint32_t sequence_offset;
 
-पूर्ण;
+};
 
-काष्ठा uml_l2tpv3_data अणु
-	uपूर्णांक64_t rx_cookie;
-	uपूर्णांक64_t tx_cookie;
-	uपूर्णांक64_t rx_session;
-	uपूर्णांक64_t tx_session;
-	uपूर्णांक32_t counter;
+struct uml_l2tpv3_data {
+	uint64_t rx_cookie;
+	uint64_t tx_cookie;
+	uint64_t rx_session;
+	uint64_t tx_session;
+	uint32_t counter;
 
 	bool udp;
 	bool ipv6;
@@ -59,63 +58,63 @@
 	bool cookie;
 	bool cookie_is_64;
 
-	uपूर्णांक32_t cookie_offset;
-	uपूर्णांक32_t session_offset;
-	uपूर्णांक32_t counter_offset;
-पूर्ण;
+	uint32_t cookie_offset;
+	uint32_t session_offset;
+	uint32_t counter_offset;
+};
 
-अटल पूर्णांक l2tpv3_क्रमm_header(uपूर्णांक8_t *header,
-	काष्ठा sk_buff *skb, काष्ठा vector_निजी *vp)
-अणु
-	काष्ठा uml_l2tpv3_data *td = vp->transport_data;
-	uपूर्णांक32_t *counter;
+static int l2tpv3_form_header(uint8_t *header,
+	struct sk_buff *skb, struct vector_private *vp)
+{
+	struct uml_l2tpv3_data *td = vp->transport_data;
+	uint32_t *counter;
 
-	अगर (td->udp)
-		*(uपूर्णांक32_t *) header = cpu_to_be32(L2TPV3_DATA_PACKET);
-	(*(uपूर्णांक32_t *) (header + td->session_offset)) = td->tx_session;
+	if (td->udp)
+		*(uint32_t *) header = cpu_to_be32(L2TPV3_DATA_PACKET);
+	(*(uint32_t *) (header + td->session_offset)) = td->tx_session;
 
-	अगर (td->cookie) अणु
-		अगर (td->cookie_is_64)
-			(*(uपूर्णांक64_t *)(header + td->cookie_offset)) =
+	if (td->cookie) {
+		if (td->cookie_is_64)
+			(*(uint64_t *)(header + td->cookie_offset)) =
 				td->tx_cookie;
-		अन्यथा
-			(*(uपूर्णांक32_t *)(header + td->cookie_offset)) =
+		else
+			(*(uint32_t *)(header + td->cookie_offset)) =
 				td->tx_cookie;
-	पूर्ण
-	अगर (td->has_counter) अणु
-		counter = (uपूर्णांक32_t *)(header + td->counter_offset);
-		अगर (td->pin_counter) अणु
+	}
+	if (td->has_counter) {
+		counter = (uint32_t *)(header + td->counter_offset);
+		if (td->pin_counter) {
 			*counter = 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			td->counter++;
 			*counter = cpu_to_be32(td->counter);
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+	}
+	return 0;
+}
 
-अटल पूर्णांक gre_क्रमm_header(uपूर्णांक8_t *header,
-		काष्ठा sk_buff *skb, काष्ठा vector_निजी *vp)
-अणु
-	काष्ठा uml_gre_data *td = vp->transport_data;
-	uपूर्णांक32_t *sequence;
-	*((uपूर्णांक32_t *) header) = *((uपूर्णांक32_t *) &td->expected_header);
-	अगर (td->key)
-		(*(uपूर्णांक32_t *) (header + td->key_offset)) = td->tx_key;
-	अगर (td->has_sequence) अणु
-		sequence = (uपूर्णांक32_t *)(header + td->sequence_offset);
-		अगर (td->pin_sequence)
+static int gre_form_header(uint8_t *header,
+		struct sk_buff *skb, struct vector_private *vp)
+{
+	struct uml_gre_data *td = vp->transport_data;
+	uint32_t *sequence;
+	*((uint32_t *) header) = *((uint32_t *) &td->expected_header);
+	if (td->key)
+		(*(uint32_t *) (header + td->key_offset)) = td->tx_key;
+	if (td->has_sequence) {
+		sequence = (uint32_t *)(header + td->sequence_offset);
+		if (td->pin_sequence)
 			*sequence = 0;
-		अन्यथा
+		else
 			*sequence = cpu_to_be32(++td->sequence);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक raw_क्रमm_header(uपूर्णांक8_t *header,
-		काष्ठा sk_buff *skb, काष्ठा vector_निजी *vp)
-अणु
-	काष्ठा virtio_net_hdr *vheader = (काष्ठा virtio_net_hdr *) header;
+static int raw_form_header(uint8_t *header,
+		struct sk_buff *skb, struct vector_private *vp)
+{
+	struct virtio_net_hdr *vheader = (struct virtio_net_hdr *) header;
 
 	virtio_net_hdr_from_skb(
 		skb,
@@ -125,199 +124,199 @@
 		0
 	);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक l2tpv3_verअगरy_header(
-	uपूर्णांक8_t *header, काष्ठा sk_buff *skb, काष्ठा vector_निजी *vp)
-अणु
-	काष्ठा uml_l2tpv3_data *td = vp->transport_data;
-	uपूर्णांक32_t *session;
-	uपूर्णांक64_t cookie;
+static int l2tpv3_verify_header(
+	uint8_t *header, struct sk_buff *skb, struct vector_private *vp)
+{
+	struct uml_l2tpv3_data *td = vp->transport_data;
+	uint32_t *session;
+	uint64_t cookie;
 
-	अगर ((!td->udp) && (!td->ipv6))
-		header += माप(काष्ठा iphdr) /* fix क्रम ipv4 raw */;
+	if ((!td->udp) && (!td->ipv6))
+		header += sizeof(struct iphdr) /* fix for ipv4 raw */;
 
-	/* we करो not करो a strict check क्रम "data" packets as per
-	 * the RFC spec because the pure IP spec करोes not have
+	/* we do not do a strict check for "data" packets as per
+	 * the RFC spec because the pure IP spec does not have
 	 * that anyway.
 	 */
 
-	अगर (td->cookie) अणु
-		अगर (td->cookie_is_64)
-			cookie = *(uपूर्णांक64_t *)(header + td->cookie_offset);
-		अन्यथा
-			cookie = *(uपूर्णांक32_t *)(header + td->cookie_offset);
-		अगर (cookie != td->rx_cookie) अणु
-			अगर (net_ratelimit())
+	if (td->cookie) {
+		if (td->cookie_is_64)
+			cookie = *(uint64_t *)(header + td->cookie_offset);
+		else
+			cookie = *(uint32_t *)(header + td->cookie_offset);
+		if (cookie != td->rx_cookie) {
+			if (net_ratelimit())
 				netdev_err(vp->dev, "uml_l2tpv3: unknown cookie id");
-			वापस -1;
-		पूर्ण
-	पूर्ण
-	session = (uपूर्णांक32_t *) (header + td->session_offset);
-	अगर (*session != td->rx_session) अणु
-		अगर (net_ratelimit())
+			return -1;
+		}
+	}
+	session = (uint32_t *) (header + td->session_offset);
+	if (*session != td->rx_session) {
+		if (net_ratelimit())
 			netdev_err(vp->dev, "uml_l2tpv3: session mismatch");
-		वापस -1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -1;
+	}
+	return 0;
+}
 
-अटल पूर्णांक gre_verअगरy_header(
-	uपूर्णांक8_t *header, काष्ठा sk_buff *skb, काष्ठा vector_निजी *vp)
-अणु
+static int gre_verify_header(
+	uint8_t *header, struct sk_buff *skb, struct vector_private *vp)
+{
 
-	uपूर्णांक32_t key;
-	काष्ठा uml_gre_data *td = vp->transport_data;
+	uint32_t key;
+	struct uml_gre_data *td = vp->transport_data;
 
-	अगर (!td->ipv6)
-		header += माप(काष्ठा iphdr) /* fix क्रम ipv4 raw */;
+	if (!td->ipv6)
+		header += sizeof(struct iphdr) /* fix for ipv4 raw */;
 
-	अगर (*((uपूर्णांक32_t *) header) != *((uपूर्णांक32_t *) &td->expected_header)) अणु
-		अगर (net_ratelimit())
+	if (*((uint32_t *) header) != *((uint32_t *) &td->expected_header)) {
+		if (net_ratelimit())
 			netdev_err(vp->dev, "header type disagreement, expecting %0x, got %0x",
-				*((uपूर्णांक32_t *) &td->expected_header),
-				*((uपूर्णांक32_t *) header)
+				*((uint32_t *) &td->expected_header),
+				*((uint32_t *) header)
 			);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	अगर (td->key) अणु
-		key = (*(uपूर्णांक32_t *)(header + td->key_offset));
-		अगर (key != td->rx_key) अणु
-			अगर (net_ratelimit())
+	if (td->key) {
+		key = (*(uint32_t *)(header + td->key_offset));
+		if (key != td->rx_key) {
+			if (net_ratelimit())
 				netdev_err(vp->dev, "unknown key id %0x, expecting %0x",
 						key, td->rx_key);
-			वापस -1;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return -1;
+		}
+	}
+	return 0;
+}
 
-अटल पूर्णांक raw_verअगरy_header(
-	uपूर्णांक8_t *header, काष्ठा sk_buff *skb, काष्ठा vector_निजी *vp)
-अणु
-	काष्ठा virtio_net_hdr *vheader = (काष्ठा virtio_net_hdr *) header;
+static int raw_verify_header(
+	uint8_t *header, struct sk_buff *skb, struct vector_private *vp)
+{
+	struct virtio_net_hdr *vheader = (struct virtio_net_hdr *) header;
 
-	अगर ((vheader->gso_type != VIRTIO_NET_HDR_GSO_NONE) &&
-		(vp->req_size != 65536)) अणु
-		अगर (net_ratelimit())
+	if ((vheader->gso_type != VIRTIO_NET_HDR_GSO_NONE) &&
+		(vp->req_size != 65536)) {
+		if (net_ratelimit())
 			netdev_err(
 				vp->dev,
 				GSO_ERROR
 		);
-	पूर्ण
-	अगर ((vheader->flags & VIRTIO_NET_HDR_F_DATA_VALID) > 0)
-		वापस 1;
+	}
+	if ((vheader->flags & VIRTIO_NET_HDR_F_DATA_VALID) > 0)
+		return 1;
 
 	virtio_net_hdr_to_skb(skb, vheader, virtio_legacy_is_little_endian());
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool get_uपूर्णांक_param(
-	काष्ठा arglist *def, अक्षर *param, अचिन्हित पूर्णांक *result)
-अणु
-	अक्षर *arg = uml_vector_fetch_arg(def, param);
+static bool get_uint_param(
+	struct arglist *def, char *param, unsigned int *result)
+{
+	char *arg = uml_vector_fetch_arg(def, param);
 
-	अगर (arg != शून्य) अणु
-		अगर (kstrtoपूर्णांक(arg, 0, result) == 0)
-			वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+	if (arg != NULL) {
+		if (kstrtoint(arg, 0, result) == 0)
+			return true;
+	}
+	return false;
+}
 
-अटल bool get_uदीर्घ_param(
-	काष्ठा arglist *def, अक्षर *param, अचिन्हित दीर्घ *result)
-अणु
-	अक्षर *arg = uml_vector_fetch_arg(def, param);
+static bool get_ulong_param(
+	struct arglist *def, char *param, unsigned long *result)
+{
+	char *arg = uml_vector_fetch_arg(def, param);
 
-	अगर (arg != शून्य) अणु
-		अगर (kम_से_अदीर्घ(arg, 0, result) == 0)
-			वापस true;
-		वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+	if (arg != NULL) {
+		if (kstrtoul(arg, 0, result) == 0)
+			return true;
+		return true;
+	}
+	return false;
+}
 
-अटल पूर्णांक build_gre_transport_data(काष्ठा vector_निजी *vp)
-अणु
-	काष्ठा uml_gre_data *td;
-	पूर्णांक temp_पूर्णांक;
-	पूर्णांक temp_rx;
-	पूर्णांक temp_tx;
+static int build_gre_transport_data(struct vector_private *vp)
+{
+	struct uml_gre_data *td;
+	int temp_int;
+	int temp_rx;
+	int temp_tx;
 
-	vp->transport_data = kदो_स्मृति(माप(काष्ठा uml_gre_data), GFP_KERNEL);
-	अगर (vp->transport_data == शून्य)
-		वापस -ENOMEM;
+	vp->transport_data = kmalloc(sizeof(struct uml_gre_data), GFP_KERNEL);
+	if (vp->transport_data == NULL)
+		return -ENOMEM;
 	td = vp->transport_data;
 	td->sequence = 0;
 
 	td->expected_header.arptype = GRE_IRB;
 	td->expected_header.header = 0;
 
-	vp->क्रमm_header = &gre_क्रमm_header;
-	vp->verअगरy_header = &gre_verअगरy_header;
+	vp->form_header = &gre_form_header;
+	vp->verify_header = &gre_verify_header;
 	vp->header_size = 4;
 	td->key_offset = 4;
 	td->sequence_offset = 4;
 	td->checksum_offset = 4;
 
 	td->ipv6 = false;
-	अगर (get_uपूर्णांक_param(vp->parsed, "v6", &temp_पूर्णांक)) अणु
-		अगर (temp_पूर्णांक > 0)
+	if (get_uint_param(vp->parsed, "v6", &temp_int)) {
+		if (temp_int > 0)
 			td->ipv6 = true;
-	पूर्ण
+	}
 	td->key = false;
-	अगर (get_uपूर्णांक_param(vp->parsed, "rx_key", &temp_rx)) अणु
-		अगर (get_uपूर्णांक_param(vp->parsed, "tx_key", &temp_tx)) अणु
+	if (get_uint_param(vp->parsed, "rx_key", &temp_rx)) {
+		if (get_uint_param(vp->parsed, "tx_key", &temp_tx)) {
 			td->key = true;
 			td->expected_header.header |= GRE_MODE_KEY;
 			td->rx_key = cpu_to_be32(temp_rx);
 			td->tx_key = cpu_to_be32(temp_tx);
 			vp->header_size += 4;
 			td->sequence_offset += 4;
-		पूर्ण अन्यथा अणु
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+		} else {
+			return -EINVAL;
+		}
+	}
 
 	td->sequence = false;
-	अगर (get_uपूर्णांक_param(vp->parsed, "sequence", &temp_पूर्णांक)) अणु
-		अगर (temp_पूर्णांक > 0) अणु
+	if (get_uint_param(vp->parsed, "sequence", &temp_int)) {
+		if (temp_int > 0) {
 			vp->header_size += 4;
 			td->has_sequence = true;
 			td->expected_header.header |= GRE_MODE_SEQUENCE;
-			अगर (get_uपूर्णांक_param(
-				vp->parsed, "pin_sequence", &temp_पूर्णांक)) अणु
-				अगर (temp_पूर्णांक > 0)
+			if (get_uint_param(
+				vp->parsed, "pin_sequence", &temp_int)) {
+				if (temp_int > 0)
 					td->pin_sequence = true;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 	vp->rx_header_size = vp->header_size;
-	अगर (!td->ipv6)
-		vp->rx_header_size += माप(काष्ठा iphdr);
-	वापस 0;
-पूर्ण
+	if (!td->ipv6)
+		vp->rx_header_size += sizeof(struct iphdr);
+	return 0;
+}
 
-अटल पूर्णांक build_l2tpv3_transport_data(काष्ठा vector_निजी *vp)
-अणु
+static int build_l2tpv3_transport_data(struct vector_private *vp)
+{
 
-	काष्ठा uml_l2tpv3_data *td;
-	पूर्णांक temp_पूर्णांक, temp_rxs, temp_txs;
-	अचिन्हित दीर्घ temp_rx;
-	अचिन्हित दीर्घ temp_tx;
+	struct uml_l2tpv3_data *td;
+	int temp_int, temp_rxs, temp_txs;
+	unsigned long temp_rx;
+	unsigned long temp_tx;
 
-	vp->transport_data = kदो_स्मृति(
-		माप(काष्ठा uml_l2tpv3_data), GFP_KERNEL);
+	vp->transport_data = kmalloc(
+		sizeof(struct uml_l2tpv3_data), GFP_KERNEL);
 
-	अगर (vp->transport_data == शून्य)
-		वापस -ENOMEM;
+	if (vp->transport_data == NULL)
+		return -ENOMEM;
 
 	td = vp->transport_data;
 
-	vp->क्रमm_header = &l2tpv3_क्रमm_header;
-	vp->verअगरy_header = &l2tpv3_verअगरy_header;
+	vp->form_header = &l2tpv3_form_header;
+	vp->verify_header = &l2tpv3_verify_header;
 	td->counter = 0;
 
 	vp->header_size = 4;
@@ -327,86 +326,86 @@
 
 
 	td->ipv6 = false;
-	अगर (get_uपूर्णांक_param(vp->parsed, "v6", &temp_पूर्णांक)) अणु
-		अगर (temp_पूर्णांक > 0)
+	if (get_uint_param(vp->parsed, "v6", &temp_int)) {
+		if (temp_int > 0)
 			td->ipv6 = true;
-	पूर्ण
+	}
 
-	अगर (get_uपूर्णांक_param(vp->parsed, "rx_session", &temp_rxs)) अणु
-		अगर (get_uपूर्णांक_param(vp->parsed, "tx_session", &temp_txs)) अणु
+	if (get_uint_param(vp->parsed, "rx_session", &temp_rxs)) {
+		if (get_uint_param(vp->parsed, "tx_session", &temp_txs)) {
 			td->tx_session = cpu_to_be32(temp_txs);
 			td->rx_session = cpu_to_be32(temp_rxs);
-		पूर्ण अन्यथा अणु
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		वापस -EINVAL;
-	पूर्ण
+		} else {
+			return -EINVAL;
+		}
+	} else {
+		return -EINVAL;
+	}
 
 	td->cookie_is_64  = false;
-	अगर (get_uपूर्णांक_param(vp->parsed, "cookie64", &temp_पूर्णांक)) अणु
-		अगर (temp_पूर्णांक > 0)
+	if (get_uint_param(vp->parsed, "cookie64", &temp_int)) {
+		if (temp_int > 0)
 			td->cookie_is_64  = true;
-	पूर्ण
+	}
 	td->cookie = false;
-	अगर (get_uदीर्घ_param(vp->parsed, "rx_cookie", &temp_rx)) अणु
-		अगर (get_uदीर्घ_param(vp->parsed, "tx_cookie", &temp_tx)) अणु
+	if (get_ulong_param(vp->parsed, "rx_cookie", &temp_rx)) {
+		if (get_ulong_param(vp->parsed, "tx_cookie", &temp_tx)) {
 			td->cookie = true;
-			अगर (td->cookie_is_64) अणु
+			if (td->cookie_is_64) {
 				td->rx_cookie = cpu_to_be64(temp_rx);
 				td->tx_cookie = cpu_to_be64(temp_tx);
 				vp->header_size += 8;
 				td->counter_offset += 8;
-			पूर्ण अन्यथा अणु
+			} else {
 				td->rx_cookie = cpu_to_be32(temp_rx);
 				td->tx_cookie = cpu_to_be32(temp_tx);
 				vp->header_size += 4;
 				td->counter_offset += 4;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			}
+		} else {
+			return -EINVAL;
+		}
+	}
 
 	td->has_counter = false;
-	अगर (get_uपूर्णांक_param(vp->parsed, "counter", &temp_पूर्णांक)) अणु
-		अगर (temp_पूर्णांक > 0) अणु
+	if (get_uint_param(vp->parsed, "counter", &temp_int)) {
+		if (temp_int > 0) {
 			td->has_counter = true;
 			vp->header_size += 4;
-			अगर (get_uपूर्णांक_param(
-				vp->parsed, "pin_counter", &temp_पूर्णांक)) अणु
-				अगर (temp_पूर्णांक > 0)
+			if (get_uint_param(
+				vp->parsed, "pin_counter", &temp_int)) {
+				if (temp_int > 0)
 					td->pin_counter = true;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	अगर (get_uपूर्णांक_param(vp->parsed, "udp", &temp_पूर्णांक)) अणु
-		अगर (temp_पूर्णांक > 0) अणु
+	if (get_uint_param(vp->parsed, "udp", &temp_int)) {
+		if (temp_int > 0) {
 			td->udp = true;
 			vp->header_size += 4;
 			td->counter_offset += 4;
 			td->session_offset += 4;
 			td->cookie_offset += 4;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	vp->rx_header_size = vp->header_size;
-	अगर ((!td->ipv6) && (!td->udp))
-		vp->rx_header_size += माप(काष्ठा iphdr);
+	if ((!td->ipv6) && (!td->udp))
+		vp->rx_header_size += sizeof(struct iphdr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक build_raw_transport_data(काष्ठा vector_निजी *vp)
-अणु
-	अगर (uml_raw_enable_vnet_headers(vp->fds->rx_fd)) अणु
-		अगर (!uml_raw_enable_vnet_headers(vp->fds->tx_fd))
-			वापस -1;
-		vp->क्रमm_header = &raw_क्रमm_header;
-		vp->verअगरy_header = &raw_verअगरy_header;
-		vp->header_size = माप(काष्ठा virtio_net_hdr);
-		vp->rx_header_size = माप(काष्ठा virtio_net_hdr);
+static int build_raw_transport_data(struct vector_private *vp)
+{
+	if (uml_raw_enable_vnet_headers(vp->fds->rx_fd)) {
+		if (!uml_raw_enable_vnet_headers(vp->fds->tx_fd))
+			return -1;
+		vp->form_header = &raw_form_header;
+		vp->verify_header = &raw_verify_header;
+		vp->header_size = sizeof(struct virtio_net_hdr);
+		vp->rx_header_size = sizeof(struct virtio_net_hdr);
 		vp->dev->hw_features |= (NETIF_F_TSO | NETIF_F_GRO);
 		vp->dev->features |=
 			(NETIF_F_RXCSUM | NETIF_F_HW_CSUM |
@@ -415,17 +414,17 @@
 			vp->dev,
 			"raw: using vnet headers for tso and tx/rx checksum"
 		);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक build_hybrid_transport_data(काष्ठा vector_निजी *vp)
-अणु
-	अगर (uml_raw_enable_vnet_headers(vp->fds->rx_fd)) अणु
-		vp->क्रमm_header = &raw_क्रमm_header;
-		vp->verअगरy_header = &raw_verअगरy_header;
-		vp->header_size = माप(काष्ठा virtio_net_hdr);
-		vp->rx_header_size = माप(काष्ठा virtio_net_hdr);
+static int build_hybrid_transport_data(struct vector_private *vp)
+{
+	if (uml_raw_enable_vnet_headers(vp->fds->rx_fd)) {
+		vp->form_header = &raw_form_header;
+		vp->verify_header = &raw_verify_header;
+		vp->header_size = sizeof(struct virtio_net_hdr);
+		vp->rx_header_size = sizeof(struct virtio_net_hdr);
 		vp->dev->hw_features |=
 			(NETIF_F_TSO | NETIF_F_GSO | NETIF_F_GRO);
 		vp->dev->features |=
@@ -435,22 +434,22 @@
 			vp->dev,
 			"tap/raw hybrid: using vnet headers for tso and tx/rx checksum"
 		);
-	पूर्ण अन्यथा अणु
-		वापस 0; /* करो not try to enable tap too अगर raw failed */
-	पूर्ण
-	अगर (uml_tap_enable_vnet_headers(vp->fds->tx_fd))
-		वापस 0;
-	वापस -1;
-पूर्ण
+	} else {
+		return 0; /* do not try to enable tap too if raw failed */
+	}
+	if (uml_tap_enable_vnet_headers(vp->fds->tx_fd))
+		return 0;
+	return -1;
+}
 
-अटल पूर्णांक build_tap_transport_data(काष्ठा vector_निजी *vp)
-अणु
-	/* "Pure" tap uses the same fd क्रम rx and tx */
-	अगर (uml_tap_enable_vnet_headers(vp->fds->tx_fd)) अणु
-		vp->क्रमm_header = &raw_क्रमm_header;
-		vp->verअगरy_header = &raw_verअगरy_header;
-		vp->header_size = माप(काष्ठा virtio_net_hdr);
-		vp->rx_header_size = माप(काष्ठा virtio_net_hdr);
+static int build_tap_transport_data(struct vector_private *vp)
+{
+	/* "Pure" tap uses the same fd for rx and tx */
+	if (uml_tap_enable_vnet_headers(vp->fds->tx_fd)) {
+		vp->form_header = &raw_form_header;
+		vp->verify_header = &raw_verify_header;
+		vp->header_size = sizeof(struct virtio_net_hdr);
+		vp->rx_header_size = sizeof(struct virtio_net_hdr);
 		vp->dev->hw_features |=
 			(NETIF_F_TSO | NETIF_F_GSO | NETIF_F_GRO);
 		vp->dev->features |=
@@ -460,37 +459,37 @@
 			vp->dev,
 			"tap: using vnet headers for tso and tx/rx checksum"
 		);
-		वापस 0;
-	पूर्ण
-	वापस -1;
-पूर्ण
+		return 0;
+	}
+	return -1;
+}
 
 
-अटल पूर्णांक build_bess_transport_data(काष्ठा vector_निजी *vp)
-अणु
-	vp->क्रमm_header = शून्य;
-	vp->verअगरy_header = शून्य;
+static int build_bess_transport_data(struct vector_private *vp)
+{
+	vp->form_header = NULL;
+	vp->verify_header = NULL;
 	vp->header_size = 0;
 	vp->rx_header_size = 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक build_transport_data(काष्ठा vector_निजी *vp)
-अणु
-	अक्षर *transport = uml_vector_fetch_arg(vp->parsed, "transport");
+int build_transport_data(struct vector_private *vp)
+{
+	char *transport = uml_vector_fetch_arg(vp->parsed, "transport");
 
-	अगर (म_भेदन(transport, TRANS_GRE, TRANS_GRE_LEN) == 0)
-		वापस build_gre_transport_data(vp);
-	अगर (म_भेदन(transport, TRANS_L2TPV3, TRANS_L2TPV3_LEN) == 0)
-		वापस build_l2tpv3_transport_data(vp);
-	अगर (म_भेदन(transport, TRANS_RAW, TRANS_RAW_LEN) == 0)
-		वापस build_raw_transport_data(vp);
-	अगर (म_भेदन(transport, TRANS_TAP, TRANS_TAP_LEN) == 0)
-		वापस build_tap_transport_data(vp);
-	अगर (म_भेदन(transport, TRANS_HYBRID, TRANS_HYBRID_LEN) == 0)
-		वापस build_hybrid_transport_data(vp);
-	अगर (म_भेदन(transport, TRANS_BESS, TRANS_BESS_LEN) == 0)
-		वापस build_bess_transport_data(vp);
-	वापस 0;
-पूर्ण
+	if (strncmp(transport, TRANS_GRE, TRANS_GRE_LEN) == 0)
+		return build_gre_transport_data(vp);
+	if (strncmp(transport, TRANS_L2TPV3, TRANS_L2TPV3_LEN) == 0)
+		return build_l2tpv3_transport_data(vp);
+	if (strncmp(transport, TRANS_RAW, TRANS_RAW_LEN) == 0)
+		return build_raw_transport_data(vp);
+	if (strncmp(transport, TRANS_TAP, TRANS_TAP_LEN) == 0)
+		return build_tap_transport_data(vp);
+	if (strncmp(transport, TRANS_HYBRID, TRANS_HYBRID_LEN) == 0)
+		return build_hybrid_transport_data(vp);
+	if (strncmp(transport, TRANS_BESS, TRANS_BESS_LEN) == 0)
+		return build_bess_transport_data(vp);
+	return 0;
+}
 

@@ -1,283 +1,282 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 2018 Oracle and/or its affiliates. All rights reserved. */
 
-#समावेश <crypto/aead.h>
-#समावेश <linux/debugfs.h>
-#समावेश <net/xfrm.h>
+#include <crypto/aead.h>
+#include <linux/debugfs.h>
+#include <net/xfrm.h>
 
-#समावेश "netdevsim.h"
+#include "netdevsim.h"
 
-#घोषणा NSIM_IPSEC_AUTH_BITS	128
+#define NSIM_IPSEC_AUTH_BITS	128
 
-अटल sमाप_प्रकार nsim_dbg_netdev_ops_पढ़ो(काष्ठा file *filp,
-					अक्षर __user *buffer,
-					माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा netdevsim *ns = filp->निजी_data;
-	काष्ठा nsim_ipsec *ipsec = &ns->ipsec;
-	माप_प्रकार bufsize;
-	अक्षर *buf, *p;
-	पूर्णांक len;
-	पूर्णांक i;
+static ssize_t nsim_dbg_netdev_ops_read(struct file *filp,
+					char __user *buffer,
+					size_t count, loff_t *ppos)
+{
+	struct netdevsim *ns = filp->private_data;
+	struct nsim_ipsec *ipsec = &ns->ipsec;
+	size_t bufsize;
+	char *buf, *p;
+	int len;
+	int i;
 
 	/* the buffer needed is
 	 * (num SAs * 3 lines each * ~60 bytes per line) + one more line
 	 */
 	bufsize = (ipsec->count * 4 * 60) + 60;
 	buf = kzalloc(bufsize, GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	if (!buf)
+		return -ENOMEM;
 
 	p = buf;
-	p += scnम_लिखो(p, bufsize - (p - buf),
+	p += scnprintf(p, bufsize - (p - buf),
 		       "SA count=%u tx=%u\n",
 		       ipsec->count, ipsec->tx);
 
-	क्रम (i = 0; i < NSIM_IPSEC_MAX_SA_COUNT; i++) अणु
-		काष्ठा nsim_sa *sap = &ipsec->sa[i];
+	for (i = 0; i < NSIM_IPSEC_MAX_SA_COUNT; i++) {
+		struct nsim_sa *sap = &ipsec->sa[i];
 
-		अगर (!sap->used)
-			जारी;
+		if (!sap->used)
+			continue;
 
-		p += scnम_लिखो(p, bufsize - (p - buf),
+		p += scnprintf(p, bufsize - (p - buf),
 			       "sa[%i] %cx ipaddr=0x%08x %08x %08x %08x\n",
 			       i, (sap->rx ? 'r' : 't'), sap->ipaddr[0],
 			       sap->ipaddr[1], sap->ipaddr[2], sap->ipaddr[3]);
-		p += scnम_लिखो(p, bufsize - (p - buf),
+		p += scnprintf(p, bufsize - (p - buf),
 			       "sa[%i]    spi=0x%08x proto=0x%x salt=0x%08x crypt=%d\n",
 			       i, be32_to_cpu(sap->xs->id.spi),
 			       sap->xs->id.proto, sap->salt, sap->crypt);
-		p += scnम_लिखो(p, bufsize - (p - buf),
+		p += scnprintf(p, bufsize - (p - buf),
 			       "sa[%i]    key=0x%08x %08x %08x %08x\n",
 			       i, sap->key[0], sap->key[1],
 			       sap->key[2], sap->key[3]);
-	पूर्ण
+	}
 
-	len = simple_पढ़ो_from_buffer(buffer, count, ppos, buf, p - buf);
+	len = simple_read_from_buffer(buffer, count, ppos, buf, p - buf);
 
-	kमुक्त(buf);
-	वापस len;
-पूर्ण
+	kfree(buf);
+	return len;
+}
 
-अटल स्थिर काष्ठा file_operations ipsec_dbg_fops = अणु
+static const struct file_operations ipsec_dbg_fops = {
 	.owner = THIS_MODULE,
-	.खोलो = simple_खोलो,
-	.पढ़ो = nsim_dbg_netdev_ops_पढ़ो,
-पूर्ण;
+	.open = simple_open,
+	.read = nsim_dbg_netdev_ops_read,
+};
 
-अटल पूर्णांक nsim_ipsec_find_empty_idx(काष्ठा nsim_ipsec *ipsec)
-अणु
+static int nsim_ipsec_find_empty_idx(struct nsim_ipsec *ipsec)
+{
 	u32 i;
 
-	अगर (ipsec->count == NSIM_IPSEC_MAX_SA_COUNT)
-		वापस -ENOSPC;
+	if (ipsec->count == NSIM_IPSEC_MAX_SA_COUNT)
+		return -ENOSPC;
 
 	/* search sa table */
-	क्रम (i = 0; i < NSIM_IPSEC_MAX_SA_COUNT; i++) अणु
-		अगर (!ipsec->sa[i].used)
-			वापस i;
-	पूर्ण
+	for (i = 0; i < NSIM_IPSEC_MAX_SA_COUNT; i++) {
+		if (!ipsec->sa[i].used)
+			return i;
+	}
 
-	वापस -ENOSPC;
-पूर्ण
+	return -ENOSPC;
+}
 
-अटल पूर्णांक nsim_ipsec_parse_proto_keys(काष्ठा xfrm_state *xs,
+static int nsim_ipsec_parse_proto_keys(struct xfrm_state *xs,
 				       u32 *mykey, u32 *mysalt)
-अणु
-	स्थिर अक्षर aes_gcm_name[] = "rfc4106(gcm(aes))";
-	काष्ठा net_device *dev = xs->xso.dev;
-	अचिन्हित अक्षर *key_data;
-	अक्षर *alg_name = शून्य;
-	पूर्णांक key_len;
+{
+	const char aes_gcm_name[] = "rfc4106(gcm(aes))";
+	struct net_device *dev = xs->xso.dev;
+	unsigned char *key_data;
+	char *alg_name = NULL;
+	int key_len;
 
-	अगर (!xs->aead) अणु
+	if (!xs->aead) {
 		netdev_err(dev, "Unsupported IPsec algorithm\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (xs->aead->alg_icv_len != NSIM_IPSEC_AUTH_BITS) अणु
+	if (xs->aead->alg_icv_len != NSIM_IPSEC_AUTH_BITS) {
 		netdev_err(dev, "IPsec offload requires %d bit authentication\n",
 			   NSIM_IPSEC_AUTH_BITS);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	key_data = &xs->aead->alg_key[0];
 	key_len = xs->aead->alg_key_len;
 	alg_name = xs->aead->alg_name;
 
-	अगर (म_भेद(alg_name, aes_gcm_name)) अणु
+	if (strcmp(alg_name, aes_gcm_name)) {
 		netdev_err(dev, "Unsupported IPsec algorithm - please use %s\n",
 			   aes_gcm_name);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* 160 accounts क्रम 16 byte key and 4 byte salt */
-	अगर (key_len > NSIM_IPSEC_AUTH_BITS) अणु
+	/* 160 accounts for 16 byte key and 4 byte salt */
+	if (key_len > NSIM_IPSEC_AUTH_BITS) {
 		*mysalt = ((u32 *)key_data)[4];
-	पूर्ण अन्यथा अगर (key_len == NSIM_IPSEC_AUTH_BITS) अणु
+	} else if (key_len == NSIM_IPSEC_AUTH_BITS) {
 		*mysalt = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		netdev_err(dev, "IPsec hw offload only supports 128 bit keys with optional 32 bit salt\n");
-		वापस -EINVAL;
-	पूर्ण
-	स_नकल(mykey, key_data, 16);
+		return -EINVAL;
+	}
+	memcpy(mykey, key_data, 16);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nsim_ipsec_add_sa(काष्ठा xfrm_state *xs)
-अणु
-	काष्ठा nsim_ipsec *ipsec;
-	काष्ठा net_device *dev;
-	काष्ठा netdevsim *ns;
-	काष्ठा nsim_sa sa;
+static int nsim_ipsec_add_sa(struct xfrm_state *xs)
+{
+	struct nsim_ipsec *ipsec;
+	struct net_device *dev;
+	struct netdevsim *ns;
+	struct nsim_sa sa;
 	u16 sa_idx;
-	पूर्णांक ret;
+	int ret;
 
 	dev = xs->xso.dev;
 	ns = netdev_priv(dev);
 	ipsec = &ns->ipsec;
 
-	अगर (xs->id.proto != IPPROTO_ESP && xs->id.proto != IPPROTO_AH) अणु
+	if (xs->id.proto != IPPROTO_ESP && xs->id.proto != IPPROTO_AH) {
 		netdev_err(dev, "Unsupported protocol 0x%04x for ipsec offload\n",
 			   xs->id.proto);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (xs->calg) अणु
+	if (xs->calg) {
 		netdev_err(dev, "Compression offload not supported\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* find the first unused index */
 	ret = nsim_ipsec_find_empty_idx(ipsec);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		netdev_err(dev, "No space for SA in Rx table!\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	sa_idx = (u16)ret;
 
-	स_रखो(&sa, 0, माप(sa));
+	memset(&sa, 0, sizeof(sa));
 	sa.used = true;
 	sa.xs = xs;
 
-	अगर (sa.xs->id.proto & IPPROTO_ESP)
+	if (sa.xs->id.proto & IPPROTO_ESP)
 		sa.crypt = xs->ealg || xs->aead;
 
 	/* get the key and salt */
 	ret = nsim_ipsec_parse_proto_keys(xs, sa.key, &sa.salt);
-	अगर (ret) अणु
+	if (ret) {
 		netdev_err(dev, "Failed to get key data for SA table\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (xs->xso.flags & XFRM_OFFLOAD_INBOUND) अणु
+	if (xs->xso.flags & XFRM_OFFLOAD_INBOUND) {
 		sa.rx = true;
 
-		अगर (xs->props.family == AF_INET6)
-			स_नकल(sa.ipaddr, &xs->id.daddr.a6, 16);
-		अन्यथा
-			स_नकल(&sa.ipaddr[3], &xs->id.daddr.a4, 4);
-	पूर्ण
+		if (xs->props.family == AF_INET6)
+			memcpy(sa.ipaddr, &xs->id.daddr.a6, 16);
+		else
+			memcpy(&sa.ipaddr[3], &xs->id.daddr.a4, 4);
+	}
 
 	/* the preparations worked, so save the info */
-	स_नकल(&ipsec->sa[sa_idx], &sa, माप(sa));
+	memcpy(&ipsec->sa[sa_idx], &sa, sizeof(sa));
 
-	/* the XFRM stack करोesn't like offload_handle == 0,
-	 * so add a bitflag in हाल our array index is 0
+	/* the XFRM stack doesn't like offload_handle == 0,
+	 * so add a bitflag in case our array index is 0
 	 */
 	xs->xso.offload_handle = sa_idx | NSIM_IPSEC_VALID;
 	ipsec->count++;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम nsim_ipsec_del_sa(काष्ठा xfrm_state *xs)
-अणु
-	काष्ठा netdevsim *ns = netdev_priv(xs->xso.dev);
-	काष्ठा nsim_ipsec *ipsec = &ns->ipsec;
+static void nsim_ipsec_del_sa(struct xfrm_state *xs)
+{
+	struct netdevsim *ns = netdev_priv(xs->xso.dev);
+	struct nsim_ipsec *ipsec = &ns->ipsec;
 	u16 sa_idx;
 
 	sa_idx = xs->xso.offload_handle & ~NSIM_IPSEC_VALID;
-	अगर (!ipsec->sa[sa_idx].used) अणु
+	if (!ipsec->sa[sa_idx].used) {
 		netdev_err(ns->netdev, "Invalid SA for delete sa_idx=%d\n",
 			   sa_idx);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	स_रखो(&ipsec->sa[sa_idx], 0, माप(काष्ठा nsim_sa));
+	memset(&ipsec->sa[sa_idx], 0, sizeof(struct nsim_sa));
 	ipsec->count--;
-पूर्ण
+}
 
-अटल bool nsim_ipsec_offload_ok(काष्ठा sk_buff *skb, काष्ठा xfrm_state *xs)
-अणु
-	काष्ठा netdevsim *ns = netdev_priv(xs->xso.dev);
-	काष्ठा nsim_ipsec *ipsec = &ns->ipsec;
+static bool nsim_ipsec_offload_ok(struct sk_buff *skb, struct xfrm_state *xs)
+{
+	struct netdevsim *ns = netdev_priv(xs->xso.dev);
+	struct nsim_ipsec *ipsec = &ns->ipsec;
 
 	ipsec->ok++;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल स्थिर काष्ठा xfrmdev_ops nsim_xfrmdev_ops = अणु
-	.xकरो_dev_state_add	= nsim_ipsec_add_sa,
-	.xकरो_dev_state_delete	= nsim_ipsec_del_sa,
-	.xकरो_dev_offload_ok	= nsim_ipsec_offload_ok,
-पूर्ण;
+static const struct xfrmdev_ops nsim_xfrmdev_ops = {
+	.xdo_dev_state_add	= nsim_ipsec_add_sa,
+	.xdo_dev_state_delete	= nsim_ipsec_del_sa,
+	.xdo_dev_offload_ok	= nsim_ipsec_offload_ok,
+};
 
-bool nsim_ipsec_tx(काष्ठा netdevsim *ns, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा sec_path *sp = skb_sec_path(skb);
-	काष्ठा nsim_ipsec *ipsec = &ns->ipsec;
-	काष्ठा xfrm_state *xs;
-	काष्ठा nsim_sa *tsa;
+bool nsim_ipsec_tx(struct netdevsim *ns, struct sk_buff *skb)
+{
+	struct sec_path *sp = skb_sec_path(skb);
+	struct nsim_ipsec *ipsec = &ns->ipsec;
+	struct xfrm_state *xs;
+	struct nsim_sa *tsa;
 	u32 sa_idx;
 
-	/* करो we even need to check this packet? */
-	अगर (!sp)
-		वापस true;
+	/* do we even need to check this packet? */
+	if (!sp)
+		return true;
 
-	अगर (unlikely(!sp->len)) अणु
+	if (unlikely(!sp->len)) {
 		netdev_err(ns->netdev, "no xfrm state len = %d\n",
 			   sp->len);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
 	xs = xfrm_input_state(skb);
-	अगर (unlikely(!xs)) अणु
+	if (unlikely(!xs)) {
 		netdev_err(ns->netdev, "no xfrm_input_state() xs = %p\n", xs);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
 	sa_idx = xs->xso.offload_handle & ~NSIM_IPSEC_VALID;
-	अगर (unlikely(sa_idx >= NSIM_IPSEC_MAX_SA_COUNT)) अणु
+	if (unlikely(sa_idx >= NSIM_IPSEC_MAX_SA_COUNT)) {
 		netdev_err(ns->netdev, "bad sa_idx=%d max=%d\n",
 			   sa_idx, NSIM_IPSEC_MAX_SA_COUNT);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
 	tsa = &ipsec->sa[sa_idx];
-	अगर (unlikely(!tsa->used)) अणु
+	if (unlikely(!tsa->used)) {
 		netdev_err(ns->netdev, "unused sa_idx=%d\n", sa_idx);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	अगर (xs->id.proto != IPPROTO_ESP && xs->id.proto != IPPROTO_AH) अणु
+	if (xs->id.proto != IPPROTO_ESP && xs->id.proto != IPPROTO_AH) {
 		netdev_err(ns->netdev, "unexpected proto=%d\n", xs->id.proto);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
 	ipsec->tx++;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-व्योम nsim_ipsec_init(काष्ठा netdevsim *ns)
-अणु
+void nsim_ipsec_init(struct netdevsim *ns)
+{
 	ns->netdev->xfrmdev_ops = &nsim_xfrmdev_ops;
 
-#घोषणा NSIM_ESP_FEATURES	(NETIF_F_HW_ESP | \
+#define NSIM_ESP_FEATURES	(NETIF_F_HW_ESP | \
 				 NETIF_F_HW_ESP_TX_CSUM | \
 				 NETIF_F_GSO_ESP)
 
@@ -287,14 +286,14 @@ bool nsim_ipsec_tx(काष्ठा netdevsim *ns, काष्ठा sk_buff 
 	ns->ipsec.pfile = debugfs_create_file("ipsec", 0400,
 					      ns->nsim_dev_port->ddir, ns,
 					      &ipsec_dbg_fops);
-पूर्ण
+}
 
-व्योम nsim_ipsec_tearकरोwn(काष्ठा netdevsim *ns)
-अणु
-	काष्ठा nsim_ipsec *ipsec = &ns->ipsec;
+void nsim_ipsec_teardown(struct netdevsim *ns)
+{
+	struct nsim_ipsec *ipsec = &ns->ipsec;
 
-	अगर (ipsec->count)
+	if (ipsec->count)
 		netdev_err(ns->netdev, "tearing down IPsec offload with %d SAs left\n",
 			   ipsec->count);
-	debugfs_हटाओ_recursive(ipsec->pfile);
-पूर्ण
+	debugfs_remove_recursive(ipsec->pfile);
+}

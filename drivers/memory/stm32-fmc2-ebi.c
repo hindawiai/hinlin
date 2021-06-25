@@ -1,109 +1,108 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) STMicroelectronics 2020
  */
 
-#समावेश <linux/bitfield.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/pinctrl/consumer.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/reset.h>
+#include <linux/bitfield.h>
+#include <linux/clk.h>
+#include <linux/mfd/syscon.h>
+#include <linux/module.h>
+#include <linux/of_platform.h>
+#include <linux/pinctrl/consumer.h>
+#include <linux/regmap.h>
+#include <linux/reset.h>
 
 /* FMC2 Controller Registers */
-#घोषणा FMC2_BCR1			0x0
-#घोषणा FMC2_BTR1			0x4
-#घोषणा FMC2_BCR(x)			((x) * 0x8 + FMC2_BCR1)
-#घोषणा FMC2_BTR(x)			((x) * 0x8 + FMC2_BTR1)
-#घोषणा FMC2_PCSCNTR			0x20
-#घोषणा FMC2_BWTR1			0x104
-#घोषणा FMC2_BWTR(x)			((x) * 0x8 + FMC2_BWTR1)
+#define FMC2_BCR1			0x0
+#define FMC2_BTR1			0x4
+#define FMC2_BCR(x)			((x) * 0x8 + FMC2_BCR1)
+#define FMC2_BTR(x)			((x) * 0x8 + FMC2_BTR1)
+#define FMC2_PCSCNTR			0x20
+#define FMC2_BWTR1			0x104
+#define FMC2_BWTR(x)			((x) * 0x8 + FMC2_BWTR1)
 
 /* Register: FMC2_BCR1 */
-#घोषणा FMC2_BCR1_CCLKEN		BIT(20)
-#घोषणा FMC2_BCR1_FMC2EN		BIT(31)
+#define FMC2_BCR1_CCLKEN		BIT(20)
+#define FMC2_BCR1_FMC2EN		BIT(31)
 
 /* Register: FMC2_BCRx */
-#घोषणा FMC2_BCR_MBKEN			BIT(0)
-#घोषणा FMC2_BCR_MUXEN			BIT(1)
-#घोषणा FMC2_BCR_MTYP			GENMASK(3, 2)
-#घोषणा FMC2_BCR_MWID			GENMASK(5, 4)
-#घोषणा FMC2_BCR_FACCEN			BIT(6)
-#घोषणा FMC2_BCR_BURSTEN		BIT(8)
-#घोषणा FMC2_BCR_WAITPOL		BIT(9)
-#घोषणा FMC2_BCR_WAITCFG		BIT(11)
-#घोषणा FMC2_BCR_WREN			BIT(12)
-#घोषणा FMC2_BCR_WAITEN			BIT(13)
-#घोषणा FMC2_BCR_EXTMOD			BIT(14)
-#घोषणा FMC2_BCR_ASYNCWAIT		BIT(15)
-#घोषणा FMC2_BCR_CPSIZE			GENMASK(18, 16)
-#घोषणा FMC2_BCR_CBURSTRW		BIT(19)
-#घोषणा FMC2_BCR_NBLSET			GENMASK(23, 22)
+#define FMC2_BCR_MBKEN			BIT(0)
+#define FMC2_BCR_MUXEN			BIT(1)
+#define FMC2_BCR_MTYP			GENMASK(3, 2)
+#define FMC2_BCR_MWID			GENMASK(5, 4)
+#define FMC2_BCR_FACCEN			BIT(6)
+#define FMC2_BCR_BURSTEN		BIT(8)
+#define FMC2_BCR_WAITPOL		BIT(9)
+#define FMC2_BCR_WAITCFG		BIT(11)
+#define FMC2_BCR_WREN			BIT(12)
+#define FMC2_BCR_WAITEN			BIT(13)
+#define FMC2_BCR_EXTMOD			BIT(14)
+#define FMC2_BCR_ASYNCWAIT		BIT(15)
+#define FMC2_BCR_CPSIZE			GENMASK(18, 16)
+#define FMC2_BCR_CBURSTRW		BIT(19)
+#define FMC2_BCR_NBLSET			GENMASK(23, 22)
 
 /* Register: FMC2_BTRx/FMC2_BWTRx */
-#घोषणा FMC2_BXTR_ADDSET		GENMASK(3, 0)
-#घोषणा FMC2_BXTR_ADDHLD		GENMASK(7, 4)
-#घोषणा FMC2_BXTR_DATAST		GENMASK(15, 8)
-#घोषणा FMC2_BXTR_BUSTURN		GENMASK(19, 16)
-#घोषणा FMC2_BTR_CLKDIV			GENMASK(23, 20)
-#घोषणा FMC2_BTR_DATLAT			GENMASK(27, 24)
-#घोषणा FMC2_BXTR_ACCMOD		GENMASK(29, 28)
-#घोषणा FMC2_BXTR_DATAHLD		GENMASK(31, 30)
+#define FMC2_BXTR_ADDSET		GENMASK(3, 0)
+#define FMC2_BXTR_ADDHLD		GENMASK(7, 4)
+#define FMC2_BXTR_DATAST		GENMASK(15, 8)
+#define FMC2_BXTR_BUSTURN		GENMASK(19, 16)
+#define FMC2_BTR_CLKDIV			GENMASK(23, 20)
+#define FMC2_BTR_DATLAT			GENMASK(27, 24)
+#define FMC2_BXTR_ACCMOD		GENMASK(29, 28)
+#define FMC2_BXTR_DATAHLD		GENMASK(31, 30)
 
 /* Register: FMC2_PCSCNTR */
-#घोषणा FMC2_PCSCNTR_CSCOUNT		GENMASK(15, 0)
-#घोषणा FMC2_PCSCNTR_CNTBEN(x)		BIT((x) + 16)
+#define FMC2_PCSCNTR_CSCOUNT		GENMASK(15, 0)
+#define FMC2_PCSCNTR_CNTBEN(x)		BIT((x) + 16)
 
-#घोषणा FMC2_MAX_EBI_CE			4
-#घोषणा FMC2_MAX_BANKS			5
+#define FMC2_MAX_EBI_CE			4
+#define FMC2_MAX_BANKS			5
 
-#घोषणा FMC2_BCR_CPSIZE_0		0x0
-#घोषणा FMC2_BCR_CPSIZE_128		0x1
-#घोषणा FMC2_BCR_CPSIZE_256		0x2
-#घोषणा FMC2_BCR_CPSIZE_512		0x3
-#घोषणा FMC2_BCR_CPSIZE_1024		0x4
+#define FMC2_BCR_CPSIZE_0		0x0
+#define FMC2_BCR_CPSIZE_128		0x1
+#define FMC2_BCR_CPSIZE_256		0x2
+#define FMC2_BCR_CPSIZE_512		0x3
+#define FMC2_BCR_CPSIZE_1024		0x4
 
-#घोषणा FMC2_BCR_MWID_8			0x0
-#घोषणा FMC2_BCR_MWID_16		0x1
+#define FMC2_BCR_MWID_8			0x0
+#define FMC2_BCR_MWID_16		0x1
 
-#घोषणा FMC2_BCR_MTYP_SRAM		0x0
-#घोषणा FMC2_BCR_MTYP_PSRAM		0x1
-#घोषणा FMC2_BCR_MTYP_NOR		0x2
+#define FMC2_BCR_MTYP_SRAM		0x0
+#define FMC2_BCR_MTYP_PSRAM		0x1
+#define FMC2_BCR_MTYP_NOR		0x2
 
-#घोषणा FMC2_BXTR_EXTMOD_A		0x0
-#घोषणा FMC2_BXTR_EXTMOD_B		0x1
-#घोषणा FMC2_BXTR_EXTMOD_C		0x2
-#घोषणा FMC2_BXTR_EXTMOD_D		0x3
+#define FMC2_BXTR_EXTMOD_A		0x0
+#define FMC2_BXTR_EXTMOD_B		0x1
+#define FMC2_BXTR_EXTMOD_C		0x2
+#define FMC2_BXTR_EXTMOD_D		0x3
 
-#घोषणा FMC2_BCR_NBLSET_MAX		0x3
-#घोषणा FMC2_BXTR_ADDSET_MAX		0xf
-#घोषणा FMC2_BXTR_ADDHLD_MAX		0xf
-#घोषणा FMC2_BXTR_DATAST_MAX		0xff
-#घोषणा FMC2_BXTR_BUSTURN_MAX		0xf
-#घोषणा FMC2_BXTR_DATAHLD_MAX		0x3
-#घोषणा FMC2_BTR_CLKDIV_MAX		0xf
-#घोषणा FMC2_BTR_DATLAT_MAX		0xf
-#घोषणा FMC2_PCSCNTR_CSCOUNT_MAX	0xff
+#define FMC2_BCR_NBLSET_MAX		0x3
+#define FMC2_BXTR_ADDSET_MAX		0xf
+#define FMC2_BXTR_ADDHLD_MAX		0xf
+#define FMC2_BXTR_DATAST_MAX		0xff
+#define FMC2_BXTR_BUSTURN_MAX		0xf
+#define FMC2_BXTR_DATAHLD_MAX		0x3
+#define FMC2_BTR_CLKDIV_MAX		0xf
+#define FMC2_BTR_DATLAT_MAX		0xf
+#define FMC2_PCSCNTR_CSCOUNT_MAX	0xff
 
-क्रमागत sपंचांग32_fmc2_ebi_bank अणु
+enum stm32_fmc2_ebi_bank {
 	FMC2_EBI1 = 0,
 	FMC2_EBI2,
 	FMC2_EBI3,
 	FMC2_EBI4,
-	FMC2_न_अंकD
-पूर्ण;
+	FMC2_NAND
+};
 
-क्रमागत sपंचांग32_fmc2_ebi_रेजिस्टर_type अणु
+enum stm32_fmc2_ebi_register_type {
 	FMC2_REG_BCR = 1,
 	FMC2_REG_BTR,
 	FMC2_REG_BWTR,
 	FMC2_REG_PCSCNTR
-पूर्ण;
+};
 
-क्रमागत sपंचांग32_fmc2_ebi_transaction_type अणु
+enum stm32_fmc2_ebi_transaction_type {
 	FMC2_ASYNC_MODE_1_SRAM = 0,
 	FMC2_ASYNC_MODE_1_PSRAM,
 	FMC2_ASYNC_MODE_A_SRAM,
@@ -116,251 +115,251 @@
 	FMC2_SYNC_READ_ASYNC_WRITE_PSRAM,
 	FMC2_SYNC_READ_SYNC_WRITE_NOR,
 	FMC2_SYNC_READ_ASYNC_WRITE_NOR
-पूर्ण;
+};
 
-क्रमागत sपंचांग32_fmc2_ebi_buswidth अणु
+enum stm32_fmc2_ebi_buswidth {
 	FMC2_BUSWIDTH_8 = 8,
 	FMC2_BUSWIDTH_16 = 16
-पूर्ण;
+};
 
-क्रमागत sपंचांग32_fmc2_ebi_cpsize अणु
+enum stm32_fmc2_ebi_cpsize {
 	FMC2_CPSIZE_0 = 0,
 	FMC2_CPSIZE_128 = 128,
 	FMC2_CPSIZE_256 = 256,
 	FMC2_CPSIZE_512 = 512,
 	FMC2_CPSIZE_1024 = 1024
-पूर्ण;
+};
 
-काष्ठा sपंचांग32_fmc2_ebi अणु
-	काष्ठा device *dev;
-	काष्ठा clk *clk;
-	काष्ठा regmap *regmap;
-	u8 bank_asचिन्हित;
+struct stm32_fmc2_ebi {
+	struct device *dev;
+	struct clk *clk;
+	struct regmap *regmap;
+	u8 bank_assigned;
 
 	u32 bcr[FMC2_MAX_EBI_CE];
 	u32 btr[FMC2_MAX_EBI_CE];
 	u32 bwtr[FMC2_MAX_EBI_CE];
 	u32 pcscntr;
-पूर्ण;
+};
 
 /*
- * काष्ठा sपंचांग32_fmc2_prop - STM32 FMC2 EBI property
+ * struct stm32_fmc2_prop - STM32 FMC2 EBI property
  * @name: the device tree binding name of the property
  * @bprop: indicate that it is a boolean property
  * @mprop: indicate that it is a mandatory property
- * @reg_type: the रेजिस्टर that have to be modअगरied
- * @reg_mask: the bit that have to be modअगरied in the selected रेजिस्टर
- *            in हाल of it is a boolean property
- * @reset_val: the शेष value that have to be set in हाल the property
+ * @reg_type: the register that have to be modified
+ * @reg_mask: the bit that have to be modified in the selected register
+ *            in case of it is a boolean property
+ * @reset_val: the default value that have to be set in case the property
  *             has not been defined in the device tree
  * @check: this callback ckecks that the property is compliant with the
  *         transaction type selected
- * @calculate: this callback is called to calculate क्रम exemple a timing
- *             set in nanoseconds in the device tree in घड़ी cycles or in
- *             घड़ी period
- * @set: this callback applies the values in the रेजिस्टरs
+ * @calculate: this callback is called to calculate for exemple a timing
+ *             set in nanoseconds in the device tree in clock cycles or in
+ *             clock period
+ * @set: this callback applies the values in the registers
  */
-काष्ठा sपंचांग32_fmc2_prop अणु
-	स्थिर अक्षर *name;
+struct stm32_fmc2_prop {
+	const char *name;
 	bool bprop;
 	bool mprop;
-	पूर्णांक reg_type;
+	int reg_type;
 	u32 reg_mask;
 	u32 reset_val;
-	पूर्णांक (*check)(काष्ठा sपंचांग32_fmc2_ebi *ebi,
-		     स्थिर काष्ठा sपंचांग32_fmc2_prop *prop, पूर्णांक cs);
-	u32 (*calculate)(काष्ठा sपंचांग32_fmc2_ebi *ebi, पूर्णांक cs, u32 setup);
-	पूर्णांक (*set)(काष्ठा sपंचांग32_fmc2_ebi *ebi,
-		   स्थिर काष्ठा sपंचांग32_fmc2_prop *prop,
-		   पूर्णांक cs, u32 setup);
-पूर्ण;
+	int (*check)(struct stm32_fmc2_ebi *ebi,
+		     const struct stm32_fmc2_prop *prop, int cs);
+	u32 (*calculate)(struct stm32_fmc2_ebi *ebi, int cs, u32 setup);
+	int (*set)(struct stm32_fmc2_ebi *ebi,
+		   const struct stm32_fmc2_prop *prop,
+		   int cs, u32 setup);
+};
 
-अटल पूर्णांक sपंचांग32_fmc2_ebi_check_mux(काष्ठा sपंचांग32_fmc2_ebi *ebi,
-				    स्थिर काष्ठा sपंचांग32_fmc2_prop *prop,
-				    पूर्णांक cs)
-अणु
+static int stm32_fmc2_ebi_check_mux(struct stm32_fmc2_ebi *ebi,
+				    const struct stm32_fmc2_prop *prop,
+				    int cs)
+{
 	u32 bcr;
 
-	regmap_पढ़ो(ebi->regmap, FMC2_BCR(cs), &bcr);
+	regmap_read(ebi->regmap, FMC2_BCR(cs), &bcr);
 
-	अगर (bcr & FMC2_BCR_MTYP)
-		वापस 0;
+	if (bcr & FMC2_BCR_MTYP)
+		return 0;
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक sपंचांग32_fmc2_ebi_check_रुकोcfg(काष्ठा sपंचांग32_fmc2_ebi *ebi,
-					स्थिर काष्ठा sपंचांग32_fmc2_prop *prop,
-					पूर्णांक cs)
-अणु
+static int stm32_fmc2_ebi_check_waitcfg(struct stm32_fmc2_ebi *ebi,
+					const struct stm32_fmc2_prop *prop,
+					int cs)
+{
 	u32 bcr, val = FIELD_PREP(FMC2_BCR_MTYP, FMC2_BCR_MTYP_NOR);
 
-	regmap_पढ़ो(ebi->regmap, FMC2_BCR(cs), &bcr);
+	regmap_read(ebi->regmap, FMC2_BCR(cs), &bcr);
 
-	अगर ((bcr & FMC2_BCR_MTYP) == val && bcr & FMC2_BCR_BURSTEN)
-		वापस 0;
+	if ((bcr & FMC2_BCR_MTYP) == val && bcr & FMC2_BCR_BURSTEN)
+		return 0;
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक sपंचांग32_fmc2_ebi_check_sync_trans(काष्ठा sपंचांग32_fmc2_ebi *ebi,
-					   स्थिर काष्ठा sपंचांग32_fmc2_prop *prop,
-					   पूर्णांक cs)
-अणु
+static int stm32_fmc2_ebi_check_sync_trans(struct stm32_fmc2_ebi *ebi,
+					   const struct stm32_fmc2_prop *prop,
+					   int cs)
+{
 	u32 bcr;
 
-	regmap_पढ़ो(ebi->regmap, FMC2_BCR(cs), &bcr);
+	regmap_read(ebi->regmap, FMC2_BCR(cs), &bcr);
 
-	अगर (bcr & FMC2_BCR_BURSTEN)
-		वापस 0;
+	if (bcr & FMC2_BCR_BURSTEN)
+		return 0;
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक sपंचांग32_fmc2_ebi_check_async_trans(काष्ठा sपंचांग32_fmc2_ebi *ebi,
-					    स्थिर काष्ठा sपंचांग32_fmc2_prop *prop,
-					    पूर्णांक cs)
-अणु
+static int stm32_fmc2_ebi_check_async_trans(struct stm32_fmc2_ebi *ebi,
+					    const struct stm32_fmc2_prop *prop,
+					    int cs)
+{
 	u32 bcr;
 
-	regmap_पढ़ो(ebi->regmap, FMC2_BCR(cs), &bcr);
+	regmap_read(ebi->regmap, FMC2_BCR(cs), &bcr);
 
-	अगर (!(bcr & FMC2_BCR_BURSTEN) || !(bcr & FMC2_BCR_CBURSTRW))
-		वापस 0;
+	if (!(bcr & FMC2_BCR_BURSTEN) || !(bcr & FMC2_BCR_CBURSTRW))
+		return 0;
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक sपंचांग32_fmc2_ebi_check_cpsize(काष्ठा sपंचांग32_fmc2_ebi *ebi,
-				       स्थिर काष्ठा sपंचांग32_fmc2_prop *prop,
-				       पूर्णांक cs)
-अणु
+static int stm32_fmc2_ebi_check_cpsize(struct stm32_fmc2_ebi *ebi,
+				       const struct stm32_fmc2_prop *prop,
+				       int cs)
+{
 	u32 bcr, val = FIELD_PREP(FMC2_BCR_MTYP, FMC2_BCR_MTYP_PSRAM);
 
-	regmap_पढ़ो(ebi->regmap, FMC2_BCR(cs), &bcr);
+	regmap_read(ebi->regmap, FMC2_BCR(cs), &bcr);
 
-	अगर ((bcr & FMC2_BCR_MTYP) == val && bcr & FMC2_BCR_BURSTEN)
-		वापस 0;
+	if ((bcr & FMC2_BCR_MTYP) == val && bcr & FMC2_BCR_BURSTEN)
+		return 0;
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक sपंचांग32_fmc2_ebi_check_address_hold(काष्ठा sपंचांग32_fmc2_ebi *ebi,
-					     स्थिर काष्ठा sपंचांग32_fmc2_prop *prop,
-					     पूर्णांक cs)
-अणु
+static int stm32_fmc2_ebi_check_address_hold(struct stm32_fmc2_ebi *ebi,
+					     const struct stm32_fmc2_prop *prop,
+					     int cs)
+{
 	u32 bcr, bxtr, val = FIELD_PREP(FMC2_BXTR_ACCMOD, FMC2_BXTR_EXTMOD_D);
 
-	regmap_पढ़ो(ebi->regmap, FMC2_BCR(cs), &bcr);
-	अगर (prop->reg_type == FMC2_REG_BWTR)
-		regmap_पढ़ो(ebi->regmap, FMC2_BWTR(cs), &bxtr);
-	अन्यथा
-		regmap_पढ़ो(ebi->regmap, FMC2_BTR(cs), &bxtr);
+	regmap_read(ebi->regmap, FMC2_BCR(cs), &bcr);
+	if (prop->reg_type == FMC2_REG_BWTR)
+		regmap_read(ebi->regmap, FMC2_BWTR(cs), &bxtr);
+	else
+		regmap_read(ebi->regmap, FMC2_BTR(cs), &bxtr);
 
-	अगर ((!(bcr & FMC2_BCR_BURSTEN) || !(bcr & FMC2_BCR_CBURSTRW)) &&
+	if ((!(bcr & FMC2_BCR_BURSTEN) || !(bcr & FMC2_BCR_CBURSTRW)) &&
 	    ((bxtr & FMC2_BXTR_ACCMOD) == val || bcr & FMC2_BCR_MUXEN))
-		वापस 0;
+		return 0;
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक sपंचांग32_fmc2_ebi_check_clk_period(काष्ठा sपंचांग32_fmc2_ebi *ebi,
-					   स्थिर काष्ठा sपंचांग32_fmc2_prop *prop,
-					   पूर्णांक cs)
-अणु
+static int stm32_fmc2_ebi_check_clk_period(struct stm32_fmc2_ebi *ebi,
+					   const struct stm32_fmc2_prop *prop,
+					   int cs)
+{
 	u32 bcr, bcr1;
 
-	regmap_पढ़ो(ebi->regmap, FMC2_BCR(cs), &bcr);
-	अगर (cs)
-		regmap_पढ़ो(ebi->regmap, FMC2_BCR1, &bcr1);
-	अन्यथा
+	regmap_read(ebi->regmap, FMC2_BCR(cs), &bcr);
+	if (cs)
+		regmap_read(ebi->regmap, FMC2_BCR1, &bcr1);
+	else
 		bcr1 = bcr;
 
-	अगर (bcr & FMC2_BCR_BURSTEN && (!cs || !(bcr1 & FMC2_BCR1_CCLKEN)))
-		वापस 0;
+	if (bcr & FMC2_BCR_BURSTEN && (!cs || !(bcr1 & FMC2_BCR1_CCLKEN)))
+		return 0;
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक sपंचांग32_fmc2_ebi_check_cclk(काष्ठा sपंचांग32_fmc2_ebi *ebi,
-				     स्थिर काष्ठा sपंचांग32_fmc2_prop *prop,
-				     पूर्णांक cs)
-अणु
-	अगर (cs)
-		वापस -EINVAL;
+static int stm32_fmc2_ebi_check_cclk(struct stm32_fmc2_ebi *ebi,
+				     const struct stm32_fmc2_prop *prop,
+				     int cs)
+{
+	if (cs)
+		return -EINVAL;
 
-	वापस sपंचांग32_fmc2_ebi_check_sync_trans(ebi, prop, cs);
-पूर्ण
+	return stm32_fmc2_ebi_check_sync_trans(ebi, prop, cs);
+}
 
-अटल u32 sपंचांग32_fmc2_ebi_ns_to_घड़ी_cycles(काष्ठा sपंचांग32_fmc2_ebi *ebi,
-					     पूर्णांक cs, u32 setup)
-अणु
-	अचिन्हित दीर्घ hclk = clk_get_rate(ebi->clk);
-	अचिन्हित दीर्घ hclkp = NSEC_PER_SEC / (hclk / 1000);
+static u32 stm32_fmc2_ebi_ns_to_clock_cycles(struct stm32_fmc2_ebi *ebi,
+					     int cs, u32 setup)
+{
+	unsigned long hclk = clk_get_rate(ebi->clk);
+	unsigned long hclkp = NSEC_PER_SEC / (hclk / 1000);
 
-	वापस DIV_ROUND_UP(setup * 1000, hclkp);
-पूर्ण
+	return DIV_ROUND_UP(setup * 1000, hclkp);
+}
 
-अटल u32 sपंचांग32_fmc2_ebi_ns_to_clk_period(काष्ठा sपंचांग32_fmc2_ebi *ebi,
-					   पूर्णांक cs, u32 setup)
-अणु
-	u32 nb_clk_cycles = sपंचांग32_fmc2_ebi_ns_to_घड़ी_cycles(ebi, cs, setup);
+static u32 stm32_fmc2_ebi_ns_to_clk_period(struct stm32_fmc2_ebi *ebi,
+					   int cs, u32 setup)
+{
+	u32 nb_clk_cycles = stm32_fmc2_ebi_ns_to_clock_cycles(ebi, cs, setup);
 	u32 bcr, btr, clk_period;
 
-	regmap_पढ़ो(ebi->regmap, FMC2_BCR1, &bcr);
-	अगर (bcr & FMC2_BCR1_CCLKEN || !cs)
-		regmap_पढ़ो(ebi->regmap, FMC2_BTR1, &btr);
-	अन्यथा
-		regmap_पढ़ो(ebi->regmap, FMC2_BTR(cs), &btr);
+	regmap_read(ebi->regmap, FMC2_BCR1, &bcr);
+	if (bcr & FMC2_BCR1_CCLKEN || !cs)
+		regmap_read(ebi->regmap, FMC2_BTR1, &btr);
+	else
+		regmap_read(ebi->regmap, FMC2_BTR(cs), &btr);
 
 	clk_period = FIELD_GET(FMC2_BTR_CLKDIV, btr) + 1;
 
-	वापस DIV_ROUND_UP(nb_clk_cycles, clk_period);
-पूर्ण
+	return DIV_ROUND_UP(nb_clk_cycles, clk_period);
+}
 
-अटल पूर्णांक sपंचांग32_fmc2_ebi_get_reg(पूर्णांक reg_type, पूर्णांक cs, u32 *reg)
-अणु
-	चयन (reg_type) अणु
-	हाल FMC2_REG_BCR:
+static int stm32_fmc2_ebi_get_reg(int reg_type, int cs, u32 *reg)
+{
+	switch (reg_type) {
+	case FMC2_REG_BCR:
 		*reg = FMC2_BCR(cs);
-		अवरोध;
-	हाल FMC2_REG_BTR:
+		break;
+	case FMC2_REG_BTR:
 		*reg = FMC2_BTR(cs);
-		अवरोध;
-	हाल FMC2_REG_BWTR:
+		break;
+	case FMC2_REG_BWTR:
 		*reg = FMC2_BWTR(cs);
-		अवरोध;
-	हाल FMC2_REG_PCSCNTR:
+		break;
+	case FMC2_REG_PCSCNTR:
 		*reg = FMC2_PCSCNTR;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sपंचांग32_fmc2_ebi_set_bit_field(काष्ठा sपंचांग32_fmc2_ebi *ebi,
-					स्थिर काष्ठा sपंचांग32_fmc2_prop *prop,
-					पूर्णांक cs, u32 setup)
-अणु
+static int stm32_fmc2_ebi_set_bit_field(struct stm32_fmc2_ebi *ebi,
+					const struct stm32_fmc2_prop *prop,
+					int cs, u32 setup)
+{
 	u32 reg;
-	पूर्णांक ret;
+	int ret;
 
-	ret = sपंचांग32_fmc2_ebi_get_reg(prop->reg_type, cs, &reg);
-	अगर (ret)
-		वापस ret;
+	ret = stm32_fmc2_ebi_get_reg(prop->reg_type, cs, &reg);
+	if (ret)
+		return ret;
 
 	regmap_update_bits(ebi->regmap, reg, prop->reg_mask,
 			   setup ? prop->reg_mask : 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sपंचांग32_fmc2_ebi_set_trans_type(काष्ठा sपंचांग32_fmc2_ebi *ebi,
-					 स्थिर काष्ठा sपंचांग32_fmc2_prop *prop,
-					 पूर्णांक cs, u32 setup)
-अणु
+static int stm32_fmc2_ebi_set_trans_type(struct stm32_fmc2_ebi *ebi,
+					 const struct stm32_fmc2_prop *prop,
+					 int cs, u32 setup)
+{
 	u32 bcr_mask, bcr = FMC2_BCR_WREN;
 	u32 btr_mask, btr = 0;
 	u32 bwtr_mask, bwtr = 0;
@@ -371,22 +370,22 @@
 		   FMC2_BCR_WREN | FMC2_BCR_WAITEN | FMC2_BCR_BURSTEN |
 		   FMC2_BCR_EXTMOD | FMC2_BCR_CBURSTRW;
 
-	चयन (setup) अणु
-	हाल FMC2_ASYNC_MODE_1_SRAM:
+	switch (setup) {
+	case FMC2_ASYNC_MODE_1_SRAM:
 		bcr |= FIELD_PREP(FMC2_BCR_MTYP, FMC2_BCR_MTYP_SRAM);
 		/*
 		 * MUXEN = 0, MTYP = 0, FACCEN = 0, BURSTEN = 0, WAITEN = 0,
 		 * WREN = 1, EXTMOD = 0, CBURSTRW = 0, ACCMOD = 0
 		 */
-		अवरोध;
-	हाल FMC2_ASYNC_MODE_1_PSRAM:
+		break;
+	case FMC2_ASYNC_MODE_1_PSRAM:
 		/*
 		 * MUXEN = 0, MTYP = 1, FACCEN = 0, BURSTEN = 0, WAITEN = 0,
 		 * WREN = 1, EXTMOD = 0, CBURSTRW = 0, ACCMOD = 0
 		 */
 		bcr |= FIELD_PREP(FMC2_BCR_MTYP, FMC2_BCR_MTYP_PSRAM);
-		अवरोध;
-	हाल FMC2_ASYNC_MODE_A_SRAM:
+		break;
+	case FMC2_ASYNC_MODE_A_SRAM:
 		/*
 		 * MUXEN = 0, MTYP = 0, FACCEN = 0, BURSTEN = 0, WAITEN = 0,
 		 * WREN = 1, EXTMOD = 1, CBURSTRW = 0, ACCMOD = 0
@@ -395,8 +394,8 @@
 		bcr |= FMC2_BCR_EXTMOD;
 		btr |= FIELD_PREP(FMC2_BXTR_ACCMOD, FMC2_BXTR_EXTMOD_A);
 		bwtr |= FIELD_PREP(FMC2_BXTR_ACCMOD, FMC2_BXTR_EXTMOD_A);
-		अवरोध;
-	हाल FMC2_ASYNC_MODE_A_PSRAM:
+		break;
+	case FMC2_ASYNC_MODE_A_PSRAM:
 		/*
 		 * MUXEN = 0, MTYP = 1, FACCEN = 0, BURSTEN = 0, WAITEN = 0,
 		 * WREN = 1, EXTMOD = 1, CBURSTRW = 0, ACCMOD = 0
@@ -405,16 +404,16 @@
 		bcr |= FMC2_BCR_EXTMOD;
 		btr |= FIELD_PREP(FMC2_BXTR_ACCMOD, FMC2_BXTR_EXTMOD_A);
 		bwtr |= FIELD_PREP(FMC2_BXTR_ACCMOD, FMC2_BXTR_EXTMOD_A);
-		अवरोध;
-	हाल FMC2_ASYNC_MODE_2_NOR:
+		break;
+	case FMC2_ASYNC_MODE_2_NOR:
 		/*
 		 * MUXEN = 0, MTYP = 2, FACCEN = 1, BURSTEN = 0, WAITEN = 0,
 		 * WREN = 1, EXTMOD = 0, CBURSTRW = 0, ACCMOD = 0
 		 */
 		bcr |= FIELD_PREP(FMC2_BCR_MTYP, FMC2_BCR_MTYP_NOR);
 		bcr |= FMC2_BCR_FACCEN;
-		अवरोध;
-	हाल FMC2_ASYNC_MODE_B_NOR:
+		break;
+	case FMC2_ASYNC_MODE_B_NOR:
 		/*
 		 * MUXEN = 0, MTYP = 2, FACCEN = 1, BURSTEN = 0, WAITEN = 0,
 		 * WREN = 1, EXTMOD = 1, CBURSTRW = 0, ACCMOD = 1
@@ -423,8 +422,8 @@
 		bcr |= FMC2_BCR_FACCEN | FMC2_BCR_EXTMOD;
 		btr |= FIELD_PREP(FMC2_BXTR_ACCMOD, FMC2_BXTR_EXTMOD_B);
 		bwtr |= FIELD_PREP(FMC2_BXTR_ACCMOD, FMC2_BXTR_EXTMOD_B);
-		अवरोध;
-	हाल FMC2_ASYNC_MODE_C_NOR:
+		break;
+	case FMC2_ASYNC_MODE_C_NOR:
 		/*
 		 * MUXEN = 0, MTYP = 2, FACCEN = 1, BURSTEN = 0, WAITEN = 0,
 		 * WREN = 1, EXTMOD = 1, CBURSTRW = 0, ACCMOD = 2
@@ -433,8 +432,8 @@
 		bcr |= FMC2_BCR_FACCEN | FMC2_BCR_EXTMOD;
 		btr |= FIELD_PREP(FMC2_BXTR_ACCMOD, FMC2_BXTR_EXTMOD_C);
 		bwtr |= FIELD_PREP(FMC2_BXTR_ACCMOD, FMC2_BXTR_EXTMOD_C);
-		अवरोध;
-	हाल FMC2_ASYNC_MODE_D_NOR:
+		break;
+	case FMC2_ASYNC_MODE_D_NOR:
 		/*
 		 * MUXEN = 0, MTYP = 2, FACCEN = 1, BURSTEN = 0, WAITEN = 0,
 		 * WREN = 1, EXTMOD = 1, CBURSTRW = 0, ACCMOD = 3
@@ -443,763 +442,763 @@
 		bcr |= FMC2_BCR_FACCEN | FMC2_BCR_EXTMOD;
 		btr |= FIELD_PREP(FMC2_BXTR_ACCMOD, FMC2_BXTR_EXTMOD_D);
 		bwtr |= FIELD_PREP(FMC2_BXTR_ACCMOD, FMC2_BXTR_EXTMOD_D);
-		अवरोध;
-	हाल FMC2_SYNC_READ_SYNC_WRITE_PSRAM:
+		break;
+	case FMC2_SYNC_READ_SYNC_WRITE_PSRAM:
 		/*
 		 * MUXEN = 0, MTYP = 1, FACCEN = 0, BURSTEN = 1, WAITEN = 0,
 		 * WREN = 1, EXTMOD = 0, CBURSTRW = 1, ACCMOD = 0
 		 */
 		bcr |= FIELD_PREP(FMC2_BCR_MTYP, FMC2_BCR_MTYP_PSRAM);
 		bcr |= FMC2_BCR_BURSTEN | FMC2_BCR_CBURSTRW;
-		अवरोध;
-	हाल FMC2_SYNC_READ_ASYNC_WRITE_PSRAM:
+		break;
+	case FMC2_SYNC_READ_ASYNC_WRITE_PSRAM:
 		/*
 		 * MUXEN = 0, MTYP = 1, FACCEN = 0, BURSTEN = 1, WAITEN = 0,
 		 * WREN = 1, EXTMOD = 0, CBURSTRW = 0, ACCMOD = 0
 		 */
 		bcr |= FIELD_PREP(FMC2_BCR_MTYP, FMC2_BCR_MTYP_PSRAM);
 		bcr |= FMC2_BCR_BURSTEN;
-		अवरोध;
-	हाल FMC2_SYNC_READ_SYNC_WRITE_NOR:
+		break;
+	case FMC2_SYNC_READ_SYNC_WRITE_NOR:
 		/*
 		 * MUXEN = 0, MTYP = 2, FACCEN = 1, BURSTEN = 1, WAITEN = 0,
 		 * WREN = 1, EXTMOD = 0, CBURSTRW = 1, ACCMOD = 0
 		 */
 		bcr |= FIELD_PREP(FMC2_BCR_MTYP, FMC2_BCR_MTYP_NOR);
 		bcr |= FMC2_BCR_FACCEN | FMC2_BCR_BURSTEN | FMC2_BCR_CBURSTRW;
-		अवरोध;
-	हाल FMC2_SYNC_READ_ASYNC_WRITE_NOR:
+		break;
+	case FMC2_SYNC_READ_ASYNC_WRITE_NOR:
 		/*
 		 * MUXEN = 0, MTYP = 2, FACCEN = 1, BURSTEN = 1, WAITEN = 0,
 		 * WREN = 1, EXTMOD = 0, CBURSTRW = 0, ACCMOD = 0
 		 */
 		bcr |= FIELD_PREP(FMC2_BCR_MTYP, FMC2_BCR_MTYP_NOR);
 		bcr |= FMC2_BCR_FACCEN | FMC2_BCR_BURSTEN;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		/* Type of transaction not supported */
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (bcr & FMC2_BCR_EXTMOD)
+	if (bcr & FMC2_BCR_EXTMOD)
 		regmap_update_bits(ebi->regmap, FMC2_BWTR(cs),
 				   bwtr_mask, bwtr);
 	regmap_update_bits(ebi->regmap, FMC2_BTR(cs), btr_mask, btr);
 	regmap_update_bits(ebi->regmap, FMC2_BCR(cs), bcr_mask, bcr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sपंचांग32_fmc2_ebi_set_buswidth(काष्ठा sपंचांग32_fmc2_ebi *ebi,
-				       स्थिर काष्ठा sपंचांग32_fmc2_prop *prop,
-				       पूर्णांक cs, u32 setup)
-अणु
+static int stm32_fmc2_ebi_set_buswidth(struct stm32_fmc2_ebi *ebi,
+				       const struct stm32_fmc2_prop *prop,
+				       int cs, u32 setup)
+{
 	u32 val;
 
-	चयन (setup) अणु
-	हाल FMC2_BUSWIDTH_8:
+	switch (setup) {
+	case FMC2_BUSWIDTH_8:
 		val = FIELD_PREP(FMC2_BCR_MWID, FMC2_BCR_MWID_8);
-		अवरोध;
-	हाल FMC2_BUSWIDTH_16:
+		break;
+	case FMC2_BUSWIDTH_16:
 		val = FIELD_PREP(FMC2_BCR_MWID, FMC2_BCR_MWID_16);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		/* Buswidth not supported */
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	regmap_update_bits(ebi->regmap, FMC2_BCR(cs), FMC2_BCR_MWID, val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sपंचांग32_fmc2_ebi_set_cpsize(काष्ठा sपंचांग32_fmc2_ebi *ebi,
-				     स्थिर काष्ठा sपंचांग32_fmc2_prop *prop,
-				     पूर्णांक cs, u32 setup)
-अणु
+static int stm32_fmc2_ebi_set_cpsize(struct stm32_fmc2_ebi *ebi,
+				     const struct stm32_fmc2_prop *prop,
+				     int cs, u32 setup)
+{
 	u32 val;
 
-	चयन (setup) अणु
-	हाल FMC2_CPSIZE_0:
+	switch (setup) {
+	case FMC2_CPSIZE_0:
 		val = FIELD_PREP(FMC2_BCR_CPSIZE, FMC2_BCR_CPSIZE_0);
-		अवरोध;
-	हाल FMC2_CPSIZE_128:
+		break;
+	case FMC2_CPSIZE_128:
 		val = FIELD_PREP(FMC2_BCR_CPSIZE, FMC2_BCR_CPSIZE_128);
-		अवरोध;
-	हाल FMC2_CPSIZE_256:
+		break;
+	case FMC2_CPSIZE_256:
 		val = FIELD_PREP(FMC2_BCR_CPSIZE, FMC2_BCR_CPSIZE_256);
-		अवरोध;
-	हाल FMC2_CPSIZE_512:
+		break;
+	case FMC2_CPSIZE_512:
 		val = FIELD_PREP(FMC2_BCR_CPSIZE, FMC2_BCR_CPSIZE_512);
-		अवरोध;
-	हाल FMC2_CPSIZE_1024:
+		break;
+	case FMC2_CPSIZE_1024:
 		val = FIELD_PREP(FMC2_BCR_CPSIZE, FMC2_BCR_CPSIZE_1024);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		/* Cpsize not supported */
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	regmap_update_bits(ebi->regmap, FMC2_BCR(cs), FMC2_BCR_CPSIZE, val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sपंचांग32_fmc2_ebi_set_bl_setup(काष्ठा sपंचांग32_fmc2_ebi *ebi,
-				       स्थिर काष्ठा sपंचांग32_fmc2_prop *prop,
-				       पूर्णांक cs, u32 setup)
-अणु
+static int stm32_fmc2_ebi_set_bl_setup(struct stm32_fmc2_ebi *ebi,
+				       const struct stm32_fmc2_prop *prop,
+				       int cs, u32 setup)
+{
 	u32 val;
 
 	val = min_t(u32, setup, FMC2_BCR_NBLSET_MAX);
 	val = FIELD_PREP(FMC2_BCR_NBLSET, val);
 	regmap_update_bits(ebi->regmap, FMC2_BCR(cs), FMC2_BCR_NBLSET, val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sपंचांग32_fmc2_ebi_set_address_setup(काष्ठा sपंचांग32_fmc2_ebi *ebi,
-					    स्थिर काष्ठा sपंचांग32_fmc2_prop *prop,
-					    पूर्णांक cs, u32 setup)
-अणु
+static int stm32_fmc2_ebi_set_address_setup(struct stm32_fmc2_ebi *ebi,
+					    const struct stm32_fmc2_prop *prop,
+					    int cs, u32 setup)
+{
 	u32 bcr, bxtr, reg;
 	u32 val = FIELD_PREP(FMC2_BXTR_ACCMOD, FMC2_BXTR_EXTMOD_D);
-	पूर्णांक ret;
+	int ret;
 
-	ret = sपंचांग32_fmc2_ebi_get_reg(prop->reg_type, cs, &reg);
-	अगर (ret)
-		वापस ret;
+	ret = stm32_fmc2_ebi_get_reg(prop->reg_type, cs, &reg);
+	if (ret)
+		return ret;
 
-	regmap_पढ़ो(ebi->regmap, FMC2_BCR(cs), &bcr);
-	अगर (prop->reg_type == FMC2_REG_BWTR)
-		regmap_पढ़ो(ebi->regmap, FMC2_BWTR(cs), &bxtr);
-	अन्यथा
-		regmap_पढ़ो(ebi->regmap, FMC2_BTR(cs), &bxtr);
+	regmap_read(ebi->regmap, FMC2_BCR(cs), &bcr);
+	if (prop->reg_type == FMC2_REG_BWTR)
+		regmap_read(ebi->regmap, FMC2_BWTR(cs), &bxtr);
+	else
+		regmap_read(ebi->regmap, FMC2_BTR(cs), &bxtr);
 
-	अगर ((bxtr & FMC2_BXTR_ACCMOD) == val || bcr & FMC2_BCR_MUXEN)
+	if ((bxtr & FMC2_BXTR_ACCMOD) == val || bcr & FMC2_BCR_MUXEN)
 		val = clamp_val(setup, 1, FMC2_BXTR_ADDSET_MAX);
-	अन्यथा
+	else
 		val = min_t(u32, setup, FMC2_BXTR_ADDSET_MAX);
 	val = FIELD_PREP(FMC2_BXTR_ADDSET, val);
 	regmap_update_bits(ebi->regmap, reg, FMC2_BXTR_ADDSET, val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sपंचांग32_fmc2_ebi_set_address_hold(काष्ठा sपंचांग32_fmc2_ebi *ebi,
-					   स्थिर काष्ठा sपंचांग32_fmc2_prop *prop,
-					   पूर्णांक cs, u32 setup)
-अणु
+static int stm32_fmc2_ebi_set_address_hold(struct stm32_fmc2_ebi *ebi,
+					   const struct stm32_fmc2_prop *prop,
+					   int cs, u32 setup)
+{
 	u32 val, reg;
-	पूर्णांक ret;
+	int ret;
 
-	ret = sपंचांग32_fmc2_ebi_get_reg(prop->reg_type, cs, &reg);
-	अगर (ret)
-		वापस ret;
+	ret = stm32_fmc2_ebi_get_reg(prop->reg_type, cs, &reg);
+	if (ret)
+		return ret;
 
 	val = clamp_val(setup, 1, FMC2_BXTR_ADDHLD_MAX);
 	val = FIELD_PREP(FMC2_BXTR_ADDHLD, val);
 	regmap_update_bits(ebi->regmap, reg, FMC2_BXTR_ADDHLD, val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sपंचांग32_fmc2_ebi_set_data_setup(काष्ठा sपंचांग32_fmc2_ebi *ebi,
-					 स्थिर काष्ठा sपंचांग32_fmc2_prop *prop,
-					 पूर्णांक cs, u32 setup)
-अणु
+static int stm32_fmc2_ebi_set_data_setup(struct stm32_fmc2_ebi *ebi,
+					 const struct stm32_fmc2_prop *prop,
+					 int cs, u32 setup)
+{
 	u32 val, reg;
-	पूर्णांक ret;
+	int ret;
 
-	ret = sपंचांग32_fmc2_ebi_get_reg(prop->reg_type, cs, &reg);
-	अगर (ret)
-		वापस ret;
+	ret = stm32_fmc2_ebi_get_reg(prop->reg_type, cs, &reg);
+	if (ret)
+		return ret;
 
 	val = clamp_val(setup, 1, FMC2_BXTR_DATAST_MAX);
 	val = FIELD_PREP(FMC2_BXTR_DATAST, val);
 	regmap_update_bits(ebi->regmap, reg, FMC2_BXTR_DATAST, val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sपंचांग32_fmc2_ebi_set_bus_turnaround(काष्ठा sपंचांग32_fmc2_ebi *ebi,
-					     स्थिर काष्ठा sपंचांग32_fmc2_prop *prop,
-					     पूर्णांक cs, u32 setup)
-अणु
+static int stm32_fmc2_ebi_set_bus_turnaround(struct stm32_fmc2_ebi *ebi,
+					     const struct stm32_fmc2_prop *prop,
+					     int cs, u32 setup)
+{
 	u32 val, reg;
-	पूर्णांक ret;
+	int ret;
 
-	ret = sपंचांग32_fmc2_ebi_get_reg(prop->reg_type, cs, &reg);
-	अगर (ret)
-		वापस ret;
+	ret = stm32_fmc2_ebi_get_reg(prop->reg_type, cs, &reg);
+	if (ret)
+		return ret;
 
 	val = setup ? min_t(u32, setup - 1, FMC2_BXTR_BUSTURN_MAX) : 0;
 	val = FIELD_PREP(FMC2_BXTR_BUSTURN, val);
 	regmap_update_bits(ebi->regmap, reg, FMC2_BXTR_BUSTURN, val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sपंचांग32_fmc2_ebi_set_data_hold(काष्ठा sपंचांग32_fmc2_ebi *ebi,
-					स्थिर काष्ठा sपंचांग32_fmc2_prop *prop,
-					पूर्णांक cs, u32 setup)
-अणु
+static int stm32_fmc2_ebi_set_data_hold(struct stm32_fmc2_ebi *ebi,
+					const struct stm32_fmc2_prop *prop,
+					int cs, u32 setup)
+{
 	u32 val, reg;
-	पूर्णांक ret;
+	int ret;
 
-	ret = sपंचांग32_fmc2_ebi_get_reg(prop->reg_type, cs, &reg);
-	अगर (ret)
-		वापस ret;
+	ret = stm32_fmc2_ebi_get_reg(prop->reg_type, cs, &reg);
+	if (ret)
+		return ret;
 
-	अगर (prop->reg_type == FMC2_REG_BWTR)
+	if (prop->reg_type == FMC2_REG_BWTR)
 		val = setup ? min_t(u32, setup - 1, FMC2_BXTR_DATAHLD_MAX) : 0;
-	अन्यथा
+	else
 		val = min_t(u32, setup, FMC2_BXTR_DATAHLD_MAX);
 	val = FIELD_PREP(FMC2_BXTR_DATAHLD, val);
 	regmap_update_bits(ebi->regmap, reg, FMC2_BXTR_DATAHLD, val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sपंचांग32_fmc2_ebi_set_clk_period(काष्ठा sपंचांग32_fmc2_ebi *ebi,
-					 स्थिर काष्ठा sपंचांग32_fmc2_prop *prop,
-					 पूर्णांक cs, u32 setup)
-अणु
+static int stm32_fmc2_ebi_set_clk_period(struct stm32_fmc2_ebi *ebi,
+					 const struct stm32_fmc2_prop *prop,
+					 int cs, u32 setup)
+{
 	u32 val;
 
 	val = setup ? clamp_val(setup - 1, 1, FMC2_BTR_CLKDIV_MAX) : 1;
 	val = FIELD_PREP(FMC2_BTR_CLKDIV, val);
 	regmap_update_bits(ebi->regmap, FMC2_BTR(cs), FMC2_BTR_CLKDIV, val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sपंचांग32_fmc2_ebi_set_data_latency(काष्ठा sपंचांग32_fmc2_ebi *ebi,
-					   स्थिर काष्ठा sपंचांग32_fmc2_prop *prop,
-					   पूर्णांक cs, u32 setup)
-अणु
+static int stm32_fmc2_ebi_set_data_latency(struct stm32_fmc2_ebi *ebi,
+					   const struct stm32_fmc2_prop *prop,
+					   int cs, u32 setup)
+{
 	u32 val;
 
 	val = setup > 1 ? min_t(u32, setup - 2, FMC2_BTR_DATLAT_MAX) : 0;
 	val = FIELD_PREP(FMC2_BTR_DATLAT, val);
 	regmap_update_bits(ebi->regmap, FMC2_BTR(cs), FMC2_BTR_DATLAT, val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sपंचांग32_fmc2_ebi_set_max_low_pulse(काष्ठा sपंचांग32_fmc2_ebi *ebi,
-					    स्थिर काष्ठा sपंचांग32_fmc2_prop *prop,
-					    पूर्णांक cs, u32 setup)
-अणु
+static int stm32_fmc2_ebi_set_max_low_pulse(struct stm32_fmc2_ebi *ebi,
+					    const struct stm32_fmc2_prop *prop,
+					    int cs, u32 setup)
+{
 	u32 old_val, new_val, pcscntr;
 
-	अगर (setup < 1)
-		वापस 0;
+	if (setup < 1)
+		return 0;
 
-	regmap_पढ़ो(ebi->regmap, FMC2_PCSCNTR, &pcscntr);
+	regmap_read(ebi->regmap, FMC2_PCSCNTR, &pcscntr);
 
-	/* Enable counter क्रम the bank */
+	/* Enable counter for the bank */
 	regmap_update_bits(ebi->regmap, FMC2_PCSCNTR,
 			   FMC2_PCSCNTR_CNTBEN(cs),
 			   FMC2_PCSCNTR_CNTBEN(cs));
 
 	new_val = min_t(u32, setup - 1, FMC2_PCSCNTR_CSCOUNT_MAX);
 	old_val = FIELD_GET(FMC2_PCSCNTR_CSCOUNT, pcscntr);
-	अगर (old_val && new_val > old_val)
+	if (old_val && new_val > old_val)
 		/* Keep current counter value */
-		वापस 0;
+		return 0;
 
 	new_val = FIELD_PREP(FMC2_PCSCNTR_CSCOUNT, new_val);
 	regmap_update_bits(ebi->regmap, FMC2_PCSCNTR,
 			   FMC2_PCSCNTR_CSCOUNT, new_val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा sपंचांग32_fmc2_prop sपंचांग32_fmc2_child_props[] = अणु
+static const struct stm32_fmc2_prop stm32_fmc2_child_props[] = {
 	/* st,fmc2-ebi-cs-trans-type must be the first property */
-	अणु
+	{
 		.name = "st,fmc2-ebi-cs-transaction-type",
 		.mprop = true,
-		.set = sपंचांग32_fmc2_ebi_set_trans_type,
-	पूर्ण,
-	अणु
+		.set = stm32_fmc2_ebi_set_trans_type,
+	},
+	{
 		.name = "st,fmc2-ebi-cs-cclk-enable",
 		.bprop = true,
 		.reg_type = FMC2_REG_BCR,
 		.reg_mask = FMC2_BCR1_CCLKEN,
-		.check = sपंचांग32_fmc2_ebi_check_cclk,
-		.set = sपंचांग32_fmc2_ebi_set_bit_field,
-	पूर्ण,
-	अणु
+		.check = stm32_fmc2_ebi_check_cclk,
+		.set = stm32_fmc2_ebi_set_bit_field,
+	},
+	{
 		.name = "st,fmc2-ebi-cs-mux-enable",
 		.bprop = true,
 		.reg_type = FMC2_REG_BCR,
 		.reg_mask = FMC2_BCR_MUXEN,
-		.check = sपंचांग32_fmc2_ebi_check_mux,
-		.set = sपंचांग32_fmc2_ebi_set_bit_field,
-	पूर्ण,
-	अणु
+		.check = stm32_fmc2_ebi_check_mux,
+		.set = stm32_fmc2_ebi_set_bit_field,
+	},
+	{
 		.name = "st,fmc2-ebi-cs-buswidth",
 		.reset_val = FMC2_BUSWIDTH_16,
-		.set = sपंचांग32_fmc2_ebi_set_buswidth,
-	पूर्ण,
-	अणु
+		.set = stm32_fmc2_ebi_set_buswidth,
+	},
+	{
 		.name = "st,fmc2-ebi-cs-waitpol-high",
 		.bprop = true,
 		.reg_type = FMC2_REG_BCR,
 		.reg_mask = FMC2_BCR_WAITPOL,
-		.set = sपंचांग32_fmc2_ebi_set_bit_field,
-	पूर्ण,
-	अणु
+		.set = stm32_fmc2_ebi_set_bit_field,
+	},
+	{
 		.name = "st,fmc2-ebi-cs-waitcfg-enable",
 		.bprop = true,
 		.reg_type = FMC2_REG_BCR,
 		.reg_mask = FMC2_BCR_WAITCFG,
-		.check = sपंचांग32_fmc2_ebi_check_रुकोcfg,
-		.set = sपंचांग32_fmc2_ebi_set_bit_field,
-	पूर्ण,
-	अणु
+		.check = stm32_fmc2_ebi_check_waitcfg,
+		.set = stm32_fmc2_ebi_set_bit_field,
+	},
+	{
 		.name = "st,fmc2-ebi-cs-wait-enable",
 		.bprop = true,
 		.reg_type = FMC2_REG_BCR,
 		.reg_mask = FMC2_BCR_WAITEN,
-		.check = sपंचांग32_fmc2_ebi_check_sync_trans,
-		.set = sपंचांग32_fmc2_ebi_set_bit_field,
-	पूर्ण,
-	अणु
+		.check = stm32_fmc2_ebi_check_sync_trans,
+		.set = stm32_fmc2_ebi_set_bit_field,
+	},
+	{
 		.name = "st,fmc2-ebi-cs-asyncwait-enable",
 		.bprop = true,
 		.reg_type = FMC2_REG_BCR,
 		.reg_mask = FMC2_BCR_ASYNCWAIT,
-		.check = sपंचांग32_fmc2_ebi_check_async_trans,
-		.set = sपंचांग32_fmc2_ebi_set_bit_field,
-	पूर्ण,
-	अणु
+		.check = stm32_fmc2_ebi_check_async_trans,
+		.set = stm32_fmc2_ebi_set_bit_field,
+	},
+	{
 		.name = "st,fmc2-ebi-cs-cpsize",
-		.check = sपंचांग32_fmc2_ebi_check_cpsize,
-		.set = sपंचांग32_fmc2_ebi_set_cpsize,
-	पूर्ण,
-	अणु
+		.check = stm32_fmc2_ebi_check_cpsize,
+		.set = stm32_fmc2_ebi_set_cpsize,
+	},
+	{
 		.name = "st,fmc2-ebi-cs-byte-lane-setup-ns",
-		.calculate = sपंचांग32_fmc2_ebi_ns_to_घड़ी_cycles,
-		.set = sपंचांग32_fmc2_ebi_set_bl_setup,
-	पूर्ण,
-	अणु
+		.calculate = stm32_fmc2_ebi_ns_to_clock_cycles,
+		.set = stm32_fmc2_ebi_set_bl_setup,
+	},
+	{
 		.name = "st,fmc2-ebi-cs-address-setup-ns",
 		.reg_type = FMC2_REG_BTR,
 		.reset_val = FMC2_BXTR_ADDSET_MAX,
-		.check = sपंचांग32_fmc2_ebi_check_async_trans,
-		.calculate = sपंचांग32_fmc2_ebi_ns_to_घड़ी_cycles,
-		.set = sपंचांग32_fmc2_ebi_set_address_setup,
-	पूर्ण,
-	अणु
+		.check = stm32_fmc2_ebi_check_async_trans,
+		.calculate = stm32_fmc2_ebi_ns_to_clock_cycles,
+		.set = stm32_fmc2_ebi_set_address_setup,
+	},
+	{
 		.name = "st,fmc2-ebi-cs-address-hold-ns",
 		.reg_type = FMC2_REG_BTR,
 		.reset_val = FMC2_BXTR_ADDHLD_MAX,
-		.check = sपंचांग32_fmc2_ebi_check_address_hold,
-		.calculate = sपंचांग32_fmc2_ebi_ns_to_घड़ी_cycles,
-		.set = sपंचांग32_fmc2_ebi_set_address_hold,
-	पूर्ण,
-	अणु
+		.check = stm32_fmc2_ebi_check_address_hold,
+		.calculate = stm32_fmc2_ebi_ns_to_clock_cycles,
+		.set = stm32_fmc2_ebi_set_address_hold,
+	},
+	{
 		.name = "st,fmc2-ebi-cs-data-setup-ns",
 		.reg_type = FMC2_REG_BTR,
 		.reset_val = FMC2_BXTR_DATAST_MAX,
-		.check = sपंचांग32_fmc2_ebi_check_async_trans,
-		.calculate = sपंचांग32_fmc2_ebi_ns_to_घड़ी_cycles,
-		.set = sपंचांग32_fmc2_ebi_set_data_setup,
-	पूर्ण,
-	अणु
+		.check = stm32_fmc2_ebi_check_async_trans,
+		.calculate = stm32_fmc2_ebi_ns_to_clock_cycles,
+		.set = stm32_fmc2_ebi_set_data_setup,
+	},
+	{
 		.name = "st,fmc2-ebi-cs-bus-turnaround-ns",
 		.reg_type = FMC2_REG_BTR,
 		.reset_val = FMC2_BXTR_BUSTURN_MAX + 1,
-		.calculate = sपंचांग32_fmc2_ebi_ns_to_घड़ी_cycles,
-		.set = sपंचांग32_fmc2_ebi_set_bus_turnaround,
-	पूर्ण,
-	अणु
+		.calculate = stm32_fmc2_ebi_ns_to_clock_cycles,
+		.set = stm32_fmc2_ebi_set_bus_turnaround,
+	},
+	{
 		.name = "st,fmc2-ebi-cs-data-hold-ns",
 		.reg_type = FMC2_REG_BTR,
-		.check = sपंचांग32_fmc2_ebi_check_async_trans,
-		.calculate = sपंचांग32_fmc2_ebi_ns_to_घड़ी_cycles,
-		.set = sपंचांग32_fmc2_ebi_set_data_hold,
-	पूर्ण,
-	अणु
+		.check = stm32_fmc2_ebi_check_async_trans,
+		.calculate = stm32_fmc2_ebi_ns_to_clock_cycles,
+		.set = stm32_fmc2_ebi_set_data_hold,
+	},
+	{
 		.name = "st,fmc2-ebi-cs-clk-period-ns",
 		.reset_val = FMC2_BTR_CLKDIV_MAX + 1,
-		.check = sपंचांग32_fmc2_ebi_check_clk_period,
-		.calculate = sपंचांग32_fmc2_ebi_ns_to_घड़ी_cycles,
-		.set = sपंचांग32_fmc2_ebi_set_clk_period,
-	पूर्ण,
-	अणु
+		.check = stm32_fmc2_ebi_check_clk_period,
+		.calculate = stm32_fmc2_ebi_ns_to_clock_cycles,
+		.set = stm32_fmc2_ebi_set_clk_period,
+	},
+	{
 		.name = "st,fmc2-ebi-cs-data-latency-ns",
-		.check = sपंचांग32_fmc2_ebi_check_sync_trans,
-		.calculate = sपंचांग32_fmc2_ebi_ns_to_clk_period,
-		.set = sपंचांग32_fmc2_ebi_set_data_latency,
-	पूर्ण,
-	अणु
+		.check = stm32_fmc2_ebi_check_sync_trans,
+		.calculate = stm32_fmc2_ebi_ns_to_clk_period,
+		.set = stm32_fmc2_ebi_set_data_latency,
+	},
+	{
 		.name = "st,fmc2-ebi-cs-write-address-setup-ns",
 		.reg_type = FMC2_REG_BWTR,
 		.reset_val = FMC2_BXTR_ADDSET_MAX,
-		.check = sपंचांग32_fmc2_ebi_check_async_trans,
-		.calculate = sपंचांग32_fmc2_ebi_ns_to_घड़ी_cycles,
-		.set = sपंचांग32_fmc2_ebi_set_address_setup,
-	पूर्ण,
-	अणु
+		.check = stm32_fmc2_ebi_check_async_trans,
+		.calculate = stm32_fmc2_ebi_ns_to_clock_cycles,
+		.set = stm32_fmc2_ebi_set_address_setup,
+	},
+	{
 		.name = "st,fmc2-ebi-cs-write-address-hold-ns",
 		.reg_type = FMC2_REG_BWTR,
 		.reset_val = FMC2_BXTR_ADDHLD_MAX,
-		.check = sपंचांग32_fmc2_ebi_check_address_hold,
-		.calculate = sपंचांग32_fmc2_ebi_ns_to_घड़ी_cycles,
-		.set = sपंचांग32_fmc2_ebi_set_address_hold,
-	पूर्ण,
-	अणु
+		.check = stm32_fmc2_ebi_check_address_hold,
+		.calculate = stm32_fmc2_ebi_ns_to_clock_cycles,
+		.set = stm32_fmc2_ebi_set_address_hold,
+	},
+	{
 		.name = "st,fmc2-ebi-cs-write-data-setup-ns",
 		.reg_type = FMC2_REG_BWTR,
 		.reset_val = FMC2_BXTR_DATAST_MAX,
-		.check = sपंचांग32_fmc2_ebi_check_async_trans,
-		.calculate = sपंचांग32_fmc2_ebi_ns_to_घड़ी_cycles,
-		.set = sपंचांग32_fmc2_ebi_set_data_setup,
-	पूर्ण,
-	अणु
+		.check = stm32_fmc2_ebi_check_async_trans,
+		.calculate = stm32_fmc2_ebi_ns_to_clock_cycles,
+		.set = stm32_fmc2_ebi_set_data_setup,
+	},
+	{
 		.name = "st,fmc2-ebi-cs-write-bus-turnaround-ns",
 		.reg_type = FMC2_REG_BWTR,
 		.reset_val = FMC2_BXTR_BUSTURN_MAX + 1,
-		.calculate = sपंचांग32_fmc2_ebi_ns_to_घड़ी_cycles,
-		.set = sपंचांग32_fmc2_ebi_set_bus_turnaround,
-	पूर्ण,
-	अणु
+		.calculate = stm32_fmc2_ebi_ns_to_clock_cycles,
+		.set = stm32_fmc2_ebi_set_bus_turnaround,
+	},
+	{
 		.name = "st,fmc2-ebi-cs-write-data-hold-ns",
 		.reg_type = FMC2_REG_BWTR,
-		.check = sपंचांग32_fmc2_ebi_check_async_trans,
-		.calculate = sपंचांग32_fmc2_ebi_ns_to_घड़ी_cycles,
-		.set = sपंचांग32_fmc2_ebi_set_data_hold,
-	पूर्ण,
-	अणु
+		.check = stm32_fmc2_ebi_check_async_trans,
+		.calculate = stm32_fmc2_ebi_ns_to_clock_cycles,
+		.set = stm32_fmc2_ebi_set_data_hold,
+	},
+	{
 		.name = "st,fmc2-ebi-cs-max-low-pulse-ns",
-		.calculate = sपंचांग32_fmc2_ebi_ns_to_घड़ी_cycles,
-		.set = sपंचांग32_fmc2_ebi_set_max_low_pulse,
-	पूर्ण,
-पूर्ण;
+		.calculate = stm32_fmc2_ebi_ns_to_clock_cycles,
+		.set = stm32_fmc2_ebi_set_max_low_pulse,
+	},
+};
 
-अटल पूर्णांक sपंचांग32_fmc2_ebi_parse_prop(काष्ठा sपंचांग32_fmc2_ebi *ebi,
-				     काष्ठा device_node *dev_node,
-				     स्थिर काष्ठा sपंचांग32_fmc2_prop *prop,
-				     पूर्णांक cs)
-अणु
-	काष्ठा device *dev = ebi->dev;
+static int stm32_fmc2_ebi_parse_prop(struct stm32_fmc2_ebi *ebi,
+				     struct device_node *dev_node,
+				     const struct stm32_fmc2_prop *prop,
+				     int cs)
+{
+	struct device *dev = ebi->dev;
 	u32 setup = 0;
 
-	अगर (!prop->set) अणु
+	if (!prop->set) {
 		dev_err(dev, "property %s is not well defined\n", prop->name);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (prop->check && prop->check(ebi, prop, cs))
+	if (prop->check && prop->check(ebi, prop, cs))
 		/* Skeep this property */
-		वापस 0;
+		return 0;
 
-	अगर (prop->bprop) अणु
+	if (prop->bprop) {
 		bool bprop;
 
-		bprop = of_property_पढ़ो_bool(dev_node, prop->name);
-		अगर (prop->mprop && !bprop) अणु
+		bprop = of_property_read_bool(dev_node, prop->name);
+		if (prop->mprop && !bprop) {
 			dev_err(dev, "mandatory property %s not defined in the device tree\n",
 				prop->name);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगर (bprop)
+		if (bprop)
 			setup = 1;
-	पूर्ण अन्यथा अणु
+	} else {
 		u32 val;
-		पूर्णांक ret;
+		int ret;
 
-		ret = of_property_पढ़ो_u32(dev_node, prop->name, &val);
-		अगर (prop->mprop && ret) अणु
+		ret = of_property_read_u32(dev_node, prop->name, &val);
+		if (prop->mprop && ret) {
 			dev_err(dev, "mandatory property %s not defined in the device tree\n",
 				prop->name);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
-		अगर (ret)
+		if (ret)
 			setup = prop->reset_val;
-		अन्यथा अगर (prop->calculate)
+		else if (prop->calculate)
 			setup = prop->calculate(ebi, cs, val);
-		अन्यथा
+		else
 			setup = val;
-	पूर्ण
+	}
 
-	वापस prop->set(ebi, prop, cs, setup);
-पूर्ण
+	return prop->set(ebi, prop, cs, setup);
+}
 
-अटल व्योम sपंचांग32_fmc2_ebi_enable_bank(काष्ठा sपंचांग32_fmc2_ebi *ebi, पूर्णांक cs)
-अणु
+static void stm32_fmc2_ebi_enable_bank(struct stm32_fmc2_ebi *ebi, int cs)
+{
 	regmap_update_bits(ebi->regmap, FMC2_BCR(cs),
 			   FMC2_BCR_MBKEN, FMC2_BCR_MBKEN);
-पूर्ण
+}
 
-अटल व्योम sपंचांग32_fmc2_ebi_disable_bank(काष्ठा sपंचांग32_fmc2_ebi *ebi, पूर्णांक cs)
-अणु
+static void stm32_fmc2_ebi_disable_bank(struct stm32_fmc2_ebi *ebi, int cs)
+{
 	regmap_update_bits(ebi->regmap, FMC2_BCR(cs), FMC2_BCR_MBKEN, 0);
-पूर्ण
+}
 
-अटल व्योम sपंचांग32_fmc2_ebi_save_setup(काष्ठा sपंचांग32_fmc2_ebi *ebi)
-अणु
-	अचिन्हित पूर्णांक cs;
+static void stm32_fmc2_ebi_save_setup(struct stm32_fmc2_ebi *ebi)
+{
+	unsigned int cs;
 
-	क्रम (cs = 0; cs < FMC2_MAX_EBI_CE; cs++) अणु
-		regmap_पढ़ो(ebi->regmap, FMC2_BCR(cs), &ebi->bcr[cs]);
-		regmap_पढ़ो(ebi->regmap, FMC2_BTR(cs), &ebi->btr[cs]);
-		regmap_पढ़ो(ebi->regmap, FMC2_BWTR(cs), &ebi->bwtr[cs]);
-	पूर्ण
+	for (cs = 0; cs < FMC2_MAX_EBI_CE; cs++) {
+		regmap_read(ebi->regmap, FMC2_BCR(cs), &ebi->bcr[cs]);
+		regmap_read(ebi->regmap, FMC2_BTR(cs), &ebi->btr[cs]);
+		regmap_read(ebi->regmap, FMC2_BWTR(cs), &ebi->bwtr[cs]);
+	}
 
-	regmap_पढ़ो(ebi->regmap, FMC2_PCSCNTR, &ebi->pcscntr);
-पूर्ण
+	regmap_read(ebi->regmap, FMC2_PCSCNTR, &ebi->pcscntr);
+}
 
-अटल व्योम sपंचांग32_fmc2_ebi_set_setup(काष्ठा sपंचांग32_fmc2_ebi *ebi)
-अणु
-	अचिन्हित पूर्णांक cs;
+static void stm32_fmc2_ebi_set_setup(struct stm32_fmc2_ebi *ebi)
+{
+	unsigned int cs;
 
-	क्रम (cs = 0; cs < FMC2_MAX_EBI_CE; cs++) अणु
-		regmap_ग_लिखो(ebi->regmap, FMC2_BCR(cs), ebi->bcr[cs]);
-		regmap_ग_लिखो(ebi->regmap, FMC2_BTR(cs), ebi->btr[cs]);
-		regmap_ग_लिखो(ebi->regmap, FMC2_BWTR(cs), ebi->bwtr[cs]);
-	पूर्ण
+	for (cs = 0; cs < FMC2_MAX_EBI_CE; cs++) {
+		regmap_write(ebi->regmap, FMC2_BCR(cs), ebi->bcr[cs]);
+		regmap_write(ebi->regmap, FMC2_BTR(cs), ebi->btr[cs]);
+		regmap_write(ebi->regmap, FMC2_BWTR(cs), ebi->bwtr[cs]);
+	}
 
-	regmap_ग_लिखो(ebi->regmap, FMC2_PCSCNTR, ebi->pcscntr);
-पूर्ण
+	regmap_write(ebi->regmap, FMC2_PCSCNTR, ebi->pcscntr);
+}
 
-अटल व्योम sपंचांग32_fmc2_ebi_disable_banks(काष्ठा sपंचांग32_fmc2_ebi *ebi)
-अणु
-	अचिन्हित पूर्णांक cs;
+static void stm32_fmc2_ebi_disable_banks(struct stm32_fmc2_ebi *ebi)
+{
+	unsigned int cs;
 
-	क्रम (cs = 0; cs < FMC2_MAX_EBI_CE; cs++) अणु
-		अगर (!(ebi->bank_asचिन्हित & BIT(cs)))
-			जारी;
+	for (cs = 0; cs < FMC2_MAX_EBI_CE; cs++) {
+		if (!(ebi->bank_assigned & BIT(cs)))
+			continue;
 
-		sपंचांग32_fmc2_ebi_disable_bank(ebi, cs);
-	पूर्ण
-पूर्ण
+		stm32_fmc2_ebi_disable_bank(ebi, cs);
+	}
+}
 
-/* NWAIT संकेत can not be connected to EBI controller and न_अंकD controller */
-अटल bool sपंचांग32_fmc2_ebi_nरुको_used_by_ctrls(काष्ठा sपंचांग32_fmc2_ebi *ebi)
-अणु
-	अचिन्हित पूर्णांक cs;
+/* NWAIT signal can not be connected to EBI controller and NAND controller */
+static bool stm32_fmc2_ebi_nwait_used_by_ctrls(struct stm32_fmc2_ebi *ebi)
+{
+	unsigned int cs;
 	u32 bcr;
 
-	क्रम (cs = 0; cs < FMC2_MAX_EBI_CE; cs++) अणु
-		अगर (!(ebi->bank_asचिन्हित & BIT(cs)))
-			जारी;
+	for (cs = 0; cs < FMC2_MAX_EBI_CE; cs++) {
+		if (!(ebi->bank_assigned & BIT(cs)))
+			continue;
 
-		regmap_पढ़ो(ebi->regmap, FMC2_BCR(cs), &bcr);
-		अगर ((bcr & FMC2_BCR_WAITEN || bcr & FMC2_BCR_ASYNCWAIT) &&
-		    ebi->bank_asचिन्हित & BIT(FMC2_न_अंकD))
-			वापस true;
-	पूर्ण
+		regmap_read(ebi->regmap, FMC2_BCR(cs), &bcr);
+		if ((bcr & FMC2_BCR_WAITEN || bcr & FMC2_BCR_ASYNCWAIT) &&
+		    ebi->bank_assigned & BIT(FMC2_NAND))
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल व्योम sपंचांग32_fmc2_ebi_enable(काष्ठा sपंचांग32_fmc2_ebi *ebi)
-अणु
+static void stm32_fmc2_ebi_enable(struct stm32_fmc2_ebi *ebi)
+{
 	regmap_update_bits(ebi->regmap, FMC2_BCR1,
 			   FMC2_BCR1_FMC2EN, FMC2_BCR1_FMC2EN);
-पूर्ण
+}
 
-अटल व्योम sपंचांग32_fmc2_ebi_disable(काष्ठा sपंचांग32_fmc2_ebi *ebi)
-अणु
+static void stm32_fmc2_ebi_disable(struct stm32_fmc2_ebi *ebi)
+{
 	regmap_update_bits(ebi->regmap, FMC2_BCR1, FMC2_BCR1_FMC2EN, 0);
-पूर्ण
+}
 
-अटल पूर्णांक sपंचांग32_fmc2_ebi_setup_cs(काष्ठा sपंचांग32_fmc2_ebi *ebi,
-				   काष्ठा device_node *dev_node,
+static int stm32_fmc2_ebi_setup_cs(struct stm32_fmc2_ebi *ebi,
+				   struct device_node *dev_node,
 				   u32 cs)
-अणु
-	अचिन्हित पूर्णांक i;
-	पूर्णांक ret;
+{
+	unsigned int i;
+	int ret;
 
-	sपंचांग32_fmc2_ebi_disable_bank(ebi, cs);
+	stm32_fmc2_ebi_disable_bank(ebi, cs);
 
-	क्रम (i = 0; i < ARRAY_SIZE(sपंचांग32_fmc2_child_props); i++) अणु
-		स्थिर काष्ठा sपंचांग32_fmc2_prop *p = &sपंचांग32_fmc2_child_props[i];
+	for (i = 0; i < ARRAY_SIZE(stm32_fmc2_child_props); i++) {
+		const struct stm32_fmc2_prop *p = &stm32_fmc2_child_props[i];
 
-		ret = sपंचांग32_fmc2_ebi_parse_prop(ebi, dev_node, p, cs);
-		अगर (ret) अणु
+		ret = stm32_fmc2_ebi_parse_prop(ebi, dev_node, p, cs);
+		if (ret) {
 			dev_err(ebi->dev, "property %s could not be set: %d\n",
 				p->name, ret);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	sपंचांग32_fmc2_ebi_enable_bank(ebi, cs);
+	stm32_fmc2_ebi_enable_bank(ebi, cs);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sपंचांग32_fmc2_ebi_parse_dt(काष्ठा sपंचांग32_fmc2_ebi *ebi)
-अणु
-	काष्ठा device *dev = ebi->dev;
-	काष्ठा device_node *child;
+static int stm32_fmc2_ebi_parse_dt(struct stm32_fmc2_ebi *ebi)
+{
+	struct device *dev = ebi->dev;
+	struct device_node *child;
 	bool child_found = false;
 	u32 bank;
-	पूर्णांक ret;
+	int ret;
 
-	क्रम_each_available_child_of_node(dev->of_node, child) अणु
-		ret = of_property_पढ़ो_u32(child, "reg", &bank);
-		अगर (ret) अणु
+	for_each_available_child_of_node(dev->of_node, child) {
+		ret = of_property_read_u32(child, "reg", &bank);
+		if (ret) {
 			dev_err(dev, "could not retrieve reg property: %d\n",
 				ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
-		अगर (bank >= FMC2_MAX_BANKS) अणु
+		if (bank >= FMC2_MAX_BANKS) {
 			dev_err(dev, "invalid reg value: %d\n", bank);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगर (ebi->bank_asचिन्हित & BIT(bank)) अणु
+		if (ebi->bank_assigned & BIT(bank)) {
 			dev_err(dev, "bank already assigned: %d\n", bank);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगर (bank < FMC2_MAX_EBI_CE) अणु
-			ret = sपंचांग32_fmc2_ebi_setup_cs(ebi, child, bank);
-			अगर (ret) अणु
+		if (bank < FMC2_MAX_EBI_CE) {
+			ret = stm32_fmc2_ebi_setup_cs(ebi, child, bank);
+			if (ret) {
 				dev_err(dev, "setup chip select %d failed: %d\n",
 					bank, ret);
-				वापस ret;
-			पूर्ण
-		पूर्ण
+				return ret;
+			}
+		}
 
-		ebi->bank_asचिन्हित |= BIT(bank);
+		ebi->bank_assigned |= BIT(bank);
 		child_found = true;
-	पूर्ण
+	}
 
-	अगर (!child_found) अणु
+	if (!child_found) {
 		dev_warn(dev, "no subnodes found, disable the driver.\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (sपंचांग32_fmc2_ebi_nरुको_used_by_ctrls(ebi)) अणु
+	if (stm32_fmc2_ebi_nwait_used_by_ctrls(ebi)) {
 		dev_err(dev, "NWAIT signal connected to EBI and NAND controllers\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	sपंचांग32_fmc2_ebi_enable(ebi);
+	stm32_fmc2_ebi_enable(ebi);
 
-	वापस of_platक्रमm_populate(dev->of_node, शून्य, शून्य, dev);
-पूर्ण
+	return of_platform_populate(dev->of_node, NULL, NULL, dev);
+}
 
-अटल पूर्णांक sपंचांग32_fmc2_ebi_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा sपंचांग32_fmc2_ebi *ebi;
-	काष्ठा reset_control *rstc;
-	पूर्णांक ret;
+static int stm32_fmc2_ebi_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct stm32_fmc2_ebi *ebi;
+	struct reset_control *rstc;
+	int ret;
 
-	ebi = devm_kzalloc(&pdev->dev, माप(*ebi), GFP_KERNEL);
-	अगर (!ebi)
-		वापस -ENOMEM;
+	ebi = devm_kzalloc(&pdev->dev, sizeof(*ebi), GFP_KERNEL);
+	if (!ebi)
+		return -ENOMEM;
 
 	ebi->dev = dev;
 
 	ebi->regmap = device_node_to_regmap(dev->of_node);
-	अगर (IS_ERR(ebi->regmap))
-		वापस PTR_ERR(ebi->regmap);
+	if (IS_ERR(ebi->regmap))
+		return PTR_ERR(ebi->regmap);
 
-	ebi->clk = devm_clk_get(dev, शून्य);
-	अगर (IS_ERR(ebi->clk))
-		वापस PTR_ERR(ebi->clk);
+	ebi->clk = devm_clk_get(dev, NULL);
+	if (IS_ERR(ebi->clk))
+		return PTR_ERR(ebi->clk);
 
-	rstc = devm_reset_control_get(dev, शून्य);
-	अगर (PTR_ERR(rstc) == -EPROBE_DEFER)
-		वापस -EPROBE_DEFER;
+	rstc = devm_reset_control_get(dev, NULL);
+	if (PTR_ERR(rstc) == -EPROBE_DEFER)
+		return -EPROBE_DEFER;
 
 	ret = clk_prepare_enable(ebi->clk);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (!IS_ERR(rstc)) अणु
-		reset_control_निश्चित(rstc);
-		reset_control_deनिश्चित(rstc);
-	पूर्ण
+	if (!IS_ERR(rstc)) {
+		reset_control_assert(rstc);
+		reset_control_deassert(rstc);
+	}
 
-	ret = sपंचांग32_fmc2_ebi_parse_dt(ebi);
-	अगर (ret)
-		जाओ err_release;
+	ret = stm32_fmc2_ebi_parse_dt(ebi);
+	if (ret)
+		goto err_release;
 
-	sपंचांग32_fmc2_ebi_save_setup(ebi);
-	platक्रमm_set_drvdata(pdev, ebi);
+	stm32_fmc2_ebi_save_setup(ebi);
+	platform_set_drvdata(pdev, ebi);
 
-	वापस 0;
+	return 0;
 
 err_release:
-	sपंचांग32_fmc2_ebi_disable_banks(ebi);
-	sपंचांग32_fmc2_ebi_disable(ebi);
+	stm32_fmc2_ebi_disable_banks(ebi);
+	stm32_fmc2_ebi_disable(ebi);
 	clk_disable_unprepare(ebi->clk);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक sपंचांग32_fmc2_ebi_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा sपंचांग32_fmc2_ebi *ebi = platक्रमm_get_drvdata(pdev);
+static int stm32_fmc2_ebi_remove(struct platform_device *pdev)
+{
+	struct stm32_fmc2_ebi *ebi = platform_get_drvdata(pdev);
 
-	of_platक्रमm_depopulate(&pdev->dev);
-	sपंचांग32_fmc2_ebi_disable_banks(ebi);
-	sपंचांग32_fmc2_ebi_disable(ebi);
+	of_platform_depopulate(&pdev->dev);
+	stm32_fmc2_ebi_disable_banks(ebi);
+	stm32_fmc2_ebi_disable(ebi);
 	clk_disable_unprepare(ebi->clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused sपंचांग32_fmc2_ebi_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा sपंचांग32_fmc2_ebi *ebi = dev_get_drvdata(dev);
+static int __maybe_unused stm32_fmc2_ebi_suspend(struct device *dev)
+{
+	struct stm32_fmc2_ebi *ebi = dev_get_drvdata(dev);
 
-	sपंचांग32_fmc2_ebi_disable(ebi);
+	stm32_fmc2_ebi_disable(ebi);
 	clk_disable_unprepare(ebi->clk);
 	pinctrl_pm_select_sleep_state(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused sपंचांग32_fmc2_ebi_resume(काष्ठा device *dev)
-अणु
-	काष्ठा sपंचांग32_fmc2_ebi *ebi = dev_get_drvdata(dev);
-	पूर्णांक ret;
+static int __maybe_unused stm32_fmc2_ebi_resume(struct device *dev)
+{
+	struct stm32_fmc2_ebi *ebi = dev_get_drvdata(dev);
+	int ret;
 
-	pinctrl_pm_select_शेष_state(dev);
+	pinctrl_pm_select_default_state(dev);
 
 	ret = clk_prepare_enable(ebi->clk);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	sपंचांग32_fmc2_ebi_set_setup(ebi);
-	sपंचांग32_fmc2_ebi_enable(ebi);
+	stm32_fmc2_ebi_set_setup(ebi);
+	stm32_fmc2_ebi_enable(ebi);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल SIMPLE_DEV_PM_OPS(sपंचांग32_fmc2_ebi_pm_ops, sपंचांग32_fmc2_ebi_suspend,
-			 sपंचांग32_fmc2_ebi_resume);
+static SIMPLE_DEV_PM_OPS(stm32_fmc2_ebi_pm_ops, stm32_fmc2_ebi_suspend,
+			 stm32_fmc2_ebi_resume);
 
-अटल स्थिर काष्ठा of_device_id sपंचांग32_fmc2_ebi_match[] = अणु
-	अणु.compatible = "st,stm32mp1-fmc2-ebi"पूर्ण,
-	अणुपूर्ण
-पूर्ण;
-MODULE_DEVICE_TABLE(of, sपंचांग32_fmc2_ebi_match);
+static const struct of_device_id stm32_fmc2_ebi_match[] = {
+	{.compatible = "st,stm32mp1-fmc2-ebi"},
+	{}
+};
+MODULE_DEVICE_TABLE(of, stm32_fmc2_ebi_match);
 
-अटल काष्ठा platक्रमm_driver sपंचांग32_fmc2_ebi_driver = अणु
-	.probe	= sपंचांग32_fmc2_ebi_probe,
-	.हटाओ	= sपंचांग32_fmc2_ebi_हटाओ,
-	.driver	= अणु
+static struct platform_driver stm32_fmc2_ebi_driver = {
+	.probe	= stm32_fmc2_ebi_probe,
+	.remove	= stm32_fmc2_ebi_remove,
+	.driver	= {
 		.name = "stm32_fmc2_ebi",
-		.of_match_table = sपंचांग32_fmc2_ebi_match,
-		.pm = &sपंचांग32_fmc2_ebi_pm_ops,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(sपंचांग32_fmc2_ebi_driver);
+		.of_match_table = stm32_fmc2_ebi_match,
+		.pm = &stm32_fmc2_ebi_pm_ops,
+	},
+};
+module_platform_driver(stm32_fmc2_ebi_driver);
 
 MODULE_ALIAS("platform:stm32_fmc2_ebi");
 MODULE_AUTHOR("Christophe Kerello <christophe.kerello@st.com>");

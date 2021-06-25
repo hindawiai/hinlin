@@ -1,90 +1,89 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * pcm emulation on emu8000 wavetable
  *
  *  Copyright (C) 2002 Takashi Iwai <tiwai@suse.de>
  */
 
-#समावेश "emu8000_local.h"
+#include "emu8000_local.h"
 
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <sound/initval.h>
-#समावेश <sound/pcm.h>
+#include <linux/sched/signal.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <sound/initval.h>
+#include <sound/pcm.h>
 
 /*
- * define the following अगर you want to use this pcm with non-पूर्णांकerleaved mode
+ * define the following if you want to use this pcm with non-interleaved mode
  */
-/* #घोषणा USE_NONINTERLEAVE */
+/* #define USE_NONINTERLEAVE */
 
-/* NOTE: क्रम using the non-पूर्णांकerleaved mode with alsa-lib, you have to set
+/* NOTE: for using the non-interleaved mode with alsa-lib, you have to set
  * mmap_emulation flag to 1 in your .asoundrc, such like
  *
- *	pcm.emu8k अणु
+ *	pcm.emu8k {
  *		type plug
- *		slave.pcm अणु
+ *		slave.pcm {
  *			type hw
  *			card 0
  *			device 1
  *			mmap_emulation 1
- *		पूर्ण
- *	पूर्ण
+ *		}
+ *	}
  *
- * besides, क्रम the समय being, the non-पूर्णांकerleaved mode करोesn't work well on
+ * besides, for the time being, the non-interleaved mode doesn't work well on
  * alsa-lib...
  */
 
 
-काष्ठा snd_emu8k_pcm अणु
-	काष्ठा snd_emu8000 *emu;
-	काष्ठा snd_pcm_substream *substream;
+struct snd_emu8k_pcm {
+	struct snd_emu8000 *emu;
+	struct snd_pcm_substream *substream;
 
-	अचिन्हित पूर्णांक allocated_bytes;
-	काष्ठा snd_util_memblk *block;
-	अचिन्हित पूर्णांक offset;
-	अचिन्हित पूर्णांक buf_size;
-	अचिन्हित पूर्णांक period_size;
-	अचिन्हित पूर्णांक loop_start[2];
-	अचिन्हित पूर्णांक pitch;
-	पूर्णांक panning[2];
-	पूर्णांक last_ptr;
-	पूर्णांक period_pos;
-	पूर्णांक voices;
-	अचिन्हित पूर्णांक dram_खोलोed: 1;
-	अचिन्हित पूर्णांक running: 1;
-	अचिन्हित पूर्णांक समयr_running: 1;
-	काष्ठा समयr_list समयr;
-	spinlock_t समयr_lock;
-पूर्ण;
+	unsigned int allocated_bytes;
+	struct snd_util_memblk *block;
+	unsigned int offset;
+	unsigned int buf_size;
+	unsigned int period_size;
+	unsigned int loop_start[2];
+	unsigned int pitch;
+	int panning[2];
+	int last_ptr;
+	int period_pos;
+	int voices;
+	unsigned int dram_opened: 1;
+	unsigned int running: 1;
+	unsigned int timer_running: 1;
+	struct timer_list timer;
+	spinlock_t timer_lock;
+};
 
-#घोषणा LOOP_BLANK_SIZE		8
+#define LOOP_BLANK_SIZE		8
 
 
 /*
- * खोलो up channels क्रम the simultaneous data transfer and playback
+ * open up channels for the simultaneous data transfer and playback
  */
-अटल पूर्णांक
-emu8k_खोलो_dram_क्रम_pcm(काष्ठा snd_emu8000 *emu, पूर्णांक channels)
-अणु
-	पूर्णांक i;
+static int
+emu8k_open_dram_for_pcm(struct snd_emu8000 *emu, int channels)
+{
+	int i;
 
-	/* reserve up to 2 voices क्रम playback */
+	/* reserve up to 2 voices for playback */
 	snd_emux_lock_voice(emu->emu, 0);
-	अगर (channels > 1)
+	if (channels > 1)
 		snd_emux_lock_voice(emu->emu, 1);
 
-	/* reserve 28 voices क्रम loading */
-	क्रम (i = channels + 1; i < EMU8000_DRAM_VOICES; i++) अणु
-		अचिन्हित पूर्णांक mode = EMU8000_RAM_WRITE;
+	/* reserve 28 voices for loading */
+	for (i = channels + 1; i < EMU8000_DRAM_VOICES; i++) {
+		unsigned int mode = EMU8000_RAM_WRITE;
 		snd_emux_lock_voice(emu->emu, i);
-#अगर_अघोषित USE_NONINTERLEAVE
-		अगर (channels > 1 && (i & 1) != 0)
+#ifndef USE_NONINTERLEAVE
+		if (channels > 1 && (i & 1) != 0)
 			mode |= EMU8000_RAM_RIGHT;
-#पूर्ण_अगर
+#endif
 		snd_emu8000_dma_chan(emu, i, mode);
-	पूर्ण
+	}
 
 	/* assign voice 31 and 32 to ROM */
 	EMU8000_VTFT_WRITE(emu, 30, 0);
@@ -96,62 +95,62 @@ emu8k_खोलो_dram_क्रम_pcm(काष्ठा snd_emu8000 *emu, �
 	EMU8000_CSL_WRITE(emu, 31, 0x1e0);
 	EMU8000_CCCA_WRITE(emu, 31, 0x1d8);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  */
-अटल व्योम
-snd_emu8000_ग_लिखो_रुको(काष्ठा snd_emu8000 *emu, पूर्णांक can_schedule)
-अणु
-	जबतक ((EMU8000_SMALW_READ(emu) & 0x80000000) != 0) अणु
-		अगर (can_schedule) अणु
-			schedule_समयout_पूर्णांकerruptible(1);
-			अगर (संकेत_pending(current))
-				अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+static void
+snd_emu8000_write_wait(struct snd_emu8000 *emu, int can_schedule)
+{
+	while ((EMU8000_SMALW_READ(emu) & 0x80000000) != 0) {
+		if (can_schedule) {
+			schedule_timeout_interruptible(1);
+			if (signal_pending(current))
+				break;
+		}
+	}
+}
 
 /*
- * बंद all channels
+ * close all channels
  */
-अटल व्योम
-emu8k_बंद_dram(काष्ठा snd_emu8000 *emu)
-अणु
-	पूर्णांक i;
+static void
+emu8k_close_dram(struct snd_emu8000 *emu)
+{
+	int i;
 
-	क्रम (i = 0; i < 2; i++)
+	for (i = 0; i < 2; i++)
 		snd_emux_unlock_voice(emu->emu, i);
-	क्रम (; i < EMU8000_DRAM_VOICES; i++) अणु
+	for (; i < EMU8000_DRAM_VOICES; i++) {
 		snd_emu8000_dma_chan(emu, i, EMU8000_RAM_CLOSE);
 		snd_emux_unlock_voice(emu->emu, i);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * convert Hz to AWE32 rate offset (see emux/soundfont.c)
  */
 
-#घोषणा OFFSET_SAMPLERATE	1011119		/* base = 44100 */
-#घोषणा SAMPLERATE_RATIO	4096
+#define OFFSET_SAMPLERATE	1011119		/* base = 44100 */
+#define SAMPLERATE_RATIO	4096
 
-अटल पूर्णांक calc_rate_offset(पूर्णांक hz)
-अणु
-	वापस snd_sf_linear_to_log(hz, OFFSET_SAMPLERATE, SAMPLERATE_RATIO);
-पूर्ण
+static int calc_rate_offset(int hz)
+{
+	return snd_sf_linear_to_log(hz, OFFSET_SAMPLERATE, SAMPLERATE_RATIO);
+}
 
 
 /*
  */
 
-अटल स्थिर काष्ठा snd_pcm_hardware emu8k_pcm_hw = अणु
-#अगर_घोषित USE_NONINTERLEAVE
+static const struct snd_pcm_hardware emu8k_pcm_hw = {
+#ifdef USE_NONINTERLEAVE
 	.info =			SNDRV_PCM_INFO_NONINTERLEAVED,
-#अन्यथा
+#else
 	.info =			SNDRV_PCM_INFO_INTERLEAVED,
-#पूर्ण_अगर
-	.क्रमmats =		SNDRV_PCM_FMTBIT_S16_LE,
+#endif
+	.formats =		SNDRV_PCM_FMTBIT_S16_LE,
 	.rates =		SNDRV_PCM_RATE_CONTINUOUS | SNDRV_PCM_RATE_8000_48000,
 	.rate_min =		4000,
 	.rate_max =		48000,
@@ -162,115 +161,115 @@ emu8k_बंद_dram(काष्ठा snd_emu8000 *emu)
 	.period_bytes_max =	(128*1024),
 	.periods_min =		2,
 	.periods_max =		1024,
-	.fअगरo_size =		0,
+	.fifo_size =		0,
 
-पूर्ण;
+};
 
 /*
- * get the current position at the given channel from CCCA रेजिस्टर
+ * get the current position at the given channel from CCCA register
  */
-अटल अंतरभूत पूर्णांक emu8k_get_curpos(काष्ठा snd_emu8k_pcm *rec, पूर्णांक ch)
-अणु
-	पूर्णांक val = EMU8000_CCCA_READ(rec->emu, ch) & 0xfffffff;
+static inline int emu8k_get_curpos(struct snd_emu8k_pcm *rec, int ch)
+{
+	int val = EMU8000_CCCA_READ(rec->emu, ch) & 0xfffffff;
 	val -= rec->loop_start[ch] - 1;
-	वापस val;
-पूर्ण
+	return val;
+}
 
 
 /*
- * समयr पूर्णांकerrupt handler
- * check the current position and update the period अगर necessary.
+ * timer interrupt handler
+ * check the current position and update the period if necessary.
  */
-अटल व्योम emu8k_pcm_समयr_func(काष्ठा समयr_list *t)
-अणु
-	काष्ठा snd_emu8k_pcm *rec = from_समयr(rec, t, समयr);
-	पूर्णांक ptr, delta;
+static void emu8k_pcm_timer_func(struct timer_list *t)
+{
+	struct snd_emu8k_pcm *rec = from_timer(rec, t, timer);
+	int ptr, delta;
 
-	spin_lock(&rec->समयr_lock);
-	/* update the current poपूर्णांकer */
+	spin_lock(&rec->timer_lock);
+	/* update the current pointer */
 	ptr = emu8k_get_curpos(rec, 0);
-	अगर (ptr < rec->last_ptr)
+	if (ptr < rec->last_ptr)
 		delta = ptr + rec->buf_size - rec->last_ptr;
-	अन्यथा
+	else
 		delta = ptr - rec->last_ptr;
 	rec->period_pos += delta;
 	rec->last_ptr = ptr;
 
-	/* reprogram समयr */
-	mod_समयr(&rec->समयr, jअगरfies + 1);
+	/* reprogram timer */
+	mod_timer(&rec->timer, jiffies + 1);
 
 	/* update period */
-	अगर (rec->period_pos >= (पूर्णांक)rec->period_size) अणु
+	if (rec->period_pos >= (int)rec->period_size) {
 		rec->period_pos %= rec->period_size;
-		spin_unlock(&rec->समयr_lock);
+		spin_unlock(&rec->timer_lock);
 		snd_pcm_period_elapsed(rec->substream);
-		वापस;
-	पूर्ण
-	spin_unlock(&rec->समयr_lock);
-पूर्ण
+		return;
+	}
+	spin_unlock(&rec->timer_lock);
+}
 
 
 /*
- * खोलो pcm
+ * open pcm
  * creating an instance here
  */
-अटल पूर्णांक emu8k_pcm_खोलो(काष्ठा snd_pcm_substream *subs)
-अणु
-	काष्ठा snd_emu8000 *emu = snd_pcm_substream_chip(subs);
-	काष्ठा snd_emu8k_pcm *rec;
-	काष्ठा snd_pcm_runसमय *runसमय = subs->runसमय;
+static int emu8k_pcm_open(struct snd_pcm_substream *subs)
+{
+	struct snd_emu8000 *emu = snd_pcm_substream_chip(subs);
+	struct snd_emu8k_pcm *rec;
+	struct snd_pcm_runtime *runtime = subs->runtime;
 
-	rec = kzalloc(माप(*rec), GFP_KERNEL);
-	अगर (! rec)
-		वापस -ENOMEM;
+	rec = kzalloc(sizeof(*rec), GFP_KERNEL);
+	if (! rec)
+		return -ENOMEM;
 
 	rec->emu = emu;
 	rec->substream = subs;
-	runसमय->निजी_data = rec;
+	runtime->private_data = rec;
 
-	spin_lock_init(&rec->समयr_lock);
-	समयr_setup(&rec->समयr, emu8k_pcm_समयr_func, 0);
+	spin_lock_init(&rec->timer_lock);
+	timer_setup(&rec->timer, emu8k_pcm_timer_func, 0);
 
-	runसमय->hw = emu8k_pcm_hw;
-	runसमय->hw.buffer_bytes_max = emu->mem_size - LOOP_BLANK_SIZE * 3;
-	runसमय->hw.period_bytes_max = runसमय->hw.buffer_bytes_max / 2;
+	runtime->hw = emu8k_pcm_hw;
+	runtime->hw.buffer_bytes_max = emu->mem_size - LOOP_BLANK_SIZE * 3;
+	runtime->hw.period_bytes_max = runtime->hw.buffer_bytes_max / 2;
 
-	/* use समयr to update periods.. (specअगरied in msec) */
-	snd_pcm_hw_स्थिरraपूर्णांक_minmax(runसमय, SNDRV_PCM_HW_PARAM_PERIOD_TIME,
-				     (1000000 + HZ - 1) / HZ, अच_पूर्णांक_उच्च);
+	/* use timer to update periods.. (specified in msec) */
+	snd_pcm_hw_constraint_minmax(runtime, SNDRV_PCM_HW_PARAM_PERIOD_TIME,
+				     (1000000 + HZ - 1) / HZ, UINT_MAX);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक emu8k_pcm_बंद(काष्ठा snd_pcm_substream *subs)
-अणु
-	काष्ठा snd_emu8k_pcm *rec = subs->runसमय->निजी_data;
-	kमुक्त(rec);
-	subs->runसमय->निजी_data = शून्य;
-	वापस 0;
-पूर्ण
+static int emu8k_pcm_close(struct snd_pcm_substream *subs)
+{
+	struct snd_emu8k_pcm *rec = subs->runtime->private_data;
+	kfree(rec);
+	subs->runtime->private_data = NULL;
+	return 0;
+}
 
 /*
  * calculate pitch target
  */
-अटल पूर्णांक calc_pitch_target(पूर्णांक pitch)
-अणु
-	पूर्णांक ptarget = 1 << (pitch >> 12);
-	अगर (pitch & 0x800) ptarget += (ptarget * 0x102e) / 0x2710;
-	अगर (pitch & 0x400) ptarget += (ptarget * 0x764) / 0x2710;
-	अगर (pitch & 0x200) ptarget += (ptarget * 0x389) / 0x2710;
+static int calc_pitch_target(int pitch)
+{
+	int ptarget = 1 << (pitch >> 12);
+	if (pitch & 0x800) ptarget += (ptarget * 0x102e) / 0x2710;
+	if (pitch & 0x400) ptarget += (ptarget * 0x764) / 0x2710;
+	if (pitch & 0x200) ptarget += (ptarget * 0x389) / 0x2710;
 	ptarget += (ptarget >> 1);
-	अगर (ptarget > 0xffff) ptarget = 0xffff;
-	वापस ptarget;
-पूर्ण
+	if (ptarget > 0xffff) ptarget = 0xffff;
+	return ptarget;
+}
 
 /*
  * set up the voice
  */
-अटल व्योम setup_voice(काष्ठा snd_emu8k_pcm *rec, पूर्णांक ch)
-अणु
-	काष्ठा snd_emu8000 *hw = rec->emu;
-	अचिन्हित पूर्णांक temp;
+static void setup_voice(struct snd_emu8k_pcm *rec, int ch)
+{
+	struct snd_emu8000 *hw = rec->emu;
+	unsigned int temp;
 
 	/* channel to be silent and idle */
 	EMU8000_DCYSUSV_WRITE(hw, ch, 0x0080);
@@ -287,14 +286,14 @@ emu8k_बंद_dram(काष्ठा snd_emu8000 *emu)
 	EMU8000_DCYSUS_WRITE(hw, ch, 0x7f7f);
 	EMU8000_ENVVOL_WRITE(hw, ch, 0x8000);
 	EMU8000_ATKHLDV_WRITE(hw, ch, 0x7f7f);
-	/* decay/sustain parameter क्रम volume envelope is used
-	   क्रम triggerg the voice */
+	/* decay/sustain parameter for volume envelope is used
+	   for triggerg the voice */
 	/* modulation envelope heights */
 	EMU8000_PEFE_WRITE(hw, ch, 0x0);
 	/* lfo1/2 delay */
 	EMU8000_LFO1VAL_WRITE(hw, ch, 0x8000);
 	EMU8000_LFO2VAL_WRITE(hw, ch, 0x8000);
-	/* lfo1 pitch & cutoff shअगरt */
+	/* lfo1 pitch & cutoff shift */
 	EMU8000_FMMOD_WRITE(hw, ch, 0);
 	/* lfo1 volume & freq */
 	EMU8000_TREMFRQ_WRITE(hw, ch, 0);
@@ -302,30 +301,30 @@ emu8k_बंद_dram(काष्ठा snd_emu8000 *emu)
 	EMU8000_FM2FRQ2_WRITE(hw, ch, 0);
 	/* pan & loop start */
 	temp = rec->panning[ch];
-	temp = (temp <<24) | ((अचिन्हित पूर्णांक)rec->loop_start[ch] - 1);
+	temp = (temp <<24) | ((unsigned int)rec->loop_start[ch] - 1);
 	EMU8000_PSST_WRITE(hw, ch, temp);
 	/* chorus & loop end (chorus 8bit, MSB) */
 	temp = 0; // chorus
-	temp = (temp << 24) | ((अचिन्हित पूर्णांक)rec->loop_start[ch] + rec->buf_size - 1);
+	temp = (temp << 24) | ((unsigned int)rec->loop_start[ch] + rec->buf_size - 1);
 	EMU8000_CSL_WRITE(hw, ch, temp);
 	/* Q & current address (Q 4bit value, MSB) */
 	temp = 0; // filterQ
-	temp = (temp << 28) | ((अचिन्हित पूर्णांक)rec->loop_start[ch] - 1);
+	temp = (temp << 28) | ((unsigned int)rec->loop_start[ch] - 1);
 	EMU8000_CCCA_WRITE(hw, ch, temp);
-	/* clear unknown रेजिस्टरs */
+	/* clear unknown registers */
 	EMU8000_00A0_WRITE(hw, ch, 0);
 	EMU8000_0080_WRITE(hw, ch, 0);
-पूर्ण
+}
 
 /*
  * trigger the voice
  */
-अटल व्योम start_voice(काष्ठा snd_emu8k_pcm *rec, पूर्णांक ch)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा snd_emu8000 *hw = rec->emu;
-	अचिन्हित पूर्णांक temp, aux;
-	पूर्णांक pt = calc_pitch_target(rec->pitch);
+static void start_voice(struct snd_emu8k_pcm *rec, int ch)
+{
+	unsigned long flags;
+	struct snd_emu8000 *hw = rec->emu;
+	unsigned int temp, aux;
+	int pt = calc_pitch_target(rec->pitch);
 
 	/* cutoff and volume */
 	EMU8000_IFATN_WRITE(hw, ch, 0xff00);
@@ -335,63 +334,63 @@ emu8k_बंद_dram(काष्ठा snd_emu8000 *emu)
 	EMU8000_DCYSUSV_WRITE(hw, ch, 0x7f7f);
 	/* set reverb and pitch target */
 	temp = 0; // reverb
-	अगर (rec->panning[ch] == 0)
+	if (rec->panning[ch] == 0)
 		aux = 0xff;
-	अन्यथा
+	else
 		aux = (-rec->panning[ch]) & 0xff;
 	temp = (temp << 8) | (pt << 16) | aux;
 	EMU8000_PTRX_WRITE(hw, ch, temp);
 	EMU8000_CPF_WRITE(hw, ch, pt << 16);
 
-	/* start समयr */
-	spin_lock_irqsave(&rec->समयr_lock, flags);
-	अगर (! rec->समयr_running) अणु
-		mod_समयr(&rec->समयr, jअगरfies + 1);
-		rec->समयr_running = 1;
-	पूर्ण
-	spin_unlock_irqrestore(&rec->समयr_lock, flags);
-पूर्ण
+	/* start timer */
+	spin_lock_irqsave(&rec->timer_lock, flags);
+	if (! rec->timer_running) {
+		mod_timer(&rec->timer, jiffies + 1);
+		rec->timer_running = 1;
+	}
+	spin_unlock_irqrestore(&rec->timer_lock, flags);
+}
 
 /*
  * stop the voice immediately
  */
-अटल व्योम stop_voice(काष्ठा snd_emu8k_pcm *rec, पूर्णांक ch)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा snd_emu8000 *hw = rec->emu;
+static void stop_voice(struct snd_emu8k_pcm *rec, int ch)
+{
+	unsigned long flags;
+	struct snd_emu8000 *hw = rec->emu;
 
 	EMU8000_DCYSUSV_WRITE(hw, ch, 0x807F);
 
-	/* stop समयr */
-	spin_lock_irqsave(&rec->समयr_lock, flags);
-	अगर (rec->समयr_running) अणु
-		del_समयr(&rec->समयr);
-		rec->समयr_running = 0;
-	पूर्ण
-	spin_unlock_irqrestore(&rec->समयr_lock, flags);
-पूर्ण
+	/* stop timer */
+	spin_lock_irqsave(&rec->timer_lock, flags);
+	if (rec->timer_running) {
+		del_timer(&rec->timer);
+		rec->timer_running = 0;
+	}
+	spin_unlock_irqrestore(&rec->timer_lock, flags);
+}
 
-अटल पूर्णांक emu8k_pcm_trigger(काष्ठा snd_pcm_substream *subs, पूर्णांक cmd)
-अणु
-	काष्ठा snd_emu8k_pcm *rec = subs->runसमय->निजी_data;
-	पूर्णांक ch;
+static int emu8k_pcm_trigger(struct snd_pcm_substream *subs, int cmd)
+{
+	struct snd_emu8k_pcm *rec = subs->runtime->private_data;
+	int ch;
 
-	चयन (cmd) अणु
-	हाल SNDRV_PCM_TRIGGER_START:
-		क्रम (ch = 0; ch < rec->voices; ch++)
+	switch (cmd) {
+	case SNDRV_PCM_TRIGGER_START:
+		for (ch = 0; ch < rec->voices; ch++)
 			start_voice(rec, ch);
 		rec->running = 1;
-		अवरोध;
-	हाल SNDRV_PCM_TRIGGER_STOP:
+		break;
+	case SNDRV_PCM_TRIGGER_STOP:
 		rec->running = 0;
-		क्रम (ch = 0; ch < rec->voices; ch++)
+		for (ch = 0; ch < rec->voices; ch++)
 			stop_voice(rec, ch);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
+	return 0;
+}
 
 
 /*
@@ -400,297 +399,297 @@ emu8k_बंद_dram(काष्ठा snd_emu8000 *emu)
 
 /*
  * this macro should be inserted in the copy/silence loops
- * to reduce the latency.  without this, the प्रणाली will hang up
+ * to reduce the latency.  without this, the system will hang up
  * during the whole loop.
  */
-#घोषणा CHECK_SCHEDULER() \
-करो अणु \
+#define CHECK_SCHEDULER() \
+do { \
 	cond_resched();\
-	अगर (संकेत_pending(current))\
-		वापस -EAGAIN;\
-पूर्ण जबतक (0)
+	if (signal_pending(current))\
+		return -EAGAIN;\
+} while (0)
 
-क्रमागत अणु
+enum {
 	COPY_USER, COPY_KERNEL, FILL_SILENCE,
-पूर्ण;
+};
 
-#घोषणा GET_VAL(sval, buf, mode)					\
-	करो अणु								\
-		चयन (mode) अणु						\
-		हाल FILL_SILENCE:					\
+#define GET_VAL(sval, buf, mode)					\
+	do {								\
+		switch (mode) {						\
+		case FILL_SILENCE:					\
 			sval = 0;					\
-			अवरोध;						\
-		हाल COPY_KERNEL:					\
+			break;						\
+		case COPY_KERNEL:					\
 			sval = *buf++;					\
-			अवरोध;						\
-		शेष:						\
-			अगर (get_user(sval, (अचिन्हित लघु __user *)buf)) \
-				वापस -EFAULT;				\
+			break;						\
+		default:						\
+			if (get_user(sval, (unsigned short __user *)buf)) \
+				return -EFAULT;				\
 			buf++;						\
-			अवरोध;						\
-		पूर्ण							\
-	पूर्ण जबतक (0)
+			break;						\
+		}							\
+	} while (0)
 
-#अगर_घोषित USE_NONINTERLEAVE
+#ifdef USE_NONINTERLEAVE
 
-#घोषणा LOOP_WRITE(rec, offset, _buf, count, mode)		\
-	करो अणु							\
-		काष्ठा snd_emu8000 *emu = (rec)->emu;		\
-		अचिन्हित लघु *buf = (__क्रमce अचिन्हित लघु *)(_buf); \
-		snd_emu8000_ग_लिखो_रुको(emu, 1);			\
+#define LOOP_WRITE(rec, offset, _buf, count, mode)		\
+	do {							\
+		struct snd_emu8000 *emu = (rec)->emu;		\
+		unsigned short *buf = (__force unsigned short *)(_buf); \
+		snd_emu8000_write_wait(emu, 1);			\
 		EMU8000_SMALW_WRITE(emu, offset);		\
-		जबतक (count > 0) अणु				\
-			अचिन्हित लघु sval;			\
+		while (count > 0) {				\
+			unsigned short sval;			\
 			CHECK_SCHEDULER();			\
 			GET_VAL(sval, buf, mode);		\
 			EMU8000_SMLD_WRITE(emu, sval);		\
 			count--;				\
-		पूर्ण						\
-	पूर्ण जबतक (0)
+		}						\
+	} while (0)
 
 /* copy one channel block */
-अटल पूर्णांक emu8k_pcm_copy(काष्ठा snd_pcm_substream *subs,
-			  पूर्णांक voice, अचिन्हित दीर्घ pos,
-			  व्योम __user *src, अचिन्हित दीर्घ count)
-अणु
-	काष्ठा snd_emu8k_pcm *rec = subs->runसमय->निजी_data;
+static int emu8k_pcm_copy(struct snd_pcm_substream *subs,
+			  int voice, unsigned long pos,
+			  void __user *src, unsigned long count)
+{
+	struct snd_emu8k_pcm *rec = subs->runtime->private_data;
 
 	/* convert to word unit */
 	pos = (pos << 1) + rec->loop_start[voice];
 	count <<= 1;
 	LOOP_WRITE(rec, pos, src, count, COPY_USER);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक emu8k_pcm_copy_kernel(काष्ठा snd_pcm_substream *subs,
-				 पूर्णांक voice, अचिन्हित दीर्घ pos,
-				 व्योम *src, अचिन्हित दीर्घ count)
-अणु
-	काष्ठा snd_emu8k_pcm *rec = subs->runसमय->निजी_data;
+static int emu8k_pcm_copy_kernel(struct snd_pcm_substream *subs,
+				 int voice, unsigned long pos,
+				 void *src, unsigned long count)
+{
+	struct snd_emu8k_pcm *rec = subs->runtime->private_data;
 
 	/* convert to word unit */
 	pos = (pos << 1) + rec->loop_start[voice];
 	count <<= 1;
 	LOOP_WRITE(rec, pos, src, count, COPY_KERNEL);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* make a channel block silence */
-अटल पूर्णांक emu8k_pcm_silence(काष्ठा snd_pcm_substream *subs,
-			     पूर्णांक voice, अचिन्हित दीर्घ pos, अचिन्हित दीर्घ count)
-अणु
-	काष्ठा snd_emu8k_pcm *rec = subs->runसमय->निजी_data;
+static int emu8k_pcm_silence(struct snd_pcm_substream *subs,
+			     int voice, unsigned long pos, unsigned long count)
+{
+	struct snd_emu8k_pcm *rec = subs->runtime->private_data;
 
 	/* convert to word unit */
 	pos = (pos << 1) + rec->loop_start[voice];
 	count <<= 1;
-	LOOP_WRITE(rec, pos, शून्य, count, FILL_SILENCE);
-	वापस 0;
-पूर्ण
+	LOOP_WRITE(rec, pos, NULL, count, FILL_SILENCE);
+	return 0;
+}
 
-#अन्यथा /* पूर्णांकerleave */
+#else /* interleave */
 
-#घोषणा LOOP_WRITE(rec, pos, _buf, count, mode)				\
-	करो अणु								\
-		काष्ठा snd_emu8000 *emu = rec->emu;			\
-		अचिन्हित लघु *buf = (__क्रमce अचिन्हित लघु *)(_buf);	\
-		snd_emu8000_ग_लिखो_रुको(emu, 1);				\
+#define LOOP_WRITE(rec, pos, _buf, count, mode)				\
+	do {								\
+		struct snd_emu8000 *emu = rec->emu;			\
+		unsigned short *buf = (__force unsigned short *)(_buf);	\
+		snd_emu8000_write_wait(emu, 1);				\
 		EMU8000_SMALW_WRITE(emu, pos + rec->loop_start[0]);	\
-		अगर (rec->voices > 1)					\
+		if (rec->voices > 1)					\
 			EMU8000_SMARW_WRITE(emu, pos + rec->loop_start[1]); \
-		जबतक (count > 0) अणु					\
-			अचिन्हित लघु sval;				\
+		while (count > 0) {					\
+			unsigned short sval;				\
 			CHECK_SCHEDULER();				\
 			GET_VAL(sval, buf, mode);			\
 			EMU8000_SMLD_WRITE(emu, sval);			\
-			अगर (rec->voices > 1) अणु				\
+			if (rec->voices > 1) {				\
 				CHECK_SCHEDULER();			\
 				GET_VAL(sval, buf, mode);		\
 				EMU8000_SMRD_WRITE(emu, sval);		\
-			पूर्ण						\
+			}						\
 			count--;					\
-		पूर्ण							\
-	पूर्ण जबतक (0)
+		}							\
+	} while (0)
 
 
 /*
- * copy the पूर्णांकerleaved data can be करोne easily by using
+ * copy the interleaved data can be done easily by using
  * DMA "left" and "right" channels on emu8k engine.
  */
-अटल पूर्णांक emu8k_pcm_copy(काष्ठा snd_pcm_substream *subs,
-			  पूर्णांक voice, अचिन्हित दीर्घ pos,
-			  व्योम __user *src, अचिन्हित दीर्घ count)
-अणु
-	काष्ठा snd_emu8k_pcm *rec = subs->runसमय->निजी_data;
+static int emu8k_pcm_copy(struct snd_pcm_substream *subs,
+			  int voice, unsigned long pos,
+			  void __user *src, unsigned long count)
+{
+	struct snd_emu8k_pcm *rec = subs->runtime->private_data;
 
 	/* convert to frames */
-	pos = bytes_to_frames(subs->runसमय, pos);
-	count = bytes_to_frames(subs->runसमय, count);
+	pos = bytes_to_frames(subs->runtime, pos);
+	count = bytes_to_frames(subs->runtime, count);
 	LOOP_WRITE(rec, pos, src, count, COPY_USER);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक emu8k_pcm_copy_kernel(काष्ठा snd_pcm_substream *subs,
-				 पूर्णांक voice, अचिन्हित दीर्घ pos,
-				 व्योम *src, अचिन्हित दीर्घ count)
-अणु
-	काष्ठा snd_emu8k_pcm *rec = subs->runसमय->निजी_data;
+static int emu8k_pcm_copy_kernel(struct snd_pcm_substream *subs,
+				 int voice, unsigned long pos,
+				 void *src, unsigned long count)
+{
+	struct snd_emu8k_pcm *rec = subs->runtime->private_data;
 
 	/* convert to frames */
-	pos = bytes_to_frames(subs->runसमय, pos);
-	count = bytes_to_frames(subs->runसमय, count);
+	pos = bytes_to_frames(subs->runtime, pos);
+	count = bytes_to_frames(subs->runtime, count);
 	LOOP_WRITE(rec, pos, src, count, COPY_KERNEL);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक emu8k_pcm_silence(काष्ठा snd_pcm_substream *subs,
-			     पूर्णांक voice, अचिन्हित दीर्घ pos, अचिन्हित दीर्घ count)
-अणु
-	काष्ठा snd_emu8k_pcm *rec = subs->runसमय->निजी_data;
+static int emu8k_pcm_silence(struct snd_pcm_substream *subs,
+			     int voice, unsigned long pos, unsigned long count)
+{
+	struct snd_emu8k_pcm *rec = subs->runtime->private_data;
 
 	/* convert to frames */
-	pos = bytes_to_frames(subs->runसमय, pos);
-	count = bytes_to_frames(subs->runसमय, count);
-	LOOP_WRITE(rec, pos, शून्य, count, FILL_SILENCE);
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	pos = bytes_to_frames(subs->runtime, pos);
+	count = bytes_to_frames(subs->runtime, count);
+	LOOP_WRITE(rec, pos, NULL, count, FILL_SILENCE);
+	return 0;
+}
+#endif
 
 
 /*
  * allocate a memory block
  */
-अटल पूर्णांक emu8k_pcm_hw_params(काष्ठा snd_pcm_substream *subs,
-			       काष्ठा snd_pcm_hw_params *hw_params)
-अणु
-	काष्ठा snd_emu8k_pcm *rec = subs->runसमय->निजी_data;
+static int emu8k_pcm_hw_params(struct snd_pcm_substream *subs,
+			       struct snd_pcm_hw_params *hw_params)
+{
+	struct snd_emu8k_pcm *rec = subs->runtime->private_data;
 
-	अगर (rec->block) अणु
-		/* पुनः_स्मृतिation - release the old block */
-		snd_util_mem_मुक्त(rec->emu->memhdr, rec->block);
-		rec->block = शून्य;
-	पूर्ण
+	if (rec->block) {
+		/* reallocation - release the old block */
+		snd_util_mem_free(rec->emu->memhdr, rec->block);
+		rec->block = NULL;
+	}
 
 	rec->allocated_bytes = params_buffer_bytes(hw_params) + LOOP_BLANK_SIZE * 4;
 	rec->block = snd_util_mem_alloc(rec->emu->memhdr, rec->allocated_bytes);
-	अगर (! rec->block)
-		वापस -ENOMEM;
+	if (! rec->block)
+		return -ENOMEM;
 	rec->offset = EMU8000_DRAM_OFFSET + (rec->block->offset >> 1); /* in word */
-	/* at least dma_bytes must be set क्रम non-पूर्णांकerleaved mode */
+	/* at least dma_bytes must be set for non-interleaved mode */
 	subs->dma_buffer.bytes = params_buffer_bytes(hw_params);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * मुक्त the memory block
+ * free the memory block
  */
-अटल पूर्णांक emu8k_pcm_hw_मुक्त(काष्ठा snd_pcm_substream *subs)
-अणु
-	काष्ठा snd_emu8k_pcm *rec = subs->runसमय->निजी_data;
+static int emu8k_pcm_hw_free(struct snd_pcm_substream *subs)
+{
+	struct snd_emu8k_pcm *rec = subs->runtime->private_data;
 
-	अगर (rec->block) अणु
-		पूर्णांक ch;
-		क्रम (ch = 0; ch < rec->voices; ch++)
+	if (rec->block) {
+		int ch;
+		for (ch = 0; ch < rec->voices; ch++)
 			stop_voice(rec, ch); // to be sure
-		अगर (rec->dram_खोलोed)
-			emu8k_बंद_dram(rec->emu);
-		snd_util_mem_मुक्त(rec->emu->memhdr, rec->block);
-		rec->block = शून्य;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (rec->dram_opened)
+			emu8k_close_dram(rec->emu);
+		snd_util_mem_free(rec->emu->memhdr, rec->block);
+		rec->block = NULL;
+	}
+	return 0;
+}
 
 /*
  */
-अटल पूर्णांक emu8k_pcm_prepare(काष्ठा snd_pcm_substream *subs)
-अणु
-	काष्ठा snd_emu8k_pcm *rec = subs->runसमय->निजी_data;
+static int emu8k_pcm_prepare(struct snd_pcm_substream *subs)
+{
+	struct snd_emu8k_pcm *rec = subs->runtime->private_data;
 
-	rec->pitch = 0xe000 + calc_rate_offset(subs->runसमय->rate);
+	rec->pitch = 0xe000 + calc_rate_offset(subs->runtime->rate);
 	rec->last_ptr = 0;
 	rec->period_pos = 0;
 
-	rec->buf_size = subs->runसमय->buffer_size;
-	rec->period_size = subs->runसमय->period_size;
-	rec->voices = subs->runसमय->channels;
+	rec->buf_size = subs->runtime->buffer_size;
+	rec->period_size = subs->runtime->period_size;
+	rec->voices = subs->runtime->channels;
 	rec->loop_start[0] = rec->offset + LOOP_BLANK_SIZE;
-	अगर (rec->voices > 1)
+	if (rec->voices > 1)
 		rec->loop_start[1] = rec->loop_start[0] + rec->buf_size + LOOP_BLANK_SIZE;
-	अगर (rec->voices > 1) अणु
+	if (rec->voices > 1) {
 		rec->panning[0] = 0xff;
 		rec->panning[1] = 0x00;
-	पूर्ण अन्यथा
+	} else
 		rec->panning[0] = 0x80;
 
-	अगर (! rec->dram_खोलोed) अणु
-		पूर्णांक err, i, ch;
+	if (! rec->dram_opened) {
+		int err, i, ch;
 
 		snd_emux_terminate_all(rec->emu->emu);
-		अगर ((err = emu8k_खोलो_dram_क्रम_pcm(rec->emu, rec->voices)) != 0)
-			वापस err;
-		rec->dram_खोलोed = 1;
+		if ((err = emu8k_open_dram_for_pcm(rec->emu, rec->voices)) != 0)
+			return err;
+		rec->dram_opened = 1;
 
 		/* clear loop blanks */
-		snd_emu8000_ग_लिखो_रुको(rec->emu, 0);
+		snd_emu8000_write_wait(rec->emu, 0);
 		EMU8000_SMALW_WRITE(rec->emu, rec->offset);
-		क्रम (i = 0; i < LOOP_BLANK_SIZE; i++)
+		for (i = 0; i < LOOP_BLANK_SIZE; i++)
 			EMU8000_SMLD_WRITE(rec->emu, 0);
-		क्रम (ch = 0; ch < rec->voices; ch++) अणु
+		for (ch = 0; ch < rec->voices; ch++) {
 			EMU8000_SMALW_WRITE(rec->emu, rec->loop_start[ch] + rec->buf_size);
-			क्रम (i = 0; i < LOOP_BLANK_SIZE; i++)
+			for (i = 0; i < LOOP_BLANK_SIZE; i++)
 				EMU8000_SMLD_WRITE(rec->emu, 0);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	setup_voice(rec, 0);
-	अगर (rec->voices > 1)
+	if (rec->voices > 1)
 		setup_voice(rec, 1);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल snd_pcm_uframes_t emu8k_pcm_poपूर्णांकer(काष्ठा snd_pcm_substream *subs)
-अणु
-	काष्ठा snd_emu8k_pcm *rec = subs->runसमय->निजी_data;
-	अगर (rec->running)
-		वापस emu8k_get_curpos(rec, 0);
-	वापस 0;
-पूर्ण
+static snd_pcm_uframes_t emu8k_pcm_pointer(struct snd_pcm_substream *subs)
+{
+	struct snd_emu8k_pcm *rec = subs->runtime->private_data;
+	if (rec->running)
+		return emu8k_get_curpos(rec, 0);
+	return 0;
+}
 
 
-अटल स्थिर काष्ठा snd_pcm_ops emu8k_pcm_ops = अणु
-	.खोलो =		emu8k_pcm_खोलो,
-	.बंद =	emu8k_pcm_बंद,
+static const struct snd_pcm_ops emu8k_pcm_ops = {
+	.open =		emu8k_pcm_open,
+	.close =	emu8k_pcm_close,
 	.hw_params =	emu8k_pcm_hw_params,
-	.hw_मुक्त =	emu8k_pcm_hw_मुक्त,
+	.hw_free =	emu8k_pcm_hw_free,
 	.prepare =	emu8k_pcm_prepare,
 	.trigger =	emu8k_pcm_trigger,
-	.poपूर्णांकer =	emu8k_pcm_poपूर्णांकer,
+	.pointer =	emu8k_pcm_pointer,
 	.copy_user =	emu8k_pcm_copy,
 	.copy_kernel =	emu8k_pcm_copy_kernel,
 	.fill_silence =	emu8k_pcm_silence,
-पूर्ण;
+};
 
 
-अटल व्योम snd_emu8000_pcm_मुक्त(काष्ठा snd_pcm *pcm)
-अणु
-	काष्ठा snd_emu8000 *emu = pcm->निजी_data;
-	emu->pcm = शून्य;
-पूर्ण
+static void snd_emu8000_pcm_free(struct snd_pcm *pcm)
+{
+	struct snd_emu8000 *emu = pcm->private_data;
+	emu->pcm = NULL;
+}
 
-पूर्णांक snd_emu8000_pcm_new(काष्ठा snd_card *card, काष्ठा snd_emu8000 *emu, पूर्णांक index)
-अणु
-	काष्ठा snd_pcm *pcm;
-	पूर्णांक err;
+int snd_emu8000_pcm_new(struct snd_card *card, struct snd_emu8000 *emu, int index)
+{
+	struct snd_pcm *pcm;
+	int err;
 
-	अगर ((err = snd_pcm_new(card, "Emu8000 PCM", index, 1, 0, &pcm)) < 0)
-		वापस err;
-	pcm->निजी_data = emu;
-	pcm->निजी_मुक्त = snd_emu8000_pcm_मुक्त;
+	if ((err = snd_pcm_new(card, "Emu8000 PCM", index, 1, 0, &pcm)) < 0)
+		return err;
+	pcm->private_data = emu;
+	pcm->private_free = snd_emu8000_pcm_free;
 	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_PLAYBACK, &emu8k_pcm_ops);
 	emu->pcm = pcm;
 
-	snd_device_रेजिस्टर(card, pcm);
+	snd_device_register(card, pcm);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * A generic version of devmem_is_allowed.
  *
@@ -9,20 +8,20 @@
  * Copyright (C) 2012 ARM Ltd.
  */
 
-#समावेश <linux/mm.h>
-#समावेश <linux/ioport.h>
+#include <linux/mm.h>
+#include <linux/ioport.h>
 
 /*
- * devmem_is_allowed() checks to see अगर /dev/mem access to a certain address
+ * devmem_is_allowed() checks to see if /dev/mem access to a certain address
  * is valid. The argument is a physical page number.  We mimic x86 here by
- * disallowing access to प्रणाली RAM as well as device-exclusive MMIO regions.
- * This effectively disable पढ़ो()/ग_लिखो() on /dev/mem.
+ * disallowing access to system RAM as well as device-exclusive MMIO regions.
+ * This effectively disable read()/write() on /dev/mem.
  */
-पूर्णांक devmem_is_allowed(अचिन्हित दीर्घ pfn)
-अणु
-	अगर (iomem_is_exclusive(pfn << PAGE_SHIFT))
-		वापस 0;
-	अगर (!page_is_ram(pfn))
-		वापस 1;
-	वापस 0;
-पूर्ण
+int devmem_is_allowed(unsigned long pfn)
+{
+	if (iomem_is_exclusive(pfn << PAGE_SHIFT))
+		return 0;
+	if (!page_is_ram(pfn))
+		return 1;
+	return 0;
+}

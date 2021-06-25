@@ -1,24 +1,23 @@
-<शैली गुरु>
 /*
  * This file is provided under a dual BSD/GPLv2 license.  When using or
- * redistributing this file, you may करो so under either license.
+ * redistributing this file, you may do so under either license.
  *
  * GPL LICENSE SUMMARY
  *
  * Copyright(c) 2008 - 2011 Intel Corporation. All rights reserved.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy
+ * This program is free software; you can redistribute it and/or modify
  * it under the terms of version 2 of the GNU General Public License as
  * published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License क्रम more details.
+ * General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * aदीर्घ with this program; अगर not, ग_लिखो to the Free Software
- * Foundation, Inc., 51 Franklin St - Fअगरth Floor, Boston, MA 02110-1301 USA.
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St - Fifth Floor, Boston, MA 02110-1301 USA.
  * The full GNU General Public License is included in this distribution
  * in the file called LICENSE.GPL.
  *
@@ -27,25 +26,25 @@
  * Copyright(c) 2008 - 2011 Intel Corporation. All rights reserved.
  * All rights reserved.
  *
- * Redistribution and use in source and binary क्रमms, with or without
- * modअगरication, are permitted provided that the following conditions
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
  * are met:
  *
  *   * Redistributions of source code must retain the above copyright
  *     notice, this list of conditions and the following disclaimer.
- *   * Redistributions in binary क्रमm must reproduce the above copyright
+ *   * Redistributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in
- *     the करोcumentation and/or other materials provided with the
+ *     the documentation and/or other materials provided with the
  *     distribution.
  *   * Neither the name of Intel Corporation nor the names of its
- *     contributors may be used to enकरोrse or promote products derived
- *     from this software without specअगरic prior written permission.
+ *     contributors may be used to endorse or promote products derived
+ *     from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL,
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
  * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -54,19 +53,19 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#समावेश "host.h"
+#include "host.h"
 
-#घोषणा SCIC_SDS_MPC_RECONFIGURATION_TIMEOUT    (10)
-#घोषणा SCIC_SDS_APC_RECONFIGURATION_TIMEOUT    (10)
-#घोषणा SCIC_SDS_APC_WAIT_LINK_UP_NOTIFICATION  (1000)
+#define SCIC_SDS_MPC_RECONFIGURATION_TIMEOUT    (10)
+#define SCIC_SDS_APC_RECONFIGURATION_TIMEOUT    (10)
+#define SCIC_SDS_APC_WAIT_LINK_UP_NOTIFICATION  (1000)
 
-क्रमागत SCIC_SDS_APC_ACTIVITY अणु
+enum SCIC_SDS_APC_ACTIVITY {
 	SCIC_SDS_APC_SKIP_PHY,
 	SCIC_SDS_APC_ADD_PHY,
 	SCIC_SDS_APC_START_TIMER,
 
 	SCIC_SDS_APC_ACTIVITY_MAX
-पूर्ण;
+};
 
 /*
  * ******************************************************************************
@@ -78,232 +77,232 @@
  * @address_one: A SAS Address to be compared.
  * @address_two: A SAS Address to be compared.
  *
- * Compare the two SAS Address and अगर SAS Address One is greater than SAS
- * Address Two then वापस > 0 अन्यथा अगर SAS Address One is less than SAS Address
- * Two वापस < 0 Otherwise they are the same वापस 0 A चिन्हित value of x > 0
- * > y where x is वापसed क्रम Address One > Address Two y is वापसed क्रम
- * Address One < Address Two 0 is वापसed ofr Address One = Address Two
+ * Compare the two SAS Address and if SAS Address One is greater than SAS
+ * Address Two then return > 0 else if SAS Address One is less than SAS Address
+ * Two return < 0 Otherwise they are the same return 0 A signed value of x > 0
+ * > y where x is returned for Address One > Address Two y is returned for
+ * Address One < Address Two 0 is returned ofr Address One = Address Two
  */
-अटल s32 sci_sas_address_compare(
-	काष्ठा sci_sas_address address_one,
-	काष्ठा sci_sas_address address_two)
-अणु
-	अगर (address_one.high > address_two.high) अणु
-		वापस 1;
-	पूर्ण अन्यथा अगर (address_one.high < address_two.high) अणु
-		वापस -1;
-	पूर्ण अन्यथा अगर (address_one.low > address_two.low) अणु
-		वापस 1;
-	पूर्ण अन्यथा अगर (address_one.low < address_two.low) अणु
-		वापस -1;
-	पूर्ण
+static s32 sci_sas_address_compare(
+	struct sci_sas_address address_one,
+	struct sci_sas_address address_two)
+{
+	if (address_one.high > address_two.high) {
+		return 1;
+	} else if (address_one.high < address_two.high) {
+		return -1;
+	} else if (address_one.low > address_two.low) {
+		return 1;
+	} else if (address_one.low < address_two.low) {
+		return -1;
+	}
 
 	/* The two SAS Address must be identical */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * sci_port_configuration_agent_find_port()
- * @ihost: The controller object used क्रम the port search.
+ * @ihost: The controller object used for the port search.
  * @iphy: The phy object to match.
  *
- * This routine will find a matching port क्रम the phy.  This means that the
+ * This routine will find a matching port for the phy.  This means that the
  * port and phy both have the same broadcast sas address and same received sas
- * address. The port address or the शून्य अगर there is no matching
- * port. port address अगर the port can be found to match the phy.
- * शून्य अगर there is no matching port क्रम the phy.
+ * address. The port address or the NULL if there is no matching
+ * port. port address if the port can be found to match the phy.
+ * NULL if there is no matching port for the phy.
  */
-अटल काष्ठा isci_port *sci_port_configuration_agent_find_port(
-	काष्ठा isci_host *ihost,
-	काष्ठा isci_phy *iphy)
-अणु
+static struct isci_port *sci_port_configuration_agent_find_port(
+	struct isci_host *ihost,
+	struct isci_phy *iphy)
+{
 	u8 i;
-	काष्ठा sci_sas_address port_sas_address;
-	काष्ठा sci_sas_address port_attached_device_address;
-	काष्ठा sci_sas_address phy_sas_address;
-	काष्ठा sci_sas_address phy_attached_device_address;
+	struct sci_sas_address port_sas_address;
+	struct sci_sas_address port_attached_device_address;
+	struct sci_sas_address phy_sas_address;
+	struct sci_sas_address phy_attached_device_address;
 
 	/*
-	 * Since this phy can be a member of a wide port check to see अगर one or
+	 * Since this phy can be a member of a wide port check to see if one or
 	 * more phys match the sent and received SAS address as this phy in which
-	 * हाल it should participate in the same port.
+	 * case it should participate in the same port.
 	 */
 	sci_phy_get_sas_address(iphy, &phy_sas_address);
 	sci_phy_get_attached_sas_address(iphy, &phy_attached_device_address);
 
-	क्रम (i = 0; i < ihost->logical_port_entries; i++) अणु
-		काष्ठा isci_port *iport = &ihost->ports[i];
+	for (i = 0; i < ihost->logical_port_entries; i++) {
+		struct isci_port *iport = &ihost->ports[i];
 
 		sci_port_get_sas_address(iport, &port_sas_address);
 		sci_port_get_attached_sas_address(iport, &port_attached_device_address);
 
-		अगर (sci_sas_address_compare(port_sas_address, phy_sas_address) == 0 &&
+		if (sci_sas_address_compare(port_sas_address, phy_sas_address) == 0 &&
 		    sci_sas_address_compare(port_attached_device_address, phy_attached_device_address) == 0)
-			वापस iport;
-	पूर्ण
+			return iport;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /**
  * sci_port_configuration_agent_validate_ports()
  * @ihost: This is the controller object that contains the port agent
- * @port_agent: This is the port configuration agent क्रम the controller.
+ * @port_agent: This is the port configuration agent for the controller.
  *
- * This routine will validate the port configuration is correct क्रम the SCU
- * hardware.  The SCU hardware allows क्रम port configurations as follows. LP0
+ * This routine will validate the port configuration is correct for the SCU
+ * hardware.  The SCU hardware allows for port configurations as follows. LP0
  * -> (PE0), (PE0, PE1), (PE0, PE1, PE2, PE3) LP1 -> (PE1) LP2 -> (PE2), (PE2,
- * PE3) LP3 -> (PE3) क्रमागत sci_status SCI_SUCCESS the port configuration is valid क्रम
+ * PE3) LP3 -> (PE3) enum sci_status SCI_SUCCESS the port configuration is valid for
  * this port configuration agent. SCI_FAILURE_UNSUPPORTED_PORT_CONFIGURATION
- * the port configuration is not valid क्रम this port configuration agent.
+ * the port configuration is not valid for this port configuration agent.
  */
-अटल क्रमागत sci_status sci_port_configuration_agent_validate_ports(
-	काष्ठा isci_host *ihost,
-	काष्ठा sci_port_configuration_agent *port_agent)
-अणु
-	काष्ठा sci_sas_address first_address;
-	काष्ठा sci_sas_address second_address;
+static enum sci_status sci_port_configuration_agent_validate_ports(
+	struct isci_host *ihost,
+	struct sci_port_configuration_agent *port_agent)
+{
+	struct sci_sas_address first_address;
+	struct sci_sas_address second_address;
 
 	/*
-	 * Sanity check the max ranges क्रम all the phys the max index
+	 * Sanity check the max ranges for all the phys the max index
 	 * is always equal to the port range index */
-	अगर (port_agent->phy_valid_port_range[0].max_index != 0 ||
+	if (port_agent->phy_valid_port_range[0].max_index != 0 ||
 	    port_agent->phy_valid_port_range[1].max_index != 1 ||
 	    port_agent->phy_valid_port_range[2].max_index != 2 ||
 	    port_agent->phy_valid_port_range[3].max_index != 3)
-		वापस SCI_FAILURE_UNSUPPORTED_PORT_CONFIGURATION;
+		return SCI_FAILURE_UNSUPPORTED_PORT_CONFIGURATION;
 
 	/*
 	 * This is a request to configure a single x4 port or at least attempt
-	 * to make all the phys पूर्णांकo a single port */
-	अगर (port_agent->phy_valid_port_range[0].min_index == 0 &&
+	 * to make all the phys into a single port */
+	if (port_agent->phy_valid_port_range[0].min_index == 0 &&
 	    port_agent->phy_valid_port_range[1].min_index == 0 &&
 	    port_agent->phy_valid_port_range[2].min_index == 0 &&
 	    port_agent->phy_valid_port_range[3].min_index == 0)
-		वापस SCI_SUCCESS;
+		return SCI_SUCCESS;
 
 	/*
-	 * This is a degenerate हाल where phy 1 and phy 2 are asचिन्हित
+	 * This is a degenerate case where phy 1 and phy 2 are assigned
 	 * to the same port this is explicitly disallowed by the hardware
 	 * unless they are part of the same x4 port and this condition was
-	 * alपढ़ोy checked above. */
-	अगर (port_agent->phy_valid_port_range[2].min_index == 1) अणु
-		वापस SCI_FAILURE_UNSUPPORTED_PORT_CONFIGURATION;
-	पूर्ण
+	 * already checked above. */
+	if (port_agent->phy_valid_port_range[2].min_index == 1) {
+		return SCI_FAILURE_UNSUPPORTED_PORT_CONFIGURATION;
+	}
 
 	/*
 	 * PE0 and PE3 can never have the same SAS Address unless they
-	 * are part of the same x4 wide port and we have alपढ़ोy checked
-	 * क्रम this condition. */
+	 * are part of the same x4 wide port and we have already checked
+	 * for this condition. */
 	sci_phy_get_sas_address(&ihost->phys[0], &first_address);
 	sci_phy_get_sas_address(&ihost->phys[3], &second_address);
 
-	अगर (sci_sas_address_compare(first_address, second_address) == 0) अणु
-		वापस SCI_FAILURE_UNSUPPORTED_PORT_CONFIGURATION;
-	पूर्ण
+	if (sci_sas_address_compare(first_address, second_address) == 0) {
+		return SCI_FAILURE_UNSUPPORTED_PORT_CONFIGURATION;
+	}
 
 	/*
-	 * PE0 and PE1 are configured पूर्णांकo a 2x1 ports make sure that the
-	 * SAS Address क्रम PE0 and PE2 are dअगरferent since they can not be
+	 * PE0 and PE1 are configured into a 2x1 ports make sure that the
+	 * SAS Address for PE0 and PE2 are different since they can not be
 	 * part of the same port. */
-	अगर (port_agent->phy_valid_port_range[0].min_index == 0 &&
-	    port_agent->phy_valid_port_range[1].min_index == 1) अणु
+	if (port_agent->phy_valid_port_range[0].min_index == 0 &&
+	    port_agent->phy_valid_port_range[1].min_index == 1) {
 		sci_phy_get_sas_address(&ihost->phys[0], &first_address);
 		sci_phy_get_sas_address(&ihost->phys[2], &second_address);
 
-		अगर (sci_sas_address_compare(first_address, second_address) == 0) अणु
-			वापस SCI_FAILURE_UNSUPPORTED_PORT_CONFIGURATION;
-		पूर्ण
-	पूर्ण
+		if (sci_sas_address_compare(first_address, second_address) == 0) {
+			return SCI_FAILURE_UNSUPPORTED_PORT_CONFIGURATION;
+		}
+	}
 
 	/*
-	 * PE2 and PE3 are configured पूर्णांकo a 2x1 ports make sure that the
-	 * SAS Address क्रम PE1 and PE3 are dअगरferent since they can not be
+	 * PE2 and PE3 are configured into a 2x1 ports make sure that the
+	 * SAS Address for PE1 and PE3 are different since they can not be
 	 * part of the same port. */
-	अगर (port_agent->phy_valid_port_range[2].min_index == 2 &&
-	    port_agent->phy_valid_port_range[3].min_index == 3) अणु
+	if (port_agent->phy_valid_port_range[2].min_index == 2 &&
+	    port_agent->phy_valid_port_range[3].min_index == 3) {
 		sci_phy_get_sas_address(&ihost->phys[1], &first_address);
 		sci_phy_get_sas_address(&ihost->phys[3], &second_address);
 
-		अगर (sci_sas_address_compare(first_address, second_address) == 0) अणु
-			वापस SCI_FAILURE_UNSUPPORTED_PORT_CONFIGURATION;
-		पूर्ण
-	पूर्ण
+		if (sci_sas_address_compare(first_address, second_address) == 0) {
+			return SCI_FAILURE_UNSUPPORTED_PORT_CONFIGURATION;
+		}
+	}
 
-	वापस SCI_SUCCESS;
-पूर्ण
+	return SCI_SUCCESS;
+}
 
 /*
  * ******************************************************************************
  * Manual port configuration agent routines
  * ****************************************************************************** */
 
-/* verअगरy all of the phys in the same port are using the same SAS address */
-अटल क्रमागत sci_status
-sci_mpc_agent_validate_phy_configuration(काष्ठा isci_host *ihost,
-					      काष्ठा sci_port_configuration_agent *port_agent)
-अणु
+/* verify all of the phys in the same port are using the same SAS address */
+static enum sci_status
+sci_mpc_agent_validate_phy_configuration(struct isci_host *ihost,
+					      struct sci_port_configuration_agent *port_agent)
+{
 	u32 phy_mask;
-	u32 asचिन्हित_phy_mask;
-	काष्ठा sci_sas_address sas_address;
-	काष्ठा sci_sas_address phy_asचिन्हित_address;
+	u32 assigned_phy_mask;
+	struct sci_sas_address sas_address;
+	struct sci_sas_address phy_assigned_address;
 	u8 port_index;
 	u8 phy_index;
 
-	asचिन्हित_phy_mask = 0;
+	assigned_phy_mask = 0;
 	sas_address.high = 0;
 	sas_address.low = 0;
 
-	क्रम (port_index = 0; port_index < SCI_MAX_PORTS; port_index++) अणु
+	for (port_index = 0; port_index < SCI_MAX_PORTS; port_index++) {
 		phy_mask = ihost->oem_parameters.ports[port_index].phy_mask;
 
-		अगर (!phy_mask)
-			जारी;
+		if (!phy_mask)
+			continue;
 		/*
-		 * Make sure that one or more of the phys were not alपढ़ोy assinged to
-		 * a dअगरferent port. */
-		अगर ((phy_mask & ~asचिन्हित_phy_mask) == 0) अणु
-			वापस SCI_FAILURE_UNSUPPORTED_PORT_CONFIGURATION;
-		पूर्ण
+		 * Make sure that one or more of the phys were not already assinged to
+		 * a different port. */
+		if ((phy_mask & ~assigned_phy_mask) == 0) {
+			return SCI_FAILURE_UNSUPPORTED_PORT_CONFIGURATION;
+		}
 
-		/* Find the starting phy index क्रम this round through the loop */
-		क्रम (phy_index = 0; phy_index < SCI_MAX_PHYS; phy_index++) अणु
-			अगर ((phy_mask & (1 << phy_index)) == 0)
-				जारी;
+		/* Find the starting phy index for this round through the loop */
+		for (phy_index = 0; phy_index < SCI_MAX_PHYS; phy_index++) {
+			if ((phy_mask & (1 << phy_index)) == 0)
+				continue;
 			sci_phy_get_sas_address(&ihost->phys[phy_index],
 						     &sas_address);
 
 			/*
-			 * The phy_index can be used as the starting poपूर्णांक क्रम the
+			 * The phy_index can be used as the starting point for the
 			 * port range since the hardware starts all logical ports
 			 * the same as the PE index. */
 			port_agent->phy_valid_port_range[phy_index].min_index = port_index;
 			port_agent->phy_valid_port_range[phy_index].max_index = phy_index;
 
-			अगर (phy_index != port_index) अणु
-				वापस SCI_FAILURE_UNSUPPORTED_PORT_CONFIGURATION;
-			पूर्ण
+			if (phy_index != port_index) {
+				return SCI_FAILURE_UNSUPPORTED_PORT_CONFIGURATION;
+			}
 
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		/*
 		 * See how many additional phys are being added to this logical port.
 		 * Note: We have not moved the current phy_index so we will actually
 		 *       compare the startting phy with itself.
 		 *       This is expected and required to add the phy to the port. */
-		क्रम (; phy_index < SCI_MAX_PHYS; phy_index++) अणु
-			अगर ((phy_mask & (1 << phy_index)) == 0)
-				जारी;
+		for (; phy_index < SCI_MAX_PHYS; phy_index++) {
+			if ((phy_mask & (1 << phy_index)) == 0)
+				continue;
 			sci_phy_get_sas_address(&ihost->phys[phy_index],
-						     &phy_asचिन्हित_address);
+						     &phy_assigned_address);
 
-			अगर (sci_sas_address_compare(sas_address, phy_asचिन्हित_address) != 0) अणु
+			if (sci_sas_address_compare(sas_address, phy_assigned_address) != 0) {
 				/*
-				 * The phy mask specअगरied that this phy is part of the same port
+				 * The phy mask specified that this phy is part of the same port
 				 * as the starting phy and it is not so fail this configuration */
-				वापस SCI_FAILURE_UNSUPPORTED_PORT_CONFIGURATION;
-			पूर्ण
+				return SCI_FAILURE_UNSUPPORTED_PORT_CONFIGURATION;
+			}
 
 			port_agent->phy_valid_port_range[phy_index].min_index = port_index;
 			port_agent->phy_valid_port_range[phy_index].max_index = phy_index;
@@ -311,390 +310,390 @@ sci_mpc_agent_validate_phy_configuration(काष्ठा isci_host *ihost,
 			sci_port_add_phy(&ihost->ports[port_index],
 					      &ihost->phys[phy_index]);
 
-			asचिन्हित_phy_mask |= (1 << phy_index);
-		पूर्ण
+			assigned_phy_mask |= (1 << phy_index);
+		}
 
-	पूर्ण
+	}
 
-	वापस sci_port_configuration_agent_validate_ports(ihost, port_agent);
-पूर्ण
+	return sci_port_configuration_agent_validate_ports(ihost, port_agent);
+}
 
-अटल व्योम mpc_agent_समयout(काष्ठा समयr_list *t)
-अणु
+static void mpc_agent_timeout(struct timer_list *t)
+{
 	u8 index;
-	काष्ठा sci_समयr *पंचांगr = from_समयr(पंचांगr, t, समयr);
-	काष्ठा sci_port_configuration_agent *port_agent;
-	काष्ठा isci_host *ihost;
-	अचिन्हित दीर्घ flags;
+	struct sci_timer *tmr = from_timer(tmr, t, timer);
+	struct sci_port_configuration_agent *port_agent;
+	struct isci_host *ihost;
+	unsigned long flags;
 	u16 configure_phy_mask;
 
-	port_agent = container_of(पंचांगr, typeof(*port_agent), समयr);
+	port_agent = container_of(tmr, typeof(*port_agent), timer);
 	ihost = container_of(port_agent, typeof(*ihost), port_agent);
 
 	spin_lock_irqsave(&ihost->scic_lock, flags);
 
-	अगर (पंचांगr->cancel)
-		जाओ करोne;
+	if (tmr->cancel)
+		goto done;
 
-	port_agent->समयr_pending = false;
+	port_agent->timer_pending = false;
 
-	/* Find the mask of phys that are reported पढ़ो but as yet unconfigured पूर्णांकo a port */
-	configure_phy_mask = ~port_agent->phy_configured_mask & port_agent->phy_पढ़ोy_mask;
+	/* Find the mask of phys that are reported read but as yet unconfigured into a port */
+	configure_phy_mask = ~port_agent->phy_configured_mask & port_agent->phy_ready_mask;
 
-	क्रम (index = 0; index < SCI_MAX_PHYS; index++) अणु
-		काष्ठा isci_phy *iphy = &ihost->phys[index];
+	for (index = 0; index < SCI_MAX_PHYS; index++) {
+		struct isci_phy *iphy = &ihost->phys[index];
 
-		अगर (configure_phy_mask & (1 << index)) अणु
+		if (configure_phy_mask & (1 << index)) {
 			port_agent->link_up_handler(ihost, port_agent,
 						    phy_get_non_dummy_port(iphy),
 						    iphy);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-करोne:
+done:
 	spin_unlock_irqrestore(&ihost->scic_lock, flags);
-पूर्ण
+}
 
-अटल व्योम sci_mpc_agent_link_up(काष्ठा isci_host *ihost,
-				       काष्ठा sci_port_configuration_agent *port_agent,
-				       काष्ठा isci_port *iport,
-				       काष्ठा isci_phy *iphy)
-अणु
-	/* If the port is शून्य then the phy was not asचिन्हित to a port.
+static void sci_mpc_agent_link_up(struct isci_host *ihost,
+				       struct sci_port_configuration_agent *port_agent,
+				       struct isci_port *iport,
+				       struct isci_phy *iphy)
+{
+	/* If the port is NULL then the phy was not assigned to a port.
 	 * This is because the phy was not given the same SAS Address as
 	 * the other PHYs in the port.
 	 */
-	अगर (!iport)
-		वापस;
+	if (!iport)
+		return;
 
-	port_agent->phy_पढ़ोy_mask |= (1 << iphy->phy_index);
+	port_agent->phy_ready_mask |= (1 << iphy->phy_index);
 	sci_port_link_up(iport, iphy);
-	अगर ((iport->active_phy_mask & (1 << iphy->phy_index)))
+	if ((iport->active_phy_mask & (1 << iphy->phy_index)))
 		port_agent->phy_configured_mask |= (1 << iphy->phy_index);
-पूर्ण
+}
 
 /**
- * sci_mpc_agent_link_करोwn()
- * @ihost: This is the controller object that receives the link करोwn
- *    notअगरication.
- * @port_agent: This is the port configuration agent क्रम the controller.
+ * sci_mpc_agent_link_down()
+ * @ihost: This is the controller object that receives the link down
+ *    notification.
+ * @port_agent: This is the port configuration agent for the controller.
  * @iport: This is the port object associated with the phy.  If the is no
- *    associated port this is an शून्य.  The port is an invalid
- *    handle only अगर the phy was never port of this port.  This happens when
+ *    associated port this is an NULL.  The port is an invalid
+ *    handle only if the phy was never port of this port.  This happens when
  *    the phy is not broadcasting the same SAS address as the other phys in the
- *    asचिन्हित port.
- * @iphy: This is the phy object which has gone link करोwn.
+ *    assigned port.
+ * @iphy: This is the phy object which has gone link down.
  *
- * This function handles the manual port configuration link करोwn notअगरications.
- * Since all ports and phys are associated at initialization समय we just turn
- * around and notअगरiy the port object of the link करोwn event.  If this PHY is
+ * This function handles the manual port configuration link down notifications.
+ * Since all ports and phys are associated at initialization time we just turn
+ * around and notifiy the port object of the link down event.  If this PHY is
  * not associated with a port there is no action taken. Is it possible to get a
- * link करोwn notअगरication from a phy that has no assocoated port?
+ * link down notification from a phy that has no assocoated port?
  */
-अटल व्योम sci_mpc_agent_link_करोwn(
-	काष्ठा isci_host *ihost,
-	काष्ठा sci_port_configuration_agent *port_agent,
-	काष्ठा isci_port *iport,
-	काष्ठा isci_phy *iphy)
-अणु
-	अगर (iport != शून्य) अणु
+static void sci_mpc_agent_link_down(
+	struct isci_host *ihost,
+	struct sci_port_configuration_agent *port_agent,
+	struct isci_port *iport,
+	struct isci_phy *iphy)
+{
+	if (iport != NULL) {
 		/*
-		 * If we can क्रमm a new port from the reमुख्यder of the phys
-		 * then we want to start the समयr to allow the SCI User to
-		 * cleanup old devices and rediscover the port beक्रमe
-		 * rebuilding the port with the phys that reमुख्य in the पढ़ोy
+		 * If we can form a new port from the remainder of the phys
+		 * then we want to start the timer to allow the SCI User to
+		 * cleanup old devices and rediscover the port before
+		 * rebuilding the port with the phys that remain in the ready
 		 * state.
 		 */
-		port_agent->phy_पढ़ोy_mask &= ~(1 << iphy->phy_index);
+		port_agent->phy_ready_mask &= ~(1 << iphy->phy_index);
 		port_agent->phy_configured_mask &= ~(1 << iphy->phy_index);
 
 		/*
-		 * Check to see अगर there are more phys रुकोing to be
-		 * configured पूर्णांकo a port. If there are allow the SCI User
-		 * to tear करोwn this port, अगर necessary, and then reस्थिरruct
-		 * the port after the समयout.
+		 * Check to see if there are more phys waiting to be
+		 * configured into a port. If there are allow the SCI User
+		 * to tear down this port, if necessary, and then reconstruct
+		 * the port after the timeout.
 		 */
-		अगर ((port_agent->phy_configured_mask == 0x0000) &&
-		    (port_agent->phy_पढ़ोy_mask != 0x0000) &&
-		    !port_agent->समयr_pending) अणु
-			port_agent->समयr_pending = true;
+		if ((port_agent->phy_configured_mask == 0x0000) &&
+		    (port_agent->phy_ready_mask != 0x0000) &&
+		    !port_agent->timer_pending) {
+			port_agent->timer_pending = true;
 
-			sci_mod_समयr(&port_agent->समयr,
+			sci_mod_timer(&port_agent->timer,
 				      SCIC_SDS_MPC_RECONFIGURATION_TIMEOUT);
-		पूर्ण
+		}
 
-		sci_port_link_करोwn(iport, iphy);
-	पूर्ण
-पूर्ण
+		sci_port_link_down(iport, iphy);
+	}
+}
 
-/* verअगरy phys are asचिन्हित a valid SAS address क्रम स्वतःmatic port
+/* verify phys are assigned a valid SAS address for automatic port
  * configuration mode.
  */
-अटल क्रमागत sci_status
-sci_apc_agent_validate_phy_configuration(काष्ठा isci_host *ihost,
-					      काष्ठा sci_port_configuration_agent *port_agent)
-अणु
+static enum sci_status
+sci_apc_agent_validate_phy_configuration(struct isci_host *ihost,
+					      struct sci_port_configuration_agent *port_agent)
+{
 	u8 phy_index;
 	u8 port_index;
-	काष्ठा sci_sas_address sas_address;
-	काष्ठा sci_sas_address phy_asचिन्हित_address;
+	struct sci_sas_address sas_address;
+	struct sci_sas_address phy_assigned_address;
 
 	phy_index = 0;
 
-	जबतक (phy_index < SCI_MAX_PHYS) अणु
+	while (phy_index < SCI_MAX_PHYS) {
 		port_index = phy_index;
 
-		/* Get the asचिन्हित SAS Address क्रम the first PHY on the controller. */
+		/* Get the assigned SAS Address for the first PHY on the controller. */
 		sci_phy_get_sas_address(&ihost->phys[phy_index],
 					    &sas_address);
 
-		जबतक (++phy_index < SCI_MAX_PHYS) अणु
+		while (++phy_index < SCI_MAX_PHYS) {
 			sci_phy_get_sas_address(&ihost->phys[phy_index],
-						     &phy_asचिन्हित_address);
+						     &phy_assigned_address);
 
-			/* Verअगरy each of the SAS address are all the same क्रम every PHY */
-			अगर (sci_sas_address_compare(sas_address, phy_asचिन्हित_address) == 0) अणु
+			/* Verify each of the SAS address are all the same for every PHY */
+			if (sci_sas_address_compare(sas_address, phy_assigned_address) == 0) {
 				port_agent->phy_valid_port_range[phy_index].min_index = port_index;
 				port_agent->phy_valid_port_range[phy_index].max_index = phy_index;
-			पूर्ण अन्यथा अणु
+			} else {
 				port_agent->phy_valid_port_range[phy_index].min_index = phy_index;
 				port_agent->phy_valid_port_range[phy_index].max_index = phy_index;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				break;
+			}
+		}
+	}
 
-	वापस sci_port_configuration_agent_validate_ports(ihost, port_agent);
-पूर्ण
+	return sci_port_configuration_agent_validate_ports(ihost, port_agent);
+}
 
 /*
- * This routine will restart the स्वतःmatic port configuration समयout
- * समयr क्रम the next समय period. This could be caused by either a link
- * करोwn event or a link up event where we can not yet tell to which a phy
- * beदीर्घs.
+ * This routine will restart the automatic port configuration timeout
+ * timer for the next time period. This could be caused by either a link
+ * down event or a link up event where we can not yet tell to which a phy
+ * belongs.
  */
-अटल व्योम sci_apc_agent_start_समयr(काष्ठा sci_port_configuration_agent *port_agent,
-				      u32 समयout)
-अणु
-	port_agent->समयr_pending = true;
-	sci_mod_समयr(&port_agent->समयr, समयout);
-पूर्ण
+static void sci_apc_agent_start_timer(struct sci_port_configuration_agent *port_agent,
+				      u32 timeout)
+{
+	port_agent->timer_pending = true;
+	sci_mod_timer(&port_agent->timer, timeout);
+}
 
-अटल व्योम sci_apc_agent_configure_ports(काष्ठा isci_host *ihost,
-					       काष्ठा sci_port_configuration_agent *port_agent,
-					       काष्ठा isci_phy *iphy,
-					       bool start_समयr)
-अणु
+static void sci_apc_agent_configure_ports(struct isci_host *ihost,
+					       struct sci_port_configuration_agent *port_agent,
+					       struct isci_phy *iphy,
+					       bool start_timer)
+{
 	u8 port_index;
-	क्रमागत sci_status status;
-	काष्ठा isci_port *iport;
-	क्रमागत SCIC_SDS_APC_ACTIVITY apc_activity = SCIC_SDS_APC_SKIP_PHY;
+	enum sci_status status;
+	struct isci_port *iport;
+	enum SCIC_SDS_APC_ACTIVITY apc_activity = SCIC_SDS_APC_SKIP_PHY;
 
 	iport = sci_port_configuration_agent_find_port(ihost, iphy);
 
-	अगर (iport) अणु
-		अगर (sci_port_is_valid_phy_assignment(iport, iphy->phy_index))
+	if (iport) {
+		if (sci_port_is_valid_phy_assignment(iport, iphy->phy_index))
 			apc_activity = SCIC_SDS_APC_ADD_PHY;
-		अन्यथा
+		else
 			apc_activity = SCIC_SDS_APC_SKIP_PHY;
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
-		 * There is no matching Port क्रम this PHY so lets search through the
-		 * Ports and see अगर we can add the PHY to its own port or maybe start
-		 * the समयr and रुको to see अगर a wider port can be made.
+		 * There is no matching Port for this PHY so lets search through the
+		 * Ports and see if we can add the PHY to its own port or maybe start
+		 * the timer and wait to see if a wider port can be made.
 		 *
-		 * Note the अवरोध when we reach the condition of the port id == phy id */
-		क्रम (port_index = port_agent->phy_valid_port_range[iphy->phy_index].min_index;
+		 * Note the break when we reach the condition of the port id == phy id */
+		for (port_index = port_agent->phy_valid_port_range[iphy->phy_index].min_index;
 		     port_index <= port_agent->phy_valid_port_range[iphy->phy_index].max_index;
-		     port_index++) अणु
+		     port_index++) {
 
 			iport = &ihost->ports[port_index];
 
 			/* First we must make sure that this PHY can be added to this Port. */
-			अगर (sci_port_is_valid_phy_assignment(iport, iphy->phy_index)) अणु
+			if (sci_port_is_valid_phy_assignment(iport, iphy->phy_index)) {
 				/*
 				 * Port contains a PHY with a greater PHY ID than the current
 				 * PHY that has gone link up.  This phy can not be part of any
 				 * port so skip it and move on. */
-				अगर (iport->active_phy_mask > (1 << iphy->phy_index)) अणु
+				if (iport->active_phy_mask > (1 << iphy->phy_index)) {
 					apc_activity = SCIC_SDS_APC_SKIP_PHY;
-					अवरोध;
-				पूर्ण
+					break;
+				}
 
 				/*
 				 * We have reached the end of our Port list and have not found
 				 * any reason why we should not either add the PHY to the port
-				 * or रुको क्रम more phys to become active. */
-				अगर (iport->physical_port_index == iphy->phy_index) अणु
+				 * or wait for more phys to become active. */
+				if (iport->physical_port_index == iphy->phy_index) {
 					/*
 					 * The Port either has no active PHYs.
-					 * Consider that अगर the port had any active PHYs we would have
+					 * Consider that if the port had any active PHYs we would have
 					 * or active PHYs with
 					 * a lower PHY Id than this PHY. */
-					अगर (apc_activity != SCIC_SDS_APC_START_TIMER) अणु
+					if (apc_activity != SCIC_SDS_APC_START_TIMER) {
 						apc_activity = SCIC_SDS_APC_ADD_PHY;
-					पूर्ण
+					}
 
-					अवरोध;
-				पूर्ण
+					break;
+				}
 
 				/*
 				 * The current Port has no active PHYs and this PHY could be part
-				 * of this Port.  Since we करोnt know as yet setup to start the
-				 * समयr and see अगर there is a better configuration. */
-				अगर (iport->active_phy_mask == 0) अणु
+				 * of this Port.  Since we dont know as yet setup to start the
+				 * timer and see if there is a better configuration. */
+				if (iport->active_phy_mask == 0) {
 					apc_activity = SCIC_SDS_APC_START_TIMER;
-				पूर्ण
-			पूर्ण अन्यथा अगर (iport->active_phy_mask != 0) अणु
+				}
+			} else if (iport->active_phy_mask != 0) {
 				/*
 				 * The Port has an active phy and the current Phy can not
-				 * participate in this port so skip the PHY and see अगर
+				 * participate in this port so skip the PHY and see if
 				 * there is a better configuration. */
 				apc_activity = SCIC_SDS_APC_SKIP_PHY;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 	/*
-	 * Check to see अगर the start समयr operations should instead map to an
-	 * add phy operation.  This is caused because we have been रुकोing to
-	 * add a phy to a port but could not becuase the स्वतःmatic port
-	 * configuration engine had a choice of possible ports क्रम the phy.
-	 * Since we have gone through a समयout we are going to restrict the
+	 * Check to see if the start timer operations should instead map to an
+	 * add phy operation.  This is caused because we have been waiting to
+	 * add a phy to a port but could not becuase the automatic port
+	 * configuration engine had a choice of possible ports for the phy.
+	 * Since we have gone through a timeout we are going to restrict the
 	 * choice to the smallest possible port. */
-	अगर (
-		(start_समयr == false)
+	if (
+		(start_timer == false)
 		&& (apc_activity == SCIC_SDS_APC_START_TIMER)
-		) अणु
+		) {
 		apc_activity = SCIC_SDS_APC_ADD_PHY;
-	पूर्ण
+	}
 
-	चयन (apc_activity) अणु
-	हाल SCIC_SDS_APC_ADD_PHY:
+	switch (apc_activity) {
+	case SCIC_SDS_APC_ADD_PHY:
 		status = sci_port_add_phy(iport, iphy);
 
-		अगर (status == SCI_SUCCESS) अणु
+		if (status == SCI_SUCCESS) {
 			port_agent->phy_configured_mask |= (1 << iphy->phy_index);
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल SCIC_SDS_APC_START_TIMER:
-		sci_apc_agent_start_समयr(port_agent,
+	case SCIC_SDS_APC_START_TIMER:
+		sci_apc_agent_start_timer(port_agent,
 					  SCIC_SDS_APC_WAIT_LINK_UP_NOTIFICATION);
-		अवरोध;
+		break;
 
-	हाल SCIC_SDS_APC_SKIP_PHY:
-	शेष:
-		/* करो nothing the PHY can not be made part of a port at this समय. */
-		अवरोध;
-	पूर्ण
-पूर्ण
+	case SCIC_SDS_APC_SKIP_PHY:
+	default:
+		/* do nothing the PHY can not be made part of a port at this time. */
+		break;
+	}
+}
 
 /**
  * sci_apc_agent_link_up - handle apc link up events
  * @ihost: This is the controller object that receives the link up
- *    notअगरication.
- * @port_agent: This is the port configuration agent क्रम the controller.
+ *    notification.
+ * @port_agent: This is the port configuration agent for the controller.
  * @iport: This is the port object associated with the phy.  If the is no
- *    associated port this is an शून्य.
+ *    associated port this is an NULL.
  * @iphy: This is the phy object which has gone link up.
  *
- * This method handles the स्वतःmatic port configuration क्रम link up
- * notअगरications. Is it possible to get a link करोwn notअगरication from a phy
+ * This method handles the automatic port configuration for link up
+ * notifications. Is it possible to get a link down notification from a phy
  * that has no assocoated port?
  */
-अटल व्योम sci_apc_agent_link_up(काष्ठा isci_host *ihost,
-				       काष्ठा sci_port_configuration_agent *port_agent,
-				       काष्ठा isci_port *iport,
-				       काष्ठा isci_phy *iphy)
-अणु
+static void sci_apc_agent_link_up(struct isci_host *ihost,
+				       struct sci_port_configuration_agent *port_agent,
+				       struct isci_port *iport,
+				       struct isci_phy *iphy)
+{
 	u8 phy_index  = iphy->phy_index;
 
-	अगर (!iport) अणु
+	if (!iport) {
 		/* the phy is not the part of this port */
-		port_agent->phy_पढ़ोy_mask |= 1 << phy_index;
-		sci_apc_agent_start_समयr(port_agent,
+		port_agent->phy_ready_mask |= 1 << phy_index;
+		sci_apc_agent_start_timer(port_agent,
 					  SCIC_SDS_APC_WAIT_LINK_UP_NOTIFICATION);
-	पूर्ण अन्यथा अणु
-		/* the phy is alपढ़ोy the part of the port */
-		port_agent->phy_पढ़ोy_mask |= 1 << phy_index;
+	} else {
+		/* the phy is already the part of the port */
+		port_agent->phy_ready_mask |= 1 << phy_index;
 		sci_port_link_up(iport, iphy);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * sci_apc_agent_link_करोwn()
- * @ihost: This is the controller object that receives the link करोwn
- *    notअगरication.
- * @port_agent: This is the port configuration agent क्रम the controller.
+ * sci_apc_agent_link_down()
+ * @ihost: This is the controller object that receives the link down
+ *    notification.
+ * @port_agent: This is the port configuration agent for the controller.
  * @iport: This is the port object associated with the phy.  If the is no
- *    associated port this is an शून्य.
- * @iphy: This is the phy object which has gone link करोwn.
+ *    associated port this is an NULL.
+ * @iphy: This is the phy object which has gone link down.
  *
- * This method handles the स्वतःmatic port configuration link करोwn
- * notअगरications. not associated with a port there is no action taken. Is it
- * possible to get a link करोwn notअगरication from a phy that has no assocoated
+ * This method handles the automatic port configuration link down
+ * notifications. not associated with a port there is no action taken. Is it
+ * possible to get a link down notification from a phy that has no assocoated
  * port?
  */
-अटल व्योम sci_apc_agent_link_करोwn(
-	काष्ठा isci_host *ihost,
-	काष्ठा sci_port_configuration_agent *port_agent,
-	काष्ठा isci_port *iport,
-	काष्ठा isci_phy *iphy)
-अणु
-	port_agent->phy_पढ़ोy_mask &= ~(1 << iphy->phy_index);
+static void sci_apc_agent_link_down(
+	struct isci_host *ihost,
+	struct sci_port_configuration_agent *port_agent,
+	struct isci_port *iport,
+	struct isci_phy *iphy)
+{
+	port_agent->phy_ready_mask &= ~(1 << iphy->phy_index);
 
-	अगर (!iport)
-		वापस;
-	अगर (port_agent->phy_configured_mask & (1 << iphy->phy_index)) अणु
-		क्रमागत sci_status status;
+	if (!iport)
+		return;
+	if (port_agent->phy_configured_mask & (1 << iphy->phy_index)) {
+		enum sci_status status;
 
-		status = sci_port_हटाओ_phy(iport, iphy);
+		status = sci_port_remove_phy(iport, iphy);
 
-		अगर (status == SCI_SUCCESS)
+		if (status == SCI_SUCCESS)
 			port_agent->phy_configured_mask &= ~(1 << iphy->phy_index);
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* configure the phys पूर्णांकo ports when the समयr fires */
-अटल व्योम apc_agent_समयout(काष्ठा समयr_list *t)
-अणु
+/* configure the phys into ports when the timer fires */
+static void apc_agent_timeout(struct timer_list *t)
+{
 	u32 index;
-	काष्ठा sci_समयr *पंचांगr = from_समयr(पंचांगr, t, समयr);
-	काष्ठा sci_port_configuration_agent *port_agent;
-	काष्ठा isci_host *ihost;
-	अचिन्हित दीर्घ flags;
+	struct sci_timer *tmr = from_timer(tmr, t, timer);
+	struct sci_port_configuration_agent *port_agent;
+	struct isci_host *ihost;
+	unsigned long flags;
 	u16 configure_phy_mask;
 
-	port_agent = container_of(पंचांगr, typeof(*port_agent), समयr);
+	port_agent = container_of(tmr, typeof(*port_agent), timer);
 	ihost = container_of(port_agent, typeof(*ihost), port_agent);
 
 	spin_lock_irqsave(&ihost->scic_lock, flags);
 
-	अगर (पंचांगr->cancel)
-		जाओ करोne;
+	if (tmr->cancel)
+		goto done;
 
-	port_agent->समयr_pending = false;
+	port_agent->timer_pending = false;
 
-	configure_phy_mask = ~port_agent->phy_configured_mask & port_agent->phy_पढ़ोy_mask;
+	configure_phy_mask = ~port_agent->phy_configured_mask & port_agent->phy_ready_mask;
 
-	अगर (!configure_phy_mask)
-		जाओ करोne;
+	if (!configure_phy_mask)
+		goto done;
 
-	क्रम (index = 0; index < SCI_MAX_PHYS; index++) अणु
-		अगर ((configure_phy_mask & (1 << index)) == 0)
-			जारी;
+	for (index = 0; index < SCI_MAX_PHYS; index++) {
+		if ((configure_phy_mask & (1 << index)) == 0)
+			continue;
 
 		sci_apc_agent_configure_ports(ihost, port_agent,
 						   &ihost->phys[index], false);
-	पूर्ण
+	}
 
-	अगर (is_controller_start_complete(ihost))
-		sci_controller_transition_to_पढ़ोy(ihost, SCI_SUCCESS);
+	if (is_controller_start_complete(ihost))
+		sci_controller_transition_to_ready(ihost, SCI_SUCCESS);
 
-करोne:
+done:
 	spin_unlock_irqrestore(&ihost->scic_lock, flags);
-पूर्ण
+}
 
 /*
  * ******************************************************************************
@@ -702,60 +701,60 @@ sci_apc_agent_validate_phy_configuration(काष्ठा isci_host *ihost,
  * ****************************************************************************** */
 
 /*
- * This method will स्थिरruct the port configuration agent क्रम operation. This
- * call is universal क्रम both manual port configuration and स्वतःmatic port
+ * This method will construct the port configuration agent for operation. This
+ * call is universal for both manual port configuration and automatic port
  * configuration modes.
  */
-व्योम sci_port_configuration_agent_स्थिरruct(
-	काष्ठा sci_port_configuration_agent *port_agent)
-अणु
+void sci_port_configuration_agent_construct(
+	struct sci_port_configuration_agent *port_agent)
+{
 	u32 index;
 
 	port_agent->phy_configured_mask = 0x00;
-	port_agent->phy_पढ़ोy_mask = 0x00;
+	port_agent->phy_ready_mask = 0x00;
 
-	port_agent->link_up_handler = शून्य;
-	port_agent->link_करोwn_handler = शून्य;
+	port_agent->link_up_handler = NULL;
+	port_agent->link_down_handler = NULL;
 
-	port_agent->समयr_pending = false;
+	port_agent->timer_pending = false;
 
-	क्रम (index = 0; index < SCI_MAX_PORTS; index++) अणु
+	for (index = 0; index < SCI_MAX_PORTS; index++) {
 		port_agent->phy_valid_port_range[index].min_index = 0;
 		port_agent->phy_valid_port_range[index].max_index = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-bool is_port_config_apc(काष्ठा isci_host *ihost)
-अणु
-	वापस ihost->port_agent.link_up_handler == sci_apc_agent_link_up;
-पूर्ण
+bool is_port_config_apc(struct isci_host *ihost)
+{
+	return ihost->port_agent.link_up_handler == sci_apc_agent_link_up;
+}
 
-क्रमागत sci_status sci_port_configuration_agent_initialize(
-	काष्ठा isci_host *ihost,
-	काष्ठा sci_port_configuration_agent *port_agent)
-अणु
-	क्रमागत sci_status status;
-	क्रमागत sci_port_configuration_mode mode;
+enum sci_status sci_port_configuration_agent_initialize(
+	struct isci_host *ihost,
+	struct sci_port_configuration_agent *port_agent)
+{
+	enum sci_status status;
+	enum sci_port_configuration_mode mode;
 
 	mode = ihost->oem_parameters.controller.mode_type;
 
-	अगर (mode == SCIC_PORT_MANUAL_CONFIGURATION_MODE) अणु
+	if (mode == SCIC_PORT_MANUAL_CONFIGURATION_MODE) {
 		status = sci_mpc_agent_validate_phy_configuration(
 				ihost, port_agent);
 
 		port_agent->link_up_handler = sci_mpc_agent_link_up;
-		port_agent->link_करोwn_handler = sci_mpc_agent_link_करोwn;
+		port_agent->link_down_handler = sci_mpc_agent_link_down;
 
-		sci_init_समयr(&port_agent->समयr, mpc_agent_समयout);
-	पूर्ण अन्यथा अणु
+		sci_init_timer(&port_agent->timer, mpc_agent_timeout);
+	} else {
 		status = sci_apc_agent_validate_phy_configuration(
 				ihost, port_agent);
 
 		port_agent->link_up_handler = sci_apc_agent_link_up;
-		port_agent->link_करोwn_handler = sci_apc_agent_link_करोwn;
+		port_agent->link_down_handler = sci_apc_agent_link_down;
 
-		sci_init_समयr(&port_agent->समयr, apc_agent_समयout);
-	पूर्ण
+		sci_init_timer(&port_agent->timer, apc_agent_timeout);
+	}
 
-	वापस status;
-पूर्ण
+	return status;
+}

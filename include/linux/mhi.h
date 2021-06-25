@@ -1,42 +1,41 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  *
  */
-#अगर_अघोषित _MHI_H_
-#घोषणा _MHI_H_
+#ifndef _MHI_H_
+#define _MHI_H_
 
-#समावेश <linux/device.h>
-#समावेश <linux/dma-direction.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/workqueue.h>
+#include <linux/device.h>
+#include <linux/dma-direction.h>
+#include <linux/mutex.h>
+#include <linux/skbuff.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
+#include <linux/wait.h>
+#include <linux/workqueue.h>
 
-#घोषणा MHI_MAX_OEM_PK_HASH_SEGMENTS 16
+#define MHI_MAX_OEM_PK_HASH_SEGMENTS 16
 
-काष्ठा mhi_chan;
-काष्ठा mhi_event;
-काष्ठा mhi_ctxt;
-काष्ठा mhi_cmd;
-काष्ठा mhi_buf_info;
+struct mhi_chan;
+struct mhi_event;
+struct mhi_ctxt;
+struct mhi_cmd;
+struct mhi_buf_info;
 
 /**
- * क्रमागत mhi_callback - MHI callback
+ * enum mhi_callback - MHI callback
  * @MHI_CB_IDLE: MHI entered idle state
- * @MHI_CB_PENDING_DATA: New data available क्रम client to process
- * @MHI_CB_LPM_ENTER: MHI host entered low घातer mode
- * @MHI_CB_LPM_EXIT: MHI host about to निकास low घातer mode
+ * @MHI_CB_PENDING_DATA: New data available for client to process
+ * @MHI_CB_LPM_ENTER: MHI host entered low power mode
+ * @MHI_CB_LPM_EXIT: MHI host about to exit low power mode
  * @MHI_CB_EE_RDDM: MHI device entered RDDM exec env
  * @MHI_CB_EE_MISSION_MODE: MHI device entered Mission Mode exec env
  * @MHI_CB_SYS_ERROR: MHI device entered error state (may recover)
  * @MHI_CB_FATAL_ERROR: MHI device entered fatal error state
- * @MHI_CB_BW_REQ: Received a bandwidth चयन request from device
+ * @MHI_CB_BW_REQ: Received a bandwidth switch request from device
  */
-क्रमागत mhi_callback अणु
+enum mhi_callback {
 	MHI_CB_IDLE,
 	MHI_CB_PENDING_DATA,
 	MHI_CB_LPM_ENTER,
@@ -46,81 +45,81 @@
 	MHI_CB_SYS_ERROR,
 	MHI_CB_FATAL_ERROR,
 	MHI_CB_BW_REQ,
-पूर्ण;
+};
 
 /**
- * क्रमागत mhi_flags - Transfer flags
- * @MHI_EOB: End of buffer क्रम bulk transfer
+ * enum mhi_flags - Transfer flags
+ * @MHI_EOB: End of buffer for bulk transfer
  * @MHI_EOT: End of transfer
  * @MHI_CHAIN: Linked transfer
  */
-क्रमागत mhi_flags अणु
+enum mhi_flags {
 	MHI_EOB = BIT(0),
 	MHI_EOT = BIT(1),
 	MHI_CHAIN = BIT(2),
-पूर्ण;
+};
 
 /**
- * क्रमागत mhi_device_type - Device types
+ * enum mhi_device_type - Device types
  * @MHI_DEVICE_XFER: Handles data transfer
  * @MHI_DEVICE_CONTROLLER: Control device
  */
-क्रमागत mhi_device_type अणु
+enum mhi_device_type {
 	MHI_DEVICE_XFER,
 	MHI_DEVICE_CONTROLLER,
-पूर्ण;
+};
 
 /**
- * क्रमागत mhi_ch_type - Channel types
+ * enum mhi_ch_type - Channel types
  * @MHI_CH_TYPE_INVALID: Invalid channel type
  * @MHI_CH_TYPE_OUTBOUND: Outbound channel to the device
  * @MHI_CH_TYPE_INBOUND: Inbound channel from the device
- * @MHI_CH_TYPE_INBOUND_COALESCED: Coalesced channel क्रम the device to combine
+ * @MHI_CH_TYPE_INBOUND_COALESCED: Coalesced channel for the device to combine
  *				   multiple packets and send them as a single
  *				   large packet to reduce CPU consumption
  */
-क्रमागत mhi_ch_type अणु
+enum mhi_ch_type {
 	MHI_CH_TYPE_INVALID = 0,
 	MHI_CH_TYPE_OUTBOUND = DMA_TO_DEVICE,
 	MHI_CH_TYPE_INBOUND = DMA_FROM_DEVICE,
 	MHI_CH_TYPE_INBOUND_COALESCED = 3,
-पूर्ण;
+};
 
 /**
- * काष्ठा image_info - Firmware and RDDM table
- * @mhi_buf: Buffer क्रम firmware and RDDM table
+ * struct image_info - Firmware and RDDM table
+ * @mhi_buf: Buffer for firmware and RDDM table
  * @entries: # of entries in table
  */
-काष्ठा image_info अणु
-	काष्ठा mhi_buf *mhi_buf;
-	/* निजी: from पूर्णांकernal.h */
-	काष्ठा bhi_vec_entry *bhi_vec;
-	/* खुला: */
+struct image_info {
+	struct mhi_buf *mhi_buf;
+	/* private: from internal.h */
+	struct bhi_vec_entry *bhi_vec;
+	/* public: */
 	u32 entries;
-पूर्ण;
+};
 
 /**
- * काष्ठा mhi_link_info - BW requirement
+ * struct mhi_link_info - BW requirement
  * target_link_speed - Link speed as defined by TLS bits in LinkControl reg
  * target_link_width - Link width as defined by NLW bits in LinkStatus reg
  */
-काष्ठा mhi_link_info अणु
-	अचिन्हित पूर्णांक target_link_speed;
-	अचिन्हित पूर्णांक target_link_width;
-पूर्ण;
+struct mhi_link_info {
+	unsigned int target_link_speed;
+	unsigned int target_link_width;
+};
 
 /**
- * क्रमागत mhi_ee_type - Execution environment types
+ * enum mhi_ee_type - Execution environment types
  * @MHI_EE_PBL: Primary Bootloader
  * @MHI_EE_SBL: Secondary Bootloader
- * @MHI_EE_AMSS: Modem, aka the primary runसमय EE
- * @MHI_EE_RDDM: Ram dump करोwnload mode
+ * @MHI_EE_AMSS: Modem, aka the primary runtime EE
+ * @MHI_EE_RDDM: Ram dump download mode
  * @MHI_EE_WFW: WLAN firmware mode
  * @MHI_EE_PTHRU: Passthrough
- * @MHI_EE_EDL: Embedded करोwnloader
+ * @MHI_EE_EDL: Embedded downloader
  * @MHI_EE_FP: Flash Programmer Environment
  */
-क्रमागत mhi_ee_type अणु
+enum mhi_ee_type {
 	MHI_EE_PBL,
 	MHI_EE_SBL,
 	MHI_EE_AMSS,
@@ -133,10 +132,10 @@
 	MHI_EE_DISABLE_TRANSITION, /* local EE, not related to mhi spec */
 	MHI_EE_NOT_SUPPORTED,
 	MHI_EE_MAX,
-पूर्ण;
+};
 
 /**
- * क्रमागत mhi_state - MHI states
+ * enum mhi_state - MHI states
  * @MHI_STATE_RESET: Reset state
  * @MHI_STATE_READY: Ready state
  * @MHI_STATE_M0: M0 state
@@ -147,7 +146,7 @@
  * @MHI_STATE_BHI: BHI state
  * @MHI_STATE_SYS_ERR: System Error state
  */
-क्रमागत mhi_state अणु
+enum mhi_state {
 	MHI_STATE_RESET = 0x0,
 	MHI_STATE_READY = 0x1,
 	MHI_STATE_M0 = 0x2,
@@ -158,10 +157,10 @@
 	MHI_STATE_BHI = 0x7,
 	MHI_STATE_SYS_ERR = 0xFF,
 	MHI_STATE_MAX,
-पूर्ण;
+};
 
 /**
- * क्रमागत mhi_ch_ee_mask - Execution environment mask क्रम channel
+ * enum mhi_ch_ee_mask - Execution environment mask for channel
  * @MHI_CH_EE_PBL: Allow channel to be used in PBL EE
  * @MHI_CH_EE_SBL: Allow channel to be used in SBL EE
  * @MHI_CH_EE_AMSS: Allow channel to be used in AMSS EE
@@ -170,7 +169,7 @@
  * @MHI_CH_EE_WFW: Allow channel to be used in WFW EE
  * @MHI_CH_EE_EDL: Allow channel to be used in EDL EE
  */
-क्रमागत mhi_ch_ee_mask अणु
+enum mhi_ch_ee_mask {
 	MHI_CH_EE_PBL = BIT(MHI_EE_PBL),
 	MHI_CH_EE_SBL = BIT(MHI_EE_SBL),
 	MHI_CH_EE_AMSS = BIT(MHI_EE_AMSS),
@@ -178,96 +177,96 @@
 	MHI_CH_EE_PTHRU = BIT(MHI_EE_PTHRU),
 	MHI_CH_EE_WFW = BIT(MHI_EE_WFW),
 	MHI_CH_EE_EDL = BIT(MHI_EE_EDL),
-पूर्ण;
+};
 
 /**
- * क्रमागत mhi_er_data_type - Event ring data types
+ * enum mhi_er_data_type - Event ring data types
  * @MHI_ER_DATA: Only client data over this ring
  * @MHI_ER_CTRL: MHI control data and client data
  */
-क्रमागत mhi_er_data_type अणु
+enum mhi_er_data_type {
 	MHI_ER_DATA,
 	MHI_ER_CTRL,
-पूर्ण;
+};
 
 /**
- * क्रमागत mhi_db_brst_mode - Doorbell mode
+ * enum mhi_db_brst_mode - Doorbell mode
  * @MHI_DB_BRST_DISABLE: Burst mode disable
  * @MHI_DB_BRST_ENABLE: Burst mode enable
  */
-क्रमागत mhi_db_brst_mode अणु
+enum mhi_db_brst_mode {
 	MHI_DB_BRST_DISABLE = 0x2,
 	MHI_DB_BRST_ENABLE = 0x3,
-पूर्ण;
+};
 
 /**
- * काष्ठा mhi_channel_config - Channel configuration काष्ठाure क्रम controller
+ * struct mhi_channel_config - Channel configuration structure for controller
  * @name: The name of this channel
- * @num: The number asचिन्हित to this channel
+ * @num: The number assigned to this channel
  * @num_elements: The number of elements that can be queued to this channel
  * @local_elements: The local ring length of the channel
  * @event_ring: The event ring index that services this channel
  * @dir: Direction that data may flow on this channel
  * @type: Channel type
- * @ee_mask: Execution Environment mask क्रम this channel
- * @pollcfg: Polling configuration क्रम burst mode.  0 is शेष.  milliseconds
-	     क्रम UL channels, multiple of 8 ring elements क्रम DL channels
- * @करोorbell: Doorbell mode
- * @lpm_notअगरy: The channel master requires low घातer mode notअगरications
+ * @ee_mask: Execution Environment mask for this channel
+ * @pollcfg: Polling configuration for burst mode.  0 is default.  milliseconds
+	     for UL channels, multiple of 8 ring elements for DL channels
+ * @doorbell: Doorbell mode
+ * @lpm_notify: The channel master requires low power mode notifications
  * @offload_channel: The client manages the channel completely
- * @करोorbell_mode_चयन: Channel चयनes to करोorbell mode on M0 transition
- * @स्वतः_queue: Framework will स्वतःmatically queue buffers क्रम DL traffic
- * @wake-capable: Channel capable of waking up the प्रणाली
+ * @doorbell_mode_switch: Channel switches to doorbell mode on M0 transition
+ * @auto_queue: Framework will automatically queue buffers for DL traffic
+ * @wake-capable: Channel capable of waking up the system
  */
-काष्ठा mhi_channel_config अणु
-	अक्षर *name;
+struct mhi_channel_config {
+	char *name;
 	u32 num;
 	u32 num_elements;
 	u32 local_elements;
 	u32 event_ring;
-	क्रमागत dma_data_direction dir;
-	क्रमागत mhi_ch_type type;
+	enum dma_data_direction dir;
+	enum mhi_ch_type type;
 	u32 ee_mask;
 	u32 pollcfg;
-	क्रमागत mhi_db_brst_mode करोorbell;
-	bool lpm_notअगरy;
+	enum mhi_db_brst_mode doorbell;
+	bool lpm_notify;
 	bool offload_channel;
-	bool करोorbell_mode_चयन;
-	bool स्वतः_queue;
+	bool doorbell_mode_switch;
+	bool auto_queue;
 	bool wake_capable;
-पूर्ण;
+};
 
 /**
- * काष्ठा mhi_event_config - Event ring configuration काष्ठाure क्रम controller
+ * struct mhi_event_config - Event ring configuration structure for controller
  * @num_elements: The number of elements that can be queued to this ring
- * @irq_moderation_ms: Delay irq क्रम additional events to be aggregated
+ * @irq_moderation_ms: Delay irq for additional events to be aggregated
  * @irq: IRQ associated with this ring
  * @channel: Dedicated channel number. U32_MAX indicates a non-dedicated ring
- * @priority: Priority of this ring. Use 1 क्रम now
+ * @priority: Priority of this ring. Use 1 for now
  * @mode: Doorbell mode
  * @data_type: Type of data this ring will process
  * @hardware_event: This ring is associated with hardware channels
  * @client_managed: This ring is client managed
  * @offload_channel: This ring is associated with an offloaded channel
  */
-काष्ठा mhi_event_config अणु
+struct mhi_event_config {
 	u32 num_elements;
 	u32 irq_moderation_ms;
 	u32 irq;
 	u32 channel;
 	u32 priority;
-	क्रमागत mhi_db_brst_mode mode;
-	क्रमागत mhi_er_data_type data_type;
+	enum mhi_db_brst_mode mode;
+	enum mhi_er_data_type data_type;
 	bool hardware_event;
 	bool client_managed;
 	bool offload_channel;
-पूर्ण;
+};
 
 /**
- * काष्ठा mhi_controller_config - Root MHI controller configuration
+ * struct mhi_controller_config - Root MHI controller configuration
  * @max_channels: Maximum number of channels supported
- * @समयout_ms: Timeout value क्रम operations. 0 means use शेष
- * @buf_len: Size of स्वतःmatically allocated buffers. 0 means use शेष
+ * @timeout_ms: Timeout value for operations. 0 means use default
+ * @buf_len: Size of automatically allocated buffers. 0 means use default
  * @num_channels: Number of channels defined in @ch_cfg
  * @ch_cfg: Array of defined channels
  * @num_events: Number of event rings defined in @event_cfg
@@ -275,39 +274,39 @@
  * @use_bounce_buf: Use a bounce buffer pool due to limited DDR access
  * @m2_no_db: Host is not allowed to ring DB in M2 state
  */
-काष्ठा mhi_controller_config अणु
+struct mhi_controller_config {
 	u32 max_channels;
-	u32 समयout_ms;
+	u32 timeout_ms;
 	u32 buf_len;
 	u32 num_channels;
-	स्थिर काष्ठा mhi_channel_config *ch_cfg;
+	const struct mhi_channel_config *ch_cfg;
 	u32 num_events;
-	काष्ठा mhi_event_config *event_cfg;
+	struct mhi_event_config *event_cfg;
 	bool use_bounce_buf;
 	bool m2_no_db;
-पूर्ण;
+};
 
 /**
- * काष्ठा mhi_controller - Master MHI controller काष्ठाure
- * @cntrl_dev: Poपूर्णांकer to the काष्ठा device of physical bus acting as the MHI
+ * struct mhi_controller - Master MHI controller structure
+ * @cntrl_dev: Pointer to the struct device of physical bus acting as the MHI
  *            controller (required)
- * @mhi_dev: MHI device instance क्रम the controller
+ * @mhi_dev: MHI device instance for the controller
  * @debugfs_dentry: MHI controller debugfs directory
- * @regs: Base address of MHI MMIO रेजिस्टर space (required)
- * @bhi: Poपूर्णांकs to base of MHI BHI रेजिस्टर space
- * @bhie: Poपूर्णांकs to base of MHI BHIe रेजिस्टर space
- * @wake_db: MHI WAKE करोorbell रेजिस्टर address
- * @ioबहु_शुरू: IOMMU starting address क्रम data (required)
- * @iova_stop: IOMMU stop address क्रम data (required)
- * @fw_image: Firmware image name क्रम normal booting (optional)
- * @edl_image: Firmware image name क्रम emergency करोwnload mode (optional)
- * @rddm_size: RAM dump size that host should allocate क्रम debugging purpose
- * @sbl_size: SBL image size करोwnloaded through BHIe (optional)
+ * @regs: Base address of MHI MMIO register space (required)
+ * @bhi: Points to base of MHI BHI register space
+ * @bhie: Points to base of MHI BHIe register space
+ * @wake_db: MHI WAKE doorbell register address
+ * @iova_start: IOMMU starting address for data (required)
+ * @iova_stop: IOMMU stop address for data (required)
+ * @fw_image: Firmware image name for normal booting (optional)
+ * @edl_image: Firmware image name for emergency download mode (optional)
+ * @rddm_size: RAM dump size that host should allocate for debugging purpose
+ * @sbl_size: SBL image size downloaded through BHIe (optional)
  * @seg_len: BHIe vector size (optional)
- * @fbc_image: Poपूर्णांकs to firmware image buffer
- * @rddm_image: Poपूर्णांकs to RAM dump buffer
- * @mhi_chan: Poपूर्णांकs to the channel configuration table
- * @lpm_chans: List of channels that require LPM notअगरications
+ * @fbc_image: Points to firmware image buffer
+ * @rddm_image: Points to RAM dump buffer
+ * @mhi_chan: Points to the channel configuration table
+ * @lpm_chans: List of channels that require LPM notifications
  * @irq: base irq # to request (required)
  * @max_chan: Maximum number of channels the controller supports
  * @total_ev_rings: Total # of event rings allocated
@@ -323,75 +322,75 @@
  * @mhi_event: MHI event ring configurations table
  * @mhi_cmd: MHI command ring configurations table
  * @mhi_ctxt: MHI device context, shared memory between host and device
- * @pm_mutex: Mutex क्रम suspend/resume operation
- * @pm_lock: Lock क्रम protecting MHI घातer management state
- * @समयout_ms: Timeout in ms क्रम state transitions
- * @pm_state: MHI घातer management state
+ * @pm_mutex: Mutex for suspend/resume operation
+ * @pm_lock: Lock for protecting MHI power management state
+ * @timeout_ms: Timeout in ms for state transitions
+ * @pm_state: MHI power management state
  * @db_access: DB access states
  * @ee: MHI device execution environment
  * @dev_state: MHI device state
  * @dev_wake: Device wakeup count
- * @pending_pkts: Pending packets क्रम the controller
+ * @pending_pkts: Pending packets for the controller
  * @M0, M2, M3: Counters to track number of device MHI state changes
  * @transition_list: List of MHI state transitions
- * @transition_lock: Lock क्रम protecting MHI state transition list
- * @wlock: Lock क्रम protecting device wakeup
+ * @transition_lock: Lock for protecting MHI state transition list
+ * @wlock: Lock for protecting device wakeup
  * @mhi_link_info: Device bandwidth info
  * @st_worker: State transition worker
- * @hiprio_wq: High priority workqueue क्रम MHI work such as state transitions
+ * @hiprio_wq: High priority workqueue for MHI work such as state transitions
  * @state_event: State change event
- * @status_cb: CB function to notअगरy घातer states of the device (required)
- * @wake_get: CB function to निश्चित device wake (optional)
- * @wake_put: CB function to de-निश्चित device wake (optional)
- * @wake_toggle: CB function to निश्चित and de-निश्चित device wake (optional)
- * @runसमय_get: CB function to controller runसमय resume (required)
- * @runसमय_put: CB function to decrement pm usage (required)
+ * @status_cb: CB function to notify power states of the device (required)
+ * @wake_get: CB function to assert device wake (optional)
+ * @wake_put: CB function to de-assert device wake (optional)
+ * @wake_toggle: CB function to assert and de-assert device wake (optional)
+ * @runtime_get: CB function to controller runtime resume (required)
+ * @runtime_put: CB function to decrement pm usage (required)
  * @map_single: CB function to create TRE buffer
  * @unmap_single: CB function to destroy TRE buffer
- * @पढ़ो_reg: Read a MHI रेजिस्टर via the physical link (required)
- * @ग_लिखो_reg: Write a MHI रेजिस्टर via the physical link (required)
- * @reset: Controller specअगरic reset function (optional)
+ * @read_reg: Read a MHI register via the physical link (required)
+ * @write_reg: Write a MHI register via the physical link (required)
+ * @reset: Controller specific reset function (optional)
  * @buffer_len: Bounce buffer length
  * @index: Index of the MHI controller instance
  * @bounce_buf: Use of bounce buffer
- * @fbc_करोwnload: MHI host needs to करो complete image transfer (optional)
+ * @fbc_download: MHI host needs to do complete image transfer (optional)
  * @wake_set: Device wakeup set flag
  * @irq_flags: irq flags passed to request_irq (optional)
  *
  * Fields marked as (required) need to be populated by the controller driver
- * beक्रमe calling mhi_रेजिस्टर_controller(). For the fields marked as (optional)
- * they can be populated depending on the useहाल.
+ * before calling mhi_register_controller(). For the fields marked as (optional)
+ * they can be populated depending on the usecase.
  *
- * The following fields are present क्रम the purpose of implementing any device
- * specअगरic quirks or customizations क्रम specअगरic MHI revisions used in device
+ * The following fields are present for the purpose of implementing any device
+ * specific quirks or customizations for specific MHI revisions used in device
  * by the controller drivers. The MHI stack will just populate these fields
- * during mhi_रेजिस्टर_controller():
+ * during mhi_register_controller():
  *  family_number
  *  device_number
  *  major_version
  *  minor_version
  */
-काष्ठा mhi_controller अणु
-	काष्ठा device *cntrl_dev;
-	काष्ठा mhi_device *mhi_dev;
-	काष्ठा dentry *debugfs_dentry;
-	व्योम __iomem *regs;
-	व्योम __iomem *bhi;
-	व्योम __iomem *bhie;
-	व्योम __iomem *wake_db;
+struct mhi_controller {
+	struct device *cntrl_dev;
+	struct mhi_device *mhi_dev;
+	struct dentry *debugfs_dentry;
+	void __iomem *regs;
+	void __iomem *bhi;
+	void __iomem *bhie;
+	void __iomem *wake_db;
 
-	dma_addr_t ioबहु_शुरू;
+	dma_addr_t iova_start;
 	dma_addr_t iova_stop;
-	स्थिर अक्षर *fw_image;
-	स्थिर अक्षर *edl_image;
-	माप_प्रकार rddm_size;
-	माप_प्रकार sbl_size;
-	माप_प्रकार seg_len;
-	काष्ठा image_info *fbc_image;
-	काष्ठा image_info *rddm_image;
-	काष्ठा mhi_chan *mhi_chan;
-	काष्ठा list_head lpm_chans;
-	पूर्णांक *irq;
+	const char *fw_image;
+	const char *edl_image;
+	size_t rddm_size;
+	size_t sbl_size;
+	size_t seg_len;
+	struct image_info *fbc_image;
+	struct image_info *rddm_image;
+	struct mhi_chan *mhi_chan;
+	struct list_head lpm_chans;
+	int *irq;
 	u32 max_chan;
 	u32 total_ev_rings;
 	u32 hw_ev_rings;
@@ -404,96 +403,96 @@
 	u32 serial_number;
 	u32 oem_pk_hash[MHI_MAX_OEM_PK_HASH_SEGMENTS];
 
-	काष्ठा mhi_event *mhi_event;
-	काष्ठा mhi_cmd *mhi_cmd;
-	काष्ठा mhi_ctxt *mhi_ctxt;
+	struct mhi_event *mhi_event;
+	struct mhi_cmd *mhi_cmd;
+	struct mhi_ctxt *mhi_ctxt;
 
-	काष्ठा mutex pm_mutex;
+	struct mutex pm_mutex;
 	rwlock_t pm_lock;
-	u32 समयout_ms;
+	u32 timeout_ms;
 	u32 pm_state;
 	u32 db_access;
-	क्रमागत mhi_ee_type ee;
-	क्रमागत mhi_state dev_state;
+	enum mhi_ee_type ee;
+	enum mhi_state dev_state;
 	atomic_t dev_wake;
 	atomic_t pending_pkts;
 	u32 M0, M2, M3;
-	काष्ठा list_head transition_list;
+	struct list_head transition_list;
 	spinlock_t transition_lock;
 	spinlock_t wlock;
-	काष्ठा mhi_link_info mhi_link_info;
-	काष्ठा work_काष्ठा st_worker;
-	काष्ठा workqueue_काष्ठा *hiprio_wq;
-	रुको_queue_head_t state_event;
+	struct mhi_link_info mhi_link_info;
+	struct work_struct st_worker;
+	struct workqueue_struct *hiprio_wq;
+	wait_queue_head_t state_event;
 
-	व्योम (*status_cb)(काष्ठा mhi_controller *mhi_cntrl,
-			  क्रमागत mhi_callback cb);
-	व्योम (*wake_get)(काष्ठा mhi_controller *mhi_cntrl, bool override);
-	व्योम (*wake_put)(काष्ठा mhi_controller *mhi_cntrl, bool override);
-	व्योम (*wake_toggle)(काष्ठा mhi_controller *mhi_cntrl);
-	पूर्णांक (*runसमय_get)(काष्ठा mhi_controller *mhi_cntrl);
-	व्योम (*runसमय_put)(काष्ठा mhi_controller *mhi_cntrl);
-	पूर्णांक (*map_single)(काष्ठा mhi_controller *mhi_cntrl,
-			  काष्ठा mhi_buf_info *buf);
-	व्योम (*unmap_single)(काष्ठा mhi_controller *mhi_cntrl,
-			     काष्ठा mhi_buf_info *buf);
-	पूर्णांक (*पढ़ो_reg)(काष्ठा mhi_controller *mhi_cntrl, व्योम __iomem *addr,
+	void (*status_cb)(struct mhi_controller *mhi_cntrl,
+			  enum mhi_callback cb);
+	void (*wake_get)(struct mhi_controller *mhi_cntrl, bool override);
+	void (*wake_put)(struct mhi_controller *mhi_cntrl, bool override);
+	void (*wake_toggle)(struct mhi_controller *mhi_cntrl);
+	int (*runtime_get)(struct mhi_controller *mhi_cntrl);
+	void (*runtime_put)(struct mhi_controller *mhi_cntrl);
+	int (*map_single)(struct mhi_controller *mhi_cntrl,
+			  struct mhi_buf_info *buf);
+	void (*unmap_single)(struct mhi_controller *mhi_cntrl,
+			     struct mhi_buf_info *buf);
+	int (*read_reg)(struct mhi_controller *mhi_cntrl, void __iomem *addr,
 			u32 *out);
-	व्योम (*ग_लिखो_reg)(काष्ठा mhi_controller *mhi_cntrl, व्योम __iomem *addr,
+	void (*write_reg)(struct mhi_controller *mhi_cntrl, void __iomem *addr,
 			  u32 val);
-	व्योम (*reset)(काष्ठा mhi_controller *mhi_cntrl);
+	void (*reset)(struct mhi_controller *mhi_cntrl);
 
-	माप_प्रकार buffer_len;
-	पूर्णांक index;
+	size_t buffer_len;
+	int index;
 	bool bounce_buf;
-	bool fbc_करोwnload;
+	bool fbc_download;
 	bool wake_set;
-	अचिन्हित दीर्घ irq_flags;
-पूर्ण;
+	unsigned long irq_flags;
+};
 
 /**
- * काष्ठा mhi_device - Structure representing an MHI device which binds
+ * struct mhi_device - Structure representing an MHI device which binds
  *                     to channels or is associated with controllers
- * @id: Poपूर्णांकer to MHI device ID काष्ठा
+ * @id: Pointer to MHI device ID struct
  * @name: Name of the associated MHI device
- * @mhi_cntrl: Controller the device beदीर्घs to
- * @ul_chan: UL channel क्रम the device
- * @dl_chan: DL channel क्रम the device
- * @dev: Driver model device node क्रम the MHI device
+ * @mhi_cntrl: Controller the device belongs to
+ * @ul_chan: UL channel for the device
+ * @dl_chan: DL channel for the device
+ * @dev: Driver model device node for the MHI device
  * @dev_type: MHI device type
- * @ul_chan_id: MHI channel id क्रम UL transfer
- * @dl_chan_id: MHI channel id क्रम DL transfer
+ * @ul_chan_id: MHI channel id for UL transfer
+ * @dl_chan_id: MHI channel id for DL transfer
  * @dev_wake: Device wakeup counter
  */
-काष्ठा mhi_device अणु
-	स्थिर काष्ठा mhi_device_id *id;
-	स्थिर अक्षर *name;
-	काष्ठा mhi_controller *mhi_cntrl;
-	काष्ठा mhi_chan *ul_chan;
-	काष्ठा mhi_chan *dl_chan;
-	काष्ठा device dev;
-	क्रमागत mhi_device_type dev_type;
-	पूर्णांक ul_chan_id;
-	पूर्णांक dl_chan_id;
+struct mhi_device {
+	const struct mhi_device_id *id;
+	const char *name;
+	struct mhi_controller *mhi_cntrl;
+	struct mhi_chan *ul_chan;
+	struct mhi_chan *dl_chan;
+	struct device dev;
+	enum mhi_device_type dev_type;
+	int ul_chan_id;
+	int dl_chan_id;
 	u32 dev_wake;
-पूर्ण;
+};
 
 /**
- * काष्ठा mhi_result - Completed buffer inक्रमmation
+ * struct mhi_result - Completed buffer information
  * @buf_addr: Address of data buffer
  * @bytes_xferd: # of bytes transferred
  * @dir: Channel direction
  * @transaction_status: Status of last transaction
  */
-काष्ठा mhi_result अणु
-	व्योम *buf_addr;
-	माप_प्रकार bytes_xferd;
-	क्रमागत dma_data_direction dir;
-	पूर्णांक transaction_status;
-पूर्ण;
+struct mhi_result {
+	void *buf_addr;
+	size_t bytes_xferd;
+	enum dma_data_direction dir;
+	int transaction_status;
+};
 
 /**
- * काष्ठा mhi_buf - MHI Buffer description
+ * struct mhi_buf - MHI Buffer description
  * @buf: Virtual address of the buffer
  * @name: Buffer label. For offload channel, configurations name must be:
  *        ECA - Event context array data
@@ -501,290 +500,290 @@
  * @dma_addr: IOMMU address of the buffer
  * @len: # of bytes
  */
-काष्ठा mhi_buf अणु
-	व्योम *buf;
-	स्थिर अक्षर *name;
+struct mhi_buf {
+	void *buf;
+	const char *name;
 	dma_addr_t dma_addr;
-	माप_प्रकार len;
-पूर्ण;
+	size_t len;
+};
 
 /**
- * काष्ठा mhi_driver - Structure representing a MHI client driver
- * @probe: CB function क्रम client driver probe function
- * @हटाओ: CB function क्रम client driver हटाओ function
- * @ul_xfer_cb: CB function क्रम UL data transfer
- * @dl_xfer_cb: CB function क्रम DL data transfer
- * @status_cb: CB functions क्रम asynchronous status
+ * struct mhi_driver - Structure representing a MHI client driver
+ * @probe: CB function for client driver probe function
+ * @remove: CB function for client driver remove function
+ * @ul_xfer_cb: CB function for UL data transfer
+ * @dl_xfer_cb: CB function for DL data transfer
+ * @status_cb: CB functions for asynchronous status
  * @driver: Device driver model driver
  */
-काष्ठा mhi_driver अणु
-	स्थिर काष्ठा mhi_device_id *id_table;
-	पूर्णांक (*probe)(काष्ठा mhi_device *mhi_dev,
-		     स्थिर काष्ठा mhi_device_id *id);
-	व्योम (*हटाओ)(काष्ठा mhi_device *mhi_dev);
-	व्योम (*ul_xfer_cb)(काष्ठा mhi_device *mhi_dev,
-			   काष्ठा mhi_result *result);
-	व्योम (*dl_xfer_cb)(काष्ठा mhi_device *mhi_dev,
-			   काष्ठा mhi_result *result);
-	व्योम (*status_cb)(काष्ठा mhi_device *mhi_dev, क्रमागत mhi_callback mhi_cb);
-	काष्ठा device_driver driver;
-पूर्ण;
+struct mhi_driver {
+	const struct mhi_device_id *id_table;
+	int (*probe)(struct mhi_device *mhi_dev,
+		     const struct mhi_device_id *id);
+	void (*remove)(struct mhi_device *mhi_dev);
+	void (*ul_xfer_cb)(struct mhi_device *mhi_dev,
+			   struct mhi_result *result);
+	void (*dl_xfer_cb)(struct mhi_device *mhi_dev,
+			   struct mhi_result *result);
+	void (*status_cb)(struct mhi_device *mhi_dev, enum mhi_callback mhi_cb);
+	struct device_driver driver;
+};
 
-#घोषणा to_mhi_driver(drv) container_of(drv, काष्ठा mhi_driver, driver)
-#घोषणा to_mhi_device(dev) container_of(dev, काष्ठा mhi_device, dev)
-
-/**
- * mhi_alloc_controller - Allocate the MHI Controller काष्ठाure
- * Allocate the mhi_controller काष्ठाure using zero initialized memory
- */
-काष्ठा mhi_controller *mhi_alloc_controller(व्योम);
+#define to_mhi_driver(drv) container_of(drv, struct mhi_driver, driver)
+#define to_mhi_device(dev) container_of(dev, struct mhi_device, dev)
 
 /**
- * mhi_मुक्त_controller - Free the MHI Controller काष्ठाure
- * Free the mhi_controller काष्ठाure which was previously allocated
+ * mhi_alloc_controller - Allocate the MHI Controller structure
+ * Allocate the mhi_controller structure using zero initialized memory
  */
-व्योम mhi_मुक्त_controller(काष्ठा mhi_controller *mhi_cntrl);
+struct mhi_controller *mhi_alloc_controller(void);
 
 /**
- * mhi_रेजिस्टर_controller - Register MHI controller
- * @mhi_cntrl: MHI controller to रेजिस्टर
- * @config: Configuration to use क्रम the controller
+ * mhi_free_controller - Free the MHI Controller structure
+ * Free the mhi_controller structure which was previously allocated
  */
-पूर्णांक mhi_रेजिस्टर_controller(काष्ठा mhi_controller *mhi_cntrl,
-			स्थिर काष्ठा mhi_controller_config *config);
+void mhi_free_controller(struct mhi_controller *mhi_cntrl);
 
 /**
- * mhi_unरेजिस्टर_controller - Unरेजिस्टर MHI controller
- * @mhi_cntrl: MHI controller to unरेजिस्टर
+ * mhi_register_controller - Register MHI controller
+ * @mhi_cntrl: MHI controller to register
+ * @config: Configuration to use for the controller
  */
-व्योम mhi_unरेजिस्टर_controller(काष्ठा mhi_controller *mhi_cntrl);
+int mhi_register_controller(struct mhi_controller *mhi_cntrl,
+			const struct mhi_controller_config *config);
+
+/**
+ * mhi_unregister_controller - Unregister MHI controller
+ * @mhi_cntrl: MHI controller to unregister
+ */
+void mhi_unregister_controller(struct mhi_controller *mhi_cntrl);
 
 /*
- * module_mhi_driver() - Helper macro क्रम drivers that करोn't करो
- * anything special other than using शेष mhi_driver_रेजिस्टर() and
- * mhi_driver_unरेजिस्टर().  This eliminates a lot of boilerplate.
+ * module_mhi_driver() - Helper macro for drivers that don't do
+ * anything special other than using default mhi_driver_register() and
+ * mhi_driver_unregister().  This eliminates a lot of boilerplate.
  * Each module may only use this macro once.
  */
-#घोषणा module_mhi_driver(mhi_drv) \
-	module_driver(mhi_drv, mhi_driver_रेजिस्टर, \
-		      mhi_driver_unरेजिस्टर)
+#define module_mhi_driver(mhi_drv) \
+	module_driver(mhi_drv, mhi_driver_register, \
+		      mhi_driver_unregister)
 
 /*
- * Macro to aव्योम include chaining to get THIS_MODULE
+ * Macro to avoid include chaining to get THIS_MODULE
  */
-#घोषणा mhi_driver_रेजिस्टर(mhi_drv) \
-	__mhi_driver_रेजिस्टर(mhi_drv, THIS_MODULE)
+#define mhi_driver_register(mhi_drv) \
+	__mhi_driver_register(mhi_drv, THIS_MODULE)
 
 /**
- * __mhi_driver_रेजिस्टर - Register driver with MHI framework
+ * __mhi_driver_register - Register driver with MHI framework
  * @mhi_drv: Driver associated with the device
  * @owner: The module owner
  */
-पूर्णांक __mhi_driver_रेजिस्टर(काष्ठा mhi_driver *mhi_drv, काष्ठा module *owner);
+int __mhi_driver_register(struct mhi_driver *mhi_drv, struct module *owner);
 
 /**
- * mhi_driver_unरेजिस्टर - Unरेजिस्टर a driver क्रम mhi_devices
+ * mhi_driver_unregister - Unregister a driver for mhi_devices
  * @mhi_drv: Driver associated with the device
  */
-व्योम mhi_driver_unरेजिस्टर(काष्ठा mhi_driver *mhi_drv);
+void mhi_driver_unregister(struct mhi_driver *mhi_drv);
 
 /**
  * mhi_set_mhi_state - Set MHI device state
  * @mhi_cntrl: MHI controller
  * @state: State to set
  */
-व्योम mhi_set_mhi_state(काष्ठा mhi_controller *mhi_cntrl,
-		       क्रमागत mhi_state state);
+void mhi_set_mhi_state(struct mhi_controller *mhi_cntrl,
+		       enum mhi_state state);
 
 /**
- * mhi_notअगरy - Notअगरy the MHI client driver about client device status
+ * mhi_notify - Notify the MHI client driver about client device status
  * @mhi_dev: MHI device instance
  * @cb_reason: MHI callback reason
  */
-व्योम mhi_notअगरy(काष्ठा mhi_device *mhi_dev, क्रमागत mhi_callback cb_reason);
+void mhi_notify(struct mhi_device *mhi_dev, enum mhi_callback cb_reason);
 
 /**
- * mhi_get_मुक्त_desc_count - Get transfer ring length
+ * mhi_get_free_desc_count - Get transfer ring length
  * Get # of TD available to queue buffers
  * @mhi_dev: Device associated with the channels
  * @dir: Direction of the channel
  */
-पूर्णांक mhi_get_मुक्त_desc_count(काष्ठा mhi_device *mhi_dev,
-				क्रमागत dma_data_direction dir);
+int mhi_get_free_desc_count(struct mhi_device *mhi_dev,
+				enum dma_data_direction dir);
 
 /**
- * mhi_prepare_क्रम_घातer_up - Do pre-initialization beक्रमe घातer up.
- *                            This is optional, call this beक्रमe घातer up अगर
- *                            the controller करोes not want bus framework to
- *                            स्वतःmatically मुक्त any allocated memory during
- *                            shutकरोwn process.
+ * mhi_prepare_for_power_up - Do pre-initialization before power up.
+ *                            This is optional, call this before power up if
+ *                            the controller does not want bus framework to
+ *                            automatically free any allocated memory during
+ *                            shutdown process.
  * @mhi_cntrl: MHI controller
  */
-पूर्णांक mhi_prepare_क्रम_घातer_up(काष्ठा mhi_controller *mhi_cntrl);
+int mhi_prepare_for_power_up(struct mhi_controller *mhi_cntrl);
 
 /**
- * mhi_async_घातer_up - Start MHI घातer up sequence
+ * mhi_async_power_up - Start MHI power up sequence
  * @mhi_cntrl: MHI controller
  */
-पूर्णांक mhi_async_घातer_up(काष्ठा mhi_controller *mhi_cntrl);
+int mhi_async_power_up(struct mhi_controller *mhi_cntrl);
 
 /**
- * mhi_sync_घातer_up - Start MHI घातer up sequence and रुको till the device
+ * mhi_sync_power_up - Start MHI power up sequence and wait till the device
  *                     enters valid EE state
  * @mhi_cntrl: MHI controller
  */
-पूर्णांक mhi_sync_घातer_up(काष्ठा mhi_controller *mhi_cntrl);
+int mhi_sync_power_up(struct mhi_controller *mhi_cntrl);
 
 /**
- * mhi_घातer_करोwn - Start MHI घातer करोwn sequence
+ * mhi_power_down - Start MHI power down sequence
  * @mhi_cntrl: MHI controller
- * @graceful: Link is still accessible, so करो a graceful shutकरोwn process
+ * @graceful: Link is still accessible, so do a graceful shutdown process
  */
-व्योम mhi_घातer_करोwn(काष्ठा mhi_controller *mhi_cntrl, bool graceful);
+void mhi_power_down(struct mhi_controller *mhi_cntrl, bool graceful);
 
 /**
- * mhi_unprepare_after_घातer_करोwn - Free any allocated memory after घातer करोwn
+ * mhi_unprepare_after_power_down - Free any allocated memory after power down
  * @mhi_cntrl: MHI controller
  */
-व्योम mhi_unprepare_after_घातer_करोwn(काष्ठा mhi_controller *mhi_cntrl);
+void mhi_unprepare_after_power_down(struct mhi_controller *mhi_cntrl);
 
 /**
- * mhi_pm_suspend - Move MHI पूर्णांकo a suspended state
+ * mhi_pm_suspend - Move MHI into a suspended state
  * @mhi_cntrl: MHI controller
  */
-पूर्णांक mhi_pm_suspend(काष्ठा mhi_controller *mhi_cntrl);
+int mhi_pm_suspend(struct mhi_controller *mhi_cntrl);
 
 /**
  * mhi_pm_resume - Resume MHI from suspended state
  * @mhi_cntrl: MHI controller
  */
-पूर्णांक mhi_pm_resume(काष्ठा mhi_controller *mhi_cntrl);
+int mhi_pm_resume(struct mhi_controller *mhi_cntrl);
 
 /**
- * mhi_करोwnload_rddm_image - Download ramdump image from device क्रम
+ * mhi_download_rddm_image - Download ramdump image from device for
  *                           debugging purpose.
  * @mhi_cntrl: MHI controller
  * @in_panic: Download rddm image during kernel panic
  */
-पूर्णांक mhi_करोwnload_rddm_image(काष्ठा mhi_controller *mhi_cntrl, bool in_panic);
+int mhi_download_rddm_image(struct mhi_controller *mhi_cntrl, bool in_panic);
 
 /**
- * mhi_क्रमce_rddm_mode - Force device पूर्णांकo rddm mode
+ * mhi_force_rddm_mode - Force device into rddm mode
  * @mhi_cntrl: MHI controller
  */
-पूर्णांक mhi_क्रमce_rddm_mode(काष्ठा mhi_controller *mhi_cntrl);
+int mhi_force_rddm_mode(struct mhi_controller *mhi_cntrl);
 
 /**
  * mhi_get_exec_env - Get BHI execution environment of the device
  * @mhi_cntrl: MHI controller
  */
-क्रमागत mhi_ee_type mhi_get_exec_env(काष्ठा mhi_controller *mhi_cntrl);
+enum mhi_ee_type mhi_get_exec_env(struct mhi_controller *mhi_cntrl);
 
 /**
  * mhi_get_mhi_state - Get MHI state of the device
  * @mhi_cntrl: MHI controller
  */
-क्रमागत mhi_state mhi_get_mhi_state(काष्ठा mhi_controller *mhi_cntrl);
+enum mhi_state mhi_get_mhi_state(struct mhi_controller *mhi_cntrl);
 
 /**
  * mhi_soc_reset - Trigger a device reset. This can be used as a last resort
  *		   to reset and recover a device.
  * @mhi_cntrl: MHI controller
  */
-व्योम mhi_soc_reset(काष्ठा mhi_controller *mhi_cntrl);
+void mhi_soc_reset(struct mhi_controller *mhi_cntrl);
 
 /**
- * mhi_device_get - Disable device low घातer mode
+ * mhi_device_get - Disable device low power mode
  * @mhi_dev: Device associated with the channel
  */
-व्योम mhi_device_get(काष्ठा mhi_device *mhi_dev);
+void mhi_device_get(struct mhi_device *mhi_dev);
 
 /**
- * mhi_device_get_sync - Disable device low घातer mode. Synchronously
+ * mhi_device_get_sync - Disable device low power mode. Synchronously
  *                       take the controller out of suspended state
  * @mhi_dev: Device associated with the channel
  */
-पूर्णांक mhi_device_get_sync(काष्ठा mhi_device *mhi_dev);
+int mhi_device_get_sync(struct mhi_device *mhi_dev);
 
 /**
- * mhi_device_put - Re-enable device low घातer mode
+ * mhi_device_put - Re-enable device low power mode
  * @mhi_dev: Device associated with the channel
  */
-व्योम mhi_device_put(काष्ठा mhi_device *mhi_dev);
+void mhi_device_put(struct mhi_device *mhi_dev);
 
 /**
- * mhi_prepare_क्रम_transfer - Setup UL and DL channels क्रम data transfer.
+ * mhi_prepare_for_transfer - Setup UL and DL channels for data transfer.
  *                            Allocate and initialize the channel context and
  *                            also issue the START channel command to both
- *                            channels. Channels can be started only अगर both
+ *                            channels. Channels can be started only if both
  *                            host and device execution environments match and
  *                            channels are in a DISABLED state.
  * @mhi_dev: Device associated with the channels
  */
-पूर्णांक mhi_prepare_क्रम_transfer(काष्ठा mhi_device *mhi_dev);
+int mhi_prepare_for_transfer(struct mhi_device *mhi_dev);
 
 /**
- * mhi_unprepare_from_transfer - Reset UL and DL channels क्रम data transfer.
+ * mhi_unprepare_from_transfer - Reset UL and DL channels for data transfer.
  *                               Issue the RESET channel command and let the
  *                               device clean-up the context so no incoming
  *                               transfers are seen on the host. Free memory
  *                               associated with the context on host. If device
- *                               is unresponsive, only perक्रमm a host side
- *                               clean-up. Channels can be reset only अगर both
+ *                               is unresponsive, only perform a host side
+ *                               clean-up. Channels can be reset only if both
  *                               host and device execution environments match
  *                               and channels are in an ENABLED, STOPPED or
  *                               SUSPENDED state.
  * @mhi_dev: Device associated with the channels
  */
-व्योम mhi_unprepare_from_transfer(काष्ठा mhi_device *mhi_dev);
+void mhi_unprepare_from_transfer(struct mhi_device *mhi_dev);
 
 /**
- * mhi_poll - Poll क्रम any available data in DL direction
+ * mhi_poll - Poll for any available data in DL direction
  * @mhi_dev: Device associated with the channels
  * @budget: # of events to process
  */
-पूर्णांक mhi_poll(काष्ठा mhi_device *mhi_dev, u32 budget);
+int mhi_poll(struct mhi_device *mhi_dev, u32 budget);
 
 /**
  * mhi_queue_dma - Send or receive DMA mapped buffers from client device
  *                 over MHI channel
  * @mhi_dev: Device associated with the channels
- * @dir: DMA direction क्रम the channel
- * @mhi_buf: Buffer क्रम holding the DMA mapped data
+ * @dir: DMA direction for the channel
+ * @mhi_buf: Buffer for holding the DMA mapped data
  * @len: Buffer length
- * @mflags: MHI transfer flags used क्रम the transfer
+ * @mflags: MHI transfer flags used for the transfer
  */
-पूर्णांक mhi_queue_dma(काष्ठा mhi_device *mhi_dev, क्रमागत dma_data_direction dir,
-		  काष्ठा mhi_buf *mhi_buf, माप_प्रकार len, क्रमागत mhi_flags mflags);
+int mhi_queue_dma(struct mhi_device *mhi_dev, enum dma_data_direction dir,
+		  struct mhi_buf *mhi_buf, size_t len, enum mhi_flags mflags);
 
 /**
  * mhi_queue_buf - Send or receive raw buffers from client device over MHI
  *                 channel
  * @mhi_dev: Device associated with the channels
- * @dir: DMA direction क्रम the channel
- * @buf: Buffer क्रम holding the data
+ * @dir: DMA direction for the channel
+ * @buf: Buffer for holding the data
  * @len: Buffer length
- * @mflags: MHI transfer flags used क्रम the transfer
+ * @mflags: MHI transfer flags used for the transfer
  */
-पूर्णांक mhi_queue_buf(काष्ठा mhi_device *mhi_dev, क्रमागत dma_data_direction dir,
-		  व्योम *buf, माप_प्रकार len, क्रमागत mhi_flags mflags);
+int mhi_queue_buf(struct mhi_device *mhi_dev, enum dma_data_direction dir,
+		  void *buf, size_t len, enum mhi_flags mflags);
 
 /**
  * mhi_queue_skb - Send or receive SKBs from client device over MHI channel
  * @mhi_dev: Device associated with the channels
- * @dir: DMA direction क्रम the channel
- * @skb: Buffer क्रम holding SKBs
+ * @dir: DMA direction for the channel
+ * @skb: Buffer for holding SKBs
  * @len: Buffer length
- * @mflags: MHI transfer flags used क्रम the transfer
+ * @mflags: MHI transfer flags used for the transfer
  */
-पूर्णांक mhi_queue_skb(काष्ठा mhi_device *mhi_dev, क्रमागत dma_data_direction dir,
-		  काष्ठा sk_buff *skb, माप_प्रकार len, क्रमागत mhi_flags mflags);
+int mhi_queue_skb(struct mhi_device *mhi_dev, enum dma_data_direction dir,
+		  struct sk_buff *skb, size_t len, enum mhi_flags mflags);
 
 /**
  * mhi_queue_is_full - Determine whether queueing new elements is possible
  * @mhi_dev: Device associated with the channels
- * @dir: DMA direction क्रम the channel
+ * @dir: DMA direction for the channel
  */
-bool mhi_queue_is_full(काष्ठा mhi_device *mhi_dev, क्रमागत dma_data_direction dir);
+bool mhi_queue_is_full(struct mhi_device *mhi_dev, enum dma_data_direction dir);
 
-#पूर्ण_अगर /* _MHI_H_ */
+#endif /* _MHI_H_ */

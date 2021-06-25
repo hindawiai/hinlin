@@ -1,296 +1,295 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  QLogic FCoE Offload Driver
  *  Copyright (c) 2016-2018 QLogic Corporation
  */
-#अगर_घोषित CONFIG_DEBUG_FS
+#ifdef CONFIG_DEBUG_FS
 
-#समावेश <linux/uaccess.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/module.h>
+#include <linux/uaccess.h>
+#include <linux/debugfs.h>
+#include <linux/module.h>
 
-#समावेश "qedf.h"
-#समावेश "qedf_dbg.h"
+#include "qedf.h"
+#include "qedf_dbg.h"
 
-अटल काष्ठा dentry *qedf_dbg_root;
+static struct dentry *qedf_dbg_root;
 
 /*
- * qedf_dbg_host_init - setup the debugfs file क्रम the pf
+ * qedf_dbg_host_init - setup the debugfs file for the pf
  */
-व्योम
-qedf_dbg_host_init(काष्ठा qedf_dbg_ctx *qedf,
-		    स्थिर काष्ठा qedf_debugfs_ops *करोps,
-		    स्थिर काष्ठा file_operations *fops)
-अणु
-	अक्षर host_स_नाम[32];
+void
+qedf_dbg_host_init(struct qedf_dbg_ctx *qedf,
+		    const struct qedf_debugfs_ops *dops,
+		    const struct file_operations *fops)
+{
+	char host_dirname[32];
 
 	QEDF_INFO(qedf, QEDF_LOG_DEBUGFS, "Creating debugfs host node\n");
 	/* create pf dir */
-	प्र_लिखो(host_स_नाम, "host%u", qedf->host_no);
-	qedf->bdf_dentry = debugfs_create_dir(host_स_नाम, qedf_dbg_root);
+	sprintf(host_dirname, "host%u", qedf->host_no);
+	qedf->bdf_dentry = debugfs_create_dir(host_dirname, qedf_dbg_root);
 
 	/* create debugfs files */
-	जबतक (करोps) अणु
-		अगर (!(करोps->name))
-			अवरोध;
+	while (dops) {
+		if (!(dops->name))
+			break;
 
-		debugfs_create_file(करोps->name, 0600, qedf->bdf_dentry, qedf,
+		debugfs_create_file(dops->name, 0600, qedf->bdf_dentry, qedf,
 				    fops);
-		करोps++;
+		dops++;
 		fops++;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * qedf_dbg_host_निकास - clear out the pf's debugfs entries
+ * qedf_dbg_host_exit - clear out the pf's debugfs entries
  */
-व्योम
-qedf_dbg_host_निकास(काष्ठा qedf_dbg_ctx *qedf_dbg)
-अणु
+void
+qedf_dbg_host_exit(struct qedf_dbg_ctx *qedf_dbg)
+{
 	QEDF_INFO(qedf_dbg, QEDF_LOG_DEBUGFS, "Destroying debugfs host "
 		   "entry\n");
-	/* हटाओ debugfs  entries of this PF */
-	debugfs_हटाओ_recursive(qedf_dbg->bdf_dentry);
-	qedf_dbg->bdf_dentry = शून्य;
-पूर्ण
+	/* remove debugfs  entries of this PF */
+	debugfs_remove_recursive(qedf_dbg->bdf_dentry);
+	qedf_dbg->bdf_dentry = NULL;
+}
 
 /*
- * qedf_dbg_init - start up debugfs क्रम the driver
+ * qedf_dbg_init - start up debugfs for the driver
  */
-व्योम
-qedf_dbg_init(अक्षर *drv_name)
-अणु
-	QEDF_INFO(शून्य, QEDF_LOG_DEBUGFS, "Creating debugfs root node\n");
+void
+qedf_dbg_init(char *drv_name)
+{
+	QEDF_INFO(NULL, QEDF_LOG_DEBUGFS, "Creating debugfs root node\n");
 
-	/* create qed dir in root of debugfs. शून्य means debugfs root */
-	qedf_dbg_root = debugfs_create_dir(drv_name, शून्य);
-पूर्ण
+	/* create qed dir in root of debugfs. NULL means debugfs root */
+	qedf_dbg_root = debugfs_create_dir(drv_name, NULL);
+}
 
 /*
- * qedf_dbg_निकास - clean out the driver's debugfs entries
+ * qedf_dbg_exit - clean out the driver's debugfs entries
  */
-व्योम
-qedf_dbg_निकास(व्योम)
-अणु
-	QEDF_INFO(शून्य, QEDF_LOG_DEBUGFS, "Destroying debugfs root "
+void
+qedf_dbg_exit(void)
+{
+	QEDF_INFO(NULL, QEDF_LOG_DEBUGFS, "Destroying debugfs root "
 		   "entry\n");
 
-	/* हटाओ qed dir in root of debugfs */
-	debugfs_हटाओ_recursive(qedf_dbg_root);
-	qedf_dbg_root = शून्य;
-पूर्ण
+	/* remove qed dir in root of debugfs */
+	debugfs_remove_recursive(qedf_dbg_root);
+	qedf_dbg_root = NULL;
+}
 
-स्थिर काष्ठा qedf_debugfs_ops qedf_debugfs_ops[] = अणु
-	अणु "fp_int", शून्य पूर्ण,
-	अणु "io_trace", शून्य पूर्ण,
-	अणु "debug", शून्य पूर्ण,
-	अणु "stop_io_on_error", शून्यपूर्ण,
-	अणु "driver_stats", शून्यपूर्ण,
-	अणु "clear_stats", शून्यपूर्ण,
-	अणु "offload_stats", शून्यपूर्ण,
+const struct qedf_debugfs_ops qedf_debugfs_ops[] = {
+	{ "fp_int", NULL },
+	{ "io_trace", NULL },
+	{ "debug", NULL },
+	{ "stop_io_on_error", NULL},
+	{ "driver_stats", NULL},
+	{ "clear_stats", NULL},
+	{ "offload_stats", NULL},
 	/* This must be last */
-	अणु शून्य, शून्य पूर्ण
-पूर्ण;
+	{ NULL, NULL }
+};
 
-DECLARE_PER_CPU(काष्ठा qedf_percpu_iothपढ़ो_s, qedf_percpu_iothपढ़ोs);
+DECLARE_PER_CPU(struct qedf_percpu_iothread_s, qedf_percpu_iothreads);
 
-अटल sमाप_प्रकार
-qedf_dbg_fp_पूर्णांक_cmd_पढ़ो(काष्ठा file *filp, अक्षर __user *buffer, माप_प्रकार count,
+static ssize_t
+qedf_dbg_fp_int_cmd_read(struct file *filp, char __user *buffer, size_t count,
 			 loff_t *ppos)
-अणु
-	माप_प्रकार cnt = 0;
-	पूर्णांक id;
-	काष्ठा qedf_fastpath *fp = शून्य;
-	काष्ठा qedf_dbg_ctx *qedf_dbg =
-				(काष्ठा qedf_dbg_ctx *)filp->निजी_data;
-	काष्ठा qedf_ctx *qedf = container_of(qedf_dbg,
-	    काष्ठा qedf_ctx, dbg_ctx);
+{
+	size_t cnt = 0;
+	int id;
+	struct qedf_fastpath *fp = NULL;
+	struct qedf_dbg_ctx *qedf_dbg =
+				(struct qedf_dbg_ctx *)filp->private_data;
+	struct qedf_ctx *qedf = container_of(qedf_dbg,
+	    struct qedf_ctx, dbg_ctx);
 
 	QEDF_INFO(qedf_dbg, QEDF_LOG_DEBUGFS, "entered\n");
 
-	cnt = प्र_लिखो(buffer, "\nFastpath I/O completions\n\n");
+	cnt = sprintf(buffer, "\nFastpath I/O completions\n\n");
 
-	क्रम (id = 0; id < qedf->num_queues; id++) अणु
+	for (id = 0; id < qedf->num_queues; id++) {
 		fp = &(qedf->fp_array[id]);
-		अगर (fp->sb_id == QEDF_SB_ID_शून्य)
-			जारी;
-		cnt += प्र_लिखो((buffer + cnt), "#%d: %lu\n", id,
+		if (fp->sb_id == QEDF_SB_ID_NULL)
+			continue;
+		cnt += sprintf((buffer + cnt), "#%d: %lu\n", id,
 			       fp->completions);
-	पूर्ण
+	}
 
-	cnt = min_t(पूर्णांक, count, cnt - *ppos);
+	cnt = min_t(int, count, cnt - *ppos);
 	*ppos += cnt;
-	वापस cnt;
-पूर्ण
+	return cnt;
+}
 
-अटल sमाप_प्रकार
-qedf_dbg_fp_पूर्णांक_cmd_ग_लिखो(काष्ठा file *filp, स्थिर अक्षर __user *buffer,
-			  माप_प्रकार count, loff_t *ppos)
-अणु
-	अगर (!count || *ppos)
-		वापस 0;
+static ssize_t
+qedf_dbg_fp_int_cmd_write(struct file *filp, const char __user *buffer,
+			  size_t count, loff_t *ppos)
+{
+	if (!count || *ppos)
+		return 0;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार
-qedf_dbg_debug_cmd_पढ़ो(काष्ठा file *filp, अक्षर __user *buffer, माप_प्रकार count,
+static ssize_t
+qedf_dbg_debug_cmd_read(struct file *filp, char __user *buffer, size_t count,
 			loff_t *ppos)
-अणु
-	पूर्णांक cnt;
-	काष्ठा qedf_dbg_ctx *qedf_dbg =
-				(काष्ठा qedf_dbg_ctx *)filp->निजी_data;
+{
+	int cnt;
+	struct qedf_dbg_ctx *qedf_dbg =
+				(struct qedf_dbg_ctx *)filp->private_data;
 
 	QEDF_INFO(qedf_dbg, QEDF_LOG_DEBUGFS, "debug mask=0x%x\n", qedf_debug);
-	cnt = प्र_लिखो(buffer, "debug mask = 0x%x\n", qedf_debug);
+	cnt = sprintf(buffer, "debug mask = 0x%x\n", qedf_debug);
 
-	cnt = min_t(पूर्णांक, count, cnt - *ppos);
+	cnt = min_t(int, count, cnt - *ppos);
 	*ppos += cnt;
-	वापस cnt;
-पूर्ण
+	return cnt;
+}
 
-अटल sमाप_प्रकार
-qedf_dbg_debug_cmd_ग_लिखो(काष्ठा file *filp, स्थिर अक्षर __user *buffer,
-			 माप_प्रकार count, loff_t *ppos)
-अणु
-	uपूर्णांक32_t val;
-	व्योम *kern_buf;
-	पूर्णांक rval;
-	काष्ठा qedf_dbg_ctx *qedf_dbg =
-	    (काष्ठा qedf_dbg_ctx *)filp->निजी_data;
+static ssize_t
+qedf_dbg_debug_cmd_write(struct file *filp, const char __user *buffer,
+			 size_t count, loff_t *ppos)
+{
+	uint32_t val;
+	void *kern_buf;
+	int rval;
+	struct qedf_dbg_ctx *qedf_dbg =
+	    (struct qedf_dbg_ctx *)filp->private_data;
 
-	अगर (!count || *ppos)
-		वापस 0;
+	if (!count || *ppos)
+		return 0;
 
 	kern_buf = memdup_user(buffer, count);
-	अगर (IS_ERR(kern_buf))
-		वापस PTR_ERR(kern_buf);
+	if (IS_ERR(kern_buf))
+		return PTR_ERR(kern_buf);
 
-	rval = kstrtouपूर्णांक(kern_buf, 10, &val);
-	kमुक्त(kern_buf);
-	अगर (rval)
-		वापस rval;
+	rval = kstrtouint(kern_buf, 10, &val);
+	kfree(kern_buf);
+	if (rval)
+		return rval;
 
-	अगर (val == 1)
+	if (val == 1)
 		qedf_debug = QEDF_DEFAULT_LOG_MASK;
-	अन्यथा
+	else
 		qedf_debug = val;
 
 	QEDF_INFO(qedf_dbg, QEDF_LOG_DEBUGFS, "Setting debug=0x%x.\n", val);
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार
-qedf_dbg_stop_io_on_error_cmd_पढ़ो(काष्ठा file *filp, अक्षर __user *buffer,
-				   माप_प्रकार count, loff_t *ppos)
-अणु
-	पूर्णांक cnt;
-	काष्ठा qedf_dbg_ctx *qedf_dbg =
-				(काष्ठा qedf_dbg_ctx *)filp->निजी_data;
-	काष्ठा qedf_ctx *qedf = container_of(qedf_dbg,
-	    काष्ठा qedf_ctx, dbg_ctx);
+static ssize_t
+qedf_dbg_stop_io_on_error_cmd_read(struct file *filp, char __user *buffer,
+				   size_t count, loff_t *ppos)
+{
+	int cnt;
+	struct qedf_dbg_ctx *qedf_dbg =
+				(struct qedf_dbg_ctx *)filp->private_data;
+	struct qedf_ctx *qedf = container_of(qedf_dbg,
+	    struct qedf_ctx, dbg_ctx);
 
 	QEDF_INFO(qedf_dbg, QEDF_LOG_DEBUGFS, "entered\n");
-	cnt = प्र_लिखो(buffer, "%s\n",
+	cnt = sprintf(buffer, "%s\n",
 	    qedf->stop_io_on_error ? "true" : "false");
 
-	cnt = min_t(पूर्णांक, count, cnt - *ppos);
+	cnt = min_t(int, count, cnt - *ppos);
 	*ppos += cnt;
-	वापस cnt;
-पूर्ण
+	return cnt;
+}
 
-अटल sमाप_प्रकार
-qedf_dbg_stop_io_on_error_cmd_ग_लिखो(काष्ठा file *filp,
-				    स्थिर अक्षर __user *buffer, माप_प्रकार count,
+static ssize_t
+qedf_dbg_stop_io_on_error_cmd_write(struct file *filp,
+				    const char __user *buffer, size_t count,
 				    loff_t *ppos)
-अणु
-	व्योम *kern_buf;
-	काष्ठा qedf_dbg_ctx *qedf_dbg =
-				(काष्ठा qedf_dbg_ctx *)filp->निजी_data;
-	काष्ठा qedf_ctx *qedf = container_of(qedf_dbg, काष्ठा qedf_ctx,
+{
+	void *kern_buf;
+	struct qedf_dbg_ctx *qedf_dbg =
+				(struct qedf_dbg_ctx *)filp->private_data;
+	struct qedf_ctx *qedf = container_of(qedf_dbg, struct qedf_ctx,
 	    dbg_ctx);
 
 	QEDF_INFO(qedf_dbg, QEDF_LOG_DEBUGFS, "entered\n");
 
-	अगर (!count || *ppos)
-		वापस 0;
+	if (!count || *ppos)
+		return 0;
 
 	kern_buf = memdup_user(buffer, 6);
-	अगर (IS_ERR(kern_buf))
-		वापस PTR_ERR(kern_buf);
+	if (IS_ERR(kern_buf))
+		return PTR_ERR(kern_buf);
 
-	अगर (म_भेदन(kern_buf, "false", 5) == 0)
+	if (strncmp(kern_buf, "false", 5) == 0)
 		qedf->stop_io_on_error = false;
-	अन्यथा अगर (म_भेदन(kern_buf, "true", 4) == 0)
+	else if (strncmp(kern_buf, "true", 4) == 0)
 		qedf->stop_io_on_error = true;
-	अन्यथा अगर (म_भेदन(kern_buf, "now", 3) == 0)
+	else if (strncmp(kern_buf, "now", 3) == 0)
 		/* Trigger from user to stop all I/O on this host */
 		set_bit(QEDF_DBG_STOP_IO, &qedf->flags);
 
-	kमुक्त(kern_buf);
-	वापस count;
-पूर्ण
+	kfree(kern_buf);
+	return count;
+}
 
-अटल पूर्णांक
-qedf_io_trace_show(काष्ठा seq_file *s, व्योम *unused)
-अणु
-	पूर्णांक i, idx = 0;
-	काष्ठा qedf_ctx *qedf = s->निजी;
-	काष्ठा qedf_dbg_ctx *qedf_dbg = &qedf->dbg_ctx;
-	काष्ठा qedf_io_log *io_log;
-	अचिन्हित दीर्घ flags;
+static int
+qedf_io_trace_show(struct seq_file *s, void *unused)
+{
+	int i, idx = 0;
+	struct qedf_ctx *qedf = s->private;
+	struct qedf_dbg_ctx *qedf_dbg = &qedf->dbg_ctx;
+	struct qedf_io_log *io_log;
+	unsigned long flags;
 
-	अगर (!qedf_io_tracing) अणु
-		seq_माला_दो(s, "I/O tracing not enabled.\n");
-		जाओ out;
-	पूर्ण
+	if (!qedf_io_tracing) {
+		seq_puts(s, "I/O tracing not enabled.\n");
+		goto out;
+	}
 
 	QEDF_INFO(qedf_dbg, QEDF_LOG_DEBUGFS, "entered\n");
 
 	spin_lock_irqsave(&qedf->io_trace_lock, flags);
 	idx = qedf->io_trace_idx;
-	क्रम (i = 0; i < QEDF_IO_TRACE_SIZE; i++) अणु
+	for (i = 0; i < QEDF_IO_TRACE_SIZE; i++) {
 		io_log = &qedf->io_trace_buf[idx];
-		seq_म_लिखो(s, "%d:", io_log->direction);
-		seq_म_लिखो(s, "0x%x:", io_log->task_id);
-		seq_म_लिखो(s, "0x%06x:", io_log->port_id);
-		seq_म_लिखो(s, "%d:", io_log->lun);
-		seq_म_लिखो(s, "0x%02x:", io_log->op);
-		seq_म_लिखो(s, "0x%02x%02x%02x%02x:", io_log->lba[0],
+		seq_printf(s, "%d:", io_log->direction);
+		seq_printf(s, "0x%x:", io_log->task_id);
+		seq_printf(s, "0x%06x:", io_log->port_id);
+		seq_printf(s, "%d:", io_log->lun);
+		seq_printf(s, "0x%02x:", io_log->op);
+		seq_printf(s, "0x%02x%02x%02x%02x:", io_log->lba[0],
 		    io_log->lba[1], io_log->lba[2], io_log->lba[3]);
-		seq_म_लिखो(s, "%d:", io_log->bufflen);
-		seq_म_लिखो(s, "%d:", io_log->sg_count);
-		seq_म_लिखो(s, "0x%08x:", io_log->result);
-		seq_म_लिखो(s, "%lu:", io_log->jअगरfies);
-		seq_म_लिखो(s, "%d:", io_log->refcount);
-		seq_म_लिखो(s, "%d:", io_log->req_cpu);
-		seq_म_लिखो(s, "%d:", io_log->पूर्णांक_cpu);
-		seq_म_लिखो(s, "%d:", io_log->rsp_cpu);
-		seq_म_लिखो(s, "%d\n", io_log->sge_type);
+		seq_printf(s, "%d:", io_log->bufflen);
+		seq_printf(s, "%d:", io_log->sg_count);
+		seq_printf(s, "0x%08x:", io_log->result);
+		seq_printf(s, "%lu:", io_log->jiffies);
+		seq_printf(s, "%d:", io_log->refcount);
+		seq_printf(s, "%d:", io_log->req_cpu);
+		seq_printf(s, "%d:", io_log->int_cpu);
+		seq_printf(s, "%d:", io_log->rsp_cpu);
+		seq_printf(s, "%d\n", io_log->sge_type);
 
 		idx++;
-		अगर (idx == QEDF_IO_TRACE_SIZE)
+		if (idx == QEDF_IO_TRACE_SIZE)
 			idx = 0;
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&qedf->io_trace_lock, flags);
 
 out:
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-qedf_dbg_io_trace_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा qedf_dbg_ctx *qedf_dbg = inode->i_निजी;
-	काष्ठा qedf_ctx *qedf = container_of(qedf_dbg,
-	    काष्ठा qedf_ctx, dbg_ctx);
+static int
+qedf_dbg_io_trace_open(struct inode *inode, struct file *file)
+{
+	struct qedf_dbg_ctx *qedf_dbg = inode->i_private;
+	struct qedf_ctx *qedf = container_of(qedf_dbg,
+	    struct qedf_ctx, dbg_ctx);
 
-	वापस single_खोलो(file, qedf_io_trace_show, qedf);
-पूर्ण
+	return single_open(file, qedf_io_trace_show, qedf);
+}
 
-/* Based on fip_state क्रमागत from libfcoe.h */
-अटल अक्षर *fip_state_names[] = अणु
+/* Based on fip_state enum from libfcoe.h */
+static char *fip_state_names[] = {
 	"FIP_ST_DISABLED",
 	"FIP_ST_LINK_WAIT",
 	"FIP_ST_AUTO",
@@ -301,10 +300,10 @@ qedf_dbg_io_trace_खोलो(काष्ठा inode *inode, काष्ठ�
 	"FIP_ST_VNMP_PROBE2",
 	"FIP_ST_VNMP_CLAIM",
 	"FIP_ST_VNMP_UP",
-पूर्ण;
+};
 
-/* Based on fc_rport_state क्रमागत from libfc.h */
-अटल अक्षर *fc_rport_state_names[] = अणु
+/* Based on fc_rport_state enum from libfc.h */
+static char *fc_rport_state_names[] = {
 	"RPORT_ST_INIT",
 	"RPORT_ST_FLOGI",
 	"RPORT_ST_PLOGI_WAIT",
@@ -314,119 +313,119 @@ qedf_dbg_io_trace_खोलो(काष्ठा inode *inode, काष्ठ�
 	"RPORT_ST_READY",
 	"RPORT_ST_ADISC",
 	"RPORT_ST_DELETE",
-पूर्ण;
+};
 
-अटल पूर्णांक
-qedf_driver_stats_show(काष्ठा seq_file *s, व्योम *unused)
-अणु
-	काष्ठा qedf_ctx *qedf = s->निजी;
-	काष्ठा qedf_rport *fcport;
-	काष्ठा fc_rport_priv *rdata;
+static int
+qedf_driver_stats_show(struct seq_file *s, void *unused)
+{
+	struct qedf_ctx *qedf = s->private;
+	struct qedf_rport *fcport;
+	struct fc_rport_priv *rdata;
 
-	seq_म_लिखो(s, "Host WWNN/WWPN: %016llx/%016llx\n",
+	seq_printf(s, "Host WWNN/WWPN: %016llx/%016llx\n",
 		   qedf->wwnn, qedf->wwpn);
-	seq_म_लिखो(s, "Host NPortID: %06x\n", qedf->lport->port_id);
-	seq_म_लिखो(s, "Link State: %s\n", atomic_पढ़ो(&qedf->link_state) ?
+	seq_printf(s, "Host NPortID: %06x\n", qedf->lport->port_id);
+	seq_printf(s, "Link State: %s\n", atomic_read(&qedf->link_state) ?
 	    "Up" : "Down");
-	seq_म_लिखो(s, "Logical Link State: %s\n", qedf->lport->link_up ?
+	seq_printf(s, "Logical Link State: %s\n", qedf->lport->link_up ?
 	    "Up" : "Down");
-	seq_म_लिखो(s, "FIP state: %s\n", fip_state_names[qedf->ctlr.state]);
-	seq_म_लिखो(s, "FIP VLAN ID: %d\n", qedf->vlan_id & 0xfff);
-	seq_म_लिखो(s, "FIP 802.1Q Priority: %d\n", qedf->prio);
-	अगर (qedf->ctlr.sel_fcf) अणु
-		seq_म_लिखो(s, "FCF WWPN: %016llx\n",
-			   qedf->ctlr.sel_fcf->चयन_name);
-		seq_म_लिखो(s, "FCF MAC: %pM\n", qedf->ctlr.sel_fcf->fcf_mac);
-	पूर्ण अन्यथा अणु
-		seq_माला_दो(s, "FCF not selected\n");
-	पूर्ण
+	seq_printf(s, "FIP state: %s\n", fip_state_names[qedf->ctlr.state]);
+	seq_printf(s, "FIP VLAN ID: %d\n", qedf->vlan_id & 0xfff);
+	seq_printf(s, "FIP 802.1Q Priority: %d\n", qedf->prio);
+	if (qedf->ctlr.sel_fcf) {
+		seq_printf(s, "FCF WWPN: %016llx\n",
+			   qedf->ctlr.sel_fcf->switch_name);
+		seq_printf(s, "FCF MAC: %pM\n", qedf->ctlr.sel_fcf->fcf_mac);
+	} else {
+		seq_puts(s, "FCF not selected\n");
+	}
 
-	seq_माला_दो(s, "\nSGE stats:\n\n");
-	seq_म_लिखो(s, "cmg_mgr free io_reqs: %d\n",
-	    atomic_पढ़ो(&qedf->cmd_mgr->मुक्त_list_cnt));
-	seq_म_लिखो(s, "slow SGEs: %d\n", qedf->slow_sge_ios);
-	seq_म_लिखो(s, "fast SGEs: %d\n\n", qedf->fast_sge_ios);
+	seq_puts(s, "\nSGE stats:\n\n");
+	seq_printf(s, "cmg_mgr free io_reqs: %d\n",
+	    atomic_read(&qedf->cmd_mgr->free_list_cnt));
+	seq_printf(s, "slow SGEs: %d\n", qedf->slow_sge_ios);
+	seq_printf(s, "fast SGEs: %d\n\n", qedf->fast_sge_ios);
 
-	seq_माला_दो(s, "Offloaded ports:\n\n");
+	seq_puts(s, "Offloaded ports:\n\n");
 
-	rcu_पढ़ो_lock();
-	list_क्रम_each_entry_rcu(fcport, &qedf->fcports, peers) अणु
+	rcu_read_lock();
+	list_for_each_entry_rcu(fcport, &qedf->fcports, peers) {
 		rdata = fcport->rdata;
-		अगर (rdata == शून्य)
-			जारी;
-		seq_म_लिखो(s, "%016llx/%016llx/%06x: state=%s, free_sqes=%d, num_active_ios=%d\n",
+		if (rdata == NULL)
+			continue;
+		seq_printf(s, "%016llx/%016llx/%06x: state=%s, free_sqes=%d, num_active_ios=%d\n",
 			   rdata->rport->node_name, rdata->rport->port_name,
 			   rdata->ids.port_id,
 			   fc_rport_state_names[rdata->rp_state],
-			   atomic_पढ़ो(&fcport->मुक्त_sqes),
-			   atomic_पढ़ो(&fcport->num_active_ios));
-	पूर्ण
-	rcu_पढ़ो_unlock();
+			   atomic_read(&fcport->free_sqes),
+			   atomic_read(&fcport->num_active_ios));
+	}
+	rcu_read_unlock();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-qedf_dbg_driver_stats_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा qedf_dbg_ctx *qedf_dbg = inode->i_निजी;
-	काष्ठा qedf_ctx *qedf = container_of(qedf_dbg,
-	    काष्ठा qedf_ctx, dbg_ctx);
+static int
+qedf_dbg_driver_stats_open(struct inode *inode, struct file *file)
+{
+	struct qedf_dbg_ctx *qedf_dbg = inode->i_private;
+	struct qedf_ctx *qedf = container_of(qedf_dbg,
+	    struct qedf_ctx, dbg_ctx);
 
-	वापस single_खोलो(file, qedf_driver_stats_show, qedf);
-पूर्ण
+	return single_open(file, qedf_driver_stats_show, qedf);
+}
 
-अटल sमाप_प्रकार
-qedf_dbg_clear_stats_cmd_पढ़ो(काष्ठा file *filp, अक्षर __user *buffer,
-				   माप_प्रकार count, loff_t *ppos)
-अणु
-	पूर्णांक cnt = 0;
+static ssize_t
+qedf_dbg_clear_stats_cmd_read(struct file *filp, char __user *buffer,
+				   size_t count, loff_t *ppos)
+{
+	int cnt = 0;
 
-	/* Essentially a पढ़ो stub */
-	cnt = min_t(पूर्णांक, count, cnt - *ppos);
+	/* Essentially a read stub */
+	cnt = min_t(int, count, cnt - *ppos);
 	*ppos += cnt;
-	वापस cnt;
-पूर्ण
+	return cnt;
+}
 
-अटल sमाप_प्रकार
-qedf_dbg_clear_stats_cmd_ग_लिखो(काष्ठा file *filp,
-				    स्थिर अक्षर __user *buffer, माप_प्रकार count,
+static ssize_t
+qedf_dbg_clear_stats_cmd_write(struct file *filp,
+				    const char __user *buffer, size_t count,
 				    loff_t *ppos)
-अणु
-	काष्ठा qedf_dbg_ctx *qedf_dbg =
-				(काष्ठा qedf_dbg_ctx *)filp->निजी_data;
-	काष्ठा qedf_ctx *qedf = container_of(qedf_dbg, काष्ठा qedf_ctx,
+{
+	struct qedf_dbg_ctx *qedf_dbg =
+				(struct qedf_dbg_ctx *)filp->private_data;
+	struct qedf_ctx *qedf = container_of(qedf_dbg, struct qedf_ctx,
 	    dbg_ctx);
 
 	QEDF_INFO(qedf_dbg, QEDF_LOG_DEBUGFS, "Clearing stat counters.\n");
 
-	अगर (!count || *ppos)
-		वापस 0;
+	if (!count || *ppos)
+		return 0;
 
 	/* Clear stat counters exposed by 'stats' node */
 	qedf->slow_sge_ios = 0;
 	qedf->fast_sge_ios = 0;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल पूर्णांक
-qedf_offload_stats_show(काष्ठा seq_file *s, व्योम *unused)
-अणु
-	काष्ठा qedf_ctx *qedf = s->निजी;
-	काष्ठा qed_fcoe_stats *fw_fcoe_stats;
+static int
+qedf_offload_stats_show(struct seq_file *s, void *unused)
+{
+	struct qedf_ctx *qedf = s->private;
+	struct qed_fcoe_stats *fw_fcoe_stats;
 
-	fw_fcoe_stats = kदो_स्मृति(माप(काष्ठा qed_fcoe_stats), GFP_KERNEL);
-	अगर (!fw_fcoe_stats) अणु
+	fw_fcoe_stats = kmalloc(sizeof(struct qed_fcoe_stats), GFP_KERNEL);
+	if (!fw_fcoe_stats) {
 		QEDF_ERR(&(qedf->dbg_ctx), "Could not allocate memory for "
 		    "fw_fcoe_stats.\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Query firmware क्रम offload stats */
+	/* Query firmware for offload stats */
 	qed_ops->get_stats(qedf->cdev, fw_fcoe_stats);
 
-	seq_म_लिखो(s, "fcoe_rx_byte_cnt=%llu\n"
+	seq_printf(s, "fcoe_rx_byte_cnt=%llu\n"
 	    "fcoe_rx_data_pkt_cnt=%llu\n"
 	    "fcoe_rx_xfer_pkt_cnt=%llu\n"
 	    "fcoe_rx_other_pkt_cnt=%llu\n"
@@ -453,23 +452,23 @@ qedf_offload_stats_show(काष्ठा seq_file *s, व्योम *unused)
 	    fw_fcoe_stats->fcoe_tx_xfer_pkt_cnt,
 	    fw_fcoe_stats->fcoe_tx_other_pkt_cnt);
 
-	kमुक्त(fw_fcoe_stats);
+	kfree(fw_fcoe_stats);
 out:
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-qedf_dbg_offload_stats_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा qedf_dbg_ctx *qedf_dbg = inode->i_निजी;
-	काष्ठा qedf_ctx *qedf = container_of(qedf_dbg,
-	    काष्ठा qedf_ctx, dbg_ctx);
+static int
+qedf_dbg_offload_stats_open(struct inode *inode, struct file *file)
+{
+	struct qedf_dbg_ctx *qedf_dbg = inode->i_private;
+	struct qedf_ctx *qedf = container_of(qedf_dbg,
+	    struct qedf_ctx, dbg_ctx);
 
-	वापस single_खोलो(file, qedf_offload_stats_show, qedf);
-पूर्ण
+	return single_open(file, qedf_offload_stats_show, qedf);
+}
 
-स्थिर काष्ठा file_operations qedf_dbg_fops[] = अणु
-	qedf_dbg_fileops(qedf, fp_पूर्णांक),
+const struct file_operations qedf_dbg_fops[] = {
+	qedf_dbg_fileops(qedf, fp_int),
 	qedf_dbg_fileops_seq(qedf, io_trace),
 	qedf_dbg_fileops(qedf, debug),
 	qedf_dbg_fileops(qedf, stop_io_on_error),
@@ -477,12 +476,12 @@ qedf_dbg_offload_stats_खोलो(काष्ठा inode *inode, काष�
 	qedf_dbg_fileops(qedf, clear_stats),
 	qedf_dbg_fileops_seq(qedf, offload_stats),
 	/* This must be last */
-	अणु पूर्ण,
-पूर्ण;
+	{ },
+};
 
-#अन्यथा /* CONFIG_DEBUG_FS */
-व्योम qedf_dbg_host_init(काष्ठा qedf_dbg_ctx *);
-व्योम qedf_dbg_host_निकास(काष्ठा qedf_dbg_ctx *);
-व्योम qedf_dbg_init(अक्षर *);
-व्योम qedf_dbg_निकास(व्योम);
-#पूर्ण_अगर /* CONFIG_DEBUG_FS */
+#else /* CONFIG_DEBUG_FS */
+void qedf_dbg_host_init(struct qedf_dbg_ctx *);
+void qedf_dbg_host_exit(struct qedf_dbg_ctx *);
+void qedf_dbg_init(char *);
+void qedf_dbg_exit(void);
+#endif /* CONFIG_DEBUG_FS */

@@ -1,6 +1,5 @@
-<शैली गुरु>
 /*
- * Synopsys AXS10X SDP Generic PLL घड़ी driver
+ * Synopsys AXS10X SDP Generic PLL clock driver
  *
  * Copyright (C) 2017 Synopsys
  *
@@ -9,233 +8,233 @@
  * warranty of any kind, whether express or implied.
  */
 
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/module.h>
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/err.h>
-#समावेश <linux/device.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/module.h>
+#include <linux/clk-provider.h>
+#include <linux/delay.h>
+#include <linux/err.h>
+#include <linux/device.h>
+#include <linux/io.h>
+#include <linux/of_address.h>
+#include <linux/of_device.h>
+#include <linux/slab.h>
+#include <linux/of.h>
 
-/* PLL रेजिस्टरs addresses */
-#घोषणा PLL_REG_IDIV	0x0
-#घोषणा PLL_REG_FBDIV	0x4
-#घोषणा PLL_REG_ODIV	0x8
+/* PLL registers addresses */
+#define PLL_REG_IDIV	0x0
+#define PLL_REG_FBDIV	0x4
+#define PLL_REG_ODIV	0x8
 
 /*
- * Bit fields of the PLL IDIV/FBDIV/ODIV रेजिस्टरs:
+ * Bit fields of the PLL IDIV/FBDIV/ODIV registers:
  *  ________________________________________________________________________
  * |31                15|    14    |   13   |  12  |11         6|5         0|
  * |-------RESRVED------|-NOUPDATE-|-BYPASS-|-EDGE-|--HIGHTIME--|--LOWTIME--|
  * |____________________|__________|________|______|____________|___________|
  *
- * Following macros determine the way of access to these रेजिस्टरs
+ * Following macros determine the way of access to these registers
  * They should be set up only using the macros.
  * reg should be an u32 variable.
  */
 
-#घोषणा PLL_REG_GET_LOW(reg)			\
+#define PLL_REG_GET_LOW(reg)			\
 	(((reg) & (0x3F << 0)) >> 0)
-#घोषणा PLL_REG_GET_HIGH(reg)			\
+#define PLL_REG_GET_HIGH(reg)			\
 	(((reg) & (0x3F << 6)) >> 6)
-#घोषणा PLL_REG_GET_EDGE(reg)			\
+#define PLL_REG_GET_EDGE(reg)			\
 	(((reg) & (BIT(12))) ? 1 : 0)
-#घोषणा PLL_REG_GET_BYPASS(reg)			\
+#define PLL_REG_GET_BYPASS(reg)			\
 	(((reg) & (BIT(13))) ? 1 : 0)
-#घोषणा PLL_REG_GET_NOUPD(reg)			\
+#define PLL_REG_GET_NOUPD(reg)			\
 	(((reg) & (BIT(14))) ? 1 : 0)
-#घोषणा PLL_REG_GET_PAD(reg)			\
+#define PLL_REG_GET_PAD(reg)			\
 	(((reg) & (0x1FFFF << 15)) >> 15)
 
-#घोषणा PLL_REG_SET_LOW(reg, value)		\
-	अणु reg |= (((value) & 0x3F) << 0); पूर्ण
-#घोषणा PLL_REG_SET_HIGH(reg, value)		\
-	अणु reg |= (((value) & 0x3F) << 6); पूर्ण
-#घोषणा PLL_REG_SET_EDGE(reg, value)		\
-	अणु reg |= (((value) & 0x01) << 12); पूर्ण
-#घोषणा PLL_REG_SET_BYPASS(reg, value)		\
-	अणु reg |= (((value) & 0x01) << 13); पूर्ण
-#घोषणा PLL_REG_SET_NOUPD(reg, value)		\
-	अणु reg |= (((value) & 0x01) << 14); पूर्ण
-#घोषणा PLL_REG_SET_PAD(reg, value)		\
-	अणु reg |= (((value) & 0x1FFFF) << 15); पूर्ण
+#define PLL_REG_SET_LOW(reg, value)		\
+	{ reg |= (((value) & 0x3F) << 0); }
+#define PLL_REG_SET_HIGH(reg, value)		\
+	{ reg |= (((value) & 0x3F) << 6); }
+#define PLL_REG_SET_EDGE(reg, value)		\
+	{ reg |= (((value) & 0x01) << 12); }
+#define PLL_REG_SET_BYPASS(reg, value)		\
+	{ reg |= (((value) & 0x01) << 13); }
+#define PLL_REG_SET_NOUPD(reg, value)		\
+	{ reg |= (((value) & 0x01) << 14); }
+#define PLL_REG_SET_PAD(reg, value)		\
+	{ reg |= (((value) & 0x1FFFF) << 15); }
 
-#घोषणा PLL_LOCK	BIT(0)
-#घोषणा PLL_ERROR	BIT(1)
-#घोषणा PLL_MAX_LOCK_TIME 100 /* 100 us */
+#define PLL_LOCK	BIT(0)
+#define PLL_ERROR	BIT(1)
+#define PLL_MAX_LOCK_TIME 100 /* 100 us */
 
-काष्ठा axs10x_pll_cfg अणु
+struct axs10x_pll_cfg {
 	u32 rate;
-	u32 iभाग;
-	u32 fbभाग;
-	u32 oभाग;
-पूर्ण;
+	u32 idiv;
+	u32 fbdiv;
+	u32 odiv;
+};
 
-अटल स्थिर काष्ठा axs10x_pll_cfg arc_pll_cfg[] = अणु
-	अणु 33333333,  1, 1,  1 पूर्ण,
-	अणु 50000000,  1, 30, 20 पूर्ण,
-	अणु 75000000,  2, 45, 10 पूर्ण,
-	अणु 90000000,  2, 54, 10 पूर्ण,
-	अणु 100000000, 1, 30, 10 पूर्ण,
-	अणु 125000000, 2, 45, 6 पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct axs10x_pll_cfg arc_pll_cfg[] = {
+	{ 33333333,  1, 1,  1 },
+	{ 50000000,  1, 30, 20 },
+	{ 75000000,  2, 45, 10 },
+	{ 90000000,  2, 54, 10 },
+	{ 100000000, 1, 30, 10 },
+	{ 125000000, 2, 45, 6 },
+	{}
+};
 
-अटल स्थिर काष्ठा axs10x_pll_cfg pgu_pll_cfg[] = अणु
-	अणु 25200000, 1, 84, 90 पूर्ण,
-	अणु 50000000, 1, 100, 54 पूर्ण,
-	अणु 74250000, 1, 44, 16 पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct axs10x_pll_cfg pgu_pll_cfg[] = {
+	{ 25200000, 1, 84, 90 },
+	{ 50000000, 1, 100, 54 },
+	{ 74250000, 1, 44, 16 },
+	{}
+};
 
-काष्ठा axs10x_pll_clk अणु
-	काष्ठा clk_hw hw;
-	व्योम __iomem *base;
-	व्योम __iomem *lock;
-	स्थिर काष्ठा axs10x_pll_cfg *pll_cfg;
-	काष्ठा device *dev;
-पूर्ण;
+struct axs10x_pll_clk {
+	struct clk_hw hw;
+	void __iomem *base;
+	void __iomem *lock;
+	const struct axs10x_pll_cfg *pll_cfg;
+	struct device *dev;
+};
 
-अटल अंतरभूत व्योम axs10x_pll_ग_लिखो(काष्ठा axs10x_pll_clk *clk, u32 reg,
+static inline void axs10x_pll_write(struct axs10x_pll_clk *clk, u32 reg,
 				    u32 val)
-अणु
-	ioग_लिखो32(val, clk->base + reg);
-पूर्ण
+{
+	iowrite32(val, clk->base + reg);
+}
 
-अटल अंतरभूत u32 axs10x_pll_पढ़ो(काष्ठा axs10x_pll_clk *clk, u32 reg)
-अणु
-	वापस ioपढ़ो32(clk->base + reg);
-पूर्ण
+static inline u32 axs10x_pll_read(struct axs10x_pll_clk *clk, u32 reg)
+{
+	return ioread32(clk->base + reg);
+}
 
-अटल अंतरभूत काष्ठा axs10x_pll_clk *to_axs10x_pll_clk(काष्ठा clk_hw *hw)
-अणु
-	वापस container_of(hw, काष्ठा axs10x_pll_clk, hw);
-पूर्ण
+static inline struct axs10x_pll_clk *to_axs10x_pll_clk(struct clk_hw *hw)
+{
+	return container_of(hw, struct axs10x_pll_clk, hw);
+}
 
-अटल अंतरभूत u32 axs10x_भाग_get_value(u32 reg)
-अणु
-	अगर (PLL_REG_GET_BYPASS(reg))
-		वापस 1;
+static inline u32 axs10x_div_get_value(u32 reg)
+{
+	if (PLL_REG_GET_BYPASS(reg))
+		return 1;
 
-	वापस PLL_REG_GET_HIGH(reg) + PLL_REG_GET_LOW(reg);
-पूर्ण
+	return PLL_REG_GET_HIGH(reg) + PLL_REG_GET_LOW(reg);
+}
 
-अटल अंतरभूत u32 axs10x_encode_भाग(अचिन्हित पूर्णांक id, पूर्णांक upd)
-अणु
-	u32 भाग = 0;
+static inline u32 axs10x_encode_div(unsigned int id, int upd)
+{
+	u32 div = 0;
 
-	PLL_REG_SET_LOW(भाग, (id % 2 == 0) ? id >> 1 : (id >> 1) + 1);
-	PLL_REG_SET_HIGH(भाग, id >> 1);
-	PLL_REG_SET_EDGE(भाग, id % 2);
-	PLL_REG_SET_BYPASS(भाग, id == 1 ? 1 : 0);
-	PLL_REG_SET_NOUPD(भाग, upd == 0 ? 1 : 0);
+	PLL_REG_SET_LOW(div, (id % 2 == 0) ? id >> 1 : (id >> 1) + 1);
+	PLL_REG_SET_HIGH(div, id >> 1);
+	PLL_REG_SET_EDGE(div, id % 2);
+	PLL_REG_SET_BYPASS(div, id == 1 ? 1 : 0);
+	PLL_REG_SET_NOUPD(div, upd == 0 ? 1 : 0);
 
-	वापस भाग;
-पूर्ण
+	return div;
+}
 
-अटल अचिन्हित दीर्घ axs10x_pll_recalc_rate(काष्ठा clk_hw *hw,
-					    अचिन्हित दीर्घ parent_rate)
-अणु
+static unsigned long axs10x_pll_recalc_rate(struct clk_hw *hw,
+					    unsigned long parent_rate)
+{
 	u64 rate;
-	u32 iभाग, fbभाग, oभाग;
-	काष्ठा axs10x_pll_clk *clk = to_axs10x_pll_clk(hw);
+	u32 idiv, fbdiv, odiv;
+	struct axs10x_pll_clk *clk = to_axs10x_pll_clk(hw);
 
-	iभाग = axs10x_भाग_get_value(axs10x_pll_पढ़ो(clk, PLL_REG_IDIV));
-	fbभाग = axs10x_भाग_get_value(axs10x_pll_पढ़ो(clk, PLL_REG_FBDIV));
-	oभाग = axs10x_भाग_get_value(axs10x_pll_पढ़ो(clk, PLL_REG_ODIV));
+	idiv = axs10x_div_get_value(axs10x_pll_read(clk, PLL_REG_IDIV));
+	fbdiv = axs10x_div_get_value(axs10x_pll_read(clk, PLL_REG_FBDIV));
+	odiv = axs10x_div_get_value(axs10x_pll_read(clk, PLL_REG_ODIV));
 
-	rate = (u64)parent_rate * fbभाग;
-	करो_भाग(rate, iभाग * oभाग);
+	rate = (u64)parent_rate * fbdiv;
+	do_div(rate, idiv * odiv);
 
-	वापस rate;
-पूर्ण
+	return rate;
+}
 
-अटल दीर्घ axs10x_pll_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				  अचिन्हित दीर्घ *prate)
-अणु
-	पूर्णांक i;
-	दीर्घ best_rate;
-	काष्ठा axs10x_pll_clk *clk = to_axs10x_pll_clk(hw);
-	स्थिर काष्ठा axs10x_pll_cfg *pll_cfg = clk->pll_cfg;
+static long axs10x_pll_round_rate(struct clk_hw *hw, unsigned long rate,
+				  unsigned long *prate)
+{
+	int i;
+	long best_rate;
+	struct axs10x_pll_clk *clk = to_axs10x_pll_clk(hw);
+	const struct axs10x_pll_cfg *pll_cfg = clk->pll_cfg;
 
-	अगर (pll_cfg[0].rate == 0)
-		वापस -EINVAL;
+	if (pll_cfg[0].rate == 0)
+		return -EINVAL;
 
 	best_rate = pll_cfg[0].rate;
 
-	क्रम (i = 1; pll_cfg[i].rate != 0; i++) अणु
-		अगर (असल(rate - pll_cfg[i].rate) < असल(rate - best_rate))
+	for (i = 1; pll_cfg[i].rate != 0; i++) {
+		if (abs(rate - pll_cfg[i].rate) < abs(rate - best_rate))
 			best_rate = pll_cfg[i].rate;
-	पूर्ण
+	}
 
-	वापस best_rate;
-पूर्ण
+	return best_rate;
+}
 
-अटल पूर्णांक axs10x_pll_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-			       अचिन्हित दीर्घ parent_rate)
-अणु
-	पूर्णांक i;
-	काष्ठा axs10x_pll_clk *clk = to_axs10x_pll_clk(hw);
-	स्थिर काष्ठा axs10x_pll_cfg *pll_cfg = clk->pll_cfg;
+static int axs10x_pll_set_rate(struct clk_hw *hw, unsigned long rate,
+			       unsigned long parent_rate)
+{
+	int i;
+	struct axs10x_pll_clk *clk = to_axs10x_pll_clk(hw);
+	const struct axs10x_pll_cfg *pll_cfg = clk->pll_cfg;
 
-	क्रम (i = 0; pll_cfg[i].rate != 0; i++) अणु
-		अगर (pll_cfg[i].rate == rate) अणु
-			axs10x_pll_ग_लिखो(clk, PLL_REG_IDIV,
-					 axs10x_encode_भाग(pll_cfg[i].iभाग, 0));
-			axs10x_pll_ग_लिखो(clk, PLL_REG_FBDIV,
-					 axs10x_encode_भाग(pll_cfg[i].fbभाग, 0));
-			axs10x_pll_ग_लिखो(clk, PLL_REG_ODIV,
-					 axs10x_encode_भाग(pll_cfg[i].oभाग, 1));
+	for (i = 0; pll_cfg[i].rate != 0; i++) {
+		if (pll_cfg[i].rate == rate) {
+			axs10x_pll_write(clk, PLL_REG_IDIV,
+					 axs10x_encode_div(pll_cfg[i].idiv, 0));
+			axs10x_pll_write(clk, PLL_REG_FBDIV,
+					 axs10x_encode_div(pll_cfg[i].fbdiv, 0));
+			axs10x_pll_write(clk, PLL_REG_ODIV,
+					 axs10x_encode_div(pll_cfg[i].odiv, 1));
 
 			/*
 			 * Wait until CGU relocks and check error status.
-			 * If after समयout CGU is unlocked yet वापस error
+			 * If after timeout CGU is unlocked yet return error
 			 */
 			udelay(PLL_MAX_LOCK_TIME);
-			अगर (!(ioपढ़ो32(clk->lock) & PLL_LOCK))
-				वापस -ETIMEDOUT;
+			if (!(ioread32(clk->lock) & PLL_LOCK))
+				return -ETIMEDOUT;
 
-			अगर (ioपढ़ो32(clk->lock) & PLL_ERROR)
-				वापस -EINVAL;
+			if (ioread32(clk->lock) & PLL_ERROR)
+				return -EINVAL;
 
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
 	dev_err(clk->dev, "invalid rate=%ld, parent_rate=%ld\n", rate,
 			parent_rate);
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल स्थिर काष्ठा clk_ops axs10x_pll_ops = अणु
+static const struct clk_ops axs10x_pll_ops = {
 	.recalc_rate = axs10x_pll_recalc_rate,
 	.round_rate = axs10x_pll_round_rate,
 	.set_rate = axs10x_pll_set_rate,
-पूर्ण;
+};
 
-अटल पूर्णांक axs10x_pll_clk_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	स्थिर अक्षर *parent_name;
-	काष्ठा axs10x_pll_clk *pll_clk;
-	काष्ठा clk_init_data init = अणु पूर्ण;
-	पूर्णांक ret;
+static int axs10x_pll_clk_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	const char *parent_name;
+	struct axs10x_pll_clk *pll_clk;
+	struct clk_init_data init = { };
+	int ret;
 
-	pll_clk = devm_kzalloc(dev, माप(*pll_clk), GFP_KERNEL);
-	अगर (!pll_clk)
-		वापस -ENOMEM;
+	pll_clk = devm_kzalloc(dev, sizeof(*pll_clk), GFP_KERNEL);
+	if (!pll_clk)
+		return -ENOMEM;
 
-	pll_clk->base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(pll_clk->base))
-		वापस PTR_ERR(pll_clk->base);
+	pll_clk->base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(pll_clk->base))
+		return PTR_ERR(pll_clk->base);
 
-	pll_clk->lock = devm_platक्रमm_ioremap_resource(pdev, 1);
-	अगर (IS_ERR(pll_clk->lock))
-		वापस PTR_ERR(pll_clk->lock);
+	pll_clk->lock = devm_platform_ioremap_resource(pdev, 1);
+	if (IS_ERR(pll_clk->lock))
+		return PTR_ERR(pll_clk->lock);
 
 	init.name = dev->of_node->name;
 	init.ops = &axs10x_pll_ops;
@@ -246,49 +245,49 @@
 	pll_clk->dev = dev;
 	pll_clk->pll_cfg = of_device_get_match_data(dev);
 
-	अगर (!pll_clk->pll_cfg) अणु
+	if (!pll_clk->pll_cfg) {
 		dev_err(dev, "No OF match data provided\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ret = devm_clk_hw_रेजिस्टर(dev, &pll_clk->hw);
-	अगर (ret) अणु
+	ret = devm_clk_hw_register(dev, &pll_clk->hw);
+	if (ret) {
 		dev_err(dev, "failed to register %s clock\n", init.name);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस of_clk_add_hw_provider(dev->of_node, of_clk_hw_simple_get,
+	return of_clk_add_hw_provider(dev->of_node, of_clk_hw_simple_get,
 			&pll_clk->hw);
-पूर्ण
+}
 
-अटल पूर्णांक axs10x_pll_clk_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
+static int axs10x_pll_clk_remove(struct platform_device *pdev)
+{
 	of_clk_del_provider(pdev->dev.of_node);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __init of_axs10x_pll_clk_setup(काष्ठा device_node *node)
-अणु
-	स्थिर अक्षर *parent_name;
-	काष्ठा axs10x_pll_clk *pll_clk;
-	काष्ठा clk_init_data init = अणु पूर्ण;
-	पूर्णांक ret;
+static void __init of_axs10x_pll_clk_setup(struct device_node *node)
+{
+	const char *parent_name;
+	struct axs10x_pll_clk *pll_clk;
+	struct clk_init_data init = { };
+	int ret;
 
-	pll_clk = kzalloc(माप(*pll_clk), GFP_KERNEL);
-	अगर (!pll_clk)
-		वापस;
+	pll_clk = kzalloc(sizeof(*pll_clk), GFP_KERNEL);
+	if (!pll_clk)
+		return;
 
 	pll_clk->base = of_iomap(node, 0);
-	अगर (!pll_clk->base) अणु
+	if (!pll_clk->base) {
 		pr_err("failed to map pll div registers\n");
-		जाओ err_मुक्त_pll_clk;
-	पूर्ण
+		goto err_free_pll_clk;
+	}
 
 	pll_clk->lock = of_iomap(node, 1);
-	अगर (!pll_clk->lock) अणु
+	if (!pll_clk->lock) {
 		pr_err("failed to map pll lock register\n");
-		जाओ err_unmap_base;
-	पूर्ण
+		goto err_unmap_base;
+	}
 
 	init.name = node->name;
 	init.ops = &axs10x_pll_ops;
@@ -298,47 +297,47 @@
 	pll_clk->hw.init = &init;
 	pll_clk->pll_cfg = arc_pll_cfg;
 
-	ret = clk_hw_रेजिस्टर(शून्य, &pll_clk->hw);
-	अगर (ret) अणु
+	ret = clk_hw_register(NULL, &pll_clk->hw);
+	if (ret) {
 		pr_err("failed to register %pOFn clock\n", node);
-		जाओ err_unmap_lock;
-	पूर्ण
+		goto err_unmap_lock;
+	}
 
 	ret = of_clk_add_hw_provider(node, of_clk_hw_simple_get, &pll_clk->hw);
-	अगर (ret) अणु
+	if (ret) {
 		pr_err("failed to add hw provider for %pOFn clock\n", node);
-		जाओ err_unरेजिस्टर_clk;
-	पूर्ण
+		goto err_unregister_clk;
+	}
 
-	वापस;
+	return;
 
-err_unरेजिस्टर_clk:
-	clk_hw_unरेजिस्टर(&pll_clk->hw);
+err_unregister_clk:
+	clk_hw_unregister(&pll_clk->hw);
 err_unmap_lock:
 	iounmap(pll_clk->lock);
 err_unmap_base:
 	iounmap(pll_clk->base);
-err_मुक्त_pll_clk:
-	kमुक्त(pll_clk);
-पूर्ण
-CLK_OF_DECLARE(axs10x_pll_घड़ी, "snps,axs10x-arc-pll-clock",
+err_free_pll_clk:
+	kfree(pll_clk);
+}
+CLK_OF_DECLARE(axs10x_pll_clock, "snps,axs10x-arc-pll-clock",
 	       of_axs10x_pll_clk_setup);
 
-अटल स्थिर काष्ठा of_device_id axs10x_pll_clk_id[] = अणु
-	अणु .compatible = "snps,axs10x-pgu-pll-clock", .data = &pgu_pll_cfgपूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id axs10x_pll_clk_id[] = {
+	{ .compatible = "snps,axs10x-pgu-pll-clock", .data = &pgu_pll_cfg},
+	{ }
+};
 MODULE_DEVICE_TABLE(of, axs10x_pll_clk_id);
 
-अटल काष्ठा platक्रमm_driver axs10x_pll_clk_driver = अणु
-	.driver = अणु
+static struct platform_driver axs10x_pll_clk_driver = {
+	.driver = {
 		.name = "axs10x-pll-clock",
 		.of_match_table = axs10x_pll_clk_id,
-	पूर्ण,
+	},
 	.probe = axs10x_pll_clk_probe,
-	.हटाओ = axs10x_pll_clk_हटाओ,
-पूर्ण;
-builtin_platक्रमm_driver(axs10x_pll_clk_driver);
+	.remove = axs10x_pll_clk_remove,
+};
+builtin_platform_driver(axs10x_pll_clk_driver);
 
 MODULE_AUTHOR("Vlad Zakharov <vzakhar@synopsys.com>");
 MODULE_DESCRIPTION("Synopsys AXS10X SDP Generic PLL Clock Driver");

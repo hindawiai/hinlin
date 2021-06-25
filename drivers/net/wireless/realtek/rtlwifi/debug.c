@@ -1,100 +1,99 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 2009-2012  Realtek Corporation.*/
 
-#समावेश "wifi.h"
-#समावेश "cam.h"
+#include "wifi.h"
+#include "cam.h"
 
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/vदो_स्मृति.h>
+#include <linux/moduleparam.h>
+#include <linux/vmalloc.h>
 
-#अगर_घोषित CONFIG_RTLWIFI_DEBUG
-व्योम _rtl_dbg_prपूर्णांक(काष्ठा rtl_priv *rtlpriv, u64 comp, पूर्णांक level,
-		    स्थिर अक्षर *fmt, ...)
-अणु
-	अगर (unlikely((comp & rtlpriv->cfg->mod_params->debug_mask) &&
-		     level <= rtlpriv->cfg->mod_params->debug_level)) अणु
-		काष्ठा va_क्रमmat vaf;
-		बहु_सूची args;
+#ifdef CONFIG_RTLWIFI_DEBUG
+void _rtl_dbg_print(struct rtl_priv *rtlpriv, u64 comp, int level,
+		    const char *fmt, ...)
+{
+	if (unlikely((comp & rtlpriv->cfg->mod_params->debug_mask) &&
+		     level <= rtlpriv->cfg->mod_params->debug_level)) {
+		struct va_format vaf;
+		va_list args;
 
-		बहु_शुरू(args, fmt);
+		va_start(args, fmt);
 
 		vaf.fmt = fmt;
 		vaf.va = &args;
 
 		pr_info("%pV", &vaf);
 
-		बहु_पूर्ण(args);
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL_GPL(_rtl_dbg_prपूर्णांक);
+		va_end(args);
+	}
+}
+EXPORT_SYMBOL_GPL(_rtl_dbg_print);
 
-व्योम _rtl_dbg_prपूर्णांक_data(काष्ठा rtl_priv *rtlpriv, u64 comp, पूर्णांक level,
-			 स्थिर अक्षर *titlestring,
-			 स्थिर व्योम *hexdata, पूर्णांक hexdatalen)
-अणु
-	अगर (unlikely(((comp) & rtlpriv->cfg->mod_params->debug_mask) &&
-		     ((level) <= rtlpriv->cfg->mod_params->debug_level))) अणु
+void _rtl_dbg_print_data(struct rtl_priv *rtlpriv, u64 comp, int level,
+			 const char *titlestring,
+			 const void *hexdata, int hexdatalen)
+{
+	if (unlikely(((comp) & rtlpriv->cfg->mod_params->debug_mask) &&
+		     ((level) <= rtlpriv->cfg->mod_params->debug_level))) {
 		pr_info("In process \"%s\" (pid %i): %s\n",
 			current->comm, current->pid, titlestring);
-		prपूर्णांक_hex_dump_bytes("", DUMP_PREFIX_NONE,
+		print_hex_dump_bytes("", DUMP_PREFIX_NONE,
 				     hexdata, hexdatalen);
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL_GPL(_rtl_dbg_prपूर्णांक_data);
+	}
+}
+EXPORT_SYMBOL_GPL(_rtl_dbg_print_data);
 
-काष्ठा rtl_debugfs_priv अणु
-	काष्ठा rtl_priv *rtlpriv;
-	पूर्णांक (*cb_पढ़ो)(काष्ठा seq_file *m, व्योम *v);
-	sमाप_प्रकार (*cb_ग_लिखो)(काष्ठा file *filp, स्थिर अक्षर __user *buffer,
-			    माप_प्रकार count, loff_t *loff);
+struct rtl_debugfs_priv {
+	struct rtl_priv *rtlpriv;
+	int (*cb_read)(struct seq_file *m, void *v);
+	ssize_t (*cb_write)(struct file *filp, const char __user *buffer,
+			    size_t count, loff_t *loff);
 	u32 cb_data;
-पूर्ण;
+};
 
-अटल काष्ठा dentry *debugfs_topdir;
+static struct dentry *debugfs_topdir;
 
-अटल पूर्णांक rtl_debug_get_common(काष्ठा seq_file *m, व्योम *v)
-अणु
-	काष्ठा rtl_debugfs_priv *debugfs_priv = m->निजी;
+static int rtl_debug_get_common(struct seq_file *m, void *v)
+{
+	struct rtl_debugfs_priv *debugfs_priv = m->private;
 
-	वापस debugfs_priv->cb_पढ़ो(m, v);
-पूर्ण
+	return debugfs_priv->cb_read(m, v);
+}
 
-अटल पूर्णांक dl_debug_खोलो_common(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस single_खोलो(file, rtl_debug_get_common, inode->i_निजी);
-पूर्ण
+static int dl_debug_open_common(struct inode *inode, struct file *file)
+{
+	return single_open(file, rtl_debug_get_common, inode->i_private);
+}
 
-अटल स्थिर काष्ठा file_operations file_ops_common = अणु
-	.खोलो = dl_debug_खोलो_common,
-	.पढ़ो = seq_पढ़ो,
+static const struct file_operations file_ops_common = {
+	.open = dl_debug_open_common,
+	.read = seq_read,
 	.llseek = seq_lseek,
 	.release = single_release,
-पूर्ण;
+};
 
-अटल पूर्णांक rtl_debug_get_mac_page(काष्ठा seq_file *m, व्योम *v)
-अणु
-	काष्ठा rtl_debugfs_priv *debugfs_priv = m->निजी;
-	काष्ठा rtl_priv *rtlpriv = debugfs_priv->rtlpriv;
+static int rtl_debug_get_mac_page(struct seq_file *m, void *v)
+{
+	struct rtl_debugfs_priv *debugfs_priv = m->private;
+	struct rtl_priv *rtlpriv = debugfs_priv->rtlpriv;
 	u32 page = debugfs_priv->cb_data;
-	पूर्णांक i, n;
-	पूर्णांक max = 0xff;
+	int i, n;
+	int max = 0xff;
 
-	क्रम (n = 0; n <= max; ) अणु
-		seq_म_लिखो(m, "\n%8.8x  ", n + page);
-		क्रम (i = 0; i < 4 && n <= max; i++, n += 4)
-			seq_म_लिखो(m, "%8.8x    ",
-				   rtl_पढ़ो_dword(rtlpriv, (page | n)));
-	पूर्ण
-	seq_माला_दो(m, "\n");
-	वापस 0;
-पूर्ण
+	for (n = 0; n <= max; ) {
+		seq_printf(m, "\n%8.8x  ", n + page);
+		for (i = 0; i < 4 && n <= max; i++, n += 4)
+			seq_printf(m, "%8.8x    ",
+				   rtl_read_dword(rtlpriv, (page | n)));
+	}
+	seq_puts(m, "\n");
+	return 0;
+}
 
-#घोषणा RTL_DEBUG_IMPL_MAC_SERIES(page, addr)			\
-अटल काष्ठा rtl_debugfs_priv rtl_debug_priv_mac_ ##page = अणु	\
-	.cb_पढ़ो = rtl_debug_get_mac_page,			\
+#define RTL_DEBUG_IMPL_MAC_SERIES(page, addr)			\
+static struct rtl_debugfs_priv rtl_debug_priv_mac_ ##page = {	\
+	.cb_read = rtl_debug_get_mac_page,			\
 	.cb_data = addr,					\
-पूर्ण
+}
 
 RTL_DEBUG_IMPL_MAC_SERIES(0, 0x0000);
 RTL_DEBUG_IMPL_MAC_SERIES(1, 0x0100);
@@ -113,30 +112,30 @@ RTL_DEBUG_IMPL_MAC_SERIES(15, 0x1500);
 RTL_DEBUG_IMPL_MAC_SERIES(16, 0x1600);
 RTL_DEBUG_IMPL_MAC_SERIES(17, 0x1700);
 
-अटल पूर्णांक rtl_debug_get_bb_page(काष्ठा seq_file *m, व्योम *v)
-अणु
-	काष्ठा rtl_debugfs_priv *debugfs_priv = m->निजी;
-	काष्ठा rtl_priv *rtlpriv = debugfs_priv->rtlpriv;
-	काष्ठा ieee80211_hw *hw = rtlpriv->hw;
+static int rtl_debug_get_bb_page(struct seq_file *m, void *v)
+{
+	struct rtl_debugfs_priv *debugfs_priv = m->private;
+	struct rtl_priv *rtlpriv = debugfs_priv->rtlpriv;
+	struct ieee80211_hw *hw = rtlpriv->hw;
 	u32 page = debugfs_priv->cb_data;
-	पूर्णांक i, n;
-	पूर्णांक max = 0xff;
+	int i, n;
+	int max = 0xff;
 
-	क्रम (n = 0; n <= max; ) अणु
-		seq_म_लिखो(m, "\n%8.8x  ", n + page);
-		क्रम (i = 0; i < 4 && n <= max; i++, n += 4)
-			seq_म_लिखो(m, "%8.8x    ",
+	for (n = 0; n <= max; ) {
+		seq_printf(m, "\n%8.8x  ", n + page);
+		for (i = 0; i < 4 && n <= max; i++, n += 4)
+			seq_printf(m, "%8.8x    ",
 				   rtl_get_bbreg(hw, (page | n), 0xffffffff));
-	पूर्ण
-	seq_माला_दो(m, "\n");
-	वापस 0;
-पूर्ण
+	}
+	seq_puts(m, "\n");
+	return 0;
+}
 
-#घोषणा RTL_DEBUG_IMPL_BB_SERIES(page, addr)			\
-अटल काष्ठा rtl_debugfs_priv rtl_debug_priv_bb_ ##page = अणु	\
-	.cb_पढ़ो = rtl_debug_get_bb_page,			\
+#define RTL_DEBUG_IMPL_BB_SERIES(page, addr)			\
+static struct rtl_debugfs_priv rtl_debug_priv_bb_ ##page = {	\
+	.cb_read = rtl_debug_get_bb_page,			\
 	.cb_data = addr,					\
-पूर्ण
+}
 
 RTL_DEBUG_IMPL_BB_SERIES(8, 0x0800);
 RTL_DEBUG_IMPL_BB_SERIES(9, 0x0900);
@@ -155,291 +154,291 @@ RTL_DEBUG_IMPL_BB_SERIES(1d, 0x1d00);
 RTL_DEBUG_IMPL_BB_SERIES(1e, 0x1e00);
 RTL_DEBUG_IMPL_BB_SERIES(1f, 0x1f00);
 
-अटल पूर्णांक rtl_debug_get_reg_rf(काष्ठा seq_file *m, व्योम *v)
-अणु
-	काष्ठा rtl_debugfs_priv *debugfs_priv = m->निजी;
-	काष्ठा rtl_priv *rtlpriv = debugfs_priv->rtlpriv;
-	काष्ठा ieee80211_hw *hw = rtlpriv->hw;
-	क्रमागत radio_path rfpath = debugfs_priv->cb_data;
-	पूर्णांक i, n;
-	पूर्णांक max = 0x40;
+static int rtl_debug_get_reg_rf(struct seq_file *m, void *v)
+{
+	struct rtl_debugfs_priv *debugfs_priv = m->private;
+	struct rtl_priv *rtlpriv = debugfs_priv->rtlpriv;
+	struct ieee80211_hw *hw = rtlpriv->hw;
+	enum radio_path rfpath = debugfs_priv->cb_data;
+	int i, n;
+	int max = 0x40;
 
-	अगर (IS_HARDWARE_TYPE_8822B(rtlpriv))
+	if (IS_HARDWARE_TYPE_8822B(rtlpriv))
 		max = 0xff;
 
-	seq_म_लिखो(m, "\nPATH(%d)", rfpath);
+	seq_printf(m, "\nPATH(%d)", rfpath);
 
-	क्रम (n = 0; n <= max; ) अणु
-		seq_म_लिखो(m, "\n%8.8x  ", n);
-		क्रम (i = 0; i < 4 && n <= max; n += 1, i++)
-			seq_म_लिखो(m, "%8.8x    ",
+	for (n = 0; n <= max; ) {
+		seq_printf(m, "\n%8.8x  ", n);
+		for (i = 0; i < 4 && n <= max; n += 1, i++)
+			seq_printf(m, "%8.8x    ",
 				   rtl_get_rfreg(hw, rfpath, n, 0xffffffff));
-	पूर्ण
-	seq_माला_दो(m, "\n");
-	वापस 0;
-पूर्ण
+	}
+	seq_puts(m, "\n");
+	return 0;
+}
 
-#घोषणा RTL_DEBUG_IMPL_RF_SERIES(page, addr)			\
-अटल काष्ठा rtl_debugfs_priv rtl_debug_priv_rf_ ##page = अणु	\
-	.cb_पढ़ो = rtl_debug_get_reg_rf,			\
+#define RTL_DEBUG_IMPL_RF_SERIES(page, addr)			\
+static struct rtl_debugfs_priv rtl_debug_priv_rf_ ##page = {	\
+	.cb_read = rtl_debug_get_reg_rf,			\
 	.cb_data = addr,					\
-पूर्ण
+}
 
 RTL_DEBUG_IMPL_RF_SERIES(a, RF90_PATH_A);
 RTL_DEBUG_IMPL_RF_SERIES(b, RF90_PATH_B);
 
-अटल पूर्णांक rtl_debug_get_cam_रेजिस्टर(काष्ठा seq_file *m, व्योम *v)
-अणु
-	काष्ठा rtl_debugfs_priv *debugfs_priv = m->निजी;
-	काष्ठा rtl_priv *rtlpriv = debugfs_priv->rtlpriv;
-	पूर्णांक start = debugfs_priv->cb_data;
+static int rtl_debug_get_cam_register(struct seq_file *m, void *v)
+{
+	struct rtl_debugfs_priv *debugfs_priv = m->private;
+	struct rtl_priv *rtlpriv = debugfs_priv->rtlpriv;
+	int start = debugfs_priv->cb_data;
 	u32 target_cmd = 0;
 	u32 target_val = 0;
 	u8 entry_i = 0;
 	u32 ulstatus;
-	पूर्णांक i = 100, j = 0;
-	पूर्णांक end = (start + 11 > TOTAL_CAM_ENTRY ? TOTAL_CAM_ENTRY : start + 11);
+	int i = 100, j = 0;
+	int end = (start + 11 > TOTAL_CAM_ENTRY ? TOTAL_CAM_ENTRY : start + 11);
 
-	/* This dump the current रेजिस्टर page */
-	seq_म_लिखो(m,
+	/* This dump the current register page */
+	seq_printf(m,
 		   "\n#################### SECURITY CAM (%d-%d) ##################\n",
 		   start, end - 1);
 
-	क्रम (j = start; j < end; j++) अणु
-		seq_म_लिखो(m, "\nD:  %2x > ", j);
-		क्रम (entry_i = 0; entry_i < CAM_CONTENT_COUNT; entry_i++) अणु
+	for (j = start; j < end; j++) {
+		seq_printf(m, "\nD:  %2x > ", j);
+		for (entry_i = 0; entry_i < CAM_CONTENT_COUNT; entry_i++) {
 			/* polling bit, and No Write enable, and address  */
 			target_cmd = entry_i + CAM_CONTENT_COUNT * j;
 			target_cmd = target_cmd | BIT(31);
 
 			/* Check polling bit is clear */
-			जबतक ((i--) >= 0) अणु
+			while ((i--) >= 0) {
 				ulstatus =
-				    rtl_पढ़ो_dword(rtlpriv,
+				    rtl_read_dword(rtlpriv,
 						   rtlpriv->cfg->maps[RWCAM]);
-				अगर (ulstatus & BIT(31))
-					जारी;
-				अन्यथा
-					अवरोध;
-			पूर्ण
+				if (ulstatus & BIT(31))
+					continue;
+				else
+					break;
+			}
 
-			rtl_ग_लिखो_dword(rtlpriv, rtlpriv->cfg->maps[RWCAM],
+			rtl_write_dword(rtlpriv, rtlpriv->cfg->maps[RWCAM],
 					target_cmd);
-			target_val = rtl_पढ़ो_dword(rtlpriv,
+			target_val = rtl_read_dword(rtlpriv,
 						    rtlpriv->cfg->maps[RCAMO]);
-			seq_म_लिखो(m, "%8.8x ", target_val);
-		पूर्ण
-	पूर्ण
-	seq_माला_दो(m, "\n");
-	वापस 0;
-पूर्ण
+			seq_printf(m, "%8.8x ", target_val);
+		}
+	}
+	seq_puts(m, "\n");
+	return 0;
+}
 
-#घोषणा RTL_DEBUG_IMPL_CAM_SERIES(page, addr)			\
-अटल काष्ठा rtl_debugfs_priv rtl_debug_priv_cam_ ##page = अणु	\
-	.cb_पढ़ो = rtl_debug_get_cam_रेजिस्टर,			\
+#define RTL_DEBUG_IMPL_CAM_SERIES(page, addr)			\
+static struct rtl_debugfs_priv rtl_debug_priv_cam_ ##page = {	\
+	.cb_read = rtl_debug_get_cam_register,			\
 	.cb_data = addr,					\
-पूर्ण
+}
 
 RTL_DEBUG_IMPL_CAM_SERIES(1, 0);
 RTL_DEBUG_IMPL_CAM_SERIES(2, 11);
 RTL_DEBUG_IMPL_CAM_SERIES(3, 22);
 
-अटल पूर्णांक rtl_debug_get_btcoex(काष्ठा seq_file *m, व्योम *v)
-अणु
-	काष्ठा rtl_debugfs_priv *debugfs_priv = m->निजी;
-	काष्ठा rtl_priv *rtlpriv = debugfs_priv->rtlpriv;
+static int rtl_debug_get_btcoex(struct seq_file *m, void *v)
+{
+	struct rtl_debugfs_priv *debugfs_priv = m->private;
+	struct rtl_priv *rtlpriv = debugfs_priv->rtlpriv;
 
-	अगर (rtlpriv->cfg->ops->get_btc_status())
+	if (rtlpriv->cfg->ops->get_btc_status())
 		rtlpriv->btcoexist.btc_ops->btc_display_bt_coex_info(rtlpriv,
 								     m);
 
-	seq_माला_दो(m, "\n");
+	seq_puts(m, "\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा rtl_debugfs_priv rtl_debug_priv_btcoex = अणु
-	.cb_पढ़ो = rtl_debug_get_btcoex,
+static struct rtl_debugfs_priv rtl_debug_priv_btcoex = {
+	.cb_read = rtl_debug_get_btcoex,
 	.cb_data = 0,
-पूर्ण;
+};
 
-अटल sमाप_प्रकार rtl_debugfs_set_ग_लिखो_reg(काष्ठा file *filp,
-					 स्थिर अक्षर __user *buffer,
-					 माप_प्रकार count, loff_t *loff)
-अणु
-	काष्ठा rtl_debugfs_priv *debugfs_priv = filp->निजी_data;
-	काष्ठा rtl_priv *rtlpriv = debugfs_priv->rtlpriv;
-	अक्षर पंचांगp[32 + 1];
-	पूर्णांक पंचांगp_len;
+static ssize_t rtl_debugfs_set_write_reg(struct file *filp,
+					 const char __user *buffer,
+					 size_t count, loff_t *loff)
+{
+	struct rtl_debugfs_priv *debugfs_priv = filp->private_data;
+	struct rtl_priv *rtlpriv = debugfs_priv->rtlpriv;
+	char tmp[32 + 1];
+	int tmp_len;
 	u32 addr, val, len;
-	पूर्णांक num;
+	int num;
 
-	अगर (count < 3)
-		वापस -EFAULT;
+	if (count < 3)
+		return -EFAULT;
 
-	पंचांगp_len = (count > माप(पंचांगp) - 1 ? माप(पंचांगp) - 1 : count);
+	tmp_len = (count > sizeof(tmp) - 1 ? sizeof(tmp) - 1 : count);
 
-	अगर (!buffer || copy_from_user(पंचांगp, buffer, पंचांगp_len))
-		वापस count;
+	if (!buffer || copy_from_user(tmp, buffer, tmp_len))
+		return count;
 
-	पंचांगp[पंचांगp_len] = '\0';
+	tmp[tmp_len] = '\0';
 
-	/* ग_लिखो BB/MAC रेजिस्टर */
-	num = माला_पूछो(पंचांगp, "%x %x %x", &addr, &val, &len);
+	/* write BB/MAC register */
+	num = sscanf(tmp, "%x %x %x", &addr, &val, &len);
 
-	अगर (num !=  3)
-		वापस count;
+	if (num !=  3)
+		return count;
 
-	चयन (len) अणु
-	हाल 1:
-		rtl_ग_लिखो_byte(rtlpriv, addr, (u8)val);
-		अवरोध;
-	हाल 2:
-		rtl_ग_लिखो_word(rtlpriv, addr, (u16)val);
-		अवरोध;
-	हाल 4:
-		rtl_ग_लिखो_dword(rtlpriv, addr, val);
-		अवरोध;
-	शेष:
-		/*prपूर्णांकk("error write length=%d", len);*/
-		अवरोध;
-	पूर्ण
+	switch (len) {
+	case 1:
+		rtl_write_byte(rtlpriv, addr, (u8)val);
+		break;
+	case 2:
+		rtl_write_word(rtlpriv, addr, (u16)val);
+		break;
+	case 4:
+		rtl_write_dword(rtlpriv, addr, val);
+		break;
+	default:
+		/*printk("error write length=%d", len);*/
+		break;
+	}
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल काष्ठा rtl_debugfs_priv rtl_debug_priv_ग_लिखो_reg = अणु
-	.cb_ग_लिखो = rtl_debugfs_set_ग_लिखो_reg,
-पूर्ण;
+static struct rtl_debugfs_priv rtl_debug_priv_write_reg = {
+	.cb_write = rtl_debugfs_set_write_reg,
+};
 
-अटल sमाप_प्रकार rtl_debugfs_set_ग_लिखो_h2c(काष्ठा file *filp,
-					 स्थिर अक्षर __user *buffer,
-					 माप_प्रकार count, loff_t *loff)
-अणु
-	काष्ठा rtl_debugfs_priv *debugfs_priv = filp->निजी_data;
-	काष्ठा rtl_priv *rtlpriv = debugfs_priv->rtlpriv;
-	काष्ठा ieee80211_hw *hw = rtlpriv->hw;
-	अक्षर पंचांगp[32 + 1];
-	पूर्णांक पंचांगp_len;
+static ssize_t rtl_debugfs_set_write_h2c(struct file *filp,
+					 const char __user *buffer,
+					 size_t count, loff_t *loff)
+{
+	struct rtl_debugfs_priv *debugfs_priv = filp->private_data;
+	struct rtl_priv *rtlpriv = debugfs_priv->rtlpriv;
+	struct ieee80211_hw *hw = rtlpriv->hw;
+	char tmp[32 + 1];
+	int tmp_len;
 	u8 h2c_len, h2c_data_packed[8];
-	पूर्णांक h2c_data[8];	/* idx 0: cmd */
-	पूर्णांक i;
+	int h2c_data[8];	/* idx 0: cmd */
+	int i;
 
-	अगर (count < 3)
-		वापस -EFAULT;
+	if (count < 3)
+		return -EFAULT;
 
-	पंचांगp_len = (count > माप(पंचांगp) - 1 ? माप(पंचांगp) - 1 : count);
+	tmp_len = (count > sizeof(tmp) - 1 ? sizeof(tmp) - 1 : count);
 
-	अगर (!buffer || copy_from_user(पंचांगp, buffer, पंचांगp_len))
-		वापस count;
+	if (!buffer || copy_from_user(tmp, buffer, tmp_len))
+		return count;
 
-	पंचांगp[पंचांगp_len] = '\0';
+	tmp[tmp_len] = '\0';
 
-	h2c_len = माला_पूछो(पंचांगp, "%X %X %X %X %X %X %X %X",
+	h2c_len = sscanf(tmp, "%X %X %X %X %X %X %X %X",
 			 &h2c_data[0], &h2c_data[1],
 			 &h2c_data[2], &h2c_data[3],
 			 &h2c_data[4], &h2c_data[5],
 			 &h2c_data[6], &h2c_data[7]);
 
-	अगर (h2c_len <= 0)
-		वापस count;
+	if (h2c_len <= 0)
+		return count;
 
-	क्रम (i = 0; i < h2c_len; i++)
+	for (i = 0; i < h2c_len; i++)
 		h2c_data_packed[i] = (u8)h2c_data[i];
 
 	rtlpriv->cfg->ops->fill_h2c_cmd(hw, h2c_data_packed[0],
 					h2c_len - 1,
 					&h2c_data_packed[1]);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल काष्ठा rtl_debugfs_priv rtl_debug_priv_ग_लिखो_h2c = अणु
-	.cb_ग_लिखो = rtl_debugfs_set_ग_लिखो_h2c,
-पूर्ण;
+static struct rtl_debugfs_priv rtl_debug_priv_write_h2c = {
+	.cb_write = rtl_debugfs_set_write_h2c,
+};
 
-अटल sमाप_प्रकार rtl_debugfs_set_ग_लिखो_rfreg(काष्ठा file *filp,
-					   स्थिर अक्षर __user *buffer,
-					    माप_प्रकार count, loff_t *loff)
-अणु
-	काष्ठा rtl_debugfs_priv *debugfs_priv = filp->निजी_data;
-	काष्ठा rtl_priv *rtlpriv = debugfs_priv->rtlpriv;
-	काष्ठा ieee80211_hw *hw = rtlpriv->hw;
-	अक्षर पंचांगp[32 + 1];
-	पूर्णांक पंचांगp_len;
-	पूर्णांक num;
-	पूर्णांक path;
-	u32 addr, biपंचांगask, data;
+static ssize_t rtl_debugfs_set_write_rfreg(struct file *filp,
+					   const char __user *buffer,
+					    size_t count, loff_t *loff)
+{
+	struct rtl_debugfs_priv *debugfs_priv = filp->private_data;
+	struct rtl_priv *rtlpriv = debugfs_priv->rtlpriv;
+	struct ieee80211_hw *hw = rtlpriv->hw;
+	char tmp[32 + 1];
+	int tmp_len;
+	int num;
+	int path;
+	u32 addr, bitmask, data;
 
-	अगर (count < 3)
-		वापस -EFAULT;
+	if (count < 3)
+		return -EFAULT;
 
-	पंचांगp_len = (count > माप(पंचांगp) - 1 ? माप(पंचांगp) - 1 : count);
+	tmp_len = (count > sizeof(tmp) - 1 ? sizeof(tmp) - 1 : count);
 
-	अगर (!buffer || copy_from_user(पंचांगp, buffer, पंचांगp_len))
-		वापस count;
+	if (!buffer || copy_from_user(tmp, buffer, tmp_len))
+		return count;
 
-	पंचांगp[पंचांगp_len] = '\0';
+	tmp[tmp_len] = '\0';
 
-	num = माला_पूछो(पंचांगp, "%X %X %X %X",
-		     &path, &addr, &biपंचांगask, &data);
+	num = sscanf(tmp, "%X %X %X %X",
+		     &path, &addr, &bitmask, &data);
 
-	अगर (num != 4) अणु
+	if (num != 4) {
 		rtl_dbg(rtlpriv, COMP_ERR, DBG_DMESG,
 			"Format is <path> <addr> <mask> <data>\n");
-		वापस count;
-	पूर्ण
+		return count;
+	}
 
-	rtl_set_rfreg(hw, path, addr, biपंचांगask, data);
+	rtl_set_rfreg(hw, path, addr, bitmask, data);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल काष्ठा rtl_debugfs_priv rtl_debug_priv_ग_लिखो_rfreg = अणु
-	.cb_ग_लिखो = rtl_debugfs_set_ग_लिखो_rfreg,
-पूर्ण;
+static struct rtl_debugfs_priv rtl_debug_priv_write_rfreg = {
+	.cb_write = rtl_debugfs_set_write_rfreg,
+};
 
-अटल पूर्णांक rtl_debugfs_बंद(काष्ठा inode *inode, काष्ठा file *filp)
-अणु
-	वापस 0;
-पूर्ण
+static int rtl_debugfs_close(struct inode *inode, struct file *filp)
+{
+	return 0;
+}
 
-अटल sमाप_प्रकार rtl_debugfs_common_ग_लिखो(काष्ठा file *filp,
-					स्थिर अक्षर __user *buffer,
-					माप_प्रकार count, loff_t *loff)
-अणु
-	काष्ठा rtl_debugfs_priv *debugfs_priv = filp->निजी_data;
+static ssize_t rtl_debugfs_common_write(struct file *filp,
+					const char __user *buffer,
+					size_t count, loff_t *loff)
+{
+	struct rtl_debugfs_priv *debugfs_priv = filp->private_data;
 
-	वापस debugfs_priv->cb_ग_लिखो(filp, buffer, count, loff);
-पूर्ण
+	return debugfs_priv->cb_write(filp, buffer, count, loff);
+}
 
-अटल स्थिर काष्ठा file_operations file_ops_common_ग_लिखो = अणु
+static const struct file_operations file_ops_common_write = {
 	.owner = THIS_MODULE,
-	.ग_लिखो = rtl_debugfs_common_ग_लिखो,
-	.खोलो = simple_खोलो,
-	.release = rtl_debugfs_बंद,
-पूर्ण;
+	.write = rtl_debugfs_common_write,
+	.open = simple_open,
+	.release = rtl_debugfs_close,
+};
 
-#घोषणा RTL_DEBUGFS_ADD_CORE(name, mode, fopname)			   \
-	करो अणु								   \
+#define RTL_DEBUGFS_ADD_CORE(name, mode, fopname)			   \
+	do {								   \
 		rtl_debug_priv_ ##name.rtlpriv = rtlpriv;		   \
 		debugfs_create_file(#name, mode, parent,		   \
 				    &rtl_debug_priv_ ##name,		   \
 				    &file_ops_ ##fopname);		   \
-	पूर्ण जबतक (0)
+	} while (0)
 
-#घोषणा RTL_DEBUGFS_ADD(name)						   \
+#define RTL_DEBUGFS_ADD(name)						   \
 		RTL_DEBUGFS_ADD_CORE(name, S_IFREG | 0444, common)
-#घोषणा RTL_DEBUGFS_ADD_W(name)						   \
-		RTL_DEBUGFS_ADD_CORE(name, S_IFREG | 0222, common_ग_लिखो)
+#define RTL_DEBUGFS_ADD_W(name)						   \
+		RTL_DEBUGFS_ADD_CORE(name, S_IFREG | 0222, common_write)
 
-व्योम rtl_debug_add_one(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा rtl_efuse *rtlefuse = rtl_efuse(rtl_priv(hw));
-	काष्ठा dentry *parent;
+void rtl_debug_add_one(struct ieee80211_hw *hw)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct rtl_efuse *rtlefuse = rtl_efuse(rtl_priv(hw));
+	struct dentry *parent;
 
-	snम_लिखो(rtlpriv->dbg.debugfs_name, 18, "%pMF", rtlefuse->dev_addr);
+	snprintf(rtlpriv->dbg.debugfs_name, 18, "%pMF", rtlefuse->dev_addr);
 
 	rtlpriv->dbg.debugfs_dir =
 		debugfs_create_dir(rtlpriv->dbg.debugfs_name, debugfs_topdir);
@@ -487,29 +486,29 @@ RTL_DEBUG_IMPL_CAM_SERIES(3, 22);
 
 	RTL_DEBUGFS_ADD(btcoex);
 
-	RTL_DEBUGFS_ADD_W(ग_लिखो_reg);
-	RTL_DEBUGFS_ADD_W(ग_लिखो_h2c);
-	RTL_DEBUGFS_ADD_W(ग_लिखो_rfreg);
-पूर्ण
+	RTL_DEBUGFS_ADD_W(write_reg);
+	RTL_DEBUGFS_ADD_W(write_h2c);
+	RTL_DEBUGFS_ADD_W(write_rfreg);
+}
 EXPORT_SYMBOL_GPL(rtl_debug_add_one);
 
-व्योम rtl_debug_हटाओ_one(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+void rtl_debug_remove_one(struct ieee80211_hw *hw)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
 
-	debugfs_हटाओ_recursive(rtlpriv->dbg.debugfs_dir);
-	rtlpriv->dbg.debugfs_dir = शून्य;
-पूर्ण
-EXPORT_SYMBOL_GPL(rtl_debug_हटाओ_one);
+	debugfs_remove_recursive(rtlpriv->dbg.debugfs_dir);
+	rtlpriv->dbg.debugfs_dir = NULL;
+}
+EXPORT_SYMBOL_GPL(rtl_debug_remove_one);
 
-व्योम rtl_debugfs_add_topdir(व्योम)
-अणु
-	debugfs_topdir = debugfs_create_dir("rtlwifi", शून्य);
-पूर्ण
+void rtl_debugfs_add_topdir(void)
+{
+	debugfs_topdir = debugfs_create_dir("rtlwifi", NULL);
+}
 
-व्योम rtl_debugfs_हटाओ_topdir(व्योम)
-अणु
-	debugfs_हटाओ_recursive(debugfs_topdir);
-पूर्ण
+void rtl_debugfs_remove_topdir(void)
+{
+	debugfs_remove_recursive(debugfs_topdir);
+}
 
-#पूर्ण_अगर
+#endif

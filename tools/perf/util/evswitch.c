@@ -1,62 +1,61 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-// Copyright (C) 2019, Red Hat Inc, Arnalकरो Carvalho de Melo <acme@redhat.com>
+// SPDX-License-Identifier: GPL-2.0-only
+// Copyright (C) 2019, Red Hat Inc, Arnaldo Carvalho de Melo <acme@redhat.com>
 
-#समावेश "evswitch.h"
-#समावेश "evlist.h"
+#include "evswitch.h"
+#include "evlist.h"
 
-bool evचयन__discard(काष्ठा evचयन *evचयन, काष्ठा evsel *evsel)
-अणु
-	अगर (evचयन->on && evचयन->discarding) अणु
-		अगर (evचयन->on != evsel)
-			वापस true;
+bool evswitch__discard(struct evswitch *evswitch, struct evsel *evsel)
+{
+	if (evswitch->on && evswitch->discarding) {
+		if (evswitch->on != evsel)
+			return true;
 
-		evचयन->discarding = false;
+		evswitch->discarding = false;
 
-		अगर (!evचयन->show_on_off_events)
-			वापस true;
+		if (!evswitch->show_on_off_events)
+			return true;
 
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	अगर (evचयन->off && !evचयन->discarding) अणु
-		अगर (evचयन->off != evsel)
-			वापस false;
+	if (evswitch->off && !evswitch->discarding) {
+		if (evswitch->off != evsel)
+			return false;
 
-		evचयन->discarding = true;
+		evswitch->discarding = true;
 
-		अगर (!evचयन->show_on_off_events)
-			वापस true;
-	पूर्ण
+		if (!evswitch->show_on_off_events)
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल पूर्णांक evचयन__ख_लिखो_enoent(खाता *fp, स्थिर अक्षर *evtype, स्थिर अक्षर *evname)
-अणु
-	पूर्णांक prपूर्णांकed = ख_लिखो(fp, "ERROR: switch-%s event not found (%s)\n", evtype, evname);
+static int evswitch__fprintf_enoent(FILE *fp, const char *evtype, const char *evname)
+{
+	int printed = fprintf(fp, "ERROR: switch-%s event not found (%s)\n", evtype, evname);
 
-	वापस prपूर्णांकed += ख_लिखो(fp, "HINT:  use 'perf evlist' to see the available event names\n");
-पूर्ण
+	return printed += fprintf(fp, "HINT:  use 'perf evlist' to see the available event names\n");
+}
 
-पूर्णांक evचयन__init(काष्ठा evचयन *evचयन, काष्ठा evlist *evlist, खाता *fp)
-अणु
-	अगर (evचयन->on_name) अणु
-		evचयन->on = evlist__find_evsel_by_str(evlist, evचयन->on_name);
-		अगर (evचयन->on == शून्य) अणु
-			evचयन__ख_लिखो_enoent(fp, "on", evचयन->on_name);
-			वापस -ENOENT;
-		पूर्ण
-		evचयन->discarding = true;
-	पूर्ण
+int evswitch__init(struct evswitch *evswitch, struct evlist *evlist, FILE *fp)
+{
+	if (evswitch->on_name) {
+		evswitch->on = evlist__find_evsel_by_str(evlist, evswitch->on_name);
+		if (evswitch->on == NULL) {
+			evswitch__fprintf_enoent(fp, "on", evswitch->on_name);
+			return -ENOENT;
+		}
+		evswitch->discarding = true;
+	}
 
-	अगर (evचयन->off_name) अणु
-		evचयन->off = evlist__find_evsel_by_str(evlist, evचयन->off_name);
-		अगर (evचयन->off == शून्य) अणु
-			evचयन__ख_लिखो_enoent(fp, "off", evचयन->off_name);
-			वापस -ENOENT;
-		पूर्ण
-	पूर्ण
+	if (evswitch->off_name) {
+		evswitch->off = evlist__find_evsel_by_str(evlist, evswitch->off_name);
+		if (evswitch->off == NULL) {
+			evswitch__fprintf_enoent(fp, "off", evswitch->off_name);
+			return -ENOENT;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

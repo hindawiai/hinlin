@@ -1,470 +1,469 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * bio-पूर्णांकegrity.c - bio data पूर्णांकegrity extensions
+ * bio-integrity.c - bio data integrity extensions
  *
  * Copyright (C) 2007, 2008, 2009 Oracle Corporation
  * Written by: Martin K. Petersen <martin.petersen@oracle.com>
  */
 
-#समावेश <linux/blkdev.h>
-#समावेश <linux/mempool.h>
-#समावेश <linux/export.h>
-#समावेश <linux/bपन.स>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/slab.h>
-#समावेश "blk.h"
+#include <linux/blkdev.h>
+#include <linux/mempool.h>
+#include <linux/export.h>
+#include <linux/bio.h>
+#include <linux/workqueue.h>
+#include <linux/slab.h>
+#include "blk.h"
 
-अटल काष्ठा kmem_cache *bip_slab;
-अटल काष्ठा workqueue_काष्ठा *kपूर्णांकegrityd_wq;
+static struct kmem_cache *bip_slab;
+static struct workqueue_struct *kintegrityd_wq;
 
-व्योम blk_flush_पूर्णांकegrity(व्योम)
-अणु
-	flush_workqueue(kपूर्णांकegrityd_wq);
-पूर्ण
+void blk_flush_integrity(void)
+{
+	flush_workqueue(kintegrityd_wq);
+}
 
-अटल व्योम __bio_पूर्णांकegrity_मुक्त(काष्ठा bio_set *bs,
-				 काष्ठा bio_पूर्णांकegrity_payload *bip)
-अणु
-	अगर (bs && mempool_initialized(&bs->bio_पूर्णांकegrity_pool)) अणु
-		अगर (bip->bip_vec)
-			bvec_मुक्त(&bs->bvec_पूर्णांकegrity_pool, bip->bip_vec,
+static void __bio_integrity_free(struct bio_set *bs,
+				 struct bio_integrity_payload *bip)
+{
+	if (bs && mempool_initialized(&bs->bio_integrity_pool)) {
+		if (bip->bip_vec)
+			bvec_free(&bs->bvec_integrity_pool, bip->bip_vec,
 				  bip->bip_max_vcnt);
-		mempool_मुक्त(bip, &bs->bio_पूर्णांकegrity_pool);
-	पूर्ण अन्यथा अणु
-		kमुक्त(bip);
-	पूर्ण
-पूर्ण
+		mempool_free(bip, &bs->bio_integrity_pool);
+	} else {
+		kfree(bip);
+	}
+}
 
 /**
- * bio_पूर्णांकegrity_alloc - Allocate पूर्णांकegrity payload and attach it to bio
- * @bio:	bio to attach पूर्णांकegrity metadata to
+ * bio_integrity_alloc - Allocate integrity payload and attach it to bio
+ * @bio:	bio to attach integrity metadata to
  * @gfp_mask:	Memory allocation mask
- * @nr_vecs:	Number of पूर्णांकegrity metadata scatter-gather elements
+ * @nr_vecs:	Number of integrity metadata scatter-gather elements
  *
- * Description: This function prepares a bio क्रम attaching पूर्णांकegrity
- * metadata.  nr_vecs specअगरies the maximum number of pages containing
- * पूर्णांकegrity metadata that can be attached.
+ * Description: This function prepares a bio for attaching integrity
+ * metadata.  nr_vecs specifies the maximum number of pages containing
+ * integrity metadata that can be attached.
  */
-काष्ठा bio_पूर्णांकegrity_payload *bio_पूर्णांकegrity_alloc(काष्ठा bio *bio,
+struct bio_integrity_payload *bio_integrity_alloc(struct bio *bio,
 						  gfp_t gfp_mask,
-						  अचिन्हित पूर्णांक nr_vecs)
-अणु
-	काष्ठा bio_पूर्णांकegrity_payload *bip;
-	काष्ठा bio_set *bs = bio->bi_pool;
-	अचिन्हित अंतरभूत_vecs;
+						  unsigned int nr_vecs)
+{
+	struct bio_integrity_payload *bip;
+	struct bio_set *bs = bio->bi_pool;
+	unsigned inline_vecs;
 
-	अगर (WARN_ON_ONCE(bio_has_crypt_ctx(bio)))
-		वापस ERR_PTR(-EOPNOTSUPP);
+	if (WARN_ON_ONCE(bio_has_crypt_ctx(bio)))
+		return ERR_PTR(-EOPNOTSUPP);
 
-	अगर (!bs || !mempool_initialized(&bs->bio_पूर्णांकegrity_pool)) अणु
-		bip = kदो_स्मृति(काष्ठा_size(bip, bip_अंतरभूत_vecs, nr_vecs), gfp_mask);
-		अंतरभूत_vecs = nr_vecs;
-	पूर्ण अन्यथा अणु
-		bip = mempool_alloc(&bs->bio_पूर्णांकegrity_pool, gfp_mask);
-		अंतरभूत_vecs = BIO_INLINE_VECS;
-	पूर्ण
+	if (!bs || !mempool_initialized(&bs->bio_integrity_pool)) {
+		bip = kmalloc(struct_size(bip, bip_inline_vecs, nr_vecs), gfp_mask);
+		inline_vecs = nr_vecs;
+	} else {
+		bip = mempool_alloc(&bs->bio_integrity_pool, gfp_mask);
+		inline_vecs = BIO_INLINE_VECS;
+	}
 
-	अगर (unlikely(!bip))
-		वापस ERR_PTR(-ENOMEM);
+	if (unlikely(!bip))
+		return ERR_PTR(-ENOMEM);
 
-	स_रखो(bip, 0, माप(*bip));
+	memset(bip, 0, sizeof(*bip));
 
-	अगर (nr_vecs > अंतरभूत_vecs) अणु
+	if (nr_vecs > inline_vecs) {
 		bip->bip_max_vcnt = nr_vecs;
-		bip->bip_vec = bvec_alloc(&bs->bvec_पूर्णांकegrity_pool,
+		bip->bip_vec = bvec_alloc(&bs->bvec_integrity_pool,
 					  &bip->bip_max_vcnt, gfp_mask);
-		अगर (!bip->bip_vec)
-			जाओ err;
-	पूर्ण अन्यथा अणु
-		bip->bip_vec = bip->bip_अंतरभूत_vecs;
-		bip->bip_max_vcnt = अंतरभूत_vecs;
-	पूर्ण
+		if (!bip->bip_vec)
+			goto err;
+	} else {
+		bip->bip_vec = bip->bip_inline_vecs;
+		bip->bip_max_vcnt = inline_vecs;
+	}
 
 	bip->bip_bio = bio;
-	bio->bi_पूर्णांकegrity = bip;
+	bio->bi_integrity = bip;
 	bio->bi_opf |= REQ_INTEGRITY;
 
-	वापस bip;
+	return bip;
 err:
-	__bio_पूर्णांकegrity_मुक्त(bs, bip);
-	वापस ERR_PTR(-ENOMEM);
-पूर्ण
-EXPORT_SYMBOL(bio_पूर्णांकegrity_alloc);
+	__bio_integrity_free(bs, bip);
+	return ERR_PTR(-ENOMEM);
+}
+EXPORT_SYMBOL(bio_integrity_alloc);
 
 /**
- * bio_पूर्णांकegrity_मुक्त - Free bio पूर्णांकegrity payload
- * @bio:	bio containing bip to be मुक्तd
+ * bio_integrity_free - Free bio integrity payload
+ * @bio:	bio containing bip to be freed
  *
- * Description: Used to मुक्त the पूर्णांकegrity portion of a bio. Usually
- * called from bio_मुक्त().
+ * Description: Used to free the integrity portion of a bio. Usually
+ * called from bio_free().
  */
-व्योम bio_पूर्णांकegrity_मुक्त(काष्ठा bio *bio)
-अणु
-	काष्ठा bio_पूर्णांकegrity_payload *bip = bio_पूर्णांकegrity(bio);
-	काष्ठा bio_set *bs = bio->bi_pool;
+void bio_integrity_free(struct bio *bio)
+{
+	struct bio_integrity_payload *bip = bio_integrity(bio);
+	struct bio_set *bs = bio->bi_pool;
 
-	अगर (bip->bip_flags & BIP_BLOCK_INTEGRITY)
-		kमुक्त(page_address(bip->bip_vec->bv_page) +
+	if (bip->bip_flags & BIP_BLOCK_INTEGRITY)
+		kfree(page_address(bip->bip_vec->bv_page) +
 		      bip->bip_vec->bv_offset);
 
-	__bio_पूर्णांकegrity_मुक्त(bs, bip);
-	bio->bi_पूर्णांकegrity = शून्य;
+	__bio_integrity_free(bs, bip);
+	bio->bi_integrity = NULL;
 	bio->bi_opf &= ~REQ_INTEGRITY;
-पूर्ण
+}
 
 /**
- * bio_पूर्णांकegrity_add_page - Attach पूर्णांकegrity metadata
+ * bio_integrity_add_page - Attach integrity metadata
  * @bio:	bio to update
- * @page:	page containing पूर्णांकegrity metadata
- * @len:	number of bytes of पूर्णांकegrity metadata in page
+ * @page:	page containing integrity metadata
+ * @len:	number of bytes of integrity metadata in page
  * @offset:	start offset within page
  *
- * Description: Attach a page containing पूर्णांकegrity metadata to bio.
+ * Description: Attach a page containing integrity metadata to bio.
  */
-पूर्णांक bio_पूर्णांकegrity_add_page(काष्ठा bio *bio, काष्ठा page *page,
-			   अचिन्हित पूर्णांक len, अचिन्हित पूर्णांक offset)
-अणु
-	काष्ठा bio_पूर्णांकegrity_payload *bip = bio_पूर्णांकegrity(bio);
-	काष्ठा bio_vec *iv;
+int bio_integrity_add_page(struct bio *bio, struct page *page,
+			   unsigned int len, unsigned int offset)
+{
+	struct bio_integrity_payload *bip = bio_integrity(bio);
+	struct bio_vec *iv;
 
-	अगर (bip->bip_vcnt >= bip->bip_max_vcnt) अणु
-		prपूर्णांकk(KERN_ERR "%s: bip_vec full\n", __func__);
-		वापस 0;
-	पूर्ण
+	if (bip->bip_vcnt >= bip->bip_max_vcnt) {
+		printk(KERN_ERR "%s: bip_vec full\n", __func__);
+		return 0;
+	}
 
 	iv = bip->bip_vec + bip->bip_vcnt;
 
-	अगर (bip->bip_vcnt &&
+	if (bip->bip_vcnt &&
 	    bvec_gap_to_prev(bio->bi_bdev->bd_disk->queue,
 			     &bip->bip_vec[bip->bip_vcnt - 1], offset))
-		वापस 0;
+		return 0;
 
 	iv->bv_page = page;
 	iv->bv_len = len;
 	iv->bv_offset = offset;
 	bip->bip_vcnt++;
 
-	वापस len;
-पूर्ण
-EXPORT_SYMBOL(bio_पूर्णांकegrity_add_page);
+	return len;
+}
+EXPORT_SYMBOL(bio_integrity_add_page);
 
 /**
- * bio_पूर्णांकegrity_process - Process पूर्णांकegrity metadata क्रम a bio
- * @bio:	bio to generate/verअगरy पूर्णांकegrity metadata क्रम
+ * bio_integrity_process - Process integrity metadata for a bio
+ * @bio:	bio to generate/verify integrity metadata for
  * @proc_iter:  iterator to process
- * @proc_fn:	Poपूर्णांकer to the relevant processing function
+ * @proc_fn:	Pointer to the relevant processing function
  */
-अटल blk_status_t bio_पूर्णांकegrity_process(काष्ठा bio *bio,
-		काष्ठा bvec_iter *proc_iter, पूर्णांकegrity_processing_fn *proc_fn)
-अणु
-	काष्ठा blk_पूर्णांकegrity *bi = blk_get_पूर्णांकegrity(bio->bi_bdev->bd_disk);
-	काष्ठा blk_पूर्णांकegrity_iter iter;
-	काष्ठा bvec_iter bviter;
-	काष्ठा bio_vec bv;
-	काष्ठा bio_पूर्णांकegrity_payload *bip = bio_पूर्णांकegrity(bio);
+static blk_status_t bio_integrity_process(struct bio *bio,
+		struct bvec_iter *proc_iter, integrity_processing_fn *proc_fn)
+{
+	struct blk_integrity *bi = blk_get_integrity(bio->bi_bdev->bd_disk);
+	struct blk_integrity_iter iter;
+	struct bvec_iter bviter;
+	struct bio_vec bv;
+	struct bio_integrity_payload *bip = bio_integrity(bio);
 	blk_status_t ret = BLK_STS_OK;
-	व्योम *prot_buf = page_address(bip->bip_vec->bv_page) +
+	void *prot_buf = page_address(bip->bip_vec->bv_page) +
 		bip->bip_vec->bv_offset;
 
 	iter.disk_name = bio->bi_bdev->bd_disk->disk_name;
-	iter.पूर्णांकerval = 1 << bi->पूर्णांकerval_exp;
+	iter.interval = 1 << bi->interval_exp;
 	iter.seed = proc_iter->bi_sector;
 	iter.prot_buf = prot_buf;
 
-	__bio_क्रम_each_segment(bv, bio, bviter, *proc_iter) अणु
-		व्योम *kaddr = kmap_atomic(bv.bv_page);
+	__bio_for_each_segment(bv, bio, bviter, *proc_iter) {
+		void *kaddr = kmap_atomic(bv.bv_page);
 
 		iter.data_buf = kaddr + bv.bv_offset;
 		iter.data_size = bv.bv_len;
 
 		ret = proc_fn(&iter);
-		अगर (ret) अणु
+		if (ret) {
 			kunmap_atomic(kaddr);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
 		kunmap_atomic(kaddr);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
 /**
- * bio_पूर्णांकegrity_prep - Prepare bio क्रम पूर्णांकegrity I/O
+ * bio_integrity_prep - Prepare bio for integrity I/O
  * @bio:	bio to prepare
  *
- * Description:  Checks अगर the bio alपढ़ोy has an पूर्णांकegrity payload attached.
- * If it करोes, the payload has been generated by another kernel subप्रणाली,
- * and we just pass it through. Otherwise allocates पूर्णांकegrity payload.
+ * Description:  Checks if the bio already has an integrity payload attached.
+ * If it does, the payload has been generated by another kernel subsystem,
+ * and we just pass it through. Otherwise allocates integrity payload.
  * The bio must have data direction, target device and start sector set priot
- * to calling.  In the WRITE हाल, पूर्णांकegrity metadata will be generated using
- * the block device's पूर्णांकegrity function.  In the READ हाल, the buffer
- * will be prepared क्रम DMA and a suitable end_io handler set up.
+ * to calling.  In the WRITE case, integrity metadata will be generated using
+ * the block device's integrity function.  In the READ case, the buffer
+ * will be prepared for DMA and a suitable end_io handler set up.
  */
-bool bio_पूर्णांकegrity_prep(काष्ठा bio *bio)
-अणु
-	काष्ठा bio_पूर्णांकegrity_payload *bip;
-	काष्ठा blk_पूर्णांकegrity *bi = blk_get_पूर्णांकegrity(bio->bi_bdev->bd_disk);
-	व्योम *buf;
-	अचिन्हित दीर्घ start, end;
-	अचिन्हित पूर्णांक len, nr_pages;
-	अचिन्हित पूर्णांक bytes, offset, i;
-	अचिन्हित पूर्णांक पूर्णांकervals;
+bool bio_integrity_prep(struct bio *bio)
+{
+	struct bio_integrity_payload *bip;
+	struct blk_integrity *bi = blk_get_integrity(bio->bi_bdev->bd_disk);
+	void *buf;
+	unsigned long start, end;
+	unsigned int len, nr_pages;
+	unsigned int bytes, offset, i;
+	unsigned int intervals;
 	blk_status_t status;
 
-	अगर (!bi)
-		वापस true;
+	if (!bi)
+		return true;
 
-	अगर (bio_op(bio) != REQ_OP_READ && bio_op(bio) != REQ_OP_WRITE)
-		वापस true;
+	if (bio_op(bio) != REQ_OP_READ && bio_op(bio) != REQ_OP_WRITE)
+		return true;
 
-	अगर (!bio_sectors(bio))
-		वापस true;
+	if (!bio_sectors(bio))
+		return true;
 
-	/* Alपढ़ोy रक्षित? */
-	अगर (bio_पूर्णांकegrity(bio))
-		वापस true;
+	/* Already protected? */
+	if (bio_integrity(bio))
+		return true;
 
-	अगर (bio_data_dir(bio) == READ) अणु
-		अगर (!bi->profile->verअगरy_fn ||
+	if (bio_data_dir(bio) == READ) {
+		if (!bi->profile->verify_fn ||
 		    !(bi->flags & BLK_INTEGRITY_VERIFY))
-			वापस true;
-	पूर्ण अन्यथा अणु
-		अगर (!bi->profile->generate_fn ||
+			return true;
+	} else {
+		if (!bi->profile->generate_fn ||
 		    !(bi->flags & BLK_INTEGRITY_GENERATE))
-			वापस true;
-	पूर्ण
-	पूर्णांकervals = bio_पूर्णांकegrity_पूर्णांकervals(bi, bio_sectors(bio));
+			return true;
+	}
+	intervals = bio_integrity_intervals(bi, bio_sectors(bio));
 
-	/* Allocate kernel buffer क्रम protection data */
-	len = पूर्णांकervals * bi->tuple_size;
-	buf = kदो_स्मृति(len, GFP_NOIO);
+	/* Allocate kernel buffer for protection data */
+	len = intervals * bi->tuple_size;
+	buf = kmalloc(len, GFP_NOIO);
 	status = BLK_STS_RESOURCE;
-	अगर (unlikely(buf == शून्य)) अणु
-		prपूर्णांकk(KERN_ERR "could not allocate integrity buffer\n");
-		जाओ err_end_io;
-	पूर्ण
+	if (unlikely(buf == NULL)) {
+		printk(KERN_ERR "could not allocate integrity buffer\n");
+		goto err_end_io;
+	}
 
-	end = (((अचिन्हित दीर्घ) buf) + len + PAGE_SIZE - 1) >> PAGE_SHIFT;
-	start = ((अचिन्हित दीर्घ) buf) >> PAGE_SHIFT;
+	end = (((unsigned long) buf) + len + PAGE_SIZE - 1) >> PAGE_SHIFT;
+	start = ((unsigned long) buf) >> PAGE_SHIFT;
 	nr_pages = end - start;
 
-	/* Allocate bio पूर्णांकegrity payload and पूर्णांकegrity vectors */
-	bip = bio_पूर्णांकegrity_alloc(bio, GFP_NOIO, nr_pages);
-	अगर (IS_ERR(bip)) अणु
-		prपूर्णांकk(KERN_ERR "could not allocate data integrity bioset\n");
-		kमुक्त(buf);
+	/* Allocate bio integrity payload and integrity vectors */
+	bip = bio_integrity_alloc(bio, GFP_NOIO, nr_pages);
+	if (IS_ERR(bip)) {
+		printk(KERN_ERR "could not allocate data integrity bioset\n");
+		kfree(buf);
 		status = BLK_STS_RESOURCE;
-		जाओ err_end_io;
-	पूर्ण
+		goto err_end_io;
+	}
 
 	bip->bip_flags |= BIP_BLOCK_INTEGRITY;
 	bip->bip_iter.bi_size = len;
 	bip_set_seed(bip, bio->bi_iter.bi_sector);
 
-	अगर (bi->flags & BLK_INTEGRITY_IP_CHECKSUM)
+	if (bi->flags & BLK_INTEGRITY_IP_CHECKSUM)
 		bip->bip_flags |= BIP_IP_CHECKSUM;
 
 	/* Map it */
 	offset = offset_in_page(buf);
-	क्रम (i = 0 ; i < nr_pages ; i++) अणु
-		पूर्णांक ret;
+	for (i = 0 ; i < nr_pages ; i++) {
+		int ret;
 		bytes = PAGE_SIZE - offset;
 
-		अगर (len <= 0)
-			अवरोध;
+		if (len <= 0)
+			break;
 
-		अगर (bytes > len)
+		if (bytes > len)
 			bytes = len;
 
-		ret = bio_पूर्णांकegrity_add_page(bio, virt_to_page(buf),
+		ret = bio_integrity_add_page(bio, virt_to_page(buf),
 					     bytes, offset);
 
-		अगर (ret == 0) अणु
-			prपूर्णांकk(KERN_ERR "could not attach integrity payload\n");
+		if (ret == 0) {
+			printk(KERN_ERR "could not attach integrity payload\n");
 			status = BLK_STS_RESOURCE;
-			जाओ err_end_io;
-		पूर्ण
+			goto err_end_io;
+		}
 
-		अगर (ret < bytes)
-			अवरोध;
+		if (ret < bytes)
+			break;
 
 		buf += bytes;
 		len -= bytes;
 		offset = 0;
-	पूर्ण
+	}
 
-	/* Auto-generate पूर्णांकegrity metadata अगर this is a ग_लिखो */
-	अगर (bio_data_dir(bio) == WRITE) अणु
-		bio_पूर्णांकegrity_process(bio, &bio->bi_iter,
+	/* Auto-generate integrity metadata if this is a write */
+	if (bio_data_dir(bio) == WRITE) {
+		bio_integrity_process(bio, &bio->bi_iter,
 				      bi->profile->generate_fn);
-	पूर्ण अन्यथा अणु
+	} else {
 		bip->bio_iter = bio->bi_iter;
-	पूर्ण
-	वापस true;
+	}
+	return true;
 
 err_end_io:
 	bio->bi_status = status;
 	bio_endio(bio);
-	वापस false;
+	return false;
 
-पूर्ण
-EXPORT_SYMBOL(bio_पूर्णांकegrity_prep);
+}
+EXPORT_SYMBOL(bio_integrity_prep);
 
 /**
- * bio_पूर्णांकegrity_verअगरy_fn - Integrity I/O completion worker
- * @work:	Work काष्ठा stored in bio to be verअगरied
+ * bio_integrity_verify_fn - Integrity I/O completion worker
+ * @work:	Work struct stored in bio to be verified
  *
  * Description: This workqueue function is called to complete a READ
- * request.  The function verअगरies the transferred पूर्णांकegrity metadata
+ * request.  The function verifies the transferred integrity metadata
  * and then calls the original bio end_io function.
  */
-अटल व्योम bio_पूर्णांकegrity_verअगरy_fn(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा bio_पूर्णांकegrity_payload *bip =
-		container_of(work, काष्ठा bio_पूर्णांकegrity_payload, bip_work);
-	काष्ठा bio *bio = bip->bip_bio;
-	काष्ठा blk_पूर्णांकegrity *bi = blk_get_पूर्णांकegrity(bio->bi_bdev->bd_disk);
+static void bio_integrity_verify_fn(struct work_struct *work)
+{
+	struct bio_integrity_payload *bip =
+		container_of(work, struct bio_integrity_payload, bip_work);
+	struct bio *bio = bip->bip_bio;
+	struct blk_integrity *bi = blk_get_integrity(bio->bi_bdev->bd_disk);
 
 	/*
-	 * At the moment verअगरy is called bio's iterator was advanced
-	 * during split and completion, we need to शुरुआत iterator to
+	 * At the moment verify is called bio's iterator was advanced
+	 * during split and completion, we need to rewind iterator to
 	 * it's original position.
 	 */
-	bio->bi_status = bio_पूर्णांकegrity_process(bio, &bip->bio_iter,
-						bi->profile->verअगरy_fn);
-	bio_पूर्णांकegrity_मुक्त(bio);
+	bio->bi_status = bio_integrity_process(bio, &bip->bio_iter,
+						bi->profile->verify_fn);
+	bio_integrity_free(bio);
 	bio_endio(bio);
-पूर्ण
+}
 
 /**
- * __bio_पूर्णांकegrity_endio - Integrity I/O completion function
+ * __bio_integrity_endio - Integrity I/O completion function
  * @bio:	Protected bio
  *
- * Description: Completion क्रम पूर्णांकegrity I/O
+ * Description: Completion for integrity I/O
  *
- * Normally I/O completion is करोne in पूर्णांकerrupt context.  However,
- * verअगरying I/O पूर्णांकegrity is a समय-consuming task which must be run
+ * Normally I/O completion is done in interrupt context.  However,
+ * verifying I/O integrity is a time-consuming task which must be run
  * in process context.	This function postpones completion
  * accordingly.
  */
-bool __bio_पूर्णांकegrity_endio(काष्ठा bio *bio)
-अणु
-	काष्ठा blk_पूर्णांकegrity *bi = blk_get_पूर्णांकegrity(bio->bi_bdev->bd_disk);
-	काष्ठा bio_पूर्णांकegrity_payload *bip = bio_पूर्णांकegrity(bio);
+bool __bio_integrity_endio(struct bio *bio)
+{
+	struct blk_integrity *bi = blk_get_integrity(bio->bi_bdev->bd_disk);
+	struct bio_integrity_payload *bip = bio_integrity(bio);
 
-	अगर (bio_op(bio) == REQ_OP_READ && !bio->bi_status &&
-	    (bip->bip_flags & BIP_BLOCK_INTEGRITY) && bi->profile->verअगरy_fn) अणु
-		INIT_WORK(&bip->bip_work, bio_पूर्णांकegrity_verअगरy_fn);
-		queue_work(kपूर्णांकegrityd_wq, &bip->bip_work);
-		वापस false;
-	पूर्ण
+	if (bio_op(bio) == REQ_OP_READ && !bio->bi_status &&
+	    (bip->bip_flags & BIP_BLOCK_INTEGRITY) && bi->profile->verify_fn) {
+		INIT_WORK(&bip->bip_work, bio_integrity_verify_fn);
+		queue_work(kintegrityd_wq, &bip->bip_work);
+		return false;
+	}
 
-	bio_पूर्णांकegrity_मुक्त(bio);
-	वापस true;
-पूर्ण
+	bio_integrity_free(bio);
+	return true;
+}
 
 /**
- * bio_पूर्णांकegrity_advance - Advance पूर्णांकegrity vector
- * @bio:	bio whose पूर्णांकegrity vector to update
- * @bytes_करोne:	number of data bytes that have been completed
+ * bio_integrity_advance - Advance integrity vector
+ * @bio:	bio whose integrity vector to update
+ * @bytes_done:	number of data bytes that have been completed
  *
- * Description: This function calculates how many पूर्णांकegrity bytes the
+ * Description: This function calculates how many integrity bytes the
  * number of completed data bytes correspond to and advances the
- * पूर्णांकegrity vector accordingly.
+ * integrity vector accordingly.
  */
-व्योम bio_पूर्णांकegrity_advance(काष्ठा bio *bio, अचिन्हित पूर्णांक bytes_करोne)
-अणु
-	काष्ठा bio_पूर्णांकegrity_payload *bip = bio_पूर्णांकegrity(bio);
-	काष्ठा blk_पूर्णांकegrity *bi = blk_get_पूर्णांकegrity(bio->bi_bdev->bd_disk);
-	अचिन्हित bytes = bio_पूर्णांकegrity_bytes(bi, bytes_करोne >> 9);
+void bio_integrity_advance(struct bio *bio, unsigned int bytes_done)
+{
+	struct bio_integrity_payload *bip = bio_integrity(bio);
+	struct blk_integrity *bi = blk_get_integrity(bio->bi_bdev->bd_disk);
+	unsigned bytes = bio_integrity_bytes(bi, bytes_done >> 9);
 
-	bip->bip_iter.bi_sector += bytes_करोne >> 9;
+	bip->bip_iter.bi_sector += bytes_done >> 9;
 	bvec_iter_advance(bip->bip_vec, &bip->bip_iter, bytes);
-पूर्ण
+}
 
 /**
- * bio_पूर्णांकegrity_trim - Trim पूर्णांकegrity vector
- * @bio:	bio whose पूर्णांकegrity vector to update
+ * bio_integrity_trim - Trim integrity vector
+ * @bio:	bio whose integrity vector to update
  *
- * Description: Used to trim the पूर्णांकegrity vector in a cloned bio.
+ * Description: Used to trim the integrity vector in a cloned bio.
  */
-व्योम bio_पूर्णांकegrity_trim(काष्ठा bio *bio)
-अणु
-	काष्ठा bio_पूर्णांकegrity_payload *bip = bio_पूर्णांकegrity(bio);
-	काष्ठा blk_पूर्णांकegrity *bi = blk_get_पूर्णांकegrity(bio->bi_bdev->bd_disk);
+void bio_integrity_trim(struct bio *bio)
+{
+	struct bio_integrity_payload *bip = bio_integrity(bio);
+	struct blk_integrity *bi = blk_get_integrity(bio->bi_bdev->bd_disk);
 
-	bip->bip_iter.bi_size = bio_पूर्णांकegrity_bytes(bi, bio_sectors(bio));
-पूर्ण
-EXPORT_SYMBOL(bio_पूर्णांकegrity_trim);
+	bip->bip_iter.bi_size = bio_integrity_bytes(bi, bio_sectors(bio));
+}
+EXPORT_SYMBOL(bio_integrity_trim);
 
 /**
- * bio_पूर्णांकegrity_clone - Callback क्रम cloning bios with पूर्णांकegrity metadata
+ * bio_integrity_clone - Callback for cloning bios with integrity metadata
  * @bio:	New bio
  * @bio_src:	Original bio
  * @gfp_mask:	Memory allocation mask
  *
  * Description:	Called to allocate a bip when cloning a bio
  */
-पूर्णांक bio_पूर्णांकegrity_clone(काष्ठा bio *bio, काष्ठा bio *bio_src,
+int bio_integrity_clone(struct bio *bio, struct bio *bio_src,
 			gfp_t gfp_mask)
-अणु
-	काष्ठा bio_पूर्णांकegrity_payload *bip_src = bio_पूर्णांकegrity(bio_src);
-	काष्ठा bio_पूर्णांकegrity_payload *bip;
+{
+	struct bio_integrity_payload *bip_src = bio_integrity(bio_src);
+	struct bio_integrity_payload *bip;
 
-	BUG_ON(bip_src == शून्य);
+	BUG_ON(bip_src == NULL);
 
-	bip = bio_पूर्णांकegrity_alloc(bio, gfp_mask, bip_src->bip_vcnt);
-	अगर (IS_ERR(bip))
-		वापस PTR_ERR(bip);
+	bip = bio_integrity_alloc(bio, gfp_mask, bip_src->bip_vcnt);
+	if (IS_ERR(bip))
+		return PTR_ERR(bip);
 
-	स_नकल(bip->bip_vec, bip_src->bip_vec,
-	       bip_src->bip_vcnt * माप(काष्ठा bio_vec));
+	memcpy(bip->bip_vec, bip_src->bip_vec,
+	       bip_src->bip_vcnt * sizeof(struct bio_vec));
 
 	bip->bip_vcnt = bip_src->bip_vcnt;
 	bip->bip_iter = bip_src->bip_iter;
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(bio_पूर्णांकegrity_clone);
+	return 0;
+}
+EXPORT_SYMBOL(bio_integrity_clone);
 
-पूर्णांक bioset_पूर्णांकegrity_create(काष्ठा bio_set *bs, पूर्णांक pool_size)
-अणु
-	अगर (mempool_initialized(&bs->bio_पूर्णांकegrity_pool))
-		वापस 0;
+int bioset_integrity_create(struct bio_set *bs, int pool_size)
+{
+	if (mempool_initialized(&bs->bio_integrity_pool))
+		return 0;
 
-	अगर (mempool_init_slab_pool(&bs->bio_पूर्णांकegrity_pool,
+	if (mempool_init_slab_pool(&bs->bio_integrity_pool,
 				   pool_size, bip_slab))
-		वापस -1;
+		return -1;
 
-	अगर (biovec_init_pool(&bs->bvec_पूर्णांकegrity_pool, pool_size)) अणु
-		mempool_निकास(&bs->bio_पूर्णांकegrity_pool);
-		वापस -1;
-	पूर्ण
+	if (biovec_init_pool(&bs->bvec_integrity_pool, pool_size)) {
+		mempool_exit(&bs->bio_integrity_pool);
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(bioset_पूर्णांकegrity_create);
+	return 0;
+}
+EXPORT_SYMBOL(bioset_integrity_create);
 
-व्योम bioset_पूर्णांकegrity_मुक्त(काष्ठा bio_set *bs)
-अणु
-	mempool_निकास(&bs->bio_पूर्णांकegrity_pool);
-	mempool_निकास(&bs->bvec_पूर्णांकegrity_pool);
-पूर्ण
+void bioset_integrity_free(struct bio_set *bs)
+{
+	mempool_exit(&bs->bio_integrity_pool);
+	mempool_exit(&bs->bvec_integrity_pool);
+}
 
-व्योम __init bio_पूर्णांकegrity_init(व्योम)
-अणु
+void __init bio_integrity_init(void)
+{
 	/*
-	 * kपूर्णांकegrityd won't block much but may burn a lot of CPU cycles.
-	 * Make it highpri CPU पूर्णांकensive wq with max concurrency of 1.
+	 * kintegrityd won't block much but may burn a lot of CPU cycles.
+	 * Make it highpri CPU intensive wq with max concurrency of 1.
 	 */
-	kपूर्णांकegrityd_wq = alloc_workqueue("kintegrityd", WQ_MEM_RECLAIM |
+	kintegrityd_wq = alloc_workqueue("kintegrityd", WQ_MEM_RECLAIM |
 					 WQ_HIGHPRI | WQ_CPU_INTENSIVE, 1);
-	अगर (!kपूर्णांकegrityd_wq)
+	if (!kintegrityd_wq)
 		panic("Failed to create kintegrityd\n");
 
 	bip_slab = kmem_cache_create("bio_integrity_payload",
-				     माप(काष्ठा bio_पूर्णांकegrity_payload) +
-				     माप(काष्ठा bio_vec) * BIO_INLINE_VECS,
-				     0, SLAB_HWCACHE_ALIGN|SLAB_PANIC, शून्य);
-पूर्ण
+				     sizeof(struct bio_integrity_payload) +
+				     sizeof(struct bio_vec) * BIO_INLINE_VECS,
+				     0, SLAB_HWCACHE_ALIGN|SLAB_PANIC, NULL);
+}

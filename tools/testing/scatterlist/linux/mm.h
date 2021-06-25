@@ -1,162 +1,161 @@
-<शैली गुरु>
-#अगर_अघोषित _LINUX_MM_H
-#घोषणा _LINUX_MM_H
+#ifndef _LINUX_MM_H
+#define _LINUX_MM_H
 
-#समावेश <निश्चित.स>
-#समावेश <माला.स>
-#समावेश <मानककोष.स>
-#समावेश <त्रुटिसं.स>
-#समावेश <सीमा.स>
-#समावेश <मानकपन.स>
+#include <assert.h>
+#include <string.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <limits.h>
+#include <stdio.h>
 
-प्रकार अचिन्हित दीर्घ dma_addr_t;
+typedef unsigned long dma_addr_t;
 
-#घोषणा unlikely
+#define unlikely
 
-#घोषणा BUG_ON(x) निश्चित(!(x))
+#define BUG_ON(x) assert(!(x))
 
-#घोषणा WARN_ON(condition) (अणु                                           \
-	पूर्णांक __ret_warn_on = !!(condition);                              \
+#define WARN_ON(condition) ({                                           \
+	int __ret_warn_on = !!(condition);                              \
 	unlikely(__ret_warn_on);                                        \
-पूर्ण)
+})
 
-#घोषणा WARN_ON_ONCE(condition) (अणु                              \
-	पूर्णांक __ret_warn_on = !!(condition);                      \
-	अगर (unlikely(__ret_warn_on))                            \
-		निश्चित(0);                                      \
+#define WARN_ON_ONCE(condition) ({                              \
+	int __ret_warn_on = !!(condition);                      \
+	if (unlikely(__ret_warn_on))                            \
+		assert(0);                                      \
 	unlikely(__ret_warn_on);                                \
-पूर्ण)
+})
 
-#घोषणा PAGE_SIZE	(4096)
-#घोषणा PAGE_SHIFT	(12)
-#घोषणा PAGE_MASK	(~(PAGE_SIZE-1))
+#define PAGE_SIZE	(4096)
+#define PAGE_SHIFT	(12)
+#define PAGE_MASK	(~(PAGE_SIZE-1))
 
-#घोषणा __ALIGN_KERNEL(x, a)		__ALIGN_KERNEL_MASK(x, (typeof(x))(a) - 1)
-#घोषणा __ALIGN_KERNEL_MASK(x, mask)	(((x) + (mask)) & ~(mask))
-#घोषणा ALIGN(x, a)			__ALIGN_KERNEL((x), (a))
-#घोषणा ALIGN_DOWN(x, a)		__ALIGN_KERNEL((x) - ((a) - 1), (a))
+#define __ALIGN_KERNEL(x, a)		__ALIGN_KERNEL_MASK(x, (typeof(x))(a) - 1)
+#define __ALIGN_KERNEL_MASK(x, mask)	(((x) + (mask)) & ~(mask))
+#define ALIGN(x, a)			__ALIGN_KERNEL((x), (a))
+#define ALIGN_DOWN(x, a)		__ALIGN_KERNEL((x) - ((a) - 1), (a))
 
-#घोषणा PAGE_ALIGN(addr) ALIGN(addr, PAGE_SIZE)
+#define PAGE_ALIGN(addr) ALIGN(addr, PAGE_SIZE)
 
-#घोषणा offset_in_page(p)	((अचिन्हित दीर्घ)(p) & ~PAGE_MASK)
+#define offset_in_page(p)	((unsigned long)(p) & ~PAGE_MASK)
 
-#घोषणा virt_to_page(x)	((व्योम *)x)
-#घोषणा page_address(x)	((व्योम *)x)
+#define virt_to_page(x)	((void *)x)
+#define page_address(x)	((void *)x)
 
-अटल अंतरभूत अचिन्हित दीर्घ page_to_phys(काष्ठा page *page)
-अणु
-	निश्चित(0);
+static inline unsigned long page_to_phys(struct page *page)
+{
+	assert(0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा page_to_pfn(page) ((अचिन्हित दीर्घ)(page) / PAGE_SIZE)
-#घोषणा pfn_to_page(pfn) (व्योम *)((pfn) * PAGE_SIZE)
-#घोषणा nth_page(page,n) pfn_to_page(page_to_pfn((page)) + (n))
+#define page_to_pfn(page) ((unsigned long)(page) / PAGE_SIZE)
+#define pfn_to_page(pfn) (void *)((pfn) * PAGE_SIZE)
+#define nth_page(page,n) pfn_to_page(page_to_pfn((page)) + (n))
 
-#घोषणा __min(t1, t2, min1, min2, x, y) (अणु              \
+#define __min(t1, t2, min1, min2, x, y) ({              \
 	t1 min1 = (x);                                  \
 	t2 min2 = (y);                                  \
-	(व्योम) (&min1 == &min2);                        \
-	min1 < min2 ? min1 : min2; पूर्ण)
+	(void) (&min1 == &min2);                        \
+	min1 < min2 ? min1 : min2; })
 
-#घोषणा ___PASTE(a,b) a##b
-#घोषणा __PASTE(a,b) ___PASTE(a,b)
+#define ___PASTE(a,b) a##b
+#define __PASTE(a,b) ___PASTE(a,b)
 
-#घोषणा __UNIQUE_ID(prefix) __PASTE(__PASTE(__UNIQUE_ID_, prefix), __COUNTER__)
+#define __UNIQUE_ID(prefix) __PASTE(__PASTE(__UNIQUE_ID_, prefix), __COUNTER__)
 
-#घोषणा min(x, y)                                       \
+#define min(x, y)                                       \
 	__min(typeof(x), typeof(y),                     \
 	      __UNIQUE_ID(min1_), __UNIQUE_ID(min2_),   \
 	      x, y)
 
-#घोषणा min_t(type, x, y)                               \
+#define min_t(type, x, y)                               \
 	__min(type, type,                               \
 	      __UNIQUE_ID(min1_), __UNIQUE_ID(min2_),   \
 	      x, y)
 
-#घोषणा preemptible() (1)
+#define preemptible() (1)
 
-अटल अंतरभूत व्योम *kmap(काष्ठा page *page)
-अणु
-	निश्चित(0);
+static inline void *kmap(struct page *page)
+{
+	assert(0);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल अंतरभूत व्योम *kmap_atomic(काष्ठा page *page)
-अणु
-	निश्चित(0);
+static inline void *kmap_atomic(struct page *page)
+{
+	assert(0);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल अंतरभूत व्योम kunmap(व्योम *addr)
-अणु
-	निश्चित(0);
-पूर्ण
+static inline void kunmap(void *addr)
+{
+	assert(0);
+}
 
-अटल अंतरभूत व्योम kunmap_atomic(व्योम *addr)
-अणु
-	निश्चित(0);
-पूर्ण
+static inline void kunmap_atomic(void *addr)
+{
+	assert(0);
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ __get_मुक्त_page(अचिन्हित पूर्णांक flags)
-अणु
-	वापस (अचिन्हित दीर्घ)दो_स्मृति(PAGE_SIZE);
-पूर्ण
+static inline unsigned long __get_free_page(unsigned int flags)
+{
+	return (unsigned long)malloc(PAGE_SIZE);
+}
 
-अटल अंतरभूत व्योम मुक्त_page(अचिन्हित दीर्घ page)
-अणु
-	मुक्त((व्योम *)page);
-पूर्ण
+static inline void free_page(unsigned long page)
+{
+	free((void *)page);
+}
 
-अटल अंतरभूत व्योम *kदो_स्मृति(अचिन्हित पूर्णांक size, अचिन्हित पूर्णांक flags)
-अणु
-	वापस दो_स्मृति(size);
-पूर्ण
+static inline void *kmalloc(unsigned int size, unsigned int flags)
+{
+	return malloc(size);
+}
 
-अटल अंतरभूत व्योम *
-kदो_स्मृति_array(अचिन्हित पूर्णांक n, अचिन्हित पूर्णांक size, अचिन्हित पूर्णांक flags)
-अणु
-	वापस दो_स्मृति(n * size);
-पूर्ण
+static inline void *
+kmalloc_array(unsigned int n, unsigned int size, unsigned int flags)
+{
+	return malloc(n * size);
+}
 
-#घोषणा kमुक्त(x) मुक्त(x)
+#define kfree(x) free(x)
 
-#घोषणा kmemleak_alloc(a, b, c, d)
-#घोषणा kmemleak_मुक्त(a)
+#define kmemleak_alloc(a, b, c, d)
+#define kmemleak_free(a)
 
-#घोषणा PageSlab(p) (0)
-#घोषणा flush_kernel_dcache_page(p)
+#define PageSlab(p) (0)
+#define flush_kernel_dcache_page(p)
 
-#घोषणा MAX_ERRNO	4095
+#define MAX_ERRNO	4095
 
-#घोषणा IS_ERR_VALUE(x) unlikely((अचिन्हित दीर्घ)(व्योम *)(x) >= (अचिन्हित दीर्घ)-MAX_ERRNO)
+#define IS_ERR_VALUE(x) unlikely((unsigned long)(void *)(x) >= (unsigned long)-MAX_ERRNO)
 
-अटल अंतरभूत व्योम * __must_check ERR_PTR(दीर्घ error)
-अणु
-	वापस (व्योम *) error;
-पूर्ण
+static inline void * __must_check ERR_PTR(long error)
+{
+	return (void *) error;
+}
 
-अटल अंतरभूत दीर्घ __must_check PTR_ERR(__क्रमce स्थिर व्योम *ptr)
-अणु
-	वापस (दीर्घ) ptr;
-पूर्ण
+static inline long __must_check PTR_ERR(__force const void *ptr)
+{
+	return (long) ptr;
+}
 
-अटल अंतरभूत bool __must_check IS_ERR(__क्रमce स्थिर व्योम *ptr)
-अणु
-	वापस IS_ERR_VALUE((अचिन्हित दीर्घ)ptr);
-पूर्ण
+static inline bool __must_check IS_ERR(__force const void *ptr)
+{
+	return IS_ERR_VALUE((unsigned long)ptr);
+}
 
-अटल अंतरभूत पूर्णांक __must_check PTR_ERR_OR_ZERO(__क्रमce स्थिर व्योम *ptr)
-अणु
-	अगर (IS_ERR(ptr))
-		वापस PTR_ERR(ptr);
-	अन्यथा
-		वापस 0;
-पूर्ण
+static inline int __must_check PTR_ERR_OR_ZERO(__force const void *ptr)
+{
+	if (IS_ERR(ptr))
+		return PTR_ERR(ptr);
+	else
+		return 0;
+}
 
-#घोषणा IS_ENABLED(x) (0)
+#define IS_ENABLED(x) (0)
 
-#पूर्ण_अगर
+#endif

@@ -1,47 +1,46 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Tegra host1x Debug
  *
  * Copyright (c) 2011-2013 NVIDIA Corporation.
  */
-#अगर_अघोषित __HOST1X_DEBUG_H
-#घोषणा __HOST1X_DEBUG_H
+#ifndef __HOST1X_DEBUG_H
+#define __HOST1X_DEBUG_H
 
-#समावेश <linux/debugfs.h>
-#समावेश <linux/seq_file.h>
+#include <linux/debugfs.h>
+#include <linux/seq_file.h>
 
-काष्ठा host1x;
+struct host1x;
 
-काष्ठा output अणु
-	व्योम (*fn)(व्योम *ctx, स्थिर अक्षर *str, माप_प्रकार len, bool cont);
-	व्योम *ctx;
-	अक्षर buf[256];
-पूर्ण;
+struct output {
+	void (*fn)(void *ctx, const char *str, size_t len, bool cont);
+	void *ctx;
+	char buf[256];
+};
 
-अटल अंतरभूत व्योम ग_लिखो_to_seqfile(व्योम *ctx, स्थिर अक्षर *str, माप_प्रकार len,
+static inline void write_to_seqfile(void *ctx, const char *str, size_t len,
 				    bool cont)
-अणु
-	seq_ग_लिखो((काष्ठा seq_file *)ctx, str, len);
-पूर्ण
+{
+	seq_write((struct seq_file *)ctx, str, len);
+}
 
-अटल अंतरभूत व्योम ग_लिखो_to_prपूर्णांकk(व्योम *ctx, स्थिर अक्षर *str, माप_प्रकार len,
+static inline void write_to_printk(void *ctx, const char *str, size_t len,
 				   bool cont)
-अणु
-	अगर (cont)
+{
+	if (cont)
 		pr_cont("%s", str);
-	अन्यथा
+	else
 		pr_info("%s", str);
-पूर्ण
+}
 
-व्योम __म_लिखो(2, 3) host1x_debug_output(काष्ठा output *o, स्थिर अक्षर *fmt, ...);
-व्योम __म_लिखो(2, 3) host1x_debug_cont(काष्ठा output *o, स्थिर अक्षर *fmt, ...);
+void __printf(2, 3) host1x_debug_output(struct output *o, const char *fmt, ...);
+void __printf(2, 3) host1x_debug_cont(struct output *o, const char *fmt, ...);
 
-बाह्य अचिन्हित पूर्णांक host1x_debug_trace_cmdbuf;
+extern unsigned int host1x_debug_trace_cmdbuf;
 
-व्योम host1x_debug_init(काष्ठा host1x *host1x);
-व्योम host1x_debug_deinit(काष्ठा host1x *host1x);
-व्योम host1x_debug_dump(काष्ठा host1x *host1x);
-व्योम host1x_debug_dump_syncpts(काष्ठा host1x *host1x);
+void host1x_debug_init(struct host1x *host1x);
+void host1x_debug_deinit(struct host1x *host1x);
+void host1x_debug_dump(struct host1x *host1x);
+void host1x_debug_dump_syncpts(struct host1x *host1x);
 
-#पूर्ण_अगर
+#endif

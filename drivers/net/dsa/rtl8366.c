@@ -1,149 +1,148 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-/* Realtek SMI library helpers क्रम the RTL8366x variants
+// SPDX-License-Identifier: GPL-2.0
+/* Realtek SMI library helpers for the RTL8366x variants
  * RTL8366RB and RTL8366S
  *
  * Copyright (C) 2017 Linus Walleij <linus.walleij@linaro.org>
- * Copyright (C) 2009-2010 Gabor Juhos <juhosg@खोलोwrt.org>
- * Copyright (C) 2010 Antti Seppथअlथअ <a.seppala@gmail.com>
+ * Copyright (C) 2009-2010 Gabor Juhos <juhosg@openwrt.org>
+ * Copyright (C) 2010 Antti Seppälä <a.seppala@gmail.com>
  * Copyright (C) 2010 Roman Yeryomin <roman@advem.lv>
  * Copyright (C) 2011 Colin Leitner <colin.leitner@googlemail.com>
  */
-#समावेश <linux/अगर_bridge.h>
-#समावेश <net/dsa.h>
+#include <linux/if_bridge.h>
+#include <net/dsa.h>
 
-#समावेश "realtek-smi-core.h"
+#include "realtek-smi-core.h"
 
-पूर्णांक rtl8366_mc_is_used(काष्ठा realtek_smi *smi, पूर्णांक mc_index, पूर्णांक *used)
-अणु
-	पूर्णांक ret;
-	पूर्णांक i;
+int rtl8366_mc_is_used(struct realtek_smi *smi, int mc_index, int *used)
+{
+	int ret;
+	int i;
 
 	*used = 0;
-	क्रम (i = 0; i < smi->num_ports; i++) अणु
-		पूर्णांक index = 0;
+	for (i = 0; i < smi->num_ports; i++) {
+		int index = 0;
 
 		ret = smi->ops->get_mc_index(smi, i, &index);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-		अगर (mc_index == index) अणु
+		if (mc_index == index) {
 			*used = 1;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(rtl8366_mc_is_used);
 
 /**
  * rtl8366_obtain_mc() - retrieve or allocate a VLAN member configuration
  * @smi: the Realtek SMI device instance
  * @vid: the VLAN ID to look up or allocate
- * @vlanmc: the poपूर्णांकer will be asचिन्हित to a poपूर्णांकer to a valid member config
- * अगर successful
- * @वापस: index of a new member config or negative error number
+ * @vlanmc: the pointer will be assigned to a pointer to a valid member config
+ * if successful
+ * @return: index of a new member config or negative error number
  */
-अटल पूर्णांक rtl8366_obtain_mc(काष्ठा realtek_smi *smi, पूर्णांक vid,
-			     काष्ठा rtl8366_vlan_mc *vlanmc)
-अणु
-	काष्ठा rtl8366_vlan_4k vlan4k;
-	पूर्णांक ret;
-	पूर्णांक i;
+static int rtl8366_obtain_mc(struct realtek_smi *smi, int vid,
+			     struct rtl8366_vlan_mc *vlanmc)
+{
+	struct rtl8366_vlan_4k vlan4k;
+	int ret;
+	int i;
 
-	/* Try to find an existing member config entry क्रम this VID */
-	क्रम (i = 0; i < smi->num_vlan_mc; i++) अणु
+	/* Try to find an existing member config entry for this VID */
+	for (i = 0; i < smi->num_vlan_mc; i++) {
 		ret = smi->ops->get_vlan_mc(smi, i, vlanmc);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(smi->dev, "error searching for VLAN MC %d for VID %d\n",
 				i, vid);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
-		अगर (vid == vlanmc->vid)
-			वापस i;
-	पूर्ण
+		if (vid == vlanmc->vid)
+			return i;
+	}
 
-	/* We have no MC entry क्रम this VID, try to find an empty one */
-	क्रम (i = 0; i < smi->num_vlan_mc; i++) अणु
+	/* We have no MC entry for this VID, try to find an empty one */
+	for (i = 0; i < smi->num_vlan_mc; i++) {
 		ret = smi->ops->get_vlan_mc(smi, i, vlanmc);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(smi->dev, "error searching for VLAN MC %d for VID %d\n",
 				i, vid);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
-		अगर (vlanmc->vid == 0 && vlanmc->member == 0) अणु
+		if (vlanmc->vid == 0 && vlanmc->member == 0) {
 			/* Update the entry from the 4K table */
 			ret = smi->ops->get_vlan_4k(smi, vid, &vlan4k);
-			अगर (ret) अणु
+			if (ret) {
 				dev_err(smi->dev, "error looking for 4K VLAN MC %d for VID %d\n",
 					i, vid);
-				वापस ret;
-			पूर्ण
+				return ret;
+			}
 
 			vlanmc->vid = vid;
 			vlanmc->member = vlan4k.member;
 			vlanmc->untag = vlan4k.untag;
 			vlanmc->fid = vlan4k.fid;
 			ret = smi->ops->set_vlan_mc(smi, i, vlanmc);
-			अगर (ret) अणु
+			if (ret) {
 				dev_err(smi->dev, "unable to set/update VLAN MC %d for VID %d\n",
 					i, vid);
-				वापस ret;
-			पूर्ण
+				return ret;
+			}
 
 			dev_dbg(smi->dev, "created new MC at index %d for VID %d\n",
 				i, vid);
-			वापस i;
-		पूर्ण
-	पूर्ण
+			return i;
+		}
+	}
 
 	/* MC table is full, try to find an unused entry and replace it */
-	क्रम (i = 0; i < smi->num_vlan_mc; i++) अणु
-		पूर्णांक used;
+	for (i = 0; i < smi->num_vlan_mc; i++) {
+		int used;
 
 		ret = rtl8366_mc_is_used(smi, i, &used);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-		अगर (!used) अणु
+		if (!used) {
 			/* Update the entry from the 4K table */
 			ret = smi->ops->get_vlan_4k(smi, vid, &vlan4k);
-			अगर (ret)
-				वापस ret;
+			if (ret)
+				return ret;
 
 			vlanmc->vid = vid;
 			vlanmc->member = vlan4k.member;
 			vlanmc->untag = vlan4k.untag;
 			vlanmc->fid = vlan4k.fid;
 			ret = smi->ops->set_vlan_mc(smi, i, vlanmc);
-			अगर (ret) अणु
+			if (ret) {
 				dev_err(smi->dev, "unable to set/update VLAN MC %d for VID %d\n",
 					i, vid);
-				वापस ret;
-			पूर्ण
+				return ret;
+			}
 			dev_dbg(smi->dev, "recycled MC at index %i for VID %d\n",
 				i, vid);
-			वापस i;
-		पूर्ण
-	पूर्ण
+			return i;
+		}
+	}
 
 	dev_err(smi->dev, "all VLAN member configurations are in use\n");
-	वापस -ENOSPC;
-पूर्ण
+	return -ENOSPC;
+}
 
-पूर्णांक rtl8366_set_vlan(काष्ठा realtek_smi *smi, पूर्णांक vid, u32 member,
+int rtl8366_set_vlan(struct realtek_smi *smi, int vid, u32 member,
 		     u32 untag, u32 fid)
-अणु
-	काष्ठा rtl8366_vlan_mc vlanmc;
-	काष्ठा rtl8366_vlan_4k vlan4k;
-	पूर्णांक mc;
-	पूर्णांक ret;
+{
+	struct rtl8366_vlan_mc vlanmc;
+	struct rtl8366_vlan_4k vlan4k;
+	int mc;
+	int ret;
 
-	अगर (!smi->ops->is_vlan_valid(smi, vid))
-		वापस -EINVAL;
+	if (!smi->ops->is_vlan_valid(smi, vid))
+		return -EINVAL;
 
 	dev_dbg(smi->dev,
 		"setting VLAN%d 4k members: 0x%02x, untagged: 0x%02x\n",
@@ -151,24 +150,24 @@ EXPORT_SYMBOL_GPL(rtl8366_mc_is_used);
 
 	/* Update the 4K table */
 	ret = smi->ops->get_vlan_4k(smi, vid, &vlan4k);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	vlan4k.member |= member;
 	vlan4k.untag |= untag;
 	vlan4k.fid = fid;
 	ret = smi->ops->set_vlan_4k(smi, &vlan4k);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	dev_dbg(smi->dev,
 		"resulting VLAN%d 4k members: 0x%02x, untagged: 0x%02x\n",
 		vid, vlan4k.member, vlan4k.untag);
 
-	/* Find or allocate a member config क्रम this VID */
+	/* Find or allocate a member config for this VID */
 	ret = rtl8366_obtain_mc(smi, vid, &vlanmc);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 	mc = ret;
 
 	/* Update the MC entry */
@@ -178,101 +177,101 @@ EXPORT_SYMBOL_GPL(rtl8366_mc_is_used);
 
 	/* Commit updates to the MC entry */
 	ret = smi->ops->set_vlan_mc(smi, mc, &vlanmc);
-	अगर (ret)
+	if (ret)
 		dev_err(smi->dev, "failed to commit changes to VLAN MC index %d for VID %d\n",
 			mc, vid);
-	अन्यथा
+	else
 		dev_dbg(smi->dev,
 			"resulting VLAN%d MC members: 0x%02x, untagged: 0x%02x\n",
 			vid, vlanmc.member, vlanmc.untag);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(rtl8366_set_vlan);
 
-पूर्णांक rtl8366_set_pvid(काष्ठा realtek_smi *smi, अचिन्हित पूर्णांक port,
-		     अचिन्हित पूर्णांक vid)
-अणु
-	काष्ठा rtl8366_vlan_mc vlanmc;
-	पूर्णांक mc;
-	पूर्णांक ret;
+int rtl8366_set_pvid(struct realtek_smi *smi, unsigned int port,
+		     unsigned int vid)
+{
+	struct rtl8366_vlan_mc vlanmc;
+	int mc;
+	int ret;
 
-	अगर (!smi->ops->is_vlan_valid(smi, vid))
-		वापस -EINVAL;
+	if (!smi->ops->is_vlan_valid(smi, vid))
+		return -EINVAL;
 
-	/* Find or allocate a member config क्रम this VID */
+	/* Find or allocate a member config for this VID */
 	ret = rtl8366_obtain_mc(smi, vid, &vlanmc);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 	mc = ret;
 
 	ret = smi->ops->set_mc_index(smi, port, mc);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(smi->dev, "set PVID: failed to set MC index %d for port %d\n",
 			mc, port);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	dev_dbg(smi->dev, "set PVID: the PVID for port %d set to %d using existing MC index %d\n",
 		port, vid, mc);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(rtl8366_set_pvid);
 
-पूर्णांक rtl8366_enable_vlan4k(काष्ठा realtek_smi *smi, bool enable)
-अणु
-	पूर्णांक ret;
+int rtl8366_enable_vlan4k(struct realtek_smi *smi, bool enable)
+{
+	int ret;
 
 	/* To enable 4k VLAN, ordinary VLAN must be enabled first,
-	 * but अगर we disable 4k VLAN it is fine to leave ordinary
+	 * but if we disable 4k VLAN it is fine to leave ordinary
 	 * VLAN enabled.
 	 */
-	अगर (enable) अणु
+	if (enable) {
 		/* Make sure VLAN is ON */
 		ret = smi->ops->enable_vlan(smi, true);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		smi->vlan_enabled = true;
-	पूर्ण
+	}
 
 	ret = smi->ops->enable_vlan4k(smi, enable);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	smi->vlan4k_enabled = enable;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(rtl8366_enable_vlan4k);
 
-पूर्णांक rtl8366_enable_vlan(काष्ठा realtek_smi *smi, bool enable)
-अणु
-	पूर्णांक ret;
+int rtl8366_enable_vlan(struct realtek_smi *smi, bool enable)
+{
+	int ret;
 
 	ret = smi->ops->enable_vlan(smi, enable);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	smi->vlan_enabled = enable;
 
 	/* If we turn VLAN off, make sure that we turn off
-	 * 4k VLAN as well, अगर that happened to be on.
+	 * 4k VLAN as well, if that happened to be on.
 	 */
-	अगर (!enable) अणु
+	if (!enable) {
 		smi->vlan4k_enabled = false;
 		ret = smi->ops->enable_vlan4k(smi, false);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(rtl8366_enable_vlan);
 
-पूर्णांक rtl8366_reset_vlan(काष्ठा realtek_smi *smi)
-अणु
-	काष्ठा rtl8366_vlan_mc vlanmc;
-	पूर्णांक ret;
-	पूर्णांक i;
+int rtl8366_reset_vlan(struct realtek_smi *smi)
+{
+	struct rtl8366_vlan_mc vlanmc;
+	int ret;
+	int i;
 
 	rtl8366_enable_vlan(smi, false);
 	rtl8366_enable_vlan4k(smi, false);
@@ -283,74 +282,74 @@ EXPORT_SYMBOL_GPL(rtl8366_enable_vlan);
 	vlanmc.member = 0;
 	vlanmc.untag = 0;
 	vlanmc.fid = 0;
-	क्रम (i = 0; i < smi->num_vlan_mc; i++) अणु
+	for (i = 0; i < smi->num_vlan_mc; i++) {
 		ret = smi->ops->set_vlan_mc(smi, i, &vlanmc);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(rtl8366_reset_vlan);
 
-पूर्णांक rtl8366_init_vlan(काष्ठा realtek_smi *smi)
-अणु
-	पूर्णांक port;
-	पूर्णांक ret;
+int rtl8366_init_vlan(struct realtek_smi *smi)
+{
+	int port;
+	int ret;
 
 	ret = rtl8366_reset_vlan(smi);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* Loop over the available ports, क्रम each port, associate
+	/* Loop over the available ports, for each port, associate
 	 * it with the VLAN (port+1)
 	 */
-	क्रम (port = 0; port < smi->num_ports; port++) अणु
+	for (port = 0; port < smi->num_ports; port++) {
 		u32 mask;
 
-		अगर (port == smi->cpu_port)
+		if (port == smi->cpu_port)
 			/* For the CPU port, make all ports members of this
 			 * VLAN.
 			 */
-			mask = GENMASK((पूर्णांक)smi->num_ports - 1, 0);
-		अन्यथा
+			mask = GENMASK((int)smi->num_ports - 1, 0);
+		else
 			/* For all other ports, enable itself plus the
 			 * CPU port.
 			 */
 			mask = BIT(port) | BIT(smi->cpu_port);
 
 		/* For each port, set the port as member of VLAN (port+1)
-		 * and untagged, except क्रम the CPU port: the CPU port (5) is
+		 * and untagged, except for the CPU port: the CPU port (5) is
 		 * member of VLAN 6 and so are ALL the other ports as well.
 		 * Use filter 0 (no filter).
 		 */
 		dev_info(smi->dev, "VLAN%d port mask for port %d, %08x\n",
 			 (port + 1), port, mask);
 		ret = rtl8366_set_vlan(smi, (port + 1), mask, mask, 0);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		dev_info(smi->dev, "VLAN%d port %d, PVID set to %d\n",
 			 (port + 1), port, (port + 1));
 		ret = rtl8366_set_pvid(smi, port, (port + 1));
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस rtl8366_enable_vlan(smi, true);
-पूर्ण
+	return rtl8366_enable_vlan(smi, true);
+}
 EXPORT_SYMBOL_GPL(rtl8366_init_vlan);
 
-पूर्णांक rtl8366_vlan_filtering(काष्ठा dsa_चयन *ds, पूर्णांक port, bool vlan_filtering,
-			   काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा realtek_smi *smi = ds->priv;
-	काष्ठा rtl8366_vlan_4k vlan4k;
-	पूर्णांक ret;
+int rtl8366_vlan_filtering(struct dsa_switch *ds, int port, bool vlan_filtering,
+			   struct netlink_ext_ack *extack)
+{
+	struct realtek_smi *smi = ds->priv;
+	struct rtl8366_vlan_4k vlan4k;
+	int ret;
 
 	/* Use VLAN nr port + 1 since VLAN0 is not valid */
-	अगर (!smi->ops->is_vlan_valid(smi, port + 1))
-		वापस -EINVAL;
+	if (!smi->ops->is_vlan_valid(smi, port + 1))
+		return -EINVAL;
 
 	dev_info(smi->dev, "%s filtering on port %d\n",
 		 vlan_filtering ? "enable" : "disable",
@@ -361,95 +360,95 @@ EXPORT_SYMBOL_GPL(rtl8366_init_vlan);
 	 * support this in the driver when the callback only says on/off.
 	 */
 	ret = smi->ops->get_vlan_4k(smi, port + 1, &vlan4k);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* Just set the filter to FID 1 क्रम now then */
+	/* Just set the filter to FID 1 for now then */
 	ret = rtl8366_set_vlan(smi, port + 1,
 			       vlan4k.member,
 			       vlan4k.untag,
 			       1);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(rtl8366_vlan_filtering);
 
-पूर्णांक rtl8366_vlan_add(काष्ठा dsa_चयन *ds, पूर्णांक port,
-		     स्थिर काष्ठा चयनdev_obj_port_vlan *vlan,
-		     काष्ठा netlink_ext_ack *extack)
-अणु
+int rtl8366_vlan_add(struct dsa_switch *ds, int port,
+		     const struct switchdev_obj_port_vlan *vlan,
+		     struct netlink_ext_ack *extack)
+{
 	bool untagged = !!(vlan->flags & BRIDGE_VLAN_INFO_UNTAGGED);
 	bool pvid = !!(vlan->flags & BRIDGE_VLAN_INFO_PVID);
-	काष्ठा realtek_smi *smi = ds->priv;
+	struct realtek_smi *smi = ds->priv;
 	u32 member = 0;
 	u32 untag = 0;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!smi->ops->is_vlan_valid(smi, vlan->vid)) अणु
+	if (!smi->ops->is_vlan_valid(smi, vlan->vid)) {
 		NL_SET_ERR_MSG_MOD(extack, "VLAN ID not valid");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* Enable VLAN in the hardware
 	 * FIXME: what's with this 4k business?
 	 * Just rtl8366_enable_vlan() seems inconclusive.
 	 */
 	ret = rtl8366_enable_vlan4k(smi, true);
-	अगर (ret) अणु
+	if (ret) {
 		NL_SET_ERR_MSG_MOD(extack, "Failed to enable VLAN 4K");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	dev_info(smi->dev, "add VLAN %d on port %d, %s, %s\n",
 		 vlan->vid, port, untagged ? "untagged" : "tagged",
 		 pvid ? " PVID" : "no PVID");
 
-	अगर (dsa_is_dsa_port(ds, port) || dsa_is_cpu_port(ds, port))
+	if (dsa_is_dsa_port(ds, port) || dsa_is_cpu_port(ds, port))
 		dev_err(smi->dev, "port is DSA or CPU port\n");
 
 	member |= BIT(port);
 
-	अगर (untagged)
+	if (untagged)
 		untag |= BIT(port);
 
 	ret = rtl8366_set_vlan(smi, vlan->vid, member, untag, 0);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(smi->dev, "failed to set up VLAN %04x", vlan->vid);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (!pvid)
-		वापस 0;
+	if (!pvid)
+		return 0;
 
 	ret = rtl8366_set_pvid(smi, port, vlan->vid);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(smi->dev, "failed to set PVID on port %d to VLAN %04x",
 			port, vlan->vid);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(rtl8366_vlan_add);
 
-पूर्णांक rtl8366_vlan_del(काष्ठा dsa_चयन *ds, पूर्णांक port,
-		     स्थिर काष्ठा चयनdev_obj_port_vlan *vlan)
-अणु
-	काष्ठा realtek_smi *smi = ds->priv;
-	पूर्णांक ret, i;
+int rtl8366_vlan_del(struct dsa_switch *ds, int port,
+		     const struct switchdev_obj_port_vlan *vlan)
+{
+	struct realtek_smi *smi = ds->priv;
+	int ret, i;
 
 	dev_info(smi->dev, "del VLAN %04x on port %d\n", vlan->vid, port);
 
-	क्रम (i = 0; i < smi->num_vlan_mc; i++) अणु
-		काष्ठा rtl8366_vlan_mc vlanmc;
+	for (i = 0; i < smi->num_vlan_mc; i++) {
+		struct rtl8366_vlan_mc vlanmc;
 
 		ret = smi->ops->get_vlan_mc(smi, i, &vlanmc);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-		अगर (vlan->vid == vlanmc.vid) अणु
+		if (vlan->vid == vlanmc.vid) {
 			/* Remove this port from the VLAN */
 			vlanmc.member &= ~BIT(port);
 			vlanmc.untag &= ~BIT(port);
@@ -458,78 +457,78 @@ EXPORT_SYMBOL_GPL(rtl8366_vlan_add);
 			 * anymore then clear the whole member
 			 * config so it can be reused.
 			 */
-			अगर (!vlanmc.member && vlanmc.untag) अणु
+			if (!vlanmc.member && vlanmc.untag) {
 				vlanmc.vid = 0;
 				vlanmc.priority = 0;
 				vlanmc.fid = 0;
-			पूर्ण
+			}
 			ret = smi->ops->set_vlan_mc(smi, i, &vlanmc);
-			अगर (ret) अणु
+			if (ret) {
 				dev_err(smi->dev,
 					"failed to remove VLAN %04x\n",
 					vlan->vid);
-				वापस ret;
-			पूर्ण
-			अवरोध;
-		पूर्ण
-	पूर्ण
+				return ret;
+			}
+			break;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(rtl8366_vlan_del);
 
-व्योम rtl8366_get_strings(काष्ठा dsa_चयन *ds, पूर्णांक port, u32 stringset,
-			 uपूर्णांक8_t *data)
-अणु
-	काष्ठा realtek_smi *smi = ds->priv;
-	काष्ठा rtl8366_mib_counter *mib;
-	पूर्णांक i;
+void rtl8366_get_strings(struct dsa_switch *ds, int port, u32 stringset,
+			 uint8_t *data)
+{
+	struct realtek_smi *smi = ds->priv;
+	struct rtl8366_mib_counter *mib;
+	int i;
 
-	अगर (port >= smi->num_ports)
-		वापस;
+	if (port >= smi->num_ports)
+		return;
 
-	क्रम (i = 0; i < smi->num_mib_counters; i++) अणु
+	for (i = 0; i < smi->num_mib_counters; i++) {
 		mib = &smi->mib_counters[i];
-		म_नकलन(data + i * ETH_GSTRING_LEN,
+		strncpy(data + i * ETH_GSTRING_LEN,
 			mib->name, ETH_GSTRING_LEN);
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL_GPL(rtl8366_get_strings);
 
-पूर्णांक rtl8366_get_sset_count(काष्ठा dsa_चयन *ds, पूर्णांक port, पूर्णांक sset)
-अणु
-	काष्ठा realtek_smi *smi = ds->priv;
+int rtl8366_get_sset_count(struct dsa_switch *ds, int port, int sset)
+{
+	struct realtek_smi *smi = ds->priv;
 
 	/* We only support SS_STATS */
-	अगर (sset != ETH_SS_STATS)
-		वापस 0;
-	अगर (port >= smi->num_ports)
-		वापस -EINVAL;
+	if (sset != ETH_SS_STATS)
+		return 0;
+	if (port >= smi->num_ports)
+		return -EINVAL;
 
-	वापस smi->num_mib_counters;
-पूर्ण
+	return smi->num_mib_counters;
+}
 EXPORT_SYMBOL_GPL(rtl8366_get_sset_count);
 
-व्योम rtl8366_get_ethtool_stats(काष्ठा dsa_चयन *ds, पूर्णांक port, uपूर्णांक64_t *data)
-अणु
-	काष्ठा realtek_smi *smi = ds->priv;
-	पूर्णांक i;
-	पूर्णांक ret;
+void rtl8366_get_ethtool_stats(struct dsa_switch *ds, int port, uint64_t *data)
+{
+	struct realtek_smi *smi = ds->priv;
+	int i;
+	int ret;
 
-	अगर (port >= smi->num_ports)
-		वापस;
+	if (port >= smi->num_ports)
+		return;
 
-	क्रम (i = 0; i < smi->num_mib_counters; i++) अणु
-		काष्ठा rtl8366_mib_counter *mib;
+	for (i = 0; i < smi->num_mib_counters; i++) {
+		struct rtl8366_mib_counter *mib;
 		u64 mibvalue = 0;
 
 		mib = &smi->mib_counters[i];
 		ret = smi->ops->get_mib_counter(smi, port, mib, &mibvalue);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(smi->dev, "error reading MIB counter %s\n",
 				mib->name);
-		पूर्ण
+		}
 		data[i] = mibvalue;
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL_GPL(rtl8366_get_ethtool_stats);

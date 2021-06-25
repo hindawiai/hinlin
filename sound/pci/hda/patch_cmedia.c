@@ -1,80 +1,79 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Universal Interface क्रम Intel High Definition Audio Codec
+ * Universal Interface for Intel High Definition Audio Codec
  *
- * HD audio पूर्णांकerface patch क्रम C-Media CMI9880
+ * HD audio interface patch for C-Media CMI9880
  *
  * Copyright (c) 2004 Takashi Iwai <tiwai@suse.de>
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
-#समावेश <sound/core.h>
-#समावेश <sound/hda_codec.h>
-#समावेश "hda_local.h"
-#समावेश "hda_auto_parser.h"
-#समावेश "hda_jack.h"
-#समावेश "hda_generic.h"
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/module.h>
+#include <sound/core.h>
+#include <sound/hda_codec.h>
+#include "hda_local.h"
+#include "hda_auto_parser.h"
+#include "hda_jack.h"
+#include "hda_generic.h"
 
-काष्ठा cmi_spec अणु
-	काष्ठा hda_gen_spec gen;
-पूर्ण;
+struct cmi_spec {
+	struct hda_gen_spec gen;
+};
 
 /*
- * stuff क्रम स्वतः-parser
+ * stuff for auto-parser
  */
-अटल स्थिर काष्ठा hda_codec_ops cmi_स्वतः_patch_ops = अणु
+static const struct hda_codec_ops cmi_auto_patch_ops = {
 	.build_controls = snd_hda_gen_build_controls,
 	.build_pcms = snd_hda_gen_build_pcms,
 	.init = snd_hda_gen_init,
-	.मुक्त = snd_hda_gen_मुक्त,
+	.free = snd_hda_gen_free,
 	.unsol_event = snd_hda_jack_unsol_event,
-पूर्ण;
+};
 
-अटल पूर्णांक patch_cmi9880(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा cmi_spec *spec;
-	काष्ठा स्वतः_pin_cfg *cfg;
-	पूर्णांक err;
+static int patch_cmi9880(struct hda_codec *codec)
+{
+	struct cmi_spec *spec;
+	struct auto_pin_cfg *cfg;
+	int err;
 
-	spec = kzalloc(माप(*spec), GFP_KERNEL);
-	अगर (spec == शून्य)
-		वापस -ENOMEM;
+	spec = kzalloc(sizeof(*spec), GFP_KERNEL);
+	if (spec == NULL)
+		return -ENOMEM;
 
 	codec->spec = spec;
-	codec->patch_ops = cmi_स्वतः_patch_ops;
-	cfg = &spec->gen.स्वतःcfg;
+	codec->patch_ops = cmi_auto_patch_ops;
+	cfg = &spec->gen.autocfg;
 	snd_hda_gen_spec_init(&spec->gen);
 
-	err = snd_hda_parse_pin_defcfg(codec, cfg, शून्य, 0);
-	अगर (err < 0)
-		जाओ error;
-	err = snd_hda_gen_parse_स्वतः_config(codec, cfg);
-	अगर (err < 0)
-		जाओ error;
+	err = snd_hda_parse_pin_defcfg(codec, cfg, NULL, 0);
+	if (err < 0)
+		goto error;
+	err = snd_hda_gen_parse_auto_config(codec, cfg);
+	if (err < 0)
+		goto error;
 
-	वापस 0;
+	return 0;
 
  error:
-	snd_hda_gen_मुक्त(codec);
-	वापस err;
-पूर्ण
+	snd_hda_gen_free(codec);
+	return err;
+}
 
-अटल पूर्णांक patch_cmi8888(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा cmi_spec *spec;
-	काष्ठा स्वतः_pin_cfg *cfg;
-	पूर्णांक err;
+static int patch_cmi8888(struct hda_codec *codec)
+{
+	struct cmi_spec *spec;
+	struct auto_pin_cfg *cfg;
+	int err;
 
-	spec = kzalloc(माप(*spec), GFP_KERNEL);
-	अगर (!spec)
-		वापस -ENOMEM;
+	spec = kzalloc(sizeof(*spec), GFP_KERNEL);
+	if (!spec)
+		return -ENOMEM;
 
 	codec->spec = spec;
-	codec->patch_ops = cmi_स्वतः_patch_ops;
-	cfg = &spec->gen.स्वतःcfg;
+	codec->patch_ops = cmi_auto_patch_ops;
+	cfg = &spec->gen.autocfg;
 	snd_hda_gen_spec_init(&spec->gen);
 
 	/* mask NID 0x10 from the playback volume selection;
@@ -82,47 +81,47 @@
 	 */
 	spec->gen.out_vol_mask = (1ULL << 0x10);
 
-	err = snd_hda_parse_pin_defcfg(codec, cfg, शून्य, 0);
-	अगर (err < 0)
-		जाओ error;
-	err = snd_hda_gen_parse_स्वतः_config(codec, cfg);
-	अगर (err < 0)
-		जाओ error;
+	err = snd_hda_parse_pin_defcfg(codec, cfg, NULL, 0);
+	if (err < 0)
+		goto error;
+	err = snd_hda_gen_parse_auto_config(codec, cfg);
+	if (err < 0)
+		goto error;
 
-	अगर (get_defcfg_device(snd_hda_codec_get_pincfg(codec, 0x10)) ==
-	    AC_JACK_HP_OUT) अणु
-		अटल स्थिर काष्ठा snd_kcontrol_new amp_kctl =
+	if (get_defcfg_device(snd_hda_codec_get_pincfg(codec, 0x10)) ==
+	    AC_JACK_HP_OUT) {
+		static const struct snd_kcontrol_new amp_kctl =
 			HDA_CODEC_VOLUME("Headphone Amp Playback Volume",
 					 0x10, 0, HDA_OUTPUT);
-		अगर (!snd_hda_gen_add_kctl(&spec->gen, शून्य, &amp_kctl)) अणु
+		if (!snd_hda_gen_add_kctl(&spec->gen, NULL, &amp_kctl)) {
 			err = -ENOMEM;
-			जाओ error;
-		पूर्ण
-	पूर्ण
+			goto error;
+		}
+	}
 
-	वापस 0;
+	return 0;
 
  error:
-	snd_hda_gen_मुक्त(codec);
-	वापस err;
-पूर्ण
+	snd_hda_gen_free(codec);
+	return err;
+}
 
 /*
  * patch entries
  */
-अटल स्थिर काष्ठा hda_device_id snd_hda_id_cmedia[] = अणु
+static const struct hda_device_id snd_hda_id_cmedia[] = {
 	HDA_CODEC_ENTRY(0x13f68888, "CMI8888", patch_cmi8888),
 	HDA_CODEC_ENTRY(0x13f69880, "CMI9880", patch_cmi9880),
 	HDA_CODEC_ENTRY(0x434d4980, "CMI9880", patch_cmi9880),
-	अणुपूर्ण /* terminator */
-पूर्ण;
+	{} /* terminator */
+};
 MODULE_DEVICE_TABLE(hdaudio, snd_hda_id_cmedia);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("C-Media HD-audio codec");
 
-अटल काष्ठा hda_codec_driver cmedia_driver = अणु
+static struct hda_codec_driver cmedia_driver = {
 	.id = snd_hda_id_cmedia,
-पूर्ण;
+};
 
 module_hda_codec_driver(cmedia_driver);

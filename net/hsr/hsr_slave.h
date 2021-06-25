@@ -1,38 +1,37 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /* Copyright 2011-2014 Autronica Fire and Security AS
  *
  *	2011-2014 Arvid Brodin, arvid.brodin@alten.se
  *
- * include file क्रम HSR and PRP.
+ * include file for HSR and PRP.
  */
 
-#अगर_अघोषित __HSR_SLAVE_H
-#घोषणा __HSR_SLAVE_H
+#ifndef __HSR_SLAVE_H
+#define __HSR_SLAVE_H
 
-#समावेश <linux/skbuff.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/rtnetlink.h>
-#समावेश "hsr_main.h"
+#include <linux/skbuff.h>
+#include <linux/netdevice.h>
+#include <linux/rtnetlink.h>
+#include "hsr_main.h"
 
-पूर्णांक hsr_add_port(काष्ठा hsr_priv *hsr, काष्ठा net_device *dev,
-		 क्रमागत hsr_port_type pt, काष्ठा netlink_ext_ack *extack);
-व्योम hsr_del_port(काष्ठा hsr_port *port);
-bool hsr_port_exists(स्थिर काष्ठा net_device *dev);
+int hsr_add_port(struct hsr_priv *hsr, struct net_device *dev,
+		 enum hsr_port_type pt, struct netlink_ext_ack *extack);
+void hsr_del_port(struct hsr_port *port);
+bool hsr_port_exists(const struct net_device *dev);
 
-अटल अंतरभूत काष्ठा hsr_port *hsr_port_get_rtnl(स्थिर काष्ठा net_device *dev)
-अणु
+static inline struct hsr_port *hsr_port_get_rtnl(const struct net_device *dev)
+{
 	ASSERT_RTNL();
-	वापस hsr_port_exists(dev) ?
-				rtnl_dereference(dev->rx_handler_data) : शून्य;
-पूर्ण
+	return hsr_port_exists(dev) ?
+				rtnl_dereference(dev->rx_handler_data) : NULL;
+}
 
-अटल अंतरभूत काष्ठा hsr_port *hsr_port_get_rcu(स्थिर काष्ठा net_device *dev)
-अणु
-	वापस hsr_port_exists(dev) ?
-				rcu_dereference(dev->rx_handler_data) : शून्य;
-पूर्ण
+static inline struct hsr_port *hsr_port_get_rcu(const struct net_device *dev)
+{
+	return hsr_port_exists(dev) ?
+				rcu_dereference(dev->rx_handler_data) : NULL;
+}
 
 bool hsr_invalid_dan_ingress_frame(__be16 protocol);
 
-#पूर्ण_अगर /* __HSR_SLAVE_H */
+#endif /* __HSR_SLAVE_H */

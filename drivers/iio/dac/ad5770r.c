@@ -1,494 +1,493 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * AD5770R Digital to analog converters driver
  *
  * Copyright 2018 Analog Devices Inc.
  */
 
-#समावेश <linux/bits.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/device.h>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/iio/sysfs.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/property.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/regulator/consumer.h>
-#समावेश <linux/spi/spi.h>
+#include <linux/bits.h>
+#include <linux/delay.h>
+#include <linux/device.h>
+#include <linux/gpio/consumer.h>
+#include <linux/iio/iio.h>
+#include <linux/iio/sysfs.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/property.h>
+#include <linux/regmap.h>
+#include <linux/regulator/consumer.h>
+#include <linux/spi/spi.h>
 
-#घोषणा ADI_SPI_IF_CONFIG_A		0x00
-#घोषणा ADI_SPI_IF_CONFIG_B		0x01
-#घोषणा ADI_SPI_IF_DEVICE_CONFIG	0x02
-#घोषणा ADI_SPI_IF_CHIP_TYPE		0x03
-#घोषणा ADI_SPI_IF_PRODUCT_ID_L		0x04
-#घोषणा ADI_SPI_IF_PRODUCT_ID_H		0x05
-#घोषणा ADI_SPI_IF_CHIP_GRADE		0x06
-#घोषणा ADI_SPI_IF_SCRACTH_PAD		0x0A
-#घोषणा ADI_SPI_IF_SPI_REVISION		0x0B
-#घोषणा ADI_SPI_IF_SPI_VENDOR_L		0x0C
-#घोषणा ADI_SPI_IF_SPI_VENDOR_H		0x0D
-#घोषणा ADI_SPI_IF_SPI_STREAM_MODE	0x0E
-#घोषणा ADI_SPI_IF_CONFIG_C		0x10
-#घोषणा ADI_SPI_IF_STATUS_A		0x11
+#define ADI_SPI_IF_CONFIG_A		0x00
+#define ADI_SPI_IF_CONFIG_B		0x01
+#define ADI_SPI_IF_DEVICE_CONFIG	0x02
+#define ADI_SPI_IF_CHIP_TYPE		0x03
+#define ADI_SPI_IF_PRODUCT_ID_L		0x04
+#define ADI_SPI_IF_PRODUCT_ID_H		0x05
+#define ADI_SPI_IF_CHIP_GRADE		0x06
+#define ADI_SPI_IF_SCRACTH_PAD		0x0A
+#define ADI_SPI_IF_SPI_REVISION		0x0B
+#define ADI_SPI_IF_SPI_VENDOR_L		0x0C
+#define ADI_SPI_IF_SPI_VENDOR_H		0x0D
+#define ADI_SPI_IF_SPI_STREAM_MODE	0x0E
+#define ADI_SPI_IF_CONFIG_C		0x10
+#define ADI_SPI_IF_STATUS_A		0x11
 
 /* ADI_SPI_IF_CONFIG_A */
-#घोषणा ADI_SPI_IF_SW_RESET_MSK		(BIT(0) | BIT(7))
-#घोषणा ADI_SPI_IF_SW_RESET_SEL(x)	((x) & ADI_SPI_IF_SW_RESET_MSK)
-#घोषणा ADI_SPI_IF_ADDR_ASC_MSK		(BIT(2) | BIT(5))
-#घोषणा ADI_SPI_IF_ADDR_ASC_SEL(x)	(((x) << 2) & ADI_SPI_IF_ADDR_ASC_MSK)
+#define ADI_SPI_IF_SW_RESET_MSK		(BIT(0) | BIT(7))
+#define ADI_SPI_IF_SW_RESET_SEL(x)	((x) & ADI_SPI_IF_SW_RESET_MSK)
+#define ADI_SPI_IF_ADDR_ASC_MSK		(BIT(2) | BIT(5))
+#define ADI_SPI_IF_ADDR_ASC_SEL(x)	(((x) << 2) & ADI_SPI_IF_ADDR_ASC_MSK)
 
 /* ADI_SPI_IF_CONFIG_B */
-#घोषणा ADI_SPI_IF_SINGLE_INS_MSK	BIT(7)
-#घोषणा ADI_SPI_IF_SINGLE_INS_SEL(x)	FIELD_PREP(ADI_SPI_IF_SINGLE_INS_MSK, x)
-#घोषणा ADI_SPI_IF_SHORT_INS_MSK	BIT(7)
-#घोषणा ADI_SPI_IF_SHORT_INS_SEL(x)	FIELD_PREP(ADI_SPI_IF_SINGLE_INS_MSK, x)
+#define ADI_SPI_IF_SINGLE_INS_MSK	BIT(7)
+#define ADI_SPI_IF_SINGLE_INS_SEL(x)	FIELD_PREP(ADI_SPI_IF_SINGLE_INS_MSK, x)
+#define ADI_SPI_IF_SHORT_INS_MSK	BIT(7)
+#define ADI_SPI_IF_SHORT_INS_SEL(x)	FIELD_PREP(ADI_SPI_IF_SINGLE_INS_MSK, x)
 
 /* ADI_SPI_IF_CONFIG_C */
-#घोषणा ADI_SPI_IF_STRICT_REG_MSK	BIT(5)
-#घोषणा ADI_SPI_IF_STRICT_REG_GET(x)	FIELD_GET(ADI_SPI_IF_STRICT_REG_MSK, x)
+#define ADI_SPI_IF_STRICT_REG_MSK	BIT(5)
+#define ADI_SPI_IF_STRICT_REG_GET(x)	FIELD_GET(ADI_SPI_IF_STRICT_REG_MSK, x)
 
-/* AD5770R configuration रेजिस्टरs */
-#घोषणा AD5770R_CHANNEL_CONFIG		0x14
-#घोषणा AD5770R_OUTPUT_RANGE(ch)	(0x15 + (ch))
-#घोषणा AD5770R_FILTER_RESISTOR(ch)	(0x1D + (ch))
-#घोषणा AD5770R_REFERENCE		0x1B
-#घोषणा AD5770R_DAC_LSB(ch)		(0x26 + 2 * (ch))
-#घोषणा AD5770R_DAC_MSB(ch)		(0x27 + 2 * (ch))
-#घोषणा AD5770R_CH_SELECT		0x34
-#घोषणा AD5770R_CH_ENABLE		0x44
+/* AD5770R configuration registers */
+#define AD5770R_CHANNEL_CONFIG		0x14
+#define AD5770R_OUTPUT_RANGE(ch)	(0x15 + (ch))
+#define AD5770R_FILTER_RESISTOR(ch)	(0x1D + (ch))
+#define AD5770R_REFERENCE		0x1B
+#define AD5770R_DAC_LSB(ch)		(0x26 + 2 * (ch))
+#define AD5770R_DAC_MSB(ch)		(0x27 + 2 * (ch))
+#define AD5770R_CH_SELECT		0x34
+#define AD5770R_CH_ENABLE		0x44
 
 /* AD5770R_CHANNEL_CONFIG */
-#घोषणा AD5770R_CFG_CH0_SINK_EN(x)		(((x) & 0x1) << 7)
-#घोषणा AD5770R_CFG_SHUTDOWN_B(x, ch)		(((x) & 0x1) << (ch))
+#define AD5770R_CFG_CH0_SINK_EN(x)		(((x) & 0x1) << 7)
+#define AD5770R_CFG_SHUTDOWN_B(x, ch)		(((x) & 0x1) << (ch))
 
 /* AD5770R_OUTPUT_RANGE */
-#घोषणा AD5770R_RANGE_OUTPUT_SCALING(x)		(((x) & GENMASK(5, 0)) << 2)
-#घोषणा AD5770R_RANGE_MODE(x)			((x) & GENMASK(1, 0))
+#define AD5770R_RANGE_OUTPUT_SCALING(x)		(((x) & GENMASK(5, 0)) << 2)
+#define AD5770R_RANGE_MODE(x)			((x) & GENMASK(1, 0))
 
 /* AD5770R_REFERENCE */
-#घोषणा AD5770R_REF_RESISTOR_SEL(x)		(((x) & 0x1) << 2)
-#घोषणा AD5770R_REF_SEL(x)			((x) & GENMASK(1, 0))
+#define AD5770R_REF_RESISTOR_SEL(x)		(((x) & 0x1) << 2)
+#define AD5770R_REF_SEL(x)			((x) & GENMASK(1, 0))
 
 /* AD5770R_CH_ENABLE */
-#घोषणा AD5770R_CH_SET(x, ch)		(((x) & 0x1) << (ch))
+#define AD5770R_CH_SET(x, ch)		(((x) & 0x1) << (ch))
 
-#घोषणा AD5770R_MAX_CHANNELS	6
-#घोषणा AD5770R_MAX_CH_MODES	14
-#घोषणा AD5770R_LOW_VREF_mV	1250
-#घोषणा AD5770R_HIGH_VREF_mV	2500
+#define AD5770R_MAX_CHANNELS	6
+#define AD5770R_MAX_CH_MODES	14
+#define AD5770R_LOW_VREF_mV	1250
+#define AD5770R_HIGH_VREF_mV	2500
 
-क्रमागत ad5770r_ch0_modes अणु
+enum ad5770r_ch0_modes {
 	AD5770R_CH0_0_300 = 0,
 	AD5770R_CH0_NEG_60_0,
 	AD5770R_CH0_NEG_60_300
-पूर्ण;
+};
 
-क्रमागत ad5770r_ch1_modes अणु
+enum ad5770r_ch1_modes {
 	AD5770R_CH1_0_140_LOW_HEAD = 1,
 	AD5770R_CH1_0_140_LOW_NOISE,
 	AD5770R_CH1_0_250
-पूर्ण;
+};
 
-क्रमागत ad5770r_ch2_5_modes अणु
+enum ad5770r_ch2_5_modes {
 	AD5770R_CH_LOW_RANGE = 0,
 	AD5770R_CH_HIGH_RANGE
-पूर्ण;
+};
 
-क्रमागत ad5770r_ref_v अणु
+enum ad5770r_ref_v {
 	AD5770R_EXT_2_5_V = 0,
 	AD5770R_INT_1_25_V_OUT_ON,
 	AD5770R_EXT_1_25_V,
 	AD5770R_INT_1_25_V_OUT_OFF
-पूर्ण;
+};
 
-क्रमागत ad5770r_output_filter_resistor अणु
+enum ad5770r_output_filter_resistor {
 	AD5770R_FILTER_60_OHM = 0x0,
 	AD5770R_FILTER_5_6_KOHM = 0x5,
 	AD5770R_FILTER_11_2_KOHM,
 	AD5770R_FILTER_22_2_KOHM,
 	AD5770R_FILTER_44_4_KOHM,
 	AD5770R_FILTER_104_KOHM,
-पूर्ण;
+};
 
-काष्ठा ad5770r_out_range अणु
+struct ad5770r_out_range {
 	u8	out_scale;
 	u8	out_range_mode;
-पूर्ण;
+};
 
 /**
- * काष्ठा ad5770r_state - driver instance specअगरic data
+ * struct ad5770r_state - driver instance specific data
  * @spi:		spi_device
  * @regmap:		regmap
- * @vref_reg:		fixed regulator क्रम reference configuration
+ * @vref_reg:		fixed regulator for reference configuration
  * @gpio_reset:		gpio descriptor
  * @output_mode:	array contains channels output ranges
  * @vref:		reference value
- * @ch_pwr_करोwn:	घातerकरोwn flags
- * @पूर्णांकernal_ref:	पूर्णांकernal reference flag
- * @बाह्यal_res:	बाह्यal 2.5k resistor flag
- * @transf_buf:		cache aligned buffer क्रम spi पढ़ो/ग_लिखो
+ * @ch_pwr_down:	powerdown flags
+ * @internal_ref:	internal reference flag
+ * @external_res:	external 2.5k resistor flag
+ * @transf_buf:		cache aligned buffer for spi read/write
  */
-काष्ठा ad5770r_state अणु
-	काष्ठा spi_device		*spi;
-	काष्ठा regmap			*regmap;
-	काष्ठा regulator		*vref_reg;
-	काष्ठा gpio_desc		*gpio_reset;
-	काष्ठा ad5770r_out_range	output_mode[AD5770R_MAX_CHANNELS];
-	पूर्णांक				vref;
-	bool				ch_pwr_करोwn[AD5770R_MAX_CHANNELS];
-	bool				पूर्णांकernal_ref;
-	bool				बाह्यal_res;
+struct ad5770r_state {
+	struct spi_device		*spi;
+	struct regmap			*regmap;
+	struct regulator		*vref_reg;
+	struct gpio_desc		*gpio_reset;
+	struct ad5770r_out_range	output_mode[AD5770R_MAX_CHANNELS];
+	int				vref;
+	bool				ch_pwr_down[AD5770R_MAX_CHANNELS];
+	bool				internal_ref;
+	bool				external_res;
 	u8				transf_buf[2] ____cacheline_aligned;
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा regmap_config ad5770r_spi_regmap_config = अणु
+static const struct regmap_config ad5770r_spi_regmap_config = {
 	.reg_bits = 8,
 	.val_bits = 8,
-	.पढ़ो_flag_mask = BIT(7),
-पूर्ण;
+	.read_flag_mask = BIT(7),
+};
 
-काष्ठा ad5770r_output_modes अणु
-	अचिन्हित पूर्णांक ch;
+struct ad5770r_output_modes {
+	unsigned int ch;
 	u8 mode;
-	पूर्णांक min;
-	पूर्णांक max;
-पूर्ण;
+	int min;
+	int max;
+};
 
-अटल काष्ठा ad5770r_output_modes ad5770r_rng_tbl[] = अणु
-	अणु 0, AD5770R_CH0_0_300, 0, 300 पूर्ण,
-	अणु 0, AD5770R_CH0_NEG_60_0, -60, 0 पूर्ण,
-	अणु 0, AD5770R_CH0_NEG_60_300, -60, 300 पूर्ण,
-	अणु 1, AD5770R_CH1_0_140_LOW_HEAD, 0, 140 पूर्ण,
-	अणु 1, AD5770R_CH1_0_140_LOW_NOISE, 0, 140 पूर्ण,
-	अणु 1, AD5770R_CH1_0_250, 0, 250 पूर्ण,
-	अणु 2, AD5770R_CH_LOW_RANGE, 0, 55 पूर्ण,
-	अणु 2, AD5770R_CH_HIGH_RANGE, 0, 150 पूर्ण,
-	अणु 3, AD5770R_CH_LOW_RANGE, 0, 45 पूर्ण,
-	अणु 3, AD5770R_CH_HIGH_RANGE, 0, 100 पूर्ण,
-	अणु 4, AD5770R_CH_LOW_RANGE, 0, 45 पूर्ण,
-	अणु 4, AD5770R_CH_HIGH_RANGE, 0, 100 पूर्ण,
-	अणु 5, AD5770R_CH_LOW_RANGE, 0, 45 पूर्ण,
-	अणु 5, AD5770R_CH_HIGH_RANGE, 0, 100 पूर्ण,
-पूर्ण;
+static struct ad5770r_output_modes ad5770r_rng_tbl[] = {
+	{ 0, AD5770R_CH0_0_300, 0, 300 },
+	{ 0, AD5770R_CH0_NEG_60_0, -60, 0 },
+	{ 0, AD5770R_CH0_NEG_60_300, -60, 300 },
+	{ 1, AD5770R_CH1_0_140_LOW_HEAD, 0, 140 },
+	{ 1, AD5770R_CH1_0_140_LOW_NOISE, 0, 140 },
+	{ 1, AD5770R_CH1_0_250, 0, 250 },
+	{ 2, AD5770R_CH_LOW_RANGE, 0, 55 },
+	{ 2, AD5770R_CH_HIGH_RANGE, 0, 150 },
+	{ 3, AD5770R_CH_LOW_RANGE, 0, 45 },
+	{ 3, AD5770R_CH_HIGH_RANGE, 0, 100 },
+	{ 4, AD5770R_CH_LOW_RANGE, 0, 45 },
+	{ 4, AD5770R_CH_HIGH_RANGE, 0, 100 },
+	{ 5, AD5770R_CH_LOW_RANGE, 0, 45 },
+	{ 5, AD5770R_CH_HIGH_RANGE, 0, 100 },
+};
 
-अटल स्थिर अचिन्हित पूर्णांक ad5770r_filter_freqs[] = अणु
+static const unsigned int ad5770r_filter_freqs[] = {
 	153, 357, 715, 1400, 2800, 262000,
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक ad5770r_filter_reg_vals[] = अणु
+static const unsigned int ad5770r_filter_reg_vals[] = {
 	AD5770R_FILTER_104_KOHM,
 	AD5770R_FILTER_44_4_KOHM,
 	AD5770R_FILTER_22_2_KOHM,
 	AD5770R_FILTER_11_2_KOHM,
 	AD5770R_FILTER_5_6_KOHM,
 	AD5770R_FILTER_60_OHM
-पूर्ण;
+};
 
-अटल पूर्णांक ad5770r_set_output_mode(काष्ठा ad5770r_state *st,
-				   स्थिर काष्ठा ad5770r_out_range *out_mode,
-				   पूर्णांक channel)
-अणु
-	अचिन्हित पूर्णांक regval;
+static int ad5770r_set_output_mode(struct ad5770r_state *st,
+				   const struct ad5770r_out_range *out_mode,
+				   int channel)
+{
+	unsigned int regval;
 
 	regval = AD5770R_RANGE_OUTPUT_SCALING(out_mode->out_scale) |
 		 AD5770R_RANGE_MODE(out_mode->out_range_mode);
 
-	वापस regmap_ग_लिखो(st->regmap,
+	return regmap_write(st->regmap,
 			    AD5770R_OUTPUT_RANGE(channel), regval);
-पूर्ण
+}
 
-अटल पूर्णांक ad5770r_set_reference(काष्ठा ad5770r_state *st)
-अणु
-	अचिन्हित पूर्णांक regval;
+static int ad5770r_set_reference(struct ad5770r_state *st)
+{
+	unsigned int regval;
 
-	regval = AD5770R_REF_RESISTOR_SEL(st->बाह्यal_res);
+	regval = AD5770R_REF_RESISTOR_SEL(st->external_res);
 
-	अगर (st->पूर्णांकernal_ref) अणु
+	if (st->internal_ref) {
 		regval |= AD5770R_REF_SEL(AD5770R_INT_1_25_V_OUT_OFF);
-	पूर्ण अन्यथा अणु
-		चयन (st->vref) अणु
-		हाल AD5770R_LOW_VREF_mV:
+	} else {
+		switch (st->vref) {
+		case AD5770R_LOW_VREF_mV:
 			regval |= AD5770R_REF_SEL(AD5770R_EXT_1_25_V);
-			अवरोध;
-		हाल AD5770R_HIGH_VREF_mV:
+			break;
+		case AD5770R_HIGH_VREF_mV:
 			regval |= AD5770R_REF_SEL(AD5770R_EXT_2_5_V);
-			अवरोध;
-		शेष:
+			break;
+		default:
 			regval = AD5770R_REF_SEL(AD5770R_INT_1_25_V_OUT_OFF);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	वापस regmap_ग_लिखो(st->regmap, AD5770R_REFERENCE, regval);
-पूर्ण
+	return regmap_write(st->regmap, AD5770R_REFERENCE, regval);
+}
 
-अटल पूर्णांक ad5770r_soft_reset(काष्ठा ad5770r_state *st)
-अणु
-	वापस regmap_ग_लिखो(st->regmap, ADI_SPI_IF_CONFIG_A,
+static int ad5770r_soft_reset(struct ad5770r_state *st)
+{
+	return regmap_write(st->regmap, ADI_SPI_IF_CONFIG_A,
 			    ADI_SPI_IF_SW_RESET_SEL(1));
-पूर्ण
+}
 
-अटल पूर्णांक ad5770r_reset(काष्ठा ad5770r_state *st)
-अणु
-	/* Perक्रमm software reset अगर no GPIO provided */
-	अगर (!st->gpio_reset)
-		वापस ad5770r_soft_reset(st);
+static int ad5770r_reset(struct ad5770r_state *st)
+{
+	/* Perform software reset if no GPIO provided */
+	if (!st->gpio_reset)
+		return ad5770r_soft_reset(st);
 
 	gpiod_set_value_cansleep(st->gpio_reset, 0);
 	usleep_range(10, 20);
 	gpiod_set_value_cansleep(st->gpio_reset, 1);
 
-	/* data must not be written during reset समयframe */
+	/* data must not be written during reset timeframe */
 	usleep_range(100, 200);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ad5770r_get_range(काष्ठा ad5770r_state *st,
-			     पूर्णांक ch, पूर्णांक *min, पूर्णांक *max)
-अणु
-	पूर्णांक i;
+static int ad5770r_get_range(struct ad5770r_state *st,
+			     int ch, int *min, int *max)
+{
+	int i;
 	u8 tbl_ch, tbl_mode, out_range;
 
 	out_range = st->output_mode[ch].out_range_mode;
 
-	क्रम (i = 0; i < AD5770R_MAX_CH_MODES; i++) अणु
+	for (i = 0; i < AD5770R_MAX_CH_MODES; i++) {
 		tbl_ch = ad5770r_rng_tbl[i].ch;
 		tbl_mode = ad5770r_rng_tbl[i].mode;
-		अगर (tbl_ch == ch && tbl_mode == out_range) अणु
+		if (tbl_ch == ch && tbl_mode == out_range) {
 			*min = ad5770r_rng_tbl[i].min;
 			*max = ad5770r_rng_tbl[i].max;
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक ad5770r_get_filter_freq(काष्ठा iio_dev *indio_dev,
-				   स्थिर काष्ठा iio_chan_spec *chan, पूर्णांक *freq)
-अणु
-	काष्ठा ad5770r_state *st = iio_priv(indio_dev);
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक regval, i;
+static int ad5770r_get_filter_freq(struct iio_dev *indio_dev,
+				   const struct iio_chan_spec *chan, int *freq)
+{
+	struct ad5770r_state *st = iio_priv(indio_dev);
+	int ret;
+	unsigned int regval, i;
 
-	ret = regmap_पढ़ो(st->regmap,
+	ret = regmap_read(st->regmap,
 			  AD5770R_FILTER_RESISTOR(chan->channel), &regval);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	क्रम (i = 0; i < ARRAY_SIZE(ad5770r_filter_reg_vals); i++)
-		अगर (regval == ad5770r_filter_reg_vals[i])
-			अवरोध;
-	अगर (i == ARRAY_SIZE(ad5770r_filter_reg_vals))
-		वापस -EINVAL;
+	for (i = 0; i < ARRAY_SIZE(ad5770r_filter_reg_vals); i++)
+		if (regval == ad5770r_filter_reg_vals[i])
+			break;
+	if (i == ARRAY_SIZE(ad5770r_filter_reg_vals))
+		return -EINVAL;
 
 	*freq = ad5770r_filter_freqs[i];
 
-	वापस IIO_VAL_INT;
-पूर्ण
+	return IIO_VAL_INT;
+}
 
-अटल पूर्णांक ad5770r_set_filter_freq(काष्ठा iio_dev *indio_dev,
-				   स्थिर काष्ठा iio_chan_spec *chan,
-				   अचिन्हित पूर्णांक freq)
-अणु
-	काष्ठा ad5770r_state *st = iio_priv(indio_dev);
-	अचिन्हित पूर्णांक regval, i;
+static int ad5770r_set_filter_freq(struct iio_dev *indio_dev,
+				   const struct iio_chan_spec *chan,
+				   unsigned int freq)
+{
+	struct ad5770r_state *st = iio_priv(indio_dev);
+	unsigned int regval, i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(ad5770r_filter_freqs); i++)
-		अगर (ad5770r_filter_freqs[i] >= freq)
-			अवरोध;
-	अगर (i == ARRAY_SIZE(ad5770r_filter_freqs))
-		वापस -EINVAL;
+	for (i = 0; i < ARRAY_SIZE(ad5770r_filter_freqs); i++)
+		if (ad5770r_filter_freqs[i] >= freq)
+			break;
+	if (i == ARRAY_SIZE(ad5770r_filter_freqs))
+		return -EINVAL;
 
 	regval = ad5770r_filter_reg_vals[i];
 
-	वापस regmap_ग_लिखो(st->regmap, AD5770R_FILTER_RESISTOR(chan->channel),
+	return regmap_write(st->regmap, AD5770R_FILTER_RESISTOR(chan->channel),
 			    regval);
-पूर्ण
+}
 
-अटल पूर्णांक ad5770r_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
-			    काष्ठा iio_chan_spec स्थिर *chan,
-			    पूर्णांक *val, पूर्णांक *val2, दीर्घ info)
-अणु
-	काष्ठा ad5770r_state *st = iio_priv(indio_dev);
-	पूर्णांक max, min, ret;
+static int ad5770r_read_raw(struct iio_dev *indio_dev,
+			    struct iio_chan_spec const *chan,
+			    int *val, int *val2, long info)
+{
+	struct ad5770r_state *st = iio_priv(indio_dev);
+	int max, min, ret;
 	u16 buf16;
 
-	चयन (info) अणु
-	हाल IIO_CHAN_INFO_RAW:
-		ret = regmap_bulk_पढ़ो(st->regmap,
+	switch (info) {
+	case IIO_CHAN_INFO_RAW:
+		ret = regmap_bulk_read(st->regmap,
 				       chan->address,
 				       st->transf_buf, 2);
-		अगर (ret)
-			वापस 0;
+		if (ret)
+			return 0;
 
 		buf16 = st->transf_buf[0] + (st->transf_buf[1] << 8);
 		*val = buf16 >> 2;
-		वापस IIO_VAL_INT;
-	हाल IIO_CHAN_INFO_SCALE:
+		return IIO_VAL_INT;
+	case IIO_CHAN_INFO_SCALE:
 		ret = ad5770r_get_range(st, chan->channel, &min, &max);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 		*val = max - min;
 		/* There is no sign bit. (negative current is mapped from 0)
 		 * (sourced/sinked) current = raw * scale + offset
-		 * where offset in हाल of CH0 can be negative.
+		 * where offset in case of CH0 can be negative.
 		 */
 		*val2 = 14;
-		वापस IIO_VAL_FRACTIONAL_LOG2;
-	हाल IIO_CHAN_INFO_LOW_PASS_FILTER_3DB_FREQUENCY:
-		वापस ad5770r_get_filter_freq(indio_dev, chan, val);
-	हाल IIO_CHAN_INFO_OFFSET:
+		return IIO_VAL_FRACTIONAL_LOG2;
+	case IIO_CHAN_INFO_LOW_PASS_FILTER_3DB_FREQUENCY:
+		return ad5770r_get_filter_freq(indio_dev, chan, val);
+	case IIO_CHAN_INFO_OFFSET:
 		ret = ad5770r_get_range(st, chan->channel, &min, &max);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 		*val = min;
-		वापस IIO_VAL_INT;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+		return IIO_VAL_INT;
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल पूर्णांक ad5770r_ग_लिखो_raw(काष्ठा iio_dev *indio_dev,
-			     काष्ठा iio_chan_spec स्थिर *chan,
-			     पूर्णांक val, पूर्णांक val2, दीर्घ info)
-अणु
-	काष्ठा ad5770r_state *st = iio_priv(indio_dev);
+static int ad5770r_write_raw(struct iio_dev *indio_dev,
+			     struct iio_chan_spec const *chan,
+			     int val, int val2, long info)
+{
+	struct ad5770r_state *st = iio_priv(indio_dev);
 
-	चयन (info) अणु
-	हाल IIO_CHAN_INFO_RAW:
+	switch (info) {
+	case IIO_CHAN_INFO_RAW:
 		st->transf_buf[0] = ((u16)val >> 6);
 		st->transf_buf[1] = (val & GENMASK(5, 0)) << 2;
-		वापस regmap_bulk_ग_लिखो(st->regmap, chan->address,
+		return regmap_bulk_write(st->regmap, chan->address,
 					 st->transf_buf, 2);
-	हाल IIO_CHAN_INFO_LOW_PASS_FILTER_3DB_FREQUENCY:
-		वापस ad5770r_set_filter_freq(indio_dev, chan, val);
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+	case IIO_CHAN_INFO_LOW_PASS_FILTER_3DB_FREQUENCY:
+		return ad5770r_set_filter_freq(indio_dev, chan, val);
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल पूर्णांक ad5770r_पढ़ो_freq_avail(काष्ठा iio_dev *indio_dev,
-				   काष्ठा iio_chan_spec स्थिर *chan,
-				   स्थिर पूर्णांक **vals, पूर्णांक *type, पूर्णांक *length,
-				   दीर्घ mask)
-अणु
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_LOW_PASS_FILTER_3DB_FREQUENCY:
+static int ad5770r_read_freq_avail(struct iio_dev *indio_dev,
+				   struct iio_chan_spec const *chan,
+				   const int **vals, int *type, int *length,
+				   long mask)
+{
+	switch (mask) {
+	case IIO_CHAN_INFO_LOW_PASS_FILTER_3DB_FREQUENCY:
 		*type = IIO_VAL_INT;
 		*vals = ad5770r_filter_freqs;
 		*length = ARRAY_SIZE(ad5770r_filter_freqs);
-		वापस IIO_AVAIL_LIST;
-	पूर्ण
+		return IIO_AVAIL_LIST;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक ad5770r_reg_access(काष्ठा iio_dev *indio_dev,
-			      अचिन्हित पूर्णांक reg,
-			      अचिन्हित पूर्णांक ग_लिखोval,
-			      अचिन्हित पूर्णांक *पढ़ोval)
-अणु
-	काष्ठा ad5770r_state *st = iio_priv(indio_dev);
+static int ad5770r_reg_access(struct iio_dev *indio_dev,
+			      unsigned int reg,
+			      unsigned int writeval,
+			      unsigned int *readval)
+{
+	struct ad5770r_state *st = iio_priv(indio_dev);
 
-	अगर (पढ़ोval)
-		वापस regmap_पढ़ो(st->regmap, reg, पढ़ोval);
-	अन्यथा
-		वापस regmap_ग_लिखो(st->regmap, reg, ग_लिखोval);
-पूर्ण
+	if (readval)
+		return regmap_read(st->regmap, reg, readval);
+	else
+		return regmap_write(st->regmap, reg, writeval);
+}
 
-अटल स्थिर काष्ठा iio_info ad5770r_info = अणु
-	.पढ़ो_raw = ad5770r_पढ़ो_raw,
-	.ग_लिखो_raw = ad5770r_ग_लिखो_raw,
-	.पढ़ो_avail = ad5770r_पढ़ो_freq_avail,
+static const struct iio_info ad5770r_info = {
+	.read_raw = ad5770r_read_raw,
+	.write_raw = ad5770r_write_raw,
+	.read_avail = ad5770r_read_freq_avail,
 	.debugfs_reg_access = &ad5770r_reg_access,
-पूर्ण;
+};
 
-अटल पूर्णांक ad5770r_store_output_range(काष्ठा ad5770r_state *st,
-				      पूर्णांक min, पूर्णांक max, पूर्णांक index)
-अणु
-	पूर्णांक i;
+static int ad5770r_store_output_range(struct ad5770r_state *st,
+				      int min, int max, int index)
+{
+	int i;
 
-	क्रम (i = 0; i < AD5770R_MAX_CH_MODES; i++) अणु
-		अगर (ad5770r_rng_tbl[i].ch != index)
-			जारी;
-		अगर (ad5770r_rng_tbl[i].min != min ||
+	for (i = 0; i < AD5770R_MAX_CH_MODES; i++) {
+		if (ad5770r_rng_tbl[i].ch != index)
+			continue;
+		if (ad5770r_rng_tbl[i].min != min ||
 		    ad5770r_rng_tbl[i].max != max)
-			जारी;
+			continue;
 		st->output_mode[index].out_range_mode = ad5770r_rng_tbl[i].mode;
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल sमाप_प्रकार ad5770r_पढ़ो_dac_घातerकरोwn(काष्ठा iio_dev *indio_dev,
-					  uपूर्णांकptr_t निजी,
-					  स्थिर काष्ठा iio_chan_spec *chan,
-					  अक्षर *buf)
-अणु
-	काष्ठा ad5770r_state *st = iio_priv(indio_dev);
+static ssize_t ad5770r_read_dac_powerdown(struct iio_dev *indio_dev,
+					  uintptr_t private,
+					  const struct iio_chan_spec *chan,
+					  char *buf)
+{
+	struct ad5770r_state *st = iio_priv(indio_dev);
 
-	वापस sysfs_emit(buf, "%d\n", st->ch_pwr_करोwn[chan->channel]);
-पूर्ण
+	return sysfs_emit(buf, "%d\n", st->ch_pwr_down[chan->channel]);
+}
 
-अटल sमाप_प्रकार ad5770r_ग_लिखो_dac_घातerकरोwn(काष्ठा iio_dev *indio_dev,
-					   uपूर्णांकptr_t निजी,
-					   स्थिर काष्ठा iio_chan_spec *chan,
-					   स्थिर अक्षर *buf, माप_प्रकार len)
-अणु
-	काष्ठा ad5770r_state *st = iio_priv(indio_dev);
-	अचिन्हित पूर्णांक regval;
-	अचिन्हित पूर्णांक mask;
-	bool पढ़ोin;
-	पूर्णांक ret;
+static ssize_t ad5770r_write_dac_powerdown(struct iio_dev *indio_dev,
+					   uintptr_t private,
+					   const struct iio_chan_spec *chan,
+					   const char *buf, size_t len)
+{
+	struct ad5770r_state *st = iio_priv(indio_dev);
+	unsigned int regval;
+	unsigned int mask;
+	bool readin;
+	int ret;
 
-	ret = kstrtobool(buf, &पढ़ोin);
-	अगर (ret)
-		वापस ret;
+	ret = kstrtobool(buf, &readin);
+	if (ret)
+		return ret;
 
-	पढ़ोin = !पढ़ोin;
+	readin = !readin;
 
-	regval = AD5770R_CFG_SHUTDOWN_B(पढ़ोin, chan->channel);
-	अगर (chan->channel == 0 &&
-	    st->output_mode[0].out_range_mode > AD5770R_CH0_0_300) अणु
-		regval |= AD5770R_CFG_CH0_SINK_EN(पढ़ोin);
+	regval = AD5770R_CFG_SHUTDOWN_B(readin, chan->channel);
+	if (chan->channel == 0 &&
+	    st->output_mode[0].out_range_mode > AD5770R_CH0_0_300) {
+		regval |= AD5770R_CFG_CH0_SINK_EN(readin);
 		mask = BIT(chan->channel) + BIT(7);
-	पूर्ण अन्यथा अणु
+	} else {
 		mask = BIT(chan->channel);
-	पूर्ण
+	}
 	ret = regmap_update_bits(st->regmap, AD5770R_CHANNEL_CONFIG, mask,
 				 regval);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	regval = AD5770R_CH_SET(पढ़ोin, chan->channel);
+	regval = AD5770R_CH_SET(readin, chan->channel);
 	ret = regmap_update_bits(st->regmap, AD5770R_CH_ENABLE,
 				 BIT(chan->channel), regval);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	st->ch_pwr_करोwn[chan->channel] = !पढ़ोin;
+	st->ch_pwr_down[chan->channel] = !readin;
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल स्थिर काष्ठा iio_chan_spec_ext_info ad5770r_ext_info[] = अणु
-	अणु
+static const struct iio_chan_spec_ext_info ad5770r_ext_info[] = {
+	{
 		.name = "powerdown",
-		.पढ़ो = ad5770r_पढ़ो_dac_घातerकरोwn,
-		.ग_लिखो = ad5770r_ग_लिखो_dac_घातerकरोwn,
+		.read = ad5770r_read_dac_powerdown,
+		.write = ad5770r_write_dac_powerdown,
 		.shared = IIO_SEPARATE,
-	पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+	},
+	{ }
+};
 
-#घोषणा AD5770R_IDAC_CHANNEL(index, reg) अणु				\
+#define AD5770R_IDAC_CHANNEL(index, reg) {				\
 	.type = IIO_CURRENT,						\
 	.address = reg,							\
 	.indexed = 1,							\
@@ -501,120 +500,120 @@
 	.info_mask_shared_by_type_available =				\
 		BIT(IIO_CHAN_INFO_LOW_PASS_FILTER_3DB_FREQUENCY),	\
 	.ext_info = ad5770r_ext_info,					\
-पूर्ण
+}
 
-अटल स्थिर काष्ठा iio_chan_spec ad5770r_channels[] = अणु
+static const struct iio_chan_spec ad5770r_channels[] = {
 	AD5770R_IDAC_CHANNEL(0, AD5770R_DAC_MSB(0)),
 	AD5770R_IDAC_CHANNEL(1, AD5770R_DAC_MSB(1)),
 	AD5770R_IDAC_CHANNEL(2, AD5770R_DAC_MSB(2)),
 	AD5770R_IDAC_CHANNEL(3, AD5770R_DAC_MSB(3)),
 	AD5770R_IDAC_CHANNEL(4, AD5770R_DAC_MSB(4)),
 	AD5770R_IDAC_CHANNEL(5, AD5770R_DAC_MSB(5)),
-पूर्ण;
+};
 
-अटल पूर्णांक ad5770r_channel_config(काष्ठा ad5770r_state *st)
-अणु
-	पूर्णांक ret, पंचांगp[2], min, max;
-	अचिन्हित पूर्णांक num;
-	काष्ठा fwnode_handle *child;
+static int ad5770r_channel_config(struct ad5770r_state *st)
+{
+	int ret, tmp[2], min, max;
+	unsigned int num;
+	struct fwnode_handle *child;
 
 	num = device_get_child_node_count(&st->spi->dev);
-	अगर (num != AD5770R_MAX_CHANNELS)
-		वापस -EINVAL;
+	if (num != AD5770R_MAX_CHANNELS)
+		return -EINVAL;
 
-	device_क्रम_each_child_node(&st->spi->dev, child) अणु
-		ret = fwnode_property_पढ़ो_u32(child, "num", &num);
-		अगर (ret)
-			जाओ err_child_out;
-		अगर (num >= AD5770R_MAX_CHANNELS) अणु
+	device_for_each_child_node(&st->spi->dev, child) {
+		ret = fwnode_property_read_u32(child, "num", &num);
+		if (ret)
+			goto err_child_out;
+		if (num >= AD5770R_MAX_CHANNELS) {
 			ret = -EINVAL;
-			जाओ err_child_out;
-		पूर्ण
+			goto err_child_out;
+		}
 
-		ret = fwnode_property_पढ़ो_u32_array(child,
+		ret = fwnode_property_read_u32_array(child,
 						     "adi,range-microamp",
-						     पंचांगp, 2);
-		अगर (ret)
-			जाओ err_child_out;
+						     tmp, 2);
+		if (ret)
+			goto err_child_out;
 
-		min = पंचांगp[0] / 1000;
-		max = पंचांगp[1] / 1000;
+		min = tmp[0] / 1000;
+		max = tmp[1] / 1000;
 		ret = ad5770r_store_output_range(st, min, max, num);
-		अगर (ret)
-			जाओ err_child_out;
-	पूर्ण
+		if (ret)
+			goto err_child_out;
+	}
 
-	वापस 0;
+	return 0;
 
 err_child_out:
 	fwnode_handle_put(child);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ad5770r_init(काष्ठा ad5770r_state *st)
-अणु
-	पूर्णांक ret, i;
+static int ad5770r_init(struct ad5770r_state *st)
+{
+	int ret, i;
 
 	st->gpio_reset = devm_gpiod_get_optional(&st->spi->dev, "reset",
 						 GPIOD_OUT_HIGH);
-	अगर (IS_ERR(st->gpio_reset))
-		वापस PTR_ERR(st->gpio_reset);
+	if (IS_ERR(st->gpio_reset))
+		return PTR_ERR(st->gpio_reset);
 
-	/* Perक्रमm a reset */
+	/* Perform a reset */
 	ret = ad5770r_reset(st);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* Set output range */
 	ret = ad5770r_channel_config(st);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	क्रम (i = 0; i < AD5770R_MAX_CHANNELS; i++) अणु
+	for (i = 0; i < AD5770R_MAX_CHANNELS; i++) {
 		ret = ad5770r_set_output_mode(st,  &st->output_mode[i], i);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	st->बाह्यal_res = fwnode_property_पढ़ो_bool(st->spi->dev.fwnode,
+	st->external_res = fwnode_property_read_bool(st->spi->dev.fwnode,
 						     "adi,external-resistor");
 
 	ret = ad5770r_set_reference(st);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* Set outमाला_दो off */
-	ret = regmap_ग_लिखो(st->regmap, AD5770R_CHANNEL_CONFIG, 0x00);
-	अगर (ret)
-		वापस ret;
+	/* Set outputs off */
+	ret = regmap_write(st->regmap, AD5770R_CHANNEL_CONFIG, 0x00);
+	if (ret)
+		return ret;
 
-	ret = regmap_ग_लिखो(st->regmap, AD5770R_CH_ENABLE, 0x00);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_write(st->regmap, AD5770R_CH_ENABLE, 0x00);
+	if (ret)
+		return ret;
 
-	क्रम (i = 0; i < AD5770R_MAX_CHANNELS; i++)
-		st->ch_pwr_करोwn[i] = true;
+	for (i = 0; i < AD5770R_MAX_CHANNELS; i++)
+		st->ch_pwr_down[i] = true;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम ad5770r_disable_regulator(व्योम *data)
-अणु
-	काष्ठा ad5770r_state *st = data;
+static void ad5770r_disable_regulator(void *data)
+{
+	struct ad5770r_state *st = data;
 
 	regulator_disable(st->vref_reg);
-पूर्ण
+}
 
-अटल पूर्णांक ad5770r_probe(काष्ठा spi_device *spi)
-अणु
-	काष्ठा ad5770r_state *st;
-	काष्ठा iio_dev *indio_dev;
-	काष्ठा regmap *regmap;
-	पूर्णांक ret;
+static int ad5770r_probe(struct spi_device *spi)
+{
+	struct ad5770r_state *st;
+	struct iio_dev *indio_dev;
+	struct regmap *regmap;
+	int ret;
 
-	indio_dev = devm_iio_device_alloc(&spi->dev, माप(*st));
-	अगर (!indio_dev)
-		वापस -ENOMEM;
+	indio_dev = devm_iio_device_alloc(&spi->dev, sizeof(*st));
+	if (!indio_dev)
+		return -ENOMEM;
 
 	st = iio_priv(indio_dev);
 	spi_set_drvdata(spi, indio_dev);
@@ -622,77 +621,77 @@ err_child_out:
 	st->spi = spi;
 
 	regmap = devm_regmap_init_spi(spi, &ad5770r_spi_regmap_config);
-	अगर (IS_ERR(regmap)) अणु
+	if (IS_ERR(regmap)) {
 		dev_err(&spi->dev, "Error initializing spi regmap: %ld\n",
 			PTR_ERR(regmap));
-		वापस PTR_ERR(regmap);
-	पूर्ण
+		return PTR_ERR(regmap);
+	}
 	st->regmap = regmap;
 
 	st->vref_reg = devm_regulator_get_optional(&spi->dev, "vref");
-	अगर (!IS_ERR(st->vref_reg)) अणु
+	if (!IS_ERR(st->vref_reg)) {
 		ret = regulator_enable(st->vref_reg);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(&spi->dev,
 				"Failed to enable vref regulators: %d\n", ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
 		ret = devm_add_action_or_reset(&spi->dev,
 					       ad5770r_disable_regulator,
 					       st);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 
 		ret = regulator_get_voltage(st->vref_reg);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 
 		st->vref = ret / 1000;
-	पूर्ण अन्यथा अणु
-		अगर (PTR_ERR(st->vref_reg) == -ENODEV) अणु
+	} else {
+		if (PTR_ERR(st->vref_reg) == -ENODEV) {
 			st->vref = AD5770R_LOW_VREF_mV;
-			st->पूर्णांकernal_ref = true;
-		पूर्ण अन्यथा अणु
-			वापस PTR_ERR(st->vref_reg);
-		पूर्ण
-	पूर्ण
+			st->internal_ref = true;
+		} else {
+			return PTR_ERR(st->vref_reg);
+		}
+	}
 
 	indio_dev->name = spi_get_device_id(spi)->name;
 	indio_dev->info = &ad5770r_info;
-	indio_dev->modes = INDIO_सूचीECT_MODE;
+	indio_dev->modes = INDIO_DIRECT_MODE;
 	indio_dev->channels = ad5770r_channels;
 	indio_dev->num_channels = ARRAY_SIZE(ad5770r_channels);
 
 	ret = ad5770r_init(st);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&spi->dev, "AD5770R init failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस devm_iio_device_रेजिस्टर(&st->spi->dev, indio_dev);
-पूर्ण
+	return devm_iio_device_register(&st->spi->dev, indio_dev);
+}
 
-अटल स्थिर काष्ठा of_device_id ad5770r_of_id[] = अणु
-	अणु .compatible = "adi,ad5770r", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id ad5770r_of_id[] = {
+	{ .compatible = "adi,ad5770r", },
+	{},
+};
 MODULE_DEVICE_TABLE(of, ad5770r_of_id);
 
-अटल स्थिर काष्ठा spi_device_id ad5770r_id[] = अणु
-	अणु "ad5770r", 0 पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct spi_device_id ad5770r_id[] = {
+	{ "ad5770r", 0 },
+	{},
+};
 MODULE_DEVICE_TABLE(spi, ad5770r_id);
 
-अटल काष्ठा spi_driver ad5770r_driver = अणु
-	.driver = अणु
+static struct spi_driver ad5770r_driver = {
+	.driver = {
 		.name = KBUILD_MODNAME,
 		.of_match_table = ad5770r_of_id,
-	पूर्ण,
+	},
 	.probe = ad5770r_probe,
 	.id_table = ad5770r_id,
-पूर्ण;
+};
 
 module_spi_driver(ad5770r_driver);
 

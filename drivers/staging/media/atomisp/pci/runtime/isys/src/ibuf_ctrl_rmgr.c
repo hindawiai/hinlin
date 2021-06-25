@@ -1,123 +1,122 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Support क्रम Intel Camera Imaging ISP subप्रणाली.
+ * Support for Intel Camera Imaging ISP subsystem.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  */
 
-#समावेश "system_global.h"
+#include "system_global.h"
 
-#समावेश "assert_support.h"
-#समावेश "platform_support.h"
-#समावेश "ia_css_isys.h"
-#समावेश "ibuf_ctrl_rmgr.h"
+#include "assert_support.h"
+#include "platform_support.h"
+#include "ia_css_isys.h"
+#include "ibuf_ctrl_rmgr.h"
 
-अटल ibuf_rsrc_t	ibuf_rsrc;
+static ibuf_rsrc_t	ibuf_rsrc;
 
-अटल ibuf_handle_t *getHandle(uपूर्णांक16_t index)
-अणु
-	ibuf_handle_t *handle = शून्य;
+static ibuf_handle_t *getHandle(uint16_t index)
+{
+	ibuf_handle_t *handle = NULL;
 
-	अगर (index < MAX_IBUF_HANDLES)
+	if (index < MAX_IBUF_HANDLES)
 		handle = &ibuf_rsrc.handles[index];
-	वापस handle;
-पूर्ण
+	return handle;
+}
 
-व्योम ia_css_isys_ibuf_rmgr_init(व्योम)
-अणु
-	स_रखो(&ibuf_rsrc, 0, माप(ibuf_rsrc));
-	ibuf_rsrc.मुक्त_size = MAX_INPUT_BUFFER_SIZE;
-पूर्ण
+void ia_css_isys_ibuf_rmgr_init(void)
+{
+	memset(&ibuf_rsrc, 0, sizeof(ibuf_rsrc));
+	ibuf_rsrc.free_size = MAX_INPUT_BUFFER_SIZE;
+}
 
-व्योम ia_css_isys_ibuf_rmgr_uninit(व्योम)
-अणु
-	स_रखो(&ibuf_rsrc, 0, माप(ibuf_rsrc));
-	ibuf_rsrc.मुक्त_size = MAX_INPUT_BUFFER_SIZE;
-पूर्ण
+void ia_css_isys_ibuf_rmgr_uninit(void)
+{
+	memset(&ibuf_rsrc, 0, sizeof(ibuf_rsrc));
+	ibuf_rsrc.free_size = MAX_INPUT_BUFFER_SIZE;
+}
 
 bool ia_css_isys_ibuf_rmgr_acquire(
     u32	size,
-    uपूर्णांक32_t	*start_addr)
-अणु
+    uint32_t	*start_addr)
+{
 	bool retval = false;
 	bool input_buffer_found = false;
 	u32 aligned_size;
-	ibuf_handle_t *handle = शून्य;
+	ibuf_handle_t *handle = NULL;
 	u16 i;
 
-	निश्चित(start_addr);
-	निश्चित(size > 0);
+	assert(start_addr);
+	assert(size > 0);
 
 	aligned_size = (size + (IBUF_ALIGN - 1)) & ~(IBUF_ALIGN - 1);
 
-	/* Check अगर there is an available un-used handle with the size
+	/* Check if there is an available un-used handle with the size
 	 * that will fulfill the request.
 	 */
-	अगर (ibuf_rsrc.num_active < ibuf_rsrc.num_allocated) अणु
-		क्रम (i = 0; i < ibuf_rsrc.num_allocated; i++) अणु
+	if (ibuf_rsrc.num_active < ibuf_rsrc.num_allocated) {
+		for (i = 0; i < ibuf_rsrc.num_allocated; i++) {
 			handle = getHandle(i);
-			अगर (!handle->active) अणु
-				अगर (handle->size >= aligned_size) अणु
+			if (!handle->active) {
+				if (handle->size >= aligned_size) {
 					handle->active = true;
 					input_buffer_found = true;
 					ibuf_rsrc.num_active++;
-					अवरोध;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
+					break;
+				}
+			}
+		}
+	}
 
-	अगर (!input_buffer_found) अणु
+	if (!input_buffer_found) {
 		/* There were no available handles that fulfilled the
 		 * request. Allocate a new handle with the requested size.
 		 */
-		अगर ((ibuf_rsrc.num_allocated < MAX_IBUF_HANDLES) &&
-		    (ibuf_rsrc.मुक्त_size >= aligned_size)) अणु
+		if ((ibuf_rsrc.num_allocated < MAX_IBUF_HANDLES) &&
+		    (ibuf_rsrc.free_size >= aligned_size)) {
 			handle = getHandle(ibuf_rsrc.num_allocated);
-			handle->start_addr	= ibuf_rsrc.मुक्त_start_addr;
+			handle->start_addr	= ibuf_rsrc.free_start_addr;
 			handle->size		= aligned_size;
 			handle->active		= true;
 
-			ibuf_rsrc.मुक्त_start_addr += aligned_size;
-			ibuf_rsrc.मुक्त_size -= aligned_size;
+			ibuf_rsrc.free_start_addr += aligned_size;
+			ibuf_rsrc.free_size -= aligned_size;
 			ibuf_rsrc.num_active++;
 			ibuf_rsrc.num_allocated++;
 
 			input_buffer_found = true;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (input_buffer_found && handle) अणु
+	if (input_buffer_found && handle) {
 		*start_addr = handle->start_addr;
 		retval = true;
-	पूर्ण
+	}
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-व्योम ia_css_isys_ibuf_rmgr_release(
-    uपूर्णांक32_t	*start_addr)
-अणु
+void ia_css_isys_ibuf_rmgr_release(
+    uint32_t	*start_addr)
+{
 	u16 i;
-	ibuf_handle_t *handle = शून्य;
+	ibuf_handle_t *handle = NULL;
 
-	निश्चित(start_addr);
+	assert(start_addr);
 
-	क्रम (i = 0; i < ibuf_rsrc.num_allocated; i++) अणु
+	for (i = 0; i < ibuf_rsrc.num_allocated; i++) {
 		handle = getHandle(i);
-		अगर (handle->active && handle->start_addr == *start_addr) अणु
+		if (handle->active && handle->start_addr == *start_addr) {
 			handle->active = false;
 			ibuf_rsrc.num_active--;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			break;
+		}
+	}
+}

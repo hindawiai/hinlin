@@ -1,67 +1,66 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 // Copyright 2019 IBM Corp.
-#समावेश <linux/module.h>
-#समावेश "ocxl_internal.h"
+#include <linux/module.h>
+#include "ocxl_internal.h"
 
 /*
- * Any खोलोcapi device which wants to use this 'generic' driver should
- * use the 0x062B device ID. Venकरोrs should define the subप्रणाली
- * venकरोr/device ID to help dअगरferentiate devices.
+ * Any opencapi device which wants to use this 'generic' driver should
+ * use the 0x062B device ID. Vendors should define the subsystem
+ * vendor/device ID to help differentiate devices.
  */
-अटल स्थिर काष्ठा pci_device_id ocxl_pci_tbl[] = अणु
-	अणु PCI_DEVICE(PCI_VENDOR_ID_IBM, 0x062B), पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct pci_device_id ocxl_pci_tbl[] = {
+	{ PCI_DEVICE(PCI_VENDOR_ID_IBM, 0x062B), },
+	{ }
+};
 MODULE_DEVICE_TABLE(pci, ocxl_pci_tbl);
 
-अटल पूर्णांक ocxl_probe(काष्ठा pci_dev *dev, स्थिर काष्ठा pci_device_id *id)
-अणु
-	पूर्णांक rc;
-	काष्ठा ocxl_afu *afu, *पंचांगp;
-	काष्ठा ocxl_fn *fn;
-	काष्ठा list_head *afu_list;
+static int ocxl_probe(struct pci_dev *dev, const struct pci_device_id *id)
+{
+	int rc;
+	struct ocxl_afu *afu, *tmp;
+	struct ocxl_fn *fn;
+	struct list_head *afu_list;
 
-	fn = ocxl_function_खोलो(dev);
-	अगर (IS_ERR(fn))
-		वापस PTR_ERR(fn);
+	fn = ocxl_function_open(dev);
+	if (IS_ERR(fn))
+		return PTR_ERR(fn);
 
 	pci_set_drvdata(dev, fn);
 
 	afu_list = ocxl_function_afu_list(fn);
 
-	list_क्रम_each_entry_safe(afu, पंचांगp, afu_list, list) अणु
-		// Cleanup handled within ocxl_file_रेजिस्टर_afu()
-		rc = ocxl_file_रेजिस्टर_afu(afu);
-		अगर (rc) अणु
+	list_for_each_entry_safe(afu, tmp, afu_list, list) {
+		// Cleanup handled within ocxl_file_register_afu()
+		rc = ocxl_file_register_afu(afu);
+		if (rc) {
 			dev_err(&dev->dev, "Failed to register AFU '%s' index %d",
 					afu->config.name, afu->config.idx);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ocxl_हटाओ(काष्ठा pci_dev *dev)
-अणु
-	काष्ठा ocxl_fn *fn;
-	काष्ठा ocxl_afu *afu;
-	काष्ठा list_head *afu_list;
+static void ocxl_remove(struct pci_dev *dev)
+{
+	struct ocxl_fn *fn;
+	struct ocxl_afu *afu;
+	struct list_head *afu_list;
 
 	fn = pci_get_drvdata(dev);
 	afu_list = ocxl_function_afu_list(fn);
 
-	list_क्रम_each_entry(afu, afu_list, list) अणु
-		ocxl_file_unरेजिस्टर_afu(afu);
-	पूर्ण
+	list_for_each_entry(afu, afu_list, list) {
+		ocxl_file_unregister_afu(afu);
+	}
 
-	ocxl_function_बंद(fn);
-पूर्ण
+	ocxl_function_close(fn);
+}
 
-काष्ठा pci_driver ocxl_pci_driver = अणु
+struct pci_driver ocxl_pci_driver = {
 	.name = "ocxl",
 	.id_table = ocxl_pci_tbl,
 	.probe = ocxl_probe,
-	.हटाओ = ocxl_हटाओ,
-	.shutकरोwn = ocxl_हटाओ,
-पूर्ण;
+	.remove = ocxl_remove,
+	.shutdown = ocxl_remove,
+};

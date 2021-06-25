@@ -1,191 +1,190 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * (C) 2002 - 2003 Dominik Broकरोwski <linux@broकरो.de>
+ * (C) 2002 - 2003 Dominik Brodowski <linux@brodo.de>
  *
- *  Library क्रम common functions क्रम Intel SpeedStep v.1 and v.2 support
+ *  Library for common functions for Intel SpeedStep v.1 and v.2 support
  *
  *  BIG FAT DISCLAIMER: Work in progress code. Possibly *dangerous*
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/init.h>
-#समावेश <linux/cpufreq.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/init.h>
+#include <linux/cpufreq.h>
 
-#समावेश <यंत्र/msr.h>
-#समावेश <यंत्र/tsc.h>
-#समावेश "speedstep-lib.h"
+#include <asm/msr.h>
+#include <asm/tsc.h>
+#include "speedstep-lib.h"
 
-#घोषणा PFX "speedstep-lib: "
+#define PFX "speedstep-lib: "
 
-#अगर_घोषित CONFIG_X86_SPEEDSTEP_RELAXED_CAP_CHECK
-अटल पूर्णांक relaxed_check;
-#अन्यथा
-#घोषणा relaxed_check 0
-#पूर्ण_अगर
+#ifdef CONFIG_X86_SPEEDSTEP_RELAXED_CAP_CHECK
+static int relaxed_check;
+#else
+#define relaxed_check 0
+#endif
 
 /*********************************************************************
  *                   GET PROCESSOR CORE SPEED IN KHZ                 *
  *********************************************************************/
 
-अटल अचिन्हित पूर्णांक pentium3_get_frequency(क्रमागत speedstep_processor processor)
-अणु
+static unsigned int pentium3_get_frequency(enum speedstep_processor processor)
+{
 	/* See table 14 of p3_ds.pdf and table 22 of 29834003.pdf */
-	अटल स्थिर काष्ठा अणु
-		अचिन्हित पूर्णांक ratio;	/* Frequency Multiplier (x10) */
-		u8 biपंचांगap;		/* घातer on configuration bits
+	static const struct {
+		unsigned int ratio;	/* Frequency Multiplier (x10) */
+		u8 bitmap;		/* power on configuration bits
 					[27, 25:22] (in MSR 0x2a) */
-	पूर्ण msr_decode_mult[] = अणु
-		अणु 30, 0x01 पूर्ण,
-		अणु 35, 0x05 पूर्ण,
-		अणु 40, 0x02 पूर्ण,
-		अणु 45, 0x06 पूर्ण,
-		अणु 50, 0x00 पूर्ण,
-		अणु 55, 0x04 पूर्ण,
-		अणु 60, 0x0b पूर्ण,
-		अणु 65, 0x0f पूर्ण,
-		अणु 70, 0x09 पूर्ण,
-		अणु 75, 0x0d पूर्ण,
-		अणु 80, 0x0a पूर्ण,
-		अणु 85, 0x26 पूर्ण,
-		अणु 90, 0x20 पूर्ण,
-		अणु 100, 0x2b पूर्ण,
-		अणु 0, 0xff पूर्ण	/* error or unknown value */
-	पूर्ण;
+	} msr_decode_mult[] = {
+		{ 30, 0x01 },
+		{ 35, 0x05 },
+		{ 40, 0x02 },
+		{ 45, 0x06 },
+		{ 50, 0x00 },
+		{ 55, 0x04 },
+		{ 60, 0x0b },
+		{ 65, 0x0f },
+		{ 70, 0x09 },
+		{ 75, 0x0d },
+		{ 80, 0x0a },
+		{ 85, 0x26 },
+		{ 90, 0x20 },
+		{ 100, 0x2b },
+		{ 0, 0xff }	/* error or unknown value */
+	};
 
 	/* PIII(-M) FSB settings: see table b1-b of 24547206.pdf */
-	अटल स्थिर काष्ठा अणु
-		अचिन्हित पूर्णांक value;	/* Front Side Bus speed in MHz */
-		u8 biपंचांगap;		/* घातer on configuration bits [18: 19]
+	static const struct {
+		unsigned int value;	/* Front Side Bus speed in MHz */
+		u8 bitmap;		/* power on configuration bits [18: 19]
 					(in MSR 0x2a) */
-	पूर्ण msr_decode_fsb[] = अणु
-		अणु  66, 0x0 पूर्ण,
-		अणु 100, 0x2 पूर्ण,
-		अणु 133, 0x1 पूर्ण,
-		अणु   0, 0xffपूर्ण
-	पूर्ण;
+	} msr_decode_fsb[] = {
+		{  66, 0x0 },
+		{ 100, 0x2 },
+		{ 133, 0x1 },
+		{   0, 0xff}
+	};
 
-	u32 msr_lo, msr_पंचांगp;
-	पूर्णांक i = 0, j = 0;
+	u32 msr_lo, msr_tmp;
+	int i = 0, j = 0;
 
-	/* पढ़ो MSR 0x2a - we only need the low 32 bits */
-	rdmsr(MSR_IA32_EBL_CR_POWERON, msr_lo, msr_पंचांगp);
-	pr_debug("P3 - MSR_IA32_EBL_CR_POWERON: 0x%x 0x%x\n", msr_lo, msr_पंचांगp);
-	msr_पंचांगp = msr_lo;
+	/* read MSR 0x2a - we only need the low 32 bits */
+	rdmsr(MSR_IA32_EBL_CR_POWERON, msr_lo, msr_tmp);
+	pr_debug("P3 - MSR_IA32_EBL_CR_POWERON: 0x%x 0x%x\n", msr_lo, msr_tmp);
+	msr_tmp = msr_lo;
 
 	/* decode the FSB */
-	msr_पंचांगp &= 0x00c0000;
-	msr_पंचांगp >>= 18;
-	जबतक (msr_पंचांगp != msr_decode_fsb[i].biपंचांगap) अणु
-		अगर (msr_decode_fsb[i].biपंचांगap == 0xff)
-			वापस 0;
+	msr_tmp &= 0x00c0000;
+	msr_tmp >>= 18;
+	while (msr_tmp != msr_decode_fsb[i].bitmap) {
+		if (msr_decode_fsb[i].bitmap == 0xff)
+			return 0;
 		i++;
-	पूर्ण
+	}
 
 	/* decode the multiplier */
-	अगर (processor == SPEEDSTEP_CPU_PIII_C_EARLY) अणु
+	if (processor == SPEEDSTEP_CPU_PIII_C_EARLY) {
 		pr_debug("workaround for early PIIIs\n");
 		msr_lo &= 0x03c00000;
-	पूर्ण अन्यथा
+	} else
 		msr_lo &= 0x0bc00000;
 	msr_lo >>= 22;
-	जबतक (msr_lo != msr_decode_mult[j].biपंचांगap) अणु
-		अगर (msr_decode_mult[j].biपंचांगap == 0xff)
-			वापस 0;
+	while (msr_lo != msr_decode_mult[j].bitmap) {
+		if (msr_decode_mult[j].bitmap == 0xff)
+			return 0;
 		j++;
-	पूर्ण
+	}
 
 	pr_debug("speed is %u\n",
 		(msr_decode_mult[j].ratio * msr_decode_fsb[i].value * 100));
 
-	वापस msr_decode_mult[j].ratio * msr_decode_fsb[i].value * 100;
-पूर्ण
+	return msr_decode_mult[j].ratio * msr_decode_fsb[i].value * 100;
+}
 
 
-अटल अचिन्हित पूर्णांक pentiumM_get_frequency(व्योम)
-अणु
-	u32 msr_lo, msr_पंचांगp;
+static unsigned int pentiumM_get_frequency(void)
+{
+	u32 msr_lo, msr_tmp;
 
-	rdmsr(MSR_IA32_EBL_CR_POWERON, msr_lo, msr_पंचांगp);
-	pr_debug("PM - MSR_IA32_EBL_CR_POWERON: 0x%x 0x%x\n", msr_lo, msr_पंचांगp);
+	rdmsr(MSR_IA32_EBL_CR_POWERON, msr_lo, msr_tmp);
+	pr_debug("PM - MSR_IA32_EBL_CR_POWERON: 0x%x 0x%x\n", msr_lo, msr_tmp);
 
 	/* see table B-2 of 24547212.pdf */
-	अगर (msr_lo & 0x00040000) अणु
-		prपूर्णांकk(KERN_DEBUG PFX "PM - invalid FSB: 0x%x 0x%x\n",
-				msr_lo, msr_पंचांगp);
-		वापस 0;
-	पूर्ण
+	if (msr_lo & 0x00040000) {
+		printk(KERN_DEBUG PFX "PM - invalid FSB: 0x%x 0x%x\n",
+				msr_lo, msr_tmp);
+		return 0;
+	}
 
-	msr_पंचांगp = (msr_lo >> 22) & 0x1f;
+	msr_tmp = (msr_lo >> 22) & 0x1f;
 	pr_debug("bits 22-26 are 0x%x, speed is %u\n",
-			msr_पंचांगp, (msr_पंचांगp * 100 * 1000));
+			msr_tmp, (msr_tmp * 100 * 1000));
 
-	वापस msr_पंचांगp * 100 * 1000;
-पूर्ण
+	return msr_tmp * 100 * 1000;
+}
 
-अटल अचिन्हित पूर्णांक pentium_core_get_frequency(व्योम)
-अणु
+static unsigned int pentium_core_get_frequency(void)
+{
 	u32 fsb = 0;
-	u32 msr_lo, msr_पंचांगp;
-	पूर्णांक ret;
+	u32 msr_lo, msr_tmp;
+	int ret;
 
-	rdmsr(MSR_FSB_FREQ, msr_lo, msr_पंचांगp);
+	rdmsr(MSR_FSB_FREQ, msr_lo, msr_tmp);
 	/* see table B-2 of 25366920.pdf */
-	चयन (msr_lo & 0x07) अणु
-	हाल 5:
+	switch (msr_lo & 0x07) {
+	case 5:
 		fsb = 100000;
-		अवरोध;
-	हाल 1:
+		break;
+	case 1:
 		fsb = 133333;
-		अवरोध;
-	हाल 3:
+		break;
+	case 3:
 		fsb = 166667;
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		fsb = 200000;
-		अवरोध;
-	हाल 0:
+		break;
+	case 0:
 		fsb = 266667;
-		अवरोध;
-	हाल 4:
+		break;
+	case 4:
 		fsb = 333333;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		pr_err("PCORE - MSR_FSB_FREQ undefined value\n");
-	पूर्ण
+	}
 
-	rdmsr(MSR_IA32_EBL_CR_POWERON, msr_lo, msr_पंचांगp);
+	rdmsr(MSR_IA32_EBL_CR_POWERON, msr_lo, msr_tmp);
 	pr_debug("PCORE - MSR_IA32_EBL_CR_POWERON: 0x%x 0x%x\n",
-			msr_lo, msr_पंचांगp);
+			msr_lo, msr_tmp);
 
-	msr_पंचांगp = (msr_lo >> 22) & 0x1f;
+	msr_tmp = (msr_lo >> 22) & 0x1f;
 	pr_debug("bits 22-26 are 0x%x, speed is %u\n",
-			msr_पंचांगp, (msr_पंचांगp * fsb));
+			msr_tmp, (msr_tmp * fsb));
 
-	ret = (msr_पंचांगp * fsb);
-	वापस ret;
-पूर्ण
+	ret = (msr_tmp * fsb);
+	return ret;
+}
 
 
-अटल अचिन्हित पूर्णांक pentium4_get_frequency(व्योम)
-अणु
-	काष्ठा cpuinfo_x86 *c = &boot_cpu_data;
+static unsigned int pentium4_get_frequency(void)
+{
+	struct cpuinfo_x86 *c = &boot_cpu_data;
 	u32 msr_lo, msr_hi, mult;
-	अचिन्हित पूर्णांक fsb = 0;
-	अचिन्हित पूर्णांक ret;
+	unsigned int fsb = 0;
+	unsigned int ret;
 	u8 fsb_code;
 
-	/* Pentium 4 Model 0 and 1 करो not have the Core Clock Frequency
+	/* Pentium 4 Model 0 and 1 do not have the Core Clock Frequency
 	 * to System Bus Frequency Ratio Field in the Processor Frequency
-	 * Configuration Register of the MSR. Thereक्रमe the current
+	 * Configuration Register of the MSR. Therefore the current
 	 * frequency cannot be calculated and has to be measured.
 	 */
-	अगर (c->x86_model < 2)
-		वापस cpu_khz;
+	if (c->x86_model < 2)
+		return cpu_khz;
 
 	rdmsr(0x2c, msr_lo, msr_hi);
 
@@ -197,20 +196,20 @@
 	 * Intel Xeon Processors, on page B-4 and B-5.
 	 */
 	fsb_code = (msr_lo >> 16) & 0x7;
-	चयन (fsb_code) अणु
-	हाल 0:
+	switch (fsb_code) {
+	case 0:
 		fsb = 100 * 1000;
-		अवरोध;
-	हाल 1:
+		break;
+	case 1:
 		fsb = 13333 * 10;
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		fsb = 200 * 1000;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (!fsb)
-		prपूर्णांकk(KERN_DEBUG PFX "couldn't detect FSB speed. "
+	if (!fsb)
+		printk(KERN_DEBUG PFX "couldn't detect FSB speed. "
 				"Please send an e-mail to <linux@brodo.de>\n");
 
 	/* Multiplier. */
@@ -220,30 +219,30 @@
 			fsb, mult, (fsb * mult));
 
 	ret = (fsb * mult);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
 /* Warning: may get called from smp_call_function_single. */
-अचिन्हित पूर्णांक speedstep_get_frequency(क्रमागत speedstep_processor processor)
-अणु
-	चयन (processor) अणु
-	हाल SPEEDSTEP_CPU_PCORE:
-		वापस pentium_core_get_frequency();
-	हाल SPEEDSTEP_CPU_PM:
-		वापस pentiumM_get_frequency();
-	हाल SPEEDSTEP_CPU_P4D:
-	हाल SPEEDSTEP_CPU_P4M:
-		वापस pentium4_get_frequency();
-	हाल SPEEDSTEP_CPU_PIII_T:
-	हाल SPEEDSTEP_CPU_PIII_C:
-	हाल SPEEDSTEP_CPU_PIII_C_EARLY:
-		वापस pentium3_get_frequency(processor);
-	शेष:
-		वापस 0;
-	पूर्ण
-	वापस 0;
-पूर्ण
+unsigned int speedstep_get_frequency(enum speedstep_processor processor)
+{
+	switch (processor) {
+	case SPEEDSTEP_CPU_PCORE:
+		return pentium_core_get_frequency();
+	case SPEEDSTEP_CPU_PM:
+		return pentiumM_get_frequency();
+	case SPEEDSTEP_CPU_P4D:
+	case SPEEDSTEP_CPU_P4M:
+		return pentium4_get_frequency();
+	case SPEEDSTEP_CPU_PIII_T:
+	case SPEEDSTEP_CPU_PIII_C:
+	case SPEEDSTEP_CPU_PIII_C_EARLY:
+		return pentium3_get_frequency(processor);
+	default:
+		return 0;
+	}
+	return 0;
+}
 EXPORT_SYMBOL_GPL(speedstep_get_frequency);
 
 
@@ -251,95 +250,95 @@ EXPORT_SYMBOL_GPL(speedstep_get_frequency);
  *                 DETECT SPEEDSTEP-CAPABLE PROCESSOR                *
  *********************************************************************/
 
-/* Keep in sync with the x86_cpu_id tables in the dअगरferent modules */
-क्रमागत speedstep_processor speedstep_detect_processor(व्योम)
-अणु
-	काष्ठा cpuinfo_x86 *c = &cpu_data(0);
+/* Keep in sync with the x86_cpu_id tables in the different modules */
+enum speedstep_processor speedstep_detect_processor(void)
+{
+	struct cpuinfo_x86 *c = &cpu_data(0);
 	u32 ebx, msr_lo, msr_hi;
 
 	pr_debug("x86: %x, model: %x\n", c->x86, c->x86_model);
 
-	अगर ((c->x86_venकरोr != X86_VENDOR_INTEL) ||
+	if ((c->x86_vendor != X86_VENDOR_INTEL) ||
 	    ((c->x86 != 6) && (c->x86 != 0xF)))
-		वापस 0;
+		return 0;
 
-	अगर (c->x86 == 0xF) अणु
+	if (c->x86 == 0xF) {
 		/* Intel Mobile Pentium 4-M
 		 * or Intel Mobile Pentium 4 with 533 MHz FSB */
-		अगर (c->x86_model != 2)
-			वापस 0;
+		if (c->x86_model != 2)
+			return 0;
 
 		ebx = cpuid_ebx(0x00000001);
 		ebx &= 0x000000FF;
 
 		pr_debug("ebx value is %x, x86_stepping is %x\n", ebx, c->x86_stepping);
 
-		चयन (c->x86_stepping) अणु
-		हाल 4:
+		switch (c->x86_stepping) {
+		case 4:
 			/*
 			 * B-stepping [M-P4-M]
 			 * sample has ebx = 0x0f, production has 0x0e.
 			 */
-			अगर ((ebx == 0x0e) || (ebx == 0x0f))
-				वापस SPEEDSTEP_CPU_P4M;
-			अवरोध;
-		हाल 7:
+			if ((ebx == 0x0e) || (ebx == 0x0f))
+				return SPEEDSTEP_CPU_P4M;
+			break;
+		case 7:
 			/*
 			 * C-stepping [M-P4-M]
-			 * needs to have ebx=0x0e, अन्यथा it's a celeron:
+			 * needs to have ebx=0x0e, else it's a celeron:
 			 * cf. 25130917.pdf / page 7, footnote 5 even
-			 * though 25072120.pdf / page 7 करोesn't say
+			 * though 25072120.pdf / page 7 doesn't say
 			 * samples are only of B-stepping...
 			 */
-			अगर (ebx == 0x0e)
-				वापस SPEEDSTEP_CPU_P4M;
-			अवरोध;
-		हाल 9:
+			if (ebx == 0x0e)
+				return SPEEDSTEP_CPU_P4M;
+			break;
+		case 9:
 			/*
 			 * D-stepping [M-P4-M or M-P4/533]
 			 *
 			 * this is totally strange: CPUID 0x0F29 is
 			 * used by M-P4-M, M-P4/533 and(!) Celeron CPUs.
-			 * The latter need to be sorted out as they करोn't
+			 * The latter need to be sorted out as they don't
 			 * support speedstep.
 			 * Celerons with CPUID 0x0F29 may have either
-			 * ebx=0x8 or 0xf -- 25130917.pdf करोesn't say anything
-			 * specअगरic.
+			 * ebx=0x8 or 0xf -- 25130917.pdf doesn't say anything
+			 * specific.
 			 * M-P4-Ms may have either ebx=0xe or 0xf [see above]
 			 * M-P4/533 have either ebx=0xe or 0xf. [25317607.pdf]
 			 * also, M-P4M HTs have ebx=0x8, too
 			 * For now, they are distinguished by the model_id
 			 * string
 			 */
-			अगर ((ebx == 0x0e) ||
-				(म_माला(c->x86_model_id,
-				    "Mobile Intel(R) Pentium(R) 4") != शून्य))
-				वापस SPEEDSTEP_CPU_P4M;
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-		वापस 0;
-	पूर्ण
+			if ((ebx == 0x0e) ||
+				(strstr(c->x86_model_id,
+				    "Mobile Intel(R) Pentium(R) 4") != NULL))
+				return SPEEDSTEP_CPU_P4M;
+			break;
+		default:
+			break;
+		}
+		return 0;
+	}
 
-	चयन (c->x86_model) अणु
-	हाल 0x0B: /* Intel PIII [Tualatin] */
-		/* cpuid_ebx(1) is 0x04 क्रम desktop PIII,
-		 * 0x06 क्रम mobile PIII-M */
+	switch (c->x86_model) {
+	case 0x0B: /* Intel PIII [Tualatin] */
+		/* cpuid_ebx(1) is 0x04 for desktop PIII,
+		 * 0x06 for mobile PIII-M */
 		ebx = cpuid_ebx(0x00000001);
 		pr_debug("ebx is %x\n", ebx);
 
 		ebx &= 0x000000FF;
 
-		अगर (ebx != 0x06)
-			वापस 0;
+		if (ebx != 0x06)
+			return 0;
 
 		/* So far all PIII-M processors support SpeedStep. See
 		 * Intel's 24540640.pdf of June 2003
 		 */
-		वापस SPEEDSTEP_CPU_PIII_T;
+		return SPEEDSTEP_CPU_PIII_T;
 
-	हाल 0x08: /* Intel PIII [Coppermine] */
+	case 0x08: /* Intel PIII [Coppermine] */
 
 		/* all mobile PIII Coppermines have FSB 100 MHz
 		 * ==> sort out a few desktop PIIIs. */
@@ -347,31 +346,31 @@ EXPORT_SYMBOL_GPL(speedstep_get_frequency);
 		pr_debug("Coppermine: MSR_IA32_EBL_CR_POWERON is 0x%x, 0x%x\n",
 				msr_lo, msr_hi);
 		msr_lo &= 0x00c0000;
-		अगर (msr_lo != 0x0080000)
-			वापस 0;
+		if (msr_lo != 0x0080000)
+			return 0;
 
 		/*
 		 * If the processor is a mobile version,
-		 * platक्रमm ID has bit 50 set
-		 * it has SpeedStep technology अगर either
+		 * platform ID has bit 50 set
+		 * it has SpeedStep technology if either
 		 * bit 56 or 57 is set
 		 */
 		rdmsr(MSR_IA32_PLATFORM_ID, msr_lo, msr_hi);
 		pr_debug("Coppermine: MSR_IA32_PLATFORM ID is 0x%x, 0x%x\n",
 				msr_lo, msr_hi);
-		अगर ((msr_hi & (1<<18)) &&
-		    (relaxed_check ? 1 : (msr_hi & (3<<24)))) अणु
-			अगर (c->x86_stepping == 0x01) अणु
+		if ((msr_hi & (1<<18)) &&
+		    (relaxed_check ? 1 : (msr_hi & (3<<24)))) {
+			if (c->x86_stepping == 0x01) {
 				pr_debug("early PIII version\n");
-				वापस SPEEDSTEP_CPU_PIII_C_EARLY;
-			पूर्ण अन्यथा
-				वापस SPEEDSTEP_CPU_PIII_C;
-		पूर्ण
+				return SPEEDSTEP_CPU_PIII_C_EARLY;
+			} else
+				return SPEEDSTEP_CPU_PIII_C;
+		}
 		fallthrough;
-	शेष:
-		वापस 0;
-	पूर्ण
-पूर्ण
+	default:
+		return 0;
+	}
+}
 EXPORT_SYMBOL_GPL(speedstep_detect_processor);
 
 
@@ -379,101 +378,101 @@ EXPORT_SYMBOL_GPL(speedstep_detect_processor);
  *                     DETECT SPEEDSTEP SPEEDS                       *
  *********************************************************************/
 
-अचिन्हित पूर्णांक speedstep_get_freqs(क्रमागत speedstep_processor processor,
-				  अचिन्हित पूर्णांक *low_speed,
-				  अचिन्हित पूर्णांक *high_speed,
-				  अचिन्हित पूर्णांक *transition_latency,
-				  व्योम (*set_state) (अचिन्हित पूर्णांक state))
-अणु
-	अचिन्हित पूर्णांक prev_speed;
-	अचिन्हित पूर्णांक ret = 0;
-	अचिन्हित दीर्घ flags;
-	kसमय_प्रकार tv1, tv2;
+unsigned int speedstep_get_freqs(enum speedstep_processor processor,
+				  unsigned int *low_speed,
+				  unsigned int *high_speed,
+				  unsigned int *transition_latency,
+				  void (*set_state) (unsigned int state))
+{
+	unsigned int prev_speed;
+	unsigned int ret = 0;
+	unsigned long flags;
+	ktime_t tv1, tv2;
 
-	अगर ((!processor) || (!low_speed) || (!high_speed) || (!set_state))
-		वापस -EINVAL;
+	if ((!processor) || (!low_speed) || (!high_speed) || (!set_state))
+		return -EINVAL;
 
 	pr_debug("trying to determine both speeds\n");
 
 	/* get current speed */
 	prev_speed = speedstep_get_frequency(processor);
-	अगर (!prev_speed)
-		वापस -EIO;
+	if (!prev_speed)
+		return -EIO;
 
 	pr_debug("previous speed is %u\n", prev_speed);
 
 	preempt_disable();
 	local_irq_save(flags);
 
-	/* चयन to low state */
+	/* switch to low state */
 	set_state(SPEEDSTEP_LOW);
 	*low_speed = speedstep_get_frequency(processor);
-	अगर (!*low_speed) अणु
+	if (!*low_speed) {
 		ret = -EIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	pr_debug("low speed is %u\n", *low_speed);
 
 	/* start latency measurement */
-	अगर (transition_latency)
-		tv1 = kसमय_get();
+	if (transition_latency)
+		tv1 = ktime_get();
 
-	/* चयन to high state */
+	/* switch to high state */
 	set_state(SPEEDSTEP_HIGH);
 
 	/* end latency measurement */
-	अगर (transition_latency)
-		tv2 = kसमय_get();
+	if (transition_latency)
+		tv2 = ktime_get();
 
 	*high_speed = speedstep_get_frequency(processor);
-	अगर (!*high_speed) अणु
+	if (!*high_speed) {
 		ret = -EIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	pr_debug("high speed is %u\n", *high_speed);
 
-	अगर (*low_speed == *high_speed) अणु
+	if (*low_speed == *high_speed) {
 		ret = -ENODEV;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* चयन to previous state, अगर necessary */
-	अगर (*high_speed != prev_speed)
+	/* switch to previous state, if necessary */
+	if (*high_speed != prev_speed)
 		set_state(SPEEDSTEP_LOW);
 
-	अगर (transition_latency) अणु
-		*transition_latency = kसमय_प्रकारo_us(kसमय_sub(tv2, tv1));
+	if (transition_latency) {
+		*transition_latency = ktime_to_us(ktime_sub(tv2, tv1));
 		pr_debug("transition latency is %u uSec\n", *transition_latency);
 
-		/* convert uSec to nSec and add 20% क्रम safety reasons */
+		/* convert uSec to nSec and add 20% for safety reasons */
 		*transition_latency *= 1200;
 
-		/* check अगर the latency measurement is too high or too low
-		 * and set it to a safe value (500uSec) in that हाल
+		/* check if the latency measurement is too high or too low
+		 * and set it to a safe value (500uSec) in that case
 		 */
-		अगर (*transition_latency > 10000000 ||
-		    *transition_latency < 50000) अणु
+		if (*transition_latency > 10000000 ||
+		    *transition_latency < 50000) {
 			pr_warn("frequency transition measured seems out of range (%u nSec), falling back to a safe one of %u nSec\n",
 				*transition_latency, 500000);
 			*transition_latency = 500000;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 out:
 	local_irq_restore(flags);
 	preempt_enable();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(speedstep_get_freqs);
 
-#अगर_घोषित CONFIG_X86_SPEEDSTEP_RELAXED_CAP_CHECK
-module_param(relaxed_check, पूर्णांक, 0444);
+#ifdef CONFIG_X86_SPEEDSTEP_RELAXED_CAP_CHECK
+module_param(relaxed_check, int, 0444);
 MODULE_PARM_DESC(relaxed_check,
 		"Don't do all checks for speedstep capability.");
-#पूर्ण_अगर
+#endif
 
 MODULE_AUTHOR("Dominik Brodowski <linux@brodo.de>");
 MODULE_DESCRIPTION("Library for Intel SpeedStep 1 or 2 cpufreq drivers.");

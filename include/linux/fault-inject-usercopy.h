@@ -1,23 +1,22 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __LINUX_FAULT_INJECT_USERCOPY_H__
-#घोषणा __LINUX_FAULT_INJECT_USERCOPY_H__
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __LINUX_FAULT_INJECT_USERCOPY_H__
+#define __LINUX_FAULT_INJECT_USERCOPY_H__
 
 /*
- * This header provides a wrapper क्रम injecting failures to user space memory
+ * This header provides a wrapper for injecting failures to user space memory
  * access functions.
  */
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-#अगर_घोषित CONFIG_FAULT_INJECTION_USERCOPY
+#ifdef CONFIG_FAULT_INJECTION_USERCOPY
 
-bool should_fail_usercopy(व्योम);
+bool should_fail_usercopy(void);
 
-#अन्यथा
+#else
 
-अटल अंतरभूत bool should_fail_usercopy(व्योम) अणु वापस false; पूर्ण
+static inline bool should_fail_usercopy(void) { return false; }
 
-#पूर्ण_अगर /* CONFIG_FAULT_INJECTION_USERCOPY */
+#endif /* CONFIG_FAULT_INJECTION_USERCOPY */
 
-#पूर्ण_अगर /* __LINUX_FAULT_INJECT_USERCOPY_H__ */
+#endif /* __LINUX_FAULT_INJECT_USERCOPY_H__ */

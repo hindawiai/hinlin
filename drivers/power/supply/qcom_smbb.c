@@ -1,97 +1,96 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2014, Sony Mobile Communications Inc.
  *
- * This driver is क्रम the multi-block Switch-Mode Battery Charger and Boost
- * (SMBB) hardware, found in Qualcomm PM8941 PMICs.  The अक्षरger is an
- * पूर्णांकegrated, single-cell lithium-ion battery अक्षरger.
+ * This driver is for the multi-block Switch-Mode Battery Charger and Boost
+ * (SMBB) hardware, found in Qualcomm PM8941 PMICs.  The charger is an
+ * integrated, single-cell lithium-ion battery charger.
  *
  * Sub-components:
  *  - Charger core
  *  - Buck
- *  - DC अक्षरge-path
- *  - USB अक्षरge-path
- *  - Battery पूर्णांकerface
+ *  - DC charge-path
+ *  - USB charge-path
+ *  - Battery interface
  *  - Boost (not implemented)
  *  - Misc
  *  - HF-Buck
  */
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/घातer_supply.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/extcon-provider.h>
-#समावेश <linux/regulator/driver.h>
+#include <linux/errno.h>
+#include <linux/interrupt.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/power_supply.h>
+#include <linux/regmap.h>
+#include <linux/slab.h>
+#include <linux/extcon-provider.h>
+#include <linux/regulator/driver.h>
 
-#घोषणा SMBB_CHG_VMAX		0x040
-#घोषणा SMBB_CHG_VSAFE		0x041
-#घोषणा SMBB_CHG_CFG		0x043
-#घोषणा SMBB_CHG_IMAX		0x044
-#घोषणा SMBB_CHG_ISAFE		0x045
-#घोषणा SMBB_CHG_VIN_MIN	0x047
-#घोषणा SMBB_CHG_CTRL		0x049
-#घोषणा CTRL_EN			BIT(7)
-#घोषणा SMBB_CHG_VBAT_WEAK	0x052
-#घोषणा SMBB_CHG_IBAT_TERM_CHG	0x05b
-#घोषणा IBAT_TERM_CHG_IEOC	BIT(7)
-#घोषणा IBAT_TERM_CHG_IEOC_BMS	BIT(7)
-#घोषणा IBAT_TERM_CHG_IEOC_CHG	0
-#घोषणा SMBB_CHG_VBAT_DET	0x05d
-#घोषणा SMBB_CHG_TCHG_MAX_EN	0x060
-#घोषणा TCHG_MAX_EN		BIT(7)
-#घोषणा SMBB_CHG_WDOG_TIME	0x062
-#घोषणा SMBB_CHG_WDOG_EN	0x065
-#घोषणा WDOG_EN			BIT(7)
+#define SMBB_CHG_VMAX		0x040
+#define SMBB_CHG_VSAFE		0x041
+#define SMBB_CHG_CFG		0x043
+#define SMBB_CHG_IMAX		0x044
+#define SMBB_CHG_ISAFE		0x045
+#define SMBB_CHG_VIN_MIN	0x047
+#define SMBB_CHG_CTRL		0x049
+#define CTRL_EN			BIT(7)
+#define SMBB_CHG_VBAT_WEAK	0x052
+#define SMBB_CHG_IBAT_TERM_CHG	0x05b
+#define IBAT_TERM_CHG_IEOC	BIT(7)
+#define IBAT_TERM_CHG_IEOC_BMS	BIT(7)
+#define IBAT_TERM_CHG_IEOC_CHG	0
+#define SMBB_CHG_VBAT_DET	0x05d
+#define SMBB_CHG_TCHG_MAX_EN	0x060
+#define TCHG_MAX_EN		BIT(7)
+#define SMBB_CHG_WDOG_TIME	0x062
+#define SMBB_CHG_WDOG_EN	0x065
+#define WDOG_EN			BIT(7)
 
-#घोषणा SMBB_BUCK_REG_MODE	0x174
-#घोषणा BUCK_REG_MODE		BIT(0)
-#घोषणा BUCK_REG_MODE_VBAT	BIT(0)
-#घोषणा BUCK_REG_MODE_VSYS	0
+#define SMBB_BUCK_REG_MODE	0x174
+#define BUCK_REG_MODE		BIT(0)
+#define BUCK_REG_MODE_VBAT	BIT(0)
+#define BUCK_REG_MODE_VSYS	0
 
-#घोषणा SMBB_BAT_PRES_STATUS	0x208
-#घोषणा PRES_STATUS_BAT_PRES	BIT(7)
-#घोषणा SMBB_BAT_TEMP_STATUS	0x209
-#घोषणा TEMP_STATUS_OK		BIT(7)
-#घोषणा TEMP_STATUS_HOT		BIT(6)
-#घोषणा SMBB_BAT_BTC_CTRL	0x249
-#घोषणा BTC_CTRL_COMP_EN	BIT(7)
-#घोषणा BTC_CTRL_COLD_EXT	BIT(1)
-#घोषणा BTC_CTRL_HOT_EXT_N	BIT(0)
+#define SMBB_BAT_PRES_STATUS	0x208
+#define PRES_STATUS_BAT_PRES	BIT(7)
+#define SMBB_BAT_TEMP_STATUS	0x209
+#define TEMP_STATUS_OK		BIT(7)
+#define TEMP_STATUS_HOT		BIT(6)
+#define SMBB_BAT_BTC_CTRL	0x249
+#define BTC_CTRL_COMP_EN	BIT(7)
+#define BTC_CTRL_COLD_EXT	BIT(1)
+#define BTC_CTRL_HOT_EXT_N	BIT(0)
 
-#घोषणा SMBB_USB_IMAX		0x344
-#घोषणा SMBB_USB_OTG_CTL	0x348
-#घोषणा OTG_CTL_EN		BIT(0)
-#घोषणा SMBB_USB_ENUM_TIMER_STOP 0x34e
-#घोषणा ENUM_TIMER_STOP		BIT(0)
-#घोषणा SMBB_USB_SEC_ACCESS	0x3d0
-#घोषणा SEC_ACCESS_MAGIC	0xa5
-#घोषणा SMBB_USB_REV_BST	0x3ed
-#घोषणा REV_BST_CHG_GONE	BIT(7)
+#define SMBB_USB_IMAX		0x344
+#define SMBB_USB_OTG_CTL	0x348
+#define OTG_CTL_EN		BIT(0)
+#define SMBB_USB_ENUM_TIMER_STOP 0x34e
+#define ENUM_TIMER_STOP		BIT(0)
+#define SMBB_USB_SEC_ACCESS	0x3d0
+#define SEC_ACCESS_MAGIC	0xa5
+#define SMBB_USB_REV_BST	0x3ed
+#define REV_BST_CHG_GONE	BIT(7)
 
-#घोषणा SMBB_DC_IMAX		0x444
+#define SMBB_DC_IMAX		0x444
 
-#घोषणा SMBB_MISC_REV2		0x601
-#घोषणा SMBB_MISC_BOOT_DONE	0x642
-#घोषणा BOOT_DONE		BIT(7)
+#define SMBB_MISC_REV2		0x601
+#define SMBB_MISC_BOOT_DONE	0x642
+#define BOOT_DONE		BIT(7)
 
-#घोषणा STATUS_USBIN_VALID	BIT(0) /* USB connection is valid */
-#घोषणा STATUS_DCIN_VALID	BIT(1) /* DC connection is valid */
-#घोषणा STATUS_BAT_HOT		BIT(2) /* Battery temp 1=Hot, 0=Cold */
-#घोषणा STATUS_BAT_OK		BIT(3) /* Battery temp OK */
-#घोषणा STATUS_BAT_PRESENT	BIT(4) /* Battery is present */
-#घोषणा STATUS_CHG_DONE		BIT(5) /* Charge cycle is complete */
-#घोषणा STATUS_CHG_TRKL		BIT(6) /* Trickle अक्षरging */
-#घोषणा STATUS_CHG_FAST		BIT(7) /* Fast अक्षरging */
-#घोषणा STATUS_CHG_GONE		BIT(8) /* No अक्षरger is connected */
+#define STATUS_USBIN_VALID	BIT(0) /* USB connection is valid */
+#define STATUS_DCIN_VALID	BIT(1) /* DC connection is valid */
+#define STATUS_BAT_HOT		BIT(2) /* Battery temp 1=Hot, 0=Cold */
+#define STATUS_BAT_OK		BIT(3) /* Battery temp OK */
+#define STATUS_BAT_PRESENT	BIT(4) /* Battery is present */
+#define STATUS_CHG_DONE		BIT(5) /* Charge cycle is complete */
+#define STATUS_CHG_TRKL		BIT(6) /* Trickle charging */
+#define STATUS_CHG_FAST		BIT(7) /* Fast charging */
+#define STATUS_CHG_GONE		BIT(8) /* No charger is connected */
 
-क्रमागत smbb_attr अणु
+enum smbb_attr {
 	ATTR_BAT_ISAFE,
 	ATTR_BAT_IMAX,
 	ATTR_USBIN_IMAX,
@@ -102,603 +101,603 @@
 	ATTR_CHG_VDET,
 	ATTR_VIN_MIN,
 	_ATTR_CNT,
-पूर्ण;
+};
 
-काष्ठा smbb_अक्षरger अणु
-	अचिन्हित पूर्णांक revision;
-	अचिन्हित पूर्णांक addr;
-	काष्ठा device *dev;
-	काष्ठा extcon_dev *edev;
+struct smbb_charger {
+	unsigned int revision;
+	unsigned int addr;
+	struct device *dev;
+	struct extcon_dev *edev;
 
 	bool dc_disabled;
 	bool jeita_ext_temp;
-	अचिन्हित दीर्घ status;
-	काष्ठा mutex statlock;
+	unsigned long status;
+	struct mutex statlock;
 
-	अचिन्हित पूर्णांक attr[_ATTR_CNT];
+	unsigned int attr[_ATTR_CNT];
 
-	काष्ठा घातer_supply *usb_psy;
-	काष्ठा घातer_supply *dc_psy;
-	काष्ठा घातer_supply *bat_psy;
-	काष्ठा regmap *regmap;
+	struct power_supply *usb_psy;
+	struct power_supply *dc_psy;
+	struct power_supply *bat_psy;
+	struct regmap *regmap;
 
-	काष्ठा regulator_desc otg_rdesc;
-	काष्ठा regulator_dev *otg_reg;
-पूर्ण;
+	struct regulator_desc otg_rdesc;
+	struct regulator_dev *otg_reg;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक smbb_usb_extcon_cable[] = अणु
+static const unsigned int smbb_usb_extcon_cable[] = {
 	EXTCON_USB,
 	EXTCON_NONE,
-पूर्ण;
+};
 
-अटल पूर्णांक smbb_vbat_weak_fn(अचिन्हित पूर्णांक index)
-अणु
-	वापस 2100000 + index * 100000;
-पूर्ण
+static int smbb_vbat_weak_fn(unsigned int index)
+{
+	return 2100000 + index * 100000;
+}
 
-अटल पूर्णांक smbb_vin_fn(अचिन्हित पूर्णांक index)
-अणु
-	अगर (index > 42)
-		वापस 5600000 + (index - 43) * 200000;
-	वापस 3400000 + index * 50000;
-पूर्ण
+static int smbb_vin_fn(unsigned int index)
+{
+	if (index > 42)
+		return 5600000 + (index - 43) * 200000;
+	return 3400000 + index * 50000;
+}
 
-अटल पूर्णांक smbb_vmax_fn(अचिन्हित पूर्णांक index)
-अणु
-	वापस 3240000 + index * 10000;
-पूर्ण
+static int smbb_vmax_fn(unsigned int index)
+{
+	return 3240000 + index * 10000;
+}
 
-अटल पूर्णांक smbb_vbat_det_fn(अचिन्हित पूर्णांक index)
-अणु
-	वापस 3240000 + index * 20000;
-पूर्ण
+static int smbb_vbat_det_fn(unsigned int index)
+{
+	return 3240000 + index * 20000;
+}
 
-अटल पूर्णांक smbb_imax_fn(अचिन्हित पूर्णांक index)
-अणु
-	अगर (index < 2)
-		वापस 100000 + index * 50000;
-	वापस index * 100000;
-पूर्ण
+static int smbb_imax_fn(unsigned int index)
+{
+	if (index < 2)
+		return 100000 + index * 50000;
+	return index * 100000;
+}
 
-अटल पूर्णांक smbb_bat_imax_fn(अचिन्हित पूर्णांक index)
-अणु
-	वापस index * 50000;
-पूर्ण
+static int smbb_bat_imax_fn(unsigned int index)
+{
+	return index * 50000;
+}
 
-अटल अचिन्हित पूर्णांक smbb_hw_lookup(अचिन्हित पूर्णांक val, पूर्णांक (*fn)(अचिन्हित पूर्णांक))
-अणु
-	अचिन्हित पूर्णांक widx;
-	अचिन्हित पूर्णांक sel;
+static unsigned int smbb_hw_lookup(unsigned int val, int (*fn)(unsigned int))
+{
+	unsigned int widx;
+	unsigned int sel;
 
-	क्रम (widx = sel = 0; (*fn)(widx) <= val; ++widx)
+	for (widx = sel = 0; (*fn)(widx) <= val; ++widx)
 		sel = widx;
 
-	वापस sel;
-पूर्ण
+	return sel;
+}
 
-अटल स्थिर काष्ठा smbb_अक्षरger_attr अणु
-	स्थिर अक्षर *name;
-	अचिन्हित पूर्णांक reg;
-	अचिन्हित पूर्णांक safe_reg;
-	अचिन्हित पूर्णांक max;
-	अचिन्हित पूर्णांक min;
-	अचिन्हित पूर्णांक fail_ok;
-	पूर्णांक (*hw_fn)(अचिन्हित पूर्णांक);
-पूर्ण smbb_अक्षरger_attrs[] = अणु
-	[ATTR_BAT_ISAFE] = अणु
+static const struct smbb_charger_attr {
+	const char *name;
+	unsigned int reg;
+	unsigned int safe_reg;
+	unsigned int max;
+	unsigned int min;
+	unsigned int fail_ok;
+	int (*hw_fn)(unsigned int);
+} smbb_charger_attrs[] = {
+	[ATTR_BAT_ISAFE] = {
 		.name = "qcom,fast-charge-safe-current",
 		.reg = SMBB_CHG_ISAFE,
 		.max = 3000000,
 		.min = 200000,
 		.hw_fn = smbb_bat_imax_fn,
 		.fail_ok = 1,
-	पूर्ण,
-	[ATTR_BAT_IMAX] = अणु
+	},
+	[ATTR_BAT_IMAX] = {
 		.name = "qcom,fast-charge-current-limit",
 		.reg = SMBB_CHG_IMAX,
 		.safe_reg = SMBB_CHG_ISAFE,
 		.max = 3000000,
 		.min = 200000,
 		.hw_fn = smbb_bat_imax_fn,
-	पूर्ण,
-	[ATTR_DCIN_IMAX] = अणु
+	},
+	[ATTR_DCIN_IMAX] = {
 		.name = "qcom,dc-current-limit",
 		.reg = SMBB_DC_IMAX,
 		.max = 2500000,
 		.min = 100000,
 		.hw_fn = smbb_imax_fn,
-	पूर्ण,
-	[ATTR_BAT_VSAFE] = अणु
+	},
+	[ATTR_BAT_VSAFE] = {
 		.name = "qcom,fast-charge-safe-voltage",
 		.reg = SMBB_CHG_VSAFE,
 		.max = 5000000,
 		.min = 3240000,
 		.hw_fn = smbb_vmax_fn,
 		.fail_ok = 1,
-	पूर्ण,
-	[ATTR_BAT_VMAX] = अणु
+	},
+	[ATTR_BAT_VMAX] = {
 		.name = "qcom,fast-charge-high-threshold-voltage",
 		.reg = SMBB_CHG_VMAX,
 		.safe_reg = SMBB_CHG_VSAFE,
 		.max = 5000000,
 		.min = 3240000,
 		.hw_fn = smbb_vmax_fn,
-	पूर्ण,
-	[ATTR_BAT_VMIN] = अणु
+	},
+	[ATTR_BAT_VMIN] = {
 		.name = "qcom,fast-charge-low-threshold-voltage",
 		.reg = SMBB_CHG_VBAT_WEAK,
 		.max = 3600000,
 		.min = 2100000,
 		.hw_fn = smbb_vbat_weak_fn,
-	पूर्ण,
-	[ATTR_CHG_VDET] = अणु
+	},
+	[ATTR_CHG_VDET] = {
 		.name = "qcom,auto-recharge-threshold-voltage",
 		.reg = SMBB_CHG_VBAT_DET,
 		.max = 5000000,
 		.min = 3240000,
 		.hw_fn = smbb_vbat_det_fn,
-	पूर्ण,
-	[ATTR_VIN_MIN] = अणु
+	},
+	[ATTR_VIN_MIN] = {
 		.name = "qcom,minimum-input-voltage",
 		.reg = SMBB_CHG_VIN_MIN,
 		.max = 9600000,
 		.min = 4200000,
 		.hw_fn = smbb_vin_fn,
-	पूर्ण,
-	[ATTR_USBIN_IMAX] = अणु
+	},
+	[ATTR_USBIN_IMAX] = {
 		.name = "usb-charge-current-limit",
 		.reg = SMBB_USB_IMAX,
 		.max = 2500000,
 		.min = 100000,
 		.hw_fn = smbb_imax_fn,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक smbb_अक्षरger_attr_ग_लिखो(काष्ठा smbb_अक्षरger *chg,
-		क्रमागत smbb_attr which, अचिन्हित पूर्णांक val)
-अणु
-	स्थिर काष्ठा smbb_अक्षरger_attr *prop;
-	अचिन्हित पूर्णांक wval;
-	अचिन्हित पूर्णांक out;
-	पूर्णांक rc;
+static int smbb_charger_attr_write(struct smbb_charger *chg,
+		enum smbb_attr which, unsigned int val)
+{
+	const struct smbb_charger_attr *prop;
+	unsigned int wval;
+	unsigned int out;
+	int rc;
 
-	prop = &smbb_अक्षरger_attrs[which];
+	prop = &smbb_charger_attrs[which];
 
-	अगर (val > prop->max || val < prop->min) अणु
+	if (val > prop->max || val < prop->min) {
 		dev_err(chg->dev, "value out of range for %s [%u:%u]\n",
 			prop->name, prop->min, prop->max);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (prop->safe_reg) अणु
-		rc = regmap_पढ़ो(chg->regmap,
+	if (prop->safe_reg) {
+		rc = regmap_read(chg->regmap,
 				chg->addr + prop->safe_reg, &wval);
-		अगर (rc) अणु
+		if (rc) {
 			dev_err(chg->dev,
 				"unable to read safe value for '%s'\n",
 				prop->name);
-			वापस rc;
-		पूर्ण
+			return rc;
+		}
 
 		wval = prop->hw_fn(wval);
 
-		अगर (val > wval) अणु
+		if (val > wval) {
 			dev_warn(chg->dev,
 				"%s above safe value, clamping at %u\n",
 				prop->name, wval);
 			val = wval;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	wval = smbb_hw_lookup(val, prop->hw_fn);
 
-	rc = regmap_ग_लिखो(chg->regmap, chg->addr + prop->reg, wval);
-	अगर (rc) अणु
+	rc = regmap_write(chg->regmap, chg->addr + prop->reg, wval);
+	if (rc) {
 		dev_err(chg->dev, "unable to update %s", prop->name);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 	out = prop->hw_fn(wval);
-	अगर (out != val) अणु
+	if (out != val) {
 		dev_warn(chg->dev,
 			"%s inaccurate, rounded to %u\n",
 			prop->name, out);
-	पूर्ण
+	}
 
 	dev_dbg(chg->dev, "%s <= %d\n", prop->name, out);
 
 	chg->attr[which] = out;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक smbb_अक्षरger_attr_पढ़ो(काष्ठा smbb_अक्षरger *chg,
-		क्रमागत smbb_attr which)
-अणु
-	स्थिर काष्ठा smbb_अक्षरger_attr *prop;
-	अचिन्हित पूर्णांक val;
-	पूर्णांक rc;
+static int smbb_charger_attr_read(struct smbb_charger *chg,
+		enum smbb_attr which)
+{
+	const struct smbb_charger_attr *prop;
+	unsigned int val;
+	int rc;
 
-	prop = &smbb_अक्षरger_attrs[which];
+	prop = &smbb_charger_attrs[which];
 
-	rc = regmap_पढ़ो(chg->regmap, chg->addr + prop->reg, &val);
-	अगर (rc) अणु
+	rc = regmap_read(chg->regmap, chg->addr + prop->reg, &val);
+	if (rc) {
 		dev_err(chg->dev, "failed to read %s\n", prop->name);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 	val = prop->hw_fn(val);
 	dev_dbg(chg->dev, "%s => %d\n", prop->name, val);
 
 	chg->attr[which] = val;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक smbb_अक्षरger_attr_parse(काष्ठा smbb_अक्षरger *chg,
-		क्रमागत smbb_attr which)
-अणु
-	स्थिर काष्ठा smbb_अक्षरger_attr *prop;
-	अचिन्हित पूर्णांक val;
-	पूर्णांक rc;
+static int smbb_charger_attr_parse(struct smbb_charger *chg,
+		enum smbb_attr which)
+{
+	const struct smbb_charger_attr *prop;
+	unsigned int val;
+	int rc;
 
-	prop = &smbb_अक्षरger_attrs[which];
+	prop = &smbb_charger_attrs[which];
 
-	rc = of_property_पढ़ो_u32(chg->dev->of_node, prop->name, &val);
-	अगर (rc == 0) अणु
-		rc = smbb_अक्षरger_attr_ग_लिखो(chg, which, val);
-		अगर (!rc || !prop->fail_ok)
-			वापस rc;
-	पूर्ण
-	वापस smbb_अक्षरger_attr_पढ़ो(chg, which);
-पूर्ण
+	rc = of_property_read_u32(chg->dev->of_node, prop->name, &val);
+	if (rc == 0) {
+		rc = smbb_charger_attr_write(chg, which, val);
+		if (!rc || !prop->fail_ok)
+			return rc;
+	}
+	return smbb_charger_attr_read(chg, which);
+}
 
-अटल व्योम smbb_set_line_flag(काष्ठा smbb_अक्षरger *chg, पूर्णांक irq, पूर्णांक flag)
-अणु
+static void smbb_set_line_flag(struct smbb_charger *chg, int irq, int flag)
+{
 	bool state;
-	पूर्णांक ret;
+	int ret;
 
 	ret = irq_get_irqchip_state(irq, IRQCHIP_STATE_LINE_LEVEL, &state);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(chg->dev, "failed to read irq line\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	mutex_lock(&chg->statlock);
-	अगर (state)
+	if (state)
 		chg->status |= flag;
-	अन्यथा
+	else
 		chg->status &= ~flag;
 	mutex_unlock(&chg->statlock);
 
 	dev_dbg(chg->dev, "status = %03lx\n", chg->status);
-पूर्ण
+}
 
-अटल irqवापस_t smbb_usb_valid_handler(पूर्णांक irq, व्योम *_data)
-अणु
-	काष्ठा smbb_अक्षरger *chg = _data;
+static irqreturn_t smbb_usb_valid_handler(int irq, void *_data)
+{
+	struct smbb_charger *chg = _data;
 
 	smbb_set_line_flag(chg, irq, STATUS_USBIN_VALID);
 	extcon_set_state_sync(chg->edev, EXTCON_USB,
 				chg->status & STATUS_USBIN_VALID);
-	घातer_supply_changed(chg->usb_psy);
+	power_supply_changed(chg->usb_psy);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t smbb_dc_valid_handler(पूर्णांक irq, व्योम *_data)
-अणु
-	काष्ठा smbb_अक्षरger *chg = _data;
+static irqreturn_t smbb_dc_valid_handler(int irq, void *_data)
+{
+	struct smbb_charger *chg = _data;
 
 	smbb_set_line_flag(chg, irq, STATUS_DCIN_VALID);
-	अगर (!chg->dc_disabled)
-		घातer_supply_changed(chg->dc_psy);
+	if (!chg->dc_disabled)
+		power_supply_changed(chg->dc_psy);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t smbb_bat_temp_handler(पूर्णांक irq, व्योम *_data)
-अणु
-	काष्ठा smbb_अक्षरger *chg = _data;
-	अचिन्हित पूर्णांक val;
-	पूर्णांक rc;
+static irqreturn_t smbb_bat_temp_handler(int irq, void *_data)
+{
+	struct smbb_charger *chg = _data;
+	unsigned int val;
+	int rc;
 
-	rc = regmap_पढ़ो(chg->regmap, chg->addr + SMBB_BAT_TEMP_STATUS, &val);
-	अगर (rc)
-		वापस IRQ_HANDLED;
+	rc = regmap_read(chg->regmap, chg->addr + SMBB_BAT_TEMP_STATUS, &val);
+	if (rc)
+		return IRQ_HANDLED;
 
 	mutex_lock(&chg->statlock);
-	अगर (val & TEMP_STATUS_OK) अणु
+	if (val & TEMP_STATUS_OK) {
 		chg->status |= STATUS_BAT_OK;
-	पूर्ण अन्यथा अणु
+	} else {
 		chg->status &= ~STATUS_BAT_OK;
-		अगर (val & TEMP_STATUS_HOT)
+		if (val & TEMP_STATUS_HOT)
 			chg->status |= STATUS_BAT_HOT;
-	पूर्ण
+	}
 	mutex_unlock(&chg->statlock);
 
-	घातer_supply_changed(chg->bat_psy);
-	वापस IRQ_HANDLED;
-पूर्ण
+	power_supply_changed(chg->bat_psy);
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t smbb_bat_present_handler(पूर्णांक irq, व्योम *_data)
-अणु
-	काष्ठा smbb_अक्षरger *chg = _data;
+static irqreturn_t smbb_bat_present_handler(int irq, void *_data)
+{
+	struct smbb_charger *chg = _data;
 
 	smbb_set_line_flag(chg, irq, STATUS_BAT_PRESENT);
-	घातer_supply_changed(chg->bat_psy);
+	power_supply_changed(chg->bat_psy);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t smbb_chg_करोne_handler(पूर्णांक irq, व्योम *_data)
-अणु
-	काष्ठा smbb_अक्षरger *chg = _data;
+static irqreturn_t smbb_chg_done_handler(int irq, void *_data)
+{
+	struct smbb_charger *chg = _data;
 
 	smbb_set_line_flag(chg, irq, STATUS_CHG_DONE);
-	घातer_supply_changed(chg->bat_psy);
+	power_supply_changed(chg->bat_psy);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t smbb_chg_gone_handler(पूर्णांक irq, व्योम *_data)
-अणु
-	काष्ठा smbb_अक्षरger *chg = _data;
+static irqreturn_t smbb_chg_gone_handler(int irq, void *_data)
+{
+	struct smbb_charger *chg = _data;
 
 	smbb_set_line_flag(chg, irq, STATUS_CHG_GONE);
-	घातer_supply_changed(chg->bat_psy);
-	घातer_supply_changed(chg->usb_psy);
-	अगर (!chg->dc_disabled)
-		घातer_supply_changed(chg->dc_psy);
+	power_supply_changed(chg->bat_psy);
+	power_supply_changed(chg->usb_psy);
+	if (!chg->dc_disabled)
+		power_supply_changed(chg->dc_psy);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t smbb_chg_fast_handler(पूर्णांक irq, व्योम *_data)
-अणु
-	काष्ठा smbb_अक्षरger *chg = _data;
+static irqreturn_t smbb_chg_fast_handler(int irq, void *_data)
+{
+	struct smbb_charger *chg = _data;
 
 	smbb_set_line_flag(chg, irq, STATUS_CHG_FAST);
-	घातer_supply_changed(chg->bat_psy);
+	power_supply_changed(chg->bat_psy);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t smbb_chg_trkl_handler(पूर्णांक irq, व्योम *_data)
-अणु
-	काष्ठा smbb_अक्षरger *chg = _data;
+static irqreturn_t smbb_chg_trkl_handler(int irq, void *_data)
+{
+	struct smbb_charger *chg = _data;
 
 	smbb_set_line_flag(chg, irq, STATUS_CHG_TRKL);
-	घातer_supply_changed(chg->bat_psy);
+	power_supply_changed(chg->bat_psy);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल स्थिर काष्ठा smbb_irq अणु
-	स्थिर अक्षर *name;
-	irqवापस_t (*handler)(पूर्णांक, व्योम *);
-पूर्ण smbb_अक्षरger_irqs[] = अणु
-	अणु "chg-done", smbb_chg_करोne_handler पूर्ण,
-	अणु "chg-fast", smbb_chg_fast_handler पूर्ण,
-	अणु "chg-trkl", smbb_chg_trkl_handler पूर्ण,
-	अणु "bat-temp-ok", smbb_bat_temp_handler पूर्ण,
-	अणु "bat-present", smbb_bat_present_handler पूर्ण,
-	अणु "chg-gone", smbb_chg_gone_handler पूर्ण,
-	अणु "usb-valid", smbb_usb_valid_handler पूर्ण,
-	अणु "dc-valid", smbb_dc_valid_handler पूर्ण,
-पूर्ण;
+static const struct smbb_irq {
+	const char *name;
+	irqreturn_t (*handler)(int, void *);
+} smbb_charger_irqs[] = {
+	{ "chg-done", smbb_chg_done_handler },
+	{ "chg-fast", smbb_chg_fast_handler },
+	{ "chg-trkl", smbb_chg_trkl_handler },
+	{ "bat-temp-ok", smbb_bat_temp_handler },
+	{ "bat-present", smbb_bat_present_handler },
+	{ "chg-gone", smbb_chg_gone_handler },
+	{ "usb-valid", smbb_usb_valid_handler },
+	{ "dc-valid", smbb_dc_valid_handler },
+};
 
-अटल पूर्णांक smbb_usbin_get_property(काष्ठा घातer_supply *psy,
-		क्रमागत घातer_supply_property psp,
-		जोड़ घातer_supply_propval *val)
-अणु
-	काष्ठा smbb_अक्षरger *chg = घातer_supply_get_drvdata(psy);
-	पूर्णांक rc = 0;
+static int smbb_usbin_get_property(struct power_supply *psy,
+		enum power_supply_property psp,
+		union power_supply_propval *val)
+{
+	struct smbb_charger *chg = power_supply_get_drvdata(psy);
+	int rc = 0;
 
-	चयन (psp) अणु
-	हाल POWER_SUPPLY_PROP_ONLINE:
+	switch (psp) {
+	case POWER_SUPPLY_PROP_ONLINE:
 		mutex_lock(&chg->statlock);
-		val->पूर्णांकval = !(chg->status & STATUS_CHG_GONE) &&
+		val->intval = !(chg->status & STATUS_CHG_GONE) &&
 				(chg->status & STATUS_USBIN_VALID);
 		mutex_unlock(&chg->statlock);
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_CHARGE_CONTROL_LIMIT:
-		val->पूर्णांकval = chg->attr[ATTR_USBIN_IMAX];
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_CHARGE_CONTROL_LIMIT_MAX:
-		val->पूर्णांकval = 2500000;
-		अवरोध;
-	शेष:
+		break;
+	case POWER_SUPPLY_PROP_CHARGE_CONTROL_LIMIT:
+		val->intval = chg->attr[ATTR_USBIN_IMAX];
+		break;
+	case POWER_SUPPLY_PROP_CHARGE_CONTROL_LIMIT_MAX:
+		val->intval = 2500000;
+		break;
+	default:
 		rc = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक smbb_usbin_set_property(काष्ठा घातer_supply *psy,
-		क्रमागत घातer_supply_property psp,
-		स्थिर जोड़ घातer_supply_propval *val)
-अणु
-	काष्ठा smbb_अक्षरger *chg = घातer_supply_get_drvdata(psy);
-	पूर्णांक rc;
+static int smbb_usbin_set_property(struct power_supply *psy,
+		enum power_supply_property psp,
+		const union power_supply_propval *val)
+{
+	struct smbb_charger *chg = power_supply_get_drvdata(psy);
+	int rc;
 
-	चयन (psp) अणु
-	हाल POWER_SUPPLY_PROP_CHARGE_CONTROL_LIMIT:
-		rc = smbb_अक्षरger_attr_ग_लिखो(chg, ATTR_USBIN_IMAX,
-				val->पूर्णांकval);
-		अवरोध;
-	शेष:
+	switch (psp) {
+	case POWER_SUPPLY_PROP_CHARGE_CONTROL_LIMIT:
+		rc = smbb_charger_attr_write(chg, ATTR_USBIN_IMAX,
+				val->intval);
+		break;
+	default:
 		rc = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक smbb_dcin_get_property(काष्ठा घातer_supply *psy,
-		क्रमागत घातer_supply_property psp,
-		जोड़ घातer_supply_propval *val)
-अणु
-	काष्ठा smbb_अक्षरger *chg = घातer_supply_get_drvdata(psy);
-	पूर्णांक rc = 0;
+static int smbb_dcin_get_property(struct power_supply *psy,
+		enum power_supply_property psp,
+		union power_supply_propval *val)
+{
+	struct smbb_charger *chg = power_supply_get_drvdata(psy);
+	int rc = 0;
 
-	चयन (psp) अणु
-	हाल POWER_SUPPLY_PROP_ONLINE:
+	switch (psp) {
+	case POWER_SUPPLY_PROP_ONLINE:
 		mutex_lock(&chg->statlock);
-		val->पूर्णांकval = !(chg->status & STATUS_CHG_GONE) &&
+		val->intval = !(chg->status & STATUS_CHG_GONE) &&
 				(chg->status & STATUS_DCIN_VALID);
 		mutex_unlock(&chg->statlock);
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_CHARGE_CONTROL_LIMIT:
-		val->पूर्णांकval = chg->attr[ATTR_DCIN_IMAX];
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_CHARGE_CONTROL_LIMIT_MAX:
-		val->पूर्णांकval = 2500000;
-		अवरोध;
-	शेष:
+		break;
+	case POWER_SUPPLY_PROP_CHARGE_CONTROL_LIMIT:
+		val->intval = chg->attr[ATTR_DCIN_IMAX];
+		break;
+	case POWER_SUPPLY_PROP_CHARGE_CONTROL_LIMIT_MAX:
+		val->intval = 2500000;
+		break;
+	default:
 		rc = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक smbb_dcin_set_property(काष्ठा घातer_supply *psy,
-		क्रमागत घातer_supply_property psp,
-		स्थिर जोड़ घातer_supply_propval *val)
-अणु
-	काष्ठा smbb_अक्षरger *chg = घातer_supply_get_drvdata(psy);
-	पूर्णांक rc;
+static int smbb_dcin_set_property(struct power_supply *psy,
+		enum power_supply_property psp,
+		const union power_supply_propval *val)
+{
+	struct smbb_charger *chg = power_supply_get_drvdata(psy);
+	int rc;
 
-	चयन (psp) अणु
-	हाल POWER_SUPPLY_PROP_CHARGE_CONTROL_LIMIT:
-		rc = smbb_अक्षरger_attr_ग_लिखो(chg, ATTR_DCIN_IMAX,
-				val->पूर्णांकval);
-		अवरोध;
-	शेष:
+	switch (psp) {
+	case POWER_SUPPLY_PROP_CHARGE_CONTROL_LIMIT:
+		rc = smbb_charger_attr_write(chg, ATTR_DCIN_IMAX,
+				val->intval);
+		break;
+	default:
 		rc = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक smbb_अक्षरger_writable_property(काष्ठा घातer_supply *psy,
-		क्रमागत घातer_supply_property psp)
-अणु
-	वापस psp == POWER_SUPPLY_PROP_CHARGE_CONTROL_LIMIT;
-पूर्ण
+static int smbb_charger_writable_property(struct power_supply *psy,
+		enum power_supply_property psp)
+{
+	return psp == POWER_SUPPLY_PROP_CHARGE_CONTROL_LIMIT;
+}
 
-अटल पूर्णांक smbb_battery_get_property(काष्ठा घातer_supply *psy,
-		क्रमागत घातer_supply_property psp,
-		जोड़ घातer_supply_propval *val)
-अणु
-	काष्ठा smbb_अक्षरger *chg = घातer_supply_get_drvdata(psy);
-	अचिन्हित दीर्घ status;
-	पूर्णांक rc = 0;
+static int smbb_battery_get_property(struct power_supply *psy,
+		enum power_supply_property psp,
+		union power_supply_propval *val)
+{
+	struct smbb_charger *chg = power_supply_get_drvdata(psy);
+	unsigned long status;
+	int rc = 0;
 
 	mutex_lock(&chg->statlock);
 	status = chg->status;
 	mutex_unlock(&chg->statlock);
 
-	चयन (psp) अणु
-	हाल POWER_SUPPLY_PROP_STATUS:
-		अगर (status & STATUS_CHG_GONE)
-			val->पूर्णांकval = POWER_SUPPLY_STATUS_DISCHARGING;
-		अन्यथा अगर (!(status & (STATUS_DCIN_VALID | STATUS_USBIN_VALID)))
-			val->पूर्णांकval = POWER_SUPPLY_STATUS_DISCHARGING;
-		अन्यथा अगर (status & STATUS_CHG_DONE)
-			val->पूर्णांकval = POWER_SUPPLY_STATUS_FULL;
-		अन्यथा अगर (!(status & STATUS_BAT_OK))
-			val->पूर्णांकval = POWER_SUPPLY_STATUS_DISCHARGING;
-		अन्यथा अगर (status & (STATUS_CHG_FAST | STATUS_CHG_TRKL))
-			val->पूर्णांकval = POWER_SUPPLY_STATUS_CHARGING;
-		अन्यथा /* everything is ok क्रम अक्षरging, but we are not... */
-			val->पूर्णांकval = POWER_SUPPLY_STATUS_DISCHARGING;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_HEALTH:
-		अगर (status & STATUS_BAT_OK)
-			val->पूर्णांकval = POWER_SUPPLY_HEALTH_GOOD;
-		अन्यथा अगर (status & STATUS_BAT_HOT)
-			val->पूर्णांकval = POWER_SUPPLY_HEALTH_OVERHEAT;
-		अन्यथा
-			val->पूर्णांकval = POWER_SUPPLY_HEALTH_COLD;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_CHARGE_TYPE:
-		अगर (status & STATUS_CHG_FAST)
-			val->पूर्णांकval = POWER_SUPPLY_CHARGE_TYPE_FAST;
-		अन्यथा अगर (status & STATUS_CHG_TRKL)
-			val->पूर्णांकval = POWER_SUPPLY_CHARGE_TYPE_TRICKLE;
-		अन्यथा
-			val->पूर्णांकval = POWER_SUPPLY_CHARGE_TYPE_NONE;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_PRESENT:
-		val->पूर्णांकval = !!(status & STATUS_BAT_PRESENT);
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_CURRENT_MAX:
-		val->पूर्णांकval = chg->attr[ATTR_BAT_IMAX];
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_VOLTAGE_MAX:
-		val->पूर्णांकval = chg->attr[ATTR_BAT_VMAX];
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_TECHNOLOGY:
-		/* this अक्षरger is a single-cell lithium-ion battery अक्षरger
+	switch (psp) {
+	case POWER_SUPPLY_PROP_STATUS:
+		if (status & STATUS_CHG_GONE)
+			val->intval = POWER_SUPPLY_STATUS_DISCHARGING;
+		else if (!(status & (STATUS_DCIN_VALID | STATUS_USBIN_VALID)))
+			val->intval = POWER_SUPPLY_STATUS_DISCHARGING;
+		else if (status & STATUS_CHG_DONE)
+			val->intval = POWER_SUPPLY_STATUS_FULL;
+		else if (!(status & STATUS_BAT_OK))
+			val->intval = POWER_SUPPLY_STATUS_DISCHARGING;
+		else if (status & (STATUS_CHG_FAST | STATUS_CHG_TRKL))
+			val->intval = POWER_SUPPLY_STATUS_CHARGING;
+		else /* everything is ok for charging, but we are not... */
+			val->intval = POWER_SUPPLY_STATUS_DISCHARGING;
+		break;
+	case POWER_SUPPLY_PROP_HEALTH:
+		if (status & STATUS_BAT_OK)
+			val->intval = POWER_SUPPLY_HEALTH_GOOD;
+		else if (status & STATUS_BAT_HOT)
+			val->intval = POWER_SUPPLY_HEALTH_OVERHEAT;
+		else
+			val->intval = POWER_SUPPLY_HEALTH_COLD;
+		break;
+	case POWER_SUPPLY_PROP_CHARGE_TYPE:
+		if (status & STATUS_CHG_FAST)
+			val->intval = POWER_SUPPLY_CHARGE_TYPE_FAST;
+		else if (status & STATUS_CHG_TRKL)
+			val->intval = POWER_SUPPLY_CHARGE_TYPE_TRICKLE;
+		else
+			val->intval = POWER_SUPPLY_CHARGE_TYPE_NONE;
+		break;
+	case POWER_SUPPLY_PROP_PRESENT:
+		val->intval = !!(status & STATUS_BAT_PRESENT);
+		break;
+	case POWER_SUPPLY_PROP_CURRENT_MAX:
+		val->intval = chg->attr[ATTR_BAT_IMAX];
+		break;
+	case POWER_SUPPLY_PROP_VOLTAGE_MAX:
+		val->intval = chg->attr[ATTR_BAT_VMAX];
+		break;
+	case POWER_SUPPLY_PROP_TECHNOLOGY:
+		/* this charger is a single-cell lithium-ion battery charger
 		* only.  If you hook up some other technology, there will be
 		* fireworks.
 		*/
-		val->पूर्णांकval = POWER_SUPPLY_TECHNOLOGY_LION;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_VOLTAGE_MIN_DESIGN:
-		val->पूर्णांकval = 3000000; /* single-cell li-ion low end */
-		अवरोध;
-	शेष:
+		val->intval = POWER_SUPPLY_TECHNOLOGY_LION;
+		break;
+	case POWER_SUPPLY_PROP_VOLTAGE_MIN_DESIGN:
+		val->intval = 3000000; /* single-cell li-ion low end */
+		break;
+	default:
 		rc = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक smbb_battery_set_property(काष्ठा घातer_supply *psy,
-		क्रमागत घातer_supply_property psp,
-		स्थिर जोड़ घातer_supply_propval *val)
-अणु
-	काष्ठा smbb_अक्षरger *chg = घातer_supply_get_drvdata(psy);
-	पूर्णांक rc;
+static int smbb_battery_set_property(struct power_supply *psy,
+		enum power_supply_property psp,
+		const union power_supply_propval *val)
+{
+	struct smbb_charger *chg = power_supply_get_drvdata(psy);
+	int rc;
 
-	चयन (psp) अणु
-	हाल POWER_SUPPLY_PROP_CURRENT_MAX:
-		rc = smbb_अक्षरger_attr_ग_लिखो(chg, ATTR_BAT_IMAX, val->पूर्णांकval);
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_VOLTAGE_MAX:
-		rc = smbb_अक्षरger_attr_ग_लिखो(chg, ATTR_BAT_VMAX, val->पूर्णांकval);
-		अवरोध;
-	शेष:
+	switch (psp) {
+	case POWER_SUPPLY_PROP_CURRENT_MAX:
+		rc = smbb_charger_attr_write(chg, ATTR_BAT_IMAX, val->intval);
+		break;
+	case POWER_SUPPLY_PROP_VOLTAGE_MAX:
+		rc = smbb_charger_attr_write(chg, ATTR_BAT_VMAX, val->intval);
+		break;
+	default:
 		rc = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक smbb_battery_writable_property(काष्ठा घातer_supply *psy,
-		क्रमागत घातer_supply_property psp)
-अणु
-	चयन (psp) अणु
-	हाल POWER_SUPPLY_PROP_CURRENT_MAX:
-	हाल POWER_SUPPLY_PROP_VOLTAGE_MAX:
-		वापस 1;
-	शेष:
-		वापस 0;
-	पूर्ण
-पूर्ण
+static int smbb_battery_writable_property(struct power_supply *psy,
+		enum power_supply_property psp)
+{
+	switch (psp) {
+	case POWER_SUPPLY_PROP_CURRENT_MAX:
+	case POWER_SUPPLY_PROP_VOLTAGE_MAX:
+		return 1;
+	default:
+		return 0;
+	}
+}
 
-अटल क्रमागत घातer_supply_property smbb_अक्षरger_properties[] = अणु
+static enum power_supply_property smbb_charger_properties[] = {
 	POWER_SUPPLY_PROP_ONLINE,
 	POWER_SUPPLY_PROP_CHARGE_CONTROL_LIMIT,
 	POWER_SUPPLY_PROP_CHARGE_CONTROL_LIMIT_MAX,
-पूर्ण;
+};
 
-अटल क्रमागत घातer_supply_property smbb_battery_properties[] = अणु
+static enum power_supply_property smbb_battery_properties[] = {
 	POWER_SUPPLY_PROP_STATUS,
 	POWER_SUPPLY_PROP_HEALTH,
 	POWER_SUPPLY_PROP_PRESENT,
@@ -707,250 +706,250 @@
 	POWER_SUPPLY_PROP_VOLTAGE_MAX,
 	POWER_SUPPLY_PROP_VOLTAGE_MIN_DESIGN,
 	POWER_SUPPLY_PROP_TECHNOLOGY,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा reg_off_mask_शेष अणु
-	अचिन्हित पूर्णांक offset;
-	अचिन्हित पूर्णांक mask;
-	अचिन्हित पूर्णांक value;
-	अचिन्हित पूर्णांक rev_mask;
-पूर्ण smbb_अक्षरger_setup[] = अणु
+static const struct reg_off_mask_default {
+	unsigned int offset;
+	unsigned int mask;
+	unsigned int value;
+	unsigned int rev_mask;
+} smbb_charger_setup[] = {
 	/* The bootloader is supposed to set this... make sure anyway. */
-	अणु SMBB_MISC_BOOT_DONE, BOOT_DONE, BOOT_DONE पूर्ण,
+	{ SMBB_MISC_BOOT_DONE, BOOT_DONE, BOOT_DONE },
 
-	/* Disable software समयr */
-	अणु SMBB_CHG_TCHG_MAX_EN, TCHG_MAX_EN, 0 पूर्ण,
+	/* Disable software timer */
+	{ SMBB_CHG_TCHG_MAX_EN, TCHG_MAX_EN, 0 },
 
-	/* Clear and disable watchकरोg */
-	अणु SMBB_CHG_WDOG_TIME, 0xff, 160 पूर्ण,
-	अणु SMBB_CHG_WDOG_EN, WDOG_EN, 0 पूर्ण,
+	/* Clear and disable watchdog */
+	{ SMBB_CHG_WDOG_TIME, 0xff, 160 },
+	{ SMBB_CHG_WDOG_EN, WDOG_EN, 0 },
 
-	/* Use अक्षरger based EoC detection */
-	अणु SMBB_CHG_IBAT_TERM_CHG, IBAT_TERM_CHG_IEOC, IBAT_TERM_CHG_IEOC_CHG पूर्ण,
+	/* Use charger based EoC detection */
+	{ SMBB_CHG_IBAT_TERM_CHG, IBAT_TERM_CHG_IEOC, IBAT_TERM_CHG_IEOC_CHG },
 
-	/* Disable GSM PA load adjusपंचांगent.
-	* The PA संकेत is incorrectly connected on v2.
+	/* Disable GSM PA load adjustment.
+	* The PA signal is incorrectly connected on v2.
 	*/
-	अणु SMBB_CHG_CFG, 0xff, 0x00, BIT(3) पूर्ण,
+	{ SMBB_CHG_CFG, 0xff, 0x00, BIT(3) },
 
-	/* Use VBAT (not VSYS) to compensate क्रम IR drop during fast अक्षरging */
-	अणु SMBB_BUCK_REG_MODE, BUCK_REG_MODE, BUCK_REG_MODE_VBAT पूर्ण,
+	/* Use VBAT (not VSYS) to compensate for IR drop during fast charging */
+	{ SMBB_BUCK_REG_MODE, BUCK_REG_MODE, BUCK_REG_MODE_VBAT },
 
 	/* Enable battery temperature comparators */
-	अणु SMBB_BAT_BTC_CTRL, BTC_CTRL_COMP_EN, BTC_CTRL_COMP_EN पूर्ण,
+	{ SMBB_BAT_BTC_CTRL, BTC_CTRL_COMP_EN, BTC_CTRL_COMP_EN },
 
-	/* Stop USB क्रमागतeration समयr */
-	अणु SMBB_USB_ENUM_TIMER_STOP, ENUM_TIMER_STOP, ENUM_TIMER_STOP पूर्ण,
+	/* Stop USB enumeration timer */
+	{ SMBB_USB_ENUM_TIMER_STOP, ENUM_TIMER_STOP, ENUM_TIMER_STOP },
 
-#अगर 0 /* FIXME supposedly only to disable hardware ARB termination */
-	अणु SMBB_USB_SEC_ACCESS, SEC_ACCESS_MAGIC पूर्ण,
-	अणु SMBB_USB_REV_BST, 0xff, REV_BST_CHG_GONE पूर्ण,
-#पूर्ण_अगर
+#if 0 /* FIXME supposedly only to disable hardware ARB termination */
+	{ SMBB_USB_SEC_ACCESS, SEC_ACCESS_MAGIC },
+	{ SMBB_USB_REV_BST, 0xff, REV_BST_CHG_GONE },
+#endif
 
-	/* Stop USB क्रमागतeration समयr, again */
-	अणु SMBB_USB_ENUM_TIMER_STOP, ENUM_TIMER_STOP, ENUM_TIMER_STOP पूर्ण,
+	/* Stop USB enumeration timer, again */
+	{ SMBB_USB_ENUM_TIMER_STOP, ENUM_TIMER_STOP, ENUM_TIMER_STOP },
 
-	/* Enable अक्षरging */
-	अणु SMBB_CHG_CTRL, CTRL_EN, CTRL_EN पूर्ण,
-पूर्ण;
+	/* Enable charging */
+	{ SMBB_CHG_CTRL, CTRL_EN, CTRL_EN },
+};
 
-अटल अक्षर *smbb_bअगर[] = अणु "smbb-bif" पूर्ण;
+static char *smbb_bif[] = { "smbb-bif" };
 
-अटल स्थिर काष्ठा घातer_supply_desc bat_psy_desc = अणु
+static const struct power_supply_desc bat_psy_desc = {
 	.name = "smbb-bif",
 	.type = POWER_SUPPLY_TYPE_BATTERY,
 	.properties = smbb_battery_properties,
 	.num_properties = ARRAY_SIZE(smbb_battery_properties),
 	.get_property = smbb_battery_get_property,
 	.set_property = smbb_battery_set_property,
-	.property_is_ग_लिखोable = smbb_battery_writable_property,
-पूर्ण;
+	.property_is_writeable = smbb_battery_writable_property,
+};
 
-अटल स्थिर काष्ठा घातer_supply_desc usb_psy_desc = अणु
+static const struct power_supply_desc usb_psy_desc = {
 	.name = "smbb-usbin",
 	.type = POWER_SUPPLY_TYPE_USB,
-	.properties = smbb_अक्षरger_properties,
-	.num_properties = ARRAY_SIZE(smbb_अक्षरger_properties),
+	.properties = smbb_charger_properties,
+	.num_properties = ARRAY_SIZE(smbb_charger_properties),
 	.get_property = smbb_usbin_get_property,
 	.set_property = smbb_usbin_set_property,
-	.property_is_ग_लिखोable = smbb_अक्षरger_writable_property,
-पूर्ण;
+	.property_is_writeable = smbb_charger_writable_property,
+};
 
-अटल स्थिर काष्ठा घातer_supply_desc dc_psy_desc = अणु
+static const struct power_supply_desc dc_psy_desc = {
 	.name = "smbb-dcin",
 	.type = POWER_SUPPLY_TYPE_MAINS,
-	.properties = smbb_अक्षरger_properties,
-	.num_properties = ARRAY_SIZE(smbb_अक्षरger_properties),
+	.properties = smbb_charger_properties,
+	.num_properties = ARRAY_SIZE(smbb_charger_properties),
 	.get_property = smbb_dcin_get_property,
 	.set_property = smbb_dcin_set_property,
-	.property_is_ग_लिखोable = smbb_अक्षरger_writable_property,
-पूर्ण;
+	.property_is_writeable = smbb_charger_writable_property,
+};
 
-अटल पूर्णांक smbb_chg_otg_enable(काष्ठा regulator_dev *rdev)
-अणु
-	काष्ठा smbb_अक्षरger *chg = rdev_get_drvdata(rdev);
-	पूर्णांक rc;
+static int smbb_chg_otg_enable(struct regulator_dev *rdev)
+{
+	struct smbb_charger *chg = rdev_get_drvdata(rdev);
+	int rc;
 
 	rc = regmap_update_bits(chg->regmap, chg->addr + SMBB_USB_OTG_CTL,
 				OTG_CTL_EN, OTG_CTL_EN);
-	अगर (rc)
+	if (rc)
 		dev_err(chg->dev, "failed to update OTG_CTL\n");
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक smbb_chg_otg_disable(काष्ठा regulator_dev *rdev)
-अणु
-	काष्ठा smbb_अक्षरger *chg = rdev_get_drvdata(rdev);
-	पूर्णांक rc;
+static int smbb_chg_otg_disable(struct regulator_dev *rdev)
+{
+	struct smbb_charger *chg = rdev_get_drvdata(rdev);
+	int rc;
 
 	rc = regmap_update_bits(chg->regmap, chg->addr + SMBB_USB_OTG_CTL,
 				OTG_CTL_EN, 0);
-	अगर (rc)
+	if (rc)
 		dev_err(chg->dev, "failed to update OTG_CTL\n");
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक smbb_chg_otg_is_enabled(काष्ठा regulator_dev *rdev)
-अणु
-	काष्ठा smbb_अक्षरger *chg = rdev_get_drvdata(rdev);
-	अचिन्हित पूर्णांक value = 0;
-	पूर्णांक rc;
+static int smbb_chg_otg_is_enabled(struct regulator_dev *rdev)
+{
+	struct smbb_charger *chg = rdev_get_drvdata(rdev);
+	unsigned int value = 0;
+	int rc;
 
-	rc = regmap_पढ़ो(chg->regmap, chg->addr + SMBB_USB_OTG_CTL, &value);
-	अगर (rc)
+	rc = regmap_read(chg->regmap, chg->addr + SMBB_USB_OTG_CTL, &value);
+	if (rc)
 		dev_err(chg->dev, "failed to read OTG_CTL\n");
 
-	वापस !!(value & OTG_CTL_EN);
-पूर्ण
+	return !!(value & OTG_CTL_EN);
+}
 
-अटल स्थिर काष्ठा regulator_ops smbb_chg_otg_ops = अणु
+static const struct regulator_ops smbb_chg_otg_ops = {
 	.enable = smbb_chg_otg_enable,
 	.disable = smbb_chg_otg_disable,
 	.is_enabled = smbb_chg_otg_is_enabled,
-पूर्ण;
+};
 
-अटल पूर्णांक smbb_अक्षरger_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा घातer_supply_config bat_cfg = अणुपूर्ण;
-	काष्ठा घातer_supply_config usb_cfg = अणुपूर्ण;
-	काष्ठा घातer_supply_config dc_cfg = अणुपूर्ण;
-	काष्ठा smbb_अक्षरger *chg;
-	काष्ठा regulator_config config = अणु पूर्ण;
-	पूर्णांक rc, i;
+static int smbb_charger_probe(struct platform_device *pdev)
+{
+	struct power_supply_config bat_cfg = {};
+	struct power_supply_config usb_cfg = {};
+	struct power_supply_config dc_cfg = {};
+	struct smbb_charger *chg;
+	struct regulator_config config = { };
+	int rc, i;
 
-	chg = devm_kzalloc(&pdev->dev, माप(*chg), GFP_KERNEL);
-	अगर (!chg)
-		वापस -ENOMEM;
+	chg = devm_kzalloc(&pdev->dev, sizeof(*chg), GFP_KERNEL);
+	if (!chg)
+		return -ENOMEM;
 
 	chg->dev = &pdev->dev;
 	mutex_init(&chg->statlock);
 
-	chg->regmap = dev_get_regmap(pdev->dev.parent, शून्य);
-	अगर (!chg->regmap) अणु
+	chg->regmap = dev_get_regmap(pdev->dev.parent, NULL);
+	if (!chg->regmap) {
 		dev_err(&pdev->dev, "failed to locate regmap\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	rc = of_property_पढ़ो_u32(pdev->dev.of_node, "reg", &chg->addr);
-	अगर (rc) अणु
+	rc = of_property_read_u32(pdev->dev.of_node, "reg", &chg->addr);
+	if (rc) {
 		dev_err(&pdev->dev, "missing or invalid 'reg' property\n");
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
-	rc = regmap_पढ़ो(chg->regmap, chg->addr + SMBB_MISC_REV2, &chg->revision);
-	अगर (rc) अणु
+	rc = regmap_read(chg->regmap, chg->addr + SMBB_MISC_REV2, &chg->revision);
+	if (rc) {
 		dev_err(&pdev->dev, "unable to read revision\n");
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
 	chg->revision += 1;
-	अगर (chg->revision != 2 && chg->revision != 3) अणु
+	if (chg->revision != 2 && chg->revision != 3) {
 		dev_err(&pdev->dev, "v1 hardware not supported\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 	dev_info(&pdev->dev, "Initializing SMBB rev %u", chg->revision);
 
-	chg->dc_disabled = of_property_पढ़ो_bool(pdev->dev.of_node, "qcom,disable-dc");
+	chg->dc_disabled = of_property_read_bool(pdev->dev.of_node, "qcom,disable-dc");
 
-	क्रम (i = 0; i < _ATTR_CNT; ++i) अणु
-		rc = smbb_अक्षरger_attr_parse(chg, i);
-		अगर (rc) अणु
+	for (i = 0; i < _ATTR_CNT; ++i) {
+		rc = smbb_charger_attr_parse(chg, i);
+		if (rc) {
 			dev_err(&pdev->dev, "failed to parse/apply settings\n");
-			वापस rc;
-		पूर्ण
-	पूर्ण
+			return rc;
+		}
+	}
 
 	bat_cfg.drv_data = chg;
 	bat_cfg.of_node = pdev->dev.of_node;
-	chg->bat_psy = devm_घातer_supply_रेजिस्टर(&pdev->dev,
+	chg->bat_psy = devm_power_supply_register(&pdev->dev,
 						  &bat_psy_desc,
 						  &bat_cfg);
-	अगर (IS_ERR(chg->bat_psy)) अणु
+	if (IS_ERR(chg->bat_psy)) {
 		dev_err(&pdev->dev, "failed to register battery\n");
-		वापस PTR_ERR(chg->bat_psy);
-	पूर्ण
+		return PTR_ERR(chg->bat_psy);
+	}
 
 	usb_cfg.drv_data = chg;
-	usb_cfg.supplied_to = smbb_bअगर;
-	usb_cfg.num_supplicants = ARRAY_SIZE(smbb_bअगर);
-	chg->usb_psy = devm_घातer_supply_रेजिस्टर(&pdev->dev,
+	usb_cfg.supplied_to = smbb_bif;
+	usb_cfg.num_supplicants = ARRAY_SIZE(smbb_bif);
+	chg->usb_psy = devm_power_supply_register(&pdev->dev,
 						  &usb_psy_desc,
 						  &usb_cfg);
-	अगर (IS_ERR(chg->usb_psy)) अणु
+	if (IS_ERR(chg->usb_psy)) {
 		dev_err(&pdev->dev, "failed to register USB power supply\n");
-		वापस PTR_ERR(chg->usb_psy);
-	पूर्ण
+		return PTR_ERR(chg->usb_psy);
+	}
 
 	chg->edev = devm_extcon_dev_allocate(&pdev->dev, smbb_usb_extcon_cable);
-	अगर (IS_ERR(chg->edev)) अणु
+	if (IS_ERR(chg->edev)) {
 		dev_err(&pdev->dev, "failed to allocate extcon device\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	rc = devm_extcon_dev_रेजिस्टर(&pdev->dev, chg->edev);
-	अगर (rc < 0) अणु
+	rc = devm_extcon_dev_register(&pdev->dev, chg->edev);
+	if (rc < 0) {
 		dev_err(&pdev->dev, "failed to register extcon device\n");
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
-	अगर (!chg->dc_disabled) अणु
+	if (!chg->dc_disabled) {
 		dc_cfg.drv_data = chg;
-		dc_cfg.supplied_to = smbb_bअगर;
-		dc_cfg.num_supplicants = ARRAY_SIZE(smbb_bअगर);
-		chg->dc_psy = devm_घातer_supply_रेजिस्टर(&pdev->dev,
+		dc_cfg.supplied_to = smbb_bif;
+		dc_cfg.num_supplicants = ARRAY_SIZE(smbb_bif);
+		chg->dc_psy = devm_power_supply_register(&pdev->dev,
 							 &dc_psy_desc,
 							 &dc_cfg);
-		अगर (IS_ERR(chg->dc_psy)) अणु
+		if (IS_ERR(chg->dc_psy)) {
 			dev_err(&pdev->dev, "failed to register DC power supply\n");
-			वापस PTR_ERR(chg->dc_psy);
-		पूर्ण
-	पूर्ण
+			return PTR_ERR(chg->dc_psy);
+		}
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(smbb_अक्षरger_irqs); ++i) अणु
-		पूर्णांक irq;
+	for (i = 0; i < ARRAY_SIZE(smbb_charger_irqs); ++i) {
+		int irq;
 
-		irq = platक्रमm_get_irq_byname(pdev, smbb_अक्षरger_irqs[i].name);
-		अगर (irq < 0) अणु
+		irq = platform_get_irq_byname(pdev, smbb_charger_irqs[i].name);
+		if (irq < 0) {
 			dev_err(&pdev->dev, "failed to get irq '%s'\n",
-				smbb_अक्षरger_irqs[i].name);
-			वापस irq;
-		पूर्ण
+				smbb_charger_irqs[i].name);
+			return irq;
+		}
 
-		smbb_अक्षरger_irqs[i].handler(irq, chg);
+		smbb_charger_irqs[i].handler(irq, chg);
 
-		rc = devm_request_thपढ़ोed_irq(&pdev->dev, irq, शून्य,
-				smbb_अक्षरger_irqs[i].handler, IRQF_ONESHOT,
-				smbb_अक्षरger_irqs[i].name, chg);
-		अगर (rc) अणु
+		rc = devm_request_threaded_irq(&pdev->dev, irq, NULL,
+				smbb_charger_irqs[i].handler, IRQF_ONESHOT,
+				smbb_charger_irqs[i].name, chg);
+		if (rc) {
 			dev_err(&pdev->dev, "failed to request irq '%s'\n",
-				smbb_अक्षरger_irqs[i].name);
-			वापस rc;
-		पूर्ण
-	पूर्ण
+				smbb_charger_irqs[i].name);
+			return rc;
+		}
+	}
 
 	/*
 	 * otg regulator is used to control VBUS voltage direction
-	 * when USB चयनes between host and gadget mode
+	 * when USB switches between host and gadget mode
 	 */
 	chg->otg_rdesc.id = -1;
 	chg->otg_rdesc.name = "otg-vbus";
@@ -963,12 +962,12 @@
 	config.dev = &pdev->dev;
 	config.driver_data = chg;
 
-	chg->otg_reg = devm_regulator_रेजिस्टर(&pdev->dev, &chg->otg_rdesc,
+	chg->otg_reg = devm_regulator_register(&pdev->dev, &chg->otg_rdesc,
 					       &config);
-	अगर (IS_ERR(chg->otg_reg))
-		वापस PTR_ERR(chg->otg_reg);
+	if (IS_ERR(chg->otg_reg))
+		return PTR_ERR(chg->otg_reg);
 
-	chg->jeita_ext_temp = of_property_पढ़ो_bool(pdev->dev.of_node,
+	chg->jeita_ext_temp = of_property_read_bool(pdev->dev.of_node,
 			"qcom,jeita-extended-temp-range");
 
 	/* Set temperature range to [35%:70%] or [25%:80%] accordingly */
@@ -977,59 +976,59 @@
 			chg->jeita_ext_temp ?
 				BTC_CTRL_COLD_EXT :
 				BTC_CTRL_HOT_EXT_N);
-	अगर (rc) अणु
+	if (rc) {
 		dev_err(&pdev->dev,
 			"unable to set %s temperature range\n",
 			chg->jeita_ext_temp ? "JEITA extended" : "normal");
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(smbb_अक्षरger_setup); ++i) अणु
-		स्थिर काष्ठा reg_off_mask_शेष *r = &smbb_अक्षरger_setup[i];
+	for (i = 0; i < ARRAY_SIZE(smbb_charger_setup); ++i) {
+		const struct reg_off_mask_default *r = &smbb_charger_setup[i];
 
-		अगर (r->rev_mask & BIT(chg->revision))
-			जारी;
+		if (r->rev_mask & BIT(chg->revision))
+			continue;
 
 		rc = regmap_update_bits(chg->regmap, chg->addr + r->offset,
 				r->mask, r->value);
-		अगर (rc) अणु
+		if (rc) {
 			dev_err(&pdev->dev,
 				"unable to initializing charging, bailing\n");
-			वापस rc;
-		पूर्ण
-	पूर्ण
+			return rc;
+		}
+	}
 
-	platक्रमm_set_drvdata(pdev, chg);
+	platform_set_drvdata(pdev, chg);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक smbb_अक्षरger_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा smbb_अक्षरger *chg;
+static int smbb_charger_remove(struct platform_device *pdev)
+{
+	struct smbb_charger *chg;
 
-	chg = platक्रमm_get_drvdata(pdev);
+	chg = platform_get_drvdata(pdev);
 
 	regmap_update_bits(chg->regmap, chg->addr + SMBB_CHG_CTRL, CTRL_EN, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id smbb_अक्षरger_id_table[] = अणु
-	अणु .compatible = "qcom,pm8941-charger" पूर्ण,
-	अणु पूर्ण
-पूर्ण;
-MODULE_DEVICE_TABLE(of, smbb_अक्षरger_id_table);
+static const struct of_device_id smbb_charger_id_table[] = {
+	{ .compatible = "qcom,pm8941-charger" },
+	{ }
+};
+MODULE_DEVICE_TABLE(of, smbb_charger_id_table);
 
-अटल काष्ठा platक्रमm_driver smbb_अक्षरger_driver = अणु
-	.probe	  = smbb_अक्षरger_probe,
-	.हटाओ	 = smbb_अक्षरger_हटाओ,
-	.driver	 = अणु
+static struct platform_driver smbb_charger_driver = {
+	.probe	  = smbb_charger_probe,
+	.remove	 = smbb_charger_remove,
+	.driver	 = {
 		.name   = "qcom-smbb",
-		.of_match_table = smbb_अक्षरger_id_table,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(smbb_अक्षरger_driver);
+		.of_match_table = smbb_charger_id_table,
+	},
+};
+module_platform_driver(smbb_charger_driver);
 
 MODULE_DESCRIPTION("Qualcomm Switch-Mode Battery Charger and Boost driver");
 MODULE_LICENSE("GPL v2");

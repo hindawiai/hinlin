@@ -1,59 +1,58 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  Atheros Communication Bluetooth HCIATH3K UART protocol
  *
  *  HCIATH3K (HCI Atheros AR300x Protocol) is a Atheros Communication's
- *  घातer management protocol extension to H4 to support AR300x Bluetooth Chip.
+ *  power management protocol extension to H4 to support AR300x Bluetooth Chip.
  *
  *  Copyright (c) 2009-2010 Atheros Communications Inc.
  *
  *  Acknowledgements:
  *  This file is based on hci_h4.c, which was written
- *  by Maxim Krasnyansky and Marcel Holपंचांगann.
+ *  by Maxim Krasnyansky and Marcel Holtmann.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
 
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/tty.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/ioctl.h>
-#समावेश <linux/skbuff.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/tty.h>
+#include <linux/errno.h>
+#include <linux/ioctl.h>
+#include <linux/skbuff.h>
 
-#समावेश <net/bluetooth/bluetooth.h>
-#समावेश <net/bluetooth/hci_core.h>
+#include <net/bluetooth/bluetooth.h>
+#include <net/bluetooth/hci_core.h>
 
-#समावेश "hci_uart.h"
+#include "hci_uart.h"
 
-काष्ठा ath_काष्ठा अणु
-	काष्ठा hci_uart *hu;
-	अचिन्हित पूर्णांक cur_sleep;
+struct ath_struct {
+	struct hci_uart *hu;
+	unsigned int cur_sleep;
 
-	काष्ठा sk_buff *rx_skb;
-	काष्ठा sk_buff_head txq;
-	काष्ठा work_काष्ठा ctxtsw;
-पूर्ण;
+	struct sk_buff *rx_skb;
+	struct sk_buff_head txq;
+	struct work_struct ctxtsw;
+};
 
-#घोषणा OP_WRITE_TAG	0x01
+#define OP_WRITE_TAG	0x01
 
-#घोषणा INDEX_BDADDR	0x01
+#define INDEX_BDADDR	0x01
 
-काष्ठा ath_venकरोr_cmd अणु
+struct ath_vendor_cmd {
 	__u8 opcode;
 	__le16 index;
 	__u8 len;
 	__u8 data[251];
-पूर्ण __packed;
+} __packed;
 
-अटल पूर्णांक ath_wakeup_ar3k(काष्ठा tty_काष्ठा *tty)
-अणु
-	पूर्णांक status = tty->driver->ops->tiocmget(tty);
+static int ath_wakeup_ar3k(struct tty_struct *tty)
+{
+	int status = tty->driver->ops->tiocmget(tty);
 
-	अगर (status & TIOCM_CTS)
-		वापस status;
+	if (status & TIOCM_CTS)
+		return status;
 
 	/* Clear RTS first */
 	tty->driver->ops->tiocmget(tty);
@@ -66,45 +65,45 @@
 	msleep(20);
 
 	status = tty->driver->ops->tiocmget(tty);
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल व्योम ath_hci_uart_work(काष्ठा work_काष्ठा *work)
-अणु
-	पूर्णांक status;
-	काष्ठा ath_काष्ठा *ath;
-	काष्ठा hci_uart *hu;
-	काष्ठा tty_काष्ठा *tty;
+static void ath_hci_uart_work(struct work_struct *work)
+{
+	int status;
+	struct ath_struct *ath;
+	struct hci_uart *hu;
+	struct tty_struct *tty;
 
-	ath = container_of(work, काष्ठा ath_काष्ठा, ctxtsw);
+	ath = container_of(work, struct ath_struct, ctxtsw);
 
 	hu = ath->hu;
 	tty = hu->tty;
 
-	/* verअगरy and wake up controller */
-	अगर (ath->cur_sleep) अणु
+	/* verify and wake up controller */
+	if (ath->cur_sleep) {
 		status = ath_wakeup_ar3k(tty);
-		अगर (!(status & TIOCM_CTS))
-			वापस;
-	पूर्ण
+		if (!(status & TIOCM_CTS))
+			return;
+	}
 
 	/* Ready to send Data */
 	clear_bit(HCI_UART_SENDING, &hu->tx_state);
 	hci_uart_tx_wakeup(hu);
-पूर्ण
+}
 
-अटल पूर्णांक ath_खोलो(काष्ठा hci_uart *hu)
-अणु
-	काष्ठा ath_काष्ठा *ath;
+static int ath_open(struct hci_uart *hu)
+{
+	struct ath_struct *ath;
 
 	BT_DBG("hu %p", hu);
 
-	अगर (!hci_uart_has_flow_control(hu))
-		वापस -EOPNOTSUPP;
+	if (!hci_uart_has_flow_control(hu))
+		return -EOPNOTSUPP;
 
-	ath = kzalloc(माप(*ath), GFP_KERNEL);
-	अगर (!ath)
-		वापस -ENOMEM;
+	ath = kzalloc(sizeof(*ath), GFP_KERNEL);
+	if (!ath)
+		return -ENOMEM;
 
 	skb_queue_head_init(&ath->txq);
 
@@ -113,157 +112,157 @@
 
 	INIT_WORK(&ath->ctxtsw, ath_hci_uart_work);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ath_बंद(काष्ठा hci_uart *hu)
-अणु
-	काष्ठा ath_काष्ठा *ath = hu->priv;
+static int ath_close(struct hci_uart *hu)
+{
+	struct ath_struct *ath = hu->priv;
 
 	BT_DBG("hu %p", hu);
 
 	skb_queue_purge(&ath->txq);
 
-	kमुक्त_skb(ath->rx_skb);
+	kfree_skb(ath->rx_skb);
 
 	cancel_work_sync(&ath->ctxtsw);
 
-	hu->priv = शून्य;
-	kमुक्त(ath);
+	hu->priv = NULL;
+	kfree(ath);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ath_flush(काष्ठा hci_uart *hu)
-अणु
-	काष्ठा ath_काष्ठा *ath = hu->priv;
+static int ath_flush(struct hci_uart *hu)
+{
+	struct ath_struct *ath = hu->priv;
 
 	BT_DBG("hu %p", hu);
 
 	skb_queue_purge(&ath->txq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ath_venकरोr_cmd(काष्ठा hci_dev *hdev, uपूर्णांक8_t opcode, uपूर्णांक16_t index,
-			  स्थिर व्योम *data, माप_प्रकार dlen)
-अणु
-	काष्ठा sk_buff *skb;
-	काष्ठा ath_venकरोr_cmd cmd;
+static int ath_vendor_cmd(struct hci_dev *hdev, uint8_t opcode, uint16_t index,
+			  const void *data, size_t dlen)
+{
+	struct sk_buff *skb;
+	struct ath_vendor_cmd cmd;
 
-	अगर (dlen > माप(cmd.data))
-		वापस -EINVAL;
+	if (dlen > sizeof(cmd.data))
+		return -EINVAL;
 
 	cmd.opcode = opcode;
 	cmd.index = cpu_to_le16(index);
 	cmd.len = dlen;
-	स_नकल(cmd.data, data, dlen);
+	memcpy(cmd.data, data, dlen);
 
 	skb = __hci_cmd_sync(hdev, 0xfc0b, dlen + 4, &cmd, HCI_INIT_TIMEOUT);
-	अगर (IS_ERR(skb))
-		वापस PTR_ERR(skb);
-	kमुक्त_skb(skb);
+	if (IS_ERR(skb))
+		return PTR_ERR(skb);
+	kfree_skb(skb);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ath_set_bdaddr(काष्ठा hci_dev *hdev, स्थिर bdaddr_t *bdaddr)
-अणु
-	वापस ath_venकरोr_cmd(hdev, OP_WRITE_TAG, INDEX_BDADDR, bdaddr,
-			      माप(*bdaddr));
-पूर्ण
+static int ath_set_bdaddr(struct hci_dev *hdev, const bdaddr_t *bdaddr)
+{
+	return ath_vendor_cmd(hdev, OP_WRITE_TAG, INDEX_BDADDR, bdaddr,
+			      sizeof(*bdaddr));
+}
 
-अटल पूर्णांक ath_setup(काष्ठा hci_uart *hu)
-अणु
+static int ath_setup(struct hci_uart *hu)
+{
 	BT_DBG("hu %p", hu);
 
 	hu->hdev->set_bdaddr = ath_set_bdaddr;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा h4_recv_pkt ath_recv_pkts[] = अणु
-	अणु H4_RECV_ACL,   .recv = hci_recv_frame पूर्ण,
-	अणु H4_RECV_SCO,   .recv = hci_recv_frame पूर्ण,
-	अणु H4_RECV_EVENT, .recv = hci_recv_frame पूर्ण,
-पूर्ण;
+static const struct h4_recv_pkt ath_recv_pkts[] = {
+	{ H4_RECV_ACL,   .recv = hci_recv_frame },
+	{ H4_RECV_SCO,   .recv = hci_recv_frame },
+	{ H4_RECV_EVENT, .recv = hci_recv_frame },
+};
 
-अटल पूर्णांक ath_recv(काष्ठा hci_uart *hu, स्थिर व्योम *data, पूर्णांक count)
-अणु
-	काष्ठा ath_काष्ठा *ath = hu->priv;
+static int ath_recv(struct hci_uart *hu, const void *data, int count)
+{
+	struct ath_struct *ath = hu->priv;
 
 	ath->rx_skb = h4_recv_buf(hu->hdev, ath->rx_skb, data, count,
 				  ath_recv_pkts, ARRAY_SIZE(ath_recv_pkts));
-	अगर (IS_ERR(ath->rx_skb)) अणु
-		पूर्णांक err = PTR_ERR(ath->rx_skb);
+	if (IS_ERR(ath->rx_skb)) {
+		int err = PTR_ERR(ath->rx_skb);
 		bt_dev_err(hu->hdev, "Frame reassembly failed (%d)", err);
-		ath->rx_skb = शून्य;
-		वापस err;
-	पूर्ण
+		ath->rx_skb = NULL;
+		return err;
+	}
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-#घोषणा HCI_OP_ATH_SLEEP 0xFC04
+#define HCI_OP_ATH_SLEEP 0xFC04
 
-अटल पूर्णांक ath_enqueue(काष्ठा hci_uart *hu, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा ath_काष्ठा *ath = hu->priv;
+static int ath_enqueue(struct hci_uart *hu, struct sk_buff *skb)
+{
+	struct ath_struct *ath = hu->priv;
 
-	अगर (hci_skb_pkt_type(skb) == HCI_SCODATA_PKT) अणु
-		kमुक्त_skb(skb);
-		वापस 0;
-	पूर्ण
+	if (hci_skb_pkt_type(skb) == HCI_SCODATA_PKT) {
+		kfree_skb(skb);
+		return 0;
+	}
 
-	/* Update घातer management enable flag with parameters of
-	 * HCI sleep enable venकरोr specअगरic HCI command.
+	/* Update power management enable flag with parameters of
+	 * HCI sleep enable vendor specific HCI command.
 	 */
-	अगर (hci_skb_pkt_type(skb) == HCI_COMMAND_PKT) अणु
-		काष्ठा hci_command_hdr *hdr = (व्योम *)skb->data;
+	if (hci_skb_pkt_type(skb) == HCI_COMMAND_PKT) {
+		struct hci_command_hdr *hdr = (void *)skb->data;
 
-		अगर (__le16_to_cpu(hdr->opcode) == HCI_OP_ATH_SLEEP)
+		if (__le16_to_cpu(hdr->opcode) == HCI_OP_ATH_SLEEP)
 			ath->cur_sleep = skb->data[HCI_COMMAND_HDR_SIZE];
-	पूर्ण
+	}
 
 	BT_DBG("hu %p skb %p", hu, skb);
 
 	/* Prepend skb with frame type */
-	स_नकल(skb_push(skb, 1), &hci_skb_pkt_type(skb), 1);
+	memcpy(skb_push(skb, 1), &hci_skb_pkt_type(skb), 1);
 
 	skb_queue_tail(&ath->txq, skb);
 	set_bit(HCI_UART_SENDING, &hu->tx_state);
 
 	schedule_work(&ath->ctxtsw);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा sk_buff *ath_dequeue(काष्ठा hci_uart *hu)
-अणु
-	काष्ठा ath_काष्ठा *ath = hu->priv;
+static struct sk_buff *ath_dequeue(struct hci_uart *hu)
+{
+	struct ath_struct *ath = hu->priv;
 
-	वापस skb_dequeue(&ath->txq);
-पूर्ण
+	return skb_dequeue(&ath->txq);
+}
 
-अटल स्थिर काष्ठा hci_uart_proto athp = अणु
+static const struct hci_uart_proto athp = {
 	.id		= HCI_UART_ATH3K,
 	.name		= "ATH3K",
 	.manufacturer	= 69,
-	.खोलो		= ath_खोलो,
-	.बंद		= ath_बंद,
+	.open		= ath_open,
+	.close		= ath_close,
 	.flush		= ath_flush,
 	.setup		= ath_setup,
 	.recv		= ath_recv,
 	.enqueue	= ath_enqueue,
 	.dequeue	= ath_dequeue,
-पूर्ण;
+};
 
-पूर्णांक __init ath_init(व्योम)
-अणु
-	वापस hci_uart_रेजिस्टर_proto(&athp);
-पूर्ण
+int __init ath_init(void)
+{
+	return hci_uart_register_proto(&athp);
+}
 
-पूर्णांक __निकास ath_deinit(व्योम)
-अणु
-	वापस hci_uart_unरेजिस्टर_proto(&athp);
-पूर्ण
+int __exit ath_deinit(void)
+{
+	return hci_uart_unregister_proto(&athp);
+}

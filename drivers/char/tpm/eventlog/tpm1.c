@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2005, 2012 IBM Corporation
  *
@@ -11,24 +10,24 @@
  *	Kylene Hall <kjhall@us.ibm.com>
  *	Nayna Jain <nayna@linux.vnet.ibm.com>
  *
- * Maपूर्णांकained by: <tpmdd-devel@lists.sourceक्रमge.net>
+ * Maintained by: <tpmdd-devel@lists.sourceforge.net>
  *
- * Access to the event log created by a प्रणाली's firmware / BIOS
+ * Access to the event log created by a system's firmware / BIOS
  */
 
-#समावेश <linux/seq_file.h>
-#समावेश <linux/efi.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/security.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/tpm_eventlog.h>
+#include <linux/seq_file.h>
+#include <linux/efi.h>
+#include <linux/fs.h>
+#include <linux/security.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/tpm_eventlog.h>
 
-#समावेश "../tpm.h"
-#समावेश "common.h"
+#include "../tpm.h"
+#include "common.h"
 
 
-अटल स्थिर अक्षर* tcpa_event_type_strings[] = अणु
+static const char* tcpa_event_type_strings[] = {
 	"PREBOOT",
 	"POST CODE",
 	"",
@@ -47,9 +46,9 @@
 	"Non-Host Code",
 	"Non-Host Config",
 	"Non-Host Info"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर* tcpa_pc_event_id_strings[] = अणु
+static const char* tcpa_pc_event_id_strings[] = {
 	"",
 	"SMBIOS",
 	"BIS Certificate",
@@ -65,234 +64,234 @@
 	"S-CRTM Contents ",
 	"POST Contents ",
 	"Table of Devices",
-पूर्ण;
+};
 
-/* वापसs poपूर्णांकer to start of pos. entry of tcg log */
-अटल व्योम *tpm1_bios_measurements_start(काष्ठा seq_file *m, loff_t *pos)
-अणु
+/* returns pointer to start of pos. entry of tcg log */
+static void *tpm1_bios_measurements_start(struct seq_file *m, loff_t *pos)
+{
 	loff_t i = 0;
-	काष्ठा tpm_chip *chip = m->निजी;
-	काष्ठा tpm_bios_log *log = &chip->log;
-	व्योम *addr = log->bios_event_log;
-	व्योम *limit = log->bios_event_log_end;
-	काष्ठा tcpa_event *event;
+	struct tpm_chip *chip = m->private;
+	struct tpm_bios_log *log = &chip->log;
+	void *addr = log->bios_event_log;
+	void *limit = log->bios_event_log_end;
+	struct tcpa_event *event;
 	u32 converted_event_size;
 	u32 converted_event_type;
 
-	/* पढ़ो over *pos measurements */
-	करो अणु
+	/* read over *pos measurements */
+	do {
 		event = addr;
 
-		/* check अगर current entry is valid */
-		अगर (addr + माप(काष्ठा tcpa_event) > limit)
-			वापस शून्य;
+		/* check if current entry is valid */
+		if (addr + sizeof(struct tcpa_event) > limit)
+			return NULL;
 
 		converted_event_size =
-		    करो_endian_conversion(event->event_size);
+		    do_endian_conversion(event->event_size);
 		converted_event_type =
-		    करो_endian_conversion(event->event_type);
+		    do_endian_conversion(event->event_type);
 
-		अगर (((converted_event_type == 0) && (converted_event_size == 0))
-		    || ((addr + माप(काष्ठा tcpa_event) + converted_event_size)
+		if (((converted_event_type == 0) && (converted_event_size == 0))
+		    || ((addr + sizeof(struct tcpa_event) + converted_event_size)
 			> limit))
-			वापस शून्य;
+			return NULL;
 
-		अगर (i++ == *pos)
-			अवरोध;
+		if (i++ == *pos)
+			break;
 
-		addr += (माप(काष्ठा tcpa_event) + converted_event_size);
-	पूर्ण जबतक (1);
+		addr += (sizeof(struct tcpa_event) + converted_event_size);
+	} while (1);
 
-	वापस addr;
-पूर्ण
+	return addr;
+}
 
-अटल व्योम *tpm1_bios_measurements_next(काष्ठा seq_file *m, व्योम *v,
+static void *tpm1_bios_measurements_next(struct seq_file *m, void *v,
 					loff_t *pos)
-अणु
-	काष्ठा tcpa_event *event = v;
-	काष्ठा tpm_chip *chip = m->निजी;
-	काष्ठा tpm_bios_log *log = &chip->log;
-	व्योम *limit = log->bios_event_log_end;
+{
+	struct tcpa_event *event = v;
+	struct tpm_chip *chip = m->private;
+	struct tpm_bios_log *log = &chip->log;
+	void *limit = log->bios_event_log_end;
 	u32 converted_event_size;
 	u32 converted_event_type;
 
 	(*pos)++;
-	converted_event_size = करो_endian_conversion(event->event_size);
+	converted_event_size = do_endian_conversion(event->event_size);
 
-	v += माप(काष्ठा tcpa_event) + converted_event_size;
+	v += sizeof(struct tcpa_event) + converted_event_size;
 
-	/* now check अगर current entry is valid */
-	अगर ((v + माप(काष्ठा tcpa_event)) > limit)
-		वापस शून्य;
+	/* now check if current entry is valid */
+	if ((v + sizeof(struct tcpa_event)) > limit)
+		return NULL;
 
 	event = v;
 
-	converted_event_size = करो_endian_conversion(event->event_size);
-	converted_event_type = करो_endian_conversion(event->event_type);
+	converted_event_size = do_endian_conversion(event->event_size);
+	converted_event_type = do_endian_conversion(event->event_type);
 
-	अगर (((converted_event_type == 0) && (converted_event_size == 0)) ||
-	    ((v + माप(काष्ठा tcpa_event) + converted_event_size) > limit))
-		वापस शून्य;
+	if (((converted_event_type == 0) && (converted_event_size == 0)) ||
+	    ((v + sizeof(struct tcpa_event) + converted_event_size) > limit))
+		return NULL;
 
-	वापस v;
-पूर्ण
+	return v;
+}
 
-अटल व्योम tpm1_bios_measurements_stop(काष्ठा seq_file *m, व्योम *v)
-अणु
-पूर्ण
+static void tpm1_bios_measurements_stop(struct seq_file *m, void *v)
+{
+}
 
-अटल पूर्णांक get_event_name(अक्षर *dest, काष्ठा tcpa_event *event,
-			अचिन्हित अक्षर * event_entry)
-अणु
-	स्थिर अक्षर *name = "";
-	/* 41 so there is room क्रम 40 data and 1 nul */
-	अक्षर data[41] = "";
-	पूर्णांक i, n_len = 0, d_len = 0;
-	काष्ठा tcpa_pc_event *pc_event;
+static int get_event_name(char *dest, struct tcpa_event *event,
+			unsigned char * event_entry)
+{
+	const char *name = "";
+	/* 41 so there is room for 40 data and 1 nul */
+	char data[41] = "";
+	int i, n_len = 0, d_len = 0;
+	struct tcpa_pc_event *pc_event;
 
-	चयन (करो_endian_conversion(event->event_type)) अणु
-	हाल PREBOOT:
-	हाल POST_CODE:
-	हाल UNUSED:
-	हाल NO_ACTION:
-	हाल SCRTM_CONTENTS:
-	हाल SCRTM_VERSION:
-	हाल CPU_MICROCODE:
-	हाल PLATFORM_CONFIG_FLAGS:
-	हाल TABLE_OF_DEVICES:
-	हाल COMPACT_HASH:
-	हाल IPL:
-	हाल IPL_PARTITION_DATA:
-	हाल NONHOST_CODE:
-	हाल NONHOST_CONFIG:
-	हाल NONHOST_INFO:
-		name = tcpa_event_type_strings[करो_endian_conversion
+	switch (do_endian_conversion(event->event_type)) {
+	case PREBOOT:
+	case POST_CODE:
+	case UNUSED:
+	case NO_ACTION:
+	case SCRTM_CONTENTS:
+	case SCRTM_VERSION:
+	case CPU_MICROCODE:
+	case PLATFORM_CONFIG_FLAGS:
+	case TABLE_OF_DEVICES:
+	case COMPACT_HASH:
+	case IPL:
+	case IPL_PARTITION_DATA:
+	case NONHOST_CODE:
+	case NONHOST_CONFIG:
+	case NONHOST_INFO:
+		name = tcpa_event_type_strings[do_endian_conversion
 						(event->event_type)];
-		n_len = म_माप(name);
-		अवरोध;
-	हाल SEPARATOR:
-	हाल ACTION:
-		अगर (MAX_TEXT_EVENT >
-		    करो_endian_conversion(event->event_size)) अणु
+		n_len = strlen(name);
+		break;
+	case SEPARATOR:
+	case ACTION:
+		if (MAX_TEXT_EVENT >
+		    do_endian_conversion(event->event_size)) {
 			name = event_entry;
-			n_len = करो_endian_conversion(event->event_size);
-		पूर्ण
-		अवरोध;
-	हाल EVENT_TAG:
-		pc_event = (काष्ठा tcpa_pc_event *)event_entry;
+			n_len = do_endian_conversion(event->event_size);
+		}
+		break;
+	case EVENT_TAG:
+		pc_event = (struct tcpa_pc_event *)event_entry;
 
 		/* ToDo Row data -> Base64 */
 
-		चयन (करो_endian_conversion(pc_event->event_id)) अणु
-		हाल SMBIOS:
-		हाल BIS_CERT:
-		हाल CMOS:
-		हाल NVRAM:
-		हाल OPTION_ROM_EXEC:
-		हाल OPTION_ROM_CONFIG:
-		हाल S_CRTM_VERSION:
-			name = tcpa_pc_event_id_strings[करो_endian_conversion
+		switch (do_endian_conversion(pc_event->event_id)) {
+		case SMBIOS:
+		case BIS_CERT:
+		case CMOS:
+		case NVRAM:
+		case OPTION_ROM_EXEC:
+		case OPTION_ROM_CONFIG:
+		case S_CRTM_VERSION:
+			name = tcpa_pc_event_id_strings[do_endian_conversion
 							(pc_event->event_id)];
-			n_len = म_माप(name);
-			अवरोध;
+			n_len = strlen(name);
+			break;
 		/* hash data */
-		हाल POST_BIOS_ROM:
-		हाल ESCD:
-		हाल OPTION_ROM_MICROCODE:
-		हाल S_CRTM_CONTENTS:
-		हाल POST_CONTENTS:
-			name = tcpa_pc_event_id_strings[करो_endian_conversion
+		case POST_BIOS_ROM:
+		case ESCD:
+		case OPTION_ROM_MICROCODE:
+		case S_CRTM_CONTENTS:
+		case POST_CONTENTS:
+			name = tcpa_pc_event_id_strings[do_endian_conversion
 							(pc_event->event_id)];
-			n_len = म_माप(name);
-			क्रम (i = 0; i < 20; i++)
-				d_len += प्र_लिखो(&data[2*i], "%02x",
+			n_len = strlen(name);
+			for (i = 0; i < 20; i++)
+				d_len += sprintf(&data[2*i], "%02x",
 						pc_event->event_data[i]);
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+			break;
+		default:
+			break;
+		}
+		break;
+	default:
+		break;
+	}
 
-	वापस snम_लिखो(dest, MAX_TEXT_EVENT, "[%.*s%.*s]",
+	return snprintf(dest, MAX_TEXT_EVENT, "[%.*s%.*s]",
 			n_len, name, d_len, data);
 
-पूर्ण
+}
 
-अटल पूर्णांक tpm1_binary_bios_measurements_show(काष्ठा seq_file *m, व्योम *v)
-अणु
-	काष्ठा tcpa_event *event = v;
-	काष्ठा tcpa_event temp_event;
-	अक्षर *temp_ptr;
-	पूर्णांक i;
+static int tpm1_binary_bios_measurements_show(struct seq_file *m, void *v)
+{
+	struct tcpa_event *event = v;
+	struct tcpa_event temp_event;
+	char *temp_ptr;
+	int i;
 
-	स_नकल(&temp_event, event, माप(काष्ठा tcpa_event));
+	memcpy(&temp_event, event, sizeof(struct tcpa_event));
 
-	/* convert raw पूर्णांकegers क्रम endianness */
-	temp_event.pcr_index = करो_endian_conversion(event->pcr_index);
-	temp_event.event_type = करो_endian_conversion(event->event_type);
-	temp_event.event_size = करो_endian_conversion(event->event_size);
+	/* convert raw integers for endianness */
+	temp_event.pcr_index = do_endian_conversion(event->pcr_index);
+	temp_event.event_type = do_endian_conversion(event->event_type);
+	temp_event.event_size = do_endian_conversion(event->event_size);
 
-	temp_ptr = (अक्षर *) &temp_event;
+	temp_ptr = (char *) &temp_event;
 
-	क्रम (i = 0; i < (माप(काष्ठा tcpa_event) - 1) ; i++)
-		seq_अ_दो(m, temp_ptr[i]);
+	for (i = 0; i < (sizeof(struct tcpa_event) - 1) ; i++)
+		seq_putc(m, temp_ptr[i]);
 
-	temp_ptr = (अक्षर *) v;
+	temp_ptr = (char *) v;
 
-	क्रम (i = (माप(काष्ठा tcpa_event) - 1);
-	     i < (माप(काष्ठा tcpa_event) + temp_event.event_size); i++)
-		seq_अ_दो(m, temp_ptr[i]);
+	for (i = (sizeof(struct tcpa_event) - 1);
+	     i < (sizeof(struct tcpa_event) + temp_event.event_size); i++)
+		seq_putc(m, temp_ptr[i]);
 
-	वापस 0;
+	return 0;
 
-पूर्ण
+}
 
-अटल पूर्णांक tpm1_ascii_bios_measurements_show(काष्ठा seq_file *m, व्योम *v)
-अणु
-	पूर्णांक len = 0;
-	अक्षर *eventname;
-	काष्ठा tcpa_event *event = v;
-	अचिन्हित अक्षर *event_entry =
-	    (अचिन्हित अक्षर *)(v + माप(काष्ठा tcpa_event));
+static int tpm1_ascii_bios_measurements_show(struct seq_file *m, void *v)
+{
+	int len = 0;
+	char *eventname;
+	struct tcpa_event *event = v;
+	unsigned char *event_entry =
+	    (unsigned char *)(v + sizeof(struct tcpa_event));
 
-	eventname = kदो_स्मृति(MAX_TEXT_EVENT, GFP_KERNEL);
-	अगर (!eventname) अणु
-		prपूर्णांकk(KERN_ERR "%s: ERROR - No Memory for event name\n ",
+	eventname = kmalloc(MAX_TEXT_EVENT, GFP_KERNEL);
+	if (!eventname) {
+		printk(KERN_ERR "%s: ERROR - No Memory for event name\n ",
 		       __func__);
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
 	/* 1st: PCR */
-	seq_म_लिखो(m, "%2d ", करो_endian_conversion(event->pcr_index));
+	seq_printf(m, "%2d ", do_endian_conversion(event->pcr_index));
 
 	/* 2nd: SHA1 */
-	seq_म_लिखो(m, "%20phN", event->pcr_value);
+	seq_printf(m, "%20phN", event->pcr_value);
 
-	/* 3rd: event type identअगरier */
-	seq_म_लिखो(m, " %02x", करो_endian_conversion(event->event_type));
+	/* 3rd: event type identifier */
+	seq_printf(m, " %02x", do_endian_conversion(event->event_type));
 
 	len += get_event_name(eventname, event, event_entry);
 
 	/* 4th: eventname <= max + \'0' delimiter */
-	seq_म_लिखो(m, " %s\n", eventname);
+	seq_printf(m, " %s\n", eventname);
 
-	kमुक्त(eventname);
-	वापस 0;
-पूर्ण
+	kfree(eventname);
+	return 0;
+}
 
-स्थिर काष्ठा seq_operations tpm1_ascii_b_measurements_seqops = अणु
+const struct seq_operations tpm1_ascii_b_measurements_seqops = {
 	.start = tpm1_bios_measurements_start,
 	.next = tpm1_bios_measurements_next,
 	.stop = tpm1_bios_measurements_stop,
 	.show = tpm1_ascii_bios_measurements_show,
-पूर्ण;
+};
 
-स्थिर काष्ठा seq_operations tpm1_binary_b_measurements_seqops = अणु
+const struct seq_operations tpm1_binary_b_measurements_seqops = {
 	.start = tpm1_bios_measurements_start,
 	.next = tpm1_bios_measurements_next,
 	.stop = tpm1_bios_measurements_stop,
 	.show = tpm1_binary_bios_measurements_show,
-पूर्ण;
+};

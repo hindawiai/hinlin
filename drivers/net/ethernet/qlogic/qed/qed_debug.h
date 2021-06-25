@@ -1,14 +1,13 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-3-Clause) */
+/* SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause) */
 /* QLogic qed NIC Driver
  * Copyright (c) 2015 QLogic Corporation
  * Copyright (c) 2019-2020 Marvell International Ltd.
  */
 
-#अगर_अघोषित _QED_DEBUGFS_H
-#घोषणा _QED_DEBUGFS_H
+#ifndef _QED_DEBUGFS_H
+#define _QED_DEBUGFS_H
 
-क्रमागत qed_dbg_features अणु
+enum qed_dbg_features {
 	DBG_FEATURE_GRC,
 	DBG_FEATURE_IDLE_CHK,
 	DBG_FEATURE_MCP_TRACE,
@@ -18,43 +17,43 @@
 	DBG_FEATURE_FW_ASSERTS,
 	DBG_FEATURE_ILT,
 	DBG_FEATURE_NUM
-पूर्ण;
+};
 
 /* Forward Declaration */
-काष्ठा qed_dev;
-काष्ठा qed_hwfn;
+struct qed_dev;
+struct qed_hwfn;
 
-पूर्णांक qed_dbg_grc(काष्ठा qed_dev *cdev, व्योम *buffer, u32 *num_dumped_bytes);
-पूर्णांक qed_dbg_grc_size(काष्ठा qed_dev *cdev);
-पूर्णांक qed_dbg_idle_chk(काष्ठा qed_dev *cdev, व्योम *buffer,
+int qed_dbg_grc(struct qed_dev *cdev, void *buffer, u32 *num_dumped_bytes);
+int qed_dbg_grc_size(struct qed_dev *cdev);
+int qed_dbg_idle_chk(struct qed_dev *cdev, void *buffer,
 		     u32 *num_dumped_bytes);
-पूर्णांक qed_dbg_idle_chk_size(काष्ठा qed_dev *cdev);
-पूर्णांक qed_dbg_reg_fअगरo(काष्ठा qed_dev *cdev, व्योम *buffer,
+int qed_dbg_idle_chk_size(struct qed_dev *cdev);
+int qed_dbg_reg_fifo(struct qed_dev *cdev, void *buffer,
 		     u32 *num_dumped_bytes);
-पूर्णांक qed_dbg_reg_fअगरo_size(काष्ठा qed_dev *cdev);
-पूर्णांक qed_dbg_igu_fअगरo(काष्ठा qed_dev *cdev, व्योम *buffer,
+int qed_dbg_reg_fifo_size(struct qed_dev *cdev);
+int qed_dbg_igu_fifo(struct qed_dev *cdev, void *buffer,
 		     u32 *num_dumped_bytes);
-पूर्णांक qed_dbg_igu_fअगरo_size(काष्ठा qed_dev *cdev);
-पूर्णांक qed_dbg_protection_override(काष्ठा qed_dev *cdev, व्योम *buffer,
+int qed_dbg_igu_fifo_size(struct qed_dev *cdev);
+int qed_dbg_protection_override(struct qed_dev *cdev, void *buffer,
 				u32 *num_dumped_bytes);
-पूर्णांक qed_dbg_protection_override_size(काष्ठा qed_dev *cdev);
-पूर्णांक qed_dbg_fw_निश्चितs(काष्ठा qed_dev *cdev, व्योम *buffer,
+int qed_dbg_protection_override_size(struct qed_dev *cdev);
+int qed_dbg_fw_asserts(struct qed_dev *cdev, void *buffer,
 		       u32 *num_dumped_bytes);
-पूर्णांक qed_dbg_fw_निश्चितs_size(काष्ठा qed_dev *cdev);
-पूर्णांक qed_dbg_ilt(काष्ठा qed_dev *cdev, व्योम *buffer, u32 *num_dumped_bytes);
-पूर्णांक qed_dbg_ilt_size(काष्ठा qed_dev *cdev);
-पूर्णांक qed_dbg_mcp_trace(काष्ठा qed_dev *cdev, व्योम *buffer,
+int qed_dbg_fw_asserts_size(struct qed_dev *cdev);
+int qed_dbg_ilt(struct qed_dev *cdev, void *buffer, u32 *num_dumped_bytes);
+int qed_dbg_ilt_size(struct qed_dev *cdev);
+int qed_dbg_mcp_trace(struct qed_dev *cdev, void *buffer,
 		      u32 *num_dumped_bytes);
-पूर्णांक qed_dbg_mcp_trace_size(काष्ठा qed_dev *cdev);
-पूर्णांक qed_dbg_all_data(काष्ठा qed_dev *cdev, व्योम *buffer);
-पूर्णांक qed_dbg_all_data_size(काष्ठा qed_dev *cdev);
-u8 qed_get_debug_engine(काष्ठा qed_dev *cdev);
-व्योम qed_set_debug_engine(काष्ठा qed_dev *cdev, पूर्णांक engine_number);
-पूर्णांक qed_dbg_feature(काष्ठा qed_dev *cdev, व्योम *buffer,
-		    क्रमागत qed_dbg_features feature, u32 *num_dumped_bytes);
-पूर्णांक qed_dbg_feature_size(काष्ठा qed_dev *cdev, क्रमागत qed_dbg_features feature);
+int qed_dbg_mcp_trace_size(struct qed_dev *cdev);
+int qed_dbg_all_data(struct qed_dev *cdev, void *buffer);
+int qed_dbg_all_data_size(struct qed_dev *cdev);
+u8 qed_get_debug_engine(struct qed_dev *cdev);
+void qed_set_debug_engine(struct qed_dev *cdev, int engine_number);
+int qed_dbg_feature(struct qed_dev *cdev, void *buffer,
+		    enum qed_dbg_features feature, u32 *num_dumped_bytes);
+int qed_dbg_feature_size(struct qed_dev *cdev, enum qed_dbg_features feature);
 
-व्योम qed_dbg_pf_init(काष्ठा qed_dev *cdev);
-व्योम qed_dbg_pf_निकास(काष्ठा qed_dev *cdev);
+void qed_dbg_pf_init(struct qed_dev *cdev);
+void qed_dbg_pf_exit(struct qed_dev *cdev);
 
-#पूर्ण_अगर
+#endif

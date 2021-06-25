@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
-#अगर_अघोषित __NVKM_CLK_SEQ_H__
-#घोषणा __NVKM_CLK_SEQ_H__
-#समावेश <subdev/bus/hwsq.h>
+/* SPDX-License-Identifier: MIT */
+#ifndef __NVKM_CLK_SEQ_H__
+#define __NVKM_CLK_SEQ_H__
+#include <subdev/bus/hwsq.h>
 
-#घोषणा clk_init(s,p)       hwsq_init(&(s)->base, (p))
-#घोषणा clk_exec(s,e)       hwsq_exec(&(s)->base, (e))
-#घोषणा clk_have(s,r)       ((s)->r_##r.addr != 0x000000)
-#घोषणा clk_rd32(s,r)       hwsq_rd32(&(s)->base, &(s)->r_##r)
-#घोषणा clk_wr32(s,r,d)     hwsq_wr32(&(s)->base, &(s)->r_##r, (d))
-#घोषणा clk_mask(s,r,m,d)   hwsq_mask(&(s)->base, &(s)->r_##r, (m), (d))
-#घोषणा clk_setf(s,f,d)     hwsq_setf(&(s)->base, (f), (d))
-#घोषणा clk_रुको(s,f,d)     hwsq_रुको(&(s)->base, (f), (d))
-#घोषणा clk_nsec(s,n)       hwsq_nsec(&(s)->base, (n))
-#पूर्ण_अगर
+#define clk_init(s,p)       hwsq_init(&(s)->base, (p))
+#define clk_exec(s,e)       hwsq_exec(&(s)->base, (e))
+#define clk_have(s,r)       ((s)->r_##r.addr != 0x000000)
+#define clk_rd32(s,r)       hwsq_rd32(&(s)->base, &(s)->r_##r)
+#define clk_wr32(s,r,d)     hwsq_wr32(&(s)->base, &(s)->r_##r, (d))
+#define clk_mask(s,r,m,d)   hwsq_mask(&(s)->base, &(s)->r_##r, (m), (d))
+#define clk_setf(s,f,d)     hwsq_setf(&(s)->base, (f), (d))
+#define clk_wait(s,f,d)     hwsq_wait(&(s)->base, (f), (d))
+#define clk_nsec(s,n)       hwsq_nsec(&(s)->base, (n))
+#endif

@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  *  linux/drivers/video/fbmem.c
  *
@@ -8,1187 +7,1187 @@
  *	- Brad Douglas <brad@neruo.com>
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file COPYING in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file COPYING in the main directory of this archive
+ * for more details.
  */
 
-#समावेश <linux/module.h>
+#include <linux/module.h>
 
-#समावेश <linux/compat.h>
-#समावेश <linux/types.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/major.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/mman.h>
-#समावेश <linux/vt.h>
-#समावेश <linux/init.h>
-#समावेश <linux/linux_logo.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/console.h>
-#समावेश <linux/kmod.h>
-#समावेश <linux/err.h>
-#समावेश <linux/device.h>
-#समावेश <linux/efi.h>
-#समावेश <linux/fb.h>
-#समावेश <linux/fbcon.h>
-#समावेश <linux/mem_encrypt.h>
-#समावेश <linux/pci.h>
+#include <linux/compat.h>
+#include <linux/types.h>
+#include <linux/errno.h>
+#include <linux/kernel.h>
+#include <linux/major.h>
+#include <linux/slab.h>
+#include <linux/mm.h>
+#include <linux/mman.h>
+#include <linux/vt.h>
+#include <linux/init.h>
+#include <linux/linux_logo.h>
+#include <linux/proc_fs.h>
+#include <linux/seq_file.h>
+#include <linux/console.h>
+#include <linux/kmod.h>
+#include <linux/err.h>
+#include <linux/device.h>
+#include <linux/efi.h>
+#include <linux/fb.h>
+#include <linux/fbcon.h>
+#include <linux/mem_encrypt.h>
+#include <linux/pci.h>
 
-#समावेश <यंत्र/fb.h>
+#include <asm/fb.h>
 
 
     /*
      *  Frame buffer device initialization and setup routines
      */
 
-#घोषणा FBPIXMAPSIZE	(1024 * 8)
+#define FBPIXMAPSIZE	(1024 * 8)
 
-अटल DEFINE_MUTEX(registration_lock);
+static DEFINE_MUTEX(registration_lock);
 
-काष्ठा fb_info *रेजिस्टरed_fb[FB_MAX] __पढ़ो_mostly;
-EXPORT_SYMBOL(रेजिस्टरed_fb);
+struct fb_info *registered_fb[FB_MAX] __read_mostly;
+EXPORT_SYMBOL(registered_fb);
 
-पूर्णांक num_रेजिस्टरed_fb __पढ़ो_mostly;
-EXPORT_SYMBOL(num_रेजिस्टरed_fb);
+int num_registered_fb __read_mostly;
+EXPORT_SYMBOL(num_registered_fb);
 
-bool fb_center_logo __पढ़ो_mostly;
+bool fb_center_logo __read_mostly;
 
-पूर्णांक fb_logo_count __पढ़ो_mostly = -1;
+int fb_logo_count __read_mostly = -1;
 
-अटल काष्ठा fb_info *get_fb_info(अचिन्हित पूर्णांक idx)
-अणु
-	काष्ठा fb_info *fb_info;
+static struct fb_info *get_fb_info(unsigned int idx)
+{
+	struct fb_info *fb_info;
 
-	अगर (idx >= FB_MAX)
-		वापस ERR_PTR(-ENODEV);
+	if (idx >= FB_MAX)
+		return ERR_PTR(-ENODEV);
 
 	mutex_lock(&registration_lock);
-	fb_info = रेजिस्टरed_fb[idx];
-	अगर (fb_info)
+	fb_info = registered_fb[idx];
+	if (fb_info)
 		atomic_inc(&fb_info->count);
 	mutex_unlock(&registration_lock);
 
-	वापस fb_info;
-पूर्ण
+	return fb_info;
+}
 
-अटल व्योम put_fb_info(काष्ठा fb_info *fb_info)
-अणु
-	अगर (!atomic_dec_and_test(&fb_info->count))
-		वापस;
-	अगर (fb_info->fbops->fb_destroy)
+static void put_fb_info(struct fb_info *fb_info)
+{
+	if (!atomic_dec_and_test(&fb_info->count))
+		return;
+	if (fb_info->fbops->fb_destroy)
 		fb_info->fbops->fb_destroy(fb_info);
-पूर्ण
+}
 
 /*
  * Helpers
  */
 
-पूर्णांक fb_get_color_depth(काष्ठा fb_var_screeninfo *var,
-		       काष्ठा fb_fix_screeninfo *fix)
-अणु
-	पूर्णांक depth = 0;
+int fb_get_color_depth(struct fb_var_screeninfo *var,
+		       struct fb_fix_screeninfo *fix)
+{
+	int depth = 0;
 
-	अगर (fix->visual == FB_VISUAL_MONO01 ||
+	if (fix->visual == FB_VISUAL_MONO01 ||
 	    fix->visual == FB_VISUAL_MONO10)
 		depth = 1;
-	अन्यथा अणु
-		अगर (var->green.length == var->blue.length &&
+	else {
+		if (var->green.length == var->blue.length &&
 		    var->green.length == var->red.length &&
 		    var->green.offset == var->blue.offset &&
 		    var->green.offset == var->red.offset)
 			depth = var->green.length;
-		अन्यथा
+		else
 			depth = var->green.length + var->red.length +
 				var->blue.length;
-	पूर्ण
+	}
 
-	वापस depth;
-पूर्ण
+	return depth;
+}
 EXPORT_SYMBOL(fb_get_color_depth);
 
 /*
  * Data padding functions.
  */
-व्योम fb_pad_aligned_buffer(u8 *dst, u32 d_pitch, u8 *src, u32 s_pitch, u32 height)
-अणु
+void fb_pad_aligned_buffer(u8 *dst, u32 d_pitch, u8 *src, u32 s_pitch, u32 height)
+{
 	__fb_pad_aligned_buffer(dst, d_pitch, src, s_pitch, height);
-पूर्ण
+}
 EXPORT_SYMBOL(fb_pad_aligned_buffer);
 
-व्योम fb_pad_unaligned_buffer(u8 *dst, u32 d_pitch, u8 *src, u32 idx, u32 height,
-				u32 shअगरt_high, u32 shअगरt_low, u32 mod)
-अणु
-	u8 mask = (u8) (0xfff << shअगरt_high), पंचांगp;
-	पूर्णांक i, j;
+void fb_pad_unaligned_buffer(u8 *dst, u32 d_pitch, u8 *src, u32 idx, u32 height,
+				u32 shift_high, u32 shift_low, u32 mod)
+{
+	u8 mask = (u8) (0xfff << shift_high), tmp;
+	int i, j;
 
-	क्रम (i = height; i--; ) अणु
-		क्रम (j = 0; j < idx; j++) अणु
-			पंचांगp = dst[j];
-			पंचांगp &= mask;
-			पंचांगp |= *src >> shअगरt_low;
-			dst[j] = पंचांगp;
-			पंचांगp = *src << shअगरt_high;
-			dst[j+1] = पंचांगp;
+	for (i = height; i--; ) {
+		for (j = 0; j < idx; j++) {
+			tmp = dst[j];
+			tmp &= mask;
+			tmp |= *src >> shift_low;
+			dst[j] = tmp;
+			tmp = *src << shift_high;
+			dst[j+1] = tmp;
 			src++;
-		पूर्ण
-		पंचांगp = dst[idx];
-		पंचांगp &= mask;
-		पंचांगp |= *src >> shअगरt_low;
-		dst[idx] = पंचांगp;
-		अगर (shअगरt_high < mod) अणु
-			पंचांगp = *src << shअगरt_high;
-			dst[idx+1] = पंचांगp;
-		पूर्ण
+		}
+		tmp = dst[idx];
+		tmp &= mask;
+		tmp |= *src >> shift_low;
+		dst[idx] = tmp;
+		if (shift_high < mod) {
+			tmp = *src << shift_high;
+			dst[idx+1] = tmp;
+		}
 		src++;
 		dst += d_pitch;
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL(fb_pad_unaligned_buffer);
 
 /*
  * we need to lock this section since fb_cursor
  * may use fb_imageblit()
  */
-अक्षर* fb_get_buffer_offset(काष्ठा fb_info *info, काष्ठा fb_pixmap *buf, u32 size)
-अणु
+char* fb_get_buffer_offset(struct fb_info *info, struct fb_pixmap *buf, u32 size)
+{
 	u32 align = buf->buf_align - 1, offset;
-	अक्षर *addr = buf->addr;
+	char *addr = buf->addr;
 
-	/* If IO mapped, we need to sync beक्रमe access, no sharing of
-	 * the pixmap is करोne
+	/* If IO mapped, we need to sync before access, no sharing of
+	 * the pixmap is done
 	 */
-	अगर (buf->flags & FB_PIXMAP_IO) अणु
-		अगर (info->fbops->fb_sync && (buf->flags & FB_PIXMAP_SYNC))
+	if (buf->flags & FB_PIXMAP_IO) {
+		if (info->fbops->fb_sync && (buf->flags & FB_PIXMAP_SYNC))
 			info->fbops->fb_sync(info);
-		वापस addr;
-	पूर्ण
+		return addr;
+	}
 
-	/* See अगर we fit in the reमुख्यing pixmap space */
+	/* See if we fit in the remaining pixmap space */
 	offset = buf->offset + align;
 	offset &= ~align;
-	अगर (offset + size > buf->size) अणु
-		/* We करो not fit. In order to be able to re-use the buffer,
+	if (offset + size > buf->size) {
+		/* We do not fit. In order to be able to re-use the buffer,
 		 * we must ensure no asynchronous DMA'ing or whatever operation
-		 * is in progress, we sync क्रम that.
+		 * is in progress, we sync for that.
 		 */
-		अगर (info->fbops->fb_sync && (buf->flags & FB_PIXMAP_SYNC))
+		if (info->fbops->fb_sync && (buf->flags & FB_PIXMAP_SYNC))
 			info->fbops->fb_sync(info);
 		offset = 0;
-	पूर्ण
+	}
 	buf->offset = offset + size;
 	addr += offset;
 
-	वापस addr;
-पूर्ण
+	return addr;
+}
 EXPORT_SYMBOL(fb_get_buffer_offset);
 
-#अगर_घोषित CONFIG_LOGO
+#ifdef CONFIG_LOGO
 
-अटल अंतरभूत अचिन्हित safe_shअगरt(अचिन्हित d, पूर्णांक n)
-अणु
-	वापस n < 0 ? d >> -n : d << n;
-पूर्ण
+static inline unsigned safe_shift(unsigned d, int n)
+{
+	return n < 0 ? d >> -n : d << n;
+}
 
-अटल व्योम fb_set_logocmap(काष्ठा fb_info *info,
-				   स्थिर काष्ठा linux_logo *logo)
-अणु
-	काष्ठा fb_cmap palette_cmap;
+static void fb_set_logocmap(struct fb_info *info,
+				   const struct linux_logo *logo)
+{
+	struct fb_cmap palette_cmap;
 	u16 palette_green[16];
 	u16 palette_blue[16];
 	u16 palette_red[16];
-	पूर्णांक i, j, n;
-	स्थिर अचिन्हित अक्षर *clut = logo->clut;
+	int i, j, n;
+	const unsigned char *clut = logo->clut;
 
 	palette_cmap.start = 0;
 	palette_cmap.len = 16;
 	palette_cmap.red = palette_red;
 	palette_cmap.green = palette_green;
 	palette_cmap.blue = palette_blue;
-	palette_cmap.transp = शून्य;
+	palette_cmap.transp = NULL;
 
-	क्रम (i = 0; i < logo->clutsize; i += n) अणु
+	for (i = 0; i < logo->clutsize; i += n) {
 		n = logo->clutsize - i;
-		/* palette_cmap provides space क्रम only 16 colors at once */
-		अगर (n > 16)
+		/* palette_cmap provides space for only 16 colors at once */
+		if (n > 16)
 			n = 16;
 		palette_cmap.start = 32 + i;
 		palette_cmap.len = n;
-		क्रम (j = 0; j < n; ++j) अणु
+		for (j = 0; j < n; ++j) {
 			palette_cmap.red[j] = clut[0] << 8 | clut[0];
 			palette_cmap.green[j] = clut[1] << 8 | clut[1];
 			palette_cmap.blue[j] = clut[2] << 8 | clut[2];
 			clut += 3;
-		पूर्ण
+		}
 		fb_set_cmap(&palette_cmap, info);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम  fb_set_logo_truepalette(काष्ठा fb_info *info,
-					    स्थिर काष्ठा linux_logo *logo,
+static void  fb_set_logo_truepalette(struct fb_info *info,
+					    const struct linux_logo *logo,
 					    u32 *palette)
-अणु
-	अटल स्थिर अचिन्हित अक्षर mask[] = अणु 0,0x80,0xc0,0xe0,0xf0,0xf8,0xfc,0xfe,0xff पूर्ण;
-	अचिन्हित अक्षर redmask, greenmask, bluemask;
-	पूर्णांक redshअगरt, greenshअगरt, blueshअगरt;
-	पूर्णांक i;
-	स्थिर अचिन्हित अक्षर *clut = logo->clut;
+{
+	static const unsigned char mask[] = { 0,0x80,0xc0,0xe0,0xf0,0xf8,0xfc,0xfe,0xff };
+	unsigned char redmask, greenmask, bluemask;
+	int redshift, greenshift, blueshift;
+	int i;
+	const unsigned char *clut = logo->clut;
 
 	/*
 	 * We have to create a temporary palette since console palette is only
-	 * 16 colors दीर्घ.
+	 * 16 colors long.
 	 */
 	/* Bug: Doesn't obey msb_right ... (who needs that?) */
 	redmask   = mask[info->var.red.length   < 8 ? info->var.red.length   : 8];
 	greenmask = mask[info->var.green.length < 8 ? info->var.green.length : 8];
 	bluemask  = mask[info->var.blue.length  < 8 ? info->var.blue.length  : 8];
-	redshअगरt   = info->var.red.offset   - (8 - info->var.red.length);
-	greenshअगरt = info->var.green.offset - (8 - info->var.green.length);
-	blueshअगरt  = info->var.blue.offset  - (8 - info->var.blue.length);
+	redshift   = info->var.red.offset   - (8 - info->var.red.length);
+	greenshift = info->var.green.offset - (8 - info->var.green.length);
+	blueshift  = info->var.blue.offset  - (8 - info->var.blue.length);
 
-	क्रम ( i = 0; i < logo->clutsize; i++) अणु
-		palette[i+32] = (safe_shअगरt((clut[0] & redmask), redshअगरt) |
-				 safe_shअगरt((clut[1] & greenmask), greenshअगरt) |
-				 safe_shअगरt((clut[2] & bluemask), blueshअगरt));
+	for ( i = 0; i < logo->clutsize; i++) {
+		palette[i+32] = (safe_shift((clut[0] & redmask), redshift) |
+				 safe_shift((clut[1] & greenmask), greenshift) |
+				 safe_shift((clut[2] & bluemask), blueshift));
 		clut += 3;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम fb_set_logo_directpalette(काष्ठा fb_info *info,
-					     स्थिर काष्ठा linux_logo *logo,
+static void fb_set_logo_directpalette(struct fb_info *info,
+					     const struct linux_logo *logo,
 					     u32 *palette)
-अणु
-	पूर्णांक redshअगरt, greenshअगरt, blueshअगरt;
-	पूर्णांक i;
+{
+	int redshift, greenshift, blueshift;
+	int i;
 
-	redshअगरt = info->var.red.offset;
-	greenshअगरt = info->var.green.offset;
-	blueshअगरt = info->var.blue.offset;
+	redshift = info->var.red.offset;
+	greenshift = info->var.green.offset;
+	blueshift = info->var.blue.offset;
 
-	क्रम (i = 32; i < 32 + logo->clutsize; i++)
-		palette[i] = i << redshअगरt | i << greenshअगरt | i << blueshअगरt;
-पूर्ण
+	for (i = 32; i < 32 + logo->clutsize; i++)
+		palette[i] = i << redshift | i << greenshift | i << blueshift;
+}
 
-अटल व्योम fb_set_logo(काष्ठा fb_info *info,
-			       स्थिर काष्ठा linux_logo *logo, u8 *dst,
-			       पूर्णांक depth)
-अणु
-	पूर्णांक i, j, k;
-	स्थिर u8 *src = logo->data;
+static void fb_set_logo(struct fb_info *info,
+			       const struct linux_logo *logo, u8 *dst,
+			       int depth)
+{
+	int i, j, k;
+	const u8 *src = logo->data;
 	u8 xor = (info->fix.visual == FB_VISUAL_MONO01) ? 0xff : 0;
 	u8 fg = 1, d;
 
-	चयन (fb_get_color_depth(&info->var, &info->fix)) अणु
-	हाल 1:
+	switch (fb_get_color_depth(&info->var, &info->fix)) {
+	case 1:
 		fg = 1;
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		fg = 3;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		fg = 7;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (info->fix.visual == FB_VISUAL_MONO01 ||
+	if (info->fix.visual == FB_VISUAL_MONO01 ||
 	    info->fix.visual == FB_VISUAL_MONO10)
 		fg = ~((u8) (0xfff << info->var.green.length));
 
-	चयन (depth) अणु
-	हाल 4:
-		क्रम (i = 0; i < logo->height; i++)
-			क्रम (j = 0; j < logo->width; src++) अणु
+	switch (depth) {
+	case 4:
+		for (i = 0; i < logo->height; i++)
+			for (j = 0; j < logo->width; src++) {
 				*dst++ = *src >> 4;
 				j++;
-				अगर (j < logo->width) अणु
+				if (j < logo->width) {
 					*dst++ = *src & 0x0f;
 					j++;
-				पूर्ण
-			पूर्ण
-		अवरोध;
-	हाल 1:
-		क्रम (i = 0; i < logo->height; i++) अणु
-			क्रम (j = 0; j < logo->width; src++) अणु
+				}
+			}
+		break;
+	case 1:
+		for (i = 0; i < logo->height; i++) {
+			for (j = 0; j < logo->width; src++) {
 				d = *src ^ xor;
-				क्रम (k = 7; k >= 0 && j < logo->width; k--) अणु
+				for (k = 7; k >= 0 && j < logo->width; k--) {
 					*dst++ = ((d >> k) & 1) ? fg : 0;
 					j++;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-		अवरोध;
-	पूर्ण
-पूर्ण
+				}
+			}
+		}
+		break;
+	}
+}
 
 /*
  * Three (3) kinds of logo maps exist.  linux_logo_clut224 (>16 colors),
  * linux_logo_vga16 (16 colors) and linux_logo_mono (2 colors).  Depending on
- * the visual क्रमmat and color depth of the framebuffer, the DAC, the
- * pseuकरो_palette, and the logo data will be adjusted accordingly.
+ * the visual format and color depth of the framebuffer, the DAC, the
+ * pseudo_palette, and the logo data will be adjusted accordingly.
  *
  * Case 1 - linux_logo_clut224:
  * Color exceeds the number of console colors (16), thus we set the hardware DAC
  * using fb_set_cmap() appropriately.  The "needs_cmapreset"  flag will be set.
  *
- * For visuals that require color info from the pseuकरो_palette, we also स्थिरruct
- * one क्रम temporary use. The "needs_directpalette" or "needs_truepalette" flags
+ * For visuals that require color info from the pseudo_palette, we also construct
+ * one for temporary use. The "needs_directpalette" or "needs_truepalette" flags
  * will be set.
  *
  * Case 2 - linux_logo_vga16:
  * The number of colors just matches the console colors, thus there is no need
- * to set the DAC or the pseuकरो_palette.  However, the biपंचांगap is packed, ie,
- * each byte contains color inक्रमmation क्रम two pixels (upper and lower nibble).
- * To be consistent with fb_imageblit() usage, we thereक्रमe separate the two
- * nibbles पूर्णांकo separate bytes. The "depth" flag will be set to 4.
+ * to set the DAC or the pseudo_palette.  However, the bitmap is packed, ie,
+ * each byte contains color information for two pixels (upper and lower nibble).
+ * To be consistent with fb_imageblit() usage, we therefore separate the two
+ * nibbles into separate bytes. The "depth" flag will be set to 4.
  *
  * Case 3 - linux_logo_mono:
- * This is similar with Case 2.  Each byte contains inक्रमmation क्रम 8 pixels.
- * We isolate each bit and expand each पूर्णांकo a byte. The "depth" flag will
+ * This is similar with Case 2.  Each byte contains information for 8 pixels.
+ * We isolate each bit and expand each into a byte. The "depth" flag will
  * be set to 1.
  */
-अटल काष्ठा logo_data अणु
-	पूर्णांक depth;
-	पूर्णांक needs_directpalette;
-	पूर्णांक needs_truepalette;
-	पूर्णांक needs_cmapreset;
-	स्थिर काष्ठा linux_logo *logo;
-पूर्ण fb_logo __पढ़ो_mostly;
+static struct logo_data {
+	int depth;
+	int needs_directpalette;
+	int needs_truepalette;
+	int needs_cmapreset;
+	const struct linux_logo *logo;
+} fb_logo __read_mostly;
 
-अटल व्योम fb_rotate_logo_ud(स्थिर u8 *in, u8 *out, u32 width, u32 height)
-अणु
+static void fb_rotate_logo_ud(const u8 *in, u8 *out, u32 width, u32 height)
+{
 	u32 size = width * height, i;
 
 	out += size - 1;
 
-	क्रम (i = size; i--; )
+	for (i = size; i--; )
 		*out-- = *in++;
-पूर्ण
+}
 
-अटल व्योम fb_rotate_logo_cw(स्थिर u8 *in, u8 *out, u32 width, u32 height)
-अणु
-	पूर्णांक i, j, h = height - 1;
+static void fb_rotate_logo_cw(const u8 *in, u8 *out, u32 width, u32 height)
+{
+	int i, j, h = height - 1;
 
-	क्रम (i = 0; i < height; i++)
-		क्रम (j = 0; j < width; j++)
+	for (i = 0; i < height; i++)
+		for (j = 0; j < width; j++)
 				out[height * j + h - i] = *in++;
-पूर्ण
+}
 
-अटल व्योम fb_rotate_logo_ccw(स्थिर u8 *in, u8 *out, u32 width, u32 height)
-अणु
-	पूर्णांक i, j, w = width - 1;
+static void fb_rotate_logo_ccw(const u8 *in, u8 *out, u32 width, u32 height)
+{
+	int i, j, w = width - 1;
 
-	क्रम (i = 0; i < height; i++)
-		क्रम (j = 0; j < width; j++)
+	for (i = 0; i < height; i++)
+		for (j = 0; j < width; j++)
 			out[height * (w - j) + i] = *in++;
-पूर्ण
+}
 
-अटल व्योम fb_rotate_logo(काष्ठा fb_info *info, u8 *dst,
-			   काष्ठा fb_image *image, पूर्णांक rotate)
-अणु
-	u32 पंचांगp;
+static void fb_rotate_logo(struct fb_info *info, u8 *dst,
+			   struct fb_image *image, int rotate)
+{
+	u32 tmp;
 
-	अगर (rotate == FB_ROTATE_UD) अणु
+	if (rotate == FB_ROTATE_UD) {
 		fb_rotate_logo_ud(image->data, dst, image->width,
 				  image->height);
 		image->dx = info->var.xres - image->width - image->dx;
 		image->dy = info->var.yres - image->height - image->dy;
-	पूर्ण अन्यथा अगर (rotate == FB_ROTATE_CW) अणु
+	} else if (rotate == FB_ROTATE_CW) {
 		fb_rotate_logo_cw(image->data, dst, image->width,
 				  image->height);
-		पंचांगp = image->width;
+		tmp = image->width;
 		image->width = image->height;
-		image->height = पंचांगp;
-		पंचांगp = image->dy;
+		image->height = tmp;
+		tmp = image->dy;
 		image->dy = image->dx;
-		image->dx = info->var.xres - image->width - पंचांगp;
-	पूर्ण अन्यथा अगर (rotate == FB_ROTATE_CCW) अणु
+		image->dx = info->var.xres - image->width - tmp;
+	} else if (rotate == FB_ROTATE_CCW) {
 		fb_rotate_logo_ccw(image->data, dst, image->width,
 				   image->height);
-		पंचांगp = image->width;
+		tmp = image->width;
 		image->width = image->height;
-		image->height = पंचांगp;
-		पंचांगp = image->dx;
+		image->height = tmp;
+		tmp = image->dx;
 		image->dx = image->dy;
-		image->dy = info->var.yres - image->height - पंचांगp;
-	पूर्ण
+		image->dy = info->var.yres - image->height - tmp;
+	}
 
 	image->data = dst;
-पूर्ण
+}
 
-अटल व्योम fb_करो_show_logo(काष्ठा fb_info *info, काष्ठा fb_image *image,
-			    पूर्णांक rotate, अचिन्हित पूर्णांक num)
-अणु
-	अचिन्हित पूर्णांक x;
+static void fb_do_show_logo(struct fb_info *info, struct fb_image *image,
+			    int rotate, unsigned int num)
+{
+	unsigned int x;
 
-	अगर (image->width > info->var.xres || image->height > info->var.yres)
-		वापस;
+	if (image->width > info->var.xres || image->height > info->var.yres)
+		return;
 
-	अगर (rotate == FB_ROTATE_UR) अणु
-		क्रम (x = 0;
+	if (rotate == FB_ROTATE_UR) {
+		for (x = 0;
 		     x < num && image->dx + image->width <= info->var.xres;
-		     x++) अणु
+		     x++) {
 			info->fbops->fb_imageblit(info, image);
 			image->dx += image->width + 8;
-		पूर्ण
-	पूर्ण अन्यथा अगर (rotate == FB_ROTATE_UD) अणु
+		}
+	} else if (rotate == FB_ROTATE_UD) {
 		u32 dx = image->dx;
 
-		क्रम (x = 0; x < num && image->dx <= dx; x++) अणु
+		for (x = 0; x < num && image->dx <= dx; x++) {
 			info->fbops->fb_imageblit(info, image);
 			image->dx -= image->width + 8;
-		पूर्ण
-	पूर्ण अन्यथा अगर (rotate == FB_ROTATE_CW) अणु
-		क्रम (x = 0;
+		}
+	} else if (rotate == FB_ROTATE_CW) {
+		for (x = 0;
 		     x < num && image->dy + image->height <= info->var.yres;
-		     x++) अणु
+		     x++) {
 			info->fbops->fb_imageblit(info, image);
 			image->dy += image->height + 8;
-		पूर्ण
-	पूर्ण अन्यथा अगर (rotate == FB_ROTATE_CCW) अणु
+		}
+	} else if (rotate == FB_ROTATE_CCW) {
 		u32 dy = image->dy;
 
-		क्रम (x = 0; x < num && image->dy <= dy; x++) अणु
+		for (x = 0; x < num && image->dy <= dy; x++) {
 			info->fbops->fb_imageblit(info, image);
 			image->dy -= image->height + 8;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल पूर्णांक fb_show_logo_line(काष्ठा fb_info *info, पूर्णांक rotate,
-			     स्थिर काष्ठा linux_logo *logo, पूर्णांक y,
-			     अचिन्हित पूर्णांक n)
-अणु
-	u32 *palette = शून्य, *saved_pseuकरो_palette = शून्य;
-	अचिन्हित अक्षर *logo_new = शून्य, *logo_rotate = शून्य;
-	काष्ठा fb_image image;
+static int fb_show_logo_line(struct fb_info *info, int rotate,
+			     const struct linux_logo *logo, int y,
+			     unsigned int n)
+{
+	u32 *palette = NULL, *saved_pseudo_palette = NULL;
+	unsigned char *logo_new = NULL, *logo_rotate = NULL;
+	struct fb_image image;
 
-	/* Return अगर the frame buffer is not mapped or suspended */
-	अगर (logo == शून्य || info->state != FBINFO_STATE_RUNNING ||
+	/* Return if the frame buffer is not mapped or suspended */
+	if (logo == NULL || info->state != FBINFO_STATE_RUNNING ||
 	    info->fbops->owner)
-		वापस 0;
+		return 0;
 
 	image.depth = 8;
 	image.data = logo->data;
 
-	अगर (fb_logo.needs_cmapreset)
+	if (fb_logo.needs_cmapreset)
 		fb_set_logocmap(info, logo);
 
-	अगर (fb_logo.needs_truepalette ||
-	    fb_logo.needs_directpalette) अणु
-		palette = kदो_स्मृति(256 * 4, GFP_KERNEL);
-		अगर (palette == शून्य)
-			वापस 0;
+	if (fb_logo.needs_truepalette ||
+	    fb_logo.needs_directpalette) {
+		palette = kmalloc(256 * 4, GFP_KERNEL);
+		if (palette == NULL)
+			return 0;
 
-		अगर (fb_logo.needs_truepalette)
+		if (fb_logo.needs_truepalette)
 			fb_set_logo_truepalette(info, logo, palette);
-		अन्यथा
+		else
 			fb_set_logo_directpalette(info, logo, palette);
 
-		saved_pseuकरो_palette = info->pseuकरो_palette;
-		info->pseuकरो_palette = palette;
-	पूर्ण
+		saved_pseudo_palette = info->pseudo_palette;
+		info->pseudo_palette = palette;
+	}
 
-	अगर (fb_logo.depth <= 4) अणु
-		logo_new = kदो_स्मृति_array(logo->width, logo->height,
+	if (fb_logo.depth <= 4) {
+		logo_new = kmalloc_array(logo->width, logo->height,
 					 GFP_KERNEL);
-		अगर (logo_new == शून्य) अणु
-			kमुक्त(palette);
-			अगर (saved_pseuकरो_palette)
-				info->pseuकरो_palette = saved_pseuकरो_palette;
-			वापस 0;
-		पूर्ण
+		if (logo_new == NULL) {
+			kfree(palette);
+			if (saved_pseudo_palette)
+				info->pseudo_palette = saved_pseudo_palette;
+			return 0;
+		}
 		image.data = logo_new;
 		fb_set_logo(info, logo, logo_new, fb_logo.depth);
-	पूर्ण
+	}
 
-	अगर (fb_center_logo) अणु
-		पूर्णांक xres = info->var.xres;
-		पूर्णांक yres = info->var.yres;
+	if (fb_center_logo) {
+		int xres = info->var.xres;
+		int yres = info->var.yres;
 
-		अगर (rotate == FB_ROTATE_CW || rotate == FB_ROTATE_CCW) अणु
+		if (rotate == FB_ROTATE_CW || rotate == FB_ROTATE_CCW) {
 			xres = info->var.yres;
 			yres = info->var.xres;
-		पूर्ण
+		}
 
-		जबतक (n && (n * (logo->width + 8) - 8 > xres))
+		while (n && (n * (logo->width + 8) - 8 > xres))
 			--n;
 		image.dx = (xres - n * (logo->width + 8) - 8) / 2;
 		image.dy = y ?: (yres - logo->height) / 2;
-	पूर्ण अन्यथा अणु
+	} else {
 		image.dx = 0;
 		image.dy = y;
-	पूर्ण
+	}
 
 	image.width = logo->width;
 	image.height = logo->height;
 
-	अगर (rotate) अणु
-		logo_rotate = kदो_स्मृति_array(logo->width, logo->height,
+	if (rotate) {
+		logo_rotate = kmalloc_array(logo->width, logo->height,
 					    GFP_KERNEL);
-		अगर (logo_rotate)
+		if (logo_rotate)
 			fb_rotate_logo(info, logo_rotate, &image, rotate);
-	पूर्ण
+	}
 
-	fb_करो_show_logo(info, &image, rotate, n);
+	fb_do_show_logo(info, &image, rotate, n);
 
-	kमुक्त(palette);
-	अगर (saved_pseuकरो_palette != शून्य)
-		info->pseuकरो_palette = saved_pseuकरो_palette;
-	kमुक्त(logo_new);
-	kमुक्त(logo_rotate);
-	वापस image.dy + logo->height;
-पूर्ण
+	kfree(palette);
+	if (saved_pseudo_palette != NULL)
+		info->pseudo_palette = saved_pseudo_palette;
+	kfree(logo_new);
+	kfree(logo_rotate);
+	return image.dy + logo->height;
+}
 
 
-#अगर_घोषित CONFIG_FB_LOGO_EXTRA
+#ifdef CONFIG_FB_LOGO_EXTRA
 
-#घोषणा FB_LOGO_EX_NUM_MAX 10
-अटल काष्ठा logo_data_extra अणु
-	स्थिर काष्ठा linux_logo *logo;
-	अचिन्हित पूर्णांक n;
-पूर्ण fb_logo_ex[FB_LOGO_EX_NUM_MAX];
-अटल अचिन्हित पूर्णांक fb_logo_ex_num;
+#define FB_LOGO_EX_NUM_MAX 10
+static struct logo_data_extra {
+	const struct linux_logo *logo;
+	unsigned int n;
+} fb_logo_ex[FB_LOGO_EX_NUM_MAX];
+static unsigned int fb_logo_ex_num;
 
-व्योम fb_append_extra_logo(स्थिर काष्ठा linux_logo *logo, अचिन्हित पूर्णांक n)
-अणु
-	अगर (!n || fb_logo_ex_num == FB_LOGO_EX_NUM_MAX)
-		वापस;
+void fb_append_extra_logo(const struct linux_logo *logo, unsigned int n)
+{
+	if (!n || fb_logo_ex_num == FB_LOGO_EX_NUM_MAX)
+		return;
 
 	fb_logo_ex[fb_logo_ex_num].logo = logo;
 	fb_logo_ex[fb_logo_ex_num].n = n;
 	fb_logo_ex_num++;
-पूर्ण
+}
 
-अटल पूर्णांक fb_prepare_extra_logos(काष्ठा fb_info *info, अचिन्हित पूर्णांक height,
-				  अचिन्हित पूर्णांक yres)
-अणु
-	अचिन्हित पूर्णांक i;
+static int fb_prepare_extra_logos(struct fb_info *info, unsigned int height,
+				  unsigned int yres)
+{
+	unsigned int i;
 
 	/* FIXME: logo_ex supports only truecolor fb. */
-	अगर (info->fix.visual != FB_VISUAL_TRUECOLOR)
+	if (info->fix.visual != FB_VISUAL_TRUECOLOR)
 		fb_logo_ex_num = 0;
 
-	क्रम (i = 0; i < fb_logo_ex_num; i++) अणु
-		अगर (fb_logo_ex[i].logo->type != fb_logo.logo->type) अणु
-			fb_logo_ex[i].logo = शून्य;
-			जारी;
-		पूर्ण
+	for (i = 0; i < fb_logo_ex_num; i++) {
+		if (fb_logo_ex[i].logo->type != fb_logo.logo->type) {
+			fb_logo_ex[i].logo = NULL;
+			continue;
+		}
 		height += fb_logo_ex[i].logo->height;
-		अगर (height > yres) अणु
+		if (height > yres) {
 			height -= fb_logo_ex[i].logo->height;
 			fb_logo_ex_num = i;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	वापस height;
-पूर्ण
+			break;
+		}
+	}
+	return height;
+}
 
-अटल पूर्णांक fb_show_extra_logos(काष्ठा fb_info *info, पूर्णांक y, पूर्णांक rotate)
-अणु
-	अचिन्हित पूर्णांक i;
+static int fb_show_extra_logos(struct fb_info *info, int y, int rotate)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < fb_logo_ex_num; i++)
+	for (i = 0; i < fb_logo_ex_num; i++)
 		y = fb_show_logo_line(info, rotate,
 				      fb_logo_ex[i].logo, y, fb_logo_ex[i].n);
 
-	वापस y;
-पूर्ण
+	return y;
+}
 
-#अन्यथा /* !CONFIG_FB_LOGO_EXTRA */
+#else /* !CONFIG_FB_LOGO_EXTRA */
 
-अटल अंतरभूत पूर्णांक fb_prepare_extra_logos(काष्ठा fb_info *info,
-					 अचिन्हित पूर्णांक height,
-					 अचिन्हित पूर्णांक yres)
-अणु
-	वापस height;
-पूर्ण
+static inline int fb_prepare_extra_logos(struct fb_info *info,
+					 unsigned int height,
+					 unsigned int yres)
+{
+	return height;
+}
 
-अटल अंतरभूत पूर्णांक fb_show_extra_logos(काष्ठा fb_info *info, पूर्णांक y, पूर्णांक rotate)
-अणु
-	वापस y;
-पूर्ण
+static inline int fb_show_extra_logos(struct fb_info *info, int y, int rotate)
+{
+	return y;
+}
 
-#पूर्ण_अगर /* CONFIG_FB_LOGO_EXTRA */
+#endif /* CONFIG_FB_LOGO_EXTRA */
 
 
-पूर्णांक fb_prepare_logo(काष्ठा fb_info *info, पूर्णांक rotate)
-अणु
-	पूर्णांक depth = fb_get_color_depth(&info->var, &info->fix);
-	अचिन्हित पूर्णांक yres;
-	पूर्णांक height;
+int fb_prepare_logo(struct fb_info *info, int rotate)
+{
+	int depth = fb_get_color_depth(&info->var, &info->fix);
+	unsigned int yres;
+	int height;
 
-	स_रखो(&fb_logo, 0, माप(काष्ठा logo_data));
+	memset(&fb_logo, 0, sizeof(struct logo_data));
 
-	अगर (info->flags & FBINFO_MISC_TILEBLITTING ||
+	if (info->flags & FBINFO_MISC_TILEBLITTING ||
 	    info->fbops->owner || !fb_logo_count)
-		वापस 0;
+		return 0;
 
-	अगर (info->fix.visual == FB_VISUAL_सूचीECTCOLOR) अणु
+	if (info->fix.visual == FB_VISUAL_DIRECTCOLOR) {
 		depth = info->var.blue.length;
-		अगर (info->var.red.length < depth)
+		if (info->var.red.length < depth)
 			depth = info->var.red.length;
-		अगर (info->var.green.length < depth)
+		if (info->var.green.length < depth)
 			depth = info->var.green.length;
-	पूर्ण
+	}
 
-	अगर (info->fix.visual == FB_VISUAL_STATIC_PSEUDOCOLOR && depth > 4) अणु
+	if (info->fix.visual == FB_VISUAL_STATIC_PSEUDOCOLOR && depth > 4) {
 		/* assume console colormap */
 		depth = 4;
-	पूर्ण
+	}
 
-	/* Return अगर no suitable logo was found */
+	/* Return if no suitable logo was found */
 	fb_logo.logo = fb_find_logo(depth);
 
-	अगर (!fb_logo.logo) अणु
-		वापस 0;
-	पूर्ण
+	if (!fb_logo.logo) {
+		return 0;
+	}
 
-	अगर (rotate == FB_ROTATE_UR || rotate == FB_ROTATE_UD)
+	if (rotate == FB_ROTATE_UR || rotate == FB_ROTATE_UD)
 		yres = info->var.yres;
-	अन्यथा
+	else
 		yres = info->var.xres;
 
-	अगर (fb_logo.logo->height > yres) अणु
-		fb_logo.logo = शून्य;
-		वापस 0;
-	पूर्ण
+	if (fb_logo.logo->height > yres) {
+		fb_logo.logo = NULL;
+		return 0;
+	}
 
-	/* What depth we asked क्रम might be dअगरferent from what we get */
-	अगर (fb_logo.logo->type == LINUX_LOGO_CLUT224)
+	/* What depth we asked for might be different from what we get */
+	if (fb_logo.logo->type == LINUX_LOGO_CLUT224)
 		fb_logo.depth = 8;
-	अन्यथा अगर (fb_logo.logo->type == LINUX_LOGO_VGA16)
+	else if (fb_logo.logo->type == LINUX_LOGO_VGA16)
 		fb_logo.depth = 4;
-	अन्यथा
+	else
 		fb_logo.depth = 1;
 
 
-	अगर (fb_logo.depth > 4 && depth > 4) अणु
-		चयन (info->fix.visual) अणु
-		हाल FB_VISUAL_TRUECOLOR:
+	if (fb_logo.depth > 4 && depth > 4) {
+		switch (info->fix.visual) {
+		case FB_VISUAL_TRUECOLOR:
 			fb_logo.needs_truepalette = 1;
-			अवरोध;
-		हाल FB_VISUAL_सूचीECTCOLOR:
+			break;
+		case FB_VISUAL_DIRECTCOLOR:
 			fb_logo.needs_directpalette = 1;
 			fb_logo.needs_cmapreset = 1;
-			अवरोध;
-		हाल FB_VISUAL_PSEUDOCOLOR:
+			break;
+		case FB_VISUAL_PSEUDOCOLOR:
 			fb_logo.needs_cmapreset = 1;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	height = fb_logo.logo->height;
-	अगर (fb_center_logo)
+	if (fb_center_logo)
 		height += (yres - fb_logo.logo->height) / 2;
 
-	वापस fb_prepare_extra_logos(info, height, yres);
-पूर्ण
+	return fb_prepare_extra_logos(info, height, yres);
+}
 
-पूर्णांक fb_show_logo(काष्ठा fb_info *info, पूर्णांक rotate)
-अणु
-	अचिन्हित पूर्णांक count;
-	पूर्णांक y;
+int fb_show_logo(struct fb_info *info, int rotate)
+{
+	unsigned int count;
+	int y;
 
-	अगर (!fb_logo_count)
-		वापस 0;
+	if (!fb_logo_count)
+		return 0;
 
 	count = fb_logo_count < 0 ? num_online_cpus() : fb_logo_count;
 	y = fb_show_logo_line(info, rotate, fb_logo.logo, 0, count);
 	y = fb_show_extra_logos(info, y, rotate);
 
-	वापस y;
-पूर्ण
-#अन्यथा
-पूर्णांक fb_prepare_logo(काष्ठा fb_info *info, पूर्णांक rotate) अणु वापस 0; पूर्ण
-पूर्णांक fb_show_logo(काष्ठा fb_info *info, पूर्णांक rotate) अणु वापस 0; पूर्ण
-#पूर्ण_अगर /* CONFIG_LOGO */
+	return y;
+}
+#else
+int fb_prepare_logo(struct fb_info *info, int rotate) { return 0; }
+int fb_show_logo(struct fb_info *info, int rotate) { return 0; }
+#endif /* CONFIG_LOGO */
 EXPORT_SYMBOL(fb_prepare_logo);
 EXPORT_SYMBOL(fb_show_logo);
 
-अटल व्योम *fb_seq_start(काष्ठा seq_file *m, loff_t *pos)
-अणु
+static void *fb_seq_start(struct seq_file *m, loff_t *pos)
+{
 	mutex_lock(&registration_lock);
-	वापस (*pos < FB_MAX) ? pos : शून्य;
-पूर्ण
+	return (*pos < FB_MAX) ? pos : NULL;
+}
 
-अटल व्योम *fb_seq_next(काष्ठा seq_file *m, व्योम *v, loff_t *pos)
-अणु
+static void *fb_seq_next(struct seq_file *m, void *v, loff_t *pos)
+{
 	(*pos)++;
-	वापस (*pos < FB_MAX) ? pos : शून्य;
-पूर्ण
+	return (*pos < FB_MAX) ? pos : NULL;
+}
 
-अटल व्योम fb_seq_stop(काष्ठा seq_file *m, व्योम *v)
-अणु
+static void fb_seq_stop(struct seq_file *m, void *v)
+{
 	mutex_unlock(&registration_lock);
-पूर्ण
+}
 
-अटल पूर्णांक fb_seq_show(काष्ठा seq_file *m, व्योम *v)
-अणु
-	पूर्णांक i = *(loff_t *)v;
-	काष्ठा fb_info *fi = रेजिस्टरed_fb[i];
+static int fb_seq_show(struct seq_file *m, void *v)
+{
+	int i = *(loff_t *)v;
+	struct fb_info *fi = registered_fb[i];
 
-	अगर (fi)
-		seq_म_लिखो(m, "%d %s\n", fi->node, fi->fix.id);
-	वापस 0;
-पूर्ण
+	if (fi)
+		seq_printf(m, "%d %s\n", fi->node, fi->fix.id);
+	return 0;
+}
 
-अटल स्थिर काष्ठा seq_operations __maybe_unused proc_fb_seq_ops = अणु
+static const struct seq_operations __maybe_unused proc_fb_seq_ops = {
 	.start	= fb_seq_start,
 	.next	= fb_seq_next,
 	.stop	= fb_seq_stop,
 	.show	= fb_seq_show,
-पूर्ण;
+};
 
 /*
- * We hold a reference to the fb_info in file->निजी_data,
- * but अगर the current रेजिस्टरed fb has changed, we करोn't
+ * We hold a reference to the fb_info in file->private_data,
+ * but if the current registered fb has changed, we don't
  * actually want to use it.
  *
  * So look up the fb_info using the inode minor number,
- * and just verअगरy it against the reference we have.
+ * and just verify it against the reference we have.
  */
-अटल काष्ठा fb_info *file_fb_info(काष्ठा file *file)
-अणु
-	काष्ठा inode *inode = file_inode(file);
-	पूर्णांक fbidx = iminor(inode);
-	काष्ठा fb_info *info = रेजिस्टरed_fb[fbidx];
+static struct fb_info *file_fb_info(struct file *file)
+{
+	struct inode *inode = file_inode(file);
+	int fbidx = iminor(inode);
+	struct fb_info *info = registered_fb[fbidx];
 
-	अगर (info != file->निजी_data)
-		info = शून्य;
-	वापस info;
-पूर्ण
+	if (info != file->private_data)
+		info = NULL;
+	return info;
+}
 
-अटल sमाप_प्रकार
-fb_पढ़ो(काष्ठा file *file, अक्षर __user *buf, माप_प्रकार count, loff_t *ppos)
-अणु
-	अचिन्हित दीर्घ p = *ppos;
-	काष्ठा fb_info *info = file_fb_info(file);
+static ssize_t
+fb_read(struct file *file, char __user *buf, size_t count, loff_t *ppos)
+{
+	unsigned long p = *ppos;
+	struct fb_info *info = file_fb_info(file);
 	u8 *buffer, *dst;
 	u8 __iomem *src;
-	पूर्णांक c, cnt = 0, err = 0;
-	अचिन्हित दीर्घ total_size;
+	int c, cnt = 0, err = 0;
+	unsigned long total_size;
 
-	अगर (!info || ! info->screen_base)
-		वापस -ENODEV;
+	if (!info || ! info->screen_base)
+		return -ENODEV;
 
-	अगर (info->state != FBINFO_STATE_RUNNING)
-		वापस -EPERM;
+	if (info->state != FBINFO_STATE_RUNNING)
+		return -EPERM;
 
-	अगर (info->fbops->fb_पढ़ो)
-		वापस info->fbops->fb_पढ़ो(info, buf, count, ppos);
+	if (info->fbops->fb_read)
+		return info->fbops->fb_read(info, buf, count, ppos);
 
 	total_size = info->screen_size;
 
-	अगर (total_size == 0)
+	if (total_size == 0)
 		total_size = info->fix.smem_len;
 
-	अगर (p >= total_size)
-		वापस 0;
+	if (p >= total_size)
+		return 0;
 
-	अगर (count >= total_size)
+	if (count >= total_size)
 		count = total_size;
 
-	अगर (count + p > total_size)
+	if (count + p > total_size)
 		count = total_size - p;
 
-	buffer = kदो_स्मृति((count > PAGE_SIZE) ? PAGE_SIZE : count,
+	buffer = kmalloc((count > PAGE_SIZE) ? PAGE_SIZE : count,
 			 GFP_KERNEL);
-	अगर (!buffer)
-		वापस -ENOMEM;
+	if (!buffer)
+		return -ENOMEM;
 
 	src = (u8 __iomem *) (info->screen_base + p);
 
-	अगर (info->fbops->fb_sync)
+	if (info->fbops->fb_sync)
 		info->fbops->fb_sync(info);
 
-	जबतक (count) अणु
+	while (count) {
 		c  = (count > PAGE_SIZE) ? PAGE_SIZE : count;
 		dst = buffer;
-		fb_स_नकल_fromfb(dst, src, c);
+		fb_memcpy_fromfb(dst, src, c);
 		dst += c;
 		src += c;
 
-		अगर (copy_to_user(buf, buffer, c)) अणु
+		if (copy_to_user(buf, buffer, c)) {
 			err = -EFAULT;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		*ppos += c;
 		buf += c;
 		cnt += c;
 		count -= c;
-	पूर्ण
+	}
 
-	kमुक्त(buffer);
+	kfree(buffer);
 
-	वापस (err) ? err : cnt;
-पूर्ण
+	return (err) ? err : cnt;
+}
 
-अटल sमाप_प्रकार
-fb_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf, माप_प्रकार count, loff_t *ppos)
-अणु
-	अचिन्हित दीर्घ p = *ppos;
-	काष्ठा fb_info *info = file_fb_info(file);
+static ssize_t
+fb_write(struct file *file, const char __user *buf, size_t count, loff_t *ppos)
+{
+	unsigned long p = *ppos;
+	struct fb_info *info = file_fb_info(file);
 	u8 *buffer, *src;
 	u8 __iomem *dst;
-	पूर्णांक c, cnt = 0, err = 0;
-	अचिन्हित दीर्घ total_size;
+	int c, cnt = 0, err = 0;
+	unsigned long total_size;
 
-	अगर (!info || !info->screen_base)
-		वापस -ENODEV;
+	if (!info || !info->screen_base)
+		return -ENODEV;
 
-	अगर (info->state != FBINFO_STATE_RUNNING)
-		वापस -EPERM;
+	if (info->state != FBINFO_STATE_RUNNING)
+		return -EPERM;
 
-	अगर (info->fbops->fb_ग_लिखो)
-		वापस info->fbops->fb_ग_लिखो(info, buf, count, ppos);
+	if (info->fbops->fb_write)
+		return info->fbops->fb_write(info, buf, count, ppos);
 
 	total_size = info->screen_size;
 
-	अगर (total_size == 0)
+	if (total_size == 0)
 		total_size = info->fix.smem_len;
 
-	अगर (p > total_size)
-		वापस -EFBIG;
+	if (p > total_size)
+		return -EFBIG;
 
-	अगर (count > total_size) अणु
+	if (count > total_size) {
 		err = -EFBIG;
 		count = total_size;
-	पूर्ण
+	}
 
-	अगर (count + p > total_size) अणु
-		अगर (!err)
+	if (count + p > total_size) {
+		if (!err)
 			err = -ENOSPC;
 
 		count = total_size - p;
-	पूर्ण
+	}
 
-	buffer = kदो_स्मृति((count > PAGE_SIZE) ? PAGE_SIZE : count,
+	buffer = kmalloc((count > PAGE_SIZE) ? PAGE_SIZE : count,
 			 GFP_KERNEL);
-	अगर (!buffer)
-		वापस -ENOMEM;
+	if (!buffer)
+		return -ENOMEM;
 
 	dst = (u8 __iomem *) (info->screen_base + p);
 
-	अगर (info->fbops->fb_sync)
+	if (info->fbops->fb_sync)
 		info->fbops->fb_sync(info);
 
-	जबतक (count) अणु
+	while (count) {
 		c = (count > PAGE_SIZE) ? PAGE_SIZE : count;
 		src = buffer;
 
-		अगर (copy_from_user(src, buf, c)) अणु
+		if (copy_from_user(src, buf, c)) {
 			err = -EFAULT;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		fb_स_नकल_tofb(dst, src, c);
+		fb_memcpy_tofb(dst, src, c);
 		dst += c;
 		src += c;
 		*ppos += c;
 		buf += c;
 		cnt += c;
 		count -= c;
-	पूर्ण
+	}
 
-	kमुक्त(buffer);
+	kfree(buffer);
 
-	वापस (cnt) ? cnt : err;
-पूर्ण
+	return (cnt) ? cnt : err;
+}
 
-पूर्णांक
-fb_pan_display(काष्ठा fb_info *info, काष्ठा fb_var_screeninfo *var)
-अणु
-	काष्ठा fb_fix_screeninfo *fix = &info->fix;
-	अचिन्हित पूर्णांक yres = info->var.yres;
-	पूर्णांक err = 0;
+int
+fb_pan_display(struct fb_info *info, struct fb_var_screeninfo *var)
+{
+	struct fb_fix_screeninfo *fix = &info->fix;
+	unsigned int yres = info->var.yres;
+	int err = 0;
 
-	अगर (var->yoffset > 0) अणु
-		अगर (var->vmode & FB_VMODE_YWRAP) अणु
-			अगर (!fix->ywrapstep || (var->yoffset % fix->ywrapstep))
+	if (var->yoffset > 0) {
+		if (var->vmode & FB_VMODE_YWRAP) {
+			if (!fix->ywrapstep || (var->yoffset % fix->ywrapstep))
 				err = -EINVAL;
-			अन्यथा
+			else
 				yres = 0;
-		पूर्ण अन्यथा अगर (!fix->ypanstep || (var->yoffset % fix->ypanstep))
+		} else if (!fix->ypanstep || (var->yoffset % fix->ypanstep))
 			err = -EINVAL;
-	पूर्ण
+	}
 
-	अगर (var->xoffset > 0 && (!fix->xpanstep ||
+	if (var->xoffset > 0 && (!fix->xpanstep ||
 				 (var->xoffset % fix->xpanstep)))
 		err = -EINVAL;
 
-	अगर (err || !info->fbops->fb_pan_display ||
-	    var->yoffset > info->var.yres_भव - yres ||
-	    var->xoffset > info->var.xres_भव - info->var.xres)
-		वापस -EINVAL;
+	if (err || !info->fbops->fb_pan_display ||
+	    var->yoffset > info->var.yres_virtual - yres ||
+	    var->xoffset > info->var.xres_virtual - info->var.xres)
+		return -EINVAL;
 
-	अगर ((err = info->fbops->fb_pan_display(var, info)))
-		वापस err;
+	if ((err = info->fbops->fb_pan_display(var, info)))
+		return err;
 	info->var.xoffset = var->xoffset;
 	info->var.yoffset = var->yoffset;
-	अगर (var->vmode & FB_VMODE_YWRAP)
+	if (var->vmode & FB_VMODE_YWRAP)
 		info->var.vmode |= FB_VMODE_YWRAP;
-	अन्यथा
+	else
 		info->var.vmode &= ~FB_VMODE_YWRAP;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(fb_pan_display);
 
-अटल पूर्णांक fb_check_caps(काष्ठा fb_info *info, काष्ठा fb_var_screeninfo *var,
+static int fb_check_caps(struct fb_info *info, struct fb_var_screeninfo *var,
 			 u32 activate)
-अणु
-	काष्ठा fb_blit_caps caps, fbcaps;
-	पूर्णांक err = 0;
+{
+	struct fb_blit_caps caps, fbcaps;
+	int err = 0;
 
-	स_रखो(&caps, 0, माप(caps));
-	स_रखो(&fbcaps, 0, माप(fbcaps));
+	memset(&caps, 0, sizeof(caps));
+	memset(&fbcaps, 0, sizeof(fbcaps));
 	caps.flags = (activate & FB_ACTIVATE_ALL) ? 1 : 0;
 	fbcon_get_requirement(info, &caps);
 	info->fbops->fb_get_caps(info, &fbcaps, var);
 
-	अगर (((fbcaps.x ^ caps.x) & caps.x) ||
+	if (((fbcaps.x ^ caps.x) & caps.x) ||
 	    ((fbcaps.y ^ caps.y) & caps.y) ||
 	    (fbcaps.len < caps.len))
 		err = -EINVAL;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक
-fb_set_var(काष्ठा fb_info *info, काष्ठा fb_var_screeninfo *var)
-अणु
-	पूर्णांक ret = 0;
+int
+fb_set_var(struct fb_info *info, struct fb_var_screeninfo *var)
+{
+	int ret = 0;
 	u32 activate;
-	काष्ठा fb_var_screeninfo old_var;
-	काष्ठा fb_videomode mode;
-	काष्ठा fb_event event;
+	struct fb_var_screeninfo old_var;
+	struct fb_videomode mode;
+	struct fb_event event;
 
-	अगर (var->activate & FB_ACTIVATE_INV_MODE) अणु
-		काष्ठा fb_videomode mode1, mode2;
+	if (var->activate & FB_ACTIVATE_INV_MODE) {
+		struct fb_videomode mode1, mode2;
 
 		fb_var_to_videomode(&mode1, var);
 		fb_var_to_videomode(&mode2, &info->var);
-		/* make sure we करोn't delete the videomode of current var */
+		/* make sure we don't delete the videomode of current var */
 		ret = fb_mode_is_equal(&mode1, &mode2);
 
-		अगर (!ret)
+		if (!ret)
 			fbcon_mode_deleted(info, &mode1);
 
-		अगर (!ret)
+		if (!ret)
 			fb_delete_videomode(&mode1, &info->modelist);
 
 
-		वापस ret ? -EINVAL : 0;
-	पूर्ण
+		return ret ? -EINVAL : 0;
+	}
 
-	अगर (!(var->activate & FB_ACTIVATE_FORCE) &&
-	    !स_भेद(&info->var, var, माप(काष्ठा fb_var_screeninfo)))
-		वापस 0;
+	if (!(var->activate & FB_ACTIVATE_FORCE) &&
+	    !memcmp(&info->var, var, sizeof(struct fb_var_screeninfo)))
+		return 0;
 
 	activate = var->activate;
 
 	/* When using FOURCC mode, make sure the red, green, blue and
 	 * transp fields are set to 0.
 	 */
-	अगर ((info->fix.capabilities & FB_CAP_FOURCC) &&
-	    var->grayscale > 1) अणु
-		अगर (var->red.offset     || var->green.offset    ||
+	if ((info->fix.capabilities & FB_CAP_FOURCC) &&
+	    var->grayscale > 1) {
+		if (var->red.offset     || var->green.offset    ||
 		    var->blue.offset    || var->transp.offset   ||
 		    var->red.length     || var->green.length    ||
 		    var->blue.length    || var->transp.length   ||
 		    var->red.msb_right  || var->green.msb_right ||
 		    var->blue.msb_right || var->transp.msb_right)
-			वापस -EINVAL;
-	पूर्ण
+			return -EINVAL;
+	}
 
-	अगर (!info->fbops->fb_check_var) अणु
+	if (!info->fbops->fb_check_var) {
 		*var = info->var;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* bitfill_aligned() assumes that it's at least 8x8 */
-	अगर (var->xres < 8 || var->yres < 8)
-		वापस -EINVAL;
+	if (var->xres < 8 || var->yres < 8)
+		return -EINVAL;
 
 	ret = info->fbops->fb_check_var(var, info);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर ((var->activate & FB_ACTIVATE_MASK) != FB_ACTIVATE_NOW)
-		वापस 0;
+	if ((var->activate & FB_ACTIVATE_MASK) != FB_ACTIVATE_NOW)
+		return 0;
 
-	अगर (info->fbops->fb_get_caps) अणु
+	if (info->fbops->fb_get_caps) {
 		ret = fb_check_caps(info, var, activate);
 
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	old_var = info->var;
 	info->var = *var;
 
-	अगर (info->fbops->fb_set_par) अणु
+	if (info->fbops->fb_set_par) {
 		ret = info->fbops->fb_set_par(info);
 
-		अगर (ret) अणु
+		if (ret) {
 			info->var = old_var;
-			prपूर्णांकk(KERN_WARNING "detected "
+			printk(KERN_WARNING "detected "
 				"fb_set_par error, "
 				"error code: %d\n", ret);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
 	fb_pan_display(info, &info->var);
 	fb_set_cmap(&info->cmap, info);
 	fb_var_to_videomode(&mode, &info->var);
 
-	अगर (info->modelist.prev && info->modelist.next &&
+	if (info->modelist.prev && info->modelist.next &&
 	    !list_empty(&info->modelist))
 		ret = fb_add_videomode(&mode, &info->modelist);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	event.info = info;
 	event.data = &mode;
-	fb_notअगरier_call_chain(FB_EVENT_MODE_CHANGE, &event);
+	fb_notifier_call_chain(FB_EVENT_MODE_CHANGE, &event);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(fb_set_var);
 
-पूर्णांक
-fb_blank(काष्ठा fb_info *info, पूर्णांक blank)
-अणु
-	काष्ठा fb_event event;
-	पूर्णांक ret = -EINVAL;
+int
+fb_blank(struct fb_info *info, int blank)
+{
+	struct fb_event event;
+	int ret = -EINVAL;
 
-	अगर (blank > FB_BLANK_POWERDOWN)
+	if (blank > FB_BLANK_POWERDOWN)
 		blank = FB_BLANK_POWERDOWN;
 
 	event.info = info;
 	event.data = &blank;
 
-	अगर (info->fbops->fb_blank)
+	if (info->fbops->fb_blank)
 		ret = info->fbops->fb_blank(blank, info);
 
-	अगर (!ret)
-		fb_notअगरier_call_chain(FB_EVENT_BLANK, &event);
+	if (!ret)
+		fb_notifier_call_chain(FB_EVENT_BLANK, &event);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(fb_blank);
 
-अटल दीर्घ करो_fb_ioctl(काष्ठा fb_info *info, अचिन्हित पूर्णांक cmd,
-			अचिन्हित दीर्घ arg)
-अणु
-	स्थिर काष्ठा fb_ops *fb;
-	काष्ठा fb_var_screeninfo var;
-	काष्ठा fb_fix_screeninfo fix;
-	काष्ठा fb_cmap cmap_from;
-	काष्ठा fb_cmap_user cmap;
-	व्योम __user *argp = (व्योम __user *)arg;
-	दीर्घ ret = 0;
+static long do_fb_ioctl(struct fb_info *info, unsigned int cmd,
+			unsigned long arg)
+{
+	const struct fb_ops *fb;
+	struct fb_var_screeninfo var;
+	struct fb_fix_screeninfo fix;
+	struct fb_cmap cmap_from;
+	struct fb_cmap_user cmap;
+	void __user *argp = (void __user *)arg;
+	long ret = 0;
 
-	चयन (cmd) अणु
-	हाल FBIOGET_VSCREENINFO:
+	switch (cmd) {
+	case FBIOGET_VSCREENINFO:
 		lock_fb_info(info);
 		var = info->var;
 		unlock_fb_info(info);
 
-		ret = copy_to_user(argp, &var, माप(var)) ? -EFAULT : 0;
-		अवरोध;
-	हाल FBIOPUT_VSCREENINFO:
-		अगर (copy_from_user(&var, argp, माप(var)))
-			वापस -EFAULT;
+		ret = copy_to_user(argp, &var, sizeof(var)) ? -EFAULT : 0;
+		break;
+	case FBIOPUT_VSCREENINFO:
+		if (copy_from_user(&var, argp, sizeof(var)))
+			return -EFAULT;
 		console_lock();
 		lock_fb_info(info);
 		ret = fb_set_var(info, &var);
-		अगर (!ret)
+		if (!ret)
 			fbcon_update_vcs(info, var.activate & FB_ACTIVATE_ALL);
 		unlock_fb_info(info);
 		console_unlock();
-		अगर (!ret && copy_to_user(argp, &var, माप(var)))
+		if (!ret && copy_to_user(argp, &var, sizeof(var)))
 			ret = -EFAULT;
-		अवरोध;
-	हाल FBIOGET_FSCREENINFO:
+		break;
+	case FBIOGET_FSCREENINFO:
 		lock_fb_info(info);
-		स_नकल(&fix, &info->fix, माप(fix));
-		अगर (info->flags & FBINFO_HIDE_SMEM_START)
+		memcpy(&fix, &info->fix, sizeof(fix));
+		if (info->flags & FBINFO_HIDE_SMEM_START)
 			fix.smem_start = 0;
 		unlock_fb_info(info);
 
-		ret = copy_to_user(argp, &fix, माप(fix)) ? -EFAULT : 0;
-		अवरोध;
-	हाल FBIOPUTCMAP:
-		अगर (copy_from_user(&cmap, argp, माप(cmap)))
-			वापस -EFAULT;
+		ret = copy_to_user(argp, &fix, sizeof(fix)) ? -EFAULT : 0;
+		break;
+	case FBIOPUTCMAP:
+		if (copy_from_user(&cmap, argp, sizeof(cmap)))
+			return -EFAULT;
 		ret = fb_set_user_cmap(&cmap, info);
-		अवरोध;
-	हाल FBIOGETCMAP:
-		अगर (copy_from_user(&cmap, argp, माप(cmap)))
-			वापस -EFAULT;
+		break;
+	case FBIOGETCMAP:
+		if (copy_from_user(&cmap, argp, sizeof(cmap)))
+			return -EFAULT;
 		lock_fb_info(info);
 		cmap_from = info->cmap;
 		unlock_fb_info(info);
 		ret = fb_cmap_to_user(&cmap_from, &cmap);
-		अवरोध;
-	हाल FBIOPAN_DISPLAY:
-		अगर (copy_from_user(&var, argp, माप(var)))
-			वापस -EFAULT;
+		break;
+	case FBIOPAN_DISPLAY:
+		if (copy_from_user(&var, argp, sizeof(var)))
+			return -EFAULT;
 		console_lock();
 		lock_fb_info(info);
 		ret = fb_pan_display(info, &var);
 		unlock_fb_info(info);
 		console_unlock();
-		अगर (ret == 0 && copy_to_user(argp, &var, माप(var)))
-			वापस -EFAULT;
-		अवरोध;
-	हाल FBIO_CURSOR:
+		if (ret == 0 && copy_to_user(argp, &var, sizeof(var)))
+			return -EFAULT;
+		break;
+	case FBIO_CURSOR:
 		ret = -EINVAL;
-		अवरोध;
-	हाल FBIOGET_CON2FBMAP:
+		break;
+	case FBIOGET_CON2FBMAP:
 		ret = fbcon_get_con2fb_map_ioctl(argp);
-		अवरोध;
-	हाल FBIOPUT_CON2FBMAP:
+		break;
+	case FBIOPUT_CON2FBMAP:
 		ret = fbcon_set_con2fb_map_ioctl(argp);
-		अवरोध;
-	हाल FBIOBLANK:
+		break;
+	case FBIOBLANK:
 		console_lock();
 		lock_fb_info(info);
 		ret = fb_blank(info, arg);
-		/* might again call पूर्णांकo fb_blank */
+		/* might again call into fb_blank */
 		fbcon_fb_blanked(info, arg);
 		unlock_fb_info(info);
 		console_unlock();
-		अवरोध;
-	शेष:
+		break;
+	default:
 		lock_fb_info(info);
 		fb = info->fbops;
-		अगर (fb->fb_ioctl)
+		if (fb->fb_ioctl)
 			ret = fb->fb_ioctl(info, cmd, arg);
-		अन्यथा
+		else
 			ret = -ENOTTY;
 		unlock_fb_info(info);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल दीर्घ fb_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा fb_info *info = file_fb_info(file);
+static long fb_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+{
+	struct fb_info *info = file_fb_info(file);
 
-	अगर (!info)
-		वापस -ENODEV;
-	वापस करो_fb_ioctl(info, cmd, arg);
-पूर्ण
+	if (!info)
+		return -ENODEV;
+	return do_fb_ioctl(info, cmd, arg);
+}
 
-#अगर_घोषित CONFIG_COMPAT
-काष्ठा fb_fix_screeninfo32 अणु
-	अक्षर			id[16];
+#ifdef CONFIG_COMPAT
+struct fb_fix_screeninfo32 {
+	char			id[16];
 	compat_caddr_t		smem_start;
 	u32			smem_len;
 	u32			type;
@@ -1202,55 +1201,55 @@ EXPORT_SYMBOL(fb_blank);
 	u32			mmio_len;
 	u32			accel;
 	u16			reserved[3];
-पूर्ण;
+};
 
-काष्ठा fb_cmap32 अणु
+struct fb_cmap32 {
 	u32			start;
 	u32			len;
 	compat_caddr_t	red;
 	compat_caddr_t	green;
 	compat_caddr_t	blue;
 	compat_caddr_t	transp;
-पूर्ण;
+};
 
-अटल पूर्णांक fb_getput_cmap(काष्ठा fb_info *info, अचिन्हित पूर्णांक cmd,
-			  अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा fb_cmap32 cmap32;
-	काष्ठा fb_cmap cmap_from;
-	काष्ठा fb_cmap_user cmap;
+static int fb_getput_cmap(struct fb_info *info, unsigned int cmd,
+			  unsigned long arg)
+{
+	struct fb_cmap32 cmap32;
+	struct fb_cmap cmap_from;
+	struct fb_cmap_user cmap;
 
-	अगर (copy_from_user(&cmap32, compat_ptr(arg), माप(cmap32)))
-		वापस -EFAULT;
+	if (copy_from_user(&cmap32, compat_ptr(arg), sizeof(cmap32)))
+		return -EFAULT;
 
-	cmap = (काष्ठा fb_cmap_user) अणु
+	cmap = (struct fb_cmap_user) {
 		.start	= cmap32.start,
 		.len	= cmap32.len,
 		.red	= compat_ptr(cmap32.red),
 		.green	= compat_ptr(cmap32.green),
 		.blue	= compat_ptr(cmap32.blue),
 		.transp	= compat_ptr(cmap32.transp),
-	पूर्ण;
+	};
 
-	अगर (cmd == FBIOPUTCMAP)
-		वापस fb_set_user_cmap(&cmap, info);
+	if (cmd == FBIOPUTCMAP)
+		return fb_set_user_cmap(&cmap, info);
 
 	lock_fb_info(info);
 	cmap_from = info->cmap;
 	unlock_fb_info(info);
 
-	वापस fb_cmap_to_user(&cmap_from, &cmap);
-पूर्ण
+	return fb_cmap_to_user(&cmap_from, &cmap);
+}
 
-अटल पूर्णांक करो_fscreeninfo_to_user(काष्ठा fb_fix_screeninfo *fix,
-				  काष्ठा fb_fix_screeninfo32 __user *fix32)
-अणु
+static int do_fscreeninfo_to_user(struct fb_fix_screeninfo *fix,
+				  struct fb_fix_screeninfo32 __user *fix32)
+{
 	__u32 data;
-	पूर्णांक err;
+	int err;
 
-	err = copy_to_user(&fix32->id, &fix->id, माप(fix32->id));
+	err = copy_to_user(&fix32->id, &fix->id, sizeof(fix32->id));
 
-	data = (__u32) (अचिन्हित दीर्घ) fix->smem_start;
+	data = (__u32) (unsigned long) fix->smem_start;
 	err |= put_user(data, &fix32->smem_start);
 
 	err |= put_user(fix->smem_len, &fix32->smem_len);
@@ -1262,706 +1261,706 @@ EXPORT_SYMBOL(fb_blank);
 	err |= put_user(fix->ywrapstep, &fix32->ywrapstep);
 	err |= put_user(fix->line_length, &fix32->line_length);
 
-	data = (__u32) (अचिन्हित दीर्घ) fix->mmio_start;
+	data = (__u32) (unsigned long) fix->mmio_start;
 	err |= put_user(data, &fix32->mmio_start);
 
 	err |= put_user(fix->mmio_len, &fix32->mmio_len);
 	err |= put_user(fix->accel, &fix32->accel);
 	err |= copy_to_user(fix32->reserved, fix->reserved,
-			    माप(fix->reserved));
+			    sizeof(fix->reserved));
 
-	अगर (err)
-		वापस -EFAULT;
-	वापस 0;
-पूर्ण
+	if (err)
+		return -EFAULT;
+	return 0;
+}
 
-अटल पूर्णांक fb_get_fscreeninfo(काष्ठा fb_info *info, अचिन्हित पूर्णांक cmd,
-			      अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा fb_fix_screeninfo fix;
+static int fb_get_fscreeninfo(struct fb_info *info, unsigned int cmd,
+			      unsigned long arg)
+{
+	struct fb_fix_screeninfo fix;
 
 	lock_fb_info(info);
 	fix = info->fix;
-	अगर (info->flags & FBINFO_HIDE_SMEM_START)
+	if (info->flags & FBINFO_HIDE_SMEM_START)
 		fix.smem_start = 0;
 	unlock_fb_info(info);
-	वापस करो_fscreeninfo_to_user(&fix, compat_ptr(arg));
-पूर्ण
+	return do_fscreeninfo_to_user(&fix, compat_ptr(arg));
+}
 
-अटल दीर्घ fb_compat_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
-			    अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा fb_info *info = file_fb_info(file);
-	स्थिर काष्ठा fb_ops *fb;
-	दीर्घ ret = -ENOIOCTLCMD;
+static long fb_compat_ioctl(struct file *file, unsigned int cmd,
+			    unsigned long arg)
+{
+	struct fb_info *info = file_fb_info(file);
+	const struct fb_ops *fb;
+	long ret = -ENOIOCTLCMD;
 
-	अगर (!info)
-		वापस -ENODEV;
+	if (!info)
+		return -ENODEV;
 	fb = info->fbops;
-	चयन(cmd) अणु
-	हाल FBIOGET_VSCREENINFO:
-	हाल FBIOPUT_VSCREENINFO:
-	हाल FBIOPAN_DISPLAY:
-	हाल FBIOGET_CON2FBMAP:
-	हाल FBIOPUT_CON2FBMAP:
-		arg = (अचिन्हित दीर्घ) compat_ptr(arg);
+	switch(cmd) {
+	case FBIOGET_VSCREENINFO:
+	case FBIOPUT_VSCREENINFO:
+	case FBIOPAN_DISPLAY:
+	case FBIOGET_CON2FBMAP:
+	case FBIOPUT_CON2FBMAP:
+		arg = (unsigned long) compat_ptr(arg);
 		fallthrough;
-	हाल FBIOBLANK:
-		ret = करो_fb_ioctl(info, cmd, arg);
-		अवरोध;
+	case FBIOBLANK:
+		ret = do_fb_ioctl(info, cmd, arg);
+		break;
 
-	हाल FBIOGET_FSCREENINFO:
+	case FBIOGET_FSCREENINFO:
 		ret = fb_get_fscreeninfo(info, cmd, arg);
-		अवरोध;
+		break;
 
-	हाल FBIOGETCMAP:
-	हाल FBIOPUTCMAP:
+	case FBIOGETCMAP:
+	case FBIOPUTCMAP:
 		ret = fb_getput_cmap(info, cmd, arg);
-		अवरोध;
+		break;
 
-	शेष:
-		अगर (fb->fb_compat_ioctl)
+	default:
+		if (fb->fb_compat_ioctl)
 			ret = fb->fb_compat_ioctl(info, cmd, arg);
-		अवरोध;
-	पूर्ण
-	वापस ret;
-पूर्ण
-#पूर्ण_अगर
+		break;
+	}
+	return ret;
+}
+#endif
 
-अटल पूर्णांक
-fb_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा * vma)
-अणु
-	काष्ठा fb_info *info = file_fb_info(file);
-	पूर्णांक (*fb_mmap_fn)(काष्ठा fb_info *info, काष्ठा vm_area_काष्ठा *vma);
-	अचिन्हित दीर्घ mmio_pgoff;
-	अचिन्हित दीर्घ start;
+static int
+fb_mmap(struct file *file, struct vm_area_struct * vma)
+{
+	struct fb_info *info = file_fb_info(file);
+	int (*fb_mmap_fn)(struct fb_info *info, struct vm_area_struct *vma);
+	unsigned long mmio_pgoff;
+	unsigned long start;
 	u32 len;
 
-	अगर (!info)
-		वापस -ENODEV;
+	if (!info)
+		return -ENODEV;
 	mutex_lock(&info->mm_lock);
 
 	fb_mmap_fn = info->fbops->fb_mmap;
 
-#अगर IS_ENABLED(CONFIG_FB_DEFERRED_IO)
-	अगर (info->fbdefio)
+#if IS_ENABLED(CONFIG_FB_DEFERRED_IO)
+	if (info->fbdefio)
 		fb_mmap_fn = fb_deferred_io_mmap;
-#पूर्ण_अगर
+#endif
 
-	अगर (fb_mmap_fn) अणु
-		पूर्णांक res;
+	if (fb_mmap_fn) {
+		int res;
 
 		/*
 		 * The framebuffer needs to be accessed decrypted, be sure
-		 * SME protection is हटाओd ahead of the call
+		 * SME protection is removed ahead of the call
 		 */
 		vma->vm_page_prot = pgprot_decrypted(vma->vm_page_prot);
 		res = fb_mmap_fn(info, vma);
 		mutex_unlock(&info->mm_lock);
-		वापस res;
-	पूर्ण
+		return res;
+	}
 
 	/*
 	 * Ugh. This can be either the frame buffer mapping, or
-	 * अगर pgoff poपूर्णांकs past it, the mmio mapping.
+	 * if pgoff points past it, the mmio mapping.
 	 */
 	start = info->fix.smem_start;
 	len = info->fix.smem_len;
 	mmio_pgoff = PAGE_ALIGN((start & ~PAGE_MASK) + len) >> PAGE_SHIFT;
-	अगर (vma->vm_pgoff >= mmio_pgoff) अणु
-		अगर (info->var.accel_flags) अणु
+	if (vma->vm_pgoff >= mmio_pgoff) {
+		if (info->var.accel_flags) {
 			mutex_unlock(&info->mm_lock);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		vma->vm_pgoff -= mmio_pgoff;
 		start = info->fix.mmio_start;
 		len = info->fix.mmio_len;
-	पूर्ण
+	}
 	mutex_unlock(&info->mm_lock);
 
 	vma->vm_page_prot = vm_get_page_prot(vma->vm_flags);
 	fb_pgprotect(file, vma, start);
 
-	वापस vm_iomap_memory(vma, start, len);
-पूर्ण
+	return vm_iomap_memory(vma, start, len);
+}
 
-अटल पूर्णांक
-fb_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+static int
+fb_open(struct inode *inode, struct file *file)
 __acquires(&info->lock)
 __releases(&info->lock)
-अणु
-	पूर्णांक fbidx = iminor(inode);
-	काष्ठा fb_info *info;
-	पूर्णांक res = 0;
+{
+	int fbidx = iminor(inode);
+	struct fb_info *info;
+	int res = 0;
 
 	info = get_fb_info(fbidx);
-	अगर (!info) अणु
+	if (!info) {
 		request_module("fb%d", fbidx);
 		info = get_fb_info(fbidx);
-		अगर (!info)
-			वापस -ENODEV;
-	पूर्ण
-	अगर (IS_ERR(info))
-		वापस PTR_ERR(info);
+		if (!info)
+			return -ENODEV;
+	}
+	if (IS_ERR(info))
+		return PTR_ERR(info);
 
 	lock_fb_info(info);
-	अगर (!try_module_get(info->fbops->owner)) अणु
+	if (!try_module_get(info->fbops->owner)) {
 		res = -ENODEV;
-		जाओ out;
-	पूर्ण
-	file->निजी_data = info;
-	अगर (info->fbops->fb_खोलो) अणु
-		res = info->fbops->fb_खोलो(info,1);
-		अगर (res)
+		goto out;
+	}
+	file->private_data = info;
+	if (info->fbops->fb_open) {
+		res = info->fbops->fb_open(info,1);
+		if (res)
 			module_put(info->fbops->owner);
-	पूर्ण
-#अगर_घोषित CONFIG_FB_DEFERRED_IO
-	अगर (info->fbdefio)
-		fb_deferred_io_खोलो(info, inode, file);
-#पूर्ण_अगर
+	}
+#ifdef CONFIG_FB_DEFERRED_IO
+	if (info->fbdefio)
+		fb_deferred_io_open(info, inode, file);
+#endif
 out:
 	unlock_fb_info(info);
-	अगर (res)
+	if (res)
 		put_fb_info(info);
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल पूर्णांक
-fb_release(काष्ठा inode *inode, काष्ठा file *file)
+static int
+fb_release(struct inode *inode, struct file *file)
 __acquires(&info->lock)
 __releases(&info->lock)
-अणु
-	काष्ठा fb_info * स्थिर info = file->निजी_data;
+{
+	struct fb_info * const info = file->private_data;
 
 	lock_fb_info(info);
-	अगर (info->fbops->fb_release)
+	if (info->fbops->fb_release)
 		info->fbops->fb_release(info,1);
 	module_put(info->fbops->owner);
 	unlock_fb_info(info);
 	put_fb_info(info);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर defined(CONFIG_FB_PROVIDE_GET_FB_UNMAPPED_AREA) && !defined(CONFIG_MMU)
-अचिन्हित दीर्घ get_fb_unmapped_area(काष्ठा file *filp,
-				   अचिन्हित दीर्घ addr, अचिन्हित दीर्घ len,
-				   अचिन्हित दीर्घ pgoff, अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा fb_info * स्थिर info = filp->निजी_data;
-	अचिन्हित दीर्घ fb_size = PAGE_ALIGN(info->fix.smem_len);
+#if defined(CONFIG_FB_PROVIDE_GET_FB_UNMAPPED_AREA) && !defined(CONFIG_MMU)
+unsigned long get_fb_unmapped_area(struct file *filp,
+				   unsigned long addr, unsigned long len,
+				   unsigned long pgoff, unsigned long flags)
+{
+	struct fb_info * const info = filp->private_data;
+	unsigned long fb_size = PAGE_ALIGN(info->fix.smem_len);
 
-	अगर (pgoff > fb_size || len > fb_size - pgoff)
-		वापस -EINVAL;
+	if (pgoff > fb_size || len > fb_size - pgoff)
+		return -EINVAL;
 
-	वापस (अचिन्हित दीर्घ)info->screen_base + pgoff;
-पूर्ण
-#पूर्ण_अगर
+	return (unsigned long)info->screen_base + pgoff;
+}
+#endif
 
-अटल स्थिर काष्ठा file_operations fb_fops = अणु
+static const struct file_operations fb_fops = {
 	.owner =	THIS_MODULE,
-	.पढ़ो =		fb_पढ़ो,
-	.ग_लिखो =	fb_ग_लिखो,
+	.read =		fb_read,
+	.write =	fb_write,
 	.unlocked_ioctl = fb_ioctl,
-#अगर_घोषित CONFIG_COMPAT
+#ifdef CONFIG_COMPAT
 	.compat_ioctl = fb_compat_ioctl,
-#पूर्ण_अगर
+#endif
 	.mmap =		fb_mmap,
-	.खोलो =		fb_खोलो,
+	.open =		fb_open,
 	.release =	fb_release,
-#अगर defined(HAVE_ARCH_FB_UNMAPPED_AREA) || \
+#if defined(HAVE_ARCH_FB_UNMAPPED_AREA) || \
 	(defined(CONFIG_FB_PROVIDE_GET_FB_UNMAPPED_AREA) && \
 	 !defined(CONFIG_MMU))
 	.get_unmapped_area = get_fb_unmapped_area,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_FB_DEFERRED_IO
+#endif
+#ifdef CONFIG_FB_DEFERRED_IO
 	.fsync =	fb_deferred_io_fsync,
-#पूर्ण_अगर
-	.llseek =	शेष_llseek,
-पूर्ण;
+#endif
+	.llseek =	default_llseek,
+};
 
-काष्ठा class *fb_class;
+struct class *fb_class;
 EXPORT_SYMBOL(fb_class);
 
-अटल पूर्णांक fb_check_क्रमeignness(काष्ठा fb_info *fi)
-अणु
-	स्थिर bool क्रमeign_endian = fi->flags & FBINFO_FOREIGN_ENDIAN;
+static int fb_check_foreignness(struct fb_info *fi)
+{
+	const bool foreign_endian = fi->flags & FBINFO_FOREIGN_ENDIAN;
 
 	fi->flags &= ~FBINFO_FOREIGN_ENDIAN;
 
-#अगर_घोषित __BIG_ENDIAN
-	fi->flags |= क्रमeign_endian ? 0 : FBINFO_BE_MATH;
-#अन्यथा
-	fi->flags |= क्रमeign_endian ? FBINFO_BE_MATH : 0;
-#पूर्ण_अगर /* __BIG_ENDIAN */
+#ifdef __BIG_ENDIAN
+	fi->flags |= foreign_endian ? 0 : FBINFO_BE_MATH;
+#else
+	fi->flags |= foreign_endian ? FBINFO_BE_MATH : 0;
+#endif /* __BIG_ENDIAN */
 
-	अगर (fi->flags & FBINFO_BE_MATH && !fb_be_math(fi)) अणु
+	if (fi->flags & FBINFO_BE_MATH && !fb_be_math(fi)) {
 		pr_err("%s: enable CONFIG_FB_BIG_ENDIAN to "
 		       "support this framebuffer\n", fi->fix.id);
-		वापस -ENOSYS;
-	पूर्ण अन्यथा अगर (!(fi->flags & FBINFO_BE_MATH) && fb_be_math(fi)) अणु
+		return -ENOSYS;
+	} else if (!(fi->flags & FBINFO_BE_MATH) && fb_be_math(fi)) {
 		pr_err("%s: enable CONFIG_FB_LITTLE_ENDIAN to "
 		       "support this framebuffer\n", fi->fix.id);
-		वापस -ENOSYS;
-	पूर्ण
+		return -ENOSYS;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool apertures_overlap(काष्ठा aperture *gen, काष्ठा aperture *hw)
-अणु
+static bool apertures_overlap(struct aperture *gen, struct aperture *hw)
+{
 	/* is the generic aperture base the same as the HW one */
-	अगर (gen->base == hw->base)
-		वापस true;
+	if (gen->base == hw->base)
+		return true;
 	/* is the generic aperture base inside the hw base->hw base+size */
-	अगर (gen->base > hw->base && gen->base < hw->base + hw->size)
-		वापस true;
-	वापस false;
-पूर्ण
+	if (gen->base > hw->base && gen->base < hw->base + hw->size)
+		return true;
+	return false;
+}
 
-अटल bool fb_करो_apertures_overlap(काष्ठा apertures_काष्ठा *gena,
-				    काष्ठा apertures_काष्ठा *hwa)
-अणु
-	पूर्णांक i, j;
-	अगर (!hwa || !gena)
-		वापस false;
+static bool fb_do_apertures_overlap(struct apertures_struct *gena,
+				    struct apertures_struct *hwa)
+{
+	int i, j;
+	if (!hwa || !gena)
+		return false;
 
-	क्रम (i = 0; i < hwa->count; ++i) अणु
-		काष्ठा aperture *h = &hwa->ranges[i];
-		क्रम (j = 0; j < gena->count; ++j) अणु
-			काष्ठा aperture *g = &gena->ranges[j];
-			prपूर्णांकk(KERN_DEBUG "checking generic (%llx %llx) vs hw (%llx %llx)\n",
-				(अचिन्हित दीर्घ दीर्घ)g->base,
-				(अचिन्हित दीर्घ दीर्घ)g->size,
-				(अचिन्हित दीर्घ दीर्घ)h->base,
-				(अचिन्हित दीर्घ दीर्घ)h->size);
-			अगर (apertures_overlap(g, h))
-				वापस true;
-		पूर्ण
-	पूर्ण
+	for (i = 0; i < hwa->count; ++i) {
+		struct aperture *h = &hwa->ranges[i];
+		for (j = 0; j < gena->count; ++j) {
+			struct aperture *g = &gena->ranges[j];
+			printk(KERN_DEBUG "checking generic (%llx %llx) vs hw (%llx %llx)\n",
+				(unsigned long long)g->base,
+				(unsigned long long)g->size,
+				(unsigned long long)h->base,
+				(unsigned long long)h->size);
+			if (apertures_overlap(g, h))
+				return true;
+		}
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल व्योम करो_unरेजिस्टर_framebuffer(काष्ठा fb_info *fb_info);
+static void do_unregister_framebuffer(struct fb_info *fb_info);
 
-#घोषणा VGA_FB_PHYS 0xA0000
-अटल व्योम करो_हटाओ_conflicting_framebuffers(काष्ठा apertures_काष्ठा *a,
-					       स्थिर अक्षर *name, bool primary)
-अणु
-	पूर्णांक i;
+#define VGA_FB_PHYS 0xA0000
+static void do_remove_conflicting_framebuffers(struct apertures_struct *a,
+					       const char *name, bool primary)
+{
+	int i;
 
-	/* check all firmware fbs and kick off अगर the base addr overlaps */
-	क्रम_each_रेजिस्टरed_fb(i) अणु
-		काष्ठा apertures_काष्ठा *gen_aper;
+	/* check all firmware fbs and kick off if the base addr overlaps */
+	for_each_registered_fb(i) {
+		struct apertures_struct *gen_aper;
 
-		अगर (!(रेजिस्टरed_fb[i]->flags & FBINFO_MISC_FIRMWARE))
-			जारी;
+		if (!(registered_fb[i]->flags & FBINFO_MISC_FIRMWARE))
+			continue;
 
-		gen_aper = रेजिस्टरed_fb[i]->apertures;
-		अगर (fb_करो_apertures_overlap(gen_aper, a) ||
+		gen_aper = registered_fb[i]->apertures;
+		if (fb_do_apertures_overlap(gen_aper, a) ||
 			(primary && gen_aper && gen_aper->count &&
-			 gen_aper->ranges[0].base == VGA_FB_PHYS)) अणु
+			 gen_aper->ranges[0].base == VGA_FB_PHYS)) {
 
-			prपूर्णांकk(KERN_INFO "fb%d: switching to %s from %s\n",
-			       i, name, रेजिस्टरed_fb[i]->fix.id);
-			करो_unरेजिस्टर_framebuffer(रेजिस्टरed_fb[i]);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			printk(KERN_INFO "fb%d: switching to %s from %s\n",
+			       i, name, registered_fb[i]->fix.id);
+			do_unregister_framebuffer(registered_fb[i]);
+		}
+	}
+}
 
-अटल bool lockless_रेजिस्टर_fb;
-module_param_named_unsafe(lockless_रेजिस्टर_fb, lockless_रेजिस्टर_fb, bool, 0400);
-MODULE_PARM_DESC(lockless_रेजिस्टर_fb,
+static bool lockless_register_fb;
+module_param_named_unsafe(lockless_register_fb, lockless_register_fb, bool, 0400);
+MODULE_PARM_DESC(lockless_register_fb,
 	"Lockless framebuffer registration for debugging [default=off]");
 
-अटल पूर्णांक करो_रेजिस्टर_framebuffer(काष्ठा fb_info *fb_info)
-अणु
-	पूर्णांक i, ret;
-	काष्ठा fb_videomode mode;
+static int do_register_framebuffer(struct fb_info *fb_info)
+{
+	int i, ret;
+	struct fb_videomode mode;
 
-	अगर (fb_check_क्रमeignness(fb_info))
-		वापस -ENOSYS;
+	if (fb_check_foreignness(fb_info))
+		return -ENOSYS;
 
-	करो_हटाओ_conflicting_framebuffers(fb_info->apertures,
+	do_remove_conflicting_framebuffers(fb_info->apertures,
 					   fb_info->fix.id,
 					   fb_is_primary_device(fb_info));
 
-	अगर (num_रेजिस्टरed_fb == FB_MAX)
-		वापस -ENXIO;
+	if (num_registered_fb == FB_MAX)
+		return -ENXIO;
 
-	num_रेजिस्टरed_fb++;
-	क्रम (i = 0 ; i < FB_MAX; i++)
-		अगर (!रेजिस्टरed_fb[i])
-			अवरोध;
+	num_registered_fb++;
+	for (i = 0 ; i < FB_MAX; i++)
+		if (!registered_fb[i])
+			break;
 	fb_info->node = i;
 	atomic_set(&fb_info->count, 1);
 	mutex_init(&fb_info->lock);
 	mutex_init(&fb_info->mm_lock);
 
 	fb_info->dev = device_create(fb_class, fb_info->device,
-				     MKDEV(FB_MAJOR, i), शून्य, "fb%d", i);
-	अगर (IS_ERR(fb_info->dev)) अणु
+				     MKDEV(FB_MAJOR, i), NULL, "fb%d", i);
+	if (IS_ERR(fb_info->dev)) {
 		/* Not fatal */
-		prपूर्णांकk(KERN_WARNING "Unable to create device for framebuffer %d; errno = %ld\n", i, PTR_ERR(fb_info->dev));
-		fb_info->dev = शून्य;
-	पूर्ण अन्यथा
+		printk(KERN_WARNING "Unable to create device for framebuffer %d; errno = %ld\n", i, PTR_ERR(fb_info->dev));
+		fb_info->dev = NULL;
+	} else
 		fb_init_device(fb_info);
 
-	अगर (fb_info->pixmap.addr == शून्य) अणु
-		fb_info->pixmap.addr = kदो_स्मृति(FBPIXMAPSIZE, GFP_KERNEL);
-		अगर (fb_info->pixmap.addr) अणु
+	if (fb_info->pixmap.addr == NULL) {
+		fb_info->pixmap.addr = kmalloc(FBPIXMAPSIZE, GFP_KERNEL);
+		if (fb_info->pixmap.addr) {
 			fb_info->pixmap.size = FBPIXMAPSIZE;
 			fb_info->pixmap.buf_align = 1;
 			fb_info->pixmap.scan_align = 1;
 			fb_info->pixmap.access_align = 32;
 			fb_info->pixmap.flags = FB_PIXMAP_DEFAULT;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	fb_info->pixmap.offset = 0;
 
-	अगर (!fb_info->pixmap.blit_x)
+	if (!fb_info->pixmap.blit_x)
 		fb_info->pixmap.blit_x = ~(u32)0;
 
-	अगर (!fb_info->pixmap.blit_y)
+	if (!fb_info->pixmap.blit_y)
 		fb_info->pixmap.blit_y = ~(u32)0;
 
-	अगर (!fb_info->modelist.prev || !fb_info->modelist.next)
+	if (!fb_info->modelist.prev || !fb_info->modelist.next)
 		INIT_LIST_HEAD(&fb_info->modelist);
 
-	अगर (fb_info->skip_vt_चयन)
-		pm_vt_चयन_required(fb_info->dev, false);
-	अन्यथा
-		pm_vt_चयन_required(fb_info->dev, true);
+	if (fb_info->skip_vt_switch)
+		pm_vt_switch_required(fb_info->dev, false);
+	else
+		pm_vt_switch_required(fb_info->dev, true);
 
 	fb_var_to_videomode(&mode, &fb_info->var);
 	fb_add_videomode(&mode, &fb_info->modelist);
-	रेजिस्टरed_fb[i] = fb_info;
+	registered_fb[i] = fb_info;
 
-#अगर_घोषित CONFIG_GUMSTIX_AM200EPD
-	अणु
-		काष्ठा fb_event event;
+#ifdef CONFIG_GUMSTIX_AM200EPD
+	{
+		struct fb_event event;
 		event.info = fb_info;
-		fb_notअगरier_call_chain(FB_EVENT_FB_REGISTERED, &event);
-	पूर्ण
-#पूर्ण_अगर
+		fb_notifier_call_chain(FB_EVENT_FB_REGISTERED, &event);
+	}
+#endif
 
-	अगर (!lockless_रेजिस्टर_fb)
+	if (!lockless_register_fb)
 		console_lock();
-	अन्यथा
+	else
 		atomic_inc(&ignore_console_lock_warning);
 	lock_fb_info(fb_info);
-	ret = fbcon_fb_रेजिस्टरed(fb_info);
+	ret = fbcon_fb_registered(fb_info);
 	unlock_fb_info(fb_info);
 
-	अगर (!lockless_रेजिस्टर_fb)
+	if (!lockless_register_fb)
 		console_unlock();
-	अन्यथा
+	else
 		atomic_dec(&ignore_console_lock_warning);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम unbind_console(काष्ठा fb_info *fb_info)
-अणु
-	पूर्णांक i = fb_info->node;
+static void unbind_console(struct fb_info *fb_info)
+{
+	int i = fb_info->node;
 
-	अगर (WARN_ON(i < 0 || i >= FB_MAX || रेजिस्टरed_fb[i] != fb_info))
-		वापस;
+	if (WARN_ON(i < 0 || i >= FB_MAX || registered_fb[i] != fb_info))
+		return;
 
 	console_lock();
 	lock_fb_info(fb_info);
 	fbcon_fb_unbind(fb_info);
 	unlock_fb_info(fb_info);
 	console_unlock();
-पूर्ण
+}
 
-अटल व्योम unlink_framebuffer(काष्ठा fb_info *fb_info)
-अणु
-	पूर्णांक i;
+static void unlink_framebuffer(struct fb_info *fb_info)
+{
+	int i;
 
 	i = fb_info->node;
-	अगर (WARN_ON(i < 0 || i >= FB_MAX || रेजिस्टरed_fb[i] != fb_info))
-		वापस;
+	if (WARN_ON(i < 0 || i >= FB_MAX || registered_fb[i] != fb_info))
+		return;
 
-	अगर (!fb_info->dev)
-		वापस;
+	if (!fb_info->dev)
+		return;
 
 	device_destroy(fb_class, MKDEV(FB_MAJOR, i));
 
-	pm_vt_चयन_unरेजिस्टर(fb_info->dev);
+	pm_vt_switch_unregister(fb_info->dev);
 
 	unbind_console(fb_info);
 
-	fb_info->dev = शून्य;
-पूर्ण
+	fb_info->dev = NULL;
+}
 
-अटल व्योम करो_unरेजिस्टर_framebuffer(काष्ठा fb_info *fb_info)
-अणु
+static void do_unregister_framebuffer(struct fb_info *fb_info)
+{
 	unlink_framebuffer(fb_info);
-	अगर (fb_info->pixmap.addr &&
+	if (fb_info->pixmap.addr &&
 	    (fb_info->pixmap.flags & FB_PIXMAP_DEFAULT))
-		kमुक्त(fb_info->pixmap.addr);
+		kfree(fb_info->pixmap.addr);
 	fb_destroy_modelist(&fb_info->modelist);
-	रेजिस्टरed_fb[fb_info->node] = शून्य;
-	num_रेजिस्टरed_fb--;
+	registered_fb[fb_info->node] = NULL;
+	num_registered_fb--;
 	fb_cleanup_device(fb_info);
-#अगर_घोषित CONFIG_GUMSTIX_AM200EPD
-	अणु
-		काष्ठा fb_event event;
+#ifdef CONFIG_GUMSTIX_AM200EPD
+	{
+		struct fb_event event;
 		event.info = fb_info;
-		fb_notअगरier_call_chain(FB_EVENT_FB_UNREGISTERED, &event);
-	पूर्ण
-#पूर्ण_अगर
+		fb_notifier_call_chain(FB_EVENT_FB_UNREGISTERED, &event);
+	}
+#endif
 	console_lock();
-	fbcon_fb_unरेजिस्टरed(fb_info);
+	fbcon_fb_unregistered(fb_info);
 	console_unlock();
 
-	/* this may मुक्त fb info */
+	/* this may free fb info */
 	put_fb_info(fb_info);
-पूर्ण
+}
 
 /**
- * हटाओ_conflicting_framebuffers - हटाओ firmware-configured framebuffers
- * @a: memory range, users of which are to be हटाओd
+ * remove_conflicting_framebuffers - remove firmware-configured framebuffers
+ * @a: memory range, users of which are to be removed
  * @name: requesting driver name
- * @primary: also kick vga16fb अगर present
+ * @primary: also kick vga16fb if present
  *
- * This function हटाओs framebuffer devices (initialized by firmware/bootloader)
- * which use memory range described by @a. If @a is शून्य all such devices are
- * हटाओd.
+ * This function removes framebuffer devices (initialized by firmware/bootloader)
+ * which use memory range described by @a. If @a is NULL all such devices are
+ * removed.
  */
-पूर्णांक हटाओ_conflicting_framebuffers(काष्ठा apertures_काष्ठा *a,
-				    स्थिर अक्षर *name, bool primary)
-अणु
-	bool करो_मुक्त = false;
+int remove_conflicting_framebuffers(struct apertures_struct *a,
+				    const char *name, bool primary)
+{
+	bool do_free = false;
 
-	अगर (!a) अणु
+	if (!a) {
 		a = alloc_apertures(1);
-		अगर (!a)
-			वापस -ENOMEM;
+		if (!a)
+			return -ENOMEM;
 
 		a->ranges[0].base = 0;
 		a->ranges[0].size = ~0;
-		करो_मुक्त = true;
-	पूर्ण
+		do_free = true;
+	}
 
 	mutex_lock(&registration_lock);
-	करो_हटाओ_conflicting_framebuffers(a, name, primary);
+	do_remove_conflicting_framebuffers(a, name, primary);
 	mutex_unlock(&registration_lock);
 
-	अगर (करो_मुक्त)
-		kमुक्त(a);
+	if (do_free)
+		kfree(a);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(हटाओ_conflicting_framebuffers);
+	return 0;
+}
+EXPORT_SYMBOL(remove_conflicting_framebuffers);
 
 /**
- * हटाओ_conflicting_pci_framebuffers - हटाओ firmware-configured framebuffers क्रम PCI devices
+ * remove_conflicting_pci_framebuffers - remove firmware-configured framebuffers for PCI devices
  * @pdev: PCI device
  * @name: requesting driver name
  *
- * This function हटाओs framebuffer devices (eg. initialized by firmware)
- * using memory range configured क्रम any of @pdev's memory bars.
+ * This function removes framebuffer devices (eg. initialized by firmware)
+ * using memory range configured for any of @pdev's memory bars.
  *
- * The function assumes that PCI device with shaकरोwed ROM drives a primary
+ * The function assumes that PCI device with shadowed ROM drives a primary
  * display and so kicks out vga16fb.
  */
-पूर्णांक हटाओ_conflicting_pci_framebuffers(काष्ठा pci_dev *pdev, स्थिर अक्षर *name)
-अणु
-	काष्ठा apertures_काष्ठा *ap;
+int remove_conflicting_pci_framebuffers(struct pci_dev *pdev, const char *name)
+{
+	struct apertures_struct *ap;
 	bool primary = false;
-	पूर्णांक err, idx, bar;
+	int err, idx, bar;
 
-	क्रम (idx = 0, bar = 0; bar < PCI_STD_NUM_BARS; bar++) अणु
-		अगर (!(pci_resource_flags(pdev, bar) & IORESOURCE_MEM))
-			जारी;
+	for (idx = 0, bar = 0; bar < PCI_STD_NUM_BARS; bar++) {
+		if (!(pci_resource_flags(pdev, bar) & IORESOURCE_MEM))
+			continue;
 		idx++;
-	पूर्ण
+	}
 
 	ap = alloc_apertures(idx);
-	अगर (!ap)
-		वापस -ENOMEM;
+	if (!ap)
+		return -ENOMEM;
 
-	क्रम (idx = 0, bar = 0; bar < PCI_STD_NUM_BARS; bar++) अणु
-		अगर (!(pci_resource_flags(pdev, bar) & IORESOURCE_MEM))
-			जारी;
+	for (idx = 0, bar = 0; bar < PCI_STD_NUM_BARS; bar++) {
+		if (!(pci_resource_flags(pdev, bar) & IORESOURCE_MEM))
+			continue;
 		ap->ranges[idx].base = pci_resource_start(pdev, bar);
 		ap->ranges[idx].size = pci_resource_len(pdev, bar);
 		pci_dbg(pdev, "%s: bar %d: 0x%lx -> 0x%lx\n", __func__, bar,
-			(अचिन्हित दीर्घ)pci_resource_start(pdev, bar),
-			(अचिन्हित दीर्घ)pci_resource_end(pdev, bar));
+			(unsigned long)pci_resource_start(pdev, bar),
+			(unsigned long)pci_resource_end(pdev, bar));
 		idx++;
-	पूर्ण
+	}
 
-#अगर_घोषित CONFIG_X86
+#ifdef CONFIG_X86
 	primary = pdev->resource[PCI_ROM_RESOURCE].flags &
 					IORESOURCE_ROM_SHADOW;
-#पूर्ण_अगर
-	err = हटाओ_conflicting_framebuffers(ap, name, primary);
-	kमुक्त(ap);
-	वापस err;
-पूर्ण
-EXPORT_SYMBOL(हटाओ_conflicting_pci_framebuffers);
+#endif
+	err = remove_conflicting_framebuffers(ap, name, primary);
+	kfree(ap);
+	return err;
+}
+EXPORT_SYMBOL(remove_conflicting_pci_framebuffers);
 
 /**
- *	रेजिस्टर_framebuffer - रेजिस्टरs a frame buffer device
- *	@fb_info: frame buffer info काष्ठाure
+ *	register_framebuffer - registers a frame buffer device
+ *	@fb_info: frame buffer info structure
  *
  *	Registers a frame buffer device @fb_info.
  *
- *	Returns negative त्रुटि_सं on error, or zero क्रम success.
+ *	Returns negative errno on error, or zero for success.
  *
  */
-पूर्णांक
-रेजिस्टर_framebuffer(काष्ठा fb_info *fb_info)
-अणु
-	पूर्णांक ret;
+int
+register_framebuffer(struct fb_info *fb_info)
+{
+	int ret;
 
 	mutex_lock(&registration_lock);
-	ret = करो_रेजिस्टर_framebuffer(fb_info);
+	ret = do_register_framebuffer(fb_info);
 	mutex_unlock(&registration_lock);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(रेजिस्टर_framebuffer);
+	return ret;
+}
+EXPORT_SYMBOL(register_framebuffer);
 
 /**
- *	unरेजिस्टर_framebuffer - releases a frame buffer device
- *	@fb_info: frame buffer info काष्ठाure
+ *	unregister_framebuffer - releases a frame buffer device
+ *	@fb_info: frame buffer info structure
  *
- *	Unरेजिस्टरs a frame buffer device @fb_info.
+ *	Unregisters a frame buffer device @fb_info.
  *
- *	Returns negative त्रुटि_सं on error, or zero क्रम success.
+ *	Returns negative errno on error, or zero for success.
  *
- *      This function will also notअगरy the framebuffer console
+ *      This function will also notify the framebuffer console
  *      to release the driver.
  *
- *      This is meant to be called within a driver's module_निकास()
- *      function. If this is called outside module_निकास(), ensure
- *      that the driver implements fb_खोलो() and fb_release() to
+ *      This is meant to be called within a driver's module_exit()
+ *      function. If this is called outside module_exit(), ensure
+ *      that the driver implements fb_open() and fb_release() to
  *      check that no processes are using the device.
  */
-व्योम
-unरेजिस्टर_framebuffer(काष्ठा fb_info *fb_info)
-अणु
+void
+unregister_framebuffer(struct fb_info *fb_info)
+{
 	mutex_lock(&registration_lock);
-	करो_unरेजिस्टर_framebuffer(fb_info);
+	do_unregister_framebuffer(fb_info);
 	mutex_unlock(&registration_lock);
-पूर्ण
-EXPORT_SYMBOL(unरेजिस्टर_framebuffer);
+}
+EXPORT_SYMBOL(unregister_framebuffer);
 
 /**
- *	fb_set_suspend - low level driver संकेतs suspend
+ *	fb_set_suspend - low level driver signals suspend
  *	@info: framebuffer affected
  *	@state: 0 = resuming, !=0 = suspending
  *
  *	This is meant to be used by low level drivers to
- * 	संकेत suspend/resume to the core & clients.
+ * 	signal suspend/resume to the core & clients.
  *	It must be called with the console semaphore held
  */
-व्योम fb_set_suspend(काष्ठा fb_info *info, पूर्णांक state)
-अणु
+void fb_set_suspend(struct fb_info *info, int state)
+{
 	WARN_CONSOLE_UNLOCKED();
 
-	अगर (state) अणु
+	if (state) {
 		fbcon_suspended(info);
 		info->state = FBINFO_STATE_SUSPENDED;
-	पूर्ण अन्यथा अणु
+	} else {
 		info->state = FBINFO_STATE_RUNNING;
 		fbcon_resumed(info);
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL(fb_set_suspend);
 
 /**
- *	fbmem_init - init frame buffer subप्रणाली
+ *	fbmem_init - init frame buffer subsystem
  *
- *	Initialize the frame buffer subप्रणाली.
+ *	Initialize the frame buffer subsystem.
  *
- *	NOTE: This function is _only_ to be called by drivers/अक्षर/mem.c.
+ *	NOTE: This function is _only_ to be called by drivers/char/mem.c.
  *
  */
 
-अटल पूर्णांक __init
-fbmem_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init
+fbmem_init(void)
+{
+	int ret;
 
-	अगर (!proc_create_seq("fb", 0, शून्य, &proc_fb_seq_ops))
-		वापस -ENOMEM;
+	if (!proc_create_seq("fb", 0, NULL, &proc_fb_seq_ops))
+		return -ENOMEM;
 
-	ret = रेजिस्टर_chrdev(FB_MAJOR, "fb", &fb_fops);
-	अगर (ret) अणु
-		prपूर्णांकk("unable to get major %d for fb devs\n", FB_MAJOR);
-		जाओ err_chrdev;
-	पूर्ण
+	ret = register_chrdev(FB_MAJOR, "fb", &fb_fops);
+	if (ret) {
+		printk("unable to get major %d for fb devs\n", FB_MAJOR);
+		goto err_chrdev;
+	}
 
 	fb_class = class_create(THIS_MODULE, "graphics");
-	अगर (IS_ERR(fb_class)) अणु
+	if (IS_ERR(fb_class)) {
 		ret = PTR_ERR(fb_class);
 		pr_warn("Unable to create fb class; errno = %d\n", ret);
-		fb_class = शून्य;
-		जाओ err_class;
-	पूर्ण
+		fb_class = NULL;
+		goto err_class;
+	}
 
 	fb_console_init();
 
-	वापस 0;
+	return 0;
 
 err_class:
-	unरेजिस्टर_chrdev(FB_MAJOR, "fb");
+	unregister_chrdev(FB_MAJOR, "fb");
 err_chrdev:
-	हटाओ_proc_entry("fb", शून्य);
-	वापस ret;
-पूर्ण
+	remove_proc_entry("fb", NULL);
+	return ret;
+}
 
-#अगर_घोषित MODULE
+#ifdef MODULE
 module_init(fbmem_init);
-अटल व्योम __निकास
-fbmem_निकास(व्योम)
-अणु
-	fb_console_निकास();
+static void __exit
+fbmem_exit(void)
+{
+	fb_console_exit();
 
-	हटाओ_proc_entry("fb", शून्य);
+	remove_proc_entry("fb", NULL);
 	class_destroy(fb_class);
-	unरेजिस्टर_chrdev(FB_MAJOR, "fb");
-पूर्ण
+	unregister_chrdev(FB_MAJOR, "fb");
+}
 
-module_निकास(fbmem_निकास);
+module_exit(fbmem_exit);
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Framebuffer base");
-#अन्यथा
+#else
 subsys_initcall(fbmem_init);
-#पूर्ण_अगर
+#endif
 
-पूर्णांक fb_new_modelist(काष्ठा fb_info *info)
-अणु
-	काष्ठा fb_var_screeninfo var = info->var;
-	काष्ठा list_head *pos, *n;
-	काष्ठा fb_modelist *modelist;
-	काष्ठा fb_videomode *m, mode;
-	पूर्णांक err;
+int fb_new_modelist(struct fb_info *info)
+{
+	struct fb_var_screeninfo var = info->var;
+	struct list_head *pos, *n;
+	struct fb_modelist *modelist;
+	struct fb_videomode *m, mode;
+	int err;
 
-	list_क्रम_each_safe(pos, n, &info->modelist) अणु
-		modelist = list_entry(pos, काष्ठा fb_modelist, list);
+	list_for_each_safe(pos, n, &info->modelist) {
+		modelist = list_entry(pos, struct fb_modelist, list);
 		m = &modelist->mode;
 		fb_videomode_to_var(&var, m);
 		var.activate = FB_ACTIVATE_TEST;
 		err = fb_set_var(info, &var);
 		fb_var_to_videomode(&mode, &var);
-		अगर (err || !fb_mode_is_equal(m, &mode)) अणु
+		if (err || !fb_mode_is_equal(m, &mode)) {
 			list_del(pos);
-			kमुक्त(pos);
-		पूर्ण
-	पूर्ण
+			kfree(pos);
+		}
+	}
 
-	अगर (list_empty(&info->modelist))
-		वापस 1;
+	if (list_empty(&info->modelist))
+		return 1;
 
 	fbcon_new_modelist(info);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 MODULE_LICENSE("GPL");

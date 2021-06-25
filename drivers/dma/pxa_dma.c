@@ -1,286 +1,285 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright 2015 Robert Jarzmik <robert.jarzmik@मुक्त.fr>
+ * Copyright 2015 Robert Jarzmik <robert.jarzmik@free.fr>
  */
 
-#समावेश <linux/err.h>
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/types.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/dmaengine.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/device.h>
-#समावेश <linux/platक्रमm_data/mmp_dma.h>
-#समावेश <linux/dmapool.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/of_dma.h>
-#समावेश <linux/of.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/dma/pxa-dma.h>
+#include <linux/err.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/types.h>
+#include <linux/interrupt.h>
+#include <linux/dma-mapping.h>
+#include <linux/slab.h>
+#include <linux/dmaengine.h>
+#include <linux/platform_device.h>
+#include <linux/device.h>
+#include <linux/platform_data/mmp_dma.h>
+#include <linux/dmapool.h>
+#include <linux/of_device.h>
+#include <linux/of_dma.h>
+#include <linux/of.h>
+#include <linux/wait.h>
+#include <linux/dma/pxa-dma.h>
 
-#समावेश "dmaengine.h"
-#समावेश "virt-dma.h"
+#include "dmaengine.h"
+#include "virt-dma.h"
 
-#घोषणा DCSR(n)		(0x0000 + ((n) << 2))
-#घोषणा DALGN(n)	0x00a0
-#घोषणा DINT		0x00f0
-#घोषणा DDADR(n)	(0x0200 + ((n) << 4))
-#घोषणा DSADR(n)	(0x0204 + ((n) << 4))
-#घोषणा DTADR(n)	(0x0208 + ((n) << 4))
-#घोषणा DCMD(n)		(0x020c + ((n) << 4))
+#define DCSR(n)		(0x0000 + ((n) << 2))
+#define DALGN(n)	0x00a0
+#define DINT		0x00f0
+#define DDADR(n)	(0x0200 + ((n) << 4))
+#define DSADR(n)	(0x0204 + ((n) << 4))
+#define DTADR(n)	(0x0208 + ((n) << 4))
+#define DCMD(n)		(0x020c + ((n) << 4))
 
-#घोषणा PXA_DCSR_RUN		BIT(31)	/* Run Bit (पढ़ो / ग_लिखो) */
-#घोषणा PXA_DCSR_NODESC		BIT(30)	/* No-Descriptor Fetch (पढ़ो / ग_लिखो) */
-#घोषणा PXA_DCSR_STOPIRQEN	BIT(29)	/* Stop Interrupt Enable (R/W) */
-#घोषणा PXA_DCSR_REQPEND	BIT(8)	/* Request Pending (पढ़ो-only) */
-#घोषणा PXA_DCSR_STOPSTATE	BIT(3)	/* Stop State (पढ़ो-only) */
-#घोषणा PXA_DCSR_ENDINTR	BIT(2)	/* End Interrupt (पढ़ो / ग_लिखो) */
-#घोषणा PXA_DCSR_STARTINTR	BIT(1)	/* Start Interrupt (पढ़ो / ग_लिखो) */
-#घोषणा PXA_DCSR_BUSERR		BIT(0)	/* Bus Error Interrupt (पढ़ो / ग_लिखो) */
+#define PXA_DCSR_RUN		BIT(31)	/* Run Bit (read / write) */
+#define PXA_DCSR_NODESC		BIT(30)	/* No-Descriptor Fetch (read / write) */
+#define PXA_DCSR_STOPIRQEN	BIT(29)	/* Stop Interrupt Enable (R/W) */
+#define PXA_DCSR_REQPEND	BIT(8)	/* Request Pending (read-only) */
+#define PXA_DCSR_STOPSTATE	BIT(3)	/* Stop State (read-only) */
+#define PXA_DCSR_ENDINTR	BIT(2)	/* End Interrupt (read / write) */
+#define PXA_DCSR_STARTINTR	BIT(1)	/* Start Interrupt (read / write) */
+#define PXA_DCSR_BUSERR		BIT(0)	/* Bus Error Interrupt (read / write) */
 
-#घोषणा PXA_DCSR_EORIRQEN	BIT(28)	/* End of Receive IRQ Enable (R/W) */
-#घोषणा PXA_DCSR_EORJMPEN	BIT(27)	/* Jump to next descriptor on EOR */
-#घोषणा PXA_DCSR_EORSTOPEN	BIT(26)	/* STOP on an EOR */
-#घोषणा PXA_DCSR_SETCMPST	BIT(25)	/* Set Descriptor Compare Status */
-#घोषणा PXA_DCSR_CLRCMPST	BIT(24)	/* Clear Descriptor Compare Status */
-#घोषणा PXA_DCSR_CMPST		BIT(10)	/* The Descriptor Compare Status */
-#घोषणा PXA_DCSR_EORINTR	BIT(9)	/* The end of Receive */
+#define PXA_DCSR_EORIRQEN	BIT(28)	/* End of Receive IRQ Enable (R/W) */
+#define PXA_DCSR_EORJMPEN	BIT(27)	/* Jump to next descriptor on EOR */
+#define PXA_DCSR_EORSTOPEN	BIT(26)	/* STOP on an EOR */
+#define PXA_DCSR_SETCMPST	BIT(25)	/* Set Descriptor Compare Status */
+#define PXA_DCSR_CLRCMPST	BIT(24)	/* Clear Descriptor Compare Status */
+#define PXA_DCSR_CMPST		BIT(10)	/* The Descriptor Compare Status */
+#define PXA_DCSR_EORINTR	BIT(9)	/* The end of Receive */
 
-#घोषणा DRCMR_MAPVLD	BIT(7)	/* Map Valid (पढ़ो / ग_लिखो) */
-#घोषणा DRCMR_CHLNUM	0x1f	/* mask क्रम Channel Number (पढ़ो / ग_लिखो) */
+#define DRCMR_MAPVLD	BIT(7)	/* Map Valid (read / write) */
+#define DRCMR_CHLNUM	0x1f	/* mask for Channel Number (read / write) */
 
-#घोषणा DDADR_DESCADDR	0xfffffff0	/* Address of next descriptor (mask) */
-#घोषणा DDADR_STOP	BIT(0)	/* Stop (पढ़ो / ग_लिखो) */
+#define DDADR_DESCADDR	0xfffffff0	/* Address of next descriptor (mask) */
+#define DDADR_STOP	BIT(0)	/* Stop (read / write) */
 
-#घोषणा PXA_DCMD_INCSRCADDR	BIT(31)	/* Source Address Increment Setting. */
-#घोषणा PXA_DCMD_INCTRGADDR	BIT(30)	/* Target Address Increment Setting. */
-#घोषणा PXA_DCMD_FLOWSRC	BIT(29)	/* Flow Control by the source. */
-#घोषणा PXA_DCMD_FLOWTRG	BIT(28)	/* Flow Control by the target. */
-#घोषणा PXA_DCMD_STARTIRQEN	BIT(22)	/* Start Interrupt Enable */
-#घोषणा PXA_DCMD_ENसूचीQEN	BIT(21)	/* End Interrupt Enable */
-#घोषणा PXA_DCMD_ENDIAN		BIT(18)	/* Device Endian-ness. */
-#घोषणा PXA_DCMD_BURST8		(1 << 16)	/* 8 byte burst */
-#घोषणा PXA_DCMD_BURST16	(2 << 16)	/* 16 byte burst */
-#घोषणा PXA_DCMD_BURST32	(3 << 16)	/* 32 byte burst */
-#घोषणा PXA_DCMD_WIDTH1		(1 << 14)	/* 1 byte width */
-#घोषणा PXA_DCMD_WIDTH2		(2 << 14)	/* 2 byte width (HalfWord) */
-#घोषणा PXA_DCMD_WIDTH4		(3 << 14)	/* 4 byte width (Word) */
-#घोषणा PXA_DCMD_LENGTH		0x01fff		/* length mask (max = 8K - 1) */
+#define PXA_DCMD_INCSRCADDR	BIT(31)	/* Source Address Increment Setting. */
+#define PXA_DCMD_INCTRGADDR	BIT(30)	/* Target Address Increment Setting. */
+#define PXA_DCMD_FLOWSRC	BIT(29)	/* Flow Control by the source. */
+#define PXA_DCMD_FLOWTRG	BIT(28)	/* Flow Control by the target. */
+#define PXA_DCMD_STARTIRQEN	BIT(22)	/* Start Interrupt Enable */
+#define PXA_DCMD_ENDIRQEN	BIT(21)	/* End Interrupt Enable */
+#define PXA_DCMD_ENDIAN		BIT(18)	/* Device Endian-ness. */
+#define PXA_DCMD_BURST8		(1 << 16)	/* 8 byte burst */
+#define PXA_DCMD_BURST16	(2 << 16)	/* 16 byte burst */
+#define PXA_DCMD_BURST32	(3 << 16)	/* 32 byte burst */
+#define PXA_DCMD_WIDTH1		(1 << 14)	/* 1 byte width */
+#define PXA_DCMD_WIDTH2		(2 << 14)	/* 2 byte width (HalfWord) */
+#define PXA_DCMD_WIDTH4		(3 << 14)	/* 4 byte width (Word) */
+#define PXA_DCMD_LENGTH		0x01fff		/* length mask (max = 8K - 1) */
 
-#घोषणा PDMA_ALIGNMENT		3
-#घोषणा PDMA_MAX_DESC_BYTES	(PXA_DCMD_LENGTH & ~((1 << PDMA_ALIGNMENT) - 1))
+#define PDMA_ALIGNMENT		3
+#define PDMA_MAX_DESC_BYTES	(PXA_DCMD_LENGTH & ~((1 << PDMA_ALIGNMENT) - 1))
 
-काष्ठा pxad_desc_hw अणु
-	u32 ddadr;	/* Poपूर्णांकs to the next descriptor + flags */
-	u32 dsadr;	/* DSADR value क्रम the current transfer */
-	u32 dtadr;	/* DTADR value क्रम the current transfer */
-	u32 dcmd;	/* DCMD value क्रम the current transfer */
-पूर्ण __aligned(16);
+struct pxad_desc_hw {
+	u32 ddadr;	/* Points to the next descriptor + flags */
+	u32 dsadr;	/* DSADR value for the current transfer */
+	u32 dtadr;	/* DTADR value for the current transfer */
+	u32 dcmd;	/* DCMD value for the current transfer */
+} __aligned(16);
 
-काष्ठा pxad_desc_sw अणु
-	काष्ठा virt_dma_desc	vd;		/* Virtual descriptor */
-	पूर्णांक			nb_desc;	/* Number of hw. descriptors */
-	माप_प्रकार			len;		/* Number of bytes xfered */
+struct pxad_desc_sw {
+	struct virt_dma_desc	vd;		/* Virtual descriptor */
+	int			nb_desc;	/* Number of hw. descriptors */
+	size_t			len;		/* Number of bytes xfered */
 	dma_addr_t		first;		/* First descriptor's addr */
 
 	/* At least one descriptor has an src/dst address not multiple of 8 */
 	bool			misaligned;
 	bool			cyclic;
-	काष्ठा dma_pool		*desc_pool;	/* Channel's used allocator */
+	struct dma_pool		*desc_pool;	/* Channel's used allocator */
 
-	काष्ठा pxad_desc_hw	*hw_desc[];	/* DMA coherent descriptors */
-पूर्ण;
+	struct pxad_desc_hw	*hw_desc[];	/* DMA coherent descriptors */
+};
 
-काष्ठा pxad_phy अणु
-	पूर्णांक			idx;
-	व्योम __iomem		*base;
-	काष्ठा pxad_chan	*vchan;
-पूर्ण;
+struct pxad_phy {
+	int			idx;
+	void __iomem		*base;
+	struct pxad_chan	*vchan;
+};
 
-काष्ठा pxad_chan अणु
-	काष्ठा virt_dma_chan	vc;		/* Virtual channel */
+struct pxad_chan {
+	struct virt_dma_chan	vc;		/* Virtual channel */
 	u32			drcmr;		/* Requestor of the channel */
-	क्रमागत pxad_chan_prio	prio;		/* Required priority of phy */
+	enum pxad_chan_prio	prio;		/* Required priority of phy */
 	/*
 	 * At least one desc_sw in submitted or issued transfers on this channel
 	 * has one address such as: addr % 8 != 0. This implies the DALGN
 	 * setting on the phy.
 	 */
 	bool			misaligned;
-	काष्ठा dma_slave_config	cfg;		/* Runसमय config */
+	struct dma_slave_config	cfg;		/* Runtime config */
 
-	/* रक्षित by vc->lock */
-	काष्ठा pxad_phy		*phy;
-	काष्ठा dma_pool		*desc_pool;	/* Descriptors pool */
+	/* protected by vc->lock */
+	struct pxad_phy		*phy;
+	struct dma_pool		*desc_pool;	/* Descriptors pool */
 	dma_cookie_t		bus_error;
 
-	रुको_queue_head_t	wq_state;
-पूर्ण;
+	wait_queue_head_t	wq_state;
+};
 
-काष्ठा pxad_device अणु
-	काष्ठा dma_device		slave;
-	पूर्णांक				nr_chans;
-	पूर्णांक				nr_requestors;
-	व्योम __iomem			*base;
-	काष्ठा pxad_phy			*phys;
+struct pxad_device {
+	struct dma_device		slave;
+	int				nr_chans;
+	int				nr_requestors;
+	void __iomem			*base;
+	struct pxad_phy			*phys;
 	spinlock_t			phy_lock;	/* Phy association */
-#अगर_घोषित CONFIG_DEBUG_FS
-	काष्ठा dentry			*dbgfs_root;
-	काष्ठा dentry			**dbgfs_chan;
-#पूर्ण_अगर
-पूर्ण;
+#ifdef CONFIG_DEBUG_FS
+	struct dentry			*dbgfs_root;
+	struct dentry			**dbgfs_chan;
+#endif
+};
 
-#घोषणा tx_to_pxad_desc(tx)					\
-	container_of(tx, काष्ठा pxad_desc_sw, async_tx)
-#घोषणा to_pxad_chan(dchan)					\
-	container_of(dchan, काष्ठा pxad_chan, vc.chan)
-#घोषणा to_pxad_dev(dmadev)					\
-	container_of(dmadev, काष्ठा pxad_device, slave)
-#घोषणा to_pxad_sw_desc(_vd)				\
-	container_of((_vd), काष्ठा pxad_desc_sw, vd)
+#define tx_to_pxad_desc(tx)					\
+	container_of(tx, struct pxad_desc_sw, async_tx)
+#define to_pxad_chan(dchan)					\
+	container_of(dchan, struct pxad_chan, vc.chan)
+#define to_pxad_dev(dmadev)					\
+	container_of(dmadev, struct pxad_device, slave)
+#define to_pxad_sw_desc(_vd)				\
+	container_of((_vd), struct pxad_desc_sw, vd)
 
-#घोषणा _phy_पढ़ोl_relaxed(phy, _reg)					\
-	पढ़ोl_relaxed((phy)->base + _reg((phy)->idx))
-#घोषणा phy_पढ़ोl_relaxed(phy, _reg)					\
-	(अणु								\
+#define _phy_readl_relaxed(phy, _reg)					\
+	readl_relaxed((phy)->base + _reg((phy)->idx))
+#define phy_readl_relaxed(phy, _reg)					\
+	({								\
 		u32 _v;							\
-		_v = पढ़ोl_relaxed((phy)->base + _reg((phy)->idx));	\
+		_v = readl_relaxed((phy)->base + _reg((phy)->idx));	\
 		dev_vdbg(&phy->vchan->vc.chan.dev->device,		\
 			 "%s(): readl(%s): 0x%08x\n", __func__, #_reg,	\
 			  _v);						\
 		_v;							\
-	पूर्ण)
-#घोषणा phy_ग_लिखोl(phy, val, _reg)					\
-	करो अणु								\
-		ग_लिखोl((val), (phy)->base + _reg((phy)->idx));		\
+	})
+#define phy_writel(phy, val, _reg)					\
+	do {								\
+		writel((val), (phy)->base + _reg((phy)->idx));		\
 		dev_vdbg(&phy->vchan->vc.chan.dev->device,		\
 			 "%s(): writel(0x%08x, %s)\n",			\
 			 __func__, (u32)(val), #_reg);			\
-	पूर्ण जबतक (0)
-#घोषणा phy_ग_लिखोl_relaxed(phy, val, _reg)				\
-	करो अणु								\
-		ग_लिखोl_relaxed((val), (phy)->base + _reg((phy)->idx));	\
+	} while (0)
+#define phy_writel_relaxed(phy, val, _reg)				\
+	do {								\
+		writel_relaxed((val), (phy)->base + _reg((phy)->idx));	\
 		dev_vdbg(&phy->vchan->vc.chan.dev->device,		\
 			 "%s(): writel_relaxed(0x%08x, %s)\n",		\
 			 __func__, (u32)(val), #_reg);			\
-	पूर्ण जबतक (0)
+	} while (0)
 
-अटल अचिन्हित पूर्णांक pxad_drcmr(अचिन्हित पूर्णांक line)
-अणु
-	अगर (line < 64)
-		वापस 0x100 + line * 4;
-	वापस 0x1000 + line * 4;
-पूर्ण
+static unsigned int pxad_drcmr(unsigned int line)
+{
+	if (line < 64)
+		return 0x100 + line * 4;
+	return 0x1000 + line * 4;
+}
 
-अटल bool pxad_filter_fn(काष्ठा dma_chan *chan, व्योम *param);
+static bool pxad_filter_fn(struct dma_chan *chan, void *param);
 
 /*
  * Debug fs
  */
-#अगर_घोषित CONFIG_DEBUG_FS
-#समावेश <linux/debugfs.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/seq_file.h>
+#ifdef CONFIG_DEBUG_FS
+#include <linux/debugfs.h>
+#include <linux/uaccess.h>
+#include <linux/seq_file.h>
 
-अटल पूर्णांक requester_chan_show(काष्ठा seq_file *s, व्योम *p)
-अणु
-	काष्ठा pxad_phy *phy = s->निजी;
-	पूर्णांक i;
+static int requester_chan_show(struct seq_file *s, void *p)
+{
+	struct pxad_phy *phy = s->private;
+	int i;
 	u32 drcmr;
 
-	seq_म_लिखो(s, "DMA channel %d requester :\n", phy->idx);
-	क्रम (i = 0; i < 70; i++) अणु
-		drcmr = पढ़ोl_relaxed(phy->base + pxad_drcmr(i));
-		अगर ((drcmr & DRCMR_CHLNUM) == phy->idx)
-			seq_म_लिखो(s, "\tRequester %d (MAPVLD=%d)\n", i,
+	seq_printf(s, "DMA channel %d requester :\n", phy->idx);
+	for (i = 0; i < 70; i++) {
+		drcmr = readl_relaxed(phy->base + pxad_drcmr(i));
+		if ((drcmr & DRCMR_CHLNUM) == phy->idx)
+			seq_printf(s, "\tRequester %d (MAPVLD=%d)\n", i,
 				   !!(drcmr & DRCMR_MAPVLD));
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक dbg_burst_from_dcmd(u32 dcmd)
-अणु
-	पूर्णांक burst = (dcmd >> 16) & 0x3;
+static inline int dbg_burst_from_dcmd(u32 dcmd)
+{
+	int burst = (dcmd >> 16) & 0x3;
 
-	वापस burst ? 4 << burst : 0;
-पूर्ण
+	return burst ? 4 << burst : 0;
+}
 
-अटल पूर्णांक is_phys_valid(अचिन्हित दीर्घ addr)
-अणु
-	वापस pfn_valid(__phys_to_pfn(addr));
-पूर्ण
+static int is_phys_valid(unsigned long addr)
+{
+	return pfn_valid(__phys_to_pfn(addr));
+}
 
-#घोषणा PXA_DCSR_STR(flag) (dcsr & PXA_DCSR_##flag ? #flag" " : "")
-#घोषणा PXA_DCMD_STR(flag) (dcmd & PXA_DCMD_##flag ? #flag" " : "")
+#define PXA_DCSR_STR(flag) (dcsr & PXA_DCSR_##flag ? #flag" " : "")
+#define PXA_DCMD_STR(flag) (dcmd & PXA_DCMD_##flag ? #flag" " : "")
 
-अटल पूर्णांक descriptors_show(काष्ठा seq_file *s, व्योम *p)
-अणु
-	काष्ठा pxad_phy *phy = s->निजी;
-	पूर्णांक i, max_show = 20, burst, width;
+static int descriptors_show(struct seq_file *s, void *p)
+{
+	struct pxad_phy *phy = s->private;
+	int i, max_show = 20, burst, width;
 	u32 dcmd;
-	अचिन्हित दीर्घ phys_desc, ddadr;
-	काष्ठा pxad_desc_hw *desc;
+	unsigned long phys_desc, ddadr;
+	struct pxad_desc_hw *desc;
 
-	phys_desc = ddadr = _phy_पढ़ोl_relaxed(phy, DDADR);
+	phys_desc = ddadr = _phy_readl_relaxed(phy, DDADR);
 
-	seq_म_लिखो(s, "DMA channel %d descriptors :\n", phy->idx);
-	seq_म_लिखो(s, "[%03d] First descriptor unknown\n", 0);
-	क्रम (i = 1; i < max_show && is_phys_valid(phys_desc); i++) अणु
+	seq_printf(s, "DMA channel %d descriptors :\n", phy->idx);
+	seq_printf(s, "[%03d] First descriptor unknown\n", 0);
+	for (i = 1; i < max_show && is_phys_valid(phys_desc); i++) {
 		desc = phys_to_virt(phys_desc);
 		dcmd = desc->dcmd;
 		burst = dbg_burst_from_dcmd(dcmd);
 		width = (1 << ((dcmd >> 14) & 0x3)) >> 1;
 
-		seq_म_लिखो(s, "[%03d] Desc at %08lx(virt %p)\n",
+		seq_printf(s, "[%03d] Desc at %08lx(virt %p)\n",
 			   i, phys_desc, desc);
-		seq_म_लिखो(s, "\tDDADR = %08x\n", desc->ddadr);
-		seq_म_लिखो(s, "\tDSADR = %08x\n", desc->dsadr);
-		seq_म_लिखो(s, "\tDTADR = %08x\n", desc->dtadr);
-		seq_म_लिखो(s, "\tDCMD  = %08x (%s%s%s%s%s%s%sburst=%d width=%d len=%d)\n",
+		seq_printf(s, "\tDDADR = %08x\n", desc->ddadr);
+		seq_printf(s, "\tDSADR = %08x\n", desc->dsadr);
+		seq_printf(s, "\tDTADR = %08x\n", desc->dtadr);
+		seq_printf(s, "\tDCMD  = %08x (%s%s%s%s%s%s%sburst=%d width=%d len=%d)\n",
 			   dcmd,
 			   PXA_DCMD_STR(INCSRCADDR), PXA_DCMD_STR(INCTRGADDR),
 			   PXA_DCMD_STR(FLOWSRC), PXA_DCMD_STR(FLOWTRG),
-			   PXA_DCMD_STR(STARTIRQEN), PXA_DCMD_STR(ENसूचीQEN),
+			   PXA_DCMD_STR(STARTIRQEN), PXA_DCMD_STR(ENDIRQEN),
 			   PXA_DCMD_STR(ENDIAN), burst, width,
 			   dcmd & PXA_DCMD_LENGTH);
 		phys_desc = desc->ddadr;
-	पूर्ण
-	अगर (i == max_show)
-		seq_म_लिखो(s, "[%03d] Desc at %08lx ... max display reached\n",
+	}
+	if (i == max_show)
+		seq_printf(s, "[%03d] Desc at %08lx ... max display reached\n",
 			   i, phys_desc);
-	अन्यथा
-		seq_म_लिखो(s, "[%03d] Desc at %08lx is %s\n",
+	else
+		seq_printf(s, "[%03d] Desc at %08lx is %s\n",
 			   i, phys_desc, phys_desc == DDADR_STOP ?
 			   "DDADR_STOP" : "invalid");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक chan_state_show(काष्ठा seq_file *s, व्योम *p)
-अणु
-	काष्ठा pxad_phy *phy = s->निजी;
+static int chan_state_show(struct seq_file *s, void *p)
+{
+	struct pxad_phy *phy = s->private;
 	u32 dcsr, dcmd;
-	पूर्णांक burst, width;
-	अटल स्थिर अक्षर * स्थिर str_prio[] = अणु
+	int burst, width;
+	static const char * const str_prio[] = {
 		"high", "normal", "low", "invalid"
-	पूर्ण;
+	};
 
-	dcsr = _phy_पढ़ोl_relaxed(phy, DCSR);
-	dcmd = _phy_पढ़ोl_relaxed(phy, DCMD);
+	dcsr = _phy_readl_relaxed(phy, DCSR);
+	dcmd = _phy_readl_relaxed(phy, DCMD);
 	burst = dbg_burst_from_dcmd(dcmd);
 	width = (1 << ((dcmd >> 14) & 0x3)) >> 1;
 
-	seq_म_लिखो(s, "DMA channel %d\n", phy->idx);
-	seq_म_लिखो(s, "\tPriority : %s\n",
+	seq_printf(s, "DMA channel %d\n", phy->idx);
+	seq_printf(s, "\tPriority : %s\n",
 			  str_prio[(phy->idx & 0xf) / 4]);
-	seq_म_लिखो(s, "\tUnaligned transfer bit: %s\n",
-			  _phy_पढ़ोl_relaxed(phy, DALGN) & BIT(phy->idx) ?
+	seq_printf(s, "\tUnaligned transfer bit: %s\n",
+			  _phy_readl_relaxed(phy, DALGN) & BIT(phy->idx) ?
 			  "yes" : "no");
-	seq_म_लिखो(s, "\tDCSR  = %08x (%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s)\n",
+	seq_printf(s, "\tDCSR  = %08x (%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s)\n",
 		   dcsr, PXA_DCSR_STR(RUN), PXA_DCSR_STR(NODESC),
 		   PXA_DCSR_STR(STOPIRQEN), PXA_DCSR_STR(EORIRQEN),
 		   PXA_DCSR_STR(EORJMPEN), PXA_DCSR_STR(EORSTOPEN),
@@ -290,89 +289,89 @@
 		   PXA_DCSR_STR(ENDINTR), PXA_DCSR_STR(STARTINTR),
 		   PXA_DCSR_STR(BUSERR));
 
-	seq_म_लिखो(s, "\tDCMD  = %08x (%s%s%s%s%s%s%sburst=%d width=%d len=%d)\n",
+	seq_printf(s, "\tDCMD  = %08x (%s%s%s%s%s%s%sburst=%d width=%d len=%d)\n",
 		   dcmd,
 		   PXA_DCMD_STR(INCSRCADDR), PXA_DCMD_STR(INCTRGADDR),
 		   PXA_DCMD_STR(FLOWSRC), PXA_DCMD_STR(FLOWTRG),
-		   PXA_DCMD_STR(STARTIRQEN), PXA_DCMD_STR(ENसूचीQEN),
+		   PXA_DCMD_STR(STARTIRQEN), PXA_DCMD_STR(ENDIRQEN),
 		   PXA_DCMD_STR(ENDIAN), burst, width, dcmd & PXA_DCMD_LENGTH);
-	seq_म_लिखो(s, "\tDSADR = %08x\n", _phy_पढ़ोl_relaxed(phy, DSADR));
-	seq_म_लिखो(s, "\tDTADR = %08x\n", _phy_पढ़ोl_relaxed(phy, DTADR));
-	seq_म_लिखो(s, "\tDDADR = %08x\n", _phy_पढ़ोl_relaxed(phy, DDADR));
+	seq_printf(s, "\tDSADR = %08x\n", _phy_readl_relaxed(phy, DSADR));
+	seq_printf(s, "\tDTADR = %08x\n", _phy_readl_relaxed(phy, DTADR));
+	seq_printf(s, "\tDDADR = %08x\n", _phy_readl_relaxed(phy, DDADR));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक state_show(काष्ठा seq_file *s, व्योम *p)
-अणु
-	काष्ठा pxad_device *pdev = s->निजी;
+static int state_show(struct seq_file *s, void *p)
+{
+	struct pxad_device *pdev = s->private;
 
 	/* basic device status */
-	seq_माला_दो(s, "DMA engine status\n");
-	seq_म_लिखो(s, "\tChannel number: %d\n", pdev->nr_chans);
+	seq_puts(s, "DMA engine status\n");
+	seq_printf(s, "\tChannel number: %d\n", pdev->nr_chans);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 DEFINE_SHOW_ATTRIBUTE(state);
 DEFINE_SHOW_ATTRIBUTE(chan_state);
 DEFINE_SHOW_ATTRIBUTE(descriptors);
 DEFINE_SHOW_ATTRIBUTE(requester_chan);
 
-अटल काष्ठा dentry *pxad_dbg_alloc_chan(काष्ठा pxad_device *pdev,
-					     पूर्णांक ch, काष्ठा dentry *chandir)
-अणु
-	अक्षर chan_name[11];
-	काष्ठा dentry *chan;
-	व्योम *dt;
+static struct dentry *pxad_dbg_alloc_chan(struct pxad_device *pdev,
+					     int ch, struct dentry *chandir)
+{
+	char chan_name[11];
+	struct dentry *chan;
+	void *dt;
 
-	scnम_लिखो(chan_name, माप(chan_name), "%d", ch);
+	scnprintf(chan_name, sizeof(chan_name), "%d", ch);
 	chan = debugfs_create_dir(chan_name, chandir);
-	dt = (व्योम *)&pdev->phys[ch];
+	dt = (void *)&pdev->phys[ch];
 
 	debugfs_create_file("state", 0400, chan, dt, &chan_state_fops);
 	debugfs_create_file("descriptors", 0400, chan, dt, &descriptors_fops);
 	debugfs_create_file("requesters", 0400, chan, dt, &requester_chan_fops);
 
-	वापस chan;
-पूर्ण
+	return chan;
+}
 
-अटल व्योम pxad_init_debugfs(काष्ठा pxad_device *pdev)
-अणु
-	पूर्णांक i;
-	काष्ठा dentry *chandir;
+static void pxad_init_debugfs(struct pxad_device *pdev)
+{
+	int i;
+	struct dentry *chandir;
 
 	pdev->dbgfs_chan =
-		kदो_स्मृति_array(pdev->nr_chans, माप(काष्ठा dentry *),
+		kmalloc_array(pdev->nr_chans, sizeof(struct dentry *),
 			      GFP_KERNEL);
-	अगर (!pdev->dbgfs_chan)
-		वापस;
+	if (!pdev->dbgfs_chan)
+		return;
 
-	pdev->dbgfs_root = debugfs_create_dir(dev_name(pdev->slave.dev), शून्य);
+	pdev->dbgfs_root = debugfs_create_dir(dev_name(pdev->slave.dev), NULL);
 
 	debugfs_create_file("state", 0400, pdev->dbgfs_root, pdev, &state_fops);
 
 	chandir = debugfs_create_dir("channels", pdev->dbgfs_root);
 
-	क्रम (i = 0; i < pdev->nr_chans; i++)
+	for (i = 0; i < pdev->nr_chans; i++)
 		pdev->dbgfs_chan[i] = pxad_dbg_alloc_chan(pdev, i, chandir);
-पूर्ण
+}
 
-अटल व्योम pxad_cleanup_debugfs(काष्ठा pxad_device *pdev)
-अणु
-	debugfs_हटाओ_recursive(pdev->dbgfs_root);
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम pxad_init_debugfs(काष्ठा pxad_device *pdev) अणुपूर्ण
-अटल अंतरभूत व्योम pxad_cleanup_debugfs(काष्ठा pxad_device *pdev) अणुपूर्ण
-#पूर्ण_अगर
+static void pxad_cleanup_debugfs(struct pxad_device *pdev)
+{
+	debugfs_remove_recursive(pdev->dbgfs_root);
+}
+#else
+static inline void pxad_init_debugfs(struct pxad_device *pdev) {}
+static inline void pxad_cleanup_debugfs(struct pxad_device *pdev) {}
+#endif
 
-अटल काष्ठा pxad_phy *lookup_phy(काष्ठा pxad_chan *pchan)
-अणु
-	पूर्णांक prio, i;
-	काष्ठा pxad_device *pdev = to_pxad_dev(pchan->vc.chan.device);
-	काष्ठा pxad_phy *phy, *found = शून्य;
-	अचिन्हित दीर्घ flags;
+static struct pxad_phy *lookup_phy(struct pxad_chan *pchan)
+{
+	int prio, i;
+	struct pxad_device *pdev = to_pxad_dev(pchan->vc.chan.device);
+	struct pxad_phy *phy, *found = NULL;
+	unsigned long flags;
 
 	/*
 	 * dma channel priorities
@@ -383,18 +382,18 @@ DEFINE_SHOW_ATTRIBUTE(requester_chan);
 	 */
 
 	spin_lock_irqsave(&pdev->phy_lock, flags);
-	क्रम (prio = pchan->prio; prio >= PXAD_PRIO_HIGHEST; prio--) अणु
-		क्रम (i = 0; i < pdev->nr_chans; i++) अणु
-			अगर (prio != (i & 0xf) >> 2)
-				जारी;
+	for (prio = pchan->prio; prio >= PXAD_PRIO_HIGHEST; prio--) {
+		for (i = 0; i < pdev->nr_chans; i++) {
+			if (prio != (i & 0xf) >> 2)
+				continue;
 			phy = &pdev->phys[i];
-			अगर (!phy->vchan) अणु
+			if (!phy->vchan) {
 				phy->vchan = pchan;
 				found = phy;
-				जाओ out_unlock;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				goto out_unlock;
+			}
+		}
+	}
 
 out_unlock:
 	spin_unlock_irqrestore(&pdev->phy_lock, flags);
@@ -402,122 +401,122 @@ out_unlock:
 		"%s(): phy=%p(%d)\n", __func__, found,
 		found ? found->idx : -1);
 
-	वापस found;
-पूर्ण
+	return found;
+}
 
-अटल व्योम pxad_मुक्त_phy(काष्ठा pxad_chan *chan)
-अणु
-	काष्ठा pxad_device *pdev = to_pxad_dev(chan->vc.chan.device);
-	अचिन्हित दीर्घ flags;
+static void pxad_free_phy(struct pxad_chan *chan)
+{
+	struct pxad_device *pdev = to_pxad_dev(chan->vc.chan.device);
+	unsigned long flags;
 	u32 reg;
 
 	dev_dbg(&chan->vc.chan.dev->device,
 		"%s(): freeing\n", __func__);
-	अगर (!chan->phy)
-		वापस;
+	if (!chan->phy)
+		return;
 
 	/* clear the channel mapping in DRCMR */
-	अगर (chan->drcmr <= pdev->nr_requestors) अणु
+	if (chan->drcmr <= pdev->nr_requestors) {
 		reg = pxad_drcmr(chan->drcmr);
-		ग_लिखोl_relaxed(0, chan->phy->base + reg);
-	पूर्ण
+		writel_relaxed(0, chan->phy->base + reg);
+	}
 
 	spin_lock_irqsave(&pdev->phy_lock, flags);
-	chan->phy->vchan = शून्य;
-	chan->phy = शून्य;
+	chan->phy->vchan = NULL;
+	chan->phy = NULL;
 	spin_unlock_irqrestore(&pdev->phy_lock, flags);
-पूर्ण
+}
 
-अटल bool is_chan_running(काष्ठा pxad_chan *chan)
-अणु
+static bool is_chan_running(struct pxad_chan *chan)
+{
 	u32 dcsr;
-	काष्ठा pxad_phy *phy = chan->phy;
+	struct pxad_phy *phy = chan->phy;
 
-	अगर (!phy)
-		वापस false;
-	dcsr = phy_पढ़ोl_relaxed(phy, DCSR);
-	वापस dcsr & PXA_DCSR_RUN;
-पूर्ण
+	if (!phy)
+		return false;
+	dcsr = phy_readl_relaxed(phy, DCSR);
+	return dcsr & PXA_DCSR_RUN;
+}
 
-अटल bool is_running_chan_misaligned(काष्ठा pxad_chan *chan)
-अणु
+static bool is_running_chan_misaligned(struct pxad_chan *chan)
+{
 	u32 dalgn;
 
 	BUG_ON(!chan->phy);
-	dalgn = phy_पढ़ोl_relaxed(chan->phy, DALGN);
-	वापस dalgn & (BIT(chan->phy->idx));
-पूर्ण
+	dalgn = phy_readl_relaxed(chan->phy, DALGN);
+	return dalgn & (BIT(chan->phy->idx));
+}
 
-अटल व्योम phy_enable(काष्ठा pxad_phy *phy, bool misaligned)
-अणु
-	काष्ठा pxad_device *pdev;
+static void phy_enable(struct pxad_phy *phy, bool misaligned)
+{
+	struct pxad_device *pdev;
 	u32 reg, dalgn;
 
-	अगर (!phy->vchan)
-		वापस;
+	if (!phy->vchan)
+		return;
 
 	dev_dbg(&phy->vchan->vc.chan.dev->device,
 		"%s(); phy=%p(%d) misaligned=%d\n", __func__,
 		phy, phy->idx, misaligned);
 
 	pdev = to_pxad_dev(phy->vchan->vc.chan.device);
-	अगर (phy->vchan->drcmr <= pdev->nr_requestors) अणु
+	if (phy->vchan->drcmr <= pdev->nr_requestors) {
 		reg = pxad_drcmr(phy->vchan->drcmr);
-		ग_लिखोl_relaxed(DRCMR_MAPVLD | phy->idx, phy->base + reg);
-	पूर्ण
+		writel_relaxed(DRCMR_MAPVLD | phy->idx, phy->base + reg);
+	}
 
-	dalgn = phy_पढ़ोl_relaxed(phy, DALGN);
-	अगर (misaligned)
+	dalgn = phy_readl_relaxed(phy, DALGN);
+	if (misaligned)
 		dalgn |= BIT(phy->idx);
-	अन्यथा
+	else
 		dalgn &= ~BIT(phy->idx);
-	phy_ग_लिखोl_relaxed(phy, dalgn, DALGN);
+	phy_writel_relaxed(phy, dalgn, DALGN);
 
-	phy_ग_लिखोl(phy, PXA_DCSR_STOPIRQEN | PXA_DCSR_ENDINTR |
+	phy_writel(phy, PXA_DCSR_STOPIRQEN | PXA_DCSR_ENDINTR |
 		   PXA_DCSR_BUSERR | PXA_DCSR_RUN, DCSR);
-पूर्ण
+}
 
-अटल व्योम phy_disable(काष्ठा pxad_phy *phy)
-अणु
+static void phy_disable(struct pxad_phy *phy)
+{
 	u32 dcsr;
 
-	अगर (!phy)
-		वापस;
+	if (!phy)
+		return;
 
-	dcsr = phy_पढ़ोl_relaxed(phy, DCSR);
+	dcsr = phy_readl_relaxed(phy, DCSR);
 	dev_dbg(&phy->vchan->vc.chan.dev->device,
 		"%s(): phy=%p(%d)\n", __func__, phy, phy->idx);
-	phy_ग_लिखोl(phy, dcsr & ~PXA_DCSR_RUN & ~PXA_DCSR_STOPIRQEN, DCSR);
-पूर्ण
+	phy_writel(phy, dcsr & ~PXA_DCSR_RUN & ~PXA_DCSR_STOPIRQEN, DCSR);
+}
 
-अटल व्योम pxad_launch_chan(काष्ठा pxad_chan *chan,
-				 काष्ठा pxad_desc_sw *desc)
-अणु
+static void pxad_launch_chan(struct pxad_chan *chan,
+				 struct pxad_desc_sw *desc)
+{
 	dev_dbg(&chan->vc.chan.dev->device,
 		"%s(): desc=%p\n", __func__, desc);
-	अगर (!chan->phy) अणु
+	if (!chan->phy) {
 		chan->phy = lookup_phy(chan);
-		अगर (!chan->phy) अणु
+		if (!chan->phy) {
 			dev_dbg(&chan->vc.chan.dev->device,
 				"%s(): no free dma channel\n", __func__);
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 	chan->bus_error = 0;
 
 	/*
-	 * Program the descriptor's address पूर्णांकo the DMA controller,
+	 * Program the descriptor's address into the DMA controller,
 	 * then start the DMA transaction
 	 */
-	phy_ग_लिखोl(chan->phy, desc->first, DDADR);
+	phy_writel(chan->phy, desc->first, DDADR);
 	phy_enable(chan->phy, chan->misaligned);
 	wake_up(&chan->wq_state);
-पूर्ण
+}
 
-अटल व्योम set_updater_desc(काष्ठा pxad_desc_sw *sw_desc,
-			     अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा pxad_desc_hw *updater =
+static void set_updater_desc(struct pxad_desc_sw *sw_desc,
+			     unsigned long flags)
+{
+	struct pxad_desc_hw *updater =
 		sw_desc->hw_desc[sw_desc->nb_desc - 1];
 	dma_addr_t dma = sw_desc->hw_desc[sw_desc->nb_desc - 2]->ddadr;
 
@@ -525,293 +524,293 @@ out_unlock:
 	updater->dsadr = dma;
 	updater->dtadr = dma + 8;
 	updater->dcmd = PXA_DCMD_WIDTH4 | PXA_DCMD_BURST32 |
-		(PXA_DCMD_LENGTH & माप(u32));
-	अगर (flags & DMA_PREP_INTERRUPT)
-		updater->dcmd |= PXA_DCMD_ENसूचीQEN;
-	अगर (sw_desc->cyclic)
+		(PXA_DCMD_LENGTH & sizeof(u32));
+	if (flags & DMA_PREP_INTERRUPT)
+		updater->dcmd |= PXA_DCMD_ENDIRQEN;
+	if (sw_desc->cyclic)
 		sw_desc->hw_desc[sw_desc->nb_desc - 2]->ddadr = sw_desc->first;
-पूर्ण
+}
 
-अटल bool is_desc_completed(काष्ठा virt_dma_desc *vd)
-अणु
-	काष्ठा pxad_desc_sw *sw_desc = to_pxad_sw_desc(vd);
-	काष्ठा pxad_desc_hw *updater =
+static bool is_desc_completed(struct virt_dma_desc *vd)
+{
+	struct pxad_desc_sw *sw_desc = to_pxad_sw_desc(vd);
+	struct pxad_desc_hw *updater =
 		sw_desc->hw_desc[sw_desc->nb_desc - 1];
 
-	वापस updater->dtadr != (updater->dsadr + 8);
-पूर्ण
+	return updater->dtadr != (updater->dsadr + 8);
+}
 
-अटल व्योम pxad_desc_chain(काष्ठा virt_dma_desc *vd1,
-				काष्ठा virt_dma_desc *vd2)
-अणु
-	काष्ठा pxad_desc_sw *desc1 = to_pxad_sw_desc(vd1);
-	काष्ठा pxad_desc_sw *desc2 = to_pxad_sw_desc(vd2);
+static void pxad_desc_chain(struct virt_dma_desc *vd1,
+				struct virt_dma_desc *vd2)
+{
+	struct pxad_desc_sw *desc1 = to_pxad_sw_desc(vd1);
+	struct pxad_desc_sw *desc2 = to_pxad_sw_desc(vd2);
 	dma_addr_t dma_to_chain;
 
 	dma_to_chain = desc2->first;
 	desc1->hw_desc[desc1->nb_desc - 1]->ddadr = dma_to_chain;
-पूर्ण
+}
 
-अटल bool pxad_try_hotchain(काष्ठा virt_dma_chan *vc,
-				  काष्ठा virt_dma_desc *vd)
-अणु
-	काष्ठा virt_dma_desc *vd_last_issued = शून्य;
-	काष्ठा pxad_chan *chan = to_pxad_chan(&vc->chan);
+static bool pxad_try_hotchain(struct virt_dma_chan *vc,
+				  struct virt_dma_desc *vd)
+{
+	struct virt_dma_desc *vd_last_issued = NULL;
+	struct pxad_chan *chan = to_pxad_chan(&vc->chan);
 
 	/*
-	 * Attempt to hot chain the tx अगर the phy is still running. This is
-	 * considered successful only अगर either the channel is still running
-	 * after the chaining, or अगर the chained transfer is completed after
+	 * Attempt to hot chain the tx if the phy is still running. This is
+	 * considered successful only if either the channel is still running
+	 * after the chaining, or if the chained transfer is completed after
 	 * having been hot chained.
-	 * A change of alignment is not allowed, and क्रमbids hotchaining.
+	 * A change of alignment is not allowed, and forbids hotchaining.
 	 */
-	अगर (is_chan_running(chan)) अणु
+	if (is_chan_running(chan)) {
 		BUG_ON(list_empty(&vc->desc_issued));
 
-		अगर (!is_running_chan_misaligned(chan) &&
+		if (!is_running_chan_misaligned(chan) &&
 		    to_pxad_sw_desc(vd)->misaligned)
-			वापस false;
+			return false;
 
 		vd_last_issued = list_entry(vc->desc_issued.prev,
-					    काष्ठा virt_dma_desc, node);
+					    struct virt_dma_desc, node);
 		pxad_desc_chain(vd_last_issued, vd);
-		अगर (is_chan_running(chan) || is_desc_completed(vd))
-			वापस true;
-	पूर्ण
+		if (is_chan_running(chan) || is_desc_completed(vd))
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल अचिन्हित पूर्णांक clear_chan_irq(काष्ठा pxad_phy *phy)
-अणु
+static unsigned int clear_chan_irq(struct pxad_phy *phy)
+{
 	u32 dcsr;
-	u32 dपूर्णांक = पढ़ोl(phy->base + DINT);
+	u32 dint = readl(phy->base + DINT);
 
-	अगर (!(dपूर्णांक & BIT(phy->idx)))
-		वापस PXA_DCSR_RUN;
+	if (!(dint & BIT(phy->idx)))
+		return PXA_DCSR_RUN;
 
 	/* clear irq */
-	dcsr = phy_पढ़ोl_relaxed(phy, DCSR);
-	phy_ग_लिखोl(phy, dcsr, DCSR);
-	अगर ((dcsr & PXA_DCSR_BUSERR) && (phy->vchan))
+	dcsr = phy_readl_relaxed(phy, DCSR);
+	phy_writel(phy, dcsr, DCSR);
+	if ((dcsr & PXA_DCSR_BUSERR) && (phy->vchan))
 		dev_warn(&phy->vchan->vc.chan.dev->device,
 			 "%s(chan=%p): PXA_DCSR_BUSERR\n",
 			 __func__, &phy->vchan);
 
-	वापस dcsr & ~PXA_DCSR_RUN;
-पूर्ण
+	return dcsr & ~PXA_DCSR_RUN;
+}
 
-अटल irqवापस_t pxad_chan_handler(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा pxad_phy *phy = dev_id;
-	काष्ठा pxad_chan *chan = phy->vchan;
-	काष्ठा virt_dma_desc *vd, *पंचांगp;
-	अचिन्हित पूर्णांक dcsr;
+static irqreturn_t pxad_chan_handler(int irq, void *dev_id)
+{
+	struct pxad_phy *phy = dev_id;
+	struct pxad_chan *chan = phy->vchan;
+	struct virt_dma_desc *vd, *tmp;
+	unsigned int dcsr;
 	bool vd_completed;
 	dma_cookie_t last_started = 0;
 
 	BUG_ON(!chan);
 
 	dcsr = clear_chan_irq(phy);
-	अगर (dcsr & PXA_DCSR_RUN)
-		वापस IRQ_NONE;
+	if (dcsr & PXA_DCSR_RUN)
+		return IRQ_NONE;
 
 	spin_lock(&chan->vc.lock);
-	list_क्रम_each_entry_safe(vd, पंचांगp, &chan->vc.desc_issued, node) अणु
+	list_for_each_entry_safe(vd, tmp, &chan->vc.desc_issued, node) {
 		vd_completed = is_desc_completed(vd);
 		dev_dbg(&chan->vc.chan.dev->device,
 			"%s(): checking txd %p[%x]: completed=%d dcsr=0x%x\n",
 			__func__, vd, vd->tx.cookie, vd_completed,
 			dcsr);
 		last_started = vd->tx.cookie;
-		अगर (to_pxad_sw_desc(vd)->cyclic) अणु
+		if (to_pxad_sw_desc(vd)->cyclic) {
 			vchan_cyclic_callback(vd);
-			अवरोध;
-		पूर्ण
-		अगर (vd_completed) अणु
+			break;
+		}
+		if (vd_completed) {
 			list_del(&vd->node);
 			vchan_cookie_complete(vd);
-		पूर्ण अन्यथा अणु
-			अवरोध;
-		पूर्ण
-	पूर्ण
+		} else {
+			break;
+		}
+	}
 
-	अगर (dcsr & PXA_DCSR_BUSERR) अणु
+	if (dcsr & PXA_DCSR_BUSERR) {
 		chan->bus_error = last_started;
 		phy_disable(phy);
-	पूर्ण
+	}
 
-	अगर (!chan->bus_error && dcsr & PXA_DCSR_STOPSTATE) अणु
+	if (!chan->bus_error && dcsr & PXA_DCSR_STOPSTATE) {
 		dev_dbg(&chan->vc.chan.dev->device,
 		"%s(): channel stopped, submitted_empty=%d issued_empty=%d",
 			__func__,
 			list_empty(&chan->vc.desc_submitted),
 			list_empty(&chan->vc.desc_issued));
-		phy_ग_लिखोl_relaxed(phy, dcsr & ~PXA_DCSR_STOPIRQEN, DCSR);
+		phy_writel_relaxed(phy, dcsr & ~PXA_DCSR_STOPIRQEN, DCSR);
 
-		अगर (list_empty(&chan->vc.desc_issued)) अणु
+		if (list_empty(&chan->vc.desc_issued)) {
 			chan->misaligned =
 				!list_empty(&chan->vc.desc_submitted);
-		पूर्ण अन्यथा अणु
+		} else {
 			vd = list_first_entry(&chan->vc.desc_issued,
-					      काष्ठा virt_dma_desc, node);
+					      struct virt_dma_desc, node);
 			pxad_launch_chan(chan, to_pxad_sw_desc(vd));
-		पूर्ण
-	पूर्ण
+		}
+	}
 	spin_unlock(&chan->vc.lock);
 	wake_up(&chan->wq_state);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t pxad_पूर्णांक_handler(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा pxad_device *pdev = dev_id;
-	काष्ठा pxad_phy *phy;
-	u32 dपूर्णांक = पढ़ोl(pdev->base + DINT);
-	पूर्णांक i, ret = IRQ_NONE;
+static irqreturn_t pxad_int_handler(int irq, void *dev_id)
+{
+	struct pxad_device *pdev = dev_id;
+	struct pxad_phy *phy;
+	u32 dint = readl(pdev->base + DINT);
+	int i, ret = IRQ_NONE;
 
-	जबतक (dपूर्णांक) अणु
-		i = __ffs(dपूर्णांक);
-		dपूर्णांक &= (dपूर्णांक - 1);
+	while (dint) {
+		i = __ffs(dint);
+		dint &= (dint - 1);
 		phy = &pdev->phys[i];
-		अगर (pxad_chan_handler(irq, phy) == IRQ_HANDLED)
+		if (pxad_chan_handler(irq, phy) == IRQ_HANDLED)
 			ret = IRQ_HANDLED;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक pxad_alloc_chan_resources(काष्ठा dma_chan *dchan)
-अणु
-	काष्ठा pxad_chan *chan = to_pxad_chan(dchan);
-	काष्ठा pxad_device *pdev = to_pxad_dev(chan->vc.chan.device);
+static int pxad_alloc_chan_resources(struct dma_chan *dchan)
+{
+	struct pxad_chan *chan = to_pxad_chan(dchan);
+	struct pxad_device *pdev = to_pxad_dev(chan->vc.chan.device);
 
-	अगर (chan->desc_pool)
-		वापस 1;
+	if (chan->desc_pool)
+		return 1;
 
 	chan->desc_pool = dma_pool_create(dma_chan_name(dchan),
 					  pdev->slave.dev,
-					  माप(काष्ठा pxad_desc_hw),
-					  __alignof__(काष्ठा pxad_desc_hw),
+					  sizeof(struct pxad_desc_hw),
+					  __alignof__(struct pxad_desc_hw),
 					  0);
-	अगर (!chan->desc_pool) अणु
+	if (!chan->desc_pool) {
 		dev_err(&chan->vc.chan.dev->device,
 			"%s(): unable to allocate descriptor pool\n",
 			__func__);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल व्योम pxad_मुक्त_chan_resources(काष्ठा dma_chan *dchan)
-अणु
-	काष्ठा pxad_chan *chan = to_pxad_chan(dchan);
+static void pxad_free_chan_resources(struct dma_chan *dchan)
+{
+	struct pxad_chan *chan = to_pxad_chan(dchan);
 
-	vchan_मुक्त_chan_resources(&chan->vc);
+	vchan_free_chan_resources(&chan->vc);
 	dma_pool_destroy(chan->desc_pool);
-	chan->desc_pool = शून्य;
+	chan->desc_pool = NULL;
 
 	chan->drcmr = U32_MAX;
 	chan->prio = PXAD_PRIO_LOWEST;
-पूर्ण
+}
 
-अटल व्योम pxad_मुक्त_desc(काष्ठा virt_dma_desc *vd)
-अणु
-	पूर्णांक i;
+static void pxad_free_desc(struct virt_dma_desc *vd)
+{
+	int i;
 	dma_addr_t dma;
-	काष्ठा pxad_desc_sw *sw_desc = to_pxad_sw_desc(vd);
+	struct pxad_desc_sw *sw_desc = to_pxad_sw_desc(vd);
 
 	BUG_ON(sw_desc->nb_desc == 0);
-	क्रम (i = sw_desc->nb_desc - 1; i >= 0; i--) अणु
-		अगर (i > 0)
+	for (i = sw_desc->nb_desc - 1; i >= 0; i--) {
+		if (i > 0)
 			dma = sw_desc->hw_desc[i - 1]->ddadr;
-		अन्यथा
+		else
 			dma = sw_desc->first;
-		dma_pool_मुक्त(sw_desc->desc_pool,
+		dma_pool_free(sw_desc->desc_pool,
 			      sw_desc->hw_desc[i], dma);
-	पूर्ण
+	}
 	sw_desc->nb_desc = 0;
-	kमुक्त(sw_desc);
-पूर्ण
+	kfree(sw_desc);
+}
 
-अटल काष्ठा pxad_desc_sw *
-pxad_alloc_desc(काष्ठा pxad_chan *chan, अचिन्हित पूर्णांक nb_hw_desc)
-अणु
-	काष्ठा pxad_desc_sw *sw_desc;
+static struct pxad_desc_sw *
+pxad_alloc_desc(struct pxad_chan *chan, unsigned int nb_hw_desc)
+{
+	struct pxad_desc_sw *sw_desc;
 	dma_addr_t dma;
-	पूर्णांक i;
+	int i;
 
-	sw_desc = kzalloc(माप(*sw_desc) +
-			  nb_hw_desc * माप(काष्ठा pxad_desc_hw *),
+	sw_desc = kzalloc(sizeof(*sw_desc) +
+			  nb_hw_desc * sizeof(struct pxad_desc_hw *),
 			  GFP_NOWAIT);
-	अगर (!sw_desc)
-		वापस शून्य;
+	if (!sw_desc)
+		return NULL;
 	sw_desc->desc_pool = chan->desc_pool;
 
-	क्रम (i = 0; i < nb_hw_desc; i++) अणु
+	for (i = 0; i < nb_hw_desc; i++) {
 		sw_desc->hw_desc[i] = dma_pool_alloc(sw_desc->desc_pool,
 						     GFP_NOWAIT, &dma);
-		अगर (!sw_desc->hw_desc[i]) अणु
+		if (!sw_desc->hw_desc[i]) {
 			dev_err(&chan->vc.chan.dev->device,
 				"%s(): Couldn't allocate the %dth hw_desc from dma_pool %p\n",
 				__func__, i, sw_desc->desc_pool);
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
-		अगर (i == 0)
+		if (i == 0)
 			sw_desc->first = dma;
-		अन्यथा
+		else
 			sw_desc->hw_desc[i - 1]->ddadr = dma;
 		sw_desc->nb_desc++;
-	पूर्ण
+	}
 
-	वापस sw_desc;
+	return sw_desc;
 err:
-	pxad_मुक्त_desc(&sw_desc->vd);
-	वापस शून्य;
-पूर्ण
+	pxad_free_desc(&sw_desc->vd);
+	return NULL;
+}
 
-अटल dma_cookie_t pxad_tx_submit(काष्ठा dma_async_tx_descriptor *tx)
-अणु
-	काष्ठा virt_dma_chan *vc = to_virt_chan(tx->chan);
-	काष्ठा pxad_chan *chan = to_pxad_chan(&vc->chan);
-	काष्ठा virt_dma_desc *vd_chained = शून्य,
-		*vd = container_of(tx, काष्ठा virt_dma_desc, tx);
+static dma_cookie_t pxad_tx_submit(struct dma_async_tx_descriptor *tx)
+{
+	struct virt_dma_chan *vc = to_virt_chan(tx->chan);
+	struct pxad_chan *chan = to_pxad_chan(&vc->chan);
+	struct virt_dma_desc *vd_chained = NULL,
+		*vd = container_of(tx, struct virt_dma_desc, tx);
 	dma_cookie_t cookie;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	set_updater_desc(to_pxad_sw_desc(vd), tx->flags);
 
 	spin_lock_irqsave(&vc->lock, flags);
 	cookie = dma_cookie_assign(tx);
 
-	अगर (list_empty(&vc->desc_submitted) && pxad_try_hotchain(vc, vd)) अणु
+	if (list_empty(&vc->desc_submitted) && pxad_try_hotchain(vc, vd)) {
 		list_move_tail(&vd->node, &vc->desc_issued);
 		dev_dbg(&chan->vc.chan.dev->device,
 			"%s(): txd %p[%x]: submitted (hot linked)\n",
 			__func__, vd, cookie);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
 	 * Fallback to placing the tx in the submitted queue
 	 */
-	अगर (!list_empty(&vc->desc_submitted)) अणु
+	if (!list_empty(&vc->desc_submitted)) {
 		vd_chained = list_entry(vc->desc_submitted.prev,
-					काष्ठा virt_dma_desc, node);
+					struct virt_dma_desc, node);
 		/*
-		 * Only chain the descriptors अगर no new misalignment is
-		 * पूर्णांकroduced. If a new misalignment is chained, let the channel
+		 * Only chain the descriptors if no new misalignment is
+		 * introduced. If a new misalignment is chained, let the channel
 		 * stop, and be relaunched in misalign mode from the irq
 		 * handler.
 		 */
-		अगर (chan->misaligned || !to_pxad_sw_desc(vd)->misaligned)
+		if (chan->misaligned || !to_pxad_sw_desc(vd)->misaligned)
 			pxad_desc_chain(vd_chained, vd);
-		अन्यथा
-			vd_chained = शून्य;
-	पूर्ण
+		else
+			vd_chained = NULL;
+	}
 	dev_dbg(&chan->vc.chan.dev->device,
 		"%s(): txd %p[%x]: submitted (%s linked)\n",
 		__func__, vd, cookie, vd_chained ? "cold" : "not");
@@ -820,37 +819,37 @@ err:
 
 out:
 	spin_unlock_irqrestore(&vc->lock, flags);
-	वापस cookie;
-पूर्ण
+	return cookie;
+}
 
-अटल व्योम pxad_issue_pending(काष्ठा dma_chan *dchan)
-अणु
-	काष्ठा pxad_chan *chan = to_pxad_chan(dchan);
-	काष्ठा virt_dma_desc *vd_first;
-	अचिन्हित दीर्घ flags;
+static void pxad_issue_pending(struct dma_chan *dchan)
+{
+	struct pxad_chan *chan = to_pxad_chan(dchan);
+	struct virt_dma_desc *vd_first;
+	unsigned long flags;
 
 	spin_lock_irqsave(&chan->vc.lock, flags);
-	अगर (list_empty(&chan->vc.desc_submitted))
-		जाओ out;
+	if (list_empty(&chan->vc.desc_submitted))
+		goto out;
 
 	vd_first = list_first_entry(&chan->vc.desc_submitted,
-				    काष्ठा virt_dma_desc, node);
+				    struct virt_dma_desc, node);
 	dev_dbg(&chan->vc.chan.dev->device,
 		"%s(): txd %p[%x]", __func__, vd_first, vd_first->tx.cookie);
 
 	vchan_issue_pending(&chan->vc);
-	अगर (!pxad_try_hotchain(&chan->vc, vd_first))
+	if (!pxad_try_hotchain(&chan->vc, vd_first))
 		pxad_launch_chan(chan, to_pxad_sw_desc(vd_first));
 out:
 	spin_unlock_irqrestore(&chan->vc.lock, flags);
-पूर्ण
+}
 
-अटल अंतरभूत काष्ठा dma_async_tx_descriptor *
-pxad_tx_prep(काष्ठा virt_dma_chan *vc, काष्ठा virt_dma_desc *vd,
-		 अचिन्हित दीर्घ tx_flags)
-अणु
-	काष्ठा dma_async_tx_descriptor *tx;
-	काष्ठा pxad_chan *chan = container_of(vc, काष्ठा pxad_chan, vc);
+static inline struct dma_async_tx_descriptor *
+pxad_tx_prep(struct virt_dma_chan *vc, struct virt_dma_desc *vd,
+		 unsigned long tx_flags)
+{
+	struct dma_async_tx_descriptor *tx;
+	struct pxad_chan *chan = container_of(vc, struct pxad_chan, vc);
 
 	INIT_LIST_HEAD(&vd->node);
 	tx = vchan_tx_prep(vc, vd, tx_flags);
@@ -860,37 +859,37 @@ pxad_tx_prep(काष्ठा virt_dma_chan *vc, काष्ठा virt_dma_d
 		vc, vd, vd->tx.cookie,
 		tx_flags);
 
-	वापस tx;
-पूर्ण
+	return tx;
+}
 
-अटल व्योम pxad_get_config(काष्ठा pxad_chan *chan,
-			    क्रमागत dma_transfer_direction dir,
+static void pxad_get_config(struct pxad_chan *chan,
+			    enum dma_transfer_direction dir,
 			    u32 *dcmd, u32 *dev_src, u32 *dev_dst)
-अणु
+{
 	u32 maxburst = 0, dev_addr = 0;
-	क्रमागत dma_slave_buswidth width = DMA_SLAVE_BUSWIDTH_UNDEFINED;
-	काष्ठा pxad_device *pdev = to_pxad_dev(chan->vc.chan.device);
+	enum dma_slave_buswidth width = DMA_SLAVE_BUSWIDTH_UNDEFINED;
+	struct pxad_device *pdev = to_pxad_dev(chan->vc.chan.device);
 
 	*dcmd = 0;
-	अगर (dir == DMA_DEV_TO_MEM) अणु
+	if (dir == DMA_DEV_TO_MEM) {
 		maxburst = chan->cfg.src_maxburst;
 		width = chan->cfg.src_addr_width;
 		dev_addr = chan->cfg.src_addr;
 		*dev_src = dev_addr;
 		*dcmd |= PXA_DCMD_INCTRGADDR;
-		अगर (chan->drcmr <= pdev->nr_requestors)
+		if (chan->drcmr <= pdev->nr_requestors)
 			*dcmd |= PXA_DCMD_FLOWSRC;
-	पूर्ण
-	अगर (dir == DMA_MEM_TO_DEV) अणु
+	}
+	if (dir == DMA_MEM_TO_DEV) {
 		maxburst = chan->cfg.dst_maxburst;
 		width = chan->cfg.dst_addr_width;
 		dev_addr = chan->cfg.dst_addr;
 		*dev_dst = dev_addr;
 		*dcmd |= PXA_DCMD_INCSRCADDR;
-		अगर (chan->drcmr <= pdev->nr_requestors)
+		if (chan->drcmr <= pdev->nr_requestors)
 			*dcmd |= PXA_DCMD_FLOWTRG;
-	पूर्ण
-	अगर (dir == DMA_MEM_TO_MEM)
+	}
+	if (dir == DMA_MEM_TO_MEM)
 		*dcmd |= PXA_DCMD_BURST32 | PXA_DCMD_INCTRGADDR |
 			PXA_DCMD_INCSRCADDR;
 
@@ -898,109 +897,109 @@ pxad_tx_prep(काष्ठा virt_dma_chan *vc, काष्ठा virt_dma_d
 		"%s(): dev_addr=0x%x maxburst=%d width=%d  dir=%d\n",
 		__func__, dev_addr, maxburst, width, dir);
 
-	अगर (width == DMA_SLAVE_BUSWIDTH_1_BYTE)
+	if (width == DMA_SLAVE_BUSWIDTH_1_BYTE)
 		*dcmd |= PXA_DCMD_WIDTH1;
-	अन्यथा अगर (width == DMA_SLAVE_BUSWIDTH_2_BYTES)
+	else if (width == DMA_SLAVE_BUSWIDTH_2_BYTES)
 		*dcmd |= PXA_DCMD_WIDTH2;
-	अन्यथा अगर (width == DMA_SLAVE_BUSWIDTH_4_BYTES)
+	else if (width == DMA_SLAVE_BUSWIDTH_4_BYTES)
 		*dcmd |= PXA_DCMD_WIDTH4;
 
-	अगर (maxburst == 8)
+	if (maxburst == 8)
 		*dcmd |= PXA_DCMD_BURST8;
-	अन्यथा अगर (maxburst == 16)
+	else if (maxburst == 16)
 		*dcmd |= PXA_DCMD_BURST16;
-	अन्यथा अगर (maxburst == 32)
+	else if (maxburst == 32)
 		*dcmd |= PXA_DCMD_BURST32;
 
 	/* FIXME: drivers should be ported over to use the filter
-	 * function. Once that's करोne, the following two lines can
-	 * be हटाओd.
+	 * function. Once that's done, the following two lines can
+	 * be removed.
 	 */
-	अगर (chan->cfg.slave_id)
+	if (chan->cfg.slave_id)
 		chan->drcmr = chan->cfg.slave_id;
-पूर्ण
+}
 
-अटल काष्ठा dma_async_tx_descriptor *
-pxad_prep_स_नकल(काष्ठा dma_chan *dchan,
+static struct dma_async_tx_descriptor *
+pxad_prep_memcpy(struct dma_chan *dchan,
 		 dma_addr_t dma_dst, dma_addr_t dma_src,
-		 माप_प्रकार len, अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा pxad_chan *chan = to_pxad_chan(dchan);
-	काष्ठा pxad_desc_sw *sw_desc;
-	काष्ठा pxad_desc_hw *hw_desc;
+		 size_t len, unsigned long flags)
+{
+	struct pxad_chan *chan = to_pxad_chan(dchan);
+	struct pxad_desc_sw *sw_desc;
+	struct pxad_desc_hw *hw_desc;
 	u32 dcmd;
-	अचिन्हित पूर्णांक i, nb_desc = 0;
-	माप_प्रकार copy;
+	unsigned int i, nb_desc = 0;
+	size_t copy;
 
-	अगर (!dchan || !len)
-		वापस शून्य;
+	if (!dchan || !len)
+		return NULL;
 
 	dev_dbg(&chan->vc.chan.dev->device,
 		"%s(): dma_dst=0x%lx dma_src=0x%lx len=%zu flags=%lx\n",
-		__func__, (अचिन्हित दीर्घ)dma_dst, (अचिन्हित दीर्घ)dma_src,
+		__func__, (unsigned long)dma_dst, (unsigned long)dma_src,
 		len, flags);
-	pxad_get_config(chan, DMA_MEM_TO_MEM, &dcmd, शून्य, शून्य);
+	pxad_get_config(chan, DMA_MEM_TO_MEM, &dcmd, NULL, NULL);
 
 	nb_desc = DIV_ROUND_UP(len, PDMA_MAX_DESC_BYTES);
 	sw_desc = pxad_alloc_desc(chan, nb_desc + 1);
-	अगर (!sw_desc)
-		वापस शून्य;
+	if (!sw_desc)
+		return NULL;
 	sw_desc->len = len;
 
-	अगर (!IS_ALIGNED(dma_src, 1 << PDMA_ALIGNMENT) ||
+	if (!IS_ALIGNED(dma_src, 1 << PDMA_ALIGNMENT) ||
 	    !IS_ALIGNED(dma_dst, 1 << PDMA_ALIGNMENT))
 		sw_desc->misaligned = true;
 
 	i = 0;
-	करो अणु
+	do {
 		hw_desc = sw_desc->hw_desc[i++];
-		copy = min_t(माप_प्रकार, len, PDMA_MAX_DESC_BYTES);
+		copy = min_t(size_t, len, PDMA_MAX_DESC_BYTES);
 		hw_desc->dcmd = dcmd | (PXA_DCMD_LENGTH & copy);
 		hw_desc->dsadr = dma_src;
 		hw_desc->dtadr = dma_dst;
 		len -= copy;
 		dma_src += copy;
 		dma_dst += copy;
-	पूर्ण जबतक (len);
+	} while (len);
 	set_updater_desc(sw_desc, flags);
 
-	वापस pxad_tx_prep(&chan->vc, &sw_desc->vd, flags);
-पूर्ण
+	return pxad_tx_prep(&chan->vc, &sw_desc->vd, flags);
+}
 
-अटल काष्ठा dma_async_tx_descriptor *
-pxad_prep_slave_sg(काष्ठा dma_chan *dchan, काष्ठा scatterlist *sgl,
-		   अचिन्हित पूर्णांक sg_len, क्रमागत dma_transfer_direction dir,
-		   अचिन्हित दीर्घ flags, व्योम *context)
-अणु
-	काष्ठा pxad_chan *chan = to_pxad_chan(dchan);
-	काष्ठा pxad_desc_sw *sw_desc;
-	माप_प्रकार len, avail;
-	काष्ठा scatterlist *sg;
+static struct dma_async_tx_descriptor *
+pxad_prep_slave_sg(struct dma_chan *dchan, struct scatterlist *sgl,
+		   unsigned int sg_len, enum dma_transfer_direction dir,
+		   unsigned long flags, void *context)
+{
+	struct pxad_chan *chan = to_pxad_chan(dchan);
+	struct pxad_desc_sw *sw_desc;
+	size_t len, avail;
+	struct scatterlist *sg;
 	dma_addr_t dma;
 	u32 dcmd, dsadr = 0, dtadr = 0;
-	अचिन्हित पूर्णांक nb_desc = 0, i, j = 0;
+	unsigned int nb_desc = 0, i, j = 0;
 
-	अगर ((sgl == शून्य) || (sg_len == 0))
-		वापस शून्य;
+	if ((sgl == NULL) || (sg_len == 0))
+		return NULL;
 
 	pxad_get_config(chan, dir, &dcmd, &dsadr, &dtadr);
 	dev_dbg(&chan->vc.chan.dev->device,
 		"%s(): dir=%d flags=%lx\n", __func__, dir, flags);
 
-	क्रम_each_sg(sgl, sg, sg_len, i)
+	for_each_sg(sgl, sg, sg_len, i)
 		nb_desc += DIV_ROUND_UP(sg_dma_len(sg), PDMA_MAX_DESC_BYTES);
 	sw_desc = pxad_alloc_desc(chan, nb_desc + 1);
-	अगर (!sw_desc)
-		वापस शून्य;
+	if (!sw_desc)
+		return NULL;
 
-	क्रम_each_sg(sgl, sg, sg_len, i) अणु
+	for_each_sg(sgl, sg, sg_len, i) {
 		dma = sg_dma_address(sg);
 		avail = sg_dma_len(sg);
 		sw_desc->len += avail;
 
-		करो अणु
-			len = min_t(माप_प्रकार, avail, PDMA_MAX_DESC_BYTES);
-			अगर (dma & 0x7)
+		do {
+			len = min_t(size_t, avail, PDMA_MAX_DESC_BYTES);
+			if (dma & 0x7)
 				sw_desc->misaligned = true;
 
 			sw_desc->hw_desc[j]->dcmd =
@@ -1010,85 +1009,85 @@ pxad_prep_slave_sg(काष्ठा dma_chan *dchan, काष्ठा scatte
 
 			dma += len;
 			avail -= len;
-		पूर्ण जबतक (avail);
-	पूर्ण
+		} while (avail);
+	}
 	set_updater_desc(sw_desc, flags);
 
-	वापस pxad_tx_prep(&chan->vc, &sw_desc->vd, flags);
-पूर्ण
+	return pxad_tx_prep(&chan->vc, &sw_desc->vd, flags);
+}
 
-अटल काष्ठा dma_async_tx_descriptor *
-pxad_prep_dma_cyclic(काष्ठा dma_chan *dchan,
-		     dma_addr_t buf_addr, माप_प्रकार len, माप_प्रकार period_len,
-		     क्रमागत dma_transfer_direction dir, अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा pxad_chan *chan = to_pxad_chan(dchan);
-	काष्ठा pxad_desc_sw *sw_desc;
-	काष्ठा pxad_desc_hw **phw_desc;
+static struct dma_async_tx_descriptor *
+pxad_prep_dma_cyclic(struct dma_chan *dchan,
+		     dma_addr_t buf_addr, size_t len, size_t period_len,
+		     enum dma_transfer_direction dir, unsigned long flags)
+{
+	struct pxad_chan *chan = to_pxad_chan(dchan);
+	struct pxad_desc_sw *sw_desc;
+	struct pxad_desc_hw **phw_desc;
 	dma_addr_t dma;
 	u32 dcmd, dsadr = 0, dtadr = 0;
-	अचिन्हित पूर्णांक nb_desc = 0;
+	unsigned int nb_desc = 0;
 
-	अगर (!dchan || !len || !period_len)
-		वापस शून्य;
-	अगर ((dir != DMA_DEV_TO_MEM) && (dir != DMA_MEM_TO_DEV)) अणु
+	if (!dchan || !len || !period_len)
+		return NULL;
+	if ((dir != DMA_DEV_TO_MEM) && (dir != DMA_MEM_TO_DEV)) {
 		dev_err(&chan->vc.chan.dev->device,
 			"Unsupported direction for cyclic DMA\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 	/* the buffer length must be a multiple of period_len */
-	अगर (len % period_len != 0 || period_len > PDMA_MAX_DESC_BYTES ||
+	if (len % period_len != 0 || period_len > PDMA_MAX_DESC_BYTES ||
 	    !IS_ALIGNED(period_len, 1 << PDMA_ALIGNMENT))
-		वापस शून्य;
+		return NULL;
 
 	pxad_get_config(chan, dir, &dcmd, &dsadr, &dtadr);
-	dcmd |= PXA_DCMD_ENसूचीQEN | (PXA_DCMD_LENGTH & period_len);
+	dcmd |= PXA_DCMD_ENDIRQEN | (PXA_DCMD_LENGTH & period_len);
 	dev_dbg(&chan->vc.chan.dev->device,
 		"%s(): buf_addr=0x%lx len=%zu period=%zu dir=%d flags=%lx\n",
-		__func__, (अचिन्हित दीर्घ)buf_addr, len, period_len, dir, flags);
+		__func__, (unsigned long)buf_addr, len, period_len, dir, flags);
 
 	nb_desc = DIV_ROUND_UP(period_len, PDMA_MAX_DESC_BYTES);
 	nb_desc *= DIV_ROUND_UP(len, period_len);
 	sw_desc = pxad_alloc_desc(chan, nb_desc + 1);
-	अगर (!sw_desc)
-		वापस शून्य;
+	if (!sw_desc)
+		return NULL;
 	sw_desc->cyclic = true;
 	sw_desc->len = len;
 
 	phw_desc = sw_desc->hw_desc;
 	dma = buf_addr;
-	करो अणु
+	do {
 		phw_desc[0]->dsadr = dsadr ? dsadr : dma;
 		phw_desc[0]->dtadr = dtadr ? dtadr : dma;
 		phw_desc[0]->dcmd = dcmd;
 		phw_desc++;
 		dma += period_len;
 		len -= period_len;
-	पूर्ण जबतक (len);
+	} while (len);
 	set_updater_desc(sw_desc, flags);
 
-	वापस pxad_tx_prep(&chan->vc, &sw_desc->vd, flags);
-पूर्ण
+	return pxad_tx_prep(&chan->vc, &sw_desc->vd, flags);
+}
 
-अटल पूर्णांक pxad_config(काष्ठा dma_chan *dchan,
-		       काष्ठा dma_slave_config *cfg)
-अणु
-	काष्ठा pxad_chan *chan = to_pxad_chan(dchan);
+static int pxad_config(struct dma_chan *dchan,
+		       struct dma_slave_config *cfg)
+{
+	struct pxad_chan *chan = to_pxad_chan(dchan);
 
-	अगर (!dchan)
-		वापस -EINVAL;
+	if (!dchan)
+		return -EINVAL;
 
 	chan->cfg = *cfg;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pxad_terminate_all(काष्ठा dma_chan *dchan)
-अणु
-	काष्ठा pxad_chan *chan = to_pxad_chan(dchan);
-	काष्ठा pxad_device *pdev = to_pxad_dev(chan->vc.chan.device);
-	काष्ठा virt_dma_desc *vd = शून्य;
-	अचिन्हित दीर्घ flags;
-	काष्ठा pxad_phy *phy;
+static int pxad_terminate_all(struct dma_chan *dchan)
+{
+	struct pxad_chan *chan = to_pxad_chan(dchan);
+	struct pxad_device *pdev = to_pxad_dev(chan->vc.chan.device);
+	struct virt_dma_desc *vd = NULL;
+	unsigned long flags;
+	struct pxad_phy *phy;
 	LIST_HEAD(head);
 
 	dev_dbg(&chan->vc.chan.dev->device,
@@ -1097,72 +1096,72 @@ pxad_prep_dma_cyclic(काष्ठा dma_chan *dchan,
 	spin_lock_irqsave(&chan->vc.lock, flags);
 	vchan_get_all_descriptors(&chan->vc, &head);
 
-	list_क्रम_each_entry(vd, &head, node) अणु
+	list_for_each_entry(vd, &head, node) {
 		dev_dbg(&chan->vc.chan.dev->device,
 			"%s(): cancelling txd %p[%x] (completed=%d)", __func__,
 			vd, vd->tx.cookie, is_desc_completed(vd));
-	पूर्ण
+	}
 
 	phy = chan->phy;
-	अगर (phy) अणु
+	if (phy) {
 		phy_disable(chan->phy);
-		pxad_मुक्त_phy(chan);
-		chan->phy = शून्य;
+		pxad_free_phy(chan);
+		chan->phy = NULL;
 		spin_lock(&pdev->phy_lock);
-		phy->vchan = शून्य;
+		phy->vchan = NULL;
 		spin_unlock(&pdev->phy_lock);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&chan->vc.lock, flags);
-	vchan_dma_desc_मुक्त_list(&chan->vc, &head);
+	vchan_dma_desc_free_list(&chan->vc, &head);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अचिन्हित पूर्णांक pxad_residue(काष्ठा pxad_chan *chan,
+static unsigned int pxad_residue(struct pxad_chan *chan,
 				 dma_cookie_t cookie)
-अणु
-	काष्ठा virt_dma_desc *vd = शून्य;
-	काष्ठा pxad_desc_sw *sw_desc = शून्य;
-	काष्ठा pxad_desc_hw *hw_desc = शून्य;
+{
+	struct virt_dma_desc *vd = NULL;
+	struct pxad_desc_sw *sw_desc = NULL;
+	struct pxad_desc_hw *hw_desc = NULL;
 	u32 curr, start, len, end, residue = 0;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 	bool passed = false;
-	पूर्णांक i;
+	int i;
 
 	/*
-	 * If the channel करोes not have a phy poपूर्णांकer anymore, it has alपढ़ोy
-	 * been completed. Thereक्रमe, its residue is 0.
+	 * If the channel does not have a phy pointer anymore, it has already
+	 * been completed. Therefore, its residue is 0.
 	 */
-	अगर (!chan->phy)
-		वापस 0;
+	if (!chan->phy)
+		return 0;
 
 	spin_lock_irqsave(&chan->vc.lock, flags);
 
 	vd = vchan_find_desc(&chan->vc, cookie);
-	अगर (!vd)
-		जाओ out;
+	if (!vd)
+		goto out;
 
 	sw_desc = to_pxad_sw_desc(vd);
-	अगर (sw_desc->hw_desc[0]->dcmd & PXA_DCMD_INCSRCADDR)
-		curr = phy_पढ़ोl_relaxed(chan->phy, DSADR);
-	अन्यथा
-		curr = phy_पढ़ोl_relaxed(chan->phy, DTADR);
+	if (sw_desc->hw_desc[0]->dcmd & PXA_DCMD_INCSRCADDR)
+		curr = phy_readl_relaxed(chan->phy, DSADR);
+	else
+		curr = phy_readl_relaxed(chan->phy, DTADR);
 
 	/*
-	 * curr has to be actually पढ़ो beक्रमe checking descriptor
+	 * curr has to be actually read before checking descriptor
 	 * completion, so that a curr inside a status updater
-	 * descriptor implies the following test वापसs true, and
+	 * descriptor implies the following test returns true, and
 	 * preventing reordering of curr load and the test.
 	 */
 	rmb();
-	अगर (is_desc_completed(vd))
-		जाओ out;
+	if (is_desc_completed(vd))
+		goto out;
 
-	क्रम (i = 0; i < sw_desc->nb_desc - 1; i++) अणु
+	for (i = 0; i < sw_desc->nb_desc - 1; i++) {
 		hw_desc = sw_desc->hw_desc[i];
-		अगर (sw_desc->hw_desc[0]->dcmd & PXA_DCMD_INCSRCADDR)
+		if (sw_desc->hw_desc[0]->dcmd & PXA_DCMD_INCSRCADDR)
 			start = hw_desc->dsadr;
-		अन्यथा
+		else
 			start = hw_desc->dtadr;
 		len = hw_desc->dcmd & PXA_DCMD_LENGTH;
 		end = start + len;
@@ -1170,20 +1169,20 @@ pxad_prep_dma_cyclic(काष्ठा dma_chan *dchan,
 		/*
 		 * 'passed' will be latched once we found the descriptor
 		 * which lies inside the boundaries of the curr
-		 * poपूर्णांकer. All descriptors that occur in the list
+		 * pointer. All descriptors that occur in the list
 		 * _after_ we found that partially handled descriptor
 		 * are still to be processed and are hence added to the
 		 * residual bytes counter.
 		 */
 
-		अगर (passed) अणु
+		if (passed) {
 			residue += len;
-		पूर्ण अन्यथा अगर (curr >= start && curr <= end) अणु
+		} else if (curr >= start && curr <= end) {
 			residue += end - curr;
 			passed = true;
-		पूर्ण
-	पूर्ण
-	अगर (!passed)
+		}
+	}
+	if (!passed)
 		residue = sw_desc->len;
 
 out:
@@ -1191,213 +1190,213 @@ out:
 	dev_dbg(&chan->vc.chan.dev->device,
 		"%s(): txd %p[%x] sw_desc=%p: %d\n",
 		__func__, vd, cookie, sw_desc, residue);
-	वापस residue;
-पूर्ण
+	return residue;
+}
 
-अटल क्रमागत dma_status pxad_tx_status(काष्ठा dma_chan *dchan,
+static enum dma_status pxad_tx_status(struct dma_chan *dchan,
 				      dma_cookie_t cookie,
-				      काष्ठा dma_tx_state *txstate)
-अणु
-	काष्ठा pxad_chan *chan = to_pxad_chan(dchan);
-	क्रमागत dma_status ret;
+				      struct dma_tx_state *txstate)
+{
+	struct pxad_chan *chan = to_pxad_chan(dchan);
+	enum dma_status ret;
 
-	अगर (cookie == chan->bus_error)
-		वापस DMA_ERROR;
+	if (cookie == chan->bus_error)
+		return DMA_ERROR;
 
 	ret = dma_cookie_status(dchan, cookie, txstate);
-	अगर (likely(txstate && (ret != DMA_ERROR)))
+	if (likely(txstate && (ret != DMA_ERROR)))
 		dma_set_residue(txstate, pxad_residue(chan, cookie));
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम pxad_synchronize(काष्ठा dma_chan *dchan)
-अणु
-	काष्ठा pxad_chan *chan = to_pxad_chan(dchan);
+static void pxad_synchronize(struct dma_chan *dchan)
+{
+	struct pxad_chan *chan = to_pxad_chan(dchan);
 
-	रुको_event(chan->wq_state, !is_chan_running(chan));
+	wait_event(chan->wq_state, !is_chan_running(chan));
 	vchan_synchronize(&chan->vc);
-पूर्ण
+}
 
-अटल व्योम pxad_मुक्त_channels(काष्ठा dma_device *dmadev)
-अणु
-	काष्ठा pxad_chan *c, *cn;
+static void pxad_free_channels(struct dma_device *dmadev)
+{
+	struct pxad_chan *c, *cn;
 
-	list_क्रम_each_entry_safe(c, cn, &dmadev->channels,
-				 vc.chan.device_node) अणु
+	list_for_each_entry_safe(c, cn, &dmadev->channels,
+				 vc.chan.device_node) {
 		list_del(&c->vc.chan.device_node);
-		tasklet_समाप्त(&c->vc.task);
-	पूर्ण
-पूर्ण
+		tasklet_kill(&c->vc.task);
+	}
+}
 
-अटल पूर्णांक pxad_हटाओ(काष्ठा platक्रमm_device *op)
-अणु
-	काष्ठा pxad_device *pdev = platक्रमm_get_drvdata(op);
+static int pxad_remove(struct platform_device *op)
+{
+	struct pxad_device *pdev = platform_get_drvdata(op);
 
 	pxad_cleanup_debugfs(pdev);
-	pxad_मुक्त_channels(&pdev->slave);
-	वापस 0;
-पूर्ण
+	pxad_free_channels(&pdev->slave);
+	return 0;
+}
 
-अटल पूर्णांक pxad_init_phys(काष्ठा platक्रमm_device *op,
-			  काष्ठा pxad_device *pdev,
-			  अचिन्हित पूर्णांक nb_phy_chans)
-अणु
-	पूर्णांक irq0, irq, nr_irq = 0, i, ret;
-	काष्ठा pxad_phy *phy;
+static int pxad_init_phys(struct platform_device *op,
+			  struct pxad_device *pdev,
+			  unsigned int nb_phy_chans)
+{
+	int irq0, irq, nr_irq = 0, i, ret;
+	struct pxad_phy *phy;
 
-	irq0 = platक्रमm_get_irq(op, 0);
-	अगर (irq0 < 0)
-		वापस irq0;
+	irq0 = platform_get_irq(op, 0);
+	if (irq0 < 0)
+		return irq0;
 
-	pdev->phys = devm_kसुस्मृति(&op->dev, nb_phy_chans,
-				  माप(pdev->phys[0]), GFP_KERNEL);
-	अगर (!pdev->phys)
-		वापस -ENOMEM;
+	pdev->phys = devm_kcalloc(&op->dev, nb_phy_chans,
+				  sizeof(pdev->phys[0]), GFP_KERNEL);
+	if (!pdev->phys)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < nb_phy_chans; i++)
-		अगर (platक्रमm_get_irq(op, i) > 0)
+	for (i = 0; i < nb_phy_chans; i++)
+		if (platform_get_irq(op, i) > 0)
 			nr_irq++;
 
-	क्रम (i = 0; i < nb_phy_chans; i++) अणु
+	for (i = 0; i < nb_phy_chans; i++) {
 		phy = &pdev->phys[i];
 		phy->base = pdev->base;
 		phy->idx = i;
-		irq = platक्रमm_get_irq(op, i);
-		अगर ((nr_irq > 1) && (irq > 0))
+		irq = platform_get_irq(op, i);
+		if ((nr_irq > 1) && (irq > 0))
 			ret = devm_request_irq(&op->dev, irq,
 					       pxad_chan_handler,
 					       IRQF_SHARED, "pxa-dma", phy);
-		अगर ((nr_irq == 1) && (i == 0))
+		if ((nr_irq == 1) && (i == 0))
 			ret = devm_request_irq(&op->dev, irq0,
-					       pxad_पूर्णांक_handler,
+					       pxad_int_handler,
 					       IRQF_SHARED, "pxa-dma", pdev);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(pdev->slave.dev,
 				"%s(): can't request irq %d:%d\n", __func__,
 				irq, ret);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id pxad_dt_ids[] = अणु
-	अणु .compatible = "marvell,pdma-1.0", पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id pxad_dt_ids[] = {
+	{ .compatible = "marvell,pdma-1.0", },
+	{}
+};
 MODULE_DEVICE_TABLE(of, pxad_dt_ids);
 
-अटल काष्ठा dma_chan *pxad_dma_xlate(काष्ठा of_phandle_args *dma_spec,
-					   काष्ठा of_dma *ofdma)
-अणु
-	काष्ठा pxad_device *d = ofdma->of_dma_data;
-	काष्ठा dma_chan *chan;
+static struct dma_chan *pxad_dma_xlate(struct of_phandle_args *dma_spec,
+					   struct of_dma *ofdma)
+{
+	struct pxad_device *d = ofdma->of_dma_data;
+	struct dma_chan *chan;
 
 	chan = dma_get_any_slave_channel(&d->slave);
-	अगर (!chan)
-		वापस शून्य;
+	if (!chan)
+		return NULL;
 
 	to_pxad_chan(chan)->drcmr = dma_spec->args[0];
 	to_pxad_chan(chan)->prio = dma_spec->args[1];
 
-	वापस chan;
-पूर्ण
+	return chan;
+}
 
-अटल पूर्णांक pxad_init_dmadev(काष्ठा platक्रमm_device *op,
-			    काष्ठा pxad_device *pdev,
-			    अचिन्हित पूर्णांक nr_phy_chans,
-			    अचिन्हित पूर्णांक nr_requestors)
-अणु
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक i;
-	काष्ठा pxad_chan *c;
+static int pxad_init_dmadev(struct platform_device *op,
+			    struct pxad_device *pdev,
+			    unsigned int nr_phy_chans,
+			    unsigned int nr_requestors)
+{
+	int ret;
+	unsigned int i;
+	struct pxad_chan *c;
 
 	pdev->nr_chans = nr_phy_chans;
 	pdev->nr_requestors = nr_requestors;
 	INIT_LIST_HEAD(&pdev->slave.channels);
 	pdev->slave.device_alloc_chan_resources = pxad_alloc_chan_resources;
-	pdev->slave.device_मुक्त_chan_resources = pxad_मुक्त_chan_resources;
+	pdev->slave.device_free_chan_resources = pxad_free_chan_resources;
 	pdev->slave.device_tx_status = pxad_tx_status;
 	pdev->slave.device_issue_pending = pxad_issue_pending;
 	pdev->slave.device_config = pxad_config;
 	pdev->slave.device_synchronize = pxad_synchronize;
 	pdev->slave.device_terminate_all = pxad_terminate_all;
 
-	अगर (op->dev.coherent_dma_mask)
+	if (op->dev.coherent_dma_mask)
 		dma_set_mask(&op->dev, op->dev.coherent_dma_mask);
-	अन्यथा
+	else
 		dma_set_mask(&op->dev, DMA_BIT_MASK(32));
 
 	ret = pxad_init_phys(op, pdev, nr_phy_chans);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	क्रम (i = 0; i < nr_phy_chans; i++) अणु
-		c = devm_kzalloc(&op->dev, माप(*c), GFP_KERNEL);
-		अगर (!c)
-			वापस -ENOMEM;
+	for (i = 0; i < nr_phy_chans; i++) {
+		c = devm_kzalloc(&op->dev, sizeof(*c), GFP_KERNEL);
+		if (!c)
+			return -ENOMEM;
 
 		c->drcmr = U32_MAX;
 		c->prio = PXAD_PRIO_LOWEST;
-		c->vc.desc_मुक्त = pxad_मुक्त_desc;
+		c->vc.desc_free = pxad_free_desc;
 		vchan_init(&c->vc, &pdev->slave);
-		init_रुकोqueue_head(&c->wq_state);
-	पूर्ण
+		init_waitqueue_head(&c->wq_state);
+	}
 
-	वापस dmaenginem_async_device_रेजिस्टर(&pdev->slave);
-पूर्ण
+	return dmaenginem_async_device_register(&pdev->slave);
+}
 
-अटल पूर्णांक pxad_probe(काष्ठा platक्रमm_device *op)
-अणु
-	काष्ठा pxad_device *pdev;
-	स्थिर काष्ठा of_device_id *of_id;
-	स्थिर काष्ठा dma_slave_map *slave_map = शून्य;
-	काष्ठा mmp_dma_platdata *pdata = dev_get_platdata(&op->dev);
-	काष्ठा resource *iores;
-	पूर्णांक ret, dma_channels = 0, nb_requestors = 0, slave_map_cnt = 0;
-	स्थिर क्रमागत dma_slave_buswidth widths =
+static int pxad_probe(struct platform_device *op)
+{
+	struct pxad_device *pdev;
+	const struct of_device_id *of_id;
+	const struct dma_slave_map *slave_map = NULL;
+	struct mmp_dma_platdata *pdata = dev_get_platdata(&op->dev);
+	struct resource *iores;
+	int ret, dma_channels = 0, nb_requestors = 0, slave_map_cnt = 0;
+	const enum dma_slave_buswidth widths =
 		DMA_SLAVE_BUSWIDTH_1_BYTE   | DMA_SLAVE_BUSWIDTH_2_BYTES |
 		DMA_SLAVE_BUSWIDTH_4_BYTES;
 
-	pdev = devm_kzalloc(&op->dev, माप(*pdev), GFP_KERNEL);
-	अगर (!pdev)
-		वापस -ENOMEM;
+	pdev = devm_kzalloc(&op->dev, sizeof(*pdev), GFP_KERNEL);
+	if (!pdev)
+		return -ENOMEM;
 
 	spin_lock_init(&pdev->phy_lock);
 
-	iores = platक्रमm_get_resource(op, IORESOURCE_MEM, 0);
+	iores = platform_get_resource(op, IORESOURCE_MEM, 0);
 	pdev->base = devm_ioremap_resource(&op->dev, iores);
-	अगर (IS_ERR(pdev->base))
-		वापस PTR_ERR(pdev->base);
+	if (IS_ERR(pdev->base))
+		return PTR_ERR(pdev->base);
 
 	of_id = of_match_device(pxad_dt_ids, &op->dev);
-	अगर (of_id) अणु
-		of_property_पढ़ो_u32(op->dev.of_node, "#dma-channels",
+	if (of_id) {
+		of_property_read_u32(op->dev.of_node, "#dma-channels",
 				     &dma_channels);
-		ret = of_property_पढ़ो_u32(op->dev.of_node, "#dma-requests",
+		ret = of_property_read_u32(op->dev.of_node, "#dma-requests",
 					   &nb_requestors);
-		अगर (ret) अणु
+		if (ret) {
 			dev_warn(pdev->slave.dev,
 				 "#dma-requests set to default 32 as missing in OF: %d",
 				 ret);
 			nb_requestors = 32;
-		पूर्ण
-	पूर्ण अन्यथा अगर (pdata && pdata->dma_channels) अणु
+		}
+	} else if (pdata && pdata->dma_channels) {
 		dma_channels = pdata->dma_channels;
 		nb_requestors = pdata->nb_requestors;
 		slave_map = pdata->slave_map;
 		slave_map_cnt = pdata->slave_map_cnt;
-	पूर्ण अन्यथा अणु
-		dma_channels = 32;	/* शेष 32 channel */
-	पूर्ण
+	} else {
+		dma_channels = 32;	/* default 32 channel */
+	}
 
 	dma_cap_set(DMA_SLAVE, pdev->slave.cap_mask);
 	dma_cap_set(DMA_MEMCPY, pdev->slave.cap_mask);
 	dma_cap_set(DMA_CYCLIC, pdev->slave.cap_mask);
 	dma_cap_set(DMA_PRIVATE, pdev->slave.cap_mask);
-	pdev->slave.device_prep_dma_स_नकल = pxad_prep_स_नकल;
+	pdev->slave.device_prep_dma_memcpy = pxad_prep_memcpy;
 	pdev->slave.device_prep_slave_sg = pxad_prep_slave_sg;
 	pdev->slave.device_prep_dma_cyclic = pxad_prep_dma_cyclic;
 	pdev->slave.filter.map = slave_map;
@@ -1413,59 +1412,59 @@ MODULE_DEVICE_TABLE(of, pxad_dt_ids);
 
 	pdev->slave.dev = &op->dev;
 	ret = pxad_init_dmadev(op, pdev, dma_channels, nb_requestors);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(pdev->slave.dev, "unable to register\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (op->dev.of_node) अणु
+	if (op->dev.of_node) {
 		/* Device-tree DMA controller registration */
-		ret = of_dma_controller_रेजिस्टर(op->dev.of_node,
+		ret = of_dma_controller_register(op->dev.of_node,
 						 pxad_dma_xlate, pdev);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(pdev->slave.dev,
 				"of_dma_controller_register failed\n");
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	platक्रमm_set_drvdata(op, pdev);
+	platform_set_drvdata(op, pdev);
 	pxad_init_debugfs(pdev);
 	dev_info(pdev->slave.dev, "initialized %d channels on %d requestors\n",
 		 dma_channels, nb_requestors);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा platक्रमm_device_id pxad_id_table[] = अणु
-	अणु "pxa-dma", पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct platform_device_id pxad_id_table[] = {
+	{ "pxa-dma", },
+	{ },
+};
 
-अटल काष्ठा platक्रमm_driver pxad_driver = अणु
-	.driver		= अणु
+static struct platform_driver pxad_driver = {
+	.driver		= {
 		.name	= "pxa-dma",
 		.of_match_table = pxad_dt_ids,
-	पूर्ण,
+	},
 	.id_table	= pxad_id_table,
 	.probe		= pxad_probe,
-	.हटाओ		= pxad_हटाओ,
-पूर्ण;
+	.remove		= pxad_remove,
+};
 
-अटल bool pxad_filter_fn(काष्ठा dma_chan *chan, व्योम *param)
-अणु
-	काष्ठा pxad_chan *c = to_pxad_chan(chan);
-	काष्ठा pxad_param *p = param;
+static bool pxad_filter_fn(struct dma_chan *chan, void *param)
+{
+	struct pxad_chan *c = to_pxad_chan(chan);
+	struct pxad_param *p = param;
 
-	अगर (chan->device->dev->driver != &pxad_driver.driver)
-		वापस false;
+	if (chan->device->dev->driver != &pxad_driver.driver)
+		return false;
 
 	c->drcmr = p->drcmr;
 	c->prio = p->prio;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-module_platक्रमm_driver(pxad_driver);
+module_platform_driver(pxad_driver);
 
 MODULE_DESCRIPTION("Marvell PXA Peripheral DMA Driver");
 MODULE_AUTHOR("Robert Jarzmik <robert.jarzmik@free.fr>");

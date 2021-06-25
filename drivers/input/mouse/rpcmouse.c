@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- *  Acorn RiscPC mouse driver क्रम Linux/ARM
+ *  Acorn RiscPC mouse driver for Linux/ARM
  *
  *  Copyright (c) 2000-2002 Vojtech Pavlik
  *  Copyright (C) 1996-2002 Russell King
@@ -10,37 +9,37 @@
 /*
  *
  * This handles the Acorn RiscPCs mouse.  We basically have a couple of
- * hardware रेजिस्टरs that track the sensor count क्रम the X-Y movement and
- * another रेजिस्टर holding the button state.  On every VSYNC पूर्णांकerrupt we पढ़ो
- * the complete state and then work out अगर something has changed.
+ * hardware registers that track the sensor count for the X-Y movement and
+ * another register holding the button state.  On every VSYNC interrupt we read
+ * the complete state and then work out if something has changed.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/init.h>
-#समावेश <linux/input.h>
-#समावेश <linux/पन.स>
+#include <linux/module.h>
+#include <linux/ptrace.h>
+#include <linux/interrupt.h>
+#include <linux/init.h>
+#include <linux/input.h>
+#include <linux/io.h>
 
-#समावेश <mach/hardware.h>
-#समावेश <यंत्र/irq.h>
-#समावेश <यंत्र/hardware/iomd.h>
+#include <mach/hardware.h>
+#include <asm/irq.h>
+#include <asm/hardware/iomd.h>
 
 MODULE_AUTHOR("Vojtech Pavlik, Russell King");
 MODULE_DESCRIPTION("Acorn RiscPC mouse driver");
 MODULE_LICENSE("GPL");
 
-अटल लघु rpcmouse_lastx, rpcmouse_lasty;
-अटल काष्ठा input_dev *rpcmouse_dev;
+static short rpcmouse_lastx, rpcmouse_lasty;
+static struct input_dev *rpcmouse_dev;
 
-अटल irqवापस_t rpcmouse_irq(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा input_dev *dev = dev_id;
-	लघु x, y, dx, dy, b;
+static irqreturn_t rpcmouse_irq(int irq, void *dev_id)
+{
+	struct input_dev *dev = dev_id;
+	short x, y, dx, dy, b;
 
-	x = (लघु) iomd_पढ़ोl(IOMD_MOUSEX);
-	y = (लघु) iomd_पढ़ोl(IOMD_MOUSEY);
-	b = (लघु) (__raw_पढ़ोl(IOMEM(0xe0310000)) ^ 0x70);
+	x = (short) iomd_readl(IOMD_MOUSEX);
+	y = (short) iomd_readl(IOMD_MOUSEY);
+	b = (short) (__raw_readl(IOMEM(0xe0310000)) ^ 0x70);
 
 	dx = x - rpcmouse_lastx;
 	dy = y - rpcmouse_lasty;
@@ -57,22 +56,22 @@ MODULE_LICENSE("GPL");
 
 	input_sync(dev);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 
-अटल पूर्णांक __init rpcmouse_init(व्योम)
-अणु
-	पूर्णांक err;
+static int __init rpcmouse_init(void)
+{
+	int err;
 
 	rpcmouse_dev = input_allocate_device();
-	अगर (!rpcmouse_dev)
-		वापस -ENOMEM;
+	if (!rpcmouse_dev)
+		return -ENOMEM;
 
 	rpcmouse_dev->name = "Acorn RiscPC Mouse";
 	rpcmouse_dev->phys = "rpcmouse/input0";
 	rpcmouse_dev->id.bustype = BUS_HOST;
-	rpcmouse_dev->id.venकरोr  = 0x0005;
+	rpcmouse_dev->id.vendor  = 0x0005;
 	rpcmouse_dev->id.product = 0x0001;
 	rpcmouse_dev->id.version = 0x0100;
 
@@ -81,34 +80,34 @@ MODULE_LICENSE("GPL");
 		BIT_MASK(BTN_MIDDLE) | BIT_MASK(BTN_RIGHT);
 	rpcmouse_dev->relbit[0]	= BIT_MASK(REL_X) | BIT_MASK(REL_Y);
 
-	rpcmouse_lastx = (लघु) iomd_पढ़ोl(IOMD_MOUSEX);
-	rpcmouse_lasty = (लघु) iomd_पढ़ोl(IOMD_MOUSEY);
+	rpcmouse_lastx = (short) iomd_readl(IOMD_MOUSEX);
+	rpcmouse_lasty = (short) iomd_readl(IOMD_MOUSEY);
 
-	अगर (request_irq(IRQ_VSYNCPULSE, rpcmouse_irq, IRQF_SHARED, "rpcmouse", rpcmouse_dev)) अणु
-		prपूर्णांकk(KERN_ERR "rpcmouse: unable to allocate VSYNC interrupt\n");
+	if (request_irq(IRQ_VSYNCPULSE, rpcmouse_irq, IRQF_SHARED, "rpcmouse", rpcmouse_dev)) {
+		printk(KERN_ERR "rpcmouse: unable to allocate VSYNC interrupt\n");
 		err = -EBUSY;
-		जाओ err_मुक्त_dev;
-	पूर्ण
+		goto err_free_dev;
+	}
 
-	err = input_रेजिस्टर_device(rpcmouse_dev);
-	अगर (err)
-		जाओ err_मुक्त_irq;
+	err = input_register_device(rpcmouse_dev);
+	if (err)
+		goto err_free_irq;
 
-	वापस 0;
+	return 0;
 
- err_मुक्त_irq:
-	मुक्त_irq(IRQ_VSYNCPULSE, rpcmouse_dev);
- err_मुक्त_dev:
-	input_मुक्त_device(rpcmouse_dev);
+ err_free_irq:
+	free_irq(IRQ_VSYNCPULSE, rpcmouse_dev);
+ err_free_dev:
+	input_free_device(rpcmouse_dev);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम __निकास rpcmouse_निकास(व्योम)
-अणु
-	मुक्त_irq(IRQ_VSYNCPULSE, rpcmouse_dev);
-	input_unरेजिस्टर_device(rpcmouse_dev);
-पूर्ण
+static void __exit rpcmouse_exit(void)
+{
+	free_irq(IRQ_VSYNCPULSE, rpcmouse_dev);
+	input_unregister_device(rpcmouse_dev);
+}
 
 module_init(rpcmouse_init);
-module_निकास(rpcmouse_निकास);
+module_exit(rpcmouse_exit);

@@ -1,51 +1,50 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2020, Oracle and/or its affiliates. */
-#समावेश "bpf_iter.h"
-#समावेश <bpf/bpf_helpers.h>
-#समावेश <bpf/bpf_tracing.h>
-#समावेश <bpf/bpf_core_पढ़ो.h>
+#include "bpf_iter.h"
+#include <bpf/bpf_helpers.h>
+#include <bpf/bpf_tracing.h>
+#include <bpf/bpf_core_read.h>
 
-#समावेश <त्रुटिसं.स>
+#include <errno.h>
 
-अक्षर _license[] SEC("license") = "GPL";
+char _license[] SEC("license") = "GPL";
 
-दीर्घ tasks = 0;
-दीर्घ seq_err = 0;
+long tasks = 0;
+long seq_err = 0;
 bool skip = false;
 
 SEC("iter/task")
-पूर्णांक dump_task_काष्ठा(काष्ठा bpf_iter__task *ctx)
-अणु
-	काष्ठा seq_file *seq = ctx->meta->seq;
-	काष्ठा task_काष्ठा *task = ctx->task;
-	अटल काष्ठा btf_ptr ptr = अणु पूर्ण;
-	दीर्घ ret;
+int dump_task_struct(struct bpf_iter__task *ctx)
+{
+	struct seq_file *seq = ctx->meta->seq;
+	struct task_struct *task = ctx->task;
+	static struct btf_ptr ptr = { };
+	long ret;
 
-#अगर __has_builtin(__builtin_btf_type_id)
-	ptr.type_id = bpf_core_type_id_kernel(काष्ठा task_काष्ठा);
+#if __has_builtin(__builtin_btf_type_id)
+	ptr.type_id = bpf_core_type_id_kernel(struct task_struct);
 	ptr.ptr = task;
 
-	अगर (ctx->meta->seq_num == 0)
+	if (ctx->meta->seq_num == 0)
 		BPF_SEQ_PRINTF(seq, "Raw BTF task\n");
 
-	ret = bpf_seq_म_लिखो_btf(seq, &ptr, माप(ptr), 0);
-	चयन (ret) अणु
-	हाल 0:
+	ret = bpf_seq_printf_btf(seq, &ptr, sizeof(ptr), 0);
+	switch (ret) {
+	case 0:
 		tasks++;
-		अवरोध;
-	हाल -दुस्फल:
-		/* शून्य task or task->fs, करोn't count it as an error. */
-		अवरोध;
-	हाल -E2BIG:
-		वापस 1;
-	शेष:
+		break;
+	case -ERANGE:
+		/* NULL task or task->fs, don't count it as an error. */
+		break;
+	case -E2BIG:
+		return 1;
+	default:
 		seq_err = ret;
-		अवरोध;
-	पूर्ण
-#अन्यथा
+		break;
+	}
+#else
 	skip = true;
-#पूर्ण_अगर
+#endif
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

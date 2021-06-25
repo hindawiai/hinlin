@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2017 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,309 +21,309 @@
  *
  */
 
-#अगर_अघोषित SMU72_H
-#घोषणा SMU72_H
+#ifndef SMU72_H
+#define SMU72_H
 
-#अगर !defined(SMC_MICROCODE)
-#आशय pack(push, 1)
-#पूर्ण_अगर
+#if !defined(SMC_MICROCODE)
+#pragma pack(push, 1)
+#endif
 
-#घोषणा SMU__NUM_SCLK_DPM_STATE  8
-#घोषणा SMU__NUM_MCLK_DPM_LEVELS 4
-#घोषणा SMU__NUM_LCLK_DPM_LEVELS 8
-#घोषणा SMU__NUM_PCIE_DPM_LEVELS 8
+#define SMU__NUM_SCLK_DPM_STATE  8
+#define SMU__NUM_MCLK_DPM_LEVELS 4
+#define SMU__NUM_LCLK_DPM_LEVELS 8
+#define SMU__NUM_PCIE_DPM_LEVELS 8
 
-क्रमागत SID_OPTION अणु
+enum SID_OPTION {
 	SID_OPTION_HI,
 	SID_OPTION_LO,
 	SID_OPTION_COUNT
-पूर्ण;
+};
 
-क्रमागत Poly3rdOrderCoeff अणु
+enum Poly3rdOrderCoeff {
 	LEAKAGE_TEMPERATURE_SCALAR,
 	LEAKAGE_VOLTAGE_SCALAR,
 	DYNAMIC_VOLTAGE_SCALAR,
 	POLY_3RD_ORDER_COUNT
-पूर्ण;
+};
 
-काष्ठा SMU7_Poly3rdOrder_Data अणु
-	पूर्णांक32_t a;
-	पूर्णांक32_t b;
-	पूर्णांक32_t c;
-	पूर्णांक32_t d;
-	uपूर्णांक8_t a_shअगरt;
-	uपूर्णांक8_t b_shअगरt;
-	uपूर्णांक8_t c_shअगरt;
-	uपूर्णांक8_t x_shअगरt;
-पूर्ण;
+struct SMU7_Poly3rdOrder_Data {
+	int32_t a;
+	int32_t b;
+	int32_t c;
+	int32_t d;
+	uint8_t a_shift;
+	uint8_t b_shift;
+	uint8_t c_shift;
+	uint8_t x_shift;
+};
 
-प्रकार काष्ठा SMU7_Poly3rdOrder_Data SMU7_Poly3rdOrder_Data;
+typedef struct SMU7_Poly3rdOrder_Data SMU7_Poly3rdOrder_Data;
 
-काष्ठा Power_Calculator_Data अणु
-	uपूर्णांक16_t NoLoadVoltage;
-	uपूर्णांक16_t LoadVoltage;
-	uपूर्णांक16_t Resistance;
-	uपूर्णांक16_t Temperature;
-	uपूर्णांक16_t BaseLeakage;
-	uपूर्णांक16_t LkgTempScalar;
-	uपूर्णांक16_t LkgVoltScalar;
-	uपूर्णांक16_t LkgAreaScalar;
-	uपूर्णांक16_t LkgPower;
-	uपूर्णांक16_t DynVoltScalar;
-	uपूर्णांक32_t Cac;
-	uपूर्णांक32_t DynPower;
-	uपूर्णांक32_t TotalCurrent;
-	uपूर्णांक32_t TotalPower;
-पूर्ण;
+struct Power_Calculator_Data {
+	uint16_t NoLoadVoltage;
+	uint16_t LoadVoltage;
+	uint16_t Resistance;
+	uint16_t Temperature;
+	uint16_t BaseLeakage;
+	uint16_t LkgTempScalar;
+	uint16_t LkgVoltScalar;
+	uint16_t LkgAreaScalar;
+	uint16_t LkgPower;
+	uint16_t DynVoltScalar;
+	uint32_t Cac;
+	uint32_t DynPower;
+	uint32_t TotalCurrent;
+	uint32_t TotalPower;
+};
 
-प्रकार काष्ठा Power_Calculator_Data PowerCalculatorData_t;
+typedef struct Power_Calculator_Data PowerCalculatorData_t;
 
-काष्ठा Gc_Cac_Weight_Data अणु
-	uपूर्णांक8_t index;
-	uपूर्णांक32_t value;
-पूर्ण;
+struct Gc_Cac_Weight_Data {
+	uint8_t index;
+	uint32_t value;
+};
 
-प्रकार काष्ठा Gc_Cac_Weight_Data GcCacWeight_Data;
+typedef struct Gc_Cac_Weight_Data GcCacWeight_Data;
 
 
-प्रकार काष्ठा अणु
-	uपूर्णांक32_t high;
-	uपूर्णांक32_t low;
-पूर्ण data_64_t;
+typedef struct {
+	uint32_t high;
+	uint32_t low;
+} data_64_t;
 
-प्रकार काष्ठा अणु
+typedef struct {
 	data_64_t high;
 	data_64_t low;
-पूर्ण data_128_t;
+} data_128_t;
 
-#घोषणा SMU7_CONTEXT_ID_SMC        1
-#घोषणा SMU7_CONTEXT_ID_VBIOS      2
+#define SMU7_CONTEXT_ID_SMC        1
+#define SMU7_CONTEXT_ID_VBIOS      2
 
-#घोषणा SMU72_MAX_LEVELS_VDDC            16
-#घोषणा SMU72_MAX_LEVELS_VDDGFX          16
-#घोषणा SMU72_MAX_LEVELS_VDDCI           8
-#घोषणा SMU72_MAX_LEVELS_MVDD            4
+#define SMU72_MAX_LEVELS_VDDC            16
+#define SMU72_MAX_LEVELS_VDDGFX          16
+#define SMU72_MAX_LEVELS_VDDCI           8
+#define SMU72_MAX_LEVELS_MVDD            4
 
-#घोषणा SMU_MAX_SMIO_LEVELS              4
+#define SMU_MAX_SMIO_LEVELS              4
 
-#घोषणा SMU72_MAX_LEVELS_GRAPHICS        SMU__NUM_SCLK_DPM_STATE   /* SCLK + SQ DPM + ULV */
-#घोषणा SMU72_MAX_LEVELS_MEMORY          SMU__NUM_MCLK_DPM_LEVELS   /* MCLK Levels DPM */
-#घोषणा SMU72_MAX_LEVELS_GIO             SMU__NUM_LCLK_DPM_LEVELS  /* LCLK Levels */
-#घोषणा SMU72_MAX_LEVELS_LINK            SMU__NUM_PCIE_DPM_LEVELS  /* PCIe speed and number of lanes. */
-#घोषणा SMU72_MAX_LEVELS_UVD             8   /* VCLK/DCLK levels क्रम UVD. */
-#घोषणा SMU72_MAX_LEVELS_VCE             8   /* ECLK levels क्रम VCE. */
-#घोषणा SMU72_MAX_LEVELS_ACP             8   /* ACLK levels क्रम ACP. */
-#घोषणा SMU72_MAX_LEVELS_SAMU            8   /* SAMCLK levels क्रम SAMU. */
-#घोषणा SMU72_MAX_ENTRIES_SMIO           32  /* Number of entries in SMIO table. */
+#define SMU72_MAX_LEVELS_GRAPHICS        SMU__NUM_SCLK_DPM_STATE   /* SCLK + SQ DPM + ULV */
+#define SMU72_MAX_LEVELS_MEMORY          SMU__NUM_MCLK_DPM_LEVELS   /* MCLK Levels DPM */
+#define SMU72_MAX_LEVELS_GIO             SMU__NUM_LCLK_DPM_LEVELS  /* LCLK Levels */
+#define SMU72_MAX_LEVELS_LINK            SMU__NUM_PCIE_DPM_LEVELS  /* PCIe speed and number of lanes. */
+#define SMU72_MAX_LEVELS_UVD             8   /* VCLK/DCLK levels for UVD. */
+#define SMU72_MAX_LEVELS_VCE             8   /* ECLK levels for VCE. */
+#define SMU72_MAX_LEVELS_ACP             8   /* ACLK levels for ACP. */
+#define SMU72_MAX_LEVELS_SAMU            8   /* SAMCLK levels for SAMU. */
+#define SMU72_MAX_ENTRIES_SMIO           32  /* Number of entries in SMIO table. */
 
-#घोषणा DPM_NO_LIMIT 0
-#घोषणा DPM_NO_UP 1
-#घोषणा DPM_GO_DOWN 2
-#घोषणा DPM_GO_UP 3
+#define DPM_NO_LIMIT 0
+#define DPM_NO_UP 1
+#define DPM_GO_DOWN 2
+#define DPM_GO_UP 3
 
-#घोषणा SMU7_FIRST_DPM_GRAPHICS_LEVEL    0
-#घोषणा SMU7_FIRST_DPM_MEMORY_LEVEL      0
+#define SMU7_FIRST_DPM_GRAPHICS_LEVEL    0
+#define SMU7_FIRST_DPM_MEMORY_LEVEL      0
 
-#घोषणा GPIO_CLAMP_MODE_VRHOT      1
-#घोषणा GPIO_CLAMP_MODE_THERM      2
-#घोषणा GPIO_CLAMP_MODE_DC         4
+#define GPIO_CLAMP_MODE_VRHOT      1
+#define GPIO_CLAMP_MODE_THERM      2
+#define GPIO_CLAMP_MODE_DC         4
 
-#घोषणा SCRATCH_B_TARG_PCIE_INDEX_SHIFT 0
-#घोषणा SCRATCH_B_TARG_PCIE_INDEX_MASK  (0x7<<SCRATCH_B_TARG_PCIE_INDEX_SHIFT)
-#घोषणा SCRATCH_B_CURR_PCIE_INDEX_SHIFT 3
-#घोषणा SCRATCH_B_CURR_PCIE_INDEX_MASK  (0x7<<SCRATCH_B_CURR_PCIE_INDEX_SHIFT)
-#घोषणा SCRATCH_B_TARG_UVD_INDEX_SHIFT  6
-#घोषणा SCRATCH_B_TARG_UVD_INDEX_MASK   (0x7<<SCRATCH_B_TARG_UVD_INDEX_SHIFT)
-#घोषणा SCRATCH_B_CURR_UVD_INDEX_SHIFT  9
-#घोषणा SCRATCH_B_CURR_UVD_INDEX_MASK   (0x7<<SCRATCH_B_CURR_UVD_INDEX_SHIFT)
-#घोषणा SCRATCH_B_TARG_VCE_INDEX_SHIFT  12
-#घोषणा SCRATCH_B_TARG_VCE_INDEX_MASK   (0x7<<SCRATCH_B_TARG_VCE_INDEX_SHIFT)
-#घोषणा SCRATCH_B_CURR_VCE_INDEX_SHIFT  15
-#घोषणा SCRATCH_B_CURR_VCE_INDEX_MASK   (0x7<<SCRATCH_B_CURR_VCE_INDEX_SHIFT)
-#घोषणा SCRATCH_B_TARG_ACP_INDEX_SHIFT  18
-#घोषणा SCRATCH_B_TARG_ACP_INDEX_MASK   (0x7<<SCRATCH_B_TARG_ACP_INDEX_SHIFT)
-#घोषणा SCRATCH_B_CURR_ACP_INDEX_SHIFT  21
-#घोषणा SCRATCH_B_CURR_ACP_INDEX_MASK   (0x7<<SCRATCH_B_CURR_ACP_INDEX_SHIFT)
-#घोषणा SCRATCH_B_TARG_SAMU_INDEX_SHIFT 24
-#घोषणा SCRATCH_B_TARG_SAMU_INDEX_MASK  (0x7<<SCRATCH_B_TARG_SAMU_INDEX_SHIFT)
-#घोषणा SCRATCH_B_CURR_SAMU_INDEX_SHIFT 27
-#घोषणा SCRATCH_B_CURR_SAMU_INDEX_MASK  (0x7<<SCRATCH_B_CURR_SAMU_INDEX_SHIFT)
+#define SCRATCH_B_TARG_PCIE_INDEX_SHIFT 0
+#define SCRATCH_B_TARG_PCIE_INDEX_MASK  (0x7<<SCRATCH_B_TARG_PCIE_INDEX_SHIFT)
+#define SCRATCH_B_CURR_PCIE_INDEX_SHIFT 3
+#define SCRATCH_B_CURR_PCIE_INDEX_MASK  (0x7<<SCRATCH_B_CURR_PCIE_INDEX_SHIFT)
+#define SCRATCH_B_TARG_UVD_INDEX_SHIFT  6
+#define SCRATCH_B_TARG_UVD_INDEX_MASK   (0x7<<SCRATCH_B_TARG_UVD_INDEX_SHIFT)
+#define SCRATCH_B_CURR_UVD_INDEX_SHIFT  9
+#define SCRATCH_B_CURR_UVD_INDEX_MASK   (0x7<<SCRATCH_B_CURR_UVD_INDEX_SHIFT)
+#define SCRATCH_B_TARG_VCE_INDEX_SHIFT  12
+#define SCRATCH_B_TARG_VCE_INDEX_MASK   (0x7<<SCRATCH_B_TARG_VCE_INDEX_SHIFT)
+#define SCRATCH_B_CURR_VCE_INDEX_SHIFT  15
+#define SCRATCH_B_CURR_VCE_INDEX_MASK   (0x7<<SCRATCH_B_CURR_VCE_INDEX_SHIFT)
+#define SCRATCH_B_TARG_ACP_INDEX_SHIFT  18
+#define SCRATCH_B_TARG_ACP_INDEX_MASK   (0x7<<SCRATCH_B_TARG_ACP_INDEX_SHIFT)
+#define SCRATCH_B_CURR_ACP_INDEX_SHIFT  21
+#define SCRATCH_B_CURR_ACP_INDEX_MASK   (0x7<<SCRATCH_B_CURR_ACP_INDEX_SHIFT)
+#define SCRATCH_B_TARG_SAMU_INDEX_SHIFT 24
+#define SCRATCH_B_TARG_SAMU_INDEX_MASK  (0x7<<SCRATCH_B_TARG_SAMU_INDEX_SHIFT)
+#define SCRATCH_B_CURR_SAMU_INDEX_SHIFT 27
+#define SCRATCH_B_CURR_SAMU_INDEX_MASK  (0x7<<SCRATCH_B_CURR_SAMU_INDEX_SHIFT)
 
 /* Virtualization Defines */
-#घोषणा CG_XDMA_MASK  0x1
-#घोषणा CG_XDMA_SHIFT 0
-#घोषणा CG_UVD_MASK   0x2
-#घोषणा CG_UVD_SHIFT  1
-#घोषणा CG_VCE_MASK   0x4
-#घोषणा CG_VCE_SHIFT  2
-#घोषणा CG_SAMU_MASK  0x8
-#घोषणा CG_SAMU_SHIFT 3
-#घोषणा CG_GFX_MASK   0x10
-#घोषणा CG_GFX_SHIFT  4
-#घोषणा CG_SDMA_MASK  0x20
-#घोषणा CG_SDMA_SHIFT 5
-#घोषणा CG_HDP_MASK   0x40
-#घोषणा CG_HDP_SHIFT  6
-#घोषणा CG_MC_MASK    0x80
-#घोषणा CG_MC_SHIFT   7
-#घोषणा CG_DRM_MASK   0x100
-#घोषणा CG_DRM_SHIFT  8
-#घोषणा CG_ROM_MASK   0x200
-#घोषणा CG_ROM_SHIFT  9
-#घोषणा CG_BIF_MASK   0x400
-#घोषणा CG_BIF_SHIFT  10
+#define CG_XDMA_MASK  0x1
+#define CG_XDMA_SHIFT 0
+#define CG_UVD_MASK   0x2
+#define CG_UVD_SHIFT  1
+#define CG_VCE_MASK   0x4
+#define CG_VCE_SHIFT  2
+#define CG_SAMU_MASK  0x8
+#define CG_SAMU_SHIFT 3
+#define CG_GFX_MASK   0x10
+#define CG_GFX_SHIFT  4
+#define CG_SDMA_MASK  0x20
+#define CG_SDMA_SHIFT 5
+#define CG_HDP_MASK   0x40
+#define CG_HDP_SHIFT  6
+#define CG_MC_MASK    0x80
+#define CG_MC_SHIFT   7
+#define CG_DRM_MASK   0x100
+#define CG_DRM_SHIFT  8
+#define CG_ROM_MASK   0x200
+#define CG_ROM_SHIFT  9
+#define CG_BIF_MASK   0x400
+#define CG_BIF_SHIFT  10
 
-#घोषणा SMU72_DTE_ITERATIONS 5
-#घोषणा SMU72_DTE_SOURCES 3
-#घोषणा SMU72_DTE_SINKS 1
-#घोषणा SMU72_NUM_CPU_TES 0
-#घोषणा SMU72_NUM_GPU_TES 1
-#घोषणा SMU72_NUM_NON_TES 2
-#घोषणा SMU72_DTE_FAN_SCALAR_MIN 0x100
-#घोषणा SMU72_DTE_FAN_SCALAR_MAX 0x166
-#घोषणा SMU72_DTE_FAN_TEMP_MAX 93
-#घोषणा SMU72_DTE_FAN_TEMP_MIN 83
+#define SMU72_DTE_ITERATIONS 5
+#define SMU72_DTE_SOURCES 3
+#define SMU72_DTE_SINKS 1
+#define SMU72_NUM_CPU_TES 0
+#define SMU72_NUM_GPU_TES 1
+#define SMU72_NUM_NON_TES 2
+#define SMU72_DTE_FAN_SCALAR_MIN 0x100
+#define SMU72_DTE_FAN_SCALAR_MAX 0x166
+#define SMU72_DTE_FAN_TEMP_MAX 93
+#define SMU72_DTE_FAN_TEMP_MIN 83
 
-#अगर defined SMU__FUSION_ONLY
-#घोषणा SMU7_DTE_ITERATIONS 5
-#घोषणा SMU7_DTE_SOURCES 5
-#घोषणा SMU7_DTE_SINKS 3
-#घोषणा SMU7_NUM_CPU_TES 2
-#घोषणा SMU7_NUM_GPU_TES 1
-#घोषणा SMU7_NUM_NON_TES 2
-#पूर्ण_अगर
+#if defined SMU__FUSION_ONLY
+#define SMU7_DTE_ITERATIONS 5
+#define SMU7_DTE_SOURCES 5
+#define SMU7_DTE_SINKS 3
+#define SMU7_NUM_CPU_TES 2
+#define SMU7_NUM_GPU_TES 1
+#define SMU7_NUM_NON_TES 2
+#endif
 
-काष्ठा SMU7_HystController_Data अणु
-	uपूर्णांक8_t waterfall_up;
-	uपूर्णांक8_t waterfall_करोwn;
-	uपूर्णांक8_t waterfall_limit;
-	uपूर्णांक8_t spare;
-	uपूर्णांक16_t release_cnt;
-	uपूर्णांक16_t release_limit;
-पूर्ण;
+struct SMU7_HystController_Data {
+	uint8_t waterfall_up;
+	uint8_t waterfall_down;
+	uint8_t waterfall_limit;
+	uint8_t spare;
+	uint16_t release_cnt;
+	uint16_t release_limit;
+};
 
-प्रकार काष्ठा SMU7_HystController_Data SMU7_HystController_Data;
+typedef struct SMU7_HystController_Data SMU7_HystController_Data;
 
-काष्ठा SMU72_PIDController अणु
-	uपूर्णांक32_t Ki;
-	पूर्णांक32_t LFWindupUpperLim;
-	पूर्णांक32_t LFWindupLowerLim;
-	uपूर्णांक32_t StatePrecision;
-	uपूर्णांक32_t LfPrecision;
-	uपूर्णांक32_t LfOffset;
-	uपूर्णांक32_t MaxState;
-	uपूर्णांक32_t MaxLfFraction;
-	uपूर्णांक32_t StateShअगरt;
-पूर्ण;
+struct SMU72_PIDController {
+	uint32_t Ki;
+	int32_t LFWindupUpperLim;
+	int32_t LFWindupLowerLim;
+	uint32_t StatePrecision;
+	uint32_t LfPrecision;
+	uint32_t LfOffset;
+	uint32_t MaxState;
+	uint32_t MaxLfFraction;
+	uint32_t StateShift;
+};
 
-प्रकार काष्ठा SMU72_PIDController SMU72_PIDController;
+typedef struct SMU72_PIDController SMU72_PIDController;
 
-काष्ठा SMU7_LocalDpmScoreboard अणु
-	uपूर्णांक32_t PercentageBusy;
+struct SMU7_LocalDpmScoreboard {
+	uint32_t PercentageBusy;
 
-	पूर्णांक32_t  PIDError;
-	पूर्णांक32_t  PIDIntegral;
-	पूर्णांक32_t  PIDOutput;
+	int32_t  PIDError;
+	int32_t  PIDIntegral;
+	int32_t  PIDOutput;
 
-	uपूर्णांक32_t SigmaDeltaAccum;
-	uपूर्णांक32_t SigmaDeltaOutput;
-	uपूर्णांक32_t SigmaDeltaLevel;
+	uint32_t SigmaDeltaAccum;
+	uint32_t SigmaDeltaOutput;
+	uint32_t SigmaDeltaLevel;
 
-	uपूर्णांक32_t UtilizationSetpoपूर्णांक;
+	uint32_t UtilizationSetpoint;
 
-	uपूर्णांक8_t  TdpClampMode;
-	uपूर्णांक8_t  TdcClampMode;
-	uपूर्णांक8_t  ThermClampMode;
-	uपूर्णांक8_t  VoltageBusy;
+	uint8_t  TdpClampMode;
+	uint8_t  TdcClampMode;
+	uint8_t  ThermClampMode;
+	uint8_t  VoltageBusy;
 
-	पूर्णांक8_t   CurrLevel;
-	पूर्णांक8_t   TargLevel;
-	uपूर्णांक8_t  LevelChangeInProgress;
-	uपूर्णांक8_t  UpHyst;
+	int8_t   CurrLevel;
+	int8_t   TargLevel;
+	uint8_t  LevelChangeInProgress;
+	uint8_t  UpHyst;
 
-	uपूर्णांक8_t  DownHyst;
-	uपूर्णांक8_t  VoltageDownHyst;
-	uपूर्णांक8_t  DpmEnable;
-	uपूर्णांक8_t  DpmRunning;
+	uint8_t  DownHyst;
+	uint8_t  VoltageDownHyst;
+	uint8_t  DpmEnable;
+	uint8_t  DpmRunning;
 
-	uपूर्णांक8_t  DpmForce;
-	uपूर्णांक8_t  DpmForceLevel;
-	uपूर्णांक8_t  DisplayWatermark;
-	uपूर्णांक8_t  McArbIndex;
+	uint8_t  DpmForce;
+	uint8_t  DpmForceLevel;
+	uint8_t  DisplayWatermark;
+	uint8_t  McArbIndex;
 
-	uपूर्णांक32_t MinimumPerfSclk;
+	uint32_t MinimumPerfSclk;
 
-	uपूर्णांक8_t  AcpiReq;
-	uपूर्णांक8_t  AcpiAck;
-	uपूर्णांक8_t  GfxClkSlow;
-	uपूर्णांक8_t  GpioClampMode; /* bit0 = VRHOT: bit1 = THERM: bit2 = DC */
+	uint8_t  AcpiReq;
+	uint8_t  AcpiAck;
+	uint8_t  GfxClkSlow;
+	uint8_t  GpioClampMode; /* bit0 = VRHOT: bit1 = THERM: bit2 = DC */
 
-	uपूर्णांक8_t  FpsFilterWeight;
-	uपूर्णांक8_t  EnabledLevelsChange;
-	uपूर्णांक8_t  DteClampMode;
-	uपूर्णांक8_t  FpsClampMode;
+	uint8_t  FpsFilterWeight;
+	uint8_t  EnabledLevelsChange;
+	uint8_t  DteClampMode;
+	uint8_t  FpsClampMode;
 
-	uपूर्णांक16_t LevelResidencyCounters[SMU72_MAX_LEVELS_GRAPHICS];
-	uपूर्णांक16_t LevelSwitchCounters[SMU72_MAX_LEVELS_GRAPHICS];
+	uint16_t LevelResidencyCounters[SMU72_MAX_LEVELS_GRAPHICS];
+	uint16_t LevelSwitchCounters[SMU72_MAX_LEVELS_GRAPHICS];
 
-	व्योम     (*TargetStateCalculator)(uपूर्णांक8_t);
-	व्योम     (*SavedTargetStateCalculator)(uपूर्णांक8_t);
+	void     (*TargetStateCalculator)(uint8_t);
+	void     (*SavedTargetStateCalculator)(uint8_t);
 
-	uपूर्णांक16_t AutoDpmInterval;
-	uपूर्णांक16_t AutoDpmRange;
+	uint16_t AutoDpmInterval;
+	uint16_t AutoDpmRange;
 
-	uपूर्णांक8_t  FpsEnabled;
-	uपूर्णांक8_t  MaxPerfLevel;
-	uपूर्णांक8_t  AllowLowClkInterruptToHost;
-	uपूर्णांक8_t  FpsRunning;
+	uint8_t  FpsEnabled;
+	uint8_t  MaxPerfLevel;
+	uint8_t  AllowLowClkInterruptToHost;
+	uint8_t  FpsRunning;
 
-	uपूर्णांक32_t MaxAllowedFrequency;
+	uint32_t MaxAllowedFrequency;
 
-	uपूर्णांक32_t FilteredSclkFrequency;
-	uपूर्णांक32_t LastSclkFrequency;
-	uपूर्णांक32_t FilteredSclkFrequencyCnt;
-पूर्ण;
+	uint32_t FilteredSclkFrequency;
+	uint32_t LastSclkFrequency;
+	uint32_t FilteredSclkFrequencyCnt;
+};
 
-प्रकार काष्ठा SMU7_LocalDpmScoreboard SMU7_LocalDpmScoreboard;
+typedef struct SMU7_LocalDpmScoreboard SMU7_LocalDpmScoreboard;
 
-#घोषणा SMU7_MAX_VOLTAGE_CLIENTS 12
+#define SMU7_MAX_VOLTAGE_CLIENTS 12
 
-प्रकार uपूर्णांक8_t (*VoltageChangeHandler_t)(uपूर्णांक16_t, uपूर्णांक8_t);
+typedef uint8_t (*VoltageChangeHandler_t)(uint16_t, uint8_t);
 
-काष्ठा SMU_VoltageLevel अणु
-	uपूर्णांक8_t Vddc;
-	uपूर्णांक8_t Vddci;
-	uपूर्णांक8_t VddGfx;
-	uपूर्णांक8_t Phases;
-पूर्ण;
+struct SMU_VoltageLevel {
+	uint8_t Vddc;
+	uint8_t Vddci;
+	uint8_t VddGfx;
+	uint8_t Phases;
+};
 
-प्रकार काष्ठा SMU_VoltageLevel SMU_VoltageLevel;
+typedef struct SMU_VoltageLevel SMU_VoltageLevel;
 
-काष्ठा SMU7_VoltageScoreboard अणु
+struct SMU7_VoltageScoreboard {
 	SMU_VoltageLevel CurrentVoltage;
 	SMU_VoltageLevel TargetVoltage;
-	uपूर्णांक16_t MaxVid;
-	uपूर्णांक8_t  HighestVidOffset;
-	uपूर्णांक8_t  CurrentVidOffset;
+	uint16_t MaxVid;
+	uint8_t  HighestVidOffset;
+	uint8_t  CurrentVidOffset;
 
-	uपूर्णांक8_t  ControllerBusy;
-	uपूर्णांक8_t  CurrentVid;
-	uपूर्णांक8_t  CurrentVddciVid;
-	uपूर्णांक8_t  VddGfxShutकरोwn; /* 0 = normal mode, 1 = shut करोwn */
+	uint8_t  ControllerBusy;
+	uint8_t  CurrentVid;
+	uint8_t  CurrentVddciVid;
+	uint8_t  VddGfxShutdown; /* 0 = normal mode, 1 = shut down */
 
 	SMU_VoltageLevel RequestedVoltage[SMU7_MAX_VOLTAGE_CLIENTS];
-	uपूर्णांक8_t  EnabledRequest[SMU7_MAX_VOLTAGE_CLIENTS];
+	uint8_t  EnabledRequest[SMU7_MAX_VOLTAGE_CLIENTS];
 
-	uपूर्णांक8_t  TargetIndex;
-	uपूर्णांक8_t  Delay;
-	uपूर्णांक8_t  ControllerEnable;
-	uपूर्णांक8_t  ControllerRunning;
-	uपूर्णांक16_t CurrentStdVoltageHiSidd;
-	uपूर्णांक16_t CurrentStdVoltageLoSidd;
-	uपूर्णांक8_t  OverrideVoltage;
-	uपूर्णांक8_t  VddcUseUlvOffset;
-	uपूर्णांक8_t  VddGfxUseUlvOffset;
-	uपूर्णांक8_t  padding;
+	uint8_t  TargetIndex;
+	uint8_t  Delay;
+	uint8_t  ControllerEnable;
+	uint8_t  ControllerRunning;
+	uint16_t CurrentStdVoltageHiSidd;
+	uint16_t CurrentStdVoltageLoSidd;
+	uint8_t  OverrideVoltage;
+	uint8_t  VddcUseUlvOffset;
+	uint8_t  VddGfxUseUlvOffset;
+	uint8_t  padding;
 
 	VoltageChangeHandler_t ChangeVddc;
 	VoltageChangeHandler_t ChangeVddGfx;
@@ -334,213 +333,213 @@
 
 	VoltageChangeHandler_t functionLinks[6];
 
-	uपूर्णांक8_t *VddcFollower1;
-	uपूर्णांक8_t *VddcFollower2;
-	पूर्णांक16_t  Driver_OD_RequestedVidOffset1;
-	पूर्णांक16_t  Driver_OD_RequestedVidOffset2;
+	uint8_t *VddcFollower1;
+	uint8_t *VddcFollower2;
+	int16_t  Driver_OD_RequestedVidOffset1;
+	int16_t  Driver_OD_RequestedVidOffset2;
 
-पूर्ण;
+};
 
-प्रकार काष्ठा SMU7_VoltageScoreboard SMU7_VoltageScoreboard;
+typedef struct SMU7_VoltageScoreboard SMU7_VoltageScoreboard;
 
-#घोषणा SMU7_MAX_PCIE_LINK_SPEEDS 3 /* 0:Gen1 1:Gen2 2:Gen3 */
+#define SMU7_MAX_PCIE_LINK_SPEEDS 3 /* 0:Gen1 1:Gen2 2:Gen3 */
 
-काष्ठा SMU7_PCIeLinkSpeedScoreboard अणु
-	uपूर्णांक8_t     DpmEnable;
-	uपूर्णांक8_t     DpmRunning;
-	uपूर्णांक8_t     DpmForce;
-	uपूर्णांक8_t     DpmForceLevel;
+struct SMU7_PCIeLinkSpeedScoreboard {
+	uint8_t     DpmEnable;
+	uint8_t     DpmRunning;
+	uint8_t     DpmForce;
+	uint8_t     DpmForceLevel;
 
-	uपूर्णांक8_t     CurrentLinkSpeed;
-	uपूर्णांक8_t     EnabledLevelsChange;
-	uपूर्णांक16_t    AutoDpmInterval;
+	uint8_t     CurrentLinkSpeed;
+	uint8_t     EnabledLevelsChange;
+	uint16_t    AutoDpmInterval;
 
-	uपूर्णांक16_t    AutoDpmRange;
-	uपूर्णांक16_t    AutoDpmCount;
+	uint16_t    AutoDpmRange;
+	uint16_t    AutoDpmCount;
 
-	uपूर्णांक8_t     DpmMode;
-	uपूर्णांक8_t     AcpiReq;
-	uपूर्णांक8_t     AcpiAck;
-	uपूर्णांक8_t     CurrentLinkLevel;
+	uint8_t     DpmMode;
+	uint8_t     AcpiReq;
+	uint8_t     AcpiAck;
+	uint8_t     CurrentLinkLevel;
 
-पूर्ण;
+};
 
-प्रकार काष्ठा SMU7_PCIeLinkSpeedScoreboard SMU7_PCIeLinkSpeedScoreboard;
+typedef struct SMU7_PCIeLinkSpeedScoreboard SMU7_PCIeLinkSpeedScoreboard;
 
 /* -------------------------------------------------------- CAC table ------------------------------------------------------ */
-#घोषणा SMU7_LKGE_LUT_NUM_OF_TEMP_ENTRIES 16
-#घोषणा SMU7_LKGE_LUT_NUM_OF_VOLT_ENTRIES 16
-#घोषणा SMU7_SCALE_I  7
-#घोषणा SMU7_SCALE_R 12
+#define SMU7_LKGE_LUT_NUM_OF_TEMP_ENTRIES 16
+#define SMU7_LKGE_LUT_NUM_OF_VOLT_ENTRIES 16
+#define SMU7_SCALE_I  7
+#define SMU7_SCALE_R 12
 
-काष्ठा SMU7_PowerScoreboard अणु
+struct SMU7_PowerScoreboard {
 	PowerCalculatorData_t VddGfxPowerData[SID_OPTION_COUNT];
 	PowerCalculatorData_t VddcPowerData[SID_OPTION_COUNT];
 
-	uपूर्णांक32_t TotalGpuPower;
-	uपूर्णांक32_t TdcCurrent;
+	uint32_t TotalGpuPower;
+	uint32_t TdcCurrent;
 
-	uपूर्णांक16_t   VddciTotalPower;
-	uपूर्णांक16_t   sparesasfsdfd;
-	uपूर्णांक16_t   Vddr1Power;
-	uपूर्णांक16_t   RocPower;
+	uint16_t   VddciTotalPower;
+	uint16_t   sparesasfsdfd;
+	uint16_t   Vddr1Power;
+	uint16_t   RocPower;
 
-	uपूर्णांक16_t   CalcMeasPowerBlend;
-	uपूर्णांक8_t    SidOptionPower;
-	uपूर्णांक8_t    SidOptionCurrent;
+	uint16_t   CalcMeasPowerBlend;
+	uint8_t    SidOptionPower;
+	uint8_t    SidOptionCurrent;
 
-	uपूर्णांक32_t   WinTime;
+	uint32_t   WinTime;
 
-	uपूर्णांक16_t Telemetry_1_slope;
-	uपूर्णांक16_t Telemetry_2_slope;
-	पूर्णांक32_t Telemetry_1_offset;
-	पूर्णांक32_t Telemetry_2_offset;
+	uint16_t Telemetry_1_slope;
+	uint16_t Telemetry_2_slope;
+	int32_t Telemetry_1_offset;
+	int32_t Telemetry_2_offset;
 
-	uपूर्णांक32_t VddcCurrentTelemetry;
-	uपूर्णांक32_t VddGfxCurrentTelemetry;
-	uपूर्णांक32_t VddcPowerTelemetry;
-	uपूर्णांक32_t VddGfxPowerTelemetry;
-	uपूर्णांक32_t VddciPowerTelemetry;
+	uint32_t VddcCurrentTelemetry;
+	uint32_t VddGfxCurrentTelemetry;
+	uint32_t VddcPowerTelemetry;
+	uint32_t VddGfxPowerTelemetry;
+	uint32_t VddciPowerTelemetry;
 
-	uपूर्णांक32_t VddcPower;
-	uपूर्णांक32_t VddGfxPower;
-	uपूर्णांक32_t VddciPower;
+	uint32_t VddcPower;
+	uint32_t VddGfxPower;
+	uint32_t VddciPower;
 
-	uपूर्णांक32_t TelemetryCurrent[2];
-	uपूर्णांक32_t TelemetryVoltage[2];
-	uपूर्णांक32_t TelemetryPower[2];
-पूर्ण;
+	uint32_t TelemetryCurrent[2];
+	uint32_t TelemetryVoltage[2];
+	uint32_t TelemetryPower[2];
+};
 
-प्रकार काष्ठा SMU7_PowerScoreboard SMU7_PowerScoreboard;
+typedef struct SMU7_PowerScoreboard SMU7_PowerScoreboard;
 
-काष्ठा SMU7_ThermalScoreboard अणु
-	पूर्णांक16_t  GpuLimit;
-	पूर्णांक16_t  GpuHyst;
-	uपूर्णांक16_t CurrGnbTemp;
-	uपूर्णांक16_t FilteredGnbTemp;
+struct SMU7_ThermalScoreboard {
+	int16_t  GpuLimit;
+	int16_t  GpuHyst;
+	uint16_t CurrGnbTemp;
+	uint16_t FilteredGnbTemp;
 
-	uपूर्णांक8_t  ControllerEnable;
-	uपूर्णांक8_t  ControllerRunning;
-	uपूर्णांक8_t  AutoTmonCalInterval;
-	uपूर्णांक8_t  AutoTmonCalEnable;
+	uint8_t  ControllerEnable;
+	uint8_t  ControllerRunning;
+	uint8_t  AutoTmonCalInterval;
+	uint8_t  AutoTmonCalEnable;
 
-	uपूर्णांक8_t  ThermalDpmEnabled;
-	uपूर्णांक8_t  SclkEnabledMask;
-	uपूर्णांक8_t  spare[2];
-	पूर्णांक32_t  temperature_gradient;
+	uint8_t  ThermalDpmEnabled;
+	uint8_t  SclkEnabledMask;
+	uint8_t  spare[2];
+	int32_t  temperature_gradient;
 
 	SMU7_HystController_Data HystControllerData;
-	पूर्णांक32_t  WeightedSensorTemperature;
-	uपूर्णांक16_t TemperatureLimit[SMU72_MAX_LEVELS_GRAPHICS];
-	uपूर्णांक32_t Alpha;
-पूर्ण;
+	int32_t  WeightedSensorTemperature;
+	uint16_t TemperatureLimit[SMU72_MAX_LEVELS_GRAPHICS];
+	uint32_t Alpha;
+};
 
-प्रकार काष्ठा SMU7_ThermalScoreboard SMU7_ThermalScoreboard;
+typedef struct SMU7_ThermalScoreboard SMU7_ThermalScoreboard;
 
 /* For FeatureEnables: */
-#घोषणा SMU7_SCLK_DPM_CONFIG_MASK                        0x01
-#घोषणा SMU7_VOLTAGE_CONTROLLER_CONFIG_MASK              0x02
-#घोषणा SMU7_THERMAL_CONTROLLER_CONFIG_MASK              0x04
-#घोषणा SMU7_MCLK_DPM_CONFIG_MASK                        0x08
-#घोषणा SMU7_UVD_DPM_CONFIG_MASK                         0x10
-#घोषणा SMU7_VCE_DPM_CONFIG_MASK                         0x20
-#घोषणा SMU7_ACP_DPM_CONFIG_MASK                         0x40
-#घोषणा SMU7_SAMU_DPM_CONFIG_MASK                        0x80
-#घोषणा SMU7_PCIEGEN_DPM_CONFIG_MASK                    0x100
+#define SMU7_SCLK_DPM_CONFIG_MASK                        0x01
+#define SMU7_VOLTAGE_CONTROLLER_CONFIG_MASK              0x02
+#define SMU7_THERMAL_CONTROLLER_CONFIG_MASK              0x04
+#define SMU7_MCLK_DPM_CONFIG_MASK                        0x08
+#define SMU7_UVD_DPM_CONFIG_MASK                         0x10
+#define SMU7_VCE_DPM_CONFIG_MASK                         0x20
+#define SMU7_ACP_DPM_CONFIG_MASK                         0x40
+#define SMU7_SAMU_DPM_CONFIG_MASK                        0x80
+#define SMU7_PCIEGEN_DPM_CONFIG_MASK                    0x100
 
-#घोषणा SMU7_ACP_MCLK_HANDSHAKE_DISABLE                  0x00000001
-#घोषणा SMU7_ACP_SCLK_HANDSHAKE_DISABLE                  0x00000002
-#घोषणा SMU7_UVD_MCLK_HANDSHAKE_DISABLE                  0x00000100
-#घोषणा SMU7_UVD_SCLK_HANDSHAKE_DISABLE                  0x00000200
-#घोषणा SMU7_VCE_MCLK_HANDSHAKE_DISABLE                  0x00010000
-#घोषणा SMU7_VCE_SCLK_HANDSHAKE_DISABLE                  0x00020000
+#define SMU7_ACP_MCLK_HANDSHAKE_DISABLE                  0x00000001
+#define SMU7_ACP_SCLK_HANDSHAKE_DISABLE                  0x00000002
+#define SMU7_UVD_MCLK_HANDSHAKE_DISABLE                  0x00000100
+#define SMU7_UVD_SCLK_HANDSHAKE_DISABLE                  0x00000200
+#define SMU7_VCE_MCLK_HANDSHAKE_DISABLE                  0x00010000
+#define SMU7_VCE_SCLK_HANDSHAKE_DISABLE                  0x00020000
 
-/* All 'soft registers' should be uपूर्णांक32_t. */
-काष्ठा SMU72_SoftRegisters अणु
-	uपूर्णांक32_t        RefClockFrequency;
-	uपूर्णांक32_t        PmTimerPeriod;
-	uपूर्णांक32_t        FeatureEnables;
+/* All 'soft registers' should be uint32_t. */
+struct SMU72_SoftRegisters {
+	uint32_t        RefClockFrequency;
+	uint32_t        PmTimerPeriod;
+	uint32_t        FeatureEnables;
 
-	uपूर्णांक32_t        PreVBlankGap;
-	uपूर्णांक32_t        VBlankTimeout;
-	uपूर्णांक32_t        TrainTimeGap;
+	uint32_t        PreVBlankGap;
+	uint32_t        VBlankTimeout;
+	uint32_t        TrainTimeGap;
 
-	uपूर्णांक32_t        MvddSwitchTime;
-	uपूर्णांक32_t        LongestAcpiTrainTime;
-	uपूर्णांक32_t        AcpiDelay;
-	uपूर्णांक32_t        G5TrainTime;
-	uपूर्णांक32_t        DelayMpllPwron;
-	uपूर्णांक32_t        VoltageChangeTimeout;
+	uint32_t        MvddSwitchTime;
+	uint32_t        LongestAcpiTrainTime;
+	uint32_t        AcpiDelay;
+	uint32_t        G5TrainTime;
+	uint32_t        DelayMpllPwron;
+	uint32_t        VoltageChangeTimeout;
 
-	uपूर्णांक32_t        HandshakeDisables;
+	uint32_t        HandshakeDisables;
 
-	uपूर्णांक8_t         DisplayPhy1Config;
-	uपूर्णांक8_t         DisplayPhy2Config;
-	uपूर्णांक8_t         DisplayPhy3Config;
-	uपूर्णांक8_t         DisplayPhy4Config;
+	uint8_t         DisplayPhy1Config;
+	uint8_t         DisplayPhy2Config;
+	uint8_t         DisplayPhy3Config;
+	uint8_t         DisplayPhy4Config;
 
-	uपूर्णांक8_t         DisplayPhy5Config;
-	uपूर्णांक8_t         DisplayPhy6Config;
-	uपूर्णांक8_t         DisplayPhy7Config;
-	uपूर्णांक8_t         DisplayPhy8Config;
+	uint8_t         DisplayPhy5Config;
+	uint8_t         DisplayPhy6Config;
+	uint8_t         DisplayPhy7Config;
+	uint8_t         DisplayPhy8Config;
 
-	uपूर्णांक32_t        AverageGraphicsActivity;
-	uपूर्णांक32_t        AverageMemoryActivity;
-	uपूर्णांक32_t        AverageGioActivity;
+	uint32_t        AverageGraphicsActivity;
+	uint32_t        AverageMemoryActivity;
+	uint32_t        AverageGioActivity;
 
-	uपूर्णांक8_t         SClkDpmEnabledLevels;
-	uपूर्णांक8_t         MClkDpmEnabledLevels;
-	uपूर्णांक8_t         LClkDpmEnabledLevels;
-	uपूर्णांक8_t         PCIeDpmEnabledLevels;
+	uint8_t         SClkDpmEnabledLevels;
+	uint8_t         MClkDpmEnabledLevels;
+	uint8_t         LClkDpmEnabledLevels;
+	uint8_t         PCIeDpmEnabledLevels;
 
-	uपूर्णांक8_t         UVDDpmEnabledLevels;
-	uपूर्णांक8_t         SAMUDpmEnabledLevels;
-	uपूर्णांक8_t         ACPDpmEnabledLevels;
-	uपूर्णांक8_t         VCEDpmEnabledLevels;
+	uint8_t         UVDDpmEnabledLevels;
+	uint8_t         SAMUDpmEnabledLevels;
+	uint8_t         ACPDpmEnabledLevels;
+	uint8_t         VCEDpmEnabledLevels;
 
-	uपूर्णांक32_t        DRAM_LOG_ADDR_H;
-	uपूर्णांक32_t        DRAM_LOG_ADDR_L;
-	uपूर्णांक32_t        DRAM_LOG_PHY_ADDR_H;
-	uपूर्णांक32_t        DRAM_LOG_PHY_ADDR_L;
-	uपूर्णांक32_t        DRAM_LOG_BUFF_SIZE;
-	uपूर्णांक32_t        UlvEnterCount;
-	uपूर्णांक32_t        UlvTime;
-	uपूर्णांक32_t        UcodeLoadStatus;
-	uपूर्णांक32_t        Reserved[2];
+	uint32_t        DRAM_LOG_ADDR_H;
+	uint32_t        DRAM_LOG_ADDR_L;
+	uint32_t        DRAM_LOG_PHY_ADDR_H;
+	uint32_t        DRAM_LOG_PHY_ADDR_L;
+	uint32_t        DRAM_LOG_BUFF_SIZE;
+	uint32_t        UlvEnterCount;
+	uint32_t        UlvTime;
+	uint32_t        UcodeLoadStatus;
+	uint32_t        Reserved[2];
 
-पूर्ण;
+};
 
-प्रकार काष्ठा SMU72_SoftRegisters SMU72_SoftRegisters;
+typedef struct SMU72_SoftRegisters SMU72_SoftRegisters;
 
-काष्ठा SMU72_Firmware_Header अणु
-	uपूर्णांक32_t Digest[5];
-	uपूर्णांक32_t Version;
-	uपूर्णांक32_t HeaderSize;
-	uपूर्णांक32_t Flags;
-	uपूर्णांक32_t EntryPoपूर्णांक;
-	uपूर्णांक32_t CodeSize;
-	uपूर्णांक32_t ImageSize;
+struct SMU72_Firmware_Header {
+	uint32_t Digest[5];
+	uint32_t Version;
+	uint32_t HeaderSize;
+	uint32_t Flags;
+	uint32_t EntryPoint;
+	uint32_t CodeSize;
+	uint32_t ImageSize;
 
-	uपूर्णांक32_t Rtos;
-	uपूर्णांक32_t SoftRegisters;
-	uपूर्णांक32_t DpmTable;
-	uपूर्णांक32_t FanTable;
-	uपूर्णांक32_t CacConfigTable;
-	uपूर्णांक32_t CacStatusTable;
-	uपूर्णांक32_t mcRegisterTable;
-	uपूर्णांक32_t mcArbDramTimingTable;
-	uपूर्णांक32_t PmFuseTable;
-	uपूर्णांक32_t Globals;
-	uपूर्णांक32_t ClockStretcherTable;
-	uपूर्णांक32_t Reserved[41];
-	uपूर्णांक32_t Signature;
-पूर्ण;
+	uint32_t Rtos;
+	uint32_t SoftRegisters;
+	uint32_t DpmTable;
+	uint32_t FanTable;
+	uint32_t CacConfigTable;
+	uint32_t CacStatusTable;
+	uint32_t mcRegisterTable;
+	uint32_t mcArbDramTimingTable;
+	uint32_t PmFuseTable;
+	uint32_t Globals;
+	uint32_t ClockStretcherTable;
+	uint32_t Reserved[41];
+	uint32_t Signature;
+};
 
-प्रकार काष्ठा SMU72_Firmware_Header SMU72_Firmware_Header;
+typedef struct SMU72_Firmware_Header SMU72_Firmware_Header;
 
-#घोषणा SMU72_FIRMWARE_HEADER_LOCATION 0x20000
+#define SMU72_FIRMWARE_HEADER_LOCATION 0x20000
 
-क्रमागत  DisplayConfig अणु
+enum  DisplayConfig {
 	PowerDown = 1,
 	DP54x4,
 	DP54x2,
@@ -554,135 +553,135 @@
 	DP324x4,
 	DP324x2,
 	DP324x1
-पूर्ण;
+};
 
-#घोषणा MC_BLOCK_COUNT 1
-#घोषणा CPL_BLOCK_COUNT 5
-#घोषणा SE_BLOCK_COUNT 15
-#घोषणा GC_BLOCK_COUNT 24
+#define MC_BLOCK_COUNT 1
+#define CPL_BLOCK_COUNT 5
+#define SE_BLOCK_COUNT 15
+#define GC_BLOCK_COUNT 24
 
-काष्ठा SMU7_Local_Cac अणु
-	uपूर्णांक8_t BlockId;
-	uपूर्णांक8_t SignalId;
-	uपूर्णांक8_t Threshold;
-	uपूर्णांक8_t Padding;
-पूर्ण;
+struct SMU7_Local_Cac {
+	uint8_t BlockId;
+	uint8_t SignalId;
+	uint8_t Threshold;
+	uint8_t Padding;
+};
 
-प्रकार काष्ठा SMU7_Local_Cac SMU7_Local_Cac;
+typedef struct SMU7_Local_Cac SMU7_Local_Cac;
 
-काष्ठा SMU7_Local_Cac_Table अणु
+struct SMU7_Local_Cac_Table {
 	SMU7_Local_Cac CplLocalCac[CPL_BLOCK_COUNT];
 	SMU7_Local_Cac McLocalCac[MC_BLOCK_COUNT];
 	SMU7_Local_Cac SeLocalCac[SE_BLOCK_COUNT];
 	SMU7_Local_Cac GcLocalCac[GC_BLOCK_COUNT];
-पूर्ण;
+};
 
-प्रकार काष्ठा SMU7_Local_Cac_Table SMU7_Local_Cac_Table;
+typedef struct SMU7_Local_Cac_Table SMU7_Local_Cac_Table;
 
-#अगर !defined(SMC_MICROCODE)
-#आशय pack(pop)
-#पूर्ण_अगर
+#if !defined(SMC_MICROCODE)
+#pragma pack(pop)
+#endif
 
-/* Description of Clock Gating biपंचांगask क्रम Tonga: */
+/* Description of Clock Gating bitmask for Tonga: */
 /* System Clock Gating */
-#घोषणा CG_SYS_BITMASK_FIRST_BIT      0  /* First bit of Sys CG biपंचांगask */
-#घोषणा CG_SYS_BITMASK_LAST_BIT       9  /* Last bit of Sys CG biपंचांगask */
-#घोषणा CG_SYS_BIF_MGLS_SHIFT         0
-#घोषणा CG_SYS_ROM_SHIFT              1
-#घोषणा CG_SYS_MC_MGCG_SHIFT          2
-#घोषणा CG_SYS_MC_MGLS_SHIFT          3
-#घोषणा CG_SYS_SDMA_MGCG_SHIFT        4
-#घोषणा CG_SYS_SDMA_MGLS_SHIFT        5
-#घोषणा CG_SYS_DRM_MGCG_SHIFT         6
-#घोषणा CG_SYS_HDP_MGCG_SHIFT         7
-#घोषणा CG_SYS_HDP_MGLS_SHIFT         8
-#घोषणा CG_SYS_DRM_MGLS_SHIFT         9
+#define CG_SYS_BITMASK_FIRST_BIT      0  /* First bit of Sys CG bitmask */
+#define CG_SYS_BITMASK_LAST_BIT       9  /* Last bit of Sys CG bitmask */
+#define CG_SYS_BIF_MGLS_SHIFT         0
+#define CG_SYS_ROM_SHIFT              1
+#define CG_SYS_MC_MGCG_SHIFT          2
+#define CG_SYS_MC_MGLS_SHIFT          3
+#define CG_SYS_SDMA_MGCG_SHIFT        4
+#define CG_SYS_SDMA_MGLS_SHIFT        5
+#define CG_SYS_DRM_MGCG_SHIFT         6
+#define CG_SYS_HDP_MGCG_SHIFT         7
+#define CG_SYS_HDP_MGLS_SHIFT         8
+#define CG_SYS_DRM_MGLS_SHIFT         9
 
-#घोषणा CG_SYS_BIF_MGLS_MASK          0x1
-#घोषणा CG_SYS_ROM_MASK               0x2
-#घोषणा CG_SYS_MC_MGCG_MASK           0x4
-#घोषणा CG_SYS_MC_MGLS_MASK           0x8
-#घोषणा CG_SYS_SDMA_MGCG_MASK         0x10
-#घोषणा CG_SYS_SDMA_MGLS_MASK         0x20
-#घोषणा CG_SYS_DRM_MGCG_MASK          0x40
-#घोषणा CG_SYS_HDP_MGCG_MASK          0x80
-#घोषणा CG_SYS_HDP_MGLS_MASK          0x100
-#घोषणा CG_SYS_DRM_MGLS_MASK          0x200
+#define CG_SYS_BIF_MGLS_MASK          0x1
+#define CG_SYS_ROM_MASK               0x2
+#define CG_SYS_MC_MGCG_MASK           0x4
+#define CG_SYS_MC_MGLS_MASK           0x8
+#define CG_SYS_SDMA_MGCG_MASK         0x10
+#define CG_SYS_SDMA_MGLS_MASK         0x20
+#define CG_SYS_DRM_MGCG_MASK          0x40
+#define CG_SYS_HDP_MGCG_MASK          0x80
+#define CG_SYS_HDP_MGLS_MASK          0x100
+#define CG_SYS_DRM_MGLS_MASK          0x200
 
 /* Graphics Clock Gating */
-#घोषणा CG_GFX_BITMASK_FIRST_BIT      16 /* First bit of Gfx CG biपंचांगask */
-#घोषणा CG_GFX_BITMASK_LAST_BIT       20 /* Last bit of Gfx CG biपंचांगask */
-#घोषणा CG_GFX_CGCG_SHIFT             16
-#घोषणा CG_GFX_CGLS_SHIFT             17
-#घोषणा CG_CPF_MGCG_SHIFT             18
-#घोषणा CG_RLC_MGCG_SHIFT             19
-#घोषणा CG_GFX_OTHERS_MGCG_SHIFT      20
+#define CG_GFX_BITMASK_FIRST_BIT      16 /* First bit of Gfx CG bitmask */
+#define CG_GFX_BITMASK_LAST_BIT       20 /* Last bit of Gfx CG bitmask */
+#define CG_GFX_CGCG_SHIFT             16
+#define CG_GFX_CGLS_SHIFT             17
+#define CG_CPF_MGCG_SHIFT             18
+#define CG_RLC_MGCG_SHIFT             19
+#define CG_GFX_OTHERS_MGCG_SHIFT      20
 
-#घोषणा CG_GFX_CGCG_MASK              0x00010000
-#घोषणा CG_GFX_CGLS_MASK              0x00020000
-#घोषणा CG_CPF_MGCG_MASK              0x00040000
-#घोषणा CG_RLC_MGCG_MASK              0x00080000
-#घोषणा CG_GFX_OTHERS_MGCG_MASK       0x00100000
+#define CG_GFX_CGCG_MASK              0x00010000
+#define CG_GFX_CGLS_MASK              0x00020000
+#define CG_CPF_MGCG_MASK              0x00040000
+#define CG_RLC_MGCG_MASK              0x00080000
+#define CG_GFX_OTHERS_MGCG_MASK       0x00100000
 
 /* Voltage Regulator Configuration */
 /* VR Config info is contained in dpmTable.VRConfig */
 
-#घोषणा VRCONF_VDDC_MASK         0x000000FF
-#घोषणा VRCONF_VDDC_SHIFT        0
-#घोषणा VRCONF_VDDGFX_MASK       0x0000FF00
-#घोषणा VRCONF_VDDGFX_SHIFT      8
-#घोषणा VRCONF_VDDCI_MASK        0x00FF0000
-#घोषणा VRCONF_VDDCI_SHIFT       16
-#घोषणा VRCONF_MVDD_MASK         0xFF000000
-#घोषणा VRCONF_MVDD_SHIFT        24
+#define VRCONF_VDDC_MASK         0x000000FF
+#define VRCONF_VDDC_SHIFT        0
+#define VRCONF_VDDGFX_MASK       0x0000FF00
+#define VRCONF_VDDGFX_SHIFT      8
+#define VRCONF_VDDCI_MASK        0x00FF0000
+#define VRCONF_VDDCI_SHIFT       16
+#define VRCONF_MVDD_MASK         0xFF000000
+#define VRCONF_MVDD_SHIFT        24
 
-#घोषणा VR_MERGED_WITH_VDDC      0
-#घोषणा VR_SVI2_PLANE_1          1
-#घोषणा VR_SVI2_PLANE_2          2
-#घोषणा VR_SMIO_PATTERN_1        3
-#घोषणा VR_SMIO_PATTERN_2        4
-#घोषणा VR_STATIC_VOLTAGE        5
+#define VR_MERGED_WITH_VDDC      0
+#define VR_SVI2_PLANE_1          1
+#define VR_SVI2_PLANE_2          2
+#define VR_SMIO_PATTERN_1        3
+#define VR_SMIO_PATTERN_2        4
+#define VR_STATIC_VOLTAGE        5
 
 /* Clock Stretcher Configuration */
 
-#घोषणा CLOCK_STRETCHER_MAX_ENTRIES 0x4
-#घोषणा CKS_LOOKUPTable_MAX_ENTRIES 0x4
+#define CLOCK_STRETCHER_MAX_ENTRIES 0x4
+#define CKS_LOOKUPTable_MAX_ENTRIES 0x4
 
-/* The 'settings' field is subभागided in the following way: */
-#घोषणा CLOCK_STRETCHER_SETTING_DDT_MASK             0x01
-#घोषणा CLOCK_STRETCHER_SETTING_DDT_SHIFT            0x0
-#घोषणा CLOCK_STRETCHER_SETTING_STRETCH_AMOUNT_MASK  0x1E
-#घोषणा CLOCK_STRETCHER_SETTING_STRETCH_AMOUNT_SHIFT 0x1
-#घोषणा CLOCK_STRETCHER_SETTING_ENABLE_MASK          0x80
-#घोषणा CLOCK_STRETCHER_SETTING_ENABLE_SHIFT         0x7
+/* The 'settings' field is subdivided in the following way: */
+#define CLOCK_STRETCHER_SETTING_DDT_MASK             0x01
+#define CLOCK_STRETCHER_SETTING_DDT_SHIFT            0x0
+#define CLOCK_STRETCHER_SETTING_STRETCH_AMOUNT_MASK  0x1E
+#define CLOCK_STRETCHER_SETTING_STRETCH_AMOUNT_SHIFT 0x1
+#define CLOCK_STRETCHER_SETTING_ENABLE_MASK          0x80
+#define CLOCK_STRETCHER_SETTING_ENABLE_SHIFT         0x7
 
-काष्ठा SMU_ClockStretcherDataTableEntry अणु
-	uपूर्णांक8_t minVID;
-	uपूर्णांक8_t maxVID;
+struct SMU_ClockStretcherDataTableEntry {
+	uint8_t minVID;
+	uint8_t maxVID;
 
-	uपूर्णांक16_t setting;
-पूर्ण;
-प्रकार काष्ठा SMU_ClockStretcherDataTableEntry SMU_ClockStretcherDataTableEntry;
+	uint16_t setting;
+};
+typedef struct SMU_ClockStretcherDataTableEntry SMU_ClockStretcherDataTableEntry;
 
-काष्ठा SMU_ClockStretcherDataTable अणु
+struct SMU_ClockStretcherDataTable {
 	SMU_ClockStretcherDataTableEntry ClockStretcherDataTableEntry[CLOCK_STRETCHER_MAX_ENTRIES];
-पूर्ण;
-प्रकार काष्ठा SMU_ClockStretcherDataTable SMU_ClockStretcherDataTable;
+};
+typedef struct SMU_ClockStretcherDataTable SMU_ClockStretcherDataTable;
 
-काष्ठा SMU_CKS_LOOKUPTableEntry अणु
-	uपूर्णांक16_t minFreq;
-	uपूर्णांक16_t maxFreq;
+struct SMU_CKS_LOOKUPTableEntry {
+	uint16_t minFreq;
+	uint16_t maxFreq;
 
-	uपूर्णांक8_t setting;
-	uपूर्णांक8_t padding[3];
-पूर्ण;
-प्रकार काष्ठा SMU_CKS_LOOKUPTableEntry SMU_CKS_LOOKUPTableEntry;
+	uint8_t setting;
+	uint8_t padding[3];
+};
+typedef struct SMU_CKS_LOOKUPTableEntry SMU_CKS_LOOKUPTableEntry;
 
-काष्ठा SMU_CKS_LOOKUPTable अणु
+struct SMU_CKS_LOOKUPTable {
 	SMU_CKS_LOOKUPTableEntry CKS_LOOKUPTableEntry[CKS_LOOKUPTable_MAX_ENTRIES];
-पूर्ण;
-प्रकार काष्ठा SMU_CKS_LOOKUPTable SMU_CKS_LOOKUPTable;
+};
+typedef struct SMU_CKS_LOOKUPTable SMU_CKS_LOOKUPTable;
 
-#पूर्ण_अगर
+#endif
 
 

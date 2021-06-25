@@ -1,50 +1,49 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /******************************************************************************
  * rtl871x_ioctl_set.c
  *
  * Copyright(c) 2007 - 2010 Realtek Corporation. All rights reserved.
- * Linux device driver क्रम RTL8192SU
+ * Linux device driver for RTL8192SU
  *
- * Modअगरications क्रम inclusion पूर्णांकo the Linux staging tree are
+ * Modifications for inclusion into the Linux staging tree are
  * Copyright(c) 2010 Larry Finger. All rights reserved.
  *
- * Contact inक्रमmation:
+ * Contact information:
  * WLAN FAE <wlanfae@realtek.com>
  * Larry Finger <Larry.Finger@lwfinger.net>
  *
  ******************************************************************************/
 
-#घोषणा _RTL871X_IOCTL_SET_C_
+#define _RTL871X_IOCTL_SET_C_
 
-#समावेश "osdep_service.h"
-#समावेश "drv_types.h"
-#समावेश "rtl871x_ioctl_set.h"
-#समावेश "usb_osintf.h"
-#समावेश "usb_ops.h"
+#include "osdep_service.h"
+#include "drv_types.h"
+#include "rtl871x_ioctl_set.h"
+#include "usb_osintf.h"
+#include "usb_ops.h"
 
 
-अटल u8 validate_ssid(काष्ठा ndis_802_11_ssid *ssid)
-अणु
+static u8 validate_ssid(struct ndis_802_11_ssid *ssid)
+{
 	u8 i;
 
-	अगर (ssid->SsidLength > 32)
-		वापस false;
-	क्रम (i = 0; i < ssid->SsidLength; i++) अणु
-		/* wअगरi, prपूर्णांकable ascii code must be supported */
-		अगर (!((ssid->Ssid[i] >= 0x20) && (ssid->Ssid[i] <= 0x7e)))
-			वापस false;
-	पूर्ण
-	वापस true;
-पूर्ण
+	if (ssid->SsidLength > 32)
+		return false;
+	for (i = 0; i < ssid->SsidLength; i++) {
+		/* wifi, printable ascii code must be supported */
+		if (!((ssid->Ssid[i] >= 0x20) && (ssid->Ssid[i] <= 0x7e)))
+			return false;
+	}
+	return true;
+}
 
-अटल u8 करो_join(काष्ठा _adapter *padapter)
-अणु
-	काष्ठा list_head *plist, *phead;
-	u8 *pibss = शून्य;
-	काष्ठा	mlme_priv	*pmlmepriv = &(padapter->mlmepriv);
-	काष्ठा  __queue	*queue	= &(pmlmepriv->scanned_queue);
-	पूर्णांक ret;
+static u8 do_join(struct _adapter *padapter)
+{
+	struct list_head *plist, *phead;
+	u8 *pibss = NULL;
+	struct	mlme_priv	*pmlmepriv = &(padapter->mlmepriv);
+	struct  __queue	*queue	= &(pmlmepriv->scanned_queue);
+	int ret;
 
 	phead = &queue->queue;
 	plist = phead->next;
@@ -54,303 +53,303 @@
 	pmlmepriv->to_join = true;
 
 	/* adhoc mode will start with an empty queue, but skip checking */
-	अगर (!check_fwstate(pmlmepriv, WIFI_ADHOC_STATE) &&
-	    list_empty(&queue->queue)) अणु
-		अगर (pmlmepriv->fw_state & _FW_UNDER_LINKING)
+	if (!check_fwstate(pmlmepriv, WIFI_ADHOC_STATE) &&
+	    list_empty(&queue->queue)) {
+		if (pmlmepriv->fw_state & _FW_UNDER_LINKING)
 			pmlmepriv->fw_state ^= _FW_UNDER_LINKING;
-		/* when set_ssid/set_bssid क्रम करो_join(), but scanning queue
+		/* when set_ssid/set_bssid for do_join(), but scanning queue
 		 * is empty we try to issue sitesurvey firstly
 		 */
-		अगर (!pmlmepriv->sitesurveyctrl.traffic_busy)
+		if (!pmlmepriv->sitesurveyctrl.traffic_busy)
 			r8712_sitesurvey_cmd(padapter, &pmlmepriv->assoc_ssid);
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
 	ret = r8712_select_and_join_from_scan(pmlmepriv);
-	अगर (!ret) अणु
-		mod_समयr(&pmlmepriv->assoc_समयr,
-			  jअगरfies + msecs_to_jअगरfies(MAX_JOIN_TIMEOUT));
-	पूर्ण अन्यथा अणु
-		अगर (check_fwstate(pmlmepriv, WIFI_ADHOC_STATE)) अणु
+	if (!ret) {
+		mod_timer(&pmlmepriv->assoc_timer,
+			  jiffies + msecs_to_jiffies(MAX_JOIN_TIMEOUT));
+	} else {
+		if (check_fwstate(pmlmepriv, WIFI_ADHOC_STATE)) {
 			/* submit r8712_createbss_cmd to change to an
 			 * ADHOC_MASTER pmlmepriv->lock has been
 			 * acquired by caller...
 			 */
-			काष्ठा wlan_bssid_ex *pdev_network =
+			struct wlan_bssid_ex *pdev_network =
 				&(padapter->registrypriv.dev_network);
 			pmlmepriv->fw_state = WIFI_ADHOC_MASTER_STATE;
 			pibss = padapter->registrypriv.dev_network.MacAddress;
-			स_नकल(&pdev_network->Ssid,
+			memcpy(&pdev_network->Ssid,
 			       &pmlmepriv->assoc_ssid,
-			       माप(काष्ठा ndis_802_11_ssid));
+			       sizeof(struct ndis_802_11_ssid));
 			r8712_update_registrypriv_dev_network(padapter);
-			r8712_generate_अक्रमom_ibss(pibss);
-			अगर (r8712_createbss_cmd(padapter))
-				वापस false;
+			r8712_generate_random_ibss(pibss);
+			if (r8712_createbss_cmd(padapter))
+				return false;
 			pmlmepriv->to_join = false;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* can't associate ; reset under-linking */
-			अगर (pmlmepriv->fw_state & _FW_UNDER_LINKING)
+			if (pmlmepriv->fw_state & _FW_UNDER_LINKING)
 				pmlmepriv->fw_state ^=
 					_FW_UNDER_LINKING;
-			/* when set_ssid/set_bssid क्रम करो_join(), but
+			/* when set_ssid/set_bssid for do_join(), but
 			 * there are no desired bss in scanning queue
 			 * we try to issue sitesurvey first
 			 */
-			अगर (!pmlmepriv->sitesurveyctrl.traffic_busy)
+			if (!pmlmepriv->sitesurveyctrl.traffic_busy)
 				r8712_sitesurvey_cmd(padapter,
 						     &pmlmepriv->assoc_ssid);
-		पूर्ण
-	पूर्ण
-	वापस true;
-पूर्ण
+		}
+	}
+	return true;
+}
 
-u8 r8712_set_802_11_bssid(काष्ठा _adapter *padapter, u8 *bssid)
-अणु
-	अचिन्हित दीर्घ irqL;
+u8 r8712_set_802_11_bssid(struct _adapter *padapter, u8 *bssid)
+{
+	unsigned long irqL;
 	u8 status = true;
-	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
+	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
 
-	अगर (is_zero_ether_addr(bssid) || is_broadcast_ether_addr(bssid)) अणु
+	if (is_zero_ether_addr(bssid) || is_broadcast_ether_addr(bssid)) {
 		status = false;
-		वापस status;
-	पूर्ण
+		return status;
+	}
 	spin_lock_irqsave(&pmlmepriv->lock, irqL);
-	अगर (check_fwstate(pmlmepriv, _FW_UNDER_SURVEY |
-	    _FW_UNDER_LINKING)) अणु
+	if (check_fwstate(pmlmepriv, _FW_UNDER_SURVEY |
+	    _FW_UNDER_LINKING)) {
 		status = check_fwstate(pmlmepriv, _FW_UNDER_LINKING);
-		जाओ _Abort_Set_BSSID;
-	पूर्ण
-	अगर (check_fwstate(pmlmepriv,
-	    _FW_LINKED | WIFI_ADHOC_MASTER_STATE)) अणु
-		अगर (!स_भेद(&pmlmepriv->cur_network.network.MacAddress, bssid,
-		    ETH_ALEN)) अणु
-			अगर (!check_fwstate(pmlmepriv, WIFI_STATION_STATE))
+		goto _Abort_Set_BSSID;
+	}
+	if (check_fwstate(pmlmepriv,
+	    _FW_LINKED | WIFI_ADHOC_MASTER_STATE)) {
+		if (!memcmp(&pmlmepriv->cur_network.network.MacAddress, bssid,
+		    ETH_ALEN)) {
+			if (!check_fwstate(pmlmepriv, WIFI_STATION_STATE))
 				/* driver is in
 				 * WIFI_ADHOC_MASTER_STATE
 				 */
-				जाओ _Abort_Set_BSSID;
-		पूर्ण अन्यथा अणु
+				goto _Abort_Set_BSSID;
+		} else {
 			r8712_disassoc_cmd(padapter);
-			अगर (check_fwstate(pmlmepriv, _FW_LINKED))
+			if (check_fwstate(pmlmepriv, _FW_LINKED))
 				r8712_ind_disconnect(padapter);
-			r8712_मुक्त_assoc_resources(padapter);
-			अगर ((check_fwstate(pmlmepriv,
-			     WIFI_ADHOC_MASTER_STATE))) अणु
+			r8712_free_assoc_resources(padapter);
+			if ((check_fwstate(pmlmepriv,
+			     WIFI_ADHOC_MASTER_STATE))) {
 				_clr_fwstate_(pmlmepriv,
 					      WIFI_ADHOC_MASTER_STATE);
 				set_fwstate(pmlmepriv, WIFI_ADHOC_STATE);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	स_नकल(&pmlmepriv->assoc_bssid, bssid, ETH_ALEN);
+			}
+		}
+	}
+	memcpy(&pmlmepriv->assoc_bssid, bssid, ETH_ALEN);
 	pmlmepriv->assoc_by_bssid = true;
-	status = करो_join(padapter);
-	जाओ करोne;
+	status = do_join(padapter);
+	goto done;
 _Abort_Set_BSSID:
-करोne:
+done:
 	spin_unlock_irqrestore(&pmlmepriv->lock, irqL);
-	वापस status;
-पूर्ण
+	return status;
+}
 
-व्योम r8712_set_802_11_ssid(काष्ठा _adapter *padapter,
-			   काष्ठा ndis_802_11_ssid *ssid)
-अणु
-	अचिन्हित दीर्घ irqL;
-	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
-	काष्ठा wlan_network *pnetwork = &pmlmepriv->cur_network;
+void r8712_set_802_11_ssid(struct _adapter *padapter,
+			   struct ndis_802_11_ssid *ssid)
+{
+	unsigned long irqL;
+	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
+	struct wlan_network *pnetwork = &pmlmepriv->cur_network;
 
-	अगर (!padapter->hw_init_completed)
-		वापस;
+	if (!padapter->hw_init_completed)
+		return;
 	spin_lock_irqsave(&pmlmepriv->lock, irqL);
-	अगर (check_fwstate(pmlmepriv, _FW_UNDER_SURVEY | _FW_UNDER_LINKING)) अणु
+	if (check_fwstate(pmlmepriv, _FW_UNDER_SURVEY | _FW_UNDER_LINKING)) {
 		check_fwstate(pmlmepriv, _FW_UNDER_LINKING);
-		जाओ _Abort_Set_SSID;
-	पूर्ण
-	अगर (check_fwstate(pmlmepriv, _FW_LINKED | WIFI_ADHOC_MASTER_STATE)) अणु
-		अगर ((pmlmepriv->assoc_ssid.SsidLength == ssid->SsidLength) &&
-		    (!स_भेद(&pmlmepriv->assoc_ssid.Ssid, ssid->Ssid,
-		    ssid->SsidLength))) अणु
-			अगर (!check_fwstate(pmlmepriv, WIFI_STATION_STATE)) अणु
-				अगर (!r8712_is_same_ibss(padapter,
-				     pnetwork)) अणु
-					/* अगर in WIFI_ADHOC_MASTER_STATE or
+		goto _Abort_Set_SSID;
+	}
+	if (check_fwstate(pmlmepriv, _FW_LINKED | WIFI_ADHOC_MASTER_STATE)) {
+		if ((pmlmepriv->assoc_ssid.SsidLength == ssid->SsidLength) &&
+		    (!memcmp(&pmlmepriv->assoc_ssid.Ssid, ssid->Ssid,
+		    ssid->SsidLength))) {
+			if (!check_fwstate(pmlmepriv, WIFI_STATION_STATE)) {
+				if (!r8712_is_same_ibss(padapter,
+				     pnetwork)) {
+					/* if in WIFI_ADHOC_MASTER_STATE or
 					 *  WIFI_ADHOC_STATE, create bss or
 					 * rejoin again
 					 */
 					r8712_disassoc_cmd(padapter);
-					अगर (check_fwstate(pmlmepriv,
+					if (check_fwstate(pmlmepriv,
 					    _FW_LINKED))
 						r8712_ind_disconnect(padapter);
-					r8712_मुक्त_assoc_resources(padapter);
-					अगर (check_fwstate(pmlmepriv,
-					     WIFI_ADHOC_MASTER_STATE)) अणु
+					r8712_free_assoc_resources(padapter);
+					if (check_fwstate(pmlmepriv,
+					     WIFI_ADHOC_MASTER_STATE)) {
 						_clr_fwstate_(pmlmepriv,
 						    WIFI_ADHOC_MASTER_STATE);
 						set_fwstate(pmlmepriv,
 							    WIFI_ADHOC_STATE);
-					पूर्ण
-				पूर्ण अन्यथा अणु
+					}
+				} else {
 					/* driver is in
 					 * WIFI_ADHOC_MASTER_STATE
 					 */
-					जाओ _Abort_Set_SSID;
-				पूर्ण
-			पूर्ण
-		पूर्ण अन्यथा अणु
+					goto _Abort_Set_SSID;
+				}
+			}
+		} else {
 			r8712_disassoc_cmd(padapter);
-			अगर (check_fwstate(pmlmepriv, _FW_LINKED))
+			if (check_fwstate(pmlmepriv, _FW_LINKED))
 				r8712_ind_disconnect(padapter);
-			r8712_मुक्त_assoc_resources(padapter);
-			अगर (check_fwstate(pmlmepriv,
-			    WIFI_ADHOC_MASTER_STATE)) अणु
+			r8712_free_assoc_resources(padapter);
+			if (check_fwstate(pmlmepriv,
+			    WIFI_ADHOC_MASTER_STATE)) {
 				_clr_fwstate_(pmlmepriv,
 					      WIFI_ADHOC_MASTER_STATE);
 				set_fwstate(pmlmepriv, WIFI_ADHOC_STATE);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	अगर (padapter->securitypriv.btkip_countermeasure)
-		जाओ _Abort_Set_SSID;
-	अगर (!validate_ssid(ssid))
-		जाओ _Abort_Set_SSID;
-	स_नकल(&pmlmepriv->assoc_ssid, ssid, माप(काष्ठा ndis_802_11_ssid));
+			}
+		}
+	}
+	if (padapter->securitypriv.btkip_countermeasure)
+		goto _Abort_Set_SSID;
+	if (!validate_ssid(ssid))
+		goto _Abort_Set_SSID;
+	memcpy(&pmlmepriv->assoc_ssid, ssid, sizeof(struct ndis_802_11_ssid));
 	pmlmepriv->assoc_by_bssid = false;
-	करो_join(padapter);
-	जाओ करोne;
+	do_join(padapter);
+	goto done;
 _Abort_Set_SSID:
-करोne:
+done:
 	spin_unlock_irqrestore(&pmlmepriv->lock, irqL);
-पूर्ण
+}
 
-व्योम r8712_set_802_11_infraकाष्ठाure_mode(काष्ठा _adapter *padapter,
-	क्रमागत NDIS_802_11_NETWORK_INFRASTRUCTURE networktype)
-अणु
-	अचिन्हित दीर्घ irqL;
-	काष्ठा mlme_priv	*pmlmepriv = &padapter->mlmepriv;
-	काष्ठा wlan_network	*cur_network = &pmlmepriv->cur_network;
-	क्रमागत NDIS_802_11_NETWORK_INFRASTRUCTURE *pold_state =
-				&(cur_network->network.Infraकाष्ठाureMode);
+void r8712_set_802_11_infrastructure_mode(struct _adapter *padapter,
+	enum NDIS_802_11_NETWORK_INFRASTRUCTURE networktype)
+{
+	unsigned long irqL;
+	struct mlme_priv	*pmlmepriv = &padapter->mlmepriv;
+	struct wlan_network	*cur_network = &pmlmepriv->cur_network;
+	enum NDIS_802_11_NETWORK_INFRASTRUCTURE *pold_state =
+				&(cur_network->network.InfrastructureMode);
 
-	अगर (*pold_state != networktype) अणु
+	if (*pold_state != networktype) {
 		spin_lock_irqsave(&pmlmepriv->lock, irqL);
-		अगर (check_fwstate(pmlmepriv, _FW_LINKED) ||
+		if (check_fwstate(pmlmepriv, _FW_LINKED) ||
 		    (*pold_state == Ndis802_11IBSS))
 			r8712_disassoc_cmd(padapter);
-		अगर (check_fwstate(pmlmepriv,
+		if (check_fwstate(pmlmepriv,
 		    _FW_LINKED | WIFI_ADHOC_MASTER_STATE))
-			r8712_मुक्त_assoc_resources(padapter);
-		अगर (check_fwstate(pmlmepriv, _FW_LINKED) ||
-		    (*pold_state == Ndis802_11Infraकाष्ठाure) ||
-		    (*pold_state == Ndis802_11IBSS)) अणु
-			/* will clr Linked_state beक्रमe this function,
+			r8712_free_assoc_resources(padapter);
+		if (check_fwstate(pmlmepriv, _FW_LINKED) ||
+		    (*pold_state == Ndis802_11Infrastructure) ||
+		    (*pold_state == Ndis802_11IBSS)) {
+			/* will clr Linked_state before this function,
 			 * we must have checked whether issue dis-assoc_cmd or
 			 * not
 			 */
 			r8712_ind_disconnect(padapter);
-		पूर्ण
+		}
 		*pold_state = networktype;
 		/* clear WIFI_STATION_STATE; WIFI_AP_STATE; WIFI_ADHOC_STATE;
 		 * WIFI_ADHOC_MASTER_STATE
 		 */
 		_clr_fwstate_(pmlmepriv, WIFI_STATION_STATE | WIFI_AP_STATE |
 			      WIFI_ADHOC_STATE | WIFI_ADHOC_MASTER_STATE);
-		चयन (networktype) अणु
-		हाल Ndis802_11IBSS:
+		switch (networktype) {
+		case Ndis802_11IBSS:
 			set_fwstate(pmlmepriv, WIFI_ADHOC_STATE);
-			अवरोध;
-		हाल Ndis802_11Infraकाष्ठाure:
+			break;
+		case Ndis802_11Infrastructure:
 			set_fwstate(pmlmepriv, WIFI_STATION_STATE);
-			अवरोध;
-		हाल Ndis802_11APMode:
+			break;
+		case Ndis802_11APMode:
 			set_fwstate(pmlmepriv, WIFI_AP_STATE);
-			अवरोध;
-		हाल Ndis802_11AutoUnknown:
-		हाल Ndis802_11Infraकाष्ठाureMax:
-			अवरोध;
-		पूर्ण
+			break;
+		case Ndis802_11AutoUnknown:
+		case Ndis802_11InfrastructureMax:
+			break;
+		}
 		spin_unlock_irqrestore(&pmlmepriv->lock, irqL);
-	पूर्ण
-पूर्ण
+	}
+}
 
-u8 r8712_set_802_11_disassociate(काष्ठा _adapter *padapter)
-अणु
-	अचिन्हित दीर्घ irqL;
-	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
+u8 r8712_set_802_11_disassociate(struct _adapter *padapter)
+{
+	unsigned long irqL;
+	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
 
 	spin_lock_irqsave(&pmlmepriv->lock, irqL);
-	अगर (check_fwstate(pmlmepriv, _FW_LINKED)) अणु
+	if (check_fwstate(pmlmepriv, _FW_LINKED)) {
 		r8712_disassoc_cmd(padapter);
 		r8712_ind_disconnect(padapter);
-		r8712_मुक्त_assoc_resources(padapter);
-	पूर्ण
+		r8712_free_assoc_resources(padapter);
+	}
 	spin_unlock_irqrestore(&pmlmepriv->lock, irqL);
-	वापस true;
-पूर्ण
+	return true;
+}
 
-u8 r8712_set_802_11_bssid_list_scan(काष्ठा _adapter *padapter)
-अणु
-	काष्ठा mlme_priv *pmlmepriv = शून्य;
-	अचिन्हित दीर्घ irqL;
+u8 r8712_set_802_11_bssid_list_scan(struct _adapter *padapter)
+{
+	struct mlme_priv *pmlmepriv = NULL;
+	unsigned long irqL;
 	u8 ret = true;
 
-	अगर (!padapter)
-		वापस false;
+	if (!padapter)
+		return false;
 	pmlmepriv = &padapter->mlmepriv;
-	अगर (!padapter->hw_init_completed)
-		वापस false;
+	if (!padapter->hw_init_completed)
+		return false;
 	spin_lock_irqsave(&pmlmepriv->lock, irqL);
-	अगर (check_fwstate(pmlmepriv, _FW_UNDER_SURVEY | _FW_UNDER_LINKING) ||
-	    pmlmepriv->sitesurveyctrl.traffic_busy) अणु
-		/* Scan or linking is in progress, करो nothing. */
+	if (check_fwstate(pmlmepriv, _FW_UNDER_SURVEY | _FW_UNDER_LINKING) ||
+	    pmlmepriv->sitesurveyctrl.traffic_busy) {
+		/* Scan or linking is in progress, do nothing. */
 		ret = (u8)check_fwstate(pmlmepriv, _FW_UNDER_SURVEY);
-	पूर्ण अन्यथा अणु
-		r8712_मुक्त_network_queue(padapter);
-		ret = r8712_sitesurvey_cmd(padapter, शून्य);
-	पूर्ण
+	} else {
+		r8712_free_network_queue(padapter);
+		ret = r8712_sitesurvey_cmd(padapter, NULL);
+	}
 	spin_unlock_irqrestore(&pmlmepriv->lock, irqL);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-u8 r8712_set_802_11_authentication_mode(काष्ठा _adapter *padapter,
-				क्रमागत NDIS_802_11_AUTHENTICATION_MODE authmode)
-अणु
-	काष्ठा security_priv *psecuritypriv = &padapter->securitypriv;
+u8 r8712_set_802_11_authentication_mode(struct _adapter *padapter,
+				enum NDIS_802_11_AUTHENTICATION_MODE authmode)
+{
+	struct security_priv *psecuritypriv = &padapter->securitypriv;
 	u8 ret;
 
 	psecuritypriv->ndisauthtype = authmode;
-	अगर (psecuritypriv->ndisauthtype > 3)
+	if (psecuritypriv->ndisauthtype > 3)
 		psecuritypriv->AuthAlgrthm = 2; /* 802.1x */
-	अगर (r8712_set_auth(padapter, psecuritypriv))
+	if (r8712_set_auth(padapter, psecuritypriv))
 		ret = false;
-	अन्यथा
+	else
 		ret = true;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक r8712_set_802_11_add_wep(काष्ठा _adapter *padapter,
-			     काष्ठा NDIS_802_11_WEP *wep)
-अणु
-	sपूर्णांक	keyid;
-	काष्ठा security_priv *psecuritypriv = &padapter->securitypriv;
+int r8712_set_802_11_add_wep(struct _adapter *padapter,
+			     struct NDIS_802_11_WEP *wep)
+{
+	sint	keyid;
+	struct security_priv *psecuritypriv = &padapter->securitypriv;
 
 	keyid = wep->KeyIndex & 0x3fffffff;
-	अगर (keyid >= WEP_KEYS)
-		वापस -EINVAL;
-	चयन (wep->KeyLength) अणु
-	हाल 5:
+	if (keyid >= WEP_KEYS)
+		return -EINVAL;
+	switch (wep->KeyLength) {
+	case 5:
 		psecuritypriv->PrivacyAlgrthm = _WEP40_;
-		अवरोध;
-	हाल 13:
+		break;
+	case 13:
 		psecuritypriv->PrivacyAlgrthm = _WEP104_;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		psecuritypriv->PrivacyAlgrthm = _NO_PRIVACY_;
-		अवरोध;
-	पूर्ण
-	स_नकल(psecuritypriv->DefKey[keyid].skey, &wep->KeyMaterial,
+		break;
+	}
+	memcpy(psecuritypriv->DefKey[keyid].skey, &wep->KeyMaterial,
 		wep->KeyLength);
 	psecuritypriv->DefKeylen[keyid] = wep->KeyLength;
 	psecuritypriv->PrivacyKeyIndex = keyid;
-	वापस r8712_set_key(padapter, psecuritypriv, keyid);
-पूर्ण
+	return r8712_set_key(padapter, psecuritypriv, keyid);
+}

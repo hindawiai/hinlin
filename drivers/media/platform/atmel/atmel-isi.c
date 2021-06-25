@@ -1,149 +1,148 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2011 Aपंचांगel Corporation
- * Josh Wu, <josh.wu@aपंचांगel.com>
+ * Copyright (c) 2011 Atmel Corporation
+ * Josh Wu, <josh.wu@atmel.com>
  *
- * Based on previous work by Lars Haring, <lars.haring@aपंचांगel.com>
+ * Based on previous work by Lars Haring, <lars.haring@atmel.com>
  * and Sedji Gaouaou
- * Based on the bttv driver क्रम Bt848 with respective copyright holders
+ * Based on the bttv driver for Bt848 with respective copyright holders
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/completion.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_graph.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/of.h>
+#include <linux/clk.h>
+#include <linux/completion.h>
+#include <linux/delay.h>
+#include <linux/fs.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/of_graph.h>
+#include <linux/platform_device.h>
+#include <linux/pm_runtime.h>
+#include <linux/slab.h>
+#include <linux/of.h>
 
-#समावेश <linux/videodev2.h>
-#समावेश <media/v4l2-ctrls.h>
-#समावेश <media/v4l2-device.h>
-#समावेश <media/v4l2-dev.h>
-#समावेश <media/v4l2-ioctl.h>
-#समावेश <media/v4l2-event.h>
-#समावेश <media/v4l2-fwnode.h>
-#समावेश <media/videobuf2-dma-contig.h>
-#समावेश <media/v4l2-image-sizes.h>
+#include <linux/videodev2.h>
+#include <media/v4l2-ctrls.h>
+#include <media/v4l2-device.h>
+#include <media/v4l2-dev.h>
+#include <media/v4l2-ioctl.h>
+#include <media/v4l2-event.h>
+#include <media/v4l2-fwnode.h>
+#include <media/videobuf2-dma-contig.h>
+#include <media/v4l2-image-sizes.h>
 
-#समावेश "atmel-isi.h"
+#include "atmel-isi.h"
 
-#घोषणा MAX_SUPPORT_WIDTH		2048U
-#घोषणा MAX_SUPPORT_HEIGHT		2048U
-#घोषणा MIN_FRAME_RATE			15
-#घोषणा FRAME_INTERVAL_MILLI_SEC	(1000 / MIN_FRAME_RATE)
+#define MAX_SUPPORT_WIDTH		2048U
+#define MAX_SUPPORT_HEIGHT		2048U
+#define MIN_FRAME_RATE			15
+#define FRAME_INTERVAL_MILLI_SEC	(1000 / MIN_FRAME_RATE)
 
 /* Frame buffer descriptor */
-काष्ठा fbd अणु
+struct fbd {
 	/* Physical address of the frame buffer */
 	u32 fb_address;
 	/* DMA Control Register(only in HISI2) */
 	u32 dma_ctrl;
 	/* Physical address of the next fbd */
 	u32 next_fbd_address;
-पूर्ण;
+};
 
-अटल व्योम set_dma_ctrl(काष्ठा fbd *fb_desc, u32 ctrl)
-अणु
+static void set_dma_ctrl(struct fbd *fb_desc, u32 ctrl)
+{
 	fb_desc->dma_ctrl = ctrl;
-पूर्ण
+}
 
-काष्ठा isi_dma_desc अणु
-	काष्ठा list_head list;
-	काष्ठा fbd *p_fbd;
+struct isi_dma_desc {
+	struct list_head list;
+	struct fbd *p_fbd;
 	dma_addr_t fbd_phys;
-पूर्ण;
+};
 
 /* Frame buffer data */
-काष्ठा frame_buffer अणु
-	काष्ठा vb2_v4l2_buffer vb;
-	काष्ठा isi_dma_desc *p_dma_desc;
-	काष्ठा list_head list;
-पूर्ण;
+struct frame_buffer {
+	struct vb2_v4l2_buffer vb;
+	struct isi_dma_desc *p_dma_desc;
+	struct list_head list;
+};
 
-काष्ठा isi_graph_entity अणु
-	काष्ठा device_node *node;
+struct isi_graph_entity {
+	struct device_node *node;
 
-	काष्ठा v4l2_subdev *subdev;
-पूर्ण;
+	struct v4l2_subdev *subdev;
+};
 
 /*
- * काष्ठा isi_क्रमmat - ISI media bus क्रमmat inक्रमmation
- * @fourcc:		Fourcc code क्रम this क्रमmat
- * @mbus_code:		V4L2 media bus क्रमmat code.
+ * struct isi_format - ISI media bus format information
+ * @fourcc:		Fourcc code for this format
+ * @mbus_code:		V4L2 media bus format code.
  * @bpp:		Bytes per pixel (when stored in memory)
  * @swap:		Byte swap configuration value
- * @support:		Indicates क्रमmat supported by subdev
- * @skip:		Skip duplicate क्रमmat supported by subdev
+ * @support:		Indicates format supported by subdev
+ * @skip:		Skip duplicate format supported by subdev
  */
-काष्ठा isi_क्रमmat अणु
+struct isi_format {
 	u32	fourcc;
 	u32	mbus_code;
 	u8	bpp;
 	u32	swap;
-पूर्ण;
+};
 
 
-काष्ठा aपंचांगel_isi अणु
+struct atmel_isi {
 	/* Protects the access of variables shared with the ISR */
 	spinlock_t			irqlock;
-	काष्ठा device			*dev;
-	व्योम __iomem			*regs;
+	struct device			*dev;
+	void __iomem			*regs;
 
-	पूर्णांक				sequence;
+	int				sequence;
 
-	/* Allocate descriptors क्रम dma buffer use */
-	काष्ठा fbd			*p_fb_descriptors;
+	/* Allocate descriptors for dma buffer use */
+	struct fbd			*p_fb_descriptors;
 	dma_addr_t			fb_descriptors_phys;
-	काष्ठा				list_head dma_desc_head;
-	काष्ठा isi_dma_desc		dma_desc[VIDEO_MAX_FRAME];
+	struct				list_head dma_desc_head;
+	struct isi_dma_desc		dma_desc[VIDEO_MAX_FRAME];
 	bool				enable_preview_path;
 
-	काष्ठा completion		complete;
-	/* ISI peripheral घड़ी */
-	काष्ठा clk			*pclk;
-	अचिन्हित पूर्णांक			irq;
+	struct completion		complete;
+	/* ISI peripheral clock */
+	struct clk			*pclk;
+	unsigned int			irq;
 
-	काष्ठा isi_platक्रमm_data	pdata;
+	struct isi_platform_data	pdata;
 	u16				width_flags;	/* max 12 bits */
 
-	काष्ठा list_head		video_buffer_list;
-	काष्ठा frame_buffer		*active;
+	struct list_head		video_buffer_list;
+	struct frame_buffer		*active;
 
-	काष्ठा v4l2_device		v4l2_dev;
-	काष्ठा video_device		*vdev;
-	काष्ठा v4l2_async_notअगरier	notअगरier;
-	काष्ठा isi_graph_entity		entity;
-	काष्ठा v4l2_क्रमmat		fmt;
+	struct v4l2_device		v4l2_dev;
+	struct video_device		*vdev;
+	struct v4l2_async_notifier	notifier;
+	struct isi_graph_entity		entity;
+	struct v4l2_format		fmt;
 
-	स्थिर काष्ठा isi_क्रमmat		**user_क्रमmats;
-	अचिन्हित पूर्णांक			num_user_क्रमmats;
-	स्थिर काष्ठा isi_क्रमmat		*current_fmt;
+	const struct isi_format		**user_formats;
+	unsigned int			num_user_formats;
+	const struct isi_format		*current_fmt;
 
-	काष्ठा mutex			lock;
-	काष्ठा vb2_queue		queue;
-पूर्ण;
+	struct mutex			lock;
+	struct vb2_queue		queue;
+};
 
-#घोषणा notअगरier_to_isi(n) container_of(n, काष्ठा aपंचांगel_isi, notअगरier)
+#define notifier_to_isi(n) container_of(n, struct atmel_isi, notifier)
 
-अटल व्योम isi_ग_लिखोl(काष्ठा aपंचांगel_isi *isi, u32 reg, u32 val)
-अणु
-	ग_लिखोl(val, isi->regs + reg);
-पूर्ण
-अटल u32 isi_पढ़ोl(काष्ठा aपंचांगel_isi *isi, u32 reg)
-अणु
-	वापस पढ़ोl(isi->regs + reg);
-पूर्ण
+static void isi_writel(struct atmel_isi *isi, u32 reg, u32 val)
+{
+	writel(val, isi->regs + reg);
+}
+static u32 isi_readl(struct atmel_isi *isi, u32 reg)
+{
+	return readl(isi->regs + reg);
+}
 
-अटल व्योम configure_geometry(काष्ठा aपंचांगel_isi *isi)
-अणु
+static void configure_geometry(struct atmel_isi *isi)
+{
 	u32 cfg2, psize;
 	u32 fourcc = isi->current_fmt->fourcc;
 
@@ -151,185 +150,185 @@
 				   fourcc == V4L2_PIX_FMT_RGB32 ||
 				   fourcc == V4L2_PIX_FMT_Y16;
 
-	/* According to sensor's output क्रमmat to set cfg2 */
+	/* According to sensor's output format to set cfg2 */
 	cfg2 = isi->current_fmt->swap;
 
-	isi_ग_लिखोl(isi, ISI_CTRL, ISI_CTRL_DIS);
+	isi_writel(isi, ISI_CTRL, ISI_CTRL_DIS);
 	/* Set width */
 	cfg2 |= ((isi->fmt.fmt.pix.width - 1) << ISI_CFG2_IM_HSIZE_OFFSET) &
 			ISI_CFG2_IM_HSIZE_MASK;
 	/* Set height */
 	cfg2 |= ((isi->fmt.fmt.pix.height - 1) << ISI_CFG2_IM_VSIZE_OFFSET)
 			& ISI_CFG2_IM_VSIZE_MASK;
-	isi_ग_लिखोl(isi, ISI_CFG2, cfg2);
+	isi_writel(isi, ISI_CFG2, cfg2);
 
-	/* No करोwn sampling, preview size equal to sensor output size */
+	/* No down sampling, preview size equal to sensor output size */
 	psize = ((isi->fmt.fmt.pix.width - 1) << ISI_PSIZE_PREV_HSIZE_OFFSET) &
 		ISI_PSIZE_PREV_HSIZE_MASK;
 	psize |= ((isi->fmt.fmt.pix.height - 1) << ISI_PSIZE_PREV_VSIZE_OFFSET) &
 		ISI_PSIZE_PREV_VSIZE_MASK;
-	isi_ग_लिखोl(isi, ISI_PSIZE, psize);
-	isi_ग_लिखोl(isi, ISI_PDECF, ISI_PDECF_NO_SAMPLING);
-पूर्ण
+	isi_writel(isi, ISI_PSIZE, psize);
+	isi_writel(isi, ISI_PDECF, ISI_PDECF_NO_SAMPLING);
+}
 
-अटल irqवापस_t aपंचांगel_isi_handle_streaming(काष्ठा aपंचांगel_isi *isi)
-अणु
-	अगर (isi->active) अणु
-		काष्ठा vb2_v4l2_buffer *vbuf = &isi->active->vb;
-		काष्ठा frame_buffer *buf = isi->active;
+static irqreturn_t atmel_isi_handle_streaming(struct atmel_isi *isi)
+{
+	if (isi->active) {
+		struct vb2_v4l2_buffer *vbuf = &isi->active->vb;
+		struct frame_buffer *buf = isi->active;
 
 		list_del_init(&buf->list);
-		vbuf->vb2_buf.बारtamp = kसमय_get_ns();
+		vbuf->vb2_buf.timestamp = ktime_get_ns();
 		vbuf->sequence = isi->sequence++;
 		vbuf->field = V4L2_FIELD_NONE;
-		vb2_buffer_करोne(&vbuf->vb2_buf, VB2_BUF_STATE_DONE);
-	पूर्ण
+		vb2_buffer_done(&vbuf->vb2_buf, VB2_BUF_STATE_DONE);
+	}
 
-	अगर (list_empty(&isi->video_buffer_list)) अणु
-		isi->active = शून्य;
-	पूर्ण अन्यथा अणु
+	if (list_empty(&isi->video_buffer_list)) {
+		isi->active = NULL;
+	} else {
 		/* start next dma frame. */
 		isi->active = list_entry(isi->video_buffer_list.next,
-					काष्ठा frame_buffer, list);
-		अगर (!isi->enable_preview_path) अणु
-			isi_ग_लिखोl(isi, ISI_DMA_C_DSCR,
+					struct frame_buffer, list);
+		if (!isi->enable_preview_path) {
+			isi_writel(isi, ISI_DMA_C_DSCR,
 				(u32)isi->active->p_dma_desc->fbd_phys);
-			isi_ग_लिखोl(isi, ISI_DMA_C_CTRL,
+			isi_writel(isi, ISI_DMA_C_CTRL,
 				ISI_DMA_CTRL_FETCH | ISI_DMA_CTRL_DONE);
-			isi_ग_लिखोl(isi, ISI_DMA_CHER, ISI_DMA_CHSR_C_CH);
-		पूर्ण अन्यथा अणु
-			isi_ग_लिखोl(isi, ISI_DMA_P_DSCR,
+			isi_writel(isi, ISI_DMA_CHER, ISI_DMA_CHSR_C_CH);
+		} else {
+			isi_writel(isi, ISI_DMA_P_DSCR,
 				(u32)isi->active->p_dma_desc->fbd_phys);
-			isi_ग_लिखोl(isi, ISI_DMA_P_CTRL,
+			isi_writel(isi, ISI_DMA_P_CTRL,
 				ISI_DMA_CTRL_FETCH | ISI_DMA_CTRL_DONE);
-			isi_ग_लिखोl(isi, ISI_DMA_CHER, ISI_DMA_CHSR_P_CH);
-		पूर्ण
-	पूर्ण
-	वापस IRQ_HANDLED;
-पूर्ण
+			isi_writel(isi, ISI_DMA_CHER, ISI_DMA_CHSR_P_CH);
+		}
+	}
+	return IRQ_HANDLED;
+}
 
-/* ISI पूर्णांकerrupt service routine */
-अटल irqवापस_t isi_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा aपंचांगel_isi *isi = dev_id;
+/* ISI interrupt service routine */
+static irqreturn_t isi_interrupt(int irq, void *dev_id)
+{
+	struct atmel_isi *isi = dev_id;
 	u32 status, mask, pending;
-	irqवापस_t ret = IRQ_NONE;
+	irqreturn_t ret = IRQ_NONE;
 
 	spin_lock(&isi->irqlock);
 
-	status = isi_पढ़ोl(isi, ISI_STATUS);
-	mask = isi_पढ़ोl(isi, ISI_INTMASK);
+	status = isi_readl(isi, ISI_STATUS);
+	mask = isi_readl(isi, ISI_INTMASK);
 	pending = status & mask;
 
-	अगर (pending & ISI_CTRL_SRST) अणु
+	if (pending & ISI_CTRL_SRST) {
 		complete(&isi->complete);
-		isi_ग_लिखोl(isi, ISI_INTDIS, ISI_CTRL_SRST);
+		isi_writel(isi, ISI_INTDIS, ISI_CTRL_SRST);
 		ret = IRQ_HANDLED;
-	पूर्ण अन्यथा अगर (pending & ISI_CTRL_DIS) अणु
+	} else if (pending & ISI_CTRL_DIS) {
 		complete(&isi->complete);
-		isi_ग_लिखोl(isi, ISI_INTDIS, ISI_CTRL_DIS);
+		isi_writel(isi, ISI_INTDIS, ISI_CTRL_DIS);
 		ret = IRQ_HANDLED;
-	पूर्ण अन्यथा अणु
-		अगर (likely(pending & ISI_SR_CXFR_DONE) ||
+	} else {
+		if (likely(pending & ISI_SR_CXFR_DONE) ||
 				likely(pending & ISI_SR_PXFR_DONE))
-			ret = aपंचांगel_isi_handle_streaming(isi);
-	पूर्ण
+			ret = atmel_isi_handle_streaming(isi);
+	}
 
 	spin_unlock(&isi->irqlock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#घोषणा	WAIT_ISI_RESET		1
-#घोषणा	WAIT_ISI_DISABLE	0
-अटल पूर्णांक aपंचांगel_isi_रुको_status(काष्ठा aपंचांगel_isi *isi, पूर्णांक रुको_reset)
-अणु
-	अचिन्हित दीर्घ समयout;
+#define	WAIT_ISI_RESET		1
+#define	WAIT_ISI_DISABLE	0
+static int atmel_isi_wait_status(struct atmel_isi *isi, int wait_reset)
+{
+	unsigned long timeout;
 	/*
-	 * The reset or disable will only succeed अगर we have a
-	 * pixel घड़ी from the camera.
+	 * The reset or disable will only succeed if we have a
+	 * pixel clock from the camera.
 	 */
 	init_completion(&isi->complete);
 
-	अगर (रुको_reset) अणु
-		isi_ग_लिखोl(isi, ISI_INTEN, ISI_CTRL_SRST);
-		isi_ग_लिखोl(isi, ISI_CTRL, ISI_CTRL_SRST);
-	पूर्ण अन्यथा अणु
-		isi_ग_लिखोl(isi, ISI_INTEN, ISI_CTRL_DIS);
-		isi_ग_लिखोl(isi, ISI_CTRL, ISI_CTRL_DIS);
-	पूर्ण
+	if (wait_reset) {
+		isi_writel(isi, ISI_INTEN, ISI_CTRL_SRST);
+		isi_writel(isi, ISI_CTRL, ISI_CTRL_SRST);
+	} else {
+		isi_writel(isi, ISI_INTEN, ISI_CTRL_DIS);
+		isi_writel(isi, ISI_CTRL, ISI_CTRL_DIS);
+	}
 
-	समयout = रुको_क्रम_completion_समयout(&isi->complete,
-			msecs_to_jअगरfies(500));
-	अगर (समयout == 0)
-		वापस -ETIMEDOUT;
+	timeout = wait_for_completion_timeout(&isi->complete,
+			msecs_to_jiffies(500));
+	if (timeout == 0)
+		return -ETIMEDOUT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* ------------------------------------------------------------------
 	Videobuf operations
    ------------------------------------------------------------------*/
-अटल पूर्णांक queue_setup(काष्ठा vb2_queue *vq,
-				अचिन्हित पूर्णांक *nbuffers, अचिन्हित पूर्णांक *nplanes,
-				अचिन्हित पूर्णांक sizes[], काष्ठा device *alloc_devs[])
-अणु
-	काष्ठा aपंचांगel_isi *isi = vb2_get_drv_priv(vq);
-	अचिन्हित दीर्घ size;
+static int queue_setup(struct vb2_queue *vq,
+				unsigned int *nbuffers, unsigned int *nplanes,
+				unsigned int sizes[], struct device *alloc_devs[])
+{
+	struct atmel_isi *isi = vb2_get_drv_priv(vq);
+	unsigned long size;
 
 	size = isi->fmt.fmt.pix.sizeimage;
 
 	/* Make sure the image size is large enough. */
-	अगर (*nplanes)
-		वापस sizes[0] < size ? -EINVAL : 0;
+	if (*nplanes)
+		return sizes[0] < size ? -EINVAL : 0;
 
 	*nplanes = 1;
 	sizes[0] = size;
 
-	isi->active = शून्य;
+	isi->active = NULL;
 
 	dev_dbg(isi->dev, "%s, count=%d, size=%ld\n", __func__,
 		*nbuffers, size);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक buffer_init(काष्ठा vb2_buffer *vb)
-अणु
-	काष्ठा vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
-	काष्ठा frame_buffer *buf = container_of(vbuf, काष्ठा frame_buffer, vb);
+static int buffer_init(struct vb2_buffer *vb)
+{
+	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
+	struct frame_buffer *buf = container_of(vbuf, struct frame_buffer, vb);
 
-	buf->p_dma_desc = शून्य;
+	buf->p_dma_desc = NULL;
 	INIT_LIST_HEAD(&buf->list);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक buffer_prepare(काष्ठा vb2_buffer *vb)
-अणु
-	काष्ठा vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
-	काष्ठा frame_buffer *buf = container_of(vbuf, काष्ठा frame_buffer, vb);
-	काष्ठा aपंचांगel_isi *isi = vb2_get_drv_priv(vb->vb2_queue);
-	अचिन्हित दीर्घ size;
-	काष्ठा isi_dma_desc *desc;
+static int buffer_prepare(struct vb2_buffer *vb)
+{
+	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
+	struct frame_buffer *buf = container_of(vbuf, struct frame_buffer, vb);
+	struct atmel_isi *isi = vb2_get_drv_priv(vb->vb2_queue);
+	unsigned long size;
+	struct isi_dma_desc *desc;
 
 	size = isi->fmt.fmt.pix.sizeimage;
 
-	अगर (vb2_plane_size(vb, 0) < size) अणु
+	if (vb2_plane_size(vb, 0) < size) {
 		dev_err(isi->dev, "%s data will not fit into plane (%lu < %lu)\n",
 				__func__, vb2_plane_size(vb, 0), size);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	vb2_set_plane_payload(vb, 0, size);
 
-	अगर (!buf->p_dma_desc) अणु
-		अगर (list_empty(&isi->dma_desc_head)) अणु
+	if (!buf->p_dma_desc) {
+		if (list_empty(&isi->dma_desc_head)) {
 			dev_err(isi->dev, "Not enough dma descriptors.\n");
-			वापस -EINVAL;
-		पूर्ण अन्यथा अणु
+			return -EINVAL;
+		} else {
 			/* Get an available descriptor */
 			desc = list_entry(isi->dma_desc_head.next,
-						काष्ठा isi_dma_desc, list);
+						struct isi_dma_desc, list);
 			/* Delete the descriptor since now it is used */
 			list_del_init(&desc->list);
 
@@ -340,50 +339,50 @@
 			set_dma_ctrl(desc->p_fbd, ISI_DMA_CTRL_WB);
 
 			buf->p_dma_desc = desc;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+	}
+	return 0;
+}
 
-अटल व्योम buffer_cleanup(काष्ठा vb2_buffer *vb)
-अणु
-	काष्ठा vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
-	काष्ठा aपंचांगel_isi *isi = vb2_get_drv_priv(vb->vb2_queue);
-	काष्ठा frame_buffer *buf = container_of(vbuf, काष्ठा frame_buffer, vb);
+static void buffer_cleanup(struct vb2_buffer *vb)
+{
+	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
+	struct atmel_isi *isi = vb2_get_drv_priv(vb->vb2_queue);
+	struct frame_buffer *buf = container_of(vbuf, struct frame_buffer, vb);
 
 	/* This descriptor is available now and we add to head list */
-	अगर (buf->p_dma_desc)
+	if (buf->p_dma_desc)
 		list_add(&buf->p_dma_desc->list, &isi->dma_desc_head);
-पूर्ण
+}
 
-अटल व्योम start_dma(काष्ठा aपंचांगel_isi *isi, काष्ठा frame_buffer *buffer)
-अणु
+static void start_dma(struct atmel_isi *isi, struct frame_buffer *buffer)
+{
 	u32 ctrl, cfg1;
 
-	cfg1 = isi_पढ़ोl(isi, ISI_CFG1);
-	/* Enable irq: cxfr क्रम the codec path, pxfr क्रम the preview path */
-	isi_ग_लिखोl(isi, ISI_INTEN,
+	cfg1 = isi_readl(isi, ISI_CFG1);
+	/* Enable irq: cxfr for the codec path, pxfr for the preview path */
+	isi_writel(isi, ISI_INTEN,
 			ISI_SR_CXFR_DONE | ISI_SR_PXFR_DONE);
 
-	/* Check अगर alपढ़ोy in a frame */
-	अगर (!isi->enable_preview_path) अणु
-		अगर (isi_पढ़ोl(isi, ISI_STATUS) & ISI_CTRL_CDC) अणु
+	/* Check if already in a frame */
+	if (!isi->enable_preview_path) {
+		if (isi_readl(isi, ISI_STATUS) & ISI_CTRL_CDC) {
 			dev_err(isi->dev, "Already in frame handling.\n");
-			वापस;
-		पूर्ण
+			return;
+		}
 
-		isi_ग_लिखोl(isi, ISI_DMA_C_DSCR,
+		isi_writel(isi, ISI_DMA_C_DSCR,
 				(u32)buffer->p_dma_desc->fbd_phys);
-		isi_ग_लिखोl(isi, ISI_DMA_C_CTRL,
+		isi_writel(isi, ISI_DMA_C_CTRL,
 				ISI_DMA_CTRL_FETCH | ISI_DMA_CTRL_DONE);
-		isi_ग_लिखोl(isi, ISI_DMA_CHER, ISI_DMA_CHSR_C_CH);
-	पूर्ण अन्यथा अणु
-		isi_ग_लिखोl(isi, ISI_DMA_P_DSCR,
+		isi_writel(isi, ISI_DMA_CHER, ISI_DMA_CHSR_C_CH);
+	} else {
+		isi_writel(isi, ISI_DMA_P_DSCR,
 				(u32)buffer->p_dma_desc->fbd_phys);
-		isi_ग_लिखोl(isi, ISI_DMA_P_CTRL,
+		isi_writel(isi, ISI_DMA_P_CTRL,
 				ISI_DMA_CTRL_FETCH | ISI_DMA_CTRL_DONE);
-		isi_ग_लिखोl(isi, ISI_DMA_CHER, ISI_DMA_CHSR_P_CH);
-	पूर्ण
+		isi_writel(isi, ISI_DMA_CHER, ISI_DMA_CHSR_P_CH);
+	}
 
 	cfg1 &= ~ISI_CFG1_FRATE_DIV_MASK;
 	/* Enable linked list */
@@ -392,132 +391,132 @@
 	/* Enable ISI */
 	ctrl = ISI_CTRL_EN;
 
-	अगर (!isi->enable_preview_path)
+	if (!isi->enable_preview_path)
 		ctrl |= ISI_CTRL_CDC;
 
-	isi_ग_लिखोl(isi, ISI_CTRL, ctrl);
-	isi_ग_लिखोl(isi, ISI_CFG1, cfg1);
-पूर्ण
+	isi_writel(isi, ISI_CTRL, ctrl);
+	isi_writel(isi, ISI_CFG1, cfg1);
+}
 
-अटल व्योम buffer_queue(काष्ठा vb2_buffer *vb)
-अणु
-	काष्ठा vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
-	काष्ठा aपंचांगel_isi *isi = vb2_get_drv_priv(vb->vb2_queue);
-	काष्ठा frame_buffer *buf = container_of(vbuf, काष्ठा frame_buffer, vb);
-	अचिन्हित दीर्घ flags = 0;
+static void buffer_queue(struct vb2_buffer *vb)
+{
+	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
+	struct atmel_isi *isi = vb2_get_drv_priv(vb->vb2_queue);
+	struct frame_buffer *buf = container_of(vbuf, struct frame_buffer, vb);
+	unsigned long flags = 0;
 
 	spin_lock_irqsave(&isi->irqlock, flags);
 	list_add_tail(&buf->list, &isi->video_buffer_list);
 
-	अगर (!isi->active) अणु
+	if (!isi->active) {
 		isi->active = buf;
-		अगर (vb2_is_streaming(vb->vb2_queue))
+		if (vb2_is_streaming(vb->vb2_queue))
 			start_dma(isi, buf);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&isi->irqlock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक start_streaming(काष्ठा vb2_queue *vq, अचिन्हित पूर्णांक count)
-अणु
-	काष्ठा aपंचांगel_isi *isi = vb2_get_drv_priv(vq);
-	काष्ठा frame_buffer *buf, *node;
-	पूर्णांक ret;
+static int start_streaming(struct vb2_queue *vq, unsigned int count)
+{
+	struct atmel_isi *isi = vb2_get_drv_priv(vq);
+	struct frame_buffer *buf, *node;
+	int ret;
 
-	pm_runसमय_get_sync(isi->dev);
+	pm_runtime_get_sync(isi->dev);
 
 	/* Enable stream on the sub device */
 	ret = v4l2_subdev_call(isi->entity.subdev, video, s_stream, 1);
-	अगर (ret && ret != -ENOIOCTLCMD) अणु
+	if (ret && ret != -ENOIOCTLCMD) {
 		dev_err(isi->dev, "stream on failed in subdev\n");
-		जाओ err_start_stream;
-	पूर्ण
+		goto err_start_stream;
+	}
 
 	/* Reset ISI */
-	ret = aपंचांगel_isi_रुको_status(isi, WAIT_ISI_RESET);
-	अगर (ret < 0) अणु
+	ret = atmel_isi_wait_status(isi, WAIT_ISI_RESET);
+	if (ret < 0) {
 		dev_err(isi->dev, "Reset ISI timed out\n");
-		जाओ err_reset;
-	पूर्ण
-	/* Disable all पूर्णांकerrupts */
-	isi_ग_लिखोl(isi, ISI_INTDIS, (u32)~0UL);
+		goto err_reset;
+	}
+	/* Disable all interrupts */
+	isi_writel(isi, ISI_INTDIS, (u32)~0UL);
 
 	isi->sequence = 0;
 	configure_geometry(isi);
 
 	spin_lock_irq(&isi->irqlock);
-	/* Clear any pending पूर्णांकerrupt */
-	isi_पढ़ोl(isi, ISI_STATUS);
+	/* Clear any pending interrupt */
+	isi_readl(isi, ISI_STATUS);
 
 	start_dma(isi, isi->active);
 	spin_unlock_irq(&isi->irqlock);
 
-	वापस 0;
+	return 0;
 
 err_reset:
 	v4l2_subdev_call(isi->entity.subdev, video, s_stream, 0);
 
 err_start_stream:
-	pm_runसमय_put(isi->dev);
+	pm_runtime_put(isi->dev);
 
 	spin_lock_irq(&isi->irqlock);
-	isi->active = शून्य;
+	isi->active = NULL;
 	/* Release all active buffers */
-	list_क्रम_each_entry_safe(buf, node, &isi->video_buffer_list, list) अणु
+	list_for_each_entry_safe(buf, node, &isi->video_buffer_list, list) {
 		list_del_init(&buf->list);
-		vb2_buffer_करोne(&buf->vb.vb2_buf, VB2_BUF_STATE_QUEUED);
-	पूर्ण
+		vb2_buffer_done(&buf->vb.vb2_buf, VB2_BUF_STATE_QUEUED);
+	}
 	spin_unlock_irq(&isi->irqlock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* पात streaming and रुको क्रम last buffer */
-अटल व्योम stop_streaming(काष्ठा vb2_queue *vq)
-अणु
-	काष्ठा aपंचांगel_isi *isi = vb2_get_drv_priv(vq);
-	काष्ठा frame_buffer *buf, *node;
-	पूर्णांक ret = 0;
-	अचिन्हित दीर्घ समयout;
+/* abort streaming and wait for last buffer */
+static void stop_streaming(struct vb2_queue *vq)
+{
+	struct atmel_isi *isi = vb2_get_drv_priv(vq);
+	struct frame_buffer *buf, *node;
+	int ret = 0;
+	unsigned long timeout;
 
 	/* Disable stream on the sub device */
 	ret = v4l2_subdev_call(isi->entity.subdev, video, s_stream, 0);
-	अगर (ret && ret != -ENOIOCTLCMD)
+	if (ret && ret != -ENOIOCTLCMD)
 		dev_err(isi->dev, "stream off failed in subdev\n");
 
 	spin_lock_irq(&isi->irqlock);
-	isi->active = शून्य;
+	isi->active = NULL;
 	/* Release all active buffers */
-	list_क्रम_each_entry_safe(buf, node, &isi->video_buffer_list, list) अणु
+	list_for_each_entry_safe(buf, node, &isi->video_buffer_list, list) {
 		list_del_init(&buf->list);
-		vb2_buffer_करोne(&buf->vb.vb2_buf, VB2_BUF_STATE_ERROR);
-	पूर्ण
+		vb2_buffer_done(&buf->vb.vb2_buf, VB2_BUF_STATE_ERROR);
+	}
 	spin_unlock_irq(&isi->irqlock);
 
-	अगर (!isi->enable_preview_path) अणु
-		समयout = jअगरfies + (FRAME_INTERVAL_MILLI_SEC * HZ) / 1000;
+	if (!isi->enable_preview_path) {
+		timeout = jiffies + (FRAME_INTERVAL_MILLI_SEC * HZ) / 1000;
 		/* Wait until the end of the current frame. */
-		जबतक ((isi_पढ़ोl(isi, ISI_STATUS) & ISI_CTRL_CDC) &&
-				समय_beक्रमe(jअगरfies, समयout))
+		while ((isi_readl(isi, ISI_STATUS) & ISI_CTRL_CDC) &&
+				time_before(jiffies, timeout))
 			msleep(1);
 
-		अगर (समय_after(jअगरfies, समयout))
+		if (time_after(jiffies, timeout))
 			dev_err(isi->dev,
 				"Timeout waiting for finishing codec request\n");
-	पूर्ण
+	}
 
-	/* Disable पूर्णांकerrupts */
-	isi_ग_लिखोl(isi, ISI_INTDIS,
+	/* Disable interrupts */
+	isi_writel(isi, ISI_INTDIS,
 			ISI_SR_CXFR_DONE | ISI_SR_PXFR_DONE);
 
-	/* Disable ISI and रुको क्रम it is करोne */
-	ret = aपंचांगel_isi_रुको_status(isi, WAIT_ISI_DISABLE);
-	अगर (ret < 0)
+	/* Disable ISI and wait for it is done */
+	ret = atmel_isi_wait_status(isi, WAIT_ISI_DISABLE);
+	if (ret < 0)
 		dev_err(isi->dev, "Disable ISI timed out\n");
 
-	pm_runसमय_put(isi->dev);
-पूर्ण
+	pm_runtime_put(isi->dev);
+}
 
-अटल स्थिर काष्ठा vb2_ops isi_video_qops = अणु
+static const struct vb2_ops isi_video_qops = {
 	.queue_setup		= queue_setup,
 	.buf_init		= buffer_init,
 	.buf_prepare		= buffer_prepare,
@@ -525,411 +524,411 @@ err_start_stream:
 	.buf_queue		= buffer_queue,
 	.start_streaming	= start_streaming,
 	.stop_streaming		= stop_streaming,
-	.रुको_prepare		= vb2_ops_रुको_prepare,
-	.रुको_finish		= vb2_ops_रुको_finish,
-पूर्ण;
+	.wait_prepare		= vb2_ops_wait_prepare,
+	.wait_finish		= vb2_ops_wait_finish,
+};
 
-अटल पूर्णांक isi_g_fmt_vid_cap(काष्ठा file *file, व्योम *priv,
-			      काष्ठा v4l2_क्रमmat *fmt)
-अणु
-	काष्ठा aपंचांगel_isi *isi = video_drvdata(file);
+static int isi_g_fmt_vid_cap(struct file *file, void *priv,
+			      struct v4l2_format *fmt)
+{
+	struct atmel_isi *isi = video_drvdata(file);
 
 	*fmt = isi->fmt;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा isi_क्रमmat *find_क्रमmat_by_fourcc(काष्ठा aपंचांगel_isi *isi,
-						      अचिन्हित पूर्णांक fourcc)
-अणु
-	अचिन्हित पूर्णांक num_क्रमmats = isi->num_user_क्रमmats;
-	स्थिर काष्ठा isi_क्रमmat *fmt;
-	अचिन्हित पूर्णांक i;
+static const struct isi_format *find_format_by_fourcc(struct atmel_isi *isi,
+						      unsigned int fourcc)
+{
+	unsigned int num_formats = isi->num_user_formats;
+	const struct isi_format *fmt;
+	unsigned int i;
 
-	क्रम (i = 0; i < num_क्रमmats; i++) अणु
-		fmt = isi->user_क्रमmats[i];
-		अगर (fmt->fourcc == fourcc)
-			वापस fmt;
-	पूर्ण
+	for (i = 0; i < num_formats; i++) {
+		fmt = isi->user_formats[i];
+		if (fmt->fourcc == fourcc)
+			return fmt;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम isi_try_fse(काष्ठा aपंचांगel_isi *isi, स्थिर काष्ठा isi_क्रमmat *isi_fmt,
-			काष्ठा v4l2_subdev_pad_config *pad_cfg)
-अणु
-	पूर्णांक ret;
-	काष्ठा v4l2_subdev_frame_size_क्रमागत fse = अणु
+static void isi_try_fse(struct atmel_isi *isi, const struct isi_format *isi_fmt,
+			struct v4l2_subdev_pad_config *pad_cfg)
+{
+	int ret;
+	struct v4l2_subdev_frame_size_enum fse = {
 		.code = isi_fmt->mbus_code,
 		.which = V4L2_SUBDEV_FORMAT_TRY,
-	पूर्ण;
+	};
 
-	ret = v4l2_subdev_call(isi->entity.subdev, pad, क्रमागत_frame_size,
+	ret = v4l2_subdev_call(isi->entity.subdev, pad, enum_frame_size,
 			       pad_cfg, &fse);
 	/*
-	 * Attempt to obtain क्रमmat size from subdev. If not available,
+	 * Attempt to obtain format size from subdev. If not available,
 	 * just use the maximum ISI can receive.
 	 */
-	अगर (ret) अणु
+	if (ret) {
 		pad_cfg->try_crop.width = MAX_SUPPORT_WIDTH;
 		pad_cfg->try_crop.height = MAX_SUPPORT_HEIGHT;
-	पूर्ण अन्यथा अणु
+	} else {
 		pad_cfg->try_crop.width = fse.max_width;
 		pad_cfg->try_crop.height = fse.max_height;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक isi_try_fmt(काष्ठा aपंचांगel_isi *isi, काष्ठा v4l2_क्रमmat *f,
-		       स्थिर काष्ठा isi_क्रमmat **current_fmt)
-अणु
-	स्थिर काष्ठा isi_क्रमmat *isi_fmt;
-	काष्ठा v4l2_pix_क्रमmat *pixfmt = &f->fmt.pix;
-	काष्ठा v4l2_subdev_pad_config pad_cfg = अणुपूर्ण;
-	काष्ठा v4l2_subdev_क्रमmat क्रमmat = अणु
+static int isi_try_fmt(struct atmel_isi *isi, struct v4l2_format *f,
+		       const struct isi_format **current_fmt)
+{
+	const struct isi_format *isi_fmt;
+	struct v4l2_pix_format *pixfmt = &f->fmt.pix;
+	struct v4l2_subdev_pad_config pad_cfg = {};
+	struct v4l2_subdev_format format = {
 		.which = V4L2_SUBDEV_FORMAT_TRY,
-	पूर्ण;
-	पूर्णांक ret;
+	};
+	int ret;
 
-	isi_fmt = find_क्रमmat_by_fourcc(isi, pixfmt->pixelक्रमmat);
-	अगर (!isi_fmt) अणु
-		isi_fmt = isi->user_क्रमmats[isi->num_user_क्रमmats - 1];
-		pixfmt->pixelक्रमmat = isi_fmt->fourcc;
-	पूर्ण
+	isi_fmt = find_format_by_fourcc(isi, pixfmt->pixelformat);
+	if (!isi_fmt) {
+		isi_fmt = isi->user_formats[isi->num_user_formats - 1];
+		pixfmt->pixelformat = isi_fmt->fourcc;
+	}
 
-	/* Limit to Aपंचांगel ISI hardware capabilities */
+	/* Limit to Atmel ISI hardware capabilities */
 	pixfmt->width = clamp(pixfmt->width, 0U, MAX_SUPPORT_WIDTH);
 	pixfmt->height = clamp(pixfmt->height, 0U, MAX_SUPPORT_HEIGHT);
 
-	v4l2_fill_mbus_क्रमmat(&क्रमmat.क्रमmat, pixfmt, isi_fmt->mbus_code);
+	v4l2_fill_mbus_format(&format.format, pixfmt, isi_fmt->mbus_code);
 
 	isi_try_fse(isi, isi_fmt, &pad_cfg);
 
 	ret = v4l2_subdev_call(isi->entity.subdev, pad, set_fmt,
-			       &pad_cfg, &क्रमmat);
-	अगर (ret < 0)
-		वापस ret;
+			       &pad_cfg, &format);
+	if (ret < 0)
+		return ret;
 
-	v4l2_fill_pix_क्रमmat(pixfmt, &क्रमmat.क्रमmat);
+	v4l2_fill_pix_format(pixfmt, &format.format);
 
 	pixfmt->field = V4L2_FIELD_NONE;
 	pixfmt->bytesperline = pixfmt->width * isi_fmt->bpp;
 	pixfmt->sizeimage = pixfmt->bytesperline * pixfmt->height;
 
-	अगर (current_fmt)
+	if (current_fmt)
 		*current_fmt = isi_fmt;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक isi_set_fmt(काष्ठा aपंचांगel_isi *isi, काष्ठा v4l2_क्रमmat *f)
-अणु
-	काष्ठा v4l2_subdev_क्रमmat क्रमmat = अणु
+static int isi_set_fmt(struct atmel_isi *isi, struct v4l2_format *f)
+{
+	struct v4l2_subdev_format format = {
 		.which = V4L2_SUBDEV_FORMAT_ACTIVE,
-	पूर्ण;
-	स्थिर काष्ठा isi_क्रमmat *current_fmt;
-	पूर्णांक ret;
+	};
+	const struct isi_format *current_fmt;
+	int ret;
 
 	ret = isi_try_fmt(isi, f, &current_fmt);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	v4l2_fill_mbus_क्रमmat(&क्रमmat.क्रमmat, &f->fmt.pix,
+	v4l2_fill_mbus_format(&format.format, &f->fmt.pix,
 			      current_fmt->mbus_code);
 	ret = v4l2_subdev_call(isi->entity.subdev, pad,
-			       set_fmt, शून्य, &क्रमmat);
-	अगर (ret < 0)
-		वापस ret;
+			       set_fmt, NULL, &format);
+	if (ret < 0)
+		return ret;
 
 	isi->fmt = *f;
 	isi->current_fmt = current_fmt;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक isi_s_fmt_vid_cap(काष्ठा file *file, व्योम *priv,
-			      काष्ठा v4l2_क्रमmat *f)
-अणु
-	काष्ठा aपंचांगel_isi *isi = video_drvdata(file);
+static int isi_s_fmt_vid_cap(struct file *file, void *priv,
+			      struct v4l2_format *f)
+{
+	struct atmel_isi *isi = video_drvdata(file);
 
-	अगर (vb2_is_streaming(&isi->queue))
-		वापस -EBUSY;
+	if (vb2_is_streaming(&isi->queue))
+		return -EBUSY;
 
-	वापस isi_set_fmt(isi, f);
-पूर्ण
+	return isi_set_fmt(isi, f);
+}
 
-अटल पूर्णांक isi_try_fmt_vid_cap(काष्ठा file *file, व्योम *priv,
-				काष्ठा v4l2_क्रमmat *f)
-अणु
-	काष्ठा aपंचांगel_isi *isi = video_drvdata(file);
+static int isi_try_fmt_vid_cap(struct file *file, void *priv,
+				struct v4l2_format *f)
+{
+	struct atmel_isi *isi = video_drvdata(file);
 
-	वापस isi_try_fmt(isi, f, शून्य);
-पूर्ण
+	return isi_try_fmt(isi, f, NULL);
+}
 
-अटल पूर्णांक isi_क्रमागत_fmt_vid_cap(काष्ठा file *file, व्योम  *priv,
-				काष्ठा v4l2_fmtdesc *f)
-अणु
-	काष्ठा aपंचांगel_isi *isi = video_drvdata(file);
+static int isi_enum_fmt_vid_cap(struct file *file, void  *priv,
+				struct v4l2_fmtdesc *f)
+{
+	struct atmel_isi *isi = video_drvdata(file);
 
-	अगर (f->index >= isi->num_user_क्रमmats)
-		वापस -EINVAL;
+	if (f->index >= isi->num_user_formats)
+		return -EINVAL;
 
-	f->pixelक्रमmat = isi->user_क्रमmats[f->index]->fourcc;
-	वापस 0;
-पूर्ण
+	f->pixelformat = isi->user_formats[f->index]->fourcc;
+	return 0;
+}
 
-अटल पूर्णांक isi_querycap(काष्ठा file *file, व्योम *priv,
-			काष्ठा v4l2_capability *cap)
-अणु
-	strscpy(cap->driver, "atmel-isi", माप(cap->driver));
-	strscpy(cap->card, "Atmel Image Sensor Interface", माप(cap->card));
-	strscpy(cap->bus_info, "platform:isi", माप(cap->bus_info));
-	वापस 0;
-पूर्ण
+static int isi_querycap(struct file *file, void *priv,
+			struct v4l2_capability *cap)
+{
+	strscpy(cap->driver, "atmel-isi", sizeof(cap->driver));
+	strscpy(cap->card, "Atmel Image Sensor Interface", sizeof(cap->card));
+	strscpy(cap->bus_info, "platform:isi", sizeof(cap->bus_info));
+	return 0;
+}
 
-अटल पूर्णांक isi_क्रमागत_input(काष्ठा file *file, व्योम *priv,
-			   काष्ठा v4l2_input *i)
-अणु
-	अगर (i->index != 0)
-		वापस -EINVAL;
+static int isi_enum_input(struct file *file, void *priv,
+			   struct v4l2_input *i)
+{
+	if (i->index != 0)
+		return -EINVAL;
 
 	i->type = V4L2_INPUT_TYPE_CAMERA;
-	strscpy(i->name, "Camera", माप(i->name));
-	वापस 0;
-पूर्ण
+	strscpy(i->name, "Camera", sizeof(i->name));
+	return 0;
+}
 
-अटल पूर्णांक isi_g_input(काष्ठा file *file, व्योम *priv, अचिन्हित पूर्णांक *i)
-अणु
+static int isi_g_input(struct file *file, void *priv, unsigned int *i)
+{
 	*i = 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक isi_s_input(काष्ठा file *file, व्योम *priv, अचिन्हित पूर्णांक i)
-अणु
-	अगर (i > 0)
-		वापस -EINVAL;
-	वापस 0;
-पूर्ण
+static int isi_s_input(struct file *file, void *priv, unsigned int i)
+{
+	if (i > 0)
+		return -EINVAL;
+	return 0;
+}
 
-अटल पूर्णांक isi_g_parm(काष्ठा file *file, व्योम *fh, काष्ठा v4l2_streamparm *a)
-अणु
-	काष्ठा aपंचांगel_isi *isi = video_drvdata(file);
+static int isi_g_parm(struct file *file, void *fh, struct v4l2_streamparm *a)
+{
+	struct atmel_isi *isi = video_drvdata(file);
 
-	वापस v4l2_g_parm_cap(video_devdata(file), isi->entity.subdev, a);
-पूर्ण
+	return v4l2_g_parm_cap(video_devdata(file), isi->entity.subdev, a);
+}
 
-अटल पूर्णांक isi_s_parm(काष्ठा file *file, व्योम *fh, काष्ठा v4l2_streamparm *a)
-अणु
-	काष्ठा aपंचांगel_isi *isi = video_drvdata(file);
+static int isi_s_parm(struct file *file, void *fh, struct v4l2_streamparm *a)
+{
+	struct atmel_isi *isi = video_drvdata(file);
 
-	वापस v4l2_s_parm_cap(video_devdata(file), isi->entity.subdev, a);
-पूर्ण
+	return v4l2_s_parm_cap(video_devdata(file), isi->entity.subdev, a);
+}
 
-अटल पूर्णांक isi_क्रमागत_framesizes(काष्ठा file *file, व्योम *fh,
-			       काष्ठा v4l2_frmsizeक्रमागत *fsize)
-अणु
-	काष्ठा aपंचांगel_isi *isi = video_drvdata(file);
-	स्थिर काष्ठा isi_क्रमmat *isi_fmt;
-	काष्ठा v4l2_subdev_frame_size_क्रमागत fse = अणु
+static int isi_enum_framesizes(struct file *file, void *fh,
+			       struct v4l2_frmsizeenum *fsize)
+{
+	struct atmel_isi *isi = video_drvdata(file);
+	const struct isi_format *isi_fmt;
+	struct v4l2_subdev_frame_size_enum fse = {
 		.index = fsize->index,
 		.which = V4L2_SUBDEV_FORMAT_ACTIVE,
-	पूर्ण;
-	पूर्णांक ret;
+	};
+	int ret;
 
-	isi_fmt = find_क्रमmat_by_fourcc(isi, fsize->pixel_क्रमmat);
-	अगर (!isi_fmt)
-		वापस -EINVAL;
+	isi_fmt = find_format_by_fourcc(isi, fsize->pixel_format);
+	if (!isi_fmt)
+		return -EINVAL;
 
 	fse.code = isi_fmt->mbus_code;
 
-	ret = v4l2_subdev_call(isi->entity.subdev, pad, क्रमागत_frame_size,
-			       शून्य, &fse);
-	अगर (ret)
-		वापस ret;
+	ret = v4l2_subdev_call(isi->entity.subdev, pad, enum_frame_size,
+			       NULL, &fse);
+	if (ret)
+		return ret;
 
 	fsize->type = V4L2_FRMSIZE_TYPE_DISCRETE;
 	fsize->discrete.width = fse.max_width;
 	fsize->discrete.height = fse.max_height;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक isi_क्रमागत_frameपूर्णांकervals(काष्ठा file *file, व्योम *fh,
-				    काष्ठा v4l2_frmivalक्रमागत *fival)
-अणु
-	काष्ठा aपंचांगel_isi *isi = video_drvdata(file);
-	स्थिर काष्ठा isi_क्रमmat *isi_fmt;
-	काष्ठा v4l2_subdev_frame_पूर्णांकerval_क्रमागत fie = अणु
+static int isi_enum_frameintervals(struct file *file, void *fh,
+				    struct v4l2_frmivalenum *fival)
+{
+	struct atmel_isi *isi = video_drvdata(file);
+	const struct isi_format *isi_fmt;
+	struct v4l2_subdev_frame_interval_enum fie = {
 		.index = fival->index,
 		.width = fival->width,
 		.height = fival->height,
 		.which = V4L2_SUBDEV_FORMAT_ACTIVE,
-	पूर्ण;
-	पूर्णांक ret;
+	};
+	int ret;
 
-	isi_fmt = find_क्रमmat_by_fourcc(isi, fival->pixel_क्रमmat);
-	अगर (!isi_fmt)
-		वापस -EINVAL;
+	isi_fmt = find_format_by_fourcc(isi, fival->pixel_format);
+	if (!isi_fmt)
+		return -EINVAL;
 
 	fie.code = isi_fmt->mbus_code;
 
 	ret = v4l2_subdev_call(isi->entity.subdev, pad,
-			       क्रमागत_frame_पूर्णांकerval, शून्य, &fie);
-	अगर (ret)
-		वापस ret;
+			       enum_frame_interval, NULL, &fie);
+	if (ret)
+		return ret;
 
 	fival->type = V4L2_FRMIVAL_TYPE_DISCRETE;
-	fival->discrete = fie.पूर्णांकerval;
+	fival->discrete = fie.interval;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम isi_camera_set_bus_param(काष्ठा aपंचांगel_isi *isi)
-अणु
+static void isi_camera_set_bus_param(struct atmel_isi *isi)
+{
 	u32 cfg1 = 0;
 
-	/* set bus param क्रम ISI */
-	अगर (isi->pdata.hsync_act_low)
+	/* set bus param for ISI */
+	if (isi->pdata.hsync_act_low)
 		cfg1 |= ISI_CFG1_HSYNC_POL_ACTIVE_LOW;
-	अगर (isi->pdata.vsync_act_low)
+	if (isi->pdata.vsync_act_low)
 		cfg1 |= ISI_CFG1_VSYNC_POL_ACTIVE_LOW;
-	अगर (isi->pdata.pclk_act_falling)
+	if (isi->pdata.pclk_act_falling)
 		cfg1 |= ISI_CFG1_PIXCLK_POL_ACTIVE_FALLING;
-	अगर (isi->pdata.has_emb_sync)
+	if (isi->pdata.has_emb_sync)
 		cfg1 |= ISI_CFG1_EMB_SYNC;
-	अगर (isi->pdata.full_mode)
+	if (isi->pdata.full_mode)
 		cfg1 |= ISI_CFG1_FULL_MODE;
 
 	cfg1 |= ISI_CFG1_THMASK_BEATS_16;
 
-	/* Enable PM and peripheral घड़ी beक्रमe operate isi रेजिस्टरs */
-	pm_runसमय_get_sync(isi->dev);
+	/* Enable PM and peripheral clock before operate isi registers */
+	pm_runtime_get_sync(isi->dev);
 
-	isi_ग_लिखोl(isi, ISI_CTRL, ISI_CTRL_DIS);
-	isi_ग_लिखोl(isi, ISI_CFG1, cfg1);
+	isi_writel(isi, ISI_CTRL, ISI_CTRL_DIS);
+	isi_writel(isi, ISI_CFG1, cfg1);
 
-	pm_runसमय_put(isi->dev);
-पूर्ण
+	pm_runtime_put(isi->dev);
+}
 
 /* -----------------------------------------------------------------------*/
-अटल पूर्णांक aपंचांगel_isi_parse_dt(काष्ठा aपंचांगel_isi *isi,
-			काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device_node *np = pdev->dev.of_node;
-	काष्ठा v4l2_fwnode_endpoपूर्णांक ep = अणु .bus_type = 0 पूर्ण;
-	पूर्णांक err;
+static int atmel_isi_parse_dt(struct atmel_isi *isi,
+			struct platform_device *pdev)
+{
+	struct device_node *np = pdev->dev.of_node;
+	struct v4l2_fwnode_endpoint ep = { .bus_type = 0 };
+	int err;
 
-	/* Default settings क्रम ISI */
+	/* Default settings for ISI */
 	isi->pdata.full_mode = 1;
 	isi->pdata.frate = ISI_CFG1_FRATE_CAPTURE_ALL;
 
-	np = of_graph_get_next_endpoपूर्णांक(np, शून्य);
-	अगर (!np) अणु
+	np = of_graph_get_next_endpoint(np, NULL);
+	if (!np) {
 		dev_err(&pdev->dev, "Could not find the endpoint\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	err = v4l2_fwnode_endpoपूर्णांक_parse(of_fwnode_handle(np), &ep);
+	err = v4l2_fwnode_endpoint_parse(of_fwnode_handle(np), &ep);
 	of_node_put(np);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev, "Could not parse the endpoint\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	चयन (ep.bus.parallel.bus_width) अणु
-	हाल 8:
+	switch (ep.bus.parallel.bus_width) {
+	case 8:
 		isi->pdata.data_width_flags = ISI_DATAWIDTH_8;
-		अवरोध;
-	हाल 10:
+		break;
+	case 10:
 		isi->pdata.data_width_flags =
 				ISI_DATAWIDTH_8 | ISI_DATAWIDTH_10;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(&pdev->dev, "Unsupported bus width: %d\n",
 				ep.bus.parallel.bus_width);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (ep.bus.parallel.flags & V4L2_MBUS_HSYNC_ACTIVE_LOW)
+	if (ep.bus.parallel.flags & V4L2_MBUS_HSYNC_ACTIVE_LOW)
 		isi->pdata.hsync_act_low = true;
-	अगर (ep.bus.parallel.flags & V4L2_MBUS_VSYNC_ACTIVE_LOW)
+	if (ep.bus.parallel.flags & V4L2_MBUS_VSYNC_ACTIVE_LOW)
 		isi->pdata.vsync_act_low = true;
-	अगर (ep.bus.parallel.flags & V4L2_MBUS_PCLK_SAMPLE_FALLING)
+	if (ep.bus.parallel.flags & V4L2_MBUS_PCLK_SAMPLE_FALLING)
 		isi->pdata.pclk_act_falling = true;
 
-	अगर (ep.bus_type == V4L2_MBUS_BT656)
+	if (ep.bus_type == V4L2_MBUS_BT656)
 		isi->pdata.has_emb_sync = true;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक isi_खोलो(काष्ठा file *file)
-अणु
-	काष्ठा aपंचांगel_isi *isi = video_drvdata(file);
-	काष्ठा v4l2_subdev *sd = isi->entity.subdev;
-	पूर्णांक ret;
+static int isi_open(struct file *file)
+{
+	struct atmel_isi *isi = video_drvdata(file);
+	struct v4l2_subdev *sd = isi->entity.subdev;
+	int ret;
 
-	अगर (mutex_lock_पूर्णांकerruptible(&isi->lock))
-		वापस -ERESTARTSYS;
+	if (mutex_lock_interruptible(&isi->lock))
+		return -ERESTARTSYS;
 
-	ret = v4l2_fh_खोलो(file);
-	अगर (ret < 0)
-		जाओ unlock;
+	ret = v4l2_fh_open(file);
+	if (ret < 0)
+		goto unlock;
 
-	अगर (!v4l2_fh_is_singular_file(file))
-		जाओ fh_rel;
+	if (!v4l2_fh_is_singular_file(file))
+		goto fh_rel;
 
-	ret = v4l2_subdev_call(sd, core, s_घातer, 1);
-	अगर (ret < 0 && ret != -ENOIOCTLCMD)
-		जाओ fh_rel;
+	ret = v4l2_subdev_call(sd, core, s_power, 1);
+	if (ret < 0 && ret != -ENOIOCTLCMD)
+		goto fh_rel;
 
 	ret = isi_set_fmt(isi, &isi->fmt);
-	अगर (ret)
-		v4l2_subdev_call(sd, core, s_घातer, 0);
+	if (ret)
+		v4l2_subdev_call(sd, core, s_power, 0);
 fh_rel:
-	अगर (ret)
+	if (ret)
 		v4l2_fh_release(file);
 unlock:
 	mutex_unlock(&isi->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक isi_release(काष्ठा file *file)
-अणु
-	काष्ठा aपंचांगel_isi *isi = video_drvdata(file);
-	काष्ठा v4l2_subdev *sd = isi->entity.subdev;
+static int isi_release(struct file *file)
+{
+	struct atmel_isi *isi = video_drvdata(file);
+	struct v4l2_subdev *sd = isi->entity.subdev;
 	bool fh_singular;
-	पूर्णांक ret;
+	int ret;
 
 	mutex_lock(&isi->lock);
 
 	fh_singular = v4l2_fh_is_singular_file(file);
 
-	ret = _vb2_fop_release(file, शून्य);
+	ret = _vb2_fop_release(file, NULL);
 
-	अगर (fh_singular)
-		v4l2_subdev_call(sd, core, s_घातer, 0);
+	if (fh_singular)
+		v4l2_subdev_call(sd, core, s_power, 0);
 
 	mutex_unlock(&isi->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा v4l2_ioctl_ops isi_ioctl_ops = अणु
+static const struct v4l2_ioctl_ops isi_ioctl_ops = {
 	.vidioc_querycap		= isi_querycap,
 
 	.vidioc_try_fmt_vid_cap		= isi_try_fmt_vid_cap,
 	.vidioc_g_fmt_vid_cap		= isi_g_fmt_vid_cap,
 	.vidioc_s_fmt_vid_cap		= isi_s_fmt_vid_cap,
-	.vidioc_क्रमागत_fmt_vid_cap	= isi_क्रमागत_fmt_vid_cap,
+	.vidioc_enum_fmt_vid_cap	= isi_enum_fmt_vid_cap,
 
-	.vidioc_क्रमागत_input		= isi_क्रमागत_input,
+	.vidioc_enum_input		= isi_enum_input,
 	.vidioc_g_input			= isi_g_input,
 	.vidioc_s_input			= isi_s_input,
 
 	.vidioc_g_parm			= isi_g_parm,
 	.vidioc_s_parm			= isi_s_parm,
-	.vidioc_क्रमागत_framesizes		= isi_क्रमागत_framesizes,
-	.vidioc_क्रमागत_frameपूर्णांकervals	= isi_क्रमागत_frameपूर्णांकervals,
+	.vidioc_enum_framesizes		= isi_enum_framesizes,
+	.vidioc_enum_frameintervals	= isi_enum_frameintervals,
 
 	.vidioc_reqbufs			= vb2_ioctl_reqbufs,
 	.vidioc_create_bufs		= vb2_ioctl_create_bufs,
@@ -944,253 +943,253 @@ unlock:
 	.vidioc_log_status		= v4l2_ctrl_log_status,
 	.vidioc_subscribe_event		= v4l2_ctrl_subscribe_event,
 	.vidioc_unsubscribe_event	= v4l2_event_unsubscribe,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_file_operations isi_fops = अणु
+static const struct v4l2_file_operations isi_fops = {
 	.owner		= THIS_MODULE,
 	.unlocked_ioctl	= video_ioctl2,
-	.खोलो		= isi_खोलो,
+	.open		= isi_open,
 	.release	= isi_release,
 	.poll		= vb2_fop_poll,
 	.mmap		= vb2_fop_mmap,
-	.पढ़ो		= vb2_fop_पढ़ो,
-पूर्ण;
+	.read		= vb2_fop_read,
+};
 
-अटल पूर्णांक isi_set_शेष_fmt(काष्ठा aपंचांगel_isi *isi)
-अणु
-	काष्ठा v4l2_क्रमmat f = अणु
+static int isi_set_default_fmt(struct atmel_isi *isi)
+{
+	struct v4l2_format f = {
 		.type = V4L2_BUF_TYPE_VIDEO_CAPTURE,
-		.fmt.pix = अणु
+		.fmt.pix = {
 			.width		= VGA_WIDTH,
 			.height		= VGA_HEIGHT,
 			.field		= V4L2_FIELD_NONE,
-			.pixelक्रमmat	= isi->user_क्रमmats[0]->fourcc,
-		पूर्ण,
-	पूर्ण;
-	पूर्णांक ret;
+			.pixelformat	= isi->user_formats[0]->fourcc,
+		},
+	};
+	int ret;
 
-	ret = isi_try_fmt(isi, &f, शून्य);
-	अगर (ret)
-		वापस ret;
-	isi->current_fmt = isi->user_क्रमmats[0];
+	ret = isi_try_fmt(isi, &f, NULL);
+	if (ret)
+		return ret;
+	isi->current_fmt = isi->user_formats[0];
 	isi->fmt = f;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा isi_क्रमmat isi_क्रमmats[] = अणु
-	अणु
+static const struct isi_format isi_formats[] = {
+	{
 		.fourcc = V4L2_PIX_FMT_YUYV,
 		.mbus_code = MEDIA_BUS_FMT_YUYV8_2X8,
 		.bpp = 2,
 		.swap = ISI_CFG2_YCC_SWAP_DEFAULT,
-	पूर्ण, अणु
+	}, {
 		.fourcc = V4L2_PIX_FMT_YUYV,
 		.mbus_code = MEDIA_BUS_FMT_YVYU8_2X8,
 		.bpp = 2,
 		.swap = ISI_CFG2_YCC_SWAP_MODE_1,
-	पूर्ण, अणु
+	}, {
 		.fourcc = V4L2_PIX_FMT_YUYV,
 		.mbus_code = MEDIA_BUS_FMT_UYVY8_2X8,
 		.bpp = 2,
 		.swap = ISI_CFG2_YCC_SWAP_MODE_2,
-	पूर्ण, अणु
+	}, {
 		.fourcc = V4L2_PIX_FMT_YUYV,
 		.mbus_code = MEDIA_BUS_FMT_VYUY8_2X8,
 		.bpp = 2,
 		.swap = ISI_CFG2_YCC_SWAP_MODE_3,
-	पूर्ण, अणु
+	}, {
 		.fourcc = V4L2_PIX_FMT_RGB565,
 		.mbus_code = MEDIA_BUS_FMT_YUYV8_2X8,
 		.bpp = 2,
 		.swap = ISI_CFG2_YCC_SWAP_MODE_2,
-	पूर्ण, अणु
+	}, {
 		.fourcc = V4L2_PIX_FMT_RGB565,
 		.mbus_code = MEDIA_BUS_FMT_YVYU8_2X8,
 		.bpp = 2,
 		.swap = ISI_CFG2_YCC_SWAP_MODE_3,
-	पूर्ण, अणु
+	}, {
 		.fourcc = V4L2_PIX_FMT_RGB565,
 		.mbus_code = MEDIA_BUS_FMT_UYVY8_2X8,
 		.bpp = 2,
 		.swap = ISI_CFG2_YCC_SWAP_DEFAULT,
-	पूर्ण, अणु
+	}, {
 		.fourcc = V4L2_PIX_FMT_RGB565,
 		.mbus_code = MEDIA_BUS_FMT_VYUY8_2X8,
 		.bpp = 2,
 		.swap = ISI_CFG2_YCC_SWAP_MODE_1,
-	पूर्ण, अणु
+	}, {
 		.fourcc = V4L2_PIX_FMT_GREY,
 		.mbus_code = MEDIA_BUS_FMT_Y10_1X10,
 		.bpp = 1,
 		.swap = ISI_CFG2_GS_MODE_2_PIXEL | ISI_CFG2_GRAYSCALE,
-	पूर्ण, अणु
+	}, {
 		.fourcc = V4L2_PIX_FMT_Y16,
 		.mbus_code = MEDIA_BUS_FMT_Y10_1X10,
 		.bpp = 2,
 		.swap = ISI_CFG2_GS_MODE_2_PIXEL | ISI_CFG2_GRAYSCALE,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक isi_क्रमmats_init(काष्ठा aपंचांगel_isi *isi)
-अणु
-	स्थिर काष्ठा isi_क्रमmat *isi_fmts[ARRAY_SIZE(isi_क्रमmats)];
-	अचिन्हित पूर्णांक num_fmts = 0, i, j;
-	काष्ठा v4l2_subdev *subdev = isi->entity.subdev;
-	काष्ठा v4l2_subdev_mbus_code_क्रमागत mbus_code = अणु
+static int isi_formats_init(struct atmel_isi *isi)
+{
+	const struct isi_format *isi_fmts[ARRAY_SIZE(isi_formats)];
+	unsigned int num_fmts = 0, i, j;
+	struct v4l2_subdev *subdev = isi->entity.subdev;
+	struct v4l2_subdev_mbus_code_enum mbus_code = {
 		.which = V4L2_SUBDEV_FORMAT_ACTIVE,
-	पूर्ण;
+	};
 
-	जबतक (!v4l2_subdev_call(subdev, pad, क्रमागत_mbus_code,
-				 शून्य, &mbus_code)) अणु
-		क्रम (i = 0; i < ARRAY_SIZE(isi_क्रमmats); i++) अणु
-			अगर (isi_क्रमmats[i].mbus_code != mbus_code.code)
-				जारी;
+	while (!v4l2_subdev_call(subdev, pad, enum_mbus_code,
+				 NULL, &mbus_code)) {
+		for (i = 0; i < ARRAY_SIZE(isi_formats); i++) {
+			if (isi_formats[i].mbus_code != mbus_code.code)
+				continue;
 
 			/* Code supported, have we got this fourcc yet? */
-			क्रम (j = 0; j < num_fmts; j++)
-				अगर (isi_fmts[j]->fourcc == isi_क्रमmats[i].fourcc)
-					/* Alपढ़ोy available */
-					अवरोध;
-			अगर (j == num_fmts)
+			for (j = 0; j < num_fmts; j++)
+				if (isi_fmts[j]->fourcc == isi_formats[i].fourcc)
+					/* Already available */
+					break;
+			if (j == num_fmts)
 				/* new */
-				isi_fmts[num_fmts++] = isi_क्रमmats + i;
-		पूर्ण
+				isi_fmts[num_fmts++] = isi_formats + i;
+		}
 		mbus_code.index++;
-	पूर्ण
+	}
 
-	अगर (!num_fmts)
-		वापस -ENXIO;
+	if (!num_fmts)
+		return -ENXIO;
 
-	isi->num_user_क्रमmats = num_fmts;
-	isi->user_क्रमmats = devm_kसुस्मृति(isi->dev,
-					 num_fmts, माप(काष्ठा isi_क्रमmat *),
+	isi->num_user_formats = num_fmts;
+	isi->user_formats = devm_kcalloc(isi->dev,
+					 num_fmts, sizeof(struct isi_format *),
 					 GFP_KERNEL);
-	अगर (!isi->user_क्रमmats)
-		वापस -ENOMEM;
+	if (!isi->user_formats)
+		return -ENOMEM;
 
-	स_नकल(isi->user_क्रमmats, isi_fmts,
-	       num_fmts * माप(काष्ठा isi_क्रमmat *));
-	isi->current_fmt = isi->user_क्रमmats[0];
+	memcpy(isi->user_formats, isi_fmts,
+	       num_fmts * sizeof(struct isi_format *));
+	isi->current_fmt = isi->user_formats[0];
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक isi_graph_notअगरy_complete(काष्ठा v4l2_async_notअगरier *notअगरier)
-अणु
-	काष्ठा aपंचांगel_isi *isi = notअगरier_to_isi(notअगरier);
-	पूर्णांक ret;
+static int isi_graph_notify_complete(struct v4l2_async_notifier *notifier)
+{
+	struct atmel_isi *isi = notifier_to_isi(notifier);
+	int ret;
 
 	isi->vdev->ctrl_handler = isi->entity.subdev->ctrl_handler;
-	ret = isi_क्रमmats_init(isi);
-	अगर (ret) अणु
+	ret = isi_formats_init(isi);
+	if (ret) {
 		dev_err(isi->dev, "No supported mediabus format found\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	isi_camera_set_bus_param(isi);
 
-	ret = isi_set_शेष_fmt(isi);
-	अगर (ret) अणु
+	ret = isi_set_default_fmt(isi);
+	if (ret) {
 		dev_err(isi->dev, "Could not set default format\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = video_रेजिस्टर_device(isi->vdev, VFL_TYPE_VIDEO, -1);
-	अगर (ret) अणु
+	ret = video_register_device(isi->vdev, VFL_TYPE_VIDEO, -1);
+	if (ret) {
 		dev_err(isi->dev, "Failed to register video device\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	dev_dbg(isi->dev, "Device registered as %s\n",
 		video_device_node_name(isi->vdev));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम isi_graph_notअगरy_unbind(काष्ठा v4l2_async_notअगरier *notअगरier,
-				     काष्ठा v4l2_subdev *sd,
-				     काष्ठा v4l2_async_subdev *asd)
-अणु
-	काष्ठा aपंचांगel_isi *isi = notअगरier_to_isi(notअगरier);
+static void isi_graph_notify_unbind(struct v4l2_async_notifier *notifier,
+				     struct v4l2_subdev *sd,
+				     struct v4l2_async_subdev *asd)
+{
+	struct atmel_isi *isi = notifier_to_isi(notifier);
 
 	dev_dbg(isi->dev, "Removing %s\n", video_device_node_name(isi->vdev));
 
-	/* Checks पूर्णांकernally अगर vdev have been init or not */
-	video_unरेजिस्टर_device(isi->vdev);
-पूर्ण
+	/* Checks internally if vdev have been init or not */
+	video_unregister_device(isi->vdev);
+}
 
-अटल पूर्णांक isi_graph_notअगरy_bound(काष्ठा v4l2_async_notअगरier *notअगरier,
-				   काष्ठा v4l2_subdev *subdev,
-				   काष्ठा v4l2_async_subdev *asd)
-अणु
-	काष्ठा aपंचांगel_isi *isi = notअगरier_to_isi(notअगरier);
+static int isi_graph_notify_bound(struct v4l2_async_notifier *notifier,
+				   struct v4l2_subdev *subdev,
+				   struct v4l2_async_subdev *asd)
+{
+	struct atmel_isi *isi = notifier_to_isi(notifier);
 
 	dev_dbg(isi->dev, "subdev %s bound\n", subdev->name);
 
 	isi->entity.subdev = subdev;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा v4l2_async_notअगरier_operations isi_graph_notअगरy_ops = अणु
-	.bound = isi_graph_notअगरy_bound,
-	.unbind = isi_graph_notअगरy_unbind,
-	.complete = isi_graph_notअगरy_complete,
-पूर्ण;
+static const struct v4l2_async_notifier_operations isi_graph_notify_ops = {
+	.bound = isi_graph_notify_bound,
+	.unbind = isi_graph_notify_unbind,
+	.complete = isi_graph_notify_complete,
+};
 
-अटल पूर्णांक isi_graph_init(काष्ठा aपंचांगel_isi *isi)
-अणु
-	काष्ठा v4l2_async_subdev *asd;
-	काष्ठा device_node *ep;
-	पूर्णांक ret;
+static int isi_graph_init(struct atmel_isi *isi)
+{
+	struct v4l2_async_subdev *asd;
+	struct device_node *ep;
+	int ret;
 
-	ep = of_graph_get_next_endpoपूर्णांक(isi->dev->of_node, शून्य);
-	अगर (!ep)
-		वापस -EINVAL;
+	ep = of_graph_get_next_endpoint(isi->dev->of_node, NULL);
+	if (!ep)
+		return -EINVAL;
 
-	v4l2_async_notअगरier_init(&isi->notअगरier);
+	v4l2_async_notifier_init(&isi->notifier);
 
-	asd = v4l2_async_notअगरier_add_fwnode_remote_subdev(
-						&isi->notअगरier,
+	asd = v4l2_async_notifier_add_fwnode_remote_subdev(
+						&isi->notifier,
 						of_fwnode_handle(ep),
-						काष्ठा v4l2_async_subdev);
+						struct v4l2_async_subdev);
 	of_node_put(ep);
 
-	अगर (IS_ERR(asd))
-		वापस PTR_ERR(asd);
+	if (IS_ERR(asd))
+		return PTR_ERR(asd);
 
-	isi->notअगरier.ops = &isi_graph_notअगरy_ops;
+	isi->notifier.ops = &isi_graph_notify_ops;
 
-	ret = v4l2_async_notअगरier_रेजिस्टर(&isi->v4l2_dev, &isi->notअगरier);
-	अगर (ret < 0) अणु
+	ret = v4l2_async_notifier_register(&isi->v4l2_dev, &isi->notifier);
+	if (ret < 0) {
 		dev_err(isi->dev, "Notifier registration failed\n");
-		v4l2_async_notअगरier_cleanup(&isi->notअगरier);
-		वापस ret;
-	पूर्ण
+		v4l2_async_notifier_cleanup(&isi->notifier);
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक aपंचांगel_isi_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक irq;
-	काष्ठा aपंचांगel_isi *isi;
-	काष्ठा vb2_queue *q;
-	काष्ठा resource *regs;
-	पूर्णांक ret, i;
+static int atmel_isi_probe(struct platform_device *pdev)
+{
+	int irq;
+	struct atmel_isi *isi;
+	struct vb2_queue *q;
+	struct resource *regs;
+	int ret, i;
 
-	isi = devm_kzalloc(&pdev->dev, माप(काष्ठा aपंचांगel_isi), GFP_KERNEL);
-	अगर (!isi)
-		वापस -ENOMEM;
+	isi = devm_kzalloc(&pdev->dev, sizeof(struct atmel_isi), GFP_KERNEL);
+	if (!isi)
+		return -ENOMEM;
 
 	isi->pclk = devm_clk_get(&pdev->dev, "isi_clk");
-	अगर (IS_ERR(isi->pclk))
-		वापस PTR_ERR(isi->pclk);
+	if (IS_ERR(isi->pclk))
+		return PTR_ERR(isi->pclk);
 
-	ret = aपंचांगel_isi_parse_dt(isi, pdev);
-	अगर (ret)
-		वापस ret;
+	ret = atmel_isi_parse_dt(isi, pdev);
+	if (ret)
+		return ret;
 
-	isi->active = शून्य;
+	isi->active = NULL;
 	isi->dev = &pdev->dev;
 	mutex_init(&isi->lock);
 	spin_lock_init(&isi->irqlock);
@@ -1199,22 +1198,22 @@ unlock:
 
 	q = &isi->queue;
 
-	/* Initialize the top-level काष्ठाure */
-	ret = v4l2_device_रेजिस्टर(&pdev->dev, &isi->v4l2_dev);
-	अगर (ret)
-		वापस ret;
+	/* Initialize the top-level structure */
+	ret = v4l2_device_register(&pdev->dev, &isi->v4l2_dev);
+	if (ret)
+		return ret;
 
 	isi->vdev = video_device_alloc();
-	अगर (!isi->vdev) अणु
+	if (!isi->vdev) {
 		ret = -ENOMEM;
-		जाओ err_vdev_alloc;
-	पूर्ण
+		goto err_vdev_alloc;
+	}
 
 	/* video node */
 	isi->vdev->fops = &isi_fops;
 	isi->vdev->v4l2_dev = &isi->v4l2_dev;
 	isi->vdev->queue = &isi->queue;
-	strscpy(isi->vdev->name, KBUILD_MODNAME, माप(isi->vdev->name));
+	strscpy(isi->vdev->name, KBUILD_MODNAME, sizeof(isi->vdev->name));
 	isi->vdev->release = video_device_release;
 	isi->vdev->ioctl_ops = &isi_ioctl_ops;
 	isi->vdev->lock = &isi->lock;
@@ -1227,139 +1226,139 @@ unlock:
 	q->io_modes = VB2_MMAP | VB2_READ | VB2_DMABUF;
 	q->lock = &isi->lock;
 	q->drv_priv = isi;
-	q->buf_काष्ठा_size = माप(काष्ठा frame_buffer);
+	q->buf_struct_size = sizeof(struct frame_buffer);
 	q->ops = &isi_video_qops;
 	q->mem_ops = &vb2_dma_contig_memops;
-	q->बारtamp_flags = V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC;
+	q->timestamp_flags = V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC;
 	q->min_buffers_needed = 2;
 	q->dev = &pdev->dev;
 
 	ret = vb2_queue_init(q);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&pdev->dev, "failed to initialize VB2 queue\n");
-		जाओ err_vb2_queue;
-	पूर्ण
+		goto err_vb2_queue;
+	}
 	isi->p_fb_descriptors = dma_alloc_coherent(&pdev->dev,
-				माप(काष्ठा fbd) * VIDEO_MAX_FRAME,
+				sizeof(struct fbd) * VIDEO_MAX_FRAME,
 				&isi->fb_descriptors_phys,
 				GFP_KERNEL);
-	अगर (!isi->p_fb_descriptors) अणु
+	if (!isi->p_fb_descriptors) {
 		dev_err(&pdev->dev, "Can't allocate descriptors!\n");
 		ret = -ENOMEM;
-		जाओ err_dma_alloc;
-	पूर्ण
+		goto err_dma_alloc;
+	}
 
-	क्रम (i = 0; i < VIDEO_MAX_FRAME; i++) अणु
+	for (i = 0; i < VIDEO_MAX_FRAME; i++) {
 		isi->dma_desc[i].p_fbd = isi->p_fb_descriptors + i;
 		isi->dma_desc[i].fbd_phys = isi->fb_descriptors_phys +
-					i * माप(काष्ठा fbd);
+					i * sizeof(struct fbd);
 		list_add(&isi->dma_desc[i].list, &isi->dma_desc_head);
-	पूर्ण
+	}
 
-	regs = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	regs = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	isi->regs = devm_ioremap_resource(&pdev->dev, regs);
-	अगर (IS_ERR(isi->regs)) अणु
+	if (IS_ERR(isi->regs)) {
 		ret = PTR_ERR(isi->regs);
-		जाओ err_ioremap;
-	पूर्ण
+		goto err_ioremap;
+	}
 
-	अगर (isi->pdata.data_width_flags & ISI_DATAWIDTH_8)
+	if (isi->pdata.data_width_flags & ISI_DATAWIDTH_8)
 		isi->width_flags = 1 << 7;
-	अगर (isi->pdata.data_width_flags & ISI_DATAWIDTH_10)
+	if (isi->pdata.data_width_flags & ISI_DATAWIDTH_10)
 		isi->width_flags |= 1 << 9;
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq < 0) अणु
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0) {
 		ret = irq;
-		जाओ err_req_irq;
-	पूर्ण
+		goto err_req_irq;
+	}
 
-	ret = devm_request_irq(&pdev->dev, irq, isi_पूर्णांकerrupt, 0, "isi", isi);
-	अगर (ret) अणु
+	ret = devm_request_irq(&pdev->dev, irq, isi_interrupt, 0, "isi", isi);
+	if (ret) {
 		dev_err(&pdev->dev, "Unable to request irq %d\n", irq);
-		जाओ err_req_irq;
-	पूर्ण
+		goto err_req_irq;
+	}
 	isi->irq = irq;
 
 	ret = isi_graph_init(isi);
-	अगर (ret < 0)
-		जाओ err_req_irq;
+	if (ret < 0)
+		goto err_req_irq;
 
 	pm_suspend_ignore_children(&pdev->dev, true);
-	pm_runसमय_enable(&pdev->dev);
-	platक्रमm_set_drvdata(pdev, isi);
-	वापस 0;
+	pm_runtime_enable(&pdev->dev);
+	platform_set_drvdata(pdev, isi);
+	return 0;
 
 err_req_irq:
 err_ioremap:
-	dma_मुक्त_coherent(&pdev->dev,
-			माप(काष्ठा fbd) * VIDEO_MAX_FRAME,
+	dma_free_coherent(&pdev->dev,
+			sizeof(struct fbd) * VIDEO_MAX_FRAME,
 			isi->p_fb_descriptors,
 			isi->fb_descriptors_phys);
 err_dma_alloc:
 err_vb2_queue:
 	video_device_release(isi->vdev);
 err_vdev_alloc:
-	v4l2_device_unरेजिस्टर(&isi->v4l2_dev);
+	v4l2_device_unregister(&isi->v4l2_dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक aपंचांगel_isi_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा aपंचांगel_isi *isi = platक्रमm_get_drvdata(pdev);
+static int atmel_isi_remove(struct platform_device *pdev)
+{
+	struct atmel_isi *isi = platform_get_drvdata(pdev);
 
-	dma_मुक्त_coherent(&pdev->dev,
-			माप(काष्ठा fbd) * VIDEO_MAX_FRAME,
+	dma_free_coherent(&pdev->dev,
+			sizeof(struct fbd) * VIDEO_MAX_FRAME,
 			isi->p_fb_descriptors,
 			isi->fb_descriptors_phys);
-	pm_runसमय_disable(&pdev->dev);
-	v4l2_async_notअगरier_unरेजिस्टर(&isi->notअगरier);
-	v4l2_async_notअगरier_cleanup(&isi->notअगरier);
-	v4l2_device_unरेजिस्टर(&isi->v4l2_dev);
+	pm_runtime_disable(&pdev->dev);
+	v4l2_async_notifier_unregister(&isi->notifier);
+	v4l2_async_notifier_cleanup(&isi->notifier);
+	v4l2_device_unregister(&isi->v4l2_dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक aपंचांगel_isi_runसमय_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा aपंचांगel_isi *isi = dev_get_drvdata(dev);
+#ifdef CONFIG_PM
+static int atmel_isi_runtime_suspend(struct device *dev)
+{
+	struct atmel_isi *isi = dev_get_drvdata(dev);
 
 	clk_disable_unprepare(isi->pclk);
 
-	वापस 0;
-पूर्ण
-अटल पूर्णांक aपंचांगel_isi_runसमय_resume(काष्ठा device *dev)
-अणु
-	काष्ठा aपंचांगel_isi *isi = dev_get_drvdata(dev);
+	return 0;
+}
+static int atmel_isi_runtime_resume(struct device *dev)
+{
+	struct atmel_isi *isi = dev_get_drvdata(dev);
 
-	वापस clk_prepare_enable(isi->pclk);
-पूर्ण
-#पूर्ण_अगर /* CONFIG_PM */
+	return clk_prepare_enable(isi->pclk);
+}
+#endif /* CONFIG_PM */
 
-अटल स्थिर काष्ठा dev_pm_ops aपंचांगel_isi_dev_pm_ops = अणु
-	SET_RUNTIME_PM_OPS(aपंचांगel_isi_runसमय_suspend,
-				aपंचांगel_isi_runसमय_resume, शून्य)
-पूर्ण;
+static const struct dev_pm_ops atmel_isi_dev_pm_ops = {
+	SET_RUNTIME_PM_OPS(atmel_isi_runtime_suspend,
+				atmel_isi_runtime_resume, NULL)
+};
 
-अटल स्थिर काष्ठा of_device_id aपंचांगel_isi_of_match[] = अणु
-	अणु .compatible = "atmel,at91sam9g45-isi" पूर्ण,
-	अणु पूर्ण
-पूर्ण;
-MODULE_DEVICE_TABLE(of, aपंचांगel_isi_of_match);
+static const struct of_device_id atmel_isi_of_match[] = {
+	{ .compatible = "atmel,at91sam9g45-isi" },
+	{ }
+};
+MODULE_DEVICE_TABLE(of, atmel_isi_of_match);
 
-अटल काष्ठा platक्रमm_driver aपंचांगel_isi_driver = अणु
-	.driver		= अणु
+static struct platform_driver atmel_isi_driver = {
+	.driver		= {
 		.name = "atmel_isi",
-		.of_match_table = of_match_ptr(aपंचांगel_isi_of_match),
-		.pm	= &aपंचांगel_isi_dev_pm_ops,
-	पूर्ण,
-	.probe		= aपंचांगel_isi_probe,
-	.हटाओ		= aपंचांगel_isi_हटाओ,
-पूर्ण;
+		.of_match_table = of_match_ptr(atmel_isi_of_match),
+		.pm	= &atmel_isi_dev_pm_ops,
+	},
+	.probe		= atmel_isi_probe,
+	.remove		= atmel_isi_remove,
+};
 
-module_platक्रमm_driver(aपंचांगel_isi_driver);
+module_platform_driver(atmel_isi_driver);
 
 MODULE_AUTHOR("Josh Wu <josh.wu@atmel.com>");
 MODULE_DESCRIPTION("The V4L2 driver for Atmel Linux");

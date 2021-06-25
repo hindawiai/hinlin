@@ -1,41 +1,40 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_X86_PROCESSOR_H
-#घोषणा _ASM_X86_PROCESSOR_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_X86_PROCESSOR_H
+#define _ASM_X86_PROCESSOR_H
 
-#समावेश <यंत्र/processor-flags.h>
+#include <asm/processor-flags.h>
 
 /* Forward declaration, a strange C thing */
-काष्ठा task_काष्ठा;
-काष्ठा mm_काष्ठा;
-काष्ठा io_biपंचांगap;
-काष्ठा vm86;
+struct task_struct;
+struct mm_struct;
+struct io_bitmap;
+struct vm86;
 
-#समावेश <यंत्र/math_emu.h>
-#समावेश <यंत्र/segment.h>
-#समावेश <यंत्र/types.h>
-#समावेश <uapi/यंत्र/sigcontext.h>
-#समावेश <यंत्र/current.h>
-#समावेश <यंत्र/cpufeatures.h>
-#समावेश <यंत्र/page.h>
-#समावेश <यंत्र/pgtable_types.h>
-#समावेश <यंत्र/percpu.h>
-#समावेश <यंत्र/msr.h>
-#समावेश <यंत्र/desc_defs.h>
-#समावेश <यंत्र/nops.h>
-#समावेश <यंत्र/special_insns.h>
-#समावेश <यंत्र/fpu/types.h>
-#समावेश <यंत्र/unwind_hपूर्णांकs.h>
-#समावेश <यंत्र/vmxfeatures.h>
-#समावेश <यंत्र/vdso/processor.h>
+#include <asm/math_emu.h>
+#include <asm/segment.h>
+#include <asm/types.h>
+#include <uapi/asm/sigcontext.h>
+#include <asm/current.h>
+#include <asm/cpufeatures.h>
+#include <asm/page.h>
+#include <asm/pgtable_types.h>
+#include <asm/percpu.h>
+#include <asm/msr.h>
+#include <asm/desc_defs.h>
+#include <asm/nops.h>
+#include <asm/special_insns.h>
+#include <asm/fpu/types.h>
+#include <asm/unwind_hints.h>
+#include <asm/vmxfeatures.h>
+#include <asm/vdso/processor.h>
 
-#समावेश <linux/personality.h>
-#समावेश <linux/cache.h>
-#समावेश <linux/thपढ़ोs.h>
-#समावेश <linux/math64.h>
-#समावेश <linux/err.h>
-#समावेश <linux/irqflags.h>
-#समावेश <linux/mem_encrypt.h>
+#include <linux/personality.h>
+#include <linux/cache.h>
+#include <linux/threads.h>
+#include <linux/math64.h>
+#include <linux/err.h>
+#include <linux/irqflags.h>
+#include <linux/mem_encrypt.h>
 
 /*
  * We handle most unaligned accesses in hardware.  On the other hand
@@ -43,84 +42,84 @@
  *
  * Based on this we disable the IP header alignment in network drivers.
  */
-#घोषणा NET_IP_ALIGN	0
+#define NET_IP_ALIGN	0
 
-#घोषणा HBP_NUM 4
+#define HBP_NUM 4
 
 /*
- * These alignment स्थिरraपूर्णांकs are क्रम perक्रमmance in the vSMP हाल,
- * but in the task_काष्ठा हाल we must also meet hardware imposed
+ * These alignment constraints are for performance in the vSMP case,
+ * but in the task_struct case we must also meet hardware imposed
  * alignment requirements of the FPU state:
  */
-#अगर_घोषित CONFIG_X86_VSMP
+#ifdef CONFIG_X86_VSMP
 # define ARCH_MIN_TASKALIGN		(1 << INTERNODE_CACHE_SHIFT)
 # define ARCH_MIN_MMSTRUCT_ALIGN	(1 << INTERNODE_CACHE_SHIFT)
-#अन्यथा
-# define ARCH_MIN_TASKALIGN		__alignof__(जोड़ fpregs_state)
+#else
+# define ARCH_MIN_TASKALIGN		__alignof__(union fpregs_state)
 # define ARCH_MIN_MMSTRUCT_ALIGN	0
-#पूर्ण_अगर
+#endif
 
-क्रमागत tlb_infos अणु
+enum tlb_infos {
 	ENTRIES,
 	NR_INFO
-पूर्ण;
+};
 
-बाह्य u16 __पढ़ो_mostly tlb_lli_4k[NR_INFO];
-बाह्य u16 __पढ़ो_mostly tlb_lli_2m[NR_INFO];
-बाह्य u16 __पढ़ो_mostly tlb_lli_4m[NR_INFO];
-बाह्य u16 __पढ़ो_mostly tlb_lld_4k[NR_INFO];
-बाह्य u16 __पढ़ो_mostly tlb_lld_2m[NR_INFO];
-बाह्य u16 __पढ़ो_mostly tlb_lld_4m[NR_INFO];
-बाह्य u16 __पढ़ो_mostly tlb_lld_1g[NR_INFO];
+extern u16 __read_mostly tlb_lli_4k[NR_INFO];
+extern u16 __read_mostly tlb_lli_2m[NR_INFO];
+extern u16 __read_mostly tlb_lli_4m[NR_INFO];
+extern u16 __read_mostly tlb_lld_4k[NR_INFO];
+extern u16 __read_mostly tlb_lld_2m[NR_INFO];
+extern u16 __read_mostly tlb_lld_4m[NR_INFO];
+extern u16 __read_mostly tlb_lld_1g[NR_INFO];
 
 /*
- *  CPU type and hardware bug flags. Kept separately क्रम each CPU.
- *  Members of this काष्ठाure are referenced in head_32.S, so think twice
- *  beक्रमe touching them. [mj]
+ *  CPU type and hardware bug flags. Kept separately for each CPU.
+ *  Members of this structure are referenced in head_32.S, so think twice
+ *  before touching them. [mj]
  */
 
-काष्ठा cpuinfo_x86 अणु
+struct cpuinfo_x86 {
 	__u8			x86;		/* CPU family */
-	__u8			x86_venकरोr;	/* CPU venकरोr */
+	__u8			x86_vendor;	/* CPU vendor */
 	__u8			x86_model;
 	__u8			x86_stepping;
-#अगर_घोषित CONFIG_X86_64
+#ifdef CONFIG_X86_64
 	/* Number of 4K pages in DTLB/ITLB combined(in pages): */
-	पूर्णांक			x86_tlbsize;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_X86_VMX_FEATURE_NAMES
+	int			x86_tlbsize;
+#endif
+#ifdef CONFIG_X86_VMX_FEATURE_NAMES
 	__u32			vmx_capability[NVMXINTS];
-#पूर्ण_अगर
+#endif
 	__u8			x86_virt_bits;
 	__u8			x86_phys_bits;
-	/* CPUID वापसed core id bits: */
+	/* CPUID returned core id bits: */
 	__u8			x86_coreid_bits;
 	__u8			cu_id;
 	/* Max extended CPUID function supported: */
 	__u32			extended_cpuid_level;
 	/* Maximum supported CPUID level, -1=no CPUID: */
-	पूर्णांक			cpuid_level;
+	int			cpuid_level;
 	/*
-	 * Align to size of अचिन्हित दीर्घ because the x86_capability array
+	 * Align to size of unsigned long because the x86_capability array
 	 * is passed to bitops which require the alignment. Use unnamed
-	 * जोड़ to enक्रमce the array is aligned to size of अचिन्हित दीर्घ.
+	 * union to enforce the array is aligned to size of unsigned long.
 	 */
-	जोड़ अणु
+	union {
 		__u32		x86_capability[NCAPINTS + NBUGINTS];
-		अचिन्हित दीर्घ	x86_capability_alignment;
-	पूर्ण;
-	अक्षर			x86_venकरोr_id[16];
-	अक्षर			x86_model_id[64];
-	/* in KB - valid क्रम CPUS which support this call: */
-	अचिन्हित पूर्णांक		x86_cache_size;
-	पूर्णांक			x86_cache_alignment;	/* In bytes */
+		unsigned long	x86_capability_alignment;
+	};
+	char			x86_vendor_id[16];
+	char			x86_model_id[64];
+	/* in KB - valid for CPUS which support this call: */
+	unsigned int		x86_cache_size;
+	int			x86_cache_alignment;	/* In bytes */
 	/* Cache QoS architectural values, valid only on the BSP: */
-	पूर्णांक			x86_cache_max_rmid;	/* max index */
-	पूर्णांक			x86_cache_occ_scale;	/* scale to bytes */
-	पूर्णांक			x86_cache_mbm_width_offset;
-	पूर्णांक			x86_घातer;
-	अचिन्हित दीर्घ		loops_per_jअगरfy;
-	/* cpuid वापसed max cores value: */
+	int			x86_cache_max_rmid;	/* max index */
+	int			x86_cache_occ_scale;	/* scale to bytes */
+	int			x86_cache_mbm_width_offset;
+	int			x86_power;
+	unsigned long		loops_per_jiffy;
+	/* cpuid returned max cores value: */
 	u16			x86_max_cores;
 	u16			apicid;
 	u16			initial_apicid;
@@ -135,105 +134,105 @@
 	u16			cpu_core_id;
 	u16			cpu_die_id;
 	u16			logical_die_id;
-	/* Index पूर्णांकo per_cpu list: */
+	/* Index into per_cpu list: */
 	u16			cpu_index;
 	u32			microcode;
-	/* Address space bits used by the cache पूर्णांकernally */
+	/* Address space bits used by the cache internally */
 	u8			x86_cache_bits;
-	अचिन्हित		initialized : 1;
-पूर्ण __अक्रमomize_layout;
+	unsigned		initialized : 1;
+} __randomize_layout;
 
-काष्ठा cpuid_regs अणु
+struct cpuid_regs {
 	u32 eax, ebx, ecx, edx;
-पूर्ण;
+};
 
-क्रमागत cpuid_regs_idx अणु
+enum cpuid_regs_idx {
 	CPUID_EAX = 0,
 	CPUID_EBX,
 	CPUID_ECX,
 	CPUID_EDX,
-पूर्ण;
+};
 
-#घोषणा X86_VENDOR_INTEL	0
-#घोषणा X86_VENDOR_CYRIX	1
-#घोषणा X86_VENDOR_AMD		2
-#घोषणा X86_VENDOR_UMC		3
-#घोषणा X86_VENDOR_CENTAUR	5
-#घोषणा X86_VENDOR_TRANSMETA	7
-#घोषणा X86_VENDOR_NSC		8
-#घोषणा X86_VENDOR_HYGON	9
-#घोषणा X86_VENDOR_ZHAOXIN	10
-#घोषणा X86_VENDOR_NUM		11
+#define X86_VENDOR_INTEL	0
+#define X86_VENDOR_CYRIX	1
+#define X86_VENDOR_AMD		2
+#define X86_VENDOR_UMC		3
+#define X86_VENDOR_CENTAUR	5
+#define X86_VENDOR_TRANSMETA	7
+#define X86_VENDOR_NSC		8
+#define X86_VENDOR_HYGON	9
+#define X86_VENDOR_ZHAOXIN	10
+#define X86_VENDOR_NUM		11
 
-#घोषणा X86_VENDOR_UNKNOWN	0xff
+#define X86_VENDOR_UNKNOWN	0xff
 
 /*
  * capabilities of CPUs
  */
-बाह्य काष्ठा cpuinfo_x86	boot_cpu_data;
-बाह्य काष्ठा cpuinfo_x86	new_cpu_data;
+extern struct cpuinfo_x86	boot_cpu_data;
+extern struct cpuinfo_x86	new_cpu_data;
 
-बाह्य __u32			cpu_caps_cleared[NCAPINTS + NBUGINTS];
-बाह्य __u32			cpu_caps_set[NCAPINTS + NBUGINTS];
+extern __u32			cpu_caps_cleared[NCAPINTS + NBUGINTS];
+extern __u32			cpu_caps_set[NCAPINTS + NBUGINTS];
 
-#अगर_घोषित CONFIG_SMP
-DECLARE_PER_CPU_READ_MOSTLY(काष्ठा cpuinfo_x86, cpu_info);
-#घोषणा cpu_data(cpu)		per_cpu(cpu_info, cpu)
-#अन्यथा
-#घोषणा cpu_info		boot_cpu_data
-#घोषणा cpu_data(cpu)		boot_cpu_data
-#पूर्ण_अगर
+#ifdef CONFIG_SMP
+DECLARE_PER_CPU_READ_MOSTLY(struct cpuinfo_x86, cpu_info);
+#define cpu_data(cpu)		per_cpu(cpu_info, cpu)
+#else
+#define cpu_info		boot_cpu_data
+#define cpu_data(cpu)		boot_cpu_data
+#endif
 
-बाह्य स्थिर काष्ठा seq_operations cpuinfo_op;
+extern const struct seq_operations cpuinfo_op;
 
-#घोषणा cache_line_size()	(boot_cpu_data.x86_cache_alignment)
+#define cache_line_size()	(boot_cpu_data.x86_cache_alignment)
 
-बाह्य व्योम cpu_detect(काष्ठा cpuinfo_x86 *c);
+extern void cpu_detect(struct cpuinfo_x86 *c);
 
-अटल अंतरभूत अचिन्हित दीर्घ दीर्घ l1tf_pfn_limit(व्योम)
-अणु
-	वापस BIT_ULL(boot_cpu_data.x86_cache_bits - 1 - PAGE_SHIFT);
-पूर्ण
+static inline unsigned long long l1tf_pfn_limit(void)
+{
+	return BIT_ULL(boot_cpu_data.x86_cache_bits - 1 - PAGE_SHIFT);
+}
 
-बाह्य व्योम early_cpu_init(व्योम);
-बाह्य व्योम identअगरy_boot_cpu(व्योम);
-बाह्य व्योम identअगरy_secondary_cpu(काष्ठा cpuinfo_x86 *);
-बाह्य व्योम prपूर्णांक_cpu_info(काष्ठा cpuinfo_x86 *);
-व्योम prपूर्णांक_cpu_msr(काष्ठा cpuinfo_x86 *);
+extern void early_cpu_init(void);
+extern void identify_boot_cpu(void);
+extern void identify_secondary_cpu(struct cpuinfo_x86 *);
+extern void print_cpu_info(struct cpuinfo_x86 *);
+void print_cpu_msr(struct cpuinfo_x86 *);
 
-#अगर_घोषित CONFIG_X86_32
-बाह्य पूर्णांक have_cpuid_p(व्योम);
-#अन्यथा
-अटल अंतरभूत पूर्णांक have_cpuid_p(व्योम)
-अणु
-	वापस 1;
-पूर्ण
-#पूर्ण_अगर
-अटल अंतरभूत व्योम native_cpuid(अचिन्हित पूर्णांक *eax, अचिन्हित पूर्णांक *ebx,
-				अचिन्हित पूर्णांक *ecx, अचिन्हित पूर्णांक *edx)
-अणु
+#ifdef CONFIG_X86_32
+extern int have_cpuid_p(void);
+#else
+static inline int have_cpuid_p(void)
+{
+	return 1;
+}
+#endif
+static inline void native_cpuid(unsigned int *eax, unsigned int *ebx,
+				unsigned int *ecx, unsigned int *edx)
+{
 	/* ecx is often an input as well as an output. */
-	यंत्र अस्थिर("cpuid"
+	asm volatile("cpuid"
 	    : "=a" (*eax),
 	      "=b" (*ebx),
 	      "=c" (*ecx),
 	      "=d" (*edx)
 	    : "0" (*eax), "2" (*ecx)
 	    : "memory");
-पूर्ण
+}
 
-#घोषणा native_cpuid_reg(reg)					\
-अटल अंतरभूत अचिन्हित पूर्णांक native_cpuid_##reg(अचिन्हित पूर्णांक op)	\
-अणु								\
-	अचिन्हित पूर्णांक eax = op, ebx, ecx = 0, edx;		\
+#define native_cpuid_reg(reg)					\
+static inline unsigned int native_cpuid_##reg(unsigned int op)	\
+{								\
+	unsigned int eax = op, ebx, ecx = 0, edx;		\
 								\
 	native_cpuid(&eax, &ebx, &ecx, &edx);			\
 								\
-	वापस reg;						\
-पूर्ण
+	return reg;						\
+}
 
 /*
- * Native CPUID functions वापसing a single datum.
+ * Native CPUID functions returning a single datum.
  */
 native_cpuid_reg(eax)
 native_cpuid_reg(ebx)
@@ -243,82 +242,82 @@ native_cpuid_reg(edx)
 /*
  * Friendlier CR3 helpers.
  */
-अटल अंतरभूत अचिन्हित दीर्घ पढ़ो_cr3_pa(व्योम)
-अणु
-	वापस __पढ़ो_cr3() & CR3_ADDR_MASK;
-पूर्ण
+static inline unsigned long read_cr3_pa(void)
+{
+	return __read_cr3() & CR3_ADDR_MASK;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ native_पढ़ो_cr3_pa(व्योम)
-अणु
-	वापस __native_पढ़ो_cr3() & CR3_ADDR_MASK;
-पूर्ण
+static inline unsigned long native_read_cr3_pa(void)
+{
+	return __native_read_cr3() & CR3_ADDR_MASK;
+}
 
-अटल अंतरभूत व्योम load_cr3(pgd_t *pgdir)
-अणु
-	ग_लिखो_cr3(__sme_pa(pgdir));
-पूर्ण
+static inline void load_cr3(pgd_t *pgdir)
+{
+	write_cr3(__sme_pa(pgdir));
+}
 
 /*
- * Note that जबतक the legacy 'TSS' name comes from 'Task State Segment',
- * on modern x86 CPUs the TSS also holds inक्रमmation important to 64-bit mode,
- * unrelated to the task-चयन mechanism:
+ * Note that while the legacy 'TSS' name comes from 'Task State Segment',
+ * on modern x86 CPUs the TSS also holds information important to 64-bit mode,
+ * unrelated to the task-switch mechanism:
  */
-#अगर_घोषित CONFIG_X86_32
+#ifdef CONFIG_X86_32
 /* This is the TSS defined by the hardware. */
-काष्ठा x86_hw_tss अणु
-	अचिन्हित लघु		back_link, __blh;
-	अचिन्हित दीर्घ		sp0;
-	अचिन्हित लघु		ss0, __ss0h;
-	अचिन्हित दीर्घ		sp1;
+struct x86_hw_tss {
+	unsigned short		back_link, __blh;
+	unsigned long		sp0;
+	unsigned short		ss0, __ss0h;
+	unsigned long		sp1;
 
 	/*
-	 * We करोn't use ring 1, so ss1 is a convenient scratch space in
+	 * We don't use ring 1, so ss1 is a convenient scratch space in
 	 * the same cacheline as sp0.  We use ss1 to cache the value in
-	 * MSR_IA32_SYSENTER_CS.  When we context चयन
-	 * MSR_IA32_SYSENTER_CS, we first check अगर the new value being
-	 * written matches ss1, and, अगर it's not, then we wrmsr the new
+	 * MSR_IA32_SYSENTER_CS.  When we context switch
+	 * MSR_IA32_SYSENTER_CS, we first check if the new value being
+	 * written matches ss1, and, if it's not, then we wrmsr the new
 	 * value and update ss1.
 	 *
-	 * The only reason we context चयन MSR_IA32_SYSENTER_CS is
-	 * that we set it to zero in vm86 tasks to aव्योम corrupting the
-	 * stack अगर we were to go through the sysenter path from vm86
+	 * The only reason we context switch MSR_IA32_SYSENTER_CS is
+	 * that we set it to zero in vm86 tasks to avoid corrupting the
+	 * stack if we were to go through the sysenter path from vm86
 	 * mode.
 	 */
-	अचिन्हित लघु		ss1;	/* MSR_IA32_SYSENTER_CS */
+	unsigned short		ss1;	/* MSR_IA32_SYSENTER_CS */
 
-	अचिन्हित लघु		__ss1h;
-	अचिन्हित दीर्घ		sp2;
-	अचिन्हित लघु		ss2, __ss2h;
-	अचिन्हित दीर्घ		__cr3;
-	अचिन्हित दीर्घ		ip;
-	अचिन्हित दीर्घ		flags;
-	अचिन्हित दीर्घ		ax;
-	अचिन्हित दीर्घ		cx;
-	अचिन्हित दीर्घ		dx;
-	अचिन्हित दीर्घ		bx;
-	अचिन्हित दीर्घ		sp;
-	अचिन्हित दीर्घ		bp;
-	अचिन्हित दीर्घ		si;
-	अचिन्हित दीर्घ		di;
-	अचिन्हित लघु		es, __esh;
-	अचिन्हित लघु		cs, __csh;
-	अचिन्हित लघु		ss, __ssh;
-	अचिन्हित लघु		ds, __dsh;
-	अचिन्हित लघु		fs, __fsh;
-	अचिन्हित लघु		gs, __gsh;
-	अचिन्हित लघु		ldt, __ldth;
-	अचिन्हित लघु		trace;
-	अचिन्हित लघु		io_biपंचांगap_base;
+	unsigned short		__ss1h;
+	unsigned long		sp2;
+	unsigned short		ss2, __ss2h;
+	unsigned long		__cr3;
+	unsigned long		ip;
+	unsigned long		flags;
+	unsigned long		ax;
+	unsigned long		cx;
+	unsigned long		dx;
+	unsigned long		bx;
+	unsigned long		sp;
+	unsigned long		bp;
+	unsigned long		si;
+	unsigned long		di;
+	unsigned short		es, __esh;
+	unsigned short		cs, __csh;
+	unsigned short		ss, __ssh;
+	unsigned short		ds, __dsh;
+	unsigned short		fs, __fsh;
+	unsigned short		gs, __gsh;
+	unsigned short		ldt, __ldth;
+	unsigned short		trace;
+	unsigned short		io_bitmap_base;
 
-पूर्ण __attribute__((packed));
-#अन्यथा
-काष्ठा x86_hw_tss अणु
+} __attribute__((packed));
+#else
+struct x86_hw_tss {
 	u32			reserved1;
 	u64			sp0;
 	u64			sp1;
 
 	/*
-	 * Since Linux करोes not use ring 2, the 'sp2' slot is unused by
+	 * Since Linux does not use ring 2, the 'sp2' slot is unused by
 	 * hardware.  entry_SYSCALL_64 uses it as scratch space to stash
 	 * the user RSP value.
 	 */
@@ -329,515 +328,515 @@ native_cpuid_reg(edx)
 	u32			reserved3;
 	u32			reserved4;
 	u16			reserved5;
-	u16			io_biपंचांगap_base;
+	u16			io_bitmap_base;
 
-पूर्ण __attribute__((packed));
-#पूर्ण_अगर
+} __attribute__((packed));
+#endif
 
 /*
- * IO-biपंचांगap sizes:
+ * IO-bitmap sizes:
  */
-#घोषणा IO_BITMAP_BITS			65536
-#घोषणा IO_BITMAP_BYTES			(IO_BITMAP_BITS / BITS_PER_BYTE)
-#घोषणा IO_BITMAP_LONGS			(IO_BITMAP_BYTES / माप(दीर्घ))
+#define IO_BITMAP_BITS			65536
+#define IO_BITMAP_BYTES			(IO_BITMAP_BITS / BITS_PER_BYTE)
+#define IO_BITMAP_LONGS			(IO_BITMAP_BYTES / sizeof(long))
 
-#घोषणा IO_BITMAP_OFFSET_VALID_MAP				\
-	(दुरत्व(काष्ठा tss_काष्ठा, io_biपंचांगap.biपंचांगap) -	\
-	 दुरत्व(काष्ठा tss_काष्ठा, x86_tss))
+#define IO_BITMAP_OFFSET_VALID_MAP				\
+	(offsetof(struct tss_struct, io_bitmap.bitmap) -	\
+	 offsetof(struct tss_struct, x86_tss))
 
-#घोषणा IO_BITMAP_OFFSET_VALID_ALL				\
-	(दुरत्व(काष्ठा tss_काष्ठा, io_biपंचांगap.mapall) -	\
-	 दुरत्व(काष्ठा tss_काष्ठा, x86_tss))
+#define IO_BITMAP_OFFSET_VALID_ALL				\
+	(offsetof(struct tss_struct, io_bitmap.mapall) -	\
+	 offsetof(struct tss_struct, x86_tss))
 
-#अगर_घोषित CONFIG_X86_IOPL_IOPERM
+#ifdef CONFIG_X86_IOPL_IOPERM
 /*
- * माप(अचिन्हित दीर्घ) coming from an extra "long" at the end of the
- * iobiपंचांगap. The limit is inclusive, i.e. the last valid byte.
+ * sizeof(unsigned long) coming from an extra "long" at the end of the
+ * iobitmap. The limit is inclusive, i.e. the last valid byte.
  */
 # define __KERNEL_TSS_LIMIT	\
 	(IO_BITMAP_OFFSET_VALID_ALL + IO_BITMAP_BYTES + \
-	 माप(अचिन्हित दीर्घ) - 1)
-#अन्यथा
+	 sizeof(unsigned long) - 1)
+#else
 # define __KERNEL_TSS_LIMIT	\
-	(दुरत्व(काष्ठा tss_काष्ठा, x86_tss) + माप(काष्ठा x86_hw_tss) - 1)
-#पूर्ण_अगर
+	(offsetof(struct tss_struct, x86_tss) + sizeof(struct x86_hw_tss) - 1)
+#endif
 
 /* Base offset outside of TSS_LIMIT so unpriviledged IO causes #GP */
-#घोषणा IO_BITMAP_OFFSET_INVALID	(__KERNEL_TSS_LIMIT + 1)
+#define IO_BITMAP_OFFSET_INVALID	(__KERNEL_TSS_LIMIT + 1)
 
-काष्ठा entry_stack अणु
-	अक्षर	stack[PAGE_SIZE];
-पूर्ण;
+struct entry_stack {
+	char	stack[PAGE_SIZE];
+};
 
-काष्ठा entry_stack_page अणु
-	काष्ठा entry_stack stack;
-पूर्ण __aligned(PAGE_SIZE);
+struct entry_stack_page {
+	struct entry_stack stack;
+} __aligned(PAGE_SIZE);
 
 /*
- * All IO biपंचांगap related data stored in the TSS:
+ * All IO bitmap related data stored in the TSS:
  */
-काष्ठा x86_io_biपंचांगap अणु
-	/* The sequence number of the last active biपंचांगap. */
+struct x86_io_bitmap {
+	/* The sequence number of the last active bitmap. */
 	u64			prev_sequence;
 
 	/*
-	 * Store the dirty size of the last io biपंचांगap offender. The next
-	 * one will have to करो the cleanup as the चयन out to a non io
-	 * biपंचांगap user will just set x86_tss.io_biपंचांगap_base to a value
-	 * outside of the TSS limit. So क्रम sane tasks there is no need to
-	 * actually touch the io_biपंचांगap at all.
+	 * Store the dirty size of the last io bitmap offender. The next
+	 * one will have to do the cleanup as the switch out to a non io
+	 * bitmap user will just set x86_tss.io_bitmap_base to a value
+	 * outside of the TSS limit. So for sane tasks there is no need to
+	 * actually touch the io_bitmap at all.
 	 */
-	अचिन्हित पूर्णांक		prev_max;
+	unsigned int		prev_max;
 
 	/*
 	 * The extra 1 is there because the CPU will access an
 	 * additional byte beyond the end of the IO permission
-	 * biपंचांगap. The extra byte must be all 1 bits, and must
+	 * bitmap. The extra byte must be all 1 bits, and must
 	 * be within the limit.
 	 */
-	अचिन्हित दीर्घ		biपंचांगap[IO_BITMAP_LONGS + 1];
+	unsigned long		bitmap[IO_BITMAP_LONGS + 1];
 
 	/*
-	 * Special I/O biपंचांगap to emulate IOPL(3). All bytes zero,
+	 * Special I/O bitmap to emulate IOPL(3). All bytes zero,
 	 * except the additional byte at the end.
 	 */
-	अचिन्हित दीर्घ		mapall[IO_BITMAP_LONGS + 1];
-पूर्ण;
+	unsigned long		mapall[IO_BITMAP_LONGS + 1];
+};
 
-काष्ठा tss_काष्ठा अणु
+struct tss_struct {
 	/*
 	 * The fixed hardware portion.  This must not cross a page boundary
 	 * at risk of violating the SDM's advice and potentially triggering
 	 * errata.
 	 */
-	काष्ठा x86_hw_tss	x86_tss;
+	struct x86_hw_tss	x86_tss;
 
-	काष्ठा x86_io_biपंचांगap	io_biपंचांगap;
-पूर्ण __aligned(PAGE_SIZE);
+	struct x86_io_bitmap	io_bitmap;
+} __aligned(PAGE_SIZE);
 
-DECLARE_PER_CPU_PAGE_ALIGNED(काष्ठा tss_काष्ठा, cpu_tss_rw);
+DECLARE_PER_CPU_PAGE_ALIGNED(struct tss_struct, cpu_tss_rw);
 
-/* Per CPU पूर्णांकerrupt stacks */
-काष्ठा irq_stack अणु
-	अक्षर		stack[IRQ_STACK_SIZE];
-पूर्ण __aligned(IRQ_STACK_SIZE);
+/* Per CPU interrupt stacks */
+struct irq_stack {
+	char		stack[IRQ_STACK_SIZE];
+} __aligned(IRQ_STACK_SIZE);
 
-DECLARE_PER_CPU(अचिन्हित दीर्घ, cpu_current_top_of_stack);
+DECLARE_PER_CPU(unsigned long, cpu_current_top_of_stack);
 
-#अगर_घोषित CONFIG_X86_64
-काष्ठा fixed_percpu_data अणु
+#ifdef CONFIG_X86_64
+struct fixed_percpu_data {
 	/*
 	 * GCC hardcodes the stack canary as %gs:40.  Since the
 	 * irq_stack is the object at %gs:0, we reserve the bottom
-	 * 48 bytes of the irq stack क्रम the canary.
+	 * 48 bytes of the irq stack for the canary.
 	 *
 	 * Once we are willing to require -mstack-protector-guard-symbol=
-	 * support क्रम x86_64 stackprotector, we can get rid of this.
+	 * support for x86_64 stackprotector, we can get rid of this.
 	 */
-	अक्षर		gs_base[40];
-	अचिन्हित दीर्घ	stack_canary;
-पूर्ण;
+	char		gs_base[40];
+	unsigned long	stack_canary;
+};
 
-DECLARE_PER_CPU_FIRST(काष्ठा fixed_percpu_data, fixed_percpu_data) __visible;
+DECLARE_PER_CPU_FIRST(struct fixed_percpu_data, fixed_percpu_data) __visible;
 DECLARE_INIT_PER_CPU(fixed_percpu_data);
 
-अटल अंतरभूत अचिन्हित दीर्घ cpu_kernelmode_gs_base(पूर्णांक cpu)
-अणु
-	वापस (अचिन्हित दीर्घ)per_cpu(fixed_percpu_data.gs_base, cpu);
-पूर्ण
+static inline unsigned long cpu_kernelmode_gs_base(int cpu)
+{
+	return (unsigned long)per_cpu(fixed_percpu_data.gs_base, cpu);
+}
 
-DECLARE_PER_CPU(व्योम *, hardirq_stack_ptr);
+DECLARE_PER_CPU(void *, hardirq_stack_ptr);
 DECLARE_PER_CPU(bool, hardirq_stack_inuse);
-बाह्य यंत्रlinkage व्योम ignore_sysret(व्योम);
+extern asmlinkage void ignore_sysret(void);
 
-/* Save actual FS/GS selectors and bases to current->thपढ़ो */
-व्योम current_save_fsgs(व्योम);
-#अन्यथा	/* X86_64 */
-#अगर_घोषित CONFIG_STACKPROTECTOR
-DECLARE_PER_CPU(अचिन्हित दीर्घ, __stack_chk_guard);
-#पूर्ण_अगर
-DECLARE_PER_CPU(काष्ठा irq_stack *, hardirq_stack_ptr);
-DECLARE_PER_CPU(काष्ठा irq_stack *, softirq_stack_ptr);
-#पूर्ण_अगर	/* !X86_64 */
+/* Save actual FS/GS selectors and bases to current->thread */
+void current_save_fsgs(void);
+#else	/* X86_64 */
+#ifdef CONFIG_STACKPROTECTOR
+DECLARE_PER_CPU(unsigned long, __stack_chk_guard);
+#endif
+DECLARE_PER_CPU(struct irq_stack *, hardirq_stack_ptr);
+DECLARE_PER_CPU(struct irq_stack *, softirq_stack_ptr);
+#endif	/* !X86_64 */
 
-बाह्य अचिन्हित पूर्णांक fpu_kernel_xstate_size;
-बाह्य अचिन्हित पूर्णांक fpu_user_xstate_size;
+extern unsigned int fpu_kernel_xstate_size;
+extern unsigned int fpu_user_xstate_size;
 
-काष्ठा perf_event;
+struct perf_event;
 
-काष्ठा thपढ़ो_काष्ठा अणु
+struct thread_struct {
 	/* Cached TLS descriptors: */
-	काष्ठा desc_काष्ठा	tls_array[GDT_ENTRY_TLS_ENTRIES];
-#अगर_घोषित CONFIG_X86_32
-	अचिन्हित दीर्घ		sp0;
-#पूर्ण_अगर
-	अचिन्हित दीर्घ		sp;
-#अगर_घोषित CONFIG_X86_32
-	अचिन्हित दीर्घ		sysenter_cs;
-#अन्यथा
-	अचिन्हित लघु		es;
-	अचिन्हित लघु		ds;
-	अचिन्हित लघु		fsindex;
-	अचिन्हित लघु		gsindex;
-#पूर्ण_अगर
+	struct desc_struct	tls_array[GDT_ENTRY_TLS_ENTRIES];
+#ifdef CONFIG_X86_32
+	unsigned long		sp0;
+#endif
+	unsigned long		sp;
+#ifdef CONFIG_X86_32
+	unsigned long		sysenter_cs;
+#else
+	unsigned short		es;
+	unsigned short		ds;
+	unsigned short		fsindex;
+	unsigned short		gsindex;
+#endif
 
-#अगर_घोषित CONFIG_X86_64
-	अचिन्हित दीर्घ		fsbase;
-	अचिन्हित दीर्घ		gsbase;
-#अन्यथा
+#ifdef CONFIG_X86_64
+	unsigned long		fsbase;
+	unsigned long		gsbase;
+#else
 	/*
-	 * XXX: this could presumably be अचिन्हित लघु.  Alternatively,
+	 * XXX: this could presumably be unsigned short.  Alternatively,
 	 * 32-bit kernels could be taught to use fsindex instead.
 	 */
-	अचिन्हित दीर्घ fs;
-	अचिन्हित दीर्घ gs;
-#पूर्ण_अगर
+	unsigned long fs;
+	unsigned long gs;
+#endif
 
-	/* Save middle states of ptrace अवरोधpoपूर्णांकs */
-	काष्ठा perf_event	*ptrace_bps[HBP_NUM];
-	/* Debug status used क्रम traps, single steps, etc... */
-	अचिन्हित दीर्घ           भव_dr6;
+	/* Save middle states of ptrace breakpoints */
+	struct perf_event	*ptrace_bps[HBP_NUM];
+	/* Debug status used for traps, single steps, etc... */
+	unsigned long           virtual_dr6;
 	/* Keep track of the exact dr7 value set by the user */
-	अचिन्हित दीर्घ           ptrace_dr7;
+	unsigned long           ptrace_dr7;
 	/* Fault info: */
-	अचिन्हित दीर्घ		cr2;
-	अचिन्हित दीर्घ		trap_nr;
-	अचिन्हित दीर्घ		error_code;
-#अगर_घोषित CONFIG_VM86
+	unsigned long		cr2;
+	unsigned long		trap_nr;
+	unsigned long		error_code;
+#ifdef CONFIG_VM86
 	/* Virtual 86 mode info */
-	काष्ठा vm86		*vm86;
-#पूर्ण_अगर
+	struct vm86		*vm86;
+#endif
 	/* IO permissions: */
-	काष्ठा io_biपंचांगap	*io_biपंचांगap;
+	struct io_bitmap	*io_bitmap;
 
 	/*
 	 * IOPL. Privilege level dependent I/O permission which is
-	 * emulated via the I/O biपंचांगap to prevent user space from disabling
-	 * पूर्णांकerrupts.
+	 * emulated via the I/O bitmap to prevent user space from disabling
+	 * interrupts.
 	 */
-	अचिन्हित दीर्घ		iopl_emul;
+	unsigned long		iopl_emul;
 
-	अचिन्हित पूर्णांक		sig_on_uaccess_err:1;
+	unsigned int		sig_on_uaccess_err:1;
 
-	/* Floating poपूर्णांक and extended processor state */
-	काष्ठा fpu		fpu;
+	/* Floating point and extended processor state */
+	struct fpu		fpu;
 	/*
 	 * WARNING: 'fpu' is dynamically-sized.  It *MUST* be at
 	 * the end.
 	 */
-पूर्ण;
+};
 
-/* Whitelist the FPU state from the task_काष्ठा क्रम hardened usercopy. */
-अटल अंतरभूत व्योम arch_thपढ़ो_काष्ठा_whitelist(अचिन्हित दीर्घ *offset,
-						अचिन्हित दीर्घ *size)
-अणु
-	*offset = दुरत्व(काष्ठा thपढ़ो_काष्ठा, fpu.state);
+/* Whitelist the FPU state from the task_struct for hardened usercopy. */
+static inline void arch_thread_struct_whitelist(unsigned long *offset,
+						unsigned long *size)
+{
+	*offset = offsetof(struct thread_struct, fpu.state);
 	*size = fpu_kernel_xstate_size;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम
-native_load_sp0(अचिन्हित दीर्घ sp0)
-अणु
-	this_cpu_ग_लिखो(cpu_tss_rw.x86_tss.sp0, sp0);
-पूर्ण
+static inline void
+native_load_sp0(unsigned long sp0)
+{
+	this_cpu_write(cpu_tss_rw.x86_tss.sp0, sp0);
+}
 
-अटल __always_अंतरभूत व्योम native_swapgs(व्योम)
-अणु
-#अगर_घोषित CONFIG_X86_64
-	यंत्र अस्थिर("swapgs" ::: "memory");
-#पूर्ण_अगर
-पूर्ण
+static __always_inline void native_swapgs(void)
+{
+#ifdef CONFIG_X86_64
+	asm volatile("swapgs" ::: "memory");
+#endif
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ current_top_of_stack(व्योम)
-अणु
+static inline unsigned long current_top_of_stack(void)
+{
 	/*
-	 *  We can't पढ़ो directly from tss.sp0: sp0 on x86_32 is special in
+	 *  We can't read directly from tss.sp0: sp0 on x86_32 is special in
 	 *  and around vm86 mode and sp0 on x86_64 is special because of the
 	 *  entry trampoline.
 	 */
-	वापस this_cpu_पढ़ो_stable(cpu_current_top_of_stack);
-पूर्ण
+	return this_cpu_read_stable(cpu_current_top_of_stack);
+}
 
-अटल अंतरभूत bool on_thपढ़ो_stack(व्योम)
-अणु
-	वापस (अचिन्हित दीर्घ)(current_top_of_stack() -
-			       current_stack_poपूर्णांकer) < THREAD_SIZE;
-पूर्ण
+static inline bool on_thread_stack(void)
+{
+	return (unsigned long)(current_top_of_stack() -
+			       current_stack_pointer) < THREAD_SIZE;
+}
 
-#अगर_घोषित CONFIG_PARAVIRT_XXL
-#समावेश <यंत्र/paravirt.h>
-#अन्यथा
-#घोषणा __cpuid			native_cpuid
+#ifdef CONFIG_PARAVIRT_XXL
+#include <asm/paravirt.h>
+#else
+#define __cpuid			native_cpuid
 
-अटल अंतरभूत व्योम load_sp0(अचिन्हित दीर्घ sp0)
-अणु
+static inline void load_sp0(unsigned long sp0)
+{
 	native_load_sp0(sp0);
-पूर्ण
+}
 
-#पूर्ण_अगर /* CONFIG_PARAVIRT_XXL */
+#endif /* CONFIG_PARAVIRT_XXL */
 
-/* Free all resources held by a thपढ़ो. */
-बाह्य व्योम release_thपढ़ो(काष्ठा task_काष्ठा *);
+/* Free all resources held by a thread. */
+extern void release_thread(struct task_struct *);
 
-अचिन्हित दीर्घ get_wchan(काष्ठा task_काष्ठा *p);
+unsigned long get_wchan(struct task_struct *p);
 
 /*
  * Generic CPUID function
- * clear %ecx since some cpus (Cyrix MII) करो not set or clear %ecx
- * resulting in stale रेजिस्टर contents being वापसed.
+ * clear %ecx since some cpus (Cyrix MII) do not set or clear %ecx
+ * resulting in stale register contents being returned.
  */
-अटल अंतरभूत व्योम cpuid(अचिन्हित पूर्णांक op,
-			 अचिन्हित पूर्णांक *eax, अचिन्हित पूर्णांक *ebx,
-			 अचिन्हित पूर्णांक *ecx, अचिन्हित पूर्णांक *edx)
-अणु
+static inline void cpuid(unsigned int op,
+			 unsigned int *eax, unsigned int *ebx,
+			 unsigned int *ecx, unsigned int *edx)
+{
 	*eax = op;
 	*ecx = 0;
 	__cpuid(eax, ebx, ecx, edx);
-पूर्ण
+}
 
 /* Some CPUID calls want 'count' to be placed in ecx */
-अटल अंतरभूत व्योम cpuid_count(अचिन्हित पूर्णांक op, पूर्णांक count,
-			       अचिन्हित पूर्णांक *eax, अचिन्हित पूर्णांक *ebx,
-			       अचिन्हित पूर्णांक *ecx, अचिन्हित पूर्णांक *edx)
-अणु
+static inline void cpuid_count(unsigned int op, int count,
+			       unsigned int *eax, unsigned int *ebx,
+			       unsigned int *ecx, unsigned int *edx)
+{
 	*eax = op;
 	*ecx = count;
 	__cpuid(eax, ebx, ecx, edx);
-पूर्ण
+}
 
 /*
- * CPUID functions वापसing a single datum
+ * CPUID functions returning a single datum
  */
-अटल अंतरभूत अचिन्हित पूर्णांक cpuid_eax(अचिन्हित पूर्णांक op)
-अणु
-	अचिन्हित पूर्णांक eax, ebx, ecx, edx;
+static inline unsigned int cpuid_eax(unsigned int op)
+{
+	unsigned int eax, ebx, ecx, edx;
 
 	cpuid(op, &eax, &ebx, &ecx, &edx);
 
-	वापस eax;
-पूर्ण
+	return eax;
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक cpuid_ebx(अचिन्हित पूर्णांक op)
-अणु
-	अचिन्हित पूर्णांक eax, ebx, ecx, edx;
-
-	cpuid(op, &eax, &ebx, &ecx, &edx);
-
-	वापस ebx;
-पूर्ण
-
-अटल अंतरभूत अचिन्हित पूर्णांक cpuid_ecx(अचिन्हित पूर्णांक op)
-अणु
-	अचिन्हित पूर्णांक eax, ebx, ecx, edx;
+static inline unsigned int cpuid_ebx(unsigned int op)
+{
+	unsigned int eax, ebx, ecx, edx;
 
 	cpuid(op, &eax, &ebx, &ecx, &edx);
 
-	वापस ecx;
-पूर्ण
+	return ebx;
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक cpuid_edx(अचिन्हित पूर्णांक op)
-अणु
-	अचिन्हित पूर्णांक eax, ebx, ecx, edx;
+static inline unsigned int cpuid_ecx(unsigned int op)
+{
+	unsigned int eax, ebx, ecx, edx;
 
 	cpuid(op, &eax, &ebx, &ecx, &edx);
 
-	वापस edx;
-पूर्ण
+	return ecx;
+}
 
-बाह्य व्योम select_idle_routine(स्थिर काष्ठा cpuinfo_x86 *c);
-बाह्य व्योम amd_e400_c1e_apic_setup(व्योम);
+static inline unsigned int cpuid_edx(unsigned int op)
+{
+	unsigned int eax, ebx, ecx, edx;
 
-बाह्य अचिन्हित दीर्घ		boot_option_idle_override;
+	cpuid(op, &eax, &ebx, &ecx, &edx);
 
-क्रमागत idle_boot_override अणुIDLE_NO_OVERRIDE=0, IDLE_HALT, IDLE_NOMWAIT,
-			 IDLE_POLLपूर्ण;
+	return edx;
+}
 
-बाह्य व्योम enable_sep_cpu(व्योम);
-बाह्य पूर्णांक sysenter_setup(व्योम);
+extern void select_idle_routine(const struct cpuinfo_x86 *c);
+extern void amd_e400_c1e_apic_setup(void);
+
+extern unsigned long		boot_option_idle_override;
+
+enum idle_boot_override {IDLE_NO_OVERRIDE=0, IDLE_HALT, IDLE_NOMWAIT,
+			 IDLE_POLL};
+
+extern void enable_sep_cpu(void);
+extern int sysenter_setup(void);
 
 
 /* Defined in head.S */
-बाह्य काष्ठा desc_ptr		early_gdt_descr;
+extern struct desc_ptr		early_gdt_descr;
 
-बाह्य व्योम चयन_to_new_gdt(पूर्णांक);
-बाह्य व्योम load_direct_gdt(पूर्णांक);
-बाह्य व्योम load_fixmap_gdt(पूर्णांक);
-बाह्य व्योम load_percpu_segment(पूर्णांक);
-बाह्य व्योम cpu_init(व्योम);
-बाह्य व्योम cpu_init_exception_handling(व्योम);
-बाह्य व्योम cr4_init(व्योम);
+extern void switch_to_new_gdt(int);
+extern void load_direct_gdt(int);
+extern void load_fixmap_gdt(int);
+extern void load_percpu_segment(int);
+extern void cpu_init(void);
+extern void cpu_init_exception_handling(void);
+extern void cr4_init(void);
 
-अटल अंतरभूत अचिन्हित दीर्घ get_debugctlmsr(व्योम)
-अणु
-	अचिन्हित दीर्घ debugctlmsr = 0;
+static inline unsigned long get_debugctlmsr(void)
+{
+	unsigned long debugctlmsr = 0;
 
-#अगर_अघोषित CONFIG_X86_DEBUGCTLMSR
-	अगर (boot_cpu_data.x86 < 6)
-		वापस 0;
-#पूर्ण_अगर
+#ifndef CONFIG_X86_DEBUGCTLMSR
+	if (boot_cpu_data.x86 < 6)
+		return 0;
+#endif
 	rdmsrl(MSR_IA32_DEBUGCTLMSR, debugctlmsr);
 
-	वापस debugctlmsr;
-पूर्ण
+	return debugctlmsr;
+}
 
-अटल अंतरभूत व्योम update_debugctlmsr(अचिन्हित दीर्घ debugctlmsr)
-अणु
-#अगर_अघोषित CONFIG_X86_DEBUGCTLMSR
-	अगर (boot_cpu_data.x86 < 6)
-		वापस;
-#पूर्ण_अगर
+static inline void update_debugctlmsr(unsigned long debugctlmsr)
+{
+#ifndef CONFIG_X86_DEBUGCTLMSR
+	if (boot_cpu_data.x86 < 6)
+		return;
+#endif
 	wrmsrl(MSR_IA32_DEBUGCTLMSR, debugctlmsr);
-पूर्ण
+}
 
-बाह्य व्योम set_task_blockstep(काष्ठा task_काष्ठा *task, bool on);
+extern void set_task_blockstep(struct task_struct *task, bool on);
 
 /* Boot loader type from the setup header: */
-बाह्य पूर्णांक			bootloader_type;
-बाह्य पूर्णांक			bootloader_version;
+extern int			bootloader_type;
+extern int			bootloader_version;
 
-बाह्य अक्षर			ignore_fpu_irq;
+extern char			ignore_fpu_irq;
 
-#घोषणा HAVE_ARCH_PICK_MMAP_LAYOUT 1
-#घोषणा ARCH_HAS_PREFETCHW
-#घोषणा ARCH_HAS_SPINLOCK_PREFETCH
+#define HAVE_ARCH_PICK_MMAP_LAYOUT 1
+#define ARCH_HAS_PREFETCHW
+#define ARCH_HAS_SPINLOCK_PREFETCH
 
-#अगर_घोषित CONFIG_X86_32
+#ifdef CONFIG_X86_32
 # define BASE_PREFETCH		""
 # define ARCH_HAS_PREFETCH
-#अन्यथा
+#else
 # define BASE_PREFETCH		"prefetcht0 %P1"
-#पूर्ण_अगर
+#endif
 
 /*
- * Prefetch inकाष्ठाions क्रम Pentium III (+) and AMD Athlon (+)
+ * Prefetch instructions for Pentium III (+) and AMD Athlon (+)
  *
- * It's not worth to care about 3dnow prefetches क्रम the K6
+ * It's not worth to care about 3dnow prefetches for the K6
  * because they are microcoded there and very slow.
  */
-अटल अंतरभूत व्योम prefetch(स्थिर व्योम *x)
-अणु
+static inline void prefetch(const void *x)
+{
 	alternative_input(BASE_PREFETCH, "prefetchnta %P1",
 			  X86_FEATURE_XMM,
-			  "m" (*(स्थिर अक्षर *)x));
-पूर्ण
+			  "m" (*(const char *)x));
+}
 
 /*
  * 3dnow prefetch to get an exclusive cache line.
- * Useful क्रम spinlocks to aव्योम one state transition in the
+ * Useful for spinlocks to avoid one state transition in the
  * cache coherency protocol:
  */
-अटल __always_अंतरभूत व्योम prefetchw(स्थिर व्योम *x)
-अणु
+static __always_inline void prefetchw(const void *x)
+{
 	alternative_input(BASE_PREFETCH, "prefetchw %P1",
 			  X86_FEATURE_3DNOWPREFETCH,
-			  "m" (*(स्थिर अक्षर *)x));
-पूर्ण
+			  "m" (*(const char *)x));
+}
 
-अटल अंतरभूत व्योम spin_lock_prefetch(स्थिर व्योम *x)
-अणु
+static inline void spin_lock_prefetch(const void *x)
+{
 	prefetchw(x);
-पूर्ण
+}
 
-#घोषणा TOP_OF_INIT_STACK ((अचिन्हित दीर्घ)&init_stack + माप(init_stack) - \
+#define TOP_OF_INIT_STACK ((unsigned long)&init_stack + sizeof(init_stack) - \
 			   TOP_OF_KERNEL_STACK_PADDING)
 
-#घोषणा task_top_of_stack(task) ((अचिन्हित दीर्घ)(task_pt_regs(task) + 1))
+#define task_top_of_stack(task) ((unsigned long)(task_pt_regs(task) + 1))
 
-#घोषणा task_pt_regs(task) \
-(अणु									\
-	अचिन्हित दीर्घ __ptr = (अचिन्हित दीर्घ)task_stack_page(task);	\
+#define task_pt_regs(task) \
+({									\
+	unsigned long __ptr = (unsigned long)task_stack_page(task);	\
 	__ptr += THREAD_SIZE - TOP_OF_KERNEL_STACK_PADDING;		\
-	((काष्ठा pt_regs *)__ptr) - 1;					\
-पूर्ण)
+	((struct pt_regs *)__ptr) - 1;					\
+})
 
-#अगर_घोषित CONFIG_X86_32
-#घोषणा INIT_THREAD  अणु							  \
+#ifdef CONFIG_X86_32
+#define INIT_THREAD  {							  \
 	.sp0			= TOP_OF_INIT_STACK,			  \
 	.sysenter_cs		= __KERNEL_CS,				  \
-पूर्ण
+}
 
-#घोषणा KSTK_ESP(task)		(task_pt_regs(task)->sp)
+#define KSTK_ESP(task)		(task_pt_regs(task)->sp)
 
-#अन्यथा
-#घोषणा INIT_THREAD अणु पूर्ण
+#else
+#define INIT_THREAD { }
 
-बाह्य अचिन्हित दीर्घ KSTK_ESP(काष्ठा task_काष्ठा *task);
+extern unsigned long KSTK_ESP(struct task_struct *task);
 
-#पूर्ण_अगर /* CONFIG_X86_64 */
+#endif /* CONFIG_X86_64 */
 
-बाह्य व्योम start_thपढ़ो(काष्ठा pt_regs *regs, अचिन्हित दीर्घ new_ip,
-					       अचिन्हित दीर्घ new_sp);
+extern void start_thread(struct pt_regs *regs, unsigned long new_ip,
+					       unsigned long new_sp);
 
 /*
- * This decides where the kernel will search क्रम a मुक्त chunk of vm
+ * This decides where the kernel will search for a free chunk of vm
  * space during mmap's.
  */
-#घोषणा __TASK_UNMAPPED_BASE(task_size)	(PAGE_ALIGN(task_size / 3))
-#घोषणा TASK_UNMAPPED_BASE		__TASK_UNMAPPED_BASE(TASK_SIZE_LOW)
+#define __TASK_UNMAPPED_BASE(task_size)	(PAGE_ALIGN(task_size / 3))
+#define TASK_UNMAPPED_BASE		__TASK_UNMAPPED_BASE(TASK_SIZE_LOW)
 
-#घोषणा KSTK_EIP(task)		(task_pt_regs(task)->ip)
+#define KSTK_EIP(task)		(task_pt_regs(task)->ip)
 
-/* Get/set a process' ability to use the बारtamp counter inकाष्ठाion */
-#घोषणा GET_TSC_CTL(adr)	get_tsc_mode((adr))
-#घोषणा SET_TSC_CTL(val)	set_tsc_mode((val))
+/* Get/set a process' ability to use the timestamp counter instruction */
+#define GET_TSC_CTL(adr)	get_tsc_mode((adr))
+#define SET_TSC_CTL(val)	set_tsc_mode((val))
 
-बाह्य पूर्णांक get_tsc_mode(अचिन्हित दीर्घ adr);
-बाह्य पूर्णांक set_tsc_mode(अचिन्हित पूर्णांक val);
+extern int get_tsc_mode(unsigned long adr);
+extern int set_tsc_mode(unsigned int val);
 
-DECLARE_PER_CPU(u64, msr_misc_features_shaकरोw);
+DECLARE_PER_CPU(u64, msr_misc_features_shadow);
 
-#अगर_घोषित CONFIG_CPU_SUP_AMD
-बाह्य u32 amd_get_nodes_per_socket(व्योम);
-बाह्य u32 amd_get_highest_perf(व्योम);
-#अन्यथा
-अटल अंतरभूत u32 amd_get_nodes_per_socket(व्योम)	अणु वापस 0; पूर्ण
-अटल अंतरभूत u32 amd_get_highest_perf(व्योम)		अणु वापस 0; पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_CPU_SUP_AMD
+extern u32 amd_get_nodes_per_socket(void);
+extern u32 amd_get_highest_perf(void);
+#else
+static inline u32 amd_get_nodes_per_socket(void)	{ return 0; }
+static inline u32 amd_get_highest_perf(void)		{ return 0; }
+#endif
 
-अटल अंतरभूत uपूर्णांक32_t hypervisor_cpuid_base(स्थिर अक्षर *sig, uपूर्णांक32_t leaves)
-अणु
-	uपूर्णांक32_t base, eax, signature[3];
+static inline uint32_t hypervisor_cpuid_base(const char *sig, uint32_t leaves)
+{
+	uint32_t base, eax, signature[3];
 
-	क्रम (base = 0x40000000; base < 0x40010000; base += 0x100) अणु
+	for (base = 0x40000000; base < 0x40010000; base += 0x100) {
 		cpuid(base, &eax, &signature[0], &signature[1], &signature[2]);
 
-		अगर (!स_भेद(sig, signature, 12) &&
+		if (!memcmp(sig, signature, 12) &&
 		    (leaves == 0 || ((eax - base) >= leaves)))
-			वापस base;
-	पूर्ण
+			return base;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-बाह्य अचिन्हित दीर्घ arch_align_stack(अचिन्हित दीर्घ sp);
-व्योम मुक्त_init_pages(स्थिर अक्षर *what, अचिन्हित दीर्घ begin, अचिन्हित दीर्घ end);
-बाह्य व्योम मुक्त_kernel_image_pages(स्थिर अक्षर *what, व्योम *begin, व्योम *end);
+extern unsigned long arch_align_stack(unsigned long sp);
+void free_init_pages(const char *what, unsigned long begin, unsigned long end);
+extern void free_kernel_image_pages(const char *what, void *begin, void *end);
 
-व्योम शेष_idle(व्योम);
-#अगर_घोषित	CONFIG_XEN
-bool xen_set_शेष_idle(व्योम);
-#अन्यथा
-#घोषणा xen_set_शेष_idle 0
-#पूर्ण_अगर
+void default_idle(void);
+#ifdef	CONFIG_XEN
+bool xen_set_default_idle(void);
+#else
+#define xen_set_default_idle 0
+#endif
 
-व्योम stop_this_cpu(व्योम *dummy);
-व्योम microcode_check(व्योम);
+void stop_this_cpu(void *dummy);
+void microcode_check(void);
 
-क्रमागत l1tf_mitigations अणु
+enum l1tf_mitigations {
 	L1TF_MITIGATION_OFF,
 	L1TF_MITIGATION_FLUSH_NOWARN,
 	L1TF_MITIGATION_FLUSH,
 	L1TF_MITIGATION_FLUSH_NOSMT,
 	L1TF_MITIGATION_FULL,
 	L1TF_MITIGATION_FULL_FORCE
-पूर्ण;
+};
 
-बाह्य क्रमागत l1tf_mitigations l1tf_mitigation;
+extern enum l1tf_mitigations l1tf_mitigation;
 
-क्रमागत mds_mitigations अणु
+enum mds_mitigations {
 	MDS_MITIGATION_OFF,
 	MDS_MITIGATION_FULL,
 	MDS_MITIGATION_VMWERV,
-पूर्ण;
+};
 
-#पूर्ण_अगर /* _ASM_X86_PROCESSOR_H */
+#endif /* _ASM_X86_PROCESSOR_H */

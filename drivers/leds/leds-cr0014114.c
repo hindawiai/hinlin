@@ -1,14 +1,13 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2018 Crane Merchandising Systems. All rights reserved.
 // Copyright (C) 2018 Oleh Kravchenko <oleg@kaa.org.ua>
 
-#समावेश <linux/delay.h>
-#समावेश <linux/leds.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/spi/spi.h>
-#समावेश <linux/workqueue.h>
+#include <linux/delay.h>
+#include <linux/leds.h>
+#include <linux/module.h>
+#include <linux/of_device.h>
+#include <linux/spi/spi.h>
+#include <linux/workqueue.h>
 
 /*
  *  CR0014114 SPI protocol descrtiption:
@@ -31,141 +30,141 @@
  */
 
 /* CR0014114 SPI commands */
-#घोषणा CR_SET_BRIGHTNESS	0x80
-#घोषणा CR_INIT_REENUMERATE	0x81
-#घोषणा CR_NEXT_REENUMERATE	0x82
+#define CR_SET_BRIGHTNESS	0x80
+#define CR_INIT_REENUMERATE	0x81
+#define CR_NEXT_REENUMERATE	0x82
 
-/* CR0014114 शेष settings */
-#घोषणा CR_MAX_BRIGHTNESS	GENMASK(6, 0)
-#घोषणा CR_FW_DELAY_MSEC	10
-#घोषणा CR_RECOUNT_DELAY	(HZ * 3600)
+/* CR0014114 default settings */
+#define CR_MAX_BRIGHTNESS	GENMASK(6, 0)
+#define CR_FW_DELAY_MSEC	10
+#define CR_RECOUNT_DELAY	(HZ * 3600)
 
-#घोषणा CR_DEV_NAME		"cr0014114"
+#define CR_DEV_NAME		"cr0014114"
 
-काष्ठा cr0014114_led अणु
-	काष्ठा cr0014114	*priv;
-	काष्ठा led_classdev	ldev;
+struct cr0014114_led {
+	struct cr0014114	*priv;
+	struct led_classdev	ldev;
 	u8			brightness;
-पूर्ण;
+};
 
-काष्ठा cr0014114 अणु
-	bool			करो_recount;
-	माप_प्रकार			count;
-	काष्ठा delayed_work	work;
-	काष्ठा device		*dev;
-	काष्ठा mutex		lock;
-	काष्ठा spi_device	*spi;
+struct cr0014114 {
+	bool			do_recount;
+	size_t			count;
+	struct delayed_work	work;
+	struct device		*dev;
+	struct mutex		lock;
+	struct spi_device	*spi;
 	u8			*buf;
-	अचिन्हित दीर्घ		delay;
-	काष्ठा cr0014114_led	leds[];
-पूर्ण;
+	unsigned long		delay;
+	struct cr0014114_led	leds[];
+};
 
-अटल व्योम cr0014114_calc_crc(u8 *buf, स्थिर माप_प्रकार len)
-अणु
-	माप_प्रकार	i;
+static void cr0014114_calc_crc(u8 *buf, const size_t len)
+{
+	size_t	i;
 	u8	crc;
 
-	क्रम (i = 1, crc = 1; i < len - 1; i++)
+	for (i = 1, crc = 1; i < len - 1; i++)
 		crc += buf[i];
 	crc |= BIT(7);
 
-	/* special हाल when CRC matches the SPI commands */
-	अगर (crc == CR_SET_BRIGHTNESS ||
+	/* special case when CRC matches the SPI commands */
+	if (crc == CR_SET_BRIGHTNESS ||
 	    crc == CR_INIT_REENUMERATE ||
 	    crc == CR_NEXT_REENUMERATE)
 		crc = 0xfe;
 
 	buf[len - 1] = crc;
-पूर्ण
+}
 
-अटल पूर्णांक cr0014114_recount(काष्ठा cr0014114 *priv)
-अणु
-	पूर्णांक	ret;
-	माप_प्रकार	i;
+static int cr0014114_recount(struct cr0014114 *priv)
+{
+	int	ret;
+	size_t	i;
 	u8	cmd;
 
 	dev_dbg(priv->dev, "LEDs recount is started\n");
 
 	cmd = CR_INIT_REENUMERATE;
-	ret = spi_ग_लिखो(priv->spi, &cmd, माप(cmd));
-	अगर (ret)
-		जाओ err;
+	ret = spi_write(priv->spi, &cmd, sizeof(cmd));
+	if (ret)
+		goto err;
 
 	cmd = CR_NEXT_REENUMERATE;
-	क्रम (i = 0; i < priv->count; i++) अणु
+	for (i = 0; i < priv->count; i++) {
 		msleep(CR_FW_DELAY_MSEC);
 
-		ret = spi_ग_लिखो(priv->spi, &cmd, माप(cmd));
-		अगर (ret)
-			जाओ err;
-	पूर्ण
+		ret = spi_write(priv->spi, &cmd, sizeof(cmd));
+		if (ret)
+			goto err;
+	}
 
 err:
 	dev_dbg(priv->dev, "LEDs recount is finished\n");
 
-	अगर (ret)
+	if (ret)
 		dev_err(priv->dev, "with error %d", ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक cr0014114_sync(काष्ठा cr0014114 *priv)
-अणु
-	पूर्णांक		ret;
-	माप_प्रकार		i;
-	अचिन्हित दीर्घ	udelay, now = jअगरfies;
+static int cr0014114_sync(struct cr0014114 *priv)
+{
+	int		ret;
+	size_t		i;
+	unsigned long	udelay, now = jiffies;
 
-	/* to aव्योम SPI mistiming with firmware we should रुको some समय */
-	अगर (समय_after(priv->delay, now)) अणु
-		udelay = jअगरfies_to_usecs(priv->delay - now);
+	/* to avoid SPI mistiming with firmware we should wait some time */
+	if (time_after(priv->delay, now)) {
+		udelay = jiffies_to_usecs(priv->delay - now);
 		usleep_range(udelay, udelay + 1);
-	पूर्ण
+	}
 
-	अगर (unlikely(priv->करो_recount)) अणु
+	if (unlikely(priv->do_recount)) {
 		ret = cr0014114_recount(priv);
-		अगर (ret)
-			जाओ err;
+		if (ret)
+			goto err;
 
-		priv->करो_recount = false;
+		priv->do_recount = false;
 		msleep(CR_FW_DELAY_MSEC);
-	पूर्ण
+	}
 
 	priv->buf[0] = CR_SET_BRIGHTNESS;
-	क्रम (i = 0; i < priv->count; i++)
+	for (i = 0; i < priv->count; i++)
 		priv->buf[i + 1] = priv->leds[i].brightness;
 	cr0014114_calc_crc(priv->buf, priv->count + 2);
-	ret = spi_ग_लिखो(priv->spi, priv->buf, priv->count + 2);
+	ret = spi_write(priv->spi, priv->buf, priv->count + 2);
 
 err:
-	priv->delay = jअगरfies + msecs_to_jअगरfies(CR_FW_DELAY_MSEC);
+	priv->delay = jiffies + msecs_to_jiffies(CR_FW_DELAY_MSEC);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम cr0014114_recount_work(काष्ठा work_काष्ठा *work)
-अणु
-	पूर्णांक			ret;
-	काष्ठा cr0014114	*priv = container_of(work,
-						     काष्ठा cr0014114,
+static void cr0014114_recount_work(struct work_struct *work)
+{
+	int			ret;
+	struct cr0014114	*priv = container_of(work,
+						     struct cr0014114,
 						     work.work);
 
 	mutex_lock(&priv->lock);
-	priv->करो_recount = true;
+	priv->do_recount = true;
 	ret = cr0014114_sync(priv);
 	mutex_unlock(&priv->lock);
 
-	अगर (ret)
+	if (ret)
 		dev_warn(priv->dev, "sync of LEDs failed %d\n", ret);
 
 	schedule_delayed_work(&priv->work, CR_RECOUNT_DELAY);
-पूर्ण
+}
 
-अटल पूर्णांक cr0014114_set_sync(काष्ठा led_classdev *ldev,
-			      क्रमागत led_brightness brightness)
-अणु
-	पूर्णांक			ret;
-	काष्ठा cr0014114_led    *led = container_of(ldev,
-						    काष्ठा cr0014114_led,
+static int cr0014114_set_sync(struct led_classdev *ldev,
+			      enum led_brightness brightness)
+{
+	int			ret;
+	struct cr0014114_led    *led = container_of(ldev,
+						    struct cr0014114_led,
 						    ldev);
 
 	dev_dbg(led->priv->dev, "Set brightness to %d\n", brightness);
@@ -175,18 +174,18 @@ err:
 	ret = cr0014114_sync(led->priv);
 	mutex_unlock(&led->priv->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक cr0014114_probe_dt(काष्ठा cr0014114 *priv)
-अणु
-	माप_प्रकार			i = 0;
-	काष्ठा cr0014114_led	*led;
-	काष्ठा fwnode_handle	*child;
-	काष्ठा led_init_data	init_data = अणुपूर्ण;
-	पूर्णांक			ret;
+static int cr0014114_probe_dt(struct cr0014114 *priv)
+{
+	size_t			i = 0;
+	struct cr0014114_led	*led;
+	struct fwnode_handle	*child;
+	struct led_init_data	init_data = {};
+	int			ret;
 
-	device_क्रम_each_child_node(priv->dev, child) अणु
+	device_for_each_child_node(priv->dev, child) {
 		led = &priv->leds[i];
 
 		led->priv			  = priv;
@@ -195,103 +194,103 @@ err:
 
 		init_data.fwnode = child;
 		init_data.devicename = CR_DEV_NAME;
-		init_data.शेष_label = ":";
+		init_data.default_label = ":";
 
-		ret = devm_led_classdev_रेजिस्टर_ext(priv->dev, &led->ldev,
+		ret = devm_led_classdev_register_ext(priv->dev, &led->ldev,
 						     &init_data);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(priv->dev,
 				"failed to register LED device, err %d", ret);
 			fwnode_handle_put(child);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
 		i++;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cr0014114_probe(काष्ठा spi_device *spi)
-अणु
-	काष्ठा cr0014114	*priv;
-	माप_प्रकार			count;
-	पूर्णांक			ret;
+static int cr0014114_probe(struct spi_device *spi)
+{
+	struct cr0014114	*priv;
+	size_t			count;
+	int			ret;
 
 	count = device_get_child_node_count(&spi->dev);
-	अगर (!count) अणु
+	if (!count) {
 		dev_err(&spi->dev, "LEDs are not defined in device tree!");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	priv = devm_kzalloc(&spi->dev, काष्ठा_size(priv, leds, count),
+	priv = devm_kzalloc(&spi->dev, struct_size(priv, leds, count),
 			    GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	if (!priv)
+		return -ENOMEM;
 
 	priv->buf = devm_kzalloc(&spi->dev, count + 2, GFP_KERNEL);
-	अगर (!priv->buf)
-		वापस -ENOMEM;
+	if (!priv->buf)
+		return -ENOMEM;
 
 	mutex_init(&priv->lock);
 	INIT_DELAYED_WORK(&priv->work, cr0014114_recount_work);
 	priv->count	= count;
 	priv->dev	= &spi->dev;
 	priv->spi	= spi;
-	priv->delay	= jअगरfies -
-			  msecs_to_jअगरfies(CR_FW_DELAY_MSEC);
+	priv->delay	= jiffies -
+			  msecs_to_jiffies(CR_FW_DELAY_MSEC);
 
-	priv->करो_recount = true;
+	priv->do_recount = true;
 	ret = cr0014114_sync(priv);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(priv->dev, "first recount failed %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	priv->करो_recount = true;
+	priv->do_recount = true;
 	ret = cr0014114_sync(priv);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(priv->dev, "second recount failed %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = cr0014114_probe_dt(priv);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* setup recount work to workaround buggy firmware */
 	schedule_delayed_work(&priv->work, CR_RECOUNT_DELAY);
 
 	spi_set_drvdata(spi, priv);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cr0014114_हटाओ(काष्ठा spi_device *spi)
-अणु
-	काष्ठा cr0014114 *priv = spi_get_drvdata(spi);
+static int cr0014114_remove(struct spi_device *spi)
+{
+	struct cr0014114 *priv = spi_get_drvdata(spi);
 
 	cancel_delayed_work_sync(&priv->work);
 	mutex_destroy(&priv->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id cr0014114_dt_ids[] = अणु
-	अणु .compatible = "crane,cr0014114", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id cr0014114_dt_ids[] = {
+	{ .compatible = "crane,cr0014114", },
+	{},
+};
 
 MODULE_DEVICE_TABLE(of, cr0014114_dt_ids);
 
-अटल काष्ठा spi_driver cr0014114_driver = अणु
+static struct spi_driver cr0014114_driver = {
 	.probe		= cr0014114_probe,
-	.हटाओ		= cr0014114_हटाओ,
-	.driver = अणु
+	.remove		= cr0014114_remove,
+	.driver = {
 		.name		= KBUILD_MODNAME,
 		.of_match_table	= cr0014114_dt_ids,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 module_spi_driver(cr0014114_driver);
 

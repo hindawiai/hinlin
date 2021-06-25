@@ -1,16 +1,15 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/compiler.h>
-#समावेश "trace.h"
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/compiler.h>
+#include "trace.h"
 
-noअंतरभूत __noclone पूर्णांक DYN_FTRACE_TEST_NAME(व्योम)
-अणु
+noinline __noclone int DYN_FTRACE_TEST_NAME(void)
+{
 	/* used to call mcount */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-noअंतरभूत __noclone पूर्णांक DYN_FTRACE_TEST_NAME2(व्योम)
-अणु
+noinline __noclone int DYN_FTRACE_TEST_NAME2(void)
+{
 	/* used to call mcount */
-	वापस 0;
-पूर्ण
+	return 0;
+}

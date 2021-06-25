@@ -1,52 +1,51 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2016 SiFive
  */
 
-#अगर_अघोषित _ASM_RISCV_PCI_H
-#घोषणा _ASM_RISCV_PCI_H
+#ifndef _ASM_RISCV_PCI_H
+#define _ASM_RISCV_PCI_H
 
-#समावेश <linux/types.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/dma-mapping.h>
+#include <linux/types.h>
+#include <linux/slab.h>
+#include <linux/dma-mapping.h>
 
-#समावेश <यंत्र/पन.स>
+#include <asm/io.h>
 
-#घोषणा PCIBIOS_MIN_IO		0
-#घोषणा PCIBIOS_MIN_MEM		0
+#define PCIBIOS_MIN_IO		0
+#define PCIBIOS_MIN_MEM		0
 
-/* RISC-V shim करोes not initialize PCI bus */
-#घोषणा pcibios_assign_all_busses() 1
+/* RISC-V shim does not initialize PCI bus */
+#define pcibios_assign_all_busses() 1
 
-बाह्य पूर्णांक isa_dma_bridge_buggy;
+extern int isa_dma_bridge_buggy;
 
-#अगर_घोषित CONFIG_PCI
-अटल अंतरभूत पूर्णांक pci_get_legacy_ide_irq(काष्ठा pci_dev *dev, पूर्णांक channel)
-अणु
+#ifdef CONFIG_PCI
+static inline int pci_get_legacy_ide_irq(struct pci_dev *dev, int channel)
+{
 	/* no legacy IRQ on risc-v */
-	वापस -ENODEV;
-पूर्ण
+	return -ENODEV;
+}
 
-अटल अंतरभूत पूर्णांक pci_proc_करोमुख्य(काष्ठा pci_bus *bus)
-अणु
-	/* always show the करोमुख्य in /proc */
-	वापस 1;
-पूर्ण
+static inline int pci_proc_domain(struct pci_bus *bus)
+{
+	/* always show the domain in /proc */
+	return 1;
+}
 
-#अगर_घोषित	CONFIG_NUMA
+#ifdef	CONFIG_NUMA
 
-अटल अंतरभूत पूर्णांक pcibus_to_node(काष्ठा pci_bus *bus)
-अणु
-	वापस dev_to_node(&bus->dev);
-पूर्ण
-#अगर_अघोषित cpumask_of_pcibus
-#घोषणा cpumask_of_pcibus(bus)	(pcibus_to_node(bus) == -1 ?		\
+static inline int pcibus_to_node(struct pci_bus *bus)
+{
+	return dev_to_node(&bus->dev);
+}
+#ifndef cpumask_of_pcibus
+#define cpumask_of_pcibus(bus)	(pcibus_to_node(bus) == -1 ?		\
 				 cpu_all_mask :				\
 				 cpumask_of_node(pcibus_to_node(bus)))
-#पूर्ण_अगर
-#पूर्ण_अगर	/* CONFIG_NUMA */
+#endif
+#endif	/* CONFIG_NUMA */
 
-#पूर्ण_अगर  /* CONFIG_PCI */
+#endif  /* CONFIG_PCI */
 
-#पूर्ण_अगर  /* _ASM_RISCV_PCI_H */
+#endif  /* _ASM_RISCV_PCI_H */

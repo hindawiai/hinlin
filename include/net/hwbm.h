@@ -1,34 +1,33 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _HWBM_H
-#घोषणा _HWBM_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _HWBM_H
+#define _HWBM_H
 
-काष्ठा hwbm_pool अणु
+struct hwbm_pool {
 	/* Capacity of the pool */
-	पूर्णांक size;
+	int size;
 	/* Size of the buffers managed */
-	पूर्णांक frag_size;
+	int frag_size;
 	/* Number of buffers currently used by this pool */
-	पूर्णांक buf_num;
-	/* स्थिरructor called during alocation */
-	पूर्णांक (*स्थिरruct)(काष्ठा hwbm_pool *bm_pool, व्योम *buf);
+	int buf_num;
+	/* constructor called during alocation */
+	int (*construct)(struct hwbm_pool *bm_pool, void *buf);
 	/* protect acces to the buffer counter*/
-	काष्ठा mutex buf_lock;
-	/* निजी data */
-	व्योम *priv;
-पूर्ण;
-#अगर_घोषित CONFIG_HWBM
-व्योम hwbm_buf_मुक्त(काष्ठा hwbm_pool *bm_pool, व्योम *buf);
-पूर्णांक hwbm_pool_refill(काष्ठा hwbm_pool *bm_pool, gfp_t gfp);
-पूर्णांक hwbm_pool_add(काष्ठा hwbm_pool *bm_pool, अचिन्हित पूर्णांक buf_num);
-#अन्यथा
-अटल अंतरभूत व्योम hwbm_buf_मुक्त(काष्ठा hwbm_pool *bm_pool, व्योम *buf) अणुपूर्ण
+	struct mutex buf_lock;
+	/* private data */
+	void *priv;
+};
+#ifdef CONFIG_HWBM
+void hwbm_buf_free(struct hwbm_pool *bm_pool, void *buf);
+int hwbm_pool_refill(struct hwbm_pool *bm_pool, gfp_t gfp);
+int hwbm_pool_add(struct hwbm_pool *bm_pool, unsigned int buf_num);
+#else
+static inline void hwbm_buf_free(struct hwbm_pool *bm_pool, void *buf) {}
 
-अटल अंतरभूत पूर्णांक hwbm_pool_refill(काष्ठा hwbm_pool *bm_pool, gfp_t gfp)
-अणु वापस 0; पूर्ण
+static inline int hwbm_pool_refill(struct hwbm_pool *bm_pool, gfp_t gfp)
+{ return 0; }
 
-अटल अंतरभूत पूर्णांक hwbm_pool_add(काष्ठा hwbm_pool *bm_pool,
-				अचिन्हित पूर्णांक buf_num)
-अणु वापस 0; पूर्ण
-#पूर्ण_अगर /* CONFIG_HWBM */
-#पूर्ण_अगर /* _HWBM_H */
+static inline int hwbm_pool_add(struct hwbm_pool *bm_pool,
+				unsigned int buf_num)
+{ return 0; }
+#endif /* CONFIG_HWBM */
+#endif /* _HWBM_H */

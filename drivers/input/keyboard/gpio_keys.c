@@ -1,1074 +1,1073 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Driver क्रम keys on GPIO lines capable of generating पूर्णांकerrupts.
+ * Driver for keys on GPIO lines capable of generating interrupts.
  *
  * Copyright 2005 Phil Blundell
  * Copyright 2010, 2011 David Jander <david@protonic.nl>
  */
 
-#समावेश <linux/module.h>
+#include <linux/module.h>
 
-#समावेश <linux/hrसमयr.h>
-#समावेश <linux/init.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/sysctl.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/input.h>
-#समावेश <linux/gpio_keys.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/spinlock.h>
-#समावेश <dt-bindings/input/gpio-keys.h>
+#include <linux/hrtimer.h>
+#include <linux/init.h>
+#include <linux/fs.h>
+#include <linux/interrupt.h>
+#include <linux/irq.h>
+#include <linux/sched.h>
+#include <linux/pm.h>
+#include <linux/slab.h>
+#include <linux/sysctl.h>
+#include <linux/proc_fs.h>
+#include <linux/delay.h>
+#include <linux/platform_device.h>
+#include <linux/input.h>
+#include <linux/gpio_keys.h>
+#include <linux/workqueue.h>
+#include <linux/gpio.h>
+#include <linux/gpio/consumer.h>
+#include <linux/of.h>
+#include <linux/of_irq.h>
+#include <linux/spinlock.h>
+#include <dt-bindings/input/gpio-keys.h>
 
-काष्ठा gpio_button_data अणु
-	स्थिर काष्ठा gpio_keys_button *button;
-	काष्ठा input_dev *input;
-	काष्ठा gpio_desc *gpiod;
+struct gpio_button_data {
+	const struct gpio_keys_button *button;
+	struct input_dev *input;
+	struct gpio_desc *gpiod;
 
-	अचिन्हित लघु *code;
+	unsigned short *code;
 
-	काष्ठा hrसमयr release_समयr;
-	अचिन्हित पूर्णांक release_delay;	/* in msecs, क्रम IRQ-only buttons */
+	struct hrtimer release_timer;
+	unsigned int release_delay;	/* in msecs, for IRQ-only buttons */
 
-	काष्ठा delayed_work work;
-	काष्ठा hrसमयr debounce_समयr;
-	अचिन्हित पूर्णांक software_debounce;	/* in msecs, क्रम GPIO-driven buttons */
+	struct delayed_work work;
+	struct hrtimer debounce_timer;
+	unsigned int software_debounce;	/* in msecs, for GPIO-driven buttons */
 
-	अचिन्हित पूर्णांक irq;
-	अचिन्हित पूर्णांक wakeup_trigger_type;
+	unsigned int irq;
+	unsigned int wakeup_trigger_type;
 	spinlock_t lock;
 	bool disabled;
 	bool key_pressed;
 	bool suspended;
-	bool debounce_use_hrसमयr;
-पूर्ण;
+	bool debounce_use_hrtimer;
+};
 
-काष्ठा gpio_keys_drvdata अणु
-	स्थिर काष्ठा gpio_keys_platक्रमm_data *pdata;
-	काष्ठा input_dev *input;
-	काष्ठा mutex disable_lock;
-	अचिन्हित लघु *keymap;
-	काष्ठा gpio_button_data data[];
-पूर्ण;
+struct gpio_keys_drvdata {
+	const struct gpio_keys_platform_data *pdata;
+	struct input_dev *input;
+	struct mutex disable_lock;
+	unsigned short *keymap;
+	struct gpio_button_data data[];
+};
 
 /*
- * SYSFS पूर्णांकerface क्रम enabling/disabling keys and चयनes:
+ * SYSFS interface for enabling/disabling keys and switches:
  *
- * There are 4 attributes under /sys/devices/platक्रमm/gpio-keys/
- *	keys [ro]              - biपंचांगap of keys (EV_KEY) which can be
+ * There are 4 attributes under /sys/devices/platform/gpio-keys/
+ *	keys [ro]              - bitmap of keys (EV_KEY) which can be
  *	                         disabled
- *	चयनes [ro]          - biपंचांगap of चयनes (EV_SW) which can be
+ *	switches [ro]          - bitmap of switches (EV_SW) which can be
  *	                         disabled
- *	disabled_keys [rw]     - biपंचांगap of keys currently disabled
- *	disabled_चयनes [rw] - biपंचांगap of चयनes currently disabled
+ *	disabled_keys [rw]     - bitmap of keys currently disabled
+ *	disabled_switches [rw] - bitmap of switches currently disabled
  *
  * Userland can change these values and hence disable event generation
- * क्रम each key (or चयन). Disabling a key means its पूर्णांकerrupt line
+ * for each key (or switch). Disabling a key means its interrupt line
  * is disabled.
  *
- * For example, अगर we have following चयनes set up as gpio-keys:
+ * For example, if we have following switches set up as gpio-keys:
  *	SW_DOCK = 5
  *	SW_CAMERA_LENS_COVER = 9
  *	SW_KEYPAD_SLIDE = 10
  *	SW_FRONT_PROXIMITY = 11
- * This is पढ़ो from चयनes:
+ * This is read from switches:
  *	11-9,5
- * Next we want to disable proximity (11) and करोck (5), we ग_लिखो:
+ * Next we want to disable proximity (11) and dock (5), we write:
  *	11,5
- * to file disabled_चयनes. Now proximity and करोck IRQs are disabled.
- * This can be verअगरied by पढ़ोing the file disabled_चयनes:
+ * to file disabled_switches. Now proximity and dock IRQs are disabled.
+ * This can be verified by reading the file disabled_switches:
  *	11,5
- * If we now want to enable proximity (11) चयन we ग_लिखो:
+ * If we now want to enable proximity (11) switch we write:
  *	5
- * to disabled_चयनes.
+ * to disabled_switches.
  *
- * We can disable only those keys which करोn't allow sharing the irq.
+ * We can disable only those keys which don't allow sharing the irq.
  */
 
 /**
- * get_n_events_by_type() - वापसs maximum number of events per @type
+ * get_n_events_by_type() - returns maximum number of events per @type
  * @type: type of button (%EV_KEY, %EV_SW)
  *
- * Return value of this function can be used to allocate biपंचांगap
- * large enough to hold all bits क्रम given type.
+ * Return value of this function can be used to allocate bitmap
+ * large enough to hold all bits for given type.
  */
-अटल पूर्णांक get_n_events_by_type(पूर्णांक type)
-अणु
+static int get_n_events_by_type(int type)
+{
 	BUG_ON(type != EV_SW && type != EV_KEY);
 
-	वापस (type == EV_KEY) ? KEY_CNT : SW_CNT;
-पूर्ण
+	return (type == EV_KEY) ? KEY_CNT : SW_CNT;
+}
 
 /**
- * get_bm_events_by_type() - वापसs biपंचांगap of supported events per @type
- * @dev: input device from which biपंचांगap is retrieved
+ * get_bm_events_by_type() - returns bitmap of supported events per @type
+ * @dev: input device from which bitmap is retrieved
  * @type: type of button (%EV_KEY, %EV_SW)
  *
- * Return value of this function can be used to allocate biपंचांगap
- * large enough to hold all bits क्रम given type.
+ * Return value of this function can be used to allocate bitmap
+ * large enough to hold all bits for given type.
  */
-अटल स्थिर अचिन्हित दीर्घ *get_bm_events_by_type(काष्ठा input_dev *dev,
-						  पूर्णांक type)
-अणु
+static const unsigned long *get_bm_events_by_type(struct input_dev *dev,
+						  int type)
+{
 	BUG_ON(type != EV_SW && type != EV_KEY);
 
-	वापस (type == EV_KEY) ? dev->keybit : dev->swbit;
-पूर्ण
+	return (type == EV_KEY) ? dev->keybit : dev->swbit;
+}
 
-अटल व्योम gpio_keys_quiesce_key(व्योम *data)
-अणु
-	काष्ठा gpio_button_data *bdata = data;
+static void gpio_keys_quiesce_key(void *data)
+{
+	struct gpio_button_data *bdata = data;
 
-	अगर (!bdata->gpiod)
-		hrसमयr_cancel(&bdata->release_समयr);
-	अगर (bdata->debounce_use_hrसमयr)
-		hrसमयr_cancel(&bdata->debounce_समयr);
-	अन्यथा
+	if (!bdata->gpiod)
+		hrtimer_cancel(&bdata->release_timer);
+	if (bdata->debounce_use_hrtimer)
+		hrtimer_cancel(&bdata->debounce_timer);
+	else
 		cancel_delayed_work_sync(&bdata->work);
-पूर्ण
+}
 
 /**
  * gpio_keys_disable_button() - disables given GPIO button
- * @bdata: button data क्रम button to be disabled
+ * @bdata: button data for button to be disabled
  *
- * Disables button poपूर्णांकed by @bdata. This is करोne by masking
+ * Disables button pointed by @bdata. This is done by masking
  * IRQ line. After this function is called, button won't generate
  * input events anymore. Note that one can only disable buttons
- * that करोn't share IRQs.
+ * that don't share IRQs.
  *
  * Make sure that @bdata->disable_lock is locked when entering
- * this function to aव्योम races when concurrent thपढ़ोs are
- * disabling buttons at the same समय.
+ * this function to avoid races when concurrent threads are
+ * disabling buttons at the same time.
  */
-अटल व्योम gpio_keys_disable_button(काष्ठा gpio_button_data *bdata)
-अणु
-	अगर (!bdata->disabled) अणु
+static void gpio_keys_disable_button(struct gpio_button_data *bdata)
+{
+	if (!bdata->disabled) {
 		/*
-		 * Disable IRQ and associated समयr/work काष्ठाure.
+		 * Disable IRQ and associated timer/work structure.
 		 */
 		disable_irq(bdata->irq);
 		gpio_keys_quiesce_key(bdata);
 		bdata->disabled = true;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * gpio_keys_enable_button() - enables given GPIO button
- * @bdata: button data क्रम button to be disabled
+ * @bdata: button data for button to be disabled
  *
- * Enables given button poपूर्णांकed by @bdata.
+ * Enables given button pointed by @bdata.
  *
  * Make sure that @bdata->disable_lock is locked when entering
- * this function to aव्योम races with concurrent thपढ़ोs trying
- * to enable the same button at the same समय.
+ * this function to avoid races with concurrent threads trying
+ * to enable the same button at the same time.
  */
-अटल व्योम gpio_keys_enable_button(काष्ठा gpio_button_data *bdata)
-अणु
-	अगर (bdata->disabled) अणु
+static void gpio_keys_enable_button(struct gpio_button_data *bdata)
+{
+	if (bdata->disabled) {
 		enable_irq(bdata->irq);
 		bdata->disabled = false;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * gpio_keys_attr_show_helper() - fill in stringअगरied biपंचांगap of buttons
- * @ddata: poपूर्णांकer to drvdata
- * @buf: buffer where stringअगरied biपंचांगap is written
+ * gpio_keys_attr_show_helper() - fill in stringified bitmap of buttons
+ * @ddata: pointer to drvdata
+ * @buf: buffer where stringified bitmap is written
  * @type: button type (%EV_KEY, %EV_SW)
- * @only_disabled: करोes caller want only those buttons that are
+ * @only_disabled: does caller want only those buttons that are
  *                 currently disabled or all buttons that can be
  *                 disabled
  *
- * This function ग_लिखोs buttons that can be disabled to @buf. If
+ * This function writes buttons that can be disabled to @buf. If
  * @only_disabled is true, then @buf contains only those buttons
  * that are currently disabled. Returns 0 on success or negative
- * त्रुटि_सं on failure.
+ * errno on failure.
  */
-अटल sमाप_प्रकार gpio_keys_attr_show_helper(काष्ठा gpio_keys_drvdata *ddata,
-					  अक्षर *buf, अचिन्हित पूर्णांक type,
+static ssize_t gpio_keys_attr_show_helper(struct gpio_keys_drvdata *ddata,
+					  char *buf, unsigned int type,
 					  bool only_disabled)
-अणु
-	पूर्णांक n_events = get_n_events_by_type(type);
-	अचिन्हित दीर्घ *bits;
-	sमाप_प्रकार ret;
-	पूर्णांक i;
+{
+	int n_events = get_n_events_by_type(type);
+	unsigned long *bits;
+	ssize_t ret;
+	int i;
 
-	bits = biपंचांगap_zalloc(n_events, GFP_KERNEL);
-	अगर (!bits)
-		वापस -ENOMEM;
+	bits = bitmap_zalloc(n_events, GFP_KERNEL);
+	if (!bits)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < ddata->pdata->nbuttons; i++) अणु
-		काष्ठा gpio_button_data *bdata = &ddata->data[i];
+	for (i = 0; i < ddata->pdata->nbuttons; i++) {
+		struct gpio_button_data *bdata = &ddata->data[i];
 
-		अगर (bdata->button->type != type)
-			जारी;
+		if (bdata->button->type != type)
+			continue;
 
-		अगर (only_disabled && !bdata->disabled)
-			जारी;
+		if (only_disabled && !bdata->disabled)
+			continue;
 
 		__set_bit(*bdata->code, bits);
-	पूर्ण
+	}
 
-	ret = scnम_लिखो(buf, PAGE_SIZE - 1, "%*pbl", n_events, bits);
+	ret = scnprintf(buf, PAGE_SIZE - 1, "%*pbl", n_events, bits);
 	buf[ret++] = '\n';
 	buf[ret] = '\0';
 
-	biपंचांगap_मुक्त(bits);
+	bitmap_free(bits);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * gpio_keys_attr_store_helper() - enable/disable buttons based on given biपंचांगap
- * @ddata: poपूर्णांकer to drvdata
- * @buf: buffer from userspace that contains stringअगरied biपंचांगap
+ * gpio_keys_attr_store_helper() - enable/disable buttons based on given bitmap
+ * @ddata: pointer to drvdata
+ * @buf: buffer from userspace that contains stringified bitmap
  * @type: button type (%EV_KEY, %EV_SW)
  *
- * This function parses stringअगरied biपंचांगap from @buf and disables/enables
+ * This function parses stringified bitmap from @buf and disables/enables
  * GPIO buttons accordingly. Returns 0 on success and negative error
  * on failure.
  */
-अटल sमाप_प्रकार gpio_keys_attr_store_helper(काष्ठा gpio_keys_drvdata *ddata,
-					   स्थिर अक्षर *buf, अचिन्हित पूर्णांक type)
-अणु
-	पूर्णांक n_events = get_n_events_by_type(type);
-	स्थिर अचिन्हित दीर्घ *biपंचांगap = get_bm_events_by_type(ddata->input, type);
-	अचिन्हित दीर्घ *bits;
-	sमाप_प्रकार error;
-	पूर्णांक i;
+static ssize_t gpio_keys_attr_store_helper(struct gpio_keys_drvdata *ddata,
+					   const char *buf, unsigned int type)
+{
+	int n_events = get_n_events_by_type(type);
+	const unsigned long *bitmap = get_bm_events_by_type(ddata->input, type);
+	unsigned long *bits;
+	ssize_t error;
+	int i;
 
-	bits = biपंचांगap_zalloc(n_events, GFP_KERNEL);
-	अगर (!bits)
-		वापस -ENOMEM;
+	bits = bitmap_zalloc(n_events, GFP_KERNEL);
+	if (!bits)
+		return -ENOMEM;
 
-	error = biपंचांगap_parselist(buf, bits, n_events);
-	अगर (error)
-		जाओ out;
+	error = bitmap_parselist(buf, bits, n_events);
+	if (error)
+		goto out;
 
 	/* First validate */
-	अगर (!biपंचांगap_subset(bits, biपंचांगap, n_events)) अणु
+	if (!bitmap_subset(bits, bitmap, n_events)) {
 		error = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	क्रम (i = 0; i < ddata->pdata->nbuttons; i++) अणु
-		काष्ठा gpio_button_data *bdata = &ddata->data[i];
+	for (i = 0; i < ddata->pdata->nbuttons; i++) {
+		struct gpio_button_data *bdata = &ddata->data[i];
 
-		अगर (bdata->button->type != type)
-			जारी;
+		if (bdata->button->type != type)
+			continue;
 
-		अगर (test_bit(*bdata->code, bits) &&
-		    !bdata->button->can_disable) अणु
+		if (test_bit(*bdata->code, bits) &&
+		    !bdata->button->can_disable) {
 			error = -EINVAL;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 	mutex_lock(&ddata->disable_lock);
 
-	क्रम (i = 0; i < ddata->pdata->nbuttons; i++) अणु
-		काष्ठा gpio_button_data *bdata = &ddata->data[i];
+	for (i = 0; i < ddata->pdata->nbuttons; i++) {
+		struct gpio_button_data *bdata = &ddata->data[i];
 
-		अगर (bdata->button->type != type)
-			जारी;
+		if (bdata->button->type != type)
+			continue;
 
-		अगर (test_bit(*bdata->code, bits))
+		if (test_bit(*bdata->code, bits))
 			gpio_keys_disable_button(bdata);
-		अन्यथा
+		else
 			gpio_keys_enable_button(bdata);
-	पूर्ण
+	}
 
 	mutex_unlock(&ddata->disable_lock);
 
 out:
-	biपंचांगap_मुक्त(bits);
-	वापस error;
-पूर्ण
+	bitmap_free(bits);
+	return error;
+}
 
-#घोषणा ATTR_SHOW_FN(name, type, only_disabled)				\
-अटल sमाप_प्रकार gpio_keys_show_##name(काष्ठा device *dev,		\
-				     काष्ठा device_attribute *attr,	\
-				     अक्षर *buf)				\
-अणु									\
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);		\
-	काष्ठा gpio_keys_drvdata *ddata = platक्रमm_get_drvdata(pdev);	\
+#define ATTR_SHOW_FN(name, type, only_disabled)				\
+static ssize_t gpio_keys_show_##name(struct device *dev,		\
+				     struct device_attribute *attr,	\
+				     char *buf)				\
+{									\
+	struct platform_device *pdev = to_platform_device(dev);		\
+	struct gpio_keys_drvdata *ddata = platform_get_drvdata(pdev);	\
 									\
-	वापस gpio_keys_attr_show_helper(ddata, buf,			\
+	return gpio_keys_attr_show_helper(ddata, buf,			\
 					  type, only_disabled);		\
-पूर्ण
+}
 
 ATTR_SHOW_FN(keys, EV_KEY, false);
-ATTR_SHOW_FN(चयनes, EV_SW, false);
+ATTR_SHOW_FN(switches, EV_SW, false);
 ATTR_SHOW_FN(disabled_keys, EV_KEY, true);
-ATTR_SHOW_FN(disabled_चयनes, EV_SW, true);
+ATTR_SHOW_FN(disabled_switches, EV_SW, true);
 
 /*
  * ATTRIBUTES:
  *
- * /sys/devices/platक्रमm/gpio-keys/keys [ro]
- * /sys/devices/platक्रमm/gpio-keys/चयनes [ro]
+ * /sys/devices/platform/gpio-keys/keys [ro]
+ * /sys/devices/platform/gpio-keys/switches [ro]
  */
-अटल DEVICE_ATTR(keys, S_IRUGO, gpio_keys_show_keys, शून्य);
-अटल DEVICE_ATTR(चयनes, S_IRUGO, gpio_keys_show_चयनes, शून्य);
+static DEVICE_ATTR(keys, S_IRUGO, gpio_keys_show_keys, NULL);
+static DEVICE_ATTR(switches, S_IRUGO, gpio_keys_show_switches, NULL);
 
-#घोषणा ATTR_STORE_FN(name, type)					\
-अटल sमाप_प्रकार gpio_keys_store_##name(काष्ठा device *dev,		\
-				      काष्ठा device_attribute *attr,	\
-				      स्थिर अक्षर *buf,			\
-				      माप_प्रकार count)			\
-अणु									\
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);		\
-	काष्ठा gpio_keys_drvdata *ddata = platक्रमm_get_drvdata(pdev);	\
-	sमाप_प्रकार error;							\
+#define ATTR_STORE_FN(name, type)					\
+static ssize_t gpio_keys_store_##name(struct device *dev,		\
+				      struct device_attribute *attr,	\
+				      const char *buf,			\
+				      size_t count)			\
+{									\
+	struct platform_device *pdev = to_platform_device(dev);		\
+	struct gpio_keys_drvdata *ddata = platform_get_drvdata(pdev);	\
+	ssize_t error;							\
 									\
 	error = gpio_keys_attr_store_helper(ddata, buf, type);		\
-	अगर (error)							\
-		वापस error;						\
+	if (error)							\
+		return error;						\
 									\
-	वापस count;							\
-पूर्ण
+	return count;							\
+}
 
 ATTR_STORE_FN(disabled_keys, EV_KEY);
-ATTR_STORE_FN(disabled_चयनes, EV_SW);
+ATTR_STORE_FN(disabled_switches, EV_SW);
 
 /*
  * ATTRIBUTES:
  *
- * /sys/devices/platक्रमm/gpio-keys/disabled_keys [rw]
- * /sys/devices/platक्रमm/gpio-keys/disables_चयनes [rw]
+ * /sys/devices/platform/gpio-keys/disabled_keys [rw]
+ * /sys/devices/platform/gpio-keys/disables_switches [rw]
  */
-अटल DEVICE_ATTR(disabled_keys, S_IWUSR | S_IRUGO,
+static DEVICE_ATTR(disabled_keys, S_IWUSR | S_IRUGO,
 		   gpio_keys_show_disabled_keys,
 		   gpio_keys_store_disabled_keys);
-अटल DEVICE_ATTR(disabled_चयनes, S_IWUSR | S_IRUGO,
-		   gpio_keys_show_disabled_चयनes,
-		   gpio_keys_store_disabled_चयनes);
+static DEVICE_ATTR(disabled_switches, S_IWUSR | S_IRUGO,
+		   gpio_keys_show_disabled_switches,
+		   gpio_keys_store_disabled_switches);
 
-अटल काष्ठा attribute *gpio_keys_attrs[] = अणु
+static struct attribute *gpio_keys_attrs[] = {
 	&dev_attr_keys.attr,
-	&dev_attr_चयनes.attr,
+	&dev_attr_switches.attr,
 	&dev_attr_disabled_keys.attr,
-	&dev_attr_disabled_चयनes.attr,
-	शून्य,
-पूर्ण;
+	&dev_attr_disabled_switches.attr,
+	NULL,
+};
 ATTRIBUTE_GROUPS(gpio_keys);
 
-अटल व्योम gpio_keys_gpio_report_event(काष्ठा gpio_button_data *bdata)
-अणु
-	स्थिर काष्ठा gpio_keys_button *button = bdata->button;
-	काष्ठा input_dev *input = bdata->input;
-	अचिन्हित पूर्णांक type = button->type ?: EV_KEY;
-	पूर्णांक state;
+static void gpio_keys_gpio_report_event(struct gpio_button_data *bdata)
+{
+	const struct gpio_keys_button *button = bdata->button;
+	struct input_dev *input = bdata->input;
+	unsigned int type = button->type ?: EV_KEY;
+	int state;
 
-	state = bdata->debounce_use_hrसमयr ?
+	state = bdata->debounce_use_hrtimer ?
 			gpiod_get_value(bdata->gpiod) :
 			gpiod_get_value_cansleep(bdata->gpiod);
-	अगर (state < 0) अणु
+	if (state < 0) {
 		dev_err(input->dev.parent,
 			"failed to get gpio state: %d\n", state);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (type == EV_ABS) अणु
-		अगर (state)
+	if (type == EV_ABS) {
+		if (state)
 			input_event(input, type, button->code, button->value);
-	पूर्ण अन्यथा अणु
+	} else {
 		input_event(input, type, *bdata->code, state);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम gpio_keys_debounce_event(काष्ठा gpio_button_data *bdata)
-अणु
+static void gpio_keys_debounce_event(struct gpio_button_data *bdata)
+{
 	gpio_keys_gpio_report_event(bdata);
 	input_sync(bdata->input);
 
-	अगर (bdata->button->wakeup)
+	if (bdata->button->wakeup)
 		pm_relax(bdata->input->dev.parent);
-पूर्ण
+}
 
-अटल व्योम gpio_keys_gpio_work_func(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा gpio_button_data *bdata =
-		container_of(work, काष्ठा gpio_button_data, work.work);
-
-	gpio_keys_debounce_event(bdata);
-पूर्ण
-
-अटल क्रमागत hrसमयr_restart gpio_keys_debounce_समयr(काष्ठा hrसमयr *t)
-अणु
-	काष्ठा gpio_button_data *bdata =
-		container_of(t, काष्ठा gpio_button_data, debounce_समयr);
+static void gpio_keys_gpio_work_func(struct work_struct *work)
+{
+	struct gpio_button_data *bdata =
+		container_of(work, struct gpio_button_data, work.work);
 
 	gpio_keys_debounce_event(bdata);
+}
 
-	वापस HRTIMER_NORESTART;
-पूर्ण
+static enum hrtimer_restart gpio_keys_debounce_timer(struct hrtimer *t)
+{
+	struct gpio_button_data *bdata =
+		container_of(t, struct gpio_button_data, debounce_timer);
 
-अटल irqवापस_t gpio_keys_gpio_isr(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा gpio_button_data *bdata = dev_id;
+	gpio_keys_debounce_event(bdata);
+
+	return HRTIMER_NORESTART;
+}
+
+static irqreturn_t gpio_keys_gpio_isr(int irq, void *dev_id)
+{
+	struct gpio_button_data *bdata = dev_id;
 
 	BUG_ON(irq != bdata->irq);
 
-	अगर (bdata->button->wakeup) अणु
-		स्थिर काष्ठा gpio_keys_button *button = bdata->button;
+	if (bdata->button->wakeup) {
+		const struct gpio_keys_button *button = bdata->button;
 
 		pm_stay_awake(bdata->input->dev.parent);
-		अगर (bdata->suspended  &&
-		    (button->type == 0 || button->type == EV_KEY)) अणु
+		if (bdata->suspended  &&
+		    (button->type == 0 || button->type == EV_KEY)) {
 			/*
-			 * Simulate wakeup key press in हाल the key has
-			 * alपढ़ोy released by the समय we got पूर्णांकerrupt
+			 * Simulate wakeup key press in case the key has
+			 * already released by the time we got interrupt
 			 * handler to run.
 			 */
 			input_report_key(bdata->input, button->code, 1);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (bdata->debounce_use_hrसमयr) अणु
-		hrसमयr_start(&bdata->debounce_समयr,
-			      ms_to_kसमय(bdata->software_debounce),
+	if (bdata->debounce_use_hrtimer) {
+		hrtimer_start(&bdata->debounce_timer,
+			      ms_to_ktime(bdata->software_debounce),
 			      HRTIMER_MODE_REL);
-	पूर्ण अन्यथा अणु
-		mod_delayed_work(प्रणाली_wq,
+	} else {
+		mod_delayed_work(system_wq,
 				 &bdata->work,
-				 msecs_to_jअगरfies(bdata->software_debounce));
-	पूर्ण
+				 msecs_to_jiffies(bdata->software_debounce));
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल क्रमागत hrसमयr_restart gpio_keys_irq_समयr(काष्ठा hrसमयr *t)
-अणु
-	काष्ठा gpio_button_data *bdata = container_of(t,
-						      काष्ठा gpio_button_data,
-						      release_समयr);
-	काष्ठा input_dev *input = bdata->input;
+static enum hrtimer_restart gpio_keys_irq_timer(struct hrtimer *t)
+{
+	struct gpio_button_data *bdata = container_of(t,
+						      struct gpio_button_data,
+						      release_timer);
+	struct input_dev *input = bdata->input;
 
-	अगर (bdata->key_pressed) अणु
+	if (bdata->key_pressed) {
 		input_event(input, EV_KEY, *bdata->code, 0);
 		input_sync(input);
 		bdata->key_pressed = false;
-	पूर्ण
+	}
 
-	वापस HRTIMER_NORESTART;
-पूर्ण
+	return HRTIMER_NORESTART;
+}
 
-अटल irqवापस_t gpio_keys_irq_isr(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा gpio_button_data *bdata = dev_id;
-	काष्ठा input_dev *input = bdata->input;
-	अचिन्हित दीर्घ flags;
+static irqreturn_t gpio_keys_irq_isr(int irq, void *dev_id)
+{
+	struct gpio_button_data *bdata = dev_id;
+	struct input_dev *input = bdata->input;
+	unsigned long flags;
 
 	BUG_ON(irq != bdata->irq);
 
 	spin_lock_irqsave(&bdata->lock, flags);
 
-	अगर (!bdata->key_pressed) अणु
-		अगर (bdata->button->wakeup)
+	if (!bdata->key_pressed) {
+		if (bdata->button->wakeup)
 			pm_wakeup_event(bdata->input->dev.parent, 0);
 
 		input_event(input, EV_KEY, *bdata->code, 1);
 		input_sync(input);
 
-		अगर (!bdata->release_delay) अणु
+		if (!bdata->release_delay) {
 			input_event(input, EV_KEY, *bdata->code, 0);
 			input_sync(input);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		bdata->key_pressed = true;
-	पूर्ण
+	}
 
-	अगर (bdata->release_delay)
-		hrसमयr_start(&bdata->release_समयr,
-			      ms_to_kसमय(bdata->release_delay),
+	if (bdata->release_delay)
+		hrtimer_start(&bdata->release_timer,
+			      ms_to_ktime(bdata->release_delay),
 			      HRTIMER_MODE_REL_HARD);
 out:
 	spin_unlock_irqrestore(&bdata->lock, flags);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक gpio_keys_setup_key(काष्ठा platक्रमm_device *pdev,
-				काष्ठा input_dev *input,
-				काष्ठा gpio_keys_drvdata *ddata,
-				स्थिर काष्ठा gpio_keys_button *button,
-				पूर्णांक idx,
-				काष्ठा fwnode_handle *child)
-अणु
-	स्थिर अक्षर *desc = button->desc ? button->desc : "gpio_keys";
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा gpio_button_data *bdata = &ddata->data[idx];
+static int gpio_keys_setup_key(struct platform_device *pdev,
+				struct input_dev *input,
+				struct gpio_keys_drvdata *ddata,
+				const struct gpio_keys_button *button,
+				int idx,
+				struct fwnode_handle *child)
+{
+	const char *desc = button->desc ? button->desc : "gpio_keys";
+	struct device *dev = &pdev->dev;
+	struct gpio_button_data *bdata = &ddata->data[idx];
 	irq_handler_t isr;
-	अचिन्हित दीर्घ irqflags;
-	पूर्णांक irq;
-	पूर्णांक error;
+	unsigned long irqflags;
+	int irq;
+	int error;
 
 	bdata->input = input;
 	bdata->button = button;
 	spin_lock_init(&bdata->lock);
 
-	अगर (child) अणु
+	if (child) {
 		bdata->gpiod = devm_fwnode_gpiod_get(dev, child,
-						     शून्य, GPIOD_IN, desc);
-		अगर (IS_ERR(bdata->gpiod)) अणु
+						     NULL, GPIOD_IN, desc);
+		if (IS_ERR(bdata->gpiod)) {
 			error = PTR_ERR(bdata->gpiod);
-			अगर (error == -ENOENT) अणु
+			if (error == -ENOENT) {
 				/*
 				 * GPIO is optional, we may be dealing with
-				 * purely पूर्णांकerrupt-driven setup.
+				 * purely interrupt-driven setup.
 				 */
-				bdata->gpiod = शून्य;
-			पूर्ण अन्यथा अणु
-				अगर (error != -EPROBE_DEFER)
+				bdata->gpiod = NULL;
+			} else {
+				if (error != -EPROBE_DEFER)
 					dev_err(dev, "failed to get gpio: %d\n",
 						error);
-				वापस error;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अगर (gpio_is_valid(button->gpio)) अणु
+				return error;
+			}
+		}
+	} else if (gpio_is_valid(button->gpio)) {
 		/*
 		 * Legacy GPIO number, so request the GPIO here and
 		 * convert it to descriptor.
 		 */
-		अचिन्हित flags = GPIOF_IN;
+		unsigned flags = GPIOF_IN;
 
-		अगर (button->active_low)
+		if (button->active_low)
 			flags |= GPIOF_ACTIVE_LOW;
 
 		error = devm_gpio_request_one(dev, button->gpio, flags, desc);
-		अगर (error < 0) अणु
+		if (error < 0) {
 			dev_err(dev, "Failed to request GPIO %d, error %d\n",
 				button->gpio, error);
-			वापस error;
-		पूर्ण
+			return error;
+		}
 
 		bdata->gpiod = gpio_to_desc(button->gpio);
-		अगर (!bdata->gpiod)
-			वापस -EINVAL;
-	पूर्ण
+		if (!bdata->gpiod)
+			return -EINVAL;
+	}
 
-	अगर (bdata->gpiod) अणु
+	if (bdata->gpiod) {
 		bool active_low = gpiod_is_active_low(bdata->gpiod);
 
-		अगर (button->debounce_पूर्णांकerval) अणु
+		if (button->debounce_interval) {
 			error = gpiod_set_debounce(bdata->gpiod,
-					button->debounce_पूर्णांकerval * 1000);
-			/* use समयr अगर gpiolib करोesn't provide debounce */
-			अगर (error < 0)
+					button->debounce_interval * 1000);
+			/* use timer if gpiolib doesn't provide debounce */
+			if (error < 0)
 				bdata->software_debounce =
-						button->debounce_पूर्णांकerval;
+						button->debounce_interval;
 
 			/*
-			 * If पढ़ोing the GPIO won't sleep, we can use a
-			 * hrसमयr instead of a standard समयr क्रम the software
+			 * If reading the GPIO won't sleep, we can use a
+			 * hrtimer instead of a standard timer for the software
 			 * debounce, to reduce the latency as much as possible.
 			 */
-			bdata->debounce_use_hrसमयr =
+			bdata->debounce_use_hrtimer =
 					!gpiod_cansleep(bdata->gpiod);
-		पूर्ण
+		}
 
-		अगर (button->irq) अणु
+		if (button->irq) {
 			bdata->irq = button->irq;
-		पूर्ण अन्यथा अणु
+		} else {
 			irq = gpiod_to_irq(bdata->gpiod);
-			अगर (irq < 0) अणु
+			if (irq < 0) {
 				error = irq;
 				dev_err(dev,
 					"Unable to get irq number for GPIO %d, error %d\n",
 					button->gpio, error);
-				वापस error;
-			पूर्ण
+				return error;
+			}
 			bdata->irq = irq;
-		पूर्ण
+		}
 
 		INIT_DELAYED_WORK(&bdata->work, gpio_keys_gpio_work_func);
 
-		hrसमयr_init(&bdata->debounce_समयr,
+		hrtimer_init(&bdata->debounce_timer,
 			     CLOCK_REALTIME, HRTIMER_MODE_REL);
-		bdata->debounce_समयr.function = gpio_keys_debounce_समयr;
+		bdata->debounce_timer.function = gpio_keys_debounce_timer;
 
 		isr = gpio_keys_gpio_isr;
 		irqflags = IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING;
 
-		चयन (button->wakeup_event_action) अणु
-		हाल EV_ACT_ASSERTED:
+		switch (button->wakeup_event_action) {
+		case EV_ACT_ASSERTED:
 			bdata->wakeup_trigger_type = active_low ?
 				IRQ_TYPE_EDGE_FALLING : IRQ_TYPE_EDGE_RISING;
-			अवरोध;
-		हाल EV_ACT_DEASSERTED:
+			break;
+		case EV_ACT_DEASSERTED:
 			bdata->wakeup_trigger_type = active_low ?
 				IRQ_TYPE_EDGE_RISING : IRQ_TYPE_EDGE_FALLING;
-			अवरोध;
-		हाल EV_ACT_ANY:
-		शेष:
+			break;
+		case EV_ACT_ANY:
+		default:
 			/*
-			 * For other हालs, we are OK letting suspend/resume
+			 * For other cases, we are OK letting suspend/resume
 			 * not reconfigure the trigger type.
 			 */
-			अवरोध;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (!button->irq) अणु
+			break;
+		}
+	} else {
+		if (!button->irq) {
 			dev_err(dev, "Found button without gpio or irq\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		bdata->irq = button->irq;
 
-		अगर (button->type && button->type != EV_KEY) अणु
+		if (button->type && button->type != EV_KEY) {
 			dev_err(dev, "Only EV_KEY allowed for IRQ buttons.\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		bdata->release_delay = button->debounce_पूर्णांकerval;
-		hrसमयr_init(&bdata->release_समयr,
+		bdata->release_delay = button->debounce_interval;
+		hrtimer_init(&bdata->release_timer,
 			     CLOCK_REALTIME, HRTIMER_MODE_REL_HARD);
-		bdata->release_समयr.function = gpio_keys_irq_समयr;
+		bdata->release_timer.function = gpio_keys_irq_timer;
 
 		isr = gpio_keys_irq_isr;
 		irqflags = 0;
 
 		/*
-		 * For IRQ buttons, there is no पूर्णांकerrupt क्रम release.
-		 * So we करोn't need to reconfigure the trigger type क्रम wakeup.
+		 * For IRQ buttons, there is no interrupt for release.
+		 * So we don't need to reconfigure the trigger type for wakeup.
 		 */
-	पूर्ण
+	}
 
 	bdata->code = &ddata->keymap[idx];
 	*bdata->code = button->code;
 	input_set_capability(input, button->type ?: EV_KEY, *bdata->code);
 
 	/*
-	 * Install custom action to cancel release समयr and
+	 * Install custom action to cancel release timer and
 	 * workqueue item.
 	 */
 	error = devm_add_action(dev, gpio_keys_quiesce_key, bdata);
-	अगर (error) अणु
+	if (error) {
 		dev_err(dev, "failed to register quiesce action, error: %d\n",
 			error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
 	/*
-	 * If platक्रमm has specअगरied that the button can be disabled,
-	 * we करोn't want it to share the पूर्णांकerrupt line.
+	 * If platform has specified that the button can be disabled,
+	 * we don't want it to share the interrupt line.
 	 */
-	अगर (!button->can_disable)
+	if (!button->can_disable)
 		irqflags |= IRQF_SHARED;
 
 	error = devm_request_any_context_irq(dev, bdata->irq, isr, irqflags,
 					     desc, bdata);
-	अगर (error < 0) अणु
+	if (error < 0) {
 		dev_err(dev, "Unable to claim irq %d; error %d\n",
 			bdata->irq, error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम gpio_keys_report_state(काष्ठा gpio_keys_drvdata *ddata)
-अणु
-	काष्ठा input_dev *input = ddata->input;
-	पूर्णांक i;
+static void gpio_keys_report_state(struct gpio_keys_drvdata *ddata)
+{
+	struct input_dev *input = ddata->input;
+	int i;
 
-	क्रम (i = 0; i < ddata->pdata->nbuttons; i++) अणु
-		काष्ठा gpio_button_data *bdata = &ddata->data[i];
-		अगर (bdata->gpiod)
+	for (i = 0; i < ddata->pdata->nbuttons; i++) {
+		struct gpio_button_data *bdata = &ddata->data[i];
+		if (bdata->gpiod)
 			gpio_keys_gpio_report_event(bdata);
-	पूर्ण
+	}
 	input_sync(input);
-पूर्ण
+}
 
-अटल पूर्णांक gpio_keys_खोलो(काष्ठा input_dev *input)
-अणु
-	काष्ठा gpio_keys_drvdata *ddata = input_get_drvdata(input);
-	स्थिर काष्ठा gpio_keys_platक्रमm_data *pdata = ddata->pdata;
-	पूर्णांक error;
+static int gpio_keys_open(struct input_dev *input)
+{
+	struct gpio_keys_drvdata *ddata = input_get_drvdata(input);
+	const struct gpio_keys_platform_data *pdata = ddata->pdata;
+	int error;
 
-	अगर (pdata->enable) अणु
+	if (pdata->enable) {
 		error = pdata->enable(input->dev.parent);
-		अगर (error)
-			वापस error;
-	पूर्ण
+		if (error)
+			return error;
+	}
 
 	/* Report current state of buttons that are connected to GPIOs */
 	gpio_keys_report_state(ddata);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम gpio_keys_बंद(काष्ठा input_dev *input)
-अणु
-	काष्ठा gpio_keys_drvdata *ddata = input_get_drvdata(input);
-	स्थिर काष्ठा gpio_keys_platक्रमm_data *pdata = ddata->pdata;
+static void gpio_keys_close(struct input_dev *input)
+{
+	struct gpio_keys_drvdata *ddata = input_get_drvdata(input);
+	const struct gpio_keys_platform_data *pdata = ddata->pdata;
 
-	अगर (pdata->disable)
+	if (pdata->disable)
 		pdata->disable(input->dev.parent);
-पूर्ण
+}
 
 /*
- * Handlers क्रम alternative sources of platक्रमm_data
+ * Handlers for alternative sources of platform_data
  */
 
 /*
- * Translate properties पूर्णांकo platक्रमm_data
+ * Translate properties into platform_data
  */
-अटल काष्ठा gpio_keys_platक्रमm_data *
-gpio_keys_get_devtree_pdata(काष्ठा device *dev)
-अणु
-	काष्ठा gpio_keys_platक्रमm_data *pdata;
-	काष्ठा gpio_keys_button *button;
-	काष्ठा fwnode_handle *child;
-	पूर्णांक nbuttons;
+static struct gpio_keys_platform_data *
+gpio_keys_get_devtree_pdata(struct device *dev)
+{
+	struct gpio_keys_platform_data *pdata;
+	struct gpio_keys_button *button;
+	struct fwnode_handle *child;
+	int nbuttons;
 
 	nbuttons = device_get_child_node_count(dev);
-	अगर (nbuttons == 0)
-		वापस ERR_PTR(-ENODEV);
+	if (nbuttons == 0)
+		return ERR_PTR(-ENODEV);
 
 	pdata = devm_kzalloc(dev,
-			     माप(*pdata) + nbuttons * माप(*button),
+			     sizeof(*pdata) + nbuttons * sizeof(*button),
 			     GFP_KERNEL);
-	अगर (!pdata)
-		वापस ERR_PTR(-ENOMEM);
+	if (!pdata)
+		return ERR_PTR(-ENOMEM);
 
-	button = (काष्ठा gpio_keys_button *)(pdata + 1);
+	button = (struct gpio_keys_button *)(pdata + 1);
 
 	pdata->buttons = button;
 	pdata->nbuttons = nbuttons;
 
-	pdata->rep = device_property_पढ़ो_bool(dev, "autorepeat");
+	pdata->rep = device_property_read_bool(dev, "autorepeat");
 
-	device_property_पढ़ो_string(dev, "label", &pdata->name);
+	device_property_read_string(dev, "label", &pdata->name);
 
-	device_क्रम_each_child_node(dev, child) अणु
-		अगर (is_of_node(child))
+	device_for_each_child_node(dev, child) {
+		if (is_of_node(child))
 			button->irq =
 				irq_of_parse_and_map(to_of_node(child), 0);
 
-		अगर (fwnode_property_पढ़ो_u32(child, "linux,code",
-					     &button->code)) अणु
+		if (fwnode_property_read_u32(child, "linux,code",
+					     &button->code)) {
 			dev_err(dev, "Button without keycode\n");
 			fwnode_handle_put(child);
-			वापस ERR_PTR(-EINVAL);
-		पूर्ण
+			return ERR_PTR(-EINVAL);
+		}
 
-		fwnode_property_पढ़ो_string(child, "label", &button->desc);
+		fwnode_property_read_string(child, "label", &button->desc);
 
-		अगर (fwnode_property_पढ़ो_u32(child, "linux,input-type",
+		if (fwnode_property_read_u32(child, "linux,input-type",
 					     &button->type))
 			button->type = EV_KEY;
 
 		button->wakeup =
-			fwnode_property_पढ़ो_bool(child, "wakeup-source") ||
+			fwnode_property_read_bool(child, "wakeup-source") ||
 			/* legacy name */
-			fwnode_property_पढ़ो_bool(child, "gpio-key,wakeup");
+			fwnode_property_read_bool(child, "gpio-key,wakeup");
 
-		fwnode_property_पढ़ो_u32(child, "wakeup-event-action",
+		fwnode_property_read_u32(child, "wakeup-event-action",
 					 &button->wakeup_event_action);
 
 		button->can_disable =
-			fwnode_property_पढ़ो_bool(child, "linux,can-disable");
+			fwnode_property_read_bool(child, "linux,can-disable");
 
-		अगर (fwnode_property_पढ़ो_u32(child, "debounce-interval",
-					 &button->debounce_पूर्णांकerval))
-			button->debounce_पूर्णांकerval = 5;
+		if (fwnode_property_read_u32(child, "debounce-interval",
+					 &button->debounce_interval))
+			button->debounce_interval = 5;
 
 		button++;
-	पूर्ण
+	}
 
-	वापस pdata;
-पूर्ण
+	return pdata;
+}
 
-अटल स्थिर काष्ठा of_device_id gpio_keys_of_match[] = अणु
-	अणु .compatible = "gpio-keys", पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct of_device_id gpio_keys_of_match[] = {
+	{ .compatible = "gpio-keys", },
+	{ },
+};
 MODULE_DEVICE_TABLE(of, gpio_keys_of_match);
 
-अटल पूर्णांक gpio_keys_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	स्थिर काष्ठा gpio_keys_platक्रमm_data *pdata = dev_get_platdata(dev);
-	काष्ठा fwnode_handle *child = शून्य;
-	काष्ठा gpio_keys_drvdata *ddata;
-	काष्ठा input_dev *input;
-	पूर्णांक i, error;
-	पूर्णांक wakeup = 0;
+static int gpio_keys_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	const struct gpio_keys_platform_data *pdata = dev_get_platdata(dev);
+	struct fwnode_handle *child = NULL;
+	struct gpio_keys_drvdata *ddata;
+	struct input_dev *input;
+	int i, error;
+	int wakeup = 0;
 
-	अगर (!pdata) अणु
+	if (!pdata) {
 		pdata = gpio_keys_get_devtree_pdata(dev);
-		अगर (IS_ERR(pdata))
-			वापस PTR_ERR(pdata);
-	पूर्ण
+		if (IS_ERR(pdata))
+			return PTR_ERR(pdata);
+	}
 
-	ddata = devm_kzalloc(dev, काष्ठा_size(ddata, data, pdata->nbuttons),
+	ddata = devm_kzalloc(dev, struct_size(ddata, data, pdata->nbuttons),
 			     GFP_KERNEL);
-	अगर (!ddata) अणु
+	if (!ddata) {
 		dev_err(dev, "failed to allocate state\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	ddata->keymap = devm_kसुस्मृति(dev,
-				     pdata->nbuttons, माप(ddata->keymap[0]),
+	ddata->keymap = devm_kcalloc(dev,
+				     pdata->nbuttons, sizeof(ddata->keymap[0]),
 				     GFP_KERNEL);
-	अगर (!ddata->keymap)
-		वापस -ENOMEM;
+	if (!ddata->keymap)
+		return -ENOMEM;
 
 	input = devm_input_allocate_device(dev);
-	अगर (!input) अणु
+	if (!input) {
 		dev_err(dev, "failed to allocate input device\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	ddata->pdata = pdata;
 	ddata->input = input;
 	mutex_init(&ddata->disable_lock);
 
-	platक्रमm_set_drvdata(pdev, ddata);
+	platform_set_drvdata(pdev, ddata);
 	input_set_drvdata(input, ddata);
 
 	input->name = pdata->name ? : pdev->name;
 	input->phys = "gpio-keys/input0";
 	input->dev.parent = dev;
-	input->खोलो = gpio_keys_खोलो;
-	input->बंद = gpio_keys_बंद;
+	input->open = gpio_keys_open;
+	input->close = gpio_keys_close;
 
 	input->id.bustype = BUS_HOST;
-	input->id.venकरोr = 0x0001;
+	input->id.vendor = 0x0001;
 	input->id.product = 0x0001;
 	input->id.version = 0x0100;
 
 	input->keycode = ddata->keymap;
-	input->keycodesize = माप(ddata->keymap[0]);
+	input->keycodesize = sizeof(ddata->keymap[0]);
 	input->keycodemax = pdata->nbuttons;
 
-	/* Enable स्वतः repeat feature of Linux input subप्रणाली */
-	अगर (pdata->rep)
+	/* Enable auto repeat feature of Linux input subsystem */
+	if (pdata->rep)
 		__set_bit(EV_REP, input->evbit);
 
-	क्रम (i = 0; i < pdata->nbuttons; i++) अणु
-		स्थिर काष्ठा gpio_keys_button *button = &pdata->buttons[i];
+	for (i = 0; i < pdata->nbuttons; i++) {
+		const struct gpio_keys_button *button = &pdata->buttons[i];
 
-		अगर (!dev_get_platdata(dev)) अणु
+		if (!dev_get_platdata(dev)) {
 			child = device_get_next_child_node(dev, child);
-			अगर (!child) अणु
+			if (!child) {
 				dev_err(dev,
 					"missing child device node for entry %d\n",
 					i);
-				वापस -EINVAL;
-			पूर्ण
-		पूर्ण
+				return -EINVAL;
+			}
+		}
 
 		error = gpio_keys_setup_key(pdev, input, ddata,
 					    button, i, child);
-		अगर (error) अणु
+		if (error) {
 			fwnode_handle_put(child);
-			वापस error;
-		पूर्ण
+			return error;
+		}
 
-		अगर (button->wakeup)
+		if (button->wakeup)
 			wakeup = 1;
-	पूर्ण
+	}
 
 	fwnode_handle_put(child);
 
-	error = input_रेजिस्टर_device(input);
-	अगर (error) अणु
+	error = input_register_device(input);
+	if (error) {
 		dev_err(dev, "Unable to register input device, error: %d\n",
 			error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
 	device_init_wakeup(dev, wakeup);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused
-gpio_keys_button_enable_wakeup(काष्ठा gpio_button_data *bdata)
-अणु
-	पूर्णांक error;
+static int __maybe_unused
+gpio_keys_button_enable_wakeup(struct gpio_button_data *bdata)
+{
+	int error;
 
 	error = enable_irq_wake(bdata->irq);
-	अगर (error) अणु
+	if (error) {
 		dev_err(bdata->input->dev.parent,
 			"failed to configure IRQ %d as wakeup source: %d\n",
 			bdata->irq, error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	अगर (bdata->wakeup_trigger_type) अणु
+	if (bdata->wakeup_trigger_type) {
 		error = irq_set_irq_type(bdata->irq,
 					 bdata->wakeup_trigger_type);
-		अगर (error) अणु
+		if (error) {
 			dev_err(bdata->input->dev.parent,
 				"failed to set wakeup trigger %08x for IRQ %d: %d\n",
 				bdata->wakeup_trigger_type, bdata->irq, error);
 			disable_irq_wake(bdata->irq);
-			वापस error;
-		पूर्ण
-	पूर्ण
+			return error;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __maybe_unused
-gpio_keys_button_disable_wakeup(काष्ठा gpio_button_data *bdata)
-अणु
-	पूर्णांक error;
+static void __maybe_unused
+gpio_keys_button_disable_wakeup(struct gpio_button_data *bdata)
+{
+	int error;
 
 	/*
-	 * The trigger type is always both edges क्रम gpio-based keys and we करो
-	 * not support changing wakeup trigger क्रम पूर्णांकerrupt-based keys.
+	 * The trigger type is always both edges for gpio-based keys and we do
+	 * not support changing wakeup trigger for interrupt-based keys.
 	 */
-	अगर (bdata->wakeup_trigger_type) अणु
+	if (bdata->wakeup_trigger_type) {
 		error = irq_set_irq_type(bdata->irq, IRQ_TYPE_EDGE_BOTH);
-		अगर (error)
+		if (error)
 			dev_warn(bdata->input->dev.parent,
 				 "failed to restore interrupt trigger for IRQ %d: %d\n",
 				 bdata->irq, error);
-	पूर्ण
+	}
 
 	error = disable_irq_wake(bdata->irq);
-	अगर (error)
+	if (error)
 		dev_warn(bdata->input->dev.parent,
 			 "failed to disable IRQ %d as wake source: %d\n",
 			 bdata->irq, error);
-पूर्ण
+}
 
-अटल पूर्णांक __maybe_unused
-gpio_keys_enable_wakeup(काष्ठा gpio_keys_drvdata *ddata)
-अणु
-	काष्ठा gpio_button_data *bdata;
-	पूर्णांक error;
-	पूर्णांक i;
+static int __maybe_unused
+gpio_keys_enable_wakeup(struct gpio_keys_drvdata *ddata)
+{
+	struct gpio_button_data *bdata;
+	int error;
+	int i;
 
-	क्रम (i = 0; i < ddata->pdata->nbuttons; i++) अणु
+	for (i = 0; i < ddata->pdata->nbuttons; i++) {
 		bdata = &ddata->data[i];
-		अगर (bdata->button->wakeup) अणु
+		if (bdata->button->wakeup) {
 			error = gpio_keys_button_enable_wakeup(bdata);
-			अगर (error)
-				जाओ err_out;
-		पूर्ण
+			if (error)
+				goto err_out;
+		}
 		bdata->suspended = true;
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 err_out:
-	जबतक (i--) अणु
+	while (i--) {
 		bdata = &ddata->data[i];
-		अगर (bdata->button->wakeup)
+		if (bdata->button->wakeup)
 			gpio_keys_button_disable_wakeup(bdata);
 		bdata->suspended = false;
-	पूर्ण
+	}
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल व्योम __maybe_unused
-gpio_keys_disable_wakeup(काष्ठा gpio_keys_drvdata *ddata)
-अणु
-	काष्ठा gpio_button_data *bdata;
-	पूर्णांक i;
+static void __maybe_unused
+gpio_keys_disable_wakeup(struct gpio_keys_drvdata *ddata)
+{
+	struct gpio_button_data *bdata;
+	int i;
 
-	क्रम (i = 0; i < ddata->pdata->nbuttons; i++) अणु
+	for (i = 0; i < ddata->pdata->nbuttons; i++) {
 		bdata = &ddata->data[i];
 		bdata->suspended = false;
-		अगर (irqd_is_wakeup_set(irq_get_irq_data(bdata->irq)))
+		if (irqd_is_wakeup_set(irq_get_irq_data(bdata->irq)))
 			gpio_keys_button_disable_wakeup(bdata);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक __maybe_unused gpio_keys_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा gpio_keys_drvdata *ddata = dev_get_drvdata(dev);
-	काष्ठा input_dev *input = ddata->input;
-	पूर्णांक error;
+static int __maybe_unused gpio_keys_suspend(struct device *dev)
+{
+	struct gpio_keys_drvdata *ddata = dev_get_drvdata(dev);
+	struct input_dev *input = ddata->input;
+	int error;
 
-	अगर (device_may_wakeup(dev)) अणु
+	if (device_may_wakeup(dev)) {
 		error = gpio_keys_enable_wakeup(ddata);
-		अगर (error)
-			वापस error;
-	पूर्ण अन्यथा अणु
+		if (error)
+			return error;
+	} else {
 		mutex_lock(&input->mutex);
-		अगर (input_device_enabled(input))
-			gpio_keys_बंद(input);
+		if (input_device_enabled(input))
+			gpio_keys_close(input);
 		mutex_unlock(&input->mutex);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused gpio_keys_resume(काष्ठा device *dev)
-अणु
-	काष्ठा gpio_keys_drvdata *ddata = dev_get_drvdata(dev);
-	काष्ठा input_dev *input = ddata->input;
-	पूर्णांक error = 0;
+static int __maybe_unused gpio_keys_resume(struct device *dev)
+{
+	struct gpio_keys_drvdata *ddata = dev_get_drvdata(dev);
+	struct input_dev *input = ddata->input;
+	int error = 0;
 
-	अगर (device_may_wakeup(dev)) अणु
+	if (device_may_wakeup(dev)) {
 		gpio_keys_disable_wakeup(ddata);
-	पूर्ण अन्यथा अणु
+	} else {
 		mutex_lock(&input->mutex);
-		अगर (input_device_enabled(input))
-			error = gpio_keys_खोलो(input);
+		if (input_device_enabled(input))
+			error = gpio_keys_open(input);
 		mutex_unlock(&input->mutex);
-	पूर्ण
+	}
 
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	gpio_keys_report_state(ddata);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल SIMPLE_DEV_PM_OPS(gpio_keys_pm_ops, gpio_keys_suspend, gpio_keys_resume);
+static SIMPLE_DEV_PM_OPS(gpio_keys_pm_ops, gpio_keys_suspend, gpio_keys_resume);
 
-अटल व्योम gpio_keys_shutकरोwn(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक ret;
+static void gpio_keys_shutdown(struct platform_device *pdev)
+{
+	int ret;
 
 	ret = gpio_keys_suspend(&pdev->dev);
-	अगर (ret)
+	if (ret)
 		dev_err(&pdev->dev, "failed to shutdown\n");
-पूर्ण
+}
 
-अटल काष्ठा platक्रमm_driver gpio_keys_device_driver = अणु
+static struct platform_driver gpio_keys_device_driver = {
 	.probe		= gpio_keys_probe,
-	.shutकरोwn	= gpio_keys_shutकरोwn,
-	.driver		= अणु
+	.shutdown	= gpio_keys_shutdown,
+	.driver		= {
 		.name	= "gpio-keys",
 		.pm	= &gpio_keys_pm_ops,
 		.of_match_table = gpio_keys_of_match,
 		.dev_groups	= gpio_keys_groups,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल पूर्णांक __init gpio_keys_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&gpio_keys_device_driver);
-पूर्ण
+static int __init gpio_keys_init(void)
+{
+	return platform_driver_register(&gpio_keys_device_driver);
+}
 
-अटल व्योम __निकास gpio_keys_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&gpio_keys_device_driver);
-पूर्ण
+static void __exit gpio_keys_exit(void)
+{
+	platform_driver_unregister(&gpio_keys_device_driver);
+}
 
 late_initcall(gpio_keys_init);
-module_निकास(gpio_keys_निकास);
+module_exit(gpio_keys_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Phil Blundell <pb@handhelds.org>");

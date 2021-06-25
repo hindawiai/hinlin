@@ -1,91 +1,90 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Clocks क्रम ux500 platक्रमms
+ * Clocks for ux500 platforms
  *
  * Copyright (C) 2012 ST-Ericsson SA
  * Author: Ulf Hansson <ulf.hansson@linaro.org>
  */
 
-#अगर_अघोषित __UX500_CLK_H
-#घोषणा __UX500_CLK_H
+#ifndef __UX500_CLK_H
+#define __UX500_CLK_H
 
-#समावेश <linux/device.h>
-#समावेश <linux/types.h>
+#include <linux/device.h>
+#include <linux/types.h>
 
-काष्ठा clk;
+struct clk;
 
-काष्ठा clk *clk_reg_prcc_pclk(स्थिर अक्षर *name,
-			      स्थिर अक्षर *parent_name,
-			      resource_माप_प्रकार phy_base,
+struct clk *clk_reg_prcc_pclk(const char *name,
+			      const char *parent_name,
+			      resource_size_t phy_base,
 			      u32 cg_sel,
-			      अचिन्हित दीर्घ flags);
+			      unsigned long flags);
 
-काष्ठा clk *clk_reg_prcc_kclk(स्थिर अक्षर *name,
-			      स्थिर अक्षर *parent_name,
-			      resource_माप_प्रकार phy_base,
+struct clk *clk_reg_prcc_kclk(const char *name,
+			      const char *parent_name,
+			      resource_size_t phy_base,
 			      u32 cg_sel,
-			      अचिन्हित दीर्घ flags);
+			      unsigned long flags);
 
-काष्ठा clk *clk_reg_prcmu_scalable(स्थिर अक्षर *name,
-				   स्थिर अक्षर *parent_name,
+struct clk *clk_reg_prcmu_scalable(const char *name,
+				   const char *parent_name,
 				   u8 cg_sel,
-				   अचिन्हित दीर्घ rate,
-				   अचिन्हित दीर्घ flags);
+				   unsigned long rate,
+				   unsigned long flags);
 
-काष्ठा clk *clk_reg_prcmu_gate(स्थिर अक्षर *name,
-			       स्थिर अक्षर *parent_name,
+struct clk *clk_reg_prcmu_gate(const char *name,
+			       const char *parent_name,
 			       u8 cg_sel,
-			       अचिन्हित दीर्घ flags);
+			       unsigned long flags);
 
-काष्ठा clk *clk_reg_prcmu_scalable_rate(स्थिर अक्षर *name,
-					स्थिर अक्षर *parent_name,
+struct clk *clk_reg_prcmu_scalable_rate(const char *name,
+					const char *parent_name,
 					u8 cg_sel,
-					अचिन्हित दीर्घ rate,
-					अचिन्हित दीर्घ flags);
+					unsigned long rate,
+					unsigned long flags);
 
-काष्ठा clk *clk_reg_prcmu_rate(स्थिर अक्षर *name,
-			       स्थिर अक्षर *parent_name,
+struct clk *clk_reg_prcmu_rate(const char *name,
+			       const char *parent_name,
 			       u8 cg_sel,
-			       अचिन्हित दीर्घ flags);
+			       unsigned long flags);
 
-काष्ठा clk *clk_reg_prcmu_opp_gate(स्थिर अक्षर *name,
-				   स्थिर अक्षर *parent_name,
+struct clk *clk_reg_prcmu_opp_gate(const char *name,
+				   const char *parent_name,
 				   u8 cg_sel,
-				   अचिन्हित दीर्घ flags);
+				   unsigned long flags);
 
-काष्ठा clk *clk_reg_prcmu_opp_volt_scalable(स्थिर अक्षर *name,
-					    स्थिर अक्षर *parent_name,
+struct clk *clk_reg_prcmu_opp_volt_scalable(const char *name,
+					    const char *parent_name,
 					    u8 cg_sel,
-					    अचिन्हित दीर्घ rate,
-					    अचिन्हित दीर्घ flags);
+					    unsigned long rate,
+					    unsigned long flags);
 
-काष्ठा clk *clk_reg_sysctrl_gate(काष्ठा device *dev,
-				 स्थिर अक्षर *name,
-				 स्थिर अक्षर *parent_name,
+struct clk *clk_reg_sysctrl_gate(struct device *dev,
+				 const char *name,
+				 const char *parent_name,
 				 u16 reg_sel,
 				 u8 reg_mask,
 				 u8 reg_bits,
-				 अचिन्हित दीर्घ enable_delay_us,
-				 अचिन्हित दीर्घ flags);
+				 unsigned long enable_delay_us,
+				 unsigned long flags);
 
-काष्ठा clk *clk_reg_sysctrl_gate_fixed_rate(काष्ठा device *dev,
-					    स्थिर अक्षर *name,
-					    स्थिर अक्षर *parent_name,
+struct clk *clk_reg_sysctrl_gate_fixed_rate(struct device *dev,
+					    const char *name,
+					    const char *parent_name,
 					    u16 reg_sel,
 					    u8 reg_mask,
 					    u8 reg_bits,
-					    अचिन्हित दीर्घ rate,
-					    अचिन्हित दीर्घ enable_delay_us,
-					    अचिन्हित दीर्घ flags);
+					    unsigned long rate,
+					    unsigned long enable_delay_us,
+					    unsigned long flags);
 
-काष्ठा clk *clk_reg_sysctrl_set_parent(काष्ठा device *dev,
-				       स्थिर अक्षर *name,
-				       स्थिर अक्षर **parent_names,
+struct clk *clk_reg_sysctrl_set_parent(struct device *dev,
+				       const char *name,
+				       const char **parent_names,
 				       u8 num_parents,
 				       u16 *reg_sel,
 				       u8 *reg_mask,
 				       u8 *reg_bits,
-				       अचिन्हित दीर्घ flags);
+				       unsigned long flags);
 
-#पूर्ण_अगर /* __UX500_CLK_H */
+#endif /* __UX500_CLK_H */

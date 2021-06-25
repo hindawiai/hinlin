@@ -1,692 +1,691 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
  */
-#समावेश <linux/debugfs.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/uaccess.h>
+#include <linux/debugfs.h>
+#include <linux/dma-mapping.h>
+#include <linux/slab.h>
+#include <linux/uaccess.h>
 
-#समावेश <soc/tegra/bpmp.h>
-#समावेश <soc/tegra/bpmp-abi.h>
+#include <soc/tegra/bpmp.h>
+#include <soc/tegra/bpmp-abi.h>
 
-अटल DEFINE_MUTEX(bpmp_debug_lock);
+static DEFINE_MUTEX(bpmp_debug_lock);
 
-काष्ठा seqbuf अणु
-	अक्षर *buf;
-	माप_प्रकार pos;
-	माप_प्रकार size;
-पूर्ण;
+struct seqbuf {
+	char *buf;
+	size_t pos;
+	size_t size;
+};
 
-अटल व्योम seqbuf_init(काष्ठा seqbuf *seqbuf, व्योम *buf, माप_प्रकार size)
-अणु
+static void seqbuf_init(struct seqbuf *seqbuf, void *buf, size_t size)
+{
 	seqbuf->buf = buf;
 	seqbuf->size = size;
 	seqbuf->pos = 0;
-पूर्ण
+}
 
-अटल माप_प्रकार seqbuf_avail(काष्ठा seqbuf *seqbuf)
-अणु
-	वापस seqbuf->pos < seqbuf->size ? seqbuf->size - seqbuf->pos : 0;
-पूर्ण
+static size_t seqbuf_avail(struct seqbuf *seqbuf)
+{
+	return seqbuf->pos < seqbuf->size ? seqbuf->size - seqbuf->pos : 0;
+}
 
-अटल माप_प्रकार seqbuf_status(काष्ठा seqbuf *seqbuf)
-अणु
-	वापस seqbuf->pos <= seqbuf->size ? 0 : -EOVERFLOW;
-पूर्ण
+static size_t seqbuf_status(struct seqbuf *seqbuf)
+{
+	return seqbuf->pos <= seqbuf->size ? 0 : -EOVERFLOW;
+}
 
-अटल पूर्णांक seqbuf_eof(काष्ठा seqbuf *seqbuf)
-अणु
-	वापस seqbuf->pos >= seqbuf->size;
-पूर्ण
+static int seqbuf_eof(struct seqbuf *seqbuf)
+{
+	return seqbuf->pos >= seqbuf->size;
+}
 
-अटल पूर्णांक seqbuf_पढ़ो(काष्ठा seqbuf *seqbuf, व्योम *buf, माप_प्रकार nbyte)
-अणु
+static int seqbuf_read(struct seqbuf *seqbuf, void *buf, size_t nbyte)
+{
 	nbyte = min(nbyte, seqbuf_avail(seqbuf));
-	स_नकल(buf, seqbuf->buf + seqbuf->pos, nbyte);
+	memcpy(buf, seqbuf->buf + seqbuf->pos, nbyte);
 	seqbuf->pos += nbyte;
-	वापस seqbuf_status(seqbuf);
-पूर्ण
+	return seqbuf_status(seqbuf);
+}
 
-अटल पूर्णांक seqbuf_पढ़ो_u32(काष्ठा seqbuf *seqbuf, uपूर्णांक32_t *v)
-अणु
-	पूर्णांक err;
+static int seqbuf_read_u32(struct seqbuf *seqbuf, uint32_t *v)
+{
+	int err;
 
-	err = seqbuf_पढ़ो(seqbuf, v, 4);
+	err = seqbuf_read(seqbuf, v, 4);
 	*v = le32_to_cpu(*v);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक seqbuf_पढ़ो_str(काष्ठा seqbuf *seqbuf, स्थिर अक्षर **str)
-अणु
+static int seqbuf_read_str(struct seqbuf *seqbuf, const char **str)
+{
 	*str = seqbuf->buf + seqbuf->pos;
 	seqbuf->pos += strnlen(*str, seqbuf_avail(seqbuf));
 	seqbuf->pos++;
-	वापस seqbuf_status(seqbuf);
-पूर्ण
+	return seqbuf_status(seqbuf);
+}
 
-अटल व्योम seqbuf_seek(काष्ठा seqbuf *seqbuf, sमाप_प्रकार offset)
-अणु
+static void seqbuf_seek(struct seqbuf *seqbuf, ssize_t offset)
+{
 	seqbuf->pos += offset;
-पूर्ण
+}
 
 /* map filename in Linux debugfs to corresponding entry in BPMP */
-अटल स्थिर अक्षर *get_filename(काष्ठा tegra_bpmp *bpmp,
-				स्थिर काष्ठा file *file, अक्षर *buf, पूर्णांक size)
-अणु
-	अक्षर root_path_buf[512];
-	स्थिर अक्षर *root_path;
-	स्थिर अक्षर *filename;
-	माप_प्रकार root_len;
+static const char *get_filename(struct tegra_bpmp *bpmp,
+				const struct file *file, char *buf, int size)
+{
+	char root_path_buf[512];
+	const char *root_path;
+	const char *filename;
+	size_t root_len;
 
 	root_path = dentry_path(bpmp->debugfs_mirror, root_path_buf,
-				माप(root_path_buf));
-	अगर (IS_ERR(root_path))
-		वापस शून्य;
+				sizeof(root_path_buf));
+	if (IS_ERR(root_path))
+		return NULL;
 
-	root_len = म_माप(root_path);
+	root_len = strlen(root_path);
 
 	filename = dentry_path(file->f_path.dentry, buf, size);
-	अगर (IS_ERR(filename))
-		वापस शून्य;
+	if (IS_ERR(filename))
+		return NULL;
 
-	अगर (म_माप(filename) < root_len ||
-			म_भेदन(filename, root_path, root_len))
-		वापस शून्य;
+	if (strlen(filename) < root_len ||
+			strncmp(filename, root_path, root_len))
+		return NULL;
 
 	filename += root_len;
 
-	वापस filename;
-पूर्ण
+	return filename;
+}
 
-अटल पूर्णांक mrq_debug_खोलो(काष्ठा tegra_bpmp *bpmp, स्थिर अक्षर *name,
-			  uपूर्णांक32_t *fd, uपूर्णांक32_t *len, bool ग_लिखो)
-अणु
-	काष्ठा mrq_debug_request req = अणु
-		.cmd = cpu_to_le32(ग_लिखो ? CMD_DEBUG_OPEN_WO : CMD_DEBUG_OPEN_RO),
-	पूर्ण;
-	काष्ठा mrq_debug_response resp;
-	काष्ठा tegra_bpmp_message msg = अणु
+static int mrq_debug_open(struct tegra_bpmp *bpmp, const char *name,
+			  uint32_t *fd, uint32_t *len, bool write)
+{
+	struct mrq_debug_request req = {
+		.cmd = cpu_to_le32(write ? CMD_DEBUG_OPEN_WO : CMD_DEBUG_OPEN_RO),
+	};
+	struct mrq_debug_response resp;
+	struct tegra_bpmp_message msg = {
 		.mrq = MRQ_DEBUG,
-		.tx = अणु
+		.tx = {
 			.data = &req,
-			.size = माप(req),
-		पूर्ण,
-		.rx = अणु
+			.size = sizeof(req),
+		},
+		.rx = {
 			.data = &resp,
-			.size = माप(resp),
-		पूर्ण,
-	पूर्ण;
-	sमाप_प्रकार sz_name;
-	पूर्णांक err = 0;
+			.size = sizeof(resp),
+		},
+	};
+	ssize_t sz_name;
+	int err = 0;
 
-	sz_name = strscpy(req.fop.name, name, माप(req.fop.name));
-	अगर (sz_name < 0) अणु
+	sz_name = strscpy(req.fop.name, name, sizeof(req.fop.name));
+	if (sz_name < 0) {
 		pr_err("File name too large: %s\n", name);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	err = tegra_bpmp_transfer(bpmp, &msg);
-	अगर (err < 0)
-		वापस err;
-	अन्यथा अगर (msg.rx.ret < 0)
-		वापस -EINVAL;
+	if (err < 0)
+		return err;
+	else if (msg.rx.ret < 0)
+		return -EINVAL;
 
 	*len = resp.fop.datalen;
 	*fd = resp.fop.fd;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mrq_debug_बंद(काष्ठा tegra_bpmp *bpmp, uपूर्णांक32_t fd)
-अणु
-	काष्ठा mrq_debug_request req = अणु
+static int mrq_debug_close(struct tegra_bpmp *bpmp, uint32_t fd)
+{
+	struct mrq_debug_request req = {
 		.cmd = cpu_to_le32(CMD_DEBUG_CLOSE),
-		.frd = अणु
+		.frd = {
 			.fd = fd,
-		पूर्ण,
-	पूर्ण;
-	काष्ठा mrq_debug_response resp;
-	काष्ठा tegra_bpmp_message msg = अणु
+		},
+	};
+	struct mrq_debug_response resp;
+	struct tegra_bpmp_message msg = {
 		.mrq = MRQ_DEBUG,
-		.tx = अणु
+		.tx = {
 			.data = &req,
-			.size = माप(req),
-		पूर्ण,
-		.rx = अणु
+			.size = sizeof(req),
+		},
+		.rx = {
 			.data = &resp,
-			.size = माप(resp),
-		पूर्ण,
-	पूर्ण;
-	पूर्णांक err = 0;
+			.size = sizeof(resp),
+		},
+	};
+	int err = 0;
 
 	err = tegra_bpmp_transfer(bpmp, &msg);
-	अगर (err < 0)
-		वापस err;
-	अन्यथा अगर (msg.rx.ret < 0)
-		वापस -EINVAL;
+	if (err < 0)
+		return err;
+	else if (msg.rx.ret < 0)
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mrq_debug_पढ़ो(काष्ठा tegra_bpmp *bpmp, स्थिर अक्षर *name,
-			  अक्षर *data, माप_प्रकार sz_data, uपूर्णांक32_t *nbytes)
-अणु
-	काष्ठा mrq_debug_request req = अणु
+static int mrq_debug_read(struct tegra_bpmp *bpmp, const char *name,
+			  char *data, size_t sz_data, uint32_t *nbytes)
+{
+	struct mrq_debug_request req = {
 		.cmd = cpu_to_le32(CMD_DEBUG_READ),
-	पूर्ण;
-	काष्ठा mrq_debug_response resp;
-	काष्ठा tegra_bpmp_message msg = अणु
+	};
+	struct mrq_debug_response resp;
+	struct tegra_bpmp_message msg = {
 		.mrq = MRQ_DEBUG,
-		.tx = अणु
+		.tx = {
 			.data = &req,
-			.size = माप(req),
-		पूर्ण,
-		.rx = अणु
+			.size = sizeof(req),
+		},
+		.rx = {
 			.data = &resp,
-			.size = माप(resp),
-		पूर्ण,
-	पूर्ण;
-	uपूर्णांक32_t fd = 0, len = 0;
-	पूर्णांक reमुख्यing, err;
+			.size = sizeof(resp),
+		},
+	};
+	uint32_t fd = 0, len = 0;
+	int remaining, err;
 
 	mutex_lock(&bpmp_debug_lock);
-	err = mrq_debug_खोलो(bpmp, name, &fd, &len, 0);
-	अगर (err)
-		जाओ out;
+	err = mrq_debug_open(bpmp, name, &fd, &len, 0);
+	if (err)
+		goto out;
 
-	अगर (len > sz_data) अणु
+	if (len > sz_data) {
 		err = -EFBIG;
-		जाओ बंद;
-	पूर्ण
+		goto close;
+	}
 
 	req.frd.fd = fd;
-	reमुख्यing = len;
+	remaining = len;
 
-	जबतक (reमुख्यing > 0) अणु
+	while (remaining > 0) {
 		err = tegra_bpmp_transfer(bpmp, &msg);
-		अगर (err < 0) अणु
-			जाओ बंद;
-		पूर्ण अन्यथा अगर (msg.rx.ret < 0) अणु
+		if (err < 0) {
+			goto close;
+		} else if (msg.rx.ret < 0) {
 			err = -EINVAL;
-			जाओ बंद;
-		पूर्ण
+			goto close;
+		}
 
-		अगर (resp.frd.पढ़ोlen > reमुख्यing) अणु
+		if (resp.frd.readlen > remaining) {
 			pr_err("%s: read data length invalid\n", __func__);
 			err = -EINVAL;
-			जाओ बंद;
-		पूर्ण
+			goto close;
+		}
 
-		स_नकल(data, resp.frd.data, resp.frd.पढ़ोlen);
-		data += resp.frd.पढ़ोlen;
-		reमुख्यing -= resp.frd.पढ़ोlen;
-	पूर्ण
+		memcpy(data, resp.frd.data, resp.frd.readlen);
+		data += resp.frd.readlen;
+		remaining -= resp.frd.readlen;
+	}
 
 	*nbytes = len;
 
-बंद:
-	err = mrq_debug_बंद(bpmp, fd);
+close:
+	err = mrq_debug_close(bpmp, fd);
 out:
 	mutex_unlock(&bpmp_debug_lock);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक mrq_debug_ग_लिखो(काष्ठा tegra_bpmp *bpmp, स्थिर अक्षर *name,
-			   uपूर्णांक8_t *data, माप_प्रकार sz_data)
-अणु
-	काष्ठा mrq_debug_request req = अणु
+static int mrq_debug_write(struct tegra_bpmp *bpmp, const char *name,
+			   uint8_t *data, size_t sz_data)
+{
+	struct mrq_debug_request req = {
 		.cmd = cpu_to_le32(CMD_DEBUG_WRITE)
-	पूर्ण;
-	काष्ठा mrq_debug_response resp;
-	काष्ठा tegra_bpmp_message msg = अणु
+	};
+	struct mrq_debug_response resp;
+	struct tegra_bpmp_message msg = {
 		.mrq = MRQ_DEBUG,
-		.tx = अणु
+		.tx = {
 			.data = &req,
-			.size = माप(req),
-		पूर्ण,
-		.rx = अणु
+			.size = sizeof(req),
+		},
+		.rx = {
 			.data = &resp,
-			.size = माप(resp),
-		पूर्ण,
-	पूर्ण;
-	uपूर्णांक32_t fd = 0, len = 0;
-	माप_प्रकार reमुख्यing;
-	पूर्णांक err;
+			.size = sizeof(resp),
+		},
+	};
+	uint32_t fd = 0, len = 0;
+	size_t remaining;
+	int err;
 
 	mutex_lock(&bpmp_debug_lock);
-	err = mrq_debug_खोलो(bpmp, name, &fd, &len, 1);
-	अगर (err)
-		जाओ out;
+	err = mrq_debug_open(bpmp, name, &fd, &len, 1);
+	if (err)
+		goto out;
 
-	अगर (sz_data > len) अणु
+	if (sz_data > len) {
 		err = -EINVAL;
-		जाओ बंद;
-	पूर्ण
+		goto close;
+	}
 
 	req.fwr.fd = fd;
-	reमुख्यing = sz_data;
+	remaining = sz_data;
 
-	जबतक (reमुख्यing > 0) अणु
-		len = min(reमुख्यing, माप(req.fwr.data));
-		स_नकल(req.fwr.data, data, len);
+	while (remaining > 0) {
+		len = min(remaining, sizeof(req.fwr.data));
+		memcpy(req.fwr.data, data, len);
 		req.fwr.datalen = len;
 
 		err = tegra_bpmp_transfer(bpmp, &msg);
-		अगर (err < 0) अणु
-			जाओ बंद;
-		पूर्ण अन्यथा अगर (msg.rx.ret < 0) अणु
+		if (err < 0) {
+			goto close;
+		} else if (msg.rx.ret < 0) {
 			err = -EINVAL;
-			जाओ बंद;
-		पूर्ण
+			goto close;
+		}
 
 		data += req.fwr.datalen;
-		reमुख्यing -= req.fwr.datalen;
-	पूर्ण
+		remaining -= req.fwr.datalen;
+	}
 
-बंद:
-	err = mrq_debug_बंद(bpmp, fd);
+close:
+	err = mrq_debug_close(bpmp, fd);
 out:
 	mutex_unlock(&bpmp_debug_lock);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक bpmp_debug_show(काष्ठा seq_file *m, व्योम *p)
-अणु
-	काष्ठा file *file = m->निजी;
-	काष्ठा inode *inode = file_inode(file);
-	काष्ठा tegra_bpmp *bpmp = inode->i_निजी;
-	अक्षर *databuf = शून्य;
-	अक्षर fnamebuf[256];
-	स्थिर अक्षर *filename;
-	uपूर्णांक32_t nbytes = 0;
-	माप_प्रकार len;
-	पूर्णांक err;
+static int bpmp_debug_show(struct seq_file *m, void *p)
+{
+	struct file *file = m->private;
+	struct inode *inode = file_inode(file);
+	struct tegra_bpmp *bpmp = inode->i_private;
+	char *databuf = NULL;
+	char fnamebuf[256];
+	const char *filename;
+	uint32_t nbytes = 0;
+	size_t len;
+	int err;
 
 	len = seq_get_buf(m, &databuf);
-	अगर (!databuf)
-		वापस -ENOMEM;
+	if (!databuf)
+		return -ENOMEM;
 
-	filename = get_filename(bpmp, file, fnamebuf, माप(fnamebuf));
-	अगर (!filename)
-		वापस -ENOENT;
+	filename = get_filename(bpmp, file, fnamebuf, sizeof(fnamebuf));
+	if (!filename)
+		return -ENOENT;
 
-	err = mrq_debug_पढ़ो(bpmp, filename, databuf, len, &nbytes);
-	अगर (!err)
+	err = mrq_debug_read(bpmp, filename, databuf, len, &nbytes);
+	if (!err)
 		seq_commit(m, nbytes);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल sमाप_प्रकार bpmp_debug_store(काष्ठा file *file, स्थिर अक्षर __user *buf,
-		माप_प्रकार count, loff_t *f_pos)
-अणु
-	काष्ठा inode *inode = file_inode(file);
-	काष्ठा tegra_bpmp *bpmp = inode->i_निजी;
-	अक्षर *databuf = शून्य;
-	अक्षर fnamebuf[256];
-	स्थिर अक्षर *filename;
-	sमाप_प्रकार err;
+static ssize_t bpmp_debug_store(struct file *file, const char __user *buf,
+		size_t count, loff_t *f_pos)
+{
+	struct inode *inode = file_inode(file);
+	struct tegra_bpmp *bpmp = inode->i_private;
+	char *databuf = NULL;
+	char fnamebuf[256];
+	const char *filename;
+	ssize_t err;
 
-	filename = get_filename(bpmp, file, fnamebuf, माप(fnamebuf));
-	अगर (!filename)
-		वापस -ENOENT;
+	filename = get_filename(bpmp, file, fnamebuf, sizeof(fnamebuf));
+	if (!filename)
+		return -ENOENT;
 
-	databuf = kदो_स्मृति(count, GFP_KERNEL);
-	अगर (!databuf)
-		वापस -ENOMEM;
+	databuf = kmalloc(count, GFP_KERNEL);
+	if (!databuf)
+		return -ENOMEM;
 
-	अगर (copy_from_user(databuf, buf, count)) अणु
+	if (copy_from_user(databuf, buf, count)) {
 		err = -EFAULT;
-		जाओ मुक्त_ret;
-	पूर्ण
+		goto free_ret;
+	}
 
-	err = mrq_debug_ग_लिखो(bpmp, filename, databuf, count);
+	err = mrq_debug_write(bpmp, filename, databuf, count);
 
-मुक्त_ret:
-	kमुक्त(databuf);
+free_ret:
+	kfree(databuf);
 
-	वापस err ?: count;
-पूर्ण
+	return err ?: count;
+}
 
-अटल पूर्णांक bpmp_debug_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस single_खोलो_size(file, bpmp_debug_show, file, SZ_256K);
-पूर्ण
+static int bpmp_debug_open(struct inode *inode, struct file *file)
+{
+	return single_open_size(file, bpmp_debug_show, file, SZ_256K);
+}
 
-अटल स्थिर काष्ठा file_operations bpmp_debug_fops = अणु
-	.खोलो		= bpmp_debug_खोलो,
-	.पढ़ो		= seq_पढ़ो,
+static const struct file_operations bpmp_debug_fops = {
+	.open		= bpmp_debug_open,
+	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.ग_लिखो		= bpmp_debug_store,
+	.write		= bpmp_debug_store,
 	.release	= single_release,
-पूर्ण;
+};
 
-अटल पूर्णांक bpmp_populate_debugfs_inband(काष्ठा tegra_bpmp *bpmp,
-					काष्ठा dentry *parent,
-					अक्षर *ppath)
-अणु
-	स्थिर माप_प्रकार pathlen = SZ_256;
-	स्थिर माप_प्रकार bufsize = SZ_16K;
-	uपूर्णांक32_t dsize, attrs = 0;
-	काष्ठा dentry *dentry;
-	काष्ठा seqbuf seqbuf;
-	अक्षर *buf, *pathbuf;
-	स्थिर अक्षर *name;
-	पूर्णांक err = 0;
+static int bpmp_populate_debugfs_inband(struct tegra_bpmp *bpmp,
+					struct dentry *parent,
+					char *ppath)
+{
+	const size_t pathlen = SZ_256;
+	const size_t bufsize = SZ_16K;
+	uint32_t dsize, attrs = 0;
+	struct dentry *dentry;
+	struct seqbuf seqbuf;
+	char *buf, *pathbuf;
+	const char *name;
+	int err = 0;
 
-	अगर (!bpmp || !parent || !ppath)
-		वापस -EINVAL;
+	if (!bpmp || !parent || !ppath)
+		return -EINVAL;
 
-	buf = kदो_स्मृति(bufsize, GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	buf = kmalloc(bufsize, GFP_KERNEL);
+	if (!buf)
+		return -ENOMEM;
 
 	pathbuf = kzalloc(pathlen, GFP_KERNEL);
-	अगर (!pathbuf) अणु
-		kमुक्त(buf);
-		वापस -ENOMEM;
-	पूर्ण
+	if (!pathbuf) {
+		kfree(buf);
+		return -ENOMEM;
+	}
 
-	err = mrq_debug_पढ़ो(bpmp, ppath, buf, bufsize, &dsize);
-	अगर (err)
-		जाओ out;
+	err = mrq_debug_read(bpmp, ppath, buf, bufsize, &dsize);
+	if (err)
+		goto out;
 
 	seqbuf_init(&seqbuf, buf, dsize);
 
-	जबतक (!seqbuf_eof(&seqbuf)) अणु
-		err = seqbuf_पढ़ो_u32(&seqbuf, &attrs);
-		अगर (err)
-			जाओ out;
+	while (!seqbuf_eof(&seqbuf)) {
+		err = seqbuf_read_u32(&seqbuf, &attrs);
+		if (err)
+			goto out;
 
-		err = seqbuf_पढ़ो_str(&seqbuf, &name);
-		अगर (err < 0)
-			जाओ out;
+		err = seqbuf_read_str(&seqbuf, &name);
+		if (err < 0)
+			goto out;
 
-		अगर (attrs & DEBUGFS_S_ISसूची) अणु
-			माप_प्रकार len;
+		if (attrs & DEBUGFS_S_ISDIR) {
+			size_t len;
 
 			dentry = debugfs_create_dir(name, parent);
-			अगर (IS_ERR(dentry)) अणु
+			if (IS_ERR(dentry)) {
 				err = PTR_ERR(dentry);
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 
-			len = snम_लिखो(pathbuf, pathlen, "%s%s/", ppath, name);
-			अगर (len >= pathlen) अणु
+			len = snprintf(pathbuf, pathlen, "%s%s/", ppath, name);
+			if (len >= pathlen) {
 				err = -EINVAL;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 
 			err = bpmp_populate_debugfs_inband(bpmp, dentry,
 							   pathbuf);
-			अगर (err < 0)
-				जाओ out;
-		पूर्ण अन्यथा अणु
+			if (err < 0)
+				goto out;
+		} else {
 			umode_t mode;
 
 			mode = attrs & DEBUGFS_S_IRUSR ? 0400 : 0;
 			mode |= attrs & DEBUGFS_S_IWUSR ? 0200 : 0;
 			dentry = debugfs_create_file(name, mode, parent, bpmp,
 						     &bpmp_debug_fops);
-			अगर (!dentry) अणु
+			if (!dentry) {
 				err = -ENOMEM;
-				जाओ out;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				goto out;
+			}
+		}
+	}
 
 out:
-	kमुक्त(pathbuf);
-	kमुक्त(buf);
+	kfree(pathbuf);
+	kfree(buf);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक mrq_debugfs_पढ़ो(काष्ठा tegra_bpmp *bpmp,
-			    dma_addr_t name, माप_प्रकार sz_name,
-			    dma_addr_t data, माप_प्रकार sz_data,
-			    माप_प्रकार *nbytes)
-अणु
-	काष्ठा mrq_debugfs_request req = अणु
+static int mrq_debugfs_read(struct tegra_bpmp *bpmp,
+			    dma_addr_t name, size_t sz_name,
+			    dma_addr_t data, size_t sz_data,
+			    size_t *nbytes)
+{
+	struct mrq_debugfs_request req = {
 		.cmd = cpu_to_le32(CMD_DEBUGFS_READ),
-		.fop = अणु
-			.fnameaddr = cpu_to_le32((uपूर्णांक32_t)name),
-			.fnamelen = cpu_to_le32((uपूर्णांक32_t)sz_name),
-			.dataaddr = cpu_to_le32((uपूर्णांक32_t)data),
-			.datalen = cpu_to_le32((uपूर्णांक32_t)sz_data),
-		पूर्ण,
-	पूर्ण;
-	काष्ठा mrq_debugfs_response resp;
-	काष्ठा tegra_bpmp_message msg = अणु
+		.fop = {
+			.fnameaddr = cpu_to_le32((uint32_t)name),
+			.fnamelen = cpu_to_le32((uint32_t)sz_name),
+			.dataaddr = cpu_to_le32((uint32_t)data),
+			.datalen = cpu_to_le32((uint32_t)sz_data),
+		},
+	};
+	struct mrq_debugfs_response resp;
+	struct tegra_bpmp_message msg = {
 		.mrq = MRQ_DEBUGFS,
-		.tx = अणु
+		.tx = {
 			.data = &req,
-			.size = माप(req),
-		पूर्ण,
-		.rx = अणु
+			.size = sizeof(req),
+		},
+		.rx = {
 			.data = &resp,
-			.size = माप(resp),
-		पूर्ण,
-	पूर्ण;
-	पूर्णांक err;
+			.size = sizeof(resp),
+		},
+	};
+	int err;
 
 	err = tegra_bpmp_transfer(bpmp, &msg);
-	अगर (err < 0)
-		वापस err;
-	अन्यथा अगर (msg.rx.ret < 0)
-		वापस -EINVAL;
+	if (err < 0)
+		return err;
+	else if (msg.rx.ret < 0)
+		return -EINVAL;
 
-	*nbytes = (माप_प्रकार)resp.fop.nbytes;
+	*nbytes = (size_t)resp.fop.nbytes;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mrq_debugfs_ग_लिखो(काष्ठा tegra_bpmp *bpmp,
-			     dma_addr_t name, माप_प्रकार sz_name,
-			     dma_addr_t data, माप_प्रकार sz_data)
-अणु
-	स्थिर काष्ठा mrq_debugfs_request req = अणु
+static int mrq_debugfs_write(struct tegra_bpmp *bpmp,
+			     dma_addr_t name, size_t sz_name,
+			     dma_addr_t data, size_t sz_data)
+{
+	const struct mrq_debugfs_request req = {
 		.cmd = cpu_to_le32(CMD_DEBUGFS_WRITE),
-		.fop = अणु
-			.fnameaddr = cpu_to_le32((uपूर्णांक32_t)name),
-			.fnamelen = cpu_to_le32((uपूर्णांक32_t)sz_name),
-			.dataaddr = cpu_to_le32((uपूर्णांक32_t)data),
-			.datalen = cpu_to_le32((uपूर्णांक32_t)sz_data),
-		पूर्ण,
-	पूर्ण;
-	काष्ठा tegra_bpmp_message msg = अणु
+		.fop = {
+			.fnameaddr = cpu_to_le32((uint32_t)name),
+			.fnamelen = cpu_to_le32((uint32_t)sz_name),
+			.dataaddr = cpu_to_le32((uint32_t)data),
+			.datalen = cpu_to_le32((uint32_t)sz_data),
+		},
+	};
+	struct tegra_bpmp_message msg = {
 		.mrq = MRQ_DEBUGFS,
-		.tx = अणु
+		.tx = {
 			.data = &req,
-			.size = माप(req),
-		पूर्ण,
-	पूर्ण;
+			.size = sizeof(req),
+		},
+	};
 
-	वापस tegra_bpmp_transfer(bpmp, &msg);
-पूर्ण
+	return tegra_bpmp_transfer(bpmp, &msg);
+}
 
-अटल पूर्णांक mrq_debugfs_dumpdir(काष्ठा tegra_bpmp *bpmp, dma_addr_t addr,
-			       माप_प्रकार size, माप_प्रकार *nbytes)
-अणु
-	स्थिर काष्ठा mrq_debugfs_request req = अणु
-		.cmd = cpu_to_le32(CMD_DEBUGFS_DUMPसूची),
-		.dumpdir = अणु
-			.dataaddr = cpu_to_le32((uपूर्णांक32_t)addr),
-			.datalen = cpu_to_le32((uपूर्णांक32_t)size),
-		पूर्ण,
-	पूर्ण;
-	काष्ठा mrq_debugfs_response resp;
-	काष्ठा tegra_bpmp_message msg = अणु
+static int mrq_debugfs_dumpdir(struct tegra_bpmp *bpmp, dma_addr_t addr,
+			       size_t size, size_t *nbytes)
+{
+	const struct mrq_debugfs_request req = {
+		.cmd = cpu_to_le32(CMD_DEBUGFS_DUMPDIR),
+		.dumpdir = {
+			.dataaddr = cpu_to_le32((uint32_t)addr),
+			.datalen = cpu_to_le32((uint32_t)size),
+		},
+	};
+	struct mrq_debugfs_response resp;
+	struct tegra_bpmp_message msg = {
 		.mrq = MRQ_DEBUGFS,
-		.tx = अणु
+		.tx = {
 			.data = &req,
-			.size = माप(req),
-		पूर्ण,
-		.rx = अणु
+			.size = sizeof(req),
+		},
+		.rx = {
 			.data = &resp,
-			.size = माप(resp),
-		पूर्ण,
-	पूर्ण;
-	पूर्णांक err;
+			.size = sizeof(resp),
+		},
+	};
+	int err;
 
 	err = tegra_bpmp_transfer(bpmp, &msg);
-	अगर (err < 0)
-		वापस err;
-	अन्यथा अगर (msg.rx.ret < 0)
-		वापस -EINVAL;
+	if (err < 0)
+		return err;
+	else if (msg.rx.ret < 0)
+		return -EINVAL;
 
-	*nbytes = (माप_प्रकार)resp.dumpdir.nbytes;
+	*nbytes = (size_t)resp.dumpdir.nbytes;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक debugfs_show(काष्ठा seq_file *m, व्योम *p)
-अणु
-	काष्ठा file *file = m->निजी;
-	काष्ठा inode *inode = file_inode(file);
-	काष्ठा tegra_bpmp *bpmp = inode->i_निजी;
-	स्थिर माप_प्रकार datasize = m->size;
-	स्थिर माप_प्रकार namesize = SZ_256;
-	व्योम *datavirt, *namevirt;
+static int debugfs_show(struct seq_file *m, void *p)
+{
+	struct file *file = m->private;
+	struct inode *inode = file_inode(file);
+	struct tegra_bpmp *bpmp = inode->i_private;
+	const size_t datasize = m->size;
+	const size_t namesize = SZ_256;
+	void *datavirt, *namevirt;
 	dma_addr_t dataphys, namephys;
-	अक्षर buf[256];
-	स्थिर अक्षर *filename;
-	माप_प्रकार len, nbytes;
-	पूर्णांक err;
+	char buf[256];
+	const char *filename;
+	size_t len, nbytes;
+	int err;
 
-	filename = get_filename(bpmp, file, buf, माप(buf));
-	अगर (!filename)
-		वापस -ENOENT;
+	filename = get_filename(bpmp, file, buf, sizeof(buf));
+	if (!filename)
+		return -ENOENT;
 
 	namevirt = dma_alloc_coherent(bpmp->dev, namesize, &namephys,
 				      GFP_KERNEL | GFP_DMA32);
-	अगर (!namevirt)
-		वापस -ENOMEM;
+	if (!namevirt)
+		return -ENOMEM;
 
 	datavirt = dma_alloc_coherent(bpmp->dev, datasize, &dataphys,
 				      GFP_KERNEL | GFP_DMA32);
-	अगर (!datavirt) अणु
+	if (!datavirt) {
 		err = -ENOMEM;
-		जाओ मुक्त_namebuf;
-	पूर्ण
+		goto free_namebuf;
+	}
 
-	len = म_माप(filename);
-	म_नकलन(namevirt, filename, namesize);
+	len = strlen(filename);
+	strncpy(namevirt, filename, namesize);
 
-	err = mrq_debugfs_पढ़ो(bpmp, namephys, len, dataphys, datasize,
+	err = mrq_debugfs_read(bpmp, namephys, len, dataphys, datasize,
 			       &nbytes);
 
-	अगर (!err)
-		seq_ग_लिखो(m, datavirt, nbytes);
+	if (!err)
+		seq_write(m, datavirt, nbytes);
 
-	dma_मुक्त_coherent(bpmp->dev, datasize, datavirt, dataphys);
-मुक्त_namebuf:
-	dma_मुक्त_coherent(bpmp->dev, namesize, namevirt, namephys);
+	dma_free_coherent(bpmp->dev, datasize, datavirt, dataphys);
+free_namebuf:
+	dma_free_coherent(bpmp->dev, namesize, namevirt, namephys);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक debugfs_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस single_खोलो_size(file, debugfs_show, file, SZ_128K);
-पूर्ण
+static int debugfs_open(struct inode *inode, struct file *file)
+{
+	return single_open_size(file, debugfs_show, file, SZ_128K);
+}
 
-अटल sमाप_प्रकार debugfs_store(काष्ठा file *file, स्थिर अक्षर __user *buf,
-		माप_प्रकार count, loff_t *f_pos)
-अणु
-	काष्ठा inode *inode = file_inode(file);
-	काष्ठा tegra_bpmp *bpmp = inode->i_निजी;
-	स्थिर माप_प्रकार datasize = count;
-	स्थिर माप_प्रकार namesize = SZ_256;
-	व्योम *datavirt, *namevirt;
+static ssize_t debugfs_store(struct file *file, const char __user *buf,
+		size_t count, loff_t *f_pos)
+{
+	struct inode *inode = file_inode(file);
+	struct tegra_bpmp *bpmp = inode->i_private;
+	const size_t datasize = count;
+	const size_t namesize = SZ_256;
+	void *datavirt, *namevirt;
 	dma_addr_t dataphys, namephys;
-	अक्षर fnamebuf[256];
-	स्थिर अक्षर *filename;
-	माप_प्रकार len;
-	पूर्णांक err;
+	char fnamebuf[256];
+	const char *filename;
+	size_t len;
+	int err;
 
-	filename = get_filename(bpmp, file, fnamebuf, माप(fnamebuf));
-	अगर (!filename)
-		वापस -ENOENT;
+	filename = get_filename(bpmp, file, fnamebuf, sizeof(fnamebuf));
+	if (!filename)
+		return -ENOENT;
 
 	namevirt = dma_alloc_coherent(bpmp->dev, namesize, &namephys,
 				      GFP_KERNEL | GFP_DMA32);
-	अगर (!namevirt)
-		वापस -ENOMEM;
+	if (!namevirt)
+		return -ENOMEM;
 
 	datavirt = dma_alloc_coherent(bpmp->dev, datasize, &dataphys,
 				      GFP_KERNEL | GFP_DMA32);
-	अगर (!datavirt) अणु
+	if (!datavirt) {
 		err = -ENOMEM;
-		जाओ मुक्त_namebuf;
-	पूर्ण
+		goto free_namebuf;
+	}
 
-	len = म_माप(filename);
-	म_नकलन(namevirt, filename, namesize);
+	len = strlen(filename);
+	strncpy(namevirt, filename, namesize);
 
-	अगर (copy_from_user(datavirt, buf, count)) अणु
+	if (copy_from_user(datavirt, buf, count)) {
 		err = -EFAULT;
-		जाओ मुक्त_databuf;
-	पूर्ण
+		goto free_databuf;
+	}
 
-	err = mrq_debugfs_ग_लिखो(bpmp, namephys, len, dataphys,
+	err = mrq_debugfs_write(bpmp, namephys, len, dataphys,
 				count);
 
-मुक्त_databuf:
-	dma_मुक्त_coherent(bpmp->dev, datasize, datavirt, dataphys);
-मुक्त_namebuf:
-	dma_मुक्त_coherent(bpmp->dev, namesize, namevirt, namephys);
+free_databuf:
+	dma_free_coherent(bpmp->dev, datasize, datavirt, dataphys);
+free_namebuf:
+	dma_free_coherent(bpmp->dev, namesize, namevirt, namephys);
 
-	वापस err ?: count;
-पूर्ण
+	return err ?: count;
+}
 
-अटल स्थिर काष्ठा file_operations debugfs_fops = अणु
-	.खोलो		= debugfs_खोलो,
-	.पढ़ो		= seq_पढ़ो,
+static const struct file_operations debugfs_fops = {
+	.open		= debugfs_open,
+	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.ग_लिखो		= debugfs_store,
+	.write		= debugfs_store,
 	.release	= single_release,
-पूर्ण;
+};
 
-अटल पूर्णांक bpmp_populate_dir(काष्ठा tegra_bpmp *bpmp, काष्ठा seqbuf *seqbuf,
-			     काष्ठा dentry *parent, uपूर्णांक32_t depth)
-अणु
-	पूर्णांक err;
-	uपूर्णांक32_t d, t;
-	स्थिर अक्षर *name;
-	काष्ठा dentry *dentry;
+static int bpmp_populate_dir(struct tegra_bpmp *bpmp, struct seqbuf *seqbuf,
+			     struct dentry *parent, uint32_t depth)
+{
+	int err;
+	uint32_t d, t;
+	const char *name;
+	struct dentry *dentry;
 
-	जबतक (!seqbuf_eof(seqbuf)) अणु
-		err = seqbuf_पढ़ो_u32(seqbuf, &d);
-		अगर (err < 0)
-			वापस err;
+	while (!seqbuf_eof(seqbuf)) {
+		err = seqbuf_read_u32(seqbuf, &d);
+		if (err < 0)
+			return err;
 
-		अगर (d < depth) अणु
+		if (d < depth) {
 			seqbuf_seek(seqbuf, -4);
 			/* go up a level */
-			वापस 0;
-		पूर्ण अन्यथा अगर (d != depth) अणु
-			/* malक्रमmed data received from BPMP */
-			वापस -EIO;
-		पूर्ण
+			return 0;
+		} else if (d != depth) {
+			/* malformed data received from BPMP */
+			return -EIO;
+		}
 
-		err = seqbuf_पढ़ो_u32(seqbuf, &t);
-		अगर (err < 0)
-			वापस err;
-		err = seqbuf_पढ़ो_str(seqbuf, &name);
-		अगर (err < 0)
-			वापस err;
+		err = seqbuf_read_u32(seqbuf, &t);
+		if (err < 0)
+			return err;
+		err = seqbuf_read_str(seqbuf, &name);
+		if (err < 0)
+			return err;
 
-		अगर (t & DEBUGFS_S_ISसूची) अणु
+		if (t & DEBUGFS_S_ISDIR) {
 			dentry = debugfs_create_dir(name, parent);
-			अगर (!dentry)
-				वापस -ENOMEM;
+			if (!dentry)
+				return -ENOMEM;
 			err = bpmp_populate_dir(bpmp, seqbuf, dentry, depth+1);
-			अगर (err < 0)
-				वापस err;
-		पूर्ण अन्यथा अणु
+			if (err < 0)
+				return err;
+		} else {
 			umode_t mode;
 
 			mode = t & DEBUGFS_S_IRUSR ? S_IRUSR : 0;
@@ -694,74 +693,74 @@ out:
 			dentry = debugfs_create_file(name, mode,
 						     parent, bpmp,
 						     &debugfs_fops);
-			अगर (!dentry)
-				वापस -ENOMEM;
-		पूर्ण
-	पूर्ण
+			if (!dentry)
+				return -ENOMEM;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bpmp_populate_debugfs_shmem(काष्ठा tegra_bpmp *bpmp)
-अणु
-	काष्ठा seqbuf seqbuf;
-	स्थिर माप_प्रकार sz = SZ_512K;
+static int bpmp_populate_debugfs_shmem(struct tegra_bpmp *bpmp)
+{
+	struct seqbuf seqbuf;
+	const size_t sz = SZ_512K;
 	dma_addr_t phys;
-	माप_प्रकार nbytes;
-	व्योम *virt;
-	पूर्णांक err;
+	size_t nbytes;
+	void *virt;
+	int err;
 
 	virt = dma_alloc_coherent(bpmp->dev, sz, &phys,
 				  GFP_KERNEL | GFP_DMA32);
-	अगर (!virt)
-		वापस -ENOMEM;
+	if (!virt)
+		return -ENOMEM;
 
 	err = mrq_debugfs_dumpdir(bpmp, phys, sz, &nbytes);
-	अगर (err < 0) अणु
-		जाओ मुक्त;
-	पूर्ण अन्यथा अगर (nbytes > sz) अणु
+	if (err < 0) {
+		goto free;
+	} else if (nbytes > sz) {
 		err = -EINVAL;
-		जाओ मुक्त;
-	पूर्ण
+		goto free;
+	}
 
 	seqbuf_init(&seqbuf, virt, nbytes);
 	err = bpmp_populate_dir(bpmp, &seqbuf, bpmp->debugfs_mirror, 0);
-मुक्त:
-	dma_मुक्त_coherent(bpmp->dev, sz, virt, phys);
+free:
+	dma_free_coherent(bpmp->dev, sz, virt, phys);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक tegra_bpmp_init_debugfs(काष्ठा tegra_bpmp *bpmp)
-अणु
-	काष्ठा dentry *root;
+int tegra_bpmp_init_debugfs(struct tegra_bpmp *bpmp)
+{
+	struct dentry *root;
 	bool inband;
-	पूर्णांक err;
+	int err;
 
 	inband = tegra_bpmp_mrq_is_supported(bpmp, MRQ_DEBUG);
 
-	अगर (!inband && !tegra_bpmp_mrq_is_supported(bpmp, MRQ_DEBUGFS))
-		वापस 0;
+	if (!inband && !tegra_bpmp_mrq_is_supported(bpmp, MRQ_DEBUGFS))
+		return 0;
 
-	root = debugfs_create_dir("bpmp", शून्य);
-	अगर (!root)
-		वापस -ENOMEM;
+	root = debugfs_create_dir("bpmp", NULL);
+	if (!root)
+		return -ENOMEM;
 
 	bpmp->debugfs_mirror = debugfs_create_dir("debug", root);
-	अगर (!bpmp->debugfs_mirror) अणु
+	if (!bpmp->debugfs_mirror) {
 		err = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (inband)
+	if (inband)
 		err = bpmp_populate_debugfs_inband(bpmp, bpmp->debugfs_mirror,
 						   "/");
-	अन्यथा
+	else
 		err = bpmp_populate_debugfs_shmem(bpmp);
 
 out:
-	अगर (err < 0)
-		debugfs_हटाओ_recursive(root);
+	if (err < 0)
+		debugfs_remove_recursive(root);
 
-	वापस err;
-पूर्ण
+	return err;
+}

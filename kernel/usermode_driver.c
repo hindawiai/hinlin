@@ -1,192 +1,191 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * umd - User mode driver support
  */
-#समावेश <linux/shmem_fs.h>
-#समावेश <linux/pipe_fs_i.h>
-#समावेश <linux/mount.h>
-#समावेश <linux/fs_काष्ठा.h>
-#समावेश <linux/task_work.h>
-#समावेश <linux/usermode_driver.h>
+#include <linux/shmem_fs.h>
+#include <linux/pipe_fs_i.h>
+#include <linux/mount.h>
+#include <linux/fs_struct.h>
+#include <linux/task_work.h>
+#include <linux/usermode_driver.h>
 
-अटल काष्ठा vfsmount *blob_to_mnt(स्थिर व्योम *data, माप_प्रकार len, स्थिर अक्षर *name)
-अणु
-	काष्ठा file_प्रणाली_type *type;
-	काष्ठा vfsmount *mnt;
-	काष्ठा file *file;
-	sमाप_प्रकार written;
+static struct vfsmount *blob_to_mnt(const void *data, size_t len, const char *name)
+{
+	struct file_system_type *type;
+	struct vfsmount *mnt;
+	struct file *file;
+	ssize_t written;
 	loff_t pos = 0;
 
 	type = get_fs_type("tmpfs");
-	अगर (!type)
-		वापस ERR_PTR(-ENODEV);
+	if (!type)
+		return ERR_PTR(-ENODEV);
 
 	mnt = kern_mount(type);
-	put_fileप्रणाली(type);
-	अगर (IS_ERR(mnt))
-		वापस mnt;
+	put_filesystem(type);
+	if (IS_ERR(mnt))
+		return mnt;
 
-	file = file_खोलो_root(mnt->mnt_root, mnt, name, O_CREAT | O_WRONLY, 0700);
-	अगर (IS_ERR(file)) अणु
+	file = file_open_root(mnt->mnt_root, mnt, name, O_CREAT | O_WRONLY, 0700);
+	if (IS_ERR(file)) {
 		mntput(mnt);
-		वापस ERR_CAST(file);
-	पूर्ण
+		return ERR_CAST(file);
+	}
 
-	written = kernel_ग_लिखो(file, data, len, &pos);
-	अगर (written != len) अणु
-		पूर्णांक err = written;
-		अगर (err >= 0)
+	written = kernel_write(file, data, len, &pos);
+	if (written != len) {
+		int err = written;
+		if (err >= 0)
 			err = -ENOMEM;
-		filp_बंद(file, शून्य);
+		filp_close(file, NULL);
 		mntput(mnt);
-		वापस ERR_PTR(err);
-	पूर्ण
+		return ERR_PTR(err);
+	}
 
 	fput(file);
 
-	/* Flush delayed fput so exec can खोलो the file पढ़ो-only */
+	/* Flush delayed fput so exec can open the file read-only */
 	flush_delayed_fput();
 	task_work_run();
-	वापस mnt;
-पूर्ण
+	return mnt;
+}
 
 /**
- * umd_load_blob - Remember a blob of bytes क्रम विभाजन_usermode_driver
- * @info: inक्रमmation about usermode driver
+ * umd_load_blob - Remember a blob of bytes for fork_usermode_driver
+ * @info: information about usermode driver
  * @data: a blob of bytes that can be executed as a file
  * @len:  The lentgh of the blob
  *
  */
-पूर्णांक umd_load_blob(काष्ठा umd_info *info, स्थिर व्योम *data, माप_प्रकार len)
-अणु
-	काष्ठा vfsmount *mnt;
+int umd_load_blob(struct umd_info *info, const void *data, size_t len)
+{
+	struct vfsmount *mnt;
 
-	अगर (WARN_ON_ONCE(info->wd.dentry || info->wd.mnt))
-		वापस -EBUSY;
+	if (WARN_ON_ONCE(info->wd.dentry || info->wd.mnt))
+		return -EBUSY;
 
 	mnt = blob_to_mnt(data, len, info->driver_name);
-	अगर (IS_ERR(mnt))
-		वापस PTR_ERR(mnt);
+	if (IS_ERR(mnt))
+		return PTR_ERR(mnt);
 
 	info->wd.mnt = mnt;
 	info->wd.dentry = mnt->mnt_root;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(umd_load_blob);
 
 /**
  * umd_unload_blob - Disassociate @info from a previously loaded blob
- * @info: inक्रमmation about usermode driver
+ * @info: information about usermode driver
  *
  */
-पूर्णांक umd_unload_blob(काष्ठा umd_info *info)
-अणु
-	अगर (WARN_ON_ONCE(!info->wd.mnt ||
+int umd_unload_blob(struct umd_info *info)
+{
+	if (WARN_ON_ONCE(!info->wd.mnt ||
 			 !info->wd.dentry ||
 			 info->wd.mnt->mnt_root != info->wd.dentry))
-		वापस -EINVAL;
+		return -EINVAL;
 
 	kern_unmount(info->wd.mnt);
-	info->wd.mnt = शून्य;
-	info->wd.dentry = शून्य;
-	वापस 0;
-पूर्ण
+	info->wd.mnt = NULL;
+	info->wd.dentry = NULL;
+	return 0;
+}
 EXPORT_SYMBOL_GPL(umd_unload_blob);
 
-अटल पूर्णांक umd_setup(काष्ठा subprocess_info *info, काष्ठा cred *new)
-अणु
-	काष्ठा umd_info *umd_info = info->data;
-	काष्ठा file *from_umh[2];
-	काष्ठा file *to_umh[2];
-	पूर्णांक err;
+static int umd_setup(struct subprocess_info *info, struct cred *new)
+{
+	struct umd_info *umd_info = info->data;
+	struct file *from_umh[2];
+	struct file *to_umh[2];
+	int err;
 
 	/* create pipe to send data to umh */
 	err = create_pipe_files(to_umh, 0);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 	err = replace_fd(0, to_umh[0], 0);
 	fput(to_umh[0]);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		fput(to_umh[1]);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	/* create pipe to receive data from umh */
 	err = create_pipe_files(from_umh, 0);
-	अगर (err) अणु
+	if (err) {
 		fput(to_umh[1]);
-		replace_fd(0, शून्य, 0);
-		वापस err;
-	पूर्ण
+		replace_fd(0, NULL, 0);
+		return err;
+	}
 	err = replace_fd(1, from_umh[1], 0);
 	fput(from_umh[1]);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		fput(to_umh[1]);
-		replace_fd(0, शून्य, 0);
+		replace_fd(0, NULL, 0);
 		fput(from_umh[0]);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	set_fs_pwd(current->fs, &umd_info->wd);
 	umd_info->pipe_to_umh = to_umh[1];
 	umd_info->pipe_from_umh = from_umh[0];
 	umd_info->tgid = get_pid(task_tgid(current));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम umd_cleanup(काष्ठा subprocess_info *info)
-अणु
-	काष्ठा umd_info *umd_info = info->data;
+static void umd_cleanup(struct subprocess_info *info)
+{
+	struct umd_info *umd_info = info->data;
 
-	/* cleanup अगर umh_setup() was successful but exec failed */
-	अगर (info->retval)
+	/* cleanup if umh_setup() was successful but exec failed */
+	if (info->retval)
 		umd_cleanup_helper(umd_info);
-पूर्ण
+}
 
 /**
  * umd_cleanup_helper - release the resources which were allocated in umd_setup
- * @info: inक्रमmation about usermode driver
+ * @info: information about usermode driver
  */
-व्योम umd_cleanup_helper(काष्ठा umd_info *info)
-अणु
+void umd_cleanup_helper(struct umd_info *info)
+{
 	fput(info->pipe_to_umh);
 	fput(info->pipe_from_umh);
 	put_pid(info->tgid);
-	info->tgid = शून्य;
-पूर्ण
+	info->tgid = NULL;
+}
 EXPORT_SYMBOL_GPL(umd_cleanup_helper);
 
 /**
- * विभाजन_usermode_driver - विभाजन a usermode driver
- * @info: inक्रमmation about usermode driver (shouldn't be शून्य)
+ * fork_usermode_driver - fork a usermode driver
+ * @info: information about usermode driver (shouldn't be NULL)
  *
  * Returns either negative error or zero which indicates success in
- * executing a usermode driver. In such हाल 'struct umd_info *info'
+ * executing a usermode driver. In such case 'struct umd_info *info'
  * is populated with two pipes and a tgid of the process. The caller is
- * responsible क्रम health check of the user process, समाप्तing it via
- * tgid, and closing the pipes when user process is no दीर्घer needed.
+ * responsible for health check of the user process, killing it via
+ * tgid, and closing the pipes when user process is no longer needed.
  */
-पूर्णांक विभाजन_usermode_driver(काष्ठा umd_info *info)
-अणु
-	काष्ठा subprocess_info *sub_info;
-	स्थिर अक्षर *argv[] = अणु info->driver_name, शून्य पूर्ण;
-	पूर्णांक err;
+int fork_usermode_driver(struct umd_info *info)
+{
+	struct subprocess_info *sub_info;
+	const char *argv[] = { info->driver_name, NULL };
+	int err;
 
-	अगर (WARN_ON_ONCE(info->tgid))
-		वापस -EBUSY;
+	if (WARN_ON_ONCE(info->tgid))
+		return -EBUSY;
 
 	err = -ENOMEM;
 	sub_info = call_usermodehelper_setup(info->driver_name,
-					     (अक्षर **)argv, शून्य, GFP_KERNEL,
+					     (char **)argv, NULL, GFP_KERNEL,
 					     umd_setup, umd_cleanup, info);
-	अगर (!sub_info)
-		जाओ out;
+	if (!sub_info)
+		goto out;
 
 	err = call_usermodehelper_exec(sub_info, UMH_WAIT_EXEC);
 out:
-	वापस err;
-पूर्ण
-EXPORT_SYMBOL_GPL(विभाजन_usermode_driver);
+	return err;
+}
+EXPORT_SYMBOL_GPL(fork_usermode_driver);
 
 

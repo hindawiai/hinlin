@@ -1,121 +1,120 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* vmu-flash.c
- * Driver क्रम SEGA Dreamcast Visual Memory Unit
+ * Driver for SEGA Dreamcast Visual Memory Unit
  *
  * Copyright (c) Adrian McMenamin 2002 - 2009
  * Copyright (c) Paul Mundt 2001
  */
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/maple.h>
-#समावेश <linux/mtd/mtd.h>
-#समावेश <linux/mtd/map.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/sched.h>
+#include <linux/delay.h>
+#include <linux/maple.h>
+#include <linux/mtd/mtd.h>
+#include <linux/mtd/map.h>
 
-काष्ठा vmu_cache अणु
-	अचिन्हित अक्षर *buffer;		/* Cache */
-	अचिन्हित पूर्णांक block;		/* Which block was cached */
-	अचिन्हित दीर्घ jअगरfies_atc;	/* When was it cached? */
-	पूर्णांक valid;
-पूर्ण;
+struct vmu_cache {
+	unsigned char *buffer;		/* Cache */
+	unsigned int block;		/* Which block was cached */
+	unsigned long jiffies_atc;	/* When was it cached? */
+	int valid;
+};
 
-काष्ठा mdev_part अणु
-	काष्ठा maple_device *mdev;
-	पूर्णांक partition;
-पूर्ण;
+struct mdev_part {
+	struct maple_device *mdev;
+	int partition;
+};
 
-काष्ठा vmupart अणु
+struct vmupart {
 	u16 user_blocks;
 	u16 root_block;
 	u16 numblocks;
-	अक्षर *name;
-	काष्ठा vmu_cache *pcache;
-पूर्ण;
+	char *name;
+	struct vmu_cache *pcache;
+};
 
-काष्ठा memcard अणु
+struct memcard {
 	u16 tempA;
 	u16 tempB;
 	u32 partitions;
 	u32 blocklen;
-	u32 ग_लिखोcnt;
-	u32 पढ़ोcnt;
+	u32 writecnt;
+	u32 readcnt;
 	u32 removable;
-	पूर्णांक partition;
-	पूर्णांक पढ़ो;
-	अचिन्हित अक्षर *blockपढ़ो;
-	काष्ठा vmupart *parts;
-	काष्ठा mtd_info *mtd;
-पूर्ण;
+	int partition;
+	int read;
+	unsigned char *blockread;
+	struct vmupart *parts;
+	struct mtd_info *mtd;
+};
 
-काष्ठा vmu_block अणु
-	अचिन्हित पूर्णांक num; /* block number */
-	अचिन्हित पूर्णांक ofs; /* block offset */
-पूर्ण;
+struct vmu_block {
+	unsigned int num; /* block number */
+	unsigned int ofs; /* block offset */
+};
 
-अटल काष्ठा vmu_block *ofs_to_block(अचिन्हित दीर्घ src_ofs,
-	काष्ठा mtd_info *mtd, पूर्णांक partition)
-अणु
-	काष्ठा vmu_block *vblock;
-	काष्ठा maple_device *mdev;
-	काष्ठा memcard *card;
-	काष्ठा mdev_part *mpart;
-	पूर्णांक num;
+static struct vmu_block *ofs_to_block(unsigned long src_ofs,
+	struct mtd_info *mtd, int partition)
+{
+	struct vmu_block *vblock;
+	struct maple_device *mdev;
+	struct memcard *card;
+	struct mdev_part *mpart;
+	int num;
 
 	mpart = mtd->priv;
 	mdev = mpart->mdev;
 	card = maple_get_drvdata(mdev);
 
-	अगर (src_ofs >= card->parts[partition].numblocks * card->blocklen)
-		जाओ failed;
+	if (src_ofs >= card->parts[partition].numblocks * card->blocklen)
+		goto failed;
 
 	num = src_ofs / card->blocklen;
-	अगर (num > card->parts[partition].numblocks)
-		जाओ failed;
+	if (num > card->parts[partition].numblocks)
+		goto failed;
 
-	vblock = kदो_स्मृति(माप(काष्ठा vmu_block), GFP_KERNEL);
-	अगर (!vblock)
-		जाओ failed;
+	vblock = kmalloc(sizeof(struct vmu_block), GFP_KERNEL);
+	if (!vblock)
+		goto failed;
 
 	vblock->num = num;
 	vblock->ofs = src_ofs % card->blocklen;
-	वापस vblock;
+	return vblock;
 
 failed:
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-/* Maple bus callback function क्रम पढ़ोs */
-अटल व्योम vmu_blockपढ़ो(काष्ठा mapleq *mq)
-अणु
-	काष्ठा maple_device *mdev;
-	काष्ठा memcard *card;
+/* Maple bus callback function for reads */
+static void vmu_blockread(struct mapleq *mq)
+{
+	struct maple_device *mdev;
+	struct memcard *card;
 
 	mdev = mq->dev;
 	card = maple_get_drvdata(mdev);
-	/* copy the पढ़ो in data */
+	/* copy the read in data */
 
-	अगर (unlikely(!card->blockपढ़ो))
-		वापस;
+	if (unlikely(!card->blockread))
+		return;
 
-	स_नकल(card->blockपढ़ो, mq->recvbuf->buf + 12,
-		card->blocklen/card->पढ़ोcnt);
+	memcpy(card->blockread, mq->recvbuf->buf + 12,
+		card->blocklen/card->readcnt);
 
-पूर्ण
+}
 
-/* Interface with maple bus to पढ़ो blocks
+/* Interface with maple bus to read blocks
  * caching the results so that other parts
- * of the driver can access block पढ़ोs */
-अटल पूर्णांक maple_vmu_पढ़ो_block(अचिन्हित पूर्णांक num, अचिन्हित अक्षर *buf,
-	काष्ठा mtd_info *mtd)
-अणु
-	काष्ठा memcard *card;
-	काष्ठा mdev_part *mpart;
-	काष्ठा maple_device *mdev;
-	पूर्णांक partition, error = 0, x, रुको;
-	अचिन्हित अक्षर *blockपढ़ो = शून्य;
-	काष्ठा vmu_cache *pcache;
+ * of the driver can access block reads */
+static int maple_vmu_read_block(unsigned int num, unsigned char *buf,
+	struct mtd_info *mtd)
+{
+	struct memcard *card;
+	struct mdev_part *mpart;
+	struct maple_device *mdev;
+	int partition, error = 0, x, wait;
+	unsigned char *blockread = NULL;
+	struct vmu_cache *pcache;
 	__be32 sendbuf;
 
 	mpart = mtd->priv;
@@ -125,112 +124,112 @@ failed:
 	pcache = card->parts[partition].pcache;
 	pcache->valid = 0;
 
-	/* prepare the cache क्रम this block */
-	अगर (!pcache->buffer) अणु
-		pcache->buffer = kदो_स्मृति(card->blocklen, GFP_KERNEL);
-		अगर (!pcache->buffer) अणु
+	/* prepare the cache for this block */
+	if (!pcache->buffer) {
+		pcache->buffer = kmalloc(card->blocklen, GFP_KERNEL);
+		if (!pcache->buffer) {
 			dev_err(&mdev->dev, "VMU at (%d, %d) - read fails due"
 				" to lack of memory\n", mdev->port,
 				mdev->unit);
 			error = -ENOMEM;
-			जाओ outB;
-		पूर्ण
-	पूर्ण
+			goto outB;
+		}
+	}
 
 	/*
 	* Reads may be phased - again the hardware spec
 	* supports this - though may not be any devices in
 	* the wild that implement it, but we will here
 	*/
-	क्रम (x = 0; x < card->पढ़ोcnt; x++) अणु
+	for (x = 0; x < card->readcnt; x++) {
 		sendbuf = cpu_to_be32(partition << 24 | x << 16 | num);
 
-		अगर (atomic_पढ़ो(&mdev->busy) == 1) अणु
-			रुको_event_पूर्णांकerruptible_समयout(mdev->maple_रुको,
-				atomic_पढ़ो(&mdev->busy) == 0, HZ);
-			अगर (atomic_पढ़ो(&mdev->busy) == 1) अणु
+		if (atomic_read(&mdev->busy) == 1) {
+			wait_event_interruptible_timeout(mdev->maple_wait,
+				atomic_read(&mdev->busy) == 0, HZ);
+			if (atomic_read(&mdev->busy) == 1) {
 				dev_notice(&mdev->dev, "VMU at (%d, %d)"
 					" is busy\n", mdev->port, mdev->unit);
 				error = -EAGAIN;
-				जाओ outB;
-			पूर्ण
-		पूर्ण
+				goto outB;
+			}
+		}
 
 		atomic_set(&mdev->busy, 1);
-		blockपढ़ो = kदो_स्मृति(card->blocklen/card->पढ़ोcnt, GFP_KERNEL);
-		अगर (!blockपढ़ो) अणु
+		blockread = kmalloc(card->blocklen/card->readcnt, GFP_KERNEL);
+		if (!blockread) {
 			error = -ENOMEM;
 			atomic_set(&mdev->busy, 0);
-			जाओ outB;
-		पूर्ण
-		card->blockपढ़ो = blockपढ़ो;
+			goto outB;
+		}
+		card->blockread = blockread;
 
-		maple_अ_लोond_callback(mdev, vmu_blockपढ़ो, 0,
+		maple_getcond_callback(mdev, vmu_blockread, 0,
 			MAPLE_FUNC_MEMCARD);
 		error = maple_add_packet(mdev, MAPLE_FUNC_MEMCARD,
 				MAPLE_COMMAND_BREAD, 2, &sendbuf);
-		/* Very दीर्घ समयouts seem to be needed when box is stressed */
-		रुको = रुको_event_पूर्णांकerruptible_समयout(mdev->maple_रुको,
-			(atomic_पढ़ो(&mdev->busy) == 0 ||
-			atomic_पढ़ो(&mdev->busy) == 2), HZ * 3);
+		/* Very long timeouts seem to be needed when box is stressed */
+		wait = wait_event_interruptible_timeout(mdev->maple_wait,
+			(atomic_read(&mdev->busy) == 0 ||
+			atomic_read(&mdev->busy) == 2), HZ * 3);
 		/*
-		* MTD layer करोes not handle hotplugging well
-		* so have to वापस errors when VMU is unplugged
-		* in the middle of a पढ़ो (busy == 2)
+		* MTD layer does not handle hotplugging well
+		* so have to return errors when VMU is unplugged
+		* in the middle of a read (busy == 2)
 		*/
-		अगर (error || atomic_पढ़ो(&mdev->busy) == 2) अणु
-			अगर (atomic_पढ़ो(&mdev->busy) == 2)
+		if (error || atomic_read(&mdev->busy) == 2) {
+			if (atomic_read(&mdev->busy) == 2)
 				error = -ENXIO;
 			atomic_set(&mdev->busy, 0);
-			card->blockपढ़ो = शून्य;
-			जाओ outA;
-		पूर्ण
-		अगर (रुको == 0 || रुको == -ERESTARTSYS) अणु
-			card->blockपढ़ो = शून्य;
+			card->blockread = NULL;
+			goto outA;
+		}
+		if (wait == 0 || wait == -ERESTARTSYS) {
+			card->blockread = NULL;
 			atomic_set(&mdev->busy, 0);
 			error = -EIO;
 			list_del_init(&(mdev->mq->list));
-			kमुक्त(mdev->mq->sendbuf);
-			mdev->mq->sendbuf = शून्य;
-			अगर (रुको == -ERESTARTSYS) अणु
+			kfree(mdev->mq->sendbuf);
+			mdev->mq->sendbuf = NULL;
+			if (wait == -ERESTARTSYS) {
 				dev_warn(&mdev->dev, "VMU read on (%d, %d)"
 					" interrupted on block 0x%X\n",
 					mdev->port, mdev->unit, num);
-			पूर्ण अन्यथा
+			} else
 				dev_notice(&mdev->dev, "VMU read on (%d, %d)"
 					" timed out on block 0x%X\n",
 					mdev->port, mdev->unit, num);
-			जाओ outA;
-		पूर्ण
+			goto outA;
+		}
 
-		स_नकल(buf + (card->blocklen/card->पढ़ोcnt) * x, blockपढ़ो,
-			card->blocklen/card->पढ़ोcnt);
+		memcpy(buf + (card->blocklen/card->readcnt) * x, blockread,
+			card->blocklen/card->readcnt);
 
-		स_नकल(pcache->buffer + (card->blocklen/card->पढ़ोcnt) * x,
-			card->blockपढ़ो, card->blocklen/card->पढ़ोcnt);
-		card->blockपढ़ो = शून्य;
+		memcpy(pcache->buffer + (card->blocklen/card->readcnt) * x,
+			card->blockread, card->blocklen/card->readcnt);
+		card->blockread = NULL;
 		pcache->block = num;
-		pcache->jअगरfies_atc = jअगरfies;
+		pcache->jiffies_atc = jiffies;
 		pcache->valid = 1;
-		kमुक्त(blockपढ़ो);
-	पूर्ण
+		kfree(blockread);
+	}
 
-	वापस error;
+	return error;
 
 outA:
-	kमुक्त(blockपढ़ो);
+	kfree(blockread);
 outB:
-	वापस error;
-पूर्ण
+	return error;
+}
 
-/* communicate with maple bus क्रम phased writing */
-अटल पूर्णांक maple_vmu_ग_लिखो_block(अचिन्हित पूर्णांक num, स्थिर अचिन्हित अक्षर *buf,
-	काष्ठा mtd_info *mtd)
-अणु
-	काष्ठा memcard *card;
-	काष्ठा mdev_part *mpart;
-	काष्ठा maple_device *mdev;
-	पूर्णांक partition, error, locking, x, phaselen, रुको;
+/* communicate with maple bus for phased writing */
+static int maple_vmu_write_block(unsigned int num, const unsigned char *buf,
+	struct mtd_info *mtd)
+{
+	struct memcard *card;
+	struct mdev_part *mpart;
+	struct maple_device *mdev;
+	int partition, error, locking, x, phaselen, wait;
 	__be32 *sendbuf;
 
 	mpart = mtd->priv;
@@ -238,77 +237,77 @@ outB:
 	partition = mpart->partition;
 	card = maple_get_drvdata(mdev);
 
-	phaselen = card->blocklen/card->ग_लिखोcnt;
+	phaselen = card->blocklen/card->writecnt;
 
-	sendbuf = kदो_स्मृति(phaselen + 4, GFP_KERNEL);
-	अगर (!sendbuf) अणु
+	sendbuf = kmalloc(phaselen + 4, GFP_KERNEL);
+	if (!sendbuf) {
 		error = -ENOMEM;
-		जाओ fail_nosendbuf;
-	पूर्ण
-	क्रम (x = 0; x < card->ग_लिखोcnt; x++) अणु
+		goto fail_nosendbuf;
+	}
+	for (x = 0; x < card->writecnt; x++) {
 		sendbuf[0] = cpu_to_be32(partition << 24 | x << 16 | num);
-		स_नकल(&sendbuf[1], buf + phaselen * x, phaselen);
-		/* रुको until the device is not busy करोing something अन्यथा
-		* or 1 second - which ever is दीर्घer */
-		अगर (atomic_पढ़ो(&mdev->busy) == 1) अणु
-			रुको_event_पूर्णांकerruptible_समयout(mdev->maple_रुको,
-				atomic_पढ़ो(&mdev->busy) == 0, HZ);
-			अगर (atomic_पढ़ो(&mdev->busy) == 1) अणु
+		memcpy(&sendbuf[1], buf + phaselen * x, phaselen);
+		/* wait until the device is not busy doing something else
+		* or 1 second - which ever is longer */
+		if (atomic_read(&mdev->busy) == 1) {
+			wait_event_interruptible_timeout(mdev->maple_wait,
+				atomic_read(&mdev->busy) == 0, HZ);
+			if (atomic_read(&mdev->busy) == 1) {
 				error = -EBUSY;
 				dev_notice(&mdev->dev, "VMU write at (%d, %d)"
 					"failed - device is busy\n",
 					mdev->port, mdev->unit);
-				जाओ fail_nolock;
-			पूर्ण
-		पूर्ण
+				goto fail_nolock;
+			}
+		}
 		atomic_set(&mdev->busy, 1);
 
 		locking = maple_add_packet(mdev, MAPLE_FUNC_MEMCARD,
 			MAPLE_COMMAND_BWRITE, phaselen / 4 + 2, sendbuf);
-		रुको = रुको_event_पूर्णांकerruptible_समयout(mdev->maple_रुको,
-			atomic_पढ़ो(&mdev->busy) == 0, HZ/10);
-		अगर (locking) अणु
+		wait = wait_event_interruptible_timeout(mdev->maple_wait,
+			atomic_read(&mdev->busy) == 0, HZ/10);
+		if (locking) {
 			error = -EIO;
 			atomic_set(&mdev->busy, 0);
-			जाओ fail_nolock;
-		पूर्ण
-		अगर (atomic_पढ़ो(&mdev->busy) == 2) अणु
+			goto fail_nolock;
+		}
+		if (atomic_read(&mdev->busy) == 2) {
 			atomic_set(&mdev->busy, 0);
-		पूर्ण अन्यथा अगर (रुको == 0 || रुको == -ERESTARTSYS) अणु
+		} else if (wait == 0 || wait == -ERESTARTSYS) {
 			error = -EIO;
 			dev_warn(&mdev->dev, "Write at (%d, %d) of block"
 				" 0x%X at phase %d failed: could not"
 				" communicate with VMU", mdev->port,
 				mdev->unit, num, x);
 			atomic_set(&mdev->busy, 0);
-			kमुक्त(mdev->mq->sendbuf);
-			mdev->mq->sendbuf = शून्य;
+			kfree(mdev->mq->sendbuf);
+			mdev->mq->sendbuf = NULL;
 			list_del_init(&(mdev->mq->list));
-			जाओ fail_nolock;
-		पूर्ण
-	पूर्ण
-	kमुक्त(sendbuf);
+			goto fail_nolock;
+		}
+	}
+	kfree(sendbuf);
 
-	वापस card->blocklen;
+	return card->blocklen;
 
 fail_nolock:
-	kमुक्त(sendbuf);
+	kfree(sendbuf);
 fail_nosendbuf:
 	dev_err(&mdev->dev, "VMU (%d, %d): write failed\n", mdev->port,
 		mdev->unit);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-/* mtd function to simulate पढ़ोing byte by byte */
-अटल अचिन्हित अक्षर vmu_flash_पढ़ो_अक्षर(अचिन्हित दीर्घ ofs, पूर्णांक *retval,
-	काष्ठा mtd_info *mtd)
-अणु
-	काष्ठा vmu_block *vblock;
-	काष्ठा memcard *card;
-	काष्ठा mdev_part *mpart;
-	काष्ठा maple_device *mdev;
-	अचिन्हित अक्षर *buf, ret;
-	पूर्णांक partition, error;
+/* mtd function to simulate reading byte by byte */
+static unsigned char vmu_flash_read_char(unsigned long ofs, int *retval,
+	struct mtd_info *mtd)
+{
+	struct vmu_block *vblock;
+	struct memcard *card;
+	struct mdev_part *mpart;
+	struct maple_device *mdev;
+	unsigned char *buf, ret;
+	int partition, error;
 
 	mpart = mtd->priv;
 	mdev = mpart->mdev;
@@ -316,48 +315,48 @@ fail_nosendbuf:
 	card = maple_get_drvdata(mdev);
 	*retval =  0;
 
-	buf = kदो_स्मृति(card->blocklen, GFP_KERNEL);
-	अगर (!buf) अणु
+	buf = kmalloc(card->blocklen, GFP_KERNEL);
+	if (!buf) {
 		*retval = 1;
 		ret = -ENOMEM;
-		जाओ finish;
-	पूर्ण
+		goto finish;
+	}
 
 	vblock = ofs_to_block(ofs, mtd, partition);
-	अगर (!vblock) अणु
+	if (!vblock) {
 		*retval = 3;
 		ret = -ENOMEM;
-		जाओ out_buf;
-	पूर्ण
+		goto out_buf;
+	}
 
-	error = maple_vmu_पढ़ो_block(vblock->num, buf, mtd);
-	अगर (error) अणु
+	error = maple_vmu_read_block(vblock->num, buf, mtd);
+	if (error) {
 		ret = error;
 		*retval = 2;
-		जाओ out_vblock;
-	पूर्ण
+		goto out_vblock;
+	}
 
 	ret = buf[vblock->ofs];
 
 out_vblock:
-	kमुक्त(vblock);
+	kfree(vblock);
 out_buf:
-	kमुक्त(buf);
+	kfree(buf);
 finish:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* mtd higher order function to पढ़ो flash */
-अटल पूर्णांक vmu_flash_पढ़ो(काष्ठा mtd_info *mtd, loff_t from, माप_प्रकार len,
-	माप_प्रकार *retlen,  u_अक्षर *buf)
-अणु
-	काष्ठा maple_device *mdev;
-	काष्ठा memcard *card;
-	काष्ठा mdev_part *mpart;
-	काष्ठा vmu_cache *pcache;
-	काष्ठा vmu_block *vblock;
-	पूर्णांक index = 0, retval, partition, leftover, numblocks;
-	अचिन्हित अक्षर cx;
+/* mtd higher order function to read flash */
+static int vmu_flash_read(struct mtd_info *mtd, loff_t from, size_t len,
+	size_t *retlen,  u_char *buf)
+{
+	struct maple_device *mdev;
+	struct memcard *card;
+	struct mdev_part *mpart;
+	struct vmu_cache *pcache;
+	struct vmu_block *vblock;
+	int index = 0, retval, partition, leftover, numblocks;
+	unsigned char cx;
 
 	mpart = mtd->priv;
 	mdev = mpart->mdev;
@@ -365,65 +364,65 @@ finish:
 	card = maple_get_drvdata(mdev);
 
 	numblocks = card->parts[partition].numblocks;
-	अगर (from + len > numblocks * card->blocklen)
+	if (from + len > numblocks * card->blocklen)
 		len = numblocks * card->blocklen - from;
-	अगर (len == 0)
-		वापस -EIO;
-	/* Have we cached this bit alपढ़ोy? */
+	if (len == 0)
+		return -EIO;
+	/* Have we cached this bit already? */
 	pcache = card->parts[partition].pcache;
-	करो अणु
+	do {
 		vblock =  ofs_to_block(from + index, mtd, partition);
-		अगर (!vblock)
-			वापस -ENOMEM;
-		/* Have we cached this and is the cache valid and समयly? */
-		अगर (pcache->valid &&
-			समय_beक्रमe(jअगरfies, pcache->jअगरfies_atc + HZ) &&
-			(pcache->block == vblock->num)) अणु
-			/* we have cached it, so करो necessary copying */
+		if (!vblock)
+			return -ENOMEM;
+		/* Have we cached this and is the cache valid and timely? */
+		if (pcache->valid &&
+			time_before(jiffies, pcache->jiffies_atc + HZ) &&
+			(pcache->block == vblock->num)) {
+			/* we have cached it, so do necessary copying */
 			leftover = card->blocklen - vblock->ofs;
-			अगर (vblock->ofs + len - index < card->blocklen) अणु
+			if (vblock->ofs + len - index < card->blocklen) {
 				/* only a bit of this block to copy */
-				स_नकल(buf + index,
+				memcpy(buf + index,
 					pcache->buffer + vblock->ofs,
 					len - index);
 				index = len;
-			पूर्ण अन्यथा अणु
-				/* otherwise copy reमुख्यder of whole block */
-				स_नकल(buf + index, pcache->buffer +
+			} else {
+				/* otherwise copy remainder of whole block */
+				memcpy(buf + index, pcache->buffer +
 					vblock->ofs, leftover);
 				index += leftover;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			/*
-			* Not cached so पढ़ो one byte -
+			* Not cached so read one byte -
 			* but cache the rest of the block
 			*/
-			cx = vmu_flash_पढ़ो_अक्षर(from + index, &retval, mtd);
-			अगर (retval) अणु
+			cx = vmu_flash_read_char(from + index, &retval, mtd);
+			if (retval) {
 				*retlen = index;
-				kमुक्त(vblock);
-				वापस cx;
-			पूर्ण
-			स_रखो(buf + index, cx, 1);
+				kfree(vblock);
+				return cx;
+			}
+			memset(buf + index, cx, 1);
 			index++;
-		पूर्ण
-		kमुक्त(vblock);
-	पूर्ण जबतक (len > index);
+		}
+		kfree(vblock);
+	} while (len > index);
 	*retlen = index;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vmu_flash_ग_लिखो(काष्ठा mtd_info *mtd, loff_t to, माप_प्रकार len,
-	माप_प्रकार *retlen, स्थिर u_अक्षर *buf)
-अणु
-	काष्ठा maple_device *mdev;
-	काष्ठा memcard *card;
-	काष्ठा mdev_part *mpart;
-	पूर्णांक index = 0, partition, error = 0, numblocks;
-	काष्ठा vmu_cache *pcache;
-	काष्ठा vmu_block *vblock;
-	अचिन्हित अक्षर *buffer;
+static int vmu_flash_write(struct mtd_info *mtd, loff_t to, size_t len,
+	size_t *retlen, const u_char *buf)
+{
+	struct maple_device *mdev;
+	struct memcard *card;
+	struct mdev_part *mpart;
+	int index = 0, partition, error = 0, numblocks;
+	struct vmu_cache *pcache;
+	struct vmu_block *vblock;
+	unsigned char *buffer;
 
 	mpart = mtd->priv;
 	mdev = mpart->mdev;
@@ -431,87 +430,87 @@ finish:
 	card = maple_get_drvdata(mdev);
 
 	numblocks = card->parts[partition].numblocks;
-	अगर (to + len > numblocks * card->blocklen)
+	if (to + len > numblocks * card->blocklen)
 		len = numblocks * card->blocklen - to;
-	अगर (len == 0) अणु
+	if (len == 0) {
 		error = -EIO;
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 
 	vblock = ofs_to_block(to, mtd, partition);
-	अगर (!vblock) अणु
+	if (!vblock) {
 		error = -ENOMEM;
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 
-	buffer = kदो_स्मृति(card->blocklen, GFP_KERNEL);
-	अगर (!buffer) अणु
+	buffer = kmalloc(card->blocklen, GFP_KERNEL);
+	if (!buffer) {
 		error = -ENOMEM;
-		जाओ fail_buffer;
-	पूर्ण
+		goto fail_buffer;
+	}
 
-	करो अणु
-		/* Read in the block we are to ग_लिखो to */
-		error = maple_vmu_पढ़ो_block(vblock->num, buffer, mtd);
-		अगर (error)
-			जाओ fail_io;
+	do {
+		/* Read in the block we are to write to */
+		error = maple_vmu_read_block(vblock->num, buffer, mtd);
+		if (error)
+			goto fail_io;
 
-		करो अणु
+		do {
 			buffer[vblock->ofs] = buf[index];
 			vblock->ofs++;
 			index++;
-			अगर (index >= len)
-				अवरोध;
-		पूर्ण जबतक (vblock->ofs < card->blocklen);
+			if (index >= len)
+				break;
+		} while (vblock->ofs < card->blocklen);
 
-		/* ग_लिखो out new buffer */
-		error = maple_vmu_ग_लिखो_block(vblock->num, buffer, mtd);
+		/* write out new buffer */
+		error = maple_vmu_write_block(vblock->num, buffer, mtd);
 		/* invalidate the cache */
 		pcache = card->parts[partition].pcache;
 		pcache->valid = 0;
 
-		अगर (error != card->blocklen)
-			जाओ fail_io;
+		if (error != card->blocklen)
+			goto fail_io;
 
 		vblock->num++;
 		vblock->ofs = 0;
-	पूर्ण जबतक (len > index);
+	} while (len > index);
 
-	kमुक्त(buffer);
+	kfree(buffer);
 	*retlen = index;
-	kमुक्त(vblock);
-	वापस 0;
+	kfree(vblock);
+	return 0;
 
 fail_io:
-	kमुक्त(buffer);
+	kfree(buffer);
 fail_buffer:
-	kमुक्त(vblock);
+	kfree(vblock);
 failed:
 	dev_err(&mdev->dev, "VMU write failing with error %d\n", error);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल व्योम vmu_flash_sync(काष्ठा mtd_info *mtd)
-अणु
+static void vmu_flash_sync(struct mtd_info *mtd)
+{
 	/* Do nothing here */
-पूर्ण
+}
 
 /* Maple bus callback function to recursively query hardware details */
-अटल व्योम vmu_queryblocks(काष्ठा mapleq *mq)
-अणु
-	काष्ठा maple_device *mdev;
-	अचिन्हित लघु *res;
-	काष्ठा memcard *card;
+static void vmu_queryblocks(struct mapleq *mq)
+{
+	struct maple_device *mdev;
+	unsigned short *res;
+	struct memcard *card;
 	__be32 partnum;
-	काष्ठा vmu_cache *pcache;
-	काष्ठा mdev_part *mpart;
-	काष्ठा mtd_info *mtd_cur;
-	काष्ठा vmupart *part_cur;
-	पूर्णांक error;
+	struct vmu_cache *pcache;
+	struct mdev_part *mpart;
+	struct mtd_info *mtd_cur;
+	struct vmupart *part_cur;
+	int error;
 
 	mdev = mq->dev;
 	card = maple_get_drvdata(mdev);
-	res = (अचिन्हित लघु *) (mq->recvbuf->buf);
+	res = (unsigned short *) (mq->recvbuf->buf);
 	card->tempA = res[12];
 	card->tempB = res[6];
 
@@ -523,11 +522,11 @@ failed:
 	part_cur->user_blocks = card->tempA;
 	part_cur->root_block = card->tempB;
 	part_cur->numblocks = card->tempB + 1;
-	part_cur->name = kदो_स्मृति(12, GFP_KERNEL);
-	अगर (!part_cur->name)
-		जाओ fail_name;
+	part_cur->name = kmalloc(12, GFP_KERNEL);
+	if (!part_cur->name)
+		goto fail_name;
 
-	प्र_लिखो(part_cur->name, "vmu%d.%d.%d",
+	sprintf(part_cur->name, "vmu%d.%d.%d",
 		mdev->port, mdev->unit, card->partition);
 	mtd_cur = &card->mtd[card->partition];
 	mtd_cur->name = part_cur->name;
@@ -535,91 +534,91 @@ failed:
 	mtd_cur->flags = MTD_WRITEABLE|MTD_NO_ERASE;
 	mtd_cur->size = part_cur->numblocks * card->blocklen;
 	mtd_cur->erasesize = card->blocklen;
-	mtd_cur->_ग_लिखो = vmu_flash_ग_लिखो;
-	mtd_cur->_पढ़ो = vmu_flash_पढ़ो;
+	mtd_cur->_write = vmu_flash_write;
+	mtd_cur->_read = vmu_flash_read;
 	mtd_cur->_sync = vmu_flash_sync;
-	mtd_cur->ग_लिखोsize = card->blocklen;
+	mtd_cur->writesize = card->blocklen;
 
-	mpart = kदो_स्मृति(माप(काष्ठा mdev_part), GFP_KERNEL);
-	अगर (!mpart)
-		जाओ fail_mpart;
+	mpart = kmalloc(sizeof(struct mdev_part), GFP_KERNEL);
+	if (!mpart)
+		goto fail_mpart;
 
 	mpart->mdev = mdev;
 	mpart->partition = card->partition;
 	mtd_cur->priv = mpart;
 	mtd_cur->owner = THIS_MODULE;
 
-	pcache = kzalloc(माप(काष्ठा vmu_cache), GFP_KERNEL);
-	अगर (!pcache)
-		जाओ fail_cache_create;
+	pcache = kzalloc(sizeof(struct vmu_cache), GFP_KERNEL);
+	if (!pcache)
+		goto fail_cache_create;
 	part_cur->pcache = pcache;
 
-	error = mtd_device_रेजिस्टर(mtd_cur, शून्य, 0);
-	अगर (error)
-		जाओ fail_mtd_रेजिस्टर;
+	error = mtd_device_register(mtd_cur, NULL, 0);
+	if (error)
+		goto fail_mtd_register;
 
-	maple_अ_लोond_callback(mdev, शून्य, 0,
+	maple_getcond_callback(mdev, NULL, 0,
 		MAPLE_FUNC_MEMCARD);
 
 	/*
 	* Set up a recursive call to the (probably theoretical)
 	* second or more partition
 	*/
-	अगर (++card->partition < card->partitions) अणु
+	if (++card->partition < card->partitions) {
 		partnum = cpu_to_be32(card->partition << 24);
-		maple_अ_लोond_callback(mdev, vmu_queryblocks, 0,
+		maple_getcond_callback(mdev, vmu_queryblocks, 0,
 			MAPLE_FUNC_MEMCARD);
 		maple_add_packet(mdev, MAPLE_FUNC_MEMCARD,
 			MAPLE_COMMAND_GETMINFO, 2, &partnum);
-	पूर्ण
-	वापस;
+	}
+	return;
 
-fail_mtd_रेजिस्टर:
+fail_mtd_register:
 	dev_err(&mdev->dev, "Could not register maple device at (%d, %d)"
 		"error is 0x%X\n", mdev->port, mdev->unit, error);
-	क्रम (error = 0; error <= card->partition; error++) अणु
-		kमुक्त(((card->parts)[error]).pcache);
-		((card->parts)[error]).pcache = शून्य;
-	पूर्ण
+	for (error = 0; error <= card->partition; error++) {
+		kfree(((card->parts)[error]).pcache);
+		((card->parts)[error]).pcache = NULL;
+	}
 fail_cache_create:
 fail_mpart:
-	क्रम (error = 0; error <= card->partition; error++) अणु
-		kमुक्त(((card->mtd)[error]).priv);
-		((card->mtd)[error]).priv = शून्य;
-	पूर्ण
-	maple_अ_लोond_callback(mdev, शून्य, 0,
+	for (error = 0; error <= card->partition; error++) {
+		kfree(((card->mtd)[error]).priv);
+		((card->mtd)[error]).priv = NULL;
+	}
+	maple_getcond_callback(mdev, NULL, 0,
 		MAPLE_FUNC_MEMCARD);
-	kमुक्त(part_cur->name);
+	kfree(part_cur->name);
 fail_name:
-	वापस;
-पूर्ण
+	return;
+}
 
-/* Handles very basic info about the flash, queries क्रम details */
-अटल पूर्णांक vmu_connect(काष्ठा maple_device *mdev)
-अणु
-	अचिन्हित दीर्घ test_flash_data, basic_flash_data;
-	पूर्णांक c, error;
-	काष्ठा memcard *card;
+/* Handles very basic info about the flash, queries for details */
+static int vmu_connect(struct maple_device *mdev)
+{
+	unsigned long test_flash_data, basic_flash_data;
+	int c, error;
+	struct memcard *card;
 	u32 partnum = 0;
 
 	test_flash_data = be32_to_cpu(mdev->devinfo.function);
 	/* Need to count how many bits are set - to find out which
 	 * function_data element has details of the memory card
 	 */
-	c = hweight_दीर्घ(test_flash_data);
+	c = hweight_long(test_flash_data);
 
 	basic_flash_data = be32_to_cpu(mdev->devinfo.function_data[c - 1]);
 
-	card = kदो_स्मृति(माप(काष्ठा memcard), GFP_KERNEL);
-	अगर (!card) अणु
+	card = kmalloc(sizeof(struct memcard), GFP_KERNEL);
+	if (!card) {
 		error = -ENOMEM;
-		जाओ fail_nomem;
-	पूर्ण
+		goto fail_nomem;
+	}
 
 	card->partitions = (basic_flash_data >> 24 & 0xFF) + 1;
 	card->blocklen = ((basic_flash_data >> 16 & 0xFF) + 1) << 5;
-	card->ग_लिखोcnt = basic_flash_data >> 12 & 0xF;
-	card->पढ़ोcnt = basic_flash_data >> 8 & 0xF;
+	card->writecnt = basic_flash_data >> 12 & 0xF;
+	card->readcnt = basic_flash_data >> 8 & 0xF;
 	card->removable = basic_flash_data >> 7 & 1;
 
 	card->partition = 0;
@@ -628,190 +627,190 @@ fail_name:
 	* Not sure there are actually any multi-partition devices in the
 	* real world, but the hardware supports them, so, so will we
 	*/
-	card->parts = kदो_स्मृति_array(card->partitions, माप(काष्ठा vmupart),
+	card->parts = kmalloc_array(card->partitions, sizeof(struct vmupart),
 				    GFP_KERNEL);
-	अगर (!card->parts) अणु
+	if (!card->parts) {
 		error = -ENOMEM;
-		जाओ fail_partitions;
-	पूर्ण
+		goto fail_partitions;
+	}
 
-	card->mtd = kदो_स्मृति_array(card->partitions, माप(काष्ठा mtd_info),
+	card->mtd = kmalloc_array(card->partitions, sizeof(struct mtd_info),
 				  GFP_KERNEL);
-	अगर (!card->mtd) अणु
+	if (!card->mtd) {
 		error = -ENOMEM;
-		जाओ fail_mtd_info;
-	पूर्ण
+		goto fail_mtd_info;
+	}
 
 	maple_set_drvdata(mdev, card);
 
 	/*
 	* We want to trap meminfo not get cond
-	* so set पूर्णांकerval to zero, but rely on maple bus
+	* so set interval to zero, but rely on maple bus
 	* driver to pass back the results of the meminfo
 	*/
-	maple_अ_लोond_callback(mdev, vmu_queryblocks, 0,
+	maple_getcond_callback(mdev, vmu_queryblocks, 0,
 		MAPLE_FUNC_MEMCARD);
 
 	/* Make sure we are clear to go */
-	अगर (atomic_पढ़ो(&mdev->busy) == 1) अणु
-		रुको_event_पूर्णांकerruptible_समयout(mdev->maple_रुको,
-			atomic_पढ़ो(&mdev->busy) == 0, HZ);
-		अगर (atomic_पढ़ो(&mdev->busy) == 1) अणु
+	if (atomic_read(&mdev->busy) == 1) {
+		wait_event_interruptible_timeout(mdev->maple_wait,
+			atomic_read(&mdev->busy) == 0, HZ);
+		if (atomic_read(&mdev->busy) == 1) {
 			dev_notice(&mdev->dev, "VMU at (%d, %d) is busy\n",
 				mdev->port, mdev->unit);
 			error = -EAGAIN;
-			जाओ fail_device_busy;
-		पूर्ण
-	पूर्ण
+			goto fail_device_busy;
+		}
+	}
 
 	atomic_set(&mdev->busy, 1);
 
 	/*
 	* Set up the minfo call: vmu_queryblocks will handle
-	* the inक्रमmation passed back
+	* the information passed back
 	*/
 	error = maple_add_packet(mdev, MAPLE_FUNC_MEMCARD,
 		MAPLE_COMMAND_GETMINFO, 2, &partnum);
-	अगर (error) अणु
+	if (error) {
 		dev_err(&mdev->dev, "Could not lock VMU at (%d, %d)"
 			" error is 0x%X\n", mdev->port, mdev->unit, error);
-		जाओ fail_mtd_info;
-	पूर्ण
-	वापस 0;
+		goto fail_mtd_info;
+	}
+	return 0;
 
 fail_device_busy:
-	kमुक्त(card->mtd);
+	kfree(card->mtd);
 fail_mtd_info:
-	kमुक्त(card->parts);
+	kfree(card->parts);
 fail_partitions:
-	kमुक्त(card);
+	kfree(card);
 fail_nomem:
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल व्योम vmu_disconnect(काष्ठा maple_device *mdev)
-अणु
-	काष्ठा memcard *card;
-	काष्ठा mdev_part *mpart;
-	पूर्णांक x;
+static void vmu_disconnect(struct maple_device *mdev)
+{
+	struct memcard *card;
+	struct mdev_part *mpart;
+	int x;
 
-	mdev->callback = शून्य;
+	mdev->callback = NULL;
 	card = maple_get_drvdata(mdev);
-	क्रम (x = 0; x < card->partitions; x++) अणु
+	for (x = 0; x < card->partitions; x++) {
 		mpart = ((card->mtd)[x]).priv;
-		mpart->mdev = शून्य;
-		mtd_device_unरेजिस्टर(&((card->mtd)[x]));
-		kमुक्त(((card->parts)[x]).name);
-	पूर्ण
-	kमुक्त(card->parts);
-	kमुक्त(card->mtd);
-	kमुक्त(card);
-पूर्ण
+		mpart->mdev = NULL;
+		mtd_device_unregister(&((card->mtd)[x]));
+		kfree(((card->parts)[x]).name);
+	}
+	kfree(card->parts);
+	kfree(card->mtd);
+	kfree(card);
+}
 
-/* Callback to handle eccentricities of both mtd subप्रणाली
+/* Callback to handle eccentricities of both mtd subsystem
  * and general flakyness of Dreamcast VMUs
  */
-अटल पूर्णांक vmu_can_unload(काष्ठा maple_device *mdev)
-अणु
-	काष्ठा memcard *card;
-	पूर्णांक x;
-	काष्ठा mtd_info *mtd;
+static int vmu_can_unload(struct maple_device *mdev)
+{
+	struct memcard *card;
+	int x;
+	struct mtd_info *mtd;
 
 	card = maple_get_drvdata(mdev);
-	क्रम (x = 0; x < card->partitions; x++) अणु
+	for (x = 0; x < card->partitions; x++) {
 		mtd = &((card->mtd)[x]);
-		अगर (mtd->usecount > 0)
-			वापस 0;
-	पूर्ण
-	वापस 1;
-पूर्ण
+		if (mtd->usecount > 0)
+			return 0;
+	}
+	return 1;
+}
 
-#घोषणा ERRSTR "VMU at (%d, %d) file error -"
+#define ERRSTR "VMU at (%d, %d) file error -"
 
-अटल व्योम vmu_file_error(काष्ठा maple_device *mdev, व्योम *recvbuf)
-अणु
-	क्रमागत maple_file_errors error = ((पूर्णांक *)recvbuf)[1];
+static void vmu_file_error(struct maple_device *mdev, void *recvbuf)
+{
+	enum maple_file_errors error = ((int *)recvbuf)[1];
 
-	चयन (error) अणु
+	switch (error) {
 
-	हाल MAPLE_खाताERR_INVALID_PARTITION:
+	case MAPLE_FILEERR_INVALID_PARTITION:
 		dev_notice(&mdev->dev, ERRSTR " invalid partition number\n",
 			mdev->port, mdev->unit);
-		अवरोध;
+		break;
 
-	हाल MAPLE_खाताERR_PHASE_ERROR:
+	case MAPLE_FILEERR_PHASE_ERROR:
 		dev_notice(&mdev->dev, ERRSTR " phase error\n",
 			mdev->port, mdev->unit);
-		अवरोध;
+		break;
 
-	हाल MAPLE_खाताERR_INVALID_BLOCK:
+	case MAPLE_FILEERR_INVALID_BLOCK:
 		dev_notice(&mdev->dev, ERRSTR " invalid block number\n",
 			mdev->port, mdev->unit);
-		अवरोध;
+		break;
 
-	हाल MAPLE_खाताERR_WRITE_ERROR:
+	case MAPLE_FILEERR_WRITE_ERROR:
 		dev_notice(&mdev->dev, ERRSTR " write error\n",
 			mdev->port, mdev->unit);
-		अवरोध;
+		break;
 
-	हाल MAPLE_खाताERR_INVALID_WRITE_LENGTH:
+	case MAPLE_FILEERR_INVALID_WRITE_LENGTH:
 		dev_notice(&mdev->dev, ERRSTR " invalid write length\n",
 			mdev->port, mdev->unit);
-		अवरोध;
+		break;
 
-	हाल MAPLE_खाताERR_BAD_CRC:
+	case MAPLE_FILEERR_BAD_CRC:
 		dev_notice(&mdev->dev, ERRSTR " bad CRC\n",
 			mdev->port, mdev->unit);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		dev_notice(&mdev->dev, ERRSTR " 0x%X\n",
 			mdev->port, mdev->unit, error);
-	पूर्ण
-पूर्ण
+	}
+}
 
 
-अटल पूर्णांक probe_maple_vmu(काष्ठा device *dev)
-अणु
-	काष्ठा maple_device *mdev = to_maple_dev(dev);
-	काष्ठा maple_driver *mdrv = to_maple_driver(dev->driver);
+static int probe_maple_vmu(struct device *dev)
+{
+	struct maple_device *mdev = to_maple_dev(dev);
+	struct maple_driver *mdrv = to_maple_driver(dev->driver);
 
 	mdev->can_unload = vmu_can_unload;
 	mdev->fileerr_handler = vmu_file_error;
 	mdev->driver = mdrv;
 
-	वापस vmu_connect(mdev);
-पूर्ण
+	return vmu_connect(mdev);
+}
 
-अटल पूर्णांक हटाओ_maple_vmu(काष्ठा device *dev)
-अणु
-	काष्ठा maple_device *mdev = to_maple_dev(dev);
+static int remove_maple_vmu(struct device *dev)
+{
+	struct maple_device *mdev = to_maple_dev(dev);
 
 	vmu_disconnect(mdev);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा maple_driver vmu_flash_driver = अणु
+static struct maple_driver vmu_flash_driver = {
 	.function =	MAPLE_FUNC_MEMCARD,
-	.drv = अणु
+	.drv = {
 		.name =		"Dreamcast_visual_memory",
 		.probe =	probe_maple_vmu,
-		.हटाओ =	हटाओ_maple_vmu,
-	पूर्ण,
-पूर्ण;
+		.remove =	remove_maple_vmu,
+	},
+};
 
-अटल पूर्णांक __init vmu_flash_map_init(व्योम)
-अणु
-	वापस maple_driver_रेजिस्टर(&vmu_flash_driver);
-पूर्ण
+static int __init vmu_flash_map_init(void)
+{
+	return maple_driver_register(&vmu_flash_driver);
+}
 
-अटल व्योम __निकास vmu_flash_map_निकास(व्योम)
-अणु
-	maple_driver_unरेजिस्टर(&vmu_flash_driver);
-पूर्ण
+static void __exit vmu_flash_map_exit(void)
+{
+	maple_driver_unregister(&vmu_flash_driver);
+}
 
 module_init(vmu_flash_map_init);
-module_निकास(vmu_flash_map_निकास);
+module_exit(vmu_flash_map_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Adrian McMenamin");

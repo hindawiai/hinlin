@@ -1,87 +1,86 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) Fuzhou Rockchip Electronics Co.Ltd
  * Author:Mark Yao <mark.yao@rock-chips.com>
  */
 
-#समावेश <drm/drm.h>
-#समावेश <drm/drm_fb_helper.h>
-#समावेश <drm/drm_fourcc.h>
-#समावेश <drm/drm_probe_helper.h>
+#include <drm/drm.h>
+#include <drm/drm_fb_helper.h>
+#include <drm/drm_fourcc.h>
+#include <drm/drm_probe_helper.h>
 
-#समावेश "rockchip_drm_drv.h"
-#समावेश "rockchip_drm_gem.h"
-#समावेश "rockchip_drm_fb.h"
-#समावेश "rockchip_drm_fbdev.h"
+#include "rockchip_drm_drv.h"
+#include "rockchip_drm_gem.h"
+#include "rockchip_drm_fb.h"
+#include "rockchip_drm_fbdev.h"
 
-#घोषणा PREFERRED_BPP		32
-#घोषणा to_drm_निजी(x) \
-		container_of(x, काष्ठा rockchip_drm_निजी, fbdev_helper)
+#define PREFERRED_BPP		32
+#define to_drm_private(x) \
+		container_of(x, struct rockchip_drm_private, fbdev_helper)
 
-अटल पूर्णांक rockchip_fbdev_mmap(काष्ठा fb_info *info,
-			       काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा drm_fb_helper *helper = info->par;
-	काष्ठा rockchip_drm_निजी *निजी = to_drm_निजी(helper);
+static int rockchip_fbdev_mmap(struct fb_info *info,
+			       struct vm_area_struct *vma)
+{
+	struct drm_fb_helper *helper = info->par;
+	struct rockchip_drm_private *private = to_drm_private(helper);
 
-	वापस rockchip_gem_mmap_buf(निजी->fbdev_bo, vma);
-पूर्ण
+	return rockchip_gem_mmap_buf(private->fbdev_bo, vma);
+}
 
-अटल स्थिर काष्ठा fb_ops rockchip_drm_fbdev_ops = अणु
+static const struct fb_ops rockchip_drm_fbdev_ops = {
 	.owner		= THIS_MODULE,
 	DRM_FB_HELPER_DEFAULT_OPS,
 	.fb_mmap	= rockchip_fbdev_mmap,
 	.fb_fillrect	= drm_fb_helper_cfb_fillrect,
 	.fb_copyarea	= drm_fb_helper_cfb_copyarea,
 	.fb_imageblit	= drm_fb_helper_cfb_imageblit,
-पूर्ण;
+};
 
-अटल पूर्णांक rockchip_drm_fbdev_create(काष्ठा drm_fb_helper *helper,
-				     काष्ठा drm_fb_helper_surface_size *sizes)
-अणु
-	काष्ठा rockchip_drm_निजी *निजी = to_drm_निजी(helper);
-	काष्ठा drm_mode_fb_cmd2 mode_cmd = अणु 0 पूर्ण;
-	काष्ठा drm_device *dev = helper->dev;
-	काष्ठा rockchip_gem_object *rk_obj;
-	काष्ठा drm_framebuffer *fb;
-	अचिन्हित पूर्णांक bytes_per_pixel;
-	अचिन्हित दीर्घ offset;
-	काष्ठा fb_info *fbi;
-	माप_प्रकार size;
-	पूर्णांक ret;
+static int rockchip_drm_fbdev_create(struct drm_fb_helper *helper,
+				     struct drm_fb_helper_surface_size *sizes)
+{
+	struct rockchip_drm_private *private = to_drm_private(helper);
+	struct drm_mode_fb_cmd2 mode_cmd = { 0 };
+	struct drm_device *dev = helper->dev;
+	struct rockchip_gem_object *rk_obj;
+	struct drm_framebuffer *fb;
+	unsigned int bytes_per_pixel;
+	unsigned long offset;
+	struct fb_info *fbi;
+	size_t size;
+	int ret;
 
 	bytes_per_pixel = DIV_ROUND_UP(sizes->surface_bpp, 8);
 
 	mode_cmd.width = sizes->surface_width;
 	mode_cmd.height = sizes->surface_height;
 	mode_cmd.pitches[0] = sizes->surface_width * bytes_per_pixel;
-	mode_cmd.pixel_क्रमmat = drm_mode_legacy_fb_क्रमmat(sizes->surface_bpp,
+	mode_cmd.pixel_format = drm_mode_legacy_fb_format(sizes->surface_bpp,
 		sizes->surface_depth);
 
 	size = mode_cmd.pitches[0] * mode_cmd.height;
 
 	rk_obj = rockchip_gem_create_object(dev, size, true);
-	अगर (IS_ERR(rk_obj))
-		वापस -ENOMEM;
+	if (IS_ERR(rk_obj))
+		return -ENOMEM;
 
-	निजी->fbdev_bo = &rk_obj->base;
+	private->fbdev_bo = &rk_obj->base;
 
 	fbi = drm_fb_helper_alloc_fbi(helper);
-	अगर (IS_ERR(fbi)) अणु
+	if (IS_ERR(fbi)) {
 		DRM_DEV_ERROR(dev->dev, "Failed to create framebuffer info.\n");
 		ret = PTR_ERR(fbi);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	helper->fb = rockchip_drm_framebuffer_init(dev, &mode_cmd,
-						   निजी->fbdev_bo);
-	अगर (IS_ERR(helper->fb)) अणु
+						   private->fbdev_bo);
+	if (IS_ERR(helper->fb)) {
 		DRM_DEV_ERROR(dev->dev,
 			      "Failed to allocate DRM framebuffer.\n");
 		ret = PTR_ERR(helper->fb);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	fbi->fbops = &rockchip_drm_fbdev_ops;
 
@@ -97,68 +96,68 @@
 	fbi->fix.smem_len = rk_obj->base.size;
 
 	DRM_DEBUG_KMS("FB [%dx%d]-%d kvaddr=%p offset=%ld size=%zu\n",
-		      fb->width, fb->height, fb->क्रमmat->depth,
+		      fb->width, fb->height, fb->format->depth,
 		      rk_obj->kvaddr,
 		      offset, size);
 
-	वापस 0;
+	return 0;
 
 out:
-	rockchip_gem_मुक्त_object(&rk_obj->base);
-	वापस ret;
-पूर्ण
+	rockchip_gem_free_object(&rk_obj->base);
+	return ret;
+}
 
-अटल स्थिर काष्ठा drm_fb_helper_funcs rockchip_drm_fb_helper_funcs = अणु
+static const struct drm_fb_helper_funcs rockchip_drm_fb_helper_funcs = {
 	.fb_probe = rockchip_drm_fbdev_create,
-पूर्ण;
+};
 
-पूर्णांक rockchip_drm_fbdev_init(काष्ठा drm_device *dev)
-अणु
-	काष्ठा rockchip_drm_निजी *निजी = dev->dev_निजी;
-	काष्ठा drm_fb_helper *helper;
-	पूर्णांक ret;
+int rockchip_drm_fbdev_init(struct drm_device *dev)
+{
+	struct rockchip_drm_private *private = dev->dev_private;
+	struct drm_fb_helper *helper;
+	int ret;
 
-	अगर (!dev->mode_config.num_crtc || !dev->mode_config.num_connector)
-		वापस -EINVAL;
+	if (!dev->mode_config.num_crtc || !dev->mode_config.num_connector)
+		return -EINVAL;
 
-	helper = &निजी->fbdev_helper;
+	helper = &private->fbdev_helper;
 
 	drm_fb_helper_prepare(dev, helper, &rockchip_drm_fb_helper_funcs);
 
 	ret = drm_fb_helper_init(dev, helper);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		DRM_DEV_ERROR(dev->dev,
 			      "Failed to initialize drm fb helper - %d.\n",
 			      ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = drm_fb_helper_initial_config(helper, PREFERRED_BPP);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		DRM_DEV_ERROR(dev->dev,
 			      "Failed to set initial hw config - %d.\n",
 			      ret);
-		जाओ err_drm_fb_helper_fini;
-	पूर्ण
+		goto err_drm_fb_helper_fini;
+	}
 
-	वापस 0;
+	return 0;
 
 err_drm_fb_helper_fini:
 	drm_fb_helper_fini(helper);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम rockchip_drm_fbdev_fini(काष्ठा drm_device *dev)
-अणु
-	काष्ठा rockchip_drm_निजी *निजी = dev->dev_निजी;
-	काष्ठा drm_fb_helper *helper;
+void rockchip_drm_fbdev_fini(struct drm_device *dev)
+{
+	struct rockchip_drm_private *private = dev->dev_private;
+	struct drm_fb_helper *helper;
 
-	helper = &निजी->fbdev_helper;
+	helper = &private->fbdev_helper;
 
-	drm_fb_helper_unरेजिस्टर_fbi(helper);
+	drm_fb_helper_unregister_fbi(helper);
 
-	अगर (helper->fb)
+	if (helper->fb)
 		drm_framebuffer_put(helper->fb);
 
 	drm_fb_helper_fini(helper);
-पूर्ण
+}

@@ -1,18 +1,17 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * altera_jtaguart.h -- Altera JTAG UART driver defines.
  */
 
-#अगर_अघोषित	__ALTJUART_H
-#घोषणा	__ALTJUART_H
+#ifndef	__ALTJUART_H
+#define	__ALTJUART_H
 
-#घोषणा ALTERA_JTAGUART_MAJOR	204
-#घोषणा ALTERA_JTAGUART_MINOR	186
+#define ALTERA_JTAGUART_MAJOR	204
+#define ALTERA_JTAGUART_MINOR	186
 
-काष्ठा altera_jtaguart_platक्रमm_uart अणु
-	अचिन्हित दीर्घ mapbase;	/* Physical address base */
-	अचिन्हित पूर्णांक irq;	/* Interrupt vector */
-पूर्ण;
+struct altera_jtaguart_platform_uart {
+	unsigned long mapbase;	/* Physical address base */
+	unsigned int irq;	/* Interrupt vector */
+};
 
-#पूर्ण_अगर /* __ALTJUART_H */
+#endif /* __ALTJUART_H */

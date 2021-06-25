@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  Bluetooth HCI serdev driver lib
  *
@@ -9,162 +8,162 @@
  *
  *  Copyright (C) 2000-2001  Qualcomm Incorporated
  *  Copyright (C) 2002-2003  Maxim Krasnyansky <maxk@qualcomm.com>
- *  Copyright (C) 2004-2005  Marcel Holपंचांगann <marcel@holपंचांगann.org>
+ *  Copyright (C) 2004-2005  Marcel Holtmann <marcel@holtmann.org>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/types.h>
-#समावेश <linux/serdev.h>
-#समावेश <linux/skbuff.h>
+#include <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/serdev.h>
+#include <linux/skbuff.h>
 
-#समावेश <net/bluetooth/bluetooth.h>
-#समावेश <net/bluetooth/hci_core.h>
+#include <net/bluetooth/bluetooth.h>
+#include <net/bluetooth/hci_core.h>
 
-#समावेश "hci_uart.h"
+#include "hci_uart.h"
 
-अटल अंतरभूत व्योम hci_uart_tx_complete(काष्ठा hci_uart *hu, पूर्णांक pkt_type)
-अणु
-	काष्ठा hci_dev *hdev = hu->hdev;
+static inline void hci_uart_tx_complete(struct hci_uart *hu, int pkt_type)
+{
+	struct hci_dev *hdev = hu->hdev;
 
 	/* Update HCI stat counters */
-	चयन (pkt_type) अणु
-	हाल HCI_COMMAND_PKT:
+	switch (pkt_type) {
+	case HCI_COMMAND_PKT:
 		hdev->stat.cmd_tx++;
-		अवरोध;
+		break;
 
-	हाल HCI_ACLDATA_PKT:
+	case HCI_ACLDATA_PKT:
 		hdev->stat.acl_tx++;
-		अवरोध;
+		break;
 
-	हाल HCI_SCODATA_PKT:
+	case HCI_SCODATA_PKT:
 		hdev->stat.sco_tx++;
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल अंतरभूत काष्ठा sk_buff *hci_uart_dequeue(काष्ठा hci_uart *hu)
-अणु
-	काष्ठा sk_buff *skb = hu->tx_skb;
+static inline struct sk_buff *hci_uart_dequeue(struct hci_uart *hu)
+{
+	struct sk_buff *skb = hu->tx_skb;
 
-	अगर (!skb) अणु
-		अगर (test_bit(HCI_UART_PROTO_READY, &hu->flags))
+	if (!skb) {
+		if (test_bit(HCI_UART_PROTO_READY, &hu->flags))
 			skb = hu->proto->dequeue(hu);
-	पूर्ण अन्यथा
-		hu->tx_skb = शून्य;
+	} else
+		hu->tx_skb = NULL;
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-अटल व्योम hci_uart_ग_लिखो_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा hci_uart *hu = container_of(work, काष्ठा hci_uart, ग_लिखो_work);
-	काष्ठा serdev_device *serdev = hu->serdev;
-	काष्ठा hci_dev *hdev = hu->hdev;
-	काष्ठा sk_buff *skb;
+static void hci_uart_write_work(struct work_struct *work)
+{
+	struct hci_uart *hu = container_of(work, struct hci_uart, write_work);
+	struct serdev_device *serdev = hu->serdev;
+	struct hci_dev *hdev = hu->hdev;
+	struct sk_buff *skb;
 
 	/* REVISIT:
-	 * should we cope with bad skbs or ->ग_लिखो() वापसing an error value?
+	 * should we cope with bad skbs or ->write() returning an error value?
 	 */
-	करो अणु
+	do {
 		clear_bit(HCI_UART_TX_WAKEUP, &hu->tx_state);
 
-		जबतक ((skb = hci_uart_dequeue(hu))) अणु
-			पूर्णांक len;
+		while ((skb = hci_uart_dequeue(hu))) {
+			int len;
 
-			len = serdev_device_ग_लिखो_buf(serdev,
+			len = serdev_device_write_buf(serdev,
 						      skb->data, skb->len);
 			hdev->stat.byte_tx += len;
 
 			skb_pull(skb, len);
-			अगर (skb->len) अणु
+			if (skb->len) {
 				hu->tx_skb = skb;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
 			hci_uart_tx_complete(hu, hci_skb_pkt_type(skb));
-			kमुक्त_skb(skb);
-		पूर्ण
+			kfree_skb(skb);
+		}
 
 		clear_bit(HCI_UART_SENDING, &hu->tx_state);
-	पूर्ण जबतक (test_bit(HCI_UART_TX_WAKEUP, &hu->tx_state));
-पूर्ण
+	} while (test_bit(HCI_UART_TX_WAKEUP, &hu->tx_state));
+}
 
 /* ------- Interface to HCI layer ------ */
 
 /* Reset device */
-अटल पूर्णांक hci_uart_flush(काष्ठा hci_dev *hdev)
-अणु
-	काष्ठा hci_uart *hu  = hci_get_drvdata(hdev);
+static int hci_uart_flush(struct hci_dev *hdev)
+{
+	struct hci_uart *hu  = hci_get_drvdata(hdev);
 
 	BT_DBG("hdev %p serdev %p", hdev, hu->serdev);
 
-	अगर (hu->tx_skb) अणु
-		kमुक्त_skb(hu->tx_skb); hu->tx_skb = शून्य;
-	पूर्ण
+	if (hu->tx_skb) {
+		kfree_skb(hu->tx_skb); hu->tx_skb = NULL;
+	}
 
-	/* Flush any pending अक्षरacters in the driver and discipline. */
-	serdev_device_ग_लिखो_flush(hu->serdev);
+	/* Flush any pending characters in the driver and discipline. */
+	serdev_device_write_flush(hu->serdev);
 
-	अगर (test_bit(HCI_UART_PROTO_READY, &hu->flags))
+	if (test_bit(HCI_UART_PROTO_READY, &hu->flags))
 		hu->proto->flush(hu);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Initialize device */
-अटल पूर्णांक hci_uart_खोलो(काष्ठा hci_dev *hdev)
-अणु
-	काष्ठा hci_uart *hu = hci_get_drvdata(hdev);
-	पूर्णांक err;
+static int hci_uart_open(struct hci_dev *hdev)
+{
+	struct hci_uart *hu = hci_get_drvdata(hdev);
+	int err;
 
 	BT_DBG("%s %p", hdev->name, hdev);
 
 	/* When Quirk HCI_QUIRK_NON_PERSISTENT_SETUP is set by
 	 * driver, BT SoC is completely turned OFF during
-	 * BT OFF. Upon next BT ON UART port should be खोलोed.
+	 * BT OFF. Upon next BT ON UART port should be opened.
 	 */
-	अगर (!test_bit(HCI_UART_PROTO_READY, &hu->flags)) अणु
-		err = serdev_device_खोलो(hu->serdev);
-		अगर (err)
-			वापस err;
+	if (!test_bit(HCI_UART_PROTO_READY, &hu->flags)) {
+		err = serdev_device_open(hu->serdev);
+		if (err)
+			return err;
 		set_bit(HCI_UART_PROTO_READY, &hu->flags);
-	पूर्ण
+	}
 
-	/* Unकरो clearing this from hci_uart_बंद() */
+	/* Undo clearing this from hci_uart_close() */
 	hdev->flush = hci_uart_flush;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Close device */
-अटल पूर्णांक hci_uart_बंद(काष्ठा hci_dev *hdev)
-अणु
-	काष्ठा hci_uart *hu = hci_get_drvdata(hdev);
+static int hci_uart_close(struct hci_dev *hdev)
+{
+	struct hci_uart *hu = hci_get_drvdata(hdev);
 
 	BT_DBG("hdev %p", hdev);
 
-	अगर (!test_bit(HCI_UART_PROTO_READY, &hu->flags))
-		वापस 0;
+	if (!test_bit(HCI_UART_PROTO_READY, &hu->flags))
+		return 0;
 
 	hci_uart_flush(hdev);
-	hdev->flush = शून्य;
+	hdev->flush = NULL;
 
 	/* When QUIRK HCI_QUIRK_NON_PERSISTENT_SETUP is set by driver,
-	 * BT SOC is completely घातered OFF during BT OFF, holding port
-	 * खोलो may drain the battery.
+	 * BT SOC is completely powered OFF during BT OFF, holding port
+	 * open may drain the battery.
 	 */
-	अगर (test_bit(HCI_QUIRK_NON_PERSISTENT_SETUP, &hdev->quirks)) अणु
+	if (test_bit(HCI_QUIRK_NON_PERSISTENT_SETUP, &hdev->quirks)) {
 		clear_bit(HCI_UART_PROTO_READY, &hu->flags);
-		serdev_device_बंद(hu->serdev);
-	पूर्ण
+		serdev_device_close(hu->serdev);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Send frames from HCI layer */
-अटल पूर्णांक hci_uart_send_frame(काष्ठा hci_dev *hdev, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा hci_uart *hu = hci_get_drvdata(hdev);
+static int hci_uart_send_frame(struct hci_dev *hdev, struct sk_buff *skb)
+{
+	struct hci_uart *hu = hci_get_drvdata(hdev);
 
 	BT_DBG("%s: type %d len %d", hdev->name, hci_skb_pkt_type(skb),
 	       skb->len);
@@ -173,89 +172,89 @@
 
 	hci_uart_tx_wakeup(hu);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hci_uart_setup(काष्ठा hci_dev *hdev)
-अणु
-	काष्ठा hci_uart *hu = hci_get_drvdata(hdev);
-	काष्ठा hci_rp_पढ़ो_local_version *ver;
-	काष्ठा sk_buff *skb;
-	अचिन्हित पूर्णांक speed;
-	पूर्णांक err;
+static int hci_uart_setup(struct hci_dev *hdev)
+{
+	struct hci_uart *hu = hci_get_drvdata(hdev);
+	struct hci_rp_read_local_version *ver;
+	struct sk_buff *skb;
+	unsigned int speed;
+	int err;
 
-	/* Init speed अगर any */
-	अगर (hu->init_speed)
+	/* Init speed if any */
+	if (hu->init_speed)
 		speed = hu->init_speed;
-	अन्यथा अगर (hu->proto->init_speed)
+	else if (hu->proto->init_speed)
 		speed = hu->proto->init_speed;
-	अन्यथा
+	else
 		speed = 0;
 
-	अगर (speed)
+	if (speed)
 		serdev_device_set_baudrate(hu->serdev, speed);
 
-	/* Operational speed अगर any */
-	अगर (hu->oper_speed)
+	/* Operational speed if any */
+	if (hu->oper_speed)
 		speed = hu->oper_speed;
-	अन्यथा अगर (hu->proto->oper_speed)
+	else if (hu->proto->oper_speed)
 		speed = hu->proto->oper_speed;
-	अन्यथा
+	else
 		speed = 0;
 
-	अगर (hu->proto->set_baudrate && speed) अणु
+	if (hu->proto->set_baudrate && speed) {
 		err = hu->proto->set_baudrate(hu, speed);
-		अगर (err)
+		if (err)
 			bt_dev_err(hdev, "Failed to set baudrate");
-		अन्यथा
+		else
 			serdev_device_set_baudrate(hu->serdev, speed);
-	पूर्ण
+	}
 
-	अगर (hu->proto->setup)
-		वापस hu->proto->setup(hu);
+	if (hu->proto->setup)
+		return hu->proto->setup(hu);
 
-	अगर (!test_bit(HCI_UART_VND_DETECT, &hu->hdev_flags))
-		वापस 0;
+	if (!test_bit(HCI_UART_VND_DETECT, &hu->hdev_flags))
+		return 0;
 
-	skb = __hci_cmd_sync(hdev, HCI_OP_READ_LOCAL_VERSION, 0, शून्य,
+	skb = __hci_cmd_sync(hdev, HCI_OP_READ_LOCAL_VERSION, 0, NULL,
 			     HCI_INIT_TIMEOUT);
-	अगर (IS_ERR(skb)) अणु
+	if (IS_ERR(skb)) {
 		bt_dev_err(hdev, "Reading local version info failed (%ld)",
 			   PTR_ERR(skb));
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (skb->len != माप(*ver))
+	if (skb->len != sizeof(*ver))
 		bt_dev_err(hdev, "Event length mismatch for version info");
 
-	kमुक्त_skb(skb);
-	वापस 0;
-पूर्ण
+	kfree_skb(skb);
+	return 0;
+}
 
-/** hci_uart_ग_लिखो_wakeup - transmit buffer wakeup
+/** hci_uart_write_wakeup - transmit buffer wakeup
  * @serdev: serial device
  *
  * This function is called by the serdev framework when it accepts
  * more data being sent.
  */
-अटल व्योम hci_uart_ग_लिखो_wakeup(काष्ठा serdev_device *serdev)
-अणु
-	काष्ठा hci_uart *hu = serdev_device_get_drvdata(serdev);
+static void hci_uart_write_wakeup(struct serdev_device *serdev)
+{
+	struct hci_uart *hu = serdev_device_get_drvdata(serdev);
 
 	BT_DBG("");
 
-	अगर (!hu || serdev != hu->serdev) अणु
+	if (!hu || serdev != hu->serdev) {
 		WARN_ON(1);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (test_bit(HCI_UART_PROTO_READY, &hu->flags))
+	if (test_bit(HCI_UART_PROTO_READY, &hu->flags))
 		hci_uart_tx_wakeup(hu);
-पूर्ण
+}
 
 /** hci_uart_receive_buf - receive buffer wakeup
  * @serdev: serial device
- * @data:   poपूर्णांकer to received data
+ * @data:   pointer to received data
  * @count:  count of received data in bytes
  *
  * This function is called by the serdev framework when it received data
@@ -263,138 +262,138 @@
  *
  * Return: number of processed bytes
  */
-अटल पूर्णांक hci_uart_receive_buf(काष्ठा serdev_device *serdev, स्थिर u8 *data,
-				   माप_प्रकार count)
-अणु
-	काष्ठा hci_uart *hu = serdev_device_get_drvdata(serdev);
+static int hci_uart_receive_buf(struct serdev_device *serdev, const u8 *data,
+				   size_t count)
+{
+	struct hci_uart *hu = serdev_device_get_drvdata(serdev);
 
-	अगर (!hu || serdev != hu->serdev) अणु
+	if (!hu || serdev != hu->serdev) {
 		WARN_ON(1);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (!test_bit(HCI_UART_PROTO_READY, &hu->flags))
-		वापस 0;
+	if (!test_bit(HCI_UART_PROTO_READY, &hu->flags))
+		return 0;
 
-	/* It करोes not need a lock here as it is alपढ़ोy रक्षित by a mutex in
+	/* It does not need a lock here as it is already protected by a mutex in
 	 * tty caller
 	 */
 	hu->proto->recv(hu, data, count);
 
-	अगर (hu->hdev)
+	if (hu->hdev)
 		hu->hdev->stat.byte_rx += count;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल स्थिर काष्ठा serdev_device_ops hci_serdev_client_ops = अणु
+static const struct serdev_device_ops hci_serdev_client_ops = {
 	.receive_buf = hci_uart_receive_buf,
-	.ग_लिखो_wakeup = hci_uart_ग_लिखो_wakeup,
-पूर्ण;
+	.write_wakeup = hci_uart_write_wakeup,
+};
 
-पूर्णांक hci_uart_रेजिस्टर_device(काष्ठा hci_uart *hu,
-			     स्थिर काष्ठा hci_uart_proto *p)
-अणु
-	पूर्णांक err;
-	काष्ठा hci_dev *hdev;
+int hci_uart_register_device(struct hci_uart *hu,
+			     const struct hci_uart_proto *p)
+{
+	int err;
+	struct hci_dev *hdev;
 
 	BT_DBG("");
 
 	serdev_device_set_client_ops(hu->serdev, &hci_serdev_client_ops);
 
-	err = serdev_device_खोलो(hu->serdev);
-	अगर (err)
-		वापस err;
+	err = serdev_device_open(hu->serdev);
+	if (err)
+		return err;
 
-	err = p->खोलो(hu);
-	अगर (err)
-		जाओ err_खोलो;
+	err = p->open(hu);
+	if (err)
+		goto err_open;
 
 	hu->proto = p;
 	set_bit(HCI_UART_PROTO_READY, &hu->flags);
 
-	/* Initialize and रेजिस्टर HCI device */
+	/* Initialize and register HCI device */
 	hdev = hci_alloc_dev();
-	अगर (!hdev) अणु
+	if (!hdev) {
 		BT_ERR("Can't allocate HCI device");
 		err = -ENOMEM;
-		जाओ err_alloc;
-	पूर्ण
+		goto err_alloc;
+	}
 
 	hu->hdev = hdev;
 
 	hdev->bus = HCI_UART;
 	hci_set_drvdata(hdev, hu);
 
-	INIT_WORK(&hu->init_पढ़ोy, hci_uart_init_work);
-	INIT_WORK(&hu->ग_लिखो_work, hci_uart_ग_लिखो_work);
+	INIT_WORK(&hu->init_ready, hci_uart_init_work);
+	INIT_WORK(&hu->write_work, hci_uart_write_work);
 	percpu_init_rwsem(&hu->proto_lock);
 
-	/* Only when venकरोr specअगरic setup callback is provided, consider
-	 * the manufacturer inक्रमmation valid. This aव्योमs filling in the
-	 * value क्रम Ericsson when nothing is specअगरied.
+	/* Only when vendor specific setup callback is provided, consider
+	 * the manufacturer information valid. This avoids filling in the
+	 * value for Ericsson when nothing is specified.
 	 */
-	अगर (hu->proto->setup)
+	if (hu->proto->setup)
 		hdev->manufacturer = hu->proto->manufacturer;
 
-	hdev->खोलो  = hci_uart_खोलो;
-	hdev->बंद = hci_uart_बंद;
+	hdev->open  = hci_uart_open;
+	hdev->close = hci_uart_close;
 	hdev->flush = hci_uart_flush;
 	hdev->send  = hci_uart_send_frame;
 	hdev->setup = hci_uart_setup;
 	SET_HCIDEV_DEV(hdev, &hu->serdev->dev);
 
-	अगर (test_bit(HCI_UART_RAW_DEVICE, &hu->hdev_flags))
+	if (test_bit(HCI_UART_RAW_DEVICE, &hu->hdev_flags))
 		set_bit(HCI_QUIRK_RAW_DEVICE, &hdev->quirks);
 
-	अगर (test_bit(HCI_UART_EXT_CONFIG, &hu->hdev_flags))
+	if (test_bit(HCI_UART_EXT_CONFIG, &hu->hdev_flags))
 		set_bit(HCI_QUIRK_EXTERNAL_CONFIG, &hdev->quirks);
 
-	अगर (test_bit(HCI_UART_CREATE_AMP, &hu->hdev_flags))
+	if (test_bit(HCI_UART_CREATE_AMP, &hu->hdev_flags))
 		hdev->dev_type = HCI_AMP;
-	अन्यथा
+	else
 		hdev->dev_type = HCI_PRIMARY;
 
-	अगर (test_bit(HCI_UART_INIT_PENDING, &hu->hdev_flags))
-		वापस 0;
+	if (test_bit(HCI_UART_INIT_PENDING, &hu->hdev_flags))
+		return 0;
 
-	अगर (hci_रेजिस्टर_dev(hdev) < 0) अणु
+	if (hci_register_dev(hdev) < 0) {
 		BT_ERR("Can't register HCI device");
 		err = -ENODEV;
-		जाओ err_रेजिस्टर;
-	पूर्ण
+		goto err_register;
+	}
 
 	set_bit(HCI_UART_REGISTERED, &hu->flags);
 
-	वापस 0;
+	return 0;
 
-err_रेजिस्टर:
-	hci_मुक्त_dev(hdev);
+err_register:
+	hci_free_dev(hdev);
 err_alloc:
 	clear_bit(HCI_UART_PROTO_READY, &hu->flags);
-	p->बंद(hu);
-err_खोलो:
-	serdev_device_बंद(hu->serdev);
-	वापस err;
-पूर्ण
-EXPORT_SYMBOL_GPL(hci_uart_रेजिस्टर_device);
+	p->close(hu);
+err_open:
+	serdev_device_close(hu->serdev);
+	return err;
+}
+EXPORT_SYMBOL_GPL(hci_uart_register_device);
 
-व्योम hci_uart_unरेजिस्टर_device(काष्ठा hci_uart *hu)
-अणु
-	काष्ठा hci_dev *hdev = hu->hdev;
+void hci_uart_unregister_device(struct hci_uart *hu)
+{
+	struct hci_dev *hdev = hu->hdev;
 
-	cancel_work_sync(&hu->init_पढ़ोy);
-	अगर (test_bit(HCI_UART_REGISTERED, &hu->flags))
-		hci_unरेजिस्टर_dev(hdev);
-	hci_मुक्त_dev(hdev);
+	cancel_work_sync(&hu->init_ready);
+	if (test_bit(HCI_UART_REGISTERED, &hu->flags))
+		hci_unregister_dev(hdev);
+	hci_free_dev(hdev);
 
-	cancel_work_sync(&hu->ग_लिखो_work);
+	cancel_work_sync(&hu->write_work);
 
-	hu->proto->बंद(hu);
+	hu->proto->close(hu);
 
-	अगर (test_bit(HCI_UART_PROTO_READY, &hu->flags)) अणु
+	if (test_bit(HCI_UART_PROTO_READY, &hu->flags)) {
 		clear_bit(HCI_UART_PROTO_READY, &hu->flags);
-		serdev_device_बंद(hu->serdev);
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL_GPL(hci_uart_unरेजिस्टर_device);
+		serdev_device_close(hu->serdev);
+	}
+}
+EXPORT_SYMBOL_GPL(hci_uart_unregister_device);

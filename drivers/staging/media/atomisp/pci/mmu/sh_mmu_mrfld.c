@@ -1,55 +1,54 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Support क्रम Merrअगरield PNW Camera Imaging ISP subप्रणाली.
+ * Support for Merrifield PNW Camera Imaging ISP subsystem.
  *
  * Copyright (c) 2012 Intel Corporation. All Rights Reserved.
  *
  * Copyright (c) 2012 Silicon Hive www.siliconhive.com.
  *
- * This program is मुक्त software; you can redistribute it and/or
- * modअगरy it under the terms of the GNU General Public License version
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
  * 2 as published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License क्रम more details.
+ * GNU General Public License for more details.
  *
  *
  */
-#समावेश "type_support.h"
-#समावेश "mmu/isp_mmu.h"
-#समावेश "mmu/sh_mmu_mrfld.h"
-#समावेश "atomisp_compat.h"
+#include "type_support.h"
+#include "mmu/isp_mmu.h"
+#include "mmu/sh_mmu_mrfld.h"
+#include "atomisp_compat.h"
 
-#घोषणा MERR_VALID_PTE_MASK	0x80000000
+#define MERR_VALID_PTE_MASK	0x80000000
 
 /*
  * include SH header file here
  */
 
-अटल अचिन्हित पूर्णांक sh_phys_to_pte(काष्ठा isp_mmu *mmu,
+static unsigned int sh_phys_to_pte(struct isp_mmu *mmu,
 				   phys_addr_t phys)
-अणु
-	वापस phys >> ISP_PAGE_OFFSET;
-पूर्ण
+{
+	return phys >> ISP_PAGE_OFFSET;
+}
 
-अटल phys_addr_t sh_pte_to_phys(काष्ठा isp_mmu *mmu,
-				  अचिन्हित पूर्णांक pte)
-अणु
-	अचिन्हित पूर्णांक mask = mmu->driver->pte_valid_mask;
+static phys_addr_t sh_pte_to_phys(struct isp_mmu *mmu,
+				  unsigned int pte)
+{
+	unsigned int mask = mmu->driver->pte_valid_mask;
 
-	वापस (phys_addr_t)((pte & ~mask) << ISP_PAGE_OFFSET);
-पूर्ण
+	return (phys_addr_t)((pte & ~mask) << ISP_PAGE_OFFSET);
+}
 
-अटल अचिन्हित पूर्णांक sh_get_pd_base(काष्ठा isp_mmu *mmu,
+static unsigned int sh_get_pd_base(struct isp_mmu *mmu,
 				   phys_addr_t phys)
-अणु
-	अचिन्हित पूर्णांक pte = sh_phys_to_pte(mmu, phys);
+{
+	unsigned int pte = sh_phys_to_pte(mmu, phys);
 
-	वापस HOST_ADDRESS(pte);
-पूर्ण
+	return HOST_ADDRESS(pte);
+}
 
 /*
  * callback to flush tlb.
@@ -59,15 +58,15 @@
  *
  * tlb_flush_all will flush all TLBs.
  *
- * tlb_flush_all is must be provided. अगर tlb_flush_range is
- * not valid, it will set to tlb_flush_all by शेष.
+ * tlb_flush_all is must be provided. if tlb_flush_range is
+ * not valid, it will set to tlb_flush_all by default.
  */
-अटल व्योम sh_tlb_flush(काष्ठा isp_mmu *mmu)
-अणु
+static void sh_tlb_flush(struct isp_mmu *mmu)
+{
 	ia_css_mmu_invalidate_cache();
-पूर्ण
+}
 
-काष्ठा isp_mmu_client sh_mmu_mrfld = अणु
+struct isp_mmu_client sh_mmu_mrfld = {
 	.name = "Silicon Hive ISP3000 MMU",
 	.pte_valid_mask = MERR_VALID_PTE_MASK,
 	.null_pte = ~MERR_VALID_PTE_MASK,
@@ -75,4 +74,4 @@
 	.tlb_flush_all = sh_tlb_flush,
 	.phys_to_pte = sh_phys_to_pte,
 	.pte_to_phys = sh_pte_to_phys,
-पूर्ण;
+};

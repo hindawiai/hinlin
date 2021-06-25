@@ -1,96 +1,95 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2019 Facebook  */
-#समावेश <मानकपन.स>
-#समावेश <त्रुटिसं.स>
-#समावेश <माला.स>
+#include <stdio.h>
+#include <errno.h>
+#include <string.h>
 
-#समावेश <bpf/bpf.h>
-#समावेश <bpf/libbpf.h>
+#include <bpf/bpf.h>
+#include <bpf/libbpf.h>
 
-#समावेश <bpf_util.h>
-#समावेश <test_maps.h>
+#include <bpf_util.h>
+#include <test_maps.h>
 
-अटल व्योम map_batch_update(पूर्णांक map_fd, __u32 max_entries, पूर्णांक *keys,
-			     व्योम *values, bool is_pcpu)
-अणु
-	प्रकार BPF_DECLARE_PERCPU(पूर्णांक, value);
-	value *v = शून्य;
-	पूर्णांक i, j, err;
+static void map_batch_update(int map_fd, __u32 max_entries, int *keys,
+			     void *values, bool is_pcpu)
+{
+	typedef BPF_DECLARE_PERCPU(int, value);
+	value *v = NULL;
+	int i, j, err;
 	DECLARE_LIBBPF_OPTS(bpf_map_batch_opts, opts,
 		.elem_flags = 0,
 		.flags = 0,
 	);
 
-	अगर (is_pcpu)
+	if (is_pcpu)
 		v = (value *)values;
 
-	क्रम (i = 0; i < max_entries; i++) अणु
+	for (i = 0; i < max_entries; i++) {
 		keys[i] = i + 1;
-		अगर (is_pcpu)
-			क्रम (j = 0; j < bpf_num_possible_cpus(); j++)
+		if (is_pcpu)
+			for (j = 0; j < bpf_num_possible_cpus(); j++)
 				bpf_percpu(v[i], j) = i + 2 + j;
-		अन्यथा
-			((पूर्णांक *)values)[i] = i + 2;
-	पूर्ण
+		else
+			((int *)values)[i] = i + 2;
+	}
 
 	err = bpf_map_update_batch(map_fd, keys, values, &max_entries, &opts);
-	CHECK(err, "bpf_map_update_batch()", "error:%s\n", म_त्रुटि(त्रुटि_सं));
-पूर्ण
+	CHECK(err, "bpf_map_update_batch()", "error:%s\n", strerror(errno));
+}
 
-अटल व्योम map_batch_verअगरy(पूर्णांक *visited, __u32 max_entries,
-			     पूर्णांक *keys, व्योम *values, bool is_pcpu)
-अणु
-	प्रकार BPF_DECLARE_PERCPU(पूर्णांक, value);
-	value *v = शून्य;
-	पूर्णांक i, j;
+static void map_batch_verify(int *visited, __u32 max_entries,
+			     int *keys, void *values, bool is_pcpu)
+{
+	typedef BPF_DECLARE_PERCPU(int, value);
+	value *v = NULL;
+	int i, j;
 
-	अगर (is_pcpu)
+	if (is_pcpu)
 		v = (value *)values;
 
-	स_रखो(visited, 0, max_entries * माप(*visited));
-	क्रम (i = 0; i < max_entries; i++) अणु
+	memset(visited, 0, max_entries * sizeof(*visited));
+	for (i = 0; i < max_entries; i++) {
 
-		अगर (is_pcpu) अणु
-			क्रम (j = 0; j < bpf_num_possible_cpus(); j++) अणु
+		if (is_pcpu) {
+			for (j = 0; j < bpf_num_possible_cpus(); j++) {
 				CHECK(keys[i] + 1 + j != bpf_percpu(v[i], j),
 				      "key/value checking",
 				      "error: i %d j %d key %d value %d\n",
 				      i, j, keys[i], bpf_percpu(v[i],  j));
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			CHECK(keys[i] + 1 != ((पूर्णांक *)values)[i],
+			}
+		} else {
+			CHECK(keys[i] + 1 != ((int *)values)[i],
 			      "key/value checking",
 			      "error: i %d key %d value %d\n", i, keys[i],
-			      ((पूर्णांक *)values)[i]);
-		पूर्ण
+			      ((int *)values)[i]);
+		}
 
 		visited[i] = 1;
 
-	पूर्ण
-	क्रम (i = 0; i < max_entries; i++) अणु
+	}
+	for (i = 0; i < max_entries; i++) {
 		CHECK(visited[i] != 1, "visited checking",
 		      "error: keys array at index %d missing\n", i);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम __test_map_lookup_and_delete_batch(bool is_pcpu)
-अणु
+void __test_map_lookup_and_delete_batch(bool is_pcpu)
+{
 	__u32 batch, count, total, total_success;
-	प्रकार BPF_DECLARE_PERCPU(पूर्णांक, value);
-	पूर्णांक map_fd, *keys, *visited, key;
-	स्थिर __u32 max_entries = 10;
+	typedef BPF_DECLARE_PERCPU(int, value);
+	int map_fd, *keys, *visited, key;
+	const __u32 max_entries = 10;
 	value pcpu_values[max_entries];
-	पूर्णांक err, step, value_size;
+	int err, step, value_size;
 	bool nospace_err;
-	व्योम *values;
-	काष्ठा bpf_create_map_attr xattr = अणु
+	void *values;
+	struct bpf_create_map_attr xattr = {
 		.name = "hash_map",
 		.map_type = is_pcpu ? BPF_MAP_TYPE_PERCPU_HASH :
 			    BPF_MAP_TYPE_HASH,
-		.key_size = माप(पूर्णांक),
-		.value_size = माप(पूर्णांक),
-	पूर्ण;
+		.key_size = sizeof(int),
+		.value_size = sizeof(int),
+	};
 	DECLARE_LIBBPF_OPTS(bpf_map_batch_opts, opts,
 		.elem_flags = 0,
 		.flags = 0,
@@ -99,186 +98,186 @@
 	xattr.max_entries = max_entries;
 	map_fd = bpf_create_map_xattr(&xattr);
 	CHECK(map_fd == -1,
-	      "bpf_create_map_xattr()", "error:%s\n", म_त्रुटि(त्रुटि_सं));
+	      "bpf_create_map_xattr()", "error:%s\n", strerror(errno));
 
-	value_size = is_pcpu ? माप(value) : माप(पूर्णांक);
-	keys = दो_स्मृति(max_entries * माप(पूर्णांक));
-	अगर (is_pcpu)
+	value_size = is_pcpu ? sizeof(value) : sizeof(int);
+	keys = malloc(max_entries * sizeof(int));
+	if (is_pcpu)
 		values = pcpu_values;
-	अन्यथा
-		values = दो_स्मृति(max_entries * माप(पूर्णांक));
-	visited = दो_स्मृति(max_entries * माप(पूर्णांक));
+	else
+		values = malloc(max_entries * sizeof(int));
+	visited = malloc(max_entries * sizeof(int));
 	CHECK(!keys || !values || !visited, "malloc()",
-	      "error:%s\n", म_त्रुटि(त्रुटि_सं));
+	      "error:%s\n", strerror(errno));
 
 	/* test 1: lookup/delete an empty hash table, -ENOENT */
 	count = max_entries;
-	err = bpf_map_lookup_and_delete_batch(map_fd, शून्य, &batch, keys,
+	err = bpf_map_lookup_and_delete_batch(map_fd, NULL, &batch, keys,
 					      values, &count, &opts);
-	CHECK((err && त्रुटि_सं != ENOENT), "empty map",
-	      "error: %s\n", म_त्रुटि(त्रुटि_सं));
+	CHECK((err && errno != ENOENT), "empty map",
+	      "error: %s\n", strerror(errno));
 
 	/* populate elements to the map */
 	map_batch_update(map_fd, max_entries, keys, values, is_pcpu);
 
 	/* test 2: lookup/delete with count = 0, success */
 	count = 0;
-	err = bpf_map_lookup_and_delete_batch(map_fd, शून्य, &batch, keys,
+	err = bpf_map_lookup_and_delete_batch(map_fd, NULL, &batch, keys,
 					      values, &count, &opts);
-	CHECK(err, "count = 0", "error: %s\n", म_त्रुटि(त्रुटि_सं));
+	CHECK(err, "count = 0", "error: %s\n", strerror(errno));
 
 	/* test 3: lookup/delete with count = max_entries, success */
-	स_रखो(keys, 0, max_entries * माप(*keys));
-	स_रखो(values, 0, max_entries * value_size);
+	memset(keys, 0, max_entries * sizeof(*keys));
+	memset(values, 0, max_entries * value_size);
 	count = max_entries;
-	err = bpf_map_lookup_and_delete_batch(map_fd, शून्य, &batch, keys,
+	err = bpf_map_lookup_and_delete_batch(map_fd, NULL, &batch, keys,
 					      values, &count, &opts);
-	CHECK((err && त्रुटि_सं != ENOENT), "count = max_entries",
-	       "error: %s\n", म_त्रुटि(त्रुटि_सं));
+	CHECK((err && errno != ENOENT), "count = max_entries",
+	       "error: %s\n", strerror(errno));
 	CHECK(count != max_entries, "count = max_entries",
 	      "count = %u, max_entries = %u\n", count, max_entries);
-	map_batch_verअगरy(visited, max_entries, keys, values, is_pcpu);
+	map_batch_verify(visited, max_entries, keys, values, is_pcpu);
 
-	/* bpf_map_get_next_key() should वापस -ENOENT क्रम an empty map. */
-	err = bpf_map_get_next_key(map_fd, शून्य, &key);
-	CHECK(!err, "bpf_map_get_next_key()", "error: %s\n", म_त्रुटि(त्रुटि_सं));
+	/* bpf_map_get_next_key() should return -ENOENT for an empty map. */
+	err = bpf_map_get_next_key(map_fd, NULL, &key);
+	CHECK(!err, "bpf_map_get_next_key()", "error: %s\n", strerror(errno));
 
 	/* test 4: lookup/delete in a loop with various steps. */
 	total_success = 0;
-	क्रम (step = 1; step < max_entries; step++) अणु
+	for (step = 1; step < max_entries; step++) {
 		map_batch_update(map_fd, max_entries, keys, values, is_pcpu);
-		स_रखो(keys, 0, max_entries * माप(*keys));
-		स_रखो(values, 0, max_entries * value_size);
+		memset(keys, 0, max_entries * sizeof(*keys));
+		memset(values, 0, max_entries * value_size);
 		total = 0;
 		/* iteratively lookup/delete elements with 'step'
 		 * elements each
 		 */
 		count = step;
 		nospace_err = false;
-		जबतक (true) अणु
+		while (true) {
 			err = bpf_map_lookup_batch(map_fd,
-						   total ? &batch : शून्य,
+						   total ? &batch : NULL,
 						   &batch, keys + total,
 						   values +
 						   total * value_size,
 						   &count, &opts);
 			/* It is possible that we are failing due to buffer size
-			 * not big enough. In such हालs, let us just निकास and
+			 * not big enough. In such cases, let us just exit and
 			 * go with large steps. Not that a buffer size with
 			 * max_entries should always work.
 			 */
-			अगर (err && त्रुटि_सं == ENOSPC) अणु
+			if (err && errno == ENOSPC) {
 				nospace_err = true;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-			CHECK((err && त्रुटि_सं != ENOENT), "lookup with steps",
-			      "error: %s\n", म_त्रुटि(त्रुटि_सं));
+			CHECK((err && errno != ENOENT), "lookup with steps",
+			      "error: %s\n", strerror(errno));
 
 			total += count;
-			अगर (err)
-				अवरोध;
+			if (err)
+				break;
 
-		पूर्ण
-		अगर (nospace_err == true)
-			जारी;
+		}
+		if (nospace_err == true)
+			continue;
 
 		CHECK(total != max_entries, "lookup with steps",
 		      "total = %u, max_entries = %u\n", total, max_entries);
-		map_batch_verअगरy(visited, max_entries, keys, values, is_pcpu);
+		map_batch_verify(visited, max_entries, keys, values, is_pcpu);
 
 		total = 0;
 		count = step;
-		जबतक (total < max_entries) अणु
-			अगर (max_entries - total < step)
+		while (total < max_entries) {
+			if (max_entries - total < step)
 				count = max_entries - total;
 			err = bpf_map_delete_batch(map_fd,
 						   keys + total,
 						   &count, &opts);
-			CHECK((err && त्रुटि_सं != ENOENT), "delete batch",
-			      "error: %s\n", म_त्रुटि(त्रुटि_सं));
+			CHECK((err && errno != ENOENT), "delete batch",
+			      "error: %s\n", strerror(errno));
 			total += count;
-			अगर (err)
-				अवरोध;
-		पूर्ण
+			if (err)
+				break;
+		}
 		CHECK(total != max_entries, "delete with steps",
 		      "total = %u, max_entries = %u\n", total, max_entries);
 
 		/* check map is empty, errono == ENOENT */
-		err = bpf_map_get_next_key(map_fd, शून्य, &key);
-		CHECK(!err || त्रुटि_सं != ENOENT, "bpf_map_get_next_key()",
-		      "error: %s\n", म_त्रुटि(त्रुटि_सं));
+		err = bpf_map_get_next_key(map_fd, NULL, &key);
+		CHECK(!err || errno != ENOENT, "bpf_map_get_next_key()",
+		      "error: %s\n", strerror(errno));
 
 		/* iteratively lookup/delete elements with 'step'
 		 * elements each
 		 */
 		map_batch_update(map_fd, max_entries, keys, values, is_pcpu);
-		स_रखो(keys, 0, max_entries * माप(*keys));
-		स_रखो(values, 0, max_entries * value_size);
+		memset(keys, 0, max_entries * sizeof(*keys));
+		memset(values, 0, max_entries * value_size);
 		total = 0;
 		count = step;
 		nospace_err = false;
-		जबतक (true) अणु
+		while (true) {
 			err = bpf_map_lookup_and_delete_batch(map_fd,
-							total ? &batch : शून्य,
+							total ? &batch : NULL,
 							&batch, keys + total,
 							values +
 							total * value_size,
 							&count, &opts);
 			/* It is possible that we are failing due to buffer size
-			 * not big enough. In such हालs, let us just निकास and
+			 * not big enough. In such cases, let us just exit and
 			 * go with large steps. Not that a buffer size with
 			 * max_entries should always work.
 			 */
-			अगर (err && त्रुटि_सं == ENOSPC) अणु
+			if (err && errno == ENOSPC) {
 				nospace_err = true;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-			CHECK((err && त्रुटि_सं != ENOENT), "lookup with steps",
-			      "error: %s\n", म_त्रुटि(त्रुटि_सं));
+			CHECK((err && errno != ENOENT), "lookup with steps",
+			      "error: %s\n", strerror(errno));
 
 			total += count;
-			अगर (err)
-				अवरोध;
-		पूर्ण
+			if (err)
+				break;
+		}
 
-		अगर (nospace_err == true)
-			जारी;
+		if (nospace_err == true)
+			continue;
 
 		CHECK(total != max_entries, "lookup/delete with steps",
 		      "total = %u, max_entries = %u\n", total, max_entries);
 
-		map_batch_verअगरy(visited, max_entries, keys, values, is_pcpu);
-		err = bpf_map_get_next_key(map_fd, शून्य, &key);
+		map_batch_verify(visited, max_entries, keys, values, is_pcpu);
+		err = bpf_map_get_next_key(map_fd, NULL, &key);
 		CHECK(!err, "bpf_map_get_next_key()", "error: %s\n",
-		      म_त्रुटि(त्रुटि_सं));
+		      strerror(errno));
 
 		total_success++;
-	पूर्ण
+	}
 
 	CHECK(total_success == 0, "check total_success",
 	      "unexpected failure\n");
-	मुक्त(keys);
-	मुक्त(visited);
-	अगर (!is_pcpu)
-		मुक्त(values);
-पूर्ण
+	free(keys);
+	free(visited);
+	if (!is_pcpu)
+		free(values);
+}
 
-व्योम htab_map_batch_ops(व्योम)
-अणु
+void htab_map_batch_ops(void)
+{
 	__test_map_lookup_and_delete_batch(false);
-	म_लिखो("test_%s:PASS\n", __func__);
-पूर्ण
+	printf("test_%s:PASS\n", __func__);
+}
 
-व्योम htab_percpu_map_batch_ops(व्योम)
-अणु
+void htab_percpu_map_batch_ops(void)
+{
 	__test_map_lookup_and_delete_batch(true);
-	म_लिखो("test_%s:PASS\n", __func__);
-पूर्ण
+	printf("test_%s:PASS\n", __func__);
+}
 
-व्योम test_htab_map_batch_ops(व्योम)
-अणु
+void test_htab_map_batch_ops(void)
+{
 	htab_map_batch_ops();
 	htab_percpu_map_batch_ops();
-पूर्ण
+}

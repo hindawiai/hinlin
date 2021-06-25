@@ -1,34 +1,33 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __PERF_CALLCHAIN_H
-#घोषणा __PERF_CALLCHAIN_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __PERF_CALLCHAIN_H
+#define __PERF_CALLCHAIN_H
 
-#समावेश <linux/list.h>
-#समावेश <linux/rbtree.h>
-#समावेश "map_symbol.h"
-#समावेश "branch.h"
+#include <linux/list.h>
+#include <linux/rbtree.h>
+#include "map_symbol.h"
+#include "branch.h"
 
-काष्ठा addr_location;
-काष्ठा evsel;
-काष्ठा ip_callchain;
-काष्ठा map;
-काष्ठा perf_sample;
-काष्ठा thपढ़ो;
-काष्ठा hists;
+struct addr_location;
+struct evsel;
+struct ip_callchain;
+struct map;
+struct perf_sample;
+struct thread;
+struct hists;
 
-#घोषणा HELP_PAD "\t\t\t\t"
+#define HELP_PAD "\t\t\t\t"
 
-#घोषणा CALLCHAIN_HELP "setup and enables call-graph (stack chain/backtrace):\n\n"
+#define CALLCHAIN_HELP "setup and enables call-graph (stack chain/backtrace):\n\n"
 
 # define RECORD_MODE_HELP  HELP_PAD "record_mode:\tcall graph recording mode (fp|dwarf|lbr)\n"
 
-#घोषणा RECORD_SIZE_HELP						\
+#define RECORD_SIZE_HELP						\
 	HELP_PAD "record_size:\tif record_mode is 'dwarf', max size of stack recording (<bytes>)\n" \
 	HELP_PAD "\t\tdefault: 8192 (bytes)\n"
 
-#घोषणा CALLCHAIN_RECORD_HELP  CALLCHAIN_HELP RECORD_MODE_HELP RECORD_SIZE_HELP
+#define CALLCHAIN_RECORD_HELP  CALLCHAIN_HELP RECORD_MODE_HELP RECORD_SIZE_HELP
 
-#घोषणा CALLCHAIN_REPORT_HELP						\
+#define CALLCHAIN_REPORT_HELP						\
 	HELP_PAD "print_type:\tcall graph printing style (graph|flat|fractal|folded|none)\n" \
 	HELP_PAD "threshold:\tminimum call graph inclusion threshold (<percent>)\n" \
 	HELP_PAD "print_limit:\tmaximum number of call graph entry (<number>)\n" \
@@ -37,103 +36,103 @@
 	HELP_PAD "branch:\t\tinclude last branch info to call graph (branch)\n" \
 	HELP_PAD "value:\t\tcall graph value (percent|period|count)\n"
 
-क्रमागत perf_call_graph_mode अणु
+enum perf_call_graph_mode {
 	CALLCHAIN_NONE,
 	CALLCHAIN_FP,
 	CALLCHAIN_DWARF,
 	CALLCHAIN_LBR,
 	CALLCHAIN_MAX
-पूर्ण;
+};
 
-क्रमागत chain_mode अणु
+enum chain_mode {
 	CHAIN_NONE,
 	CHAIN_FLAT,
 	CHAIN_GRAPH_ABS,
 	CHAIN_GRAPH_REL,
 	CHAIN_FOLDED,
-पूर्ण;
+};
 
-क्रमागत chain_order अणु
+enum chain_order {
 	ORDER_CALLER,
 	ORDER_CALLEE
-पूर्ण;
+};
 
-काष्ठा callchain_node अणु
-	काष्ठा callchain_node	*parent;
-	काष्ठा list_head	val;
-	काष्ठा list_head	parent_val;
-	काष्ठा rb_node		rb_node_in; /* to insert nodes in an rbtree */
-	काष्ठा rb_node		rb_node;    /* to sort nodes in an output tree */
-	काष्ठा rb_root		rb_root_in; /* input tree of children */
-	काष्ठा rb_root		rb_root;    /* sorted output tree of children */
-	अचिन्हित पूर्णांक		val_nr;
-	अचिन्हित पूर्णांक		count;
-	अचिन्हित पूर्णांक		children_count;
+struct callchain_node {
+	struct callchain_node	*parent;
+	struct list_head	val;
+	struct list_head	parent_val;
+	struct rb_node		rb_node_in; /* to insert nodes in an rbtree */
+	struct rb_node		rb_node;    /* to sort nodes in an output tree */
+	struct rb_root		rb_root_in; /* input tree of children */
+	struct rb_root		rb_root;    /* sorted output tree of children */
+	unsigned int		val_nr;
+	unsigned int		count;
+	unsigned int		children_count;
 	u64			hit;
 	u64			children_hit;
-पूर्ण;
+};
 
-काष्ठा callchain_root अणु
+struct callchain_root {
 	u64			max_depth;
-	काष्ठा callchain_node	node;
-पूर्ण;
+	struct callchain_node	node;
+};
 
-काष्ठा callchain_param;
+struct callchain_param;
 
-प्रकार व्योम (*sort_chain_func_t)(काष्ठा rb_root *, काष्ठा callchain_root *,
-				 u64, काष्ठा callchain_param *);
+typedef void (*sort_chain_func_t)(struct rb_root *, struct callchain_root *,
+				 u64, struct callchain_param *);
 
-क्रमागत chain_key अणु
+enum chain_key {
 	CCKEY_FUNCTION,
 	CCKEY_ADDRESS,
 	CCKEY_SRCLINE
-पूर्ण;
+};
 
-क्रमागत chain_value अणु
+enum chain_value {
 	CCVAL_PERCENT,
 	CCVAL_PERIOD,
 	CCVAL_COUNT,
-पूर्ण;
+};
 
-बाह्य bool dwarf_callchain_users;
+extern bool dwarf_callchain_users;
 
-काष्ठा callchain_param अणु
+struct callchain_param {
 	bool			enabled;
-	क्रमागत perf_call_graph_mode record_mode;
+	enum perf_call_graph_mode record_mode;
 	u32			dump_size;
-	क्रमागत chain_mode 	mode;
+	enum chain_mode 	mode;
 	u16			max_stack;
-	u32			prपूर्णांक_limit;
-	द्विगुन			min_percent;
+	u32			print_limit;
+	double			min_percent;
 	sort_chain_func_t	sort;
-	क्रमागत chain_order	order;
+	enum chain_order	order;
 	bool			order_set;
-	क्रमागत chain_key		key;
+	enum chain_key		key;
 	bool			branch_callstack;
-	क्रमागत chain_value	value;
-पूर्ण;
+	enum chain_value	value;
+};
 
-बाह्य काष्ठा callchain_param callchain_param;
-बाह्य काष्ठा callchain_param callchain_param_शेष;
+extern struct callchain_param callchain_param;
+extern struct callchain_param callchain_param_default;
 
-काष्ठा callchain_list अणु
+struct callchain_list {
 	u64			ip;
-	काष्ठा map_symbol	ms;
-	काष्ठा /* क्रम TUI */ अणु
+	struct map_symbol	ms;
+	struct /* for TUI */ {
 		bool		unfolded;
 		bool		has_children;
-	पूर्ण;
+	};
 	u64			branch_count;
 	u64			from_count;
 	u64			predicted_count;
-	u64			पात_count;
+	u64			abort_count;
 	u64			cycles_count;
 	u64			iter_count;
 	u64			iter_cycles;
-	काष्ठा branch_type_stat brtype_stat;
-	स्थिर अक्षर		*srcline;
-	काष्ठा list_head	list;
-पूर्ण;
+	struct branch_type_stat brtype_stat;
+	const char		*srcline;
+	struct list_head	list;
+};
 
 /*
  * A callchain cursor is a single linked list that
@@ -141,171 +140,171 @@
  * It keeps persistent allocated entries to minimize
  * allocations.
  */
-काष्ठा callchain_cursor_node अणु
+struct callchain_cursor_node {
 	u64				ip;
-	काष्ठा map_symbol		ms;
-	स्थिर अक्षर			*srcline;
-	/* Indicate valid cursor node क्रम LBR stitch */
+	struct map_symbol		ms;
+	const char			*srcline;
+	/* Indicate valid cursor node for LBR stitch */
 	bool				valid;
 
 	bool				branch;
-	काष्ठा branch_flags		branch_flags;
+	struct branch_flags		branch_flags;
 	u64				branch_from;
-	पूर्णांक				nr_loop_iter;
+	int				nr_loop_iter;
 	u64				iter_cycles;
-	काष्ठा callchain_cursor_node	*next;
-पूर्ण;
+	struct callchain_cursor_node	*next;
+};
 
-काष्ठा stitch_list अणु
-	काष्ठा list_head		node;
-	काष्ठा callchain_cursor_node	cursor;
-पूर्ण;
+struct stitch_list {
+	struct list_head		node;
+	struct callchain_cursor_node	cursor;
+};
 
-काष्ठा callchain_cursor अणु
+struct callchain_cursor {
 	u64				nr;
-	काष्ठा callchain_cursor_node	*first;
-	काष्ठा callchain_cursor_node	**last;
+	struct callchain_cursor_node	*first;
+	struct callchain_cursor_node	**last;
 	u64				pos;
-	काष्ठा callchain_cursor_node	*curr;
-पूर्ण;
+	struct callchain_cursor_node	*curr;
+};
 
-बाह्य __thपढ़ो काष्ठा callchain_cursor callchain_cursor;
+extern __thread struct callchain_cursor callchain_cursor;
 
-अटल अंतरभूत व्योम callchain_init(काष्ठा callchain_root *root)
-अणु
+static inline void callchain_init(struct callchain_root *root)
+{
 	INIT_LIST_HEAD(&root->node.val);
 	INIT_LIST_HEAD(&root->node.parent_val);
 
-	root->node.parent = शून्य;
+	root->node.parent = NULL;
 	root->node.hit = 0;
 	root->node.children_hit = 0;
 	root->node.rb_root_in = RB_ROOT;
 	root->max_depth = 0;
-पूर्ण
+}
 
-अटल अंतरभूत u64 callchain_cumul_hits(काष्ठा callchain_node *node)
-अणु
-	वापस node->hit + node->children_hit;
-पूर्ण
+static inline u64 callchain_cumul_hits(struct callchain_node *node)
+{
+	return node->hit + node->children_hit;
+}
 
-अटल अंतरभूत अचिन्हित callchain_cumul_counts(काष्ठा callchain_node *node)
-अणु
-	वापस node->count + node->children_count;
-पूर्ण
+static inline unsigned callchain_cumul_counts(struct callchain_node *node)
+{
+	return node->count + node->children_count;
+}
 
-पूर्णांक callchain_रेजिस्टर_param(काष्ठा callchain_param *param);
-पूर्णांक callchain_append(काष्ठा callchain_root *root,
-		     काष्ठा callchain_cursor *cursor,
+int callchain_register_param(struct callchain_param *param);
+int callchain_append(struct callchain_root *root,
+		     struct callchain_cursor *cursor,
 		     u64 period);
 
-पूर्णांक callchain_merge(काष्ठा callchain_cursor *cursor,
-		    काष्ठा callchain_root *dst, काष्ठा callchain_root *src);
+int callchain_merge(struct callchain_cursor *cursor,
+		    struct callchain_root *dst, struct callchain_root *src);
 
-व्योम callchain_cursor_reset(काष्ठा callchain_cursor *cursor);
+void callchain_cursor_reset(struct callchain_cursor *cursor);
 
-पूर्णांक callchain_cursor_append(काष्ठा callchain_cursor *cursor, u64 ip,
-			    काष्ठा map_symbol *ms,
-			    bool branch, काष्ठा branch_flags *flags,
-			    पूर्णांक nr_loop_iter, u64 iter_cycles, u64 branch_from,
-			    स्थिर अक्षर *srcline);
+int callchain_cursor_append(struct callchain_cursor *cursor, u64 ip,
+			    struct map_symbol *ms,
+			    bool branch, struct branch_flags *flags,
+			    int nr_loop_iter, u64 iter_cycles, u64 branch_from,
+			    const char *srcline);
 
-/* Close a cursor writing session. Initialize क्रम the पढ़ोer */
-अटल अंतरभूत व्योम callchain_cursor_commit(काष्ठा callchain_cursor *cursor)
-अणु
+/* Close a cursor writing session. Initialize for the reader */
+static inline void callchain_cursor_commit(struct callchain_cursor *cursor)
+{
 	cursor->curr = cursor->first;
 	cursor->pos = 0;
-पूर्ण
+}
 
-/* Cursor पढ़ोing iteration helpers */
-अटल अंतरभूत काष्ठा callchain_cursor_node *
-callchain_cursor_current(काष्ठा callchain_cursor *cursor)
-अणु
-	अगर (cursor->pos == cursor->nr)
-		वापस शून्य;
+/* Cursor reading iteration helpers */
+static inline struct callchain_cursor_node *
+callchain_cursor_current(struct callchain_cursor *cursor)
+{
+	if (cursor->pos == cursor->nr)
+		return NULL;
 
-	वापस cursor->curr;
-पूर्ण
+	return cursor->curr;
+}
 
-अटल अंतरभूत व्योम callchain_cursor_advance(काष्ठा callchain_cursor *cursor)
-अणु
+static inline void callchain_cursor_advance(struct callchain_cursor *cursor)
+{
 	cursor->curr = cursor->curr->next;
 	cursor->pos++;
-पूर्ण
+}
 
-पूर्णांक callchain_cursor__copy(काष्ठा callchain_cursor *dst,
-			   काष्ठा callchain_cursor *src);
+int callchain_cursor__copy(struct callchain_cursor *dst,
+			   struct callchain_cursor *src);
 
-काष्ठा option;
-काष्ठा hist_entry;
+struct option;
+struct hist_entry;
 
-पूर्णांक record_parse_callchain_opt(स्थिर काष्ठा option *opt, स्थिर अक्षर *arg, पूर्णांक unset);
-पूर्णांक record_callchain_opt(स्थिर काष्ठा option *opt, स्थिर अक्षर *arg, पूर्णांक unset);
+int record_parse_callchain_opt(const struct option *opt, const char *arg, int unset);
+int record_callchain_opt(const struct option *opt, const char *arg, int unset);
 
-काष्ठा record_opts;
+struct record_opts;
 
-पूर्णांक record_opts__parse_callchain(काष्ठा record_opts *record,
-				 काष्ठा callchain_param *callchain,
-				 स्थिर अक्षर *arg, bool unset);
+int record_opts__parse_callchain(struct record_opts *record,
+				 struct callchain_param *callchain,
+				 const char *arg, bool unset);
 
-पूर्णांक sample__resolve_callchain(काष्ठा perf_sample *sample,
-			      काष्ठा callchain_cursor *cursor, काष्ठा symbol **parent,
-			      काष्ठा evsel *evsel, काष्ठा addr_location *al,
-			      पूर्णांक max_stack);
-पूर्णांक hist_entry__append_callchain(काष्ठा hist_entry *he, काष्ठा perf_sample *sample);
-पूर्णांक fill_callchain_info(काष्ठा addr_location *al, काष्ठा callchain_cursor_node *node,
+int sample__resolve_callchain(struct perf_sample *sample,
+			      struct callchain_cursor *cursor, struct symbol **parent,
+			      struct evsel *evsel, struct addr_location *al,
+			      int max_stack);
+int hist_entry__append_callchain(struct hist_entry *he, struct perf_sample *sample);
+int fill_callchain_info(struct addr_location *al, struct callchain_cursor_node *node,
 			bool hide_unresolved);
 
-बाह्य स्थिर अक्षर record_callchain_help[];
-पूर्णांक parse_callchain_record(स्थिर अक्षर *arg, काष्ठा callchain_param *param);
-पूर्णांक parse_callchain_record_opt(स्थिर अक्षर *arg, काष्ठा callchain_param *param);
-पूर्णांक parse_callchain_report_opt(स्थिर अक्षर *arg);
-पूर्णांक parse_callchain_top_opt(स्थिर अक्षर *arg);
-पूर्णांक perf_callchain_config(स्थिर अक्षर *var, स्थिर अक्षर *value);
+extern const char record_callchain_help[];
+int parse_callchain_record(const char *arg, struct callchain_param *param);
+int parse_callchain_record_opt(const char *arg, struct callchain_param *param);
+int parse_callchain_report_opt(const char *arg);
+int parse_callchain_top_opt(const char *arg);
+int perf_callchain_config(const char *var, const char *value);
 
-अटल अंतरभूत व्योम callchain_cursor_snapshot(काष्ठा callchain_cursor *dest,
-					     काष्ठा callchain_cursor *src)
-अणु
+static inline void callchain_cursor_snapshot(struct callchain_cursor *dest,
+					     struct callchain_cursor *src)
+{
 	*dest = *src;
 
 	dest->first = src->curr;
 	dest->nr -= src->pos;
-पूर्ण
+}
 
-#अगर_घोषित HAVE_SKIP_CALLCHAIN_IDX
-पूर्णांक arch_skip_callchain_idx(काष्ठा thपढ़ो *thपढ़ो, काष्ठा ip_callchain *chain);
-#अन्यथा
-अटल अंतरभूत पूर्णांक arch_skip_callchain_idx(काष्ठा thपढ़ो *thपढ़ो __maybe_unused,
-			काष्ठा ip_callchain *chain __maybe_unused)
-अणु
-	वापस -1;
-पूर्ण
-#पूर्ण_अगर
+#ifdef HAVE_SKIP_CALLCHAIN_IDX
+int arch_skip_callchain_idx(struct thread *thread, struct ip_callchain *chain);
+#else
+static inline int arch_skip_callchain_idx(struct thread *thread __maybe_unused,
+			struct ip_callchain *chain __maybe_unused)
+{
+	return -1;
+}
+#endif
 
-अक्षर *callchain_list__sym_name(काष्ठा callchain_list *cl,
-			       अक्षर *bf, माप_प्रकार bfsize, bool show_dso);
-अक्षर *callchain_node__scnम_लिखो_value(काष्ठा callchain_node *node,
-				      अक्षर *bf, माप_प्रकार bfsize, u64 total);
-पूर्णांक callchain_node__ख_लिखो_value(काष्ठा callchain_node *node,
-				  खाता *fp, u64 total);
+char *callchain_list__sym_name(struct callchain_list *cl,
+			       char *bf, size_t bfsize, bool show_dso);
+char *callchain_node__scnprintf_value(struct callchain_node *node,
+				      char *bf, size_t bfsize, u64 total);
+int callchain_node__fprintf_value(struct callchain_node *node,
+				  FILE *fp, u64 total);
 
-पूर्णांक callchain_list_counts__म_लिखो_value(काष्ठा callchain_list *clist,
-					खाता *fp, अक्षर *bf, पूर्णांक bfsize);
+int callchain_list_counts__printf_value(struct callchain_list *clist,
+					FILE *fp, char *bf, int bfsize);
 
-व्योम मुक्त_callchain(काष्ठा callchain_root *root);
-व्योम decay_callchain(काष्ठा callchain_root *root);
-पूर्णांक callchain_node__make_parent_list(काष्ठा callchain_node *node);
+void free_callchain(struct callchain_root *root);
+void decay_callchain(struct callchain_root *root);
+int callchain_node__make_parent_list(struct callchain_node *node);
 
-पूर्णांक callchain_branch_counts(काष्ठा callchain_root *root,
+int callchain_branch_counts(struct callchain_root *root,
 			    u64 *branch_count, u64 *predicted_count,
-			    u64 *पात_count, u64 *cycles_count);
+			    u64 *abort_count, u64 *cycles_count);
 
-व्योम callchain_param_setup(u64 sample_type);
+void callchain_param_setup(u64 sample_type);
 
-bool callchain_cnode_matched(काष्ठा callchain_node *base_cnode,
-			     काष्ठा callchain_node *pair_cnode);
+bool callchain_cnode_matched(struct callchain_node *base_cnode,
+			     struct callchain_node *pair_cnode);
 
-u64 callchain_total_hits(काष्ठा hists *hists);
+u64 callchain_total_hits(struct hists *hists);
 
-s64 callchain_avg_cycles(काष्ठा callchain_node *cnode);
+s64 callchain_avg_cycles(struct callchain_node *cnode);
 
-#पूर्ण_अगर	/* __PERF_CALLCHAIN_H */
+#endif	/* __PERF_CALLCHAIN_H */

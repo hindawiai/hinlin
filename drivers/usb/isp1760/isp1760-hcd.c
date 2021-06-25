@@ -1,57 +1,56 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Driver क्रम the NXP ISP1760 chip
+ * Driver for the NXP ISP1760 chip
  *
- * However, the code might contain some bugs. What करोesn't work क्रम sure is:
+ * However, the code might contain some bugs. What doesn't work for sure is:
  * - ISO
  * - OTG
- e The पूर्णांकerrupt line is configured as active low, level.
+ e The interrupt line is configured as active low, level.
  *
  * (c) 2007 Sebastian Siewior <bigeasy@linutronix.de>
  *
  * (c) 2011 Arvid Brodin <arvid.brodin@enea.com>
  *
  */
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/list.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/usb/hcd.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/iopoll.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/समयr.h>
-#समावेश <यंत्र/unaligned.h>
-#समावेश <यंत्र/cacheflush.h>
+#include <linux/gpio/consumer.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/list.h>
+#include <linux/usb.h>
+#include <linux/usb/hcd.h>
+#include <linux/debugfs.h>
+#include <linux/uaccess.h>
+#include <linux/io.h>
+#include <linux/iopoll.h>
+#include <linux/mm.h>
+#include <linux/timer.h>
+#include <asm/unaligned.h>
+#include <asm/cacheflush.h>
 
-#समावेश "isp1760-core.h"
-#समावेश "isp1760-hcd.h"
-#समावेश "isp1760-regs.h"
+#include "isp1760-core.h"
+#include "isp1760-hcd.h"
+#include "isp1760-regs.h"
 
-अटल काष्ठा kmem_cache *qtd_cachep;
-अटल काष्ठा kmem_cache *qh_cachep;
-अटल काष्ठा kmem_cache *urb_listitem_cachep;
+static struct kmem_cache *qtd_cachep;
+static struct kmem_cache *qh_cachep;
+static struct kmem_cache *urb_listitem_cachep;
 
-प्रकार व्योम (packet_enqueue)(काष्ठा usb_hcd *hcd, काष्ठा isp1760_qh *qh,
-		काष्ठा isp1760_qtd *qtd);
+typedef void (packet_enqueue)(struct usb_hcd *hcd, struct isp1760_qh *qh,
+		struct isp1760_qtd *qtd);
 
-अटल अंतरभूत काष्ठा isp1760_hcd *hcd_to_priv(काष्ठा usb_hcd *hcd)
-अणु
-	वापस *(काष्ठा isp1760_hcd **)hcd->hcd_priv;
-पूर्ण
+static inline struct isp1760_hcd *hcd_to_priv(struct usb_hcd *hcd)
+{
+	return *(struct isp1760_hcd **)hcd->hcd_priv;
+}
 
 /* urb state*/
-#घोषणा DELETE_URB		(0x0008)
-#घोषणा NO_TRANSFER_ACTIVE	(0xffffffff)
+#define DELETE_URB		(0x0008)
+#define NO_TRANSFER_ACTIVE	(0xffffffff)
 
 /* Philips Proprietary Transfer Descriptor (PTD) */
-प्रकार __u32 __bitwise __dw;
-काष्ठा ptd अणु
+typedef __u32 __bitwise __dw;
+struct ptd {
 	__dw dw0;
 	__dw dw1;
 	__dw dw2;
@@ -60,134 +59,134 @@
 	__dw dw5;
 	__dw dw6;
 	__dw dw7;
-पूर्ण;
-#घोषणा PTD_OFFSET		0x0400
-#घोषणा ISO_PTD_OFFSET		0x0400
-#घोषणा INT_PTD_OFFSET		0x0800
-#घोषणा ATL_PTD_OFFSET		0x0c00
-#घोषणा PAYLOAD_OFFSET		0x1000
+};
+#define PTD_OFFSET		0x0400
+#define ISO_PTD_OFFSET		0x0400
+#define INT_PTD_OFFSET		0x0800
+#define ATL_PTD_OFFSET		0x0c00
+#define PAYLOAD_OFFSET		0x1000
 
 
 /* ATL */
 /* DW0 */
-#घोषणा DW0_VALID_BIT			1
-#घोषणा FROM_DW0_VALID(x)		((x) & 0x01)
-#घोषणा TO_DW0_LENGTH(x)		(((u32) x) << 3)
-#घोषणा TO_DW0_MAXPACKET(x)		(((u32) x) << 18)
-#घोषणा TO_DW0_MULTI(x)			(((u32) x) << 29)
-#घोषणा TO_DW0_ENDPOINT(x)		(((u32)	x) << 31)
+#define DW0_VALID_BIT			1
+#define FROM_DW0_VALID(x)		((x) & 0x01)
+#define TO_DW0_LENGTH(x)		(((u32) x) << 3)
+#define TO_DW0_MAXPACKET(x)		(((u32) x) << 18)
+#define TO_DW0_MULTI(x)			(((u32) x) << 29)
+#define TO_DW0_ENDPOINT(x)		(((u32)	x) << 31)
 /* DW1 */
-#घोषणा TO_DW1_DEVICE_ADDR(x)		(((u32) x) << 3)
-#घोषणा TO_DW1_PID_TOKEN(x)		(((u32) x) << 10)
-#घोषणा DW1_TRANS_BULK			((u32) 2 << 12)
-#घोषणा DW1_TRANS_INT			((u32) 3 << 12)
-#घोषणा DW1_TRANS_SPLIT			((u32) 1 << 14)
-#घोषणा DW1_SE_USB_LOSPEED		((u32) 2 << 16)
-#घोषणा TO_DW1_PORT_NUM(x)		(((u32) x) << 18)
-#घोषणा TO_DW1_HUB_NUM(x)		(((u32) x) << 25)
+#define TO_DW1_DEVICE_ADDR(x)		(((u32) x) << 3)
+#define TO_DW1_PID_TOKEN(x)		(((u32) x) << 10)
+#define DW1_TRANS_BULK			((u32) 2 << 12)
+#define DW1_TRANS_INT			((u32) 3 << 12)
+#define DW1_TRANS_SPLIT			((u32) 1 << 14)
+#define DW1_SE_USB_LOSPEED		((u32) 2 << 16)
+#define TO_DW1_PORT_NUM(x)		(((u32) x) << 18)
+#define TO_DW1_HUB_NUM(x)		(((u32) x) << 25)
 /* DW2 */
-#घोषणा TO_DW2_DATA_START_ADDR(x)	(((u32) x) << 8)
-#घोषणा TO_DW2_RL(x)			((x) << 25)
-#घोषणा FROM_DW2_RL(x)			(((x) >> 25) & 0xf)
+#define TO_DW2_DATA_START_ADDR(x)	(((u32) x) << 8)
+#define TO_DW2_RL(x)			((x) << 25)
+#define FROM_DW2_RL(x)			(((x) >> 25) & 0xf)
 /* DW3 */
-#घोषणा FROM_DW3_NRBYTESTRANSFERRED(x)		((x) & 0x7fff)
-#घोषणा FROM_DW3_SCS_NRBYTESTRANSFERRED(x)	((x) & 0x07ff)
-#घोषणा TO_DW3_NAKCOUNT(x)		((x) << 19)
-#घोषणा FROM_DW3_NAKCOUNT(x)		(((x) >> 19) & 0xf)
-#घोषणा TO_DW3_CERR(x)			((x) << 23)
-#घोषणा FROM_DW3_CERR(x)		(((x) >> 23) & 0x3)
-#घोषणा TO_DW3_DATA_TOGGLE(x)		((x) << 25)
-#घोषणा FROM_DW3_DATA_TOGGLE(x)		(((x) >> 25) & 0x1)
-#घोषणा TO_DW3_PING(x)			((x) << 26)
-#घोषणा FROM_DW3_PING(x)		(((x) >> 26) & 0x1)
-#घोषणा DW3_ERROR_BIT			(1 << 28)
-#घोषणा DW3_BABBLE_BIT			(1 << 29)
-#घोषणा DW3_HALT_BIT			(1 << 30)
-#घोषणा DW3_ACTIVE_BIT			(1 << 31)
-#घोषणा FROM_DW3_ACTIVE(x)		(((x) >> 31) & 0x01)
+#define FROM_DW3_NRBYTESTRANSFERRED(x)		((x) & 0x7fff)
+#define FROM_DW3_SCS_NRBYTESTRANSFERRED(x)	((x) & 0x07ff)
+#define TO_DW3_NAKCOUNT(x)		((x) << 19)
+#define FROM_DW3_NAKCOUNT(x)		(((x) >> 19) & 0xf)
+#define TO_DW3_CERR(x)			((x) << 23)
+#define FROM_DW3_CERR(x)		(((x) >> 23) & 0x3)
+#define TO_DW3_DATA_TOGGLE(x)		((x) << 25)
+#define FROM_DW3_DATA_TOGGLE(x)		(((x) >> 25) & 0x1)
+#define TO_DW3_PING(x)			((x) << 26)
+#define FROM_DW3_PING(x)		(((x) >> 26) & 0x1)
+#define DW3_ERROR_BIT			(1 << 28)
+#define DW3_BABBLE_BIT			(1 << 29)
+#define DW3_HALT_BIT			(1 << 30)
+#define DW3_ACTIVE_BIT			(1 << 31)
+#define FROM_DW3_ACTIVE(x)		(((x) >> 31) & 0x01)
 
-#घोषणा INT_UNDERRUN			(1 << 2)
-#घोषणा INT_BABBLE			(1 << 1)
-#घोषणा INT_EXACT			(1 << 0)
+#define INT_UNDERRUN			(1 << 2)
+#define INT_BABBLE			(1 << 1)
+#define INT_EXACT			(1 << 0)
 
-#घोषणा SETUP_PID	(2)
-#घोषणा IN_PID		(1)
-#घोषणा OUT_PID		(0)
+#define SETUP_PID	(2)
+#define IN_PID		(1)
+#define OUT_PID		(0)
 
 /* Errata 1 */
-#घोषणा RL_COUNTER	(0)
-#घोषणा NAK_COUNTER	(0)
-#घोषणा ERR_COUNTER	(2)
+#define RL_COUNTER	(0)
+#define NAK_COUNTER	(0)
+#define ERR_COUNTER	(2)
 
-काष्ठा isp1760_qtd अणु
+struct isp1760_qtd {
 	u8 packet_type;
-	व्योम *data_buffer;
+	void *data_buffer;
 	u32 payload_addr;
 
-	/* the rest is HCD-निजी */
-	काष्ठा list_head qtd_list;
-	काष्ठा urb *urb;
-	माप_प्रकार length;
-	माप_प्रकार actual_length;
+	/* the rest is HCD-private */
+	struct list_head qtd_list;
+	struct urb *urb;
+	size_t length;
+	size_t actual_length;
 
-	/* QTD_ENQUEUED:	रुकोing क्रम transfer (inactive) */
-	/* QTD_PAYLOAD_ALLOC:	chip mem has been allocated क्रम payload */
+	/* QTD_ENQUEUED:	waiting for transfer (inactive) */
+	/* QTD_PAYLOAD_ALLOC:	chip mem has been allocated for payload */
 	/* QTD_XFER_STARTED:	valid ptd has been written to isp176x - only
-				पूर्णांकerrupt handler may touch this qtd! */
+				interrupt handler may touch this qtd! */
 	/* QTD_XFER_COMPLETE:	payload has been transferred successfully */
-	/* QTD_RETIRE:		transfer error/पात qtd */
-#घोषणा QTD_ENQUEUED		0
-#घोषणा QTD_PAYLOAD_ALLOC	1
-#घोषणा QTD_XFER_STARTED	2
-#घोषणा QTD_XFER_COMPLETE	3
-#घोषणा QTD_RETIRE		4
+	/* QTD_RETIRE:		transfer error/abort qtd */
+#define QTD_ENQUEUED		0
+#define QTD_PAYLOAD_ALLOC	1
+#define QTD_XFER_STARTED	2
+#define QTD_XFER_COMPLETE	3
+#define QTD_RETIRE		4
 	u32 status;
-पूर्ण;
+};
 
-/* Queue head, one क्रम each active endpoपूर्णांक */
-काष्ठा isp1760_qh अणु
-	काष्ठा list_head qh_list;
-	काष्ठा list_head qtd_list;
+/* Queue head, one for each active endpoint */
+struct isp1760_qh {
+	struct list_head qh_list;
+	struct list_head qtd_list;
 	u32 toggle;
 	u32 ping;
-	पूर्णांक slot;
-	पूर्णांक tt_buffer_dirty;	/* See USB2.0 spec section 11.17.5 */
-पूर्ण;
+	int slot;
+	int tt_buffer_dirty;	/* See USB2.0 spec section 11.17.5 */
+};
 
-काष्ठा urb_listitem अणु
-	काष्ठा list_head urb_list;
-	काष्ठा urb *urb;
-पूर्ण;
+struct urb_listitem {
+	struct list_head urb_list;
+	struct urb *urb;
+};
 
 /*
- * Access functions क्रम isp176x रेजिस्टरs (addresses 0..0x03FF).
+ * Access functions for isp176x registers (addresses 0..0x03FF).
  */
-अटल u32 reg_पढ़ो32(व्योम __iomem *base, u32 reg)
-अणु
-	वापस isp1760_पढ़ो32(base, reg);
-पूर्ण
+static u32 reg_read32(void __iomem *base, u32 reg)
+{
+	return isp1760_read32(base, reg);
+}
 
-अटल व्योम reg_ग_लिखो32(व्योम __iomem *base, u32 reg, u32 val)
-अणु
-	isp1760_ग_लिखो32(base, reg, val);
-पूर्ण
+static void reg_write32(void __iomem *base, u32 reg, u32 val)
+{
+	isp1760_write32(base, reg, val);
+}
 
 /*
- * Access functions क्रम isp176x memory (offset >= 0x0400).
+ * Access functions for isp176x memory (offset >= 0x0400).
  *
- * bank_पढ़ोs8() पढ़ोs memory locations prefetched by an earlier ग_लिखो to
- * HC_MEMORY_REG (see isp176x datasheet). Unless you want to करो fancy multi-
- * bank optimizations, you should use the more generic mem_पढ़ोs8() below.
+ * bank_reads8() reads memory locations prefetched by an earlier write to
+ * HC_MEMORY_REG (see isp176x datasheet). Unless you want to do fancy multi-
+ * bank optimizations, you should use the more generic mem_reads8() below.
  *
- * For access to ptd memory, use the specialized ptd_पढ़ो() and ptd_ग_लिखो()
+ * For access to ptd memory, use the specialized ptd_read() and ptd_write()
  * below.
  *
- * These functions copy via MMIO data to/from the device. स_नकल_अणुto|fromपूर्णio()
- * करोesn't quite work because some people have to enक्रमce 32-bit access
+ * These functions copy via MMIO data to/from the device. memcpy_{to|from}io()
+ * doesn't quite work because some people have to enforce 32-bit access
  */
-अटल व्योम bank_पढ़ोs8(व्योम __iomem *src_base, u32 src_offset, u32 bank_addr,
+static void bank_reads8(void __iomem *src_base, u32 src_offset, u32 bank_addr,
 							__u32 *dst, u32 bytes)
-अणु
+{
 	__u32 __iomem *src;
 	u32 val;
 	__u8 *src_byteptr;
@@ -195,351 +194,351 @@
 
 	src = src_base + (bank_addr | src_offset);
 
-	अगर (src_offset < PAYLOAD_OFFSET) अणु
-		जबतक (bytes >= 4) अणु
-			*dst = le32_to_cpu(__raw_पढ़ोl(src));
+	if (src_offset < PAYLOAD_OFFSET) {
+		while (bytes >= 4) {
+			*dst = le32_to_cpu(__raw_readl(src));
 			bytes -= 4;
 			src++;
 			dst++;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		जबतक (bytes >= 4) अणु
-			*dst = __raw_पढ़ोl(src);
+		}
+	} else {
+		while (bytes >= 4) {
+			*dst = __raw_readl(src);
 			bytes -= 4;
 			src++;
 			dst++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!bytes)
-		वापस;
+	if (!bytes)
+		return;
 
-	/* in हाल we have 3, 2 or 1 by left. The dst buffer may not be fully
+	/* in case we have 3, 2 or 1 by left. The dst buffer may not be fully
 	 * allocated.
 	 */
-	अगर (src_offset < PAYLOAD_OFFSET)
-		val = le32_to_cpu(__raw_पढ़ोl(src));
-	अन्यथा
-		val = __raw_पढ़ोl(src);
+	if (src_offset < PAYLOAD_OFFSET)
+		val = le32_to_cpu(__raw_readl(src));
+	else
+		val = __raw_readl(src);
 
-	dst_byteptr = (व्योम *) dst;
-	src_byteptr = (व्योम *) &val;
-	जबतक (bytes > 0) अणु
+	dst_byteptr = (void *) dst;
+	src_byteptr = (void *) &val;
+	while (bytes > 0) {
 		*dst_byteptr = *src_byteptr;
 		dst_byteptr++;
 		src_byteptr++;
 		bytes--;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम mem_पढ़ोs8(व्योम __iomem *src_base, u32 src_offset, व्योम *dst,
+static void mem_reads8(void __iomem *src_base, u32 src_offset, void *dst,
 								u32 bytes)
-अणु
-	reg_ग_लिखो32(src_base, HC_MEMORY_REG, src_offset + ISP_BANK(0));
+{
+	reg_write32(src_base, HC_MEMORY_REG, src_offset + ISP_BANK(0));
 	ndelay(90);
-	bank_पढ़ोs8(src_base, src_offset, ISP_BANK(0), dst, bytes);
-पूर्ण
+	bank_reads8(src_base, src_offset, ISP_BANK(0), dst, bytes);
+}
 
-अटल व्योम mem_ग_लिखोs8(व्योम __iomem *dst_base, u32 dst_offset,
-						__u32 स्थिर *src, u32 bytes)
-अणु
+static void mem_writes8(void __iomem *dst_base, u32 dst_offset,
+						__u32 const *src, u32 bytes)
+{
 	__u32 __iomem *dst;
 
 	dst = dst_base + dst_offset;
 
-	अगर (dst_offset < PAYLOAD_OFFSET) अणु
-		जबतक (bytes >= 4) अणु
-			__raw_ग_लिखोl(cpu_to_le32(*src), dst);
+	if (dst_offset < PAYLOAD_OFFSET) {
+		while (bytes >= 4) {
+			__raw_writel(cpu_to_le32(*src), dst);
 			bytes -= 4;
 			src++;
 			dst++;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		जबतक (bytes >= 4) अणु
-			__raw_ग_लिखोl(*src, dst);
+		}
+	} else {
+		while (bytes >= 4) {
+			__raw_writel(*src, dst);
 			bytes -= 4;
 			src++;
 			dst++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!bytes)
-		वापस;
-	/* in हाल we have 3, 2 or 1 bytes left. The buffer is allocated and the
-	 * extra bytes should not be पढ़ो by the HW.
+	if (!bytes)
+		return;
+	/* in case we have 3, 2 or 1 bytes left. The buffer is allocated and the
+	 * extra bytes should not be read by the HW.
 	 */
 
-	अगर (dst_offset < PAYLOAD_OFFSET)
-		__raw_ग_लिखोl(cpu_to_le32(*src), dst);
-	अन्यथा
-		__raw_ग_लिखोl(*src, dst);
-पूर्ण
+	if (dst_offset < PAYLOAD_OFFSET)
+		__raw_writel(cpu_to_le32(*src), dst);
+	else
+		__raw_writel(*src, dst);
+}
 
 /*
- * Read and ग_लिखो ptds. 'ptd_offset' should be one of ISO_PTD_OFFSET,
+ * Read and write ptds. 'ptd_offset' should be one of ISO_PTD_OFFSET,
  * INT_PTD_OFFSET, and ATL_PTD_OFFSET. 'slot' should be less than 32.
  */
-अटल व्योम ptd_पढ़ो(व्योम __iomem *base, u32 ptd_offset, u32 slot,
-								काष्ठा ptd *ptd)
-अणु
-	reg_ग_लिखो32(base, HC_MEMORY_REG,
-				ISP_BANK(0) + ptd_offset + slot*माप(*ptd));
+static void ptd_read(void __iomem *base, u32 ptd_offset, u32 slot,
+								struct ptd *ptd)
+{
+	reg_write32(base, HC_MEMORY_REG,
+				ISP_BANK(0) + ptd_offset + slot*sizeof(*ptd));
 	ndelay(90);
-	bank_पढ़ोs8(base, ptd_offset + slot*माप(*ptd), ISP_BANK(0),
-						(व्योम *) ptd, माप(*ptd));
-पूर्ण
+	bank_reads8(base, ptd_offset + slot*sizeof(*ptd), ISP_BANK(0),
+						(void *) ptd, sizeof(*ptd));
+}
 
-अटल व्योम ptd_ग_लिखो(व्योम __iomem *base, u32 ptd_offset, u32 slot,
-								काष्ठा ptd *ptd)
-अणु
-	mem_ग_लिखोs8(base, ptd_offset + slot*माप(*ptd) + माप(ptd->dw0),
-						&ptd->dw1, 7*माप(ptd->dw1));
-	/* Make sure dw0 माला_लो written last (after other dw's and after payload)
+static void ptd_write(void __iomem *base, u32 ptd_offset, u32 slot,
+								struct ptd *ptd)
+{
+	mem_writes8(base, ptd_offset + slot*sizeof(*ptd) + sizeof(ptd->dw0),
+						&ptd->dw1, 7*sizeof(ptd->dw1));
+	/* Make sure dw0 gets written last (after other dw's and after payload)
 	   since it contains the enable bit */
 	wmb();
-	mem_ग_लिखोs8(base, ptd_offset + slot*माप(*ptd), &ptd->dw0,
-							माप(ptd->dw0));
-पूर्ण
+	mem_writes8(base, ptd_offset + slot*sizeof(*ptd), &ptd->dw0,
+							sizeof(ptd->dw0));
+}
 
 
 /* memory management of the 60kb on the chip from 0x1000 to 0xffff */
-अटल व्योम init_memory(काष्ठा isp1760_hcd *priv)
-अणु
-	पूर्णांक i, curr;
+static void init_memory(struct isp1760_hcd *priv)
+{
+	int i, curr;
 	u32 payload_addr;
 
 	payload_addr = PAYLOAD_OFFSET;
-	क्रम (i = 0; i < BLOCK_1_NUM; i++) अणु
+	for (i = 0; i < BLOCK_1_NUM; i++) {
 		priv->memory_pool[i].start = payload_addr;
 		priv->memory_pool[i].size = BLOCK_1_SIZE;
-		priv->memory_pool[i].मुक्त = 1;
+		priv->memory_pool[i].free = 1;
 		payload_addr += priv->memory_pool[i].size;
-	पूर्ण
+	}
 
 	curr = i;
-	क्रम (i = 0; i < BLOCK_2_NUM; i++) अणु
+	for (i = 0; i < BLOCK_2_NUM; i++) {
 		priv->memory_pool[curr + i].start = payload_addr;
 		priv->memory_pool[curr + i].size = BLOCK_2_SIZE;
-		priv->memory_pool[curr + i].मुक्त = 1;
+		priv->memory_pool[curr + i].free = 1;
 		payload_addr += priv->memory_pool[curr + i].size;
-	पूर्ण
+	}
 
 	curr = i;
-	क्रम (i = 0; i < BLOCK_3_NUM; i++) अणु
+	for (i = 0; i < BLOCK_3_NUM; i++) {
 		priv->memory_pool[curr + i].start = payload_addr;
 		priv->memory_pool[curr + i].size = BLOCK_3_SIZE;
-		priv->memory_pool[curr + i].मुक्त = 1;
+		priv->memory_pool[curr + i].free = 1;
 		payload_addr += priv->memory_pool[curr + i].size;
-	पूर्ण
+	}
 
 	WARN_ON(payload_addr - priv->memory_pool[0].start > PAYLOAD_AREA_SIZE);
-पूर्ण
+}
 
-अटल व्योम alloc_mem(काष्ठा usb_hcd *hcd, काष्ठा isp1760_qtd *qtd)
-अणु
-	काष्ठा isp1760_hcd *priv = hcd_to_priv(hcd);
-	पूर्णांक i;
+static void alloc_mem(struct usb_hcd *hcd, struct isp1760_qtd *qtd)
+{
+	struct isp1760_hcd *priv = hcd_to_priv(hcd);
+	int i;
 
 	WARN_ON(qtd->payload_addr);
 
-	अगर (!qtd->length)
-		वापस;
+	if (!qtd->length)
+		return;
 
-	क्रम (i = 0; i < BLOCKS; i++) अणु
-		अगर (priv->memory_pool[i].size >= qtd->length &&
-				priv->memory_pool[i].मुक्त) अणु
-			priv->memory_pool[i].मुक्त = 0;
+	for (i = 0; i < BLOCKS; i++) {
+		if (priv->memory_pool[i].size >= qtd->length &&
+				priv->memory_pool[i].free) {
+			priv->memory_pool[i].free = 0;
 			qtd->payload_addr = priv->memory_pool[i].start;
-			वापस;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			return;
+		}
+	}
+}
 
-अटल व्योम मुक्त_mem(काष्ठा usb_hcd *hcd, काष्ठा isp1760_qtd *qtd)
-अणु
-	काष्ठा isp1760_hcd *priv = hcd_to_priv(hcd);
-	पूर्णांक i;
+static void free_mem(struct usb_hcd *hcd, struct isp1760_qtd *qtd)
+{
+	struct isp1760_hcd *priv = hcd_to_priv(hcd);
+	int i;
 
-	अगर (!qtd->payload_addr)
-		वापस;
+	if (!qtd->payload_addr)
+		return;
 
-	क्रम (i = 0; i < BLOCKS; i++) अणु
-		अगर (priv->memory_pool[i].start == qtd->payload_addr) अणु
-			WARN_ON(priv->memory_pool[i].मुक्त);
-			priv->memory_pool[i].मुक्त = 1;
+	for (i = 0; i < BLOCKS; i++) {
+		if (priv->memory_pool[i].start == qtd->payload_addr) {
+			WARN_ON(priv->memory_pool[i].free);
+			priv->memory_pool[i].free = 1;
 			qtd->payload_addr = 0;
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 
 	dev_err(hcd->self.controller, "%s: Invalid pointer: %08x\n",
 						__func__, qtd->payload_addr);
 	WARN_ON(1);
 	qtd->payload_addr = 0;
-पूर्ण
+}
 
-अटल पूर्णांक handshake(काष्ठा usb_hcd *hcd, u32 reg,
-		      u32 mask, u32 करोne, पूर्णांक usec)
-अणु
+static int handshake(struct usb_hcd *hcd, u32 reg,
+		      u32 mask, u32 done, int usec)
+{
 	u32 result;
-	पूर्णांक ret;
+	int ret;
 
-	ret = पढ़ोl_poll_समयout_atomic(hcd->regs + reg, result,
-					((result & mask) == करोne ||
+	ret = readl_poll_timeout_atomic(hcd->regs + reg, result,
+					((result & mask) == done ||
 					 result == U32_MAX), 1, usec);
-	अगर (result == U32_MAX)
-		वापस -ENODEV;
+	if (result == U32_MAX)
+		return -ENODEV;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* reset a non-running (STS_HALT == 1) controller */
-अटल पूर्णांक ehci_reset(काष्ठा usb_hcd *hcd)
-अणु
-	काष्ठा isp1760_hcd *priv = hcd_to_priv(hcd);
+static int ehci_reset(struct usb_hcd *hcd)
+{
+	struct isp1760_hcd *priv = hcd_to_priv(hcd);
 
-	u32 command = reg_पढ़ो32(hcd->regs, HC_USBCMD);
+	u32 command = reg_read32(hcd->regs, HC_USBCMD);
 
 	command |= CMD_RESET;
-	reg_ग_लिखो32(hcd->regs, HC_USBCMD, command);
+	reg_write32(hcd->regs, HC_USBCMD, command);
 	hcd->state = HC_STATE_HALT;
-	priv->next_statechange = jअगरfies;
+	priv->next_statechange = jiffies;
 
-	वापस handshake(hcd, HC_USBCMD, CMD_RESET, 0, 250 * 1000);
-पूर्ण
+	return handshake(hcd, HC_USBCMD, CMD_RESET, 0, 250 * 1000);
+}
 
-अटल काष्ठा isp1760_qh *qh_alloc(gfp_t flags)
-अणु
-	काष्ठा isp1760_qh *qh;
+static struct isp1760_qh *qh_alloc(gfp_t flags)
+{
+	struct isp1760_qh *qh;
 
 	qh = kmem_cache_zalloc(qh_cachep, flags);
-	अगर (!qh)
-		वापस शून्य;
+	if (!qh)
+		return NULL;
 
 	INIT_LIST_HEAD(&qh->qh_list);
 	INIT_LIST_HEAD(&qh->qtd_list);
 	qh->slot = -1;
 
-	वापस qh;
-पूर्ण
+	return qh;
+}
 
-अटल व्योम qh_मुक्त(काष्ठा isp1760_qh *qh)
-अणु
+static void qh_free(struct isp1760_qh *qh)
+{
 	WARN_ON(!list_empty(&qh->qtd_list));
 	WARN_ON(qh->slot > -1);
-	kmem_cache_मुक्त(qh_cachep, qh);
-पूर्ण
+	kmem_cache_free(qh_cachep, qh);
+}
 
-/* one-समय init, only क्रम memory state */
-अटल पूर्णांक priv_init(काष्ठा usb_hcd *hcd)
-अणु
-	काष्ठा isp1760_hcd		*priv = hcd_to_priv(hcd);
+/* one-time init, only for memory state */
+static int priv_init(struct usb_hcd *hcd)
+{
+	struct isp1760_hcd		*priv = hcd_to_priv(hcd);
 	u32			hcc_params;
-	पूर्णांक i;
+	int i;
 
 	spin_lock_init(&priv->lock);
 
-	क्रम (i = 0; i < QH_END; i++)
+	for (i = 0; i < QH_END; i++)
 		INIT_LIST_HEAD(&priv->qh_list[i]);
 
 	/*
-	 * hw शेष: 1K periodic list heads, one per frame.
-	 * periodic_size can shrink by USBCMD update अगर hcc_params allows.
+	 * hw default: 1K periodic list heads, one per frame.
+	 * periodic_size can shrink by USBCMD update if hcc_params allows.
 	 */
 	priv->periodic_size = DEFAULT_I_TDPS;
 
 	/* controllers may cache some of the periodic schedule ... */
-	hcc_params = reg_पढ़ो32(hcd->regs, HC_HCCPARAMS);
+	hcc_params = reg_read32(hcd->regs, HC_HCCPARAMS);
 	/* full frame cache */
-	अगर (HCC_ISOC_CACHE(hcc_params))
+	if (HCC_ISOC_CACHE(hcc_params))
 		priv->i_thresh = 8;
-	अन्यथा /* N microframes cached */
+	else /* N microframes cached */
 		priv->i_thresh = 2 + HCC_ISOC_THRES(hcc_params);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक isp1760_hc_setup(काष्ठा usb_hcd *hcd)
-अणु
-	काष्ठा isp1760_hcd *priv = hcd_to_priv(hcd);
-	पूर्णांक result;
+static int isp1760_hc_setup(struct usb_hcd *hcd)
+{
+	struct isp1760_hcd *priv = hcd_to_priv(hcd);
+	int result;
 	u32 scratch, hwmode;
 
-	reg_ग_लिखो32(hcd->regs, HC_SCRATCH_REG, 0xdeadbabe);
+	reg_write32(hcd->regs, HC_SCRATCH_REG, 0xdeadbabe);
 	/* Change bus pattern */
-	scratch = reg_पढ़ो32(hcd->regs, HC_CHIP_ID_REG);
-	scratch = reg_पढ़ो32(hcd->regs, HC_SCRATCH_REG);
-	अगर (scratch != 0xdeadbabe) अणु
+	scratch = reg_read32(hcd->regs, HC_CHIP_ID_REG);
+	scratch = reg_read32(hcd->regs, HC_SCRATCH_REG);
+	if (scratch != 0xdeadbabe) {
 		dev_err(hcd->self.controller, "Scratch test failed.\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	/*
-	 * The RESET_HC bit in the SW_RESET रेजिस्टर is supposed to reset the
-	 * host controller without touching the CPU पूर्णांकerface रेजिस्टरs, but at
+	 * The RESET_HC bit in the SW_RESET register is supposed to reset the
+	 * host controller without touching the CPU interface registers, but at
 	 * least on the ISP1761 it seems to behave as the RESET_ALL bit and
 	 * reset the whole device. We thus can't use it here, so let's reset
-	 * the host controller through the EHCI USB Command रेजिस्टर. The device
+	 * the host controller through the EHCI USB Command register. The device
 	 * has been reset in core code anyway, so this shouldn't matter.
 	 */
-	reg_ग_लिखो32(hcd->regs, HC_BUFFER_STATUS_REG, 0);
-	reg_ग_लिखो32(hcd->regs, HC_ATL_PTD_SKIPMAP_REG, NO_TRANSFER_ACTIVE);
-	reg_ग_लिखो32(hcd->regs, HC_INT_PTD_SKIPMAP_REG, NO_TRANSFER_ACTIVE);
-	reg_ग_लिखो32(hcd->regs, HC_ISO_PTD_SKIPMAP_REG, NO_TRANSFER_ACTIVE);
+	reg_write32(hcd->regs, HC_BUFFER_STATUS_REG, 0);
+	reg_write32(hcd->regs, HC_ATL_PTD_SKIPMAP_REG, NO_TRANSFER_ACTIVE);
+	reg_write32(hcd->regs, HC_INT_PTD_SKIPMAP_REG, NO_TRANSFER_ACTIVE);
+	reg_write32(hcd->regs, HC_ISO_PTD_SKIPMAP_REG, NO_TRANSFER_ACTIVE);
 
 	result = ehci_reset(hcd);
-	अगर (result)
-		वापस result;
+	if (result)
+		return result;
 
 	/* Step 11 passed */
 
 	/* ATL reset */
-	hwmode = reg_पढ़ो32(hcd->regs, HC_HW_MODE_CTRL) & ~ALL_ATX_RESET;
-	reg_ग_लिखो32(hcd->regs, HC_HW_MODE_CTRL, hwmode | ALL_ATX_RESET);
+	hwmode = reg_read32(hcd->regs, HC_HW_MODE_CTRL) & ~ALL_ATX_RESET;
+	reg_write32(hcd->regs, HC_HW_MODE_CTRL, hwmode | ALL_ATX_RESET);
 	mdelay(10);
-	reg_ग_लिखो32(hcd->regs, HC_HW_MODE_CTRL, hwmode);
+	reg_write32(hcd->regs, HC_HW_MODE_CTRL, hwmode);
 
-	reg_ग_लिखो32(hcd->regs, HC_INTERRUPT_ENABLE, INTERRUPT_ENABLE_MASK);
+	reg_write32(hcd->regs, HC_INTERRUPT_ENABLE, INTERRUPT_ENABLE_MASK);
 
-	priv->hcs_params = reg_पढ़ो32(hcd->regs, HC_HCSPARAMS);
+	priv->hcs_params = reg_read32(hcd->regs, HC_HCSPARAMS);
 
-	वापस priv_init(hcd);
-पूर्ण
+	return priv_init(hcd);
+}
 
-अटल u32 base_to_chip(u32 base)
-अणु
-	वापस ((base - 0x400) >> 3);
-पूर्ण
+static u32 base_to_chip(u32 base)
+{
+	return ((base - 0x400) >> 3);
+}
 
-अटल पूर्णांक last_qtd_of_urb(काष्ठा isp1760_qtd *qtd, काष्ठा isp1760_qh *qh)
-अणु
-	काष्ठा urb *urb;
+static int last_qtd_of_urb(struct isp1760_qtd *qtd, struct isp1760_qh *qh)
+{
+	struct urb *urb;
 
-	अगर (list_is_last(&qtd->qtd_list, &qh->qtd_list))
-		वापस 1;
+	if (list_is_last(&qtd->qtd_list, &qh->qtd_list))
+		return 1;
 
 	urb = qtd->urb;
 	qtd = list_entry(qtd->qtd_list.next, typeof(*qtd), qtd_list);
-	वापस (qtd->urb != urb);
-पूर्ण
+	return (qtd->urb != urb);
+}
 
-/* magic numbers that can affect प्रणाली perक्रमmance */
-#घोषणा	EHCI_TUNE_CERR		3	/* 0-3 qtd retries; 0 == करोn't stop */
-#घोषणा	EHCI_TUNE_RL_HS		4	/* nak throttle; see 4.9 */
-#घोषणा	EHCI_TUNE_RL_TT		0
-#घोषणा	EHCI_TUNE_MULT_HS	1	/* 1-3 transactions/uframe; 4.10.3 */
-#घोषणा	EHCI_TUNE_MULT_TT	1
-#घोषणा	EHCI_TUNE_FLS		2	/* (small) 256 frame schedule */
+/* magic numbers that can affect system performance */
+#define	EHCI_TUNE_CERR		3	/* 0-3 qtd retries; 0 == don't stop */
+#define	EHCI_TUNE_RL_HS		4	/* nak throttle; see 4.9 */
+#define	EHCI_TUNE_RL_TT		0
+#define	EHCI_TUNE_MULT_HS	1	/* 1-3 transactions/uframe; 4.10.3 */
+#define	EHCI_TUNE_MULT_TT	1
+#define	EHCI_TUNE_FLS		2	/* (small) 256 frame schedule */
 
-अटल व्योम create_ptd_atl(काष्ठा isp1760_qh *qh,
-			काष्ठा isp1760_qtd *qtd, काष्ठा ptd *ptd)
-अणु
+static void create_ptd_atl(struct isp1760_qh *qh,
+			struct isp1760_qtd *qtd, struct ptd *ptd)
+{
 	u32 maxpacket;
 	u32 multi;
 	u32 rl = RL_COUNTER;
 	u32 nak = NAK_COUNTER;
 
-	स_रखो(ptd, 0, माप(*ptd));
+	memset(ptd, 0, sizeof(*ptd));
 
 	/* according to 3.6.2, max packet len can not be > 0x400 */
 	maxpacket = usb_maxpacket(qtd->urb->dev, qtd->urb->pipe,
@@ -551,41 +550,41 @@
 	ptd->dw0 = DW0_VALID_BIT;
 	ptd->dw0 |= TO_DW0_LENGTH(qtd->length);
 	ptd->dw0 |= TO_DW0_MAXPACKET(maxpacket);
-	ptd->dw0 |= TO_DW0_ENDPOINT(usb_pipeendpoपूर्णांक(qtd->urb->pipe));
+	ptd->dw0 |= TO_DW0_ENDPOINT(usb_pipeendpoint(qtd->urb->pipe));
 
 	/* DW1 */
-	ptd->dw1 = usb_pipeendpoपूर्णांक(qtd->urb->pipe) >> 1;
+	ptd->dw1 = usb_pipeendpoint(qtd->urb->pipe) >> 1;
 	ptd->dw1 |= TO_DW1_DEVICE_ADDR(usb_pipedevice(qtd->urb->pipe));
 	ptd->dw1 |= TO_DW1_PID_TOKEN(qtd->packet_type);
 
-	अगर (usb_pipebulk(qtd->urb->pipe))
+	if (usb_pipebulk(qtd->urb->pipe))
 		ptd->dw1 |= DW1_TRANS_BULK;
-	अन्यथा अगर  (usb_pipeपूर्णांक(qtd->urb->pipe))
+	else if  (usb_pipeint(qtd->urb->pipe))
 		ptd->dw1 |= DW1_TRANS_INT;
 
-	अगर (qtd->urb->dev->speed != USB_SPEED_HIGH) अणु
+	if (qtd->urb->dev->speed != USB_SPEED_HIGH) {
 		/* split transaction */
 
 		ptd->dw1 |= DW1_TRANS_SPLIT;
-		अगर (qtd->urb->dev->speed == USB_SPEED_LOW)
+		if (qtd->urb->dev->speed == USB_SPEED_LOW)
 			ptd->dw1 |= DW1_SE_USB_LOSPEED;
 
 		ptd->dw1 |= TO_DW1_PORT_NUM(qtd->urb->dev->ttport);
 		ptd->dw1 |= TO_DW1_HUB_NUM(qtd->urb->dev->tt->hub->devnum);
 
-		/* SE bit क्रम Split INT transfers */
-		अगर (usb_pipeपूर्णांक(qtd->urb->pipe) &&
+		/* SE bit for Split INT transfers */
+		if (usb_pipeint(qtd->urb->pipe) &&
 				(qtd->urb->dev->speed == USB_SPEED_LOW))
 			ptd->dw1 |= 2 << 16;
 
 		rl = 0;
 		nak = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		ptd->dw0 |= TO_DW0_MULTI(multi);
-		अगर (usb_pipecontrol(qtd->urb->pipe) ||
+		if (usb_pipecontrol(qtd->urb->pipe) ||
 						usb_pipebulk(qtd->urb->pipe))
 			ptd->dw3 |= TO_DW3_PING(qh->ping);
-	पूर्ण
+	}
 	/* DW2 */
 	ptd->dw2 = 0;
 	ptd->dw2 |= TO_DW2_DATA_START_ADDR(base_to_chip(qtd->payload_addr));
@@ -594,111 +593,111 @@
 	/* DW3 */
 	ptd->dw3 |= TO_DW3_NAKCOUNT(nak);
 	ptd->dw3 |= TO_DW3_DATA_TOGGLE(qh->toggle);
-	अगर (usb_pipecontrol(qtd->urb->pipe)) अणु
-		अगर (qtd->data_buffer == qtd->urb->setup_packet)
+	if (usb_pipecontrol(qtd->urb->pipe)) {
+		if (qtd->data_buffer == qtd->urb->setup_packet)
 			ptd->dw3 &= ~TO_DW3_DATA_TOGGLE(1);
-		अन्यथा अगर (last_qtd_of_urb(qtd, qh))
+		else if (last_qtd_of_urb(qtd, qh))
 			ptd->dw3 |= TO_DW3_DATA_TOGGLE(1);
-	पूर्ण
+	}
 
 	ptd->dw3 |= DW3_ACTIVE_BIT;
 	/* Cerr */
 	ptd->dw3 |= TO_DW3_CERR(ERR_COUNTER);
-पूर्ण
+}
 
-अटल व्योम transक्रमm_add_पूर्णांक(काष्ठा isp1760_qh *qh,
-			काष्ठा isp1760_qtd *qtd, काष्ठा ptd *ptd)
-अणु
+static void transform_add_int(struct isp1760_qh *qh,
+			struct isp1760_qtd *qtd, struct ptd *ptd)
+{
 	u32 usof;
 	u32 period;
 
 	/*
 	 * Most of this is guessing. ISP1761 datasheet is quite unclear, and
 	 * the algorithm from the original Philips driver code, which was
-	 * pretty much used in this driver beक्रमe as well, is quite horrenकरोus
+	 * pretty much used in this driver before as well, is quite horrendous
 	 * and, i believe, incorrect. The code below follows the datasheet and
 	 * USB2.0 spec as far as I can tell, and plug/unplug seems to be much
 	 * more reliable this way (fingers crossed...).
 	 */
 
-	अगर (qtd->urb->dev->speed == USB_SPEED_HIGH) अणु
-		/* urb->पूर्णांकerval is in units of microframes (1/8 ms) */
-		period = qtd->urb->पूर्णांकerval >> 3;
+	if (qtd->urb->dev->speed == USB_SPEED_HIGH) {
+		/* urb->interval is in units of microframes (1/8 ms) */
+		period = qtd->urb->interval >> 3;
 
-		अगर (qtd->urb->पूर्णांकerval > 4)
+		if (qtd->urb->interval > 4)
 			usof = 0x01; /* One bit set =>
-						पूर्णांकerval 1 ms * uFrame-match */
-		अन्यथा अगर (qtd->urb->पूर्णांकerval > 2)
-			usof = 0x22; /* Two bits set => पूर्णांकerval 1/2 ms */
-		अन्यथा अगर (qtd->urb->पूर्णांकerval > 1)
-			usof = 0x55; /* Four bits set => पूर्णांकerval 1/4 ms */
-		अन्यथा
-			usof = 0xff; /* All bits set => पूर्णांकerval 1/8 ms */
-	पूर्ण अन्यथा अणु
-		/* urb->पूर्णांकerval is in units of frames (1 ms) */
-		period = qtd->urb->पूर्णांकerval;
+						interval 1 ms * uFrame-match */
+		else if (qtd->urb->interval > 2)
+			usof = 0x22; /* Two bits set => interval 1/2 ms */
+		else if (qtd->urb->interval > 1)
+			usof = 0x55; /* Four bits set => interval 1/4 ms */
+		else
+			usof = 0xff; /* All bits set => interval 1/8 ms */
+	} else {
+		/* urb->interval is in units of frames (1 ms) */
+		period = qtd->urb->interval;
 		usof = 0x0f;		/* Execute Start Split on any of the
 					   four first uFrames */
 
 		/*
-		 * First 8 bits in dw5 is uSCS and "specअगरies which uSOF the
-		 * complete split needs to be sent. Valid only क्रम IN." Also,
+		 * First 8 bits in dw5 is uSCS and "specifies which uSOF the
+		 * complete split needs to be sent. Valid only for IN." Also,
 		 * "All bits can be set to one for every transfer." (p 82,
 		 * ISP1761 data sheet.) 0x1c is from Philips driver. Where did
 		 * that number come from? 0xff seems to work fine...
 		 */
 		/* ptd->dw5 = 0x1c; */
 		ptd->dw5 = 0xff; /* Execute Complete Split on any uFrame */
-	पूर्ण
+	}
 
-	period = period >> 1;/* Ensure equal or लघुer period than requested */
+	period = period >> 1;/* Ensure equal or shorter period than requested */
 	period &= 0xf8; /* Mask off too large values and lowest unused 3 bits */
 
 	ptd->dw2 |= period;
 	ptd->dw4 = usof;
-पूर्ण
+}
 
-अटल व्योम create_ptd_पूर्णांक(काष्ठा isp1760_qh *qh,
-			काष्ठा isp1760_qtd *qtd, काष्ठा ptd *ptd)
-अणु
+static void create_ptd_int(struct isp1760_qh *qh,
+			struct isp1760_qtd *qtd, struct ptd *ptd)
+{
 	create_ptd_atl(qh, qtd, ptd);
-	transक्रमm_add_पूर्णांक(qh, qtd, ptd);
-पूर्ण
+	transform_add_int(qh, qtd, ptd);
+}
 
-अटल व्योम isp1760_urb_करोne(काष्ठा usb_hcd *hcd, काष्ठा urb *urb)
+static void isp1760_urb_done(struct usb_hcd *hcd, struct urb *urb)
 __releases(priv->lock)
 __acquires(priv->lock)
-अणु
-	काष्ठा isp1760_hcd *priv = hcd_to_priv(hcd);
+{
+	struct isp1760_hcd *priv = hcd_to_priv(hcd);
 
-	अगर (!urb->unlinked) अणु
-		अगर (urb->status == -EINPROGRESS)
+	if (!urb->unlinked) {
+		if (urb->status == -EINPROGRESS)
 			urb->status = 0;
-	पूर्ण
+	}
 
-	अगर (usb_pipein(urb->pipe) && usb_pipetype(urb->pipe) != PIPE_CONTROL) अणु
-		व्योम *ptr;
-		क्रम (ptr = urb->transfer_buffer;
+	if (usb_pipein(urb->pipe) && usb_pipetype(urb->pipe) != PIPE_CONTROL) {
+		void *ptr;
+		for (ptr = urb->transfer_buffer;
 		     ptr < urb->transfer_buffer + urb->transfer_buffer_length;
 		     ptr += PAGE_SIZE)
 			flush_dcache_page(virt_to_page(ptr));
-	पूर्ण
+	}
 
 	/* complete() can reenter this HCD */
 	usb_hcd_unlink_urb_from_ep(hcd, urb);
 	spin_unlock(&priv->lock);
 	usb_hcd_giveback_urb(hcd, urb, urb->status);
 	spin_lock(&priv->lock);
-पूर्ण
+}
 
-अटल काष्ठा isp1760_qtd *qtd_alloc(gfp_t flags, काष्ठा urb *urb,
+static struct isp1760_qtd *qtd_alloc(gfp_t flags, struct urb *urb,
 								u8 packet_type)
-अणु
-	काष्ठा isp1760_qtd *qtd;
+{
+	struct isp1760_qtd *qtd;
 
 	qtd = kmem_cache_zalloc(qtd_cachep, flags);
-	अगर (!qtd)
-		वापस शून्य;
+	if (!qtd)
+		return NULL;
 
 	INIT_LIST_HEAD(&qtd->qtd_list);
 	qtd->urb = urb;
@@ -706,22 +705,22 @@ __acquires(priv->lock)
 	qtd->status = QTD_ENQUEUED;
 	qtd->actual_length = 0;
 
-	वापस qtd;
-पूर्ण
+	return qtd;
+}
 
-अटल व्योम qtd_मुक्त(काष्ठा isp1760_qtd *qtd)
-अणु
+static void qtd_free(struct isp1760_qtd *qtd)
+{
 	WARN_ON(qtd->payload_addr);
-	kmem_cache_मुक्त(qtd_cachep, qtd);
-पूर्ण
+	kmem_cache_free(qtd_cachep, qtd);
+}
 
-अटल व्योम start_bus_transfer(काष्ठा usb_hcd *hcd, u32 ptd_offset, पूर्णांक slot,
-				काष्ठा isp1760_slotinfo *slots,
-				काष्ठा isp1760_qtd *qtd, काष्ठा isp1760_qh *qh,
-				काष्ठा ptd *ptd)
-अणु
-	काष्ठा isp1760_hcd *priv = hcd_to_priv(hcd);
-	पूर्णांक skip_map;
+static void start_bus_transfer(struct usb_hcd *hcd, u32 ptd_offset, int slot,
+				struct isp1760_slotinfo *slots,
+				struct isp1760_qtd *qtd, struct isp1760_qh *qh,
+				struct ptd *ptd)
+{
+	struct isp1760_hcd *priv = hcd_to_priv(hcd);
+	int skip_map;
 
 	WARN_ON((slot < 0) || (slot > 31));
 	WARN_ON(qtd->length && !qtd->payload_addr);
@@ -729,309 +728,309 @@ __acquires(priv->lock)
 	WARN_ON(slots[slot].qh);
 	WARN_ON(qtd->status != QTD_PAYLOAD_ALLOC);
 
-	/* Make sure करोne map has not triggered from some unlinked transfer */
-	अगर (ptd_offset == ATL_PTD_OFFSET) अणु
-		priv->atl_करोne_map |= reg_पढ़ो32(hcd->regs,
+	/* Make sure done map has not triggered from some unlinked transfer */
+	if (ptd_offset == ATL_PTD_OFFSET) {
+		priv->atl_done_map |= reg_read32(hcd->regs,
 						HC_ATL_PTD_DONEMAP_REG);
-		priv->atl_करोne_map &= ~(1 << slot);
-	पूर्ण अन्यथा अणु
-		priv->पूर्णांक_करोne_map |= reg_पढ़ो32(hcd->regs,
+		priv->atl_done_map &= ~(1 << slot);
+	} else {
+		priv->int_done_map |= reg_read32(hcd->regs,
 						HC_INT_PTD_DONEMAP_REG);
-		priv->पूर्णांक_करोne_map &= ~(1 << slot);
-	पूर्ण
+		priv->int_done_map &= ~(1 << slot);
+	}
 
 	qh->slot = slot;
 	qtd->status = QTD_XFER_STARTED;
-	slots[slot].बारtamp = jअगरfies;
+	slots[slot].timestamp = jiffies;
 	slots[slot].qtd = qtd;
 	slots[slot].qh = qh;
-	ptd_ग_लिखो(hcd->regs, ptd_offset, slot, ptd);
+	ptd_write(hcd->regs, ptd_offset, slot, ptd);
 
-	अगर (ptd_offset == ATL_PTD_OFFSET) अणु
-		skip_map = reg_पढ़ो32(hcd->regs, HC_ATL_PTD_SKIPMAP_REG);
+	if (ptd_offset == ATL_PTD_OFFSET) {
+		skip_map = reg_read32(hcd->regs, HC_ATL_PTD_SKIPMAP_REG);
 		skip_map &= ~(1 << qh->slot);
-		reg_ग_लिखो32(hcd->regs, HC_ATL_PTD_SKIPMAP_REG, skip_map);
-	पूर्ण अन्यथा अणु
-		skip_map = reg_पढ़ो32(hcd->regs, HC_INT_PTD_SKIPMAP_REG);
+		reg_write32(hcd->regs, HC_ATL_PTD_SKIPMAP_REG, skip_map);
+	} else {
+		skip_map = reg_read32(hcd->regs, HC_INT_PTD_SKIPMAP_REG);
 		skip_map &= ~(1 << qh->slot);
-		reg_ग_लिखो32(hcd->regs, HC_INT_PTD_SKIPMAP_REG, skip_map);
-	पूर्ण
-पूर्ण
+		reg_write32(hcd->regs, HC_INT_PTD_SKIPMAP_REG, skip_map);
+	}
+}
 
-अटल पूर्णांक is_लघु_bulk(काष्ठा isp1760_qtd *qtd)
-अणु
-	वापस (usb_pipebulk(qtd->urb->pipe) &&
+static int is_short_bulk(struct isp1760_qtd *qtd)
+{
+	return (usb_pipebulk(qtd->urb->pipe) &&
 					(qtd->actual_length < qtd->length));
-पूर्ण
+}
 
-अटल व्योम collect_qtds(काष्ठा usb_hcd *hcd, काष्ठा isp1760_qh *qh,
-						काष्ठा list_head *urb_list)
-अणु
-	पूर्णांक last_qtd;
-	काष्ठा isp1760_qtd *qtd, *qtd_next;
-	काष्ठा urb_listitem *urb_listitem;
+static void collect_qtds(struct usb_hcd *hcd, struct isp1760_qh *qh,
+						struct list_head *urb_list)
+{
+	int last_qtd;
+	struct isp1760_qtd *qtd, *qtd_next;
+	struct urb_listitem *urb_listitem;
 
-	list_क्रम_each_entry_safe(qtd, qtd_next, &qh->qtd_list, qtd_list) अणु
-		अगर (qtd->status < QTD_XFER_COMPLETE)
-			अवरोध;
+	list_for_each_entry_safe(qtd, qtd_next, &qh->qtd_list, qtd_list) {
+		if (qtd->status < QTD_XFER_COMPLETE)
+			break;
 
 		last_qtd = last_qtd_of_urb(qtd, qh);
 
-		अगर ((!last_qtd) && (qtd->status == QTD_RETIRE))
+		if ((!last_qtd) && (qtd->status == QTD_RETIRE))
 			qtd_next->status = QTD_RETIRE;
 
-		अगर (qtd->status == QTD_XFER_COMPLETE) अणु
-			अगर (qtd->actual_length) अणु
-				चयन (qtd->packet_type) अणु
-				हाल IN_PID:
-					mem_पढ़ोs8(hcd->regs, qtd->payload_addr,
+		if (qtd->status == QTD_XFER_COMPLETE) {
+			if (qtd->actual_length) {
+				switch (qtd->packet_type) {
+				case IN_PID:
+					mem_reads8(hcd->regs, qtd->payload_addr,
 							qtd->data_buffer,
 							qtd->actual_length);
 					fallthrough;
-				हाल OUT_PID:
+				case OUT_PID:
 					qtd->urb->actual_length +=
 							qtd->actual_length;
 					fallthrough;
-				हाल SETUP_PID:
-					अवरोध;
-				पूर्ण
-			पूर्ण
+				case SETUP_PID:
+					break;
+				}
+			}
 
-			अगर (is_लघु_bulk(qtd)) अणु
-				अगर (qtd->urb->transfer_flags & URB_SHORT_NOT_OK)
+			if (is_short_bulk(qtd)) {
+				if (qtd->urb->transfer_flags & URB_SHORT_NOT_OK)
 					qtd->urb->status = -EREMOTEIO;
-				अगर (!last_qtd)
+				if (!last_qtd)
 					qtd_next->status = QTD_RETIRE;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अगर (qtd->payload_addr)
-			मुक्त_mem(hcd, qtd);
+		if (qtd->payload_addr)
+			free_mem(hcd, qtd);
 
-		अगर (last_qtd) अणु
-			अगर ((qtd->status == QTD_RETIRE) &&
+		if (last_qtd) {
+			if ((qtd->status == QTD_RETIRE) &&
 					(qtd->urb->status == -EINPROGRESS))
 				qtd->urb->status = -EPIPE;
-			/* Defer calling of urb_करोne() since it releases lock */
+			/* Defer calling of urb_done() since it releases lock */
 			urb_listitem = kmem_cache_zalloc(urb_listitem_cachep,
 								GFP_ATOMIC);
-			अगर (unlikely(!urb_listitem))
-				अवरोध; /* Try again on next call */
+			if (unlikely(!urb_listitem))
+				break; /* Try again on next call */
 			urb_listitem->urb = qtd->urb;
 			list_add_tail(&urb_listitem->urb_list, urb_list);
-		पूर्ण
+		}
 
 		list_del(&qtd->qtd_list);
-		qtd_मुक्त(qtd);
-	पूर्ण
-पूर्ण
+		qtd_free(qtd);
+	}
+}
 
-#घोषणा ENQUEUE_DEPTH	2
-अटल व्योम enqueue_qtds(काष्ठा usb_hcd *hcd, काष्ठा isp1760_qh *qh)
-अणु
-	काष्ठा isp1760_hcd *priv = hcd_to_priv(hcd);
-	पूर्णांक ptd_offset;
-	काष्ठा isp1760_slotinfo *slots;
-	पूर्णांक curr_slot, मुक्त_slot;
-	पूर्णांक n;
-	काष्ठा ptd ptd;
-	काष्ठा isp1760_qtd *qtd;
+#define ENQUEUE_DEPTH	2
+static void enqueue_qtds(struct usb_hcd *hcd, struct isp1760_qh *qh)
+{
+	struct isp1760_hcd *priv = hcd_to_priv(hcd);
+	int ptd_offset;
+	struct isp1760_slotinfo *slots;
+	int curr_slot, free_slot;
+	int n;
+	struct ptd ptd;
+	struct isp1760_qtd *qtd;
 
-	अगर (unlikely(list_empty(&qh->qtd_list))) अणु
+	if (unlikely(list_empty(&qh->qtd_list))) {
 		WARN_ON(1);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* Make sure this endpoपूर्णांक's TT buffer is clean beक्रमe queueing ptds */
-	अगर (qh->tt_buffer_dirty)
-		वापस;
+	/* Make sure this endpoint's TT buffer is clean before queueing ptds */
+	if (qh->tt_buffer_dirty)
+		return;
 
-	अगर (usb_pipeपूर्णांक(list_entry(qh->qtd_list.next, काष्ठा isp1760_qtd,
-							qtd_list)->urb->pipe)) अणु
+	if (usb_pipeint(list_entry(qh->qtd_list.next, struct isp1760_qtd,
+							qtd_list)->urb->pipe)) {
 		ptd_offset = INT_PTD_OFFSET;
-		slots = priv->पूर्णांक_slots;
-	पूर्ण अन्यथा अणु
+		slots = priv->int_slots;
+	} else {
 		ptd_offset = ATL_PTD_OFFSET;
 		slots = priv->atl_slots;
-	पूर्ण
+	}
 
-	मुक्त_slot = -1;
-	क्रम (curr_slot = 0; curr_slot < 32; curr_slot++) अणु
-		अगर ((मुक्त_slot == -1) && (slots[curr_slot].qtd == शून्य))
-			मुक्त_slot = curr_slot;
-		अगर (slots[curr_slot].qh == qh)
-			अवरोध;
-	पूर्ण
+	free_slot = -1;
+	for (curr_slot = 0; curr_slot < 32; curr_slot++) {
+		if ((free_slot == -1) && (slots[curr_slot].qtd == NULL))
+			free_slot = curr_slot;
+		if (slots[curr_slot].qh == qh)
+			break;
+	}
 
 	n = 0;
-	list_क्रम_each_entry(qtd, &qh->qtd_list, qtd_list) अणु
-		अगर (qtd->status == QTD_ENQUEUED) अणु
+	list_for_each_entry(qtd, &qh->qtd_list, qtd_list) {
+		if (qtd->status == QTD_ENQUEUED) {
 			WARN_ON(qtd->payload_addr);
 			alloc_mem(hcd, qtd);
-			अगर ((qtd->length) && (!qtd->payload_addr))
-				अवरोध;
+			if ((qtd->length) && (!qtd->payload_addr))
+				break;
 
-			अगर ((qtd->length) &&
+			if ((qtd->length) &&
 			    ((qtd->packet_type == SETUP_PID) ||
-			     (qtd->packet_type == OUT_PID))) अणु
-				mem_ग_लिखोs8(hcd->regs, qtd->payload_addr,
+			     (qtd->packet_type == OUT_PID))) {
+				mem_writes8(hcd->regs, qtd->payload_addr,
 						qtd->data_buffer, qtd->length);
-			पूर्ण
+			}
 
 			qtd->status = QTD_PAYLOAD_ALLOC;
-		पूर्ण
+		}
 
-		अगर (qtd->status == QTD_PAYLOAD_ALLOC) अणु
+		if (qtd->status == QTD_PAYLOAD_ALLOC) {
 /*
-			अगर ((curr_slot > 31) && (मुक्त_slot == -1))
+			if ((curr_slot > 31) && (free_slot == -1))
 				dev_dbg(hcd->self.controller, "%s: No slot "
 					"available for transfer\n", __func__);
 */
-			/* Start xfer क्रम this endpoपूर्णांक अगर not alपढ़ोy करोne */
-			अगर ((curr_slot > 31) && (मुक्त_slot > -1)) अणु
-				अगर (usb_pipeपूर्णांक(qtd->urb->pipe))
-					create_ptd_पूर्णांक(qh, qtd, &ptd);
-				अन्यथा
+			/* Start xfer for this endpoint if not already done */
+			if ((curr_slot > 31) && (free_slot > -1)) {
+				if (usb_pipeint(qtd->urb->pipe))
+					create_ptd_int(qh, qtd, &ptd);
+				else
 					create_ptd_atl(qh, qtd, &ptd);
 
-				start_bus_transfer(hcd, ptd_offset, मुक्त_slot,
+				start_bus_transfer(hcd, ptd_offset, free_slot,
 							slots, qtd, qh, &ptd);
-				curr_slot = मुक्त_slot;
-			पूर्ण
+				curr_slot = free_slot;
+			}
 
 			n++;
-			अगर (n >= ENQUEUE_DEPTH)
-				अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			if (n >= ENQUEUE_DEPTH)
+				break;
+		}
+	}
+}
 
-अटल व्योम schedule_ptds(काष्ठा usb_hcd *hcd)
-अणु
-	काष्ठा isp1760_hcd *priv;
-	काष्ठा isp1760_qh *qh, *qh_next;
-	काष्ठा list_head *ep_queue;
+static void schedule_ptds(struct usb_hcd *hcd)
+{
+	struct isp1760_hcd *priv;
+	struct isp1760_qh *qh, *qh_next;
+	struct list_head *ep_queue;
 	LIST_HEAD(urb_list);
-	काष्ठा urb_listitem *urb_listitem, *urb_listitem_next;
-	पूर्णांक i;
+	struct urb_listitem *urb_listitem, *urb_listitem_next;
+	int i;
 
-	अगर (!hcd) अणु
+	if (!hcd) {
 		WARN_ON(1);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	priv = hcd_to_priv(hcd);
 
 	/*
-	 * check finished/retired xfers, transfer payloads, call urb_करोne()
+	 * check finished/retired xfers, transfer payloads, call urb_done()
 	 */
-	क्रम (i = 0; i < QH_END; i++) अणु
+	for (i = 0; i < QH_END; i++) {
 		ep_queue = &priv->qh_list[i];
-		list_क्रम_each_entry_safe(qh, qh_next, ep_queue, qh_list) अणु
+		list_for_each_entry_safe(qh, qh_next, ep_queue, qh_list) {
 			collect_qtds(hcd, qh, &urb_list);
-			अगर (list_empty(&qh->qtd_list))
+			if (list_empty(&qh->qtd_list))
 				list_del(&qh->qh_list);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	list_क्रम_each_entry_safe(urb_listitem, urb_listitem_next, &urb_list,
-								urb_list) अणु
-		isp1760_urb_करोne(hcd, urb_listitem->urb);
-		kmem_cache_मुक्त(urb_listitem_cachep, urb_listitem);
-	पूर्ण
+	list_for_each_entry_safe(urb_listitem, urb_listitem_next, &urb_list,
+								urb_list) {
+		isp1760_urb_done(hcd, urb_listitem->urb);
+		kmem_cache_free(urb_listitem_cachep, urb_listitem);
+	}
 
 	/*
-	 * Schedule packets क्रम transfer.
+	 * Schedule packets for transfer.
 	 *
-	 * According to USB2.0 specअगरication:
+	 * According to USB2.0 specification:
 	 *
-	 * 1st prio: पूर्णांकerrupt xfers, up to 80 % of bandwidth
+	 * 1st prio: interrupt xfers, up to 80 % of bandwidth
 	 * 2nd prio: control xfers
 	 * 3rd prio: bulk xfers
 	 *
-	 * ... but let's use a simpler scheme here (mostly because ISP1761 करोc
+	 * ... but let's use a simpler scheme here (mostly because ISP1761 doc
 	 * is very unclear on how to prioritize traffic):
 	 *
-	 * 1) Enqueue any queued control transfers, as दीर्घ as payload chip mem
+	 * 1) Enqueue any queued control transfers, as long as payload chip mem
 	 *    and PTD ATL slots are available.
-	 * 2) Enqueue any queued INT transfers, as दीर्घ as payload chip mem
+	 * 2) Enqueue any queued INT transfers, as long as payload chip mem
 	 *    and PTD INT slots are available.
-	 * 3) Enqueue any queued bulk transfers, as दीर्घ as payload chip mem
+	 * 3) Enqueue any queued bulk transfers, as long as payload chip mem
 	 *    and PTD ATL slots are available.
 	 *
-	 * Use द्विगुन buffering (ENQUEUE_DEPTH==2) as a compromise between
-	 * conservation of chip mem and perक्रमmance.
+	 * Use double buffering (ENQUEUE_DEPTH==2) as a compromise between
+	 * conservation of chip mem and performance.
 	 *
 	 * I'm sure this scheme could be improved upon!
 	 */
-	क्रम (i = 0; i < QH_END; i++) अणु
+	for (i = 0; i < QH_END; i++) {
 		ep_queue = &priv->qh_list[i];
-		list_क्रम_each_entry_safe(qh, qh_next, ep_queue, qh_list)
+		list_for_each_entry_safe(qh, qh_next, ep_queue, qh_list)
 			enqueue_qtds(hcd, qh);
-	पूर्ण
-पूर्ण
+	}
+}
 
-#घोषणा PTD_STATE_QTD_DONE	1
-#घोषणा PTD_STATE_QTD_RELOAD	2
-#घोषणा PTD_STATE_URB_RETIRE	3
+#define PTD_STATE_QTD_DONE	1
+#define PTD_STATE_QTD_RELOAD	2
+#define PTD_STATE_URB_RETIRE	3
 
-अटल पूर्णांक check_पूर्णांक_transfer(काष्ठा usb_hcd *hcd, काष्ठा ptd *ptd,
-								काष्ठा urb *urb)
-अणु
+static int check_int_transfer(struct usb_hcd *hcd, struct ptd *ptd,
+								struct urb *urb)
+{
 	__dw dw4;
-	पूर्णांक i;
+	int i;
 
 	dw4 = ptd->dw4;
 	dw4 >>= 8;
 
-	/* FIXME: ISP1761 datasheet करोes not say what to करो with these. Do we
-	   need to handle these errors? Is it करोne in hardware? */
+	/* FIXME: ISP1761 datasheet does not say what to do with these. Do we
+	   need to handle these errors? Is it done in hardware? */
 
-	अगर (ptd->dw3 & DW3_HALT_BIT) अणु
+	if (ptd->dw3 & DW3_HALT_BIT) {
 
 		urb->status = -EPROTO; /* Default unknown error */
 
-		क्रम (i = 0; i < 8; i++) अणु
-			चयन (dw4 & 0x7) अणु
-			हाल INT_UNDERRUN:
+		for (i = 0; i < 8; i++) {
+			switch (dw4 & 0x7) {
+			case INT_UNDERRUN:
 				dev_dbg(hcd->self.controller, "%s: underrun "
 						"during uFrame %d\n",
 						__func__, i);
-				urb->status = -ECOMM; /* Could not ग_लिखो data */
-				अवरोध;
-			हाल INT_EXACT:
+				urb->status = -ECOMM; /* Could not write data */
+				break;
+			case INT_EXACT:
 				dev_dbg(hcd->self.controller, "%s: transaction "
 						"error during uFrame %d\n",
 						__func__, i);
-				urb->status = -EPROTO; /* समयout, bad CRC, PID
+				urb->status = -EPROTO; /* timeout, bad CRC, PID
 							  error etc. */
-				अवरोध;
-			हाल INT_BABBLE:
+				break;
+			case INT_BABBLE:
 				dev_dbg(hcd->self.controller, "%s: babble "
 						"error during uFrame %d\n",
 						__func__, i);
 				urb->status = -EOVERFLOW;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			dw4 >>= 3;
-		पूर्ण
+		}
 
-		वापस PTD_STATE_URB_RETIRE;
-	पूर्ण
+		return PTD_STATE_URB_RETIRE;
+	}
 
-	वापस PTD_STATE_QTD_DONE;
-पूर्ण
+	return PTD_STATE_QTD_DONE;
+}
 
-अटल पूर्णांक check_atl_transfer(काष्ठा usb_hcd *hcd, काष्ठा ptd *ptd,
-								काष्ठा urb *urb)
-अणु
+static int check_atl_transfer(struct usb_hcd *hcd, struct ptd *ptd,
+								struct urb *urb)
+{
 	WARN_ON(!ptd);
-	अगर (ptd->dw3 & DW3_HALT_BIT) अणु
-		अगर (ptd->dw3 & DW3_BABBLE_BIT)
+	if (ptd->dw3 & DW3_HALT_BIT) {
+		if (ptd->dw3 & DW3_BABBLE_BIT)
 			urb->status = -EOVERFLOW;
-		अन्यथा अगर (FROM_DW3_CERR(ptd->dw3))
+		else if (FROM_DW3_CERR(ptd->dw3))
 			urb->status = -EPIPE;  /* Stall */
-		अन्यथा
+		else
 			urb->status = -EPROTO; /* Unknown */
 /*
 		dev_dbg(hcd->self.controller, "%s: ptd error:\n"
@@ -1041,111 +1040,111 @@ __acquires(priv->lock)
 			ptd->dw0, ptd->dw1, ptd->dw2, ptd->dw3,
 			ptd->dw4, ptd->dw5, ptd->dw6, ptd->dw7);
 */
-		वापस PTD_STATE_URB_RETIRE;
-	पूर्ण
+		return PTD_STATE_URB_RETIRE;
+	}
 
-	अगर ((ptd->dw3 & DW3_ERROR_BIT) && (ptd->dw3 & DW3_ACTIVE_BIT)) अणु
+	if ((ptd->dw3 & DW3_ERROR_BIT) && (ptd->dw3 & DW3_ACTIVE_BIT)) {
 		/* Transfer Error, *but* active and no HALT -> reload */
 		dev_dbg(hcd->self.controller, "PID error; reloading ptd\n");
-		वापस PTD_STATE_QTD_RELOAD;
-	पूर्ण
+		return PTD_STATE_QTD_RELOAD;
+	}
 
-	अगर (!FROM_DW3_NAKCOUNT(ptd->dw3) && (ptd->dw3 & DW3_ACTIVE_BIT)) अणु
+	if (!FROM_DW3_NAKCOUNT(ptd->dw3) && (ptd->dw3 & DW3_ACTIVE_BIT)) {
 		/*
-		 * NAKs are handled in HW by the chip. Usually अगर the
+		 * NAKs are handled in HW by the chip. Usually if the
 		 * device is not able to send data fast enough.
 		 * This happens mostly on slower hardware.
 		 */
-		वापस PTD_STATE_QTD_RELOAD;
-	पूर्ण
+		return PTD_STATE_QTD_RELOAD;
+	}
 
-	वापस PTD_STATE_QTD_DONE;
-पूर्ण
+	return PTD_STATE_QTD_DONE;
+}
 
-अटल व्योम handle_करोne_ptds(काष्ठा usb_hcd *hcd)
-अणु
-	काष्ठा isp1760_hcd *priv = hcd_to_priv(hcd);
-	काष्ठा ptd ptd;
-	काष्ठा isp1760_qh *qh;
-	पूर्णांक slot;
-	पूर्णांक state;
-	काष्ठा isp1760_slotinfo *slots;
+static void handle_done_ptds(struct usb_hcd *hcd)
+{
+	struct isp1760_hcd *priv = hcd_to_priv(hcd);
+	struct ptd ptd;
+	struct isp1760_qh *qh;
+	int slot;
+	int state;
+	struct isp1760_slotinfo *slots;
 	u32 ptd_offset;
-	काष्ठा isp1760_qtd *qtd;
-	पूर्णांक modअगरied;
-	पूर्णांक skip_map;
+	struct isp1760_qtd *qtd;
+	int modified;
+	int skip_map;
 
-	skip_map = reg_पढ़ो32(hcd->regs, HC_INT_PTD_SKIPMAP_REG);
-	priv->पूर्णांक_करोne_map &= ~skip_map;
-	skip_map = reg_पढ़ो32(hcd->regs, HC_ATL_PTD_SKIPMAP_REG);
-	priv->atl_करोne_map &= ~skip_map;
+	skip_map = reg_read32(hcd->regs, HC_INT_PTD_SKIPMAP_REG);
+	priv->int_done_map &= ~skip_map;
+	skip_map = reg_read32(hcd->regs, HC_ATL_PTD_SKIPMAP_REG);
+	priv->atl_done_map &= ~skip_map;
 
-	modअगरied = priv->पूर्णांक_करोne_map || priv->atl_करोne_map;
+	modified = priv->int_done_map || priv->atl_done_map;
 
-	जबतक (priv->पूर्णांक_करोne_map || priv->atl_करोne_map) अणु
-		अगर (priv->पूर्णांक_करोne_map) अणु
+	while (priv->int_done_map || priv->atl_done_map) {
+		if (priv->int_done_map) {
 			/* INT ptd */
-			slot = __ffs(priv->पूर्णांक_करोne_map);
-			priv->पूर्णांक_करोne_map &= ~(1 << slot);
-			slots = priv->पूर्णांक_slots;
-			/* This should not trigger, and could be हटाओd अगर
+			slot = __ffs(priv->int_done_map);
+			priv->int_done_map &= ~(1 << slot);
+			slots = priv->int_slots;
+			/* This should not trigger, and could be removed if
 			   noone have any problems with it triggering: */
-			अगर (!slots[slot].qh) अणु
+			if (!slots[slot].qh) {
 				WARN_ON(1);
-				जारी;
-			पूर्ण
+				continue;
+			}
 			ptd_offset = INT_PTD_OFFSET;
-			ptd_पढ़ो(hcd->regs, INT_PTD_OFFSET, slot, &ptd);
-			state = check_पूर्णांक_transfer(hcd, &ptd,
+			ptd_read(hcd->regs, INT_PTD_OFFSET, slot, &ptd);
+			state = check_int_transfer(hcd, &ptd,
 							slots[slot].qtd->urb);
-		पूर्ण अन्यथा अणु
+		} else {
 			/* ATL ptd */
-			slot = __ffs(priv->atl_करोne_map);
-			priv->atl_करोne_map &= ~(1 << slot);
+			slot = __ffs(priv->atl_done_map);
+			priv->atl_done_map &= ~(1 << slot);
 			slots = priv->atl_slots;
-			/* This should not trigger, and could be हटाओd अगर
+			/* This should not trigger, and could be removed if
 			   noone have any problems with it triggering: */
-			अगर (!slots[slot].qh) अणु
+			if (!slots[slot].qh) {
 				WARN_ON(1);
-				जारी;
-			पूर्ण
+				continue;
+			}
 			ptd_offset = ATL_PTD_OFFSET;
-			ptd_पढ़ो(hcd->regs, ATL_PTD_OFFSET, slot, &ptd);
+			ptd_read(hcd->regs, ATL_PTD_OFFSET, slot, &ptd);
 			state = check_atl_transfer(hcd, &ptd,
 							slots[slot].qtd->urb);
-		पूर्ण
+		}
 
 		qtd = slots[slot].qtd;
-		slots[slot].qtd = शून्य;
+		slots[slot].qtd = NULL;
 		qh = slots[slot].qh;
-		slots[slot].qh = शून्य;
+		slots[slot].qh = NULL;
 		qh->slot = -1;
 
 		WARN_ON(qtd->status != QTD_XFER_STARTED);
 
-		चयन (state) अणु
-		हाल PTD_STATE_QTD_DONE:
-			अगर ((usb_pipeपूर्णांक(qtd->urb->pipe)) &&
+		switch (state) {
+		case PTD_STATE_QTD_DONE:
+			if ((usb_pipeint(qtd->urb->pipe)) &&
 				       (qtd->urb->dev->speed != USB_SPEED_HIGH))
 				qtd->actual_length =
 				       FROM_DW3_SCS_NRBYTESTRANSFERRED(ptd.dw3);
-			अन्यथा
+			else
 				qtd->actual_length =
 					FROM_DW3_NRBYTESTRANSFERRED(ptd.dw3);
 
 			qtd->status = QTD_XFER_COMPLETE;
-			अगर (list_is_last(&qtd->qtd_list, &qh->qtd_list) ||
-							is_लघु_bulk(qtd))
-				qtd = शून्य;
-			अन्यथा
+			if (list_is_last(&qtd->qtd_list, &qh->qtd_list) ||
+							is_short_bulk(qtd))
+				qtd = NULL;
+			else
 				qtd = list_entry(qtd->qtd_list.next,
 							typeof(*qtd), qtd_list);
 
 			qh->toggle = FROM_DW3_DATA_TOGGLE(ptd.dw3);
 			qh->ping = FROM_DW3_PING(ptd.dw3);
-			अवरोध;
+			break;
 
-		हाल PTD_STATE_QTD_RELOAD: /* QTD_RETRY, क्रम atls only */
+		case PTD_STATE_QTD_RELOAD: /* QTD_RETRY, for atls only */
 			qtd->status = QTD_PAYLOAD_ALLOC;
 			ptd.dw0 |= DW0_VALID_BIT;
 			/* RL counter = ERR counter */
@@ -1155,141 +1154,141 @@ __acquires(priv->lock)
 			ptd.dw3 |= TO_DW3_CERR(ERR_COUNTER);
 			qh->toggle = FROM_DW3_DATA_TOGGLE(ptd.dw3);
 			qh->ping = FROM_DW3_PING(ptd.dw3);
-			अवरोध;
+			break;
 
-		हाल PTD_STATE_URB_RETIRE:
+		case PTD_STATE_URB_RETIRE:
 			qtd->status = QTD_RETIRE;
-			अगर ((qtd->urb->dev->speed != USB_SPEED_HIGH) &&
+			if ((qtd->urb->dev->speed != USB_SPEED_HIGH) &&
 					(qtd->urb->status != -EPIPE) &&
-					(qtd->urb->status != -EREMOTEIO)) अणु
+					(qtd->urb->status != -EREMOTEIO)) {
 				qh->tt_buffer_dirty = 1;
-				अगर (usb_hub_clear_tt_buffer(qtd->urb))
+				if (usb_hub_clear_tt_buffer(qtd->urb))
 					/* Clear failed; let's hope things work
 					   anyway */
 					qh->tt_buffer_dirty = 0;
-			पूर्ण
-			qtd = शून्य;
+			}
+			qtd = NULL;
 			qh->toggle = 0;
 			qh->ping = 0;
-			अवरोध;
+			break;
 
-		शेष:
+		default:
 			WARN_ON(1);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (qtd && (qtd->status == QTD_PAYLOAD_ALLOC)) अणु
-			अगर (slots == priv->पूर्णांक_slots) अणु
-				अगर (state == PTD_STATE_QTD_RELOAD)
+		if (qtd && (qtd->status == QTD_PAYLOAD_ALLOC)) {
+			if (slots == priv->int_slots) {
+				if (state == PTD_STATE_QTD_RELOAD)
 					dev_err(hcd->self.controller,
 						"%s: PTD_STATE_QTD_RELOAD on "
 						"interrupt packet\n", __func__);
-				अगर (state != PTD_STATE_QTD_RELOAD)
-					create_ptd_पूर्णांक(qh, qtd, &ptd);
-			पूर्ण अन्यथा अणु
-				अगर (state != PTD_STATE_QTD_RELOAD)
+				if (state != PTD_STATE_QTD_RELOAD)
+					create_ptd_int(qh, qtd, &ptd);
+			} else {
+				if (state != PTD_STATE_QTD_RELOAD)
 					create_ptd_atl(qh, qtd, &ptd);
-			पूर्ण
+			}
 
 			start_bus_transfer(hcd, ptd_offset, slot, slots, qtd,
 				qh, &ptd);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (modअगरied)
+	if (modified)
 		schedule_ptds(hcd);
-पूर्ण
+}
 
-अटल irqवापस_t isp1760_irq(काष्ठा usb_hcd *hcd)
-अणु
-	काष्ठा isp1760_hcd *priv = hcd_to_priv(hcd);
+static irqreturn_t isp1760_irq(struct usb_hcd *hcd)
+{
+	struct isp1760_hcd *priv = hcd_to_priv(hcd);
 	u32 imask;
-	irqवापस_t irqret = IRQ_NONE;
+	irqreturn_t irqret = IRQ_NONE;
 
 	spin_lock(&priv->lock);
 
-	अगर (!(hcd->state & HC_STATE_RUNNING))
-		जाओ leave;
+	if (!(hcd->state & HC_STATE_RUNNING))
+		goto leave;
 
-	imask = reg_पढ़ो32(hcd->regs, HC_INTERRUPT_REG);
-	अगर (unlikely(!imask))
-		जाओ leave;
-	reg_ग_लिखो32(hcd->regs, HC_INTERRUPT_REG, imask); /* Clear */
+	imask = reg_read32(hcd->regs, HC_INTERRUPT_REG);
+	if (unlikely(!imask))
+		goto leave;
+	reg_write32(hcd->regs, HC_INTERRUPT_REG, imask); /* Clear */
 
-	priv->पूर्णांक_करोne_map |= reg_पढ़ो32(hcd->regs, HC_INT_PTD_DONEMAP_REG);
-	priv->atl_करोne_map |= reg_पढ़ो32(hcd->regs, HC_ATL_PTD_DONEMAP_REG);
+	priv->int_done_map |= reg_read32(hcd->regs, HC_INT_PTD_DONEMAP_REG);
+	priv->atl_done_map |= reg_read32(hcd->regs, HC_ATL_PTD_DONEMAP_REG);
 
-	handle_करोne_ptds(hcd);
+	handle_done_ptds(hcd);
 
 	irqret = IRQ_HANDLED;
 leave:
 	spin_unlock(&priv->lock);
 
-	वापस irqret;
-पूर्ण
+	return irqret;
+}
 
 /*
- * Workaround क्रम problem described in chip errata 2:
+ * Workaround for problem described in chip errata 2:
  *
- * Someबार पूर्णांकerrupts are not generated when ATL (not INT?) completion occurs.
- * One solution suggested in the errata is to use SOF पूर्णांकerrupts _instead_of_
- * ATL करोne पूर्णांकerrupts (the "instead of" might be important since it seems
- * enabling ATL पूर्णांकerrupts also causes the chip to someबार - rarely - "forget"
- * to set the PTD's करोne bit in addition to not generating an पूर्णांकerrupt!).
+ * Sometimes interrupts are not generated when ATL (not INT?) completion occurs.
+ * One solution suggested in the errata is to use SOF interrupts _instead_of_
+ * ATL done interrupts (the "instead of" might be important since it seems
+ * enabling ATL interrupts also causes the chip to sometimes - rarely - "forget"
+ * to set the PTD's done bit in addition to not generating an interrupt!).
  *
- * So अगर we use SOF + ATL पूर्णांकerrupts, we someबार get stale PTDs since their
- * करोne bit is not being set. This is bad - it blocks the endpoपूर्णांक until reboot.
+ * So if we use SOF + ATL interrupts, we sometimes get stale PTDs since their
+ * done bit is not being set. This is bad - it blocks the endpoint until reboot.
  *
- * If we use SOF पूर्णांकerrupts only, we get latency between ptd completion and the
+ * If we use SOF interrupts only, we get latency between ptd completion and the
  * actual handling. This is very noticeable in testusb runs which takes several
- * minutes दीर्घer without ATL पूर्णांकerrupts.
+ * minutes longer without ATL interrupts.
  *
  * A better solution is to run the code below every SLOT_CHECK_PERIOD ms. If it
  * finds active ATL slots which are older than SLOT_TIMEOUT ms, it checks the
  * slot's ACTIVE and VALID bits. If these are not set, the ptd is considered
- * completed and its करोne map bit is set.
+ * completed and its done map bit is set.
  *
  * The values of SLOT_TIMEOUT and SLOT_CHECK_PERIOD have been arbitrarily chosen
- * not to cause too much lag when this HW bug occurs, जबतक still hopefully
- * ensuring that the check करोes not falsely trigger.
+ * not to cause too much lag when this HW bug occurs, while still hopefully
+ * ensuring that the check does not falsely trigger.
  */
-#घोषणा SLOT_TIMEOUT 300
-#घोषणा SLOT_CHECK_PERIOD 200
-अटल काष्ठा समयr_list errata2_समयr;
-अटल काष्ठा usb_hcd *errata2_समयr_hcd;
+#define SLOT_TIMEOUT 300
+#define SLOT_CHECK_PERIOD 200
+static struct timer_list errata2_timer;
+static struct usb_hcd *errata2_timer_hcd;
 
-अटल व्योम errata2_function(काष्ठा समयr_list *unused)
-अणु
-	काष्ठा usb_hcd *hcd = errata2_समयr_hcd;
-	काष्ठा isp1760_hcd *priv = hcd_to_priv(hcd);
-	पूर्णांक slot;
-	काष्ठा ptd ptd;
-	अचिन्हित दीर्घ spinflags;
+static void errata2_function(struct timer_list *unused)
+{
+	struct usb_hcd *hcd = errata2_timer_hcd;
+	struct isp1760_hcd *priv = hcd_to_priv(hcd);
+	int slot;
+	struct ptd ptd;
+	unsigned long spinflags;
 
 	spin_lock_irqsave(&priv->lock, spinflags);
 
-	क्रम (slot = 0; slot < 32; slot++)
-		अगर (priv->atl_slots[slot].qh && समय_after(jअगरfies,
-					priv->atl_slots[slot].बारtamp +
-					msecs_to_jअगरfies(SLOT_TIMEOUT))) अणु
-			ptd_पढ़ो(hcd->regs, ATL_PTD_OFFSET, slot, &ptd);
-			अगर (!FROM_DW0_VALID(ptd.dw0) &&
+	for (slot = 0; slot < 32; slot++)
+		if (priv->atl_slots[slot].qh && time_after(jiffies,
+					priv->atl_slots[slot].timestamp +
+					msecs_to_jiffies(SLOT_TIMEOUT))) {
+			ptd_read(hcd->regs, ATL_PTD_OFFSET, slot, &ptd);
+			if (!FROM_DW0_VALID(ptd.dw0) &&
 					!FROM_DW3_ACTIVE(ptd.dw3))
-				priv->atl_करोne_map |= 1 << slot;
-		पूर्ण
+				priv->atl_done_map |= 1 << slot;
+		}
 
-	अगर (priv->atl_करोne_map)
-		handle_करोne_ptds(hcd);
+	if (priv->atl_done_map)
+		handle_done_ptds(hcd);
 
 	spin_unlock_irqrestore(&priv->lock, spinflags);
 
-	errata2_समयr.expires = jअगरfies + msecs_to_jअगरfies(SLOT_CHECK_PERIOD);
-	add_समयr(&errata2_समयr);
-पूर्ण
+	errata2_timer.expires = jiffies + msecs_to_jiffies(SLOT_CHECK_PERIOD);
+	add_timer(&errata2_timer);
+}
 
-अटल पूर्णांक isp1760_run(काष्ठा usb_hcd *hcd)
-अणु
-	पूर्णांक retval;
+static int isp1760_run(struct usb_hcd *hcd)
+{
+	int retval;
 	u32 temp;
 	u32 command;
 	u32 chipid;
@@ -1298,462 +1297,462 @@ leave:
 
 	hcd->state = HC_STATE_RUNNING;
 
-	/* Set PTD पूर्णांकerrupt AND & OR maps */
-	reg_ग_लिखो32(hcd->regs, HC_ATL_IRQ_MASK_AND_REG, 0);
-	reg_ग_लिखो32(hcd->regs, HC_ATL_IRQ_MASK_OR_REG, 0xffffffff);
-	reg_ग_लिखो32(hcd->regs, HC_INT_IRQ_MASK_AND_REG, 0);
-	reg_ग_लिखो32(hcd->regs, HC_INT_IRQ_MASK_OR_REG, 0xffffffff);
-	reg_ग_लिखो32(hcd->regs, HC_ISO_IRQ_MASK_AND_REG, 0);
-	reg_ग_लिखो32(hcd->regs, HC_ISO_IRQ_MASK_OR_REG, 0xffffffff);
+	/* Set PTD interrupt AND & OR maps */
+	reg_write32(hcd->regs, HC_ATL_IRQ_MASK_AND_REG, 0);
+	reg_write32(hcd->regs, HC_ATL_IRQ_MASK_OR_REG, 0xffffffff);
+	reg_write32(hcd->regs, HC_INT_IRQ_MASK_AND_REG, 0);
+	reg_write32(hcd->regs, HC_INT_IRQ_MASK_OR_REG, 0xffffffff);
+	reg_write32(hcd->regs, HC_ISO_IRQ_MASK_AND_REG, 0);
+	reg_write32(hcd->regs, HC_ISO_IRQ_MASK_OR_REG, 0xffffffff);
 	/* step 23 passed */
 
-	temp = reg_पढ़ो32(hcd->regs, HC_HW_MODE_CTRL);
-	reg_ग_लिखो32(hcd->regs, HC_HW_MODE_CTRL, temp | HW_GLOBAL_INTR_EN);
+	temp = reg_read32(hcd->regs, HC_HW_MODE_CTRL);
+	reg_write32(hcd->regs, HC_HW_MODE_CTRL, temp | HW_GLOBAL_INTR_EN);
 
-	command = reg_पढ़ो32(hcd->regs, HC_USBCMD);
+	command = reg_read32(hcd->regs, HC_USBCMD);
 	command &= ~(CMD_LRESET|CMD_RESET);
 	command |= CMD_RUN;
-	reg_ग_लिखो32(hcd->regs, HC_USBCMD, command);
+	reg_write32(hcd->regs, HC_USBCMD, command);
 
 	retval = handshake(hcd, HC_USBCMD, CMD_RUN, CMD_RUN, 250 * 1000);
-	अगर (retval)
-		वापस retval;
+	if (retval)
+		return retval;
 
 	/*
 	 * XXX
-	 * Spec says to ग_लिखो FLAG_CF as last config action, priv code grअसल
-	 * the semaphore जबतक करोing so.
+	 * Spec says to write FLAG_CF as last config action, priv code grabs
+	 * the semaphore while doing so.
 	 */
-	करोwn_ग_लिखो(&ehci_cf_port_reset_rwsem);
-	reg_ग_लिखो32(hcd->regs, HC_CONFIGFLAG, FLAG_CF);
+	down_write(&ehci_cf_port_reset_rwsem);
+	reg_write32(hcd->regs, HC_CONFIGFLAG, FLAG_CF);
 
 	retval = handshake(hcd, HC_CONFIGFLAG, FLAG_CF, FLAG_CF, 250 * 1000);
-	up_ग_लिखो(&ehci_cf_port_reset_rwsem);
-	अगर (retval)
-		वापस retval;
+	up_write(&ehci_cf_port_reset_rwsem);
+	if (retval)
+		return retval;
 
-	errata2_समयr_hcd = hcd;
-	समयr_setup(&errata2_समयr, errata2_function, 0);
-	errata2_समयr.expires = jअगरfies + msecs_to_jअगरfies(SLOT_CHECK_PERIOD);
-	add_समयr(&errata2_समयr);
+	errata2_timer_hcd = hcd;
+	timer_setup(&errata2_timer, errata2_function, 0);
+	errata2_timer.expires = jiffies + msecs_to_jiffies(SLOT_CHECK_PERIOD);
+	add_timer(&errata2_timer);
 
-	chipid = reg_पढ़ो32(hcd->regs, HC_CHIP_ID_REG);
+	chipid = reg_read32(hcd->regs, HC_CHIP_ID_REG);
 	dev_info(hcd->self.controller, "USB ISP %04x HW rev. %d started\n",
 					chipid & 0xffff, chipid >> 16);
 
 	/* PTD Register Init Part 2, Step 28 */
 
-	/* Setup रेजिस्टरs controlling PTD checking */
-	reg_ग_लिखो32(hcd->regs, HC_ATL_PTD_LASTPTD_REG, 0x80000000);
-	reg_ग_लिखो32(hcd->regs, HC_INT_PTD_LASTPTD_REG, 0x80000000);
-	reg_ग_लिखो32(hcd->regs, HC_ISO_PTD_LASTPTD_REG, 0x00000001);
-	reg_ग_लिखो32(hcd->regs, HC_ATL_PTD_SKIPMAP_REG, 0xffffffff);
-	reg_ग_लिखो32(hcd->regs, HC_INT_PTD_SKIPMAP_REG, 0xffffffff);
-	reg_ग_लिखो32(hcd->regs, HC_ISO_PTD_SKIPMAP_REG, 0xffffffff);
-	reg_ग_लिखो32(hcd->regs, HC_BUFFER_STATUS_REG,
+	/* Setup registers controlling PTD checking */
+	reg_write32(hcd->regs, HC_ATL_PTD_LASTPTD_REG, 0x80000000);
+	reg_write32(hcd->regs, HC_INT_PTD_LASTPTD_REG, 0x80000000);
+	reg_write32(hcd->regs, HC_ISO_PTD_LASTPTD_REG, 0x00000001);
+	reg_write32(hcd->regs, HC_ATL_PTD_SKIPMAP_REG, 0xffffffff);
+	reg_write32(hcd->regs, HC_INT_PTD_SKIPMAP_REG, 0xffffffff);
+	reg_write32(hcd->regs, HC_ISO_PTD_SKIPMAP_REG, 0xffffffff);
+	reg_write32(hcd->regs, HC_BUFFER_STATUS_REG,
 						ATL_BUF_FILL | INT_BUF_FILL);
 
-	/* GRR this is run-once init(), being करोne every समय the HC starts.
-	 * So दीर्घ as they're part of class devices, we can't करो it init()
+	/* GRR this is run-once init(), being done every time the HC starts.
+	 * So long as they're part of class devices, we can't do it init()
 	 * since the class device isn't created that early.
 	 */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक qtd_fill(काष्ठा isp1760_qtd *qtd, व्योम *databuffer, माप_प्रकार len)
-अणु
+static int qtd_fill(struct isp1760_qtd *qtd, void *databuffer, size_t len)
+{
 	qtd->data_buffer = databuffer;
 
-	अगर (len > MAX_PAYLOAD_SIZE)
+	if (len > MAX_PAYLOAD_SIZE)
 		len = MAX_PAYLOAD_SIZE;
 	qtd->length = len;
 
-	वापस qtd->length;
-पूर्ण
+	return qtd->length;
+}
 
-अटल व्योम qtd_list_मुक्त(काष्ठा list_head *qtd_list)
-अणु
-	काष्ठा isp1760_qtd *qtd, *qtd_next;
+static void qtd_list_free(struct list_head *qtd_list)
+{
+	struct isp1760_qtd *qtd, *qtd_next;
 
-	list_क्रम_each_entry_safe(qtd, qtd_next, qtd_list, qtd_list) अणु
+	list_for_each_entry_safe(qtd, qtd_next, qtd_list, qtd_list) {
 		list_del(&qtd->qtd_list);
-		qtd_मुक्त(qtd);
-	पूर्ण
-पूर्ण
+		qtd_free(qtd);
+	}
+}
 
 /*
- * Packetize urb->transfer_buffer पूर्णांकo list of packets of size wMaxPacketSize.
- * Also calculate the PID type (SETUP/IN/OUT) क्रम each packet.
+ * Packetize urb->transfer_buffer into list of packets of size wMaxPacketSize.
+ * Also calculate the PID type (SETUP/IN/OUT) for each packet.
  */
-#घोषणा max_packet(wMaxPacketSize) ((wMaxPacketSize) & 0x07ff)
-अटल व्योम packetize_urb(काष्ठा usb_hcd *hcd,
-		काष्ठा urb *urb, काष्ठा list_head *head, gfp_t flags)
-अणु
-	काष्ठा isp1760_qtd *qtd;
-	व्योम *buf;
-	पूर्णांक len, maxpacketsize;
+#define max_packet(wMaxPacketSize) ((wMaxPacketSize) & 0x07ff)
+static void packetize_urb(struct usb_hcd *hcd,
+		struct urb *urb, struct list_head *head, gfp_t flags)
+{
+	struct isp1760_qtd *qtd;
+	void *buf;
+	int len, maxpacketsize;
 	u8 packet_type;
 
 	/*
 	 * URBs map to sequences of QTDs:  one logical transaction
 	 */
 
-	अगर (!urb->transfer_buffer && urb->transfer_buffer_length) अणु
+	if (!urb->transfer_buffer && urb->transfer_buffer_length) {
 		/* XXX This looks like usb storage / SCSI bug */
 		dev_err(hcd->self.controller,
 				"buf is null, dma is %08lx len is %d\n",
-				(दीर्घ अचिन्हित)urb->transfer_dma,
+				(long unsigned)urb->transfer_dma,
 				urb->transfer_buffer_length);
 		WARN_ON(1);
-	पूर्ण
+	}
 
-	अगर (usb_pipein(urb->pipe))
+	if (usb_pipein(urb->pipe))
 		packet_type = IN_PID;
-	अन्यथा
+	else
 		packet_type = OUT_PID;
 
-	अगर (usb_pipecontrol(urb->pipe)) अणु
+	if (usb_pipecontrol(urb->pipe)) {
 		qtd = qtd_alloc(flags, urb, SETUP_PID);
-		अगर (!qtd)
-			जाओ cleanup;
-		qtd_fill(qtd, urb->setup_packet, माप(काष्ठा usb_ctrlrequest));
+		if (!qtd)
+			goto cleanup;
+		qtd_fill(qtd, urb->setup_packet, sizeof(struct usb_ctrlrequest));
 		list_add_tail(&qtd->qtd_list, head);
 
-		/* क्रम zero length DATA stages, STATUS is always IN */
-		अगर (urb->transfer_buffer_length == 0)
+		/* for zero length DATA stages, STATUS is always IN */
+		if (urb->transfer_buffer_length == 0)
 			packet_type = IN_PID;
-	पूर्ण
+	}
 
 	maxpacketsize = max_packet(usb_maxpacket(urb->dev, urb->pipe,
 						usb_pipeout(urb->pipe)));
 
 	/*
-	 * buffer माला_लो wrapped in one or more qtds;
+	 * buffer gets wrapped in one or more qtds;
 	 * last one may be "short" (including zero len)
 	 * and may serve as a control status ack
 	 */
 	buf = urb->transfer_buffer;
 	len = urb->transfer_buffer_length;
 
-	क्रम (;;) अणु
-		पूर्णांक this_qtd_len;
+	for (;;) {
+		int this_qtd_len;
 
 		qtd = qtd_alloc(flags, urb, packet_type);
-		अगर (!qtd)
-			जाओ cleanup;
+		if (!qtd)
+			goto cleanup;
 		this_qtd_len = qtd_fill(qtd, buf, len);
 		list_add_tail(&qtd->qtd_list, head);
 
 		len -= this_qtd_len;
 		buf += this_qtd_len;
 
-		अगर (len <= 0)
-			अवरोध;
-	पूर्ण
+		if (len <= 0)
+			break;
+	}
 
 	/*
 	 * control requests may need a terminating data "status" ack;
-	 * bulk ones may need a terminating लघु packet (zero length).
+	 * bulk ones may need a terminating short packet (zero length).
 	 */
-	अगर (urb->transfer_buffer_length != 0) अणु
-		पूर्णांक one_more = 0;
+	if (urb->transfer_buffer_length != 0) {
+		int one_more = 0;
 
-		अगर (usb_pipecontrol(urb->pipe)) अणु
+		if (usb_pipecontrol(urb->pipe)) {
 			one_more = 1;
-			अगर (packet_type == IN_PID)
+			if (packet_type == IN_PID)
 				packet_type = OUT_PID;
-			अन्यथा
+			else
 				packet_type = IN_PID;
-		पूर्ण अन्यथा अगर (usb_pipebulk(urb->pipe)
+		} else if (usb_pipebulk(urb->pipe)
 				&& (urb->transfer_flags & URB_ZERO_PACKET)
 				&& !(urb->transfer_buffer_length %
-							maxpacketsize)) अणु
+							maxpacketsize)) {
 			one_more = 1;
-		पूर्ण
-		अगर (one_more) अणु
+		}
+		if (one_more) {
 			qtd = qtd_alloc(flags, urb, packet_type);
-			अगर (!qtd)
-				जाओ cleanup;
+			if (!qtd)
+				goto cleanup;
 
 			/* never any data in such packets */
-			qtd_fill(qtd, शून्य, 0);
+			qtd_fill(qtd, NULL, 0);
 			list_add_tail(&qtd->qtd_list, head);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस;
+	return;
 
 cleanup:
-	qtd_list_मुक्त(head);
-पूर्ण
+	qtd_list_free(head);
+}
 
-अटल पूर्णांक isp1760_urb_enqueue(काष्ठा usb_hcd *hcd, काष्ठा urb *urb,
+static int isp1760_urb_enqueue(struct usb_hcd *hcd, struct urb *urb,
 		gfp_t mem_flags)
-अणु
-	काष्ठा isp1760_hcd *priv = hcd_to_priv(hcd);
-	काष्ठा list_head *ep_queue;
-	काष्ठा isp1760_qh *qh, *qhit;
-	अचिन्हित दीर्घ spinflags;
+{
+	struct isp1760_hcd *priv = hcd_to_priv(hcd);
+	struct list_head *ep_queue;
+	struct isp1760_qh *qh, *qhit;
+	unsigned long spinflags;
 	LIST_HEAD(new_qtds);
-	पूर्णांक retval;
-	पूर्णांक qh_in_queue;
+	int retval;
+	int qh_in_queue;
 
-	चयन (usb_pipetype(urb->pipe)) अणु
-	हाल PIPE_CONTROL:
+	switch (usb_pipetype(urb->pipe)) {
+	case PIPE_CONTROL:
 		ep_queue = &priv->qh_list[QH_CONTROL];
-		अवरोध;
-	हाल PIPE_BULK:
+		break;
+	case PIPE_BULK:
 		ep_queue = &priv->qh_list[QH_BULK];
-		अवरोध;
-	हाल PIPE_INTERRUPT:
-		अगर (urb->पूर्णांकerval < 0)
-			वापस -EINVAL;
+		break;
+	case PIPE_INTERRUPT:
+		if (urb->interval < 0)
+			return -EINVAL;
 		/* FIXME: Check bandwidth  */
 		ep_queue = &priv->qh_list[QH_INTERRUPT];
-		अवरोध;
-	हाल PIPE_ISOCHRONOUS:
+		break;
+	case PIPE_ISOCHRONOUS:
 		dev_err(hcd->self.controller, "%s: isochronous USB packets "
 							"not yet supported\n",
 							__func__);
-		वापस -EPIPE;
-	शेष:
+		return -EPIPE;
+	default:
 		dev_err(hcd->self.controller, "%s: unknown pipe type\n",
 							__func__);
-		वापस -EPIPE;
-	पूर्ण
+		return -EPIPE;
+	}
 
-	अगर (usb_pipein(urb->pipe))
+	if (usb_pipein(urb->pipe))
 		urb->actual_length = 0;
 
 	packetize_urb(hcd, urb, &new_qtds, mem_flags);
-	अगर (list_empty(&new_qtds))
-		वापस -ENOMEM;
+	if (list_empty(&new_qtds))
+		return -ENOMEM;
 
 	retval = 0;
 	spin_lock_irqsave(&priv->lock, spinflags);
 
-	अगर (!test_bit(HCD_FLAG_HW_ACCESSIBLE, &hcd->flags)) अणु
+	if (!test_bit(HCD_FLAG_HW_ACCESSIBLE, &hcd->flags)) {
 		retval = -ESHUTDOWN;
-		qtd_list_मुक्त(&new_qtds);
-		जाओ out;
-	पूर्ण
+		qtd_list_free(&new_qtds);
+		goto out;
+	}
 	retval = usb_hcd_link_urb_to_ep(hcd, urb);
-	अगर (retval) अणु
-		qtd_list_मुक्त(&new_qtds);
-		जाओ out;
-	पूर्ण
+	if (retval) {
+		qtd_list_free(&new_qtds);
+		goto out;
+	}
 
 	qh = urb->ep->hcpriv;
-	अगर (qh) अणु
+	if (qh) {
 		qh_in_queue = 0;
-		list_क्रम_each_entry(qhit, ep_queue, qh_list) अणु
-			अगर (qhit == qh) अणु
+		list_for_each_entry(qhit, ep_queue, qh_list) {
+			if (qhit == qh) {
 				qh_in_queue = 1;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		अगर (!qh_in_queue)
+				break;
+			}
+		}
+		if (!qh_in_queue)
 			list_add_tail(&qh->qh_list, ep_queue);
-	पूर्ण अन्यथा अणु
+	} else {
 		qh = qh_alloc(GFP_ATOMIC);
-		अगर (!qh) अणु
+		if (!qh) {
 			retval = -ENOMEM;
 			usb_hcd_unlink_urb_from_ep(hcd, urb);
-			qtd_list_मुक्त(&new_qtds);
-			जाओ out;
-		पूर्ण
+			qtd_list_free(&new_qtds);
+			goto out;
+		}
 		list_add_tail(&qh->qh_list, ep_queue);
 		urb->ep->hcpriv = qh;
-	पूर्ण
+	}
 
 	list_splice_tail(&new_qtds, &qh->qtd_list);
 	schedule_ptds(hcd);
 
 out:
 	spin_unlock_irqrestore(&priv->lock, spinflags);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल व्योम समाप्त_transfer(काष्ठा usb_hcd *hcd, काष्ठा urb *urb,
-		काष्ठा isp1760_qh *qh)
-अणु
-	काष्ठा isp1760_hcd *priv = hcd_to_priv(hcd);
-	पूर्णांक skip_map;
+static void kill_transfer(struct usb_hcd *hcd, struct urb *urb,
+		struct isp1760_qh *qh)
+{
+	struct isp1760_hcd *priv = hcd_to_priv(hcd);
+	int skip_map;
 
 	WARN_ON(qh->slot == -1);
 
-	/* We need to क्रमcefully reclaim the slot since some transfers never
-	   वापस, e.g. पूर्णांकerrupt transfers and NAKed bulk transfers. */
-	अगर (usb_pipecontrol(urb->pipe) || usb_pipebulk(urb->pipe)) अणु
-		skip_map = reg_पढ़ो32(hcd->regs, HC_ATL_PTD_SKIPMAP_REG);
+	/* We need to forcefully reclaim the slot since some transfers never
+	   return, e.g. interrupt transfers and NAKed bulk transfers. */
+	if (usb_pipecontrol(urb->pipe) || usb_pipebulk(urb->pipe)) {
+		skip_map = reg_read32(hcd->regs, HC_ATL_PTD_SKIPMAP_REG);
 		skip_map |= (1 << qh->slot);
-		reg_ग_लिखो32(hcd->regs, HC_ATL_PTD_SKIPMAP_REG, skip_map);
-		priv->atl_slots[qh->slot].qh = शून्य;
-		priv->atl_slots[qh->slot].qtd = शून्य;
-	पूर्ण अन्यथा अणु
-		skip_map = reg_पढ़ो32(hcd->regs, HC_INT_PTD_SKIPMAP_REG);
+		reg_write32(hcd->regs, HC_ATL_PTD_SKIPMAP_REG, skip_map);
+		priv->atl_slots[qh->slot].qh = NULL;
+		priv->atl_slots[qh->slot].qtd = NULL;
+	} else {
+		skip_map = reg_read32(hcd->regs, HC_INT_PTD_SKIPMAP_REG);
 		skip_map |= (1 << qh->slot);
-		reg_ग_लिखो32(hcd->regs, HC_INT_PTD_SKIPMAP_REG, skip_map);
-		priv->पूर्णांक_slots[qh->slot].qh = शून्य;
-		priv->पूर्णांक_slots[qh->slot].qtd = शून्य;
-	पूर्ण
+		reg_write32(hcd->regs, HC_INT_PTD_SKIPMAP_REG, skip_map);
+		priv->int_slots[qh->slot].qh = NULL;
+		priv->int_slots[qh->slot].qtd = NULL;
+	}
 
 	qh->slot = -1;
-पूर्ण
+}
 
 /*
- * Retire the qtds beginning at 'qtd' and beदीर्घing all to the same urb, समाप्तing
- * any active transfer beदीर्घing to the urb in the process.
+ * Retire the qtds beginning at 'qtd' and belonging all to the same urb, killing
+ * any active transfer belonging to the urb in the process.
  */
-अटल व्योम dequeue_urb_from_qtd(काष्ठा usb_hcd *hcd, काष्ठा isp1760_qh *qh,
-						काष्ठा isp1760_qtd *qtd)
-अणु
-	काष्ठा urb *urb;
-	पूर्णांक urb_was_running;
+static void dequeue_urb_from_qtd(struct usb_hcd *hcd, struct isp1760_qh *qh,
+						struct isp1760_qtd *qtd)
+{
+	struct urb *urb;
+	int urb_was_running;
 
 	urb = qtd->urb;
 	urb_was_running = 0;
-	list_क्रम_each_entry_from(qtd, &qh->qtd_list, qtd_list) अणु
-		अगर (qtd->urb != urb)
-			अवरोध;
+	list_for_each_entry_from(qtd, &qh->qtd_list, qtd_list) {
+		if (qtd->urb != urb)
+			break;
 
-		अगर (qtd->status >= QTD_XFER_STARTED)
+		if (qtd->status >= QTD_XFER_STARTED)
 			urb_was_running = 1;
-		अगर (last_qtd_of_urb(qtd, qh) &&
+		if (last_qtd_of_urb(qtd, qh) &&
 					(qtd->status >= QTD_XFER_COMPLETE))
 			urb_was_running = 0;
 
-		अगर (qtd->status == QTD_XFER_STARTED)
-			समाप्त_transfer(hcd, urb, qh);
+		if (qtd->status == QTD_XFER_STARTED)
+			kill_transfer(hcd, urb, qh);
 		qtd->status = QTD_RETIRE;
-	पूर्ण
+	}
 
-	अगर ((urb->dev->speed != USB_SPEED_HIGH) && urb_was_running) अणु
+	if ((urb->dev->speed != USB_SPEED_HIGH) && urb_was_running) {
 		qh->tt_buffer_dirty = 1;
-		अगर (usb_hub_clear_tt_buffer(urb))
+		if (usb_hub_clear_tt_buffer(urb))
 			/* Clear failed; let's hope things work anyway */
 			qh->tt_buffer_dirty = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक isp1760_urb_dequeue(काष्ठा usb_hcd *hcd, काष्ठा urb *urb,
-		पूर्णांक status)
-अणु
-	काष्ठा isp1760_hcd *priv = hcd_to_priv(hcd);
-	अचिन्हित दीर्घ spinflags;
-	काष्ठा isp1760_qh *qh;
-	काष्ठा isp1760_qtd *qtd;
-	पूर्णांक retval = 0;
+static int isp1760_urb_dequeue(struct usb_hcd *hcd, struct urb *urb,
+		int status)
+{
+	struct isp1760_hcd *priv = hcd_to_priv(hcd);
+	unsigned long spinflags;
+	struct isp1760_qh *qh;
+	struct isp1760_qtd *qtd;
+	int retval = 0;
 
 	spin_lock_irqsave(&priv->lock, spinflags);
 	retval = usb_hcd_check_unlink_urb(hcd, urb, status);
-	अगर (retval)
-		जाओ out;
+	if (retval)
+		goto out;
 
 	qh = urb->ep->hcpriv;
-	अगर (!qh) अणु
+	if (!qh) {
 		retval = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	list_क्रम_each_entry(qtd, &qh->qtd_list, qtd_list)
-		अगर (qtd->urb == urb) अणु
+	list_for_each_entry(qtd, &qh->qtd_list, qtd_list)
+		if (qtd->urb == urb) {
 			dequeue_urb_from_qtd(hcd, qh, qtd);
 			list_move(&qtd->qtd_list, &qh->qtd_list);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 	urb->status = status;
 	schedule_ptds(hcd);
 
 out:
 	spin_unlock_irqrestore(&priv->lock, spinflags);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल व्योम isp1760_endpoपूर्णांक_disable(काष्ठा usb_hcd *hcd,
-		काष्ठा usb_host_endpoपूर्णांक *ep)
-अणु
-	काष्ठा isp1760_hcd *priv = hcd_to_priv(hcd);
-	अचिन्हित दीर्घ spinflags;
-	काष्ठा isp1760_qh *qh, *qh_iter;
-	पूर्णांक i;
+static void isp1760_endpoint_disable(struct usb_hcd *hcd,
+		struct usb_host_endpoint *ep)
+{
+	struct isp1760_hcd *priv = hcd_to_priv(hcd);
+	unsigned long spinflags;
+	struct isp1760_qh *qh, *qh_iter;
+	int i;
 
 	spin_lock_irqsave(&priv->lock, spinflags);
 
 	qh = ep->hcpriv;
-	अगर (!qh)
-		जाओ out;
+	if (!qh)
+		goto out;
 
 	WARN_ON(!list_empty(&qh->qtd_list));
 
-	क्रम (i = 0; i < QH_END; i++)
-		list_क्रम_each_entry(qh_iter, &priv->qh_list[i], qh_list)
-			अगर (qh_iter == qh) अणु
+	for (i = 0; i < QH_END; i++)
+		list_for_each_entry(qh_iter, &priv->qh_list[i], qh_list)
+			if (qh_iter == qh) {
 				list_del(&qh_iter->qh_list);
 				i = QH_END;
-				अवरोध;
-			पूर्ण
-	qh_मुक्त(qh);
-	ep->hcpriv = शून्य;
+				break;
+			}
+	qh_free(qh);
+	ep->hcpriv = NULL;
 
 	schedule_ptds(hcd);
 
 out:
 	spin_unlock_irqrestore(&priv->lock, spinflags);
-पूर्ण
+}
 
-अटल पूर्णांक isp1760_hub_status_data(काष्ठा usb_hcd *hcd, अक्षर *buf)
-अणु
-	काष्ठा isp1760_hcd *priv = hcd_to_priv(hcd);
+static int isp1760_hub_status_data(struct usb_hcd *hcd, char *buf)
+{
+	struct isp1760_hcd *priv = hcd_to_priv(hcd);
 	u32 temp, status = 0;
 	u32 mask;
-	पूर्णांक retval = 1;
-	अचिन्हित दीर्घ flags;
+	int retval = 1;
+	unsigned long flags;
 
-	/* अगर !PM, root hub समयrs won't get shut करोwn ... */
-	अगर (!HC_IS_RUNNING(hcd->state))
-		वापस 0;
+	/* if !PM, root hub timers won't get shut down ... */
+	if (!HC_IS_RUNNING(hcd->state))
+		return 0;
 
 	/* init status to no-changes */
 	buf[0] = 0;
 	mask = PORT_CSC;
 
 	spin_lock_irqsave(&priv->lock, flags);
-	temp = reg_पढ़ो32(hcd->regs, HC_PORTSC1);
+	temp = reg_read32(hcd->regs, HC_PORTSC1);
 
-	अगर (temp & PORT_OWNER) अणु
-		अगर (temp & PORT_CSC) अणु
+	if (temp & PORT_OWNER) {
+		if (temp & PORT_CSC) {
 			temp &= ~PORT_CSC;
-			reg_ग_लिखो32(hcd->regs, HC_PORTSC1, temp);
-			जाओ करोne;
-		पूर्ण
-	पूर्ण
+			reg_write32(hcd->regs, HC_PORTSC1, temp);
+			goto done;
+		}
+	}
 
 	/*
-	 * Return status inक्रमmation even क्रम ports with OWNER set.
+	 * Return status information even for ports with OWNER set.
 	 * Otherwise hub_wq wouldn't see the disconnect event when a
-	 * high-speed device is चयनed over to the companion
+	 * high-speed device is switched over to the companion
 	 * controller by the user.
 	 */
 
-	अगर ((temp & mask) != 0
+	if ((temp & mask) != 0
 			|| ((temp & PORT_RESUME) != 0
-				&& समय_after_eq(jअगरfies,
-					priv->reset_करोne))) अणु
+				&& time_after_eq(jiffies,
+					priv->reset_done))) {
 		buf [0] |= 1 << (0 + 1);
 		status = STS_PCD;
-	पूर्ण
-	/* FIXME स्वतःsuspend idle root hubs */
-करोne:
+	}
+	/* FIXME autosuspend idle root hubs */
+done:
 	spin_unlock_irqrestore(&priv->lock, flags);
-	वापस status ? retval : 0;
-पूर्ण
+	return status ? retval : 0;
+}
 
-अटल व्योम isp1760_hub_descriptor(काष्ठा isp1760_hcd *priv,
-		काष्ठा usb_hub_descriptor *desc)
-अणु
-	पूर्णांक ports = HCS_N_PORTS(priv->hcs_params);
+static void isp1760_hub_descriptor(struct isp1760_hcd *priv,
+		struct usb_hub_descriptor *desc)
+{
+	int ports = HCS_N_PORTS(priv->hcs_params);
 	u16 temp;
 
 	desc->bDescriptorType = USB_DT_HUB;
@@ -1766,30 +1765,30 @@ out:
 	desc->bDescLength = 7 + 2 * temp;
 
 	/* ports removable, and usb 1.0 legacy PortPwrCtrlMask */
-	स_रखो(&desc->u.hs.DeviceRemovable[0], 0, temp);
-	स_रखो(&desc->u.hs.DeviceRemovable[temp], 0xff, temp);
+	memset(&desc->u.hs.DeviceRemovable[0], 0, temp);
+	memset(&desc->u.hs.DeviceRemovable[temp], 0xff, temp);
 
 	/* per-port overcurrent reporting */
 	temp = HUB_CHAR_INDV_PORT_OCPM;
-	अगर (HCS_PPC(priv->hcs_params))
-		/* per-port घातer control */
+	if (HCS_PPC(priv->hcs_params))
+		/* per-port power control */
 		temp |= HUB_CHAR_INDV_PORT_LPSM;
-	अन्यथा
-		/* no घातer चयनing */
+	else
+		/* no power switching */
 		temp |= HUB_CHAR_NO_LPSM;
 	desc->wHubCharacteristics = cpu_to_le16(temp);
-पूर्ण
+}
 
-#घोषणा	PORT_WAKE_BITS	(PORT_WKOC_E|PORT_WKDISC_E|PORT_WKCONN_E)
+#define	PORT_WAKE_BITS	(PORT_WKOC_E|PORT_WKDISC_E|PORT_WKCONN_E)
 
-अटल पूर्णांक check_reset_complete(काष्ठा usb_hcd *hcd, पूर्णांक index,
-		पूर्णांक port_status)
-अणु
-	अगर (!(port_status & PORT_CONNECT))
-		वापस port_status;
+static int check_reset_complete(struct usb_hcd *hcd, int index,
+		int port_status)
+{
+	if (!(port_status & PORT_CONNECT))
+		return port_status;
 
-	/* अगर reset finished and it's still not enabled -- hanकरोff */
-	अगर (!(port_status & PORT_PE)) अणु
+	/* if reset finished and it's still not enabled -- handoff */
+	if (!(port_status & PORT_PE)) {
 
 		dev_info(hcd->self.controller,
 					"port %d full speed --> companion\n",
@@ -1797,404 +1796,404 @@ out:
 
 		port_status |= PORT_OWNER;
 		port_status &= ~PORT_RWC_BITS;
-		reg_ग_लिखो32(hcd->regs, HC_PORTSC1, port_status);
+		reg_write32(hcd->regs, HC_PORTSC1, port_status);
 
-	पूर्ण अन्यथा
+	} else
 		dev_info(hcd->self.controller, "port %d high speed\n",
 								index + 1);
 
-	वापस port_status;
-पूर्ण
+	return port_status;
+}
 
-अटल पूर्णांक isp1760_hub_control(काष्ठा usb_hcd *hcd, u16 typeReq,
-		u16 wValue, u16 wIndex, अक्षर *buf, u16 wLength)
-अणु
-	काष्ठा isp1760_hcd *priv = hcd_to_priv(hcd);
-	पूर्णांक ports = HCS_N_PORTS(priv->hcs_params);
+static int isp1760_hub_control(struct usb_hcd *hcd, u16 typeReq,
+		u16 wValue, u16 wIndex, char *buf, u16 wLength)
+{
+	struct isp1760_hcd *priv = hcd_to_priv(hcd);
+	int ports = HCS_N_PORTS(priv->hcs_params);
 	u32 temp, status;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक retval = 0;
+	unsigned long flags;
+	int retval = 0;
 
 	/*
 	 * FIXME:  support SetPortFeatures USB_PORT_FEAT_INDICATOR.
 	 * HCS_INDICATOR may say we can change LEDs to off/amber/green.
-	 * (track current state ourselves) ... blink क्रम diagnostics,
-	 * घातer, "this is the one", etc.  EHCI spec supports this.
+	 * (track current state ourselves) ... blink for diagnostics,
+	 * power, "this is the one", etc.  EHCI spec supports this.
 	 */
 
 	spin_lock_irqsave(&priv->lock, flags);
-	चयन (typeReq) अणु
-	हाल ClearHubFeature:
-		चयन (wValue) अणु
-		हाल C_HUB_LOCAL_POWER:
-		हाल C_HUB_OVER_CURRENT:
+	switch (typeReq) {
+	case ClearHubFeature:
+		switch (wValue) {
+		case C_HUB_LOCAL_POWER:
+		case C_HUB_OVER_CURRENT:
 			/* no hub-wide feature/status flags */
-			अवरोध;
-		शेष:
-			जाओ error;
-		पूर्ण
-		अवरोध;
-	हाल ClearPortFeature:
-		अगर (!wIndex || wIndex > ports)
-			जाओ error;
+			break;
+		default:
+			goto error;
+		}
+		break;
+	case ClearPortFeature:
+		if (!wIndex || wIndex > ports)
+			goto error;
 		wIndex--;
-		temp = reg_पढ़ो32(hcd->regs, HC_PORTSC1);
+		temp = reg_read32(hcd->regs, HC_PORTSC1);
 
 		/*
-		 * Even अगर OWNER is set, so the port is owned by the
+		 * Even if OWNER is set, so the port is owned by the
 		 * companion controller, hub_wq needs to be able to clear
 		 * the port-change status bits (especially
 		 * USB_PORT_STAT_C_CONNECTION).
 		 */
 
-		चयन (wValue) अणु
-		हाल USB_PORT_FEAT_ENABLE:
-			reg_ग_लिखो32(hcd->regs, HC_PORTSC1, temp & ~PORT_PE);
-			अवरोध;
-		हाल USB_PORT_FEAT_C_ENABLE:
+		switch (wValue) {
+		case USB_PORT_FEAT_ENABLE:
+			reg_write32(hcd->regs, HC_PORTSC1, temp & ~PORT_PE);
+			break;
+		case USB_PORT_FEAT_C_ENABLE:
 			/* XXX error? */
-			अवरोध;
-		हाल USB_PORT_FEAT_SUSPEND:
-			अगर (temp & PORT_RESET)
-				जाओ error;
+			break;
+		case USB_PORT_FEAT_SUSPEND:
+			if (temp & PORT_RESET)
+				goto error;
 
-			अगर (temp & PORT_SUSPEND) अणु
-				अगर ((temp & PORT_PE) == 0)
-					जाओ error;
-				/* resume संकेतing क्रम 20 msec */
+			if (temp & PORT_SUSPEND) {
+				if ((temp & PORT_PE) == 0)
+					goto error;
+				/* resume signaling for 20 msec */
 				temp &= ~(PORT_RWC_BITS);
-				reg_ग_लिखो32(hcd->regs, HC_PORTSC1,
+				reg_write32(hcd->regs, HC_PORTSC1,
 							temp | PORT_RESUME);
-				priv->reset_करोne = jअगरfies +
-					msecs_to_jअगरfies(USB_RESUME_TIMEOUT);
-			पूर्ण
-			अवरोध;
-		हाल USB_PORT_FEAT_C_SUSPEND:
-			/* we स्वतः-clear this feature */
-			अवरोध;
-		हाल USB_PORT_FEAT_POWER:
-			अगर (HCS_PPC(priv->hcs_params))
-				reg_ग_लिखो32(hcd->regs, HC_PORTSC1,
+				priv->reset_done = jiffies +
+					msecs_to_jiffies(USB_RESUME_TIMEOUT);
+			}
+			break;
+		case USB_PORT_FEAT_C_SUSPEND:
+			/* we auto-clear this feature */
+			break;
+		case USB_PORT_FEAT_POWER:
+			if (HCS_PPC(priv->hcs_params))
+				reg_write32(hcd->regs, HC_PORTSC1,
 							temp & ~PORT_POWER);
-			अवरोध;
-		हाल USB_PORT_FEAT_C_CONNECTION:
-			reg_ग_लिखो32(hcd->regs, HC_PORTSC1, temp | PORT_CSC);
-			अवरोध;
-		हाल USB_PORT_FEAT_C_OVER_CURRENT:
+			break;
+		case USB_PORT_FEAT_C_CONNECTION:
+			reg_write32(hcd->regs, HC_PORTSC1, temp | PORT_CSC);
+			break;
+		case USB_PORT_FEAT_C_OVER_CURRENT:
 			/* XXX error ?*/
-			अवरोध;
-		हाल USB_PORT_FEAT_C_RESET:
+			break;
+		case USB_PORT_FEAT_C_RESET:
 			/* GetPortStatus clears reset */
-			अवरोध;
-		शेष:
-			जाओ error;
-		पूर्ण
-		reg_पढ़ो32(hcd->regs, HC_USBCMD);
-		अवरोध;
-	हाल GetHubDescriptor:
-		isp1760_hub_descriptor(priv, (काष्ठा usb_hub_descriptor *)
+			break;
+		default:
+			goto error;
+		}
+		reg_read32(hcd->regs, HC_USBCMD);
+		break;
+	case GetHubDescriptor:
+		isp1760_hub_descriptor(priv, (struct usb_hub_descriptor *)
 			buf);
-		अवरोध;
-	हाल GetHubStatus:
+		break;
+	case GetHubStatus:
 		/* no hub-wide feature/status flags */
-		स_रखो(buf, 0, 4);
-		अवरोध;
-	हाल GetPortStatus:
-		अगर (!wIndex || wIndex > ports)
-			जाओ error;
+		memset(buf, 0, 4);
+		break;
+	case GetPortStatus:
+		if (!wIndex || wIndex > ports)
+			goto error;
 		wIndex--;
 		status = 0;
-		temp = reg_पढ़ो32(hcd->regs, HC_PORTSC1);
+		temp = reg_read32(hcd->regs, HC_PORTSC1);
 
 		/* wPortChange bits */
-		अगर (temp & PORT_CSC)
+		if (temp & PORT_CSC)
 			status |= USB_PORT_STAT_C_CONNECTION << 16;
 
 
 		/* whoever resumes must GetPortStatus to complete it!! */
-		अगर (temp & PORT_RESUME) अणु
+		if (temp & PORT_RESUME) {
 			dev_err(hcd->self.controller, "Port resume should be skipped.\n");
 
 			/* Remote Wakeup received? */
-			अगर (!priv->reset_करोne) अणु
-				/* resume संकेतing क्रम 20 msec */
-				priv->reset_करोne = jअगरfies
-						+ msecs_to_jअगरfies(20);
+			if (!priv->reset_done) {
+				/* resume signaling for 20 msec */
+				priv->reset_done = jiffies
+						+ msecs_to_jiffies(20);
 				/* check the port again */
-				mod_समयr(&hcd->rh_समयr, priv->reset_करोne);
-			पूर्ण
+				mod_timer(&hcd->rh_timer, priv->reset_done);
+			}
 
 			/* resume completed? */
-			अन्यथा अगर (समय_after_eq(jअगरfies,
-					priv->reset_करोne)) अणु
+			else if (time_after_eq(jiffies,
+					priv->reset_done)) {
 				status |= USB_PORT_STAT_C_SUSPEND << 16;
-				priv->reset_करोne = 0;
+				priv->reset_done = 0;
 
-				/* stop resume संकेतing */
-				temp = reg_पढ़ो32(hcd->regs, HC_PORTSC1);
-				reg_ग_लिखो32(hcd->regs, HC_PORTSC1,
+				/* stop resume signaling */
+				temp = reg_read32(hcd->regs, HC_PORTSC1);
+				reg_write32(hcd->regs, HC_PORTSC1,
 					temp & ~(PORT_RWC_BITS | PORT_RESUME));
 				retval = handshake(hcd, HC_PORTSC1,
 					   PORT_RESUME, 0, 2000 /* 2msec */);
-				अगर (retval != 0) अणु
+				if (retval != 0) {
 					dev_err(hcd->self.controller,
 						"port %d resume error %d\n",
 						wIndex + 1, retval);
-					जाओ error;
-				पूर्ण
+					goto error;
+				}
 				temp &= ~(PORT_SUSPEND|PORT_RESUME|(3<<10));
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		/* whoever resets must GetPortStatus to complete it!! */
-		अगर ((temp & PORT_RESET)
-				&& समय_after_eq(jअगरfies,
-					priv->reset_करोne)) अणु
+		if ((temp & PORT_RESET)
+				&& time_after_eq(jiffies,
+					priv->reset_done)) {
 			status |= USB_PORT_STAT_C_RESET << 16;
-			priv->reset_करोne = 0;
+			priv->reset_done = 0;
 
-			/* क्रमce reset to complete */
-			reg_ग_लिखो32(hcd->regs, HC_PORTSC1, temp & ~PORT_RESET);
+			/* force reset to complete */
+			reg_write32(hcd->regs, HC_PORTSC1, temp & ~PORT_RESET);
 			/* REVISIT:  some hardware needs 550+ usec to clear
-			 * this bit; seems too दीर्घ to spin routinely...
+			 * this bit; seems too long to spin routinely...
 			 */
 			retval = handshake(hcd, HC_PORTSC1,
 					PORT_RESET, 0, 750);
-			अगर (retval != 0) अणु
+			if (retval != 0) {
 				dev_err(hcd->self.controller, "port %d reset error %d\n",
 						wIndex + 1, retval);
-				जाओ error;
-			पूर्ण
+				goto error;
+			}
 
 			/* see what we found out */
 			temp = check_reset_complete(hcd, wIndex,
-					reg_पढ़ो32(hcd->regs, HC_PORTSC1));
-		पूर्ण
+					reg_read32(hcd->regs, HC_PORTSC1));
+		}
 		/*
-		 * Even अगर OWNER is set, there's no harm letting hub_wq
+		 * Even if OWNER is set, there's no harm letting hub_wq
 		 * see the wPortStatus values (they should all be 0 except
-		 * क्रम PORT_POWER anyway).
+		 * for PORT_POWER anyway).
 		 */
 
-		अगर (temp & PORT_OWNER)
+		if (temp & PORT_OWNER)
 			dev_err(hcd->self.controller, "PORT_OWNER is set\n");
 
-		अगर (temp & PORT_CONNECT) अणु
+		if (temp & PORT_CONNECT) {
 			status |= USB_PORT_STAT_CONNECTION;
-			/* status may be from पूर्णांकegrated TT */
+			/* status may be from integrated TT */
 			status |= USB_PORT_STAT_HIGH_SPEED;
-		पूर्ण
-		अगर (temp & PORT_PE)
+		}
+		if (temp & PORT_PE)
 			status |= USB_PORT_STAT_ENABLE;
-		अगर (temp & (PORT_SUSPEND|PORT_RESUME))
+		if (temp & (PORT_SUSPEND|PORT_RESUME))
 			status |= USB_PORT_STAT_SUSPEND;
-		अगर (temp & PORT_RESET)
+		if (temp & PORT_RESET)
 			status |= USB_PORT_STAT_RESET;
-		अगर (temp & PORT_POWER)
+		if (temp & PORT_POWER)
 			status |= USB_PORT_STAT_POWER;
 
 		put_unaligned(cpu_to_le32(status), (__le32 *) buf);
-		अवरोध;
-	हाल SetHubFeature:
-		चयन (wValue) अणु
-		हाल C_HUB_LOCAL_POWER:
-		हाल C_HUB_OVER_CURRENT:
+		break;
+	case SetHubFeature:
+		switch (wValue) {
+		case C_HUB_LOCAL_POWER:
+		case C_HUB_OVER_CURRENT:
 			/* no hub-wide feature/status flags */
-			अवरोध;
-		शेष:
-			जाओ error;
-		पूर्ण
-		अवरोध;
-	हाल SetPortFeature:
+			break;
+		default:
+			goto error;
+		}
+		break;
+	case SetPortFeature:
 		wIndex &= 0xff;
-		अगर (!wIndex || wIndex > ports)
-			जाओ error;
+		if (!wIndex || wIndex > ports)
+			goto error;
 		wIndex--;
-		temp = reg_पढ़ो32(hcd->regs, HC_PORTSC1);
-		अगर (temp & PORT_OWNER)
-			अवरोध;
+		temp = reg_read32(hcd->regs, HC_PORTSC1);
+		if (temp & PORT_OWNER)
+			break;
 
 /*		temp &= ~PORT_RWC_BITS; */
-		चयन (wValue) अणु
-		हाल USB_PORT_FEAT_ENABLE:
-			reg_ग_लिखो32(hcd->regs, HC_PORTSC1, temp | PORT_PE);
-			अवरोध;
+		switch (wValue) {
+		case USB_PORT_FEAT_ENABLE:
+			reg_write32(hcd->regs, HC_PORTSC1, temp | PORT_PE);
+			break;
 
-		हाल USB_PORT_FEAT_SUSPEND:
-			अगर ((temp & PORT_PE) == 0
+		case USB_PORT_FEAT_SUSPEND:
+			if ((temp & PORT_PE) == 0
 					|| (temp & PORT_RESET) != 0)
-				जाओ error;
+				goto error;
 
-			reg_ग_लिखो32(hcd->regs, HC_PORTSC1, temp | PORT_SUSPEND);
-			अवरोध;
-		हाल USB_PORT_FEAT_POWER:
-			अगर (HCS_PPC(priv->hcs_params))
-				reg_ग_लिखो32(hcd->regs, HC_PORTSC1,
+			reg_write32(hcd->regs, HC_PORTSC1, temp | PORT_SUSPEND);
+			break;
+		case USB_PORT_FEAT_POWER:
+			if (HCS_PPC(priv->hcs_params))
+				reg_write32(hcd->regs, HC_PORTSC1,
 							temp | PORT_POWER);
-			अवरोध;
-		हाल USB_PORT_FEAT_RESET:
-			अगर (temp & PORT_RESUME)
-				जाओ error;
+			break;
+		case USB_PORT_FEAT_RESET:
+			if (temp & PORT_RESUME)
+				goto error;
 			/* line status bits may report this as low speed,
-			 * which can be fine अगर this root hub has a
+			 * which can be fine if this root hub has a
 			 * transaction translator built in.
 			 */
-			अगर ((temp & (PORT_PE|PORT_CONNECT)) == PORT_CONNECT
-					&& PORT_USB11(temp)) अणु
+			if ((temp & (PORT_PE|PORT_CONNECT)) == PORT_CONNECT
+					&& PORT_USB11(temp)) {
 				temp |= PORT_OWNER;
-			पूर्ण अन्यथा अणु
+			} else {
 				temp |= PORT_RESET;
 				temp &= ~PORT_PE;
 
 				/*
-				 * caller must रुको, then call GetPortStatus
+				 * caller must wait, then call GetPortStatus
 				 * usb 2.0 spec says 50 ms resets on root
 				 */
-				priv->reset_करोne = jअगरfies +
-					msecs_to_jअगरfies(50);
-			पूर्ण
-			reg_ग_लिखो32(hcd->regs, HC_PORTSC1, temp);
-			अवरोध;
-		शेष:
-			जाओ error;
-		पूर्ण
-		reg_पढ़ो32(hcd->regs, HC_USBCMD);
-		अवरोध;
+				priv->reset_done = jiffies +
+					msecs_to_jiffies(50);
+			}
+			reg_write32(hcd->regs, HC_PORTSC1, temp);
+			break;
+		default:
+			goto error;
+		}
+		reg_read32(hcd->regs, HC_USBCMD);
+		break;
 
-	शेष:
+	default:
 error:
 		/* "stall" on error */
 		retval = -EPIPE;
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&priv->lock, flags);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल पूर्णांक isp1760_get_frame(काष्ठा usb_hcd *hcd)
-अणु
-	काष्ठा isp1760_hcd *priv = hcd_to_priv(hcd);
+static int isp1760_get_frame(struct usb_hcd *hcd)
+{
+	struct isp1760_hcd *priv = hcd_to_priv(hcd);
 	u32 fr;
 
-	fr = reg_पढ़ो32(hcd->regs, HC_FRINDEX);
-	वापस (fr >> 3) % priv->periodic_size;
-पूर्ण
+	fr = reg_read32(hcd->regs, HC_FRINDEX);
+	return (fr >> 3) % priv->periodic_size;
+}
 
-अटल व्योम isp1760_stop(काष्ठा usb_hcd *hcd)
-अणु
-	काष्ठा isp1760_hcd *priv = hcd_to_priv(hcd);
+static void isp1760_stop(struct usb_hcd *hcd)
+{
+	struct isp1760_hcd *priv = hcd_to_priv(hcd);
 	u32 temp;
 
-	del_समयr(&errata2_समयr);
+	del_timer(&errata2_timer);
 
 	isp1760_hub_control(hcd, ClearPortFeature, USB_PORT_FEAT_POWER,	1,
-			शून्य, 0);
+			NULL, 0);
 	msleep(20);
 
 	spin_lock_irq(&priv->lock);
 	ehci_reset(hcd);
 	/* Disable IRQ */
-	temp = reg_पढ़ो32(hcd->regs, HC_HW_MODE_CTRL);
-	reg_ग_लिखो32(hcd->regs, HC_HW_MODE_CTRL, temp &= ~HW_GLOBAL_INTR_EN);
+	temp = reg_read32(hcd->regs, HC_HW_MODE_CTRL);
+	reg_write32(hcd->regs, HC_HW_MODE_CTRL, temp &= ~HW_GLOBAL_INTR_EN);
 	spin_unlock_irq(&priv->lock);
 
-	reg_ग_लिखो32(hcd->regs, HC_CONFIGFLAG, 0);
-पूर्ण
+	reg_write32(hcd->regs, HC_CONFIGFLAG, 0);
+}
 
-अटल व्योम isp1760_shutकरोwn(काष्ठा usb_hcd *hcd)
-अणु
+static void isp1760_shutdown(struct usb_hcd *hcd)
+{
 	u32 command, temp;
 
 	isp1760_stop(hcd);
-	temp = reg_पढ़ो32(hcd->regs, HC_HW_MODE_CTRL);
-	reg_ग_लिखो32(hcd->regs, HC_HW_MODE_CTRL, temp &= ~HW_GLOBAL_INTR_EN);
+	temp = reg_read32(hcd->regs, HC_HW_MODE_CTRL);
+	reg_write32(hcd->regs, HC_HW_MODE_CTRL, temp &= ~HW_GLOBAL_INTR_EN);
 
-	command = reg_पढ़ो32(hcd->regs, HC_USBCMD);
+	command = reg_read32(hcd->regs, HC_USBCMD);
 	command &= ~CMD_RUN;
-	reg_ग_लिखो32(hcd->regs, HC_USBCMD, command);
-पूर्ण
+	reg_write32(hcd->regs, HC_USBCMD, command);
+}
 
-अटल व्योम isp1760_clear_tt_buffer_complete(काष्ठा usb_hcd *hcd,
-						काष्ठा usb_host_endpoपूर्णांक *ep)
-अणु
-	काष्ठा isp1760_hcd *priv = hcd_to_priv(hcd);
-	काष्ठा isp1760_qh *qh = ep->hcpriv;
-	अचिन्हित दीर्घ spinflags;
+static void isp1760_clear_tt_buffer_complete(struct usb_hcd *hcd,
+						struct usb_host_endpoint *ep)
+{
+	struct isp1760_hcd *priv = hcd_to_priv(hcd);
+	struct isp1760_qh *qh = ep->hcpriv;
+	unsigned long spinflags;
 
-	अगर (!qh)
-		वापस;
+	if (!qh)
+		return;
 
 	spin_lock_irqsave(&priv->lock, spinflags);
 	qh->tt_buffer_dirty = 0;
 	schedule_ptds(hcd);
 	spin_unlock_irqrestore(&priv->lock, spinflags);
-पूर्ण
+}
 
 
-अटल स्थिर काष्ठा hc_driver isp1760_hc_driver = अणु
+static const struct hc_driver isp1760_hc_driver = {
 	.description		= "isp1760-hcd",
 	.product_desc		= "NXP ISP1760 USB Host Controller",
-	.hcd_priv_size		= माप(काष्ठा isp1760_hcd *),
+	.hcd_priv_size		= sizeof(struct isp1760_hcd *),
 	.irq			= isp1760_irq,
 	.flags			= HCD_MEMORY | HCD_USB2,
 	.reset			= isp1760_hc_setup,
 	.start			= isp1760_run,
 	.stop			= isp1760_stop,
-	.shutकरोwn		= isp1760_shutकरोwn,
+	.shutdown		= isp1760_shutdown,
 	.urb_enqueue		= isp1760_urb_enqueue,
 	.urb_dequeue		= isp1760_urb_dequeue,
-	.endpoपूर्णांक_disable	= isp1760_endpoपूर्णांक_disable,
+	.endpoint_disable	= isp1760_endpoint_disable,
 	.get_frame_number	= isp1760_get_frame,
 	.hub_status_data	= isp1760_hub_status_data,
 	.hub_control		= isp1760_hub_control,
 	.clear_tt_buffer_complete	= isp1760_clear_tt_buffer_complete,
-पूर्ण;
+};
 
-पूर्णांक __init isp1760_init_kmem_once(व्योम)
-अणु
+int __init isp1760_init_kmem_once(void)
+{
 	urb_listitem_cachep = kmem_cache_create("isp1760_urb_listitem",
-			माप(काष्ठा urb_listitem), 0, SLAB_TEMPORARY |
-			SLAB_MEM_SPREAD, शून्य);
+			sizeof(struct urb_listitem), 0, SLAB_TEMPORARY |
+			SLAB_MEM_SPREAD, NULL);
 
-	अगर (!urb_listitem_cachep)
-		वापस -ENOMEM;
+	if (!urb_listitem_cachep)
+		return -ENOMEM;
 
 	qtd_cachep = kmem_cache_create("isp1760_qtd",
-			माप(काष्ठा isp1760_qtd), 0, SLAB_TEMPORARY |
-			SLAB_MEM_SPREAD, शून्य);
+			sizeof(struct isp1760_qtd), 0, SLAB_TEMPORARY |
+			SLAB_MEM_SPREAD, NULL);
 
-	अगर (!qtd_cachep)
-		वापस -ENOMEM;
+	if (!qtd_cachep)
+		return -ENOMEM;
 
-	qh_cachep = kmem_cache_create("isp1760_qh", माप(काष्ठा isp1760_qh),
-			0, SLAB_TEMPORARY | SLAB_MEM_SPREAD, शून्य);
+	qh_cachep = kmem_cache_create("isp1760_qh", sizeof(struct isp1760_qh),
+			0, SLAB_TEMPORARY | SLAB_MEM_SPREAD, NULL);
 
-	अगर (!qh_cachep) अणु
+	if (!qh_cachep) {
 		kmem_cache_destroy(qtd_cachep);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम isp1760_deinit_kmem_cache(व्योम)
-अणु
+void isp1760_deinit_kmem_cache(void)
+{
 	kmem_cache_destroy(qtd_cachep);
 	kmem_cache_destroy(qh_cachep);
 	kmem_cache_destroy(urb_listitem_cachep);
-पूर्ण
+}
 
-पूर्णांक isp1760_hcd_रेजिस्टर(काष्ठा isp1760_hcd *priv, व्योम __iomem *regs,
-			 काष्ठा resource *mem, पूर्णांक irq, अचिन्हित दीर्घ irqflags,
-			 काष्ठा device *dev)
-अणु
-	काष्ठा usb_hcd *hcd;
-	पूर्णांक ret;
+int isp1760_hcd_register(struct isp1760_hcd *priv, void __iomem *regs,
+			 struct resource *mem, int irq, unsigned long irqflags,
+			 struct device *dev)
+{
+	struct usb_hcd *hcd;
+	int ret;
 
 	hcd = usb_create_hcd(&isp1760_hc_driver, dev, dev_name(dev));
-	अगर (!hcd)
-		वापस -ENOMEM;
+	if (!hcd)
+		return -ENOMEM;
 
-	*(काष्ठा isp1760_hcd **)hcd->hcd_priv = priv;
+	*(struct isp1760_hcd **)hcd->hcd_priv = priv;
 
 	priv->hcd = hcd;
 
@@ -2205,27 +2204,27 @@ error:
 	hcd->rsrc_start = mem->start;
 	hcd->rsrc_len = resource_size(mem);
 
-	/* This driver करोesn't support wakeup requests */
+	/* This driver doesn't support wakeup requests */
 	hcd->cant_recv_wakeups = 1;
 
 	ret = usb_add_hcd(hcd, irq, irqflags);
-	अगर (ret)
-		जाओ error;
+	if (ret)
+		goto error;
 
 	device_wakeup_enable(hcd->self.controller);
 
-	वापस 0;
+	return 0;
 
 error:
 	usb_put_hcd(hcd);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम isp1760_hcd_unरेजिस्टर(काष्ठा isp1760_hcd *priv)
-अणु
-	अगर (!priv->hcd)
-		वापस;
+void isp1760_hcd_unregister(struct isp1760_hcd *priv)
+{
+	if (!priv->hcd)
+		return;
 
-	usb_हटाओ_hcd(priv->hcd);
+	usb_remove_hcd(priv->hcd);
 	usb_put_hcd(priv->hcd);
-पूर्ण
+}

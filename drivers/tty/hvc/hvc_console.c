@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * Copyright (C) 2001 Anton Blanअक्षरd <anton@au.ibm.com>, IBM
+ * Copyright (C) 2001 Anton Blanchard <anton@au.ibm.com>, IBM
  * Copyright (C) 2001 Paul Mackerras <paulus@au.ibm.com>, IBM
  * Copyright (C) 2004 Benjamin Herrenschmidt <benh@kernel.crashing.org>, IBM Corp.
  * Copyright (C) 2004 IBM Corporation
@@ -10,440 +9,440 @@
  *  Ryan S. Arnold <rsa@us.ibm.com>
  */
 
-#समावेश <linux/console.h>
-#समावेश <linux/cpumask.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kbd_kern.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/list.h>
-#समावेश <linux/major.h>
-#समावेश <linux/atomic.h>
-#समावेश <linux/sysrq.h>
-#समावेश <linux/tty.h>
-#समावेश <linux/tty_flip.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/मुक्तzer.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/serial_core.h>
+#include <linux/console.h>
+#include <linux/cpumask.h>
+#include <linux/init.h>
+#include <linux/kbd_kern.h>
+#include <linux/kernel.h>
+#include <linux/kthread.h>
+#include <linux/list.h>
+#include <linux/major.h>
+#include <linux/atomic.h>
+#include <linux/sysrq.h>
+#include <linux/tty.h>
+#include <linux/tty_flip.h>
+#include <linux/sched.h>
+#include <linux/spinlock.h>
+#include <linux/delay.h>
+#include <linux/freezer.h>
+#include <linux/slab.h>
+#include <linux/serial_core.h>
 
-#समावेश <linux/uaccess.h>
+#include <linux/uaccess.h>
 
-#समावेश "hvc_console.h"
+#include "hvc_console.h"
 
-#घोषणा HVC_MAJOR	229
-#घोषणा HVC_MINOR	0
+#define HVC_MAJOR	229
+#define HVC_MINOR	0
 
 /*
- * Wait this दीर्घ per iteration जबतक trying to push buffered data to the
- * hypervisor beक्रमe allowing the tty to complete a बंद operation.
+ * Wait this long per iteration while trying to push buffered data to the
+ * hypervisor before allowing the tty to complete a close operation.
  */
-#घोषणा HVC_CLOSE_WAIT (HZ/100) /* 1/10 of a second */
+#define HVC_CLOSE_WAIT (HZ/100) /* 1/10 of a second */
 
 /*
- * These sizes are most efficient क्रम vio, because they are the
+ * These sizes are most efficient for vio, because they are the
  * native transfer size. We could make them selectable in the
  * future to better deal with backends that want other buffer sizes.
  */
-#घोषणा N_OUTBUF	16
-#घोषणा N_INBUF		16
+#define N_OUTBUF	16
+#define N_INBUF		16
 
-#घोषणा __ALIGNED__ __attribute__((__aligned__(माप(दीर्घ))))
+#define __ALIGNED__ __attribute__((__aligned__(sizeof(long))))
 
-अटल काष्ठा tty_driver *hvc_driver;
-अटल काष्ठा task_काष्ठा *hvc_task;
+static struct tty_driver *hvc_driver;
+static struct task_struct *hvc_task;
 
-/* Picks up late kicks after list walk but beक्रमe schedule() */
-अटल पूर्णांक hvc_kicked;
+/* Picks up late kicks after list walk but before schedule() */
+static int hvc_kicked;
 
 /* hvc_init is triggered from hvc_alloc, i.e. only when actually used */
-अटल atomic_t hvc_needs_init __पढ़ो_mostly = ATOMIC_INIT(-1);
+static atomic_t hvc_needs_init __read_mostly = ATOMIC_INIT(-1);
 
-अटल पूर्णांक hvc_init(व्योम);
+static int hvc_init(void);
 
-#अगर_घोषित CONFIG_MAGIC_SYSRQ
-अटल पूर्णांक sysrq_pressed;
-#पूर्ण_अगर
+#ifdef CONFIG_MAGIC_SYSRQ
+static int sysrq_pressed;
+#endif
 
-/* dynamic list of hvc_काष्ठा instances */
-अटल LIST_HEAD(hvc_काष्ठाs);
+/* dynamic list of hvc_struct instances */
+static LIST_HEAD(hvc_structs);
 
 /*
- * Protect the list of hvc_काष्ठा instances from inserts and removals during
+ * Protect the list of hvc_struct instances from inserts and removals during
  * list traversal.
  */
-अटल DEFINE_MUTEX(hvc_काष्ठाs_mutex);
+static DEFINE_MUTEX(hvc_structs_mutex);
 
 /*
- * This value is used to assign a tty->index value to a hvc_काष्ठा based
+ * This value is used to assign a tty->index value to a hvc_struct based
  * upon order of exposure via hvc_probe(), when we can not match it to
- * a console candidate रेजिस्टरed with hvc_instantiate().
+ * a console candidate registered with hvc_instantiate().
  */
-अटल पूर्णांक last_hvc = -1;
+static int last_hvc = -1;
 
 /*
- * Do not call this function with either the hvc_काष्ठाs_mutex or the hvc_काष्ठा
+ * Do not call this function with either the hvc_structs_mutex or the hvc_struct
  * lock held.  If successful, this function increments the kref reference
- * count against the target hvc_काष्ठा so it should be released when finished.
+ * count against the target hvc_struct so it should be released when finished.
  */
-अटल काष्ठा hvc_काष्ठा *hvc_get_by_index(पूर्णांक index)
-अणु
-	काष्ठा hvc_काष्ठा *hp;
-	अचिन्हित दीर्घ flags;
+static struct hvc_struct *hvc_get_by_index(int index)
+{
+	struct hvc_struct *hp;
+	unsigned long flags;
 
-	mutex_lock(&hvc_काष्ठाs_mutex);
+	mutex_lock(&hvc_structs_mutex);
 
-	list_क्रम_each_entry(hp, &hvc_काष्ठाs, next) अणु
+	list_for_each_entry(hp, &hvc_structs, next) {
 		spin_lock_irqsave(&hp->lock, flags);
-		अगर (hp->index == index) अणु
+		if (hp->index == index) {
 			tty_port_get(&hp->port);
 			spin_unlock_irqrestore(&hp->lock, flags);
-			mutex_unlock(&hvc_काष्ठाs_mutex);
-			वापस hp;
-		पूर्ण
+			mutex_unlock(&hvc_structs_mutex);
+			return hp;
+		}
 		spin_unlock_irqrestore(&hp->lock, flags);
-	पूर्ण
-	hp = शून्य;
-	mutex_unlock(&hvc_काष्ठाs_mutex);
+	}
+	hp = NULL;
+	mutex_unlock(&hvc_structs_mutex);
 
-	वापस hp;
-पूर्ण
+	return hp;
+}
 
-अटल पूर्णांक __hvc_flush(स्थिर काष्ठा hv_ops *ops, uपूर्णांक32_t vtermno, bool रुको)
-अणु
-	अगर (रुको)
+static int __hvc_flush(const struct hv_ops *ops, uint32_t vtermno, bool wait)
+{
+	if (wait)
 		might_sleep();
 
-	अगर (ops->flush)
-		वापस ops->flush(vtermno, रुको);
-	वापस 0;
-पूर्ण
+	if (ops->flush)
+		return ops->flush(vtermno, wait);
+	return 0;
+}
 
-अटल पूर्णांक hvc_console_flush(स्थिर काष्ठा hv_ops *ops, uपूर्णांक32_t vtermno)
-अणु
-	वापस __hvc_flush(ops, vtermno, false);
-पूर्ण
+static int hvc_console_flush(const struct hv_ops *ops, uint32_t vtermno)
+{
+	return __hvc_flush(ops, vtermno, false);
+}
 
 /*
- * Wait क्रम the console to flush beक्रमe writing more to it. This sleeps.
+ * Wait for the console to flush before writing more to it. This sleeps.
  */
-अटल पूर्णांक hvc_flush(काष्ठा hvc_काष्ठा *hp)
-अणु
-	वापस __hvc_flush(hp->ops, hp->vtermno, true);
-पूर्ण
+static int hvc_flush(struct hvc_struct *hp)
+{
+	return __hvc_flush(hp->ops, hp->vtermno, true);
+}
 
 /*
- * Initial console vtermnos क्रम console API usage prior to full console
+ * Initial console vtermnos for console API usage prior to full console
  * initialization.  Any vty adapter outside this range will not have usable
- * console पूर्णांकerfaces but can still be used as a tty device.  This has to be
- * अटल because kदो_स्मृति will not work during early console init.
+ * console interfaces but can still be used as a tty device.  This has to be
+ * static because kmalloc will not work during early console init.
  */
-अटल स्थिर काष्ठा hv_ops *cons_ops[MAX_NR_HVC_CONSOLES];
-अटल uपूर्णांक32_t vtermnos[MAX_NR_HVC_CONSOLES] =
-	अणु[0 ... MAX_NR_HVC_CONSOLES - 1] = -1पूर्ण;
+static const struct hv_ops *cons_ops[MAX_NR_HVC_CONSOLES];
+static uint32_t vtermnos[MAX_NR_HVC_CONSOLES] =
+	{[0 ... MAX_NR_HVC_CONSOLES - 1] = -1};
 
 /*
  * Console APIs, NOT TTY.  These APIs are available immediately when
  * hvc_console_setup() finds adapters.
  */
 
-अटल व्योम hvc_console_prपूर्णांक(काष्ठा console *co, स्थिर अक्षर *b,
-			      अचिन्हित count)
-अणु
-	अक्षर c[N_OUTBUF] __ALIGNED__;
-	अचिन्हित i = 0, n = 0;
-	पूर्णांक r, करोnecr = 0, index = co->index;
+static void hvc_console_print(struct console *co, const char *b,
+			      unsigned count)
+{
+	char c[N_OUTBUF] __ALIGNED__;
+	unsigned i = 0, n = 0;
+	int r, donecr = 0, index = co->index;
 
 	/* Console access attempt outside of acceptable console range. */
-	अगर (index >= MAX_NR_HVC_CONSOLES)
-		वापस;
+	if (index >= MAX_NR_HVC_CONSOLES)
+		return;
 
-	/* This console adapter was हटाओd so it is not usable. */
-	अगर (vtermnos[index] == -1)
-		वापस;
+	/* This console adapter was removed so it is not usable. */
+	if (vtermnos[index] == -1)
+		return;
 
-	जबतक (count > 0 || i > 0) अणु
-		अगर (count > 0 && i < माप(c)) अणु
-			अगर (b[n] == '\n' && !करोnecr) अणु
+	while (count > 0 || i > 0) {
+		if (count > 0 && i < sizeof(c)) {
+			if (b[n] == '\n' && !donecr) {
 				c[i++] = '\r';
-				करोnecr = 1;
-			पूर्ण अन्यथा अणु
+				donecr = 1;
+			} else {
 				c[i++] = b[n++];
-				करोnecr = 0;
+				donecr = 0;
 				--count;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			r = cons_ops[index]->put_अक्षरs(vtermnos[index], c, i);
-			अगर (r <= 0) अणु
-				/* throw away अक्षरacters on error
-				 * but spin in हाल of -EAGAIN */
-				अगर (r != -EAGAIN) अणु
+			}
+		} else {
+			r = cons_ops[index]->put_chars(vtermnos[index], c, i);
+			if (r <= 0) {
+				/* throw away characters on error
+				 * but spin in case of -EAGAIN */
+				if (r != -EAGAIN) {
 					i = 0;
-				पूर्ण अन्यथा अणु
+				} else {
 					hvc_console_flush(cons_ops[index],
 						      vtermnos[index]);
-				पूर्ण
-			पूर्ण अन्यथा अगर (r > 0) अणु
+				}
+			} else if (r > 0) {
 				i -= r;
-				अगर (i > 0)
-					स_हटाओ(c, c+r, i);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				if (i > 0)
+					memmove(c, c+r, i);
+			}
+		}
+	}
 	hvc_console_flush(cons_ops[index], vtermnos[index]);
-पूर्ण
+}
 
-अटल काष्ठा tty_driver *hvc_console_device(काष्ठा console *c, पूर्णांक *index)
-अणु
-	अगर (vtermnos[c->index] == -1)
-		वापस शून्य;
+static struct tty_driver *hvc_console_device(struct console *c, int *index)
+{
+	if (vtermnos[c->index] == -1)
+		return NULL;
 
 	*index = c->index;
-	वापस hvc_driver;
-पूर्ण
+	return hvc_driver;
+}
 
-अटल पूर्णांक hvc_console_setup(काष्ठा console *co, अक्षर *options)
-अणु	
-	अगर (co->index < 0 || co->index >= MAX_NR_HVC_CONSOLES)
-		वापस -ENODEV;
+static int hvc_console_setup(struct console *co, char *options)
+{	
+	if (co->index < 0 || co->index >= MAX_NR_HVC_CONSOLES)
+		return -ENODEV;
 
-	अगर (vtermnos[co->index] == -1)
-		वापस -ENODEV;
+	if (vtermnos[co->index] == -1)
+		return -ENODEV;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा console hvc_console = अणु
+static struct console hvc_console = {
 	.name		= "hvc",
-	.ग_लिखो		= hvc_console_prपूर्णांक,
+	.write		= hvc_console_print,
 	.device		= hvc_console_device,
 	.setup		= hvc_console_setup,
 	.flags		= CON_PRINTBUFFER,
 	.index		= -1,
-पूर्ण;
+};
 
 /*
  * Early console initialization.  Precedes driver initialization.
  *
- * (1) we are first, and the user specअगरied another driver
- * -- index will reमुख्य -1
- * (2) we are first and the user specअगरied no driver
+ * (1) we are first, and the user specified another driver
+ * -- index will remain -1
+ * (2) we are first and the user specified no driver
  * -- index will be set to 0, then we will fail setup.
- * (3)  we are first and the user specअगरied our driver
- * -- index will be set to user specअगरied driver, and we will fail
- * (4) we are after driver, and this initcall will रेजिस्टर us
- * -- अगर the user didn't specअगरy a driver then the console will match
+ * (3)  we are first and the user specified our driver
+ * -- index will be set to user specified driver, and we will fail
+ * (4) we are after driver, and this initcall will register us
+ * -- if the user didn't specify a driver then the console will match
  *
- * Note that क्रम हालs 2 and 3, we will match later when the io driver
- * calls hvc_instantiate() and call रेजिस्टर again.
+ * Note that for cases 2 and 3, we will match later when the io driver
+ * calls hvc_instantiate() and call register again.
  */
-अटल पूर्णांक __init hvc_console_init(व्योम)
-अणु
-	रेजिस्टर_console(&hvc_console);
-	वापस 0;
-पूर्ण
+static int __init hvc_console_init(void)
+{
+	register_console(&hvc_console);
+	return 0;
+}
 console_initcall(hvc_console_init);
 
 /* callback when the kboject ref count reaches zero. */
-अटल व्योम hvc_port_deकाष्ठा(काष्ठा tty_port *port)
-अणु
-	काष्ठा hvc_काष्ठा *hp = container_of(port, काष्ठा hvc_काष्ठा, port);
-	अचिन्हित दीर्घ flags;
+static void hvc_port_destruct(struct tty_port *port)
+{
+	struct hvc_struct *hp = container_of(port, struct hvc_struct, port);
+	unsigned long flags;
 
-	mutex_lock(&hvc_काष्ठाs_mutex);
+	mutex_lock(&hvc_structs_mutex);
 
 	spin_lock_irqsave(&hp->lock, flags);
 	list_del(&(hp->next));
 	spin_unlock_irqrestore(&hp->lock, flags);
 
-	mutex_unlock(&hvc_काष्ठाs_mutex);
+	mutex_unlock(&hvc_structs_mutex);
 
-	kमुक्त(hp);
-पूर्ण
+	kfree(hp);
+}
 
-अटल व्योम hvc_check_console(पूर्णांक index)
-अणु
-	/* Alपढ़ोy enabled, bail out */
-	अगर (hvc_console.flags & CON_ENABLED)
-		वापस;
+static void hvc_check_console(int index)
+{
+	/* Already enabled, bail out */
+	if (hvc_console.flags & CON_ENABLED)
+		return;
 
- 	/* If this index is what the user requested, then रेजिस्टर
+ 	/* If this index is what the user requested, then register
 	 * now (setup won't fail at this point).  It's ok to just
-	 * call रेजिस्टर again अगर previously .setup failed.
+	 * call register again if previously .setup failed.
 	 */
-	अगर (index == hvc_console.index)
-		रेजिस्टर_console(&hvc_console);
-पूर्ण
+	if (index == hvc_console.index)
+		register_console(&hvc_console);
+}
 
 /*
  * hvc_instantiate() is an early console discovery method which locates
- * consoles * prior to the vio subप्रणाली discovering them.  Hotplugged
- * vty adapters करो NOT get an hvc_instantiate() callback since they
+ * consoles * prior to the vio subsystem discovering them.  Hotplugged
+ * vty adapters do NOT get an hvc_instantiate() callback since they
  * appear after early console init.
  */
-पूर्णांक hvc_instantiate(uपूर्णांक32_t vtermno, पूर्णांक index, स्थिर काष्ठा hv_ops *ops)
-अणु
-	काष्ठा hvc_काष्ठा *hp;
+int hvc_instantiate(uint32_t vtermno, int index, const struct hv_ops *ops)
+{
+	struct hvc_struct *hp;
 
-	अगर (index < 0 || index >= MAX_NR_HVC_CONSOLES)
-		वापस -1;
+	if (index < 0 || index >= MAX_NR_HVC_CONSOLES)
+		return -1;
 
-	अगर (vtermnos[index] != -1)
-		वापस -1;
+	if (vtermnos[index] != -1)
+		return -1;
 
-	/* make sure no no tty has been रेजिस्टरed in this index */
+	/* make sure no no tty has been registered in this index */
 	hp = hvc_get_by_index(index);
-	अगर (hp) अणु
+	if (hp) {
 		tty_port_put(&hp->port);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	vtermnos[index] = vtermno;
 	cons_ops[index] = ops;
 
-	/* check अगर we need to re-रेजिस्टर the kernel console */
+	/* check if we need to re-register the kernel console */
 	hvc_check_console(index);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(hvc_instantiate);
 
 /* Wake the sleeping khvcd */
-व्योम hvc_kick(व्योम)
-अणु
+void hvc_kick(void)
+{
 	hvc_kicked = 1;
 	wake_up_process(hvc_task);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(hvc_kick);
 
-अटल व्योम hvc_unthrottle(काष्ठा tty_काष्ठा *tty)
-अणु
+static void hvc_unthrottle(struct tty_struct *tty)
+{
 	hvc_kick();
-पूर्ण
+}
 
-अटल पूर्णांक hvc_install(काष्ठा tty_driver *driver, काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा hvc_काष्ठा *hp;
-	पूर्णांक rc;
+static int hvc_install(struct tty_driver *driver, struct tty_struct *tty)
+{
+	struct hvc_struct *hp;
+	int rc;
 
-	/* Auto increments kref reference अगर found. */
+	/* Auto increments kref reference if found. */
 	hp = hvc_get_by_index(tty->index);
-	अगर (!hp)
-		वापस -ENODEV;
+	if (!hp)
+		return -ENODEV;
 
 	tty->driver_data = hp;
 
 	rc = tty_port_install(&hp->port, driver, tty);
-	अगर (rc)
+	if (rc)
 		tty_port_put(&hp->port);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
- * The TTY पूर्णांकerface won't be used until after the vio layer has exposed the vty
+ * The TTY interface won't be used until after the vio layer has exposed the vty
  * adapter to the kernel.
  */
-अटल पूर्णांक hvc_खोलो(काष्ठा tty_काष्ठा *tty, काष्ठा file * filp)
-अणु
-	काष्ठा hvc_काष्ठा *hp = tty->driver_data;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक rc = 0;
+static int hvc_open(struct tty_struct *tty, struct file * filp)
+{
+	struct hvc_struct *hp = tty->driver_data;
+	unsigned long flags;
+	int rc = 0;
 
 	spin_lock_irqsave(&hp->port.lock, flags);
-	/* Check and then increment क्रम fast path खोलो. */
-	अगर (hp->port.count++ > 0) अणु
+	/* Check and then increment for fast path open. */
+	if (hp->port.count++ > 0) {
 		spin_unlock_irqrestore(&hp->port.lock, flags);
 		hvc_kick();
-		वापस 0;
-	पूर्ण /* अन्यथा count == 0 */
+		return 0;
+	} /* else count == 0 */
 	spin_unlock_irqrestore(&hp->port.lock, flags);
 
 	tty_port_tty_set(&hp->port, tty);
 
-	अगर (hp->ops->notअगरier_add)
-		rc = hp->ops->notअगरier_add(hp, hp->data);
+	if (hp->ops->notifier_add)
+		rc = hp->ops->notifier_add(hp, hp->data);
 
 	/*
-	 * If the notअगरier fails we वापस an error.  The tty layer
-	 * will call hvc_बंद() after a failed खोलो but we करोn't want to clean
+	 * If the notifier fails we return an error.  The tty layer
+	 * will call hvc_close() after a failed open but we don't want to clean
 	 * up there so we'll clean up here and clear out the previously set
-	 * tty fields and वापस the kref reference.
+	 * tty fields and return the kref reference.
 	 */
-	अगर (rc) अणु
-		prपूर्णांकk(KERN_ERR "hvc_open: request_irq failed with rc %d.\n", rc);
-	पूर्ण अन्यथा अणु
-		/* We are पढ़ोy... उठाओ DTR/RTS */
-		अगर (C_BAUD(tty))
-			अगर (hp->ops->dtr_rts)
+	if (rc) {
+		printk(KERN_ERR "hvc_open: request_irq failed with rc %d.\n", rc);
+	} else {
+		/* We are ready... raise DTR/RTS */
+		if (C_BAUD(tty))
+			if (hp->ops->dtr_rts)
 				hp->ops->dtr_rts(hp, 1);
 		tty_port_set_initialized(&hp->port, true);
-	पूर्ण
+	}
 
-	/* Force wakeup of the polling thपढ़ो */
+	/* Force wakeup of the polling thread */
 	hvc_kick();
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम hvc_बंद(काष्ठा tty_काष्ठा *tty, काष्ठा file * filp)
-अणु
-	काष्ठा hvc_काष्ठा *hp = tty->driver_data;
-	अचिन्हित दीर्घ flags;
+static void hvc_close(struct tty_struct *tty, struct file * filp)
+{
+	struct hvc_struct *hp = tty->driver_data;
+	unsigned long flags;
 
-	अगर (tty_hung_up_p(filp))
-		वापस;
+	if (tty_hung_up_p(filp))
+		return;
 
 	spin_lock_irqsave(&hp->port.lock, flags);
 
-	अगर (--hp->port.count == 0) अणु
+	if (--hp->port.count == 0) {
 		spin_unlock_irqrestore(&hp->port.lock, flags);
-		/* We are करोne with the tty poपूर्णांकer now. */
-		tty_port_tty_set(&hp->port, शून्य);
+		/* We are done with the tty pointer now. */
+		tty_port_tty_set(&hp->port, NULL);
 
-		अगर (!tty_port_initialized(&hp->port))
-			वापस;
+		if (!tty_port_initialized(&hp->port))
+			return;
 
-		अगर (C_HUPCL(tty))
-			अगर (hp->ops->dtr_rts)
+		if (C_HUPCL(tty))
+			if (hp->ops->dtr_rts)
 				hp->ops->dtr_rts(hp, 0);
 
-		अगर (hp->ops->notअगरier_del)
-			hp->ops->notअगरier_del(hp, hp->data);
+		if (hp->ops->notifier_del)
+			hp->ops->notifier_del(hp, hp->data);
 
 		/* cancel pending tty resize work */
 		cancel_work_sync(&hp->tty_resize);
 
 		/*
-		 * Chain calls अक्षरs_in_buffer() and वापसs immediately अगर
-		 * there is no buffered data otherwise sleeps on a रुको queue
-		 * waking periodically to check अक्षरs_in_buffer().
+		 * Chain calls chars_in_buffer() and returns immediately if
+		 * there is no buffered data otherwise sleeps on a wait queue
+		 * waking periodically to check chars_in_buffer().
 		 */
-		tty_रुको_until_sent(tty, HVC_CLOSE_WAIT);
+		tty_wait_until_sent(tty, HVC_CLOSE_WAIT);
 		tty_port_set_initialized(&hp->port, false);
-	पूर्ण अन्यथा अणु
-		अगर (hp->port.count < 0)
-			prपूर्णांकk(KERN_ERR "hvc_close %X: oops, count is %d\n",
+	} else {
+		if (hp->port.count < 0)
+			printk(KERN_ERR "hvc_close %X: oops, count is %d\n",
 				hp->vtermno, hp->port.count);
 		spin_unlock_irqrestore(&hp->port.lock, flags);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम hvc_cleanup(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा hvc_काष्ठा *hp = tty->driver_data;
+static void hvc_cleanup(struct tty_struct *tty)
+{
+	struct hvc_struct *hp = tty->driver_data;
 
 	tty_port_put(&hp->port);
-पूर्ण
+}
 
-अटल व्योम hvc_hangup(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा hvc_काष्ठा *hp = tty->driver_data;
-	अचिन्हित दीर्घ flags;
+static void hvc_hangup(struct tty_struct *tty)
+{
+	struct hvc_struct *hp = tty->driver_data;
+	unsigned long flags;
 
-	अगर (!hp)
-		वापस;
+	if (!hp)
+		return;
 
 	/* cancel pending tty resize work */
 	cancel_work_sync(&hp->tty_resize);
@@ -451,547 +450,547 @@ EXPORT_SYMBOL_GPL(hvc_kick);
 	spin_lock_irqsave(&hp->port.lock, flags);
 
 	/*
-	 * The N_TTY line discipline has problems such that in a बंद vs
-	 * खोलो->hangup हाल this can be called after the final बंद so prevent
-	 * that from happening क्रम now.
+	 * The N_TTY line discipline has problems such that in a close vs
+	 * open->hangup case this can be called after the final close so prevent
+	 * that from happening for now.
 	 */
-	अगर (hp->port.count <= 0) अणु
+	if (hp->port.count <= 0) {
 		spin_unlock_irqrestore(&hp->port.lock, flags);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	hp->port.count = 0;
 	spin_unlock_irqrestore(&hp->port.lock, flags);
-	tty_port_tty_set(&hp->port, शून्य);
+	tty_port_tty_set(&hp->port, NULL);
 
 	hp->n_outbuf = 0;
 
-	अगर (hp->ops->notअगरier_hangup)
-		hp->ops->notअगरier_hangup(hp, hp->data);
-पूर्ण
+	if (hp->ops->notifier_hangup)
+		hp->ops->notifier_hangup(hp, hp->data);
+}
 
 /*
- * Push buffered अक्षरacters whether they were just recently buffered or रुकोing
+ * Push buffered characters whether they were just recently buffered or waiting
  * on a blocked hypervisor.  Call this function with hp->lock held.
  */
-अटल पूर्णांक hvc_push(काष्ठा hvc_काष्ठा *hp)
-अणु
-	पूर्णांक n;
+static int hvc_push(struct hvc_struct *hp)
+{
+	int n;
 
-	n = hp->ops->put_अक्षरs(hp->vtermno, hp->outbuf, hp->n_outbuf);
-	अगर (n <= 0) अणु
-		अगर (n == 0 || n == -EAGAIN) अणु
-			hp->करो_wakeup = 1;
-			वापस 0;
-		पूर्ण
+	n = hp->ops->put_chars(hp->vtermno, hp->outbuf, hp->n_outbuf);
+	if (n <= 0) {
+		if (n == 0 || n == -EAGAIN) {
+			hp->do_wakeup = 1;
+			return 0;
+		}
 		/* throw away output on error; this happens when
 		   there is no session connected to the vterm. */
 		hp->n_outbuf = 0;
-	पूर्ण अन्यथा
+	} else
 		hp->n_outbuf -= n;
-	अगर (hp->n_outbuf > 0)
-		स_हटाओ(hp->outbuf, hp->outbuf + n, hp->n_outbuf);
-	अन्यथा
-		hp->करो_wakeup = 1;
+	if (hp->n_outbuf > 0)
+		memmove(hp->outbuf, hp->outbuf + n, hp->n_outbuf);
+	else
+		hp->do_wakeup = 1;
 
-	वापस n;
-पूर्ण
+	return n;
+}
 
-अटल पूर्णांक hvc_ग_लिखो(काष्ठा tty_काष्ठा *tty, स्थिर अचिन्हित अक्षर *buf, पूर्णांक count)
-अणु
-	काष्ठा hvc_काष्ठा *hp = tty->driver_data;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक rsize, written = 0;
+static int hvc_write(struct tty_struct *tty, const unsigned char *buf, int count)
+{
+	struct hvc_struct *hp = tty->driver_data;
+	unsigned long flags;
+	int rsize, written = 0;
 
-	/* This ग_लिखो was probably executed during a tty बंद. */
-	अगर (!hp)
-		वापस -EPIPE;
+	/* This write was probably executed during a tty close. */
+	if (!hp)
+		return -EPIPE;
 
-	/* FIXME what's this (unरक्षित) check क्रम? */
-	अगर (hp->port.count <= 0)
-		वापस -EIO;
+	/* FIXME what's this (unprotected) check for? */
+	if (hp->port.count <= 0)
+		return -EIO;
 
-	जबतक (count > 0) अणु
-		पूर्णांक ret = 0;
+	while (count > 0) {
+		int ret = 0;
 
 		spin_lock_irqsave(&hp->lock, flags);
 
 		rsize = hp->outbuf_size - hp->n_outbuf;
 
-		अगर (rsize) अणु
-			अगर (rsize > count)
+		if (rsize) {
+			if (rsize > count)
 				rsize = count;
-			स_नकल(hp->outbuf + hp->n_outbuf, buf, rsize);
+			memcpy(hp->outbuf + hp->n_outbuf, buf, rsize);
 			count -= rsize;
 			buf += rsize;
 			hp->n_outbuf += rsize;
 			written += rsize;
-		पूर्ण
+		}
 
-		अगर (hp->n_outbuf > 0)
+		if (hp->n_outbuf > 0)
 			ret = hvc_push(hp);
 
 		spin_unlock_irqrestore(&hp->lock, flags);
 
-		अगर (!ret)
-			अवरोध;
+		if (!ret)
+			break;
 
-		अगर (count) अणु
-			अगर (hp->n_outbuf > 0)
+		if (count) {
+			if (hp->n_outbuf > 0)
 				hvc_flush(hp);
 			cond_resched();
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/*
-	 * Racy, but harmless, kick thपढ़ो अगर there is still pending data.
+	 * Racy, but harmless, kick thread if there is still pending data.
 	 */
-	अगर (hp->n_outbuf)
+	if (hp->n_outbuf)
 		hvc_kick();
 
-	वापस written;
-पूर्ण
+	return written;
+}
 
 /**
- * hvc_set_winsz() - Resize the hvc tty terminal winकरोw.
- * @work:	work काष्ठाure.
+ * hvc_set_winsz() - Resize the hvc tty terminal window.
+ * @work:	work structure.
  *
  * The routine shall not be called within an atomic context because it
  * might sleep.
  *
  * Locking:	hp->lock
  */
-अटल व्योम hvc_set_winsz(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा hvc_काष्ठा *hp;
-	अचिन्हित दीर्घ hvc_flags;
-	काष्ठा tty_काष्ठा *tty;
-	काष्ठा winsize ws;
+static void hvc_set_winsz(struct work_struct *work)
+{
+	struct hvc_struct *hp;
+	unsigned long hvc_flags;
+	struct tty_struct *tty;
+	struct winsize ws;
 
-	hp = container_of(work, काष्ठा hvc_काष्ठा, tty_resize);
+	hp = container_of(work, struct hvc_struct, tty_resize);
 
 	tty = tty_port_tty_get(&hp->port);
-	अगर (!tty)
-		वापस;
+	if (!tty)
+		return;
 
 	spin_lock_irqsave(&hp->lock, hvc_flags);
 	ws = hp->ws;
 	spin_unlock_irqrestore(&hp->lock, hvc_flags);
 
-	tty_करो_resize(tty, &ws);
+	tty_do_resize(tty, &ws);
 	tty_kref_put(tty);
-पूर्ण
+}
 
 /*
  * This is actually a contract between the driver and the tty layer outlining
- * how much ग_लिखो room the driver can guarantee will be sent OR BUFFERED.  This
- * driver MUST honor the वापस value.
+ * how much write room the driver can guarantee will be sent OR BUFFERED.  This
+ * driver MUST honor the return value.
  */
-अटल पूर्णांक hvc_ग_लिखो_room(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा hvc_काष्ठा *hp = tty->driver_data;
+static int hvc_write_room(struct tty_struct *tty)
+{
+	struct hvc_struct *hp = tty->driver_data;
 
-	अगर (!hp)
-		वापस 0;
+	if (!hp)
+		return 0;
 
-	वापस hp->outbuf_size - hp->n_outbuf;
-पूर्ण
+	return hp->outbuf_size - hp->n_outbuf;
+}
 
-अटल पूर्णांक hvc_अक्षरs_in_buffer(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा hvc_काष्ठा *hp = tty->driver_data;
+static int hvc_chars_in_buffer(struct tty_struct *tty)
+{
+	struct hvc_struct *hp = tty->driver_data;
 
-	अगर (!hp)
-		वापस 0;
-	वापस hp->n_outbuf;
-पूर्ण
+	if (!hp)
+		return 0;
+	return hp->n_outbuf;
+}
 
 /*
- * समयout will vary between the MIN and MAX values defined here.  By शेष
- * and during console activity we will use a शेष MIN_TIMEOUT of 10.  When
- * the console is idle, we increase the समयout value on each pass through
+ * timeout will vary between the MIN and MAX values defined here.  By default
+ * and during console activity we will use a default MIN_TIMEOUT of 10.  When
+ * the console is idle, we increase the timeout value on each pass through
  * msleep until we reach the max.  This may be noticeable as a brief (average
- * one second) delay on the console beक्रमe the console responds to input when
- * there has been no input क्रम some समय.
+ * one second) delay on the console before the console responds to input when
+ * there has been no input for some time.
  */
-#घोषणा MIN_TIMEOUT		(10)
-#घोषणा MAX_TIMEOUT		(2000)
-अटल u32 समयout = MIN_TIMEOUT;
+#define MIN_TIMEOUT		(10)
+#define MAX_TIMEOUT		(2000)
+static u32 timeout = MIN_TIMEOUT;
 
 /*
- * Maximum number of bytes to get from the console driver अगर hvc_poll is
- * called from driver (and can't sleep). Any more than this and we अवरोध
+ * Maximum number of bytes to get from the console driver if hvc_poll is
+ * called from driver (and can't sleep). Any more than this and we break
  * and start polling with khvcd. This value was derived from from an OpenBMC
- * console with the OPAL driver that results in about 0.25ms पूर्णांकerrupts off
+ * console with the OPAL driver that results in about 0.25ms interrupts off
  * latency.
  */
-#घोषणा HVC_ATOMIC_READ_MAX	128
+#define HVC_ATOMIC_READ_MAX	128
 
-#घोषणा HVC_POLL_READ	0x00000001
-#घोषणा HVC_POLL_WRITE	0x00000002
+#define HVC_POLL_READ	0x00000001
+#define HVC_POLL_WRITE	0x00000002
 
-अटल पूर्णांक __hvc_poll(काष्ठा hvc_काष्ठा *hp, bool may_sleep)
-अणु
-	काष्ठा tty_काष्ठा *tty;
-	पूर्णांक i, n, count, poll_mask = 0;
-	अक्षर buf[N_INBUF] __ALIGNED__;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक पढ़ो_total = 0;
-	पूर्णांक written_total = 0;
+static int __hvc_poll(struct hvc_struct *hp, bool may_sleep)
+{
+	struct tty_struct *tty;
+	int i, n, count, poll_mask = 0;
+	char buf[N_INBUF] __ALIGNED__;
+	unsigned long flags;
+	int read_total = 0;
+	int written_total = 0;
 
 	spin_lock_irqsave(&hp->lock, flags);
 
-	/* Push pending ग_लिखोs */
-	अगर (hp->n_outbuf > 0)
+	/* Push pending writes */
+	if (hp->n_outbuf > 0)
 		written_total = hvc_push(hp);
 
-	/* Reschedule us अगर still some ग_लिखो pending */
-	अगर (hp->n_outbuf > 0) अणु
+	/* Reschedule us if still some write pending */
+	if (hp->n_outbuf > 0) {
 		poll_mask |= HVC_POLL_WRITE;
-		/* If hvc_push() was not able to ग_लिखो, sleep a few msecs */
-		समयout = (written_total) ? 0 : MIN_TIMEOUT;
-	पूर्ण
+		/* If hvc_push() was not able to write, sleep a few msecs */
+		timeout = (written_total) ? 0 : MIN_TIMEOUT;
+	}
 
-	अगर (may_sleep) अणु
+	if (may_sleep) {
 		spin_unlock_irqrestore(&hp->lock, flags);
 		cond_resched();
 		spin_lock_irqsave(&hp->lock, flags);
-	पूर्ण
+	}
 
 	/* No tty attached, just skip */
 	tty = tty_port_tty_get(&hp->port);
-	अगर (tty == शून्य)
-		जाओ bail;
+	if (tty == NULL)
+		goto bail;
 
-	/* Now check अगर we can get data (are we throttled ?) */
-	अगर (tty_throttled(tty))
-		जाओ out;
+	/* Now check if we can get data (are we throttled ?) */
+	if (tty_throttled(tty))
+		goto out;
 
 	/* If we aren't notifier driven and aren't throttled, we always
 	 * request a reschedule
 	 */
-	अगर (!hp->irq_requested)
+	if (!hp->irq_requested)
 		poll_mask |= HVC_POLL_READ;
 
- पढ़ो_again:
-	/* Read data अगर any */
+ read_again:
+	/* Read data if any */
 	count = tty_buffer_request_room(&hp->port, N_INBUF);
 
-	/* If flip is full, just reschedule a later पढ़ो */
-	अगर (count == 0) अणु
+	/* If flip is full, just reschedule a later read */
+	if (count == 0) {
 		poll_mask |= HVC_POLL_READ;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	n = hp->ops->get_अक्षरs(hp->vtermno, buf, count);
-	अगर (n <= 0) अणु
+	n = hp->ops->get_chars(hp->vtermno, buf, count);
+	if (n <= 0) {
 		/* Hangup the tty when disconnected from host */
-		अगर (n == -EPIPE) अणु
+		if (n == -EPIPE) {
 			spin_unlock_irqrestore(&hp->lock, flags);
 			tty_hangup(tty);
 			spin_lock_irqsave(&hp->lock, flags);
-		पूर्ण अन्यथा अगर ( n == -EAGAIN ) अणु
+		} else if ( n == -EAGAIN ) {
 			/*
 			 * Some back-ends can only ensure a certain min
-			 * num of bytes पढ़ो, which may be > 'count'.
+			 * num of bytes read, which may be > 'count'.
 			 * Let the tty clear the flip buff to make room.
 			 */
 			poll_mask |= HVC_POLL_READ;
-		पूर्ण
-		जाओ out;
-	पूर्ण
+		}
+		goto out;
+	}
 
-	क्रम (i = 0; i < n; ++i) अणु
-#अगर_घोषित CONFIG_MAGIC_SYSRQ
-		अगर (hp->index == hvc_console.index) अणु
+	for (i = 0; i < n; ++i) {
+#ifdef CONFIG_MAGIC_SYSRQ
+		if (hp->index == hvc_console.index) {
 			/* Handle the SysRq Hack */
 			/* XXX should support a sequence */
-			अगर (buf[i] == '\x0f') अणु	/* ^O */
-				/* अगर ^O is pressed again, reset
-				 * sysrq_pressed and flip ^O अक्षर */
+			if (buf[i] == '\x0f') {	/* ^O */
+				/* if ^O is pressed again, reset
+				 * sysrq_pressed and flip ^O char */
 				sysrq_pressed = !sysrq_pressed;
-				अगर (sysrq_pressed)
-					जारी;
-			पूर्ण अन्यथा अगर (sysrq_pressed) अणु
+				if (sysrq_pressed)
+					continue;
+			} else if (sysrq_pressed) {
 				handle_sysrq(buf[i]);
 				sysrq_pressed = 0;
-				जारी;
-			पूर्ण
-		पूर्ण
-#पूर्ण_अगर /* CONFIG_MAGIC_SYSRQ */
-		tty_insert_flip_अक्षर(&hp->port, buf[i], 0);
-	पूर्ण
-	पढ़ो_total += n;
+				continue;
+			}
+		}
+#endif /* CONFIG_MAGIC_SYSRQ */
+		tty_insert_flip_char(&hp->port, buf[i], 0);
+	}
+	read_total += n;
 
-	अगर (may_sleep) अणु
+	if (may_sleep) {
 		/* Keep going until the flip is full */
 		spin_unlock_irqrestore(&hp->lock, flags);
 		cond_resched();
 		spin_lock_irqsave(&hp->lock, flags);
-		जाओ पढ़ो_again;
-	पूर्ण अन्यथा अगर (पढ़ो_total < HVC_ATOMIC_READ_MAX) अणु
-		/* Break and defer अगर it's a large पढ़ो in atomic */
-		जाओ पढ़ो_again;
-	पूर्ण
+		goto read_again;
+	} else if (read_total < HVC_ATOMIC_READ_MAX) {
+		/* Break and defer if it's a large read in atomic */
+		goto read_again;
+	}
 
 	/*
-	 * Latency अवरोध, schedule another poll immediately.
+	 * Latency break, schedule another poll immediately.
 	 */
 	poll_mask |= HVC_POLL_READ;
 
  out:
-	/* Wakeup ग_लिखो queue अगर necessary */
-	अगर (hp->करो_wakeup) अणु
-		hp->करो_wakeup = 0;
+	/* Wakeup write queue if necessary */
+	if (hp->do_wakeup) {
+		hp->do_wakeup = 0;
 		tty_wakeup(tty);
-	पूर्ण
+	}
  bail:
 	spin_unlock_irqrestore(&hp->lock, flags);
 
-	अगर (पढ़ो_total) अणु
+	if (read_total) {
 		/* Activity is occurring, so reset the polling backoff value to
-		   a minimum क्रम perक्रमmance. */
-		समयout = MIN_TIMEOUT;
+		   a minimum for performance. */
+		timeout = MIN_TIMEOUT;
 
 		tty_flip_buffer_push(&hp->port);
-	पूर्ण
+	}
 	tty_kref_put(tty);
 
-	वापस poll_mask;
-पूर्ण
+	return poll_mask;
+}
 
-पूर्णांक hvc_poll(काष्ठा hvc_काष्ठा *hp)
-अणु
-	वापस __hvc_poll(hp, false);
-पूर्ण
+int hvc_poll(struct hvc_struct *hp)
+{
+	return __hvc_poll(hp, false);
+}
 EXPORT_SYMBOL_GPL(hvc_poll);
 
 /**
- * __hvc_resize() - Update terminal winकरोw size inक्रमmation.
- * @hp:		HVC console poपूर्णांकer
- * @ws:		Terminal winकरोw size काष्ठाure
+ * __hvc_resize() - Update terminal window size information.
+ * @hp:		HVC console pointer
+ * @ws:		Terminal window size structure
  *
- * Stores the specअगरied winकरोw size inक्रमmation in the hvc काष्ठाure of @hp.
+ * Stores the specified window size information in the hvc structure of @hp.
  * The function schedule the tty resize update.
  *
- * Locking:	Locking मुक्त; the function MUST be called holding hp->lock
+ * Locking:	Locking free; the function MUST be called holding hp->lock
  */
-व्योम __hvc_resize(काष्ठा hvc_काष्ठा *hp, काष्ठा winsize ws)
-अणु
+void __hvc_resize(struct hvc_struct *hp, struct winsize ws)
+{
 	hp->ws = ws;
 	schedule_work(&hp->tty_resize);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(__hvc_resize);
 
 /*
- * This kthपढ़ो is either polling or पूर्णांकerrupt driven.  This is determined by
+ * This kthread is either polling or interrupt driven.  This is determined by
  * calling hvc_poll() who determines whether a console adapter support
- * पूर्णांकerrupts.
+ * interrupts.
  */
-अटल पूर्णांक khvcd(व्योम *unused)
-अणु
-	पूर्णांक poll_mask;
-	काष्ठा hvc_काष्ठा *hp;
+static int khvcd(void *unused)
+{
+	int poll_mask;
+	struct hvc_struct *hp;
 
-	set_मुक्तzable();
-	करो अणु
+	set_freezable();
+	do {
 		poll_mask = 0;
 		hvc_kicked = 0;
-		try_to_मुक्तze();
+		try_to_freeze();
 		wmb();
-		अगर (!cpus_are_in_xmon()) अणु
-			mutex_lock(&hvc_काष्ठाs_mutex);
-			list_क्रम_each_entry(hp, &hvc_काष्ठाs, next) अणु
+		if (!cpus_are_in_xmon()) {
+			mutex_lock(&hvc_structs_mutex);
+			list_for_each_entry(hp, &hvc_structs, next) {
 				poll_mask |= __hvc_poll(hp, true);
 				cond_resched();
-			पूर्ण
-			mutex_unlock(&hvc_काष्ठाs_mutex);
-		पूर्ण अन्यथा
+			}
+			mutex_unlock(&hvc_structs_mutex);
+		} else
 			poll_mask |= HVC_POLL_READ;
-		अगर (hvc_kicked)
-			जारी;
+		if (hvc_kicked)
+			continue;
 		set_current_state(TASK_INTERRUPTIBLE);
-		अगर (!hvc_kicked) अणु
-			अगर (poll_mask == 0)
+		if (!hvc_kicked) {
+			if (poll_mask == 0)
 				schedule();
-			अन्यथा अणु
-				अचिन्हित दीर्घ j_समयout;
+			else {
+				unsigned long j_timeout;
 
-				अगर (समयout < MAX_TIMEOUT)
-					समयout += (समयout >> 6) + 1;
+				if (timeout < MAX_TIMEOUT)
+					timeout += (timeout >> 6) + 1;
 
 				/*
-				 * We करोn't use msleep_पूर्णांकerruptible otherwise
+				 * We don't use msleep_interruptible otherwise
 				 * "kick" will fail to wake us up
 				 */
-				j_समयout = msecs_to_jअगरfies(समयout) + 1;
-				schedule_समयout_पूर्णांकerruptible(j_समयout);
-			पूर्ण
-		पूर्ण
+				j_timeout = msecs_to_jiffies(timeout) + 1;
+				schedule_timeout_interruptible(j_timeout);
+			}
+		}
 		__set_current_state(TASK_RUNNING);
-	पूर्ण जबतक (!kthपढ़ो_should_stop());
+	} while (!kthread_should_stop());
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hvc_tiocmget(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा hvc_काष्ठा *hp = tty->driver_data;
+static int hvc_tiocmget(struct tty_struct *tty)
+{
+	struct hvc_struct *hp = tty->driver_data;
 
-	अगर (!hp || !hp->ops->tiocmget)
-		वापस -EINVAL;
-	वापस hp->ops->tiocmget(hp);
-पूर्ण
+	if (!hp || !hp->ops->tiocmget)
+		return -EINVAL;
+	return hp->ops->tiocmget(hp);
+}
 
-अटल पूर्णांक hvc_tiocmset(काष्ठा tty_काष्ठा *tty,
-			अचिन्हित पूर्णांक set, अचिन्हित पूर्णांक clear)
-अणु
-	काष्ठा hvc_काष्ठा *hp = tty->driver_data;
+static int hvc_tiocmset(struct tty_struct *tty,
+			unsigned int set, unsigned int clear)
+{
+	struct hvc_struct *hp = tty->driver_data;
 
-	अगर (!hp || !hp->ops->tiocmset)
-		वापस -EINVAL;
-	वापस hp->ops->tiocmset(hp, set, clear);
-पूर्ण
+	if (!hp || !hp->ops->tiocmset)
+		return -EINVAL;
+	return hp->ops->tiocmset(hp, set, clear);
+}
 
-#अगर_घोषित CONFIG_CONSOLE_POLL
-अटल पूर्णांक hvc_poll_init(काष्ठा tty_driver *driver, पूर्णांक line, अक्षर *options)
-अणु
-	वापस 0;
-पूर्ण
+#ifdef CONFIG_CONSOLE_POLL
+static int hvc_poll_init(struct tty_driver *driver, int line, char *options)
+{
+	return 0;
+}
 
-अटल पूर्णांक hvc_poll_get_अक्षर(काष्ठा tty_driver *driver, पूर्णांक line)
-अणु
-	काष्ठा tty_काष्ठा *tty = driver->ttys[0];
-	काष्ठा hvc_काष्ठा *hp = tty->driver_data;
-	पूर्णांक n;
-	अक्षर ch;
+static int hvc_poll_get_char(struct tty_driver *driver, int line)
+{
+	struct tty_struct *tty = driver->ttys[0];
+	struct hvc_struct *hp = tty->driver_data;
+	int n;
+	char ch;
 
-	n = hp->ops->get_अक्षरs(hp->vtermno, &ch, 1);
+	n = hp->ops->get_chars(hp->vtermno, &ch, 1);
 
-	अगर (n <= 0)
-		वापस NO_POLL_CHAR;
+	if (n <= 0)
+		return NO_POLL_CHAR;
 
-	वापस ch;
-पूर्ण
+	return ch;
+}
 
-अटल व्योम hvc_poll_put_अक्षर(काष्ठा tty_driver *driver, पूर्णांक line, अक्षर ch)
-अणु
-	काष्ठा tty_काष्ठा *tty = driver->ttys[0];
-	काष्ठा hvc_काष्ठा *hp = tty->driver_data;
-	पूर्णांक n;
+static void hvc_poll_put_char(struct tty_driver *driver, int line, char ch)
+{
+	struct tty_struct *tty = driver->ttys[0];
+	struct hvc_struct *hp = tty->driver_data;
+	int n;
 
-	करो अणु
-		n = hp->ops->put_अक्षरs(hp->vtermno, &ch, 1);
-	पूर्ण जबतक (n <= 0);
-पूर्ण
-#पूर्ण_अगर
+	do {
+		n = hp->ops->put_chars(hp->vtermno, &ch, 1);
+	} while (n <= 0);
+}
+#endif
 
-अटल स्थिर काष्ठा tty_operations hvc_ops = अणु
+static const struct tty_operations hvc_ops = {
 	.install = hvc_install,
-	.खोलो = hvc_खोलो,
-	.बंद = hvc_बंद,
+	.open = hvc_open,
+	.close = hvc_close,
 	.cleanup = hvc_cleanup,
-	.ग_लिखो = hvc_ग_लिखो,
+	.write = hvc_write,
 	.hangup = hvc_hangup,
 	.unthrottle = hvc_unthrottle,
-	.ग_लिखो_room = hvc_ग_लिखो_room,
-	.अक्षरs_in_buffer = hvc_अक्षरs_in_buffer,
+	.write_room = hvc_write_room,
+	.chars_in_buffer = hvc_chars_in_buffer,
 	.tiocmget = hvc_tiocmget,
 	.tiocmset = hvc_tiocmset,
-#अगर_घोषित CONFIG_CONSOLE_POLL
+#ifdef CONFIG_CONSOLE_POLL
 	.poll_init = hvc_poll_init,
-	.poll_get_अक्षर = hvc_poll_get_अक्षर,
-	.poll_put_अक्षर = hvc_poll_put_अक्षर,
-#पूर्ण_अगर
-पूर्ण;
+	.poll_get_char = hvc_poll_get_char,
+	.poll_put_char = hvc_poll_put_char,
+#endif
+};
 
-अटल स्थिर काष्ठा tty_port_operations hvc_port_ops = अणु
-	.deकाष्ठा = hvc_port_deकाष्ठा,
-पूर्ण;
+static const struct tty_port_operations hvc_port_ops = {
+	.destruct = hvc_port_destruct,
+};
 
-काष्ठा hvc_काष्ठा *hvc_alloc(uपूर्णांक32_t vtermno, पूर्णांक data,
-			     स्थिर काष्ठा hv_ops *ops,
-			     पूर्णांक outbuf_size)
-अणु
-	काष्ठा hvc_काष्ठा *hp;
-	पूर्णांक i;
+struct hvc_struct *hvc_alloc(uint32_t vtermno, int data,
+			     const struct hv_ops *ops,
+			     int outbuf_size)
+{
+	struct hvc_struct *hp;
+	int i;
 
-	/* We रुको until a driver actually comes aदीर्घ */
-	अगर (atomic_inc_not_zero(&hvc_needs_init)) अणु
-		पूर्णांक err = hvc_init();
-		अगर (err)
-			वापस ERR_PTR(err);
-	पूर्ण
+	/* We wait until a driver actually comes along */
+	if (atomic_inc_not_zero(&hvc_needs_init)) {
+		int err = hvc_init();
+		if (err)
+			return ERR_PTR(err);
+	}
 
-	hp = kzalloc(ALIGN(माप(*hp), माप(दीर्घ)) + outbuf_size,
+	hp = kzalloc(ALIGN(sizeof(*hp), sizeof(long)) + outbuf_size,
 			GFP_KERNEL);
-	अगर (!hp)
-		वापस ERR_PTR(-ENOMEM);
+	if (!hp)
+		return ERR_PTR(-ENOMEM);
 
 	hp->vtermno = vtermno;
 	hp->data = data;
 	hp->ops = ops;
 	hp->outbuf_size = outbuf_size;
-	hp->outbuf = &((अक्षर *)hp)[ALIGN(माप(*hp), माप(दीर्घ))];
+	hp->outbuf = &((char *)hp)[ALIGN(sizeof(*hp), sizeof(long))];
 
 	tty_port_init(&hp->port);
 	hp->port.ops = &hvc_port_ops;
 
 	INIT_WORK(&hp->tty_resize, hvc_set_winsz);
 	spin_lock_init(&hp->lock);
-	mutex_lock(&hvc_काष्ठाs_mutex);
+	mutex_lock(&hvc_structs_mutex);
 
 	/*
 	 * find index to use:
-	 * see अगर this vterm id matches one रेजिस्टरed क्रम console.
+	 * see if this vterm id matches one registered for console.
 	 */
-	क्रम (i=0; i < MAX_NR_HVC_CONSOLES; i++)
-		अगर (vtermnos[i] == hp->vtermno &&
+	for (i=0; i < MAX_NR_HVC_CONSOLES; i++)
+		if (vtermnos[i] == hp->vtermno &&
 		    cons_ops[i] == hp->ops)
-			अवरोध;
+			break;
 
-	अगर (i >= MAX_NR_HVC_CONSOLES) अणु
+	if (i >= MAX_NR_HVC_CONSOLES) {
 
-		/* find 'empty' slot क्रम console */
-		क्रम (i = 0; i < MAX_NR_HVC_CONSOLES && vtermnos[i] != -1; i++) अणु
-		पूर्ण
+		/* find 'empty' slot for console */
+		for (i = 0; i < MAX_NR_HVC_CONSOLES && vtermnos[i] != -1; i++) {
+		}
 
 		/* no matching slot, just use a counter */
-		अगर (i == MAX_NR_HVC_CONSOLES)
+		if (i == MAX_NR_HVC_CONSOLES)
 			i = ++last_hvc + MAX_NR_HVC_CONSOLES;
-	पूर्ण
+	}
 
 	hp->index = i;
-	अगर (i < MAX_NR_HVC_CONSOLES) अणु
+	if (i < MAX_NR_HVC_CONSOLES) {
 		cons_ops[i] = ops;
 		vtermnos[i] = vtermno;
-	पूर्ण
+	}
 
-	list_add_tail(&(hp->next), &hvc_काष्ठाs);
-	mutex_unlock(&hvc_काष्ठाs_mutex);
+	list_add_tail(&(hp->next), &hvc_structs);
+	mutex_unlock(&hvc_structs_mutex);
 
-	/* check अगर we need to re-रेजिस्टर the kernel console */
+	/* check if we need to re-register the kernel console */
 	hvc_check_console(i);
 
-	वापस hp;
-पूर्ण
+	return hp;
+}
 EXPORT_SYMBOL_GPL(hvc_alloc);
 
-पूर्णांक hvc_हटाओ(काष्ठा hvc_काष्ठा *hp)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा tty_काष्ठा *tty;
+int hvc_remove(struct hvc_struct *hp)
+{
+	unsigned long flags;
+	struct tty_struct *tty;
 
 	tty = tty_port_tty_get(&hp->port);
 
 	console_lock();
 	spin_lock_irqsave(&hp->lock, flags);
-	अगर (hp->index < MAX_NR_HVC_CONSOLES) अणु
+	if (hp->index < MAX_NR_HVC_CONSOLES) {
 		vtermnos[hp->index] = -1;
-		cons_ops[hp->index] = शून्य;
-	पूर्ण
+		cons_ops[hp->index] = NULL;
+	}
 
-	/* Don't whack hp->irq because tty_hangup() will need to मुक्त the irq. */
+	/* Don't whack hp->irq because tty_hangup() will need to free the irq. */
 
 	spin_unlock_irqrestore(&hp->lock, flags);
 	console_unlock();
@@ -999,34 +998,34 @@ EXPORT_SYMBOL_GPL(hvc_alloc);
 	/*
 	 * We 'put' the instance that was grabbed when the kref instance
 	 * was initialized using kref_init().  Let the last holder of this
-	 * kref cause it to be हटाओd, which will probably be the tty_vhangup
+	 * kref cause it to be removed, which will probably be the tty_vhangup
 	 * below.
 	 */
 	tty_port_put(&hp->port);
 
 	/*
-	 * This function call will स्वतः chain call hvc_hangup.
+	 * This function call will auto chain call hvc_hangup.
 	 */
-	अगर (tty) अणु
+	if (tty) {
 		tty_vhangup(tty);
 		tty_kref_put(tty);
-	पूर्ण
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(hvc_हटाओ);
+	}
+	return 0;
+}
+EXPORT_SYMBOL_GPL(hvc_remove);
 
 /* Driver initialization: called as soon as someone uses hvc_alloc(). */
-अटल पूर्णांक hvc_init(व्योम)
-अणु
-	काष्ठा tty_driver *drv;
-	पूर्णांक err;
+static int hvc_init(void)
+{
+	struct tty_driver *drv;
+	int err;
 
 	/* We need more than hvc_count adapters due to hotplug additions. */
 	drv = alloc_tty_driver(HVC_ALLOC_TTY_ADAPTERS);
-	अगर (!drv) अणु
+	if (!drv) {
 		err = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	drv->driver_name = "hvc";
 	drv->name = "hvc";
@@ -1037,34 +1036,34 @@ EXPORT_SYMBOL_GPL(hvc_हटाओ);
 	drv->flags = TTY_DRIVER_REAL_RAW | TTY_DRIVER_RESET_TERMIOS;
 	tty_set_operations(drv, &hvc_ops);
 
-	/* Always start the kthपढ़ो because there can be hotplug vty adapters
+	/* Always start the kthread because there can be hotplug vty adapters
 	 * added later. */
-	hvc_task = kthपढ़ो_run(khvcd, शून्य, "khvcd");
-	अगर (IS_ERR(hvc_task)) अणु
-		prपूर्णांकk(KERN_ERR "Couldn't create kthread for console.\n");
+	hvc_task = kthread_run(khvcd, NULL, "khvcd");
+	if (IS_ERR(hvc_task)) {
+		printk(KERN_ERR "Couldn't create kthread for console.\n");
 		err = PTR_ERR(hvc_task);
-		जाओ put_tty;
-	पूर्ण
+		goto put_tty;
+	}
 
-	err = tty_रेजिस्टर_driver(drv);
-	अगर (err) अणु
-		prपूर्णांकk(KERN_ERR "Couldn't register hvc console driver\n");
-		जाओ stop_thपढ़ो;
-	पूर्ण
+	err = tty_register_driver(drv);
+	if (err) {
+		printk(KERN_ERR "Couldn't register hvc console driver\n");
+		goto stop_thread;
+	}
 
 	/*
-	 * Make sure tty is fully रेजिस्टरed beक्रमe allowing it to be
+	 * Make sure tty is fully registered before allowing it to be
 	 * found by hvc_console_device.
 	 */
 	smp_mb();
 	hvc_driver = drv;
-	वापस 0;
+	return 0;
 
-stop_thपढ़ो:
-	kthपढ़ो_stop(hvc_task);
-	hvc_task = शून्य;
+stop_thread:
+	kthread_stop(hvc_task);
+	hvc_task = NULL;
 put_tty:
 	put_tty_driver(drv);
 out:
-	वापस err;
-पूर्ण
+	return err;
+}

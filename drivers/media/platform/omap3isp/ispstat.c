@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * ispstat.c
  *
@@ -9,493 +8,493 @@
  * Copyright (C) 2009 Texas Instruments, Inc
  *
  * Contacts: David Cohen <dacohen@gmail.com>
- *	     Laurent Pinअक्षरt <laurent.pinअक्षरt@ideasonboard.com>
+ *	     Laurent Pinchart <laurent.pinchart@ideasonboard.com>
  *	     Sakari Ailus <sakari.ailus@iki.fi>
  */
 
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/समयkeeping.h>
-#समावेश <linux/uaccess.h>
+#include <linux/dma-mapping.h>
+#include <linux/slab.h>
+#include <linux/timekeeping.h>
+#include <linux/uaccess.h>
 
-#समावेश "isp.h"
+#include "isp.h"
 
-#घोषणा ISP_STAT_USES_DMAENGINE(stat)	((stat)->dma_ch != शून्य)
+#define ISP_STAT_USES_DMAENGINE(stat)	((stat)->dma_ch != NULL)
 
 /*
- * MAGIC_SIZE must always be the greatest common भागisor of
+ * MAGIC_SIZE must always be the greatest common divisor of
  * AEWB_PACKET_SIZE and AF_PAXEL_SIZE.
  */
-#घोषणा MAGIC_SIZE		16
-#घोषणा MAGIC_NUM		0x55
+#define MAGIC_SIZE		16
+#define MAGIC_NUM		0x55
 
 /* HACK: AF module seems to be writing one more paxel data than it should. */
-#घोषणा AF_EXTRA_DATA		OMAP3ISP_AF_PAXEL_SIZE
+#define AF_EXTRA_DATA		OMAP3ISP_AF_PAXEL_SIZE
 
 /*
  * HACK: H3A modules go to an invalid state after have a SBL overflow. It makes
- * the next buffer to start to be written in the same poपूर्णांक where the overflow
+ * the next buffer to start to be written in the same point where the overflow
  * occurred instead of the configured address. The only known way to make it to
  * go back to a valid state is having a valid buffer processing. Of course it
- * requires at least a द्विगुनd buffer size to aव्योम an access to invalid memory
- * region. But it करोes not fix everything. It may happen more than one
- * consecutive SBL overflows. In that हाल, it might be unpredictable how many
- * buffers the allocated memory should fit. For that हाल, a recover
- * configuration was created. It produces the minimum buffer size क्रम each H3A
- * module and decrease the change क्रम more SBL overflows. This recover state
- * will be enabled every समय a SBL overflow occur. As the output buffer size
+ * requires at least a doubled buffer size to avoid an access to invalid memory
+ * region. But it does not fix everything. It may happen more than one
+ * consecutive SBL overflows. In that case, it might be unpredictable how many
+ * buffers the allocated memory should fit. For that case, a recover
+ * configuration was created. It produces the minimum buffer size for each H3A
+ * module and decrease the change for more SBL overflows. This recover state
+ * will be enabled every time a SBL overflow occur. As the output buffer size
  * isn't big, it's possible to have an extra size able to fit many recover
  * buffers making it extreamily unlikely to have an access to invalid memory
  * region.
  */
-#घोषणा NUM_H3A_RECOVER_BUFS	10
+#define NUM_H3A_RECOVER_BUFS	10
 
 /*
- * HACK: Because of HW issues the generic layer someबार need to have
- * dअगरferent behaviour क्रम dअगरferent statistic modules.
+ * HACK: Because of HW issues the generic layer sometimes need to have
+ * different behaviour for different statistic modules.
  */
-#घोषणा IS_H3A_AF(stat)		((stat) == &(stat)->isp->isp_af)
-#घोषणा IS_H3A_AEWB(stat)	((stat) == &(stat)->isp->isp_aewb)
-#घोषणा IS_H3A(stat)		(IS_H3A_AF(stat) || IS_H3A_AEWB(stat))
+#define IS_H3A_AF(stat)		((stat) == &(stat)->isp->isp_af)
+#define IS_H3A_AEWB(stat)	((stat) == &(stat)->isp->isp_aewb)
+#define IS_H3A(stat)		(IS_H3A_AF(stat) || IS_H3A_AEWB(stat))
 
-अटल व्योम __isp_stat_buf_sync_magic(काष्ठा ispstat *stat,
-				      काष्ठा ispstat_buffer *buf,
-				      u32 buf_size, क्रमागत dma_data_direction dir,
-				      व्योम (*dma_sync)(काष्ठा device *,
-					dma_addr_t, अचिन्हित दीर्घ, माप_प्रकार,
-					क्रमागत dma_data_direction))
-अणु
+static void __isp_stat_buf_sync_magic(struct ispstat *stat,
+				      struct ispstat_buffer *buf,
+				      u32 buf_size, enum dma_data_direction dir,
+				      void (*dma_sync)(struct device *,
+					dma_addr_t, unsigned long, size_t,
+					enum dma_data_direction))
+{
 	/* Sync the initial and final magic words. */
 	dma_sync(stat->isp->dev, buf->dma_addr, 0, MAGIC_SIZE, dir);
 	dma_sync(stat->isp->dev, buf->dma_addr + (buf_size & PAGE_MASK),
 		 buf_size & ~PAGE_MASK, MAGIC_SIZE, dir);
-पूर्ण
+}
 
-अटल व्योम isp_stat_buf_sync_magic_क्रम_device(काष्ठा ispstat *stat,
-					       काष्ठा ispstat_buffer *buf,
+static void isp_stat_buf_sync_magic_for_device(struct ispstat *stat,
+					       struct ispstat_buffer *buf,
 					       u32 buf_size,
-					       क्रमागत dma_data_direction dir)
-अणु
-	अगर (ISP_STAT_USES_DMAENGINE(stat))
-		वापस;
+					       enum dma_data_direction dir)
+{
+	if (ISP_STAT_USES_DMAENGINE(stat))
+		return;
 
 	__isp_stat_buf_sync_magic(stat, buf, buf_size, dir,
-				  dma_sync_single_range_क्रम_device);
-पूर्ण
+				  dma_sync_single_range_for_device);
+}
 
-अटल व्योम isp_stat_buf_sync_magic_क्रम_cpu(काष्ठा ispstat *stat,
-					    काष्ठा ispstat_buffer *buf,
+static void isp_stat_buf_sync_magic_for_cpu(struct ispstat *stat,
+					    struct ispstat_buffer *buf,
 					    u32 buf_size,
-					    क्रमागत dma_data_direction dir)
-अणु
-	अगर (ISP_STAT_USES_DMAENGINE(stat))
-		वापस;
+					    enum dma_data_direction dir)
+{
+	if (ISP_STAT_USES_DMAENGINE(stat))
+		return;
 
 	__isp_stat_buf_sync_magic(stat, buf, buf_size, dir,
-				  dma_sync_single_range_क्रम_cpu);
-पूर्ण
+				  dma_sync_single_range_for_cpu);
+}
 
-अटल पूर्णांक isp_stat_buf_check_magic(काष्ठा ispstat *stat,
-				    काष्ठा ispstat_buffer *buf)
-अणु
-	स्थिर u32 buf_size = IS_H3A_AF(stat) ?
+static int isp_stat_buf_check_magic(struct ispstat *stat,
+				    struct ispstat_buffer *buf)
+{
+	const u32 buf_size = IS_H3A_AF(stat) ?
 			     buf->buf_size + AF_EXTRA_DATA : buf->buf_size;
 	u8 *w;
 	u8 *end;
-	पूर्णांक ret = -EINVAL;
+	int ret = -EINVAL;
 
-	isp_stat_buf_sync_magic_क्रम_cpu(stat, buf, buf_size, DMA_FROM_DEVICE);
+	isp_stat_buf_sync_magic_for_cpu(stat, buf, buf_size, DMA_FROM_DEVICE);
 
 	/* Checking initial magic numbers. They shouldn't be here anymore. */
-	क्रम (w = buf->virt_addr, end = w + MAGIC_SIZE; w < end; w++)
-		अगर (likely(*w != MAGIC_NUM))
+	for (w = buf->virt_addr, end = w + MAGIC_SIZE; w < end; w++)
+		if (likely(*w != MAGIC_NUM))
 			ret = 0;
 
-	अगर (ret) अणु
+	if (ret) {
 		dev_dbg(stat->isp->dev,
 			"%s: beginning magic check does not match.\n",
 			stat->subdev.name);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* Checking magic numbers at the end. They must be still here. */
-	क्रम (w = buf->virt_addr + buf_size, end = w + MAGIC_SIZE;
-	     w < end; w++) अणु
-		अगर (unlikely(*w != MAGIC_NUM)) अणु
+	for (w = buf->virt_addr + buf_size, end = w + MAGIC_SIZE;
+	     w < end; w++) {
+		if (unlikely(*w != MAGIC_NUM)) {
 			dev_dbg(stat->isp->dev,
 				"%s: ending magic check does not match.\n",
 				stat->subdev.name);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	isp_stat_buf_sync_magic_क्रम_device(stat, buf, buf_size,
+	isp_stat_buf_sync_magic_for_device(stat, buf, buf_size,
 					   DMA_FROM_DEVICE);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम isp_stat_buf_insert_magic(काष्ठा ispstat *stat,
-				      काष्ठा ispstat_buffer *buf)
-अणु
-	स्थिर u32 buf_size = IS_H3A_AF(stat) ?
+static void isp_stat_buf_insert_magic(struct ispstat *stat,
+				      struct ispstat_buffer *buf)
+{
+	const u32 buf_size = IS_H3A_AF(stat) ?
 			     stat->buf_size + AF_EXTRA_DATA : stat->buf_size;
 
-	isp_stat_buf_sync_magic_क्रम_cpu(stat, buf, buf_size, DMA_FROM_DEVICE);
+	isp_stat_buf_sync_magic_for_cpu(stat, buf, buf_size, DMA_FROM_DEVICE);
 
 	/*
 	 * Inserting MAGIC_NUM at the beginning and end of the buffer.
 	 * buf->buf_size is set only after the buffer is queued. For now the
-	 * right buf_size क्रम the current configuration is poपूर्णांकed by
+	 * right buf_size for the current configuration is pointed by
 	 * stat->buf_size.
 	 */
-	स_रखो(buf->virt_addr, MAGIC_NUM, MAGIC_SIZE);
-	स_रखो(buf->virt_addr + buf_size, MAGIC_NUM, MAGIC_SIZE);
+	memset(buf->virt_addr, MAGIC_NUM, MAGIC_SIZE);
+	memset(buf->virt_addr + buf_size, MAGIC_NUM, MAGIC_SIZE);
 
-	isp_stat_buf_sync_magic_क्रम_device(stat, buf, buf_size,
-					   DMA_BIसूचीECTIONAL);
-पूर्ण
+	isp_stat_buf_sync_magic_for_device(stat, buf, buf_size,
+					   DMA_BIDIRECTIONAL);
+}
 
-अटल व्योम isp_stat_buf_sync_क्रम_device(काष्ठा ispstat *stat,
-					 काष्ठा ispstat_buffer *buf)
-अणु
-	अगर (ISP_STAT_USES_DMAENGINE(stat))
-		वापस;
+static void isp_stat_buf_sync_for_device(struct ispstat *stat,
+					 struct ispstat_buffer *buf)
+{
+	if (ISP_STAT_USES_DMAENGINE(stat))
+		return;
 
-	dma_sync_sg_क्रम_device(stat->isp->dev, buf->sgt.sgl,
+	dma_sync_sg_for_device(stat->isp->dev, buf->sgt.sgl,
 			       buf->sgt.nents, DMA_FROM_DEVICE);
-पूर्ण
+}
 
-अटल व्योम isp_stat_buf_sync_क्रम_cpu(काष्ठा ispstat *stat,
-				      काष्ठा ispstat_buffer *buf)
-अणु
-	अगर (ISP_STAT_USES_DMAENGINE(stat))
-		वापस;
+static void isp_stat_buf_sync_for_cpu(struct ispstat *stat,
+				      struct ispstat_buffer *buf)
+{
+	if (ISP_STAT_USES_DMAENGINE(stat))
+		return;
 
-	dma_sync_sg_क्रम_cpu(stat->isp->dev, buf->sgt.sgl,
+	dma_sync_sg_for_cpu(stat->isp->dev, buf->sgt.sgl,
 			    buf->sgt.nents, DMA_FROM_DEVICE);
-पूर्ण
+}
 
-अटल व्योम isp_stat_buf_clear(काष्ठा ispstat *stat)
-अणु
-	पूर्णांक i;
+static void isp_stat_buf_clear(struct ispstat *stat)
+{
+	int i;
 
-	क्रम (i = 0; i < STAT_MAX_BUFS; i++)
+	for (i = 0; i < STAT_MAX_BUFS; i++)
 		stat->buf[i].empty = 1;
-पूर्ण
+}
 
-अटल काष्ठा ispstat_buffer *
-__isp_stat_buf_find(काष्ठा ispstat *stat, पूर्णांक look_empty)
-अणु
-	काष्ठा ispstat_buffer *found = शून्य;
-	पूर्णांक i;
+static struct ispstat_buffer *
+__isp_stat_buf_find(struct ispstat *stat, int look_empty)
+{
+	struct ispstat_buffer *found = NULL;
+	int i;
 
-	क्रम (i = 0; i < STAT_MAX_BUFS; i++) अणु
-		काष्ठा ispstat_buffer *curr = &stat->buf[i];
+	for (i = 0; i < STAT_MAX_BUFS; i++) {
+		struct ispstat_buffer *curr = &stat->buf[i];
 
 		/*
 		 * Don't select the buffer which is being copied to
 		 * userspace or used by the module.
 		 */
-		अगर (curr == stat->locked_buf || curr == stat->active_buf)
-			जारी;
+		if (curr == stat->locked_buf || curr == stat->active_buf)
+			continue;
 
 		/* Don't select uninitialised buffers if it's not required */
-		अगर (!look_empty && curr->empty)
-			जारी;
+		if (!look_empty && curr->empty)
+			continue;
 
-		/* Pick uninitialised buffer over anything अन्यथा अगर look_empty */
-		अगर (curr->empty) अणु
+		/* Pick uninitialised buffer over anything else if look_empty */
+		if (curr->empty) {
 			found = curr;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		/* Choose the oldest buffer */
-		अगर (!found ||
+		if (!found ||
 		    (s32)curr->frame_number - (s32)found->frame_number < 0)
 			found = curr;
-	पूर्ण
+	}
 
-	वापस found;
-पूर्ण
+	return found;
+}
 
-अटल अंतरभूत काष्ठा ispstat_buffer *
-isp_stat_buf_find_oldest(काष्ठा ispstat *stat)
-अणु
-	वापस __isp_stat_buf_find(stat, 0);
-पूर्ण
+static inline struct ispstat_buffer *
+isp_stat_buf_find_oldest(struct ispstat *stat)
+{
+	return __isp_stat_buf_find(stat, 0);
+}
 
-अटल अंतरभूत काष्ठा ispstat_buffer *
-isp_stat_buf_find_oldest_or_empty(काष्ठा ispstat *stat)
-अणु
-	वापस __isp_stat_buf_find(stat, 1);
-पूर्ण
+static inline struct ispstat_buffer *
+isp_stat_buf_find_oldest_or_empty(struct ispstat *stat)
+{
+	return __isp_stat_buf_find(stat, 1);
+}
 
-अटल पूर्णांक isp_stat_buf_queue(काष्ठा ispstat *stat)
-अणु
-	अगर (!stat->active_buf)
-		वापस STAT_NO_BUF;
+static int isp_stat_buf_queue(struct ispstat *stat)
+{
+	if (!stat->active_buf)
+		return STAT_NO_BUF;
 
-	kसमय_get_ts64(&stat->active_buf->ts);
+	ktime_get_ts64(&stat->active_buf->ts);
 
 	stat->active_buf->buf_size = stat->buf_size;
-	अगर (isp_stat_buf_check_magic(stat, stat->active_buf)) अणु
+	if (isp_stat_buf_check_magic(stat, stat->active_buf)) {
 		dev_dbg(stat->isp->dev, "%s: data wasn't properly written.\n",
 			stat->subdev.name);
-		वापस STAT_NO_BUF;
-	पूर्ण
+		return STAT_NO_BUF;
+	}
 	stat->active_buf->config_counter = stat->config_counter;
 	stat->active_buf->frame_number = stat->frame_number;
 	stat->active_buf->empty = 0;
-	stat->active_buf = शून्य;
+	stat->active_buf = NULL;
 
-	वापस STAT_BUF_DONE;
-पूर्ण
+	return STAT_BUF_DONE;
+}
 
-/* Get next मुक्त buffer to ग_लिखो the statistics to and mark it active. */
-अटल व्योम isp_stat_buf_next(काष्ठा ispstat *stat)
-अणु
-	अगर (unlikely(stat->active_buf))
+/* Get next free buffer to write the statistics to and mark it active. */
+static void isp_stat_buf_next(struct ispstat *stat)
+{
+	if (unlikely(stat->active_buf))
 		/* Overwriting unused active buffer */
 		dev_dbg(stat->isp->dev,
 			"%s: new buffer requested without queuing active one.\n",
 			stat->subdev.name);
-	अन्यथा
+	else
 		stat->active_buf = isp_stat_buf_find_oldest_or_empty(stat);
-पूर्ण
+}
 
-अटल व्योम isp_stat_buf_release(काष्ठा ispstat *stat)
-अणु
-	अचिन्हित दीर्घ flags;
+static void isp_stat_buf_release(struct ispstat *stat)
+{
+	unsigned long flags;
 
-	isp_stat_buf_sync_क्रम_device(stat, stat->locked_buf);
+	isp_stat_buf_sync_for_device(stat, stat->locked_buf);
 	spin_lock_irqsave(&stat->isp->stat_lock, flags);
-	stat->locked_buf = शून्य;
+	stat->locked_buf = NULL;
 	spin_unlock_irqrestore(&stat->isp->stat_lock, flags);
-पूर्ण
+}
 
 /* Get buffer to userspace. */
-अटल काष्ठा ispstat_buffer *isp_stat_buf_get(काष्ठा ispstat *stat,
-					       काष्ठा omap3isp_stat_data *data)
-अणु
-	पूर्णांक rval = 0;
-	अचिन्हित दीर्घ flags;
-	काष्ठा ispstat_buffer *buf;
+static struct ispstat_buffer *isp_stat_buf_get(struct ispstat *stat,
+					       struct omap3isp_stat_data *data)
+{
+	int rval = 0;
+	unsigned long flags;
+	struct ispstat_buffer *buf;
 
 	spin_lock_irqsave(&stat->isp->stat_lock, flags);
 
-	जबतक (1) अणु
+	while (1) {
 		buf = isp_stat_buf_find_oldest(stat);
-		अगर (!buf) अणु
+		if (!buf) {
 			spin_unlock_irqrestore(&stat->isp->stat_lock, flags);
 			dev_dbg(stat->isp->dev, "%s: cannot find a buffer.\n",
 				stat->subdev.name);
-			वापस ERR_PTR(-EBUSY);
-		पूर्ण
-		अगर (isp_stat_buf_check_magic(stat, buf)) अणु
+			return ERR_PTR(-EBUSY);
+		}
+		if (isp_stat_buf_check_magic(stat, buf)) {
 			dev_dbg(stat->isp->dev,
 				"%s: current buffer has corrupted data\n.",
 				stat->subdev.name);
-			/* Mark empty because it करोesn't have valid data. */
+			/* Mark empty because it doesn't have valid data. */
 			buf->empty = 1;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* Buffer isn't corrupted. */
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	stat->locked_buf = buf;
 
 	spin_unlock_irqrestore(&stat->isp->stat_lock, flags);
 
-	अगर (buf->buf_size > data->buf_size) अणु
+	if (buf->buf_size > data->buf_size) {
 		dev_warn(stat->isp->dev,
 			 "%s: userspace's buffer size is not enough.\n",
 			 stat->subdev.name);
 		isp_stat_buf_release(stat);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	isp_stat_buf_sync_क्रम_cpu(stat, buf);
+	isp_stat_buf_sync_for_cpu(stat, buf);
 
 	rval = copy_to_user(data->buf,
 			    buf->virt_addr,
 			    buf->buf_size);
 
-	अगर (rval) अणु
+	if (rval) {
 		dev_info(stat->isp->dev,
 			 "%s: failed copying %d bytes of stat data\n",
 			 stat->subdev.name, rval);
 		buf = ERR_PTR(-EFAULT);
 		isp_stat_buf_release(stat);
-	पूर्ण
+	}
 
-	वापस buf;
-पूर्ण
+	return buf;
+}
 
-अटल व्योम isp_stat_bufs_मुक्त(काष्ठा ispstat *stat)
-अणु
-	काष्ठा device *dev = ISP_STAT_USES_DMAENGINE(stat)
-			   ? शून्य : stat->isp->dev;
-	अचिन्हित पूर्णांक i;
+static void isp_stat_bufs_free(struct ispstat *stat)
+{
+	struct device *dev = ISP_STAT_USES_DMAENGINE(stat)
+			   ? NULL : stat->isp->dev;
+	unsigned int i;
 
-	क्रम (i = 0; i < STAT_MAX_BUFS; i++) अणु
-		काष्ठा ispstat_buffer *buf = &stat->buf[i];
+	for (i = 0; i < STAT_MAX_BUFS; i++) {
+		struct ispstat_buffer *buf = &stat->buf[i];
 
-		अगर (!buf->virt_addr)
-			जारी;
+		if (!buf->virt_addr)
+			continue;
 
-		sg_मुक्त_table(&buf->sgt);
+		sg_free_table(&buf->sgt);
 
-		dma_मुक्त_coherent(dev, stat->buf_alloc_size, buf->virt_addr,
+		dma_free_coherent(dev, stat->buf_alloc_size, buf->virt_addr,
 				  buf->dma_addr);
 
 		buf->dma_addr = 0;
-		buf->virt_addr = शून्य;
+		buf->virt_addr = NULL;
 		buf->empty = 1;
-	पूर्ण
+	}
 
 	dev_dbg(stat->isp->dev, "%s: all buffers were freed.\n",
 		stat->subdev.name);
 
 	stat->buf_alloc_size = 0;
-	stat->active_buf = शून्य;
-पूर्ण
+	stat->active_buf = NULL;
+}
 
-अटल पूर्णांक isp_stat_bufs_alloc_one(काष्ठा device *dev,
-				   काष्ठा ispstat_buffer *buf,
-				   अचिन्हित पूर्णांक size)
-अणु
-	पूर्णांक ret;
+static int isp_stat_bufs_alloc_one(struct device *dev,
+				   struct ispstat_buffer *buf,
+				   unsigned int size)
+{
+	int ret;
 
 	buf->virt_addr = dma_alloc_coherent(dev, size, &buf->dma_addr,
 					    GFP_KERNEL);
-	अगर (!buf->virt_addr)
-		वापस -ENOMEM;
+	if (!buf->virt_addr)
+		return -ENOMEM;
 
 	ret = dma_get_sgtable(dev, &buf->sgt, buf->virt_addr, buf->dma_addr,
 			      size);
-	अगर (ret < 0) अणु
-		dma_मुक्त_coherent(dev, size, buf->virt_addr, buf->dma_addr);
-		buf->virt_addr = शून्य;
+	if (ret < 0) {
+		dma_free_coherent(dev, size, buf->virt_addr, buf->dma_addr);
+		buf->virt_addr = NULL;
 		buf->dma_addr = 0;
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * The device passed to the DMA API depends on whether the statistics block uses
- * ISP DMA, बाह्यal DMA or PIO to transfer data.
+ * ISP DMA, external DMA or PIO to transfer data.
  *
- * The first हाल (क्रम the AEWB and AF engines) passes the ISP device, resulting
+ * The first case (for the AEWB and AF engines) passes the ISP device, resulting
  * in the DMA buffers being mapped through the ISP IOMMU.
  *
- * The second हाल (क्रम the histogram engine) should pass the DMA engine device.
+ * The second case (for the histogram engine) should pass the DMA engine device.
  * As that device isn't accessible through the OMAP DMA engine API the driver
- * passes शून्य instead, resulting in the buffers being mapped directly as
+ * passes NULL instead, resulting in the buffers being mapped directly as
  * physical pages.
  *
- * The third हाल (क्रम the histogram engine) करोesn't require any mapping. The
- * buffers could be allocated with kदो_स्मृति/vदो_स्मृति, but we still use
- * dma_alloc_coherent() क्रम consistency purpose.
+ * The third case (for the histogram engine) doesn't require any mapping. The
+ * buffers could be allocated with kmalloc/vmalloc, but we still use
+ * dma_alloc_coherent() for consistency purpose.
  */
-अटल पूर्णांक isp_stat_bufs_alloc(काष्ठा ispstat *stat, u32 size)
-अणु
-	काष्ठा device *dev = ISP_STAT_USES_DMAENGINE(stat)
-			   ? शून्य : stat->isp->dev;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक i;
+static int isp_stat_bufs_alloc(struct ispstat *stat, u32 size)
+{
+	struct device *dev = ISP_STAT_USES_DMAENGINE(stat)
+			   ? NULL : stat->isp->dev;
+	unsigned long flags;
+	unsigned int i;
 
 	spin_lock_irqsave(&stat->isp->stat_lock, flags);
 
-	BUG_ON(stat->locked_buf != शून्य);
+	BUG_ON(stat->locked_buf != NULL);
 
 	/* Are the old buffers big enough? */
-	अगर (stat->buf_alloc_size >= size) अणु
+	if (stat->buf_alloc_size >= size) {
 		spin_unlock_irqrestore(&stat->isp->stat_lock, flags);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (stat->state != ISPSTAT_DISABLED || stat->buf_processing) अणु
+	if (stat->state != ISPSTAT_DISABLED || stat->buf_processing) {
 		dev_info(stat->isp->dev,
 			 "%s: trying to allocate memory when busy\n",
 			 stat->subdev.name);
 		spin_unlock_irqrestore(&stat->isp->stat_lock, flags);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	spin_unlock_irqrestore(&stat->isp->stat_lock, flags);
 
-	isp_stat_bufs_मुक्त(stat);
+	isp_stat_bufs_free(stat);
 
 	stat->buf_alloc_size = size;
 
-	क्रम (i = 0; i < STAT_MAX_BUFS; i++) अणु
-		काष्ठा ispstat_buffer *buf = &stat->buf[i];
-		पूर्णांक ret;
+	for (i = 0; i < STAT_MAX_BUFS; i++) {
+		struct ispstat_buffer *buf = &stat->buf[i];
+		int ret;
 
 		ret = isp_stat_bufs_alloc_one(dev, buf, size);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(stat->isp->dev,
 				"%s: Failed to allocate DMA buffer %u\n",
 				stat->subdev.name, i);
-			isp_stat_bufs_मुक्त(stat);
-			वापस ret;
-		पूर्ण
+			isp_stat_bufs_free(stat);
+			return ret;
+		}
 
 		buf->empty = 1;
 
 		dev_dbg(stat->isp->dev,
 			"%s: buffer[%u] allocated. dma=%pad virt=%p",
 			stat->subdev.name, i, &buf->dma_addr, buf->virt_addr);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम isp_stat_queue_event(काष्ठा ispstat *stat, पूर्णांक err)
-अणु
-	काष्ठा video_device *vdev = stat->subdev.devnode;
-	काष्ठा v4l2_event event;
-	काष्ठा omap3isp_stat_event_status *status = (व्योम *)event.u.data;
+static void isp_stat_queue_event(struct ispstat *stat, int err)
+{
+	struct video_device *vdev = stat->subdev.devnode;
+	struct v4l2_event event;
+	struct omap3isp_stat_event_status *status = (void *)event.u.data;
 
-	स_रखो(&event, 0, माप(event));
-	अगर (!err) अणु
+	memset(&event, 0, sizeof(event));
+	if (!err) {
 		status->frame_number = stat->frame_number;
 		status->config_counter = stat->config_counter;
-	पूर्ण अन्यथा अणु
+	} else {
 		status->buf_err = 1;
-	पूर्ण
+	}
 	event.type = stat->event_type;
 	v4l2_event_queue(vdev, &event);
-पूर्ण
+}
 
 
 /*
  * omap3isp_stat_request_statistics - Request statistics.
- * @data: Poपूर्णांकer to वापस statistics data.
+ * @data: Pointer to return statistics data.
  *
- * Returns 0 अगर successful.
+ * Returns 0 if successful.
  */
-पूर्णांक omap3isp_stat_request_statistics(काष्ठा ispstat *stat,
-				     काष्ठा omap3isp_stat_data *data)
-अणु
-	काष्ठा ispstat_buffer *buf;
+int omap3isp_stat_request_statistics(struct ispstat *stat,
+				     struct omap3isp_stat_data *data)
+{
+	struct ispstat_buffer *buf;
 
-	अगर (stat->state != ISPSTAT_ENABLED) अणु
+	if (stat->state != ISPSTAT_ENABLED) {
 		dev_dbg(stat->isp->dev, "%s: engine not enabled.\n",
 			stat->subdev.name);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	mutex_lock(&stat->ioctl_lock);
 	buf = isp_stat_buf_get(stat, data);
-	अगर (IS_ERR(buf)) अणु
+	if (IS_ERR(buf)) {
 		mutex_unlock(&stat->ioctl_lock);
-		वापस PTR_ERR(buf);
-	पूर्ण
+		return PTR_ERR(buf);
+	}
 
 	data->ts.tv_sec = buf->ts.tv_sec;
 	data->ts.tv_usec = buf->ts.tv_nsec / NSEC_PER_USEC;
@@ -507,103 +506,103 @@ isp_stat_buf_find_oldest_or_empty(काष्ठा ispstat *stat)
 	isp_stat_buf_release(stat);
 	mutex_unlock(&stat->ioctl_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक omap3isp_stat_request_statistics_समय32(काष्ठा ispstat *stat,
-					काष्ठा omap3isp_stat_data_समय32 *data)
-अणु
-	काष्ठा omap3isp_stat_data data64;
-	पूर्णांक ret;
+int omap3isp_stat_request_statistics_time32(struct ispstat *stat,
+					struct omap3isp_stat_data_time32 *data)
+{
+	struct omap3isp_stat_data data64;
+	int ret;
 
 	ret = omap3isp_stat_request_statistics(stat, &data64);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	data->ts.tv_sec = data64.ts.tv_sec;
 	data->ts.tv_usec = data64.ts.tv_usec;
-	स_नकल(&data->buf, &data64.buf, माप(*data) - माप(data->ts));
+	memcpy(&data->buf, &data64.buf, sizeof(*data) - sizeof(data->ts));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * omap3isp_stat_config - Receives new statistic engine configuration.
- * @new_conf: Poपूर्णांकer to config काष्ठाure.
+ * @new_conf: Pointer to config structure.
  *
- * Returns 0 अगर successful, -EINVAL अगर new_conf poपूर्णांकer is शून्य, -ENOMEM अगर
- * was unable to allocate memory क्रम the buffer, or other errors अगर parameters
+ * Returns 0 if successful, -EINVAL if new_conf pointer is NULL, -ENOMEM if
+ * was unable to allocate memory for the buffer, or other errors if parameters
  * are invalid.
  */
-पूर्णांक omap3isp_stat_config(काष्ठा ispstat *stat, व्योम *new_conf)
-अणु
-	पूर्णांक ret;
-	अचिन्हित दीर्घ irqflags;
-	काष्ठा ispstat_generic_config *user_cfg = new_conf;
+int omap3isp_stat_config(struct ispstat *stat, void *new_conf)
+{
+	int ret;
+	unsigned long irqflags;
+	struct ispstat_generic_config *user_cfg = new_conf;
 	u32 buf_size = user_cfg->buf_size;
 
 	mutex_lock(&stat->ioctl_lock);
 
 	dev_dbg(stat->isp->dev,
 		"%s: configuring module with buffer size=0x%08lx\n",
-		stat->subdev.name, (अचिन्हित दीर्घ)buf_size);
+		stat->subdev.name, (unsigned long)buf_size);
 
 	ret = stat->ops->validate_params(stat, new_conf);
-	अगर (ret) अणु
+	if (ret) {
 		mutex_unlock(&stat->ioctl_lock);
 		dev_dbg(stat->isp->dev, "%s: configuration values are invalid.\n",
 			stat->subdev.name);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (buf_size != user_cfg->buf_size)
+	if (buf_size != user_cfg->buf_size)
 		dev_dbg(stat->isp->dev,
 			"%s: driver has corrected buffer size request to 0x%08lx\n",
 			stat->subdev.name,
-			(अचिन्हित दीर्घ)user_cfg->buf_size);
+			(unsigned long)user_cfg->buf_size);
 
 	/*
-	 * Hack: H3A modules may need a द्विगुनd buffer size to aव्योम access
+	 * Hack: H3A modules may need a doubled buffer size to avoid access
 	 * to a invalid memory address after a SBL overflow.
 	 * The buffer size is always PAGE_ALIGNED.
 	 * Hack 2: MAGIC_SIZE is added to buf_size so a magic word can be
-	 * inserted at the end to data पूर्णांकegrity check purpose.
-	 * Hack 3: AF module ग_लिखोs one paxel data more than it should, so
-	 * the buffer allocation must consider it to aव्योम invalid memory
+	 * inserted at the end to data integrity check purpose.
+	 * Hack 3: AF module writes one paxel data more than it should, so
+	 * the buffer allocation must consider it to avoid invalid memory
 	 * access.
-	 * Hack 4: H3A need to allocate extra space क्रम the recover state.
+	 * Hack 4: H3A need to allocate extra space for the recover state.
 	 */
-	अगर (IS_H3A(stat)) अणु
+	if (IS_H3A(stat)) {
 		buf_size = user_cfg->buf_size * 2 + MAGIC_SIZE;
-		अगर (IS_H3A_AF(stat))
+		if (IS_H3A_AF(stat))
 			/*
-			 * Adding one extra paxel data size क्रम each recover
+			 * Adding one extra paxel data size for each recover
 			 * buffer + 2 regular ones.
 			 */
 			buf_size += AF_EXTRA_DATA * (NUM_H3A_RECOVER_BUFS + 2);
-		अगर (stat->recover_priv) अणु
-			काष्ठा ispstat_generic_config *recover_cfg =
+		if (stat->recover_priv) {
+			struct ispstat_generic_config *recover_cfg =
 				stat->recover_priv;
 			buf_size += recover_cfg->buf_size *
 				    NUM_H3A_RECOVER_BUFS;
-		पूर्ण
+		}
 		buf_size = PAGE_ALIGN(buf_size);
-	पूर्ण अन्यथा अणु /* Histogram */
+	} else { /* Histogram */
 		buf_size = PAGE_ALIGN(user_cfg->buf_size + MAGIC_SIZE);
-	पूर्ण
+	}
 
 	ret = isp_stat_bufs_alloc(stat, buf_size);
-	अगर (ret) अणु
+	if (ret) {
 		mutex_unlock(&stat->ioctl_lock);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	spin_lock_irqsave(&stat->isp->stat_lock, irqflags);
 	stat->ops->set_params(stat, new_conf);
 	spin_unlock_irqrestore(&stat->isp->stat_lock, irqflags);
 
 	/*
-	 * Returning the right future config_counter क्रम this setup, so
+	 * Returning the right future config_counter for this setup, so
 	 * userspace can *know* when it has been applied.
 	 */
 	user_cfg->config_counter = stat->config_counter + stat->inc_config;
@@ -616,38 +615,38 @@ isp_stat_buf_find_oldest_or_empty(काष्ठा ispstat *stat)
 
 	mutex_unlock(&stat->ioctl_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * isp_stat_buf_process - Process statistic buffers.
- * @buf_state: poपूर्णांकs out अगर buffer is पढ़ोy to be processed. It's necessary
- *	       because histogram needs to copy the data from पूर्णांकernal memory
- *	       beक्रमe be able to process the buffer.
+ * @buf_state: points out if buffer is ready to be processed. It's necessary
+ *	       because histogram needs to copy the data from internal memory
+ *	       before be able to process the buffer.
  */
-अटल पूर्णांक isp_stat_buf_process(काष्ठा ispstat *stat, पूर्णांक buf_state)
-अणु
-	पूर्णांक ret = STAT_NO_BUF;
+static int isp_stat_buf_process(struct ispstat *stat, int buf_state)
+{
+	int ret = STAT_NO_BUF;
 
-	अगर (!atomic_add_unless(&stat->buf_err, -1, 0) &&
-	    buf_state == STAT_BUF_DONE && stat->state == ISPSTAT_ENABLED) अणु
+	if (!atomic_add_unless(&stat->buf_err, -1, 0) &&
+	    buf_state == STAT_BUF_DONE && stat->state == ISPSTAT_ENABLED) {
 		ret = isp_stat_buf_queue(stat);
 		isp_stat_buf_next(stat);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक omap3isp_stat_pcr_busy(काष्ठा ispstat *stat)
-अणु
-	वापस stat->ops->busy(stat);
-पूर्ण
+int omap3isp_stat_pcr_busy(struct ispstat *stat)
+{
+	return stat->ops->busy(stat);
+}
 
-पूर्णांक omap3isp_stat_busy(काष्ठा ispstat *stat)
-अणु
-	वापस omap3isp_stat_pcr_busy(stat) | stat->buf_processing |
+int omap3isp_stat_busy(struct ispstat *stat)
+{
+	return omap3isp_stat_pcr_busy(stat) | stat->buf_processing |
 		(stat->state != ISPSTAT_DISABLED);
-पूर्ण
+}
 
 /*
  * isp_stat_pcr_enable - Disables/Enables statistic engines.
@@ -656,55 +655,55 @@ isp_stat_buf_find_oldest_or_empty(काष्ठा ispstat *stat)
  * Must be called from ISP driver when the module is idle and synchronized
  * with CCDC.
  */
-अटल व्योम isp_stat_pcr_enable(काष्ठा ispstat *stat, u8 pcr_enable)
-अणु
-	अगर ((stat->state != ISPSTAT_ENABLING &&
+static void isp_stat_pcr_enable(struct ispstat *stat, u8 pcr_enable)
+{
+	if ((stat->state != ISPSTAT_ENABLING &&
 	     stat->state != ISPSTAT_ENABLED) && pcr_enable)
 		/* Userspace has disabled the module. Aborting. */
-		वापस;
+		return;
 
 	stat->ops->enable(stat, pcr_enable);
-	अगर (stat->state == ISPSTAT_DISABLING && !pcr_enable)
+	if (stat->state == ISPSTAT_DISABLING && !pcr_enable)
 		stat->state = ISPSTAT_DISABLED;
-	अन्यथा अगर (stat->state == ISPSTAT_ENABLING && pcr_enable)
+	else if (stat->state == ISPSTAT_ENABLING && pcr_enable)
 		stat->state = ISPSTAT_ENABLED;
-पूर्ण
+}
 
-व्योम omap3isp_stat_suspend(काष्ठा ispstat *stat)
-अणु
-	अचिन्हित दीर्घ flags;
+void omap3isp_stat_suspend(struct ispstat *stat)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&stat->isp->stat_lock, flags);
 
-	अगर (stat->state != ISPSTAT_DISABLED)
+	if (stat->state != ISPSTAT_DISABLED)
 		stat->ops->enable(stat, 0);
-	अगर (stat->state == ISPSTAT_ENABLED)
+	if (stat->state == ISPSTAT_ENABLED)
 		stat->state = ISPSTAT_SUSPENDED;
 
 	spin_unlock_irqrestore(&stat->isp->stat_lock, flags);
-पूर्ण
+}
 
-व्योम omap3isp_stat_resume(काष्ठा ispstat *stat)
-अणु
+void omap3isp_stat_resume(struct ispstat *stat)
+{
 	/* Module will be re-enabled with its pipeline */
-	अगर (stat->state == ISPSTAT_SUSPENDED)
+	if (stat->state == ISPSTAT_SUSPENDED)
 		stat->state = ISPSTAT_ENABLING;
-पूर्ण
+}
 
-अटल व्योम isp_stat_try_enable(काष्ठा ispstat *stat)
-अणु
-	अचिन्हित दीर्घ irqflags;
+static void isp_stat_try_enable(struct ispstat *stat)
+{
+	unsigned long irqflags;
 
-	अगर (stat->priv == शून्य)
+	if (stat->priv == NULL)
 		/* driver wasn't initialised */
-		वापस;
+		return;
 
 	spin_lock_irqsave(&stat->isp->stat_lock, irqflags);
-	अगर (stat->state == ISPSTAT_ENABLING && !stat->buf_processing &&
-	    stat->buf_alloc_size) अणु
+	if (stat->state == ISPSTAT_ENABLING && !stat->buf_processing &&
+	    stat->buf_alloc_size) {
 		/*
 		 * Userspace's requested to enable the engine but it wasn't yet.
-		 * Let's करो that now.
+		 * Let's do that now.
 		 */
 		stat->update = 1;
 		isp_stat_buf_next(stat);
@@ -712,31 +711,31 @@ isp_stat_buf_find_oldest_or_empty(काष्ठा ispstat *stat)
 		isp_stat_buf_insert_magic(stat, stat->active_buf);
 
 		/*
-		 * H3A module has some hw issues which क्रमces the driver to
-		 * ignore next buffers even अगर it was disabled in the meanसमय.
+		 * H3A module has some hw issues which forces the driver to
+		 * ignore next buffers even if it was disabled in the meantime.
 		 * On the other hand, Histogram shouldn't ignore buffers anymore
-		 * अगर it's being enabled.
+		 * if it's being enabled.
 		 */
-		अगर (!IS_H3A(stat))
+		if (!IS_H3A(stat))
 			atomic_set(&stat->buf_err, 0);
 
 		isp_stat_pcr_enable(stat, 1);
 		spin_unlock_irqrestore(&stat->isp->stat_lock, irqflags);
 		dev_dbg(stat->isp->dev, "%s: module is enabled.\n",
 			stat->subdev.name);
-	पूर्ण अन्यथा अणु
+	} else {
 		spin_unlock_irqrestore(&stat->isp->stat_lock, irqflags);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम omap3isp_stat_isr_frame_sync(काष्ठा ispstat *stat)
-अणु
+void omap3isp_stat_isr_frame_sync(struct ispstat *stat)
+{
 	isp_stat_try_enable(stat);
-पूर्ण
+}
 
-व्योम omap3isp_stat_sbl_overflow(काष्ठा ispstat *stat)
-अणु
-	अचिन्हित दीर्घ irqflags;
+void omap3isp_stat_sbl_overflow(struct ispstat *stat)
+{
+	unsigned long irqflags;
 
 	spin_lock_irqsave(&stat->isp->stat_lock, irqflags);
 	/*
@@ -749,77 +748,77 @@ isp_stat_buf_find_oldest_or_empty(काष्ठा ispstat *stat)
 	 * If more than one SBL overflow happen in a row, H3A module may access
 	 * invalid memory region.
 	 * stat->sbl_ovl_recover is set to tell to the driver to temporarily use
-	 * a soft configuration which helps to aव्योम consecutive overflows.
+	 * a soft configuration which helps to avoid consecutive overflows.
 	 */
-	अगर (stat->recover_priv)
+	if (stat->recover_priv)
 		stat->sbl_ovl_recover = 1;
 	spin_unlock_irqrestore(&stat->isp->stat_lock, irqflags);
-पूर्ण
+}
 
 /*
  * omap3isp_stat_enable - Disable/Enable statistic engine as soon as possible
  * @enable: 0/1 - Disables/Enables the engine.
  *
- * Client should configure all the module रेजिस्टरs beक्रमe this.
+ * Client should configure all the module registers before this.
  * This function can be called from a userspace request.
  */
-पूर्णांक omap3isp_stat_enable(काष्ठा ispstat *stat, u8 enable)
-अणु
-	अचिन्हित दीर्घ irqflags;
+int omap3isp_stat_enable(struct ispstat *stat, u8 enable)
+{
+	unsigned long irqflags;
 
 	dev_dbg(stat->isp->dev, "%s: user wants to %s module.\n",
 		stat->subdev.name, enable ? "enable" : "disable");
 
-	/* Prevent enabling जबतक configuring */
+	/* Prevent enabling while configuring */
 	mutex_lock(&stat->ioctl_lock);
 
 	spin_lock_irqsave(&stat->isp->stat_lock, irqflags);
 
-	अगर (!stat->configured && enable) अणु
+	if (!stat->configured && enable) {
 		spin_unlock_irqrestore(&stat->isp->stat_lock, irqflags);
 		mutex_unlock(&stat->ioctl_lock);
 		dev_dbg(stat->isp->dev,
 			"%s: cannot enable module as it's never been successfully configured so far.\n",
 			stat->subdev.name);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (enable) अणु
-		अगर (stat->state == ISPSTAT_DISABLING)
-			/* Previous disabling request wasn't करोne yet */
+	if (enable) {
+		if (stat->state == ISPSTAT_DISABLING)
+			/* Previous disabling request wasn't done yet */
 			stat->state = ISPSTAT_ENABLED;
-		अन्यथा अगर (stat->state == ISPSTAT_DISABLED)
+		else if (stat->state == ISPSTAT_DISABLED)
 			/* Module is now being enabled */
 			stat->state = ISPSTAT_ENABLING;
-	पूर्ण अन्यथा अणु
-		अगर (stat->state == ISPSTAT_ENABLING) अणु
-			/* Previous enabling request wasn't करोne yet */
+	} else {
+		if (stat->state == ISPSTAT_ENABLING) {
+			/* Previous enabling request wasn't done yet */
 			stat->state = ISPSTAT_DISABLED;
-		पूर्ण अन्यथा अगर (stat->state == ISPSTAT_ENABLED) अणु
+		} else if (stat->state == ISPSTAT_ENABLED) {
 			/* Module is now being disabled */
 			stat->state = ISPSTAT_DISABLING;
 			isp_stat_buf_clear(stat);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	spin_unlock_irqrestore(&stat->isp->stat_lock, irqflags);
 	mutex_unlock(&stat->ioctl_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक omap3isp_stat_s_stream(काष्ठा v4l2_subdev *subdev, पूर्णांक enable)
-अणु
-	काष्ठा ispstat *stat = v4l2_get_subdevdata(subdev);
+int omap3isp_stat_s_stream(struct v4l2_subdev *subdev, int enable)
+{
+	struct ispstat *stat = v4l2_get_subdevdata(subdev);
 
-	अगर (enable) अणु
+	if (enable) {
 		/*
-		 * Only set enable PCR bit अगर the module was previously
+		 * Only set enable PCR bit if the module was previously
 		 * enabled through ioctl.
 		 */
 		isp_stat_try_enable(stat);
-	पूर्ण अन्यथा अणु
-		अचिन्हित दीर्घ flags;
+	} else {
+		unsigned long flags;
 		/* Disable PCR bit and config enable field */
 		omap3isp_stat_enable(stat, 0);
 		spin_lock_irqsave(&stat->isp->stat_lock, flags);
@@ -827,107 +826,107 @@ isp_stat_buf_find_oldest_or_empty(काष्ठा ispstat *stat)
 		spin_unlock_irqrestore(&stat->isp->stat_lock, flags);
 
 		/*
-		 * If module isn't busy, a new पूर्णांकerrupt may come or not to
-		 * set the state to DISABLED. As Histogram needs to पढ़ो its
-		 * पूर्णांकernal memory to clear it, let पूर्णांकerrupt handler
+		 * If module isn't busy, a new interrupt may come or not to
+		 * set the state to DISABLED. As Histogram needs to read its
+		 * internal memory to clear it, let interrupt handler
 		 * responsible of changing state to DISABLED. If the last
-		 * पूर्णांकerrupt is coming, it's still safe as the handler will
-		 * ignore the second समय when state is alपढ़ोy set to DISABLED.
+		 * interrupt is coming, it's still safe as the handler will
+		 * ignore the second time when state is already set to DISABLED.
 		 * It's necessary to synchronize Histogram with streamoff, once
-		 * the module may be considered idle beक्रमe last SDMA transfer
-		 * starts अगर we वापस here.
+		 * the module may be considered idle before last SDMA transfer
+		 * starts if we return here.
 		 */
-		अगर (!omap3isp_stat_pcr_busy(stat))
+		if (!omap3isp_stat_pcr_busy(stat))
 			omap3isp_stat_isr(stat);
 
 		dev_dbg(stat->isp->dev, "%s: module is being disabled\n",
 			stat->subdev.name);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * __stat_isr - Interrupt handler क्रम statistic drivers
+ * __stat_isr - Interrupt handler for statistic drivers
  */
-अटल व्योम __stat_isr(काष्ठा ispstat *stat, पूर्णांक from_dma)
-अणु
-	पूर्णांक ret = STAT_BUF_DONE;
-	पूर्णांक buf_processing;
-	अचिन्हित दीर्घ irqflags;
-	काष्ठा isp_pipeline *pipe;
+static void __stat_isr(struct ispstat *stat, int from_dma)
+{
+	int ret = STAT_BUF_DONE;
+	int buf_processing;
+	unsigned long irqflags;
+	struct isp_pipeline *pipe;
 
 	/*
-	 * stat->buf_processing must be set beक्रमe disable module. It's
-	 * necessary to not inक्रमm too early the buffers aren't busy in हाल
+	 * stat->buf_processing must be set before disable module. It's
+	 * necessary to not inform too early the buffers aren't busy in case
 	 * of SDMA is going to be used.
 	 */
 	spin_lock_irqsave(&stat->isp->stat_lock, irqflags);
-	अगर (stat->state == ISPSTAT_DISABLED) अणु
+	if (stat->state == ISPSTAT_DISABLED) {
 		spin_unlock_irqrestore(&stat->isp->stat_lock, irqflags);
-		वापस;
-	पूर्ण
+		return;
+	}
 	buf_processing = stat->buf_processing;
 	stat->buf_processing = 1;
 	stat->ops->enable(stat, 0);
 
-	अगर (buf_processing && !from_dma) अणु
-		अगर (stat->state == ISPSTAT_ENABLED) अणु
+	if (buf_processing && !from_dma) {
+		if (stat->state == ISPSTAT_ENABLED) {
 			spin_unlock_irqrestore(&stat->isp->stat_lock, irqflags);
 			dev_err(stat->isp->dev,
 				"%s: interrupt occurred when module was still processing a buffer.\n",
 				stat->subdev.name);
 			ret = STAT_NO_BUF;
-			जाओ out;
-		पूर्ण अन्यथा अणु
+			goto out;
+		} else {
 			/*
 			 * Interrupt handler was called from streamoff when
 			 * the module wasn't busy anymore to ensure it is being
 			 * disabled after process last buffer. If such buffer
-			 * processing has alपढ़ोy started, no need to करो
-			 * anything अन्यथा.
+			 * processing has already started, no need to do
+			 * anything else.
 			 */
 			spin_unlock_irqrestore(&stat->isp->stat_lock, irqflags);
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 	spin_unlock_irqrestore(&stat->isp->stat_lock, irqflags);
 
 	/* If it's busy we can't process this buffer anymore */
-	अगर (!omap3isp_stat_pcr_busy(stat)) अणु
-		अगर (!from_dma && stat->ops->buf_process)
+	if (!omap3isp_stat_pcr_busy(stat)) {
+		if (!from_dma && stat->ops->buf_process)
 			/* Module still need to copy data to buffer. */
 			ret = stat->ops->buf_process(stat);
-		अगर (ret == STAT_BUF_WAITING_DMA)
-			/* Buffer is not पढ़ोy yet */
-			वापस;
+		if (ret == STAT_BUF_WAITING_DMA)
+			/* Buffer is not ready yet */
+			return;
 
 		spin_lock_irqsave(&stat->isp->stat_lock, irqflags);
 
 		/*
-		 * Histogram needs to पढ़ो its पूर्णांकernal memory to clear it
-		 * beक्रमe be disabled. For that reason, common statistic layer
-		 * can वापस only after call stat's buf_process() चालक.
+		 * Histogram needs to read its internal memory to clear it
+		 * before be disabled. For that reason, common statistic layer
+		 * can return only after call stat's buf_process() operator.
 		 */
-		अगर (stat->state == ISPSTAT_DISABLING) अणु
+		if (stat->state == ISPSTAT_DISABLING) {
 			stat->state = ISPSTAT_DISABLED;
 			spin_unlock_irqrestore(&stat->isp->stat_lock, irqflags);
 			stat->buf_processing = 0;
-			वापस;
-		पूर्ण
+			return;
+		}
 		pipe = to_isp_pipeline(&stat->subdev.entity);
-		stat->frame_number = atomic_पढ़ो(&pipe->frame_number);
+		stat->frame_number = atomic_read(&pipe->frame_number);
 
 		/*
-		 * Beक्रमe this poपूर्णांक, 'ret' stores the buffer's status if it's
-		 * पढ़ोy to be processed. Afterwards, it holds the status अगर
+		 * Before this point, 'ret' stores the buffer's status if it's
+		 * ready to be processed. Afterwards, it holds the status if
 		 * it was processed successfully.
 		 */
 		ret = isp_stat_buf_process(stat, ret);
 
-		अगर (likely(!stat->sbl_ovl_recover)) अणु
+		if (likely(!stat->sbl_ovl_recover)) {
 			stat->ops->setup_regs(stat, stat->priv);
-		पूर्ण अन्यथा अणु
+		} else {
 			/*
 			 * Using recover config to increase the chance to have
 			 * a good buffer processing and make the H3A module to
@@ -938,28 +937,28 @@ isp_stat_buf_find_oldest_or_empty(काष्ठा ispstat *stat)
 			stat->sbl_ovl_recover = 0;
 
 			/*
-			 * Set 'update' in हाल of the module needs to use
+			 * Set 'update' in case of the module needs to use
 			 * regular configuration after next buffer.
 			 */
 			stat->update = 1;
-		पूर्ण
+		}
 
 		isp_stat_buf_insert_magic(stat, stat->active_buf);
 
 		/*
 		 * Hack: H3A modules may access invalid memory address or send
-		 * corrupted data to userspace अगर more than 1 SBL overflow
+		 * corrupted data to userspace if more than 1 SBL overflow
 		 * happens in a row without re-writing its buffer's start memory
-		 * address in the meanसमय. Such situation is aव्योमed अगर the
+		 * address in the meantime. Such situation is avoided if the
 		 * module is not immediately re-enabled when the ISR misses the
-		 * timing to process the buffer and to setup the रेजिस्टरs.
+		 * timing to process the buffer and to setup the registers.
 		 * Because of that, pcr_enable(1) was moved to inside this 'if'
-		 * block. But the next पूर्णांकerruption will still happen as during
+		 * block. But the next interruption will still happen as during
 		 * pcr_enable(0) the module was busy.
 		 */
 		isp_stat_pcr_enable(stat, 1);
 		spin_unlock_irqrestore(&stat->isp->stat_lock, irqflags);
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
 		 * If a SBL overflow occurs and the H3A driver misses the timing
 		 * to process the buffer, stat->buf_err is set and won't be
@@ -970,12 +969,12 @@ isp_stat_buf_find_oldest_or_empty(काष्ठा ispstat *stat)
 		 * Do not "stat->buf_err = 0" here.
 		 */
 
-		अगर (stat->ops->buf_process)
+		if (stat->ops->buf_process)
 			/*
 			 * Driver may need to erase current data prior to
 			 * process a new buffer. If it misses the timing, the
 			 * next buffer might be wrong. So should be ignored.
-			 * It happens only क्रम Histogram.
+			 * It happens only for Histogram.
 			 */
 			atomic_set(&stat->buf_err, 1);
 
@@ -983,101 +982,101 @@ isp_stat_buf_find_oldest_or_empty(काष्ठा ispstat *stat)
 		dev_dbg(stat->isp->dev,
 			"%s: cannot process buffer, device is busy.\n",
 			stat->subdev.name);
-	पूर्ण
+	}
 
 out:
 	stat->buf_processing = 0;
 	isp_stat_queue_event(stat, ret != STAT_BUF_DONE);
-पूर्ण
+}
 
-व्योम omap3isp_stat_isr(काष्ठा ispstat *stat)
-अणु
+void omap3isp_stat_isr(struct ispstat *stat)
+{
 	__stat_isr(stat, 0);
-पूर्ण
+}
 
-व्योम omap3isp_stat_dma_isr(काष्ठा ispstat *stat)
-अणु
+void omap3isp_stat_dma_isr(struct ispstat *stat)
+{
 	__stat_isr(stat, 1);
-पूर्ण
+}
 
-पूर्णांक omap3isp_stat_subscribe_event(काष्ठा v4l2_subdev *subdev,
-				  काष्ठा v4l2_fh *fh,
-				  काष्ठा v4l2_event_subscription *sub)
-अणु
-	काष्ठा ispstat *stat = v4l2_get_subdevdata(subdev);
+int omap3isp_stat_subscribe_event(struct v4l2_subdev *subdev,
+				  struct v4l2_fh *fh,
+				  struct v4l2_event_subscription *sub)
+{
+	struct ispstat *stat = v4l2_get_subdevdata(subdev);
 
-	अगर (sub->type != stat->event_type)
-		वापस -EINVAL;
+	if (sub->type != stat->event_type)
+		return -EINVAL;
 
-	वापस v4l2_event_subscribe(fh, sub, STAT_NEVENTS, शून्य);
-पूर्ण
+	return v4l2_event_subscribe(fh, sub, STAT_NEVENTS, NULL);
+}
 
-पूर्णांक omap3isp_stat_unsubscribe_event(काष्ठा v4l2_subdev *subdev,
-				    काष्ठा v4l2_fh *fh,
-				    काष्ठा v4l2_event_subscription *sub)
-अणु
-	वापस v4l2_event_unsubscribe(fh, sub);
-पूर्ण
+int omap3isp_stat_unsubscribe_event(struct v4l2_subdev *subdev,
+				    struct v4l2_fh *fh,
+				    struct v4l2_event_subscription *sub)
+{
+	return v4l2_event_unsubscribe(fh, sub);
+}
 
-व्योम omap3isp_stat_unरेजिस्टर_entities(काष्ठा ispstat *stat)
-अणु
-	v4l2_device_unरेजिस्टर_subdev(&stat->subdev);
-पूर्ण
+void omap3isp_stat_unregister_entities(struct ispstat *stat)
+{
+	v4l2_device_unregister_subdev(&stat->subdev);
+}
 
-पूर्णांक omap3isp_stat_रेजिस्टर_entities(काष्ठा ispstat *stat,
-				    काष्ठा v4l2_device *vdev)
-अणु
+int omap3isp_stat_register_entities(struct ispstat *stat,
+				    struct v4l2_device *vdev)
+{
 	stat->subdev.dev = vdev->mdev->dev;
 
-	वापस v4l2_device_रेजिस्टर_subdev(vdev, &stat->subdev);
-पूर्ण
+	return v4l2_device_register_subdev(vdev, &stat->subdev);
+}
 
-अटल पूर्णांक isp_stat_init_entities(काष्ठा ispstat *stat, स्थिर अक्षर *name,
-				  स्थिर काष्ठा v4l2_subdev_ops *sd_ops)
-अणु
-	काष्ठा v4l2_subdev *subdev = &stat->subdev;
-	काष्ठा media_entity *me = &subdev->entity;
+static int isp_stat_init_entities(struct ispstat *stat, const char *name,
+				  const struct v4l2_subdev_ops *sd_ops)
+{
+	struct v4l2_subdev *subdev = &stat->subdev;
+	struct media_entity *me = &subdev->entity;
 
 	v4l2_subdev_init(subdev, sd_ops);
-	snम_लिखो(subdev->name, V4L2_SUBDEV_NAME_SIZE, "OMAP3 ISP %s", name);
-	subdev->grp_id = BIT(16);	/* group ID क्रम isp subdevs */
+	snprintf(subdev->name, V4L2_SUBDEV_NAME_SIZE, "OMAP3 ISP %s", name);
+	subdev->grp_id = BIT(16);	/* group ID for isp subdevs */
 	subdev->flags |= V4L2_SUBDEV_FL_HAS_EVENTS | V4L2_SUBDEV_FL_HAS_DEVNODE;
 	v4l2_set_subdevdata(subdev, stat);
 
 	stat->pad.flags = MEDIA_PAD_FL_SINK | MEDIA_PAD_FL_MUST_CONNECT;
-	me->ops = शून्य;
+	me->ops = NULL;
 
-	वापस media_entity_pads_init(me, 1, &stat->pad);
-पूर्ण
+	return media_entity_pads_init(me, 1, &stat->pad);
+}
 
-पूर्णांक omap3isp_stat_init(काष्ठा ispstat *stat, स्थिर अक्षर *name,
-		       स्थिर काष्ठा v4l2_subdev_ops *sd_ops)
-अणु
-	पूर्णांक ret;
+int omap3isp_stat_init(struct ispstat *stat, const char *name,
+		       const struct v4l2_subdev_ops *sd_ops)
+{
+	int ret;
 
-	stat->buf = kसुस्मृति(STAT_MAX_BUFS, माप(*stat->buf), GFP_KERNEL);
-	अगर (!stat->buf)
-		वापस -ENOMEM;
+	stat->buf = kcalloc(STAT_MAX_BUFS, sizeof(*stat->buf), GFP_KERNEL);
+	if (!stat->buf)
+		return -ENOMEM;
 
 	isp_stat_buf_clear(stat);
 	mutex_init(&stat->ioctl_lock);
 	atomic_set(&stat->buf_err, 0);
 
 	ret = isp_stat_init_entities(stat, name, sd_ops);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		mutex_destroy(&stat->ioctl_lock);
-		kमुक्त(stat->buf);
-	पूर्ण
+		kfree(stat->buf);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम omap3isp_stat_cleanup(काष्ठा ispstat *stat)
-अणु
+void omap3isp_stat_cleanup(struct ispstat *stat)
+{
 	media_entity_cleanup(&stat->subdev.entity);
 	mutex_destroy(&stat->ioctl_lock);
-	isp_stat_bufs_मुक्त(stat);
-	kमुक्त(stat->buf);
-	kमुक्त(stat->priv);
-	kमुक्त(stat->recover_priv);
-पूर्ण
+	isp_stat_bufs_free(stat);
+	kfree(stat->buf);
+	kfree(stat->priv);
+	kfree(stat->recover_priv);
+}

@@ -1,411 +1,410 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * vz89x.c - Support क्रम SGX Sensortech MiCS VZ89X VOC sensors
+ * vz89x.c - Support for SGX Sensortech MiCS VZ89X VOC sensors
  *
  * Copyright (C) 2015-2018
  * Author: Matt Ranostay <matt.ranostay@konsulko.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/init.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/mod_devicetable.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <linux/init.h>
+#include <linux/i2c.h>
+#include <linux/mod_devicetable.h>
 
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/iio/sysfs.h>
+#include <linux/iio/iio.h>
+#include <linux/iio/sysfs.h>
 
-#घोषणा VZ89X_REG_MEASUREMENT		0x09
-#घोषणा VZ89X_REG_MEASUREMENT_RD_SIZE	6
-#घोषणा VZ89X_REG_MEASUREMENT_WR_SIZE	3
+#define VZ89X_REG_MEASUREMENT		0x09
+#define VZ89X_REG_MEASUREMENT_RD_SIZE	6
+#define VZ89X_REG_MEASUREMENT_WR_SIZE	3
 
-#घोषणा VZ89X_VOC_CO2_IDX		0
-#घोषणा VZ89X_VOC_SHORT_IDX		1
-#घोषणा VZ89X_VOC_TVOC_IDX		2
-#घोषणा VZ89X_VOC_RESISTANCE_IDX	3
+#define VZ89X_VOC_CO2_IDX		0
+#define VZ89X_VOC_SHORT_IDX		1
+#define VZ89X_VOC_TVOC_IDX		2
+#define VZ89X_VOC_RESISTANCE_IDX	3
 
-#घोषणा VZ89TE_REG_MEASUREMENT		0x0c
-#घोषणा VZ89TE_REG_MEASUREMENT_RD_SIZE	7
-#घोषणा VZ89TE_REG_MEASUREMENT_WR_SIZE	6
+#define VZ89TE_REG_MEASUREMENT		0x0c
+#define VZ89TE_REG_MEASUREMENT_RD_SIZE	7
+#define VZ89TE_REG_MEASUREMENT_WR_SIZE	6
 
-#घोषणा VZ89TE_VOC_TVOC_IDX		0
-#घोषणा VZ89TE_VOC_CO2_IDX		1
-#घोषणा VZ89TE_VOC_RESISTANCE_IDX	2
+#define VZ89TE_VOC_TVOC_IDX		0
+#define VZ89TE_VOC_CO2_IDX		1
+#define VZ89TE_VOC_RESISTANCE_IDX	2
 
-क्रमागत अणु
+enum {
 	VZ89X,
 	VZ89TE,
-पूर्ण;
+};
 
-काष्ठा vz89x_chip_data;
+struct vz89x_chip_data;
 
-काष्ठा vz89x_data अणु
-	काष्ठा i2c_client *client;
-	स्थिर काष्ठा vz89x_chip_data *chip;
-	काष्ठा mutex lock;
-	पूर्णांक (*xfer)(काष्ठा vz89x_data *data, u8 cmd);
+struct vz89x_data {
+	struct i2c_client *client;
+	const struct vz89x_chip_data *chip;
+	struct mutex lock;
+	int (*xfer)(struct vz89x_data *data, u8 cmd);
 
 	bool is_valid;
-	अचिन्हित दीर्घ last_update;
+	unsigned long last_update;
 	u8 buffer[VZ89TE_REG_MEASUREMENT_RD_SIZE];
-पूर्ण;
+};
 
-काष्ठा vz89x_chip_data अणु
-	bool (*valid)(काष्ठा vz89x_data *data);
-	स्थिर काष्ठा iio_chan_spec *channels;
+struct vz89x_chip_data {
+	bool (*valid)(struct vz89x_data *data);
+	const struct iio_chan_spec *channels;
 	u8 num_channels;
 
 	u8 cmd;
-	u8 पढ़ो_size;
-	u8 ग_लिखो_size;
-पूर्ण;
+	u8 read_size;
+	u8 write_size;
+};
 
-अटल स्थिर काष्ठा iio_chan_spec vz89x_channels[] = अणु
-	अणु
+static const struct iio_chan_spec vz89x_channels[] = {
+	{
 		.type = IIO_CONCENTRATION,
 		.channel2 = IIO_MOD_CO2,
-		.modअगरied = 1,
+		.modified = 1,
 		.info_mask_separate =
 			BIT(IIO_CHAN_INFO_OFFSET) | BIT(IIO_CHAN_INFO_RAW),
 		.address = VZ89X_VOC_CO2_IDX,
-	पूर्ण,
-	अणु
+	},
+	{
 		.type = IIO_CONCENTRATION,
 		.channel2 = IIO_MOD_VOC,
-		.modअगरied = 1,
+		.modified = 1,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),
 		.address = VZ89X_VOC_SHORT_IDX,
 		.extend_name = "short",
-	पूर्ण,
-	अणु
+	},
+	{
 		.type = IIO_CONCENTRATION,
 		.channel2 = IIO_MOD_VOC,
-		.modअगरied = 1,
+		.modified = 1,
 		.info_mask_separate =
 			BIT(IIO_CHAN_INFO_OFFSET) | BIT(IIO_CHAN_INFO_RAW),
 		.address = VZ89X_VOC_TVOC_IDX,
-	पूर्ण,
-	अणु
+	},
+	{
 		.type = IIO_RESISTANCE,
 		.info_mask_separate =
 			BIT(IIO_CHAN_INFO_RAW) | BIT(IIO_CHAN_INFO_SCALE),
 		.address = VZ89X_VOC_RESISTANCE_IDX,
 		.scan_index = -1,
-		.scan_type = अणु
+		.scan_type = {
 			.endianness = IIO_LE,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल स्थिर काष्ठा iio_chan_spec vz89te_channels[] = अणु
-	अणु
+static const struct iio_chan_spec vz89te_channels[] = {
+	{
 		.type = IIO_CONCENTRATION,
 		.channel2 = IIO_MOD_VOC,
-		.modअगरied = 1,
+		.modified = 1,
 		.info_mask_separate =
 			BIT(IIO_CHAN_INFO_OFFSET) | BIT(IIO_CHAN_INFO_RAW),
 		.address = VZ89TE_VOC_TVOC_IDX,
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.type = IIO_CONCENTRATION,
 		.channel2 = IIO_MOD_CO2,
-		.modअगरied = 1,
+		.modified = 1,
 		.info_mask_separate =
 			BIT(IIO_CHAN_INFO_OFFSET) | BIT(IIO_CHAN_INFO_RAW),
 		.address = VZ89TE_VOC_CO2_IDX,
-	पूर्ण,
-	अणु
+	},
+	{
 		.type = IIO_RESISTANCE,
 		.info_mask_separate =
 			BIT(IIO_CHAN_INFO_RAW) | BIT(IIO_CHAN_INFO_SCALE),
 		.address = VZ89TE_VOC_RESISTANCE_IDX,
 		.scan_index = -1,
-		.scan_type = अणु
+		.scan_type = {
 			.endianness = IIO_BE,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल IIO_CONST_ATTR(in_concentration_co2_scale, "0.00000698689");
-अटल IIO_CONST_ATTR(in_concentration_voc_scale, "0.00000000436681223");
+static IIO_CONST_ATTR(in_concentration_co2_scale, "0.00000698689");
+static IIO_CONST_ATTR(in_concentration_voc_scale, "0.00000000436681223");
 
-अटल काष्ठा attribute *vz89x_attributes[] = अणु
-	&iio_स्थिर_attr_in_concentration_co2_scale.dev_attr.attr,
-	&iio_स्थिर_attr_in_concentration_voc_scale.dev_attr.attr,
-	शून्य,
-पूर्ण;
+static struct attribute *vz89x_attributes[] = {
+	&iio_const_attr_in_concentration_co2_scale.dev_attr.attr,
+	&iio_const_attr_in_concentration_voc_scale.dev_attr.attr,
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group vz89x_attrs_group = अणु
+static const struct attribute_group vz89x_attrs_group = {
 	.attrs = vz89x_attributes,
-पूर्ण;
+};
 
 /*
- * Chipset someसमय updates in the middle of a पढ़ोing causing it to reset the
- * data poपूर्णांकer, and causing invalid पढ़ोing of previous data.
- * We can check क्रम this by पढ़ोing MSB of the resistance पढ़ोing that is
- * always zero, and by also confirming the VOC_लघु isn't zero.
+ * Chipset sometime updates in the middle of a reading causing it to reset the
+ * data pointer, and causing invalid reading of previous data.
+ * We can check for this by reading MSB of the resistance reading that is
+ * always zero, and by also confirming the VOC_short isn't zero.
  */
 
-अटल bool vz89x_measurement_is_valid(काष्ठा vz89x_data *data)
-अणु
-	अगर (data->buffer[VZ89X_VOC_SHORT_IDX] == 0)
-		वापस true;
+static bool vz89x_measurement_is_valid(struct vz89x_data *data)
+{
+	if (data->buffer[VZ89X_VOC_SHORT_IDX] == 0)
+		return true;
 
-	वापस !!(data->buffer[data->chip->पढ़ो_size - 1] > 0);
-पूर्ण
+	return !!(data->buffer[data->chip->read_size - 1] > 0);
+}
 
-/* VZ89TE device has a modअगरied CRC-8 two complement check */
-अटल bool vz89te_measurement_is_valid(काष्ठा vz89x_data *data)
-अणु
+/* VZ89TE device has a modified CRC-8 two complement check */
+static bool vz89te_measurement_is_valid(struct vz89x_data *data)
+{
 	u8 crc = 0;
-	पूर्णांक i, sum = 0;
+	int i, sum = 0;
 
-	क्रम (i = 0; i < (data->chip->पढ़ो_size - 1); i++) अणु
+	for (i = 0; i < (data->chip->read_size - 1); i++) {
 		sum = crc + data->buffer[i];
 		crc = sum;
 		crc += sum / 256;
-	पूर्ण
+	}
 
-	वापस !((0xff - crc) == data->buffer[data->chip->पढ़ो_size - 1]);
-पूर्ण
+	return !((0xff - crc) == data->buffer[data->chip->read_size - 1]);
+}
 
-अटल पूर्णांक vz89x_i2c_xfer(काष्ठा vz89x_data *data, u8 cmd)
-अणु
-	स्थिर काष्ठा vz89x_chip_data *chip = data->chip;
-	काष्ठा i2c_client *client = data->client;
-	काष्ठा i2c_msg msg[2];
-	पूर्णांक ret;
-	u8 buf[6] = अणु cmd, 0, 0, 0, 0, 0xf3 पूर्ण;
+static int vz89x_i2c_xfer(struct vz89x_data *data, u8 cmd)
+{
+	const struct vz89x_chip_data *chip = data->chip;
+	struct i2c_client *client = data->client;
+	struct i2c_msg msg[2];
+	int ret;
+	u8 buf[6] = { cmd, 0, 0, 0, 0, 0xf3 };
 
 	msg[0].addr = client->addr;
 	msg[0].flags = client->flags;
-	msg[0].len = chip->ग_लिखो_size;
-	msg[0].buf  = (अक्षर *) &buf;
+	msg[0].len = chip->write_size;
+	msg[0].buf  = (char *) &buf;
 
 	msg[1].addr = client->addr;
 	msg[1].flags = client->flags | I2C_M_RD;
-	msg[1].len = chip->पढ़ो_size;
-	msg[1].buf = (अक्षर *) &data->buffer;
+	msg[1].len = chip->read_size;
+	msg[1].buf = (char *) &data->buffer;
 
 	ret = i2c_transfer(client->adapter, msg, 2);
 
-	वापस (ret == 2) ? 0 : ret;
-पूर्ण
+	return (ret == 2) ? 0 : ret;
+}
 
-अटल पूर्णांक vz89x_smbus_xfer(काष्ठा vz89x_data *data, u8 cmd)
-अणु
-	काष्ठा i2c_client *client = data->client;
-	पूर्णांक ret;
-	पूर्णांक i;
+static int vz89x_smbus_xfer(struct vz89x_data *data, u8 cmd)
+{
+	struct i2c_client *client = data->client;
+	int ret;
+	int i;
 
-	ret = i2c_smbus_ग_लिखो_word_data(client, cmd, 0);
-	अगर (ret < 0)
-		वापस ret;
+	ret = i2c_smbus_write_word_data(client, cmd, 0);
+	if (ret < 0)
+		return ret;
 
-	क्रम (i = 0; i < data->chip->पढ़ो_size; i++) अणु
-		ret = i2c_smbus_पढ़ो_byte(client);
-		अगर (ret < 0)
-			वापस ret;
+	for (i = 0; i < data->chip->read_size; i++) {
+		ret = i2c_smbus_read_byte(client);
+		if (ret < 0)
+			return ret;
 		data->buffer[i] = ret;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vz89x_get_measurement(काष्ठा vz89x_data *data)
-अणु
-	स्थिर काष्ठा vz89x_chip_data *chip = data->chip;
-	पूर्णांक ret;
+static int vz89x_get_measurement(struct vz89x_data *data)
+{
+	const struct vz89x_chip_data *chip = data->chip;
+	int ret;
 
 	/* sensor can only be polled once a second max per datasheet */
-	अगर (!समय_after(jअगरfies, data->last_update + HZ))
-		वापस data->is_valid ? 0 : -EAGAIN;
+	if (!time_after(jiffies, data->last_update + HZ))
+		return data->is_valid ? 0 : -EAGAIN;
 
 	data->is_valid = false;
-	data->last_update = jअगरfies;
+	data->last_update = jiffies;
 
 	ret = data->xfer(data, chip->cmd);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	ret = chip->valid(data);
-	अगर (ret)
-		वापस -EAGAIN;
+	if (ret)
+		return -EAGAIN;
 
 	data->is_valid = true;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vz89x_get_resistance_पढ़ोing(काष्ठा vz89x_data *data,
-					काष्ठा iio_chan_spec स्थिर *chan,
-					पूर्णांक *val)
-अणु
-	u8 *पंचांगp = (u8 *) &data->buffer[chan->address];
+static int vz89x_get_resistance_reading(struct vz89x_data *data,
+					struct iio_chan_spec const *chan,
+					int *val)
+{
+	u8 *tmp = (u8 *) &data->buffer[chan->address];
 
-	चयन (chan->scan_type.endianness) अणु
-	हाल IIO_LE:
-		*val = le32_to_cpup((__le32 *) पंचांगp) & GENMASK(23, 0);
-		अवरोध;
-	हाल IIO_BE:
-		*val = be32_to_cpup((__be32 *) पंचांगp) >> 8;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	switch (chan->scan_type.endianness) {
+	case IIO_LE:
+		*val = le32_to_cpup((__le32 *) tmp) & GENMASK(23, 0);
+		break;
+	case IIO_BE:
+		*val = be32_to_cpup((__be32 *) tmp) >> 8;
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vz89x_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
-			  काष्ठा iio_chan_spec स्थिर *chan, पूर्णांक *val,
-			  पूर्णांक *val2, दीर्घ mask)
-अणु
-	काष्ठा vz89x_data *data = iio_priv(indio_dev);
-	पूर्णांक ret = -EINVAL;
+static int vz89x_read_raw(struct iio_dev *indio_dev,
+			  struct iio_chan_spec const *chan, int *val,
+			  int *val2, long mask)
+{
+	struct vz89x_data *data = iio_priv(indio_dev);
+	int ret = -EINVAL;
 
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_RAW:
+	switch (mask) {
+	case IIO_CHAN_INFO_RAW:
 		mutex_lock(&data->lock);
 		ret = vz89x_get_measurement(data);
 		mutex_unlock(&data->lock);
 
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-		चयन (chan->type) अणु
-		हाल IIO_CONCENTRATION:
+		switch (chan->type) {
+		case IIO_CONCENTRATION:
 			*val = data->buffer[chan->address];
-			वापस IIO_VAL_INT;
-		हाल IIO_RESISTANCE:
-			ret = vz89x_get_resistance_पढ़ोing(data, chan, val);
-			अगर (!ret)
-				वापस IIO_VAL_INT;
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-		अवरोध;
-	हाल IIO_CHAN_INFO_SCALE:
-		चयन (chan->type) अणु
-		हाल IIO_RESISTANCE:
+			return IIO_VAL_INT;
+		case IIO_RESISTANCE:
+			ret = vz89x_get_resistance_reading(data, chan, val);
+			if (!ret)
+				return IIO_VAL_INT;
+			break;
+		default:
+			return -EINVAL;
+		}
+		break;
+	case IIO_CHAN_INFO_SCALE:
+		switch (chan->type) {
+		case IIO_RESISTANCE:
 			*val = 10;
-			वापस IIO_VAL_INT;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-		अवरोध;
-	हाल IIO_CHAN_INFO_OFFSET:
-		चयन (chan->channel2) अणु
-		हाल IIO_MOD_CO2:
+			return IIO_VAL_INT;
+		default:
+			return -EINVAL;
+		}
+		break;
+	case IIO_CHAN_INFO_OFFSET:
+		switch (chan->channel2) {
+		case IIO_MOD_CO2:
 			*val = 44;
 			*val2 = 250000;
-			वापस IIO_VAL_INT_PLUS_MICRO;
-		हाल IIO_MOD_VOC:
+			return IIO_VAL_INT_PLUS_MICRO;
+		case IIO_MOD_VOC:
 			*val = -13;
-			वापस IIO_VAL_INT;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return IIO_VAL_INT;
+		default:
+			return -EINVAL;
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा iio_info vz89x_info = अणु
+static const struct iio_info vz89x_info = {
 	.attrs		= &vz89x_attrs_group,
-	.पढ़ो_raw	= vz89x_पढ़ो_raw,
-पूर्ण;
+	.read_raw	= vz89x_read_raw,
+};
 
-अटल स्थिर काष्ठा vz89x_chip_data vz89x_chips[] = अणु
-	अणु
+static const struct vz89x_chip_data vz89x_chips[] = {
+	{
 		.valid = vz89x_measurement_is_valid,
 
 		.cmd = VZ89X_REG_MEASUREMENT,
-		.पढ़ो_size = VZ89X_REG_MEASUREMENT_RD_SIZE,
-		.ग_लिखो_size = VZ89X_REG_MEASUREMENT_WR_SIZE,
+		.read_size = VZ89X_REG_MEASUREMENT_RD_SIZE,
+		.write_size = VZ89X_REG_MEASUREMENT_WR_SIZE,
 
 		.channels = vz89x_channels,
 		.num_channels = ARRAY_SIZE(vz89x_channels),
-	पूर्ण,
-	अणु
+	},
+	{
 		.valid = vz89te_measurement_is_valid,
 
 		.cmd = VZ89TE_REG_MEASUREMENT,
-		.पढ़ो_size = VZ89TE_REG_MEASUREMENT_RD_SIZE,
-		.ग_लिखो_size = VZ89TE_REG_MEASUREMENT_WR_SIZE,
+		.read_size = VZ89TE_REG_MEASUREMENT_RD_SIZE,
+		.write_size = VZ89TE_REG_MEASUREMENT_WR_SIZE,
 
 		.channels = vz89te_channels,
 		.num_channels = ARRAY_SIZE(vz89te_channels),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा of_device_id vz89x_dt_ids[] = अणु
-	अणु .compatible = "sgx,vz89x", .data = (व्योम *) VZ89X पूर्ण,
-	अणु .compatible = "sgx,vz89te", .data = (व्योम *) VZ89TE पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id vz89x_dt_ids[] = {
+	{ .compatible = "sgx,vz89x", .data = (void *) VZ89X },
+	{ .compatible = "sgx,vz89te", .data = (void *) VZ89TE },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, vz89x_dt_ids);
 
-अटल पूर्णांक vz89x_probe(काष्ठा i2c_client *client,
-		       स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा device *dev = &client->dev;
-	काष्ठा iio_dev *indio_dev;
-	काष्ठा vz89x_data *data;
-	पूर्णांक chip_id;
+static int vz89x_probe(struct i2c_client *client,
+		       const struct i2c_device_id *id)
+{
+	struct device *dev = &client->dev;
+	struct iio_dev *indio_dev;
+	struct vz89x_data *data;
+	int chip_id;
 
-	indio_dev = devm_iio_device_alloc(dev, माप(*data));
-	अगर (!indio_dev)
-		वापस -ENOMEM;
+	indio_dev = devm_iio_device_alloc(dev, sizeof(*data));
+	if (!indio_dev)
+		return -ENOMEM;
 	data = iio_priv(indio_dev);
 
-	अगर (i2c_check_functionality(client->adapter, I2C_FUNC_I2C))
+	if (i2c_check_functionality(client->adapter, I2C_FUNC_I2C))
 		data->xfer = vz89x_i2c_xfer;
-	अन्यथा अगर (i2c_check_functionality(client->adapter,
+	else if (i2c_check_functionality(client->adapter,
 				I2C_FUNC_SMBUS_WORD_DATA | I2C_FUNC_SMBUS_BYTE))
 		data->xfer = vz89x_smbus_xfer;
-	अन्यथा
-		वापस -EOPNOTSUPP;
+	else
+		return -EOPNOTSUPP;
 
-	अगर (!dev_fwnode(dev))
+	if (!dev_fwnode(dev))
 		chip_id = id->driver_data;
-	अन्यथा
-		chip_id = (अचिन्हित दीर्घ)device_get_match_data(dev);
+	else
+		chip_id = (unsigned long)device_get_match_data(dev);
 
 	i2c_set_clientdata(client, indio_dev);
 	data->client = client;
 	data->chip = &vz89x_chips[chip_id];
-	data->last_update = jअगरfies - HZ;
+	data->last_update = jiffies - HZ;
 	mutex_init(&data->lock);
 
 	indio_dev->info = &vz89x_info;
 	indio_dev->name = dev_name(dev);
-	indio_dev->modes = INDIO_सूचीECT_MODE;
+	indio_dev->modes = INDIO_DIRECT_MODE;
 
 	indio_dev->channels = data->chip->channels;
 	indio_dev->num_channels = data->chip->num_channels;
 
-	वापस devm_iio_device_रेजिस्टर(dev, indio_dev);
-पूर्ण
+	return devm_iio_device_register(dev, indio_dev);
+}
 
-अटल स्थिर काष्ठा i2c_device_id vz89x_id[] = अणु
-	अणु "vz89x", VZ89X पूर्ण,
-	अणु "vz89te", VZ89TE पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id vz89x_id[] = {
+	{ "vz89x", VZ89X },
+	{ "vz89te", VZ89TE },
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, vz89x_id);
 
-अटल काष्ठा i2c_driver vz89x_driver = अणु
-	.driver = अणु
+static struct i2c_driver vz89x_driver = {
+	.driver = {
 		.name	= "vz89x",
 		.of_match_table = vz89x_dt_ids,
-	पूर्ण,
+	},
 	.probe = vz89x_probe,
 	.id_table = vz89x_id,
-पूर्ण;
+};
 module_i2c_driver(vz89x_driver);
 
 MODULE_AUTHOR("Matt Ranostay <matt.ranostay@konsulko.com>");

@@ -1,23 +1,22 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  scsi_netlink.c  - SCSI Transport Netlink Interface
  *
  *  Copyright (C) 2006   James Smart, Emulex Corporation
  */
-#समावेश <linux/समय.स>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/security.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/export.h>
-#समावेश <net/sock.h>
-#समावेश <net/netlink.h>
+#include <linux/time.h>
+#include <linux/jiffies.h>
+#include <linux/security.h>
+#include <linux/delay.h>
+#include <linux/slab.h>
+#include <linux/export.h>
+#include <net/sock.h>
+#include <net/netlink.h>
 
-#समावेश <scsi/scsi_netlink.h>
-#समावेश "scsi_priv.h"
+#include <scsi/scsi_netlink.h>
+#include "scsi_priv.h"
 
-काष्ठा sock *scsi_nl_sock = शून्य;
+struct sock *scsi_nl_sock = NULL;
 EXPORT_SYMBOL_GPL(scsi_nl_sock);
 
 /**
@@ -29,117 +28,117 @@ EXPORT_SYMBOL_GPL(scsi_nl_sock);
  *
  *
  **/
-अटल व्योम
-scsi_nl_rcv_msg(काष्ठा sk_buff *skb)
-अणु
-	काष्ठा nlmsghdr *nlh;
-	काष्ठा scsi_nl_hdr *hdr;
+static void
+scsi_nl_rcv_msg(struct sk_buff *skb)
+{
+	struct nlmsghdr *nlh;
+	struct scsi_nl_hdr *hdr;
 	u32 rlen;
-	पूर्णांक err, tport;
+	int err, tport;
 
-	जबतक (skb->len >= NLMSG_HDRLEN) अणु
+	while (skb->len >= NLMSG_HDRLEN) {
 		err = 0;
 
 		nlh = nlmsg_hdr(skb);
-		अगर ((nlh->nlmsg_len < (माप(*nlh) + माप(*hdr))) ||
-		    (skb->len < nlh->nlmsg_len)) अणु
-			prपूर्णांकk(KERN_WARNING "%s: discarding partial skb\n",
+		if ((nlh->nlmsg_len < (sizeof(*nlh) + sizeof(*hdr))) ||
+		    (skb->len < nlh->nlmsg_len)) {
+			printk(KERN_WARNING "%s: discarding partial skb\n",
 				 __func__);
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		rlen = NLMSG_ALIGN(nlh->nlmsg_len);
-		अगर (rlen > skb->len)
+		if (rlen > skb->len)
 			rlen = skb->len;
 
-		अगर (nlh->nlmsg_type != SCSI_TRANSPORT_MSG) अणु
+		if (nlh->nlmsg_type != SCSI_TRANSPORT_MSG) {
 			err = -EBADMSG;
-			जाओ next_msg;
-		पूर्ण
+			goto next_msg;
+		}
 
 		hdr = nlmsg_data(nlh);
-		अगर ((hdr->version != SCSI_NL_VERSION) ||
-		    (hdr->magic != SCSI_NL_MAGIC)) अणु
+		if ((hdr->version != SCSI_NL_VERSION) ||
+		    (hdr->magic != SCSI_NL_MAGIC)) {
 			err = -EPROTOTYPE;
-			जाओ next_msg;
-		पूर्ण
+			goto next_msg;
+		}
 
-		अगर (!netlink_capable(skb, CAP_SYS_ADMIN)) अणु
+		if (!netlink_capable(skb, CAP_SYS_ADMIN)) {
 			err = -EPERM;
-			जाओ next_msg;
-		पूर्ण
+			goto next_msg;
+		}
 
-		अगर (nlh->nlmsg_len < (माप(*nlh) + hdr->msglen)) अणु
-			prपूर्णांकk(KERN_WARNING "%s: discarding partial message\n",
+		if (nlh->nlmsg_len < (sizeof(*nlh) + hdr->msglen)) {
+			printk(KERN_WARNING "%s: discarding partial message\n",
 				 __func__);
-			जाओ next_msg;
-		पूर्ण
+			goto next_msg;
+		}
 
 		/*
 		 * Deliver message to the appropriate transport
 		 */
 		tport = hdr->transport;
-		अगर (tport == SCSI_NL_TRANSPORT) अणु
-			चयन (hdr->msgtype) अणु
-			हाल SCSI_NL_SHOST_VENDOR:
+		if (tport == SCSI_NL_TRANSPORT) {
+			switch (hdr->msgtype) {
+			case SCSI_NL_SHOST_VENDOR:
 				/* Locate the driver that corresponds to the message */
 				err = -ESRCH;
-				अवरोध;
-			शेष:
+				break;
+			default:
 				err = -EBADR;
-				अवरोध;
-			पूर्ण
-			अगर (err)
-				prपूर्णांकk(KERN_WARNING "%s: Msgtype %d failed - err %d\n",
+				break;
+			}
+			if (err)
+				printk(KERN_WARNING "%s: Msgtype %d failed - err %d\n",
 				       __func__, hdr->msgtype, err);
-		पूर्ण
-		अन्यथा
+		}
+		else
 			err = -ENOENT;
 
 next_msg:
-		अगर ((err) || (nlh->nlmsg_flags & NLM_F_ACK))
-			netlink_ack(skb, nlh, err, शून्य);
+		if ((err) || (nlh->nlmsg_flags & NLM_F_ACK))
+			netlink_ack(skb, nlh, err, NULL);
 
 		skb_pull(skb, rlen);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * scsi_netlink_init - Called by SCSI subप्रणाली to initialize
- * 	the SCSI transport netlink पूर्णांकerface
+ * scsi_netlink_init - Called by SCSI subsystem to initialize
+ * 	the SCSI transport netlink interface
  *
  **/
-व्योम
-scsi_netlink_init(व्योम)
-अणु
-	काष्ठा netlink_kernel_cfg cfg = अणु
+void
+scsi_netlink_init(void)
+{
+	struct netlink_kernel_cfg cfg = {
 		.input	= scsi_nl_rcv_msg,
 		.groups	= SCSI_NL_GRP_CNT,
-	पूर्ण;
+	};
 
 	scsi_nl_sock = netlink_kernel_create(&init_net, NETLINK_SCSITRANSPORT,
 					     &cfg);
-	अगर (!scsi_nl_sock) अणु
-		prपूर्णांकk(KERN_ERR "%s: register of receive handler failed\n",
+	if (!scsi_nl_sock) {
+		printk(KERN_ERR "%s: register of receive handler failed\n",
 				__func__);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	वापस;
-पूर्ण
+	return;
+}
 
 
 /**
- * scsi_netlink_निकास - Called by SCSI subप्रणाली to disable the SCSI transport netlink पूर्णांकerface
+ * scsi_netlink_exit - Called by SCSI subsystem to disable the SCSI transport netlink interface
  *
  **/
-व्योम
-scsi_netlink_निकास(व्योम)
-अणु
-	अगर (scsi_nl_sock) अणु
+void
+scsi_netlink_exit(void)
+{
+	if (scsi_nl_sock) {
 		netlink_kernel_release(scsi_nl_sock);
-	पूर्ण
+	}
 
-	वापस;
-पूर्ण
+	return;
+}
 

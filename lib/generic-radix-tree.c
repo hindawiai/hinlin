@@ -1,238 +1,237 @@
-<शैली गुरु>
 
-#समावेश <linux/export.h>
-#समावेश <linux/generic-radix-tree.h>
-#समावेश <linux/gfp.h>
-#समावेश <linux/kmemleak.h>
+#include <linux/export.h>
+#include <linux/generic-radix-tree.h>
+#include <linux/gfp.h>
+#include <linux/kmemleak.h>
 
-#घोषणा GENRADIX_ARY		(PAGE_SIZE / माप(काष्ठा genradix_node *))
-#घोषणा GENRADIX_ARY_SHIFT	ilog2(GENRADIX_ARY)
+#define GENRADIX_ARY		(PAGE_SIZE / sizeof(struct genradix_node *))
+#define GENRADIX_ARY_SHIFT	ilog2(GENRADIX_ARY)
 
-काष्ठा genradix_node अणु
-	जोड़ अणु
+struct genradix_node {
+	union {
 		/* Interior node: */
-		काष्ठा genradix_node	*children[GENRADIX_ARY];
+		struct genradix_node	*children[GENRADIX_ARY];
 
 		/* Leaf: */
 		u8			data[PAGE_SIZE];
-	पूर्ण;
-पूर्ण;
+	};
+};
 
-अटल अंतरभूत पूर्णांक genradix_depth_shअगरt(अचिन्हित depth)
-अणु
-	वापस PAGE_SHIFT + GENRADIX_ARY_SHIFT * depth;
-पूर्ण
+static inline int genradix_depth_shift(unsigned depth)
+{
+	return PAGE_SHIFT + GENRADIX_ARY_SHIFT * depth;
+}
 
 /*
  * Returns size (of data, in bytes) that a tree of a given depth holds:
  */
-अटल अंतरभूत माप_प्रकार genradix_depth_size(अचिन्हित depth)
-अणु
-	वापस 1UL << genradix_depth_shअगरt(depth);
-पूर्ण
+static inline size_t genradix_depth_size(unsigned depth)
+{
+	return 1UL << genradix_depth_shift(depth);
+}
 
-/* depth that's needed क्रम a genradix that can address up to अच_दीर्घ_उच्च: */
-#घोषणा GENRADIX_MAX_DEPTH	\
+/* depth that's needed for a genradix that can address up to ULONG_MAX: */
+#define GENRADIX_MAX_DEPTH	\
 	DIV_ROUND_UP(BITS_PER_LONG - PAGE_SHIFT, GENRADIX_ARY_SHIFT)
 
-#घोषणा GENRADIX_DEPTH_MASK				\
-	((अचिन्हित दीर्घ) (roundup_घात_of_two(GENRADIX_MAX_DEPTH + 1) - 1))
+#define GENRADIX_DEPTH_MASK				\
+	((unsigned long) (roundup_pow_of_two(GENRADIX_MAX_DEPTH + 1) - 1))
 
-अटल अंतरभूत अचिन्हित genradix_root_to_depth(काष्ठा genradix_root *r)
-अणु
-	वापस (अचिन्हित दीर्घ) r & GENRADIX_DEPTH_MASK;
-पूर्ण
+static inline unsigned genradix_root_to_depth(struct genradix_root *r)
+{
+	return (unsigned long) r & GENRADIX_DEPTH_MASK;
+}
 
-अटल अंतरभूत काष्ठा genradix_node *genradix_root_to_node(काष्ठा genradix_root *r)
-अणु
-	वापस (व्योम *) ((अचिन्हित दीर्घ) r & ~GENRADIX_DEPTH_MASK);
-पूर्ण
+static inline struct genradix_node *genradix_root_to_node(struct genradix_root *r)
+{
+	return (void *) ((unsigned long) r & ~GENRADIX_DEPTH_MASK);
+}
 
 /*
- * Returns poपूर्णांकer to the specअगरied byte @offset within @radix, or शून्य अगर not
+ * Returns pointer to the specified byte @offset within @radix, or NULL if not
  * allocated
  */
-व्योम *__genradix_ptr(काष्ठा __genradix *radix, माप_प्रकार offset)
-अणु
-	काष्ठा genradix_root *r = READ_ONCE(radix->root);
-	काष्ठा genradix_node *n = genradix_root_to_node(r);
-	अचिन्हित level		= genradix_root_to_depth(r);
+void *__genradix_ptr(struct __genradix *radix, size_t offset)
+{
+	struct genradix_root *r = READ_ONCE(radix->root);
+	struct genradix_node *n = genradix_root_to_node(r);
+	unsigned level		= genradix_root_to_depth(r);
 
-	अगर (ilog2(offset) >= genradix_depth_shअगरt(level))
-		वापस शून्य;
+	if (ilog2(offset) >= genradix_depth_shift(level))
+		return NULL;
 
-	जबतक (1) अणु
-		अगर (!n)
-			वापस शून्य;
-		अगर (!level)
-			अवरोध;
+	while (1) {
+		if (!n)
+			return NULL;
+		if (!level)
+			break;
 
 		level--;
 
-		n = n->children[offset >> genradix_depth_shअगरt(level)];
+		n = n->children[offset >> genradix_depth_shift(level)];
 		offset &= genradix_depth_size(level) - 1;
-	पूर्ण
+	}
 
-	वापस &n->data[offset];
-पूर्ण
+	return &n->data[offset];
+}
 EXPORT_SYMBOL(__genradix_ptr);
 
-अटल अंतरभूत काष्ठा genradix_node *genradix_alloc_node(gfp_t gfp_mask)
-अणु
-	काष्ठा genradix_node *node;
+static inline struct genradix_node *genradix_alloc_node(gfp_t gfp_mask)
+{
+	struct genradix_node *node;
 
-	node = (काष्ठा genradix_node *)__get_मुक्त_page(gfp_mask|__GFP_ZERO);
+	node = (struct genradix_node *)__get_free_page(gfp_mask|__GFP_ZERO);
 
 	/*
-	 * We're using pages (not slab allocations) directly क्रम kernel data
-	 * काष्ठाures, so we need to explicitly inक्रमm kmemleak of them in order
-	 * to aव्योम false positive memory leak reports.
+	 * We're using pages (not slab allocations) directly for kernel data
+	 * structures, so we need to explicitly inform kmemleak of them in order
+	 * to avoid false positive memory leak reports.
 	 */
 	kmemleak_alloc(node, PAGE_SIZE, 1, gfp_mask);
-	वापस node;
-पूर्ण
+	return node;
+}
 
-अटल अंतरभूत व्योम genradix_मुक्त_node(काष्ठा genradix_node *node)
-अणु
-	kmemleak_मुक्त(node);
-	मुक्त_page((अचिन्हित दीर्घ)node);
-पूर्ण
+static inline void genradix_free_node(struct genradix_node *node)
+{
+	kmemleak_free(node);
+	free_page((unsigned long)node);
+}
 
 /*
- * Returns poपूर्णांकer to the specअगरied byte @offset within @radix, allocating it अगर
+ * Returns pointer to the specified byte @offset within @radix, allocating it if
  * necessary - newly allocated slots are always zeroed out:
  */
-व्योम *__genradix_ptr_alloc(काष्ठा __genradix *radix, माप_प्रकार offset,
+void *__genradix_ptr_alloc(struct __genradix *radix, size_t offset,
 			   gfp_t gfp_mask)
-अणु
-	काष्ठा genradix_root *v = READ_ONCE(radix->root);
-	काष्ठा genradix_node *n, *new_node = शून्य;
-	अचिन्हित level;
+{
+	struct genradix_root *v = READ_ONCE(radix->root);
+	struct genradix_node *n, *new_node = NULL;
+	unsigned level;
 
-	/* Increase tree depth अगर necessary: */
-	जबतक (1) अणु
-		काष्ठा genradix_root *r = v, *new_root;
+	/* Increase tree depth if necessary: */
+	while (1) {
+		struct genradix_root *r = v, *new_root;
 
 		n	= genradix_root_to_node(r);
 		level	= genradix_root_to_depth(r);
 
-		अगर (n && ilog2(offset) < genradix_depth_shअगरt(level))
-			अवरोध;
+		if (n && ilog2(offset) < genradix_depth_shift(level))
+			break;
 
-		अगर (!new_node) अणु
+		if (!new_node) {
 			new_node = genradix_alloc_node(gfp_mask);
-			अगर (!new_node)
-				वापस शून्य;
-		पूर्ण
+			if (!new_node)
+				return NULL;
+		}
 
 		new_node->children[0] = n;
-		new_root = ((काष्ठा genradix_root *)
-			    ((अचिन्हित दीर्घ) new_node | (n ? level + 1 : 0)));
+		new_root = ((struct genradix_root *)
+			    ((unsigned long) new_node | (n ? level + 1 : 0)));
 
-		अगर ((v = cmpxchg_release(&radix->root, r, new_root)) == r) अणु
+		if ((v = cmpxchg_release(&radix->root, r, new_root)) == r) {
 			v = new_root;
-			new_node = शून्य;
-		पूर्ण
-	पूर्ण
+			new_node = NULL;
+		}
+	}
 
-	जबतक (level--) अणु
-		काष्ठा genradix_node **p =
-			&n->children[offset >> genradix_depth_shअगरt(level)];
+	while (level--) {
+		struct genradix_node **p =
+			&n->children[offset >> genradix_depth_shift(level)];
 		offset &= genradix_depth_size(level) - 1;
 
 		n = READ_ONCE(*p);
-		अगर (!n) अणु
-			अगर (!new_node) अणु
+		if (!n) {
+			if (!new_node) {
 				new_node = genradix_alloc_node(gfp_mask);
-				अगर (!new_node)
-					वापस शून्य;
-			पूर्ण
+				if (!new_node)
+					return NULL;
+			}
 
-			अगर (!(n = cmpxchg_release(p, शून्य, new_node)))
+			if (!(n = cmpxchg_release(p, NULL, new_node)))
 				swap(n, new_node);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (new_node)
-		genradix_मुक्त_node(new_node);
+	if (new_node)
+		genradix_free_node(new_node);
 
-	वापस &n->data[offset];
-पूर्ण
+	return &n->data[offset];
+}
 EXPORT_SYMBOL(__genradix_ptr_alloc);
 
-व्योम *__genradix_iter_peek(काष्ठा genradix_iter *iter,
-			   काष्ठा __genradix *radix,
-			   माप_प्रकार objs_per_page)
-अणु
-	काष्ठा genradix_root *r;
-	काष्ठा genradix_node *n;
-	अचिन्हित level, i;
+void *__genradix_iter_peek(struct genradix_iter *iter,
+			   struct __genradix *radix,
+			   size_t objs_per_page)
+{
+	struct genradix_root *r;
+	struct genradix_node *n;
+	unsigned level, i;
 restart:
 	r = READ_ONCE(radix->root);
-	अगर (!r)
-		वापस शून्य;
+	if (!r)
+		return NULL;
 
 	n	= genradix_root_to_node(r);
 	level	= genradix_root_to_depth(r);
 
-	अगर (ilog2(iter->offset) >= genradix_depth_shअगरt(level))
-		वापस शून्य;
+	if (ilog2(iter->offset) >= genradix_depth_shift(level))
+		return NULL;
 
-	जबतक (level) अणु
+	while (level) {
 		level--;
 
-		i = (iter->offset >> genradix_depth_shअगरt(level)) &
+		i = (iter->offset >> genradix_depth_shift(level)) &
 			(GENRADIX_ARY - 1);
 
-		जबतक (!n->children[i]) अणु
+		while (!n->children[i]) {
 			i++;
-			iter->offset = round_करोwn(iter->offset +
+			iter->offset = round_down(iter->offset +
 					   genradix_depth_size(level),
 					   genradix_depth_size(level));
 			iter->pos = (iter->offset >> PAGE_SHIFT) *
 				objs_per_page;
-			अगर (i == GENRADIX_ARY)
-				जाओ restart;
-		पूर्ण
+			if (i == GENRADIX_ARY)
+				goto restart;
+		}
 
 		n = n->children[i];
-	पूर्ण
+	}
 
-	वापस &n->data[iter->offset & (PAGE_SIZE - 1)];
-पूर्ण
+	return &n->data[iter->offset & (PAGE_SIZE - 1)];
+}
 EXPORT_SYMBOL(__genradix_iter_peek);
 
-अटल व्योम genradix_मुक्त_recurse(काष्ठा genradix_node *n, अचिन्हित level)
-अणु
-	अगर (level) अणु
-		अचिन्हित i;
+static void genradix_free_recurse(struct genradix_node *n, unsigned level)
+{
+	if (level) {
+		unsigned i;
 
-		क्रम (i = 0; i < GENRADIX_ARY; i++)
-			अगर (n->children[i])
-				genradix_मुक्त_recurse(n->children[i], level - 1);
-	पूर्ण
+		for (i = 0; i < GENRADIX_ARY; i++)
+			if (n->children[i])
+				genradix_free_recurse(n->children[i], level - 1);
+	}
 
-	genradix_मुक्त_node(n);
-पूर्ण
+	genradix_free_node(n);
+}
 
-पूर्णांक __genradix_pपुनः_स्मृति(काष्ठा __genradix *radix, माप_प्रकार size,
+int __genradix_prealloc(struct __genradix *radix, size_t size,
 			gfp_t gfp_mask)
-अणु
-	माप_प्रकार offset;
+{
+	size_t offset;
 
-	क्रम (offset = 0; offset < size; offset += PAGE_SIZE)
-		अगर (!__genradix_ptr_alloc(radix, offset, gfp_mask))
-			वापस -ENOMEM;
+	for (offset = 0; offset < size; offset += PAGE_SIZE)
+		if (!__genradix_ptr_alloc(radix, offset, gfp_mask))
+			return -ENOMEM;
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(__genradix_pपुनः_स्मृति);
+	return 0;
+}
+EXPORT_SYMBOL(__genradix_prealloc);
 
-व्योम __genradix_मुक्त(काष्ठा __genradix *radix)
-अणु
-	काष्ठा genradix_root *r = xchg(&radix->root, शून्य);
+void __genradix_free(struct __genradix *radix)
+{
+	struct genradix_root *r = xchg(&radix->root, NULL);
 
-	genradix_मुक्त_recurse(genradix_root_to_node(r),
+	genradix_free_recurse(genradix_root_to_node(r),
 			      genradix_root_to_depth(r));
-पूर्ण
-EXPORT_SYMBOL(__genradix_मुक्त);
+}
+EXPORT_SYMBOL(__genradix_free);

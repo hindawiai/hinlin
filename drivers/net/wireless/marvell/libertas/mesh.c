@@ -1,61 +1,60 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+// SPDX-License-Identifier: GPL-2.0
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/delay.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/hardirq.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/अगर_ether.h>
-#समावेश <linux/अगर_arp.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/kfअगरo.h>
-#समावेश <net/cfg80211.h>
+#include <linux/delay.h>
+#include <linux/etherdevice.h>
+#include <linux/hardirq.h>
+#include <linux/netdevice.h>
+#include <linux/if_ether.h>
+#include <linux/if_arp.h>
+#include <linux/kthread.h>
+#include <linux/kfifo.h>
+#include <net/cfg80211.h>
 
-#समावेश "mesh.h"
-#समावेश "decl.h"
-#समावेश "cmd.h"
+#include "mesh.h"
+#include "decl.h"
+#include "cmd.h"
 
 
-अटल पूर्णांक lbs_add_mesh(काष्ठा lbs_निजी *priv);
+static int lbs_add_mesh(struct lbs_private *priv);
 
 /***************************************************************************
  * Mesh command handling
  */
 
-अटल पूर्णांक lbs_mesh_access(काष्ठा lbs_निजी *priv, uपूर्णांक16_t cmd_action,
-		    काष्ठा cmd_ds_mesh_access *cmd)
-अणु
-	पूर्णांक ret;
+static int lbs_mesh_access(struct lbs_private *priv, uint16_t cmd_action,
+		    struct cmd_ds_mesh_access *cmd)
+{
+	int ret;
 
 	cmd->hdr.command = cpu_to_le16(CMD_MESH_ACCESS);
-	cmd->hdr.size = cpu_to_le16(माप(*cmd));
+	cmd->hdr.size = cpu_to_le16(sizeof(*cmd));
 	cmd->hdr.result = 0;
 
 	cmd->action = cpu_to_le16(cmd_action);
 
 	ret = lbs_cmd_with_response(priv, CMD_MESH_ACCESS, cmd);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक __lbs_mesh_config_send(काष्ठा lbs_निजी *priv,
-				  काष्ठा cmd_ds_mesh_config *cmd,
-				  uपूर्णांक16_t action, uपूर्णांक16_t type)
-अणु
-	पूर्णांक ret;
+static int __lbs_mesh_config_send(struct lbs_private *priv,
+				  struct cmd_ds_mesh_config *cmd,
+				  uint16_t action, uint16_t type)
+{
+	int ret;
 	u16 command = CMD_MESH_CONFIG_OLD;
 
 	/*
-	 * Command id is 0xac क्रम v10 FW aदीर्घ with mesh पूर्णांकerface
+	 * Command id is 0xac for v10 FW along with mesh interface
 	 * id in bits 14-13-12.
 	 */
-	अगर (priv->mesh_tlv == TLV_TYPE_MESH_ID)
+	if (priv->mesh_tlv == TLV_TYPE_MESH_ID)
 		command = CMD_MESH_CONFIG |
 			  (MESH_IFACE_ID << MESH_IFACE_BIT_OFFSET);
 
 	cmd->hdr.command = cpu_to_le16(command);
-	cmd->hdr.size = cpu_to_le16(माप(काष्ठा cmd_ds_mesh_config));
+	cmd->hdr.size = cpu_to_le16(sizeof(struct cmd_ds_mesh_config));
 	cmd->hdr.result = 0;
 
 	cmd->type = cpu_to_le16(type);
@@ -63,40 +62,40 @@
 
 	ret = lbs_cmd_with_response(priv, command, cmd);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक lbs_mesh_config_send(काष्ठा lbs_निजी *priv,
-			 काष्ठा cmd_ds_mesh_config *cmd,
-			 uपूर्णांक16_t action, uपूर्णांक16_t type)
-अणु
-	पूर्णांक ret;
+static int lbs_mesh_config_send(struct lbs_private *priv,
+			 struct cmd_ds_mesh_config *cmd,
+			 uint16_t action, uint16_t type)
+{
+	int ret;
 
-	अगर (!(priv->fwcapinfo & FW_CAPINFO_PERSISTENT_CONFIG))
-		वापस -EOPNOTSUPP;
+	if (!(priv->fwcapinfo & FW_CAPINFO_PERSISTENT_CONFIG))
+		return -EOPNOTSUPP;
 
 	ret = __lbs_mesh_config_send(priv, cmd, action, type);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* This function is the CMD_MESH_CONFIG legacy function.  It only handles the
  * START and STOP actions.  The extended actions supported by CMD_MESH_CONFIG
- * are all handled by preparing a काष्ठा cmd_ds_mesh_config and passing it to
+ * are all handled by preparing a struct cmd_ds_mesh_config and passing it to
  * lbs_mesh_config_send.
  */
-अटल पूर्णांक lbs_mesh_config(काष्ठा lbs_निजी *priv, uपूर्णांक16_t action,
-		uपूर्णांक16_t chan)
-अणु
-	काष्ठा wireless_dev *mesh_wdev;
-	काष्ठा cmd_ds_mesh_config cmd;
-	काष्ठा mrvl_meshie *ie;
+static int lbs_mesh_config(struct lbs_private *priv, uint16_t action,
+		uint16_t chan)
+{
+	struct wireless_dev *mesh_wdev;
+	struct cmd_ds_mesh_config cmd;
+	struct mrvl_meshie *ie;
 
-	स_रखो(&cmd, 0, माप(cmd));
+	memset(&cmd, 0, sizeof(cmd));
 	cmd.channel = cpu_to_le16(chan);
-	ie = (काष्ठा mrvl_meshie *)cmd.data;
+	ie = (struct mrvl_meshie *)cmd.data;
 
-	चयन (action) अणु
-	हाल CMD_ACT_MESH_CONFIG_START:
+	switch (action) {
+	case CMD_ACT_MESH_CONFIG_START:
 		ie->id = WLAN_EID_VENDOR_SPECIFIC;
 		ie->val.oui[0] = 0x00;
 		ie->val.oui[1] = 0x50;
@@ -108,40 +107,40 @@
 		ie->val.active_metric_id = MARVELL_MESH_METRIC_ID;
 		ie->val.mesh_capability = MARVELL_MESH_CAPABILITY;
 
-		अगर (priv->mesh_dev) अणु
+		if (priv->mesh_dev) {
 			mesh_wdev = priv->mesh_dev->ieee80211_ptr;
 			ie->val.mesh_id_len = mesh_wdev->mesh_id_up_len;
-			स_नकल(ie->val.mesh_id, mesh_wdev->ssid,
+			memcpy(ie->val.mesh_id, mesh_wdev->ssid,
 						mesh_wdev->mesh_id_up_len);
-		पूर्ण
+		}
 
-		ie->len = माप(काष्ठा mrvl_meshie_val) -
+		ie->len = sizeof(struct mrvl_meshie_val) -
 			IEEE80211_MAX_SSID_LEN + ie->val.mesh_id_len;
 
-		cmd.length = cpu_to_le16(माप(काष्ठा mrvl_meshie_val));
-		अवरोध;
-	हाल CMD_ACT_MESH_CONFIG_STOP:
-		अवरोध;
-	शेष:
-		वापस -1;
-	पूर्ण
+		cmd.length = cpu_to_le16(sizeof(struct mrvl_meshie_val));
+		break;
+	case CMD_ACT_MESH_CONFIG_STOP:
+		break;
+	default:
+		return -1;
+	}
 	lbs_deb_cmd("mesh config action %d type %x channel %d SSID %*pE\n",
 		    action, priv->mesh_tlv, chan, ie->val.mesh_id_len,
 		    ie->val.mesh_id);
 
-	वापस __lbs_mesh_config_send(priv, &cmd, action, priv->mesh_tlv);
-पूर्ण
+	return __lbs_mesh_config_send(priv, &cmd, action, priv->mesh_tlv);
+}
 
-पूर्णांक lbs_mesh_set_channel(काष्ठा lbs_निजी *priv, u8 channel)
-अणु
+int lbs_mesh_set_channel(struct lbs_private *priv, u8 channel)
+{
 	priv->mesh_channel = channel;
-	वापस lbs_mesh_config(priv, CMD_ACT_MESH_CONFIG_START, channel);
-पूर्ण
+	return lbs_mesh_config(priv, CMD_ACT_MESH_CONFIG_START, channel);
+}
 
-अटल uपूर्णांक16_t lbs_mesh_get_channel(काष्ठा lbs_निजी *priv)
-अणु
-	वापस priv->mesh_channel ?: 1;
-पूर्ण
+static uint16_t lbs_mesh_get_channel(struct lbs_private *priv)
+{
+	return priv->mesh_channel ?: 1;
+}
 
 /***************************************************************************
  * Mesh sysfs support
@@ -152,655 +151,655 @@
  */
 
 /**
- * lbs_anycast_get - Get function क्रम sysfs attribute anycast_mask
- * @dev: the &काष्ठा device
+ * lbs_anycast_get - Get function for sysfs attribute anycast_mask
+ * @dev: the &struct device
  * @attr: device attributes
- * @buf: buffer where data will be वापसed
+ * @buf: buffer where data will be returned
  */
-अटल sमाप_प्रकार lbs_anycast_get(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर * buf)
-अणु
-	काष्ठा lbs_निजी *priv = to_net_dev(dev)->ml_priv;
-	काष्ठा cmd_ds_mesh_access mesh_access;
-	पूर्णांक ret;
+static ssize_t lbs_anycast_get(struct device *dev,
+		struct device_attribute *attr, char * buf)
+{
+	struct lbs_private *priv = to_net_dev(dev)->ml_priv;
+	struct cmd_ds_mesh_access mesh_access;
+	int ret;
 
-	स_रखो(&mesh_access, 0, माप(mesh_access));
+	memset(&mesh_access, 0, sizeof(mesh_access));
 
 	ret = lbs_mesh_access(priv, CMD_ACT_MESH_GET_ANYCAST, &mesh_access);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस snम_लिखो(buf, 12, "0x%X\n", le32_to_cpu(mesh_access.data[0]));
-पूर्ण
+	return snprintf(buf, 12, "0x%X\n", le32_to_cpu(mesh_access.data[0]));
+}
 
 /**
- * lbs_anycast_set - Set function क्रम sysfs attribute anycast_mask
- * @dev: the &काष्ठा device
+ * lbs_anycast_set - Set function for sysfs attribute anycast_mask
+ * @dev: the &struct device
  * @attr: device attributes
  * @buf: buffer that contains new attribute value
  * @count: size of buffer
  */
-अटल sमाप_प्रकार lbs_anycast_set(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, स्थिर अक्षर * buf, माप_प्रकार count)
-अणु
-	काष्ठा lbs_निजी *priv = to_net_dev(dev)->ml_priv;
-	काष्ठा cmd_ds_mesh_access mesh_access;
-	uपूर्णांक32_t datum;
-	पूर्णांक ret;
+static ssize_t lbs_anycast_set(struct device *dev,
+		struct device_attribute *attr, const char * buf, size_t count)
+{
+	struct lbs_private *priv = to_net_dev(dev)->ml_priv;
+	struct cmd_ds_mesh_access mesh_access;
+	uint32_t datum;
+	int ret;
 
-	स_रखो(&mesh_access, 0, माप(mesh_access));
-	माला_पूछो(buf, "%x", &datum);
+	memset(&mesh_access, 0, sizeof(mesh_access));
+	sscanf(buf, "%x", &datum);
 	mesh_access.data[0] = cpu_to_le32(datum);
 
 	ret = lbs_mesh_access(priv, CMD_ACT_MESH_SET_ANYCAST, &mesh_access);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस म_माप(buf);
-पूर्ण
+	return strlen(buf);
+}
 
 /**
- * lbs_prb_rsp_limit_get - Get function क्रम sysfs attribute prb_rsp_limit
- * @dev: the &काष्ठा device
+ * lbs_prb_rsp_limit_get - Get function for sysfs attribute prb_rsp_limit
+ * @dev: the &struct device
  * @attr: device attributes
- * @buf: buffer where data will be वापसed
+ * @buf: buffer where data will be returned
  */
-अटल sमाप_प्रकार lbs_prb_rsp_limit_get(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा lbs_निजी *priv = to_net_dev(dev)->ml_priv;
-	काष्ठा cmd_ds_mesh_access mesh_access;
-	पूर्णांक ret;
+static ssize_t lbs_prb_rsp_limit_get(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct lbs_private *priv = to_net_dev(dev)->ml_priv;
+	struct cmd_ds_mesh_access mesh_access;
+	int ret;
 	u32 retry_limit;
 
-	स_रखो(&mesh_access, 0, माप(mesh_access));
+	memset(&mesh_access, 0, sizeof(mesh_access));
 	mesh_access.data[0] = cpu_to_le32(CMD_ACT_GET);
 
 	ret = lbs_mesh_access(priv, CMD_ACT_MESH_SET_GET_PRB_RSP_LIMIT,
 			&mesh_access);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	retry_limit = le32_to_cpu(mesh_access.data[1]);
-	वापस snम_लिखो(buf, 10, "%d\n", retry_limit);
-पूर्ण
+	return snprintf(buf, 10, "%d\n", retry_limit);
+}
 
 /**
- * lbs_prb_rsp_limit_set - Set function क्रम sysfs attribute prb_rsp_limit
- * @dev: the &काष्ठा device
+ * lbs_prb_rsp_limit_set - Set function for sysfs attribute prb_rsp_limit
+ * @dev: the &struct device
  * @attr: device attributes
  * @buf: buffer that contains new attribute value
  * @count: size of buffer
  */
-अटल sमाप_प्रकार lbs_prb_rsp_limit_set(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा lbs_निजी *priv = to_net_dev(dev)->ml_priv;
-	काष्ठा cmd_ds_mesh_access mesh_access;
-	पूर्णांक ret;
-	अचिन्हित दीर्घ retry_limit;
+static ssize_t lbs_prb_rsp_limit_set(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t count)
+{
+	struct lbs_private *priv = to_net_dev(dev)->ml_priv;
+	struct cmd_ds_mesh_access mesh_access;
+	int ret;
+	unsigned long retry_limit;
 
-	स_रखो(&mesh_access, 0, माप(mesh_access));
+	memset(&mesh_access, 0, sizeof(mesh_access));
 	mesh_access.data[0] = cpu_to_le32(CMD_ACT_SET);
 
-	ret = kम_से_अदीर्घ(buf, 10, &retry_limit);
-	अगर (ret)
-		वापस ret;
-	अगर (retry_limit > 15)
-		वापस -ENOTSUPP;
+	ret = kstrtoul(buf, 10, &retry_limit);
+	if (ret)
+		return ret;
+	if (retry_limit > 15)
+		return -ENOTSUPP;
 
 	mesh_access.data[1] = cpu_to_le32(retry_limit);
 
 	ret = lbs_mesh_access(priv, CMD_ACT_MESH_SET_GET_PRB_RSP_LIMIT,
 			&mesh_access);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस म_माप(buf);
-पूर्ण
+	return strlen(buf);
+}
 
 /**
- * lbs_mesh_get - Get function क्रम sysfs attribute mesh
- * @dev: the &काष्ठा device
+ * lbs_mesh_get - Get function for sysfs attribute mesh
+ * @dev: the &struct device
  * @attr: device attributes
- * @buf: buffer where data will be वापसed
+ * @buf: buffer where data will be returned
  */
-अटल sमाप_प्रकार lbs_mesh_get(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर * buf)
-अणु
-	काष्ठा lbs_निजी *priv = to_net_dev(dev)->ml_priv;
-	वापस snम_लिखो(buf, 5, "0x%X\n", !!priv->mesh_dev);
-पूर्ण
+static ssize_t lbs_mesh_get(struct device *dev,
+		struct device_attribute *attr, char * buf)
+{
+	struct lbs_private *priv = to_net_dev(dev)->ml_priv;
+	return snprintf(buf, 5, "0x%X\n", !!priv->mesh_dev);
+}
 
 /**
- * lbs_mesh_set - Set function क्रम sysfs attribute mesh
- * @dev: the &काष्ठा device
+ * lbs_mesh_set - Set function for sysfs attribute mesh
+ * @dev: the &struct device
  * @attr: device attributes
  * @buf: buffer that contains new attribute value
  * @count: size of buffer
  */
-अटल sमाप_प्रकार lbs_mesh_set(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, स्थिर अक्षर * buf, माप_प्रकार count)
-अणु
-	काष्ठा lbs_निजी *priv = to_net_dev(dev)->ml_priv;
-	पूर्णांक enable;
+static ssize_t lbs_mesh_set(struct device *dev,
+		struct device_attribute *attr, const char * buf, size_t count)
+{
+	struct lbs_private *priv = to_net_dev(dev)->ml_priv;
+	int enable;
 
-	माला_पूछो(buf, "%x", &enable);
+	sscanf(buf, "%x", &enable);
 	enable = !!enable;
-	अगर (enable == !!priv->mesh_dev)
-		वापस count;
+	if (enable == !!priv->mesh_dev)
+		return count;
 
-	अगर (enable)
+	if (enable)
 		lbs_add_mesh(priv);
-	अन्यथा
-		lbs_हटाओ_mesh(priv);
+	else
+		lbs_remove_mesh(priv);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
 /*
- * lbs_mesh attribute to be exported per ethX पूर्णांकerface
+ * lbs_mesh attribute to be exported per ethX interface
  * through sysfs (/sys/class/net/ethX/lbs_mesh)
  */
-अटल DEVICE_ATTR(lbs_mesh, 0644, lbs_mesh_get, lbs_mesh_set);
+static DEVICE_ATTR(lbs_mesh, 0644, lbs_mesh_get, lbs_mesh_set);
 
 /*
- * anycast_mask attribute to be exported per mshX पूर्णांकerface
+ * anycast_mask attribute to be exported per mshX interface
  * through sysfs (/sys/class/net/mshX/anycast_mask)
  */
-अटल DEVICE_ATTR(anycast_mask, 0644, lbs_anycast_get, lbs_anycast_set);
+static DEVICE_ATTR(anycast_mask, 0644, lbs_anycast_get, lbs_anycast_set);
 
 /*
- * prb_rsp_limit attribute to be exported per mshX पूर्णांकerface
+ * prb_rsp_limit attribute to be exported per mshX interface
  * through sysfs (/sys/class/net/mshX/prb_rsp_limit)
  */
-अटल DEVICE_ATTR(prb_rsp_limit, 0644, lbs_prb_rsp_limit_get,
+static DEVICE_ATTR(prb_rsp_limit, 0644, lbs_prb_rsp_limit_get,
 		lbs_prb_rsp_limit_set);
 
-अटल काष्ठा attribute *lbs_mesh_sysfs_entries[] = अणु
+static struct attribute *lbs_mesh_sysfs_entries[] = {
 	&dev_attr_anycast_mask.attr,
 	&dev_attr_prb_rsp_limit.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group lbs_mesh_attr_group = अणु
+static const struct attribute_group lbs_mesh_attr_group = {
 	.attrs = lbs_mesh_sysfs_entries,
-पूर्ण;
+};
 
 
 /***************************************************************************
  * Persistent configuration support
  */
 
-अटल पूर्णांक mesh_get_शेष_parameters(काष्ठा device *dev,
-				       काष्ठा mrvl_mesh_शेषs *defs)
-अणु
-	काष्ठा lbs_निजी *priv = to_net_dev(dev)->ml_priv;
-	काष्ठा cmd_ds_mesh_config cmd;
-	पूर्णांक ret;
+static int mesh_get_default_parameters(struct device *dev,
+				       struct mrvl_mesh_defaults *defs)
+{
+	struct lbs_private *priv = to_net_dev(dev)->ml_priv;
+	struct cmd_ds_mesh_config cmd;
+	int ret;
 
-	स_रखो(&cmd, 0, माप(काष्ठा cmd_ds_mesh_config));
+	memset(&cmd, 0, sizeof(struct cmd_ds_mesh_config));
 	ret = lbs_mesh_config_send(priv, &cmd, CMD_ACT_MESH_CONFIG_GET,
 				   CMD_TYPE_MESH_GET_DEFAULTS);
 
-	अगर (ret)
-		वापस -EOPNOTSUPP;
+	if (ret)
+		return -EOPNOTSUPP;
 
-	स_नकल(defs, &cmd.data[0], माप(काष्ठा mrvl_mesh_शेषs));
+	memcpy(defs, &cmd.data[0], sizeof(struct mrvl_mesh_defaults));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * bootflag_get - Get function क्रम sysfs attribute bootflag
- * @dev: the &काष्ठा device
+ * bootflag_get - Get function for sysfs attribute bootflag
+ * @dev: the &struct device
  * @attr: device attributes
- * @buf: buffer where data will be वापसed
+ * @buf: buffer where data will be returned
  */
-अटल sमाप_प्रकार bootflag_get(काष्ठा device *dev,
-			    काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा mrvl_mesh_शेषs defs;
-	पूर्णांक ret;
+static ssize_t bootflag_get(struct device *dev,
+			    struct device_attribute *attr, char *buf)
+{
+	struct mrvl_mesh_defaults defs;
+	int ret;
 
-	ret = mesh_get_शेष_parameters(dev, &defs);
+	ret = mesh_get_default_parameters(dev, &defs);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस snम_लिखो(buf, 12, "%d\n", le32_to_cpu(defs.bootflag));
-पूर्ण
+	return snprintf(buf, 12, "%d\n", le32_to_cpu(defs.bootflag));
+}
 
 /**
- * bootflag_set - Set function क्रम sysfs attribute bootflag
- * @dev: the &काष्ठा device
+ * bootflag_set - Set function for sysfs attribute bootflag
+ * @dev: the &struct device
  * @attr: device attributes
  * @buf: buffer that contains new attribute value
  * @count: size of buffer
  */
-अटल sमाप_प्रकार bootflag_set(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			    स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा lbs_निजी *priv = to_net_dev(dev)->ml_priv;
-	काष्ठा cmd_ds_mesh_config cmd;
-	uपूर्णांक32_t datum;
-	पूर्णांक ret;
+static ssize_t bootflag_set(struct device *dev, struct device_attribute *attr,
+			    const char *buf, size_t count)
+{
+	struct lbs_private *priv = to_net_dev(dev)->ml_priv;
+	struct cmd_ds_mesh_config cmd;
+	uint32_t datum;
+	int ret;
 
-	स_रखो(&cmd, 0, माप(cmd));
-	ret = माला_पूछो(buf, "%d", &datum);
-	अगर ((ret != 1) || (datum > 1))
-		वापस -EINVAL;
+	memset(&cmd, 0, sizeof(cmd));
+	ret = sscanf(buf, "%d", &datum);
+	if ((ret != 1) || (datum > 1))
+		return -EINVAL;
 
 	*((__le32 *)&cmd.data[0]) = cpu_to_le32(!!datum);
-	cmd.length = cpu_to_le16(माप(uपूर्णांक32_t));
+	cmd.length = cpu_to_le16(sizeof(uint32_t));
 	ret = lbs_mesh_config_send(priv, &cmd, CMD_ACT_MESH_CONFIG_SET,
 				   CMD_TYPE_MESH_SET_BOOTFLAG);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस म_माप(buf);
-पूर्ण
+	return strlen(buf);
+}
 
 /**
- * bootसमय_get - Get function क्रम sysfs attribute bootसमय
- * @dev: the &काष्ठा device
+ * boottime_get - Get function for sysfs attribute boottime
+ * @dev: the &struct device
  * @attr: device attributes
- * @buf: buffer where data will be वापसed
+ * @buf: buffer where data will be returned
  */
-अटल sमाप_प्रकार bootसमय_get(काष्ठा device *dev,
-			    काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा mrvl_mesh_शेषs defs;
-	पूर्णांक ret;
+static ssize_t boottime_get(struct device *dev,
+			    struct device_attribute *attr, char *buf)
+{
+	struct mrvl_mesh_defaults defs;
+	int ret;
 
-	ret = mesh_get_शेष_parameters(dev, &defs);
+	ret = mesh_get_default_parameters(dev, &defs);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस snम_लिखो(buf, 12, "%d\n", defs.bootसमय);
-पूर्ण
+	return snprintf(buf, 12, "%d\n", defs.boottime);
+}
 
 /**
- * bootसमय_set - Set function क्रम sysfs attribute bootसमय
- * @dev: the &काष्ठा device
+ * boottime_set - Set function for sysfs attribute boottime
+ * @dev: the &struct device
  * @attr: device attributes
  * @buf: buffer that contains new attribute value
  * @count: size of buffer
  */
-अटल sमाप_प्रकार bootसमय_set(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा lbs_निजी *priv = to_net_dev(dev)->ml_priv;
-	काष्ठा cmd_ds_mesh_config cmd;
-	uपूर्णांक32_t datum;
-	पूर्णांक ret;
+static ssize_t boottime_set(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t count)
+{
+	struct lbs_private *priv = to_net_dev(dev)->ml_priv;
+	struct cmd_ds_mesh_config cmd;
+	uint32_t datum;
+	int ret;
 
-	स_रखो(&cmd, 0, माप(cmd));
-	ret = माला_पूछो(buf, "%d", &datum);
-	अगर ((ret != 1) || (datum > 255))
-		वापस -EINVAL;
+	memset(&cmd, 0, sizeof(cmd));
+	ret = sscanf(buf, "%d", &datum);
+	if ((ret != 1) || (datum > 255))
+		return -EINVAL;
 
-	/* A too small boot समय will result in the device booting पूर्णांकo
-	 * standalone (no-host) mode beक्रमe the host can take control of it,
+	/* A too small boot time will result in the device booting into
+	 * standalone (no-host) mode before the host can take control of it,
 	 * so the change will be hard to revert.  This may be a desired
-	 * feature (e.g to configure a very fast boot समय क्रम devices that
-	 * will not be attached to a host), but dangerous.  So I'm enक्रमcing a
-	 * lower limit of 20 seconds:  हटाओ and recompile the driver अगर this
-	 * करोes not work क्रम you.
+	 * feature (e.g to configure a very fast boot time for devices that
+	 * will not be attached to a host), but dangerous.  So I'm enforcing a
+	 * lower limit of 20 seconds:  remove and recompile the driver if this
+	 * does not work for you.
 	 */
 	datum = (datum < 20) ? 20 : datum;
 	cmd.data[0] = datum;
-	cmd.length = cpu_to_le16(माप(uपूर्णांक8_t));
+	cmd.length = cpu_to_le16(sizeof(uint8_t));
 	ret = lbs_mesh_config_send(priv, &cmd, CMD_ACT_MESH_CONFIG_SET,
 				   CMD_TYPE_MESH_SET_BOOTTIME);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस म_माप(buf);
-पूर्ण
+	return strlen(buf);
+}
 
 /**
- * channel_get - Get function क्रम sysfs attribute channel
- * @dev: the &काष्ठा device
+ * channel_get - Get function for sysfs attribute channel
+ * @dev: the &struct device
  * @attr: device attributes
- * @buf: buffer where data will be वापसed
+ * @buf: buffer where data will be returned
  */
-अटल sमाप_प्रकार channel_get(काष्ठा device *dev,
-			   काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा mrvl_mesh_शेषs defs;
-	पूर्णांक ret;
+static ssize_t channel_get(struct device *dev,
+			   struct device_attribute *attr, char *buf)
+{
+	struct mrvl_mesh_defaults defs;
+	int ret;
 
-	ret = mesh_get_शेष_parameters(dev, &defs);
+	ret = mesh_get_default_parameters(dev, &defs);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस snम_लिखो(buf, 12, "%d\n", le16_to_cpu(defs.channel));
-पूर्ण
+	return snprintf(buf, 12, "%d\n", le16_to_cpu(defs.channel));
+}
 
 /**
- * channel_set - Set function क्रम sysfs attribute channel
- * @dev: the &काष्ठा device
+ * channel_set - Set function for sysfs attribute channel
+ * @dev: the &struct device
  * @attr: device attributes
  * @buf: buffer that contains new attribute value
  * @count: size of buffer
  */
-अटल sमाप_प्रकार channel_set(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			   स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा lbs_निजी *priv = to_net_dev(dev)->ml_priv;
-	काष्ठा cmd_ds_mesh_config cmd;
-	uपूर्णांक32_t datum;
-	पूर्णांक ret;
+static ssize_t channel_set(struct device *dev, struct device_attribute *attr,
+			   const char *buf, size_t count)
+{
+	struct lbs_private *priv = to_net_dev(dev)->ml_priv;
+	struct cmd_ds_mesh_config cmd;
+	uint32_t datum;
+	int ret;
 
-	स_रखो(&cmd, 0, माप(cmd));
-	ret = माला_पूछो(buf, "%d", &datum);
-	अगर (ret != 1 || datum < 1 || datum > 11)
-		वापस -EINVAL;
+	memset(&cmd, 0, sizeof(cmd));
+	ret = sscanf(buf, "%d", &datum);
+	if (ret != 1 || datum < 1 || datum > 11)
+		return -EINVAL;
 
 	*((__le16 *)&cmd.data[0]) = cpu_to_le16(datum);
-	cmd.length = cpu_to_le16(माप(uपूर्णांक16_t));
+	cmd.length = cpu_to_le16(sizeof(uint16_t));
 	ret = lbs_mesh_config_send(priv, &cmd, CMD_ACT_MESH_CONFIG_SET,
 				   CMD_TYPE_MESH_SET_DEF_CHANNEL);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस म_माप(buf);
-पूर्ण
+	return strlen(buf);
+}
 
 /**
- * mesh_id_get - Get function क्रम sysfs attribute mesh_id
- * @dev: the &काष्ठा device
+ * mesh_id_get - Get function for sysfs attribute mesh_id
+ * @dev: the &struct device
  * @attr: device attributes
- * @buf: buffer where data will be वापसed
+ * @buf: buffer where data will be returned
  */
-अटल sमाप_प्रकार mesh_id_get(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			   अक्षर *buf)
-अणु
-	काष्ठा mrvl_mesh_शेषs defs;
-	पूर्णांक ret;
+static ssize_t mesh_id_get(struct device *dev, struct device_attribute *attr,
+			   char *buf)
+{
+	struct mrvl_mesh_defaults defs;
+	int ret;
 
-	ret = mesh_get_शेष_parameters(dev, &defs);
+	ret = mesh_get_default_parameters(dev, &defs);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (defs.meshie.val.mesh_id_len > IEEE80211_MAX_SSID_LEN) अणु
+	if (defs.meshie.val.mesh_id_len > IEEE80211_MAX_SSID_LEN) {
 		dev_err(dev, "inconsistent mesh ID length\n");
 		defs.meshie.val.mesh_id_len = IEEE80211_MAX_SSID_LEN;
-	पूर्ण
+	}
 
-	स_नकल(buf, defs.meshie.val.mesh_id, defs.meshie.val.mesh_id_len);
+	memcpy(buf, defs.meshie.val.mesh_id, defs.meshie.val.mesh_id_len);
 	buf[defs.meshie.val.mesh_id_len] = '\n';
 	buf[defs.meshie.val.mesh_id_len + 1] = '\0';
 
-	वापस defs.meshie.val.mesh_id_len + 1;
-पूर्ण
+	return defs.meshie.val.mesh_id_len + 1;
+}
 
 /**
- * mesh_id_set - Set function क्रम sysfs attribute mesh_id
- * @dev: the &काष्ठा device
+ * mesh_id_set - Set function for sysfs attribute mesh_id
+ * @dev: the &struct device
  * @attr: device attributes
  * @buf: buffer that contains new attribute value
  * @count: size of buffer
  */
-अटल sमाप_प्रकार mesh_id_set(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			   स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा cmd_ds_mesh_config cmd;
-	काष्ठा mrvl_mesh_शेषs defs;
-	काष्ठा mrvl_meshie *ie;
-	काष्ठा lbs_निजी *priv = to_net_dev(dev)->ml_priv;
-	पूर्णांक len;
-	पूर्णांक ret;
+static ssize_t mesh_id_set(struct device *dev, struct device_attribute *attr,
+			   const char *buf, size_t count)
+{
+	struct cmd_ds_mesh_config cmd;
+	struct mrvl_mesh_defaults defs;
+	struct mrvl_meshie *ie;
+	struct lbs_private *priv = to_net_dev(dev)->ml_priv;
+	int len;
+	int ret;
 
-	अगर (count < 2 || count > IEEE80211_MAX_SSID_LEN + 1)
-		वापस -EINVAL;
+	if (count < 2 || count > IEEE80211_MAX_SSID_LEN + 1)
+		return -EINVAL;
 
-	स_रखो(&cmd, 0, माप(काष्ठा cmd_ds_mesh_config));
-	ie = (काष्ठा mrvl_meshie *) &cmd.data[0];
+	memset(&cmd, 0, sizeof(struct cmd_ds_mesh_config));
+	ie = (struct mrvl_meshie *) &cmd.data[0];
 
-	/* fetch all other Inक्रमmation Element parameters */
-	ret = mesh_get_शेष_parameters(dev, &defs);
+	/* fetch all other Information Element parameters */
+	ret = mesh_get_default_parameters(dev, &defs);
 
-	cmd.length = cpu_to_le16(माप(काष्ठा mrvl_meshie));
+	cmd.length = cpu_to_le16(sizeof(struct mrvl_meshie));
 
 	/* transfer IE elements */
-	स_नकल(ie, &defs.meshie, माप(काष्ठा mrvl_meshie));
+	memcpy(ie, &defs.meshie, sizeof(struct mrvl_meshie));
 
 	len = count - 1;
-	स_नकल(ie->val.mesh_id, buf, len);
+	memcpy(ie->val.mesh_id, buf, len);
 	/* SSID len */
 	ie->val.mesh_id_len = len;
 	/* IE len */
-	ie->len = माप(काष्ठा mrvl_meshie_val) - IEEE80211_MAX_SSID_LEN + len;
+	ie->len = sizeof(struct mrvl_meshie_val) - IEEE80211_MAX_SSID_LEN + len;
 
 	ret = lbs_mesh_config_send(priv, &cmd, CMD_ACT_MESH_CONFIG_SET,
 				   CMD_TYPE_MESH_SET_MESH_IE);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस म_माप(buf);
-पूर्ण
+	return strlen(buf);
+}
 
 /**
- * protocol_id_get - Get function क्रम sysfs attribute protocol_id
- * @dev: the &काष्ठा device
+ * protocol_id_get - Get function for sysfs attribute protocol_id
+ * @dev: the &struct device
  * @attr: device attributes
- * @buf: buffer where data will be वापसed
+ * @buf: buffer where data will be returned
  */
-अटल sमाप_प्रकार protocol_id_get(काष्ठा device *dev,
-			       काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा mrvl_mesh_शेषs defs;
-	पूर्णांक ret;
+static ssize_t protocol_id_get(struct device *dev,
+			       struct device_attribute *attr, char *buf)
+{
+	struct mrvl_mesh_defaults defs;
+	int ret;
 
-	ret = mesh_get_शेष_parameters(dev, &defs);
+	ret = mesh_get_default_parameters(dev, &defs);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस snम_लिखो(buf, 5, "%d\n", defs.meshie.val.active_protocol_id);
-पूर्ण
+	return snprintf(buf, 5, "%d\n", defs.meshie.val.active_protocol_id);
+}
 
 /**
- * protocol_id_set - Set function क्रम sysfs attribute protocol_id
- * @dev: the &काष्ठा device
+ * protocol_id_set - Set function for sysfs attribute protocol_id
+ * @dev: the &struct device
  * @attr: device attributes
  * @buf: buffer that contains new attribute value
  * @count: size of buffer
  */
-अटल sमाप_प्रकार protocol_id_set(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा cmd_ds_mesh_config cmd;
-	काष्ठा mrvl_mesh_शेषs defs;
-	काष्ठा mrvl_meshie *ie;
-	काष्ठा lbs_निजी *priv = to_net_dev(dev)->ml_priv;
-	uपूर्णांक32_t datum;
-	पूर्णांक ret;
+static ssize_t protocol_id_set(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t count)
+{
+	struct cmd_ds_mesh_config cmd;
+	struct mrvl_mesh_defaults defs;
+	struct mrvl_meshie *ie;
+	struct lbs_private *priv = to_net_dev(dev)->ml_priv;
+	uint32_t datum;
+	int ret;
 
-	स_रखो(&cmd, 0, माप(cmd));
-	ret = माला_पूछो(buf, "%d", &datum);
-	अगर ((ret != 1) || (datum > 255))
-		वापस -EINVAL;
+	memset(&cmd, 0, sizeof(cmd));
+	ret = sscanf(buf, "%d", &datum);
+	if ((ret != 1) || (datum > 255))
+		return -EINVAL;
 
-	/* fetch all other Inक्रमmation Element parameters */
-	ret = mesh_get_शेष_parameters(dev, &defs);
+	/* fetch all other Information Element parameters */
+	ret = mesh_get_default_parameters(dev, &defs);
 
-	cmd.length = cpu_to_le16(माप(काष्ठा mrvl_meshie));
+	cmd.length = cpu_to_le16(sizeof(struct mrvl_meshie));
 
 	/* transfer IE elements */
-	ie = (काष्ठा mrvl_meshie *) &cmd.data[0];
-	स_नकल(ie, &defs.meshie, माप(काष्ठा mrvl_meshie));
+	ie = (struct mrvl_meshie *) &cmd.data[0];
+	memcpy(ie, &defs.meshie, sizeof(struct mrvl_meshie));
 	/* update protocol id */
 	ie->val.active_protocol_id = datum;
 
 	ret = lbs_mesh_config_send(priv, &cmd, CMD_ACT_MESH_CONFIG_SET,
 				   CMD_TYPE_MESH_SET_MESH_IE);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस म_माप(buf);
-पूर्ण
+	return strlen(buf);
+}
 
 /**
- * metric_id_get - Get function क्रम sysfs attribute metric_id
- * @dev: the &काष्ठा device
+ * metric_id_get - Get function for sysfs attribute metric_id
+ * @dev: the &struct device
  * @attr: device attributes
- * @buf: buffer where data will be वापसed
+ * @buf: buffer where data will be returned
  */
-अटल sमाप_प्रकार metric_id_get(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा mrvl_mesh_शेषs defs;
-	पूर्णांक ret;
+static ssize_t metric_id_get(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct mrvl_mesh_defaults defs;
+	int ret;
 
-	ret = mesh_get_शेष_parameters(dev, &defs);
+	ret = mesh_get_default_parameters(dev, &defs);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस snम_लिखो(buf, 5, "%d\n", defs.meshie.val.active_metric_id);
-पूर्ण
+	return snprintf(buf, 5, "%d\n", defs.meshie.val.active_metric_id);
+}
 
 /**
- * metric_id_set - Set function क्रम sysfs attribute metric_id
- * @dev: the &काष्ठा device
+ * metric_id_set - Set function for sysfs attribute metric_id
+ * @dev: the &struct device
  * @attr: device attributes
  * @buf: buffer that contains new attribute value
  * @count: size of buffer
  */
-अटल sमाप_प्रकार metric_id_set(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			     स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा cmd_ds_mesh_config cmd;
-	काष्ठा mrvl_mesh_शेषs defs;
-	काष्ठा mrvl_meshie *ie;
-	काष्ठा lbs_निजी *priv = to_net_dev(dev)->ml_priv;
-	uपूर्णांक32_t datum;
-	पूर्णांक ret;
+static ssize_t metric_id_set(struct device *dev, struct device_attribute *attr,
+			     const char *buf, size_t count)
+{
+	struct cmd_ds_mesh_config cmd;
+	struct mrvl_mesh_defaults defs;
+	struct mrvl_meshie *ie;
+	struct lbs_private *priv = to_net_dev(dev)->ml_priv;
+	uint32_t datum;
+	int ret;
 
-	स_रखो(&cmd, 0, माप(cmd));
-	ret = माला_पूछो(buf, "%d", &datum);
-	अगर ((ret != 1) || (datum > 255))
-		वापस -EINVAL;
+	memset(&cmd, 0, sizeof(cmd));
+	ret = sscanf(buf, "%d", &datum);
+	if ((ret != 1) || (datum > 255))
+		return -EINVAL;
 
-	/* fetch all other Inक्रमmation Element parameters */
-	ret = mesh_get_शेष_parameters(dev, &defs);
+	/* fetch all other Information Element parameters */
+	ret = mesh_get_default_parameters(dev, &defs);
 
-	cmd.length = cpu_to_le16(माप(काष्ठा mrvl_meshie));
+	cmd.length = cpu_to_le16(sizeof(struct mrvl_meshie));
 
 	/* transfer IE elements */
-	ie = (काष्ठा mrvl_meshie *) &cmd.data[0];
-	स_नकल(ie, &defs.meshie, माप(काष्ठा mrvl_meshie));
+	ie = (struct mrvl_meshie *) &cmd.data[0];
+	memcpy(ie, &defs.meshie, sizeof(struct mrvl_meshie));
 	/* update metric id */
 	ie->val.active_metric_id = datum;
 
 	ret = lbs_mesh_config_send(priv, &cmd, CMD_ACT_MESH_CONFIG_SET,
 				   CMD_TYPE_MESH_SET_MESH_IE);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस म_माप(buf);
-पूर्ण
+	return strlen(buf);
+}
 
 /**
- * capability_get - Get function क्रम sysfs attribute capability
- * @dev: the &काष्ठा device
+ * capability_get - Get function for sysfs attribute capability
+ * @dev: the &struct device
  * @attr: device attributes
- * @buf: buffer where data will be वापसed
+ * @buf: buffer where data will be returned
  */
-अटल sमाप_प्रकार capability_get(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा mrvl_mesh_शेषs defs;
-	पूर्णांक ret;
+static ssize_t capability_get(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct mrvl_mesh_defaults defs;
+	int ret;
 
-	ret = mesh_get_शेष_parameters(dev, &defs);
+	ret = mesh_get_default_parameters(dev, &defs);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस snम_लिखो(buf, 5, "%d\n", defs.meshie.val.mesh_capability);
-पूर्ण
+	return snprintf(buf, 5, "%d\n", defs.meshie.val.mesh_capability);
+}
 
 /**
- * capability_set - Set function क्रम sysfs attribute capability
- * @dev: the &काष्ठा device
+ * capability_set - Set function for sysfs attribute capability
+ * @dev: the &struct device
  * @attr: device attributes
  * @buf: buffer that contains new attribute value
  * @count: size of buffer
  */
-अटल sमाप_प्रकार capability_set(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			      स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा cmd_ds_mesh_config cmd;
-	काष्ठा mrvl_mesh_शेषs defs;
-	काष्ठा mrvl_meshie *ie;
-	काष्ठा lbs_निजी *priv = to_net_dev(dev)->ml_priv;
-	uपूर्णांक32_t datum;
-	पूर्णांक ret;
+static ssize_t capability_set(struct device *dev, struct device_attribute *attr,
+			      const char *buf, size_t count)
+{
+	struct cmd_ds_mesh_config cmd;
+	struct mrvl_mesh_defaults defs;
+	struct mrvl_meshie *ie;
+	struct lbs_private *priv = to_net_dev(dev)->ml_priv;
+	uint32_t datum;
+	int ret;
 
-	स_रखो(&cmd, 0, माप(cmd));
-	ret = माला_पूछो(buf, "%d", &datum);
-	अगर ((ret != 1) || (datum > 255))
-		वापस -EINVAL;
+	memset(&cmd, 0, sizeof(cmd));
+	ret = sscanf(buf, "%d", &datum);
+	if ((ret != 1) || (datum > 255))
+		return -EINVAL;
 
-	/* fetch all other Inक्रमmation Element parameters */
-	ret = mesh_get_शेष_parameters(dev, &defs);
+	/* fetch all other Information Element parameters */
+	ret = mesh_get_default_parameters(dev, &defs);
 
-	cmd.length = cpu_to_le16(माप(काष्ठा mrvl_meshie));
+	cmd.length = cpu_to_le16(sizeof(struct mrvl_meshie));
 
 	/* transfer IE elements */
-	ie = (काष्ठा mrvl_meshie *) &cmd.data[0];
-	स_नकल(ie, &defs.meshie, माप(काष्ठा mrvl_meshie));
+	ie = (struct mrvl_meshie *) &cmd.data[0];
+	memcpy(ie, &defs.meshie, sizeof(struct mrvl_meshie));
 	/* update value */
 	ie->val.mesh_capability = datum;
 
 	ret = lbs_mesh_config_send(priv, &cmd, CMD_ACT_MESH_CONFIG_SET,
 				   CMD_TYPE_MESH_SET_MESH_IE);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस म_माप(buf);
-पूर्ण
+	return strlen(buf);
+}
 
 
-अटल DEVICE_ATTR(bootflag, 0644, bootflag_get, bootflag_set);
-अटल DEVICE_ATTR(bootसमय, 0644, bootसमय_get, bootसमय_set);
-अटल DEVICE_ATTR(channel, 0644, channel_get, channel_set);
-अटल DEVICE_ATTR(mesh_id, 0644, mesh_id_get, mesh_id_set);
-अटल DEVICE_ATTR(protocol_id, 0644, protocol_id_get, protocol_id_set);
-अटल DEVICE_ATTR(metric_id, 0644, metric_id_get, metric_id_set);
-अटल DEVICE_ATTR(capability, 0644, capability_get, capability_set);
+static DEVICE_ATTR(bootflag, 0644, bootflag_get, bootflag_set);
+static DEVICE_ATTR(boottime, 0644, boottime_get, boottime_set);
+static DEVICE_ATTR(channel, 0644, channel_get, channel_set);
+static DEVICE_ATTR(mesh_id, 0644, mesh_id_get, mesh_id_set);
+static DEVICE_ATTR(protocol_id, 0644, protocol_id_get, protocol_id_set);
+static DEVICE_ATTR(metric_id, 0644, metric_id_get, metric_id_set);
+static DEVICE_ATTR(capability, 0644, capability_get, capability_set);
 
-अटल काष्ठा attribute *boot_opts_attrs[] = अणु
+static struct attribute *boot_opts_attrs[] = {
 	&dev_attr_bootflag.attr,
-	&dev_attr_bootसमय.attr,
+	&dev_attr_boottime.attr,
 	&dev_attr_channel.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group boot_opts_group = अणु
+static const struct attribute_group boot_opts_group = {
 	.name = "boot_options",
 	.attrs = boot_opts_attrs,
-पूर्ण;
+};
 
-अटल काष्ठा attribute *mesh_ie_attrs[] = अणु
+static struct attribute *mesh_ie_attrs[] = {
 	&dev_attr_mesh_id.attr,
 	&dev_attr_protocol_id.attr,
 	&dev_attr_metric_id.attr,
 	&dev_attr_capability.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group mesh_ie_group = अणु
+static const struct attribute_group mesh_ie_group = {
 	.name = "mesh_ie",
 	.attrs = mesh_ie_attrs,
-पूर्ण;
+};
 
 
 /***************************************************************************
@@ -811,126 +810,126 @@
  * Check mesh FW version and appropriately send the mesh start
  * command
  */
-व्योम lbs_init_mesh(काष्ठा lbs_निजी *priv)
-अणु
+void lbs_init_mesh(struct lbs_private *priv)
+{
 	/* Determine mesh_fw_ver from fwrelease and fwcapinfo */
 	/* 5.0.16p0 9.0.0.p0 is known to NOT support any mesh */
 	/* 5.110.22 have mesh command with 0xa3 command id */
-	/* 10.0.0.p0 FW brings in mesh config command with dअगरferent id */
+	/* 10.0.0.p0 FW brings in mesh config command with different id */
 	/* Check FW version MSB and initialize mesh_fw_ver */
-	अगर (MRVL_FW_MAJOR_REV(priv->fwrelease) == MRVL_FW_V5) अणु
-		/* Enable mesh, अगर supported, and work out which TLV it uses.
+	if (MRVL_FW_MAJOR_REV(priv->fwrelease) == MRVL_FW_V5) {
+		/* Enable mesh, if supported, and work out which TLV it uses.
 		   0x100 + 291 is an unofficial value used in 5.110.20.pXX
 		   0x100 + 37 is the official value used in 5.110.21.pXX
-		   but we check them in that order because 20.pXX करोesn't
+		   but we check them in that order because 20.pXX doesn't
 		   give an error -- it just silently fails. */
 
-		/* 5.110.20.pXX firmware will fail the command अगर the channel
-		   करोesn't match the existing channel. But only अगर the TLV
+		/* 5.110.20.pXX firmware will fail the command if the channel
+		   doesn't match the existing channel. But only if the TLV
 		   is correct. If the channel is wrong, _BOTH_ versions will
 		   give an error to 0x100+291, and allow 0x100+37 to succeed.
-		   It's just that 5.110.20.pXX will not have करोne anything
+		   It's just that 5.110.20.pXX will not have done anything
 		   useful */
 
 		priv->mesh_tlv = TLV_TYPE_OLD_MESH_ID;
-		अगर (lbs_mesh_config(priv, CMD_ACT_MESH_CONFIG_START, 1)) अणु
+		if (lbs_mesh_config(priv, CMD_ACT_MESH_CONFIG_START, 1)) {
 			priv->mesh_tlv = TLV_TYPE_MESH_ID;
-			अगर (lbs_mesh_config(priv, CMD_ACT_MESH_CONFIG_START, 1))
+			if (lbs_mesh_config(priv, CMD_ACT_MESH_CONFIG_START, 1))
 				priv->mesh_tlv = 0;
-		पूर्ण
-	पूर्ण अन्यथा
-	अगर ((MRVL_FW_MAJOR_REV(priv->fwrelease) >= MRVL_FW_V10) &&
-		(priv->fwcapinfo & MESH_CAPINFO_ENABLE_MASK)) अणु
+		}
+	} else
+	if ((MRVL_FW_MAJOR_REV(priv->fwrelease) >= MRVL_FW_V10) &&
+		(priv->fwcapinfo & MESH_CAPINFO_ENABLE_MASK)) {
 		/* 10.0.0.pXX new firmwares should succeed with TLV
 		 * 0x100+37; Do not invoke command with old TLV.
 		 */
 		priv->mesh_tlv = TLV_TYPE_MESH_ID;
-		अगर (lbs_mesh_config(priv, CMD_ACT_MESH_CONFIG_START, 1))
+		if (lbs_mesh_config(priv, CMD_ACT_MESH_CONFIG_START, 1))
 			priv->mesh_tlv = 0;
-	पूर्ण
+	}
 
-	/* Stop meshing until पूर्णांकerface is brought up */
+	/* Stop meshing until interface is brought up */
 	lbs_mesh_config(priv, CMD_ACT_MESH_CONFIG_STOP, 1);
-पूर्ण
+}
 
-व्योम lbs_start_mesh(काष्ठा lbs_निजी *priv)
-अणु
+void lbs_start_mesh(struct lbs_private *priv)
+{
 	lbs_add_mesh(priv);
 
-	अगर (device_create_file(&priv->dev->dev, &dev_attr_lbs_mesh))
+	if (device_create_file(&priv->dev->dev, &dev_attr_lbs_mesh))
 		netdev_err(priv->dev, "cannot register lbs_mesh attribute\n");
-पूर्ण
+}
 
-पूर्णांक lbs_deinit_mesh(काष्ठा lbs_निजी *priv)
-अणु
-	काष्ठा net_device *dev = priv->dev;
-	पूर्णांक ret = 0;
+int lbs_deinit_mesh(struct lbs_private *priv)
+{
+	struct net_device *dev = priv->dev;
+	int ret = 0;
 
-	अगर (priv->mesh_tlv) अणु
-		device_हटाओ_file(&dev->dev, &dev_attr_lbs_mesh);
+	if (priv->mesh_tlv) {
+		device_remove_file(&dev->dev, &dev_attr_lbs_mesh);
 		ret = 1;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
 /**
- * lbs_mesh_stop - बंद the mshX पूर्णांकerface
+ * lbs_mesh_stop - close the mshX interface
  *
- * @dev:	A poपूर्णांकer to &net_device काष्ठाure
- * वापसs:	0
+ * @dev:	A pointer to &net_device structure
+ * returns:	0
  */
-अटल पूर्णांक lbs_mesh_stop(काष्ठा net_device *dev)
-अणु
-	काष्ठा lbs_निजी *priv = dev->ml_priv;
+static int lbs_mesh_stop(struct net_device *dev)
+{
+	struct lbs_private *priv = dev->ml_priv;
 
 	lbs_mesh_config(priv, CMD_ACT_MESH_CONFIG_STOP,
 		lbs_mesh_get_channel(priv));
 
 	spin_lock_irq(&priv->driver_lock);
 
-	netअगर_stop_queue(dev);
-	netअगर_carrier_off(dev);
+	netif_stop_queue(dev);
+	netif_carrier_off(dev);
 
 	spin_unlock_irq(&priv->driver_lock);
 
 	lbs_update_mcast(priv);
-	अगर (!lbs_अगरace_active(priv))
-		lbs_stop_अगरace(priv);
+	if (!lbs_iface_active(priv))
+		lbs_stop_iface(priv);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * lbs_mesh_dev_खोलो - खोलो the mshX पूर्णांकerface
+ * lbs_mesh_dev_open - open the mshX interface
  *
- * @dev:	A poपूर्णांकer to &net_device काष्ठाure
- * वापसs:	0 or -EBUSY अगर monitor mode active
+ * @dev:	A pointer to &net_device structure
+ * returns:	0 or -EBUSY if monitor mode active
  */
-अटल पूर्णांक lbs_mesh_dev_खोलो(काष्ठा net_device *dev)
-अणु
-	काष्ठा lbs_निजी *priv = dev->ml_priv;
-	पूर्णांक ret = 0;
+static int lbs_mesh_dev_open(struct net_device *dev)
+{
+	struct lbs_private *priv = dev->ml_priv;
+	int ret = 0;
 
-	अगर (!priv->अगरace_running) अणु
-		ret = lbs_start_अगरace(priv);
-		अगर (ret)
-			जाओ out;
-	पूर्ण
+	if (!priv->iface_running) {
+		ret = lbs_start_iface(priv);
+		if (ret)
+			goto out;
+	}
 
 	spin_lock_irq(&priv->driver_lock);
 
-	अगर (priv->wdev->अगरtype == NL80211_IFTYPE_MONITOR) अणु
+	if (priv->wdev->iftype == NL80211_IFTYPE_MONITOR) {
 		ret = -EBUSY;
 		spin_unlock_irq(&priv->driver_lock);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	netअगर_carrier_on(dev);
+	netif_carrier_on(dev);
 
-	अगर (!priv->tx_pending_len)
-		netअगर_wake_queue(dev);
+	if (!priv->tx_pending_len)
+		netif_wake_queue(dev);
 
 	spin_unlock_irq(&priv->driver_lock);
 
@@ -938,51 +937,51 @@
 		lbs_mesh_get_channel(priv));
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा net_device_ops mesh_netdev_ops = अणु
-	.nकरो_खोलो		= lbs_mesh_dev_खोलो,
-	.nकरो_stop 		= lbs_mesh_stop,
-	.nकरो_start_xmit		= lbs_hard_start_xmit,
-	.nकरो_set_mac_address	= lbs_set_mac_address,
-	.nकरो_set_rx_mode	= lbs_set_multicast_list,
-पूर्ण;
+static const struct net_device_ops mesh_netdev_ops = {
+	.ndo_open		= lbs_mesh_dev_open,
+	.ndo_stop 		= lbs_mesh_stop,
+	.ndo_start_xmit		= lbs_hard_start_xmit,
+	.ndo_set_mac_address	= lbs_set_mac_address,
+	.ndo_set_rx_mode	= lbs_set_multicast_list,
+};
 
 /**
- * lbs_add_mesh - add mshX पूर्णांकerface
+ * lbs_add_mesh - add mshX interface
  *
- * @priv:	A poपूर्णांकer to the &काष्ठा lbs_निजी काष्ठाure
- * वापसs:	0 अगर successful, -X otherwise
+ * @priv:	A pointer to the &struct lbs_private structure
+ * returns:	0 if successful, -X otherwise
  */
-अटल पूर्णांक lbs_add_mesh(काष्ठा lbs_निजी *priv)
-अणु
-	काष्ठा net_device *mesh_dev = शून्य;
-	काष्ठा wireless_dev *mesh_wdev;
-	पूर्णांक ret = 0;
+static int lbs_add_mesh(struct lbs_private *priv)
+{
+	struct net_device *mesh_dev = NULL;
+	struct wireless_dev *mesh_wdev;
+	int ret = 0;
 
-	/* Allocate a भव mesh device */
-	mesh_wdev = kzalloc(माप(काष्ठा wireless_dev), GFP_KERNEL);
-	अगर (!mesh_wdev) अणु
+	/* Allocate a virtual mesh device */
+	mesh_wdev = kzalloc(sizeof(struct wireless_dev), GFP_KERNEL);
+	if (!mesh_wdev) {
 		lbs_deb_mesh("init mshX wireless device failed\n");
 		ret = -ENOMEM;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	mesh_dev = alloc_netdev(0, "msh%d", NET_NAME_UNKNOWN, ether_setup);
-	अगर (!mesh_dev) अणु
+	if (!mesh_dev) {
 		lbs_deb_mesh("init mshX device failed\n");
 		ret = -ENOMEM;
-		जाओ err_मुक्त_wdev;
-	पूर्ण
+		goto err_free_wdev;
+	}
 
-	mesh_wdev->अगरtype = NL80211_IFTYPE_MESH_POINT;
+	mesh_wdev->iftype = NL80211_IFTYPE_MESH_POINT;
 	mesh_wdev->wiphy = priv->wdev->wiphy;
 
-	अगर (priv->mesh_tlv) अणु
-		प्र_लिखो(mesh_wdev->ssid, "mesh");
+	if (priv->mesh_tlv) {
+		sprintf(mesh_wdev->ssid, "mesh");
 		mesh_wdev->mesh_id_up_len = 4;
-	पूर्ण
+	}
 
 	mesh_wdev->netdev = mesh_dev;
 
@@ -1001,80 +1000,80 @@ out:
 	mesh_dev->sysfs_groups[1] = &boot_opts_group;
 	mesh_dev->sysfs_groups[2] = &mesh_ie_group;
 
-	/* Register भव mesh पूर्णांकerface */
-	ret = रेजिस्टर_netdev(mesh_dev);
-	अगर (ret) अणु
+	/* Register virtual mesh interface */
+	ret = register_netdev(mesh_dev);
+	if (ret) {
 		pr_err("cannot register mshX virtual interface\n");
-		जाओ err_मुक्त_netdev;
-	पूर्ण
+		goto err_free_netdev;
+	}
 
 	/* Everything successful */
 	ret = 0;
-	जाओ करोne;
+	goto done;
 
-err_मुक्त_netdev:
-	मुक्त_netdev(mesh_dev);
+err_free_netdev:
+	free_netdev(mesh_dev);
 
-err_मुक्त_wdev:
-	kमुक्त(mesh_wdev);
+err_free_wdev:
+	kfree(mesh_wdev);
 
-करोne:
-	वापस ret;
-पूर्ण
+done:
+	return ret;
+}
 
-व्योम lbs_हटाओ_mesh(काष्ठा lbs_निजी *priv)
-अणु
-	काष्ठा net_device *mesh_dev;
+void lbs_remove_mesh(struct lbs_private *priv)
+{
+	struct net_device *mesh_dev;
 
 	mesh_dev = priv->mesh_dev;
-	अगर (!mesh_dev)
-		वापस;
+	if (!mesh_dev)
+		return;
 
-	netअगर_stop_queue(mesh_dev);
-	netअगर_carrier_off(mesh_dev);
-	unरेजिस्टर_netdev(mesh_dev);
-	priv->mesh_dev = शून्य;
-	kमुक्त(mesh_dev->ieee80211_ptr);
-	मुक्त_netdev(mesh_dev);
-पूर्ण
+	netif_stop_queue(mesh_dev);
+	netif_carrier_off(mesh_dev);
+	unregister_netdev(mesh_dev);
+	priv->mesh_dev = NULL;
+	kfree(mesh_dev->ieee80211_ptr);
+	free_netdev(mesh_dev);
+}
 
 
 /***************************************************************************
  * Sending and receiving
  */
-काष्ठा net_device *lbs_mesh_set_dev(काष्ठा lbs_निजी *priv,
-	काष्ठा net_device *dev, काष्ठा rxpd *rxpd)
-अणु
-	अगर (priv->mesh_dev) अणु
-		अगर (priv->mesh_tlv == TLV_TYPE_OLD_MESH_ID) अणु
-			अगर (rxpd->rx_control & RxPD_MESH_FRAME)
+struct net_device *lbs_mesh_set_dev(struct lbs_private *priv,
+	struct net_device *dev, struct rxpd *rxpd)
+{
+	if (priv->mesh_dev) {
+		if (priv->mesh_tlv == TLV_TYPE_OLD_MESH_ID) {
+			if (rxpd->rx_control & RxPD_MESH_FRAME)
 				dev = priv->mesh_dev;
-		पूर्ण अन्यथा अगर (priv->mesh_tlv == TLV_TYPE_MESH_ID) अणु
-			अगर (rxpd->u.bss.bss_num == MESH_IFACE_ID)
+		} else if (priv->mesh_tlv == TLV_TYPE_MESH_ID) {
+			if (rxpd->u.bss.bss_num == MESH_IFACE_ID)
 				dev = priv->mesh_dev;
-		पूर्ण
-	पूर्ण
-	वापस dev;
-पूर्ण
+		}
+	}
+	return dev;
+}
 
 
-व्योम lbs_mesh_set_txpd(काष्ठा lbs_निजी *priv,
-	काष्ठा net_device *dev, काष्ठा txpd *txpd)
-अणु
-	अगर (dev == priv->mesh_dev) अणु
-		अगर (priv->mesh_tlv == TLV_TYPE_OLD_MESH_ID)
+void lbs_mesh_set_txpd(struct lbs_private *priv,
+	struct net_device *dev, struct txpd *txpd)
+{
+	if (dev == priv->mesh_dev) {
+		if (priv->mesh_tlv == TLV_TYPE_OLD_MESH_ID)
 			txpd->tx_control |= cpu_to_le32(TxPD_MESH_FRAME);
-		अन्यथा अगर (priv->mesh_tlv == TLV_TYPE_MESH_ID)
+		else if (priv->mesh_tlv == TLV_TYPE_MESH_ID)
 			txpd->u.bss.bss_num = MESH_IFACE_ID;
-	पूर्ण
-पूर्ण
+	}
+}
 
 
 /***************************************************************************
  * Ethtool related
  */
 
-अटल स्थिर अक्षर mesh_stat_strings[MESH_STATS_NUM][ETH_GSTRING_LEN] = अणु
+static const char mesh_stat_strings[MESH_STATS_NUM][ETH_GSTRING_LEN] = {
 	"drop_duplicate_bcast",
 	"drop_ttl_zero",
 	"drop_no_fwd_route",
@@ -1083,22 +1082,22 @@ err_मुक्त_wdev:
 	"fwded_bcast_cnt",
 	"drop_blind_table",
 	"tx_failed_cnt"
-पूर्ण;
+};
 
-व्योम lbs_mesh_ethtool_get_stats(काष्ठा net_device *dev,
-	काष्ठा ethtool_stats *stats, uपूर्णांक64_t *data)
-अणु
-	काष्ठा lbs_निजी *priv = dev->ml_priv;
-	काष्ठा cmd_ds_mesh_access mesh_access;
-	पूर्णांक ret;
+void lbs_mesh_ethtool_get_stats(struct net_device *dev,
+	struct ethtool_stats *stats, uint64_t *data)
+{
+	struct lbs_private *priv = dev->ml_priv;
+	struct cmd_ds_mesh_access mesh_access;
+	int ret;
 
 	/* Get Mesh Statistics */
 	ret = lbs_mesh_access(priv, CMD_ACT_MESH_GET_STATS, &mesh_access);
 
-	अगर (ret) अणु
-		स_रखो(data, 0, MESH_STATS_NUM*(माप(uपूर्णांक64_t)));
-		वापस;
-	पूर्ण
+	if (ret) {
+		memset(data, 0, MESH_STATS_NUM*(sizeof(uint64_t)));
+		return;
+	}
 
 	priv->mstats.fwd_drop_rbt = le32_to_cpu(mesh_access.data[0]);
 	priv->mstats.fwd_drop_ttl = le32_to_cpu(mesh_access.data[1]);
@@ -1117,24 +1116,24 @@ err_मुक्त_wdev:
 	data[5] = priv->mstats.fwd_bcast_cnt;
 	data[6] = priv->mstats.drop_blind;
 	data[7] = priv->mstats.tx_failed_cnt;
-पूर्ण
+}
 
-पूर्णांक lbs_mesh_ethtool_get_sset_count(काष्ठा net_device *dev, पूर्णांक sset)
-अणु
-	काष्ठा lbs_निजी *priv = dev->ml_priv;
+int lbs_mesh_ethtool_get_sset_count(struct net_device *dev, int sset)
+{
+	struct lbs_private *priv = dev->ml_priv;
 
-	अगर (sset == ETH_SS_STATS && dev == priv->mesh_dev)
-		वापस MESH_STATS_NUM;
+	if (sset == ETH_SS_STATS && dev == priv->mesh_dev)
+		return MESH_STATS_NUM;
 
-	वापस -EOPNOTSUPP;
-पूर्ण
+	return -EOPNOTSUPP;
+}
 
-व्योम lbs_mesh_ethtool_get_strings(काष्ठा net_device *dev,
-	uपूर्णांक32_t stringset, uपूर्णांक8_t *s)
-अणु
-	चयन (stringset) अणु
-	हाल ETH_SS_STATS:
-		स_नकल(s, mesh_stat_strings, माप(mesh_stat_strings));
-		अवरोध;
-	पूर्ण
-पूर्ण
+void lbs_mesh_ethtool_get_strings(struct net_device *dev,
+	uint32_t stringset, uint8_t *s)
+{
+	switch (stringset) {
+	case ETH_SS_STATS:
+		memcpy(s, mesh_stat_strings, sizeof(mesh_stat_strings));
+		break;
+	}
+}

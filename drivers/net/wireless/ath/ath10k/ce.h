@@ -1,21 +1,20 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: ISC */
+/* SPDX-License-Identifier: ISC */
 /*
  * Copyright (c) 2005-2011 Atheros Communications Inc.
  * Copyright (c) 2011-2017 Qualcomm Atheros, Inc.
  * Copyright (c) 2018 The Linux Foundation. All rights reserved.
  */
 
-#अगर_अघोषित _CE_H_
-#घोषणा _CE_H_
+#ifndef _CE_H_
+#define _CE_H_
 
-#समावेश "hif.h"
+#include "hif.h"
 
-#घोषणा CE_HTT_H2T_MSG_SRC_NENTRIES 8192
+#define CE_HTT_H2T_MSG_SRC_NENTRIES 8192
 
 /* Descriptor rings must be aligned to this boundary */
-#घोषणा CE_DESC_RING_ALIGN	8
-#घोषणा CE_SEND_FLAG_GATHER	0x00010000
+#define CE_DESC_RING_ALIGN	8
+#define CE_SEND_FLAG_GATHER	0x00010000
 
 /*
  * Copy Engine support: low-level Target-side Copy Engine API.
@@ -23,141 +22,141 @@
  * how to use copy engines.
  */
 
-काष्ठा ath10k_ce_pipe;
+struct ath10k_ce_pipe;
 
-#घोषणा CE_DESC_FLAGS_GATHER         (1 << 0)
-#घोषणा CE_DESC_FLAGS_BYTE_SWAP      (1 << 1)
-#घोषणा CE_WCN3990_DESC_FLAGS_GATHER BIT(31)
+#define CE_DESC_FLAGS_GATHER         (1 << 0)
+#define CE_DESC_FLAGS_BYTE_SWAP      (1 << 1)
+#define CE_WCN3990_DESC_FLAGS_GATHER BIT(31)
 
-#घोषणा CE_DESC_ADDR_MASK		GENMASK_ULL(34, 0)
-#घोषणा CE_DESC_ADDR_HI_MASK		GENMASK(4, 0)
+#define CE_DESC_ADDR_MASK		GENMASK_ULL(34, 0)
+#define CE_DESC_ADDR_HI_MASK		GENMASK(4, 0)
 
 /* Following desc flags are used in QCA99X0 */
-#घोषणा CE_DESC_FLAGS_HOST_INT_DIS	(1 << 2)
-#घोषणा CE_DESC_FLAGS_TGT_INT_DIS	(1 << 3)
+#define CE_DESC_FLAGS_HOST_INT_DIS	(1 << 2)
+#define CE_DESC_FLAGS_TGT_INT_DIS	(1 << 3)
 
-#घोषणा CE_DESC_FLAGS_META_DATA_MASK ar->hw_values->ce_desc_meta_data_mask
-#घोषणा CE_DESC_FLAGS_META_DATA_LSB  ar->hw_values->ce_desc_meta_data_lsb
+#define CE_DESC_FLAGS_META_DATA_MASK ar->hw_values->ce_desc_meta_data_mask
+#define CE_DESC_FLAGS_META_DATA_LSB  ar->hw_values->ce_desc_meta_data_lsb
 
-#घोषणा CE_DDR_RRI_MASK			GENMASK(15, 0)
-#घोषणा CE_DDR_DRRI_SHIFT		16
+#define CE_DDR_RRI_MASK			GENMASK(15, 0)
+#define CE_DDR_DRRI_SHIFT		16
 
-काष्ठा ce_desc अणु
+struct ce_desc {
 	__le32 addr;
 	__le16 nbytes;
 	__le16 flags; /* %CE_DESC_FLAGS_ */
-पूर्ण;
+};
 
-काष्ठा ce_desc_64 अणु
+struct ce_desc_64 {
 	__le64 addr;
-	__le16 nbytes; /* length in रेजिस्टर map */
+	__le16 nbytes; /* length in register map */
 	__le16 flags; /* fw_metadata_high */
 	__le32 toeplitz_hash_result;
-पूर्ण;
+};
 
-#घोषणा CE_DESC_SIZE माप(काष्ठा ce_desc)
-#घोषणा CE_DESC_SIZE_64 माप(काष्ठा ce_desc_64)
+#define CE_DESC_SIZE sizeof(struct ce_desc)
+#define CE_DESC_SIZE_64 sizeof(struct ce_desc_64)
 
-काष्ठा ath10k_ce_ring अणु
-	/* Number of entries in this ring; must be घातer of 2 */
-	अचिन्हित पूर्णांक nentries;
-	अचिन्हित पूर्णांक nentries_mask;
+struct ath10k_ce_ring {
+	/* Number of entries in this ring; must be power of 2 */
+	unsigned int nentries;
+	unsigned int nentries_mask;
 
 	/*
 	 * For dest ring, this is the next index to be processed
-	 * by software after it was/is received पूर्णांकo.
+	 * by software after it was/is received into.
 	 *
 	 * For src ring, this is the last descriptor that was sent
 	 * and completion processed by software.
 	 *
 	 * Regardless of src or dest ring, this is an invariant
 	 * (modulo ring size):
-	 *     ग_लिखो index >= पढ़ो index >= sw_index
+	 *     write index >= read index >= sw_index
 	 */
-	अचिन्हित पूर्णांक sw_index;
+	unsigned int sw_index;
 	/* cached copy */
-	अचिन्हित पूर्णांक ग_लिखो_index;
+	unsigned int write_index;
 	/*
 	 * For src ring, this is the next index not yet processed by HW.
-	 * This is a cached copy of the real HW index (पढ़ो index), used
-	 * क्रम aव्योमing पढ़ोing the HW index रेजिस्टर more often than
+	 * This is a cached copy of the real HW index (read index), used
+	 * for avoiding reading the HW index register more often than
 	 * necessary.
 	 * This extends the invariant:
-	 *     ग_लिखो index >= पढ़ो index >= hw_index >= sw_index
+	 *     write index >= read index >= hw_index >= sw_index
 	 *
 	 * For dest ring, this is currently unused.
 	 */
 	/* cached copy */
-	अचिन्हित पूर्णांक hw_index;
+	unsigned int hw_index;
 
-	/* Start of DMA-coherent area reserved क्रम descriptors */
+	/* Start of DMA-coherent area reserved for descriptors */
 	/* Host address space */
-	व्योम *base_addr_owner_space_unaligned;
+	void *base_addr_owner_space_unaligned;
 	/* CE address space */
 	dma_addr_t base_addr_ce_space_unaligned;
 
 	/*
 	 * Actual start of descriptors.
 	 * Aligned to descriptor-size boundary.
-	 * Poपूर्णांकs पूर्णांकo reserved DMA-coherent area, above.
+	 * Points into reserved DMA-coherent area, above.
 	 */
 	/* Host address space */
-	व्योम *base_addr_owner_space;
+	void *base_addr_owner_space;
 
 	/* CE address space */
 	dma_addr_t base_addr_ce_space;
 
-	अक्षर *shaकरोw_base_unaligned;
-	काष्ठा ce_desc_64 *shaकरोw_base;
+	char *shadow_base_unaligned;
+	struct ce_desc_64 *shadow_base;
 
 	/* keep last */
-	व्योम *per_transfer_context[];
-पूर्ण;
+	void *per_transfer_context[];
+};
 
-काष्ठा ath10k_ce_pipe अणु
-	काष्ठा ath10k *ar;
-	अचिन्हित पूर्णांक id;
+struct ath10k_ce_pipe {
+	struct ath10k *ar;
+	unsigned int id;
 
-	अचिन्हित पूर्णांक attr_flags;
+	unsigned int attr_flags;
 
 	u32 ctrl_addr;
 
-	व्योम (*send_cb)(काष्ठा ath10k_ce_pipe *);
-	व्योम (*recv_cb)(काष्ठा ath10k_ce_pipe *);
+	void (*send_cb)(struct ath10k_ce_pipe *);
+	void (*recv_cb)(struct ath10k_ce_pipe *);
 
-	अचिन्हित पूर्णांक src_sz_max;
-	काष्ठा ath10k_ce_ring *src_ring;
-	काष्ठा ath10k_ce_ring *dest_ring;
-	स्थिर काष्ठा ath10k_ce_ops *ops;
-पूर्ण;
+	unsigned int src_sz_max;
+	struct ath10k_ce_ring *src_ring;
+	struct ath10k_ce_ring *dest_ring;
+	const struct ath10k_ce_ops *ops;
+};
 
 /* Copy Engine settable attributes */
-काष्ठा ce_attr;
+struct ce_attr;
 
-काष्ठा ath10k_bus_ops अणु
-	u32 (*पढ़ो32)(काष्ठा ath10k *ar, u32 offset);
-	व्योम (*ग_लिखो32)(काष्ठा ath10k *ar, u32 offset, u32 value);
-	पूर्णांक (*get_num_banks)(काष्ठा ath10k *ar);
-पूर्ण;
+struct ath10k_bus_ops {
+	u32 (*read32)(struct ath10k *ar, u32 offset);
+	void (*write32)(struct ath10k *ar, u32 offset, u32 value);
+	int (*get_num_banks)(struct ath10k *ar);
+};
 
-अटल अंतरभूत काष्ठा ath10k_ce *ath10k_ce_priv(काष्ठा ath10k *ar)
-अणु
-	वापस (काष्ठा ath10k_ce *)ar->ce_priv;
-पूर्ण
+static inline struct ath10k_ce *ath10k_ce_priv(struct ath10k *ar)
+{
+	return (struct ath10k_ce *)ar->ce_priv;
+}
 
-काष्ठा ath10k_ce अणु
+struct ath10k_ce {
 	/* protects CE info */
 	spinlock_t ce_lock;
-	स्थिर काष्ठा ath10k_bus_ops *bus_ops;
-	काष्ठा ath10k_ce_pipe ce_states[CE_COUNT_MAX];
+	const struct ath10k_bus_ops *bus_ops;
+	struct ath10k_ce_pipe ce_states[CE_COUNT_MAX];
 	u32 *vaddr_rri;
 	dma_addr_t paddr_rri;
-पूर्ण;
+};
 
 /*==================Send====================*/
 
 /* ath10k_ce_send flags */
-#घोषणा CE_SEND_FLAG_BYTE_SWAP 1
+#define CE_SEND_FLAG_BYTE_SWAP 1
 
 /*
  * Queue a source buffer to be sent to an anonymous destination buffer.
@@ -168,261 +167,261 @@
  *   flags           - CE_SEND_FLAG_* values
  * Returns 0 on success; otherwise an error status.
  *
- * Note: If no flags are specअगरied, use CE's शेष data swap mode.
+ * Note: If no flags are specified, use CE's default data swap mode.
  *
  * Implementation note: pushes 1 buffer to Source ring
  */
-पूर्णांक ath10k_ce_send(काष्ठा ath10k_ce_pipe *ce_state,
-		   व्योम *per_transfer_send_context,
+int ath10k_ce_send(struct ath10k_ce_pipe *ce_state,
+		   void *per_transfer_send_context,
 		   dma_addr_t buffer,
-		   अचिन्हित पूर्णांक nbytes,
+		   unsigned int nbytes,
 		   /* 14 bits */
-		   अचिन्हित पूर्णांक transfer_id,
-		   अचिन्हित पूर्णांक flags);
+		   unsigned int transfer_id,
+		   unsigned int flags);
 
-पूर्णांक ath10k_ce_send_nolock(काष्ठा ath10k_ce_pipe *ce_state,
-			  व्योम *per_transfer_context,
+int ath10k_ce_send_nolock(struct ath10k_ce_pipe *ce_state,
+			  void *per_transfer_context,
 			  dma_addr_t buffer,
-			  अचिन्हित पूर्णांक nbytes,
-			  अचिन्हित पूर्णांक transfer_id,
-			  अचिन्हित पूर्णांक flags);
+			  unsigned int nbytes,
+			  unsigned int transfer_id,
+			  unsigned int flags);
 
-व्योम __ath10k_ce_send_revert(काष्ठा ath10k_ce_pipe *pipe);
+void __ath10k_ce_send_revert(struct ath10k_ce_pipe *pipe);
 
-पूर्णांक ath10k_ce_num_मुक्त_src_entries(काष्ठा ath10k_ce_pipe *pipe);
+int ath10k_ce_num_free_src_entries(struct ath10k_ce_pipe *pipe);
 
 /*==================Recv=======================*/
 
-पूर्णांक __ath10k_ce_rx_num_मुक्त_bufs(काष्ठा ath10k_ce_pipe *pipe);
-पूर्णांक ath10k_ce_rx_post_buf(काष्ठा ath10k_ce_pipe *pipe, व्योम *ctx,
+int __ath10k_ce_rx_num_free_bufs(struct ath10k_ce_pipe *pipe);
+int ath10k_ce_rx_post_buf(struct ath10k_ce_pipe *pipe, void *ctx,
 			  dma_addr_t paddr);
-व्योम ath10k_ce_rx_update_ग_लिखो_idx(काष्ठा ath10k_ce_pipe *pipe, u32 nentries);
+void ath10k_ce_rx_update_write_idx(struct ath10k_ce_pipe *pipe, u32 nentries);
 
 /* recv flags */
 /* Data is byte-swapped */
-#घोषणा CE_RECV_FLAG_SWAPPED	1
+#define CE_RECV_FLAG_SWAPPED	1
 
 /*
- * Supply data क्रम the next completed unprocessed receive descriptor.
+ * Supply data for the next completed unprocessed receive descriptor.
  * Pops buffer from Dest ring.
  */
-पूर्णांक ath10k_ce_completed_recv_next(काष्ठा ath10k_ce_pipe *ce_state,
-				  व्योम **per_transfer_contextp,
-				  अचिन्हित पूर्णांक *nbytesp);
+int ath10k_ce_completed_recv_next(struct ath10k_ce_pipe *ce_state,
+				  void **per_transfer_contextp,
+				  unsigned int *nbytesp);
 /*
- * Supply data क्रम the next completed unprocessed send descriptor.
+ * Supply data for the next completed unprocessed send descriptor.
  * Pops 1 completed send buffer from Source ring.
  */
-पूर्णांक ath10k_ce_completed_send_next(काष्ठा ath10k_ce_pipe *ce_state,
-				  व्योम **per_transfer_contextp);
+int ath10k_ce_completed_send_next(struct ath10k_ce_pipe *ce_state,
+				  void **per_transfer_contextp);
 
-पूर्णांक ath10k_ce_completed_send_next_nolock(काष्ठा ath10k_ce_pipe *ce_state,
-					 व्योम **per_transfer_contextp);
+int ath10k_ce_completed_send_next_nolock(struct ath10k_ce_pipe *ce_state,
+					 void **per_transfer_contextp);
 
 /*==================CE Engine Initialization=======================*/
 
-पूर्णांक ath10k_ce_init_pipe(काष्ठा ath10k *ar, अचिन्हित पूर्णांक ce_id,
-			स्थिर काष्ठा ce_attr *attr);
-व्योम ath10k_ce_deinit_pipe(काष्ठा ath10k *ar, अचिन्हित पूर्णांक ce_id);
-पूर्णांक ath10k_ce_alloc_pipe(काष्ठा ath10k *ar, पूर्णांक ce_id,
-			 स्थिर काष्ठा ce_attr *attr);
-व्योम ath10k_ce_मुक्त_pipe(काष्ठा ath10k *ar, पूर्णांक ce_id);
+int ath10k_ce_init_pipe(struct ath10k *ar, unsigned int ce_id,
+			const struct ce_attr *attr);
+void ath10k_ce_deinit_pipe(struct ath10k *ar, unsigned int ce_id);
+int ath10k_ce_alloc_pipe(struct ath10k *ar, int ce_id,
+			 const struct ce_attr *attr);
+void ath10k_ce_free_pipe(struct ath10k *ar, int ce_id);
 
-/*==================CE Engine Shutकरोwn=======================*/
+/*==================CE Engine Shutdown=======================*/
 /*
- * Support clean shutकरोwn by allowing the caller to revoke
- * receive buffers.  Target DMA must be stopped beक्रमe using
+ * Support clean shutdown by allowing the caller to revoke
+ * receive buffers.  Target DMA must be stopped before using
  * this API.
  */
-पूर्णांक ath10k_ce_revoke_recv_next(काष्ठा ath10k_ce_pipe *ce_state,
-			       व्योम **per_transfer_contextp,
+int ath10k_ce_revoke_recv_next(struct ath10k_ce_pipe *ce_state,
+			       void **per_transfer_contextp,
 			       dma_addr_t *bufferp);
 
-पूर्णांक ath10k_ce_completed_recv_next_nolock(काष्ठा ath10k_ce_pipe *ce_state,
-					 व्योम **per_transfer_contextp,
-					 अचिन्हित पूर्णांक *nbytesp);
+int ath10k_ce_completed_recv_next_nolock(struct ath10k_ce_pipe *ce_state,
+					 void **per_transfer_contextp,
+					 unsigned int *nbytesp);
 
 /*
- * Support clean shutकरोwn by allowing the caller to cancel
- * pending sends.  Target DMA must be stopped beक्रमe using
+ * Support clean shutdown by allowing the caller to cancel
+ * pending sends.  Target DMA must be stopped before using
  * this API.
  */
-पूर्णांक ath10k_ce_cancel_send_next(काष्ठा ath10k_ce_pipe *ce_state,
-			       व्योम **per_transfer_contextp,
+int ath10k_ce_cancel_send_next(struct ath10k_ce_pipe *ce_state,
+			       void **per_transfer_contextp,
 			       dma_addr_t *bufferp,
-			       अचिन्हित पूर्णांक *nbytesp,
-			       अचिन्हित पूर्णांक *transfer_idp);
+			       unsigned int *nbytesp,
+			       unsigned int *transfer_idp);
 
 /*==================CE Interrupt Handlers====================*/
-व्योम ath10k_ce_per_engine_service_any(काष्ठा ath10k *ar);
-व्योम ath10k_ce_per_engine_service(काष्ठा ath10k *ar, अचिन्हित पूर्णांक ce_id);
-व्योम ath10k_ce_disable_पूर्णांकerrupt(काष्ठा ath10k *ar, पूर्णांक ce_id);
-व्योम ath10k_ce_disable_पूर्णांकerrupts(काष्ठा ath10k *ar);
-व्योम ath10k_ce_enable_पूर्णांकerrupt(काष्ठा ath10k *ar, पूर्णांक ce_id);
-व्योम ath10k_ce_enable_पूर्णांकerrupts(काष्ठा ath10k *ar);
-व्योम ath10k_ce_dump_रेजिस्टरs(काष्ठा ath10k *ar,
-			      काष्ठा ath10k_fw_crash_data *crash_data);
+void ath10k_ce_per_engine_service_any(struct ath10k *ar);
+void ath10k_ce_per_engine_service(struct ath10k *ar, unsigned int ce_id);
+void ath10k_ce_disable_interrupt(struct ath10k *ar, int ce_id);
+void ath10k_ce_disable_interrupts(struct ath10k *ar);
+void ath10k_ce_enable_interrupt(struct ath10k *ar, int ce_id);
+void ath10k_ce_enable_interrupts(struct ath10k *ar);
+void ath10k_ce_dump_registers(struct ath10k *ar,
+			      struct ath10k_fw_crash_data *crash_data);
 
-व्योम ath10k_ce_alloc_rri(काष्ठा ath10k *ar);
-व्योम ath10k_ce_मुक्त_rri(काष्ठा ath10k *ar);
+void ath10k_ce_alloc_rri(struct ath10k *ar);
+void ath10k_ce_free_rri(struct ath10k *ar);
 
 /* ce_attr.flags values */
 /* Use NonSnooping PCIe accesses? */
-#घोषणा CE_ATTR_NO_SNOOP		BIT(0)
+#define CE_ATTR_NO_SNOOP		BIT(0)
 
 /* Byte swap data words */
-#घोषणा CE_ATTR_BYTE_SWAP_DATA		BIT(1)
+#define CE_ATTR_BYTE_SWAP_DATA		BIT(1)
 
 /* Swizzle descriptors? */
-#घोषणा CE_ATTR_SWIZZLE_DESCRIPTORS	BIT(2)
+#define CE_ATTR_SWIZZLE_DESCRIPTORS	BIT(2)
 
-/* no पूर्णांकerrupt on copy completion */
-#घोषणा CE_ATTR_DIS_INTR		BIT(3)
+/* no interrupt on copy completion */
+#define CE_ATTR_DIS_INTR		BIT(3)
 
-/* no पूर्णांकerrupt, only polling */
-#घोषणा CE_ATTR_POLL			BIT(4)
+/* no interrupt, only polling */
+#define CE_ATTR_POLL			BIT(4)
 
 /* Attributes of an instance of a Copy Engine */
-काष्ठा ce_attr अणु
+struct ce_attr {
 	/* CE_ATTR_* values */
-	अचिन्हित पूर्णांक flags;
+	unsigned int flags;
 
-	/* #entries in source ring - Must be a घातer of 2 */
-	अचिन्हित पूर्णांक src_nentries;
+	/* #entries in source ring - Must be a power of 2 */
+	unsigned int src_nentries;
 
 	/*
-	 * Max source send size क्रम this CE.
+	 * Max source send size for this CE.
 	 * This is also the minimum size of a destination buffer.
 	 */
-	अचिन्हित पूर्णांक src_sz_max;
+	unsigned int src_sz_max;
 
-	/* #entries in destination ring - Must be a घातer of 2 */
-	अचिन्हित पूर्णांक dest_nentries;
+	/* #entries in destination ring - Must be a power of 2 */
+	unsigned int dest_nentries;
 
-	व्योम (*send_cb)(काष्ठा ath10k_ce_pipe *);
-	व्योम (*recv_cb)(काष्ठा ath10k_ce_pipe *);
-पूर्ण;
+	void (*send_cb)(struct ath10k_ce_pipe *);
+	void (*recv_cb)(struct ath10k_ce_pipe *);
+};
 
-काष्ठा ath10k_ce_ops अणु
-	काष्ठा ath10k_ce_ring *(*ce_alloc_src_ring)(काष्ठा ath10k *ar,
+struct ath10k_ce_ops {
+	struct ath10k_ce_ring *(*ce_alloc_src_ring)(struct ath10k *ar,
 						    u32 ce_id,
-						    स्थिर काष्ठा ce_attr *attr);
-	काष्ठा ath10k_ce_ring *(*ce_alloc_dst_ring)(काष्ठा ath10k *ar,
+						    const struct ce_attr *attr);
+	struct ath10k_ce_ring *(*ce_alloc_dst_ring)(struct ath10k *ar,
 						    u32 ce_id,
-						    स्थिर काष्ठा ce_attr *attr);
-	पूर्णांक (*ce_rx_post_buf)(काष्ठा ath10k_ce_pipe *pipe, व्योम *ctx,
+						    const struct ce_attr *attr);
+	int (*ce_rx_post_buf)(struct ath10k_ce_pipe *pipe, void *ctx,
 			      dma_addr_t paddr);
-	पूर्णांक (*ce_completed_recv_next_nolock)(काष्ठा ath10k_ce_pipe *ce_state,
-					     व्योम **per_transfer_contextp,
+	int (*ce_completed_recv_next_nolock)(struct ath10k_ce_pipe *ce_state,
+					     void **per_transfer_contextp,
 					     u32 *nbytesp);
-	पूर्णांक (*ce_revoke_recv_next)(काष्ठा ath10k_ce_pipe *ce_state,
-				   व्योम **per_transfer_contextp,
+	int (*ce_revoke_recv_next)(struct ath10k_ce_pipe *ce_state,
+				   void **per_transfer_contextp,
 				   dma_addr_t *nbytesp);
-	व्योम (*ce_extract_desc_data)(काष्ठा ath10k *ar,
-				     काष्ठा ath10k_ce_ring *src_ring,
+	void (*ce_extract_desc_data)(struct ath10k *ar,
+				     struct ath10k_ce_ring *src_ring,
 				     u32 sw_index, dma_addr_t *bufferp,
 				     u32 *nbytesp, u32 *transfer_idp);
-	व्योम (*ce_मुक्त_pipe)(काष्ठा ath10k *ar, पूर्णांक ce_id);
-	पूर्णांक (*ce_send_nolock)(काष्ठा ath10k_ce_pipe *pipe,
-			      व्योम *per_transfer_context,
+	void (*ce_free_pipe)(struct ath10k *ar, int ce_id);
+	int (*ce_send_nolock)(struct ath10k_ce_pipe *pipe,
+			      void *per_transfer_context,
 			      dma_addr_t buffer, u32 nbytes,
 			      u32 transfer_id, u32 flags);
-	व्योम (*ce_set_src_ring_base_addr_hi)(काष्ठा ath10k *ar,
+	void (*ce_set_src_ring_base_addr_hi)(struct ath10k *ar,
 					     u32 ce_ctrl_addr,
 					     u64 addr);
-	व्योम (*ce_set_dest_ring_base_addr_hi)(काष्ठा ath10k *ar,
+	void (*ce_set_dest_ring_base_addr_hi)(struct ath10k *ar,
 					      u32 ce_ctrl_addr,
 					      u64 addr);
-	पूर्णांक (*ce_completed_send_next_nolock)(काष्ठा ath10k_ce_pipe *ce_state,
-					     व्योम **per_transfer_contextp);
-पूर्ण;
+	int (*ce_completed_send_next_nolock)(struct ath10k_ce_pipe *ce_state,
+					     void **per_transfer_contextp);
+};
 
-अटल अंतरभूत u32 ath10k_ce_base_address(काष्ठा ath10k *ar, अचिन्हित पूर्णांक ce_id)
-अणु
-	वापस CE0_BASE_ADDRESS + (CE1_BASE_ADDRESS - CE0_BASE_ADDRESS) * ce_id;
-पूर्ण
+static inline u32 ath10k_ce_base_address(struct ath10k *ar, unsigned int ce_id)
+{
+	return CE0_BASE_ADDRESS + (CE1_BASE_ADDRESS - CE0_BASE_ADDRESS) * ce_id;
+}
 
-#घोषणा COPY_ENGINE_ID(COPY_ENGINE_BASE_ADDRESS) (((COPY_ENGINE_BASE_ADDRESS) \
+#define COPY_ENGINE_ID(COPY_ENGINE_BASE_ADDRESS) (((COPY_ENGINE_BASE_ADDRESS) \
 		- CE0_BASE_ADDRESS) / (CE1_BASE_ADDRESS - CE0_BASE_ADDRESS))
 
-#घोषणा CE_SRC_RING_TO_DESC(baddr, idx) \
-	(&(((काष्ठा ce_desc *)baddr)[idx]))
+#define CE_SRC_RING_TO_DESC(baddr, idx) \
+	(&(((struct ce_desc *)baddr)[idx]))
 
-#घोषणा CE_DEST_RING_TO_DESC(baddr, idx) \
-	(&(((काष्ठा ce_desc *)baddr)[idx]))
+#define CE_DEST_RING_TO_DESC(baddr, idx) \
+	(&(((struct ce_desc *)baddr)[idx]))
 
-#घोषणा CE_SRC_RING_TO_DESC_64(baddr, idx) \
-	(&(((काष्ठा ce_desc_64 *)baddr)[idx]))
+#define CE_SRC_RING_TO_DESC_64(baddr, idx) \
+	(&(((struct ce_desc_64 *)baddr)[idx]))
 
-#घोषणा CE_DEST_RING_TO_DESC_64(baddr, idx) \
-	(&(((काष्ठा ce_desc_64 *)baddr)[idx]))
+#define CE_DEST_RING_TO_DESC_64(baddr, idx) \
+	(&(((struct ce_desc_64 *)baddr)[idx]))
 
 /* Ring arithmetic (modulus number of entries in ring, which is a pwr of 2). */
-#घोषणा CE_RING_DELTA(nentries_mask, fromidx, toidx) \
-	(((पूर्णांक)(toidx) - (पूर्णांक)(fromidx)) & (nentries_mask))
+#define CE_RING_DELTA(nentries_mask, fromidx, toidx) \
+	(((int)(toidx) - (int)(fromidx)) & (nentries_mask))
 
-#घोषणा CE_RING_IDX_INCR(nentries_mask, idx) (((idx) + 1) & (nentries_mask))
-#घोषणा CE_RING_IDX_ADD(nentries_mask, idx, num) \
+#define CE_RING_IDX_INCR(nentries_mask, idx) (((idx) + 1) & (nentries_mask))
+#define CE_RING_IDX_ADD(nentries_mask, idx, num) \
 		(((idx) + (num)) & (nentries_mask))
 
-#घोषणा CE_WRAPPER_INTERRUPT_SUMMARY_HOST_MSI_LSB \
-				ar->regs->ce_wrap_पूर्णांकr_sum_host_msi_lsb
-#घोषणा CE_WRAPPER_INTERRUPT_SUMMARY_HOST_MSI_MASK \
-				ar->regs->ce_wrap_पूर्णांकr_sum_host_msi_mask
-#घोषणा CE_WRAPPER_INTERRUPT_SUMMARY_HOST_MSI_GET(x) \
+#define CE_WRAPPER_INTERRUPT_SUMMARY_HOST_MSI_LSB \
+				ar->regs->ce_wrap_intr_sum_host_msi_lsb
+#define CE_WRAPPER_INTERRUPT_SUMMARY_HOST_MSI_MASK \
+				ar->regs->ce_wrap_intr_sum_host_msi_mask
+#define CE_WRAPPER_INTERRUPT_SUMMARY_HOST_MSI_GET(x) \
 	(((x) & CE_WRAPPER_INTERRUPT_SUMMARY_HOST_MSI_MASK) >> \
 		CE_WRAPPER_INTERRUPT_SUMMARY_HOST_MSI_LSB)
-#घोषणा CE_WRAPPER_INTERRUPT_SUMMARY_ADDRESS			0x0000
+#define CE_WRAPPER_INTERRUPT_SUMMARY_ADDRESS			0x0000
 
-अटल अंतरभूत u32 ath10k_ce_पूर्णांकerrupt_summary(काष्ठा ath10k *ar)
-अणु
-	काष्ठा ath10k_ce *ce = ath10k_ce_priv(ar);
+static inline u32 ath10k_ce_interrupt_summary(struct ath10k *ar)
+{
+	struct ath10k_ce *ce = ath10k_ce_priv(ar);
 
-	वापस CE_WRAPPER_INTERRUPT_SUMMARY_HOST_MSI_GET(
-		ce->bus_ops->पढ़ो32((ar), CE_WRAPPER_BASE_ADDRESS +
+	return CE_WRAPPER_INTERRUPT_SUMMARY_HOST_MSI_GET(
+		ce->bus_ops->read32((ar), CE_WRAPPER_BASE_ADDRESS +
 		CE_WRAPPER_INTERRUPT_SUMMARY_ADDRESS));
-पूर्ण
+}
 
 /* Host software's Copy Engine configuration. */
-#घोषणा CE_ATTR_FLAGS 0
+#define CE_ATTR_FLAGS 0
 
 /*
- * Configuration inक्रमmation क्रम a Copy Engine pipe.
+ * Configuration information for a Copy Engine pipe.
  * Passed from Host to Target during startup (one per CE).
  *
  * NOTE: Structure is shared between Host software and Target firmware!
  */
-काष्ठा ce_pipe_config अणु
-	__le32 pipक्रमागत;
+struct ce_pipe_config {
+	__le32 pipenum;
 	__le32 pipedir;
 	__le32 nentries;
 	__le32 nbytes_max;
 	__le32 flags;
 	__le32 reserved;
-पूर्ण;
+};
 
 /*
- * Directions क्रम पूर्णांकerconnect pipe configuration.
+ * Directions for interconnect pipe configuration.
  * These definitions may be used during configuration and are shared
  * between Host and Target.
  *
- * Pipe Directions are relative to the Host, so PIPEसूची_IN means
+ * Pipe Directions are relative to the Host, so PIPEDIR_IN means
  * "coming IN over air through Target to Host" as with a WiFi Rx operation.
- * Conversely, PIPEसूची_OUT means "going OUT from Host through Target over air"
- * as with a WiFi Tx operation. This is somewhat awkward क्रम the "middle-man"
+ * Conversely, PIPEDIR_OUT means "going OUT from Host through Target over air"
+ * as with a WiFi Tx operation. This is somewhat awkward for the "middle-man"
  * Target since things that are "PIPEDIR_OUT" are coming IN to the Target
- * over the पूर्णांकerconnect.
+ * over the interconnect.
  */
-#घोषणा PIPEसूची_NONE    0
-#घोषणा PIPEसूची_IN      1  /* Target-->Host, WiFi Rx direction */
-#घोषणा PIPEसूची_OUT     2  /* Host->Target, WiFi Tx direction */
-#घोषणा PIPEसूची_INOUT   3  /* bidirectional */
+#define PIPEDIR_NONE    0
+#define PIPEDIR_IN      1  /* Target-->Host, WiFi Rx direction */
+#define PIPEDIR_OUT     2  /* Host->Target, WiFi Tx direction */
+#define PIPEDIR_INOUT   3  /* bidirectional */
 
 /* Establish a mapping between a service/direction and a pipe. */
-काष्ठा ce_service_to_pipe अणु
+struct ce_service_to_pipe {
 	__le32 service_id;
 	__le32 pipedir;
-	__le32 pipक्रमागत;
-पूर्ण;
+	__le32 pipenum;
+};
 
-#पूर्ण_अगर /* _CE_H_ */
+#endif /* _CE_H_ */

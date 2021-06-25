@@ -1,82 +1,81 @@
-<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Reset an IP27.
  *
  * Copyright (C) 1997, 1998, 1999, 2000, 06 by Ralf Baechle
  * Copyright (C) 1999, 2000 Silicon Graphics, Inc.
  */
-#समावेश <linux/compiler.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/mmzone.h>
-#समावेश <linux/nodemask.h>
-#समावेश <linux/pm.h>
+#include <linux/compiler.h>
+#include <linux/kernel.h>
+#include <linux/sched.h>
+#include <linux/timer.h>
+#include <linux/smp.h>
+#include <linux/mmzone.h>
+#include <linux/nodemask.h>
+#include <linux/pm.h>
 
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/irq.h>
-#समावेश <यंत्र/reboot.h>
-#समावेश <यंत्र/sgialib.h>
-#समावेश <यंत्र/sn/addrs.h>
-#समावेश <यंत्र/sn/agent.h>
-#समावेश <यंत्र/sn/arch.h>
-#समावेश <यंत्र/sn/gda.h>
+#include <asm/io.h>
+#include <asm/irq.h>
+#include <asm/reboot.h>
+#include <asm/sgialib.h>
+#include <asm/sn/addrs.h>
+#include <asm/sn/agent.h>
+#include <asm/sn/arch.h>
+#include <asm/sn/gda.h>
 
-#समावेश "ip27-common.h"
+#include "ip27-common.h"
 
-व्योम machine_restart(अक्षर *command) __noवापस;
-व्योम machine_halt(व्योम) __noवापस;
-व्योम machine_घातer_off(व्योम) __noवापस;
+void machine_restart(char *command) __noreturn;
+void machine_halt(void) __noreturn;
+void machine_power_off(void) __noreturn;
 
-#घोषणा noवापस जबतक(1);				/* Silence gcc.	 */
+#define noreturn while(1);				/* Silence gcc.	 */
 
 /* XXX How to pass the reboot command to the firmware??? */
-अटल व्योम ip27_machine_restart(अक्षर *command)
-अणु
-#अगर 0
-	पूर्णांक i;
-#पूर्ण_अगर
+static void ip27_machine_restart(char *command)
+{
+#if 0
+	int i;
+#endif
 
-	prपूर्णांकk("Reboot started from CPU %d\n", smp_processor_id());
-#अगर_घोषित CONFIG_SMP
+	printk("Reboot started from CPU %d\n", smp_processor_id());
+#ifdef CONFIG_SMP
 	smp_send_stop();
-#पूर्ण_अगर
-#अगर 0
-	क्रम_each_online_node(i)
+#endif
+#if 0
+	for_each_online_node(i)
 		REMOTE_HUB_S(i, PROMOP_REG, PROMOP_REBOOT);
-#अन्यथा
+#else
 	LOCAL_HUB_S(NI_PORT_RESET, NPR_PORTRESET | NPR_LOCALRESET);
-#पूर्ण_अगर
-	noवापस;
-पूर्ण
+#endif
+	noreturn;
+}
 
-अटल व्योम ip27_machine_halt(व्योम)
-अणु
-	पूर्णांक i;
+static void ip27_machine_halt(void)
+{
+	int i;
 
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 	smp_send_stop();
-#पूर्ण_अगर
-	क्रम_each_online_node(i)
+#endif
+	for_each_online_node(i)
 		REMOTE_HUB_S(i, PROMOP_REG, PROMOP_RESTART);
 	LOCAL_HUB_S(NI_PORT_RESET, NPR_PORTRESET | NPR_LOCALRESET);
-	noवापस;
-पूर्ण
+	noreturn;
+}
 
-अटल व्योम ip27_machine_घातer_off(व्योम)
-अणु
-	/* To करो ...  */
-	noवापस;
-पूर्ण
+static void ip27_machine_power_off(void)
+{
+	/* To do ...  */
+	noreturn;
+}
 
-व्योम ip27_reboot_setup(व्योम)
-अणु
+void ip27_reboot_setup(void)
+{
 	_machine_restart = ip27_machine_restart;
 	_machine_halt = ip27_machine_halt;
-	pm_घातer_off = ip27_machine_घातer_off;
-पूर्ण
+	pm_power_off = ip27_machine_power_off;
+}

@@ -1,31 +1,30 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /* linux/include/linux/mtd/plat-ram.h
  *
  * (c) 2004 Simtec Electronics
  *	http://www.simtec.co.uk/products/SWLINUX/
  *	Ben Dooks <ben@simtec.co.uk>
  *
- * Generic platक्रमm device based RAM map
+ * Generic platform device based RAM map
  */
 
-#अगर_अघोषित __LINUX_MTD_PLATRAM_H
-#घोषणा __LINUX_MTD_PLATRAM_H __खाता__
+#ifndef __LINUX_MTD_PLATRAM_H
+#define __LINUX_MTD_PLATRAM_H __FILE__
 
-#घोषणा PLATRAM_RO (0)
-#घोषणा PLATRAM_RW (1)
+#define PLATRAM_RO (0)
+#define PLATRAM_RW (1)
 
-काष्ठा platdata_mtd_ram अणु
-	स्थिर अक्षर		*mapname;
-	स्थिर अक्षर * स्थिर      *map_probes;
-	स्थिर अक्षर * स्थिर      *probes;
-	काष्ठा mtd_partition	*partitions;
-	पूर्णांक			 nr_partitions;
-	पूर्णांक			 bankwidth;
+struct platdata_mtd_ram {
+	const char		*mapname;
+	const char * const      *map_probes;
+	const char * const      *probes;
+	struct mtd_partition	*partitions;
+	int			 nr_partitions;
+	int			 bankwidth;
 
 	/* control callbacks */
 
-	व्योम	(*set_rw)(काष्ठा device *dev, पूर्णांक to);
-पूर्ण;
+	void	(*set_rw)(struct device *dev, int to);
+};
 
-#पूर्ण_अगर /* __LINUX_MTD_PLATRAM_H */
+#endif /* __LINUX_MTD_PLATRAM_H */

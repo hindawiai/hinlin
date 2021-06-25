@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- *  lpc_sch.c - LPC पूर्णांकerface क्रम Intel Poulsbo SCH
+ *  lpc_sch.c - LPC interface for Intel Poulsbo SCH
  *
  *  LPC bridge function of the Intel SCH contains many other
  *  functional units, such as Interrupt controllers, Timers,
@@ -13,114 +12,114 @@
  *  Author: Denis Turischev <denis@compulab.co.il>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/acpi.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/mfd/core.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/errno.h>
+#include <linux/acpi.h>
+#include <linux/pci.h>
+#include <linux/mfd/core.h>
 
-#घोषणा SMBASE		0x40
-#घोषणा SMBUS_IO_SIZE	64
+#define SMBASE		0x40
+#define SMBUS_IO_SIZE	64
 
-#घोषणा GPIOBASE	0x44
-#घोषणा GPIO_IO_SIZE	64
-#घोषणा GPIO_IO_SIZE_CENTERTON	128
+#define GPIOBASE	0x44
+#define GPIO_IO_SIZE	64
+#define GPIO_IO_SIZE_CENTERTON	128
 
-#घोषणा WDTBASE		0x84
-#घोषणा WDT_IO_SIZE	64
+#define WDTBASE		0x84
+#define WDT_IO_SIZE	64
 
-क्रमागत sch_chipsets अणु
+enum sch_chipsets {
 	LPC_SCH = 0,		/* Intel Poulsbo SCH */
 	LPC_ITC,		/* Intel Tunnel Creek */
 	LPC_CENTERTON,		/* Intel Centerton */
 	LPC_QUARK_X1000,	/* Intel Quark X1000 */
-पूर्ण;
+};
 
-काष्ठा lpc_sch_info अणु
-	अचिन्हित पूर्णांक io_size_smbus;
-	अचिन्हित पूर्णांक io_size_gpio;
-	अचिन्हित पूर्णांक io_size_wdt;
-पूर्ण;
+struct lpc_sch_info {
+	unsigned int io_size_smbus;
+	unsigned int io_size_gpio;
+	unsigned int io_size_wdt;
+};
 
-अटल काष्ठा lpc_sch_info sch_chipset_info[] = अणु
-	[LPC_SCH] = अणु
+static struct lpc_sch_info sch_chipset_info[] = {
+	[LPC_SCH] = {
 		.io_size_smbus = SMBUS_IO_SIZE,
 		.io_size_gpio = GPIO_IO_SIZE,
-	पूर्ण,
-	[LPC_ITC] = अणु
+	},
+	[LPC_ITC] = {
 		.io_size_smbus = SMBUS_IO_SIZE,
 		.io_size_gpio = GPIO_IO_SIZE,
 		.io_size_wdt = WDT_IO_SIZE,
-	पूर्ण,
-	[LPC_CENTERTON] = अणु
+	},
+	[LPC_CENTERTON] = {
 		.io_size_smbus = SMBUS_IO_SIZE,
 		.io_size_gpio = GPIO_IO_SIZE_CENTERTON,
 		.io_size_wdt = WDT_IO_SIZE,
-	पूर्ण,
-	[LPC_QUARK_X1000] = अणु
+	},
+	[LPC_QUARK_X1000] = {
 		.io_size_gpio = GPIO_IO_SIZE,
 		.io_size_wdt = WDT_IO_SIZE,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा pci_device_id lpc_sch_ids[] = अणु
-	अणु PCI_VDEVICE(INTEL, PCI_DEVICE_ID_INTEL_SCH_LPC), LPC_SCH पूर्ण,
-	अणु PCI_VDEVICE(INTEL, PCI_DEVICE_ID_INTEL_ITC_LPC), LPC_ITC पूर्ण,
-	अणु PCI_VDEVICE(INTEL, PCI_DEVICE_ID_INTEL_CENTERTON_ILB), LPC_CENTERTON पूर्ण,
-	अणु PCI_VDEVICE(INTEL, PCI_DEVICE_ID_INTEL_QUARK_X1000_ILB), LPC_QUARK_X1000 पूर्ण,
-	अणु 0, पूर्ण
-पूर्ण;
+static const struct pci_device_id lpc_sch_ids[] = {
+	{ PCI_VDEVICE(INTEL, PCI_DEVICE_ID_INTEL_SCH_LPC), LPC_SCH },
+	{ PCI_VDEVICE(INTEL, PCI_DEVICE_ID_INTEL_ITC_LPC), LPC_ITC },
+	{ PCI_VDEVICE(INTEL, PCI_DEVICE_ID_INTEL_CENTERTON_ILB), LPC_CENTERTON },
+	{ PCI_VDEVICE(INTEL, PCI_DEVICE_ID_INTEL_QUARK_X1000_ILB), LPC_QUARK_X1000 },
+	{ 0, }
+};
 MODULE_DEVICE_TABLE(pci, lpc_sch_ids);
 
-#घोषणा LPC_NO_RESOURCE		1
-#घोषणा LPC_SKIP_RESOURCE	2
+#define LPC_NO_RESOURCE		1
+#define LPC_SKIP_RESOURCE	2
 
-अटल पूर्णांक lpc_sch_get_io(काष्ठा pci_dev *pdev, पूर्णांक where, स्थिर अक्षर *name,
-			  काष्ठा resource *res, पूर्णांक size)
-अणु
-	अचिन्हित पूर्णांक base_addr_cfg;
-	अचिन्हित लघु base_addr;
+static int lpc_sch_get_io(struct pci_dev *pdev, int where, const char *name,
+			  struct resource *res, int size)
+{
+	unsigned int base_addr_cfg;
+	unsigned short base_addr;
 
-	अगर (size == 0)
-		वापस LPC_NO_RESOURCE;
+	if (size == 0)
+		return LPC_NO_RESOURCE;
 
-	pci_पढ़ो_config_dword(pdev, where, &base_addr_cfg);
+	pci_read_config_dword(pdev, where, &base_addr_cfg);
 	base_addr = 0;
-	अगर (!(base_addr_cfg & (1 << 31)))
+	if (!(base_addr_cfg & (1 << 31)))
 		dev_warn(&pdev->dev, "Decode of the %s I/O range disabled\n",
 			 name);
-	अन्यथा
-		base_addr = (अचिन्हित लघु)base_addr_cfg;
+	else
+		base_addr = (unsigned short)base_addr_cfg;
 
-	अगर (base_addr == 0) अणु
+	if (base_addr == 0) {
 		dev_warn(&pdev->dev, "I/O space for %s uninitialized\n", name);
-		वापस LPC_SKIP_RESOURCE;
-	पूर्ण
+		return LPC_SKIP_RESOURCE;
+	}
 
 	res->start = base_addr;
 	res->end = base_addr + size - 1;
 	res->flags = IORESOURCE_IO;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lpc_sch_populate_cell(काष्ठा pci_dev *pdev, पूर्णांक where,
-				 स्थिर अक्षर *name, पूर्णांक size, पूर्णांक id,
-				 काष्ठा mfd_cell *cell)
-अणु
-	काष्ठा resource *res;
-	पूर्णांक ret;
+static int lpc_sch_populate_cell(struct pci_dev *pdev, int where,
+				 const char *name, int size, int id,
+				 struct mfd_cell *cell)
+{
+	struct resource *res;
+	int ret;
 
-	res = devm_kzalloc(&pdev->dev, माप(*res), GFP_KERNEL);
-	अगर (!res)
-		वापस -ENOMEM;
+	res = devm_kzalloc(&pdev->dev, sizeof(*res), GFP_KERNEL);
+	if (!res)
+		return -ENOMEM;
 
 	ret = lpc_sch_get_io(pdev, where, name, res, size);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	स_रखो(cell, 0, माप(*cell));
+	memset(cell, 0, sizeof(*cell));
 
 	cell->name = name;
 	cell->resources = res;
@@ -128,59 +127,59 @@ MODULE_DEVICE_TABLE(pci, lpc_sch_ids);
 	cell->ignore_resource_conflicts = true;
 	cell->id = id;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lpc_sch_probe(काष्ठा pci_dev *dev, स्थिर काष्ठा pci_device_id *id)
-अणु
-	काष्ठा mfd_cell lpc_sch_cells[3];
-	काष्ठा lpc_sch_info *info = &sch_chipset_info[id->driver_data];
-	अचिन्हित पूर्णांक cells = 0;
-	पूर्णांक ret;
+static int lpc_sch_probe(struct pci_dev *dev, const struct pci_device_id *id)
+{
+	struct mfd_cell lpc_sch_cells[3];
+	struct lpc_sch_info *info = &sch_chipset_info[id->driver_data];
+	unsigned int cells = 0;
+	int ret;
 
 	ret = lpc_sch_populate_cell(dev, SMBASE, "isch_smbus",
 				    info->io_size_smbus,
 				    id->device, &lpc_sch_cells[cells]);
-	अगर (ret < 0)
-		वापस ret;
-	अगर (ret == 0)
+	if (ret < 0)
+		return ret;
+	if (ret == 0)
 		cells++;
 
 	ret = lpc_sch_populate_cell(dev, GPIOBASE, "sch_gpio",
 				    info->io_size_gpio,
 				    id->device, &lpc_sch_cells[cells]);
-	अगर (ret < 0)
-		वापस ret;
-	अगर (ret == 0)
+	if (ret < 0)
+		return ret;
+	if (ret == 0)
 		cells++;
 
 	ret = lpc_sch_populate_cell(dev, WDTBASE, "ie6xx_wdt",
 				    info->io_size_wdt,
 				    id->device, &lpc_sch_cells[cells]);
-	अगर (ret < 0)
-		वापस ret;
-	अगर (ret == 0)
+	if (ret < 0)
+		return ret;
+	if (ret == 0)
 		cells++;
 
-	अगर (cells == 0) अणु
+	if (cells == 0) {
 		dev_err(&dev->dev, "All decode registers disabled.\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	वापस mfd_add_devices(&dev->dev, 0, lpc_sch_cells, cells, शून्य, 0, शून्य);
-पूर्ण
+	return mfd_add_devices(&dev->dev, 0, lpc_sch_cells, cells, NULL, 0, NULL);
+}
 
-अटल व्योम lpc_sch_हटाओ(काष्ठा pci_dev *dev)
-अणु
-	mfd_हटाओ_devices(&dev->dev);
-पूर्ण
+static void lpc_sch_remove(struct pci_dev *dev)
+{
+	mfd_remove_devices(&dev->dev);
+}
 
-अटल काष्ठा pci_driver lpc_sch_driver = अणु
+static struct pci_driver lpc_sch_driver = {
 	.name		= "lpc_sch",
 	.id_table	= lpc_sch_ids,
 	.probe		= lpc_sch_probe,
-	.हटाओ		= lpc_sch_हटाओ,
-पूर्ण;
+	.remove		= lpc_sch_remove,
+};
 
 module_pci_driver(lpc_sch_driver);
 

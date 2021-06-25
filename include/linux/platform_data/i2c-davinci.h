@@ -1,6 +1,5 @@
-<शैली गुरु>
 /*
- * DaVinci I2C controller platक्रमm_device info
+ * DaVinci I2C controller platform_device info
  *
  * Author: Vladimir Barinov, MontaVista Software, Inc. <source@mvista.com>
  *
@@ -10,18 +9,18 @@
  * or implied.
 */
 
-#अगर_अघोषित __ASM_ARCH_I2C_H
-#घोषणा __ASM_ARCH_I2C_H
+#ifndef __ASM_ARCH_I2C_H
+#define __ASM_ARCH_I2C_H
 
 /* All frequencies are expressed in kHz */
-काष्ठा davinci_i2c_platक्रमm_data अणु
-	अचिन्हित पूर्णांक	bus_freq;	/* standard bus frequency (kHz) */
-	अचिन्हित पूर्णांक	bus_delay;	/* post-transaction delay (usec) */
+struct davinci_i2c_platform_data {
+	unsigned int	bus_freq;	/* standard bus frequency (kHz) */
+	unsigned int	bus_delay;	/* post-transaction delay (usec) */
 	bool		gpio_recovery;	/* Use GPIO recovery method */
-	bool		has_pfunc;	/* Chip has a ICPFUNC रेजिस्टर */
-पूर्ण;
+	bool		has_pfunc;	/* Chip has a ICPFUNC register */
+};
 
-/* क्रम board setup code */
-व्योम davinci_init_i2c(काष्ठा davinci_i2c_platक्रमm_data *);
+/* for board setup code */
+void davinci_init_i2c(struct davinci_i2c_platform_data *);
 
-#पूर्ण_अगर /* __ASM_ARCH_I2C_H */
+#endif /* __ASM_ARCH_I2C_H */

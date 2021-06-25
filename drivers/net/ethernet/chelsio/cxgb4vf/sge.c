@@ -1,27 +1,26 @@
-<शैली गुरु>
 /*
  * This file is part of the Chelsio T4 PCI-E SR-IOV Virtual Function Ethernet
- * driver क्रम Linux.
+ * driver for Linux.
  *
  * Copyright (c) 2009-2010 Chelsio Communications, Inc. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -34,90 +33,90 @@
  * SOFTWARE.
  */
 
-#समावेश <linux/skbuff.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/अगर_vlan.h>
-#समावेश <linux/ip.h>
-#समावेश <net/ipv6.h>
-#समावेश <net/tcp.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/prefetch.h>
+#include <linux/skbuff.h>
+#include <linux/netdevice.h>
+#include <linux/etherdevice.h>
+#include <linux/if_vlan.h>
+#include <linux/ip.h>
+#include <net/ipv6.h>
+#include <net/tcp.h>
+#include <linux/dma-mapping.h>
+#include <linux/prefetch.h>
 
-#समावेश "t4vf_common.h"
-#समावेश "t4vf_defs.h"
+#include "t4vf_common.h"
+#include "t4vf_defs.h"
 
-#समावेश "../cxgb4/t4_regs.h"
-#समावेश "../cxgb4/t4_values.h"
-#समावेश "../cxgb4/t4fw_api.h"
-#समावेश "../cxgb4/t4_msg.h"
+#include "../cxgb4/t4_regs.h"
+#include "../cxgb4/t4_values.h"
+#include "../cxgb4/t4fw_api.h"
+#include "../cxgb4/t4_msg.h"
 
 /*
  * Constants ...
  */
-क्रमागत अणु
+enum {
 	/*
 	 * Egress Queue sizes, producer and consumer indices are all in units
 	 * of Egress Context Units bytes.  Note that as far as the hardware is
-	 * concerned, the मुक्त list is an Egress Queue (the host produces मुक्त
-	 * buffers which the hardware consumes) and मुक्त list entries are
+	 * concerned, the free list is an Egress Queue (the host produces free
+	 * buffers which the hardware consumes) and free list entries are
 	 * 64-bit PCI DMA addresses.
 	 */
 	EQ_UNIT = SGE_EQ_IDXSIZE,
-	FL_PER_EQ_UNIT = EQ_UNIT / माप(__be64),
-	TXD_PER_EQ_UNIT = EQ_UNIT / माप(__be64),
+	FL_PER_EQ_UNIT = EQ_UNIT / sizeof(__be64),
+	TXD_PER_EQ_UNIT = EQ_UNIT / sizeof(__be64),
 
 	/*
-	 * Max number of TX descriptors we clean up at a समय.  Should be
-	 * modest as मुक्तing skbs isn't cheap and it happens जबतक holding
-	 * locks.  We just need to मुक्त packets faster than they arrive, we
+	 * Max number of TX descriptors we clean up at a time.  Should be
+	 * modest as freeing skbs isn't cheap and it happens while holding
+	 * locks.  We just need to free packets faster than they arrive, we
 	 * eventually catch up and keep the amortized cost reasonable.
 	 */
 	MAX_TX_RECLAIM = 16,
 
 	/*
-	 * Max number of Rx buffers we replenish at a समय.  Again keep this
+	 * Max number of Rx buffers we replenish at a time.  Again keep this
 	 * modest, allocating buffers isn't cheap either.
 	 */
 	MAX_RX_REFILL = 16,
 
 	/*
-	 * Period of the Rx queue check समयr.  This समयr is infrequent as it
-	 * has something to करो only when the प्रणाली experiences severe memory
-	 * लघुage.
+	 * Period of the Rx queue check timer.  This timer is infrequent as it
+	 * has something to do only when the system experiences severe memory
+	 * shortage.
 	 */
 	RX_QCHECK_PERIOD = (HZ / 2),
 
 	/*
-	 * Period of the TX queue check समयr and the maximum number of TX
-	 * descriptors to be reclaimed by the TX समयr.
+	 * Period of the TX queue check timer and the maximum number of TX
+	 * descriptors to be reclaimed by the TX timer.
 	 */
 	TX_QCHECK_PERIOD = (HZ / 2),
 	MAX_TIMER_TX_RECLAIM = 100,
 
 	/*
 	 * Suspend an Ethernet TX queue with fewer available descriptors than
-	 * this.  We always want to have room क्रम a maximum sized packet:
-	 * अंतरभूत immediate data + MAX_SKB_FRAGS. This is the same as
-	 * calc_tx_flits() क्रम a TSO packet with nr_frags == MAX_SKB_FRAGS
-	 * (see that function and its helpers क्रम a description of the
+	 * this.  We always want to have room for a maximum sized packet:
+	 * inline immediate data + MAX_SKB_FRAGS. This is the same as
+	 * calc_tx_flits() for a TSO packet with nr_frags == MAX_SKB_FRAGS
+	 * (see that function and its helpers for a description of the
 	 * calculation).
 	 */
 	ETHTXQ_MAX_FRAGS = MAX_SKB_FRAGS + 1,
 	ETHTXQ_MAX_SGL_LEN = ((3 * (ETHTXQ_MAX_FRAGS-1))/2 +
 				   ((ETHTXQ_MAX_FRAGS-1) & 1) +
 				   2),
-	ETHTXQ_MAX_HDR = (माप(काष्ठा fw_eth_tx_pkt_vm_wr) +
-			  माप(काष्ठा cpl_tx_pkt_lso_core) +
-			  माप(काष्ठा cpl_tx_pkt_core)) / माप(__be64),
+	ETHTXQ_MAX_HDR = (sizeof(struct fw_eth_tx_pkt_vm_wr) +
+			  sizeof(struct cpl_tx_pkt_lso_core) +
+			  sizeof(struct cpl_tx_pkt_core)) / sizeof(__be64),
 	ETHTXQ_MAX_FLITS = ETHTXQ_MAX_SGL_LEN + ETHTXQ_MAX_HDR,
 
 	ETHTXQ_STOP_THRES = 1 + DIV_ROUND_UP(ETHTXQ_MAX_FLITS, TXD_PER_EQ_UNIT),
 
 	/*
-	 * Max TX descriptor space we allow क्रम an Ethernet packet to be
-	 * अंतरभूतd पूर्णांकo a WR.  This is limited by the maximum value which
-	 * we can specअगरy क्रम immediate data in the firmware Ethernet TX
+	 * Max TX descriptor space we allow for an Ethernet packet to be
+	 * inlined into a WR.  This is limited by the maximum value which
+	 * we can specify for immediate data in the firmware Ethernet TX
 	 * Work Request.
 	 */
 	MAX_IMM_TX_PKT_LEN = FW_WR_IMMDLEN_M,
@@ -128,7 +127,7 @@
 	MAX_CTRL_WR_LEN = 256,
 
 	/*
-	 * Maximum amount of data which we'll ever need to अंतरभूत पूर्णांकo a
+	 * Maximum amount of data which we'll ever need to inline into a
 	 * TX ring: max(MAX_IMM_TX_PKT_LEN, MAX_CTRL_WR_LEN).
 	 */
 	MAX_IMM_TX_LEN = (MAX_IMM_TX_PKT_LEN > MAX_CTRL_WR_LEN
@@ -136,7 +135,7 @@
 			  : MAX_CTRL_WR_LEN),
 
 	/*
-	 * For incoming packets less than RX_COPY_THRES, we copy the data पूर्णांकo
+	 * For incoming packets less than RX_COPY_THRES, we copy the data into
 	 * an skb rather than referencing the data.  We allocate enough
 	 * in-line room in skb's to accommodate pulling in RX_PULL_LEN bytes
 	 * of the data (header).
@@ -145,99 +144,99 @@
 	RX_PULL_LEN = 128,
 
 	/*
-	 * Main body length क्रम sk_buffs used क्रम RX Ethernet packets with
+	 * Main body length for sk_buffs used for RX Ethernet packets with
 	 * fragments.  Should be >= RX_PULL_LEN but possibly bigger to give
 	 * pskb_may_pull() some room.
 	 */
 	RX_SKB_LEN = 512,
-पूर्ण;
+};
 
 /*
  * Software state per TX descriptor.
  */
-काष्ठा tx_sw_desc अणु
-	काष्ठा sk_buff *skb;		/* socket buffer of TX data source */
-	काष्ठा ulptx_sgl *sgl;		/* scatter/gather list in TX Queue */
-पूर्ण;
+struct tx_sw_desc {
+	struct sk_buff *skb;		/* socket buffer of TX data source */
+	struct ulptx_sgl *sgl;		/* scatter/gather list in TX Queue */
+};
 
 /*
  * Software state per RX Free List descriptor.  We keep track of the allocated
- * FL page, its size, and its PCI DMA address (अगर the page is mapped).  The FL
+ * FL page, its size, and its PCI DMA address (if the page is mapped).  The FL
  * page size and its PCI DMA mapped state are stored in the low bits of the
  * PCI DMA address as per below.
  */
-काष्ठा rx_sw_desc अणु
-	काष्ठा page *page;		/* Free List page buffer */
-	dma_addr_t dma_addr;		/* PCI DMA address (अगर mapped) */
+struct rx_sw_desc {
+	struct page *page;		/* Free List page buffer */
+	dma_addr_t dma_addr;		/* PCI DMA address (if mapped) */
 					/*   and flags (see below) */
-पूर्ण;
+};
 
 /*
  * The low bits of rx_sw_desc.dma_addr have special meaning.  Note that the
  * SGE also uses the low 4 bits to determine the size of the buffer.  It uses
- * those bits to index पूर्णांकo the SGE_FL_BUFFER_SIZE[index] रेजिस्टर array.
+ * those bits to index into the SGE_FL_BUFFER_SIZE[index] register array.
  * Since we only use SGE_FL_BUFFER_SIZE0 and SGE_FL_BUFFER_SIZE1, these low 4
  * bits can only contain a 0 or a 1 to indicate which size buffer we're giving
  * to the SGE.  Thus, our software state of "is the buffer mapped for DMA" is
- * मुख्यtained in an inverse sense so the hardware never sees that bit high.
+ * maintained in an inverse sense so the hardware never sees that bit high.
  */
-क्रमागत अणु
+enum {
 	RX_LARGE_BUF    = 1 << 0,	/* buffer is SGE_FL_BUFFER_SIZE[1] */
 	RX_UNMAPPED_BUF = 1 << 1,	/* buffer is not mapped */
-पूर्ण;
+};
 
 /**
- *	get_buf_addr - वापस DMA buffer address of software descriptor
- *	@sdesc: poपूर्णांकer to the software buffer descriptor
+ *	get_buf_addr - return DMA buffer address of software descriptor
+ *	@sdesc: pointer to the software buffer descriptor
  *
  *	Return the DMA buffer address of a software descriptor (stripping out
  *	our low-order flag bits).
  */
-अटल अंतरभूत dma_addr_t get_buf_addr(स्थिर काष्ठा rx_sw_desc *sdesc)
-अणु
-	वापस sdesc->dma_addr & ~(dma_addr_t)(RX_LARGE_BUF | RX_UNMAPPED_BUF);
-पूर्ण
+static inline dma_addr_t get_buf_addr(const struct rx_sw_desc *sdesc)
+{
+	return sdesc->dma_addr & ~(dma_addr_t)(RX_LARGE_BUF | RX_UNMAPPED_BUF);
+}
 
 /**
- *	is_buf_mapped - is buffer mapped क्रम DMA?
- *	@sdesc: poपूर्णांकer to the software buffer descriptor
+ *	is_buf_mapped - is buffer mapped for DMA?
+ *	@sdesc: pointer to the software buffer descriptor
  *
  *	Determine whether the buffer associated with a software descriptor in
- *	mapped क्रम DMA or not.
+ *	mapped for DMA or not.
  */
-अटल अंतरभूत bool is_buf_mapped(स्थिर काष्ठा rx_sw_desc *sdesc)
-अणु
-	वापस !(sdesc->dma_addr & RX_UNMAPPED_BUF);
-पूर्ण
+static inline bool is_buf_mapped(const struct rx_sw_desc *sdesc)
+{
+	return !(sdesc->dma_addr & RX_UNMAPPED_BUF);
+}
 
 /**
- *	need_skb_unmap - करोes the platक्रमm need unmapping of sk_buffs?
+ *	need_skb_unmap - does the platform need unmapping of sk_buffs?
  *
- *	Returns true अगर the platक्रमm needs sk_buff unmapping.  The compiler
- *	optimizes away unnecessary code अगर this वापसs true.
+ *	Returns true if the platform needs sk_buff unmapping.  The compiler
+ *	optimizes away unnecessary code if this returns true.
  */
-अटल अंतरभूत पूर्णांक need_skb_unmap(व्योम)
-अणु
-#अगर_घोषित CONFIG_NEED_DMA_MAP_STATE
-	वापस 1;
-#अन्यथा
-	वापस 0;
-#पूर्ण_अगर
-पूर्ण
+static inline int need_skb_unmap(void)
+{
+#ifdef CONFIG_NEED_DMA_MAP_STATE
+	return 1;
+#else
+	return 0;
+#endif
+}
 
 /**
- *	txq_avail - वापस the number of available slots in a TX queue
+ *	txq_avail - return the number of available slots in a TX queue
  *	@tq: the TX queue
  *
  *	Returns the number of available descriptors in a TX queue.
  */
-अटल अंतरभूत अचिन्हित पूर्णांक txq_avail(स्थिर काष्ठा sge_txq *tq)
-अणु
-	वापस tq->size - 1 - tq->in_use;
-पूर्ण
+static inline unsigned int txq_avail(const struct sge_txq *tq)
+{
+	return tq->size - 1 - tq->in_use;
+}
 
 /**
- *	fl_cap - वापस the capacity of a Free List
+ *	fl_cap - return the capacity of a Free List
  *	@fl: the Free List
  *
  *	Returns the capacity of a Free List.  The capacity is less than the
@@ -245,248 +244,248 @@
  *	be left unpopulated, otherwise the Producer and Consumer indices PIDX
  *	and CIDX will match and the hardware will think the FL is empty.
  */
-अटल अंतरभूत अचिन्हित पूर्णांक fl_cap(स्थिर काष्ठा sge_fl *fl)
-अणु
-	वापस fl->size - FL_PER_EQ_UNIT;
-पूर्ण
+static inline unsigned int fl_cap(const struct sge_fl *fl)
+{
+	return fl->size - FL_PER_EQ_UNIT;
+}
 
 /**
- *	fl_starving - वापस whether a Free List is starving.
- *	@adapter: poपूर्णांकer to the adapter
+ *	fl_starving - return whether a Free List is starving.
+ *	@adapter: pointer to the adapter
  *	@fl: the Free List
  *
- *	Tests specअगरied Free List to see whether the number of buffers
+ *	Tests specified Free List to see whether the number of buffers
  *	available to the hardware has falled below our "starvation"
  *	threshold.
  */
-अटल अंतरभूत bool fl_starving(स्थिर काष्ठा adapter *adapter,
-			       स्थिर काष्ठा sge_fl *fl)
-अणु
-	स्थिर काष्ठा sge *s = &adapter->sge;
+static inline bool fl_starving(const struct adapter *adapter,
+			       const struct sge_fl *fl)
+{
+	const struct sge *s = &adapter->sge;
 
-	वापस fl->avail - fl->pend_cred <= s->fl_starve_thres;
-पूर्ण
+	return fl->avail - fl->pend_cred <= s->fl_starve_thres;
+}
 
 /**
- *	map_skb -  map an skb क्रम DMA to the device
+ *	map_skb -  map an skb for DMA to the device
  *	@dev: the egress net device
  *	@skb: the packet to map
- *	@addr: a poपूर्णांकer to the base of the DMA mapping array
+ *	@addr: a pointer to the base of the DMA mapping array
  *
- *	Map an skb क्रम DMA to the device and वापस an array of DMA addresses.
+ *	Map an skb for DMA to the device and return an array of DMA addresses.
  */
-अटल पूर्णांक map_skb(काष्ठा device *dev, स्थिर काष्ठा sk_buff *skb,
+static int map_skb(struct device *dev, const struct sk_buff *skb,
 		   dma_addr_t *addr)
-अणु
-	स्थिर skb_frag_t *fp, *end;
-	स्थिर काष्ठा skb_shared_info *si;
+{
+	const skb_frag_t *fp, *end;
+	const struct skb_shared_info *si;
 
 	*addr = dma_map_single(dev, skb->data, skb_headlen(skb), DMA_TO_DEVICE);
-	अगर (dma_mapping_error(dev, *addr))
-		जाओ out_err;
+	if (dma_mapping_error(dev, *addr))
+		goto out_err;
 
 	si = skb_shinfo(skb);
 	end = &si->frags[si->nr_frags];
-	क्रम (fp = si->frags; fp < end; fp++) अणु
+	for (fp = si->frags; fp < end; fp++) {
 		*++addr = skb_frag_dma_map(dev, fp, 0, skb_frag_size(fp),
 					   DMA_TO_DEVICE);
-		अगर (dma_mapping_error(dev, *addr))
-			जाओ unwind;
-	पूर्ण
-	वापस 0;
+		if (dma_mapping_error(dev, *addr))
+			goto unwind;
+	}
+	return 0;
 
 unwind:
-	जबतक (fp-- > si->frags)
+	while (fp-- > si->frags)
 		dma_unmap_page(dev, *--addr, skb_frag_size(fp), DMA_TO_DEVICE);
 	dma_unmap_single(dev, addr[-1], skb_headlen(skb), DMA_TO_DEVICE);
 
 out_err:
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-अटल व्योम unmap_sgl(काष्ठा device *dev, स्थिर काष्ठा sk_buff *skb,
-		      स्थिर काष्ठा ulptx_sgl *sgl, स्थिर काष्ठा sge_txq *tq)
-अणु
-	स्थिर काष्ठा ulptx_sge_pair *p;
-	अचिन्हित पूर्णांक nfrags = skb_shinfo(skb)->nr_frags;
+static void unmap_sgl(struct device *dev, const struct sk_buff *skb,
+		      const struct ulptx_sgl *sgl, const struct sge_txq *tq)
+{
+	const struct ulptx_sge_pair *p;
+	unsigned int nfrags = skb_shinfo(skb)->nr_frags;
 
-	अगर (likely(skb_headlen(skb)))
+	if (likely(skb_headlen(skb)))
 		dma_unmap_single(dev, be64_to_cpu(sgl->addr0),
 				 be32_to_cpu(sgl->len0), DMA_TO_DEVICE);
-	अन्यथा अणु
+	else {
 		dma_unmap_page(dev, be64_to_cpu(sgl->addr0),
 			       be32_to_cpu(sgl->len0), DMA_TO_DEVICE);
 		nfrags--;
-	पूर्ण
+	}
 
 	/*
-	 * the complनिकासy below is because of the possibility of a wrap-around
+	 * the complexity below is because of the possibility of a wrap-around
 	 * in the middle of an SGL
 	 */
-	क्रम (p = sgl->sge; nfrags >= 2; nfrags -= 2) अणु
-		अगर (likely((u8 *)(p + 1) <= (u8 *)tq->stat)) अणु
+	for (p = sgl->sge; nfrags >= 2; nfrags -= 2) {
+		if (likely((u8 *)(p + 1) <= (u8 *)tq->stat)) {
 unmap:
 			dma_unmap_page(dev, be64_to_cpu(p->addr[0]),
 				       be32_to_cpu(p->len[0]), DMA_TO_DEVICE);
 			dma_unmap_page(dev, be64_to_cpu(p->addr[1]),
 				       be32_to_cpu(p->len[1]), DMA_TO_DEVICE);
 			p++;
-		पूर्ण अन्यथा अगर ((u8 *)p == (u8 *)tq->stat) अणु
-			p = (स्थिर काष्ठा ulptx_sge_pair *)tq->desc;
-			जाओ unmap;
-		पूर्ण अन्यथा अगर ((u8 *)p + 8 == (u8 *)tq->stat) अणु
-			स्थिर __be64 *addr = (स्थिर __be64 *)tq->desc;
+		} else if ((u8 *)p == (u8 *)tq->stat) {
+			p = (const struct ulptx_sge_pair *)tq->desc;
+			goto unmap;
+		} else if ((u8 *)p + 8 == (u8 *)tq->stat) {
+			const __be64 *addr = (const __be64 *)tq->desc;
 
 			dma_unmap_page(dev, be64_to_cpu(addr[0]),
 				       be32_to_cpu(p->len[0]), DMA_TO_DEVICE);
 			dma_unmap_page(dev, be64_to_cpu(addr[1]),
 				       be32_to_cpu(p->len[1]), DMA_TO_DEVICE);
-			p = (स्थिर काष्ठा ulptx_sge_pair *)&addr[2];
-		पूर्ण अन्यथा अणु
-			स्थिर __be64 *addr = (स्थिर __be64 *)tq->desc;
+			p = (const struct ulptx_sge_pair *)&addr[2];
+		} else {
+			const __be64 *addr = (const __be64 *)tq->desc;
 
 			dma_unmap_page(dev, be64_to_cpu(p->addr[0]),
 				       be32_to_cpu(p->len[0]), DMA_TO_DEVICE);
 			dma_unmap_page(dev, be64_to_cpu(addr[0]),
 				       be32_to_cpu(p->len[1]), DMA_TO_DEVICE);
-			p = (स्थिर काष्ठा ulptx_sge_pair *)&addr[1];
-		पूर्ण
-	पूर्ण
-	अगर (nfrags) अणु
+			p = (const struct ulptx_sge_pair *)&addr[1];
+		}
+	}
+	if (nfrags) {
 		__be64 addr;
 
-		अगर ((u8 *)p == (u8 *)tq->stat)
-			p = (स्थिर काष्ठा ulptx_sge_pair *)tq->desc;
+		if ((u8 *)p == (u8 *)tq->stat)
+			p = (const struct ulptx_sge_pair *)tq->desc;
 		addr = ((u8 *)p + 16 <= (u8 *)tq->stat
 			? p->addr[0]
-			: *(स्थिर __be64 *)tq->desc);
+			: *(const __be64 *)tq->desc);
 		dma_unmap_page(dev, be64_to_cpu(addr), be32_to_cpu(p->len[0]),
 			       DMA_TO_DEVICE);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- *	मुक्त_tx_desc - reclaims TX descriptors and their buffers
+ *	free_tx_desc - reclaims TX descriptors and their buffers
  *	@adapter: the adapter
  *	@tq: the TX queue to reclaim descriptors from
  *	@n: the number of descriptors to reclaim
- *	@unmap: whether the buffers should be unmapped क्रम DMA
+ *	@unmap: whether the buffers should be unmapped for DMA
  *
- *	Reclaims TX descriptors from an SGE TX queue and मुक्तs the associated
+ *	Reclaims TX descriptors from an SGE TX queue and frees the associated
  *	TX buffers.  Called with the TX queue lock held.
  */
-अटल व्योम मुक्त_tx_desc(काष्ठा adapter *adapter, काष्ठा sge_txq *tq,
-			 अचिन्हित पूर्णांक n, bool unmap)
-अणु
-	काष्ठा tx_sw_desc *sdesc;
-	अचिन्हित पूर्णांक cidx = tq->cidx;
-	काष्ठा device *dev = adapter->pdev_dev;
+static void free_tx_desc(struct adapter *adapter, struct sge_txq *tq,
+			 unsigned int n, bool unmap)
+{
+	struct tx_sw_desc *sdesc;
+	unsigned int cidx = tq->cidx;
+	struct device *dev = adapter->pdev_dev;
 
-	स्थिर पूर्णांक need_unmap = need_skb_unmap() && unmap;
+	const int need_unmap = need_skb_unmap() && unmap;
 
 	sdesc = &tq->sdesc[cidx];
-	जबतक (n--) अणु
+	while (n--) {
 		/*
 		 * If we kept a reference to the original TX skb, we need to
-		 * unmap it from PCI DMA space (अगर required) and मुक्त it.
+		 * unmap it from PCI DMA space (if required) and free it.
 		 */
-		अगर (sdesc->skb) अणु
-			अगर (need_unmap)
+		if (sdesc->skb) {
+			if (need_unmap)
 				unmap_sgl(dev, sdesc->skb, sdesc->sgl, tq);
 			dev_consume_skb_any(sdesc->skb);
-			sdesc->skb = शून्य;
-		पूर्ण
+			sdesc->skb = NULL;
+		}
 
 		sdesc++;
-		अगर (++cidx == tq->size) अणु
+		if (++cidx == tq->size) {
 			cidx = 0;
 			sdesc = tq->sdesc;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	tq->cidx = cidx;
-पूर्ण
+}
 
 /*
  * Return the number of reclaimable descriptors in a TX queue.
  */
-अटल अंतरभूत पूर्णांक reclaimable(स्थिर काष्ठा sge_txq *tq)
-अणु
-	पूर्णांक hw_cidx = be16_to_cpu(tq->stat->cidx);
-	पूर्णांक reclaimable = hw_cidx - tq->cidx;
-	अगर (reclaimable < 0)
+static inline int reclaimable(const struct sge_txq *tq)
+{
+	int hw_cidx = be16_to_cpu(tq->stat->cidx);
+	int reclaimable = hw_cidx - tq->cidx;
+	if (reclaimable < 0)
 		reclaimable += tq->size;
-	वापस reclaimable;
-पूर्ण
+	return reclaimable;
+}
 
 /**
  *	reclaim_completed_tx - reclaims completed TX descriptors
  *	@adapter: the adapter
  *	@tq: the TX queue to reclaim completed descriptors from
- *	@unmap: whether the buffers should be unmapped क्रम DMA
+ *	@unmap: whether the buffers should be unmapped for DMA
  *
  *	Reclaims TX descriptors that the SGE has indicated it has processed,
- *	and मुक्तs the associated buffers अगर possible.  Called with the TX
+ *	and frees the associated buffers if possible.  Called with the TX
  *	queue locked.
  */
-अटल अंतरभूत व्योम reclaim_completed_tx(काष्ठा adapter *adapter,
-					काष्ठा sge_txq *tq,
+static inline void reclaim_completed_tx(struct adapter *adapter,
+					struct sge_txq *tq,
 					bool unmap)
-अणु
-	पूर्णांक avail = reclaimable(tq);
+{
+	int avail = reclaimable(tq);
 
-	अगर (avail) अणु
+	if (avail) {
 		/*
-		 * Limit the amount of clean up work we करो at a समय to keep
-		 * the TX lock hold समय O(1).
+		 * Limit the amount of clean up work we do at a time to keep
+		 * the TX lock hold time O(1).
 		 */
-		अगर (avail > MAX_TX_RECLAIM)
+		if (avail > MAX_TX_RECLAIM)
 			avail = MAX_TX_RECLAIM;
 
-		मुक्त_tx_desc(adapter, tq, avail, unmap);
+		free_tx_desc(adapter, tq, avail, unmap);
 		tq->in_use -= avail;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- *	get_buf_size - वापस the size of an RX Free List buffer.
- *	@adapter: poपूर्णांकer to the associated adapter
- *	@sdesc: poपूर्णांकer to the software buffer descriptor
+ *	get_buf_size - return the size of an RX Free List buffer.
+ *	@adapter: pointer to the associated adapter
+ *	@sdesc: pointer to the software buffer descriptor
  */
-अटल अंतरभूत पूर्णांक get_buf_size(स्थिर काष्ठा adapter *adapter,
-			       स्थिर काष्ठा rx_sw_desc *sdesc)
-अणु
-	स्थिर काष्ठा sge *s = &adapter->sge;
+static inline int get_buf_size(const struct adapter *adapter,
+			       const struct rx_sw_desc *sdesc)
+{
+	const struct sge *s = &adapter->sge;
 
-	वापस (s->fl_pg_order > 0 && (sdesc->dma_addr & RX_LARGE_BUF)
+	return (s->fl_pg_order > 0 && (sdesc->dma_addr & RX_LARGE_BUF)
 		? (PAGE_SIZE << s->fl_pg_order) : PAGE_SIZE);
-पूर्ण
+}
 
 /**
- *	मुक्त_rx_bufs - मुक्त RX buffers on an SGE Free List
+ *	free_rx_bufs - free RX buffers on an SGE Free List
  *	@adapter: the adapter
- *	@fl: the SGE Free List to मुक्त buffers from
- *	@n: how many buffers to मुक्त
+ *	@fl: the SGE Free List to free buffers from
+ *	@n: how many buffers to free
  *
  *	Release the next @n buffers on an SGE Free List RX queue.   The
- *	buffers must be made inaccessible to hardware beक्रमe calling this
+ *	buffers must be made inaccessible to hardware before calling this
  *	function.
  */
-अटल व्योम मुक्त_rx_bufs(काष्ठा adapter *adapter, काष्ठा sge_fl *fl, पूर्णांक n)
-अणु
-	जबतक (n--) अणु
-		काष्ठा rx_sw_desc *sdesc = &fl->sdesc[fl->cidx];
+static void free_rx_bufs(struct adapter *adapter, struct sge_fl *fl, int n)
+{
+	while (n--) {
+		struct rx_sw_desc *sdesc = &fl->sdesc[fl->cidx];
 
-		अगर (is_buf_mapped(sdesc))
+		if (is_buf_mapped(sdesc))
 			dma_unmap_page(adapter->pdev_dev, get_buf_addr(sdesc),
 				       get_buf_size(adapter, sdesc),
 				       PCI_DMA_FROMDEVICE);
 		put_page(sdesc->page);
-		sdesc->page = शून्य;
-		अगर (++fl->cidx == fl->size)
+		sdesc->page = NULL;
+		if (++fl->cidx == fl->size)
 			fl->cidx = 0;
 		fl->avail--;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  *	unmap_rx_buf - unmap the current RX buffer on an SGE Free List
@@ -494,123 +493,123 @@ unmap:
  *	@fl: the SGE Free List
  *
  *	Unmap the current buffer on an SGE Free List RX queue.   The
- *	buffer must be made inaccessible to HW beक्रमe calling this function.
+ *	buffer must be made inaccessible to HW before calling this function.
  *
- *	This is similar to @मुक्त_rx_bufs above but करोes not मुक्त the buffer.
+ *	This is similar to @free_rx_bufs above but does not free the buffer.
  *	Do note that the FL still loses any further access to the buffer.
- *	This is used preकरोminantly to "transfer ownership" of an FL buffer
+ *	This is used predominantly to "transfer ownership" of an FL buffer
  *	to another entity (typically an skb's fragment list).
  */
-अटल व्योम unmap_rx_buf(काष्ठा adapter *adapter, काष्ठा sge_fl *fl)
-अणु
-	काष्ठा rx_sw_desc *sdesc = &fl->sdesc[fl->cidx];
+static void unmap_rx_buf(struct adapter *adapter, struct sge_fl *fl)
+{
+	struct rx_sw_desc *sdesc = &fl->sdesc[fl->cidx];
 
-	अगर (is_buf_mapped(sdesc))
+	if (is_buf_mapped(sdesc))
 		dma_unmap_page(adapter->pdev_dev, get_buf_addr(sdesc),
 			       get_buf_size(adapter, sdesc),
 			       PCI_DMA_FROMDEVICE);
-	sdesc->page = शून्य;
-	अगर (++fl->cidx == fl->size)
+	sdesc->page = NULL;
+	if (++fl->cidx == fl->size)
 		fl->cidx = 0;
 	fl->avail--;
-पूर्ण
+}
 
 /**
- *	ring_fl_db - righ करोorbell on मुक्त list
+ *	ring_fl_db - righ doorbell on free list
  *	@adapter: the adapter
- *	@fl: the Free List whose करोorbell should be rung ...
+ *	@fl: the Free List whose doorbell should be rung ...
  *
- *	Tell the Scatter Gather Engine that there are new मुक्त list entries
+ *	Tell the Scatter Gather Engine that there are new free list entries
  *	available.
  */
-अटल अंतरभूत व्योम ring_fl_db(काष्ठा adapter *adapter, काष्ठा sge_fl *fl)
-अणु
+static inline void ring_fl_db(struct adapter *adapter, struct sge_fl *fl)
+{
 	u32 val = adapter->params.arch.sge_fl_db;
 
 	/* The SGE keeps track of its Producer and Consumer Indices in terms
-	 * of Egress Queue Units so we can only tell it about पूर्णांकegral numbers
+	 * of Egress Queue Units so we can only tell it about integral numbers
 	 * of multiples of Free List Entries per Egress Queue Units ...
 	 */
-	अगर (fl->pend_cred >= FL_PER_EQ_UNIT) अणु
-		अगर (is_t4(adapter->params.chip))
+	if (fl->pend_cred >= FL_PER_EQ_UNIT) {
+		if (is_t4(adapter->params.chip))
 			val |= PIDX_V(fl->pend_cred / FL_PER_EQ_UNIT);
-		अन्यथा
+		else
 			val |= PIDX_T5_V(fl->pend_cred / FL_PER_EQ_UNIT);
 
-		/* Make sure all memory ग_लिखोs to the Free List queue are
-		 * committed beक्रमe we tell the hardware about them.
+		/* Make sure all memory writes to the Free List queue are
+		 * committed before we tell the hardware about them.
 		 */
 		wmb();
 
-		/* If we करोn't have access to the new User Doorbell (T5+), use
-		 * the old करोorbell mechanism; otherwise use the new BAR2
+		/* If we don't have access to the new User Doorbell (T5+), use
+		 * the old doorbell mechanism; otherwise use the new BAR2
 		 * mechanism.
 		 */
-		अगर (unlikely(fl->bar2_addr == शून्य)) अणु
-			t4_ग_लिखो_reg(adapter,
+		if (unlikely(fl->bar2_addr == NULL)) {
+			t4_write_reg(adapter,
 				     T4VF_SGE_BASE_ADDR + SGE_VF_KDOORBELL,
 				     QID_V(fl->cntxt_id) | val);
-		पूर्ण अन्यथा अणु
-			ग_लिखोl(val | QID_V(fl->bar2_qid),
+		} else {
+			writel(val | QID_V(fl->bar2_qid),
 			       fl->bar2_addr + SGE_UDB_KDOORBELL);
 
-			/* This Write memory Barrier will क्रमce the ग_लिखो to
+			/* This Write memory Barrier will force the write to
 			 * the User Doorbell area to be flushed.
 			 */
 			wmb();
-		पूर्ण
+		}
 		fl->pend_cred %= FL_PER_EQ_UNIT;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  *	set_rx_sw_desc - initialize software RX buffer descriptor
- *	@sdesc: poपूर्णांकer to the softwore RX buffer descriptor
- *	@page: poपूर्णांकer to the page data काष्ठाure backing the RX buffer
+ *	@sdesc: pointer to the softwore RX buffer descriptor
+ *	@page: pointer to the page data structure backing the RX buffer
  *	@dma_addr: PCI DMA address (possibly with low-bit flags)
  */
-अटल अंतरभूत व्योम set_rx_sw_desc(काष्ठा rx_sw_desc *sdesc, काष्ठा page *page,
+static inline void set_rx_sw_desc(struct rx_sw_desc *sdesc, struct page *page,
 				  dma_addr_t dma_addr)
-अणु
+{
 	sdesc->page = page;
 	sdesc->dma_addr = dma_addr;
-पूर्ण
+}
 
 /*
- * Support क्रम poisoning RX buffers ...
+ * Support for poisoning RX buffers ...
  */
-#घोषणा POISON_BUF_VAL -1
+#define POISON_BUF_VAL -1
 
-अटल अंतरभूत व्योम poison_buf(काष्ठा page *page, माप_प्रकार sz)
-अणु
-#अगर POISON_BUF_VAL >= 0
-	स_रखो(page_address(page), POISON_BUF_VAL, sz);
-#पूर्ण_अगर
-पूर्ण
+static inline void poison_buf(struct page *page, size_t sz)
+{
+#if POISON_BUF_VAL >= 0
+	memset(page_address(page), POISON_BUF_VAL, sz);
+#endif
+}
 
 /**
  *	refill_fl - refill an SGE RX buffer ring
  *	@adapter: the adapter
  *	@fl: the Free List ring to refill
  *	@n: the number of new buffers to allocate
- *	@gfp: the gfp flags क्रम the allocations
+ *	@gfp: the gfp flags for the allocations
  *
- *	(Re)populate an SGE मुक्त-buffer queue with up to @n new packet buffers,
+ *	(Re)populate an SGE free-buffer queue with up to @n new packet buffers,
  *	allocated with the supplied gfp flags.  The caller must assure that
- *	@n करोes not exceed the queue's capacity -- i.e. (cidx == pidx) _IN
+ *	@n does not exceed the queue's capacity -- i.e. (cidx == pidx) _IN
  *	EGRESS QUEUE UNITS_ indicates an empty Free List!  Returns the number
  *	of buffers allocated.  If afterwards the queue is found critically low,
- *	mark it as starving in the biपंचांगap of starving FLs.
+ *	mark it as starving in the bitmap of starving FLs.
  */
-अटल अचिन्हित पूर्णांक refill_fl(काष्ठा adapter *adapter, काष्ठा sge_fl *fl,
-			      पूर्णांक n, gfp_t gfp)
-अणु
-	काष्ठा sge *s = &adapter->sge;
-	काष्ठा page *page;
+static unsigned int refill_fl(struct adapter *adapter, struct sge_fl *fl,
+			      int n, gfp_t gfp)
+{
+	struct sge *s = &adapter->sge;
+	struct page *page;
 	dma_addr_t dma_addr;
-	अचिन्हित पूर्णांक cred = fl->avail;
+	unsigned int cred = fl->avail;
 	__be64 *d = &fl->desc[fl->pidx];
-	काष्ठा rx_sw_desc *sdesc = &fl->sdesc[fl->pidx];
+	struct rx_sw_desc *sdesc = &fl->sdesc[fl->pidx];
 
 	/*
 	 * Sanity: ensure that the result of adding n Free List buffers
@@ -623,41 +622,41 @@ unmap:
 
 	/*
 	 * If we support large pages, prefer large buffers and fail over to
-	 * small pages अगर we can't allocate large pages to satisfy the refill.
-	 * If we करोn't support large pages, drop directly पूर्णांकo the small page
+	 * small pages if we can't allocate large pages to satisfy the refill.
+	 * If we don't support large pages, drop directly into the small page
 	 * allocation code.
 	 */
-	अगर (s->fl_pg_order == 0)
-		जाओ alloc_small_pages;
+	if (s->fl_pg_order == 0)
+		goto alloc_small_pages;
 
-	जबतक (n) अणु
+	while (n) {
 		page = __dev_alloc_pages(gfp, s->fl_pg_order);
-		अगर (unlikely(!page)) अणु
+		if (unlikely(!page)) {
 			/*
 			 * We've failed inour attempt to allocate a "large
 			 * page".  Fail over to the "small page" allocation
 			 * below.
 			 */
 			fl->large_alloc_failed++;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		poison_buf(page, PAGE_SIZE << s->fl_pg_order);
 
 		dma_addr = dma_map_page(adapter->pdev_dev, page, 0,
 					PAGE_SIZE << s->fl_pg_order,
 					PCI_DMA_FROMDEVICE);
-		अगर (unlikely(dma_mapping_error(adapter->pdev_dev, dma_addr))) अणु
+		if (unlikely(dma_mapping_error(adapter->pdev_dev, dma_addr))) {
 			/*
 			 * We've run out of DMA mapping space.  Free up the
-			 * buffer and वापस with what we've managed to put
-			 * पूर्णांकo the मुक्त list.  We करोn't want to fail over to
-			 * the small page allocation below in this हाल
+			 * buffer and return with what we've managed to put
+			 * into the free list.  We don't want to fail over to
+			 * the small page allocation below in this case
 			 * because DMA mapping resources are typically
 			 * critical resources once they become scarse.
 			 */
-			__मुक्त_pages(page, s->fl_pg_order);
-			जाओ out;
-		पूर्ण
+			__free_pages(page, s->fl_pg_order);
+			goto out;
+		}
 		dma_addr |= RX_LARGE_BUF;
 		*d++ = cpu_to_be64(dma_addr);
 
@@ -665,163 +664,163 @@ unmap:
 		sdesc++;
 
 		fl->avail++;
-		अगर (++fl->pidx == fl->size) अणु
+		if (++fl->pidx == fl->size) {
 			fl->pidx = 0;
 			sdesc = fl->sdesc;
 			d = fl->desc;
-		पूर्ण
+		}
 		n--;
-	पूर्ण
+	}
 
 alloc_small_pages:
-	जबतक (n--) अणु
+	while (n--) {
 		page = __dev_alloc_page(gfp);
-		अगर (unlikely(!page)) अणु
+		if (unlikely(!page)) {
 			fl->alloc_failed++;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		poison_buf(page, PAGE_SIZE);
 
 		dma_addr = dma_map_page(adapter->pdev_dev, page, 0, PAGE_SIZE,
 				       PCI_DMA_FROMDEVICE);
-		अगर (unlikely(dma_mapping_error(adapter->pdev_dev, dma_addr))) अणु
+		if (unlikely(dma_mapping_error(adapter->pdev_dev, dma_addr))) {
 			put_page(page);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		*d++ = cpu_to_be64(dma_addr);
 
 		set_rx_sw_desc(sdesc, page, dma_addr);
 		sdesc++;
 
 		fl->avail++;
-		अगर (++fl->pidx == fl->size) अणु
+		if (++fl->pidx == fl->size) {
 			fl->pidx = 0;
 			sdesc = fl->sdesc;
 			d = fl->desc;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 out:
 	/*
 	 * Update our accounting state to incorporate the new Free List
-	 * buffers, tell the hardware about them and वापस the number of
+	 * buffers, tell the hardware about them and return the number of
 	 * buffers which we were able to allocate.
 	 */
 	cred = fl->avail - cred;
 	fl->pend_cred += cred;
 	ring_fl_db(adapter, fl);
 
-	अगर (unlikely(fl_starving(adapter, fl))) अणु
+	if (unlikely(fl_starving(adapter, fl))) {
 		smp_wmb();
 		set_bit(fl->cntxt_id, adapter->sge.starving_fl);
-	पूर्ण
+	}
 
-	वापस cred;
-पूर्ण
+	return cred;
+}
 
 /*
  * Refill a Free List to its capacity or the Maximum Refill Increment,
  * whichever is smaller ...
  */
-अटल अंतरभूत व्योम __refill_fl(काष्ठा adapter *adapter, काष्ठा sge_fl *fl)
-अणु
+static inline void __refill_fl(struct adapter *adapter, struct sge_fl *fl)
+{
 	refill_fl(adapter, fl,
-		  min((अचिन्हित पूर्णांक)MAX_RX_REFILL, fl_cap(fl) - fl->avail),
+		  min((unsigned int)MAX_RX_REFILL, fl_cap(fl) - fl->avail),
 		  GFP_ATOMIC);
-पूर्ण
+}
 
 /**
- *	alloc_ring - allocate resources क्रम an SGE descriptor ring
+ *	alloc_ring - allocate resources for an SGE descriptor ring
  *	@dev: the PCI device's core device
  *	@nelem: the number of descriptors
  *	@hwsize: the size of each hardware descriptor
  *	@swsize: the size of each software descriptor
  *	@busaddrp: the physical PCI bus address of the allocated ring
- *	@swringp: वापस address poपूर्णांकer क्रम software ring
- *	@stat_size: extra space in hardware ring क्रम status inक्रमmation
+ *	@swringp: return address pointer for software ring
+ *	@stat_size: extra space in hardware ring for status information
  *
- *	Allocates resources क्रम an SGE descriptor ring, such as TX queues,
- *	मुक्त buffer lists, response queues, etc.  Each SGE ring requires
- *	space क्रम its hardware descriptors plus, optionally, space क्रम software
+ *	Allocates resources for an SGE descriptor ring, such as TX queues,
+ *	free buffer lists, response queues, etc.  Each SGE ring requires
+ *	space for its hardware descriptors plus, optionally, space for software
  *	state associated with each hardware entry (the metadata).  The function
- *	वापसs three values: the भव address क्रम the hardware ring (the
- *	वापस value of the function), the PCI bus address of the hardware
+ *	returns three values: the virtual address for the hardware ring (the
+ *	return value of the function), the PCI bus address of the hardware
  *	ring (in *busaddrp), and the address of the software ring (in swringp).
- *	Both the hardware and software rings are वापसed zeroed out.
+ *	Both the hardware and software rings are returned zeroed out.
  */
-अटल व्योम *alloc_ring(काष्ठा device *dev, माप_प्रकार nelem, माप_प्रकार hwsize,
-			माप_प्रकार swsize, dma_addr_t *busaddrp, व्योम *swringp,
-			माप_प्रकार stat_size)
-अणु
+static void *alloc_ring(struct device *dev, size_t nelem, size_t hwsize,
+			size_t swsize, dma_addr_t *busaddrp, void *swringp,
+			size_t stat_size)
+{
 	/*
-	 * Allocate the hardware ring and PCI DMA bus address space क्रम said.
+	 * Allocate the hardware ring and PCI DMA bus address space for said.
 	 */
-	माप_प्रकार hwlen = nelem * hwsize + stat_size;
-	व्योम *hwring = dma_alloc_coherent(dev, hwlen, busaddrp, GFP_KERNEL);
+	size_t hwlen = nelem * hwsize + stat_size;
+	void *hwring = dma_alloc_coherent(dev, hwlen, busaddrp, GFP_KERNEL);
 
-	अगर (!hwring)
-		वापस शून्य;
+	if (!hwring)
+		return NULL;
 
 	/*
-	 * If the caller wants a software ring, allocate it and वापस a
-	 * poपूर्णांकer to it in *swringp.
+	 * If the caller wants a software ring, allocate it and return a
+	 * pointer to it in *swringp.
 	 */
-	BUG_ON((swsize != 0) != (swringp != शून्य));
-	अगर (swsize) अणु
-		व्योम *swring = kसुस्मृति(nelem, swsize, GFP_KERNEL);
+	BUG_ON((swsize != 0) != (swringp != NULL));
+	if (swsize) {
+		void *swring = kcalloc(nelem, swsize, GFP_KERNEL);
 
-		अगर (!swring) अणु
-			dma_मुक्त_coherent(dev, hwlen, hwring, *busaddrp);
-			वापस शून्य;
-		पूर्ण
-		*(व्योम **)swringp = swring;
-	पूर्ण
+		if (!swring) {
+			dma_free_coherent(dev, hwlen, hwring, *busaddrp);
+			return NULL;
+		}
+		*(void **)swringp = swring;
+	}
 
-	वापस hwring;
-पूर्ण
+	return hwring;
+}
 
 /**
  *	sgl_len - calculates the size of an SGL of the given capacity
  *	@n: the number of SGL entries
  *
- *	Calculates the number of flits (8-byte units) needed क्रम a Direct
+ *	Calculates the number of flits (8-byte units) needed for a Direct
  *	Scatter/Gather List that can hold the given number of entries.
  */
-अटल अंतरभूत अचिन्हित पूर्णांक sgl_len(अचिन्हित पूर्णांक n)
-अणु
+static inline unsigned int sgl_len(unsigned int n)
+{
 	/*
 	 * A Direct Scatter Gather List uses 32-bit lengths and 64-bit PCI DMA
 	 * addresses.  The DSGL Work Request starts off with a 32-bit DSGL
-	 * ULPTX header, then Length0, then Address0, then, क्रम 1 <= i <= N,
-	 * repeated sequences of अणु Length[i], Length[i+1], Address[i],
-	 * Address[i+1] पूर्ण (this ensures that all addresses are on 64-bit
+	 * ULPTX header, then Length0, then Address0, then, for 1 <= i <= N,
+	 * repeated sequences of { Length[i], Length[i+1], Address[i],
+	 * Address[i+1] } (this ensures that all addresses are on 64-bit
 	 * boundaries).  If N is even, then Length[N+1] should be set to 0 and
 	 * Address[N+1] is omitted.
 	 *
 	 * The following calculation incorporates all of the above.  It's
-	 * somewhat hard to follow but, briefly: the "+2" accounts क्रम the
+	 * somewhat hard to follow but, briefly: the "+2" accounts for the
 	 * first two flits which include the DSGL header, Length0 and
-	 * Address0; the "(3*(n-1))/2" covers the मुख्य body of list entries (3
-	 * flits क्रम every pair of the reमुख्यing N) +1 अगर (n-1) is odd; and
-	 * finally the "+((n-1)&1)" adds the one reमुख्यing flit needed अगर
+	 * Address0; the "(3*(n-1))/2" covers the main body of list entries (3
+	 * flits for every pair of the remaining N) +1 if (n-1) is odd; and
+	 * finally the "+((n-1)&1)" adds the one remaining flit needed if
 	 * (n-1) is odd ...
 	 */
 	n--;
-	वापस (3 * n) / 2 + (n & 1) + 2;
-पूर्ण
+	return (3 * n) / 2 + (n & 1) + 2;
+}
 
 /**
- *	flits_to_desc - वापसs the num of TX descriptors क्रम the given flits
+ *	flits_to_desc - returns the num of TX descriptors for the given flits
  *	@flits: the number of flits
  *
- *	Returns the number of TX descriptors needed क्रम the supplied number
+ *	Returns the number of TX descriptors needed for the supplied number
  *	of flits.
  */
-अटल अंतरभूत अचिन्हित पूर्णांक flits_to_desc(अचिन्हित पूर्णांक flits)
-अणु
-	BUG_ON(flits > SGE_MAX_WR_LEN / माप(__be64));
-	वापस DIV_ROUND_UP(flits, TXD_PER_EQ_UNIT);
-पूर्ण
+static inline unsigned int flits_to_desc(unsigned int flits)
+{
+	BUG_ON(flits > SGE_MAX_WR_LEN / sizeof(__be64));
+	return DIV_ROUND_UP(flits, TXD_PER_EQ_UNIT);
+}
 
 /**
  *	is_eth_imm - can an Ethernet packet be sent as immediate data?
@@ -830,323 +829,323 @@ out:
  *	Returns whether an Ethernet packet is small enough to fit completely as
  *	immediate data.
  */
-अटल अंतरभूत पूर्णांक is_eth_imm(स्थिर काष्ठा sk_buff *skb)
-अणु
+static inline int is_eth_imm(const struct sk_buff *skb)
+{
 	/*
 	 * The VF Driver uses the FW_ETH_TX_PKT_VM_WR firmware Work Request
-	 * which करोes not accommodate immediate data.  We could dike out all
-	 * of the support code क्रम immediate data but that would tie our hands
-	 * too much अगर we ever want to enhace the firmware.  It would also
-	 * create more dअगरferences between the PF and VF Drivers.
+	 * which does not accommodate immediate data.  We could dike out all
+	 * of the support code for immediate data but that would tie our hands
+	 * too much if we ever want to enhace the firmware.  It would also
+	 * create more differences between the PF and VF Drivers.
 	 */
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /**
- *	calc_tx_flits - calculate the number of flits क्रम a packet TX WR
+ *	calc_tx_flits - calculate the number of flits for a packet TX WR
  *	@skb: the packet
  *
- *	Returns the number of flits needed क्रम a TX Work Request क्रम the
+ *	Returns the number of flits needed for a TX Work Request for the
  *	given Ethernet packet, including the needed WR and CPL headers.
  */
-अटल अंतरभूत अचिन्हित पूर्णांक calc_tx_flits(स्थिर काष्ठा sk_buff *skb)
-अणु
-	अचिन्हित पूर्णांक flits;
+static inline unsigned int calc_tx_flits(const struct sk_buff *skb)
+{
+	unsigned int flits;
 
 	/*
 	 * If the skb is small enough, we can pump it out as a work request
-	 * with only immediate data.  In that हाल we just have to have the
+	 * with only immediate data.  In that case we just have to have the
 	 * TX Packet header plus the skb data in the Work Request.
 	 */
-	अगर (is_eth_imm(skb))
-		वापस DIV_ROUND_UP(skb->len + माप(काष्ठा cpl_tx_pkt),
-				    माप(__be64));
+	if (is_eth_imm(skb))
+		return DIV_ROUND_UP(skb->len + sizeof(struct cpl_tx_pkt),
+				    sizeof(__be64));
 
 	/*
-	 * Otherwise, we're going to have to स्थिरruct a Scatter gather list
+	 * Otherwise, we're going to have to construct a Scatter gather list
 	 * of the skb body and fragments.  We also include the flits necessary
-	 * क्रम the TX Packet Work Request and CPL.  We always have a firmware
+	 * for the TX Packet Work Request and CPL.  We always have a firmware
 	 * Write Header (incorporated as part of the cpl_tx_pkt_lso and
-	 * cpl_tx_pkt काष्ठाures), followed by either a TX Packet Write CPL
-	 * message or, अगर we're करोing a Large Send Offload, an LSO CPL message
+	 * cpl_tx_pkt structures), followed by either a TX Packet Write CPL
+	 * message or, if we're doing a Large Send Offload, an LSO CPL message
 	 * with an embedded TX Packet Write CPL message.
 	 */
 	flits = sgl_len(skb_shinfo(skb)->nr_frags + 1);
-	अगर (skb_shinfo(skb)->gso_size)
-		flits += (माप(काष्ठा fw_eth_tx_pkt_vm_wr) +
-			  माप(काष्ठा cpl_tx_pkt_lso_core) +
-			  माप(काष्ठा cpl_tx_pkt_core)) / माप(__be64);
-	अन्यथा
-		flits += (माप(काष्ठा fw_eth_tx_pkt_vm_wr) +
-			  माप(काष्ठा cpl_tx_pkt_core)) / माप(__be64);
-	वापस flits;
-पूर्ण
+	if (skb_shinfo(skb)->gso_size)
+		flits += (sizeof(struct fw_eth_tx_pkt_vm_wr) +
+			  sizeof(struct cpl_tx_pkt_lso_core) +
+			  sizeof(struct cpl_tx_pkt_core)) / sizeof(__be64);
+	else
+		flits += (sizeof(struct fw_eth_tx_pkt_vm_wr) +
+			  sizeof(struct cpl_tx_pkt_core)) / sizeof(__be64);
+	return flits;
+}
 
 /**
- *	ग_लिखो_sgl - populate a Scatter/Gather List क्रम a packet
+ *	write_sgl - populate a Scatter/Gather List for a packet
  *	@skb: the packet
- *	@tq: the TX queue we are writing पूर्णांकo
- *	@sgl: starting location क्रम writing the SGL
- *	@end: poपूर्णांकs right after the end of the SGL
- *	@start: start offset पूर्णांकo skb मुख्य-body data to include in the SGL
- *	@addr: the list of DMA bus addresses क्रम the SGL elements
+ *	@tq: the TX queue we are writing into
+ *	@sgl: starting location for writing the SGL
+ *	@end: points right after the end of the SGL
+ *	@start: start offset into skb main-body data to include in the SGL
+ *	@addr: the list of DMA bus addresses for the SGL elements
  *
- *	Generates a Scatter/Gather List क्रम the buffers that make up a packet.
- *	The caller must provide adequate space क्रम the SGL that will be written.
+ *	Generates a Scatter/Gather List for the buffers that make up a packet.
+ *	The caller must provide adequate space for the SGL that will be written.
  *	The SGL includes all of the packet's page fragments and the data in its
- *	मुख्य body except क्रम the first @start bytes.  @pos must be 16-byte
- *	aligned and within a TX descriptor with available space.  @end poपूर्णांकs
- *	ग_लिखो after the end of the SGL but करोes not account क्रम any potential
+ *	main body except for the first @start bytes.  @pos must be 16-byte
+ *	aligned and within a TX descriptor with available space.  @end points
+ *	write after the end of the SGL but does not account for any potential
  *	wrap around, i.e., @end > @tq->stat.
  */
-अटल व्योम ग_लिखो_sgl(स्थिर काष्ठा sk_buff *skb, काष्ठा sge_txq *tq,
-		      काष्ठा ulptx_sgl *sgl, u64 *end, अचिन्हित पूर्णांक start,
-		      स्थिर dma_addr_t *addr)
-अणु
-	अचिन्हित पूर्णांक i, len;
-	काष्ठा ulptx_sge_pair *to;
-	स्थिर काष्ठा skb_shared_info *si = skb_shinfo(skb);
-	अचिन्हित पूर्णांक nfrags = si->nr_frags;
-	काष्ठा ulptx_sge_pair buf[MAX_SKB_FRAGS / 2 + 1];
+static void write_sgl(const struct sk_buff *skb, struct sge_txq *tq,
+		      struct ulptx_sgl *sgl, u64 *end, unsigned int start,
+		      const dma_addr_t *addr)
+{
+	unsigned int i, len;
+	struct ulptx_sge_pair *to;
+	const struct skb_shared_info *si = skb_shinfo(skb);
+	unsigned int nfrags = si->nr_frags;
+	struct ulptx_sge_pair buf[MAX_SKB_FRAGS / 2 + 1];
 
 	len = skb_headlen(skb) - start;
-	अगर (likely(len)) अणु
+	if (likely(len)) {
 		sgl->len0 = htonl(len);
 		sgl->addr0 = cpu_to_be64(addr[0] + start);
 		nfrags++;
-	पूर्ण अन्यथा अणु
+	} else {
 		sgl->len0 = htonl(skb_frag_size(&si->frags[0]));
 		sgl->addr0 = cpu_to_be64(addr[1]);
-	पूर्ण
+	}
 
 	sgl->cmd_nsge = htonl(ULPTX_CMD_V(ULP_TX_SC_DSGL) |
 			      ULPTX_NSGE_V(nfrags));
-	अगर (likely(--nfrags == 0))
-		वापस;
+	if (likely(--nfrags == 0))
+		return;
 	/*
-	 * Most of the complनिकासy below deals with the possibility we hit the
-	 * end of the queue in the middle of writing the SGL.  For this हाल
+	 * Most of the complexity below deals with the possibility we hit the
+	 * end of the queue in the middle of writing the SGL.  For this case
 	 * only we create the SGL in a temporary buffer and then copy it.
 	 */
 	to = (u8 *)end > (u8 *)tq->stat ? buf : sgl->sge;
 
-	क्रम (i = (nfrags != si->nr_frags); nfrags >= 2; nfrags -= 2, to++) अणु
+	for (i = (nfrags != si->nr_frags); nfrags >= 2; nfrags -= 2, to++) {
 		to->len[0] = cpu_to_be32(skb_frag_size(&si->frags[i]));
 		to->len[1] = cpu_to_be32(skb_frag_size(&si->frags[++i]));
 		to->addr[0] = cpu_to_be64(addr[i]);
 		to->addr[1] = cpu_to_be64(addr[++i]);
-	पूर्ण
-	अगर (nfrags) अणु
+	}
+	if (nfrags) {
 		to->len[0] = cpu_to_be32(skb_frag_size(&si->frags[i]));
 		to->len[1] = cpu_to_be32(0);
 		to->addr[0] = cpu_to_be64(addr[i + 1]);
-	पूर्ण
-	अगर (unlikely((u8 *)end > (u8 *)tq->stat)) अणु
-		अचिन्हित पूर्णांक part0 = (u8 *)tq->stat - (u8 *)sgl->sge, part1;
+	}
+	if (unlikely((u8 *)end > (u8 *)tq->stat)) {
+		unsigned int part0 = (u8 *)tq->stat - (u8 *)sgl->sge, part1;
 
-		अगर (likely(part0))
-			स_नकल(sgl->sge, buf, part0);
+		if (likely(part0))
+			memcpy(sgl->sge, buf, part0);
 		part1 = (u8 *)end - (u8 *)tq->stat;
-		स_नकल(tq->desc, (u8 *)buf + part0, part1);
-		end = (व्योम *)tq->desc + part1;
-	पूर्ण
-	अगर ((uपूर्णांकptr_t)end & 8)           /* 0-pad to multiple of 16 */
+		memcpy(tq->desc, (u8 *)buf + part0, part1);
+		end = (void *)tq->desc + part1;
+	}
+	if ((uintptr_t)end & 8)           /* 0-pad to multiple of 16 */
 		*end = 0;
-पूर्ण
+}
 
 /**
- *	check_ring_tx_db - check and potentially ring a TX queue's करोorbell
+ *	check_ring_tx_db - check and potentially ring a TX queue's doorbell
  *	@adapter: the adapter
  *	@tq: the TX queue
  *	@n: number of new descriptors to give to HW
  *
- *	Ring the करोorbel क्रम a TX queue.
+ *	Ring the doorbel for a TX queue.
  */
-अटल अंतरभूत व्योम ring_tx_db(काष्ठा adapter *adapter, काष्ठा sge_txq *tq,
-			      पूर्णांक n)
-अणु
-	/* Make sure that all ग_लिखोs to the TX Descriptors are committed
-	 * beक्रमe we tell the hardware about them.
+static inline void ring_tx_db(struct adapter *adapter, struct sge_txq *tq,
+			      int n)
+{
+	/* Make sure that all writes to the TX Descriptors are committed
+	 * before we tell the hardware about them.
 	 */
 	wmb();
 
-	/* If we करोn't have access to the new User Doorbell (T5+), use the old
-	 * करोorbell mechanism; otherwise use the new BAR2 mechanism.
+	/* If we don't have access to the new User Doorbell (T5+), use the old
+	 * doorbell mechanism; otherwise use the new BAR2 mechanism.
 	 */
-	अगर (unlikely(tq->bar2_addr == शून्य)) अणु
+	if (unlikely(tq->bar2_addr == NULL)) {
 		u32 val = PIDX_V(n);
 
-		t4_ग_लिखो_reg(adapter, T4VF_SGE_BASE_ADDR + SGE_VF_KDOORBELL,
+		t4_write_reg(adapter, T4VF_SGE_BASE_ADDR + SGE_VF_KDOORBELL,
 			     QID_V(tq->cntxt_id) | val);
-	पूर्ण अन्यथा अणु
+	} else {
 		u32 val = PIDX_T5_V(n);
 
 		/* T4 and later chips share the same PIDX field offset within
-		 * the करोorbell, but T5 and later shrank the field in order to
-		 * gain a bit क्रम Doorbell Priority.  The field was असलurdly
+		 * the doorbell, but T5 and later shrank the field in order to
+		 * gain a bit for Doorbell Priority.  The field was absurdly
 		 * large in the first place (14 bits) so we just use the T5
-		 * and later limits and warn अगर a Queue ID is too large.
+		 * and later limits and warn if a Queue ID is too large.
 		 */
 		WARN_ON(val & DBPRIO_F);
 
 		/* If we're only writing a single Egress Unit and the BAR2
 		 * Queue ID is 0, we can use the Write Combining Doorbell
-		 * Gather Buffer; otherwise we use the simple करोorbell.
+		 * Gather Buffer; otherwise we use the simple doorbell.
 		 */
-		अगर (n == 1 && tq->bar2_qid == 0) अणु
-			अचिन्हित पूर्णांक index = (tq->pidx
+		if (n == 1 && tq->bar2_qid == 0) {
+			unsigned int index = (tq->pidx
 					      ? (tq->pidx - 1)
 					      : (tq->size - 1));
 			__be64 *src = (__be64 *)&tq->desc[index];
 			__be64 __iomem *dst = (__be64 __iomem *)(tq->bar2_addr +
 							 SGE_UDB_WCDOORBELL);
-			अचिन्हित पूर्णांक count = EQ_UNIT / माप(__be64);
+			unsigned int count = EQ_UNIT / sizeof(__be64);
 
 			/* Copy the TX Descriptor in a tight loop in order to
 			 * try to get it to the adapter in a single Write
 			 * Combined transfer on the PCI-E Bus.  If the Write
-			 * Combine fails (say because of an पूर्णांकerrupt, etc.)
-			 * the hardware will simply take the last ग_लिखो as a
-			 * simple करोorbell ग_लिखो with a PIDX Increment of 1
+			 * Combine fails (say because of an interrupt, etc.)
+			 * the hardware will simply take the last write as a
+			 * simple doorbell write with a PIDX Increment of 1
 			 * and will fetch the TX Descriptor from memory via
 			 * DMA.
 			 */
-			जबतक (count) अणु
-				/* the (__क्रमce u64) is because the compiler
-				 * करोesn't understand the endian swizzling
+			while (count) {
+				/* the (__force u64) is because the compiler
+				 * doesn't understand the endian swizzling
 				 * going on
 				 */
-				ग_लिखोq((__क्रमce u64)*src, dst);
+				writeq((__force u64)*src, dst);
 				src++;
 				dst++;
 				count--;
-			पूर्ण
-		पूर्ण अन्यथा
-			ग_लिखोl(val | QID_V(tq->bar2_qid),
+			}
+		} else
+			writel(val | QID_V(tq->bar2_qid),
 			       tq->bar2_addr + SGE_UDB_KDOORBELL);
 
-		/* This Write Memory Barrier will क्रमce the ग_लिखो to the User
+		/* This Write Memory Barrier will force the write to the User
 		 * Doorbell area to be flushed.  This is needed to prevent
-		 * ग_लिखोs on dअगरferent CPUs क्रम the same queue from hitting
+		 * writes on different CPUs for the same queue from hitting
 		 * the adapter out of order.  This is required when some Work
 		 * Requests take the Write Combine Gather Buffer path (user
-		 * करोorbell area offset [SGE_UDB_WCDOORBELL..+63]) and some
+		 * doorbell area offset [SGE_UDB_WCDOORBELL..+63]) and some
 		 * take the traditional path where we simply increment the
 		 * PIDX (User Doorbell area SGE_UDB_KDOORBELL) and have the
-		 * hardware DMA पढ़ो the actual Work Request.
+		 * hardware DMA read the actual Work Request.
 		 */
 		wmb();
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- *	अंतरभूत_tx_skb - अंतरभूत a packet's data पूर्णांकo TX descriptors
+ *	inline_tx_skb - inline a packet's data into TX descriptors
  *	@skb: the packet
- *	@tq: the TX queue where the packet will be अंतरभूतd
- *	@pos: starting position in the TX queue to अंतरभूत the packet
+ *	@tq: the TX queue where the packet will be inlined
+ *	@pos: starting position in the TX queue to inline the packet
  *
- *	Inline a packet's contents directly पूर्णांकo TX descriptors, starting at
+ *	Inline a packet's contents directly into TX descriptors, starting at
  *	the given position within the TX DMA ring.
- *	Most of the complनिकासy of this operation is dealing with wrap arounds
- *	in the middle of the packet we want to अंतरभूत.
+ *	Most of the complexity of this operation is dealing with wrap arounds
+ *	in the middle of the packet we want to inline.
  */
-अटल व्योम अंतरभूत_tx_skb(स्थिर काष्ठा sk_buff *skb, स्थिर काष्ठा sge_txq *tq,
-			  व्योम *pos)
-अणु
+static void inline_tx_skb(const struct sk_buff *skb, const struct sge_txq *tq,
+			  void *pos)
+{
 	u64 *p;
-	पूर्णांक left = (व्योम *)tq->stat - pos;
+	int left = (void *)tq->stat - pos;
 
-	अगर (likely(skb->len <= left)) अणु
-		अगर (likely(!skb->data_len))
+	if (likely(skb->len <= left)) {
+		if (likely(!skb->data_len))
 			skb_copy_from_linear_data(skb, pos, skb->len);
-		अन्यथा
+		else
 			skb_copy_bits(skb, 0, pos, skb->len);
 		pos += skb->len;
-	पूर्ण अन्यथा अणु
+	} else {
 		skb_copy_bits(skb, 0, pos, left);
 		skb_copy_bits(skb, left, tq->desc, skb->len - left);
-		pos = (व्योम *)tq->desc + (skb->len - left);
-	पूर्ण
+		pos = (void *)tq->desc + (skb->len - left);
+	}
 
 	/* 0-pad to multiple of 16 */
 	p = PTR_ALIGN(pos, 8);
-	अगर ((uपूर्णांकptr_t)p & 8)
+	if ((uintptr_t)p & 8)
 		*p = 0;
-पूर्ण
+}
 
 /*
- * Figure out what HW csum a packet wants and वापस the appropriate control
+ * Figure out what HW csum a packet wants and return the appropriate control
  * bits.
  */
-अटल u64 hwcsum(क्रमागत chip_type chip, स्थिर काष्ठा sk_buff *skb)
-अणु
-	पूर्णांक csum_type;
-	स्थिर काष्ठा iphdr *iph = ip_hdr(skb);
+static u64 hwcsum(enum chip_type chip, const struct sk_buff *skb)
+{
+	int csum_type;
+	const struct iphdr *iph = ip_hdr(skb);
 
-	अगर (iph->version == 4) अणु
-		अगर (iph->protocol == IPPROTO_TCP)
+	if (iph->version == 4) {
+		if (iph->protocol == IPPROTO_TCP)
 			csum_type = TX_CSUM_TCPIP;
-		अन्यथा अगर (iph->protocol == IPPROTO_UDP)
+		else if (iph->protocol == IPPROTO_UDP)
 			csum_type = TX_CSUM_UDPIP;
-		अन्यथा अणु
+		else {
 nocsum:
 			/*
 			 * unknown protocol, disable HW csum
 			 * and hope a bad packet is detected
 			 */
-			वापस TXPKT_L4CSUM_DIS_F;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			return TXPKT_L4CSUM_DIS_F;
+		}
+	} else {
 		/*
-		 * this करोesn't work with extension headers
+		 * this doesn't work with extension headers
 		 */
-		स्थिर काष्ठा ipv6hdr *ip6h = (स्थिर काष्ठा ipv6hdr *)iph;
+		const struct ipv6hdr *ip6h = (const struct ipv6hdr *)iph;
 
-		अगर (ip6h->nexthdr == IPPROTO_TCP)
+		if (ip6h->nexthdr == IPPROTO_TCP)
 			csum_type = TX_CSUM_TCPIP6;
-		अन्यथा अगर (ip6h->nexthdr == IPPROTO_UDP)
+		else if (ip6h->nexthdr == IPPROTO_UDP)
 			csum_type = TX_CSUM_UDPIP6;
-		अन्यथा
-			जाओ nocsum;
-	पूर्ण
+		else
+			goto nocsum;
+	}
 
-	अगर (likely(csum_type >= TX_CSUM_TCPIP)) अणु
+	if (likely(csum_type >= TX_CSUM_TCPIP)) {
 		u64 hdr_len = TXPKT_IPHDR_LEN_V(skb_network_header_len(skb));
-		पूर्णांक eth_hdr_len = skb_network_offset(skb) - ETH_HLEN;
+		int eth_hdr_len = skb_network_offset(skb) - ETH_HLEN;
 
-		अगर (chip <= CHELSIO_T5)
+		if (chip <= CHELSIO_T5)
 			hdr_len |= TXPKT_ETHHDR_LEN_V(eth_hdr_len);
-		अन्यथा
+		else
 			hdr_len |= T6_TXPKT_ETHHDR_LEN_V(eth_hdr_len);
-		वापस TXPKT_CSUM_TYPE_V(csum_type) | hdr_len;
-	पूर्ण अन्यथा अणु
-		पूर्णांक start = skb_transport_offset(skb);
+		return TXPKT_CSUM_TYPE_V(csum_type) | hdr_len;
+	} else {
+		int start = skb_transport_offset(skb);
 
-		वापस TXPKT_CSUM_TYPE_V(csum_type) |
+		return TXPKT_CSUM_TYPE_V(csum_type) |
 			TXPKT_CSUM_START_V(start) |
 			TXPKT_CSUM_LOC_V(start + skb->csum_offset);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Stop an Ethernet TX queue and record that state change.
  */
-अटल व्योम txq_stop(काष्ठा sge_eth_txq *txq)
-अणु
-	netअगर_tx_stop_queue(txq->txq);
+static void txq_stop(struct sge_eth_txq *txq)
+{
+	netif_tx_stop_queue(txq->txq);
 	txq->q.stops++;
-पूर्ण
+}
 
 /*
- * Advance our software state क्रम a TX queue by adding n in use descriptors.
+ * Advance our software state for a TX queue by adding n in use descriptors.
  */
-अटल अंतरभूत व्योम txq_advance(काष्ठा sge_txq *tq, अचिन्हित पूर्णांक n)
-अणु
+static inline void txq_advance(struct sge_txq *tq, unsigned int n)
+{
 	tq->in_use += n;
 	tq->pidx += n;
-	अगर (tq->pidx >= tq->size)
+	if (tq->pidx >= tq->size)
 		tq->pidx -= tq->size;
-पूर्ण
+}
 
 /**
  *	t4vf_eth_xmit - add a packet to an Ethernet TX queue
@@ -1155,39 +1154,39 @@ nocsum:
  *
  *	Add a packet to an SGE Ethernet TX queue.  Runs with softirqs disabled.
  */
-netdev_tx_t t4vf_eth_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
-अणु
+netdev_tx_t t4vf_eth_xmit(struct sk_buff *skb, struct net_device *dev)
+{
 	u32 wr_mid;
 	u64 cntrl, *end;
-	पूर्णांक qidx, credits, max_pkt_len;
-	अचिन्हित पूर्णांक flits, ndesc;
-	काष्ठा adapter *adapter;
-	काष्ठा sge_eth_txq *txq;
-	स्थिर काष्ठा port_info *pi;
-	काष्ठा fw_eth_tx_pkt_vm_wr *wr;
-	काष्ठा cpl_tx_pkt_core *cpl;
-	स्थिर काष्ठा skb_shared_info *ssi;
+	int qidx, credits, max_pkt_len;
+	unsigned int flits, ndesc;
+	struct adapter *adapter;
+	struct sge_eth_txq *txq;
+	const struct port_info *pi;
+	struct fw_eth_tx_pkt_vm_wr *wr;
+	struct cpl_tx_pkt_core *cpl;
+	const struct skb_shared_info *ssi;
 	dma_addr_t addr[MAX_SKB_FRAGS + 1];
-	स्थिर माप_प्रकार fw_hdr_copy_len = (माप(wr->ethmacdst) +
-					माप(wr->ethmacsrc) +
-					माप(wr->ethtype) +
-					माप(wr->vlantci));
+	const size_t fw_hdr_copy_len = (sizeof(wr->ethmacdst) +
+					sizeof(wr->ethmacsrc) +
+					sizeof(wr->ethtype) +
+					sizeof(wr->vlantci));
 
 	/*
 	 * The chip minimum packet length is 10 octets but the firmware
 	 * command that we are using requires that we copy the Ethernet header
-	 * (including the VLAN tag) पूर्णांकo the header so we reject anything
+	 * (including the VLAN tag) into the header so we reject anything
 	 * smaller than that ...
 	 */
-	अगर (unlikely(skb->len < fw_hdr_copy_len))
-		जाओ out_मुक्त;
+	if (unlikely(skb->len < fw_hdr_copy_len))
+		goto out_free;
 
-	/* Discard the packet अगर the length is greater than mtu */
+	/* Discard the packet if the length is greater than mtu */
 	max_pkt_len = ETH_HLEN + dev->mtu;
-	अगर (skb_vlan_tagged(skb))
+	if (skb_vlan_tagged(skb))
 		max_pkt_len += VLAN_HLEN;
-	अगर (!skb_shinfo(skb)->gso_size && (unlikely(skb->len > max_pkt_len)))
-		जाओ out_मुक्त;
+	if (!skb_shinfo(skb)->gso_size && (unlikely(skb->len > max_pkt_len)))
+		goto out_free;
 
 	/*
 	 * Figure out which TX Queue we're going to use.
@@ -1198,7 +1197,7 @@ netdev_tx_t t4vf_eth_xmit(काष्ठा sk_buff *skb, काष्ठा ne
 	BUG_ON(qidx >= pi->nqsets);
 	txq = &adapter->sge.ethtxq[pi->first_qset + qidx];
 
-	अगर (pi->vlan_id && !skb_vlan_tag_present(skb))
+	if (pi->vlan_id && !skb_vlan_tag_present(skb))
 		__vlan_hwaccel_put_tag(skb, cpu_to_be16(ETH_P_8021Q),
 				       pi->vlan_id);
 
@@ -1210,65 +1209,65 @@ netdev_tx_t t4vf_eth_xmit(काष्ठा sk_buff *skb, काष्ठा ne
 
 	/*
 	 * Calculate the number of flits and TX Descriptors we're going to
-	 * need aदीर्घ with how many TX Descriptors will be left over after
+	 * need along with how many TX Descriptors will be left over after
 	 * we inject our Work Request.
 	 */
 	flits = calc_tx_flits(skb);
 	ndesc = flits_to_desc(flits);
 	credits = txq_avail(&txq->q) - ndesc;
 
-	अगर (unlikely(credits < 0)) अणु
+	if (unlikely(credits < 0)) {
 		/*
-		 * Not enough room क्रम this packet's Work Request.  Stop the
-		 * TX Queue and वापस a "busy" condition.  The queue will get
-		 * started later on when the firmware inक्रमms us that space
-		 * has खोलोed up.
+		 * Not enough room for this packet's Work Request.  Stop the
+		 * TX Queue and return a "busy" condition.  The queue will get
+		 * started later on when the firmware informs us that space
+		 * has opened up.
 		 */
 		txq_stop(txq);
 		dev_err(adapter->pdev_dev,
 			"%s: TX ring %u full while queue awake!\n",
 			dev->name, qidx);
-		वापस NETDEV_TX_BUSY;
-	पूर्ण
+		return NETDEV_TX_BUSY;
+	}
 
-	अगर (!is_eth_imm(skb) &&
-	    unlikely(map_skb(adapter->pdev_dev, skb, addr) < 0)) अणु
+	if (!is_eth_imm(skb) &&
+	    unlikely(map_skb(adapter->pdev_dev, skb, addr) < 0)) {
 		/*
-		 * We need to map the skb पूर्णांकo PCI DMA space (because it can't
-		 * be in-lined directly पूर्णांकo the Work Request) and the mapping
+		 * We need to map the skb into PCI DMA space (because it can't
+		 * be in-lined directly into the Work Request) and the mapping
 		 * operation failed.  Record the error and drop the packet.
 		 */
 		txq->mapping_err++;
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
 	wr_mid = FW_WR_LEN16_V(DIV_ROUND_UP(flits, 2));
-	अगर (unlikely(credits < ETHTXQ_STOP_THRES)) अणु
+	if (unlikely(credits < ETHTXQ_STOP_THRES)) {
 		/*
-		 * After we're करोne injecting the Work Request क्रम this
+		 * After we're done injecting the Work Request for this
 		 * packet, we'll be below our "stop threshold" so stop the TX
-		 * Queue now and schedule a request क्रम an SGE Egress Queue
+		 * Queue now and schedule a request for an SGE Egress Queue
 		 * Update message.  The queue will get started later on when
 		 * the firmware processes this Work Request and sends us an
 		 * Egress Queue Status Update message indicating that space
-		 * has खोलोed up.
+		 * has opened up.
 		 */
 		txq_stop(txq);
 		wr_mid |= FW_WR_EQUEQ_F | FW_WR_EQUIQ_F;
-	पूर्ण
+	}
 
 	/*
-	 * Start filling in our Work Request.  Note that we करो _not_ handle
+	 * Start filling in our Work Request.  Note that we do _not_ handle
 	 * the WR Header wrapping around the TX Descriptor Ring.  If our
 	 * maximum header size ever exceeds one TX Descriptor, we'll need to
-	 * करो something अन्यथा here.
+	 * do something else here.
 	 */
 	BUG_ON(DIV_ROUND_UP(ETHTXQ_MAX_HDR, TXD_PER_EQ_UNIT) > 1);
-	wr = (व्योम *)&txq->q.desc[txq->q.pidx];
+	wr = (void *)&txq->q.desc[txq->q.pidx];
 	wr->equiq_to_len16 = cpu_to_be32(wr_mid);
 	wr->r3[0] = cpu_to_be32(0);
 	wr->r3[1] = cpu_to_be32(0);
-	skb_copy_from_linear_data(skb, (व्योम *)wr->ethmacdst, fw_hdr_copy_len);
+	skb_copy_from_linear_data(skb, (void *)wr->ethmacdst, fw_hdr_copy_len);
 	end = (u64 *)wr + flits;
 
 	/*
@@ -1277,16 +1276,16 @@ netdev_tx_t t4vf_eth_xmit(काष्ठा sk_buff *skb, काष्ठा ne
 	 * just use a TX Packet CPL message.
 	 */
 	ssi = skb_shinfo(skb);
-	अगर (ssi->gso_size) अणु
-		काष्ठा cpl_tx_pkt_lso_core *lso = (व्योम *)(wr + 1);
+	if (ssi->gso_size) {
+		struct cpl_tx_pkt_lso_core *lso = (void *)(wr + 1);
 		bool v6 = (ssi->gso_type & SKB_GSO_TCPV6) != 0;
-		पूर्णांक l3hdr_len = skb_network_header_len(skb);
-		पूर्णांक eth_xtra_len = skb_network_offset(skb) - ETH_HLEN;
+		int l3hdr_len = skb_network_header_len(skb);
+		int eth_xtra_len = skb_network_offset(skb) - ETH_HLEN;
 
 		wr->op_immdlen =
 			cpu_to_be32(FW_WR_OP_V(FW_ETH_TX_PKT_VM_WR) |
-				    FW_WR_IMMDLEN_V(माप(*lso) +
-						    माप(*cpl)));
+				    FW_WR_IMMDLEN_V(sizeof(*lso) +
+						    sizeof(*cpl)));
 		/*
 		 * Fill in the LSO CPL message.
 		 */
@@ -1297,24 +1296,24 @@ netdev_tx_t t4vf_eth_xmit(काष्ठा sk_buff *skb, काष्ठा ne
 				    LSO_IPV6_V(v6) |
 				    LSO_ETHHDR_LEN_V(eth_xtra_len / 4) |
 				    LSO_IPHDR_LEN_V(l3hdr_len / 4) |
-				    LSO_TCPHDR_LEN_V(tcp_hdr(skb)->करोff));
+				    LSO_TCPHDR_LEN_V(tcp_hdr(skb)->doff));
 		lso->ipid_ofst = cpu_to_be16(0);
 		lso->mss = cpu_to_be16(ssi->gso_size);
 		lso->seqno_offset = cpu_to_be32(0);
-		अगर (is_t4(adapter->params.chip))
+		if (is_t4(adapter->params.chip))
 			lso->len = cpu_to_be32(skb->len);
-		अन्यथा
+		else
 			lso->len = cpu_to_be32(LSO_T5_XFER_SIZE_V(skb->len));
 
 		/*
-		 * Set up TX Packet CPL poपूर्णांकer, control word and perक्रमm
+		 * Set up TX Packet CPL pointer, control word and perform
 		 * accounting.
 		 */
-		cpl = (व्योम *)(lso + 1);
+		cpl = (void *)(lso + 1);
 
-		अगर (CHELSIO_CHIP_VERSION(adapter->params.chip) <= CHELSIO_T5)
+		if (CHELSIO_CHIP_VERSION(adapter->params.chip) <= CHELSIO_T5)
 			cntrl = TXPKT_ETHHDR_LEN_V(eth_xtra_len);
-		अन्यथा
+		else
 			cntrl = T6_TXPKT_ETHHDR_LEN_V(eth_xtra_len);
 
 		cntrl |= TXPKT_CSUM_TYPE_V(v6 ?
@@ -1322,35 +1321,35 @@ netdev_tx_t t4vf_eth_xmit(काष्ठा sk_buff *skb, काष्ठा ne
 			 TXPKT_IPHDR_LEN_V(l3hdr_len);
 		txq->tso++;
 		txq->tx_cso += ssi->gso_segs;
-	पूर्ण अन्यथा अणु
-		पूर्णांक len;
+	} else {
+		int len;
 
-		len = is_eth_imm(skb) ? skb->len + माप(*cpl) : माप(*cpl);
+		len = is_eth_imm(skb) ? skb->len + sizeof(*cpl) : sizeof(*cpl);
 		wr->op_immdlen =
 			cpu_to_be32(FW_WR_OP_V(FW_ETH_TX_PKT_VM_WR) |
 				    FW_WR_IMMDLEN_V(len));
 
 		/*
-		 * Set up TX Packet CPL poपूर्णांकer, control word and perक्रमm
+		 * Set up TX Packet CPL pointer, control word and perform
 		 * accounting.
 		 */
-		cpl = (व्योम *)(wr + 1);
-		अगर (skb->ip_summed == CHECKSUM_PARTIAL) अणु
+		cpl = (void *)(wr + 1);
+		if (skb->ip_summed == CHECKSUM_PARTIAL) {
 			cntrl = hwcsum(adapter->params.chip, skb) |
 				TXPKT_IPCSUM_DIS_F;
 			txq->tx_cso++;
-		पूर्ण अन्यथा
+		} else
 			cntrl = TXPKT_L4CSUM_DIS_F | TXPKT_IPCSUM_DIS_F;
-	पूर्ण
+	}
 
 	/*
 	 * If there's a VLAN tag present, add that to the list of things to
-	 * करो in this Work Request.
+	 * do in this Work Request.
 	 */
-	अगर (skb_vlan_tag_present(skb)) अणु
+	if (skb_vlan_tag_present(skb)) {
 		txq->vlan_ins++;
 		cntrl |= TXPKT_VLAN_VLD_F | TXPKT_VLAN_V(skb_vlan_tag_get(skb));
-	पूर्ण
+	}
 
 	/*
 	 * Fill in the TX Packet CPL message header.
@@ -1362,171 +1361,171 @@ netdev_tx_t t4vf_eth_xmit(काष्ठा sk_buff *skb, काष्ठा ne
 	cpl->len = cpu_to_be16(skb->len);
 	cpl->ctrl1 = cpu_to_be64(cntrl);
 
-#अगर_घोषित T4_TRACE
+#ifdef T4_TRACE
 	T4_TRACE5(adapter->tb[txq->q.cntxt_id & 7],
 		  "eth_xmit: ndesc %u, credits %u, pidx %u, len %u, frags %u",
 		  ndesc, credits, txq->q.pidx, skb->len, ssi->nr_frags);
-#पूर्ण_अगर
+#endif
 
 	/*
 	 * Fill in the body of the TX Packet CPL message with either in-lined
 	 * data or a Scatter/Gather List.
 	 */
-	अगर (is_eth_imm(skb)) अणु
+	if (is_eth_imm(skb)) {
 		/*
 		 * In-line the packet's data and free the skb since we don't
-		 * need it any दीर्घer.
+		 * need it any longer.
 		 */
-		अंतरभूत_tx_skb(skb, &txq->q, cpl + 1);
+		inline_tx_skb(skb, &txq->q, cpl + 1);
 		dev_consume_skb_any(skb);
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
-		 * Write the skb's Scatter/Gather list पूर्णांकo the TX Packet CPL
-		 * message and retain a poपूर्णांकer to the skb so we can मुक्त it
-		 * later when its DMA completes.  (We store the skb poपूर्णांकer
+		 * Write the skb's Scatter/Gather list into the TX Packet CPL
+		 * message and retain a pointer to the skb so we can free it
+		 * later when its DMA completes.  (We store the skb pointer
 		 * in the Software Descriptor corresponding to the last TX
 		 * Descriptor used by the Work Request.)
 		 *
-		 * The retained skb will be मुक्तd when the corresponding TX
+		 * The retained skb will be freed when the corresponding TX
 		 * Descriptors are reclaimed after their DMAs complete.
-		 * However, this could take quite a जबतक since, in general,
+		 * However, this could take quite a while since, in general,
 		 * the hardware is set up to be lazy about sending DMA
-		 * completion notअगरications to us and we mostly perक्रमm TX
+		 * completion notifications to us and we mostly perform TX
 		 * reclaims in the transmit routine.
 		 *
-		 * This is good क्रम perक्रमmamce but means that we rely on new
-		 * TX packets arriving to run the deकाष्ठाors of completed
-		 * packets, which खोलो up space in their sockets' send queues.
-		 * Someबार we करो not get such new packets causing TX to
+		 * This is good for performamce but means that we rely on new
+		 * TX packets arriving to run the destructors of completed
+		 * packets, which open up space in their sockets' send queues.
+		 * Sometimes we do not get such new packets causing TX to
 		 * stall.  A single UDP transmitter is a good example of this
-		 * situation.  We have a clean up समयr that periodically
-		 * reclaims completed packets but it करोesn't run often enough
-		 * (nor करो we want it to) to prevent lengthy stalls.  A
-		 * solution to this problem is to run the deकाष्ठाor early,
-		 * after the packet is queued but beक्रमe it's DMAd.  A con is
+		 * situation.  We have a clean up timer that periodically
+		 * reclaims completed packets but it doesn't run often enough
+		 * (nor do we want it to) to prevent lengthy stalls.  A
+		 * solution to this problem is to run the destructor early,
+		 * after the packet is queued but before it's DMAd.  A con is
 		 * that we lie to socket memory accounting, but the amount of
 		 * extra memory is reasonable (limited by the number of TX
-		 * descriptors), the packets करो actually get मुक्तd quickly by
-		 * new packets almost always, and क्रम protocols like TCP that
-		 * रुको क्रम acks to really मुक्त up the data the extra memory
-		 * is even less.  On the positive side we run the deकाष्ठाors
-		 * on the sending CPU rather than on a potentially dअगरferent
+		 * descriptors), the packets do actually get freed quickly by
+		 * new packets almost always, and for protocols like TCP that
+		 * wait for acks to really free up the data the extra memory
+		 * is even less.  On the positive side we run the destructors
+		 * on the sending CPU rather than on a potentially different
 		 * completing CPU, usually a good thing.
 		 *
-		 * Run the deकाष्ठाor beक्रमe telling the DMA engine about the
-		 * packet to make sure it करोesn't complete and get मुक्तd
+		 * Run the destructor before telling the DMA engine about the
+		 * packet to make sure it doesn't complete and get freed
 		 * prematurely.
 		 */
-		काष्ठा ulptx_sgl *sgl = (काष्ठा ulptx_sgl *)(cpl + 1);
-		काष्ठा sge_txq *tq = &txq->q;
-		पूर्णांक last_desc;
+		struct ulptx_sgl *sgl = (struct ulptx_sgl *)(cpl + 1);
+		struct sge_txq *tq = &txq->q;
+		int last_desc;
 
 		/*
 		 * If the Work Request header was an exact multiple of our TX
 		 * Descriptor length, then it's possible that the starting SGL
-		 * poपूर्णांकer lines up exactly with the end of our TX Descriptor
-		 * ring.  If that's the हाल, wrap around to the beginning
+		 * pointer lines up exactly with the end of our TX Descriptor
+		 * ring.  If that's the case, wrap around to the beginning
 		 * here ...
 		 */
-		अगर (unlikely((व्योम *)sgl == (व्योम *)tq->stat)) अणु
-			sgl = (व्योम *)tq->desc;
-			end = ((व्योम *)tq->desc + ((व्योम *)end - (व्योम *)tq->stat));
-		पूर्ण
+		if (unlikely((void *)sgl == (void *)tq->stat)) {
+			sgl = (void *)tq->desc;
+			end = ((void *)tq->desc + ((void *)end - (void *)tq->stat));
+		}
 
-		ग_लिखो_sgl(skb, tq, sgl, end, 0, addr);
+		write_sgl(skb, tq, sgl, end, 0, addr);
 		skb_orphan(skb);
 
 		last_desc = tq->pidx + ndesc - 1;
-		अगर (last_desc >= tq->size)
+		if (last_desc >= tq->size)
 			last_desc -= tq->size;
 		tq->sdesc[last_desc].skb = skb;
 		tq->sdesc[last_desc].sgl = sgl;
-	पूर्ण
+	}
 
 	/*
-	 * Advance our पूर्णांकernal TX Queue state, tell the hardware about
-	 * the new TX descriptors and वापस success.
+	 * Advance our internal TX Queue state, tell the hardware about
+	 * the new TX descriptors and return success.
 	 */
 	txq_advance(&txq->q, ndesc);
-	netअगर_trans_update(dev);
+	netif_trans_update(dev);
 	ring_tx_db(adapter, &txq->q, ndesc);
-	वापस NETDEV_TX_OK;
+	return NETDEV_TX_OK;
 
-out_मुक्त:
+out_free:
 	/*
 	 * An error of some sort happened.  Free the TX skb and tell the
 	 * OS that we've "dealt" with the packet ...
 	 */
-	dev_kमुक्त_skb_any(skb);
-	वापस NETDEV_TX_OK;
-पूर्ण
+	dev_kfree_skb_any(skb);
+	return NETDEV_TX_OK;
+}
 
 /**
- *	copy_frags - copy fragments from gather list पूर्णांकo skb_shared_info
+ *	copy_frags - copy fragments from gather list into skb_shared_info
  *	@skb: destination skb
- *	@gl: source पूर्णांकernal packet gather list
+ *	@gl: source internal packet gather list
  *	@offset: packet start offset in first page
  *
- *	Copy an पूर्णांकernal packet gather list पूर्णांकo a Linux skb_shared_info
- *	काष्ठाure.
+ *	Copy an internal packet gather list into a Linux skb_shared_info
+ *	structure.
  */
-अटल अंतरभूत व्योम copy_frags(काष्ठा sk_buff *skb,
-			      स्थिर काष्ठा pkt_gl *gl,
-			      अचिन्हित पूर्णांक offset)
-अणु
-	पूर्णांक i;
+static inline void copy_frags(struct sk_buff *skb,
+			      const struct pkt_gl *gl,
+			      unsigned int offset)
+{
+	int i;
 
 	/* usually there's just one frag */
 	__skb_fill_page_desc(skb, 0, gl->frags[0].page,
 			     gl->frags[0].offset + offset,
 			     gl->frags[0].size - offset);
 	skb_shinfo(skb)->nr_frags = gl->nfrags;
-	क्रम (i = 1; i < gl->nfrags; i++)
+	for (i = 1; i < gl->nfrags; i++)
 		__skb_fill_page_desc(skb, i, gl->frags[i].page,
 				     gl->frags[i].offset,
 				     gl->frags[i].size);
 
-	/* get a reference to the last page, we करोn't own it */
+	/* get a reference to the last page, we don't own it */
 	get_page(gl->frags[gl->nfrags - 1].page);
-पूर्ण
+}
 
 /**
  *	t4vf_pktgl_to_skb - build an sk_buff from a packet gather list
  *	@gl: the gather list
- *	@skb_len: size of sk_buff मुख्य body अगर it carries fragments
- *	@pull_len: amount of data to move to the sk_buff's मुख्य body
+ *	@skb_len: size of sk_buff main body if it carries fragments
+ *	@pull_len: amount of data to move to the sk_buff's main body
  *
  *	Builds an sk_buff from the given packet gather list.  Returns the
- *	sk_buff or %शून्य अगर sk_buff allocation failed.
+ *	sk_buff or %NULL if sk_buff allocation failed.
  */
-अटल काष्ठा sk_buff *t4vf_pktgl_to_skb(स्थिर काष्ठा pkt_gl *gl,
-					 अचिन्हित पूर्णांक skb_len,
-					 अचिन्हित पूर्णांक pull_len)
-अणु
-	काष्ठा sk_buff *skb;
+static struct sk_buff *t4vf_pktgl_to_skb(const struct pkt_gl *gl,
+					 unsigned int skb_len,
+					 unsigned int pull_len)
+{
+	struct sk_buff *skb;
 
 	/*
 	 * If the ingress packet is small enough, allocate an skb large enough
-	 * क्रम all of the data and copy it अंतरभूत.  Otherwise, allocate an skb
+	 * for all of the data and copy it inline.  Otherwise, allocate an skb
 	 * with enough room to pull in the header and reference the rest of
 	 * the data via the skb fragment list.
 	 *
 	 * Below we rely on RX_COPY_THRES being less than the smallest Rx
 	 * buff!  size, which is expected since buffers are at least
-	 * PAGE_SIZEd.  In this हाल packets up to RX_COPY_THRES have only one
+	 * PAGE_SIZEd.  In this case packets up to RX_COPY_THRES have only one
 	 * fragment.
 	 */
-	अगर (gl->tot_len <= RX_COPY_THRES) अणु
+	if (gl->tot_len <= RX_COPY_THRES) {
 		/* small packets have only one fragment */
 		skb = alloc_skb(gl->tot_len, GFP_ATOMIC);
-		अगर (unlikely(!skb))
-			जाओ out;
+		if (unlikely(!skb))
+			goto out;
 		__skb_put(skb, gl->tot_len);
 		skb_copy_to_linear_data(skb, gl->va, gl->tot_len);
-	पूर्ण अन्यथा अणु
+	} else {
 		skb = alloc_skb(skb_len, GFP_ATOMIC);
-		अगर (unlikely(!skb))
-			जाओ out;
+		if (unlikely(!skb))
+			goto out;
 		__skb_put(skb, pull_len);
 		skb_copy_to_linear_data(skb, gl->va, pull_len);
 
@@ -1534,75 +1533,75 @@ out_मुक्त:
 		skb->len = gl->tot_len;
 		skb->data_len = skb->len - pull_len;
 		skb->truesize += skb->data_len;
-	पूर्ण
+	}
 
 out:
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
 /**
- *	t4vf_pktgl_मुक्त - मुक्त a packet gather list
+ *	t4vf_pktgl_free - free a packet gather list
  *	@gl: the gather list
  *
- *	Releases the pages of a packet gather list.  We करो not own the last
- *	page on the list and करो not मुक्त it.
+ *	Releases the pages of a packet gather list.  We do not own the last
+ *	page on the list and do not free it.
  */
-अटल व्योम t4vf_pktgl_मुक्त(स्थिर काष्ठा pkt_gl *gl)
-अणु
-	पूर्णांक frag;
+static void t4vf_pktgl_free(const struct pkt_gl *gl)
+{
+	int frag;
 
 	frag = gl->nfrags - 1;
-	जबतक (frag--)
+	while (frag--)
 		put_page(gl->frags[frag].page);
-पूर्ण
+}
 
 /**
- *	करो_gro - perक्रमm Generic Receive Offload ingress packet processing
+ *	do_gro - perform Generic Receive Offload ingress packet processing
  *	@rxq: ingress RX Ethernet Queue
- *	@gl: gather list क्रम ingress packet
- *	@pkt: CPL header क्रम last packet fragment
+ *	@gl: gather list for ingress packet
+ *	@pkt: CPL header for last packet fragment
  *
- *	Perक्रमm Generic Receive Offload (GRO) ingress packet processing.
- *	We use the standard Linux GRO पूर्णांकerfaces क्रम this.
+ *	Perform Generic Receive Offload (GRO) ingress packet processing.
+ *	We use the standard Linux GRO interfaces for this.
  */
-अटल व्योम करो_gro(काष्ठा sge_eth_rxq *rxq, स्थिर काष्ठा pkt_gl *gl,
-		   स्थिर काष्ठा cpl_rx_pkt *pkt)
-अणु
-	काष्ठा adapter *adapter = rxq->rspq.adapter;
-	काष्ठा sge *s = &adapter->sge;
-	काष्ठा port_info *pi;
-	पूर्णांक ret;
-	काष्ठा sk_buff *skb;
+static void do_gro(struct sge_eth_rxq *rxq, const struct pkt_gl *gl,
+		   const struct cpl_rx_pkt *pkt)
+{
+	struct adapter *adapter = rxq->rspq.adapter;
+	struct sge *s = &adapter->sge;
+	struct port_info *pi;
+	int ret;
+	struct sk_buff *skb;
 
 	skb = napi_get_frags(&rxq->rspq.napi);
-	अगर (unlikely(!skb)) अणु
-		t4vf_pktgl_मुक्त(gl);
+	if (unlikely(!skb)) {
+		t4vf_pktgl_free(gl);
 		rxq->stats.rx_drops++;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	copy_frags(skb, gl, s->pktshअगरt);
-	skb->len = gl->tot_len - s->pktshअगरt;
+	copy_frags(skb, gl, s->pktshift);
+	skb->len = gl->tot_len - s->pktshift;
 	skb->data_len = skb->len;
 	skb->truesize += skb->data_len;
 	skb->ip_summed = CHECKSUM_UNNECESSARY;
 	skb_record_rx_queue(skb, rxq->rspq.idx);
 	pi = netdev_priv(skb->dev);
 
-	अगर (pkt->vlan_ex && !pi->vlan_id) अणु
+	if (pkt->vlan_ex && !pi->vlan_id) {
 		__vlan_hwaccel_put_tag(skb, cpu_to_be16(ETH_P_8021Q),
 					be16_to_cpu(pkt->vlan));
 		rxq->stats.vlan_ex++;
-	पूर्ण
+	}
 	ret = napi_gro_frags(&rxq->rspq.napi);
 
-	अगर (ret == GRO_HELD)
+	if (ret == GRO_HELD)
 		rxq->stats.lro_pkts++;
-	अन्यथा अगर (ret == GRO_MERGED || ret == GRO_MERGED_FREE)
+	else if (ret == GRO_MERGED || ret == GRO_MERGED_FREE)
 		rxq->stats.lro_merged++;
 	rxq->stats.pkts++;
 	rxq->stats.rx_cso++;
-पूर्ण
+}
 
 /**
  *	t4vf_ethrx_handler - process an ingress ethernet packet
@@ -1612,82 +1611,82 @@ out:
  *
  *	Process an ingress ethernet packet and deliver it to the stack.
  */
-पूर्णांक t4vf_ethrx_handler(काष्ठा sge_rspq *rspq, स्थिर __be64 *rsp,
-		       स्थिर काष्ठा pkt_gl *gl)
-अणु
-	काष्ठा sk_buff *skb;
-	स्थिर काष्ठा cpl_rx_pkt *pkt = (व्योम *)rsp;
+int t4vf_ethrx_handler(struct sge_rspq *rspq, const __be64 *rsp,
+		       const struct pkt_gl *gl)
+{
+	struct sk_buff *skb;
+	const struct cpl_rx_pkt *pkt = (void *)rsp;
 	bool csum_ok = pkt->csum_calc && !pkt->err_vec &&
 		       (rspq->netdev->features & NETIF_F_RXCSUM);
-	काष्ठा sge_eth_rxq *rxq = container_of(rspq, काष्ठा sge_eth_rxq, rspq);
-	काष्ठा adapter *adapter = rspq->adapter;
-	काष्ठा sge *s = &adapter->sge;
-	काष्ठा port_info *pi;
+	struct sge_eth_rxq *rxq = container_of(rspq, struct sge_eth_rxq, rspq);
+	struct adapter *adapter = rspq->adapter;
+	struct sge *s = &adapter->sge;
+	struct port_info *pi;
 
 	/*
 	 * If this is a good TCP packet and we have Generic Receive Offload
 	 * enabled, handle the packet in the GRO path.
 	 */
-	अगर ((pkt->l2info & cpu_to_be32(RXF_TCP_F)) &&
+	if ((pkt->l2info & cpu_to_be32(RXF_TCP_F)) &&
 	    (rspq->netdev->features & NETIF_F_GRO) && csum_ok &&
-	    !pkt->ip_frag) अणु
-		करो_gro(rxq, gl, pkt);
-		वापस 0;
-	पूर्ण
+	    !pkt->ip_frag) {
+		do_gro(rxq, gl, pkt);
+		return 0;
+	}
 
 	/*
-	 * Convert the Packet Gather List पूर्णांकo an skb.
+	 * Convert the Packet Gather List into an skb.
 	 */
 	skb = t4vf_pktgl_to_skb(gl, RX_SKB_LEN, RX_PULL_LEN);
-	अगर (unlikely(!skb)) अणु
-		t4vf_pktgl_मुक्त(gl);
+	if (unlikely(!skb)) {
+		t4vf_pktgl_free(gl);
 		rxq->stats.rx_drops++;
-		वापस 0;
-	पूर्ण
-	__skb_pull(skb, s->pktshअगरt);
+		return 0;
+	}
+	__skb_pull(skb, s->pktshift);
 	skb->protocol = eth_type_trans(skb, rspq->netdev);
 	skb_record_rx_queue(skb, rspq->idx);
 	pi = netdev_priv(skb->dev);
 	rxq->stats.pkts++;
 
-	अगर (csum_ok && !pkt->err_vec &&
-	    (be32_to_cpu(pkt->l2info) & (RXF_UDP_F | RXF_TCP_F))) अणु
-		अगर (!pkt->ip_frag) अणु
+	if (csum_ok && !pkt->err_vec &&
+	    (be32_to_cpu(pkt->l2info) & (RXF_UDP_F | RXF_TCP_F))) {
+		if (!pkt->ip_frag) {
 			skb->ip_summed = CHECKSUM_UNNECESSARY;
 			rxq->stats.rx_cso++;
-		पूर्ण अन्यथा अगर (pkt->l2info & htonl(RXF_IP_F)) अणु
-			__sum16 c = (__क्रमce __sum16)pkt->csum;
+		} else if (pkt->l2info & htonl(RXF_IP_F)) {
+			__sum16 c = (__force __sum16)pkt->csum;
 			skb->csum = csum_unfold(c);
 			skb->ip_summed = CHECKSUM_COMPLETE;
 			rxq->stats.rx_cso++;
-		पूर्ण
-	पूर्ण अन्यथा
-		skb_checksum_none_निश्चित(skb);
+		}
+	} else
+		skb_checksum_none_assert(skb);
 
-	अगर (pkt->vlan_ex && !pi->vlan_id) अणु
+	if (pkt->vlan_ex && !pi->vlan_id) {
 		rxq->stats.vlan_ex++;
 		__vlan_hwaccel_put_tag(skb, htons(ETH_P_8021Q),
 				       be16_to_cpu(pkt->vlan));
-	पूर्ण
+	}
 
-	netअगर_receive_skb(skb);
+	netif_receive_skb(skb);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- *	is_new_response - check अगर a response is newly written
+ *	is_new_response - check if a response is newly written
  *	@rc: the response control descriptor
  *	@rspq: the response queue
  *
- *	Returns true अगर a response descriptor contains a yet unprocessed
+ *	Returns true if a response descriptor contains a yet unprocessed
  *	response.
  */
-अटल अंतरभूत bool is_new_response(स्थिर काष्ठा rsp_ctrl *rc,
-				   स्थिर काष्ठा sge_rspq *rspq)
-अणु
-	वापस ((rc->type_gen >> RSPD_GEN_S) & 0x1) == rspq->gen;
-पूर्ण
+static inline bool is_new_response(const struct rsp_ctrl *rc,
+				   const struct sge_rspq *rspq)
+{
+	return ((rc->type_gen >> RSPD_GEN_S) & 0x1) == rspq->gen;
+}
 
 /**
  *	restore_rx_bufs - put back a packet's RX buffers
@@ -1696,35 +1695,35 @@ out:
  *	@frags: how many fragments in @si
  *
  *	Called when we find out that the current packet, @si, can't be
- *	processed right away क्रम some reason.  This is a very rare event and
- *	there's no efक्रमt to make this suspension/resumption process
+ *	processed right away for some reason.  This is a very rare event and
+ *	there's no effort to make this suspension/resumption process
  *	particularly efficient.
  *
  *	We implement the suspension by putting all of the RX buffers associated
  *	with the current packet back on the original Free List.  The buffers
- *	have alपढ़ोy been unmapped and are left unmapped, we mark them as
+ *	have already been unmapped and are left unmapped, we mark them as
  *	unmapped in order to prevent further unmapping attempts.  (Effectively
- *	this function unकरोes the series of @unmap_rx_buf calls which were करोne
- *	to create the current packet's gather list.)  This leaves us पढ़ोy to
- *	restart processing of the packet the next समय we start processing the
+ *	this function undoes the series of @unmap_rx_buf calls which were done
+ *	to create the current packet's gather list.)  This leaves us ready to
+ *	restart processing of the packet the next time we start processing the
  *	RX Queue ...
  */
-अटल व्योम restore_rx_bufs(स्थिर काष्ठा pkt_gl *gl, काष्ठा sge_fl *fl,
-			    पूर्णांक frags)
-अणु
-	काष्ठा rx_sw_desc *sdesc;
+static void restore_rx_bufs(const struct pkt_gl *gl, struct sge_fl *fl,
+			    int frags)
+{
+	struct rx_sw_desc *sdesc;
 
-	जबतक (frags--) अणु
-		अगर (fl->cidx == 0)
+	while (frags--) {
+		if (fl->cidx == 0)
 			fl->cidx = fl->size - 1;
-		अन्यथा
+		else
 			fl->cidx--;
 		sdesc = &fl->sdesc[fl->cidx];
 		sdesc->page = gl->frags[frags].page;
 		sdesc->dma_addr |= RX_UNMAPPED_BUF;
 		fl->avail++;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  *	rspq_next - advance to the next entry in a response queue
@@ -1732,15 +1731,15 @@ out:
  *
  *	Updates the state of a response queue to advance it to the next entry.
  */
-अटल अंतरभूत व्योम rspq_next(काष्ठा sge_rspq *rspq)
-अणु
-	rspq->cur_desc = (व्योम *)rspq->cur_desc + rspq->iqe_len;
-	अगर (unlikely(++rspq->cidx == rspq->size)) अणु
+static inline void rspq_next(struct sge_rspq *rspq)
+{
+	rspq->cur_desc = (void *)rspq->cur_desc + rspq->iqe_len;
+	if (unlikely(++rspq->cidx == rspq->size)) {
 		rspq->cidx = 0;
 		rspq->gen ^= 1;
 		rspq->cur_desc = rspq->desc;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  *	process_responses - process responses from an SGE response queue
@@ -1751,24 +1750,24 @@ out:
  *	the supplied budget.  Responses include received packets as well as
  *	control messages from firmware or hardware.
  *
- *	Additionally choose the पूर्णांकerrupt holकरोff समय क्रम the next पूर्णांकerrupt
- *	on this queue.  If the प्रणाली is under memory लघुage use a fairly
- *	दीर्घ delay to help recovery.
+ *	Additionally choose the interrupt holdoff time for the next interrupt
+ *	on this queue.  If the system is under memory shortage use a fairly
+ *	long delay to help recovery.
  */
-अटल पूर्णांक process_responses(काष्ठा sge_rspq *rspq, पूर्णांक budget)
-अणु
-	काष्ठा sge_eth_rxq *rxq = container_of(rspq, काष्ठा sge_eth_rxq, rspq);
-	काष्ठा adapter *adapter = rspq->adapter;
-	काष्ठा sge *s = &adapter->sge;
-	पूर्णांक budget_left = budget;
+static int process_responses(struct sge_rspq *rspq, int budget)
+{
+	struct sge_eth_rxq *rxq = container_of(rspq, struct sge_eth_rxq, rspq);
+	struct adapter *adapter = rspq->adapter;
+	struct sge *s = &adapter->sge;
+	int budget_left = budget;
 
-	जबतक (likely(budget_left)) अणु
-		पूर्णांक ret, rsp_type;
-		स्थिर काष्ठा rsp_ctrl *rc;
+	while (likely(budget_left)) {
+		int ret, rsp_type;
+		const struct rsp_ctrl *rc;
 
-		rc = (व्योम *)rspq->cur_desc + (rspq->iqe_len - माप(*rc));
-		अगर (!is_new_response(rc, rspq))
-			अवरोध;
+		rc = (void *)rspq->cur_desc + (rspq->iqe_len - sizeof(*rc));
+		if (!is_new_response(rc, rspq))
+			break;
 
 		/*
 		 * Figure out what kind of response we've received from the
@@ -1776,10 +1775,10 @@ out:
 		 */
 		dma_rmb();
 		rsp_type = RSPD_TYPE_G(rc->type_gen);
-		अगर (likely(rsp_type == RSPD_TYPE_FLBUF_X)) अणु
-			काष्ठा page_frag *fp;
-			काष्ठा pkt_gl gl;
-			स्थिर काष्ठा rx_sw_desc *sdesc;
+		if (likely(rsp_type == RSPD_TYPE_FLBUF_X)) {
+			struct page_frag *fp;
+			struct pkt_gl gl;
+			const struct rx_sw_desc *sdesc;
 			u32 bufsz, frag;
 			u32 len = be32_to_cpu(rc->pldbuflen_qid);
 
@@ -1787,25 +1786,25 @@ out:
 			 * If we get a "new buffer" message from the SGE we
 			 * need to move on to the next Free List buffer.
 			 */
-			अगर (len & RSPD_NEWBUF_F) अणु
+			if (len & RSPD_NEWBUF_F) {
 				/*
 				 * We get one "new buffer" message when we
 				 * first start up a queue so we need to ignore
-				 * it when our offset पूर्णांकo the buffer is 0.
+				 * it when our offset into the buffer is 0.
 				 */
-				अगर (likely(rspq->offset > 0)) अणु
-					मुक्त_rx_bufs(rspq->adapter, &rxq->fl,
+				if (likely(rspq->offset > 0)) {
+					free_rx_bufs(rspq->adapter, &rxq->fl,
 						     1);
 					rspq->offset = 0;
-				पूर्ण
+				}
 				len = RSPD_LEN_G(len);
-			पूर्ण
+			}
 			gl.tot_len = len;
 
 			/*
 			 * Gather packet fragments.
 			 */
-			क्रम (frag = 0, fp = gl.frags; /**/; frag++, fp++) अणु
+			for (frag = 0, fp = gl.frags; /**/; frag++, fp++) {
 				BUG_ON(frag >= MAX_SKB_FRAGS);
 				BUG_ON(rxq->fl.avail == 0);
 				sdesc = &rxq->fl.sdesc[rxq->fl.cidx];
@@ -1814,18 +1813,18 @@ out:
 				fp->offset = rspq->offset;
 				fp->size = min(bufsz, len);
 				len -= fp->size;
-				अगर (!len)
-					अवरोध;
+				if (!len)
+					break;
 				unmap_rx_buf(rspq->adapter, &rxq->fl);
-			पूर्ण
+			}
 			gl.nfrags = frag+1;
 
 			/*
-			 * Last buffer reमुख्यs mapped so explicitly make it
-			 * coherent क्रम CPU access and start preloading first
+			 * Last buffer remains mapped so explicitly make it
+			 * coherent for CPU access and start preloading first
 			 * cache line ...
 			 */
-			dma_sync_single_क्रम_cpu(rspq->adapter->pdev_dev,
+			dma_sync_single_for_cpu(rspq->adapter->pdev_dev,
 						get_buf_addr(sdesc),
 						fp->size, DMA_FROM_DEVICE);
 			gl.va = (page_address(gl.frags[0].page) +
@@ -1833,144 +1832,144 @@ out:
 			prefetch(gl.va);
 
 			/*
-			 * Hand the new ingress packet to the handler क्रम
+			 * Hand the new ingress packet to the handler for
 			 * this Response Queue.
 			 */
 			ret = rspq->handler(rspq, rspq->cur_desc, &gl);
-			अगर (likely(ret == 0))
+			if (likely(ret == 0))
 				rspq->offset += ALIGN(fp->size, s->fl_align);
-			अन्यथा
+			else
 				restore_rx_bufs(&gl, &rxq->fl, frag);
-		पूर्ण अन्यथा अगर (likely(rsp_type == RSPD_TYPE_CPL_X)) अणु
-			ret = rspq->handler(rspq, rspq->cur_desc, शून्य);
-		पूर्ण अन्यथा अणु
+		} else if (likely(rsp_type == RSPD_TYPE_CPL_X)) {
+			ret = rspq->handler(rspq, rspq->cur_desc, NULL);
+		} else {
 			WARN_ON(rsp_type > RSPD_TYPE_CPL_X);
 			ret = 0;
-		पूर्ण
+		}
 
-		अगर (unlikely(ret)) अणु
+		if (unlikely(ret)) {
 			/*
-			 * Couldn't process descriptor, back off क्रम recovery.
-			 * We use the SGE's last समयr which has the दीर्घest
-			 * पूर्णांकerrupt coalescing value ...
+			 * Couldn't process descriptor, back off for recovery.
+			 * We use the SGE's last timer which has the longest
+			 * interrupt coalescing value ...
 			 */
-			स्थिर पूर्णांक NOMEM_TIMER_IDX = SGE_NTIMERS-1;
-			rspq->next_पूर्णांकr_params =
+			const int NOMEM_TIMER_IDX = SGE_NTIMERS-1;
+			rspq->next_intr_params =
 				QINTR_TIMER_IDX_V(NOMEM_TIMER_IDX);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		rspq_next(rspq);
 		budget_left--;
-	पूर्ण
+	}
 
 	/*
 	 * If this is a Response Queue with an associated Free List and
 	 * at least two Egress Queue units available in the Free List
-	 * क्रम new buffer poपूर्णांकers, refill the Free List.
+	 * for new buffer pointers, refill the Free List.
 	 */
-	अगर (rspq->offset >= 0 &&
+	if (rspq->offset >= 0 &&
 	    fl_cap(&rxq->fl) - rxq->fl.avail >= 2*FL_PER_EQ_UNIT)
 		__refill_fl(rspq->adapter, &rxq->fl);
-	वापस budget - budget_left;
-पूर्ण
+	return budget - budget_left;
+}
 
 /**
- *	napi_rx_handler - the NAPI handler क्रम RX processing
+ *	napi_rx_handler - the NAPI handler for RX processing
  *	@napi: the napi instance
  *	@budget: how many packets we can process in this round
  *
- *	Handler क्रम new data events when using NAPI.  This करोes not need any
- *	locking or protection from पूर्णांकerrupts as data पूर्णांकerrupts are off at
- *	this poपूर्णांक and other adapter पूर्णांकerrupts करो not पूर्णांकerfere (the latter
- *	in not a concern at all with MSI-X as non-data पूर्णांकerrupts then have
+ *	Handler for new data events when using NAPI.  This does not need any
+ *	locking or protection from interrupts as data interrupts are off at
+ *	this point and other adapter interrupts do not interfere (the latter
+ *	in not a concern at all with MSI-X as non-data interrupts then have
  *	a separate handler).
  */
-अटल पूर्णांक napi_rx_handler(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
-अणु
-	अचिन्हित पूर्णांक पूर्णांकr_params;
-	काष्ठा sge_rspq *rspq = container_of(napi, काष्ठा sge_rspq, napi);
-	पूर्णांक work_करोne = process_responses(rspq, budget);
+static int napi_rx_handler(struct napi_struct *napi, int budget)
+{
+	unsigned int intr_params;
+	struct sge_rspq *rspq = container_of(napi, struct sge_rspq, napi);
+	int work_done = process_responses(rspq, budget);
 	u32 val;
 
-	अगर (likely(work_करोne < budget)) अणु
-		napi_complete_करोne(napi, work_करोne);
-		पूर्णांकr_params = rspq->next_पूर्णांकr_params;
-		rspq->next_पूर्णांकr_params = rspq->पूर्णांकr_params;
-	पूर्ण अन्यथा
-		पूर्णांकr_params = QINTR_TIMER_IDX_V(SGE_TIMER_UPD_CIDX);
+	if (likely(work_done < budget)) {
+		napi_complete_done(napi, work_done);
+		intr_params = rspq->next_intr_params;
+		rspq->next_intr_params = rspq->intr_params;
+	} else
+		intr_params = QINTR_TIMER_IDX_V(SGE_TIMER_UPD_CIDX);
 
-	अगर (unlikely(work_करोne == 0))
+	if (unlikely(work_done == 0))
 		rspq->unhandled_irqs++;
 
-	val = CIDXINC_V(work_करोne) | SEINTARM_V(पूर्णांकr_params);
-	/* If we करोn't have access to the new User GTS (T5+), use the old
-	 * करोorbell mechanism; otherwise use the new BAR2 mechanism.
+	val = CIDXINC_V(work_done) | SEINTARM_V(intr_params);
+	/* If we don't have access to the new User GTS (T5+), use the old
+	 * doorbell mechanism; otherwise use the new BAR2 mechanism.
 	 */
-	अगर (unlikely(!rspq->bar2_addr)) अणु
-		t4_ग_लिखो_reg(rspq->adapter,
+	if (unlikely(!rspq->bar2_addr)) {
+		t4_write_reg(rspq->adapter,
 			     T4VF_SGE_BASE_ADDR + SGE_VF_GTS,
 			     val | INGRESSQID_V((u32)rspq->cntxt_id));
-	पूर्ण अन्यथा अणु
-		ग_लिखोl(val | INGRESSQID_V(rspq->bar2_qid),
+	} else {
+		writel(val | INGRESSQID_V(rspq->bar2_qid),
 		       rspq->bar2_addr + SGE_UDB_GTS);
 		wmb();
-	पूर्ण
-	वापस work_करोne;
-पूर्ण
+	}
+	return work_done;
+}
 
 /*
- * The MSI-X पूर्णांकerrupt handler क्रम an SGE response queue क्रम the NAPI हाल
+ * The MSI-X interrupt handler for an SGE response queue for the NAPI case
  * (i.e., response queue serviced by NAPI polling).
  */
-irqवापस_t t4vf_sge_पूर्णांकr_msix(पूर्णांक irq, व्योम *cookie)
-अणु
-	काष्ठा sge_rspq *rspq = cookie;
+irqreturn_t t4vf_sge_intr_msix(int irq, void *cookie)
+{
+	struct sge_rspq *rspq = cookie;
 
 	napi_schedule(&rspq->napi);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /*
- * Process the indirect पूर्णांकerrupt entries in the पूर्णांकerrupt queue and kick off
- * NAPI क्रम each queue that has generated an entry.
+ * Process the indirect interrupt entries in the interrupt queue and kick off
+ * NAPI for each queue that has generated an entry.
  */
-अटल अचिन्हित पूर्णांक process_पूर्णांकrq(काष्ठा adapter *adapter)
-अणु
-	काष्ठा sge *s = &adapter->sge;
-	काष्ठा sge_rspq *पूर्णांकrq = &s->पूर्णांकrq;
-	अचिन्हित पूर्णांक work_करोne;
+static unsigned int process_intrq(struct adapter *adapter)
+{
+	struct sge *s = &adapter->sge;
+	struct sge_rspq *intrq = &s->intrq;
+	unsigned int work_done;
 	u32 val;
 
-	spin_lock(&adapter->sge.पूर्णांकrq_lock);
-	क्रम (work_करोne = 0; ; work_करोne++) अणु
-		स्थिर काष्ठा rsp_ctrl *rc;
-		अचिन्हित पूर्णांक qid, iq_idx;
-		काष्ठा sge_rspq *rspq;
+	spin_lock(&adapter->sge.intrq_lock);
+	for (work_done = 0; ; work_done++) {
+		const struct rsp_ctrl *rc;
+		unsigned int qid, iq_idx;
+		struct sge_rspq *rspq;
 
 		/*
-		 * Grab the next response from the पूर्णांकerrupt queue and bail
-		 * out अगर it's not a new response.
+		 * Grab the next response from the interrupt queue and bail
+		 * out if it's not a new response.
 		 */
-		rc = (व्योम *)पूर्णांकrq->cur_desc + (पूर्णांकrq->iqe_len - माप(*rc));
-		अगर (!is_new_response(rc, पूर्णांकrq))
-			अवरोध;
+		rc = (void *)intrq->cur_desc + (intrq->iqe_len - sizeof(*rc));
+		if (!is_new_response(rc, intrq))
+			break;
 
 		/*
-		 * If the response isn't a क्रमwarded पूर्णांकerrupt message issue a
+		 * If the response isn't a forwarded interrupt message issue a
 		 * error and go on to the next response message.  This should
 		 * never happen ...
 		 */
 		dma_rmb();
-		अगर (unlikely(RSPD_TYPE_G(rc->type_gen) != RSPD_TYPE_INTR_X)) अणु
+		if (unlikely(RSPD_TYPE_G(rc->type_gen) != RSPD_TYPE_INTR_X)) {
 			dev_err(adapter->pdev_dev,
 				"Unexpected INTRQ response type %d\n",
 				RSPD_TYPE_G(rc->type_gen));
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/*
-		 * Extract the Queue ID from the पूर्णांकerrupt message and perक्रमm
+		 * Extract the Queue ID from the interrupt message and perform
 		 * sanity checking to make sure it really refers to one of our
 		 * Ingress Queues which is active and matches the queue's ID.
 		 * None of these error conditions should ever happen so we may
@@ -1979,23 +1978,23 @@ irqवापस_t t4vf_sge_पूर्णांकr_msix(पूर्णां�
 		 */
 		qid = RSPD_QID_G(be32_to_cpu(rc->pldbuflen_qid));
 		iq_idx = IQ_IDX(s, qid);
-		अगर (unlikely(iq_idx >= MAX_INGQ)) अणु
+		if (unlikely(iq_idx >= MAX_INGQ)) {
 			dev_err(adapter->pdev_dev,
 				"Ingress QID %d out of range\n", qid);
-			जारी;
-		पूर्ण
+			continue;
+		}
 		rspq = s->ingr_map[iq_idx];
-		अगर (unlikely(rspq == शून्य)) अणु
+		if (unlikely(rspq == NULL)) {
 			dev_err(adapter->pdev_dev,
 				"Ingress QID %d RSPQ=NULL\n", qid);
-			जारी;
-		पूर्ण
-		अगर (unlikely(rspq->असल_id != qid)) अणु
+			continue;
+		}
+		if (unlikely(rspq->abs_id != qid)) {
 			dev_err(adapter->pdev_dev,
 				"Ingress QID %d refers to RSPQ %d\n",
-				qid, rspq->असल_id);
-			जारी;
-		पूर्ण
+				qid, rspq->abs_id);
+			continue;
+		}
 
 		/*
 		 * Schedule NAPI processing on the indicated Response Queue
@@ -2003,87 +2002,87 @@ irqवापस_t t4vf_sge_पूर्णांकr_msix(पूर्णां�
 		 * Queue.
 		 */
 		napi_schedule(&rspq->napi);
-		rspq_next(पूर्णांकrq);
-	पूर्ण
+		rspq_next(intrq);
+	}
 
-	val = CIDXINC_V(work_करोne) | SEINTARM_V(पूर्णांकrq->पूर्णांकr_params);
-	/* If we करोn't have access to the new User GTS (T5+), use the old
-	 * करोorbell mechanism; otherwise use the new BAR2 mechanism.
+	val = CIDXINC_V(work_done) | SEINTARM_V(intrq->intr_params);
+	/* If we don't have access to the new User GTS (T5+), use the old
+	 * doorbell mechanism; otherwise use the new BAR2 mechanism.
 	 */
-	अगर (unlikely(!पूर्णांकrq->bar2_addr)) अणु
-		t4_ग_लिखो_reg(adapter, T4VF_SGE_BASE_ADDR + SGE_VF_GTS,
-			     val | INGRESSQID_V(पूर्णांकrq->cntxt_id));
-	पूर्ण अन्यथा अणु
-		ग_लिखोl(val | INGRESSQID_V(पूर्णांकrq->bar2_qid),
-		       पूर्णांकrq->bar2_addr + SGE_UDB_GTS);
+	if (unlikely(!intrq->bar2_addr)) {
+		t4_write_reg(adapter, T4VF_SGE_BASE_ADDR + SGE_VF_GTS,
+			     val | INGRESSQID_V(intrq->cntxt_id));
+	} else {
+		writel(val | INGRESSQID_V(intrq->bar2_qid),
+		       intrq->bar2_addr + SGE_UDB_GTS);
 		wmb();
-	पूर्ण
+	}
 
-	spin_unlock(&adapter->sge.पूर्णांकrq_lock);
+	spin_unlock(&adapter->sge.intrq_lock);
 
-	वापस work_करोne;
-पूर्ण
+	return work_done;
+}
 
 /*
- * The MSI पूर्णांकerrupt handler handles data events from SGE response queues as
+ * The MSI interrupt handler handles data events from SGE response queues as
  * well as error and other async events as they all use the same MSI vector.
  */
-अटल irqवापस_t t4vf_पूर्णांकr_msi(पूर्णांक irq, व्योम *cookie)
-अणु
-	काष्ठा adapter *adapter = cookie;
+static irqreturn_t t4vf_intr_msi(int irq, void *cookie)
+{
+	struct adapter *adapter = cookie;
 
-	process_पूर्णांकrq(adapter);
-	वापस IRQ_HANDLED;
-पूर्ण
+	process_intrq(adapter);
+	return IRQ_HANDLED;
+}
 
 /**
- *	t4vf_पूर्णांकr_handler - select the top-level पूर्णांकerrupt handler
+ *	t4vf_intr_handler - select the top-level interrupt handler
  *	@adapter: the adapter
  *
- *	Selects the top-level पूर्णांकerrupt handler based on the type of पूर्णांकerrupts
+ *	Selects the top-level interrupt handler based on the type of interrupts
  *	(MSI-X or MSI).
  */
-irq_handler_t t4vf_पूर्णांकr_handler(काष्ठा adapter *adapter)
-अणु
+irq_handler_t t4vf_intr_handler(struct adapter *adapter)
+{
 	BUG_ON((adapter->flags &
 	       (CXGB4VF_USING_MSIX | CXGB4VF_USING_MSI)) == 0);
-	अगर (adapter->flags & CXGB4VF_USING_MSIX)
-		वापस t4vf_sge_पूर्णांकr_msix;
-	अन्यथा
-		वापस t4vf_पूर्णांकr_msi;
-पूर्ण
+	if (adapter->flags & CXGB4VF_USING_MSIX)
+		return t4vf_sge_intr_msix;
+	else
+		return t4vf_intr_msi;
+}
 
 /**
- *	sge_rx_समयr_cb - perक्रमm periodic मुख्यtenance of SGE RX queues
- *	@t: Rx समयr
+ *	sge_rx_timer_cb - perform periodic maintenance of SGE RX queues
+ *	@t: Rx timer
  *
- *	Runs periodically from a समयr to perक्रमm मुख्यtenance of SGE RX queues.
+ *	Runs periodically from a timer to perform maintenance of SGE RX queues.
  *
- *	a) Replenishes RX queues that have run out due to memory लघुage.
+ *	a) Replenishes RX queues that have run out due to memory shortage.
  *	Normally new RX buffers are added when existing ones are consumed but
- *	when out of memory a queue can become empty.  We schedule NAPI to करो
+ *	when out of memory a queue can become empty.  We schedule NAPI to do
  *	the actual refill.
  */
-अटल व्योम sge_rx_समयr_cb(काष्ठा समयr_list *t)
-अणु
-	काष्ठा adapter *adapter = from_समयr(adapter, t, sge.rx_समयr);
-	काष्ठा sge *s = &adapter->sge;
-	अचिन्हित पूर्णांक i;
+static void sge_rx_timer_cb(struct timer_list *t)
+{
+	struct adapter *adapter = from_timer(adapter, t, sge.rx_timer);
+	struct sge *s = &adapter->sge;
+	unsigned int i;
 
 	/*
-	 * Scan the "Starving Free Lists" flag array looking क्रम any Free
-	 * Lists in need of more मुक्त buffers.  If we find one and it's not
+	 * Scan the "Starving Free Lists" flag array looking for any Free
+	 * Lists in need of more free buffers.  If we find one and it's not
 	 * being actively polled, then bump its "starving" counter and attempt
 	 * to refill it.  If we're successful in adding enough buffers to push
 	 * the Free List over the starving threshold, then we can clear its
 	 * "starving" status.
 	 */
-	क्रम (i = 0; i < ARRAY_SIZE(s->starving_fl); i++) अणु
-		अचिन्हित दीर्घ m;
+	for (i = 0; i < ARRAY_SIZE(s->starving_fl); i++) {
+		unsigned long m;
 
-		क्रम (m = s->starving_fl[i]; m; m &= m - 1) अणु
-			अचिन्हित पूर्णांक id = __ffs(m) + i * BITS_PER_LONG;
-			काष्ठा sge_fl *fl = s->egr_map[id];
+		for (m = s->starving_fl[i]; m; m &= m - 1) {
+			unsigned int id = __ffs(m) + i * BITS_PER_LONG;
+			struct sge_fl *fl = s->egr_map[id];
 
 			clear_bit(id, s->starving_fl);
 			smp_mb__after_atomic();
@@ -2091,162 +2090,162 @@ irq_handler_t t4vf_पूर्णांकr_handler(काष्ठा adapter 
 			/*
 			 * Since we are accessing fl without a lock there's a
 			 * small probability of a false positive where we
-			 * schedule napi but the FL is no दीर्घer starving.
+			 * schedule napi but the FL is no longer starving.
 			 * No biggie.
 			 */
-			अगर (fl_starving(adapter, fl)) अणु
-				काष्ठा sge_eth_rxq *rxq;
+			if (fl_starving(adapter, fl)) {
+				struct sge_eth_rxq *rxq;
 
-				rxq = container_of(fl, काष्ठा sge_eth_rxq, fl);
-				अगर (napi_reschedule(&rxq->rspq.napi))
+				rxq = container_of(fl, struct sge_eth_rxq, fl);
+				if (napi_reschedule(&rxq->rspq.napi))
 					fl->starving++;
-				अन्यथा
+				else
 					set_bit(id, s->starving_fl);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 	/*
-	 * Reschedule the next scan क्रम starving Free Lists ...
+	 * Reschedule the next scan for starving Free Lists ...
 	 */
-	mod_समयr(&s->rx_समयr, jअगरfies + RX_QCHECK_PERIOD);
-पूर्ण
+	mod_timer(&s->rx_timer, jiffies + RX_QCHECK_PERIOD);
+}
 
 /**
- *	sge_tx_समयr_cb - perक्रमm periodic मुख्यtenance of SGE Tx queues
- *	@t: Tx समयr
+ *	sge_tx_timer_cb - perform periodic maintenance of SGE Tx queues
+ *	@t: Tx timer
  *
- *	Runs periodically from a समयr to perक्रमm मुख्यtenance of SGE TX queues.
+ *	Runs periodically from a timer to perform maintenance of SGE TX queues.
  *
- *	b) Reclaims completed Tx packets क्रम the Ethernet queues.  Normally
- *	packets are cleaned up by new Tx packets, this समयr cleans up packets
- *	when no new packets are being submitted.  This is essential क्रम pktgen,
+ *	b) Reclaims completed Tx packets for the Ethernet queues.  Normally
+ *	packets are cleaned up by new Tx packets, this timer cleans up packets
+ *	when no new packets are being submitted.  This is essential for pktgen,
  *	at least.
  */
-अटल व्योम sge_tx_समयr_cb(काष्ठा समयr_list *t)
-अणु
-	काष्ठा adapter *adapter = from_समयr(adapter, t, sge.tx_समयr);
-	काष्ठा sge *s = &adapter->sge;
-	अचिन्हित पूर्णांक i, budget;
+static void sge_tx_timer_cb(struct timer_list *t)
+{
+	struct adapter *adapter = from_timer(adapter, t, sge.tx_timer);
+	struct sge *s = &adapter->sge;
+	unsigned int i, budget;
 
 	budget = MAX_TIMER_TX_RECLAIM;
 	i = s->ethtxq_rover;
-	करो अणु
-		काष्ठा sge_eth_txq *txq = &s->ethtxq[i];
+	do {
+		struct sge_eth_txq *txq = &s->ethtxq[i];
 
-		अगर (reclaimable(&txq->q) && __netअगर_tx_trylock(txq->txq)) अणु
-			पूर्णांक avail = reclaimable(&txq->q);
+		if (reclaimable(&txq->q) && __netif_tx_trylock(txq->txq)) {
+			int avail = reclaimable(&txq->q);
 
-			अगर (avail > budget)
+			if (avail > budget)
 				avail = budget;
 
-			मुक्त_tx_desc(adapter, &txq->q, avail, true);
+			free_tx_desc(adapter, &txq->q, avail, true);
 			txq->q.in_use -= avail;
-			__netअगर_tx_unlock(txq->txq);
+			__netif_tx_unlock(txq->txq);
 
 			budget -= avail;
-			अगर (!budget)
-				अवरोध;
-		पूर्ण
+			if (!budget)
+				break;
+		}
 
 		i++;
-		अगर (i >= s->ethqsets)
+		if (i >= s->ethqsets)
 			i = 0;
-	पूर्ण जबतक (i != s->ethtxq_rover);
+	} while (i != s->ethtxq_rover);
 	s->ethtxq_rover = i;
 
 	/*
-	 * If we found too many reclaimable packets schedule a समयr in the
-	 * near future to जारी where we left off.  Otherwise the next समयr
-	 * will be at its normal पूर्णांकerval.
+	 * If we found too many reclaimable packets schedule a timer in the
+	 * near future to continue where we left off.  Otherwise the next timer
+	 * will be at its normal interval.
 	 */
-	mod_समयr(&s->tx_समयr, jअगरfies + (budget ? TX_QCHECK_PERIOD : 2));
-पूर्ण
+	mod_timer(&s->tx_timer, jiffies + (budget ? TX_QCHECK_PERIOD : 2));
+}
 
 /**
- *	bar2_address - वापस the BAR2 address क्रम an SGE Queue's Registers
+ *	bar2_address - return the BAR2 address for an SGE Queue's Registers
  *	@adapter: the adapter
  *	@qid: the SGE Queue ID
  *	@qtype: the SGE Queue Type (Egress or Ingress)
- *	@pbar2_qid: BAR2 Queue ID or 0 क्रम Queue ID inferred SGE Queues
+ *	@pbar2_qid: BAR2 Queue ID or 0 for Queue ID inferred SGE Queues
  *
- *	Returns the BAR2 address क्रम the SGE Queue Registers associated with
- *	@qid.  If BAR2 SGE Registers aren't available, वापसs शून्य.  Also
- *	वापसs the BAR2 Queue ID to be used with ग_लिखोs to the BAR2 SGE
+ *	Returns the BAR2 address for the SGE Queue Registers associated with
+ *	@qid.  If BAR2 SGE Registers aren't available, returns NULL.  Also
+ *	returns the BAR2 Queue ID to be used with writes to the BAR2 SGE
  *	Queue Registers.  If the BAR2 Queue ID is 0, then "Inferred Queue ID"
  *	Registers are supported (e.g. the Write Combining Doorbell Buffer).
  */
-अटल व्योम __iomem *bar2_address(काष्ठा adapter *adapter,
-				  अचिन्हित पूर्णांक qid,
-				  क्रमागत t4_bar2_qtype qtype,
-				  अचिन्हित पूर्णांक *pbar2_qid)
-अणु
+static void __iomem *bar2_address(struct adapter *adapter,
+				  unsigned int qid,
+				  enum t4_bar2_qtype qtype,
+				  unsigned int *pbar2_qid)
+{
 	u64 bar2_qoffset;
-	पूर्णांक ret;
+	int ret;
 
 	ret = t4vf_bar2_sge_qregs(adapter, qid, qtype,
 				  &bar2_qoffset, pbar2_qid);
-	अगर (ret)
-		वापस शून्य;
+	if (ret)
+		return NULL;
 
-	वापस adapter->bar2 + bar2_qoffset;
-पूर्ण
+	return adapter->bar2 + bar2_qoffset;
+}
 
 /**
  *	t4vf_sge_alloc_rxq - allocate an SGE RX Queue
  *	@adapter: the adapter
- *	@rspq: poपूर्णांकer to to the new rxq's Response Queue to be filled in
- *	@iqasynch: अगर 0, a normal rspq; अगर 1, an asynchronous event queue
+ *	@rspq: pointer to to the new rxq's Response Queue to be filled in
+ *	@iqasynch: if 0, a normal rspq; if 1, an asynchronous event queue
  *	@dev: the network device associated with the new rspq
- *	@पूर्णांकr_dest: MSI-X vector index (overriden in MSI mode)
- *	@fl: poपूर्णांकer to the new rxq's Free List to be filled in
- *	@hnd: the पूर्णांकerrupt handler to invoke क्रम the rspq
+ *	@intr_dest: MSI-X vector index (overriden in MSI mode)
+ *	@fl: pointer to the new rxq's Free List to be filled in
+ *	@hnd: the interrupt handler to invoke for the rspq
  */
-पूर्णांक t4vf_sge_alloc_rxq(काष्ठा adapter *adapter, काष्ठा sge_rspq *rspq,
-		       bool iqasynch, काष्ठा net_device *dev,
-		       पूर्णांक पूर्णांकr_dest,
-		       काष्ठा sge_fl *fl, rspq_handler_t hnd)
-अणु
-	काष्ठा sge *s = &adapter->sge;
-	काष्ठा port_info *pi = netdev_priv(dev);
-	काष्ठा fw_iq_cmd cmd, rpl;
-	पूर्णांक ret, iqandst, flsz = 0;
-	पूर्णांक relaxed = !(adapter->flags & CXGB4VF_ROOT_NO_RELAXED_ORDERING);
+int t4vf_sge_alloc_rxq(struct adapter *adapter, struct sge_rspq *rspq,
+		       bool iqasynch, struct net_device *dev,
+		       int intr_dest,
+		       struct sge_fl *fl, rspq_handler_t hnd)
+{
+	struct sge *s = &adapter->sge;
+	struct port_info *pi = netdev_priv(dev);
+	struct fw_iq_cmd cmd, rpl;
+	int ret, iqandst, flsz = 0;
+	int relaxed = !(adapter->flags & CXGB4VF_ROOT_NO_RELAXED_ORDERING);
 
 	/*
 	 * If we're using MSI interrupts and we're not initializing the
-	 * Forwarded Interrupt Queue itself, then set up this queue क्रम
-	 * indirect पूर्णांकerrupts to the Forwarded Interrupt Queue.  Obviously
-	 * the Forwarded Interrupt Queue must be set up beक्रमe any other
+	 * Forwarded Interrupt Queue itself, then set up this queue for
+	 * indirect interrupts to the Forwarded Interrupt Queue.  Obviously
+	 * the Forwarded Interrupt Queue must be set up before any other
 	 * ingress queue ...
 	 */
-	अगर ((adapter->flags & CXGB4VF_USING_MSI) &&
-	    rspq != &adapter->sge.पूर्णांकrq) अणु
+	if ((adapter->flags & CXGB4VF_USING_MSI) &&
+	    rspq != &adapter->sge.intrq) {
 		iqandst = SGE_INTRDST_IQ;
-		पूर्णांकr_dest = adapter->sge.पूर्णांकrq.असल_id;
-	पूर्ण अन्यथा
+		intr_dest = adapter->sge.intrq.abs_id;
+	} else
 		iqandst = SGE_INTRDST_PCI;
 
 	/*
-	 * Allocate the hardware ring क्रम the Response Queue.  The size needs
+	 * Allocate the hardware ring for the Response Queue.  The size needs
 	 * to be a multiple of 16 which includes the mandatory status entry
 	 * (regardless of whether the Status Page capabilities are enabled or
 	 * not).
 	 */
 	rspq->size = roundup(rspq->size, 16);
 	rspq->desc = alloc_ring(adapter->pdev_dev, rspq->size, rspq->iqe_len,
-				0, &rspq->phys_addr, शून्य, 0);
-	अगर (!rspq->desc)
-		वापस -ENOMEM;
+				0, &rspq->phys_addr, NULL, 0);
+	if (!rspq->desc)
+		return -ENOMEM;
 
 	/*
 	 * Fill in the Ingress Queue Command.  Note: Ideally this code would
 	 * be in t4vf_hw.c but there are so many parameters and dependencies
 	 * on our Linux SGE state that we would end up having to pass tons of
 	 * parameters.  We'll have to think about how this might be migrated
-	 * पूर्णांकo OS-independent common code ...
+	 * into OS-independent common code ...
 	 */
-	स_रखो(&cmd, 0, माप(cmd));
+	memset(&cmd, 0, sizeof(cmd));
 	cmd.op_to_vfn = cpu_to_be32(FW_CMD_OP_V(FW_IQ_CMD) |
 				    FW_CMD_REQUEST_F |
 				    FW_CMD_WRITE_F |
@@ -2261,7 +2260,7 @@ irq_handler_t t4vf_पूर्णांकr_handler(काष्ठा adapter 
 			    FW_IQ_CMD_IQANDST_V(iqandst) |
 			    FW_IQ_CMD_IQANUS_V(1) |
 			    FW_IQ_CMD_IQANUD_V(SGE_UPDATEDEL_INTR) |
-			    FW_IQ_CMD_IQANDSTINDEX_V(पूर्णांकr_dest));
+			    FW_IQ_CMD_IQANDSTINDEX_V(intr_dest));
 	cmd.iqdroprss_to_iqesize =
 		cpu_to_be16(FW_IQ_CMD_IQPCIECH_V(pi->port_id) |
 			    FW_IQ_CMD_IQGTSMODE_F |
@@ -2270,39 +2269,39 @@ irq_handler_t t4vf_पूर्णांकr_handler(काष्ठा adapter 
 	cmd.iqsize = cpu_to_be16(rspq->size);
 	cmd.iqaddr = cpu_to_be64(rspq->phys_addr);
 
-	अगर (fl) अणु
-		अचिन्हित पूर्णांक chip_ver =
+	if (fl) {
+		unsigned int chip_ver =
 			CHELSIO_CHIP_VERSION(adapter->params.chip);
 		/*
-		 * Allocate the ring क्रम the hardware मुक्त list (with space
-		 * क्रम its status page) aदीर्घ with the associated software
-		 * descriptor ring.  The मुक्त list size needs to be a multiple
+		 * Allocate the ring for the hardware free list (with space
+		 * for its status page) along with the associated software
+		 * descriptor ring.  The free list size needs to be a multiple
 		 * of the Egress Queue Unit and at least 2 Egress Units larger
 		 * than the SGE's Egress Congrestion Threshold
 		 * (fl_starve_thres - 1).
 		 */
-		अगर (fl->size < s->fl_starve_thres - 1 + 2 * FL_PER_EQ_UNIT)
+		if (fl->size < s->fl_starve_thres - 1 + 2 * FL_PER_EQ_UNIT)
 			fl->size = s->fl_starve_thres - 1 + 2 * FL_PER_EQ_UNIT;
 		fl->size = roundup(fl->size, FL_PER_EQ_UNIT);
 		fl->desc = alloc_ring(adapter->pdev_dev, fl->size,
-				      माप(__be64), माप(काष्ठा rx_sw_desc),
+				      sizeof(__be64), sizeof(struct rx_sw_desc),
 				      &fl->addr, &fl->sdesc, s->stat_len);
-		अगर (!fl->desc) अणु
+		if (!fl->desc) {
 			ret = -ENOMEM;
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
 		/*
-		 * Calculate the size of the hardware मुक्त list ring plus
+		 * Calculate the size of the hardware free list ring plus
 		 * Status Page (which the SGE will place after the end of the
-		 * मुक्त list ring) in Egress Queue Units.
+		 * free list ring) in Egress Queue Units.
 		 */
 		flsz = (fl->size / FL_PER_EQ_UNIT +
 			s->stat_len / EQ_UNIT);
 
 		/*
 		 * Fill in all the relevant firmware Ingress Queue Command
-		 * fields क्रम the मुक्त list.
+		 * fields for the free list.
 		 */
 		cmd.iqns_to_fl0congen =
 			cpu_to_be32(
@@ -2312,11 +2311,11 @@ irq_handler_t t4vf_पूर्णांकr_handler(काष्ठा adapter 
 				FW_IQ_CMD_FL0DATARO_V(relaxed) |
 				FW_IQ_CMD_FL0PADEN_F);
 
-		/* In T6, क्रम egress queue type FL there is पूर्णांकernal overhead
-		 * of 16B क्रम header going पूर्णांकo FLM module.  Hence the maximum
+		/* In T6, for egress queue type FL there is internal overhead
+		 * of 16B for header going into FLM module.  Hence the maximum
 		 * allowed burst size is 448 bytes.  For T4/T5, the hardware
-		 * करोesn't coalesce fetch requests अगर more than 64 bytes of
-		 * Free List poपूर्णांकers are provided, so we use a 128-byte Fetch
+		 * doesn't coalesce fetch requests if more than 64 bytes of
+		 * Free List pointers are provided, so we use a 128-byte Fetch
 		 * Burst Minimum there (T6 implements coalescing so we can use
 		 * the smaller 64-byte value there).
 		 */
@@ -2330,27 +2329,27 @@ irq_handler_t t4vf_पूर्णांकr_handler(काष्ठा adapter 
 						     FETCHBURSTMAX_256B_X));
 		cmd.fl0size = cpu_to_be16(flsz);
 		cmd.fl0addr = cpu_to_be64(fl->addr);
-	पूर्ण
+	}
 
 	/*
-	 * Issue the firmware Ingress Queue Command and extract the results अगर
+	 * Issue the firmware Ingress Queue Command and extract the results if
 	 * it completes successfully.
 	 */
-	ret = t4vf_wr_mbox(adapter, &cmd, माप(cmd), &rpl);
-	अगर (ret)
-		जाओ err;
+	ret = t4vf_wr_mbox(adapter, &cmd, sizeof(cmd), &rpl);
+	if (ret)
+		goto err;
 
-	netअगर_napi_add(dev, &rspq->napi, napi_rx_handler, 64);
+	netif_napi_add(dev, &rspq->napi, napi_rx_handler, 64);
 	rspq->cur_desc = rspq->desc;
 	rspq->cidx = 0;
 	rspq->gen = 1;
-	rspq->next_पूर्णांकr_params = rspq->पूर्णांकr_params;
+	rspq->next_intr_params = rspq->intr_params;
 	rspq->cntxt_id = be16_to_cpu(rpl.iqid);
 	rspq->bar2_addr = bar2_address(adapter,
 				       rspq->cntxt_id,
 				       T4_BAR2_QTYPE_INGRESS,
 				       &rspq->bar2_qid);
-	rspq->असल_id = be16_to_cpu(rpl.physiqid);
+	rspq->abs_id = be16_to_cpu(rpl.physiqid);
 	rspq->size--;			/* subtract status entry */
 	rspq->adapter = adapter;
 	rspq->netdev = dev;
@@ -2359,7 +2358,7 @@ irq_handler_t t4vf_पूर्णांकr_handler(काष्ठा adapter 
 	/* set offset to -1 to distinguish ingress queues without FL */
 	rspq->offset = fl ? 0 : -1;
 
-	अगर (fl) अणु
+	if (fl) {
 		fl->cntxt_id = be16_to_cpu(rpl.fl0id);
 		fl->avail = 0;
 		fl->pend_cred = 0;
@@ -2370,7 +2369,7 @@ irq_handler_t t4vf_पूर्णांकr_handler(काष्ठा adapter 
 		fl->starving = 0;
 
 		/* Note, we must initialize the BAR2 Free List User Doorbell
-		 * inक्रमmation beक्रमe refilling the Free List!
+		 * information before refilling the Free List!
 		 */
 		fl->bar2_addr = bar2_address(adapter,
 					     fl->cntxt_id,
@@ -2378,74 +2377,74 @@ irq_handler_t t4vf_पूर्णांकr_handler(काष्ठा adapter 
 					     &fl->bar2_qid);
 
 		refill_fl(adapter, fl, fl_cap(fl), GFP_KERNEL);
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 err:
 	/*
 	 * An error occurred.  Clean up our partial allocation state and
-	 * वापस the error.
+	 * return the error.
 	 */
-	अगर (rspq->desc) अणु
-		dma_मुक्त_coherent(adapter->pdev_dev, rspq->size * rspq->iqe_len,
+	if (rspq->desc) {
+		dma_free_coherent(adapter->pdev_dev, rspq->size * rspq->iqe_len,
 				  rspq->desc, rspq->phys_addr);
-		rspq->desc = शून्य;
-	पूर्ण
-	अगर (fl && fl->desc) अणु
-		kमुक्त(fl->sdesc);
-		fl->sdesc = शून्य;
-		dma_मुक्त_coherent(adapter->pdev_dev, flsz * EQ_UNIT,
+		rspq->desc = NULL;
+	}
+	if (fl && fl->desc) {
+		kfree(fl->sdesc);
+		fl->sdesc = NULL;
+		dma_free_coherent(adapter->pdev_dev, flsz * EQ_UNIT,
 				  fl->desc, fl->addr);
-		fl->desc = शून्य;
-	पूर्ण
-	वापस ret;
-पूर्ण
+		fl->desc = NULL;
+	}
+	return ret;
+}
 
 /**
  *	t4vf_sge_alloc_eth_txq - allocate an SGE Ethernet TX Queue
  *	@adapter: the adapter
- *	@txq: poपूर्णांकer to the new txq to be filled in
+ *	@txq: pointer to the new txq to be filled in
  *	@dev: the network device
  *	@devq: the network TX queue associated with the new txq
  *	@iqid: the relative ingress queue ID to which events relating to
  *		the new txq should be directed
  */
-पूर्णांक t4vf_sge_alloc_eth_txq(काष्ठा adapter *adapter, काष्ठा sge_eth_txq *txq,
-			   काष्ठा net_device *dev, काष्ठा netdev_queue *devq,
-			   अचिन्हित पूर्णांक iqid)
-अणु
-	अचिन्हित पूर्णांक chip_ver = CHELSIO_CHIP_VERSION(adapter->params.chip);
-	काष्ठा port_info *pi = netdev_priv(dev);
-	काष्ठा fw_eq_eth_cmd cmd, rpl;
-	काष्ठा sge *s = &adapter->sge;
-	पूर्णांक ret, nentries;
+int t4vf_sge_alloc_eth_txq(struct adapter *adapter, struct sge_eth_txq *txq,
+			   struct net_device *dev, struct netdev_queue *devq,
+			   unsigned int iqid)
+{
+	unsigned int chip_ver = CHELSIO_CHIP_VERSION(adapter->params.chip);
+	struct port_info *pi = netdev_priv(dev);
+	struct fw_eq_eth_cmd cmd, rpl;
+	struct sge *s = &adapter->sge;
+	int ret, nentries;
 
 	/*
 	 * Calculate the size of the hardware TX Queue (including the Status
 	 * Page on the end of the TX Queue) in units of TX Descriptors.
 	 */
-	nentries = txq->q.size + s->stat_len / माप(काष्ठा tx_desc);
+	nentries = txq->q.size + s->stat_len / sizeof(struct tx_desc);
 
 	/*
-	 * Allocate the hardware ring क्रम the TX ring (with space क्रम its
-	 * status page) aदीर्घ with the associated software descriptor ring.
+	 * Allocate the hardware ring for the TX ring (with space for its
+	 * status page) along with the associated software descriptor ring.
 	 */
 	txq->q.desc = alloc_ring(adapter->pdev_dev, txq->q.size,
-				 माप(काष्ठा tx_desc),
-				 माप(काष्ठा tx_sw_desc),
+				 sizeof(struct tx_desc),
+				 sizeof(struct tx_sw_desc),
 				 &txq->q.phys_addr, &txq->q.sdesc, s->stat_len);
-	अगर (!txq->q.desc)
-		वापस -ENOMEM;
+	if (!txq->q.desc)
+		return -ENOMEM;
 
 	/*
 	 * Fill in the Egress Queue Command.  Note: As with the direct use of
 	 * the firmware Ingress Queue COmmand above in our RXQ allocation
 	 * routine, ideally, this code would be in t4vf_hw.c.  Again, we'll
-	 * have to see अगर there's some reasonable way to parameterize it
-	 * पूर्णांकo the common code ...
+	 * have to see if there's some reasonable way to parameterize it
+	 * into the common code ...
 	 */
-	स_रखो(&cmd, 0, माप(cmd));
+	memset(&cmd, 0, sizeof(cmd));
 	cmd.op_to_vfn = cpu_to_be32(FW_CMD_OP_V(FW_EQ_ETH_CMD) |
 				    FW_CMD_REQUEST_F |
 				    FW_CMD_WRITE_F |
@@ -2453,7 +2452,7 @@ err:
 	cmd.alloc_to_len16 = cpu_to_be32(FW_EQ_ETH_CMD_ALLOC_F |
 					 FW_EQ_ETH_CMD_EQSTART_F |
 					 FW_LEN16(cmd));
-	cmd.स्वतःequiqe_to_viid = cpu_to_be32(FW_EQ_ETH_CMD_AUTOEQUEQE_F |
+	cmd.autoequiqe_to_viid = cpu_to_be32(FW_EQ_ETH_CMD_AUTOEQUEQE_F |
 					     FW_EQ_ETH_CMD_VIID_V(pi->viid));
 	cmd.fetchszm_to_iqid =
 		cpu_to_be32(FW_EQ_ETH_CMD_HOSTFCMODE_V(SGE_HOSTFCMODE_STPG) |
@@ -2470,34 +2469,34 @@ err:
 	cmd.eqaddr = cpu_to_be64(txq->q.phys_addr);
 
 	/*
-	 * Issue the firmware Egress Queue Command and extract the results अगर
+	 * Issue the firmware Egress Queue Command and extract the results if
 	 * it completes successfully.
 	 */
-	ret = t4vf_wr_mbox(adapter, &cmd, माप(cmd), &rpl);
-	अगर (ret) अणु
+	ret = t4vf_wr_mbox(adapter, &cmd, sizeof(cmd), &rpl);
+	if (ret) {
 		/*
-		 * The girmware Ingress Queue Command failed क्रम some reason.
-		 * Free up our partial allocation state and वापस the error.
+		 * The girmware Ingress Queue Command failed for some reason.
+		 * Free up our partial allocation state and return the error.
 		 */
-		kमुक्त(txq->q.sdesc);
-		txq->q.sdesc = शून्य;
-		dma_मुक्त_coherent(adapter->pdev_dev,
-				  nentries * माप(काष्ठा tx_desc),
+		kfree(txq->q.sdesc);
+		txq->q.sdesc = NULL;
+		dma_free_coherent(adapter->pdev_dev,
+				  nentries * sizeof(struct tx_desc),
 				  txq->q.desc, txq->q.phys_addr);
-		txq->q.desc = शून्य;
-		वापस ret;
-	पूर्ण
+		txq->q.desc = NULL;
+		return ret;
+	}
 
 	txq->q.in_use = 0;
 	txq->q.cidx = 0;
 	txq->q.pidx = 0;
-	txq->q.stat = (व्योम *)&txq->q.desc[txq->q.size];
+	txq->q.stat = (void *)&txq->q.desc[txq->q.size];
 	txq->q.cntxt_id = FW_EQ_ETH_CMD_EQID_G(be32_to_cpu(rpl.eqid_pkd));
 	txq->q.bar2_addr = bar2_address(adapter,
 					txq->q.cntxt_id,
 					T4_BAR2_QTYPE_EGRESS,
 					&txq->q.bar2_qid);
-	txq->q.असल_id =
+	txq->q.abs_id =
 		FW_EQ_ETH_CMD_PHYSEQID_G(be32_to_cpu(rpl.physeqid_pkd));
 	txq->txq = devq;
 	txq->tso = 0;
@@ -2506,205 +2505,205 @@ err:
 	txq->q.stops = 0;
 	txq->q.restarts = 0;
 	txq->mapping_err = 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Free the DMA map resources associated with a TX queue.
  */
-अटल व्योम मुक्त_txq(काष्ठा adapter *adapter, काष्ठा sge_txq *tq)
-अणु
-	काष्ठा sge *s = &adapter->sge;
+static void free_txq(struct adapter *adapter, struct sge_txq *tq)
+{
+	struct sge *s = &adapter->sge;
 
-	dma_मुक्त_coherent(adapter->pdev_dev,
-			  tq->size * माप(*tq->desc) + s->stat_len,
+	dma_free_coherent(adapter->pdev_dev,
+			  tq->size * sizeof(*tq->desc) + s->stat_len,
 			  tq->desc, tq->phys_addr);
 	tq->cntxt_id = 0;
-	tq->sdesc = शून्य;
-	tq->desc = शून्य;
-पूर्ण
+	tq->sdesc = NULL;
+	tq->desc = NULL;
+}
 
 /*
  * Free the resources associated with a response queue (possibly including a
- * मुक्त list).
+ * free list).
  */
-अटल व्योम मुक्त_rspq_fl(काष्ठा adapter *adapter, काष्ठा sge_rspq *rspq,
-			 काष्ठा sge_fl *fl)
-अणु
-	काष्ठा sge *s = &adapter->sge;
-	अचिन्हित पूर्णांक flid = fl ? fl->cntxt_id : 0xffff;
+static void free_rspq_fl(struct adapter *adapter, struct sge_rspq *rspq,
+			 struct sge_fl *fl)
+{
+	struct sge *s = &adapter->sge;
+	unsigned int flid = fl ? fl->cntxt_id : 0xffff;
 
-	t4vf_iq_मुक्त(adapter, FW_IQ_TYPE_FL_INT_CAP,
+	t4vf_iq_free(adapter, FW_IQ_TYPE_FL_INT_CAP,
 		     rspq->cntxt_id, flid, 0xffff);
-	dma_मुक्त_coherent(adapter->pdev_dev, (rspq->size + 1) * rspq->iqe_len,
+	dma_free_coherent(adapter->pdev_dev, (rspq->size + 1) * rspq->iqe_len,
 			  rspq->desc, rspq->phys_addr);
-	netअगर_napi_del(&rspq->napi);
-	rspq->netdev = शून्य;
+	netif_napi_del(&rspq->napi);
+	rspq->netdev = NULL;
 	rspq->cntxt_id = 0;
-	rspq->असल_id = 0;
-	rspq->desc = शून्य;
+	rspq->abs_id = 0;
+	rspq->desc = NULL;
 
-	अगर (fl) अणु
-		मुक्त_rx_bufs(adapter, fl, fl->avail);
-		dma_मुक्त_coherent(adapter->pdev_dev,
-				  fl->size * माप(*fl->desc) + s->stat_len,
+	if (fl) {
+		free_rx_bufs(adapter, fl, fl->avail);
+		dma_free_coherent(adapter->pdev_dev,
+				  fl->size * sizeof(*fl->desc) + s->stat_len,
 				  fl->desc, fl->addr);
-		kमुक्त(fl->sdesc);
-		fl->sdesc = शून्य;
+		kfree(fl->sdesc);
+		fl->sdesc = NULL;
 		fl->cntxt_id = 0;
-		fl->desc = शून्य;
-	पूर्ण
-पूर्ण
+		fl->desc = NULL;
+	}
+}
 
 /**
- *	t4vf_मुक्त_sge_resources - मुक्त SGE resources
+ *	t4vf_free_sge_resources - free SGE resources
  *	@adapter: the adapter
  *
  *	Frees resources used by the SGE queue sets.
  */
-व्योम t4vf_मुक्त_sge_resources(काष्ठा adapter *adapter)
-अणु
-	काष्ठा sge *s = &adapter->sge;
-	काष्ठा sge_eth_rxq *rxq = s->ethrxq;
-	काष्ठा sge_eth_txq *txq = s->ethtxq;
-	काष्ठा sge_rspq *evtq = &s->fw_evtq;
-	काष्ठा sge_rspq *पूर्णांकrq = &s->पूर्णांकrq;
-	पूर्णांक qs;
+void t4vf_free_sge_resources(struct adapter *adapter)
+{
+	struct sge *s = &adapter->sge;
+	struct sge_eth_rxq *rxq = s->ethrxq;
+	struct sge_eth_txq *txq = s->ethtxq;
+	struct sge_rspq *evtq = &s->fw_evtq;
+	struct sge_rspq *intrq = &s->intrq;
+	int qs;
 
-	क्रम (qs = 0; qs < adapter->sge.ethqsets; qs++, rxq++, txq++) अणु
-		अगर (rxq->rspq.desc)
-			मुक्त_rspq_fl(adapter, &rxq->rspq, &rxq->fl);
-		अगर (txq->q.desc) अणु
-			t4vf_eth_eq_मुक्त(adapter, txq->q.cntxt_id);
-			मुक्त_tx_desc(adapter, &txq->q, txq->q.in_use, true);
-			kमुक्त(txq->q.sdesc);
-			मुक्त_txq(adapter, &txq->q);
-		पूर्ण
-	पूर्ण
-	अगर (evtq->desc)
-		मुक्त_rspq_fl(adapter, evtq, शून्य);
-	अगर (पूर्णांकrq->desc)
-		मुक्त_rspq_fl(adapter, पूर्णांकrq, शून्य);
-पूर्ण
+	for (qs = 0; qs < adapter->sge.ethqsets; qs++, rxq++, txq++) {
+		if (rxq->rspq.desc)
+			free_rspq_fl(adapter, &rxq->rspq, &rxq->fl);
+		if (txq->q.desc) {
+			t4vf_eth_eq_free(adapter, txq->q.cntxt_id);
+			free_tx_desc(adapter, &txq->q, txq->q.in_use, true);
+			kfree(txq->q.sdesc);
+			free_txq(adapter, &txq->q);
+		}
+	}
+	if (evtq->desc)
+		free_rspq_fl(adapter, evtq, NULL);
+	if (intrq->desc)
+		free_rspq_fl(adapter, intrq, NULL);
+}
 
 /**
  *	t4vf_sge_start - enable SGE operation
  *	@adapter: the adapter
  *
- *	Start tasklets and समयrs associated with the DMA engine.
+ *	Start tasklets and timers associated with the DMA engine.
  */
-व्योम t4vf_sge_start(काष्ठा adapter *adapter)
-अणु
+void t4vf_sge_start(struct adapter *adapter)
+{
 	adapter->sge.ethtxq_rover = 0;
-	mod_समयr(&adapter->sge.rx_समयr, jअगरfies + RX_QCHECK_PERIOD);
-	mod_समयr(&adapter->sge.tx_समयr, jअगरfies + TX_QCHECK_PERIOD);
-पूर्ण
+	mod_timer(&adapter->sge.rx_timer, jiffies + RX_QCHECK_PERIOD);
+	mod_timer(&adapter->sge.tx_timer, jiffies + TX_QCHECK_PERIOD);
+}
 
 /**
  *	t4vf_sge_stop - disable SGE operation
  *	@adapter: the adapter
  *
- *	Stop tasklets and समयrs associated with the DMA engine.  Note that
- *	this is effective only अगर measures have been taken to disable any HW
+ *	Stop tasklets and timers associated with the DMA engine.  Note that
+ *	this is effective only if measures have been taken to disable any HW
  *	events that may restart them.
  */
-व्योम t4vf_sge_stop(काष्ठा adapter *adapter)
-अणु
-	काष्ठा sge *s = &adapter->sge;
+void t4vf_sge_stop(struct adapter *adapter)
+{
+	struct sge *s = &adapter->sge;
 
-	अगर (s->rx_समयr.function)
-		del_समयr_sync(&s->rx_समयr);
-	अगर (s->tx_समयr.function)
-		del_समयr_sync(&s->tx_समयr);
-पूर्ण
+	if (s->rx_timer.function)
+		del_timer_sync(&s->rx_timer);
+	if (s->tx_timer.function)
+		del_timer_sync(&s->tx_timer);
+}
 
 /**
  *	t4vf_sge_init - initialize SGE
  *	@adapter: the adapter
  *
- *	Perक्रमms SGE initialization needed every समय after a chip reset.
- *	We करो not initialize any of the queue sets here, instead the driver
- *	top-level must request those inभागidually.  We also करो not enable DMA
- *	here, that should be करोne after the queues have been set up.
+ *	Performs SGE initialization needed every time after a chip reset.
+ *	We do not initialize any of the queue sets here, instead the driver
+ *	top-level must request those individually.  We also do not enable DMA
+ *	here, that should be done after the queues have been set up.
  */
-पूर्णांक t4vf_sge_init(काष्ठा adapter *adapter)
-अणु
-	काष्ठा sge_params *sge_params = &adapter->params.sge;
+int t4vf_sge_init(struct adapter *adapter)
+{
+	struct sge_params *sge_params = &adapter->params.sge;
 	u32 fl_small_pg = sge_params->sge_fl_buffer_size[0];
 	u32 fl_large_pg = sge_params->sge_fl_buffer_size[1];
-	काष्ठा sge *s = &adapter->sge;
+	struct sge *s = &adapter->sge;
 
 	/*
 	 * Start by vetting the basic SGE parameters which have been set up by
 	 * the Physical Function Driver.  Ideally we should be able to deal
-	 * with _any_ configuration.  Practice is dअगरferent ...
+	 * with _any_ configuration.  Practice is different ...
 	 */
 
-	/* We only bother using the Large Page logic अगर the Large Page Buffer
+	/* We only bother using the Large Page logic if the Large Page Buffer
 	 * is larger than our Page Size Buffer.
 	 */
-	अगर (fl_large_pg <= fl_small_pg)
+	if (fl_large_pg <= fl_small_pg)
 		fl_large_pg = 0;
 
 	/* The Page Size Buffer must be exactly equal to our Page Size and the
-	 * Large Page Size Buffer should be 0 (per above) or a घातer of 2.
+	 * Large Page Size Buffer should be 0 (per above) or a power of 2.
 	 */
-	अगर (fl_small_pg != PAGE_SIZE ||
-	    (fl_large_pg & (fl_large_pg - 1)) != 0) अणु
+	if (fl_small_pg != PAGE_SIZE ||
+	    (fl_large_pg & (fl_large_pg - 1)) != 0) {
 		dev_err(adapter->pdev_dev, "bad SGE FL buffer sizes [%d, %d]\n",
 			fl_small_pg, fl_large_pg);
-		वापस -EINVAL;
-	पूर्ण
-	अगर ((sge_params->sge_control & RXPKTCPLMODE_F) !=
-	    RXPKTCPLMODE_V(RXPKTCPLMODE_SPLIT_X)) अणु
+		return -EINVAL;
+	}
+	if ((sge_params->sge_control & RXPKTCPLMODE_F) !=
+	    RXPKTCPLMODE_V(RXPKTCPLMODE_SPLIT_X)) {
 		dev_err(adapter->pdev_dev, "bad SGE CPL MODE\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/*
-	 * Now translate the adapter parameters पूर्णांकo our पूर्णांकernal क्रमms.
+	 * Now translate the adapter parameters into our internal forms.
 	 */
-	अगर (fl_large_pg)
+	if (fl_large_pg)
 		s->fl_pg_order = ilog2(fl_large_pg) - PAGE_SHIFT;
 	s->stat_len = ((sge_params->sge_control & EGRSTATUSPAGESIZE_F)
 			? 128 : 64);
-	s->pktshअगरt = PKTSHIFT_G(sge_params->sge_control);
+	s->pktshift = PKTSHIFT_G(sge_params->sge_control);
 	s->fl_align = t4vf_fl_pkt_align(adapter);
 
 	/* A FL with <= fl_starve_thres buffers is starving and a periodic
-	 * समयr will attempt to refill it.  This needs to be larger than the
+	 * timer will attempt to refill it.  This needs to be larger than the
 	 * SGE's Egress Congestion Threshold.  If it isn't, then we can get
-	 * stuck रुकोing क्रम new packets जबतक the SGE is रुकोing क्रम us to
+	 * stuck waiting for new packets while the SGE is waiting for us to
 	 * give it more Free List entries.  (Note that the SGE's Egress
-	 * Congestion Threshold is in units of 2 Free List poपूर्णांकers.)
+	 * Congestion Threshold is in units of 2 Free List pointers.)
 	 */
-	चयन (CHELSIO_CHIP_VERSION(adapter->params.chip)) अणु
-	हाल CHELSIO_T4:
+	switch (CHELSIO_CHIP_VERSION(adapter->params.chip)) {
+	case CHELSIO_T4:
 		s->fl_starve_thres =
 		   EGRTHRESHOLD_G(sge_params->sge_congestion_control);
-		अवरोध;
-	हाल CHELSIO_T5:
+		break;
+	case CHELSIO_T5:
 		s->fl_starve_thres =
 		   EGRTHRESHOLDPACKING_G(sge_params->sge_congestion_control);
-		अवरोध;
-	हाल CHELSIO_T6:
-	शेष:
+		break;
+	case CHELSIO_T6:
+	default:
 		s->fl_starve_thres =
 		   T6_EGRTHRESHOLDPACKING_G(sge_params->sge_congestion_control);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	s->fl_starve_thres = s->fl_starve_thres * 2 + 1;
 
 	/*
-	 * Set up tasklet समयrs.
+	 * Set up tasklet timers.
 	 */
-	समयr_setup(&s->rx_समयr, sge_rx_समयr_cb, 0);
-	समयr_setup(&s->tx_समयr, sge_tx_समयr_cb, 0);
+	timer_setup(&s->rx_timer, sge_rx_timer_cb, 0);
+	timer_setup(&s->tx_timer, sge_tx_timer_cb, 0);
 
 	/*
 	 * Initialize Forwarded Interrupt Queue lock.
 	 */
-	spin_lock_init(&s->पूर्णांकrq_lock);
+	spin_lock_init(&s->intrq_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

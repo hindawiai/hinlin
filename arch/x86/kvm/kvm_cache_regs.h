@@ -1,25 +1,24 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित ASM_KVM_CACHE_REGS_H
-#घोषणा ASM_KVM_CACHE_REGS_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef ASM_KVM_CACHE_REGS_H
+#define ASM_KVM_CACHE_REGS_H
 
-#समावेश <linux/kvm_host.h>
+#include <linux/kvm_host.h>
 
-#घोषणा KVM_POSSIBLE_CR0_GUEST_BITS X86_CR0_TS
-#घोषणा KVM_POSSIBLE_CR4_GUEST_BITS				  \
+#define KVM_POSSIBLE_CR0_GUEST_BITS X86_CR0_TS
+#define KVM_POSSIBLE_CR4_GUEST_BITS				  \
 	(X86_CR4_PVI | X86_CR4_DE | X86_CR4_PCE | X86_CR4_OSFXSR  \
 	 | X86_CR4_OSXMMEXCPT | X86_CR4_PGE | X86_CR4_TSD | X86_CR4_FSGSBASE)
 
-#घोषणा BUILD_KVM_GPR_ACCESSORS(lname, uname)				      \
-अटल __always_अंतरभूत अचिन्हित दीर्घ kvm_##lname##_पढ़ो(काष्ठा kvm_vcpu *vcpu)\
-अणु									      \
-	वापस vcpu->arch.regs[VCPU_REGS_##uname];			      \
-पूर्ण									      \
-अटल __always_अंतरभूत व्योम kvm_##lname##_ग_लिखो(काष्ठा kvm_vcpu *vcpu,	      \
-						अचिन्हित दीर्घ val)	      \
-अणु									      \
+#define BUILD_KVM_GPR_ACCESSORS(lname, uname)				      \
+static __always_inline unsigned long kvm_##lname##_read(struct kvm_vcpu *vcpu)\
+{									      \
+	return vcpu->arch.regs[VCPU_REGS_##uname];			      \
+}									      \
+static __always_inline void kvm_##lname##_write(struct kvm_vcpu *vcpu,	      \
+						unsigned long val)	      \
+{									      \
 	vcpu->arch.regs[VCPU_REGS_##uname] = val;			      \
-पूर्ण
+}
 BUILD_KVM_GPR_ACCESSORS(rax, RAX)
 BUILD_KVM_GPR_ACCESSORS(rbx, RBX)
 BUILD_KVM_GPR_ACCESSORS(rcx, RCX)
@@ -27,7 +26,7 @@ BUILD_KVM_GPR_ACCESSORS(rdx, RDX)
 BUILD_KVM_GPR_ACCESSORS(rbp, RBP)
 BUILD_KVM_GPR_ACCESSORS(rsi, RSI)
 BUILD_KVM_GPR_ACCESSORS(rdi, RDI)
-#अगर_घोषित CONFIG_X86_64
+#ifdef CONFIG_X86_64
 BUILD_KVM_GPR_ACCESSORS(r8,  R8)
 BUILD_KVM_GPR_ACCESSORS(r9,  R9)
 BUILD_KVM_GPR_ACCESSORS(r10, R10)
@@ -36,153 +35,153 @@ BUILD_KVM_GPR_ACCESSORS(r12, R12)
 BUILD_KVM_GPR_ACCESSORS(r13, R13)
 BUILD_KVM_GPR_ACCESSORS(r14, R14)
 BUILD_KVM_GPR_ACCESSORS(r15, R15)
-#पूर्ण_अगर
+#endif
 
-अटल अंतरभूत bool kvm_रेजिस्टर_is_available(काष्ठा kvm_vcpu *vcpu,
-					     क्रमागत kvm_reg reg)
-अणु
-	वापस test_bit(reg, (अचिन्हित दीर्घ *)&vcpu->arch.regs_avail);
-पूर्ण
+static inline bool kvm_register_is_available(struct kvm_vcpu *vcpu,
+					     enum kvm_reg reg)
+{
+	return test_bit(reg, (unsigned long *)&vcpu->arch.regs_avail);
+}
 
-अटल अंतरभूत bool kvm_रेजिस्टर_is_dirty(काष्ठा kvm_vcpu *vcpu,
-					 क्रमागत kvm_reg reg)
-अणु
-	वापस test_bit(reg, (अचिन्हित दीर्घ *)&vcpu->arch.regs_dirty);
-पूर्ण
+static inline bool kvm_register_is_dirty(struct kvm_vcpu *vcpu,
+					 enum kvm_reg reg)
+{
+	return test_bit(reg, (unsigned long *)&vcpu->arch.regs_dirty);
+}
 
-अटल अंतरभूत व्योम kvm_रेजिस्टर_mark_available(काष्ठा kvm_vcpu *vcpu,
-					       क्रमागत kvm_reg reg)
-अणु
-	__set_bit(reg, (अचिन्हित दीर्घ *)&vcpu->arch.regs_avail);
-पूर्ण
+static inline void kvm_register_mark_available(struct kvm_vcpu *vcpu,
+					       enum kvm_reg reg)
+{
+	__set_bit(reg, (unsigned long *)&vcpu->arch.regs_avail);
+}
 
-अटल अंतरभूत व्योम kvm_रेजिस्टर_mark_dirty(काष्ठा kvm_vcpu *vcpu,
-					   क्रमागत kvm_reg reg)
-अणु
-	__set_bit(reg, (अचिन्हित दीर्घ *)&vcpu->arch.regs_avail);
-	__set_bit(reg, (अचिन्हित दीर्घ *)&vcpu->arch.regs_dirty);
-पूर्ण
+static inline void kvm_register_mark_dirty(struct kvm_vcpu *vcpu,
+					   enum kvm_reg reg)
+{
+	__set_bit(reg, (unsigned long *)&vcpu->arch.regs_avail);
+	__set_bit(reg, (unsigned long *)&vcpu->arch.regs_dirty);
+}
 
 /*
- * The "raw" रेजिस्टर helpers are only क्रम हालs where the full 64 bits of a
- * रेजिस्टर are पढ़ो/written irrespective of current vCPU mode.  In other words,
+ * The "raw" register helpers are only for cases where the full 64 bits of a
+ * register are read/written irrespective of current vCPU mode.  In other words,
  * odds are good you shouldn't be using the raw variants.
  */
-अटल अंतरभूत अचिन्हित दीर्घ kvm_रेजिस्टर_पढ़ो_raw(काष्ठा kvm_vcpu *vcpu, पूर्णांक reg)
-अणु
-	अगर (WARN_ON_ONCE((अचिन्हित पूर्णांक)reg >= NR_VCPU_REGS))
-		वापस 0;
+static inline unsigned long kvm_register_read_raw(struct kvm_vcpu *vcpu, int reg)
+{
+	if (WARN_ON_ONCE((unsigned int)reg >= NR_VCPU_REGS))
+		return 0;
 
-	अगर (!kvm_रेजिस्टर_is_available(vcpu, reg))
-		अटल_call(kvm_x86_cache_reg)(vcpu, reg);
+	if (!kvm_register_is_available(vcpu, reg))
+		static_call(kvm_x86_cache_reg)(vcpu, reg);
 
-	वापस vcpu->arch.regs[reg];
-पूर्ण
+	return vcpu->arch.regs[reg];
+}
 
-अटल अंतरभूत व्योम kvm_रेजिस्टर_ग_लिखो_raw(काष्ठा kvm_vcpu *vcpu, पूर्णांक reg,
-					  अचिन्हित दीर्घ val)
-अणु
-	अगर (WARN_ON_ONCE((अचिन्हित पूर्णांक)reg >= NR_VCPU_REGS))
-		वापस;
+static inline void kvm_register_write_raw(struct kvm_vcpu *vcpu, int reg,
+					  unsigned long val)
+{
+	if (WARN_ON_ONCE((unsigned int)reg >= NR_VCPU_REGS))
+		return;
 
 	vcpu->arch.regs[reg] = val;
-	kvm_रेजिस्टर_mark_dirty(vcpu, reg);
-पूर्ण
+	kvm_register_mark_dirty(vcpu, reg);
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ kvm_rip_पढ़ो(काष्ठा kvm_vcpu *vcpu)
-अणु
-	वापस kvm_रेजिस्टर_पढ़ो_raw(vcpu, VCPU_REGS_RIP);
-पूर्ण
+static inline unsigned long kvm_rip_read(struct kvm_vcpu *vcpu)
+{
+	return kvm_register_read_raw(vcpu, VCPU_REGS_RIP);
+}
 
-अटल अंतरभूत व्योम kvm_rip_ग_लिखो(काष्ठा kvm_vcpu *vcpu, अचिन्हित दीर्घ val)
-अणु
-	kvm_रेजिस्टर_ग_लिखो_raw(vcpu, VCPU_REGS_RIP, val);
-पूर्ण
+static inline void kvm_rip_write(struct kvm_vcpu *vcpu, unsigned long val)
+{
+	kvm_register_write_raw(vcpu, VCPU_REGS_RIP, val);
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ kvm_rsp_पढ़ो(काष्ठा kvm_vcpu *vcpu)
-अणु
-	वापस kvm_रेजिस्टर_पढ़ो_raw(vcpu, VCPU_REGS_RSP);
-पूर्ण
+static inline unsigned long kvm_rsp_read(struct kvm_vcpu *vcpu)
+{
+	return kvm_register_read_raw(vcpu, VCPU_REGS_RSP);
+}
 
-अटल अंतरभूत व्योम kvm_rsp_ग_लिखो(काष्ठा kvm_vcpu *vcpu, अचिन्हित दीर्घ val)
-अणु
-	kvm_रेजिस्टर_ग_लिखो_raw(vcpu, VCPU_REGS_RSP, val);
-पूर्ण
+static inline void kvm_rsp_write(struct kvm_vcpu *vcpu, unsigned long val)
+{
+	kvm_register_write_raw(vcpu, VCPU_REGS_RSP, val);
+}
 
-अटल अंतरभूत u64 kvm_pdptr_पढ़ो(काष्ठा kvm_vcpu *vcpu, पूर्णांक index)
-अणु
+static inline u64 kvm_pdptr_read(struct kvm_vcpu *vcpu, int index)
+{
 	might_sleep();  /* on svm */
 
-	अगर (!kvm_रेजिस्टर_is_available(vcpu, VCPU_EXREG_PDPTR))
-		अटल_call(kvm_x86_cache_reg)(vcpu, VCPU_EXREG_PDPTR);
+	if (!kvm_register_is_available(vcpu, VCPU_EXREG_PDPTR))
+		static_call(kvm_x86_cache_reg)(vcpu, VCPU_EXREG_PDPTR);
 
-	वापस vcpu->arch.walk_mmu->pdptrs[index];
-पूर्ण
+	return vcpu->arch.walk_mmu->pdptrs[index];
+}
 
-अटल अंतरभूत uदीर्घ kvm_पढ़ो_cr0_bits(काष्ठा kvm_vcpu *vcpu, uदीर्घ mask)
-अणु
-	uदीर्घ पंचांगask = mask & KVM_POSSIBLE_CR0_GUEST_BITS;
-	अगर ((पंचांगask & vcpu->arch.cr0_guest_owned_bits) &&
-	    !kvm_रेजिस्टर_is_available(vcpu, VCPU_EXREG_CR0))
-		अटल_call(kvm_x86_cache_reg)(vcpu, VCPU_EXREG_CR0);
-	वापस vcpu->arch.cr0 & mask;
-पूर्ण
+static inline ulong kvm_read_cr0_bits(struct kvm_vcpu *vcpu, ulong mask)
+{
+	ulong tmask = mask & KVM_POSSIBLE_CR0_GUEST_BITS;
+	if ((tmask & vcpu->arch.cr0_guest_owned_bits) &&
+	    !kvm_register_is_available(vcpu, VCPU_EXREG_CR0))
+		static_call(kvm_x86_cache_reg)(vcpu, VCPU_EXREG_CR0);
+	return vcpu->arch.cr0 & mask;
+}
 
-अटल अंतरभूत uदीर्घ kvm_पढ़ो_cr0(काष्ठा kvm_vcpu *vcpu)
-अणु
-	वापस kvm_पढ़ो_cr0_bits(vcpu, ~0UL);
-पूर्ण
+static inline ulong kvm_read_cr0(struct kvm_vcpu *vcpu)
+{
+	return kvm_read_cr0_bits(vcpu, ~0UL);
+}
 
-अटल अंतरभूत uदीर्घ kvm_पढ़ो_cr4_bits(काष्ठा kvm_vcpu *vcpu, uदीर्घ mask)
-अणु
-	uदीर्घ पंचांगask = mask & KVM_POSSIBLE_CR4_GUEST_BITS;
-	अगर ((पंचांगask & vcpu->arch.cr4_guest_owned_bits) &&
-	    !kvm_रेजिस्टर_is_available(vcpu, VCPU_EXREG_CR4))
-		अटल_call(kvm_x86_cache_reg)(vcpu, VCPU_EXREG_CR4);
-	वापस vcpu->arch.cr4 & mask;
-पूर्ण
+static inline ulong kvm_read_cr4_bits(struct kvm_vcpu *vcpu, ulong mask)
+{
+	ulong tmask = mask & KVM_POSSIBLE_CR4_GUEST_BITS;
+	if ((tmask & vcpu->arch.cr4_guest_owned_bits) &&
+	    !kvm_register_is_available(vcpu, VCPU_EXREG_CR4))
+		static_call(kvm_x86_cache_reg)(vcpu, VCPU_EXREG_CR4);
+	return vcpu->arch.cr4 & mask;
+}
 
-अटल अंतरभूत uदीर्घ kvm_पढ़ो_cr3(काष्ठा kvm_vcpu *vcpu)
-अणु
-	अगर (!kvm_रेजिस्टर_is_available(vcpu, VCPU_EXREG_CR3))
-		अटल_call(kvm_x86_cache_reg)(vcpu, VCPU_EXREG_CR3);
-	वापस vcpu->arch.cr3;
-पूर्ण
+static inline ulong kvm_read_cr3(struct kvm_vcpu *vcpu)
+{
+	if (!kvm_register_is_available(vcpu, VCPU_EXREG_CR3))
+		static_call(kvm_x86_cache_reg)(vcpu, VCPU_EXREG_CR3);
+	return vcpu->arch.cr3;
+}
 
-अटल अंतरभूत uदीर्घ kvm_पढ़ो_cr4(काष्ठा kvm_vcpu *vcpu)
-अणु
-	वापस kvm_पढ़ो_cr4_bits(vcpu, ~0UL);
-पूर्ण
+static inline ulong kvm_read_cr4(struct kvm_vcpu *vcpu)
+{
+	return kvm_read_cr4_bits(vcpu, ~0UL);
+}
 
-अटल अंतरभूत u64 kvm_पढ़ो_edx_eax(काष्ठा kvm_vcpu *vcpu)
-अणु
-	वापस (kvm_rax_पढ़ो(vcpu) & -1u)
-		| ((u64)(kvm_rdx_पढ़ो(vcpu) & -1u) << 32);
-पूर्ण
+static inline u64 kvm_read_edx_eax(struct kvm_vcpu *vcpu)
+{
+	return (kvm_rax_read(vcpu) & -1u)
+		| ((u64)(kvm_rdx_read(vcpu) & -1u) << 32);
+}
 
-अटल अंतरभूत व्योम enter_guest_mode(काष्ठा kvm_vcpu *vcpu)
-अणु
+static inline void enter_guest_mode(struct kvm_vcpu *vcpu)
+{
 	vcpu->arch.hflags |= HF_GUEST_MASK;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम leave_guest_mode(काष्ठा kvm_vcpu *vcpu)
-अणु
+static inline void leave_guest_mode(struct kvm_vcpu *vcpu)
+{
 	vcpu->arch.hflags &= ~HF_GUEST_MASK;
 
-	अगर (vcpu->arch.load_eoi_निकासmap_pending) अणु
-		vcpu->arch.load_eoi_निकासmap_pending = false;
+	if (vcpu->arch.load_eoi_exitmap_pending) {
+		vcpu->arch.load_eoi_exitmap_pending = false;
 		kvm_make_request(KVM_REQ_LOAD_EOI_EXITMAP, vcpu);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत bool is_guest_mode(काष्ठा kvm_vcpu *vcpu)
-अणु
-	वापस vcpu->arch.hflags & HF_GUEST_MASK;
-पूर्ण
+static inline bool is_guest_mode(struct kvm_vcpu *vcpu)
+{
+	return vcpu->arch.hflags & HF_GUEST_MASK;
+}
 
-अटल अंतरभूत bool is_smm(काष्ठा kvm_vcpu *vcpu)
-अणु
-	वापस vcpu->arch.hflags & HF_SMM_MASK;
-पूर्ण
+static inline bool is_smm(struct kvm_vcpu *vcpu)
+{
+	return vcpu->arch.hflags & HF_SMM_MASK;
+}
 
-#पूर्ण_अगर
+#endif

@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * tegra20_wm9712.c - Tegra machine ASoC driver क्रम boards using WM9712 codec.
+ * tegra20_wm9712.c - Tegra machine ASoC driver for boards using WM9712 codec.
  *
  * Copyright 2012 Lucas Stach <dev@lynxeye.de>
  *
@@ -9,156 +8,156 @@
  * Copyright 2011,2012 Toradex Inc.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/of_gpपन.स>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
+#include <linux/gpio.h>
+#include <linux/of_gpio.h>
 
-#समावेश <sound/core.h>
-#समावेश <sound/jack.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/pcm_params.h>
-#समावेश <sound/soc.h>
+#include <sound/core.h>
+#include <sound/jack.h>
+#include <sound/pcm.h>
+#include <sound/pcm_params.h>
+#include <sound/soc.h>
 
-#समावेश "tegra_asoc_utils.h"
+#include "tegra_asoc_utils.h"
 
-#घोषणा DRV_NAME "tegra-snd-wm9712"
+#define DRV_NAME "tegra-snd-wm9712"
 
-काष्ठा tegra_wm9712 अणु
-	काष्ठा platक्रमm_device *codec;
-	काष्ठा tegra_asoc_utils_data util_data;
-पूर्ण;
+struct tegra_wm9712 {
+	struct platform_device *codec;
+	struct tegra_asoc_utils_data util_data;
+};
 
-अटल स्थिर काष्ठा snd_soc_dapm_widget tegra_wm9712_dapm_widमाला_लो[] = अणु
-	SND_SOC_DAPM_HP("Headphone", शून्य),
-	SND_SOC_DAPM_LINE("LineIn", शून्य),
-	SND_SOC_DAPM_MIC("Mic", शून्य),
-पूर्ण;
+static const struct snd_soc_dapm_widget tegra_wm9712_dapm_widgets[] = {
+	SND_SOC_DAPM_HP("Headphone", NULL),
+	SND_SOC_DAPM_LINE("LineIn", NULL),
+	SND_SOC_DAPM_MIC("Mic", NULL),
+};
 
-अटल पूर्णांक tegra_wm9712_init(काष्ठा snd_soc_pcm_runसमय *rtd)
-अणु
-	वापस snd_soc_dapm_क्रमce_enable_pin(&rtd->card->dapm, "Mic Bias");
-पूर्ण
+static int tegra_wm9712_init(struct snd_soc_pcm_runtime *rtd)
+{
+	return snd_soc_dapm_force_enable_pin(&rtd->card->dapm, "Mic Bias");
+}
 
-SND_SOC_DAILINK_DEFS(hअगरi,
+SND_SOC_DAILINK_DEFS(hifi,
 	DAILINK_COMP_ARRAY(COMP_EMPTY()),
 	DAILINK_COMP_ARRAY(COMP_CODEC("wm9712-codec", "wm9712-hifi")),
 	DAILINK_COMP_ARRAY(COMP_EMPTY()));
 
-अटल काष्ठा snd_soc_dai_link tegra_wm9712_dai = अणु
+static struct snd_soc_dai_link tegra_wm9712_dai = {
 	.name = "AC97 HiFi",
 	.stream_name = "AC97 HiFi",
 	.init = tegra_wm9712_init,
-	SND_SOC_DAILINK_REG(hअगरi),
-पूर्ण;
+	SND_SOC_DAILINK_REG(hifi),
+};
 
-अटल काष्ठा snd_soc_card snd_soc_tegra_wm9712 = अणु
+static struct snd_soc_card snd_soc_tegra_wm9712 = {
 	.name = "tegra-wm9712",
 	.owner = THIS_MODULE,
 	.dai_link = &tegra_wm9712_dai,
 	.num_links = 1,
 
-	.dapm_widमाला_लो = tegra_wm9712_dapm_widमाला_लो,
-	.num_dapm_widमाला_लो = ARRAY_SIZE(tegra_wm9712_dapm_widमाला_लो),
+	.dapm_widgets = tegra_wm9712_dapm_widgets,
+	.num_dapm_widgets = ARRAY_SIZE(tegra_wm9712_dapm_widgets),
 	.fully_routed = true,
-पूर्ण;
+};
 
-अटल पूर्णांक tegra_wm9712_driver_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device_node *np = pdev->dev.of_node;
-	काष्ठा snd_soc_card *card = &snd_soc_tegra_wm9712;
-	काष्ठा tegra_wm9712 *machine;
-	पूर्णांक ret;
+static int tegra_wm9712_driver_probe(struct platform_device *pdev)
+{
+	struct device_node *np = pdev->dev.of_node;
+	struct snd_soc_card *card = &snd_soc_tegra_wm9712;
+	struct tegra_wm9712 *machine;
+	int ret;
 
-	machine = devm_kzalloc(&pdev->dev, माप(काष्ठा tegra_wm9712),
+	machine = devm_kzalloc(&pdev->dev, sizeof(struct tegra_wm9712),
 			       GFP_KERNEL);
-	अगर (!machine)
-		वापस -ENOMEM;
+	if (!machine)
+		return -ENOMEM;
 
 	card->dev = &pdev->dev;
 	snd_soc_card_set_drvdata(card, machine);
 
-	machine->codec = platक्रमm_device_alloc("wm9712-codec", -1);
-	अगर (!machine->codec) अणु
+	machine->codec = platform_device_alloc("wm9712-codec", -1);
+	if (!machine->codec) {
 		dev_err(&pdev->dev, "Can't allocate wm9712 platform device\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	ret = platक्रमm_device_add(machine->codec);
-	अगर (ret)
-		जाओ codec_put;
+	ret = platform_device_add(machine->codec);
+	if (ret)
+		goto codec_put;
 
 	ret = snd_soc_of_parse_card_name(card, "nvidia,model");
-	अगर (ret)
-		जाओ codec_unरेजिस्टर;
+	if (ret)
+		goto codec_unregister;
 
 	ret = snd_soc_of_parse_audio_routing(card, "nvidia,audio-routing");
-	अगर (ret)
-		जाओ codec_unरेजिस्टर;
+	if (ret)
+		goto codec_unregister;
 
 	tegra_wm9712_dai.cpus->of_node = of_parse_phandle(np,
 				       "nvidia,ac97-controller", 0);
-	अगर (!tegra_wm9712_dai.cpus->of_node) अणु
+	if (!tegra_wm9712_dai.cpus->of_node) {
 		dev_err(&pdev->dev,
 			"Property 'nvidia,ac97-controller' missing or invalid\n");
 		ret = -EINVAL;
-		जाओ codec_unरेजिस्टर;
-	पूर्ण
+		goto codec_unregister;
+	}
 
-	tegra_wm9712_dai.platक्रमms->of_node = tegra_wm9712_dai.cpus->of_node;
+	tegra_wm9712_dai.platforms->of_node = tegra_wm9712_dai.cpus->of_node;
 
 	ret = tegra_asoc_utils_init(&machine->util_data, &pdev->dev);
-	अगर (ret)
-		जाओ codec_unरेजिस्टर;
+	if (ret)
+		goto codec_unregister;
 
 	ret = tegra_asoc_utils_set_ac97_rate(&machine->util_data);
-	अगर (ret)
-		जाओ codec_unरेजिस्टर;
+	if (ret)
+		goto codec_unregister;
 
-	ret = snd_soc_रेजिस्टर_card(card);
-	अगर (ret) अणु
+	ret = snd_soc_register_card(card);
+	if (ret) {
 		dev_err_probe(&pdev->dev, ret,
 			      "snd_soc_register_card failed\n");
-		जाओ codec_unरेजिस्टर;
-	पूर्ण
+		goto codec_unregister;
+	}
 
-	वापस 0;
+	return 0;
 
-codec_unरेजिस्टर:
-	platक्रमm_device_del(machine->codec);
+codec_unregister:
+	platform_device_del(machine->codec);
 codec_put:
-	platक्रमm_device_put(machine->codec);
-	वापस ret;
-पूर्ण
+	platform_device_put(machine->codec);
+	return ret;
+}
 
-अटल पूर्णांक tegra_wm9712_driver_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा snd_soc_card *card = platक्रमm_get_drvdata(pdev);
-	काष्ठा tegra_wm9712 *machine = snd_soc_card_get_drvdata(card);
+static int tegra_wm9712_driver_remove(struct platform_device *pdev)
+{
+	struct snd_soc_card *card = platform_get_drvdata(pdev);
+	struct tegra_wm9712 *machine = snd_soc_card_get_drvdata(card);
 
-	snd_soc_unरेजिस्टर_card(card);
+	snd_soc_unregister_card(card);
 
-	platक्रमm_device_unरेजिस्टर(machine->codec);
+	platform_device_unregister(machine->codec);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id tegra_wm9712_of_match[] = अणु
-	अणु .compatible = "nvidia,tegra-audio-wm9712", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id tegra_wm9712_of_match[] = {
+	{ .compatible = "nvidia,tegra-audio-wm9712", },
+	{},
+};
 
-अटल काष्ठा platक्रमm_driver tegra_wm9712_driver = अणु
-	.driver = अणु
+static struct platform_driver tegra_wm9712_driver = {
+	.driver = {
 		.name = DRV_NAME,
 		.pm = &snd_soc_pm_ops,
 		.of_match_table = tegra_wm9712_of_match,
-	पूर्ण,
+	},
 	.probe = tegra_wm9712_driver_probe,
-	.हटाओ = tegra_wm9712_driver_हटाओ,
-पूर्ण;
-module_platक्रमm_driver(tegra_wm9712_driver);
+	.remove = tegra_wm9712_driver_remove,
+};
+module_platform_driver(tegra_wm9712_driver);
 
 MODULE_AUTHOR("Lucas Stach");
 MODULE_DESCRIPTION("Tegra+WM9712 machine ASoC driver");

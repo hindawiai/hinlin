@@ -1,74 +1,73 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Generate opcode table initializers क्रम the in-kernel disassembler.
+ * Generate opcode table initializers for the in-kernel disassembler.
  *
  *    Copyright IBM Corp. 2017
  *
  */
 
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <प्रकार.स>
-#समावेश <मानकपन.स>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+#include <stdio.h>
 
-#घोषणा STRING_SIZE_MAX 20
+#define STRING_SIZE_MAX 20
 
-काष्ठा insn_type अणु
-	अचिन्हित अक्षर byte;
-	अचिन्हित अक्षर mask;
-	अक्षर **क्रमmat;
-पूर्ण;
+struct insn_type {
+	unsigned char byte;
+	unsigned char mask;
+	char **format;
+};
 
-काष्ठा insn अणु
-	काष्ठा insn_type *type;
-	अक्षर opcode[STRING_SIZE_MAX];
-	अक्षर name[STRING_SIZE_MAX];
-	अक्षर upper[STRING_SIZE_MAX];
-	अक्षर क्रमmat[STRING_SIZE_MAX];
-	अचिन्हित पूर्णांक name_len;
-पूर्ण;
+struct insn {
+	struct insn_type *type;
+	char opcode[STRING_SIZE_MAX];
+	char name[STRING_SIZE_MAX];
+	char upper[STRING_SIZE_MAX];
+	char format[STRING_SIZE_MAX];
+	unsigned int name_len;
+};
 
-काष्ठा insn_group अणु
-	काष्ठा insn_type *type;
-	पूर्णांक offset;
-	पूर्णांक count;
-	अक्षर opcode[2];
-पूर्ण;
+struct insn_group {
+	struct insn_type *type;
+	int offset;
+	int count;
+	char opcode[2];
+};
 
-काष्ठा insn_क्रमmat अणु
-	अक्षर *क्रमmat;
-	पूर्णांक type;
-पूर्ण;
+struct insn_format {
+	char *format;
+	int type;
+};
 
-काष्ठा gen_opcode अणु
-	काष्ठा insn *insn;
-	पूर्णांक nr;
-	काष्ठा insn_group *group;
-	पूर्णांक nr_groups;
-पूर्ण;
+struct gen_opcode {
+	struct insn *insn;
+	int nr;
+	struct insn_group *group;
+	int nr_groups;
+};
 
 /*
- * Table of inकाष्ठाion क्रमmat types. Each opcode is defined with at
+ * Table of instruction format types. Each opcode is defined with at
  * least one byte (two nibbles), three nibbles, or two bytes (four
  * nibbles).
- * The byte member of each inकाष्ठाion क्रमmat type entry defines
- * within which byte of an inकाष्ठाion the third (and fourth) nibble
+ * The byte member of each instruction format type entry defines
+ * within which byte of an instruction the third (and fourth) nibble
  * of an opcode can be found. The mask member is the and-mask that
  * needs to be applied on this byte in order to get the third (and
  * fourth) nibble of the opcode.
- * The क्रमmat array defines all inकाष्ठाion क्रमmats (as defined in the
+ * The format array defines all instruction formats (as defined in the
  * Principles of Operation) which have the same position of the opcode
  * nibbles.
- * A special हाल are inकाष्ठाion क्रमmats with 1-byte opcodes. In this
- * हाल the byte member always is zero, so that the mask is applied on
+ * A special case are instruction formats with 1-byte opcodes. In this
+ * case the byte member always is zero, so that the mask is applied on
  * the (only) byte that contains the opcode.
  */
-अटल काष्ठा insn_type insn_type_table[] = अणु
-	अणु
+static struct insn_type insn_type_table[] = {
+	{
 		.byte = 0,
 		.mask = 0xff,
-		.क्रमmat = (अक्षर *[]) अणु
+		.format = (char *[]) {
 			"MII",
 			"RR",
 			"RS",
@@ -77,23 +76,23 @@
 			"SI",
 			"SMI",
 			"SS",
-			शून्य,
-		पूर्ण,
-	पूर्ण,
-	अणु
+			NULL,
+		},
+	},
+	{
 		.byte = 1,
 		.mask = 0x0f,
-		.क्रमmat = (अक्षर *[]) अणु
+		.format = (char *[]) {
 			"RI",
 			"RIL",
 			"SSF",
-			शून्य,
-		पूर्ण,
-	पूर्ण,
-	अणु
+			NULL,
+		},
+	},
+	{
 		.byte = 1,
 		.mask = 0xff,
-		.क्रमmat = (अक्षर *[]) अणु
+		.format = (char *[]) {
 			"E",
 			"IE",
 			"RRE",
@@ -102,13 +101,13 @@
 			"S",
 			"SIL",
 			"SSE",
-			शून्य,
-		पूर्ण,
-	पूर्ण,
-	अणु
+			NULL,
+		},
+	},
+	{
 		.byte = 5,
 		.mask = 0xff,
-		.क्रमmat = (अक्षर *[]) अणु
+		.format = (char *[]) {
 			"RIE",
 			"RIS",
 			"RRS",
@@ -125,214 +124,214 @@
 			"VRV",
 			"VRX",
 			"VSI",
-			शून्य,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+			NULL,
+		},
+	},
+};
 
-अटल काष्ठा insn_type *insn_क्रमmat_to_type(अक्षर *क्रमmat)
-अणु
-	अक्षर पंचांगp[STRING_SIZE_MAX];
-	अक्षर *base_क्रमmat, **ptr;
-	पूर्णांक i;
+static struct insn_type *insn_format_to_type(char *format)
+{
+	char tmp[STRING_SIZE_MAX];
+	char *base_format, **ptr;
+	int i;
 
-	म_नकल(पंचांगp, क्रमmat);
-	base_क्रमmat = पंचांगp;
-	base_क्रमmat = strsep(&base_क्रमmat, "_");
-	क्रम (i = 0; i < माप(insn_type_table) / माप(insn_type_table[0]); i++) अणु
-		ptr = insn_type_table[i].क्रमmat;
-		जबतक (*ptr) अणु
-			अगर (!म_भेद(base_क्रमmat, *ptr))
-				वापस &insn_type_table[i];
+	strcpy(tmp, format);
+	base_format = tmp;
+	base_format = strsep(&base_format, "_");
+	for (i = 0; i < sizeof(insn_type_table) / sizeof(insn_type_table[0]); i++) {
+		ptr = insn_type_table[i].format;
+		while (*ptr) {
+			if (!strcmp(base_format, *ptr))
+				return &insn_type_table[i];
 			ptr++;
-		पूर्ण
-	पूर्ण
-	निकास(निकास_त्रुटि);
-पूर्ण
+		}
+	}
+	exit(EXIT_FAILURE);
+}
 
-अटल व्योम पढ़ो_inकाष्ठाions(काष्ठा gen_opcode *desc)
-अणु
-	काष्ठा insn insn;
-	पूर्णांक rc, i;
+static void read_instructions(struct gen_opcode *desc)
+{
+	struct insn insn;
+	int rc, i;
 
-	जबतक (1) अणु
-		rc = म_पूछो("%s %s %s", insn.opcode, insn.name, insn.क्रमmat);
-		अगर (rc == खातापूर्ण)
-			अवरोध;
-		अगर (rc != 3)
-			निकास(निकास_त्रुटि);
-		insn.type = insn_क्रमmat_to_type(insn.क्रमmat);
-		insn.name_len = म_माप(insn.name);
-		क्रम (i = 0; i <= insn.name_len; i++)
-			insn.upper[i] = बड़े((अचिन्हित अक्षर)insn.name[i]);
+	while (1) {
+		rc = scanf("%s %s %s", insn.opcode, insn.name, insn.format);
+		if (rc == EOF)
+			break;
+		if (rc != 3)
+			exit(EXIT_FAILURE);
+		insn.type = insn_format_to_type(insn.format);
+		insn.name_len = strlen(insn.name);
+		for (i = 0; i <= insn.name_len; i++)
+			insn.upper[i] = toupper((unsigned char)insn.name[i]);
 		desc->nr++;
-		desc->insn = पुनः_स्मृति(desc->insn, desc->nr * माप(*desc->insn));
-		अगर (!desc->insn)
-			निकास(निकास_त्रुटि);
+		desc->insn = realloc(desc->insn, desc->nr * sizeof(*desc->insn));
+		if (!desc->insn)
+			exit(EXIT_FAILURE);
 		desc->insn[desc->nr - 1] = insn;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक cmpक्रमmat(स्थिर व्योम *a, स्थिर व्योम *b)
-अणु
-	वापस म_भेद(((काष्ठा insn *)a)->क्रमmat, ((काष्ठा insn *)b)->क्रमmat);
-पूर्ण
+static int cmpformat(const void *a, const void *b)
+{
+	return strcmp(((struct insn *)a)->format, ((struct insn *)b)->format);
+}
 
-अटल व्योम prपूर्णांक_क्रमmats(काष्ठा gen_opcode *desc)
-अणु
-	अक्षर *क्रमmat;
-	पूर्णांक i, count;
+static void print_formats(struct gen_opcode *desc)
+{
+	char *format;
+	int i, count;
 
-	क्विक(desc->insn, desc->nr, माप(*desc->insn), cmpक्रमmat);
-	क्रमmat = "";
+	qsort(desc->insn, desc->nr, sizeof(*desc->insn), cmpformat);
+	format = "";
 	count = 0;
-	म_लिखो("enum {\n");
-	क्रम (i = 0; i < desc->nr; i++) अणु
-		अगर (!म_भेद(क्रमmat, desc->insn[i].क्रमmat))
-			जारी;
+	printf("enum {\n");
+	for (i = 0; i < desc->nr; i++) {
+		if (!strcmp(format, desc->insn[i].format))
+			continue;
 		count++;
-		क्रमmat = desc->insn[i].क्रमmat;
-		म_लिखो("\tINSTR_%s,\n", क्रमmat);
-	पूर्ण
-	म_लिखो("}; /* %d */\n\n", count);
-पूर्ण
+		format = desc->insn[i].format;
+		printf("\tINSTR_%s,\n", format);
+	}
+	printf("}; /* %d */\n\n", count);
+}
 
-अटल पूर्णांक cmp_दीर्घ_insn(स्थिर व्योम *a, स्थिर व्योम *b)
-अणु
-	वापस म_भेद(((काष्ठा insn *)a)->name, ((काष्ठा insn *)b)->name);
-पूर्ण
+static int cmp_long_insn(const void *a, const void *b)
+{
+	return strcmp(((struct insn *)a)->name, ((struct insn *)b)->name);
+}
 
-अटल व्योम prपूर्णांक_दीर्घ_insn(काष्ठा gen_opcode *desc)
-अणु
-	काष्ठा insn *insn;
-	पूर्णांक i, count;
+static void print_long_insn(struct gen_opcode *desc)
+{
+	struct insn *insn;
+	int i, count;
 
-	क्विक(desc->insn, desc->nr, माप(*desc->insn), cmp_दीर्घ_insn);
+	qsort(desc->insn, desc->nr, sizeof(*desc->insn), cmp_long_insn);
 	count = 0;
-	म_लिखो("enum {\n");
-	क्रम (i = 0; i < desc->nr; i++) अणु
+	printf("enum {\n");
+	for (i = 0; i < desc->nr; i++) {
 		insn = &desc->insn[i];
-		अगर (insn->name_len < 6)
-			जारी;
-		म_लिखो("\tLONG_INSN_%s,\n", insn->upper);
+		if (insn->name_len < 6)
+			continue;
+		printf("\tLONG_INSN_%s,\n", insn->upper);
 		count++;
-	पूर्ण
-	म_लिखो("}; /* %d */\n\n", count);
+	}
+	printf("}; /* %d */\n\n", count);
 
-	म_लिखो("#define LONG_INSN_INITIALIZER { \\\n");
-	क्रम (i = 0; i < desc->nr; i++) अणु
+	printf("#define LONG_INSN_INITIALIZER { \\\n");
+	for (i = 0; i < desc->nr; i++) {
 		insn = &desc->insn[i];
-		अगर (insn->name_len < 6)
-			जारी;
-		म_लिखो("\t[LONG_INSN_%s] = \"%s\", \\\n", insn->upper, insn->name);
-	पूर्ण
-	म_लिखो("}\n\n");
-पूर्ण
+		if (insn->name_len < 6)
+			continue;
+		printf("\t[LONG_INSN_%s] = \"%s\", \\\n", insn->upper, insn->name);
+	}
+	printf("}\n\n");
+}
 
-अटल व्योम prपूर्णांक_opcode(काष्ठा insn *insn, पूर्णांक nr)
-अणु
-	अक्षर *opcode;
+static void print_opcode(struct insn *insn, int nr)
+{
+	char *opcode;
 
 	opcode = insn->opcode;
-	अगर (insn->type->byte != 0)
+	if (insn->type->byte != 0)
 		opcode += 2;
-	म_लिखो("\t[%4d] = { .opfrag = 0x%s, .format = INSTR_%s, ", nr, opcode, insn->क्रमmat);
-	अगर (insn->name_len < 6)
-		म_लिखो(".name = \"%s\" ", insn->name);
-	अन्यथा
-		म_लिखो(".offset = LONG_INSN_%s ", insn->upper);
-	म_लिखो("}, \\\n");
-पूर्ण
+	printf("\t[%4d] = { .opfrag = 0x%s, .format = INSTR_%s, ", nr, opcode, insn->format);
+	if (insn->name_len < 6)
+		printf(".name = \"%s\" ", insn->name);
+	else
+		printf(".offset = LONG_INSN_%s ", insn->upper);
+	printf("}, \\\n");
+}
 
-अटल व्योम add_to_group(काष्ठा gen_opcode *desc, काष्ठा insn *insn, पूर्णांक offset)
-अणु
-	काष्ठा insn_group *group;
+static void add_to_group(struct gen_opcode *desc, struct insn *insn, int offset)
+{
+	struct insn_group *group;
 
-	group = desc->group ? &desc->group[desc->nr_groups - 1] : शून्य;
-	अगर (group && (!म_भेदन(group->opcode, insn->opcode, 2) || group->type->byte == 0)) अणु
+	group = desc->group ? &desc->group[desc->nr_groups - 1] : NULL;
+	if (group && (!strncmp(group->opcode, insn->opcode, 2) || group->type->byte == 0)) {
 		group->count++;
-		वापस;
-	पूर्ण
+		return;
+	}
 	desc->nr_groups++;
-	desc->group = पुनः_स्मृति(desc->group, desc->nr_groups * माप(*desc->group));
-	अगर (!desc->group)
-		निकास(निकास_त्रुटि);
+	desc->group = realloc(desc->group, desc->nr_groups * sizeof(*desc->group));
+	if (!desc->group)
+		exit(EXIT_FAILURE);
 	group = &desc->group[desc->nr_groups - 1];
-	स_नकल(group->opcode, insn->opcode, 2);
+	memcpy(group->opcode, insn->opcode, 2);
 	group->type = insn->type;
 	group->offset = offset;
 	group->count = 1;
-पूर्ण
+}
 
-अटल पूर्णांक cmpopcode(स्थिर व्योम *a, स्थिर व्योम *b)
-अणु
-	वापस म_भेद(((काष्ठा insn *)a)->opcode, ((काष्ठा insn *)b)->opcode);
-पूर्ण
+static int cmpopcode(const void *a, const void *b)
+{
+	return strcmp(((struct insn *)a)->opcode, ((struct insn *)b)->opcode);
+}
 
-अटल व्योम prपूर्णांक_opcode_table(काष्ठा gen_opcode *desc)
-अणु
-	अक्षर opcode[2] = "";
-	काष्ठा insn *insn;
-	पूर्णांक i, offset;
+static void print_opcode_table(struct gen_opcode *desc)
+{
+	char opcode[2] = "";
+	struct insn *insn;
+	int i, offset;
 
-	क्विक(desc->insn, desc->nr, माप(*desc->insn), cmpopcode);
-	म_लिखो("#define OPCODE_TABLE_INITIALIZER { \\\n");
+	qsort(desc->insn, desc->nr, sizeof(*desc->insn), cmpopcode);
+	printf("#define OPCODE_TABLE_INITIALIZER { \\\n");
 	offset = 0;
-	क्रम (i = 0; i < desc->nr; i++) अणु
+	for (i = 0; i < desc->nr; i++) {
 		insn = &desc->insn[i];
-		अगर (insn->type->byte == 0)
-			जारी;
+		if (insn->type->byte == 0)
+			continue;
 		add_to_group(desc, insn, offset);
-		अगर (म_भेदन(opcode, insn->opcode, 2)) अणु
-			स_नकल(opcode, insn->opcode, 2);
-			म_लिखो("\t/* %.2s */ \\\n", opcode);
-		पूर्ण
-		prपूर्णांक_opcode(insn, offset);
+		if (strncmp(opcode, insn->opcode, 2)) {
+			memcpy(opcode, insn->opcode, 2);
+			printf("\t/* %.2s */ \\\n", opcode);
+		}
+		print_opcode(insn, offset);
 		offset++;
-	पूर्ण
-	म_लिखो("\t/* 1-byte opcode instructions */ \\\n");
-	क्रम (i = 0; i < desc->nr; i++) अणु
+	}
+	printf("\t/* 1-byte opcode instructions */ \\\n");
+	for (i = 0; i < desc->nr; i++) {
 		insn = &desc->insn[i];
-		अगर (insn->type->byte != 0)
-			जारी;
+		if (insn->type->byte != 0)
+			continue;
 		add_to_group(desc, insn, offset);
-		prपूर्णांक_opcode(insn, offset);
+		print_opcode(insn, offset);
 		offset++;
-	पूर्ण
-	म_लिखो("}\n\n");
-पूर्ण
+	}
+	printf("}\n\n");
+}
 
-अटल व्योम prपूर्णांक_opcode_table_offsets(काष्ठा gen_opcode *desc)
-अणु
-	काष्ठा insn_group *group;
-	पूर्णांक i;
+static void print_opcode_table_offsets(struct gen_opcode *desc)
+{
+	struct insn_group *group;
+	int i;
 
-	म_लिखो("#define OPCODE_OFFSET_INITIALIZER { \\\n");
-	क्रम (i = 0; i < desc->nr_groups; i++) अणु
+	printf("#define OPCODE_OFFSET_INITIALIZER { \\\n");
+	for (i = 0; i < desc->nr_groups; i++) {
 		group = &desc->group[i];
-		म_लिखो("\t{ .opcode = 0x%.2s, .mask = 0x%02x, .byte = %d, .offset = %d, .count = %d }, \\\n",
+		printf("\t{ .opcode = 0x%.2s, .mask = 0x%02x, .byte = %d, .offset = %d, .count = %d }, \\\n",
 		       group->opcode, group->type->mask, group->type->byte, group->offset, group->count);
-	पूर्ण
-	म_लिखो("}\n\n");
-पूर्ण
+	}
+	printf("}\n\n");
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
-अणु
-	काष्ठा gen_opcode _desc = अणु 0 पूर्ण;
-	काष्ठा gen_opcode *desc = &_desc;
+int main(int argc, char **argv)
+{
+	struct gen_opcode _desc = { 0 };
+	struct gen_opcode *desc = &_desc;
 
-	पढ़ो_inकाष्ठाions(desc);
-	म_लिखो("#ifndef __S390_GENERATED_DIS_DEFS_H__\n");
-	म_लिखो("#define __S390_GENERATED_DIS_DEFS_H__\n");
-	म_लिखो("/*\n");
-	म_लिखो(" * DO NOT MODIFY.\n");
-	म_लिखो(" *\n");
-	म_लिखो(" * This file was generated by %s\n", __खाता__);
-	म_लिखो(" */\n\n");
-	prपूर्णांक_क्रमmats(desc);
-	prपूर्णांक_दीर्घ_insn(desc);
-	prपूर्णांक_opcode_table(desc);
-	prपूर्णांक_opcode_table_offsets(desc);
-	म_लिखो("#endif\n");
-	निकास(निकास_सफल);
-पूर्ण
+	read_instructions(desc);
+	printf("#ifndef __S390_GENERATED_DIS_DEFS_H__\n");
+	printf("#define __S390_GENERATED_DIS_DEFS_H__\n");
+	printf("/*\n");
+	printf(" * DO NOT MODIFY.\n");
+	printf(" *\n");
+	printf(" * This file was generated by %s\n", __FILE__);
+	printf(" */\n\n");
+	print_formats(desc);
+	print_long_insn(desc);
+	print_opcode_table(desc);
+	print_opcode_table_offsets(desc);
+	printf("#endif\n");
+	exit(EXIT_SUCCESS);
+}

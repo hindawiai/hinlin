@@ -1,29 +1,28 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2000-2006 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
-#समावेश "xfs.h"
-#समावेश <linux/backing-dev.h>
+#include "xfs.h"
+#include <linux/backing-dev.h>
 
-#समावेश "xfs_shared.h"
-#समावेश "xfs_format.h"
-#समावेश "xfs_log_format.h"
-#समावेश "xfs_trans_resv.h"
-#समावेश "xfs_sb.h"
-#समावेश "xfs_mount.h"
-#समावेश "xfs_trace.h"
-#समावेश "xfs_log.h"
-#समावेश "xfs_log_recover.h"
-#समावेश "xfs_trans.h"
-#समावेश "xfs_buf_item.h"
-#समावेश "xfs_errortag.h"
-#समावेश "xfs_error.h"
+#include "xfs_shared.h"
+#include "xfs_format.h"
+#include "xfs_log_format.h"
+#include "xfs_trans_resv.h"
+#include "xfs_sb.h"
+#include "xfs_mount.h"
+#include "xfs_trace.h"
+#include "xfs_log.h"
+#include "xfs_log_recover.h"
+#include "xfs_trans.h"
+#include "xfs_buf_item.h"
+#include "xfs_errortag.h"
+#include "xfs_error.h"
 
-अटल kmem_zone_t *xfs_buf_zone;
+static kmem_zone_t *xfs_buf_zone;
 
-#घोषणा xb_to_gfp(flags) \
+#define xb_to_gfp(flags) \
 	((((flags) & XBF_READ_AHEAD) ? __GFP_NORETRY : GFP_NOFS) | __GFP_NOWARN)
 
 /*
@@ -53,102 +52,102 @@
  *	  b_lock (trylock due to inversion)
  */
 
-अटल पूर्णांक __xfs_buf_submit(काष्ठा xfs_buf *bp, bool रुको);
+static int __xfs_buf_submit(struct xfs_buf *bp, bool wait);
 
-अटल अंतरभूत पूर्णांक
+static inline int
 xfs_buf_submit(
-	काष्ठा xfs_buf		*bp)
-अणु
-	वापस __xfs_buf_submit(bp, !(bp->b_flags & XBF_ASYNC));
-पूर्ण
+	struct xfs_buf		*bp)
+{
+	return __xfs_buf_submit(bp, !(bp->b_flags & XBF_ASYNC));
+}
 
-अटल अंतरभूत पूर्णांक
+static inline int
 xfs_buf_is_vmapped(
-	काष्ठा xfs_buf	*bp)
-अणु
+	struct xfs_buf	*bp)
+{
 	/*
-	 * Return true अगर the buffer is vmapped.
+	 * Return true if the buffer is vmapped.
 	 *
-	 * b_addr is null अगर the buffer is not mapped, but the code is clever
-	 * enough to know it करोesn't have to map a single page, so the check has
-	 * to be both क्रम b_addr and bp->b_page_count > 1.
+	 * b_addr is null if the buffer is not mapped, but the code is clever
+	 * enough to know it doesn't have to map a single page, so the check has
+	 * to be both for b_addr and bp->b_page_count > 1.
 	 */
-	वापस bp->b_addr && bp->b_page_count > 1;
-पूर्ण
+	return bp->b_addr && bp->b_page_count > 1;
+}
 
-अटल अंतरभूत पूर्णांक
+static inline int
 xfs_buf_vmap_len(
-	काष्ठा xfs_buf	*bp)
-अणु
-	वापस (bp->b_page_count * PAGE_SIZE) - bp->b_offset;
-पूर्ण
+	struct xfs_buf	*bp)
+{
+	return (bp->b_page_count * PAGE_SIZE) - bp->b_offset;
+}
 
 /*
- * Bump the I/O in flight count on the buftarg अगर we haven't yet करोne so क्रम
+ * Bump the I/O in flight count on the buftarg if we haven't yet done so for
  * this buffer. The count is incremented once per buffer (per hold cycle)
  * because the corresponding decrement is deferred to buffer release. Buffers
- * can undergo I/O multiple बार in a hold-release cycle and per buffer I/O
- * tracking adds unnecessary overhead. This is used क्रम sychronization purposes
+ * can undergo I/O multiple times in a hold-release cycle and per buffer I/O
+ * tracking adds unnecessary overhead. This is used for sychronization purposes
  * with unmount (see xfs_buftarg_drain()), so all we really need is a count of
  * in-flight buffers.
  *
  * Buffers that are never released (e.g., superblock, iclog buffers) must set
- * the XBF_NO_IOACCT flag beक्रमe I/O submission. Otherwise, the buftarg count
+ * the XBF_NO_IOACCT flag before I/O submission. Otherwise, the buftarg count
  * never reaches zero and unmount hangs indefinitely.
  */
-अटल अंतरभूत व्योम
+static inline void
 xfs_buf_ioacct_inc(
-	काष्ठा xfs_buf	*bp)
-अणु
-	अगर (bp->b_flags & XBF_NO_IOACCT)
-		वापस;
+	struct xfs_buf	*bp)
+{
+	if (bp->b_flags & XBF_NO_IOACCT)
+		return;
 
 	ASSERT(bp->b_flags & XBF_ASYNC);
 	spin_lock(&bp->b_lock);
-	अगर (!(bp->b_state & XFS_BSTATE_IN_FLIGHT)) अणु
+	if (!(bp->b_state & XFS_BSTATE_IN_FLIGHT)) {
 		bp->b_state |= XFS_BSTATE_IN_FLIGHT;
 		percpu_counter_inc(&bp->b_target->bt_io_count);
-	पूर्ण
+	}
 	spin_unlock(&bp->b_lock);
-पूर्ण
+}
 
 /*
  * Clear the in-flight state on a buffer about to be released to the LRU or
- * मुक्तd and unaccount from the buftarg.
+ * freed and unaccount from the buftarg.
  */
-अटल अंतरभूत व्योम
+static inline void
 __xfs_buf_ioacct_dec(
-	काष्ठा xfs_buf	*bp)
-अणु
-	lockdep_निश्चित_held(&bp->b_lock);
+	struct xfs_buf	*bp)
+{
+	lockdep_assert_held(&bp->b_lock);
 
-	अगर (bp->b_state & XFS_BSTATE_IN_FLIGHT) अणु
+	if (bp->b_state & XFS_BSTATE_IN_FLIGHT) {
 		bp->b_state &= ~XFS_BSTATE_IN_FLIGHT;
 		percpu_counter_dec(&bp->b_target->bt_io_count);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम
+static inline void
 xfs_buf_ioacct_dec(
-	काष्ठा xfs_buf	*bp)
-अणु
+	struct xfs_buf	*bp)
+{
 	spin_lock(&bp->b_lock);
 	__xfs_buf_ioacct_dec(bp);
 	spin_unlock(&bp->b_lock);
-पूर्ण
+}
 
 /*
- * When we mark a buffer stale, we हटाओ the buffer from the LRU and clear the
- * b_lru_ref count so that the buffer is मुक्तd immediately when the buffer
- * reference count falls to zero. If the buffer is alपढ़ोy on the LRU, we need
- * to हटाओ the reference that LRU holds on the buffer.
+ * When we mark a buffer stale, we remove the buffer from the LRU and clear the
+ * b_lru_ref count so that the buffer is freed immediately when the buffer
+ * reference count falls to zero. If the buffer is already on the LRU, we need
+ * to remove the reference that LRU holds on the buffer.
  *
  * This prevents build-up of stale buffers on the LRU.
  */
-व्योम
+void
 xfs_buf_stale(
-	काष्ठा xfs_buf	*bp)
-अणु
+	struct xfs_buf	*bp)
+{
 	ASSERT(xfs_buf_islocked(bp));
 
 	bp->b_flags |= XBF_STALE;
@@ -156,89 +155,89 @@ xfs_buf_stale(
 	/*
 	 * Clear the delwri status so that a delwri queue walker will not
 	 * flush this buffer to disk now that it is stale. The delwri queue has
-	 * a reference to the buffer, so this is safe to करो.
+	 * a reference to the buffer, so this is safe to do.
 	 */
 	bp->b_flags &= ~_XBF_DELWRI_Q;
 
 	/*
 	 * Once the buffer is marked stale and unlocked, a subsequent lookup
 	 * could reset b_flags. There is no guarantee that the buffer is
-	 * unaccounted (released to LRU) beक्रमe that occurs. Drop in-flight
+	 * unaccounted (released to LRU) before that occurs. Drop in-flight
 	 * status now to preserve accounting consistency.
 	 */
 	spin_lock(&bp->b_lock);
 	__xfs_buf_ioacct_dec(bp);
 
 	atomic_set(&bp->b_lru_ref, 0);
-	अगर (!(bp->b_state & XFS_BSTATE_DISPOSE) &&
+	if (!(bp->b_state & XFS_BSTATE_DISPOSE) &&
 	    (list_lru_del(&bp->b_target->bt_lru, &bp->b_lru)))
 		atomic_dec(&bp->b_hold);
 
-	ASSERT(atomic_पढ़ो(&bp->b_hold) >= 1);
+	ASSERT(atomic_read(&bp->b_hold) >= 1);
 	spin_unlock(&bp->b_lock);
-पूर्ण
+}
 
-अटल पूर्णांक
+static int
 xfs_buf_get_maps(
-	काष्ठा xfs_buf		*bp,
-	पूर्णांक			map_count)
-अणु
-	ASSERT(bp->b_maps == शून्य);
+	struct xfs_buf		*bp,
+	int			map_count)
+{
+	ASSERT(bp->b_maps == NULL);
 	bp->b_map_count = map_count;
 
-	अगर (map_count == 1) अणु
+	if (map_count == 1) {
 		bp->b_maps = &bp->__b_map;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	bp->b_maps = kmem_zalloc(map_count * माप(काष्ठा xfs_buf_map),
+	bp->b_maps = kmem_zalloc(map_count * sizeof(struct xfs_buf_map),
 				KM_NOFS);
-	अगर (!bp->b_maps)
-		वापस -ENOMEM;
-	वापस 0;
-पूर्ण
+	if (!bp->b_maps)
+		return -ENOMEM;
+	return 0;
+}
 
 /*
- *	Frees b_pages अगर it was allocated.
+ *	Frees b_pages if it was allocated.
  */
-अटल व्योम
-xfs_buf_मुक्त_maps(
-	काष्ठा xfs_buf	*bp)
-अणु
-	अगर (bp->b_maps != &bp->__b_map) अणु
-		kmem_मुक्त(bp->b_maps);
-		bp->b_maps = शून्य;
-	पूर्ण
-पूर्ण
+static void
+xfs_buf_free_maps(
+	struct xfs_buf	*bp)
+{
+	if (bp->b_maps != &bp->__b_map) {
+		kmem_free(bp->b_maps);
+		bp->b_maps = NULL;
+	}
+}
 
-अटल पूर्णांक
+static int
 _xfs_buf_alloc(
-	काष्ठा xfs_buftarg	*target,
-	काष्ठा xfs_buf_map	*map,
-	पूर्णांक			nmaps,
+	struct xfs_buftarg	*target,
+	struct xfs_buf_map	*map,
+	int			nmaps,
 	xfs_buf_flags_t		flags,
-	काष्ठा xfs_buf		**bpp)
-अणु
-	काष्ठा xfs_buf		*bp;
-	पूर्णांक			error;
-	पूर्णांक			i;
+	struct xfs_buf		**bpp)
+{
+	struct xfs_buf		*bp;
+	int			error;
+	int			i;
 
-	*bpp = शून्य;
+	*bpp = NULL;
 	bp = kmem_cache_zalloc(xfs_buf_zone, GFP_NOFS | __GFP_NOFAIL);
 
 	/*
-	 * We करोn't want certain flags to appear in b_flags unless they are
-	 * specअगरically set by later operations on the buffer.
+	 * We don't want certain flags to appear in b_flags unless they are
+	 * specifically set by later operations on the buffer.
 	 */
 	flags &= ~(XBF_UNMAPPED | XBF_TRYLOCK | XBF_ASYNC | XBF_READ_AHEAD);
 
 	atomic_set(&bp->b_hold, 1);
 	atomic_set(&bp->b_lru_ref, 1);
-	init_completion(&bp->b_ioरुको);
+	init_completion(&bp->b_iowait);
 	INIT_LIST_HEAD(&bp->b_lru);
 	INIT_LIST_HEAD(&bp->b_list);
 	INIT_LIST_HEAD(&bp->b_li_list);
-	sema_init(&bp->b_sema, 0); /* held, no रुकोers */
+	sema_init(&bp->b_sema, 0); /* held, no waiters */
 	spin_lock_init(&bp->b_lock);
 	bp->b_target = target;
 	bp->b_mount = target->bt_mount;
@@ -247,160 +246,160 @@ _xfs_buf_alloc(
 	/*
 	 * Set length and io_length to the same value initially.
 	 * I/O routines should use io_length, which will be the same in
-	 * most हालs but may be reset (e.g. XFS recovery).
+	 * most cases but may be reset (e.g. XFS recovery).
 	 */
 	error = xfs_buf_get_maps(bp, nmaps);
-	अगर (error)  अणु
-		kmem_cache_मुक्त(xfs_buf_zone, bp);
-		वापस error;
-	पूर्ण
+	if (error)  {
+		kmem_cache_free(xfs_buf_zone, bp);
+		return error;
+	}
 
 	bp->b_bn = map[0].bm_bn;
 	bp->b_length = 0;
-	क्रम (i = 0; i < nmaps; i++) अणु
+	for (i = 0; i < nmaps; i++) {
 		bp->b_maps[i].bm_bn = map[i].bm_bn;
 		bp->b_maps[i].bm_len = map[i].bm_len;
 		bp->b_length += map[i].bm_len;
-	पूर्ण
+	}
 
 	atomic_set(&bp->b_pin_count, 0);
-	init_रुकोqueue_head(&bp->b_रुकोers);
+	init_waitqueue_head(&bp->b_waiters);
 
 	XFS_STATS_INC(bp->b_mount, xb_create);
 	trace_xfs_buf_init(bp, _RET_IP_);
 
 	*bpp = bp;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- *	Allocate a page array capable of holding a specअगरied number
- *	of pages, and poपूर्णांक the page buf at it.
+ *	Allocate a page array capable of holding a specified number
+ *	of pages, and point the page buf at it.
  */
-STATIC पूर्णांक
+STATIC int
 _xfs_buf_get_pages(
-	काष्ठा xfs_buf		*bp,
-	पूर्णांक			page_count)
-अणु
+	struct xfs_buf		*bp,
+	int			page_count)
+{
 	/* Make sure that we have a page list */
-	अगर (bp->b_pages == शून्य) अणु
+	if (bp->b_pages == NULL) {
 		bp->b_page_count = page_count;
-		अगर (page_count <= XB_PAGES) अणु
+		if (page_count <= XB_PAGES) {
 			bp->b_pages = bp->b_page_array;
-		पूर्ण अन्यथा अणु
-			bp->b_pages = kmem_alloc(माप(काष्ठा page *) *
+		} else {
+			bp->b_pages = kmem_alloc(sizeof(struct page *) *
 						 page_count, KM_NOFS);
-			अगर (bp->b_pages == शून्य)
-				वापस -ENOMEM;
-		पूर्ण
-		स_रखो(bp->b_pages, 0, माप(काष्ठा page *) * page_count);
-	पूर्ण
-	वापस 0;
-पूर्ण
+			if (bp->b_pages == NULL)
+				return -ENOMEM;
+		}
+		memset(bp->b_pages, 0, sizeof(struct page *) * page_count);
+	}
+	return 0;
+}
 
 /*
- *	Frees b_pages अगर it was allocated.
+ *	Frees b_pages if it was allocated.
  */
-STATIC व्योम
-_xfs_buf_मुक्त_pages(
-	काष्ठा xfs_buf	*bp)
-अणु
-	अगर (bp->b_pages != bp->b_page_array) अणु
-		kmem_मुक्त(bp->b_pages);
-		bp->b_pages = शून्य;
-	पूर्ण
-पूर्ण
+STATIC void
+_xfs_buf_free_pages(
+	struct xfs_buf	*bp)
+{
+	if (bp->b_pages != bp->b_page_array) {
+		kmem_free(bp->b_pages);
+		bp->b_pages = NULL;
+	}
+}
 
 /*
- *	Releases the specअगरied buffer.
+ *	Releases the specified buffer.
  *
- * 	The modअगरication state of any associated pages is left unchanged.
- * 	The buffer must not be on any hash - use xfs_buf_rele instead क्रम
+ * 	The modification state of any associated pages is left unchanged.
+ * 	The buffer must not be on any hash - use xfs_buf_rele instead for
  * 	hashed and refcounted buffers
  */
-अटल व्योम
-xfs_buf_मुक्त(
-	काष्ठा xfs_buf		*bp)
-अणु
-	trace_xfs_buf_मुक्त(bp, _RET_IP_);
+static void
+xfs_buf_free(
+	struct xfs_buf		*bp)
+{
+	trace_xfs_buf_free(bp, _RET_IP_);
 
 	ASSERT(list_empty(&bp->b_lru));
 
-	अगर (bp->b_flags & _XBF_PAGES) अणु
-		uपूर्णांक		i;
+	if (bp->b_flags & _XBF_PAGES) {
+		uint		i;
 
-		अगर (xfs_buf_is_vmapped(bp))
+		if (xfs_buf_is_vmapped(bp))
 			vm_unmap_ram(bp->b_addr - bp->b_offset,
 					bp->b_page_count);
 
-		क्रम (i = 0; i < bp->b_page_count; i++) अणु
-			काष्ठा page	*page = bp->b_pages[i];
+		for (i = 0; i < bp->b_page_count; i++) {
+			struct page	*page = bp->b_pages[i];
 
-			__मुक्त_page(page);
-		पूर्ण
-		अगर (current->reclaim_state)
+			__free_page(page);
+		}
+		if (current->reclaim_state)
 			current->reclaim_state->reclaimed_slab +=
 							bp->b_page_count;
-	पूर्ण अन्यथा अगर (bp->b_flags & _XBF_KMEM)
-		kmem_मुक्त(bp->b_addr);
-	_xfs_buf_मुक्त_pages(bp);
-	xfs_buf_मुक्त_maps(bp);
-	kmem_cache_मुक्त(xfs_buf_zone, bp);
-पूर्ण
+	} else if (bp->b_flags & _XBF_KMEM)
+		kmem_free(bp->b_addr);
+	_xfs_buf_free_pages(bp);
+	xfs_buf_free_maps(bp);
+	kmem_cache_free(xfs_buf_zone, bp);
+}
 
 /*
- * Allocates all the pages क्रम buffer in question and builds it's page list.
+ * Allocates all the pages for buffer in question and builds it's page list.
  */
-STATIC पूर्णांक
+STATIC int
 xfs_buf_allocate_memory(
-	काष्ठा xfs_buf		*bp,
-	uपूर्णांक			flags)
-अणु
-	माप_प्रकार			size;
-	माप_प्रकार			nbytes, offset;
+	struct xfs_buf		*bp,
+	uint			flags)
+{
+	size_t			size;
+	size_t			nbytes, offset;
 	gfp_t			gfp_mask = xb_to_gfp(flags);
-	अचिन्हित लघु		page_count, i;
+	unsigned short		page_count, i;
 	xfs_off_t		start, end;
-	पूर्णांक			error;
+	int			error;
 	xfs_km_flags_t		kmflag_mask = 0;
 
 	/*
-	 * assure zeroed buffer क्रम non-पढ़ो हालs.
+	 * assure zeroed buffer for non-read cases.
 	 */
-	अगर (!(flags & XBF_READ)) अणु
+	if (!(flags & XBF_READ)) {
 		kmflag_mask |= KM_ZERO;
 		gfp_mask |= __GFP_ZERO;
-	पूर्ण
+	}
 
 	/*
-	 * क्रम buffers that are contained within a single page, just allocate
-	 * the memory from the heap - there's no need क्रम the complनिकासy of
-	 * page arrays to keep allocation करोwn to order 0.
+	 * for buffers that are contained within a single page, just allocate
+	 * the memory from the heap - there's no need for the complexity of
+	 * page arrays to keep allocation down to order 0.
 	 */
 	size = BBTOB(bp->b_length);
-	अगर (size < PAGE_SIZE) अणु
-		पूर्णांक align_mask = xfs_buftarg_dma_alignment(bp->b_target);
+	if (size < PAGE_SIZE) {
+		int align_mask = xfs_buftarg_dma_alignment(bp->b_target);
 		bp->b_addr = kmem_alloc_io(size, align_mask,
 					   KM_NOFS | kmflag_mask);
-		अगर (!bp->b_addr) अणु
+		if (!bp->b_addr) {
 			/* low memory - use alloc_page loop instead */
-			जाओ use_alloc_page;
-		पूर्ण
+			goto use_alloc_page;
+		}
 
-		अगर (((अचिन्हित दीर्घ)(bp->b_addr + size - 1) & PAGE_MASK) !=
-		    ((अचिन्हित दीर्घ)bp->b_addr & PAGE_MASK)) अणु
+		if (((unsigned long)(bp->b_addr + size - 1) & PAGE_MASK) !=
+		    ((unsigned long)bp->b_addr & PAGE_MASK)) {
 			/* b_addr spans two pages - use alloc_page instead */
-			kmem_मुक्त(bp->b_addr);
-			bp->b_addr = शून्य;
-			जाओ use_alloc_page;
-		पूर्ण
+			kmem_free(bp->b_addr);
+			bp->b_addr = NULL;
+			goto use_alloc_page;
+		}
 		bp->b_offset = offset_in_page(bp->b_addr);
 		bp->b_pages = bp->b_page_array;
 		bp->b_pages[0] = kmem_to_page(bp->b_addr);
 		bp->b_page_count = 1;
 		bp->b_flags |= _XBF_KMEM;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 use_alloc_page:
 	start = BBTOB(bp->b_maps[0].bm_bn) >> PAGE_SHIFT;
@@ -408,215 +407,215 @@ use_alloc_page:
 								>> PAGE_SHIFT;
 	page_count = end - start;
 	error = _xfs_buf_get_pages(bp, page_count);
-	अगर (unlikely(error))
-		वापस error;
+	if (unlikely(error))
+		return error;
 
 	offset = bp->b_offset;
 	bp->b_flags |= _XBF_PAGES;
 
-	क्रम (i = 0; i < bp->b_page_count; i++) अणु
-		काष्ठा page	*page;
-		uपूर्णांक		retries = 0;
+	for (i = 0; i < bp->b_page_count; i++) {
+		struct page	*page;
+		uint		retries = 0;
 retry:
 		page = alloc_page(gfp_mask);
-		अगर (unlikely(page == शून्य)) अणु
-			अगर (flags & XBF_READ_AHEAD) अणु
+		if (unlikely(page == NULL)) {
+			if (flags & XBF_READ_AHEAD) {
 				bp->b_page_count = i;
 				error = -ENOMEM;
-				जाओ out_मुक्त_pages;
-			पूर्ण
+				goto out_free_pages;
+			}
 
 			/*
 			 * This could deadlock.
 			 *
 			 * But until all the XFS lowlevel code is revamped to
-			 * handle buffer allocation failures we can't करो much.
+			 * handle buffer allocation failures we can't do much.
 			 */
-			अगर (!(++retries % 100))
-				xfs_err(शून्य,
+			if (!(++retries % 100))
+				xfs_err(NULL,
 		"%s(%u) possible memory allocation deadlock in %s (mode:0x%x)",
 					current->comm, current->pid,
 					__func__, gfp_mask);
 
 			XFS_STATS_INC(bp->b_mount, xb_page_retries);
-			congestion_रुको(BLK_RW_ASYNC, HZ/50);
-			जाओ retry;
-		पूर्ण
+			congestion_wait(BLK_RW_ASYNC, HZ/50);
+			goto retry;
+		}
 
 		XFS_STATS_INC(bp->b_mount, xb_page_found);
 
-		nbytes = min_t(माप_प्रकार, size, PAGE_SIZE - offset);
+		nbytes = min_t(size_t, size, PAGE_SIZE - offset);
 		size -= nbytes;
 		bp->b_pages[i] = page;
 		offset = 0;
-	पूर्ण
-	वापस 0;
+	}
+	return 0;
 
-out_मुक्त_pages:
-	क्रम (i = 0; i < bp->b_page_count; i++)
-		__मुक्त_page(bp->b_pages[i]);
+out_free_pages:
+	for (i = 0; i < bp->b_page_count; i++)
+		__free_page(bp->b_pages[i]);
 	bp->b_flags &= ~_XBF_PAGES;
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /*
- *	Map buffer पूर्णांकo kernel address-space अगर necessary.
+ *	Map buffer into kernel address-space if necessary.
  */
-STATIC पूर्णांक
+STATIC int
 _xfs_buf_map_pages(
-	काष्ठा xfs_buf		*bp,
-	uपूर्णांक			flags)
-अणु
+	struct xfs_buf		*bp,
+	uint			flags)
+{
 	ASSERT(bp->b_flags & _XBF_PAGES);
-	अगर (bp->b_page_count == 1) अणु
+	if (bp->b_page_count == 1) {
 		/* A single page buffer is always mappable */
 		bp->b_addr = page_address(bp->b_pages[0]) + bp->b_offset;
-	पूर्ण अन्यथा अगर (flags & XBF_UNMAPPED) अणु
-		bp->b_addr = शून्य;
-	पूर्ण अन्यथा अणु
-		पूर्णांक retried = 0;
-		अचिन्हित nofs_flag;
+	} else if (flags & XBF_UNMAPPED) {
+		bp->b_addr = NULL;
+	} else {
+		int retried = 0;
+		unsigned nofs_flag;
 
 		/*
-		 * vm_map_ram() will allocate auxiliary काष्ठाures (e.g.
+		 * vm_map_ram() will allocate auxiliary structures (e.g.
 		 * pagetables) with GFP_KERNEL, yet we are likely to be under
 		 * GFP_NOFS context here. Hence we need to tell memory reclaim
 		 * that we are in such a context via PF_MEMALLOC_NOFS to prevent
-		 * memory reclaim re-entering the fileप्रणाली here and
+		 * memory reclaim re-entering the filesystem here and
 		 * potentially deadlocking.
 		 */
-		nofs_flag = meदो_स्मृति_nofs_save();
-		करो अणु
+		nofs_flag = memalloc_nofs_save();
+		do {
 			bp->b_addr = vm_map_ram(bp->b_pages, bp->b_page_count,
 						-1);
-			अगर (bp->b_addr)
-				अवरोध;
+			if (bp->b_addr)
+				break;
 			vm_unmap_aliases();
-		पूर्ण जबतक (retried++ <= 1);
-		meदो_स्मृति_nofs_restore(nofs_flag);
+		} while (retried++ <= 1);
+		memalloc_nofs_restore(nofs_flag);
 
-		अगर (!bp->b_addr)
-			वापस -ENOMEM;
+		if (!bp->b_addr)
+			return -ENOMEM;
 		bp->b_addr += bp->b_offset;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  *	Finding and Reading Buffers
  */
-अटल पूर्णांक
+static int
 _xfs_buf_obj_cmp(
-	काष्ठा rhashtable_compare_arg	*arg,
-	स्थिर व्योम			*obj)
-अणु
-	स्थिर काष्ठा xfs_buf_map	*map = arg->key;
-	स्थिर काष्ठा xfs_buf		*bp = obj;
+	struct rhashtable_compare_arg	*arg,
+	const void			*obj)
+{
+	const struct xfs_buf_map	*map = arg->key;
+	const struct xfs_buf		*bp = obj;
 
 	/*
 	 * The key hashing in the lookup path depends on the key being the
-	 * first element of the compare_arg, make sure to निश्चित this.
+	 * first element of the compare_arg, make sure to assert this.
 	 */
-	BUILD_BUG_ON(दुरत्व(काष्ठा xfs_buf_map, bm_bn) != 0);
+	BUILD_BUG_ON(offsetof(struct xfs_buf_map, bm_bn) != 0);
 
-	अगर (bp->b_bn != map->bm_bn)
-		वापस 1;
+	if (bp->b_bn != map->bm_bn)
+		return 1;
 
-	अगर (unlikely(bp->b_length != map->bm_len)) अणु
+	if (unlikely(bp->b_length != map->bm_len)) {
 		/*
-		 * found a block number match. If the range करोesn't
-		 * match, the only way this is allowed is अगर the buffer
+		 * found a block number match. If the range doesn't
+		 * match, the only way this is allowed is if the buffer
 		 * in the cache is stale and the transaction that made
 		 * it stale has not yet committed. i.e. we are
-		 * पुनः_स्मृतिating a busy extent. Skip this buffer and
-		 * जारी searching क्रम an exact match.
+		 * reallocating a busy extent. Skip this buffer and
+		 * continue searching for an exact match.
 		 */
 		ASSERT(bp->b_flags & XBF_STALE);
-		वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return 1;
+	}
+	return 0;
+}
 
-अटल स्थिर काष्ठा rhashtable_params xfs_buf_hash_params = अणु
-	.min_size		= 32,	/* empty AGs have minimal footprपूर्णांक */
-	.nelem_hपूर्णांक		= 16,
-	.key_len		= माप(xfs_daddr_t),
-	.key_offset		= दुरत्व(काष्ठा xfs_buf, b_bn),
-	.head_offset		= दुरत्व(काष्ठा xfs_buf, b_rhash_head),
-	.स्वतःmatic_shrinking	= true,
+static const struct rhashtable_params xfs_buf_hash_params = {
+	.min_size		= 32,	/* empty AGs have minimal footprint */
+	.nelem_hint		= 16,
+	.key_len		= sizeof(xfs_daddr_t),
+	.key_offset		= offsetof(struct xfs_buf, b_bn),
+	.head_offset		= offsetof(struct xfs_buf, b_rhash_head),
+	.automatic_shrinking	= true,
 	.obj_cmpfn		= _xfs_buf_obj_cmp,
-पूर्ण;
+};
 
-पूर्णांक
+int
 xfs_buf_hash_init(
-	काष्ठा xfs_perag	*pag)
-अणु
+	struct xfs_perag	*pag)
+{
 	spin_lock_init(&pag->pag_buf_lock);
-	वापस rhashtable_init(&pag->pag_buf_hash, &xfs_buf_hash_params);
-पूर्ण
+	return rhashtable_init(&pag->pag_buf_hash, &xfs_buf_hash_params);
+}
 
-व्योम
+void
 xfs_buf_hash_destroy(
-	काष्ठा xfs_perag	*pag)
-अणु
+	struct xfs_perag	*pag)
+{
 	rhashtable_destroy(&pag->pag_buf_hash);
-पूर्ण
+}
 
 /*
- * Look up a buffer in the buffer cache and वापस it referenced and locked
+ * Look up a buffer in the buffer cache and return it referenced and locked
  * in @found_bp.
  *
- * If @new_bp is supplied and we have a lookup miss, insert @new_bp पूर्णांकo the
+ * If @new_bp is supplied and we have a lookup miss, insert @new_bp into the
  * cache.
  *
- * If XBF_TRYLOCK is set in @flags, only try to lock the buffer and वापस
- * -EAGAIN अगर we fail to lock it.
+ * If XBF_TRYLOCK is set in @flags, only try to lock the buffer and return
+ * -EAGAIN if we fail to lock it.
  *
  * Return values are:
- *	-EFSCORRUPTED अगर have been supplied with an invalid address
+ *	-EFSCORRUPTED if have been supplied with an invalid address
  *	-EAGAIN on trylock failure
- *	-ENOENT अगर we fail to find a match and @new_bp was शून्य
+ *	-ENOENT if we fail to find a match and @new_bp was NULL
  *	0, with @found_bp:
- *		- @new_bp अगर we inserted it पूर्णांकo the cache
+ *		- @new_bp if we inserted it into the cache
  *		- the buffer we found and locked.
  */
-अटल पूर्णांक
+static int
 xfs_buf_find(
-	काष्ठा xfs_buftarg	*btp,
-	काष्ठा xfs_buf_map	*map,
-	पूर्णांक			nmaps,
+	struct xfs_buftarg	*btp,
+	struct xfs_buf_map	*map,
+	int			nmaps,
 	xfs_buf_flags_t		flags,
-	काष्ठा xfs_buf		*new_bp,
-	काष्ठा xfs_buf		**found_bp)
-अणु
-	काष्ठा xfs_perag	*pag;
-	काष्ठा xfs_buf		*bp;
-	काष्ठा xfs_buf_map	cmap = अणु .bm_bn = map[0].bm_bn पूर्ण;
+	struct xfs_buf		*new_bp,
+	struct xfs_buf		**found_bp)
+{
+	struct xfs_perag	*pag;
+	struct xfs_buf		*bp;
+	struct xfs_buf_map	cmap = { .bm_bn = map[0].bm_bn };
 	xfs_daddr_t		eofs;
-	पूर्णांक			i;
+	int			i;
 
-	*found_bp = शून्य;
+	*found_bp = NULL;
 
-	क्रम (i = 0; i < nmaps; i++)
+	for (i = 0; i < nmaps; i++)
 		cmap.bm_len += map[i].bm_len;
 
-	/* Check क्रम IOs smaller than the sector size / not sector aligned */
+	/* Check for IOs smaller than the sector size / not sector aligned */
 	ASSERT(!(BBTOB(cmap.bm_len) < btp->bt_meta_sectorsize));
 	ASSERT(!(BBTOB(cmap.bm_bn) & (xfs_off_t)btp->bt_meta_sectormask));
 
 	/*
-	 * Corrupted block numbers can get through to here, unक्रमtunately, so we
-	 * have to check that the buffer falls within the fileप्रणाली bounds.
+	 * Corrupted block numbers can get through to here, unfortunately, so we
+	 * have to check that the buffer falls within the filesystem bounds.
 	 */
 	eofs = XFS_FSB_TO_BB(btp->bt_mount, btp->bt_mount->m_sb.sb_dblocks);
-	अगर (cmap.bm_bn < 0 || cmap.bm_bn >= eofs) अणु
+	if (cmap.bm_bn < 0 || cmap.bm_bn >= eofs) {
 		xfs_alert(btp->bt_mount,
 			  "%s: daddr 0x%llx out of range, EOFS 0x%llx",
 			  __func__, cmap.bm_bn, eofs);
 		WARN_ON(1);
-		वापस -EFSCORRUPTED;
-	पूर्ण
+		return -EFSCORRUPTED;
+	}
 
 	pag = xfs_perag_get(btp->bt_mount,
 			    xfs_daddr_to_agno(btp->bt_mount, cmap.bm_bn));
@@ -624,632 +623,632 @@ xfs_buf_find(
 	spin_lock(&pag->pag_buf_lock);
 	bp = rhashtable_lookup_fast(&pag->pag_buf_hash, &cmap,
 				    xfs_buf_hash_params);
-	अगर (bp) अणु
+	if (bp) {
 		atomic_inc(&bp->b_hold);
-		जाओ found;
-	पूर्ण
+		goto found;
+	}
 
 	/* No match found */
-	अगर (!new_bp) अणु
+	if (!new_bp) {
 		XFS_STATS_INC(btp->bt_mount, xb_miss_locked);
 		spin_unlock(&pag->pag_buf_lock);
 		xfs_perag_put(pag);
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
-	/* the buffer keeps the perag reference until it is मुक्तd */
+	/* the buffer keeps the perag reference until it is freed */
 	new_bp->b_pag = pag;
 	rhashtable_insert_fast(&pag->pag_buf_hash, &new_bp->b_rhash_head,
 			       xfs_buf_hash_params);
 	spin_unlock(&pag->pag_buf_lock);
 	*found_bp = new_bp;
-	वापस 0;
+	return 0;
 
 found:
 	spin_unlock(&pag->pag_buf_lock);
 	xfs_perag_put(pag);
 
-	अगर (!xfs_buf_trylock(bp)) अणु
-		अगर (flags & XBF_TRYLOCK) अणु
+	if (!xfs_buf_trylock(bp)) {
+		if (flags & XBF_TRYLOCK) {
 			xfs_buf_rele(bp);
 			XFS_STATS_INC(btp->bt_mount, xb_busy_locked);
-			वापस -EAGAIN;
-		पूर्ण
+			return -EAGAIN;
+		}
 		xfs_buf_lock(bp);
-		XFS_STATS_INC(btp->bt_mount, xb_get_locked_रुकोed);
-	पूर्ण
+		XFS_STATS_INC(btp->bt_mount, xb_get_locked_waited);
+	}
 
 	/*
-	 * अगर the buffer is stale, clear all the बाह्यal state associated with
+	 * if the buffer is stale, clear all the external state associated with
 	 * it. We need to keep flags such as how we allocated the buffer memory
-	 * पूर्णांकact here.
+	 * intact here.
 	 */
-	अगर (bp->b_flags & XBF_STALE) अणु
+	if (bp->b_flags & XBF_STALE) {
 		ASSERT((bp->b_flags & _XBF_DELWRI_Q) == 0);
 		bp->b_flags &= _XBF_KMEM | _XBF_PAGES;
-		bp->b_ops = शून्य;
-	पूर्ण
+		bp->b_ops = NULL;
+	}
 
 	trace_xfs_buf_find(bp, flags, _RET_IP_);
 	XFS_STATS_INC(btp->bt_mount, xb_get_locked);
 	*found_bp = bp;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा xfs_buf *
+struct xfs_buf *
 xfs_buf_incore(
-	काष्ठा xfs_buftarg	*target,
+	struct xfs_buftarg	*target,
 	xfs_daddr_t		blkno,
-	माप_प्रकार			numblks,
+	size_t			numblks,
 	xfs_buf_flags_t		flags)
-अणु
-	काष्ठा xfs_buf		*bp;
-	पूर्णांक			error;
+{
+	struct xfs_buf		*bp;
+	int			error;
 	DEFINE_SINGLE_BUF_MAP(map, blkno, numblks);
 
-	error = xfs_buf_find(target, &map, 1, flags, शून्य, &bp);
-	अगर (error)
-		वापस शून्य;
-	वापस bp;
-पूर्ण
+	error = xfs_buf_find(target, &map, 1, flags, NULL, &bp);
+	if (error)
+		return NULL;
+	return bp;
+}
 
 /*
- * Assembles a buffer covering the specअगरied range. The code is optimised क्रम
- * cache hits, as metadata पूर्णांकensive workloads will see 3 orders of magnitude
+ * Assembles a buffer covering the specified range. The code is optimised for
+ * cache hits, as metadata intensive workloads will see 3 orders of magnitude
  * more hits than misses.
  */
-पूर्णांक
+int
 xfs_buf_get_map(
-	काष्ठा xfs_buftarg	*target,
-	काष्ठा xfs_buf_map	*map,
-	पूर्णांक			nmaps,
+	struct xfs_buftarg	*target,
+	struct xfs_buf_map	*map,
+	int			nmaps,
 	xfs_buf_flags_t		flags,
-	काष्ठा xfs_buf		**bpp)
-अणु
-	काष्ठा xfs_buf		*bp;
-	काष्ठा xfs_buf		*new_bp;
-	पूर्णांक			error = 0;
+	struct xfs_buf		**bpp)
+{
+	struct xfs_buf		*bp;
+	struct xfs_buf		*new_bp;
+	int			error = 0;
 
-	*bpp = शून्य;
-	error = xfs_buf_find(target, map, nmaps, flags, शून्य, &bp);
-	अगर (!error)
-		जाओ found;
-	अगर (error != -ENOENT)
-		वापस error;
+	*bpp = NULL;
+	error = xfs_buf_find(target, map, nmaps, flags, NULL, &bp);
+	if (!error)
+		goto found;
+	if (error != -ENOENT)
+		return error;
 
 	error = _xfs_buf_alloc(target, map, nmaps, flags, &new_bp);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	error = xfs_buf_allocate_memory(new_bp, flags);
-	अगर (error) अणु
-		xfs_buf_मुक्त(new_bp);
-		वापस error;
-	पूर्ण
+	if (error) {
+		xfs_buf_free(new_bp);
+		return error;
+	}
 
 	error = xfs_buf_find(target, map, nmaps, flags, new_bp, &bp);
-	अगर (error) अणु
-		xfs_buf_मुक्त(new_bp);
-		वापस error;
-	पूर्ण
+	if (error) {
+		xfs_buf_free(new_bp);
+		return error;
+	}
 
-	अगर (bp != new_bp)
-		xfs_buf_मुक्त(new_bp);
+	if (bp != new_bp)
+		xfs_buf_free(new_bp);
 
 found:
-	अगर (!bp->b_addr) अणु
+	if (!bp->b_addr) {
 		error = _xfs_buf_map_pages(bp, flags);
-		अगर (unlikely(error)) अणु
+		if (unlikely(error)) {
 			xfs_warn_ratelimited(target->bt_mount,
 				"%s: failed to map %u pages", __func__,
 				bp->b_page_count);
-			xfs_buf_rअन्यथा(bp);
-			वापस error;
-		पूर्ण
-	पूर्ण
+			xfs_buf_relse(bp);
+			return error;
+		}
+	}
 
 	/*
-	 * Clear b_error अगर this is a lookup from a caller that करोesn't expect
+	 * Clear b_error if this is a lookup from a caller that doesn't expect
 	 * valid data to be found in the buffer.
 	 */
-	अगर (!(flags & XBF_READ))
+	if (!(flags & XBF_READ))
 		xfs_buf_ioerror(bp, 0);
 
 	XFS_STATS_INC(target->bt_mount, xb_get);
 	trace_xfs_buf_get(bp, flags, _RET_IP_);
 	*bpp = bp;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक
-_xfs_buf_पढ़ो(
-	काष्ठा xfs_buf		*bp,
+int
+_xfs_buf_read(
+	struct xfs_buf		*bp,
 	xfs_buf_flags_t		flags)
-अणु
+{
 	ASSERT(!(flags & XBF_WRITE));
-	ASSERT(bp->b_maps[0].bm_bn != XFS_BUF_DADDR_शून्य);
+	ASSERT(bp->b_maps[0].bm_bn != XFS_BUF_DADDR_NULL);
 
 	bp->b_flags &= ~(XBF_WRITE | XBF_ASYNC | XBF_READ_AHEAD | XBF_DONE);
 	bp->b_flags |= flags & (XBF_READ | XBF_ASYNC | XBF_READ_AHEAD);
 
-	वापस xfs_buf_submit(bp);
-पूर्ण
+	return xfs_buf_submit(bp);
+}
 
 /*
- * Reverअगरy a buffer found in cache without an attached ->b_ops.
+ * Reverify a buffer found in cache without an attached ->b_ops.
  *
- * If the caller passed an ops काष्ठाure and the buffer करोesn't have ops
- * asचिन्हित, set the ops and use it to verअगरy the contents. If verअगरication
+ * If the caller passed an ops structure and the buffer doesn't have ops
+ * assigned, set the ops and use it to verify the contents. If verification
  * fails, clear XBF_DONE. We assume the buffer has no recorded errors and is
- * alपढ़ोy in XBF_DONE state on entry.
+ * already in XBF_DONE state on entry.
  *
- * Under normal operations, every in-core buffer is verअगरied on पढ़ो I/O
+ * Under normal operations, every in-core buffer is verified on read I/O
  * completion. There are two scenarios that can lead to in-core buffers without
- * an asचिन्हित ->b_ops. The first is during log recovery of buffers on a V4
- * fileप्रणाली, though these buffers are purged at the end of recovery. The
- * other is online repair, which पूर्णांकentionally पढ़ोs with a शून्य buffer ops to
- * run several verअगरiers across an in-core buffer in order to establish buffer
+ * an assigned ->b_ops. The first is during log recovery of buffers on a V4
+ * filesystem, though these buffers are purged at the end of recovery. The
+ * other is online repair, which intentionally reads with a NULL buffer ops to
+ * run several verifiers across an in-core buffer in order to establish buffer
  * type.  If repair can't establish that, the buffer will be left in memory
- * with शून्य buffer ops.
+ * with NULL buffer ops.
  */
-पूर्णांक
-xfs_buf_reverअगरy(
-	काष्ठा xfs_buf		*bp,
-	स्थिर काष्ठा xfs_buf_ops *ops)
-अणु
+int
+xfs_buf_reverify(
+	struct xfs_buf		*bp,
+	const struct xfs_buf_ops *ops)
+{
 	ASSERT(bp->b_flags & XBF_DONE);
 	ASSERT(bp->b_error == 0);
 
-	अगर (!ops || bp->b_ops)
-		वापस 0;
+	if (!ops || bp->b_ops)
+		return 0;
 
 	bp->b_ops = ops;
-	bp->b_ops->verअगरy_पढ़ो(bp);
-	अगर (bp->b_error)
+	bp->b_ops->verify_read(bp);
+	if (bp->b_error)
 		bp->b_flags &= ~XBF_DONE;
-	वापस bp->b_error;
-पूर्ण
+	return bp->b_error;
+}
 
-पूर्णांक
-xfs_buf_पढ़ो_map(
-	काष्ठा xfs_buftarg	*target,
-	काष्ठा xfs_buf_map	*map,
-	पूर्णांक			nmaps,
+int
+xfs_buf_read_map(
+	struct xfs_buftarg	*target,
+	struct xfs_buf_map	*map,
+	int			nmaps,
 	xfs_buf_flags_t		flags,
-	काष्ठा xfs_buf		**bpp,
-	स्थिर काष्ठा xfs_buf_ops *ops,
+	struct xfs_buf		**bpp,
+	const struct xfs_buf_ops *ops,
 	xfs_failaddr_t		fa)
-अणु
-	काष्ठा xfs_buf		*bp;
-	पूर्णांक			error;
+{
+	struct xfs_buf		*bp;
+	int			error;
 
 	flags |= XBF_READ;
-	*bpp = शून्य;
+	*bpp = NULL;
 
 	error = xfs_buf_get_map(target, map, nmaps, flags, &bp);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	trace_xfs_buf_पढ़ो(bp, flags, _RET_IP_);
+	trace_xfs_buf_read(bp, flags, _RET_IP_);
 
-	अगर (!(bp->b_flags & XBF_DONE)) अणु
-		/* Initiate the buffer पढ़ो and रुको. */
-		XFS_STATS_INC(target->bt_mount, xb_get_पढ़ो);
+	if (!(bp->b_flags & XBF_DONE)) {
+		/* Initiate the buffer read and wait. */
+		XFS_STATS_INC(target->bt_mount, xb_get_read);
 		bp->b_ops = ops;
-		error = _xfs_buf_पढ़ो(bp, flags);
+		error = _xfs_buf_read(bp, flags);
 
-		/* Readahead ioकरोne alपढ़ोy dropped the buffer, so निकास. */
-		अगर (flags & XBF_ASYNC)
-			वापस 0;
-	पूर्ण अन्यथा अणु
-		/* Buffer alपढ़ोy पढ़ो; all we need to करो is check it. */
-		error = xfs_buf_reverअगरy(bp, ops);
+		/* Readahead iodone already dropped the buffer, so exit. */
+		if (flags & XBF_ASYNC)
+			return 0;
+	} else {
+		/* Buffer already read; all we need to do is check it. */
+		error = xfs_buf_reverify(bp, ops);
 
-		/* Readahead alपढ़ोy finished; drop the buffer and निकास. */
-		अगर (flags & XBF_ASYNC) अणु
-			xfs_buf_rअन्यथा(bp);
-			वापस 0;
-		पूर्ण
+		/* Readahead already finished; drop the buffer and exit. */
+		if (flags & XBF_ASYNC) {
+			xfs_buf_relse(bp);
+			return 0;
+		}
 
-		/* We करो not want पढ़ो in the flags */
+		/* We do not want read in the flags */
 		bp->b_flags &= ~XBF_READ;
-		ASSERT(bp->b_ops != शून्य || ops == शून्य);
-	पूर्ण
+		ASSERT(bp->b_ops != NULL || ops == NULL);
+	}
 
 	/*
-	 * If we've had a पढ़ो error, then the contents of the buffer are
-	 * invalid and should not be used. To ensure that a followup पढ़ो tries
+	 * If we've had a read error, then the contents of the buffer are
+	 * invalid and should not be used. To ensure that a followup read tries
 	 * to pull the buffer from disk again, we clear the XBF_DONE flag and
 	 * mark the buffer stale. This ensures that anyone who has a current
-	 * reference to the buffer will पूर्णांकerpret it's contents correctly and
+	 * reference to the buffer will interpret it's contents correctly and
 	 * future cache lookups will also treat it as an empty, uninitialised
 	 * buffer.
 	 */
-	अगर (error) अणु
-		अगर (!XFS_FORCED_SHUTDOWN(target->bt_mount))
+	if (error) {
+		if (!XFS_FORCED_SHUTDOWN(target->bt_mount))
 			xfs_buf_ioerror_alert(bp, fa);
 
 		bp->b_flags &= ~XBF_DONE;
 		xfs_buf_stale(bp);
-		xfs_buf_rअन्यथा(bp);
+		xfs_buf_relse(bp);
 
 		/* bad CRC means corrupted metadata */
-		अगर (error == -EFSBADCRC)
+		if (error == -EFSBADCRC)
 			error = -EFSCORRUPTED;
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
 	*bpp = bp;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- *	If we are not low on memory then करो the पढ़ोahead in a deadlock
+ *	If we are not low on memory then do the readahead in a deadlock
  *	safe manner.
  */
-व्योम
-xfs_buf_पढ़ोahead_map(
-	काष्ठा xfs_buftarg	*target,
-	काष्ठा xfs_buf_map	*map,
-	पूर्णांक			nmaps,
-	स्थिर काष्ठा xfs_buf_ops *ops)
-अणु
-	काष्ठा xfs_buf		*bp;
+void
+xfs_buf_readahead_map(
+	struct xfs_buftarg	*target,
+	struct xfs_buf_map	*map,
+	int			nmaps,
+	const struct xfs_buf_ops *ops)
+{
+	struct xfs_buf		*bp;
 
-	अगर (bdi_पढ़ो_congested(target->bt_bdev->bd_bdi))
-		वापस;
+	if (bdi_read_congested(target->bt_bdev->bd_bdi))
+		return;
 
-	xfs_buf_पढ़ो_map(target, map, nmaps,
+	xfs_buf_read_map(target, map, nmaps,
 		     XBF_TRYLOCK | XBF_ASYNC | XBF_READ_AHEAD, &bp, ops,
 		     __this_address);
-पूर्ण
+}
 
 /*
- * Read an uncached buffer from disk. Allocates and वापसs a locked
+ * Read an uncached buffer from disk. Allocates and returns a locked
  * buffer containing the disk contents or nothing.
  */
-पूर्णांक
-xfs_buf_पढ़ो_uncached(
-	काष्ठा xfs_buftarg	*target,
+int
+xfs_buf_read_uncached(
+	struct xfs_buftarg	*target,
 	xfs_daddr_t		daddr,
-	माप_प्रकार			numblks,
-	पूर्णांक			flags,
-	काष्ठा xfs_buf		**bpp,
-	स्थिर काष्ठा xfs_buf_ops *ops)
-अणु
-	काष्ठा xfs_buf		*bp;
-	पूर्णांक			error;
+	size_t			numblks,
+	int			flags,
+	struct xfs_buf		**bpp,
+	const struct xfs_buf_ops *ops)
+{
+	struct xfs_buf		*bp;
+	int			error;
 
-	*bpp = शून्य;
+	*bpp = NULL;
 
 	error = xfs_buf_get_uncached(target, numblks, flags, &bp);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	/* set up the buffer क्रम a पढ़ो IO */
+	/* set up the buffer for a read IO */
 	ASSERT(bp->b_map_count == 1);
-	bp->b_bn = XFS_BUF_DADDR_शून्य;  /* always null क्रम uncached buffers */
+	bp->b_bn = XFS_BUF_DADDR_NULL;  /* always null for uncached buffers */
 	bp->b_maps[0].bm_bn = daddr;
 	bp->b_flags |= XBF_READ;
 	bp->b_ops = ops;
 
 	xfs_buf_submit(bp);
-	अगर (bp->b_error) अणु
+	if (bp->b_error) {
 		error = bp->b_error;
-		xfs_buf_rअन्यथा(bp);
-		वापस error;
-	पूर्ण
+		xfs_buf_relse(bp);
+		return error;
+	}
 
 	*bpp = bp;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक
+int
 xfs_buf_get_uncached(
-	काष्ठा xfs_buftarg	*target,
-	माप_प्रकार			numblks,
-	पूर्णांक			flags,
-	काष्ठा xfs_buf		**bpp)
-अणु
-	अचिन्हित दीर्घ		page_count;
-	पूर्णांक			error, i;
-	काष्ठा xfs_buf		*bp;
-	DEFINE_SINGLE_BUF_MAP(map, XFS_BUF_DADDR_शून्य, numblks);
+	struct xfs_buftarg	*target,
+	size_t			numblks,
+	int			flags,
+	struct xfs_buf		**bpp)
+{
+	unsigned long		page_count;
+	int			error, i;
+	struct xfs_buf		*bp;
+	DEFINE_SINGLE_BUF_MAP(map, XFS_BUF_DADDR_NULL, numblks);
 
-	*bpp = शून्य;
+	*bpp = NULL;
 
 	/* flags might contain irrelevant bits, pass only what we care about */
 	error = _xfs_buf_alloc(target, &map, 1, flags & XBF_NO_IOACCT, &bp);
-	अगर (error)
-		जाओ fail;
+	if (error)
+		goto fail;
 
 	page_count = PAGE_ALIGN(numblks << BBSHIFT) >> PAGE_SHIFT;
 	error = _xfs_buf_get_pages(bp, page_count);
-	अगर (error)
-		जाओ fail_मुक्त_buf;
+	if (error)
+		goto fail_free_buf;
 
-	क्रम (i = 0; i < page_count; i++) अणु
+	for (i = 0; i < page_count; i++) {
 		bp->b_pages[i] = alloc_page(xb_to_gfp(flags));
-		अगर (!bp->b_pages[i]) अणु
+		if (!bp->b_pages[i]) {
 			error = -ENOMEM;
-			जाओ fail_मुक्त_mem;
-		पूर्ण
-	पूर्ण
+			goto fail_free_mem;
+		}
+	}
 	bp->b_flags |= _XBF_PAGES;
 
 	error = _xfs_buf_map_pages(bp, 0);
-	अगर (unlikely(error)) अणु
+	if (unlikely(error)) {
 		xfs_warn(target->bt_mount,
 			"%s: failed to map pages", __func__);
-		जाओ fail_मुक्त_mem;
-	पूर्ण
+		goto fail_free_mem;
+	}
 
 	trace_xfs_buf_get_uncached(bp, _RET_IP_);
 	*bpp = bp;
-	वापस 0;
+	return 0;
 
- fail_मुक्त_mem:
-	जबतक (--i >= 0)
-		__मुक्त_page(bp->b_pages[i]);
-	_xfs_buf_मुक्त_pages(bp);
- fail_मुक्त_buf:
-	xfs_buf_मुक्त_maps(bp);
-	kmem_cache_मुक्त(xfs_buf_zone, bp);
+ fail_free_mem:
+	while (--i >= 0)
+		__free_page(bp->b_pages[i]);
+	_xfs_buf_free_pages(bp);
+ fail_free_buf:
+	xfs_buf_free_maps(bp);
+	kmem_cache_free(xfs_buf_zone, bp);
  fail:
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /*
  *	Increment reference count on buffer, to hold the buffer concurrently
- *	with another thपढ़ो which may release (मुक्त) the buffer asynchronously.
- *	Must hold the buffer alपढ़ोy to call this function.
+ *	with another thread which may release (free) the buffer asynchronously.
+ *	Must hold the buffer already to call this function.
  */
-व्योम
+void
 xfs_buf_hold(
-	काष्ठा xfs_buf		*bp)
-अणु
+	struct xfs_buf		*bp)
+{
 	trace_xfs_buf_hold(bp, _RET_IP_);
 	atomic_inc(&bp->b_hold);
-पूर्ण
+}
 
 /*
- * Release a hold on the specअगरied buffer. If the hold count is 1, the buffer is
- * placed on LRU or मुक्तd (depending on b_lru_ref).
+ * Release a hold on the specified buffer. If the hold count is 1, the buffer is
+ * placed on LRU or freed (depending on b_lru_ref).
  */
-व्योम
+void
 xfs_buf_rele(
-	काष्ठा xfs_buf		*bp)
-अणु
-	काष्ठा xfs_perag	*pag = bp->b_pag;
+	struct xfs_buf		*bp)
+{
+	struct xfs_perag	*pag = bp->b_pag;
 	bool			release;
-	bool			मुक्तbuf = false;
+	bool			freebuf = false;
 
 	trace_xfs_buf_rele(bp, _RET_IP_);
 
-	अगर (!pag) अणु
+	if (!pag) {
 		ASSERT(list_empty(&bp->b_lru));
-		अगर (atomic_dec_and_test(&bp->b_hold)) अणु
+		if (atomic_dec_and_test(&bp->b_hold)) {
 			xfs_buf_ioacct_dec(bp);
-			xfs_buf_मुक्त(bp);
-		पूर्ण
-		वापस;
-	पूर्ण
+			xfs_buf_free(bp);
+		}
+		return;
+	}
 
-	ASSERT(atomic_पढ़ो(&bp->b_hold) > 0);
+	ASSERT(atomic_read(&bp->b_hold) > 0);
 
 	/*
 	 * We grab the b_lock here first to serialise racing xfs_buf_rele()
 	 * calls. The pag_buf_lock being taken on the last reference only
 	 * serialises against racing lookups in xfs_buf_find(). IOWs, the second
 	 * to last reference we drop here is not serialised against the last
-	 * reference until we take bp->b_lock. Hence अगर we करोn't grab b_lock
+	 * reference until we take bp->b_lock. Hence if we don't grab b_lock
 	 * first, the last "release" reference can win the race to the lock and
-	 * मुक्त the buffer beक्रमe the second-to-last reference is processed,
-	 * leading to a use-after-मुक्त scenario.
+	 * free the buffer before the second-to-last reference is processed,
+	 * leading to a use-after-free scenario.
 	 */
 	spin_lock(&bp->b_lock);
 	release = atomic_dec_and_lock(&bp->b_hold, &pag->pag_buf_lock);
-	अगर (!release) अणु
+	if (!release) {
 		/*
-		 * Drop the in-flight state अगर the buffer is alपढ़ोy on the LRU
+		 * Drop the in-flight state if the buffer is already on the LRU
 		 * and it holds the only reference. This is racy because we
 		 * haven't acquired the pag lock, but the use of _XBF_IN_FLIGHT
 		 * ensures the decrement occurs only once per-buf.
 		 */
-		अगर ((atomic_पढ़ो(&bp->b_hold) == 1) && !list_empty(&bp->b_lru))
+		if ((atomic_read(&bp->b_hold) == 1) && !list_empty(&bp->b_lru))
 			__xfs_buf_ioacct_dec(bp);
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 	/* the last reference has been dropped ... */
 	__xfs_buf_ioacct_dec(bp);
-	अगर (!(bp->b_flags & XBF_STALE) && atomic_पढ़ो(&bp->b_lru_ref)) अणु
+	if (!(bp->b_flags & XBF_STALE) && atomic_read(&bp->b_lru_ref)) {
 		/*
 		 * If the buffer is added to the LRU take a new reference to the
-		 * buffer क्रम the LRU and clear the (now stale) dispose list
+		 * buffer for the LRU and clear the (now stale) dispose list
 		 * state flag
 		 */
-		अगर (list_lru_add(&bp->b_target->bt_lru, &bp->b_lru)) अणु
+		if (list_lru_add(&bp->b_target->bt_lru, &bp->b_lru)) {
 			bp->b_state &= ~XFS_BSTATE_DISPOSE;
 			atomic_inc(&bp->b_hold);
-		पूर्ण
+		}
 		spin_unlock(&pag->pag_buf_lock);
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
-		 * most of the समय buffers will alपढ़ोy be हटाओd from the
-		 * LRU, so optimise that हाल by checking क्रम the
+		 * most of the time buffers will already be removed from the
+		 * LRU, so optimise that case by checking for the
 		 * XFS_BSTATE_DISPOSE flag indicating the last list the buffer
 		 * was on was the disposal list
 		 */
-		अगर (!(bp->b_state & XFS_BSTATE_DISPOSE)) अणु
+		if (!(bp->b_state & XFS_BSTATE_DISPOSE)) {
 			list_lru_del(&bp->b_target->bt_lru, &bp->b_lru);
-		पूर्ण अन्यथा अणु
+		} else {
 			ASSERT(list_empty(&bp->b_lru));
-		पूर्ण
+		}
 
 		ASSERT(!(bp->b_flags & _XBF_DELWRI_Q));
-		rhashtable_हटाओ_fast(&pag->pag_buf_hash, &bp->b_rhash_head,
+		rhashtable_remove_fast(&pag->pag_buf_hash, &bp->b_rhash_head,
 				       xfs_buf_hash_params);
 		spin_unlock(&pag->pag_buf_lock);
 		xfs_perag_put(pag);
-		मुक्तbuf = true;
-	पूर्ण
+		freebuf = true;
+	}
 
 out_unlock:
 	spin_unlock(&bp->b_lock);
 
-	अगर (मुक्तbuf)
-		xfs_buf_मुक्त(bp);
-पूर्ण
+	if (freebuf)
+		xfs_buf_free(bp);
+}
 
 
 /*
- *	Lock a buffer object, अगर it is not alपढ़ोy locked.
+ *	Lock a buffer object, if it is not already locked.
  *
  *	If we come across a stale, pinned, locked buffer, we know that we are
- *	being asked to lock a buffer that has been पुनः_स्मृतिated. Because it is
+ *	being asked to lock a buffer that has been reallocated. Because it is
  *	pinned, we know that the log has not been pushed to disk and hence it
  *	will still be locked.  Rather than continuing to have trylock attempts
- *	fail until someone अन्यथा pushes the log, push it ourselves beक्रमe
- *	वापसing.  This means that the xfsaild will not get stuck trying
+ *	fail until someone else pushes the log, push it ourselves before
+ *	returning.  This means that the xfsaild will not get stuck trying
  *	to push on stale inode buffers.
  */
-पूर्णांक
+int
 xfs_buf_trylock(
-	काष्ठा xfs_buf		*bp)
-अणु
-	पूर्णांक			locked;
+	struct xfs_buf		*bp)
+{
+	int			locked;
 
-	locked = करोwn_trylock(&bp->b_sema) == 0;
-	अगर (locked)
+	locked = down_trylock(&bp->b_sema) == 0;
+	if (locked)
 		trace_xfs_buf_trylock(bp, _RET_IP_);
-	अन्यथा
+	else
 		trace_xfs_buf_trylock_fail(bp, _RET_IP_);
-	वापस locked;
-पूर्ण
+	return locked;
+}
 
 /*
  *	Lock a buffer object.
  *
  *	If we come across a stale, pinned, locked buffer, we know that we
- *	are being asked to lock a buffer that has been पुनः_स्मृतिated. Because
+ *	are being asked to lock a buffer that has been reallocated. Because
  *	it is pinned, we know that the log has not been pushed to disk and
  *	hence it will still be locked. Rather than sleeping until someone
- *	अन्यथा pushes the log, push it ourselves beक्रमe trying to get the lock.
+ *	else pushes the log, push it ourselves before trying to get the lock.
  */
-व्योम
+void
 xfs_buf_lock(
-	काष्ठा xfs_buf		*bp)
-अणु
+	struct xfs_buf		*bp)
+{
 	trace_xfs_buf_lock(bp, _RET_IP_);
 
-	अगर (atomic_पढ़ो(&bp->b_pin_count) && (bp->b_flags & XBF_STALE))
-		xfs_log_क्रमce(bp->b_mount, 0);
-	करोwn(&bp->b_sema);
+	if (atomic_read(&bp->b_pin_count) && (bp->b_flags & XBF_STALE))
+		xfs_log_force(bp->b_mount, 0);
+	down(&bp->b_sema);
 
-	trace_xfs_buf_lock_करोne(bp, _RET_IP_);
-पूर्ण
+	trace_xfs_buf_lock_done(bp, _RET_IP_);
+}
 
-व्योम
+void
 xfs_buf_unlock(
-	काष्ठा xfs_buf		*bp)
-अणु
+	struct xfs_buf		*bp)
+{
 	ASSERT(xfs_buf_islocked(bp));
 
 	up(&bp->b_sema);
 	trace_xfs_buf_unlock(bp, _RET_IP_);
-पूर्ण
+}
 
-STATIC व्योम
-xfs_buf_रुको_unpin(
-	काष्ठा xfs_buf		*bp)
-अणु
-	DECLARE_WAITQUEUE	(रुको, current);
+STATIC void
+xfs_buf_wait_unpin(
+	struct xfs_buf		*bp)
+{
+	DECLARE_WAITQUEUE	(wait, current);
 
-	अगर (atomic_पढ़ो(&bp->b_pin_count) == 0)
-		वापस;
+	if (atomic_read(&bp->b_pin_count) == 0)
+		return;
 
-	add_रुको_queue(&bp->b_रुकोers, &रुको);
-	क्रम (;;) अणु
+	add_wait_queue(&bp->b_waiters, &wait);
+	for (;;) {
 		set_current_state(TASK_UNINTERRUPTIBLE);
-		अगर (atomic_पढ़ो(&bp->b_pin_count) == 0)
-			अवरोध;
+		if (atomic_read(&bp->b_pin_count) == 0)
+			break;
 		io_schedule();
-	पूर्ण
-	हटाओ_रुको_queue(&bp->b_रुकोers, &रुको);
+	}
+	remove_wait_queue(&bp->b_waiters, &wait);
 	set_current_state(TASK_RUNNING);
-पूर्ण
+}
 
-अटल व्योम
+static void
 xfs_buf_ioerror_alert_ratelimited(
-	काष्ठा xfs_buf		*bp)
-अणु
-	अटल अचिन्हित दीर्घ	lastसमय;
-	अटल काष्ठा xfs_buftarg *lasttarg;
+	struct xfs_buf		*bp)
+{
+	static unsigned long	lasttime;
+	static struct xfs_buftarg *lasttarg;
 
-	अगर (bp->b_target != lasttarg ||
-	    समय_after(jअगरfies, (lastसमय + 5*HZ))) अणु
-		lastसमय = jअगरfies;
+	if (bp->b_target != lasttarg ||
+	    time_after(jiffies, (lasttime + 5*HZ))) {
+		lasttime = jiffies;
 		xfs_buf_ioerror_alert(bp, __this_address);
-	पूर्ण
+	}
 	lasttarg = bp->b_target;
-पूर्ण
+}
 
 /*
- * Account क्रम this latest trip around the retry handler, and decide अगर
- * we've failed enough बार to स्थिरitute a permanent failure.
+ * Account for this latest trip around the retry handler, and decide if
+ * we've failed enough times to constitute a permanent failure.
  */
-अटल bool
+static bool
 xfs_buf_ioerror_permanent(
-	काष्ठा xfs_buf		*bp,
-	काष्ठा xfs_error_cfg	*cfg)
-अणु
-	काष्ठा xfs_mount	*mp = bp->b_mount;
+	struct xfs_buf		*bp,
+	struct xfs_error_cfg	*cfg)
+{
+	struct xfs_mount	*mp = bp->b_mount;
 
-	अगर (cfg->max_retries != XFS_ERR_RETRY_FOREVER &&
+	if (cfg->max_retries != XFS_ERR_RETRY_FOREVER &&
 	    ++bp->b_retries > cfg->max_retries)
-		वापस true;
-	अगर (cfg->retry_समयout != XFS_ERR_RETRY_FOREVER &&
-	    समय_after(jअगरfies, cfg->retry_समयout + bp->b_first_retry_समय))
-		वापस true;
+		return true;
+	if (cfg->retry_timeout != XFS_ERR_RETRY_FOREVER &&
+	    time_after(jiffies, cfg->retry_timeout + bp->b_first_retry_time))
+		return true;
 
-	/* At unmount we may treat errors dअगरferently */
-	अगर ((mp->m_flags & XFS_MOUNT_UNMOUNTING) && mp->m_fail_unmount)
-		वापस true;
+	/* At unmount we may treat errors differently */
+	if ((mp->m_flags & XFS_MOUNT_UNMOUNTING) && mp->m_fail_unmount)
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /*
- * On a sync ग_लिखो or shutकरोwn we just want to stale the buffer and let the
+ * On a sync write or shutdown we just want to stale the buffer and let the
  * caller handle the error in bp->b_error appropriately.
  *
- * If the ग_लिखो was asynchronous then no one will be looking क्रम the error.  If
- * this is the first failure of this type, clear the error state and ग_लिखो the
- * buffer out again. This means we always retry an async ग_लिखो failure at least
- * once, but we also need to set the buffer up to behave correctly now क्रम
+ * If the write was asynchronous then no one will be looking for the error.  If
+ * this is the first failure of this type, clear the error state and write the
+ * buffer out again. This means we always retry an async write failure at least
+ * once, but we also need to set the buffer up to behave correctly now for
  * repeated failures.
  *
- * If we get repeated async ग_लिखो failures, then we take action according to the
+ * If we get repeated async write failures, then we take action according to the
  * error configuration we have been set up to use.
  *
- * Returns true अगर this function took care of error handling and the caller must
- * not touch the buffer again.  Return false अगर the caller should proceed with
+ * Returns true if this function took care of error handling and the caller must
+ * not touch the buffer again.  Return false if the caller should proceed with
  * normal I/O completion handling.
  */
-अटल bool
+static bool
 xfs_buf_ioend_handle_error(
-	काष्ठा xfs_buf		*bp)
-अणु
-	काष्ठा xfs_mount	*mp = bp->b_mount;
-	काष्ठा xfs_error_cfg	*cfg;
+	struct xfs_buf		*bp)
+{
+	struct xfs_mount	*mp = bp->b_mount;
+	struct xfs_error_cfg	*cfg;
 
 	/*
-	 * If we've alपढ़ोy decided to shutकरोwn the fileप्रणाली because of I/O
-	 * errors, there's no poपूर्णांक in giving this a retry.
+	 * If we've already decided to shutdown the filesystem because of I/O
+	 * errors, there's no point in giving this a retry.
 	 */
-	अगर (XFS_FORCED_SHUTDOWN(mp))
-		जाओ out_stale;
+	if (XFS_FORCED_SHUTDOWN(mp))
+		goto out_stale;
 
 	xfs_buf_ioerror_alert_ratelimited(bp);
 
@@ -1257,179 +1256,179 @@ xfs_buf_ioend_handle_error(
 	 * We're not going to bother about retrying this during recovery.
 	 * One strike!
 	 */
-	अगर (bp->b_flags & _XBF_LOGRECOVERY) अणु
-		xfs_क्रमce_shutकरोwn(mp, SHUTDOWN_META_IO_ERROR);
-		वापस false;
-	पूर्ण
+	if (bp->b_flags & _XBF_LOGRECOVERY) {
+		xfs_force_shutdown(mp, SHUTDOWN_META_IO_ERROR);
+		return false;
+	}
 
 	/*
-	 * Synchronous ग_लिखोs will have callers process the error.
+	 * Synchronous writes will have callers process the error.
 	 */
-	अगर (!(bp->b_flags & XBF_ASYNC))
-		जाओ out_stale;
+	if (!(bp->b_flags & XBF_ASYNC))
+		goto out_stale;
 
-	trace_xfs_buf_ioकरोne_async(bp, _RET_IP_);
+	trace_xfs_buf_iodone_async(bp, _RET_IP_);
 
 	cfg = xfs_error_get_cfg(mp, XFS_ERR_METADATA, bp->b_error);
-	अगर (bp->b_last_error != bp->b_error ||
-	    !(bp->b_flags & (XBF_STALE | XBF_WRITE_FAIL))) अणु
+	if (bp->b_last_error != bp->b_error ||
+	    !(bp->b_flags & (XBF_STALE | XBF_WRITE_FAIL))) {
 		bp->b_last_error = bp->b_error;
-		अगर (cfg->retry_समयout != XFS_ERR_RETRY_FOREVER &&
-		    !bp->b_first_retry_समय)
-			bp->b_first_retry_समय = jअगरfies;
-		जाओ resubmit;
-	पूर्ण
+		if (cfg->retry_timeout != XFS_ERR_RETRY_FOREVER &&
+		    !bp->b_first_retry_time)
+			bp->b_first_retry_time = jiffies;
+		goto resubmit;
+	}
 
 	/*
-	 * Permanent error - we need to trigger a shutकरोwn अगर we haven't alपढ़ोy
+	 * Permanent error - we need to trigger a shutdown if we haven't already
 	 * to indicate that inconsistency will result from this action.
 	 */
-	अगर (xfs_buf_ioerror_permanent(bp, cfg)) अणु
-		xfs_क्रमce_shutकरोwn(mp, SHUTDOWN_META_IO_ERROR);
-		जाओ out_stale;
-	पूर्ण
+	if (xfs_buf_ioerror_permanent(bp, cfg)) {
+		xfs_force_shutdown(mp, SHUTDOWN_META_IO_ERROR);
+		goto out_stale;
+	}
 
 	/* Still considered a transient error. Caller will schedule retries. */
-	अगर (bp->b_flags & _XBF_INODES)
+	if (bp->b_flags & _XBF_INODES)
 		xfs_buf_inode_io_fail(bp);
-	अन्यथा अगर (bp->b_flags & _XBF_DQUOTS)
+	else if (bp->b_flags & _XBF_DQUOTS)
 		xfs_buf_dquot_io_fail(bp);
-	अन्यथा
+	else
 		ASSERT(list_empty(&bp->b_li_list));
 	xfs_buf_ioerror(bp, 0);
-	xfs_buf_rअन्यथा(bp);
-	वापस true;
+	xfs_buf_relse(bp);
+	return true;
 
 resubmit:
 	xfs_buf_ioerror(bp, 0);
 	bp->b_flags |= (XBF_DONE | XBF_WRITE_FAIL);
 	xfs_buf_submit(bp);
-	वापस true;
+	return true;
 out_stale:
 	xfs_buf_stale(bp);
 	bp->b_flags |= XBF_DONE;
 	bp->b_flags &= ~XBF_WRITE;
-	trace_xfs_buf_error_rअन्यथा(bp, _RET_IP_);
-	वापस false;
-पूर्ण
+	trace_xfs_buf_error_relse(bp, _RET_IP_);
+	return false;
+}
 
-अटल व्योम
+static void
 xfs_buf_ioend(
-	काष्ठा xfs_buf	*bp)
-अणु
-	trace_xfs_buf_ioकरोne(bp, _RET_IP_);
+	struct xfs_buf	*bp)
+{
+	trace_xfs_buf_iodone(bp, _RET_IP_);
 
 	/*
 	 * Pull in IO completion errors now. We are guaranteed to be running
-	 * single thपढ़ोed, so we करोn't need the lock to पढ़ो b_io_error.
+	 * single threaded, so we don't need the lock to read b_io_error.
 	 */
-	अगर (!bp->b_error && bp->b_io_error)
+	if (!bp->b_error && bp->b_io_error)
 		xfs_buf_ioerror(bp, bp->b_io_error);
 
-	अगर (bp->b_flags & XBF_READ) अणु
-		अगर (!bp->b_error && bp->b_ops)
-			bp->b_ops->verअगरy_पढ़ो(bp);
-		अगर (!bp->b_error)
+	if (bp->b_flags & XBF_READ) {
+		if (!bp->b_error && bp->b_ops)
+			bp->b_ops->verify_read(bp);
+		if (!bp->b_error)
 			bp->b_flags |= XBF_DONE;
-	पूर्ण अन्यथा अणु
-		अगर (!bp->b_error) अणु
+	} else {
+		if (!bp->b_error) {
 			bp->b_flags &= ~XBF_WRITE_FAIL;
 			bp->b_flags |= XBF_DONE;
-		पूर्ण
+		}
 
-		अगर (unlikely(bp->b_error) && xfs_buf_ioend_handle_error(bp))
-			वापस;
+		if (unlikely(bp->b_error) && xfs_buf_ioend_handle_error(bp))
+			return;
 
 		/* clear the retry state */
 		bp->b_last_error = 0;
 		bp->b_retries = 0;
-		bp->b_first_retry_समय = 0;
+		bp->b_first_retry_time = 0;
 
 		/*
-		 * Note that क्रम things like remote attribute buffers, there may
+		 * Note that for things like remote attribute buffers, there may
 		 * not be a buffer log item here, so processing the buffer log
-		 * item must reमुख्य optional.
+		 * item must remain optional.
 		 */
-		अगर (bp->b_log_item)
-			xfs_buf_item_करोne(bp);
+		if (bp->b_log_item)
+			xfs_buf_item_done(bp);
 
-		अगर (bp->b_flags & _XBF_INODES)
-			xfs_buf_inode_ioकरोne(bp);
-		अन्यथा अगर (bp->b_flags & _XBF_DQUOTS)
-			xfs_buf_dquot_ioकरोne(bp);
+		if (bp->b_flags & _XBF_INODES)
+			xfs_buf_inode_iodone(bp);
+		else if (bp->b_flags & _XBF_DQUOTS)
+			xfs_buf_dquot_iodone(bp);
 
-	पूर्ण
+	}
 
 	bp->b_flags &= ~(XBF_READ | XBF_WRITE | XBF_READ_AHEAD |
 			 _XBF_LOGRECOVERY);
 
-	अगर (bp->b_flags & XBF_ASYNC)
-		xfs_buf_rअन्यथा(bp);
-	अन्यथा
-		complete(&bp->b_ioरुको);
-पूर्ण
+	if (bp->b_flags & XBF_ASYNC)
+		xfs_buf_relse(bp);
+	else
+		complete(&bp->b_iowait);
+}
 
-अटल व्योम
+static void
 xfs_buf_ioend_work(
-	काष्ठा work_काष्ठा	*work)
-अणु
-	काष्ठा xfs_buf		*bp =
-		container_of(work, काष्ठा xfs_buf, b_ioend_work);
+	struct work_struct	*work)
+{
+	struct xfs_buf		*bp =
+		container_of(work, struct xfs_buf, b_ioend_work);
 
 	xfs_buf_ioend(bp);
-पूर्ण
+}
 
-अटल व्योम
+static void
 xfs_buf_ioend_async(
-	काष्ठा xfs_buf	*bp)
-अणु
+	struct xfs_buf	*bp)
+{
 	INIT_WORK(&bp->b_ioend_work, xfs_buf_ioend_work);
 	queue_work(bp->b_mount->m_buf_workqueue, &bp->b_ioend_work);
-पूर्ण
+}
 
-व्योम
+void
 __xfs_buf_ioerror(
-	काष्ठा xfs_buf		*bp,
-	पूर्णांक			error,
+	struct xfs_buf		*bp,
+	int			error,
 	xfs_failaddr_t		failaddr)
-अणु
+{
 	ASSERT(error <= 0 && error >= -1000);
 	bp->b_error = error;
 	trace_xfs_buf_ioerror(bp, error, failaddr);
-पूर्ण
+}
 
-व्योम
+void
 xfs_buf_ioerror_alert(
-	काष्ठा xfs_buf		*bp,
+	struct xfs_buf		*bp,
 	xfs_failaddr_t		func)
-अणु
+{
 	xfs_buf_alert_ratelimited(bp, "XFS: metadata IO error",
 		"metadata I/O error in \"%pS\" at daddr 0x%llx len %d error %d",
-				  func, (uपूर्णांक64_t)XFS_BUF_ADDR(bp),
+				  func, (uint64_t)XFS_BUF_ADDR(bp),
 				  bp->b_length, -bp->b_error);
-पूर्ण
+}
 
 /*
  * To simulate an I/O failure, the buffer must be locked and held with at least
  * three references. The LRU reference is dropped by the stale call. The buf
  * item reference is dropped via ioend processing. The third reference is owned
- * by the caller and is dropped on I/O completion अगर the buffer is XBF_ASYNC.
+ * by the caller and is dropped on I/O completion if the buffer is XBF_ASYNC.
  */
-व्योम
+void
 xfs_buf_ioend_fail(
-	काष्ठा xfs_buf	*bp)
-अणु
+	struct xfs_buf	*bp)
+{
 	bp->b_flags &= ~XBF_DONE;
 	xfs_buf_stale(bp);
 	xfs_buf_ioerror(bp, -EIO);
 	xfs_buf_ioend(bp);
-पूर्ण
+}
 
-पूर्णांक
-xfs_bग_लिखो(
-	काष्ठा xfs_buf		*bp)
-अणु
-	पूर्णांक			error;
+int
+xfs_bwrite(
+	struct xfs_buf		*bp)
+{
+	int			error;
 
 	ASSERT(xfs_buf_islocked(bp));
 
@@ -1438,577 +1437,577 @@ xfs_bग_लिखो(
 			 XBF_DONE);
 
 	error = xfs_buf_submit(bp);
-	अगर (error)
-		xfs_क्रमce_shutकरोwn(bp->b_mount, SHUTDOWN_META_IO_ERROR);
-	वापस error;
-पूर्ण
+	if (error)
+		xfs_force_shutdown(bp->b_mount, SHUTDOWN_META_IO_ERROR);
+	return error;
+}
 
-अटल व्योम
+static void
 xfs_buf_bio_end_io(
-	काष्ठा bio		*bio)
-अणु
-	काष्ठा xfs_buf		*bp = (काष्ठा xfs_buf *)bio->bi_निजी;
+	struct bio		*bio)
+{
+	struct xfs_buf		*bp = (struct xfs_buf *)bio->bi_private;
 
-	अगर (!bio->bi_status &&
+	if (!bio->bi_status &&
 	    (bp->b_flags & XBF_WRITE) && (bp->b_flags & XBF_ASYNC) &&
 	    XFS_TEST_ERROR(false, bp->b_mount, XFS_ERRTAG_BUF_IOERROR))
 		bio->bi_status = BLK_STS_IOERR;
 
 	/*
-	 * करोn't overग_लिखो existing errors - otherwise we can lose errors on
+	 * don't overwrite existing errors - otherwise we can lose errors on
 	 * buffers that require multiple bios to complete.
 	 */
-	अगर (bio->bi_status) अणु
-		पूर्णांक error = blk_status_to_त्रुटि_सं(bio->bi_status);
+	if (bio->bi_status) {
+		int error = blk_status_to_errno(bio->bi_status);
 
 		cmpxchg(&bp->b_io_error, 0, error);
-	पूर्ण
+	}
 
-	अगर (!bp->b_error && xfs_buf_is_vmapped(bp) && (bp->b_flags & XBF_READ))
+	if (!bp->b_error && xfs_buf_is_vmapped(bp) && (bp->b_flags & XBF_READ))
 		invalidate_kernel_vmap_range(bp->b_addr, xfs_buf_vmap_len(bp));
 
-	अगर (atomic_dec_and_test(&bp->b_io_reमुख्यing) == 1)
+	if (atomic_dec_and_test(&bp->b_io_remaining) == 1)
 		xfs_buf_ioend_async(bp);
 	bio_put(bio);
-पूर्ण
+}
 
-अटल व्योम
+static void
 xfs_buf_ioapply_map(
-	काष्ठा xfs_buf	*bp,
-	पूर्णांक		map,
-	पूर्णांक		*buf_offset,
-	पूर्णांक		*count,
-	पूर्णांक		op)
-अणु
-	पूर्णांक		page_index;
-	अचिन्हित पूर्णांक	total_nr_pages = bp->b_page_count;
-	पूर्णांक		nr_pages;
-	काष्ठा bio	*bio;
+	struct xfs_buf	*bp,
+	int		map,
+	int		*buf_offset,
+	int		*count,
+	int		op)
+{
+	int		page_index;
+	unsigned int	total_nr_pages = bp->b_page_count;
+	int		nr_pages;
+	struct bio	*bio;
 	sector_t	sector =  bp->b_maps[map].bm_bn;
-	पूर्णांक		size;
-	पूर्णांक		offset;
+	int		size;
+	int		offset;
 
-	/* skip the pages in the buffer beक्रमe the start offset */
+	/* skip the pages in the buffer before the start offset */
 	page_index = 0;
 	offset = *buf_offset;
-	जबतक (offset >= PAGE_SIZE) अणु
+	while (offset >= PAGE_SIZE) {
 		page_index++;
 		offset -= PAGE_SIZE;
-	पूर्ण
+	}
 
 	/*
 	 * Limit the IO size to the length of the current vector, and update the
-	 * reमुख्यing IO count क्रम the next समय around.
+	 * remaining IO count for the next time around.
 	 */
-	size = min_t(पूर्णांक, BBTOB(bp->b_maps[map].bm_len), *count);
+	size = min_t(int, BBTOB(bp->b_maps[map].bm_len), *count);
 	*count -= size;
 	*buf_offset += size;
 
 next_chunk:
-	atomic_inc(&bp->b_io_reमुख्यing);
+	atomic_inc(&bp->b_io_remaining);
 	nr_pages = bio_max_segs(total_nr_pages);
 
 	bio = bio_alloc(GFP_NOIO, nr_pages);
 	bio_set_dev(bio, bp->b_target->bt_bdev);
 	bio->bi_iter.bi_sector = sector;
 	bio->bi_end_io = xfs_buf_bio_end_io;
-	bio->bi_निजी = bp;
+	bio->bi_private = bp;
 	bio->bi_opf = op;
 
-	क्रम (; size && nr_pages; nr_pages--, page_index++) अणु
-		पूर्णांक	rbytes, nbytes = PAGE_SIZE - offset;
+	for (; size && nr_pages; nr_pages--, page_index++) {
+		int	rbytes, nbytes = PAGE_SIZE - offset;
 
-		अगर (nbytes > size)
+		if (nbytes > size)
 			nbytes = size;
 
 		rbytes = bio_add_page(bio, bp->b_pages[page_index], nbytes,
 				      offset);
-		अगर (rbytes < nbytes)
-			अवरोध;
+		if (rbytes < nbytes)
+			break;
 
 		offset = 0;
 		sector += BTOBB(nbytes);
 		size -= nbytes;
 		total_nr_pages--;
-	पूर्ण
+	}
 
-	अगर (likely(bio->bi_iter.bi_size)) अणु
-		अगर (xfs_buf_is_vmapped(bp)) अणु
+	if (likely(bio->bi_iter.bi_size)) {
+		if (xfs_buf_is_vmapped(bp)) {
 			flush_kernel_vmap_range(bp->b_addr,
 						xfs_buf_vmap_len(bp));
-		पूर्ण
+		}
 		submit_bio(bio);
-		अगर (size)
-			जाओ next_chunk;
-	पूर्ण अन्यथा अणु
+		if (size)
+			goto next_chunk;
+	} else {
 		/*
 		 * This is guaranteed not to be the last io reference count
 		 * because the caller (xfs_buf_submit) holds a count itself.
 		 */
-		atomic_dec(&bp->b_io_reमुख्यing);
+		atomic_dec(&bp->b_io_remaining);
 		xfs_buf_ioerror(bp, -EIO);
 		bio_put(bio);
-	पूर्ण
+	}
 
-पूर्ण
+}
 
-STATIC व्योम
+STATIC void
 _xfs_buf_ioapply(
-	काष्ठा xfs_buf	*bp)
-अणु
-	काष्ठा blk_plug	plug;
-	पूर्णांक		op;
-	पूर्णांक		offset;
-	पूर्णांक		size;
-	पूर्णांक		i;
+	struct xfs_buf	*bp)
+{
+	struct blk_plug	plug;
+	int		op;
+	int		offset;
+	int		size;
+	int		i;
 
 	/*
 	 * Make sure we capture only current IO errors rather than stale errors
-	 * left over from previous use of the buffer (e.g. failed पढ़ोahead).
+	 * left over from previous use of the buffer (e.g. failed readahead).
 	 */
 	bp->b_error = 0;
 
-	अगर (bp->b_flags & XBF_WRITE) अणु
+	if (bp->b_flags & XBF_WRITE) {
 		op = REQ_OP_WRITE;
 
 		/*
-		 * Run the ग_लिखो verअगरier callback function अगर it exists. If
+		 * Run the write verifier callback function if it exists. If
 		 * this function fails it will mark the buffer with an error and
 		 * the IO should not be dispatched.
 		 */
-		अगर (bp->b_ops) अणु
-			bp->b_ops->verअगरy_ग_लिखो(bp);
-			अगर (bp->b_error) अणु
-				xfs_क्रमce_shutकरोwn(bp->b_mount,
+		if (bp->b_ops) {
+			bp->b_ops->verify_write(bp);
+			if (bp->b_error) {
+				xfs_force_shutdown(bp->b_mount,
 						   SHUTDOWN_CORRUPT_INCORE);
-				वापस;
-			पूर्ण
-		पूर्ण अन्यथा अगर (bp->b_bn != XFS_BUF_DADDR_शून्य) अणु
-			काष्ठा xfs_mount *mp = bp->b_mount;
+				return;
+			}
+		} else if (bp->b_bn != XFS_BUF_DADDR_NULL) {
+			struct xfs_mount *mp = bp->b_mount;
 
 			/*
-			 * non-crc fileप्रणालीs करोn't attach verअगरiers during
-			 * log recovery, so करोn't warn क्रम such fileप्रणालीs.
+			 * non-crc filesystems don't attach verifiers during
+			 * log recovery, so don't warn for such filesystems.
 			 */
-			अगर (xfs_sb_version_hascrc(&mp->m_sb)) अणु
+			if (xfs_sb_version_hascrc(&mp->m_sb)) {
 				xfs_warn(mp,
 					"%s: no buf ops on daddr 0x%llx len %d",
 					__func__, bp->b_bn, bp->b_length);
 				xfs_hex_dump(bp->b_addr,
 						XFS_CORRUPTION_DUMP_LEN);
 				dump_stack();
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			}
+		}
+	} else {
 		op = REQ_OP_READ;
-		अगर (bp->b_flags & XBF_READ_AHEAD)
+		if (bp->b_flags & XBF_READ_AHEAD)
 			op |= REQ_RAHEAD;
-	पूर्ण
+	}
 
-	/* we only use the buffer cache क्रम meta-data */
+	/* we only use the buffer cache for meta-data */
 	op |= REQ_META;
 
 	/*
 	 * Walk all the vectors issuing IO on them. Set up the initial offset
-	 * पूर्णांकo the buffer and the desired IO size beक्रमe we start -
-	 * _xfs_buf_ioapply_vec() will modअगरy them appropriately क्रम each
+	 * into the buffer and the desired IO size before we start -
+	 * _xfs_buf_ioapply_vec() will modify them appropriately for each
 	 * subsequent call.
 	 */
 	offset = bp->b_offset;
 	size = BBTOB(bp->b_length);
 	blk_start_plug(&plug);
-	क्रम (i = 0; i < bp->b_map_count; i++) अणु
+	for (i = 0; i < bp->b_map_count; i++) {
 		xfs_buf_ioapply_map(bp, i, &offset, &size, op);
-		अगर (bp->b_error)
-			अवरोध;
-		अगर (size <= 0)
-			अवरोध;	/* all करोne */
-	पूर्ण
+		if (bp->b_error)
+			break;
+		if (size <= 0)
+			break;	/* all done */
+	}
 	blk_finish_plug(&plug);
-पूर्ण
+}
 
 /*
- * Wait क्रम I/O completion of a sync buffer and वापस the I/O error code.
+ * Wait for I/O completion of a sync buffer and return the I/O error code.
  */
-अटल पूर्णांक
-xfs_buf_ioरुको(
-	काष्ठा xfs_buf	*bp)
-अणु
+static int
+xfs_buf_iowait(
+	struct xfs_buf	*bp)
+{
 	ASSERT(!(bp->b_flags & XBF_ASYNC));
 
-	trace_xfs_buf_ioरुको(bp, _RET_IP_);
-	रुको_क्रम_completion(&bp->b_ioरुको);
-	trace_xfs_buf_ioरुको_करोne(bp, _RET_IP_);
+	trace_xfs_buf_iowait(bp, _RET_IP_);
+	wait_for_completion(&bp->b_iowait);
+	trace_xfs_buf_iowait_done(bp, _RET_IP_);
 
-	वापस bp->b_error;
-पूर्ण
+	return bp->b_error;
+}
 
 /*
- * Buffer I/O submission path, पढ़ो or ग_लिखो. Asynchronous submission transfers
+ * Buffer I/O submission path, read or write. Asynchronous submission transfers
  * the buffer lock ownership and the current reference to the IO. It is not
  * safe to reference the buffer after a call to this function unless the caller
  * holds an additional reference itself.
  */
-अटल पूर्णांक
+static int
 __xfs_buf_submit(
-	काष्ठा xfs_buf	*bp,
-	bool		रुको)
-अणु
-	पूर्णांक		error = 0;
+	struct xfs_buf	*bp,
+	bool		wait)
+{
+	int		error = 0;
 
 	trace_xfs_buf_submit(bp, _RET_IP_);
 
 	ASSERT(!(bp->b_flags & _XBF_DELWRI_Q));
 
-	/* on shutकरोwn we stale and complete the buffer immediately */
-	अगर (XFS_FORCED_SHUTDOWN(bp->b_mount)) अणु
+	/* on shutdown we stale and complete the buffer immediately */
+	if (XFS_FORCED_SHUTDOWN(bp->b_mount)) {
 		xfs_buf_ioend_fail(bp);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	/*
-	 * Grab a reference so the buffer करोes not go away underneath us. For
+	 * Grab a reference so the buffer does not go away underneath us. For
 	 * async buffers, I/O completion drops the callers reference, which
-	 * could occur beक्रमe submission वापसs.
+	 * could occur before submission returns.
 	 */
 	xfs_buf_hold(bp);
 
-	अगर (bp->b_flags & XBF_WRITE)
-		xfs_buf_रुको_unpin(bp);
+	if (bp->b_flags & XBF_WRITE)
+		xfs_buf_wait_unpin(bp);
 
-	/* clear the पूर्णांकernal error state to aव्योम spurious errors */
+	/* clear the internal error state to avoid spurious errors */
 	bp->b_io_error = 0;
 
 	/*
 	 * Set the count to 1 initially, this will stop an I/O completion
-	 * callout which happens beक्रमe we have started all the I/O from calling
+	 * callout which happens before we have started all the I/O from calling
 	 * xfs_buf_ioend too early.
 	 */
-	atomic_set(&bp->b_io_reमुख्यing, 1);
-	अगर (bp->b_flags & XBF_ASYNC)
+	atomic_set(&bp->b_io_remaining, 1);
+	if (bp->b_flags & XBF_ASYNC)
 		xfs_buf_ioacct_inc(bp);
 	_xfs_buf_ioapply(bp);
 
 	/*
 	 * If _xfs_buf_ioapply failed, we can get back here with only the IO
 	 * reference we took above. If we drop it to zero, run completion so
-	 * that we करोn't वापस to the caller with completion still pending.
+	 * that we don't return to the caller with completion still pending.
 	 */
-	अगर (atomic_dec_and_test(&bp->b_io_reमुख्यing) == 1) अणु
-		अगर (bp->b_error || !(bp->b_flags & XBF_ASYNC))
+	if (atomic_dec_and_test(&bp->b_io_remaining) == 1) {
+		if (bp->b_error || !(bp->b_flags & XBF_ASYNC))
 			xfs_buf_ioend(bp);
-		अन्यथा
+		else
 			xfs_buf_ioend_async(bp);
-	पूर्ण
+	}
 
-	अगर (रुको)
-		error = xfs_buf_ioरुको(bp);
+	if (wait)
+		error = xfs_buf_iowait(bp);
 
 	/*
-	 * Release the hold that keeps the buffer referenced क्रम the entire
-	 * I/O. Note that अगर the buffer is async, it is not safe to reference
+	 * Release the hold that keeps the buffer referenced for the entire
+	 * I/O. Note that if the buffer is async, it is not safe to reference
 	 * after this release.
 	 */
 	xfs_buf_rele(bp);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-व्योम *
+void *
 xfs_buf_offset(
-	काष्ठा xfs_buf		*bp,
-	माप_प्रकार			offset)
-अणु
-	काष्ठा page		*page;
+	struct xfs_buf		*bp,
+	size_t			offset)
+{
+	struct page		*page;
 
-	अगर (bp->b_addr)
-		वापस bp->b_addr + offset;
+	if (bp->b_addr)
+		return bp->b_addr + offset;
 
 	offset += bp->b_offset;
 	page = bp->b_pages[offset >> PAGE_SHIFT];
-	वापस page_address(page) + (offset & (PAGE_SIZE-1));
-पूर्ण
+	return page_address(page) + (offset & (PAGE_SIZE-1));
+}
 
-व्योम
+void
 xfs_buf_zero(
-	काष्ठा xfs_buf		*bp,
-	माप_प्रकार			boff,
-	माप_प्रकार			bsize)
-अणु
-	माप_प्रकार			bend;
+	struct xfs_buf		*bp,
+	size_t			boff,
+	size_t			bsize)
+{
+	size_t			bend;
 
 	bend = boff + bsize;
-	जबतक (boff < bend) अणु
-		काष्ठा page	*page;
-		पूर्णांक		page_index, page_offset, csize;
+	while (boff < bend) {
+		struct page	*page;
+		int		page_index, page_offset, csize;
 
 		page_index = (boff + bp->b_offset) >> PAGE_SHIFT;
 		page_offset = (boff + bp->b_offset) & ~PAGE_MASK;
 		page = bp->b_pages[page_index];
-		csize = min_t(माप_प्रकार, PAGE_SIZE - page_offset,
+		csize = min_t(size_t, PAGE_SIZE - page_offset,
 				      BBTOB(bp->b_length) - boff);
 
 		ASSERT((csize + page_offset) <= PAGE_SIZE);
 
-		स_रखो(page_address(page) + page_offset, 0, csize);
+		memset(page_address(page) + page_offset, 0, csize);
 
 		boff += csize;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Log a message about and stale a buffer that a caller has decided is corrupt.
  *
- * This function should be called क्रम the kinds of metadata corruption that
- * cannot be detect from a verअगरier, such as incorrect पूर्णांकer-block relationship
- * data.  Do /not/ call this function from a verअगरier function.
+ * This function should be called for the kinds of metadata corruption that
+ * cannot be detect from a verifier, such as incorrect inter-block relationship
+ * data.  Do /not/ call this function from a verifier function.
  *
  * The buffer must be XBF_DONE prior to the call.  Afterwards, the buffer will
- * be marked stale, but b_error will not be set.  The caller is responsible क्रम
+ * be marked stale, but b_error will not be set.  The caller is responsible for
  * releasing the buffer or fixing it.
  */
-व्योम
+void
 __xfs_buf_mark_corrupt(
-	काष्ठा xfs_buf		*bp,
+	struct xfs_buf		*bp,
 	xfs_failaddr_t		fa)
-अणु
+{
 	ASSERT(bp->b_flags & XBF_DONE);
 
 	xfs_buf_corruption_error(bp, fa);
 	xfs_buf_stale(bp);
-पूर्ण
+}
 
 /*
- *	Handling of buffer tarमाला_लो (buftargs).
+ *	Handling of buffer targets (buftargs).
  */
 
 /*
- * Wait क्रम any bufs with callbacks that have been submitted but have not yet
- * वापसed. These buffers will have an elevated hold count, so रुको on those
- * जबतक मुक्तing all the buffers only held by the LRU.
+ * Wait for any bufs with callbacks that have been submitted but have not yet
+ * returned. These buffers will have an elevated hold count, so wait on those
+ * while freeing all the buffers only held by the LRU.
  */
-अटल क्रमागत lru_status
+static enum lru_status
 xfs_buftarg_drain_rele(
-	काष्ठा list_head	*item,
-	काष्ठा list_lru_one	*lru,
+	struct list_head	*item,
+	struct list_lru_one	*lru,
 	spinlock_t		*lru_lock,
-	व्योम			*arg)
+	void			*arg)
 
-अणु
-	काष्ठा xfs_buf		*bp = container_of(item, काष्ठा xfs_buf, b_lru);
-	काष्ठा list_head	*dispose = arg;
+{
+	struct xfs_buf		*bp = container_of(item, struct xfs_buf, b_lru);
+	struct list_head	*dispose = arg;
 
-	अगर (atomic_पढ़ो(&bp->b_hold) > 1) अणु
-		/* need to रुको, so skip it this pass */
+	if (atomic_read(&bp->b_hold) > 1) {
+		/* need to wait, so skip it this pass */
 		trace_xfs_buf_drain_buftarg(bp, _RET_IP_);
-		वापस LRU_SKIP;
-	पूर्ण
-	अगर (!spin_trylock(&bp->b_lock))
-		वापस LRU_SKIP;
+		return LRU_SKIP;
+	}
+	if (!spin_trylock(&bp->b_lock))
+		return LRU_SKIP;
 
 	/*
-	 * clear the LRU reference count so the buffer करोesn't get
+	 * clear the LRU reference count so the buffer doesn't get
 	 * ignored in xfs_buf_rele().
 	 */
 	atomic_set(&bp->b_lru_ref, 0);
 	bp->b_state |= XFS_BSTATE_DISPOSE;
 	list_lru_isolate_move(lru, item, dispose);
 	spin_unlock(&bp->b_lock);
-	वापस LRU_REMOVED;
-पूर्ण
+	return LRU_REMOVED;
+}
 
 /*
- * Wait क्रम outstanding I/O on the buftarg to complete.
+ * Wait for outstanding I/O on the buftarg to complete.
  */
-व्योम
-xfs_buftarg_रुको(
-	काष्ठा xfs_buftarg	*btp)
-अणु
+void
+xfs_buftarg_wait(
+	struct xfs_buftarg	*btp)
+{
 	/*
-	 * First रुको on the buftarg I/O count क्रम all in-flight buffers to be
-	 * released. This is critical as new buffers करो not make the LRU until
+	 * First wait on the buftarg I/O count for all in-flight buffers to be
+	 * released. This is critical as new buffers do not make the LRU until
 	 * they are released.
 	 *
 	 * Next, flush the buffer workqueue to ensure all completion processing
-	 * has finished. Just रुकोing on buffer locks is not sufficient क्रम
+	 * has finished. Just waiting on buffer locks is not sufficient for
 	 * async IO as the reference count held over IO is not released until
 	 * after the buffer lock is dropped. Hence we need to ensure here that
-	 * all reference counts have been dropped beक्रमe we start walking the
+	 * all reference counts have been dropped before we start walking the
 	 * LRU list.
 	 */
-	जबतक (percpu_counter_sum(&btp->bt_io_count))
+	while (percpu_counter_sum(&btp->bt_io_count))
 		delay(100);
 	flush_workqueue(btp->bt_mount->m_buf_workqueue);
-पूर्ण
+}
 
-व्योम
+void
 xfs_buftarg_drain(
-	काष्ठा xfs_buftarg	*btp)
-अणु
+	struct xfs_buftarg	*btp)
+{
 	LIST_HEAD(dispose);
-	पूर्णांक			loop = 0;
-	bool			ग_लिखो_fail = false;
+	int			loop = 0;
+	bool			write_fail = false;
 
-	xfs_buftarg_रुको(btp);
+	xfs_buftarg_wait(btp);
 
 	/* loop until there is nothing left on the lru list. */
-	जबतक (list_lru_count(&btp->bt_lru)) अणु
+	while (list_lru_count(&btp->bt_lru)) {
 		list_lru_walk(&btp->bt_lru, xfs_buftarg_drain_rele,
-			      &dispose, दीर्घ_उच्च);
+			      &dispose, LONG_MAX);
 
-		जबतक (!list_empty(&dispose)) अणु
-			काष्ठा xfs_buf *bp;
-			bp = list_first_entry(&dispose, काष्ठा xfs_buf, b_lru);
+		while (!list_empty(&dispose)) {
+			struct xfs_buf *bp;
+			bp = list_first_entry(&dispose, struct xfs_buf, b_lru);
 			list_del_init(&bp->b_lru);
-			अगर (bp->b_flags & XBF_WRITE_FAIL) अणु
-				ग_लिखो_fail = true;
+			if (bp->b_flags & XBF_WRITE_FAIL) {
+				write_fail = true;
 				xfs_buf_alert_ratelimited(bp,
 					"XFS: Corruption Alert",
 "Corruption Alert: Buffer at daddr 0x%llx had permanent write failures!",
-					(दीर्घ दीर्घ)bp->b_bn);
-			पूर्ण
+					(long long)bp->b_bn);
+			}
 			xfs_buf_rele(bp);
-		पूर्ण
-		अगर (loop++ != 0)
+		}
+		if (loop++ != 0)
 			delay(100);
-	पूर्ण
+	}
 
 	/*
-	 * If one or more failed buffers were मुक्तd, that means dirty metadata
+	 * If one or more failed buffers were freed, that means dirty metadata
 	 * was thrown away. This should only ever happen after I/O completion
 	 * handling has elevated I/O error(s) to permanent failures and shuts
-	 * करोwn the fs.
+	 * down the fs.
 	 */
-	अगर (ग_लिखो_fail) अणु
+	if (write_fail) {
 		ASSERT(XFS_FORCED_SHUTDOWN(btp->bt_mount));
 		xfs_alert(btp->bt_mount,
 	      "Please run xfs_repair to determine the extent of the problem.");
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल क्रमागत lru_status
+static enum lru_status
 xfs_buftarg_isolate(
-	काष्ठा list_head	*item,
-	काष्ठा list_lru_one	*lru,
+	struct list_head	*item,
+	struct list_lru_one	*lru,
 	spinlock_t		*lru_lock,
-	व्योम			*arg)
-अणु
-	काष्ठा xfs_buf		*bp = container_of(item, काष्ठा xfs_buf, b_lru);
-	काष्ठा list_head	*dispose = arg;
+	void			*arg)
+{
+	struct xfs_buf		*bp = container_of(item, struct xfs_buf, b_lru);
+	struct list_head	*dispose = arg;
 
 	/*
 	 * we are inverting the lru lock/bp->b_lock here, so use a trylock.
 	 * If we fail to get the lock, just skip it.
 	 */
-	अगर (!spin_trylock(&bp->b_lock))
-		वापस LRU_SKIP;
+	if (!spin_trylock(&bp->b_lock))
+		return LRU_SKIP;
 	/*
-	 * Decrement the b_lru_ref count unless the value is alपढ़ोy
-	 * zero. If the value is alपढ़ोy zero, we need to reclaim the
-	 * buffer, otherwise it माला_लो another trip through the LRU.
+	 * Decrement the b_lru_ref count unless the value is already
+	 * zero. If the value is already zero, we need to reclaim the
+	 * buffer, otherwise it gets another trip through the LRU.
 	 */
-	अगर (atomic_add_unless(&bp->b_lru_ref, -1, 0)) अणु
+	if (atomic_add_unless(&bp->b_lru_ref, -1, 0)) {
 		spin_unlock(&bp->b_lock);
-		वापस LRU_ROTATE;
-	पूर्ण
+		return LRU_ROTATE;
+	}
 
 	bp->b_state |= XFS_BSTATE_DISPOSE;
 	list_lru_isolate_move(lru, item, dispose);
 	spin_unlock(&bp->b_lock);
-	वापस LRU_REMOVED;
-पूर्ण
+	return LRU_REMOVED;
+}
 
-अटल अचिन्हित दीर्घ
+static unsigned long
 xfs_buftarg_shrink_scan(
-	काष्ठा shrinker		*shrink,
-	काष्ठा shrink_control	*sc)
-अणु
-	काष्ठा xfs_buftarg	*btp = container_of(shrink,
-					काष्ठा xfs_buftarg, bt_shrinker);
+	struct shrinker		*shrink,
+	struct shrink_control	*sc)
+{
+	struct xfs_buftarg	*btp = container_of(shrink,
+					struct xfs_buftarg, bt_shrinker);
 	LIST_HEAD(dispose);
-	अचिन्हित दीर्घ		मुक्तd;
+	unsigned long		freed;
 
-	मुक्तd = list_lru_shrink_walk(&btp->bt_lru, sc,
+	freed = list_lru_shrink_walk(&btp->bt_lru, sc,
 				     xfs_buftarg_isolate, &dispose);
 
-	जबतक (!list_empty(&dispose)) अणु
-		काष्ठा xfs_buf *bp;
-		bp = list_first_entry(&dispose, काष्ठा xfs_buf, b_lru);
+	while (!list_empty(&dispose)) {
+		struct xfs_buf *bp;
+		bp = list_first_entry(&dispose, struct xfs_buf, b_lru);
 		list_del_init(&bp->b_lru);
 		xfs_buf_rele(bp);
-	पूर्ण
+	}
 
-	वापस मुक्तd;
-पूर्ण
+	return freed;
+}
 
-अटल अचिन्हित दीर्घ
+static unsigned long
 xfs_buftarg_shrink_count(
-	काष्ठा shrinker		*shrink,
-	काष्ठा shrink_control	*sc)
-अणु
-	काष्ठा xfs_buftarg	*btp = container_of(shrink,
-					काष्ठा xfs_buftarg, bt_shrinker);
-	वापस list_lru_shrink_count(&btp->bt_lru, sc);
-पूर्ण
+	struct shrinker		*shrink,
+	struct shrink_control	*sc)
+{
+	struct xfs_buftarg	*btp = container_of(shrink,
+					struct xfs_buftarg, bt_shrinker);
+	return list_lru_shrink_count(&btp->bt_lru, sc);
+}
 
-व्योम
-xfs_मुक्त_buftarg(
-	काष्ठा xfs_buftarg	*btp)
-अणु
-	unरेजिस्टर_shrinker(&btp->bt_shrinker);
+void
+xfs_free_buftarg(
+	struct xfs_buftarg	*btp)
+{
+	unregister_shrinker(&btp->bt_shrinker);
 	ASSERT(percpu_counter_sum(&btp->bt_io_count) == 0);
 	percpu_counter_destroy(&btp->bt_io_count);
 	list_lru_destroy(&btp->bt_lru);
 
 	xfs_blkdev_issue_flush(btp);
 
-	kmem_मुक्त(btp);
-पूर्ण
+	kmem_free(btp);
+}
 
-पूर्णांक
+int
 xfs_setsize_buftarg(
 	xfs_buftarg_t		*btp,
-	अचिन्हित पूर्णांक		sectorsize)
-अणु
+	unsigned int		sectorsize)
+{
 	/* Set up metadata sector size info */
 	btp->bt_meta_sectorsize = sectorsize;
 	btp->bt_meta_sectormask = sectorsize - 1;
 
-	अगर (set_blocksize(btp->bt_bdev, sectorsize)) अणु
+	if (set_blocksize(btp->bt_bdev, sectorsize)) {
 		xfs_warn(btp->bt_mount,
 			"Cannot set_blocksize to %u on device %pg",
 			sectorsize, btp->bt_bdev);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* Set up device logical sector size mask */
 	btp->bt_logical_sectorsize = bdev_logical_block_size(btp->bt_bdev);
 	btp->bt_logical_sectormask = bdev_logical_block_size(btp->bt_bdev) - 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * When allocating the initial buffer target we have not yet
- * पढ़ो in the superblock, so करोn't know what sized sectors
+ * read in the superblock, so don't know what sized sectors
  * are being used at this early stage.  Play safe.
  */
-STATIC पूर्णांक
+STATIC int
 xfs_setsize_buftarg_early(
 	xfs_buftarg_t		*btp,
-	काष्ठा block_device	*bdev)
-अणु
-	वापस xfs_setsize_buftarg(btp, bdev_logical_block_size(bdev));
-पूर्ण
+	struct block_device	*bdev)
+{
+	return xfs_setsize_buftarg(btp, bdev_logical_block_size(bdev));
+}
 
 xfs_buftarg_t *
 xfs_alloc_buftarg(
-	काष्ठा xfs_mount	*mp,
-	काष्ठा block_device	*bdev,
-	काष्ठा dax_device	*dax_dev)
-अणु
+	struct xfs_mount	*mp,
+	struct block_device	*bdev,
+	struct dax_device	*dax_dev)
+{
 	xfs_buftarg_t		*btp;
 
-	btp = kmem_zalloc(माप(*btp), KM_NOFS);
+	btp = kmem_zalloc(sizeof(*btp), KM_NOFS);
 
 	btp->bt_mount = mp;
 	btp->bt_dev =  bdev->bd_dev;
@@ -2022,281 +2021,281 @@ xfs_alloc_buftarg(
 	ratelimit_state_init(&btp->bt_ioerror_rl, 30 * HZ,
 			     DEFAULT_RATELIMIT_BURST);
 
-	अगर (xfs_setsize_buftarg_early(btp, bdev))
-		जाओ error_मुक्त;
+	if (xfs_setsize_buftarg_early(btp, bdev))
+		goto error_free;
 
-	अगर (list_lru_init(&btp->bt_lru))
-		जाओ error_मुक्त;
+	if (list_lru_init(&btp->bt_lru))
+		goto error_free;
 
-	अगर (percpu_counter_init(&btp->bt_io_count, 0, GFP_KERNEL))
-		जाओ error_lru;
+	if (percpu_counter_init(&btp->bt_io_count, 0, GFP_KERNEL))
+		goto error_lru;
 
 	btp->bt_shrinker.count_objects = xfs_buftarg_shrink_count;
 	btp->bt_shrinker.scan_objects = xfs_buftarg_shrink_scan;
 	btp->bt_shrinker.seeks = DEFAULT_SEEKS;
 	btp->bt_shrinker.flags = SHRINKER_NUMA_AWARE;
-	अगर (रेजिस्टर_shrinker(&btp->bt_shrinker))
-		जाओ error_pcpu;
-	वापस btp;
+	if (register_shrinker(&btp->bt_shrinker))
+		goto error_pcpu;
+	return btp;
 
 error_pcpu:
 	percpu_counter_destroy(&btp->bt_io_count);
 error_lru:
 	list_lru_destroy(&btp->bt_lru);
-error_मुक्त:
-	kmem_मुक्त(btp);
-	वापस शून्य;
-पूर्ण
+error_free:
+	kmem_free(btp);
+	return NULL;
+}
 
 /*
- * Cancel a delayed ग_लिखो list.
+ * Cancel a delayed write list.
  *
  * Remove each buffer from the list, clear the delwri queue flag and drop the
  * associated buffer reference.
  */
-व्योम
+void
 xfs_buf_delwri_cancel(
-	काष्ठा list_head	*list)
-अणु
-	काष्ठा xfs_buf		*bp;
+	struct list_head	*list)
+{
+	struct xfs_buf		*bp;
 
-	जबतक (!list_empty(list)) अणु
-		bp = list_first_entry(list, काष्ठा xfs_buf, b_list);
+	while (!list_empty(list)) {
+		bp = list_first_entry(list, struct xfs_buf, b_list);
 
 		xfs_buf_lock(bp);
 		bp->b_flags &= ~_XBF_DELWRI_Q;
 		list_del_init(&bp->b_list);
-		xfs_buf_rअन्यथा(bp);
-	पूर्ण
-पूर्ण
+		xfs_buf_relse(bp);
+	}
+}
 
 /*
- * Add a buffer to the delayed ग_लिखो list.
+ * Add a buffer to the delayed write list.
  *
- * This queues a buffer क्रम ग_लिखोout अगर it hasn't alपढ़ोy been.  Note that
- * neither this routine nor the buffer list submission functions perक्रमm
- * any पूर्णांकernal synchronization.  It is expected that the lists are thपढ़ो-local
+ * This queues a buffer for writeout if it hasn't already been.  Note that
+ * neither this routine nor the buffer list submission functions perform
+ * any internal synchronization.  It is expected that the lists are thread-local
  * to the callers.
  *
- * Returns true अगर we queued up the buffer, or false अगर it alपढ़ोy had
+ * Returns true if we queued up the buffer, or false if it already had
  * been on the buffer list.
  */
 bool
 xfs_buf_delwri_queue(
-	काष्ठा xfs_buf		*bp,
-	काष्ठा list_head	*list)
-अणु
+	struct xfs_buf		*bp,
+	struct list_head	*list)
+{
 	ASSERT(xfs_buf_islocked(bp));
 	ASSERT(!(bp->b_flags & XBF_READ));
 
 	/*
-	 * If the buffer is alपढ़ोy marked delwri it alपढ़ोy is queued up
-	 * by someone अन्यथा क्रम imediate ग_लिखोout.  Just ignore it in that
-	 * हाल.
+	 * If the buffer is already marked delwri it already is queued up
+	 * by someone else for imediate writeout.  Just ignore it in that
+	 * case.
 	 */
-	अगर (bp->b_flags & _XBF_DELWRI_Q) अणु
+	if (bp->b_flags & _XBF_DELWRI_Q) {
 		trace_xfs_buf_delwri_queued(bp, _RET_IP_);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
 	trace_xfs_buf_delwri_queue(bp, _RET_IP_);
 
 	/*
-	 * If a buffer माला_लो written out synchronously or marked stale जबतक it
-	 * is on a delwri list we lazily हटाओ it. To करो this, the other party
+	 * If a buffer gets written out synchronously or marked stale while it
+	 * is on a delwri list we lazily remove it. To do this, the other party
 	 * clears the  _XBF_DELWRI_Q flag but otherwise leaves the buffer alone.
-	 * It reमुख्यs referenced and on the list.  In a rare corner हाल it
-	 * might get पढ़ोded to a delwri list after the synchronous ग_लिखोout, in
-	 * which हाल we need just need to re-add the flag here.
+	 * It remains referenced and on the list.  In a rare corner case it
+	 * might get readded to a delwri list after the synchronous writeout, in
+	 * which case we need just need to re-add the flag here.
 	 */
 	bp->b_flags |= _XBF_DELWRI_Q;
-	अगर (list_empty(&bp->b_list)) अणु
+	if (list_empty(&bp->b_list)) {
 		atomic_inc(&bp->b_hold);
 		list_add_tail(&bp->b_list, list);
-	पूर्ण
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /*
  * Compare function is more complex than it needs to be because
- * the वापस value is only 32 bits and we are करोing comparisons
+ * the return value is only 32 bits and we are doing comparisons
  * on 64 bit values
  */
-अटल पूर्णांक
+static int
 xfs_buf_cmp(
-	व्योम			*priv,
-	स्थिर काष्ठा list_head	*a,
-	स्थिर काष्ठा list_head	*b)
-अणु
-	काष्ठा xfs_buf	*ap = container_of(a, काष्ठा xfs_buf, b_list);
-	काष्ठा xfs_buf	*bp = container_of(b, काष्ठा xfs_buf, b_list);
-	xfs_daddr_t		dअगरf;
+	void			*priv,
+	const struct list_head	*a,
+	const struct list_head	*b)
+{
+	struct xfs_buf	*ap = container_of(a, struct xfs_buf, b_list);
+	struct xfs_buf	*bp = container_of(b, struct xfs_buf, b_list);
+	xfs_daddr_t		diff;
 
-	dअगरf = ap->b_maps[0].bm_bn - bp->b_maps[0].bm_bn;
-	अगर (dअगरf < 0)
-		वापस -1;
-	अगर (dअगरf > 0)
-		वापस 1;
-	वापस 0;
-पूर्ण
+	diff = ap->b_maps[0].bm_bn - bp->b_maps[0].bm_bn;
+	if (diff < 0)
+		return -1;
+	if (diff > 0)
+		return 1;
+	return 0;
+}
 
 /*
- * Submit buffers क्रम ग_लिखो. If रुको_list is specअगरied, the buffers are
- * submitted using sync I/O and placed on the रुको list such that the caller can
- * ioरुको each buffer. Otherwise async I/O is used and the buffers are released
- * at I/O completion समय. In either हाल, buffers reमुख्य locked until I/O
+ * Submit buffers for write. If wait_list is specified, the buffers are
+ * submitted using sync I/O and placed on the wait list such that the caller can
+ * iowait each buffer. Otherwise async I/O is used and the buffers are released
+ * at I/O completion time. In either case, buffers remain locked until I/O
  * completes and the buffer is released from the queue.
  */
-अटल पूर्णांक
+static int
 xfs_buf_delwri_submit_buffers(
-	काष्ठा list_head	*buffer_list,
-	काष्ठा list_head	*रुको_list)
-अणु
-	काष्ठा xfs_buf		*bp, *n;
-	पूर्णांक			pinned = 0;
-	काष्ठा blk_plug		plug;
+	struct list_head	*buffer_list,
+	struct list_head	*wait_list)
+{
+	struct xfs_buf		*bp, *n;
+	int			pinned = 0;
+	struct blk_plug		plug;
 
-	list_sort(शून्य, buffer_list, xfs_buf_cmp);
+	list_sort(NULL, buffer_list, xfs_buf_cmp);
 
 	blk_start_plug(&plug);
-	list_क्रम_each_entry_safe(bp, n, buffer_list, b_list) अणु
-		अगर (!रुको_list) अणु
-			अगर (xfs_buf_ispinned(bp)) अणु
+	list_for_each_entry_safe(bp, n, buffer_list, b_list) {
+		if (!wait_list) {
+			if (xfs_buf_ispinned(bp)) {
 				pinned++;
-				जारी;
-			पूर्ण
-			अगर (!xfs_buf_trylock(bp))
-				जारी;
-		पूर्ण अन्यथा अणु
+				continue;
+			}
+			if (!xfs_buf_trylock(bp))
+				continue;
+		} else {
 			xfs_buf_lock(bp);
-		पूर्ण
+		}
 
 		/*
-		 * Someone अन्यथा might have written the buffer synchronously or
-		 * marked it stale in the meanसमय.  In that हाल only the
+		 * Someone else might have written the buffer synchronously or
+		 * marked it stale in the meantime.  In that case only the
 		 * _XBF_DELWRI_Q flag got cleared, and we have to drop the
-		 * reference and हटाओ it from the list here.
+		 * reference and remove it from the list here.
 		 */
-		अगर (!(bp->b_flags & _XBF_DELWRI_Q)) अणु
+		if (!(bp->b_flags & _XBF_DELWRI_Q)) {
 			list_del_init(&bp->b_list);
-			xfs_buf_rअन्यथा(bp);
-			जारी;
-		पूर्ण
+			xfs_buf_relse(bp);
+			continue;
+		}
 
 		trace_xfs_buf_delwri_split(bp, _RET_IP_);
 
 		/*
-		 * If we have a रुको list, each buffer (and associated delwri
+		 * If we have a wait list, each buffer (and associated delwri
 		 * queue reference) transfers to it and is submitted
 		 * synchronously. Otherwise, drop the buffer from the delwri
 		 * queue and submit async.
 		 */
 		bp->b_flags &= ~_XBF_DELWRI_Q;
 		bp->b_flags |= XBF_WRITE;
-		अगर (रुको_list) अणु
+		if (wait_list) {
 			bp->b_flags &= ~XBF_ASYNC;
-			list_move_tail(&bp->b_list, रुको_list);
-		पूर्ण अन्यथा अणु
+			list_move_tail(&bp->b_list, wait_list);
+		} else {
 			bp->b_flags |= XBF_ASYNC;
 			list_del_init(&bp->b_list);
-		पूर्ण
+		}
 		__xfs_buf_submit(bp, false);
-	पूर्ण
+	}
 	blk_finish_plug(&plug);
 
-	वापस pinned;
-पूर्ण
+	return pinned;
+}
 
 /*
  * Write out a buffer list asynchronously.
  *
- * This will take the @buffer_list, ग_लिखो all non-locked and non-pinned buffers
- * out and not रुको क्रम I/O completion on any of the buffers.  This पूर्णांकerface
- * is only safely useable क्रम callers that can track I/O completion by higher
+ * This will take the @buffer_list, write all non-locked and non-pinned buffers
+ * out and not wait for I/O completion on any of the buffers.  This interface
+ * is only safely useable for callers that can track I/O completion by higher
  * level means, e.g. AIL pushing as the @buffer_list is consumed in this
  * function.
  *
- * Note: this function will skip buffers it would block on, and in करोing so
+ * Note: this function will skip buffers it would block on, and in doing so
  * leaves them on @buffer_list so they can be retried on a later pass. As such,
  * it is up to the caller to ensure that the buffer list is fully submitted or
  * cancelled appropriately when they are finished with the list. Failure to
  * cancel or resubmit the list until it is empty will result in leaked buffers
- * at unmount समय.
+ * at unmount time.
  */
-पूर्णांक
-xfs_buf_delwri_submit_noरुको(
-	काष्ठा list_head	*buffer_list)
-अणु
-	वापस xfs_buf_delwri_submit_buffers(buffer_list, शून्य);
-पूर्ण
+int
+xfs_buf_delwri_submit_nowait(
+	struct list_head	*buffer_list)
+{
+	return xfs_buf_delwri_submit_buffers(buffer_list, NULL);
+}
 
 /*
  * Write out a buffer list synchronously.
  *
- * This will take the @buffer_list, ग_लिखो all buffers out and रुको क्रम I/O
+ * This will take the @buffer_list, write all buffers out and wait for I/O
  * completion on all of the buffers. @buffer_list is consumed by the function,
- * so callers must have some other way of tracking buffers अगर they require such
+ * so callers must have some other way of tracking buffers if they require such
  * functionality.
  */
-पूर्णांक
+int
 xfs_buf_delwri_submit(
-	काष्ठा list_head	*buffer_list)
-अणु
-	LIST_HEAD		(रुको_list);
-	पूर्णांक			error = 0, error2;
-	काष्ठा xfs_buf		*bp;
+	struct list_head	*buffer_list)
+{
+	LIST_HEAD		(wait_list);
+	int			error = 0, error2;
+	struct xfs_buf		*bp;
 
-	xfs_buf_delwri_submit_buffers(buffer_list, &रुको_list);
+	xfs_buf_delwri_submit_buffers(buffer_list, &wait_list);
 
-	/* Wait क्रम IO to complete. */
-	जबतक (!list_empty(&रुको_list)) अणु
-		bp = list_first_entry(&रुको_list, काष्ठा xfs_buf, b_list);
+	/* Wait for IO to complete. */
+	while (!list_empty(&wait_list)) {
+		bp = list_first_entry(&wait_list, struct xfs_buf, b_list);
 
 		list_del_init(&bp->b_list);
 
 		/*
-		 * Wait on the locked buffer, check क्रम errors and unlock and
+		 * Wait on the locked buffer, check for errors and unlock and
 		 * release the delwri queue reference.
 		 */
-		error2 = xfs_buf_ioरुको(bp);
-		xfs_buf_rअन्यथा(bp);
-		अगर (!error)
+		error2 = xfs_buf_iowait(bp);
+		xfs_buf_relse(bp);
+		if (!error)
 			error = error2;
-	पूर्ण
+	}
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /*
  * Push a single buffer on a delwri queue.
  *
  * The purpose of this function is to submit a single buffer of a delwri queue
- * and वापस with the buffer still on the original queue. The रुकोing delwri
- * buffer submission infraकाष्ठाure guarantees transfer of the delwri queue
- * buffer reference to a temporary रुको list. We reuse this infraकाष्ठाure to
+ * and return with the buffer still on the original queue. The waiting delwri
+ * buffer submission infrastructure guarantees transfer of the delwri queue
+ * buffer reference to a temporary wait list. We reuse this infrastructure to
  * transfer the buffer back to the original queue.
  *
- * Note the buffer transitions from the queued state, to the submitted and रुको
+ * Note the buffer transitions from the queued state, to the submitted and wait
  * listed state and back to the queued state during this call. The buffer
  * locking and queue management logic between _delwri_pushbuf() and
  * _delwri_queue() guarantee that the buffer cannot be queued to another list
- * beक्रमe वापसing.
+ * before returning.
  */
-पूर्णांक
+int
 xfs_buf_delwri_pushbuf(
-	काष्ठा xfs_buf		*bp,
-	काष्ठा list_head	*buffer_list)
-अणु
+	struct xfs_buf		*bp,
+	struct list_head	*buffer_list)
+{
 	LIST_HEAD		(submit_list);
-	पूर्णांक			error;
+	int			error;
 
 	ASSERT(bp->b_flags & _XBF_DELWRI_Q);
 
 	trace_xfs_buf_delwri_pushbuf(bp, _RET_IP_);
 
 	/*
-	 * Isolate the buffer to a new local list so we can submit it क्रम I/O
+	 * Isolate the buffer to a new local list so we can submit it for I/O
 	 * independently from the rest of the original list.
 	 */
 	xfs_buf_lock(bp);
@@ -2304,94 +2303,94 @@ xfs_buf_delwri_pushbuf(
 	xfs_buf_unlock(bp);
 
 	/*
-	 * Delwri submission clears the DELWRI_Q buffer flag and वापसs with
-	 * the buffer on the रुको list with the original reference. Rather than
-	 * bounce the buffer from a local रुको list back to the original list
-	 * after I/O completion, reuse the original list as the रुको list.
+	 * Delwri submission clears the DELWRI_Q buffer flag and returns with
+	 * the buffer on the wait list with the original reference. Rather than
+	 * bounce the buffer from a local wait list back to the original list
+	 * after I/O completion, reuse the original list as the wait list.
 	 */
 	xfs_buf_delwri_submit_buffers(&submit_list, buffer_list);
 
 	/*
-	 * The buffer is now locked, under I/O and रुको listed on the original
-	 * delwri queue. Wait क्रम I/O completion, restore the DELWRI_Q flag and
-	 * वापस with the buffer unlocked and on the original queue.
+	 * The buffer is now locked, under I/O and wait listed on the original
+	 * delwri queue. Wait for I/O completion, restore the DELWRI_Q flag and
+	 * return with the buffer unlocked and on the original queue.
 	 */
-	error = xfs_buf_ioरुको(bp);
+	error = xfs_buf_iowait(bp);
 	bp->b_flags |= _XBF_DELWRI_Q;
 	xfs_buf_unlock(bp);
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-पूर्णांक __init
-xfs_buf_init(व्योम)
-अणु
-	xfs_buf_zone = kmem_cache_create("xfs_buf", माप(काष्ठा xfs_buf), 0,
+int __init
+xfs_buf_init(void)
+{
+	xfs_buf_zone = kmem_cache_create("xfs_buf", sizeof(struct xfs_buf), 0,
 					 SLAB_HWCACHE_ALIGN |
 					 SLAB_RECLAIM_ACCOUNT |
 					 SLAB_MEM_SPREAD,
-					 शून्य);
-	अगर (!xfs_buf_zone)
-		जाओ out;
+					 NULL);
+	if (!xfs_buf_zone)
+		goto out;
 
-	वापस 0;
+	return 0;
 
  out:
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-व्योम
-xfs_buf_terminate(व्योम)
-अणु
+void
+xfs_buf_terminate(void)
+{
 	kmem_cache_destroy(xfs_buf_zone);
-पूर्ण
+}
 
-व्योम xfs_buf_set_ref(काष्ठा xfs_buf *bp, पूर्णांक lru_ref)
-अणु
+void xfs_buf_set_ref(struct xfs_buf *bp, int lru_ref)
+{
 	/*
 	 * Set the lru reference count to 0 based on the error injection tag.
-	 * This allows userspace to disrupt buffer caching क्रम debug/testing
+	 * This allows userspace to disrupt buffer caching for debug/testing
 	 * purposes.
 	 */
-	अगर (XFS_TEST_ERROR(false, bp->b_mount, XFS_ERRTAG_BUF_LRU_REF))
+	if (XFS_TEST_ERROR(false, bp->b_mount, XFS_ERRTAG_BUF_LRU_REF))
 		lru_ref = 0;
 
 	atomic_set(&bp->b_lru_ref, lru_ref);
-पूर्ण
+}
 
 /*
- * Verअगरy an on-disk magic value against the magic value specअगरied in the
- * verअगरier काष्ठाure. The verअगरier magic is in disk byte order so the caller is
+ * Verify an on-disk magic value against the magic value specified in the
+ * verifier structure. The verifier magic is in disk byte order so the caller is
  * expected to pass the value directly from disk.
  */
 bool
-xfs_verअगरy_magic(
-	काष्ठा xfs_buf		*bp,
+xfs_verify_magic(
+	struct xfs_buf		*bp,
 	__be32			dmagic)
-अणु
-	काष्ठा xfs_mount	*mp = bp->b_mount;
-	पूर्णांक			idx;
+{
+	struct xfs_mount	*mp = bp->b_mount;
+	int			idx;
 
 	idx = xfs_sb_version_hascrc(&mp->m_sb);
-	अगर (WARN_ON(!bp->b_ops || !bp->b_ops->magic[idx]))
-		वापस false;
-	वापस dmagic == bp->b_ops->magic[idx];
-पूर्ण
+	if (WARN_ON(!bp->b_ops || !bp->b_ops->magic[idx]))
+		return false;
+	return dmagic == bp->b_ops->magic[idx];
+}
 /*
- * Verअगरy an on-disk magic value against the magic value specअगरied in the
- * verअगरier काष्ठाure. The verअगरier magic is in disk byte order so the caller is
+ * Verify an on-disk magic value against the magic value specified in the
+ * verifier structure. The verifier magic is in disk byte order so the caller is
  * expected to pass the value directly from disk.
  */
 bool
-xfs_verअगरy_magic16(
-	काष्ठा xfs_buf		*bp,
+xfs_verify_magic16(
+	struct xfs_buf		*bp,
 	__be16			dmagic)
-अणु
-	काष्ठा xfs_mount	*mp = bp->b_mount;
-	पूर्णांक			idx;
+{
+	struct xfs_mount	*mp = bp->b_mount;
+	int			idx;
 
 	idx = xfs_sb_version_hascrc(&mp->m_sb);
-	अगर (WARN_ON(!bp->b_ops || !bp->b_ops->magic16[idx]))
-		वापस false;
-	वापस dmagic == bp->b_ops->magic16[idx];
-पूर्ण
+	if (WARN_ON(!bp->b_ops || !bp->b_ops->magic16[idx]))
+		return false;
+	return dmagic == bp->b_ops->magic16[idx];
+}

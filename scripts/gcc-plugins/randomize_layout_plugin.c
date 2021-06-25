@@ -1,549 +1,548 @@
-<शैली गुरु>
 /*
  * Copyright 2014-2016 by Open Source Security, Inc., Brad Spengler <spender@grsecurity.net>
- *                   and PaX Team <pageexec@मुक्तmail.hu>
+ *                   and PaX Team <pageexec@freemail.hu>
  * Licensed under the GPL v2
  *
  * Note: the choice of the license means that the compilation process is
  *       NOT 'eligible' as defined by gcc's library exception to the GPL v3,
- *       but क्रम the kernel it करोesn't matter since it doesn't link against
+ *       but for the kernel it doesn't matter since it doesn't link against
  *       any of the gcc libraries
  *
  * Usage:
- * $ # क्रम 4.5/4.6/C based 4.7
- * $ gcc -I`gcc -prपूर्णांक-file-name=plugin`/include -I`gcc -prपूर्णांक-file-name=plugin`/include/c-family -fPIC -shared -O2 -o अक्रमomize_layout_plugin.so अक्रमomize_layout_plugin.c
- * $ # क्रम C++ based 4.7/4.8+
- * $ g++ -I`g++ -prपूर्णांक-file-name=plugin`/include -I`g++ -prपूर्णांक-file-name=plugin`/include/c-family -fPIC -shared -O2 -o अक्रमomize_layout_plugin.so अक्रमomize_layout_plugin.c
- * $ gcc -fplugin=./अक्रमomize_layout_plugin.so test.c -O2
+ * $ # for 4.5/4.6/C based 4.7
+ * $ gcc -I`gcc -print-file-name=plugin`/include -I`gcc -print-file-name=plugin`/include/c-family -fPIC -shared -O2 -o randomize_layout_plugin.so randomize_layout_plugin.c
+ * $ # for C++ based 4.7/4.8+
+ * $ g++ -I`g++ -print-file-name=plugin`/include -I`g++ -print-file-name=plugin`/include/c-family -fPIC -shared -O2 -o randomize_layout_plugin.so randomize_layout_plugin.c
+ * $ gcc -fplugin=./randomize_layout_plugin.so test.c -O2
  */
 
-#समावेश "gcc-common.h"
-#समावेश "randomize_layout_seed.h"
+#include "gcc-common.h"
+#include "randomize_layout_seed.h"
 
-#अगर BUILDING_GCC_MAJOR < 4 || (BUILDING_GCC_MAJOR == 4 && BUILDING_GCC_MINOR < 7)
-#त्रुटि "The RANDSTRUCT plugin requires GCC 4.7 or newer."
-#पूर्ण_अगर
+#if BUILDING_GCC_MAJOR < 4 || (BUILDING_GCC_MAJOR == 4 && BUILDING_GCC_MINOR < 7)
+#error "The RANDSTRUCT plugin requires GCC 4.7 or newer."
+#endif
 
-#घोषणा ORIG_TYPE_NAME(node) \
-	(TYPE_NAME(TYPE_MAIN_VARIANT(node)) != शून्य_TREE ? ((स्थिर अचिन्हित अक्षर *)IDENTIFIER_POINTER(TYPE_NAME(TYPE_MAIN_VARIANT(node)))) : (स्थिर अचिन्हित अक्षर *)"anonymous")
+#define ORIG_TYPE_NAME(node) \
+	(TYPE_NAME(TYPE_MAIN_VARIANT(node)) != NULL_TREE ? ((const unsigned char *)IDENTIFIER_POINTER(TYPE_NAME(TYPE_MAIN_VARIANT(node)))) : (const unsigned char *)"anonymous")
 
-#घोषणा INFORM(loc, msg, ...)	inक्रमm(loc, "randstruct: " msg, ##__VA_ARGS__)
-#घोषणा MISMATCH(loc, how, ...)	INFORM(loc, "casting between randomized structure pointer types (" how "): %qT and %qT\n", __VA_ARGS__)
+#define INFORM(loc, msg, ...)	inform(loc, "randstruct: " msg, ##__VA_ARGS__)
+#define MISMATCH(loc, how, ...)	INFORM(loc, "casting between randomized structure pointer types (" how "): %qT and %qT\n", __VA_ARGS__)
 
-__visible पूर्णांक plugin_is_GPL_compatible;
+__visible int plugin_is_GPL_compatible;
 
-अटल पूर्णांक perक्रमmance_mode;
+static int performance_mode;
 
-अटल काष्ठा plugin_info अक्रमomize_layout_plugin_info = अणु
+static struct plugin_info randomize_layout_plugin_info = {
 	.version	= "201402201816vanilla",
 	.help		= "disable\t\t\tdo not activate plugin\n"
 			  "performance-mode\tenable cacheline-aware layout randomization\n"
-पूर्ण;
+};
 
-काष्ठा whitelist_entry अणु
-	स्थिर अक्षर *pathname;
-	स्थिर अक्षर *lhs;
-	स्थिर अक्षर *rhs;
-पूर्ण;
+struct whitelist_entry {
+	const char *pathname;
+	const char *lhs;
+	const char *rhs;
+};
 
-अटल स्थिर काष्ठा whitelist_entry whitelist[] = अणु
-	/* NIU overloads mapping with page काष्ठा */
-	अणु "drivers/net/ethernet/sun/niu.c", "page", "address_space" पूर्ण,
+static const struct whitelist_entry whitelist[] = {
+	/* NIU overloads mapping with page struct */
+	{ "drivers/net/ethernet/sun/niu.c", "page", "address_space" },
 	/* unix_skb_parms via UNIXCB() buffer */
-	अणु "net/unix/af_unix.c", "unix_skb_parms", "char" पूर्ण,
-	/* big_key payload.data काष्ठा splashing */
-	अणु "security/keys/big_key.c", "path", "void *" पूर्ण,
-	/* walk काष्ठा security_hook_heads as an array of काष्ठा hlist_head */
-	अणु "security/security.c", "hlist_head", "security_hook_heads" पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+	{ "net/unix/af_unix.c", "unix_skb_parms", "char" },
+	/* big_key payload.data struct splashing */
+	{ "security/keys/big_key.c", "path", "void *" },
+	/* walk struct security_hook_heads as an array of struct hlist_head */
+	{ "security/security.c", "hlist_head", "security_hook_heads" },
+	{ }
+};
 
 /* from old Linux dcache.h */
-अटल अंतरभूत अचिन्हित दीर्घ
-partial_name_hash(अचिन्हित दीर्घ c, अचिन्हित दीर्घ prevhash)
-अणु
-	वापस (prevhash + (c << 4) + (c >> 4)) * 11;
-पूर्ण
-अटल अंतरभूत अचिन्हित पूर्णांक
-name_hash(स्थिर अचिन्हित अक्षर *name)
-अणु
-	अचिन्हित दीर्घ hash = 0;
-	अचिन्हित पूर्णांक len = म_माप((स्थिर अक्षर *)name);
-	जबतक (len--)
+static inline unsigned long
+partial_name_hash(unsigned long c, unsigned long prevhash)
+{
+	return (prevhash + (c << 4) + (c >> 4)) * 11;
+}
+static inline unsigned int
+name_hash(const unsigned char *name)
+{
+	unsigned long hash = 0;
+	unsigned int len = strlen((const char *)name);
+	while (len--)
 		hash = partial_name_hash(*name++, hash);
-	वापस (अचिन्हित पूर्णांक)hash;
-पूर्ण
+	return (unsigned int)hash;
+}
 
-अटल tree handle_अक्रमomize_layout_attr(tree *node, tree name, tree args, पूर्णांक flags, bool *no_add_attrs)
-अणु
+static tree handle_randomize_layout_attr(tree *node, tree name, tree args, int flags, bool *no_add_attrs)
+{
 	tree type;
 
 	*no_add_attrs = true;
-	अगर (TREE_CODE(*node) == FUNCTION_DECL) अणु
+	if (TREE_CODE(*node) == FUNCTION_DECL) {
 		error("%qE attribute does not apply to functions (%qF)", name, *node);
-		वापस शून्य_TREE;
-	पूर्ण
+		return NULL_TREE;
+	}
 
-	अगर (TREE_CODE(*node) == PARM_DECL) अणु
+	if (TREE_CODE(*node) == PARM_DECL) {
 		error("%qE attribute does not apply to function parameters (%qD)", name, *node);
-		वापस शून्य_TREE;
-	पूर्ण
+		return NULL_TREE;
+	}
 
-	अगर (TREE_CODE(*node) == VAR_DECL) अणु
+	if (TREE_CODE(*node) == VAR_DECL) {
 		error("%qE attribute does not apply to variables (%qD)", name, *node);
-		वापस शून्य_TREE;
-	पूर्ण
+		return NULL_TREE;
+	}
 
-	अगर (TYPE_P(*node)) अणु
+	if (TYPE_P(*node)) {
 		type = *node;
-	पूर्ण अन्यथा अणु
-		gcc_निश्चित(TREE_CODE(*node) == TYPE_DECL);
+	} else {
+		gcc_assert(TREE_CODE(*node) == TYPE_DECL);
 		type = TREE_TYPE(*node);
-	पूर्ण
+	}
 
-	अगर (TREE_CODE(type) != RECORD_TYPE) अणु
+	if (TREE_CODE(type) != RECORD_TYPE) {
 		error("%qE attribute used on %qT applies to struct types only", name, type);
-		वापस शून्य_TREE;
-	पूर्ण
+		return NULL_TREE;
+	}
 
-	अगर (lookup_attribute(IDENTIFIER_POINTER(name), TYPE_ATTRIBUTES(type))) अणु
+	if (lookup_attribute(IDENTIFIER_POINTER(name), TYPE_ATTRIBUTES(type))) {
 		error("%qE attribute is already applied to the type %qT", name, type);
-		वापस शून्य_TREE;
-	पूर्ण
+		return NULL_TREE;
+	}
 
 	*no_add_attrs = false;
 
-	वापस शून्य_TREE;
-पूर्ण
+	return NULL_TREE;
+}
 
-/* set on complete types that we करोn't need to inspect further at all */
-अटल tree handle_अक्रमomize_considered_attr(tree *node, tree name, tree args, पूर्णांक flags, bool *no_add_attrs)
-अणु
+/* set on complete types that we don't need to inspect further at all */
+static tree handle_randomize_considered_attr(tree *node, tree name, tree args, int flags, bool *no_add_attrs)
+{
 	*no_add_attrs = false;
-	वापस शून्य_TREE;
-पूर्ण
+	return NULL_TREE;
+}
 
 /*
- * set on types that we've perक्रमmed a shuffle on, to prevent re-shuffling
- * this करोes not preclude us from inspecting its fields क्रम potential shuffles
+ * set on types that we've performed a shuffle on, to prevent re-shuffling
+ * this does not preclude us from inspecting its fields for potential shuffles
  */
-अटल tree handle_अक्रमomize_perक्रमmed_attr(tree *node, tree name, tree args, पूर्णांक flags, bool *no_add_attrs)
-अणु
+static tree handle_randomize_performed_attr(tree *node, tree name, tree args, int flags, bool *no_add_attrs)
+{
 	*no_add_attrs = false;
-	वापस शून्य_TREE;
-पूर्ण
+	return NULL_TREE;
+}
 
 /*
- * 64bit variant of Bob Jenkins' खुला करोमुख्य PRNG
- * 256 bits of पूर्णांकernal state
+ * 64bit variant of Bob Jenkins' public domain PRNG
+ * 256 bits of internal state
  */
 
-प्रकार अचिन्हित दीर्घ दीर्घ u64;
+typedef unsigned long long u64;
 
-प्रकार काष्ठा ranctx अणु u64 a; u64 b; u64 c; u64 d; पूर्ण ranctx;
+typedef struct ranctx { u64 a; u64 b; u64 c; u64 d; } ranctx;
 
-#घोषणा rot(x,k) (((x)<<(k))|((x)>>(64-(k))))
-अटल u64 ranval(ranctx *x) अणु
+#define rot(x,k) (((x)<<(k))|((x)>>(64-(k))))
+static u64 ranval(ranctx *x) {
 	u64 e = x->a - rot(x->b, 7);
 	x->a = x->b ^ rot(x->c, 13);
 	x->b = x->c + rot(x->d, 37);
 	x->c = x->d + e;
 	x->d = e + x->a;
-	वापस x->d;
-पूर्ण
+	return x->d;
+}
 
-अटल व्योम raninit(ranctx *x, u64 *seed) अणु
-	पूर्णांक i;
+static void raninit(ranctx *x, u64 *seed) {
+	int i;
 
 	x->a = seed[0];
 	x->b = seed[1];
 	x->c = seed[2];
 	x->d = seed[3];
 
-	क्रम (i=0; i < 30; ++i)
-		(व्योम)ranval(x);
-पूर्ण
+	for (i=0; i < 30; ++i)
+		(void)ranval(x);
+}
 
-अटल u64 shuffle_seed[4];
+static u64 shuffle_seed[4];
 
-काष्ठा partition_group अणु
+struct partition_group {
 	tree tree_start;
-	अचिन्हित दीर्घ start;
-	अचिन्हित दीर्घ length;
-पूर्ण;
+	unsigned long start;
+	unsigned long length;
+};
 
-अटल व्योम partition_काष्ठा(tree *fields, अचिन्हित दीर्घ length, काष्ठा partition_group *size_groups, अचिन्हित दीर्घ *num_groups)
-अणु
-	अचिन्हित दीर्घ i;
-	अचिन्हित दीर्घ accum_size = 0;
-	अचिन्हित दीर्घ accum_length = 0;
-	अचिन्हित दीर्घ group_idx = 0;
+static void partition_struct(tree *fields, unsigned long length, struct partition_group *size_groups, unsigned long *num_groups)
+{
+	unsigned long i;
+	unsigned long accum_size = 0;
+	unsigned long accum_length = 0;
+	unsigned long group_idx = 0;
 
-	gcc_निश्चित(length < पूर्णांक_उच्च);
+	gcc_assert(length < INT_MAX);
 
-	स_रखो(size_groups, 0, माप(काष्ठा partition_group) * length);
+	memset(size_groups, 0, sizeof(struct partition_group) * length);
 
-	क्रम (i = 0; i < length; i++) अणु
-		अगर (size_groups[group_idx].tree_start == शून्य_TREE) अणु
+	for (i = 0; i < length; i++) {
+		if (size_groups[group_idx].tree_start == NULL_TREE) {
 			size_groups[group_idx].tree_start = fields[i];
 			size_groups[group_idx].start = i;
 			accum_length = 0;
 			accum_size = 0;
-		पूर्ण
-		accum_size += (अचिन्हित दीर्घ)पूर्णांक_size_in_bytes(TREE_TYPE(fields[i]));
+		}
+		accum_size += (unsigned long)int_size_in_bytes(TREE_TYPE(fields[i]));
 		accum_length++;
-		अगर (accum_size >= 64) अणु
+		if (accum_size >= 64) {
 			size_groups[group_idx].length = accum_length;
 			accum_length = 0;
 			group_idx++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (size_groups[group_idx].tree_start != शून्य_TREE &&
-	    !size_groups[group_idx].length) अणु
+	if (size_groups[group_idx].tree_start != NULL_TREE &&
+	    !size_groups[group_idx].length) {
 		size_groups[group_idx].length = accum_length;
 		group_idx++;
-	पूर्ण
+	}
 
 	*num_groups = group_idx;
-पूर्ण
+}
 
-अटल व्योम perक्रमmance_shuffle(tree *newtree, अचिन्हित दीर्घ length, ranctx *prng_state)
-अणु
-	अचिन्हित दीर्घ i, x;
-	काष्ठा partition_group size_group[length];
-	अचिन्हित दीर्घ num_groups = 0;
-	अचिन्हित दीर्घ अक्रमnum;
+static void performance_shuffle(tree *newtree, unsigned long length, ranctx *prng_state)
+{
+	unsigned long i, x;
+	struct partition_group size_group[length];
+	unsigned long num_groups = 0;
+	unsigned long randnum;
 
-	partition_काष्ठा(newtree, length, (काष्ठा partition_group *)&size_group, &num_groups);
-	क्रम (i = num_groups - 1; i > 0; i--) अणु
-		काष्ठा partition_group पंचांगp;
-		अक्रमnum = ranval(prng_state) % (i + 1);
-		पंचांगp = size_group[i];
-		size_group[i] = size_group[अक्रमnum];
-		size_group[अक्रमnum] = पंचांगp;
-	पूर्ण
+	partition_struct(newtree, length, (struct partition_group *)&size_group, &num_groups);
+	for (i = num_groups - 1; i > 0; i--) {
+		struct partition_group tmp;
+		randnum = ranval(prng_state) % (i + 1);
+		tmp = size_group[i];
+		size_group[i] = size_group[randnum];
+		size_group[randnum] = tmp;
+	}
 
-	क्रम (x = 0; x < num_groups; x++) अणु
-		क्रम (i = size_group[x].start + size_group[x].length - 1; i > size_group[x].start; i--) अणु
-			tree पंचांगp;
-			अगर (DECL_BIT_FIELD_TYPE(newtree[i]))
-				जारी;
-			अक्रमnum = ranval(prng_state) % (i + 1);
-			// we could handle this हाल dअगरferently अगर desired
-			अगर (DECL_BIT_FIELD_TYPE(newtree[अक्रमnum]))
-				जारी;
-			पंचांगp = newtree[i];
-			newtree[i] = newtree[अक्रमnum];
-			newtree[अक्रमnum] = पंचांगp;
-		पूर्ण
-	पूर्ण
-पूर्ण
+	for (x = 0; x < num_groups; x++) {
+		for (i = size_group[x].start + size_group[x].length - 1; i > size_group[x].start; i--) {
+			tree tmp;
+			if (DECL_BIT_FIELD_TYPE(newtree[i]))
+				continue;
+			randnum = ranval(prng_state) % (i + 1);
+			// we could handle this case differently if desired
+			if (DECL_BIT_FIELD_TYPE(newtree[randnum]))
+				continue;
+			tmp = newtree[i];
+			newtree[i] = newtree[randnum];
+			newtree[randnum] = tmp;
+		}
+	}
+}
 
-अटल व्योम full_shuffle(tree *newtree, अचिन्हित दीर्घ length, ranctx *prng_state)
-अणु
-	अचिन्हित दीर्घ i, अक्रमnum;
+static void full_shuffle(tree *newtree, unsigned long length, ranctx *prng_state)
+{
+	unsigned long i, randnum;
 
-	क्रम (i = length - 1; i > 0; i--) अणु
-		tree पंचांगp;
-		अक्रमnum = ranval(prng_state) % (i + 1);
-		पंचांगp = newtree[i];
-		newtree[i] = newtree[अक्रमnum];
-		newtree[अक्रमnum] = पंचांगp;
-	पूर्ण
-पूर्ण
+	for (i = length - 1; i > 0; i--) {
+		tree tmp;
+		randnum = ranval(prng_state) % (i + 1);
+		tmp = newtree[i];
+		newtree[i] = newtree[randnum];
+		newtree[randnum] = tmp;
+	}
+}
 
 /* modern in-place Fisher-Yates shuffle */
-अटल व्योम shuffle(स्थिर_tree type, tree *newtree, अचिन्हित दीर्घ length)
-अणु
-	अचिन्हित दीर्घ i;
+static void shuffle(const_tree type, tree *newtree, unsigned long length)
+{
+	unsigned long i;
 	u64 seed[4];
 	ranctx prng_state;
-	स्थिर अचिन्हित अक्षर *काष्ठाname;
+	const unsigned char *structname;
 
-	अगर (length == 0)
-		वापस;
+	if (length == 0)
+		return;
 
-	gcc_निश्चित(TREE_CODE(type) == RECORD_TYPE);
+	gcc_assert(TREE_CODE(type) == RECORD_TYPE);
 
-	काष्ठाname = ORIG_TYPE_NAME(type);
+	structname = ORIG_TYPE_NAME(type);
 
-#अगर_घोषित __DEBUG_PLUGIN
-	ख_लिखो(मानक_त्रुटि, "Shuffling struct %s %p\n", (स्थिर अक्षर *)काष्ठाname, type);
-#अगर_घोषित __DEBUG_VERBOSE
+#ifdef __DEBUG_PLUGIN
+	fprintf(stderr, "Shuffling struct %s %p\n", (const char *)structname, type);
+#ifdef __DEBUG_VERBOSE
 	debug_tree((tree)type);
-#पूर्ण_अगर
-#पूर्ण_अगर
+#endif
+#endif
 
-	क्रम (i = 0; i < 4; i++) अणु
+	for (i = 0; i < 4; i++) {
 		seed[i] = shuffle_seed[i];
-		seed[i] ^= name_hash(काष्ठाname);
-	पूर्ण
+		seed[i] ^= name_hash(structname);
+	}
 
 	raninit(&prng_state, (u64 *)&seed);
 
-	अगर (perक्रमmance_mode)
-		perक्रमmance_shuffle(newtree, length, &prng_state);
-	अन्यथा
+	if (performance_mode)
+		performance_shuffle(newtree, length, &prng_state);
+	else
 		full_shuffle(newtree, length, &prng_state);
-पूर्ण
+}
 
-अटल bool is_flexible_array(स्थिर_tree field)
-अणु
-	स्थिर_tree fieldtype;
-	स्थिर_tree typesize;
-	स्थिर_tree elemtype;
-	स्थिर_tree elemsize;
+static bool is_flexible_array(const_tree field)
+{
+	const_tree fieldtype;
+	const_tree typesize;
+	const_tree elemtype;
+	const_tree elemsize;
 
 	fieldtype = TREE_TYPE(field);
 	typesize = TYPE_SIZE(fieldtype);
 
-	अगर (TREE_CODE(fieldtype) != ARRAY_TYPE)
-		वापस false;
+	if (TREE_CODE(fieldtype) != ARRAY_TYPE)
+		return false;
 
 	elemtype = TREE_TYPE(fieldtype);
 	elemsize = TYPE_SIZE(elemtype);
 
 	/* size of type is represented in bits */
 
-	अगर (typesize == शून्य_TREE && TYPE_DOMAIN(fieldtype) != शून्य_TREE &&
-	    TYPE_MAX_VALUE(TYPE_DOMAIN(fieldtype)) == शून्य_TREE)
-		वापस true;
+	if (typesize == NULL_TREE && TYPE_DOMAIN(fieldtype) != NULL_TREE &&
+	    TYPE_MAX_VALUE(TYPE_DOMAIN(fieldtype)) == NULL_TREE)
+		return true;
 
-	अगर (typesize != शून्य_TREE &&
+	if (typesize != NULL_TREE &&
 	    (TREE_CONSTANT(typesize) && (!tree_to_uhwi(typesize) ||
 	     tree_to_uhwi(typesize) == tree_to_uhwi(elemsize))))
-		वापस true;
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल पूर्णांक relayout_काष्ठा(tree type)
-अणु
-	अचिन्हित दीर्घ num_fields = (अचिन्हित दीर्घ)list_length(TYPE_FIELDS(type));
-	अचिन्हित दीर्घ shuffle_length = num_fields;
+static int relayout_struct(tree type)
+{
+	unsigned long num_fields = (unsigned long)list_length(TYPE_FIELDS(type));
+	unsigned long shuffle_length = num_fields;
 	tree field;
 	tree newtree[num_fields];
-	अचिन्हित दीर्घ i;
+	unsigned long i;
 	tree list;
 	tree variant;
-	tree मुख्य_variant;
+	tree main_variant;
 	expanded_location xloc;
 	bool has_flexarray = false;
 
-	अगर (TYPE_FIELDS(type) == शून्य_TREE)
-		वापस 0;
+	if (TYPE_FIELDS(type) == NULL_TREE)
+		return 0;
 
-	अगर (num_fields < 2)
-		वापस 0;
+	if (num_fields < 2)
+		return 0;
 
-	gcc_निश्चित(TREE_CODE(type) == RECORD_TYPE);
+	gcc_assert(TREE_CODE(type) == RECORD_TYPE);
 
-	gcc_निश्चित(num_fields < पूर्णांक_उच्च);
+	gcc_assert(num_fields < INT_MAX);
 
-	अगर (lookup_attribute("randomize_performed", TYPE_ATTRIBUTES(type)) ||
+	if (lookup_attribute("randomize_performed", TYPE_ATTRIBUTES(type)) ||
 	    lookup_attribute("no_randomize_layout", TYPE_ATTRIBUTES(TYPE_MAIN_VARIANT(type))))
-		वापस 0;
+		return 0;
 
-	/* Workaround क्रम 3rd-party VirtualBox source that we can't modअगरy ourselves */
-	अगर (!म_भेद((स्थिर अक्षर *)ORIG_TYPE_NAME(type), "INTNETTRUNKFACTORY") ||
-	    !म_भेद((स्थिर अक्षर *)ORIG_TYPE_NAME(type), "RAWPCIFACTORY"))
-		वापस 0;
+	/* Workaround for 3rd-party VirtualBox source that we can't modify ourselves */
+	if (!strcmp((const char *)ORIG_TYPE_NAME(type), "INTNETTRUNKFACTORY") ||
+	    !strcmp((const char *)ORIG_TYPE_NAME(type), "RAWPCIFACTORY"))
+		return 0;
 
-	/* throw out any काष्ठाs in uapi */
+	/* throw out any structs in uapi */
 	xloc = expand_location(DECL_SOURCE_LOCATION(TYPE_FIELDS(type)));
 
-	अगर (म_माला(xloc.file, "/uapi/"))
+	if (strstr(xloc.file, "/uapi/"))
 		error(G_("attempted to randomize userland API struct %s"), ORIG_TYPE_NAME(type));
 
-	क्रम (field = TYPE_FIELDS(type), i = 0; field; field = TREE_CHAIN(field), i++) अणु
-		gcc_निश्चित(TREE_CODE(field) == FIELD_DECL);
+	for (field = TYPE_FIELDS(type), i = 0; field; field = TREE_CHAIN(field), i++) {
+		gcc_assert(TREE_CODE(field) == FIELD_DECL);
 		newtree[i] = field;
-	पूर्ण
+	}
 
 	/*
-	 * enक्रमce that we करोn't अक्रमomize the layout of the last
-	 * element of a काष्ठा अगर it's a 0 or 1-length array
+	 * enforce that we don't randomize the layout of the last
+	 * element of a struct if it's a 0 or 1-length array
 	 * or a proper flexible array
 	 */
-	अगर (is_flexible_array(newtree[num_fields - 1])) अणु
+	if (is_flexible_array(newtree[num_fields - 1])) {
 		has_flexarray = true;
 		shuffle_length--;
-	पूर्ण
+	}
 
 	shuffle(type, (tree *)newtree, shuffle_length);
 
 	/*
-	 * set up a bogus anonymous काष्ठा field deचिन्हित to error out on unnamed काष्ठा initializers
+	 * set up a bogus anonymous struct field designed to error out on unnamed struct initializers
 	 * as gcc provides no other way to detect such code
 	 */
 	list = make_node(FIELD_DECL);
 	TREE_CHAIN(list) = newtree[0];
-	TREE_TYPE(list) = व्योम_type_node;
+	TREE_TYPE(list) = void_type_node;
 	DECL_SIZE(list) = bitsize_zero_node;
 	DECL_NONADDRESSABLE_P(list) = 1;
 	DECL_FIELD_BIT_OFFSET(list) = bitsize_zero_node;
 	DECL_SIZE_UNIT(list) = size_zero_node;
 	DECL_FIELD_OFFSET(list) = size_zero_node;
 	DECL_CONTEXT(list) = type;
-	// to satisfy the स्थिरअगरy plugin
+	// to satisfy the constify plugin
 	TREE_READONLY(list) = 1;
 
-	क्रम (i = 0; i < num_fields - 1; i++)
+	for (i = 0; i < num_fields - 1; i++)
 		TREE_CHAIN(newtree[i]) = newtree[i+1];
-	TREE_CHAIN(newtree[num_fields - 1]) = शून्य_TREE;
+	TREE_CHAIN(newtree[num_fields - 1]) = NULL_TREE;
 
-	मुख्य_variant = TYPE_MAIN_VARIANT(type);
-	क्रम (variant = मुख्य_variant; variant; variant = TYPE_NEXT_VARIANT(variant)) अणु
+	main_variant = TYPE_MAIN_VARIANT(type);
+	for (variant = main_variant; variant; variant = TYPE_NEXT_VARIANT(variant)) {
 		TYPE_FIELDS(variant) = list;
 		TYPE_ATTRIBUTES(variant) = copy_list(TYPE_ATTRIBUTES(variant));
-		TYPE_ATTRIBUTES(variant) = tree_cons(get_identअगरier("randomize_performed"), शून्य_TREE, TYPE_ATTRIBUTES(variant));
-		TYPE_ATTRIBUTES(variant) = tree_cons(get_identअगरier("designated_init"), शून्य_TREE, TYPE_ATTRIBUTES(variant));
-		अगर (has_flexarray)
-			TYPE_ATTRIBUTES(type) = tree_cons(get_identअगरier("has_flexarray"), शून्य_TREE, TYPE_ATTRIBUTES(type));
-	पूर्ण
+		TYPE_ATTRIBUTES(variant) = tree_cons(get_identifier("randomize_performed"), NULL_TREE, TYPE_ATTRIBUTES(variant));
+		TYPE_ATTRIBUTES(variant) = tree_cons(get_identifier("designated_init"), NULL_TREE, TYPE_ATTRIBUTES(variant));
+		if (has_flexarray)
+			TYPE_ATTRIBUTES(type) = tree_cons(get_identifier("has_flexarray"), NULL_TREE, TYPE_ATTRIBUTES(type));
+	}
 
 	/*
-	 * क्रमce a re-layout of the मुख्य variant
-	 * the TYPE_SIZE क्रम all variants will be recomputed
+	 * force a re-layout of the main variant
+	 * the TYPE_SIZE for all variants will be recomputed
 	 * by finalize_type_size()
 	 */
-	TYPE_SIZE(मुख्य_variant) = शून्य_TREE;
-	layout_type(मुख्य_variant);
-	gcc_निश्चित(TYPE_SIZE(मुख्य_variant) != शून्य_TREE);
+	TYPE_SIZE(main_variant) = NULL_TREE;
+	layout_type(main_variant);
+	gcc_assert(TYPE_SIZE(main_variant) != NULL_TREE);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-/* from स्थिरअगरy plugin */
-अटल स्थिर_tree get_field_type(स्थिर_tree field)
-अणु
-	वापस strip_array_types(TREE_TYPE(field));
-पूर्ण
+/* from constify plugin */
+static const_tree get_field_type(const_tree field)
+{
+	return strip_array_types(TREE_TYPE(field));
+}
 
-/* from स्थिरअगरy plugin */
-अटल bool is_fptr(स्थिर_tree fieldtype)
-अणु
-	अगर (TREE_CODE(fieldtype) != POINTER_TYPE)
-		वापस false;
+/* from constify plugin */
+static bool is_fptr(const_tree fieldtype)
+{
+	if (TREE_CODE(fieldtype) != POINTER_TYPE)
+		return false;
 
-	वापस TREE_CODE(TREE_TYPE(fieldtype)) == FUNCTION_TYPE;
-पूर्ण
+	return TREE_CODE(TREE_TYPE(fieldtype)) == FUNCTION_TYPE;
+}
 
-/* derived from स्थिरअगरy plugin */
-अटल पूर्णांक is_pure_ops_काष्ठा(स्थिर_tree node)
-अणु
-	स्थिर_tree field;
+/* derived from constify plugin */
+static int is_pure_ops_struct(const_tree node)
+{
+	const_tree field;
 
-	gcc_निश्चित(TREE_CODE(node) == RECORD_TYPE || TREE_CODE(node) == UNION_TYPE);
+	gcc_assert(TREE_CODE(node) == RECORD_TYPE || TREE_CODE(node) == UNION_TYPE);
 
-	क्रम (field = TYPE_FIELDS(node); field; field = TREE_CHAIN(field)) अणु
-		स्थिर_tree fieldtype = get_field_type(field);
-		क्रमागत tree_code code = TREE_CODE(fieldtype);
+	for (field = TYPE_FIELDS(node); field; field = TREE_CHAIN(field)) {
+		const_tree fieldtype = get_field_type(field);
+		enum tree_code code = TREE_CODE(fieldtype);
 
-		अगर (node == fieldtype)
-			जारी;
+		if (node == fieldtype)
+			continue;
 
-		अगर (code == RECORD_TYPE || code == UNION_TYPE) अणु
-			अगर (!is_pure_ops_काष्ठा(fieldtype))
-				वापस 0;
-			जारी;
-		पूर्ण
+		if (code == RECORD_TYPE || code == UNION_TYPE) {
+			if (!is_pure_ops_struct(fieldtype))
+				return 0;
+			continue;
+		}
 
-		अगर (!is_fptr(fieldtype))
-			वापस 0;
-	पूर्ण
+		if (!is_fptr(fieldtype))
+			return 0;
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल व्योम अक्रमomize_type(tree type)
-अणु
+static void randomize_type(tree type)
+{
 	tree variant;
 
-	gcc_निश्चित(TREE_CODE(type) == RECORD_TYPE);
+	gcc_assert(TREE_CODE(type) == RECORD_TYPE);
 
-	अगर (lookup_attribute("randomize_considered", TYPE_ATTRIBUTES(type)))
-		वापस;
+	if (lookup_attribute("randomize_considered", TYPE_ATTRIBUTES(type)))
+		return;
 
-	अगर (lookup_attribute("randomize_layout", TYPE_ATTRIBUTES(TYPE_MAIN_VARIANT(type))) || is_pure_ops_काष्ठा(type))
-		relayout_काष्ठा(type);
+	if (lookup_attribute("randomize_layout", TYPE_ATTRIBUTES(TYPE_MAIN_VARIANT(type))) || is_pure_ops_struct(type))
+		relayout_struct(type);
 
-	क्रम (variant = TYPE_MAIN_VARIANT(type); variant; variant = TYPE_NEXT_VARIANT(variant)) अणु
+	for (variant = TYPE_MAIN_VARIANT(type); variant; variant = TYPE_NEXT_VARIANT(variant)) {
 		TYPE_ATTRIBUTES(type) = copy_list(TYPE_ATTRIBUTES(type));
-		TYPE_ATTRIBUTES(type) = tree_cons(get_identअगरier("randomize_considered"), शून्य_TREE, TYPE_ATTRIBUTES(type));
-	पूर्ण
-#अगर_घोषित __DEBUG_PLUGIN
-	ख_लिखो(मानक_त्रुटि, "Marking randomize_considered on struct %s\n", ORIG_TYPE_NAME(type));
-#अगर_घोषित __DEBUG_VERBOSE
+		TYPE_ATTRIBUTES(type) = tree_cons(get_identifier("randomize_considered"), NULL_TREE, TYPE_ATTRIBUTES(type));
+	}
+#ifdef __DEBUG_PLUGIN
+	fprintf(stderr, "Marking randomize_considered on struct %s\n", ORIG_TYPE_NAME(type));
+#ifdef __DEBUG_VERBOSE
 	debug_tree(type);
-#पूर्ण_अगर
-#पूर्ण_अगर
-पूर्ण
+#endif
+#endif
+}
 
-अटल व्योम update_decl_size(tree decl)
-अणु
+static void update_decl_size(tree decl)
+{
 	tree lastval, lastidx, field, init, type, flexsize;
-	अचिन्हित HOST_WIDE_INT len;
+	unsigned HOST_WIDE_INT len;
 
 	type = TREE_TYPE(decl);
 
-	अगर (!lookup_attribute("has_flexarray", TYPE_ATTRIBUTES(type)))
-		वापस;
+	if (!lookup_attribute("has_flexarray", TYPE_ATTRIBUTES(type)))
+		return;
 
 	init = DECL_INITIAL(decl);
-	अगर (init == शून्य_TREE || init == error_mark_node)
-		वापस;
+	if (init == NULL_TREE || init == error_mark_node)
+		return;
 
-	अगर (TREE_CODE(init) != CONSTRUCTOR)
-		वापस;
+	if (TREE_CODE(init) != CONSTRUCTOR)
+		return;
 
 	len = CONSTRUCTOR_NELTS(init);
-        अगर (!len)
-		वापस;
+        if (!len)
+		return;
 
 	lastval = CONSTRUCTOR_ELT(init, CONSTRUCTOR_NELTS(init) - 1)->value;
 	lastidx = CONSTRUCTOR_ELT(init, CONSTRUCTOR_NELTS(init) - 1)->index;
 
-	क्रम (field = TYPE_FIELDS(TREE_TYPE(decl)); TREE_CHAIN(field); field = TREE_CHAIN(field))
+	for (field = TYPE_FIELDS(TREE_TYPE(decl)); TREE_CHAIN(field); field = TREE_CHAIN(field))
 		;
 
-	अगर (lastidx != field)
-		वापस;
+	if (lastidx != field)
+		return;
 
-	अगर (TREE_CODE(lastval) != STRING_CST) अणु
+	if (TREE_CODE(lastval) != STRING_CST) {
 		error("Only string constants are supported as initializers "
 		      "for randomized structures with flexible arrays");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	flexsize = bitsize_पूर्णांक(TREE_STRING_LENGTH(lastval) *
+	flexsize = bitsize_int(TREE_STRING_LENGTH(lastval) *
 		tree_to_uhwi(TYPE_SIZE(TREE_TYPE(TREE_TYPE(lastval)))));
 
 	DECL_SIZE(decl) = size_binop(PLUS_EXPR, TYPE_SIZE(type), flexsize);
 
-	वापस;
-पूर्ण
+	return;
+}
 
 
-अटल व्योम अक्रमomize_layout_finish_decl(व्योम *event_data, व्योम *data)
-अणु
+static void randomize_layout_finish_decl(void *event_data, void *data)
+{
 	tree decl = (tree)event_data;
 	tree type;
 
-	अगर (decl == शून्य_TREE || decl == error_mark_node)
-		वापस;
+	if (decl == NULL_TREE || decl == error_mark_node)
+		return;
 
 	type = TREE_TYPE(decl);
 
-	अगर (TREE_CODE(decl) != VAR_DECL)
-		वापस;
+	if (TREE_CODE(decl) != VAR_DECL)
+		return;
 
-	अगर (TREE_CODE(type) != RECORD_TYPE && TREE_CODE(type) != UNION_TYPE)
-		वापस;
+	if (TREE_CODE(type) != RECORD_TYPE && TREE_CODE(type) != UNION_TYPE)
+		return;
 
-	अगर (!lookup_attribute("randomize_performed", TYPE_ATTRIBUTES(type)))
-		वापस;
+	if (!lookup_attribute("randomize_performed", TYPE_ATTRIBUTES(type)))
+		return;
 
 	DECL_SIZE(decl) = 0;
 	DECL_SIZE_UNIT(decl) = 0;
@@ -552,438 +551,438 @@ name_hash(स्थिर अचिन्हित अक्षर *name)
 	SET_DECL_RTL(decl, 0);
 	update_decl_size(decl);
 	layout_decl(decl, 0);
-पूर्ण
+}
 
-अटल व्योम finish_type(व्योम *event_data, व्योम *data)
-अणु
+static void finish_type(void *event_data, void *data)
+{
 	tree type = (tree)event_data;
 
-	अगर (type == शून्य_TREE || type == error_mark_node)
-		वापस;
+	if (type == NULL_TREE || type == error_mark_node)
+		return;
 
-	अगर (TREE_CODE(type) != RECORD_TYPE)
-		वापस;
+	if (TREE_CODE(type) != RECORD_TYPE)
+		return;
 
-	अगर (TYPE_FIELDS(type) == शून्य_TREE)
-		वापस;
+	if (TYPE_FIELDS(type) == NULL_TREE)
+		return;
 
-	अगर (lookup_attribute("randomize_considered", TYPE_ATTRIBUTES(type)))
-		वापस;
+	if (lookup_attribute("randomize_considered", TYPE_ATTRIBUTES(type)))
+		return;
 
-#अगर_घोषित __DEBUG_PLUGIN
-	ख_लिखो(मानक_त्रुटि, "Calling randomize_type on %s\n", ORIG_TYPE_NAME(type));
-#पूर्ण_अगर
-#अगर_घोषित __DEBUG_VERBOSE
+#ifdef __DEBUG_PLUGIN
+	fprintf(stderr, "Calling randomize_type on %s\n", ORIG_TYPE_NAME(type));
+#endif
+#ifdef __DEBUG_VERBOSE
 	debug_tree(type);
-#पूर्ण_अगर
-	अक्रमomize_type(type);
+#endif
+	randomize_type(type);
 
-	वापस;
-पूर्ण
+	return;
+}
 
-अटल काष्ठा attribute_spec अक्रमomize_layout_attr = अणु पूर्ण;
-अटल काष्ठा attribute_spec no_अक्रमomize_layout_attr = अणु पूर्ण;
-अटल काष्ठा attribute_spec अक्रमomize_considered_attr = अणु पूर्ण;
-अटल काष्ठा attribute_spec अक्रमomize_perक्रमmed_attr = अणु पूर्ण;
+static struct attribute_spec randomize_layout_attr = { };
+static struct attribute_spec no_randomize_layout_attr = { };
+static struct attribute_spec randomize_considered_attr = { };
+static struct attribute_spec randomize_performed_attr = { };
 
-अटल व्योम रेजिस्टर_attributes(व्योम *event_data, व्योम *data)
-अणु
-	अक्रमomize_layout_attr.name		= "randomize_layout";
-	अक्रमomize_layout_attr.type_required	= true;
-	अक्रमomize_layout_attr.handler		= handle_अक्रमomize_layout_attr;
-	अक्रमomize_layout_attr.affects_type_identity = true;
+static void register_attributes(void *event_data, void *data)
+{
+	randomize_layout_attr.name		= "randomize_layout";
+	randomize_layout_attr.type_required	= true;
+	randomize_layout_attr.handler		= handle_randomize_layout_attr;
+	randomize_layout_attr.affects_type_identity = true;
 
-	no_अक्रमomize_layout_attr.name		= "no_randomize_layout";
-	no_अक्रमomize_layout_attr.type_required	= true;
-	no_अक्रमomize_layout_attr.handler	= handle_अक्रमomize_layout_attr;
-	no_अक्रमomize_layout_attr.affects_type_identity = true;
+	no_randomize_layout_attr.name		= "no_randomize_layout";
+	no_randomize_layout_attr.type_required	= true;
+	no_randomize_layout_attr.handler	= handle_randomize_layout_attr;
+	no_randomize_layout_attr.affects_type_identity = true;
 
-	अक्रमomize_considered_attr.name		= "randomize_considered";
-	अक्रमomize_considered_attr.type_required	= true;
-	अक्रमomize_considered_attr.handler	= handle_अक्रमomize_considered_attr;
+	randomize_considered_attr.name		= "randomize_considered";
+	randomize_considered_attr.type_required	= true;
+	randomize_considered_attr.handler	= handle_randomize_considered_attr;
 
-	अक्रमomize_perक्रमmed_attr.name		= "randomize_performed";
-	अक्रमomize_perक्रमmed_attr.type_required	= true;
-	अक्रमomize_perक्रमmed_attr.handler	= handle_अक्रमomize_perक्रमmed_attr;
+	randomize_performed_attr.name		= "randomize_performed";
+	randomize_performed_attr.type_required	= true;
+	randomize_performed_attr.handler	= handle_randomize_performed_attr;
 
-	रेजिस्टर_attribute(&अक्रमomize_layout_attr);
-	रेजिस्टर_attribute(&no_अक्रमomize_layout_attr);
-	रेजिस्टर_attribute(&अक्रमomize_considered_attr);
-	रेजिस्टर_attribute(&अक्रमomize_perक्रमmed_attr);
-पूर्ण
+	register_attribute(&randomize_layout_attr);
+	register_attribute(&no_randomize_layout_attr);
+	register_attribute(&randomize_considered_attr);
+	register_attribute(&randomize_performed_attr);
+}
 
-अटल व्योम check_bad_casts_in_स्थिरructor(tree var, tree init)
-अणु
-	अचिन्हित HOST_WIDE_INT idx;
+static void check_bad_casts_in_constructor(tree var, tree init)
+{
+	unsigned HOST_WIDE_INT idx;
 	tree field, val;
 	tree field_type, val_type;
 
-	FOR_EACH_CONSTRUCTOR_ELT(CONSTRUCTOR_ELTS(init), idx, field, val) अणु
-		अगर (TREE_CODE(val) == CONSTRUCTOR) अणु
-			check_bad_casts_in_स्थिरructor(var, val);
-			जारी;
-		पूर्ण
+	FOR_EACH_CONSTRUCTOR_ELT(CONSTRUCTOR_ELTS(init), idx, field, val) {
+		if (TREE_CODE(val) == CONSTRUCTOR) {
+			check_bad_casts_in_constructor(var, val);
+			continue;
+		}
 
-		/* pipacs' plugin creates franken-arrays that dअगरfer from those produced by
+		/* pipacs' plugin creates franken-arrays that differ from those produced by
 		   normal code which all have valid 'field' trees. work around this */
-		अगर (field == शून्य_TREE)
-			जारी;
+		if (field == NULL_TREE)
+			continue;
 		field_type = TREE_TYPE(field);
 		val_type = TREE_TYPE(val);
 
-		अगर (TREE_CODE(field_type) != POINTER_TYPE || TREE_CODE(val_type) != POINTER_TYPE)
-			जारी;
+		if (TREE_CODE(field_type) != POINTER_TYPE || TREE_CODE(val_type) != POINTER_TYPE)
+			continue;
 
-		अगर (field_type == val_type)
-			जारी;
+		if (field_type == val_type)
+			continue;
 
 		field_type = TYPE_MAIN_VARIANT(strip_array_types(TYPE_MAIN_VARIANT(TREE_TYPE(field_type))));
 		val_type = TYPE_MAIN_VARIANT(strip_array_types(TYPE_MAIN_VARIANT(TREE_TYPE(val_type))));
 
-		अगर (field_type == व्योम_type_node)
-			जारी;
-		अगर (field_type == val_type)
-			जारी;
-		अगर (TREE_CODE(val_type) != RECORD_TYPE)
-			जारी;
+		if (field_type == void_type_node)
+			continue;
+		if (field_type == val_type)
+			continue;
+		if (TREE_CODE(val_type) != RECORD_TYPE)
+			continue;
 
-		अगर (!lookup_attribute("randomize_performed", TYPE_ATTRIBUTES(val_type)))
-			जारी;
+		if (!lookup_attribute("randomize_performed", TYPE_ATTRIBUTES(val_type)))
+			continue;
 		MISMATCH(DECL_SOURCE_LOCATION(var), "constructor\n", TYPE_MAIN_VARIANT(field_type), TYPE_MAIN_VARIANT(val_type));
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* derived from the स्थिरअगरy plugin */
-अटल व्योम check_global_variables(व्योम *event_data, व्योम *data)
-अणु
-	काष्ठा varpool_node *node;
+/* derived from the constify plugin */
+static void check_global_variables(void *event_data, void *data)
+{
+	struct varpool_node *node;
 	tree init;
 
-	FOR_EACH_VARIABLE(node) अणु
+	FOR_EACH_VARIABLE(node) {
 		tree var = NODE_DECL(node);
 		init = DECL_INITIAL(var);
-		अगर (init == शून्य_TREE)
-			जारी;
+		if (init == NULL_TREE)
+			continue;
 
-		अगर (TREE_CODE(init) != CONSTRUCTOR)
-			जारी;
+		if (TREE_CODE(init) != CONSTRUCTOR)
+			continue;
 
-		check_bad_casts_in_स्थिरructor(var, init);
-	पूर्ण
-पूर्ण
+		check_bad_casts_in_constructor(var, init);
+	}
+}
 
-अटल bool करोminated_by_is_err(स्थिर_tree rhs, basic_block bb)
-अणु
-	basic_block करोm;
-	gimple करोm_sपंचांगt;
-	gimple call_sपंचांगt;
-	स्थिर_tree करोm_lhs;
-	स्थिर_tree poss_is_err_cond;
-	स्थिर_tree poss_is_err_func;
-	स्थिर_tree is_err_arg;
+static bool dominated_by_is_err(const_tree rhs, basic_block bb)
+{
+	basic_block dom;
+	gimple dom_stmt;
+	gimple call_stmt;
+	const_tree dom_lhs;
+	const_tree poss_is_err_cond;
+	const_tree poss_is_err_func;
+	const_tree is_err_arg;
 
-	करोm = get_immediate_करोminator(CDI_DOMINATORS, bb);
-	अगर (!करोm)
-		वापस false;
+	dom = get_immediate_dominator(CDI_DOMINATORS, bb);
+	if (!dom)
+		return false;
 
-	करोm_sपंचांगt = last_sपंचांगt(करोm);
-	अगर (!करोm_sपंचांगt)
-		वापस false;
+	dom_stmt = last_stmt(dom);
+	if (!dom_stmt)
+		return false;
 
-	अगर (gimple_code(करोm_sपंचांगt) != GIMPLE_COND)
-		वापस false;
+	if (gimple_code(dom_stmt) != GIMPLE_COND)
+		return false;
 
-	अगर (gimple_cond_code(करोm_sपंचांगt) != NE_EXPR)
-		वापस false;
+	if (gimple_cond_code(dom_stmt) != NE_EXPR)
+		return false;
 
-	अगर (!पूर्णांकeger_zerop(gimple_cond_rhs(करोm_sपंचांगt)))
-		वापस false;
+	if (!integer_zerop(gimple_cond_rhs(dom_stmt)))
+		return false;
 
-	poss_is_err_cond = gimple_cond_lhs(करोm_sपंचांगt);
+	poss_is_err_cond = gimple_cond_lhs(dom_stmt);
 
-	अगर (TREE_CODE(poss_is_err_cond) != SSA_NAME)
-		वापस false;
+	if (TREE_CODE(poss_is_err_cond) != SSA_NAME)
+		return false;
 
-	call_sपंचांगt = SSA_NAME_DEF_STMT(poss_is_err_cond);
+	call_stmt = SSA_NAME_DEF_STMT(poss_is_err_cond);
 
-	अगर (gimple_code(call_sपंचांगt) != GIMPLE_CALL)
-		वापस false;
+	if (gimple_code(call_stmt) != GIMPLE_CALL)
+		return false;
 
-	करोm_lhs = gimple_get_lhs(call_sपंचांगt);
-	poss_is_err_func = gimple_call_fndecl(call_sपंचांगt);
-	अगर (!poss_is_err_func)
-		वापस false;
-	अगर (करोm_lhs != poss_is_err_cond)
-		वापस false;
-	अगर (म_भेद(DECL_NAME_POINTER(poss_is_err_func), "IS_ERR"))
-		वापस false;
+	dom_lhs = gimple_get_lhs(call_stmt);
+	poss_is_err_func = gimple_call_fndecl(call_stmt);
+	if (!poss_is_err_func)
+		return false;
+	if (dom_lhs != poss_is_err_cond)
+		return false;
+	if (strcmp(DECL_NAME_POINTER(poss_is_err_func), "IS_ERR"))
+		return false;
 
-	is_err_arg = gimple_call_arg(call_sपंचांगt, 0);
-	अगर (!is_err_arg)
-		वापस false;
+	is_err_arg = gimple_call_arg(call_stmt, 0);
+	if (!is_err_arg)
+		return false;
 
-	अगर (is_err_arg != rhs)
-		वापस false;
+	if (is_err_arg != rhs)
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल व्योम handle_local_var_initializers(व्योम)
-अणु
+static void handle_local_var_initializers(void)
+{
 	tree var;
-	अचिन्हित पूर्णांक i;
+	unsigned int i;
 
-	FOR_EACH_LOCAL_DECL(cfun, i, var) अणु
+	FOR_EACH_LOCAL_DECL(cfun, i, var) {
 		tree init = DECL_INITIAL(var);
-		अगर (!init)
-			जारी;
-		अगर (TREE_CODE(init) != CONSTRUCTOR)
-			जारी;
-		check_bad_casts_in_स्थिरructor(var, init);
-	पूर्ण
-पूर्ण
+		if (!init)
+			continue;
+		if (TREE_CODE(init) != CONSTRUCTOR)
+			continue;
+		check_bad_casts_in_constructor(var, init);
+	}
+}
 
-अटल bool type_name_eq(gimple sपंचांगt, स्थिर_tree type_tree, स्थिर अक्षर *wanted_name)
-अणु
-	स्थिर अक्षर *type_name;
+static bool type_name_eq(gimple stmt, const_tree type_tree, const char *wanted_name)
+{
+	const char *type_name;
 
-	अगर (type_tree == शून्य_TREE)
-		वापस false;
+	if (type_tree == NULL_TREE)
+		return false;
 
-	चयन (TREE_CODE(type_tree)) अणु
-	हाल RECORD_TYPE:
+	switch (TREE_CODE(type_tree)) {
+	case RECORD_TYPE:
 		type_name = TYPE_NAME_POINTER(type_tree);
-		अवरोध;
-	हाल INTEGER_TYPE:
-		अगर (TYPE_PRECISION(type_tree) == CHAR_TYPE_SIZE)
+		break;
+	case INTEGER_TYPE:
+		if (TYPE_PRECISION(type_tree) == CHAR_TYPE_SIZE)
 			type_name = "char";
-		अन्यथा अणु
-			INFORM(gimple_location(sपंचांगt), "found non-char INTEGER_TYPE cast comparison: %qT\n", type_tree);
+		else {
+			INFORM(gimple_location(stmt), "found non-char INTEGER_TYPE cast comparison: %qT\n", type_tree);
 			debug_tree(type_tree);
-			वापस false;
-		पूर्ण
-		अवरोध;
-	हाल POINTER_TYPE:
-		अगर (TREE_CODE(TREE_TYPE(type_tree)) == VOID_TYPE) अणु
+			return false;
+		}
+		break;
+	case POINTER_TYPE:
+		if (TREE_CODE(TREE_TYPE(type_tree)) == VOID_TYPE) {
 			type_name = "void *";
-			अवरोध;
-		पूर्ण अन्यथा अणु
-			INFORM(gimple_location(sपंचांगt), "found non-void POINTER_TYPE cast comparison %qT\n", type_tree);
+			break;
+		} else {
+			INFORM(gimple_location(stmt), "found non-void POINTER_TYPE cast comparison %qT\n", type_tree);
 			debug_tree(type_tree);
-			वापस false;
-		पूर्ण
-	शेष:
-		INFORM(gimple_location(sपंचांगt), "unhandled cast comparison: %qT\n", type_tree);
+			return false;
+		}
+	default:
+		INFORM(gimple_location(stmt), "unhandled cast comparison: %qT\n", type_tree);
 		debug_tree(type_tree);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	वापस म_भेद(type_name, wanted_name) == 0;
-पूर्ण
+	return strcmp(type_name, wanted_name) == 0;
+}
 
-अटल bool whitelisted_cast(gimple sपंचांगt, स्थिर_tree lhs_tree, स्थिर_tree rhs_tree)
-अणु
-	स्थिर काष्ठा whitelist_entry *entry;
-	expanded_location xloc = expand_location(gimple_location(sपंचांगt));
+static bool whitelisted_cast(gimple stmt, const_tree lhs_tree, const_tree rhs_tree)
+{
+	const struct whitelist_entry *entry;
+	expanded_location xloc = expand_location(gimple_location(stmt));
 
-	क्रम (entry = whitelist; entry->pathname; entry++) अणु
-		अगर (!म_माला(xloc.file, entry->pathname))
-			जारी;
+	for (entry = whitelist; entry->pathname; entry++) {
+		if (!strstr(xloc.file, entry->pathname))
+			continue;
 
-		अगर (type_name_eq(sपंचांगt, lhs_tree, entry->lhs) && type_name_eq(sपंचांगt, rhs_tree, entry->rhs))
-			वापस true;
-	पूर्ण
+		if (type_name_eq(stmt, lhs_tree, entry->lhs) && type_name_eq(stmt, rhs_tree, entry->rhs))
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /*
  * iterate over all statements to find "bad" casts:
- * those where the address of the start of a काष्ठाure is cast
- * to a poपूर्णांकer of a काष्ठाure of a dअगरferent type, or a
- * काष्ठाure poपूर्णांकer type is cast to a dअगरferent काष्ठाure poपूर्णांकer type
+ * those where the address of the start of a structure is cast
+ * to a pointer of a structure of a different type, or a
+ * structure pointer type is cast to a different structure pointer type
  */
-अटल अचिन्हित पूर्णांक find_bad_casts_execute(व्योम)
-अणु
+static unsigned int find_bad_casts_execute(void)
+{
 	basic_block bb;
 
 	handle_local_var_initializers();
 
-	FOR_EACH_BB_FN(bb, cfun) अणु
-		gimple_sपंचांगt_iterator gsi;
+	FOR_EACH_BB_FN(bb, cfun) {
+		gimple_stmt_iterator gsi;
 
-		क्रम (gsi = gsi_start_bb(bb); !gsi_end_p(gsi); gsi_next(&gsi)) अणु
-			gimple sपंचांगt;
-			स्थिर_tree lhs;
-			स्थिर_tree lhs_type;
-			स्थिर_tree rhs1;
-			स्थिर_tree rhs_type;
-			स्थिर_tree ptr_lhs_type;
-			स्थिर_tree ptr_rhs_type;
-			स्थिर_tree op0;
-			स्थिर_tree op0_type;
-			क्रमागत tree_code rhs_code;
+		for (gsi = gsi_start_bb(bb); !gsi_end_p(gsi); gsi_next(&gsi)) {
+			gimple stmt;
+			const_tree lhs;
+			const_tree lhs_type;
+			const_tree rhs1;
+			const_tree rhs_type;
+			const_tree ptr_lhs_type;
+			const_tree ptr_rhs_type;
+			const_tree op0;
+			const_tree op0_type;
+			enum tree_code rhs_code;
 
-			sपंचांगt = gsi_sपंचांगt(gsi);
+			stmt = gsi_stmt(gsi);
 
-#अगर_घोषित __DEBUG_PLUGIN
-#अगर_घोषित __DEBUG_VERBOSE
-			debug_gimple_sपंचांगt(sपंचांगt);
-			debug_tree(gimple_get_lhs(sपंचांगt));
-#पूर्ण_अगर
-#पूर्ण_अगर
+#ifdef __DEBUG_PLUGIN
+#ifdef __DEBUG_VERBOSE
+			debug_gimple_stmt(stmt);
+			debug_tree(gimple_get_lhs(stmt));
+#endif
+#endif
 
-			अगर (gimple_code(sपंचांगt) != GIMPLE_ASSIGN)
-				जारी;
+			if (gimple_code(stmt) != GIMPLE_ASSIGN)
+				continue;
 
-#अगर_घोषित __DEBUG_PLUGIN
-#अगर_घोषित __DEBUG_VERBOSE
-			debug_tree(gimple_assign_rhs1(sपंचांगt));
-#पूर्ण_अगर
-#पूर्ण_अगर
+#ifdef __DEBUG_PLUGIN
+#ifdef __DEBUG_VERBOSE
+			debug_tree(gimple_assign_rhs1(stmt));
+#endif
+#endif
 
 
-			rhs_code = gimple_assign_rhs_code(sपंचांगt);
+			rhs_code = gimple_assign_rhs_code(stmt);
 
-			अगर (rhs_code != ADDR_EXPR && rhs_code != SSA_NAME)
-				जारी;
+			if (rhs_code != ADDR_EXPR && rhs_code != SSA_NAME)
+				continue;
 
-			lhs = gimple_get_lhs(sपंचांगt);
+			lhs = gimple_get_lhs(stmt);
 			lhs_type = TREE_TYPE(lhs);
-			rhs1 = gimple_assign_rhs1(sपंचांगt);
+			rhs1 = gimple_assign_rhs1(stmt);
 			rhs_type = TREE_TYPE(rhs1);
 
-			अगर (TREE_CODE(rhs_type) != POINTER_TYPE ||
+			if (TREE_CODE(rhs_type) != POINTER_TYPE ||
 			    TREE_CODE(lhs_type) != POINTER_TYPE)
-				जारी;
+				continue;
 
 			ptr_lhs_type = TYPE_MAIN_VARIANT(strip_array_types(TYPE_MAIN_VARIANT(TREE_TYPE(lhs_type))));
 			ptr_rhs_type = TYPE_MAIN_VARIANT(strip_array_types(TYPE_MAIN_VARIANT(TREE_TYPE(rhs_type))));
 
-			अगर (ptr_rhs_type == व्योम_type_node)
-				जारी;
+			if (ptr_rhs_type == void_type_node)
+				continue;
 
-			अगर (ptr_lhs_type == व्योम_type_node)
-				जारी;
+			if (ptr_lhs_type == void_type_node)
+				continue;
 
-			अगर (करोminated_by_is_err(rhs1, bb))
-				जारी;
+			if (dominated_by_is_err(rhs1, bb))
+				continue;
 
-			अगर (TREE_CODE(ptr_rhs_type) != RECORD_TYPE) अणु
-#अगर_अघोषित __DEBUG_PLUGIN
-				अगर (lookup_attribute("randomize_performed", TYPE_ATTRIBUTES(ptr_lhs_type)))
-#पूर्ण_अगर
-				अणु
-					अगर (!whitelisted_cast(sपंचांगt, ptr_lhs_type, ptr_rhs_type))
-						MISMATCH(gimple_location(sपंचांगt), "rhs", ptr_lhs_type, ptr_rhs_type);
-				पूर्ण
-				जारी;
-			पूर्ण
+			if (TREE_CODE(ptr_rhs_type) != RECORD_TYPE) {
+#ifndef __DEBUG_PLUGIN
+				if (lookup_attribute("randomize_performed", TYPE_ATTRIBUTES(ptr_lhs_type)))
+#endif
+				{
+					if (!whitelisted_cast(stmt, ptr_lhs_type, ptr_rhs_type))
+						MISMATCH(gimple_location(stmt), "rhs", ptr_lhs_type, ptr_rhs_type);
+				}
+				continue;
+			}
 
-			अगर (rhs_code == SSA_NAME && ptr_lhs_type == ptr_rhs_type)
-				जारी;
+			if (rhs_code == SSA_NAME && ptr_lhs_type == ptr_rhs_type)
+				continue;
 
-			अगर (rhs_code == ADDR_EXPR) अणु
+			if (rhs_code == ADDR_EXPR) {
 				op0 = TREE_OPERAND(rhs1, 0);
 
-				अगर (op0 == शून्य_TREE)
-					जारी;
+				if (op0 == NULL_TREE)
+					continue;
 
-				अगर (TREE_CODE(op0) != VAR_DECL)
-					जारी;
+				if (TREE_CODE(op0) != VAR_DECL)
+					continue;
 
 				op0_type = TYPE_MAIN_VARIANT(strip_array_types(TYPE_MAIN_VARIANT(TREE_TYPE(op0))));
-				अगर (op0_type == ptr_lhs_type)
-					जारी;
+				if (op0_type == ptr_lhs_type)
+					continue;
 
-#अगर_अघोषित __DEBUG_PLUGIN
-				अगर (lookup_attribute("randomize_performed", TYPE_ATTRIBUTES(op0_type)))
-#पूर्ण_अगर
-				अणु
-					अगर (!whitelisted_cast(sपंचांगt, ptr_lhs_type, op0_type))
-						MISMATCH(gimple_location(sपंचांगt), "op0", ptr_lhs_type, op0_type);
-				पूर्ण
-			पूर्ण अन्यथा अणु
-				स्थिर_tree ssa_name_var = SSA_NAME_VAR(rhs1);
-				/* skip bogus type casts पूर्णांकroduced by container_of */
-				अगर (ssa_name_var != शून्य_TREE && DECL_NAME(ssa_name_var) && 
-				    !म_भेद((स्थिर अक्षर *)DECL_NAME_POINTER(ssa_name_var), "__mptr"))
-					जारी;
-#अगर_अघोषित __DEBUG_PLUGIN
-				अगर (lookup_attribute("randomize_performed", TYPE_ATTRIBUTES(ptr_rhs_type)))
-#पूर्ण_अगर
-				अणु
-					अगर (!whitelisted_cast(sपंचांगt, ptr_lhs_type, ptr_rhs_type))
-						MISMATCH(gimple_location(sपंचांगt), "ssa", ptr_lhs_type, ptr_rhs_type);
-				पूर्ण
-			पूर्ण
+#ifndef __DEBUG_PLUGIN
+				if (lookup_attribute("randomize_performed", TYPE_ATTRIBUTES(op0_type)))
+#endif
+				{
+					if (!whitelisted_cast(stmt, ptr_lhs_type, op0_type))
+						MISMATCH(gimple_location(stmt), "op0", ptr_lhs_type, op0_type);
+				}
+			} else {
+				const_tree ssa_name_var = SSA_NAME_VAR(rhs1);
+				/* skip bogus type casts introduced by container_of */
+				if (ssa_name_var != NULL_TREE && DECL_NAME(ssa_name_var) && 
+				    !strcmp((const char *)DECL_NAME_POINTER(ssa_name_var), "__mptr"))
+					continue;
+#ifndef __DEBUG_PLUGIN
+				if (lookup_attribute("randomize_performed", TYPE_ATTRIBUTES(ptr_rhs_type)))
+#endif
+				{
+					if (!whitelisted_cast(stmt, ptr_lhs_type, ptr_rhs_type))
+						MISMATCH(gimple_location(stmt), "ssa", ptr_lhs_type, ptr_rhs_type);
+				}
+			}
 
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+	}
+	return 0;
+}
 
-#घोषणा PASS_NAME find_bad_casts
-#घोषणा NO_GATE
-#घोषणा TODO_FLAGS_FINISH TODO_dump_func
-#समावेश "gcc-generate-gimple-pass.h"
+#define PASS_NAME find_bad_casts
+#define NO_GATE
+#define TODO_FLAGS_FINISH TODO_dump_func
+#include "gcc-generate-gimple-pass.h"
 
-__visible पूर्णांक plugin_init(काष्ठा plugin_name_args *plugin_info, काष्ठा plugin_gcc_version *version)
-अणु
-	पूर्णांक i;
-	स्थिर अक्षर * स्थिर plugin_name = plugin_info->base_name;
-	स्थिर पूर्णांक argc = plugin_info->argc;
-	स्थिर काष्ठा plugin_argument * स्थिर argv = plugin_info->argv;
+__visible int plugin_init(struct plugin_name_args *plugin_info, struct plugin_gcc_version *version)
+{
+	int i;
+	const char * const plugin_name = plugin_info->base_name;
+	const int argc = plugin_info->argc;
+	const struct plugin_argument * const argv = plugin_info->argv;
 	bool enable = true;
-	पूर्णांक obtained_seed = 0;
-	काष्ठा रेजिस्टर_pass_info find_bad_casts_pass_info;
+	int obtained_seed = 0;
+	struct register_pass_info find_bad_casts_pass_info;
 
 	find_bad_casts_pass_info.pass			= make_find_bad_casts_pass();
 	find_bad_casts_pass_info.reference_pass_name	= "ssa";
 	find_bad_casts_pass_info.ref_pass_instance_number	= 1;
 	find_bad_casts_pass_info.pos_op			= PASS_POS_INSERT_AFTER;
 
-	अगर (!plugin_शेष_version_check(version, &gcc_version)) अणु
+	if (!plugin_default_version_check(version, &gcc_version)) {
 		error(G_("incompatible gcc/plugin versions"));
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	अगर (म_भेदन(lang_hooks.name, "GNU C", 5) && !म_भेदन(lang_hooks.name, "GNU C+", 6)) अणु
-		inक्रमm(UNKNOWN_LOCATION, G_("%s supports C only, not %s"), plugin_name, lang_hooks.name);
+	if (strncmp(lang_hooks.name, "GNU C", 5) && !strncmp(lang_hooks.name, "GNU C+", 6)) {
+		inform(UNKNOWN_LOCATION, G_("%s supports C only, not %s"), plugin_name, lang_hooks.name);
 		enable = false;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < argc; ++i) अणु
-		अगर (!म_भेद(argv[i].key, "disable")) अणु
+	for (i = 0; i < argc; ++i) {
+		if (!strcmp(argv[i].key, "disable")) {
 			enable = false;
-			जारी;
-		पूर्ण
-		अगर (!म_भेद(argv[i].key, "performance-mode")) अणु
-			perक्रमmance_mode = 1;
-			जारी;
-		पूर्ण
+			continue;
+		}
+		if (!strcmp(argv[i].key, "performance-mode")) {
+			performance_mode = 1;
+			continue;
+		}
 		error(G_("unknown option '-fplugin-arg-%s-%s'"), plugin_name, argv[i].key);
-	पूर्ण
+	}
 
-	अगर (म_माप(अक्रमकाष्ठा_seed) != 64) अणु
+	if (strlen(randstruct_seed) != 64) {
 		error(G_("invalid seed value supplied for %s plugin"), plugin_name);
-		वापस 1;
-	पूर्ण
-	obtained_seed = माला_पूछो(अक्रमकाष्ठा_seed, "%016llx%016llx%016llx%016llx",
+		return 1;
+	}
+	obtained_seed = sscanf(randstruct_seed, "%016llx%016llx%016llx%016llx",
 		&shuffle_seed[0], &shuffle_seed[1], &shuffle_seed[2], &shuffle_seed[3]);
-	अगर (obtained_seed != 4) अणु
+	if (obtained_seed != 4) {
 		error(G_("Invalid seed supplied for %s plugin"), plugin_name);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	रेजिस्टर_callback(plugin_name, PLUGIN_INFO, शून्य, &अक्रमomize_layout_plugin_info);
-	अगर (enable) अणु
-		रेजिस्टर_callback(plugin_name, PLUGIN_ALL_IPA_PASSES_START, check_global_variables, शून्य);
-		रेजिस्टर_callback(plugin_name, PLUGIN_PASS_MANAGER_SETUP, शून्य, &find_bad_casts_pass_info);
-		रेजिस्टर_callback(plugin_name, PLUGIN_FINISH_TYPE, finish_type, शून्य);
-		रेजिस्टर_callback(plugin_name, PLUGIN_FINISH_DECL, अक्रमomize_layout_finish_decl, शून्य);
-	पूर्ण
-	रेजिस्टर_callback(plugin_name, PLUGIN_ATTRIBUTES, रेजिस्टर_attributes, शून्य);
+	register_callback(plugin_name, PLUGIN_INFO, NULL, &randomize_layout_plugin_info);
+	if (enable) {
+		register_callback(plugin_name, PLUGIN_ALL_IPA_PASSES_START, check_global_variables, NULL);
+		register_callback(plugin_name, PLUGIN_PASS_MANAGER_SETUP, NULL, &find_bad_casts_pass_info);
+		register_callback(plugin_name, PLUGIN_FINISH_TYPE, finish_type, NULL);
+		register_callback(plugin_name, PLUGIN_FINISH_DECL, randomize_layout_finish_decl, NULL);
+	}
+	register_callback(plugin_name, PLUGIN_ATTRIBUTES, register_attributes, NULL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

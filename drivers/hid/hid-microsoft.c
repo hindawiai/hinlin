@@ -1,11 +1,10 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *  HID driver क्रम some microsoft "special" devices
+ *  HID driver for some microsoft "special" devices
  *
  *  Copyright (c) 1999 Andreas Gal
  *  Copyright (c) 2000-2005 Vojtech Pavlik <vojtech@suse.cz>
- *  Copyright (c) 2005 Michael Haboustak <mike-@cinci.rr.com> क्रम Concept2, Inc
+ *  Copyright (c) 2005 Michael Haboustak <mike-@cinci.rr.com> for Concept2, Inc
  *  Copyright (c) 2006-2007 Jiri Kosina
  *  Copyright (c) 2008 Jiri Slaby
  */
@@ -13,119 +12,119 @@
 /*
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/input.h>
-#समावेश <linux/hid.h>
-#समावेश <linux/module.h>
+#include <linux/device.h>
+#include <linux/input.h>
+#include <linux/hid.h>
+#include <linux/module.h>
 
-#समावेश "hid-ids.h"
+#include "hid-ids.h"
 
-#घोषणा MS_HIDINPUT		BIT(0)
-#घोषणा MS_ERGONOMY		BIT(1)
-#घोषणा MS_PRESENTER		BIT(2)
-#घोषणा MS_RDESC		BIT(3)
-#घोषणा MS_NOGET		BIT(4)
-#घोषणा MS_DUPLICATE_USAGES	BIT(5)
-#घोषणा MS_SURFACE_DIAL		BIT(6)
-#घोषणा MS_QUIRK_FF		BIT(7)
+#define MS_HIDINPUT		BIT(0)
+#define MS_ERGONOMY		BIT(1)
+#define MS_PRESENTER		BIT(2)
+#define MS_RDESC		BIT(3)
+#define MS_NOGET		BIT(4)
+#define MS_DUPLICATE_USAGES	BIT(5)
+#define MS_SURFACE_DIAL		BIT(6)
+#define MS_QUIRK_FF		BIT(7)
 
-काष्ठा ms_data अणु
-	अचिन्हित दीर्घ quirks;
-	काष्ठा hid_device *hdev;
-	काष्ठा work_काष्ठा ff_worker;
+struct ms_data {
+	unsigned long quirks;
+	struct hid_device *hdev;
+	struct work_struct ff_worker;
 	__u8 strong;
 	__u8 weak;
-	व्योम *output_report_dmabuf;
-पूर्ण;
+	void *output_report_dmabuf;
+};
 
-#घोषणा XB1S_FF_REPORT		3
-#घोषणा ENABLE_WEAK		BIT(0)
-#घोषणा ENABLE_STRONG		BIT(1)
+#define XB1S_FF_REPORT		3
+#define ENABLE_WEAK		BIT(0)
+#define ENABLE_STRONG		BIT(1)
 
-क्रमागत अणु
+enum {
 	MAGNITUDE_STRONG = 2,
 	MAGNITUDE_WEAK,
 	MAGNITUDE_NUM
-पूर्ण;
+};
 
-काष्ठा xb1s_ff_report अणु
+struct xb1s_ff_report {
 	__u8	report_id;
 	__u8	enable;
 	__u8	magnitude[MAGNITUDE_NUM];
 	__u8	duration_10ms;
 	__u8	start_delay_10ms;
 	__u8	loop_count;
-पूर्ण __packed;
+} __packed;
 
-अटल __u8 *ms_report_fixup(काष्ठा hid_device *hdev, __u8 *rdesc,
-		अचिन्हित पूर्णांक *rsize)
-अणु
-	काष्ठा ms_data *ms = hid_get_drvdata(hdev);
-	अचिन्हित दीर्घ quirks = ms->quirks;
+static __u8 *ms_report_fixup(struct hid_device *hdev, __u8 *rdesc,
+		unsigned int *rsize)
+{
+	struct ms_data *ms = hid_get_drvdata(hdev);
+	unsigned long quirks = ms->quirks;
 
 	/*
 	 * Microsoft Wireless Desktop Receiver (Model 1028) has
 	 * 'Usage Min/Max' where it ought to have 'Physical Min/Max'
 	 */
-	अगर ((quirks & MS_RDESC) && *rsize == 571 && rdesc[557] == 0x19 &&
-			rdesc[559] == 0x29) अणु
+	if ((quirks & MS_RDESC) && *rsize == 571 && rdesc[557] == 0x19 &&
+			rdesc[559] == 0x29) {
 		hid_info(hdev, "fixing up Microsoft Wireless Receiver Model 1028 report descriptor\n");
 		rdesc[557] = 0x35;
 		rdesc[559] = 0x45;
-	पूर्ण
-	वापस rdesc;
-पूर्ण
+	}
+	return rdesc;
+}
 
-#घोषणा ms_map_key_clear(c)	hid_map_usage_clear(hi, usage, bit, max, \
+#define ms_map_key_clear(c)	hid_map_usage_clear(hi, usage, bit, max, \
 					EV_KEY, (c))
-अटल पूर्णांक ms_ergonomy_kb_quirk(काष्ठा hid_input *hi, काष्ठा hid_usage *usage,
-		अचिन्हित दीर्घ **bit, पूर्णांक *max)
-अणु
-	काष्ठा input_dev *input = hi->input;
+static int ms_ergonomy_kb_quirk(struct hid_input *hi, struct hid_usage *usage,
+		unsigned long **bit, int *max)
+{
+	struct input_dev *input = hi->input;
 
-	अगर ((usage->hid & HID_USAGE_PAGE) == HID_UP_CONSUMER) अणु
-		चयन (usage->hid & HID_USAGE) अणु
+	if ((usage->hid & HID_USAGE_PAGE) == HID_UP_CONSUMER) {
+		switch (usage->hid & HID_USAGE) {
 		/*
-		 * Microsoft uses these 2 reserved usage ids क्रम 2 keys on
+		 * Microsoft uses these 2 reserved usage ids for 2 keys on
 		 * the MS office kb labelled "Office Home" and "Task Pane".
 		 */
-		हाल 0x29d:
+		case 0x29d:
 			ms_map_key_clear(KEY_PROG1);
-			वापस 1;
-		हाल 0x29e:
+			return 1;
+		case 0x29e:
 			ms_map_key_clear(KEY_PROG2);
-			वापस 1;
-		पूर्ण
-		वापस 0;
-	पूर्ण
+			return 1;
+		}
+		return 0;
+	}
 
-	अगर ((usage->hid & HID_USAGE_PAGE) != HID_UP_MSVENDOR)
-		वापस 0;
+	if ((usage->hid & HID_USAGE_PAGE) != HID_UP_MSVENDOR)
+		return 0;
 
-	चयन (usage->hid & HID_USAGE) अणु
-	हाल 0xfd06: ms_map_key_clear(KEY_CHAT);	अवरोध;
-	हाल 0xfd07: ms_map_key_clear(KEY_PHONE);	अवरोध;
-	हाल 0xff00:
+	switch (usage->hid & HID_USAGE) {
+	case 0xfd06: ms_map_key_clear(KEY_CHAT);	break;
+	case 0xfd07: ms_map_key_clear(KEY_PHONE);	break;
+	case 0xff00:
 		/* Special keypad keys */
 		ms_map_key_clear(KEY_KPEQUAL);
 		set_bit(KEY_KPLEFTPAREN, input->keybit);
 		set_bit(KEY_KPRIGHTPAREN, input->keybit);
-		अवरोध;
-	हाल 0xff01:
+		break;
+	case 0xff01:
 		/* Scroll wheel */
 		hid_map_usage_clear(hi, usage, bit, max, EV_REL, REL_WHEEL);
-		अवरोध;
-	हाल 0xff02:
+		break;
+	case 0xff02:
 		/*
-		 * This byte contains a copy of the modअगरier keys byte of a
-		 * standard hid keyboard report, as send by पूर्णांकerface 0
-		 * (this usage is found on पूर्णांकerface 1).
+		 * This byte contains a copy of the modifier keys byte of a
+		 * standard hid keyboard report, as send by interface 0
+		 * (this usage is found on interface 1).
 		 *
-		 * This byte only माला_लो send when another key in the same report
+		 * This byte only gets send when another key in the same report
 		 * changes state, and as such is useless, ignore it.
 		 */
-		वापस -1;
-	हाल 0xff05:
+		return -1;
+	case 0xff05:
 		set_bit(EV_REP, input->evbit);
 		ms_map_key_clear(KEY_F13);
 		set_bit(KEY_F14, input->keybit);
@@ -133,165 +132,165 @@
 		set_bit(KEY_F16, input->keybit);
 		set_bit(KEY_F17, input->keybit);
 		set_bit(KEY_F18, input->keybit);
-		अवरोध;
-	शेष:
-		वापस 0;
-	पूर्ण
-	वापस 1;
-पूर्ण
+		break;
+	default:
+		return 0;
+	}
+	return 1;
+}
 
-अटल पूर्णांक ms_presenter_8k_quirk(काष्ठा hid_input *hi, काष्ठा hid_usage *usage,
-		अचिन्हित दीर्घ **bit, पूर्णांक *max)
-अणु
-	अगर ((usage->hid & HID_USAGE_PAGE) != HID_UP_MSVENDOR)
-		वापस 0;
+static int ms_presenter_8k_quirk(struct hid_input *hi, struct hid_usage *usage,
+		unsigned long **bit, int *max)
+{
+	if ((usage->hid & HID_USAGE_PAGE) != HID_UP_MSVENDOR)
+		return 0;
 
 	set_bit(EV_REP, hi->input->evbit);
-	चयन (usage->hid & HID_USAGE) अणु
-	हाल 0xfd08: ms_map_key_clear(KEY_FORWARD);	अवरोध;
-	हाल 0xfd09: ms_map_key_clear(KEY_BACK);	अवरोध;
-	हाल 0xfd0b: ms_map_key_clear(KEY_PLAYPAUSE);	अवरोध;
-	हाल 0xfd0e: ms_map_key_clear(KEY_CLOSE);	अवरोध;
-	हाल 0xfd0f: ms_map_key_clear(KEY_PLAY);	अवरोध;
-	शेष:
-		वापस 0;
-	पूर्ण
-	वापस 1;
-पूर्ण
+	switch (usage->hid & HID_USAGE) {
+	case 0xfd08: ms_map_key_clear(KEY_FORWARD);	break;
+	case 0xfd09: ms_map_key_clear(KEY_BACK);	break;
+	case 0xfd0b: ms_map_key_clear(KEY_PLAYPAUSE);	break;
+	case 0xfd0e: ms_map_key_clear(KEY_CLOSE);	break;
+	case 0xfd0f: ms_map_key_clear(KEY_PLAY);	break;
+	default:
+		return 0;
+	}
+	return 1;
+}
 
-अटल पूर्णांक ms_surface_dial_quirk(काष्ठा hid_input *hi, काष्ठा hid_field *field,
-		काष्ठा hid_usage *usage, अचिन्हित दीर्घ **bit, पूर्णांक *max)
-अणु
-	चयन (usage->hid & HID_USAGE_PAGE) अणु
-	हाल 0xff070000:
-	हाल HID_UP_DIGITIZER:
+static int ms_surface_dial_quirk(struct hid_input *hi, struct hid_field *field,
+		struct hid_usage *usage, unsigned long **bit, int *max)
+{
+	switch (usage->hid & HID_USAGE_PAGE) {
+	case 0xff070000:
+	case HID_UP_DIGITIZER:
 		/* ignore those axis */
-		वापस -1;
-	हाल HID_UP_GENDESK:
-		चयन (usage->hid) अणु
-		हाल HID_GD_X:
-		हाल HID_GD_Y:
-		हाल HID_GD_RFKILL_BTN:
+		return -1;
+	case HID_UP_GENDESK:
+		switch (usage->hid) {
+		case HID_GD_X:
+		case HID_GD_Y:
+		case HID_GD_RFKILL_BTN:
 			/* ignore those axis */
-			वापस -1;
-		पूर्ण
-	पूर्ण
+			return -1;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ms_input_mapping(काष्ठा hid_device *hdev, काष्ठा hid_input *hi,
-		काष्ठा hid_field *field, काष्ठा hid_usage *usage,
-		अचिन्हित दीर्घ **bit, पूर्णांक *max)
-अणु
-	काष्ठा ms_data *ms = hid_get_drvdata(hdev);
-	अचिन्हित दीर्घ quirks = ms->quirks;
+static int ms_input_mapping(struct hid_device *hdev, struct hid_input *hi,
+		struct hid_field *field, struct hid_usage *usage,
+		unsigned long **bit, int *max)
+{
+	struct ms_data *ms = hid_get_drvdata(hdev);
+	unsigned long quirks = ms->quirks;
 
-	अगर (quirks & MS_ERGONOMY) अणु
-		पूर्णांक ret = ms_ergonomy_kb_quirk(hi, usage, bit, max);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+	if (quirks & MS_ERGONOMY) {
+		int ret = ms_ergonomy_kb_quirk(hi, usage, bit, max);
+		if (ret)
+			return ret;
+	}
 
-	अगर ((quirks & MS_PRESENTER) &&
+	if ((quirks & MS_PRESENTER) &&
 			ms_presenter_8k_quirk(hi, usage, bit, max))
-		वापस 1;
+		return 1;
 
-	अगर (quirks & MS_SURFACE_DIAL) अणु
-		पूर्णांक ret = ms_surface_dial_quirk(hi, field, usage, bit, max);
+	if (quirks & MS_SURFACE_DIAL) {
+		int ret = ms_surface_dial_quirk(hi, field, usage, bit, max);
 
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ms_input_mapped(काष्ठा hid_device *hdev, काष्ठा hid_input *hi,
-		काष्ठा hid_field *field, काष्ठा hid_usage *usage,
-		अचिन्हित दीर्घ **bit, पूर्णांक *max)
-अणु
-	काष्ठा ms_data *ms = hid_get_drvdata(hdev);
-	अचिन्हित दीर्घ quirks = ms->quirks;
+static int ms_input_mapped(struct hid_device *hdev, struct hid_input *hi,
+		struct hid_field *field, struct hid_usage *usage,
+		unsigned long **bit, int *max)
+{
+	struct ms_data *ms = hid_get_drvdata(hdev);
+	unsigned long quirks = ms->quirks;
 
-	अगर (quirks & MS_DUPLICATE_USAGES)
+	if (quirks & MS_DUPLICATE_USAGES)
 		clear_bit(usage->code, *bit);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ms_event(काष्ठा hid_device *hdev, काष्ठा hid_field *field,
-		काष्ठा hid_usage *usage, __s32 value)
-अणु
-	काष्ठा ms_data *ms = hid_get_drvdata(hdev);
-	अचिन्हित दीर्घ quirks = ms->quirks;
-	काष्ठा input_dev *input;
+static int ms_event(struct hid_device *hdev, struct hid_field *field,
+		struct hid_usage *usage, __s32 value)
+{
+	struct ms_data *ms = hid_get_drvdata(hdev);
+	unsigned long quirks = ms->quirks;
+	struct input_dev *input;
 
-	अगर (!(hdev->claimed & HID_CLAIMED_INPUT) || !field->hidinput ||
+	if (!(hdev->claimed & HID_CLAIMED_INPUT) || !field->hidinput ||
 			!usage->type)
-		वापस 0;
+		return 0;
 
 	input = field->hidinput->input;
 
 	/* Handling MS keyboards special buttons */
-	अगर (quirks & MS_ERGONOMY && usage->hid == (HID_UP_MSVENDOR | 0xff00)) अणु
+	if (quirks & MS_ERGONOMY && usage->hid == (HID_UP_MSVENDOR | 0xff00)) {
 		/* Special keypad keys */
 		input_report_key(input, KEY_KPEQUAL, value & 0x01);
 		input_report_key(input, KEY_KPLEFTPAREN, value & 0x02);
 		input_report_key(input, KEY_KPRIGHTPAREN, value & 0x04);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	अगर (quirks & MS_ERGONOMY && usage->hid == (HID_UP_MSVENDOR | 0xff01)) अणु
+	if (quirks & MS_ERGONOMY && usage->hid == (HID_UP_MSVENDOR | 0xff01)) {
 		/* Scroll wheel */
-		पूर्णांक step = ((value & 0x60) >> 5) + 1;
+		int step = ((value & 0x60) >> 5) + 1;
 
-		चयन (value & 0x1f) अणु
-		हाल 0x01:
+		switch (value & 0x1f) {
+		case 0x01:
 			input_report_rel(input, REL_WHEEL, step);
-			अवरोध;
-		हाल 0x1f:
+			break;
+		case 0x1f:
 			input_report_rel(input, REL_WHEEL, -step);
-			अवरोध;
-		पूर्ण
-		वापस 1;
-	पूर्ण
+			break;
+		}
+		return 1;
+	}
 
-	अगर (quirks & MS_ERGONOMY && usage->hid == (HID_UP_MSVENDOR | 0xff05)) अणु
-		अटल अचिन्हित पूर्णांक last_key = 0;
-		अचिन्हित पूर्णांक key = 0;
-		चयन (value) अणु
-		हाल 0x01: key = KEY_F14; अवरोध;
-		हाल 0x02: key = KEY_F15; अवरोध;
-		हाल 0x04: key = KEY_F16; अवरोध;
-		हाल 0x08: key = KEY_F17; अवरोध;
-		हाल 0x10: key = KEY_F18; अवरोध;
-		पूर्ण
-		अगर (key) अणु
+	if (quirks & MS_ERGONOMY && usage->hid == (HID_UP_MSVENDOR | 0xff05)) {
+		static unsigned int last_key = 0;
+		unsigned int key = 0;
+		switch (value) {
+		case 0x01: key = KEY_F14; break;
+		case 0x02: key = KEY_F15; break;
+		case 0x04: key = KEY_F16; break;
+		case 0x08: key = KEY_F17; break;
+		case 0x10: key = KEY_F18; break;
+		}
+		if (key) {
 			input_event(input, usage->type, key, 1);
 			last_key = key;
-		पूर्ण अन्यथा
+		} else
 			input_event(input, usage->type, last_key, 0);
 
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ms_ff_worker(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा ms_data *ms = container_of(work, काष्ठा ms_data, ff_worker);
-	काष्ठा hid_device *hdev = ms->hdev;
-	काष्ठा xb1s_ff_report *r = ms->output_report_dmabuf;
-	पूर्णांक ret;
+static void ms_ff_worker(struct work_struct *work)
+{
+	struct ms_data *ms = container_of(work, struct ms_data, ff_worker);
+	struct hid_device *hdev = ms->hdev;
+	struct xb1s_ff_report *r = ms->output_report_dmabuf;
+	int ret;
 
-	स_रखो(r, 0, माप(*r));
+	memset(r, 0, sizeof(*r));
 
 	r->report_id = XB1S_FF_REPORT;
 	r->enable = ENABLE_WEAK | ENABLE_STRONG;
 	/*
-	 * Specअगरying maximum duration and maximum loop count should
+	 * Specifying maximum duration and maximum loop count should
 	 * cover maximum duration of a single effect, which is 65536
 	 * ms
 	 */
@@ -300,19 +299,19 @@
 	r->magnitude[MAGNITUDE_STRONG] = ms->strong; /* left actuator */
 	r->magnitude[MAGNITUDE_WEAK] = ms->weak;     /* right actuator */
 
-	ret = hid_hw_output_report(hdev, (__u8 *)r, माप(*r));
-	अगर (ret < 0)
+	ret = hid_hw_output_report(hdev, (__u8 *)r, sizeof(*r));
+	if (ret < 0)
 		hid_warn(hdev, "failed to send FF report\n");
-पूर्ण
+}
 
-अटल पूर्णांक ms_play_effect(काष्ठा input_dev *dev, व्योम *data,
-			  काष्ठा ff_effect *effect)
-अणु
-	काष्ठा hid_device *hid = input_get_drvdata(dev);
-	काष्ठा ms_data *ms = hid_get_drvdata(hid);
+static int ms_play_effect(struct input_dev *dev, void *data,
+			  struct ff_effect *effect)
+{
+	struct hid_device *hid = input_get_drvdata(dev);
+	struct ms_data *ms = hid_get_drvdata(hid);
 
-	अगर (effect->type != FF_RUMBLE)
-		वापस 0;
+	if (effect->type != FF_RUMBLE)
+		return 0;
 
 	/*
 	 * Magnitude is 0..100 so scale the 16-bit input here
@@ -321,141 +320,141 @@
 	ms->weak = ((u32) effect->u.rumble.weak_magnitude * 100) / U16_MAX;
 
 	schedule_work(&ms->ff_worker);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ms_init_ff(काष्ठा hid_device *hdev)
-अणु
-	काष्ठा hid_input *hidinput;
-	काष्ठा input_dev *input_dev;
-	काष्ठा ms_data *ms = hid_get_drvdata(hdev);
+static int ms_init_ff(struct hid_device *hdev)
+{
+	struct hid_input *hidinput;
+	struct input_dev *input_dev;
+	struct ms_data *ms = hid_get_drvdata(hdev);
 
-	अगर (list_empty(&hdev->inमाला_दो)) अणु
+	if (list_empty(&hdev->inputs)) {
 		hid_err(hdev, "no inputs found\n");
-		वापस -ENODEV;
-	पूर्ण
-	hidinput = list_entry(hdev->inमाला_दो.next, काष्ठा hid_input, list);
+		return -ENODEV;
+	}
+	hidinput = list_entry(hdev->inputs.next, struct hid_input, list);
 	input_dev = hidinput->input;
 
-	अगर (!(ms->quirks & MS_QUIRK_FF))
-		वापस 0;
+	if (!(ms->quirks & MS_QUIRK_FF))
+		return 0;
 
 	ms->hdev = hdev;
 	INIT_WORK(&ms->ff_worker, ms_ff_worker);
 
 	ms->output_report_dmabuf = devm_kzalloc(&hdev->dev,
-						माप(काष्ठा xb1s_ff_report),
+						sizeof(struct xb1s_ff_report),
 						GFP_KERNEL);
-	अगर (ms->output_report_dmabuf == शून्य)
-		वापस -ENOMEM;
+	if (ms->output_report_dmabuf == NULL)
+		return -ENOMEM;
 
 	input_set_capability(input_dev, EV_FF, FF_RUMBLE);
-	वापस input_ff_create_memless(input_dev, शून्य, ms_play_effect);
-पूर्ण
+	return input_ff_create_memless(input_dev, NULL, ms_play_effect);
+}
 
-अटल व्योम ms_हटाओ_ff(काष्ठा hid_device *hdev)
-अणु
-	काष्ठा ms_data *ms = hid_get_drvdata(hdev);
+static void ms_remove_ff(struct hid_device *hdev)
+{
+	struct ms_data *ms = hid_get_drvdata(hdev);
 
-	अगर (!(ms->quirks & MS_QUIRK_FF))
-		वापस;
+	if (!(ms->quirks & MS_QUIRK_FF))
+		return;
 
 	cancel_work_sync(&ms->ff_worker);
-पूर्ण
+}
 
-अटल पूर्णांक ms_probe(काष्ठा hid_device *hdev, स्थिर काष्ठा hid_device_id *id)
-अणु
-	अचिन्हित दीर्घ quirks = id->driver_data;
-	काष्ठा ms_data *ms;
-	पूर्णांक ret;
+static int ms_probe(struct hid_device *hdev, const struct hid_device_id *id)
+{
+	unsigned long quirks = id->driver_data;
+	struct ms_data *ms;
+	int ret;
 
-	ms = devm_kzalloc(&hdev->dev, माप(*ms), GFP_KERNEL);
-	अगर (ms == शून्य)
-		वापस -ENOMEM;
+	ms = devm_kzalloc(&hdev->dev, sizeof(*ms), GFP_KERNEL);
+	if (ms == NULL)
+		return -ENOMEM;
 
 	ms->quirks = quirks;
 
 	hid_set_drvdata(hdev, ms);
 
-	अगर (quirks & MS_NOGET)
+	if (quirks & MS_NOGET)
 		hdev->quirks |= HID_QUIRK_NOGET;
 
-	अगर (quirks & MS_SURFACE_DIAL)
+	if (quirks & MS_SURFACE_DIAL)
 		hdev->quirks |= HID_QUIRK_INPUT_PER_APP;
 
 	ret = hid_parse(hdev);
-	अगर (ret) अणु
+	if (ret) {
 		hid_err(hdev, "parse failed\n");
-		जाओ err_मुक्त;
-	पूर्ण
+		goto err_free;
+	}
 
 	ret = hid_hw_start(hdev, HID_CONNECT_DEFAULT | ((quirks & MS_HIDINPUT) ?
 				HID_CONNECT_HIDINPUT_FORCE : 0));
-	अगर (ret) अणु
+	if (ret) {
 		hid_err(hdev, "hw start failed\n");
-		जाओ err_मुक्त;
-	पूर्ण
+		goto err_free;
+	}
 
 	ret = ms_init_ff(hdev);
-	अगर (ret)
+	if (ret)
 		hid_err(hdev, "could not initialize ff, continuing anyway");
 
-	वापस 0;
-err_मुक्त:
-	वापस ret;
-पूर्ण
+	return 0;
+err_free:
+	return ret;
+}
 
-अटल व्योम ms_हटाओ(काष्ठा hid_device *hdev)
-अणु
+static void ms_remove(struct hid_device *hdev)
+{
 	hid_hw_stop(hdev);
-	ms_हटाओ_ff(hdev);
-पूर्ण
+	ms_remove_ff(hdev);
+}
 
-अटल स्थिर काष्ठा hid_device_id ms_devices[] = अणु
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_MICROSOFT, USB_DEVICE_ID_SIDEWINDER_GV),
-		.driver_data = MS_HIDINPUT पूर्ण,
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_MICROSOFT, USB_DEVICE_ID_MS_OFFICE_KB),
-		.driver_data = MS_ERGONOMY पूर्ण,
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_MICROSOFT, USB_DEVICE_ID_MS_NE4K),
-		.driver_data = MS_ERGONOMY पूर्ण,
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_MICROSOFT, USB_DEVICE_ID_MS_NE4K_JP),
-		.driver_data = MS_ERGONOMY पूर्ण,
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_MICROSOFT, USB_DEVICE_ID_MS_NE7K),
-		.driver_data = MS_ERGONOMY पूर्ण,
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_MICROSOFT, USB_DEVICE_ID_MS_LK6K),
-		.driver_data = MS_ERGONOMY | MS_RDESC पूर्ण,
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_MICROSOFT, USB_DEVICE_ID_MS_PRESENTER_8K_USB),
-		.driver_data = MS_PRESENTER पूर्ण,
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_MICROSOFT, USB_DEVICE_ID_MS_DIGITAL_MEDIA_3K),
-		.driver_data = MS_ERGONOMY पूर्ण,
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_MICROSOFT, USB_DEVICE_ID_MS_DIGITAL_MEDIA_7K),
-		.driver_data = MS_ERGONOMY पूर्ण,
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_MICROSOFT, USB_DEVICE_ID_MS_DIGITAL_MEDIA_600),
-		.driver_data = MS_ERGONOMY पूर्ण,
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_MICROSOFT, USB_DEVICE_ID_MS_DIGITAL_MEDIA_3KV1),
-		.driver_data = MS_ERGONOMY पूर्ण,
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_MICROSOFT, USB_DEVICE_ID_WIRELESS_OPTICAL_DESKTOP_3_0),
-		.driver_data = MS_NOGET पूर्ण,
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_MICROSOFT, USB_DEVICE_ID_MS_COMFORT_MOUSE_4500),
-		.driver_data = MS_DUPLICATE_USAGES पूर्ण,
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_MICROSOFT, USB_DEVICE_ID_MS_POWER_COVER),
-		.driver_data = MS_HIDINPUT पूर्ण,
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_MICROSOFT, USB_DEVICE_ID_MS_COMFORT_KEYBOARD),
-		.driver_data = MS_ERGONOMYपूर्ण,
+static const struct hid_device_id ms_devices[] = {
+	{ HID_USB_DEVICE(USB_VENDOR_ID_MICROSOFT, USB_DEVICE_ID_SIDEWINDER_GV),
+		.driver_data = MS_HIDINPUT },
+	{ HID_USB_DEVICE(USB_VENDOR_ID_MICROSOFT, USB_DEVICE_ID_MS_OFFICE_KB),
+		.driver_data = MS_ERGONOMY },
+	{ HID_USB_DEVICE(USB_VENDOR_ID_MICROSOFT, USB_DEVICE_ID_MS_NE4K),
+		.driver_data = MS_ERGONOMY },
+	{ HID_USB_DEVICE(USB_VENDOR_ID_MICROSOFT, USB_DEVICE_ID_MS_NE4K_JP),
+		.driver_data = MS_ERGONOMY },
+	{ HID_USB_DEVICE(USB_VENDOR_ID_MICROSOFT, USB_DEVICE_ID_MS_NE7K),
+		.driver_data = MS_ERGONOMY },
+	{ HID_USB_DEVICE(USB_VENDOR_ID_MICROSOFT, USB_DEVICE_ID_MS_LK6K),
+		.driver_data = MS_ERGONOMY | MS_RDESC },
+	{ HID_USB_DEVICE(USB_VENDOR_ID_MICROSOFT, USB_DEVICE_ID_MS_PRESENTER_8K_USB),
+		.driver_data = MS_PRESENTER },
+	{ HID_USB_DEVICE(USB_VENDOR_ID_MICROSOFT, USB_DEVICE_ID_MS_DIGITAL_MEDIA_3K),
+		.driver_data = MS_ERGONOMY },
+	{ HID_USB_DEVICE(USB_VENDOR_ID_MICROSOFT, USB_DEVICE_ID_MS_DIGITAL_MEDIA_7K),
+		.driver_data = MS_ERGONOMY },
+	{ HID_USB_DEVICE(USB_VENDOR_ID_MICROSOFT, USB_DEVICE_ID_MS_DIGITAL_MEDIA_600),
+		.driver_data = MS_ERGONOMY },
+	{ HID_USB_DEVICE(USB_VENDOR_ID_MICROSOFT, USB_DEVICE_ID_MS_DIGITAL_MEDIA_3KV1),
+		.driver_data = MS_ERGONOMY },
+	{ HID_USB_DEVICE(USB_VENDOR_ID_MICROSOFT, USB_DEVICE_ID_WIRELESS_OPTICAL_DESKTOP_3_0),
+		.driver_data = MS_NOGET },
+	{ HID_USB_DEVICE(USB_VENDOR_ID_MICROSOFT, USB_DEVICE_ID_MS_COMFORT_MOUSE_4500),
+		.driver_data = MS_DUPLICATE_USAGES },
+	{ HID_USB_DEVICE(USB_VENDOR_ID_MICROSOFT, USB_DEVICE_ID_MS_POWER_COVER),
+		.driver_data = MS_HIDINPUT },
+	{ HID_USB_DEVICE(USB_VENDOR_ID_MICROSOFT, USB_DEVICE_ID_MS_COMFORT_KEYBOARD),
+		.driver_data = MS_ERGONOMY},
 
-	अणु HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, USB_DEVICE_ID_MS_PRESENTER_8K_BT),
-		.driver_data = MS_PRESENTER पूर्ण,
-	अणु HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x091B),
-		.driver_data = MS_SURFACE_DIAL पूर्ण,
-	अणु HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, USB_DEVICE_ID_MS_XBOX_ONE_S_CONTROLLER),
-		.driver_data = MS_QUIRK_FF पूर्ण,
-	अणु HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, USB_DEVICE_ID_8BITDO_SN30_PRO_PLUS),
-		.driver_data = MS_QUIRK_FF पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, USB_DEVICE_ID_MS_PRESENTER_8K_BT),
+		.driver_data = MS_PRESENTER },
+	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, 0x091B),
+		.driver_data = MS_SURFACE_DIAL },
+	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, USB_DEVICE_ID_MS_XBOX_ONE_S_CONTROLLER),
+		.driver_data = MS_QUIRK_FF },
+	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MICROSOFT, USB_DEVICE_ID_8BITDO_SN30_PRO_PLUS),
+		.driver_data = MS_QUIRK_FF },
+	{ }
+};
 MODULE_DEVICE_TABLE(hid, ms_devices);
 
-अटल काष्ठा hid_driver ms_driver = अणु
+static struct hid_driver ms_driver = {
 	.name = "microsoft",
 	.id_table = ms_devices,
 	.report_fixup = ms_report_fixup,
@@ -463,8 +462,8 @@ MODULE_DEVICE_TABLE(hid, ms_devices);
 	.input_mapped = ms_input_mapped,
 	.event = ms_event,
 	.probe = ms_probe,
-	.हटाओ = ms_हटाओ,
-पूर्ण;
+	.remove = ms_remove,
+};
 module_hid_driver(ms_driver);
 
 MODULE_LICENSE("GPL");

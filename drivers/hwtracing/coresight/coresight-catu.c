@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2018 Arm Limited. All rights reserved.
  *
@@ -8,46 +7,46 @@
  * Author: Suzuki K Poulose <suzuki.poulose@arm.com>
  */
 
-#समावेश <linux/amba/bus.h>
-#समावेश <linux/device.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
+#include <linux/amba/bus.h>
+#include <linux/device.h>
+#include <linux/dma-mapping.h>
+#include <linux/io.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
 
-#समावेश "coresight-catu.h"
-#समावेश "coresight-priv.h"
-#समावेश "coresight-tmc.h"
+#include "coresight-catu.h"
+#include "coresight-priv.h"
+#include "coresight-tmc.h"
 
-#घोषणा csdev_to_catu_drvdata(csdev)	\
+#define csdev_to_catu_drvdata(csdev)	\
 	dev_get_drvdata(csdev->dev.parent)
 
-/* Verbose output क्रम CATU table contents */
-#अगर_घोषित CATU_DEBUG
-#घोषणा catu_dbg(x, ...) dev_dbg(x, __VA_ARGS__)
-#अन्यथा
-#घोषणा catu_dbg(x, ...) करो अणुपूर्ण जबतक (0)
-#पूर्ण_अगर
+/* Verbose output for CATU table contents */
+#ifdef CATU_DEBUG
+#define catu_dbg(x, ...) dev_dbg(x, __VA_ARGS__)
+#else
+#define catu_dbg(x, ...) do {} while (0)
+#endif
 
 DEFINE_CORESIGHT_DEVLIST(catu_devs, "catu");
 
-काष्ठा catu_etr_buf अणु
-	काष्ठा पंचांगc_sg_table *catu_table;
+struct catu_etr_buf {
+	struct tmc_sg_table *catu_table;
 	dma_addr_t sladdr;
-पूर्ण;
+};
 
 /*
- * CATU uses a page size of 4KB क्रम page tables as well as data pages.
- * Each 64bit entry in the table has the following क्रमmat.
+ * CATU uses a page size of 4KB for page tables as well as data pages.
+ * Each 64bit entry in the table has the following format.
  *
  *	63			12	1  0
  *	------------------------------------
  *	|	 Address [63-12] | SBZ	| V|
  *	------------------------------------
  *
- * Where bit[0] V indicates अगर the address is valid or not.
- * Each 4K table pages have upto 256 data page poपूर्णांकers, taking upto 2K
- * size. There are two Link poपूर्णांकers, poपूर्णांकing to the previous and next
+ * Where bit[0] V indicates if the address is valid or not.
+ * Each 4K table pages have upto 256 data page pointers, taking upto 2K
+ * size. There are two Link pointers, pointing to the previous and next
  * table pages respectively at the end of the 4K page. (i.e, entry 510
  * and 511).
  *  E.g, a table of two pages could look like :
@@ -76,50 +75,50 @@ DEFINE_CORESIGHT_DEVLIST(catu_devs, "catu");
  *             x------------------x       x-----------------x
  * SLADDR+4K==>
  *
- * The base input address (used by the ETR, programmed in INADDR_अणुLO,HIपूर्ण)
+ * The base input address (used by the ETR, programmed in INADDR_{LO,HI})
  * must be aligned to 1MB (the size addressable by a single page table).
- * The CATU maps INADDRअणुLO:HIपूर्ण to the first page in the table poपूर्णांकed
- * to by SLADDRअणुLO:HIपूर्ण and so on.
+ * The CATU maps INADDR{LO:HI} to the first page in the table pointed
+ * to by SLADDR{LO:HI} and so on.
  *
  */
-प्रकार u64 cate_t;
+typedef u64 cate_t;
 
-#घोषणा CATU_PAGE_SHIFT		12
-#घोषणा CATU_PAGE_SIZE		(1UL << CATU_PAGE_SHIFT)
-#घोषणा CATU_PAGES_PER_SYSPAGE	(PAGE_SIZE / CATU_PAGE_SIZE)
+#define CATU_PAGE_SHIFT		12
+#define CATU_PAGE_SIZE		(1UL << CATU_PAGE_SHIFT)
+#define CATU_PAGES_PER_SYSPAGE	(PAGE_SIZE / CATU_PAGE_SIZE)
 
-/* Page poपूर्णांकers are only allocated in the first 2K half */
-#घोषणा CATU_PTRS_PER_PAGE	((CATU_PAGE_SIZE >> 1) / माप(cate_t))
-#घोषणा CATU_PTRS_PER_SYSPAGE	(CATU_PAGES_PER_SYSPAGE * CATU_PTRS_PER_PAGE)
-#घोषणा CATU_LINK_PREV		((CATU_PAGE_SIZE / माप(cate_t)) - 2)
-#घोषणा CATU_LINK_NEXT		((CATU_PAGE_SIZE / माप(cate_t)) - 1)
+/* Page pointers are only allocated in the first 2K half */
+#define CATU_PTRS_PER_PAGE	((CATU_PAGE_SIZE >> 1) / sizeof(cate_t))
+#define CATU_PTRS_PER_SYSPAGE	(CATU_PAGES_PER_SYSPAGE * CATU_PTRS_PER_PAGE)
+#define CATU_LINK_PREV		((CATU_PAGE_SIZE / sizeof(cate_t)) - 2)
+#define CATU_LINK_NEXT		((CATU_PAGE_SIZE / sizeof(cate_t)) - 1)
 
-#घोषणा CATU_ADDR_SHIFT		12
-#घोषणा CATU_ADDR_MASK		~(((cate_t)1 << CATU_ADDR_SHIFT) - 1)
-#घोषणा CATU_ENTRY_VALID	((cate_t)0x1)
-#घोषणा CATU_VALID_ENTRY(addr) \
+#define CATU_ADDR_SHIFT		12
+#define CATU_ADDR_MASK		~(((cate_t)1 << CATU_ADDR_SHIFT) - 1)
+#define CATU_ENTRY_VALID	((cate_t)0x1)
+#define CATU_VALID_ENTRY(addr) \
 	(((cate_t)(addr) & CATU_ADDR_MASK) | CATU_ENTRY_VALID)
-#घोषणा CATU_ENTRY_ADDR(entry)	((cate_t)(entry) & ~((cate_t)CATU_ENTRY_VALID))
+#define CATU_ENTRY_ADDR(entry)	((cate_t)(entry) & ~((cate_t)CATU_ENTRY_VALID))
 
 /* CATU expects the INADDR to be aligned to 1M. */
-#घोषणा CATU_DEFAULT_INADDR	(1ULL << 20)
+#define CATU_DEFAULT_INADDR	(1ULL << 20)
 
 /*
- * catu_get_table : Retrieve the table poपूर्णांकers क्रम the given @offset
+ * catu_get_table : Retrieve the table pointers for the given @offset
  * within the buffer. The buffer is wrapped around to a valid offset.
  *
- * Returns : The CPU भव address क्रम the beginning of the table
- * containing the data page poपूर्णांकer क्रम @offset. If @daddrp is not शून्य,
- * @daddrp poपूर्णांकs the DMA address of the beginning of the table.
+ * Returns : The CPU virtual address for the beginning of the table
+ * containing the data page pointer for @offset. If @daddrp is not NULL,
+ * @daddrp points the DMA address of the beginning of the table.
  */
-अटल अंतरभूत cate_t *catu_get_table(काष्ठा पंचांगc_sg_table *catu_table,
-				     अचिन्हित दीर्घ offset,
+static inline cate_t *catu_get_table(struct tmc_sg_table *catu_table,
+				     unsigned long offset,
 				     dma_addr_t *daddrp)
-अणु
-	अचिन्हित दीर्घ buf_size = पंचांगc_sg_table_buf_size(catu_table);
-	अचिन्हित पूर्णांक table_nr, pg_idx, pg_offset;
-	काष्ठा पंचांगc_pages *table_pages = &catu_table->table_pages;
-	व्योम *ptr;
+{
+	unsigned long buf_size = tmc_sg_table_buf_size(catu_table);
+	unsigned int table_nr, pg_idx, pg_offset;
+	struct tmc_pages *table_pages = &catu_table->table_pages;
+	void *ptr;
 
 	/* Make sure offset is within the range */
 	offset %= buf_size;
@@ -132,85 +131,85 @@ DEFINE_CORESIGHT_DEVLIST(catu_devs, "catu");
 	/* Find the table page where the table_nr lies in */
 	pg_idx = table_nr / CATU_PAGES_PER_SYSPAGE;
 	pg_offset = (table_nr % CATU_PAGES_PER_SYSPAGE) * CATU_PAGE_SIZE;
-	अगर (daddrp)
+	if (daddrp)
 		*daddrp = table_pages->daddrs[pg_idx] + pg_offset;
 	ptr = page_address(table_pages->pages[pg_idx]);
-	वापस (cate_t *)((अचिन्हित दीर्घ)ptr + pg_offset);
-पूर्ण
+	return (cate_t *)((unsigned long)ptr + pg_offset);
+}
 
-#अगर_घोषित CATU_DEBUG
-अटल व्योम catu_dump_table(काष्ठा पंचांगc_sg_table *catu_table)
-अणु
-	पूर्णांक i;
+#ifdef CATU_DEBUG
+static void catu_dump_table(struct tmc_sg_table *catu_table)
+{
+	int i;
 	cate_t *table;
-	अचिन्हित दीर्घ table_end, buf_size, offset = 0;
+	unsigned long table_end, buf_size, offset = 0;
 
-	buf_size = पंचांगc_sg_table_buf_size(catu_table);
+	buf_size = tmc_sg_table_buf_size(catu_table);
 	dev_dbg(catu_table->dev,
 		"Dump table %p, tdaddr: %llx\n",
 		catu_table, catu_table->table_daddr);
 
-	जबतक (offset < buf_size) अणु
+	while (offset < buf_size) {
 		table_end = offset + SZ_1M < buf_size ?
 			    offset + SZ_1M : buf_size;
-		table = catu_get_table(catu_table, offset, शून्य);
-		क्रम (i = 0; offset < table_end; i++, offset += CATU_PAGE_SIZE)
+		table = catu_get_table(catu_table, offset, NULL);
+		for (i = 0; offset < table_end; i++, offset += CATU_PAGE_SIZE)
 			dev_dbg(catu_table->dev, "%d: %llx\n", i, table[i]);
 		dev_dbg(catu_table->dev, "Prev : %llx, Next: %llx\n",
 			table[CATU_LINK_PREV], table[CATU_LINK_NEXT]);
 		dev_dbg(catu_table->dev, "== End of sub-table ===");
-	पूर्ण
+	}
 	dev_dbg(catu_table->dev, "== End of Table ===");
-पूर्ण
+}
 
-#अन्यथा
-अटल अंतरभूत व्योम catu_dump_table(काष्ठा पंचांगc_sg_table *catu_table)
-अणु
-पूर्ण
-#पूर्ण_अगर
+#else
+static inline void catu_dump_table(struct tmc_sg_table *catu_table)
+{
+}
+#endif
 
-अटल अंतरभूत cate_t catu_make_entry(dma_addr_t addr)
-अणु
-	वापस addr ? CATU_VALID_ENTRY(addr) : 0;
-पूर्ण
+static inline cate_t catu_make_entry(dma_addr_t addr)
+{
+	return addr ? CATU_VALID_ENTRY(addr) : 0;
+}
 
 /*
  * catu_populate_table : Populate the given CATU table.
  * The table is always populated as a circular table.
- * i.e, the "prev" link of the "first" table poपूर्णांकs to the "last"
- * table and the "next" link of the "last" table poपूर्णांकs to the
+ * i.e, the "prev" link of the "first" table points to the "last"
+ * table and the "next" link of the "last" table points to the
  * "first" table. The buffer should be made linear by calling
  * catu_set_table().
  */
-अटल व्योम
-catu_populate_table(काष्ठा पंचांगc_sg_table *catu_table)
-अणु
-	पूर्णांक i;
-	पूर्णांक sys_pidx;	/* Index to current प्रणाली data page */
-	पूर्णांक catu_pidx;	/* Index of CATU page within the प्रणाली data page */
-	अचिन्हित दीर्घ offset, buf_size, table_end;
+static void
+catu_populate_table(struct tmc_sg_table *catu_table)
+{
+	int i;
+	int sys_pidx;	/* Index to current system data page */
+	int catu_pidx;	/* Index of CATU page within the system data page */
+	unsigned long offset, buf_size, table_end;
 	dma_addr_t data_daddr;
 	dma_addr_t prev_taddr, next_taddr, cur_taddr;
 	cate_t *table_ptr, *next_table;
 
-	buf_size = पंचांगc_sg_table_buf_size(catu_table);
+	buf_size = tmc_sg_table_buf_size(catu_table);
 	sys_pidx = catu_pidx = 0;
 	offset = 0;
 
 	table_ptr = catu_get_table(catu_table, 0, &cur_taddr);
-	prev_taddr = 0;	/* Prev link क्रम the first table */
+	prev_taddr = 0;	/* Prev link for the first table */
 
-	जबतक (offset < buf_size) अणु
+	while (offset < buf_size) {
 		/*
 		 * The @offset is always 1M aligned here and we have an
 		 * empty table @table_ptr to fill. Each table can address
 		 * upto 1MB data buffer. The last table may have fewer
-		 * entries अगर the buffer size is not aligned.
+		 * entries if the buffer size is not aligned.
 		 */
 		table_end = (offset + SZ_1M) < buf_size ?
 			    (offset + SZ_1M) : buf_size;
-		क्रम (i = 0; offset < table_end;
-		     i++, offset += CATU_PAGE_SIZE) अणु
+		for (i = 0; offset < table_end;
+		     i++, offset += CATU_PAGE_SIZE) {
 
 			data_daddr = catu_table->data_pages.daddrs[sys_pidx] +
 				     catu_pidx * CATU_PAGE_SIZE;
@@ -218,25 +217,25 @@ catu_populate_table(काष्ठा पंचांगc_sg_table *catu_table)
 				"[table %5ld:%03d] 0x%llx\n",
 				(offset >> 20), i, data_daddr);
 			table_ptr[i] = catu_make_entry(data_daddr);
-			/* Move the poपूर्णांकers क्रम data pages */
+			/* Move the pointers for data pages */
 			catu_pidx = (catu_pidx + 1) % CATU_PAGES_PER_SYSPAGE;
-			अगर (catu_pidx == 0)
+			if (catu_pidx == 0)
 				sys_pidx++;
-		पूर्ण
+		}
 
 		/*
 		 * If we have finished all the valid entries, fill the rest of
 		 * the table (i.e, last table page) with invalid entries,
 		 * to fail the lookups.
 		 */
-		अगर (offset == buf_size) अणु
-			स_रखो(&table_ptr[i], 0,
-			       माप(cate_t) * (CATU_PTRS_PER_PAGE - i));
+		if (offset == buf_size) {
+			memset(&table_ptr[i], 0,
+			       sizeof(cate_t) * (CATU_PTRS_PER_PAGE - i));
 			next_taddr = 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			next_table = catu_get_table(catu_table,
 						    offset, &next_taddr);
-		पूर्ण
+		}
 
 		table_ptr[CATU_LINK_PREV] = catu_make_entry(prev_taddr);
 		table_ptr[CATU_LINK_NEXT] = catu_make_entry(next_taddr);
@@ -246,66 +245,66 @@ catu_populate_table(काष्ठा पंचांगc_sg_table *catu_table)
 			(offset >> 20) - 1,  cur_taddr, prev_taddr, next_taddr);
 
 		/* Update the prev/next addresses */
-		अगर (next_taddr) अणु
+		if (next_taddr) {
 			prev_taddr = cur_taddr;
 			cur_taddr = next_taddr;
 			table_ptr = next_table;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* Sync the table क्रम device */
-	पंचांगc_sg_table_sync_table(catu_table);
-पूर्ण
+	/* Sync the table for device */
+	tmc_sg_table_sync_table(catu_table);
+}
 
-अटल काष्ठा पंचांगc_sg_table *
-catu_init_sg_table(काष्ठा device *catu_dev, पूर्णांक node,
-		   sमाप_प्रकार size, व्योम **pages)
-अणु
-	पूर्णांक nr_tpages;
-	काष्ठा पंचांगc_sg_table *catu_table;
+static struct tmc_sg_table *
+catu_init_sg_table(struct device *catu_dev, int node,
+		   ssize_t size, void **pages)
+{
+	int nr_tpages;
+	struct tmc_sg_table *catu_table;
 
 	/*
 	 * Each table can address upto 1MB and we can have
-	 * CATU_PAGES_PER_SYSPAGE tables in a प्रणाली page.
+	 * CATU_PAGES_PER_SYSPAGE tables in a system page.
 	 */
 	nr_tpages = DIV_ROUND_UP(size, SZ_1M) / CATU_PAGES_PER_SYSPAGE;
-	catu_table = पंचांगc_alloc_sg_table(catu_dev, node, nr_tpages,
+	catu_table = tmc_alloc_sg_table(catu_dev, node, nr_tpages,
 					size >> PAGE_SHIFT, pages);
-	अगर (IS_ERR(catu_table))
-		वापस catu_table;
+	if (IS_ERR(catu_table))
+		return catu_table;
 
 	catu_populate_table(catu_table);
 	dev_dbg(catu_dev,
 		"Setup table %p, size %ldKB, %d table pages\n",
-		catu_table, (अचिन्हित दीर्घ)size >> 10,  nr_tpages);
+		catu_table, (unsigned long)size >> 10,  nr_tpages);
 	catu_dump_table(catu_table);
-	वापस catu_table;
-पूर्ण
+	return catu_table;
+}
 
-अटल व्योम catu_मुक्त_etr_buf(काष्ठा etr_buf *etr_buf)
-अणु
-	काष्ठा catu_etr_buf *catu_buf;
+static void catu_free_etr_buf(struct etr_buf *etr_buf)
+{
+	struct catu_etr_buf *catu_buf;
 
-	अगर (!etr_buf || etr_buf->mode != ETR_MODE_CATU || !etr_buf->निजी)
-		वापस;
+	if (!etr_buf || etr_buf->mode != ETR_MODE_CATU || !etr_buf->private)
+		return;
 
-	catu_buf = etr_buf->निजी;
-	पंचांगc_मुक्त_sg_table(catu_buf->catu_table);
-	kमुक्त(catu_buf);
-पूर्ण
+	catu_buf = etr_buf->private;
+	tmc_free_sg_table(catu_buf->catu_table);
+	kfree(catu_buf);
+}
 
-अटल sमाप_प्रकार catu_get_data_etr_buf(काष्ठा etr_buf *etr_buf, u64 offset,
-				     माप_प्रकार len, अक्षर **bufpp)
-अणु
-	काष्ठा catu_etr_buf *catu_buf = etr_buf->निजी;
+static ssize_t catu_get_data_etr_buf(struct etr_buf *etr_buf, u64 offset,
+				     size_t len, char **bufpp)
+{
+	struct catu_etr_buf *catu_buf = etr_buf->private;
 
-	वापस पंचांगc_sg_table_get_data(catu_buf->catu_table, offset, len, bufpp);
-पूर्ण
+	return tmc_sg_table_get_data(catu_buf->catu_table, offset, len, bufpp);
+}
 
-अटल व्योम catu_sync_etr_buf(काष्ठा etr_buf *etr_buf, u64 rrp, u64 rwp)
-अणु
-	काष्ठा catu_etr_buf *catu_buf = etr_buf->निजी;
-	काष्ठा पंचांगc_sg_table *catu_table = catu_buf->catu_table;
+static void catu_sync_etr_buf(struct etr_buf *etr_buf, u64 rrp, u64 rwp)
+{
+	struct catu_etr_buf *catu_buf = etr_buf->private;
+	struct tmc_sg_table *catu_table = catu_buf->catu_table;
 	u64 r_offset, w_offset;
 
 	/*
@@ -315,69 +314,69 @@ catu_init_sg_table(काष्ठा device *catu_dev, पूर्णांक
 	r_offset = rrp - etr_buf->hwaddr;
 	w_offset = rwp - etr_buf->hwaddr;
 
-	अगर (!etr_buf->full) अणु
+	if (!etr_buf->full) {
 		etr_buf->len = w_offset - r_offset;
-		अगर (w_offset < r_offset)
+		if (w_offset < r_offset)
 			etr_buf->len += etr_buf->size;
-	पूर्ण अन्यथा अणु
+	} else {
 		etr_buf->len = etr_buf->size;
-	पूर्ण
+	}
 
 	etr_buf->offset = r_offset;
-	पंचांगc_sg_table_sync_data_range(catu_table, r_offset, etr_buf->len);
-पूर्ण
+	tmc_sg_table_sync_data_range(catu_table, r_offset, etr_buf->len);
+}
 
-अटल पूर्णांक catu_alloc_etr_buf(काष्ठा पंचांगc_drvdata *पंचांगc_drvdata,
-			      काष्ठा etr_buf *etr_buf, पूर्णांक node, व्योम **pages)
-अणु
-	काष्ठा coresight_device *csdev;
-	काष्ठा पंचांगc_sg_table *catu_table;
-	काष्ठा catu_etr_buf *catu_buf;
+static int catu_alloc_etr_buf(struct tmc_drvdata *tmc_drvdata,
+			      struct etr_buf *etr_buf, int node, void **pages)
+{
+	struct coresight_device *csdev;
+	struct tmc_sg_table *catu_table;
+	struct catu_etr_buf *catu_buf;
 
-	csdev = पंचांगc_etr_get_catu_device(पंचांगc_drvdata);
-	अगर (!csdev)
-		वापस -ENODEV;
-	catu_buf = kzalloc(माप(*catu_buf), GFP_KERNEL);
-	अगर (!catu_buf)
-		वापस -ENOMEM;
+	csdev = tmc_etr_get_catu_device(tmc_drvdata);
+	if (!csdev)
+		return -ENODEV;
+	catu_buf = kzalloc(sizeof(*catu_buf), GFP_KERNEL);
+	if (!catu_buf)
+		return -ENOMEM;
 
 	catu_table = catu_init_sg_table(&csdev->dev, node,
 					etr_buf->size, pages);
-	अगर (IS_ERR(catu_table)) अणु
-		kमुक्त(catu_buf);
-		वापस PTR_ERR(catu_table);
-	पूर्ण
+	if (IS_ERR(catu_table)) {
+		kfree(catu_buf);
+		return PTR_ERR(catu_table);
+	}
 
 	etr_buf->mode = ETR_MODE_CATU;
-	etr_buf->निजी = catu_buf;
+	etr_buf->private = catu_buf;
 	etr_buf->hwaddr = CATU_DEFAULT_INADDR;
 
 	catu_buf->catu_table = catu_table;
 	/* Get the table base address */
 	catu_buf->sladdr = catu_table->table_daddr;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा etr_buf_operations etr_catu_buf_ops = अणु
+static const struct etr_buf_operations etr_catu_buf_ops = {
 	.alloc = catu_alloc_etr_buf,
-	.मुक्त = catu_मुक्त_etr_buf,
+	.free = catu_free_etr_buf,
 	.sync = catu_sync_etr_buf,
 	.get_data = catu_get_data_etr_buf,
-पूर्ण;
+};
 
-coresight_simple_reg32(काष्ठा catu_drvdata, devid, CORESIGHT_DEVID);
-coresight_simple_reg32(काष्ठा catu_drvdata, control, CATU_CONTROL);
-coresight_simple_reg32(काष्ठा catu_drvdata, status, CATU_STATUS);
-coresight_simple_reg32(काष्ठा catu_drvdata, mode, CATU_MODE);
-coresight_simple_reg32(काष्ठा catu_drvdata, axictrl, CATU_AXICTRL);
-coresight_simple_reg32(काष्ठा catu_drvdata, irqen, CATU_IRQEN);
-coresight_simple_reg64(काष्ठा catu_drvdata, sladdr,
+coresight_simple_reg32(struct catu_drvdata, devid, CORESIGHT_DEVID);
+coresight_simple_reg32(struct catu_drvdata, control, CATU_CONTROL);
+coresight_simple_reg32(struct catu_drvdata, status, CATU_STATUS);
+coresight_simple_reg32(struct catu_drvdata, mode, CATU_MODE);
+coresight_simple_reg32(struct catu_drvdata, axictrl, CATU_AXICTRL);
+coresight_simple_reg32(struct catu_drvdata, irqen, CATU_IRQEN);
+coresight_simple_reg64(struct catu_drvdata, sladdr,
 		       CATU_SLADDRLO, CATU_SLADDRHI);
-coresight_simple_reg64(काष्ठा catu_drvdata, inaddr,
+coresight_simple_reg64(struct catu_drvdata, inaddr,
 		       CATU_INADDRLO, CATU_INADDRHI);
 
-अटल काष्ठा attribute *catu_mgmt_attrs[] = अणु
+static struct attribute *catu_mgmt_attrs[] = {
 	&dev_attr_devid.attr,
 	&dev_attr_control.attr,
 	&dev_attr_status.attr,
@@ -386,173 +385,173 @@ coresight_simple_reg64(काष्ठा catu_drvdata, inaddr,
 	&dev_attr_irqen.attr,
 	&dev_attr_sladdr.attr,
 	&dev_attr_inaddr.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group catu_mgmt_group = अणु
+static const struct attribute_group catu_mgmt_group = {
 	.attrs = catu_mgmt_attrs,
 	.name = "mgmt",
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा attribute_group *catu_groups[] = अणु
+static const struct attribute_group *catu_groups[] = {
 	&catu_mgmt_group,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
 
-अटल अंतरभूत पूर्णांक catu_रुको_क्रम_पढ़ोy(काष्ठा catu_drvdata *drvdata)
-अणु
-	काष्ठा csdev_access *csa = &drvdata->csdev->access;
+static inline int catu_wait_for_ready(struct catu_drvdata *drvdata)
+{
+	struct csdev_access *csa = &drvdata->csdev->access;
 
-	वापस coresight_समयout(csa, CATU_STATUS, CATU_STATUS_READY, 1);
-पूर्ण
+	return coresight_timeout(csa, CATU_STATUS, CATU_STATUS_READY, 1);
+}
 
-अटल पूर्णांक catu_enable_hw(काष्ठा catu_drvdata *drvdata, व्योम *data)
-अणु
-	पूर्णांक rc;
+static int catu_enable_hw(struct catu_drvdata *drvdata, void *data)
+{
+	int rc;
 	u32 control, mode;
-	काष्ठा etr_buf *etr_buf = data;
-	काष्ठा device *dev = &drvdata->csdev->dev;
-	काष्ठा coresight_device *csdev = drvdata->csdev;
+	struct etr_buf *etr_buf = data;
+	struct device *dev = &drvdata->csdev->dev;
+	struct coresight_device *csdev = drvdata->csdev;
 
-	अगर (catu_रुको_क्रम_पढ़ोy(drvdata))
+	if (catu_wait_for_ready(drvdata))
 		dev_warn(dev, "Timeout while waiting for READY\n");
 
-	control = catu_पढ़ो_control(drvdata);
-	अगर (control & BIT(CATU_CONTROL_ENABLE)) अणु
+	control = catu_read_control(drvdata);
+	if (control & BIT(CATU_CONTROL_ENABLE)) {
 		dev_warn(dev, "CATU is already enabled\n");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	rc = coresight_claim_device_unlocked(csdev);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	control |= BIT(CATU_CONTROL_ENABLE);
 
-	अगर (etr_buf && etr_buf->mode == ETR_MODE_CATU) अणु
-		काष्ठा catu_etr_buf *catu_buf = etr_buf->निजी;
+	if (etr_buf && etr_buf->mode == ETR_MODE_CATU) {
+		struct catu_etr_buf *catu_buf = etr_buf->private;
 
 		mode = CATU_MODE_TRANSLATE;
-		catu_ग_लिखो_axictrl(drvdata, CATU_OS_AXICTRL);
-		catu_ग_लिखो_sladdr(drvdata, catu_buf->sladdr);
-		catu_ग_लिखो_inaddr(drvdata, CATU_DEFAULT_INADDR);
-	पूर्ण अन्यथा अणु
+		catu_write_axictrl(drvdata, CATU_OS_AXICTRL);
+		catu_write_sladdr(drvdata, catu_buf->sladdr);
+		catu_write_inaddr(drvdata, CATU_DEFAULT_INADDR);
+	} else {
 		mode = CATU_MODE_PASS_THROUGH;
-		catu_ग_लिखो_sladdr(drvdata, 0);
-		catu_ग_लिखो_inaddr(drvdata, 0);
-	पूर्ण
+		catu_write_sladdr(drvdata, 0);
+		catu_write_inaddr(drvdata, 0);
+	}
 
-	catu_ग_लिखो_irqen(drvdata, 0);
-	catu_ग_लिखो_mode(drvdata, mode);
-	catu_ग_लिखो_control(drvdata, control);
+	catu_write_irqen(drvdata, 0);
+	catu_write_mode(drvdata, mode);
+	catu_write_control(drvdata, control);
 	dev_dbg(dev, "Enabled in %s mode\n",
 		(mode == CATU_MODE_PASS_THROUGH) ?
 		"Pass through" :
 		"Translate");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक catu_enable(काष्ठा coresight_device *csdev, व्योम *data)
-अणु
-	पूर्णांक rc;
-	काष्ठा catu_drvdata *catu_drvdata = csdev_to_catu_drvdata(csdev);
+static int catu_enable(struct coresight_device *csdev, void *data)
+{
+	int rc;
+	struct catu_drvdata *catu_drvdata = csdev_to_catu_drvdata(csdev);
 
 	CS_UNLOCK(catu_drvdata->base);
 	rc = catu_enable_hw(catu_drvdata, data);
 	CS_LOCK(catu_drvdata->base);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक catu_disable_hw(काष्ठा catu_drvdata *drvdata)
-अणु
-	पूर्णांक rc = 0;
-	काष्ठा device *dev = &drvdata->csdev->dev;
-	काष्ठा coresight_device *csdev = drvdata->csdev;
+static int catu_disable_hw(struct catu_drvdata *drvdata)
+{
+	int rc = 0;
+	struct device *dev = &drvdata->csdev->dev;
+	struct coresight_device *csdev = drvdata->csdev;
 
-	catu_ग_लिखो_control(drvdata, 0);
+	catu_write_control(drvdata, 0);
 	coresight_disclaim_device_unlocked(csdev);
-	अगर (catu_रुको_क्रम_पढ़ोy(drvdata)) अणु
+	if (catu_wait_for_ready(drvdata)) {
 		dev_info(dev, "Timeout while waiting for READY\n");
 		rc = -EAGAIN;
-	पूर्ण
+	}
 
 	dev_dbg(dev, "Disabled\n");
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक catu_disable(काष्ठा coresight_device *csdev, व्योम *__unused)
-अणु
-	पूर्णांक rc;
-	काष्ठा catu_drvdata *catu_drvdata = csdev_to_catu_drvdata(csdev);
+static int catu_disable(struct coresight_device *csdev, void *__unused)
+{
+	int rc;
+	struct catu_drvdata *catu_drvdata = csdev_to_catu_drvdata(csdev);
 
 	CS_UNLOCK(catu_drvdata->base);
 	rc = catu_disable_hw(catu_drvdata);
 	CS_LOCK(catu_drvdata->base);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल स्थिर काष्ठा coresight_ops_helper catu_helper_ops = अणु
+static const struct coresight_ops_helper catu_helper_ops = {
 	.enable = catu_enable,
 	.disable = catu_disable,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा coresight_ops catu_ops = अणु
+static const struct coresight_ops catu_ops = {
 	.helper_ops = &catu_helper_ops,
-पूर्ण;
+};
 
-अटल पूर्णांक catu_probe(काष्ठा amba_device *adev, स्थिर काष्ठा amba_id *id)
-अणु
-	पूर्णांक ret = 0;
+static int catu_probe(struct amba_device *adev, const struct amba_id *id)
+{
+	int ret = 0;
 	u32 dma_mask;
-	काष्ठा catu_drvdata *drvdata;
-	काष्ठा coresight_desc catu_desc;
-	काष्ठा coresight_platक्रमm_data *pdata = शून्य;
-	काष्ठा device *dev = &adev->dev;
-	व्योम __iomem *base;
+	struct catu_drvdata *drvdata;
+	struct coresight_desc catu_desc;
+	struct coresight_platform_data *pdata = NULL;
+	struct device *dev = &adev->dev;
+	void __iomem *base;
 
 	catu_desc.name = coresight_alloc_device_name(&catu_devs, dev);
-	अगर (!catu_desc.name)
-		वापस -ENOMEM;
+	if (!catu_desc.name)
+		return -ENOMEM;
 
-	drvdata = devm_kzalloc(dev, माप(*drvdata), GFP_KERNEL);
-	अगर (!drvdata) अणु
+	drvdata = devm_kzalloc(dev, sizeof(*drvdata), GFP_KERNEL);
+	if (!drvdata) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	dev_set_drvdata(dev, drvdata);
 	base = devm_ioremap_resource(dev, &adev->res);
-	अगर (IS_ERR(base)) अणु
+	if (IS_ERR(base)) {
 		ret = PTR_ERR(base);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Setup dma mask क्रम the device */
-	dma_mask = पढ़ोl_relaxed(base + CORESIGHT_DEVID) & 0x3f;
-	चयन (dma_mask) अणु
-	हाल 32:
-	हाल 40:
-	हाल 44:
-	हाल 48:
-	हाल 52:
-	हाल 56:
-	हाल 64:
-		अवरोध;
-	शेष:
+	/* Setup dma mask for the device */
+	dma_mask = readl_relaxed(base + CORESIGHT_DEVID) & 0x3f;
+	switch (dma_mask) {
+	case 32:
+	case 40:
+	case 44:
+	case 48:
+	case 52:
+	case 56:
+	case 64:
+		break;
+	default:
 		/* Default to the 40bits as supported by TMC-ETR */
 		dma_mask = 40;
-	पूर्ण
+	}
 	ret = dma_set_mask_and_coherent(dev, DMA_BIT_MASK(dma_mask));
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	pdata = coresight_get_platक्रमm_data(dev);
-	अगर (IS_ERR(pdata)) अणु
+	pdata = coresight_get_platform_data(dev);
+	if (IS_ERR(pdata)) {
 		ret = PTR_ERR(pdata);
-		जाओ out;
-	पूर्ण
-	dev->platक्रमm_data = pdata;
+		goto out;
+	}
+	dev->platform_data = pdata;
 
 	drvdata->base = base;
 	catu_desc.access = CSDEV_ACCESS_IOMEM(base);
@@ -563,59 +562,59 @@ coresight_simple_reg64(काष्ठा catu_drvdata, inaddr,
 	catu_desc.subtype.helper_subtype = CORESIGHT_DEV_SUBTYPE_HELPER_CATU;
 	catu_desc.ops = &catu_ops;
 
-	drvdata->csdev = coresight_रेजिस्टर(&catu_desc);
-	अगर (IS_ERR(drvdata->csdev))
+	drvdata->csdev = coresight_register(&catu_desc);
+	if (IS_ERR(drvdata->csdev))
 		ret = PTR_ERR(drvdata->csdev);
-	अन्यथा
-		pm_runसमय_put(&adev->dev);
+	else
+		pm_runtime_put(&adev->dev);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम catu_हटाओ(काष्ठा amba_device *adev)
-अणु
-	काष्ठा catu_drvdata *drvdata = dev_get_drvdata(&adev->dev);
+static void catu_remove(struct amba_device *adev)
+{
+	struct catu_drvdata *drvdata = dev_get_drvdata(&adev->dev);
 
-	coresight_unरेजिस्टर(drvdata->csdev);
-पूर्ण
+	coresight_unregister(drvdata->csdev);
+}
 
-अटल काष्ठा amba_id catu_ids[] = अणु
+static struct amba_id catu_ids[] = {
 	CS_AMBA_ID(0x000bb9ee),
-	अणुपूर्ण,
-पूर्ण;
+	{},
+};
 
 MODULE_DEVICE_TABLE(amba, catu_ids);
 
-अटल काष्ठा amba_driver catu_driver = अणु
-	.drv = अणु
+static struct amba_driver catu_driver = {
+	.drv = {
 		.name			= "coresight-catu",
 		.owner			= THIS_MODULE,
 		.suppress_bind_attrs	= true,
-	पूर्ण,
+	},
 	.probe				= catu_probe,
-	.हटाओ				= catu_हटाओ,
+	.remove				= catu_remove,
 	.id_table			= catu_ids,
-पूर्ण;
+};
 
-अटल पूर्णांक __init catu_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init catu_init(void)
+{
+	int ret;
 
-	ret = amba_driver_रेजिस्टर(&catu_driver);
-	अगर (ret)
+	ret = amba_driver_register(&catu_driver);
+	if (ret)
 		pr_info("Error registering catu driver\n");
-	पंचांगc_etr_set_catu_ops(&etr_catu_buf_ops);
-	वापस ret;
-पूर्ण
+	tmc_etr_set_catu_ops(&etr_catu_buf_ops);
+	return ret;
+}
 
-अटल व्योम __निकास catu_निकास(व्योम)
-अणु
-	पंचांगc_etr_हटाओ_catu_ops();
-	amba_driver_unरेजिस्टर(&catu_driver);
-पूर्ण
+static void __exit catu_exit(void)
+{
+	tmc_etr_remove_catu_ops();
+	amba_driver_unregister(&catu_driver);
+}
 
 module_init(catu_init);
-module_निकास(catu_निकास);
+module_exit(catu_exit);
 
 MODULE_AUTHOR("Suzuki K Poulose <suzuki.poulose@arm.com>");
 MODULE_DESCRIPTION("Arm CoreSight Address Translation Unit (CATU) Driver");

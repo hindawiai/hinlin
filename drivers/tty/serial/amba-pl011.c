@@ -1,62 +1,61 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- *  Driver क्रम AMBA serial ports
+ *  Driver for AMBA serial ports
  *
- *  Based on drivers/अक्षर/serial.c, by Linus Torvalds, Theoकरोre Ts'o.
+ *  Based on drivers/char/serial.c, by Linus Torvalds, Theodore Ts'o.
  *
  *  Copyright 1999 ARM Limited
  *  Copyright (C) 2000 Deep Blue Solutions Ltd.
  *  Copyright (C) 2010 ST-Ericsson SA
  *
- * This is a generic driver क्रम ARM AMBA-type serial ports.  They
- * have a lot of 16550-like features, but are not रेजिस्टर compatible.
- * Note that although they करो have CTS, DCD and DSR inमाला_दो, they करो
- * not have an RI input, nor करो they have DTR or RTS outमाला_दो.  If
+ * This is a generic driver for ARM AMBA-type serial ports.  They
+ * have a lot of 16550-like features, but are not register compatible.
+ * Note that although they do have CTS, DCD and DSR inputs, they do
+ * not have an RI input, nor do they have DTR or RTS outputs.  If
  * required, these have to be supplied via some other means (eg, GPIO)
- * and hooked पूर्णांकo this driver.
+ * and hooked into this driver.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/init.h>
-#समावेश <linux/console.h>
-#समावेश <linux/sysrq.h>
-#समावेश <linux/device.h>
-#समावेश <linux/tty.h>
-#समावेश <linux/tty_flip.h>
-#समावेश <linux/serial_core.h>
-#समावेश <linux/serial.h>
-#समावेश <linux/amba/bus.h>
-#समावेश <linux/amba/serial.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/dmaengine.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/scatterlist.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/types.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/pinctrl/consumer.h>
-#समावेश <linux/sizes.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/acpi.h>
+#include <linux/module.h>
+#include <linux/ioport.h>
+#include <linux/init.h>
+#include <linux/console.h>
+#include <linux/sysrq.h>
+#include <linux/device.h>
+#include <linux/tty.h>
+#include <linux/tty_flip.h>
+#include <linux/serial_core.h>
+#include <linux/serial.h>
+#include <linux/amba/bus.h>
+#include <linux/amba/serial.h>
+#include <linux/clk.h>
+#include <linux/slab.h>
+#include <linux/dmaengine.h>
+#include <linux/dma-mapping.h>
+#include <linux/scatterlist.h>
+#include <linux/delay.h>
+#include <linux/types.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/pinctrl/consumer.h>
+#include <linux/sizes.h>
+#include <linux/io.h>
+#include <linux/acpi.h>
 
-#समावेश "amba-pl011.h"
+#include "amba-pl011.h"
 
-#घोषणा UART_NR			14
+#define UART_NR			14
 
-#घोषणा SERIAL_AMBA_MAJOR	204
-#घोषणा SERIAL_AMBA_MINOR	64
-#घोषणा SERIAL_AMBA_NR		UART_NR
+#define SERIAL_AMBA_MAJOR	204
+#define SERIAL_AMBA_MINOR	64
+#define SERIAL_AMBA_NR		UART_NR
 
-#घोषणा AMBA_ISR_PASS_LIMIT	256
+#define AMBA_ISR_PASS_LIMIT	256
 
-#घोषणा UART_DR_ERROR		(UART011_DR_OE|UART011_DR_BE|UART011_DR_PE|UART011_DR_FE)
-#घोषणा UART_DUMMY_DR_RX	(1 << 16)
+#define UART_DR_ERROR		(UART011_DR_OE|UART011_DR_BE|UART011_DR_PE|UART011_DR_FE)
+#define UART_DUMMY_DR_RX	(1 << 16)
 
-अटल u16 pl011_std_offsets[REG_ARRAY_SIZE] = अणु
+static u16 pl011_std_offsets[REG_ARRAY_SIZE] = {
 	[REG_DR] = UART01x_DR,
 	[REG_FR] = UART01x_FR,
 	[REG_LCRH_RX] = UART011_LCRH,
@@ -70,17 +69,17 @@
 	[REG_MIS] = UART011_MIS,
 	[REG_ICR] = UART011_ICR,
 	[REG_DMACR] = UART011_DMACR,
-पूर्ण;
+};
 
-/* There is by now at least one venकरोr with dअगरfering details, so handle it */
-काष्ठा venकरोr_data अणु
-	स्थिर u16		*reg_offset;
-	अचिन्हित पूर्णांक		अगरls;
-	अचिन्हित पूर्णांक		fr_busy;
-	अचिन्हित पूर्णांक		fr_dsr;
-	अचिन्हित पूर्णांक		fr_cts;
-	अचिन्हित पूर्णांक		fr_ri;
-	अचिन्हित पूर्णांक		inv_fr;
+/* There is by now at least one vendor with differing details, so handle it */
+struct vendor_data {
+	const u16		*reg_offset;
+	unsigned int		ifls;
+	unsigned int		fr_busy;
+	unsigned int		fr_dsr;
+	unsigned int		fr_cts;
+	unsigned int		fr_ri;
+	unsigned int		inv_fr;
 	bool			access_32b;
 	bool			oversampling;
 	bool			dma_threshold;
@@ -88,17 +87,17 @@
 	bool			always_enabled;
 	bool			fixed_options;
 
-	अचिन्हित पूर्णांक (*get_fअगरosize)(काष्ठा amba_device *dev);
-पूर्ण;
+	unsigned int (*get_fifosize)(struct amba_device *dev);
+};
 
-अटल अचिन्हित पूर्णांक get_fअगरosize_arm(काष्ठा amba_device *dev)
-अणु
-	वापस amba_rev(dev) < 3 ? 16 : 32;
-पूर्ण
+static unsigned int get_fifosize_arm(struct amba_device *dev)
+{
+	return amba_rev(dev) < 3 ? 16 : 32;
+}
 
-अटल काष्ठा venकरोr_data venकरोr_arm = अणु
+static struct vendor_data vendor_arm = {
 	.reg_offset		= pl011_std_offsets,
-	.अगरls			= UART011_IFLS_RX4_8|UART011_IFLS_TX4_8,
+	.ifls			= UART011_IFLS_RX4_8|UART011_IFLS_TX4_8,
 	.fr_busy		= UART01x_FR_BUSY,
 	.fr_dsr			= UART01x_FR_DSR,
 	.fr_cts			= UART01x_FR_CTS,
@@ -108,10 +107,10 @@
 	.cts_event_workaround	= false,
 	.always_enabled		= false,
 	.fixed_options		= false,
-	.get_fअगरosize		= get_fअगरosize_arm,
-पूर्ण;
+	.get_fifosize		= get_fifosize_arm,
+};
 
-अटल स्थिर काष्ठा venकरोr_data venकरोr_sbsa = अणु
+static const struct vendor_data vendor_sbsa = {
 	.reg_offset		= pl011_std_offsets,
 	.fr_busy		= UART01x_FR_BUSY,
 	.fr_dsr			= UART01x_FR_DSR,
@@ -123,10 +122,10 @@
 	.cts_event_workaround	= false,
 	.always_enabled		= true,
 	.fixed_options		= true,
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_ACPI_SPCR_TABLE
-अटल स्थिर काष्ठा venकरोr_data venकरोr_qdt_qdf2400_e44 = अणु
+#ifdef CONFIG_ACPI_SPCR_TABLE
+static const struct vendor_data vendor_qdt_qdf2400_e44 = {
 	.reg_offset		= pl011_std_offsets,
 	.fr_busy		= UART011_FR_TXFE,
 	.fr_dsr			= UART01x_FR_DSR,
@@ -139,10 +138,10 @@
 	.cts_event_workaround	= false,
 	.always_enabled		= true,
 	.fixed_options		= true,
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif
 
-अटल u16 pl011_st_offsets[REG_ARRAY_SIZE] = अणु
+static u16 pl011_st_offsets[REG_ARRAY_SIZE] = {
 	[REG_DR] = UART01x_DR,
 	[REG_ST_DMAWM] = ST_UART011_DMAWM,
 	[REG_ST_TIMEOUT] = ST_UART011_TIMEOUT,
@@ -167,16 +166,16 @@
 	[REG_ST_ITIP] = ST_UART011_ITIP,
 	[REG_ST_ABCR] = ST_UART011_ABCR,
 	[REG_ST_ABIMSC] = ST_UART011_ABIMSC,
-पूर्ण;
+};
 
-अटल अचिन्हित पूर्णांक get_fअगरosize_st(काष्ठा amba_device *dev)
-अणु
-	वापस 64;
-पूर्ण
+static unsigned int get_fifosize_st(struct amba_device *dev)
+{
+	return 64;
+}
 
-अटल काष्ठा venकरोr_data venकरोr_st = अणु
+static struct vendor_data vendor_st = {
 	.reg_offset		= pl011_st_offsets,
-	.अगरls			= UART011_IFLS_RX_HALF|UART011_IFLS_TX_HALF,
+	.ifls			= UART011_IFLS_RX_HALF|UART011_IFLS_TX_HALF,
 	.fr_busy		= UART01x_FR_BUSY,
 	.fr_dsr			= UART01x_FR_DSR,
 	.fr_cts			= UART01x_FR_CTS,
@@ -186,10 +185,10 @@
 	.cts_event_workaround	= true,
 	.always_enabled		= false,
 	.fixed_options		= false,
-	.get_fअगरosize		= get_fअगरosize_st,
-पूर्ण;
+	.get_fifosize		= get_fifosize_st,
+};
 
-अटल स्थिर u16 pl011_zte_offsets[REG_ARRAY_SIZE] = अणु
+static const u16 pl011_zte_offsets[REG_ARRAY_SIZE] = {
 	[REG_DR] = ZX_UART011_DR,
 	[REG_FR] = ZX_UART011_FR,
 	[REG_LCRH_RX] = ZX_UART011_LCRH,
@@ -203,179 +202,179 @@
 	[REG_MIS] = ZX_UART011_MIS,
 	[REG_ICR] = ZX_UART011_ICR,
 	[REG_DMACR] = ZX_UART011_DMACR,
-पूर्ण;
+};
 
-अटल अचिन्हित पूर्णांक get_fअगरosize_zte(काष्ठा amba_device *dev)
-अणु
-	वापस 16;
-पूर्ण
+static unsigned int get_fifosize_zte(struct amba_device *dev)
+{
+	return 16;
+}
 
-अटल काष्ठा venकरोr_data venकरोr_zte = अणु
+static struct vendor_data vendor_zte = {
 	.reg_offset		= pl011_zte_offsets,
 	.access_32b		= true,
-	.अगरls			= UART011_IFLS_RX4_8|UART011_IFLS_TX4_8,
+	.ifls			= UART011_IFLS_RX4_8|UART011_IFLS_TX4_8,
 	.fr_busy		= ZX_UART01x_FR_BUSY,
 	.fr_dsr			= ZX_UART01x_FR_DSR,
 	.fr_cts			= ZX_UART01x_FR_CTS,
 	.fr_ri			= ZX_UART011_FR_RI,
-	.get_fअगरosize		= get_fअगरosize_zte,
-पूर्ण;
+	.get_fifosize		= get_fifosize_zte,
+};
 
 /* Deals with DMA transactions */
 
-काष्ठा pl011_sgbuf अणु
-	काष्ठा scatterlist sg;
-	अक्षर *buf;
-पूर्ण;
+struct pl011_sgbuf {
+	struct scatterlist sg;
+	char *buf;
+};
 
-काष्ठा pl011_dmarx_data अणु
-	काष्ठा dma_chan		*chan;
-	काष्ठा completion	complete;
+struct pl011_dmarx_data {
+	struct dma_chan		*chan;
+	struct completion	complete;
 	bool			use_buf_b;
-	काष्ठा pl011_sgbuf	sgbuf_a;
-	काष्ठा pl011_sgbuf	sgbuf_b;
+	struct pl011_sgbuf	sgbuf_a;
+	struct pl011_sgbuf	sgbuf_b;
 	dma_cookie_t		cookie;
 	bool			running;
-	काष्ठा समयr_list	समयr;
-	अचिन्हित पूर्णांक last_residue;
-	अचिन्हित दीर्घ last_jअगरfies;
-	bool स्वतः_poll_rate;
-	अचिन्हित पूर्णांक poll_rate;
-	अचिन्हित पूर्णांक poll_समयout;
-पूर्ण;
+	struct timer_list	timer;
+	unsigned int last_residue;
+	unsigned long last_jiffies;
+	bool auto_poll_rate;
+	unsigned int poll_rate;
+	unsigned int poll_timeout;
+};
 
-काष्ठा pl011_dmatx_data अणु
-	काष्ठा dma_chan		*chan;
-	काष्ठा scatterlist	sg;
-	अक्षर			*buf;
+struct pl011_dmatx_data {
+	struct dma_chan		*chan;
+	struct scatterlist	sg;
+	char			*buf;
 	bool			queued;
-पूर्ण;
+};
 
 /*
- * We wrap our port काष्ठाure around the generic uart_port.
+ * We wrap our port structure around the generic uart_port.
  */
-काष्ठा uart_amba_port अणु
-	काष्ठा uart_port	port;
-	स्थिर u16		*reg_offset;
-	काष्ठा clk		*clk;
-	स्थिर काष्ठा venकरोr_data *venकरोr;
-	अचिन्हित पूर्णांक		dmacr;		/* dma control reg */
-	अचिन्हित पूर्णांक		im;		/* पूर्णांकerrupt mask */
-	अचिन्हित पूर्णांक		old_status;
-	अचिन्हित पूर्णांक		fअगरosize;	/* venकरोr-specअगरic */
-	अचिन्हित पूर्णांक		old_cr;		/* state during shutकरोwn */
-	अचिन्हित पूर्णांक		fixed_baud;	/* venकरोr-set fixed baud rate */
-	अक्षर			type[12];
-#अगर_घोषित CONFIG_DMA_ENGINE
+struct uart_amba_port {
+	struct uart_port	port;
+	const u16		*reg_offset;
+	struct clk		*clk;
+	const struct vendor_data *vendor;
+	unsigned int		dmacr;		/* dma control reg */
+	unsigned int		im;		/* interrupt mask */
+	unsigned int		old_status;
+	unsigned int		fifosize;	/* vendor-specific */
+	unsigned int		old_cr;		/* state during shutdown */
+	unsigned int		fixed_baud;	/* vendor-set fixed baud rate */
+	char			type[12];
+#ifdef CONFIG_DMA_ENGINE
 	/* DMA stuff */
 	bool			using_tx_dma;
 	bool			using_rx_dma;
-	काष्ठा pl011_dmarx_data dmarx;
-	काष्ठा pl011_dmatx_data	dmatx;
+	struct pl011_dmarx_data dmarx;
+	struct pl011_dmatx_data	dmatx;
 	bool			dma_probed;
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-अटल अचिन्हित पूर्णांक pl011_reg_to_offset(स्थिर काष्ठा uart_amba_port *uap,
-	अचिन्हित पूर्णांक reg)
-अणु
-	वापस uap->reg_offset[reg];
-पूर्ण
+static unsigned int pl011_reg_to_offset(const struct uart_amba_port *uap,
+	unsigned int reg)
+{
+	return uap->reg_offset[reg];
+}
 
-अटल अचिन्हित पूर्णांक pl011_पढ़ो(स्थिर काष्ठा uart_amba_port *uap,
-	अचिन्हित पूर्णांक reg)
-अणु
-	व्योम __iomem *addr = uap->port.membase + pl011_reg_to_offset(uap, reg);
+static unsigned int pl011_read(const struct uart_amba_port *uap,
+	unsigned int reg)
+{
+	void __iomem *addr = uap->port.membase + pl011_reg_to_offset(uap, reg);
 
-	वापस (uap->port.iotype == UPIO_MEM32) ?
-		पढ़ोl_relaxed(addr) : पढ़ोw_relaxed(addr);
-पूर्ण
+	return (uap->port.iotype == UPIO_MEM32) ?
+		readl_relaxed(addr) : readw_relaxed(addr);
+}
 
-अटल व्योम pl011_ग_लिखो(अचिन्हित पूर्णांक val, स्थिर काष्ठा uart_amba_port *uap,
-	अचिन्हित पूर्णांक reg)
-अणु
-	व्योम __iomem *addr = uap->port.membase + pl011_reg_to_offset(uap, reg);
+static void pl011_write(unsigned int val, const struct uart_amba_port *uap,
+	unsigned int reg)
+{
+	void __iomem *addr = uap->port.membase + pl011_reg_to_offset(uap, reg);
 
-	अगर (uap->port.iotype == UPIO_MEM32)
-		ग_लिखोl_relaxed(val, addr);
-	अन्यथा
-		ग_लिखोw_relaxed(val, addr);
-पूर्ण
+	if (uap->port.iotype == UPIO_MEM32)
+		writel_relaxed(val, addr);
+	else
+		writew_relaxed(val, addr);
+}
 
 /*
- * Reads up to 256 अक्षरacters from the FIFO or until it's empty and
- * inserts them पूर्णांकo the TTY layer. Returns the number of अक्षरacters
- * पढ़ो from the FIFO.
+ * Reads up to 256 characters from the FIFO or until it's empty and
+ * inserts them into the TTY layer. Returns the number of characters
+ * read from the FIFO.
  */
-अटल पूर्णांक pl011_fअगरo_to_tty(काष्ठा uart_amba_port *uap)
-अणु
-	अचिन्हित पूर्णांक ch, flag, fअगरotaken;
-	पूर्णांक sysrq;
+static int pl011_fifo_to_tty(struct uart_amba_port *uap)
+{
+	unsigned int ch, flag, fifotaken;
+	int sysrq;
 	u16 status;
 
-	क्रम (fअगरotaken = 0; fअगरotaken != 256; fअगरotaken++) अणु
-		status = pl011_पढ़ो(uap, REG_FR);
-		अगर (status & UART01x_FR_RXFE)
-			अवरोध;
+	for (fifotaken = 0; fifotaken != 256; fifotaken++) {
+		status = pl011_read(uap, REG_FR);
+		if (status & UART01x_FR_RXFE)
+			break;
 
-		/* Take अक्षरs from the FIFO and update status */
-		ch = pl011_पढ़ो(uap, REG_DR) | UART_DUMMY_DR_RX;
+		/* Take chars from the FIFO and update status */
+		ch = pl011_read(uap, REG_DR) | UART_DUMMY_DR_RX;
 		flag = TTY_NORMAL;
 		uap->port.icount.rx++;
 
-		अगर (unlikely(ch & UART_DR_ERROR)) अणु
-			अगर (ch & UART011_DR_BE) अणु
+		if (unlikely(ch & UART_DR_ERROR)) {
+			if (ch & UART011_DR_BE) {
 				ch &= ~(UART011_DR_FE | UART011_DR_PE);
 				uap->port.icount.brk++;
-				अगर (uart_handle_अवरोध(&uap->port))
-					जारी;
-			पूर्ण अन्यथा अगर (ch & UART011_DR_PE)
+				if (uart_handle_break(&uap->port))
+					continue;
+			} else if (ch & UART011_DR_PE)
 				uap->port.icount.parity++;
-			अन्यथा अगर (ch & UART011_DR_FE)
+			else if (ch & UART011_DR_FE)
 				uap->port.icount.frame++;
-			अगर (ch & UART011_DR_OE)
+			if (ch & UART011_DR_OE)
 				uap->port.icount.overrun++;
 
-			ch &= uap->port.पढ़ो_status_mask;
+			ch &= uap->port.read_status_mask;
 
-			अगर (ch & UART011_DR_BE)
+			if (ch & UART011_DR_BE)
 				flag = TTY_BREAK;
-			अन्यथा अगर (ch & UART011_DR_PE)
+			else if (ch & UART011_DR_PE)
 				flag = TTY_PARITY;
-			अन्यथा अगर (ch & UART011_DR_FE)
+			else if (ch & UART011_DR_FE)
 				flag = TTY_FRAME;
-		पूर्ण
+		}
 
 		spin_unlock(&uap->port.lock);
-		sysrq = uart_handle_sysrq_अक्षर(&uap->port, ch & 255);
+		sysrq = uart_handle_sysrq_char(&uap->port, ch & 255);
 		spin_lock(&uap->port.lock);
 
-		अगर (!sysrq)
-			uart_insert_अक्षर(&uap->port, ch, UART011_DR_OE, ch, flag);
-	पूर्ण
+		if (!sysrq)
+			uart_insert_char(&uap->port, ch, UART011_DR_OE, ch, flag);
+	}
 
-	वापस fअगरotaken;
-पूर्ण
+	return fifotaken;
+}
 
 
 /*
- * All the DMA operation mode stuff goes inside this अगरdef.
- * This assumes that you have a generic DMA device पूर्णांकerface,
- * no custom DMA पूर्णांकerfaces are supported.
+ * All the DMA operation mode stuff goes inside this ifdef.
+ * This assumes that you have a generic DMA device interface,
+ * no custom DMA interfaces are supported.
  */
-#अगर_घोषित CONFIG_DMA_ENGINE
+#ifdef CONFIG_DMA_ENGINE
 
-#घोषणा PL011_DMA_BUFFER_SIZE PAGE_SIZE
+#define PL011_DMA_BUFFER_SIZE PAGE_SIZE
 
-अटल पूर्णांक pl011_sgbuf_init(काष्ठा dma_chan *chan, काष्ठा pl011_sgbuf *sg,
-	क्रमागत dma_data_direction dir)
-अणु
+static int pl011_sgbuf_init(struct dma_chan *chan, struct pl011_sgbuf *sg,
+	enum dma_data_direction dir)
+{
 	dma_addr_t dma_addr;
 
 	sg->buf = dma_alloc_coherent(chan->device->dev,
 		PL011_DMA_BUFFER_SIZE, &dma_addr, GFP_KERNEL);
-	अगर (!sg->buf)
-		वापस -ENOMEM;
+	if (!sg->buf)
+		return -ENOMEM;
 
 	sg_init_table(&sg->sg, 1);
 	sg_set_page(&sg->sg, phys_to_page(dma_addr),
@@ -383,48 +382,48 @@
 	sg_dma_address(&sg->sg) = dma_addr;
 	sg_dma_len(&sg->sg) = PL011_DMA_BUFFER_SIZE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम pl011_sgbuf_मुक्त(काष्ठा dma_chan *chan, काष्ठा pl011_sgbuf *sg,
-	क्रमागत dma_data_direction dir)
-अणु
-	अगर (sg->buf) अणु
-		dma_मुक्त_coherent(chan->device->dev,
+static void pl011_sgbuf_free(struct dma_chan *chan, struct pl011_sgbuf *sg,
+	enum dma_data_direction dir)
+{
+	if (sg->buf) {
+		dma_free_coherent(chan->device->dev,
 			PL011_DMA_BUFFER_SIZE, sg->buf,
 			sg_dma_address(&sg->sg));
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम pl011_dma_probe(काष्ठा uart_amba_port *uap)
-अणु
-	/* DMA is the sole user of the platक्रमm data right now */
-	काष्ठा amba_pl011_data *plat = dev_get_platdata(uap->port.dev);
-	काष्ठा device *dev = uap->port.dev;
-	काष्ठा dma_slave_config tx_conf = अणु
+static void pl011_dma_probe(struct uart_amba_port *uap)
+{
+	/* DMA is the sole user of the platform data right now */
+	struct amba_pl011_data *plat = dev_get_platdata(uap->port.dev);
+	struct device *dev = uap->port.dev;
+	struct dma_slave_config tx_conf = {
 		.dst_addr = uap->port.mapbase +
 				 pl011_reg_to_offset(uap, REG_DR),
 		.dst_addr_width = DMA_SLAVE_BUSWIDTH_1_BYTE,
 		.direction = DMA_MEM_TO_DEV,
-		.dst_maxburst = uap->fअगरosize >> 1,
+		.dst_maxburst = uap->fifosize >> 1,
 		.device_fc = false,
-	पूर्ण;
-	काष्ठा dma_chan *chan;
+	};
+	struct dma_chan *chan;
 	dma_cap_mask_t mask;
 
 	uap->dma_probed = true;
 	chan = dma_request_chan(dev, "tx");
-	अगर (IS_ERR(chan)) अणु
-		अगर (PTR_ERR(chan) == -EPROBE_DEFER) अणु
+	if (IS_ERR(chan)) {
+		if (PTR_ERR(chan) == -EPROBE_DEFER) {
 			uap->dma_probed = false;
-			वापस;
-		पूर्ण
+			return;
+		}
 
-		/* We need platक्रमm data */
-		अगर (!plat || !plat->dma_filter) अणु
+		/* We need platform data */
+		if (!plat || !plat->dma_filter) {
 			dev_info(uap->port.dev, "no DMA platform data\n");
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		/* Try to acquire a generic DMA engine slave TX channel */
 		dma_cap_zero(mask);
@@ -432,11 +431,11 @@
 
 		chan = dma_request_channel(mask, plat->dma_filter,
 						plat->dma_tx_param);
-		अगर (!chan) अणु
+		if (!chan) {
 			dev_err(uap->port.dev, "no TX DMA channel!\n");
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 
 	dmaengine_slave_config(chan, &tx_conf);
 	uap->dmatx.chan = chan;
@@ -447,210 +446,210 @@
 	/* Optionally make use of an RX channel as well */
 	chan = dma_request_slave_channel(dev, "rx");
 
-	अगर (!chan && plat && plat->dma_rx_param) अणु
+	if (!chan && plat && plat->dma_rx_param) {
 		chan = dma_request_channel(mask, plat->dma_filter, plat->dma_rx_param);
 
-		अगर (!chan) अणु
+		if (!chan) {
 			dev_err(uap->port.dev, "no RX DMA channel!\n");
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 
-	अगर (chan) अणु
-		काष्ठा dma_slave_config rx_conf = अणु
+	if (chan) {
+		struct dma_slave_config rx_conf = {
 			.src_addr = uap->port.mapbase +
 				pl011_reg_to_offset(uap, REG_DR),
 			.src_addr_width = DMA_SLAVE_BUSWIDTH_1_BYTE,
 			.direction = DMA_DEV_TO_MEM,
-			.src_maxburst = uap->fअगरosize >> 2,
+			.src_maxburst = uap->fifosize >> 2,
 			.device_fc = false,
-		पूर्ण;
-		काष्ठा dma_slave_caps caps;
+		};
+		struct dma_slave_caps caps;
 
 		/*
-		 * Some DMA controllers provide inक्रमmation on their capabilities.
-		 * If the controller करोes, check क्रम suitable residue processing
+		 * Some DMA controllers provide information on their capabilities.
+		 * If the controller does, check for suitable residue processing
 		 * otherwise assime all is well.
 		 */
-		अगर (0 == dma_get_slave_caps(chan, &caps)) अणु
-			अगर (caps.residue_granularity ==
-					DMA_RESIDUE_GRANULARITY_DESCRIPTOR) अणु
+		if (0 == dma_get_slave_caps(chan, &caps)) {
+			if (caps.residue_granularity ==
+					DMA_RESIDUE_GRANULARITY_DESCRIPTOR) {
 				dma_release_channel(chan);
 				dev_info(uap->port.dev,
 					"RX DMA disabled - no residue processing\n");
-				वापस;
-			पूर्ण
-		पूर्ण
+				return;
+			}
+		}
 		dmaengine_slave_config(chan, &rx_conf);
 		uap->dmarx.chan = chan;
 
-		uap->dmarx.स्वतः_poll_rate = false;
-		अगर (plat && plat->dma_rx_poll_enable) अणु
-			/* Set poll rate अगर specअगरied. */
-			अगर (plat->dma_rx_poll_rate) अणु
-				uap->dmarx.स्वतः_poll_rate = false;
+		uap->dmarx.auto_poll_rate = false;
+		if (plat && plat->dma_rx_poll_enable) {
+			/* Set poll rate if specified. */
+			if (plat->dma_rx_poll_rate) {
+				uap->dmarx.auto_poll_rate = false;
 				uap->dmarx.poll_rate = plat->dma_rx_poll_rate;
-			पूर्ण अन्यथा अणु
+			} else {
 				/*
-				 * 100 ms शेषs to poll rate अगर not
-				 * specअगरied. This will be adjusted with
+				 * 100 ms defaults to poll rate if not
+				 * specified. This will be adjusted with
 				 * the baud rate at set_termios.
 				 */
-				uap->dmarx.स्वतः_poll_rate = true;
+				uap->dmarx.auto_poll_rate = true;
 				uap->dmarx.poll_rate =  100;
-			पूर्ण
-			/* 3 secs शेषs poll_समयout अगर not specअगरied. */
-			अगर (plat->dma_rx_poll_समयout)
-				uap->dmarx.poll_समयout =
-					plat->dma_rx_poll_समयout;
-			अन्यथा
-				uap->dmarx.poll_समयout = 3000;
-		पूर्ण अन्यथा अगर (!plat && dev->of_node) अणु
-			uap->dmarx.स्वतः_poll_rate = of_property_पढ़ो_bool(
+			}
+			/* 3 secs defaults poll_timeout if not specified. */
+			if (plat->dma_rx_poll_timeout)
+				uap->dmarx.poll_timeout =
+					plat->dma_rx_poll_timeout;
+			else
+				uap->dmarx.poll_timeout = 3000;
+		} else if (!plat && dev->of_node) {
+			uap->dmarx.auto_poll_rate = of_property_read_bool(
 						dev->of_node, "auto-poll");
-			अगर (uap->dmarx.स्वतः_poll_rate) अणु
+			if (uap->dmarx.auto_poll_rate) {
 				u32 x;
 
-				अगर (0 == of_property_पढ़ो_u32(dev->of_node,
+				if (0 == of_property_read_u32(dev->of_node,
 						"poll-rate-ms", &x))
 					uap->dmarx.poll_rate = x;
-				अन्यथा
+				else
 					uap->dmarx.poll_rate = 100;
-				अगर (0 == of_property_पढ़ो_u32(dev->of_node,
+				if (0 == of_property_read_u32(dev->of_node,
 						"poll-timeout-ms", &x))
-					uap->dmarx.poll_समयout = x;
-				अन्यथा
-					uap->dmarx.poll_समयout = 3000;
-			पूर्ण
-		पूर्ण
+					uap->dmarx.poll_timeout = x;
+				else
+					uap->dmarx.poll_timeout = 3000;
+			}
+		}
 		dev_info(uap->port.dev, "DMA channel RX %s\n",
 			 dma_chan_name(uap->dmarx.chan));
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम pl011_dma_हटाओ(काष्ठा uart_amba_port *uap)
-अणु
-	अगर (uap->dmatx.chan)
+static void pl011_dma_remove(struct uart_amba_port *uap)
+{
+	if (uap->dmatx.chan)
 		dma_release_channel(uap->dmatx.chan);
-	अगर (uap->dmarx.chan)
+	if (uap->dmarx.chan)
 		dma_release_channel(uap->dmarx.chan);
-पूर्ण
+}
 
-/* Forward declare these क्रम the refill routine */
-अटल पूर्णांक pl011_dma_tx_refill(काष्ठा uart_amba_port *uap);
-अटल व्योम pl011_start_tx_pio(काष्ठा uart_amba_port *uap);
+/* Forward declare these for the refill routine */
+static int pl011_dma_tx_refill(struct uart_amba_port *uap);
+static void pl011_start_tx_pio(struct uart_amba_port *uap);
 
 /*
  * The current DMA TX buffer has been sent.
  * Try to queue up another DMA buffer.
  */
-अटल व्योम pl011_dma_tx_callback(व्योम *data)
-अणु
-	काष्ठा uart_amba_port *uap = data;
-	काष्ठा pl011_dmatx_data *dmatx = &uap->dmatx;
-	अचिन्हित दीर्घ flags;
+static void pl011_dma_tx_callback(void *data)
+{
+	struct uart_amba_port *uap = data;
+	struct pl011_dmatx_data *dmatx = &uap->dmatx;
+	unsigned long flags;
 	u16 dmacr;
 
 	spin_lock_irqsave(&uap->port.lock, flags);
-	अगर (uap->dmatx.queued)
+	if (uap->dmatx.queued)
 		dma_unmap_sg(dmatx->chan->device->dev, &dmatx->sg, 1,
 			     DMA_TO_DEVICE);
 
 	dmacr = uap->dmacr;
 	uap->dmacr = dmacr & ~UART011_TXDMAE;
-	pl011_ग_लिखो(uap->dmacr, uap, REG_DMACR);
+	pl011_write(uap->dmacr, uap, REG_DMACR);
 
 	/*
-	 * If TX DMA was disabled, it means that we've stopped the DMA क्रम
-	 * some reason (eg, XOFF received, or we want to send an X-अक्षर.)
+	 * If TX DMA was disabled, it means that we've stopped the DMA for
+	 * some reason (eg, XOFF received, or we want to send an X-char.)
 	 *
 	 * Note: we need to be careful here of a potential race between DMA
-	 * and the rest of the driver - अगर the driver disables TX DMA जबतक
+	 * and the rest of the driver - if the driver disables TX DMA while
 	 * a TX buffer completing, we must update the tx queued status to
 	 * get further refills (hence we check dmacr).
 	 */
-	अगर (!(dmacr & UART011_TXDMAE) || uart_tx_stopped(&uap->port) ||
-	    uart_circ_empty(&uap->port.state->xmit)) अणु
+	if (!(dmacr & UART011_TXDMAE) || uart_tx_stopped(&uap->port) ||
+	    uart_circ_empty(&uap->port.state->xmit)) {
 		uap->dmatx.queued = false;
 		spin_unlock_irqrestore(&uap->port.lock, flags);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (pl011_dma_tx_refill(uap) <= 0)
+	if (pl011_dma_tx_refill(uap) <= 0)
 		/*
-		 * We didn't queue a DMA buffer क्रम some reason, but we
+		 * We didn't queue a DMA buffer for some reason, but we
 		 * have data pending to be sent.  Re-enable the TX IRQ.
 		 */
 		pl011_start_tx_pio(uap);
 
 	spin_unlock_irqrestore(&uap->port.lock, flags);
-पूर्ण
+}
 
 /*
  * Try to refill the TX DMA buffer.
  * Locking: called with port lock held and IRQs disabled.
  * Returns:
- *   1 अगर we queued up a TX DMA buffer.
- *   0 अगर we didn't want to handle this by DMA
+ *   1 if we queued up a TX DMA buffer.
+ *   0 if we didn't want to handle this by DMA
  *  <0 on error
  */
-अटल पूर्णांक pl011_dma_tx_refill(काष्ठा uart_amba_port *uap)
-अणु
-	काष्ठा pl011_dmatx_data *dmatx = &uap->dmatx;
-	काष्ठा dma_chan *chan = dmatx->chan;
-	काष्ठा dma_device *dma_dev = chan->device;
-	काष्ठा dma_async_tx_descriptor *desc;
-	काष्ठा circ_buf *xmit = &uap->port.state->xmit;
-	अचिन्हित पूर्णांक count;
+static int pl011_dma_tx_refill(struct uart_amba_port *uap)
+{
+	struct pl011_dmatx_data *dmatx = &uap->dmatx;
+	struct dma_chan *chan = dmatx->chan;
+	struct dma_device *dma_dev = chan->device;
+	struct dma_async_tx_descriptor *desc;
+	struct circ_buf *xmit = &uap->port.state->xmit;
+	unsigned int count;
 
 	/*
-	 * Try to aव्योम the overhead involved in using DMA अगर the
+	 * Try to avoid the overhead involved in using DMA if the
 	 * transaction fits in the first half of the FIFO, by using
-	 * the standard पूर्णांकerrupt handling.  This ensures that we
-	 * issue a uart_ग_लिखो_wakeup() at the appropriate समय.
+	 * the standard interrupt handling.  This ensures that we
+	 * issue a uart_write_wakeup() at the appropriate time.
 	 */
-	count = uart_circ_अक्षरs_pending(xmit);
-	अगर (count < (uap->fअगरosize >> 1)) अणु
+	count = uart_circ_chars_pending(xmit);
+	if (count < (uap->fifosize >> 1)) {
 		uap->dmatx.queued = false;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/*
-	 * Bodge: करोn't send the last अक्षरacter by DMA, as this
-	 * will prevent XON from notअगरying us to restart DMA.
+	 * Bodge: don't send the last character by DMA, as this
+	 * will prevent XON from notifying us to restart DMA.
 	 */
 	count -= 1;
 
-	/* Else proceed to copy the TX अक्षरs to the DMA buffer and fire DMA */
-	अगर (count > PL011_DMA_BUFFER_SIZE)
+	/* Else proceed to copy the TX chars to the DMA buffer and fire DMA */
+	if (count > PL011_DMA_BUFFER_SIZE)
 		count = PL011_DMA_BUFFER_SIZE;
 
-	अगर (xmit->tail < xmit->head)
-		स_नकल(&dmatx->buf[0], &xmit->buf[xmit->tail], count);
-	अन्यथा अणु
-		माप_प्रकार first = UART_XMIT_SIZE - xmit->tail;
-		माप_प्रकार second;
+	if (xmit->tail < xmit->head)
+		memcpy(&dmatx->buf[0], &xmit->buf[xmit->tail], count);
+	else {
+		size_t first = UART_XMIT_SIZE - xmit->tail;
+		size_t second;
 
-		अगर (first > count)
+		if (first > count)
 			first = count;
 		second = count - first;
 
-		स_नकल(&dmatx->buf[0], &xmit->buf[xmit->tail], first);
-		अगर (second)
-			स_नकल(&dmatx->buf[first], &xmit->buf[0], second);
-	पूर्ण
+		memcpy(&dmatx->buf[0], &xmit->buf[xmit->tail], first);
+		if (second)
+			memcpy(&dmatx->buf[first], &xmit->buf[0], second);
+	}
 
 	dmatx->sg.length = count;
 
-	अगर (dma_map_sg(dma_dev->dev, &dmatx->sg, 1, DMA_TO_DEVICE) != 1) अणु
+	if (dma_map_sg(dma_dev->dev, &dmatx->sg, 1, DMA_TO_DEVICE) != 1) {
 		uap->dmatx.queued = false;
 		dev_dbg(uap->port.dev, "unable to map TX DMA\n");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	desc = dmaengine_prep_slave_sg(chan, &dmatx->sg, 1, DMA_MEM_TO_DEV,
 					     DMA_PREP_INTERRUPT | DMA_CTRL_ACK);
-	अगर (!desc) अणु
+	if (!desc) {
 		dma_unmap_sg(dma_dev->dev, &dmatx->sg, 1, DMA_TO_DEVICE);
 		uap->dmatx.queued = false;
 		/*
@@ -658,21 +657,21 @@
 		 * transaction via IRQ and let the TTY layer retry.
 		 */
 		dev_dbg(uap->port.dev, "TX DMA busy\n");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	/* Some data to go aदीर्घ to the callback */
+	/* Some data to go along to the callback */
 	desc->callback = pl011_dma_tx_callback;
 	desc->callback_param = uap;
 
-	/* All errors should happen at prepare समय */
+	/* All errors should happen at prepare time */
 	dmaengine_submit(desc);
 
 	/* Fire the DMA transaction */
 	dma_dev->device_issue_pending(chan);
 
 	uap->dmacr |= UART011_TXDMAE;
-	pl011_ग_लिखो(uap->dmacr, uap, REG_DMACR);
+	pl011_write(uap->dmacr, uap, REG_DMACR);
 	uap->dmatx.queued = true;
 
 	/*
@@ -682,158 +681,158 @@
 	xmit->tail = (xmit->tail + count) & (UART_XMIT_SIZE - 1);
 	uap->port.icount.tx += count;
 
-	अगर (uart_circ_अक्षरs_pending(xmit) < WAKEUP_CHARS)
-		uart_ग_लिखो_wakeup(&uap->port);
+	if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
+		uart_write_wakeup(&uap->port);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /*
- * We received a transmit पूर्णांकerrupt without a pending X-अक्षर but with
- * pending अक्षरacters.
+ * We received a transmit interrupt without a pending X-char but with
+ * pending characters.
  * Locking: called with port lock held and IRQs disabled.
  * Returns:
- *   false अगर we want to use PIO to transmit
- *   true अगर we queued a DMA buffer
+ *   false if we want to use PIO to transmit
+ *   true if we queued a DMA buffer
  */
-अटल bool pl011_dma_tx_irq(काष्ठा uart_amba_port *uap)
-अणु
-	अगर (!uap->using_tx_dma)
-		वापस false;
+static bool pl011_dma_tx_irq(struct uart_amba_port *uap)
+{
+	if (!uap->using_tx_dma)
+		return false;
 
 	/*
-	 * If we alपढ़ोy have a TX buffer queued, but received a
-	 * TX पूर्णांकerrupt, it will be because we've just sent an X-अक्षर.
+	 * If we already have a TX buffer queued, but received a
+	 * TX interrupt, it will be because we've just sent an X-char.
 	 * Ensure the TX DMA is enabled and the TX IRQ is disabled.
 	 */
-	अगर (uap->dmatx.queued) अणु
+	if (uap->dmatx.queued) {
 		uap->dmacr |= UART011_TXDMAE;
-		pl011_ग_लिखो(uap->dmacr, uap, REG_DMACR);
+		pl011_write(uap->dmacr, uap, REG_DMACR);
 		uap->im &= ~UART011_TXIM;
-		pl011_ग_लिखो(uap->im, uap, REG_IMSC);
-		वापस true;
-	पूर्ण
+		pl011_write(uap->im, uap, REG_IMSC);
+		return true;
+	}
 
 	/*
-	 * We करोn't have a TX buffer queued, so try to queue one.
+	 * We don't have a TX buffer queued, so try to queue one.
 	 * If we successfully queued a buffer, mask the TX IRQ.
 	 */
-	अगर (pl011_dma_tx_refill(uap) > 0) अणु
+	if (pl011_dma_tx_refill(uap) > 0) {
 		uap->im &= ~UART011_TXIM;
-		pl011_ग_लिखो(uap->im, uap, REG_IMSC);
-		वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+		pl011_write(uap->im, uap, REG_IMSC);
+		return true;
+	}
+	return false;
+}
 
 /*
  * Stop the DMA transmit (eg, due to received XOFF).
  * Locking: called with port lock held and IRQs disabled.
  */
-अटल अंतरभूत व्योम pl011_dma_tx_stop(काष्ठा uart_amba_port *uap)
-अणु
-	अगर (uap->dmatx.queued) अणु
+static inline void pl011_dma_tx_stop(struct uart_amba_port *uap)
+{
+	if (uap->dmatx.queued) {
 		uap->dmacr &= ~UART011_TXDMAE;
-		pl011_ग_लिखो(uap->dmacr, uap, REG_DMACR);
-	पूर्ण
-पूर्ण
+		pl011_write(uap->dmacr, uap, REG_DMACR);
+	}
+}
 
 /*
- * Try to start a DMA transmit, or in the हाल of an XON/OFF
- * अक्षरacter queued क्रम send, try to get that अक्षरacter out ASAP.
+ * Try to start a DMA transmit, or in the case of an XON/OFF
+ * character queued for send, try to get that character out ASAP.
  * Locking: called with port lock held and IRQs disabled.
  * Returns:
- *   false अगर we want the TX IRQ to be enabled
- *   true अगर we have a buffer queued
+ *   false if we want the TX IRQ to be enabled
+ *   true if we have a buffer queued
  */
-अटल अंतरभूत bool pl011_dma_tx_start(काष्ठा uart_amba_port *uap)
-अणु
+static inline bool pl011_dma_tx_start(struct uart_amba_port *uap)
+{
 	u16 dmacr;
 
-	अगर (!uap->using_tx_dma)
-		वापस false;
+	if (!uap->using_tx_dma)
+		return false;
 
-	अगर (!uap->port.x_अक्षर) अणु
-		/* no X-अक्षर, try to push अक्षरs out in DMA mode */
+	if (!uap->port.x_char) {
+		/* no X-char, try to push chars out in DMA mode */
 		bool ret = true;
 
-		अगर (!uap->dmatx.queued) अणु
-			अगर (pl011_dma_tx_refill(uap) > 0) अणु
+		if (!uap->dmatx.queued) {
+			if (pl011_dma_tx_refill(uap) > 0) {
 				uap->im &= ~UART011_TXIM;
-				pl011_ग_लिखो(uap->im, uap, REG_IMSC);
-			पूर्ण अन्यथा
+				pl011_write(uap->im, uap, REG_IMSC);
+			} else
 				ret = false;
-		पूर्ण अन्यथा अगर (!(uap->dmacr & UART011_TXDMAE)) अणु
+		} else if (!(uap->dmacr & UART011_TXDMAE)) {
 			uap->dmacr |= UART011_TXDMAE;
-			pl011_ग_लिखो(uap->dmacr, uap, REG_DMACR);
-		पूर्ण
-		वापस ret;
-	पूर्ण
+			pl011_write(uap->dmacr, uap, REG_DMACR);
+		}
+		return ret;
+	}
 
 	/*
-	 * We have an X-अक्षर to send.  Disable DMA to prevent it loading
-	 * the TX fअगरo, and then see अगर we can stuff it पूर्णांकo the FIFO.
+	 * We have an X-char to send.  Disable DMA to prevent it loading
+	 * the TX fifo, and then see if we can stuff it into the FIFO.
 	 */
 	dmacr = uap->dmacr;
 	uap->dmacr &= ~UART011_TXDMAE;
-	pl011_ग_लिखो(uap->dmacr, uap, REG_DMACR);
+	pl011_write(uap->dmacr, uap, REG_DMACR);
 
-	अगर (pl011_पढ़ो(uap, REG_FR) & UART01x_FR_TXFF) अणु
+	if (pl011_read(uap, REG_FR) & UART01x_FR_TXFF) {
 		/*
-		 * No space in the FIFO, so enable the transmit पूर्णांकerrupt
+		 * No space in the FIFO, so enable the transmit interrupt
 		 * so we know when there is space.  Note that once we've
-		 * loaded the अक्षरacter, we should just re-enable DMA.
+		 * loaded the character, we should just re-enable DMA.
 		 */
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	pl011_ग_लिखो(uap->port.x_अक्षर, uap, REG_DR);
+	pl011_write(uap->port.x_char, uap, REG_DR);
 	uap->port.icount.tx++;
-	uap->port.x_अक्षर = 0;
+	uap->port.x_char = 0;
 
 	/* Success - restore the DMA state */
 	uap->dmacr = dmacr;
-	pl011_ग_लिखो(dmacr, uap, REG_DMACR);
+	pl011_write(dmacr, uap, REG_DMACR);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /*
  * Flush the transmit buffer.
  * Locking: called with port lock held and IRQs disabled.
  */
-अटल व्योम pl011_dma_flush_buffer(काष्ठा uart_port *port)
+static void pl011_dma_flush_buffer(struct uart_port *port)
 __releases(&uap->port.lock)
 __acquires(&uap->port.lock)
-अणु
-	काष्ठा uart_amba_port *uap =
-	    container_of(port, काष्ठा uart_amba_port, port);
+{
+	struct uart_amba_port *uap =
+	    container_of(port, struct uart_amba_port, port);
 
-	अगर (!uap->using_tx_dma)
-		वापस;
+	if (!uap->using_tx_dma)
+		return;
 
 	dmaengine_terminate_async(uap->dmatx.chan);
 
-	अगर (uap->dmatx.queued) अणु
+	if (uap->dmatx.queued) {
 		dma_unmap_sg(uap->dmatx.chan->device->dev, &uap->dmatx.sg, 1,
 			     DMA_TO_DEVICE);
 		uap->dmatx.queued = false;
 		uap->dmacr &= ~UART011_TXDMAE;
-		pl011_ग_लिखो(uap->dmacr, uap, REG_DMACR);
-	पूर्ण
-पूर्ण
+		pl011_write(uap->dmacr, uap, REG_DMACR);
+	}
+}
 
-अटल व्योम pl011_dma_rx_callback(व्योम *data);
+static void pl011_dma_rx_callback(void *data);
 
-अटल पूर्णांक pl011_dma_rx_trigger_dma(काष्ठा uart_amba_port *uap)
-अणु
-	काष्ठा dma_chan *rxchan = uap->dmarx.chan;
-	काष्ठा pl011_dmarx_data *dmarx = &uap->dmarx;
-	काष्ठा dma_async_tx_descriptor *desc;
-	काष्ठा pl011_sgbuf *sgbuf;
+static int pl011_dma_rx_trigger_dma(struct uart_amba_port *uap)
+{
+	struct dma_chan *rxchan = uap->dmarx.chan;
+	struct pl011_dmarx_data *dmarx = &uap->dmarx;
+	struct dma_async_tx_descriptor *desc;
+	struct pl011_sgbuf *sgbuf;
 
-	अगर (!rxchan)
-		वापस -EIO;
+	if (!rxchan)
+		return -EIO;
 
 	/* Start the RX DMA job */
 	sgbuf = uap->dmarx.use_buf_b ?
@@ -844,131 +843,131 @@ __acquires(&uap->port.lock)
 	/*
 	 * If the DMA engine is busy and cannot prepare a
 	 * channel, no big deal, the driver will fall back
-	 * to पूर्णांकerrupt mode as a result of this error code.
+	 * to interrupt mode as a result of this error code.
 	 */
-	अगर (!desc) अणु
+	if (!desc) {
 		uap->dmarx.running = false;
 		dmaengine_terminate_all(rxchan);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	/* Some data to go aदीर्घ to the callback */
+	/* Some data to go along to the callback */
 	desc->callback = pl011_dma_rx_callback;
 	desc->callback_param = uap;
 	dmarx->cookie = dmaengine_submit(desc);
 	dma_async_issue_pending(rxchan);
 
 	uap->dmacr |= UART011_RXDMAE;
-	pl011_ग_लिखो(uap->dmacr, uap, REG_DMACR);
+	pl011_write(uap->dmacr, uap, REG_DMACR);
 	uap->dmarx.running = true;
 
 	uap->im &= ~UART011_RXIM;
-	pl011_ग_लिखो(uap->im, uap, REG_IMSC);
+	pl011_write(uap->im, uap, REG_IMSC);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * This is called when either the DMA job is complete, or
- * the FIFO समयout पूर्णांकerrupt occurred. This must be called
+ * the FIFO timeout interrupt occurred. This must be called
  * with the port spinlock uap->port.lock held.
  */
-अटल व्योम pl011_dma_rx_अक्षरs(काष्ठा uart_amba_port *uap,
+static void pl011_dma_rx_chars(struct uart_amba_port *uap,
 			       u32 pending, bool use_buf_b,
-			       bool पढ़ोfअगरo)
-अणु
-	काष्ठा tty_port *port = &uap->port.state->port;
-	काष्ठा pl011_sgbuf *sgbuf = use_buf_b ?
+			       bool readfifo)
+{
+	struct tty_port *port = &uap->port.state->port;
+	struct pl011_sgbuf *sgbuf = use_buf_b ?
 		&uap->dmarx.sgbuf_b : &uap->dmarx.sgbuf_a;
-	पूर्णांक dma_count = 0;
-	u32 fअगरotaken = 0; /* only used क्रम vdbg() */
+	int dma_count = 0;
+	u32 fifotaken = 0; /* only used for vdbg() */
 
-	काष्ठा pl011_dmarx_data *dmarx = &uap->dmarx;
-	पूर्णांक dmataken = 0;
+	struct pl011_dmarx_data *dmarx = &uap->dmarx;
+	int dmataken = 0;
 
-	अगर (uap->dmarx.poll_rate) अणु
+	if (uap->dmarx.poll_rate) {
 		/* The data can be taken by polling */
 		dmataken = sgbuf->sg.length - dmarx->last_residue;
 		/* Recalculate the pending size */
-		अगर (pending >= dmataken)
+		if (pending >= dmataken)
 			pending -= dmataken;
-	पूर्ण
+	}
 
-	/* Pick the reमुख्य data from the DMA */
-	अगर (pending) अणु
+	/* Pick the remain data from the DMA */
+	if (pending) {
 
 		/*
-		 * First take all अक्षरs in the DMA pipe, then look in the FIFO.
-		 * Note that tty_insert_flip_buf() tries to take as many अक्षरs
+		 * First take all chars in the DMA pipe, then look in the FIFO.
+		 * Note that tty_insert_flip_buf() tries to take as many chars
 		 * as it can.
 		 */
 		dma_count = tty_insert_flip_string(port, sgbuf->buf + dmataken,
 				pending);
 
 		uap->port.icount.rx += dma_count;
-		अगर (dma_count < pending)
+		if (dma_count < pending)
 			dev_warn(uap->port.dev,
 				 "couldn't insert all characters (TTY is full?)\n");
-	पूर्ण
+	}
 
-	/* Reset the last_residue क्रम Rx DMA poll */
-	अगर (uap->dmarx.poll_rate)
+	/* Reset the last_residue for Rx DMA poll */
+	if (uap->dmarx.poll_rate)
 		dmarx->last_residue = sgbuf->sg.length;
 
 	/*
-	 * Only जारी with trying to पढ़ो the FIFO अगर all DMA अक्षरs have
+	 * Only continue with trying to read the FIFO if all DMA chars have
 	 * been taken first.
 	 */
-	अगर (dma_count == pending && पढ़ोfअगरo) अणु
+	if (dma_count == pending && readfifo) {
 		/* Clear any error flags */
-		pl011_ग_लिखो(UART011_OEIS | UART011_BEIS | UART011_PEIS |
+		pl011_write(UART011_OEIS | UART011_BEIS | UART011_PEIS |
 			    UART011_FEIS, uap, REG_ICR);
 
 		/*
-		 * If we पढ़ो all the DMA'd अक्षरacters, and we had an
+		 * If we read all the DMA'd characters, and we had an
 		 * incomplete buffer, that could be due to an rx error, or
-		 * maybe we just समयd out. Read any pending अक्षरs and check
+		 * maybe we just timed out. Read any pending chars and check
 		 * the error status.
 		 *
 		 * Error conditions will only occur in the FIFO, these will
-		 * trigger an immediate पूर्णांकerrupt and stop the DMA job, so we
+		 * trigger an immediate interrupt and stop the DMA job, so we
 		 * will always find the error in the FIFO, never in the DMA
 		 * buffer.
 		 */
-		fअगरotaken = pl011_fअगरo_to_tty(uap);
-	पूर्ण
+		fifotaken = pl011_fifo_to_tty(uap);
+	}
 
 	dev_vdbg(uap->port.dev,
 		 "Took %d chars from DMA buffer and %d chars from the FIFO\n",
-		 dma_count, fअगरotaken);
+		 dma_count, fifotaken);
 	tty_flip_buffer_push(port);
-पूर्ण
+}
 
-अटल व्योम pl011_dma_rx_irq(काष्ठा uart_amba_port *uap)
-अणु
-	काष्ठा pl011_dmarx_data *dmarx = &uap->dmarx;
-	काष्ठा dma_chan *rxchan = dmarx->chan;
-	काष्ठा pl011_sgbuf *sgbuf = dmarx->use_buf_b ?
+static void pl011_dma_rx_irq(struct uart_amba_port *uap)
+{
+	struct pl011_dmarx_data *dmarx = &uap->dmarx;
+	struct dma_chan *rxchan = dmarx->chan;
+	struct pl011_sgbuf *sgbuf = dmarx->use_buf_b ?
 		&dmarx->sgbuf_b : &dmarx->sgbuf_a;
-	माप_प्रकार pending;
-	काष्ठा dma_tx_state state;
-	क्रमागत dma_status dmastat;
+	size_t pending;
+	struct dma_tx_state state;
+	enum dma_status dmastat;
 
 	/*
 	 * Pause the transfer so we can trust the current counter,
-	 * करो this beक्रमe we छोड़ो the PL011 block, अन्यथा we may
+	 * do this before we pause the PL011 block, else we may
 	 * overflow the FIFO.
 	 */
-	अगर (dmaengine_छोड़ो(rxchan))
+	if (dmaengine_pause(rxchan))
 		dev_err(uap->port.dev, "unable to pause DMA transfer\n");
 	dmastat = rxchan->device->device_tx_status(rxchan,
 						   dmarx->cookie, &state);
-	अगर (dmastat != DMA_PAUSED)
+	if (dmastat != DMA_PAUSED)
 		dev_err(uap->port.dev, "unable to pause DMA transfer\n");
 
-	/* Disable RX DMA - incoming data will रुको in the FIFO */
+	/* Disable RX DMA - incoming data will wait in the FIFO */
 	uap->dmacr &= ~UART011_RXDMAE;
-	pl011_ग_लिखो(uap->dmacr, uap, REG_DMACR);
+	pl011_write(uap->dmacr, uap, REG_DMACR);
 	uap->dmarx.running = false;
 
 	pending = sgbuf->sg.length - state.residue;
@@ -977,43 +976,43 @@ __acquires(&uap->port.lock)
 	dmaengine_terminate_all(rxchan);
 
 	/*
-	 * This will take the अक्षरs we have so far and insert
-	 * पूर्णांकo the framework.
+	 * This will take the chars we have so far and insert
+	 * into the framework.
 	 */
-	pl011_dma_rx_अक्षरs(uap, pending, dmarx->use_buf_b, true);
+	pl011_dma_rx_chars(uap, pending, dmarx->use_buf_b, true);
 
 	/* Switch buffer & re-trigger DMA job */
 	dmarx->use_buf_b = !dmarx->use_buf_b;
-	अगर (pl011_dma_rx_trigger_dma(uap)) अणु
+	if (pl011_dma_rx_trigger_dma(uap)) {
 		dev_dbg(uap->port.dev, "could not retrigger RX DMA job "
 			"fall back to interrupt mode\n");
 		uap->im |= UART011_RXIM;
-		pl011_ग_लिखो(uap->im, uap, REG_IMSC);
-	पूर्ण
-पूर्ण
+		pl011_write(uap->im, uap, REG_IMSC);
+	}
+}
 
-अटल व्योम pl011_dma_rx_callback(व्योम *data)
-अणु
-	काष्ठा uart_amba_port *uap = data;
-	काष्ठा pl011_dmarx_data *dmarx = &uap->dmarx;
-	काष्ठा dma_chan *rxchan = dmarx->chan;
+static void pl011_dma_rx_callback(void *data)
+{
+	struct uart_amba_port *uap = data;
+	struct pl011_dmarx_data *dmarx = &uap->dmarx;
+	struct dma_chan *rxchan = dmarx->chan;
 	bool lastbuf = dmarx->use_buf_b;
-	काष्ठा pl011_sgbuf *sgbuf = dmarx->use_buf_b ?
+	struct pl011_sgbuf *sgbuf = dmarx->use_buf_b ?
 		&dmarx->sgbuf_b : &dmarx->sgbuf_a;
-	माप_प्रकार pending;
-	काष्ठा dma_tx_state state;
-	पूर्णांक ret;
+	size_t pending;
+	struct dma_tx_state state;
+	int ret;
 
 	/*
-	 * This completion पूर्णांकerrupt occurs typically when the
-	 * RX buffer is totally stuffed but no समयout has yet
+	 * This completion interrupt occurs typically when the
+	 * RX buffer is totally stuffed but no timeout has yet
 	 * occurred. When that happens, we just want the RX
-	 * routine to flush out the secondary DMA buffer जबतक
+	 * routine to flush out the secondary DMA buffer while
 	 * we immediately trigger the next DMA job.
 	 */
 	spin_lock_irq(&uap->port.lock);
 	/*
-	 * Rx data can be taken by the UART पूर्णांकerrupts during
+	 * Rx data can be taken by the UART interrupts during
 	 * the DMA irq handler. So we check the residue here.
 	 */
 	rxchan->device->device_tx_status(rxchan, dmarx->cookie, &state);
@@ -1026,529 +1025,529 @@ __acquires(&uap->port.lock)
 	dmarx->use_buf_b = !lastbuf;
 	ret = pl011_dma_rx_trigger_dma(uap);
 
-	pl011_dma_rx_अक्षरs(uap, pending, lastbuf, false);
+	pl011_dma_rx_chars(uap, pending, lastbuf, false);
 	spin_unlock_irq(&uap->port.lock);
 	/*
-	 * Do this check after we picked the DMA अक्षरs so we करोn't
+	 * Do this check after we picked the DMA chars so we don't
 	 * get some IRQ immediately from RX.
 	 */
-	अगर (ret) अणु
+	if (ret) {
 		dev_dbg(uap->port.dev, "could not retrigger RX DMA job "
 			"fall back to interrupt mode\n");
 		uap->im |= UART011_RXIM;
-		pl011_ग_लिखो(uap->im, uap, REG_IMSC);
-	पूर्ण
-पूर्ण
+		pl011_write(uap->im, uap, REG_IMSC);
+	}
+}
 
 /*
- * Stop accepting received अक्षरacters, when we're shutting करोwn or
+ * Stop accepting received characters, when we're shutting down or
  * suspending this port.
  * Locking: called with port lock held and IRQs disabled.
  */
-अटल अंतरभूत व्योम pl011_dma_rx_stop(काष्ठा uart_amba_port *uap)
-अणु
+static inline void pl011_dma_rx_stop(struct uart_amba_port *uap)
+{
 	/* FIXME.  Just disable the DMA enable */
 	uap->dmacr &= ~UART011_RXDMAE;
-	pl011_ग_लिखो(uap->dmacr, uap, REG_DMACR);
-पूर्ण
+	pl011_write(uap->dmacr, uap, REG_DMACR);
+}
 
 /*
- * Timer handler क्रम Rx DMA polling.
+ * Timer handler for Rx DMA polling.
  * Every polling, It checks the residue in the dma buffer and transfer
- * data to the tty. Also, last_residue is updated क्रम the next polling.
+ * data to the tty. Also, last_residue is updated for the next polling.
  */
-अटल व्योम pl011_dma_rx_poll(काष्ठा समयr_list *t)
-अणु
-	काष्ठा uart_amba_port *uap = from_समयr(uap, t, dmarx.समयr);
-	काष्ठा tty_port *port = &uap->port.state->port;
-	काष्ठा pl011_dmarx_data *dmarx = &uap->dmarx;
-	काष्ठा dma_chan *rxchan = uap->dmarx.chan;
-	अचिन्हित दीर्घ flags = 0;
-	अचिन्हित पूर्णांक dmataken = 0;
-	अचिन्हित पूर्णांक size = 0;
-	काष्ठा pl011_sgbuf *sgbuf;
-	पूर्णांक dma_count;
-	काष्ठा dma_tx_state state;
+static void pl011_dma_rx_poll(struct timer_list *t)
+{
+	struct uart_amba_port *uap = from_timer(uap, t, dmarx.timer);
+	struct tty_port *port = &uap->port.state->port;
+	struct pl011_dmarx_data *dmarx = &uap->dmarx;
+	struct dma_chan *rxchan = uap->dmarx.chan;
+	unsigned long flags = 0;
+	unsigned int dmataken = 0;
+	unsigned int size = 0;
+	struct pl011_sgbuf *sgbuf;
+	int dma_count;
+	struct dma_tx_state state;
 
 	sgbuf = dmarx->use_buf_b ? &uap->dmarx.sgbuf_b : &uap->dmarx.sgbuf_a;
 	rxchan->device->device_tx_status(rxchan, dmarx->cookie, &state);
-	अगर (likely(state.residue < dmarx->last_residue)) अणु
+	if (likely(state.residue < dmarx->last_residue)) {
 		dmataken = sgbuf->sg.length - dmarx->last_residue;
 		size = dmarx->last_residue - state.residue;
 		dma_count = tty_insert_flip_string(port, sgbuf->buf + dmataken,
 				size);
-		अगर (dma_count == size)
+		if (dma_count == size)
 			dmarx->last_residue =  state.residue;
-		dmarx->last_jअगरfies = jअगरfies;
-	पूर्ण
+		dmarx->last_jiffies = jiffies;
+	}
 	tty_flip_buffer_push(port);
 
 	/*
-	 * If no data is received in poll_समयout, the driver will fall back
-	 * to पूर्णांकerrupt mode. We will retrigger DMA at the first पूर्णांकerrupt.
+	 * If no data is received in poll_timeout, the driver will fall back
+	 * to interrupt mode. We will retrigger DMA at the first interrupt.
 	 */
-	अगर (jअगरfies_to_msecs(jअगरfies - dmarx->last_jअगरfies)
-			> uap->dmarx.poll_समयout) अणु
+	if (jiffies_to_msecs(jiffies - dmarx->last_jiffies)
+			> uap->dmarx.poll_timeout) {
 
 		spin_lock_irqsave(&uap->port.lock, flags);
 		pl011_dma_rx_stop(uap);
 		uap->im |= UART011_RXIM;
-		pl011_ग_लिखो(uap->im, uap, REG_IMSC);
+		pl011_write(uap->im, uap, REG_IMSC);
 		spin_unlock_irqrestore(&uap->port.lock, flags);
 
 		uap->dmarx.running = false;
 		dmaengine_terminate_all(rxchan);
-		del_समयr(&uap->dmarx.समयr);
-	पूर्ण अन्यथा अणु
-		mod_समयr(&uap->dmarx.समयr,
-			jअगरfies + msecs_to_jअगरfies(uap->dmarx.poll_rate));
-	पूर्ण
-पूर्ण
+		del_timer(&uap->dmarx.timer);
+	} else {
+		mod_timer(&uap->dmarx.timer,
+			jiffies + msecs_to_jiffies(uap->dmarx.poll_rate));
+	}
+}
 
-अटल व्योम pl011_dma_startup(काष्ठा uart_amba_port *uap)
-अणु
-	पूर्णांक ret;
+static void pl011_dma_startup(struct uart_amba_port *uap)
+{
+	int ret;
 
-	अगर (!uap->dma_probed)
+	if (!uap->dma_probed)
 		pl011_dma_probe(uap);
 
-	अगर (!uap->dmatx.chan)
-		वापस;
+	if (!uap->dmatx.chan)
+		return;
 
-	uap->dmatx.buf = kदो_स्मृति(PL011_DMA_BUFFER_SIZE, GFP_KERNEL | __GFP_DMA);
-	अगर (!uap->dmatx.buf) अणु
+	uap->dmatx.buf = kmalloc(PL011_DMA_BUFFER_SIZE, GFP_KERNEL | __GFP_DMA);
+	if (!uap->dmatx.buf) {
 		dev_err(uap->port.dev, "no memory for DMA TX buffer\n");
-		uap->port.fअगरosize = uap->fअगरosize;
-		वापस;
-	पूर्ण
+		uap->port.fifosize = uap->fifosize;
+		return;
+	}
 
 	sg_init_one(&uap->dmatx.sg, uap->dmatx.buf, PL011_DMA_BUFFER_SIZE);
 
-	/* The DMA buffer is now the FIFO the TTY subप्रणाली can use */
-	uap->port.fअगरosize = PL011_DMA_BUFFER_SIZE;
+	/* The DMA buffer is now the FIFO the TTY subsystem can use */
+	uap->port.fifosize = PL011_DMA_BUFFER_SIZE;
 	uap->using_tx_dma = true;
 
-	अगर (!uap->dmarx.chan)
-		जाओ skip_rx;
+	if (!uap->dmarx.chan)
+		goto skip_rx;
 
 	/* Allocate and map DMA RX buffers */
 	ret = pl011_sgbuf_init(uap->dmarx.chan, &uap->dmarx.sgbuf_a,
 			       DMA_FROM_DEVICE);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(uap->port.dev, "failed to init DMA %s: %d\n",
 			"RX buffer A", ret);
-		जाओ skip_rx;
-	पूर्ण
+		goto skip_rx;
+	}
 
 	ret = pl011_sgbuf_init(uap->dmarx.chan, &uap->dmarx.sgbuf_b,
 			       DMA_FROM_DEVICE);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(uap->port.dev, "failed to init DMA %s: %d\n",
 			"RX buffer B", ret);
-		pl011_sgbuf_मुक्त(uap->dmarx.chan, &uap->dmarx.sgbuf_a,
+		pl011_sgbuf_free(uap->dmarx.chan, &uap->dmarx.sgbuf_a,
 				 DMA_FROM_DEVICE);
-		जाओ skip_rx;
-	पूर्ण
+		goto skip_rx;
+	}
 
 	uap->using_rx_dma = true;
 
 skip_rx:
 	/* Turn on DMA error (RX/TX will be enabled on demand) */
 	uap->dmacr |= UART011_DMAONERR;
-	pl011_ग_लिखो(uap->dmacr, uap, REG_DMACR);
+	pl011_write(uap->dmacr, uap, REG_DMACR);
 
 	/*
-	 * ST Micro variants has some specअगरic dma burst threshold
+	 * ST Micro variants has some specific dma burst threshold
 	 * compensation. Set this to 16 bytes, so burst will only
 	 * be issued above/below 16 bytes.
 	 */
-	अगर (uap->venकरोr->dma_threshold)
-		pl011_ग_लिखो(ST_UART011_DMAWM_RX_16 | ST_UART011_DMAWM_TX_16,
+	if (uap->vendor->dma_threshold)
+		pl011_write(ST_UART011_DMAWM_RX_16 | ST_UART011_DMAWM_TX_16,
 			    uap, REG_ST_DMAWM);
 
-	अगर (uap->using_rx_dma) अणु
-		अगर (pl011_dma_rx_trigger_dma(uap))
+	if (uap->using_rx_dma) {
+		if (pl011_dma_rx_trigger_dma(uap))
 			dev_dbg(uap->port.dev, "could not trigger initial "
 				"RX DMA job, fall back to interrupt mode\n");
-		अगर (uap->dmarx.poll_rate) अणु
-			समयr_setup(&uap->dmarx.समयr, pl011_dma_rx_poll, 0);
-			mod_समयr(&uap->dmarx.समयr,
-				jअगरfies +
-				msecs_to_jअगरfies(uap->dmarx.poll_rate));
+		if (uap->dmarx.poll_rate) {
+			timer_setup(&uap->dmarx.timer, pl011_dma_rx_poll, 0);
+			mod_timer(&uap->dmarx.timer,
+				jiffies +
+				msecs_to_jiffies(uap->dmarx.poll_rate));
 			uap->dmarx.last_residue = PL011_DMA_BUFFER_SIZE;
-			uap->dmarx.last_jअगरfies = jअगरfies;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			uap->dmarx.last_jiffies = jiffies;
+		}
+	}
+}
 
-अटल व्योम pl011_dma_shutकरोwn(काष्ठा uart_amba_port *uap)
-अणु
-	अगर (!(uap->using_tx_dma || uap->using_rx_dma))
-		वापस;
+static void pl011_dma_shutdown(struct uart_amba_port *uap)
+{
+	if (!(uap->using_tx_dma || uap->using_rx_dma))
+		return;
 
 	/* Disable RX and TX DMA */
-	जबतक (pl011_पढ़ो(uap, REG_FR) & uap->venकरोr->fr_busy)
+	while (pl011_read(uap, REG_FR) & uap->vendor->fr_busy)
 		cpu_relax();
 
 	spin_lock_irq(&uap->port.lock);
 	uap->dmacr &= ~(UART011_DMAONERR | UART011_RXDMAE | UART011_TXDMAE);
-	pl011_ग_लिखो(uap->dmacr, uap, REG_DMACR);
+	pl011_write(uap->dmacr, uap, REG_DMACR);
 	spin_unlock_irq(&uap->port.lock);
 
-	अगर (uap->using_tx_dma) अणु
-		/* In theory, this should alपढ़ोy be करोne by pl011_dma_flush_buffer */
+	if (uap->using_tx_dma) {
+		/* In theory, this should already be done by pl011_dma_flush_buffer */
 		dmaengine_terminate_all(uap->dmatx.chan);
-		अगर (uap->dmatx.queued) अणु
+		if (uap->dmatx.queued) {
 			dma_unmap_sg(uap->dmatx.chan->device->dev, &uap->dmatx.sg, 1,
 				     DMA_TO_DEVICE);
 			uap->dmatx.queued = false;
-		पूर्ण
+		}
 
-		kमुक्त(uap->dmatx.buf);
+		kfree(uap->dmatx.buf);
 		uap->using_tx_dma = false;
-	पूर्ण
+	}
 
-	अगर (uap->using_rx_dma) अणु
+	if (uap->using_rx_dma) {
 		dmaengine_terminate_all(uap->dmarx.chan);
 		/* Clean up the RX DMA */
-		pl011_sgbuf_मुक्त(uap->dmarx.chan, &uap->dmarx.sgbuf_a, DMA_FROM_DEVICE);
-		pl011_sgbuf_मुक्त(uap->dmarx.chan, &uap->dmarx.sgbuf_b, DMA_FROM_DEVICE);
-		अगर (uap->dmarx.poll_rate)
-			del_समयr_sync(&uap->dmarx.समयr);
+		pl011_sgbuf_free(uap->dmarx.chan, &uap->dmarx.sgbuf_a, DMA_FROM_DEVICE);
+		pl011_sgbuf_free(uap->dmarx.chan, &uap->dmarx.sgbuf_b, DMA_FROM_DEVICE);
+		if (uap->dmarx.poll_rate)
+			del_timer_sync(&uap->dmarx.timer);
 		uap->using_rx_dma = false;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत bool pl011_dma_rx_available(काष्ठा uart_amba_port *uap)
-अणु
-	वापस uap->using_rx_dma;
-पूर्ण
+static inline bool pl011_dma_rx_available(struct uart_amba_port *uap)
+{
+	return uap->using_rx_dma;
+}
 
-अटल अंतरभूत bool pl011_dma_rx_running(काष्ठा uart_amba_port *uap)
-अणु
-	वापस uap->using_rx_dma && uap->dmarx.running;
-पूर्ण
+static inline bool pl011_dma_rx_running(struct uart_amba_port *uap)
+{
+	return uap->using_rx_dma && uap->dmarx.running;
+}
 
-#अन्यथा
-/* Blank functions अगर the DMA engine is not available */
-अटल अंतरभूत व्योम pl011_dma_हटाओ(काष्ठा uart_amba_port *uap)
-अणु
-पूर्ण
+#else
+/* Blank functions if the DMA engine is not available */
+static inline void pl011_dma_remove(struct uart_amba_port *uap)
+{
+}
 
-अटल अंतरभूत व्योम pl011_dma_startup(काष्ठा uart_amba_port *uap)
-अणु
-पूर्ण
+static inline void pl011_dma_startup(struct uart_amba_port *uap)
+{
+}
 
-अटल अंतरभूत व्योम pl011_dma_shutकरोwn(काष्ठा uart_amba_port *uap)
-अणु
-पूर्ण
+static inline void pl011_dma_shutdown(struct uart_amba_port *uap)
+{
+}
 
-अटल अंतरभूत bool pl011_dma_tx_irq(काष्ठा uart_amba_port *uap)
-अणु
-	वापस false;
-पूर्ण
+static inline bool pl011_dma_tx_irq(struct uart_amba_port *uap)
+{
+	return false;
+}
 
-अटल अंतरभूत व्योम pl011_dma_tx_stop(काष्ठा uart_amba_port *uap)
-अणु
-पूर्ण
+static inline void pl011_dma_tx_stop(struct uart_amba_port *uap)
+{
+}
 
-अटल अंतरभूत bool pl011_dma_tx_start(काष्ठा uart_amba_port *uap)
-अणु
-	वापस false;
-पूर्ण
+static inline bool pl011_dma_tx_start(struct uart_amba_port *uap)
+{
+	return false;
+}
 
-अटल अंतरभूत व्योम pl011_dma_rx_irq(काष्ठा uart_amba_port *uap)
-अणु
-पूर्ण
+static inline void pl011_dma_rx_irq(struct uart_amba_port *uap)
+{
+}
 
-अटल अंतरभूत व्योम pl011_dma_rx_stop(काष्ठा uart_amba_port *uap)
-अणु
-पूर्ण
+static inline void pl011_dma_rx_stop(struct uart_amba_port *uap)
+{
+}
 
-अटल अंतरभूत पूर्णांक pl011_dma_rx_trigger_dma(काष्ठा uart_amba_port *uap)
-अणु
-	वापस -EIO;
-पूर्ण
+static inline int pl011_dma_rx_trigger_dma(struct uart_amba_port *uap)
+{
+	return -EIO;
+}
 
-अटल अंतरभूत bool pl011_dma_rx_available(काष्ठा uart_amba_port *uap)
-अणु
-	वापस false;
-पूर्ण
+static inline bool pl011_dma_rx_available(struct uart_amba_port *uap)
+{
+	return false;
+}
 
-अटल अंतरभूत bool pl011_dma_rx_running(काष्ठा uart_amba_port *uap)
-अणु
-	वापस false;
-पूर्ण
+static inline bool pl011_dma_rx_running(struct uart_amba_port *uap)
+{
+	return false;
+}
 
-#घोषणा pl011_dma_flush_buffer	शून्य
-#पूर्ण_अगर
+#define pl011_dma_flush_buffer	NULL
+#endif
 
-अटल व्योम pl011_stop_tx(काष्ठा uart_port *port)
-अणु
-	काष्ठा uart_amba_port *uap =
-	    container_of(port, काष्ठा uart_amba_port, port);
+static void pl011_stop_tx(struct uart_port *port)
+{
+	struct uart_amba_port *uap =
+	    container_of(port, struct uart_amba_port, port);
 
 	uap->im &= ~UART011_TXIM;
-	pl011_ग_लिखो(uap->im, uap, REG_IMSC);
+	pl011_write(uap->im, uap, REG_IMSC);
 	pl011_dma_tx_stop(uap);
-पूर्ण
+}
 
-अटल bool pl011_tx_अक्षरs(काष्ठा uart_amba_port *uap, bool from_irq);
+static bool pl011_tx_chars(struct uart_amba_port *uap, bool from_irq);
 
 /* Start TX with programmed I/O only (no DMA) */
-अटल व्योम pl011_start_tx_pio(काष्ठा uart_amba_port *uap)
-अणु
-	अगर (pl011_tx_अक्षरs(uap, false)) अणु
+static void pl011_start_tx_pio(struct uart_amba_port *uap)
+{
+	if (pl011_tx_chars(uap, false)) {
 		uap->im |= UART011_TXIM;
-		pl011_ग_लिखो(uap->im, uap, REG_IMSC);
-	पूर्ण
-पूर्ण
+		pl011_write(uap->im, uap, REG_IMSC);
+	}
+}
 
-अटल व्योम pl011_start_tx(काष्ठा uart_port *port)
-अणु
-	काष्ठा uart_amba_port *uap =
-	    container_of(port, काष्ठा uart_amba_port, port);
+static void pl011_start_tx(struct uart_port *port)
+{
+	struct uart_amba_port *uap =
+	    container_of(port, struct uart_amba_port, port);
 
-	अगर (!pl011_dma_tx_start(uap))
+	if (!pl011_dma_tx_start(uap))
 		pl011_start_tx_pio(uap);
-पूर्ण
+}
 
-अटल व्योम pl011_stop_rx(काष्ठा uart_port *port)
-अणु
-	काष्ठा uart_amba_port *uap =
-	    container_of(port, काष्ठा uart_amba_port, port);
+static void pl011_stop_rx(struct uart_port *port)
+{
+	struct uart_amba_port *uap =
+	    container_of(port, struct uart_amba_port, port);
 
 	uap->im &= ~(UART011_RXIM|UART011_RTIM|UART011_FEIM|
 		     UART011_PEIM|UART011_BEIM|UART011_OEIM);
-	pl011_ग_लिखो(uap->im, uap, REG_IMSC);
+	pl011_write(uap->im, uap, REG_IMSC);
 
 	pl011_dma_rx_stop(uap);
-पूर्ण
+}
 
-अटल व्योम pl011_enable_ms(काष्ठा uart_port *port)
-अणु
-	काष्ठा uart_amba_port *uap =
-	    container_of(port, काष्ठा uart_amba_port, port);
+static void pl011_enable_ms(struct uart_port *port)
+{
+	struct uart_amba_port *uap =
+	    container_of(port, struct uart_amba_port, port);
 
 	uap->im |= UART011_RIMIM|UART011_CTSMIM|UART011_DCDMIM|UART011_DSRMIM;
-	pl011_ग_लिखो(uap->im, uap, REG_IMSC);
-पूर्ण
+	pl011_write(uap->im, uap, REG_IMSC);
+}
 
-अटल व्योम pl011_rx_अक्षरs(काष्ठा uart_amba_port *uap)
+static void pl011_rx_chars(struct uart_amba_port *uap)
 __releases(&uap->port.lock)
 __acquires(&uap->port.lock)
-अणु
-	pl011_fअगरo_to_tty(uap);
+{
+	pl011_fifo_to_tty(uap);
 
 	spin_unlock(&uap->port.lock);
 	tty_flip_buffer_push(&uap->port.state->port);
 	/*
-	 * If we were temporarily out of DMA mode क्रम a जबतक,
-	 * attempt to चयन back to DMA mode again.
+	 * If we were temporarily out of DMA mode for a while,
+	 * attempt to switch back to DMA mode again.
 	 */
-	अगर (pl011_dma_rx_available(uap)) अणु
-		अगर (pl011_dma_rx_trigger_dma(uap)) अणु
+	if (pl011_dma_rx_available(uap)) {
+		if (pl011_dma_rx_trigger_dma(uap)) {
 			dev_dbg(uap->port.dev, "could not trigger RX DMA job "
 				"fall back to interrupt mode again\n");
 			uap->im |= UART011_RXIM;
-			pl011_ग_लिखो(uap->im, uap, REG_IMSC);
-		पूर्ण अन्यथा अणु
-#अगर_घोषित CONFIG_DMA_ENGINE
+			pl011_write(uap->im, uap, REG_IMSC);
+		} else {
+#ifdef CONFIG_DMA_ENGINE
 			/* Start Rx DMA poll */
-			अगर (uap->dmarx.poll_rate) अणु
-				uap->dmarx.last_jअगरfies = jअगरfies;
+			if (uap->dmarx.poll_rate) {
+				uap->dmarx.last_jiffies = jiffies;
 				uap->dmarx.last_residue	= PL011_DMA_BUFFER_SIZE;
-				mod_समयr(&uap->dmarx.समयr,
-					jअगरfies +
-					msecs_to_jअगरfies(uap->dmarx.poll_rate));
-			पूर्ण
-#पूर्ण_अगर
-		पूर्ण
-	पूर्ण
+				mod_timer(&uap->dmarx.timer,
+					jiffies +
+					msecs_to_jiffies(uap->dmarx.poll_rate));
+			}
+#endif
+		}
+	}
 	spin_lock(&uap->port.lock);
-पूर्ण
+}
 
-अटल bool pl011_tx_अक्षर(काष्ठा uart_amba_port *uap, अचिन्हित अक्षर c,
+static bool pl011_tx_char(struct uart_amba_port *uap, unsigned char c,
 			  bool from_irq)
-अणु
-	अगर (unlikely(!from_irq) &&
-	    pl011_पढ़ो(uap, REG_FR) & UART01x_FR_TXFF)
-		वापस false; /* unable to transmit अक्षरacter */
+{
+	if (unlikely(!from_irq) &&
+	    pl011_read(uap, REG_FR) & UART01x_FR_TXFF)
+		return false; /* unable to transmit character */
 
-	pl011_ग_लिखो(c, uap, REG_DR);
+	pl011_write(c, uap, REG_DR);
 	uap->port.icount.tx++;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-/* Returns true अगर tx पूर्णांकerrupts have to be (kept) enabled  */
-अटल bool pl011_tx_अक्षरs(काष्ठा uart_amba_port *uap, bool from_irq)
-अणु
-	काष्ठा circ_buf *xmit = &uap->port.state->xmit;
-	पूर्णांक count = uap->fअगरosize >> 1;
+/* Returns true if tx interrupts have to be (kept) enabled  */
+static bool pl011_tx_chars(struct uart_amba_port *uap, bool from_irq)
+{
+	struct circ_buf *xmit = &uap->port.state->xmit;
+	int count = uap->fifosize >> 1;
 
-	अगर (uap->port.x_अक्षर) अणु
-		अगर (!pl011_tx_अक्षर(uap, uap->port.x_अक्षर, from_irq))
-			वापस true;
-		uap->port.x_अक्षर = 0;
+	if (uap->port.x_char) {
+		if (!pl011_tx_char(uap, uap->port.x_char, from_irq))
+			return true;
+		uap->port.x_char = 0;
 		--count;
-	पूर्ण
-	अगर (uart_circ_empty(xmit) || uart_tx_stopped(&uap->port)) अणु
+	}
+	if (uart_circ_empty(xmit) || uart_tx_stopped(&uap->port)) {
 		pl011_stop_tx(&uap->port);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	/* If we are using DMA mode, try to send some अक्षरacters. */
-	अगर (pl011_dma_tx_irq(uap))
-		वापस true;
+	/* If we are using DMA mode, try to send some characters. */
+	if (pl011_dma_tx_irq(uap))
+		return true;
 
-	करो अणु
-		अगर (likely(from_irq) && count-- == 0)
-			अवरोध;
+	do {
+		if (likely(from_irq) && count-- == 0)
+			break;
 
-		अगर (!pl011_tx_अक्षर(uap, xmit->buf[xmit->tail], from_irq))
-			अवरोध;
+		if (!pl011_tx_char(uap, xmit->buf[xmit->tail], from_irq))
+			break;
 
 		xmit->tail = (xmit->tail + 1) & (UART_XMIT_SIZE - 1);
-	पूर्ण जबतक (!uart_circ_empty(xmit));
+	} while (!uart_circ_empty(xmit));
 
-	अगर (uart_circ_अक्षरs_pending(xmit) < WAKEUP_CHARS)
-		uart_ग_लिखो_wakeup(&uap->port);
+	if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
+		uart_write_wakeup(&uap->port);
 
-	अगर (uart_circ_empty(xmit)) अणु
+	if (uart_circ_empty(xmit)) {
 		pl011_stop_tx(&uap->port);
-		वापस false;
-	पूर्ण
-	वापस true;
-पूर्ण
+		return false;
+	}
+	return true;
+}
 
-अटल व्योम pl011_modem_status(काष्ठा uart_amba_port *uap)
-अणु
-	अचिन्हित पूर्णांक status, delta;
+static void pl011_modem_status(struct uart_amba_port *uap)
+{
+	unsigned int status, delta;
 
-	status = pl011_पढ़ो(uap, REG_FR) & UART01x_FR_MODEM_ANY;
+	status = pl011_read(uap, REG_FR) & UART01x_FR_MODEM_ANY;
 
 	delta = status ^ uap->old_status;
 	uap->old_status = status;
 
-	अगर (!delta)
-		वापस;
+	if (!delta)
+		return;
 
-	अगर (delta & UART01x_FR_DCD)
+	if (delta & UART01x_FR_DCD)
 		uart_handle_dcd_change(&uap->port, status & UART01x_FR_DCD);
 
-	अगर (delta & uap->venकरोr->fr_dsr)
+	if (delta & uap->vendor->fr_dsr)
 		uap->port.icount.dsr++;
 
-	अगर (delta & uap->venकरोr->fr_cts)
+	if (delta & uap->vendor->fr_cts)
 		uart_handle_cts_change(&uap->port,
-				       status & uap->venकरोr->fr_cts);
+				       status & uap->vendor->fr_cts);
 
-	wake_up_पूर्णांकerruptible(&uap->port.state->port.delta_msr_रुको);
-पूर्ण
+	wake_up_interruptible(&uap->port.state->port.delta_msr_wait);
+}
 
-अटल व्योम check_apply_cts_event_workaround(काष्ठा uart_amba_port *uap)
-अणु
-	अगर (!uap->venकरोr->cts_event_workaround)
-		वापस;
+static void check_apply_cts_event_workaround(struct uart_amba_port *uap)
+{
+	if (!uap->vendor->cts_event_workaround)
+		return;
 
 	/* workaround to make sure that all bits are unlocked.. */
-	pl011_ग_लिखो(0x00, uap, REG_ICR);
+	pl011_write(0x00, uap, REG_ICR);
 
 	/*
-	 * WA: पूर्णांकroduce 26ns(1 uart clk) delay beक्रमe W1C;
+	 * WA: introduce 26ns(1 uart clk) delay before W1C;
 	 * single apb access will incur 2 pclk(133.12Mhz) delay,
-	 * so add 2 dummy पढ़ोs
+	 * so add 2 dummy reads
 	 */
-	pl011_पढ़ो(uap, REG_ICR);
-	pl011_पढ़ो(uap, REG_ICR);
-पूर्ण
+	pl011_read(uap, REG_ICR);
+	pl011_read(uap, REG_ICR);
+}
 
-अटल irqवापस_t pl011_पूर्णांक(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा uart_amba_port *uap = dev_id;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक status, pass_counter = AMBA_ISR_PASS_LIMIT;
-	पूर्णांक handled = 0;
+static irqreturn_t pl011_int(int irq, void *dev_id)
+{
+	struct uart_amba_port *uap = dev_id;
+	unsigned long flags;
+	unsigned int status, pass_counter = AMBA_ISR_PASS_LIMIT;
+	int handled = 0;
 
 	spin_lock_irqsave(&uap->port.lock, flags);
-	status = pl011_पढ़ो(uap, REG_RIS) & uap->im;
-	अगर (status) अणु
-		करो अणु
+	status = pl011_read(uap, REG_RIS) & uap->im;
+	if (status) {
+		do {
 			check_apply_cts_event_workaround(uap);
 
-			pl011_ग_लिखो(status & ~(UART011_TXIS|UART011_RTIS|
+			pl011_write(status & ~(UART011_TXIS|UART011_RTIS|
 					       UART011_RXIS),
 				    uap, REG_ICR);
 
-			अगर (status & (UART011_RTIS|UART011_RXIS)) अणु
-				अगर (pl011_dma_rx_running(uap))
+			if (status & (UART011_RTIS|UART011_RXIS)) {
+				if (pl011_dma_rx_running(uap))
 					pl011_dma_rx_irq(uap);
-				अन्यथा
-					pl011_rx_अक्षरs(uap);
-			पूर्ण
-			अगर (status & (UART011_DSRMIS|UART011_DCDMIS|
+				else
+					pl011_rx_chars(uap);
+			}
+			if (status & (UART011_DSRMIS|UART011_DCDMIS|
 				      UART011_CTSMIS|UART011_RIMIS))
 				pl011_modem_status(uap);
-			अगर (status & UART011_TXIS)
-				pl011_tx_अक्षरs(uap, true);
+			if (status & UART011_TXIS)
+				pl011_tx_chars(uap, true);
 
-			अगर (pass_counter-- == 0)
-				अवरोध;
+			if (pass_counter-- == 0)
+				break;
 
-			status = pl011_पढ़ो(uap, REG_RIS) & uap->im;
-		पूर्ण जबतक (status != 0);
+			status = pl011_read(uap, REG_RIS) & uap->im;
+		} while (status != 0);
 		handled = 1;
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&uap->port.lock, flags);
 
-	वापस IRQ_RETVAL(handled);
-पूर्ण
+	return IRQ_RETVAL(handled);
+}
 
-अटल अचिन्हित पूर्णांक pl011_tx_empty(काष्ठा uart_port *port)
-अणु
-	काष्ठा uart_amba_port *uap =
-	    container_of(port, काष्ठा uart_amba_port, port);
+static unsigned int pl011_tx_empty(struct uart_port *port)
+{
+	struct uart_amba_port *uap =
+	    container_of(port, struct uart_amba_port, port);
 
-	/* Allow feature रेजिस्टर bits to be inverted to work around errata */
-	अचिन्हित पूर्णांक status = pl011_पढ़ो(uap, REG_FR) ^ uap->venकरोr->inv_fr;
+	/* Allow feature register bits to be inverted to work around errata */
+	unsigned int status = pl011_read(uap, REG_FR) ^ uap->vendor->inv_fr;
 
-	वापस status & (uap->venकरोr->fr_busy | UART01x_FR_TXFF) ?
+	return status & (uap->vendor->fr_busy | UART01x_FR_TXFF) ?
 							0 : TIOCSER_TEMT;
-पूर्ण
+}
 
-अटल अचिन्हित पूर्णांक pl011_get_mctrl(काष्ठा uart_port *port)
-अणु
-	काष्ठा uart_amba_port *uap =
-	    container_of(port, काष्ठा uart_amba_port, port);
-	अचिन्हित पूर्णांक result = 0;
-	अचिन्हित पूर्णांक status = pl011_पढ़ो(uap, REG_FR);
+static unsigned int pl011_get_mctrl(struct uart_port *port)
+{
+	struct uart_amba_port *uap =
+	    container_of(port, struct uart_amba_port, port);
+	unsigned int result = 0;
+	unsigned int status = pl011_read(uap, REG_FR);
 
-#घोषणा TIOCMBIT(uartbit, tiocmbit)	\
-	अगर (status & uartbit)		\
+#define TIOCMBIT(uartbit, tiocmbit)	\
+	if (status & uartbit)		\
 		result |= tiocmbit
 
 	TIOCMBIT(UART01x_FR_DCD, TIOCM_CAR);
-	TIOCMBIT(uap->venकरोr->fr_dsr, TIOCM_DSR);
-	TIOCMBIT(uap->venकरोr->fr_cts, TIOCM_CTS);
-	TIOCMBIT(uap->venकरोr->fr_ri, TIOCM_RNG);
-#अघोषित TIOCMBIT
-	वापस result;
-पूर्ण
+	TIOCMBIT(uap->vendor->fr_dsr, TIOCM_DSR);
+	TIOCMBIT(uap->vendor->fr_cts, TIOCM_CTS);
+	TIOCMBIT(uap->vendor->fr_ri, TIOCM_RNG);
+#undef TIOCMBIT
+	return result;
+}
 
-अटल व्योम pl011_set_mctrl(काष्ठा uart_port *port, अचिन्हित पूर्णांक mctrl)
-अणु
-	काष्ठा uart_amba_port *uap =
-	    container_of(port, काष्ठा uart_amba_port, port);
-	अचिन्हित पूर्णांक cr;
+static void pl011_set_mctrl(struct uart_port *port, unsigned int mctrl)
+{
+	struct uart_amba_port *uap =
+	    container_of(port, struct uart_amba_port, port);
+	unsigned int cr;
 
-	cr = pl011_पढ़ो(uap, REG_CR);
+	cr = pl011_read(uap, REG_CR);
 
-#घोषणा	TIOCMBIT(tiocmbit, uartbit)		\
-	अगर (mctrl & tiocmbit)		\
+#define	TIOCMBIT(tiocmbit, uartbit)		\
+	if (mctrl & tiocmbit)		\
 		cr |= uartbit;		\
-	अन्यथा				\
+	else				\
 		cr &= ~uartbit
 
 	TIOCMBIT(TIOCM_RTS, UART011_CR_RTS);
@@ -1557,490 +1556,490 @@ __acquires(&uap->port.lock)
 	TIOCMBIT(TIOCM_OUT2, UART011_CR_OUT2);
 	TIOCMBIT(TIOCM_LOOP, UART011_CR_LBE);
 
-	अगर (port->status & UPSTAT_AUTORTS) अणु
-		/* We need to disable स्वतः-RTS अगर we want to turn RTS off */
+	if (port->status & UPSTAT_AUTORTS) {
+		/* We need to disable auto-RTS if we want to turn RTS off */
 		TIOCMBIT(TIOCM_RTS, UART011_CR_RTSEN);
-	पूर्ण
-#अघोषित TIOCMBIT
+	}
+#undef TIOCMBIT
 
-	pl011_ग_लिखो(cr, uap, REG_CR);
-पूर्ण
+	pl011_write(cr, uap, REG_CR);
+}
 
-अटल व्योम pl011_अवरोध_ctl(काष्ठा uart_port *port, पूर्णांक अवरोध_state)
-अणु
-	काष्ठा uart_amba_port *uap =
-	    container_of(port, काष्ठा uart_amba_port, port);
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक lcr_h;
+static void pl011_break_ctl(struct uart_port *port, int break_state)
+{
+	struct uart_amba_port *uap =
+	    container_of(port, struct uart_amba_port, port);
+	unsigned long flags;
+	unsigned int lcr_h;
 
 	spin_lock_irqsave(&uap->port.lock, flags);
-	lcr_h = pl011_पढ़ो(uap, REG_LCRH_TX);
-	अगर (अवरोध_state == -1)
+	lcr_h = pl011_read(uap, REG_LCRH_TX);
+	if (break_state == -1)
 		lcr_h |= UART01x_LCRH_BRK;
-	अन्यथा
+	else
 		lcr_h &= ~UART01x_LCRH_BRK;
-	pl011_ग_लिखो(lcr_h, uap, REG_LCRH_TX);
+	pl011_write(lcr_h, uap, REG_LCRH_TX);
 	spin_unlock_irqrestore(&uap->port.lock, flags);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_CONSOLE_POLL
+#ifdef CONFIG_CONSOLE_POLL
 
-अटल व्योम pl011_quiesce_irqs(काष्ठा uart_port *port)
-अणु
-	काष्ठा uart_amba_port *uap =
-	    container_of(port, काष्ठा uart_amba_port, port);
+static void pl011_quiesce_irqs(struct uart_port *port)
+{
+	struct uart_amba_port *uap =
+	    container_of(port, struct uart_amba_port, port);
 
-	pl011_ग_लिखो(pl011_पढ़ो(uap, REG_MIS), uap, REG_ICR);
+	pl011_write(pl011_read(uap, REG_MIS), uap, REG_ICR);
 	/*
 	 * There is no way to clear TXIM as this is "ready to transmit IRQ", so
 	 * we simply mask it. start_tx() will unmask it.
 	 *
-	 * Note we can race with start_tx(), and अगर the race happens, the
-	 * polling user might get another पूर्णांकerrupt just after we clear it.
+	 * Note we can race with start_tx(), and if the race happens, the
+	 * polling user might get another interrupt just after we clear it.
 	 * But it should be OK and can happen even w/o the race, e.g.
-	 * controller immediately got some new data and उठाओd the IRQ.
+	 * controller immediately got some new data and raised the IRQ.
 	 *
 	 * And whoever uses polling routines assumes that it manages the device
 	 * (including tx queue), so we're also fine with start_tx()'s caller
 	 * side.
 	 */
-	pl011_ग_लिखो(pl011_पढ़ो(uap, REG_IMSC) & ~UART011_TXIM, uap,
+	pl011_write(pl011_read(uap, REG_IMSC) & ~UART011_TXIM, uap,
 		    REG_IMSC);
-पूर्ण
+}
 
-अटल पूर्णांक pl011_get_poll_अक्षर(काष्ठा uart_port *port)
-अणु
-	काष्ठा uart_amba_port *uap =
-	    container_of(port, काष्ठा uart_amba_port, port);
-	अचिन्हित पूर्णांक status;
+static int pl011_get_poll_char(struct uart_port *port)
+{
+	struct uart_amba_port *uap =
+	    container_of(port, struct uart_amba_port, port);
+	unsigned int status;
 
 	/*
-	 * The caller might need IRQs lowered, e.g. अगर used with KDB NMI
+	 * The caller might need IRQs lowered, e.g. if used with KDB NMI
 	 * debugger.
 	 */
 	pl011_quiesce_irqs(port);
 
-	status = pl011_पढ़ो(uap, REG_FR);
-	अगर (status & UART01x_FR_RXFE)
-		वापस NO_POLL_CHAR;
+	status = pl011_read(uap, REG_FR);
+	if (status & UART01x_FR_RXFE)
+		return NO_POLL_CHAR;
 
-	वापस pl011_पढ़ो(uap, REG_DR);
-पूर्ण
+	return pl011_read(uap, REG_DR);
+}
 
-अटल व्योम pl011_put_poll_अक्षर(काष्ठा uart_port *port,
-			 अचिन्हित अक्षर ch)
-अणु
-	काष्ठा uart_amba_port *uap =
-	    container_of(port, काष्ठा uart_amba_port, port);
+static void pl011_put_poll_char(struct uart_port *port,
+			 unsigned char ch)
+{
+	struct uart_amba_port *uap =
+	    container_of(port, struct uart_amba_port, port);
 
-	जबतक (pl011_पढ़ो(uap, REG_FR) & UART01x_FR_TXFF)
+	while (pl011_read(uap, REG_FR) & UART01x_FR_TXFF)
 		cpu_relax();
 
-	pl011_ग_लिखो(ch, uap, REG_DR);
-पूर्ण
+	pl011_write(ch, uap, REG_DR);
+}
 
-#पूर्ण_अगर /* CONFIG_CONSOLE_POLL */
+#endif /* CONFIG_CONSOLE_POLL */
 
-अटल पूर्णांक pl011_hwinit(काष्ठा uart_port *port)
-अणु
-	काष्ठा uart_amba_port *uap =
-	    container_of(port, काष्ठा uart_amba_port, port);
-	पूर्णांक retval;
+static int pl011_hwinit(struct uart_port *port)
+{
+	struct uart_amba_port *uap =
+	    container_of(port, struct uart_amba_port, port);
+	int retval;
 
 	/* Optionaly enable pins to be muxed in and configured */
-	pinctrl_pm_select_शेष_state(port->dev);
+	pinctrl_pm_select_default_state(port->dev);
 
 	/*
-	 * Try to enable the घड़ी producer.
+	 * Try to enable the clock producer.
 	 */
 	retval = clk_prepare_enable(uap->clk);
-	अगर (retval)
-		वापस retval;
+	if (retval)
+		return retval;
 
 	uap->port.uartclk = clk_get_rate(uap->clk);
 
-	/* Clear pending error and receive पूर्णांकerrupts */
-	pl011_ग_लिखो(UART011_OEIS | UART011_BEIS | UART011_PEIS |
+	/* Clear pending error and receive interrupts */
+	pl011_write(UART011_OEIS | UART011_BEIS | UART011_PEIS |
 		    UART011_FEIS | UART011_RTIS | UART011_RXIS,
 		    uap, REG_ICR);
 
 	/*
-	 * Save पूर्णांकerrupts enable mask, and enable RX पूर्णांकerrupts in हाल अगर
-	 * the पूर्णांकerrupt is used क्रम NMI entry.
+	 * Save interrupts enable mask, and enable RX interrupts in case if
+	 * the interrupt is used for NMI entry.
 	 */
-	uap->im = pl011_पढ़ो(uap, REG_IMSC);
-	pl011_ग_लिखो(UART011_RTIM | UART011_RXIM, uap, REG_IMSC);
+	uap->im = pl011_read(uap, REG_IMSC);
+	pl011_write(UART011_RTIM | UART011_RXIM, uap, REG_IMSC);
 
-	अगर (dev_get_platdata(uap->port.dev)) अणु
-		काष्ठा amba_pl011_data *plat;
+	if (dev_get_platdata(uap->port.dev)) {
+		struct amba_pl011_data *plat;
 
 		plat = dev_get_platdata(uap->port.dev);
-		अगर (plat->init)
+		if (plat->init)
 			plat->init();
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल bool pl011_split_lcrh(स्थिर काष्ठा uart_amba_port *uap)
-अणु
-	वापस pl011_reg_to_offset(uap, REG_LCRH_RX) !=
+static bool pl011_split_lcrh(const struct uart_amba_port *uap)
+{
+	return pl011_reg_to_offset(uap, REG_LCRH_RX) !=
 	       pl011_reg_to_offset(uap, REG_LCRH_TX);
-पूर्ण
+}
 
-अटल व्योम pl011_ग_लिखो_lcr_h(काष्ठा uart_amba_port *uap, अचिन्हित पूर्णांक lcr_h)
-अणु
-	pl011_ग_लिखो(lcr_h, uap, REG_LCRH_RX);
-	अगर (pl011_split_lcrh(uap)) अणु
-		पूर्णांक i;
+static void pl011_write_lcr_h(struct uart_amba_port *uap, unsigned int lcr_h)
+{
+	pl011_write(lcr_h, uap, REG_LCRH_RX);
+	if (pl011_split_lcrh(uap)) {
+		int i;
 		/*
-		 * Wait 10 PCLKs beक्रमe writing LCRH_TX रेजिस्टर,
-		 * to get this delay ग_लिखो पढ़ो only रेजिस्टर 10 बार
+		 * Wait 10 PCLKs before writing LCRH_TX register,
+		 * to get this delay write read only register 10 times
 		 */
-		क्रम (i = 0; i < 10; ++i)
-			pl011_ग_लिखो(0xff, uap, REG_MIS);
-		pl011_ग_लिखो(lcr_h, uap, REG_LCRH_TX);
-	पूर्ण
-पूर्ण
+		for (i = 0; i < 10; ++i)
+			pl011_write(0xff, uap, REG_MIS);
+		pl011_write(lcr_h, uap, REG_LCRH_TX);
+	}
+}
 
-अटल पूर्णांक pl011_allocate_irq(काष्ठा uart_amba_port *uap)
-अणु
-	pl011_ग_लिखो(uap->im, uap, REG_IMSC);
+static int pl011_allocate_irq(struct uart_amba_port *uap)
+{
+	pl011_write(uap->im, uap, REG_IMSC);
 
-	वापस request_irq(uap->port.irq, pl011_पूर्णांक, IRQF_SHARED, "uart-pl011", uap);
-पूर्ण
+	return request_irq(uap->port.irq, pl011_int, IRQF_SHARED, "uart-pl011", uap);
+}
 
 /*
- * Enable पूर्णांकerrupts, only समयouts when using DMA
- * अगर initial RX DMA job failed, start in पूर्णांकerrupt mode
+ * Enable interrupts, only timeouts when using DMA
+ * if initial RX DMA job failed, start in interrupt mode
  * as well.
  */
-अटल व्योम pl011_enable_पूर्णांकerrupts(काष्ठा uart_amba_port *uap)
-अणु
-	अचिन्हित पूर्णांक i;
+static void pl011_enable_interrupts(struct uart_amba_port *uap)
+{
+	unsigned int i;
 
 	spin_lock_irq(&uap->port.lock);
 
-	/* Clear out any spuriously appearing RX पूर्णांकerrupts */
-	pl011_ग_लिखो(UART011_RTIS | UART011_RXIS, uap, REG_ICR);
+	/* Clear out any spuriously appearing RX interrupts */
+	pl011_write(UART011_RTIS | UART011_RXIS, uap, REG_ICR);
 
 	/*
-	 * RXIS is निश्चितed only when the RX FIFO transitions from below
-	 * to above the trigger threshold.  If the RX FIFO is alपढ़ोy
+	 * RXIS is asserted only when the RX FIFO transitions from below
+	 * to above the trigger threshold.  If the RX FIFO is already
 	 * full to the threshold this can't happen and RXIS will now be
 	 * stuck off.  Drain the RX FIFO explicitly to fix this:
 	 */
-	क्रम (i = 0; i < uap->fअगरosize * 2; ++i) अणु
-		अगर (pl011_पढ़ो(uap, REG_FR) & UART01x_FR_RXFE)
-			अवरोध;
+	for (i = 0; i < uap->fifosize * 2; ++i) {
+		if (pl011_read(uap, REG_FR) & UART01x_FR_RXFE)
+			break;
 
-		pl011_पढ़ो(uap, REG_DR);
-	पूर्ण
+		pl011_read(uap, REG_DR);
+	}
 
 	uap->im = UART011_RTIM;
-	अगर (!pl011_dma_rx_running(uap))
+	if (!pl011_dma_rx_running(uap))
 		uap->im |= UART011_RXIM;
-	pl011_ग_लिखो(uap->im, uap, REG_IMSC);
+	pl011_write(uap->im, uap, REG_IMSC);
 	spin_unlock_irq(&uap->port.lock);
-पूर्ण
+}
 
-अटल पूर्णांक pl011_startup(काष्ठा uart_port *port)
-अणु
-	काष्ठा uart_amba_port *uap =
-	    container_of(port, काष्ठा uart_amba_port, port);
-	अचिन्हित पूर्णांक cr;
-	पूर्णांक retval;
+static int pl011_startup(struct uart_port *port)
+{
+	struct uart_amba_port *uap =
+	    container_of(port, struct uart_amba_port, port);
+	unsigned int cr;
+	int retval;
 
 	retval = pl011_hwinit(port);
-	अगर (retval)
-		जाओ clk_dis;
+	if (retval)
+		goto clk_dis;
 
 	retval = pl011_allocate_irq(uap);
-	अगर (retval)
-		जाओ clk_dis;
+	if (retval)
+		goto clk_dis;
 
-	pl011_ग_लिखो(uap->venकरोr->अगरls, uap, REG_IFLS);
+	pl011_write(uap->vendor->ifls, uap, REG_IFLS);
 
 	spin_lock_irq(&uap->port.lock);
 
 	/* restore RTS and DTR */
 	cr = uap->old_cr & (UART011_CR_RTS | UART011_CR_DTR);
 	cr |= UART01x_CR_UARTEN | UART011_CR_RXE | UART011_CR_TXE;
-	pl011_ग_लिखो(cr, uap, REG_CR);
+	pl011_write(cr, uap, REG_CR);
 
 	spin_unlock_irq(&uap->port.lock);
 
 	/*
-	 * initialise the old status of the modem संकेतs
+	 * initialise the old status of the modem signals
 	 */
-	uap->old_status = pl011_पढ़ो(uap, REG_FR) & UART01x_FR_MODEM_ANY;
+	uap->old_status = pl011_read(uap, REG_FR) & UART01x_FR_MODEM_ANY;
 
 	/* Startup DMA */
 	pl011_dma_startup(uap);
 
-	pl011_enable_पूर्णांकerrupts(uap);
+	pl011_enable_interrupts(uap);
 
-	वापस 0;
+	return 0;
 
  clk_dis:
 	clk_disable_unprepare(uap->clk);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल पूर्णांक sbsa_uart_startup(काष्ठा uart_port *port)
-अणु
-	काष्ठा uart_amba_port *uap =
-		container_of(port, काष्ठा uart_amba_port, port);
-	पूर्णांक retval;
+static int sbsa_uart_startup(struct uart_port *port)
+{
+	struct uart_amba_port *uap =
+		container_of(port, struct uart_amba_port, port);
+	int retval;
 
 	retval = pl011_hwinit(port);
-	अगर (retval)
-		वापस retval;
+	if (retval)
+		return retval;
 
 	retval = pl011_allocate_irq(uap);
-	अगर (retval)
-		वापस retval;
+	if (retval)
+		return retval;
 
-	/* The SBSA UART करोes not support any modem status lines. */
+	/* The SBSA UART does not support any modem status lines. */
 	uap->old_status = 0;
 
-	pl011_enable_पूर्णांकerrupts(uap);
+	pl011_enable_interrupts(uap);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम pl011_shutकरोwn_channel(काष्ठा uart_amba_port *uap,
-					अचिन्हित पूर्णांक lcrh)
-अणु
-      अचिन्हित दीर्घ val;
+static void pl011_shutdown_channel(struct uart_amba_port *uap,
+					unsigned int lcrh)
+{
+      unsigned long val;
 
-      val = pl011_पढ़ो(uap, lcrh);
+      val = pl011_read(uap, lcrh);
       val &= ~(UART01x_LCRH_BRK | UART01x_LCRH_FEN);
-      pl011_ग_लिखो(val, uap, lcrh);
-पूर्ण
+      pl011_write(val, uap, lcrh);
+}
 
 /*
  * disable the port. It should not disable RTS and DTR.
  * Also RTS and DTR state should be preserved to restore
  * it during startup().
  */
-अटल व्योम pl011_disable_uart(काष्ठा uart_amba_port *uap)
-अणु
-	अचिन्हित पूर्णांक cr;
+static void pl011_disable_uart(struct uart_amba_port *uap)
+{
+	unsigned int cr;
 
 	uap->port.status &= ~(UPSTAT_AUTOCTS | UPSTAT_AUTORTS);
 	spin_lock_irq(&uap->port.lock);
-	cr = pl011_पढ़ो(uap, REG_CR);
+	cr = pl011_read(uap, REG_CR);
 	uap->old_cr = cr;
 	cr &= UART011_CR_RTS | UART011_CR_DTR;
 	cr |= UART01x_CR_UARTEN | UART011_CR_TXE;
-	pl011_ग_लिखो(cr, uap, REG_CR);
+	pl011_write(cr, uap, REG_CR);
 	spin_unlock_irq(&uap->port.lock);
 
 	/*
-	 * disable अवरोध condition and fअगरos
+	 * disable break condition and fifos
 	 */
-	pl011_shutकरोwn_channel(uap, REG_LCRH_RX);
-	अगर (pl011_split_lcrh(uap))
-		pl011_shutकरोwn_channel(uap, REG_LCRH_TX);
-पूर्ण
+	pl011_shutdown_channel(uap, REG_LCRH_RX);
+	if (pl011_split_lcrh(uap))
+		pl011_shutdown_channel(uap, REG_LCRH_TX);
+}
 
-अटल व्योम pl011_disable_पूर्णांकerrupts(काष्ठा uart_amba_port *uap)
-अणु
+static void pl011_disable_interrupts(struct uart_amba_port *uap)
+{
 	spin_lock_irq(&uap->port.lock);
 
-	/* mask all पूर्णांकerrupts and clear all pending ones */
+	/* mask all interrupts and clear all pending ones */
 	uap->im = 0;
-	pl011_ग_लिखो(uap->im, uap, REG_IMSC);
-	pl011_ग_लिखो(0xffff, uap, REG_ICR);
+	pl011_write(uap->im, uap, REG_IMSC);
+	pl011_write(0xffff, uap, REG_ICR);
 
 	spin_unlock_irq(&uap->port.lock);
-पूर्ण
+}
 
-अटल व्योम pl011_shutकरोwn(काष्ठा uart_port *port)
-अणु
-	काष्ठा uart_amba_port *uap =
-		container_of(port, काष्ठा uart_amba_port, port);
+static void pl011_shutdown(struct uart_port *port)
+{
+	struct uart_amba_port *uap =
+		container_of(port, struct uart_amba_port, port);
 
-	pl011_disable_पूर्णांकerrupts(uap);
+	pl011_disable_interrupts(uap);
 
-	pl011_dma_shutकरोwn(uap);
+	pl011_dma_shutdown(uap);
 
-	मुक्त_irq(uap->port.irq, uap);
+	free_irq(uap->port.irq, uap);
 
 	pl011_disable_uart(uap);
 
 	/*
-	 * Shut करोwn the घड़ी producer
+	 * Shut down the clock producer
 	 */
 	clk_disable_unprepare(uap->clk);
-	/* Optionally let pins go पूर्णांकo sleep states */
+	/* Optionally let pins go into sleep states */
 	pinctrl_pm_select_sleep_state(port->dev);
 
-	अगर (dev_get_platdata(uap->port.dev)) अणु
-		काष्ठा amba_pl011_data *plat;
+	if (dev_get_platdata(uap->port.dev)) {
+		struct amba_pl011_data *plat;
 
 		plat = dev_get_platdata(uap->port.dev);
-		अगर (plat->निकास)
-			plat->निकास();
-	पूर्ण
+		if (plat->exit)
+			plat->exit();
+	}
 
-	अगर (uap->port.ops->flush_buffer)
+	if (uap->port.ops->flush_buffer)
 		uap->port.ops->flush_buffer(port);
-पूर्ण
+}
 
-अटल व्योम sbsa_uart_shutकरोwn(काष्ठा uart_port *port)
-अणु
-	काष्ठा uart_amba_port *uap =
-		container_of(port, काष्ठा uart_amba_port, port);
+static void sbsa_uart_shutdown(struct uart_port *port)
+{
+	struct uart_amba_port *uap =
+		container_of(port, struct uart_amba_port, port);
 
-	pl011_disable_पूर्णांकerrupts(uap);
+	pl011_disable_interrupts(uap);
 
-	मुक्त_irq(uap->port.irq, uap);
+	free_irq(uap->port.irq, uap);
 
-	अगर (uap->port.ops->flush_buffer)
+	if (uap->port.ops->flush_buffer)
 		uap->port.ops->flush_buffer(port);
-पूर्ण
+}
 
-अटल व्योम
-pl011_setup_status_masks(काष्ठा uart_port *port, काष्ठा ktermios *termios)
-अणु
-	port->पढ़ो_status_mask = UART011_DR_OE | 255;
-	अगर (termios->c_अगरlag & INPCK)
-		port->पढ़ो_status_mask |= UART011_DR_FE | UART011_DR_PE;
-	अगर (termios->c_अगरlag & (IGNBRK | BRKINT | PARMRK))
-		port->पढ़ो_status_mask |= UART011_DR_BE;
+static void
+pl011_setup_status_masks(struct uart_port *port, struct ktermios *termios)
+{
+	port->read_status_mask = UART011_DR_OE | 255;
+	if (termios->c_iflag & INPCK)
+		port->read_status_mask |= UART011_DR_FE | UART011_DR_PE;
+	if (termios->c_iflag & (IGNBRK | BRKINT | PARMRK))
+		port->read_status_mask |= UART011_DR_BE;
 
 	/*
 	 * Characters to ignore
 	 */
 	port->ignore_status_mask = 0;
-	अगर (termios->c_अगरlag & IGNPAR)
+	if (termios->c_iflag & IGNPAR)
 		port->ignore_status_mask |= UART011_DR_FE | UART011_DR_PE;
-	अगर (termios->c_अगरlag & IGNBRK) अणु
+	if (termios->c_iflag & IGNBRK) {
 		port->ignore_status_mask |= UART011_DR_BE;
 		/*
-		 * If we're ignoring parity and अवरोध indicators,
-		 * ignore overruns too (क्रम real raw support).
+		 * If we're ignoring parity and break indicators,
+		 * ignore overruns too (for real raw support).
 		 */
-		अगर (termios->c_अगरlag & IGNPAR)
+		if (termios->c_iflag & IGNPAR)
 			port->ignore_status_mask |= UART011_DR_OE;
-	पूर्ण
+	}
 
 	/*
-	 * Ignore all अक्षरacters अगर CREAD is not set.
+	 * Ignore all characters if CREAD is not set.
 	 */
-	अगर ((termios->c_cflag & CREAD) == 0)
+	if ((termios->c_cflag & CREAD) == 0)
 		port->ignore_status_mask |= UART_DUMMY_DR_RX;
-पूर्ण
+}
 
-अटल व्योम
-pl011_set_termios(काष्ठा uart_port *port, काष्ठा ktermios *termios,
-		     काष्ठा ktermios *old)
-अणु
-	काष्ठा uart_amba_port *uap =
-	    container_of(port, काष्ठा uart_amba_port, port);
-	अचिन्हित पूर्णांक lcr_h, old_cr;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक baud, quot, clkभाग;
+static void
+pl011_set_termios(struct uart_port *port, struct ktermios *termios,
+		     struct ktermios *old)
+{
+	struct uart_amba_port *uap =
+	    container_of(port, struct uart_amba_port, port);
+	unsigned int lcr_h, old_cr;
+	unsigned long flags;
+	unsigned int baud, quot, clkdiv;
 
-	अगर (uap->venकरोr->oversampling)
-		clkभाग = 8;
-	अन्यथा
-		clkभाग = 16;
+	if (uap->vendor->oversampling)
+		clkdiv = 8;
+	else
+		clkdiv = 16;
 
 	/*
-	 * Ask the core to calculate the भागisor क्रम us.
+	 * Ask the core to calculate the divisor for us.
 	 */
 	baud = uart_get_baud_rate(port, termios, old, 0,
-				  port->uartclk / clkभाग);
-#अगर_घोषित CONFIG_DMA_ENGINE
+				  port->uartclk / clkdiv);
+#ifdef CONFIG_DMA_ENGINE
 	/*
-	 * Adjust RX DMA polling rate with baud rate अगर not specअगरied.
+	 * Adjust RX DMA polling rate with baud rate if not specified.
 	 */
-	अगर (uap->dmarx.स्वतः_poll_rate)
+	if (uap->dmarx.auto_poll_rate)
 		uap->dmarx.poll_rate = DIV_ROUND_UP(10000000, baud);
-#पूर्ण_अगर
+#endif
 
-	अगर (baud > port->uartclk/16)
+	if (baud > port->uartclk/16)
 		quot = DIV_ROUND_CLOSEST(port->uartclk * 8, baud);
-	अन्यथा
+	else
 		quot = DIV_ROUND_CLOSEST(port->uartclk * 4, baud);
 
-	चयन (termios->c_cflag & CSIZE) अणु
-	हाल CS5:
+	switch (termios->c_cflag & CSIZE) {
+	case CS5:
 		lcr_h = UART01x_LCRH_WLEN_5;
-		अवरोध;
-	हाल CS6:
+		break;
+	case CS6:
 		lcr_h = UART01x_LCRH_WLEN_6;
-		अवरोध;
-	हाल CS7:
+		break;
+	case CS7:
 		lcr_h = UART01x_LCRH_WLEN_7;
-		अवरोध;
-	शेष: // CS8
+		break;
+	default: // CS8
 		lcr_h = UART01x_LCRH_WLEN_8;
-		अवरोध;
-	पूर्ण
-	अगर (termios->c_cflag & CSTOPB)
+		break;
+	}
+	if (termios->c_cflag & CSTOPB)
 		lcr_h |= UART01x_LCRH_STP2;
-	अगर (termios->c_cflag & PARENB) अणु
+	if (termios->c_cflag & PARENB) {
 		lcr_h |= UART01x_LCRH_PEN;
-		अगर (!(termios->c_cflag & PARODD))
+		if (!(termios->c_cflag & PARODD))
 			lcr_h |= UART01x_LCRH_EPS;
-		अगर (termios->c_cflag & CMSPAR)
+		if (termios->c_cflag & CMSPAR)
 			lcr_h |= UART011_LCRH_SPS;
-	पूर्ण
-	अगर (uap->fअगरosize > 1)
+	}
+	if (uap->fifosize > 1)
 		lcr_h |= UART01x_LCRH_FEN;
 
 	spin_lock_irqsave(&port->lock, flags);
 
 	/*
-	 * Update the per-port समयout.
+	 * Update the per-port timeout.
 	 */
-	uart_update_समयout(port, termios->c_cflag, baud);
+	uart_update_timeout(port, termios->c_cflag, baud);
 
 	pl011_setup_status_masks(port, termios);
 
-	अगर (UART_ENABLE_MS(port, termios->c_cflag))
+	if (UART_ENABLE_MS(port, termios->c_cflag))
 		pl011_enable_ms(port);
 
 	/* first, disable everything */
-	old_cr = pl011_पढ़ो(uap, REG_CR);
-	pl011_ग_लिखो(0, uap, REG_CR);
+	old_cr = pl011_read(uap, REG_CR);
+	pl011_write(0, uap, REG_CR);
 
-	अगर (termios->c_cflag & CRTSCTS) अणु
-		अगर (old_cr & UART011_CR_RTS)
+	if (termios->c_cflag & CRTSCTS) {
+		if (old_cr & UART011_CR_RTS)
 			old_cr |= UART011_CR_RTSEN;
 
 		old_cr |= UART011_CR_CTSEN;
 		port->status |= UPSTAT_AUTOCTS | UPSTAT_AUTORTS;
-	पूर्ण अन्यथा अणु
+	} else {
 		old_cr &= ~(UART011_CR_CTSEN | UART011_CR_RTSEN);
 		port->status &= ~(UPSTAT_AUTOCTS | UPSTAT_AUTORTS);
-	पूर्ण
+	}
 
-	अगर (uap->venकरोr->oversampling) अणु
-		अगर (baud > port->uartclk / 16)
+	if (uap->vendor->oversampling) {
+		if (baud > port->uartclk / 16)
 			old_cr |= ST_UART011_CR_OVSFACT;
-		अन्यथा
+		else
 			old_cr &= ~ST_UART011_CR_OVSFACT;
-	पूर्ण
+	}
 
 	/*
-	 * Workaround क्रम the ST Micro oversampling variants to
-	 * increase the bitrate slightly, by lowering the भागisor,
-	 * to aव्योम delayed sampling of start bit at high speeds,
-	 * अन्यथा we see data corruption.
+	 * Workaround for the ST Micro oversampling variants to
+	 * increase the bitrate slightly, by lowering the divisor,
+	 * to avoid delayed sampling of start bit at high speeds,
+	 * else we see data corruption.
 	 */
-	अगर (uap->venकरोr->oversampling) अणु
-		अगर ((baud >= 3000000) && (baud < 3250000) && (quot > 1))
+	if (uap->vendor->oversampling) {
+		if ((baud >= 3000000) && (baud < 3250000) && (quot > 1))
 			quot -= 1;
-		अन्यथा अगर ((baud > 3250000) && (quot > 2))
+		else if ((baud > 3250000) && (quot > 2))
 			quot -= 2;
-	पूर्ण
+	}
 	/* Set baud rate */
-	pl011_ग_लिखो(quot & 0x3f, uap, REG_FBRD);
-	pl011_ग_लिखो(quot >> 6, uap, REG_IBRD);
+	pl011_write(quot & 0x3f, uap, REG_FBRD);
+	pl011_write(quot >> 6, uap, REG_IBRD);
 
 	/*
 	 * ----------v----------v----------v----------v-----
@@ -2048,19 +2047,19 @@ pl011_set_termios(काष्ठा uart_port *port, काष्ठा ktermio
 	 * REG_FBRD & REG_IBRD.
 	 * ----------^----------^----------^----------^-----
 	 */
-	pl011_ग_लिखो_lcr_h(uap, lcr_h);
-	pl011_ग_लिखो(old_cr, uap, REG_CR);
+	pl011_write_lcr_h(uap, lcr_h);
+	pl011_write(old_cr, uap, REG_CR);
 
 	spin_unlock_irqrestore(&port->lock, flags);
-पूर्ण
+}
 
-अटल व्योम
-sbsa_uart_set_termios(काष्ठा uart_port *port, काष्ठा ktermios *termios,
-		      काष्ठा ktermios *old)
-अणु
-	काष्ठा uart_amba_port *uap =
-	    container_of(port, काष्ठा uart_amba_port, port);
-	अचिन्हित दीर्घ flags;
+static void
+sbsa_uart_set_termios(struct uart_port *port, struct ktermios *termios,
+		      struct ktermios *old)
+{
+	struct uart_amba_port *uap =
+	    container_of(port, struct uart_amba_port, port);
+	unsigned long flags;
 
 	tty_termios_encode_baud_rate(termios, uap->fixed_baud, uap->fixed_baud);
 
@@ -2070,62 +2069,62 @@ sbsa_uart_set_termios(काष्ठा uart_port *port, काष्ठा kte
 	termios->c_cflag |= CS8 | CLOCAL;
 
 	spin_lock_irqsave(&port->lock, flags);
-	uart_update_समयout(port, CS8, uap->fixed_baud);
+	uart_update_timeout(port, CS8, uap->fixed_baud);
 	pl011_setup_status_masks(port, termios);
 	spin_unlock_irqrestore(&port->lock, flags);
-पूर्ण
+}
 
-अटल स्थिर अक्षर *pl011_type(काष्ठा uart_port *port)
-अणु
-	काष्ठा uart_amba_port *uap =
-	    container_of(port, काष्ठा uart_amba_port, port);
-	वापस uap->port.type == PORT_AMBA ? uap->type : शून्य;
-पूर्ण
+static const char *pl011_type(struct uart_port *port)
+{
+	struct uart_amba_port *uap =
+	    container_of(port, struct uart_amba_port, port);
+	return uap->port.type == PORT_AMBA ? uap->type : NULL;
+}
 
 /*
  * Release the memory region(s) being used by 'port'
  */
-अटल व्योम pl011_release_port(काष्ठा uart_port *port)
-अणु
+static void pl011_release_port(struct uart_port *port)
+{
 	release_mem_region(port->mapbase, SZ_4K);
-पूर्ण
+}
 
 /*
  * Request the memory region(s) being used by 'port'
  */
-अटल पूर्णांक pl011_request_port(काष्ठा uart_port *port)
-अणु
-	वापस request_mem_region(port->mapbase, SZ_4K, "uart-pl011")
-			!= शून्य ? 0 : -EBUSY;
-पूर्ण
+static int pl011_request_port(struct uart_port *port)
+{
+	return request_mem_region(port->mapbase, SZ_4K, "uart-pl011")
+			!= NULL ? 0 : -EBUSY;
+}
 
 /*
- * Configure/स्वतःconfigure the port.
+ * Configure/autoconfigure the port.
  */
-अटल व्योम pl011_config_port(काष्ठा uart_port *port, पूर्णांक flags)
-अणु
-	अगर (flags & UART_CONFIG_TYPE) अणु
+static void pl011_config_port(struct uart_port *port, int flags)
+{
+	if (flags & UART_CONFIG_TYPE) {
 		port->type = PORT_AMBA;
 		pl011_request_port(port);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * verअगरy the new serial_काष्ठा (क्रम TIOCSSERIAL).
+ * verify the new serial_struct (for TIOCSSERIAL).
  */
-अटल पूर्णांक pl011_verअगरy_port(काष्ठा uart_port *port, काष्ठा serial_काष्ठा *ser)
-अणु
-	पूर्णांक ret = 0;
-	अगर (ser->type != PORT_UNKNOWN && ser->type != PORT_AMBA)
+static int pl011_verify_port(struct uart_port *port, struct serial_struct *ser)
+{
+	int ret = 0;
+	if (ser->type != PORT_UNKNOWN && ser->type != PORT_AMBA)
 		ret = -EINVAL;
-	अगर (ser->irq < 0 || ser->irq >= nr_irqs)
+	if (ser->irq < 0 || ser->irq >= nr_irqs)
 		ret = -EINVAL;
-	अगर (ser->baud_base < 9600)
+	if (ser->baud_base < 9600)
 		ret = -EINVAL;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा uart_ops amba_pl011_pops = अणु
+static const struct uart_ops amba_pl011_pops = {
 	.tx_empty	= pl011_tx_empty,
 	.set_mctrl	= pl011_set_mctrl,
 	.get_mctrl	= pl011_get_mctrl,
@@ -2133,33 +2132,33 @@ sbsa_uart_set_termios(काष्ठा uart_port *port, काष्ठा kte
 	.start_tx	= pl011_start_tx,
 	.stop_rx	= pl011_stop_rx,
 	.enable_ms	= pl011_enable_ms,
-	.अवरोध_ctl	= pl011_अवरोध_ctl,
+	.break_ctl	= pl011_break_ctl,
 	.startup	= pl011_startup,
-	.shutकरोwn	= pl011_shutकरोwn,
+	.shutdown	= pl011_shutdown,
 	.flush_buffer	= pl011_dma_flush_buffer,
 	.set_termios	= pl011_set_termios,
 	.type		= pl011_type,
 	.release_port	= pl011_release_port,
 	.request_port	= pl011_request_port,
 	.config_port	= pl011_config_port,
-	.verअगरy_port	= pl011_verअगरy_port,
-#अगर_घोषित CONFIG_CONSOLE_POLL
+	.verify_port	= pl011_verify_port,
+#ifdef CONFIG_CONSOLE_POLL
 	.poll_init     = pl011_hwinit,
-	.poll_get_अक्षर = pl011_get_poll_अक्षर,
-	.poll_put_अक्षर = pl011_put_poll_अक्षर,
-#पूर्ण_अगर
-पूर्ण;
+	.poll_get_char = pl011_get_poll_char,
+	.poll_put_char = pl011_put_poll_char,
+#endif
+};
 
-अटल व्योम sbsa_uart_set_mctrl(काष्ठा uart_port *port, अचिन्हित पूर्णांक mctrl)
-अणु
-पूर्ण
+static void sbsa_uart_set_mctrl(struct uart_port *port, unsigned int mctrl)
+{
+}
 
-अटल अचिन्हित पूर्णांक sbsa_uart_get_mctrl(काष्ठा uart_port *port)
-अणु
-	वापस 0;
-पूर्ण
+static unsigned int sbsa_uart_get_mctrl(struct uart_port *port)
+{
+	return 0;
+}
 
-अटल स्थिर काष्ठा uart_ops sbsa_uart_pops = अणु
+static const struct uart_ops sbsa_uart_pops = {
 	.tx_empty	= pl011_tx_empty,
 	.set_mctrl	= sbsa_uart_set_mctrl,
 	.get_mctrl	= sbsa_uart_get_mctrl,
@@ -2167,359 +2166,359 @@ sbsa_uart_set_termios(काष्ठा uart_port *port, काष्ठा kte
 	.start_tx	= pl011_start_tx,
 	.stop_rx	= pl011_stop_rx,
 	.startup	= sbsa_uart_startup,
-	.shutकरोwn	= sbsa_uart_shutकरोwn,
+	.shutdown	= sbsa_uart_shutdown,
 	.set_termios	= sbsa_uart_set_termios,
 	.type		= pl011_type,
 	.release_port	= pl011_release_port,
 	.request_port	= pl011_request_port,
 	.config_port	= pl011_config_port,
-	.verअगरy_port	= pl011_verअगरy_port,
-#अगर_घोषित CONFIG_CONSOLE_POLL
+	.verify_port	= pl011_verify_port,
+#ifdef CONFIG_CONSOLE_POLL
 	.poll_init     = pl011_hwinit,
-	.poll_get_अक्षर = pl011_get_poll_अक्षर,
-	.poll_put_अक्षर = pl011_put_poll_अक्षर,
-#पूर्ण_अगर
-पूर्ण;
+	.poll_get_char = pl011_get_poll_char,
+	.poll_put_char = pl011_put_poll_char,
+#endif
+};
 
-अटल काष्ठा uart_amba_port *amba_ports[UART_NR];
+static struct uart_amba_port *amba_ports[UART_NR];
 
-#अगर_घोषित CONFIG_SERIAL_AMBA_PL011_CONSOLE
+#ifdef CONFIG_SERIAL_AMBA_PL011_CONSOLE
 
-अटल व्योम pl011_console_अक्षर_दो(काष्ठा uart_port *port, पूर्णांक ch)
-अणु
-	काष्ठा uart_amba_port *uap =
-	    container_of(port, काष्ठा uart_amba_port, port);
+static void pl011_console_putchar(struct uart_port *port, int ch)
+{
+	struct uart_amba_port *uap =
+	    container_of(port, struct uart_amba_port, port);
 
-	जबतक (pl011_पढ़ो(uap, REG_FR) & UART01x_FR_TXFF)
+	while (pl011_read(uap, REG_FR) & UART01x_FR_TXFF)
 		cpu_relax();
-	pl011_ग_लिखो(ch, uap, REG_DR);
-पूर्ण
+	pl011_write(ch, uap, REG_DR);
+}
 
-अटल व्योम
-pl011_console_ग_लिखो(काष्ठा console *co, स्थिर अक्षर *s, अचिन्हित पूर्णांक count)
-अणु
-	काष्ठा uart_amba_port *uap = amba_ports[co->index];
-	अचिन्हित पूर्णांक old_cr = 0, new_cr;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक locked = 1;
+static void
+pl011_console_write(struct console *co, const char *s, unsigned int count)
+{
+	struct uart_amba_port *uap = amba_ports[co->index];
+	unsigned int old_cr = 0, new_cr;
+	unsigned long flags;
+	int locked = 1;
 
 	clk_enable(uap->clk);
 
 	local_irq_save(flags);
-	अगर (uap->port.sysrq)
+	if (uap->port.sysrq)
 		locked = 0;
-	अन्यथा अगर (oops_in_progress)
+	else if (oops_in_progress)
 		locked = spin_trylock(&uap->port.lock);
-	अन्यथा
+	else
 		spin_lock(&uap->port.lock);
 
 	/*
-	 *	First save the CR then disable the पूर्णांकerrupts
+	 *	First save the CR then disable the interrupts
 	 */
-	अगर (!uap->venकरोr->always_enabled) अणु
-		old_cr = pl011_पढ़ो(uap, REG_CR);
+	if (!uap->vendor->always_enabled) {
+		old_cr = pl011_read(uap, REG_CR);
 		new_cr = old_cr & ~UART011_CR_CTSEN;
 		new_cr |= UART01x_CR_UARTEN | UART011_CR_TXE;
-		pl011_ग_लिखो(new_cr, uap, REG_CR);
-	पूर्ण
+		pl011_write(new_cr, uap, REG_CR);
+	}
 
-	uart_console_ग_लिखो(&uap->port, s, count, pl011_console_अक्षर_दो);
+	uart_console_write(&uap->port, s, count, pl011_console_putchar);
 
 	/*
-	 *	Finally, रुको क्रम transmitter to become empty and restore the
-	 *	TCR. Allow feature रेजिस्टर bits to be inverted to work around
+	 *	Finally, wait for transmitter to become empty and restore the
+	 *	TCR. Allow feature register bits to be inverted to work around
 	 *	errata.
 	 */
-	जबतक ((pl011_पढ़ो(uap, REG_FR) ^ uap->venकरोr->inv_fr)
-						& uap->venकरोr->fr_busy)
+	while ((pl011_read(uap, REG_FR) ^ uap->vendor->inv_fr)
+						& uap->vendor->fr_busy)
 		cpu_relax();
-	अगर (!uap->venकरोr->always_enabled)
-		pl011_ग_लिखो(old_cr, uap, REG_CR);
+	if (!uap->vendor->always_enabled)
+		pl011_write(old_cr, uap, REG_CR);
 
-	अगर (locked)
+	if (locked)
 		spin_unlock(&uap->port.lock);
 	local_irq_restore(flags);
 
 	clk_disable(uap->clk);
-पूर्ण
+}
 
-अटल व्योम pl011_console_get_options(काष्ठा uart_amba_port *uap, पूर्णांक *baud,
-				      पूर्णांक *parity, पूर्णांक *bits)
-अणु
-	अगर (pl011_पढ़ो(uap, REG_CR) & UART01x_CR_UARTEN) अणु
-		अचिन्हित पूर्णांक lcr_h, ibrd, fbrd;
+static void pl011_console_get_options(struct uart_amba_port *uap, int *baud,
+				      int *parity, int *bits)
+{
+	if (pl011_read(uap, REG_CR) & UART01x_CR_UARTEN) {
+		unsigned int lcr_h, ibrd, fbrd;
 
-		lcr_h = pl011_पढ़ो(uap, REG_LCRH_TX);
+		lcr_h = pl011_read(uap, REG_LCRH_TX);
 
 		*parity = 'n';
-		अगर (lcr_h & UART01x_LCRH_PEN) अणु
-			अगर (lcr_h & UART01x_LCRH_EPS)
+		if (lcr_h & UART01x_LCRH_PEN) {
+			if (lcr_h & UART01x_LCRH_EPS)
 				*parity = 'e';
-			अन्यथा
+			else
 				*parity = 'o';
-		पूर्ण
+		}
 
-		अगर ((lcr_h & 0x60) == UART01x_LCRH_WLEN_7)
+		if ((lcr_h & 0x60) == UART01x_LCRH_WLEN_7)
 			*bits = 7;
-		अन्यथा
+		else
 			*bits = 8;
 
-		ibrd = pl011_पढ़ो(uap, REG_IBRD);
-		fbrd = pl011_पढ़ो(uap, REG_FBRD);
+		ibrd = pl011_read(uap, REG_IBRD);
+		fbrd = pl011_read(uap, REG_FBRD);
 
 		*baud = uap->port.uartclk * 4 / (64 * ibrd + fbrd);
 
-		अगर (uap->venकरोr->oversampling) अणु
-			अगर (pl011_पढ़ो(uap, REG_CR)
+		if (uap->vendor->oversampling) {
+			if (pl011_read(uap, REG_CR)
 				  & ST_UART011_CR_OVSFACT)
 				*baud *= 2;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल पूर्णांक pl011_console_setup(काष्ठा console *co, अक्षर *options)
-अणु
-	काष्ठा uart_amba_port *uap;
-	पूर्णांक baud = 38400;
-	पूर्णांक bits = 8;
-	पूर्णांक parity = 'n';
-	पूर्णांक flow = 'n';
-	पूर्णांक ret;
+static int pl011_console_setup(struct console *co, char *options)
+{
+	struct uart_amba_port *uap;
+	int baud = 38400;
+	int bits = 8;
+	int parity = 'n';
+	int flow = 'n';
+	int ret;
 
 	/*
-	 * Check whether an invalid uart number has been specअगरied, and
-	 * अगर so, search क्रम the first available port that करोes have
+	 * Check whether an invalid uart number has been specified, and
+	 * if so, search for the first available port that does have
 	 * console support.
 	 */
-	अगर (co->index >= UART_NR)
+	if (co->index >= UART_NR)
 		co->index = 0;
 	uap = amba_ports[co->index];
-	अगर (!uap)
-		वापस -ENODEV;
+	if (!uap)
+		return -ENODEV;
 
 	/* Allow pins to be muxed in and configured */
-	pinctrl_pm_select_शेष_state(uap->port.dev);
+	pinctrl_pm_select_default_state(uap->port.dev);
 
 	ret = clk_prepare(uap->clk);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (dev_get_platdata(uap->port.dev)) अणु
-		काष्ठा amba_pl011_data *plat;
+	if (dev_get_platdata(uap->port.dev)) {
+		struct amba_pl011_data *plat;
 
 		plat = dev_get_platdata(uap->port.dev);
-		अगर (plat->init)
+		if (plat->init)
 			plat->init();
-	पूर्ण
+	}
 
 	uap->port.uartclk = clk_get_rate(uap->clk);
 
-	अगर (uap->venकरोr->fixed_options) अणु
+	if (uap->vendor->fixed_options) {
 		baud = uap->fixed_baud;
-	पूर्ण अन्यथा अणु
-		अगर (options)
+	} else {
+		if (options)
 			uart_parse_options(options,
 					   &baud, &parity, &bits, &flow);
-		अन्यथा
+		else
 			pl011_console_get_options(uap, &baud, &parity, &bits);
-	पूर्ण
+	}
 
-	वापस uart_set_options(&uap->port, co, baud, parity, bits, flow);
-पूर्ण
+	return uart_set_options(&uap->port, co, baud, parity, bits, flow);
+}
 
 /**
  *	pl011_console_match - non-standard console matching
- *	@co:	  रेजिस्टरing console
+ *	@co:	  registering console
  *	@name:	  name from console command line
  *	@idx:	  index from console command line
  *	@options: ptr to option string from console command line
  *
- *	Only attempts to match console command lines of the क्रमm:
+ *	Only attempts to match console command lines of the form:
  *	    console=pl011,mmio|mmio32,<addr>[,<options>]
  *	    console=pl011,0x<addr>[,<options>]
- *	This क्रमm is used to रेजिस्टर an initial earlycon boot console and
+ *	This form is used to register an initial earlycon boot console and
  *	replace it with the amba_console at pl011 driver init.
  *
- *	Perक्रमms console setup क्रम a match (as required by पूर्णांकerface)
- *	If no <options> are specअगरied, then assume the h/w is alपढ़ोy setup.
+ *	Performs console setup for a match (as required by interface)
+ *	If no <options> are specified, then assume the h/w is already setup.
  *
- *	Returns 0 अगर console matches; otherwise non-zero to use शेष matching
+ *	Returns 0 if console matches; otherwise non-zero to use default matching
  */
-अटल पूर्णांक pl011_console_match(काष्ठा console *co, अक्षर *name, पूर्णांक idx,
-			       अक्षर *options)
-अणु
-	अचिन्हित अक्षर iotype;
-	resource_माप_प्रकार addr;
-	पूर्णांक i;
+static int pl011_console_match(struct console *co, char *name, int idx,
+			       char *options)
+{
+	unsigned char iotype;
+	resource_size_t addr;
+	int i;
 
 	/*
 	 * Systems affected by the Qualcomm Technologies QDF2400 E44 erratum
-	 * have a distinct console name, so make sure we check क्रम that.
+	 * have a distinct console name, so make sure we check for that.
 	 * The actual implementation of the erratum occurs in the probe
 	 * function.
 	 */
-	अगर ((म_भेद(name, "qdf2400_e44") != 0) && (म_भेद(name, "pl011") != 0))
-		वापस -ENODEV;
+	if ((strcmp(name, "qdf2400_e44") != 0) && (strcmp(name, "pl011") != 0))
+		return -ENODEV;
 
-	अगर (uart_parse_earlycon(options, &iotype, &addr, &options))
-		वापस -ENODEV;
+	if (uart_parse_earlycon(options, &iotype, &addr, &options))
+		return -ENODEV;
 
-	अगर (iotype != UPIO_MEM && iotype != UPIO_MEM32)
-		वापस -ENODEV;
+	if (iotype != UPIO_MEM && iotype != UPIO_MEM32)
+		return -ENODEV;
 
-	/* try to match the port specअगरied on the command line */
-	क्रम (i = 0; i < ARRAY_SIZE(amba_ports); i++) अणु
-		काष्ठा uart_port *port;
+	/* try to match the port specified on the command line */
+	for (i = 0; i < ARRAY_SIZE(amba_ports); i++) {
+		struct uart_port *port;
 
-		अगर (!amba_ports[i])
-			जारी;
+		if (!amba_ports[i])
+			continue;
 
 		port = &amba_ports[i]->port;
 
-		अगर (port->mapbase != addr)
-			जारी;
+		if (port->mapbase != addr)
+			continue;
 
 		co->index = i;
 		port->cons = co;
-		वापस pl011_console_setup(co, options);
-	पूर्ण
+		return pl011_console_setup(co, options);
+	}
 
-	वापस -ENODEV;
-पूर्ण
+	return -ENODEV;
+}
 
-अटल काष्ठा uart_driver amba_reg;
-अटल काष्ठा console amba_console = अणु
+static struct uart_driver amba_reg;
+static struct console amba_console = {
 	.name		= "ttyAMA",
-	.ग_लिखो		= pl011_console_ग_लिखो,
+	.write		= pl011_console_write,
 	.device		= uart_console_device,
 	.setup		= pl011_console_setup,
 	.match		= pl011_console_match,
 	.flags		= CON_PRINTBUFFER | CON_ANYTIME,
 	.index		= -1,
 	.data		= &amba_reg,
-पूर्ण;
+};
 
-#घोषणा AMBA_CONSOLE	(&amba_console)
+#define AMBA_CONSOLE	(&amba_console)
 
-अटल व्योम qdf2400_e44_अ_दो(काष्ठा uart_port *port, पूर्णांक c)
-अणु
-	जबतक (पढ़ोl(port->membase + UART01x_FR) & UART01x_FR_TXFF)
+static void qdf2400_e44_putc(struct uart_port *port, int c)
+{
+	while (readl(port->membase + UART01x_FR) & UART01x_FR_TXFF)
 		cpu_relax();
-	ग_लिखोl(c, port->membase + UART01x_DR);
-	जबतक (!(पढ़ोl(port->membase + UART01x_FR) & UART011_FR_TXFE))
+	writel(c, port->membase + UART01x_DR);
+	while (!(readl(port->membase + UART01x_FR) & UART011_FR_TXFE))
 		cpu_relax();
-पूर्ण
+}
 
-अटल व्योम qdf2400_e44_early_ग_लिखो(काष्ठा console *con, स्थिर अक्षर *s, अचिन्हित n)
-अणु
-	काष्ठा earlycon_device *dev = con->data;
+static void qdf2400_e44_early_write(struct console *con, const char *s, unsigned n)
+{
+	struct earlycon_device *dev = con->data;
 
-	uart_console_ग_लिखो(&dev->port, s, n, qdf2400_e44_अ_दो);
-पूर्ण
+	uart_console_write(&dev->port, s, n, qdf2400_e44_putc);
+}
 
-अटल व्योम pl011_अ_दो(काष्ठा uart_port *port, पूर्णांक c)
-अणु
-	जबतक (पढ़ोl(port->membase + UART01x_FR) & UART01x_FR_TXFF)
+static void pl011_putc(struct uart_port *port, int c)
+{
+	while (readl(port->membase + UART01x_FR) & UART01x_FR_TXFF)
 		cpu_relax();
-	अगर (port->iotype == UPIO_MEM32)
-		ग_लिखोl(c, port->membase + UART01x_DR);
-	अन्यथा
-		ग_लिखोb(c, port->membase + UART01x_DR);
-	जबतक (पढ़ोl(port->membase + UART01x_FR) & UART01x_FR_BUSY)
+	if (port->iotype == UPIO_MEM32)
+		writel(c, port->membase + UART01x_DR);
+	else
+		writeb(c, port->membase + UART01x_DR);
+	while (readl(port->membase + UART01x_FR) & UART01x_FR_BUSY)
 		cpu_relax();
-पूर्ण
+}
 
-अटल व्योम pl011_early_ग_लिखो(काष्ठा console *con, स्थिर अक्षर *s, अचिन्हित n)
-अणु
-	काष्ठा earlycon_device *dev = con->data;
+static void pl011_early_write(struct console *con, const char *s, unsigned n)
+{
+	struct earlycon_device *dev = con->data;
 
-	uart_console_ग_लिखो(&dev->port, s, n, pl011_अ_दो);
-पूर्ण
+	uart_console_write(&dev->port, s, n, pl011_putc);
+}
 
-#अगर_घोषित CONFIG_CONSOLE_POLL
-अटल पूर्णांक pl011_अ_लो(काष्ठा uart_port *port)
-अणु
-	अगर (पढ़ोl(port->membase + UART01x_FR) & UART01x_FR_RXFE)
-		वापस NO_POLL_CHAR;
+#ifdef CONFIG_CONSOLE_POLL
+static int pl011_getc(struct uart_port *port)
+{
+	if (readl(port->membase + UART01x_FR) & UART01x_FR_RXFE)
+		return NO_POLL_CHAR;
 
-	अगर (port->iotype == UPIO_MEM32)
-		वापस पढ़ोl(port->membase + UART01x_DR);
-	अन्यथा
-		वापस पढ़ोb(port->membase + UART01x_DR);
-पूर्ण
+	if (port->iotype == UPIO_MEM32)
+		return readl(port->membase + UART01x_DR);
+	else
+		return readb(port->membase + UART01x_DR);
+}
 
-अटल पूर्णांक pl011_early_पढ़ो(काष्ठा console *con, अक्षर *s, अचिन्हित पूर्णांक n)
-अणु
-	काष्ठा earlycon_device *dev = con->data;
-	पूर्णांक ch, num_पढ़ो = 0;
+static int pl011_early_read(struct console *con, char *s, unsigned int n)
+{
+	struct earlycon_device *dev = con->data;
+	int ch, num_read = 0;
 
-	जबतक (num_पढ़ो < n) अणु
-		ch = pl011_अ_लो(&dev->port);
-		अगर (ch == NO_POLL_CHAR)
-			अवरोध;
+	while (num_read < n) {
+		ch = pl011_getc(&dev->port);
+		if (ch == NO_POLL_CHAR)
+			break;
 
-		s[num_पढ़ो++] = ch;
-	पूर्ण
+		s[num_read++] = ch;
+	}
 
-	वापस num_पढ़ो;
-पूर्ण
-#अन्यथा
-#घोषणा pl011_early_पढ़ो शून्य
-#पूर्ण_अगर
+	return num_read;
+}
+#else
+#define pl011_early_read NULL
+#endif
 
 /*
- * On non-ACPI प्रणालीs, earlycon is enabled by specअगरying
+ * On non-ACPI systems, earlycon is enabled by specifying
  * "earlycon=pl011,<address>" on the kernel command line.
  *
- * On ACPI ARM64 प्रणालीs, an "early" console is enabled via the SPCR table,
- * by specअगरying only "earlycon" on the command line.  Because it requires
+ * On ACPI ARM64 systems, an "early" console is enabled via the SPCR table,
+ * by specifying only "earlycon" on the command line.  Because it requires
  * SPCR, the console starts after ACPI is parsed, which is later than a
  * traditional early console.
  *
- * To get the traditional early console that starts beक्रमe ACPI is parsed,
- * specअगरy the full "earlycon=pl011,<address>" option.
+ * To get the traditional early console that starts before ACPI is parsed,
+ * specify the full "earlycon=pl011,<address>" option.
  */
-अटल पूर्णांक __init pl011_early_console_setup(काष्ठा earlycon_device *device,
-					    स्थिर अक्षर *opt)
-अणु
-	अगर (!device->port.membase)
-		वापस -ENODEV;
+static int __init pl011_early_console_setup(struct earlycon_device *device,
+					    const char *opt)
+{
+	if (!device->port.membase)
+		return -ENODEV;
 
-	device->con->ग_लिखो = pl011_early_ग_लिखो;
-	device->con->पढ़ो = pl011_early_पढ़ो;
+	device->con->write = pl011_early_write;
+	device->con->read = pl011_early_read;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 OF_EARLYCON_DECLARE(pl011, "arm,pl011", pl011_early_console_setup);
 OF_EARLYCON_DECLARE(pl011, "arm,sbsa-uart", pl011_early_console_setup);
 
 /*
  * On Qualcomm Datacenter Technologies QDF2400 SOCs affected by
- * Erratum 44, traditional earlycon can be enabled by specअगरying
+ * Erratum 44, traditional earlycon can be enabled by specifying
  * "earlycon=qdf2400_e44,<address>".  Any options are ignored.
  *
- * Alternatively, you can just specअगरy "earlycon", and the early console
- * will be enabled with the inक्रमmation from the SPCR table.  In this
- * हाल, the SPCR code will detect the need क्रम the E44 work-around,
+ * Alternatively, you can just specify "earlycon", and the early console
+ * will be enabled with the information from the SPCR table.  In this
+ * case, the SPCR code will detect the need for the E44 work-around,
  * and set the console name to "qdf2400_e44".
  */
-अटल पूर्णांक __init
-qdf2400_e44_early_console_setup(काष्ठा earlycon_device *device,
-				स्थिर अक्षर *opt)
-अणु
-	अगर (!device->port.membase)
-		वापस -ENODEV;
+static int __init
+qdf2400_e44_early_console_setup(struct earlycon_device *device,
+				const char *opt)
+{
+	if (!device->port.membase)
+		return -ENODEV;
 
-	device->con->ग_लिखो = qdf2400_e44_early_ग_लिखो;
-	वापस 0;
-पूर्ण
+	device->con->write = qdf2400_e44_early_write;
+	return 0;
+}
 EARLYCON_DECLARE(qdf2400_e44, qdf2400_e44_early_console_setup);
 
-#अन्यथा
-#घोषणा AMBA_CONSOLE	शून्य
-#पूर्ण_अगर
+#else
+#define AMBA_CONSOLE	NULL
+#endif
 
-अटल काष्ठा uart_driver amba_reg = अणु
+static struct uart_driver amba_reg = {
 	.owner			= THIS_MODULE,
 	.driver_name		= "ttyAMA",
 	.dev_name		= "ttyAMA",
@@ -2527,76 +2526,76 @@ EARLYCON_DECLARE(qdf2400_e44, qdf2400_e44_early_console_setup);
 	.minor			= SERIAL_AMBA_MINOR,
 	.nr			= UART_NR,
 	.cons			= AMBA_CONSOLE,
-पूर्ण;
+};
 
-अटल पूर्णांक pl011_probe_dt_alias(पूर्णांक index, काष्ठा device *dev)
-अणु
-	काष्ठा device_node *np;
-	अटल bool seen_dev_with_alias = false;
-	अटल bool seen_dev_without_alias = false;
-	पूर्णांक ret = index;
+static int pl011_probe_dt_alias(int index, struct device *dev)
+{
+	struct device_node *np;
+	static bool seen_dev_with_alias = false;
+	static bool seen_dev_without_alias = false;
+	int ret = index;
 
-	अगर (!IS_ENABLED(CONFIG_OF))
-		वापस ret;
+	if (!IS_ENABLED(CONFIG_OF))
+		return ret;
 
 	np = dev->of_node;
-	अगर (!np)
-		वापस ret;
+	if (!np)
+		return ret;
 
 	ret = of_alias_get_id(np, "serial");
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		seen_dev_without_alias = true;
 		ret = index;
-	पूर्ण अन्यथा अणु
+	} else {
 		seen_dev_with_alias = true;
-		अगर (ret >= ARRAY_SIZE(amba_ports) || amba_ports[ret] != शून्य) अणु
+		if (ret >= ARRAY_SIZE(amba_ports) || amba_ports[ret] != NULL) {
 			dev_warn(dev, "requested serial port %d  not available.\n", ret);
 			ret = index;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (seen_dev_with_alias && seen_dev_without_alias)
+	if (seen_dev_with_alias && seen_dev_without_alias)
 		dev_warn(dev, "aliased and non-aliased serial devices found in device tree. Serial port enumeration may be unpredictable.\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* unरेजिस्टरs the driver also अगर no more ports are left */
-अटल व्योम pl011_unरेजिस्टर_port(काष्ठा uart_amba_port *uap)
-अणु
-	पूर्णांक i;
+/* unregisters the driver also if no more ports are left */
+static void pl011_unregister_port(struct uart_amba_port *uap)
+{
+	int i;
 	bool busy = false;
 
-	क्रम (i = 0; i < ARRAY_SIZE(amba_ports); i++) अणु
-		अगर (amba_ports[i] == uap)
-			amba_ports[i] = शून्य;
-		अन्यथा अगर (amba_ports[i])
+	for (i = 0; i < ARRAY_SIZE(amba_ports); i++) {
+		if (amba_ports[i] == uap)
+			amba_ports[i] = NULL;
+		else if (amba_ports[i])
 			busy = true;
-	पूर्ण
-	pl011_dma_हटाओ(uap);
-	अगर (!busy)
-		uart_unरेजिस्टर_driver(&amba_reg);
-पूर्ण
+	}
+	pl011_dma_remove(uap);
+	if (!busy)
+		uart_unregister_driver(&amba_reg);
+}
 
-अटल पूर्णांक pl011_find_मुक्त_port(व्योम)
-अणु
-	पूर्णांक i;
+static int pl011_find_free_port(void)
+{
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(amba_ports); i++)
-		अगर (amba_ports[i] == शून्य)
-			वापस i;
+	for (i = 0; i < ARRAY_SIZE(amba_ports); i++)
+		if (amba_ports[i] == NULL)
+			return i;
 
-	वापस -EBUSY;
-पूर्ण
+	return -EBUSY;
+}
 
-अटल पूर्णांक pl011_setup_port(काष्ठा device *dev, काष्ठा uart_amba_port *uap,
-			    काष्ठा resource *mmiobase, पूर्णांक index)
-अणु
-	व्योम __iomem *base;
+static int pl011_setup_port(struct device *dev, struct uart_amba_port *uap,
+			    struct resource *mmiobase, int index)
+{
+	void __iomem *base;
 
 	base = devm_ioremap_resource(dev, mmiobase);
-	अगर (IS_ERR(base))
-		वापस PTR_ERR(base);
+	if (IS_ERR(base))
+		return PTR_ERR(base);
 
 	index = pl011_probe_dt_alias(index, dev);
 
@@ -2604,260 +2603,260 @@ EARLYCON_DECLARE(qdf2400_e44, qdf2400_e44_early_console_setup);
 	uap->port.dev = dev;
 	uap->port.mapbase = mmiobase->start;
 	uap->port.membase = base;
-	uap->port.fअगरosize = uap->fअगरosize;
+	uap->port.fifosize = uap->fifosize;
 	uap->port.has_sysrq = IS_ENABLED(CONFIG_SERIAL_AMBA_PL011_CONSOLE);
 	uap->port.flags = UPF_BOOT_AUTOCONF;
 	uap->port.line = index;
 
 	amba_ports[index] = uap;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pl011_रेजिस्टर_port(काष्ठा uart_amba_port *uap)
-अणु
-	पूर्णांक ret, i;
+static int pl011_register_port(struct uart_amba_port *uap)
+{
+	int ret, i;
 
-	/* Ensure पूर्णांकerrupts from this UART are masked and cleared */
-	pl011_ग_लिखो(0, uap, REG_IMSC);
-	pl011_ग_लिखो(0xffff, uap, REG_ICR);
+	/* Ensure interrupts from this UART are masked and cleared */
+	pl011_write(0, uap, REG_IMSC);
+	pl011_write(0xffff, uap, REG_ICR);
 
-	अगर (!amba_reg.state) अणु
-		ret = uart_रेजिस्टर_driver(&amba_reg);
-		अगर (ret < 0) अणु
+	if (!amba_reg.state) {
+		ret = uart_register_driver(&amba_reg);
+		if (ret < 0) {
 			dev_err(uap->port.dev,
 				"Failed to register AMBA-PL011 driver\n");
-			क्रम (i = 0; i < ARRAY_SIZE(amba_ports); i++)
-				अगर (amba_ports[i] == uap)
-					amba_ports[i] = शून्य;
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			for (i = 0; i < ARRAY_SIZE(amba_ports); i++)
+				if (amba_ports[i] == uap)
+					amba_ports[i] = NULL;
+			return ret;
+		}
+	}
 
 	ret = uart_add_one_port(&amba_reg, &uap->port);
-	अगर (ret)
-		pl011_unरेजिस्टर_port(uap);
+	if (ret)
+		pl011_unregister_port(uap);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक pl011_probe(काष्ठा amba_device *dev, स्थिर काष्ठा amba_id *id)
-अणु
-	काष्ठा uart_amba_port *uap;
-	काष्ठा venकरोr_data *venकरोr = id->data;
-	पूर्णांक portnr, ret;
+static int pl011_probe(struct amba_device *dev, const struct amba_id *id)
+{
+	struct uart_amba_port *uap;
+	struct vendor_data *vendor = id->data;
+	int portnr, ret;
 
-	portnr = pl011_find_मुक्त_port();
-	अगर (portnr < 0)
-		वापस portnr;
+	portnr = pl011_find_free_port();
+	if (portnr < 0)
+		return portnr;
 
-	uap = devm_kzalloc(&dev->dev, माप(काष्ठा uart_amba_port),
+	uap = devm_kzalloc(&dev->dev, sizeof(struct uart_amba_port),
 			   GFP_KERNEL);
-	अगर (!uap)
-		वापस -ENOMEM;
+	if (!uap)
+		return -ENOMEM;
 
-	uap->clk = devm_clk_get(&dev->dev, शून्य);
-	अगर (IS_ERR(uap->clk))
-		वापस PTR_ERR(uap->clk);
+	uap->clk = devm_clk_get(&dev->dev, NULL);
+	if (IS_ERR(uap->clk))
+		return PTR_ERR(uap->clk);
 
-	uap->reg_offset = venकरोr->reg_offset;
-	uap->venकरोr = venकरोr;
-	uap->fअगरosize = venकरोr->get_fअगरosize(dev);
-	uap->port.iotype = venकरोr->access_32b ? UPIO_MEM32 : UPIO_MEM;
+	uap->reg_offset = vendor->reg_offset;
+	uap->vendor = vendor;
+	uap->fifosize = vendor->get_fifosize(dev);
+	uap->port.iotype = vendor->access_32b ? UPIO_MEM32 : UPIO_MEM;
 	uap->port.irq = dev->irq[0];
 	uap->port.ops = &amba_pl011_pops;
 
-	snम_लिखो(uap->type, माप(uap->type), "PL011 rev%u", amba_rev(dev));
+	snprintf(uap->type, sizeof(uap->type), "PL011 rev%u", amba_rev(dev));
 
 	ret = pl011_setup_port(&dev->dev, uap, &dev->res, portnr);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	amba_set_drvdata(dev, uap);
 
-	वापस pl011_रेजिस्टर_port(uap);
-पूर्ण
+	return pl011_register_port(uap);
+}
 
-अटल व्योम pl011_हटाओ(काष्ठा amba_device *dev)
-अणु
-	काष्ठा uart_amba_port *uap = amba_get_drvdata(dev);
+static void pl011_remove(struct amba_device *dev)
+{
+	struct uart_amba_port *uap = amba_get_drvdata(dev);
 
-	uart_हटाओ_one_port(&amba_reg, &uap->port);
-	pl011_unरेजिस्टर_port(uap);
-पूर्ण
+	uart_remove_one_port(&amba_reg, &uap->port);
+	pl011_unregister_port(uap);
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक pl011_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा uart_amba_port *uap = dev_get_drvdata(dev);
+#ifdef CONFIG_PM_SLEEP
+static int pl011_suspend(struct device *dev)
+{
+	struct uart_amba_port *uap = dev_get_drvdata(dev);
 
-	अगर (!uap)
-		वापस -EINVAL;
+	if (!uap)
+		return -EINVAL;
 
-	वापस uart_suspend_port(&amba_reg, &uap->port);
-पूर्ण
+	return uart_suspend_port(&amba_reg, &uap->port);
+}
 
-अटल पूर्णांक pl011_resume(काष्ठा device *dev)
-अणु
-	काष्ठा uart_amba_port *uap = dev_get_drvdata(dev);
+static int pl011_resume(struct device *dev)
+{
+	struct uart_amba_port *uap = dev_get_drvdata(dev);
 
-	अगर (!uap)
-		वापस -EINVAL;
+	if (!uap)
+		return -EINVAL;
 
-	वापस uart_resume_port(&amba_reg, &uap->port);
-पूर्ण
-#पूर्ण_अगर
+	return uart_resume_port(&amba_reg, &uap->port);
+}
+#endif
 
-अटल SIMPLE_DEV_PM_OPS(pl011_dev_pm_ops, pl011_suspend, pl011_resume);
+static SIMPLE_DEV_PM_OPS(pl011_dev_pm_ops, pl011_suspend, pl011_resume);
 
-अटल पूर्णांक sbsa_uart_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा uart_amba_port *uap;
-	काष्ठा resource *r;
-	पूर्णांक portnr, ret;
-	पूर्णांक baudrate;
+static int sbsa_uart_probe(struct platform_device *pdev)
+{
+	struct uart_amba_port *uap;
+	struct resource *r;
+	int portnr, ret;
+	int baudrate;
 
 	/*
 	 * Check the mandatory baud rate parameter in the DT node early
-	 * so that we can easily निकास with the error.
+	 * so that we can easily exit with the error.
 	 */
-	अगर (pdev->dev.of_node) अणु
-		काष्ठा device_node *np = pdev->dev.of_node;
+	if (pdev->dev.of_node) {
+		struct device_node *np = pdev->dev.of_node;
 
-		ret = of_property_पढ़ो_u32(np, "current-speed", &baudrate);
-		अगर (ret)
-			वापस ret;
-	पूर्ण अन्यथा अणु
+		ret = of_property_read_u32(np, "current-speed", &baudrate);
+		if (ret)
+			return ret;
+	} else {
 		baudrate = 115200;
-	पूर्ण
+	}
 
-	portnr = pl011_find_मुक्त_port();
-	अगर (portnr < 0)
-		वापस portnr;
+	portnr = pl011_find_free_port();
+	if (portnr < 0)
+		return portnr;
 
-	uap = devm_kzalloc(&pdev->dev, माप(काष्ठा uart_amba_port),
+	uap = devm_kzalloc(&pdev->dev, sizeof(struct uart_amba_port),
 			   GFP_KERNEL);
-	अगर (!uap)
-		वापस -ENOMEM;
+	if (!uap)
+		return -ENOMEM;
 
-	ret = platक्रमm_get_irq(pdev, 0);
-	अगर (ret < 0)
-		वापस ret;
+	ret = platform_get_irq(pdev, 0);
+	if (ret < 0)
+		return ret;
 	uap->port.irq	= ret;
 
-#अगर_घोषित CONFIG_ACPI_SPCR_TABLE
-	अगर (qdf2400_e44_present) अणु
+#ifdef CONFIG_ACPI_SPCR_TABLE
+	if (qdf2400_e44_present) {
 		dev_info(&pdev->dev, "working around QDF2400 SoC erratum 44\n");
-		uap->venकरोr = &venकरोr_qdt_qdf2400_e44;
-	पूर्ण अन्यथा
-#पूर्ण_अगर
-		uap->venकरोr = &venकरोr_sbsa;
+		uap->vendor = &vendor_qdt_qdf2400_e44;
+	} else
+#endif
+		uap->vendor = &vendor_sbsa;
 
-	uap->reg_offset	= uap->venकरोr->reg_offset;
-	uap->fअगरosize	= 32;
-	uap->port.iotype = uap->venकरोr->access_32b ? UPIO_MEM32 : UPIO_MEM;
+	uap->reg_offset	= uap->vendor->reg_offset;
+	uap->fifosize	= 32;
+	uap->port.iotype = uap->vendor->access_32b ? UPIO_MEM32 : UPIO_MEM;
 	uap->port.ops	= &sbsa_uart_pops;
 	uap->fixed_baud = baudrate;
 
-	snम_लिखो(uap->type, माप(uap->type), "SBSA");
+	snprintf(uap->type, sizeof(uap->type), "SBSA");
 
-	r = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	r = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 
 	ret = pl011_setup_port(&pdev->dev, uap, r, portnr);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	platक्रमm_set_drvdata(pdev, uap);
+	platform_set_drvdata(pdev, uap);
 
-	वापस pl011_रेजिस्टर_port(uap);
-पूर्ण
+	return pl011_register_port(uap);
+}
 
-अटल पूर्णांक sbsa_uart_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा uart_amba_port *uap = platक्रमm_get_drvdata(pdev);
+static int sbsa_uart_remove(struct platform_device *pdev)
+{
+	struct uart_amba_port *uap = platform_get_drvdata(pdev);
 
-	uart_हटाओ_one_port(&amba_reg, &uap->port);
-	pl011_unरेजिस्टर_port(uap);
-	वापस 0;
-पूर्ण
+	uart_remove_one_port(&amba_reg, &uap->port);
+	pl011_unregister_port(uap);
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id sbsa_uart_of_match[] = अणु
-	अणु .compatible = "arm,sbsa-uart", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id sbsa_uart_of_match[] = {
+	{ .compatible = "arm,sbsa-uart", },
+	{},
+};
 MODULE_DEVICE_TABLE(of, sbsa_uart_of_match);
 
-अटल स्थिर काष्ठा acpi_device_id __maybe_unused sbsa_uart_acpi_match[] = अणु
-	अणु "ARMH0011", 0 पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct acpi_device_id __maybe_unused sbsa_uart_acpi_match[] = {
+	{ "ARMH0011", 0 },
+	{},
+};
 MODULE_DEVICE_TABLE(acpi, sbsa_uart_acpi_match);
 
-अटल काष्ठा platक्रमm_driver arm_sbsa_uart_platक्रमm_driver = अणु
+static struct platform_driver arm_sbsa_uart_platform_driver = {
 	.probe		= sbsa_uart_probe,
-	.हटाओ		= sbsa_uart_हटाओ,
-	.driver	= अणु
+	.remove		= sbsa_uart_remove,
+	.driver	= {
 		.name	= "sbsa-uart",
 		.pm	= &pl011_dev_pm_ops,
 		.of_match_table = of_match_ptr(sbsa_uart_of_match),
 		.acpi_match_table = ACPI_PTR(sbsa_uart_acpi_match),
 		.suppress_bind_attrs = IS_BUILTIN(CONFIG_SERIAL_AMBA_PL011),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा amba_id pl011_ids[] = अणु
-	अणु
+static const struct amba_id pl011_ids[] = {
+	{
 		.id	= 0x00041011,
 		.mask	= 0x000fffff,
-		.data	= &venकरोr_arm,
-	पूर्ण,
-	अणु
+		.data	= &vendor_arm,
+	},
+	{
 		.id	= 0x00380802,
 		.mask	= 0x00ffffff,
-		.data	= &venकरोr_st,
-	पूर्ण,
-	अणु
+		.data	= &vendor_st,
+	},
+	{
 		.id	= AMBA_LINUX_ID(0x00, 0x1, 0xffe),
 		.mask	= 0x00ffffff,
-		.data	= &venकरोr_zte,
-	पूर्ण,
-	अणु 0, 0 पूर्ण,
-पूर्ण;
+		.data	= &vendor_zte,
+	},
+	{ 0, 0 },
+};
 
 MODULE_DEVICE_TABLE(amba, pl011_ids);
 
-अटल काष्ठा amba_driver pl011_driver = अणु
-	.drv = अणु
+static struct amba_driver pl011_driver = {
+	.drv = {
 		.name	= "uart-pl011",
 		.pm	= &pl011_dev_pm_ops,
 		.suppress_bind_attrs = IS_BUILTIN(CONFIG_SERIAL_AMBA_PL011),
-	पूर्ण,
+	},
 	.id_table	= pl011_ids,
 	.probe		= pl011_probe,
-	.हटाओ		= pl011_हटाओ,
-पूर्ण;
+	.remove		= pl011_remove,
+};
 
-अटल पूर्णांक __init pl011_init(व्योम)
-अणु
-	prपूर्णांकk(KERN_INFO "Serial: AMBA PL011 UART driver\n");
+static int __init pl011_init(void)
+{
+	printk(KERN_INFO "Serial: AMBA PL011 UART driver\n");
 
-	अगर (platक्रमm_driver_रेजिस्टर(&arm_sbsa_uart_platक्रमm_driver))
+	if (platform_driver_register(&arm_sbsa_uart_platform_driver))
 		pr_warn("could not register SBSA UART platform driver\n");
-	वापस amba_driver_रेजिस्टर(&pl011_driver);
-पूर्ण
+	return amba_driver_register(&pl011_driver);
+}
 
-अटल व्योम __निकास pl011_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&arm_sbsa_uart_platक्रमm_driver);
-	amba_driver_unरेजिस्टर(&pl011_driver);
-पूर्ण
+static void __exit pl011_exit(void)
+{
+	platform_driver_unregister(&arm_sbsa_uart_platform_driver);
+	amba_driver_unregister(&pl011_driver);
+}
 
 /*
- * While this can be a module, अगर builtin it's most likely the console
- * So let's leave module_निकास but move module_init to an earlier place
+ * While this can be a module, if builtin it's most likely the console
+ * So let's leave module_exit but move module_init to an earlier place
  */
 arch_initcall(pl011_init);
-module_निकास(pl011_निकास);
+module_exit(pl011_exit);
 
 MODULE_AUTHOR("ARM Ltd/Deep Blue Solutions Ltd");
 MODULE_DESCRIPTION("ARM AMBA serial port driver");

@@ -1,89 +1,88 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * HD audio पूर्णांकerface patch क्रम Creative X-Fi CA0110-IBG chip
+ * HD audio interface patch for Creative X-Fi CA0110-IBG chip
  *
  * Copyright (c) 2008 Takashi Iwai <tiwai@suse.de>
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
-#समावेश <sound/core.h>
-#समावेश <sound/hda_codec.h>
-#समावेश "hda_local.h"
-#समावेश "hda_auto_parser.h"
-#समावेश "hda_jack.h"
-#समावेश "hda_generic.h"
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/module.h>
+#include <sound/core.h>
+#include <sound/hda_codec.h>
+#include "hda_local.h"
+#include "hda_auto_parser.h"
+#include "hda_jack.h"
+#include "hda_generic.h"
 
 
-अटल स्थिर काष्ठा hda_codec_ops ca0110_patch_ops = अणु
+static const struct hda_codec_ops ca0110_patch_ops = {
 	.build_controls = snd_hda_gen_build_controls,
 	.build_pcms = snd_hda_gen_build_pcms,
 	.init = snd_hda_gen_init,
-	.मुक्त = snd_hda_gen_मुक्त,
+	.free = snd_hda_gen_free,
 	.unsol_event = snd_hda_jack_unsol_event,
-पूर्ण;
+};
 
-अटल पूर्णांक ca0110_parse_स्वतः_config(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा hda_gen_spec *spec = codec->spec;
-	पूर्णांक err;
+static int ca0110_parse_auto_config(struct hda_codec *codec)
+{
+	struct hda_gen_spec *spec = codec->spec;
+	int err;
 
-	err = snd_hda_parse_pin_defcfg(codec, &spec->स्वतःcfg, शून्य, 0);
-	अगर (err < 0)
-		वापस err;
-	err = snd_hda_gen_parse_स्वतः_config(codec, &spec->स्वतःcfg);
-	अगर (err < 0)
-		वापस err;
+	err = snd_hda_parse_pin_defcfg(codec, &spec->autocfg, NULL, 0);
+	if (err < 0)
+		return err;
+	err = snd_hda_gen_parse_auto_config(codec, &spec->autocfg);
+	if (err < 0)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक patch_ca0110(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा hda_gen_spec *spec;
-	पूर्णांक err;
+static int patch_ca0110(struct hda_codec *codec)
+{
+	struct hda_gen_spec *spec;
+	int err;
 
-	spec = kzalloc(माप(*spec), GFP_KERNEL);
-	अगर (!spec)
-		वापस -ENOMEM;
+	spec = kzalloc(sizeof(*spec), GFP_KERNEL);
+	if (!spec)
+		return -ENOMEM;
 	snd_hda_gen_spec_init(spec);
 	codec->spec = spec;
 	codec->patch_ops = ca0110_patch_ops;
 
 	spec->multi_cap_vol = 1;
-	codec->bus->core.needs_damn_दीर्घ_delay = 1;
+	codec->bus->core.needs_damn_long_delay = 1;
 
-	err = ca0110_parse_स्वतः_config(codec);
-	अगर (err < 0)
-		जाओ error;
+	err = ca0110_parse_auto_config(codec);
+	if (err < 0)
+		goto error;
 
-	वापस 0;
+	return 0;
 
  error:
-	snd_hda_gen_मुक्त(codec);
-	वापस err;
-पूर्ण
+	snd_hda_gen_free(codec);
+	return err;
+}
 
 
 /*
  * patch entries
  */
-अटल स्थिर काष्ठा hda_device_id snd_hda_id_ca0110[] = अणु
+static const struct hda_device_id snd_hda_id_ca0110[] = {
 	HDA_CODEC_ENTRY(0x1102000a, "CA0110-IBG", patch_ca0110),
 	HDA_CODEC_ENTRY(0x1102000b, "CA0110-IBG", patch_ca0110),
 	HDA_CODEC_ENTRY(0x1102000d, "SB0880 X-Fi", patch_ca0110),
-	अणुपूर्ण /* terminator */
-पूर्ण;
+	{} /* terminator */
+};
 MODULE_DEVICE_TABLE(hdaudio, snd_hda_id_ca0110);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Creative CA0110-IBG HD-audio codec");
 
-अटल काष्ठा hda_codec_driver ca0110_driver = अणु
+static struct hda_codec_driver ca0110_driver = {
 	.id = snd_hda_id_ca0110,
-पूर्ण;
+};
 
 module_hda_codec_driver(ca0110_driver);

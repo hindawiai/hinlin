@@ -1,114 +1,113 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2002 - 2007 Jeff Dike (jdike@अणुaddtoit,linux.पूर्णांकelपूर्ण.com)
+ * Copyright (C) 2002 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/netdevice.h>
-#समावेश <net_kern.h>
-#समावेश "pcap_user.h"
+#include <linux/init.h>
+#include <linux/netdevice.h>
+#include <net_kern.h>
+#include "pcap_user.h"
 
-काष्ठा pcap_init अणु
-	अक्षर *host_अगर;
-	पूर्णांक promisc;
-	पूर्णांक optimize;
-	अक्षर *filter;
-पूर्ण;
+struct pcap_init {
+	char *host_if;
+	int promisc;
+	int optimize;
+	char *filter;
+};
 
-व्योम pcap_init(काष्ठा net_device *dev, व्योम *data)
-अणु
-	काष्ठा uml_net_निजी *pri;
-	काष्ठा pcap_data *ppri;
-	काष्ठा pcap_init *init = data;
+void pcap_init(struct net_device *dev, void *data)
+{
+	struct uml_net_private *pri;
+	struct pcap_data *ppri;
+	struct pcap_init *init = data;
 
 	pri = netdev_priv(dev);
-	ppri = (काष्ठा pcap_data *) pri->user;
-	ppri->host_अगर = init->host_अगर;
+	ppri = (struct pcap_data *) pri->user;
+	ppri->host_if = init->host_if;
 	ppri->promisc = init->promisc;
 	ppri->optimize = init->optimize;
 	ppri->filter = init->filter;
 
-	prपूर्णांकk("pcap backend, host interface %s\n", ppri->host_अगर);
-पूर्ण
+	printk("pcap backend, host interface %s\n", ppri->host_if);
+}
 
-अटल पूर्णांक pcap_पढ़ो(पूर्णांक fd, काष्ठा sk_buff *skb, काष्ठा uml_net_निजी *lp)
-अणु
-	वापस pcap_user_पढ़ो(fd, skb_mac_header(skb),
+static int pcap_read(int fd, struct sk_buff *skb, struct uml_net_private *lp)
+{
+	return pcap_user_read(fd, skb_mac_header(skb),
 			      skb->dev->mtu + ETH_HEADER_OTHER,
-			      (काष्ठा pcap_data *) &lp->user);
-पूर्ण
+			      (struct pcap_data *) &lp->user);
+}
 
-अटल पूर्णांक pcap_ग_लिखो(पूर्णांक fd, काष्ठा sk_buff *skb, काष्ठा uml_net_निजी *lp)
-अणु
-	वापस -EPERM;
-पूर्ण
+static int pcap_write(int fd, struct sk_buff *skb, struct uml_net_private *lp)
+{
+	return -EPERM;
+}
 
-अटल स्थिर काष्ठा net_kern_info pcap_kern_info = अणु
+static const struct net_kern_info pcap_kern_info = {
 	.init			= pcap_init,
 	.protocol		= eth_protocol,
-	.पढ़ो			= pcap_पढ़ो,
-	.ग_लिखो			= pcap_ग_लिखो,
-पूर्ण;
+	.read			= pcap_read,
+	.write			= pcap_write,
+};
 
-पूर्णांक pcap_setup(अक्षर *str, अक्षर **mac_out, व्योम *data)
-अणु
-	काष्ठा pcap_init *init = data;
-	अक्षर *reमुख्य, *host_अगर = शून्य, *options[2] = अणु शून्य, शून्य पूर्ण;
-	पूर्णांक i;
+int pcap_setup(char *str, char **mac_out, void *data)
+{
+	struct pcap_init *init = data;
+	char *remain, *host_if = NULL, *options[2] = { NULL, NULL };
+	int i;
 
-	*init = ((काष्ठा pcap_init)
-		अणु .host_अगर 	= "eth0",
+	*init = ((struct pcap_init)
+		{ .host_if 	= "eth0",
 		  .promisc 	= 1,
 		  .optimize 	= 0,
-		  .filter 	= शून्य पूर्ण);
+		  .filter 	= NULL });
 
-	reमुख्य = split_अगर_spec(str, &host_अगर, &init->filter,
-			       &options[0], &options[1], mac_out, शून्य);
-	अगर (reमुख्य != शून्य) अणु
-		prपूर्णांकk(KERN_ERR "pcap_setup - Extra garbage on "
-		       "specification : '%s'\n", reमुख्य);
-		वापस 0;
-	पूर्ण
+	remain = split_if_spec(str, &host_if, &init->filter,
+			       &options[0], &options[1], mac_out, NULL);
+	if (remain != NULL) {
+		printk(KERN_ERR "pcap_setup - Extra garbage on "
+		       "specification : '%s'\n", remain);
+		return 0;
+	}
 
-	अगर (host_अगर != शून्य)
-		init->host_अगर = host_अगर;
+	if (host_if != NULL)
+		init->host_if = host_if;
 
-	क्रम (i = 0; i < ARRAY_SIZE(options); i++) अणु
-		अगर (options[i] == शून्य)
-			जारी;
-		अगर (!म_भेद(options[i], "promisc"))
+	for (i = 0; i < ARRAY_SIZE(options); i++) {
+		if (options[i] == NULL)
+			continue;
+		if (!strcmp(options[i], "promisc"))
 			init->promisc = 1;
-		अन्यथा अगर (!म_भेद(options[i], "nopromisc"))
+		else if (!strcmp(options[i], "nopromisc"))
 			init->promisc = 0;
-		अन्यथा अगर (!म_भेद(options[i], "optimize"))
+		else if (!strcmp(options[i], "optimize"))
 			init->optimize = 1;
-		अन्यथा अगर (!म_भेद(options[i], "nooptimize"))
+		else if (!strcmp(options[i], "nooptimize"))
 			init->optimize = 0;
-		अन्यथा अणु
-			prपूर्णांकk(KERN_ERR "pcap_setup : bad option - '%s'\n",
+		else {
+			printk(KERN_ERR "pcap_setup : bad option - '%s'\n",
 			       options[i]);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल काष्ठा transport pcap_transport = अणु
+static struct transport pcap_transport = {
 	.list 		= LIST_HEAD_INIT(pcap_transport.list),
 	.name 		= "pcap",
 	.setup  	= pcap_setup,
 	.user 		= &pcap_user_info,
 	.kern 		= &pcap_kern_info,
-	.निजी_size 	= माप(काष्ठा pcap_data),
-	.setup_size 	= माप(काष्ठा pcap_init),
-पूर्ण;
+	.private_size 	= sizeof(struct pcap_data),
+	.setup_size 	= sizeof(struct pcap_init),
+};
 
-अटल पूर्णांक रेजिस्टर_pcap(व्योम)
-अणु
-	रेजिस्टर_transport(&pcap_transport);
-	वापस 0;
-पूर्ण
+static int register_pcap(void)
+{
+	register_transport(&pcap_transport);
+	return 0;
+}
 
-late_initcall(रेजिस्टर_pcap);
+late_initcall(register_pcap);

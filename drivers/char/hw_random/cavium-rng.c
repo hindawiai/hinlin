@@ -1,71 +1,70 @@
-<शैली गुरु>
 /*
- * Hardware Ranकरोm Number Generator support क्रम Cavium Inc.
+ * Hardware Random Number Generator support for Cavium Inc.
  * Thunder processor family.
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 2016 Cavium, Inc.
  */
 
-#समावेश <linux/hw_अक्रमom.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/pci_ids.h>
+#include <linux/hw_random.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/pci.h>
+#include <linux/pci_ids.h>
 
-#घोषणा THUNDERX_RNM_ENT_EN     0x1
-#घोषणा THUNDERX_RNM_RNG_EN     0x2
+#define THUNDERX_RNM_ENT_EN     0x1
+#define THUNDERX_RNM_RNG_EN     0x2
 
-काष्ठा cavium_rng_pf अणु
-	व्योम __iomem *control_status;
-पूर्ण;
+struct cavium_rng_pf {
+	void __iomem *control_status;
+};
 
 /* Enable the RNG hardware and activate the VF */
-अटल पूर्णांक cavium_rng_probe(काष्ठा pci_dev *pdev,
-			स्थिर काष्ठा pci_device_id *id)
-अणु
-	काष्ठा	cavium_rng_pf *rng;
-	पूर्णांक	iov_err;
+static int cavium_rng_probe(struct pci_dev *pdev,
+			const struct pci_device_id *id)
+{
+	struct	cavium_rng_pf *rng;
+	int	iov_err;
 
-	rng = devm_kzalloc(&pdev->dev, माप(*rng), GFP_KERNEL);
-	अगर (!rng)
-		वापस -ENOMEM;
+	rng = devm_kzalloc(&pdev->dev, sizeof(*rng), GFP_KERNEL);
+	if (!rng)
+		return -ENOMEM;
 
 	/*Map the RNG control */
 	rng->control_status = pcim_iomap(pdev, 0, 0);
-	अगर (!rng->control_status) अणु
+	if (!rng->control_status) {
 		dev_err(&pdev->dev,
 			"Error iomap failed retrieving control_status.\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	/* Enable the RNG hardware and entropy source */
-	ग_लिखोq(THUNDERX_RNM_RNG_EN | THUNDERX_RNM_ENT_EN,
+	writeq(THUNDERX_RNM_RNG_EN | THUNDERX_RNM_ENT_EN,
 		rng->control_status);
 
 	pci_set_drvdata(pdev, rng);
 
 	/* Enable the Cavium RNG as a VF */
 	iov_err = pci_enable_sriov(pdev, 1);
-	अगर (iov_err != 0) अणु
+	if (iov_err != 0) {
 		/* Disable the RNG hardware and entropy source */
-		ग_लिखोq(0, rng->control_status);
+		writeq(0, rng->control_status);
 		dev_err(&pdev->dev,
 			"Error initializing RNG virtual function,(%i).\n",
 			iov_err);
-		वापस iov_err;
-	पूर्ण
+		return iov_err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Disable VF and RNG Hardware */
-अटल व्योम cavium_rng_हटाओ(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा cavium_rng_pf *rng;
+static void cavium_rng_remove(struct pci_dev *pdev)
+{
+	struct cavium_rng_pf *rng;
 
 	rng = pci_get_drvdata(pdev);
 
@@ -73,22 +72,22 @@
 	pci_disable_sriov(pdev);
 
 	/* Disable the RNG hardware and entropy source */
-	ग_लिखोq(0, rng->control_status);
-पूर्ण
+	writeq(0, rng->control_status);
+}
 
-अटल स्थिर काष्ठा pci_device_id cavium_rng_pf_id_table[] = अणु
-	अणु PCI_DEVICE(PCI_VENDOR_ID_CAVIUM, 0xa018), 0, 0, 0पूर्ण, /* Thunder RNM */
-	अणु0,पूर्ण,
-पूर्ण;
+static const struct pci_device_id cavium_rng_pf_id_table[] = {
+	{ PCI_DEVICE(PCI_VENDOR_ID_CAVIUM, 0xa018), 0, 0, 0}, /* Thunder RNM */
+	{0,},
+};
 
 MODULE_DEVICE_TABLE(pci, cavium_rng_pf_id_table);
 
-अटल काष्ठा pci_driver cavium_rng_pf_driver = अणु
+static struct pci_driver cavium_rng_pf_driver = {
 	.name		= "cavium_rng_pf",
 	.id_table	= cavium_rng_pf_id_table,
 	.probe		= cavium_rng_probe,
-	.हटाओ		= cavium_rng_हटाओ,
-पूर्ण;
+	.remove		= cavium_rng_remove,
+};
 
 module_pci_driver(cavium_rng_pf_driver);
 MODULE_AUTHOR("Omer Khaliq <okhaliq@caviumnetworks.com>");

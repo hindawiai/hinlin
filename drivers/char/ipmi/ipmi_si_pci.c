@@ -1,161 +1,160 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * ipmi_si_pci.c
  *
- * Handling क्रम IPMI devices on the PCI bus.
+ * Handling for IPMI devices on the PCI bus.
  */
 
-#घोषणा pr_fmt(fmt) "ipmi_pci: " fmt
+#define pr_fmt(fmt) "ipmi_pci: " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
-#समावेश "ipmi_si.h"
+#include <linux/module.h>
+#include <linux/pci.h>
+#include "ipmi_si.h"
 
-अटल bool pci_रेजिस्टरed;
+static bool pci_registered;
 
-अटल bool si_trypci = true;
+static bool si_trypci = true;
 
 module_param_named(trypci, si_trypci, bool, 0);
 MODULE_PARM_DESC(trypci,
 		 "Setting this to zero will disable the default scan of the interfaces identified via pci");
 
-#घोषणा PCI_DEVICE_ID_HP_MMC 0x121A
+#define PCI_DEVICE_ID_HP_MMC 0x121A
 
-अटल पूर्णांक ipmi_pci_probe_regspacing(काष्ठा si_sm_io *io)
-अणु
-	अगर (io->si_type == SI_KCS) अणु
-		अचिन्हित अक्षर	status;
-		पूर्णांक		regspacing;
+static int ipmi_pci_probe_regspacing(struct si_sm_io *io)
+{
+	if (io->si_type == SI_KCS) {
+		unsigned char	status;
+		int		regspacing;
 
 		io->regsize = DEFAULT_REGSIZE;
-		io->regshअगरt = 0;
+		io->regshift = 0;
 
 		/* detect 1, 4, 16byte spacing */
-		क्रम (regspacing = DEFAULT_REGSPACING; regspacing <= 16;) अणु
+		for (regspacing = DEFAULT_REGSPACING; regspacing <= 16;) {
 			io->regspacing = regspacing;
-			अगर (io->io_setup(io)) अणु
+			if (io->io_setup(io)) {
 				dev_err(io->dev, "Could not setup I/O space\n");
-				वापस DEFAULT_REGSPACING;
-			पूर्ण
-			/* ग_लिखो invalid cmd */
+				return DEFAULT_REGSPACING;
+			}
+			/* write invalid cmd */
 			io->outputb(io, 1, 0x10);
-			/* पढ़ो status back */
+			/* read status back */
 			status = io->inputb(io, 1);
 			io->io_cleanup(io);
-			अगर (status)
-				वापस regspacing;
+			if (status)
+				return regspacing;
 			regspacing *= 4;
-		पूर्ण
-	पूर्ण
-	वापस DEFAULT_REGSPACING;
-पूर्ण
+		}
+	}
+	return DEFAULT_REGSPACING;
+}
 
-अटल काष्ठा pci_device_id ipmi_pci_blacklist[] = अणु
+static struct pci_device_id ipmi_pci_blacklist[] = {
 	/*
 	 * This is a "Virtual IPMI device", whatever that is.  It appears
 	 * as a KCS device by the class, but it is not one.
 	 */
-	अणु PCI_VDEVICE(REALTEK, 0x816c) पूर्ण,
-	अणु 0, पूर्ण
-पूर्ण;
+	{ PCI_VDEVICE(REALTEK, 0x816c) },
+	{ 0, }
+};
 
-अटल पूर्णांक ipmi_pci_probe(काष्ठा pci_dev *pdev,
-				    स्थिर काष्ठा pci_device_id *ent)
-अणु
-	पूर्णांक rv;
-	काष्ठा si_sm_io io;
+static int ipmi_pci_probe(struct pci_dev *pdev,
+				    const struct pci_device_id *ent)
+{
+	int rv;
+	struct si_sm_io io;
 
-	अगर (pci_match_id(ipmi_pci_blacklist, pdev))
-		वापस -ENODEV;
+	if (pci_match_id(ipmi_pci_blacklist, pdev))
+		return -ENODEV;
 
-	स_रखो(&io, 0, माप(io));
+	memset(&io, 0, sizeof(io));
 	io.addr_source = SI_PCI;
 	dev_info(&pdev->dev, "probing via PCI");
 
-	चयन (pdev->class) अणु
-	हाल PCI_CLASS_SERIAL_IPMI_SMIC:
+	switch (pdev->class) {
+	case PCI_CLASS_SERIAL_IPMI_SMIC:
 		io.si_type = SI_SMIC;
-		अवरोध;
+		break;
 
-	हाल PCI_CLASS_SERIAL_IPMI_KCS:
+	case PCI_CLASS_SERIAL_IPMI_KCS:
 		io.si_type = SI_KCS;
-		अवरोध;
+		break;
 
-	हाल PCI_CLASS_SERIAL_IPMI_BT:
+	case PCI_CLASS_SERIAL_IPMI_BT:
 		io.si_type = SI_BT;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		dev_info(&pdev->dev, "Unknown IPMI class: %x\n", pdev->class);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	rv = pcim_enable_device(pdev);
-	अगर (rv) अणु
+	if (rv) {
 		dev_err(&pdev->dev, "couldn't enable PCI device\n");
-		वापस rv;
-	पूर्ण
+		return rv;
+	}
 
-	अगर (pci_resource_flags(pdev, 0) & IORESOURCE_IO) अणु
+	if (pci_resource_flags(pdev, 0) & IORESOURCE_IO) {
 		io.addr_space = IPMI_IO_ADDR_SPACE;
 		io.io_setup = ipmi_si_port_setup;
-	पूर्ण अन्यथा अणु
+	} else {
 		io.addr_space = IPMI_MEM_ADDR_SPACE;
 		io.io_setup = ipmi_si_mem_setup;
-	पूर्ण
+	}
 	io.addr_data = pci_resource_start(pdev, 0);
 
 	io.dev = &pdev->dev;
 
 	io.regspacing = ipmi_pci_probe_regspacing(&io);
 	io.regsize = DEFAULT_REGSIZE;
-	io.regshअगरt = 0;
+	io.regshift = 0;
 
 	io.irq = pdev->irq;
-	अगर (io.irq)
+	if (io.irq)
 		io.irq_setup = ipmi_std_irq_setup;
 
 	dev_info(&pdev->dev, "%pR regsize %d spacing %d irq %d\n",
 		 &pdev->resource[0], io.regsize, io.regspacing, io.irq);
 
-	वापस ipmi_si_add_smi(&io);
-पूर्ण
+	return ipmi_si_add_smi(&io);
+}
 
-अटल व्योम ipmi_pci_हटाओ(काष्ठा pci_dev *pdev)
-अणु
-	ipmi_si_हटाओ_by_dev(&pdev->dev);
-पूर्ण
+static void ipmi_pci_remove(struct pci_dev *pdev)
+{
+	ipmi_si_remove_by_dev(&pdev->dev);
+}
 
-अटल स्थिर काष्ठा pci_device_id ipmi_pci_devices[] = अणु
-	अणु PCI_VDEVICE(HP, PCI_DEVICE_ID_HP_MMC) पूर्ण,
-	अणु PCI_DEVICE_CLASS(PCI_CLASS_SERIAL_IPMI_SMIC, ~0) पूर्ण,
-	अणु PCI_DEVICE_CLASS(PCI_CLASS_SERIAL_IPMI_KCS, ~0) पूर्ण,
-	अणु PCI_DEVICE_CLASS(PCI_CLASS_SERIAL_IPMI_BT, ~0) पूर्ण,
-	अणु 0, पूर्ण
-पूर्ण;
+static const struct pci_device_id ipmi_pci_devices[] = {
+	{ PCI_VDEVICE(HP, PCI_DEVICE_ID_HP_MMC) },
+	{ PCI_DEVICE_CLASS(PCI_CLASS_SERIAL_IPMI_SMIC, ~0) },
+	{ PCI_DEVICE_CLASS(PCI_CLASS_SERIAL_IPMI_KCS, ~0) },
+	{ PCI_DEVICE_CLASS(PCI_CLASS_SERIAL_IPMI_BT, ~0) },
+	{ 0, }
+};
 MODULE_DEVICE_TABLE(pci, ipmi_pci_devices);
 
-अटल काष्ठा pci_driver ipmi_pci_driver = अणु
+static struct pci_driver ipmi_pci_driver = {
 	.name =         SI_DEVICE_NAME,
 	.id_table =     ipmi_pci_devices,
 	.probe =        ipmi_pci_probe,
-	.हटाओ =       ipmi_pci_हटाओ,
-पूर्ण;
+	.remove =       ipmi_pci_remove,
+};
 
-व्योम ipmi_si_pci_init(व्योम)
-अणु
-	अगर (si_trypci) अणु
-		पूर्णांक rv = pci_रेजिस्टर_driver(&ipmi_pci_driver);
-		अगर (rv)
+void ipmi_si_pci_init(void)
+{
+	if (si_trypci) {
+		int rv = pci_register_driver(&ipmi_pci_driver);
+		if (rv)
 			pr_err("Unable to register PCI driver: %d\n", rv);
-		अन्यथा
-			pci_रेजिस्टरed = true;
-	पूर्ण
-पूर्ण
+		else
+			pci_registered = true;
+	}
+}
 
-व्योम ipmi_si_pci_shutकरोwn(व्योम)
-अणु
-	अगर (pci_रेजिस्टरed)
-		pci_unरेजिस्टर_driver(&ipmi_pci_driver);
-पूर्ण
+void ipmi_si_pci_shutdown(void)
+{
+	if (pci_registered)
+		pci_unregister_driver(&ipmi_pci_driver);
+}

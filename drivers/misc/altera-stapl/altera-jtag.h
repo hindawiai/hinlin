@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * altera-jtag.h
  *
@@ -10,11 +9,11 @@
  * Copyright (C) 2010 Igor M. Liplianin <liplianin@netup.ru>
  */
 
-#अगर_अघोषित ALTERA_JTAG_H
-#घोषणा ALTERA_JTAG_H
+#ifndef ALTERA_JTAG_H
+#define ALTERA_JTAG_H
 
 /* Function Prototypes */
-क्रमागत altera_jtag_state अणु
+enum altera_jtag_state {
 	ILLEGAL_JTAG_STATE = -1,
 	RESET = 0,
 	IDLE = 1,
@@ -33,15 +32,15 @@
 	IREXIT2 = 14,
 	IRUPDATE = 15
 
-पूर्ण;
+};
 
-काष्ठा altera_jtag अणु
+struct altera_jtag {
 	/* Global variable to store the current JTAG state */
-	क्रमागत altera_jtag_state jtag_state;
+	enum altera_jtag_state jtag_state;
 
-	/* Store current stop-state क्रम DR and IR scan commands */
-	क्रमागत altera_jtag_state drstop_state;
-	क्रमागत altera_jtag_state irstop_state;
+	/* Store current stop-state for DR and IR scan commands */
+	enum altera_jtag_state drstop_state;
+	enum altera_jtag_state irstop_state;
 
 	/* Store current padding values */
 	u32 dr_pre;
@@ -56,45 +55,45 @@
 	u8 *ir_post_data;
 	u8 *dr_buffer;
 	u8 *ir_buffer;
-पूर्ण;
+};
 
-#घोषणा ALTERA_STACK_SIZE 128
-#घोषणा ALTERA_MESSAGE_LENGTH 1024
+#define ALTERA_STACK_SIZE 128
+#define ALTERA_MESSAGE_LENGTH 1024
 
-काष्ठा altera_state अणु
-	काष्ठा altera_config	*config;
-	काष्ठा altera_jtag	js;
-	अक्षर			msg_buff[ALTERA_MESSAGE_LENGTH + 1];
-	दीर्घ			stack[ALTERA_STACK_SIZE];
-पूर्ण;
+struct altera_state {
+	struct altera_config	*config;
+	struct altera_jtag	js;
+	char			msg_buff[ALTERA_MESSAGE_LENGTH + 1];
+	long			stack[ALTERA_STACK_SIZE];
+};
 
-पूर्णांक altera_jinit(काष्ठा altera_state *astate);
-पूर्णांक altera_set_drstop(काष्ठा altera_jtag *js, क्रमागत altera_jtag_state state);
-पूर्णांक altera_set_irstop(काष्ठा altera_jtag *js, क्रमागत altera_jtag_state state);
-पूर्णांक altera_set_dr_pre(काष्ठा altera_jtag *js, u32 count, u32 start_index,
+int altera_jinit(struct altera_state *astate);
+int altera_set_drstop(struct altera_jtag *js, enum altera_jtag_state state);
+int altera_set_irstop(struct altera_jtag *js, enum altera_jtag_state state);
+int altera_set_dr_pre(struct altera_jtag *js, u32 count, u32 start_index,
 				u8 *preamble_data);
-पूर्णांक altera_set_ir_pre(काष्ठा altera_jtag *js, u32 count, u32 start_index,
+int altera_set_ir_pre(struct altera_jtag *js, u32 count, u32 start_index,
 				u8 *preamble_data);
-पूर्णांक altera_set_dr_post(काष्ठा altera_jtag *js, u32 count, u32 start_index,
+int altera_set_dr_post(struct altera_jtag *js, u32 count, u32 start_index,
 				u8 *postamble_data);
-पूर्णांक altera_set_ir_post(काष्ठा altera_jtag *js, u32 count, u32 start_index,
+int altera_set_ir_post(struct altera_jtag *js, u32 count, u32 start_index,
 				u8 *postamble_data);
-पूर्णांक altera_जाओ_jstate(काष्ठा altera_state *astate,
-				क्रमागत altera_jtag_state state);
-पूर्णांक altera_रुको_cycles(काष्ठा altera_state *astate, s32 cycles,
-				क्रमागत altera_jtag_state रुको_state);
-पूर्णांक altera_रुको_msecs(काष्ठा altera_state *astate, s32 microseconds,
-				क्रमागत altera_jtag_state रुको_state);
-पूर्णांक altera_irscan(काष्ठा altera_state *astate, u32 count,
+int altera_goto_jstate(struct altera_state *astate,
+				enum altera_jtag_state state);
+int altera_wait_cycles(struct altera_state *astate, s32 cycles,
+				enum altera_jtag_state wait_state);
+int altera_wait_msecs(struct altera_state *astate, s32 microseconds,
+				enum altera_jtag_state wait_state);
+int altera_irscan(struct altera_state *astate, u32 count,
 				u8 *tdi_data, u32 start_index);
-पूर्णांक altera_swap_ir(काष्ठा altera_state *astate,
+int altera_swap_ir(struct altera_state *astate,
 				u32 count, u8 *in_data,
 				u32 in_index, u8 *out_data,
 				u32 out_index);
-पूर्णांक altera_drscan(काष्ठा altera_state *astate, u32 count,
+int altera_drscan(struct altera_state *astate, u32 count,
 				u8 *tdi_data, u32 start_index);
-पूर्णांक altera_swap_dr(काष्ठा altera_state *astate, u32 count,
+int altera_swap_dr(struct altera_state *astate, u32 count,
 				u8 *in_data, u32 in_index,
 				u8 *out_data, u32 out_index);
-व्योम altera_मुक्त_buffers(काष्ठा altera_state *astate);
-#पूर्ण_अगर /* ALTERA_JTAG_H */
+void altera_free_buffers(struct altera_state *astate);
+#endif /* ALTERA_JTAG_H */

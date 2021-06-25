@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
 
   Broadcom B43 wireless driver
@@ -13,12 +12,12 @@
 
 */
 
-#समावेश "b43.h"
-#समावेश "tables.h"
-#समावेश "phy_g.h"
+#include "b43.h"
+#include "tables.h"
+#include "phy_g.h"
 
 
-स्थिर u32 b43_tab_rotor[] = अणु
+const u32 b43_tab_rotor[] = {
 	0xFEB93FFD, 0xFEC63FFD,	/* 0 */
 	0xFED23FFD, 0xFEDF3FFD,
 	0xFEEC3FFE, 0xFEF83FFE,
@@ -46,9 +45,9 @@
 	0x01143FFE, 0x01213FFD,	/* 48 */
 	0x012E3FFD, 0x013A3FFD,
 	0x01473FFD,
-पूर्ण;
+};
 
-स्थिर u32 b43_tab_retard[] = अणु
+const u32 b43_tab_retard[] = {
 	0xDB93CB87, 0xD666CF64,	/* 0 */
 	0xD1FDD358, 0xCDA6D826,
 	0xCA38DD9F, 0xC729E2B4,
@@ -76,9 +75,9 @@
 	0x35C8DD9F, 0x325AD826,	/* 48 */
 	0x2E03D358, 0x299ACF64,
 	0x246DCB87,
-पूर्ण;
+};
 
-स्थिर u16 b43_tab_finefreqa[] = अणु
+const u16 b43_tab_finefreqa[] = {
 	0x0082, 0x0082, 0x0102, 0x0182,	/* 0 */
 	0x0202, 0x0282, 0x0302, 0x0382,
 	0x0402, 0x0482, 0x0502, 0x0582,
@@ -143,9 +142,9 @@
 	0x2A00, 0x2A20, 0x2A20, 0x2A20,
 	0x2A20, 0x2A40, 0x2A40, 0x2A40,
 	0x2A40, 0x2A60, 0x2A60, 0x2A60,
-पूर्ण;
+};
 
-स्थिर u16 b43_tab_finefreqg[] = अणु
+const u16 b43_tab_finefreqg[] = {
 	0x0089, 0x02E9, 0x0409, 0x04E9,	/* 0 */
 	0x05A9, 0x0669, 0x0709, 0x0789,
 	0x0829, 0x08A9, 0x0929, 0x0989,
@@ -210,29 +209,29 @@
 	0x5AA1, 0x5B01, 0x5B81, 0x5BE1,
 	0x5C61, 0x5D01, 0x5D80, 0x5E20,
 	0x5EE0, 0x5FA0, 0x6080, 0x61C0,
-पूर्ण;
+};
 
-स्थिर u16 b43_tab_noisea2[] = अणु
+const u16 b43_tab_noisea2[] = {
 	0x0001, 0x0001, 0x0001, 0xFFFE,
 	0xFFFE, 0x3FFF, 0x1000, 0x0393,
-पूर्ण;
+};
 
-स्थिर u16 b43_tab_noisea3[] = अणु
+const u16 b43_tab_noisea3[] = {
 	0x5E5E, 0x5E5E, 0x5E5E, 0x3F48,
 	0x4C4C, 0x4C4C, 0x4C4C, 0x2D36,
-पूर्ण;
+};
 
-स्थिर u16 b43_tab_noiseg1[] = अणु
+const u16 b43_tab_noiseg1[] = {
 	0x013C, 0x01F5, 0x031A, 0x0631,
 	0x0001, 0x0001, 0x0001, 0x0001,
-पूर्ण;
+};
 
-स्थिर u16 b43_tab_noiseg2[] = अणु
+const u16 b43_tab_noiseg2[] = {
 	0x5484, 0x3C40, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000,
-पूर्ण;
+};
 
-स्थिर u16 b43_tab_noisescalea2[] = अणु
+const u16 b43_tab_noisescalea2[] = {
 	0x6767, 0x6767, 0x6767, 0x6767, /* 0 */
 	0x6767, 0x6767, 0x6767, 0x6767,
 	0x6767, 0x6767, 0x6767, 0x6767,
@@ -240,9 +239,9 @@
 	0x6767, 0x6767, 0x6767, 0x6767, /* 16 */
 	0x6767, 0x6767, 0x6767, 0x6767,
 	0x6767, 0x6767, 0x0067,
-पूर्ण;
+};
 
-स्थिर u16 b43_tab_noisescalea3[] = अणु
+const u16 b43_tab_noisescalea3[] = {
 	0x2323, 0x2323, 0x2323, 0x2323, /* 0 */
 	0x2323, 0x2323, 0x2323, 0x2323,
 	0x2323, 0x2323, 0x2323, 0x2323,
@@ -250,9 +249,9 @@
 	0x2323, 0x2323, 0x2323, 0x2323, /* 16 */
 	0x2323, 0x2323, 0x2323, 0x2323,
 	0x2323, 0x2323, 0x0023,
-पूर्ण;
+};
 
-स्थिर u16 b43_tab_noisescaleg1[] = अणु
+const u16 b43_tab_noisescaleg1[] = {
 	0x6C77, 0x5162, 0x3B40, 0x3335,	/* 0 */
 	0x2F2D, 0x2A2A, 0x2527, 0x1F21,
 	0x1A1D, 0x1719, 0x1616, 0x1414,
@@ -260,9 +259,9 @@
 	0x1716, 0x1A19, 0x1F1D, 0x2521,	/* 16 */
 	0x2A27, 0x2F2A, 0x332D, 0x3B35,
 	0x5140, 0x6C62, 0x0077,
-पूर्ण;
+};
 
-स्थिर u16 b43_tab_noisescaleg2[] = अणु
+const u16 b43_tab_noisescaleg2[] = {
 	0xD8DD, 0xCBD4, 0xBCC0, 0xB6B7,	/* 0 */
 	0xB2B0, 0xADAD, 0xA7A9, 0x9FA1,
 	0x969B, 0x9195, 0x8F8F, 0x8A8A,
@@ -270,9 +269,9 @@
 	0x918F, 0x9695, 0x9F9B, 0xA7A1,	/* 16 */
 	0xADA9, 0xB2AD, 0xB6B0, 0xBCB7,
 	0xCBC0, 0xD8D4, 0x00DD,
-पूर्ण;
+};
 
-स्थिर u16 b43_tab_noisescaleg3[] = अणु
+const u16 b43_tab_noisescaleg3[] = {
 	0xA4A4, 0xA4A4, 0xA4A4, 0xA4A4,	/* 0 */
 	0xA4A4, 0xA4A4, 0xA4A4, 0xA4A4,
 	0xA4A4, 0xA4A4, 0xA4A4, 0xA4A4,
@@ -280,9 +279,9 @@
 	0xA4A4, 0xA4A4, 0xA4A4, 0xA4A4,	/* 16 */
 	0xA4A4, 0xA4A4, 0xA4A4, 0xA4A4,
 	0xA4A4, 0xA4A4, 0x00A4,
-पूर्ण;
+};
 
-स्थिर u16 b43_tab_sigmasqr1[] = अणु
+const u16 b43_tab_sigmasqr1[] = {
 	0x007A, 0x0075, 0x0071, 0x006C,	/* 0 */
 	0x0067, 0x0063, 0x005E, 0x0059,
 	0x0054, 0x0050, 0x004B, 0x0046,
@@ -297,9 +296,9 @@
 	0x0054, 0x0059, 0x005E, 0x0063,
 	0x0067, 0x006C, 0x0071, 0x0075,	/* 48 */
 	0x007A,
-पूर्ण;
+};
 
-स्थिर u16 b43_tab_sigmasqr2[] = अणु
+const u16 b43_tab_sigmasqr2[] = {
 	0x00DE, 0x00DC, 0x00DA, 0x00D8,	/* 0 */
 	0x00D6, 0x00D4, 0x00D2, 0x00CF,
 	0x00CD, 0x00CA, 0x00C7, 0x00C4,
@@ -314,16 +313,16 @@
 	0x00CD, 0x00CF, 0x00D2, 0x00D4,
 	0x00D6, 0x00D8, 0x00DA, 0x00DC,	/* 48 */
 	0x00DE,
-पूर्ण;
+};
 
-स्थिर u16 b43_tab_rssiagc1[] = अणु
+const u16 b43_tab_rssiagc1[] = {
 	0xFFF8, 0xFFF8, 0xFFF8, 0xFFF8, /* 0 */
 	0xFFF8, 0xFFF9, 0xFFFC, 0xFFFE,
 	0xFFF8, 0xFFF8, 0xFFF8, 0xFFF8,
 	0xFFF8, 0xFFF8, 0xFFF8, 0xFFF8,
-पूर्ण;
+};
 
-स्थिर u16 b43_tab_rssiagc2[] = अणु
+const u16 b43_tab_rssiagc2[] = {
 	0x0820, 0x0820, 0x0920, 0x0C38, /* 0 */
 	0x0820, 0x0820, 0x0820, 0x0820,
 	0x0820, 0x0820, 0x0920, 0x0A38,
@@ -336,10 +335,10 @@
 	0x0820, 0x0820, 0x0820, 0x0820,
 	0x0820, 0x0820, 0x0920, 0x0A38,
 	0x0820, 0x0820, 0x0820, 0x0820,
-पूर्ण;
+};
 
-अटल अंतरभूत व्योम निश्चित_sizes(व्योम)
-अणु
+static inline void assert_sizes(void)
+{
 	BUILD_BUG_ON(B43_TAB_ROTOR_SIZE != ARRAY_SIZE(b43_tab_rotor));
 	BUILD_BUG_ON(B43_TAB_RETARD_SIZE != ARRAY_SIZE(b43_tab_retard));
 	BUILD_BUG_ON(B43_TAB_FINEFREQA_SIZE != ARRAY_SIZE(b43_tab_finefreqa));
@@ -362,93 +361,93 @@
 	BUILD_BUG_ON(B43_TAB_SIGMASQR_SIZE != ARRAY_SIZE(b43_tab_sigmasqr2));
 	BUILD_BUG_ON(B43_TAB_RSSIAGC1_SIZE != ARRAY_SIZE(b43_tab_rssiagc1));
 	BUILD_BUG_ON(B43_TAB_RSSIAGC2_SIZE != ARRAY_SIZE(b43_tab_rssiagc2));
-पूर्ण
+}
 
-u16 b43_ofdmtab_पढ़ो16(काष्ठा b43_wldev *dev, u16 table, u16 offset)
-अणु
-	काष्ठा b43_phy_g *gphy = dev->phy.g;
+u16 b43_ofdmtab_read16(struct b43_wldev *dev, u16 table, u16 offset)
+{
+	struct b43_phy_g *gphy = dev->phy.g;
 	u16 addr;
 
 	addr = table + offset;
-	अगर ((gphy->ofdmtab_addr_direction != B43_OFDMTAB_सूचीECTION_READ) ||
-	    (addr - 1 != gphy->ofdmtab_addr)) अणु
-		/* The hardware has a dअगरferent address in memory. Update it. */
-		b43_phy_ग_लिखो(dev, B43_PHY_OTABLECTL, addr);
-		gphy->ofdmtab_addr_direction = B43_OFDMTAB_सूचीECTION_READ;
-	पूर्ण
+	if ((gphy->ofdmtab_addr_direction != B43_OFDMTAB_DIRECTION_READ) ||
+	    (addr - 1 != gphy->ofdmtab_addr)) {
+		/* The hardware has a different address in memory. Update it. */
+		b43_phy_write(dev, B43_PHY_OTABLECTL, addr);
+		gphy->ofdmtab_addr_direction = B43_OFDMTAB_DIRECTION_READ;
+	}
 	gphy->ofdmtab_addr = addr;
 
-	वापस b43_phy_पढ़ो(dev, B43_PHY_OTABLEI);
+	return b43_phy_read(dev, B43_PHY_OTABLEI);
 
-	/* Some compileसमय निश्चितions... */
-	निश्चित_sizes();
-पूर्ण
+	/* Some compiletime assertions... */
+	assert_sizes();
+}
 
-व्योम b43_ofdmtab_ग_लिखो16(काष्ठा b43_wldev *dev, u16 table,
+void b43_ofdmtab_write16(struct b43_wldev *dev, u16 table,
 			 u16 offset, u16 value)
-अणु
-	काष्ठा b43_phy_g *gphy = dev->phy.g;
+{
+	struct b43_phy_g *gphy = dev->phy.g;
 	u16 addr;
 
 	addr = table + offset;
-	अगर ((gphy->ofdmtab_addr_direction != B43_OFDMTAB_सूचीECTION_WRITE) ||
-	    (addr - 1 != gphy->ofdmtab_addr)) अणु
-		/* The hardware has a dअगरferent address in memory. Update it. */
-		b43_phy_ग_लिखो(dev, B43_PHY_OTABLECTL, addr);
-		gphy->ofdmtab_addr_direction = B43_OFDMTAB_सूचीECTION_WRITE;
-	पूर्ण
+	if ((gphy->ofdmtab_addr_direction != B43_OFDMTAB_DIRECTION_WRITE) ||
+	    (addr - 1 != gphy->ofdmtab_addr)) {
+		/* The hardware has a different address in memory. Update it. */
+		b43_phy_write(dev, B43_PHY_OTABLECTL, addr);
+		gphy->ofdmtab_addr_direction = B43_OFDMTAB_DIRECTION_WRITE;
+	}
 	gphy->ofdmtab_addr = addr;
-	b43_phy_ग_लिखो(dev, B43_PHY_OTABLEI, value);
-पूर्ण
+	b43_phy_write(dev, B43_PHY_OTABLEI, value);
+}
 
-u32 b43_ofdmtab_पढ़ो32(काष्ठा b43_wldev *dev, u16 table, u16 offset)
-अणु
-	काष्ठा b43_phy_g *gphy = dev->phy.g;
+u32 b43_ofdmtab_read32(struct b43_wldev *dev, u16 table, u16 offset)
+{
+	struct b43_phy_g *gphy = dev->phy.g;
 	u32 ret;
 	u16 addr;
 
 	addr = table + offset;
-	अगर ((gphy->ofdmtab_addr_direction != B43_OFDMTAB_सूचीECTION_READ) ||
-	    (addr - 1 != gphy->ofdmtab_addr)) अणु
-		/* The hardware has a dअगरferent address in memory. Update it. */
-		b43_phy_ग_लिखो(dev, B43_PHY_OTABLECTL, addr);
-		gphy->ofdmtab_addr_direction = B43_OFDMTAB_सूचीECTION_READ;
-	पूर्ण
+	if ((gphy->ofdmtab_addr_direction != B43_OFDMTAB_DIRECTION_READ) ||
+	    (addr - 1 != gphy->ofdmtab_addr)) {
+		/* The hardware has a different address in memory. Update it. */
+		b43_phy_write(dev, B43_PHY_OTABLECTL, addr);
+		gphy->ofdmtab_addr_direction = B43_OFDMTAB_DIRECTION_READ;
+	}
 	gphy->ofdmtab_addr = addr;
-	ret = b43_phy_पढ़ो(dev, B43_PHY_OTABLEQ);
+	ret = b43_phy_read(dev, B43_PHY_OTABLEQ);
 	ret <<= 16;
-	ret |= b43_phy_पढ़ो(dev, B43_PHY_OTABLEI);
+	ret |= b43_phy_read(dev, B43_PHY_OTABLEI);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम b43_ofdmtab_ग_लिखो32(काष्ठा b43_wldev *dev, u16 table,
+void b43_ofdmtab_write32(struct b43_wldev *dev, u16 table,
 			 u16 offset, u32 value)
-अणु
-	काष्ठा b43_phy_g *gphy = dev->phy.g;
+{
+	struct b43_phy_g *gphy = dev->phy.g;
 	u16 addr;
 
 	addr = table + offset;
-	अगर ((gphy->ofdmtab_addr_direction != B43_OFDMTAB_सूचीECTION_WRITE) ||
-	    (addr - 1 != gphy->ofdmtab_addr)) अणु
-		/* The hardware has a dअगरferent address in memory. Update it. */
-		b43_phy_ग_लिखो(dev, B43_PHY_OTABLECTL, addr);
-		gphy->ofdmtab_addr_direction = B43_OFDMTAB_सूचीECTION_WRITE;
-	पूर्ण
+	if ((gphy->ofdmtab_addr_direction != B43_OFDMTAB_DIRECTION_WRITE) ||
+	    (addr - 1 != gphy->ofdmtab_addr)) {
+		/* The hardware has a different address in memory. Update it. */
+		b43_phy_write(dev, B43_PHY_OTABLECTL, addr);
+		gphy->ofdmtab_addr_direction = B43_OFDMTAB_DIRECTION_WRITE;
+	}
 	gphy->ofdmtab_addr = addr;
 
-	b43_phy_ग_लिखो(dev, B43_PHY_OTABLEI, value);
-	b43_phy_ग_लिखो(dev, B43_PHY_OTABLEQ, (value >> 16));
-पूर्ण
+	b43_phy_write(dev, B43_PHY_OTABLEI, value);
+	b43_phy_write(dev, B43_PHY_OTABLEQ, (value >> 16));
+}
 
-u16 b43_gtab_पढ़ो(काष्ठा b43_wldev *dev, u16 table, u16 offset)
-अणु
-	b43_phy_ग_लिखो(dev, B43_PHY_GTABCTL, table + offset);
-	वापस b43_phy_पढ़ो(dev, B43_PHY_GTABDATA);
-पूर्ण
+u16 b43_gtab_read(struct b43_wldev *dev, u16 table, u16 offset)
+{
+	b43_phy_write(dev, B43_PHY_GTABCTL, table + offset);
+	return b43_phy_read(dev, B43_PHY_GTABDATA);
+}
 
-व्योम b43_gtab_ग_लिखो(काष्ठा b43_wldev *dev, u16 table, u16 offset, u16 value)
-अणु
-	b43_phy_ग_लिखो(dev, B43_PHY_GTABCTL, table + offset);
-	b43_phy_ग_लिखो(dev, B43_PHY_GTABDATA, value);
-पूर्ण
+void b43_gtab_write(struct b43_wldev *dev, u16 table, u16 offset, u16 value)
+{
+	b43_phy_write(dev, B43_PHY_GTABCTL, table + offset);
+	b43_phy_write(dev, B43_PHY_GTABDATA, value);
+}

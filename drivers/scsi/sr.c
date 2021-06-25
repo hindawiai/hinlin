@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  sr.c Copyright (C) 1992 David Giller
  *           Copyright (C) 1993, 1994, 1995, 1999 Eric Youngdale
@@ -7,64 +6,64 @@
  *  adapted from:
  *      sd.c Copyright (C) 1992 Drew Eckhardt
  *      Linux scsi disk driver by
- *              Drew Eckhardt <drew@coloraकरो.edu>
+ *              Drew Eckhardt <drew@colorado.edu>
  *
- *	Modअगरied by Eric Youngdale ericy@andante.org to
+ *	Modified by Eric Youngdale ericy@andante.org to
  *	add scatter-gather, multiple outstanding request, and other
  *	enhancements.
  *
- *      Modअगरied by Eric Youngdale eric@andante.org to support loadable
+ *      Modified by Eric Youngdale eric@andante.org to support loadable
  *      low-level scsi drivers.
  *
- *      Modअगरied by Thomas Quinot thomas@melchior.cuivre.fdn.fr to
- *      provide स्वतः-eject.
+ *      Modified by Thomas Quinot thomas@melchior.cuivre.fdn.fr to
+ *      provide auto-eject.
  *
- *      Modअगरied by Gerd Knorr <kraxel@cs.tu-berlin.de> to support the
- *      generic cdrom पूर्णांकerface
+ *      Modified by Gerd Knorr <kraxel@cs.tu-berlin.de> to support the
+ *      generic cdrom interface
  *
- *      Modअगरied by Jens Axboe <axboe@suse.de> - Unअगरorm sr_packet()
- *      पूर्णांकerface, capabilities probe additions, ioctl cleanups, etc.
+ *      Modified by Jens Axboe <axboe@suse.de> - Uniform sr_packet()
+ *      interface, capabilities probe additions, ioctl cleanups, etc.
  *
- *	Modअगरied by Riअक्षरd Gooch <rgooch@atnf.csiro.au> to support devfs
+ *	Modified by Richard Gooch <rgooch@atnf.csiro.au> to support devfs
  *
- *	Modअगरied by Jens Axboe <axboe@suse.de> - support DVD-RAM
+ *	Modified by Jens Axboe <axboe@suse.de> - support DVD-RAM
  *	transparently and lose the GHOST hack
  *
- *	Modअगरied by Arnalकरो Carvalho de Melo <acme@conectiva.com.br>
+ *	Modified by Arnaldo Carvalho de Melo <acme@conectiva.com.br>
  *	check resource allocation in sr_init and some cleanups
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/bपन.स>
-#समावेश <linux/compat.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/cdrom.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/init.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/blk-pm.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/uaccess.h>
+#include <linux/module.h>
+#include <linux/fs.h>
+#include <linux/kernel.h>
+#include <linux/mm.h>
+#include <linux/bio.h>
+#include <linux/compat.h>
+#include <linux/string.h>
+#include <linux/errno.h>
+#include <linux/cdrom.h>
+#include <linux/interrupt.h>
+#include <linux/init.h>
+#include <linux/blkdev.h>
+#include <linux/blk-pm.h>
+#include <linux/mutex.h>
+#include <linux/slab.h>
+#include <linux/pm_runtime.h>
+#include <linux/uaccess.h>
 
-#समावेश <यंत्र/unaligned.h>
+#include <asm/unaligned.h>
 
-#समावेश <scsi/scsi.h>
-#समावेश <scsi/scsi_dbg.h>
-#समावेश <scsi/scsi_device.h>
-#समावेश <scsi/scsi_driver.h>
-#समावेश <scsi/scsi_cmnd.h>
-#समावेश <scsi/scsi_eh.h>
-#समावेश <scsi/scsi_host.h>
-#समावेश <scsi/scsi_ioctl.h>	/* For the करोor lock/unlock commands */
+#include <scsi/scsi.h>
+#include <scsi/scsi_dbg.h>
+#include <scsi/scsi_device.h>
+#include <scsi/scsi_driver.h>
+#include <scsi/scsi_cmnd.h>
+#include <scsi/scsi_eh.h>
+#include <scsi/scsi_host.h>
+#include <scsi/scsi_ioctl.h>	/* For the door lock/unlock commands */
 
-#समावेश "scsi_logging.h"
-#समावेश "sr.h"
+#include "scsi_logging.h"
+#include "sr.h"
 
 
 MODULE_DESCRIPTION("SCSI cdrom (sr) driver");
@@ -73,62 +72,62 @@ MODULE_ALIAS_BLOCKDEV_MAJOR(SCSI_CDROM_MAJOR);
 MODULE_ALIAS_SCSI_DEVICE(TYPE_ROM);
 MODULE_ALIAS_SCSI_DEVICE(TYPE_WORM);
 
-#घोषणा SR_DISKS	256
+#define SR_DISKS	256
 
-#घोषणा SR_CAPABILITIES \
+#define SR_CAPABILITIES \
 	(CDC_CLOSE_TRAY|CDC_OPEN_TRAY|CDC_LOCK|CDC_SELECT_SPEED| \
 	 CDC_SELECT_DISC|CDC_MULTI_SESSION|CDC_MCN|CDC_MEDIA_CHANGED| \
 	 CDC_PLAY_AUDIO|CDC_RESET|CDC_DRIVE_STATUS| \
 	 CDC_CD_R|CDC_CD_RW|CDC_DVD|CDC_DVD_R|CDC_DVD_RAM|CDC_GENERIC_PACKET| \
 	 CDC_MRW|CDC_MRW_W|CDC_RAM)
 
-अटल पूर्णांक sr_probe(काष्ठा device *);
-अटल पूर्णांक sr_हटाओ(काष्ठा device *);
-अटल blk_status_t sr_init_command(काष्ठा scsi_cmnd *SCpnt);
-अटल पूर्णांक sr_करोne(काष्ठा scsi_cmnd *);
-अटल पूर्णांक sr_runसमय_suspend(काष्ठा device *dev);
+static int sr_probe(struct device *);
+static int sr_remove(struct device *);
+static blk_status_t sr_init_command(struct scsi_cmnd *SCpnt);
+static int sr_done(struct scsi_cmnd *);
+static int sr_runtime_suspend(struct device *dev);
 
-अटल स्थिर काष्ठा dev_pm_ops sr_pm_ops = अणु
-	.runसमय_suspend	= sr_runसमय_suspend,
-पूर्ण;
+static const struct dev_pm_ops sr_pm_ops = {
+	.runtime_suspend	= sr_runtime_suspend,
+};
 
-अटल काष्ठा scsi_driver sr_ढाँचा = अणु
-	.gendrv = अणु
+static struct scsi_driver sr_template = {
+	.gendrv = {
 		.name   	= "sr",
 		.owner		= THIS_MODULE,
 		.probe		= sr_probe,
-		.हटाओ		= sr_हटाओ,
+		.remove		= sr_remove,
 		.pm		= &sr_pm_ops,
-	पूर्ण,
+	},
 	.init_command		= sr_init_command,
-	.करोne			= sr_करोne,
-पूर्ण;
+	.done			= sr_done,
+};
 
-अटल अचिन्हित दीर्घ sr_index_bits[SR_DISKS / BITS_PER_LONG];
-अटल DEFINE_SPINLOCK(sr_index_lock);
+static unsigned long sr_index_bits[SR_DISKS / BITS_PER_LONG];
+static DEFINE_SPINLOCK(sr_index_lock);
 
 /* This semaphore is used to mediate the 0->1 reference get in the
- * face of object deकाष्ठाion (i.e. we can't allow a get on an
+ * face of object destruction (i.e. we can't allow a get on an
  * object after last put) */
-अटल DEFINE_MUTEX(sr_ref_mutex);
+static DEFINE_MUTEX(sr_ref_mutex);
 
-अटल पूर्णांक sr_खोलो(काष्ठा cdrom_device_info *, पूर्णांक);
-अटल व्योम sr_release(काष्ठा cdrom_device_info *);
+static int sr_open(struct cdrom_device_info *, int);
+static void sr_release(struct cdrom_device_info *);
 
-अटल व्योम get_sectorsize(काष्ठा scsi_cd *);
-अटल व्योम get_capabilities(काष्ठा scsi_cd *);
+static void get_sectorsize(struct scsi_cd *);
+static void get_capabilities(struct scsi_cd *);
 
-अटल अचिन्हित पूर्णांक sr_check_events(काष्ठा cdrom_device_info *cdi,
-				    अचिन्हित पूर्णांक clearing, पूर्णांक slot);
-अटल पूर्णांक sr_packet(काष्ठा cdrom_device_info *, काष्ठा packet_command *);
+static unsigned int sr_check_events(struct cdrom_device_info *cdi,
+				    unsigned int clearing, int slot);
+static int sr_packet(struct cdrom_device_info *, struct packet_command *);
 
-अटल स्थिर काष्ठा cdrom_device_ops sr_करोps = अणु
-	.खोलो			= sr_खोलो,
+static const struct cdrom_device_ops sr_dops = {
+	.open			= sr_open,
 	.release	 	= sr_release,
 	.drive_status	 	= sr_drive_status,
 	.check_events		= sr_check_events,
 	.tray_move		= sr_tray_move,
-	.lock_करोor		= sr_lock_करोor,
+	.lock_door		= sr_lock_door,
 	.select_speed		= sr_select_speed,
 	.get_last_session	= sr_get_last_session,
 	.get_mcn		= sr_get_mcn,
@@ -136,349 +135,349 @@ MODULE_ALIAS_SCSI_DEVICE(TYPE_WORM);
 	.audio_ioctl		= sr_audio_ioctl,
 	.capability		= SR_CAPABILITIES,
 	.generic_packet		= sr_packet,
-पूर्ण;
+};
 
-अटल व्योम sr_kref_release(काष्ठा kref *kref);
+static void sr_kref_release(struct kref *kref);
 
-अटल अंतरभूत काष्ठा scsi_cd *scsi_cd(काष्ठा gendisk *disk)
-अणु
-	वापस container_of(disk->निजी_data, काष्ठा scsi_cd, driver);
-पूर्ण
+static inline struct scsi_cd *scsi_cd(struct gendisk *disk)
+{
+	return container_of(disk->private_data, struct scsi_cd, driver);
+}
 
-अटल पूर्णांक sr_runसमय_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा scsi_cd *cd = dev_get_drvdata(dev);
+static int sr_runtime_suspend(struct device *dev)
+{
+	struct scsi_cd *cd = dev_get_drvdata(dev);
 
-	अगर (!cd)	/* E.g.: runसमय suspend following sr_हटाओ() */
-		वापस 0;
+	if (!cd)	/* E.g.: runtime suspend following sr_remove() */
+		return 0;
 
-	अगर (cd->media_present)
-		वापस -EBUSY;
-	अन्यथा
-		वापस 0;
-पूर्ण
+	if (cd->media_present)
+		return -EBUSY;
+	else
+		return 0;
+}
 
 /*
- * The get and put routines क्रम the काष्ठा scsi_cd.  Note this entity
- * has a scsi_device poपूर्णांकer and owns a reference to this.
+ * The get and put routines for the struct scsi_cd.  Note this entity
+ * has a scsi_device pointer and owns a reference to this.
  */
-अटल अंतरभूत काष्ठा scsi_cd *scsi_cd_get(काष्ठा gendisk *disk)
-अणु
-	काष्ठा scsi_cd *cd = शून्य;
+static inline struct scsi_cd *scsi_cd_get(struct gendisk *disk)
+{
+	struct scsi_cd *cd = NULL;
 
 	mutex_lock(&sr_ref_mutex);
-	अगर (disk->निजी_data == शून्य)
-		जाओ out;
+	if (disk->private_data == NULL)
+		goto out;
 	cd = scsi_cd(disk);
 	kref_get(&cd->kref);
-	अगर (scsi_device_get(cd->device)) अणु
+	if (scsi_device_get(cd->device)) {
 		kref_put(&cd->kref, sr_kref_release);
-		cd = शून्य;
-	पूर्ण
+		cd = NULL;
+	}
  out:
 	mutex_unlock(&sr_ref_mutex);
-	वापस cd;
-पूर्ण
+	return cd;
+}
 
-अटल व्योम scsi_cd_put(काष्ठा scsi_cd *cd)
-अणु
-	काष्ठा scsi_device *sdev = cd->device;
+static void scsi_cd_put(struct scsi_cd *cd)
+{
+	struct scsi_device *sdev = cd->device;
 
 	mutex_lock(&sr_ref_mutex);
 	kref_put(&cd->kref, sr_kref_release);
 	scsi_device_put(sdev);
 	mutex_unlock(&sr_ref_mutex);
-पूर्ण
+}
 
-अटल अचिन्हित पूर्णांक sr_get_events(काष्ठा scsi_device *sdev)
-अणु
+static unsigned int sr_get_events(struct scsi_device *sdev)
+{
 	u8 buf[8];
-	u8 cmd[] = अणु GET_EVENT_STATUS_NOTIFICATION,
+	u8 cmd[] = { GET_EVENT_STATUS_NOTIFICATION,
 		     1,			/* polled */
 		     0, 0,		/* reserved */
-		     1 << 4,		/* notअगरication class: media */
+		     1 << 4,		/* notification class: media */
 		     0, 0,		/* reserved */
-		     0, माप(buf),	/* allocation length */
+		     0, sizeof(buf),	/* allocation length */
 		     0,			/* control */
-	पूर्ण;
-	काष्ठा event_header *eh = (व्योम *)buf;
-	काष्ठा media_event_desc *med = (व्योम *)(buf + 4);
-	काष्ठा scsi_sense_hdr sshdr;
-	पूर्णांक result;
+	};
+	struct event_header *eh = (void *)buf;
+	struct media_event_desc *med = (void *)(buf + 4);
+	struct scsi_sense_hdr sshdr;
+	int result;
 
-	result = scsi_execute_req(sdev, cmd, DMA_FROM_DEVICE, buf, माप(buf),
-				  &sshdr, SR_TIMEOUT, MAX_RETRIES, शून्य);
-	अगर (scsi_sense_valid(&sshdr) && sshdr.sense_key == UNIT_ATTENTION)
-		वापस DISK_EVENT_MEDIA_CHANGE;
+	result = scsi_execute_req(sdev, cmd, DMA_FROM_DEVICE, buf, sizeof(buf),
+				  &sshdr, SR_TIMEOUT, MAX_RETRIES, NULL);
+	if (scsi_sense_valid(&sshdr) && sshdr.sense_key == UNIT_ATTENTION)
+		return DISK_EVENT_MEDIA_CHANGE;
 
-	अगर (result || be16_to_cpu(eh->data_len) < माप(*med))
-		वापस 0;
+	if (result || be16_to_cpu(eh->data_len) < sizeof(*med))
+		return 0;
 
-	अगर (eh->nea || eh->notअगरication_class != 0x4)
-		वापस 0;
+	if (eh->nea || eh->notification_class != 0x4)
+		return 0;
 
-	अगर (med->media_event_code == 1)
-		वापस DISK_EVENT_EJECT_REQUEST;
-	अन्यथा अगर (med->media_event_code == 2)
-		वापस DISK_EVENT_MEDIA_CHANGE;
-	वापस 0;
-पूर्ण
+	if (med->media_event_code == 1)
+		return DISK_EVENT_EJECT_REQUEST;
+	else if (med->media_event_code == 2)
+		return DISK_EVENT_MEDIA_CHANGE;
+	return 0;
+}
 
 /*
- * This function checks to see अगर the media has been changed or eject
- * button has been pressed.  It is possible that we have alपढ़ोy
+ * This function checks to see if the media has been changed or eject
+ * button has been pressed.  It is possible that we have already
  * sensed a change, or the drive may have sensed one and not yet
  * reported it.  The past events are accumulated in sdev->changed and
- * वापसed together with the current state.
+ * returned together with the current state.
  */
-अटल अचिन्हित पूर्णांक sr_check_events(काष्ठा cdrom_device_info *cdi,
-				    अचिन्हित पूर्णांक clearing, पूर्णांक slot)
-अणु
-	काष्ठा scsi_cd *cd = cdi->handle;
+static unsigned int sr_check_events(struct cdrom_device_info *cdi,
+				    unsigned int clearing, int slot)
+{
+	struct scsi_cd *cd = cdi->handle;
 	bool last_present;
-	काष्ठा scsi_sense_hdr sshdr;
-	अचिन्हित पूर्णांक events;
-	पूर्णांक ret;
+	struct scsi_sense_hdr sshdr;
+	unsigned int events;
+	int ret;
 
 	/* no changer support */
-	अगर (CDSL_CURRENT != slot)
-		वापस 0;
+	if (CDSL_CURRENT != slot)
+		return 0;
 
 	events = sr_get_events(cd->device);
 	cd->get_event_changed |= events & DISK_EVENT_MEDIA_CHANGE;
 
 	/*
 	 * If earlier GET_EVENT_STATUS_NOTIFICATION and TUR did not agree
-	 * क्रम several बार in a row.  We rely on TUR only क्रम this likely
+	 * for several times in a row.  We rely on TUR only for this likely
 	 * broken device, to prevent generating incorrect media changed
-	 * events क्रम every खोलो().
+	 * events for every open().
 	 */
-	अगर (cd->ignore_get_event) अणु
+	if (cd->ignore_get_event) {
 		events &= ~DISK_EVENT_MEDIA_CHANGE;
-		जाओ करो_tur;
-	पूर्ण
+		goto do_tur;
+	}
 
 	/*
 	 * GET_EVENT_STATUS_NOTIFICATION is enough unless MEDIA_CHANGE
 	 * is being cleared.  Note that there are devices which hang
-	 * अगर asked to execute TUR repeatedly.
+	 * if asked to execute TUR repeatedly.
 	 */
-	अगर (cd->device->changed) अणु
+	if (cd->device->changed) {
 		events |= DISK_EVENT_MEDIA_CHANGE;
 		cd->device->changed = 0;
 		cd->tur_changed = true;
-	पूर्ण
+	}
 
-	अगर (!(clearing & DISK_EVENT_MEDIA_CHANGE))
-		वापस events;
-करो_tur:
+	if (!(clearing & DISK_EVENT_MEDIA_CHANGE))
+		return events;
+do_tur:
 	/* let's see whether the media is there with TUR */
 	last_present = cd->media_present;
-	ret = scsi_test_unit_पढ़ोy(cd->device, SR_TIMEOUT, MAX_RETRIES, &sshdr);
+	ret = scsi_test_unit_ready(cd->device, SR_TIMEOUT, MAX_RETRIES, &sshdr);
 
 	/*
-	 * Media is considered to be present अगर TUR succeeds or fails with
+	 * Media is considered to be present if TUR succeeds or fails with
 	 * sense data indicating something other than media-not-present
 	 * (ASC 0x3a).
 	 */
 	cd->media_present = scsi_status_is_good(ret) ||
 		(scsi_sense_valid(&sshdr) && sshdr.asc != 0x3a);
 
-	अगर (last_present != cd->media_present)
+	if (last_present != cd->media_present)
 		cd->device->changed = 1;
 
-	अगर (cd->device->changed) अणु
+	if (cd->device->changed) {
 		events |= DISK_EVENT_MEDIA_CHANGE;
 		cd->device->changed = 0;
 		cd->tur_changed = true;
-	पूर्ण
+	}
 
-	अगर (cd->ignore_get_event)
-		वापस events;
+	if (cd->ignore_get_event)
+		return events;
 
 	/* check whether GET_EVENT is reporting spurious MEDIA_CHANGE */
-	अगर (!cd->tur_changed) अणु
-		अगर (cd->get_event_changed) अणु
-			अगर (cd->tur_mismatch++ > 8) अणु
-				sr_prपूर्णांकk(KERN_WARNING, cd,
+	if (!cd->tur_changed) {
+		if (cd->get_event_changed) {
+			if (cd->tur_mismatch++ > 8) {
+				sr_printk(KERN_WARNING, cd,
 					  "GET_EVENT and TUR disagree continuously, suppress GET_EVENT events\n");
 				cd->ignore_get_event = true;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			cd->tur_mismatch = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	cd->tur_changed = false;
 	cd->get_event_changed = false;
 
-	वापस events;
-पूर्ण
+	return events;
+}
 
 /*
- * sr_करोne is the पूर्णांकerrupt routine क्रम the device driver.
+ * sr_done is the interrupt routine for the device driver.
  *
- * It will be notअगरied on the end of a SCSI पढ़ो / ग_लिखो, and will take one
+ * It will be notified on the end of a SCSI read / write, and will take one
  * of several actions based on success or failure.
  */
-अटल पूर्णांक sr_करोne(काष्ठा scsi_cmnd *SCpnt)
-अणु
-	पूर्णांक result = SCpnt->result;
-	पूर्णांक this_count = scsi_bufflen(SCpnt);
-	पूर्णांक good_bytes = (result == 0 ? this_count : 0);
-	पूर्णांक block_sectors = 0;
-	दीर्घ error_sector;
-	काष्ठा scsi_cd *cd = scsi_cd(SCpnt->request->rq_disk);
+static int sr_done(struct scsi_cmnd *SCpnt)
+{
+	int result = SCpnt->result;
+	int this_count = scsi_bufflen(SCpnt);
+	int good_bytes = (result == 0 ? this_count : 0);
+	int block_sectors = 0;
+	long error_sector;
+	struct scsi_cd *cd = scsi_cd(SCpnt->request->rq_disk);
 
-#अगर_घोषित DEBUG
-	scmd_prपूर्णांकk(KERN_INFO, SCpnt, "done: %x\n", result);
-#पूर्ण_अगर
+#ifdef DEBUG
+	scmd_printk(KERN_INFO, SCpnt, "done: %x\n", result);
+#endif
 
 	/*
 	 * Handle MEDIUM ERRORs or VOLUME OVERFLOWs that indicate partial
 	 * success.  Since this is a relatively rare error condition, no
-	 * care is taken to aव्योम unnecessary additional work such as
-	 * स_नकल's that could be aव्योमed.
+	 * care is taken to avoid unnecessary additional work such as
+	 * memcpy's that could be avoided.
 	 */
-	अगर (driver_byte(result) != 0 &&		/* An error occurred */
-	    (SCpnt->sense_buffer[0] & 0x7f) == 0x70) अणु /* Sense current */
-		चयन (SCpnt->sense_buffer[2]) अणु
-		हाल MEDIUM_ERROR:
-		हाल VOLUME_OVERFLOW:
-		हाल ILLEGAL_REQUEST:
-			अगर (!(SCpnt->sense_buffer[0] & 0x90))
-				अवरोध;
+	if (driver_byte(result) != 0 &&		/* An error occurred */
+	    (SCpnt->sense_buffer[0] & 0x7f) == 0x70) { /* Sense current */
+		switch (SCpnt->sense_buffer[2]) {
+		case MEDIUM_ERROR:
+		case VOLUME_OVERFLOW:
+		case ILLEGAL_REQUEST:
+			if (!(SCpnt->sense_buffer[0] & 0x90))
+				break;
 			error_sector =
 				get_unaligned_be32(&SCpnt->sense_buffer[3]);
-			अगर (SCpnt->request->bio != शून्य)
+			if (SCpnt->request->bio != NULL)
 				block_sectors =
 					bio_sectors(SCpnt->request->bio);
-			अगर (block_sectors < 4)
+			if (block_sectors < 4)
 				block_sectors = 4;
-			अगर (cd->device->sector_size == 2048)
+			if (cd->device->sector_size == 2048)
 				error_sector <<= 2;
 			error_sector &= ~(block_sectors - 1);
 			good_bytes = (error_sector -
 				      blk_rq_pos(SCpnt->request)) << 9;
-			अगर (good_bytes < 0 || good_bytes >= this_count)
+			if (good_bytes < 0 || good_bytes >= this_count)
 				good_bytes = 0;
 			/*
-			 * The SCSI specअगरication allows क्रम the value
-			 * वापसed by READ CAPACITY to be up to 75 2K
-			 * sectors past the last पढ़ोable block.
-			 * Thereक्रमe, अगर we hit a medium error within the
+			 * The SCSI specification allows for the value
+			 * returned by READ CAPACITY to be up to 75 2K
+			 * sectors past the last readable block.
+			 * Therefore, if we hit a medium error within the
 			 * last 75 2K sectors, we decrease the saved size
 			 * value.
 			 */
-			अगर (error_sector < get_capacity(cd->disk) &&
+			if (error_sector < get_capacity(cd->disk) &&
 			    cd->capacity - error_sector < 4 * 75)
 				set_capacity(cd->disk, error_sector);
-			अवरोध;
+			break;
 
-		हाल RECOVERED_ERROR:
+		case RECOVERED_ERROR:
 			good_bytes = this_count;
-			अवरोध;
+			break;
 
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
+		default:
+			break;
+		}
+	}
 
-	वापस good_bytes;
-पूर्ण
+	return good_bytes;
+}
 
-अटल blk_status_t sr_init_command(काष्ठा scsi_cmnd *SCpnt)
-अणु
-	पूर्णांक block = 0, this_count, s_size;
-	काष्ठा scsi_cd *cd;
-	काष्ठा request *rq = SCpnt->request;
+static blk_status_t sr_init_command(struct scsi_cmnd *SCpnt)
+{
+	int block = 0, this_count, s_size;
+	struct scsi_cd *cd;
+	struct request *rq = SCpnt->request;
 	blk_status_t ret;
 
 	ret = scsi_alloc_sgtables(SCpnt);
-	अगर (ret != BLK_STS_OK)
-		वापस ret;
+	if (ret != BLK_STS_OK)
+		return ret;
 	cd = scsi_cd(rq->rq_disk);
 
-	SCSI_LOG_HLQUEUE(1, scmd_prपूर्णांकk(KERN_INFO, SCpnt,
+	SCSI_LOG_HLQUEUE(1, scmd_printk(KERN_INFO, SCpnt,
 		"Doing sr request, block = %d\n", block));
 
-	अगर (!cd->device || !scsi_device_online(cd->device)) अणु
-		SCSI_LOG_HLQUEUE(2, scmd_prपूर्णांकk(KERN_INFO, SCpnt,
+	if (!cd->device || !scsi_device_online(cd->device)) {
+		SCSI_LOG_HLQUEUE(2, scmd_printk(KERN_INFO, SCpnt,
 			"Finishing %u sectors\n", blk_rq_sectors(rq)));
-		SCSI_LOG_HLQUEUE(2, scmd_prपूर्णांकk(KERN_INFO, SCpnt,
+		SCSI_LOG_HLQUEUE(2, scmd_printk(KERN_INFO, SCpnt,
 			"Retry with 0x%p\n", SCpnt));
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (cd->device->changed) अणु
+	if (cd->device->changed) {
 		/*
-		 * quietly refuse to करो anything to a changed disc until the
+		 * quietly refuse to do anything to a changed disc until the
 		 * changed bit has been reset
 		 */
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	s_size = cd->device->sector_size;
-	अगर (s_size != 512 && s_size != 1024 && s_size != 2048) अणु
-		scmd_prपूर्णांकk(KERN_ERR, SCpnt, "bad sector size %d\n", s_size);
-		जाओ out;
-	पूर्ण
+	if (s_size != 512 && s_size != 1024 && s_size != 2048) {
+		scmd_printk(KERN_ERR, SCpnt, "bad sector size %d\n", s_size);
+		goto out;
+	}
 
-	चयन (req_op(rq)) अणु
-	हाल REQ_OP_WRITE:
-		अगर (!cd->ग_लिखोable)
-			जाओ out;
+	switch (req_op(rq)) {
+	case REQ_OP_WRITE:
+		if (!cd->writeable)
+			goto out;
 		SCpnt->cmnd[0] = WRITE_10;
 		cd->cdi.media_written = 1;
-		अवरोध;
-	हाल REQ_OP_READ:
+		break;
+	case REQ_OP_READ:
 		SCpnt->cmnd[0] = READ_10;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		blk_dump_rq_flags(rq, "Unknown sr command");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अणु
-		काष्ठा scatterlist *sg;
-		पूर्णांक i, size = 0, sg_count = scsi_sg_count(SCpnt);
+	{
+		struct scatterlist *sg;
+		int i, size = 0, sg_count = scsi_sg_count(SCpnt);
 
-		scsi_क्रम_each_sg(SCpnt, sg, sg_count, i)
+		scsi_for_each_sg(SCpnt, sg, sg_count, i)
 			size += sg->length;
 
-		अगर (size != scsi_bufflen(SCpnt)) अणु
-			scmd_prपूर्णांकk(KERN_ERR, SCpnt,
+		if (size != scsi_bufflen(SCpnt)) {
+			scmd_printk(KERN_ERR, SCpnt,
 				"mismatch count %d, bytes %d\n",
 				size, scsi_bufflen(SCpnt));
-			अगर (scsi_bufflen(SCpnt) > size)
+			if (scsi_bufflen(SCpnt) > size)
 				SCpnt->sdb.length = size;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/*
-	 * request करोesn't start on hw block boundary, add scatter pads
+	 * request doesn't start on hw block boundary, add scatter pads
 	 */
-	अगर (((अचिन्हित पूर्णांक)blk_rq_pos(rq) % (s_size >> 9)) ||
-	    (scsi_bufflen(SCpnt) % s_size)) अणु
-		scmd_prपूर्णांकk(KERN_NOTICE, SCpnt, "unaligned transfer\n");
-		जाओ out;
-	पूर्ण
+	if (((unsigned int)blk_rq_pos(rq) % (s_size >> 9)) ||
+	    (scsi_bufflen(SCpnt) % s_size)) {
+		scmd_printk(KERN_NOTICE, SCpnt, "unaligned transfer\n");
+		goto out;
+	}
 
 	this_count = (scsi_bufflen(SCpnt) >> 9) / (s_size >> 9);
 
 
-	SCSI_LOG_HLQUEUE(2, scmd_prपूर्णांकk(KERN_INFO, SCpnt,
+	SCSI_LOG_HLQUEUE(2, scmd_printk(KERN_INFO, SCpnt,
 					"%s %d/%u 512 byte blocks.\n",
 					(rq_data_dir(rq) == WRITE) ?
 					"writing" : "reading",
 					this_count, blk_rq_sectors(rq)));
 
 	SCpnt->cmnd[1] = 0;
-	block = (अचिन्हित पूर्णांक)blk_rq_pos(rq) / (s_size >> 9);
+	block = (unsigned int)blk_rq_pos(rq) / (s_size >> 9);
 
-	अगर (this_count > 0xffff) अणु
+	if (this_count > 0xffff) {
 		this_count = 0xffff;
 		SCpnt->sdb.length = this_count * s_size;
-	पूर्ण
+	}
 
 	put_unaligned_be32(block, &SCpnt->cmnd[2]);
 	SCpnt->cmnd[6] = SCpnt->cmnd[9] = 0;
@@ -495,293 +494,293 @@ MODULE_ALIAS_SCSI_DEVICE(TYPE_WORM);
 	SCpnt->cmd_len = 10;
 
 	/*
-	 * This indicates that the command is पढ़ोy from our end to be queued.
+	 * This indicates that the command is ready from our end to be queued.
 	 */
-	वापस BLK_STS_OK;
+	return BLK_STS_OK;
  out:
-	scsi_मुक्त_sgtables(SCpnt);
-	वापस BLK_STS_IOERR;
-पूर्ण
+	scsi_free_sgtables(SCpnt);
+	return BLK_STS_IOERR;
+}
 
-अटल व्योम sr_revalidate_disk(काष्ठा scsi_cd *cd)
-अणु
-	काष्ठा scsi_sense_hdr sshdr;
+static void sr_revalidate_disk(struct scsi_cd *cd)
+{
+	struct scsi_sense_hdr sshdr;
 
-	/* अगर the unit is not पढ़ोy, nothing more to करो */
-	अगर (scsi_test_unit_पढ़ोy(cd->device, SR_TIMEOUT, MAX_RETRIES, &sshdr))
-		वापस;
+	/* if the unit is not ready, nothing more to do */
+	if (scsi_test_unit_ready(cd->device, SR_TIMEOUT, MAX_RETRIES, &sshdr))
+		return;
 	sr_cd_check(&cd->cdi);
 	get_sectorsize(cd);
-पूर्ण
+}
 
-अटल पूर्णांक sr_block_खोलो(काष्ठा block_device *bdev, भ_शेषe_t mode)
-अणु
-	काष्ठा scsi_cd *cd;
-	काष्ठा scsi_device *sdev;
-	पूर्णांक ret = -ENXIO;
+static int sr_block_open(struct block_device *bdev, fmode_t mode)
+{
+	struct scsi_cd *cd;
+	struct scsi_device *sdev;
+	int ret = -ENXIO;
 
 	cd = scsi_cd_get(bdev->bd_disk);
-	अगर (!cd)
-		जाओ out;
+	if (!cd)
+		goto out;
 
 	sdev = cd->device;
-	scsi_स्वतःpm_get_device(sdev);
-	अगर (bdev_check_media_change(bdev))
+	scsi_autopm_get_device(sdev);
+	if (bdev_check_media_change(bdev))
 		sr_revalidate_disk(cd);
 
 	mutex_lock(&cd->lock);
-	ret = cdrom_खोलो(&cd->cdi, bdev, mode);
+	ret = cdrom_open(&cd->cdi, bdev, mode);
 	mutex_unlock(&cd->lock);
 
-	scsi_स्वतःpm_put_device(sdev);
-	अगर (ret)
+	scsi_autopm_put_device(sdev);
+	if (ret)
 		scsi_cd_put(cd);
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम sr_block_release(काष्ठा gendisk *disk, भ_शेषe_t mode)
-अणु
-	काष्ठा scsi_cd *cd = scsi_cd(disk);
+static void sr_block_release(struct gendisk *disk, fmode_t mode)
+{
+	struct scsi_cd *cd = scsi_cd(disk);
 
 	mutex_lock(&cd->lock);
 	cdrom_release(&cd->cdi, mode);
 	mutex_unlock(&cd->lock);
 
 	scsi_cd_put(cd);
-पूर्ण
+}
 
-अटल पूर्णांक sr_block_ioctl(काष्ठा block_device *bdev, भ_शेषe_t mode, अचिन्हित cmd,
-			  अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा scsi_cd *cd = scsi_cd(bdev->bd_disk);
-	काष्ठा scsi_device *sdev = cd->device;
-	व्योम __user *argp = (व्योम __user *)arg;
-	पूर्णांक ret;
+static int sr_block_ioctl(struct block_device *bdev, fmode_t mode, unsigned cmd,
+			  unsigned long arg)
+{
+	struct scsi_cd *cd = scsi_cd(bdev->bd_disk);
+	struct scsi_device *sdev = cd->device;
+	void __user *argp = (void __user *)arg;
+	int ret;
 
 	mutex_lock(&cd->lock);
 
 	ret = scsi_ioctl_block_when_processing_errors(sdev, cmd,
 			(mode & FMODE_NDELAY) != 0);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	scsi_स्वतःpm_get_device(sdev);
+	scsi_autopm_get_device(sdev);
 
 	/*
 	 * Send SCSI addressing ioctls directly to mid level, send other
 	 * ioctls to cdrom/block level.
 	 */
-	चयन (cmd) अणु
-	हाल SCSI_IOCTL_GET_IDLUN:
-	हाल SCSI_IOCTL_GET_BUS_NUMBER:
+	switch (cmd) {
+	case SCSI_IOCTL_GET_IDLUN:
+	case SCSI_IOCTL_GET_BUS_NUMBER:
 		ret = scsi_ioctl(sdev, cmd, argp);
-		जाओ put;
-	पूर्ण
+		goto put;
+	}
 
 	ret = cdrom_ioctl(&cd->cdi, bdev, mode, cmd, arg);
-	अगर (ret != -ENOSYS)
-		जाओ put;
+	if (ret != -ENOSYS)
+		goto put;
 
 	ret = scsi_ioctl(sdev, cmd, argp);
 
 put:
-	scsi_स्वतःpm_put_device(sdev);
+	scsi_autopm_put_device(sdev);
 
 out:
 	mutex_unlock(&cd->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#अगर_घोषित CONFIG_COMPAT
-अटल पूर्णांक sr_block_compat_ioctl(काष्ठा block_device *bdev, भ_शेषe_t mode, अचिन्हित cmd,
-			  अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा scsi_cd *cd = scsi_cd(bdev->bd_disk);
-	काष्ठा scsi_device *sdev = cd->device;
-	व्योम __user *argp = compat_ptr(arg);
-	पूर्णांक ret;
+#ifdef CONFIG_COMPAT
+static int sr_block_compat_ioctl(struct block_device *bdev, fmode_t mode, unsigned cmd,
+			  unsigned long arg)
+{
+	struct scsi_cd *cd = scsi_cd(bdev->bd_disk);
+	struct scsi_device *sdev = cd->device;
+	void __user *argp = compat_ptr(arg);
+	int ret;
 
 	mutex_lock(&cd->lock);
 
 	ret = scsi_ioctl_block_when_processing_errors(sdev, cmd,
 			(mode & FMODE_NDELAY) != 0);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	scsi_स्वतःpm_get_device(sdev);
+	scsi_autopm_get_device(sdev);
 
 	/*
 	 * Send SCSI addressing ioctls directly to mid level, send other
 	 * ioctls to cdrom/block level.
 	 */
-	चयन (cmd) अणु
-	हाल SCSI_IOCTL_GET_IDLUN:
-	हाल SCSI_IOCTL_GET_BUS_NUMBER:
+	switch (cmd) {
+	case SCSI_IOCTL_GET_IDLUN:
+	case SCSI_IOCTL_GET_BUS_NUMBER:
 		ret = scsi_compat_ioctl(sdev, cmd, argp);
-		जाओ put;
-	पूर्ण
+		goto put;
+	}
 
-	ret = cdrom_ioctl(&cd->cdi, bdev, mode, cmd, (अचिन्हित दीर्घ)argp);
-	अगर (ret != -ENOSYS)
-		जाओ put;
+	ret = cdrom_ioctl(&cd->cdi, bdev, mode, cmd, (unsigned long)argp);
+	if (ret != -ENOSYS)
+		goto put;
 
 	ret = scsi_compat_ioctl(sdev, cmd, argp);
 
 put:
-	scsi_स्वतःpm_put_device(sdev);
+	scsi_autopm_put_device(sdev);
 
 out:
 	mutex_unlock(&cd->lock);
-	वापस ret;
+	return ret;
 
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-अटल अचिन्हित पूर्णांक sr_block_check_events(काष्ठा gendisk *disk,
-					  अचिन्हित पूर्णांक clearing)
-अणु
-	अचिन्हित पूर्णांक ret = 0;
-	काष्ठा scsi_cd *cd;
+static unsigned int sr_block_check_events(struct gendisk *disk,
+					  unsigned int clearing)
+{
+	unsigned int ret = 0;
+	struct scsi_cd *cd;
 
 	cd = scsi_cd_get(disk);
-	अगर (!cd)
-		वापस 0;
+	if (!cd)
+		return 0;
 
-	अगर (!atomic_पढ़ो(&cd->device->disk_events_disable_depth))
+	if (!atomic_read(&cd->device->disk_events_disable_depth))
 		ret = cdrom_check_events(&cd->cdi, clearing);
 
 	scsi_cd_put(cd);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा block_device_operations sr_bकरोps =
-अणु
+static const struct block_device_operations sr_bdops =
+{
 	.owner		= THIS_MODULE,
-	.खोलो		= sr_block_खोलो,
+	.open		= sr_block_open,
 	.release	= sr_block_release,
 	.ioctl		= sr_block_ioctl,
-#अगर_घोषित CONFIG_COMPAT
+#ifdef CONFIG_COMPAT
 	.compat_ioctl	= sr_block_compat_ioctl,
-#पूर्ण_अगर
+#endif
 	.check_events	= sr_block_check_events,
-पूर्ण;
+};
 
-अटल पूर्णांक sr_खोलो(काष्ठा cdrom_device_info *cdi, पूर्णांक purpose)
-अणु
-	काष्ठा scsi_cd *cd = cdi->handle;
-	काष्ठा scsi_device *sdev = cd->device;
-	पूर्णांक retval;
+static int sr_open(struct cdrom_device_info *cdi, int purpose)
+{
+	struct scsi_cd *cd = cdi->handle;
+	struct scsi_device *sdev = cd->device;
+	int retval;
 
 	/*
-	 * If the device is in error recovery, रुको until it is करोne.
+	 * If the device is in error recovery, wait until it is done.
 	 * If the device is offline, then disallow any access to it.
 	 */
 	retval = -ENXIO;
-	अगर (!scsi_block_when_processing_errors(sdev))
-		जाओ error_out;
+	if (!scsi_block_when_processing_errors(sdev))
+		goto error_out;
 
-	वापस 0;
+	return 0;
 
 error_out:
-	वापस retval;	
-पूर्ण
+	return retval;	
+}
 
-अटल व्योम sr_release(काष्ठा cdrom_device_info *cdi)
-अणु
-पूर्ण
+static void sr_release(struct cdrom_device_info *cdi)
+{
+}
 
-अटल पूर्णांक sr_probe(काष्ठा device *dev)
-अणु
-	काष्ठा scsi_device *sdev = to_scsi_device(dev);
-	काष्ठा gendisk *disk;
-	काष्ठा scsi_cd *cd;
-	पूर्णांक minor, error;
+static int sr_probe(struct device *dev)
+{
+	struct scsi_device *sdev = to_scsi_device(dev);
+	struct gendisk *disk;
+	struct scsi_cd *cd;
+	int minor, error;
 
-	scsi_स्वतःpm_get_device(sdev);
+	scsi_autopm_get_device(sdev);
 	error = -ENODEV;
-	अगर (sdev->type != TYPE_ROM && sdev->type != TYPE_WORM)
-		जाओ fail;
+	if (sdev->type != TYPE_ROM && sdev->type != TYPE_WORM)
+		goto fail;
 
 	error = -ENOMEM;
-	cd = kzalloc(माप(*cd), GFP_KERNEL);
-	अगर (!cd)
-		जाओ fail;
+	cd = kzalloc(sizeof(*cd), GFP_KERNEL);
+	if (!cd)
+		goto fail;
 
 	kref_init(&cd->kref);
 
 	disk = alloc_disk(1);
-	अगर (!disk)
-		जाओ fail_मुक्त;
+	if (!disk)
+		goto fail_free;
 	mutex_init(&cd->lock);
 
 	spin_lock(&sr_index_lock);
 	minor = find_first_zero_bit(sr_index_bits, SR_DISKS);
-	अगर (minor == SR_DISKS) अणु
+	if (minor == SR_DISKS) {
 		spin_unlock(&sr_index_lock);
 		error = -EBUSY;
-		जाओ fail_put;
-	पूर्ण
+		goto fail_put;
+	}
 	__set_bit(minor, sr_index_bits);
 	spin_unlock(&sr_index_lock);
 
 	disk->major = SCSI_CDROM_MAJOR;
 	disk->first_minor = minor;
-	प्र_लिखो(disk->disk_name, "sr%d", minor);
-	disk->fops = &sr_bकरोps;
+	sprintf(disk->disk_name, "sr%d", minor);
+	disk->fops = &sr_bdops;
 	disk->flags = GENHD_FL_CD | GENHD_FL_BLOCK_EVENTS_ON_EXCL_WRITE;
 	disk->events = DISK_EVENT_MEDIA_CHANGE | DISK_EVENT_EJECT_REQUEST;
 	disk->event_flags = DISK_EVENT_FLAG_POLL | DISK_EVENT_FLAG_UEVENT;
 
-	blk_queue_rq_समयout(sdev->request_queue, SR_TIMEOUT);
+	blk_queue_rq_timeout(sdev->request_queue, SR_TIMEOUT);
 
 	cd->device = sdev;
 	cd->disk = disk;
-	cd->driver = &sr_ढाँचा;
+	cd->driver = &sr_template;
 	cd->disk = disk;
 	cd->capacity = 0x1fffff;
-	cd->device->changed = 1;	/* क्रमce recheck CD type */
+	cd->device->changed = 1;	/* force recheck CD type */
 	cd->media_present = 1;
 	cd->use = 1;
-	cd->पढ़ोcd_known = 0;
-	cd->पढ़ोcd_cdda = 0;
+	cd->readcd_known = 0;
+	cd->readcd_cdda = 0;
 
-	cd->cdi.ops = &sr_करोps;
+	cd->cdi.ops = &sr_dops;
 	cd->cdi.handle = cd;
 	cd->cdi.mask = 0;
 	cd->cdi.capacity = 1;
-	प्र_लिखो(cd->cdi.name, "sr%d", minor);
+	sprintf(cd->cdi.name, "sr%d", minor);
 
-	sdev->sector_size = 2048;	/* A guess, just in हाल */
+	sdev->sector_size = 2048;	/* A guess, just in case */
 
 	/* FIXME: need to handle a get_capabilities failure properly ?? */
 	get_capabilities(cd);
-	sr_venकरोr_init(cd);
+	sr_vendor_init(cd);
 
 	set_capacity(disk, cd->capacity);
-	disk->निजी_data = &cd->driver;
+	disk->private_data = &cd->driver;
 	disk->queue = sdev->request_queue;
 
-	अगर (रेजिस्टर_cdrom(disk, &cd->cdi))
-		जाओ fail_minor;
+	if (register_cdrom(disk, &cd->cdi))
+		goto fail_minor;
 
 	/*
-	 * Initialize block layer runसमय PM stuffs beक्रमe the
-	 * periodic event checking request माला_लो started in add_disk.
+	 * Initialize block layer runtime PM stuffs before the
+	 * periodic event checking request gets started in add_disk.
 	 */
-	blk_pm_runसमय_init(sdev->request_queue, dev);
+	blk_pm_runtime_init(sdev->request_queue, dev);
 
 	dev_set_drvdata(dev, cd);
 	disk->flags |= GENHD_FL_REMOVABLE;
 	sr_revalidate_disk(cd);
-	device_add_disk(&sdev->sdev_gendev, disk, शून्य);
+	device_add_disk(&sdev->sdev_gendev, disk, NULL);
 
-	sdev_prपूर्णांकk(KERN_DEBUG, sdev,
+	sdev_printk(KERN_DEBUG, sdev,
 		    "Attached scsi CD-ROM %s\n", cd->cdi.name);
-	scsi_स्वतःpm_put_device(cd->device);
+	scsi_autopm_put_device(cd->device);
 
-	वापस 0;
+	return 0;
 
 fail_minor:
 	spin_lock(&sr_index_lock);
@@ -790,77 +789,77 @@ fail_minor:
 fail_put:
 	put_disk(disk);
 	mutex_destroy(&cd->lock);
-fail_मुक्त:
-	kमुक्त(cd);
+fail_free:
+	kfree(cd);
 fail:
-	scsi_स्वतःpm_put_device(sdev);
-	वापस error;
-पूर्ण
+	scsi_autopm_put_device(sdev);
+	return error;
+}
 
 
-अटल व्योम get_sectorsize(काष्ठा scsi_cd *cd)
-अणु
-	अचिन्हित अक्षर cmd[10];
-	अचिन्हित अक्षर buffer[8];
-	पूर्णांक the_result, retries = 3;
-	पूर्णांक sector_size;
-	काष्ठा request_queue *queue;
+static void get_sectorsize(struct scsi_cd *cd)
+{
+	unsigned char cmd[10];
+	unsigned char buffer[8];
+	int the_result, retries = 3;
+	int sector_size;
+	struct request_queue *queue;
 
-	करो अणु
+	do {
 		cmd[0] = READ_CAPACITY;
-		स_रखो((व्योम *) &cmd[1], 0, 9);
-		स_रखो(buffer, 0, माप(buffer));
+		memset((void *) &cmd[1], 0, 9);
+		memset(buffer, 0, sizeof(buffer));
 
-		/* Do the command and रुको.. */
+		/* Do the command and wait.. */
 		the_result = scsi_execute_req(cd->device, cmd, DMA_FROM_DEVICE,
-					      buffer, माप(buffer), शून्य,
-					      SR_TIMEOUT, MAX_RETRIES, शून्य);
+					      buffer, sizeof(buffer), NULL,
+					      SR_TIMEOUT, MAX_RETRIES, NULL);
 
 		retries--;
 
-	पूर्ण जबतक (the_result && retries);
+	} while (the_result && retries);
 
 
-	अगर (the_result) अणु
+	if (the_result) {
 		cd->capacity = 0x1fffff;
-		sector_size = 2048;	/* A guess, just in हाल */
-	पूर्ण अन्यथा अणु
-		दीर्घ last_written;
+		sector_size = 2048;	/* A guess, just in case */
+	} else {
+		long last_written;
 
 		cd->capacity = 1 + get_unaligned_be32(&buffer[0]);
 		/*
-		 * READ_CAPACITY करोesn't वापस the correct size on
+		 * READ_CAPACITY doesn't return the correct size on
 		 * certain UDF media.  If last_written is larger, use
 		 * it instead.
 		 *
 		 * http://bugzilla.kernel.org/show_bug.cgi?id=9668
 		 */
-		अगर (!cdrom_get_last_written(&cd->cdi, &last_written))
-			cd->capacity = max_t(दीर्घ, cd->capacity, last_written);
+		if (!cdrom_get_last_written(&cd->cdi, &last_written))
+			cd->capacity = max_t(long, cd->capacity, last_written);
 
 		sector_size = get_unaligned_be32(&buffer[4]);
-		चयन (sector_size) अणु
+		switch (sector_size) {
 			/*
 			 * HP 4020i CD-Recorder reports 2340 byte sectors
 			 * Philips CD-Writers report 2352 byte sectors
 			 *
-			 * Use 2k sectors क्रम them..
+			 * Use 2k sectors for them..
 			 */
-		हाल 0:
-		हाल 2340:
-		हाल 2352:
+		case 0:
+		case 2340:
+		case 2352:
 			sector_size = 2048;
 			fallthrough;
-		हाल 2048:
+		case 2048:
 			cd->capacity *= 4;
 			fallthrough;
-		हाल 512:
-			अवरोध;
-		शेष:
-			sr_prपूर्णांकk(KERN_INFO, cd,
+		case 512:
+			break;
+		default:
+			sr_printk(KERN_INFO, cd,
 				  "unsupported sector size %d.", sector_size);
 			cd->capacity = 0;
-		पूर्ण
+		}
 
 		cd->device->sector_size = sector_size;
 
@@ -869,24 +868,24 @@ fail:
 		 * what the device is capable of.
 		 */
 		set_capacity(cd->disk, cd->capacity);
-	पूर्ण
+	}
 
 	queue = cd->device->request_queue;
 	blk_queue_logical_block_size(queue, sector_size);
 
-	वापस;
-पूर्ण
+	return;
+}
 
-अटल व्योम get_capabilities(काष्ठा scsi_cd *cd)
-अणु
-	अचिन्हित अक्षर *buffer;
-	काष्ठा scsi_mode_data data;
-	काष्ठा scsi_sense_hdr sshdr;
-	अचिन्हित पूर्णांक ms_len = 128;
-	पूर्णांक rc, n;
+static void get_capabilities(struct scsi_cd *cd)
+{
+	unsigned char *buffer;
+	struct scsi_mode_data data;
+	struct scsi_sense_hdr sshdr;
+	unsigned int ms_len = 128;
+	int rc, n;
 
-	अटल स्थिर अक्षर *loadmech[] =
-	अणु
+	static const char *loadmech[] =
+	{
 		"caddy",
 		"tray",
 		"pop-up",
@@ -895,180 +894,180 @@ fail:
 		"cartridge changer",
 		"",
 		""
-	पूर्ण;
+	};
 
 
 	/* allocate transfer buffer */
-	buffer = kदो_स्मृति(512, GFP_KERNEL | GFP_DMA);
-	अगर (!buffer) अणु
-		sr_prपूर्णांकk(KERN_ERR, cd, "out of memory.\n");
-		वापस;
-	पूर्ण
+	buffer = kmalloc(512, GFP_KERNEL | GFP_DMA);
+	if (!buffer) {
+		sr_printk(KERN_ERR, cd, "out of memory.\n");
+		return;
+	}
 
 	/* eat unit attentions */
-	scsi_test_unit_पढ़ोy(cd->device, SR_TIMEOUT, MAX_RETRIES, &sshdr);
+	scsi_test_unit_ready(cd->device, SR_TIMEOUT, MAX_RETRIES, &sshdr);
 
-	/* ask क्रम mode page 0x2a */
+	/* ask for mode page 0x2a */
 	rc = scsi_mode_sense(cd->device, 0, 0x2a, buffer, ms_len,
-			     SR_TIMEOUT, 3, &data, शून्य);
+			     SR_TIMEOUT, 3, &data, NULL);
 
-	अगर (!scsi_status_is_good(rc) || data.length > ms_len ||
-	    data.header_length + data.block_descriptor_length > data.length) अणु
-		/* failed, drive करोesn't have capabilities mode page */
+	if (!scsi_status_is_good(rc) || data.length > ms_len ||
+	    data.header_length + data.block_descriptor_length > data.length) {
+		/* failed, drive doesn't have capabilities mode page */
 		cd->cdi.speed = 1;
 		cd->cdi.mask |= (CDC_CD_R | CDC_CD_RW | CDC_DVD_R |
 				 CDC_DVD | CDC_DVD_RAM |
 				 CDC_SELECT_DISC | CDC_SELECT_SPEED |
 				 CDC_MRW | CDC_MRW_W | CDC_RAM);
-		kमुक्त(buffer);
-		sr_prपूर्णांकk(KERN_INFO, cd, "scsi-1 drive");
-		वापस;
-	पूर्ण
+		kfree(buffer);
+		sr_printk(KERN_INFO, cd, "scsi-1 drive");
+		return;
+	}
 
 	n = data.header_length + data.block_descriptor_length;
 	cd->cdi.speed = get_unaligned_be16(&buffer[n + 8]) / 176;
-	cd->पढ़ोcd_known = 1;
-	cd->पढ़ोcd_cdda = buffer[n + 5] & 0x01;
-	/* prपूर्णांक some capability bits */
-	sr_prपूर्णांकk(KERN_INFO, cd,
+	cd->readcd_known = 1;
+	cd->readcd_cdda = buffer[n + 5] & 0x01;
+	/* print some capability bits */
+	sr_printk(KERN_INFO, cd,
 		  "scsi3-mmc drive: %dx/%dx %s%s%s%s%s%s\n",
 		  get_unaligned_be16(&buffer[n + 14]) / 176,
 		  cd->cdi.speed,
 		  buffer[n + 3] & 0x01 ? "writer " : "", /* CD Writer */
 		  buffer[n + 3] & 0x20 ? "dvd-ram " : "",
-		  buffer[n + 2] & 0x02 ? "cd/rw " : "", /* can पढ़ो reग_लिखोable */
-		  buffer[n + 4] & 0x20 ? "xa/form2 " : "",	/* can पढ़ो xa/from2 */
-		  buffer[n + 5] & 0x01 ? "cdda " : "", /* can पढ़ो audio data */
+		  buffer[n + 2] & 0x02 ? "cd/rw " : "", /* can read rewriteable */
+		  buffer[n + 4] & 0x20 ? "xa/form2 " : "",	/* can read xa/from2 */
+		  buffer[n + 5] & 0x01 ? "cdda " : "", /* can read audio data */
 		  loadmech[buffer[n + 6] >> 5]);
-	अगर ((buffer[n + 6] >> 5) == 0)
-		/* caddy drives can't बंद tray... */
+	if ((buffer[n + 6] >> 5) == 0)
+		/* caddy drives can't close tray... */
 		cd->cdi.mask |= CDC_CLOSE_TRAY;
-	अगर ((buffer[n + 2] & 0x8) == 0)
+	if ((buffer[n + 2] & 0x8) == 0)
 		/* not a DVD drive */
 		cd->cdi.mask |= CDC_DVD;
-	अगर ((buffer[n + 3] & 0x20) == 0)
-		/* can't ग_लिखो DVD-RAM media */
+	if ((buffer[n + 3] & 0x20) == 0)
+		/* can't write DVD-RAM media */
 		cd->cdi.mask |= CDC_DVD_RAM;
-	अगर ((buffer[n + 3] & 0x10) == 0)
-		/* can't ग_लिखो DVD-R media */
+	if ((buffer[n + 3] & 0x10) == 0)
+		/* can't write DVD-R media */
 		cd->cdi.mask |= CDC_DVD_R;
-	अगर ((buffer[n + 3] & 0x2) == 0)
-		/* can't ग_लिखो CD-RW media */
+	if ((buffer[n + 3] & 0x2) == 0)
+		/* can't write CD-RW media */
 		cd->cdi.mask |= CDC_CD_RW;
-	अगर ((buffer[n + 3] & 0x1) == 0)
-		/* can't ग_लिखो CD-R media */
+	if ((buffer[n + 3] & 0x1) == 0)
+		/* can't write CD-R media */
 		cd->cdi.mask |= CDC_CD_R;
-	अगर ((buffer[n + 6] & 0x8) == 0)
+	if ((buffer[n + 6] & 0x8) == 0)
 		/* can't eject */
 		cd->cdi.mask |= CDC_OPEN_TRAY;
 
-	अगर ((buffer[n + 6] >> 5) == mechtype_inभागidual_changer ||
+	if ((buffer[n + 6] >> 5) == mechtype_individual_changer ||
 	    (buffer[n + 6] >> 5) == mechtype_cartridge_changer)
 		cd->cdi.capacity =
 		    cdrom_number_of_slots(&cd->cdi);
-	अगर (cd->cdi.capacity <= 1)
+	if (cd->cdi.capacity <= 1)
 		/* not a changer */
 		cd->cdi.mask |= CDC_SELECT_DISC;
-	/*अन्यथा    I करोn't think it can बंद its tray
+	/*else    I don't think it can close its tray
 		cd->cdi.mask |= CDC_CLOSE_TRAY; */
 
 	/*
-	 * अगर DVD-RAM, MRW-W or CD-RW, we are अक्रमomly writable
+	 * if DVD-RAM, MRW-W or CD-RW, we are randomly writable
 	 */
-	अगर ((cd->cdi.mask & (CDC_DVD_RAM | CDC_MRW_W | CDC_RAM | CDC_CD_RW)) !=
-			(CDC_DVD_RAM | CDC_MRW_W | CDC_RAM | CDC_CD_RW)) अणु
-		cd->ग_लिखोable = 1;
-	पूर्ण
+	if ((cd->cdi.mask & (CDC_DVD_RAM | CDC_MRW_W | CDC_RAM | CDC_CD_RW)) !=
+			(CDC_DVD_RAM | CDC_MRW_W | CDC_RAM | CDC_CD_RW)) {
+		cd->writeable = 1;
+	}
 
-	kमुक्त(buffer);
-पूर्ण
+	kfree(buffer);
+}
 
 /*
- * sr_packet() is the entry poपूर्णांक क्रम the generic commands generated
- * by the Unअगरorm CD-ROM layer.
+ * sr_packet() is the entry point for the generic commands generated
+ * by the Uniform CD-ROM layer.
  */
-अटल पूर्णांक sr_packet(काष्ठा cdrom_device_info *cdi,
-		काष्ठा packet_command *cgc)
-अणु
-	काष्ठा scsi_cd *cd = cdi->handle;
-	काष्ठा scsi_device *sdev = cd->device;
+static int sr_packet(struct cdrom_device_info *cdi,
+		struct packet_command *cgc)
+{
+	struct scsi_cd *cd = cdi->handle;
+	struct scsi_device *sdev = cd->device;
 
-	अगर (cgc->cmd[0] == GPCMD_READ_DISC_INFO && sdev->no_पढ़ो_disc_info)
-		वापस -EDRIVE_CANT_DO_THIS;
+	if (cgc->cmd[0] == GPCMD_READ_DISC_INFO && sdev->no_read_disc_info)
+		return -EDRIVE_CANT_DO_THIS;
 
-	अगर (cgc->समयout <= 0)
-		cgc->समयout = IOCTL_TIMEOUT;
+	if (cgc->timeout <= 0)
+		cgc->timeout = IOCTL_TIMEOUT;
 
-	sr_करो_ioctl(cd, cgc);
+	sr_do_ioctl(cd, cgc);
 
-	वापस cgc->stat;
-पूर्ण
+	return cgc->stat;
+}
 
 /**
- *	sr_kref_release - Called to मुक्त the scsi_cd काष्ठाure
- *	@kref: poपूर्णांकer to embedded kref
+ *	sr_kref_release - Called to free the scsi_cd structure
+ *	@kref: pointer to embedded kref
  *
  *	sr_ref_mutex must be held entering this routine.  Because it is
  *	called on last put, you should always use the scsi_cd_get()
  *	scsi_cd_put() helpers which manipulate the semaphore directly
- *	and never करो a direct kref_put().
+ *	and never do a direct kref_put().
  **/
-अटल व्योम sr_kref_release(काष्ठा kref *kref)
-अणु
-	काष्ठा scsi_cd *cd = container_of(kref, काष्ठा scsi_cd, kref);
-	काष्ठा gendisk *disk = cd->disk;
+static void sr_kref_release(struct kref *kref)
+{
+	struct scsi_cd *cd = container_of(kref, struct scsi_cd, kref);
+	struct gendisk *disk = cd->disk;
 
 	spin_lock(&sr_index_lock);
 	clear_bit(MINOR(disk_devt(disk)), sr_index_bits);
 	spin_unlock(&sr_index_lock);
 
-	unरेजिस्टर_cdrom(&cd->cdi);
+	unregister_cdrom(&cd->cdi);
 
-	disk->निजी_data = शून्य;
+	disk->private_data = NULL;
 
 	put_disk(disk);
 
 	mutex_destroy(&cd->lock);
 
-	kमुक्त(cd);
-पूर्ण
+	kfree(cd);
+}
 
-अटल पूर्णांक sr_हटाओ(काष्ठा device *dev)
-अणु
-	काष्ठा scsi_cd *cd = dev_get_drvdata(dev);
+static int sr_remove(struct device *dev)
+{
+	struct scsi_cd *cd = dev_get_drvdata(dev);
 
-	scsi_स्वतःpm_get_device(cd->device);
+	scsi_autopm_get_device(cd->device);
 
 	del_gendisk(cd->disk);
-	dev_set_drvdata(dev, शून्य);
+	dev_set_drvdata(dev, NULL);
 
 	mutex_lock(&sr_ref_mutex);
 	kref_put(&cd->kref, sr_kref_release);
 	mutex_unlock(&sr_ref_mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __init init_sr(व्योम)
-अणु
-	पूर्णांक rc;
+static int __init init_sr(void)
+{
+	int rc;
 
-	rc = रेजिस्टर_blkdev(SCSI_CDROM_MAJOR, "sr");
-	अगर (rc)
-		वापस rc;
-	rc = scsi_रेजिस्टर_driver(&sr_ढाँचा.gendrv);
-	अगर (rc)
-		unरेजिस्टर_blkdev(SCSI_CDROM_MAJOR, "sr");
+	rc = register_blkdev(SCSI_CDROM_MAJOR, "sr");
+	if (rc)
+		return rc;
+	rc = scsi_register_driver(&sr_template.gendrv);
+	if (rc)
+		unregister_blkdev(SCSI_CDROM_MAJOR, "sr");
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम __निकास निकास_sr(व्योम)
-अणु
-	scsi_unरेजिस्टर_driver(&sr_ढाँचा.gendrv);
-	unरेजिस्टर_blkdev(SCSI_CDROM_MAJOR, "sr");
-पूर्ण
+static void __exit exit_sr(void)
+{
+	scsi_unregister_driver(&sr_template.gendrv);
+	unregister_blkdev(SCSI_CDROM_MAJOR, "sr");
+}
 
 module_init(init_sr);
-module_निकास(निकास_sr);
+module_exit(exit_sr);
 MODULE_LICENSE("GPL");

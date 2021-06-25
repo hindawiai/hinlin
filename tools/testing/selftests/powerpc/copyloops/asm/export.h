@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#घोषणा EXPORT_SYMBOL(x)
-#घोषणा EXPORT_SYMBOL_GPL(x)
-#घोषणा EXPORT_SYMBOL_KASAN(x)
+/* SPDX-License-Identifier: GPL-2.0 */
+#define EXPORT_SYMBOL(x)
+#define EXPORT_SYMBOL_GPL(x)
+#define EXPORT_SYMBOL_KASAN(x)

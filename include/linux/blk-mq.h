@@ -1,140 +1,139 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित BLK_MQ_H
-#घोषणा BLK_MQ_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef BLK_MQ_H
+#define BLK_MQ_H
 
-#समावेश <linux/blkdev.h>
-#समावेश <linux/sbiपंचांगap.h>
-#समावेश <linux/srcu.h>
-#समावेश <linux/lockdep.h>
+#include <linux/blkdev.h>
+#include <linux/sbitmap.h>
+#include <linux/srcu.h>
+#include <linux/lockdep.h>
 
-काष्ठा blk_mq_tags;
-काष्ठा blk_flush_queue;
+struct blk_mq_tags;
+struct blk_flush_queue;
 
 /**
- * काष्ठा blk_mq_hw_ctx - State क्रम a hardware queue facing the hardware
+ * struct blk_mq_hw_ctx - State for a hardware queue facing the hardware
  * block device
  */
-काष्ठा blk_mq_hw_ctx अणु
-	काष्ठा अणु
+struct blk_mq_hw_ctx {
+	struct {
 		/** @lock: Protects the dispatch list. */
 		spinlock_t		lock;
 		/**
-		 * @dispatch: Used क्रम requests that are पढ़ोy to be
-		 * dispatched to the hardware but क्रम some reason (e.g. lack of
+		 * @dispatch: Used for requests that are ready to be
+		 * dispatched to the hardware but for some reason (e.g. lack of
 		 * resources) could not be sent to the hardware. As soon as the
 		 * driver can send new requests, requests at this list will
-		 * be sent first क्रम a fairer dispatch.
+		 * be sent first for a fairer dispatch.
 		 */
-		काष्ठा list_head	dispatch;
+		struct list_head	dispatch;
 		 /**
 		  * @state: BLK_MQ_S_* flags. Defines the state of the hw
 		  * queue (active, scheduled to restart, stopped).
 		  */
-		अचिन्हित दीर्घ		state;
-	पूर्ण ____cacheline_aligned_in_smp;
+		unsigned long		state;
+	} ____cacheline_aligned_in_smp;
 
 	/**
-	 * @run_work: Used क्रम scheduling a hardware queue run at a later समय.
+	 * @run_work: Used for scheduling a hardware queue run at a later time.
 	 */
-	काष्ठा delayed_work	run_work;
+	struct delayed_work	run_work;
 	/** @cpumask: Map of available CPUs where this hctx can run. */
 	cpumask_var_t		cpumask;
 	/**
-	 * @next_cpu: Used by blk_mq_hctx_next_cpu() क्रम round-robin CPU
+	 * @next_cpu: Used by blk_mq_hctx_next_cpu() for round-robin CPU
 	 * selection from @cpumask.
 	 */
-	पूर्णांक			next_cpu;
+	int			next_cpu;
 	/**
-	 * @next_cpu_batch: Counter of how many works left in the batch beक्रमe
+	 * @next_cpu_batch: Counter of how many works left in the batch before
 	 * changing to the next CPU.
 	 */
-	पूर्णांक			next_cpu_batch;
+	int			next_cpu_batch;
 
 	/** @flags: BLK_MQ_F_* flags. Defines the behaviour of the queue. */
-	अचिन्हित दीर्घ		flags;
+	unsigned long		flags;
 
 	/**
-	 * @sched_data: Poपूर्णांकer owned by the IO scheduler attached to a request
-	 * queue. It's up to the IO scheduler how to use this poपूर्णांकer.
+	 * @sched_data: Pointer owned by the IO scheduler attached to a request
+	 * queue. It's up to the IO scheduler how to use this pointer.
 	 */
-	व्योम			*sched_data;
+	void			*sched_data;
 	/**
-	 * @queue: Poपूर्णांकer to the request queue that owns this hardware context.
+	 * @queue: Pointer to the request queue that owns this hardware context.
 	 */
-	काष्ठा request_queue	*queue;
-	/** @fq: Queue of requests that need to perक्रमm a flush operation. */
-	काष्ठा blk_flush_queue	*fq;
+	struct request_queue	*queue;
+	/** @fq: Queue of requests that need to perform a flush operation. */
+	struct blk_flush_queue	*fq;
 
 	/**
-	 * @driver_data: Poपूर्णांकer to data owned by the block driver that created
+	 * @driver_data: Pointer to data owned by the block driver that created
 	 * this hctx
 	 */
-	व्योम			*driver_data;
+	void			*driver_data;
 
 	/**
-	 * @ctx_map: Biपंचांगap क्रम each software queue. If bit is on, there is a
+	 * @ctx_map: Bitmap for each software queue. If bit is on, there is a
 	 * pending request in that software queue.
 	 */
-	काष्ठा sbiपंचांगap		ctx_map;
+	struct sbitmap		ctx_map;
 
 	/**
 	 * @dispatch_from: Software queue to be used when no scheduler was
 	 * selected.
 	 */
-	काष्ठा blk_mq_ctx	*dispatch_from;
+	struct blk_mq_ctx	*dispatch_from;
 	/**
 	 * @dispatch_busy: Number used by blk_mq_update_dispatch_busy() to
-	 * decide अगर the hw_queue is busy using Exponential Weighted Moving
+	 * decide if the hw_queue is busy using Exponential Weighted Moving
 	 * Average algorithm.
 	 */
-	अचिन्हित पूर्णांक		dispatch_busy;
+	unsigned int		dispatch_busy;
 
 	/** @type: HCTX_TYPE_* flags. Type of hardware queue. */
-	अचिन्हित लघु		type;
+	unsigned short		type;
 	/** @nr_ctx: Number of software queues. */
-	अचिन्हित लघु		nr_ctx;
+	unsigned short		nr_ctx;
 	/** @ctxs: Array of software queues. */
-	काष्ठा blk_mq_ctx	**ctxs;
+	struct blk_mq_ctx	**ctxs;
 
-	/** @dispatch_रुको_lock: Lock क्रम dispatch_रुको queue. */
-	spinlock_t		dispatch_रुको_lock;
+	/** @dispatch_wait_lock: Lock for dispatch_wait queue. */
+	spinlock_t		dispatch_wait_lock;
 	/**
-	 * @dispatch_रुको: Waitqueue to put requests when there is no tag
-	 * available at the moment, to रुको क्रम another try in the future.
+	 * @dispatch_wait: Waitqueue to put requests when there is no tag
+	 * available at the moment, to wait for another try in the future.
 	 */
-	रुको_queue_entry_t	dispatch_रुको;
+	wait_queue_entry_t	dispatch_wait;
 
 	/**
-	 * @रुको_index: Index of next available dispatch_रुको queue to insert
+	 * @wait_index: Index of next available dispatch_wait queue to insert
 	 * requests.
 	 */
-	atomic_t		रुको_index;
+	atomic_t		wait_index;
 
 	/**
 	 * @tags: Tags owned by the block driver. A tag at this set is only
-	 * asचिन्हित when a request is dispatched from a hardware queue.
+	 * assigned when a request is dispatched from a hardware queue.
 	 */
-	काष्ठा blk_mq_tags	*tags;
+	struct blk_mq_tags	*tags;
 	/**
 	 * @sched_tags: Tags owned by I/O scheduler. If there is an I/O
-	 * scheduler associated with a request queue, a tag is asचिन्हित when
+	 * scheduler associated with a request queue, a tag is assigned when
 	 * that request is allocated. Else, this member is not used.
 	 */
-	काष्ठा blk_mq_tags	*sched_tags;
+	struct blk_mq_tags	*sched_tags;
 
 	/** @queued: Number of queued requests. */
-	अचिन्हित दीर्घ		queued;
+	unsigned long		queued;
 	/** @run: Number of dispatched requests. */
-	अचिन्हित दीर्घ		run;
-#घोषणा BLK_MQ_MAX_DISPATCH_ORDER	7
+	unsigned long		run;
+#define BLK_MQ_MAX_DISPATCH_ORDER	7
 	/** @dispatched: Number of dispatch requests by queue. */
-	अचिन्हित दीर्घ		dispatched[BLK_MQ_MAX_DISPATCH_ORDER];
+	unsigned long		dispatched[BLK_MQ_MAX_DISPATCH_ORDER];
 
 	/** @numa_node: NUMA node the storage adapter has been connected to. */
-	अचिन्हित पूर्णांक		numa_node;
+	unsigned int		numa_node;
 	/** @queue_num: Index of this hardware queue. */
-	अचिन्हित पूर्णांक		queue_num;
+	unsigned int		queue_num;
 
 	/**
 	 * @nr_active: Number of active requests. Only used when a tag set is
@@ -142,264 +141,264 @@
 	 */
 	atomic_t		nr_active;
 
-	/** @cpuhp_online: List to store request अगर CPU is going to die */
-	काष्ठा hlist_node	cpuhp_online;
-	/** @cpuhp_dead: List to store request अगर some CPU die. */
-	काष्ठा hlist_node	cpuhp_dead;
-	/** @kobj: Kernel object क्रम sysfs. */
-	काष्ठा kobject		kobj;
+	/** @cpuhp_online: List to store request if CPU is going to die */
+	struct hlist_node	cpuhp_online;
+	/** @cpuhp_dead: List to store request if some CPU die. */
+	struct hlist_node	cpuhp_dead;
+	/** @kobj: Kernel object for sysfs. */
+	struct kobject		kobj;
 
-	/** @poll_considered: Count बार blk_poll() was called. */
-	अचिन्हित दीर्घ		poll_considered;
+	/** @poll_considered: Count times blk_poll() was called. */
+	unsigned long		poll_considered;
 	/** @poll_invoked: Count how many requests blk_poll() polled. */
-	अचिन्हित दीर्घ		poll_invoked;
+	unsigned long		poll_invoked;
 	/** @poll_success: Count how many polled requests were completed. */
-	अचिन्हित दीर्घ		poll_success;
+	unsigned long		poll_success;
 
-#अगर_घोषित CONFIG_BLK_DEBUG_FS
+#ifdef CONFIG_BLK_DEBUG_FS
 	/**
-	 * @debugfs_dir: debugfs directory क्रम this hardware queue. Named
+	 * @debugfs_dir: debugfs directory for this hardware queue. Named
 	 * as cpu<cpu_number>.
 	 */
-	काष्ठा dentry		*debugfs_dir;
-	/** @sched_debugfs_dir:	debugfs directory क्रम the scheduler. */
-	काष्ठा dentry		*sched_debugfs_dir;
-#पूर्ण_अगर
+	struct dentry		*debugfs_dir;
+	/** @sched_debugfs_dir:	debugfs directory for the scheduler. */
+	struct dentry		*sched_debugfs_dir;
+#endif
 
 	/**
-	 * @hctx_list: अगर this hctx is not in use, this is an entry in
+	 * @hctx_list: if this hctx is not in use, this is an entry in
 	 * q->unused_hctx_list.
 	 */
-	काष्ठा list_head	hctx_list;
+	struct list_head	hctx_list;
 
 	/**
 	 * @srcu: Sleepable RCU. Use as lock when type of the hardware queue is
 	 * blocking (BLK_MQ_F_BLOCKING). Must be the last member - see also
 	 * blk_mq_hw_ctx_size().
 	 */
-	काष्ठा srcu_काष्ठा	srcu[];
-पूर्ण;
+	struct srcu_struct	srcu[];
+};
 
 /**
- * काष्ठा blk_mq_queue_map - Map software queues to hardware queues
+ * struct blk_mq_queue_map - Map software queues to hardware queues
  * @mq_map:       CPU ID to hardware queue index map. This is an array
  *	with nr_cpu_ids elements. Each element has a value in the range
  *	[@queue_offset, @queue_offset + @nr_queues).
  * @nr_queues:    Number of hardware queues to map CPU IDs onto.
  * @queue_offset: First hardware queue to map onto. Used by the PCIe NVMe
- *	driver to map each hardware queue type (क्रमागत hctx_type) onto a distinct
+ *	driver to map each hardware queue type (enum hctx_type) onto a distinct
  *	set of hardware queues.
  */
-काष्ठा blk_mq_queue_map अणु
-	अचिन्हित पूर्णांक *mq_map;
-	अचिन्हित पूर्णांक nr_queues;
-	अचिन्हित पूर्णांक queue_offset;
-पूर्ण;
+struct blk_mq_queue_map {
+	unsigned int *mq_map;
+	unsigned int nr_queues;
+	unsigned int queue_offset;
+};
 
 /**
- * क्रमागत hctx_type - Type of hardware queue
- * @HCTX_TYPE_DEFAULT:	All I/O not otherwise accounted क्रम.
- * @HCTX_TYPE_READ:	Just क्रम READ I/O.
+ * enum hctx_type - Type of hardware queue
+ * @HCTX_TYPE_DEFAULT:	All I/O not otherwise accounted for.
+ * @HCTX_TYPE_READ:	Just for READ I/O.
  * @HCTX_TYPE_POLL:	Polled I/O of any kind.
  * @HCTX_MAX_TYPES:	Number of types of hctx.
  */
-क्रमागत hctx_type अणु
+enum hctx_type {
 	HCTX_TYPE_DEFAULT,
 	HCTX_TYPE_READ,
 	HCTX_TYPE_POLL,
 
 	HCTX_MAX_TYPES,
-पूर्ण;
+};
 
 /**
- * काष्ठा blk_mq_tag_set - tag set that can be shared between request queues
- * @map:	   One or more ctx -> hctx mappings. One map exists क्रम each
- *		   hardware queue type (क्रमागत hctx_type) that the driver wishes
+ * struct blk_mq_tag_set - tag set that can be shared between request queues
+ * @map:	   One or more ctx -> hctx mappings. One map exists for each
+ *		   hardware queue type (enum hctx_type) that the driver wishes
  *		   to support. There are no restrictions on maps being of the
  *		   same size, and it's perfectly legal to share maps between
  *		   types.
  * @nr_maps:	   Number of elements in the @map array. A number in the range
  *		   [1, HCTX_MAX_TYPES].
- * @ops:	   Poपूर्णांकers to functions that implement block driver behavior.
+ * @ops:	   Pointers to functions that implement block driver behavior.
  * @nr_hw_queues:  Number of hardware queues supported by the block driver that
- *		   owns this data काष्ठाure.
+ *		   owns this data structure.
  * @queue_depth:   Number of tags per hardware queue, reserved tags included.
- * @reserved_tags: Number of tags to set aside क्रम BLK_MQ_REQ_RESERVED tag
+ * @reserved_tags: Number of tags to set aside for BLK_MQ_REQ_RESERVED tag
  *		   allocations.
  * @cmd_size:	   Number of additional bytes to allocate per request. The block
  *		   driver owns these additional bytes.
  * @numa_node:	   NUMA node the storage adapter has been connected to.
- * @समयout:	   Request processing समयout in jअगरfies.
+ * @timeout:	   Request processing timeout in jiffies.
  * @flags:	   Zero or more BLK_MQ_F_* flags.
- * @driver_data:   Poपूर्णांकer to data owned by the block driver that created this
+ * @driver_data:   Pointer to data owned by the block driver that created this
  *		   tag set.
- * @active_queues_shared_sbiपंचांगap:
+ * @active_queues_shared_sbitmap:
  * 		   number of active request queues per tag set.
- * @__biपंचांगap_tags: A shared tags sbiपंचांगap, used over all hctx's
+ * @__bitmap_tags: A shared tags sbitmap, used over all hctx's
  * @__breserved_tags:
- *		   A shared reserved tags sbiपंचांगap, used over all hctx's
+ *		   A shared reserved tags sbitmap, used over all hctx's
  * @tags:	   Tag sets. One tag set per hardware queue. Has @nr_hw_queues
  *		   elements.
  * @tag_list_lock: Serializes tag_list accesses.
  * @tag_list:	   List of the request queues that use this tag set. See also
  *		   request_queue.tag_set_list.
  */
-काष्ठा blk_mq_tag_set अणु
-	काष्ठा blk_mq_queue_map	map[HCTX_MAX_TYPES];
-	अचिन्हित पूर्णांक		nr_maps;
-	स्थिर काष्ठा blk_mq_ops	*ops;
-	अचिन्हित पूर्णांक		nr_hw_queues;
-	अचिन्हित पूर्णांक		queue_depth;
-	अचिन्हित पूर्णांक		reserved_tags;
-	अचिन्हित पूर्णांक		cmd_size;
-	पूर्णांक			numa_node;
-	अचिन्हित पूर्णांक		समयout;
-	अचिन्हित पूर्णांक		flags;
-	व्योम			*driver_data;
-	atomic_t		active_queues_shared_sbiपंचांगap;
+struct blk_mq_tag_set {
+	struct blk_mq_queue_map	map[HCTX_MAX_TYPES];
+	unsigned int		nr_maps;
+	const struct blk_mq_ops	*ops;
+	unsigned int		nr_hw_queues;
+	unsigned int		queue_depth;
+	unsigned int		reserved_tags;
+	unsigned int		cmd_size;
+	int			numa_node;
+	unsigned int		timeout;
+	unsigned int		flags;
+	void			*driver_data;
+	atomic_t		active_queues_shared_sbitmap;
 
-	काष्ठा sbiपंचांगap_queue	__biपंचांगap_tags;
-	काष्ठा sbiपंचांगap_queue	__breserved_tags;
-	काष्ठा blk_mq_tags	**tags;
+	struct sbitmap_queue	__bitmap_tags;
+	struct sbitmap_queue	__breserved_tags;
+	struct blk_mq_tags	**tags;
 
-	काष्ठा mutex		tag_list_lock;
-	काष्ठा list_head	tag_list;
-पूर्ण;
+	struct mutex		tag_list_lock;
+	struct list_head	tag_list;
+};
 
 /**
- * काष्ठा blk_mq_queue_data - Data about a request inserted in a queue
+ * struct blk_mq_queue_data - Data about a request inserted in a queue
  *
- * @rq:   Request poपूर्णांकer.
+ * @rq:   Request pointer.
  * @last: If it is the last request in the queue.
  */
-काष्ठा blk_mq_queue_data अणु
-	काष्ठा request *rq;
+struct blk_mq_queue_data {
+	struct request *rq;
 	bool last;
-पूर्ण;
+};
 
-प्रकार bool (busy_iter_fn)(काष्ठा blk_mq_hw_ctx *, काष्ठा request *, व्योम *,
+typedef bool (busy_iter_fn)(struct blk_mq_hw_ctx *, struct request *, void *,
 		bool);
-प्रकार bool (busy_tag_iter_fn)(काष्ठा request *, व्योम *, bool);
+typedef bool (busy_tag_iter_fn)(struct request *, void *, bool);
 
 /**
- * काष्ठा blk_mq_ops - Callback functions that implements block driver
+ * struct blk_mq_ops - Callback functions that implements block driver
  * behaviour.
  */
-काष्ठा blk_mq_ops अणु
+struct blk_mq_ops {
 	/**
 	 * @queue_rq: Queue a new request from block IO.
 	 */
-	blk_status_t (*queue_rq)(काष्ठा blk_mq_hw_ctx *,
-				 स्थिर काष्ठा blk_mq_queue_data *);
+	blk_status_t (*queue_rq)(struct blk_mq_hw_ctx *,
+				 const struct blk_mq_queue_data *);
 
 	/**
 	 * @commit_rqs: If a driver uses bd->last to judge when to submit
-	 * requests to hardware, it must define this function. In हाल of errors
+	 * requests to hardware, it must define this function. In case of errors
 	 * that make us stop issuing further requests, this hook serves the
 	 * purpose of kicking the hardware (which the last request otherwise
-	 * would have करोne).
+	 * would have done).
 	 */
-	व्योम (*commit_rqs)(काष्ठा blk_mq_hw_ctx *);
+	void (*commit_rqs)(struct blk_mq_hw_ctx *);
 
 	/**
-	 * @get_budget: Reserve budget beक्रमe queue request, once .queue_rq is
+	 * @get_budget: Reserve budget before queue request, once .queue_rq is
 	 * run, it is driver's responsibility to release the
-	 * reserved budget. Also we have to handle failure हाल
-	 * of .get_budget क्रम aव्योमing I/O deadlock.
+	 * reserved budget. Also we have to handle failure case
+	 * of .get_budget for avoiding I/O deadlock.
 	 */
-	पूर्णांक (*get_budget)(काष्ठा request_queue *);
+	int (*get_budget)(struct request_queue *);
 
 	/**
 	 * @put_budget: Release the reserved budget.
 	 */
-	व्योम (*put_budget)(काष्ठा request_queue *, पूर्णांक);
+	void (*put_budget)(struct request_queue *, int);
 
 	/**
 	 * @set_rq_budget_token: store rq's budget token
 	 */
-	व्योम (*set_rq_budget_token)(काष्ठा request *, पूर्णांक);
+	void (*set_rq_budget_token)(struct request *, int);
 	/**
 	 * @get_rq_budget_token: retrieve rq's budget token
 	 */
-	पूर्णांक (*get_rq_budget_token)(काष्ठा request *);
+	int (*get_rq_budget_token)(struct request *);
 
 	/**
-	 * @समयout: Called on request समयout.
+	 * @timeout: Called on request timeout.
 	 */
-	क्रमागत blk_eh_समयr_वापस (*समयout)(काष्ठा request *, bool);
+	enum blk_eh_timer_return (*timeout)(struct request *, bool);
 
 	/**
-	 * @poll: Called to poll क्रम completion of a specअगरic tag.
+	 * @poll: Called to poll for completion of a specific tag.
 	 */
-	पूर्णांक (*poll)(काष्ठा blk_mq_hw_ctx *);
+	int (*poll)(struct blk_mq_hw_ctx *);
 
 	/**
 	 * @complete: Mark the request as complete.
 	 */
-	व्योम (*complete)(काष्ठा request *);
+	void (*complete)(struct request *);
 
 	/**
 	 * @init_hctx: Called when the block layer side of a hardware queue has
 	 * been set up, allowing the driver to allocate/init matching
-	 * काष्ठाures.
+	 * structures.
 	 */
-	पूर्णांक (*init_hctx)(काष्ठा blk_mq_hw_ctx *, व्योम *, अचिन्हित पूर्णांक);
+	int (*init_hctx)(struct blk_mq_hw_ctx *, void *, unsigned int);
 	/**
-	 * @निकास_hctx: Ditto क्रम निकास/tearकरोwn.
+	 * @exit_hctx: Ditto for exit/teardown.
 	 */
-	व्योम (*निकास_hctx)(काष्ठा blk_mq_hw_ctx *, अचिन्हित पूर्णांक);
+	void (*exit_hctx)(struct blk_mq_hw_ctx *, unsigned int);
 
 	/**
-	 * @init_request: Called क्रम every command allocated by the block layer
-	 * to allow the driver to set up driver specअगरic data.
+	 * @init_request: Called for every command allocated by the block layer
+	 * to allow the driver to set up driver specific data.
 	 *
-	 * Tag greater than or equal to queue_depth is क्रम setting up
+	 * Tag greater than or equal to queue_depth is for setting up
 	 * flush request.
 	 */
-	पूर्णांक (*init_request)(काष्ठा blk_mq_tag_set *set, काष्ठा request *,
-			    अचिन्हित पूर्णांक, अचिन्हित पूर्णांक);
+	int (*init_request)(struct blk_mq_tag_set *set, struct request *,
+			    unsigned int, unsigned int);
 	/**
-	 * @निकास_request: Ditto क्रम निकास/tearकरोwn.
+	 * @exit_request: Ditto for exit/teardown.
 	 */
-	व्योम (*निकास_request)(काष्ठा blk_mq_tag_set *set, काष्ठा request *,
-			     अचिन्हित पूर्णांक);
+	void (*exit_request)(struct blk_mq_tag_set *set, struct request *,
+			     unsigned int);
 
 	/**
 	 * @initialize_rq_fn: Called from inside blk_get_request().
 	 */
-	व्योम (*initialize_rq_fn)(काष्ठा request *rq);
+	void (*initialize_rq_fn)(struct request *rq);
 
 	/**
-	 * @cleanup_rq: Called beक्रमe मुक्तing one request which isn't completed
-	 * yet, and usually क्रम मुक्तing the driver निजी data.
+	 * @cleanup_rq: Called before freeing one request which isn't completed
+	 * yet, and usually for freeing the driver private data.
 	 */
-	व्योम (*cleanup_rq)(काष्ठा request *);
+	void (*cleanup_rq)(struct request *);
 
 	/**
-	 * @busy: If set, वापसs whether or not this queue currently is busy.
+	 * @busy: If set, returns whether or not this queue currently is busy.
 	 */
-	bool (*busy)(काष्ठा request_queue *);
+	bool (*busy)(struct request_queue *);
 
 	/**
-	 * @map_queues: This allows drivers specअगरy their own queue mapping by
-	 * overriding the setup-समय function that builds the mq_map.
+	 * @map_queues: This allows drivers specify their own queue mapping by
+	 * overriding the setup-time function that builds the mq_map.
 	 */
-	पूर्णांक (*map_queues)(काष्ठा blk_mq_tag_set *set);
+	int (*map_queues)(struct blk_mq_tag_set *set);
 
-#अगर_घोषित CONFIG_BLK_DEBUG_FS
+#ifdef CONFIG_BLK_DEBUG_FS
 	/**
-	 * @show_rq: Used by the debugfs implementation to show driver-specअगरic
-	 * inक्रमmation about a request.
+	 * @show_rq: Used by the debugfs implementation to show driver-specific
+	 * information about a request.
 	 */
-	व्योम (*show_rq)(काष्ठा seq_file *m, काष्ठा request *rq);
-#पूर्ण_अगर
-पूर्ण;
+	void (*show_rq)(struct seq_file *m, struct request *rq);
+#endif
+};
 
-क्रमागत अणु
+enum {
 	BLK_MQ_F_SHOULD_MERGE	= 1 << 0,
 	BLK_MQ_F_TAG_QUEUE_SHARED = 1 << 1,
 	/*
-	 * Set when this device requires underlying blk-mq device क्रम
+	 * Set when this device requires underlying blk-mq device for
 	 * completing IO:
 	 */
 	BLK_MQ_F_STACKING	= 1 << 2,
@@ -419,146 +418,146 @@
 	BLK_MQ_MAX_DEPTH	= 10240,
 
 	BLK_MQ_CPU_WORK_BATCH	= 8,
-पूर्ण;
-#घोषणा BLK_MQ_FLAG_TO_ALLOC_POLICY(flags) \
+};
+#define BLK_MQ_FLAG_TO_ALLOC_POLICY(flags) \
 	((flags >> BLK_MQ_F_ALLOC_POLICY_START_BIT) & \
 		((1 << BLK_MQ_F_ALLOC_POLICY_BITS) - 1))
-#घोषणा BLK_ALLOC_POLICY_TO_MQ_FLAG(policy) \
+#define BLK_ALLOC_POLICY_TO_MQ_FLAG(policy) \
 	((policy & ((1 << BLK_MQ_F_ALLOC_POLICY_BITS) - 1)) \
 		<< BLK_MQ_F_ALLOC_POLICY_START_BIT)
 
-काष्ठा request_queue *blk_mq_init_queue(काष्ठा blk_mq_tag_set *);
-काष्ठा request_queue *blk_mq_init_queue_data(काष्ठा blk_mq_tag_set *set,
-		व्योम *queuedata);
-काष्ठा request_queue *blk_mq_init_allocated_queue(काष्ठा blk_mq_tag_set *set,
-						  काष्ठा request_queue *q,
+struct request_queue *blk_mq_init_queue(struct blk_mq_tag_set *);
+struct request_queue *blk_mq_init_queue_data(struct blk_mq_tag_set *set,
+		void *queuedata);
+struct request_queue *blk_mq_init_allocated_queue(struct blk_mq_tag_set *set,
+						  struct request_queue *q,
 						  bool elevator_init);
-काष्ठा request_queue *blk_mq_init_sq_queue(काष्ठा blk_mq_tag_set *set,
-						स्थिर काष्ठा blk_mq_ops *ops,
-						अचिन्हित पूर्णांक queue_depth,
-						अचिन्हित पूर्णांक set_flags);
-व्योम blk_mq_unरेजिस्टर_dev(काष्ठा device *, काष्ठा request_queue *);
+struct request_queue *blk_mq_init_sq_queue(struct blk_mq_tag_set *set,
+						const struct blk_mq_ops *ops,
+						unsigned int queue_depth,
+						unsigned int set_flags);
+void blk_mq_unregister_dev(struct device *, struct request_queue *);
 
-पूर्णांक blk_mq_alloc_tag_set(काष्ठा blk_mq_tag_set *set);
-व्योम blk_mq_मुक्त_tag_set(काष्ठा blk_mq_tag_set *set);
+int blk_mq_alloc_tag_set(struct blk_mq_tag_set *set);
+void blk_mq_free_tag_set(struct blk_mq_tag_set *set);
 
-व्योम blk_mq_flush_plug_list(काष्ठा blk_plug *plug, bool from_schedule);
+void blk_mq_flush_plug_list(struct blk_plug *plug, bool from_schedule);
 
-व्योम blk_mq_मुक्त_request(काष्ठा request *rq);
+void blk_mq_free_request(struct request *rq);
 
-bool blk_mq_queue_inflight(काष्ठा request_queue *q);
+bool blk_mq_queue_inflight(struct request_queue *q);
 
-क्रमागत अणु
-	/* वापस when out of requests */
-	BLK_MQ_REQ_NOWAIT	= (__क्रमce blk_mq_req_flags_t)(1 << 0),
+enum {
+	/* return when out of requests */
+	BLK_MQ_REQ_NOWAIT	= (__force blk_mq_req_flags_t)(1 << 0),
 	/* allocate from reserved pool */
-	BLK_MQ_REQ_RESERVED	= (__क्रमce blk_mq_req_flags_t)(1 << 1),
+	BLK_MQ_REQ_RESERVED	= (__force blk_mq_req_flags_t)(1 << 1),
 	/* set RQF_PM */
-	BLK_MQ_REQ_PM		= (__क्रमce blk_mq_req_flags_t)(1 << 2),
-पूर्ण;
+	BLK_MQ_REQ_PM		= (__force blk_mq_req_flags_t)(1 << 2),
+};
 
-काष्ठा request *blk_mq_alloc_request(काष्ठा request_queue *q, अचिन्हित पूर्णांक op,
+struct request *blk_mq_alloc_request(struct request_queue *q, unsigned int op,
 		blk_mq_req_flags_t flags);
-काष्ठा request *blk_mq_alloc_request_hctx(काष्ठा request_queue *q,
-		अचिन्हित पूर्णांक op, blk_mq_req_flags_t flags,
-		अचिन्हित पूर्णांक hctx_idx);
-काष्ठा request *blk_mq_tag_to_rq(काष्ठा blk_mq_tags *tags, अचिन्हित पूर्णांक tag);
+struct request *blk_mq_alloc_request_hctx(struct request_queue *q,
+		unsigned int op, blk_mq_req_flags_t flags,
+		unsigned int hctx_idx);
+struct request *blk_mq_tag_to_rq(struct blk_mq_tags *tags, unsigned int tag);
 
-क्रमागत अणु
+enum {
 	BLK_MQ_UNIQUE_TAG_BITS = 16,
 	BLK_MQ_UNIQUE_TAG_MASK = (1 << BLK_MQ_UNIQUE_TAG_BITS) - 1,
-पूर्ण;
+};
 
-u32 blk_mq_unique_tag(काष्ठा request *rq);
+u32 blk_mq_unique_tag(struct request *rq);
 
-अटल अंतरभूत u16 blk_mq_unique_tag_to_hwq(u32 unique_tag)
-अणु
-	वापस unique_tag >> BLK_MQ_UNIQUE_TAG_BITS;
-पूर्ण
+static inline u16 blk_mq_unique_tag_to_hwq(u32 unique_tag)
+{
+	return unique_tag >> BLK_MQ_UNIQUE_TAG_BITS;
+}
 
-अटल अंतरभूत u16 blk_mq_unique_tag_to_tag(u32 unique_tag)
-अणु
-	वापस unique_tag & BLK_MQ_UNIQUE_TAG_MASK;
-पूर्ण
+static inline u16 blk_mq_unique_tag_to_tag(u32 unique_tag)
+{
+	return unique_tag & BLK_MQ_UNIQUE_TAG_MASK;
+}
 
 /**
- * blk_mq_rq_state() - पढ़ो the current MQ_RQ_* state of a request
+ * blk_mq_rq_state() - read the current MQ_RQ_* state of a request
  * @rq: target request.
  */
-अटल अंतरभूत क्रमागत mq_rq_state blk_mq_rq_state(काष्ठा request *rq)
-अणु
-	वापस READ_ONCE(rq->state);
-पूर्ण
+static inline enum mq_rq_state blk_mq_rq_state(struct request *rq)
+{
+	return READ_ONCE(rq->state);
+}
 
-अटल अंतरभूत पूर्णांक blk_mq_request_started(काष्ठा request *rq)
-अणु
-	वापस blk_mq_rq_state(rq) != MQ_RQ_IDLE;
-पूर्ण
+static inline int blk_mq_request_started(struct request *rq)
+{
+	return blk_mq_rq_state(rq) != MQ_RQ_IDLE;
+}
 
-अटल अंतरभूत पूर्णांक blk_mq_request_completed(काष्ठा request *rq)
-अणु
-	वापस blk_mq_rq_state(rq) == MQ_RQ_COMPLETE;
-पूर्ण
+static inline int blk_mq_request_completed(struct request *rq)
+{
+	return blk_mq_rq_state(rq) == MQ_RQ_COMPLETE;
+}
 
 /*
  * 
  * Set the state to complete when completing a request from inside ->queue_rq.
  * This is used by drivers that want to ensure special complete actions that
- * need access to the request are called on failure, e.g. by nvme क्रम
+ * need access to the request are called on failure, e.g. by nvme for
  * multipathing.
  */
-अटल अंतरभूत व्योम blk_mq_set_request_complete(काष्ठा request *rq)
-अणु
+static inline void blk_mq_set_request_complete(struct request *rq)
+{
 	WRITE_ONCE(rq->state, MQ_RQ_COMPLETE);
-पूर्ण
+}
 
-व्योम blk_mq_start_request(काष्ठा request *rq);
-व्योम blk_mq_end_request(काष्ठा request *rq, blk_status_t error);
-व्योम __blk_mq_end_request(काष्ठा request *rq, blk_status_t error);
+void blk_mq_start_request(struct request *rq);
+void blk_mq_end_request(struct request *rq, blk_status_t error);
+void __blk_mq_end_request(struct request *rq, blk_status_t error);
 
-व्योम blk_mq_requeue_request(काष्ठा request *rq, bool kick_requeue_list);
-व्योम blk_mq_kick_requeue_list(काष्ठा request_queue *q);
-व्योम blk_mq_delay_kick_requeue_list(काष्ठा request_queue *q, अचिन्हित दीर्घ msecs);
-व्योम blk_mq_complete_request(काष्ठा request *rq);
-bool blk_mq_complete_request_remote(काष्ठा request *rq);
-bool blk_mq_queue_stopped(काष्ठा request_queue *q);
-व्योम blk_mq_stop_hw_queue(काष्ठा blk_mq_hw_ctx *hctx);
-व्योम blk_mq_start_hw_queue(काष्ठा blk_mq_hw_ctx *hctx);
-व्योम blk_mq_stop_hw_queues(काष्ठा request_queue *q);
-व्योम blk_mq_start_hw_queues(काष्ठा request_queue *q);
-व्योम blk_mq_start_stopped_hw_queue(काष्ठा blk_mq_hw_ctx *hctx, bool async);
-व्योम blk_mq_start_stopped_hw_queues(काष्ठा request_queue *q, bool async);
-व्योम blk_mq_quiesce_queue(काष्ठा request_queue *q);
-व्योम blk_mq_unquiesce_queue(काष्ठा request_queue *q);
-व्योम blk_mq_delay_run_hw_queue(काष्ठा blk_mq_hw_ctx *hctx, अचिन्हित दीर्घ msecs);
-व्योम blk_mq_run_hw_queue(काष्ठा blk_mq_hw_ctx *hctx, bool async);
-व्योम blk_mq_run_hw_queues(काष्ठा request_queue *q, bool async);
-व्योम blk_mq_delay_run_hw_queues(काष्ठा request_queue *q, अचिन्हित दीर्घ msecs);
-व्योम blk_mq_tagset_busy_iter(काष्ठा blk_mq_tag_set *tagset,
-		busy_tag_iter_fn *fn, व्योम *priv);
-व्योम blk_mq_tagset_रुको_completed_request(काष्ठा blk_mq_tag_set *tagset);
-व्योम blk_mq_मुक्तze_queue(काष्ठा request_queue *q);
-व्योम blk_mq_unमुक्तze_queue(काष्ठा request_queue *q);
-व्योम blk_मुक्तze_queue_start(काष्ठा request_queue *q);
-व्योम blk_mq_मुक्तze_queue_रुको(काष्ठा request_queue *q);
-पूर्णांक blk_mq_मुक्तze_queue_रुको_समयout(काष्ठा request_queue *q,
-				     अचिन्हित दीर्घ समयout);
+void blk_mq_requeue_request(struct request *rq, bool kick_requeue_list);
+void blk_mq_kick_requeue_list(struct request_queue *q);
+void blk_mq_delay_kick_requeue_list(struct request_queue *q, unsigned long msecs);
+void blk_mq_complete_request(struct request *rq);
+bool blk_mq_complete_request_remote(struct request *rq);
+bool blk_mq_queue_stopped(struct request_queue *q);
+void blk_mq_stop_hw_queue(struct blk_mq_hw_ctx *hctx);
+void blk_mq_start_hw_queue(struct blk_mq_hw_ctx *hctx);
+void blk_mq_stop_hw_queues(struct request_queue *q);
+void blk_mq_start_hw_queues(struct request_queue *q);
+void blk_mq_start_stopped_hw_queue(struct blk_mq_hw_ctx *hctx, bool async);
+void blk_mq_start_stopped_hw_queues(struct request_queue *q, bool async);
+void blk_mq_quiesce_queue(struct request_queue *q);
+void blk_mq_unquiesce_queue(struct request_queue *q);
+void blk_mq_delay_run_hw_queue(struct blk_mq_hw_ctx *hctx, unsigned long msecs);
+void blk_mq_run_hw_queue(struct blk_mq_hw_ctx *hctx, bool async);
+void blk_mq_run_hw_queues(struct request_queue *q, bool async);
+void blk_mq_delay_run_hw_queues(struct request_queue *q, unsigned long msecs);
+void blk_mq_tagset_busy_iter(struct blk_mq_tag_set *tagset,
+		busy_tag_iter_fn *fn, void *priv);
+void blk_mq_tagset_wait_completed_request(struct blk_mq_tag_set *tagset);
+void blk_mq_freeze_queue(struct request_queue *q);
+void blk_mq_unfreeze_queue(struct request_queue *q);
+void blk_freeze_queue_start(struct request_queue *q);
+void blk_mq_freeze_queue_wait(struct request_queue *q);
+int blk_mq_freeze_queue_wait_timeout(struct request_queue *q,
+				     unsigned long timeout);
 
-पूर्णांक blk_mq_map_queues(काष्ठा blk_mq_queue_map *qmap);
-व्योम blk_mq_update_nr_hw_queues(काष्ठा blk_mq_tag_set *set, पूर्णांक nr_hw_queues);
+int blk_mq_map_queues(struct blk_mq_queue_map *qmap);
+void blk_mq_update_nr_hw_queues(struct blk_mq_tag_set *set, int nr_hw_queues);
 
-व्योम blk_mq_quiesce_queue_noरुको(काष्ठा request_queue *q);
+void blk_mq_quiesce_queue_nowait(struct request_queue *q);
 
-अचिन्हित पूर्णांक blk_mq_rq_cpu(काष्ठा request *rq);
+unsigned int blk_mq_rq_cpu(struct request *rq);
 
-bool __blk_should_fake_समयout(काष्ठा request_queue *q);
-अटल अंतरभूत bool blk_should_fake_समयout(काष्ठा request_queue *q)
-अणु
-	अगर (IS_ENABLED(CONFIG_FAIL_IO_TIMEOUT) &&
+bool __blk_should_fake_timeout(struct request_queue *q);
+static inline bool blk_should_fake_timeout(struct request_queue *q)
+{
+	if (IS_ENABLED(CONFIG_FAIL_IO_TIMEOUT) &&
 	    test_bit(QUEUE_FLAG_FAIL_IO, &q->queue_flags))
-		वापस __blk_should_fake_समयout(q);
-	वापस false;
-पूर्ण
+		return __blk_should_fake_timeout(q);
+	return false;
+}
 
 /**
  * blk_mq_rq_from_pdu - cast a PDU to a request
@@ -569,63 +568,63 @@ bool __blk_should_fake_समयout(काष्ठा request_queue *q);
  * Driver command data is immediately after the request. So subtract request
  * size to get back to the original request.
  */
-अटल अंतरभूत काष्ठा request *blk_mq_rq_from_pdu(व्योम *pdu)
-अणु
-	वापस pdu - माप(काष्ठा request);
-पूर्ण
+static inline struct request *blk_mq_rq_from_pdu(void *pdu)
+{
+	return pdu - sizeof(struct request);
+}
 
 /**
  * blk_mq_rq_to_pdu - cast a request to a PDU
  * @rq: the request to be casted
  *
- * Return: poपूर्णांकer to the PDU
+ * Return: pointer to the PDU
  *
  * Driver command data is immediately after the request. So add request to get
  * the PDU.
  */
-अटल अंतरभूत व्योम *blk_mq_rq_to_pdu(काष्ठा request *rq)
-अणु
-	वापस rq + 1;
-पूर्ण
+static inline void *blk_mq_rq_to_pdu(struct request *rq)
+{
+	return rq + 1;
+}
 
-#घोषणा queue_क्रम_each_hw_ctx(q, hctx, i)				\
-	क्रम ((i) = 0; (i) < (q)->nr_hw_queues &&			\
-	     (अणु hctx = (q)->queue_hw_ctx[i]; 1; पूर्ण); (i)++)
+#define queue_for_each_hw_ctx(q, hctx, i)				\
+	for ((i) = 0; (i) < (q)->nr_hw_queues &&			\
+	     ({ hctx = (q)->queue_hw_ctx[i]; 1; }); (i)++)
 
-#घोषणा hctx_क्रम_each_ctx(hctx, ctx, i)					\
-	क्रम ((i) = 0; (i) < (hctx)->nr_ctx &&				\
-	     (अणु ctx = (hctx)->ctxs[(i)]; 1; पूर्ण); (i)++)
+#define hctx_for_each_ctx(hctx, ctx, i)					\
+	for ((i) = 0; (i) < (hctx)->nr_ctx &&				\
+	     ({ ctx = (hctx)->ctxs[(i)]; 1; }); (i)++)
 
-अटल अंतरभूत blk_qc_t request_to_qc_t(काष्ठा blk_mq_hw_ctx *hctx,
-		काष्ठा request *rq)
-अणु
-	अगर (rq->tag != -1)
-		वापस rq->tag | (hctx->queue_num << BLK_QC_T_SHIFT);
+static inline blk_qc_t request_to_qc_t(struct blk_mq_hw_ctx *hctx,
+		struct request *rq)
+{
+	if (rq->tag != -1)
+		return rq->tag | (hctx->queue_num << BLK_QC_T_SHIFT);
 
-	वापस rq->पूर्णांकernal_tag | (hctx->queue_num << BLK_QC_T_SHIFT) |
+	return rq->internal_tag | (hctx->queue_num << BLK_QC_T_SHIFT) |
 			BLK_QC_T_INTERNAL;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम blk_mq_cleanup_rq(काष्ठा request *rq)
-अणु
-	अगर (rq->q->mq_ops->cleanup_rq)
+static inline void blk_mq_cleanup_rq(struct request *rq)
+{
+	if (rq->q->mq_ops->cleanup_rq)
 		rq->q->mq_ops->cleanup_rq(rq);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम blk_rq_bio_prep(काष्ठा request *rq, काष्ठा bio *bio,
-		अचिन्हित पूर्णांक nr_segs)
-अणु
+static inline void blk_rq_bio_prep(struct request *rq, struct bio *bio,
+		unsigned int nr_segs)
+{
 	rq->nr_phys_segments = nr_segs;
 	rq->__data_len = bio->bi_iter.bi_size;
 	rq->bio = rq->biotail = bio;
 	rq->ioprio = bio_prio(bio);
 
-	अगर (bio->bi_bdev)
+	if (bio->bi_bdev)
 		rq->rq_disk = bio->bi_bdev->bd_disk;
-पूर्ण
+}
 
-blk_qc_t blk_mq_submit_bio(काष्ठा bio *bio);
-व्योम blk_mq_hctx_set_fq_lock_class(काष्ठा blk_mq_hw_ctx *hctx,
-		काष्ठा lock_class_key *key);
+blk_qc_t blk_mq_submit_bio(struct bio *bio);
+void blk_mq_hctx_set_fq_lock_class(struct blk_mq_hw_ctx *hctx,
+		struct lock_class_key *key);
 
-#पूर्ण_अगर
+#endif

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * PIC32 Integrated Serial Driver.
  *
@@ -9,203 +8,203 @@
  *   Sorin-Andrei Pistirica <andrei.pistirica@microchip.com>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/of_gpपन.स>
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/console.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/tty.h>
-#समावेश <linux/tty_flip.h>
-#समावेश <linux/serial_core.h>
-#समावेश <linux/delay.h>
+#include <linux/kernel.h>
+#include <linux/platform_device.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/of_irq.h>
+#include <linux/of_gpio.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/console.h>
+#include <linux/clk.h>
+#include <linux/tty.h>
+#include <linux/tty_flip.h>
+#include <linux/serial_core.h>
+#include <linux/delay.h>
 
-#समावेश <यंत्र/mach-pic32/pic32.h>
-#समावेश "pic32_uart.h"
+#include <asm/mach-pic32/pic32.h>
+#include "pic32_uart.h"
 
 /* UART name and device definitions */
-#घोषणा PIC32_DEV_NAME		"pic32-uart"
-#घोषणा PIC32_MAX_UARTS		6
-#घोषणा PIC32_SDEV_NAME		"ttyPIC"
+#define PIC32_DEV_NAME		"pic32-uart"
+#define PIC32_MAX_UARTS		6
+#define PIC32_SDEV_NAME		"ttyPIC"
 
-/* pic32_sport poपूर्णांकer क्रम console use */
-अटल काष्ठा pic32_sport *pic32_sports[PIC32_MAX_UARTS];
+/* pic32_sport pointer for console use */
+static struct pic32_sport *pic32_sports[PIC32_MAX_UARTS];
 
-अटल अंतरभूत व्योम pic32_रुको_deplete_txbuf(काष्ठा pic32_sport *sport)
-अणु
-	/* रुको क्रम tx empty, otherwise अक्षरs will be lost or corrupted */
-	जबतक (!(pic32_uart_पढ़ोl(sport, PIC32_UART_STA) & PIC32_UART_STA_TRMT))
+static inline void pic32_wait_deplete_txbuf(struct pic32_sport *sport)
+{
+	/* wait for tx empty, otherwise chars will be lost or corrupted */
+	while (!(pic32_uart_readl(sport, PIC32_UART_STA) & PIC32_UART_STA_TRMT))
 		udelay(1);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक pic32_enable_घड़ी(काष्ठा pic32_sport *sport)
-अणु
-	पूर्णांक ret = clk_prepare_enable(sport->clk);
+static inline int pic32_enable_clock(struct pic32_sport *sport)
+{
+	int ret = clk_prepare_enable(sport->clk);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	sport->ref_clk++;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत व्योम pic32_disable_घड़ी(काष्ठा pic32_sport *sport)
-अणु
+static inline void pic32_disable_clock(struct pic32_sport *sport)
+{
 	sport->ref_clk--;
 	clk_disable_unprepare(sport->clk);
-पूर्ण
+}
 
-/* serial core request to check अगर uart tx buffer is empty */
-अटल अचिन्हित पूर्णांक pic32_uart_tx_empty(काष्ठा uart_port *port)
-अणु
-	काष्ठा pic32_sport *sport = to_pic32_sport(port);
-	u32 val = pic32_uart_पढ़ोl(sport, PIC32_UART_STA);
+/* serial core request to check if uart tx buffer is empty */
+static unsigned int pic32_uart_tx_empty(struct uart_port *port)
+{
+	struct pic32_sport *sport = to_pic32_sport(port);
+	u32 val = pic32_uart_readl(sport, PIC32_UART_STA);
 
-	वापस (val & PIC32_UART_STA_TRMT) ? 1 : 0;
-पूर्ण
+	return (val & PIC32_UART_STA_TRMT) ? 1 : 0;
+}
 
-/* serial core request to set UART outमाला_दो */
-अटल व्योम pic32_uart_set_mctrl(काष्ठा uart_port *port, अचिन्हित पूर्णांक mctrl)
-अणु
-	काष्ठा pic32_sport *sport = to_pic32_sport(port);
+/* serial core request to set UART outputs */
+static void pic32_uart_set_mctrl(struct uart_port *port, unsigned int mctrl)
+{
+	struct pic32_sport *sport = to_pic32_sport(port);
 
 	/* set loopback mode */
-	अगर (mctrl & TIOCM_LOOP)
-		pic32_uart_ग_लिखोl(sport, PIC32_SET(PIC32_UART_MODE),
+	if (mctrl & TIOCM_LOOP)
+		pic32_uart_writel(sport, PIC32_SET(PIC32_UART_MODE),
 					PIC32_UART_MODE_LPBK);
-	अन्यथा
-		pic32_uart_ग_लिखोl(sport, PIC32_CLR(PIC32_UART_MODE),
+	else
+		pic32_uart_writel(sport, PIC32_CLR(PIC32_UART_MODE),
 					PIC32_UART_MODE_LPBK);
-पूर्ण
+}
 
-/* get the state of CTS input pin क्रम this port */
-अटल अचिन्हित पूर्णांक get_cts_state(काष्ठा pic32_sport *sport)
-अणु
-	/* पढ़ो and invert UxCTS */
-	अगर (gpio_is_valid(sport->cts_gpio))
-		वापस !gpio_get_value(sport->cts_gpio);
+/* get the state of CTS input pin for this port */
+static unsigned int get_cts_state(struct pic32_sport *sport)
+{
+	/* read and invert UxCTS */
+	if (gpio_is_valid(sport->cts_gpio))
+		return !gpio_get_value(sport->cts_gpio);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-/* serial core request to वापस the state of misc UART input pins */
-अटल अचिन्हित पूर्णांक pic32_uart_get_mctrl(काष्ठा uart_port *port)
-अणु
-	काष्ठा pic32_sport *sport = to_pic32_sport(port);
-	अचिन्हित पूर्णांक mctrl = 0;
+/* serial core request to return the state of misc UART input pins */
+static unsigned int pic32_uart_get_mctrl(struct uart_port *port)
+{
+	struct pic32_sport *sport = to_pic32_sport(port);
+	unsigned int mctrl = 0;
 
-	अगर (!sport->hw_flow_ctrl)
+	if (!sport->hw_flow_ctrl)
 		mctrl |= TIOCM_CTS;
-	अन्यथा अगर (get_cts_state(sport))
+	else if (get_cts_state(sport))
 		mctrl |= TIOCM_CTS;
 
-	/* DSR and CD are not supported in PIC32, so वापस 1
-	 * RI is not supported in PIC32, so वापस 0
+	/* DSR and CD are not supported in PIC32, so return 1
+	 * RI is not supported in PIC32, so return 0
 	 */
 	mctrl |= TIOCM_CD;
 	mctrl |= TIOCM_DSR;
 
-	वापस mctrl;
-पूर्ण
+	return mctrl;
+}
 
-/* stop tx and start tx are not called in pairs, thereक्रमe a flag indicates
+/* stop tx and start tx are not called in pairs, therefore a flag indicates
  * the status of irq to control the irq-depth.
  */
-अटल अंतरभूत व्योम pic32_uart_irqtxen(काष्ठा pic32_sport *sport, u8 en)
-अणु
-	अगर (en && !tx_irq_enabled(sport)) अणु
+static inline void pic32_uart_irqtxen(struct pic32_sport *sport, u8 en)
+{
+	if (en && !tx_irq_enabled(sport)) {
 		enable_irq(sport->irq_tx);
 		tx_irq_enabled(sport) = 1;
-	पूर्ण अन्यथा अगर (!en && tx_irq_enabled(sport)) अणु
-		/* use disable_irq_nosync() and not disable_irq() to aव्योम self
-		 * imposed deadlock by not रुकोing क्रम irq handler to end,
-		 * since this callback is called from पूर्णांकerrupt context.
+	} else if (!en && tx_irq_enabled(sport)) {
+		/* use disable_irq_nosync() and not disable_irq() to avoid self
+		 * imposed deadlock by not waiting for irq handler to end,
+		 * since this callback is called from interrupt context.
 		 */
 		disable_irq_nosync(sport->irq_tx);
 		tx_irq_enabled(sport) = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* serial core request to disable tx ASAP (used क्रम flow control) */
-अटल व्योम pic32_uart_stop_tx(काष्ठा uart_port *port)
-अणु
-	काष्ठा pic32_sport *sport = to_pic32_sport(port);
+/* serial core request to disable tx ASAP (used for flow control) */
+static void pic32_uart_stop_tx(struct uart_port *port)
+{
+	struct pic32_sport *sport = to_pic32_sport(port);
 
-	अगर (!(pic32_uart_पढ़ोl(sport, PIC32_UART_MODE) & PIC32_UART_MODE_ON))
-		वापस;
+	if (!(pic32_uart_readl(sport, PIC32_UART_MODE) & PIC32_UART_MODE_ON))
+		return;
 
-	अगर (!(pic32_uart_पढ़ोl(sport, PIC32_UART_STA) & PIC32_UART_STA_UTXEN))
-		वापस;
+	if (!(pic32_uart_readl(sport, PIC32_UART_STA) & PIC32_UART_STA_UTXEN))
+		return;
 
-	/* रुको क्रम tx empty */
-	pic32_रुको_deplete_txbuf(sport);
+	/* wait for tx empty */
+	pic32_wait_deplete_txbuf(sport);
 
-	pic32_uart_ग_लिखोl(sport, PIC32_CLR(PIC32_UART_STA),
+	pic32_uart_writel(sport, PIC32_CLR(PIC32_UART_STA),
 				PIC32_UART_STA_UTXEN);
 	pic32_uart_irqtxen(sport, 0);
-पूर्ण
+}
 
 /* serial core request to (re)enable tx */
-अटल व्योम pic32_uart_start_tx(काष्ठा uart_port *port)
-अणु
-	काष्ठा pic32_sport *sport = to_pic32_sport(port);
+static void pic32_uart_start_tx(struct uart_port *port)
+{
+	struct pic32_sport *sport = to_pic32_sport(port);
 
 	pic32_uart_irqtxen(sport, 1);
-	pic32_uart_ग_लिखोl(sport, PIC32_SET(PIC32_UART_STA),
+	pic32_uart_writel(sport, PIC32_SET(PIC32_UART_STA),
 				PIC32_UART_STA_UTXEN);
-पूर्ण
+}
 
-/* serial core request to stop rx, called beक्रमe port shutकरोwn */
-अटल व्योम pic32_uart_stop_rx(काष्ठा uart_port *port)
-अणु
-	काष्ठा pic32_sport *sport = to_pic32_sport(port);
+/* serial core request to stop rx, called before port shutdown */
+static void pic32_uart_stop_rx(struct uart_port *port)
+{
+	struct pic32_sport *sport = to_pic32_sport(port);
 
-	/* disable rx पूर्णांकerrupts */
+	/* disable rx interrupts */
 	disable_irq(sport->irq_rx);
 
 	/* receiver Enable bit OFF */
-	pic32_uart_ग_लिखोl(sport, PIC32_CLR(PIC32_UART_STA),
+	pic32_uart_writel(sport, PIC32_CLR(PIC32_UART_STA),
 				PIC32_UART_STA_URXEN);
-पूर्ण
+}
 
-/* serial core request to start/stop emitting अवरोध अक्षर */
-अटल व्योम pic32_uart_अवरोध_ctl(काष्ठा uart_port *port, पूर्णांक ctl)
-अणु
-	काष्ठा pic32_sport *sport = to_pic32_sport(port);
-	अचिन्हित दीर्घ flags;
+/* serial core request to start/stop emitting break char */
+static void pic32_uart_break_ctl(struct uart_port *port, int ctl)
+{
+	struct pic32_sport *sport = to_pic32_sport(port);
+	unsigned long flags;
 
 	spin_lock_irqsave(&port->lock, flags);
 
-	अगर (ctl)
-		pic32_uart_ग_लिखोl(sport, PIC32_SET(PIC32_UART_STA),
+	if (ctl)
+		pic32_uart_writel(sport, PIC32_SET(PIC32_UART_STA),
 					PIC32_UART_STA_UTXBRK);
-	अन्यथा
-		pic32_uart_ग_लिखोl(sport, PIC32_CLR(PIC32_UART_STA),
+	else
+		pic32_uart_writel(sport, PIC32_CLR(PIC32_UART_STA),
 					PIC32_UART_STA_UTXBRK);
 
 	spin_unlock_irqrestore(&port->lock, flags);
-पूर्ण
+}
 
-/* get port type in string क्रमmat */
-अटल स्थिर अक्षर *pic32_uart_type(काष्ठा uart_port *port)
-अणु
-	वापस (port->type == PORT_PIC32) ? PIC32_DEV_NAME : शून्य;
-पूर्ण
+/* get port type in string format */
+static const char *pic32_uart_type(struct uart_port *port)
+{
+	return (port->type == PORT_PIC32) ? PIC32_DEV_NAME : NULL;
+}
 
-/* पढ़ो all अक्षरs in rx fअगरo and send them to core */
-अटल व्योम pic32_uart_करो_rx(काष्ठा uart_port *port)
-अणु
-	काष्ठा pic32_sport *sport = to_pic32_sport(port);
-	काष्ठा tty_port *tty;
-	अचिन्हित पूर्णांक max_count;
+/* read all chars in rx fifo and send them to core */
+static void pic32_uart_do_rx(struct uart_port *port)
+{
+	struct pic32_sport *sport = to_pic32_sport(port);
+	struct tty_port *tty;
+	unsigned int max_count;
 
-	/* limit number of अक्षर पढ़ो in पूर्णांकerrupt, should not be
-	 * higher than fअगरo size anyway since we're much faster than
+	/* limit number of char read in interrupt, should not be
+	 * higher than fifo size anyway since we're much faster than
 	 * serial port
 	 */
 	max_count = PIC32_UART_RX_FIFO_DEPTH;
@@ -214,375 +213,375 @@
 
 	tty = &port->state->port;
 
-	करो अणु
+	do {
 		u32 sta_reg, c;
-		अक्षर flag;
+		char flag;
 
-		/* get overrun/fअगरo empty inक्रमmation from status रेजिस्टर */
-		sta_reg = pic32_uart_पढ़ोl(sport, PIC32_UART_STA);
-		अगर (unlikely(sta_reg & PIC32_UART_STA_OERR)) अणु
+		/* get overrun/fifo empty information from status register */
+		sta_reg = pic32_uart_readl(sport, PIC32_UART_STA);
+		if (unlikely(sta_reg & PIC32_UART_STA_OERR)) {
 
-			/* fअगरo reset is required to clear पूर्णांकerrupt */
-			pic32_uart_ग_लिखोl(sport, PIC32_CLR(PIC32_UART_STA),
+			/* fifo reset is required to clear interrupt */
+			pic32_uart_writel(sport, PIC32_CLR(PIC32_UART_STA),
 						PIC32_UART_STA_OERR);
 
 			port->icount.overrun++;
-			tty_insert_flip_अक्षर(tty, 0, TTY_OVERRUN);
-		पूर्ण
+			tty_insert_flip_char(tty, 0, TTY_OVERRUN);
+		}
 
-		/* Can at least one more अक्षरacter can be पढ़ो? */
-		अगर (!(sta_reg & PIC32_UART_STA_URXDA))
-			अवरोध;
+		/* Can at least one more character can be read? */
+		if (!(sta_reg & PIC32_UART_STA_URXDA))
+			break;
 
-		/* पढ़ो the अक्षरacter and increment the rx counter */
-		c = pic32_uart_पढ़ोl(sport, PIC32_UART_RX);
+		/* read the character and increment the rx counter */
+		c = pic32_uart_readl(sport, PIC32_UART_RX);
 
 		port->icount.rx++;
 		flag = TTY_NORMAL;
 		c &= 0xff;
 
-		अगर (unlikely((sta_reg & PIC32_UART_STA_PERR) ||
-			     (sta_reg & PIC32_UART_STA_FERR))) अणु
+		if (unlikely((sta_reg & PIC32_UART_STA_PERR) ||
+			     (sta_reg & PIC32_UART_STA_FERR))) {
 
-			/* करो stats first */
-			अगर (sta_reg & PIC32_UART_STA_PERR)
+			/* do stats first */
+			if (sta_reg & PIC32_UART_STA_PERR)
 				port->icount.parity++;
-			अगर (sta_reg & PIC32_UART_STA_FERR)
+			if (sta_reg & PIC32_UART_STA_FERR)
 				port->icount.frame++;
 
-			/* update flag wrt पढ़ो_status_mask */
-			sta_reg &= port->पढ़ो_status_mask;
+			/* update flag wrt read_status_mask */
+			sta_reg &= port->read_status_mask;
 
-			अगर (sta_reg & PIC32_UART_STA_FERR)
+			if (sta_reg & PIC32_UART_STA_FERR)
 				flag = TTY_FRAME;
-			अगर (sta_reg & PIC32_UART_STA_PERR)
+			if (sta_reg & PIC32_UART_STA_PERR)
 				flag = TTY_PARITY;
-		पूर्ण
+		}
 
-		अगर (uart_handle_sysrq_अक्षर(port, c))
-			जारी;
+		if (uart_handle_sysrq_char(port, c))
+			continue;
 
-		अगर ((sta_reg & port->ignore_status_mask) == 0)
-			tty_insert_flip_अक्षर(tty, c, flag);
+		if ((sta_reg & port->ignore_status_mask) == 0)
+			tty_insert_flip_char(tty, c, flag);
 
-	पूर्ण जबतक (--max_count);
+	} while (--max_count);
 
 	spin_unlock(&port->lock);
 
 	tty_flip_buffer_push(tty);
-पूर्ण
+}
 
-/* fill tx fअगरo with अक्षरs to send, stop when fअगरo is about to be full
- * or when all अक्षरs have been sent.
+/* fill tx fifo with chars to send, stop when fifo is about to be full
+ * or when all chars have been sent.
  */
-अटल व्योम pic32_uart_करो_tx(काष्ठा uart_port *port)
-अणु
-	काष्ठा pic32_sport *sport = to_pic32_sport(port);
-	काष्ठा circ_buf *xmit = &port->state->xmit;
-	अचिन्हित पूर्णांक max_count = PIC32_UART_TX_FIFO_DEPTH;
+static void pic32_uart_do_tx(struct uart_port *port)
+{
+	struct pic32_sport *sport = to_pic32_sport(port);
+	struct circ_buf *xmit = &port->state->xmit;
+	unsigned int max_count = PIC32_UART_TX_FIFO_DEPTH;
 
-	अगर (port->x_अक्षर) अणु
-		pic32_uart_ग_लिखोl(sport, PIC32_UART_TX, port->x_अक्षर);
+	if (port->x_char) {
+		pic32_uart_writel(sport, PIC32_UART_TX, port->x_char);
 		port->icount.tx++;
-		port->x_अक्षर = 0;
-		वापस;
-	पूर्ण
+		port->x_char = 0;
+		return;
+	}
 
-	अगर (uart_tx_stopped(port)) अणु
+	if (uart_tx_stopped(port)) {
 		pic32_uart_stop_tx(port);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (uart_circ_empty(xmit))
-		जाओ txq_empty;
+	if (uart_circ_empty(xmit))
+		goto txq_empty;
 
-	/* keep stuffing अक्षरs पूर्णांकo uart tx buffer
-	 * 1) until uart fअगरo is full
+	/* keep stuffing chars into uart tx buffer
+	 * 1) until uart fifo is full
 	 * or
 	 * 2) until the circ buffer is empty
-	 * (all अक्षरs have been sent)
+	 * (all chars have been sent)
 	 * or
 	 * 3) until the max count is reached
-	 * (prevents lingering here क्रम too दीर्घ in certain हालs)
+	 * (prevents lingering here for too long in certain cases)
 	 */
-	जबतक (!(PIC32_UART_STA_UTXBF &
-		pic32_uart_पढ़ोl(sport, PIC32_UART_STA))) अणु
-		अचिन्हित पूर्णांक c = xmit->buf[xmit->tail];
+	while (!(PIC32_UART_STA_UTXBF &
+		pic32_uart_readl(sport, PIC32_UART_STA))) {
+		unsigned int c = xmit->buf[xmit->tail];
 
-		pic32_uart_ग_लिखोl(sport, PIC32_UART_TX, c);
+		pic32_uart_writel(sport, PIC32_UART_TX, c);
 
 		xmit->tail = (xmit->tail + 1) & (UART_XMIT_SIZE - 1);
 		port->icount.tx++;
-		अगर (uart_circ_empty(xmit))
-			अवरोध;
-		अगर (--max_count == 0)
-			अवरोध;
-	पूर्ण
+		if (uart_circ_empty(xmit))
+			break;
+		if (--max_count == 0)
+			break;
+	}
 
-	अगर (uart_circ_अक्षरs_pending(xmit) < WAKEUP_CHARS)
-		uart_ग_लिखो_wakeup(port);
+	if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
+		uart_write_wakeup(port);
 
-	अगर (uart_circ_empty(xmit))
-		जाओ txq_empty;
+	if (uart_circ_empty(xmit))
+		goto txq_empty;
 
-	वापस;
+	return;
 
 txq_empty:
 	pic32_uart_irqtxen(sport, 0);
-पूर्ण
+}
 
-/* RX पूर्णांकerrupt handler */
-अटल irqवापस_t pic32_uart_rx_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा uart_port *port = dev_id;
+/* RX interrupt handler */
+static irqreturn_t pic32_uart_rx_interrupt(int irq, void *dev_id)
+{
+	struct uart_port *port = dev_id;
 
-	pic32_uart_करो_rx(port);
+	pic32_uart_do_rx(port);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-/* TX पूर्णांकerrupt handler */
-अटल irqवापस_t pic32_uart_tx_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा uart_port *port = dev_id;
-	अचिन्हित दीर्घ flags;
+/* TX interrupt handler */
+static irqreturn_t pic32_uart_tx_interrupt(int irq, void *dev_id)
+{
+	struct uart_port *port = dev_id;
+	unsigned long flags;
 
 	spin_lock_irqsave(&port->lock, flags);
-	pic32_uart_करो_tx(port);
+	pic32_uart_do_tx(port);
 	spin_unlock_irqrestore(&port->lock, flags);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-/* FAULT पूर्णांकerrupt handler */
-अटल irqवापस_t pic32_uart_fault_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	/* करो nothing: pic32_uart_करो_rx() handles faults. */
-	वापस IRQ_HANDLED;
-पूर्ण
+/* FAULT interrupt handler */
+static irqreturn_t pic32_uart_fault_interrupt(int irq, void *dev_id)
+{
+	/* do nothing: pic32_uart_do_rx() handles faults. */
+	return IRQ_HANDLED;
+}
 
 /* enable rx & tx operation on uart */
-अटल व्योम pic32_uart_en_and_unmask(काष्ठा uart_port *port)
-अणु
-	काष्ठा pic32_sport *sport = to_pic32_sport(port);
+static void pic32_uart_en_and_unmask(struct uart_port *port)
+{
+	struct pic32_sport *sport = to_pic32_sport(port);
 
-	pic32_uart_ग_लिखोl(sport, PIC32_SET(PIC32_UART_STA),
+	pic32_uart_writel(sport, PIC32_SET(PIC32_UART_STA),
 				PIC32_UART_STA_UTXEN | PIC32_UART_STA_URXEN);
-	pic32_uart_ग_लिखोl(sport, PIC32_SET(PIC32_UART_MODE),
+	pic32_uart_writel(sport, PIC32_SET(PIC32_UART_MODE),
 				PIC32_UART_MODE_ON);
-पूर्ण
+}
 
 /* disable rx & tx operation on uart */
-अटल व्योम pic32_uart_dsbl_and_mask(काष्ठा uart_port *port)
-अणु
-	काष्ठा pic32_sport *sport = to_pic32_sport(port);
+static void pic32_uart_dsbl_and_mask(struct uart_port *port)
+{
+	struct pic32_sport *sport = to_pic32_sport(port);
 
-	/* रुको क्रम tx empty, otherwise अक्षरs will be lost or corrupted */
-	pic32_रुको_deplete_txbuf(sport);
+	/* wait for tx empty, otherwise chars will be lost or corrupted */
+	pic32_wait_deplete_txbuf(sport);
 
-	pic32_uart_ग_लिखोl(sport, PIC32_CLR(PIC32_UART_STA),
+	pic32_uart_writel(sport, PIC32_CLR(PIC32_UART_STA),
 				PIC32_UART_STA_UTXEN | PIC32_UART_STA_URXEN);
-	pic32_uart_ग_लिखोl(sport, PIC32_CLR(PIC32_UART_MODE),
+	pic32_uart_writel(sport, PIC32_CLR(PIC32_UART_MODE),
 				PIC32_UART_MODE_ON);
-पूर्ण
+}
 
 /* serial core request to initialize uart and start rx operation */
-अटल पूर्णांक pic32_uart_startup(काष्ठा uart_port *port)
-अणु
-	काष्ठा pic32_sport *sport = to_pic32_sport(port);
+static int pic32_uart_startup(struct uart_port *port)
+{
+	struct pic32_sport *sport = to_pic32_sport(port);
 	u32 dflt_baud = (port->uartclk / PIC32_UART_DFLT_BRATE / 16) - 1;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+	unsigned long flags;
+	int ret;
 
 	local_irq_save(flags);
 
-	ret = pic32_enable_घड़ी(sport);
-	अगर (ret) अणु
+	ret = pic32_enable_clock(sport);
+	if (ret) {
 		local_irq_restore(flags);
-		जाओ out_करोne;
-	पूर्ण
+		goto out_done;
+	}
 
-	/* clear status and mode रेजिस्टरs */
-	pic32_uart_ग_लिखोl(sport, PIC32_UART_MODE, 0);
-	pic32_uart_ग_लिखोl(sport, PIC32_UART_STA, 0);
+	/* clear status and mode registers */
+	pic32_uart_writel(sport, PIC32_UART_MODE, 0);
+	pic32_uart_writel(sport, PIC32_UART_STA, 0);
 
-	/* disable uart and mask all पूर्णांकerrupts */
+	/* disable uart and mask all interrupts */
 	pic32_uart_dsbl_and_mask(port);
 
-	/* set शेष baud */
-	pic32_uart_ग_लिखोl(sport, PIC32_UART_BRG, dflt_baud);
+	/* set default baud */
+	pic32_uart_writel(sport, PIC32_UART_BRG, dflt_baud);
 
 	local_irq_restore(flags);
 
-	/* Each UART of a PIC32 has three पूर्णांकerrupts thereक्रमe,
-	 * we setup driver to रेजिस्टर the 3 irqs क्रम the device.
+	/* Each UART of a PIC32 has three interrupts therefore,
+	 * we setup driver to register the 3 irqs for the device.
 	 *
-	 * For each irq request_irq() is called with पूर्णांकerrupt disabled.
-	 * And the irq is enabled as soon as we are पढ़ोy to handle them.
+	 * For each irq request_irq() is called with interrupt disabled.
+	 * And the irq is enabled as soon as we are ready to handle them.
 	 */
 	tx_irq_enabled(sport) = 0;
 
-	sport->irq_fault_name = kaप्र_लिखो(GFP_KERNEL, "%s%d-fault",
+	sport->irq_fault_name = kasprintf(GFP_KERNEL, "%s%d-fault",
 					  pic32_uart_type(port),
 					  sport->idx);
-	अगर (!sport->irq_fault_name) अणु
+	if (!sport->irq_fault_name) {
 		dev_err(port->dev, "%s: kasprintf err!", __func__);
 		ret = -ENOMEM;
-		जाओ out_करोne;
-	पूर्ण
+		goto out_done;
+	}
 	irq_set_status_flags(sport->irq_fault, IRQ_NOAUTOEN);
-	ret = request_irq(sport->irq_fault, pic32_uart_fault_पूर्णांकerrupt,
+	ret = request_irq(sport->irq_fault, pic32_uart_fault_interrupt,
 			  sport->irqflags_fault, sport->irq_fault_name, port);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(port->dev, "%s: request irq(%d) err! ret:%d name:%s\n",
 			__func__, sport->irq_fault, ret,
 			pic32_uart_type(port));
-		जाओ out_f;
-	पूर्ण
+		goto out_f;
+	}
 
-	sport->irq_rx_name = kaप्र_लिखो(GFP_KERNEL, "%s%d-rx",
+	sport->irq_rx_name = kasprintf(GFP_KERNEL, "%s%d-rx",
 				       pic32_uart_type(port),
 				       sport->idx);
-	अगर (!sport->irq_rx_name) अणु
+	if (!sport->irq_rx_name) {
 		dev_err(port->dev, "%s: kasprintf err!", __func__);
 		ret = -ENOMEM;
-		जाओ out_f;
-	पूर्ण
+		goto out_f;
+	}
 	irq_set_status_flags(sport->irq_rx, IRQ_NOAUTOEN);
-	ret = request_irq(sport->irq_rx, pic32_uart_rx_पूर्णांकerrupt,
+	ret = request_irq(sport->irq_rx, pic32_uart_rx_interrupt,
 			  sport->irqflags_rx, sport->irq_rx_name, port);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(port->dev, "%s: request irq(%d) err! ret:%d name:%s\n",
 			__func__, sport->irq_rx, ret,
 			pic32_uart_type(port));
-		जाओ out_r;
-	पूर्ण
+		goto out_r;
+	}
 
-	sport->irq_tx_name = kaप्र_लिखो(GFP_KERNEL, "%s%d-tx",
+	sport->irq_tx_name = kasprintf(GFP_KERNEL, "%s%d-tx",
 				       pic32_uart_type(port),
 				       sport->idx);
-	अगर (!sport->irq_tx_name) अणु
+	if (!sport->irq_tx_name) {
 		dev_err(port->dev, "%s: kasprintf err!", __func__);
 		ret = -ENOMEM;
-		जाओ out_r;
-	पूर्ण
+		goto out_r;
+	}
 	irq_set_status_flags(sport->irq_tx, IRQ_NOAUTOEN);
-	ret = request_irq(sport->irq_tx, pic32_uart_tx_पूर्णांकerrupt,
+	ret = request_irq(sport->irq_tx, pic32_uart_tx_interrupt,
 			  sport->irqflags_tx, sport->irq_tx_name, port);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(port->dev, "%s: request irq(%d) err! ret:%d name:%s\n",
 			__func__, sport->irq_tx, ret,
 			pic32_uart_type(port));
-		जाओ out_t;
-	पूर्ण
+		goto out_t;
+	}
 
 	local_irq_save(flags);
 
-	/* set rx पूर्णांकerrupt on first receive */
-	pic32_uart_ग_लिखोl(sport, PIC32_CLR(PIC32_UART_STA),
+	/* set rx interrupt on first receive */
+	pic32_uart_writel(sport, PIC32_CLR(PIC32_UART_STA),
 			PIC32_UART_STA_URXISEL1 | PIC32_UART_STA_URXISEL0);
 
-	/* set पूर्णांकerrupt on empty */
-	pic32_uart_ग_लिखोl(sport, PIC32_CLR(PIC32_UART_STA),
+	/* set interrupt on empty */
+	pic32_uart_writel(sport, PIC32_CLR(PIC32_UART_STA),
 			PIC32_UART_STA_UTXISEL1);
 
-	/* enable all पूर्णांकerrupts and eanable uart */
+	/* enable all interrupts and eanable uart */
 	pic32_uart_en_and_unmask(port);
 
 	enable_irq(sport->irq_rx);
 
-	वापस 0;
+	return 0;
 
 out_t:
-	kमुक्त(sport->irq_tx_name);
-	मुक्त_irq(sport->irq_tx, port);
+	kfree(sport->irq_tx_name);
+	free_irq(sport->irq_tx, port);
 out_r:
-	kमुक्त(sport->irq_rx_name);
-	मुक्त_irq(sport->irq_rx, port);
+	kfree(sport->irq_rx_name);
+	free_irq(sport->irq_rx, port);
 out_f:
-	kमुक्त(sport->irq_fault_name);
-	मुक्त_irq(sport->irq_fault, port);
-out_करोne:
-	वापस ret;
-पूर्ण
+	kfree(sport->irq_fault_name);
+	free_irq(sport->irq_fault, port);
+out_done:
+	return ret;
+}
 
 /* serial core request to flush & disable uart */
-अटल व्योम pic32_uart_shutकरोwn(काष्ठा uart_port *port)
-अणु
-	काष्ठा pic32_sport *sport = to_pic32_sport(port);
-	अचिन्हित दीर्घ flags;
+static void pic32_uart_shutdown(struct uart_port *port)
+{
+	struct pic32_sport *sport = to_pic32_sport(port);
+	unsigned long flags;
 
 	/* disable uart */
 	spin_lock_irqsave(&port->lock, flags);
 	pic32_uart_dsbl_and_mask(port);
 	spin_unlock_irqrestore(&port->lock, flags);
-	pic32_disable_घड़ी(sport);
+	pic32_disable_clock(sport);
 
-	/* मुक्त all 3 पूर्णांकerrupts क्रम this UART */
-	मुक्त_irq(sport->irq_fault, port);
-	मुक्त_irq(sport->irq_tx, port);
-	मुक्त_irq(sport->irq_rx, port);
-पूर्ण
+	/* free all 3 interrupts for this UART */
+	free_irq(sport->irq_fault, port);
+	free_irq(sport->irq_tx, port);
+	free_irq(sport->irq_rx, port);
+}
 
 /* serial core request to change current uart setting */
-अटल व्योम pic32_uart_set_termios(काष्ठा uart_port *port,
-				   काष्ठा ktermios *new,
-				   काष्ठा ktermios *old)
-अणु
-	काष्ठा pic32_sport *sport = to_pic32_sport(port);
-	अचिन्हित पूर्णांक baud;
-	अचिन्हित पूर्णांक quot;
-	अचिन्हित दीर्घ flags;
+static void pic32_uart_set_termios(struct uart_port *port,
+				   struct ktermios *new,
+				   struct ktermios *old)
+{
+	struct pic32_sport *sport = to_pic32_sport(port);
+	unsigned int baud;
+	unsigned int quot;
+	unsigned long flags;
 
 	spin_lock_irqsave(&port->lock, flags);
 
-	/* disable uart and mask all पूर्णांकerrupts जबतक changing speed */
+	/* disable uart and mask all interrupts while changing speed */
 	pic32_uart_dsbl_and_mask(port);
 
 	/* stop bit options */
-	अगर (new->c_cflag & CSTOPB)
-		pic32_uart_ग_लिखोl(sport, PIC32_SET(PIC32_UART_MODE),
+	if (new->c_cflag & CSTOPB)
+		pic32_uart_writel(sport, PIC32_SET(PIC32_UART_MODE),
 					PIC32_UART_MODE_STSEL);
-	अन्यथा
-		pic32_uart_ग_लिखोl(sport, PIC32_CLR(PIC32_UART_MODE),
+	else
+		pic32_uart_writel(sport, PIC32_CLR(PIC32_UART_MODE),
 					PIC32_UART_MODE_STSEL);
 
 	/* parity options */
-	अगर (new->c_cflag & PARENB) अणु
-		अगर (new->c_cflag & PARODD) अणु
-			pic32_uart_ग_लिखोl(sport, PIC32_SET(PIC32_UART_MODE),
+	if (new->c_cflag & PARENB) {
+		if (new->c_cflag & PARODD) {
+			pic32_uart_writel(sport, PIC32_SET(PIC32_UART_MODE),
 					PIC32_UART_MODE_PDSEL1);
-			pic32_uart_ग_लिखोl(sport, PIC32_CLR(PIC32_UART_MODE),
+			pic32_uart_writel(sport, PIC32_CLR(PIC32_UART_MODE),
 					PIC32_UART_MODE_PDSEL0);
-		पूर्ण अन्यथा अणु
-			pic32_uart_ग_लिखोl(sport, PIC32_SET(PIC32_UART_MODE),
+		} else {
+			pic32_uart_writel(sport, PIC32_SET(PIC32_UART_MODE),
 					PIC32_UART_MODE_PDSEL0);
-			pic32_uart_ग_लिखोl(sport, PIC32_CLR(PIC32_UART_MODE),
+			pic32_uart_writel(sport, PIC32_CLR(PIC32_UART_MODE),
 					PIC32_UART_MODE_PDSEL1);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		pic32_uart_ग_लिखोl(sport, PIC32_CLR(PIC32_UART_MODE),
+		}
+	} else {
+		pic32_uart_writel(sport, PIC32_CLR(PIC32_UART_MODE),
 					PIC32_UART_MODE_PDSEL1 |
 					PIC32_UART_MODE_PDSEL0);
-	पूर्ण
-	/* अगर hw flow ctrl, then the pins must be specअगरied in device tree */
-	अगर ((new->c_cflag & CRTSCTS) && sport->hw_flow_ctrl) अणु
+	}
+	/* if hw flow ctrl, then the pins must be specified in device tree */
+	if ((new->c_cflag & CRTSCTS) && sport->hw_flow_ctrl) {
 		/* enable hardware flow control */
-		pic32_uart_ग_लिखोl(sport, PIC32_SET(PIC32_UART_MODE),
+		pic32_uart_writel(sport, PIC32_SET(PIC32_UART_MODE),
 					PIC32_UART_MODE_UEN1);
-		pic32_uart_ग_लिखोl(sport, PIC32_CLR(PIC32_UART_MODE),
+		pic32_uart_writel(sport, PIC32_CLR(PIC32_UART_MODE),
 					PIC32_UART_MODE_UEN0);
-		pic32_uart_ग_लिखोl(sport, PIC32_CLR(PIC32_UART_MODE),
+		pic32_uart_writel(sport, PIC32_CLR(PIC32_UART_MODE),
 					PIC32_UART_MODE_RTSMD);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* disable hardware flow control */
-		pic32_uart_ग_लिखोl(sport, PIC32_CLR(PIC32_UART_MODE),
+		pic32_uart_writel(sport, PIC32_CLR(PIC32_UART_MODE),
 					PIC32_UART_MODE_UEN1);
-		pic32_uart_ग_लिखोl(sport, PIC32_CLR(PIC32_UART_MODE),
+		pic32_uart_writel(sport, PIC32_CLR(PIC32_UART_MODE),
 					PIC32_UART_MODE_UEN0);
-		pic32_uart_ग_लिखोl(sport, PIC32_CLR(PIC32_UART_MODE),
+		pic32_uart_writel(sport, PIC32_CLR(PIC32_UART_MODE),
 					PIC32_UART_MODE_RTSMD);
-	पूर्ण
+	}
 
 	/* Always 8-bit */
 	new->c_cflag |= CS8;
@@ -592,228 +591,228 @@ out_करोne:
 
 	/* update baud */
 	baud = uart_get_baud_rate(port, new, old, 0, port->uartclk / 16);
-	quot = uart_get_भागisor(port, baud) - 1;
-	pic32_uart_ग_लिखोl(sport, PIC32_UART_BRG, quot);
-	uart_update_समयout(port, new->c_cflag, baud);
+	quot = uart_get_divisor(port, baud) - 1;
+	pic32_uart_writel(sport, PIC32_UART_BRG, quot);
+	uart_update_timeout(port, new->c_cflag, baud);
 
-	अगर (tty_termios_baud_rate(new))
+	if (tty_termios_baud_rate(new))
 		tty_termios_encode_baud_rate(new, baud, baud);
 
 	/* enable uart */
 	pic32_uart_en_and_unmask(port);
 
 	spin_unlock_irqrestore(&port->lock, flags);
-पूर्ण
+}
 
 /* serial core request to claim uart iomem */
-अटल पूर्णांक pic32_uart_request_port(काष्ठा uart_port *port)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(port->dev);
-	काष्ठा resource *res_mem;
+static int pic32_uart_request_port(struct uart_port *port)
+{
+	struct platform_device *pdev = to_platform_device(port->dev);
+	struct resource *res_mem;
 
-	res_mem = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (unlikely(!res_mem))
-		वापस -EINVAL;
+	res_mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (unlikely(!res_mem))
+		return -EINVAL;
 
-	अगर (!request_mem_region(port->mapbase, resource_size(res_mem),
+	if (!request_mem_region(port->mapbase, resource_size(res_mem),
 				"pic32_uart_mem"))
-		वापस -EBUSY;
+		return -EBUSY;
 
 	port->membase = devm_ioremap(port->dev, port->mapbase,
 						resource_size(res_mem));
-	अगर (!port->membase) अणु
+	if (!port->membase) {
 		dev_err(port->dev, "Unable to map registers\n");
 		release_mem_region(port->mapbase, resource_size(res_mem));
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* serial core request to release uart iomem */
-अटल व्योम pic32_uart_release_port(काष्ठा uart_port *port)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(port->dev);
-	काष्ठा resource *res_mem;
-	अचिन्हित पूर्णांक res_size;
+static void pic32_uart_release_port(struct uart_port *port)
+{
+	struct platform_device *pdev = to_platform_device(port->dev);
+	struct resource *res_mem;
+	unsigned int res_size;
 
-	res_mem = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (unlikely(!res_mem))
-		वापस;
+	res_mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (unlikely(!res_mem))
+		return;
 	res_size = resource_size(res_mem);
 
 	release_mem_region(port->mapbase, res_size);
-पूर्ण
+}
 
-/* serial core request to करो any port required स्वतः-configuration */
-अटल व्योम pic32_uart_config_port(काष्ठा uart_port *port, पूर्णांक flags)
-अणु
-	अगर (flags & UART_CONFIG_TYPE) अणु
-		अगर (pic32_uart_request_port(port))
-			वापस;
+/* serial core request to do any port required auto-configuration */
+static void pic32_uart_config_port(struct uart_port *port, int flags)
+{
+	if (flags & UART_CONFIG_TYPE) {
+		if (pic32_uart_request_port(port))
+			return;
 		port->type = PORT_PIC32;
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* serial core request to check that port inक्रमmation in serinfo are suitable */
-अटल पूर्णांक pic32_uart_verअगरy_port(काष्ठा uart_port *port,
-				  काष्ठा serial_काष्ठा *serinfo)
-अणु
-	अगर (port->type != PORT_PIC32)
-		वापस -EINVAL;
-	अगर (port->irq != serinfo->irq)
-		वापस -EINVAL;
-	अगर (port->iotype != serinfo->io_type)
-		वापस -EINVAL;
-	अगर (port->mapbase != (अचिन्हित दीर्घ)serinfo->iomem_base)
-		वापस -EINVAL;
+/* serial core request to check that port information in serinfo are suitable */
+static int pic32_uart_verify_port(struct uart_port *port,
+				  struct serial_struct *serinfo)
+{
+	if (port->type != PORT_PIC32)
+		return -EINVAL;
+	if (port->irq != serinfo->irq)
+		return -EINVAL;
+	if (port->iotype != serinfo->io_type)
+		return -EINVAL;
+	if (port->mapbase != (unsigned long)serinfo->iomem_base)
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* serial core callbacks */
-अटल स्थिर काष्ठा uart_ops pic32_uart_ops = अणु
+static const struct uart_ops pic32_uart_ops = {
 	.tx_empty	= pic32_uart_tx_empty,
 	.get_mctrl	= pic32_uart_get_mctrl,
 	.set_mctrl	= pic32_uart_set_mctrl,
 	.start_tx	= pic32_uart_start_tx,
 	.stop_tx	= pic32_uart_stop_tx,
 	.stop_rx	= pic32_uart_stop_rx,
-	.अवरोध_ctl	= pic32_uart_अवरोध_ctl,
+	.break_ctl	= pic32_uart_break_ctl,
 	.startup	= pic32_uart_startup,
-	.shutकरोwn	= pic32_uart_shutकरोwn,
+	.shutdown	= pic32_uart_shutdown,
 	.set_termios	= pic32_uart_set_termios,
 	.type		= pic32_uart_type,
 	.release_port	= pic32_uart_release_port,
 	.request_port	= pic32_uart_request_port,
 	.config_port	= pic32_uart_config_port,
-	.verअगरy_port	= pic32_uart_verअगरy_port,
-पूर्ण;
+	.verify_port	= pic32_uart_verify_port,
+};
 
-#अगर_घोषित CONFIG_SERIAL_PIC32_CONSOLE
-/* output given अक्षर */
-अटल व्योम pic32_console_अक्षर_दो(काष्ठा uart_port *port, पूर्णांक ch)
-अणु
-	काष्ठा pic32_sport *sport = to_pic32_sport(port);
+#ifdef CONFIG_SERIAL_PIC32_CONSOLE
+/* output given char */
+static void pic32_console_putchar(struct uart_port *port, int ch)
+{
+	struct pic32_sport *sport = to_pic32_sport(port);
 
-	अगर (!(pic32_uart_पढ़ोl(sport, PIC32_UART_MODE) & PIC32_UART_MODE_ON))
-		वापस;
+	if (!(pic32_uart_readl(sport, PIC32_UART_MODE) & PIC32_UART_MODE_ON))
+		return;
 
-	अगर (!(pic32_uart_पढ़ोl(sport, PIC32_UART_STA) & PIC32_UART_STA_UTXEN))
-		वापस;
+	if (!(pic32_uart_readl(sport, PIC32_UART_STA) & PIC32_UART_STA_UTXEN))
+		return;
 
-	/* रुको क्रम tx empty */
-	pic32_रुको_deplete_txbuf(sport);
+	/* wait for tx empty */
+	pic32_wait_deplete_txbuf(sport);
 
-	pic32_uart_ग_लिखोl(sport, PIC32_UART_TX, ch & 0xff);
-पूर्ण
+	pic32_uart_writel(sport, PIC32_UART_TX, ch & 0xff);
+}
 
 /* console core request to output given string */
-अटल व्योम pic32_console_ग_लिखो(काष्ठा console *co, स्थिर अक्षर *s,
-				अचिन्हित पूर्णांक count)
-अणु
-	काष्ठा pic32_sport *sport = pic32_sports[co->index];
-	काष्ठा uart_port *port = pic32_get_port(sport);
+static void pic32_console_write(struct console *co, const char *s,
+				unsigned int count)
+{
+	struct pic32_sport *sport = pic32_sports[co->index];
+	struct uart_port *port = pic32_get_port(sport);
 
-	/* call uart helper to deal with \ल\न */
-	uart_console_ग_लिखो(port, s, count, pic32_console_अक्षर_दो);
-पूर्ण
+	/* call uart helper to deal with \r\n */
+	uart_console_write(port, s, count, pic32_console_putchar);
+}
 
 /* console core request to setup given console, find matching uart
  * port and setup it.
  */
-अटल पूर्णांक pic32_console_setup(काष्ठा console *co, अक्षर *options)
-अणु
-	काष्ठा pic32_sport *sport;
-	काष्ठा uart_port *port = शून्य;
-	पूर्णांक baud = 115200;
-	पूर्णांक bits = 8;
-	पूर्णांक parity = 'n';
-	पूर्णांक flow = 'n';
-	पूर्णांक ret = 0;
+static int pic32_console_setup(struct console *co, char *options)
+{
+	struct pic32_sport *sport;
+	struct uart_port *port = NULL;
+	int baud = 115200;
+	int bits = 8;
+	int parity = 'n';
+	int flow = 'n';
+	int ret = 0;
 
-	अगर (unlikely(co->index < 0 || co->index >= PIC32_MAX_UARTS))
-		वापस -ENODEV;
+	if (unlikely(co->index < 0 || co->index >= PIC32_MAX_UARTS))
+		return -ENODEV;
 
 	sport = pic32_sports[co->index];
-	अगर (!sport)
-		वापस -ENODEV;
+	if (!sport)
+		return -ENODEV;
 	port = pic32_get_port(sport);
 
-	ret = pic32_enable_घड़ी(sport);
-	अगर (ret)
-		वापस ret;
+	ret = pic32_enable_clock(sport);
+	if (ret)
+		return ret;
 
-	अगर (options)
+	if (options)
 		uart_parse_options(options, &baud, &parity, &bits, &flow);
 
-	वापस uart_set_options(port, co, baud, parity, bits, flow);
-पूर्ण
+	return uart_set_options(port, co, baud, parity, bits, flow);
+}
 
-अटल काष्ठा uart_driver pic32_uart_driver;
-अटल काष्ठा console pic32_console = अणु
+static struct uart_driver pic32_uart_driver;
+static struct console pic32_console = {
 	.name		= PIC32_SDEV_NAME,
-	.ग_लिखो		= pic32_console_ग_लिखो,
+	.write		= pic32_console_write,
 	.device		= uart_console_device,
 	.setup		= pic32_console_setup,
 	.flags		= CON_PRINTBUFFER,
 	.index		= -1,
 	.data		= &pic32_uart_driver,
-पूर्ण;
-#घोषणा PIC32_SCONSOLE (&pic32_console)
+};
+#define PIC32_SCONSOLE (&pic32_console)
 
-अटल पूर्णांक __init pic32_console_init(व्योम)
-अणु
-	रेजिस्टर_console(&pic32_console);
-	वापस 0;
-पूर्ण
+static int __init pic32_console_init(void)
+{
+	register_console(&pic32_console);
+	return 0;
+}
 console_initcall(pic32_console_init);
 
 /*
  * Late console initialization.
  */
-अटल पूर्णांक __init pic32_late_console_init(व्योम)
-अणु
-	अगर (!(pic32_console.flags & CON_ENABLED))
-		रेजिस्टर_console(&pic32_console);
+static int __init pic32_late_console_init(void)
+{
+	if (!(pic32_console.flags & CON_ENABLED))
+		register_console(&pic32_console);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 core_initcall(pic32_late_console_init);
 
-#अन्यथा
-#घोषणा PIC32_SCONSOLE शून्य
-#पूर्ण_अगर
+#else
+#define PIC32_SCONSOLE NULL
+#endif
 
-अटल काष्ठा uart_driver pic32_uart_driver = अणु
+static struct uart_driver pic32_uart_driver = {
 	.owner			= THIS_MODULE,
 	.driver_name		= PIC32_DEV_NAME,
 	.dev_name		= PIC32_SDEV_NAME,
 	.nr			= PIC32_MAX_UARTS,
 	.cons			= PIC32_SCONSOLE,
-पूर्ण;
+};
 
-अटल पूर्णांक pic32_uart_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device_node *np = pdev->dev.of_node;
-	काष्ठा pic32_sport *sport;
-	पूर्णांक uart_idx = 0;
-	काष्ठा resource *res_mem;
-	काष्ठा uart_port *port;
-	पूर्णांक ret;
+static int pic32_uart_probe(struct platform_device *pdev)
+{
+	struct device_node *np = pdev->dev.of_node;
+	struct pic32_sport *sport;
+	int uart_idx = 0;
+	struct resource *res_mem;
+	struct uart_port *port;
+	int ret;
 
 	uart_idx = of_alias_get_id(np, "serial");
-	अगर (uart_idx < 0 || uart_idx >= PIC32_MAX_UARTS)
-		वापस -EINVAL;
+	if (uart_idx < 0 || uart_idx >= PIC32_MAX_UARTS)
+		return -EINVAL;
 
-	res_mem = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (!res_mem)
-		वापस -EINVAL;
+	res_mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (!res_mem)
+		return -EINVAL;
 
-	sport = devm_kzalloc(&pdev->dev, माप(*sport), GFP_KERNEL);
-	अगर (!sport)
-		वापस -ENOMEM;
+	sport = devm_kzalloc(&pdev->dev, sizeof(*sport), GFP_KERNEL);
+	if (!sport)
+		return -ENOMEM;
 
 	sport->idx		= uart_idx;
 	sport->irq_fault	= irq_of_parse_and_map(np, 0);
@@ -822,132 +821,132 @@ core_initcall(pic32_late_console_init);
 	sport->irqflags_rx	= IRQF_NO_THREAD;
 	sport->irq_tx		= irq_of_parse_and_map(np, 2);
 	sport->irqflags_tx	= IRQF_NO_THREAD;
-	sport->clk		= devm_clk_get(&pdev->dev, शून्य);
+	sport->clk		= devm_clk_get(&pdev->dev, NULL);
 	sport->cts_gpio		= -EINVAL;
 	sport->dev		= &pdev->dev;
 
 	/* Hardware flow control: gpios
-	 * !Note: Basically, CTS is needed क्रम पढ़ोing the status.
+	 * !Note: Basically, CTS is needed for reading the status.
 	 */
 	sport->hw_flow_ctrl = false;
 	sport->cts_gpio = of_get_named_gpio(np, "cts-gpios", 0);
-	अगर (gpio_is_valid(sport->cts_gpio)) अणु
+	if (gpio_is_valid(sport->cts_gpio)) {
 		sport->hw_flow_ctrl = true;
 
 		ret = devm_gpio_request(sport->dev,
 					sport->cts_gpio, "CTS");
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(&pdev->dev,
 				"error requesting CTS GPIO\n");
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
 		ret = gpio_direction_input(sport->cts_gpio);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(&pdev->dev, "error setting CTS GPIO\n");
-			जाओ err;
-		पूर्ण
-	पूर्ण
+			goto err;
+		}
+	}
 
 	pic32_sports[uart_idx] = sport;
 	port = &sport->port;
-	स_रखो(port, 0, माप(*port));
+	memset(port, 0, sizeof(*port));
 	port->iotype	= UPIO_MEM;
 	port->mapbase	= res_mem->start;
 	port->ops	= &pic32_uart_ops;
 	port->flags	= UPF_BOOT_AUTOCONF;
 	port->dev	= &pdev->dev;
-	port->fअगरosize	= PIC32_UART_TX_FIFO_DEPTH;
+	port->fifosize	= PIC32_UART_TX_FIFO_DEPTH;
 	port->uartclk	= clk_get_rate(sport->clk);
 	port->line	= uart_idx;
 
 	ret = uart_add_one_port(&pic32_uart_driver, port);
-	अगर (ret) अणु
-		port->membase = शून्य;
+	if (ret) {
+		port->membase = NULL;
 		dev_err(port->dev, "%s: uart add port error!\n", __func__);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-#अगर_घोषित CONFIG_SERIAL_PIC32_CONSOLE
-	अगर (uart_console(port) && (pic32_console.flags & CON_ENABLED)) अणु
-		/* The peripheral घड़ी has been enabled by console_setup,
+#ifdef CONFIG_SERIAL_PIC32_CONSOLE
+	if (uart_console(port) && (pic32_console.flags & CON_ENABLED)) {
+		/* The peripheral clock has been enabled by console_setup,
 		 * so disable it till the port is used.
 		 */
-		pic32_disable_घड़ी(sport);
-	पूर्ण
-#पूर्ण_अगर
+		pic32_disable_clock(sport);
+	}
+#endif
 
-	platक्रमm_set_drvdata(pdev, port);
+	platform_set_drvdata(pdev, port);
 
 	dev_info(&pdev->dev, "%s: uart(%d) driver initialized.\n",
 		 __func__, uart_idx);
 
-	वापस 0;
+	return 0;
 err:
-	/* स्वतःmatic unroll of sport and gpios */
-	वापस ret;
-पूर्ण
+	/* automatic unroll of sport and gpios */
+	return ret;
+}
 
-अटल पूर्णांक pic32_uart_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा uart_port *port = platक्रमm_get_drvdata(pdev);
-	काष्ठा pic32_sport *sport = to_pic32_sport(port);
+static int pic32_uart_remove(struct platform_device *pdev)
+{
+	struct uart_port *port = platform_get_drvdata(pdev);
+	struct pic32_sport *sport = to_pic32_sport(port);
 
-	uart_हटाओ_one_port(&pic32_uart_driver, port);
-	pic32_disable_घड़ी(sport);
-	platक्रमm_set_drvdata(pdev, शून्य);
-	pic32_sports[sport->idx] = शून्य;
+	uart_remove_one_port(&pic32_uart_driver, port);
+	pic32_disable_clock(sport);
+	platform_set_drvdata(pdev, NULL);
+	pic32_sports[sport->idx] = NULL;
 
-	/* स्वतःmatic unroll of sport and gpios */
-	वापस 0;
-पूर्ण
+	/* automatic unroll of sport and gpios */
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id pic32_serial_dt_ids[] = अणु
-	अणु .compatible = "microchip,pic32mzda-uart" पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+static const struct of_device_id pic32_serial_dt_ids[] = {
+	{ .compatible = "microchip,pic32mzda-uart" },
+	{ /* sentinel */ }
+};
 MODULE_DEVICE_TABLE(of, pic32_serial_dt_ids);
 
-अटल काष्ठा platक्रमm_driver pic32_uart_platक्रमm_driver = अणु
+static struct platform_driver pic32_uart_platform_driver = {
 	.probe		= pic32_uart_probe,
-	.हटाओ		= pic32_uart_हटाओ,
-	.driver		= अणु
+	.remove		= pic32_uart_remove,
+	.driver		= {
 		.name	= PIC32_DEV_NAME,
 		.of_match_table	= of_match_ptr(pic32_serial_dt_ids),
 		.suppress_bind_attrs = IS_BUILTIN(CONFIG_SERIAL_PIC32),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init pic32_uart_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init pic32_uart_init(void)
+{
+	int ret;
 
-	ret = uart_रेजिस्टर_driver(&pic32_uart_driver);
-	अगर (ret) अणु
+	ret = uart_register_driver(&pic32_uart_driver);
+	if (ret) {
 		pr_err("failed to register %s:%d\n",
 		       pic32_uart_driver.driver_name, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = platक्रमm_driver_रेजिस्टर(&pic32_uart_platक्रमm_driver);
-	अगर (ret) अणु
+	ret = platform_driver_register(&pic32_uart_platform_driver);
+	if (ret) {
 		pr_err("fail to register pic32 uart\n");
-		uart_unरेजिस्टर_driver(&pic32_uart_driver);
-	पूर्ण
+		uart_unregister_driver(&pic32_uart_driver);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 arch_initcall(pic32_uart_init);
 
-अटल व्योम __निकास pic32_uart_निकास(व्योम)
-अणु
-#अगर_घोषित CONFIG_SERIAL_PIC32_CONSOLE
-	unरेजिस्टर_console(&pic32_console);
-#पूर्ण_अगर
-	platक्रमm_driver_unरेजिस्टर(&pic32_uart_platक्रमm_driver);
-	uart_unरेजिस्टर_driver(&pic32_uart_driver);
-पूर्ण
-module_निकास(pic32_uart_निकास);
+static void __exit pic32_uart_exit(void)
+{
+#ifdef CONFIG_SERIAL_PIC32_CONSOLE
+	unregister_console(&pic32_console);
+#endif
+	platform_driver_unregister(&pic32_uart_platform_driver);
+	uart_unregister_driver(&pic32_uart_driver);
+}
+module_exit(pic32_uart_exit);
 
 MODULE_AUTHOR("Sorin-Andrei Pistirica <andrei.pistirica@microchip.com>");
 MODULE_DESCRIPTION("Microchip PIC32 integrated serial port driver");

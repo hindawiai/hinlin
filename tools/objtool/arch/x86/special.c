@@ -1,63 +1,62 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
-#समावेश <माला.स>
+// SPDX-License-Identifier: GPL-2.0-or-later
+#include <string.h>
 
-#समावेश <objtool/special.h>
-#समावेश <objtool/builtin.h>
+#include <objtool/special.h>
+#include <objtool/builtin.h>
 
-#घोषणा X86_FEATURE_POPCNT (4 * 32 + 23)
-#घोषणा X86_FEATURE_SMAP   (9 * 32 + 20)
+#define X86_FEATURE_POPCNT (4 * 32 + 23)
+#define X86_FEATURE_SMAP   (9 * 32 + 20)
 
-व्योम arch_handle_alternative(अचिन्हित लघु feature, काष्ठा special_alt *alt)
-अणु
-	चयन (feature) अणु
-	हाल X86_FEATURE_SMAP:
+void arch_handle_alternative(unsigned short feature, struct special_alt *alt)
+{
+	switch (feature) {
+	case X86_FEATURE_SMAP:
 		/*
-		 * If UACCESS validation is enabled; क्रमce that alternative;
-		 * otherwise क्रमce it the other way.
+		 * If UACCESS validation is enabled; force that alternative;
+		 * otherwise force it the other way.
 		 *
-		 * What we want to aव्योम is having both the original and the
-		 * alternative code flow at the same समय, in that हाल we can
+		 * What we want to avoid is having both the original and the
+		 * alternative code flow at the same time, in that case we can
 		 * find paths that see the STAC but take the NOP instead of
 		 * CLAC and the other way around.
 		 */
-		अगर (uaccess)
+		if (uaccess)
 			alt->skip_orig = true;
-		अन्यथा
+		else
 			alt->skip_alt = true;
-		अवरोध;
-	हाल X86_FEATURE_POPCNT:
+		break;
+	case X86_FEATURE_POPCNT:
 		/*
-		 * It has been requested that we करोn't validate the !POPCNT
+		 * It has been requested that we don't validate the !POPCNT
 		 * feature path which is a "very very small percentage of
 		 * machines".
 		 */
 		alt->skip_orig = true;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 
-bool arch_support_alt_relocation(काष्ठा special_alt *special_alt,
-				 काष्ठा inकाष्ठाion *insn,
-				 काष्ठा reloc *reloc)
-अणु
+bool arch_support_alt_relocation(struct special_alt *special_alt,
+				 struct instruction *insn,
+				 struct reloc *reloc)
+{
 	/*
 	 * The x86 alternatives code adjusts the offsets only when it
-	 * encounters a branch inकाष्ठाion at the very beginning of the
+	 * encounters a branch instruction at the very beginning of the
 	 * replacement group.
 	 */
-	वापस insn->offset == special_alt->new_off &&
+	return insn->offset == special_alt->new_off &&
 	       (insn->type == INSN_CALL || is_jump(insn));
-पूर्ण
+}
 
 /*
  * There are 3 basic jump table patterns:
  *
  * 1. jmpq *[rodata addr](,%reg,8)
  *
- *    This is the most common हाल by far.  It jumps to an address in a simple
+ *    This is the most common case by far.  It jumps to an address in a simple
  *    jump table which is stored in .rodata.
  *
  * 2. jmpq *[rodata addr](%rip)
@@ -65,82 +64,82 @@ bool arch_support_alt_relocation(काष्ठा special_alt *special_alt,
  *    This is caused by a rare GCC quirk, currently only seen in three driver
  *    functions in the kernel, only with certain obscure non-distro configs.
  *
- *    As part of an optimization, GCC makes a copy of an existing चयन jump
- *    table, modअगरies it, and then hard-codes the jump (albeit with an indirect
+ *    As part of an optimization, GCC makes a copy of an existing switch jump
+ *    table, modifies it, and then hard-codes the jump (albeit with an indirect
  *    jump) to use a single entry in the table.  The rest of the jump table and
- *    some of its jump tarमाला_लो reमुख्य as dead code.
+ *    some of its jump targets remain as dead code.
  *
- *    In such a हाल we can just crudely ignore all unreachable inकाष्ठाion
- *    warnings क्रम the entire object file.  Ideally we would just ignore them
- *    क्रम the function, but that would require redesigning the code quite a
- *    bit.  And honestly that's just not worth करोing: unreachable inकाष्ठाion
+ *    In such a case we can just crudely ignore all unreachable instruction
+ *    warnings for the entire object file.  Ideally we would just ignore them
+ *    for the function, but that would require redesigning the code quite a
+ *    bit.  And honestly that's just not worth doing: unreachable instruction
  *    warnings are of questionable value anyway, and this is such a rare issue.
  *
  * 3. mov [rodata addr],%reg1
- *    ... some inकाष्ठाions ...
+ *    ... some instructions ...
  *    jmpq *(%reg1,%reg2,8)
  *
- *    This is a fairly uncommon pattern which is new क्रम GCC 6.  As of this
+ *    This is a fairly uncommon pattern which is new for GCC 6.  As of this
  *    writing, there are 11 occurrences of it in the allmodconfig kernel.
  *
  *    As of GCC 7 there are quite a few more of these and the 'in between' code
- *    is signअगरicant. Esp. with KASAN enabled some of the code between the mov
+ *    is significant. Esp. with KASAN enabled some of the code between the mov
  *    and jmpq uses .rodata itself, which can confuse things.
  *
- *    TODO: Once we have DWARF CFI and smarter inकाष्ठाion decoding logic,
- *    ensure the same रेजिस्टर is used in the mov and jump inकाष्ठाions.
+ *    TODO: Once we have DWARF CFI and smarter instruction decoding logic,
+ *    ensure the same register is used in the mov and jump instructions.
  *
  *    NOTE: RETPOLINE made it harder still to decode dynamic jumps.
  */
-काष्ठा reloc *arch_find_चयन_table(काष्ठा objtool_file *file,
-				    काष्ठा inकाष्ठाion *insn)
-अणु
-	काष्ठा reloc  *text_reloc, *rodata_reloc;
-	काष्ठा section *table_sec;
-	अचिन्हित दीर्घ table_offset;
+struct reloc *arch_find_switch_table(struct objtool_file *file,
+				    struct instruction *insn)
+{
+	struct reloc  *text_reloc, *rodata_reloc;
+	struct section *table_sec;
+	unsigned long table_offset;
 
-	/* look क्रम a relocation which references .rodata */
+	/* look for a relocation which references .rodata */
 	text_reloc = find_reloc_by_dest_range(file->elf, insn->sec,
 					      insn->offset, insn->len);
-	अगर (!text_reloc || text_reloc->sym->type != STT_SECTION ||
+	if (!text_reloc || text_reloc->sym->type != STT_SECTION ||
 	    !text_reloc->sym->sec->rodata)
-		वापस शून्य;
+		return NULL;
 
 	table_offset = text_reloc->addend;
 	table_sec = text_reloc->sym->sec;
 
-	अगर (text_reloc->type == R_X86_64_PC32)
+	if (text_reloc->type == R_X86_64_PC32)
 		table_offset += 4;
 
 	/*
 	 * Make sure the .rodata address isn't associated with a
 	 * symbol.  GCC jump tables are anonymous data.
 	 *
-	 * Also support C jump tables which are in the same क्रमmat as
-	 * चयन jump tables.  For objtool to recognize them, they
+	 * Also support C jump tables which are in the same format as
+	 * switch jump tables.  For objtool to recognize them, they
 	 * need to be placed in the C_JUMP_TABLE_SECTION section.  They
 	 * have symbols associated with them.
 	 */
-	अगर (find_symbol_containing(table_sec, table_offset) &&
-	    म_भेद(table_sec->name, C_JUMP_TABLE_SECTION))
-		वापस शून्य;
+	if (find_symbol_containing(table_sec, table_offset) &&
+	    strcmp(table_sec->name, C_JUMP_TABLE_SECTION))
+		return NULL;
 
 	/*
 	 * Each table entry has a rela associated with it.  The rela
 	 * should reference text in the same function as the original
-	 * inकाष्ठाion.
+	 * instruction.
 	 */
 	rodata_reloc = find_reloc_by_dest(file->elf, table_sec, table_offset);
-	अगर (!rodata_reloc)
-		वापस शून्य;
+	if (!rodata_reloc)
+		return NULL;
 
 	/*
-	 * Use of RIP-relative चयन jumps is quite rare, and
+	 * Use of RIP-relative switch jumps is quite rare, and
 	 * indicates a rare GCC quirk/bug which can leave dead
 	 * code behind.
 	 */
-	अगर (text_reloc->type == R_X86_64_PC32)
+	if (text_reloc->type == R_X86_64_PC32)
 		file->ignore_unreachables = true;
 
-	वापस rodata_reloc;
-पूर्ण
+	return rodata_reloc;
+}

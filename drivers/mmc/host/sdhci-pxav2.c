@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2010 Marvell International Ltd.
  *		Zhangfei Gao <zhangfei.gao@marvell.com>
@@ -9,233 +8,233 @@
  *		Philip Rakity <prakity@marvell.com>
  */
 
-#समावेश <linux/err.h>
-#समावेश <linux/init.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/module.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/mmc/card.h>
-#समावेश <linux/mmc/host.h>
-#समावेश <linux/platक्रमm_data/pxa_sdhci.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
+#include <linux/err.h>
+#include <linux/init.h>
+#include <linux/platform_device.h>
+#include <linux/clk.h>
+#include <linux/module.h>
+#include <linux/io.h>
+#include <linux/mmc/card.h>
+#include <linux/mmc/host.h>
+#include <linux/platform_data/pxa_sdhci.h>
+#include <linux/slab.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
 
-#समावेश "sdhci.h"
-#समावेश "sdhci-pltfm.h"
+#include "sdhci.h"
+#include "sdhci-pltfm.h"
 
-#घोषणा SD_FIFO_PARAM		0xe0
-#घोषणा DIS_PAD_SD_CLK_GATE	0x0400 /* Turn on/off Dynamic SD Clock Gating */
-#घोषणा CLK_GATE_ON		0x0200 /* Disable/enable Clock Gate */
-#घोषणा CLK_GATE_CTL		0x0100 /* Clock Gate Control */
-#घोषणा CLK_GATE_SETTING_BITS	(DIS_PAD_SD_CLK_GATE | \
+#define SD_FIFO_PARAM		0xe0
+#define DIS_PAD_SD_CLK_GATE	0x0400 /* Turn on/off Dynamic SD Clock Gating */
+#define CLK_GATE_ON		0x0200 /* Disable/enable Clock Gate */
+#define CLK_GATE_CTL		0x0100 /* Clock Gate Control */
+#define CLK_GATE_SETTING_BITS	(DIS_PAD_SD_CLK_GATE | \
 		CLK_GATE_ON | CLK_GATE_CTL)
 
-#घोषणा SD_CLOCK_BURST_SIZE_SETUP	0xe6
-#घोषणा SDCLK_SEL_SHIFT		8
-#घोषणा SDCLK_SEL_MASK		0x3
-#घोषणा SDCLK_DELAY_SHIFT	10
-#घोषणा SDCLK_DELAY_MASK	0x3c
+#define SD_CLOCK_BURST_SIZE_SETUP	0xe6
+#define SDCLK_SEL_SHIFT		8
+#define SDCLK_SEL_MASK		0x3
+#define SDCLK_DELAY_SHIFT	10
+#define SDCLK_DELAY_MASK	0x3c
 
-#घोषणा SD_CE_ATA_2		0xea
-#घोषणा MMC_CARD		0x1000
-#घोषणा MMC_WIDTH		0x0100
+#define SD_CE_ATA_2		0xea
+#define MMC_CARD		0x1000
+#define MMC_WIDTH		0x0100
 
-अटल व्योम pxav2_reset(काष्ठा sdhci_host *host, u8 mask)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(mmc_dev(host->mmc));
-	काष्ठा sdhci_pxa_platdata *pdata = pdev->dev.platक्रमm_data;
+static void pxav2_reset(struct sdhci_host *host, u8 mask)
+{
+	struct platform_device *pdev = to_platform_device(mmc_dev(host->mmc));
+	struct sdhci_pxa_platdata *pdata = pdev->dev.platform_data;
 
 	sdhci_reset(host, mask);
 
-	अगर (mask == SDHCI_RESET_ALL) अणु
-		u16 पंचांगp = 0;
+	if (mask == SDHCI_RESET_ALL) {
+		u16 tmp = 0;
 
 		/*
-		 * tune timing of पढ़ो data/command when crc error happen
-		 * no perक्रमmance impact
+		 * tune timing of read data/command when crc error happen
+		 * no performance impact
 		 */
-		अगर (pdata && pdata->clk_delay_sel == 1) अणु
-			पंचांगp = पढ़ोw(host->ioaddr + SD_CLOCK_BURST_SIZE_SETUP);
+		if (pdata && pdata->clk_delay_sel == 1) {
+			tmp = readw(host->ioaddr + SD_CLOCK_BURST_SIZE_SETUP);
 
-			पंचांगp &= ~(SDCLK_DELAY_MASK << SDCLK_DELAY_SHIFT);
-			पंचांगp |= (pdata->clk_delay_cycles & SDCLK_DELAY_MASK)
+			tmp &= ~(SDCLK_DELAY_MASK << SDCLK_DELAY_SHIFT);
+			tmp |= (pdata->clk_delay_cycles & SDCLK_DELAY_MASK)
 				<< SDCLK_DELAY_SHIFT;
-			पंचांगp &= ~(SDCLK_SEL_MASK << SDCLK_SEL_SHIFT);
-			पंचांगp |= (1 & SDCLK_SEL_MASK) << SDCLK_SEL_SHIFT;
+			tmp &= ~(SDCLK_SEL_MASK << SDCLK_SEL_SHIFT);
+			tmp |= (1 & SDCLK_SEL_MASK) << SDCLK_SEL_SHIFT;
 
-			ग_लिखोw(पंचांगp, host->ioaddr + SD_CLOCK_BURST_SIZE_SETUP);
-		पूर्ण
+			writew(tmp, host->ioaddr + SD_CLOCK_BURST_SIZE_SETUP);
+		}
 
-		अगर (pdata && (pdata->flags & PXA_FLAG_ENABLE_CLOCK_GATING)) अणु
-			पंचांगp = पढ़ोw(host->ioaddr + SD_FIFO_PARAM);
-			पंचांगp &= ~CLK_GATE_SETTING_BITS;
-			ग_लिखोw(पंचांगp, host->ioaddr + SD_FIFO_PARAM);
-		पूर्ण अन्यथा अणु
-			पंचांगp = पढ़ोw(host->ioaddr + SD_FIFO_PARAM);
-			पंचांगp &= ~CLK_GATE_SETTING_BITS;
-			पंचांगp |= CLK_GATE_SETTING_BITS;
-			ग_लिखोw(पंचांगp, host->ioaddr + SD_FIFO_PARAM);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		if (pdata && (pdata->flags & PXA_FLAG_ENABLE_CLOCK_GATING)) {
+			tmp = readw(host->ioaddr + SD_FIFO_PARAM);
+			tmp &= ~CLK_GATE_SETTING_BITS;
+			writew(tmp, host->ioaddr + SD_FIFO_PARAM);
+		} else {
+			tmp = readw(host->ioaddr + SD_FIFO_PARAM);
+			tmp &= ~CLK_GATE_SETTING_BITS;
+			tmp |= CLK_GATE_SETTING_BITS;
+			writew(tmp, host->ioaddr + SD_FIFO_PARAM);
+		}
+	}
+}
 
-अटल व्योम pxav2_mmc_set_bus_width(काष्ठा sdhci_host *host, पूर्णांक width)
-अणु
+static void pxav2_mmc_set_bus_width(struct sdhci_host *host, int width)
+{
 	u8 ctrl;
-	u16 पंचांगp;
+	u16 tmp;
 
-	ctrl = पढ़ोb(host->ioaddr + SDHCI_HOST_CONTROL);
-	पंचांगp = पढ़ोw(host->ioaddr + SD_CE_ATA_2);
-	अगर (width == MMC_BUS_WIDTH_8) अणु
+	ctrl = readb(host->ioaddr + SDHCI_HOST_CONTROL);
+	tmp = readw(host->ioaddr + SD_CE_ATA_2);
+	if (width == MMC_BUS_WIDTH_8) {
 		ctrl &= ~SDHCI_CTRL_4BITBUS;
-		पंचांगp |= MMC_CARD | MMC_WIDTH;
-	पूर्ण अन्यथा अणु
-		पंचांगp &= ~(MMC_CARD | MMC_WIDTH);
-		अगर (width == MMC_BUS_WIDTH_4)
+		tmp |= MMC_CARD | MMC_WIDTH;
+	} else {
+		tmp &= ~(MMC_CARD | MMC_WIDTH);
+		if (width == MMC_BUS_WIDTH_4)
 			ctrl |= SDHCI_CTRL_4BITBUS;
-		अन्यथा
+		else
 			ctrl &= ~SDHCI_CTRL_4BITBUS;
-	पूर्ण
-	ग_लिखोw(पंचांगp, host->ioaddr + SD_CE_ATA_2);
-	ग_लिखोb(ctrl, host->ioaddr + SDHCI_HOST_CONTROL);
-पूर्ण
+	}
+	writew(tmp, host->ioaddr + SD_CE_ATA_2);
+	writeb(ctrl, host->ioaddr + SDHCI_HOST_CONTROL);
+}
 
-अटल स्थिर काष्ठा sdhci_ops pxav2_sdhci_ops = अणु
-	.set_घड़ी     = sdhci_set_घड़ी,
-	.get_max_घड़ी = sdhci_pltfm_clk_get_max_घड़ी,
+static const struct sdhci_ops pxav2_sdhci_ops = {
+	.set_clock     = sdhci_set_clock,
+	.get_max_clock = sdhci_pltfm_clk_get_max_clock,
 	.set_bus_width = pxav2_mmc_set_bus_width,
 	.reset         = pxav2_reset,
-	.set_uhs_संकेतing = sdhci_set_uhs_संकेतing,
-पूर्ण;
+	.set_uhs_signaling = sdhci_set_uhs_signaling,
+};
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा of_device_id sdhci_pxav2_of_match[] = अणु
-	अणु
+#ifdef CONFIG_OF
+static const struct of_device_id sdhci_pxav2_of_match[] = {
+	{
 		.compatible = "mrvl,pxav2-mmc",
-	पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+	},
+	{},
+};
 MODULE_DEVICE_TABLE(of, sdhci_pxav2_of_match);
 
-अटल काष्ठा sdhci_pxa_platdata *pxav2_get_mmc_pdata(काष्ठा device *dev)
-अणु
-	काष्ठा sdhci_pxa_platdata *pdata;
-	काष्ठा device_node *np = dev->of_node;
+static struct sdhci_pxa_platdata *pxav2_get_mmc_pdata(struct device *dev)
+{
+	struct sdhci_pxa_platdata *pdata;
+	struct device_node *np = dev->of_node;
 	u32 bus_width;
 	u32 clk_delay_cycles;
 
-	pdata = devm_kzalloc(dev, माप(*pdata), GFP_KERNEL);
-	अगर (!pdata)
-		वापस शून्य;
+	pdata = devm_kzalloc(dev, sizeof(*pdata), GFP_KERNEL);
+	if (!pdata)
+		return NULL;
 
-	अगर (of_find_property(np, "non-removable", शून्य))
+	if (of_find_property(np, "non-removable", NULL))
 		pdata->flags |= PXA_FLAG_CARD_PERMANENT;
 
-	of_property_पढ़ो_u32(np, "bus-width", &bus_width);
-	अगर (bus_width == 8)
+	of_property_read_u32(np, "bus-width", &bus_width);
+	if (bus_width == 8)
 		pdata->flags |= PXA_FLAG_SD_8_BIT_CAPABLE_SLOT;
 
-	of_property_पढ़ो_u32(np, "mrvl,clk-delay-cycles", &clk_delay_cycles);
-	अगर (clk_delay_cycles > 0) अणु
+	of_property_read_u32(np, "mrvl,clk-delay-cycles", &clk_delay_cycles);
+	if (clk_delay_cycles > 0) {
 		pdata->clk_delay_sel = 1;
 		pdata->clk_delay_cycles = clk_delay_cycles;
-	पूर्ण
+	}
 
-	वापस pdata;
-पूर्ण
-#अन्यथा
-अटल अंतरभूत काष्ठा sdhci_pxa_platdata *pxav2_get_mmc_pdata(काष्ठा device *dev)
-अणु
-	वापस शून्य;
-पूर्ण
-#पूर्ण_अगर
+	return pdata;
+}
+#else
+static inline struct sdhci_pxa_platdata *pxav2_get_mmc_pdata(struct device *dev)
+{
+	return NULL;
+}
+#endif
 
-अटल पूर्णांक sdhci_pxav2_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा sdhci_pltfm_host *pltfm_host;
-	काष्ठा sdhci_pxa_platdata *pdata = pdev->dev.platक्रमm_data;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा sdhci_host *host = शून्य;
-	स्थिर काष्ठा of_device_id *match;
+static int sdhci_pxav2_probe(struct platform_device *pdev)
+{
+	struct sdhci_pltfm_host *pltfm_host;
+	struct sdhci_pxa_platdata *pdata = pdev->dev.platform_data;
+	struct device *dev = &pdev->dev;
+	struct sdhci_host *host = NULL;
+	const struct of_device_id *match;
 
-	पूर्णांक ret;
-	काष्ठा clk *clk;
+	int ret;
+	struct clk *clk;
 
-	host = sdhci_pltfm_init(pdev, शून्य, 0);
-	अगर (IS_ERR(host))
-		वापस PTR_ERR(host);
+	host = sdhci_pltfm_init(pdev, NULL, 0);
+	if (IS_ERR(host))
+		return PTR_ERR(host);
 
 	pltfm_host = sdhci_priv(host);
 
 	clk = devm_clk_get(dev, "PXA-SDHCLK");
-	अगर (IS_ERR(clk)) अणु
+	if (IS_ERR(clk)) {
 		dev_err(dev, "failed to get io clock\n");
 		ret = PTR_ERR(clk);
-		जाओ मुक्त;
-	पूर्ण
+		goto free;
+	}
 	pltfm_host->clk = clk;
 	ret = clk_prepare_enable(clk);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "failed to enable io clock\n");
-		जाओ मुक्त;
-	पूर्ण
+		goto free;
+	}
 
 	host->quirks = SDHCI_QUIRK_BROKEN_ADMA
 		| SDHCI_QUIRK_BROKEN_TIMEOUT_VAL
 		| SDHCI_QUIRK_CAP_CLOCK_BASE_BROKEN;
 
 	match = of_match_device(of_match_ptr(sdhci_pxav2_of_match), &pdev->dev);
-	अगर (match) अणु
+	if (match) {
 		pdata = pxav2_get_mmc_pdata(dev);
-	पूर्ण
-	अगर (pdata) अणु
-		अगर (pdata->flags & PXA_FLAG_CARD_PERMANENT) अणु
+	}
+	if (pdata) {
+		if (pdata->flags & PXA_FLAG_CARD_PERMANENT) {
 			/* on-chip device */
 			host->quirks |= SDHCI_QUIRK_BROKEN_CARD_DETECTION;
 			host->mmc->caps |= MMC_CAP_NONREMOVABLE;
-		पूर्ण
+		}
 
 		/* If slot design supports 8 bit data, indicate this to MMC. */
-		अगर (pdata->flags & PXA_FLAG_SD_8_BIT_CAPABLE_SLOT)
+		if (pdata->flags & PXA_FLAG_SD_8_BIT_CAPABLE_SLOT)
 			host->mmc->caps |= MMC_CAP_8_BIT_DATA;
 
-		अगर (pdata->quirks)
+		if (pdata->quirks)
 			host->quirks |= pdata->quirks;
-		अगर (pdata->host_caps)
+		if (pdata->host_caps)
 			host->mmc->caps |= pdata->host_caps;
-		अगर (pdata->pm_caps)
+		if (pdata->pm_caps)
 			host->mmc->pm_caps |= pdata->pm_caps;
-	पूर्ण
+	}
 
 	host->ops = &pxav2_sdhci_ops;
 
 	ret = sdhci_add_host(host);
-	अगर (ret)
-		जाओ disable_clk;
+	if (ret)
+		goto disable_clk;
 
-	वापस 0;
+	return 0;
 
 disable_clk:
 	clk_disable_unprepare(clk);
-मुक्त:
-	sdhci_pltfm_मुक्त(pdev);
-	वापस ret;
-पूर्ण
+free:
+	sdhci_pltfm_free(pdev);
+	return ret;
+}
 
-अटल काष्ठा platक्रमm_driver sdhci_pxav2_driver = अणु
-	.driver		= अणु
+static struct platform_driver sdhci_pxav2_driver = {
+	.driver		= {
 		.name	= "sdhci-pxav2",
 		.probe_type = PROBE_PREFER_ASYNCHRONOUS,
 		.of_match_table = of_match_ptr(sdhci_pxav2_of_match),
 		.pm	= &sdhci_pltfm_pmops,
-	पूर्ण,
+	},
 	.probe		= sdhci_pxav2_probe,
-	.हटाओ		= sdhci_pltfm_unरेजिस्टर,
-पूर्ण;
+	.remove		= sdhci_pltfm_unregister,
+};
 
-module_platक्रमm_driver(sdhci_pxav2_driver);
+module_platform_driver(sdhci_pxav2_driver);
 
 MODULE_DESCRIPTION("SDHCI driver for pxav2");
 MODULE_AUTHOR("Marvell International Ltd.");

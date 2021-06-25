@@ -1,127 +1,126 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित TARGET_CORE_BACKEND_H
-#घोषणा TARGET_CORE_BACKEND_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef TARGET_CORE_BACKEND_H
+#define TARGET_CORE_BACKEND_H
 
-#समावेश <linux/types.h>
-#समावेश <यंत्र/unaligned.h>
-#समावेश <target/target_core_base.h>
+#include <linux/types.h>
+#include <asm/unaligned.h>
+#include <target/target_core_base.h>
 
-#घोषणा TRANSPORT_FLAG_PASSTHROUGH		0x1
+#define TRANSPORT_FLAG_PASSTHROUGH		0x1
 /*
  * ALUA commands, state checks and setup operations are handled by the
  * backend module.
  */
-#घोषणा TRANSPORT_FLAG_PASSTHROUGH_ALUA		0x2
-#घोषणा TRANSPORT_FLAG_PASSTHROUGH_PGR          0x4
+#define TRANSPORT_FLAG_PASSTHROUGH_ALUA		0x2
+#define TRANSPORT_FLAG_PASSTHROUGH_PGR          0x4
 
-काष्ठा request_queue;
-काष्ठा scatterlist;
+struct request_queue;
+struct scatterlist;
 
-काष्ठा target_backend_ops अणु
-	अक्षर name[16];
-	अक्षर inquiry_prod[16];
-	अक्षर inquiry_rev[4];
-	काष्ठा module *owner;
+struct target_backend_ops {
+	char name[16];
+	char inquiry_prod[16];
+	char inquiry_rev[4];
+	struct module *owner;
 
-	u8 transport_flags_शेष;
+	u8 transport_flags_default;
 	u8 transport_flags_changeable;
 
-	पूर्णांक (*attach_hba)(काष्ठा se_hba *, u32);
-	व्योम (*detach_hba)(काष्ठा se_hba *);
-	पूर्णांक (*pmode_enable_hba)(काष्ठा se_hba *, अचिन्हित दीर्घ);
+	int (*attach_hba)(struct se_hba *, u32);
+	void (*detach_hba)(struct se_hba *);
+	int (*pmode_enable_hba)(struct se_hba *, unsigned long);
 
-	काष्ठा se_device *(*alloc_device)(काष्ठा se_hba *, स्थिर अक्षर *);
-	पूर्णांक (*configure_device)(काष्ठा se_device *);
-	व्योम (*destroy_device)(काष्ठा se_device *);
-	व्योम (*मुक्त_device)(काष्ठा se_device *device);
-	काष्ठा se_dev_plug *(*plug_device)(काष्ठा se_device *se_dev);
-	व्योम (*unplug_device)(काष्ठा se_dev_plug *se_plug);
+	struct se_device *(*alloc_device)(struct se_hba *, const char *);
+	int (*configure_device)(struct se_device *);
+	void (*destroy_device)(struct se_device *);
+	void (*free_device)(struct se_device *device);
+	struct se_dev_plug *(*plug_device)(struct se_device *se_dev);
+	void (*unplug_device)(struct se_dev_plug *se_plug);
 
-	sमाप_प्रकार (*set_configfs_dev_params)(काष्ठा se_device *,
-					   स्थिर अक्षर *, sमाप_प्रकार);
-	sमाप_प्रकार (*show_configfs_dev_params)(काष्ठा se_device *, अक्षर *);
+	ssize_t (*set_configfs_dev_params)(struct se_device *,
+					   const char *, ssize_t);
+	ssize_t (*show_configfs_dev_params)(struct se_device *, char *);
 
-	sense_reason_t (*parse_cdb)(काष्ठा se_cmd *cmd);
-	व्योम (*पंचांगr_notअगरy)(काष्ठा se_device *se_dev, क्रमागत tcm_पंचांगreq_table,
-			   काष्ठा list_head *पातed_cmds);
-	u32 (*get_device_type)(काष्ठा se_device *);
-	sector_t (*get_blocks)(काष्ठा se_device *);
-	sector_t (*get_alignment_offset_lbas)(काष्ठा se_device *);
+	sense_reason_t (*parse_cdb)(struct se_cmd *cmd);
+	void (*tmr_notify)(struct se_device *se_dev, enum tcm_tmreq_table,
+			   struct list_head *aborted_cmds);
+	u32 (*get_device_type)(struct se_device *);
+	sector_t (*get_blocks)(struct se_device *);
+	sector_t (*get_alignment_offset_lbas)(struct se_device *);
 	/* lbppbe = logical blocks per physical block exponent. see SBC-3 */
-	अचिन्हित पूर्णांक (*get_lbppbe)(काष्ठा se_device *);
-	अचिन्हित पूर्णांक (*get_io_min)(काष्ठा se_device *);
-	अचिन्हित पूर्णांक (*get_io_opt)(काष्ठा se_device *);
-	अचिन्हित अक्षर *(*get_sense_buffer)(काष्ठा se_cmd *);
-	bool (*get_ग_लिखो_cache)(काष्ठा se_device *);
-	पूर्णांक (*init_prot)(काष्ठा se_device *);
-	पूर्णांक (*क्रमmat_prot)(काष्ठा se_device *);
-	व्योम (*मुक्त_prot)(काष्ठा se_device *);
+	unsigned int (*get_lbppbe)(struct se_device *);
+	unsigned int (*get_io_min)(struct se_device *);
+	unsigned int (*get_io_opt)(struct se_device *);
+	unsigned char *(*get_sense_buffer)(struct se_cmd *);
+	bool (*get_write_cache)(struct se_device *);
+	int (*init_prot)(struct se_device *);
+	int (*format_prot)(struct se_device *);
+	void (*free_prot)(struct se_device *);
 
-	काष्ठा configfs_attribute **tb_dev_attrib_attrs;
-	काष्ठा configfs_attribute **tb_dev_action_attrs;
-पूर्ण;
+	struct configfs_attribute **tb_dev_attrib_attrs;
+	struct configfs_attribute **tb_dev_action_attrs;
+};
 
-काष्ठा sbc_ops अणु
-	sense_reason_t (*execute_rw)(काष्ठा se_cmd *cmd, काष्ठा scatterlist *,
-				     u32, क्रमागत dma_data_direction);
-	sense_reason_t (*execute_sync_cache)(काष्ठा se_cmd *cmd);
-	sense_reason_t (*execute_ग_लिखो_same)(काष्ठा se_cmd *cmd);
-	sense_reason_t (*execute_unmap)(काष्ठा se_cmd *cmd,
+struct sbc_ops {
+	sense_reason_t (*execute_rw)(struct se_cmd *cmd, struct scatterlist *,
+				     u32, enum dma_data_direction);
+	sense_reason_t (*execute_sync_cache)(struct se_cmd *cmd);
+	sense_reason_t (*execute_write_same)(struct se_cmd *cmd);
+	sense_reason_t (*execute_unmap)(struct se_cmd *cmd,
 				sector_t lba, sector_t nolb);
-पूर्ण;
+};
 
-पूर्णांक	transport_backend_रेजिस्टर(स्थिर काष्ठा target_backend_ops *);
-व्योम	target_backend_unरेजिस्टर(स्थिर काष्ठा target_backend_ops *);
+int	transport_backend_register(const struct target_backend_ops *);
+void	target_backend_unregister(const struct target_backend_ops *);
 
-व्योम	target_complete_cmd(काष्ठा se_cmd *, u8);
-व्योम	target_set_cmd_data_length(काष्ठा se_cmd *, पूर्णांक);
-व्योम	target_complete_cmd_with_length(काष्ठा se_cmd *, u8, पूर्णांक);
+void	target_complete_cmd(struct se_cmd *, u8);
+void	target_set_cmd_data_length(struct se_cmd *, int);
+void	target_complete_cmd_with_length(struct se_cmd *, u8, int);
 
-व्योम	transport_copy_sense_to_cmd(काष्ठा se_cmd *, अचिन्हित अक्षर *);
+void	transport_copy_sense_to_cmd(struct se_cmd *, unsigned char *);
 
-sense_reason_t	spc_parse_cdb(काष्ठा se_cmd *cmd, अचिन्हित पूर्णांक *size);
-sense_reason_t	spc_emulate_report_luns(काष्ठा se_cmd *cmd);
-sense_reason_t	spc_emulate_inquiry_std(काष्ठा se_cmd *, अचिन्हित अक्षर *);
-sense_reason_t	spc_emulate_evpd_83(काष्ठा se_cmd *, अचिन्हित अक्षर *);
+sense_reason_t	spc_parse_cdb(struct se_cmd *cmd, unsigned int *size);
+sense_reason_t	spc_emulate_report_luns(struct se_cmd *cmd);
+sense_reason_t	spc_emulate_inquiry_std(struct se_cmd *, unsigned char *);
+sense_reason_t	spc_emulate_evpd_83(struct se_cmd *, unsigned char *);
 
-sense_reason_t	sbc_parse_cdb(काष्ठा se_cmd *cmd, काष्ठा sbc_ops *ops);
-u32	sbc_get_device_rev(काष्ठा se_device *dev);
-u32	sbc_get_device_type(काष्ठा se_device *dev);
-sector_t	sbc_get_ग_लिखो_same_sectors(काष्ठा se_cmd *cmd);
-व्योम	sbc_dअगर_generate(काष्ठा se_cmd *);
-sense_reason_t	sbc_dअगर_verअगरy(काष्ठा se_cmd *, sector_t, अचिन्हित पूर्णांक,
-				     अचिन्हित पूर्णांक, काष्ठा scatterlist *, पूर्णांक);
-व्योम sbc_dअगर_copy_prot(काष्ठा se_cmd *, अचिन्हित पूर्णांक, bool,
-		       काष्ठा scatterlist *, पूर्णांक);
-व्योम	transport_set_vpd_proto_id(काष्ठा t10_vpd *, अचिन्हित अक्षर *);
-पूर्णांक	transport_set_vpd_assoc(काष्ठा t10_vpd *, अचिन्हित अक्षर *);
-पूर्णांक	transport_set_vpd_ident_type(काष्ठा t10_vpd *, अचिन्हित अक्षर *);
-पूर्णांक	transport_set_vpd_ident(काष्ठा t10_vpd *, अचिन्हित अक्षर *);
+sense_reason_t	sbc_parse_cdb(struct se_cmd *cmd, struct sbc_ops *ops);
+u32	sbc_get_device_rev(struct se_device *dev);
+u32	sbc_get_device_type(struct se_device *dev);
+sector_t	sbc_get_write_same_sectors(struct se_cmd *cmd);
+void	sbc_dif_generate(struct se_cmd *);
+sense_reason_t	sbc_dif_verify(struct se_cmd *, sector_t, unsigned int,
+				     unsigned int, struct scatterlist *, int);
+void sbc_dif_copy_prot(struct se_cmd *, unsigned int, bool,
+		       struct scatterlist *, int);
+void	transport_set_vpd_proto_id(struct t10_vpd *, unsigned char *);
+int	transport_set_vpd_assoc(struct t10_vpd *, unsigned char *);
+int	transport_set_vpd_ident_type(struct t10_vpd *, unsigned char *);
+int	transport_set_vpd_ident(struct t10_vpd *, unsigned char *);
 
-बाह्य काष्ठा configfs_attribute *sbc_attrib_attrs[];
-बाह्य काष्ठा configfs_attribute *passthrough_attrib_attrs[];
-बाह्य काष्ठा configfs_attribute *passthrough_pr_attrib_attrs[];
+extern struct configfs_attribute *sbc_attrib_attrs[];
+extern struct configfs_attribute *passthrough_attrib_attrs[];
+extern struct configfs_attribute *passthrough_pr_attrib_attrs[];
 
 /* core helpers also used by command snooping in pscsi */
-व्योम	*transport_kmap_data_sg(काष्ठा se_cmd *);
-व्योम	transport_kunmap_data_sg(काष्ठा se_cmd *);
-/* core helpers also used by xcopy during पूर्णांकernal command setup */
-sense_reason_t	transport_generic_map_mem_to_cmd(काष्ठा se_cmd *,
-		काष्ठा scatterlist *, u32, काष्ठा scatterlist *, u32);
+void	*transport_kmap_data_sg(struct se_cmd *);
+void	transport_kunmap_data_sg(struct se_cmd *);
+/* core helpers also used by xcopy during internal command setup */
+sense_reason_t	transport_generic_map_mem_to_cmd(struct se_cmd *,
+		struct scatterlist *, u32, struct scatterlist *, u32);
 
-bool	target_lun_is_rकरोnly(काष्ठा se_cmd *);
-sense_reason_t passthrough_parse_cdb(काष्ठा se_cmd *cmd,
-	sense_reason_t (*exec_cmd)(काष्ठा se_cmd *cmd));
+bool	target_lun_is_rdonly(struct se_cmd *);
+sense_reason_t passthrough_parse_cdb(struct se_cmd *cmd,
+	sense_reason_t (*exec_cmd)(struct se_cmd *cmd));
 
-bool target_sense_desc_क्रमmat(काष्ठा se_device *dev);
-sector_t target_to_linux_sector(काष्ठा se_device *dev, sector_t lb);
-bool target_configure_unmap_from_queue(काष्ठा se_dev_attrib *attrib,
-				       काष्ठा request_queue *q);
+bool target_sense_desc_format(struct se_device *dev);
+sector_t target_to_linux_sector(struct se_device *dev, sector_t lb);
+bool target_configure_unmap_from_queue(struct se_dev_attrib *attrib,
+				       struct request_queue *q);
 
-अटल अंतरभूत bool target_dev_configured(काष्ठा se_device *se_dev)
-अणु
-	वापस !!(se_dev->dev_flags & DF_CONFIGURED);
-पूर्ण
+static inline bool target_dev_configured(struct se_device *se_dev)
+{
+	return !!(se_dev->dev_flags & DF_CONFIGURED);
+}
 
-#पूर्ण_अगर /* TARGET_CORE_BACKEND_H */
+#endif /* TARGET_CORE_BACKEND_H */

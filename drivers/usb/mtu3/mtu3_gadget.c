@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * mtu3_gadget.c - MediaTek usb3 DRD peripheral support
  *
@@ -8,26 +7,26 @@
  * Author: Chunfeng Yun <chunfeng.yun@mediatek.com>
  */
 
-#समावेश "mtu3.h"
-#समावेश "mtu3_trace.h"
+#include "mtu3.h"
+#include "mtu3_trace.h"
 
-व्योम mtu3_req_complete(काष्ठा mtu3_ep *mep,
-		     काष्ठा usb_request *req, पूर्णांक status)
+void mtu3_req_complete(struct mtu3_ep *mep,
+		     struct usb_request *req, int status)
 __releases(mep->mtu->lock)
 __acquires(mep->mtu->lock)
-अणु
-	काष्ठा mtu3_request *mreq = to_mtu3_request(req);
-	काष्ठा mtu3 *mtu = mreq->mtu;
+{
+	struct mtu3_request *mreq = to_mtu3_request(req);
+	struct mtu3 *mtu = mreq->mtu;
 
 	list_del(&mreq->list);
-	अगर (req->status == -EINPROGRESS)
+	if (req->status == -EINPROGRESS)
 		req->status = status;
 
 	trace_mtu3_req_complete(mreq);
 	spin_unlock(&mtu->lock);
 
 	/* ep0 makes use of PIO, needn't unmap it */
-	अगर (mep->epnum)
+	if (mep->epnum)
 		usb_gadget_unmap_request(&mtu->g, req, mep->is_in);
 
 	dev_dbg(mtu->dev, "%s complete req: %p, sts %d, %d/%d\n",
@@ -35,158 +34,158 @@ __acquires(mep->mtu->lock)
 
 	usb_gadget_giveback_request(&mep->ep, req);
 	spin_lock(&mtu->lock);
-पूर्ण
+}
 
-अटल व्योम nuke(काष्ठा mtu3_ep *mep, स्थिर पूर्णांक status)
-अणु
-	काष्ठा mtu3_request *mreq = शून्य;
+static void nuke(struct mtu3_ep *mep, const int status)
+{
+	struct mtu3_request *mreq = NULL;
 
-	अगर (list_empty(&mep->req_list))
-		वापस;
+	if (list_empty(&mep->req_list))
+		return;
 
 	dev_dbg(mep->mtu->dev, "abort %s's req: sts %d\n", mep->name, status);
 
 	/* exclude EP0 */
-	अगर (mep->epnum)
+	if (mep->epnum)
 		mtu3_qmu_flush(mep);
 
-	जबतक (!list_empty(&mep->req_list)) अणु
+	while (!list_empty(&mep->req_list)) {
 		mreq = list_first_entry(&mep->req_list,
-					काष्ठा mtu3_request, list);
+					struct mtu3_request, list);
 		mtu3_req_complete(mep, &mreq->request, status);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक mtu3_ep_enable(काष्ठा mtu3_ep *mep)
-अणु
-	स्थिर काष्ठा usb_endpoपूर्णांक_descriptor *desc;
-	स्थिर काष्ठा usb_ss_ep_comp_descriptor *comp_desc;
-	काष्ठा mtu3 *mtu = mep->mtu;
-	u32 पूर्णांकerval = 0;
+static int mtu3_ep_enable(struct mtu3_ep *mep)
+{
+	const struct usb_endpoint_descriptor *desc;
+	const struct usb_ss_ep_comp_descriptor *comp_desc;
+	struct mtu3 *mtu = mep->mtu;
+	u32 interval = 0;
 	u32 mult = 0;
 	u32 burst = 0;
-	पूर्णांक max_packet;
-	पूर्णांक ret;
+	int max_packet;
+	int ret;
 
 	desc = mep->desc;
 	comp_desc = mep->comp_desc;
-	mep->type = usb_endpoपूर्णांक_type(desc);
-	max_packet = usb_endpoपूर्णांक_maxp(desc);
+	mep->type = usb_endpoint_type(desc);
+	max_packet = usb_endpoint_maxp(desc);
 	mep->maxp = max_packet & GENMASK(10, 0);
 
-	चयन (mtu->g.speed) अणु
-	हाल USB_SPEED_SUPER:
-	हाल USB_SPEED_SUPER_PLUS:
-		अगर (usb_endpoपूर्णांक_xfer_पूर्णांक(desc) ||
-				usb_endpoपूर्णांक_xfer_isoc(desc)) अणु
-			पूर्णांकerval = desc->bInterval;
-			पूर्णांकerval = clamp_val(पूर्णांकerval, 1, 16) - 1;
-			अगर (usb_endpoपूर्णांक_xfer_isoc(desc) && comp_desc)
+	switch (mtu->g.speed) {
+	case USB_SPEED_SUPER:
+	case USB_SPEED_SUPER_PLUS:
+		if (usb_endpoint_xfer_int(desc) ||
+				usb_endpoint_xfer_isoc(desc)) {
+			interval = desc->bInterval;
+			interval = clamp_val(interval, 1, 16) - 1;
+			if (usb_endpoint_xfer_isoc(desc) && comp_desc)
 				mult = comp_desc->bmAttributes;
-		पूर्ण
-		अगर (comp_desc)
+		}
+		if (comp_desc)
 			burst = comp_desc->bMaxBurst;
 
-		अवरोध;
-	हाल USB_SPEED_HIGH:
-		अगर (usb_endpoपूर्णांक_xfer_isoc(desc) ||
-				usb_endpoपूर्णांक_xfer_पूर्णांक(desc)) अणु
-			पूर्णांकerval = desc->bInterval;
-			पूर्णांकerval = clamp_val(पूर्णांकerval, 1, 16) - 1;
+		break;
+	case USB_SPEED_HIGH:
+		if (usb_endpoint_xfer_isoc(desc) ||
+				usb_endpoint_xfer_int(desc)) {
+			interval = desc->bInterval;
+			interval = clamp_val(interval, 1, 16) - 1;
 			burst = (max_packet & GENMASK(12, 11)) >> 11;
-		पूर्ण
-		अवरोध;
-	शेष:
-		अवरोध; /*others are ignored */
-	पूर्ण
+		}
+		break;
+	default:
+		break; /*others are ignored */
+	}
 
 	dev_dbg(mtu->dev, "%s maxp:%d, interval:%d, burst:%d, mult:%d\n",
-		__func__, mep->maxp, पूर्णांकerval, burst, mult);
+		__func__, mep->maxp, interval, burst, mult);
 
 	mep->ep.maxpacket = mep->maxp;
 	mep->ep.desc = desc;
 	mep->ep.comp_desc = comp_desc;
 
-	/* slot मुख्यly affects bulk/isoc transfer, so ignore पूर्णांक */
-	mep->slot = usb_endpoपूर्णांक_xfer_पूर्णांक(desc) ? 0 : mtu->slot;
+	/* slot mainly affects bulk/isoc transfer, so ignore int */
+	mep->slot = usb_endpoint_xfer_int(desc) ? 0 : mtu->slot;
 
-	ret = mtu3_config_ep(mtu, mep, पूर्णांकerval, burst, mult);
-	अगर (ret < 0)
-		वापस ret;
+	ret = mtu3_config_ep(mtu, mep, interval, burst, mult);
+	if (ret < 0)
+		return ret;
 
 	ret = mtu3_gpd_ring_alloc(mep);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		mtu3_deconfig_ep(mtu, mep);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	mtu3_qmu_start(mep);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mtu3_ep_disable(काष्ठा mtu3_ep *mep)
-अणु
-	काष्ठा mtu3 *mtu = mep->mtu;
+static int mtu3_ep_disable(struct mtu3_ep *mep)
+{
+	struct mtu3 *mtu = mep->mtu;
 
 	mtu3_qmu_stop(mep);
 
-	/* पात all pending requests */
+	/* abort all pending requests */
 	nuke(mep, -ESHUTDOWN);
 	mtu3_deconfig_ep(mtu, mep);
-	mtu3_gpd_ring_मुक्त(mep);
+	mtu3_gpd_ring_free(mep);
 
-	mep->desc = शून्य;
-	mep->ep.desc = शून्य;
-	mep->comp_desc = शून्य;
+	mep->desc = NULL;
+	mep->ep.desc = NULL;
+	mep->comp_desc = NULL;
 	mep->type = 0;
 	mep->flags = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mtu3_gadget_ep_enable(काष्ठा usb_ep *ep,
-		स्थिर काष्ठा usb_endpoपूर्णांक_descriptor *desc)
-अणु
-	काष्ठा mtu3_ep *mep;
-	काष्ठा mtu3 *mtu;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret = -EINVAL;
+static int mtu3_gadget_ep_enable(struct usb_ep *ep,
+		const struct usb_endpoint_descriptor *desc)
+{
+	struct mtu3_ep *mep;
+	struct mtu3 *mtu;
+	unsigned long flags;
+	int ret = -EINVAL;
 
-	अगर (!ep || !desc || desc->bDescriptorType != USB_DT_ENDPOINT) अणु
+	if (!ep || !desc || desc->bDescriptorType != USB_DT_ENDPOINT) {
 		pr_debug("%s invalid parameters\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!desc->wMaxPacketSize) अणु
+	if (!desc->wMaxPacketSize) {
 		pr_debug("%s missing wMaxPacketSize\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	mep = to_mtu3_ep(ep);
 	mtu = mep->mtu;
 
-	/* check ep number and direction against endpoपूर्णांक */
-	अगर (usb_endpoपूर्णांक_num(desc) != mep->epnum)
-		वापस -EINVAL;
+	/* check ep number and direction against endpoint */
+	if (usb_endpoint_num(desc) != mep->epnum)
+		return -EINVAL;
 
-	अगर (!!usb_endpoपूर्णांक_dir_in(desc) ^ !!mep->is_in)
-		वापस -EINVAL;
+	if (!!usb_endpoint_dir_in(desc) ^ !!mep->is_in)
+		return -EINVAL;
 
 	dev_dbg(mtu->dev, "%s %s\n", __func__, ep->name);
 
-	अगर (mep->flags & MTU3_EP_ENABLED) अणु
+	if (mep->flags & MTU3_EP_ENABLED) {
 		dev_WARN_ONCE(mtu->dev, true, "%s is already enabled\n",
 				mep->name);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	spin_lock_irqsave(&mtu->lock, flags);
 	mep->desc = desc;
 	mep->comp_desc = ep->comp_desc;
 
 	ret = mtu3_ep_enable(mep);
-	अगर (ret)
-		जाओ error;
+	if (ret)
+		goto error;
 
 	mep->flags = MTU3_EP_ENABLED;
 	mtu->active_ep++;
@@ -197,22 +196,22 @@ error:
 	dev_dbg(mtu->dev, "%s active_ep=%d\n", __func__, mtu->active_ep);
 	trace_mtu3_gadget_ep_enable(mep);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक mtu3_gadget_ep_disable(काष्ठा usb_ep *ep)
-अणु
-	काष्ठा mtu3_ep *mep = to_mtu3_ep(ep);
-	काष्ठा mtu3 *mtu = mep->mtu;
-	अचिन्हित दीर्घ flags;
+static int mtu3_gadget_ep_disable(struct usb_ep *ep)
+{
+	struct mtu3_ep *mep = to_mtu3_ep(ep);
+	struct mtu3 *mtu = mep->mtu;
+	unsigned long flags;
 
 	dev_dbg(mtu->dev, "%s %s\n", __func__, mep->name);
 	trace_mtu3_gadget_ep_disable(mep);
 
-	अगर (!(mep->flags & MTU3_EP_ENABLED)) अणु
+	if (!(mep->flags & MTU3_EP_ENABLED)) {
 		dev_warn(mtu->dev, "%s is already disabled\n", mep->name);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	spin_lock_irqsave(&mtu->lock, flags);
 	mtu3_ep_disable(mep);
@@ -223,85 +222,85 @@ error:
 	dev_dbg(mtu->dev, "%s active_ep=%d, mtu3 is_active=%d\n",
 		__func__, mtu->active_ep, mtu->is_active);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा usb_request *mtu3_alloc_request(काष्ठा usb_ep *ep, gfp_t gfp_flags)
-अणु
-	काष्ठा mtu3_ep *mep = to_mtu3_ep(ep);
-	काष्ठा mtu3_request *mreq;
+struct usb_request *mtu3_alloc_request(struct usb_ep *ep, gfp_t gfp_flags)
+{
+	struct mtu3_ep *mep = to_mtu3_ep(ep);
+	struct mtu3_request *mreq;
 
-	mreq = kzalloc(माप(*mreq), gfp_flags);
-	अगर (!mreq)
-		वापस शून्य;
+	mreq = kzalloc(sizeof(*mreq), gfp_flags);
+	if (!mreq)
+		return NULL;
 
 	mreq->request.dma = DMA_ADDR_INVALID;
 	mreq->epnum = mep->epnum;
 	mreq->mep = mep;
 	trace_mtu3_alloc_request(mreq);
 
-	वापस &mreq->request;
-पूर्ण
+	return &mreq->request;
+}
 
-व्योम mtu3_मुक्त_request(काष्ठा usb_ep *ep, काष्ठा usb_request *req)
-अणु
-	काष्ठा mtu3_request *mreq = to_mtu3_request(req);
+void mtu3_free_request(struct usb_ep *ep, struct usb_request *req)
+{
+	struct mtu3_request *mreq = to_mtu3_request(req);
 
-	trace_mtu3_मुक्त_request(mreq);
-	kमुक्त(mreq);
-पूर्ण
+	trace_mtu3_free_request(mreq);
+	kfree(mreq);
+}
 
-अटल पूर्णांक mtu3_gadget_queue(काष्ठा usb_ep *ep,
-		काष्ठा usb_request *req, gfp_t gfp_flags)
-अणु
-	काष्ठा mtu3_ep *mep = to_mtu3_ep(ep);
-	काष्ठा mtu3_request *mreq = to_mtu3_request(req);
-	काष्ठा mtu3 *mtu = mep->mtu;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret = 0;
+static int mtu3_gadget_queue(struct usb_ep *ep,
+		struct usb_request *req, gfp_t gfp_flags)
+{
+	struct mtu3_ep *mep = to_mtu3_ep(ep);
+	struct mtu3_request *mreq = to_mtu3_request(req);
+	struct mtu3 *mtu = mep->mtu;
+	unsigned long flags;
+	int ret = 0;
 
-	अगर (!req->buf)
-		वापस -ENODATA;
+	if (!req->buf)
+		return -ENODATA;
 
-	अगर (mreq->mep != mep)
-		वापस -EINVAL;
+	if (mreq->mep != mep)
+		return -EINVAL;
 
 	dev_dbg(mtu->dev, "%s %s EP%d(%s), req=%p, maxp=%d, len#%d\n",
 		__func__, mep->is_in ? "TX" : "RX", mreq->epnum, ep->name,
 		mreq, ep->maxpacket, mreq->request.length);
 
-	अगर (req->length > GPD_BUF_SIZE ||
-	    (mtu->gen2cp && req->length > GPD_BUF_SIZE_EL)) अणु
+	if (req->length > GPD_BUF_SIZE ||
+	    (mtu->gen2cp && req->length > GPD_BUF_SIZE_EL)) {
 		dev_warn(mtu->dev,
 			"req length > supported MAX:%d requested:%d\n",
 			mtu->gen2cp ? GPD_BUF_SIZE_EL : GPD_BUF_SIZE,
 			req->length);
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	/* करोn't queue अगर the ep is करोwn */
-	अगर (!mep->desc) अणु
+	/* don't queue if the ep is down */
+	if (!mep->desc) {
 		dev_dbg(mtu->dev, "req=%p queued to %s while it's disabled\n",
 			req, ep->name);
-		वापस -ESHUTDOWN;
-	पूर्ण
+		return -ESHUTDOWN;
+	}
 
 	mreq->mtu = mtu;
 	mreq->request.actual = 0;
 	mreq->request.status = -EINPROGRESS;
 
 	ret = usb_gadget_map_request(&mtu->g, req, mep->is_in);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(mtu->dev, "dma mapping failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	spin_lock_irqsave(&mtu->lock, flags);
 
-	अगर (mtu3_prepare_transfer(mep)) अणु
+	if (mtu3_prepare_transfer(mep)) {
 		ret = -EAGAIN;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	list_add_tail(&mreq->list, &mep->req_list);
 	mtu3_insert_gpd(mep, mreq);
@@ -311,161 +310,161 @@ error:
 	spin_unlock_irqrestore(&mtu->lock, flags);
 	trace_mtu3_gadget_queue(mreq);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक mtu3_gadget_dequeue(काष्ठा usb_ep *ep, काष्ठा usb_request *req)
-अणु
-	काष्ठा mtu3_ep *mep = to_mtu3_ep(ep);
-	काष्ठा mtu3_request *mreq = to_mtu3_request(req);
-	काष्ठा mtu3_request *r;
-	काष्ठा mtu3 *mtu = mep->mtu;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret = 0;
+static int mtu3_gadget_dequeue(struct usb_ep *ep, struct usb_request *req)
+{
+	struct mtu3_ep *mep = to_mtu3_ep(ep);
+	struct mtu3_request *mreq = to_mtu3_request(req);
+	struct mtu3_request *r;
+	struct mtu3 *mtu = mep->mtu;
+	unsigned long flags;
+	int ret = 0;
 
-	अगर (mreq->mep != mep)
-		वापस -EINVAL;
+	if (mreq->mep != mep)
+		return -EINVAL;
 
 	dev_dbg(mtu->dev, "%s : req=%p\n", __func__, req);
 	trace_mtu3_gadget_dequeue(mreq);
 
 	spin_lock_irqsave(&mtu->lock, flags);
 
-	list_क्रम_each_entry(r, &mep->req_list, list) अणु
-		अगर (r == mreq)
-			अवरोध;
-	पूर्ण
-	अगर (r != mreq) अणु
+	list_for_each_entry(r, &mep->req_list, list) {
+		if (r == mreq)
+			break;
+	}
+	if (r != mreq) {
 		dev_dbg(mtu->dev, "req=%p not queued to %s\n", req, ep->name);
 		ret = -EINVAL;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	mtu3_qmu_flush(mep);  /* REVISIT: set BPS ?? */
 	mtu3_req_complete(mep, req, -ECONNRESET);
 	mtu3_qmu_start(mep);
 
-करोne:
+done:
 	spin_unlock_irqrestore(&mtu->lock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Set or clear the halt bit of an EP.
  * A halted EP won't TX/RX any data but will queue requests.
  */
-अटल पूर्णांक mtu3_gadget_ep_set_halt(काष्ठा usb_ep *ep, पूर्णांक value)
-अणु
-	काष्ठा mtu3_ep *mep = to_mtu3_ep(ep);
-	काष्ठा mtu3 *mtu = mep->mtu;
-	काष्ठा mtu3_request *mreq;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret = 0;
+static int mtu3_gadget_ep_set_halt(struct usb_ep *ep, int value)
+{
+	struct mtu3_ep *mep = to_mtu3_ep(ep);
+	struct mtu3 *mtu = mep->mtu;
+	struct mtu3_request *mreq;
+	unsigned long flags;
+	int ret = 0;
 
 	dev_dbg(mtu->dev, "%s : %s...", __func__, ep->name);
 
 	spin_lock_irqsave(&mtu->lock, flags);
 
-	अगर (mep->type == USB_ENDPOINT_XFER_ISOC) अणु
+	if (mep->type == USB_ENDPOINT_XFER_ISOC) {
 		ret = -EINVAL;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	mreq = next_request(mep);
-	अगर (value) अणु
+	if (value) {
 		/*
-		 * If there is not request क्रम TX-EP, QMU will not transfer
+		 * If there is not request for TX-EP, QMU will not transfer
 		 * data to TX-FIFO, so no need check whether TX-FIFO
 		 * holds bytes or not here
 		 */
-		अगर (mreq) अणु
+		if (mreq) {
 			dev_dbg(mtu->dev, "req in progress, cannot halt %s\n",
 				ep->name);
 			ret = -EAGAIN;
-			जाओ करोne;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			goto done;
+		}
+	} else {
 		mep->flags &= ~MTU3_EP_WEDGE;
-	पूर्ण
+	}
 
 	dev_dbg(mtu->dev, "%s %s stall\n", ep->name, value ? "set" : "clear");
 
 	mtu3_ep_stall_set(mep, value);
 
-करोne:
+done:
 	spin_unlock_irqrestore(&mtu->lock, flags);
 	trace_mtu3_gadget_ep_set_halt(mep);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* Sets the halt feature with the clear requests ignored */
-अटल पूर्णांक mtu3_gadget_ep_set_wedge(काष्ठा usb_ep *ep)
-अणु
-	काष्ठा mtu3_ep *mep = to_mtu3_ep(ep);
+static int mtu3_gadget_ep_set_wedge(struct usb_ep *ep)
+{
+	struct mtu3_ep *mep = to_mtu3_ep(ep);
 
 	mep->flags |= MTU3_EP_WEDGE;
 
-	वापस usb_ep_set_halt(ep);
-पूर्ण
+	return usb_ep_set_halt(ep);
+}
 
-अटल स्थिर काष्ठा usb_ep_ops mtu3_ep_ops = अणु
+static const struct usb_ep_ops mtu3_ep_ops = {
 	.enable = mtu3_gadget_ep_enable,
 	.disable = mtu3_gadget_ep_disable,
 	.alloc_request = mtu3_alloc_request,
-	.मुक्त_request = mtu3_मुक्त_request,
+	.free_request = mtu3_free_request,
 	.queue = mtu3_gadget_queue,
 	.dequeue = mtu3_gadget_dequeue,
 	.set_halt = mtu3_gadget_ep_set_halt,
 	.set_wedge = mtu3_gadget_ep_set_wedge,
-पूर्ण;
+};
 
-अटल पूर्णांक mtu3_gadget_get_frame(काष्ठा usb_gadget *gadget)
-अणु
-	काष्ठा mtu3 *mtu = gadget_to_mtu3(gadget);
+static int mtu3_gadget_get_frame(struct usb_gadget *gadget)
+{
+	struct mtu3 *mtu = gadget_to_mtu3(gadget);
 
-	वापस (पूर्णांक)mtu3_पढ़ोl(mtu->mac_base, U3D_USB20_FRAME_NUM);
-पूर्ण
+	return (int)mtu3_readl(mtu->mac_base, U3D_USB20_FRAME_NUM);
+}
 
-अटल पूर्णांक mtu3_gadget_wakeup(काष्ठा usb_gadget *gadget)
-अणु
-	काष्ठा mtu3 *mtu = gadget_to_mtu3(gadget);
-	अचिन्हित दीर्घ flags;
+static int mtu3_gadget_wakeup(struct usb_gadget *gadget)
+{
+	struct mtu3 *mtu = gadget_to_mtu3(gadget);
+	unsigned long flags;
 
 	dev_dbg(mtu->dev, "%s\n", __func__);
 
 	/* remote wakeup feature is not enabled by host */
-	अगर (!mtu->may_wakeup)
-		वापस  -EOPNOTSUPP;
+	if (!mtu->may_wakeup)
+		return  -EOPNOTSUPP;
 
 	spin_lock_irqsave(&mtu->lock, flags);
-	अगर (mtu->g.speed >= USB_SPEED_SUPER) अणु
+	if (mtu->g.speed >= USB_SPEED_SUPER) {
 		mtu3_setbits(mtu->mac_base, U3D_LINK_POWER_CONTROL, UX_EXIT);
-	पूर्ण अन्यथा अणु
+	} else {
 		mtu3_setbits(mtu->mac_base, U3D_POWER_MANAGEMENT, RESUME);
 		spin_unlock_irqrestore(&mtu->lock, flags);
 		usleep_range(10000, 11000);
 		spin_lock_irqsave(&mtu->lock, flags);
 		mtu3_clrbits(mtu->mac_base, U3D_POWER_MANAGEMENT, RESUME);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&mtu->lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mtu3_gadget_set_self_घातered(काष्ठा usb_gadget *gadget,
-		पूर्णांक is_selfघातered)
-अणु
-	काष्ठा mtu3 *mtu = gadget_to_mtu3(gadget);
+static int mtu3_gadget_set_self_powered(struct usb_gadget *gadget,
+		int is_selfpowered)
+{
+	struct mtu3 *mtu = gadget_to_mtu3(gadget);
 
-	mtu->is_self_घातered = !!is_selfघातered;
-	वापस 0;
-पूर्ण
+	mtu->is_self_powered = !!is_selfpowered;
+	return 0;
+}
 
-अटल पूर्णांक mtu3_gadget_pullup(काष्ठा usb_gadget *gadget, पूर्णांक is_on)
-अणु
-	काष्ठा mtu3 *mtu = gadget_to_mtu3(gadget);
-	अचिन्हित दीर्घ flags;
+static int mtu3_gadget_pullup(struct usb_gadget *gadget, int is_on)
+{
+	struct mtu3 *mtu = gadget_to_mtu3(gadget);
+	unsigned long flags;
 
 	dev_dbg(mtu->dev, "%s (%s) for %sactive device\n", __func__,
 		is_on ? "on" : "off", mtu->is_active ? "" : "in");
@@ -474,30 +473,30 @@ error:
 	spin_lock_irqsave(&mtu->lock, flags);
 
 	is_on = !!is_on;
-	अगर (!mtu->is_active) अणु
-		/* save it क्रम mtu3_start() to process the request */
+	if (!mtu->is_active) {
+		/* save it for mtu3_start() to process the request */
 		mtu->softconnect = is_on;
-	पूर्ण अन्यथा अगर (is_on != mtu->softconnect) अणु
+	} else if (is_on != mtu->softconnect) {
 		mtu->softconnect = is_on;
 		mtu3_dev_on_off(mtu, is_on);
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&mtu->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mtu3_gadget_start(काष्ठा usb_gadget *gadget,
-		काष्ठा usb_gadget_driver *driver)
-अणु
-	काष्ठा mtu3 *mtu = gadget_to_mtu3(gadget);
-	अचिन्हित दीर्घ flags;
+static int mtu3_gadget_start(struct usb_gadget *gadget,
+		struct usb_gadget_driver *driver)
+{
+	struct mtu3 *mtu = gadget_to_mtu3(gadget);
+	unsigned long flags;
 
-	अगर (mtu->gadget_driver) अणु
+	if (mtu->gadget_driver) {
 		dev_err(mtu->dev, "%s is already bound to %s\n",
 			mtu->g.name, mtu->gadget_driver->driver.name);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	dev_dbg(mtu->dev, "bind driver %s\n", driver->function);
 
@@ -506,94 +505,94 @@ error:
 	mtu->softconnect = 0;
 	mtu->gadget_driver = driver;
 
-	अगर (mtu->ssusb->dr_mode == USB_DR_MODE_PERIPHERAL)
+	if (mtu->ssusb->dr_mode == USB_DR_MODE_PERIPHERAL)
 		mtu3_start(mtu);
 
 	spin_unlock_irqrestore(&mtu->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम stop_activity(काष्ठा mtu3 *mtu)
-अणु
-	काष्ठा usb_gadget_driver *driver = mtu->gadget_driver;
-	पूर्णांक i;
+static void stop_activity(struct mtu3 *mtu)
+{
+	struct usb_gadget_driver *driver = mtu->gadget_driver;
+	int i;
 
-	/* करोn't disconnect if it's not connected */
-	अगर (mtu->g.speed == USB_SPEED_UNKNOWN)
-		driver = शून्य;
-	अन्यथा
+	/* don't disconnect if it's not connected */
+	if (mtu->g.speed == USB_SPEED_UNKNOWN)
+		driver = NULL;
+	else
 		mtu->g.speed = USB_SPEED_UNKNOWN;
 
 	/* deactivate the hardware */
-	अगर (mtu->softconnect) अणु
+	if (mtu->softconnect) {
 		mtu->softconnect = 0;
 		mtu3_dev_on_off(mtu, 0);
-	पूर्ण
+	}
 
 	/*
-	 * समाप्तing any outstanding requests will quiesce the driver;
+	 * killing any outstanding requests will quiesce the driver;
 	 * then report disconnect
 	 */
 	nuke(mtu->ep0, -ESHUTDOWN);
-	क्रम (i = 1; i < mtu->num_eps; i++) अणु
+	for (i = 1; i < mtu->num_eps; i++) {
 		nuke(mtu->in_eps + i, -ESHUTDOWN);
 		nuke(mtu->out_eps + i, -ESHUTDOWN);
-	पूर्ण
+	}
 
-	अगर (driver) अणु
+	if (driver) {
 		spin_unlock(&mtu->lock);
 		driver->disconnect(&mtu->g);
 		spin_lock(&mtu->lock);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक mtu3_gadget_stop(काष्ठा usb_gadget *g)
-अणु
-	काष्ठा mtu3 *mtu = gadget_to_mtu3(g);
-	अचिन्हित दीर्घ flags;
+static int mtu3_gadget_stop(struct usb_gadget *g)
+{
+	struct mtu3 *mtu = gadget_to_mtu3(g);
+	unsigned long flags;
 
 	dev_dbg(mtu->dev, "%s\n", __func__);
 
 	spin_lock_irqsave(&mtu->lock, flags);
 
 	stop_activity(mtu);
-	mtu->gadget_driver = शून्य;
+	mtu->gadget_driver = NULL;
 
-	अगर (mtu->ssusb->dr_mode == USB_DR_MODE_PERIPHERAL)
+	if (mtu->ssusb->dr_mode == USB_DR_MODE_PERIPHERAL)
 		mtu3_stop(mtu);
 
 	spin_unlock_irqrestore(&mtu->lock, flags);
 
 	synchronize_irq(mtu->irq);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-mtu3_gadget_set_speed(काष्ठा usb_gadget *g, क्रमागत usb_device_speed speed)
-अणु
-	काष्ठा mtu3 *mtu = gadget_to_mtu3(g);
-	अचिन्हित दीर्घ flags;
+static void
+mtu3_gadget_set_speed(struct usb_gadget *g, enum usb_device_speed speed)
+{
+	struct mtu3 *mtu = gadget_to_mtu3(g);
+	unsigned long flags;
 
 	dev_dbg(mtu->dev, "%s %s\n", __func__, usb_speed_string(speed));
 
 	spin_lock_irqsave(&mtu->lock, flags);
 	mtu3_set_speed(mtu, speed);
 	spin_unlock_irqrestore(&mtu->lock, flags);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा usb_gadget_ops mtu3_gadget_ops = अणु
+static const struct usb_gadget_ops mtu3_gadget_ops = {
 	.get_frame = mtu3_gadget_get_frame,
 	.wakeup = mtu3_gadget_wakeup,
-	.set_selfघातered = mtu3_gadget_set_self_घातered,
+	.set_selfpowered = mtu3_gadget_set_self_powered,
 	.pullup = mtu3_gadget_pullup,
 	.udc_start = mtu3_gadget_start,
 	.udc_stop = mtu3_gadget_stop,
 	.udc_set_speed = mtu3_gadget_set_speed,
-पूर्ण;
+};
 
-अटल व्योम mtu3_state_reset(काष्ठा mtu3 *mtu)
-अणु
+static void mtu3_state_reset(struct mtu3 *mtu)
+{
 	mtu->address = 0;
 	mtu->ep0_state = MU3D_EP0_STATE_SETUP;
 	mtu->may_wakeup = 0;
@@ -601,70 +600,70 @@ mtu3_gadget_set_speed(काष्ठा usb_gadget *g, क्रमागत us
 	mtu->u2_enable = 0;
 	mtu->delayed_status = false;
 	mtu->test_mode = false;
-पूर्ण
+}
 
-अटल व्योम init_hw_ep(काष्ठा mtu3 *mtu, काष्ठा mtu3_ep *mep,
+static void init_hw_ep(struct mtu3 *mtu, struct mtu3_ep *mep,
 		u32 epnum, u32 is_in)
-अणु
+{
 	mep->epnum = epnum;
 	mep->mtu = mtu;
 	mep->is_in = is_in;
 
 	INIT_LIST_HEAD(&mep->req_list);
 
-	प्र_लिखो(mep->name, "ep%d%s", epnum,
+	sprintf(mep->name, "ep%d%s", epnum,
 		!epnum ? "" : (is_in ? "in" : "out"));
 
 	mep->ep.name = mep->name;
 	INIT_LIST_HEAD(&mep->ep.ep_list);
 
 	/* initialize maxpacket as SS */
-	अगर (!epnum) अणु
+	if (!epnum) {
 		usb_ep_set_maxpacket_limit(&mep->ep, 512);
 		mep->ep.caps.type_control = true;
 		mep->ep.ops = &mtu3_ep0_ops;
 		mtu->g.ep0 = &mep->ep;
-	पूर्ण अन्यथा अणु
+	} else {
 		usb_ep_set_maxpacket_limit(&mep->ep, 1024);
 		mep->ep.caps.type_iso = true;
 		mep->ep.caps.type_bulk = true;
-		mep->ep.caps.type_पूर्णांक = true;
+		mep->ep.caps.type_int = true;
 		mep->ep.ops = &mtu3_ep_ops;
 		list_add_tail(&mep->ep.ep_list, &mtu->g.ep_list);
-	पूर्ण
+	}
 
 	dev_dbg(mtu->dev, "%s, name=%s, maxp=%d\n", __func__, mep->ep.name,
 		 mep->ep.maxpacket);
 
-	अगर (!epnum) अणु
+	if (!epnum) {
 		mep->ep.caps.dir_in = true;
 		mep->ep.caps.dir_out = true;
-	पूर्ण अन्यथा अगर (is_in) अणु
+	} else if (is_in) {
 		mep->ep.caps.dir_in = true;
-	पूर्ण अन्यथा अणु
+	} else {
 		mep->ep.caps.dir_out = true;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम mtu3_gadget_init_eps(काष्ठा mtu3 *mtu)
-अणु
+static void mtu3_gadget_init_eps(struct mtu3 *mtu)
+{
 	u8 epnum;
 
-	/* initialize endpoपूर्णांक list just once */
+	/* initialize endpoint list just once */
 	INIT_LIST_HEAD(&(mtu->g.ep_list));
 
 	dev_dbg(mtu->dev, "%s num_eps(1 for a pair of tx&rx ep)=%d\n",
 		__func__, mtu->num_eps);
 
 	init_hw_ep(mtu, mtu->ep0, 0, 0);
-	क्रम (epnum = 1; epnum < mtu->num_eps; epnum++) अणु
+	for (epnum = 1; epnum < mtu->num_eps; epnum++) {
 		init_hw_ep(mtu, mtu->in_eps + epnum, epnum, 1);
 		init_hw_ep(mtu, mtu->out_eps + epnum, epnum, 0);
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक mtu3_gadget_setup(काष्ठा mtu3 *mtu)
-अणु
+int mtu3_gadget_setup(struct mtu3 *mtu)
+{
 	mtu->g.ops = &mtu3_gadget_ops;
 	mtu->g.max_speed = mtu->max_speed;
 	mtu->g.speed = USB_SPEED_UNKNOWN;
@@ -675,56 +674,56 @@ mtu3_gadget_set_speed(काष्ठा usb_gadget *g, क्रमागत us
 
 	mtu3_gadget_init_eps(mtu);
 
-	वापस usb_add_gadget_udc(mtu->dev, &mtu->g);
-पूर्ण
+	return usb_add_gadget_udc(mtu->dev, &mtu->g);
+}
 
-व्योम mtu3_gadget_cleanup(काष्ठा mtu3 *mtu)
-अणु
+void mtu3_gadget_cleanup(struct mtu3 *mtu)
+{
 	usb_del_gadget_udc(&mtu->g);
-पूर्ण
+}
 
-व्योम mtu3_gadget_resume(काष्ठा mtu3 *mtu)
-अणु
+void mtu3_gadget_resume(struct mtu3 *mtu)
+{
 	dev_dbg(mtu->dev, "gadget RESUME\n");
-	अगर (mtu->gadget_driver && mtu->gadget_driver->resume) अणु
+	if (mtu->gadget_driver && mtu->gadget_driver->resume) {
 		spin_unlock(&mtu->lock);
 		mtu->gadget_driver->resume(&mtu->g);
 		spin_lock(&mtu->lock);
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* called when SOF packets stop क्रम 3+ msec or enters U3 */
-व्योम mtu3_gadget_suspend(काष्ठा mtu3 *mtu)
-अणु
+/* called when SOF packets stop for 3+ msec or enters U3 */
+void mtu3_gadget_suspend(struct mtu3 *mtu)
+{
 	dev_dbg(mtu->dev, "gadget SUSPEND\n");
-	अगर (mtu->gadget_driver && mtu->gadget_driver->suspend) अणु
+	if (mtu->gadget_driver && mtu->gadget_driver->suspend) {
 		spin_unlock(&mtu->lock);
 		mtu->gadget_driver->suspend(&mtu->g);
 		spin_lock(&mtu->lock);
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* called when VBUS drops below session threshold, and in other हालs */
-व्योम mtu3_gadget_disconnect(काष्ठा mtu3 *mtu)
-अणु
+/* called when VBUS drops below session threshold, and in other cases */
+void mtu3_gadget_disconnect(struct mtu3 *mtu)
+{
 	dev_dbg(mtu->dev, "gadget DISCONNECT\n");
-	अगर (mtu->gadget_driver && mtu->gadget_driver->disconnect) अणु
+	if (mtu->gadget_driver && mtu->gadget_driver->disconnect) {
 		spin_unlock(&mtu->lock);
 		mtu->gadget_driver->disconnect(&mtu->g);
 		spin_lock(&mtu->lock);
-	पूर्ण
+	}
 
 	mtu3_state_reset(mtu);
 	usb_gadget_set_state(&mtu->g, USB_STATE_NOTATTACHED);
-पूर्ण
+}
 
-व्योम mtu3_gadget_reset(काष्ठा mtu3 *mtu)
-अणु
+void mtu3_gadget_reset(struct mtu3 *mtu)
+{
 	dev_dbg(mtu->dev, "gadget RESET\n");
 
-	/* report disconnect, अगर we didn't flush EP state */
-	अगर (mtu->g.speed != USB_SPEED_UNKNOWN)
+	/* report disconnect, if we didn't flush EP state */
+	if (mtu->g.speed != USB_SPEED_UNKNOWN)
 		mtu3_gadget_disconnect(mtu);
-	अन्यथा
+	else
 		mtu3_state_reset(mtu);
-पूर्ण
+}

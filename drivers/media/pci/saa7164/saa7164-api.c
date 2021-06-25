@@ -1,24 +1,23 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *  Driver क्रम the NXP SAA7164 PCIe bridge
+ *  Driver for the NXP SAA7164 PCIe bridge
  *
- *  Copyright (c) 2010-2015 Steven Toth <stoth@kernelद_असल.com>
+ *  Copyright (c) 2010-2015 Steven Toth <stoth@kernellabs.com>
  */
 
-#समावेश <linux/रुको.h>
-#समावेश <linux/slab.h>
+#include <linux/wait.h>
+#include <linux/slab.h>
 
-#समावेश "saa7164.h"
+#include "saa7164.h"
 
-पूर्णांक saa7164_api_get_load_info(काष्ठा saa7164_dev *dev, काष्ठा पंचांगFwInfoStruct *i)
-अणु
-	पूर्णांक ret;
+int saa7164_api_get_load_info(struct saa7164_dev *dev, struct tmFwInfoStruct *i)
+{
+	int ret;
 
-	अगर (!(saa_debug & DBGLVL_CPU))
-		वापस 0;
+	if (!(saa_debug & DBGLVL_CPU))
+		return 0;
 
-	dprपूर्णांकk(DBGLVL_API, "%s()\n", __func__);
+	dprintk(DBGLVL_API, "%s()\n", __func__);
 
 	i->deviceinst = 0;
 	i->devicespec = 0;
@@ -26,191 +25,191 @@
 	i->status = 0;
 
 	ret = saa7164_cmd_send(dev, 0, GET_CUR,
-		GET_FW_STATUS_CONTROL, माप(काष्ठा पंचांगFwInfoStruct), i);
-	अगर (ret != SAA_OK)
-		prपूर्णांकk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
+		GET_FW_STATUS_CONTROL, sizeof(struct tmFwInfoStruct), i);
+	if (ret != SAA_OK)
+		printk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
 
-	prपूर्णांकk(KERN_INFO "saa7164[%d]-CPU: %d percent", dev->nr, i->CPULoad);
+	printk(KERN_INFO "saa7164[%d]-CPU: %d percent", dev->nr, i->CPULoad);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक saa7164_api_collect_debug(काष्ठा saa7164_dev *dev)
-अणु
-	काष्ठा पंचांगComResDebugGetData d;
+int saa7164_api_collect_debug(struct saa7164_dev *dev)
+{
+	struct tmComResDebugGetData d;
 	u8 more = 255;
-	पूर्णांक ret;
+	int ret;
 
-	dprपूर्णांकk(DBGLVL_API, "%s()\n", __func__);
+	dprintk(DBGLVL_API, "%s()\n", __func__);
 
-	जबतक (more--) अणु
+	while (more--) {
 
-		स_रखो(&d, 0, माप(d));
+		memset(&d, 0, sizeof(d));
 
 		ret = saa7164_cmd_send(dev, 0, GET_CUR,
-			GET_DEBUG_DATA_CONTROL, माप(d), &d);
-		अगर (ret != SAA_OK)
-			prपूर्णांकk(KERN_ERR "%s() error, ret = 0x%x\n",
+			GET_DEBUG_DATA_CONTROL, sizeof(d), &d);
+		if (ret != SAA_OK)
+			printk(KERN_ERR "%s() error, ret = 0x%x\n",
 				__func__, ret);
 
-		अगर (d.dwResult != SAA_OK)
-			अवरोध;
+		if (d.dwResult != SAA_OK)
+			break;
 
-		prपूर्णांकk(KERN_INFO "saa7164[%d]-FWMSG: %s", dev->nr,
+		printk(KERN_INFO "saa7164[%d]-FWMSG: %s", dev->nr,
 			d.ucDebugData);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक saa7164_api_set_debug(काष्ठा saa7164_dev *dev, u8 level)
-अणु
-	काष्ठा पंचांगComResDebugSetLevel lvl;
-	पूर्णांक ret;
+int saa7164_api_set_debug(struct saa7164_dev *dev, u8 level)
+{
+	struct tmComResDebugSetLevel lvl;
+	int ret;
 
-	dprपूर्णांकk(DBGLVL_API, "%s(level=%d)\n", __func__, level);
+	dprintk(DBGLVL_API, "%s(level=%d)\n", __func__, level);
 
 	/* Retrieve current state */
 	ret = saa7164_cmd_send(dev, 0, GET_CUR,
-		SET_DEBUG_LEVEL_CONTROL, माप(lvl), &lvl);
-	अगर (ret != SAA_OK)
-		prपूर्णांकk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
+		SET_DEBUG_LEVEL_CONTROL, sizeof(lvl), &lvl);
+	if (ret != SAA_OK)
+		printk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
 
-	dprपूर्णांकk(DBGLVL_API, "%s() Was %d\n", __func__, lvl.dwDebugLevel);
+	dprintk(DBGLVL_API, "%s() Was %d\n", __func__, lvl.dwDebugLevel);
 
 	lvl.dwDebugLevel = level;
 
 	/* set new state */
 	ret = saa7164_cmd_send(dev, 0, SET_CUR,
-		SET_DEBUG_LEVEL_CONTROL, माप(lvl), &lvl);
-	अगर (ret != SAA_OK)
-		prपूर्णांकk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
+		SET_DEBUG_LEVEL_CONTROL, sizeof(lvl), &lvl);
+	if (ret != SAA_OK)
+		printk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक saa7164_api_set_vbi_क्रमmat(काष्ठा saa7164_port *port)
-अणु
-	काष्ठा saa7164_dev *dev = port->dev;
-	काष्ठा पंचांगComResProbeCommit fmt, rsp;
-	पूर्णांक ret;
+int saa7164_api_set_vbi_format(struct saa7164_port *port)
+{
+	struct saa7164_dev *dev = port->dev;
+	struct tmComResProbeCommit fmt, rsp;
+	int ret;
 
-	dprपूर्णांकk(DBGLVL_API, "%s(nr=%d, unitid=0x%x)\n", __func__,
+	dprintk(DBGLVL_API, "%s(nr=%d, unitid=0x%x)\n", __func__,
 		port->nr, port->hwcfg.unitid);
 
-	fmt.bmHपूर्णांक = 0;
+	fmt.bmHint = 0;
 	fmt.bFormatIndex = 1;
 	fmt.bFrameIndex = 1;
 
-	/* Probe, see अगर it can support this क्रमmat */
+	/* Probe, see if it can support this format */
 	ret = saa7164_cmd_send(port->dev, port->hwcfg.unitid,
-		SET_CUR, SAA_PROBE_CONTROL, माप(fmt), &fmt);
-	अगर (ret != SAA_OK)
-		prपूर्णांकk(KERN_ERR "%s() set error, ret = 0x%x\n", __func__, ret);
+		SET_CUR, SAA_PROBE_CONTROL, sizeof(fmt), &fmt);
+	if (ret != SAA_OK)
+		printk(KERN_ERR "%s() set error, ret = 0x%x\n", __func__, ret);
 
-	/* See of the क्रमmat change was successful */
+	/* See of the format change was successful */
 	ret = saa7164_cmd_send(port->dev, port->hwcfg.unitid,
-		GET_CUR, SAA_PROBE_CONTROL, माप(rsp), &rsp);
-	अगर (ret != SAA_OK) अणु
-		prपूर्णांकk(KERN_ERR "%s() get error, ret = 0x%x\n", __func__, ret);
-	पूर्ण अन्यथा अणु
+		GET_CUR, SAA_PROBE_CONTROL, sizeof(rsp), &rsp);
+	if (ret != SAA_OK) {
+		printk(KERN_ERR "%s() get error, ret = 0x%x\n", __func__, ret);
+	} else {
 		/* Compare requested vs received, should be same */
-		अगर (स_भेद(&fmt, &rsp, माप(rsp)) == 0) अणु
-			dprपूर्णांकk(DBGLVL_API, "SET/PROBE Verified\n");
+		if (memcmp(&fmt, &rsp, sizeof(rsp)) == 0) {
+			dprintk(DBGLVL_API, "SET/PROBE Verified\n");
 
-			/* Ask the device to select the negotiated क्रमmat */
+			/* Ask the device to select the negotiated format */
 			ret = saa7164_cmd_send(port->dev, port->hwcfg.unitid,
-				SET_CUR, SAA_COMMIT_CONTROL, माप(fmt), &fmt);
-			अगर (ret != SAA_OK)
-				prपूर्णांकk(KERN_ERR "%s() commit error, ret = 0x%x\n",
+				SET_CUR, SAA_COMMIT_CONTROL, sizeof(fmt), &fmt);
+			if (ret != SAA_OK)
+				printk(KERN_ERR "%s() commit error, ret = 0x%x\n",
 					__func__, ret);
 
 			ret = saa7164_cmd_send(port->dev, port->hwcfg.unitid,
-				GET_CUR, SAA_COMMIT_CONTROL, माप(rsp), &rsp);
-			अगर (ret != SAA_OK)
-				prपूर्णांकk(KERN_ERR "%s() GET commit error, ret = 0x%x\n",
+				GET_CUR, SAA_COMMIT_CONTROL, sizeof(rsp), &rsp);
+			if (ret != SAA_OK)
+				printk(KERN_ERR "%s() GET commit error, ret = 0x%x\n",
 					__func__, ret);
 
-			अगर (स_भेद(&fmt, &rsp, माप(rsp)) != 0) अणु
-				prपूर्णांकk(KERN_ERR "%s() memcmp error, ret = 0x%x\n",
+			if (memcmp(&fmt, &rsp, sizeof(rsp)) != 0) {
+				printk(KERN_ERR "%s() memcmp error, ret = 0x%x\n",
 					__func__, ret);
-			पूर्ण अन्यथा
-				dprपूर्णांकk(DBGLVL_API, "SET/COMMIT Verified\n");
+			} else
+				dprintk(DBGLVL_API, "SET/COMMIT Verified\n");
 
-			dprपूर्णांकk(DBGLVL_API, "rsp.bmHint = 0x%x\n", rsp.bmHपूर्णांक);
-			dprपूर्णांकk(DBGLVL_API, "rsp.bFormatIndex = 0x%x\n",
+			dprintk(DBGLVL_API, "rsp.bmHint = 0x%x\n", rsp.bmHint);
+			dprintk(DBGLVL_API, "rsp.bFormatIndex = 0x%x\n",
 				rsp.bFormatIndex);
-			dprपूर्णांकk(DBGLVL_API, "rsp.bFrameIndex = 0x%x\n",
+			dprintk(DBGLVL_API, "rsp.bFrameIndex = 0x%x\n",
 				rsp.bFrameIndex);
-		पूर्ण अन्यथा
-			prपूर्णांकk(KERN_ERR "%s() compare failed\n", __func__);
-	पूर्ण
+		} else
+			printk(KERN_ERR "%s() compare failed\n", __func__);
+	}
 
-	अगर (ret == SAA_OK)
-		dprपूर्णांकk(DBGLVL_API, "%s(nr=%d) Success\n", __func__, port->nr);
+	if (ret == SAA_OK)
+		dprintk(DBGLVL_API, "%s(nr=%d) Success\n", __func__, port->nr);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक saa7164_api_set_gop_size(काष्ठा saa7164_port *port)
-अणु
-	काष्ठा saa7164_dev *dev = port->dev;
-	काष्ठा पंचांगComResEncVideoGopStructure gs;
-	पूर्णांक ret;
+static int saa7164_api_set_gop_size(struct saa7164_port *port)
+{
+	struct saa7164_dev *dev = port->dev;
+	struct tmComResEncVideoGopStructure gs;
+	int ret;
 
-	dprपूर्णांकk(DBGLVL_ENC, "%s()\n", __func__);
+	dprintk(DBGLVL_ENC, "%s()\n", __func__);
 
 	gs.ucRefFrameDist = port->encoder_params.refdist;
 	gs.ucGOPSize = port->encoder_params.gop_size;
 	ret = saa7164_cmd_send(port->dev, port->hwcfg.sourceid, SET_CUR,
 		EU_VIDEO_GOP_STRUCTURE_CONTROL,
-		माप(gs), &gs);
-	अगर (ret != SAA_OK)
-		prपूर्णांकk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
+		sizeof(gs), &gs);
+	if (ret != SAA_OK)
+		printk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक saa7164_api_set_encoder(काष्ठा saa7164_port *port)
-अणु
-	काष्ठा saa7164_dev *dev = port->dev;
-	काष्ठा पंचांगComResEncVideoBitRate vb;
-	काष्ठा पंचांगComResEncAudioBitRate ab;
-	पूर्णांक ret;
+int saa7164_api_set_encoder(struct saa7164_port *port)
+{
+	struct saa7164_dev *dev = port->dev;
+	struct tmComResEncVideoBitRate vb;
+	struct tmComResEncAudioBitRate ab;
+	int ret;
 
-	dprपूर्णांकk(DBGLVL_ENC, "%s() unitid=0x%x\n", __func__,
+	dprintk(DBGLVL_ENC, "%s() unitid=0x%x\n", __func__,
 		port->hwcfg.sourceid);
 
-	अगर (port->encoder_params.stream_type == V4L2_MPEG_STREAM_TYPE_MPEG2_PS)
-		port->encoder_profile = EU_PROखाता_PS_DVD;
-	अन्यथा
-		port->encoder_profile = EU_PROखाता_TS_HQ;
+	if (port->encoder_params.stream_type == V4L2_MPEG_STREAM_TYPE_MPEG2_PS)
+		port->encoder_profile = EU_PROFILE_PS_DVD;
+	else
+		port->encoder_profile = EU_PROFILE_TS_HQ;
 
 	ret = saa7164_cmd_send(port->dev, port->hwcfg.sourceid, SET_CUR,
-		EU_PROखाता_CONTROL, माप(u8), &port->encoder_profile);
-	अगर (ret != SAA_OK)
-		prपूर्णांकk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
+		EU_PROFILE_CONTROL, sizeof(u8), &port->encoder_profile);
+	if (ret != SAA_OK)
+		printk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
 
 	/* Resolution */
 	ret = saa7164_cmd_send(port->dev, port->hwcfg.sourceid, SET_CUR,
-		EU_PROखाता_CONTROL, माप(u8), &port->encoder_profile);
-	अगर (ret != SAA_OK)
-		prपूर्णांकk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
+		EU_PROFILE_CONTROL, sizeof(u8), &port->encoder_profile);
+	if (ret != SAA_OK)
+		printk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
 
 	/* Establish video bitrates */
-	अगर (port->encoder_params.bitrate_mode ==
+	if (port->encoder_params.bitrate_mode ==
 		V4L2_MPEG_VIDEO_BITRATE_MODE_CBR)
 		vb.ucVideoBitRateMode = EU_VIDEO_BIT_RATE_MODE_CONSTANT;
-	अन्यथा
+	else
 		vb.ucVideoBitRateMode = EU_VIDEO_BIT_RATE_MODE_VARIABLE_PEAK;
 	vb.dwVideoBitRate = port->encoder_params.bitrate;
 	vb.dwVideoBitRatePeak = port->encoder_params.bitrate_peak;
 	ret = saa7164_cmd_send(port->dev, port->hwcfg.sourceid, SET_CUR,
 		EU_VIDEO_BIT_RATE_CONTROL,
-		माप(काष्ठा पंचांगComResEncVideoBitRate),
+		sizeof(struct tmComResEncVideoBitRate),
 		&vb);
-	अगर (ret != SAA_OK)
-		prपूर्णांकk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
+	if (ret != SAA_OK)
+		printk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
 
 	/* Establish audio bitrates */
 	ab.ucAudioBitRateMode = 0;
@@ -218,326 +217,326 @@
 	ab.dwAudioBitRatePeak = ab.dwAudioBitRate;
 	ret = saa7164_cmd_send(port->dev, port->hwcfg.sourceid, SET_CUR,
 		EU_AUDIO_BIT_RATE_CONTROL,
-		माप(काष्ठा पंचांगComResEncAudioBitRate),
+		sizeof(struct tmComResEncAudioBitRate),
 		&ab);
-	अगर (ret != SAA_OK)
-		prपूर्णांकk(KERN_ERR "%s() error, ret = 0x%x\n", __func__,
+	if (ret != SAA_OK)
+		printk(KERN_ERR "%s() error, ret = 0x%x\n", __func__,
 			ret);
 
 	saa7164_api_set_aspect_ratio(port);
 	saa7164_api_set_gop_size(port);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक saa7164_api_get_encoder(काष्ठा saa7164_port *port)
-अणु
-	काष्ठा saa7164_dev *dev = port->dev;
-	काष्ठा पंचांगComResEncVideoBitRate v;
-	काष्ठा पंचांगComResEncAudioBitRate a;
-	काष्ठा पंचांगComResEncVideoInputAspectRatio ar;
-	पूर्णांक ret;
+int saa7164_api_get_encoder(struct saa7164_port *port)
+{
+	struct saa7164_dev *dev = port->dev;
+	struct tmComResEncVideoBitRate v;
+	struct tmComResEncAudioBitRate a;
+	struct tmComResEncVideoInputAspectRatio ar;
+	int ret;
 
-	dprपूर्णांकk(DBGLVL_ENC, "%s() unitid=0x%x\n", __func__,
+	dprintk(DBGLVL_ENC, "%s() unitid=0x%x\n", __func__,
 		port->hwcfg.sourceid);
 
 	port->encoder_profile = 0;
-	port->video_क्रमmat = 0;
+	port->video_format = 0;
 	port->video_resolution = 0;
-	port->audio_क्रमmat = 0;
+	port->audio_format = 0;
 
 	ret = saa7164_cmd_send(port->dev, port->hwcfg.sourceid, GET_CUR,
-		EU_PROखाता_CONTROL, माप(u8), &port->encoder_profile);
-	अगर (ret != SAA_OK)
-		prपूर्णांकk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
+		EU_PROFILE_CONTROL, sizeof(u8), &port->encoder_profile);
+	if (ret != SAA_OK)
+		printk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
 
 	ret = saa7164_cmd_send(port->dev, port->hwcfg.sourceid, GET_CUR,
-		EU_VIDEO_RESOLUTION_CONTROL, माप(u8),
+		EU_VIDEO_RESOLUTION_CONTROL, sizeof(u8),
 		&port->video_resolution);
-	अगर (ret != SAA_OK)
-		prपूर्णांकk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
+	if (ret != SAA_OK)
+		printk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
 
 	ret = saa7164_cmd_send(port->dev, port->hwcfg.sourceid, GET_CUR,
-		EU_VIDEO_FORMAT_CONTROL, माप(u8), &port->video_क्रमmat);
-	अगर (ret != SAA_OK)
-		prपूर्णांकk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
+		EU_VIDEO_FORMAT_CONTROL, sizeof(u8), &port->video_format);
+	if (ret != SAA_OK)
+		printk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
 
 	ret = saa7164_cmd_send(port->dev, port->hwcfg.sourceid, GET_CUR,
-		EU_VIDEO_BIT_RATE_CONTROL, माप(v), &v);
-	अगर (ret != SAA_OK)
-		prपूर्णांकk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
+		EU_VIDEO_BIT_RATE_CONTROL, sizeof(v), &v);
+	if (ret != SAA_OK)
+		printk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
 
 	ret = saa7164_cmd_send(port->dev, port->hwcfg.sourceid, GET_CUR,
-		EU_AUDIO_FORMAT_CONTROL, माप(u8), &port->audio_क्रमmat);
-	अगर (ret != SAA_OK)
-		prपूर्णांकk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
+		EU_AUDIO_FORMAT_CONTROL, sizeof(u8), &port->audio_format);
+	if (ret != SAA_OK)
+		printk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
 
 	ret = saa7164_cmd_send(port->dev, port->hwcfg.sourceid, GET_CUR,
-		EU_AUDIO_BIT_RATE_CONTROL, माप(a), &a);
-	अगर (ret != SAA_OK)
-		prपूर्णांकk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
+		EU_AUDIO_BIT_RATE_CONTROL, sizeof(a), &a);
+	if (ret != SAA_OK)
+		printk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
 
 	/* Aspect Ratio */
 	ar.width = 0;
 	ar.height = 0;
 	ret = saa7164_cmd_send(port->dev, port->hwcfg.sourceid, GET_CUR,
 		EU_VIDEO_INPUT_ASPECT_CONTROL,
-		माप(काष्ठा पंचांगComResEncVideoInputAspectRatio), &ar);
-	अगर (ret != SAA_OK)
-		prपूर्णांकk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
+		sizeof(struct tmComResEncVideoInputAspectRatio), &ar);
+	if (ret != SAA_OK)
+		printk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
 
-	dprपूर्णांकk(DBGLVL_ENC, "encoder_profile = %d\n", port->encoder_profile);
-	dprपूर्णांकk(DBGLVL_ENC, "video_format    = %d\n", port->video_क्रमmat);
-	dprपूर्णांकk(DBGLVL_ENC, "audio_format    = %d\n", port->audio_क्रमmat);
-	dprपूर्णांकk(DBGLVL_ENC, "video_resolution= %d\n", port->video_resolution);
-	dprपूर्णांकk(DBGLVL_ENC, "v.ucVideoBitRateMode = %d\n",
+	dprintk(DBGLVL_ENC, "encoder_profile = %d\n", port->encoder_profile);
+	dprintk(DBGLVL_ENC, "video_format    = %d\n", port->video_format);
+	dprintk(DBGLVL_ENC, "audio_format    = %d\n", port->audio_format);
+	dprintk(DBGLVL_ENC, "video_resolution= %d\n", port->video_resolution);
+	dprintk(DBGLVL_ENC, "v.ucVideoBitRateMode = %d\n",
 		v.ucVideoBitRateMode);
-	dprपूर्णांकk(DBGLVL_ENC, "v.dwVideoBitRate     = %d\n",
+	dprintk(DBGLVL_ENC, "v.dwVideoBitRate     = %d\n",
 		v.dwVideoBitRate);
-	dprपूर्णांकk(DBGLVL_ENC, "v.dwVideoBitRatePeak = %d\n",
+	dprintk(DBGLVL_ENC, "v.dwVideoBitRatePeak = %d\n",
 		v.dwVideoBitRatePeak);
-	dprपूर्णांकk(DBGLVL_ENC, "a.ucVideoBitRateMode = %d\n",
+	dprintk(DBGLVL_ENC, "a.ucVideoBitRateMode = %d\n",
 		a.ucAudioBitRateMode);
-	dprपूर्णांकk(DBGLVL_ENC, "a.dwVideoBitRate     = %d\n",
+	dprintk(DBGLVL_ENC, "a.dwVideoBitRate     = %d\n",
 		a.dwAudioBitRate);
-	dprपूर्णांकk(DBGLVL_ENC, "a.dwVideoBitRatePeak = %d\n",
+	dprintk(DBGLVL_ENC, "a.dwVideoBitRatePeak = %d\n",
 		a.dwAudioBitRatePeak);
-	dprपूर्णांकk(DBGLVL_ENC, "aspect.width / height = %d:%d\n",
+	dprintk(DBGLVL_ENC, "aspect.width / height = %d:%d\n",
 		ar.width, ar.height);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक saa7164_api_set_aspect_ratio(काष्ठा saa7164_port *port)
-अणु
-	काष्ठा saa7164_dev *dev = port->dev;
-	काष्ठा पंचांगComResEncVideoInputAspectRatio ar;
-	पूर्णांक ret;
+int saa7164_api_set_aspect_ratio(struct saa7164_port *port)
+{
+	struct saa7164_dev *dev = port->dev;
+	struct tmComResEncVideoInputAspectRatio ar;
+	int ret;
 
-	dprपूर्णांकk(DBGLVL_ENC, "%s(%d)\n", __func__,
+	dprintk(DBGLVL_ENC, "%s(%d)\n", __func__,
 		port->encoder_params.ctl_aspect);
 
-	चयन (port->encoder_params.ctl_aspect) अणु
-	हाल V4L2_MPEG_VIDEO_ASPECT_1x1:
+	switch (port->encoder_params.ctl_aspect) {
+	case V4L2_MPEG_VIDEO_ASPECT_1x1:
 		ar.width = 1;
 		ar.height = 1;
-		अवरोध;
-	हाल V4L2_MPEG_VIDEO_ASPECT_4x3:
+		break;
+	case V4L2_MPEG_VIDEO_ASPECT_4x3:
 		ar.width = 4;
 		ar.height = 3;
-		अवरोध;
-	हाल V4L2_MPEG_VIDEO_ASPECT_16x9:
+		break;
+	case V4L2_MPEG_VIDEO_ASPECT_16x9:
 		ar.width = 16;
 		ar.height = 9;
-		अवरोध;
-	हाल V4L2_MPEG_VIDEO_ASPECT_221x100:
+		break;
+	case V4L2_MPEG_VIDEO_ASPECT_221x100:
 		ar.width = 221;
 		ar.height = 100;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		BUG();
-	पूर्ण
+	}
 
-	dprपूर्णांकk(DBGLVL_ENC, "%s(%d) now %d:%d\n", __func__,
+	dprintk(DBGLVL_ENC, "%s(%d) now %d:%d\n", __func__,
 		port->encoder_params.ctl_aspect,
 		ar.width, ar.height);
 
 	/* Aspect Ratio */
 	ret = saa7164_cmd_send(port->dev, port->hwcfg.sourceid, SET_CUR,
 		EU_VIDEO_INPUT_ASPECT_CONTROL,
-		माप(काष्ठा पंचांगComResEncVideoInputAspectRatio), &ar);
-	अगर (ret != SAA_OK)
-		prपूर्णांकk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
+		sizeof(struct tmComResEncVideoInputAspectRatio), &ar);
+	if (ret != SAA_OK)
+		printk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक saa7164_api_set_usercontrol(काष्ठा saa7164_port *port, u8 ctl)
-अणु
-	काष्ठा saa7164_dev *dev = port->dev;
-	पूर्णांक ret;
+int saa7164_api_set_usercontrol(struct saa7164_port *port, u8 ctl)
+{
+	struct saa7164_dev *dev = port->dev;
+	int ret;
 	u16 val;
 
-	अगर (ctl == PU_BRIGHTNESS_CONTROL)
+	if (ctl == PU_BRIGHTNESS_CONTROL)
 		val = port->ctl_brightness;
-	अन्यथा
-	अगर (ctl == PU_CONTRAST_CONTROL)
+	else
+	if (ctl == PU_CONTRAST_CONTROL)
 		val = port->ctl_contrast;
-	अन्यथा
-	अगर (ctl == PU_HUE_CONTROL)
+	else
+	if (ctl == PU_HUE_CONTROL)
 		val = port->ctl_hue;
-	अन्यथा
-	अगर (ctl == PU_SATURATION_CONTROL)
+	else
+	if (ctl == PU_SATURATION_CONTROL)
 		val = port->ctl_saturation;
-	अन्यथा
-	अगर (ctl == PU_SHARPNESS_CONTROL)
+	else
+	if (ctl == PU_SHARPNESS_CONTROL)
 		val = port->ctl_sharpness;
-	अन्यथा
-		वापस -EINVAL;
+	else
+		return -EINVAL;
 
-	dprपूर्णांकk(DBGLVL_ENC, "%s() unitid=0x%x ctl=%d, val=%d\n",
+	dprintk(DBGLVL_ENC, "%s() unitid=0x%x ctl=%d, val=%d\n",
 		__func__, port->encunit.vsourceid, ctl, val);
 
 	ret = saa7164_cmd_send(port->dev, port->encunit.vsourceid, SET_CUR,
-		ctl, माप(u16), &val);
-	अगर (ret != SAA_OK)
-		prपूर्णांकk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
+		ctl, sizeof(u16), &val);
+	if (ret != SAA_OK)
+		printk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक saa7164_api_get_usercontrol(काष्ठा saa7164_port *port, u8 ctl)
-अणु
-	काष्ठा saa7164_dev *dev = port->dev;
-	पूर्णांक ret;
+int saa7164_api_get_usercontrol(struct saa7164_port *port, u8 ctl)
+{
+	struct saa7164_dev *dev = port->dev;
+	int ret;
 	u16 val;
 
 	ret = saa7164_cmd_send(port->dev, port->encunit.vsourceid, GET_CUR,
-		ctl, माप(u16), &val);
-	अगर (ret != SAA_OK) अणु
-		prपूर्णांकk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
-		वापस ret;
-	पूर्ण
+		ctl, sizeof(u16), &val);
+	if (ret != SAA_OK) {
+		printk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
+		return ret;
+	}
 
-	dprपूर्णांकk(DBGLVL_ENC, "%s() ctl=%d, val=%d\n",
+	dprintk(DBGLVL_ENC, "%s() ctl=%d, val=%d\n",
 		__func__, ctl, val);
 
-	अगर (ctl == PU_BRIGHTNESS_CONTROL)
+	if (ctl == PU_BRIGHTNESS_CONTROL)
 		port->ctl_brightness = val;
-	अन्यथा
-	अगर (ctl == PU_CONTRAST_CONTROL)
+	else
+	if (ctl == PU_CONTRAST_CONTROL)
 		port->ctl_contrast = val;
-	अन्यथा
-	अगर (ctl == PU_HUE_CONTROL)
+	else
+	if (ctl == PU_HUE_CONTROL)
 		port->ctl_hue = val;
-	अन्यथा
-	अगर (ctl == PU_SATURATION_CONTROL)
+	else
+	if (ctl == PU_SATURATION_CONTROL)
 		port->ctl_saturation = val;
-	अन्यथा
-	अगर (ctl == PU_SHARPNESS_CONTROL)
+	else
+	if (ctl == PU_SHARPNESS_CONTROL)
 		port->ctl_sharpness = val;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक saa7164_api_set_videomux(काष्ठा saa7164_port *port)
-अणु
-	काष्ठा saa7164_dev *dev = port->dev;
-	u8 inमाला_दो[] = अणु 1, 2, 2, 2, 5, 5, 5 पूर्ण;
-	पूर्णांक ret;
+int saa7164_api_set_videomux(struct saa7164_port *port)
+{
+	struct saa7164_dev *dev = port->dev;
+	u8 inputs[] = { 1, 2, 2, 2, 5, 5, 5 };
+	int ret;
 
-	dprपूर्णांकk(DBGLVL_ENC, "%s() v_mux=%d a_mux=%d\n",
-		__func__, port->mux_input, inमाला_दो[port->mux_input - 1]);
+	dprintk(DBGLVL_ENC, "%s() v_mux=%d a_mux=%d\n",
+		__func__, port->mux_input, inputs[port->mux_input - 1]);
 
 	/* Audio Mute */
 	ret = saa7164_api_audio_mute(port, 1);
-	अगर (ret != SAA_OK)
-		prपूर्णांकk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
+	if (ret != SAA_OK)
+		printk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
 
 	/* Video Mux */
 	ret = saa7164_cmd_send(port->dev, port->vidproc.sourceid, SET_CUR,
-		SU_INPUT_SELECT_CONTROL, माप(u8), &port->mux_input);
-	अगर (ret != SAA_OK)
-		prपूर्णांकk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
+		SU_INPUT_SELECT_CONTROL, sizeof(u8), &port->mux_input);
+	if (ret != SAA_OK)
+		printk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
 
 	/* Audio Mux */
 	ret = saa7164_cmd_send(port->dev, port->audfeat.sourceid, SET_CUR,
-		SU_INPUT_SELECT_CONTROL, माप(u8),
-		&inमाला_दो[port->mux_input - 1]);
-	अगर (ret != SAA_OK)
-		prपूर्णांकk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
+		SU_INPUT_SELECT_CONTROL, sizeof(u8),
+		&inputs[port->mux_input - 1]);
+	if (ret != SAA_OK)
+		printk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
 
 	/* Audio UnMute */
 	ret = saa7164_api_audio_mute(port, 0);
-	अगर (ret != SAA_OK)
-		prपूर्णांकk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
+	if (ret != SAA_OK)
+		printk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक saa7164_api_audio_mute(काष्ठा saa7164_port *port, पूर्णांक mute)
-अणु
-	काष्ठा saa7164_dev *dev = port->dev;
+int saa7164_api_audio_mute(struct saa7164_port *port, int mute)
+{
+	struct saa7164_dev *dev = port->dev;
 	u8 v = mute;
-	पूर्णांक ret;
+	int ret;
 
-	dprपूर्णांकk(DBGLVL_API, "%s(%d)\n", __func__, mute);
+	dprintk(DBGLVL_API, "%s(%d)\n", __func__, mute);
 
 	ret = saa7164_cmd_send(port->dev, port->audfeat.unitid, SET_CUR,
-		MUTE_CONTROL, माप(u8), &v);
-	अगर (ret != SAA_OK)
-		prपूर्णांकk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
+		MUTE_CONTROL, sizeof(u8), &v);
+	if (ret != SAA_OK)
+		printk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* 0 = silence, 0xff = full */
-पूर्णांक saa7164_api_set_audio_volume(काष्ठा saa7164_port *port, s8 level)
-अणु
-	काष्ठा saa7164_dev *dev = port->dev;
+int saa7164_api_set_audio_volume(struct saa7164_port *port, s8 level)
+{
+	struct saa7164_dev *dev = port->dev;
 	s16 v, min, max;
-	पूर्णांक ret;
+	int ret;
 
-	dprपूर्णांकk(DBGLVL_API, "%s(%d)\n", __func__, level);
+	dprintk(DBGLVL_API, "%s(%d)\n", __func__, level);
 
 	/* Obtain the min/max ranges */
 	ret = saa7164_cmd_send(port->dev, port->audfeat.unitid, GET_MIN,
-		VOLUME_CONTROL, माप(u16), &min);
-	अगर (ret != SAA_OK)
-		prपूर्णांकk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
+		VOLUME_CONTROL, sizeof(u16), &min);
+	if (ret != SAA_OK)
+		printk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
 
 	ret = saa7164_cmd_send(port->dev, port->audfeat.unitid, GET_MAX,
-		VOLUME_CONTROL, माप(u16), &max);
-	अगर (ret != SAA_OK)
-		prपूर्णांकk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
+		VOLUME_CONTROL, sizeof(u16), &max);
+	if (ret != SAA_OK)
+		printk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
 
 	ret = saa7164_cmd_send(port->dev, port->audfeat.unitid, GET_CUR,
-		(0x01 << 8) | VOLUME_CONTROL, माप(u16), &v);
-	अगर (ret != SAA_OK)
-		prपूर्णांकk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
+		(0x01 << 8) | VOLUME_CONTROL, sizeof(u16), &v);
+	if (ret != SAA_OK)
+		printk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
 
-	dprपूर्णांकk(DBGLVL_API, "%s(%d) min=%d max=%d cur=%d\n", __func__,
+	dprintk(DBGLVL_API, "%s(%d) min=%d max=%d cur=%d\n", __func__,
 		level, min, max, v);
 
 	v = level;
-	अगर (v < min)
+	if (v < min)
 		v = min;
-	अगर (v > max)
+	if (v > max)
 		v = max;
 
 	/* Left */
 	ret = saa7164_cmd_send(port->dev, port->audfeat.unitid, SET_CUR,
-		(0x01 << 8) | VOLUME_CONTROL, माप(s16), &v);
-	अगर (ret != SAA_OK)
-		prपूर्णांकk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
+		(0x01 << 8) | VOLUME_CONTROL, sizeof(s16), &v);
+	if (ret != SAA_OK)
+		printk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
 
 	/* Right */
 	ret = saa7164_cmd_send(port->dev, port->audfeat.unitid, SET_CUR,
-		(0x02 << 8) | VOLUME_CONTROL, माप(s16), &v);
-	अगर (ret != SAA_OK)
-		prपूर्णांकk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
+		(0x02 << 8) | VOLUME_CONTROL, sizeof(s16), &v);
+	if (ret != SAA_OK)
+		printk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
 
 	ret = saa7164_cmd_send(port->dev, port->audfeat.unitid, GET_CUR,
-		(0x01 << 8) | VOLUME_CONTROL, माप(u16), &v);
-	अगर (ret != SAA_OK)
-		prपूर्णांकk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
+		(0x01 << 8) | VOLUME_CONTROL, sizeof(u16), &v);
+	if (ret != SAA_OK)
+		printk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
 
-	dprपूर्णांकk(DBGLVL_API, "%s(%d) min=%d max=%d cur=%d\n", __func__,
+	dprintk(DBGLVL_API, "%s(%d) min=%d max=%d cur=%d\n", __func__,
 		level, min, max, v);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक saa7164_api_set_audio_std(काष्ठा saa7164_port *port)
-अणु
-	काष्ठा saa7164_dev *dev = port->dev;
-	काष्ठा पंचांगComResAudioDefaults lvl;
-	काष्ठा पंचांगComResTunerStandard tvaudio;
-	पूर्णांक ret;
+int saa7164_api_set_audio_std(struct saa7164_port *port)
+{
+	struct saa7164_dev *dev = port->dev;
+	struct tmComResAudioDefaults lvl;
+	struct tmComResTunerStandard tvaudio;
+	int ret;
 
-	dprपूर्णांकk(DBGLVL_API, "%s()\n", __func__);
+	dprintk(DBGLVL_API, "%s()\n", __func__);
 
-	/* Establish शेष levels */
+	/* Establish default levels */
 	lvl.ucDecoderLevel = TMHW_LEV_ADJ_DECLEV_DEFAULT;
 	lvl.ucDecoderFM_Level = TMHW_LEV_ADJ_DECLEV_DEFAULT;
 	lvl.ucMonoLevel = TMHW_LEV_ADJ_MONOLEV_DEFAULT;
@@ -545,85 +544,85 @@
 	lvl.ucSAP_Level = TMHW_LEV_ADJ_SAPLEV_DEFAULT;
 	lvl.ucADC_Level = TMHW_LEV_ADJ_ADCLEV_DEFAULT;
 	ret = saa7164_cmd_send(port->dev, port->audfeat.unitid, SET_CUR,
-		AUDIO_DEFAULT_CONTROL, माप(काष्ठा पंचांगComResAudioDefaults),
+		AUDIO_DEFAULT_CONTROL, sizeof(struct tmComResAudioDefaults),
 		&lvl);
-	अगर (ret != SAA_OK)
-		prपूर्णांकk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
+	if (ret != SAA_OK)
+		printk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
 
 	/* Manually select the appropriate TV audio standard */
-	अगर (port->encodernorm.id & V4L2_STD_NTSC) अणु
+	if (port->encodernorm.id & V4L2_STD_NTSC) {
 		tvaudio.std = TU_STANDARD_NTSC_M;
 		tvaudio.country = 1;
-	पूर्ण अन्यथा अणु
+	} else {
 		tvaudio.std = TU_STANDARD_PAL_I;
 		tvaudio.country = 44;
-	पूर्ण
+	}
 
 	ret = saa7164_cmd_send(port->dev, port->tunerunit.unitid, SET_CUR,
-		TU_STANDARD_CONTROL, माप(tvaudio), &tvaudio);
-	अगर (ret != SAA_OK)
-		prपूर्णांकk(KERN_ERR "%s() TU_STANDARD_CONTROL error, ret = 0x%x\n",
+		TU_STANDARD_CONTROL, sizeof(tvaudio), &tvaudio);
+	if (ret != SAA_OK)
+		printk(KERN_ERR "%s() TU_STANDARD_CONTROL error, ret = 0x%x\n",
 			__func__, ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक saa7164_api_set_audio_detection(काष्ठा saa7164_port *port, पूर्णांक स्वतःdetect)
-अणु
-	काष्ठा saa7164_dev *dev = port->dev;
-	काष्ठा पंचांगComResTunerStandardAuto p;
-	पूर्णांक ret;
+int saa7164_api_set_audio_detection(struct saa7164_port *port, int autodetect)
+{
+	struct saa7164_dev *dev = port->dev;
+	struct tmComResTunerStandardAuto p;
+	int ret;
 
-	dprपूर्णांकk(DBGLVL_API, "%s(%d)\n", __func__, स्वतःdetect);
+	dprintk(DBGLVL_API, "%s(%d)\n", __func__, autodetect);
 
-	/* Disable TV Audio स्वतःdetect अगर not alपढ़ोy set (buggy) */
-	अगर (स्वतःdetect)
+	/* Disable TV Audio autodetect if not already set (buggy) */
+	if (autodetect)
 		p.mode = TU_STANDARD_AUTO;
-	अन्यथा
+	else
 		p.mode = TU_STANDARD_MANUAL;
 	ret = saa7164_cmd_send(port->dev, port->tunerunit.unitid, SET_CUR,
-		TU_STANDARD_AUTO_CONTROL, माप(p), &p);
-	अगर (ret != SAA_OK)
-		prपूर्णांकk(KERN_ERR
+		TU_STANDARD_AUTO_CONTROL, sizeof(p), &p);
+	if (ret != SAA_OK)
+		printk(KERN_ERR
 			"%s() TU_STANDARD_AUTO_CONTROL error, ret = 0x%x\n",
 			__func__, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक saa7164_api_get_videomux(काष्ठा saa7164_port *port)
-अणु
-	काष्ठा saa7164_dev *dev = port->dev;
-	पूर्णांक ret;
+int saa7164_api_get_videomux(struct saa7164_port *port)
+{
+	struct saa7164_dev *dev = port->dev;
+	int ret;
 
 	ret = saa7164_cmd_send(port->dev, port->vidproc.sourceid, GET_CUR,
-		SU_INPUT_SELECT_CONTROL, माप(u8), &port->mux_input);
-	अगर (ret != SAA_OK)
-		prपूर्णांकk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
+		SU_INPUT_SELECT_CONTROL, sizeof(u8), &port->mux_input);
+	if (ret != SAA_OK)
+		printk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
 
-	dprपूर्णांकk(DBGLVL_ENC, "%s() v_mux=%d\n",
+	dprintk(DBGLVL_ENC, "%s() v_mux=%d\n",
 		__func__, port->mux_input);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक saa7164_api_set_dअगर(काष्ठा saa7164_port *port, u8 reg, u8 val)
-अणु
-	काष्ठा saa7164_dev *dev = port->dev;
+static int saa7164_api_set_dif(struct saa7164_port *port, u8 reg, u8 val)
+{
+	struct saa7164_dev *dev = port->dev;
 
 	u16 len = 0;
 	u8 buf[256];
-	पूर्णांक ret;
+	int ret;
 	u8 mas;
 
-	dprपूर्णांकk(DBGLVL_API, "%s(nr=%d type=%d val=%x)\n", __func__,
+	dprintk(DBGLVL_API, "%s(nr=%d type=%d val=%x)\n", __func__,
 		port->nr, port->type, val);
 
-	अगर (port->nr == 0)
+	if (port->nr == 0)
 		mas = 0xd0;
-	अन्यथा
+	else
 		mas = 0xe0;
 
-	स_रखो(buf, 0, माप(buf));
+	memset(buf, 0, sizeof(buf));
 
 	buf[0x00] = 0x04;
 	buf[0x01] = 0x00;
@@ -645,871 +644,871 @@
 	buf[0x0e] = 0x00;
 	buf[0x0f] = 0x00;
 
-	ret = saa7164_cmd_send(dev, port->अगरunit.unitid, GET_LEN,
-		EXU_REGISTER_ACCESS_CONTROL, माप(len), &len);
-	अगर (ret != SAA_OK) अणु
-		prपूर्णांकk(KERN_ERR "%s() error, ret(1) = 0x%x\n", __func__, ret);
-		वापस -EIO;
-	पूर्ण
+	ret = saa7164_cmd_send(dev, port->ifunit.unitid, GET_LEN,
+		EXU_REGISTER_ACCESS_CONTROL, sizeof(len), &len);
+	if (ret != SAA_OK) {
+		printk(KERN_ERR "%s() error, ret(1) = 0x%x\n", __func__, ret);
+		return -EIO;
+	}
 
-	ret = saa7164_cmd_send(dev, port->अगरunit.unitid, SET_CUR,
+	ret = saa7164_cmd_send(dev, port->ifunit.unitid, SET_CUR,
 		EXU_REGISTER_ACCESS_CONTROL, len, &buf);
-	अगर (ret != SAA_OK)
-		prपूर्णांकk(KERN_ERR "%s() error, ret(2) = 0x%x\n", __func__, ret);
-#अगर 0
-	prपूर्णांक_hex_dump(KERN_INFO, "", DUMP_PREFIX_OFFSET, 16, 1, buf, 16,
+	if (ret != SAA_OK)
+		printk(KERN_ERR "%s() error, ret(2) = 0x%x\n", __func__, ret);
+#if 0
+	print_hex_dump(KERN_INFO, "", DUMP_PREFIX_OFFSET, 16, 1, buf, 16,
 		       false);
-#पूर्ण_अगर
-	वापस ret == SAA_OK ? 0 : -EIO;
-पूर्ण
+#endif
+	return ret == SAA_OK ? 0 : -EIO;
+}
 
 /* Disable the IF block AGC controls */
-पूर्णांक saa7164_api_configure_dअगर(काष्ठा saa7164_port *port, u32 std)
-अणु
-	काष्ठा saa7164_dev *dev = port->dev;
+int saa7164_api_configure_dif(struct saa7164_port *port, u32 std)
+{
+	struct saa7164_dev *dev = port->dev;
 	u8 agc_disable;
 
-	dprपूर्णांकk(DBGLVL_API, "%s(nr=%d, 0x%x)\n", __func__, port->nr, std);
+	dprintk(DBGLVL_API, "%s(nr=%d, 0x%x)\n", __func__, port->nr, std);
 
-	अगर (std & V4L2_STD_NTSC) अणु
-		dprपूर्णांकk(DBGLVL_API, " NTSC\n");
-		saa7164_api_set_dअगर(port, 0x00, 0x01); /* Video Standard */
+	if (std & V4L2_STD_NTSC) {
+		dprintk(DBGLVL_API, " NTSC\n");
+		saa7164_api_set_dif(port, 0x00, 0x01); /* Video Standard */
 		agc_disable = 0;
-	पूर्ण अन्यथा अगर (std & V4L2_STD_PAL_I) अणु
-		dprपूर्णांकk(DBGLVL_API, " PAL-I\n");
-		saa7164_api_set_dअगर(port, 0x00, 0x08); /* Video Standard */
+	} else if (std & V4L2_STD_PAL_I) {
+		dprintk(DBGLVL_API, " PAL-I\n");
+		saa7164_api_set_dif(port, 0x00, 0x08); /* Video Standard */
 		agc_disable = 0;
-	पूर्ण अन्यथा अगर (std & V4L2_STD_PAL_M) अणु
-		dprपूर्णांकk(DBGLVL_API, " PAL-M\n");
-		saa7164_api_set_dअगर(port, 0x00, 0x01); /* Video Standard */
+	} else if (std & V4L2_STD_PAL_M) {
+		dprintk(DBGLVL_API, " PAL-M\n");
+		saa7164_api_set_dif(port, 0x00, 0x01); /* Video Standard */
 		agc_disable = 0;
-	पूर्ण अन्यथा अगर (std & V4L2_STD_PAL_N) अणु
-		dprपूर्णांकk(DBGLVL_API, " PAL-N\n");
-		saa7164_api_set_dअगर(port, 0x00, 0x01); /* Video Standard */
+	} else if (std & V4L2_STD_PAL_N) {
+		dprintk(DBGLVL_API, " PAL-N\n");
+		saa7164_api_set_dif(port, 0x00, 0x01); /* Video Standard */
 		agc_disable = 0;
-	पूर्ण अन्यथा अगर (std & V4L2_STD_PAL_Nc) अणु
-		dprपूर्णांकk(DBGLVL_API, " PAL-Nc\n");
-		saa7164_api_set_dअगर(port, 0x00, 0x01); /* Video Standard */
+	} else if (std & V4L2_STD_PAL_Nc) {
+		dprintk(DBGLVL_API, " PAL-Nc\n");
+		saa7164_api_set_dif(port, 0x00, 0x01); /* Video Standard */
 		agc_disable = 0;
-	पूर्ण अन्यथा अगर (std & V4L2_STD_PAL_B) अणु
-		dprपूर्णांकk(DBGLVL_API, " PAL-B\n");
-		saa7164_api_set_dअगर(port, 0x00, 0x02); /* Video Standard */
+	} else if (std & V4L2_STD_PAL_B) {
+		dprintk(DBGLVL_API, " PAL-B\n");
+		saa7164_api_set_dif(port, 0x00, 0x02); /* Video Standard */
 		agc_disable = 0;
-	पूर्ण अन्यथा अगर (std & V4L2_STD_PAL_DK) अणु
-		dprपूर्णांकk(DBGLVL_API, " PAL-DK\n");
-		saa7164_api_set_dअगर(port, 0x00, 0x10); /* Video Standard */
+	} else if (std & V4L2_STD_PAL_DK) {
+		dprintk(DBGLVL_API, " PAL-DK\n");
+		saa7164_api_set_dif(port, 0x00, 0x10); /* Video Standard */
 		agc_disable = 0;
-	पूर्ण अन्यथा अगर (std & V4L2_STD_SECAM_L) अणु
-		dprपूर्णांकk(DBGLVL_API, " SECAM-L\n");
-		saa7164_api_set_dअगर(port, 0x00, 0x20); /* Video Standard */
+	} else if (std & V4L2_STD_SECAM_L) {
+		dprintk(DBGLVL_API, " SECAM-L\n");
+		saa7164_api_set_dif(port, 0x00, 0x20); /* Video Standard */
 		agc_disable = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Unknown standard, assume DTV */
-		dprपूर्णांकk(DBGLVL_API, " Unknown (assuming DTV)\n");
+		dprintk(DBGLVL_API, " Unknown (assuming DTV)\n");
 		/* Undefinded Video Standard */
-		saa7164_api_set_dअगर(port, 0x00, 0x80);
+		saa7164_api_set_dif(port, 0x00, 0x80);
 		agc_disable = 1;
-	पूर्ण
+	}
 
-	saa7164_api_set_dअगर(port, 0x48, 0xa0); /* AGC Functions 1 */
-	saa7164_api_set_dअगर(port, 0xc0, agc_disable); /* AGC Output Disable */
-	saa7164_api_set_dअगर(port, 0x7c, 0x04); /* CVBS EQ */
-	saa7164_api_set_dअगर(port, 0x04, 0x01); /* Active */
+	saa7164_api_set_dif(port, 0x48, 0xa0); /* AGC Functions 1 */
+	saa7164_api_set_dif(port, 0xc0, agc_disable); /* AGC Output Disable */
+	saa7164_api_set_dif(port, 0x7c, 0x04); /* CVBS EQ */
+	saa7164_api_set_dif(port, 0x04, 0x01); /* Active */
 	msleep(100);
-	saa7164_api_set_dअगर(port, 0x04, 0x00); /* Active (again) */
+	saa7164_api_set_dif(port, 0x04, 0x00); /* Active (again) */
 	msleep(100);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Ensure the dअगर is in the correct state क्रम the operating mode
- * (analog / dtv). We only configure the dअगरf through the analog encoder
+/* Ensure the dif is in the correct state for the operating mode
+ * (analog / dtv). We only configure the diff through the analog encoder
  * so when we're in digital mode we need to find the appropriate encoder
  * and use it to configure the DIF.
  */
-पूर्णांक saa7164_api_initialize_dअगर(काष्ठा saa7164_port *port)
-अणु
-	काष्ठा saa7164_dev *dev = port->dev;
-	काष्ठा saa7164_port *p = शून्य;
-	पूर्णांक ret = -EINVAL;
+int saa7164_api_initialize_dif(struct saa7164_port *port)
+{
+	struct saa7164_dev *dev = port->dev;
+	struct saa7164_port *p = NULL;
+	int ret = -EINVAL;
 	u32 std = 0;
 
-	dprपूर्णांकk(DBGLVL_API, "%s(nr=%d type=%d)\n", __func__,
+	dprintk(DBGLVL_API, "%s(nr=%d type=%d)\n", __func__,
 		port->nr, port->type);
 
-	अगर (port->type == SAA7164_MPEG_ENCODER) अणु
-		/* Pick any analog standard to init the dअगरf.
+	if (port->type == SAA7164_MPEG_ENCODER) {
+		/* Pick any analog standard to init the diff.
 		 * we'll come back during encoder_init'
-		 * and set the correct standard अगर required.
+		 * and set the correct standard if required.
 		 */
 		std = V4L2_STD_NTSC;
-	पूर्ण अन्यथा
-	अगर (port->type == SAA7164_MPEG_DVB) अणु
-		अगर (port->nr == SAA7164_PORT_TS1)
+	} else
+	if (port->type == SAA7164_MPEG_DVB) {
+		if (port->nr == SAA7164_PORT_TS1)
 			p = &dev->ports[SAA7164_PORT_ENC1];
-		अन्यथा
+		else
 			p = &dev->ports[SAA7164_PORT_ENC2];
-	पूर्ण अन्यथा
-	अगर (port->type == SAA7164_MPEG_VBI) अणु
+	} else
+	if (port->type == SAA7164_MPEG_VBI) {
 		std = V4L2_STD_NTSC;
-		अगर (port->nr == SAA7164_PORT_VBI1)
+		if (port->nr == SAA7164_PORT_VBI1)
 			p = &dev->ports[SAA7164_PORT_ENC1];
-		अन्यथा
+		else
 			p = &dev->ports[SAA7164_PORT_ENC2];
-	पूर्ण अन्यथा
+	} else
 		BUG();
 
-	अगर (p)
-		ret = saa7164_api_configure_dअगर(p, std);
+	if (p)
+		ret = saa7164_api_configure_dif(p, std);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक saa7164_api_transition_port(काष्ठा saa7164_port *port, u8 mode)
-अणु
-	काष्ठा saa7164_dev *dev = port->dev;
+int saa7164_api_transition_port(struct saa7164_port *port, u8 mode)
+{
+	struct saa7164_dev *dev = port->dev;
 
-	पूर्णांक ret;
+	int ret;
 
-	dprपूर्णांकk(DBGLVL_API, "%s(nr=%d unitid=0x%x,%d)\n",
+	dprintk(DBGLVL_API, "%s(nr=%d unitid=0x%x,%d)\n",
 		__func__, port->nr, port->hwcfg.unitid, mode);
 
 	ret = saa7164_cmd_send(port->dev, port->hwcfg.unitid, SET_CUR,
-		SAA_STATE_CONTROL, माप(mode), &mode);
-	अगर (ret != SAA_OK)
-		prपूर्णांकk(KERN_ERR "%s(portnr %d unitid 0x%x) error, ret = 0x%x\n",
+		SAA_STATE_CONTROL, sizeof(mode), &mode);
+	if (ret != SAA_OK)
+		printk(KERN_ERR "%s(portnr %d unitid 0x%x) error, ret = 0x%x\n",
 			__func__, port->nr, port->hwcfg.unitid, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक saa7164_api_get_fw_version(काष्ठा saa7164_dev *dev, u32 *version)
-अणु
-	पूर्णांक ret;
+int saa7164_api_get_fw_version(struct saa7164_dev *dev, u32 *version)
+{
+	int ret;
 
 	ret = saa7164_cmd_send(dev, 0, GET_CUR,
-		GET_FW_VERSION_CONTROL, माप(u32), version);
-	अगर (ret != SAA_OK)
-		prपूर्णांकk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
+		GET_FW_VERSION_CONTROL, sizeof(u32), version);
+	if (ret != SAA_OK)
+		printk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक saa7164_api_पढ़ो_eeprom(काष्ठा saa7164_dev *dev, u8 *buf, पूर्णांक buflen)
-अणु
-	u8 reg[] = अणु 0x0f, 0x00 पूर्ण;
+int saa7164_api_read_eeprom(struct saa7164_dev *dev, u8 *buf, int buflen)
+{
+	u8 reg[] = { 0x0f, 0x00 };
 
-	अगर (buflen < 128)
-		वापस -ENOMEM;
+	if (buflen < 128)
+		return -ENOMEM;
 
 	/* Assumption: Hauppauge eeprom is at 0xa0 on on bus 0 */
-	/* TODO: Pull the details from the boards काष्ठा */
-	वापस saa7164_api_i2c_पढ़ो(&dev->i2c_bus[0], 0xa0 >> 1, माप(reg),
+	/* TODO: Pull the details from the boards struct */
+	return saa7164_api_i2c_read(&dev->i2c_bus[0], 0xa0 >> 1, sizeof(reg),
 		&reg[0], 128, buf);
-पूर्ण
+}
 
-अटल पूर्णांक saa7164_api_configure_port_vbi(काष्ठा saa7164_dev *dev,
-					  काष्ठा saa7164_port *port)
-अणु
-	काष्ठा पंचांगComResVBIFormatDescrHeader *fmt = &port->vbi_fmt_ntsc;
+static int saa7164_api_configure_port_vbi(struct saa7164_dev *dev,
+					  struct saa7164_port *port)
+{
+	struct tmComResVBIFormatDescrHeader *fmt = &port->vbi_fmt_ntsc;
 
-	dprपूर्णांकk(DBGLVL_API, "    bFormatIndex  = 0x%x\n", fmt->bFormatIndex);
-	dprपूर्णांकk(DBGLVL_API, "    VideoStandard = 0x%x\n", fmt->VideoStandard);
-	dprपूर्णांकk(DBGLVL_API, "    StartLine     = %d\n", fmt->StartLine);
-	dprपूर्णांकk(DBGLVL_API, "    EndLine       = %d\n", fmt->EndLine);
-	dprपूर्णांकk(DBGLVL_API, "    FieldRate     = %d\n", fmt->FieldRate);
-	dprपूर्णांकk(DBGLVL_API, "    bNumLines     = %d\n", fmt->bNumLines);
-
-	/* Cache the hardware configuration in the port */
-
-	port->bufcounter = port->hwcfg.BARLocation;
-	port->pitch = port->hwcfg.BARLocation + (2 * माप(u32));
-	port->bufsize = port->hwcfg.BARLocation + (3 * माप(u32));
-	port->bufoffset = port->hwcfg.BARLocation + (4 * माप(u32));
-	port->bufptr32l = port->hwcfg.BARLocation +
-		(4 * माप(u32)) +
-		(माप(u32) * port->hwcfg.buffercount) + माप(u32);
-	port->bufptr32h = port->hwcfg.BARLocation +
-		(4 * माप(u32)) +
-		(माप(u32) * port->hwcfg.buffercount);
-	port->bufptr64 = port->hwcfg.BARLocation +
-		(4 * माप(u32)) +
-		(माप(u32) * port->hwcfg.buffercount);
-	dprपूर्णांकk(DBGLVL_API, "   = port->hwcfg.BARLocation = 0x%x\n",
-		port->hwcfg.BARLocation);
-
-	dprपूर्णांकk(DBGLVL_API, "   = VS_FORMAT_VBI (becomes dev->en[%d])\n",
-		port->nr);
-
-	वापस 0;
-पूर्ण
-
-अटल पूर्णांक
-saa7164_api_configure_port_mpeg2ts(काष्ठा saa7164_dev *dev,
-				   काष्ठा saa7164_port *port,
-				   काष्ठा पंचांगComResTSFormatDescrHeader *tsfmt)
-अणु
-	dprपूर्णांकk(DBGLVL_API, "    bFormatIndex = 0x%x\n", tsfmt->bFormatIndex);
-	dprपूर्णांकk(DBGLVL_API, "    bDataOffset  = 0x%x\n", tsfmt->bDataOffset);
-	dprपूर्णांकk(DBGLVL_API, "    bPacketLength= 0x%x\n", tsfmt->bPacketLength);
-	dprपूर्णांकk(DBGLVL_API, "    bStrideLength= 0x%x\n", tsfmt->bStrideLength);
-	dprपूर्णांकk(DBGLVL_API, "    bguid        = (....)\n");
+	dprintk(DBGLVL_API, "    bFormatIndex  = 0x%x\n", fmt->bFormatIndex);
+	dprintk(DBGLVL_API, "    VideoStandard = 0x%x\n", fmt->VideoStandard);
+	dprintk(DBGLVL_API, "    StartLine     = %d\n", fmt->StartLine);
+	dprintk(DBGLVL_API, "    EndLine       = %d\n", fmt->EndLine);
+	dprintk(DBGLVL_API, "    FieldRate     = %d\n", fmt->FieldRate);
+	dprintk(DBGLVL_API, "    bNumLines     = %d\n", fmt->bNumLines);
 
 	/* Cache the hardware configuration in the port */
 
 	port->bufcounter = port->hwcfg.BARLocation;
-	port->pitch = port->hwcfg.BARLocation + (2 * माप(u32));
-	port->bufsize = port->hwcfg.BARLocation + (3 * माप(u32));
-	port->bufoffset = port->hwcfg.BARLocation + (4 * माप(u32));
+	port->pitch = port->hwcfg.BARLocation + (2 * sizeof(u32));
+	port->bufsize = port->hwcfg.BARLocation + (3 * sizeof(u32));
+	port->bufoffset = port->hwcfg.BARLocation + (4 * sizeof(u32));
 	port->bufptr32l = port->hwcfg.BARLocation +
-		(4 * माप(u32)) +
-		(माप(u32) * port->hwcfg.buffercount) + माप(u32);
+		(4 * sizeof(u32)) +
+		(sizeof(u32) * port->hwcfg.buffercount) + sizeof(u32);
 	port->bufptr32h = port->hwcfg.BARLocation +
-		(4 * माप(u32)) +
-		(माप(u32) * port->hwcfg.buffercount);
+		(4 * sizeof(u32)) +
+		(sizeof(u32) * port->hwcfg.buffercount);
 	port->bufptr64 = port->hwcfg.BARLocation +
-		(4 * माप(u32)) +
-		(माप(u32) * port->hwcfg.buffercount);
-	dprपूर्णांकk(DBGLVL_API, "   = port->hwcfg.BARLocation = 0x%x\n",
+		(4 * sizeof(u32)) +
+		(sizeof(u32) * port->hwcfg.buffercount);
+	dprintk(DBGLVL_API, "   = port->hwcfg.BARLocation = 0x%x\n",
 		port->hwcfg.BARLocation);
 
-	dprपूर्णांकk(DBGLVL_API, "   = VS_FORMAT_MPEGTS (becomes dev->ts[%d])\n",
+	dprintk(DBGLVL_API, "   = VS_FORMAT_VBI (becomes dev->en[%d])\n",
 		port->nr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-saa7164_api_configure_port_mpeg2ps(काष्ठा saa7164_dev *dev,
-				   काष्ठा saa7164_port *port,
-				   काष्ठा पंचांगComResPSFormatDescrHeader *fmt)
-अणु
-	dprपूर्णांकk(DBGLVL_API, "    bFormatIndex = 0x%x\n", fmt->bFormatIndex);
-	dprपूर्णांकk(DBGLVL_API, "    wPacketLength= 0x%x\n", fmt->wPacketLength);
-	dprपूर्णांकk(DBGLVL_API, "    wPackLength=   0x%x\n", fmt->wPackLength);
-	dprपूर्णांकk(DBGLVL_API, "    bPackDataType= 0x%x\n", fmt->bPackDataType);
+static int
+saa7164_api_configure_port_mpeg2ts(struct saa7164_dev *dev,
+				   struct saa7164_port *port,
+				   struct tmComResTSFormatDescrHeader *tsfmt)
+{
+	dprintk(DBGLVL_API, "    bFormatIndex = 0x%x\n", tsfmt->bFormatIndex);
+	dprintk(DBGLVL_API, "    bDataOffset  = 0x%x\n", tsfmt->bDataOffset);
+	dprintk(DBGLVL_API, "    bPacketLength= 0x%x\n", tsfmt->bPacketLength);
+	dprintk(DBGLVL_API, "    bStrideLength= 0x%x\n", tsfmt->bStrideLength);
+	dprintk(DBGLVL_API, "    bguid        = (....)\n");
+
+	/* Cache the hardware configuration in the port */
+
+	port->bufcounter = port->hwcfg.BARLocation;
+	port->pitch = port->hwcfg.BARLocation + (2 * sizeof(u32));
+	port->bufsize = port->hwcfg.BARLocation + (3 * sizeof(u32));
+	port->bufoffset = port->hwcfg.BARLocation + (4 * sizeof(u32));
+	port->bufptr32l = port->hwcfg.BARLocation +
+		(4 * sizeof(u32)) +
+		(sizeof(u32) * port->hwcfg.buffercount) + sizeof(u32);
+	port->bufptr32h = port->hwcfg.BARLocation +
+		(4 * sizeof(u32)) +
+		(sizeof(u32) * port->hwcfg.buffercount);
+	port->bufptr64 = port->hwcfg.BARLocation +
+		(4 * sizeof(u32)) +
+		(sizeof(u32) * port->hwcfg.buffercount);
+	dprintk(DBGLVL_API, "   = port->hwcfg.BARLocation = 0x%x\n",
+		port->hwcfg.BARLocation);
+
+	dprintk(DBGLVL_API, "   = VS_FORMAT_MPEGTS (becomes dev->ts[%d])\n",
+		port->nr);
+
+	return 0;
+}
+
+static int
+saa7164_api_configure_port_mpeg2ps(struct saa7164_dev *dev,
+				   struct saa7164_port *port,
+				   struct tmComResPSFormatDescrHeader *fmt)
+{
+	dprintk(DBGLVL_API, "    bFormatIndex = 0x%x\n", fmt->bFormatIndex);
+	dprintk(DBGLVL_API, "    wPacketLength= 0x%x\n", fmt->wPacketLength);
+	dprintk(DBGLVL_API, "    wPackLength=   0x%x\n", fmt->wPackLength);
+	dprintk(DBGLVL_API, "    bPackDataType= 0x%x\n", fmt->bPackDataType);
 
 	/* Cache the hardware configuration in the port */
 	/* TODO: CHECK THIS in the port config */
 	port->bufcounter = port->hwcfg.BARLocation;
-	port->pitch = port->hwcfg.BARLocation + (2 * माप(u32));
-	port->bufsize = port->hwcfg.BARLocation + (3 * माप(u32));
-	port->bufoffset = port->hwcfg.BARLocation + (4 * माप(u32));
+	port->pitch = port->hwcfg.BARLocation + (2 * sizeof(u32));
+	port->bufsize = port->hwcfg.BARLocation + (3 * sizeof(u32));
+	port->bufoffset = port->hwcfg.BARLocation + (4 * sizeof(u32));
 	port->bufptr32l = port->hwcfg.BARLocation +
-		(4 * माप(u32)) +
-		(माप(u32) * port->hwcfg.buffercount) + माप(u32);
+		(4 * sizeof(u32)) +
+		(sizeof(u32) * port->hwcfg.buffercount) + sizeof(u32);
 	port->bufptr32h = port->hwcfg.BARLocation +
-		(4 * माप(u32)) +
-		(माप(u32) * port->hwcfg.buffercount);
+		(4 * sizeof(u32)) +
+		(sizeof(u32) * port->hwcfg.buffercount);
 	port->bufptr64 = port->hwcfg.BARLocation +
-		(4 * माप(u32)) +
-		(माप(u32) * port->hwcfg.buffercount);
-	dprपूर्णांकk(DBGLVL_API, "   = port->hwcfg.BARLocation = 0x%x\n",
+		(4 * sizeof(u32)) +
+		(sizeof(u32) * port->hwcfg.buffercount);
+	dprintk(DBGLVL_API, "   = port->hwcfg.BARLocation = 0x%x\n",
 		port->hwcfg.BARLocation);
 
-	dprपूर्णांकk(DBGLVL_API, "   = VS_FORMAT_MPEGPS (becomes dev->enc[%d])\n",
+	dprintk(DBGLVL_API, "   = VS_FORMAT_MPEGPS (becomes dev->enc[%d])\n",
 		port->nr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक saa7164_api_dump_subdevs(काष्ठा saa7164_dev *dev, u8 *buf, पूर्णांक len)
-अणु
-	काष्ठा saa7164_port *tsport = शून्य;
-	काष्ठा saa7164_port *encport = शून्य;
-	काष्ठा saa7164_port *vbiport = शून्य;
+static int saa7164_api_dump_subdevs(struct saa7164_dev *dev, u8 *buf, int len)
+{
+	struct saa7164_port *tsport = NULL;
+	struct saa7164_port *encport = NULL;
+	struct saa7164_port *vbiport = NULL;
 	u32 idx, next_offset;
-	पूर्णांक i;
-	काष्ठा पंचांगComResDescrHeader *hdr, *t;
-	काष्ठा पंचांगComResExtDevDescrHeader *exthdr;
-	काष्ठा पंचांगComResPathDescrHeader *pathhdr;
-	काष्ठा पंचांगComResAntTermDescrHeader *anttermhdr;
-	काष्ठा पंचांगComResTunerDescrHeader *tunerunithdr;
-	काष्ठा पंचांगComResDMATermDescrHeader *vcoutputtermhdr;
-	काष्ठा पंचांगComResTSFormatDescrHeader *tsfmt;
-	काष्ठा पंचांगComResPSFormatDescrHeader *psfmt;
-	काष्ठा पंचांगComResSelDescrHeader *psel;
-	काष्ठा पंचांगComResProcDescrHeader *pdh;
-	काष्ठा पंचांगComResAFeatureDescrHeader *afd;
-	काष्ठा पंचांगComResEncoderDescrHeader *edh;
-	काष्ठा पंचांगComResVBIFormatDescrHeader *vbअगरmt;
+	int i;
+	struct tmComResDescrHeader *hdr, *t;
+	struct tmComResExtDevDescrHeader *exthdr;
+	struct tmComResPathDescrHeader *pathhdr;
+	struct tmComResAntTermDescrHeader *anttermhdr;
+	struct tmComResTunerDescrHeader *tunerunithdr;
+	struct tmComResDMATermDescrHeader *vcoutputtermhdr;
+	struct tmComResTSFormatDescrHeader *tsfmt;
+	struct tmComResPSFormatDescrHeader *psfmt;
+	struct tmComResSelDescrHeader *psel;
+	struct tmComResProcDescrHeader *pdh;
+	struct tmComResAFeatureDescrHeader *afd;
+	struct tmComResEncoderDescrHeader *edh;
+	struct tmComResVBIFormatDescrHeader *vbifmt;
 	u32 currpath = 0;
 
-	dprपूर्णांकk(DBGLVL_API,
+	dprintk(DBGLVL_API,
 		"%s(?,?,%d) sizeof(struct tmComResDescrHeader) = %d bytes\n",
-		__func__, len, (u32)माप(काष्ठा पंचांगComResDescrHeader));
+		__func__, len, (u32)sizeof(struct tmComResDescrHeader));
 
-	क्रम (idx = 0; idx < (len - माप(काष्ठा पंचांगComResDescrHeader));) अणु
+	for (idx = 0; idx < (len - sizeof(struct tmComResDescrHeader));) {
 
-		hdr = (काष्ठा पंचांगComResDescrHeader *)(buf + idx);
+		hdr = (struct tmComResDescrHeader *)(buf + idx);
 
-		अगर (hdr->type != CS_INTERFACE)
-			वापस SAA_ERR_NOT_SUPPORTED;
+		if (hdr->type != CS_INTERFACE)
+			return SAA_ERR_NOT_SUPPORTED;
 
-		dprपूर्णांकk(DBGLVL_API, "@ 0x%x =\n", idx);
-		चयन (hdr->subtype) अणु
-		हाल GENERAL_REQUEST:
-			dprपूर्णांकk(DBGLVL_API, " GENERAL_REQUEST\n");
-			अवरोध;
-		हाल VC_TUNER_PATH:
-			dprपूर्णांकk(DBGLVL_API, " VC_TUNER_PATH\n");
-			pathhdr = (काष्ठा पंचांगComResPathDescrHeader *)(buf + idx);
-			dprपूर्णांकk(DBGLVL_API, "  pathid = 0x%x\n",
+		dprintk(DBGLVL_API, "@ 0x%x =\n", idx);
+		switch (hdr->subtype) {
+		case GENERAL_REQUEST:
+			dprintk(DBGLVL_API, " GENERAL_REQUEST\n");
+			break;
+		case VC_TUNER_PATH:
+			dprintk(DBGLVL_API, " VC_TUNER_PATH\n");
+			pathhdr = (struct tmComResPathDescrHeader *)(buf + idx);
+			dprintk(DBGLVL_API, "  pathid = 0x%x\n",
 				pathhdr->pathid);
 			currpath = pathhdr->pathid;
-			अवरोध;
-		हाल VC_INPUT_TERMINAL:
-			dprपूर्णांकk(DBGLVL_API, " VC_INPUT_TERMINAL\n");
+			break;
+		case VC_INPUT_TERMINAL:
+			dprintk(DBGLVL_API, " VC_INPUT_TERMINAL\n");
 			anttermhdr =
-				(काष्ठा पंचांगComResAntTermDescrHeader *)(buf + idx);
-			dprपूर्णांकk(DBGLVL_API, "  terminalid   = 0x%x\n",
+				(struct tmComResAntTermDescrHeader *)(buf + idx);
+			dprintk(DBGLVL_API, "  terminalid   = 0x%x\n",
 				anttermhdr->terminalid);
-			dprपूर्णांकk(DBGLVL_API, "  terminaltype = 0x%x\n",
+			dprintk(DBGLVL_API, "  terminaltype = 0x%x\n",
 				anttermhdr->terminaltype);
-			चयन (anttermhdr->terminaltype) अणु
-			हाल ITT_ANTENNA:
-				dprपूर्णांकk(DBGLVL_API, "   = ITT_ANTENNA\n");
-				अवरोध;
-			हाल LINE_CONNECTOR:
-				dprपूर्णांकk(DBGLVL_API, "   = LINE_CONNECTOR\n");
-				अवरोध;
-			हाल SPDIF_CONNECTOR:
-				dprपूर्णांकk(DBGLVL_API, "   = SPDIF_CONNECTOR\n");
-				अवरोध;
-			हाल COMPOSITE_CONNECTOR:
-				dprपूर्णांकk(DBGLVL_API,
+			switch (anttermhdr->terminaltype) {
+			case ITT_ANTENNA:
+				dprintk(DBGLVL_API, "   = ITT_ANTENNA\n");
+				break;
+			case LINE_CONNECTOR:
+				dprintk(DBGLVL_API, "   = LINE_CONNECTOR\n");
+				break;
+			case SPDIF_CONNECTOR:
+				dprintk(DBGLVL_API, "   = SPDIF_CONNECTOR\n");
+				break;
+			case COMPOSITE_CONNECTOR:
+				dprintk(DBGLVL_API,
 					"   = COMPOSITE_CONNECTOR\n");
-				अवरोध;
-			हाल SVIDEO_CONNECTOR:
-				dprपूर्णांकk(DBGLVL_API, "   = SVIDEO_CONNECTOR\n");
-				अवरोध;
-			हाल COMPONENT_CONNECTOR:
-				dprपूर्णांकk(DBGLVL_API,
+				break;
+			case SVIDEO_CONNECTOR:
+				dprintk(DBGLVL_API, "   = SVIDEO_CONNECTOR\n");
+				break;
+			case COMPONENT_CONNECTOR:
+				dprintk(DBGLVL_API,
 					"   = COMPONENT_CONNECTOR\n");
-				अवरोध;
-			हाल STANDARD_DMA:
-				dprपूर्णांकk(DBGLVL_API, "   = STANDARD_DMA\n");
-				अवरोध;
-			शेष:
-				dprपूर्णांकk(DBGLVL_API, "   = undefined (0x%x)\n",
+				break;
+			case STANDARD_DMA:
+				dprintk(DBGLVL_API, "   = STANDARD_DMA\n");
+				break;
+			default:
+				dprintk(DBGLVL_API, "   = undefined (0x%x)\n",
 					anttermhdr->terminaltype);
-			पूर्ण
-			dprपूर्णांकk(DBGLVL_API, "  assocterminal= 0x%x\n",
+			}
+			dprintk(DBGLVL_API, "  assocterminal= 0x%x\n",
 				anttermhdr->assocterminal);
-			dprपूर्णांकk(DBGLVL_API, "  iterminal    = 0x%x\n",
+			dprintk(DBGLVL_API, "  iterminal    = 0x%x\n",
 				anttermhdr->iterminal);
-			dprपूर्णांकk(DBGLVL_API, "  controlsize  = 0x%x\n",
+			dprintk(DBGLVL_API, "  controlsize  = 0x%x\n",
 				anttermhdr->controlsize);
-			अवरोध;
-		हाल VC_OUTPUT_TERMINAL:
-			dprपूर्णांकk(DBGLVL_API, " VC_OUTPUT_TERMINAL\n");
+			break;
+		case VC_OUTPUT_TERMINAL:
+			dprintk(DBGLVL_API, " VC_OUTPUT_TERMINAL\n");
 			vcoutputtermhdr =
-				(काष्ठा पंचांगComResDMATermDescrHeader *)(buf + idx);
-			dprपूर्णांकk(DBGLVL_API, "  unitid = 0x%x\n",
+				(struct tmComResDMATermDescrHeader *)(buf + idx);
+			dprintk(DBGLVL_API, "  unitid = 0x%x\n",
 				vcoutputtermhdr->unitid);
-			dprपूर्णांकk(DBGLVL_API, "  terminaltype = 0x%x\n",
+			dprintk(DBGLVL_API, "  terminaltype = 0x%x\n",
 				vcoutputtermhdr->terminaltype);
-			चयन (vcoutputtermhdr->terminaltype) अणु
-			हाल ITT_ANTENNA:
-				dprपूर्णांकk(DBGLVL_API, "   = ITT_ANTENNA\n");
-				अवरोध;
-			हाल LINE_CONNECTOR:
-				dprपूर्णांकk(DBGLVL_API, "   = LINE_CONNECTOR\n");
-				अवरोध;
-			हाल SPDIF_CONNECTOR:
-				dprपूर्णांकk(DBGLVL_API, "   = SPDIF_CONNECTOR\n");
-				अवरोध;
-			हाल COMPOSITE_CONNECTOR:
-				dprपूर्णांकk(DBGLVL_API,
+			switch (vcoutputtermhdr->terminaltype) {
+			case ITT_ANTENNA:
+				dprintk(DBGLVL_API, "   = ITT_ANTENNA\n");
+				break;
+			case LINE_CONNECTOR:
+				dprintk(DBGLVL_API, "   = LINE_CONNECTOR\n");
+				break;
+			case SPDIF_CONNECTOR:
+				dprintk(DBGLVL_API, "   = SPDIF_CONNECTOR\n");
+				break;
+			case COMPOSITE_CONNECTOR:
+				dprintk(DBGLVL_API,
 					"   = COMPOSITE_CONNECTOR\n");
-				अवरोध;
-			हाल SVIDEO_CONNECTOR:
-				dprपूर्णांकk(DBGLVL_API, "   = SVIDEO_CONNECTOR\n");
-				अवरोध;
-			हाल COMPONENT_CONNECTOR:
-				dprपूर्णांकk(DBGLVL_API,
+				break;
+			case SVIDEO_CONNECTOR:
+				dprintk(DBGLVL_API, "   = SVIDEO_CONNECTOR\n");
+				break;
+			case COMPONENT_CONNECTOR:
+				dprintk(DBGLVL_API,
 					"   = COMPONENT_CONNECTOR\n");
-				अवरोध;
-			हाल STANDARD_DMA:
-				dprपूर्णांकk(DBGLVL_API, "   = STANDARD_DMA\n");
-				अवरोध;
-			शेष:
-				dprपूर्णांकk(DBGLVL_API, "   = undefined (0x%x)\n",
+				break;
+			case STANDARD_DMA:
+				dprintk(DBGLVL_API, "   = STANDARD_DMA\n");
+				break;
+			default:
+				dprintk(DBGLVL_API, "   = undefined (0x%x)\n",
 					vcoutputtermhdr->terminaltype);
-			पूर्ण
-			dprपूर्णांकk(DBGLVL_API, "  assocterminal= 0x%x\n",
+			}
+			dprintk(DBGLVL_API, "  assocterminal= 0x%x\n",
 				vcoutputtermhdr->assocterminal);
-			dprपूर्णांकk(DBGLVL_API, "  sourceid     = 0x%x\n",
+			dprintk(DBGLVL_API, "  sourceid     = 0x%x\n",
 				vcoutputtermhdr->sourceid);
-			dprपूर्णांकk(DBGLVL_API, "  iterminal    = 0x%x\n",
+			dprintk(DBGLVL_API, "  iterminal    = 0x%x\n",
 				vcoutputtermhdr->iterminal);
-			dprपूर्णांकk(DBGLVL_API, "  BARLocation  = 0x%x\n",
+			dprintk(DBGLVL_API, "  BARLocation  = 0x%x\n",
 				vcoutputtermhdr->BARLocation);
-			dprपूर्णांकk(DBGLVL_API, "  flags        = 0x%x\n",
+			dprintk(DBGLVL_API, "  flags        = 0x%x\n",
 				vcoutputtermhdr->flags);
-			dprपूर्णांकk(DBGLVL_API, "  interruptid  = 0x%x\n",
-				vcoutputtermhdr->पूर्णांकerruptid);
-			dprपूर्णांकk(DBGLVL_API, "  buffercount  = 0x%x\n",
+			dprintk(DBGLVL_API, "  interruptid  = 0x%x\n",
+				vcoutputtermhdr->interruptid);
+			dprintk(DBGLVL_API, "  buffercount  = 0x%x\n",
 				vcoutputtermhdr->buffercount);
-			dprपूर्णांकk(DBGLVL_API, "  metadatasize = 0x%x\n",
+			dprintk(DBGLVL_API, "  metadatasize = 0x%x\n",
 				vcoutputtermhdr->metadatasize);
-			dprपूर्णांकk(DBGLVL_API, "  controlsize  = 0x%x\n",
+			dprintk(DBGLVL_API, "  controlsize  = 0x%x\n",
 				vcoutputtermhdr->controlsize);
-			dprपूर्णांकk(DBGLVL_API, "  numformats   = 0x%x\n",
-				vcoutputtermhdr->numक्रमmats);
+			dprintk(DBGLVL_API, "  numformats   = 0x%x\n",
+				vcoutputtermhdr->numformats);
 
-			t = (काष्ठा पंचांगComResDescrHeader *)
-				((काष्ठा पंचांगComResDMATermDescrHeader *)(buf + idx));
+			t = (struct tmComResDescrHeader *)
+				((struct tmComResDMATermDescrHeader *)(buf + idx));
 			next_offset = idx + (vcoutputtermhdr->len);
-			क्रम (i = 0; i < vcoutputtermhdr->numक्रमmats; i++) अणु
-				t = (काष्ठा पंचांगComResDescrHeader *)
+			for (i = 0; i < vcoutputtermhdr->numformats; i++) {
+				t = (struct tmComResDescrHeader *)
 					(buf + next_offset);
-				चयन (t->subtype) अणु
-				हाल VS_FORMAT_MPEG2TS:
+				switch (t->subtype) {
+				case VS_FORMAT_MPEG2TS:
 					tsfmt =
-					(काष्ठा पंचांगComResTSFormatDescrHeader *)t;
-					अगर (currpath == 1)
+					(struct tmComResTSFormatDescrHeader *)t;
+					if (currpath == 1)
 						tsport = &dev->ports[SAA7164_PORT_TS1];
-					अन्यथा
+					else
 						tsport = &dev->ports[SAA7164_PORT_TS2];
-					स_नकल(&tsport->hwcfg, vcoutputtermhdr,
-						माप(*vcoutputtermhdr));
+					memcpy(&tsport->hwcfg, vcoutputtermhdr,
+						sizeof(*vcoutputtermhdr));
 					saa7164_api_configure_port_mpeg2ts(dev,
 						tsport, tsfmt);
-					अवरोध;
-				हाल VS_FORMAT_MPEG2PS:
+					break;
+				case VS_FORMAT_MPEG2PS:
 					psfmt =
-					(काष्ठा पंचांगComResPSFormatDescrHeader *)t;
-					अगर (currpath == 1)
+					(struct tmComResPSFormatDescrHeader *)t;
+					if (currpath == 1)
 						encport = &dev->ports[SAA7164_PORT_ENC1];
-					अन्यथा
+					else
 						encport = &dev->ports[SAA7164_PORT_ENC2];
-					स_नकल(&encport->hwcfg, vcoutputtermhdr,
-						माप(*vcoutputtermhdr));
+					memcpy(&encport->hwcfg, vcoutputtermhdr,
+						sizeof(*vcoutputtermhdr));
 					saa7164_api_configure_port_mpeg2ps(dev,
 						encport, psfmt);
-					अवरोध;
-				हाल VS_FORMAT_VBI:
-					vbअगरmt =
-					(काष्ठा पंचांगComResVBIFormatDescrHeader *)t;
-					अगर (currpath == 1)
+					break;
+				case VS_FORMAT_VBI:
+					vbifmt =
+					(struct tmComResVBIFormatDescrHeader *)t;
+					if (currpath == 1)
 						vbiport = &dev->ports[SAA7164_PORT_VBI1];
-					अन्यथा
+					else
 						vbiport = &dev->ports[SAA7164_PORT_VBI2];
-					स_नकल(&vbiport->hwcfg, vcoutputtermhdr,
-						माप(*vcoutputtermhdr));
-					स_नकल(&vbiport->vbi_fmt_ntsc, vbअगरmt,
-						माप(*vbअगरmt));
+					memcpy(&vbiport->hwcfg, vcoutputtermhdr,
+						sizeof(*vcoutputtermhdr));
+					memcpy(&vbiport->vbi_fmt_ntsc, vbifmt,
+						sizeof(*vbifmt));
 					saa7164_api_configure_port_vbi(dev,
 						vbiport);
-					अवरोध;
-				हाल VS_FORMAT_RDS:
-					dprपूर्णांकk(DBGLVL_API,
+					break;
+				case VS_FORMAT_RDS:
+					dprintk(DBGLVL_API,
 						"   = VS_FORMAT_RDS\n");
-					अवरोध;
-				हाल VS_FORMAT_UNCOMPRESSED:
-					dprपूर्णांकk(DBGLVL_API,
+					break;
+				case VS_FORMAT_UNCOMPRESSED:
+					dprintk(DBGLVL_API,
 					"   = VS_FORMAT_UNCOMPRESSED\n");
-					अवरोध;
-				हाल VS_FORMAT_TYPE:
-					dprपूर्णांकk(DBGLVL_API,
+					break;
+				case VS_FORMAT_TYPE:
+					dprintk(DBGLVL_API,
 						"   = VS_FORMAT_TYPE\n");
-					अवरोध;
-				शेष:
-					dprपूर्णांकk(DBGLVL_API,
+					break;
+				default:
+					dprintk(DBGLVL_API,
 						"   = undefined (0x%x)\n",
 						t->subtype);
-				पूर्ण
+				}
 				next_offset += t->len;
-			पूर्ण
+			}
 
-			अवरोध;
-		हाल TUNER_UNIT:
-			dprपूर्णांकk(DBGLVL_API, " TUNER_UNIT\n");
+			break;
+		case TUNER_UNIT:
+			dprintk(DBGLVL_API, " TUNER_UNIT\n");
 			tunerunithdr =
-				(काष्ठा पंचांगComResTunerDescrHeader *)(buf + idx);
-			dprपूर्णांकk(DBGLVL_API, "  unitid = 0x%x\n",
+				(struct tmComResTunerDescrHeader *)(buf + idx);
+			dprintk(DBGLVL_API, "  unitid = 0x%x\n",
 				tunerunithdr->unitid);
-			dprपूर्णांकk(DBGLVL_API, "  sourceid = 0x%x\n",
+			dprintk(DBGLVL_API, "  sourceid = 0x%x\n",
 				tunerunithdr->sourceid);
-			dprपूर्णांकk(DBGLVL_API, "  iunit = 0x%x\n",
+			dprintk(DBGLVL_API, "  iunit = 0x%x\n",
 				tunerunithdr->iunit);
-			dprपूर्णांकk(DBGLVL_API, "  tuningstandards = 0x%x\n",
+			dprintk(DBGLVL_API, "  tuningstandards = 0x%x\n",
 				tunerunithdr->tuningstandards);
-			dprपूर्णांकk(DBGLVL_API, "  controlsize = 0x%x\n",
+			dprintk(DBGLVL_API, "  controlsize = 0x%x\n",
 				tunerunithdr->controlsize);
-			dprपूर्णांकk(DBGLVL_API, "  controls = 0x%x\n",
+			dprintk(DBGLVL_API, "  controls = 0x%x\n",
 				tunerunithdr->controls);
 
-			अगर (tunerunithdr->unitid == tunerunithdr->iunit) अणु
-				अगर (currpath == 1)
+			if (tunerunithdr->unitid == tunerunithdr->iunit) {
+				if (currpath == 1)
 					encport = &dev->ports[SAA7164_PORT_ENC1];
-				अन्यथा
+				else
 					encport = &dev->ports[SAA7164_PORT_ENC2];
-				स_नकल(&encport->tunerunit, tunerunithdr,
-					माप(काष्ठा पंचांगComResTunerDescrHeader));
-				dprपूर्णांकk(DBGLVL_API,
+				memcpy(&encport->tunerunit, tunerunithdr,
+					sizeof(struct tmComResTunerDescrHeader));
+				dprintk(DBGLVL_API,
 					"  (becomes dev->enc[%d] tuner)\n",
 					encport->nr);
-			पूर्ण
-			अवरोध;
-		हाल VC_SELECTOR_UNIT:
-			psel = (काष्ठा पंचांगComResSelDescrHeader *)(buf + idx);
-			dprपूर्णांकk(DBGLVL_API, " VC_SELECTOR_UNIT\n");
-			dprपूर्णांकk(DBGLVL_API, "  unitid = 0x%x\n",
+			}
+			break;
+		case VC_SELECTOR_UNIT:
+			psel = (struct tmComResSelDescrHeader *)(buf + idx);
+			dprintk(DBGLVL_API, " VC_SELECTOR_UNIT\n");
+			dprintk(DBGLVL_API, "  unitid = 0x%x\n",
 				psel->unitid);
-			dprपूर्णांकk(DBGLVL_API, "  nrinpins = 0x%x\n",
+			dprintk(DBGLVL_API, "  nrinpins = 0x%x\n",
 				psel->nrinpins);
-			dprपूर्णांकk(DBGLVL_API, "  sourceid = 0x%x\n",
+			dprintk(DBGLVL_API, "  sourceid = 0x%x\n",
 				psel->sourceid);
-			अवरोध;
-		हाल VC_PROCESSING_UNIT:
-			pdh = (काष्ठा पंचांगComResProcDescrHeader *)(buf + idx);
-			dprपूर्णांकk(DBGLVL_API, " VC_PROCESSING_UNIT\n");
-			dprपूर्णांकk(DBGLVL_API, "  unitid = 0x%x\n",
+			break;
+		case VC_PROCESSING_UNIT:
+			pdh = (struct tmComResProcDescrHeader *)(buf + idx);
+			dprintk(DBGLVL_API, " VC_PROCESSING_UNIT\n");
+			dprintk(DBGLVL_API, "  unitid = 0x%x\n",
 				pdh->unitid);
-			dprपूर्णांकk(DBGLVL_API, "  sourceid = 0x%x\n",
+			dprintk(DBGLVL_API, "  sourceid = 0x%x\n",
 				pdh->sourceid);
-			dprपूर्णांकk(DBGLVL_API, "  controlsize = 0x%x\n",
+			dprintk(DBGLVL_API, "  controlsize = 0x%x\n",
 				pdh->controlsize);
-			अगर (pdh->controlsize == 0x04) अणु
-				अगर (currpath == 1)
+			if (pdh->controlsize == 0x04) {
+				if (currpath == 1)
 					encport = &dev->ports[SAA7164_PORT_ENC1];
-				अन्यथा
+				else
 					encport = &dev->ports[SAA7164_PORT_ENC2];
-				स_नकल(&encport->vidproc, pdh,
-					माप(काष्ठा पंचांगComResProcDescrHeader));
-				dprपूर्णांकk(DBGLVL_API, "  (becomes dev->enc[%d])\n",
+				memcpy(&encport->vidproc, pdh,
+					sizeof(struct tmComResProcDescrHeader));
+				dprintk(DBGLVL_API, "  (becomes dev->enc[%d])\n",
 					encport->nr);
-			पूर्ण
-			अवरोध;
-		हाल FEATURE_UNIT:
-			afd = (काष्ठा पंचांगComResAFeatureDescrHeader *)(buf + idx);
-			dprपूर्णांकk(DBGLVL_API, " FEATURE_UNIT\n");
-			dprपूर्णांकk(DBGLVL_API, "  unitid = 0x%x\n",
+			}
+			break;
+		case FEATURE_UNIT:
+			afd = (struct tmComResAFeatureDescrHeader *)(buf + idx);
+			dprintk(DBGLVL_API, " FEATURE_UNIT\n");
+			dprintk(DBGLVL_API, "  unitid = 0x%x\n",
 				afd->unitid);
-			dprपूर्णांकk(DBGLVL_API, "  sourceid = 0x%x\n",
+			dprintk(DBGLVL_API, "  sourceid = 0x%x\n",
 				afd->sourceid);
-			dprपूर्णांकk(DBGLVL_API, "  controlsize = 0x%x\n",
+			dprintk(DBGLVL_API, "  controlsize = 0x%x\n",
 				afd->controlsize);
-			अगर (currpath == 1)
+			if (currpath == 1)
 				encport = &dev->ports[SAA7164_PORT_ENC1];
-			अन्यथा
+			else
 				encport = &dev->ports[SAA7164_PORT_ENC2];
-			स_नकल(&encport->audfeat, afd,
-				माप(काष्ठा पंचांगComResAFeatureDescrHeader));
-			dprपूर्णांकk(DBGLVL_API, "  (becomes dev->enc[%d])\n",
+			memcpy(&encport->audfeat, afd,
+				sizeof(struct tmComResAFeatureDescrHeader));
+			dprintk(DBGLVL_API, "  (becomes dev->enc[%d])\n",
 				encport->nr);
-			अवरोध;
-		हाल ENCODER_UNIT:
-			edh = (काष्ठा पंचांगComResEncoderDescrHeader *)(buf + idx);
-			dprपूर्णांकk(DBGLVL_API, " ENCODER_UNIT\n");
-			dprपूर्णांकk(DBGLVL_API, "  subtype = 0x%x\n", edh->subtype);
-			dprपूर्णांकk(DBGLVL_API, "  unitid = 0x%x\n", edh->unitid);
-			dprपूर्णांकk(DBGLVL_API, "  vsourceid = 0x%x\n",
+			break;
+		case ENCODER_UNIT:
+			edh = (struct tmComResEncoderDescrHeader *)(buf + idx);
+			dprintk(DBGLVL_API, " ENCODER_UNIT\n");
+			dprintk(DBGLVL_API, "  subtype = 0x%x\n", edh->subtype);
+			dprintk(DBGLVL_API, "  unitid = 0x%x\n", edh->unitid);
+			dprintk(DBGLVL_API, "  vsourceid = 0x%x\n",
 			edh->vsourceid);
-			dprपूर्णांकk(DBGLVL_API, "  asourceid = 0x%x\n",
+			dprintk(DBGLVL_API, "  asourceid = 0x%x\n",
 				edh->asourceid);
-			dprपूर्णांकk(DBGLVL_API, "  iunit = 0x%x\n", edh->iunit);
-			अगर (edh->iunit == edh->unitid) अणु
-				अगर (currpath == 1)
+			dprintk(DBGLVL_API, "  iunit = 0x%x\n", edh->iunit);
+			if (edh->iunit == edh->unitid) {
+				if (currpath == 1)
 					encport = &dev->ports[SAA7164_PORT_ENC1];
-				अन्यथा
+				else
 					encport = &dev->ports[SAA7164_PORT_ENC2];
-				स_नकल(&encport->encunit, edh,
-					माप(काष्ठा पंचांगComResEncoderDescrHeader));
-				dprपूर्णांकk(DBGLVL_API,
+				memcpy(&encport->encunit, edh,
+					sizeof(struct tmComResEncoderDescrHeader));
+				dprintk(DBGLVL_API,
 					"  (becomes dev->enc[%d])\n",
 					encport->nr);
-			पूर्ण
-			अवरोध;
-		हाल EXTENSION_UNIT:
-			dprपूर्णांकk(DBGLVL_API, " EXTENSION_UNIT\n");
-			exthdr = (काष्ठा पंचांगComResExtDevDescrHeader *)(buf + idx);
-			dprपूर्णांकk(DBGLVL_API, "  unitid = 0x%x\n",
+			}
+			break;
+		case EXTENSION_UNIT:
+			dprintk(DBGLVL_API, " EXTENSION_UNIT\n");
+			exthdr = (struct tmComResExtDevDescrHeader *)(buf + idx);
+			dprintk(DBGLVL_API, "  unitid = 0x%x\n",
 				exthdr->unitid);
-			dprपूर्णांकk(DBGLVL_API, "  deviceid = 0x%x\n",
+			dprintk(DBGLVL_API, "  deviceid = 0x%x\n",
 				exthdr->deviceid);
-			dprपूर्णांकk(DBGLVL_API, "  devicetype = 0x%x\n",
+			dprintk(DBGLVL_API, "  devicetype = 0x%x\n",
 				exthdr->devicetype);
-			अगर (exthdr->devicetype & 0x1)
-				dprपूर्णांकk(DBGLVL_API, "   = Decoder Device\n");
-			अगर (exthdr->devicetype & 0x2)
-				dprपूर्णांकk(DBGLVL_API, "   = GPIO Source\n");
-			अगर (exthdr->devicetype & 0x4)
-				dprपूर्णांकk(DBGLVL_API, "   = Video Decoder\n");
-			अगर (exthdr->devicetype & 0x8)
-				dprपूर्णांकk(DBGLVL_API, "   = Audio Decoder\n");
-			अगर (exthdr->devicetype & 0x20)
-				dprपूर्णांकk(DBGLVL_API, "   = Crossbar\n");
-			अगर (exthdr->devicetype & 0x40)
-				dprपूर्णांकk(DBGLVL_API, "   = Tuner\n");
-			अगर (exthdr->devicetype & 0x80)
-				dprपूर्णांकk(DBGLVL_API, "   = IF PLL\n");
-			अगर (exthdr->devicetype & 0x100)
-				dprपूर्णांकk(DBGLVL_API, "   = Demodulator\n");
-			अगर (exthdr->devicetype & 0x200)
-				dprपूर्णांकk(DBGLVL_API, "   = RDS Decoder\n");
-			अगर (exthdr->devicetype & 0x400)
-				dprपूर्णांकk(DBGLVL_API, "   = Encoder\n");
-			अगर (exthdr->devicetype & 0x800)
-				dprपूर्णांकk(DBGLVL_API, "   = IR Decoder\n");
-			अगर (exthdr->devicetype & 0x1000)
-				dprपूर्णांकk(DBGLVL_API, "   = EEPROM\n");
-			अगर (exthdr->devicetype & 0x2000)
-				dprपूर्णांकk(DBGLVL_API,
+			if (exthdr->devicetype & 0x1)
+				dprintk(DBGLVL_API, "   = Decoder Device\n");
+			if (exthdr->devicetype & 0x2)
+				dprintk(DBGLVL_API, "   = GPIO Source\n");
+			if (exthdr->devicetype & 0x4)
+				dprintk(DBGLVL_API, "   = Video Decoder\n");
+			if (exthdr->devicetype & 0x8)
+				dprintk(DBGLVL_API, "   = Audio Decoder\n");
+			if (exthdr->devicetype & 0x20)
+				dprintk(DBGLVL_API, "   = Crossbar\n");
+			if (exthdr->devicetype & 0x40)
+				dprintk(DBGLVL_API, "   = Tuner\n");
+			if (exthdr->devicetype & 0x80)
+				dprintk(DBGLVL_API, "   = IF PLL\n");
+			if (exthdr->devicetype & 0x100)
+				dprintk(DBGLVL_API, "   = Demodulator\n");
+			if (exthdr->devicetype & 0x200)
+				dprintk(DBGLVL_API, "   = RDS Decoder\n");
+			if (exthdr->devicetype & 0x400)
+				dprintk(DBGLVL_API, "   = Encoder\n");
+			if (exthdr->devicetype & 0x800)
+				dprintk(DBGLVL_API, "   = IR Decoder\n");
+			if (exthdr->devicetype & 0x1000)
+				dprintk(DBGLVL_API, "   = EEPROM\n");
+			if (exthdr->devicetype & 0x2000)
+				dprintk(DBGLVL_API,
 					"   = VBI Decoder\n");
-			अगर (exthdr->devicetype & 0x10000)
-				dprपूर्णांकk(DBGLVL_API,
+			if (exthdr->devicetype & 0x10000)
+				dprintk(DBGLVL_API,
 					"   = Streaming Device\n");
-			अगर (exthdr->devicetype & 0x20000)
-				dprपूर्णांकk(DBGLVL_API,
+			if (exthdr->devicetype & 0x20000)
+				dprintk(DBGLVL_API,
 					"   = DRM Device\n");
-			अगर (exthdr->devicetype & 0x40000000)
-				dprपूर्णांकk(DBGLVL_API,
+			if (exthdr->devicetype & 0x40000000)
+				dprintk(DBGLVL_API,
 					"   = Generic Device\n");
-			अगर (exthdr->devicetype & 0x80000000)
-				dprपूर्णांकk(DBGLVL_API,
+			if (exthdr->devicetype & 0x80000000)
+				dprintk(DBGLVL_API,
 					"   = Config Space Device\n");
-			dprपूर्णांकk(DBGLVL_API, "  numgpiopins = 0x%x\n",
+			dprintk(DBGLVL_API, "  numgpiopins = 0x%x\n",
 				exthdr->numgpiopins);
-			dprपूर्णांकk(DBGLVL_API, "  numgpiogroups = 0x%x\n",
+			dprintk(DBGLVL_API, "  numgpiogroups = 0x%x\n",
 				exthdr->numgpiogroups);
-			dprपूर्णांकk(DBGLVL_API, "  controlsize = 0x%x\n",
+			dprintk(DBGLVL_API, "  controlsize = 0x%x\n",
 				exthdr->controlsize);
-			अगर (exthdr->devicetype & 0x80) अणु
-				अगर (currpath == 1)
+			if (exthdr->devicetype & 0x80) {
+				if (currpath == 1)
 					encport = &dev->ports[SAA7164_PORT_ENC1];
-				अन्यथा
+				else
 					encport = &dev->ports[SAA7164_PORT_ENC2];
-				स_नकल(&encport->अगरunit, exthdr,
-					माप(काष्ठा पंचांगComResExtDevDescrHeader));
-				dprपूर्णांकk(DBGLVL_API,
+				memcpy(&encport->ifunit, exthdr,
+					sizeof(struct tmComResExtDevDescrHeader));
+				dprintk(DBGLVL_API,
 					"  (becomes dev->enc[%d])\n",
 					encport->nr);
-			पूर्ण
-			अवरोध;
-		हाल PVC_INFRARED_UNIT:
-			dprपूर्णांकk(DBGLVL_API, " PVC_INFRARED_UNIT\n");
-			अवरोध;
-		हाल DRM_UNIT:
-			dprपूर्णांकk(DBGLVL_API, " DRM_UNIT\n");
-			अवरोध;
-		शेष:
-			dprपूर्णांकk(DBGLVL_API, "default %d\n", hdr->subtype);
-		पूर्ण
+			}
+			break;
+		case PVC_INFRARED_UNIT:
+			dprintk(DBGLVL_API, " PVC_INFRARED_UNIT\n");
+			break;
+		case DRM_UNIT:
+			dprintk(DBGLVL_API, " DRM_UNIT\n");
+			break;
+		default:
+			dprintk(DBGLVL_API, "default %d\n", hdr->subtype);
+		}
 
-		dprपूर्णांकk(DBGLVL_API, " 1.%x\n", hdr->len);
-		dprपूर्णांकk(DBGLVL_API, " 2.%x\n", hdr->type);
-		dprपूर्णांकk(DBGLVL_API, " 3.%x\n", hdr->subtype);
-		dprपूर्णांकk(DBGLVL_API, " 4.%x\n", hdr->unitid);
+		dprintk(DBGLVL_API, " 1.%x\n", hdr->len);
+		dprintk(DBGLVL_API, " 2.%x\n", hdr->type);
+		dprintk(DBGLVL_API, " 3.%x\n", hdr->subtype);
+		dprintk(DBGLVL_API, " 4.%x\n", hdr->unitid);
 
 		idx += hdr->len;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक saa7164_api_क्रमागत_subdevs(काष्ठा saa7164_dev *dev)
-अणु
-	पूर्णांक ret;
+int saa7164_api_enum_subdevs(struct saa7164_dev *dev)
+{
+	int ret;
 	u32 buflen = 0;
 	u8 *buf;
 
-	dprपूर्णांकk(DBGLVL_API, "%s()\n", __func__);
+	dprintk(DBGLVL_API, "%s()\n", __func__);
 
 	/* Get the total descriptor length */
 	ret = saa7164_cmd_send(dev, 0, GET_LEN,
-		GET_DESCRIPTORS_CONTROL, माप(buflen), &buflen);
-	अगर (ret != SAA_OK)
-		prपूर्णांकk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
+		GET_DESCRIPTORS_CONTROL, sizeof(buflen), &buflen);
+	if (ret != SAA_OK)
+		printk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
 
-	dprपूर्णांकk(DBGLVL_API, "%s() total descriptor size = %d bytes.\n",
+	dprintk(DBGLVL_API, "%s() total descriptor size = %d bytes.\n",
 		__func__, buflen);
 
-	/* Allocate enough storage क्रम all of the descs */
+	/* Allocate enough storage for all of the descs */
 	buf = kzalloc(buflen, GFP_KERNEL);
-	अगर (!buf)
-		वापस SAA_ERR_NO_RESOURCES;
+	if (!buf)
+		return SAA_ERR_NO_RESOURCES;
 
 	/* Retrieve them */
 	ret = saa7164_cmd_send(dev, 0, GET_CUR,
 		GET_DESCRIPTORS_CONTROL, buflen, buf);
-	अगर (ret != SAA_OK) अणु
-		prपूर्णांकk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
-		जाओ out;
-	पूर्ण
+	if (ret != SAA_OK) {
+		printk(KERN_ERR "%s() error, ret = 0x%x\n", __func__, ret);
+		goto out;
+	}
 
-	अगर (saa_debug & DBGLVL_API)
-		prपूर्णांक_hex_dump(KERN_INFO, "", DUMP_PREFIX_OFFSET, 16, 1, buf,
+	if (saa_debug & DBGLVL_API)
+		print_hex_dump(KERN_INFO, "", DUMP_PREFIX_OFFSET, 16, 1, buf,
 			       buflen & ~15, false);
 
 	saa7164_api_dump_subdevs(dev, buf, buflen);
 
 out:
-	kमुक्त(buf);
-	वापस ret;
-पूर्ण
+	kfree(buf);
+	return ret;
+}
 
-पूर्णांक saa7164_api_i2c_पढ़ो(काष्ठा saa7164_i2c *bus, u8 addr, u32 reglen, u8 *reg,
+int saa7164_api_i2c_read(struct saa7164_i2c *bus, u8 addr, u32 reglen, u8 *reg,
 	u32 datalen, u8 *data)
-अणु
-	काष्ठा saa7164_dev *dev = bus->dev;
+{
+	struct saa7164_dev *dev = bus->dev;
 	u16 len = 0;
-	पूर्णांक unitid;
+	int unitid;
 	u8 buf[256];
-	पूर्णांक ret;
+	int ret;
 
-	dprपूर्णांकk(DBGLVL_API, "%s() addr=%x reglen=%d datalen=%d\n",
+	dprintk(DBGLVL_API, "%s() addr=%x reglen=%d datalen=%d\n",
 		__func__, addr, reglen, datalen);
 
-	अगर (reglen > 4)
-		वापस -EIO;
+	if (reglen > 4)
+		return -EIO;
 
 	/* Prepare the send buffer */
-	/* Bytes 00-03 source रेजिस्टर length
-	 *       04-07 source bytes to पढ़ो
-	 *       08... रेजिस्टर address
+	/* Bytes 00-03 source register length
+	 *       04-07 source bytes to read
+	 *       08... register address
 	 */
-	स_रखो(buf, 0, माप(buf));
-	स_नकल((buf + 2 * माप(u32) + 0), reg, reglen);
-	*((u32 *)(buf + 0 * माप(u32))) = reglen;
-	*((u32 *)(buf + 1 * माप(u32))) = datalen;
+	memset(buf, 0, sizeof(buf));
+	memcpy((buf + 2 * sizeof(u32) + 0), reg, reglen);
+	*((u32 *)(buf + 0 * sizeof(u32))) = reglen;
+	*((u32 *)(buf + 1 * sizeof(u32))) = datalen;
 
 	unitid = saa7164_i2caddr_to_unitid(bus, addr);
-	अगर (unitid < 0) अणु
-		prपूर्णांकk(KERN_ERR
+	if (unitid < 0) {
+		printk(KERN_ERR
 			"%s() error, cannot translate regaddr 0x%x to unitid\n",
 			__func__, addr);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	ret = saa7164_cmd_send(bus->dev, unitid, GET_LEN,
-		EXU_REGISTER_ACCESS_CONTROL, माप(len), &len);
-	अगर (ret != SAA_OK) अणु
-		prपूर्णांकk(KERN_ERR "%s() error, ret(1) = 0x%x\n", __func__, ret);
-		वापस -EIO;
-	पूर्ण
+		EXU_REGISTER_ACCESS_CONTROL, sizeof(len), &len);
+	if (ret != SAA_OK) {
+		printk(KERN_ERR "%s() error, ret(1) = 0x%x\n", __func__, ret);
+		return -EIO;
+	}
 
-	dprपूर्णांकk(DBGLVL_API, "%s() len = %d bytes\n", __func__, len);
+	dprintk(DBGLVL_API, "%s() len = %d bytes\n", __func__, len);
 
-	अगर (saa_debug & DBGLVL_I2C)
-		prपूर्णांक_hex_dump(KERN_INFO, "", DUMP_PREFIX_OFFSET, 16, 1, buf,
+	if (saa_debug & DBGLVL_I2C)
+		print_hex_dump(KERN_INFO, "", DUMP_PREFIX_OFFSET, 16, 1, buf,
 			       32, false);
 
 	ret = saa7164_cmd_send(bus->dev, unitid, GET_CUR,
 		EXU_REGISTER_ACCESS_CONTROL, len, &buf);
-	अगर (ret != SAA_OK)
-		prपूर्णांकk(KERN_ERR "%s() error, ret(2) = 0x%x\n", __func__, ret);
-	अन्यथा अणु
-		अगर (saa_debug & DBGLVL_I2C)
-			prपूर्णांक_hex_dump(KERN_INFO, "", DUMP_PREFIX_OFFSET, 16, 1,
-				       buf, माप(buf), false);
-		स_नकल(data, (buf + 2 * माप(u32) + reglen), datalen);
-	पूर्ण
+	if (ret != SAA_OK)
+		printk(KERN_ERR "%s() error, ret(2) = 0x%x\n", __func__, ret);
+	else {
+		if (saa_debug & DBGLVL_I2C)
+			print_hex_dump(KERN_INFO, "", DUMP_PREFIX_OFFSET, 16, 1,
+				       buf, sizeof(buf), false);
+		memcpy(data, (buf + 2 * sizeof(u32) + reglen), datalen);
+	}
 
-	वापस ret == SAA_OK ? 0 : -EIO;
-पूर्ण
+	return ret == SAA_OK ? 0 : -EIO;
+}
 
-/* For a given 8 bit i2c address device, ग_लिखो the buffer */
-पूर्णांक saa7164_api_i2c_ग_लिखो(काष्ठा saa7164_i2c *bus, u8 addr, u32 datalen,
+/* For a given 8 bit i2c address device, write the buffer */
+int saa7164_api_i2c_write(struct saa7164_i2c *bus, u8 addr, u32 datalen,
 	u8 *data)
-अणु
-	काष्ठा saa7164_dev *dev = bus->dev;
+{
+	struct saa7164_dev *dev = bus->dev;
 	u16 len = 0;
-	पूर्णांक unitid;
-	पूर्णांक reglen;
+	int unitid;
+	int reglen;
 	u8 buf[256];
-	पूर्णांक ret;
+	int ret;
 
-	dprपूर्णांकk(DBGLVL_API, "%s() addr=0x%2x len=0x%x\n",
+	dprintk(DBGLVL_API, "%s() addr=0x%2x len=0x%x\n",
 		__func__, addr, datalen);
 
-	अगर ((datalen == 0) || (datalen > 232))
-		वापस -EIO;
+	if ((datalen == 0) || (datalen > 232))
+		return -EIO;
 
-	स_रखो(buf, 0, माप(buf));
+	memset(buf, 0, sizeof(buf));
 
 	unitid = saa7164_i2caddr_to_unitid(bus, addr);
-	अगर (unitid < 0) अणु
-		prपूर्णांकk(KERN_ERR
+	if (unitid < 0) {
+		printk(KERN_ERR
 			"%s() error, cannot translate regaddr 0x%x to unitid\n",
 			__func__, addr);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	reglen = saa7164_i2caddr_to_reglen(bus, addr);
-	अगर (reglen < 0) अणु
-		prपूर्णांकk(KERN_ERR
+	if (reglen < 0) {
+		printk(KERN_ERR
 			"%s() error, cannot translate regaddr to reglen\n",
 			__func__);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	ret = saa7164_cmd_send(bus->dev, unitid, GET_LEN,
-		EXU_REGISTER_ACCESS_CONTROL, माप(len), &len);
-	अगर (ret != SAA_OK) अणु
-		prपूर्णांकk(KERN_ERR "%s() error, ret(1) = 0x%x\n", __func__, ret);
-		वापस -EIO;
-	पूर्ण
+		EXU_REGISTER_ACCESS_CONTROL, sizeof(len), &len);
+	if (ret != SAA_OK) {
+		printk(KERN_ERR "%s() error, ret(1) = 0x%x\n", __func__, ret);
+		return -EIO;
+	}
 
-	dprपूर्णांकk(DBGLVL_API, "%s() len = %d bytes unitid=0x%x\n", __func__,
+	dprintk(DBGLVL_API, "%s() len = %d bytes unitid=0x%x\n", __func__,
 		len, unitid);
 
 	/* Prepare the send buffer */
-	/* Bytes 00-03 dest रेजिस्टर length
-	 *       04-07 dest bytes to ग_लिखो
-	 *       08... रेजिस्टर address
+	/* Bytes 00-03 dest register length
+	 *       04-07 dest bytes to write
+	 *       08... register address
 	 */
-	*((u32 *)(buf + 0 * माप(u32))) = reglen;
-	*((u32 *)(buf + 1 * माप(u32))) = datalen - reglen;
-	स_नकल((buf + 2 * माप(u32)), data, datalen);
+	*((u32 *)(buf + 0 * sizeof(u32))) = reglen;
+	*((u32 *)(buf + 1 * sizeof(u32))) = datalen - reglen;
+	memcpy((buf + 2 * sizeof(u32)), data, datalen);
 
-	अगर (saa_debug & DBGLVL_I2C)
-		prपूर्णांक_hex_dump(KERN_INFO, "", DUMP_PREFIX_OFFSET, 16, 1,
-			       buf, माप(buf), false);
+	if (saa_debug & DBGLVL_I2C)
+		print_hex_dump(KERN_INFO, "", DUMP_PREFIX_OFFSET, 16, 1,
+			       buf, sizeof(buf), false);
 
 	ret = saa7164_cmd_send(bus->dev, unitid, SET_CUR,
 		EXU_REGISTER_ACCESS_CONTROL, len, &buf);
-	अगर (ret != SAA_OK)
-		prपूर्णांकk(KERN_ERR "%s() error, ret(2) = 0x%x\n", __func__, ret);
+	if (ret != SAA_OK)
+		printk(KERN_ERR "%s() error, ret(2) = 0x%x\n", __func__, ret);
 
-	वापस ret == SAA_OK ? 0 : -EIO;
-पूर्ण
+	return ret == SAA_OK ? 0 : -EIO;
+}
 
-अटल पूर्णांक saa7164_api_modअगरy_gpio(काष्ठा saa7164_dev *dev, u8 unitid,
+static int saa7164_api_modify_gpio(struct saa7164_dev *dev, u8 unitid,
 	u8 pin, u8 state)
-अणु
-	पूर्णांक ret;
-	काष्ठा पंचांगComResGPIO t;
+{
+	int ret;
+	struct tmComResGPIO t;
 
-	dprपूर्णांकk(DBGLVL_API, "%s(0x%x, %d, %d)\n",
+	dprintk(DBGLVL_API, "%s(0x%x, %d, %d)\n",
 		__func__, unitid, pin, state);
 
-	अगर ((pin > 7) || (state > 2))
-		वापस SAA_ERR_BAD_PARAMETER;
+	if ((pin > 7) || (state > 2))
+		return SAA_ERR_BAD_PARAMETER;
 
 	t.pin = pin;
 	t.state = state;
 
 	ret = saa7164_cmd_send(dev, unitid, SET_CUR,
-		EXU_GPIO_CONTROL, माप(t), &t);
-	अगर (ret != SAA_OK)
-		prपूर्णांकk(KERN_ERR "%s() error, ret = 0x%x\n",
+		EXU_GPIO_CONTROL, sizeof(t), &t);
+	if (ret != SAA_OK)
+		printk(KERN_ERR "%s() error, ret = 0x%x\n",
 			__func__, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक saa7164_api_set_gpiobit(काष्ठा saa7164_dev *dev, u8 unitid,
+int saa7164_api_set_gpiobit(struct saa7164_dev *dev, u8 unitid,
 	u8 pin)
-अणु
-	वापस saa7164_api_modअगरy_gpio(dev, unitid, pin, 1);
-पूर्ण
+{
+	return saa7164_api_modify_gpio(dev, unitid, pin, 1);
+}
 
-पूर्णांक saa7164_api_clear_gpiobit(काष्ठा saa7164_dev *dev, u8 unitid,
+int saa7164_api_clear_gpiobit(struct saa7164_dev *dev, u8 unitid,
 	u8 pin)
-अणु
-	वापस saa7164_api_modअगरy_gpio(dev, unitid, pin, 0);
-पूर्ण
+{
+	return saa7164_api_modify_gpio(dev, unitid, pin, 0);
+}
 

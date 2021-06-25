@@ -1,25 +1,24 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2020 Linaro Limited
  *
  * Based on original driver:
  * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
  */
-#समावेश <linux/bitfield.h>
-#समावेश <linux/iio/adc/qcom-vadc-common.h>
-#समावेश <linux/iio/consumer.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/thermal.h>
+#include <linux/bitfield.h>
+#include <linux/iio/adc/qcom-vadc-common.h>
+#include <linux/iio/consumer.h>
+#include <linux/interrupt.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/platform_device.h>
+#include <linux/regmap.h>
+#include <linux/thermal.h>
 
 /*
  * Thermal monitoring block consists of 8 (ADC_TM5_NUM_CHANNELS) channels. Each
- * channel is programmed to use one of ADC channels क्रम voltage comparison.
+ * channel is programmed to use one of ADC channels for voltage comparison.
  * Voltages are programmed using ADC codes, so we have to convert temp to
  * voltage and then to ADC code value.
  *
@@ -27,175 +26,175 @@
  * channels.
  */
 
-#घोषणा ADC5_MAX_CHANNEL                        0xc0
-#घोषणा ADC_TM5_NUM_CHANNELS		8
+#define ADC5_MAX_CHANNEL                        0xc0
+#define ADC_TM5_NUM_CHANNELS		8
 
-#घोषणा ADC_TM5_STATUS_LOW			0x0a
+#define ADC_TM5_STATUS_LOW			0x0a
 
-#घोषणा ADC_TM5_STATUS_HIGH			0x0b
+#define ADC_TM5_STATUS_HIGH			0x0b
 
-#घोषणा ADC_TM5_NUM_BTM				0x0f
+#define ADC_TM5_NUM_BTM				0x0f
 
-#घोषणा ADC_TM5_ADC_DIG_PARAM			0x42
+#define ADC_TM5_ADC_DIG_PARAM			0x42
 
-#घोषणा ADC_TM5_FAST_AVG_CTL			(ADC_TM5_ADC_DIG_PARAM + 1)
-#घोषणा ADC_TM5_FAST_AVG_EN				BIT(7)
+#define ADC_TM5_FAST_AVG_CTL			(ADC_TM5_ADC_DIG_PARAM + 1)
+#define ADC_TM5_FAST_AVG_EN				BIT(7)
 
-#घोषणा ADC_TM5_MEAS_INTERVAL_CTL		(ADC_TM5_ADC_DIG_PARAM + 2)
-#घोषणा ADC_TM5_TIMER1					3 /* 3.9ms */
+#define ADC_TM5_MEAS_INTERVAL_CTL		(ADC_TM5_ADC_DIG_PARAM + 2)
+#define ADC_TM5_TIMER1					3 /* 3.9ms */
 
-#घोषणा ADC_TM5_MEAS_INTERVAL_CTL2		(ADC_TM5_ADC_DIG_PARAM + 3)
-#घोषणा ADC_TM5_MEAS_INTERVAL_CTL2_MASK			0xf0
-#घोषणा ADC_TM5_TIMER2					10 /* 1 second */
-#घोषणा ADC_TM5_MEAS_INTERVAL_CTL3_MASK			0xf
-#घोषणा ADC_TM5_TIMER3					4 /* 4 second */
+#define ADC_TM5_MEAS_INTERVAL_CTL2		(ADC_TM5_ADC_DIG_PARAM + 3)
+#define ADC_TM5_MEAS_INTERVAL_CTL2_MASK			0xf0
+#define ADC_TM5_TIMER2					10 /* 1 second */
+#define ADC_TM5_MEAS_INTERVAL_CTL3_MASK			0xf
+#define ADC_TM5_TIMER3					4 /* 4 second */
 
-#घोषणा ADC_TM_EN_CTL1				0x46
-#घोषणा ADC_TM_EN					BIT(7)
-#घोषणा ADC_TM_CONV_REQ				0x47
-#घोषणा ADC_TM_CONV_REQ_EN				BIT(7)
+#define ADC_TM_EN_CTL1				0x46
+#define ADC_TM_EN					BIT(7)
+#define ADC_TM_CONV_REQ				0x47
+#define ADC_TM_CONV_REQ_EN				BIT(7)
 
-#घोषणा ADC_TM5_M_CHAN_BASE			0x60
+#define ADC_TM5_M_CHAN_BASE			0x60
 
-#घोषणा ADC_TM5_M_ADC_CH_SEL_CTL(n)		(ADC_TM5_M_CHAN_BASE + ((n) * 8) + 0)
-#घोषणा ADC_TM5_M_LOW_THR0(n)			(ADC_TM5_M_CHAN_BASE + ((n) * 8) + 1)
-#घोषणा ADC_TM5_M_LOW_THR1(n)			(ADC_TM5_M_CHAN_BASE + ((n) * 8) + 2)
-#घोषणा ADC_TM5_M_HIGH_THR0(n)			(ADC_TM5_M_CHAN_BASE + ((n) * 8) + 3)
-#घोषणा ADC_TM5_M_HIGH_THR1(n)			(ADC_TM5_M_CHAN_BASE + ((n) * 8) + 4)
-#घोषणा ADC_TM5_M_MEAS_INTERVAL_CTL(n)		(ADC_TM5_M_CHAN_BASE + ((n) * 8) + 5)
-#घोषणा ADC_TM5_M_CTL(n)			(ADC_TM5_M_CHAN_BASE + ((n) * 8) + 6)
-#घोषणा ADC_TM5_M_CTL_HW_SETTLE_DELAY_MASK		0xf
-#घोषणा ADC_TM5_M_CTL_CAL_SEL_MASK			0x30
-#घोषणा ADC_TM5_M_CTL_CAL_VAL				0x40
-#घोषणा ADC_TM5_M_EN(n)				(ADC_TM5_M_CHAN_BASE + ((n) * 8) + 7)
-#घोषणा ADC_TM5_M_MEAS_EN				BIT(7)
-#घोषणा ADC_TM5_M_HIGH_THR_INT_EN			BIT(1)
-#घोषणा ADC_TM5_M_LOW_THR_INT_EN			BIT(0)
+#define ADC_TM5_M_ADC_CH_SEL_CTL(n)		(ADC_TM5_M_CHAN_BASE + ((n) * 8) + 0)
+#define ADC_TM5_M_LOW_THR0(n)			(ADC_TM5_M_CHAN_BASE + ((n) * 8) + 1)
+#define ADC_TM5_M_LOW_THR1(n)			(ADC_TM5_M_CHAN_BASE + ((n) * 8) + 2)
+#define ADC_TM5_M_HIGH_THR0(n)			(ADC_TM5_M_CHAN_BASE + ((n) * 8) + 3)
+#define ADC_TM5_M_HIGH_THR1(n)			(ADC_TM5_M_CHAN_BASE + ((n) * 8) + 4)
+#define ADC_TM5_M_MEAS_INTERVAL_CTL(n)		(ADC_TM5_M_CHAN_BASE + ((n) * 8) + 5)
+#define ADC_TM5_M_CTL(n)			(ADC_TM5_M_CHAN_BASE + ((n) * 8) + 6)
+#define ADC_TM5_M_CTL_HW_SETTLE_DELAY_MASK		0xf
+#define ADC_TM5_M_CTL_CAL_SEL_MASK			0x30
+#define ADC_TM5_M_CTL_CAL_VAL				0x40
+#define ADC_TM5_M_EN(n)				(ADC_TM5_M_CHAN_BASE + ((n) * 8) + 7)
+#define ADC_TM5_M_MEAS_EN				BIT(7)
+#define ADC_TM5_M_HIGH_THR_INT_EN			BIT(1)
+#define ADC_TM5_M_LOW_THR_INT_EN			BIT(0)
 
-क्रमागत adc5_समयr_select अणु
+enum adc5_timer_select {
 	ADC5_TIMER_SEL_1 = 0,
 	ADC5_TIMER_SEL_2,
 	ADC5_TIMER_SEL_3,
 	ADC5_TIMER_SEL_NONE,
-पूर्ण;
+};
 
-काष्ठा adc_पंचांग5_data अणु
-	स्थिर u32	full_scale_code_volt;
-	अचिन्हित पूर्णांक	*decimation;
-	अचिन्हित पूर्णांक	*hw_settle;
-पूर्ण;
+struct adc_tm5_data {
+	const u32	full_scale_code_volt;
+	unsigned int	*decimation;
+	unsigned int	*hw_settle;
+};
 
-क्रमागत adc_पंचांग5_cal_method अणु
+enum adc_tm5_cal_method {
 	ADC_TM5_NO_CAL = 0,
 	ADC_TM5_RATIOMETRIC_CAL,
 	ADC_TM5_ABSOLUTE_CAL
-पूर्ण;
+};
 
-काष्ठा adc_पंचांग5_chip;
+struct adc_tm5_chip;
 
 /**
- * काष्ठा adc_पंचांग5_channel - ADC Thermal Monitoring channel data.
+ * struct adc_tm5_channel - ADC Thermal Monitoring channel data.
  * @channel: channel number.
  * @adc_channel: corresponding ADC channel number.
  * @cal_method: calibration method.
- * @prescale: channel scaling perक्रमmed on the input संकेत.
- * @hw_settle_समय: the समय between AMUX being configured and the
+ * @prescale: channel scaling performed on the input signal.
+ * @hw_settle_time: the time between AMUX being configured and the
  *	start of conversion.
  * @iio: IIO channel instance used by this channel.
  * @chip: ADC TM chip instance.
  * @tzd: thermal zone device used by this channel.
  */
-काष्ठा adc_पंचांग5_channel अणु
-	अचिन्हित पूर्णांक		channel;
-	अचिन्हित पूर्णांक		adc_channel;
-	क्रमागत adc_पंचांग5_cal_method	cal_method;
-	अचिन्हित पूर्णांक		prescale;
-	अचिन्हित पूर्णांक		hw_settle_समय;
-	काष्ठा iio_channel	*iio;
-	काष्ठा adc_पंचांग5_chip	*chip;
-	काष्ठा thermal_zone_device *tzd;
-पूर्ण;
+struct adc_tm5_channel {
+	unsigned int		channel;
+	unsigned int		adc_channel;
+	enum adc_tm5_cal_method	cal_method;
+	unsigned int		prescale;
+	unsigned int		hw_settle_time;
+	struct iio_channel	*iio;
+	struct adc_tm5_chip	*chip;
+	struct thermal_zone_device *tzd;
+};
 
 /**
- * काष्ठा adc_पंचांग5_chip - ADC Thermal Monitoring properties
- * @regmap: SPMI ADC5 Thermal Monitoring  peripheral रेजिस्टर map field.
+ * struct adc_tm5_chip - ADC Thermal Monitoring properties
+ * @regmap: SPMI ADC5 Thermal Monitoring  peripheral register map field.
  * @dev: SPMI ADC5 device.
  * @data: software configuration data.
  * @channels: array of ADC TM channel data.
  * @nchannels: amount of channels defined/allocated
- * @decimation: sampling rate supported क्रम the channel.
+ * @decimation: sampling rate supported for the channel.
  * @avg_samples: ability to provide single result from the ADC
  *	that is an average of multiple measurements.
- * @base: base address of TM रेजिस्टरs.
+ * @base: base address of TM registers.
  */
-काष्ठा adc_पंचांग5_chip अणु
-	काष्ठा regmap		*regmap;
-	काष्ठा device		*dev;
-	स्थिर काष्ठा adc_पंचांग5_data	*data;
-	काष्ठा adc_पंचांग5_channel	*channels;
-	अचिन्हित पूर्णांक		nchannels;
-	अचिन्हित पूर्णांक		decimation;
-	अचिन्हित पूर्णांक		avg_samples;
+struct adc_tm5_chip {
+	struct regmap		*regmap;
+	struct device		*dev;
+	const struct adc_tm5_data	*data;
+	struct adc_tm5_channel	*channels;
+	unsigned int		nchannels;
+	unsigned int		decimation;
+	unsigned int		avg_samples;
 	u16			base;
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा adc_पंचांग5_data adc_पंचांग5_data_pmic = अणु
+static const struct adc_tm5_data adc_tm5_data_pmic = {
 	.full_scale_code_volt = 0x70e4,
-	.decimation = (अचिन्हित पूर्णांक []) अणु 250, 420, 840 पूर्ण,
-	.hw_settle = (अचिन्हित पूर्णांक []) अणु 15, 100, 200, 300, 400, 500, 600, 700,
+	.decimation = (unsigned int []) { 250, 420, 840 },
+	.hw_settle = (unsigned int []) { 15, 100, 200, 300, 400, 500, 600, 700,
 					 1000, 2000, 4000, 8000, 16000, 32000,
-					 64000, 128000 पूर्ण,
-पूर्ण;
+					 64000, 128000 },
+};
 
-अटल पूर्णांक adc_पंचांग5_पढ़ो(काष्ठा adc_पंचांग5_chip *adc_पंचांग, u16 offset, u8 *data, पूर्णांक len)
-अणु
-	वापस regmap_bulk_पढ़ो(adc_पंचांग->regmap, adc_पंचांग->base + offset, data, len);
-पूर्ण
+static int adc_tm5_read(struct adc_tm5_chip *adc_tm, u16 offset, u8 *data, int len)
+{
+	return regmap_bulk_read(adc_tm->regmap, adc_tm->base + offset, data, len);
+}
 
-अटल पूर्णांक adc_पंचांग5_ग_लिखो(काष्ठा adc_पंचांग5_chip *adc_पंचांग, u16 offset, u8 *data, पूर्णांक len)
-अणु
-	वापस regmap_bulk_ग_लिखो(adc_पंचांग->regmap, adc_पंचांग->base + offset, data, len);
-पूर्ण
+static int adc_tm5_write(struct adc_tm5_chip *adc_tm, u16 offset, u8 *data, int len)
+{
+	return regmap_bulk_write(adc_tm->regmap, adc_tm->base + offset, data, len);
+}
 
-अटल पूर्णांक adc_पंचांग5_reg_update(काष्ठा adc_पंचांग5_chip *adc_पंचांग, u16 offset, u8 mask, u8 val)
-अणु
-	वापस regmap_ग_लिखो_bits(adc_पंचांग->regmap, adc_पंचांग->base + offset, mask, val);
-पूर्ण
+static int adc_tm5_reg_update(struct adc_tm5_chip *adc_tm, u16 offset, u8 mask, u8 val)
+{
+	return regmap_write_bits(adc_tm->regmap, adc_tm->base + offset, mask, val);
+}
 
-अटल irqवापस_t adc_पंचांग5_isr(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा adc_पंचांग5_chip *chip = data;
+static irqreturn_t adc_tm5_isr(int irq, void *data)
+{
+	struct adc_tm5_chip *chip = data;
 	u8 status_low, status_high, ctl;
-	पूर्णांक ret, i;
+	int ret, i;
 
-	ret = adc_पंचांग5_पढ़ो(chip, ADC_TM5_STATUS_LOW, &status_low, माप(status_low));
-	अगर (unlikely(ret)) अणु
+	ret = adc_tm5_read(chip, ADC_TM5_STATUS_LOW, &status_low, sizeof(status_low));
+	if (unlikely(ret)) {
 		dev_err(chip->dev, "read status low failed: %d\n", ret);
-		वापस IRQ_HANDLED;
-	पूर्ण
+		return IRQ_HANDLED;
+	}
 
-	ret = adc_पंचांग5_पढ़ो(chip, ADC_TM5_STATUS_HIGH, &status_high, माप(status_high));
-	अगर (unlikely(ret)) अणु
+	ret = adc_tm5_read(chip, ADC_TM5_STATUS_HIGH, &status_high, sizeof(status_high));
+	if (unlikely(ret)) {
 		dev_err(chip->dev, "read status high failed: %d\n", ret);
-		वापस IRQ_HANDLED;
-	पूर्ण
+		return IRQ_HANDLED;
+	}
 
-	क्रम (i = 0; i < chip->nchannels; i++) अणु
+	for (i = 0; i < chip->nchannels; i++) {
 		bool upper_set = false, lower_set = false;
-		अचिन्हित पूर्णांक ch = chip->channels[i].channel;
+		unsigned int ch = chip->channels[i].channel;
 
-		/* No TZD, we warned at the boot समय */
-		अगर (!chip->channels[i].tzd)
-			जारी;
+		/* No TZD, we warned at the boot time */
+		if (!chip->channels[i].tzd)
+			continue;
 
-		ret = adc_पंचांग5_पढ़ो(chip, ADC_TM5_M_EN(ch), &ctl, माप(ctl));
-		अगर (unlikely(ret)) अणु
+		ret = adc_tm5_read(chip, ADC_TM5_M_EN(ch), &ctl, sizeof(ctl));
+		if (unlikely(ret)) {
 			dev_err(chip->dev, "ctl read failed: %d, channel %d\n", ret, i);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (!(ctl & ADC_TM5_M_MEAS_EN))
-			जारी;
+		if (!(ctl & ADC_TM5_M_MEAS_EN))
+			continue;
 
 		lower_set = (status_low & BIT(ch)) &&
 			(ctl & ADC_TM5_M_LOW_THR_INT_EN);
@@ -203,192 +202,192 @@
 		upper_set = (status_high & BIT(ch)) &&
 			(ctl & ADC_TM5_M_HIGH_THR_INT_EN);
 
-		अगर (upper_set || lower_set)
+		if (upper_set || lower_set)
 			thermal_zone_device_update(chip->channels[i].tzd,
 						   THERMAL_EVENT_UNSPECIFIED);
-	पूर्ण
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक adc_पंचांग5_get_temp(व्योम *data, पूर्णांक *temp)
-अणु
-	काष्ठा adc_पंचांग5_channel *channel = data;
-	पूर्णांक ret;
+static int adc_tm5_get_temp(void *data, int *temp)
+{
+	struct adc_tm5_channel *channel = data;
+	int ret;
 
-	अगर (!channel || !channel->iio)
-		वापस -EINVAL;
+	if (!channel || !channel->iio)
+		return -EINVAL;
 
-	ret = iio_पढ़ो_channel_processed(channel->iio, temp);
-	अगर (ret < 0)
-		वापस ret;
+	ret = iio_read_channel_processed(channel->iio, temp);
+	if (ret < 0)
+		return ret;
 
-	अगर (ret != IIO_VAL_INT)
-		वापस -EINVAL;
+	if (ret != IIO_VAL_INT)
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक adc_पंचांग5_disable_channel(काष्ठा adc_पंचांग5_channel *channel)
-अणु
-	काष्ठा adc_पंचांग5_chip *chip = channel->chip;
-	अचिन्हित पूर्णांक reg = ADC_TM5_M_EN(channel->channel);
+static int adc_tm5_disable_channel(struct adc_tm5_channel *channel)
+{
+	struct adc_tm5_chip *chip = channel->chip;
+	unsigned int reg = ADC_TM5_M_EN(channel->channel);
 
-	वापस adc_पंचांग5_reg_update(chip, reg,
+	return adc_tm5_reg_update(chip, reg,
 				  ADC_TM5_M_MEAS_EN |
 				  ADC_TM5_M_HIGH_THR_INT_EN |
 				  ADC_TM5_M_LOW_THR_INT_EN,
 				  0);
-पूर्ण
+}
 
-अटल पूर्णांक adc_पंचांग5_enable(काष्ठा adc_पंचांग5_chip *chip)
-अणु
-	पूर्णांक ret;
+static int adc_tm5_enable(struct adc_tm5_chip *chip)
+{
+	int ret;
 	u8 data;
 
 	data = ADC_TM_EN;
-	ret = adc_पंचांग5_ग_लिखो(chip, ADC_TM_EN_CTL1, &data, माप(data));
-	अगर (ret < 0) अणु
+	ret = adc_tm5_write(chip, ADC_TM_EN_CTL1, &data, sizeof(data));
+	if (ret < 0) {
 		dev_err(chip->dev, "adc-tm enable failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	data = ADC_TM_CONV_REQ_EN;
-	ret = adc_पंचांग5_ग_लिखो(chip, ADC_TM_CONV_REQ, &data, माप(data));
-	अगर (ret < 0) अणु
+	ret = adc_tm5_write(chip, ADC_TM_CONV_REQ, &data, sizeof(data));
+	if (ret < 0) {
 		dev_err(chip->dev, "adc-tm request conversion failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक adc_पंचांग5_configure(काष्ठा adc_पंचांग5_channel *channel, पूर्णांक low, पूर्णांक high)
-अणु
-	काष्ठा adc_पंचांग5_chip *chip = channel->chip;
+static int adc_tm5_configure(struct adc_tm5_channel *channel, int low, int high)
+{
+	struct adc_tm5_chip *chip = channel->chip;
 	u8 buf[8];
 	u16 reg = ADC_TM5_M_ADC_CH_SEL_CTL(channel->channel);
-	पूर्णांक ret;
+	int ret;
 
-	ret = adc_पंचांग5_पढ़ो(chip, reg, buf, माप(buf));
-	अगर (ret) अणु
+	ret = adc_tm5_read(chip, reg, buf, sizeof(buf));
+	if (ret) {
 		dev_err(chip->dev, "channel %d params read failed: %d\n", channel->channel, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	buf[0] = channel->adc_channel;
 
 	/* High temperature corresponds to low voltage threshold */
-	अगर (high != पूर्णांक_उच्च) अणु
-		u16 adc_code = qcom_adc_पंचांग5_temp_volt_scale(channel->prescale,
+	if (high != INT_MAX) {
+		u16 adc_code = qcom_adc_tm5_temp_volt_scale(channel->prescale,
 				chip->data->full_scale_code_volt, high);
 
 		buf[1] = adc_code & 0xff;
 		buf[2] = adc_code >> 8;
 		buf[7] |= ADC_TM5_M_LOW_THR_INT_EN;
-	पूर्ण अन्यथा अणु
+	} else {
 		buf[7] &= ~ADC_TM5_M_LOW_THR_INT_EN;
-	पूर्ण
+	}
 
 	/* Low temperature corresponds to high voltage threshold */
-	अगर (low != -पूर्णांक_उच्च) अणु
-		u16 adc_code = qcom_adc_पंचांग5_temp_volt_scale(channel->prescale,
+	if (low != -INT_MAX) {
+		u16 adc_code = qcom_adc_tm5_temp_volt_scale(channel->prescale,
 				chip->data->full_scale_code_volt, low);
 
 		buf[3] = adc_code & 0xff;
 		buf[4] = adc_code >> 8;
 		buf[7] |= ADC_TM5_M_HIGH_THR_INT_EN;
-	पूर्ण अन्यथा अणु
+	} else {
 		buf[7] &= ~ADC_TM5_M_HIGH_THR_INT_EN;
-	पूर्ण
+	}
 
 	buf[5] = ADC5_TIMER_SEL_2;
 
 	/* Set calibration select, hw_settle delay */
 	buf[6] &= ~ADC_TM5_M_CTL_HW_SETTLE_DELAY_MASK;
-	buf[6] |= FIELD_PREP(ADC_TM5_M_CTL_HW_SETTLE_DELAY_MASK, channel->hw_settle_समय);
+	buf[6] |= FIELD_PREP(ADC_TM5_M_CTL_HW_SETTLE_DELAY_MASK, channel->hw_settle_time);
 	buf[6] &= ~ADC_TM5_M_CTL_CAL_SEL_MASK;
 	buf[6] |= FIELD_PREP(ADC_TM5_M_CTL_CAL_SEL_MASK, channel->cal_method);
 
 	buf[7] |= ADC_TM5_M_MEAS_EN;
 
-	ret = adc_पंचांग5_ग_लिखो(chip, reg, buf, माप(buf));
-	अगर (ret) अणु
+	ret = adc_tm5_write(chip, reg, buf, sizeof(buf));
+	if (ret) {
 		dev_err(chip->dev, "channel %d params write failed: %d\n", channel->channel, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस adc_पंचांग5_enable(chip);
-पूर्ण
+	return adc_tm5_enable(chip);
+}
 
-अटल पूर्णांक adc_पंचांग5_set_trips(व्योम *data, पूर्णांक low, पूर्णांक high)
-अणु
-	काष्ठा adc_पंचांग5_channel *channel = data;
-	काष्ठा adc_पंचांग5_chip *chip;
-	पूर्णांक ret;
+static int adc_tm5_set_trips(void *data, int low, int high)
+{
+	struct adc_tm5_channel *channel = data;
+	struct adc_tm5_chip *chip;
+	int ret;
 
-	अगर (!channel)
-		वापस -EINVAL;
+	if (!channel)
+		return -EINVAL;
 
 	chip = channel->chip;
 	dev_dbg(chip->dev, "%d:low(mdegC):%d, high(mdegC):%d\n",
 		channel->channel, low, high);
 
-	अगर (high == पूर्णांक_उच्च && low <= -पूर्णांक_उच्च)
-		ret = adc_पंचांग5_disable_channel(channel);
-	अन्यथा
-		ret = adc_पंचांग5_configure(channel, low, high);
+	if (high == INT_MAX && low <= -INT_MAX)
+		ret = adc_tm5_disable_channel(channel);
+	else
+		ret = adc_tm5_configure(channel, low, high);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा thermal_zone_of_device_ops adc_पंचांग5_ops = अणु
-	.get_temp = adc_पंचांग5_get_temp,
-	.set_trips = adc_पंचांग5_set_trips,
-पूर्ण;
+static struct thermal_zone_of_device_ops adc_tm5_ops = {
+	.get_temp = adc_tm5_get_temp,
+	.set_trips = adc_tm5_set_trips,
+};
 
-अटल पूर्णांक adc_पंचांग5_रेजिस्टर_tzd(काष्ठा adc_पंचांग5_chip *adc_पंचांग)
-अणु
-	अचिन्हित पूर्णांक i;
-	काष्ठा thermal_zone_device *tzd;
+static int adc_tm5_register_tzd(struct adc_tm5_chip *adc_tm)
+{
+	unsigned int i;
+	struct thermal_zone_device *tzd;
 
-	क्रम (i = 0; i < adc_पंचांग->nchannels; i++) अणु
-		adc_पंचांग->channels[i].chip = adc_पंचांग;
+	for (i = 0; i < adc_tm->nchannels; i++) {
+		adc_tm->channels[i].chip = adc_tm;
 
-		tzd = devm_thermal_zone_of_sensor_रेजिस्टर(adc_पंचांग->dev,
-							   adc_पंचांग->channels[i].channel,
-							   &adc_पंचांग->channels[i],
-							   &adc_पंचांग5_ops);
-		अगर (IS_ERR(tzd)) अणु
-			dev_err(adc_पंचांग->dev, "Error registering TZ zone for channel %d: %ld\n",
-				adc_पंचांग->channels[i].channel, PTR_ERR(tzd));
-			वापस PTR_ERR(tzd);
-		पूर्ण
-		adc_पंचांग->channels[i].tzd = tzd;
-	पूर्ण
+		tzd = devm_thermal_zone_of_sensor_register(adc_tm->dev,
+							   adc_tm->channels[i].channel,
+							   &adc_tm->channels[i],
+							   &adc_tm5_ops);
+		if (IS_ERR(tzd)) {
+			dev_err(adc_tm->dev, "Error registering TZ zone for channel %d: %ld\n",
+				adc_tm->channels[i].channel, PTR_ERR(tzd));
+			return PTR_ERR(tzd);
+		}
+		adc_tm->channels[i].tzd = tzd;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक adc_पंचांग5_init(काष्ठा adc_पंचांग5_chip *chip)
-अणु
+static int adc_tm5_init(struct adc_tm5_chip *chip)
+{
 	u8 buf[4], channels_available;
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक i;
+	int ret;
+	unsigned int i;
 
-	ret = adc_पंचांग5_पढ़ो(chip, ADC_TM5_NUM_BTM,
-			   &channels_available, माप(channels_available));
-	अगर (ret) अणु
+	ret = adc_tm5_read(chip, ADC_TM5_NUM_BTM,
+			   &channels_available, sizeof(channels_available));
+	if (ret) {
 		dev_err(chip->dev, "read failed for BTM channels\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	क्रम (i = 0; i < chip->nchannels; i++) अणु
-		अगर (chip->channels[i].channel >= channels_available) अणु
+	for (i = 0; i < chip->nchannels; i++) {
+		if (chip->channels[i].channel >= channels_available) {
 			dev_err(chip->dev, "Invalid channel %d\n", chip->channels[i].channel);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
 	buf[0] = chip->decimation;
 	buf[1] = chip->avg_samples | ADC_TM5_FAST_AVG_EN;
@@ -396,229 +395,229 @@
 	buf[3] = FIELD_PREP(ADC_TM5_MEAS_INTERVAL_CTL2_MASK, ADC_TM5_TIMER2) |
 		 FIELD_PREP(ADC_TM5_MEAS_INTERVAL_CTL3_MASK, ADC_TM5_TIMER3);
 
-	ret = adc_पंचांग5_ग_लिखो(chip, ADC_TM5_ADC_DIG_PARAM, buf, माप(buf));
-	अगर (ret) अणु
+	ret = adc_tm5_write(chip, ADC_TM5_ADC_DIG_PARAM, buf, sizeof(buf));
+	if (ret) {
 		dev_err(chip->dev, "block write failed: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक adc_पंचांग5_get_dt_channel_data(काष्ठा adc_पंचांग5_chip *adc_पंचांग,
-				       काष्ठा adc_पंचांग5_channel *channel,
-				       काष्ठा device_node *node)
-अणु
-	स्थिर अक्षर *name = node->name;
+static int adc_tm5_get_dt_channel_data(struct adc_tm5_chip *adc_tm,
+				       struct adc_tm5_channel *channel,
+				       struct device_node *node)
+{
+	const char *name = node->name;
 	u32 chan, value, varr[2];
-	पूर्णांक ret;
-	काष्ठा device *dev = adc_पंचांग->dev;
-	काष्ठा of_phandle_args args;
+	int ret;
+	struct device *dev = adc_tm->dev;
+	struct of_phandle_args args;
 
-	ret = of_property_पढ़ो_u32(node, "reg", &chan);
-	अगर (ret) अणु
+	ret = of_property_read_u32(node, "reg", &chan);
+	if (ret) {
 		dev_err(dev, "%s: invalid channel number %d\n", name, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (chan >= ADC_TM5_NUM_CHANNELS) अणु
+	if (chan >= ADC_TM5_NUM_CHANNELS) {
 		dev_err(dev, "%s: channel number too big: %d\n", name, chan);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	channel->channel = chan;
 
 	/*
 	 * We are tied to PMIC's ADC controller, which always use single
-	 * argument क्रम channel number.  So करोn't bother parsing
-	 * #io-channel-cells, just enक्रमce cell_count = 1.
+	 * argument for channel number.  So don't bother parsing
+	 * #io-channel-cells, just enforce cell_count = 1.
 	 */
 	ret = of_parse_phandle_with_fixed_args(node, "io-channels", 1, 0, &args);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "%s: error parsing ADC channel number %d: %d\n", name, chan, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	of_node_put(args.np);
 
-	अगर (args.args_count != 1 || args.args[0] >= ADC5_MAX_CHANNEL) अणु
+	if (args.args_count != 1 || args.args[0] >= ADC5_MAX_CHANNEL) {
 		dev_err(dev, "%s: invalid ADC channel number %d\n", name, chan);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	channel->adc_channel = args.args[0];
 
-	channel->iio = devm_of_iio_channel_get_by_name(adc_पंचांग->dev, node, शून्य);
-	अगर (IS_ERR(channel->iio)) अणु
+	channel->iio = devm_of_iio_channel_get_by_name(adc_tm->dev, node, NULL);
+	if (IS_ERR(channel->iio)) {
 		ret = PTR_ERR(channel->iio);
-		अगर (ret != -EPROBE_DEFER)
+		if (ret != -EPROBE_DEFER)
 			dev_err(dev, "%s: error getting channel: %d\n", name, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = of_property_पढ़ो_u32_array(node, "qcom,pre-scaling", varr, 2);
-	अगर (!ret) अणु
+	ret = of_property_read_u32_array(node, "qcom,pre-scaling", varr, 2);
+	if (!ret) {
 		ret = qcom_adc5_prescaling_from_dt(varr[0], varr[1]);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(dev, "%s: invalid pre-scaling <%d %d>\n",
 				name, varr[0], varr[1]);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		channel->prescale = ret;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* 1:1 prescale is index 0 */
 		channel->prescale = 0;
-	पूर्ण
+	}
 
-	ret = of_property_पढ़ो_u32(node, "qcom,hw-settle-time-us", &value);
-	अगर (!ret) अणु
-		ret = qcom_adc5_hw_settle_समय_from_dt(value, adc_पंचांग->data->hw_settle);
-		अगर (ret < 0) अणु
+	ret = of_property_read_u32(node, "qcom,hw-settle-time-us", &value);
+	if (!ret) {
+		ret = qcom_adc5_hw_settle_time_from_dt(value, adc_tm->data->hw_settle);
+		if (ret < 0) {
 			dev_err(dev, "%s invalid hw-settle-time-us %d us\n",
 				name, value);
-			वापस ret;
-		पूर्ण
-		channel->hw_settle_समय = ret;
-	पूर्ण अन्यथा अणु
-		channel->hw_settle_समय = VADC_DEF_HW_SETTLE_TIME;
-	पूर्ण
+			return ret;
+		}
+		channel->hw_settle_time = ret;
+	} else {
+		channel->hw_settle_time = VADC_DEF_HW_SETTLE_TIME;
+	}
 
-	अगर (of_property_पढ़ो_bool(node, "qcom,ratiometric"))
+	if (of_property_read_bool(node, "qcom,ratiometric"))
 		channel->cal_method = ADC_TM5_RATIOMETRIC_CAL;
-	अन्यथा
+	else
 		channel->cal_method = ADC_TM5_ABSOLUTE_CAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक adc_पंचांग5_get_dt_data(काष्ठा adc_पंचांग5_chip *adc_पंचांग, काष्ठा device_node *node)
-अणु
-	काष्ठा adc_पंचांग5_channel *channels;
-	काष्ठा device_node *child;
+static int adc_tm5_get_dt_data(struct adc_tm5_chip *adc_tm, struct device_node *node)
+{
+	struct adc_tm5_channel *channels;
+	struct device_node *child;
 	u32 value;
-	पूर्णांक ret;
-	काष्ठा device *dev = adc_पंचांग->dev;
+	int ret;
+	struct device *dev = adc_tm->dev;
 
-	adc_पंचांग->nchannels = of_get_available_child_count(node);
-	अगर (!adc_पंचांग->nchannels)
-		वापस -EINVAL;
+	adc_tm->nchannels = of_get_available_child_count(node);
+	if (!adc_tm->nchannels)
+		return -EINVAL;
 
-	adc_पंचांग->channels = devm_kसुस्मृति(dev, adc_पंचांग->nchannels,
-					माप(*adc_पंचांग->channels), GFP_KERNEL);
-	अगर (!adc_पंचांग->channels)
-		वापस -ENOMEM;
+	adc_tm->channels = devm_kcalloc(dev, adc_tm->nchannels,
+					sizeof(*adc_tm->channels), GFP_KERNEL);
+	if (!adc_tm->channels)
+		return -ENOMEM;
 
-	channels = adc_पंचांग->channels;
+	channels = adc_tm->channels;
 
-	adc_पंचांग->data = of_device_get_match_data(dev);
-	अगर (!adc_पंचांग->data)
-		adc_पंचांग->data = &adc_पंचांग5_data_pmic;
+	adc_tm->data = of_device_get_match_data(dev);
+	if (!adc_tm->data)
+		adc_tm->data = &adc_tm5_data_pmic;
 
-	ret = of_property_पढ़ो_u32(node, "qcom,decimation", &value);
-	अगर (!ret) अणु
-		ret = qcom_adc5_decimation_from_dt(value, adc_पंचांग->data->decimation);
-		अगर (ret < 0) अणु
+	ret = of_property_read_u32(node, "qcom,decimation", &value);
+	if (!ret) {
+		ret = qcom_adc5_decimation_from_dt(value, adc_tm->data->decimation);
+		if (ret < 0) {
 			dev_err(dev, "invalid decimation %d\n", value);
-			वापस ret;
-		पूर्ण
-		adc_पंचांग->decimation = ret;
-	पूर्ण अन्यथा अणु
-		adc_पंचांग->decimation = ADC5_DECIMATION_DEFAULT;
-	पूर्ण
+			return ret;
+		}
+		adc_tm->decimation = ret;
+	} else {
+		adc_tm->decimation = ADC5_DECIMATION_DEFAULT;
+	}
 
-	ret = of_property_पढ़ो_u32(node, "qcom,avg-samples", &value);
-	अगर (!ret) अणु
+	ret = of_property_read_u32(node, "qcom,avg-samples", &value);
+	if (!ret) {
 		ret = qcom_adc5_avg_samples_from_dt(value);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(dev, "invalid avg-samples %d\n", value);
-			वापस ret;
-		पूर्ण
-		adc_पंचांग->avg_samples = ret;
-	पूर्ण अन्यथा अणु
-		adc_पंचांग->avg_samples = VADC_DEF_AVG_SAMPLES;
-	पूर्ण
+			return ret;
+		}
+		adc_tm->avg_samples = ret;
+	} else {
+		adc_tm->avg_samples = VADC_DEF_AVG_SAMPLES;
+	}
 
-	क्रम_each_available_child_of_node(node, child) अणु
-		ret = adc_पंचांग5_get_dt_channel_data(adc_पंचांग, channels, child);
-		अगर (ret) अणु
+	for_each_available_child_of_node(node, child) {
+		ret = adc_tm5_get_dt_channel_data(adc_tm, channels, child);
+		if (ret) {
 			of_node_put(child);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
 		channels++;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक adc_पंचांग5_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device_node *node = pdev->dev.of_node;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा adc_पंचांग5_chip *adc_पंचांग;
-	काष्ठा regmap *regmap;
-	पूर्णांक ret, irq;
+static int adc_tm5_probe(struct platform_device *pdev)
+{
+	struct device_node *node = pdev->dev.of_node;
+	struct device *dev = &pdev->dev;
+	struct adc_tm5_chip *adc_tm;
+	struct regmap *regmap;
+	int ret, irq;
 	u32 reg;
 
-	regmap = dev_get_regmap(dev->parent, शून्य);
-	अगर (!regmap)
-		वापस -ENODEV;
+	regmap = dev_get_regmap(dev->parent, NULL);
+	if (!regmap)
+		return -ENODEV;
 
-	ret = of_property_पढ़ो_u32(node, "reg", &reg);
-	अगर (ret)
-		वापस ret;
+	ret = of_property_read_u32(node, "reg", &reg);
+	if (ret)
+		return ret;
 
-	adc_पंचांग = devm_kzalloc(&pdev->dev, माप(*adc_पंचांग), GFP_KERNEL);
-	अगर (!adc_पंचांग)
-		वापस -ENOMEM;
+	adc_tm = devm_kzalloc(&pdev->dev, sizeof(*adc_tm), GFP_KERNEL);
+	if (!adc_tm)
+		return -ENOMEM;
 
-	adc_पंचांग->regmap = regmap;
-	adc_पंचांग->dev = dev;
-	adc_पंचांग->base = reg;
+	adc_tm->regmap = regmap;
+	adc_tm->dev = dev;
+	adc_tm->base = reg;
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq < 0) अणु
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0) {
 		dev_err(dev, "get_irq failed: %d\n", irq);
-		वापस irq;
-	पूर्ण
+		return irq;
+	}
 
-	ret = adc_पंचांग5_get_dt_data(adc_पंचांग, node);
-	अगर (ret) अणु
+	ret = adc_tm5_get_dt_data(adc_tm, node);
+	if (ret) {
 		dev_err(dev, "get dt data failed: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = adc_पंचांग5_init(adc_पंचांग);
-	अगर (ret) अणु
+	ret = adc_tm5_init(adc_tm);
+	if (ret) {
 		dev_err(dev, "adc-tm init failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = adc_पंचांग5_रेजिस्टर_tzd(adc_पंचांग);
-	अगर (ret) अणु
+	ret = adc_tm5_register_tzd(adc_tm);
+	if (ret) {
 		dev_err(dev, "tzd register failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस devm_request_thपढ़ोed_irq(dev, irq, शून्य, adc_पंचांग5_isr,
-					 IRQF_ONESHOT, "pm-adc-tm5", adc_पंचांग);
-पूर्ण
+	return devm_request_threaded_irq(dev, irq, NULL, adc_tm5_isr,
+					 IRQF_ONESHOT, "pm-adc-tm5", adc_tm);
+}
 
-अटल स्थिर काष्ठा of_device_id adc_पंचांग5_match_table[] = अणु
-	अणु
+static const struct of_device_id adc_tm5_match_table[] = {
+	{
 		.compatible = "qcom,spmi-adc-tm5",
-		.data = &adc_पंचांग5_data_pmic,
-	पूर्ण,
-	अणु पूर्ण
-पूर्ण;
-MODULE_DEVICE_TABLE(of, adc_पंचांग5_match_table);
+		.data = &adc_tm5_data_pmic,
+	},
+	{ }
+};
+MODULE_DEVICE_TABLE(of, adc_tm5_match_table);
 
-अटल काष्ठा platक्रमm_driver adc_पंचांग5_driver = अणु
-	.driver = अणु
+static struct platform_driver adc_tm5_driver = {
+	.driver = {
 		.name = "qcom-spmi-adc-tm5",
-		.of_match_table = adc_पंचांग5_match_table,
-	पूर्ण,
-	.probe = adc_पंचांग5_probe,
-पूर्ण;
-module_platक्रमm_driver(adc_पंचांग5_driver);
+		.of_match_table = adc_tm5_match_table,
+	},
+	.probe = adc_tm5_probe,
+};
+module_platform_driver(adc_tm5_driver);
 
 MODULE_DESCRIPTION("SPMI PMIC Thermal Monitor ADC driver");
 MODULE_LICENSE("GPL v2");

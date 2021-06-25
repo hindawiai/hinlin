@@ -1,29 +1,28 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2014 Redpine Signals Inc.
  *
- * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/firmware.h>
-#समावेश <net/rsi_91x.h>
-#समावेश "rsi_mgmt.h"
-#समावेश "rsi_common.h"
-#समावेश "rsi_coex.h"
-#समावेश "rsi_hal.h"
+#include <linux/module.h>
+#include <linux/firmware.h>
+#include <net/rsi_91x.h>
+#include "rsi_mgmt.h"
+#include "rsi_common.h"
+#include "rsi_coex.h"
+#include "rsi_hal.h"
 
 u32 rsi_zone_enabled = /* INFO_ZONE |
 			INIT_ZONE |
@@ -37,65 +36,65 @@ u32 rsi_zone_enabled = /* INFO_ZONE |
 			0;
 EXPORT_SYMBOL_GPL(rsi_zone_enabled);
 
-#अगर_घोषित CONFIG_RSI_COEX
-अटल काष्ठा rsi_proto_ops g_proto_ops = अणु
+#ifdef CONFIG_RSI_COEX
+static struct rsi_proto_ops g_proto_ops = {
 	.coex_send_pkt = rsi_coex_send_pkt,
-	.get_host_पूर्णांकf = rsi_get_host_पूर्णांकf,
+	.get_host_intf = rsi_get_host_intf,
 	.set_bt_context = rsi_set_bt_context,
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif
 
 /**
- * rsi_dbg() - This function outमाला_दो inक्रमmational messages.
- * @zone: Zone of पूर्णांकerest क्रम output message.
- * @fmt: म_लिखो-style क्रमmat क्रम output message.
+ * rsi_dbg() - This function outputs informational messages.
+ * @zone: Zone of interest for output message.
+ * @fmt: printf-style format for output message.
  *
  * Return: none
  */
-व्योम rsi_dbg(u32 zone, स्थिर अक्षर *fmt, ...)
-अणु
-	काष्ठा va_क्रमmat vaf;
-	बहु_सूची args;
+void rsi_dbg(u32 zone, const char *fmt, ...)
+{
+	struct va_format vaf;
+	va_list args;
 
-	बहु_शुरू(args, fmt);
+	va_start(args, fmt);
 
 	vaf.fmt = fmt;
 	vaf.va = &args;
 
-	अगर (zone & rsi_zone_enabled)
+	if (zone & rsi_zone_enabled)
 		pr_info("%pV", &vaf);
-	बहु_पूर्ण(args);
-पूर्ण
+	va_end(args);
+}
 EXPORT_SYMBOL_GPL(rsi_dbg);
 
-अटल अक्षर *opmode_str(पूर्णांक oper_mode)
-अणु
-	चयन (oper_mode) अणु
-	हाल DEV_OPMODE_WIFI_ALONE:
-		वापस "Wi-Fi alone";
-	हाल DEV_OPMODE_BT_ALONE:
-		वापस "BT EDR alone";
-	हाल DEV_OPMODE_BT_LE_ALONE:
-		वापस "BT LE alone";
-	हाल DEV_OPMODE_BT_DUAL:
-		वापस "BT Dual";
-	हाल DEV_OPMODE_STA_BT:
-		वापस "Wi-Fi STA + BT EDR";
-	हाल DEV_OPMODE_STA_BT_LE:
-		वापस "Wi-Fi STA + BT LE";
-	हाल DEV_OPMODE_STA_BT_DUAL:
-		वापस "Wi-Fi STA + BT DUAL";
-	हाल DEV_OPMODE_AP_BT:
-		वापस "Wi-Fi AP + BT EDR";
-	हाल DEV_OPMODE_AP_BT_DUAL:
-		वापस "Wi-Fi AP + BT DUAL";
-	पूर्ण
+static char *opmode_str(int oper_mode)
+{
+	switch (oper_mode) {
+	case DEV_OPMODE_WIFI_ALONE:
+		return "Wi-Fi alone";
+	case DEV_OPMODE_BT_ALONE:
+		return "BT EDR alone";
+	case DEV_OPMODE_BT_LE_ALONE:
+		return "BT LE alone";
+	case DEV_OPMODE_BT_DUAL:
+		return "BT Dual";
+	case DEV_OPMODE_STA_BT:
+		return "Wi-Fi STA + BT EDR";
+	case DEV_OPMODE_STA_BT_LE:
+		return "Wi-Fi STA + BT LE";
+	case DEV_OPMODE_STA_BT_DUAL:
+		return "Wi-Fi STA + BT DUAL";
+	case DEV_OPMODE_AP_BT:
+		return "Wi-Fi AP + BT EDR";
+	case DEV_OPMODE_AP_BT_DUAL:
+		return "Wi-Fi AP + BT DUAL";
+	}
 
-	वापस "Unknown";
-पूर्ण
+	return "Unknown";
+}
 
-व्योम rsi_prपूर्णांक_version(काष्ठा rsi_common *common)
-अणु
+void rsi_print_version(struct rsi_common *common)
+{
 	rsi_dbg(ERR_ZONE, "================================================\n");
 	rsi_dbg(ERR_ZONE, "================ RSI Version Info ==============\n");
 	rsi_dbg(ERR_ZONE, "================================================\n");
@@ -106,66 +105,66 @@ EXPORT_SYMBOL_GPL(rsi_dbg);
 		common->oper_mode, opmode_str(common->oper_mode));
 	rsi_dbg(ERR_ZONE, "Firmware file\t: %s", common->priv->fw_file_name);
 	rsi_dbg(ERR_ZONE, "================================================\n");
-पूर्ण
+}
 
 /**
  * rsi_prepare_skb() - This function prepares the skb.
- * @common: Poपूर्णांकer to the driver निजी काष्ठाure.
- * @buffer: Poपूर्णांकer to the packet data.
+ * @common: Pointer to the driver private structure.
+ * @buffer: Pointer to the packet data.
  * @pkt_len: Length of the packet.
  * @extended_desc: Extended descriptor.
  *
  * Return: Successfully skb.
  */
-अटल काष्ठा sk_buff *rsi_prepare_skb(काष्ठा rsi_common *common,
+static struct sk_buff *rsi_prepare_skb(struct rsi_common *common,
 				       u8 *buffer,
 				       u32 pkt_len,
 				       u8 extended_desc)
-अणु
-	काष्ठा sk_buff *skb = शून्य;
+{
+	struct sk_buff *skb = NULL;
 	u8 payload_offset;
 
-	अगर (WARN(!pkt_len, "%s: Dummy pkt received", __func__))
-		वापस शून्य;
+	if (WARN(!pkt_len, "%s: Dummy pkt received", __func__))
+		return NULL;
 
-	अगर (pkt_len > (RSI_RCV_BUFFER_LEN * 4)) अणु
+	if (pkt_len > (RSI_RCV_BUFFER_LEN * 4)) {
 		rsi_dbg(ERR_ZONE, "%s: Pkt size > max rx buf size %d\n",
 			__func__, pkt_len);
 		pkt_len = RSI_RCV_BUFFER_LEN * 4;
-	पूर्ण
+	}
 
 	pkt_len -= extended_desc;
 	skb = dev_alloc_skb(pkt_len + FRAME_DESC_SZ);
-	अगर (skb == शून्य)
-		वापस शून्य;
+	if (skb == NULL)
+		return NULL;
 
 	payload_offset = (extended_desc + FRAME_DESC_SZ);
 	skb_put(skb, pkt_len);
-	स_नकल((skb->data), (buffer + payload_offset), skb->len);
+	memcpy((skb->data), (buffer + payload_offset), skb->len);
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
 /**
- * rsi_पढ़ो_pkt() - This function पढ़ोs frames from the card.
- * @common: Poपूर्णांकer to the driver निजी काष्ठाure.
+ * rsi_read_pkt() - This function reads frames from the card.
+ * @common: Pointer to the driver private structure.
  * @rx_pkt: Received pkt.
- * @rcv_pkt_len: Received pkt length. In हाल of USB it is 0.
+ * @rcv_pkt_len: Received pkt length. In case of USB it is 0.
  *
  * Return: 0 on success, -1 on failure.
  */
-पूर्णांक rsi_पढ़ो_pkt(काष्ठा rsi_common *common, u8 *rx_pkt, s32 rcv_pkt_len)
-अणु
-	u8 *frame_desc = शून्य, extended_desc = 0;
+int rsi_read_pkt(struct rsi_common *common, u8 *rx_pkt, s32 rcv_pkt_len)
+{
+	u8 *frame_desc = NULL, extended_desc = 0;
 	u32 index, length = 0, queueno = 0;
 	u16 actual_length = 0, offset;
-	काष्ठा sk_buff *skb = शून्य;
-#अगर_घोषित CONFIG_RSI_COEX
+	struct sk_buff *skb = NULL;
+#ifdef CONFIG_RSI_COEX
 	u8 bt_pkt_type;
-#पूर्ण_अगर
+#endif
 
 	index = 0;
-	करो अणु
+	do {
 		frame_desc = &rx_pkt[index];
 		actual_length = *(u16 *)&frame_desc[0];
 		offset = *(u16 *)&frame_desc[2];
@@ -173,273 +172,273 @@ EXPORT_SYMBOL_GPL(rsi_dbg);
 		queueno = rsi_get_queueno(frame_desc, offset);
 		length = rsi_get_length(frame_desc, offset);
 
-		/* Extended descriptor is valid क्रम WLAN queues only */
-		अगर (queueno == RSI_WIFI_DATA_Q || queueno == RSI_WIFI_MGMT_Q)
+		/* Extended descriptor is valid for WLAN queues only */
+		if (queueno == RSI_WIFI_DATA_Q || queueno == RSI_WIFI_MGMT_Q)
 			extended_desc = rsi_get_extended_desc(frame_desc,
 							      offset);
 
-		चयन (queueno) अणु
-		हाल RSI_COEX_Q:
-#अगर_घोषित CONFIG_RSI_COEX
-			अगर (common->coex_mode > 1)
+		switch (queueno) {
+		case RSI_COEX_Q:
+#ifdef CONFIG_RSI_COEX
+			if (common->coex_mode > 1)
 				rsi_coex_recv_pkt(common, frame_desc + offset);
-			अन्यथा
-#पूर्ण_अगर
+			else
+#endif
 				rsi_mgmt_pkt_recv(common,
 						  (frame_desc + offset));
-			अवरोध;
+			break;
 
-		हाल RSI_WIFI_DATA_Q:
+		case RSI_WIFI_DATA_Q:
 			skb = rsi_prepare_skb(common,
 					      (frame_desc + offset),
 					      length,
 					      extended_desc);
-			अगर (skb == शून्य)
-				जाओ fail;
+			if (skb == NULL)
+				goto fail;
 
 			rsi_indicate_pkt_to_os(common, skb);
-			अवरोध;
+			break;
 
-		हाल RSI_WIFI_MGMT_Q:
+		case RSI_WIFI_MGMT_Q:
 			rsi_mgmt_pkt_recv(common, (frame_desc + offset));
-			अवरोध;
+			break;
 
-#अगर_घोषित CONFIG_RSI_COEX
-		हाल RSI_BT_MGMT_Q:
-		हाल RSI_BT_DATA_Q:
-#घोषणा BT_RX_PKT_TYPE_OFST	14
-#घोषणा BT_CARD_READY_IND	0x89
+#ifdef CONFIG_RSI_COEX
+		case RSI_BT_MGMT_Q:
+		case RSI_BT_DATA_Q:
+#define BT_RX_PKT_TYPE_OFST	14
+#define BT_CARD_READY_IND	0x89
 			bt_pkt_type = frame_desc[offset + BT_RX_PKT_TYPE_OFST];
-			अगर (bt_pkt_type == BT_CARD_READY_IND) अणु
+			if (bt_pkt_type == BT_CARD_READY_IND) {
 				rsi_dbg(INFO_ZONE, "BT Card ready recvd\n");
-				अगर (rsi_bt_ops.attach(common, &g_proto_ops))
+				if (rsi_bt_ops.attach(common, &g_proto_ops))
 					rsi_dbg(ERR_ZONE,
 						"Failed to attach BT module\n");
-			पूर्ण अन्यथा अणु
-				अगर (common->bt_adapter)
+			} else {
+				if (common->bt_adapter)
 					rsi_bt_ops.recv_pkt(common->bt_adapter,
 							frame_desc + offset);
-			पूर्ण
-			अवरोध;
-#पूर्ण_अगर
+			}
+			break;
+#endif
 
-		शेष:
+		default:
 			rsi_dbg(ERR_ZONE, "%s: pkt from invalid queue: %d\n",
 				__func__,   queueno);
-			जाओ fail;
-		पूर्ण
+			goto fail;
+		}
 
 		index  += actual_length;
 		rcv_pkt_len -= actual_length;
-	पूर्ण जबतक (rcv_pkt_len > 0);
+	} while (rcv_pkt_len > 0);
 
-	वापस 0;
+	return 0;
 fail:
-	वापस -EINVAL;
-पूर्ण
-EXPORT_SYMBOL_GPL(rsi_पढ़ो_pkt);
+	return -EINVAL;
+}
+EXPORT_SYMBOL_GPL(rsi_read_pkt);
 
 /**
- * rsi_tx_scheduler_thपढ़ो() - This function is a kernel thपढ़ो to send the
+ * rsi_tx_scheduler_thread() - This function is a kernel thread to send the
  *			       packets to the device.
- * @common: Poपूर्णांकer to the driver निजी काष्ठाure.
+ * @common: Pointer to the driver private structure.
  *
  * Return: None.
  */
-अटल व्योम rsi_tx_scheduler_thपढ़ो(काष्ठा rsi_common *common)
-अणु
-	काष्ठा rsi_hw *adapter = common->priv;
-	u32 समयout = EVENT_WAIT_FOREVER;
+static void rsi_tx_scheduler_thread(struct rsi_common *common)
+{
+	struct rsi_hw *adapter = common->priv;
+	u32 timeout = EVENT_WAIT_FOREVER;
 
-	करो अणु
-		अगर (adapter->determine_event_समयout)
-			समयout = adapter->determine_event_समयout(adapter);
-		rsi_रुको_event(&common->tx_thपढ़ो.event, समयout);
-		rsi_reset_event(&common->tx_thपढ़ो.event);
+	do {
+		if (adapter->determine_event_timeout)
+			timeout = adapter->determine_event_timeout(adapter);
+		rsi_wait_event(&common->tx_thread.event, timeout);
+		rsi_reset_event(&common->tx_thread.event);
 
-		अगर (common->init_करोne)
+		if (common->init_done)
 			rsi_core_qos_processor(common);
-	पूर्ण जबतक (atomic_पढ़ो(&common->tx_thपढ़ो.thपढ़ो_करोne) == 0);
-	complete_and_निकास(&common->tx_thपढ़ो.completion, 0);
-पूर्ण
+	} while (atomic_read(&common->tx_thread.thread_done) == 0);
+	complete_and_exit(&common->tx_thread.completion, 0);
+}
 
-#अगर_घोषित CONFIG_RSI_COEX
-क्रमागत rsi_host_पूर्णांकf rsi_get_host_पूर्णांकf(व्योम *priv)
-अणु
-	काष्ठा rsi_common *common = (काष्ठा rsi_common *)priv;
+#ifdef CONFIG_RSI_COEX
+enum rsi_host_intf rsi_get_host_intf(void *priv)
+{
+	struct rsi_common *common = (struct rsi_common *)priv;
 
-	वापस common->priv->rsi_host_पूर्णांकf;
-पूर्ण
+	return common->priv->rsi_host_intf;
+}
 
-व्योम rsi_set_bt_context(व्योम *priv, व्योम *bt_context)
-अणु
-	काष्ठा rsi_common *common = (काष्ठा rsi_common *)priv;
+void rsi_set_bt_context(void *priv, void *bt_context)
+{
+	struct rsi_common *common = (struct rsi_common *)priv;
 
 	common->bt_adapter = bt_context;
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
 /**
- * rsi_91x_init() - This function initializes os पूर्णांकerface operations.
+ * rsi_91x_init() - This function initializes os interface operations.
  * @oper_mode: One of DEV_OPMODE_*.
  *
- * Return: Poपूर्णांकer to the adapter काष्ठाure on success, शून्य on failure .
+ * Return: Pointer to the adapter structure on success, NULL on failure .
  */
-काष्ठा rsi_hw *rsi_91x_init(u16 oper_mode)
-अणु
-	काष्ठा rsi_hw *adapter = शून्य;
-	काष्ठा rsi_common *common = शून्य;
+struct rsi_hw *rsi_91x_init(u16 oper_mode)
+{
+	struct rsi_hw *adapter = NULL;
+	struct rsi_common *common = NULL;
 	u8 ii = 0;
 
-	adapter = kzalloc(माप(*adapter), GFP_KERNEL);
-	अगर (!adapter)
-		वापस शून्य;
+	adapter = kzalloc(sizeof(*adapter), GFP_KERNEL);
+	if (!adapter)
+		return NULL;
 
-	adapter->priv = kzalloc(माप(*common), GFP_KERNEL);
-	अगर (adapter->priv == शून्य) अणु
+	adapter->priv = kzalloc(sizeof(*common), GFP_KERNEL);
+	if (adapter->priv == NULL) {
 		rsi_dbg(ERR_ZONE, "%s: Failed in allocation of memory\n",
 			__func__);
-		kमुक्त(adapter);
-		वापस शून्य;
-	पूर्ण अन्यथा अणु
+		kfree(adapter);
+		return NULL;
+	} else {
 		common = adapter->priv;
 		common->priv = adapter;
-	पूर्ण
+	}
 
-	क्रम (ii = 0; ii < NUM_SOFT_QUEUES; ii++)
+	for (ii = 0; ii < NUM_SOFT_QUEUES; ii++)
 		skb_queue_head_init(&common->tx_queue[ii]);
 
-	rsi_init_event(&common->tx_thपढ़ो.event);
+	rsi_init_event(&common->tx_thread.event);
 	mutex_init(&common->mutex);
 	mutex_init(&common->tx_lock);
 	mutex_init(&common->rx_lock);
 	mutex_init(&common->tx_bus_mutex);
 
-	अगर (rsi_create_kthपढ़ो(common,
-			       &common->tx_thपढ़ो,
-			       rsi_tx_scheduler_thपढ़ो,
-			       "Tx-Thread")) अणु
+	if (rsi_create_kthread(common,
+			       &common->tx_thread,
+			       rsi_tx_scheduler_thread,
+			       "Tx-Thread")) {
 		rsi_dbg(ERR_ZONE, "%s: Unable to init tx thrd\n", __func__);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	rsi_शेष_ps_params(adapter);
+	rsi_default_ps_params(adapter);
 	init_bgscan_params(common);
 	spin_lock_init(&adapter->ps_lock);
-	समयr_setup(&common->roc_समयr, rsi_roc_समयout, 0);
+	timer_setup(&common->roc_timer, rsi_roc_timeout, 0);
 	init_completion(&common->wlan_init_completion);
 	adapter->device_model = RSI_DEV_9113;
 	common->oper_mode = oper_mode;
 
 	/* Determine coex mode */
-	चयन (common->oper_mode) अणु
-	हाल DEV_OPMODE_STA_BT_DUAL:
-	हाल DEV_OPMODE_STA_BT:
-	हाल DEV_OPMODE_STA_BT_LE:
-	हाल DEV_OPMODE_BT_ALONE:
-	हाल DEV_OPMODE_BT_LE_ALONE:
-	हाल DEV_OPMODE_BT_DUAL:
+	switch (common->oper_mode) {
+	case DEV_OPMODE_STA_BT_DUAL:
+	case DEV_OPMODE_STA_BT:
+	case DEV_OPMODE_STA_BT_LE:
+	case DEV_OPMODE_BT_ALONE:
+	case DEV_OPMODE_BT_LE_ALONE:
+	case DEV_OPMODE_BT_DUAL:
 		common->coex_mode = 2;
-		अवरोध;
-	हाल DEV_OPMODE_AP_BT_DUAL:
-	हाल DEV_OPMODE_AP_BT:
+		break;
+	case DEV_OPMODE_AP_BT_DUAL:
+	case DEV_OPMODE_AP_BT:
 		common->coex_mode = 4;
-		अवरोध;
-	हाल DEV_OPMODE_WIFI_ALONE:
+		break;
+	case DEV_OPMODE_WIFI_ALONE:
 		common->coex_mode = 1;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		common->oper_mode = 1;
 		common->coex_mode = 1;
-	पूर्ण
+	}
 	rsi_dbg(INFO_ZONE, "%s: oper_mode = %d, coex_mode = %d\n",
 		__func__, common->oper_mode, common->coex_mode);
 
 	adapter->device_model = RSI_DEV_9113;
-#अगर_घोषित CONFIG_RSI_COEX
-	अगर (common->coex_mode > 1) अणु
-		अगर (rsi_coex_attach(common)) अणु
+#ifdef CONFIG_RSI_COEX
+	if (common->coex_mode > 1) {
+		if (rsi_coex_attach(common)) {
 			rsi_dbg(ERR_ZONE, "Failed to init coex module\n");
-			जाओ err;
-		पूर्ण
-	पूर्ण
-#पूर्ण_अगर
+			goto err;
+		}
+	}
+#endif
 
-	common->init_करोne = true;
-	वापस adapter;
+	common->init_done = true;
+	return adapter;
 
 err:
-	kमुक्त(common);
-	kमुक्त(adapter);
-	वापस शून्य;
-पूर्ण
+	kfree(common);
+	kfree(adapter);
+	return NULL;
+}
 EXPORT_SYMBOL_GPL(rsi_91x_init);
 
 /**
- * rsi_91x_deinit() - This function de-पूर्णांकializes os पूर्णांकf operations.
- * @adapter: Poपूर्णांकer to the adapter काष्ठाure.
+ * rsi_91x_deinit() - This function de-intializes os intf operations.
+ * @adapter: Pointer to the adapter structure.
  *
  * Return: None.
  */
-व्योम rsi_91x_deinit(काष्ठा rsi_hw *adapter)
-अणु
-	काष्ठा rsi_common *common = adapter->priv;
+void rsi_91x_deinit(struct rsi_hw *adapter)
+{
+	struct rsi_common *common = adapter->priv;
 	u8 ii;
 
 	rsi_dbg(INFO_ZONE, "%s: Performing deinit os ops\n", __func__);
 
-	rsi_समाप्त_thपढ़ो(&common->tx_thपढ़ो);
+	rsi_kill_thread(&common->tx_thread);
 
-	क्रम (ii = 0; ii < NUM_SOFT_QUEUES; ii++)
+	for (ii = 0; ii < NUM_SOFT_QUEUES; ii++)
 		skb_queue_purge(&common->tx_queue[ii]);
 
-#अगर_घोषित CONFIG_RSI_COEX
-	अगर (common->coex_mode > 1) अणु
-		अगर (common->bt_adapter) अणु
+#ifdef CONFIG_RSI_COEX
+	if (common->coex_mode > 1) {
+		if (common->bt_adapter) {
 			rsi_bt_ops.detach(common->bt_adapter);
-			common->bt_adapter = शून्य;
-		पूर्ण
+			common->bt_adapter = NULL;
+		}
 		rsi_coex_detach(common);
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
-	common->init_करोne = false;
+	common->init_done = false;
 
-	kमुक्त(common);
-	kमुक्त(adapter->rsi_dev);
-	kमुक्त(adapter);
-पूर्ण
+	kfree(common);
+	kfree(adapter->rsi_dev);
+	kfree(adapter);
+}
 EXPORT_SYMBOL_GPL(rsi_91x_deinit);
 
 /**
  * rsi_91x_hal_module_init() - This function is invoked when the module is
- *			       loaded पूर्णांकo the kernel.
- *			       It रेजिस्टरs the client driver.
- * @व्योम: Void.
+ *			       loaded into the kernel.
+ *			       It registers the client driver.
+ * @void: Void.
  *
  * Return: 0 on success, -1 on failure.
  */
-अटल पूर्णांक rsi_91x_hal_module_init(व्योम)
-अणु
+static int rsi_91x_hal_module_init(void)
+{
 	rsi_dbg(INIT_ZONE, "%s: Module init called\n", __func__);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * rsi_91x_hal_module_निकास() - This function is called at the समय of
+ * rsi_91x_hal_module_exit() - This function is called at the time of
  *			       removing/unloading the module.
- *			       It unरेजिस्टरs the client driver.
- * @व्योम: Void.
+ *			       It unregisters the client driver.
+ * @void: Void.
  *
  * Return: None.
  */
-अटल व्योम rsi_91x_hal_module_निकास(व्योम)
-अणु
+static void rsi_91x_hal_module_exit(void)
+{
 	rsi_dbg(INIT_ZONE, "%s: Module exit called\n", __func__);
-पूर्ण
+}
 
 module_init(rsi_91x_hal_module_init);
-module_निकास(rsi_91x_hal_module_निकास);
+module_exit(rsi_91x_hal_module_exit);
 MODULE_AUTHOR("Redpine Signals Inc");
 MODULE_DESCRIPTION("Station driver for RSI 91x devices");
 MODULE_VERSION("0.1");

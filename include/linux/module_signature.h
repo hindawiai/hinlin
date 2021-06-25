@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Module signature handling.
  *
@@ -7,41 +6,41 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#अगर_अघोषित _LINUX_MODULE_SIGNATURE_H
-#घोषणा _LINUX_MODULE_SIGNATURE_H
+#ifndef _LINUX_MODULE_SIGNATURE_H
+#define _LINUX_MODULE_SIGNATURE_H
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
 /* In stripped ARM and x86-64 modules, ~ is surprisingly rare. */
-#घोषणा MODULE_SIG_STRING "~Module signature appended~\n"
+#define MODULE_SIG_STRING "~Module signature appended~\n"
 
-क्रमागत pkey_id_type अणु
+enum pkey_id_type {
 	PKEY_ID_PGP,		/* OpenPGP generated key ID */
-	PKEY_ID_X509,		/* X.509 arbitrary subjectKeyIdentअगरier */
+	PKEY_ID_X509,		/* X.509 arbitrary subjectKeyIdentifier */
 	PKEY_ID_PKCS7,		/* Signature in PKCS#7 message */
-पूर्ण;
+};
 
 /*
- * Module signature inक्रमmation block.
+ * Module signature information block.
  *
- * The स्थिरituents of the signature section are, in order:
+ * The constituents of the signature section are, in order:
  *
  *	- Signer's name
- *	- Key identअगरier
+ *	- Key identifier
  *	- Signature data
- *	- Inक्रमmation block
+ *	- Information block
  */
-काष्ठा module_signature अणु
+struct module_signature {
 	u8	algo;		/* Public-key crypto algorithm [0] */
 	u8	hash;		/* Digest algorithm [0] */
-	u8	id_type;	/* Key identअगरier type [PKEY_ID_PKCS7] */
+	u8	id_type;	/* Key identifier type [PKEY_ID_PKCS7] */
 	u8	signer_len;	/* Length of signer's name [0] */
-	u8	key_id_len;	/* Length of key identअगरier [0] */
+	u8	key_id_len;	/* Length of key identifier [0] */
 	u8	__pad[3];
 	__be32	sig_len;	/* Length of signature data */
-पूर्ण;
+};
 
-पूर्णांक mod_check_sig(स्थिर काष्ठा module_signature *ms, माप_प्रकार file_len,
-		  स्थिर अक्षर *name);
+int mod_check_sig(const struct module_signature *ms, size_t file_len,
+		  const char *name);
 
-#पूर्ण_अगर /* _LINUX_MODULE_SIGNATURE_H */
+#endif /* _LINUX_MODULE_SIGNATURE_H */

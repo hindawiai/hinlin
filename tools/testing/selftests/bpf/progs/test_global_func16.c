@@ -1,23 +1,22 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-#समावेश <मानकघोष.स>
-#समावेश <linux/bpf.h>
-#समावेश <bpf/bpf_helpers.h>
+// SPDX-License-Identifier: GPL-2.0-only
+#include <stddef.h>
+#include <linux/bpf.h>
+#include <bpf/bpf_helpers.h>
 
-__noअंतरभूत पूर्णांक foo(पूर्णांक (*arr)[10])
-अणु
-	अगर (arr)
-		वापस (*arr)[9];
+__noinline int foo(int (*arr)[10])
+{
+	if (arr)
+		return (*arr)[9];
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 SEC("cgroup_skb/ingress")
-पूर्णांक test_cls(काष्ठा __sk_buff *skb)
-अणु
-	पूर्णांक array[10];
+int test_cls(struct __sk_buff *skb)
+{
+	int array[10];
 
-	स्थिर पूर्णांक rv = foo(&array);
+	const int rv = foo(&array);
 
-	वापस rv ? 1 : 0;
-पूर्ण
+	return rv ? 1 : 0;
+}

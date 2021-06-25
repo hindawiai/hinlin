@@ -1,135 +1,134 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2020 Facebook
 
-#समावेश <linux/debugfs.h>
-#समावेश <linux/ethtool.h>
-#समावेश <linux/अक्रमom.h>
+#include <linux/debugfs.h>
+#include <linux/ethtool.h>
+#include <linux/random.h>
 
-#समावेश "netdevsim.h"
+#include "netdevsim.h"
 
-अटल व्योम
-nsim_get_छोड़ो_stats(काष्ठा net_device *dev,
-		     काष्ठा ethtool_छोड़ो_stats *छोड़ो_stats)
-अणु
-	काष्ठा netdevsim *ns = netdev_priv(dev);
+static void
+nsim_get_pause_stats(struct net_device *dev,
+		     struct ethtool_pause_stats *pause_stats)
+{
+	struct netdevsim *ns = netdev_priv(dev);
 
-	अगर (ns->ethtool.छोड़ोparam.report_stats_rx)
-		छोड़ो_stats->rx_छोड़ो_frames = 1;
-	अगर (ns->ethtool.छोड़ोparam.report_stats_tx)
-		छोड़ो_stats->tx_छोड़ो_frames = 2;
-पूर्ण
+	if (ns->ethtool.pauseparam.report_stats_rx)
+		pause_stats->rx_pause_frames = 1;
+	if (ns->ethtool.pauseparam.report_stats_tx)
+		pause_stats->tx_pause_frames = 2;
+}
 
-अटल व्योम
-nsim_get_छोड़ोparam(काष्ठा net_device *dev, काष्ठा ethtool_छोड़ोparam *छोड़ो)
-अणु
-	काष्ठा netdevsim *ns = netdev_priv(dev);
+static void
+nsim_get_pauseparam(struct net_device *dev, struct ethtool_pauseparam *pause)
+{
+	struct netdevsim *ns = netdev_priv(dev);
 
-	छोड़ो->स्वतःneg = 0; /* We करोn't support ksettings, so can't pretend */
-	छोड़ो->rx_छोड़ो = ns->ethtool.छोड़ोparam.rx;
-	छोड़ो->tx_छोड़ो = ns->ethtool.छोड़ोparam.tx;
-पूर्ण
+	pause->autoneg = 0; /* We don't support ksettings, so can't pretend */
+	pause->rx_pause = ns->ethtool.pauseparam.rx;
+	pause->tx_pause = ns->ethtool.pauseparam.tx;
+}
 
-अटल पूर्णांक
-nsim_set_छोड़ोparam(काष्ठा net_device *dev, काष्ठा ethtool_छोड़ोparam *छोड़ो)
-अणु
-	काष्ठा netdevsim *ns = netdev_priv(dev);
+static int
+nsim_set_pauseparam(struct net_device *dev, struct ethtool_pauseparam *pause)
+{
+	struct netdevsim *ns = netdev_priv(dev);
 
-	अगर (छोड़ो->स्वतःneg)
-		वापस -EINVAL;
+	if (pause->autoneg)
+		return -EINVAL;
 
-	ns->ethtool.छोड़ोparam.rx = छोड़ो->rx_छोड़ो;
-	ns->ethtool.छोड़ोparam.tx = छोड़ो->tx_छोड़ो;
-	वापस 0;
-पूर्ण
+	ns->ethtool.pauseparam.rx = pause->rx_pause;
+	ns->ethtool.pauseparam.tx = pause->tx_pause;
+	return 0;
+}
 
-अटल पूर्णांक nsim_get_coalesce(काष्ठा net_device *dev,
-			     काष्ठा ethtool_coalesce *coal)
-अणु
-	काष्ठा netdevsim *ns = netdev_priv(dev);
+static int nsim_get_coalesce(struct net_device *dev,
+			     struct ethtool_coalesce *coal)
+{
+	struct netdevsim *ns = netdev_priv(dev);
 
-	स_नकल(coal, &ns->ethtool.coalesce, माप(ns->ethtool.coalesce));
-	वापस 0;
-पूर्ण
+	memcpy(coal, &ns->ethtool.coalesce, sizeof(ns->ethtool.coalesce));
+	return 0;
+}
 
-अटल पूर्णांक nsim_set_coalesce(काष्ठा net_device *dev,
-			     काष्ठा ethtool_coalesce *coal)
-अणु
-	काष्ठा netdevsim *ns = netdev_priv(dev);
+static int nsim_set_coalesce(struct net_device *dev,
+			     struct ethtool_coalesce *coal)
+{
+	struct netdevsim *ns = netdev_priv(dev);
 
-	स_नकल(&ns->ethtool.coalesce, coal, माप(ns->ethtool.coalesce));
-	वापस 0;
-पूर्ण
+	memcpy(&ns->ethtool.coalesce, coal, sizeof(ns->ethtool.coalesce));
+	return 0;
+}
 
-अटल व्योम nsim_get_ringparam(काष्ठा net_device *dev,
-			       काष्ठा ethtool_ringparam *ring)
-अणु
-	काष्ठा netdevsim *ns = netdev_priv(dev);
+static void nsim_get_ringparam(struct net_device *dev,
+			       struct ethtool_ringparam *ring)
+{
+	struct netdevsim *ns = netdev_priv(dev);
 
-	स_नकल(ring, &ns->ethtool.ring, माप(ns->ethtool.ring));
-पूर्ण
+	memcpy(ring, &ns->ethtool.ring, sizeof(ns->ethtool.ring));
+}
 
-अटल पूर्णांक nsim_set_ringparam(काष्ठा net_device *dev,
-			      काष्ठा ethtool_ringparam *ring)
-अणु
-	काष्ठा netdevsim *ns = netdev_priv(dev);
+static int nsim_set_ringparam(struct net_device *dev,
+			      struct ethtool_ringparam *ring)
+{
+	struct netdevsim *ns = netdev_priv(dev);
 
-	स_नकल(&ns->ethtool.ring, ring, माप(ns->ethtool.ring));
-	वापस 0;
-पूर्ण
+	memcpy(&ns->ethtool.ring, ring, sizeof(ns->ethtool.ring));
+	return 0;
+}
 
-अटल पूर्णांक
-nsim_get_fecparam(काष्ठा net_device *dev, काष्ठा ethtool_fecparam *fecparam)
-अणु
-	काष्ठा netdevsim *ns = netdev_priv(dev);
+static int
+nsim_get_fecparam(struct net_device *dev, struct ethtool_fecparam *fecparam)
+{
+	struct netdevsim *ns = netdev_priv(dev);
 
-	अगर (ns->ethtool.get_err)
-		वापस -ns->ethtool.get_err;
-	स_नकल(fecparam, &ns->ethtool.fec, माप(ns->ethtool.fec));
-	वापस 0;
-पूर्ण
+	if (ns->ethtool.get_err)
+		return -ns->ethtool.get_err;
+	memcpy(fecparam, &ns->ethtool.fec, sizeof(ns->ethtool.fec));
+	return 0;
+}
 
-अटल पूर्णांक
-nsim_set_fecparam(काष्ठा net_device *dev, काष्ठा ethtool_fecparam *fecparam)
-अणु
-	काष्ठा netdevsim *ns = netdev_priv(dev);
+static int
+nsim_set_fecparam(struct net_device *dev, struct ethtool_fecparam *fecparam)
+{
+	struct netdevsim *ns = netdev_priv(dev);
 	u32 fec;
 
-	अगर (ns->ethtool.set_err)
-		वापस -ns->ethtool.set_err;
-	स_नकल(&ns->ethtool.fec, fecparam, माप(ns->ethtool.fec));
+	if (ns->ethtool.set_err)
+		return -ns->ethtool.set_err;
+	memcpy(&ns->ethtool.fec, fecparam, sizeof(ns->ethtool.fec));
 	fec = fecparam->fec;
-	अगर (fec == ETHTOOL_FEC_AUTO)
+	if (fec == ETHTOOL_FEC_AUTO)
 		fec |= ETHTOOL_FEC_OFF;
 	fec |= ETHTOOL_FEC_NONE;
 	ns->ethtool.fec.active_fec = 1 << (fls(fec) - 1);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा ethtool_ops nsim_ethtool_ops = अणु
+static const struct ethtool_ops nsim_ethtool_ops = {
 	.supported_coalesce_params	= ETHTOOL_COALESCE_ALL_PARAMS,
-	.get_छोड़ो_stats	        = nsim_get_छोड़ो_stats,
-	.get_छोड़ोparam		        = nsim_get_छोड़ोparam,
-	.set_छोड़ोparam		        = nsim_set_छोड़ोparam,
+	.get_pause_stats	        = nsim_get_pause_stats,
+	.get_pauseparam		        = nsim_get_pauseparam,
+	.set_pauseparam		        = nsim_set_pauseparam,
 	.set_coalesce			= nsim_set_coalesce,
 	.get_coalesce			= nsim_get_coalesce,
 	.get_ringparam			= nsim_get_ringparam,
 	.set_ringparam			= nsim_set_ringparam,
 	.get_fecparam			= nsim_get_fecparam,
 	.set_fecparam			= nsim_set_fecparam,
-पूर्ण;
+};
 
-अटल व्योम nsim_ethtool_ring_init(काष्ठा netdevsim *ns)
-अणु
+static void nsim_ethtool_ring_init(struct netdevsim *ns)
+{
 	ns->ethtool.ring.rx_max_pending = 4096;
 	ns->ethtool.ring.rx_jumbo_max_pending = 4096;
 	ns->ethtool.ring.rx_mini_max_pending = 4096;
 	ns->ethtool.ring.tx_max_pending = 4096;
-पूर्ण
+}
 
-व्योम nsim_ethtool_init(काष्ठा netdevsim *ns)
-अणु
-	काष्ठा dentry *ethtool, *dir;
+void nsim_ethtool_init(struct netdevsim *ns)
+{
+	struct dentry *ethtool, *dir;
 
 	ns->netdev->ethtool_ops = &nsim_ethtool_ops;
 
@@ -145,9 +144,9 @@ nsim_set_fecparam(काष्ठा net_device *dev, काष्ठा ethtool
 
 	dir = debugfs_create_dir("pause", ethtool);
 	debugfs_create_bool("report_stats_rx", 0600, dir,
-			    &ns->ethtool.छोड़ोparam.report_stats_rx);
+			    &ns->ethtool.pauseparam.report_stats_rx);
 	debugfs_create_bool("report_stats_tx", 0600, dir,
-			    &ns->ethtool.छोड़ोparam.report_stats_tx);
+			    &ns->ethtool.pauseparam.report_stats_tx);
 
 	dir = debugfs_create_dir("ring", ethtool);
 	debugfs_create_u32("rx_max_pending", 0600, dir,
@@ -158,4 +157,4 @@ nsim_set_fecparam(काष्ठा net_device *dev, काष्ठा ethtool
 			   &ns->ethtool.ring.rx_mini_max_pending);
 	debugfs_create_u32("tx_max_pending", 0600, dir,
 			   &ns->ethtool.ring.tx_max_pending);
-पूर्ण
+}

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * linux/mm/slab.c
  * Written by Mark Hemment, 1996/97.
@@ -7,10 +6,10 @@
  *
  * kmem_cache_destroy() + some cleanup - 1999 Andrea Arcangeli
  *
- * Major cleanup, dअगरferent bufctl logic, per-cpu arrays
+ * Major cleanup, different bufctl logic, per-cpu arrays
  *	(c) 2000 Manfred Spraul
  *
- * Cleanup, make the head arrays unconditional, preparation क्रम NUMA
+ * Cleanup, make the head arrays unconditional, preparation for NUMA
  * 	(c) 2002 Manfred Spraul
  *
  * An implementation of the Slab Allocator as described in outline in;
@@ -18,61 +17,61 @@
  *	Pub: Prentice Hall	ISBN 0-13-101908-2
  * or with a little more detail in;
  *	The Slab Allocator: An Object-Caching Kernel Memory Allocator
- *	Jeff Bonwick (Sun Microप्रणालीs).
+ *	Jeff Bonwick (Sun Microsystems).
  *	Presented at: USENIX Summer 1994 Technical Conference
  *
- * The memory is organized in caches, one cache क्रम each object type.
- * (e.g. inode_cache, dentry_cache, buffer_head, vm_area_काष्ठा)
- * Each cache consists out of many sद_असल (they are small (usually one
- * page दीर्घ) and always contiguous), and each slab contains multiple
+ * The memory is organized in caches, one cache for each object type.
+ * (e.g. inode_cache, dentry_cache, buffer_head, vm_area_struct)
+ * Each cache consists out of many slabs (they are small (usually one
+ * page long) and always contiguous), and each slab contains multiple
  * initialized objects.
  *
- * This means, that your स्थिरructor is used only क्रम newly allocated
- * sद_असल and you must pass objects with the same initializations to
- * kmem_cache_मुक्त.
+ * This means, that your constructor is used only for newly allocated
+ * slabs and you must pass objects with the same initializations to
+ * kmem_cache_free.
  *
  * Each cache can only support one memory type (GFP_DMA, GFP_HIGHMEM,
  * normal). If you need a special memory type, then must create a new
- * cache क्रम that memory type.
+ * cache for that memory type.
  *
- * In order to reduce fragmentation, the sद_असल are sorted in 3 groups:
- *   full sद_असल with 0 मुक्त objects
- *   partial sद_असल
- *   empty sद_असल with no allocated objects
+ * In order to reduce fragmentation, the slabs are sorted in 3 groups:
+ *   full slabs with 0 free objects
+ *   partial slabs
+ *   empty slabs with no allocated objects
  *
- * If partial sद_असल exist, then new allocations come from these sद_असल,
- * otherwise from empty sद_असल or new sद_असल are allocated.
+ * If partial slabs exist, then new allocations come from these slabs,
+ * otherwise from empty slabs or new slabs are allocated.
  *
- * kmem_cache_destroy() CAN CRASH अगर you try to allocate from the cache
+ * kmem_cache_destroy() CAN CRASH if you try to allocate from the cache
  * during kmem_cache_destroy(). The caller must prevent concurrent allocs.
  *
- * Each cache has a लघु per-cpu head array, most allocs
- * and मुक्तs go पूर्णांकo that array, and अगर that array overflows, then 1/2
- * of the entries in the array are given back पूर्णांकo the global cache.
+ * Each cache has a short per-cpu head array, most allocs
+ * and frees go into that array, and if that array overflows, then 1/2
+ * of the entries in the array are given back into the global cache.
  * The head array is strictly LIFO and should improve the cache hit rates.
  * On SMP, it additionally reduces the spinlock operations.
  *
- * The c_cpuarray may not be पढ़ो with enabled local पूर्णांकerrupts -
+ * The c_cpuarray may not be read with enabled local interrupts -
  * it's changed with a smp_call_function().
  *
  * SMP synchronization:
- *  स्थिरructors and deकाष्ठाors are called without any locking.
- *  Several members in काष्ठा kmem_cache and काष्ठा slab never change, they
+ *  constructors and destructors are called without any locking.
+ *  Several members in struct kmem_cache and struct slab never change, they
  *	are accessed without any locking.
  *  The per-cpu arrays are never accessed from the wrong cpu, no locking,
- *  	and local पूर्णांकerrupts are disabled so slab code is preempt-safe.
- *  The non-स्थिरant members are रक्षित with a per-cache irq spinlock.
+ *  	and local interrupts are disabled so slab code is preempt-safe.
+ *  The non-constant members are protected with a per-cache irq spinlock.
  *
  * Many thanks to Mark Hemment, who wrote another per-cpu slab patch
  * in 2000 - many ideas in the current implementation are derived from
  * his patch.
  *
- * Further notes from the original करोcumentation:
+ * Further notes from the original documentation:
  *
- * 11 April '97.  Started multi-thपढ़ोing - markhe
- *	The global cache-chain is रक्षित by the mutex 'slab_mutex'.
+ * 11 April '97.  Started multi-threading - markhe
+ *	The global cache-chain is protected by the mutex 'slab_mutex'.
  *	The sem is only needed when accessing/extending the cache-chain, which
- *	can never happen inside an पूर्णांकerrupt (kmem_cache_create(),
+ *	can never happen inside an interrupt (kmem_cache_create(),
  *	kmem_cache_shrink() and kmem_cache_reap()).
  *
  *	At present, each engine can be growing a cache.  This should be blocked.
@@ -83,489 +82,489 @@
  *	Alok N Kataria <alokk@calsoftinc.com>
  *	Christoph Lameter <christoph@lameter.com>
  *
- *	Modअगरied the slab allocator to be node aware on NUMA प्रणालीs.
- *	Each node has its own list of partial, मुक्त and full sद_असल.
- *	All object allocations क्रम a node occur from node specअगरic slab lists.
+ *	Modified the slab allocator to be node aware on NUMA systems.
+ *	Each node has its own list of partial, free and full slabs.
+ *	All object allocations for a node occur from node specific slab lists.
  */
 
-#समावेश	<linux/slab.h>
-#समावेश	<linux/mm.h>
-#समावेश	<linux/poison.h>
-#समावेश	<linux/swap.h>
-#समावेश	<linux/cache.h>
-#समावेश	<linux/पूर्णांकerrupt.h>
-#समावेश	<linux/init.h>
-#समावेश	<linux/compiler.h>
-#समावेश	<linux/cpuset.h>
-#समावेश	<linux/proc_fs.h>
-#समावेश	<linux/seq_file.h>
-#समावेश	<linux/notअगरier.h>
-#समावेश	<linux/kallsyms.h>
-#समावेश	<linux/kfence.h>
-#समावेश	<linux/cpu.h>
-#समावेश	<linux/sysctl.h>
-#समावेश	<linux/module.h>
-#समावेश	<linux/rcupdate.h>
-#समावेश	<linux/माला.स>
-#समावेश	<linux/uaccess.h>
-#समावेश	<linux/nodemask.h>
-#समावेश	<linux/kmemleak.h>
-#समावेश	<linux/mempolicy.h>
-#समावेश	<linux/mutex.h>
-#समावेश	<linux/fault-inject.h>
-#समावेश	<linux/rपंचांगutex.h>
-#समावेश	<linux/reciprocal_भाग.h>
-#समावेश	<linux/debugobjects.h>
-#समावेश	<linux/memory.h>
-#समावेश	<linux/prefetch.h>
-#समावेश	<linux/sched/task_stack.h>
+#include	<linux/slab.h>
+#include	<linux/mm.h>
+#include	<linux/poison.h>
+#include	<linux/swap.h>
+#include	<linux/cache.h>
+#include	<linux/interrupt.h>
+#include	<linux/init.h>
+#include	<linux/compiler.h>
+#include	<linux/cpuset.h>
+#include	<linux/proc_fs.h>
+#include	<linux/seq_file.h>
+#include	<linux/notifier.h>
+#include	<linux/kallsyms.h>
+#include	<linux/kfence.h>
+#include	<linux/cpu.h>
+#include	<linux/sysctl.h>
+#include	<linux/module.h>
+#include	<linux/rcupdate.h>
+#include	<linux/string.h>
+#include	<linux/uaccess.h>
+#include	<linux/nodemask.h>
+#include	<linux/kmemleak.h>
+#include	<linux/mempolicy.h>
+#include	<linux/mutex.h>
+#include	<linux/fault-inject.h>
+#include	<linux/rtmutex.h>
+#include	<linux/reciprocal_div.h>
+#include	<linux/debugobjects.h>
+#include	<linux/memory.h>
+#include	<linux/prefetch.h>
+#include	<linux/sched/task_stack.h>
 
-#समावेश	<net/sock.h>
+#include	<net/sock.h>
 
-#समावेश	<यंत्र/cacheflush.h>
-#समावेश	<यंत्र/tlbflush.h>
-#समावेश	<यंत्र/page.h>
+#include	<asm/cacheflush.h>
+#include	<asm/tlbflush.h>
+#include	<asm/page.h>
 
-#समावेश <trace/events/kस्मृति.स>
+#include <trace/events/kmem.h>
 
-#समावेश	"internal.h"
+#include	"internal.h"
 
-#समावेश	"slab.h"
+#include	"slab.h"
 
 /*
- * DEBUG	- 1 क्रम kmem_cache_create() to honour; SLAB_RED_ZONE & SLAB_POISON.
- *		  0 क्रम faster, smaller code (especially in the critical paths).
+ * DEBUG	- 1 for kmem_cache_create() to honour; SLAB_RED_ZONE & SLAB_POISON.
+ *		  0 for faster, smaller code (especially in the critical paths).
  *
- * STATS	- 1 to collect stats क्रम /proc/slabinfo.
- *		  0 क्रम faster, smaller code (especially in the critical paths).
+ * STATS	- 1 to collect stats for /proc/slabinfo.
+ *		  0 for faster, smaller code (especially in the critical paths).
  *
- * FORCED_DEBUG	- 1 enables SLAB_RED_ZONE and SLAB_POISON (अगर possible)
+ * FORCED_DEBUG	- 1 enables SLAB_RED_ZONE and SLAB_POISON (if possible)
  */
 
-#अगर_घोषित CONFIG_DEBUG_SLAB
-#घोषणा	DEBUG		1
-#घोषणा	STATS		1
-#घोषणा	FORCED_DEBUG	1
-#अन्यथा
-#घोषणा	DEBUG		0
-#घोषणा	STATS		0
-#घोषणा	FORCED_DEBUG	0
-#पूर्ण_अगर
+#ifdef CONFIG_DEBUG_SLAB
+#define	DEBUG		1
+#define	STATS		1
+#define	FORCED_DEBUG	1
+#else
+#define	DEBUG		0
+#define	STATS		0
+#define	FORCED_DEBUG	0
+#endif
 
 /* Shouldn't this be in a header file somewhere? */
-#घोषणा	BYTES_PER_WORD		माप(व्योम *)
-#घोषणा	REDZONE_ALIGN		max(BYTES_PER_WORD, __alignof__(अचिन्हित दीर्घ दीर्घ))
+#define	BYTES_PER_WORD		sizeof(void *)
+#define	REDZONE_ALIGN		max(BYTES_PER_WORD, __alignof__(unsigned long long))
 
-#अगर_अघोषित ARCH_KMALLOC_FLAGS
-#घोषणा ARCH_KMALLOC_FLAGS SLAB_HWCACHE_ALIGN
-#पूर्ण_अगर
+#ifndef ARCH_KMALLOC_FLAGS
+#define ARCH_KMALLOC_FLAGS SLAB_HWCACHE_ALIGN
+#endif
 
-#घोषणा FREELIST_BYTE_INDEX (((PAGE_SIZE >> BITS_PER_BYTE) \
+#define FREELIST_BYTE_INDEX (((PAGE_SIZE >> BITS_PER_BYTE) \
 				<= SLAB_OBJ_MIN_SIZE) ? 1 : 0)
 
-#अगर FREELIST_BYTE_INDEX
-प्रकार अचिन्हित अक्षर मुक्तlist_idx_t;
-#अन्यथा
-प्रकार अचिन्हित लघु मुक्तlist_idx_t;
-#पूर्ण_अगर
+#if FREELIST_BYTE_INDEX
+typedef unsigned char freelist_idx_t;
+#else
+typedef unsigned short freelist_idx_t;
+#endif
 
-#घोषणा SLAB_OBJ_MAX_NUM ((1 << माप(मुक्तlist_idx_t) * BITS_PER_BYTE) - 1)
+#define SLAB_OBJ_MAX_NUM ((1 << sizeof(freelist_idx_t) * BITS_PER_BYTE) - 1)
 
 /*
- * काष्ठा array_cache
+ * struct array_cache
  *
  * Purpose:
  * - LIFO ordering, to hand out cache-warm objects from _alloc
  * - reduce the number of linked list operations
  * - reduce spinlock operations
  *
- * The limit is stored in the per-cpu काष्ठाure to reduce the data cache
- * footprपूर्णांक.
+ * The limit is stored in the per-cpu structure to reduce the data cache
+ * footprint.
  *
  */
-काष्ठा array_cache अणु
-	अचिन्हित पूर्णांक avail;
-	अचिन्हित पूर्णांक limit;
-	अचिन्हित पूर्णांक batchcount;
-	अचिन्हित पूर्णांक touched;
-	व्योम *entry[];	/*
-			 * Must have this definition in here क्रम the proper
-			 * alignment of array_cache. Also simplअगरies accessing
+struct array_cache {
+	unsigned int avail;
+	unsigned int limit;
+	unsigned int batchcount;
+	unsigned int touched;
+	void *entry[];	/*
+			 * Must have this definition in here for the proper
+			 * alignment of array_cache. Also simplifies accessing
 			 * the entries.
 			 */
-पूर्ण;
+};
 
-काष्ठा alien_cache अणु
+struct alien_cache {
 	spinlock_t lock;
-	काष्ठा array_cache ac;
-पूर्ण;
+	struct array_cache ac;
+};
 
 /*
- * Need this क्रम bootstrapping a per node allocator.
+ * Need this for bootstrapping a per node allocator.
  */
-#घोषणा NUM_INIT_LISTS (2 * MAX_NUMNODES)
-अटल काष्ठा kmem_cache_node __initdata init_kmem_cache_node[NUM_INIT_LISTS];
-#घोषणा	CACHE_CACHE 0
-#घोषणा	SIZE_NODE (MAX_NUMNODES)
+#define NUM_INIT_LISTS (2 * MAX_NUMNODES)
+static struct kmem_cache_node __initdata init_kmem_cache_node[NUM_INIT_LISTS];
+#define	CACHE_CACHE 0
+#define	SIZE_NODE (MAX_NUMNODES)
 
-अटल पूर्णांक drain_मुक्तlist(काष्ठा kmem_cache *cache,
-			काष्ठा kmem_cache_node *n, पूर्णांक toमुक्त);
-अटल व्योम मुक्त_block(काष्ठा kmem_cache *cachep, व्योम **objpp, पूर्णांक len,
-			पूर्णांक node, काष्ठा list_head *list);
-अटल व्योम sद_असल_destroy(काष्ठा kmem_cache *cachep, काष्ठा list_head *list);
-अटल पूर्णांक enable_cpucache(काष्ठा kmem_cache *cachep, gfp_t gfp);
-अटल व्योम cache_reap(काष्ठा work_काष्ठा *unused);
+static int drain_freelist(struct kmem_cache *cache,
+			struct kmem_cache_node *n, int tofree);
+static void free_block(struct kmem_cache *cachep, void **objpp, int len,
+			int node, struct list_head *list);
+static void slabs_destroy(struct kmem_cache *cachep, struct list_head *list);
+static int enable_cpucache(struct kmem_cache *cachep, gfp_t gfp);
+static void cache_reap(struct work_struct *unused);
 
-अटल अंतरभूत व्योम fixup_objमुक्तlist_debug(काष्ठा kmem_cache *cachep,
-						व्योम **list);
-अटल अंतरभूत व्योम fixup_slab_list(काष्ठा kmem_cache *cachep,
-				काष्ठा kmem_cache_node *n, काष्ठा page *page,
-				व्योम **list);
-अटल पूर्णांक slab_early_init = 1;
+static inline void fixup_objfreelist_debug(struct kmem_cache *cachep,
+						void **list);
+static inline void fixup_slab_list(struct kmem_cache *cachep,
+				struct kmem_cache_node *n, struct page *page,
+				void **list);
+static int slab_early_init = 1;
 
-#घोषणा INDEX_NODE kदो_स्मृति_index(माप(काष्ठा kmem_cache_node))
+#define INDEX_NODE kmalloc_index(sizeof(struct kmem_cache_node))
 
-अटल व्योम kmem_cache_node_init(काष्ठा kmem_cache_node *parent)
-अणु
-	INIT_LIST_HEAD(&parent->sद_असल_full);
-	INIT_LIST_HEAD(&parent->sद_असल_partial);
-	INIT_LIST_HEAD(&parent->sद_असल_मुक्त);
-	parent->total_sद_असल = 0;
-	parent->मुक्त_sद_असल = 0;
-	parent->shared = शून्य;
-	parent->alien = शून्य;
+static void kmem_cache_node_init(struct kmem_cache_node *parent)
+{
+	INIT_LIST_HEAD(&parent->slabs_full);
+	INIT_LIST_HEAD(&parent->slabs_partial);
+	INIT_LIST_HEAD(&parent->slabs_free);
+	parent->total_slabs = 0;
+	parent->free_slabs = 0;
+	parent->shared = NULL;
+	parent->alien = NULL;
 	parent->colour_next = 0;
 	spin_lock_init(&parent->list_lock);
-	parent->मुक्त_objects = 0;
-	parent->मुक्त_touched = 0;
-पूर्ण
+	parent->free_objects = 0;
+	parent->free_touched = 0;
+}
 
-#घोषणा MAKE_LIST(cachep, listp, slab, nodeid)				\
-	करो अणु								\
+#define MAKE_LIST(cachep, listp, slab, nodeid)				\
+	do {								\
 		INIT_LIST_HEAD(listp);					\
 		list_splice(&get_node(cachep, nodeid)->slab, listp);	\
-	पूर्ण जबतक (0)
+	} while (0)
 
-#घोषणा	MAKE_ALL_LISTS(cachep, ptr, nodeid)				\
-	करो अणु								\
-	MAKE_LIST((cachep), (&(ptr)->sद_असल_full), sद_असल_full, nodeid);	\
-	MAKE_LIST((cachep), (&(ptr)->sद_असल_partial), sद_असल_partial, nodeid); \
-	MAKE_LIST((cachep), (&(ptr)->sद_असल_मुक्त), sद_असल_मुक्त, nodeid);	\
-	पूर्ण जबतक (0)
+#define	MAKE_ALL_LISTS(cachep, ptr, nodeid)				\
+	do {								\
+	MAKE_LIST((cachep), (&(ptr)->slabs_full), slabs_full, nodeid);	\
+	MAKE_LIST((cachep), (&(ptr)->slabs_partial), slabs_partial, nodeid); \
+	MAKE_LIST((cachep), (&(ptr)->slabs_free), slabs_free, nodeid);	\
+	} while (0)
 
-#घोषणा CFLGS_OBJFREELIST_SLAB	((slab_flags_t __क्रमce)0x40000000U)
-#घोषणा CFLGS_OFF_SLAB		((slab_flags_t __क्रमce)0x80000000U)
-#घोषणा	OBJFREELIST_SLAB(x)	((x)->flags & CFLGS_OBJFREELIST_SLAB)
-#घोषणा	OFF_SLAB(x)	((x)->flags & CFLGS_OFF_SLAB)
+#define CFLGS_OBJFREELIST_SLAB	((slab_flags_t __force)0x40000000U)
+#define CFLGS_OFF_SLAB		((slab_flags_t __force)0x80000000U)
+#define	OBJFREELIST_SLAB(x)	((x)->flags & CFLGS_OBJFREELIST_SLAB)
+#define	OFF_SLAB(x)	((x)->flags & CFLGS_OFF_SLAB)
 
-#घोषणा BATCHREFILL_LIMIT	16
+#define BATCHREFILL_LIMIT	16
 /*
- * Optimization question: fewer reaps means less probability क्रम unnecessary
+ * Optimization question: fewer reaps means less probability for unnecessary
  * cpucache drain/refill cycles.
  *
  * OTOH the cpuarrays can contain lots of objects,
- * which could lock up otherwise मुक्तable sद_असल.
+ * which could lock up otherwise freeable slabs.
  */
-#घोषणा REAPTIMEOUT_AC		(2*HZ)
-#घोषणा REAPTIMEOUT_NODE	(4*HZ)
+#define REAPTIMEOUT_AC		(2*HZ)
+#define REAPTIMEOUT_NODE	(4*HZ)
 
-#अगर STATS
-#घोषणा	STATS_INC_ACTIVE(x)	((x)->num_active++)
-#घोषणा	STATS_DEC_ACTIVE(x)	((x)->num_active--)
-#घोषणा	STATS_INC_ALLOCED(x)	((x)->num_allocations++)
-#घोषणा	STATS_INC_GROWN(x)	((x)->grown++)
-#घोषणा	STATS_ADD_REAPED(x, y)	((x)->reaped += (y))
-#घोषणा	STATS_SET_HIGH(x)						\
-	करो अणु								\
-		अगर ((x)->num_active > (x)->high_mark)			\
+#if STATS
+#define	STATS_INC_ACTIVE(x)	((x)->num_active++)
+#define	STATS_DEC_ACTIVE(x)	((x)->num_active--)
+#define	STATS_INC_ALLOCED(x)	((x)->num_allocations++)
+#define	STATS_INC_GROWN(x)	((x)->grown++)
+#define	STATS_ADD_REAPED(x, y)	((x)->reaped += (y))
+#define	STATS_SET_HIGH(x)						\
+	do {								\
+		if ((x)->num_active > (x)->high_mark)			\
 			(x)->high_mark = (x)->num_active;		\
-	पूर्ण जबतक (0)
-#घोषणा	STATS_INC_ERR(x)	((x)->errors++)
-#घोषणा	STATS_INC_NODEALLOCS(x)	((x)->node_allocs++)
-#घोषणा	STATS_INC_NODEFREES(x)	((x)->node_मुक्तs++)
-#घोषणा STATS_INC_ACOVERFLOW(x)   ((x)->node_overflow++)
-#घोषणा	STATS_SET_FREEABLE(x, i)					\
-	करो अणु								\
-		अगर ((x)->max_मुक्तable < i)				\
-			(x)->max_मुक्तable = i;				\
-	पूर्ण जबतक (0)
-#घोषणा STATS_INC_ALLOCHIT(x)	atomic_inc(&(x)->allochit)
-#घोषणा STATS_INC_ALLOCMISS(x)	atomic_inc(&(x)->allocmiss)
-#घोषणा STATS_INC_FREEHIT(x)	atomic_inc(&(x)->मुक्तhit)
-#घोषणा STATS_INC_FREEMISS(x)	atomic_inc(&(x)->मुक्तmiss)
-#अन्यथा
-#घोषणा	STATS_INC_ACTIVE(x)	करो अणु पूर्ण जबतक (0)
-#घोषणा	STATS_DEC_ACTIVE(x)	करो अणु पूर्ण जबतक (0)
-#घोषणा	STATS_INC_ALLOCED(x)	करो अणु पूर्ण जबतक (0)
-#घोषणा	STATS_INC_GROWN(x)	करो अणु पूर्ण जबतक (0)
-#घोषणा	STATS_ADD_REAPED(x, y)	करो अणु (व्योम)(y); पूर्ण जबतक (0)
-#घोषणा	STATS_SET_HIGH(x)	करो अणु पूर्ण जबतक (0)
-#घोषणा	STATS_INC_ERR(x)	करो अणु पूर्ण जबतक (0)
-#घोषणा	STATS_INC_NODEALLOCS(x)	करो अणु पूर्ण जबतक (0)
-#घोषणा	STATS_INC_NODEFREES(x)	करो अणु पूर्ण जबतक (0)
-#घोषणा STATS_INC_ACOVERFLOW(x)   करो अणु पूर्ण जबतक (0)
-#घोषणा	STATS_SET_FREEABLE(x, i) करो अणु पूर्ण जबतक (0)
-#घोषणा STATS_INC_ALLOCHIT(x)	करो अणु पूर्ण जबतक (0)
-#घोषणा STATS_INC_ALLOCMISS(x)	करो अणु पूर्ण जबतक (0)
-#घोषणा STATS_INC_FREEHIT(x)	करो अणु पूर्ण जबतक (0)
-#घोषणा STATS_INC_FREEMISS(x)	करो अणु पूर्ण जबतक (0)
-#पूर्ण_अगर
+	} while (0)
+#define	STATS_INC_ERR(x)	((x)->errors++)
+#define	STATS_INC_NODEALLOCS(x)	((x)->node_allocs++)
+#define	STATS_INC_NODEFREES(x)	((x)->node_frees++)
+#define STATS_INC_ACOVERFLOW(x)   ((x)->node_overflow++)
+#define	STATS_SET_FREEABLE(x, i)					\
+	do {								\
+		if ((x)->max_freeable < i)				\
+			(x)->max_freeable = i;				\
+	} while (0)
+#define STATS_INC_ALLOCHIT(x)	atomic_inc(&(x)->allochit)
+#define STATS_INC_ALLOCMISS(x)	atomic_inc(&(x)->allocmiss)
+#define STATS_INC_FREEHIT(x)	atomic_inc(&(x)->freehit)
+#define STATS_INC_FREEMISS(x)	atomic_inc(&(x)->freemiss)
+#else
+#define	STATS_INC_ACTIVE(x)	do { } while (0)
+#define	STATS_DEC_ACTIVE(x)	do { } while (0)
+#define	STATS_INC_ALLOCED(x)	do { } while (0)
+#define	STATS_INC_GROWN(x)	do { } while (0)
+#define	STATS_ADD_REAPED(x, y)	do { (void)(y); } while (0)
+#define	STATS_SET_HIGH(x)	do { } while (0)
+#define	STATS_INC_ERR(x)	do { } while (0)
+#define	STATS_INC_NODEALLOCS(x)	do { } while (0)
+#define	STATS_INC_NODEFREES(x)	do { } while (0)
+#define STATS_INC_ACOVERFLOW(x)   do { } while (0)
+#define	STATS_SET_FREEABLE(x, i) do { } while (0)
+#define STATS_INC_ALLOCHIT(x)	do { } while (0)
+#define STATS_INC_ALLOCMISS(x)	do { } while (0)
+#define STATS_INC_FREEHIT(x)	do { } while (0)
+#define STATS_INC_FREEMISS(x)	do { } while (0)
+#endif
 
-#अगर DEBUG
+#if DEBUG
 
 /*
  * memory layout of objects:
  * 0		: objp
  * 0 .. cachep->obj_offset - BYTES_PER_WORD - 1: padding. This ensures that
  * 		the end of an object is aligned with the end of the real
- * 		allocation. Catches ग_लिखोs behind the end of the allocation.
+ * 		allocation. Catches writes behind the end of the allocation.
  * cachep->obj_offset - BYTES_PER_WORD .. cachep->obj_offset - 1:
  * 		redzone word.
  * cachep->obj_offset: The real object.
- * cachep->size - 2* BYTES_PER_WORD: redzone word [BYTES_PER_WORD दीर्घ]
+ * cachep->size - 2* BYTES_PER_WORD: redzone word [BYTES_PER_WORD long]
  * cachep->size - 1* BYTES_PER_WORD: last caller address
- *					[BYTES_PER_WORD दीर्घ]
+ *					[BYTES_PER_WORD long]
  */
-अटल पूर्णांक obj_offset(काष्ठा kmem_cache *cachep)
-अणु
-	वापस cachep->obj_offset;
-पूर्ण
+static int obj_offset(struct kmem_cache *cachep)
+{
+	return cachep->obj_offset;
+}
 
-अटल अचिन्हित दीर्घ दीर्घ *dbg_redzone1(काष्ठा kmem_cache *cachep, व्योम *objp)
-अणु
+static unsigned long long *dbg_redzone1(struct kmem_cache *cachep, void *objp)
+{
 	BUG_ON(!(cachep->flags & SLAB_RED_ZONE));
-	वापस (अचिन्हित दीर्घ दीर्घ *) (objp + obj_offset(cachep) -
-				      माप(अचिन्हित दीर्घ दीर्घ));
-पूर्ण
+	return (unsigned long long *) (objp + obj_offset(cachep) -
+				      sizeof(unsigned long long));
+}
 
-अटल अचिन्हित दीर्घ दीर्घ *dbg_redzone2(काष्ठा kmem_cache *cachep, व्योम *objp)
-अणु
+static unsigned long long *dbg_redzone2(struct kmem_cache *cachep, void *objp)
+{
 	BUG_ON(!(cachep->flags & SLAB_RED_ZONE));
-	अगर (cachep->flags & SLAB_STORE_USER)
-		वापस (अचिन्हित दीर्घ दीर्घ *)(objp + cachep->size -
-					      माप(अचिन्हित दीर्घ दीर्घ) -
+	if (cachep->flags & SLAB_STORE_USER)
+		return (unsigned long long *)(objp + cachep->size -
+					      sizeof(unsigned long long) -
 					      REDZONE_ALIGN);
-	वापस (अचिन्हित दीर्घ दीर्घ *) (objp + cachep->size -
-				       माप(अचिन्हित दीर्घ दीर्घ));
-पूर्ण
+	return (unsigned long long *) (objp + cachep->size -
+				       sizeof(unsigned long long));
+}
 
-अटल व्योम **dbg_userword(काष्ठा kmem_cache *cachep, व्योम *objp)
-अणु
+static void **dbg_userword(struct kmem_cache *cachep, void *objp)
+{
 	BUG_ON(!(cachep->flags & SLAB_STORE_USER));
-	वापस (व्योम **)(objp + cachep->size - BYTES_PER_WORD);
-पूर्ण
+	return (void **)(objp + cachep->size - BYTES_PER_WORD);
+}
 
-#अन्यथा
+#else
 
-#घोषणा obj_offset(x)			0
-#घोषणा dbg_redzone1(cachep, objp)	(अणुBUG(); (अचिन्हित दीर्घ दीर्घ *)शून्य;पूर्ण)
-#घोषणा dbg_redzone2(cachep, objp)	(अणुBUG(); (अचिन्हित दीर्घ दीर्घ *)शून्य;पूर्ण)
-#घोषणा dbg_userword(cachep, objp)	(अणुBUG(); (व्योम **)शून्य;पूर्ण)
+#define obj_offset(x)			0
+#define dbg_redzone1(cachep, objp)	({BUG(); (unsigned long long *)NULL;})
+#define dbg_redzone2(cachep, objp)	({BUG(); (unsigned long long *)NULL;})
+#define dbg_userword(cachep, objp)	({BUG(); (void **)NULL;})
 
-#पूर्ण_अगर
+#endif
 
 /*
- * Do not go above this order unless 0 objects fit पूर्णांकo the slab or
+ * Do not go above this order unless 0 objects fit into the slab or
  * overridden on the command line.
  */
-#घोषणा	SLAB_MAX_ORDER_HI	1
-#घोषणा	SLAB_MAX_ORDER_LO	0
-अटल पूर्णांक slab_max_order = SLAB_MAX_ORDER_LO;
-अटल bool slab_max_order_set __initdata;
+#define	SLAB_MAX_ORDER_HI	1
+#define	SLAB_MAX_ORDER_LO	0
+static int slab_max_order = SLAB_MAX_ORDER_LO;
+static bool slab_max_order_set __initdata;
 
-अटल अंतरभूत व्योम *index_to_obj(काष्ठा kmem_cache *cache, काष्ठा page *page,
-				 अचिन्हित पूर्णांक idx)
-अणु
-	वापस page->s_mem + cache->size * idx;
-पूर्ण
+static inline void *index_to_obj(struct kmem_cache *cache, struct page *page,
+				 unsigned int idx)
+{
+	return page->s_mem + cache->size * idx;
+}
 
-#घोषणा BOOT_CPUCACHE_ENTRIES	1
-/* पूर्णांकernal cache of cache description objs */
-अटल काष्ठा kmem_cache kmem_cache_boot = अणु
+#define BOOT_CPUCACHE_ENTRIES	1
+/* internal cache of cache description objs */
+static struct kmem_cache kmem_cache_boot = {
 	.batchcount = 1,
 	.limit = BOOT_CPUCACHE_ENTRIES,
 	.shared = 1,
-	.size = माप(काष्ठा kmem_cache),
+	.size = sizeof(struct kmem_cache),
 	.name = "kmem_cache",
-पूर्ण;
+};
 
-अटल DEFINE_PER_CPU(काष्ठा delayed_work, slab_reap_work);
+static DEFINE_PER_CPU(struct delayed_work, slab_reap_work);
 
-अटल अंतरभूत काष्ठा array_cache *cpu_cache_get(काष्ठा kmem_cache *cachep)
-अणु
-	वापस this_cpu_ptr(cachep->cpu_cache);
-पूर्ण
+static inline struct array_cache *cpu_cache_get(struct kmem_cache *cachep)
+{
+	return this_cpu_ptr(cachep->cpu_cache);
+}
 
 /*
- * Calculate the number of objects and left-over bytes क्रम a given buffer size.
+ * Calculate the number of objects and left-over bytes for a given buffer size.
  */
-अटल अचिन्हित पूर्णांक cache_estimate(अचिन्हित दीर्घ gfporder, माप_प्रकार buffer_size,
-		slab_flags_t flags, माप_प्रकार *left_over)
-अणु
-	अचिन्हित पूर्णांक num;
-	माप_प्रकार slab_size = PAGE_SIZE << gfporder;
+static unsigned int cache_estimate(unsigned long gfporder, size_t buffer_size,
+		slab_flags_t flags, size_t *left_over)
+{
+	unsigned int num;
+	size_t slab_size = PAGE_SIZE << gfporder;
 
 	/*
-	 * The slab management काष्ठाure can be either off the slab or
-	 * on it. For the latter हाल, the memory allocated क्रम a
-	 * slab is used क्रम:
+	 * The slab management structure can be either off the slab or
+	 * on it. For the latter case, the memory allocated for a
+	 * slab is used for:
 	 *
-	 * - @buffer_size bytes क्रम each object
-	 * - One मुक्तlist_idx_t क्रम each object
+	 * - @buffer_size bytes for each object
+	 * - One freelist_idx_t for each object
 	 *
-	 * We करोn't need to consider alignment of मुक्तlist because
-	 * मुक्तlist will be at the end of slab page. The objects will be
+	 * We don't need to consider alignment of freelist because
+	 * freelist will be at the end of slab page. The objects will be
 	 * at the correct alignment.
 	 *
-	 * If the slab management काष्ठाure is off the slab, then the
-	 * alignment will alपढ़ोy be calculated पूर्णांकo the size. Because
-	 * the sद_असल are all pages aligned, the objects will be at the
+	 * If the slab management structure is off the slab, then the
+	 * alignment will already be calculated into the size. Because
+	 * the slabs are all pages aligned, the objects will be at the
 	 * correct alignment when allocated.
 	 */
-	अगर (flags & (CFLGS_OBJFREELIST_SLAB | CFLGS_OFF_SLAB)) अणु
+	if (flags & (CFLGS_OBJFREELIST_SLAB | CFLGS_OFF_SLAB)) {
 		num = slab_size / buffer_size;
 		*left_over = slab_size % buffer_size;
-	पूर्ण अन्यथा अणु
-		num = slab_size / (buffer_size + माप(मुक्तlist_idx_t));
+	} else {
+		num = slab_size / (buffer_size + sizeof(freelist_idx_t));
 		*left_over = slab_size %
-			(buffer_size + माप(मुक्तlist_idx_t));
-	पूर्ण
+			(buffer_size + sizeof(freelist_idx_t));
+	}
 
-	वापस num;
-पूर्ण
+	return num;
+}
 
-#अगर DEBUG
-#घोषणा slab_error(cachep, msg) __slab_error(__func__, cachep, msg)
+#if DEBUG
+#define slab_error(cachep, msg) __slab_error(__func__, cachep, msg)
 
-अटल व्योम __slab_error(स्थिर अक्षर *function, काष्ठा kmem_cache *cachep,
-			अक्षर *msg)
-अणु
+static void __slab_error(const char *function, struct kmem_cache *cachep,
+			char *msg)
+{
 	pr_err("slab error in %s(): cache `%s': %s\n",
 	       function, cachep->name, msg);
 	dump_stack();
-	add_taपूर्णांक(TAINT_BAD_PAGE, LOCKDEP_NOW_UNRELIABLE);
-पूर्ण
-#पूर्ण_अगर
+	add_taint(TAINT_BAD_PAGE, LOCKDEP_NOW_UNRELIABLE);
+}
+#endif
 
 /*
- * By शेष on NUMA we use alien caches to stage the मुक्तing of
+ * By default on NUMA we use alien caches to stage the freeing of
  * objects allocated from other nodes. This causes massive memory
- * inefficiencies when using fake NUMA setup to split memory पूर्णांकo a
+ * inefficiencies when using fake NUMA setup to split memory into a
  * large number of small nodes, so it can be disabled on the command
  * line
   */
 
-अटल पूर्णांक use_alien_caches __पढ़ो_mostly = 1;
-अटल पूर्णांक __init noaliencache_setup(अक्षर *s)
-अणु
+static int use_alien_caches __read_mostly = 1;
+static int __init noaliencache_setup(char *s)
+{
 	use_alien_caches = 0;
-	वापस 1;
-पूर्ण
+	return 1;
+}
 __setup("noaliencache", noaliencache_setup);
 
-अटल पूर्णांक __init slab_max_order_setup(अक्षर *str)
-अणु
+static int __init slab_max_order_setup(char *str)
+{
 	get_option(&str, &slab_max_order);
 	slab_max_order = slab_max_order < 0 ? 0 :
 				min(slab_max_order, MAX_ORDER - 1);
 	slab_max_order_set = true;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 __setup("slab_max_order=", slab_max_order_setup);
 
-#अगर_घोषित CONFIG_NUMA
+#ifdef CONFIG_NUMA
 /*
- * Special reaping functions क्रम NUMA प्रणालीs called from cache_reap().
- * These take care of करोing round robin flushing of alien caches (containing
- * objects मुक्तd on dअगरferent nodes from which they were allocated) and the
+ * Special reaping functions for NUMA systems called from cache_reap().
+ * These take care of doing round robin flushing of alien caches (containing
+ * objects freed on different nodes from which they were allocated) and the
  * flushing of remote pcps by calling drain_node_pages.
  */
-अटल DEFINE_PER_CPU(अचिन्हित दीर्घ, slab_reap_node);
+static DEFINE_PER_CPU(unsigned long, slab_reap_node);
 
-अटल व्योम init_reap_node(पूर्णांक cpu)
-अणु
+static void init_reap_node(int cpu)
+{
 	per_cpu(slab_reap_node, cpu) = next_node_in(cpu_to_mem(cpu),
 						    node_online_map);
-पूर्ण
+}
 
-अटल व्योम next_reap_node(व्योम)
-अणु
-	पूर्णांक node = __this_cpu_पढ़ो(slab_reap_node);
+static void next_reap_node(void)
+{
+	int node = __this_cpu_read(slab_reap_node);
 
 	node = next_node_in(node, node_online_map);
-	__this_cpu_ग_लिखो(slab_reap_node, node);
-पूर्ण
+	__this_cpu_write(slab_reap_node, node);
+}
 
-#अन्यथा
-#घोषणा init_reap_node(cpu) करो अणु पूर्ण जबतक (0)
-#घोषणा next_reap_node(व्योम) करो अणु पूर्ण जबतक (0)
-#पूर्ण_अगर
+#else
+#define init_reap_node(cpu) do { } while (0)
+#define next_reap_node(void) do { } while (0)
+#endif
 
 /*
- * Initiate the reap समयr running on the target CPU.  We run at around 1 to 2Hz
+ * Initiate the reap timer running on the target CPU.  We run at around 1 to 2Hz
  * via the workqueue/eventd.
- * Add the CPU number पूर्णांकo the expiration समय to minimize the possibility of
- * the CPUs getting पूर्णांकo lockstep and contending क्रम the global cache chain
+ * Add the CPU number into the expiration time to minimize the possibility of
+ * the CPUs getting into lockstep and contending for the global cache chain
  * lock.
  */
-अटल व्योम start_cpu_समयr(पूर्णांक cpu)
-अणु
-	काष्ठा delayed_work *reap_work = &per_cpu(slab_reap_work, cpu);
+static void start_cpu_timer(int cpu)
+{
+	struct delayed_work *reap_work = &per_cpu(slab_reap_work, cpu);
 
-	अगर (reap_work->work.func == शून्य) अणु
+	if (reap_work->work.func == NULL) {
 		init_reap_node(cpu);
 		INIT_DEFERRABLE_WORK(reap_work, cache_reap);
 		schedule_delayed_work_on(cpu, reap_work,
-					__round_jअगरfies_relative(HZ, cpu));
-	पूर्ण
-पूर्ण
+					__round_jiffies_relative(HZ, cpu));
+	}
+}
 
-अटल व्योम init_arraycache(काष्ठा array_cache *ac, पूर्णांक limit, पूर्णांक batch)
-अणु
-	अगर (ac) अणु
+static void init_arraycache(struct array_cache *ac, int limit, int batch)
+{
+	if (ac) {
 		ac->avail = 0;
 		ac->limit = limit;
 		ac->batchcount = batch;
 		ac->touched = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल काष्ठा array_cache *alloc_arraycache(पूर्णांक node, पूर्णांक entries,
-					    पूर्णांक batchcount, gfp_t gfp)
-अणु
-	माप_प्रकार memsize = माप(व्योम *) * entries + माप(काष्ठा array_cache);
-	काष्ठा array_cache *ac = शून्य;
+static struct array_cache *alloc_arraycache(int node, int entries,
+					    int batchcount, gfp_t gfp)
+{
+	size_t memsize = sizeof(void *) * entries + sizeof(struct array_cache);
+	struct array_cache *ac = NULL;
 
-	ac = kदो_स्मृति_node(memsize, gfp, node);
+	ac = kmalloc_node(memsize, gfp, node);
 	/*
-	 * The array_cache काष्ठाures contain poपूर्णांकers to मुक्त object.
+	 * The array_cache structures contain pointers to free object.
 	 * However, when such objects are allocated or transferred to another
-	 * cache the poपूर्णांकers are not cleared and they could be counted as
-	 * valid references during a kmemleak scan. Thereक्रमe, kmemleak must
+	 * cache the pointers are not cleared and they could be counted as
+	 * valid references during a kmemleak scan. Therefore, kmemleak must
 	 * not scan such objects.
 	 */
 	kmemleak_no_scan(ac);
 	init_arraycache(ac, entries, batchcount);
-	वापस ac;
-पूर्ण
+	return ac;
+}
 
-अटल noअंतरभूत व्योम cache_मुक्त_pfmeदो_स्मृति(काष्ठा kmem_cache *cachep,
-					काष्ठा page *page, व्योम *objp)
-अणु
-	काष्ठा kmem_cache_node *n;
-	पूर्णांक page_node;
+static noinline void cache_free_pfmemalloc(struct kmem_cache *cachep,
+					struct page *page, void *objp)
+{
+	struct kmem_cache_node *n;
+	int page_node;
 	LIST_HEAD(list);
 
 	page_node = page_to_nid(page);
 	n = get_node(cachep, page_node);
 
 	spin_lock(&n->list_lock);
-	मुक्त_block(cachep, &objp, 1, page_node, &list);
+	free_block(cachep, &objp, 1, page_node, &list);
 	spin_unlock(&n->list_lock);
 
-	sद_असल_destroy(cachep, &list);
-पूर्ण
+	slabs_destroy(cachep, &list);
+}
 
 /*
  * Transfer objects in one arraycache to another.
@@ -573,1214 +572,1214 @@ __setup("slab_max_order=", slab_max_order_setup);
  *
  * Return the number of entries transferred.
  */
-अटल पूर्णांक transfer_objects(काष्ठा array_cache *to,
-		काष्ठा array_cache *from, अचिन्हित पूर्णांक max)
-अणु
+static int transfer_objects(struct array_cache *to,
+		struct array_cache *from, unsigned int max)
+{
 	/* Figure out how many entries to transfer */
-	पूर्णांक nr = min3(from->avail, max, to->limit - to->avail);
+	int nr = min3(from->avail, max, to->limit - to->avail);
 
-	अगर (!nr)
-		वापस 0;
+	if (!nr)
+		return 0;
 
-	स_नकल(to->entry + to->avail, from->entry + from->avail - nr,
-			माप(व्योम *) *nr);
+	memcpy(to->entry + to->avail, from->entry + from->avail - nr,
+			sizeof(void *) *nr);
 
 	from->avail -= nr;
 	to->avail += nr;
-	वापस nr;
-पूर्ण
+	return nr;
+}
 
 /* &alien->lock must be held by alien callers. */
-अटल __always_अंतरभूत व्योम __मुक्त_one(काष्ठा array_cache *ac, व्योम *objp)
-अणु
-	/* Aव्योम trivial द्विगुन-मुक्त. */
-	अगर (IS_ENABLED(CONFIG_SLAB_FREELIST_HARDENED) &&
+static __always_inline void __free_one(struct array_cache *ac, void *objp)
+{
+	/* Avoid trivial double-free. */
+	if (IS_ENABLED(CONFIG_SLAB_FREELIST_HARDENED) &&
 	    WARN_ON_ONCE(ac->avail > 0 && ac->entry[ac->avail - 1] == objp))
-		वापस;
+		return;
 	ac->entry[ac->avail++] = objp;
-पूर्ण
+}
 
-#अगर_अघोषित CONFIG_NUMA
+#ifndef CONFIG_NUMA
 
-#घोषणा drain_alien_cache(cachep, alien) करो अणु पूर्ण जबतक (0)
-#घोषणा reap_alien(cachep, n) करो अणु पूर्ण जबतक (0)
+#define drain_alien_cache(cachep, alien) do { } while (0)
+#define reap_alien(cachep, n) do { } while (0)
 
-अटल अंतरभूत काष्ठा alien_cache **alloc_alien_cache(पूर्णांक node,
-						पूर्णांक limit, gfp_t gfp)
-अणु
-	वापस शून्य;
-पूर्ण
+static inline struct alien_cache **alloc_alien_cache(int node,
+						int limit, gfp_t gfp)
+{
+	return NULL;
+}
 
-अटल अंतरभूत व्योम मुक्त_alien_cache(काष्ठा alien_cache **ac_ptr)
-अणु
-पूर्ण
+static inline void free_alien_cache(struct alien_cache **ac_ptr)
+{
+}
 
-अटल अंतरभूत पूर्णांक cache_मुक्त_alien(काष्ठा kmem_cache *cachep, व्योम *objp)
-अणु
-	वापस 0;
-पूर्ण
+static inline int cache_free_alien(struct kmem_cache *cachep, void *objp)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम *alternate_node_alloc(काष्ठा kmem_cache *cachep,
+static inline void *alternate_node_alloc(struct kmem_cache *cachep,
 		gfp_t flags)
-अणु
-	वापस शून्य;
-पूर्ण
+{
+	return NULL;
+}
 
-अटल अंतरभूत व्योम *____cache_alloc_node(काष्ठा kmem_cache *cachep,
-		 gfp_t flags, पूर्णांक nodeid)
-अणु
-	वापस शून्य;
-पूर्ण
+static inline void *____cache_alloc_node(struct kmem_cache *cachep,
+		 gfp_t flags, int nodeid)
+{
+	return NULL;
+}
 
-अटल अंतरभूत gfp_t gfp_exact_node(gfp_t flags)
-अणु
-	वापस flags & ~__GFP_NOFAIL;
-पूर्ण
+static inline gfp_t gfp_exact_node(gfp_t flags)
+{
+	return flags & ~__GFP_NOFAIL;
+}
 
-#अन्यथा	/* CONFIG_NUMA */
+#else	/* CONFIG_NUMA */
 
-अटल व्योम *____cache_alloc_node(काष्ठा kmem_cache *, gfp_t, पूर्णांक);
-अटल व्योम *alternate_node_alloc(काष्ठा kmem_cache *, gfp_t);
+static void *____cache_alloc_node(struct kmem_cache *, gfp_t, int);
+static void *alternate_node_alloc(struct kmem_cache *, gfp_t);
 
-अटल काष्ठा alien_cache *__alloc_alien_cache(पूर्णांक node, पूर्णांक entries,
-						पूर्णांक batch, gfp_t gfp)
-अणु
-	माप_प्रकार memsize = माप(व्योम *) * entries + माप(काष्ठा alien_cache);
-	काष्ठा alien_cache *alc = शून्य;
+static struct alien_cache *__alloc_alien_cache(int node, int entries,
+						int batch, gfp_t gfp)
+{
+	size_t memsize = sizeof(void *) * entries + sizeof(struct alien_cache);
+	struct alien_cache *alc = NULL;
 
-	alc = kदो_स्मृति_node(memsize, gfp, node);
-	अगर (alc) अणु
+	alc = kmalloc_node(memsize, gfp, node);
+	if (alc) {
 		kmemleak_no_scan(alc);
 		init_arraycache(&alc->ac, entries, batch);
 		spin_lock_init(&alc->lock);
-	पूर्ण
-	वापस alc;
-पूर्ण
+	}
+	return alc;
+}
 
-अटल काष्ठा alien_cache **alloc_alien_cache(पूर्णांक node, पूर्णांक limit, gfp_t gfp)
-अणु
-	काष्ठा alien_cache **alc_ptr;
-	पूर्णांक i;
+static struct alien_cache **alloc_alien_cache(int node, int limit, gfp_t gfp)
+{
+	struct alien_cache **alc_ptr;
+	int i;
 
-	अगर (limit > 1)
+	if (limit > 1)
 		limit = 12;
-	alc_ptr = kसुस्मृति_node(nr_node_ids, माप(व्योम *), gfp, node);
-	अगर (!alc_ptr)
-		वापस शून्य;
+	alc_ptr = kcalloc_node(nr_node_ids, sizeof(void *), gfp, node);
+	if (!alc_ptr)
+		return NULL;
 
-	क्रम_each_node(i) अणु
-		अगर (i == node || !node_online(i))
-			जारी;
+	for_each_node(i) {
+		if (i == node || !node_online(i))
+			continue;
 		alc_ptr[i] = __alloc_alien_cache(node, limit, 0xbaadf00d, gfp);
-		अगर (!alc_ptr[i]) अणु
-			क्रम (i--; i >= 0; i--)
-				kमुक्त(alc_ptr[i]);
-			kमुक्त(alc_ptr);
-			वापस शून्य;
-		पूर्ण
-	पूर्ण
-	वापस alc_ptr;
-पूर्ण
+		if (!alc_ptr[i]) {
+			for (i--; i >= 0; i--)
+				kfree(alc_ptr[i]);
+			kfree(alc_ptr);
+			return NULL;
+		}
+	}
+	return alc_ptr;
+}
 
-अटल व्योम मुक्त_alien_cache(काष्ठा alien_cache **alc_ptr)
-अणु
-	पूर्णांक i;
+static void free_alien_cache(struct alien_cache **alc_ptr)
+{
+	int i;
 
-	अगर (!alc_ptr)
-		वापस;
-	क्रम_each_node(i)
-	    kमुक्त(alc_ptr[i]);
-	kमुक्त(alc_ptr);
-पूर्ण
+	if (!alc_ptr)
+		return;
+	for_each_node(i)
+	    kfree(alc_ptr[i]);
+	kfree(alc_ptr);
+}
 
-अटल व्योम __drain_alien_cache(काष्ठा kmem_cache *cachep,
-				काष्ठा array_cache *ac, पूर्णांक node,
-				काष्ठा list_head *list)
-अणु
-	काष्ठा kmem_cache_node *n = get_node(cachep, node);
+static void __drain_alien_cache(struct kmem_cache *cachep,
+				struct array_cache *ac, int node,
+				struct list_head *list)
+{
+	struct kmem_cache_node *n = get_node(cachep, node);
 
-	अगर (ac->avail) अणु
+	if (ac->avail) {
 		spin_lock(&n->list_lock);
 		/*
-		 * Stuff objects पूर्णांकo the remote nodes shared array first.
-		 * That way we could aव्योम the overhead of putting the objects
-		 * पूर्णांकo the मुक्त lists and getting them back later.
+		 * Stuff objects into the remote nodes shared array first.
+		 * That way we could avoid the overhead of putting the objects
+		 * into the free lists and getting them back later.
 		 */
-		अगर (n->shared)
+		if (n->shared)
 			transfer_objects(n->shared, ac, ac->limit);
 
-		मुक्त_block(cachep, ac->entry, ac->avail, node, list);
+		free_block(cachep, ac->entry, ac->avail, node, list);
 		ac->avail = 0;
 		spin_unlock(&n->list_lock);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Called from cache_reap() to regularly drain alien caches round robin.
  */
-अटल व्योम reap_alien(काष्ठा kmem_cache *cachep, काष्ठा kmem_cache_node *n)
-अणु
-	पूर्णांक node = __this_cpu_पढ़ो(slab_reap_node);
+static void reap_alien(struct kmem_cache *cachep, struct kmem_cache_node *n)
+{
+	int node = __this_cpu_read(slab_reap_node);
 
-	अगर (n->alien) अणु
-		काष्ठा alien_cache *alc = n->alien[node];
-		काष्ठा array_cache *ac;
+	if (n->alien) {
+		struct alien_cache *alc = n->alien[node];
+		struct array_cache *ac;
 
-		अगर (alc) अणु
+		if (alc) {
 			ac = &alc->ac;
-			अगर (ac->avail && spin_trylock_irq(&alc->lock)) अणु
+			if (ac->avail && spin_trylock_irq(&alc->lock)) {
 				LIST_HEAD(list);
 
 				__drain_alien_cache(cachep, ac, node, &list);
 				spin_unlock_irq(&alc->lock);
-				sद_असल_destroy(cachep, &list);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+				slabs_destroy(cachep, &list);
+			}
+		}
+	}
+}
 
-अटल व्योम drain_alien_cache(काष्ठा kmem_cache *cachep,
-				काष्ठा alien_cache **alien)
-अणु
-	पूर्णांक i = 0;
-	काष्ठा alien_cache *alc;
-	काष्ठा array_cache *ac;
-	अचिन्हित दीर्घ flags;
+static void drain_alien_cache(struct kmem_cache *cachep,
+				struct alien_cache **alien)
+{
+	int i = 0;
+	struct alien_cache *alc;
+	struct array_cache *ac;
+	unsigned long flags;
 
-	क्रम_each_online_node(i) अणु
+	for_each_online_node(i) {
 		alc = alien[i];
-		अगर (alc) अणु
+		if (alc) {
 			LIST_HEAD(list);
 
 			ac = &alc->ac;
 			spin_lock_irqsave(&alc->lock, flags);
 			__drain_alien_cache(cachep, ac, i, &list);
 			spin_unlock_irqrestore(&alc->lock, flags);
-			sद_असल_destroy(cachep, &list);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			slabs_destroy(cachep, &list);
+		}
+	}
+}
 
-अटल पूर्णांक __cache_मुक्त_alien(काष्ठा kmem_cache *cachep, व्योम *objp,
-				पूर्णांक node, पूर्णांक page_node)
-अणु
-	काष्ठा kmem_cache_node *n;
-	काष्ठा alien_cache *alien = शून्य;
-	काष्ठा array_cache *ac;
+static int __cache_free_alien(struct kmem_cache *cachep, void *objp,
+				int node, int page_node)
+{
+	struct kmem_cache_node *n;
+	struct alien_cache *alien = NULL;
+	struct array_cache *ac;
 	LIST_HEAD(list);
 
 	n = get_node(cachep, node);
 	STATS_INC_NODEFREES(cachep);
-	अगर (n->alien && n->alien[page_node]) अणु
+	if (n->alien && n->alien[page_node]) {
 		alien = n->alien[page_node];
 		ac = &alien->ac;
 		spin_lock(&alien->lock);
-		अगर (unlikely(ac->avail == ac->limit)) अणु
+		if (unlikely(ac->avail == ac->limit)) {
 			STATS_INC_ACOVERFLOW(cachep);
 			__drain_alien_cache(cachep, ac, page_node, &list);
-		पूर्ण
-		__मुक्त_one(ac, objp);
+		}
+		__free_one(ac, objp);
 		spin_unlock(&alien->lock);
-		sद_असल_destroy(cachep, &list);
-	पूर्ण अन्यथा अणु
+		slabs_destroy(cachep, &list);
+	} else {
 		n = get_node(cachep, page_node);
 		spin_lock(&n->list_lock);
-		मुक्त_block(cachep, &objp, 1, page_node, &list);
+		free_block(cachep, &objp, 1, page_node, &list);
 		spin_unlock(&n->list_lock);
-		sद_असल_destroy(cachep, &list);
-	पूर्ण
-	वापस 1;
-पूर्ण
+		slabs_destroy(cachep, &list);
+	}
+	return 1;
+}
 
-अटल अंतरभूत पूर्णांक cache_मुक्त_alien(काष्ठा kmem_cache *cachep, व्योम *objp)
-अणु
-	पूर्णांक page_node = page_to_nid(virt_to_page(objp));
-	पूर्णांक node = numa_mem_id();
+static inline int cache_free_alien(struct kmem_cache *cachep, void *objp)
+{
+	int page_node = page_to_nid(virt_to_page(objp));
+	int node = numa_mem_id();
 	/*
-	 * Make sure we are not मुक्तing a object from another node to the array
+	 * Make sure we are not freeing a object from another node to the array
 	 * cache on this cpu.
 	 */
-	अगर (likely(node == page_node))
-		वापस 0;
+	if (likely(node == page_node))
+		return 0;
 
-	वापस __cache_मुक्त_alien(cachep, objp, node, page_node);
-पूर्ण
+	return __cache_free_alien(cachep, objp, node, page_node);
+}
 
 /*
- * Conकाष्ठा gfp mask to allocate from a specअगरic node but करो not reclaim or
+ * Construct gfp mask to allocate from a specific node but do not reclaim or
  * warn about failures.
  */
-अटल अंतरभूत gfp_t gfp_exact_node(gfp_t flags)
-अणु
-	वापस (flags | __GFP_THISNODE | __GFP_NOWARN) & ~(__GFP_RECLAIM|__GFP_NOFAIL);
-पूर्ण
-#पूर्ण_अगर
+static inline gfp_t gfp_exact_node(gfp_t flags)
+{
+	return (flags | __GFP_THISNODE | __GFP_NOWARN) & ~(__GFP_RECLAIM|__GFP_NOFAIL);
+}
+#endif
 
-अटल पूर्णांक init_cache_node(काष्ठा kmem_cache *cachep, पूर्णांक node, gfp_t gfp)
-अणु
-	काष्ठा kmem_cache_node *n;
+static int init_cache_node(struct kmem_cache *cachep, int node, gfp_t gfp)
+{
+	struct kmem_cache_node *n;
 
 	/*
-	 * Set up the kmem_cache_node क्रम cpu beक्रमe we can
+	 * Set up the kmem_cache_node for cpu before we can
 	 * begin anything. Make sure some other cpu on this
-	 * node has not alपढ़ोy allocated this
+	 * node has not already allocated this
 	 */
 	n = get_node(cachep, node);
-	अगर (n) अणु
+	if (n) {
 		spin_lock_irq(&n->list_lock);
-		n->मुक्त_limit = (1 + nr_cpus_node(node)) * cachep->batchcount +
+		n->free_limit = (1 + nr_cpus_node(node)) * cachep->batchcount +
 				cachep->num;
 		spin_unlock_irq(&n->list_lock);
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	n = kदो_स्मृति_node(माप(काष्ठा kmem_cache_node), gfp, node);
-	अगर (!n)
-		वापस -ENOMEM;
+	n = kmalloc_node(sizeof(struct kmem_cache_node), gfp, node);
+	if (!n)
+		return -ENOMEM;
 
 	kmem_cache_node_init(n);
-	n->next_reap = jअगरfies + REAPTIMEOUT_NODE +
-		    ((अचिन्हित दीर्घ)cachep) % REAPTIMEOUT_NODE;
+	n->next_reap = jiffies + REAPTIMEOUT_NODE +
+		    ((unsigned long)cachep) % REAPTIMEOUT_NODE;
 
-	n->मुक्त_limit =
+	n->free_limit =
 		(1 + nr_cpus_node(node)) * cachep->batchcount + cachep->num;
 
 	/*
-	 * The kmem_cache_nodes करोn't come and go as CPUs
+	 * The kmem_cache_nodes don't come and go as CPUs
 	 * come and go.  slab_mutex is sufficient
 	 * protection here.
 	 */
 	cachep->node[node] = n;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर (defined(CONFIG_NUMA) && defined(CONFIG_MEMORY_HOTPLUG)) || defined(CONFIG_SMP)
+#if (defined(CONFIG_NUMA) && defined(CONFIG_MEMORY_HOTPLUG)) || defined(CONFIG_SMP)
 /*
- * Allocates and initializes node क्रम a node on each slab cache, used क्रम
+ * Allocates and initializes node for a node on each slab cache, used for
  * either memory or cpu hotplug.  If memory is being hot-added, the kmem_cache_node
- * will be allocated off-node since memory is not yet online क्रम the new node.
- * When hotplugging memory or a cpu, existing node are not replaced अगर
- * alपढ़ोy in use.
+ * will be allocated off-node since memory is not yet online for the new node.
+ * When hotplugging memory or a cpu, existing node are not replaced if
+ * already in use.
  *
  * Must hold slab_mutex.
  */
-अटल पूर्णांक init_cache_node_node(पूर्णांक node)
-अणु
-	पूर्णांक ret;
-	काष्ठा kmem_cache *cachep;
+static int init_cache_node_node(int node)
+{
+	int ret;
+	struct kmem_cache *cachep;
 
-	list_क्रम_each_entry(cachep, &slab_caches, list) अणु
+	list_for_each_entry(cachep, &slab_caches, list) {
 		ret = init_cache_node(cachep, node, GFP_KERNEL);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल पूर्णांक setup_kmem_cache_node(काष्ठा kmem_cache *cachep,
-				पूर्णांक node, gfp_t gfp, bool क्रमce_change)
-अणु
-	पूर्णांक ret = -ENOMEM;
-	काष्ठा kmem_cache_node *n;
-	काष्ठा array_cache *old_shared = शून्य;
-	काष्ठा array_cache *new_shared = शून्य;
-	काष्ठा alien_cache **new_alien = शून्य;
+static int setup_kmem_cache_node(struct kmem_cache *cachep,
+				int node, gfp_t gfp, bool force_change)
+{
+	int ret = -ENOMEM;
+	struct kmem_cache_node *n;
+	struct array_cache *old_shared = NULL;
+	struct array_cache *new_shared = NULL;
+	struct alien_cache **new_alien = NULL;
 	LIST_HEAD(list);
 
-	अगर (use_alien_caches) अणु
+	if (use_alien_caches) {
 		new_alien = alloc_alien_cache(node, cachep->limit, gfp);
-		अगर (!new_alien)
-			जाओ fail;
-	पूर्ण
+		if (!new_alien)
+			goto fail;
+	}
 
-	अगर (cachep->shared) अणु
+	if (cachep->shared) {
 		new_shared = alloc_arraycache(node,
 			cachep->shared * cachep->batchcount, 0xbaadf00d, gfp);
-		अगर (!new_shared)
-			जाओ fail;
-	पूर्ण
+		if (!new_shared)
+			goto fail;
+	}
 
 	ret = init_cache_node(cachep, node, gfp);
-	अगर (ret)
-		जाओ fail;
+	if (ret)
+		goto fail;
 
 	n = get_node(cachep, node);
 	spin_lock_irq(&n->list_lock);
-	अगर (n->shared && क्रमce_change) अणु
-		मुक्त_block(cachep, n->shared->entry,
+	if (n->shared && force_change) {
+		free_block(cachep, n->shared->entry,
 				n->shared->avail, node, &list);
 		n->shared->avail = 0;
-	पूर्ण
+	}
 
-	अगर (!n->shared || क्रमce_change) अणु
+	if (!n->shared || force_change) {
 		old_shared = n->shared;
 		n->shared = new_shared;
-		new_shared = शून्य;
-	पूर्ण
+		new_shared = NULL;
+	}
 
-	अगर (!n->alien) अणु
+	if (!n->alien) {
 		n->alien = new_alien;
-		new_alien = शून्य;
-	पूर्ण
+		new_alien = NULL;
+	}
 
 	spin_unlock_irq(&n->list_lock);
-	sद_असल_destroy(cachep, &list);
+	slabs_destroy(cachep, &list);
 
 	/*
 	 * To protect lockless access to n->shared during irq disabled context.
-	 * If n->shared isn't शून्य in irq disabled context, accessing to it is
+	 * If n->shared isn't NULL in irq disabled context, accessing to it is
 	 * guaranteed to be valid until irq is re-enabled, because it will be
-	 * मुक्तd after synchronize_rcu().
+	 * freed after synchronize_rcu().
 	 */
-	अगर (old_shared && क्रमce_change)
+	if (old_shared && force_change)
 		synchronize_rcu();
 
 fail:
-	kमुक्त(old_shared);
-	kमुक्त(new_shared);
-	मुक्त_alien_cache(new_alien);
+	kfree(old_shared);
+	kfree(new_shared);
+	free_alien_cache(new_alien);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 
-अटल व्योम cpuup_canceled(दीर्घ cpu)
-अणु
-	काष्ठा kmem_cache *cachep;
-	काष्ठा kmem_cache_node *n = शून्य;
-	पूर्णांक node = cpu_to_mem(cpu);
-	स्थिर काष्ठा cpumask *mask = cpumask_of_node(node);
+static void cpuup_canceled(long cpu)
+{
+	struct kmem_cache *cachep;
+	struct kmem_cache_node *n = NULL;
+	int node = cpu_to_mem(cpu);
+	const struct cpumask *mask = cpumask_of_node(node);
 
-	list_क्रम_each_entry(cachep, &slab_caches, list) अणु
-		काष्ठा array_cache *nc;
-		काष्ठा array_cache *shared;
-		काष्ठा alien_cache **alien;
+	list_for_each_entry(cachep, &slab_caches, list) {
+		struct array_cache *nc;
+		struct array_cache *shared;
+		struct alien_cache **alien;
 		LIST_HEAD(list);
 
 		n = get_node(cachep, node);
-		अगर (!n)
-			जारी;
+		if (!n)
+			continue;
 
 		spin_lock_irq(&n->list_lock);
 
-		/* Free limit क्रम this kmem_cache_node */
-		n->मुक्त_limit -= cachep->batchcount;
+		/* Free limit for this kmem_cache_node */
+		n->free_limit -= cachep->batchcount;
 
 		/* cpu is dead; no one can alloc from it. */
 		nc = per_cpu_ptr(cachep->cpu_cache, cpu);
-		मुक्त_block(cachep, nc->entry, nc->avail, node, &list);
+		free_block(cachep, nc->entry, nc->avail, node, &list);
 		nc->avail = 0;
 
-		अगर (!cpumask_empty(mask)) अणु
+		if (!cpumask_empty(mask)) {
 			spin_unlock_irq(&n->list_lock);
-			जाओ मुक्त_slab;
-		पूर्ण
+			goto free_slab;
+		}
 
 		shared = n->shared;
-		अगर (shared) अणु
-			मुक्त_block(cachep, shared->entry,
+		if (shared) {
+			free_block(cachep, shared->entry,
 				   shared->avail, node, &list);
-			n->shared = शून्य;
-		पूर्ण
+			n->shared = NULL;
+		}
 
 		alien = n->alien;
-		n->alien = शून्य;
+		n->alien = NULL;
 
 		spin_unlock_irq(&n->list_lock);
 
-		kमुक्त(shared);
-		अगर (alien) अणु
+		kfree(shared);
+		if (alien) {
 			drain_alien_cache(cachep, alien);
-			मुक्त_alien_cache(alien);
-		पूर्ण
+			free_alien_cache(alien);
+		}
 
-मुक्त_slab:
-		sद_असल_destroy(cachep, &list);
-	पूर्ण
+free_slab:
+		slabs_destroy(cachep, &list);
+	}
 	/*
-	 * In the previous loop, all the objects were मुक्तd to
-	 * the respective cache's sद_असल,  now we can go ahead and
+	 * In the previous loop, all the objects were freed to
+	 * the respective cache's slabs,  now we can go ahead and
 	 * shrink each nodelist to its limit.
 	 */
-	list_क्रम_each_entry(cachep, &slab_caches, list) अणु
+	list_for_each_entry(cachep, &slab_caches, list) {
 		n = get_node(cachep, node);
-		अगर (!n)
-			जारी;
-		drain_मुक्तlist(cachep, n, पूर्णांक_उच्च);
-	पूर्ण
-पूर्ण
+		if (!n)
+			continue;
+		drain_freelist(cachep, n, INT_MAX);
+	}
+}
 
-अटल पूर्णांक cpuup_prepare(दीर्घ cpu)
-अणु
-	काष्ठा kmem_cache *cachep;
-	पूर्णांक node = cpu_to_mem(cpu);
-	पूर्णांक err;
+static int cpuup_prepare(long cpu)
+{
+	struct kmem_cache *cachep;
+	int node = cpu_to_mem(cpu);
+	int err;
 
 	/*
-	 * We need to करो this right in the beginning since
+	 * We need to do this right in the beginning since
 	 * alloc_arraycache's are going to use this list.
-	 * kदो_स्मृति_node allows us to add the slab to the right
+	 * kmalloc_node allows us to add the slab to the right
 	 * kmem_cache_node and not this cpu's kmem_cache_node
 	 */
 	err = init_cache_node_node(node);
-	अगर (err < 0)
-		जाओ bad;
+	if (err < 0)
+		goto bad;
 
 	/*
 	 * Now we can go ahead with allocating the shared arrays and
 	 * array caches
 	 */
-	list_क्रम_each_entry(cachep, &slab_caches, list) अणु
+	list_for_each_entry(cachep, &slab_caches, list) {
 		err = setup_kmem_cache_node(cachep, node, GFP_KERNEL, false);
-		अगर (err)
-			जाओ bad;
-	पूर्ण
+		if (err)
+			goto bad;
+	}
 
-	वापस 0;
+	return 0;
 bad:
 	cpuup_canceled(cpu);
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-पूर्णांक slab_prepare_cpu(अचिन्हित पूर्णांक cpu)
-अणु
-	पूर्णांक err;
+int slab_prepare_cpu(unsigned int cpu)
+{
+	int err;
 
 	mutex_lock(&slab_mutex);
 	err = cpuup_prepare(cpu);
 	mutex_unlock(&slab_mutex);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
- * This is called क्रम a failed online attempt and क्रम a successful
+ * This is called for a failed online attempt and for a successful
  * offline.
  *
- * Even अगर all the cpus of a node are करोwn, we करोn't मुक्त the
- * kmem_cache_node of any cache. This to aव्योम a race between cpu_करोwn, and
- * a kदो_स्मृति allocation from another cpu क्रम memory from the node of
- * the cpu going करोwn.  The kmem_cache_node काष्ठाure is usually allocated from
- * kmem_cache_create() and माला_लो destroyed at kmem_cache_destroy().
+ * Even if all the cpus of a node are down, we don't free the
+ * kmem_cache_node of any cache. This to avoid a race between cpu_down, and
+ * a kmalloc allocation from another cpu for memory from the node of
+ * the cpu going down.  The kmem_cache_node structure is usually allocated from
+ * kmem_cache_create() and gets destroyed at kmem_cache_destroy().
  */
-पूर्णांक slab_dead_cpu(अचिन्हित पूर्णांक cpu)
-अणु
+int slab_dead_cpu(unsigned int cpu)
+{
 	mutex_lock(&slab_mutex);
 	cpuup_canceled(cpu);
 	mutex_unlock(&slab_mutex);
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल पूर्णांक slab_online_cpu(अचिन्हित पूर्णांक cpu)
-अणु
-	start_cpu_समयr(cpu);
-	वापस 0;
-पूर्ण
+static int slab_online_cpu(unsigned int cpu)
+{
+	start_cpu_timer(cpu);
+	return 0;
+}
 
-अटल पूर्णांक slab_offline_cpu(अचिन्हित पूर्णांक cpu)
-अणु
+static int slab_offline_cpu(unsigned int cpu)
+{
 	/*
-	 * Shutकरोwn cache reaper. Note that the slab_mutex is held so
-	 * that अगर cache_reap() is invoked it cannot करो anything
-	 * expensive but will only modअगरy reap_work and reschedule the
-	 * समयr.
+	 * Shutdown cache reaper. Note that the slab_mutex is held so
+	 * that if cache_reap() is invoked it cannot do anything
+	 * expensive but will only modify reap_work and reschedule the
+	 * timer.
 	 */
 	cancel_delayed_work_sync(&per_cpu(slab_reap_work, cpu));
 	/* Now the cache_reaper is guaranteed to be not running. */
-	per_cpu(slab_reap_work, cpu).work.func = शून्य;
-	वापस 0;
-पूर्ण
+	per_cpu(slab_reap_work, cpu).work.func = NULL;
+	return 0;
+}
 
-#अगर defined(CONFIG_NUMA) && defined(CONFIG_MEMORY_HOTPLUG)
+#if defined(CONFIG_NUMA) && defined(CONFIG_MEMORY_HOTPLUG)
 /*
- * Drains मुक्तlist क्रम a node on each slab cache, used क्रम memory hot-हटाओ.
- * Returns -EBUSY अगर all objects cannot be drained so that the node is not
- * हटाओd.
+ * Drains freelist for a node on each slab cache, used for memory hot-remove.
+ * Returns -EBUSY if all objects cannot be drained so that the node is not
+ * removed.
  *
  * Must hold slab_mutex.
  */
-अटल पूर्णांक __meminit drain_cache_node_node(पूर्णांक node)
-अणु
-	काष्ठा kmem_cache *cachep;
-	पूर्णांक ret = 0;
+static int __meminit drain_cache_node_node(int node)
+{
+	struct kmem_cache *cachep;
+	int ret = 0;
 
-	list_क्रम_each_entry(cachep, &slab_caches, list) अणु
-		काष्ठा kmem_cache_node *n;
+	list_for_each_entry(cachep, &slab_caches, list) {
+		struct kmem_cache_node *n;
 
 		n = get_node(cachep, node);
-		अगर (!n)
-			जारी;
+		if (!n)
+			continue;
 
-		drain_मुक्तlist(cachep, n, पूर्णांक_उच्च);
+		drain_freelist(cachep, n, INT_MAX);
 
-		अगर (!list_empty(&n->sद_असल_full) ||
-		    !list_empty(&n->sद_असल_partial)) अणु
+		if (!list_empty(&n->slabs_full) ||
+		    !list_empty(&n->slabs_partial)) {
 			ret = -EBUSY;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	वापस ret;
-पूर्ण
+			break;
+		}
+	}
+	return ret;
+}
 
-अटल पूर्णांक __meminit slab_memory_callback(काष्ठा notअगरier_block *self,
-					अचिन्हित दीर्घ action, व्योम *arg)
-अणु
-	काष्ठा memory_notअगरy *mnb = arg;
-	पूर्णांक ret = 0;
-	पूर्णांक nid;
+static int __meminit slab_memory_callback(struct notifier_block *self,
+					unsigned long action, void *arg)
+{
+	struct memory_notify *mnb = arg;
+	int ret = 0;
+	int nid;
 
 	nid = mnb->status_change_nid;
-	अगर (nid < 0)
-		जाओ out;
+	if (nid < 0)
+		goto out;
 
-	चयन (action) अणु
-	हाल MEM_GOING_ONLINE:
+	switch (action) {
+	case MEM_GOING_ONLINE:
 		mutex_lock(&slab_mutex);
 		ret = init_cache_node_node(nid);
 		mutex_unlock(&slab_mutex);
-		अवरोध;
-	हाल MEM_GOING_OFFLINE:
+		break;
+	case MEM_GOING_OFFLINE:
 		mutex_lock(&slab_mutex);
 		ret = drain_cache_node_node(nid);
 		mutex_unlock(&slab_mutex);
-		अवरोध;
-	हाल MEM_ONLINE:
-	हाल MEM_OFFLINE:
-	हाल MEM_CANCEL_ONLINE:
-	हाल MEM_CANCEL_OFFLINE:
-		अवरोध;
-	पूर्ण
+		break;
+	case MEM_ONLINE:
+	case MEM_OFFLINE:
+	case MEM_CANCEL_ONLINE:
+	case MEM_CANCEL_OFFLINE:
+		break;
+	}
 out:
-	वापस notअगरier_from_त्रुटि_सं(ret);
-पूर्ण
-#पूर्ण_अगर /* CONFIG_NUMA && CONFIG_MEMORY_HOTPLUG */
+	return notifier_from_errno(ret);
+}
+#endif /* CONFIG_NUMA && CONFIG_MEMORY_HOTPLUG */
 
 /*
- * swap the अटल kmem_cache_node with kदो_स्मृतिed memory
+ * swap the static kmem_cache_node with kmalloced memory
  */
-अटल व्योम __init init_list(काष्ठा kmem_cache *cachep, काष्ठा kmem_cache_node *list,
-				पूर्णांक nodeid)
-अणु
-	काष्ठा kmem_cache_node *ptr;
+static void __init init_list(struct kmem_cache *cachep, struct kmem_cache_node *list,
+				int nodeid)
+{
+	struct kmem_cache_node *ptr;
 
-	ptr = kदो_स्मृति_node(माप(काष्ठा kmem_cache_node), GFP_NOWAIT, nodeid);
+	ptr = kmalloc_node(sizeof(struct kmem_cache_node), GFP_NOWAIT, nodeid);
 	BUG_ON(!ptr);
 
-	स_नकल(ptr, list, माप(काष्ठा kmem_cache_node));
+	memcpy(ptr, list, sizeof(struct kmem_cache_node));
 	/*
-	 * Do not assume that spinlocks can be initialized via स_नकल:
+	 * Do not assume that spinlocks can be initialized via memcpy:
 	 */
 	spin_lock_init(&ptr->list_lock);
 
 	MAKE_ALL_LISTS(cachep, ptr, nodeid);
 	cachep->node[nodeid] = ptr;
-पूर्ण
+}
 
 /*
- * For setting up all the kmem_cache_node क्रम cache whose buffer_size is same as
+ * For setting up all the kmem_cache_node for cache whose buffer_size is same as
  * size of kmem_cache_node.
  */
-अटल व्योम __init set_up_node(काष्ठा kmem_cache *cachep, पूर्णांक index)
-अणु
-	पूर्णांक node;
+static void __init set_up_node(struct kmem_cache *cachep, int index)
+{
+	int node;
 
-	क्रम_each_online_node(node) अणु
+	for_each_online_node(node) {
 		cachep->node[node] = &init_kmem_cache_node[index + node];
-		cachep->node[node]->next_reap = jअगरfies +
+		cachep->node[node]->next_reap = jiffies +
 		    REAPTIMEOUT_NODE +
-		    ((अचिन्हित दीर्घ)cachep) % REAPTIMEOUT_NODE;
-	पूर्ण
-पूर्ण
+		    ((unsigned long)cachep) % REAPTIMEOUT_NODE;
+	}
+}
 
 /*
  * Initialisation.  Called after the page allocator have been initialised and
- * beक्रमe smp_init().
+ * before smp_init().
  */
-व्योम __init kmem_cache_init(व्योम)
-अणु
-	पूर्णांक i;
+void __init kmem_cache_init(void)
+{
+	int i;
 
 	kmem_cache = &kmem_cache_boot;
 
-	अगर (!IS_ENABLED(CONFIG_NUMA) || num_possible_nodes() == 1)
+	if (!IS_ENABLED(CONFIG_NUMA) || num_possible_nodes() == 1)
 		use_alien_caches = 0;
 
-	क्रम (i = 0; i < NUM_INIT_LISTS; i++)
+	for (i = 0; i < NUM_INIT_LISTS; i++)
 		kmem_cache_node_init(&init_kmem_cache_node[i]);
 
 	/*
 	 * Fragmentation resistance on low memory - only use bigger
-	 * page orders on machines with more than 32MB of memory अगर
+	 * page orders on machines with more than 32MB of memory if
 	 * not overridden on the command line.
 	 */
-	अगर (!slab_max_order_set && totalram_pages() > (32 << 20) >> PAGE_SHIFT)
+	if (!slab_max_order_set && totalram_pages() > (32 << 20) >> PAGE_SHIFT)
 		slab_max_order = SLAB_MAX_ORDER_HI;
 
 	/* Bootstrap is tricky, because several objects are allocated
-	 * from caches that करो not exist yet:
-	 * 1) initialize the kmem_cache cache: it contains the काष्ठा
-	 *    kmem_cache काष्ठाures of all caches, except kmem_cache itself:
-	 *    kmem_cache is अटलally allocated.
-	 *    Initially an __init data area is used क्रम the head array and the
-	 *    kmem_cache_node काष्ठाures, it's replaced with a kदो_स्मृति allocated
+	 * from caches that do not exist yet:
+	 * 1) initialize the kmem_cache cache: it contains the struct
+	 *    kmem_cache structures of all caches, except kmem_cache itself:
+	 *    kmem_cache is statically allocated.
+	 *    Initially an __init data area is used for the head array and the
+	 *    kmem_cache_node structures, it's replaced with a kmalloc allocated
 	 *    array at the end of the bootstrap.
-	 * 2) Create the first kदो_स्मृति cache.
-	 *    The काष्ठा kmem_cache क्रम the new cache is allocated normally.
-	 *    An __init data area is used क्रम the head array.
-	 * 3) Create the reमुख्यing kदो_स्मृति caches, with minimally sized
+	 * 2) Create the first kmalloc cache.
+	 *    The struct kmem_cache for the new cache is allocated normally.
+	 *    An __init data area is used for the head array.
+	 * 3) Create the remaining kmalloc caches, with minimally sized
 	 *    head arrays.
-	 * 4) Replace the __init data head arrays क्रम kmem_cache and the first
-	 *    kदो_स्मृति cache with kदो_स्मृति allocated arrays.
-	 * 5) Replace the __init data क्रम kmem_cache_node क्रम kmem_cache and
-	 *    the other cache's with kदो_स्मृति allocated memory.
-	 * 6) Resize the head arrays of the kदो_स्मृति caches to their final sizes.
+	 * 4) Replace the __init data head arrays for kmem_cache and the first
+	 *    kmalloc cache with kmalloc allocated arrays.
+	 * 5) Replace the __init data for kmem_cache_node for kmem_cache and
+	 *    the other cache's with kmalloc allocated memory.
+	 * 6) Resize the head arrays of the kmalloc caches to their final sizes.
 	 */
 
 	/* 1) create the kmem_cache */
 
 	/*
-	 * काष्ठा kmem_cache size depends on nr_node_ids & nr_cpu_ids
+	 * struct kmem_cache size depends on nr_node_ids & nr_cpu_ids
 	 */
 	create_boot_cache(kmem_cache, "kmem_cache",
-		दुरत्व(काष्ठा kmem_cache, node) +
-				  nr_node_ids * माप(काष्ठा kmem_cache_node *),
+		offsetof(struct kmem_cache, node) +
+				  nr_node_ids * sizeof(struct kmem_cache_node *),
 				  SLAB_HWCACHE_ALIGN, 0, 0);
 	list_add(&kmem_cache->list, &slab_caches);
 	slab_state = PARTIAL;
 
 	/*
-	 * Initialize the caches that provide memory क्रम the  kmem_cache_node
-	 * काष्ठाures first.  Without this, further allocations will bug.
+	 * Initialize the caches that provide memory for the  kmem_cache_node
+	 * structures first.  Without this, further allocations will bug.
 	 */
-	kदो_स्मृति_caches[KMALLOC_NORMAL][INDEX_NODE] = create_kदो_स्मृति_cache(
-				kदो_स्मृति_info[INDEX_NODE].name[KMALLOC_NORMAL],
-				kदो_स्मृति_info[INDEX_NODE].size,
+	kmalloc_caches[KMALLOC_NORMAL][INDEX_NODE] = create_kmalloc_cache(
+				kmalloc_info[INDEX_NODE].name[KMALLOC_NORMAL],
+				kmalloc_info[INDEX_NODE].size,
 				ARCH_KMALLOC_FLAGS, 0,
-				kदो_स्मृति_info[INDEX_NODE].size);
+				kmalloc_info[INDEX_NODE].size);
 	slab_state = PARTIAL_NODE;
-	setup_kदो_स्मृति_cache_index_table();
+	setup_kmalloc_cache_index_table();
 
 	slab_early_init = 0;
 
 	/* 5) Replace the bootstrap kmem_cache_node */
-	अणु
-		पूर्णांक nid;
+	{
+		int nid;
 
-		क्रम_each_online_node(nid) अणु
+		for_each_online_node(nid) {
 			init_list(kmem_cache, &init_kmem_cache_node[CACHE_CACHE + nid], nid);
 
-			init_list(kदो_स्मृति_caches[KMALLOC_NORMAL][INDEX_NODE],
+			init_list(kmalloc_caches[KMALLOC_NORMAL][INDEX_NODE],
 					  &init_kmem_cache_node[SIZE_NODE + nid], nid);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	create_kदो_स्मृति_caches(ARCH_KMALLOC_FLAGS);
-पूर्ण
+	create_kmalloc_caches(ARCH_KMALLOC_FLAGS);
+}
 
-व्योम __init kmem_cache_init_late(व्योम)
-अणु
-	काष्ठा kmem_cache *cachep;
+void __init kmem_cache_init_late(void)
+{
+	struct kmem_cache *cachep;
 
 	/* 6) resize the head arrays to their final sizes */
 	mutex_lock(&slab_mutex);
-	list_क्रम_each_entry(cachep, &slab_caches, list)
-		अगर (enable_cpucache(cachep, GFP_NOWAIT))
+	list_for_each_entry(cachep, &slab_caches, list)
+		if (enable_cpucache(cachep, GFP_NOWAIT))
 			BUG();
 	mutex_unlock(&slab_mutex);
 
 	/* Done! */
 	slab_state = FULL;
 
-#अगर_घोषित CONFIG_NUMA
+#ifdef CONFIG_NUMA
 	/*
-	 * Register a memory hotplug callback that initializes and मुक्तs
+	 * Register a memory hotplug callback that initializes and frees
 	 * node.
 	 */
-	hotplug_memory_notअगरier(slab_memory_callback, SLAB_CALLBACK_PRI);
-#पूर्ण_अगर
+	hotplug_memory_notifier(slab_memory_callback, SLAB_CALLBACK_PRI);
+#endif
 
 	/*
-	 * The reap समयrs are started later, with a module init call: That part
+	 * The reap timers are started later, with a module init call: That part
 	 * of the kernel is not yet operational.
 	 */
-पूर्ण
+}
 
-अटल पूर्णांक __init cpucache_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init cpucache_init(void)
+{
+	int ret;
 
 	/*
-	 * Register the समयrs that वापस unneeded pages to the page allocator
+	 * Register the timers that return unneeded pages to the page allocator
 	 */
 	ret = cpuhp_setup_state(CPUHP_AP_ONLINE_DYN, "SLAB online",
 				slab_online_cpu, slab_offline_cpu);
 	WARN_ON(ret < 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 __initcall(cpucache_init);
 
-अटल noअंतरभूत व्योम
-slab_out_of_memory(काष्ठा kmem_cache *cachep, gfp_t gfpflags, पूर्णांक nodeid)
-अणु
-#अगर DEBUG
-	काष्ठा kmem_cache_node *n;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक node;
-	अटल DEFINE_RATELIMIT_STATE(slab_oom_rs, DEFAULT_RATELIMIT_INTERVAL,
+static noinline void
+slab_out_of_memory(struct kmem_cache *cachep, gfp_t gfpflags, int nodeid)
+{
+#if DEBUG
+	struct kmem_cache_node *n;
+	unsigned long flags;
+	int node;
+	static DEFINE_RATELIMIT_STATE(slab_oom_rs, DEFAULT_RATELIMIT_INTERVAL,
 				      DEFAULT_RATELIMIT_BURST);
 
-	अगर ((gfpflags & __GFP_NOWARN) || !__ratelimit(&slab_oom_rs))
-		वापस;
+	if ((gfpflags & __GFP_NOWARN) || !__ratelimit(&slab_oom_rs))
+		return;
 
 	pr_warn("SLAB: Unable to allocate memory on node %d, gfp=%#x(%pGg)\n",
 		nodeid, gfpflags, &gfpflags);
 	pr_warn("  cache: %s, object size: %d, order: %d\n",
 		cachep->name, cachep->size, cachep->gfporder);
 
-	क्रम_each_kmem_cache_node(cachep, node, n) अणु
-		अचिन्हित दीर्घ total_sद_असल, मुक्त_sद_असल, मुक्त_objs;
+	for_each_kmem_cache_node(cachep, node, n) {
+		unsigned long total_slabs, free_slabs, free_objs;
 
 		spin_lock_irqsave(&n->list_lock, flags);
-		total_sद_असल = n->total_sद_असल;
-		मुक्त_sद_असल = n->मुक्त_sद_असल;
-		मुक्त_objs = n->मुक्त_objects;
+		total_slabs = n->total_slabs;
+		free_slabs = n->free_slabs;
+		free_objs = n->free_objects;
 		spin_unlock_irqrestore(&n->list_lock, flags);
 
 		pr_warn("  node %d: slabs: %ld/%ld, objs: %ld/%ld\n",
-			node, total_sद_असल - मुक्त_sद_असल, total_sद_असल,
-			(total_sद_असल * cachep->num) - मुक्त_objs,
-			total_sद_असल * cachep->num);
-	पूर्ण
-#पूर्ण_अगर
-पूर्ण
+			node, total_slabs - free_slabs, total_slabs,
+			(total_slabs * cachep->num) - free_objs,
+			total_slabs * cachep->num);
+	}
+#endif
+}
 
 /*
- * Interface to प्रणाली's page allocator. No need to hold the
+ * Interface to system's page allocator. No need to hold the
  * kmem_cache_node ->list_lock.
  *
- * If we requested dmaable memory, we will get it. Even अगर we
+ * If we requested dmaable memory, we will get it. Even if we
  * did not request dmaable memory, we might get it, but that
  * would be relatively rare and ignorable.
  */
-अटल काष्ठा page *kmem_getpages(काष्ठा kmem_cache *cachep, gfp_t flags,
-								पूर्णांक nodeid)
-अणु
-	काष्ठा page *page;
+static struct page *kmem_getpages(struct kmem_cache *cachep, gfp_t flags,
+								int nodeid)
+{
+	struct page *page;
 
 	flags |= cachep->allocflags;
 
 	page = __alloc_pages_node(nodeid, flags, cachep->gfporder);
-	अगर (!page) अणु
+	if (!page) {
 		slab_out_of_memory(cachep, flags, nodeid);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	account_slab_page(page, cachep->gfporder, cachep, flags);
 	__SetPageSlab(page);
-	/* Record अगर ALLOC_NO_WATERMARKS was set when allocating the slab */
-	अगर (sk_meदो_स्मृति_socks() && page_is_pfmeदो_स्मृति(page))
-		SetPageSlabPfmeदो_स्मृति(page);
+	/* Record if ALLOC_NO_WATERMARKS was set when allocating the slab */
+	if (sk_memalloc_socks() && page_is_pfmemalloc(page))
+		SetPageSlabPfmemalloc(page);
 
-	वापस page;
-पूर्ण
+	return page;
+}
 
 /*
- * Interface to प्रणाली's page release.
+ * Interface to system's page release.
  */
-अटल व्योम kmem_मुक्तpages(काष्ठा kmem_cache *cachep, काष्ठा page *page)
-अणु
-	पूर्णांक order = cachep->gfporder;
+static void kmem_freepages(struct kmem_cache *cachep, struct page *page)
+{
+	int order = cachep->gfporder;
 
 	BUG_ON(!PageSlab(page));
-	__ClearPageSlabPfmeदो_स्मृति(page);
+	__ClearPageSlabPfmemalloc(page);
 	__ClearPageSlab(page);
 	page_mapcount_reset(page);
-	/* In जोड़ with page->mapping where page allocator expects शून्य */
-	page->slab_cache = शून्य;
+	/* In union with page->mapping where page allocator expects NULL */
+	page->slab_cache = NULL;
 
-	अगर (current->reclaim_state)
+	if (current->reclaim_state)
 		current->reclaim_state->reclaimed_slab += 1 << order;
 	unaccount_slab_page(page, order, cachep);
-	__मुक्त_pages(page, order);
-पूर्ण
+	__free_pages(page, order);
+}
 
-अटल व्योम kmem_rcu_मुक्त(काष्ठा rcu_head *head)
-अणु
-	काष्ठा kmem_cache *cachep;
-	काष्ठा page *page;
+static void kmem_rcu_free(struct rcu_head *head)
+{
+	struct kmem_cache *cachep;
+	struct page *page;
 
-	page = container_of(head, काष्ठा page, rcu_head);
+	page = container_of(head, struct page, rcu_head);
 	cachep = page->slab_cache;
 
-	kmem_मुक्तpages(cachep, page);
-पूर्ण
+	kmem_freepages(cachep, page);
+}
 
-#अगर DEBUG
-अटल bool is_debug_pagealloc_cache(काष्ठा kmem_cache *cachep)
-अणु
-	अगर (debug_pagealloc_enabled_अटल() && OFF_SLAB(cachep) &&
+#if DEBUG
+static bool is_debug_pagealloc_cache(struct kmem_cache *cachep)
+{
+	if (debug_pagealloc_enabled_static() && OFF_SLAB(cachep) &&
 		(cachep->size % PAGE_SIZE) == 0)
-		वापस true;
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-#अगर_घोषित CONFIG_DEBUG_PAGEALLOC
-अटल व्योम slab_kernel_map(काष्ठा kmem_cache *cachep, व्योम *objp, पूर्णांक map)
-अणु
-	अगर (!is_debug_pagealloc_cache(cachep))
-		वापस;
+#ifdef CONFIG_DEBUG_PAGEALLOC
+static void slab_kernel_map(struct kmem_cache *cachep, void *objp, int map)
+{
+	if (!is_debug_pagealloc_cache(cachep))
+		return;
 
 	__kernel_map_pages(virt_to_page(objp), cachep->size / PAGE_SIZE, map);
-पूर्ण
+}
 
-#अन्यथा
-अटल अंतरभूत व्योम slab_kernel_map(काष्ठा kmem_cache *cachep, व्योम *objp,
-				पूर्णांक map) अणुपूर्ण
+#else
+static inline void slab_kernel_map(struct kmem_cache *cachep, void *objp,
+				int map) {}
 
-#पूर्ण_अगर
+#endif
 
-अटल व्योम poison_obj(काष्ठा kmem_cache *cachep, व्योम *addr, अचिन्हित अक्षर val)
-अणु
-	पूर्णांक size = cachep->object_size;
-	addr = &((अक्षर *)addr)[obj_offset(cachep)];
+static void poison_obj(struct kmem_cache *cachep, void *addr, unsigned char val)
+{
+	int size = cachep->object_size;
+	addr = &((char *)addr)[obj_offset(cachep)];
 
-	स_रखो(addr, val, size);
-	*(अचिन्हित अक्षर *)(addr + size - 1) = POISON_END;
-पूर्ण
+	memset(addr, val, size);
+	*(unsigned char *)(addr + size - 1) = POISON_END;
+}
 
-अटल व्योम dump_line(अक्षर *data, पूर्णांक offset, पूर्णांक limit)
-अणु
-	पूर्णांक i;
-	अचिन्हित अक्षर error = 0;
-	पूर्णांक bad_count = 0;
+static void dump_line(char *data, int offset, int limit)
+{
+	int i;
+	unsigned char error = 0;
+	int bad_count = 0;
 
 	pr_err("%03x: ", offset);
-	क्रम (i = 0; i < limit; i++) अणु
-		अगर (data[offset + i] != POISON_FREE) अणु
+	for (i = 0; i < limit; i++) {
+		if (data[offset + i] != POISON_FREE) {
 			error = data[offset + i];
 			bad_count++;
-		पूर्ण
-	पूर्ण
-	prपूर्णांक_hex_dump(KERN_CONT, "", 0, 16, 1,
+		}
+	}
+	print_hex_dump(KERN_CONT, "", 0, 16, 1,
 			&data[offset], limit, 1);
 
-	अगर (bad_count == 1) अणु
+	if (bad_count == 1) {
 		error ^= POISON_FREE;
-		अगर (!(error & (error - 1))) अणु
+		if (!(error & (error - 1))) {
 			pr_err("Single bit error detected. Probably bad RAM.\n");
-#अगर_घोषित CONFIG_X86
+#ifdef CONFIG_X86
 			pr_err("Run memtest86+ or a similar memory test tool.\n");
-#अन्यथा
+#else
 			pr_err("Run a memory test tool.\n");
-#पूर्ण_अगर
-		पूर्ण
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर
+#endif
+		}
+	}
+}
+#endif
 
-#अगर DEBUG
+#if DEBUG
 
-अटल व्योम prपूर्णांक_objinfo(काष्ठा kmem_cache *cachep, व्योम *objp, पूर्णांक lines)
-अणु
-	पूर्णांक i, size;
-	अक्षर *realobj;
+static void print_objinfo(struct kmem_cache *cachep, void *objp, int lines)
+{
+	int i, size;
+	char *realobj;
 
-	अगर (cachep->flags & SLAB_RED_ZONE) अणु
+	if (cachep->flags & SLAB_RED_ZONE) {
 		pr_err("Redzone: 0x%llx/0x%llx\n",
 		       *dbg_redzone1(cachep, objp),
 		       *dbg_redzone2(cachep, objp));
-	पूर्ण
+	}
 
-	अगर (cachep->flags & SLAB_STORE_USER)
+	if (cachep->flags & SLAB_STORE_USER)
 		pr_err("Last user: (%pSR)\n", *dbg_userword(cachep, objp));
-	realobj = (अक्षर *)objp + obj_offset(cachep);
+	realobj = (char *)objp + obj_offset(cachep);
 	size = cachep->object_size;
-	क्रम (i = 0; i < size && lines; i += 16, lines--) अणु
-		पूर्णांक limit;
+	for (i = 0; i < size && lines; i += 16, lines--) {
+		int limit;
 		limit = 16;
-		अगर (i + limit > size)
+		if (i + limit > size)
 			limit = size - i;
 		dump_line(realobj, i, limit);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम check_poison_obj(काष्ठा kmem_cache *cachep, व्योम *objp)
-अणु
-	अक्षर *realobj;
-	पूर्णांक size, i;
-	पूर्णांक lines = 0;
+static void check_poison_obj(struct kmem_cache *cachep, void *objp)
+{
+	char *realobj;
+	int size, i;
+	int lines = 0;
 
-	अगर (is_debug_pagealloc_cache(cachep))
-		वापस;
+	if (is_debug_pagealloc_cache(cachep))
+		return;
 
-	realobj = (अक्षर *)objp + obj_offset(cachep);
+	realobj = (char *)objp + obj_offset(cachep);
 	size = cachep->object_size;
 
-	क्रम (i = 0; i < size; i++) अणु
-		अक्षर exp = POISON_FREE;
-		अगर (i == size - 1)
+	for (i = 0; i < size; i++) {
+		char exp = POISON_FREE;
+		if (i == size - 1)
 			exp = POISON_END;
-		अगर (realobj[i] != exp) अणु
-			पूर्णांक limit;
+		if (realobj[i] != exp) {
+			int limit;
 			/* Mismatch ! */
-			/* Prपूर्णांक header */
-			अगर (lines == 0) अणु
+			/* Print header */
+			if (lines == 0) {
 				pr_err("Slab corruption (%s): %s start=%px, len=%d\n",
-				       prपूर्णांक_taपूर्णांकed(), cachep->name,
+				       print_tainted(), cachep->name,
 				       realobj, size);
-				prपूर्णांक_objinfo(cachep, objp, 0);
-			पूर्ण
+				print_objinfo(cachep, objp, 0);
+			}
 			/* Hexdump the affected line */
 			i = (i / 16) * 16;
 			limit = 16;
-			अगर (i + limit > size)
+			if (i + limit > size)
 				limit = size - i;
 			dump_line(realobj, i, limit);
 			i += 16;
 			lines++;
 			/* Limit to 5 lines */
-			अगर (lines > 5)
-				अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (lines != 0) अणु
-		/* Prपूर्णांक some data about the neighboring objects, अगर they
+			if (lines > 5)
+				break;
+		}
+	}
+	if (lines != 0) {
+		/* Print some data about the neighboring objects, if they
 		 * exist:
 		 */
-		काष्ठा page *page = virt_to_head_page(objp);
-		अचिन्हित पूर्णांक objnr;
+		struct page *page = virt_to_head_page(objp);
+		unsigned int objnr;
 
 		objnr = obj_to_index(cachep, page, objp);
-		अगर (objnr) अणु
+		if (objnr) {
 			objp = index_to_obj(cachep, page, objnr - 1);
-			realobj = (अक्षर *)objp + obj_offset(cachep);
+			realobj = (char *)objp + obj_offset(cachep);
 			pr_err("Prev obj: start=%px, len=%d\n", realobj, size);
-			prपूर्णांक_objinfo(cachep, objp, 2);
-		पूर्ण
-		अगर (objnr + 1 < cachep->num) अणु
+			print_objinfo(cachep, objp, 2);
+		}
+		if (objnr + 1 < cachep->num) {
 			objp = index_to_obj(cachep, page, objnr + 1);
-			realobj = (अक्षर *)objp + obj_offset(cachep);
+			realobj = (char *)objp + obj_offset(cachep);
 			pr_err("Next obj: start=%px, len=%d\n", realobj, size);
-			prपूर्णांक_objinfo(cachep, objp, 2);
-		पूर्ण
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर
+			print_objinfo(cachep, objp, 2);
+		}
+	}
+}
+#endif
 
-#अगर DEBUG
-अटल व्योम slab_destroy_debugcheck(काष्ठा kmem_cache *cachep,
-						काष्ठा page *page)
-अणु
-	पूर्णांक i;
+#if DEBUG
+static void slab_destroy_debugcheck(struct kmem_cache *cachep,
+						struct page *page)
+{
+	int i;
 
-	अगर (OBJFREELIST_SLAB(cachep) && cachep->flags & SLAB_POISON) अणु
-		poison_obj(cachep, page->मुक्तlist - obj_offset(cachep),
+	if (OBJFREELIST_SLAB(cachep) && cachep->flags & SLAB_POISON) {
+		poison_obj(cachep, page->freelist - obj_offset(cachep),
 			POISON_FREE);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < cachep->num; i++) अणु
-		व्योम *objp = index_to_obj(cachep, page, i);
+	for (i = 0; i < cachep->num; i++) {
+		void *objp = index_to_obj(cachep, page, i);
 
-		अगर (cachep->flags & SLAB_POISON) अणु
+		if (cachep->flags & SLAB_POISON) {
 			check_poison_obj(cachep, objp);
 			slab_kernel_map(cachep, objp, 1);
-		पूर्ण
-		अगर (cachep->flags & SLAB_RED_ZONE) अणु
-			अगर (*dbg_redzone1(cachep, objp) != RED_INACTIVE)
+		}
+		if (cachep->flags & SLAB_RED_ZONE) {
+			if (*dbg_redzone1(cachep, objp) != RED_INACTIVE)
 				slab_error(cachep, "start of a freed object was overwritten");
-			अगर (*dbg_redzone2(cachep, objp) != RED_INACTIVE)
+			if (*dbg_redzone2(cachep, objp) != RED_INACTIVE)
 				slab_error(cachep, "end of a freed object was overwritten");
-		पूर्ण
-	पूर्ण
-पूर्ण
-#अन्यथा
-अटल व्योम slab_destroy_debugcheck(काष्ठा kmem_cache *cachep,
-						काष्ठा page *page)
-अणु
-पूर्ण
-#पूर्ण_अगर
+		}
+	}
+}
+#else
+static void slab_destroy_debugcheck(struct kmem_cache *cachep,
+						struct page *page)
+{
+}
+#endif
 
 /**
  * slab_destroy - destroy and release all objects in a slab
- * @cachep: cache poपूर्णांकer being destroyed
- * @page: page poपूर्णांकer being destroyed
+ * @cachep: cache pointer being destroyed
+ * @page: page pointer being destroyed
  *
- * Destroy all the objs in a slab page, and release the mem back to the प्रणाली.
- * Beक्रमe calling the slab page must have been unlinked from the cache. The
+ * Destroy all the objs in a slab page, and release the mem back to the system.
+ * Before calling the slab page must have been unlinked from the cache. The
  * kmem_cache_node ->list_lock is not held/needed.
  */
-अटल व्योम slab_destroy(काष्ठा kmem_cache *cachep, काष्ठा page *page)
-अणु
-	व्योम *मुक्तlist;
+static void slab_destroy(struct kmem_cache *cachep, struct page *page)
+{
+	void *freelist;
 
-	मुक्तlist = page->मुक्तlist;
+	freelist = page->freelist;
 	slab_destroy_debugcheck(cachep, page);
-	अगर (unlikely(cachep->flags & SLAB_TYPESAFE_BY_RCU))
-		call_rcu(&page->rcu_head, kmem_rcu_मुक्त);
-	अन्यथा
-		kmem_मुक्तpages(cachep, page);
+	if (unlikely(cachep->flags & SLAB_TYPESAFE_BY_RCU))
+		call_rcu(&page->rcu_head, kmem_rcu_free);
+	else
+		kmem_freepages(cachep, page);
 
 	/*
-	 * From now on, we करोn't use मुक्तlist
-	 * although actual page can be मुक्तd in rcu context
+	 * From now on, we don't use freelist
+	 * although actual page can be freed in rcu context
 	 */
-	अगर (OFF_SLAB(cachep))
-		kmem_cache_मुक्त(cachep->मुक्तlist_cache, मुक्तlist);
-पूर्ण
+	if (OFF_SLAB(cachep))
+		kmem_cache_free(cachep->freelist_cache, freelist);
+}
 
 /*
- * Update the size of the caches beक्रमe calling sद_असल_destroy as it may
- * recursively call kमुक्त.
+ * Update the size of the caches before calling slabs_destroy as it may
+ * recursively call kfree.
  */
-अटल व्योम sद_असल_destroy(काष्ठा kmem_cache *cachep, काष्ठा list_head *list)
-अणु
-	काष्ठा page *page, *n;
+static void slabs_destroy(struct kmem_cache *cachep, struct list_head *list)
+{
+	struct page *page, *n;
 
-	list_क्रम_each_entry_safe(page, n, list, slab_list) अणु
+	list_for_each_entry_safe(page, n, list, slab_list) {
 		list_del(&page->slab_list);
 		slab_destroy(cachep, page);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * calculate_slab_order - calculate size (page order) of sद_असल
- * @cachep: poपूर्णांकer to the cache that is being created
+ * calculate_slab_order - calculate size (page order) of slabs
+ * @cachep: pointer to the cache that is being created
  * @size: size of objects to be created in this cache.
  * @flags: slab allocation flags
  *
  * Also calculates the number of objects per slab.
  *
- * This could be made much more पूर्णांकelligent.  For now, try to aव्योम using
- * high order pages क्रम sद_असल.  When the gfp() functions are more मित्रly
+ * This could be made much more intelligent.  For now, try to avoid using
+ * high order pages for slabs.  When the gfp() functions are more friendly
  * towards high-order requests, this should be changed.
  *
  * Return: number of left-over bytes in a slab
  */
-अटल माप_प्रकार calculate_slab_order(काष्ठा kmem_cache *cachep,
-				माप_प्रकार size, slab_flags_t flags)
-अणु
-	माप_प्रकार left_over = 0;
-	पूर्णांक gfporder;
+static size_t calculate_slab_order(struct kmem_cache *cachep,
+				size_t size, slab_flags_t flags)
+{
+	size_t left_over = 0;
+	int gfporder;
 
-	क्रम (gfporder = 0; gfporder <= KMALLOC_MAX_ORDER; gfporder++) अणु
-		अचिन्हित पूर्णांक num;
-		माप_प्रकार reमुख्यder;
+	for (gfporder = 0; gfporder <= KMALLOC_MAX_ORDER; gfporder++) {
+		unsigned int num;
+		size_t remainder;
 
-		num = cache_estimate(gfporder, size, flags, &reमुख्यder);
-		अगर (!num)
-			जारी;
+		num = cache_estimate(gfporder, size, flags, &remainder);
+		if (!num)
+			continue;
 
 		/* Can't handle number of objects more than SLAB_OBJ_MAX_NUM */
-		अगर (num > SLAB_OBJ_MAX_NUM)
-			अवरोध;
+		if (num > SLAB_OBJ_MAX_NUM)
+			break;
 
-		अगर (flags & CFLGS_OFF_SLAB) अणु
-			काष्ठा kmem_cache *मुक्तlist_cache;
-			माप_प्रकार मुक्तlist_size;
+		if (flags & CFLGS_OFF_SLAB) {
+			struct kmem_cache *freelist_cache;
+			size_t freelist_size;
 
-			मुक्तlist_size = num * माप(मुक्तlist_idx_t);
-			मुक्तlist_cache = kदो_स्मृति_slab(मुक्तlist_size, 0u);
-			अगर (!मुक्तlist_cache)
-				जारी;
+			freelist_size = num * sizeof(freelist_idx_t);
+			freelist_cache = kmalloc_slab(freelist_size, 0u);
+			if (!freelist_cache)
+				continue;
 
 			/*
-			 * Needed to aव्योम possible looping condition
+			 * Needed to avoid possible looping condition
 			 * in cache_grow_begin()
 			 */
-			अगर (OFF_SLAB(मुक्तlist_cache))
-				जारी;
+			if (OFF_SLAB(freelist_cache))
+				continue;
 
-			/* check अगर off slab has enough benefit */
-			अगर (मुक्तlist_cache->size > cachep->size / 2)
-				जारी;
-		पूर्ण
+			/* check if off slab has enough benefit */
+			if (freelist_cache->size > cachep->size / 2)
+				continue;
+		}
 
 		/* Found something acceptable - save it away */
 		cachep->num = num;
 		cachep->gfporder = gfporder;
-		left_over = reमुख्यder;
+		left_over = remainder;
 
 		/*
 		 * A VFS-reclaimable slab tends to have most allocations
-		 * as GFP_NOFS and we really करोn't want to have to be allocating
+		 * as GFP_NOFS and we really don't want to have to be allocating
 		 * higher-order pages when we are unable to shrink dcache.
 		 */
-		अगर (flags & SLAB_RECLAIM_ACCOUNT)
-			अवरोध;
+		if (flags & SLAB_RECLAIM_ACCOUNT)
+			break;
 
 		/*
-		 * Large number of objects is good, but very large sद_असल are
-		 * currently bad क्रम the gfp()s.
+		 * Large number of objects is good, but very large slabs are
+		 * currently bad for the gfp()s.
 		 */
-		अगर (gfporder >= slab_max_order)
-			अवरोध;
+		if (gfporder >= slab_max_order)
+			break;
 
 		/*
-		 * Acceptable पूर्णांकernal fragmentation?
+		 * Acceptable internal fragmentation?
 		 */
-		अगर (left_over * 8 <= (PAGE_SIZE << gfporder))
-			अवरोध;
-	पूर्ण
-	वापस left_over;
-पूर्ण
+		if (left_over * 8 <= (PAGE_SIZE << gfporder))
+			break;
+	}
+	return left_over;
+}
 
-अटल काष्ठा array_cache __percpu *alloc_kmem_cache_cpus(
-		काष्ठा kmem_cache *cachep, पूर्णांक entries, पूर्णांक batchcount)
-अणु
-	पूर्णांक cpu;
-	माप_प्रकार size;
-	काष्ठा array_cache __percpu *cpu_cache;
+static struct array_cache __percpu *alloc_kmem_cache_cpus(
+		struct kmem_cache *cachep, int entries, int batchcount)
+{
+	int cpu;
+	size_t size;
+	struct array_cache __percpu *cpu_cache;
 
-	size = माप(व्योम *) * entries + माप(काष्ठा array_cache);
-	cpu_cache = __alloc_percpu(size, माप(व्योम *));
+	size = sizeof(void *) * entries + sizeof(struct array_cache);
+	cpu_cache = __alloc_percpu(size, sizeof(void *));
 
-	अगर (!cpu_cache)
-		वापस शून्य;
+	if (!cpu_cache)
+		return NULL;
 
-	क्रम_each_possible_cpu(cpu) अणु
+	for_each_possible_cpu(cpu) {
 		init_arraycache(per_cpu_ptr(cpu_cache, cpu),
 				entries, batchcount);
-	पूर्ण
+	}
 
-	वापस cpu_cache;
-पूर्ण
+	return cpu_cache;
+}
 
-अटल पूर्णांक __ref setup_cpu_cache(काष्ठा kmem_cache *cachep, gfp_t gfp)
-अणु
-	अगर (slab_state >= FULL)
-		वापस enable_cpucache(cachep, gfp);
+static int __ref setup_cpu_cache(struct kmem_cache *cachep, gfp_t gfp)
+{
+	if (slab_state >= FULL)
+		return enable_cpucache(cachep, gfp);
 
 	cachep->cpu_cache = alloc_kmem_cache_cpus(cachep, 1, 1);
-	अगर (!cachep->cpu_cache)
-		वापस 1;
+	if (!cachep->cpu_cache)
+		return 1;
 
-	अगर (slab_state == DOWN) अणु
+	if (slab_state == DOWN) {
 		/* Creation of first cache (kmem_cache). */
 		set_up_node(kmem_cache, CACHE_CACHE);
-	पूर्ण अन्यथा अगर (slab_state == PARTIAL) अणु
+	} else if (slab_state == PARTIAL) {
 		/* For kmem_cache_node */
 		set_up_node(cachep, SIZE_NODE);
-	पूर्ण अन्यथा अणु
-		पूर्णांक node;
+	} else {
+		int node;
 
-		क्रम_each_online_node(node) अणु
-			cachep->node[node] = kदो_स्मृति_node(
-				माप(काष्ठा kmem_cache_node), gfp, node);
+		for_each_online_node(node) {
+			cachep->node[node] = kmalloc_node(
+				sizeof(struct kmem_cache_node), gfp, node);
 			BUG_ON(!cachep->node[node]);
 			kmem_cache_node_init(cachep->node[node]);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	cachep->node[numa_mem_id()]->next_reap =
-			jअगरfies + REAPTIMEOUT_NODE +
-			((अचिन्हित दीर्घ)cachep) % REAPTIMEOUT_NODE;
+			jiffies + REAPTIMEOUT_NODE +
+			((unsigned long)cachep) % REAPTIMEOUT_NODE;
 
 	cpu_cache_get(cachep)->avail = 0;
 	cpu_cache_get(cachep)->limit = BOOT_CPUCACHE_ENTRIES;
@@ -1788,122 +1787,122 @@ slab_out_of_memory(काष्ठा kmem_cache *cachep, gfp_t gfpflags, पू
 	cpu_cache_get(cachep)->touched = 0;
 	cachep->batchcount = 1;
 	cachep->limit = BOOT_CPUCACHE_ENTRIES;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-slab_flags_t kmem_cache_flags(अचिन्हित पूर्णांक object_size,
-	slab_flags_t flags, स्थिर अक्षर *name)
-अणु
-	वापस flags;
-पूर्ण
+slab_flags_t kmem_cache_flags(unsigned int object_size,
+	slab_flags_t flags, const char *name)
+{
+	return flags;
+}
 
-काष्ठा kmem_cache *
-__kmem_cache_alias(स्थिर अक्षर *name, अचिन्हित पूर्णांक size, अचिन्हित पूर्णांक align,
-		   slab_flags_t flags, व्योम (*ctor)(व्योम *))
-अणु
-	काष्ठा kmem_cache *cachep;
+struct kmem_cache *
+__kmem_cache_alias(const char *name, unsigned int size, unsigned int align,
+		   slab_flags_t flags, void (*ctor)(void *))
+{
+	struct kmem_cache *cachep;
 
 	cachep = find_mergeable(size, align, flags, name, ctor);
-	अगर (cachep) अणु
+	if (cachep) {
 		cachep->refcount++;
 
 		/*
 		 * Adjust the object sizes so that we clear
 		 * the complete object on kzalloc.
 		 */
-		cachep->object_size = max_t(पूर्णांक, cachep->object_size, size);
-	पूर्ण
-	वापस cachep;
-पूर्ण
+		cachep->object_size = max_t(int, cachep->object_size, size);
+	}
+	return cachep;
+}
 
-अटल bool set_objमुक्तlist_slab_cache(काष्ठा kmem_cache *cachep,
-			माप_प्रकार size, slab_flags_t flags)
-अणु
-	माप_प्रकार left;
+static bool set_objfreelist_slab_cache(struct kmem_cache *cachep,
+			size_t size, slab_flags_t flags)
+{
+	size_t left;
 
 	cachep->num = 0;
 
 	/*
-	 * If slab स्वतः-initialization on मुक्त is enabled, store the मुक्तlist
-	 * off-slab, so that its contents करोn't end up in one of the allocated
+	 * If slab auto-initialization on free is enabled, store the freelist
+	 * off-slab, so that its contents don't end up in one of the allocated
 	 * objects.
 	 */
-	अगर (unlikely(slab_want_init_on_मुक्त(cachep)))
-		वापस false;
+	if (unlikely(slab_want_init_on_free(cachep)))
+		return false;
 
-	अगर (cachep->ctor || flags & SLAB_TYPESAFE_BY_RCU)
-		वापस false;
+	if (cachep->ctor || flags & SLAB_TYPESAFE_BY_RCU)
+		return false;
 
 	left = calculate_slab_order(cachep, size,
 			flags | CFLGS_OBJFREELIST_SLAB);
-	अगर (!cachep->num)
-		वापस false;
+	if (!cachep->num)
+		return false;
 
-	अगर (cachep->num * माप(मुक्तlist_idx_t) > cachep->object_size)
-		वापस false;
+	if (cachep->num * sizeof(freelist_idx_t) > cachep->object_size)
+		return false;
 
 	cachep->colour = left / cachep->colour_off;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool set_off_slab_cache(काष्ठा kmem_cache *cachep,
-			माप_प्रकार size, slab_flags_t flags)
-अणु
-	माप_प्रकार left;
+static bool set_off_slab_cache(struct kmem_cache *cachep,
+			size_t size, slab_flags_t flags)
+{
+	size_t left;
 
 	cachep->num = 0;
 
 	/*
 	 * Always use on-slab management when SLAB_NOLEAKTRACE
-	 * to aव्योम recursive calls पूर्णांकo kmemleak.
+	 * to avoid recursive calls into kmemleak.
 	 */
-	अगर (flags & SLAB_NOLEAKTRACE)
-		वापस false;
+	if (flags & SLAB_NOLEAKTRACE)
+		return false;
 
 	/*
 	 * Size is large, assume best to place the slab management obj
 	 * off-slab (should allow better packing of objs).
 	 */
 	left = calculate_slab_order(cachep, size, flags | CFLGS_OFF_SLAB);
-	अगर (!cachep->num)
-		वापस false;
+	if (!cachep->num)
+		return false;
 
 	/*
 	 * If the slab has been placed off-slab, and we have enough space then
 	 * move it on-slab. This is at the expense of any extra colouring.
 	 */
-	अगर (left >= cachep->num * माप(मुक्तlist_idx_t))
-		वापस false;
+	if (left >= cachep->num * sizeof(freelist_idx_t))
+		return false;
 
 	cachep->colour = left / cachep->colour_off;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool set_on_slab_cache(काष्ठा kmem_cache *cachep,
-			माप_प्रकार size, slab_flags_t flags)
-अणु
-	माप_प्रकार left;
+static bool set_on_slab_cache(struct kmem_cache *cachep,
+			size_t size, slab_flags_t flags)
+{
+	size_t left;
 
 	cachep->num = 0;
 
 	left = calculate_slab_order(cachep, size, flags);
-	अगर (!cachep->num)
-		वापस false;
+	if (!cachep->num)
+		return false;
 
 	cachep->colour = left / cachep->colour_off;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /**
  * __kmem_cache_create - Create a cache.
  * @cachep: cache management descriptor
  * @flags: SLAB flags
  *
- * Returns a ptr to the cache on success, शून्य on failure.
- * Cannot be called within a पूर्णांक, but can be पूर्णांकerrupted.
+ * Returns a ptr to the cache on success, NULL on failure.
+ * Cannot be called within a int, but can be interrupted.
  * The @ctor is run when new pages are allocated by the cache.
  *
  * The flags are
@@ -1912,57 +1911,57 @@ __kmem_cache_alias(स्थिर अक्षर *name, अचिन्हि�
  * to catch references to uninitialised memory.
  *
  * %SLAB_RED_ZONE - Insert `Red' zones around the allocated memory to check
- * क्रम buffer overruns.
+ * for buffer overruns.
  *
  * %SLAB_HWCACHE_ALIGN - Align the objects in this cache to a hardware
- * cacheline.  This can be beneficial अगर you're counting cycles as बंदly
+ * cacheline.  This can be beneficial if you're counting cycles as closely
  * as davem.
  *
- * Return: a poपूर्णांकer to the created cache or %शून्य in हाल of error
+ * Return: a pointer to the created cache or %NULL in case of error
  */
-पूर्णांक __kmem_cache_create(काष्ठा kmem_cache *cachep, slab_flags_t flags)
-अणु
-	माप_प्रकार ralign = BYTES_PER_WORD;
+int __kmem_cache_create(struct kmem_cache *cachep, slab_flags_t flags)
+{
+	size_t ralign = BYTES_PER_WORD;
 	gfp_t gfp;
-	पूर्णांक err;
-	अचिन्हित पूर्णांक size = cachep->size;
+	int err;
+	unsigned int size = cachep->size;
 
-#अगर DEBUG
-#अगर FORCED_DEBUG
+#if DEBUG
+#if FORCED_DEBUG
 	/*
-	 * Enable redzoning and last user accounting, except क्रम caches with
-	 * large objects, अगर the increased size would increase the object size
-	 * above the next घातer of two: caches with object sizes just above a
-	 * घातer of two have a signअगरicant amount of पूर्णांकernal fragmentation.
+	 * Enable redzoning and last user accounting, except for caches with
+	 * large objects, if the increased size would increase the object size
+	 * above the next power of two: caches with object sizes just above a
+	 * power of two have a significant amount of internal fragmentation.
 	 */
-	अगर (size < 4096 || fls(size - 1) == fls(size-1 + REDZONE_ALIGN +
-						2 * माप(अचिन्हित दीर्घ दीर्घ)))
+	if (size < 4096 || fls(size - 1) == fls(size-1 + REDZONE_ALIGN +
+						2 * sizeof(unsigned long long)))
 		flags |= SLAB_RED_ZONE | SLAB_STORE_USER;
-	अगर (!(flags & SLAB_TYPESAFE_BY_RCU))
+	if (!(flags & SLAB_TYPESAFE_BY_RCU))
 		flags |= SLAB_POISON;
-#पूर्ण_अगर
-#पूर्ण_अगर
+#endif
+#endif
 
 	/*
-	 * Check that size is in terms of words.  This is needed to aव्योम
-	 * unaligned accesses क्रम some archs when redzoning is used, and makes
+	 * Check that size is in terms of words.  This is needed to avoid
+	 * unaligned accesses for some archs when redzoning is used, and makes
 	 * sure any on-slab bufctl's are also correctly aligned.
 	 */
 	size = ALIGN(size, BYTES_PER_WORD);
 
-	अगर (flags & SLAB_RED_ZONE) अणु
+	if (flags & SLAB_RED_ZONE) {
 		ralign = REDZONE_ALIGN;
 		/* If redzoning, ensure that the second redzone is suitably
 		 * aligned, by adjusting the object size accordingly. */
 		size = ALIGN(size, REDZONE_ALIGN);
-	पूर्ण
+	}
 
 	/* 3) caller mandated alignment */
-	अगर (ralign < cachep->align) अणु
+	if (ralign < cachep->align) {
 		ralign = cachep->align;
-	पूर्ण
-	/* disable debug अगर necessary */
-	अगर (ralign > __alignof__(अचिन्हित दीर्घ दीर्घ))
+	}
+	/* disable debug if necessary */
+	if (ralign > __alignof__(unsigned long long))
 		flags &= ~(SLAB_RED_ZONE | SLAB_STORE_USER);
 	/*
 	 * 4) Store it.
@@ -1970,36 +1969,36 @@ __kmem_cache_alias(स्थिर अक्षर *name, अचिन्हि�
 	cachep->align = ralign;
 	cachep->colour_off = cache_line_size();
 	/* Offset must be a multiple of the alignment. */
-	अगर (cachep->colour_off < cachep->align)
+	if (cachep->colour_off < cachep->align)
 		cachep->colour_off = cachep->align;
 
-	अगर (slab_is_available())
+	if (slab_is_available())
 		gfp = GFP_KERNEL;
-	अन्यथा
+	else
 		gfp = GFP_NOWAIT;
 
-#अगर DEBUG
+#if DEBUG
 
 	/*
 	 * Both debugging options require word-alignment which is calculated
-	 * पूर्णांकo align above.
+	 * into align above.
 	 */
-	अगर (flags & SLAB_RED_ZONE) अणु
-		/* add space क्रम red zone words */
-		cachep->obj_offset += माप(अचिन्हित दीर्घ दीर्घ);
-		size += 2 * माप(अचिन्हित दीर्घ दीर्घ);
-	पूर्ण
-	अगर (flags & SLAB_STORE_USER) अणु
+	if (flags & SLAB_RED_ZONE) {
+		/* add space for red zone words */
+		cachep->obj_offset += sizeof(unsigned long long);
+		size += 2 * sizeof(unsigned long long);
+	}
+	if (flags & SLAB_STORE_USER) {
 		/* user store requires one word storage behind the end of
-		 * the real object. But अगर the second red zone needs to be
+		 * the real object. But if the second red zone needs to be
 		 * aligned to 64 bits, we must allow that much space.
 		 */
-		अगर (flags & SLAB_RED_ZONE)
+		if (flags & SLAB_RED_ZONE)
 			size += REDZONE_ALIGN;
-		अन्यथा
+		else
 			size += BYTES_PER_WORD;
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
 	kasan_cache_create(cachep, &size, &flags);
 
@@ -2008,684 +2007,684 @@ __kmem_cache_alias(स्थिर अक्षर *name, अचिन्हि�
 	 * We should restrict the number of objects in a slab to implement
 	 * byte sized index. Refer comment on SLAB_OBJ_MIN_SIZE definition.
 	 */
-	अगर (FREELIST_BYTE_INDEX && size < SLAB_OBJ_MIN_SIZE)
+	if (FREELIST_BYTE_INDEX && size < SLAB_OBJ_MIN_SIZE)
 		size = ALIGN(SLAB_OBJ_MIN_SIZE, cachep->align);
 
-#अगर DEBUG
+#if DEBUG
 	/*
 	 * To activate debug pagealloc, off-slab management is necessary
 	 * requirement. In early phase of initialization, small sized slab
-	 * करोesn't get initialized so it would not be possible. So, we need
+	 * doesn't get initialized so it would not be possible. So, we need
 	 * to check size >= 256. It guarantees that all necessary small
 	 * sized slab is initialized in current slab initialization sequence.
 	 */
-	अगर (debug_pagealloc_enabled_अटल() && (flags & SLAB_POISON) &&
-		size >= 256 && cachep->object_size > cache_line_size()) अणु
-		अगर (size < PAGE_SIZE || size % PAGE_SIZE == 0) अणु
-			माप_प्रकार पंचांगp_size = ALIGN(size, PAGE_SIZE);
+	if (debug_pagealloc_enabled_static() && (flags & SLAB_POISON) &&
+		size >= 256 && cachep->object_size > cache_line_size()) {
+		if (size < PAGE_SIZE || size % PAGE_SIZE == 0) {
+			size_t tmp_size = ALIGN(size, PAGE_SIZE);
 
-			अगर (set_off_slab_cache(cachep, पंचांगp_size, flags)) अणु
+			if (set_off_slab_cache(cachep, tmp_size, flags)) {
 				flags |= CFLGS_OFF_SLAB;
-				cachep->obj_offset += पंचांगp_size - size;
-				size = पंचांगp_size;
-				जाओ करोne;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-#पूर्ण_अगर
+				cachep->obj_offset += tmp_size - size;
+				size = tmp_size;
+				goto done;
+			}
+		}
+	}
+#endif
 
-	अगर (set_objमुक्तlist_slab_cache(cachep, size, flags)) अणु
+	if (set_objfreelist_slab_cache(cachep, size, flags)) {
 		flags |= CFLGS_OBJFREELIST_SLAB;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	अगर (set_off_slab_cache(cachep, size, flags)) अणु
+	if (set_off_slab_cache(cachep, size, flags)) {
 		flags |= CFLGS_OFF_SLAB;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	अगर (set_on_slab_cache(cachep, size, flags))
-		जाओ करोne;
+	if (set_on_slab_cache(cachep, size, flags))
+		goto done;
 
-	वापस -E2BIG;
+	return -E2BIG;
 
-करोne:
-	cachep->मुक्तlist_size = cachep->num * माप(मुक्तlist_idx_t);
+done:
+	cachep->freelist_size = cachep->num * sizeof(freelist_idx_t);
 	cachep->flags = flags;
 	cachep->allocflags = __GFP_COMP;
-	अगर (flags & SLAB_CACHE_DMA)
+	if (flags & SLAB_CACHE_DMA)
 		cachep->allocflags |= GFP_DMA;
-	अगर (flags & SLAB_CACHE_DMA32)
+	if (flags & SLAB_CACHE_DMA32)
 		cachep->allocflags |= GFP_DMA32;
-	अगर (flags & SLAB_RECLAIM_ACCOUNT)
+	if (flags & SLAB_RECLAIM_ACCOUNT)
 		cachep->allocflags |= __GFP_RECLAIMABLE;
 	cachep->size = size;
 	cachep->reciprocal_buffer_size = reciprocal_value(size);
 
-#अगर DEBUG
+#if DEBUG
 	/*
 	 * If we're going to use the generic kernel_map_pages()
 	 * poisoning, then it's going to smash the contents of
-	 * the redzone and userword anyhow, so चयन them off.
+	 * the redzone and userword anyhow, so switch them off.
 	 */
-	अगर (IS_ENABLED(CONFIG_PAGE_POISONING) &&
+	if (IS_ENABLED(CONFIG_PAGE_POISONING) &&
 		(cachep->flags & SLAB_POISON) &&
 		is_debug_pagealloc_cache(cachep))
 		cachep->flags &= ~(SLAB_RED_ZONE | SLAB_STORE_USER);
-#पूर्ण_अगर
+#endif
 
-	अगर (OFF_SLAB(cachep)) अणु
-		cachep->मुक्तlist_cache =
-			kदो_स्मृति_slab(cachep->मुक्तlist_size, 0u);
-	पूर्ण
+	if (OFF_SLAB(cachep)) {
+		cachep->freelist_cache =
+			kmalloc_slab(cachep->freelist_size, 0u);
+	}
 
 	err = setup_cpu_cache(cachep, gfp);
-	अगर (err) अणु
+	if (err) {
 		__kmem_cache_release(cachep);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर DEBUG
-अटल व्योम check_irq_off(व्योम)
-अणु
+#if DEBUG
+static void check_irq_off(void)
+{
 	BUG_ON(!irqs_disabled());
-पूर्ण
+}
 
-अटल व्योम check_irq_on(व्योम)
-अणु
+static void check_irq_on(void)
+{
 	BUG_ON(irqs_disabled());
-पूर्ण
+}
 
-अटल व्योम check_mutex_acquired(व्योम)
-अणु
+static void check_mutex_acquired(void)
+{
 	BUG_ON(!mutex_is_locked(&slab_mutex));
-पूर्ण
+}
 
-अटल व्योम check_spinlock_acquired(काष्ठा kmem_cache *cachep)
-अणु
-#अगर_घोषित CONFIG_SMP
+static void check_spinlock_acquired(struct kmem_cache *cachep)
+{
+#ifdef CONFIG_SMP
 	check_irq_off();
-	निश्चित_spin_locked(&get_node(cachep, numa_mem_id())->list_lock);
-#पूर्ण_अगर
-पूर्ण
+	assert_spin_locked(&get_node(cachep, numa_mem_id())->list_lock);
+#endif
+}
 
-अटल व्योम check_spinlock_acquired_node(काष्ठा kmem_cache *cachep, पूर्णांक node)
-अणु
-#अगर_घोषित CONFIG_SMP
+static void check_spinlock_acquired_node(struct kmem_cache *cachep, int node)
+{
+#ifdef CONFIG_SMP
 	check_irq_off();
-	निश्चित_spin_locked(&get_node(cachep, node)->list_lock);
-#पूर्ण_अगर
-पूर्ण
+	assert_spin_locked(&get_node(cachep, node)->list_lock);
+#endif
+}
 
-#अन्यथा
-#घोषणा check_irq_off()	करो अणु पूर्ण जबतक(0)
-#घोषणा check_irq_on()	करो अणु पूर्ण जबतक(0)
-#घोषणा check_mutex_acquired()	करो अणु पूर्ण जबतक(0)
-#घोषणा check_spinlock_acquired(x) करो अणु पूर्ण जबतक(0)
-#घोषणा check_spinlock_acquired_node(x, y) करो अणु पूर्ण जबतक(0)
-#पूर्ण_अगर
+#else
+#define check_irq_off()	do { } while(0)
+#define check_irq_on()	do { } while(0)
+#define check_mutex_acquired()	do { } while(0)
+#define check_spinlock_acquired(x) do { } while(0)
+#define check_spinlock_acquired_node(x, y) do { } while(0)
+#endif
 
-अटल व्योम drain_array_locked(काष्ठा kmem_cache *cachep, काष्ठा array_cache *ac,
-				पूर्णांक node, bool मुक्त_all, काष्ठा list_head *list)
-अणु
-	पूर्णांक toमुक्त;
+static void drain_array_locked(struct kmem_cache *cachep, struct array_cache *ac,
+				int node, bool free_all, struct list_head *list)
+{
+	int tofree;
 
-	अगर (!ac || !ac->avail)
-		वापस;
+	if (!ac || !ac->avail)
+		return;
 
-	toमुक्त = मुक्त_all ? ac->avail : (ac->limit + 4) / 5;
-	अगर (toमुक्त > ac->avail)
-		toमुक्त = (ac->avail + 1) / 2;
+	tofree = free_all ? ac->avail : (ac->limit + 4) / 5;
+	if (tofree > ac->avail)
+		tofree = (ac->avail + 1) / 2;
 
-	मुक्त_block(cachep, ac->entry, toमुक्त, node, list);
-	ac->avail -= toमुक्त;
-	स_हटाओ(ac->entry, &(ac->entry[toमुक्त]), माप(व्योम *) * ac->avail);
-पूर्ण
+	free_block(cachep, ac->entry, tofree, node, list);
+	ac->avail -= tofree;
+	memmove(ac->entry, &(ac->entry[tofree]), sizeof(void *) * ac->avail);
+}
 
-अटल व्योम करो_drain(व्योम *arg)
-अणु
-	काष्ठा kmem_cache *cachep = arg;
-	काष्ठा array_cache *ac;
-	पूर्णांक node = numa_mem_id();
-	काष्ठा kmem_cache_node *n;
+static void do_drain(void *arg)
+{
+	struct kmem_cache *cachep = arg;
+	struct array_cache *ac;
+	int node = numa_mem_id();
+	struct kmem_cache_node *n;
 	LIST_HEAD(list);
 
 	check_irq_off();
 	ac = cpu_cache_get(cachep);
 	n = get_node(cachep, node);
 	spin_lock(&n->list_lock);
-	मुक्त_block(cachep, ac->entry, ac->avail, node, &list);
+	free_block(cachep, ac->entry, ac->avail, node, &list);
 	spin_unlock(&n->list_lock);
 	ac->avail = 0;
-	sद_असल_destroy(cachep, &list);
-पूर्ण
+	slabs_destroy(cachep, &list);
+}
 
-अटल व्योम drain_cpu_caches(काष्ठा kmem_cache *cachep)
-अणु
-	काष्ठा kmem_cache_node *n;
-	पूर्णांक node;
+static void drain_cpu_caches(struct kmem_cache *cachep)
+{
+	struct kmem_cache_node *n;
+	int node;
 	LIST_HEAD(list);
 
-	on_each_cpu(करो_drain, cachep, 1);
+	on_each_cpu(do_drain, cachep, 1);
 	check_irq_on();
-	क्रम_each_kmem_cache_node(cachep, node, n)
-		अगर (n->alien)
+	for_each_kmem_cache_node(cachep, node, n)
+		if (n->alien)
 			drain_alien_cache(cachep, n->alien);
 
-	क्रम_each_kmem_cache_node(cachep, node, n) अणु
+	for_each_kmem_cache_node(cachep, node, n) {
 		spin_lock_irq(&n->list_lock);
 		drain_array_locked(cachep, n->shared, node, true, &list);
 		spin_unlock_irq(&n->list_lock);
 
-		sद_असल_destroy(cachep, &list);
-	पूर्ण
-पूर्ण
+		slabs_destroy(cachep, &list);
+	}
+}
 
 /*
- * Remove sद_असल from the list of मुक्त sद_असल.
- * Specअगरy the number of sद_असल to drain in toमुक्त.
+ * Remove slabs from the list of free slabs.
+ * Specify the number of slabs to drain in tofree.
  *
- * Returns the actual number of sद_असल released.
+ * Returns the actual number of slabs released.
  */
-अटल पूर्णांक drain_मुक्तlist(काष्ठा kmem_cache *cache,
-			काष्ठा kmem_cache_node *n, पूर्णांक toमुक्त)
-अणु
-	काष्ठा list_head *p;
-	पूर्णांक nr_मुक्तd;
-	काष्ठा page *page;
+static int drain_freelist(struct kmem_cache *cache,
+			struct kmem_cache_node *n, int tofree)
+{
+	struct list_head *p;
+	int nr_freed;
+	struct page *page;
 
-	nr_मुक्तd = 0;
-	जबतक (nr_मुक्तd < toमुक्त && !list_empty(&n->sद_असल_मुक्त)) अणु
+	nr_freed = 0;
+	while (nr_freed < tofree && !list_empty(&n->slabs_free)) {
 
 		spin_lock_irq(&n->list_lock);
-		p = n->sद_असल_मुक्त.prev;
-		अगर (p == &n->sद_असल_मुक्त) अणु
+		p = n->slabs_free.prev;
+		if (p == &n->slabs_free) {
 			spin_unlock_irq(&n->list_lock);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		page = list_entry(p, काष्ठा page, slab_list);
+		page = list_entry(p, struct page, slab_list);
 		list_del(&page->slab_list);
-		n->मुक्त_sद_असल--;
-		n->total_sद_असल--;
+		n->free_slabs--;
+		n->total_slabs--;
 		/*
-		 * Safe to drop the lock. The slab is no दीर्घer linked
+		 * Safe to drop the lock. The slab is no longer linked
 		 * to the cache.
 		 */
-		n->मुक्त_objects -= cache->num;
+		n->free_objects -= cache->num;
 		spin_unlock_irq(&n->list_lock);
 		slab_destroy(cache, page);
-		nr_मुक्तd++;
-	पूर्ण
+		nr_freed++;
+	}
 out:
-	वापस nr_मुक्तd;
-पूर्ण
+	return nr_freed;
+}
 
-bool __kmem_cache_empty(काष्ठा kmem_cache *s)
-अणु
-	पूर्णांक node;
-	काष्ठा kmem_cache_node *n;
+bool __kmem_cache_empty(struct kmem_cache *s)
+{
+	int node;
+	struct kmem_cache_node *n;
 
-	क्रम_each_kmem_cache_node(s, node, n)
-		अगर (!list_empty(&n->sद_असल_full) ||
-		    !list_empty(&n->sद_असल_partial))
-			वापस false;
-	वापस true;
-पूर्ण
+	for_each_kmem_cache_node(s, node, n)
+		if (!list_empty(&n->slabs_full) ||
+		    !list_empty(&n->slabs_partial))
+			return false;
+	return true;
+}
 
-पूर्णांक __kmem_cache_shrink(काष्ठा kmem_cache *cachep)
-अणु
-	पूर्णांक ret = 0;
-	पूर्णांक node;
-	काष्ठा kmem_cache_node *n;
+int __kmem_cache_shrink(struct kmem_cache *cachep)
+{
+	int ret = 0;
+	int node;
+	struct kmem_cache_node *n;
 
 	drain_cpu_caches(cachep);
 
 	check_irq_on();
-	क्रम_each_kmem_cache_node(cachep, node, n) अणु
-		drain_मुक्तlist(cachep, n, पूर्णांक_उच्च);
+	for_each_kmem_cache_node(cachep, node, n) {
+		drain_freelist(cachep, n, INT_MAX);
 
-		ret += !list_empty(&n->sद_असल_full) ||
-			!list_empty(&n->sद_असल_partial);
-	पूर्ण
-	वापस (ret ? 1 : 0);
-पूर्ण
+		ret += !list_empty(&n->slabs_full) ||
+			!list_empty(&n->slabs_partial);
+	}
+	return (ret ? 1 : 0);
+}
 
-पूर्णांक __kmem_cache_shutकरोwn(काष्ठा kmem_cache *cachep)
-अणु
-	वापस __kmem_cache_shrink(cachep);
-पूर्ण
+int __kmem_cache_shutdown(struct kmem_cache *cachep)
+{
+	return __kmem_cache_shrink(cachep);
+}
 
-व्योम __kmem_cache_release(काष्ठा kmem_cache *cachep)
-अणु
-	पूर्णांक i;
-	काष्ठा kmem_cache_node *n;
+void __kmem_cache_release(struct kmem_cache *cachep)
+{
+	int i;
+	struct kmem_cache_node *n;
 
-	cache_अक्रमom_seq_destroy(cachep);
+	cache_random_seq_destroy(cachep);
 
-	मुक्त_percpu(cachep->cpu_cache);
+	free_percpu(cachep->cpu_cache);
 
-	/* NUMA: मुक्त the node काष्ठाures */
-	क्रम_each_kmem_cache_node(cachep, i, n) अणु
-		kमुक्त(n->shared);
-		मुक्त_alien_cache(n->alien);
-		kमुक्त(n);
-		cachep->node[i] = शून्य;
-	पूर्ण
-पूर्ण
+	/* NUMA: free the node structures */
+	for_each_kmem_cache_node(cachep, i, n) {
+		kfree(n->shared);
+		free_alien_cache(n->alien);
+		kfree(n);
+		cachep->node[i] = NULL;
+	}
+}
 
 /*
- * Get the memory क्रम a slab management obj.
+ * Get the memory for a slab management obj.
  *
  * For a slab cache when the slab descriptor is off-slab, the
  * slab descriptor can't come from the same cache which is being created,
- * Because अगर it is the हाल, that means we defer the creation of
- * the kदो_स्मृति_अणुdma,पूर्ण_cache of size माप(slab descriptor) to this poपूर्णांक.
- * And we eventually call करोwn to __kmem_cache_create(), which
- * in turn looks up in the kदो_स्मृति_अणुdma,पूर्ण_caches क्रम the desired-size one.
+ * Because if it is the case, that means we defer the creation of
+ * the kmalloc_{dma,}_cache of size sizeof(slab descriptor) to this point.
+ * And we eventually call down to __kmem_cache_create(), which
+ * in turn looks up in the kmalloc_{dma,}_caches for the desired-size one.
  * This is a "chicken-and-egg" problem.
  *
- * So the off-slab slab descriptor shall come from the kदो_स्मृति_अणुdma,पूर्ण_caches,
+ * So the off-slab slab descriptor shall come from the kmalloc_{dma,}_caches,
  * which are all initialized during kmem_cache_init().
  */
-अटल व्योम *alloc_slabmgmt(काष्ठा kmem_cache *cachep,
-				   काष्ठा page *page, पूर्णांक colour_off,
-				   gfp_t local_flags, पूर्णांक nodeid)
-अणु
-	व्योम *मुक्तlist;
-	व्योम *addr = page_address(page);
+static void *alloc_slabmgmt(struct kmem_cache *cachep,
+				   struct page *page, int colour_off,
+				   gfp_t local_flags, int nodeid)
+{
+	void *freelist;
+	void *addr = page_address(page);
 
 	page->s_mem = addr + colour_off;
 	page->active = 0;
 
-	अगर (OBJFREELIST_SLAB(cachep))
-		मुक्तlist = शून्य;
-	अन्यथा अगर (OFF_SLAB(cachep)) अणु
+	if (OBJFREELIST_SLAB(cachep))
+		freelist = NULL;
+	else if (OFF_SLAB(cachep)) {
 		/* Slab management obj is off-slab. */
-		मुक्तlist = kmem_cache_alloc_node(cachep->मुक्तlist_cache,
+		freelist = kmem_cache_alloc_node(cachep->freelist_cache,
 					      local_flags, nodeid);
-	पूर्ण अन्यथा अणु
-		/* We will use last bytes at the slab क्रम मुक्तlist */
-		मुक्तlist = addr + (PAGE_SIZE << cachep->gfporder) -
-				cachep->मुक्तlist_size;
-	पूर्ण
+	} else {
+		/* We will use last bytes at the slab for freelist */
+		freelist = addr + (PAGE_SIZE << cachep->gfporder) -
+				cachep->freelist_size;
+	}
 
-	वापस मुक्तlist;
-पूर्ण
+	return freelist;
+}
 
-अटल अंतरभूत मुक्तlist_idx_t get_मुक्त_obj(काष्ठा page *page, अचिन्हित पूर्णांक idx)
-अणु
-	वापस ((मुक्तlist_idx_t *)page->मुक्तlist)[idx];
-पूर्ण
+static inline freelist_idx_t get_free_obj(struct page *page, unsigned int idx)
+{
+	return ((freelist_idx_t *)page->freelist)[idx];
+}
 
-अटल अंतरभूत व्योम set_मुक्त_obj(काष्ठा page *page,
-					अचिन्हित पूर्णांक idx, मुक्तlist_idx_t val)
-अणु
-	((मुक्तlist_idx_t *)(page->मुक्तlist))[idx] = val;
-पूर्ण
+static inline void set_free_obj(struct page *page,
+					unsigned int idx, freelist_idx_t val)
+{
+	((freelist_idx_t *)(page->freelist))[idx] = val;
+}
 
-अटल व्योम cache_init_objs_debug(काष्ठा kmem_cache *cachep, काष्ठा page *page)
-अणु
-#अगर DEBUG
-	पूर्णांक i;
+static void cache_init_objs_debug(struct kmem_cache *cachep, struct page *page)
+{
+#if DEBUG
+	int i;
 
-	क्रम (i = 0; i < cachep->num; i++) अणु
-		व्योम *objp = index_to_obj(cachep, page, i);
+	for (i = 0; i < cachep->num; i++) {
+		void *objp = index_to_obj(cachep, page, i);
 
-		अगर (cachep->flags & SLAB_STORE_USER)
-			*dbg_userword(cachep, objp) = शून्य;
+		if (cachep->flags & SLAB_STORE_USER)
+			*dbg_userword(cachep, objp) = NULL;
 
-		अगर (cachep->flags & SLAB_RED_ZONE) अणु
+		if (cachep->flags & SLAB_RED_ZONE) {
 			*dbg_redzone1(cachep, objp) = RED_INACTIVE;
 			*dbg_redzone2(cachep, objp) = RED_INACTIVE;
-		पूर्ण
+		}
 		/*
-		 * Conकाष्ठाors are not allowed to allocate memory from the same
-		 * cache which they are a स्थिरructor क्रम.  Otherwise, deadlock.
-		 * They must also be thपढ़ोed.
+		 * Constructors are not allowed to allocate memory from the same
+		 * cache which they are a constructor for.  Otherwise, deadlock.
+		 * They must also be threaded.
 		 */
-		अगर (cachep->ctor && !(cachep->flags & SLAB_POISON)) अणु
+		if (cachep->ctor && !(cachep->flags & SLAB_POISON)) {
 			kasan_unpoison_object_data(cachep,
 						   objp + obj_offset(cachep));
 			cachep->ctor(objp + obj_offset(cachep));
 			kasan_poison_object_data(
 				cachep, objp + obj_offset(cachep));
-		पूर्ण
+		}
 
-		अगर (cachep->flags & SLAB_RED_ZONE) अणु
-			अगर (*dbg_redzone2(cachep, objp) != RED_INACTIVE)
+		if (cachep->flags & SLAB_RED_ZONE) {
+			if (*dbg_redzone2(cachep, objp) != RED_INACTIVE)
 				slab_error(cachep, "constructor overwrote the end of an object");
-			अगर (*dbg_redzone1(cachep, objp) != RED_INACTIVE)
+			if (*dbg_redzone1(cachep, objp) != RED_INACTIVE)
 				slab_error(cachep, "constructor overwrote the start of an object");
-		पूर्ण
+		}
 		/* need to poison the objs? */
-		अगर (cachep->flags & SLAB_POISON) अणु
+		if (cachep->flags & SLAB_POISON) {
 			poison_obj(cachep, objp, POISON_FREE);
 			slab_kernel_map(cachep, objp, 0);
-		पूर्ण
-	पूर्ण
-#पूर्ण_अगर
-पूर्ण
+		}
+	}
+#endif
+}
 
-#अगर_घोषित CONFIG_SLAB_FREELIST_RANDOM
-/* Hold inक्रमmation during a मुक्तlist initialization */
-जोड़ मुक्तlist_init_state अणु
-	काष्ठा अणु
-		अचिन्हित पूर्णांक pos;
-		अचिन्हित पूर्णांक *list;
-		अचिन्हित पूर्णांक count;
-	पूर्ण;
-	काष्ठा rnd_state rnd_state;
-पूर्ण;
+#ifdef CONFIG_SLAB_FREELIST_RANDOM
+/* Hold information during a freelist initialization */
+union freelist_init_state {
+	struct {
+		unsigned int pos;
+		unsigned int *list;
+		unsigned int count;
+	};
+	struct rnd_state rnd_state;
+};
 
 /*
- * Initialize the state based on the अक्रमomization method available.
- * वापस true अगर the pre-computed list is available, false otherwise.
+ * Initialize the state based on the randomization method available.
+ * return true if the pre-computed list is available, false otherwise.
  */
-अटल bool मुक्तlist_state_initialize(जोड़ मुक्तlist_init_state *state,
-				काष्ठा kmem_cache *cachep,
-				अचिन्हित पूर्णांक count)
-अणु
+static bool freelist_state_initialize(union freelist_init_state *state,
+				struct kmem_cache *cachep,
+				unsigned int count)
+{
 	bool ret;
-	अचिन्हित पूर्णांक अक्रम;
+	unsigned int rand;
 
-	/* Use best entropy available to define a अक्रमom shअगरt */
-	अक्रम = get_अक्रमom_पूर्णांक();
+	/* Use best entropy available to define a random shift */
+	rand = get_random_int();
 
-	/* Use a अक्रमom state अगर the pre-computed list is not available */
-	अगर (!cachep->अक्रमom_seq) अणु
-		pअक्रमom_seed_state(&state->rnd_state, अक्रम);
+	/* Use a random state if the pre-computed list is not available */
+	if (!cachep->random_seq) {
+		prandom_seed_state(&state->rnd_state, rand);
 		ret = false;
-	पूर्ण अन्यथा अणु
-		state->list = cachep->अक्रमom_seq;
+	} else {
+		state->list = cachep->random_seq;
 		state->count = count;
-		state->pos = अक्रम % count;
+		state->pos = rand % count;
 		ret = true;
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-/* Get the next entry on the list and अक्रमomize it using a अक्रमom shअगरt */
-अटल मुक्तlist_idx_t next_अक्रमom_slot(जोड़ मुक्तlist_init_state *state)
-अणु
-	अगर (state->pos >= state->count)
+/* Get the next entry on the list and randomize it using a random shift */
+static freelist_idx_t next_random_slot(union freelist_init_state *state)
+{
+	if (state->pos >= state->count)
 		state->pos = 0;
-	वापस state->list[state->pos++];
-पूर्ण
+	return state->list[state->pos++];
+}
 
-/* Swap two मुक्तlist entries */
-अटल व्योम swap_मुक्त_obj(काष्ठा page *page, अचिन्हित पूर्णांक a, अचिन्हित पूर्णांक b)
-अणु
-	swap(((मुक्तlist_idx_t *)page->मुक्तlist)[a],
-		((मुक्तlist_idx_t *)page->मुक्तlist)[b]);
-पूर्ण
+/* Swap two freelist entries */
+static void swap_free_obj(struct page *page, unsigned int a, unsigned int b)
+{
+	swap(((freelist_idx_t *)page->freelist)[a],
+		((freelist_idx_t *)page->freelist)[b]);
+}
 
 /*
- * Shuffle the मुक्तlist initialization state based on pre-computed lists.
- * वापस true अगर the list was successfully shuffled, false otherwise.
+ * Shuffle the freelist initialization state based on pre-computed lists.
+ * return true if the list was successfully shuffled, false otherwise.
  */
-अटल bool shuffle_मुक्तlist(काष्ठा kmem_cache *cachep, काष्ठा page *page)
-अणु
-	अचिन्हित पूर्णांक objमुक्तlist = 0, i, अक्रम, count = cachep->num;
-	जोड़ मुक्तlist_init_state state;
+static bool shuffle_freelist(struct kmem_cache *cachep, struct page *page)
+{
+	unsigned int objfreelist = 0, i, rand, count = cachep->num;
+	union freelist_init_state state;
 	bool precomputed;
 
-	अगर (count < 2)
-		वापस false;
+	if (count < 2)
+		return false;
 
-	precomputed = मुक्तlist_state_initialize(&state, cachep, count);
+	precomputed = freelist_state_initialize(&state, cachep, count);
 
-	/* Take a अक्रमom entry as the objमुक्तlist */
-	अगर (OBJFREELIST_SLAB(cachep)) अणु
-		अगर (!precomputed)
-			objमुक्तlist = count - 1;
-		अन्यथा
-			objमुक्तlist = next_अक्रमom_slot(&state);
-		page->मुक्तlist = index_to_obj(cachep, page, objमुक्तlist) +
+	/* Take a random entry as the objfreelist */
+	if (OBJFREELIST_SLAB(cachep)) {
+		if (!precomputed)
+			objfreelist = count - 1;
+		else
+			objfreelist = next_random_slot(&state);
+		page->freelist = index_to_obj(cachep, page, objfreelist) +
 						obj_offset(cachep);
 		count--;
-	पूर्ण
+	}
 
 	/*
 	 * On early boot, generate the list dynamically.
-	 * Later use a pre-computed list क्रम speed.
+	 * Later use a pre-computed list for speed.
 	 */
-	अगर (!precomputed) अणु
-		क्रम (i = 0; i < count; i++)
-			set_मुक्त_obj(page, i, i);
+	if (!precomputed) {
+		for (i = 0; i < count; i++)
+			set_free_obj(page, i, i);
 
 		/* Fisher-Yates shuffle */
-		क्रम (i = count - 1; i > 0; i--) अणु
-			अक्रम = pअक्रमom_u32_state(&state.rnd_state);
-			अक्रम %= (i + 1);
-			swap_मुक्त_obj(page, i, अक्रम);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		क्रम (i = 0; i < count; i++)
-			set_मुक्त_obj(page, i, next_अक्रमom_slot(&state));
-	पूर्ण
+		for (i = count - 1; i > 0; i--) {
+			rand = prandom_u32_state(&state.rnd_state);
+			rand %= (i + 1);
+			swap_free_obj(page, i, rand);
+		}
+	} else {
+		for (i = 0; i < count; i++)
+			set_free_obj(page, i, next_random_slot(&state));
+	}
 
-	अगर (OBJFREELIST_SLAB(cachep))
-		set_मुक्त_obj(page, cachep->num - 1, objमुक्तlist);
+	if (OBJFREELIST_SLAB(cachep))
+		set_free_obj(page, cachep->num - 1, objfreelist);
 
-	वापस true;
-पूर्ण
-#अन्यथा
-अटल अंतरभूत bool shuffle_मुक्तlist(काष्ठा kmem_cache *cachep,
-				काष्ठा page *page)
-अणु
-	वापस false;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_SLAB_FREELIST_RANDOM */
+	return true;
+}
+#else
+static inline bool shuffle_freelist(struct kmem_cache *cachep,
+				struct page *page)
+{
+	return false;
+}
+#endif /* CONFIG_SLAB_FREELIST_RANDOM */
 
-अटल व्योम cache_init_objs(काष्ठा kmem_cache *cachep,
-			    काष्ठा page *page)
-अणु
-	पूर्णांक i;
-	व्योम *objp;
+static void cache_init_objs(struct kmem_cache *cachep,
+			    struct page *page)
+{
+	int i;
+	void *objp;
 	bool shuffled;
 
 	cache_init_objs_debug(cachep, page);
 
-	/* Try to अक्रमomize the मुक्तlist अगर enabled */
-	shuffled = shuffle_मुक्तlist(cachep, page);
+	/* Try to randomize the freelist if enabled */
+	shuffled = shuffle_freelist(cachep, page);
 
-	अगर (!shuffled && OBJFREELIST_SLAB(cachep)) अणु
-		page->मुक्तlist = index_to_obj(cachep, page, cachep->num - 1) +
+	if (!shuffled && OBJFREELIST_SLAB(cachep)) {
+		page->freelist = index_to_obj(cachep, page, cachep->num - 1) +
 						obj_offset(cachep);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < cachep->num; i++) अणु
+	for (i = 0; i < cachep->num; i++) {
 		objp = index_to_obj(cachep, page, i);
 		objp = kasan_init_slab_obj(cachep, objp);
 
-		/* स्थिरructor could अवरोध poison info */
-		अगर (DEBUG == 0 && cachep->ctor) अणु
+		/* constructor could break poison info */
+		if (DEBUG == 0 && cachep->ctor) {
 			kasan_unpoison_object_data(cachep, objp);
 			cachep->ctor(objp);
 			kasan_poison_object_data(cachep, objp);
-		पूर्ण
+		}
 
-		अगर (!shuffled)
-			set_मुक्त_obj(page, i, i);
-	पूर्ण
-पूर्ण
+		if (!shuffled)
+			set_free_obj(page, i, i);
+	}
+}
 
-अटल व्योम *slab_get_obj(काष्ठा kmem_cache *cachep, काष्ठा page *page)
-अणु
-	व्योम *objp;
+static void *slab_get_obj(struct kmem_cache *cachep, struct page *page)
+{
+	void *objp;
 
-	objp = index_to_obj(cachep, page, get_मुक्त_obj(page, page->active));
+	objp = index_to_obj(cachep, page, get_free_obj(page, page->active));
 	page->active++;
 
-	वापस objp;
-पूर्ण
+	return objp;
+}
 
-अटल व्योम slab_put_obj(काष्ठा kmem_cache *cachep,
-			काष्ठा page *page, व्योम *objp)
-अणु
-	अचिन्हित पूर्णांक objnr = obj_to_index(cachep, page, objp);
-#अगर DEBUG
-	अचिन्हित पूर्णांक i;
+static void slab_put_obj(struct kmem_cache *cachep,
+			struct page *page, void *objp)
+{
+	unsigned int objnr = obj_to_index(cachep, page, objp);
+#if DEBUG
+	unsigned int i;
 
-	/* Verअगरy द्विगुन मुक्त bug */
-	क्रम (i = page->active; i < cachep->num; i++) अणु
-		अगर (get_मुक्त_obj(page, i) == objnr) अणु
+	/* Verify double free bug */
+	for (i = page->active; i < cachep->num; i++) {
+		if (get_free_obj(page, i) == objnr) {
 			pr_err("slab: double free detected in cache '%s', objp %px\n",
 			       cachep->name, objp);
 			BUG();
-		पूर्ण
-	पूर्ण
-#पूर्ण_अगर
+		}
+	}
+#endif
 	page->active--;
-	अगर (!page->मुक्तlist)
-		page->मुक्तlist = objp + obj_offset(cachep);
+	if (!page->freelist)
+		page->freelist = objp + obj_offset(cachep);
 
-	set_मुक्त_obj(page, page->active, objnr);
-पूर्ण
+	set_free_obj(page, page->active, objnr);
+}
 
 /*
  * Map pages beginning at addr to the given cache and slab. This is required
- * क्रम the slab allocator to be able to lookup the cache and slab of a
- * भव address क्रम kमुक्त, ksize, and slab debugging.
+ * for the slab allocator to be able to lookup the cache and slab of a
+ * virtual address for kfree, ksize, and slab debugging.
  */
-अटल व्योम slab_map_pages(काष्ठा kmem_cache *cache, काष्ठा page *page,
-			   व्योम *मुक्तlist)
-अणु
+static void slab_map_pages(struct kmem_cache *cache, struct page *page,
+			   void *freelist)
+{
 	page->slab_cache = cache;
-	page->मुक्तlist = मुक्तlist;
-पूर्ण
+	page->freelist = freelist;
+}
 
 /*
- * Grow (by 1) the number of sद_असल within a cache.  This is called by
+ * Grow (by 1) the number of slabs within a cache.  This is called by
  * kmem_cache_alloc() when there are no active objs left in a cache.
  */
-अटल काष्ठा page *cache_grow_begin(काष्ठा kmem_cache *cachep,
-				gfp_t flags, पूर्णांक nodeid)
-अणु
-	व्योम *मुक्तlist;
-	माप_प्रकार offset;
+static struct page *cache_grow_begin(struct kmem_cache *cachep,
+				gfp_t flags, int nodeid)
+{
+	void *freelist;
+	size_t offset;
 	gfp_t local_flags;
-	पूर्णांक page_node;
-	काष्ठा kmem_cache_node *n;
-	काष्ठा page *page;
+	int page_node;
+	struct kmem_cache_node *n;
+	struct page *page;
 
 	/*
-	 * Be lazy and only check क्रम valid flags here,  keeping it out of the
+	 * Be lazy and only check for valid flags here,  keeping it out of the
 	 * critical path in kmem_cache_alloc().
 	 */
-	अगर (unlikely(flags & GFP_SLAB_BUG_MASK))
-		flags = kदो_स्मृति_fix_flags(flags);
+	if (unlikely(flags & GFP_SLAB_BUG_MASK))
+		flags = kmalloc_fix_flags(flags);
 
 	WARN_ON_ONCE(cachep->ctor && (flags & __GFP_ZERO));
 	local_flags = flags & (GFP_CONSTRAINT_MASK|GFP_RECLAIM_MASK);
 
 	check_irq_off();
-	अगर (gfpflags_allow_blocking(local_flags))
+	if (gfpflags_allow_blocking(local_flags))
 		local_irq_enable();
 
 	/*
-	 * Get mem क्रम the objs.  Attempt to allocate a physical page from
+	 * Get mem for the objs.  Attempt to allocate a physical page from
 	 * 'nodeid'.
 	 */
 	page = kmem_getpages(cachep, local_flags, nodeid);
-	अगर (!page)
-		जाओ failed;
+	if (!page)
+		goto failed;
 
 	page_node = page_to_nid(page);
 	n = get_node(cachep, page_node);
 
-	/* Get colour क्रम the slab, and cal the next value. */
+	/* Get colour for the slab, and cal the next value. */
 	n->colour_next++;
-	अगर (n->colour_next >= cachep->colour)
+	if (n->colour_next >= cachep->colour)
 		n->colour_next = 0;
 
 	offset = n->colour_next;
-	अगर (offset >= cachep->colour)
+	if (offset >= cachep->colour)
 		offset = 0;
 
 	offset *= cachep->colour_off;
 
 	/*
-	 * Call kasan_poison_slab() beक्रमe calling alloc_slabmgmt(), so
-	 * page_address() in the latter वापसs a non-tagged poपूर्णांकer,
-	 * as it should be क्रम slab pages.
+	 * Call kasan_poison_slab() before calling alloc_slabmgmt(), so
+	 * page_address() in the latter returns a non-tagged pointer,
+	 * as it should be for slab pages.
 	 */
 	kasan_poison_slab(page);
 
 	/* Get slab management. */
-	मुक्तlist = alloc_slabmgmt(cachep, page, offset,
+	freelist = alloc_slabmgmt(cachep, page, offset,
 			local_flags & ~GFP_CONSTRAINT_MASK, page_node);
-	अगर (OFF_SLAB(cachep) && !मुक्तlist)
-		जाओ opps1;
+	if (OFF_SLAB(cachep) && !freelist)
+		goto opps1;
 
-	slab_map_pages(cachep, page, मुक्तlist);
+	slab_map_pages(cachep, page, freelist);
 
 	cache_init_objs(cachep, page);
 
-	अगर (gfpflags_allow_blocking(local_flags))
+	if (gfpflags_allow_blocking(local_flags))
 		local_irq_disable();
 
-	वापस page;
+	return page;
 
 opps1:
-	kmem_मुक्तpages(cachep, page);
+	kmem_freepages(cachep, page);
 failed:
-	अगर (gfpflags_allow_blocking(local_flags))
+	if (gfpflags_allow_blocking(local_flags))
 		local_irq_disable();
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम cache_grow_end(काष्ठा kmem_cache *cachep, काष्ठा page *page)
-अणु
-	काष्ठा kmem_cache_node *n;
-	व्योम *list = शून्य;
+static void cache_grow_end(struct kmem_cache *cachep, struct page *page)
+{
+	struct kmem_cache_node *n;
+	void *list = NULL;
 
 	check_irq_off();
 
-	अगर (!page)
-		वापस;
+	if (!page)
+		return;
 
 	INIT_LIST_HEAD(&page->slab_list);
 	n = get_node(cachep, page_to_nid(page));
 
 	spin_lock(&n->list_lock);
-	n->total_sद_असल++;
-	अगर (!page->active) अणु
-		list_add_tail(&page->slab_list, &n->sद_असल_मुक्त);
-		n->मुक्त_sद_असल++;
-	पूर्ण अन्यथा
+	n->total_slabs++;
+	if (!page->active) {
+		list_add_tail(&page->slab_list, &n->slabs_free);
+		n->free_slabs++;
+	} else
 		fixup_slab_list(cachep, n, page, &list);
 
 	STATS_INC_GROWN(cachep);
-	n->मुक्त_objects += cachep->num - page->active;
+	n->free_objects += cachep->num - page->active;
 	spin_unlock(&n->list_lock);
 
-	fixup_objमुक्तlist_debug(cachep, &list);
-पूर्ण
+	fixup_objfreelist_debug(cachep, &list);
+}
 
-#अगर DEBUG
+#if DEBUG
 
 /*
- * Perक्रमm extra मुक्तing checks:
- * - detect bad poपूर्णांकers.
+ * Perform extra freeing checks:
+ * - detect bad pointers.
  * - POISON/RED_ZONE checking
  */
-अटल व्योम kमुक्त_debugcheck(स्थिर व्योम *objp)
-अणु
-	अगर (!virt_addr_valid(objp)) अणु
+static void kfree_debugcheck(const void *objp)
+{
+	if (!virt_addr_valid(objp)) {
 		pr_err("kfree_debugcheck: out of range ptr %lxh\n",
-		       (अचिन्हित दीर्घ)objp);
+		       (unsigned long)objp);
 		BUG();
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम verअगरy_redzone_मुक्त(काष्ठा kmem_cache *cache, व्योम *obj)
-अणु
-	अचिन्हित दीर्घ दीर्घ redzone1, redzone2;
+static inline void verify_redzone_free(struct kmem_cache *cache, void *obj)
+{
+	unsigned long long redzone1, redzone2;
 
 	redzone1 = *dbg_redzone1(cache, obj);
 	redzone2 = *dbg_redzone2(cache, obj);
@@ -2693,357 +2692,357 @@ failed:
 	/*
 	 * Redzone is ok.
 	 */
-	अगर (redzone1 == RED_ACTIVE && redzone2 == RED_ACTIVE)
-		वापस;
+	if (redzone1 == RED_ACTIVE && redzone2 == RED_ACTIVE)
+		return;
 
-	अगर (redzone1 == RED_INACTIVE && redzone2 == RED_INACTIVE)
+	if (redzone1 == RED_INACTIVE && redzone2 == RED_INACTIVE)
 		slab_error(cache, "double free detected");
-	अन्यथा
+	else
 		slab_error(cache, "memory outside object was overwritten");
 
 	pr_err("%px: redzone 1:0x%llx, redzone 2:0x%llx\n",
 	       obj, redzone1, redzone2);
-पूर्ण
+}
 
-अटल व्योम *cache_मुक्त_debugcheck(काष्ठा kmem_cache *cachep, व्योम *objp,
-				   अचिन्हित दीर्घ caller)
-अणु
-	अचिन्हित पूर्णांक objnr;
-	काष्ठा page *page;
+static void *cache_free_debugcheck(struct kmem_cache *cachep, void *objp,
+				   unsigned long caller)
+{
+	unsigned int objnr;
+	struct page *page;
 
 	BUG_ON(virt_to_cache(objp) != cachep);
 
 	objp -= obj_offset(cachep);
-	kमुक्त_debugcheck(objp);
+	kfree_debugcheck(objp);
 	page = virt_to_head_page(objp);
 
-	अगर (cachep->flags & SLAB_RED_ZONE) अणु
-		verअगरy_redzone_मुक्त(cachep, objp);
+	if (cachep->flags & SLAB_RED_ZONE) {
+		verify_redzone_free(cachep, objp);
 		*dbg_redzone1(cachep, objp) = RED_INACTIVE;
 		*dbg_redzone2(cachep, objp) = RED_INACTIVE;
-	पूर्ण
-	अगर (cachep->flags & SLAB_STORE_USER)
-		*dbg_userword(cachep, objp) = (व्योम *)caller;
+	}
+	if (cachep->flags & SLAB_STORE_USER)
+		*dbg_userword(cachep, objp) = (void *)caller;
 
 	objnr = obj_to_index(cachep, page, objp);
 
 	BUG_ON(objnr >= cachep->num);
 	BUG_ON(objp != index_to_obj(cachep, page, objnr));
 
-	अगर (cachep->flags & SLAB_POISON) अणु
+	if (cachep->flags & SLAB_POISON) {
 		poison_obj(cachep, objp, POISON_FREE);
 		slab_kernel_map(cachep, objp, 0);
-	पूर्ण
-	वापस objp;
-पूर्ण
+	}
+	return objp;
+}
 
-#अन्यथा
-#घोषणा kमुक्त_debugcheck(x) करो अणु पूर्ण जबतक(0)
-#घोषणा cache_मुक्त_debugcheck(x, objp, z) (objp)
-#पूर्ण_अगर
+#else
+#define kfree_debugcheck(x) do { } while(0)
+#define cache_free_debugcheck(x, objp, z) (objp)
+#endif
 
-अटल अंतरभूत व्योम fixup_objमुक्तlist_debug(काष्ठा kmem_cache *cachep,
-						व्योम **list)
-अणु
-#अगर DEBUG
-	व्योम *next = *list;
-	व्योम *objp;
+static inline void fixup_objfreelist_debug(struct kmem_cache *cachep,
+						void **list)
+{
+#if DEBUG
+	void *next = *list;
+	void *objp;
 
-	जबतक (next) अणु
+	while (next) {
 		objp = next - obj_offset(cachep);
-		next = *(व्योम **)next;
+		next = *(void **)next;
 		poison_obj(cachep, objp, POISON_FREE);
-	पूर्ण
-#पूर्ण_अगर
-पूर्ण
+	}
+#endif
+}
 
-अटल अंतरभूत व्योम fixup_slab_list(काष्ठा kmem_cache *cachep,
-				काष्ठा kmem_cache_node *n, काष्ठा page *page,
-				व्योम **list)
-अणु
+static inline void fixup_slab_list(struct kmem_cache *cachep,
+				struct kmem_cache_node *n, struct page *page,
+				void **list)
+{
 	/* move slabp to correct slabp list: */
 	list_del(&page->slab_list);
-	अगर (page->active == cachep->num) अणु
-		list_add(&page->slab_list, &n->sद_असल_full);
-		अगर (OBJFREELIST_SLAB(cachep)) अणु
-#अगर DEBUG
-			/* Poisoning will be करोne without holding the lock */
-			अगर (cachep->flags & SLAB_POISON) अणु
-				व्योम **objp = page->मुक्तlist;
+	if (page->active == cachep->num) {
+		list_add(&page->slab_list, &n->slabs_full);
+		if (OBJFREELIST_SLAB(cachep)) {
+#if DEBUG
+			/* Poisoning will be done without holding the lock */
+			if (cachep->flags & SLAB_POISON) {
+				void **objp = page->freelist;
 
 				*objp = *list;
 				*list = objp;
-			पूर्ण
-#पूर्ण_अगर
-			page->मुक्तlist = शून्य;
-		पूर्ण
-	पूर्ण अन्यथा
-		list_add(&page->slab_list, &n->sद_असल_partial);
-पूर्ण
+			}
+#endif
+			page->freelist = NULL;
+		}
+	} else
+		list_add(&page->slab_list, &n->slabs_partial);
+}
 
-/* Try to find non-pfmeदो_स्मृति slab अगर needed */
-अटल noअंतरभूत काष्ठा page *get_valid_first_slab(काष्ठा kmem_cache_node *n,
-					काष्ठा page *page, bool pfmeदो_स्मृति)
-अणु
-	अगर (!page)
-		वापस शून्य;
+/* Try to find non-pfmemalloc slab if needed */
+static noinline struct page *get_valid_first_slab(struct kmem_cache_node *n,
+					struct page *page, bool pfmemalloc)
+{
+	if (!page)
+		return NULL;
 
-	अगर (pfmeदो_स्मृति)
-		वापस page;
+	if (pfmemalloc)
+		return page;
 
-	अगर (!PageSlabPfmeदो_स्मृति(page))
-		वापस page;
+	if (!PageSlabPfmemalloc(page))
+		return page;
 
-	/* No need to keep pfmeदो_स्मृति slab अगर we have enough मुक्त objects */
-	अगर (n->मुक्त_objects > n->मुक्त_limit) अणु
-		ClearPageSlabPfmeदो_स्मृति(page);
-		वापस page;
-	पूर्ण
+	/* No need to keep pfmemalloc slab if we have enough free objects */
+	if (n->free_objects > n->free_limit) {
+		ClearPageSlabPfmemalloc(page);
+		return page;
+	}
 
-	/* Move pfmeदो_स्मृति slab to the end of list to speed up next search */
+	/* Move pfmemalloc slab to the end of list to speed up next search */
 	list_del(&page->slab_list);
-	अगर (!page->active) अणु
-		list_add_tail(&page->slab_list, &n->sद_असल_मुक्त);
-		n->मुक्त_sद_असल++;
-	पूर्ण अन्यथा
-		list_add_tail(&page->slab_list, &n->sद_असल_partial);
+	if (!page->active) {
+		list_add_tail(&page->slab_list, &n->slabs_free);
+		n->free_slabs++;
+	} else
+		list_add_tail(&page->slab_list, &n->slabs_partial);
 
-	list_क्रम_each_entry(page, &n->sद_असल_partial, slab_list) अणु
-		अगर (!PageSlabPfmeदो_स्मृति(page))
-			वापस page;
-	पूर्ण
+	list_for_each_entry(page, &n->slabs_partial, slab_list) {
+		if (!PageSlabPfmemalloc(page))
+			return page;
+	}
 
-	n->मुक्त_touched = 1;
-	list_क्रम_each_entry(page, &n->sद_असल_मुक्त, slab_list) अणु
-		अगर (!PageSlabPfmeदो_स्मृति(page)) अणु
-			n->मुक्त_sद_असल--;
-			वापस page;
-		पूर्ण
-	पूर्ण
+	n->free_touched = 1;
+	list_for_each_entry(page, &n->slabs_free, slab_list) {
+		if (!PageSlabPfmemalloc(page)) {
+			n->free_slabs--;
+			return page;
+		}
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा page *get_first_slab(काष्ठा kmem_cache_node *n, bool pfmeदो_स्मृति)
-अणु
-	काष्ठा page *page;
+static struct page *get_first_slab(struct kmem_cache_node *n, bool pfmemalloc)
+{
+	struct page *page;
 
-	निश्चित_spin_locked(&n->list_lock);
-	page = list_first_entry_or_null(&n->sद_असल_partial, काष्ठा page,
+	assert_spin_locked(&n->list_lock);
+	page = list_first_entry_or_null(&n->slabs_partial, struct page,
 					slab_list);
-	अगर (!page) अणु
-		n->मुक्त_touched = 1;
-		page = list_first_entry_or_null(&n->sद_असल_मुक्त, काष्ठा page,
+	if (!page) {
+		n->free_touched = 1;
+		page = list_first_entry_or_null(&n->slabs_free, struct page,
 						slab_list);
-		अगर (page)
-			n->मुक्त_sद_असल--;
-	पूर्ण
+		if (page)
+			n->free_slabs--;
+	}
 
-	अगर (sk_meदो_स्मृति_socks())
-		page = get_valid_first_slab(n, page, pfmeदो_स्मृति);
+	if (sk_memalloc_socks())
+		page = get_valid_first_slab(n, page, pfmemalloc);
 
-	वापस page;
-पूर्ण
+	return page;
+}
 
-अटल noअंतरभूत व्योम *cache_alloc_pfmeदो_स्मृति(काष्ठा kmem_cache *cachep,
-				काष्ठा kmem_cache_node *n, gfp_t flags)
-अणु
-	काष्ठा page *page;
-	व्योम *obj;
-	व्योम *list = शून्य;
+static noinline void *cache_alloc_pfmemalloc(struct kmem_cache *cachep,
+				struct kmem_cache_node *n, gfp_t flags)
+{
+	struct page *page;
+	void *obj;
+	void *list = NULL;
 
-	अगर (!gfp_pfmeदो_स्मृति_allowed(flags))
-		वापस शून्य;
+	if (!gfp_pfmemalloc_allowed(flags))
+		return NULL;
 
 	spin_lock(&n->list_lock);
 	page = get_first_slab(n, true);
-	अगर (!page) अणु
+	if (!page) {
 		spin_unlock(&n->list_lock);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	obj = slab_get_obj(cachep, page);
-	n->मुक्त_objects--;
+	n->free_objects--;
 
 	fixup_slab_list(cachep, n, page, &list);
 
 	spin_unlock(&n->list_lock);
-	fixup_objमुक्तlist_debug(cachep, &list);
+	fixup_objfreelist_debug(cachep, &list);
 
-	वापस obj;
-पूर्ण
+	return obj;
+}
 
 /*
- * Slab list should be fixed up by fixup_slab_list() क्रम existing slab
- * or cache_grow_end() क्रम new slab
+ * Slab list should be fixed up by fixup_slab_list() for existing slab
+ * or cache_grow_end() for new slab
  */
-अटल __always_अंतरभूत पूर्णांक alloc_block(काष्ठा kmem_cache *cachep,
-		काष्ठा array_cache *ac, काष्ठा page *page, पूर्णांक batchcount)
-अणु
+static __always_inline int alloc_block(struct kmem_cache *cachep,
+		struct array_cache *ac, struct page *page, int batchcount)
+{
 	/*
-	 * There must be at least one object available क्रम
+	 * There must be at least one object available for
 	 * allocation.
 	 */
 	BUG_ON(page->active >= cachep->num);
 
-	जबतक (page->active < cachep->num && batchcount--) अणु
+	while (page->active < cachep->num && batchcount--) {
 		STATS_INC_ALLOCED(cachep);
 		STATS_INC_ACTIVE(cachep);
 		STATS_SET_HIGH(cachep);
 
 		ac->entry[ac->avail++] = slab_get_obj(cachep, page);
-	पूर्ण
+	}
 
-	वापस batchcount;
-पूर्ण
+	return batchcount;
+}
 
-अटल व्योम *cache_alloc_refill(काष्ठा kmem_cache *cachep, gfp_t flags)
-अणु
-	पूर्णांक batchcount;
-	काष्ठा kmem_cache_node *n;
-	काष्ठा array_cache *ac, *shared;
-	पूर्णांक node;
-	व्योम *list = शून्य;
-	काष्ठा page *page;
+static void *cache_alloc_refill(struct kmem_cache *cachep, gfp_t flags)
+{
+	int batchcount;
+	struct kmem_cache_node *n;
+	struct array_cache *ac, *shared;
+	int node;
+	void *list = NULL;
+	struct page *page;
 
 	check_irq_off();
 	node = numa_mem_id();
 
 	ac = cpu_cache_get(cachep);
 	batchcount = ac->batchcount;
-	अगर (!ac->touched && batchcount > BATCHREFILL_LIMIT) अणु
+	if (!ac->touched && batchcount > BATCHREFILL_LIMIT) {
 		/*
 		 * If there was little recent activity on this cache, then
-		 * perक्रमm only a partial refill.  Otherwise we could generate
+		 * perform only a partial refill.  Otherwise we could generate
 		 * refill bouncing.
 		 */
 		batchcount = BATCHREFILL_LIMIT;
-	पूर्ण
+	}
 	n = get_node(cachep, node);
 
 	BUG_ON(ac->avail > 0 || !n);
 	shared = READ_ONCE(n->shared);
-	अगर (!n->मुक्त_objects && (!shared || !shared->avail))
-		जाओ direct_grow;
+	if (!n->free_objects && (!shared || !shared->avail))
+		goto direct_grow;
 
 	spin_lock(&n->list_lock);
 	shared = READ_ONCE(n->shared);
 
-	/* See अगर we can refill from the shared array */
-	अगर (shared && transfer_objects(ac, shared, batchcount)) अणु
+	/* See if we can refill from the shared array */
+	if (shared && transfer_objects(ac, shared, batchcount)) {
 		shared->touched = 1;
-		जाओ alloc_करोne;
-	पूर्ण
+		goto alloc_done;
+	}
 
-	जबतक (batchcount > 0) अणु
+	while (batchcount > 0) {
 		/* Get slab alloc is to come from. */
 		page = get_first_slab(n, false);
-		अगर (!page)
-			जाओ must_grow;
+		if (!page)
+			goto must_grow;
 
 		check_spinlock_acquired(cachep);
 
 		batchcount = alloc_block(cachep, ac, page, batchcount);
 		fixup_slab_list(cachep, n, page, &list);
-	पूर्ण
+	}
 
 must_grow:
-	n->मुक्त_objects -= ac->avail;
-alloc_करोne:
+	n->free_objects -= ac->avail;
+alloc_done:
 	spin_unlock(&n->list_lock);
-	fixup_objमुक्तlist_debug(cachep, &list);
+	fixup_objfreelist_debug(cachep, &list);
 
 direct_grow:
-	अगर (unlikely(!ac->avail)) अणु
-		/* Check अगर we can use obj in pfmeदो_स्मृति slab */
-		अगर (sk_meदो_स्मृति_socks()) अणु
-			व्योम *obj = cache_alloc_pfmeदो_स्मृति(cachep, n, flags);
+	if (unlikely(!ac->avail)) {
+		/* Check if we can use obj in pfmemalloc slab */
+		if (sk_memalloc_socks()) {
+			void *obj = cache_alloc_pfmemalloc(cachep, n, flags);
 
-			अगर (obj)
-				वापस obj;
-		पूर्ण
+			if (obj)
+				return obj;
+		}
 
 		page = cache_grow_begin(cachep, gfp_exact_node(flags), node);
 
 		/*
-		 * cache_grow_begin() can reenable पूर्णांकerrupts,
+		 * cache_grow_begin() can reenable interrupts,
 		 * then ac could change.
 		 */
 		ac = cpu_cache_get(cachep);
-		अगर (!ac->avail && page)
+		if (!ac->avail && page)
 			alloc_block(cachep, ac, page, batchcount);
 		cache_grow_end(cachep, page);
 
-		अगर (!ac->avail)
-			वापस शून्य;
-	पूर्ण
+		if (!ac->avail)
+			return NULL;
+	}
 	ac->touched = 1;
 
-	वापस ac->entry[--ac->avail];
-पूर्ण
+	return ac->entry[--ac->avail];
+}
 
-अटल अंतरभूत व्योम cache_alloc_debugcheck_beक्रमe(काष्ठा kmem_cache *cachep,
+static inline void cache_alloc_debugcheck_before(struct kmem_cache *cachep,
 						gfp_t flags)
-अणु
-	might_sleep_अगर(gfpflags_allow_blocking(flags));
-पूर्ण
+{
+	might_sleep_if(gfpflags_allow_blocking(flags));
+}
 
-#अगर DEBUG
-अटल व्योम *cache_alloc_debugcheck_after(काष्ठा kmem_cache *cachep,
-				gfp_t flags, व्योम *objp, अचिन्हित दीर्घ caller)
-अणु
+#if DEBUG
+static void *cache_alloc_debugcheck_after(struct kmem_cache *cachep,
+				gfp_t flags, void *objp, unsigned long caller)
+{
 	WARN_ON_ONCE(cachep->ctor && (flags & __GFP_ZERO));
-	अगर (!objp || is_kfence_address(objp))
-		वापस objp;
-	अगर (cachep->flags & SLAB_POISON) अणु
+	if (!objp || is_kfence_address(objp))
+		return objp;
+	if (cachep->flags & SLAB_POISON) {
 		check_poison_obj(cachep, objp);
 		slab_kernel_map(cachep, objp, 1);
 		poison_obj(cachep, objp, POISON_INUSE);
-	पूर्ण
-	अगर (cachep->flags & SLAB_STORE_USER)
-		*dbg_userword(cachep, objp) = (व्योम *)caller;
+	}
+	if (cachep->flags & SLAB_STORE_USER)
+		*dbg_userword(cachep, objp) = (void *)caller;
 
-	अगर (cachep->flags & SLAB_RED_ZONE) अणु
-		अगर (*dbg_redzone1(cachep, objp) != RED_INACTIVE ||
-				*dbg_redzone2(cachep, objp) != RED_INACTIVE) अणु
+	if (cachep->flags & SLAB_RED_ZONE) {
+		if (*dbg_redzone1(cachep, objp) != RED_INACTIVE ||
+				*dbg_redzone2(cachep, objp) != RED_INACTIVE) {
 			slab_error(cachep, "double free, or memory outside object was overwritten");
 			pr_err("%px: redzone 1:0x%llx, redzone 2:0x%llx\n",
 			       objp, *dbg_redzone1(cachep, objp),
 			       *dbg_redzone2(cachep, objp));
-		पूर्ण
+		}
 		*dbg_redzone1(cachep, objp) = RED_ACTIVE;
 		*dbg_redzone2(cachep, objp) = RED_ACTIVE;
-	पूर्ण
+	}
 
 	objp += obj_offset(cachep);
-	अगर (cachep->ctor && cachep->flags & SLAB_POISON)
+	if (cachep->ctor && cachep->flags & SLAB_POISON)
 		cachep->ctor(objp);
-	अगर (ARCH_SLAB_MINALIGN &&
-	    ((अचिन्हित दीर्घ)objp & (ARCH_SLAB_MINALIGN-1))) अणु
+	if (ARCH_SLAB_MINALIGN &&
+	    ((unsigned long)objp & (ARCH_SLAB_MINALIGN-1))) {
 		pr_err("0x%px: not aligned to ARCH_SLAB_MINALIGN=%d\n",
-		       objp, (पूर्णांक)ARCH_SLAB_MINALIGN);
-	पूर्ण
-	वापस objp;
-पूर्ण
-#अन्यथा
-#घोषणा cache_alloc_debugcheck_after(a, b, objp, d) (objp)
-#पूर्ण_अगर
+		       objp, (int)ARCH_SLAB_MINALIGN);
+	}
+	return objp;
+}
+#else
+#define cache_alloc_debugcheck_after(a, b, objp, d) (objp)
+#endif
 
-अटल अंतरभूत व्योम *____cache_alloc(काष्ठा kmem_cache *cachep, gfp_t flags)
-अणु
-	व्योम *objp;
-	काष्ठा array_cache *ac;
+static inline void *____cache_alloc(struct kmem_cache *cachep, gfp_t flags)
+{
+	void *objp;
+	struct array_cache *ac;
 
 	check_irq_off();
 
 	ac = cpu_cache_get(cachep);
-	अगर (likely(ac->avail)) अणु
+	if (likely(ac->avail)) {
 		ac->touched = 1;
 		objp = ac->entry[--ac->avail];
 
 		STATS_INC_ALLOCHIT(cachep);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	STATS_INC_ALLOCMISS(cachep);
 	objp = cache_alloc_refill(cachep, flags);
@@ -3055,92 +3054,92 @@ direct_grow:
 
 out:
 	/*
-	 * To aव्योम a false negative, अगर an object that is in one of the
-	 * per-CPU caches is leaked, we need to make sure kmemleak करोesn't
-	 * treat the array poपूर्णांकers as a reference to the object.
+	 * To avoid a false negative, if an object that is in one of the
+	 * per-CPU caches is leaked, we need to make sure kmemleak doesn't
+	 * treat the array pointers as a reference to the object.
 	 */
-	अगर (objp)
+	if (objp)
 		kmemleak_erase(&ac->entry[ac->avail]);
-	वापस objp;
-पूर्ण
+	return objp;
+}
 
-#अगर_घोषित CONFIG_NUMA
+#ifdef CONFIG_NUMA
 /*
- * Try allocating on another node अगर PFA_SPREAD_SLAB is a mempolicy is set.
+ * Try allocating on another node if PFA_SPREAD_SLAB is a mempolicy is set.
  *
- * If we are in_पूर्णांकerrupt, then process context, including cpusets and
- * mempolicy, may not apply and should not be used क्रम allocation policy.
+ * If we are in_interrupt, then process context, including cpusets and
+ * mempolicy, may not apply and should not be used for allocation policy.
  */
-अटल व्योम *alternate_node_alloc(काष्ठा kmem_cache *cachep, gfp_t flags)
-अणु
-	पूर्णांक nid_alloc, nid_here;
+static void *alternate_node_alloc(struct kmem_cache *cachep, gfp_t flags)
+{
+	int nid_alloc, nid_here;
 
-	अगर (in_पूर्णांकerrupt() || (flags & __GFP_THISNODE))
-		वापस शून्य;
+	if (in_interrupt() || (flags & __GFP_THISNODE))
+		return NULL;
 	nid_alloc = nid_here = numa_mem_id();
-	अगर (cpuset_करो_slab_mem_spपढ़ो() && (cachep->flags & SLAB_MEM_SPREAD))
-		nid_alloc = cpuset_slab_spपढ़ो_node();
-	अन्यथा अगर (current->mempolicy)
+	if (cpuset_do_slab_mem_spread() && (cachep->flags & SLAB_MEM_SPREAD))
+		nid_alloc = cpuset_slab_spread_node();
+	else if (current->mempolicy)
 		nid_alloc = mempolicy_slab_node();
-	अगर (nid_alloc != nid_here)
-		वापस ____cache_alloc_node(cachep, flags, nid_alloc);
-	वापस शून्य;
-पूर्ण
+	if (nid_alloc != nid_here)
+		return ____cache_alloc_node(cachep, flags, nid_alloc);
+	return NULL;
+}
 
 /*
- * Fallback function अगर there was no memory available and no objects on a
+ * Fallback function if there was no memory available and no objects on a
  * certain node and fall back is permitted. First we scan all the
- * available node क्रम available objects. If that fails then we
- * perक्रमm an allocation without specअगरying a node. This allows the page
- * allocator to करो its reclaim / fallback magic. We then insert the
- * slab पूर्णांकo the proper nodelist and then allocate from it.
+ * available node for available objects. If that fails then we
+ * perform an allocation without specifying a node. This allows the page
+ * allocator to do its reclaim / fallback magic. We then insert the
+ * slab into the proper nodelist and then allocate from it.
  */
-अटल व्योम *fallback_alloc(काष्ठा kmem_cache *cache, gfp_t flags)
-अणु
-	काष्ठा zonelist *zonelist;
-	काष्ठा zoneref *z;
-	काष्ठा zone *zone;
-	क्रमागत zone_type highest_zoneidx = gfp_zone(flags);
-	व्योम *obj = शून्य;
-	काष्ठा page *page;
-	पूर्णांक nid;
-	अचिन्हित पूर्णांक cpuset_mems_cookie;
+static void *fallback_alloc(struct kmem_cache *cache, gfp_t flags)
+{
+	struct zonelist *zonelist;
+	struct zoneref *z;
+	struct zone *zone;
+	enum zone_type highest_zoneidx = gfp_zone(flags);
+	void *obj = NULL;
+	struct page *page;
+	int nid;
+	unsigned int cpuset_mems_cookie;
 
-	अगर (flags & __GFP_THISNODE)
-		वापस शून्य;
+	if (flags & __GFP_THISNODE)
+		return NULL;
 
 retry_cpuset:
-	cpuset_mems_cookie = पढ़ो_mems_allowed_begin();
+	cpuset_mems_cookie = read_mems_allowed_begin();
 	zonelist = node_zonelist(mempolicy_slab_node(), flags);
 
 retry:
 	/*
-	 * Look through allowed nodes क्रम objects available
+	 * Look through allowed nodes for objects available
 	 * from existing per node queues.
 	 */
-	क्रम_each_zone_zonelist(zone, z, zonelist, highest_zoneidx) अणु
+	for_each_zone_zonelist(zone, z, zonelist, highest_zoneidx) {
 		nid = zone_to_nid(zone);
 
-		अगर (cpuset_zone_allowed(zone, flags) &&
+		if (cpuset_zone_allowed(zone, flags) &&
 			get_node(cache, nid) &&
-			get_node(cache, nid)->मुक्त_objects) अणु
+			get_node(cache, nid)->free_objects) {
 				obj = ____cache_alloc_node(cache,
 					gfp_exact_node(flags), nid);
-				अगर (obj)
-					अवरोध;
-		पूर्ण
-	पूर्ण
+				if (obj)
+					break;
+		}
+	}
 
-	अगर (!obj) अणु
+	if (!obj) {
 		/*
-		 * This allocation will be perक्रमmed within the स्थिरraपूर्णांकs
+		 * This allocation will be performed within the constraints
 		 * of the current cpuset / memory policy requirements.
-		 * We may trigger various क्रमms of reclaim on the allowed
-		 * set and go पूर्णांकo memory reserves अगर necessary.
+		 * We may trigger various forms of reclaim on the allowed
+		 * set and go into memory reserves if necessary.
 		 */
 		page = cache_grow_begin(cache, flags, numa_mem_id());
 		cache_grow_end(cache, page);
-		अगर (page) अणु
+		if (page) {
 			nid = page_to_nid(page);
 			obj = ____cache_alloc_node(cache,
 				gfp_exact_node(flags), nid);
@@ -3149,26 +3148,26 @@ retry:
 			 * Another processor may allocate the objects in
 			 * the slab since we are not holding any locks.
 			 */
-			अगर (!obj)
-				जाओ retry;
-		पूर्ण
-	पूर्ण
+			if (!obj)
+				goto retry;
+		}
+	}
 
-	अगर (unlikely(!obj && पढ़ो_mems_allowed_retry(cpuset_mems_cookie)))
-		जाओ retry_cpuset;
-	वापस obj;
-पूर्ण
+	if (unlikely(!obj && read_mems_allowed_retry(cpuset_mems_cookie)))
+		goto retry_cpuset;
+	return obj;
+}
 
 /*
- * A पूर्णांकerface to enable slab creation on nodeid
+ * A interface to enable slab creation on nodeid
  */
-अटल व्योम *____cache_alloc_node(काष्ठा kmem_cache *cachep, gfp_t flags,
-				पूर्णांक nodeid)
-अणु
-	काष्ठा page *page;
-	काष्ठा kmem_cache_node *n;
-	व्योम *obj = शून्य;
-	व्योम *list = शून्य;
+static void *____cache_alloc_node(struct kmem_cache *cachep, gfp_t flags,
+				int nodeid)
+{
+	struct page *page;
+	struct kmem_cache_node *n;
+	void *obj = NULL;
+	void *list = NULL;
 
 	VM_BUG_ON(nodeid < 0 || nodeid >= MAX_NUMNODES);
 	n = get_node(cachep, nodeid);
@@ -3177,8 +3176,8 @@ retry:
 	check_irq_off();
 	spin_lock(&n->list_lock);
 	page = get_first_slab(n, false);
-	अगर (!page)
-		जाओ must_grow;
+	if (!page)
+		goto must_grow;
 
 	check_spinlock_acquired_node(cachep, nodeid);
 
@@ -3189,68 +3188,68 @@ retry:
 	BUG_ON(page->active == cachep->num);
 
 	obj = slab_get_obj(cachep, page);
-	n->मुक्त_objects--;
+	n->free_objects--;
 
 	fixup_slab_list(cachep, n, page, &list);
 
 	spin_unlock(&n->list_lock);
-	fixup_objमुक्तlist_debug(cachep, &list);
-	वापस obj;
+	fixup_objfreelist_debug(cachep, &list);
+	return obj;
 
 must_grow:
 	spin_unlock(&n->list_lock);
 	page = cache_grow_begin(cachep, gfp_exact_node(flags), nodeid);
-	अगर (page) अणु
-		/* This slab isn't counted yet so don't update मुक्त_objects */
+	if (page) {
+		/* This slab isn't counted yet so don't update free_objects */
 		obj = slab_get_obj(cachep, page);
-	पूर्ण
+	}
 	cache_grow_end(cachep, page);
 
-	वापस obj ? obj : fallback_alloc(cachep, flags);
-पूर्ण
+	return obj ? obj : fallback_alloc(cachep, flags);
+}
 
-अटल __always_अंतरभूत व्योम *
-slab_alloc_node(काष्ठा kmem_cache *cachep, gfp_t flags, पूर्णांक nodeid, माप_प्रकार orig_size,
-		   अचिन्हित दीर्घ caller)
-अणु
-	अचिन्हित दीर्घ save_flags;
-	व्योम *ptr;
-	पूर्णांक slab_node = numa_mem_id();
-	काष्ठा obj_cgroup *objcg = शून्य;
+static __always_inline void *
+slab_alloc_node(struct kmem_cache *cachep, gfp_t flags, int nodeid, size_t orig_size,
+		   unsigned long caller)
+{
+	unsigned long save_flags;
+	void *ptr;
+	int slab_node = numa_mem_id();
+	struct obj_cgroup *objcg = NULL;
 	bool init = false;
 
 	flags &= gfp_allowed_mask;
 	cachep = slab_pre_alloc_hook(cachep, &objcg, 1, flags);
-	अगर (unlikely(!cachep))
-		वापस शून्य;
+	if (unlikely(!cachep))
+		return NULL;
 
 	ptr = kfence_alloc(cachep, orig_size, flags);
-	अगर (unlikely(ptr))
-		जाओ out_hooks;
+	if (unlikely(ptr))
+		goto out_hooks;
 
-	cache_alloc_debugcheck_beक्रमe(cachep, flags);
+	cache_alloc_debugcheck_before(cachep, flags);
 	local_irq_save(save_flags);
 
-	अगर (nodeid == NUMA_NO_NODE)
+	if (nodeid == NUMA_NO_NODE)
 		nodeid = slab_node;
 
-	अगर (unlikely(!get_node(cachep, nodeid))) अणु
+	if (unlikely(!get_node(cachep, nodeid))) {
 		/* Node not bootstrapped yet */
 		ptr = fallback_alloc(cachep, flags);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (nodeid == slab_node) अणु
+	if (nodeid == slab_node) {
 		/*
-		 * Use the locally cached objects अगर possible.
-		 * However ____cache_alloc करोes not allow fallback
-		 * to other nodes. It may fail जबतक we still have
+		 * Use the locally cached objects if possible.
+		 * However ____cache_alloc does not allow fallback
+		 * to other nodes. It may fail while we still have
 		 * objects on other nodes available.
 		 */
 		ptr = ____cache_alloc(cachep, flags);
-		अगर (ptr)
-			जाओ out;
-	पूर्ण
+		if (ptr)
+			goto out;
+	}
 	/* ___cache_alloc_node can fall back to other nodes */
 	ptr = ____cache_alloc_node(cachep, flags, nodeid);
   out:
@@ -3260,61 +3259,61 @@ slab_alloc_node(काष्ठा kmem_cache *cachep, gfp_t flags, पूर्
 
 out_hooks:
 	slab_post_alloc_hook(cachep, objcg, flags, 1, &ptr, init);
-	वापस ptr;
-पूर्ण
+	return ptr;
+}
 
-अटल __always_अंतरभूत व्योम *
-__करो_cache_alloc(काष्ठा kmem_cache *cache, gfp_t flags)
-अणु
-	व्योम *objp;
+static __always_inline void *
+__do_cache_alloc(struct kmem_cache *cache, gfp_t flags)
+{
+	void *objp;
 
-	अगर (current->mempolicy || cpuset_करो_slab_mem_spपढ़ो()) अणु
+	if (current->mempolicy || cpuset_do_slab_mem_spread()) {
 		objp = alternate_node_alloc(cache, flags);
-		अगर (objp)
-			जाओ out;
-	पूर्ण
+		if (objp)
+			goto out;
+	}
 	objp = ____cache_alloc(cache, flags);
 
 	/*
 	 * We may just have run out of memory on the local node.
 	 * ____cache_alloc_node() knows how to locate memory on other nodes
 	 */
-	अगर (!objp)
+	if (!objp)
 		objp = ____cache_alloc_node(cache, flags, numa_mem_id());
 
   out:
-	वापस objp;
-पूर्ण
-#अन्यथा
+	return objp;
+}
+#else
 
-अटल __always_अंतरभूत व्योम *
-__करो_cache_alloc(काष्ठा kmem_cache *cachep, gfp_t flags)
-अणु
-	वापस ____cache_alloc(cachep, flags);
-पूर्ण
+static __always_inline void *
+__do_cache_alloc(struct kmem_cache *cachep, gfp_t flags)
+{
+	return ____cache_alloc(cachep, flags);
+}
 
-#पूर्ण_अगर /* CONFIG_NUMA */
+#endif /* CONFIG_NUMA */
 
-अटल __always_अंतरभूत व्योम *
-slab_alloc(काष्ठा kmem_cache *cachep, gfp_t flags, माप_प्रकार orig_size, अचिन्हित दीर्घ caller)
-अणु
-	अचिन्हित दीर्घ save_flags;
-	व्योम *objp;
-	काष्ठा obj_cgroup *objcg = शून्य;
+static __always_inline void *
+slab_alloc(struct kmem_cache *cachep, gfp_t flags, size_t orig_size, unsigned long caller)
+{
+	unsigned long save_flags;
+	void *objp;
+	struct obj_cgroup *objcg = NULL;
 	bool init = false;
 
 	flags &= gfp_allowed_mask;
 	cachep = slab_pre_alloc_hook(cachep, &objcg, 1, flags);
-	अगर (unlikely(!cachep))
-		वापस शून्य;
+	if (unlikely(!cachep))
+		return NULL;
 
 	objp = kfence_alloc(cachep, orig_size, flags);
-	अगर (unlikely(objp))
-		जाओ out;
+	if (unlikely(objp))
+		goto out;
 
-	cache_alloc_debugcheck_beक्रमe(cachep, flags);
+	cache_alloc_debugcheck_before(cachep, flags);
 	local_irq_save(save_flags);
-	objp = __करो_cache_alloc(cachep, flags);
+	objp = __do_cache_alloc(cachep, flags);
 	local_irq_restore(save_flags);
 	objp = cache_alloc_debugcheck_after(cachep, flags, objp, caller);
 	prefetchw(objp);
@@ -3322,25 +3321,25 @@ slab_alloc(काष्ठा kmem_cache *cachep, gfp_t flags, माप_प्�
 
 out:
 	slab_post_alloc_hook(cachep, objcg, flags, 1, &objp, init);
-	वापस objp;
-पूर्ण
+	return objp;
+}
 
 /*
  * Caller needs to acquire correct kmem_cache_node's list_lock
- * @list: List of detached मुक्त sद_असल should be मुक्तd by caller
+ * @list: List of detached free slabs should be freed by caller
  */
-अटल व्योम मुक्त_block(काष्ठा kmem_cache *cachep, व्योम **objpp,
-			पूर्णांक nr_objects, पूर्णांक node, काष्ठा list_head *list)
-अणु
-	पूर्णांक i;
-	काष्ठा kmem_cache_node *n = get_node(cachep, node);
-	काष्ठा page *page;
+static void free_block(struct kmem_cache *cachep, void **objpp,
+			int nr_objects, int node, struct list_head *list)
+{
+	int i;
+	struct kmem_cache_node *n = get_node(cachep, node);
+	struct page *page;
 
-	n->मुक्त_objects += nr_objects;
+	n->free_objects += nr_objects;
 
-	क्रम (i = 0; i < nr_objects; i++) अणु
-		व्योम *objp;
-		काष्ठा page *page;
+	for (i = 0; i < nr_objects; i++) {
+		void *objp;
+		struct page *page;
 
 		objp = objpp[i];
 
@@ -3351,33 +3350,33 @@ out:
 		STATS_DEC_ACTIVE(cachep);
 
 		/* fixup slab chains */
-		अगर (page->active == 0) अणु
-			list_add(&page->slab_list, &n->sद_असल_मुक्त);
-			n->मुक्त_sद_असल++;
-		पूर्ण अन्यथा अणु
+		if (page->active == 0) {
+			list_add(&page->slab_list, &n->slabs_free);
+			n->free_slabs++;
+		} else {
 			/* Unconditionally move a slab to the end of the
-			 * partial list on मुक्त - maximum समय क्रम the
-			 * other objects to be मुक्तd, too.
+			 * partial list on free - maximum time for the
+			 * other objects to be freed, too.
 			 */
-			list_add_tail(&page->slab_list, &n->sद_असल_partial);
-		पूर्ण
-	पूर्ण
+			list_add_tail(&page->slab_list, &n->slabs_partial);
+		}
+	}
 
-	जबतक (n->मुक्त_objects > n->मुक्त_limit && !list_empty(&n->sद_असल_मुक्त)) अणु
-		n->मुक्त_objects -= cachep->num;
+	while (n->free_objects > n->free_limit && !list_empty(&n->slabs_free)) {
+		n->free_objects -= cachep->num;
 
-		page = list_last_entry(&n->sद_असल_मुक्त, काष्ठा page, slab_list);
+		page = list_last_entry(&n->slabs_free, struct page, slab_list);
 		list_move(&page->slab_list, list);
-		n->मुक्त_sद_असल--;
-		n->total_sद_असल--;
-	पूर्ण
-पूर्ण
+		n->free_slabs--;
+		n->total_slabs--;
+	}
+}
 
-अटल व्योम cache_flusharray(काष्ठा kmem_cache *cachep, काष्ठा array_cache *ac)
-अणु
-	पूर्णांक batchcount;
-	काष्ठा kmem_cache_node *n;
-	पूर्णांक node = numa_mem_id();
+static void cache_flusharray(struct kmem_cache *cachep, struct array_cache *ac)
+{
+	int batchcount;
+	struct kmem_cache_node *n;
+	int node = numa_mem_id();
 	LIST_HEAD(list);
 
 	batchcount = ac->batchcount;
@@ -3385,165 +3384,165 @@ out:
 	check_irq_off();
 	n = get_node(cachep, node);
 	spin_lock(&n->list_lock);
-	अगर (n->shared) अणु
-		काष्ठा array_cache *shared_array = n->shared;
-		पूर्णांक max = shared_array->limit - shared_array->avail;
-		अगर (max) अणु
-			अगर (batchcount > max)
+	if (n->shared) {
+		struct array_cache *shared_array = n->shared;
+		int max = shared_array->limit - shared_array->avail;
+		if (max) {
+			if (batchcount > max)
 				batchcount = max;
-			स_नकल(&(shared_array->entry[shared_array->avail]),
-			       ac->entry, माप(व्योम *) * batchcount);
+			memcpy(&(shared_array->entry[shared_array->avail]),
+			       ac->entry, sizeof(void *) * batchcount);
 			shared_array->avail += batchcount;
-			जाओ मुक्त_करोne;
-		पूर्ण
-	पूर्ण
+			goto free_done;
+		}
+	}
 
-	मुक्त_block(cachep, ac->entry, batchcount, node, &list);
-मुक्त_करोne:
-#अगर STATS
-	अणु
-		पूर्णांक i = 0;
-		काष्ठा page *page;
+	free_block(cachep, ac->entry, batchcount, node, &list);
+free_done:
+#if STATS
+	{
+		int i = 0;
+		struct page *page;
 
-		list_क्रम_each_entry(page, &n->sद_असल_मुक्त, slab_list) अणु
+		list_for_each_entry(page, &n->slabs_free, slab_list) {
 			BUG_ON(page->active);
 
 			i++;
-		पूर्ण
+		}
 		STATS_SET_FREEABLE(cachep, i);
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 	spin_unlock(&n->list_lock);
 	ac->avail -= batchcount;
-	स_हटाओ(ac->entry, &(ac->entry[batchcount]), माप(व्योम *)*ac->avail);
-	sद_असल_destroy(cachep, &list);
-पूर्ण
+	memmove(ac->entry, &(ac->entry[batchcount]), sizeof(void *)*ac->avail);
+	slabs_destroy(cachep, &list);
+}
 
 /*
- * Release an obj back to its cache. If the obj has a स्थिरructed state, it must
- * be in this state _beक्रमe_ it is released.  Called with disabled पूर्णांकs.
+ * Release an obj back to its cache. If the obj has a constructed state, it must
+ * be in this state _before_ it is released.  Called with disabled ints.
  */
-अटल __always_अंतरभूत व्योम __cache_मुक्त(काष्ठा kmem_cache *cachep, व्योम *objp,
-					 अचिन्हित दीर्घ caller)
-अणु
+static __always_inline void __cache_free(struct kmem_cache *cachep, void *objp,
+					 unsigned long caller)
+{
 	bool init;
 
-	अगर (is_kfence_address(objp)) अणु
-		kmemleak_मुक्त_recursive(objp, cachep->flags);
-		__kfence_मुक्त(objp);
-		वापस;
-	पूर्ण
+	if (is_kfence_address(objp)) {
+		kmemleak_free_recursive(objp, cachep->flags);
+		__kfence_free(objp);
+		return;
+	}
 
 	/*
-	 * As memory initialization might be पूर्णांकegrated पूर्णांकo KASAN,
-	 * kasan_slab_मुक्त and initialization स_रखो must be
-	 * kept together to aव्योम discrepancies in behavior.
+	 * As memory initialization might be integrated into KASAN,
+	 * kasan_slab_free and initialization memset must be
+	 * kept together to avoid discrepancies in behavior.
 	 */
-	init = slab_want_init_on_मुक्त(cachep);
-	अगर (init && !kasan_has_पूर्णांकegrated_init())
-		स_रखो(objp, 0, cachep->object_size);
-	/* KASAN might put objp पूर्णांकo memory quarantine, delaying its reuse. */
-	अगर (kasan_slab_मुक्त(cachep, objp, init))
-		वापस;
+	init = slab_want_init_on_free(cachep);
+	if (init && !kasan_has_integrated_init())
+		memset(objp, 0, cachep->object_size);
+	/* KASAN might put objp into memory quarantine, delaying its reuse. */
+	if (kasan_slab_free(cachep, objp, init))
+		return;
 
-	/* Use KCSAN to help debug racy use-after-मुक्त. */
-	अगर (!(cachep->flags & SLAB_TYPESAFE_BY_RCU))
+	/* Use KCSAN to help debug racy use-after-free. */
+	if (!(cachep->flags & SLAB_TYPESAFE_BY_RCU))
 		__kcsan_check_access(objp, cachep->object_size,
 				     KCSAN_ACCESS_WRITE | KCSAN_ACCESS_ASSERT);
 
-	___cache_मुक्त(cachep, objp, caller);
-पूर्ण
+	___cache_free(cachep, objp, caller);
+}
 
-व्योम ___cache_मुक्त(काष्ठा kmem_cache *cachep, व्योम *objp,
-		अचिन्हित दीर्घ caller)
-अणु
-	काष्ठा array_cache *ac = cpu_cache_get(cachep);
+void ___cache_free(struct kmem_cache *cachep, void *objp,
+		unsigned long caller)
+{
+	struct array_cache *ac = cpu_cache_get(cachep);
 
 	check_irq_off();
-	kmemleak_मुक्त_recursive(objp, cachep->flags);
-	objp = cache_मुक्त_debugcheck(cachep, objp, caller);
-	memcg_slab_मुक्त_hook(cachep, &objp, 1);
+	kmemleak_free_recursive(objp, cachep->flags);
+	objp = cache_free_debugcheck(cachep, objp, caller);
+	memcg_slab_free_hook(cachep, &objp, 1);
 
 	/*
-	 * Skip calling cache_मुक्त_alien() when the platक्रमm is not numa.
-	 * This will aव्योम cache misses that happen जबतक accessing slabp (which
+	 * Skip calling cache_free_alien() when the platform is not numa.
+	 * This will avoid cache misses that happen while accessing slabp (which
 	 * is per page memory  reference) to get nodeid. Instead use a global
 	 * variable to skip the call, which is mostly likely to be present in
 	 * the cache.
 	 */
-	अगर (nr_online_nodes > 1 && cache_मुक्त_alien(cachep, objp))
-		वापस;
+	if (nr_online_nodes > 1 && cache_free_alien(cachep, objp))
+		return;
 
-	अगर (ac->avail < ac->limit) अणु
+	if (ac->avail < ac->limit) {
 		STATS_INC_FREEHIT(cachep);
-	पूर्ण अन्यथा अणु
+	} else {
 		STATS_INC_FREEMISS(cachep);
 		cache_flusharray(cachep, ac);
-	पूर्ण
+	}
 
-	अगर (sk_meदो_स्मृति_socks()) अणु
-		काष्ठा page *page = virt_to_head_page(objp);
+	if (sk_memalloc_socks()) {
+		struct page *page = virt_to_head_page(objp);
 
-		अगर (unlikely(PageSlabPfmeदो_स्मृति(page))) अणु
-			cache_मुक्त_pfmeदो_स्मृति(cachep, page, objp);
-			वापस;
-		पूर्ण
-	पूर्ण
+		if (unlikely(PageSlabPfmemalloc(page))) {
+			cache_free_pfmemalloc(cachep, page, objp);
+			return;
+		}
+	}
 
-	__मुक्त_one(ac, objp);
-पूर्ण
+	__free_one(ac, objp);
+}
 
 /**
  * kmem_cache_alloc - Allocate an object
  * @cachep: The cache to allocate from.
- * @flags: See kदो_स्मृति().
+ * @flags: See kmalloc().
  *
  * Allocate an object from this cache.  The flags are only relevant
- * अगर the cache has no available objects.
+ * if the cache has no available objects.
  *
- * Return: poपूर्णांकer to the new object or %शून्य in हाल of error
+ * Return: pointer to the new object or %NULL in case of error
  */
-व्योम *kmem_cache_alloc(काष्ठा kmem_cache *cachep, gfp_t flags)
-अणु
-	व्योम *ret = slab_alloc(cachep, flags, cachep->object_size, _RET_IP_);
+void *kmem_cache_alloc(struct kmem_cache *cachep, gfp_t flags)
+{
+	void *ret = slab_alloc(cachep, flags, cachep->object_size, _RET_IP_);
 
 	trace_kmem_cache_alloc(_RET_IP_, ret,
 			       cachep->object_size, cachep->size, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(kmem_cache_alloc);
 
-अटल __always_अंतरभूत व्योम
-cache_alloc_debugcheck_after_bulk(काष्ठा kmem_cache *s, gfp_t flags,
-				  माप_प्रकार size, व्योम **p, अचिन्हित दीर्घ caller)
-अणु
-	माप_प्रकार i;
+static __always_inline void
+cache_alloc_debugcheck_after_bulk(struct kmem_cache *s, gfp_t flags,
+				  size_t size, void **p, unsigned long caller)
+{
+	size_t i;
 
-	क्रम (i = 0; i < size; i++)
+	for (i = 0; i < size; i++)
 		p[i] = cache_alloc_debugcheck_after(s, flags, p[i], caller);
-पूर्ण
+}
 
-पूर्णांक kmem_cache_alloc_bulk(काष्ठा kmem_cache *s, gfp_t flags, माप_प्रकार size,
-			  व्योम **p)
-अणु
-	माप_प्रकार i;
-	काष्ठा obj_cgroup *objcg = शून्य;
+int kmem_cache_alloc_bulk(struct kmem_cache *s, gfp_t flags, size_t size,
+			  void **p)
+{
+	size_t i;
+	struct obj_cgroup *objcg = NULL;
 
 	s = slab_pre_alloc_hook(s, &objcg, size, flags);
-	अगर (!s)
-		वापस 0;
+	if (!s)
+		return 0;
 
-	cache_alloc_debugcheck_beक्रमe(s, flags);
+	cache_alloc_debugcheck_before(s, flags);
 
 	local_irq_disable();
-	क्रम (i = 0; i < size; i++) अणु
-		व्योम *objp = kfence_alloc(s, s->object_size, flags) ?: __करो_cache_alloc(s, flags);
+	for (i = 0; i < size; i++) {
+		void *objp = kfence_alloc(s, s->object_size, flags) ?: __do_cache_alloc(s, flags);
 
-		अगर (unlikely(!objp))
-			जाओ error;
+		if (unlikely(!objp))
+			goto error;
 		p[i] = objp;
-	पूर्ण
+	}
 	local_irq_enable();
 
 	cache_alloc_debugcheck_after_bulk(s, flags, size, p, _RET_IP_);
@@ -3555,114 +3554,114 @@ cache_alloc_debugcheck_after_bulk(काष्ठा kmem_cache *s, gfp_t flags,
 	slab_post_alloc_hook(s, objcg, flags, size, p,
 				slab_want_init_on_alloc(flags, s));
 	/* FIXME: Trace call missing. Christoph would like a bulk variant */
-	वापस size;
+	return size;
 error:
 	local_irq_enable();
 	cache_alloc_debugcheck_after_bulk(s, flags, i, p, _RET_IP_);
 	slab_post_alloc_hook(s, objcg, flags, i, p, false);
-	__kmem_cache_मुक्त_bulk(s, i, p);
-	वापस 0;
-पूर्ण
+	__kmem_cache_free_bulk(s, i, p);
+	return 0;
+}
 EXPORT_SYMBOL(kmem_cache_alloc_bulk);
 
-#अगर_घोषित CONFIG_TRACING
-व्योम *
-kmem_cache_alloc_trace(काष्ठा kmem_cache *cachep, gfp_t flags, माप_प्रकार size)
-अणु
-	व्योम *ret;
+#ifdef CONFIG_TRACING
+void *
+kmem_cache_alloc_trace(struct kmem_cache *cachep, gfp_t flags, size_t size)
+{
+	void *ret;
 
 	ret = slab_alloc(cachep, flags, size, _RET_IP_);
 
-	ret = kasan_kदो_स्मृति(cachep, ret, size, flags);
-	trace_kदो_स्मृति(_RET_IP_, ret,
+	ret = kasan_kmalloc(cachep, ret, size, flags);
+	trace_kmalloc(_RET_IP_, ret,
 		      size, cachep->size, flags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(kmem_cache_alloc_trace);
-#पूर्ण_अगर
+#endif
 
-#अगर_घोषित CONFIG_NUMA
+#ifdef CONFIG_NUMA
 /**
- * kmem_cache_alloc_node - Allocate an object on the specअगरied node
+ * kmem_cache_alloc_node - Allocate an object on the specified node
  * @cachep: The cache to allocate from.
- * @flags: See kदो_स्मृति().
+ * @flags: See kmalloc().
  * @nodeid: node number of the target node.
  *
  * Identical to kmem_cache_alloc but it will allocate memory on the given
- * node, which can improve the perक्रमmance क्रम cpu bound काष्ठाures.
+ * node, which can improve the performance for cpu bound structures.
  *
- * Fallback to other node is possible अगर __GFP_THISNODE is not set.
+ * Fallback to other node is possible if __GFP_THISNODE is not set.
  *
- * Return: poपूर्णांकer to the new object or %शून्य in हाल of error
+ * Return: pointer to the new object or %NULL in case of error
  */
-व्योम *kmem_cache_alloc_node(काष्ठा kmem_cache *cachep, gfp_t flags, पूर्णांक nodeid)
-अणु
-	व्योम *ret = slab_alloc_node(cachep, flags, nodeid, cachep->object_size, _RET_IP_);
+void *kmem_cache_alloc_node(struct kmem_cache *cachep, gfp_t flags, int nodeid)
+{
+	void *ret = slab_alloc_node(cachep, flags, nodeid, cachep->object_size, _RET_IP_);
 
 	trace_kmem_cache_alloc_node(_RET_IP_, ret,
 				    cachep->object_size, cachep->size,
 				    flags, nodeid);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(kmem_cache_alloc_node);
 
-#अगर_घोषित CONFIG_TRACING
-व्योम *kmem_cache_alloc_node_trace(काष्ठा kmem_cache *cachep,
+#ifdef CONFIG_TRACING
+void *kmem_cache_alloc_node_trace(struct kmem_cache *cachep,
 				  gfp_t flags,
-				  पूर्णांक nodeid,
-				  माप_प्रकार size)
-अणु
-	व्योम *ret;
+				  int nodeid,
+				  size_t size)
+{
+	void *ret;
 
 	ret = slab_alloc_node(cachep, flags, nodeid, size, _RET_IP_);
 
-	ret = kasan_kदो_स्मृति(cachep, ret, size, flags);
-	trace_kदो_स्मृति_node(_RET_IP_, ret,
+	ret = kasan_kmalloc(cachep, ret, size, flags);
+	trace_kmalloc_node(_RET_IP_, ret,
 			   size, cachep->size,
 			   flags, nodeid);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(kmem_cache_alloc_node_trace);
-#पूर्ण_अगर
+#endif
 
-अटल __always_अंतरभूत व्योम *
-__करो_kदो_स्मृति_node(माप_प्रकार size, gfp_t flags, पूर्णांक node, अचिन्हित दीर्घ caller)
-अणु
-	काष्ठा kmem_cache *cachep;
-	व्योम *ret;
+static __always_inline void *
+__do_kmalloc_node(size_t size, gfp_t flags, int node, unsigned long caller)
+{
+	struct kmem_cache *cachep;
+	void *ret;
 
-	अगर (unlikely(size > KMALLOC_MAX_CACHE_SIZE))
-		वापस शून्य;
-	cachep = kदो_स्मृति_slab(size, flags);
-	अगर (unlikely(ZERO_OR_शून्य_PTR(cachep)))
-		वापस cachep;
+	if (unlikely(size > KMALLOC_MAX_CACHE_SIZE))
+		return NULL;
+	cachep = kmalloc_slab(size, flags);
+	if (unlikely(ZERO_OR_NULL_PTR(cachep)))
+		return cachep;
 	ret = kmem_cache_alloc_node_trace(cachep, flags, node, size);
-	ret = kasan_kदो_स्मृति(cachep, ret, size, flags);
+	ret = kasan_kmalloc(cachep, ret, size, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम *__kदो_स्मृति_node(माप_प्रकार size, gfp_t flags, पूर्णांक node)
-अणु
-	वापस __करो_kदो_स्मृति_node(size, flags, node, _RET_IP_);
-पूर्ण
-EXPORT_SYMBOL(__kदो_स्मृति_node);
+void *__kmalloc_node(size_t size, gfp_t flags, int node)
+{
+	return __do_kmalloc_node(size, flags, node, _RET_IP_);
+}
+EXPORT_SYMBOL(__kmalloc_node);
 
-व्योम *__kदो_स्मृति_node_track_caller(माप_प्रकार size, gfp_t flags,
-		पूर्णांक node, अचिन्हित दीर्घ caller)
-अणु
-	वापस __करो_kदो_स्मृति_node(size, flags, node, caller);
-पूर्ण
-EXPORT_SYMBOL(__kदो_स्मृति_node_track_caller);
-#पूर्ण_अगर /* CONFIG_NUMA */
+void *__kmalloc_node_track_caller(size_t size, gfp_t flags,
+		int node, unsigned long caller)
+{
+	return __do_kmalloc_node(size, flags, node, caller);
+}
+EXPORT_SYMBOL(__kmalloc_node_track_caller);
+#endif /* CONFIG_NUMA */
 
-#अगर_घोषित CONFIG_PRINTK
-व्योम kmem_obj_info(काष्ठा kmem_obj_info *kpp, व्योम *object, काष्ठा page *page)
-अणु
-	काष्ठा kmem_cache *cachep;
-	अचिन्हित पूर्णांक objnr;
-	व्योम *objp;
+#ifdef CONFIG_PRINTK
+void kmem_obj_info(struct kmem_obj_info *kpp, void *object, struct page *page)
+{
+	struct kmem_cache *cachep;
+	unsigned int objnr;
+	void *objp;
 
 	kpp->kp_ptr = object;
 	kpp->kp_page = page;
@@ -3674,184 +3673,184 @@ EXPORT_SYMBOL(__kदो_स्मृति_node_track_caller);
 	objnr = obj_to_index(cachep, page, objp);
 	objp = index_to_obj(cachep, page, objnr);
 	kpp->kp_objp = objp;
-	अगर (DEBUG && cachep->flags & SLAB_STORE_USER)
+	if (DEBUG && cachep->flags & SLAB_STORE_USER)
 		kpp->kp_ret = *dbg_userword(cachep, objp);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
 /**
- * __करो_kदो_स्मृति - allocate memory
+ * __do_kmalloc - allocate memory
  * @size: how many bytes of memory are required.
- * @flags: the type of memory to allocate (see kदो_स्मृति).
- * @caller: function caller क्रम debug tracking of the caller
+ * @flags: the type of memory to allocate (see kmalloc).
+ * @caller: function caller for debug tracking of the caller
  *
- * Return: poपूर्णांकer to the allocated memory or %शून्य in हाल of error
+ * Return: pointer to the allocated memory or %NULL in case of error
  */
-अटल __always_अंतरभूत व्योम *__करो_kदो_स्मृति(माप_प्रकार size, gfp_t flags,
-					  अचिन्हित दीर्घ caller)
-अणु
-	काष्ठा kmem_cache *cachep;
-	व्योम *ret;
+static __always_inline void *__do_kmalloc(size_t size, gfp_t flags,
+					  unsigned long caller)
+{
+	struct kmem_cache *cachep;
+	void *ret;
 
-	अगर (unlikely(size > KMALLOC_MAX_CACHE_SIZE))
-		वापस शून्य;
-	cachep = kदो_स्मृति_slab(size, flags);
-	अगर (unlikely(ZERO_OR_शून्य_PTR(cachep)))
-		वापस cachep;
+	if (unlikely(size > KMALLOC_MAX_CACHE_SIZE))
+		return NULL;
+	cachep = kmalloc_slab(size, flags);
+	if (unlikely(ZERO_OR_NULL_PTR(cachep)))
+		return cachep;
 	ret = slab_alloc(cachep, flags, size, caller);
 
-	ret = kasan_kदो_स्मृति(cachep, ret, size, flags);
-	trace_kदो_स्मृति(caller, ret,
+	ret = kasan_kmalloc(cachep, ret, size, flags);
+	trace_kmalloc(caller, ret,
 		      size, cachep->size, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम *__kदो_स्मृति(माप_प्रकार size, gfp_t flags)
-अणु
-	वापस __करो_kदो_स्मृति(size, flags, _RET_IP_);
-पूर्ण
-EXPORT_SYMBOL(__kदो_स्मृति);
+void *__kmalloc(size_t size, gfp_t flags)
+{
+	return __do_kmalloc(size, flags, _RET_IP_);
+}
+EXPORT_SYMBOL(__kmalloc);
 
-व्योम *__kदो_स्मृति_track_caller(माप_प्रकार size, gfp_t flags, अचिन्हित दीर्घ caller)
-अणु
-	वापस __करो_kदो_स्मृति(size, flags, caller);
-पूर्ण
-EXPORT_SYMBOL(__kदो_स्मृति_track_caller);
+void *__kmalloc_track_caller(size_t size, gfp_t flags, unsigned long caller)
+{
+	return __do_kmalloc(size, flags, caller);
+}
+EXPORT_SYMBOL(__kmalloc_track_caller);
 
 /**
- * kmem_cache_मुक्त - Deallocate an object
+ * kmem_cache_free - Deallocate an object
  * @cachep: The cache the allocation was from.
  * @objp: The previously allocated object.
  *
  * Free an object which was previously allocated from this
  * cache.
  */
-व्योम kmem_cache_मुक्त(काष्ठा kmem_cache *cachep, व्योम *objp)
-अणु
-	अचिन्हित दीर्घ flags;
+void kmem_cache_free(struct kmem_cache *cachep, void *objp)
+{
+	unsigned long flags;
 	cachep = cache_from_obj(cachep, objp);
-	अगर (!cachep)
-		वापस;
+	if (!cachep)
+		return;
 
 	local_irq_save(flags);
-	debug_check_no_locks_मुक्तd(objp, cachep->object_size);
-	अगर (!(cachep->flags & SLAB_DEBUG_OBJECTS))
-		debug_check_no_obj_मुक्तd(objp, cachep->object_size);
-	__cache_मुक्त(cachep, objp, _RET_IP_);
+	debug_check_no_locks_freed(objp, cachep->object_size);
+	if (!(cachep->flags & SLAB_DEBUG_OBJECTS))
+		debug_check_no_obj_freed(objp, cachep->object_size);
+	__cache_free(cachep, objp, _RET_IP_);
 	local_irq_restore(flags);
 
-	trace_kmem_cache_मुक्त(_RET_IP_, objp, cachep->name);
-पूर्ण
-EXPORT_SYMBOL(kmem_cache_मुक्त);
+	trace_kmem_cache_free(_RET_IP_, objp, cachep->name);
+}
+EXPORT_SYMBOL(kmem_cache_free);
 
-व्योम kmem_cache_मुक्त_bulk(काष्ठा kmem_cache *orig_s, माप_प्रकार size, व्योम **p)
-अणु
-	काष्ठा kmem_cache *s;
-	माप_प्रकार i;
+void kmem_cache_free_bulk(struct kmem_cache *orig_s, size_t size, void **p)
+{
+	struct kmem_cache *s;
+	size_t i;
 
 	local_irq_disable();
-	क्रम (i = 0; i < size; i++) अणु
-		व्योम *objp = p[i];
+	for (i = 0; i < size; i++) {
+		void *objp = p[i];
 
-		अगर (!orig_s) /* called via kमुक्त_bulk */
+		if (!orig_s) /* called via kfree_bulk */
 			s = virt_to_cache(objp);
-		अन्यथा
+		else
 			s = cache_from_obj(orig_s, objp);
-		अगर (!s)
-			जारी;
+		if (!s)
+			continue;
 
-		debug_check_no_locks_मुक्तd(objp, s->object_size);
-		अगर (!(s->flags & SLAB_DEBUG_OBJECTS))
-			debug_check_no_obj_मुक्तd(objp, s->object_size);
+		debug_check_no_locks_freed(objp, s->object_size);
+		if (!(s->flags & SLAB_DEBUG_OBJECTS))
+			debug_check_no_obj_freed(objp, s->object_size);
 
-		__cache_मुक्त(s, objp, _RET_IP_);
-	पूर्ण
+		__cache_free(s, objp, _RET_IP_);
+	}
 	local_irq_enable();
 
 	/* FIXME: add tracing */
-पूर्ण
-EXPORT_SYMBOL(kmem_cache_मुक्त_bulk);
+}
+EXPORT_SYMBOL(kmem_cache_free_bulk);
 
 /**
- * kमुक्त - मुक्त previously allocated memory
- * @objp: poपूर्णांकer वापसed by kदो_स्मृति.
+ * kfree - free previously allocated memory
+ * @objp: pointer returned by kmalloc.
  *
- * If @objp is शून्य, no operation is perक्रमmed.
+ * If @objp is NULL, no operation is performed.
  *
- * Don't मुक्त memory not originally allocated by kदो_स्मृति()
- * or you will run पूर्णांकo trouble.
+ * Don't free memory not originally allocated by kmalloc()
+ * or you will run into trouble.
  */
-व्योम kमुक्त(स्थिर व्योम *objp)
-अणु
-	काष्ठा kmem_cache *c;
-	अचिन्हित दीर्घ flags;
+void kfree(const void *objp)
+{
+	struct kmem_cache *c;
+	unsigned long flags;
 
-	trace_kमुक्त(_RET_IP_, objp);
+	trace_kfree(_RET_IP_, objp);
 
-	अगर (unlikely(ZERO_OR_शून्य_PTR(objp)))
-		वापस;
+	if (unlikely(ZERO_OR_NULL_PTR(objp)))
+		return;
 	local_irq_save(flags);
-	kमुक्त_debugcheck(objp);
+	kfree_debugcheck(objp);
 	c = virt_to_cache(objp);
-	अगर (!c) अणु
+	if (!c) {
 		local_irq_restore(flags);
-		वापस;
-	पूर्ण
-	debug_check_no_locks_मुक्तd(objp, c->object_size);
+		return;
+	}
+	debug_check_no_locks_freed(objp, c->object_size);
 
-	debug_check_no_obj_मुक्तd(objp, c->object_size);
-	__cache_मुक्त(c, (व्योम *)objp, _RET_IP_);
+	debug_check_no_obj_freed(objp, c->object_size);
+	__cache_free(c, (void *)objp, _RET_IP_);
 	local_irq_restore(flags);
-पूर्ण
-EXPORT_SYMBOL(kमुक्त);
+}
+EXPORT_SYMBOL(kfree);
 
 /*
- * This initializes kmem_cache_node or resizes various caches क्रम all nodes.
+ * This initializes kmem_cache_node or resizes various caches for all nodes.
  */
-अटल पूर्णांक setup_kmem_cache_nodes(काष्ठा kmem_cache *cachep, gfp_t gfp)
-अणु
-	पूर्णांक ret;
-	पूर्णांक node;
-	काष्ठा kmem_cache_node *n;
+static int setup_kmem_cache_nodes(struct kmem_cache *cachep, gfp_t gfp)
+{
+	int ret;
+	int node;
+	struct kmem_cache_node *n;
 
-	क्रम_each_online_node(node) अणु
+	for_each_online_node(node) {
 		ret = setup_kmem_cache_node(cachep, node, gfp, true);
-		अगर (ret)
-			जाओ fail;
+		if (ret)
+			goto fail;
 
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 fail:
-	अगर (!cachep->list.next) अणु
+	if (!cachep->list.next) {
 		/* Cache is not active yet. Roll back what we did */
 		node--;
-		जबतक (node >= 0) अणु
+		while (node >= 0) {
 			n = get_node(cachep, node);
-			अगर (n) अणु
-				kमुक्त(n->shared);
-				मुक्त_alien_cache(n->alien);
-				kमुक्त(n);
-				cachep->node[node] = शून्य;
-			पूर्ण
+			if (n) {
+				kfree(n->shared);
+				free_alien_cache(n->alien);
+				kfree(n);
+				cachep->node[node] = NULL;
+			}
 			node--;
-		पूर्ण
-	पूर्ण
-	वापस -ENOMEM;
-पूर्ण
+		}
+	}
+	return -ENOMEM;
+}
 
 /* Always called with the slab_mutex held */
-अटल पूर्णांक करो_tune_cpucache(काष्ठा kmem_cache *cachep, पूर्णांक limit,
-			    पूर्णांक batchcount, पूर्णांक shared, gfp_t gfp)
-अणु
-	काष्ठा array_cache __percpu *cpu_cache, *prev;
-	पूर्णांक cpu;
+static int do_tune_cpucache(struct kmem_cache *cachep, int limit,
+			    int batchcount, int shared, gfp_t gfp)
+{
+	struct array_cache __percpu *cpu_cache, *prev;
+	int cpu;
 
 	cpu_cache = alloc_kmem_cache_cpus(cachep, limit, batchcount);
-	अगर (!cpu_cache)
-		वापस -ENOMEM;
+	if (!cpu_cache)
+		return -ENOMEM;
 
 	prev = cachep->cpu_cache;
 	cachep->cpu_cache = cpu_cache;
@@ -3859,7 +3858,7 @@ fail:
 	 * Without a previous cpu_cache there's no need to synchronize remote
 	 * cpus, so skip the IPIs.
 	 */
-	अगर (prev)
+	if (prev)
 		kick_all_cpus_sync();
 
 	check_irq_on();
@@ -3867,120 +3866,120 @@ fail:
 	cachep->limit = limit;
 	cachep->shared = shared;
 
-	अगर (!prev)
-		जाओ setup_node;
+	if (!prev)
+		goto setup_node;
 
-	क्रम_each_online_cpu(cpu) अणु
+	for_each_online_cpu(cpu) {
 		LIST_HEAD(list);
-		पूर्णांक node;
-		काष्ठा kmem_cache_node *n;
-		काष्ठा array_cache *ac = per_cpu_ptr(prev, cpu);
+		int node;
+		struct kmem_cache_node *n;
+		struct array_cache *ac = per_cpu_ptr(prev, cpu);
 
 		node = cpu_to_mem(cpu);
 		n = get_node(cachep, node);
 		spin_lock_irq(&n->list_lock);
-		मुक्त_block(cachep, ac->entry, ac->avail, node, &list);
+		free_block(cachep, ac->entry, ac->avail, node, &list);
 		spin_unlock_irq(&n->list_lock);
-		sद_असल_destroy(cachep, &list);
-	पूर्ण
-	मुक्त_percpu(prev);
+		slabs_destroy(cachep, &list);
+	}
+	free_percpu(prev);
 
 setup_node:
-	वापस setup_kmem_cache_nodes(cachep, gfp);
-पूर्ण
+	return setup_kmem_cache_nodes(cachep, gfp);
+}
 
 /* Called with slab_mutex held always */
-अटल पूर्णांक enable_cpucache(काष्ठा kmem_cache *cachep, gfp_t gfp)
-अणु
-	पूर्णांक err;
-	पूर्णांक limit = 0;
-	पूर्णांक shared = 0;
-	पूर्णांक batchcount = 0;
+static int enable_cpucache(struct kmem_cache *cachep, gfp_t gfp)
+{
+	int err;
+	int limit = 0;
+	int shared = 0;
+	int batchcount = 0;
 
-	err = cache_अक्रमom_seq_create(cachep, cachep->num, gfp);
-	अगर (err)
-		जाओ end;
+	err = cache_random_seq_create(cachep, cachep->num, gfp);
+	if (err)
+		goto end;
 
-	अगर (limit && shared && batchcount)
-		जाओ skip_setup;
+	if (limit && shared && batchcount)
+		goto skip_setup;
 	/*
 	 * The head array serves three purposes:
-	 * - create a LIFO ordering, i.e. वापस objects that are cache-warm
+	 * - create a LIFO ordering, i.e. return objects that are cache-warm
 	 * - reduce the number of spinlock operations.
 	 * - reduce the number of linked list operations on the slab and
 	 *   bufctl chains: array operations are cheaper.
-	 * The numbers are guessed, we should स्वतः-tune as described by
+	 * The numbers are guessed, we should auto-tune as described by
 	 * Bonwick.
 	 */
-	अगर (cachep->size > 131072)
+	if (cachep->size > 131072)
 		limit = 1;
-	अन्यथा अगर (cachep->size > PAGE_SIZE)
+	else if (cachep->size > PAGE_SIZE)
 		limit = 8;
-	अन्यथा अगर (cachep->size > 1024)
+	else if (cachep->size > 1024)
 		limit = 24;
-	अन्यथा अगर (cachep->size > 256)
+	else if (cachep->size > 256)
 		limit = 54;
-	अन्यथा
+	else
 		limit = 120;
 
 	/*
 	 * CPU bound tasks (e.g. network routing) can exhibit cpu bound
-	 * allocation behaviour: Most allocs on one cpu, most मुक्त operations
-	 * on another cpu. For these हालs, an efficient object passing between
+	 * allocation behaviour: Most allocs on one cpu, most free operations
+	 * on another cpu. For these cases, an efficient object passing between
 	 * cpus is necessary. This is provided by a shared array. The array
 	 * replaces Bonwick's magazine layer.
 	 * On uniprocessor, it's functionally equivalent (but less efficient)
-	 * to a larger limit. Thus disabled by शेष.
+	 * to a larger limit. Thus disabled by default.
 	 */
 	shared = 0;
-	अगर (cachep->size <= PAGE_SIZE && num_possible_cpus() > 1)
+	if (cachep->size <= PAGE_SIZE && num_possible_cpus() > 1)
 		shared = 8;
 
-#अगर DEBUG
+#if DEBUG
 	/*
-	 * With debugging enabled, large batchcount lead to excessively दीर्घ
-	 * periods with disabled local पूर्णांकerrupts. Limit the batchcount
+	 * With debugging enabled, large batchcount lead to excessively long
+	 * periods with disabled local interrupts. Limit the batchcount
 	 */
-	अगर (limit > 32)
+	if (limit > 32)
 		limit = 32;
-#पूर्ण_अगर
+#endif
 	batchcount = (limit + 1) / 2;
 skip_setup:
-	err = करो_tune_cpucache(cachep, limit, batchcount, shared, gfp);
+	err = do_tune_cpucache(cachep, limit, batchcount, shared, gfp);
 end:
-	अगर (err)
+	if (err)
 		pr_err("enable_cpucache failed for %s, error %d\n",
 		       cachep->name, -err);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
- * Drain an array अगर it contains any elements taking the node lock only अगर
+ * Drain an array if it contains any elements taking the node lock only if
  * necessary. Note that the node listlock also protects the array_cache
- * अगर drain_array() is used on the shared array.
+ * if drain_array() is used on the shared array.
  */
-अटल व्योम drain_array(काष्ठा kmem_cache *cachep, काष्ठा kmem_cache_node *n,
-			 काष्ठा array_cache *ac, पूर्णांक node)
-अणु
+static void drain_array(struct kmem_cache *cachep, struct kmem_cache_node *n,
+			 struct array_cache *ac, int node)
+{
 	LIST_HEAD(list);
 
-	/* ac from n->shared can be मुक्तd अगर we करोn't hold the slab_mutex. */
+	/* ac from n->shared can be freed if we don't hold the slab_mutex. */
 	check_mutex_acquired();
 
-	अगर (!ac || !ac->avail)
-		वापस;
+	if (!ac || !ac->avail)
+		return;
 
-	अगर (ac->touched) अणु
+	if (ac->touched) {
 		ac->touched = 0;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	spin_lock_irq(&n->list_lock);
 	drain_array_locked(cachep, ac, node, false, &list);
 	spin_unlock_irq(&n->list_lock);
 
-	sद_असल_destroy(cachep, &list);
-पूर्ण
+	slabs_destroy(cachep, &list);
+}
 
 /**
  * cache_reap - Reclaim memory from caches.
@@ -3988,30 +3987,30 @@ end:
  *
  * Called from workqueue/eventd every few seconds.
  * Purpose:
- * - clear the per-cpu caches क्रम this CPU.
- * - वापस मुक्तable pages to the मुख्य मुक्त memory pool.
+ * - clear the per-cpu caches for this CPU.
+ * - return freeable pages to the main free memory pool.
  *
  * If we cannot acquire the cache chain mutex then just give up - we'll try
  * again on the next iteration.
  */
-अटल व्योम cache_reap(काष्ठा work_काष्ठा *w)
-अणु
-	काष्ठा kmem_cache *searchp;
-	काष्ठा kmem_cache_node *n;
-	पूर्णांक node = numa_mem_id();
-	काष्ठा delayed_work *work = to_delayed_work(w);
+static void cache_reap(struct work_struct *w)
+{
+	struct kmem_cache *searchp;
+	struct kmem_cache_node *n;
+	int node = numa_mem_id();
+	struct delayed_work *work = to_delayed_work(w);
 
-	अगर (!mutex_trylock(&slab_mutex))
+	if (!mutex_trylock(&slab_mutex))
 		/* Give up. Setup the next iteration. */
-		जाओ out;
+		goto out;
 
-	list_क्रम_each_entry(searchp, &slab_caches, list) अणु
+	list_for_each_entry(searchp, &slab_caches, list) {
 		check_irq_on();
 
 		/*
-		 * We only take the node lock अगर असलolutely necessary and we
-		 * have established with reasonable certaपूर्णांकy that
-		 * we can करो some work अगर the lock was obtained.
+		 * We only take the node lock if absolutely necessary and we
+		 * have established with reasonable certainty that
+		 * we can do some work if the lock was obtained.
 		 */
 		n = get_node(searchp, node);
 
@@ -4020,109 +4019,109 @@ end:
 		drain_array(searchp, n, cpu_cache_get(searchp), node);
 
 		/*
-		 * These are racy checks but it करोes not matter
-		 * अगर we skip one check or scan twice.
+		 * These are racy checks but it does not matter
+		 * if we skip one check or scan twice.
 		 */
-		अगर (समय_after(n->next_reap, jअगरfies))
-			जाओ next;
+		if (time_after(n->next_reap, jiffies))
+			goto next;
 
-		n->next_reap = jअगरfies + REAPTIMEOUT_NODE;
+		n->next_reap = jiffies + REAPTIMEOUT_NODE;
 
 		drain_array(searchp, n, n->shared, node);
 
-		अगर (n->मुक्त_touched)
-			n->मुक्त_touched = 0;
-		अन्यथा अणु
-			पूर्णांक मुक्तd;
+		if (n->free_touched)
+			n->free_touched = 0;
+		else {
+			int freed;
 
-			मुक्तd = drain_मुक्तlist(searchp, n, (n->मुक्त_limit +
+			freed = drain_freelist(searchp, n, (n->free_limit +
 				5 * searchp->num - 1) / (5 * searchp->num));
-			STATS_ADD_REAPED(searchp, मुक्तd);
-		पूर्ण
+			STATS_ADD_REAPED(searchp, freed);
+		}
 next:
 		cond_resched();
-	पूर्ण
+	}
 	check_irq_on();
 	mutex_unlock(&slab_mutex);
 	next_reap_node();
 out:
 	/* Set up the next iteration */
 	schedule_delayed_work_on(smp_processor_id(), work,
-				round_jअगरfies_relative(REAPTIMEOUT_AC));
-पूर्ण
+				round_jiffies_relative(REAPTIMEOUT_AC));
+}
 
-व्योम get_slabinfo(काष्ठा kmem_cache *cachep, काष्ठा slabinfo *sinfo)
-अणु
-	अचिन्हित दीर्घ active_objs, num_objs, active_sद_असल;
-	अचिन्हित दीर्घ total_sद_असल = 0, मुक्त_objs = 0, shared_avail = 0;
-	अचिन्हित दीर्घ मुक्त_sद_असल = 0;
-	पूर्णांक node;
-	काष्ठा kmem_cache_node *n;
+void get_slabinfo(struct kmem_cache *cachep, struct slabinfo *sinfo)
+{
+	unsigned long active_objs, num_objs, active_slabs;
+	unsigned long total_slabs = 0, free_objs = 0, shared_avail = 0;
+	unsigned long free_slabs = 0;
+	int node;
+	struct kmem_cache_node *n;
 
-	क्रम_each_kmem_cache_node(cachep, node, n) अणु
+	for_each_kmem_cache_node(cachep, node, n) {
 		check_irq_on();
 		spin_lock_irq(&n->list_lock);
 
-		total_sद_असल += n->total_sद_असल;
-		मुक्त_sद_असल += n->मुक्त_sद_असल;
-		मुक्त_objs += n->मुक्त_objects;
+		total_slabs += n->total_slabs;
+		free_slabs += n->free_slabs;
+		free_objs += n->free_objects;
 
-		अगर (n->shared)
+		if (n->shared)
 			shared_avail += n->shared->avail;
 
 		spin_unlock_irq(&n->list_lock);
-	पूर्ण
-	num_objs = total_sद_असल * cachep->num;
-	active_sद_असल = total_sद_असल - मुक्त_sद_असल;
-	active_objs = num_objs - मुक्त_objs;
+	}
+	num_objs = total_slabs * cachep->num;
+	active_slabs = total_slabs - free_slabs;
+	active_objs = num_objs - free_objs;
 
 	sinfo->active_objs = active_objs;
 	sinfo->num_objs = num_objs;
-	sinfo->active_sद_असल = active_sद_असल;
-	sinfo->num_sद_असल = total_sद_असल;
+	sinfo->active_slabs = active_slabs;
+	sinfo->num_slabs = total_slabs;
 	sinfo->shared_avail = shared_avail;
 	sinfo->limit = cachep->limit;
 	sinfo->batchcount = cachep->batchcount;
 	sinfo->shared = cachep->shared;
 	sinfo->objects_per_slab = cachep->num;
 	sinfo->cache_order = cachep->gfporder;
-पूर्ण
+}
 
-व्योम slabinfo_show_stats(काष्ठा seq_file *m, काष्ठा kmem_cache *cachep)
-अणु
-#अगर STATS
-	अणु			/* node stats */
-		अचिन्हित दीर्घ high = cachep->high_mark;
-		अचिन्हित दीर्घ allocs = cachep->num_allocations;
-		अचिन्हित दीर्घ grown = cachep->grown;
-		अचिन्हित दीर्घ reaped = cachep->reaped;
-		अचिन्हित दीर्घ errors = cachep->errors;
-		अचिन्हित दीर्घ max_मुक्तable = cachep->max_मुक्तable;
-		अचिन्हित दीर्घ node_allocs = cachep->node_allocs;
-		अचिन्हित दीर्घ node_मुक्तs = cachep->node_मुक्तs;
-		अचिन्हित दीर्घ overflows = cachep->node_overflow;
+void slabinfo_show_stats(struct seq_file *m, struct kmem_cache *cachep)
+{
+#if STATS
+	{			/* node stats */
+		unsigned long high = cachep->high_mark;
+		unsigned long allocs = cachep->num_allocations;
+		unsigned long grown = cachep->grown;
+		unsigned long reaped = cachep->reaped;
+		unsigned long errors = cachep->errors;
+		unsigned long max_freeable = cachep->max_freeable;
+		unsigned long node_allocs = cachep->node_allocs;
+		unsigned long node_frees = cachep->node_frees;
+		unsigned long overflows = cachep->node_overflow;
 
-		seq_म_लिखो(m, " : globalstat %7lu %6lu %5lu %4lu %4lu %4lu %4lu %4lu %4lu",
+		seq_printf(m, " : globalstat %7lu %6lu %5lu %4lu %4lu %4lu %4lu %4lu %4lu",
 			   allocs, high, grown,
-			   reaped, errors, max_मुक्तable, node_allocs,
-			   node_मुक्तs, overflows);
-	पूर्ण
+			   reaped, errors, max_freeable, node_allocs,
+			   node_frees, overflows);
+	}
 	/* cpu stats */
-	अणु
-		अचिन्हित दीर्घ allochit = atomic_पढ़ो(&cachep->allochit);
-		अचिन्हित दीर्घ allocmiss = atomic_पढ़ो(&cachep->allocmiss);
-		अचिन्हित दीर्घ मुक्तhit = atomic_पढ़ो(&cachep->मुक्तhit);
-		अचिन्हित दीर्घ मुक्तmiss = atomic_पढ़ो(&cachep->मुक्तmiss);
+	{
+		unsigned long allochit = atomic_read(&cachep->allochit);
+		unsigned long allocmiss = atomic_read(&cachep->allocmiss);
+		unsigned long freehit = atomic_read(&cachep->freehit);
+		unsigned long freemiss = atomic_read(&cachep->freemiss);
 
-		seq_म_लिखो(m, " : cpustat %6lu %6lu %6lu %6lu",
-			   allochit, allocmiss, मुक्तhit, मुक्तmiss);
-	पूर्ण
-#पूर्ण_अगर
-पूर्ण
+		seq_printf(m, " : cpustat %6lu %6lu %6lu %6lu",
+			   allochit, allocmiss, freehit, freemiss);
+	}
+#endif
+}
 
-#घोषणा MAX_SLABINFO_WRITE 128
+#define MAX_SLABINFO_WRITE 128
 /**
- * slabinfo_ग_लिखो - Tuning क्रम the slab allocator
+ * slabinfo_write - Tuning for the slab allocator
  * @file: unused
  * @buffer: user buffer
  * @count: data length
@@ -4130,122 +4129,122 @@ out:
  *
  * Return: %0 on success, negative error code otherwise.
  */
-sमाप_प्रकार slabinfo_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buffer,
-		       माप_प्रकार count, loff_t *ppos)
-अणु
-	अक्षर kbuf[MAX_SLABINFO_WRITE + 1], *पंचांगp;
-	पूर्णांक limit, batchcount, shared, res;
-	काष्ठा kmem_cache *cachep;
+ssize_t slabinfo_write(struct file *file, const char __user *buffer,
+		       size_t count, loff_t *ppos)
+{
+	char kbuf[MAX_SLABINFO_WRITE + 1], *tmp;
+	int limit, batchcount, shared, res;
+	struct kmem_cache *cachep;
 
-	अगर (count > MAX_SLABINFO_WRITE)
-		वापस -EINVAL;
-	अगर (copy_from_user(&kbuf, buffer, count))
-		वापस -EFAULT;
+	if (count > MAX_SLABINFO_WRITE)
+		return -EINVAL;
+	if (copy_from_user(&kbuf, buffer, count))
+		return -EFAULT;
 	kbuf[MAX_SLABINFO_WRITE] = '\0';
 
-	पंचांगp = म_अक्षर(kbuf, ' ');
-	अगर (!पंचांगp)
-		वापस -EINVAL;
-	*पंचांगp = '\0';
-	पंचांगp++;
-	अगर (माला_पूछो(पंचांगp, " %d %d %d", &limit, &batchcount, &shared) != 3)
-		वापस -EINVAL;
+	tmp = strchr(kbuf, ' ');
+	if (!tmp)
+		return -EINVAL;
+	*tmp = '\0';
+	tmp++;
+	if (sscanf(tmp, " %d %d %d", &limit, &batchcount, &shared) != 3)
+		return -EINVAL;
 
 	/* Find the cache in the chain of caches. */
 	mutex_lock(&slab_mutex);
 	res = -EINVAL;
-	list_क्रम_each_entry(cachep, &slab_caches, list) अणु
-		अगर (!म_भेद(cachep->name, kbuf)) अणु
-			अगर (limit < 1 || batchcount < 1 ||
-					batchcount > limit || shared < 0) अणु
+	list_for_each_entry(cachep, &slab_caches, list) {
+		if (!strcmp(cachep->name, kbuf)) {
+			if (limit < 1 || batchcount < 1 ||
+					batchcount > limit || shared < 0) {
 				res = 0;
-			पूर्ण अन्यथा अणु
-				res = करो_tune_cpucache(cachep, limit,
+			} else {
+				res = do_tune_cpucache(cachep, limit,
 						       batchcount, shared,
 						       GFP_KERNEL);
-			पूर्ण
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			}
+			break;
+		}
+	}
 	mutex_unlock(&slab_mutex);
-	अगर (res >= 0)
+	if (res >= 0)
 		res = count;
-	वापस res;
-पूर्ण
+	return res;
+}
 
-#अगर_घोषित CONFIG_HARDENED_USERCOPY
+#ifdef CONFIG_HARDENED_USERCOPY
 /*
  * Rejects incorrectly sized objects and objects that are to be copied
- * to/from userspace but करो not fall entirely within the containing slab
+ * to/from userspace but do not fall entirely within the containing slab
  * cache's usercopy region.
  *
- * Returns शून्य अगर check passes, otherwise स्थिर अक्षर * to name of cache
+ * Returns NULL if check passes, otherwise const char * to name of cache
  * to indicate an error.
  */
-व्योम __check_heap_object(स्थिर व्योम *ptr, अचिन्हित दीर्घ n, काष्ठा page *page,
+void __check_heap_object(const void *ptr, unsigned long n, struct page *page,
 			 bool to_user)
-अणु
-	काष्ठा kmem_cache *cachep;
-	अचिन्हित पूर्णांक objnr;
-	अचिन्हित दीर्घ offset;
+{
+	struct kmem_cache *cachep;
+	unsigned int objnr;
+	unsigned long offset;
 
 	ptr = kasan_reset_tag(ptr);
 
 	/* Find and validate object. */
 	cachep = page->slab_cache;
-	objnr = obj_to_index(cachep, page, (व्योम *)ptr);
+	objnr = obj_to_index(cachep, page, (void *)ptr);
 	BUG_ON(objnr >= cachep->num);
 
 	/* Find offset within object. */
-	अगर (is_kfence_address(ptr))
+	if (is_kfence_address(ptr))
 		offset = ptr - kfence_object_start(ptr);
-	अन्यथा
+	else
 		offset = ptr - index_to_obj(cachep, page, objnr) - obj_offset(cachep);
 
 	/* Allow address range falling entirely within usercopy region. */
-	अगर (offset >= cachep->useroffset &&
+	if (offset >= cachep->useroffset &&
 	    offset - cachep->useroffset <= cachep->usersize &&
 	    n <= cachep->useroffset - offset + cachep->usersize)
-		वापस;
+		return;
 
 	/*
 	 * If the copy is still within the allocated object, produce
-	 * a warning instead of rejecting the copy. This is पूर्णांकended
+	 * a warning instead of rejecting the copy. This is intended
 	 * to be a temporary method to find any missing usercopy
 	 * whitelists.
 	 */
-	अगर (usercopy_fallback &&
+	if (usercopy_fallback &&
 	    offset <= cachep->object_size &&
-	    n <= cachep->object_size - offset) अणु
+	    n <= cachep->object_size - offset) {
 		usercopy_warn("SLAB object", cachep->name, to_user, offset, n);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	usercopy_पात("SLAB object", cachep->name, to_user, offset, n);
-पूर्ण
-#पूर्ण_अगर /* CONFIG_HARDENED_USERCOPY */
+	usercopy_abort("SLAB object", cachep->name, to_user, offset, n);
+}
+#endif /* CONFIG_HARDENED_USERCOPY */
 
 /**
  * __ksize -- Uninstrumented ksize.
- * @objp: poपूर्णांकer to the object
+ * @objp: pointer to the object
  *
- * Unlike ksize(), __ksize() is uninstrumented, and करोes not provide the same
+ * Unlike ksize(), __ksize() is uninstrumented, and does not provide the same
  * safety checks as ksize() with KASAN instrumentation enabled.
  *
  * Return: size of the actual memory used by @objp in bytes
  */
-माप_प्रकार __ksize(स्थिर व्योम *objp)
-अणु
-	काष्ठा kmem_cache *c;
-	माप_प्रकार size;
+size_t __ksize(const void *objp)
+{
+	struct kmem_cache *c;
+	size_t size;
 
 	BUG_ON(!objp);
-	अगर (unlikely(objp == ZERO_SIZE_PTR))
-		वापस 0;
+	if (unlikely(objp == ZERO_SIZE_PTR))
+		return 0;
 
 	c = virt_to_cache(objp);
 	size = c ? c->object_size : 0;
 
-	वापस size;
-पूर्ण
+	return size;
+}
 EXPORT_SYMBOL(__ksize);

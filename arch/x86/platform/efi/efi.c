@@ -1,8 +1,7 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Common EFI (Extensible Firmware Interface) support functions
- * Based on Extensible Firmware Interface Specअगरication version 1.0
+ * Based on Extensible Firmware Interface Specification version 1.0
  *
  * Copyright (C) 1999 VA Linux Systems
  * Copyright (C) 1999 Walt Drummond <drummond@valinux.com>
@@ -10,124 +9,124 @@
  *	David Mosberger-Tang <davidm@hpl.hp.com>
  *	Stephane Eranian <eranian@hpl.hp.com>
  * Copyright (C) 2005-2008 Intel Co.
- *	Fenghua Yu <fenghua.yu@पूर्णांकel.com>
- *	Bibo Mao <bibo.mao@पूर्णांकel.com>
- *	Chandramouli Narayanan <mouli@linux.पूर्णांकel.com>
- *	Huang Ying <ying.huang@पूर्णांकel.com>
- * Copyright (C) 2013 SuSE Lअसल
- *	Borislav Petkov <bp@suse.de> - runसमय services VA mapping
+ *	Fenghua Yu <fenghua.yu@intel.com>
+ *	Bibo Mao <bibo.mao@intel.com>
+ *	Chandramouli Narayanan <mouli@linux.intel.com>
+ *	Huang Ying <ying.huang@intel.com>
+ * Copyright (C) 2013 SuSE Labs
+ *	Borislav Petkov <bp@suse.de> - runtime services VA mapping
  *
  * Copied from efi_32.c to eliminate the duplicated code between EFI
  * 32/64 support code. --ying 2007-10-26
  *
- * All EFI Runसमय Services are not implemented yet as EFI only
+ * All EFI Runtime Services are not implemented yet as EFI only
  * supports physical mode addressing on SoftSDV. This is to be fixed
  * in a future version.  --drummond 1999-07-20
  *
- * Implemented EFI runसमय services and भव mode calls.  --davidm
+ * Implemented EFI runtime services and virtual mode calls.  --davidm
  *
- * Goutham Rao: <goutham.rao@पूर्णांकel.com>
+ * Goutham Rao: <goutham.rao@intel.com>
  *	Skip non-WB memory and ignore empty memory ranges.
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/efi.h>
-#समावेश <linux/efi-bgrt.h>
-#समावेश <linux/export.h>
-#समावेश <linux/memblock.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/समय.स>
-#समावेश <linux/पन.स>
-#समावेश <linux/reboot.h>
-#समावेश <linux/bcd.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/efi.h>
+#include <linux/efi-bgrt.h>
+#include <linux/export.h>
+#include <linux/memblock.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
+#include <linux/uaccess.h>
+#include <linux/time.h>
+#include <linux/io.h>
+#include <linux/reboot.h>
+#include <linux/bcd.h>
 
-#समावेश <यंत्र/setup.h>
-#समावेश <यंत्र/efi.h>
-#समावेश <यंत्र/e820/api.h>
-#समावेश <यंत्र/समय.स>
-#समावेश <यंत्र/tlbflush.h>
-#समावेश <यंत्र/x86_init.h>
-#समावेश <यंत्र/uv/uv.h>
+#include <asm/setup.h>
+#include <asm/efi.h>
+#include <asm/e820/api.h>
+#include <asm/time.h>
+#include <asm/tlbflush.h>
+#include <asm/x86_init.h>
+#include <asm/uv/uv.h>
 
-अटल अचिन्हित दीर्घ efi_systab_phys __initdata;
-अटल अचिन्हित दीर्घ prop_phys = EFI_INVALID_TABLE_ADDR;
-अटल अचिन्हित दीर्घ uga_phys = EFI_INVALID_TABLE_ADDR;
-अटल अचिन्हित दीर्घ efi_runसमय, efi_nr_tables;
+static unsigned long efi_systab_phys __initdata;
+static unsigned long prop_phys = EFI_INVALID_TABLE_ADDR;
+static unsigned long uga_phys = EFI_INVALID_TABLE_ADDR;
+static unsigned long efi_runtime, efi_nr_tables;
 
-अचिन्हित दीर्घ efi_fw_venकरोr, efi_config_table;
+unsigned long efi_fw_vendor, efi_config_table;
 
-अटल स्थिर efi_config_table_type_t arch_tables[] __initस्थिर = अणु
-	अणुEFI_PROPERTIES_TABLE_GUID,	&prop_phys,		"PROP"		पूर्ण,
-	अणुUGA_IO_PROTOCOL_GUID,		&uga_phys,		"UGA"		पूर्ण,
-#अगर_घोषित CONFIG_X86_UV
-	अणुUV_SYSTEM_TABLE_GUID,		&uv_systab_phys,	"UVsystab"	पूर्ण,
-#पूर्ण_अगर
-	अणुपूर्ण,
-पूर्ण;
+static const efi_config_table_type_t arch_tables[] __initconst = {
+	{EFI_PROPERTIES_TABLE_GUID,	&prop_phys,		"PROP"		},
+	{UGA_IO_PROTOCOL_GUID,		&uga_phys,		"UGA"		},
+#ifdef CONFIG_X86_UV
+	{UV_SYSTEM_TABLE_GUID,		&uv_systab_phys,	"UVsystab"	},
+#endif
+	{},
+};
 
-अटल स्थिर अचिन्हित दीर्घ * स्थिर efi_tables[] = अणु
+static const unsigned long * const efi_tables[] = {
 	&efi.acpi,
 	&efi.acpi20,
 	&efi.smbios,
 	&efi.smbios3,
 	&uga_phys,
-#अगर_घोषित CONFIG_X86_UV
+#ifdef CONFIG_X86_UV
 	&uv_systab_phys,
-#पूर्ण_अगर
-	&efi_fw_venकरोr,
-	&efi_runसमय,
+#endif
+	&efi_fw_vendor,
+	&efi_runtime,
 	&efi_config_table,
 	&efi.esrt,
 	&prop_phys,
 	&efi_mem_attr_table,
-#अगर_घोषित CONFIG_EFI_RCI2_TABLE
+#ifdef CONFIG_EFI_RCI2_TABLE
 	&rci2_table_phys,
-#पूर्ण_अगर
+#endif
 	&efi.tpm_log,
 	&efi.tpm_final_log,
 	&efi_rng_seed,
-#अगर_घोषित CONFIG_LOAD_UEFI_KEYS
+#ifdef CONFIG_LOAD_UEFI_KEYS
 	&efi.mokvar_table,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
 u64 efi_setup;		/* efi setup_data physical address */
 
-अटल पूर्णांक add_efi_memmap __initdata;
-अटल पूर्णांक __init setup_add_efi_memmap(अक्षर *arg)
-अणु
+static int add_efi_memmap __initdata;
+static int __init setup_add_efi_memmap(char *arg)
+{
 	add_efi_memmap = 1;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 early_param("add_efi_memmap", setup_add_efi_memmap);
 
-व्योम __init efi_find_mirror(व्योम)
-अणु
+void __init efi_find_mirror(void)
+{
 	efi_memory_desc_t *md;
 	u64 mirror_size = 0, total_size = 0;
 
-	अगर (!efi_enabled(EFI_MEMMAP))
-		वापस;
+	if (!efi_enabled(EFI_MEMMAP))
+		return;
 
-	क्रम_each_efi_memory_desc(md) अणु
-		अचिन्हित दीर्घ दीर्घ start = md->phys_addr;
-		अचिन्हित दीर्घ दीर्घ size = md->num_pages << EFI_PAGE_SHIFT;
+	for_each_efi_memory_desc(md) {
+		unsigned long long start = md->phys_addr;
+		unsigned long long size = md->num_pages << EFI_PAGE_SHIFT;
 
 		total_size += size;
-		अगर (md->attribute & EFI_MEMORY_MORE_RELIABLE) अणु
+		if (md->attribute & EFI_MEMORY_MORE_RELIABLE) {
 			memblock_mark_mirror(start, size);
 			mirror_size += size;
-		पूर्ण
-	पूर्ण
-	अगर (mirror_size)
+		}
+	}
+	if (mirror_size)
 		pr_info("Memory: %lldM/%lldM mirrored memory\n",
 			mirror_size>>20, total_size>>20);
-पूर्ण
+}
 
 /*
  * Tell the kernel about the EFI memory map.  This might include
@@ -136,98 +135,98 @@ early_param("add_efi_memmap", setup_add_efi_memmap);
  * E820_MAX_ENTRIES.
  */
 
-अटल व्योम __init करो_add_efi_memmap(व्योम)
-अणु
+static void __init do_add_efi_memmap(void)
+{
 	efi_memory_desc_t *md;
 
-	अगर (!efi_enabled(EFI_MEMMAP))
-		वापस;
+	if (!efi_enabled(EFI_MEMMAP))
+		return;
 
-	क्रम_each_efi_memory_desc(md) अणु
-		अचिन्हित दीर्घ दीर्घ start = md->phys_addr;
-		अचिन्हित दीर्घ दीर्घ size = md->num_pages << EFI_PAGE_SHIFT;
-		पूर्णांक e820_type;
+	for_each_efi_memory_desc(md) {
+		unsigned long long start = md->phys_addr;
+		unsigned long long size = md->num_pages << EFI_PAGE_SHIFT;
+		int e820_type;
 
-		चयन (md->type) अणु
-		हाल EFI_LOADER_CODE:
-		हाल EFI_LOADER_DATA:
-		हाल EFI_BOOT_SERVICES_CODE:
-		हाल EFI_BOOT_SERVICES_DATA:
-		हाल EFI_CONVENTIONAL_MEMORY:
-			अगर (efi_soft_reserve_enabled()
+		switch (md->type) {
+		case EFI_LOADER_CODE:
+		case EFI_LOADER_DATA:
+		case EFI_BOOT_SERVICES_CODE:
+		case EFI_BOOT_SERVICES_DATA:
+		case EFI_CONVENTIONAL_MEMORY:
+			if (efi_soft_reserve_enabled()
 			    && (md->attribute & EFI_MEMORY_SP))
 				e820_type = E820_TYPE_SOFT_RESERVED;
-			अन्यथा अगर (md->attribute & EFI_MEMORY_WB)
+			else if (md->attribute & EFI_MEMORY_WB)
 				e820_type = E820_TYPE_RAM;
-			अन्यथा
+			else
 				e820_type = E820_TYPE_RESERVED;
-			अवरोध;
-		हाल EFI_ACPI_RECLAIM_MEMORY:
+			break;
+		case EFI_ACPI_RECLAIM_MEMORY:
 			e820_type = E820_TYPE_ACPI;
-			अवरोध;
-		हाल EFI_ACPI_MEMORY_NVS:
+			break;
+		case EFI_ACPI_MEMORY_NVS:
 			e820_type = E820_TYPE_NVS;
-			अवरोध;
-		हाल EFI_UNUSABLE_MEMORY:
+			break;
+		case EFI_UNUSABLE_MEMORY:
 			e820_type = E820_TYPE_UNUSABLE;
-			अवरोध;
-		हाल EFI_PERSISTENT_MEMORY:
+			break;
+		case EFI_PERSISTENT_MEMORY:
 			e820_type = E820_TYPE_PMEM;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			/*
 			 * EFI_RESERVED_TYPE EFI_RUNTIME_SERVICES_CODE
 			 * EFI_RUNTIME_SERVICES_DATA EFI_MEMORY_MAPPED_IO
 			 * EFI_MEMORY_MAPPED_IO_PORT_SPACE EFI_PAL_CODE
 			 */
 			e820_type = E820_TYPE_RESERVED;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		e820__range_add(start, size, e820_type);
-	पूर्ण
+	}
 	e820__update_table(e820_table);
-पूर्ण
+}
 
 /*
- * Given add_efi_memmap शेषs to 0 and there there is no alternative
- * e820 mechanism क्रम soft-reserved memory, import the full EFI memory
- * map अगर soft reservations are present and enabled. Otherwise, the
+ * Given add_efi_memmap defaults to 0 and there there is no alternative
+ * e820 mechanism for soft-reserved memory, import the full EFI memory
+ * map if soft reservations are present and enabled. Otherwise, the
  * mechanism to disable the kernel's consideration of EFI_MEMORY_SP is
  * the efi=nosoftreserve option.
  */
-अटल bool करो_efi_soft_reserve(व्योम)
-अणु
+static bool do_efi_soft_reserve(void)
+{
 	efi_memory_desc_t *md;
 
-	अगर (!efi_enabled(EFI_MEMMAP))
-		वापस false;
+	if (!efi_enabled(EFI_MEMMAP))
+		return false;
 
-	अगर (!efi_soft_reserve_enabled())
-		वापस false;
+	if (!efi_soft_reserve_enabled())
+		return false;
 
-	क्रम_each_efi_memory_desc(md)
-		अगर (md->type == EFI_CONVENTIONAL_MEMORY &&
+	for_each_efi_memory_desc(md)
+		if (md->type == EFI_CONVENTIONAL_MEMORY &&
 		    (md->attribute & EFI_MEMORY_SP))
-			वापस true;
-	वापस false;
-पूर्ण
+			return true;
+	return false;
+}
 
-पूर्णांक __init efi_memblock_x86_reserve_range(व्योम)
-अणु
-	काष्ठा efi_info *e = &boot_params.efi_info;
-	काष्ठा efi_memory_map_data data;
+int __init efi_memblock_x86_reserve_range(void)
+{
+	struct efi_info *e = &boot_params.efi_info;
+	struct efi_memory_map_data data;
 	phys_addr_t pmap;
-	पूर्णांक rv;
+	int rv;
 
-	अगर (efi_enabled(EFI_PARAVIRT))
-		वापस 0;
+	if (efi_enabled(EFI_PARAVIRT))
+		return 0;
 
 	/* Can't handle firmware tables above 4GB on i386 */
-	अगर (IS_ENABLED(CONFIG_X86_32) && e->efi_memmap_hi > 0) अणु
+	if (IS_ENABLED(CONFIG_X86_32) && e->efi_memmap_hi > 0) {
 		pr_err("Memory map is above 4GB, disabling EFI.\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	pmap = (phys_addr_t)(e->efi_memmap | ((u64)e->efi_memmap_hi << 32));
 
 	data.phys_map		= pmap;
@@ -236,11 +235,11 @@ early_param("add_efi_memmap", setup_add_efi_memmap);
 	data.desc_version	= e->efi_memdesc_version;
 
 	rv = efi_memmap_init_early(&data);
-	अगर (rv)
-		वापस rv;
+	if (rv)
+		return rv;
 
-	अगर (add_efi_memmap || करो_efi_soft_reserve())
-		करो_add_efi_memmap();
+	if (add_efi_memmap || do_efi_soft_reserve())
+		do_add_efi_memmap();
 
 	efi_fake_memmap_early();
 
@@ -251,345 +250,345 @@ early_param("add_efi_memmap", setup_add_efi_memmap);
 	memblock_reserve(pmap, efi.memmap.nr_map * efi.memmap.desc_size);
 	set_bit(EFI_PRESERVE_BS_REGIONS, &efi.flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा OVERFLOW_ADDR_SHIFT	(64 - EFI_PAGE_SHIFT)
-#घोषणा OVERFLOW_ADDR_MASK	(U64_MAX << OVERFLOW_ADDR_SHIFT)
-#घोषणा U64_HIGH_BIT		(~(U64_MAX >> 1))
+#define OVERFLOW_ADDR_SHIFT	(64 - EFI_PAGE_SHIFT)
+#define OVERFLOW_ADDR_MASK	(U64_MAX << OVERFLOW_ADDR_SHIFT)
+#define U64_HIGH_BIT		(~(U64_MAX >> 1))
 
-अटल bool __init efi_memmap_entry_valid(स्थिर efi_memory_desc_t *md, पूर्णांक i)
-अणु
+static bool __init efi_memmap_entry_valid(const efi_memory_desc_t *md, int i)
+{
 	u64 end = (md->num_pages << EFI_PAGE_SHIFT) + md->phys_addr - 1;
 	u64 end_hi = 0;
-	अक्षर buf[64];
+	char buf[64];
 
-	अगर (md->num_pages == 0) अणु
+	if (md->num_pages == 0) {
 		end = 0;
-	पूर्ण अन्यथा अगर (md->num_pages > EFI_PAGES_MAX ||
+	} else if (md->num_pages > EFI_PAGES_MAX ||
 		   EFI_PAGES_MAX - md->num_pages <
-		   (md->phys_addr >> EFI_PAGE_SHIFT)) अणु
+		   (md->phys_addr >> EFI_PAGE_SHIFT)) {
 		end_hi = (md->num_pages & OVERFLOW_ADDR_MASK)
 			>> OVERFLOW_ADDR_SHIFT;
 
-		अगर ((md->phys_addr & U64_HIGH_BIT) && !(end & U64_HIGH_BIT))
+		if ((md->phys_addr & U64_HIGH_BIT) && !(end & U64_HIGH_BIT))
 			end_hi += 1;
-	पूर्ण अन्यथा अणु
-		वापस true;
-	पूर्ण
+	} else {
+		return true;
+	}
 
 	pr_warn_once(FW_BUG "Invalid EFI memory map entries:\n");
 
-	अगर (end_hi) अणु
+	if (end_hi) {
 		pr_warn("mem%02u: %s range=[0x%016llx-0x%llx%016llx] (invalid)\n",
-			i, efi_md_typeattr_क्रमmat(buf, माप(buf), md),
+			i, efi_md_typeattr_format(buf, sizeof(buf), md),
 			md->phys_addr, end_hi, end);
-	पूर्ण अन्यथा अणु
+	} else {
 		pr_warn("mem%02u: %s range=[0x%016llx-0x%016llx] (invalid)\n",
-			i, efi_md_typeattr_क्रमmat(buf, माप(buf), md),
+			i, efi_md_typeattr_format(buf, sizeof(buf), md),
 			md->phys_addr, end);
-	पूर्ण
-	वापस false;
-पूर्ण
+	}
+	return false;
+}
 
-अटल व्योम __init efi_clean_memmap(व्योम)
-अणु
+static void __init efi_clean_memmap(void)
+{
 	efi_memory_desc_t *out = efi.memmap.map;
-	स्थिर efi_memory_desc_t *in = out;
-	स्थिर efi_memory_desc_t *end = efi.memmap.map_end;
-	पूर्णांक i, n_removal;
+	const efi_memory_desc_t *in = out;
+	const efi_memory_desc_t *end = efi.memmap.map_end;
+	int i, n_removal;
 
-	क्रम (i = n_removal = 0; in < end; i++) अणु
-		अगर (efi_memmap_entry_valid(in, i)) अणु
-			अगर (out != in)
-				स_नकल(out, in, efi.memmap.desc_size);
-			out = (व्योम *)out + efi.memmap.desc_size;
-		पूर्ण अन्यथा अणु
+	for (i = n_removal = 0; in < end; i++) {
+		if (efi_memmap_entry_valid(in, i)) {
+			if (out != in)
+				memcpy(out, in, efi.memmap.desc_size);
+			out = (void *)out + efi.memmap.desc_size;
+		} else {
 			n_removal++;
-		पूर्ण
-		in = (व्योम *)in + efi.memmap.desc_size;
-	पूर्ण
+		}
+		in = (void *)in + efi.memmap.desc_size;
+	}
 
-	अगर (n_removal > 0) अणु
-		काष्ठा efi_memory_map_data data = अणु
+	if (n_removal > 0) {
+		struct efi_memory_map_data data = {
 			.phys_map	= efi.memmap.phys_map,
 			.desc_version	= efi.memmap.desc_version,
 			.desc_size	= efi.memmap.desc_size,
 			.size		= efi.memmap.desc_size * (efi.memmap.nr_map - n_removal),
 			.flags		= 0,
-		पूर्ण;
+		};
 
 		pr_warn("Removing %d invalid memory map entries.\n", n_removal);
 		efi_memmap_install(&data);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम __init efi_prपूर्णांक_memmap(व्योम)
-अणु
+void __init efi_print_memmap(void)
+{
 	efi_memory_desc_t *md;
-	पूर्णांक i = 0;
+	int i = 0;
 
-	क्रम_each_efi_memory_desc(md) अणु
-		अक्षर buf[64];
+	for_each_efi_memory_desc(md) {
+		char buf[64];
 
 		pr_info("mem%02u: %s range=[0x%016llx-0x%016llx] (%lluMB)\n",
-			i++, efi_md_typeattr_क्रमmat(buf, माप(buf), md),
+			i++, efi_md_typeattr_format(buf, sizeof(buf), md),
 			md->phys_addr,
 			md->phys_addr + (md->num_pages << EFI_PAGE_SHIFT) - 1,
 			(md->num_pages >> (20 - EFI_PAGE_SHIFT)));
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक __init efi_systab_init(अचिन्हित दीर्घ phys)
-अणु
-	पूर्णांक size = efi_enabled(EFI_64BIT) ? माप(efi_प्रणाली_table_64_t)
-					  : माप(efi_प्रणाली_table_32_t);
-	स्थिर efi_table_hdr_t *hdr;
+static int __init efi_systab_init(unsigned long phys)
+{
+	int size = efi_enabled(EFI_64BIT) ? sizeof(efi_system_table_64_t)
+					  : sizeof(efi_system_table_32_t);
+	const efi_table_hdr_t *hdr;
 	bool over4g = false;
-	व्योम *p;
-	पूर्णांक ret;
+	void *p;
+	int ret;
 
 	hdr = p = early_memremap_ro(phys, size);
-	अगर (p == शून्य) अणु
+	if (p == NULL) {
 		pr_err("Couldn't map the system table!\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	ret = efi_systab_check_header(hdr, 1);
-	अगर (ret) अणु
+	if (ret) {
 		early_memunmap(p, size);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (efi_enabled(EFI_64BIT)) अणु
-		स्थिर efi_प्रणाली_table_64_t *systab64 = p;
+	if (efi_enabled(EFI_64BIT)) {
+		const efi_system_table_64_t *systab64 = p;
 
-		efi_runसमय	= systab64->runसमय;
-		over4g		= systab64->runसमय > U32_MAX;
+		efi_runtime	= systab64->runtime;
+		over4g		= systab64->runtime > U32_MAX;
 
-		अगर (efi_setup) अणु
-			काष्ठा efi_setup_data *data;
+		if (efi_setup) {
+			struct efi_setup_data *data;
 
-			data = early_memremap_ro(efi_setup, माप(*data));
-			अगर (!data) अणु
+			data = early_memremap_ro(efi_setup, sizeof(*data));
+			if (!data) {
 				early_memunmap(p, size);
-				वापस -ENOMEM;
-			पूर्ण
+				return -ENOMEM;
+			}
 
-			efi_fw_venकरोr		= (अचिन्हित दीर्घ)data->fw_venकरोr;
-			efi_config_table	= (अचिन्हित दीर्घ)data->tables;
+			efi_fw_vendor		= (unsigned long)data->fw_vendor;
+			efi_config_table	= (unsigned long)data->tables;
 
-			over4g |= data->fw_venकरोr	> U32_MAX ||
+			over4g |= data->fw_vendor	> U32_MAX ||
 				  data->tables		> U32_MAX;
 
-			early_memunmap(data, माप(*data));
-		पूर्ण अन्यथा अणु
-			efi_fw_venकरोr		= systab64->fw_venकरोr;
+			early_memunmap(data, sizeof(*data));
+		} else {
+			efi_fw_vendor		= systab64->fw_vendor;
 			efi_config_table	= systab64->tables;
 
-			over4g |= systab64->fw_venकरोr	> U32_MAX ||
+			over4g |= systab64->fw_vendor	> U32_MAX ||
 				  systab64->tables	> U32_MAX;
-		पूर्ण
+		}
 		efi_nr_tables = systab64->nr_tables;
-	पूर्ण अन्यथा अणु
-		स्थिर efi_प्रणाली_table_32_t *systab32 = p;
+	} else {
+		const efi_system_table_32_t *systab32 = p;
 
-		efi_fw_venकरोr		= systab32->fw_venकरोr;
-		efi_runसमय		= systab32->runसमय;
+		efi_fw_vendor		= systab32->fw_vendor;
+		efi_runtime		= systab32->runtime;
 		efi_config_table	= systab32->tables;
 		efi_nr_tables		= systab32->nr_tables;
-	पूर्ण
+	}
 
-	efi.runसमय_version = hdr->revision;
+	efi.runtime_version = hdr->revision;
 
-	efi_systab_report_header(hdr, efi_fw_venकरोr);
+	efi_systab_report_header(hdr, efi_fw_vendor);
 	early_memunmap(p, size);
 
-	अगर (IS_ENABLED(CONFIG_X86_32) && over4g) अणु
+	if (IS_ENABLED(CONFIG_X86_32) && over4g) {
 		pr_err("EFI data located above 4GB, disabling EFI.\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __init efi_config_init(स्थिर efi_config_table_type_t *arch_tables)
-अणु
-	व्योम *config_tables;
-	पूर्णांक sz, ret;
+static int __init efi_config_init(const efi_config_table_type_t *arch_tables)
+{
+	void *config_tables;
+	int sz, ret;
 
-	अगर (efi_nr_tables == 0)
-		वापस 0;
+	if (efi_nr_tables == 0)
+		return 0;
 
-	अगर (efi_enabled(EFI_64BIT))
-		sz = माप(efi_config_table_64_t);
-	अन्यथा
-		sz = माप(efi_config_table_32_t);
+	if (efi_enabled(EFI_64BIT))
+		sz = sizeof(efi_config_table_64_t);
+	else
+		sz = sizeof(efi_config_table_32_t);
 
 	/*
 	 * Let's see what config tables the firmware passed to us.
 	 */
 	config_tables = early_memremap(efi_config_table, efi_nr_tables * sz);
-	अगर (config_tables == शून्य) अणु
+	if (config_tables == NULL) {
 		pr_err("Could not map Configuration table!\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	ret = efi_config_parse_tables(config_tables, efi_nr_tables,
 				      arch_tables);
 
 	early_memunmap(config_tables, efi_nr_tables * sz);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम __init efi_init(व्योम)
-अणु
-	अगर (IS_ENABLED(CONFIG_X86_32) &&
+void __init efi_init(void)
+{
+	if (IS_ENABLED(CONFIG_X86_32) &&
 	    (boot_params.efi_info.efi_systab_hi ||
-	     boot_params.efi_info.efi_memmap_hi)) अणु
+	     boot_params.efi_info.efi_memmap_hi)) {
 		pr_info("Table located above 4GB, disabling EFI.\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	efi_systab_phys = boot_params.efi_info.efi_systab |
 			  ((__u64)boot_params.efi_info.efi_systab_hi << 32);
 
-	अगर (efi_systab_init(efi_systab_phys))
-		वापस;
+	if (efi_systab_init(efi_systab_phys))
+		return;
 
-	अगर (efi_reuse_config(efi_config_table, efi_nr_tables))
-		वापस;
+	if (efi_reuse_config(efi_config_table, efi_nr_tables))
+		return;
 
-	अगर (efi_config_init(arch_tables))
-		वापस;
+	if (efi_config_init(arch_tables))
+		return;
 
 	/*
-	 * Note: We currently करोn't support runसमय services on an EFI
-	 * that करोesn't match the kernel 32/64-bit mode.
+	 * Note: We currently don't support runtime services on an EFI
+	 * that doesn't match the kernel 32/64-bit mode.
 	 */
 
-	अगर (!efi_runसमय_supported())
+	if (!efi_runtime_supported())
 		pr_info("No EFI runtime due to 32/64-bit mismatch with kernel\n");
 
-	अगर (!efi_runसमय_supported() || efi_runसमय_disabled()) अणु
+	if (!efi_runtime_supported() || efi_runtime_disabled()) {
 		efi_memmap_unmap();
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* Parse the EFI Properties table अगर it exists */
-	अगर (prop_phys != EFI_INVALID_TABLE_ADDR) अणु
+	/* Parse the EFI Properties table if it exists */
+	if (prop_phys != EFI_INVALID_TABLE_ADDR) {
 		efi_properties_table_t *tbl;
 
-		tbl = early_memremap_ro(prop_phys, माप(*tbl));
-		अगर (tbl == शून्य) अणु
+		tbl = early_memremap_ro(prop_phys, sizeof(*tbl));
+		if (tbl == NULL) {
 			pr_err("Could not map Properties table!\n");
-		पूर्ण अन्यथा अणु
-			अगर (tbl->memory_protection_attribute &
+		} else {
+			if (tbl->memory_protection_attribute &
 			    EFI_PROPERTIES_RUNTIME_MEMORY_PROTECTION_NON_EXECUTABLE_PE_DATA)
 				set_bit(EFI_NX_PE_DATA, &efi.flags);
 
-			early_memunmap(tbl, माप(*tbl));
-		पूर्ण
-	पूर्ण
+			early_memunmap(tbl, sizeof(*tbl));
+		}
+	}
 
 	set_bit(EFI_RUNTIME_SERVICES, &efi.flags);
 	efi_clean_memmap();
 
-	अगर (efi_enabled(EFI_DBG))
-		efi_prपूर्णांक_memmap();
-पूर्ण
+	if (efi_enabled(EFI_DBG))
+		efi_print_memmap();
+}
 
 /* Merge contiguous regions of the same type and attribute */
-अटल व्योम __init efi_merge_regions(व्योम)
-अणु
-	efi_memory_desc_t *md, *prev_md = शून्य;
+static void __init efi_merge_regions(void)
+{
+	efi_memory_desc_t *md, *prev_md = NULL;
 
-	क्रम_each_efi_memory_desc(md) अणु
+	for_each_efi_memory_desc(md) {
 		u64 prev_size;
 
-		अगर (!prev_md) अणु
+		if (!prev_md) {
 			prev_md = md;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (prev_md->type != md->type ||
-		    prev_md->attribute != md->attribute) अणु
+		if (prev_md->type != md->type ||
+		    prev_md->attribute != md->attribute) {
 			prev_md = md;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		prev_size = prev_md->num_pages << EFI_PAGE_SHIFT;
 
-		अगर (md->phys_addr == (prev_md->phys_addr + prev_size)) अणु
+		if (md->phys_addr == (prev_md->phys_addr + prev_size)) {
 			prev_md->num_pages += md->num_pages;
 			md->type = EFI_RESERVED_TYPE;
 			md->attribute = 0;
-			जारी;
-		पूर्ण
+			continue;
+		}
 		prev_md = md;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम *पुनः_स्मृति_pages(व्योम *old_memmap, पूर्णांक old_shअगरt)
-अणु
-	व्योम *ret;
+static void *realloc_pages(void *old_memmap, int old_shift)
+{
+	void *ret;
 
-	ret = (व्योम *)__get_मुक्त_pages(GFP_KERNEL, old_shअगरt + 1);
-	अगर (!ret)
-		जाओ out;
+	ret = (void *)__get_free_pages(GFP_KERNEL, old_shift + 1);
+	if (!ret)
+		goto out;
 
 	/*
-	 * A first-समय allocation करोesn't have anything to copy.
+	 * A first-time allocation doesn't have anything to copy.
 	 */
-	अगर (!old_memmap)
-		वापस ret;
+	if (!old_memmap)
+		return ret;
 
-	स_नकल(ret, old_memmap, PAGE_SIZE << old_shअगरt);
+	memcpy(ret, old_memmap, PAGE_SIZE << old_shift);
 
 out:
-	मुक्त_pages((अचिन्हित दीर्घ)old_memmap, old_shअगरt);
-	वापस ret;
-पूर्ण
+	free_pages((unsigned long)old_memmap, old_shift);
+	return ret;
+}
 
 /*
  * Iterate the EFI memory map in reverse order because the regions
- * will be mapped top-करोwn. The end result is the same as अगर we had
- * mapped things क्रमward, but करोesn't require us to change the
+ * will be mapped top-down. The end result is the same as if we had
+ * mapped things forward, but doesn't require us to change the
  * existing implementation of efi_map_region().
  */
-अटल अंतरभूत व्योम *efi_map_next_entry_reverse(व्योम *entry)
-अणु
+static inline void *efi_map_next_entry_reverse(void *entry)
+{
 	/* Initial call */
-	अगर (!entry)
-		वापस efi.memmap.map_end - efi.memmap.desc_size;
+	if (!entry)
+		return efi.memmap.map_end - efi.memmap.desc_size;
 
 	entry -= efi.memmap.desc_size;
-	अगर (entry < efi.memmap.map)
-		वापस शून्य;
+	if (entry < efi.memmap.map)
+		return NULL;
 
-	वापस entry;
-पूर्ण
+	return entry;
+}
 
 /*
  * efi_map_next_entry - Return the next EFI memory map descriptor
  * @entry: Previous EFI memory map descriptor
  *
  * This is a helper function to iterate over the EFI memory map, which
- * we करो in dअगरferent orders depending on the current configuration.
+ * we do in different orders depending on the current configuration.
  *
- * To begin traversing the memory map @entry must be %शून्य.
+ * To begin traversing the memory map @entry must be %NULL.
  *
- * Returns %शून्य when we reach the end of the memory map.
+ * Returns %NULL when we reach the end of the memory map.
  */
-अटल व्योम *efi_map_next_entry(व्योम *entry)
-अणु
-	अगर (efi_enabled(EFI_64BIT)) अणु
+static void *efi_map_next_entry(void *entry)
+{
+	if (efi_enabled(EFI_64BIT)) {
 		/*
 		 * Starting in UEFI v2.5 the EFI_PROPERTIES_TABLE
 		 * config table feature requires us to map all entries
 		 * in the same order as they appear in the EFI memory
 		 * map. That is to say, entry N must have a lower
-		 * भव address than entry N+1. This is because the
+		 * virtual address than entry N+1. This is because the
 		 * firmware toolchain leaves relative references in
 		 * the code/data sections, which are split and become
 		 * separate EFI memory regions. Mapping things
@@ -598,325 +597,325 @@ out:
 		 *
 		 * Since we need to map things this way whether or not
 		 * the kernel actually makes use of
-		 * EFI_PROPERTIES_TABLE, let's just चयन to this
-		 * scheme by शेष क्रम 64-bit.
+		 * EFI_PROPERTIES_TABLE, let's just switch to this
+		 * scheme by default for 64-bit.
 		 */
-		वापस efi_map_next_entry_reverse(entry);
-	पूर्ण
+		return efi_map_next_entry_reverse(entry);
+	}
 
 	/* Initial call */
-	अगर (!entry)
-		वापस efi.memmap.map;
+	if (!entry)
+		return efi.memmap.map;
 
 	entry += efi.memmap.desc_size;
-	अगर (entry >= efi.memmap.map_end)
-		वापस शून्य;
+	if (entry >= efi.memmap.map_end)
+		return NULL;
 
-	वापस entry;
-पूर्ण
+	return entry;
+}
 
-अटल bool should_map_region(efi_memory_desc_t *md)
-अणु
+static bool should_map_region(efi_memory_desc_t *md)
+{
 	/*
-	 * Runसमय regions always require runसमय mappings (obviously).
+	 * Runtime regions always require runtime mappings (obviously).
 	 */
-	अगर (md->attribute & EFI_MEMORY_RUNTIME)
-		वापस true;
+	if (md->attribute & EFI_MEMORY_RUNTIME)
+		return true;
 
 	/*
-	 * 32-bit EFI करोesn't suffer from the bug that requires us to
+	 * 32-bit EFI doesn't suffer from the bug that requires us to
 	 * reserve boot services regions, and mixed mode support
-	 * करोesn't exist क्रम 32-bit kernels.
+	 * doesn't exist for 32-bit kernels.
 	 */
-	अगर (IS_ENABLED(CONFIG_X86_32))
-		वापस false;
+	if (IS_ENABLED(CONFIG_X86_32))
+		return false;
 
 	/*
-	 * EFI specअगरic purpose memory may be reserved by शेष
+	 * EFI specific purpose memory may be reserved by default
 	 * depending on kernel config and boot options.
 	 */
-	अगर (md->type == EFI_CONVENTIONAL_MEMORY &&
+	if (md->type == EFI_CONVENTIONAL_MEMORY &&
 	    efi_soft_reserve_enabled() &&
 	    (md->attribute & EFI_MEMORY_SP))
-		वापस false;
+		return false;
 
 	/*
 	 * Map all of RAM so that we can access arguments in the 1:1
-	 * mapping when making EFI runसमय calls.
+	 * mapping when making EFI runtime calls.
 	 */
-	अगर (efi_is_mixed()) अणु
-		अगर (md->type == EFI_CONVENTIONAL_MEMORY ||
+	if (efi_is_mixed()) {
+		if (md->type == EFI_CONVENTIONAL_MEMORY ||
 		    md->type == EFI_LOADER_DATA ||
 		    md->type == EFI_LOADER_CODE)
-			वापस true;
-	पूर्ण
+			return true;
+	}
 
 	/*
-	 * Map boot services regions as a workaround क्रम buggy
+	 * Map boot services regions as a workaround for buggy
 	 * firmware that accesses them even when they shouldn't.
 	 *
-	 * See efi_अणुreserve,मुक्तपूर्ण_boot_services().
+	 * See efi_{reserve,free}_boot_services().
 	 */
-	अगर (md->type == EFI_BOOT_SERVICES_CODE ||
+	if (md->type == EFI_BOOT_SERVICES_CODE ||
 	    md->type == EFI_BOOT_SERVICES_DATA)
-		वापस true;
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /*
- * Map the efi memory ranges of the runसमय services and update new_mmap with
- * भव addresses.
+ * Map the efi memory ranges of the runtime services and update new_mmap with
+ * virtual addresses.
  */
-अटल व्योम * __init efi_map_regions(पूर्णांक *count, पूर्णांक *pg_shअगरt)
-अणु
-	व्योम *p, *new_memmap = शून्य;
-	अचिन्हित दीर्घ left = 0;
-	अचिन्हित दीर्घ desc_size;
+static void * __init efi_map_regions(int *count, int *pg_shift)
+{
+	void *p, *new_memmap = NULL;
+	unsigned long left = 0;
+	unsigned long desc_size;
 	efi_memory_desc_t *md;
 
 	desc_size = efi.memmap.desc_size;
 
-	p = शून्य;
-	जबतक ((p = efi_map_next_entry(p))) अणु
+	p = NULL;
+	while ((p = efi_map_next_entry(p))) {
 		md = p;
 
-		अगर (!should_map_region(md))
-			जारी;
+		if (!should_map_region(md))
+			continue;
 
 		efi_map_region(md);
 
-		अगर (left < desc_size) अणु
-			new_memmap = पुनः_स्मृति_pages(new_memmap, *pg_shअगरt);
-			अगर (!new_memmap)
-				वापस शून्य;
+		if (left < desc_size) {
+			new_memmap = realloc_pages(new_memmap, *pg_shift);
+			if (!new_memmap)
+				return NULL;
 
-			left += PAGE_SIZE << *pg_shअगरt;
-			(*pg_shअगरt)++;
-		पूर्ण
+			left += PAGE_SIZE << *pg_shift;
+			(*pg_shift)++;
+		}
 
-		स_नकल(new_memmap + (*count * desc_size), md, desc_size);
+		memcpy(new_memmap + (*count * desc_size), md, desc_size);
 
 		left -= desc_size;
 		(*count)++;
-	पूर्ण
+	}
 
-	वापस new_memmap;
-पूर्ण
+	return new_memmap;
+}
 
-अटल व्योम __init kexec_enter_भव_mode(व्योम)
-अणु
-#अगर_घोषित CONFIG_KEXEC_CORE
+static void __init kexec_enter_virtual_mode(void)
+{
+#ifdef CONFIG_KEXEC_CORE
 	efi_memory_desc_t *md;
-	अचिन्हित पूर्णांक num_pages;
+	unsigned int num_pages;
 
 	/*
-	 * We करोn't do virtual mode, since we don't करो runसमय services, on
+	 * We don't do virtual mode, since we don't do runtime services, on
 	 * non-native EFI.
 	 */
-	अगर (efi_is_mixed()) अणु
+	if (efi_is_mixed()) {
 		efi_memmap_unmap();
 		clear_bit(EFI_RUNTIME_SERVICES, &efi.flags);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (efi_alloc_page_tables()) अणु
+	if (efi_alloc_page_tables()) {
 		pr_err("Failed to allocate EFI page tables\n");
 		clear_bit(EFI_RUNTIME_SERVICES, &efi.flags);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
 	* Map efi regions which were passed via setup_data. The virt_addr is a
 	* fixed addr which was used in first kernel of a kexec boot.
 	*/
-	क्रम_each_efi_memory_desc(md)
+	for_each_efi_memory_desc(md)
 		efi_map_region_fixed(md); /* FIXME: add error handling */
 
 	/*
-	 * Unरेजिस्टर the early EFI memmap from efi_init() and install
+	 * Unregister the early EFI memmap from efi_init() and install
 	 * the new EFI memory map.
 	 */
 	efi_memmap_unmap();
 
-	अगर (efi_memmap_init_late(efi.memmap.phys_map,
-				 efi.memmap.desc_size * efi.memmap.nr_map)) अणु
+	if (efi_memmap_init_late(efi.memmap.phys_map,
+				 efi.memmap.desc_size * efi.memmap.nr_map)) {
 		pr_err("Failed to remap late EFI memory map\n");
 		clear_bit(EFI_RUNTIME_SERVICES, &efi.flags);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	num_pages = ALIGN(efi.memmap.nr_map * efi.memmap.desc_size, PAGE_SIZE);
 	num_pages >>= PAGE_SHIFT;
 
-	अगर (efi_setup_page_tables(efi.memmap.phys_map, num_pages)) अणु
+	if (efi_setup_page_tables(efi.memmap.phys_map, num_pages)) {
 		clear_bit(EFI_RUNTIME_SERVICES, &efi.flags);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	efi_sync_low_kernel_mappings();
-	efi_native_runसमय_setup();
-#पूर्ण_अगर
-पूर्ण
+	efi_native_runtime_setup();
+#endif
+}
 
 /*
- * This function will चयन the EFI runसमय services to भव mode.
+ * This function will switch the EFI runtime services to virtual mode.
  * Essentially, we look through the EFI memmap and map every region that
- * has the runसमय attribute bit set in its memory descriptor पूर्णांकo the
+ * has the runtime attribute bit set in its memory descriptor into the
  * efi_pgd page table.
  *
- * The new method करोes a pagetable चयन in a preemption-safe manner
- * so that we're in a dअगरferent address space when calling a runसमय
- * function. For function arguments passing we करो copy the PUDs of the
- * kernel page table पूर्णांकo efi_pgd prior to each call.
+ * The new method does a pagetable switch in a preemption-safe manner
+ * so that we're in a different address space when calling a runtime
+ * function. For function arguments passing we do copy the PUDs of the
+ * kernel page table into efi_pgd prior to each call.
  *
- * Specially क्रम kexec boot, efi runसमय maps in previous kernel should
- * be passed in via setup_data. In that हाल runसमय ranges will be mapped
- * to the same भव addresses as the first kernel, see
- * kexec_enter_भव_mode().
+ * Specially for kexec boot, efi runtime maps in previous kernel should
+ * be passed in via setup_data. In that case runtime ranges will be mapped
+ * to the same virtual addresses as the first kernel, see
+ * kexec_enter_virtual_mode().
  */
-अटल व्योम __init __efi_enter_भव_mode(व्योम)
-अणु
-	पूर्णांक count = 0, pg_shअगरt = 0;
-	व्योम *new_memmap = शून्य;
+static void __init __efi_enter_virtual_mode(void)
+{
+	int count = 0, pg_shift = 0;
+	void *new_memmap = NULL;
 	efi_status_t status;
-	अचिन्हित दीर्घ pa;
+	unsigned long pa;
 
-	अगर (efi_alloc_page_tables()) अणु
+	if (efi_alloc_page_tables()) {
 		pr_err("Failed to allocate EFI page tables\n");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	efi_merge_regions();
-	new_memmap = efi_map_regions(&count, &pg_shअगरt);
-	अगर (!new_memmap) अणु
+	new_memmap = efi_map_regions(&count, &pg_shift);
+	if (!new_memmap) {
 		pr_err("Error reallocating memory, EFI runtime non-functional!\n");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	pa = __pa(new_memmap);
 
 	/*
-	 * Unरेजिस्टर the early EFI memmap from efi_init() and install
+	 * Unregister the early EFI memmap from efi_init() and install
 	 * the new EFI memory map that we are about to pass to the
 	 * firmware via SetVirtualAddressMap().
 	 */
 	efi_memmap_unmap();
 
-	अगर (efi_memmap_init_late(pa, efi.memmap.desc_size * count)) अणु
+	if (efi_memmap_init_late(pa, efi.memmap.desc_size * count)) {
 		pr_err("Failed to remap late EFI memory map\n");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	अगर (efi_enabled(EFI_DBG)) अणु
+	if (efi_enabled(EFI_DBG)) {
 		pr_info("EFI runtime memory map:\n");
-		efi_prपूर्णांक_memmap();
-	पूर्ण
+		efi_print_memmap();
+	}
 
-	अगर (efi_setup_page_tables(pa, 1 << pg_shअगरt))
-		जाओ err;
+	if (efi_setup_page_tables(pa, 1 << pg_shift))
+		goto err;
 
 	efi_sync_low_kernel_mappings();
 
-	status = efi_set_भव_address_map(efi.memmap.desc_size * count,
+	status = efi_set_virtual_address_map(efi.memmap.desc_size * count,
 					     efi.memmap.desc_size,
 					     efi.memmap.desc_version,
 					     (efi_memory_desc_t *)pa,
 					     efi_systab_phys);
-	अगर (status != EFI_SUCCESS) अणु
+	if (status != EFI_SUCCESS) {
 		pr_err("Unable to switch EFI into virtual mode (status=%lx)!\n",
 		       status);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	efi_check_क्रम_embedded_firmwares();
-	efi_मुक्त_boot_services();
+	efi_check_for_embedded_firmwares();
+	efi_free_boot_services();
 
-	अगर (!efi_is_mixed())
-		efi_native_runसमय_setup();
-	अन्यथा
-		efi_thunk_runसमय_setup();
+	if (!efi_is_mixed())
+		efi_native_runtime_setup();
+	else
+		efi_thunk_runtime_setup();
 
 	/*
 	 * Apply more restrictive page table mapping attributes now that
-	 * SVAM() has been called and the firmware has perक्रमmed all
-	 * necessary relocation fixups क्रम the new भव addresses.
+	 * SVAM() has been called and the firmware has performed all
+	 * necessary relocation fixups for the new virtual addresses.
 	 */
-	efi_runसमय_update_mappings();
+	efi_runtime_update_mappings();
 
 	/* clean DUMMY object */
 	efi_delete_dummy_variable();
-	वापस;
+	return;
 
 err:
 	clear_bit(EFI_RUNTIME_SERVICES, &efi.flags);
-पूर्ण
+}
 
-व्योम __init efi_enter_भव_mode(व्योम)
-अणु
-	अगर (efi_enabled(EFI_PARAVIRT))
-		वापस;
+void __init efi_enter_virtual_mode(void)
+{
+	if (efi_enabled(EFI_PARAVIRT))
+		return;
 
-	efi.runसमय = (efi_runसमय_services_t *)efi_runसमय;
+	efi.runtime = (efi_runtime_services_t *)efi_runtime;
 
-	अगर (efi_setup)
-		kexec_enter_भव_mode();
-	अन्यथा
-		__efi_enter_भव_mode();
+	if (efi_setup)
+		kexec_enter_virtual_mode();
+	else
+		__efi_enter_virtual_mode();
 
 	efi_dump_pagetable();
-पूर्ण
+}
 
-bool efi_is_table_address(अचिन्हित दीर्घ phys_addr)
-अणु
-	अचिन्हित पूर्णांक i;
+bool efi_is_table_address(unsigned long phys_addr)
+{
+	unsigned int i;
 
-	अगर (phys_addr == EFI_INVALID_TABLE_ADDR)
-		वापस false;
+	if (phys_addr == EFI_INVALID_TABLE_ADDR)
+		return false;
 
-	क्रम (i = 0; i < ARRAY_SIZE(efi_tables); i++)
-		अगर (*(efi_tables[i]) == phys_addr)
-			वापस true;
+	for (i = 0; i < ARRAY_SIZE(efi_tables); i++)
+		if (*(efi_tables[i]) == phys_addr)
+			return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अक्षर *efi_systab_show_arch(अक्षर *str)
-अणु
-	अगर (uga_phys != EFI_INVALID_TABLE_ADDR)
-		str += प्र_लिखो(str, "UGA=0x%lx\n", uga_phys);
-	वापस str;
-पूर्ण
+char *efi_systab_show_arch(char *str)
+{
+	if (uga_phys != EFI_INVALID_TABLE_ADDR)
+		str += sprintf(str, "UGA=0x%lx\n", uga_phys);
+	return str;
+}
 
-#घोषणा EFI_FIELD(var) efi_ ## var
+#define EFI_FIELD(var) efi_ ## var
 
-#घोषणा EFI_ATTR_SHOW(name) \
-अटल sमाप_प्रकार name##_show(काष्ठा kobject *kobj, \
-				काष्ठा kobj_attribute *attr, अक्षर *buf) \
-अणु \
-	वापस प्र_लिखो(buf, "0x%lx\n", EFI_FIELD(name)); \
-पूर्ण
+#define EFI_ATTR_SHOW(name) \
+static ssize_t name##_show(struct kobject *kobj, \
+				struct kobj_attribute *attr, char *buf) \
+{ \
+	return sprintf(buf, "0x%lx\n", EFI_FIELD(name)); \
+}
 
-EFI_ATTR_SHOW(fw_venकरोr);
-EFI_ATTR_SHOW(runसमय);
+EFI_ATTR_SHOW(fw_vendor);
+EFI_ATTR_SHOW(runtime);
 EFI_ATTR_SHOW(config_table);
 
-काष्ठा kobj_attribute efi_attr_fw_venकरोr = __ATTR_RO(fw_venकरोr);
-काष्ठा kobj_attribute efi_attr_runसमय = __ATTR_RO(runसमय);
-काष्ठा kobj_attribute efi_attr_config_table = __ATTR_RO(config_table);
+struct kobj_attribute efi_attr_fw_vendor = __ATTR_RO(fw_vendor);
+struct kobj_attribute efi_attr_runtime = __ATTR_RO(runtime);
+struct kobj_attribute efi_attr_config_table = __ATTR_RO(config_table);
 
-umode_t efi_attr_is_visible(काष्ठा kobject *kobj, काष्ठा attribute *attr, पूर्णांक n)
-अणु
-	अगर (attr == &efi_attr_fw_venकरोr.attr) अणु
-		अगर (efi_enabled(EFI_PARAVIRT) ||
-				efi_fw_venकरोr == EFI_INVALID_TABLE_ADDR)
-			वापस 0;
-	पूर्ण अन्यथा अगर (attr == &efi_attr_runसमय.attr) अणु
-		अगर (efi_runसमय == EFI_INVALID_TABLE_ADDR)
-			वापस 0;
-	पूर्ण अन्यथा अगर (attr == &efi_attr_config_table.attr) अणु
-		अगर (efi_config_table == EFI_INVALID_TABLE_ADDR)
-			वापस 0;
-	पूर्ण
-	वापस attr->mode;
-पूर्ण
+umode_t efi_attr_is_visible(struct kobject *kobj, struct attribute *attr, int n)
+{
+	if (attr == &efi_attr_fw_vendor.attr) {
+		if (efi_enabled(EFI_PARAVIRT) ||
+				efi_fw_vendor == EFI_INVALID_TABLE_ADDR)
+			return 0;
+	} else if (attr == &efi_attr_runtime.attr) {
+		if (efi_runtime == EFI_INVALID_TABLE_ADDR)
+			return 0;
+	} else if (attr == &efi_attr_config_table.attr) {
+		if (efi_config_table == EFI_INVALID_TABLE_ADDR)
+			return 0;
+	}
+	return attr->mode;
+}

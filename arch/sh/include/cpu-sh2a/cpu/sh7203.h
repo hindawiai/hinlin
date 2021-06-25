@@ -1,9 +1,8 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ASM_SH7203_H__
-#घोषणा __ASM_SH7203_H__
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ASM_SH7203_H__
+#define __ASM_SH7203_H__
 
-क्रमागत अणु
+enum {
 	/* PA */
 	GPIO_PA7, GPIO_PA6, GPIO_PA5, GPIO_PA4,
 	GPIO_PA3, GPIO_PA2, GPIO_PA1, GPIO_PA0,
@@ -140,6 +139,6 @@
 	GPIO_FN_LCD_DATA5, GPIO_FN_LCD_DATA4,
 	GPIO_FN_LCD_DATA3, GPIO_FN_LCD_DATA2,
 	GPIO_FN_LCD_DATA1, GPIO_FN_LCD_DATA0,
-पूर्ण;
+};
 
-#पूर्ण_अगर /* __ASM_SH7203_H__ */
+#endif /* __ASM_SH7203_H__ */

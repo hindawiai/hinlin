@@ -1,185 +1,184 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright 2016, Cyril Bur, IBM Corp.
  *
- * Test the kernel's संकेत frame code.
+ * Test the kernel's signal frame code.
  *
- * The kernel sets up two sets of ucontexts अगर the संकेत was to be
- * delivered जबतक the thपढ़ो was in a transaction (referred too as
+ * The kernel sets up two sets of ucontexts if the signal was to be
+ * delivered while the thread was in a transaction (referred too as
  * first and second contexts).
- * Expected behaviour is that the checkpoपूर्णांकed state is in the user
- * context passed to the संकेत handler (first context). The speculated
- * state can be accessed with the uc_link poपूर्णांकer (second context).
+ * Expected behaviour is that the checkpointed state is in the user
+ * context passed to the signal handler (first context). The speculated
+ * state can be accessed with the uc_link pointer (second context).
  *
- * The rationale क्रम this is that अगर TM unaware code (which linked
- * against TM libs) installs a संकेत handler it will not know of the
- * speculative nature of the 'live' रेजिस्टरs and may infer the wrong
+ * The rationale for this is that if TM unaware code (which linked
+ * against TM libs) installs a signal handler it will not know of the
+ * speculative nature of the 'live' registers and may infer the wrong
  * thing.
  */
 
-#समावेश <मानककोष.स>
-#समावेश <मानकपन.स>
-#समावेश <माला.स>
-#समावेश <संकेत.स>
-#समावेश <unistd.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <signal.h>
+#include <unistd.h>
 
-#समावेश <altivec.h>
+#include <altivec.h>
 
-#समावेश "utils.h"
-#समावेश "tm.h"
+#include "utils.h"
+#include "tm.h"
 
-#घोषणा MAX_ATTEMPT 500000
+#define MAX_ATTEMPT 500000
 
-#घोषणा NV_VSX_REGS 12 /* Number of VSX रेजिस्टरs to check. */
-#घोषणा VSX20 20 /* First VSX रेजिस्टर to check in vsr20-vsr31 subset */
-#घोषणा FPR20 20 /* FPR20 overlaps VSX20 most signअगरicant द्विगुनword */
+#define NV_VSX_REGS 12 /* Number of VSX registers to check. */
+#define VSX20 20 /* First VSX register to check in vsr20-vsr31 subset */
+#define FPR20 20 /* FPR20 overlaps VSX20 most significant doubleword */
 
-दीर्घ पंचांग_संकेत_self_context_load(pid_t pid, दीर्घ *gprs, द्विगुन *fps, vector पूर्णांक *vms, vector पूर्णांक *vss);
+long tm_signal_self_context_load(pid_t pid, long *gprs, double *fps, vector int *vms, vector int *vss);
 
-अटल संक_पूर्ण_प्रकार fail, broken;
+static sig_atomic_t fail, broken;
 
-/* Test only 12 vsx रेजिस्टरs from vsr20 to vsr31 */
-vector पूर्णांक vsxs[] = अणु
+/* Test only 12 vsx registers from vsr20 to vsr31 */
+vector int vsxs[] = {
 	/* First context will be set with these values, i.e. non-speculative */
 	/* VSX20     ,  VSX21      , ... */
-	अणु 1, 2, 3, 4पूर्ण,अणु 5, 6, 7, 8पूर्ण,अणु 9,10,11,12पूर्ण,
-	अणु13,14,15,16पूर्ण,अणु17,18,19,20पूर्ण,अणु21,22,23,24पूर्ण,
-	अणु25,26,27,28पूर्ण,अणु29,30,31,32पूर्ण,अणु33,34,35,36पूर्ण,
-	अणु37,38,39,40पूर्ण,अणु41,42,43,44पूर्ण,अणु45,46,47,48पूर्ण,
+	{ 1, 2, 3, 4},{ 5, 6, 7, 8},{ 9,10,11,12},
+	{13,14,15,16},{17,18,19,20},{21,22,23,24},
+	{25,26,27,28},{29,30,31,32},{33,34,35,36},
+	{37,38,39,40},{41,42,43,44},{45,46,47,48},
 	/* Second context will be set with these values, i.e. speculative */
 	/* VSX20         ,  VSX21          , ... */
-	अणु-1, -2, -3, -4 पूर्ण,अणु-5, -6, -7, -8 पूर्ण,अणु-9, -10,-11,-12पूर्ण,
-	अणु-13,-14,-15,-16पूर्ण,अणु-17,-18,-19,-20पूर्ण,अणु-21,-22,-23,-24पूर्ण,
-	अणु-25,-26,-27,-28पूर्ण,अणु-29,-30,-31,-32पूर्ण,अणु-33,-34,-35,-36पूर्ण,
-	अणु-37,-38,-39,-40पूर्ण,अणु-41,-42,-43,-44पूर्ण,अणु-45,-46,-47,-48पूर्ण
-पूर्ण;
+	{-1, -2, -3, -4 },{-5, -6, -7, -8 },{-9, -10,-11,-12},
+	{-13,-14,-15,-16},{-17,-18,-19,-20},{-21,-22,-23,-24},
+	{-25,-26,-27,-28},{-29,-30,-31,-32},{-33,-34,-35,-36},
+	{-37,-38,-39,-40},{-41,-42,-43,-44},{-45,-46,-47,-48}
+};
 
-अटल व्योम संकेत_usr1(पूर्णांक signum, siginfo_t *info, व्योम *uc)
-अणु
-	पूर्णांक i, j;
-	uपूर्णांक8_t vsx[माप(vector पूर्णांक)];
-	uपूर्णांक8_t vsx_पंचांग[माप(vector पूर्णांक)];
+static void signal_usr1(int signum, siginfo_t *info, void *uc)
+{
+	int i, j;
+	uint8_t vsx[sizeof(vector int)];
+	uint8_t vsx_tm[sizeof(vector int)];
 	ucontext_t *ucp = uc;
-	ucontext_t *पंचांग_ucp = ucp->uc_link;
+	ucontext_t *tm_ucp = ucp->uc_link;
 
 	/*
-	 * FP रेजिस्टरs and VMX रेजिस्टरs overlap the VSX रेजिस्टरs.
+	 * FP registers and VMX registers overlap the VSX registers.
 	 *
-	 * FP रेजिस्टरs (f0-31) overlap the most signअगरicant 64 bits of VSX
-	 * रेजिस्टरs vsr0-31, whilst VMX रेजिस्टरs vr0-31, being 128-bit like
-	 * the VSX रेजिस्टरs, overlap fully the other half of VSX रेजिस्टरs,
+	 * FP registers (f0-31) overlap the most significant 64 bits of VSX
+	 * registers vsr0-31, whilst VMX registers vr0-31, being 128-bit like
+	 * the VSX registers, overlap fully the other half of VSX registers,
 	 * i.e. vr0-31 overlaps fully vsr32-63.
 	 *
 	 * Due to compatibility and historical reasons (VMX/Altivec support
-	 * appeared first on the architecture), VMX रेजिस्टरs vr0-31 (so VSX
-	 * half vsr32-63 too) are stored right after the v_regs poपूर्णांकer, in an
-	 * area allocated क्रम 'vmx_reverse' array (please see
-	 * arch/घातerpc/include/uapi/यंत्र/sigcontext.h क्रम details about the
-	 * mcontext_t काष्ठाure on Power).
+	 * appeared first on the architecture), VMX registers vr0-31 (so VSX
+	 * half vsr32-63 too) are stored right after the v_regs pointer, in an
+	 * area allocated for 'vmx_reverse' array (please see
+	 * arch/powerpc/include/uapi/asm/sigcontext.h for details about the
+	 * mcontext_t structure on Power).
 	 *
 	 * The other VSX half (vsr0-31) is hence stored below vr0-31/vsr32-63
-	 * रेजिस्टरs, but only the least signअगरicant 64 bits of vsr0-31. The
-	 * most signअगरicant 64 bits of vsr0-31 (f0-31), as it overlaps the FP
-	 * रेजिस्टरs, is kept in fp_regs.
+	 * registers, but only the least significant 64 bits of vsr0-31. The
+	 * most significant 64 bits of vsr0-31 (f0-31), as it overlaps the FP
+	 * registers, is kept in fp_regs.
 	 *
-	 * v_regs is a 16 byte aligned poपूर्णांकer at the start of vmx_reserve
-	 * (vmx_reserve may or may not be 16 aligned) where the v_regs काष्ठाure
-	 * exists, so v_regs poपूर्णांकs to where vr0-31 / vsr32-63 रेजिस्टरs are
+	 * v_regs is a 16 byte aligned pointer at the start of vmx_reserve
+	 * (vmx_reserve may or may not be 16 aligned) where the v_regs structure
+	 * exists, so v_regs points to where vr0-31 / vsr32-63 registers are
 	 * fully stored. Since v_regs type is elf_vrregset_t, v_regs + 1
-	 * skips all the slots used to store vr0-31 / vsr32-64 and poपूर्णांकs to
-	 * part of one VSX half, i.e. v_regs + 1 poपूर्णांकs to the least signअगरicant
-	 * 64 bits of vsr0-31. The other part of this half (the most signअगरicant
+	 * skips all the slots used to store vr0-31 / vsr32-64 and points to
+	 * part of one VSX half, i.e. v_regs + 1 points to the least significant
+	 * 64 bits of vsr0-31. The other part of this half (the most significant
 	 * part of vsr0-31) is stored in fp_regs.
 	 *
 	 */
-	/* Get poपूर्णांकer to least signअगरicant द्विगुनword of vsr0-31 */
-	दीर्घ *vsx_ptr = (दीर्घ *)(ucp->uc_mcontext.v_regs + 1);
-	दीर्घ *पंचांग_vsx_ptr = (दीर्घ *)(पंचांग_ucp->uc_mcontext.v_regs + 1);
+	/* Get pointer to least significant doubleword of vsr0-31 */
+	long *vsx_ptr = (long *)(ucp->uc_mcontext.v_regs + 1);
+	long *tm_vsx_ptr = (long *)(tm_ucp->uc_mcontext.v_regs + 1);
 
-	/* Check first context. Prपूर्णांक all mismatches. */
-	क्रम (i = 0; i < NV_VSX_REGS; i++) अणु
+	/* Check first context. Print all mismatches. */
+	for (i = 0; i < NV_VSX_REGS; i++) {
 		/*
-		 * Copy VSX most signअगरicant द्विगुनword from fp_regs and
-		 * copy VSX least signअगरicant one from 64-bit slots below
-		 * saved VMX रेजिस्टरs.
+		 * Copy VSX most significant doubleword from fp_regs and
+		 * copy VSX least significant one from 64-bit slots below
+		 * saved VMX registers.
 		 */
-		स_नकल(vsx, &ucp->uc_mcontext.fp_regs[FPR20 + i], 8);
-		स_नकल(vsx + 8, &vsx_ptr[VSX20 + i], 8);
+		memcpy(vsx, &ucp->uc_mcontext.fp_regs[FPR20 + i], 8);
+		memcpy(vsx + 8, &vsx_ptr[VSX20 + i], 8);
 
-		fail = स_भेद(vsx, &vsxs[i], माप(vector पूर्णांक));
+		fail = memcmp(vsx, &vsxs[i], sizeof(vector int));
 
-		अगर (fail) अणु
+		if (fail) {
 			broken = 1;
-			म_लिखो("VSX%d (1st context) == 0x", VSX20 + i);
-			क्रम (j = 0; j < 16; j++)
-				म_लिखो("%02x", vsx[j]);
-			म_लिखो(" instead of 0x");
-			क्रम (j = 0; j < 4; j++)
-				म_लिखो("%08x", vsxs[i][j]);
-			म_लिखो(" (expected)\n");
-		पूर्ण
-	पूर्ण
+			printf("VSX%d (1st context) == 0x", VSX20 + i);
+			for (j = 0; j < 16; j++)
+				printf("%02x", vsx[j]);
+			printf(" instead of 0x");
+			for (j = 0; j < 4; j++)
+				printf("%08x", vsxs[i][j]);
+			printf(" (expected)\n");
+		}
+	}
 
-	/* Check second context. Prपूर्णांक all mismatches. */
-	क्रम (i = 0; i < NV_VSX_REGS; i++) अणु
+	/* Check second context. Print all mismatches. */
+	for (i = 0; i < NV_VSX_REGS; i++) {
 		/*
-		 * Copy VSX most signअगरicant द्विगुनword from fp_regs and
-		 * copy VSX least signअगरicant one from 64-bit slots below
-		 * saved VMX रेजिस्टरs.
+		 * Copy VSX most significant doubleword from fp_regs and
+		 * copy VSX least significant one from 64-bit slots below
+		 * saved VMX registers.
 		 */
-		स_नकल(vsx_पंचांग, &पंचांग_ucp->uc_mcontext.fp_regs[FPR20 + i], 8);
-		स_नकल(vsx_पंचांग + 8, &पंचांग_vsx_ptr[VSX20 + i], 8);
+		memcpy(vsx_tm, &tm_ucp->uc_mcontext.fp_regs[FPR20 + i], 8);
+		memcpy(vsx_tm + 8, &tm_vsx_ptr[VSX20 + i], 8);
 
-		fail = स_भेद(vsx_पंचांग, &vsxs[NV_VSX_REGS + i], माप(vector पूर्णांक));
+		fail = memcmp(vsx_tm, &vsxs[NV_VSX_REGS + i], sizeof(vector int));
 
-		अगर (fail) अणु
+		if (fail) {
 			broken = 1;
-			म_लिखो("VSX%d (2nd context) == 0x", VSX20 + i);
-			क्रम (j = 0; j < 16; j++)
-				म_लिखो("%02x", vsx_पंचांग[j]);
-			म_लिखो(" instead of 0x");
-			क्रम (j = 0; j < 4; j++)
-				म_लिखो("%08x", vsxs[NV_VSX_REGS + i][j]);
-			म_लिखो("(expected)\n");
-		पूर्ण
-	पूर्ण
-पूर्ण
+			printf("VSX%d (2nd context) == 0x", VSX20 + i);
+			for (j = 0; j < 16; j++)
+				printf("%02x", vsx_tm[j]);
+			printf(" instead of 0x");
+			for (j = 0; j < 4; j++)
+				printf("%08x", vsxs[NV_VSX_REGS + i][j]);
+			printf("(expected)\n");
+		}
+	}
+}
 
-अटल पूर्णांक पंचांग_संकेत_context_chk()
-अणु
-	काष्ठा sigaction act;
-	पूर्णांक i;
-	दीर्घ rc;
+static int tm_signal_context_chk()
+{
+	struct sigaction act;
+	int i;
+	long rc;
 	pid_t pid = getpid();
 
-	SKIP_IF(!have_hपंचांग());
+	SKIP_IF(!have_htm());
 
-	act.sa_sigaction = संकेत_usr1;
+	act.sa_sigaction = signal_usr1;
 	sigemptyset(&act.sa_mask);
 	act.sa_flags = SA_SIGINFO;
-	अगर (sigaction(SIGUSR1, &act, शून्य) < 0) अणु
-		लिखो_त्रुटि("sigaction sigusr1");
-		निकास(1);
-	पूर्ण
+	if (sigaction(SIGUSR1, &act, NULL) < 0) {
+		perror("sigaction sigusr1");
+		exit(1);
+	}
 
 	i = 0;
-	जबतक (i < MAX_ATTEMPT && !broken) अणु
+	while (i < MAX_ATTEMPT && !broken) {
                /*
-                * पंचांग_संकेत_self_context_load will set both first and second
-                * contexts accordingly to the values passed through non-शून्य
-                * array poपूर्णांकers to it, in that हाल 'vsxs', and invoke the
-                * संकेत handler installed क्रम SIGUSR1.
+                * tm_signal_self_context_load will set both first and second
+                * contexts accordingly to the values passed through non-NULL
+                * array pointers to it, in that case 'vsxs', and invoke the
+                * signal handler installed for SIGUSR1.
                 */
-		rc = पंचांग_संकेत_self_context_load(pid, शून्य, शून्य, शून्य, vsxs);
+		rc = tm_signal_self_context_load(pid, NULL, NULL, NULL, vsxs);
 		FAIL_IF(rc != pid);
 		i++;
-	पूर्ण
+	}
 
-	वापस (broken);
-पूर्ण
+	return (broken);
+}
 
-पूर्णांक मुख्य(व्योम)
-अणु
-	वापस test_harness(पंचांग_संकेत_context_chk, "tm_signal_context_chk_vsx");
-पूर्ण
+int main(void)
+{
+	return test_harness(tm_signal_context_chk, "tm_signal_context_chk_vsx");
+}

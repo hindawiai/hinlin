@@ -1,24 +1,23 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Ceph 'frag' type
  */
-#समावेश <linux/module.h>
-#समावेश <linux/ceph/types.h>
+#include <linux/module.h>
+#include <linux/ceph/types.h>
 
-पूर्णांक ceph_frag_compare(__u32 a, __u32 b)
-अणु
-	अचिन्हित va = ceph_frag_value(a);
-	अचिन्हित vb = ceph_frag_value(b);
-	अगर (va < vb)
-		वापस -1;
-	अगर (va > vb)
-		वापस 1;
+int ceph_frag_compare(__u32 a, __u32 b)
+{
+	unsigned va = ceph_frag_value(a);
+	unsigned vb = ceph_frag_value(b);
+	if (va < vb)
+		return -1;
+	if (va > vb)
+		return 1;
 	va = ceph_frag_bits(a);
 	vb = ceph_frag_bits(b);
-	अगर (va < vb)
-		वापस -1;
-	अगर (va > vb)
-		वापस 1;
-	वापस 0;
-पूर्ण
+	if (va < vb)
+		return -1;
+	if (va > vb)
+		return 1;
+	return 0;
+}

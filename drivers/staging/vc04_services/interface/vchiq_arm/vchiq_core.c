@@ -1,81 +1,80 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0 OR BSD-3-Clause
+// SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
 /* Copyright (c) 2010-2012 Broadcom. All rights reserved. */
 
-#समावेश <linux/types.h>
-#समावेश <linux/completion.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/kref.h>
-#समावेश <linux/rcupdate.h>
-#समावेश <linux/sched/संकेत.स>
+#include <linux/types.h>
+#include <linux/completion.h>
+#include <linux/mutex.h>
+#include <linux/bitops.h>
+#include <linux/kthread.h>
+#include <linux/wait.h>
+#include <linux/delay.h>
+#include <linux/slab.h>
+#include <linux/kref.h>
+#include <linux/rcupdate.h>
+#include <linux/sched/signal.h>
 
-#समावेश "vchiq_core.h"
+#include "vchiq_core.h"
 
-#घोषणा VCHIQ_SLOT_HANDLER_STACK 8192
+#define VCHIQ_SLOT_HANDLER_STACK 8192
 
-#घोषणा HANDLE_STATE_SHIFT 12
+#define HANDLE_STATE_SHIFT 12
 
-#घोषणा SLOT_INFO_FROM_INDEX(state, index) (state->slot_info + (index))
-#घोषणा SLOT_DATA_FROM_INDEX(state, index) (state->slot_data + (index))
-#घोषणा SLOT_INDEX_FROM_DATA(state, data) \
-	(((अचिन्हित पूर्णांक)((अक्षर *)data - (अक्षर *)state->slot_data)) / \
+#define SLOT_INFO_FROM_INDEX(state, index) (state->slot_info + (index))
+#define SLOT_DATA_FROM_INDEX(state, index) (state->slot_data + (index))
+#define SLOT_INDEX_FROM_DATA(state, data) \
+	(((unsigned int)((char *)data - (char *)state->slot_data)) / \
 	VCHIQ_SLOT_SIZE)
-#घोषणा SLOT_INDEX_FROM_INFO(state, info) \
-	((अचिन्हित पूर्णांक)(info - state->slot_info))
-#घोषणा SLOT_QUEUE_INDEX_FROM_POS(pos) \
-	((पूर्णांक)((अचिन्हित पूर्णांक)(pos) / VCHIQ_SLOT_SIZE))
-#घोषणा SLOT_QUEUE_INDEX_FROM_POS_MASKED(pos) \
+#define SLOT_INDEX_FROM_INFO(state, info) \
+	((unsigned int)(info - state->slot_info))
+#define SLOT_QUEUE_INDEX_FROM_POS(pos) \
+	((int)((unsigned int)(pos) / VCHIQ_SLOT_SIZE))
+#define SLOT_QUEUE_INDEX_FROM_POS_MASKED(pos) \
 	(SLOT_QUEUE_INDEX_FROM_POS(pos) & VCHIQ_SLOT_QUEUE_MASK)
 
-#घोषणा BULK_INDEX(x) (x & (VCHIQ_NUM_SERVICE_BULKS - 1))
+#define BULK_INDEX(x) (x & (VCHIQ_NUM_SERVICE_BULKS - 1))
 
-#घोषणा SRVTRACE_LEVEL(srv) \
+#define SRVTRACE_LEVEL(srv) \
 	(((srv) && (srv)->trace) ? VCHIQ_LOG_TRACE : vchiq_core_msg_log_level)
-#घोषणा SRVTRACE_ENABLED(srv, lev) \
+#define SRVTRACE_ENABLED(srv, lev) \
 	(((srv) && (srv)->trace) || (vchiq_core_msg_log_level >= (lev)))
 
-काष्ठा vchiq_खोलो_payload अणु
-	पूर्णांक fourcc;
-	पूर्णांक client_id;
-	लघु version;
-	लघु version_min;
-पूर्ण;
+struct vchiq_open_payload {
+	int fourcc;
+	int client_id;
+	short version;
+	short version_min;
+};
 
-काष्ठा vchiq_खोलोack_payload अणु
-	लघु version;
-पूर्ण;
+struct vchiq_openack_payload {
+	short version;
+};
 
-क्रमागत अणु
+enum {
 	QMFLAGS_IS_BLOCKING     = BIT(0),
 	QMFLAGS_NO_MUTEX_LOCK   = BIT(1),
 	QMFLAGS_NO_MUTEX_UNLOCK = BIT(2)
-पूर्ण;
+};
 
-/* we require this क्रम consistency between endpoपूर्णांकs */
-vchiq_अटल_निश्चित(माप(काष्ठा vchiq_header) == 8);
-vchiq_अटल_निश्चित(IS_POW2(माप(काष्ठा vchiq_header)));
-vchiq_अटल_निश्चित(IS_POW2(VCHIQ_NUM_CURRENT_BULKS));
-vchiq_अटल_निश्चित(IS_POW2(VCHIQ_NUM_SERVICE_BULKS));
-vchiq_अटल_निश्चित(IS_POW2(VCHIQ_MAX_SERVICES));
-vchiq_अटल_निश्चित(VCHIQ_VERSION >= VCHIQ_VERSION_MIN);
+/* we require this for consistency between endpoints */
+vchiq_static_assert(sizeof(struct vchiq_header) == 8);
+vchiq_static_assert(IS_POW2(sizeof(struct vchiq_header)));
+vchiq_static_assert(IS_POW2(VCHIQ_NUM_CURRENT_BULKS));
+vchiq_static_assert(IS_POW2(VCHIQ_NUM_SERVICE_BULKS));
+vchiq_static_assert(IS_POW2(VCHIQ_MAX_SERVICES));
+vchiq_static_assert(VCHIQ_VERSION >= VCHIQ_VERSION_MIN);
 
-/* Run समय control of log level, based on KERN_XXX level. */
-पूर्णांक vchiq_core_log_level = VCHIQ_LOG_DEFAULT;
-पूर्णांक vchiq_core_msg_log_level = VCHIQ_LOG_DEFAULT;
-पूर्णांक vchiq_sync_log_level = VCHIQ_LOG_DEFAULT;
+/* Run time control of log level, based on KERN_XXX level. */
+int vchiq_core_log_level = VCHIQ_LOG_DEFAULT;
+int vchiq_core_msg_log_level = VCHIQ_LOG_DEFAULT;
+int vchiq_sync_log_level = VCHIQ_LOG_DEFAULT;
 
-DEFINE_SPINLOCK(bulk_रुकोer_spinlock);
-अटल DEFINE_SPINLOCK(quota_spinlock);
+DEFINE_SPINLOCK(bulk_waiter_spinlock);
+static DEFINE_SPINLOCK(quota_spinlock);
 
-काष्ठा vchiq_state *vchiq_states[VCHIQ_MAX_STATES];
-अटल अचिन्हित पूर्णांक handle_seq;
+struct vchiq_state *vchiq_states[VCHIQ_MAX_STATES];
+static unsigned int handle_seq;
 
-अटल स्थिर अक्षर *स्थिर srvstate_names[] = अणु
+static const char *const srvstate_names[] = {
 	"FREE",
 	"HIDDEN",
 	"LISTENING",
@@ -86,9 +85,9 @@ DEFINE_SPINLOCK(bulk_रुकोer_spinlock);
 	"CLOSERECVD",
 	"CLOSEWAIT",
 	"CLOSED"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *स्थिर reason_names[] = अणु
+static const char *const reason_names[] = {
 	"SERVICE_OPENED",
 	"SERVICE_CLOSED",
 	"MESSAGE_AVAILABLE",
@@ -96,9 +95,9 @@ DEFINE_SPINLOCK(bulk_रुकोer_spinlock);
 	"BULK_RECEIVE_DONE",
 	"BULK_TRANSMIT_ABORTED",
 	"BULK_RECEIVE_ABORTED"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *स्थिर conn_state_names[] = अणु
+static const char *const conn_state_names[] = {
 	"DISCONNECTED",
 	"CONNECTING",
 	"CONNECTED",
@@ -108,452 +107,452 @@ DEFINE_SPINLOCK(bulk_रुकोer_spinlock);
 	"RESUMING",
 	"PAUSE_TIMEOUT",
 	"RESUME_TIMEOUT"
-पूर्ण;
+};
 
-अटल व्योम
-release_message_sync(काष्ठा vchiq_state *state, काष्ठा vchiq_header *header);
+static void
+release_message_sync(struct vchiq_state *state, struct vchiq_header *header);
 
-अटल स्थिर अक्षर *msg_type_str(अचिन्हित पूर्णांक msg_type)
-अणु
-	चयन (msg_type) अणु
-	हाल VCHIQ_MSG_PADDING:       वापस "PADDING";
-	हाल VCHIQ_MSG_CONNECT:       वापस "CONNECT";
-	हाल VCHIQ_MSG_OPEN:          वापस "OPEN";
-	हाल VCHIQ_MSG_OPENACK:       वापस "OPENACK";
-	हाल VCHIQ_MSG_CLOSE:         वापस "CLOSE";
-	हाल VCHIQ_MSG_DATA:          वापस "DATA";
-	हाल VCHIQ_MSG_BULK_RX:       वापस "BULK_RX";
-	हाल VCHIQ_MSG_BULK_TX:       वापस "BULK_TX";
-	हाल VCHIQ_MSG_BULK_RX_DONE:  वापस "BULK_RX_DONE";
-	हाल VCHIQ_MSG_BULK_TX_DONE:  वापस "BULK_TX_DONE";
-	हाल VCHIQ_MSG_PAUSE:         वापस "PAUSE";
-	हाल VCHIQ_MSG_RESUME:        वापस "RESUME";
-	हाल VCHIQ_MSG_REMOTE_USE:    वापस "REMOTE_USE";
-	हाल VCHIQ_MSG_REMOTE_RELEASE:      वापस "REMOTE_RELEASE";
-	हाल VCHIQ_MSG_REMOTE_USE_ACTIVE:   वापस "REMOTE_USE_ACTIVE";
-	पूर्ण
-	वापस "???";
-पूर्ण
+static const char *msg_type_str(unsigned int msg_type)
+{
+	switch (msg_type) {
+	case VCHIQ_MSG_PADDING:       return "PADDING";
+	case VCHIQ_MSG_CONNECT:       return "CONNECT";
+	case VCHIQ_MSG_OPEN:          return "OPEN";
+	case VCHIQ_MSG_OPENACK:       return "OPENACK";
+	case VCHIQ_MSG_CLOSE:         return "CLOSE";
+	case VCHIQ_MSG_DATA:          return "DATA";
+	case VCHIQ_MSG_BULK_RX:       return "BULK_RX";
+	case VCHIQ_MSG_BULK_TX:       return "BULK_TX";
+	case VCHIQ_MSG_BULK_RX_DONE:  return "BULK_RX_DONE";
+	case VCHIQ_MSG_BULK_TX_DONE:  return "BULK_TX_DONE";
+	case VCHIQ_MSG_PAUSE:         return "PAUSE";
+	case VCHIQ_MSG_RESUME:        return "RESUME";
+	case VCHIQ_MSG_REMOTE_USE:    return "REMOTE_USE";
+	case VCHIQ_MSG_REMOTE_RELEASE:      return "REMOTE_RELEASE";
+	case VCHIQ_MSG_REMOTE_USE_ACTIVE:   return "REMOTE_USE_ACTIVE";
+	}
+	return "???";
+}
 
-अटल अंतरभूत व्योम
-vchiq_set_service_state(काष्ठा vchiq_service *service, पूर्णांक newstate)
-अणु
+static inline void
+vchiq_set_service_state(struct vchiq_service *service, int newstate)
+{
 	vchiq_log_info(vchiq_core_log_level, "%d: srv:%d %s->%s",
 		service->state->id, service->localport,
 		srvstate_names[service->srvstate],
 		srvstate_names[newstate]);
 	service->srvstate = newstate;
-पूर्ण
+}
 
-काष्ठा vchiq_service *
-find_service_by_handle(अचिन्हित पूर्णांक handle)
-अणु
-	काष्ठा vchiq_service *service;
+struct vchiq_service *
+find_service_by_handle(unsigned int handle)
+{
+	struct vchiq_service *service;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	service = handle_to_service(handle);
-	अगर (service && service->srvstate != VCHIQ_SRVSTATE_FREE &&
+	if (service && service->srvstate != VCHIQ_SRVSTATE_FREE &&
 	    service->handle == handle &&
-	    kref_get_unless_zero(&service->ref_count)) अणु
-		service = rcu_poपूर्णांकer_hanकरोff(service);
-		rcu_पढ़ो_unlock();
-		वापस service;
-	पूर्ण
-	rcu_पढ़ो_unlock();
+	    kref_get_unless_zero(&service->ref_count)) {
+		service = rcu_pointer_handoff(service);
+		rcu_read_unlock();
+		return service;
+	}
+	rcu_read_unlock();
 	vchiq_log_info(vchiq_core_log_level,
 		       "Invalid service handle 0x%x", handle);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-काष्ठा vchiq_service *
-find_service_by_port(काष्ठा vchiq_state *state, पूर्णांक localport)
-अणु
+struct vchiq_service *
+find_service_by_port(struct vchiq_state *state, int localport)
+{
 
-	अगर ((अचिन्हित पूर्णांक)localport <= VCHIQ_PORT_MAX) अणु
-		काष्ठा vchiq_service *service;
+	if ((unsigned int)localport <= VCHIQ_PORT_MAX) {
+		struct vchiq_service *service;
 
-		rcu_पढ़ो_lock();
+		rcu_read_lock();
 		service = rcu_dereference(state->services[localport]);
-		अगर (service && service->srvstate != VCHIQ_SRVSTATE_FREE &&
-		    kref_get_unless_zero(&service->ref_count)) अणु
-			service = rcu_poपूर्णांकer_hanकरोff(service);
-			rcu_पढ़ो_unlock();
-			वापस service;
-		पूर्ण
-		rcu_पढ़ो_unlock();
-	पूर्ण
+		if (service && service->srvstate != VCHIQ_SRVSTATE_FREE &&
+		    kref_get_unless_zero(&service->ref_count)) {
+			service = rcu_pointer_handoff(service);
+			rcu_read_unlock();
+			return service;
+		}
+		rcu_read_unlock();
+	}
 	vchiq_log_info(vchiq_core_log_level,
 		       "Invalid port %d", localport);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-काष्ठा vchiq_service *
-find_service_क्रम_instance(काष्ठा vchiq_instance *instance,
-	अचिन्हित पूर्णांक handle)
-अणु
-	काष्ठा vchiq_service *service;
+struct vchiq_service *
+find_service_for_instance(struct vchiq_instance *instance,
+	unsigned int handle)
+{
+	struct vchiq_service *service;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	service = handle_to_service(handle);
-	अगर (service && service->srvstate != VCHIQ_SRVSTATE_FREE &&
+	if (service && service->srvstate != VCHIQ_SRVSTATE_FREE &&
 	    service->handle == handle &&
 	    service->instance == instance &&
-	    kref_get_unless_zero(&service->ref_count)) अणु
-		service = rcu_poपूर्णांकer_hanकरोff(service);
-		rcu_पढ़ो_unlock();
-		वापस service;
-	पूर्ण
-	rcu_पढ़ो_unlock();
+	    kref_get_unless_zero(&service->ref_count)) {
+		service = rcu_pointer_handoff(service);
+		rcu_read_unlock();
+		return service;
+	}
+	rcu_read_unlock();
 	vchiq_log_info(vchiq_core_log_level,
 		       "Invalid service handle 0x%x", handle);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-काष्ठा vchiq_service *
-find_बंदd_service_क्रम_instance(काष्ठा vchiq_instance *instance,
-	अचिन्हित पूर्णांक handle)
-अणु
-	काष्ठा vchiq_service *service;
+struct vchiq_service *
+find_closed_service_for_instance(struct vchiq_instance *instance,
+	unsigned int handle)
+{
+	struct vchiq_service *service;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	service = handle_to_service(handle);
-	अगर (service &&
+	if (service &&
 	    (service->srvstate == VCHIQ_SRVSTATE_FREE ||
 	     service->srvstate == VCHIQ_SRVSTATE_CLOSED) &&
 	    service->handle == handle &&
 	    service->instance == instance &&
-	    kref_get_unless_zero(&service->ref_count)) अणु
-		service = rcu_poपूर्णांकer_hanकरोff(service);
-		rcu_पढ़ो_unlock();
-		वापस service;
-	पूर्ण
-	rcu_पढ़ो_unlock();
+	    kref_get_unless_zero(&service->ref_count)) {
+		service = rcu_pointer_handoff(service);
+		rcu_read_unlock();
+		return service;
+	}
+	rcu_read_unlock();
 	vchiq_log_info(vchiq_core_log_level,
 		       "Invalid service handle 0x%x", handle);
-	वापस service;
-पूर्ण
+	return service;
+}
 
-काष्ठा vchiq_service *
-__next_service_by_instance(काष्ठा vchiq_state *state,
-			   काष्ठा vchiq_instance *instance,
-			   पूर्णांक *pidx)
-अणु
-	काष्ठा vchiq_service *service = शून्य;
-	पूर्णांक idx = *pidx;
+struct vchiq_service *
+__next_service_by_instance(struct vchiq_state *state,
+			   struct vchiq_instance *instance,
+			   int *pidx)
+{
+	struct vchiq_service *service = NULL;
+	int idx = *pidx;
 
-	जबतक (idx < state->unused_service) अणु
-		काष्ठा vchiq_service *srv;
+	while (idx < state->unused_service) {
+		struct vchiq_service *srv;
 
 		srv = rcu_dereference(state->services[idx++]);
-		अगर (srv && srv->srvstate != VCHIQ_SRVSTATE_FREE &&
-		    srv->instance == instance) अणु
+		if (srv && srv->srvstate != VCHIQ_SRVSTATE_FREE &&
+		    srv->instance == instance) {
 			service = srv;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	*pidx = idx;
-	वापस service;
-पूर्ण
+	return service;
+}
 
-काष्ठा vchiq_service *
-next_service_by_instance(काष्ठा vchiq_state *state,
-			 काष्ठा vchiq_instance *instance,
-			 पूर्णांक *pidx)
-अणु
-	काष्ठा vchiq_service *service;
+struct vchiq_service *
+next_service_by_instance(struct vchiq_state *state,
+			 struct vchiq_instance *instance,
+			 int *pidx)
+{
+	struct vchiq_service *service;
 
-	rcu_पढ़ो_lock();
-	जबतक (1) अणु
+	rcu_read_lock();
+	while (1) {
 		service = __next_service_by_instance(state, instance, pidx);
-		अगर (!service)
-			अवरोध;
-		अगर (kref_get_unless_zero(&service->ref_count)) अणु
-			service = rcu_poपूर्णांकer_hanकरोff(service);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	rcu_पढ़ो_unlock();
-	वापस service;
-पूर्ण
+		if (!service)
+			break;
+		if (kref_get_unless_zero(&service->ref_count)) {
+			service = rcu_pointer_handoff(service);
+			break;
+		}
+	}
+	rcu_read_unlock();
+	return service;
+}
 
-व्योम
-lock_service(काष्ठा vchiq_service *service)
-अणु
-	अगर (!service) अणु
+void
+lock_service(struct vchiq_service *service)
+{
+	if (!service) {
 		WARN(1, "%s service is NULL\n", __func__);
-		वापस;
-	पूर्ण
+		return;
+	}
 	kref_get(&service->ref_count);
-पूर्ण
+}
 
-अटल व्योम service_release(काष्ठा kref *kref)
-अणु
-	काष्ठा vchiq_service *service =
-		container_of(kref, काष्ठा vchiq_service, ref_count);
-	काष्ठा vchiq_state *state = service->state;
+static void service_release(struct kref *kref)
+{
+	struct vchiq_service *service =
+		container_of(kref, struct vchiq_service, ref_count);
+	struct vchiq_state *state = service->state;
 
 	WARN_ON(service->srvstate != VCHIQ_SRVSTATE_FREE);
-	rcu_assign_poपूर्णांकer(state->services[service->localport], शून्य);
-	अगर (service->userdata_term)
+	rcu_assign_pointer(state->services[service->localport], NULL);
+	if (service->userdata_term)
 		service->userdata_term(service->base.userdata);
-	kमुक्त_rcu(service, rcu);
-पूर्ण
+	kfree_rcu(service, rcu);
+}
 
-व्योम
-unlock_service(काष्ठा vchiq_service *service)
-अणु
-	अगर (!service) अणु
+void
+unlock_service(struct vchiq_service *service)
+{
+	if (!service) {
 		WARN(1, "%s: service is NULL\n", __func__);
-		वापस;
-	पूर्ण
+		return;
+	}
 	kref_put(&service->ref_count, service_release);
-पूर्ण
+}
 
-पूर्णांक
-vchiq_get_client_id(अचिन्हित पूर्णांक handle)
-अणु
-	काष्ठा vchiq_service *service;
-	पूर्णांक id;
+int
+vchiq_get_client_id(unsigned int handle)
+{
+	struct vchiq_service *service;
+	int id;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	service = handle_to_service(handle);
 	id = service ? service->client_id : 0;
-	rcu_पढ़ो_unlock();
-	वापस id;
-पूर्ण
+	rcu_read_unlock();
+	return id;
+}
 
-व्योम *
-vchiq_get_service_userdata(अचिन्हित पूर्णांक handle)
-अणु
-	व्योम *userdata;
-	काष्ठा vchiq_service *service;
+void *
+vchiq_get_service_userdata(unsigned int handle)
+{
+	void *userdata;
+	struct vchiq_service *service;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	service = handle_to_service(handle);
-	userdata = service ? service->base.userdata : शून्य;
-	rcu_पढ़ो_unlock();
-	वापस userdata;
-पूर्ण
+	userdata = service ? service->base.userdata : NULL;
+	rcu_read_unlock();
+	return userdata;
+}
 EXPORT_SYMBOL(vchiq_get_service_userdata);
 
-अटल व्योम
-mark_service_closing_पूर्णांकernal(काष्ठा vchiq_service *service, पूर्णांक sh_thपढ़ो)
-अणु
-	काष्ठा vchiq_state *state = service->state;
-	काष्ठा vchiq_service_quota *quota;
+static void
+mark_service_closing_internal(struct vchiq_service *service, int sh_thread)
+{
+	struct vchiq_state *state = service->state;
+	struct vchiq_service_quota *quota;
 
 	service->closing = 1;
 
-	/* Synchronise with other thपढ़ोs. */
+	/* Synchronise with other threads. */
 	mutex_lock(&state->recycle_mutex);
 	mutex_unlock(&state->recycle_mutex);
-	अगर (!sh_thपढ़ो || (state->conn_state != VCHIQ_CONNSTATE_PAUSE_SENT)) अणु
+	if (!sh_thread || (state->conn_state != VCHIQ_CONNSTATE_PAUSE_SENT)) {
 		/*
 		 * If we're pausing then the slot_mutex is held until resume
-		 * by the slot handler.  Thereक्रमe करोn't try to acquire this
-		 * mutex अगर we're the slot handler and in the छोड़ो sent state.
-		 * We करोn't need to in this हाल anyway.
+		 * by the slot handler.  Therefore don't try to acquire this
+		 * mutex if we're the slot handler and in the pause sent state.
+		 * We don't need to in this case anyway.
 		 */
 		mutex_lock(&state->slot_mutex);
 		mutex_unlock(&state->slot_mutex);
-	पूर्ण
+	}
 
-	/* Unblock any sending thपढ़ो. */
+	/* Unblock any sending thread. */
 	quota = &state->service_quotas[service->localport];
 	complete(&quota->quota_event);
-पूर्ण
+}
 
-अटल व्योम
-mark_service_closing(काष्ठा vchiq_service *service)
-अणु
-	mark_service_closing_पूर्णांकernal(service, 0);
-पूर्ण
+static void
+mark_service_closing(struct vchiq_service *service)
+{
+	mark_service_closing_internal(service, 0);
+}
 
-अटल अंतरभूत क्रमागत vchiq_status
-make_service_callback(काष्ठा vchiq_service *service, क्रमागत vchiq_reason reason,
-		      काष्ठा vchiq_header *header, व्योम *bulk_userdata)
-अणु
-	क्रमागत vchiq_status status;
+static inline enum vchiq_status
+make_service_callback(struct vchiq_service *service, enum vchiq_reason reason,
+		      struct vchiq_header *header, void *bulk_userdata)
+{
+	enum vchiq_status status;
 
 	vchiq_log_trace(vchiq_core_log_level, "%d: callback:%d (%s, %pK, %pK)",
 		service->state->id, service->localport, reason_names[reason],
 		header, bulk_userdata);
 	status = service->base.callback(reason, header, service->handle,
 		bulk_userdata);
-	अगर (status == VCHIQ_ERROR) अणु
+	if (status == VCHIQ_ERROR) {
 		vchiq_log_warning(vchiq_core_log_level,
 			"%d: ignoring ERROR from callback to service %x",
 			service->state->id, service->handle);
 		status = VCHIQ_SUCCESS;
-	पूर्ण
+	}
 
-	अगर (reason != VCHIQ_MESSAGE_AVAILABLE)
+	if (reason != VCHIQ_MESSAGE_AVAILABLE)
 		vchiq_release_message(service->handle, header);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अंतरभूत व्योम
-vchiq_set_conn_state(काष्ठा vchiq_state *state, क्रमागत vchiq_connstate newstate)
-अणु
-	क्रमागत vchiq_connstate oldstate = state->conn_state;
+inline void
+vchiq_set_conn_state(struct vchiq_state *state, enum vchiq_connstate newstate)
+{
+	enum vchiq_connstate oldstate = state->conn_state;
 
 	vchiq_log_info(vchiq_core_log_level, "%d: %s->%s", state->id,
 		conn_state_names[oldstate],
 		conn_state_names[newstate]);
 	state->conn_state = newstate;
-	vchiq_platक्रमm_conn_state_changed(state, oldstate, newstate);
-पूर्ण
+	vchiq_platform_conn_state_changed(state, oldstate, newstate);
+}
 
-अटल अंतरभूत व्योम
-remote_event_create(रुको_queue_head_t *wq, काष्ठा remote_event *event)
-अणु
+static inline void
+remote_event_create(wait_queue_head_t *wq, struct remote_event *event)
+{
 	event->armed = 0;
 	/*
-	 * Don't clear the 'fired' flag because it may alपढ़ोy have been set
+	 * Don't clear the 'fired' flag because it may already have been set
 	 * by the other side.
 	 */
-	init_रुकोqueue_head(wq);
-पूर्ण
+	init_waitqueue_head(wq);
+}
 
 /*
- * All the event रुकोing routines in VCHIQ used a custom semaphore
- * implementation that filtered most संकेतs. This achieved a behaviour similar
+ * All the event waiting routines in VCHIQ used a custom semaphore
+ * implementation that filtered most signals. This achieved a behaviour similar
  * to the "killable" family of functions. While cleaning up this code all the
- * routines where चयनed to the "interruptible" family of functions, as the
- * क्रमmer was deemed unjustअगरied and the use "killable" set all VCHIQ's
- * thपढ़ोs in D state.
+ * routines where switched to the "interruptible" family of functions, as the
+ * former was deemed unjustified and the use "killable" set all VCHIQ's
+ * threads in D state.
  */
-अटल अंतरभूत पूर्णांक
-remote_event_रुको(रुको_queue_head_t *wq, काष्ठा remote_event *event)
-अणु
-	अगर (!event->fired) अणु
+static inline int
+remote_event_wait(wait_queue_head_t *wq, struct remote_event *event)
+{
+	if (!event->fired) {
 		event->armed = 1;
 		dsb(sy);
-		अगर (रुको_event_पूर्णांकerruptible(*wq, event->fired)) अणु
+		if (wait_event_interruptible(*wq, event->fired)) {
 			event->armed = 0;
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 		event->armed = 0;
 		wmb();
-	पूर्ण
+	}
 
 	event->fired = 0;
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल अंतरभूत व्योम
-remote_event_संकेत_local(रुको_queue_head_t *wq, काष्ठा remote_event *event)
-अणु
+static inline void
+remote_event_signal_local(wait_queue_head_t *wq, struct remote_event *event)
+{
 	event->fired = 1;
 	event->armed = 0;
 	wake_up_all(wq);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम
-remote_event_poll(रुको_queue_head_t *wq, काष्ठा remote_event *event)
-अणु
-	अगर (event->fired && event->armed)
-		remote_event_संकेत_local(wq, event);
-पूर्ण
+static inline void
+remote_event_poll(wait_queue_head_t *wq, struct remote_event *event)
+{
+	if (event->fired && event->armed)
+		remote_event_signal_local(wq, event);
+}
 
-व्योम
-remote_event_pollall(काष्ठा vchiq_state *state)
-अणु
+void
+remote_event_pollall(struct vchiq_state *state)
+{
 	remote_event_poll(&state->sync_trigger_event, &state->local->sync_trigger);
 	remote_event_poll(&state->sync_release_event, &state->local->sync_release);
 	remote_event_poll(&state->trigger_event, &state->local->trigger);
 	remote_event_poll(&state->recycle_event, &state->local->recycle);
-पूर्ण
+}
 
 /*
  * Round up message sizes so that any space at the end of a slot is always big
- * enough क्रम a header. This relies on header size being a घातer of two, which
- * has been verअगरied earlier by a अटल निश्चितion.
+ * enough for a header. This relies on header size being a power of two, which
+ * has been verified earlier by a static assertion.
  */
 
-अटल अंतरभूत माप_प्रकार
-calc_stride(माप_प्रकार size)
-अणु
-	/* Allow room क्रम the header */
-	size += माप(काष्ठा vchiq_header);
+static inline size_t
+calc_stride(size_t size)
+{
+	/* Allow room for the header */
+	size += sizeof(struct vchiq_header);
 
 	/* Round up */
-	वापस (size + माप(काष्ठा vchiq_header) - 1) &
-		~(माप(काष्ठा vchiq_header) - 1);
-पूर्ण
+	return (size + sizeof(struct vchiq_header) - 1) &
+		~(sizeof(struct vchiq_header) - 1);
+}
 
-/* Called by the slot handler thपढ़ो */
-अटल काष्ठा vchiq_service *
-get_listening_service(काष्ठा vchiq_state *state, पूर्णांक fourcc)
-अणु
-	पूर्णांक i;
+/* Called by the slot handler thread */
+static struct vchiq_service *
+get_listening_service(struct vchiq_state *state, int fourcc)
+{
+	int i;
 
 	WARN_ON(fourcc == VCHIQ_FOURCC_INVALID);
 
-	rcu_पढ़ो_lock();
-	क्रम (i = 0; i < state->unused_service; i++) अणु
-		काष्ठा vchiq_service *service;
+	rcu_read_lock();
+	for (i = 0; i < state->unused_service; i++) {
+		struct vchiq_service *service;
 
 		service = rcu_dereference(state->services[i]);
-		अगर (service &&
-		    service->खुला_fourcc == fourcc &&
+		if (service &&
+		    service->public_fourcc == fourcc &&
 		    (service->srvstate == VCHIQ_SRVSTATE_LISTENING ||
 		     (service->srvstate == VCHIQ_SRVSTATE_OPEN &&
 		      service->remoteport == VCHIQ_PORT_FREE)) &&
-		    kref_get_unless_zero(&service->ref_count)) अणु
-			service = rcu_poपूर्णांकer_hanकरोff(service);
-			rcu_पढ़ो_unlock();
-			वापस service;
-		पूर्ण
-	पूर्ण
-	rcu_पढ़ो_unlock();
-	वापस शून्य;
-पूर्ण
+		    kref_get_unless_zero(&service->ref_count)) {
+			service = rcu_pointer_handoff(service);
+			rcu_read_unlock();
+			return service;
+		}
+	}
+	rcu_read_unlock();
+	return NULL;
+}
 
-/* Called by the slot handler thपढ़ो */
-अटल काष्ठा vchiq_service *
-get_connected_service(काष्ठा vchiq_state *state, अचिन्हित पूर्णांक port)
-अणु
-	पूर्णांक i;
+/* Called by the slot handler thread */
+static struct vchiq_service *
+get_connected_service(struct vchiq_state *state, unsigned int port)
+{
+	int i;
 
-	rcu_पढ़ो_lock();
-	क्रम (i = 0; i < state->unused_service; i++) अणु
-		काष्ठा vchiq_service *service =
+	rcu_read_lock();
+	for (i = 0; i < state->unused_service; i++) {
+		struct vchiq_service *service =
 			rcu_dereference(state->services[i]);
 
-		अगर (service && service->srvstate == VCHIQ_SRVSTATE_OPEN &&
+		if (service && service->srvstate == VCHIQ_SRVSTATE_OPEN &&
 		    service->remoteport == port &&
-		    kref_get_unless_zero(&service->ref_count)) अणु
-			service = rcu_poपूर्णांकer_hanकरोff(service);
-			rcu_पढ़ो_unlock();
-			वापस service;
-		पूर्ण
-	पूर्ण
-	rcu_पढ़ो_unlock();
-	वापस शून्य;
-पूर्ण
+		    kref_get_unless_zero(&service->ref_count)) {
+			service = rcu_pointer_handoff(service);
+			rcu_read_unlock();
+			return service;
+		}
+	}
+	rcu_read_unlock();
+	return NULL;
+}
 
-अंतरभूत व्योम
-request_poll(काष्ठा vchiq_state *state, काष्ठा vchiq_service *service,
-	     पूर्णांक poll_type)
-अणु
+inline void
+request_poll(struct vchiq_state *state, struct vchiq_service *service,
+	     int poll_type)
+{
 	u32 value;
-	पूर्णांक index;
+	int index;
 
-	अगर (!service)
-		जाओ skip_service;
+	if (!service)
+		goto skip_service;
 
-	करो अणु
-		value = atomic_पढ़ो(&service->poll_flags);
-	पूर्ण जबतक (atomic_cmpxchg(&service->poll_flags, value,
+	do {
+		value = atomic_read(&service->poll_flags);
+	} while (atomic_cmpxchg(&service->poll_flags, value,
 		 value | BIT(poll_type)) != value);
 
 	index = BITSET_WORD(service->localport);
-	करो अणु
-		value = atomic_पढ़ो(&state->poll_services[index]);
-	पूर्ण जबतक (atomic_cmpxchg(&state->poll_services[index],
+	do {
+		value = atomic_read(&state->poll_services[index]);
+	} while (atomic_cmpxchg(&state->poll_services[index],
 		 value, value | BIT(service->localport & 0x1f)) != value);
 
 skip_service:
@@ -561,99 +560,99 @@ skip_service:
 	wmb();
 
 	/* ... and ensure the slot handler runs. */
-	remote_event_संकेत_local(&state->trigger_event, &state->local->trigger);
-पूर्ण
+	remote_event_signal_local(&state->trigger_event, &state->local->trigger);
+}
 
 /*
- * Called from queue_message, by the slot handler and application thपढ़ोs,
+ * Called from queue_message, by the slot handler and application threads,
  * with slot_mutex held
  */
-अटल काष्ठा vchiq_header *
-reserve_space(काष्ठा vchiq_state *state, माप_प्रकार space, पूर्णांक is_blocking)
-अणु
-	काष्ठा vchiq_shared_state *local = state->local;
-	पूर्णांक tx_pos = state->local_tx_pos;
-	पूर्णांक slot_space = VCHIQ_SLOT_SIZE - (tx_pos & VCHIQ_SLOT_MASK);
+static struct vchiq_header *
+reserve_space(struct vchiq_state *state, size_t space, int is_blocking)
+{
+	struct vchiq_shared_state *local = state->local;
+	int tx_pos = state->local_tx_pos;
+	int slot_space = VCHIQ_SLOT_SIZE - (tx_pos & VCHIQ_SLOT_MASK);
 
-	अगर (space > slot_space) अणु
-		काष्ठा vchiq_header *header;
-		/* Fill the reमुख्यing space with padding */
+	if (space > slot_space) {
+		struct vchiq_header *header;
+		/* Fill the remaining space with padding */
 		WARN_ON(!state->tx_data);
-		header = (काष्ठा vchiq_header *)
+		header = (struct vchiq_header *)
 			(state->tx_data + (tx_pos & VCHIQ_SLOT_MASK));
 		header->msgid = VCHIQ_MSGID_PADDING;
-		header->size = slot_space - माप(काष्ठा vchiq_header);
+		header->size = slot_space - sizeof(struct vchiq_header);
 
 		tx_pos += slot_space;
-	पूर्ण
+	}
 
 	/* If necessary, get the next slot. */
-	अगर ((tx_pos & VCHIQ_SLOT_MASK) == 0) अणु
-		पूर्णांक slot_index;
+	if ((tx_pos & VCHIQ_SLOT_MASK) == 0) {
+		int slot_index;
 
-		/* If there is no मुक्त slot... */
+		/* If there is no free slot... */
 
-		अगर (!try_रुको_क्रम_completion(&state->slot_available_event)) अणु
-			/* ...रुको क्रम one. */
+		if (!try_wait_for_completion(&state->slot_available_event)) {
+			/* ...wait for one. */
 
 			VCHIQ_STATS_INC(state, slot_stalls);
 
 			/* But first, flush through the last slot. */
 			state->local_tx_pos = tx_pos;
 			local->tx_pos = tx_pos;
-			remote_event_संकेत(&state->remote->trigger);
+			remote_event_signal(&state->remote->trigger);
 
-			अगर (!is_blocking ||
-				(रुको_क्रम_completion_पूर्णांकerruptible(
+			if (!is_blocking ||
+				(wait_for_completion_interruptible(
 				&state->slot_available_event)))
-				वापस शून्य; /* No space available */
-		पूर्ण
+				return NULL; /* No space available */
+		}
 
-		अगर (tx_pos == (state->slot_queue_available * VCHIQ_SLOT_SIZE)) अणु
+		if (tx_pos == (state->slot_queue_available * VCHIQ_SLOT_SIZE)) {
 			complete(&state->slot_available_event);
 			pr_warn("%s: invalid tx_pos: %d\n", __func__, tx_pos);
-			वापस शून्य;
-		पूर्ण
+			return NULL;
+		}
 
 		slot_index = local->slot_queue[
 			SLOT_QUEUE_INDEX_FROM_POS_MASKED(tx_pos)];
 		state->tx_data =
-			(अक्षर *)SLOT_DATA_FROM_INDEX(state, slot_index);
-	पूर्ण
+			(char *)SLOT_DATA_FROM_INDEX(state, slot_index);
+	}
 
 	state->local_tx_pos = tx_pos + space;
 
-	वापस (काष्ठा vchiq_header *)(state->tx_data +
+	return (struct vchiq_header *)(state->tx_data +
 						(tx_pos & VCHIQ_SLOT_MASK));
-पूर्ण
+}
 
-/* Called by the recycle thपढ़ो. */
-अटल व्योम
-process_मुक्त_queue(काष्ठा vchiq_state *state, BITSET_T *service_found,
-		   माप_प्रकार length)
-अणु
-	काष्ठा vchiq_shared_state *local = state->local;
-	पूर्णांक slot_queue_available;
+/* Called by the recycle thread. */
+static void
+process_free_queue(struct vchiq_state *state, BITSET_T *service_found,
+		   size_t length)
+{
+	struct vchiq_shared_state *local = state->local;
+	int slot_queue_available;
 
 	/*
-	 * Find slots which have been मुक्तd by the other side, and वापस them
+	 * Find slots which have been freed by the other side, and return them
 	 * to the available queue.
 	 */
 	slot_queue_available = state->slot_queue_available;
 
 	/*
 	 * Use a memory barrier to ensure that any state that may have been
-	 * modअगरied by another thपढ़ो is not masked by stale prefetched
+	 * modified by another thread is not masked by stale prefetched
 	 * values.
 	 */
 	mb();
 
-	जबतक (slot_queue_available != local->slot_queue_recycle) अणु
-		अचिन्हित पूर्णांक pos;
-		पूर्णांक slot_index = local->slot_queue[slot_queue_available++ &
+	while (slot_queue_available != local->slot_queue_recycle) {
+		unsigned int pos;
+		int slot_index = local->slot_queue[slot_queue_available++ &
 			VCHIQ_SLOT_QUEUE_MASK];
-		अक्षर *data = (अक्षर *)SLOT_DATA_FROM_INDEX(state, slot_index);
-		पूर्णांक data_found = 0;
+		char *data = (char *)SLOT_DATA_FROM_INDEX(state, slot_index);
+		int data_found = 0;
 
 		/*
 		 * Beware of the address dependency - data is calculated
@@ -665,36 +664,36 @@ process_मुक्त_queue(काष्ठा vchiq_state *state, BITSET_T *s
 			state->id, slot_index, data,
 			local->slot_queue_recycle, slot_queue_available);
 
-		/* Initialise the biपंचांगask क्रम services which have used this slot */
-		स_रखो(service_found, 0, length);
+		/* Initialise the bitmask for services which have used this slot */
+		memset(service_found, 0, length);
 
 		pos = 0;
 
-		जबतक (pos < VCHIQ_SLOT_SIZE) अणु
-			काष्ठा vchiq_header *header =
-				(काष्ठा vchiq_header *)(data + pos);
-			पूर्णांक msgid = header->msgid;
+		while (pos < VCHIQ_SLOT_SIZE) {
+			struct vchiq_header *header =
+				(struct vchiq_header *)(data + pos);
+			int msgid = header->msgid;
 
-			अगर (VCHIQ_MSG_TYPE(msgid) == VCHIQ_MSG_DATA) अणु
-				पूर्णांक port = VCHIQ_MSG_SRCPORT(msgid);
-				काष्ठा vchiq_service_quota *quota =
+			if (VCHIQ_MSG_TYPE(msgid) == VCHIQ_MSG_DATA) {
+				int port = VCHIQ_MSG_SRCPORT(msgid);
+				struct vchiq_service_quota *quota =
 					&state->service_quotas[port];
-				पूर्णांक count;
+				int count;
 
 				spin_lock(&quota_spinlock);
 				count = quota->message_use_count;
-				अगर (count > 0)
+				if (count > 0)
 					quota->message_use_count =
 						count - 1;
 				spin_unlock(&quota_spinlock);
 
-				अगर (count == quota->message_quota)
+				if (count == quota->message_quota)
 					/*
 					 * Signal the service that it
 					 * has dropped below its quota
 					 */
 					complete(&quota->quota_event);
-				अन्यथा अगर (count == 0) अणु
+				else if (count == 0) {
 					vchiq_log_error(vchiq_core_log_level,
 						"service %d message_use_count=%d (header %pK, msgid %x, header->msgid %x, header->size %x)",
 						port,
@@ -702,21 +701,21 @@ process_मुक्त_queue(काष्ठा vchiq_state *state, BITSET_T *s
 						header, msgid, header->msgid,
 						header->size);
 					WARN(1, "invalid message use count\n");
-				पूर्ण
-				अगर (!BITSET_IS_SET(service_found, port)) अणु
-					/* Set the found bit क्रम this service */
+				}
+				if (!BITSET_IS_SET(service_found, port)) {
+					/* Set the found bit for this service */
 					BITSET_SET(service_found, port);
 
 					spin_lock(&quota_spinlock);
 					count = quota->slot_use_count;
-					अगर (count > 0)
+					if (count > 0)
 						quota->slot_use_count =
 							count - 1;
 					spin_unlock(&quota_spinlock);
 
-					अगर (count > 0) अणु
+					if (count > 0) {
 						/*
-						 * Signal the service in हाल
+						 * Signal the service in case
 						 * it has dropped below its quota
 						 */
 						complete(&quota->quota_event);
@@ -726,7 +725,7 @@ process_मुक्त_queue(काष्ठा vchiq_state *state, BITSET_T *s
 							state->id, port,
 							header->size, header,
 							count - 1);
-					पूर्ण अन्यथा अणु
+					} else {
 						vchiq_log_error(
 							vchiq_core_log_level,
 								"service %d slot_use_count=%d (header %pK, msgid %x, header->msgid %x, header->size %x)",
@@ -734,102 +733,102 @@ process_मुक्त_queue(काष्ठा vchiq_state *state, BITSET_T *s
 							msgid, header->msgid,
 							header->size);
 						WARN(1, "bad slot use count\n");
-					पूर्ण
-				पूर्ण
+					}
+				}
 
 				data_found = 1;
-			पूर्ण
+			}
 
 			pos += calc_stride(header->size);
-			अगर (pos > VCHIQ_SLOT_SIZE) अणु
+			if (pos > VCHIQ_SLOT_SIZE) {
 				vchiq_log_error(vchiq_core_log_level,
 					"pfq - pos %x: header %pK, msgid %x, header->msgid %x, header->size %x",
 					pos, header, msgid, header->msgid,
 					header->size);
 				WARN(1, "invalid slot position\n");
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अगर (data_found) अणु
-			पूर्णांक count;
+		if (data_found) {
+			int count;
 
 			spin_lock(&quota_spinlock);
 			count = state->data_use_count;
-			अगर (count > 0)
+			if (count > 0)
 				state->data_use_count =
 					count - 1;
 			spin_unlock(&quota_spinlock);
-			अगर (count == state->data_quota)
+			if (count == state->data_quota)
 				complete(&state->data_quota_event);
-		पूर्ण
+		}
 
 		/*
 		 * Don't allow the slot to be reused until we are no
-		 * दीर्घer पूर्णांकerested in it.
+		 * longer interested in it.
 		 */
 		mb();
 
 		state->slot_queue_available = slot_queue_available;
 		complete(&state->slot_available_event);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल sमाप_प्रकार
-स_नकल_copy_callback(
-	व्योम *context, व्योम *dest,
-	माप_प्रकार offset, माप_प्रकार maxsize)
-अणु
-	स_नकल(dest + offset, context + offset, maxsize);
-	वापस maxsize;
-पूर्ण
+static ssize_t
+memcpy_copy_callback(
+	void *context, void *dest,
+	size_t offset, size_t maxsize)
+{
+	memcpy(dest + offset, context + offset, maxsize);
+	return maxsize;
+}
 
-अटल sमाप_प्रकार
+static ssize_t
 copy_message_data(
-	sमाप_प्रकार (*copy_callback)(व्योम *context, व्योम *dest,
-				 माप_प्रकार offset, माप_प्रकार maxsize),
-	व्योम *context,
-	व्योम *dest,
-	माप_प्रकार size)
-अणु
-	माप_प्रकार pos = 0;
+	ssize_t (*copy_callback)(void *context, void *dest,
+				 size_t offset, size_t maxsize),
+	void *context,
+	void *dest,
+	size_t size)
+{
+	size_t pos = 0;
 
-	जबतक (pos < size) अणु
-		sमाप_प्रकार callback_result;
-		माप_प्रकार max_bytes = size - pos;
+	while (pos < size) {
+		ssize_t callback_result;
+		size_t max_bytes = size - pos;
 
 		callback_result =
 			copy_callback(context, dest + pos,
 				      pos, max_bytes);
 
-		अगर (callback_result < 0)
-			वापस callback_result;
+		if (callback_result < 0)
+			return callback_result;
 
-		अगर (!callback_result)
-			वापस -EIO;
+		if (!callback_result)
+			return -EIO;
 
-		अगर (callback_result > max_bytes)
-			वापस -EIO;
+		if (callback_result > max_bytes)
+			return -EIO;
 
 		pos += callback_result;
-	पूर्ण
+	}
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
-/* Called by the slot handler and application thपढ़ोs */
-अटल क्रमागत vchiq_status
-queue_message(काष्ठा vchiq_state *state, काष्ठा vchiq_service *service,
-	      पूर्णांक msgid,
-	      sमाप_प्रकार (*copy_callback)(व्योम *context, व्योम *dest,
-				       माप_प्रकार offset, माप_प्रकार maxsize),
-	      व्योम *context, माप_प्रकार size, पूर्णांक flags)
-अणु
-	काष्ठा vchiq_shared_state *local;
-	काष्ठा vchiq_service_quota *quota = शून्य;
-	काष्ठा vchiq_header *header;
-	पूर्णांक type = VCHIQ_MSG_TYPE(msgid);
+/* Called by the slot handler and application threads */
+static enum vchiq_status
+queue_message(struct vchiq_state *state, struct vchiq_service *service,
+	      int msgid,
+	      ssize_t (*copy_callback)(void *context, void *dest,
+				       size_t offset, size_t maxsize),
+	      void *context, size_t size, int flags)
+{
+	struct vchiq_shared_state *local;
+	struct vchiq_service_quota *quota = NULL;
+	struct vchiq_header *header;
+	int type = VCHIQ_MSG_TYPE(msgid);
 
-	माप_प्रकार stride;
+	size_t stride;
 
 	local = state->local;
 
@@ -837,69 +836,69 @@ queue_message(काष्ठा vchiq_state *state, काष्ठा vchiq_se
 
 	WARN_ON(!(stride <= VCHIQ_SLOT_SIZE));
 
-	अगर (!(flags & QMFLAGS_NO_MUTEX_LOCK) &&
-	    mutex_lock_समाप्तable(&state->slot_mutex))
-		वापस VCHIQ_RETRY;
+	if (!(flags & QMFLAGS_NO_MUTEX_LOCK) &&
+	    mutex_lock_killable(&state->slot_mutex))
+		return VCHIQ_RETRY;
 
-	अगर (type == VCHIQ_MSG_DATA) अणु
-		पूर्णांक tx_end_index;
+	if (type == VCHIQ_MSG_DATA) {
+		int tx_end_index;
 
-		अगर (!service) अणु
+		if (!service) {
 			WARN(1, "%s: service is NULL\n", __func__);
 			mutex_unlock(&state->slot_mutex);
-			वापस VCHIQ_ERROR;
-		पूर्ण
+			return VCHIQ_ERROR;
+		}
 
 		WARN_ON(flags & (QMFLAGS_NO_MUTEX_LOCK |
 				 QMFLAGS_NO_MUTEX_UNLOCK));
 
-		अगर (service->closing) अणु
-			/* The service has been बंदd */
+		if (service->closing) {
+			/* The service has been closed */
 			mutex_unlock(&state->slot_mutex);
-			वापस VCHIQ_ERROR;
-		पूर्ण
+			return VCHIQ_ERROR;
+		}
 
 		quota = &state->service_quotas[service->localport];
 
 		spin_lock(&quota_spinlock);
 
 		/*
-		 * Ensure this service करोesn't use more than its quota of
+		 * Ensure this service doesn't use more than its quota of
 		 * messages or slots
 		 */
 		tx_end_index = SLOT_QUEUE_INDEX_FROM_POS(
 			state->local_tx_pos + stride - 1);
 
 		/*
-		 * Ensure data messages करोn't use more than their quota of
+		 * Ensure data messages don't use more than their quota of
 		 * slots
 		 */
-		जबतक ((tx_end_index != state->previous_data_index) &&
-			(state->data_use_count == state->data_quota)) अणु
+		while ((tx_end_index != state->previous_data_index) &&
+			(state->data_use_count == state->data_quota)) {
 			VCHIQ_STATS_INC(state, data_stalls);
 			spin_unlock(&quota_spinlock);
 			mutex_unlock(&state->slot_mutex);
 
-			अगर (रुको_क्रम_completion_पूर्णांकerruptible(
+			if (wait_for_completion_interruptible(
 						&state->data_quota_event))
-				वापस VCHIQ_RETRY;
+				return VCHIQ_RETRY;
 
 			mutex_lock(&state->slot_mutex);
 			spin_lock(&quota_spinlock);
 			tx_end_index = SLOT_QUEUE_INDEX_FROM_POS(
 				state->local_tx_pos + stride - 1);
-			अगर ((tx_end_index == state->previous_data_index) ||
-				(state->data_use_count < state->data_quota)) अणु
-				/* Pass the संकेत on to other रुकोers */
+			if ((tx_end_index == state->previous_data_index) ||
+				(state->data_use_count < state->data_quota)) {
+				/* Pass the signal on to other waiters */
 				complete(&state->data_quota_event);
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 
-		जबतक ((quota->message_use_count == quota->message_quota) ||
+		while ((quota->message_use_count == quota->message_quota) ||
 			((tx_end_index != quota->previous_tx_index) &&
 			(quota->slot_use_count ==
-				quota->slot_quota))) अणु
+				quota->slot_quota))) {
 			spin_unlock(&quota_spinlock);
 			vchiq_log_trace(vchiq_core_log_level,
 				"%d: qm:%d %s,%zx - quota stall (msg %d, slot %d)",
@@ -909,44 +908,44 @@ queue_message(काष्ठा vchiq_state *state, काष्ठा vchiq_se
 				quota->slot_use_count);
 			VCHIQ_SERVICE_STATS_INC(service, quota_stalls);
 			mutex_unlock(&state->slot_mutex);
-			अगर (रुको_क्रम_completion_पूर्णांकerruptible(
+			if (wait_for_completion_interruptible(
 						&quota->quota_event))
-				वापस VCHIQ_RETRY;
-			अगर (service->closing)
-				वापस VCHIQ_ERROR;
-			अगर (mutex_lock_समाप्तable(&state->slot_mutex))
-				वापस VCHIQ_RETRY;
-			अगर (service->srvstate != VCHIQ_SRVSTATE_OPEN) अणु
-				/* The service has been बंदd */
+				return VCHIQ_RETRY;
+			if (service->closing)
+				return VCHIQ_ERROR;
+			if (mutex_lock_killable(&state->slot_mutex))
+				return VCHIQ_RETRY;
+			if (service->srvstate != VCHIQ_SRVSTATE_OPEN) {
+				/* The service has been closed */
 				mutex_unlock(&state->slot_mutex);
-				वापस VCHIQ_ERROR;
-			पूर्ण
+				return VCHIQ_ERROR;
+			}
 			spin_lock(&quota_spinlock);
 			tx_end_index = SLOT_QUEUE_INDEX_FROM_POS(
 				state->local_tx_pos + stride - 1);
-		पूर्ण
+		}
 
 		spin_unlock(&quota_spinlock);
-	पूर्ण
+	}
 
 	header = reserve_space(state, stride, flags & QMFLAGS_IS_BLOCKING);
 
-	अगर (!header) अणु
-		अगर (service)
+	if (!header) {
+		if (service)
 			VCHIQ_SERVICE_STATS_INC(service, slot_stalls);
 		/*
-		 * In the event of a failure, वापस the mutex to the
+		 * In the event of a failure, return the mutex to the
 		 * state it was in
 		 */
-		अगर (!(flags & QMFLAGS_NO_MUTEX_LOCK))
+		if (!(flags & QMFLAGS_NO_MUTEX_LOCK))
 			mutex_unlock(&state->slot_mutex);
-		वापस VCHIQ_RETRY;
-	पूर्ण
+		return VCHIQ_RETRY;
+	}
 
-	अगर (type == VCHIQ_MSG_DATA) अणु
-		sमाप_प्रकार callback_result;
-		पूर्णांक tx_end_index;
-		पूर्णांक slot_use_count;
+	if (type == VCHIQ_MSG_DATA) {
+		ssize_t callback_result;
+		int tx_end_index;
+		int slot_use_count;
 
 		vchiq_log_info(vchiq_core_log_level,
 			"%d: qm %s@%pK,%zx (%d->%d)",
@@ -961,19 +960,19 @@ queue_message(काष्ठा vchiq_state *state, काष्ठा vchiq_se
 			copy_message_data(copy_callback, context,
 					  header->data, size);
 
-		अगर (callback_result < 0) अणु
+		if (callback_result < 0) {
 			mutex_unlock(&state->slot_mutex);
 			VCHIQ_SERVICE_STATS_INC(service,
 						error_count);
-			वापस VCHIQ_ERROR;
-		पूर्ण
+			return VCHIQ_ERROR;
+		}
 
-		अगर (SRVTRACE_ENABLED(service,
+		if (SRVTRACE_ENABLED(service,
 				     VCHIQ_LOG_INFO))
 			vchiq_log_dump_mem("Sent", 0,
 					   header->data,
-					   min((माप_प्रकार)16,
-					       (माप_प्रकार)callback_result));
+					   min((size_t)16,
+					       (size_t)callback_result));
 
 		spin_lock(&quota_spinlock);
 		quota->message_use_count++;
@@ -985,25 +984,25 @@ queue_message(काष्ठा vchiq_state *state, काष्ठा vchiq_se
 		 * If this transmission can't fit in the last slot used by any
 		 * service, the data_use_count must be increased.
 		 */
-		अगर (tx_end_index != state->previous_data_index) अणु
+		if (tx_end_index != state->previous_data_index) {
 			state->previous_data_index = tx_end_index;
 			state->data_use_count++;
-		पूर्ण
+		}
 
 		/*
 		 * If this isn't the same slot last used by this service,
 		 * the service's slot_use_count must be increased.
 		 */
-		अगर (tx_end_index != quota->previous_tx_index) अणु
+		if (tx_end_index != quota->previous_tx_index) {
 			quota->previous_tx_index = tx_end_index;
 			slot_use_count = ++quota->slot_use_count;
-		पूर्ण अन्यथा अणु
+		} else {
 			slot_use_count = 0;
-		पूर्ण
+		}
 
 		spin_unlock(&quota_spinlock);
 
-		अगर (slot_use_count)
+		if (slot_use_count)
 			vchiq_log_trace(vchiq_core_log_level,
 				"%d: qm:%d %s,%zx - slot_use->%d (hdr %p)",
 				state->id, service->localport,
@@ -1012,15 +1011,15 @@ queue_message(काष्ठा vchiq_state *state, काष्ठा vchiq_se
 
 		VCHIQ_SERVICE_STATS_INC(service, ctrl_tx_count);
 		VCHIQ_SERVICE_STATS_ADD(service, ctrl_tx_bytes, size);
-	पूर्ण अन्यथा अणु
+	} else {
 		vchiq_log_info(vchiq_core_log_level,
 			"%d: qm %s@%pK,%zx (%d->%d)", state->id,
 			msg_type_str(VCHIQ_MSG_TYPE(msgid)),
 			header, size, VCHIQ_MSG_SRCPORT(msgid),
 			VCHIQ_MSG_DSTPORT(msgid));
-		अगर (size != 0) अणु
+		if (size != 0) {
 			/*
-			 * It is assumed क्रम now that this code path
+			 * It is assumed for now that this code path
 			 * only happens from calls inside this file.
 			 *
 			 * External callers are through the vchiq_queue_message
@@ -1031,15 +1030,15 @@ queue_message(काष्ठा vchiq_state *state, काष्ठा vchiq_se
 			 */
 			copy_message_data(copy_callback, context,
 					  header->data, size);
-		पूर्ण
+		}
 		VCHIQ_STATS_INC(state, ctrl_tx_count);
-	पूर्ण
+	}
 
 	header->msgid = msgid;
 	header->size = size;
 
-	अणु
-		पूर्णांक svc_fourcc;
+	{
+		int svc_fourcc;
 
 		svc_fourcc = service
 			? service->base.fourcc
@@ -1053,7 +1052,7 @@ queue_message(काष्ठा vchiq_state *state, काष्ठा vchiq_se
 			VCHIQ_MSG_SRCPORT(msgid),
 			VCHIQ_MSG_DSTPORT(msgid),
 			size);
-	पूर्ण
+	}
 
 	/* Make sure the new header is visible to the peer. */
 	wmb();
@@ -1062,50 +1061,50 @@ queue_message(काष्ठा vchiq_state *state, काष्ठा vchiq_se
 	local->tx_pos = state->local_tx_pos;
 	wmb();
 
-	अगर (service && (type == VCHIQ_MSG_CLOSE))
+	if (service && (type == VCHIQ_MSG_CLOSE))
 		vchiq_set_service_state(service, VCHIQ_SRVSTATE_CLOSESENT);
 
-	अगर (!(flags & QMFLAGS_NO_MUTEX_UNLOCK))
+	if (!(flags & QMFLAGS_NO_MUTEX_UNLOCK))
 		mutex_unlock(&state->slot_mutex);
 
-	remote_event_संकेत(&state->remote->trigger);
+	remote_event_signal(&state->remote->trigger);
 
-	वापस VCHIQ_SUCCESS;
-पूर्ण
+	return VCHIQ_SUCCESS;
+}
 
-/* Called by the slot handler and application thपढ़ोs */
-अटल क्रमागत vchiq_status
-queue_message_sync(काष्ठा vchiq_state *state, काष्ठा vchiq_service *service,
-		   पूर्णांक msgid,
-		   sमाप_प्रकार (*copy_callback)(व्योम *context, व्योम *dest,
-					    माप_प्रकार offset, माप_प्रकार maxsize),
-		   व्योम *context, पूर्णांक size, पूर्णांक is_blocking)
-अणु
-	काष्ठा vchiq_shared_state *local;
-	काष्ठा vchiq_header *header;
-	sमाप_प्रकार callback_result;
+/* Called by the slot handler and application threads */
+static enum vchiq_status
+queue_message_sync(struct vchiq_state *state, struct vchiq_service *service,
+		   int msgid,
+		   ssize_t (*copy_callback)(void *context, void *dest,
+					    size_t offset, size_t maxsize),
+		   void *context, int size, int is_blocking)
+{
+	struct vchiq_shared_state *local;
+	struct vchiq_header *header;
+	ssize_t callback_result;
 
 	local = state->local;
 
-	अगर (VCHIQ_MSG_TYPE(msgid) != VCHIQ_MSG_RESUME &&
-	    mutex_lock_समाप्तable(&state->sync_mutex))
-		वापस VCHIQ_RETRY;
+	if (VCHIQ_MSG_TYPE(msgid) != VCHIQ_MSG_RESUME &&
+	    mutex_lock_killable(&state->sync_mutex))
+		return VCHIQ_RETRY;
 
-	remote_event_रुको(&state->sync_release_event, &local->sync_release);
+	remote_event_wait(&state->sync_release_event, &local->sync_release);
 
 	rmb();
 
-	header = (काष्ठा vchiq_header *)SLOT_DATA_FROM_INDEX(state,
+	header = (struct vchiq_header *)SLOT_DATA_FROM_INDEX(state,
 		local->slot_sync);
 
-	अणु
-		पूर्णांक oldmsgid = header->msgid;
+	{
+		int oldmsgid = header->msgid;
 
-		अगर (oldmsgid != VCHIQ_MSGID_PADDING)
+		if (oldmsgid != VCHIQ_MSGID_PADDING)
 			vchiq_log_error(vchiq_core_log_level,
 				"%d: qms - msgid %x, not PADDING",
 				state->id, oldmsgid);
-	पूर्ण
+	}
 
 	vchiq_log_info(vchiq_sync_log_level,
 		       "%d: qms %s@%pK,%x (%d->%d)", state->id,
@@ -1117,32 +1116,32 @@ queue_message_sync(काष्ठा vchiq_state *state, काष्ठा vch
 		copy_message_data(copy_callback, context,
 				  header->data, size);
 
-	अगर (callback_result < 0) अणु
+	if (callback_result < 0) {
 		mutex_unlock(&state->slot_mutex);
 		VCHIQ_SERVICE_STATS_INC(service,
 					error_count);
-		वापस VCHIQ_ERROR;
-	पूर्ण
+		return VCHIQ_ERROR;
+	}
 
-	अगर (service) अणु
-		अगर (SRVTRACE_ENABLED(service,
+	if (service) {
+		if (SRVTRACE_ENABLED(service,
 				     VCHIQ_LOG_INFO))
 			vchiq_log_dump_mem("Sent", 0,
 					   header->data,
-					   min((माप_प्रकार)16,
-					       (माप_प्रकार)callback_result));
+					   min((size_t)16,
+					       (size_t)callback_result));
 
 		VCHIQ_SERVICE_STATS_INC(service, ctrl_tx_count);
 		VCHIQ_SERVICE_STATS_ADD(service, ctrl_tx_bytes, size);
-	पूर्ण अन्यथा अणु
+	} else {
 		VCHIQ_STATS_INC(state, ctrl_tx_count);
-	पूर्ण
+	}
 
 	header->size = size;
 	header->msgid = msgid;
 
-	अगर (vchiq_sync_log_level >= VCHIQ_LOG_TRACE) अणु
-		पूर्णांक svc_fourcc;
+	if (vchiq_sync_log_level >= VCHIQ_LOG_TRACE) {
+		int svc_fourcc;
 
 		svc_fourcc = service
 			? service->base.fourcc
@@ -1156,52 +1155,52 @@ queue_message_sync(काष्ठा vchiq_state *state, काष्ठा vch
 			VCHIQ_MSG_SRCPORT(msgid),
 			VCHIQ_MSG_DSTPORT(msgid),
 			size);
-	पूर्ण
+	}
 
-	remote_event_संकेत(&state->remote->sync_trigger);
+	remote_event_signal(&state->remote->sync_trigger);
 
-	अगर (VCHIQ_MSG_TYPE(msgid) != VCHIQ_MSG_PAUSE)
+	if (VCHIQ_MSG_TYPE(msgid) != VCHIQ_MSG_PAUSE)
 		mutex_unlock(&state->sync_mutex);
 
-	वापस VCHIQ_SUCCESS;
-पूर्ण
+	return VCHIQ_SUCCESS;
+}
 
-अटल अंतरभूत व्योम
-claim_slot(काष्ठा vchiq_slot_info *slot)
-अणु
+static inline void
+claim_slot(struct vchiq_slot_info *slot)
+{
 	slot->use_count++;
-पूर्ण
+}
 
-अटल व्योम
-release_slot(काष्ठा vchiq_state *state, काष्ठा vchiq_slot_info *slot_info,
-	     काष्ठा vchiq_header *header, काष्ठा vchiq_service *service)
-अणु
-	पूर्णांक release_count;
+static void
+release_slot(struct vchiq_state *state, struct vchiq_slot_info *slot_info,
+	     struct vchiq_header *header, struct vchiq_service *service)
+{
+	int release_count;
 
 	mutex_lock(&state->recycle_mutex);
 
-	अगर (header) अणु
-		पूर्णांक msgid = header->msgid;
+	if (header) {
+		int msgid = header->msgid;
 
-		अगर (((msgid & VCHIQ_MSGID_CLAIMED) == 0) ||
-			(service && service->closing)) अणु
+		if (((msgid & VCHIQ_MSGID_CLAIMED) == 0) ||
+			(service && service->closing)) {
 			mutex_unlock(&state->recycle_mutex);
-			वापस;
-		पूर्ण
+			return;
+		}
 
-		/* Reग_लिखो the message header to prevent a द्विगुन release */
+		/* Rewrite the message header to prevent a double release */
 		header->msgid = msgid & ~VCHIQ_MSGID_CLAIMED;
-	पूर्ण
+	}
 
 	release_count = slot_info->release_count;
 	slot_info->release_count = ++release_count;
 
-	अगर (release_count == slot_info->use_count) अणु
-		पूर्णांक slot_queue_recycle;
-		/* Add to the मुक्तd queue */
+	if (release_count == slot_info->use_count) {
+		int slot_queue_recycle;
+		/* Add to the freed queue */
 
 		/*
-		 * A पढ़ो barrier is necessary here to prevent speculative
+		 * A read barrier is necessary here to prevent speculative
 		 * fetches of remote->slot_queue_recycle from overtaking the
 		 * mutex.
 		 */
@@ -1218,71 +1217,71 @@ release_slot(काष्ठा vchiq_state *state, काष्ठा vchiq_slo
 			state->remote->slot_queue_recycle);
 
 		/*
-		 * A ग_लिखो barrier is necessary, but remote_event_संकेत
+		 * A write barrier is necessary, but remote_event_signal
 		 * contains one.
 		 */
-		remote_event_संकेत(&state->remote->recycle);
-	पूर्ण
+		remote_event_signal(&state->remote->recycle);
+	}
 
 	mutex_unlock(&state->recycle_mutex);
-पूर्ण
+}
 
-/* Called by the slot handler - करोn't hold the bulk mutex */
-अटल क्रमागत vchiq_status
-notअगरy_bulks(काष्ठा vchiq_service *service, काष्ठा vchiq_bulk_queue *queue,
-	     पूर्णांक retry_poll)
-अणु
-	क्रमागत vchiq_status status = VCHIQ_SUCCESS;
+/* Called by the slot handler - don't hold the bulk mutex */
+static enum vchiq_status
+notify_bulks(struct vchiq_service *service, struct vchiq_bulk_queue *queue,
+	     int retry_poll)
+{
+	enum vchiq_status status = VCHIQ_SUCCESS;
 
 	vchiq_log_trace(vchiq_core_log_level,
 		"%d: nb:%d %cx - p=%x rn=%x r=%x",
 		service->state->id, service->localport,
 		(queue == &service->bulk_tx) ? 't' : 'r',
-		queue->process, queue->remote_notअगरy, queue->हटाओ);
+		queue->process, queue->remote_notify, queue->remove);
 
-	queue->remote_notअगरy = queue->process;
+	queue->remote_notify = queue->process;
 
-	अगर (status == VCHIQ_SUCCESS) अणु
-		जबतक (queue->हटाओ != queue->remote_notअगरy) अणु
-			काष्ठा vchiq_bulk *bulk =
-				&queue->bulks[BULK_INDEX(queue->हटाओ)];
+	if (status == VCHIQ_SUCCESS) {
+		while (queue->remove != queue->remote_notify) {
+			struct vchiq_bulk *bulk =
+				&queue->bulks[BULK_INDEX(queue->remove)];
 
 			/*
-			 * Only generate callbacks क्रम non-dummy bulk
+			 * Only generate callbacks for non-dummy bulk
 			 * requests, and non-terminated services
 			 */
-			अगर (bulk->data && service->instance) अणु
-				अगर (bulk->actual != VCHIQ_BULK_ACTUAL_ABORTED) अणु
-					अगर (bulk->dir == VCHIQ_BULK_TRANSMIT) अणु
+			if (bulk->data && service->instance) {
+				if (bulk->actual != VCHIQ_BULK_ACTUAL_ABORTED) {
+					if (bulk->dir == VCHIQ_BULK_TRANSMIT) {
 						VCHIQ_SERVICE_STATS_INC(service,
 							bulk_tx_count);
 						VCHIQ_SERVICE_STATS_ADD(service,
 							bulk_tx_bytes,
 							bulk->actual);
-					पूर्ण अन्यथा अणु
+					} else {
 						VCHIQ_SERVICE_STATS_INC(service,
 							bulk_rx_count);
 						VCHIQ_SERVICE_STATS_ADD(service,
 							bulk_rx_bytes,
 							bulk->actual);
-					पूर्ण
-				पूर्ण अन्यथा अणु
+					}
+				} else {
 					VCHIQ_SERVICE_STATS_INC(service,
-						bulk_पातed_count);
-				पूर्ण
-				अगर (bulk->mode == VCHIQ_BULK_MODE_BLOCKING) अणु
-					काष्ठा bulk_रुकोer *रुकोer;
+						bulk_aborted_count);
+				}
+				if (bulk->mode == VCHIQ_BULK_MODE_BLOCKING) {
+					struct bulk_waiter *waiter;
 
-					spin_lock(&bulk_रुकोer_spinlock);
-					रुकोer = bulk->userdata;
-					अगर (रुकोer) अणु
-						रुकोer->actual = bulk->actual;
-						complete(&रुकोer->event);
-					पूर्ण
-					spin_unlock(&bulk_रुकोer_spinlock);
-				पूर्ण अन्यथा अगर (bulk->mode ==
-					VCHIQ_BULK_MODE_CALLBACK) अणु
-					क्रमागत vchiq_reason reason = (bulk->dir ==
+					spin_lock(&bulk_waiter_spinlock);
+					waiter = bulk->userdata;
+					if (waiter) {
+						waiter->actual = bulk->actual;
+						complete(&waiter->event);
+					}
+					spin_unlock(&bulk_waiter_spinlock);
+				} else if (bulk->mode ==
+					VCHIQ_BULK_MODE_CALLBACK) {
+					enum vchiq_reason reason = (bulk->dir ==
 						VCHIQ_BULK_TRANSMIT) ?
 						((bulk->actual ==
 						VCHIQ_BULK_ACTUAL_ABORTED) ?
@@ -1293,51 +1292,51 @@ notअगरy_bulks(काष्ठा vchiq_service *service, काष्ठ�
 						VCHIQ_BULK_RECEIVE_ABORTED :
 						VCHIQ_BULK_RECEIVE_DONE);
 					status = make_service_callback(service,
-						reason,	शून्य, bulk->userdata);
-					अगर (status == VCHIQ_RETRY)
-						अवरोध;
-				पूर्ण
-			पूर्ण
+						reason,	NULL, bulk->userdata);
+					if (status == VCHIQ_RETRY)
+						break;
+				}
+			}
 
-			queue->हटाओ++;
-			complete(&service->bulk_हटाओ_event);
-		पूर्ण
-		अगर (!retry_poll)
+			queue->remove++;
+			complete(&service->bulk_remove_event);
+		}
+		if (!retry_poll)
 			status = VCHIQ_SUCCESS;
-	पूर्ण
+	}
 
-	अगर (status == VCHIQ_RETRY)
+	if (status == VCHIQ_RETRY)
 		request_poll(service->state, service,
 			(queue == &service->bulk_tx) ?
 			VCHIQ_POLL_TXNOTIFY : VCHIQ_POLL_RXNOTIFY);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-/* Called by the slot handler thपढ़ो */
-अटल व्योम
-poll_services(काष्ठा vchiq_state *state)
-अणु
-	पूर्णांक group, i;
+/* Called by the slot handler thread */
+static void
+poll_services(struct vchiq_state *state)
+{
+	int group, i;
 
-	क्रम (group = 0; group < BITSET_SIZE(state->unused_service); group++) अणु
+	for (group = 0; group < BITSET_SIZE(state->unused_service); group++) {
 		u32 flags;
 
 		flags = atomic_xchg(&state->poll_services[group], 0);
-		क्रम (i = 0; flags; i++) अणु
-			अगर (flags & BIT(i)) अणु
-				काष्ठा vchiq_service *service =
+		for (i = 0; flags; i++) {
+			if (flags & BIT(i)) {
+				struct vchiq_service *service =
 					find_service_by_port(state,
 						(group<<5) + i);
 				u32 service_flags;
 
 				flags &= ~BIT(i);
-				अगर (!service)
-					जारी;
+				if (!service)
+					continue;
 				service_flags =
 					atomic_xchg(&service->poll_flags, 0);
-				अगर (service_flags &
-					BIT(VCHIQ_POLL_REMOVE)) अणु
+				if (service_flags &
+					BIT(VCHIQ_POLL_REMOVE)) {
 					vchiq_log_info(vchiq_core_log_level,
 						"%d: ps - remove %d<->%d",
 						state->id, service->localport,
@@ -1345,71 +1344,71 @@ poll_services(काष्ठा vchiq_state *state)
 
 					/*
 					 * Make it look like a client, because
-					 * it must be हटाओd and not left in
+					 * it must be removed and not left in
 					 * the LISTENING state.
 					 */
-					service->खुला_fourcc =
+					service->public_fourcc =
 						VCHIQ_FOURCC_INVALID;
 
-					अगर (vchiq_बंद_service_पूर्णांकernal(
-						service, 0/*!बंद_recvd*/) !=
+					if (vchiq_close_service_internal(
+						service, 0/*!close_recvd*/) !=
 						VCHIQ_SUCCESS)
 						request_poll(state, service,
 							VCHIQ_POLL_REMOVE);
-				पूर्ण अन्यथा अगर (service_flags &
-					BIT(VCHIQ_POLL_TERMINATE)) अणु
+				} else if (service_flags &
+					BIT(VCHIQ_POLL_TERMINATE)) {
 					vchiq_log_info(vchiq_core_log_level,
 						"%d: ps - terminate %d<->%d",
 						state->id, service->localport,
 						service->remoteport);
-					अगर (vchiq_बंद_service_पूर्णांकernal(
-						service, 0/*!बंद_recvd*/) !=
+					if (vchiq_close_service_internal(
+						service, 0/*!close_recvd*/) !=
 						VCHIQ_SUCCESS)
 						request_poll(state, service,
 							VCHIQ_POLL_TERMINATE);
-				पूर्ण
-				अगर (service_flags & BIT(VCHIQ_POLL_TXNOTIFY))
-					notअगरy_bulks(service,
+				}
+				if (service_flags & BIT(VCHIQ_POLL_TXNOTIFY))
+					notify_bulks(service,
 						&service->bulk_tx,
 						1/*retry_poll*/);
-				अगर (service_flags & BIT(VCHIQ_POLL_RXNOTIFY))
-					notअगरy_bulks(service,
+				if (service_flags & BIT(VCHIQ_POLL_RXNOTIFY))
+					notify_bulks(service,
 						&service->bulk_rx,
 						1/*retry_poll*/);
 				unlock_service(service);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+			}
+		}
+	}
+}
 
 /* Called with the bulk_mutex held */
-अटल व्योम
-पात_outstanding_bulks(काष्ठा vchiq_service *service,
-			काष्ठा vchiq_bulk_queue *queue)
-अणु
-	पूर्णांक is_tx = (queue == &service->bulk_tx);
+static void
+abort_outstanding_bulks(struct vchiq_service *service,
+			struct vchiq_bulk_queue *queue)
+{
+	int is_tx = (queue == &service->bulk_tx);
 
 	vchiq_log_trace(vchiq_core_log_level,
 		"%d: aob:%d %cx - li=%x ri=%x p=%x",
 		service->state->id, service->localport, is_tx ? 't' : 'r',
 		queue->local_insert, queue->remote_insert, queue->process);
 
-	WARN_ON(!((पूर्णांक)(queue->local_insert - queue->process) >= 0));
-	WARN_ON(!((पूर्णांक)(queue->remote_insert - queue->process) >= 0));
+	WARN_ON(!((int)(queue->local_insert - queue->process) >= 0));
+	WARN_ON(!((int)(queue->remote_insert - queue->process) >= 0));
 
-	जबतक ((queue->process != queue->local_insert) ||
-		(queue->process != queue->remote_insert)) अणु
-		काष्ठा vchiq_bulk *bulk =
+	while ((queue->process != queue->local_insert) ||
+		(queue->process != queue->remote_insert)) {
+		struct vchiq_bulk *bulk =
 				&queue->bulks[BULK_INDEX(queue->process)];
 
-		अगर (queue->process == queue->remote_insert) अणु
+		if (queue->process == queue->remote_insert) {
 			/* fabricate a matching dummy bulk */
-			bulk->remote_data = शून्य;
+			bulk->remote_data = NULL;
 			bulk->remote_size = 0;
 			queue->remote_insert++;
-		पूर्ण
+		}
 
-		अगर (queue->process != queue->local_insert) अणु
+		if (queue->process != queue->local_insert) {
 			vchiq_complete_bulk(bulk);
 
 			vchiq_log_info(SRVTRACE_LEVEL(service),
@@ -1419,7 +1418,7 @@ poll_services(काष्ठा vchiq_state *state)
 				service->remoteport,
 				bulk->size,
 				bulk->remote_size);
-		पूर्ण अन्यथा अणु
+		} else {
 			/* fabricate a matching dummy bulk */
 			bulk->data = 0;
 			bulk->size = 0;
@@ -1427,27 +1426,27 @@ poll_services(काष्ठा vchiq_state *state)
 			bulk->dir = is_tx ? VCHIQ_BULK_TRANSMIT :
 				VCHIQ_BULK_RECEIVE;
 			queue->local_insert++;
-		पूर्ण
+		}
 
 		queue->process++;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक
-parse_खोलो(काष्ठा vchiq_state *state, काष्ठा vchiq_header *header)
-अणु
-	काष्ठा vchiq_service *service = शून्य;
-	पूर्णांक msgid, size;
-	अचिन्हित पूर्णांक localport, remoteport;
+static int
+parse_open(struct vchiq_state *state, struct vchiq_header *header)
+{
+	struct vchiq_service *service = NULL;
+	int msgid, size;
+	unsigned int localport, remoteport;
 
 	msgid = header->msgid;
 	size = header->size;
 	localport = VCHIQ_MSG_DSTPORT(msgid);
 	remoteport = VCHIQ_MSG_SRCPORT(msgid);
-	अगर (size >= माप(काष्ठा vchiq_खोलो_payload)) अणु
-		स्थिर काष्ठा vchiq_खोलो_payload *payload =
-			(काष्ठा vchiq_खोलो_payload *)header->data;
-		अचिन्हित पूर्णांक fourcc;
+	if (size >= sizeof(struct vchiq_open_payload)) {
+		const struct vchiq_open_payload *payload =
+			(struct vchiq_open_payload *)header->data;
+		unsigned int fourcc;
 
 		fourcc = payload->fourcc;
 		vchiq_log_info(vchiq_core_log_level,
@@ -1457,13 +1456,13 @@ parse_खोलो(काष्ठा vchiq_state *state, काष्ठा vch
 
 		service = get_listening_service(state, fourcc);
 
-		अगर (service) अणु
+		if (service) {
 			/* A matching service exists */
-			लघु version = payload->version;
-			लघु version_min = payload->version_min;
+			short version = payload->version;
+			short version_min = payload->version_min;
 
-			अगर ((service->version < version_min) ||
-				(version < service->version_min)) अणु
+			if ((service->version < version_min) ||
+				(version < service->version_min)) {
 				/* Version mismatch */
 				vchiq_loud_error_header();
 				vchiq_loud_error("%d: service %d (%c%c%c%c) "
@@ -1475,117 +1474,117 @@ parse_खोलो(काष्ठा vchiq_state *state, काष्ठा vch
 					version, version_min);
 				vchiq_loud_error_footer();
 				unlock_service(service);
-				service = शून्य;
-				जाओ fail_खोलो;
-			पूर्ण
+				service = NULL;
+				goto fail_open;
+			}
 			service->peer_version = version;
 
-			अगर (service->srvstate == VCHIQ_SRVSTATE_LISTENING) अणु
-				काष्ठा vchiq_खोलोack_payload ack_payload = अणु
+			if (service->srvstate == VCHIQ_SRVSTATE_LISTENING) {
+				struct vchiq_openack_payload ack_payload = {
 					service->version
-				पूर्ण;
+				};
 
-				अगर (state->version_common <
+				if (state->version_common <
 				    VCHIQ_VERSION_SYNCHRONOUS_MODE)
 					service->sync = 0;
 
 				/* Acknowledge the OPEN */
-				अगर (service->sync) अणु
-					अगर (queue_message_sync(
+				if (service->sync) {
+					if (queue_message_sync(
 						state,
-						शून्य,
+						NULL,
 						VCHIQ_MAKE_MSG(
 							VCHIQ_MSG_OPENACK,
 							service->localport,
 							remoteport),
-						स_नकल_copy_callback,
+						memcpy_copy_callback,
 						&ack_payload,
-						माप(ack_payload),
+						sizeof(ack_payload),
 						0) == VCHIQ_RETRY)
-						जाओ bail_not_पढ़ोy;
-				पूर्ण अन्यथा अणु
-					अगर (queue_message(state,
-							शून्य,
+						goto bail_not_ready;
+				} else {
+					if (queue_message(state,
+							NULL,
 							VCHIQ_MAKE_MSG(
 							VCHIQ_MSG_OPENACK,
 							service->localport,
 							remoteport),
-						स_नकल_copy_callback,
+						memcpy_copy_callback,
 						&ack_payload,
-						माप(ack_payload),
+						sizeof(ack_payload),
 						0) == VCHIQ_RETRY)
-						जाओ bail_not_पढ़ोy;
-				पूर्ण
+						goto bail_not_ready;
+				}
 
-				/* The service is now खोलो */
+				/* The service is now open */
 				vchiq_set_service_state(service,
 					service->sync ? VCHIQ_SRVSTATE_OPENSYNC
 					: VCHIQ_SRVSTATE_OPEN);
-			पूर्ण
+			}
 
 			/* Success - the message has been dealt with */
 			unlock_service(service);
-			वापस 1;
-		पूर्ण
-	पूर्ण
+			return 1;
+		}
+	}
 
-fail_खोलो:
+fail_open:
 	/* No available service, or an invalid request - send a CLOSE */
-	अगर (queue_message(state, शून्य,
+	if (queue_message(state, NULL,
 		VCHIQ_MAKE_MSG(VCHIQ_MSG_CLOSE, 0, VCHIQ_MSG_SRCPORT(msgid)),
-		शून्य, शून्य, 0, 0) == VCHIQ_RETRY)
-		जाओ bail_not_पढ़ोy;
+		NULL, NULL, 0, 0) == VCHIQ_RETRY)
+		goto bail_not_ready;
 
-	वापस 1;
+	return 1;
 
-bail_not_पढ़ोy:
-	अगर (service)
+bail_not_ready:
+	if (service)
 		unlock_service(service);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Called by the slot handler thपढ़ो */
-अटल व्योम
-parse_rx_slots(काष्ठा vchiq_state *state)
-अणु
-	काष्ठा vchiq_shared_state *remote = state->remote;
-	काष्ठा vchiq_service *service = शून्य;
-	पूर्णांक tx_pos;
+/* Called by the slot handler thread */
+static void
+parse_rx_slots(struct vchiq_state *state)
+{
+	struct vchiq_shared_state *remote = state->remote;
+	struct vchiq_service *service = NULL;
+	int tx_pos;
 
 	DEBUG_INITIALISE(state->local)
 
 	tx_pos = remote->tx_pos;
 
-	जबतक (state->rx_pos != tx_pos) अणु
-		काष्ठा vchiq_header *header;
-		पूर्णांक msgid, size;
-		पूर्णांक type;
-		अचिन्हित पूर्णांक localport, remoteport;
+	while (state->rx_pos != tx_pos) {
+		struct vchiq_header *header;
+		int msgid, size;
+		int type;
+		unsigned int localport, remoteport;
 
 		DEBUG_TRACE(PARSE_LINE);
-		अगर (!state->rx_data) अणु
-			पूर्णांक rx_index;
+		if (!state->rx_data) {
+			int rx_index;
 
 			WARN_ON(!((state->rx_pos & VCHIQ_SLOT_MASK) == 0));
 			rx_index = remote->slot_queue[
 				SLOT_QUEUE_INDEX_FROM_POS_MASKED(state->rx_pos)];
-			state->rx_data = (अक्षर *)SLOT_DATA_FROM_INDEX(state,
+			state->rx_data = (char *)SLOT_DATA_FROM_INDEX(state,
 				rx_index);
 			state->rx_info = SLOT_INFO_FROM_INDEX(state, rx_index);
 
 			/*
 			 * Initialise use_count to one, and increment
-			 * release_count at the end of the slot to aव्योम
+			 * release_count at the end of the slot to avoid
 			 * releasing the slot prematurely.
 			 */
 			state->rx_info->use_count = 1;
 			state->rx_info->release_count = 0;
-		पूर्ण
+		}
 
-		header = (काष्ठा vchiq_header *)(state->rx_data +
+		header = (struct vchiq_header *)(state->rx_data +
 			(state->rx_pos & VCHIQ_SLOT_MASK));
-		DEBUG_VALUE(PARSE_HEADER, (पूर्णांक)(दीर्घ)header);
+		DEBUG_VALUE(PARSE_HEADER, (int)(long)header);
 		msgid = header->msgid;
 		DEBUG_VALUE(PARSE_MSGID, msgid);
 		size = header->size;
@@ -1593,55 +1592,55 @@ parse_rx_slots(काष्ठा vchiq_state *state)
 		localport = VCHIQ_MSG_DSTPORT(msgid);
 		remoteport = VCHIQ_MSG_SRCPORT(msgid);
 
-		अगर (type != VCHIQ_MSG_DATA)
+		if (type != VCHIQ_MSG_DATA)
 			VCHIQ_STATS_INC(state, ctrl_rx_count);
 
-		चयन (type) अणु
-		हाल VCHIQ_MSG_OPENACK:
-		हाल VCHIQ_MSG_CLOSE:
-		हाल VCHIQ_MSG_DATA:
-		हाल VCHIQ_MSG_BULK_RX:
-		हाल VCHIQ_MSG_BULK_TX:
-		हाल VCHIQ_MSG_BULK_RX_DONE:
-		हाल VCHIQ_MSG_BULK_TX_DONE:
+		switch (type) {
+		case VCHIQ_MSG_OPENACK:
+		case VCHIQ_MSG_CLOSE:
+		case VCHIQ_MSG_DATA:
+		case VCHIQ_MSG_BULK_RX:
+		case VCHIQ_MSG_BULK_TX:
+		case VCHIQ_MSG_BULK_RX_DONE:
+		case VCHIQ_MSG_BULK_TX_DONE:
 			service = find_service_by_port(state, localport);
-			अगर ((!service ||
+			if ((!service ||
 			     ((service->remoteport != remoteport) &&
 			      (service->remoteport != VCHIQ_PORT_FREE))) &&
 			    (localport == 0) &&
-			    (type == VCHIQ_MSG_CLOSE)) अणु
+			    (type == VCHIQ_MSG_CLOSE)) {
 				/*
 				 * This could be a CLOSE from a client which
-				 * hadn't yet received the OPENACK - look क्रम
+				 * hadn't yet received the OPENACK - look for
 				 * the connected service
 				 */
-				अगर (service)
+				if (service)
 					unlock_service(service);
 				service = get_connected_service(state,
 					remoteport);
-				अगर (service)
+				if (service)
 					vchiq_log_warning(vchiq_core_log_level,
 						"%d: prs %s@%pK (%d->%d) - found connected service %d",
 						state->id, msg_type_str(type),
 						header, remoteport, localport,
 						service->localport);
-			पूर्ण
+			}
 
-			अगर (!service) अणु
+			if (!service) {
 				vchiq_log_error(vchiq_core_log_level,
 					"%d: prs %s@%pK (%d->%d) - invalid/closed service %d",
 					state->id, msg_type_str(type),
 					header, remoteport, localport,
 					localport);
-				जाओ skip_message;
-			पूर्ण
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
+				goto skip_message;
+			}
+			break;
+		default:
+			break;
+		}
 
-		अगर (SRVTRACE_ENABLED(service, VCHIQ_LOG_INFO)) अणु
-			पूर्णांक svc_fourcc;
+		if (SRVTRACE_ENABLED(service, VCHIQ_LOG_INFO)) {
+			int svc_fourcc;
 
 			svc_fourcc = service
 				? service->base.fourcc
@@ -1651,122 +1650,122 @@ parse_rx_slots(काष्ठा vchiq_state *state)
 				msg_type_str(type), type,
 				VCHIQ_FOURCC_AS_4CHARS(svc_fourcc),
 				remoteport, localport, size);
-			अगर (size > 0)
+			if (size > 0)
 				vchiq_log_dump_mem("Rcvd", 0, header->data,
 					min(16, size));
-		पूर्ण
+		}
 
-		अगर (((अचिन्हित दीर्घ)header & VCHIQ_SLOT_MASK) +
-		    calc_stride(size) > VCHIQ_SLOT_SIZE) अणु
+		if (((unsigned long)header & VCHIQ_SLOT_MASK) +
+		    calc_stride(size) > VCHIQ_SLOT_SIZE) {
 			vchiq_log_error(vchiq_core_log_level,
 				"header %pK (msgid %x) - size %x too big for slot",
-				header, (अचिन्हित पूर्णांक)msgid,
-				(अचिन्हित पूर्णांक)size);
+				header, (unsigned int)msgid,
+				(unsigned int)size);
 			WARN(1, "oversized for slot\n");
-		पूर्ण
+		}
 
-		चयन (type) अणु
-		हाल VCHIQ_MSG_OPEN:
+		switch (type) {
+		case VCHIQ_MSG_OPEN:
 			WARN_ON(!(VCHIQ_MSG_DSTPORT(msgid) == 0));
-			अगर (!parse_खोलो(state, header))
-				जाओ bail_not_पढ़ोy;
-			अवरोध;
-		हाल VCHIQ_MSG_OPENACK:
-			अगर (size >= माप(काष्ठा vchiq_खोलोack_payload)) अणु
-				स्थिर काष्ठा vchiq_खोलोack_payload *payload =
-					(काष्ठा vchiq_खोलोack_payload *)
+			if (!parse_open(state, header))
+				goto bail_not_ready;
+			break;
+		case VCHIQ_MSG_OPENACK:
+			if (size >= sizeof(struct vchiq_openack_payload)) {
+				const struct vchiq_openack_payload *payload =
+					(struct vchiq_openack_payload *)
 					header->data;
 				service->peer_version = payload->version;
-			पूर्ण
+			}
 			vchiq_log_info(vchiq_core_log_level,
 				"%d: prs OPENACK@%pK,%x (%d->%d) v:%d",
 				state->id, header, size, remoteport, localport,
 				service->peer_version);
-			अगर (service->srvstate == VCHIQ_SRVSTATE_OPENING) अणु
+			if (service->srvstate == VCHIQ_SRVSTATE_OPENING) {
 				service->remoteport = remoteport;
 				vchiq_set_service_state(service,
 					VCHIQ_SRVSTATE_OPEN);
-				complete(&service->हटाओ_event);
-			पूर्ण अन्यथा
+				complete(&service->remove_event);
+			} else
 				vchiq_log_error(vchiq_core_log_level,
 					"OPENACK received in state %s",
 					srvstate_names[service->srvstate]);
-			अवरोध;
-		हाल VCHIQ_MSG_CLOSE:
+			break;
+		case VCHIQ_MSG_CLOSE:
 			WARN_ON(size != 0); /* There should be no data */
 
 			vchiq_log_info(vchiq_core_log_level,
 				"%d: prs CLOSE@%pK (%d->%d)",
 				state->id, header, remoteport, localport);
 
-			mark_service_closing_पूर्णांकernal(service, 1);
+			mark_service_closing_internal(service, 1);
 
-			अगर (vchiq_बंद_service_पूर्णांकernal(service,
-				1/*बंद_recvd*/) == VCHIQ_RETRY)
-				जाओ bail_not_पढ़ोy;
+			if (vchiq_close_service_internal(service,
+				1/*close_recvd*/) == VCHIQ_RETRY)
+				goto bail_not_ready;
 
 			vchiq_log_info(vchiq_core_log_level,
 				"Close Service %c%c%c%c s:%u d:%d",
 				VCHIQ_FOURCC_AS_4CHARS(service->base.fourcc),
 				service->localport,
 				service->remoteport);
-			अवरोध;
-		हाल VCHIQ_MSG_DATA:
+			break;
+		case VCHIQ_MSG_DATA:
 			vchiq_log_info(vchiq_core_log_level,
 				"%d: prs DATA@%pK,%x (%d->%d)",
 				state->id, header, size, remoteport, localport);
 
-			अगर ((service->remoteport == remoteport) &&
-			    (service->srvstate == VCHIQ_SRVSTATE_OPEN)) अणु
+			if ((service->remoteport == remoteport) &&
+			    (service->srvstate == VCHIQ_SRVSTATE_OPEN)) {
 				header->msgid = msgid | VCHIQ_MSGID_CLAIMED;
 				claim_slot(state->rx_info);
 				DEBUG_TRACE(PARSE_LINE);
-				अगर (make_service_callback(service,
+				if (make_service_callback(service,
 					VCHIQ_MESSAGE_AVAILABLE, header,
-					शून्य) == VCHIQ_RETRY) अणु
+					NULL) == VCHIQ_RETRY) {
 					DEBUG_TRACE(PARSE_LINE);
-					जाओ bail_not_पढ़ोy;
-				पूर्ण
+					goto bail_not_ready;
+				}
 				VCHIQ_SERVICE_STATS_INC(service, ctrl_rx_count);
 				VCHIQ_SERVICE_STATS_ADD(service, ctrl_rx_bytes,
 					size);
-			पूर्ण अन्यथा अणु
+			} else {
 				VCHIQ_STATS_INC(state, error_count);
-			पूर्ण
-			अवरोध;
-		हाल VCHIQ_MSG_CONNECT:
+			}
+			break;
+		case VCHIQ_MSG_CONNECT:
 			vchiq_log_info(vchiq_core_log_level,
 				"%d: prs CONNECT@%pK", state->id, header);
-			state->version_common =	((काष्ठा vchiq_slot_zero *)
+			state->version_common =	((struct vchiq_slot_zero *)
 						 state->slot_data)->version;
 			complete(&state->connect);
-			अवरोध;
-		हाल VCHIQ_MSG_BULK_RX:
-		हाल VCHIQ_MSG_BULK_TX:
+			break;
+		case VCHIQ_MSG_BULK_RX:
+		case VCHIQ_MSG_BULK_TX:
 			/*
 			 * We should never receive a bulk request from the
-			 * other side since we're not setup to perक्रमm as the
+			 * other side since we're not setup to perform as the
 			 * master.
 			 */
 			WARN_ON(1);
-			अवरोध;
-		हाल VCHIQ_MSG_BULK_RX_DONE:
-		हाल VCHIQ_MSG_BULK_TX_DONE:
-			अगर ((service->remoteport == remoteport) &&
-			    (service->srvstate != VCHIQ_SRVSTATE_FREE)) अणु
-				काष्ठा vchiq_bulk_queue *queue;
-				काष्ठा vchiq_bulk *bulk;
+			break;
+		case VCHIQ_MSG_BULK_RX_DONE:
+		case VCHIQ_MSG_BULK_TX_DONE:
+			if ((service->remoteport == remoteport) &&
+			    (service->srvstate != VCHIQ_SRVSTATE_FREE)) {
+				struct vchiq_bulk_queue *queue;
+				struct vchiq_bulk *bulk;
 
 				queue = (type == VCHIQ_MSG_BULK_RX_DONE) ?
 					&service->bulk_rx : &service->bulk_tx;
 
 				DEBUG_TRACE(PARSE_LINE);
-				अगर (mutex_lock_समाप्तable(&service->bulk_mutex)) अणु
+				if (mutex_lock_killable(&service->bulk_mutex)) {
 					DEBUG_TRACE(PARSE_LINE);
-					जाओ bail_not_पढ़ोy;
-				पूर्ण
-				अगर ((पूर्णांक)(queue->remote_insert -
-					queue->local_insert) >= 0) अणु
+					goto bail_not_ready;
+				}
+				if ((int)(queue->remote_insert -
+					queue->local_insert) >= 0) {
 					vchiq_log_error(vchiq_core_log_level,
 						"%d: prs %s@%pK (%d->%d) unexpected (ri=%d,li=%d)",
 						state->id, msg_type_str(type),
@@ -1774,20 +1773,20 @@ parse_rx_slots(काष्ठा vchiq_state *state)
 						queue->remote_insert,
 						queue->local_insert);
 					mutex_unlock(&service->bulk_mutex);
-					अवरोध;
-				पूर्ण
-				अगर (queue->process != queue->remote_insert) अणु
+					break;
+				}
+				if (queue->process != queue->remote_insert) {
 					pr_err("%s: p %x != ri %x\n",
 					       __func__,
 					       queue->process,
 					       queue->remote_insert);
 					mutex_unlock(&service->bulk_mutex);
-					जाओ bail_not_पढ़ोy;
-				पूर्ण
+					goto bail_not_ready;
+				}
 
 				bulk = &queue->bulks[
 					BULK_INDEX(queue->remote_insert)];
-				bulk->actual = *(पूर्णांक *)header->data;
+				bulk->actual = *(int *)header->data;
 				queue->remote_insert++;
 
 				vchiq_log_info(vchiq_core_log_level,
@@ -1810,141 +1809,141 @@ parse_rx_slots(काष्ठा vchiq_state *state)
 				queue->process++;
 				mutex_unlock(&service->bulk_mutex);
 				DEBUG_TRACE(PARSE_LINE);
-				notअगरy_bulks(service, queue, 1/*retry_poll*/);
+				notify_bulks(service, queue, 1/*retry_poll*/);
 				DEBUG_TRACE(PARSE_LINE);
-			पूर्ण
-			अवरोध;
-		हाल VCHIQ_MSG_PADDING:
+			}
+			break;
+		case VCHIQ_MSG_PADDING:
 			vchiq_log_trace(vchiq_core_log_level,
 				"%d: prs PADDING@%pK,%x",
 				state->id, header, size);
-			अवरोध;
-		हाल VCHIQ_MSG_PAUSE:
-			/* If initiated, संकेत the application thपढ़ो */
+			break;
+		case VCHIQ_MSG_PAUSE:
+			/* If initiated, signal the application thread */
 			vchiq_log_trace(vchiq_core_log_level,
 				"%d: prs PAUSE@%pK,%x",
 				state->id, header, size);
-			अगर (state->conn_state == VCHIQ_CONNSTATE_PAUSED) अणु
+			if (state->conn_state == VCHIQ_CONNSTATE_PAUSED) {
 				vchiq_log_error(vchiq_core_log_level,
 					"%d: PAUSE received in state PAUSED",
 					state->id);
-				अवरोध;
-			पूर्ण
-			अगर (state->conn_state != VCHIQ_CONNSTATE_PAUSE_SENT) अणु
+				break;
+			}
+			if (state->conn_state != VCHIQ_CONNSTATE_PAUSE_SENT) {
 				/* Send a PAUSE in response */
-				अगर (queue_message(state, शून्य,
+				if (queue_message(state, NULL,
 					VCHIQ_MAKE_MSG(VCHIQ_MSG_PAUSE, 0, 0),
-					शून्य, शून्य, 0, QMFLAGS_NO_MUTEX_UNLOCK)
+					NULL, NULL, 0, QMFLAGS_NO_MUTEX_UNLOCK)
 				    == VCHIQ_RETRY)
-					जाओ bail_not_पढ़ोy;
-			पूर्ण
-			/* At this poपूर्णांक slot_mutex is held */
+					goto bail_not_ready;
+			}
+			/* At this point slot_mutex is held */
 			vchiq_set_conn_state(state, VCHIQ_CONNSTATE_PAUSED);
-			अवरोध;
-		हाल VCHIQ_MSG_RESUME:
+			break;
+		case VCHIQ_MSG_RESUME:
 			vchiq_log_trace(vchiq_core_log_level,
 				"%d: prs RESUME@%pK,%x",
 				state->id, header, size);
 			/* Release the slot mutex */
 			mutex_unlock(&state->slot_mutex);
 			vchiq_set_conn_state(state, VCHIQ_CONNSTATE_CONNECTED);
-			अवरोध;
+			break;
 
-		हाल VCHIQ_MSG_REMOTE_USE:
+		case VCHIQ_MSG_REMOTE_USE:
 			vchiq_on_remote_use(state);
-			अवरोध;
-		हाल VCHIQ_MSG_REMOTE_RELEASE:
+			break;
+		case VCHIQ_MSG_REMOTE_RELEASE:
 			vchiq_on_remote_release(state);
-			अवरोध;
-		हाल VCHIQ_MSG_REMOTE_USE_ACTIVE:
-			अवरोध;
+			break;
+		case VCHIQ_MSG_REMOTE_USE_ACTIVE:
+			break;
 
-		शेष:
+		default:
 			vchiq_log_error(vchiq_core_log_level,
 				"%d: prs invalid msgid %x@%pK,%x",
 				state->id, msgid, header, size);
 			WARN(1, "invalid message\n");
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 skip_message:
-		अगर (service) अणु
+		if (service) {
 			unlock_service(service);
-			service = शून्य;
-		पूर्ण
+			service = NULL;
+		}
 
 		state->rx_pos += calc_stride(size);
 
 		DEBUG_TRACE(PARSE_LINE);
 		/*
-		 * Perक्रमm some housekeeping when the end of the slot is
+		 * Perform some housekeeping when the end of the slot is
 		 * reached.
 		 */
-		अगर ((state->rx_pos & VCHIQ_SLOT_MASK) == 0) अणु
+		if ((state->rx_pos & VCHIQ_SLOT_MASK) == 0) {
 			/* Remove the extra reference count. */
-			release_slot(state, state->rx_info, शून्य, शून्य);
-			state->rx_data = शून्य;
-		पूर्ण
-	पूर्ण
+			release_slot(state, state->rx_info, NULL, NULL);
+			state->rx_data = NULL;
+		}
+	}
 
-bail_not_पढ़ोy:
-	अगर (service)
+bail_not_ready:
+	if (service)
 		unlock_service(service);
-पूर्ण
+}
 
-/* Called by the slot handler thपढ़ो */
-अटल पूर्णांक
-slot_handler_func(व्योम *v)
-अणु
-	काष्ठा vchiq_state *state = v;
-	काष्ठा vchiq_shared_state *local = state->local;
+/* Called by the slot handler thread */
+static int
+slot_handler_func(void *v)
+{
+	struct vchiq_state *state = v;
+	struct vchiq_shared_state *local = state->local;
 
 	DEBUG_INITIALISE(local)
 
-	जबतक (1) अणु
+	while (1) {
 		DEBUG_COUNT(SLOT_HANDLER_COUNT);
 		DEBUG_TRACE(SLOT_HANDLER_LINE);
-		remote_event_रुको(&state->trigger_event, &local->trigger);
+		remote_event_wait(&state->trigger_event, &local->trigger);
 
 		rmb();
 
 		DEBUG_TRACE(SLOT_HANDLER_LINE);
-		अगर (state->poll_needed) अणु
+		if (state->poll_needed) {
 
 			state->poll_needed = 0;
 
 			/*
 			 * Handle service polling and other rare conditions here
-			 * out of the मुख्यline code
+			 * out of the mainline code
 			 */
-			चयन (state->conn_state) अणु
-			हाल VCHIQ_CONNSTATE_CONNECTED:
+			switch (state->conn_state) {
+			case VCHIQ_CONNSTATE_CONNECTED:
 				/* Poll the services as requested */
 				poll_services(state);
-				अवरोध;
+				break;
 
-			हाल VCHIQ_CONNSTATE_PAUSING:
-				अगर (queue_message(state, शून्य,
+			case VCHIQ_CONNSTATE_PAUSING:
+				if (queue_message(state, NULL,
 					VCHIQ_MAKE_MSG(VCHIQ_MSG_PAUSE, 0, 0),
-					शून्य, शून्य, 0,
+					NULL, NULL, 0,
 					QMFLAGS_NO_MUTEX_UNLOCK)
-				    != VCHIQ_RETRY) अणु
+				    != VCHIQ_RETRY) {
 					vchiq_set_conn_state(state,
 						VCHIQ_CONNSTATE_PAUSE_SENT);
-				पूर्ण अन्यथा अणु
+				} else {
 					/* Retry later */
 					state->poll_needed = 1;
-				पूर्ण
-				अवरोध;
+				}
+				break;
 
-			हाल VCHIQ_CONNSTATE_RESUMING:
-				अगर (queue_message(state, शून्य,
+			case VCHIQ_CONNSTATE_RESUMING:
+				if (queue_message(state, NULL,
 					VCHIQ_MAKE_MSG(VCHIQ_MSG_RESUME, 0, 0),
-					शून्य, शून्य, 0, QMFLAGS_NO_MUTEX_LOCK)
-					!= VCHIQ_RETRY) अणु
+					NULL, NULL, 0, QMFLAGS_NO_MUTEX_LOCK)
+					!= VCHIQ_RETRY) {
 					vchiq_set_conn_state(state,
 						VCHIQ_CONNSTATE_CONNECTED);
-				पूर्ण अन्यथा अणु
+				} else {
 					/*
 					 * This should really be impossible,
 					 * since the PAUSE should have flushed
@@ -1952,61 +1951,61 @@ slot_handler_func(व्योम *v)
 					 */
 					vchiq_log_error(vchiq_core_log_level,
 						"Failed to send RESUME message");
-				पूर्ण
-				अवरोध;
-			शेष:
-				अवरोध;
-			पूर्ण
+				}
+				break;
+			default:
+				break;
+			}
 
-		पूर्ण
+		}
 
 		DEBUG_TRACE(SLOT_HANDLER_LINE);
 		parse_rx_slots(state);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-/* Called by the recycle thपढ़ो */
-अटल पूर्णांक
-recycle_func(व्योम *v)
-अणु
-	काष्ठा vchiq_state *state = v;
-	काष्ठा vchiq_shared_state *local = state->local;
+/* Called by the recycle thread */
+static int
+recycle_func(void *v)
+{
+	struct vchiq_state *state = v;
+	struct vchiq_shared_state *local = state->local;
 	BITSET_T *found;
-	माप_प्रकार length;
+	size_t length;
 
-	length = माप(*found) * BITSET_SIZE(VCHIQ_MAX_SERVICES);
+	length = sizeof(*found) * BITSET_SIZE(VCHIQ_MAX_SERVICES);
 
-	found = kदो_स्मृति_array(BITSET_SIZE(VCHIQ_MAX_SERVICES), माप(*found),
+	found = kmalloc_array(BITSET_SIZE(VCHIQ_MAX_SERVICES), sizeof(*found),
 			      GFP_KERNEL);
-	अगर (!found)
-		वापस -ENOMEM;
+	if (!found)
+		return -ENOMEM;
 
-	जबतक (1) अणु
-		remote_event_रुको(&state->recycle_event, &local->recycle);
+	while (1) {
+		remote_event_wait(&state->recycle_event, &local->recycle);
 
-		process_मुक्त_queue(state, found, length);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		process_free_queue(state, found, length);
+	}
+	return 0;
+}
 
-/* Called by the sync thपढ़ो */
-अटल पूर्णांक
-sync_func(व्योम *v)
-अणु
-	काष्ठा vchiq_state *state = v;
-	काष्ठा vchiq_shared_state *local = state->local;
-	काष्ठा vchiq_header *header =
-		(काष्ठा vchiq_header *)SLOT_DATA_FROM_INDEX(state,
+/* Called by the sync thread */
+static int
+sync_func(void *v)
+{
+	struct vchiq_state *state = v;
+	struct vchiq_shared_state *local = state->local;
+	struct vchiq_header *header =
+		(struct vchiq_header *)SLOT_DATA_FROM_INDEX(state,
 			state->remote->slot_sync);
 
-	जबतक (1) अणु
-		काष्ठा vchiq_service *service;
-		पूर्णांक msgid, size;
-		पूर्णांक type;
-		अचिन्हित पूर्णांक localport, remoteport;
+	while (1) {
+		struct vchiq_service *service;
+		int msgid, size;
+		int type;
+		unsigned int localport, remoteport;
 
-		remote_event_रुको(&state->sync_trigger_event, &local->sync_trigger);
+		remote_event_wait(&state->sync_trigger_event, &local->sync_trigger);
 
 		rmb();
 
@@ -2018,17 +2017,17 @@ sync_func(व्योम *v)
 
 		service = find_service_by_port(state, localport);
 
-		अगर (!service) अणु
+		if (!service) {
 			vchiq_log_error(vchiq_sync_log_level,
 				"%d: sf %s@%pK (%d->%d) - invalid/closed service %d",
 				state->id, msg_type_str(type),
 				header, remoteport, localport, localport);
 			release_message_sync(state, header);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (vchiq_sync_log_level >= VCHIQ_LOG_TRACE) अणु
-			पूर्णांक svc_fourcc;
+		if (vchiq_sync_log_level >= VCHIQ_LOG_TRACE) {
+			int svc_fourcc;
 
 			svc_fourcc = service
 				? service->base.fourcc
@@ -2038,106 +2037,106 @@ sync_func(व्योम *v)
 				msg_type_str(type),
 				VCHIQ_FOURCC_AS_4CHARS(svc_fourcc),
 				remoteport, localport, size);
-			अगर (size > 0)
+			if (size > 0)
 				vchiq_log_dump_mem("Rcvd", 0, header->data,
 					min(16, size));
-		पूर्ण
+		}
 
-		चयन (type) अणु
-		हाल VCHIQ_MSG_OPENACK:
-			अगर (size >= माप(काष्ठा vchiq_खोलोack_payload)) अणु
-				स्थिर काष्ठा vchiq_खोलोack_payload *payload =
-					(काष्ठा vchiq_खोलोack_payload *)
+		switch (type) {
+		case VCHIQ_MSG_OPENACK:
+			if (size >= sizeof(struct vchiq_openack_payload)) {
+				const struct vchiq_openack_payload *payload =
+					(struct vchiq_openack_payload *)
 					header->data;
 				service->peer_version = payload->version;
-			पूर्ण
+			}
 			vchiq_log_info(vchiq_sync_log_level,
 				"%d: sf OPENACK@%pK,%x (%d->%d) v:%d",
 				state->id, header, size, remoteport, localport,
 				service->peer_version);
-			अगर (service->srvstate == VCHIQ_SRVSTATE_OPENING) अणु
+			if (service->srvstate == VCHIQ_SRVSTATE_OPENING) {
 				service->remoteport = remoteport;
 				vchiq_set_service_state(service,
 					VCHIQ_SRVSTATE_OPENSYNC);
 				service->sync = 1;
-				complete(&service->हटाओ_event);
-			पूर्ण
+				complete(&service->remove_event);
+			}
 			release_message_sync(state, header);
-			अवरोध;
+			break;
 
-		हाल VCHIQ_MSG_DATA:
+		case VCHIQ_MSG_DATA:
 			vchiq_log_trace(vchiq_sync_log_level,
 				"%d: sf DATA@%pK,%x (%d->%d)",
 				state->id, header, size, remoteport, localport);
 
-			अगर ((service->remoteport == remoteport) &&
+			if ((service->remoteport == remoteport) &&
 				(service->srvstate ==
-				VCHIQ_SRVSTATE_OPENSYNC)) अणु
-				अगर (make_service_callback(service,
+				VCHIQ_SRVSTATE_OPENSYNC)) {
+				if (make_service_callback(service,
 					VCHIQ_MESSAGE_AVAILABLE, header,
-					शून्य) == VCHIQ_RETRY)
+					NULL) == VCHIQ_RETRY)
 					vchiq_log_error(vchiq_sync_log_level,
 						"synchronous callback to service %d returns VCHIQ_RETRY",
 						localport);
-			पूर्ण
-			अवरोध;
+			}
+			break;
 
-		शेष:
+		default:
 			vchiq_log_error(vchiq_sync_log_level,
 				"%d: sf unexpected msgid %x@%pK,%x",
 				state->id, msgid, header, size);
 			release_message_sync(state, header);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		unlock_service(service);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-init_bulk_queue(काष्ठा vchiq_bulk_queue *queue)
-अणु
+static void
+init_bulk_queue(struct vchiq_bulk_queue *queue)
+{
 	queue->local_insert = 0;
 	queue->remote_insert = 0;
 	queue->process = 0;
-	queue->remote_notअगरy = 0;
-	queue->हटाओ = 0;
-पूर्ण
+	queue->remote_notify = 0;
+	queue->remove = 0;
+}
 
-अंतरभूत स्थिर अक्षर *
-get_conn_state_name(क्रमागत vchiq_connstate conn_state)
-अणु
-	वापस conn_state_names[conn_state];
-पूर्ण
+inline const char *
+get_conn_state_name(enum vchiq_connstate conn_state)
+{
+	return conn_state_names[conn_state];
+}
 
-काष्ठा vchiq_slot_zero *
-vchiq_init_slots(व्योम *mem_base, पूर्णांक mem_size)
-अणु
-	पूर्णांक mem_align =
-		(पूर्णांक)((VCHIQ_SLOT_SIZE - (दीर्घ)mem_base) & VCHIQ_SLOT_MASK);
-	काष्ठा vchiq_slot_zero *slot_zero =
-		(काष्ठा vchiq_slot_zero *)(mem_base + mem_align);
-	पूर्णांक num_slots = (mem_size - mem_align)/VCHIQ_SLOT_SIZE;
-	पूर्णांक first_data_slot = VCHIQ_SLOT_ZERO_SLOTS;
+struct vchiq_slot_zero *
+vchiq_init_slots(void *mem_base, int mem_size)
+{
+	int mem_align =
+		(int)((VCHIQ_SLOT_SIZE - (long)mem_base) & VCHIQ_SLOT_MASK);
+	struct vchiq_slot_zero *slot_zero =
+		(struct vchiq_slot_zero *)(mem_base + mem_align);
+	int num_slots = (mem_size - mem_align)/VCHIQ_SLOT_SIZE;
+	int first_data_slot = VCHIQ_SLOT_ZERO_SLOTS;
 
-	/* Ensure there is enough memory to run an असलolutely minimum प्रणाली */
+	/* Ensure there is enough memory to run an absolutely minimum system */
 	num_slots -= first_data_slot;
 
-	अगर (num_slots < 4) अणु
+	if (num_slots < 4) {
 		vchiq_log_error(vchiq_core_log_level,
 			"%s - insufficient memory %x bytes",
 			__func__, mem_size);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	स_रखो(slot_zero, 0, माप(काष्ठा vchiq_slot_zero));
+	memset(slot_zero, 0, sizeof(struct vchiq_slot_zero));
 
 	slot_zero->magic = VCHIQ_MAGIC;
 	slot_zero->version = VCHIQ_VERSION;
 	slot_zero->version_min = VCHIQ_VERSION_MIN;
-	slot_zero->slot_zero_size = माप(काष्ठा vchiq_slot_zero);
+	slot_zero->slot_zero_size = sizeof(struct vchiq_slot_zero);
 	slot_zero->slot_size = VCHIQ_SLOT_SIZE;
 	slot_zero->max_slots = VCHIQ_MAX_SLOTS;
 	slot_zero->max_slots_per_side = VCHIQ_MAX_SLOTS_PER_SIDE;
@@ -2149,45 +2148,45 @@ vchiq_init_slots(व्योम *mem_base, पूर्णांक mem_size)
 	slot_zero->slave.slot_first = first_data_slot + (num_slots/2) + 1;
 	slot_zero->slave.slot_last = first_data_slot + num_slots - 1;
 
-	वापस slot_zero;
-पूर्ण
+	return slot_zero;
+}
 
-क्रमागत vchiq_status
-vchiq_init_state(काष्ठा vchiq_state *state, काष्ठा vchiq_slot_zero *slot_zero)
-अणु
-	काष्ठा vchiq_shared_state *local;
-	काष्ठा vchiq_shared_state *remote;
-	क्रमागत vchiq_status status;
-	अक्षर thपढ़ोname[16];
-	पूर्णांक i;
+enum vchiq_status
+vchiq_init_state(struct vchiq_state *state, struct vchiq_slot_zero *slot_zero)
+{
+	struct vchiq_shared_state *local;
+	struct vchiq_shared_state *remote;
+	enum vchiq_status status;
+	char threadname[16];
+	int i;
 
-	अगर (vchiq_states[0]) अणु
+	if (vchiq_states[0]) {
 		pr_err("%s: VCHIQ state already initialized\n", __func__);
-		वापस VCHIQ_ERROR;
-	पूर्ण
+		return VCHIQ_ERROR;
+	}
 
 	local = &slot_zero->slave;
 	remote = &slot_zero->master;
 
-	अगर (local->initialised) अणु
+	if (local->initialised) {
 		vchiq_loud_error_header();
-		अगर (remote->initialised)
+		if (remote->initialised)
 			vchiq_loud_error("local state has already been initialised");
-		अन्यथा
+		else
 			vchiq_loud_error("master/slave mismatch two slaves");
 		vchiq_loud_error_footer();
-		वापस VCHIQ_ERROR;
-	पूर्ण
+		return VCHIQ_ERROR;
+	}
 
-	स_रखो(state, 0, माप(काष्ठा vchiq_state));
+	memset(state, 0, sizeof(struct vchiq_state));
 
 	/*
-	 * initialize shared state poपूर्णांकers
+	 * initialize shared state pointers
 	 */
 
 	state->local = local;
 	state->remote = remote;
-	state->slot_data = (काष्ठा vchiq_slot *)slot_zero;
+	state->slot_data = (struct vchiq_slot *)slot_zero;
 
 	/*
 	 * initialize events and mutexes
@@ -2201,26 +2200,26 @@ vchiq_init_state(काष्ठा vchiq_state *state, काष्ठा vchiq
 	mutex_init(&state->bulk_transfer_mutex);
 
 	init_completion(&state->slot_available_event);
-	init_completion(&state->slot_हटाओ_event);
+	init_completion(&state->slot_remove_event);
 	init_completion(&state->data_quota_event);
 
 	state->slot_queue_available = 0;
 
-	क्रम (i = 0; i < VCHIQ_MAX_SERVICES; i++) अणु
-		काष्ठा vchiq_service_quota *quota =
+	for (i = 0; i < VCHIQ_MAX_SERVICES; i++) {
+		struct vchiq_service_quota *quota =
 			&state->service_quotas[i];
 		init_completion(&quota->quota_event);
-	पूर्ण
+	}
 
-	क्रम (i = local->slot_first; i <= local->slot_last; i++) अणु
+	for (i = local->slot_first; i <= local->slot_last; i++) {
 		local->slot_queue[state->slot_queue_available++] = i;
 		complete(&state->slot_available_event);
-	पूर्ण
+	}
 
-	state->शेष_slot_quota = state->slot_queue_available/2;
-	state->शेष_message_quota =
-		min((अचिन्हित लघु)(state->शेष_slot_quota * 256),
-		(अचिन्हित लघु)~0);
+	state->default_slot_quota = state->slot_queue_available/2;
+	state->default_message_quota =
+		min((unsigned short)(state->default_slot_quota * 256),
+		(unsigned short)~0);
 
 	state->previous_data_index = -1;
 	state->data_use_count = 0;
@@ -2234,147 +2233,147 @@ vchiq_init_state(काष्ठा vchiq_state *state, काष्ठा vchiq
 	remote_event_create(&state->sync_release_event, &local->sync_release);
 
 	/* At start-of-day, the slot is empty and available */
-	((काष्ठा vchiq_header *)
+	((struct vchiq_header *)
 		SLOT_DATA_FROM_INDEX(state, local->slot_sync))->msgid =
 							VCHIQ_MSGID_PADDING;
-	remote_event_संकेत_local(&state->sync_release_event, &local->sync_release);
+	remote_event_signal_local(&state->sync_release_event, &local->sync_release);
 
 	local->debug[DEBUG_ENTRIES] = DEBUG_MAX;
 
-	status = vchiq_platक्रमm_init_state(state);
-	अगर (status != VCHIQ_SUCCESS)
-		वापस VCHIQ_ERROR;
+	status = vchiq_platform_init_state(state);
+	if (status != VCHIQ_SUCCESS)
+		return VCHIQ_ERROR;
 
 	/*
-	 * bring up slot handler thपढ़ो
+	 * bring up slot handler thread
 	 */
-	snम_लिखो(thपढ़ोname, माप(thपढ़ोname), "vchiq-slot/%d", state->id);
-	state->slot_handler_thपढ़ो = kthपढ़ो_create(&slot_handler_func,
-		(व्योम *)state,
-		thपढ़ोname);
+	snprintf(threadname, sizeof(threadname), "vchiq-slot/%d", state->id);
+	state->slot_handler_thread = kthread_create(&slot_handler_func,
+		(void *)state,
+		threadname);
 
-	अगर (IS_ERR(state->slot_handler_thपढ़ो)) अणु
+	if (IS_ERR(state->slot_handler_thread)) {
 		vchiq_loud_error_header();
-		vchiq_loud_error("couldn't create thread %s", thपढ़ोname);
+		vchiq_loud_error("couldn't create thread %s", threadname);
 		vchiq_loud_error_footer();
-		वापस VCHIQ_ERROR;
-	पूर्ण
-	set_user_nice(state->slot_handler_thपढ़ो, -19);
+		return VCHIQ_ERROR;
+	}
+	set_user_nice(state->slot_handler_thread, -19);
 
-	snम_लिखो(thपढ़ोname, माप(thपढ़ोname), "vchiq-recy/%d", state->id);
-	state->recycle_thपढ़ो = kthपढ़ो_create(&recycle_func,
-		(व्योम *)state,
-		thपढ़ोname);
-	अगर (IS_ERR(state->recycle_thपढ़ो)) अणु
+	snprintf(threadname, sizeof(threadname), "vchiq-recy/%d", state->id);
+	state->recycle_thread = kthread_create(&recycle_func,
+		(void *)state,
+		threadname);
+	if (IS_ERR(state->recycle_thread)) {
 		vchiq_loud_error_header();
-		vchiq_loud_error("couldn't create thread %s", thपढ़ोname);
+		vchiq_loud_error("couldn't create thread %s", threadname);
 		vchiq_loud_error_footer();
-		जाओ fail_मुक्त_handler_thपढ़ो;
-	पूर्ण
-	set_user_nice(state->recycle_thपढ़ो, -19);
+		goto fail_free_handler_thread;
+	}
+	set_user_nice(state->recycle_thread, -19);
 
-	snम_लिखो(thपढ़ोname, माप(thपढ़ोname), "vchiq-sync/%d", state->id);
-	state->sync_thपढ़ो = kthपढ़ो_create(&sync_func,
-		(व्योम *)state,
-		thपढ़ोname);
-	अगर (IS_ERR(state->sync_thपढ़ो)) अणु
+	snprintf(threadname, sizeof(threadname), "vchiq-sync/%d", state->id);
+	state->sync_thread = kthread_create(&sync_func,
+		(void *)state,
+		threadname);
+	if (IS_ERR(state->sync_thread)) {
 		vchiq_loud_error_header();
-		vchiq_loud_error("couldn't create thread %s", thपढ़ोname);
+		vchiq_loud_error("couldn't create thread %s", threadname);
 		vchiq_loud_error_footer();
-		जाओ fail_मुक्त_recycle_thपढ़ो;
-	पूर्ण
-	set_user_nice(state->sync_thपढ़ो, -20);
+		goto fail_free_recycle_thread;
+	}
+	set_user_nice(state->sync_thread, -20);
 
-	wake_up_process(state->slot_handler_thपढ़ो);
-	wake_up_process(state->recycle_thपढ़ो);
-	wake_up_process(state->sync_thपढ़ो);
+	wake_up_process(state->slot_handler_thread);
+	wake_up_process(state->recycle_thread);
+	wake_up_process(state->sync_thread);
 
 	vchiq_states[0] = state;
 
-	/* Indicate पढ़ोiness to the other side */
+	/* Indicate readiness to the other side */
 	local->initialised = 1;
 
-	वापस status;
+	return status;
 
-fail_मुक्त_recycle_thपढ़ो:
-	kthपढ़ो_stop(state->recycle_thपढ़ो);
-fail_मुक्त_handler_thपढ़ो:
-	kthपढ़ो_stop(state->slot_handler_thपढ़ो);
+fail_free_recycle_thread:
+	kthread_stop(state->recycle_thread);
+fail_free_handler_thread:
+	kthread_stop(state->slot_handler_thread);
 
-	वापस VCHIQ_ERROR;
-पूर्ण
+	return VCHIQ_ERROR;
+}
 
-व्योम vchiq_msg_queue_push(अचिन्हित पूर्णांक handle, काष्ठा vchiq_header *header)
-अणु
-	काष्ठा vchiq_service *service = find_service_by_handle(handle);
-	पूर्णांक pos;
+void vchiq_msg_queue_push(unsigned int handle, struct vchiq_header *header)
+{
+	struct vchiq_service *service = find_service_by_handle(handle);
+	int pos;
 
-	जबतक (service->msg_queue_ग_लिखो == service->msg_queue_पढ़ो +
-		VCHIQ_MAX_SLOTS) अणु
-		अगर (रुको_क्रम_completion_पूर्णांकerruptible(&service->msg_queue_pop))
-			flush_संकेतs(current);
-	पूर्ण
+	while (service->msg_queue_write == service->msg_queue_read +
+		VCHIQ_MAX_SLOTS) {
+		if (wait_for_completion_interruptible(&service->msg_queue_pop))
+			flush_signals(current);
+	}
 
-	pos = service->msg_queue_ग_लिखो++ & (VCHIQ_MAX_SLOTS - 1);
+	pos = service->msg_queue_write++ & (VCHIQ_MAX_SLOTS - 1);
 	service->msg_queue[pos] = header;
 
 	complete(&service->msg_queue_push);
-पूर्ण
+}
 EXPORT_SYMBOL(vchiq_msg_queue_push);
 
-काष्ठा vchiq_header *vchiq_msg_hold(अचिन्हित पूर्णांक handle)
-अणु
-	काष्ठा vchiq_service *service = find_service_by_handle(handle);
-	काष्ठा vchiq_header *header;
-	पूर्णांक pos;
+struct vchiq_header *vchiq_msg_hold(unsigned int handle)
+{
+	struct vchiq_service *service = find_service_by_handle(handle);
+	struct vchiq_header *header;
+	int pos;
 
-	अगर (service->msg_queue_ग_लिखो == service->msg_queue_पढ़ो)
-		वापस शून्य;
+	if (service->msg_queue_write == service->msg_queue_read)
+		return NULL;
 
-	जबतक (service->msg_queue_ग_लिखो == service->msg_queue_पढ़ो) अणु
-		अगर (रुको_क्रम_completion_पूर्णांकerruptible(&service->msg_queue_push))
-			flush_संकेतs(current);
-	पूर्ण
+	while (service->msg_queue_write == service->msg_queue_read) {
+		if (wait_for_completion_interruptible(&service->msg_queue_push))
+			flush_signals(current);
+	}
 
-	pos = service->msg_queue_पढ़ो++ & (VCHIQ_MAX_SLOTS - 1);
+	pos = service->msg_queue_read++ & (VCHIQ_MAX_SLOTS - 1);
 	header = service->msg_queue[pos];
 
 	complete(&service->msg_queue_pop);
 
-	वापस header;
-पूर्ण
+	return header;
+}
 EXPORT_SYMBOL(vchiq_msg_hold);
 
-अटल पूर्णांक vchiq_validate_params(स्थिर काष्ठा vchiq_service_params_kernel *params)
-अणु
-	अगर (!params->callback || !params->fourcc) अणु
+static int vchiq_validate_params(const struct vchiq_service_params_kernel *params)
+{
+	if (!params->callback || !params->fourcc) {
 		vchiq_loud_error("Can't add service, invalid params\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Called from application thपढ़ो when a client or server service is created. */
-काष्ठा vchiq_service *
-vchiq_add_service_पूर्णांकernal(काष्ठा vchiq_state *state,
-			   स्थिर काष्ठा vchiq_service_params_kernel *params,
-			   पूर्णांक srvstate, काष्ठा vchiq_instance *instance,
+/* Called from application thread when a client or server service is created. */
+struct vchiq_service *
+vchiq_add_service_internal(struct vchiq_state *state,
+			   const struct vchiq_service_params_kernel *params,
+			   int srvstate, struct vchiq_instance *instance,
 			   vchiq_userdata_term userdata_term)
-अणु
-	काष्ठा vchiq_service *service;
-	काष्ठा vchiq_service __rcu **pservice = शून्य;
-	काष्ठा vchiq_service_quota *quota;
-	पूर्णांक ret;
-	पूर्णांक i;
+{
+	struct vchiq_service *service;
+	struct vchiq_service __rcu **pservice = NULL;
+	struct vchiq_service_quota *quota;
+	int ret;
+	int i;
 
 	ret = vchiq_validate_params(params);
-	अगर (ret)
-		वापस शून्य;
+	if (ret)
+		return NULL;
 
-	service = kदो_स्मृति(माप(*service), GFP_KERNEL);
-	अगर (!service)
-		वापस service;
+	service = kmalloc(sizeof(*service), GFP_KERNEL);
+	if (!service)
+		return service;
 
 	service->base.fourcc   = params->fourcc;
 	service->base.callback = params->callback;
@@ -2386,10 +2385,10 @@ vchiq_add_service_पूर्णांकernal(काष्ठा vchiq_state *
 	service->localport     = VCHIQ_PORT_FREE;
 	service->remoteport    = VCHIQ_PORT_FREE;
 
-	service->खुला_fourcc = (srvstate == VCHIQ_SRVSTATE_OPENING) ?
+	service->public_fourcc = (srvstate == VCHIQ_SRVSTATE_OPENING) ?
 		VCHIQ_FOURCC_INVALID : params->fourcc;
 	service->client_id     = 0;
-	service->स्वतः_बंद    = 1;
+	service->auto_close    = 1;
 	service->sync          = 0;
 	service->closing       = 0;
 	service->trace         = 0;
@@ -2399,89 +2398,89 @@ vchiq_add_service_पूर्णांकernal(काष्ठा vchiq_state *
 	service->state         = state;
 	service->instance      = instance;
 	service->service_use_count = 0;
-	service->msg_queue_पढ़ो = 0;
-	service->msg_queue_ग_लिखो = 0;
+	service->msg_queue_read = 0;
+	service->msg_queue_write = 0;
 	init_bulk_queue(&service->bulk_tx);
 	init_bulk_queue(&service->bulk_rx);
-	init_completion(&service->हटाओ_event);
-	init_completion(&service->bulk_हटाओ_event);
+	init_completion(&service->remove_event);
+	init_completion(&service->bulk_remove_event);
 	init_completion(&service->msg_queue_pop);
 	init_completion(&service->msg_queue_push);
 	mutex_init(&service->bulk_mutex);
-	स_रखो(&service->stats, 0, माप(service->stats));
-	स_रखो(&service->msg_queue, 0, माप(service->msg_queue));
+	memset(&service->stats, 0, sizeof(service->stats));
+	memset(&service->msg_queue, 0, sizeof(service->msg_queue));
 
 	/*
 	 * Although it is perfectly possible to use a spinlock
-	 * to protect the creation of services, it is overसमाप्त as it
-	 * disables पूर्णांकerrupts जबतक the array is searched.
-	 * The only danger is of another thपढ़ो trying to create a
+	 * to protect the creation of services, it is overkill as it
+	 * disables interrupts while the array is searched.
+	 * The only danger is of another thread trying to create a
 	 * service - service deletion is safe.
-	 * Thereक्रमe it is preferable to use state->mutex which,
-	 * although slower to claim, करोesn't block पूर्णांकerrupts जबतक
+	 * Therefore it is preferable to use state->mutex which,
+	 * although slower to claim, doesn't block interrupts while
 	 * it is held.
 	 */
 
 	mutex_lock(&state->mutex);
 
 	/* Prepare to use a previously unused service */
-	अगर (state->unused_service < VCHIQ_MAX_SERVICES)
+	if (state->unused_service < VCHIQ_MAX_SERVICES)
 		pservice = &state->services[state->unused_service];
 
-	अगर (srvstate == VCHIQ_SRVSTATE_OPENING) अणु
-		क्रम (i = 0; i < state->unused_service; i++) अणु
-			अगर (!rcu_access_poपूर्णांकer(state->services[i])) अणु
+	if (srvstate == VCHIQ_SRVSTATE_OPENING) {
+		for (i = 0; i < state->unused_service; i++) {
+			if (!rcu_access_pointer(state->services[i])) {
 				pservice = &state->services[i];
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		rcu_पढ़ो_lock();
-		क्रम (i = (state->unused_service - 1); i >= 0; i--) अणु
-			काष्ठा vchiq_service *srv;
+				break;
+			}
+		}
+	} else {
+		rcu_read_lock();
+		for (i = (state->unused_service - 1); i >= 0; i--) {
+			struct vchiq_service *srv;
 
 			srv = rcu_dereference(state->services[i]);
-			अगर (!srv)
+			if (!srv)
 				pservice = &state->services[i];
-			अन्यथा अगर ((srv->खुला_fourcc == params->fourcc) &&
+			else if ((srv->public_fourcc == params->fourcc) &&
 				 ((srv->instance != instance) ||
-				  (srv->base.callback != params->callback))) अणु
+				  (srv->base.callback != params->callback))) {
 				/*
 				 * There is another server using this
-				 * fourcc which करोesn't match.
+				 * fourcc which doesn't match.
 				 */
-				pservice = शून्य;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		rcu_पढ़ो_unlock();
-	पूर्ण
+				pservice = NULL;
+				break;
+			}
+		}
+		rcu_read_unlock();
+	}
 
-	अगर (pservice) अणु
+	if (pservice) {
 		service->localport = (pservice - state->services);
-		अगर (!handle_seq)
+		if (!handle_seq)
 			handle_seq = VCHIQ_MAX_STATES *
 				 VCHIQ_MAX_SERVICES;
 		service->handle = handle_seq |
 			(state->id * VCHIQ_MAX_SERVICES) |
 			service->localport;
 		handle_seq += VCHIQ_MAX_STATES * VCHIQ_MAX_SERVICES;
-		rcu_assign_poपूर्णांकer(*pservice, service);
-		अगर (pservice == &state->services[state->unused_service])
+		rcu_assign_pointer(*pservice, service);
+		if (pservice == &state->services[state->unused_service])
 			state->unused_service++;
-	पूर्ण
+	}
 
 	mutex_unlock(&state->mutex);
 
-	अगर (!pservice) अणु
-		kमुक्त(service);
-		वापस शून्य;
-	पूर्ण
+	if (!pservice) {
+		kfree(service);
+		return NULL;
+	}
 
 	quota = &state->service_quotas[service->localport];
-	quota->slot_quota = state->शेष_slot_quota;
-	quota->message_quota = state->शेष_message_quota;
-	अगर (quota->slot_use_count == 0)
+	quota->slot_quota = state->default_slot_quota;
+	quota->message_quota = state->default_message_quota;
+	if (quota->slot_use_count == 0)
 		quota->previous_tx_index =
 			SLOT_QUEUE_INDEX_FROM_POS(state->local_tx_pos)
 			- 1;
@@ -2498,634 +2497,634 @@ vchiq_add_service_पूर्णांकernal(काष्ठा vchiq_state *
 
 	/* Don't unlock the service - leave it with a ref_count of 1. */
 
-	वापस service;
-पूर्ण
+	return service;
+}
 
-क्रमागत vchiq_status
-vchiq_खोलो_service_पूर्णांकernal(काष्ठा vchiq_service *service, पूर्णांक client_id)
-अणु
-	काष्ठा vchiq_खोलो_payload payload = अणु
+enum vchiq_status
+vchiq_open_service_internal(struct vchiq_service *service, int client_id)
+{
+	struct vchiq_open_payload payload = {
 		service->base.fourcc,
 		client_id,
 		service->version,
 		service->version_min
-	पूर्ण;
-	क्रमागत vchiq_status status = VCHIQ_SUCCESS;
+	};
+	enum vchiq_status status = VCHIQ_SUCCESS;
 
 	service->client_id = client_id;
-	vchiq_use_service_पूर्णांकernal(service);
+	vchiq_use_service_internal(service);
 	status = queue_message(service->state,
-			       शून्य,
+			       NULL,
 			       VCHIQ_MAKE_MSG(VCHIQ_MSG_OPEN,
 					      service->localport,
 					      0),
-			       स_नकल_copy_callback,
+			       memcpy_copy_callback,
 			       &payload,
-			       माप(payload),
+			       sizeof(payload),
 			       QMFLAGS_IS_BLOCKING);
 
-	अगर (status != VCHIQ_SUCCESS)
-		वापस status;
+	if (status != VCHIQ_SUCCESS)
+		return status;
 
-	/* Wait क्रम the ACK/NAK */
-	अगर (रुको_क्रम_completion_पूर्णांकerruptible(&service->हटाओ_event)) अणु
+	/* Wait for the ACK/NAK */
+	if (wait_for_completion_interruptible(&service->remove_event)) {
 		status = VCHIQ_RETRY;
-		vchiq_release_service_पूर्णांकernal(service);
-	पूर्ण अन्यथा अगर ((service->srvstate != VCHIQ_SRVSTATE_OPEN) &&
-		   (service->srvstate != VCHIQ_SRVSTATE_OPENSYNC)) अणु
-		अगर (service->srvstate != VCHIQ_SRVSTATE_CLOSEWAIT)
+		vchiq_release_service_internal(service);
+	} else if ((service->srvstate != VCHIQ_SRVSTATE_OPEN) &&
+		   (service->srvstate != VCHIQ_SRVSTATE_OPENSYNC)) {
+		if (service->srvstate != VCHIQ_SRVSTATE_CLOSEWAIT)
 			vchiq_log_error(vchiq_core_log_level,
 					"%d: osi - srvstate = %s (ref %u)",
 					service->state->id,
 					srvstate_names[service->srvstate],
-					kref_पढ़ो(&service->ref_count));
+					kref_read(&service->ref_count));
 		status = VCHIQ_ERROR;
 		VCHIQ_SERVICE_STATS_INC(service, error_count);
-		vchiq_release_service_पूर्णांकernal(service);
-	पूर्ण
+		vchiq_release_service_internal(service);
+	}
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल व्योम
-release_service_messages(काष्ठा vchiq_service *service)
-अणु
-	काष्ठा vchiq_state *state = service->state;
-	पूर्णांक slot_last = state->remote->slot_last;
-	पूर्णांक i;
+static void
+release_service_messages(struct vchiq_service *service)
+{
+	struct vchiq_state *state = service->state;
+	int slot_last = state->remote->slot_last;
+	int i;
 
 	/* Release any claimed messages aimed at this service */
 
-	अगर (service->sync) अणु
-		काष्ठा vchiq_header *header =
-			(काष्ठा vchiq_header *)SLOT_DATA_FROM_INDEX(state,
+	if (service->sync) {
+		struct vchiq_header *header =
+			(struct vchiq_header *)SLOT_DATA_FROM_INDEX(state,
 						state->remote->slot_sync);
-		अगर (VCHIQ_MSG_DSTPORT(header->msgid) == service->localport)
+		if (VCHIQ_MSG_DSTPORT(header->msgid) == service->localport)
 			release_message_sync(state, header);
 
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	क्रम (i = state->remote->slot_first; i <= slot_last; i++) अणु
-		काष्ठा vchiq_slot_info *slot_info =
+	for (i = state->remote->slot_first; i <= slot_last; i++) {
+		struct vchiq_slot_info *slot_info =
 			SLOT_INFO_FROM_INDEX(state, i);
-		अगर (slot_info->release_count != slot_info->use_count) अणु
-			अक्षर *data =
-				(अक्षर *)SLOT_DATA_FROM_INDEX(state, i);
-			अचिन्हित पूर्णांक pos, end;
+		if (slot_info->release_count != slot_info->use_count) {
+			char *data =
+				(char *)SLOT_DATA_FROM_INDEX(state, i);
+			unsigned int pos, end;
 
 			end = VCHIQ_SLOT_SIZE;
-			अगर (data == state->rx_data)
+			if (data == state->rx_data)
 				/*
-				 * This buffer is still being पढ़ो from - stop
-				 * at the current पढ़ो position
+				 * This buffer is still being read from - stop
+				 * at the current read position
 				 */
 				end = state->rx_pos & VCHIQ_SLOT_MASK;
 
 			pos = 0;
 
-			जबतक (pos < end) अणु
-				काष्ठा vchiq_header *header =
-					(काष्ठा vchiq_header *)(data + pos);
-				पूर्णांक msgid = header->msgid;
-				पूर्णांक port = VCHIQ_MSG_DSTPORT(msgid);
+			while (pos < end) {
+				struct vchiq_header *header =
+					(struct vchiq_header *)(data + pos);
+				int msgid = header->msgid;
+				int port = VCHIQ_MSG_DSTPORT(msgid);
 
-				अगर ((port == service->localport) &&
-					(msgid & VCHIQ_MSGID_CLAIMED)) अणु
+				if ((port == service->localport) &&
+					(msgid & VCHIQ_MSGID_CLAIMED)) {
 					vchiq_log_info(vchiq_core_log_level,
 						"  fsi - hdr %pK", header);
 					release_slot(state, slot_info, header,
-						शून्य);
-				पूर्ण
+						NULL);
+				}
 				pos += calc_stride(header->size);
-				अगर (pos > VCHIQ_SLOT_SIZE) अणु
+				if (pos > VCHIQ_SLOT_SIZE) {
 					vchiq_log_error(vchiq_core_log_level,
 						"fsi - pos %x: header %pK, msgid %x, header->msgid %x, header->size %x",
 						pos, header, msgid,
 						header->msgid, header->size);
 					WARN(1, "invalid slot position\n");
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+				}
+			}
+		}
+	}
+}
 
-अटल पूर्णांक
-करो_पात_bulks(काष्ठा vchiq_service *service)
-अणु
-	क्रमागत vchiq_status status;
+static int
+do_abort_bulks(struct vchiq_service *service)
+{
+	enum vchiq_status status;
 
 	/* Abort any outstanding bulk transfers */
-	अगर (mutex_lock_समाप्तable(&service->bulk_mutex))
-		वापस 0;
-	पात_outstanding_bulks(service, &service->bulk_tx);
-	पात_outstanding_bulks(service, &service->bulk_rx);
+	if (mutex_lock_killable(&service->bulk_mutex))
+		return 0;
+	abort_outstanding_bulks(service, &service->bulk_tx);
+	abort_outstanding_bulks(service, &service->bulk_rx);
 	mutex_unlock(&service->bulk_mutex);
 
-	status = notअगरy_bulks(service, &service->bulk_tx, 0/*!retry_poll*/);
-	अगर (status == VCHIQ_SUCCESS)
-		status = notअगरy_bulks(service, &service->bulk_rx,
+	status = notify_bulks(service, &service->bulk_tx, 0/*!retry_poll*/);
+	if (status == VCHIQ_SUCCESS)
+		status = notify_bulks(service, &service->bulk_rx,
 			0/*!retry_poll*/);
-	वापस (status == VCHIQ_SUCCESS);
-पूर्ण
+	return (status == VCHIQ_SUCCESS);
+}
 
-अटल क्रमागत vchiq_status
-बंद_service_complete(काष्ठा vchiq_service *service, पूर्णांक failstate)
-अणु
-	क्रमागत vchiq_status status;
-	पूर्णांक is_server = (service->खुला_fourcc != VCHIQ_FOURCC_INVALID);
-	पूर्णांक newstate;
+static enum vchiq_status
+close_service_complete(struct vchiq_service *service, int failstate)
+{
+	enum vchiq_status status;
+	int is_server = (service->public_fourcc != VCHIQ_FOURCC_INVALID);
+	int newstate;
 
-	चयन (service->srvstate) अणु
-	हाल VCHIQ_SRVSTATE_OPEN:
-	हाल VCHIQ_SRVSTATE_CLOSESENT:
-	हाल VCHIQ_SRVSTATE_CLOSERECVD:
-		अगर (is_server) अणु
-			अगर (service->स्वतः_बंद) अणु
+	switch (service->srvstate) {
+	case VCHIQ_SRVSTATE_OPEN:
+	case VCHIQ_SRVSTATE_CLOSESENT:
+	case VCHIQ_SRVSTATE_CLOSERECVD:
+		if (is_server) {
+			if (service->auto_close) {
 				service->client_id = 0;
 				service->remoteport = VCHIQ_PORT_FREE;
 				newstate = VCHIQ_SRVSTATE_LISTENING;
-			पूर्ण अन्यथा
+			} else
 				newstate = VCHIQ_SRVSTATE_CLOSEWAIT;
-		पूर्ण अन्यथा
+		} else
 			newstate = VCHIQ_SRVSTATE_CLOSED;
 		vchiq_set_service_state(service, newstate);
-		अवरोध;
-	हाल VCHIQ_SRVSTATE_LISTENING:
-		अवरोध;
-	शेष:
+		break;
+	case VCHIQ_SRVSTATE_LISTENING:
+		break;
+	default:
 		vchiq_log_error(vchiq_core_log_level,
 			"%s(%x) called in state %s", __func__,
 			service->handle, srvstate_names[service->srvstate]);
 		WARN(1, "%s in unexpected state\n", __func__);
-		वापस VCHIQ_ERROR;
-	पूर्ण
+		return VCHIQ_ERROR;
+	}
 
 	status = make_service_callback(service,
-		VCHIQ_SERVICE_CLOSED, शून्य, शून्य);
+		VCHIQ_SERVICE_CLOSED, NULL, NULL);
 
-	अगर (status != VCHIQ_RETRY) अणु
-		पूर्णांक uc = service->service_use_count;
-		पूर्णांक i;
-		/* Complete the बंद process */
-		क्रम (i = 0; i < uc; i++)
+	if (status != VCHIQ_RETRY) {
+		int uc = service->service_use_count;
+		int i;
+		/* Complete the close process */
+		for (i = 0; i < uc; i++)
 			/*
-			 * cater क्रम हालs where बंद is क्रमced and the
-			 * client may not बंद all it's handles
+			 * cater for cases where close is forced and the
+			 * client may not close all it's handles
 			 */
-			vchiq_release_service_पूर्णांकernal(service);
+			vchiq_release_service_internal(service);
 
 		service->client_id = 0;
 		service->remoteport = VCHIQ_PORT_FREE;
 
-		अगर (service->srvstate == VCHIQ_SRVSTATE_CLOSED)
-			vchiq_मुक्त_service_पूर्णांकernal(service);
-		अन्यथा अगर (service->srvstate != VCHIQ_SRVSTATE_CLOSEWAIT) अणु
-			अगर (is_server)
+		if (service->srvstate == VCHIQ_SRVSTATE_CLOSED)
+			vchiq_free_service_internal(service);
+		else if (service->srvstate != VCHIQ_SRVSTATE_CLOSEWAIT) {
+			if (is_server)
 				service->closing = 0;
 
-			complete(&service->हटाओ_event);
-		पूर्ण
-	पूर्ण अन्यथा
+			complete(&service->remove_event);
+		}
+	} else
 		vchiq_set_service_state(service, failstate);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /* Called by the slot handler */
-क्रमागत vchiq_status
-vchiq_बंद_service_पूर्णांकernal(काष्ठा vchiq_service *service, पूर्णांक बंद_recvd)
-अणु
-	काष्ठा vchiq_state *state = service->state;
-	क्रमागत vchiq_status status = VCHIQ_SUCCESS;
-	पूर्णांक is_server = (service->खुला_fourcc != VCHIQ_FOURCC_INVALID);
+enum vchiq_status
+vchiq_close_service_internal(struct vchiq_service *service, int close_recvd)
+{
+	struct vchiq_state *state = service->state;
+	enum vchiq_status status = VCHIQ_SUCCESS;
+	int is_server = (service->public_fourcc != VCHIQ_FOURCC_INVALID);
 
 	vchiq_log_info(vchiq_core_log_level, "%d: csi:%d,%d (%s)",
-		service->state->id, service->localport, बंद_recvd,
+		service->state->id, service->localport, close_recvd,
 		srvstate_names[service->srvstate]);
 
-	चयन (service->srvstate) अणु
-	हाल VCHIQ_SRVSTATE_CLOSED:
-	हाल VCHIQ_SRVSTATE_HIDDEN:
-	हाल VCHIQ_SRVSTATE_LISTENING:
-	हाल VCHIQ_SRVSTATE_CLOSEWAIT:
-		अगर (बंद_recvd)
+	switch (service->srvstate) {
+	case VCHIQ_SRVSTATE_CLOSED:
+	case VCHIQ_SRVSTATE_HIDDEN:
+	case VCHIQ_SRVSTATE_LISTENING:
+	case VCHIQ_SRVSTATE_CLOSEWAIT:
+		if (close_recvd)
 			vchiq_log_error(vchiq_core_log_level,
 				"%s(1) called in state %s",
 				__func__, srvstate_names[service->srvstate]);
-		अन्यथा अगर (is_server) अणु
-			अगर (service->srvstate == VCHIQ_SRVSTATE_LISTENING) अणु
+		else if (is_server) {
+			if (service->srvstate == VCHIQ_SRVSTATE_LISTENING) {
 				status = VCHIQ_ERROR;
-			पूर्ण अन्यथा अणु
+			} else {
 				service->client_id = 0;
 				service->remoteport = VCHIQ_PORT_FREE;
-				अगर (service->srvstate ==
+				if (service->srvstate ==
 					VCHIQ_SRVSTATE_CLOSEWAIT)
 					vchiq_set_service_state(service,
 						VCHIQ_SRVSTATE_LISTENING);
-			पूर्ण
-			complete(&service->हटाओ_event);
-		पूर्ण अन्यथा
-			vchiq_मुक्त_service_पूर्णांकernal(service);
-		अवरोध;
-	हाल VCHIQ_SRVSTATE_OPENING:
-		अगर (बंद_recvd) अणु
-			/* The खोलो was rejected - tell the user */
+			}
+			complete(&service->remove_event);
+		} else
+			vchiq_free_service_internal(service);
+		break;
+	case VCHIQ_SRVSTATE_OPENING:
+		if (close_recvd) {
+			/* The open was rejected - tell the user */
 			vchiq_set_service_state(service,
 				VCHIQ_SRVSTATE_CLOSEWAIT);
-			complete(&service->हटाओ_event);
-		पूर्ण अन्यथा अणु
-			/* Shutकरोwn mid-खोलो - let the other side know */
+			complete(&service->remove_event);
+		} else {
+			/* Shutdown mid-open - let the other side know */
 			status = queue_message(state, service,
 				VCHIQ_MAKE_MSG
 				(VCHIQ_MSG_CLOSE,
 				service->localport,
 				VCHIQ_MSG_DSTPORT(service->remoteport)),
-				शून्य, शून्य, 0, 0);
-		पूर्ण
-		अवरोध;
+				NULL, NULL, 0, 0);
+		}
+		break;
 
-	हाल VCHIQ_SRVSTATE_OPENSYNC:
+	case VCHIQ_SRVSTATE_OPENSYNC:
 		mutex_lock(&state->sync_mutex);
 		fallthrough;
-	हाल VCHIQ_SRVSTATE_OPEN:
-		अगर (बंद_recvd) अणु
-			अगर (!करो_पात_bulks(service))
+	case VCHIQ_SRVSTATE_OPEN:
+		if (close_recvd) {
+			if (!do_abort_bulks(service))
 				status = VCHIQ_RETRY;
-		पूर्ण
+		}
 
 		release_service_messages(service);
 
-		अगर (status == VCHIQ_SUCCESS)
+		if (status == VCHIQ_SUCCESS)
 			status = queue_message(state, service,
 				VCHIQ_MAKE_MSG
 				(VCHIQ_MSG_CLOSE,
 				service->localport,
 				VCHIQ_MSG_DSTPORT(service->remoteport)),
-				शून्य, शून्य, 0, QMFLAGS_NO_MUTEX_UNLOCK);
+				NULL, NULL, 0, QMFLAGS_NO_MUTEX_UNLOCK);
 
-		अगर (status == VCHIQ_SUCCESS) अणु
-			अगर (!बंद_recvd) अणु
-				/* Change the state जबतक the mutex is still held */
+		if (status == VCHIQ_SUCCESS) {
+			if (!close_recvd) {
+				/* Change the state while the mutex is still held */
 				vchiq_set_service_state(service,
 							VCHIQ_SRVSTATE_CLOSESENT);
 				mutex_unlock(&state->slot_mutex);
-				अगर (service->sync)
+				if (service->sync)
 					mutex_unlock(&state->sync_mutex);
-				अवरोध;
-			पूर्ण
-		पूर्ण अन्यथा अगर (service->srvstate == VCHIQ_SRVSTATE_OPENSYNC) अणु
+				break;
+			}
+		} else if (service->srvstate == VCHIQ_SRVSTATE_OPENSYNC) {
 			mutex_unlock(&state->sync_mutex);
-			अवरोध;
-		पूर्ण अन्यथा
-			अवरोध;
+			break;
+		} else
+			break;
 
-		/* Change the state जबतक the mutex is still held */
+		/* Change the state while the mutex is still held */
 		vchiq_set_service_state(service, VCHIQ_SRVSTATE_CLOSERECVD);
 		mutex_unlock(&state->slot_mutex);
-		अगर (service->sync)
+		if (service->sync)
 			mutex_unlock(&state->sync_mutex);
 
-		status = बंद_service_complete(service,
+		status = close_service_complete(service,
 				VCHIQ_SRVSTATE_CLOSERECVD);
-		अवरोध;
+		break;
 
-	हाल VCHIQ_SRVSTATE_CLOSESENT:
-		अगर (!बंद_recvd)
-			/* This happens when a process is समाप्तed mid-बंद */
-			अवरोध;
+	case VCHIQ_SRVSTATE_CLOSESENT:
+		if (!close_recvd)
+			/* This happens when a process is killed mid-close */
+			break;
 
-		अगर (!करो_पात_bulks(service)) अणु
+		if (!do_abort_bulks(service)) {
 			status = VCHIQ_RETRY;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (status == VCHIQ_SUCCESS)
-			status = बंद_service_complete(service,
+		if (status == VCHIQ_SUCCESS)
+			status = close_service_complete(service,
 				VCHIQ_SRVSTATE_CLOSERECVD);
-		अवरोध;
+		break;
 
-	हाल VCHIQ_SRVSTATE_CLOSERECVD:
-		अगर (!बंद_recvd && is_server)
-			/* Force पूर्णांकo LISTENING mode */
+	case VCHIQ_SRVSTATE_CLOSERECVD:
+		if (!close_recvd && is_server)
+			/* Force into LISTENING mode */
 			vchiq_set_service_state(service,
 				VCHIQ_SRVSTATE_LISTENING);
-		status = बंद_service_complete(service,
+		status = close_service_complete(service,
 			VCHIQ_SRVSTATE_CLOSERECVD);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		vchiq_log_error(vchiq_core_log_level,
 			"%s(%d) called in state %s", __func__,
-			बंद_recvd, srvstate_names[service->srvstate]);
-		अवरोध;
-	पूर्ण
+			close_recvd, srvstate_names[service->srvstate]);
+		break;
+	}
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /* Called from the application process upon process death */
-व्योम
-vchiq_terminate_service_पूर्णांकernal(काष्ठा vchiq_service *service)
-अणु
-	काष्ठा vchiq_state *state = service->state;
+void
+vchiq_terminate_service_internal(struct vchiq_service *service)
+{
+	struct vchiq_state *state = service->state;
 
 	vchiq_log_info(vchiq_core_log_level, "%d: tsi - (%d<->%d)",
 		state->id, service->localport, service->remoteport);
 
 	mark_service_closing(service);
 
-	/* Mark the service क्रम removal by the slot handler */
+	/* Mark the service for removal by the slot handler */
 	request_poll(state, service, VCHIQ_POLL_REMOVE);
-पूर्ण
+}
 
 /* Called from the slot handler */
-व्योम
-vchiq_मुक्त_service_पूर्णांकernal(काष्ठा vchiq_service *service)
-अणु
-	काष्ठा vchiq_state *state = service->state;
+void
+vchiq_free_service_internal(struct vchiq_service *service)
+{
+	struct vchiq_state *state = service->state;
 
 	vchiq_log_info(vchiq_core_log_level, "%d: fsi - (%d)",
 		state->id, service->localport);
 
-	चयन (service->srvstate) अणु
-	हाल VCHIQ_SRVSTATE_OPENING:
-	हाल VCHIQ_SRVSTATE_CLOSED:
-	हाल VCHIQ_SRVSTATE_HIDDEN:
-	हाल VCHIQ_SRVSTATE_LISTENING:
-	हाल VCHIQ_SRVSTATE_CLOSEWAIT:
-		अवरोध;
-	शेष:
+	switch (service->srvstate) {
+	case VCHIQ_SRVSTATE_OPENING:
+	case VCHIQ_SRVSTATE_CLOSED:
+	case VCHIQ_SRVSTATE_HIDDEN:
+	case VCHIQ_SRVSTATE_LISTENING:
+	case VCHIQ_SRVSTATE_CLOSEWAIT:
+		break;
+	default:
 		vchiq_log_error(vchiq_core_log_level,
 			"%d: fsi - (%d) in state %s",
 			state->id, service->localport,
 			srvstate_names[service->srvstate]);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	vchiq_set_service_state(service, VCHIQ_SRVSTATE_FREE);
 
-	complete(&service->हटाओ_event);
+	complete(&service->remove_event);
 
 	/* Release the initial lock */
 	unlock_service(service);
-पूर्ण
+}
 
-क्रमागत vchiq_status
-vchiq_connect_पूर्णांकernal(काष्ठा vchiq_state *state, काष्ठा vchiq_instance *instance)
-अणु
-	काष्ठा vchiq_service *service;
-	पूर्णांक i;
+enum vchiq_status
+vchiq_connect_internal(struct vchiq_state *state, struct vchiq_instance *instance)
+{
+	struct vchiq_service *service;
+	int i;
 
-	/* Find all services रेजिस्टरed to this client and enable them. */
+	/* Find all services registered to this client and enable them. */
 	i = 0;
-	जबतक ((service = next_service_by_instance(state, instance,
-		&i)) !=	शून्य) अणु
-		अगर (service->srvstate == VCHIQ_SRVSTATE_HIDDEN)
+	while ((service = next_service_by_instance(state, instance,
+		&i)) !=	NULL) {
+		if (service->srvstate == VCHIQ_SRVSTATE_HIDDEN)
 			vchiq_set_service_state(service,
 				VCHIQ_SRVSTATE_LISTENING);
 		unlock_service(service);
-	पूर्ण
+	}
 
-	अगर (state->conn_state == VCHIQ_CONNSTATE_DISCONNECTED) अणु
-		अगर (queue_message(state, शून्य,
-			VCHIQ_MAKE_MSG(VCHIQ_MSG_CONNECT, 0, 0), शून्य, शून्य,
+	if (state->conn_state == VCHIQ_CONNSTATE_DISCONNECTED) {
+		if (queue_message(state, NULL,
+			VCHIQ_MAKE_MSG(VCHIQ_MSG_CONNECT, 0, 0), NULL, NULL,
 			0, QMFLAGS_IS_BLOCKING) == VCHIQ_RETRY)
-			वापस VCHIQ_RETRY;
+			return VCHIQ_RETRY;
 
 		vchiq_set_conn_state(state, VCHIQ_CONNSTATE_CONNECTING);
-	पूर्ण
+	}
 
-	अगर (state->conn_state == VCHIQ_CONNSTATE_CONNECTING) अणु
-		अगर (रुको_क्रम_completion_पूर्णांकerruptible(&state->connect))
-			वापस VCHIQ_RETRY;
+	if (state->conn_state == VCHIQ_CONNSTATE_CONNECTING) {
+		if (wait_for_completion_interruptible(&state->connect))
+			return VCHIQ_RETRY;
 
 		vchiq_set_conn_state(state, VCHIQ_CONNSTATE_CONNECTED);
 		complete(&state->connect);
-	पूर्ण
+	}
 
-	वापस VCHIQ_SUCCESS;
-पूर्ण
+	return VCHIQ_SUCCESS;
+}
 
-क्रमागत vchiq_status
-vchiq_shutकरोwn_पूर्णांकernal(काष्ठा vchiq_state *state, काष्ठा vchiq_instance *instance)
-अणु
-	काष्ठा vchiq_service *service;
-	पूर्णांक i;
+enum vchiq_status
+vchiq_shutdown_internal(struct vchiq_state *state, struct vchiq_instance *instance)
+{
+	struct vchiq_service *service;
+	int i;
 
-	/* Find all services रेजिस्टरed to this client and enable them. */
+	/* Find all services registered to this client and enable them. */
 	i = 0;
-	जबतक ((service = next_service_by_instance(state, instance,
-		&i)) !=	शून्य) अणु
-		(व्योम)vchiq_हटाओ_service(service->handle);
+	while ((service = next_service_by_instance(state, instance,
+		&i)) !=	NULL) {
+		(void)vchiq_remove_service(service->handle);
 		unlock_service(service);
-	पूर्ण
+	}
 
-	वापस VCHIQ_SUCCESS;
-पूर्ण
+	return VCHIQ_SUCCESS;
+}
 
-क्रमागत vchiq_status
-vchiq_बंद_service(अचिन्हित पूर्णांक handle)
-अणु
-	/* Unरेजिस्टर the service */
-	काष्ठा vchiq_service *service = find_service_by_handle(handle);
-	क्रमागत vchiq_status status = VCHIQ_SUCCESS;
+enum vchiq_status
+vchiq_close_service(unsigned int handle)
+{
+	/* Unregister the service */
+	struct vchiq_service *service = find_service_by_handle(handle);
+	enum vchiq_status status = VCHIQ_SUCCESS;
 
-	अगर (!service)
-		वापस VCHIQ_ERROR;
+	if (!service)
+		return VCHIQ_ERROR;
 
 	vchiq_log_info(vchiq_core_log_level,
 		"%d: close_service:%d",
 		service->state->id, service->localport);
 
-	अगर ((service->srvstate == VCHIQ_SRVSTATE_FREE) ||
+	if ((service->srvstate == VCHIQ_SRVSTATE_FREE) ||
 	    (service->srvstate == VCHIQ_SRVSTATE_LISTENING) ||
-	    (service->srvstate == VCHIQ_SRVSTATE_HIDDEN)) अणु
+	    (service->srvstate == VCHIQ_SRVSTATE_HIDDEN)) {
 		unlock_service(service);
-		वापस VCHIQ_ERROR;
-	पूर्ण
+		return VCHIQ_ERROR;
+	}
 
 	mark_service_closing(service);
 
-	अगर (current == service->state->slot_handler_thपढ़ो) अणु
-		status = vchiq_बंद_service_पूर्णांकernal(service,
-			0/*!बंद_recvd*/);
+	if (current == service->state->slot_handler_thread) {
+		status = vchiq_close_service_internal(service,
+			0/*!close_recvd*/);
 		WARN_ON(status == VCHIQ_RETRY);
-	पूर्ण अन्यथा अणु
-	/* Mark the service क्रम termination by the slot handler */
+	} else {
+	/* Mark the service for termination by the slot handler */
 		request_poll(service->state, service, VCHIQ_POLL_TERMINATE);
-	पूर्ण
+	}
 
-	जबतक (1) अणु
-		अगर (रुको_क्रम_completion_पूर्णांकerruptible(&service->हटाओ_event)) अणु
+	while (1) {
+		if (wait_for_completion_interruptible(&service->remove_event)) {
 			status = VCHIQ_RETRY;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर ((service->srvstate == VCHIQ_SRVSTATE_FREE) ||
+		if ((service->srvstate == VCHIQ_SRVSTATE_FREE) ||
 		    (service->srvstate == VCHIQ_SRVSTATE_LISTENING) ||
 		    (service->srvstate == VCHIQ_SRVSTATE_OPEN))
-			अवरोध;
+			break;
 
 		vchiq_log_warning(vchiq_core_log_level,
 			"%d: close_service:%d - waiting in state %s",
 			service->state->id, service->localport,
 			srvstate_names[service->srvstate]);
-	पूर्ण
+	}
 
-	अगर ((status == VCHIQ_SUCCESS) &&
+	if ((status == VCHIQ_SUCCESS) &&
 	    (service->srvstate != VCHIQ_SRVSTATE_FREE) &&
 	    (service->srvstate != VCHIQ_SRVSTATE_LISTENING))
 		status = VCHIQ_ERROR;
 
 	unlock_service(service);
 
-	वापस status;
-पूर्ण
-EXPORT_SYMBOL(vchiq_बंद_service);
+	return status;
+}
+EXPORT_SYMBOL(vchiq_close_service);
 
-क्रमागत vchiq_status
-vchiq_हटाओ_service(अचिन्हित पूर्णांक handle)
-अणु
-	/* Unरेजिस्टर the service */
-	काष्ठा vchiq_service *service = find_service_by_handle(handle);
-	क्रमागत vchiq_status status = VCHIQ_SUCCESS;
+enum vchiq_status
+vchiq_remove_service(unsigned int handle)
+{
+	/* Unregister the service */
+	struct vchiq_service *service = find_service_by_handle(handle);
+	enum vchiq_status status = VCHIQ_SUCCESS;
 
-	अगर (!service)
-		वापस VCHIQ_ERROR;
+	if (!service)
+		return VCHIQ_ERROR;
 
 	vchiq_log_info(vchiq_core_log_level,
 		"%d: remove_service:%d",
 		service->state->id, service->localport);
 
-	अगर (service->srvstate == VCHIQ_SRVSTATE_FREE) अणु
+	if (service->srvstate == VCHIQ_SRVSTATE_FREE) {
 		unlock_service(service);
-		वापस VCHIQ_ERROR;
-	पूर्ण
+		return VCHIQ_ERROR;
+	}
 
 	mark_service_closing(service);
 
-	अगर ((service->srvstate == VCHIQ_SRVSTATE_HIDDEN) ||
-	    (current == service->state->slot_handler_thपढ़ो)) अणु
+	if ((service->srvstate == VCHIQ_SRVSTATE_HIDDEN) ||
+	    (current == service->state->slot_handler_thread)) {
 		/*
-		 * Make it look like a client, because it must be हटाओd and
+		 * Make it look like a client, because it must be removed and
 		 * not left in the LISTENING state.
 		 */
-		service->खुला_fourcc = VCHIQ_FOURCC_INVALID;
+		service->public_fourcc = VCHIQ_FOURCC_INVALID;
 
-		status = vchiq_बंद_service_पूर्णांकernal(service,
-			0/*!बंद_recvd*/);
+		status = vchiq_close_service_internal(service,
+			0/*!close_recvd*/);
 		WARN_ON(status == VCHIQ_RETRY);
-	पूर्ण अन्यथा अणु
-		/* Mark the service क्रम removal by the slot handler */
+	} else {
+		/* Mark the service for removal by the slot handler */
 		request_poll(service->state, service, VCHIQ_POLL_REMOVE);
-	पूर्ण
-	जबतक (1) अणु
-		अगर (रुको_क्रम_completion_पूर्णांकerruptible(&service->हटाओ_event)) अणु
+	}
+	while (1) {
+		if (wait_for_completion_interruptible(&service->remove_event)) {
 			status = VCHIQ_RETRY;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर ((service->srvstate == VCHIQ_SRVSTATE_FREE) ||
+		if ((service->srvstate == VCHIQ_SRVSTATE_FREE) ||
 		    (service->srvstate == VCHIQ_SRVSTATE_OPEN))
-			अवरोध;
+			break;
 
 		vchiq_log_warning(vchiq_core_log_level,
 			"%d: remove_service:%d - waiting in state %s",
 			service->state->id, service->localport,
 			srvstate_names[service->srvstate]);
-	पूर्ण
+	}
 
-	अगर ((status == VCHIQ_SUCCESS) &&
+	if ((status == VCHIQ_SUCCESS) &&
 	    (service->srvstate != VCHIQ_SRVSTATE_FREE))
 		status = VCHIQ_ERROR;
 
 	unlock_service(service);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
- * This function may be called by kernel thपढ़ोs or user thपढ़ोs.
- * User thपढ़ोs may receive VCHIQ_RETRY to indicate that a संकेत has been
- * received and the call should be retried after being वापसed to user
+ * This function may be called by kernel threads or user threads.
+ * User threads may receive VCHIQ_RETRY to indicate that a signal has been
+ * received and the call should be retried after being returned to user
  * context.
- * When called in blocking mode, the userdata field poपूर्णांकs to a bulk_रुकोer
- * काष्ठाure.
+ * When called in blocking mode, the userdata field points to a bulk_waiter
+ * structure.
  */
-क्रमागत vchiq_status vchiq_bulk_transfer(अचिन्हित पूर्णांक handle,
-				   व्योम *offset, व्योम __user *uoffset,
-				   पूर्णांक size, व्योम *userdata,
-				   क्रमागत vchiq_bulk_mode mode,
-				   क्रमागत vchiq_bulk_dir dir)
-अणु
-	काष्ठा vchiq_service *service = find_service_by_handle(handle);
-	काष्ठा vchiq_bulk_queue *queue;
-	काष्ठा vchiq_bulk *bulk;
-	काष्ठा vchiq_state *state;
-	काष्ठा bulk_रुकोer *bulk_रुकोer = शून्य;
-	स्थिर अक्षर dir_अक्षर = (dir == VCHIQ_BULK_TRANSMIT) ? 't' : 'r';
-	स्थिर पूर्णांक dir_msgtype = (dir == VCHIQ_BULK_TRANSMIT) ?
+enum vchiq_status vchiq_bulk_transfer(unsigned int handle,
+				   void *offset, void __user *uoffset,
+				   int size, void *userdata,
+				   enum vchiq_bulk_mode mode,
+				   enum vchiq_bulk_dir dir)
+{
+	struct vchiq_service *service = find_service_by_handle(handle);
+	struct vchiq_bulk_queue *queue;
+	struct vchiq_bulk *bulk;
+	struct vchiq_state *state;
+	struct bulk_waiter *bulk_waiter = NULL;
+	const char dir_char = (dir == VCHIQ_BULK_TRANSMIT) ? 't' : 'r';
+	const int dir_msgtype = (dir == VCHIQ_BULK_TRANSMIT) ?
 		VCHIQ_MSG_BULK_TX : VCHIQ_MSG_BULK_RX;
-	क्रमागत vchiq_status status = VCHIQ_ERROR;
-	पूर्णांक payload[2];
+	enum vchiq_status status = VCHIQ_ERROR;
+	int payload[2];
 
-	अगर (!service)
-		जाओ error_निकास;
+	if (!service)
+		goto error_exit;
 
-	अगर (service->srvstate != VCHIQ_SRVSTATE_OPEN)
-		जाओ error_निकास;
+	if (service->srvstate != VCHIQ_SRVSTATE_OPEN)
+		goto error_exit;
 
-	अगर (!offset && !uoffset)
-		जाओ error_निकास;
+	if (!offset && !uoffset)
+		goto error_exit;
 
-	अगर (vchiq_check_service(service) != VCHIQ_SUCCESS)
-		जाओ error_निकास;
+	if (vchiq_check_service(service) != VCHIQ_SUCCESS)
+		goto error_exit;
 
-	चयन (mode) अणु
-	हाल VCHIQ_BULK_MODE_NOCALLBACK:
-	हाल VCHIQ_BULK_MODE_CALLBACK:
-		अवरोध;
-	हाल VCHIQ_BULK_MODE_BLOCKING:
-		bulk_रुकोer = userdata;
-		init_completion(&bulk_रुकोer->event);
-		bulk_रुकोer->actual = 0;
-		bulk_रुकोer->bulk = शून्य;
-		अवरोध;
-	हाल VCHIQ_BULK_MODE_WAITING:
-		bulk_रुकोer = userdata;
-		bulk = bulk_रुकोer->bulk;
-		जाओ रुकोing;
-	शेष:
-		जाओ error_निकास;
-	पूर्ण
+	switch (mode) {
+	case VCHIQ_BULK_MODE_NOCALLBACK:
+	case VCHIQ_BULK_MODE_CALLBACK:
+		break;
+	case VCHIQ_BULK_MODE_BLOCKING:
+		bulk_waiter = userdata;
+		init_completion(&bulk_waiter->event);
+		bulk_waiter->actual = 0;
+		bulk_waiter->bulk = NULL;
+		break;
+	case VCHIQ_BULK_MODE_WAITING:
+		bulk_waiter = userdata;
+		bulk = bulk_waiter->bulk;
+		goto waiting;
+	default:
+		goto error_exit;
+	}
 
 	state = service->state;
 
 	queue = (dir == VCHIQ_BULK_TRANSMIT) ?
 		&service->bulk_tx : &service->bulk_rx;
 
-	अगर (mutex_lock_समाप्तable(&service->bulk_mutex)) अणु
+	if (mutex_lock_killable(&service->bulk_mutex)) {
 		status = VCHIQ_RETRY;
-		जाओ error_निकास;
-	पूर्ण
+		goto error_exit;
+	}
 
-	अगर (queue->local_insert == queue->हटाओ + VCHIQ_NUM_SERVICE_BULKS) अणु
+	if (queue->local_insert == queue->remove + VCHIQ_NUM_SERVICE_BULKS) {
 		VCHIQ_SERVICE_STATS_INC(service, bulk_stalls);
-		करो अणु
+		do {
 			mutex_unlock(&service->bulk_mutex);
-			अगर (रुको_क्रम_completion_पूर्णांकerruptible(
-						&service->bulk_हटाओ_event)) अणु
+			if (wait_for_completion_interruptible(
+						&service->bulk_remove_event)) {
 				status = VCHIQ_RETRY;
-				जाओ error_निकास;
-			पूर्ण
-			अगर (mutex_lock_समाप्तable(&service->bulk_mutex)) अणु
+				goto error_exit;
+			}
+			if (mutex_lock_killable(&service->bulk_mutex)) {
 				status = VCHIQ_RETRY;
-				जाओ error_निकास;
-			पूर्ण
-		पूर्ण जबतक (queue->local_insert == queue->हटाओ +
+				goto error_exit;
+			}
+		} while (queue->local_insert == queue->remove +
 				VCHIQ_NUM_SERVICE_BULKS);
-	पूर्ण
+	}
 
 	bulk = &queue->bulks[BULK_INDEX(queue->local_insert)];
 
@@ -3135,44 +3134,44 @@ vchiq_हटाओ_service(अचिन्हित पूर्णांक han
 	bulk->size = size;
 	bulk->actual = VCHIQ_BULK_ACTUAL_ABORTED;
 
-	अगर (vchiq_prepare_bulk_data(bulk, offset, uoffset, size, dir)
+	if (vchiq_prepare_bulk_data(bulk, offset, uoffset, size, dir)
 			!= VCHIQ_SUCCESS)
-		जाओ unlock_error_निकास;
+		goto unlock_error_exit;
 
 	wmb();
 
 	vchiq_log_info(vchiq_core_log_level,
 		"%d: bt (%d->%d) %cx %x@%pad %pK",
-		state->id, service->localport, service->remoteport, dir_अक्षर,
+		state->id, service->localport, service->remoteport, dir_char,
 		size, &bulk->data, userdata);
 
 	/*
-	 * The slot mutex must be held when the service is being बंदd, so
+	 * The slot mutex must be held when the service is being closed, so
 	 * claim it here to ensure that isn't happening
 	 */
-	अगर (mutex_lock_समाप्तable(&state->slot_mutex)) अणु
+	if (mutex_lock_killable(&state->slot_mutex)) {
 		status = VCHIQ_RETRY;
-		जाओ cancel_bulk_error_निकास;
-	पूर्ण
+		goto cancel_bulk_error_exit;
+	}
 
-	अगर (service->srvstate != VCHIQ_SRVSTATE_OPEN)
-		जाओ unlock_both_error_निकास;
+	if (service->srvstate != VCHIQ_SRVSTATE_OPEN)
+		goto unlock_both_error_exit;
 
 	payload[0] = lower_32_bits(bulk->data);
 	payload[1] = bulk->size;
 	status = queue_message(state,
-			       शून्य,
+			       NULL,
 			       VCHIQ_MAKE_MSG(dir_msgtype,
 					      service->localport,
 					      service->remoteport),
-			       स_नकल_copy_callback,
+			       memcpy_copy_callback,
 			       &payload,
-			       माप(payload),
+			       sizeof(payload),
 			       QMFLAGS_IS_BLOCKING |
 			       QMFLAGS_NO_MUTEX_LOCK |
 			       QMFLAGS_NO_MUTEX_UNLOCK);
-	अगर (status != VCHIQ_SUCCESS)
-		जाओ unlock_both_error_निकास;
+	if (status != VCHIQ_SUCCESS)
+		goto unlock_both_error_exit;
 
 	queue->local_insert++;
 
@@ -3182,215 +3181,215 @@ vchiq_हटाओ_service(अचिन्हित पूर्णांक han
 	vchiq_log_trace(vchiq_core_log_level,
 		"%d: bt:%d %cx li=%x ri=%x p=%x",
 		state->id,
-		service->localport, dir_अक्षर,
+		service->localport, dir_char,
 		queue->local_insert, queue->remote_insert, queue->process);
 
-रुकोing:
+waiting:
 	unlock_service(service);
 
 	status = VCHIQ_SUCCESS;
 
-	अगर (bulk_रुकोer) अणु
-		bulk_रुकोer->bulk = bulk;
-		अगर (रुको_क्रम_completion_पूर्णांकerruptible(&bulk_रुकोer->event))
+	if (bulk_waiter) {
+		bulk_waiter->bulk = bulk;
+		if (wait_for_completion_interruptible(&bulk_waiter->event))
 			status = VCHIQ_RETRY;
-		अन्यथा अगर (bulk_रुकोer->actual == VCHIQ_BULK_ACTUAL_ABORTED)
+		else if (bulk_waiter->actual == VCHIQ_BULK_ACTUAL_ABORTED)
 			status = VCHIQ_ERROR;
-	पूर्ण
+	}
 
-	वापस status;
+	return status;
 
-unlock_both_error_निकास:
+unlock_both_error_exit:
 	mutex_unlock(&state->slot_mutex);
-cancel_bulk_error_निकास:
+cancel_bulk_error_exit:
 	vchiq_complete_bulk(bulk);
-unlock_error_निकास:
+unlock_error_exit:
 	mutex_unlock(&service->bulk_mutex);
 
-error_निकास:
-	अगर (service)
+error_exit:
+	if (service)
 		unlock_service(service);
-	वापस status;
-पूर्ण
+	return status;
+}
 
-क्रमागत vchiq_status
-vchiq_queue_message(अचिन्हित पूर्णांक handle,
-		    sमाप_प्रकार (*copy_callback)(व्योम *context, व्योम *dest,
-					     माप_प्रकार offset, माप_प्रकार maxsize),
-		    व्योम *context,
-		    माप_प्रकार size)
-अणु
-	काष्ठा vchiq_service *service = find_service_by_handle(handle);
-	क्रमागत vchiq_status status = VCHIQ_ERROR;
+enum vchiq_status
+vchiq_queue_message(unsigned int handle,
+		    ssize_t (*copy_callback)(void *context, void *dest,
+					     size_t offset, size_t maxsize),
+		    void *context,
+		    size_t size)
+{
+	struct vchiq_service *service = find_service_by_handle(handle);
+	enum vchiq_status status = VCHIQ_ERROR;
 
-	अगर (!service)
-		जाओ error_निकास;
+	if (!service)
+		goto error_exit;
 
-	अगर (vchiq_check_service(service) != VCHIQ_SUCCESS)
-		जाओ error_निकास;
+	if (vchiq_check_service(service) != VCHIQ_SUCCESS)
+		goto error_exit;
 
-	अगर (!size) अणु
+	if (!size) {
 		VCHIQ_SERVICE_STATS_INC(service, error_count);
-		जाओ error_निकास;
+		goto error_exit;
 
-	पूर्ण
+	}
 
-	अगर (size > VCHIQ_MAX_MSG_SIZE) अणु
+	if (size > VCHIQ_MAX_MSG_SIZE) {
 		VCHIQ_SERVICE_STATS_INC(service, error_count);
-		जाओ error_निकास;
-	पूर्ण
+		goto error_exit;
+	}
 
-	चयन (service->srvstate) अणु
-	हाल VCHIQ_SRVSTATE_OPEN:
+	switch (service->srvstate) {
+	case VCHIQ_SRVSTATE_OPEN:
 		status = queue_message(service->state, service,
 				VCHIQ_MAKE_MSG(VCHIQ_MSG_DATA,
 					service->localport,
 					service->remoteport),
 				copy_callback, context, size, 1);
-		अवरोध;
-	हाल VCHIQ_SRVSTATE_OPENSYNC:
+		break;
+	case VCHIQ_SRVSTATE_OPENSYNC:
 		status = queue_message_sync(service->state, service,
 				VCHIQ_MAKE_MSG(VCHIQ_MSG_DATA,
 					service->localport,
 					service->remoteport),
 				copy_callback, context, size, 1);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		status = VCHIQ_ERROR;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-error_निकास:
-	अगर (service)
+error_exit:
+	if (service)
 		unlock_service(service);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-पूर्णांक vchiq_queue_kernel_message(अचिन्हित पूर्णांक handle, व्योम *data, अचिन्हित पूर्णांक size)
-अणु
-	क्रमागत vchiq_status status;
+int vchiq_queue_kernel_message(unsigned int handle, void *data, unsigned int size)
+{
+	enum vchiq_status status;
 
-	जबतक (1) अणु
-		status = vchiq_queue_message(handle, स_नकल_copy_callback,
+	while (1) {
+		status = vchiq_queue_message(handle, memcpy_copy_callback,
 					     data, size);
 
 		/*
-		 * vchiq_queue_message() may वापस VCHIQ_RETRY, so we need to
+		 * vchiq_queue_message() may return VCHIQ_RETRY, so we need to
 		 * implement a retry mechanism since this function is supposed
 		 * to block until queued
 		 */
-		अगर (status != VCHIQ_RETRY)
-			अवरोध;
+		if (status != VCHIQ_RETRY)
+			break;
 
 		msleep(1);
-	पूर्ण
+	}
 
-	वापस status;
-पूर्ण
+	return status;
+}
 EXPORT_SYMBOL(vchiq_queue_kernel_message);
 
-व्योम
-vchiq_release_message(अचिन्हित पूर्णांक handle,
-		      काष्ठा vchiq_header *header)
-अणु
-	काष्ठा vchiq_service *service = find_service_by_handle(handle);
-	काष्ठा vchiq_shared_state *remote;
-	काष्ठा vchiq_state *state;
-	पूर्णांक slot_index;
+void
+vchiq_release_message(unsigned int handle,
+		      struct vchiq_header *header)
+{
+	struct vchiq_service *service = find_service_by_handle(handle);
+	struct vchiq_shared_state *remote;
+	struct vchiq_state *state;
+	int slot_index;
 
-	अगर (!service)
-		वापस;
+	if (!service)
+		return;
 
 	state = service->state;
 	remote = state->remote;
 
-	slot_index = SLOT_INDEX_FROM_DATA(state, (व्योम *)header);
+	slot_index = SLOT_INDEX_FROM_DATA(state, (void *)header);
 
-	अगर ((slot_index >= remote->slot_first) &&
-	    (slot_index <= remote->slot_last)) अणु
-		पूर्णांक msgid = header->msgid;
+	if ((slot_index >= remote->slot_first) &&
+	    (slot_index <= remote->slot_last)) {
+		int msgid = header->msgid;
 
-		अगर (msgid & VCHIQ_MSGID_CLAIMED) अणु
-			काष्ठा vchiq_slot_info *slot_info =
+		if (msgid & VCHIQ_MSGID_CLAIMED) {
+			struct vchiq_slot_info *slot_info =
 				SLOT_INFO_FROM_INDEX(state, slot_index);
 
 			release_slot(state, slot_info, header, service);
-		पूर्ण
-	पूर्ण अन्यथा अगर (slot_index == remote->slot_sync)
+		}
+	} else if (slot_index == remote->slot_sync)
 		release_message_sync(state, header);
 
 	unlock_service(service);
-पूर्ण
+}
 EXPORT_SYMBOL(vchiq_release_message);
 
-अटल व्योम
-release_message_sync(काष्ठा vchiq_state *state, काष्ठा vchiq_header *header)
-अणु
+static void
+release_message_sync(struct vchiq_state *state, struct vchiq_header *header)
+{
 	header->msgid = VCHIQ_MSGID_PADDING;
-	remote_event_संकेत(&state->remote->sync_release);
-पूर्ण
+	remote_event_signal(&state->remote->sync_release);
+}
 
-क्रमागत vchiq_status
-vchiq_get_peer_version(अचिन्हित पूर्णांक handle, लघु *peer_version)
-अणु
-	क्रमागत vchiq_status status = VCHIQ_ERROR;
-	काष्ठा vchiq_service *service = find_service_by_handle(handle);
+enum vchiq_status
+vchiq_get_peer_version(unsigned int handle, short *peer_version)
+{
+	enum vchiq_status status = VCHIQ_ERROR;
+	struct vchiq_service *service = find_service_by_handle(handle);
 
-	अगर (!service)
-		जाओ निकास;
+	if (!service)
+		goto exit;
 
-	अगर (vchiq_check_service(service) != VCHIQ_SUCCESS)
-		जाओ निकास;
+	if (vchiq_check_service(service) != VCHIQ_SUCCESS)
+		goto exit;
 
-	अगर (!peer_version)
-		जाओ निकास;
+	if (!peer_version)
+		goto exit;
 
 	*peer_version = service->peer_version;
 	status = VCHIQ_SUCCESS;
 
-निकास:
-	अगर (service)
+exit:
+	if (service)
 		unlock_service(service);
-	वापस status;
-पूर्ण
+	return status;
+}
 EXPORT_SYMBOL(vchiq_get_peer_version);
 
-व्योम vchiq_get_config(काष्ठा vchiq_config *config)
-अणु
+void vchiq_get_config(struct vchiq_config *config)
+{
 	config->max_msg_size           = VCHIQ_MAX_MSG_SIZE;
 	config->bulk_threshold         = VCHIQ_MAX_MSG_SIZE;
 	config->max_outstanding_bulks  = VCHIQ_NUM_SERVICE_BULKS;
 	config->max_services           = VCHIQ_MAX_SERVICES;
 	config->version                = VCHIQ_VERSION;
 	config->version_min            = VCHIQ_VERSION_MIN;
-पूर्ण
+}
 
-क्रमागत vchiq_status
-vchiq_set_service_option(अचिन्हित पूर्णांक handle,
-	क्रमागत vchiq_service_option option, पूर्णांक value)
-अणु
-	काष्ठा vchiq_service *service = find_service_by_handle(handle);
-	क्रमागत vchiq_status status = VCHIQ_ERROR;
-	काष्ठा vchiq_service_quota *quota;
+enum vchiq_status
+vchiq_set_service_option(unsigned int handle,
+	enum vchiq_service_option option, int value)
+{
+	struct vchiq_service *service = find_service_by_handle(handle);
+	enum vchiq_status status = VCHIQ_ERROR;
+	struct vchiq_service_quota *quota;
 
-	अगर (!service)
-		वापस VCHIQ_ERROR;
+	if (!service)
+		return VCHIQ_ERROR;
 
-	चयन (option) अणु
-	हाल VCHIQ_SERVICE_OPTION_AUTOCLOSE:
-		service->स्वतः_बंद = value;
+	switch (option) {
+	case VCHIQ_SERVICE_OPTION_AUTOCLOSE:
+		service->auto_close = value;
 		status = VCHIQ_SUCCESS;
-		अवरोध;
+		break;
 
-	हाल VCHIQ_SERVICE_OPTION_SLOT_QUOTA:
+	case VCHIQ_SERVICE_OPTION_SLOT_QUOTA:
 		quota = &service->state->service_quotas[service->localport];
-		अगर (value == 0)
-			value = service->state->शेष_slot_quota;
-		अगर ((value >= quota->slot_use_count) &&
-		    (value < (अचिन्हित लघु)~0)) अणु
+		if (value == 0)
+			value = service->state->default_slot_quota;
+		if ((value >= quota->slot_use_count) &&
+		    (value < (unsigned short)~0)) {
 			quota->slot_quota = value;
-			अगर ((value >= quota->slot_use_count) &&
+			if ((value >= quota->slot_use_count) &&
 			    (quota->message_quota >= quota->message_use_count))
 				/*
 				 * Signal the service that it may have
@@ -3398,17 +3397,17 @@ vchiq_set_service_option(अचिन्हित पूर्णांक handl
 				 */
 				complete(&quota->quota_event);
 			status = VCHIQ_SUCCESS;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल VCHIQ_SERVICE_OPTION_MESSAGE_QUOTA:
+	case VCHIQ_SERVICE_OPTION_MESSAGE_QUOTA:
 		quota = &service->state->service_quotas[service->localport];
-		अगर (value == 0)
-			value = service->state->शेष_message_quota;
-		अगर ((value >= quota->message_use_count) &&
-		    (value < (अचिन्हित लघु)~0)) अणु
+		if (value == 0)
+			value = service->state->default_message_quota;
+		if ((value >= quota->message_use_count) &&
+		    (value < (unsigned short)~0)) {
 			quota->message_quota = value;
-			अगर ((value >= quota->message_use_count) &&
+			if ((value >= quota->message_use_count) &&
 			    (quota->slot_quota >= quota->slot_use_count))
 				/*
 				 * Signal the service that it may have
@@ -3416,35 +3415,35 @@ vchiq_set_service_option(अचिन्हित पूर्णांक handl
 				 */
 				complete(&quota->quota_event);
 			status = VCHIQ_SUCCESS;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल VCHIQ_SERVICE_OPTION_SYNCHRONOUS:
-		अगर ((service->srvstate == VCHIQ_SRVSTATE_HIDDEN) ||
-		    (service->srvstate == VCHIQ_SRVSTATE_LISTENING)) अणु
+	case VCHIQ_SERVICE_OPTION_SYNCHRONOUS:
+		if ((service->srvstate == VCHIQ_SRVSTATE_HIDDEN) ||
+		    (service->srvstate == VCHIQ_SRVSTATE_LISTENING)) {
 			service->sync = value;
 			status = VCHIQ_SUCCESS;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल VCHIQ_SERVICE_OPTION_TRACE:
+	case VCHIQ_SERVICE_OPTION_TRACE:
 		service->trace = value;
 		status = VCHIQ_SUCCESS;
-		अवरोध;
+		break;
 
-	शेष:
-		अवरोध;
-	पूर्ण
+	default:
+		break;
+	}
 	unlock_service(service);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक
-vchiq_dump_shared_state(व्योम *dump_context, काष्ठा vchiq_state *state,
-			काष्ठा vchiq_shared_state *shared, स्थिर अक्षर *label)
-अणु
-	अटल स्थिर अक्षर *स्थिर debug_names[] = अणु
+static int
+vchiq_dump_shared_state(void *dump_context, struct vchiq_state *state,
+			struct vchiq_shared_state *shared, const char *label)
+{
+	static const char *const debug_names[] = {
 		"<entries>",
 		"SLOT_HANDLER_COUNT",
 		"SLOT_HANDLER_LINE",
@@ -3456,90 +3455,90 @@ vchiq_dump_shared_state(व्योम *dump_context, काष्ठा vchiq_
 		"SERVICE_CALLBACK_LINE",
 		"MSG_QUEUE_FULL_COUNT",
 		"COMPLETION_QUEUE_FULL_COUNT"
-	पूर्ण;
-	पूर्णांक i;
-	अक्षर buf[80];
-	पूर्णांक len;
-	पूर्णांक err;
+	};
+	int i;
+	char buf[80];
+	int len;
+	int err;
 
-	len = scnम_लिखो(buf, माप(buf),
+	len = scnprintf(buf, sizeof(buf),
 		"  %s: slots %d-%d tx_pos=%x recycle=%x",
 		label, shared->slot_first, shared->slot_last,
 		shared->tx_pos, shared->slot_queue_recycle);
 	err = vchiq_dump(dump_context, buf, len + 1);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	len = scnम_लिखो(buf, माप(buf),
+	len = scnprintf(buf, sizeof(buf),
 		"    Slots claimed:");
 	err = vchiq_dump(dump_context, buf, len + 1);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	क्रम (i = shared->slot_first; i <= shared->slot_last; i++) अणु
-		काष्ठा vchiq_slot_info slot_info =
+	for (i = shared->slot_first; i <= shared->slot_last; i++) {
+		struct vchiq_slot_info slot_info =
 						*SLOT_INFO_FROM_INDEX(state, i);
-		अगर (slot_info.use_count != slot_info.release_count) अणु
-			len = scnम_लिखो(buf, माप(buf),
+		if (slot_info.use_count != slot_info.release_count) {
+			len = scnprintf(buf, sizeof(buf),
 				"      %d: %d/%d", i, slot_info.use_count,
 				slot_info.release_count);
 			err = vchiq_dump(dump_context, buf, len + 1);
-			अगर (err)
-				वापस err;
-		पूर्ण
-	पूर्ण
+			if (err)
+				return err;
+		}
+	}
 
-	क्रम (i = 1; i < shared->debug[DEBUG_ENTRIES]; i++) अणु
-		len = scnम_लिखो(buf, माप(buf), "    DEBUG: %s = %d(%x)",
+	for (i = 1; i < shared->debug[DEBUG_ENTRIES]; i++) {
+		len = scnprintf(buf, sizeof(buf), "    DEBUG: %s = %d(%x)",
 			debug_names[i], shared->debug[i], shared->debug[i]);
 		err = vchiq_dump(dump_context, buf, len + 1);
-		अगर (err)
-			वापस err;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (err)
+			return err;
+	}
+	return 0;
+}
 
-पूर्णांक vchiq_dump_state(व्योम *dump_context, काष्ठा vchiq_state *state)
-अणु
-	अक्षर buf[80];
-	पूर्णांक len;
-	पूर्णांक i;
-	पूर्णांक err;
+int vchiq_dump_state(void *dump_context, struct vchiq_state *state)
+{
+	char buf[80];
+	int len;
+	int i;
+	int err;
 
-	len = scnम_लिखो(buf, माप(buf), "State %d: %s", state->id,
+	len = scnprintf(buf, sizeof(buf), "State %d: %s", state->id,
 		conn_state_names[state->conn_state]);
 	err = vchiq_dump(dump_context, buf, len + 1);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	len = scnम_लिखो(buf, माप(buf),
+	len = scnprintf(buf, sizeof(buf),
 		"  tx_pos=%x(@%pK), rx_pos=%x(@%pK)",
 		state->local->tx_pos,
 		state->tx_data + (state->local_tx_pos & VCHIQ_SLOT_MASK),
 		state->rx_pos,
 		state->rx_data + (state->rx_pos & VCHIQ_SLOT_MASK));
 	err = vchiq_dump(dump_context, buf, len + 1);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	len = scnम_लिखो(buf, माप(buf),
+	len = scnprintf(buf, sizeof(buf),
 		"  Version: %d (min %d)",
 		VCHIQ_VERSION, VCHIQ_VERSION_MIN);
 	err = vchiq_dump(dump_context, buf, len + 1);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (VCHIQ_ENABLE_STATS) अणु
-		len = scnम_लिखो(buf, माप(buf),
+	if (VCHIQ_ENABLE_STATS) {
+		len = scnprintf(buf, sizeof(buf),
 			"  Stats: ctrl_tx_count=%d, ctrl_rx_count=%d, error_count=%d",
 			state->stats.ctrl_tx_count, state->stats.ctrl_rx_count,
 			state->stats.error_count);
 		err = vchiq_dump(dump_context, buf, len + 1);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	len = scnम_लिखो(buf, माप(buf),
+	len = scnprintf(buf, sizeof(buf),
 		"  Slots: %d available (%d data), %d recyclable, %d stalls (%d data)",
 		((state->slot_queue_available * VCHIQ_SLOT_SIZE) -
 			state->local_tx_pos) / VCHIQ_SLOT_SIZE,
@@ -3547,75 +3546,75 @@ vchiq_dump_shared_state(व्योम *dump_context, काष्ठा vchiq_
 		state->local->slot_queue_recycle - state->slot_queue_available,
 		state->stats.slot_stalls, state->stats.data_stalls);
 	err = vchiq_dump(dump_context, buf, len + 1);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	err = vchiq_dump_platक्रमm_state(dump_context);
-	अगर (err)
-		वापस err;
+	err = vchiq_dump_platform_state(dump_context);
+	if (err)
+		return err;
 
 	err = vchiq_dump_shared_state(dump_context,
 				      state,
 				      state->local,
 				      "Local");
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 	err = vchiq_dump_shared_state(dump_context,
 				      state,
 				      state->remote,
 				      "Remote");
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	err = vchiq_dump_platक्रमm_instances(dump_context);
-	अगर (err)
-		वापस err;
+	err = vchiq_dump_platform_instances(dump_context);
+	if (err)
+		return err;
 
-	क्रम (i = 0; i < state->unused_service; i++) अणु
-		काष्ठा vchiq_service *service = find_service_by_port(state, i);
+	for (i = 0; i < state->unused_service; i++) {
+		struct vchiq_service *service = find_service_by_port(state, i);
 
-		अगर (service) अणु
+		if (service) {
 			err = vchiq_dump_service_state(dump_context, service);
 			unlock_service(service);
-			अगर (err)
-				वापस err;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			if (err)
+				return err;
+		}
+	}
+	return 0;
+}
 
-पूर्णांक vchiq_dump_service_state(व्योम *dump_context, काष्ठा vchiq_service *service)
-अणु
-	अक्षर buf[80];
-	पूर्णांक len;
-	पूर्णांक err;
-	अचिन्हित पूर्णांक ref_count;
+int vchiq_dump_service_state(void *dump_context, struct vchiq_service *service)
+{
+	char buf[80];
+	int len;
+	int err;
+	unsigned int ref_count;
 
 	/*Don't include the lock just taken*/
-	ref_count = kref_पढ़ो(&service->ref_count) - 1;
-	len = scnम_लिखो(buf, माप(buf), "Service %u: %s (ref %u)",
+	ref_count = kref_read(&service->ref_count) - 1;
+	len = scnprintf(buf, sizeof(buf), "Service %u: %s (ref %u)",
 			service->localport, srvstate_names[service->srvstate],
 			ref_count);
 
-	अगर (service->srvstate != VCHIQ_SRVSTATE_FREE) अणु
-		अक्षर remoteport[30];
-		काष्ठा vchiq_service_quota *quota =
+	if (service->srvstate != VCHIQ_SRVSTATE_FREE) {
+		char remoteport[30];
+		struct vchiq_service_quota *quota =
 			&service->state->service_quotas[service->localport];
-		पूर्णांक fourcc = service->base.fourcc;
-		पूर्णांक tx_pending, rx_pending;
+		int fourcc = service->base.fourcc;
+		int tx_pending, rx_pending;
 
-		अगर (service->remoteport != VCHIQ_PORT_FREE) अणु
-			पूर्णांक len2 = scnम_लिखो(remoteport, माप(remoteport),
+		if (service->remoteport != VCHIQ_PORT_FREE) {
+			int len2 = scnprintf(remoteport, sizeof(remoteport),
 				"%u", service->remoteport);
 
-			अगर (service->खुला_fourcc != VCHIQ_FOURCC_INVALID)
-				scnम_लिखो(remoteport + len2,
-					माप(remoteport) - len2,
+			if (service->public_fourcc != VCHIQ_FOURCC_INVALID)
+				scnprintf(remoteport + len2,
+					sizeof(remoteport) - len2,
 					" (client %x)", service->client_id);
-		पूर्ण अन्यथा
-			म_नकल(remoteport, "n/a");
+		} else
+			strcpy(remoteport, "n/a");
 
-		len += scnम_लिखो(buf + len, माप(buf) - len,
+		len += scnprintf(buf + len, sizeof(buf) - len,
 			" '%c%c%c%c' remote %s (msg use %d/%d, slot use %d/%d)",
 			VCHIQ_FOURCC_AS_4CHARS(fourcc),
 			remoteport,
@@ -3625,8 +3624,8 @@ vchiq_dump_shared_state(व्योम *dump_context, काष्ठा vchiq_
 			quota->slot_quota);
 
 		err = vchiq_dump(dump_context, buf, len + 1);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
 		tx_pending = service->bulk_tx.local_insert -
 			service->bulk_tx.remote_insert;
@@ -3634,140 +3633,140 @@ vchiq_dump_shared_state(व्योम *dump_context, काष्ठा vchiq_
 		rx_pending = service->bulk_rx.local_insert -
 			service->bulk_rx.remote_insert;
 
-		len = scnम_लिखो(buf, माप(buf),
+		len = scnprintf(buf, sizeof(buf),
 			"  Bulk: tx_pending=%d (size %d), rx_pending=%d (size %d)",
 			tx_pending,
 			tx_pending ? service->bulk_tx.bulks[
-			BULK_INDEX(service->bulk_tx.हटाओ)].size : 0,
+			BULK_INDEX(service->bulk_tx.remove)].size : 0,
 			rx_pending,
 			rx_pending ? service->bulk_rx.bulks[
-			BULK_INDEX(service->bulk_rx.हटाओ)].size : 0);
+			BULK_INDEX(service->bulk_rx.remove)].size : 0);
 
-		अगर (VCHIQ_ENABLE_STATS) अणु
+		if (VCHIQ_ENABLE_STATS) {
 			err = vchiq_dump(dump_context, buf, len + 1);
-			अगर (err)
-				वापस err;
+			if (err)
+				return err;
 
-			len = scnम_लिखो(buf, माप(buf),
+			len = scnprintf(buf, sizeof(buf),
 				"  Ctrl: tx_count=%d, tx_bytes=%llu, rx_count=%d, rx_bytes=%llu",
 				service->stats.ctrl_tx_count,
 				service->stats.ctrl_tx_bytes,
 				service->stats.ctrl_rx_count,
 				service->stats.ctrl_rx_bytes);
 			err = vchiq_dump(dump_context, buf, len + 1);
-			अगर (err)
-				वापस err;
+			if (err)
+				return err;
 
-			len = scnम_लिखो(buf, माप(buf),
+			len = scnprintf(buf, sizeof(buf),
 				"  Bulk: tx_count=%d, tx_bytes=%llu, rx_count=%d, rx_bytes=%llu",
 				service->stats.bulk_tx_count,
 				service->stats.bulk_tx_bytes,
 				service->stats.bulk_rx_count,
 				service->stats.bulk_rx_bytes);
 			err = vchiq_dump(dump_context, buf, len + 1);
-			अगर (err)
-				वापस err;
+			if (err)
+				return err;
 
-			len = scnम_लिखो(buf, माप(buf),
+			len = scnprintf(buf, sizeof(buf),
 				"  %d quota stalls, %d slot stalls, %d bulk stalls, %d aborted, %d errors",
 				service->stats.quota_stalls,
 				service->stats.slot_stalls,
 				service->stats.bulk_stalls,
-				service->stats.bulk_पातed_count,
+				service->stats.bulk_aborted_count,
 				service->stats.error_count);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	err = vchiq_dump(dump_context, buf, len + 1);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (service->srvstate != VCHIQ_SRVSTATE_FREE)
-		err = vchiq_dump_platक्रमm_service_state(dump_context, service);
-	वापस err;
-पूर्ण
+	if (service->srvstate != VCHIQ_SRVSTATE_FREE)
+		err = vchiq_dump_platform_service_state(dump_context, service);
+	return err;
+}
 
-व्योम
-vchiq_loud_error_header(व्योम)
-अणु
+void
+vchiq_loud_error_header(void)
+{
 	vchiq_log_error(vchiq_core_log_level,
 		"============================================================================");
 	vchiq_log_error(vchiq_core_log_level,
 		"============================================================================");
 	vchiq_log_error(vchiq_core_log_level, "=====");
-पूर्ण
+}
 
-व्योम
-vchiq_loud_error_footer(व्योम)
-अणु
+void
+vchiq_loud_error_footer(void)
+{
 	vchiq_log_error(vchiq_core_log_level, "=====");
 	vchiq_log_error(vchiq_core_log_level,
 		"============================================================================");
 	vchiq_log_error(vchiq_core_log_level,
 		"============================================================================");
-पूर्ण
+}
 
-क्रमागत vchiq_status vchiq_send_remote_use(काष्ठा vchiq_state *state)
-अणु
-	अगर (state->conn_state == VCHIQ_CONNSTATE_DISCONNECTED)
-		वापस VCHIQ_RETRY;
+enum vchiq_status vchiq_send_remote_use(struct vchiq_state *state)
+{
+	if (state->conn_state == VCHIQ_CONNSTATE_DISCONNECTED)
+		return VCHIQ_RETRY;
 
-	वापस queue_message(state, शून्य,
+	return queue_message(state, NULL,
 			     VCHIQ_MAKE_MSG(VCHIQ_MSG_REMOTE_USE, 0, 0),
-			     शून्य, शून्य, 0, 0);
-पूर्ण
+			     NULL, NULL, 0, 0);
+}
 
-क्रमागत vchiq_status vchiq_send_remote_use_active(काष्ठा vchiq_state *state)
-अणु
-	अगर (state->conn_state == VCHIQ_CONNSTATE_DISCONNECTED)
-		वापस VCHIQ_RETRY;
+enum vchiq_status vchiq_send_remote_use_active(struct vchiq_state *state)
+{
+	if (state->conn_state == VCHIQ_CONNSTATE_DISCONNECTED)
+		return VCHIQ_RETRY;
 
-	वापस queue_message(state, शून्य,
+	return queue_message(state, NULL,
 			     VCHIQ_MAKE_MSG(VCHIQ_MSG_REMOTE_USE_ACTIVE, 0, 0),
-			     शून्य, शून्य, 0, 0);
-पूर्ण
+			     NULL, NULL, 0, 0);
+}
 
-व्योम vchiq_log_dump_mem(स्थिर अक्षर *label, u32 addr, स्थिर व्योम *व्योम_mem,
-	माप_प्रकार num_bytes)
-अणु
-	स्थिर u8  *mem = व्योम_mem;
-	माप_प्रकार          offset;
-	अक्षर            line_buf[100];
-	अक्षर           *s;
+void vchiq_log_dump_mem(const char *label, u32 addr, const void *void_mem,
+	size_t num_bytes)
+{
+	const u8  *mem = void_mem;
+	size_t          offset;
+	char            line_buf[100];
+	char           *s;
 
-	जबतक (num_bytes > 0) अणु
+	while (num_bytes > 0) {
 		s = line_buf;
 
-		क्रम (offset = 0; offset < 16; offset++) अणु
-			अगर (offset < num_bytes)
-				s += scnम_लिखो(s, 4, "%02x ", mem[offset]);
-			अन्यथा
-				s += scnम_लिखो(s, 4, "   ");
-		पूर्ण
+		for (offset = 0; offset < 16; offset++) {
+			if (offset < num_bytes)
+				s += scnprintf(s, 4, "%02x ", mem[offset]);
+			else
+				s += scnprintf(s, 4, "   ");
+		}
 
-		क्रम (offset = 0; offset < 16; offset++) अणु
-			अगर (offset < num_bytes) अणु
+		for (offset = 0; offset < 16; offset++) {
+			if (offset < num_bytes) {
 				u8 ch = mem[offset];
 
-				अगर ((ch < ' ') || (ch > '~'))
+				if ((ch < ' ') || (ch > '~'))
 					ch = '.';
-				*s++ = (अक्षर)ch;
-			पूर्ण
-		पूर्ण
+				*s++ = (char)ch;
+			}
+		}
 		*s++ = '\0';
 
-		अगर (label && (*label != '\0'))
+		if (label && (*label != '\0'))
 			vchiq_log_trace(VCHIQ_LOG_TRACE,
 				"%s: %08x: %s", label, addr, line_buf);
-		अन्यथा
+		else
 			vchiq_log_trace(VCHIQ_LOG_TRACE,
 				"%08x: %s", addr, line_buf);
 
 		addr += 16;
 		mem += 16;
-		अगर (num_bytes > 16)
+		if (num_bytes > 16)
 			num_bytes -= 16;
-		अन्यथा
+		else
 			num_bytes = 0;
-	पूर्ण
-पूर्ण
+	}
+}

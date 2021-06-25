@@ -1,199 +1,198 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- *  Simplअगरied MAC Kernel (smack) security module
+ *  Simplified MAC Kernel (smack) security module
  *
  *  This file contains the smack hook function implementations.
  *
  *  Authors:
- *	Casey Schaufler <हालy@schaufler-ca.com>
- *	Jarkko Sakkinen <jarkko.sakkinen@पूर्णांकel.com>
+ *	Casey Schaufler <casey@schaufler-ca.com>
+ *	Jarkko Sakkinen <jarkko.sakkinen@intel.com>
  *
- *  Copyright (C) 2007 Casey Schaufler <हालy@schaufler-ca.com>
+ *  Copyright (C) 2007 Casey Schaufler <casey@schaufler-ca.com>
  *  Copyright (C) 2009 Hewlett-Packard Development Company, L.P.
  *                Paul Moore <paul@paul-moore.com>
  *  Copyright (C) 2010 Nokia Corporation
  *  Copyright (C) 2011 Intel Corporation.
  */
 
-#समावेश <linux/xattr.h>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/mount.h>
-#समावेश <linux/स्थिति.स>
-#समावेश <linux/kd.h>
-#समावेश <यंत्र/ioctls.h>
-#समावेश <linux/ip.h>
-#समावेश <linux/tcp.h>
-#समावेश <linux/udp.h>
-#समावेश <linux/dccp.h>
-#समावेश <linux/icmpv6.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/mutex.h>
-#समावेश <net/cipso_ipv4.h>
-#समावेश <net/ip.h>
-#समावेश <net/ipv6.h>
-#समावेश <linux/audit.h>
-#समावेश <linux/magic.h>
-#समावेश <linux/dcache.h>
-#समावेश <linux/personality.h>
-#समावेश <linux/msg.h>
-#समावेश <linux/shm.h>
-#समावेश <linux/binfmts.h>
-#समावेश <linux/parser.h>
-#समावेश <linux/fs_context.h>
-#समावेश <linux/fs_parser.h>
-#समावेश <linux/watch_queue.h>
-#समावेश "smack.h"
+#include <linux/xattr.h>
+#include <linux/pagemap.h>
+#include <linux/mount.h>
+#include <linux/stat.h>
+#include <linux/kd.h>
+#include <asm/ioctls.h>
+#include <linux/ip.h>
+#include <linux/tcp.h>
+#include <linux/udp.h>
+#include <linux/dccp.h>
+#include <linux/icmpv6.h>
+#include <linux/slab.h>
+#include <linux/mutex.h>
+#include <net/cipso_ipv4.h>
+#include <net/ip.h>
+#include <net/ipv6.h>
+#include <linux/audit.h>
+#include <linux/magic.h>
+#include <linux/dcache.h>
+#include <linux/personality.h>
+#include <linux/msg.h>
+#include <linux/shm.h>
+#include <linux/binfmts.h>
+#include <linux/parser.h>
+#include <linux/fs_context.h>
+#include <linux/fs_parser.h>
+#include <linux/watch_queue.h>
+#include "smack.h"
 
-#घोषणा TRANS_TRUE	"TRUE"
-#घोषणा TRANS_TRUE_SIZE	4
+#define TRANS_TRUE	"TRUE"
+#define TRANS_TRUE_SIZE	4
 
-#घोषणा SMK_CONNECTING	0
-#घोषणा SMK_RECEIVING	1
-#घोषणा SMK_SENDING	2
+#define SMK_CONNECTING	0
+#define SMK_RECEIVING	1
+#define SMK_SENDING	2
 
-अटल DEFINE_MUTEX(smack_ipv6_lock);
-अटल LIST_HEAD(smk_ipv6_port_list);
-काष्ठा kmem_cache *smack_rule_cache;
-पूर्णांक smack_enabled;
+static DEFINE_MUTEX(smack_ipv6_lock);
+static LIST_HEAD(smk_ipv6_port_list);
+struct kmem_cache *smack_rule_cache;
+int smack_enabled;
 
-#घोषणा A(s) अणु"smack"#s, माप("smack"#s) - 1, Opt_##sपूर्ण
-अटल काष्ठा अणु
-	स्थिर अक्षर *name;
-	पूर्णांक len;
-	पूर्णांक opt;
-पूर्ण smk_mount_opts[] = अणु
-	अणु"smackfsdef", माप("smackfsdef") - 1, Opt_fsशेषपूर्ण,
-	A(fsशेष), A(fsन्यूनमान), A(fshat), A(fsroot), A(fstransmute)
-पूर्ण;
-#अघोषित A
+#define A(s) {"smack"#s, sizeof("smack"#s) - 1, Opt_##s}
+static struct {
+	const char *name;
+	int len;
+	int opt;
+} smk_mount_opts[] = {
+	{"smackfsdef", sizeof("smackfsdef") - 1, Opt_fsdefault},
+	A(fsdefault), A(fsfloor), A(fshat), A(fsroot), A(fstransmute)
+};
+#undef A
 
-अटल पूर्णांक match_opt_prefix(अक्षर *s, पूर्णांक l, अक्षर **arg)
-अणु
-	पूर्णांक i;
+static int match_opt_prefix(char *s, int l, char **arg)
+{
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(smk_mount_opts); i++) अणु
-		माप_प्रकार len = smk_mount_opts[i].len;
-		अगर (len > l || स_भेद(s, smk_mount_opts[i].name, len))
-			जारी;
-		अगर (len == l || s[len] != '=')
-			जारी;
+	for (i = 0; i < ARRAY_SIZE(smk_mount_opts); i++) {
+		size_t len = smk_mount_opts[i].len;
+		if (len > l || memcmp(s, smk_mount_opts[i].name, len))
+			continue;
+		if (len == l || s[len] != '=')
+			continue;
 		*arg = s + len + 1;
-		वापस smk_mount_opts[i].opt;
-	पूर्ण
-	वापस Opt_error;
-पूर्ण
+		return smk_mount_opts[i].opt;
+	}
+	return Opt_error;
+}
 
-#अगर_घोषित CONFIG_SECURITY_SMACK_BRINGUP
-अटल अक्षर *smk_bu_mess[] = अणु
+#ifdef CONFIG_SECURITY_SMACK_BRINGUP
+static char *smk_bu_mess[] = {
 	"Bringup Error",	/* Unused */
 	"Bringup",		/* SMACK_BRINGUP_ALLOW */
 	"Unconfined Subject",	/* SMACK_UNCONFINED_SUBJECT */
 	"Unconfined Object",	/* SMACK_UNCONFINED_OBJECT */
-पूर्ण;
+};
 
-अटल व्योम smk_bu_mode(पूर्णांक mode, अक्षर *s)
-अणु
-	पूर्णांक i = 0;
+static void smk_bu_mode(int mode, char *s)
+{
+	int i = 0;
 
-	अगर (mode & MAY_READ)
+	if (mode & MAY_READ)
 		s[i++] = 'r';
-	अगर (mode & MAY_WRITE)
+	if (mode & MAY_WRITE)
 		s[i++] = 'w';
-	अगर (mode & MAY_EXEC)
+	if (mode & MAY_EXEC)
 		s[i++] = 'x';
-	अगर (mode & MAY_APPEND)
+	if (mode & MAY_APPEND)
 		s[i++] = 'a';
-	अगर (mode & MAY_TRANSMUTE)
+	if (mode & MAY_TRANSMUTE)
 		s[i++] = 't';
-	अगर (mode & MAY_LOCK)
+	if (mode & MAY_LOCK)
 		s[i++] = 'l';
-	अगर (i == 0)
+	if (i == 0)
 		s[i++] = '-';
 	s[i] = '\0';
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-#अगर_घोषित CONFIG_SECURITY_SMACK_BRINGUP
-अटल पूर्णांक smk_bu_note(अक्षर *note, काष्ठा smack_known *sskp,
-		       काष्ठा smack_known *oskp, पूर्णांक mode, पूर्णांक rc)
-अणु
-	अक्षर acc[SMK_NUM_ACCESS_TYPE + 1];
+#ifdef CONFIG_SECURITY_SMACK_BRINGUP
+static int smk_bu_note(char *note, struct smack_known *sskp,
+		       struct smack_known *oskp, int mode, int rc)
+{
+	char acc[SMK_NUM_ACCESS_TYPE + 1];
 
-	अगर (rc <= 0)
-		वापस rc;
-	अगर (rc > SMACK_UNCONFINED_OBJECT)
+	if (rc <= 0)
+		return rc;
+	if (rc > SMACK_UNCONFINED_OBJECT)
 		rc = 0;
 
 	smk_bu_mode(mode, acc);
 	pr_info("Smack %s: (%s %s %s) %s\n", smk_bu_mess[rc],
 		sskp->smk_known, oskp->smk_known, acc, note);
-	वापस 0;
-पूर्ण
-#अन्यथा
-#घोषणा smk_bu_note(note, sskp, oskp, mode, RC) (RC)
-#पूर्ण_अगर
+	return 0;
+}
+#else
+#define smk_bu_note(note, sskp, oskp, mode, RC) (RC)
+#endif
 
-#अगर_घोषित CONFIG_SECURITY_SMACK_BRINGUP
-अटल पूर्णांक smk_bu_current(अक्षर *note, काष्ठा smack_known *oskp,
-			  पूर्णांक mode, पूर्णांक rc)
-अणु
-	काष्ठा task_smack *tsp = smack_cred(current_cred());
-	अक्षर acc[SMK_NUM_ACCESS_TYPE + 1];
+#ifdef CONFIG_SECURITY_SMACK_BRINGUP
+static int smk_bu_current(char *note, struct smack_known *oskp,
+			  int mode, int rc)
+{
+	struct task_smack *tsp = smack_cred(current_cred());
+	char acc[SMK_NUM_ACCESS_TYPE + 1];
 
-	अगर (rc <= 0)
-		वापस rc;
-	अगर (rc > SMACK_UNCONFINED_OBJECT)
+	if (rc <= 0)
+		return rc;
+	if (rc > SMACK_UNCONFINED_OBJECT)
 		rc = 0;
 
 	smk_bu_mode(mode, acc);
 	pr_info("Smack %s: (%s %s %s) %s %s\n", smk_bu_mess[rc],
 		tsp->smk_task->smk_known, oskp->smk_known,
 		acc, current->comm, note);
-	वापस 0;
-पूर्ण
-#अन्यथा
-#घोषणा smk_bu_current(note, oskp, mode, RC) (RC)
-#पूर्ण_अगर
+	return 0;
+}
+#else
+#define smk_bu_current(note, oskp, mode, RC) (RC)
+#endif
 
-#अगर_घोषित CONFIG_SECURITY_SMACK_BRINGUP
-अटल पूर्णांक smk_bu_task(काष्ठा task_काष्ठा *otp, पूर्णांक mode, पूर्णांक rc)
-अणु
-	काष्ठा task_smack *tsp = smack_cred(current_cred());
-	काष्ठा smack_known *smk_task = smk_of_task_काष्ठा_obj(otp);
-	अक्षर acc[SMK_NUM_ACCESS_TYPE + 1];
+#ifdef CONFIG_SECURITY_SMACK_BRINGUP
+static int smk_bu_task(struct task_struct *otp, int mode, int rc)
+{
+	struct task_smack *tsp = smack_cred(current_cred());
+	struct smack_known *smk_task = smk_of_task_struct_obj(otp);
+	char acc[SMK_NUM_ACCESS_TYPE + 1];
 
-	अगर (rc <= 0)
-		वापस rc;
-	अगर (rc > SMACK_UNCONFINED_OBJECT)
+	if (rc <= 0)
+		return rc;
+	if (rc > SMACK_UNCONFINED_OBJECT)
 		rc = 0;
 
 	smk_bu_mode(mode, acc);
 	pr_info("Smack %s: (%s %s %s) %s to %s\n", smk_bu_mess[rc],
 		tsp->smk_task->smk_known, smk_task->smk_known, acc,
 		current->comm, otp->comm);
-	वापस 0;
-पूर्ण
-#अन्यथा
-#घोषणा smk_bu_task(otp, mode, RC) (RC)
-#पूर्ण_अगर
+	return 0;
+}
+#else
+#define smk_bu_task(otp, mode, RC) (RC)
+#endif
 
-#अगर_घोषित CONFIG_SECURITY_SMACK_BRINGUP
-अटल पूर्णांक smk_bu_inode(काष्ठा inode *inode, पूर्णांक mode, पूर्णांक rc)
-अणु
-	काष्ठा task_smack *tsp = smack_cred(current_cred());
-	काष्ठा inode_smack *isp = smack_inode(inode);
-	अक्षर acc[SMK_NUM_ACCESS_TYPE + 1];
+#ifdef CONFIG_SECURITY_SMACK_BRINGUP
+static int smk_bu_inode(struct inode *inode, int mode, int rc)
+{
+	struct task_smack *tsp = smack_cred(current_cred());
+	struct inode_smack *isp = smack_inode(inode);
+	char acc[SMK_NUM_ACCESS_TYPE + 1];
 
-	अगर (isp->smk_flags & SMK_INODE_IMPURE)
+	if (isp->smk_flags & SMK_INODE_IMPURE)
 		pr_info("Smack Unconfined Corruption: inode=(%s %ld) %s\n",
 			inode->i_sb->s_id, inode->i_ino, current->comm);
 
-	अगर (rc <= 0)
-		वापस rc;
-	अगर (rc > SMACK_UNCONFINED_OBJECT)
+	if (rc <= 0)
+		return rc;
+	if (rc > SMACK_UNCONFINED_OBJECT)
 		rc = 0;
-	अगर (rc == SMACK_UNCONFINED_SUBJECT &&
+	if (rc == SMACK_UNCONFINED_SUBJECT &&
 	    (mode & (MAY_WRITE | MAY_APPEND)))
 		isp->smk_flags |= SMK_INODE_IMPURE;
 
@@ -202,28 +201,28 @@
 	pr_info("Smack %s: (%s %s %s) inode=(%s %ld) %s\n", smk_bu_mess[rc],
 		tsp->smk_task->smk_known, isp->smk_inode->smk_known, acc,
 		inode->i_sb->s_id, inode->i_ino, current->comm);
-	वापस 0;
-पूर्ण
-#अन्यथा
-#घोषणा smk_bu_inode(inode, mode, RC) (RC)
-#पूर्ण_अगर
+	return 0;
+}
+#else
+#define smk_bu_inode(inode, mode, RC) (RC)
+#endif
 
-#अगर_घोषित CONFIG_SECURITY_SMACK_BRINGUP
-अटल पूर्णांक smk_bu_file(काष्ठा file *file, पूर्णांक mode, पूर्णांक rc)
-अणु
-	काष्ठा task_smack *tsp = smack_cred(current_cred());
-	काष्ठा smack_known *sskp = tsp->smk_task;
-	काष्ठा inode *inode = file_inode(file);
-	काष्ठा inode_smack *isp = smack_inode(inode);
-	अक्षर acc[SMK_NUM_ACCESS_TYPE + 1];
+#ifdef CONFIG_SECURITY_SMACK_BRINGUP
+static int smk_bu_file(struct file *file, int mode, int rc)
+{
+	struct task_smack *tsp = smack_cred(current_cred());
+	struct smack_known *sskp = tsp->smk_task;
+	struct inode *inode = file_inode(file);
+	struct inode_smack *isp = smack_inode(inode);
+	char acc[SMK_NUM_ACCESS_TYPE + 1];
 
-	अगर (isp->smk_flags & SMK_INODE_IMPURE)
+	if (isp->smk_flags & SMK_INODE_IMPURE)
 		pr_info("Smack Unconfined Corruption: inode=(%s %ld) %s\n",
 			inode->i_sb->s_id, inode->i_ino, current->comm);
 
-	अगर (rc <= 0)
-		वापस rc;
-	अगर (rc > SMACK_UNCONFINED_OBJECT)
+	if (rc <= 0)
+		return rc;
+	if (rc > SMACK_UNCONFINED_OBJECT)
 		rc = 0;
 
 	smk_bu_mode(mode, acc);
@@ -231,29 +230,29 @@
 		sskp->smk_known, smk_of_inode(inode)->smk_known, acc,
 		inode->i_sb->s_id, inode->i_ino, file,
 		current->comm);
-	वापस 0;
-पूर्ण
-#अन्यथा
-#घोषणा smk_bu_file(file, mode, RC) (RC)
-#पूर्ण_अगर
+	return 0;
+}
+#else
+#define smk_bu_file(file, mode, RC) (RC)
+#endif
 
-#अगर_घोषित CONFIG_SECURITY_SMACK_BRINGUP
-अटल पूर्णांक smk_bu_credfile(स्थिर काष्ठा cred *cred, काष्ठा file *file,
-				पूर्णांक mode, पूर्णांक rc)
-अणु
-	काष्ठा task_smack *tsp = smack_cred(cred);
-	काष्ठा smack_known *sskp = tsp->smk_task;
-	काष्ठा inode *inode = file_inode(file);
-	काष्ठा inode_smack *isp = smack_inode(inode);
-	अक्षर acc[SMK_NUM_ACCESS_TYPE + 1];
+#ifdef CONFIG_SECURITY_SMACK_BRINGUP
+static int smk_bu_credfile(const struct cred *cred, struct file *file,
+				int mode, int rc)
+{
+	struct task_smack *tsp = smack_cred(cred);
+	struct smack_known *sskp = tsp->smk_task;
+	struct inode *inode = file_inode(file);
+	struct inode_smack *isp = smack_inode(inode);
+	char acc[SMK_NUM_ACCESS_TYPE + 1];
 
-	अगर (isp->smk_flags & SMK_INODE_IMPURE)
+	if (isp->smk_flags & SMK_INODE_IMPURE)
 		pr_info("Smack Unconfined Corruption: inode=(%s %ld) %s\n",
 			inode->i_sb->s_id, inode->i_ino, current->comm);
 
-	अगर (rc <= 0)
-		वापस rc;
-	अगर (rc > SMACK_UNCONFINED_OBJECT)
+	if (rc <= 0)
+		return rc;
+	if (rc > SMACK_UNCONFINED_OBJECT)
 		rc = 0;
 
 	smk_bu_mode(mode, acc);
@@ -261,206 +260,206 @@
 		sskp->smk_known, smk_of_inode(inode)->smk_known, acc,
 		inode->i_sb->s_id, inode->i_ino, file,
 		current->comm);
-	वापस 0;
-पूर्ण
-#अन्यथा
-#घोषणा smk_bu_credfile(cred, file, mode, RC) (RC)
-#पूर्ण_अगर
+	return 0;
+}
+#else
+#define smk_bu_credfile(cred, file, mode, RC) (RC)
+#endif
 
 /**
  * smk_fetch - Fetch the smack label from a file.
  * @name: type of the label (attribute)
- * @ip: a poपूर्णांकer to the inode
- * @dp: a poपूर्णांकer to the dentry
+ * @ip: a pointer to the inode
+ * @dp: a pointer to the dentry
  *
- * Returns a poपूर्णांकer to the master list entry क्रम the Smack label,
- * शून्य अगर there was no label to fetch, or an error code.
+ * Returns a pointer to the master list entry for the Smack label,
+ * NULL if there was no label to fetch, or an error code.
  */
-अटल काष्ठा smack_known *smk_fetch(स्थिर अक्षर *name, काष्ठा inode *ip,
-					काष्ठा dentry *dp)
-अणु
-	पूर्णांक rc;
-	अक्षर *buffer;
-	काष्ठा smack_known *skp = शून्य;
+static struct smack_known *smk_fetch(const char *name, struct inode *ip,
+					struct dentry *dp)
+{
+	int rc;
+	char *buffer;
+	struct smack_known *skp = NULL;
 
-	अगर (!(ip->i_opflags & IOP_XATTR))
-		वापस ERR_PTR(-EOPNOTSUPP);
+	if (!(ip->i_opflags & IOP_XATTR))
+		return ERR_PTR(-EOPNOTSUPP);
 
 	buffer = kzalloc(SMK_LONGLABEL, GFP_NOFS);
-	अगर (buffer == शून्य)
-		वापस ERR_PTR(-ENOMEM);
+	if (buffer == NULL)
+		return ERR_PTR(-ENOMEM);
 
 	rc = __vfs_getxattr(dp, ip, name, buffer, SMK_LONGLABEL);
-	अगर (rc < 0)
+	if (rc < 0)
 		skp = ERR_PTR(rc);
-	अन्यथा अगर (rc == 0)
-		skp = शून्य;
-	अन्यथा
+	else if (rc == 0)
+		skp = NULL;
+	else
 		skp = smk_import_entry(buffer, rc);
 
-	kमुक्त(buffer);
+	kfree(buffer);
 
-	वापस skp;
-पूर्ण
+	return skp;
+}
 
 /**
  * init_inode_smack - initialize an inode security blob
  * @inode: inode to extract the info from
- * @skp: a poपूर्णांकer to the Smack label entry to use in the blob
+ * @skp: a pointer to the Smack label entry to use in the blob
  *
  */
-अटल व्योम init_inode_smack(काष्ठा inode *inode, काष्ठा smack_known *skp)
-अणु
-	काष्ठा inode_smack *isp = smack_inode(inode);
+static void init_inode_smack(struct inode *inode, struct smack_known *skp)
+{
+	struct inode_smack *isp = smack_inode(inode);
 
 	isp->smk_inode = skp;
 	isp->smk_flags = 0;
-पूर्ण
+}
 
 /**
  * init_task_smack - initialize a task security blob
  * @tsp: blob to initialize
- * @task: a poपूर्णांकer to the Smack label क्रम the running task
- * @विभाजनed: a poपूर्णांकer to the Smack label क्रम the विभाजनed task
+ * @task: a pointer to the Smack label for the running task
+ * @forked: a pointer to the Smack label for the forked task
  *
  */
-अटल व्योम init_task_smack(काष्ठा task_smack *tsp, काष्ठा smack_known *task,
-					काष्ठा smack_known *विभाजनed)
-अणु
+static void init_task_smack(struct task_smack *tsp, struct smack_known *task,
+					struct smack_known *forked)
+{
 	tsp->smk_task = task;
-	tsp->smk_विभाजनed = विभाजनed;
+	tsp->smk_forked = forked;
 	INIT_LIST_HEAD(&tsp->smk_rules);
 	INIT_LIST_HEAD(&tsp->smk_relabel);
 	mutex_init(&tsp->smk_rules_lock);
-पूर्ण
+}
 
 /**
  * smk_copy_rules - copy a rule set
- * @nhead: new rules header poपूर्णांकer
- * @ohead: old rules header poपूर्णांकer
- * @gfp: type of the memory क्रम the allocation
+ * @nhead: new rules header pointer
+ * @ohead: old rules header pointer
+ * @gfp: type of the memory for the allocation
  *
  * Returns 0 on success, -ENOMEM on error
  */
-अटल पूर्णांक smk_copy_rules(काष्ठा list_head *nhead, काष्ठा list_head *ohead,
+static int smk_copy_rules(struct list_head *nhead, struct list_head *ohead,
 				gfp_t gfp)
-अणु
-	काष्ठा smack_rule *nrp;
-	काष्ठा smack_rule *orp;
-	पूर्णांक rc = 0;
+{
+	struct smack_rule *nrp;
+	struct smack_rule *orp;
+	int rc = 0;
 
-	list_क्रम_each_entry_rcu(orp, ohead, list) अणु
+	list_for_each_entry_rcu(orp, ohead, list) {
 		nrp = kmem_cache_zalloc(smack_rule_cache, gfp);
-		अगर (nrp == शून्य) अणु
+		if (nrp == NULL) {
 			rc = -ENOMEM;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		*nrp = *orp;
 		list_add_rcu(&nrp->list, nhead);
-	पूर्ण
-	वापस rc;
-पूर्ण
+	}
+	return rc;
+}
 
 /**
  * smk_copy_relabel - copy smk_relabel labels list
- * @nhead: new rules header poपूर्णांकer
- * @ohead: old rules header poपूर्णांकer
- * @gfp: type of the memory क्रम the allocation
+ * @nhead: new rules header pointer
+ * @ohead: old rules header pointer
+ * @gfp: type of the memory for the allocation
  *
  * Returns 0 on success, -ENOMEM on error
  */
-अटल पूर्णांक smk_copy_relabel(काष्ठा list_head *nhead, काष्ठा list_head *ohead,
+static int smk_copy_relabel(struct list_head *nhead, struct list_head *ohead,
 				gfp_t gfp)
-अणु
-	काष्ठा smack_known_list_elem *nklep;
-	काष्ठा smack_known_list_elem *oklep;
+{
+	struct smack_known_list_elem *nklep;
+	struct smack_known_list_elem *oklep;
 
-	list_क्रम_each_entry(oklep, ohead, list) अणु
-		nklep = kzalloc(माप(काष्ठा smack_known_list_elem), gfp);
-		अगर (nklep == शून्य) अणु
+	list_for_each_entry(oklep, ohead, list) {
+		nklep = kzalloc(sizeof(struct smack_known_list_elem), gfp);
+		if (nklep == NULL) {
 			smk_destroy_label_list(nhead);
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 		nklep->smk_label = oklep->smk_label;
 		list_add(&nklep->list, nhead);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * smk_ptrace_mode - helper function क्रम converting PTRACE_MODE_* पूर्णांकo MAY_*
- * @mode - input mode in क्रमm of PTRACE_MODE_*
+ * smk_ptrace_mode - helper function for converting PTRACE_MODE_* into MAY_*
+ * @mode - input mode in form of PTRACE_MODE_*
  *
  * Returns a converted MAY_* mode usable by smack rules
  */
-अटल अंतरभूत अचिन्हित पूर्णांक smk_ptrace_mode(अचिन्हित पूर्णांक mode)
-अणु
-	अगर (mode & PTRACE_MODE_ATTACH)
-		वापस MAY_READWRITE;
-	अगर (mode & PTRACE_MODE_READ)
-		वापस MAY_READ;
+static inline unsigned int smk_ptrace_mode(unsigned int mode)
+{
+	if (mode & PTRACE_MODE_ATTACH)
+		return MAY_READWRITE;
+	if (mode & PTRACE_MODE_READ)
+		return MAY_READ;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * smk_ptrace_rule_check - helper क्रम ptrace access
+ * smk_ptrace_rule_check - helper for ptrace access
  * @tracer: tracer process
  * @tracee_known: label entry of the process that's about to be traced
  * @mode: ptrace attachment mode (PTRACE_MODE_*)
- * @func: name of the function that called us, used क्रम audit
+ * @func: name of the function that called us, used for audit
  *
  * Returns 0 on access granted, -error on error
  */
-अटल पूर्णांक smk_ptrace_rule_check(काष्ठा task_काष्ठा *tracer,
-				 काष्ठा smack_known *tracee_known,
-				 अचिन्हित पूर्णांक mode, स्थिर अक्षर *func)
-अणु
-	पूर्णांक rc;
-	काष्ठा smk_audit_info ad, *saip = शून्य;
-	काष्ठा task_smack *tsp;
-	काष्ठा smack_known *tracer_known;
-	स्थिर काष्ठा cred *tracercred;
+static int smk_ptrace_rule_check(struct task_struct *tracer,
+				 struct smack_known *tracee_known,
+				 unsigned int mode, const char *func)
+{
+	int rc;
+	struct smk_audit_info ad, *saip = NULL;
+	struct task_smack *tsp;
+	struct smack_known *tracer_known;
+	const struct cred *tracercred;
 
-	अगर ((mode & PTRACE_MODE_NOAUDIT) == 0) अणु
+	if ((mode & PTRACE_MODE_NOAUDIT) == 0) {
 		smk_ad_init(&ad, func, LSM_AUDIT_DATA_TASK);
 		smk_ad_setfield_u_tsk(&ad, tracer);
 		saip = &ad;
-	पूर्ण
+	}
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	tracercred = __task_cred(tracer);
 	tsp = smack_cred(tracercred);
 	tracer_known = smk_of_task(tsp);
 
-	अगर ((mode & PTRACE_MODE_ATTACH) &&
+	if ((mode & PTRACE_MODE_ATTACH) &&
 	    (smack_ptrace_rule == SMACK_PTRACE_EXACT ||
-	     smack_ptrace_rule == SMACK_PTRACE_DRACONIAN)) अणु
-		अगर (tracer_known->smk_known == tracee_known->smk_known)
+	     smack_ptrace_rule == SMACK_PTRACE_DRACONIAN)) {
+		if (tracer_known->smk_known == tracee_known->smk_known)
 			rc = 0;
-		अन्यथा अगर (smack_ptrace_rule == SMACK_PTRACE_DRACONIAN)
+		else if (smack_ptrace_rule == SMACK_PTRACE_DRACONIAN)
 			rc = -EACCES;
-		अन्यथा अगर (smack_privileged_cred(CAP_SYS_PTRACE, tracercred))
+		else if (smack_privileged_cred(CAP_SYS_PTRACE, tracercred))
 			rc = 0;
-		अन्यथा
+		else
 			rc = -EACCES;
 
-		अगर (saip)
+		if (saip)
 			smack_log(tracer_known->smk_known,
 				  tracee_known->smk_known,
 				  0, rc, saip);
 
-		rcu_पढ़ो_unlock();
-		वापस rc;
-	पूर्ण
+		rcu_read_unlock();
+		return rc;
+	}
 
-	/* In हाल of rule==SMACK_PTRACE_DEFAULT or mode==PTRACE_MODE_READ */
+	/* In case of rule==SMACK_PTRACE_DEFAULT or mode==PTRACE_MODE_READ */
 	rc = smk_tskacc(tsp, tracee_known, smk_ptrace_mode(mode), saip);
 
-	rcu_पढ़ो_unlock();
-	वापस rc;
-पूर्ण
+	rcu_read_unlock();
+	return rc;
+}
 
 /*
  * LSM hooks.
@@ -469,40 +468,40 @@
 
 /**
  * smack_ptrace_access_check - Smack approval on PTRACE_ATTACH
- * @ctp: child task poपूर्णांकer
+ * @ctp: child task pointer
  * @mode: ptrace attachment mode (PTRACE_MODE_*)
  *
- * Returns 0 अगर access is OK, an error code otherwise
+ * Returns 0 if access is OK, an error code otherwise
  *
  * Do the capability checks.
  */
-अटल पूर्णांक smack_ptrace_access_check(काष्ठा task_काष्ठा *ctp, अचिन्हित पूर्णांक mode)
-अणु
-	काष्ठा smack_known *skp;
+static int smack_ptrace_access_check(struct task_struct *ctp, unsigned int mode)
+{
+	struct smack_known *skp;
 
-	skp = smk_of_task_काष्ठा_obj(ctp);
+	skp = smk_of_task_struct_obj(ctp);
 
-	वापस smk_ptrace_rule_check(current, skp, mode, __func__);
-पूर्ण
+	return smk_ptrace_rule_check(current, skp, mode, __func__);
+}
 
 /**
  * smack_ptrace_traceme - Smack approval on PTRACE_TRACEME
- * @ptp: parent task poपूर्णांकer
+ * @ptp: parent task pointer
  *
- * Returns 0 अगर access is OK, an error code otherwise
+ * Returns 0 if access is OK, an error code otherwise
  *
  * Do the capability checks, and require PTRACE_MODE_ATTACH.
  */
-अटल पूर्णांक smack_ptrace_traceme(काष्ठा task_काष्ठा *ptp)
-अणु
-	पूर्णांक rc;
-	काष्ठा smack_known *skp;
+static int smack_ptrace_traceme(struct task_struct *ptp)
+{
+	int rc;
+	struct smack_known *skp;
 
 	skp = smk_of_task(smack_cred(current_cred()));
 
 	rc = smk_ptrace_rule_check(ptp, skp, PTRACE_MODE_ATTACH, __func__);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
  * smack_syslog - Smack approval on syslog
@@ -510,19 +509,19 @@
  *
  * Returns 0 on success, error code otherwise.
  */
-अटल पूर्णांक smack_syslog(पूर्णांक typefrom_file)
-अणु
-	पूर्णांक rc = 0;
-	काष्ठा smack_known *skp = smk_of_current();
+static int smack_syslog(int typefrom_file)
+{
+	int rc = 0;
+	struct smack_known *skp = smk_of_current();
 
-	अगर (smack_privileged(CAP_MAC_OVERRIDE))
-		वापस 0;
+	if (smack_privileged(CAP_MAC_OVERRIDE))
+		return 0;
 
-	अगर (smack_syslog_label != शून्य && smack_syslog_label != skp)
+	if (smack_syslog_label != NULL && smack_syslog_label != skp)
 		rc = -EACCES;
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
  * Superblock Hooks.
@@ -534,394 +533,394 @@
  *
  * Returns 0 on success or -ENOMEM on error.
  */
-अटल पूर्णांक smack_sb_alloc_security(काष्ठा super_block *sb)
-अणु
-	काष्ठा superblock_smack *sbsp = smack_superblock(sb);
+static int smack_sb_alloc_security(struct super_block *sb)
+{
+	struct superblock_smack *sbsp = smack_superblock(sb);
 
-	sbsp->smk_root = &smack_known_न्यूनमान;
-	sbsp->smk_शेष = &smack_known_न्यूनमान;
-	sbsp->smk_न्यूनमान = &smack_known_न्यूनमान;
+	sbsp->smk_root = &smack_known_floor;
+	sbsp->smk_default = &smack_known_floor;
+	sbsp->smk_floor = &smack_known_floor;
 	sbsp->smk_hat = &smack_known_hat;
 	/*
 	 * SMK_SB_INITIALIZED will be zero from kzalloc.
 	 */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा smack_mnt_opts अणु
-	स्थिर अक्षर *fsशेष, *fsन्यूनमान, *fshat, *fsroot, *fstransmute;
-पूर्ण;
+struct smack_mnt_opts {
+	const char *fsdefault, *fsfloor, *fshat, *fsroot, *fstransmute;
+};
 
-अटल व्योम smack_मुक्त_mnt_opts(व्योम *mnt_opts)
-अणु
-	काष्ठा smack_mnt_opts *opts = mnt_opts;
-	kमुक्त(opts->fsशेष);
-	kमुक्त(opts->fsन्यूनमान);
-	kमुक्त(opts->fshat);
-	kमुक्त(opts->fsroot);
-	kमुक्त(opts->fstransmute);
-	kमुक्त(opts);
-पूर्ण
+static void smack_free_mnt_opts(void *mnt_opts)
+{
+	struct smack_mnt_opts *opts = mnt_opts;
+	kfree(opts->fsdefault);
+	kfree(opts->fsfloor);
+	kfree(opts->fshat);
+	kfree(opts->fsroot);
+	kfree(opts->fstransmute);
+	kfree(opts);
+}
 
-अटल पूर्णांक smack_add_opt(पूर्णांक token, स्थिर अक्षर *s, व्योम **mnt_opts)
-अणु
-	काष्ठा smack_mnt_opts *opts = *mnt_opts;
+static int smack_add_opt(int token, const char *s, void **mnt_opts)
+{
+	struct smack_mnt_opts *opts = *mnt_opts;
 
-	अगर (!opts) अणु
-		opts = kzalloc(माप(काष्ठा smack_mnt_opts), GFP_KERNEL);
-		अगर (!opts)
-			वापस -ENOMEM;
+	if (!opts) {
+		opts = kzalloc(sizeof(struct smack_mnt_opts), GFP_KERNEL);
+		if (!opts)
+			return -ENOMEM;
 		*mnt_opts = opts;
-	पूर्ण
-	अगर (!s)
-		वापस -ENOMEM;
+	}
+	if (!s)
+		return -ENOMEM;
 
-	चयन (token) अणु
-	हाल Opt_fsशेष:
-		अगर (opts->fsशेष)
-			जाओ out_opt_err;
-		opts->fsशेष = s;
-		अवरोध;
-	हाल Opt_fsन्यूनमान:
-		अगर (opts->fsन्यूनमान)
-			जाओ out_opt_err;
-		opts->fsन्यूनमान = s;
-		अवरोध;
-	हाल Opt_fshat:
-		अगर (opts->fshat)
-			जाओ out_opt_err;
+	switch (token) {
+	case Opt_fsdefault:
+		if (opts->fsdefault)
+			goto out_opt_err;
+		opts->fsdefault = s;
+		break;
+	case Opt_fsfloor:
+		if (opts->fsfloor)
+			goto out_opt_err;
+		opts->fsfloor = s;
+		break;
+	case Opt_fshat:
+		if (opts->fshat)
+			goto out_opt_err;
 		opts->fshat = s;
-		अवरोध;
-	हाल Opt_fsroot:
-		अगर (opts->fsroot)
-			जाओ out_opt_err;
+		break;
+	case Opt_fsroot:
+		if (opts->fsroot)
+			goto out_opt_err;
 		opts->fsroot = s;
-		अवरोध;
-	हाल Opt_fstransmute:
-		अगर (opts->fstransmute)
-			जाओ out_opt_err;
+		break;
+	case Opt_fstransmute:
+		if (opts->fstransmute)
+			goto out_opt_err;
 		opts->fstransmute = s;
-		अवरोध;
-	पूर्ण
-	वापस 0;
+		break;
+	}
+	return 0;
 
 out_opt_err:
 	pr_warn("Smack: duplicate mount options\n");
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
 /**
  * smack_fs_context_dup - Duplicate the security data on fs_context duplication
- * @fc: The new fileप्रणाली context.
- * @src_fc: The source fileप्रणाली context being duplicated.
+ * @fc: The new filesystem context.
+ * @src_fc: The source filesystem context being duplicated.
  *
  * Returns 0 on success or -ENOMEM on error.
  */
-अटल पूर्णांक smack_fs_context_dup(काष्ठा fs_context *fc,
-				काष्ठा fs_context *src_fc)
-अणु
-	काष्ठा smack_mnt_opts *dst, *src = src_fc->security;
+static int smack_fs_context_dup(struct fs_context *fc,
+				struct fs_context *src_fc)
+{
+	struct smack_mnt_opts *dst, *src = src_fc->security;
 
-	अगर (!src)
-		वापस 0;
+	if (!src)
+		return 0;
 
-	fc->security = kzalloc(माप(काष्ठा smack_mnt_opts), GFP_KERNEL);
-	अगर (!fc->security)
-		वापस -ENOMEM;
+	fc->security = kzalloc(sizeof(struct smack_mnt_opts), GFP_KERNEL);
+	if (!fc->security)
+		return -ENOMEM;
 	dst = fc->security;
 
-	अगर (src->fsशेष) अणु
-		dst->fsशेष = kstrdup(src->fsशेष, GFP_KERNEL);
-		अगर (!dst->fsशेष)
-			वापस -ENOMEM;
-	पूर्ण
-	अगर (src->fsन्यूनमान) अणु
-		dst->fsन्यूनमान = kstrdup(src->fsन्यूनमान, GFP_KERNEL);
-		अगर (!dst->fsन्यूनमान)
-			वापस -ENOMEM;
-	पूर्ण
-	अगर (src->fshat) अणु
+	if (src->fsdefault) {
+		dst->fsdefault = kstrdup(src->fsdefault, GFP_KERNEL);
+		if (!dst->fsdefault)
+			return -ENOMEM;
+	}
+	if (src->fsfloor) {
+		dst->fsfloor = kstrdup(src->fsfloor, GFP_KERNEL);
+		if (!dst->fsfloor)
+			return -ENOMEM;
+	}
+	if (src->fshat) {
 		dst->fshat = kstrdup(src->fshat, GFP_KERNEL);
-		अगर (!dst->fshat)
-			वापस -ENOMEM;
-	पूर्ण
-	अगर (src->fsroot) अणु
+		if (!dst->fshat)
+			return -ENOMEM;
+	}
+	if (src->fsroot) {
 		dst->fsroot = kstrdup(src->fsroot, GFP_KERNEL);
-		अगर (!dst->fsroot)
-			वापस -ENOMEM;
-	पूर्ण
-	अगर (src->fstransmute) अणु
+		if (!dst->fsroot)
+			return -ENOMEM;
+	}
+	if (src->fstransmute) {
 		dst->fstransmute = kstrdup(src->fstransmute, GFP_KERNEL);
-		अगर (!dst->fstransmute)
-			वापस -ENOMEM;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (!dst->fstransmute)
+			return -ENOMEM;
+	}
+	return 0;
+}
 
-अटल स्थिर काष्ठा fs_parameter_spec smack_fs_parameters[] = अणु
-	fsparam_string("smackfsdef",		Opt_fsशेष),
-	fsparam_string("smackfsdefault",	Opt_fsशेष),
-	fsparam_string("smackfsfloor",		Opt_fsन्यूनमान),
+static const struct fs_parameter_spec smack_fs_parameters[] = {
+	fsparam_string("smackfsdef",		Opt_fsdefault),
+	fsparam_string("smackfsdefault",	Opt_fsdefault),
+	fsparam_string("smackfsfloor",		Opt_fsfloor),
 	fsparam_string("smackfshat",		Opt_fshat),
 	fsparam_string("smackfsroot",		Opt_fsroot),
 	fsparam_string("smackfstransmute",	Opt_fstransmute),
-	अणुपूर्ण
-पूर्ण;
+	{}
+};
 
 /**
  * smack_fs_context_parse_param - Parse a single mount parameter
- * @fc: The new fileप्रणाली context being स्थिरructed.
+ * @fc: The new filesystem context being constructed.
  * @param: The parameter.
  *
- * Returns 0 on success, -ENOPARAM to pass the parameter on or anything अन्यथा on
+ * Returns 0 on success, -ENOPARAM to pass the parameter on or anything else on
  * error.
  */
-अटल पूर्णांक smack_fs_context_parse_param(काष्ठा fs_context *fc,
-					काष्ठा fs_parameter *param)
-अणु
-	काष्ठा fs_parse_result result;
-	पूर्णांक opt, rc;
+static int smack_fs_context_parse_param(struct fs_context *fc,
+					struct fs_parameter *param)
+{
+	struct fs_parse_result result;
+	int opt, rc;
 
 	opt = fs_parse(fc, smack_fs_parameters, param, &result);
-	अगर (opt < 0)
-		वापस opt;
+	if (opt < 0)
+		return opt;
 
 	rc = smack_add_opt(opt, param->string, &fc->security);
-	अगर (!rc)
-		param->string = शून्य;
-	वापस rc;
-पूर्ण
+	if (!rc)
+		param->string = NULL;
+	return rc;
+}
 
-अटल पूर्णांक smack_sb_eat_lsm_opts(अक्षर *options, व्योम **mnt_opts)
-अणु
-	अक्षर *from = options, *to = options;
+static int smack_sb_eat_lsm_opts(char *options, void **mnt_opts)
+{
+	char *from = options, *to = options;
 	bool first = true;
 
-	जबतक (1) अणु
-		अक्षर *next = म_अक्षर(from, ',');
-		पूर्णांक token, len, rc;
-		अक्षर *arg = शून्य;
+	while (1) {
+		char *next = strchr(from, ',');
+		int token, len, rc;
+		char *arg = NULL;
 
-		अगर (next)
+		if (next)
 			len = next - from;
-		अन्यथा
-			len = म_माप(from);
+		else
+			len = strlen(from);
 
 		token = match_opt_prefix(from, len, &arg);
-		अगर (token != Opt_error) अणु
+		if (token != Opt_error) {
 			arg = kmemdup_nul(arg, from + len - arg, GFP_KERNEL);
 			rc = smack_add_opt(token, arg, mnt_opts);
-			अगर (unlikely(rc)) अणु
-				kमुक्त(arg);
-				अगर (*mnt_opts)
-					smack_मुक्त_mnt_opts(*mnt_opts);
-				*mnt_opts = शून्य;
-				वापस rc;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (!first) अणु	// copy with preceding comma
+			if (unlikely(rc)) {
+				kfree(arg);
+				if (*mnt_opts)
+					smack_free_mnt_opts(*mnt_opts);
+				*mnt_opts = NULL;
+				return rc;
+			}
+		} else {
+			if (!first) {	// copy with preceding comma
 				from--;
 				len++;
-			पूर्ण
-			अगर (to != from)
-				स_हटाओ(to, from, len);
+			}
+			if (to != from)
+				memmove(to, from, len);
 			to += len;
 			first = false;
-		पूर्ण
-		अगर (!from[len])
-			अवरोध;
+		}
+		if (!from[len])
+			break;
 		from += len + 1;
-	पूर्ण
+	}
 	*to = '\0';
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * smack_set_mnt_opts - set Smack specअगरic mount options
- * @sb: the file प्रणाली superblock
+ * smack_set_mnt_opts - set Smack specific mount options
+ * @sb: the file system superblock
  * @mnt_opts: Smack mount options
  * @kern_flags: mount option from kernel space or user space
  * @set_kern_flags: where to store converted mount opts
  *
  * Returns 0 on success, an error code on failure
  *
- * Allow fileप्रणालीs with binary mount data to explicitly set Smack mount
+ * Allow filesystems with binary mount data to explicitly set Smack mount
  * labels.
  */
-अटल पूर्णांक smack_set_mnt_opts(काष्ठा super_block *sb,
-		व्योम *mnt_opts,
-		अचिन्हित दीर्घ kern_flags,
-		अचिन्हित दीर्घ *set_kern_flags)
-अणु
-	काष्ठा dentry *root = sb->s_root;
-	काष्ठा inode *inode = d_backing_inode(root);
-	काष्ठा superblock_smack *sp = smack_superblock(sb);
-	काष्ठा inode_smack *isp;
-	काष्ठा smack_known *skp;
-	काष्ठा smack_mnt_opts *opts = mnt_opts;
+static int smack_set_mnt_opts(struct super_block *sb,
+		void *mnt_opts,
+		unsigned long kern_flags,
+		unsigned long *set_kern_flags)
+{
+	struct dentry *root = sb->s_root;
+	struct inode *inode = d_backing_inode(root);
+	struct superblock_smack *sp = smack_superblock(sb);
+	struct inode_smack *isp;
+	struct smack_known *skp;
+	struct smack_mnt_opts *opts = mnt_opts;
 	bool transmute = false;
 
-	अगर (sp->smk_flags & SMK_SB_INITIALIZED)
-		वापस 0;
+	if (sp->smk_flags & SMK_SB_INITIALIZED)
+		return 0;
 
-	अगर (inode->i_security == शून्य) अणु
-		पूर्णांक rc = lsm_inode_alloc(inode);
+	if (inode->i_security == NULL) {
+		int rc = lsm_inode_alloc(inode);
 
-		अगर (rc)
-			वापस rc;
-	पूर्ण
+		if (rc)
+			return rc;
+	}
 
-	अगर (!smack_privileged(CAP_MAC_ADMIN)) अणु
+	if (!smack_privileged(CAP_MAC_ADMIN)) {
 		/*
-		 * Unprivileged mounts करोn't get to specअगरy Smack values.
+		 * Unprivileged mounts don't get to specify Smack values.
 		 */
-		अगर (opts)
-			वापस -EPERM;
+		if (opts)
+			return -EPERM;
 		/*
-		 * Unprivileged mounts get root and शेष from the caller.
+		 * Unprivileged mounts get root and default from the caller.
 		 */
 		skp = smk_of_current();
 		sp->smk_root = skp;
-		sp->smk_शेष = skp;
+		sp->smk_default = skp;
 		/*
 		 * For a handful of fs types with no user-controlled
 		 * backing store it's okay to trust security labels
-		 * in the fileप्रणाली. The rest are untrusted.
+		 * in the filesystem. The rest are untrusted.
 		 */
-		अगर (sb->s_user_ns != &init_user_ns &&
+		if (sb->s_user_ns != &init_user_ns &&
 		    sb->s_magic != SYSFS_MAGIC && sb->s_magic != TMPFS_MAGIC &&
-		    sb->s_magic != RAMFS_MAGIC) अणु
+		    sb->s_magic != RAMFS_MAGIC) {
 			transmute = true;
 			sp->smk_flags |= SMK_SB_UNTRUSTED;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	sp->smk_flags |= SMK_SB_INITIALIZED;
 
-	अगर (opts) अणु
-		अगर (opts->fsशेष) अणु
-			skp = smk_import_entry(opts->fsशेष, 0);
-			अगर (IS_ERR(skp))
-				वापस PTR_ERR(skp);
-			sp->smk_शेष = skp;
-		पूर्ण
-		अगर (opts->fsन्यूनमान) अणु
-			skp = smk_import_entry(opts->fsन्यूनमान, 0);
-			अगर (IS_ERR(skp))
-				वापस PTR_ERR(skp);
-			sp->smk_न्यूनमान = skp;
-		पूर्ण
-		अगर (opts->fshat) अणु
+	if (opts) {
+		if (opts->fsdefault) {
+			skp = smk_import_entry(opts->fsdefault, 0);
+			if (IS_ERR(skp))
+				return PTR_ERR(skp);
+			sp->smk_default = skp;
+		}
+		if (opts->fsfloor) {
+			skp = smk_import_entry(opts->fsfloor, 0);
+			if (IS_ERR(skp))
+				return PTR_ERR(skp);
+			sp->smk_floor = skp;
+		}
+		if (opts->fshat) {
 			skp = smk_import_entry(opts->fshat, 0);
-			अगर (IS_ERR(skp))
-				वापस PTR_ERR(skp);
+			if (IS_ERR(skp))
+				return PTR_ERR(skp);
 			sp->smk_hat = skp;
-		पूर्ण
-		अगर (opts->fsroot) अणु
+		}
+		if (opts->fsroot) {
 			skp = smk_import_entry(opts->fsroot, 0);
-			अगर (IS_ERR(skp))
-				वापस PTR_ERR(skp);
+			if (IS_ERR(skp))
+				return PTR_ERR(skp);
 			sp->smk_root = skp;
-		पूर्ण
-		अगर (opts->fstransmute) अणु
+		}
+		if (opts->fstransmute) {
 			skp = smk_import_entry(opts->fstransmute, 0);
-			अगर (IS_ERR(skp))
-				वापस PTR_ERR(skp);
+			if (IS_ERR(skp))
+				return PTR_ERR(skp);
 			sp->smk_root = skp;
 			transmute = true;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/*
 	 * Initialize the root inode.
 	 */
 	init_inode_smack(inode, sp->smk_root);
 
-	अगर (transmute) अणु
+	if (transmute) {
 		isp = smack_inode(inode);
 		isp->smk_flags |= SMK_INODE_TRANSMUTE;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * smack_sb_statfs - Smack check on statfs
- * @dentry: identअगरies the file प्रणाली in question
+ * @dentry: identifies the file system in question
  *
- * Returns 0 अगर current can पढ़ो the न्यूनमान of the fileप्रणाली,
+ * Returns 0 if current can read the floor of the filesystem,
  * and error code otherwise
  */
-अटल पूर्णांक smack_sb_statfs(काष्ठा dentry *dentry)
-अणु
-	काष्ठा superblock_smack *sbp = smack_superblock(dentry->d_sb);
-	पूर्णांक rc;
-	काष्ठा smk_audit_info ad;
+static int smack_sb_statfs(struct dentry *dentry)
+{
+	struct superblock_smack *sbp = smack_superblock(dentry->d_sb);
+	int rc;
+	struct smk_audit_info ad;
 
 	smk_ad_init(&ad, __func__, LSM_AUDIT_DATA_DENTRY);
 	smk_ad_setfield_u_fs_path_dentry(&ad, dentry);
 
-	rc = smk_curacc(sbp->smk_न्यूनमान, MAY_READ, &ad);
-	rc = smk_bu_current("statfs", sbp->smk_न्यूनमान, MAY_READ, rc);
-	वापस rc;
-पूर्ण
+	rc = smk_curacc(sbp->smk_floor, MAY_READ, &ad);
+	rc = smk_bu_current("statfs", sbp->smk_floor, MAY_READ, rc);
+	return rc;
+}
 
 /*
  * BPRM hooks
  */
 
 /**
- * smack_bprm_creds_क्रम_exec - Update bprm->cred अगर needed क्रम exec
- * @bprm: the exec inक्रमmation
+ * smack_bprm_creds_for_exec - Update bprm->cred if needed for exec
+ * @bprm: the exec information
  *
- * Returns 0 अगर it माला_लो a blob, -EPERM अगर exec क्रमbidden and -ENOMEM otherwise
+ * Returns 0 if it gets a blob, -EPERM if exec forbidden and -ENOMEM otherwise
  */
-अटल पूर्णांक smack_bprm_creds_क्रम_exec(काष्ठा linux_binprm *bprm)
-अणु
-	काष्ठा inode *inode = file_inode(bprm->file);
-	काष्ठा task_smack *bsp = smack_cred(bprm->cred);
-	काष्ठा inode_smack *isp;
-	काष्ठा superblock_smack *sbsp;
-	पूर्णांक rc;
+static int smack_bprm_creds_for_exec(struct linux_binprm *bprm)
+{
+	struct inode *inode = file_inode(bprm->file);
+	struct task_smack *bsp = smack_cred(bprm->cred);
+	struct inode_smack *isp;
+	struct superblock_smack *sbsp;
+	int rc;
 
 	isp = smack_inode(inode);
-	अगर (isp->smk_task == शून्य || isp->smk_task == bsp->smk_task)
-		वापस 0;
+	if (isp->smk_task == NULL || isp->smk_task == bsp->smk_task)
+		return 0;
 
 	sbsp = smack_superblock(inode->i_sb);
-	अगर ((sbsp->smk_flags & SMK_SB_UNTRUSTED) &&
+	if ((sbsp->smk_flags & SMK_SB_UNTRUSTED) &&
 	    isp->smk_task != sbsp->smk_root)
-		वापस 0;
+		return 0;
 
-	अगर (bprm->unsafe & LSM_UNSAFE_PTRACE) अणु
-		काष्ठा task_काष्ठा *tracer;
+	if (bprm->unsafe & LSM_UNSAFE_PTRACE) {
+		struct task_struct *tracer;
 		rc = 0;
 
-		rcu_पढ़ो_lock();
+		rcu_read_lock();
 		tracer = ptrace_parent(current);
-		अगर (likely(tracer != शून्य))
+		if (likely(tracer != NULL))
 			rc = smk_ptrace_rule_check(tracer,
 						   isp->smk_task,
 						   PTRACE_MODE_ATTACH,
 						   __func__);
-		rcu_पढ़ो_unlock();
+		rcu_read_unlock();
 
-		अगर (rc != 0)
-			वापस rc;
-	पूर्ण
-	अगर (bprm->unsafe & ~LSM_UNSAFE_PTRACE)
-		वापस -EPERM;
+		if (rc != 0)
+			return rc;
+	}
+	if (bprm->unsafe & ~LSM_UNSAFE_PTRACE)
+		return -EPERM;
 
 	bsp->smk_task = isp->smk_task;
 	bprm->per_clear |= PER_CLEAR_ON_SETID;
 
-	/* Decide अगर this is a secure exec. */
-	अगर (bsp->smk_task != bsp->smk_विभाजनed)
+	/* Decide if this is a secure exec. */
+	if (bsp->smk_task != bsp->smk_forked)
 		bprm->secureexec = 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Inode hooks
@@ -933,13 +932,13 @@ out_opt_err:
  *
  * Returns 0
  */
-अटल पूर्णांक smack_inode_alloc_security(काष्ठा inode *inode)
-अणु
-	काष्ठा smack_known *skp = smk_of_current();
+static int smack_inode_alloc_security(struct inode *inode)
+{
+	struct smack_known *skp = smk_of_current();
 
 	init_inode_smack(inode, skp);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * smack_inode_init_security - copy out the smack from an inode
@@ -950,26 +949,26 @@ out_opt_err:
  * @value: where to put the attribute value
  * @len: where to put the length of the attribute
  *
- * Returns 0 अगर it all works out, -ENOMEM अगर there's no memory
+ * Returns 0 if it all works out, -ENOMEM if there's no memory
  */
-अटल पूर्णांक smack_inode_init_security(काष्ठा inode *inode, काष्ठा inode *dir,
-				     स्थिर काष्ठा qstr *qstr, स्थिर अक्षर **name,
-				     व्योम **value, माप_प्रकार *len)
-अणु
-	काष्ठा inode_smack *issp = smack_inode(inode);
-	काष्ठा smack_known *skp = smk_of_current();
-	काष्ठा smack_known *isp = smk_of_inode(inode);
-	काष्ठा smack_known *dsp = smk_of_inode(dir);
-	पूर्णांक may;
+static int smack_inode_init_security(struct inode *inode, struct inode *dir,
+				     const struct qstr *qstr, const char **name,
+				     void **value, size_t *len)
+{
+	struct inode_smack *issp = smack_inode(inode);
+	struct smack_known *skp = smk_of_current();
+	struct smack_known *isp = smk_of_inode(inode);
+	struct smack_known *dsp = smk_of_inode(dir);
+	int may;
 
-	अगर (name)
+	if (name)
 		*name = XATTR_SMACK_SUFFIX;
 
-	अगर (value && len) अणु
-		rcu_पढ़ो_lock();
+	if (value && len) {
+		rcu_read_lock();
 		may = smk_access_entry(skp->smk_known, dsp->smk_known,
 				       &skp->smk_rules);
-		rcu_पढ़ो_unlock();
+		rcu_read_unlock();
 
 		/*
 		 * If the access rule allows transmutation and
@@ -977,21 +976,21 @@ out_opt_err:
 		 * by all means transmute.
 		 * Mark the inode as changed.
 		 */
-		अगर (may > 0 && ((may & MAY_TRANSMUTE) != 0) &&
-		    smk_inode_transmutable(dir)) अणु
+		if (may > 0 && ((may & MAY_TRANSMUTE) != 0) &&
+		    smk_inode_transmutable(dir)) {
 			isp = dsp;
 			issp->smk_flags |= SMK_INODE_CHANGED;
-		पूर्ण
+		}
 
 		*value = kstrdup(isp->smk_known, GFP_NOFS);
-		अगर (*value == शून्य)
-			वापस -ENOMEM;
+		if (*value == NULL)
+			return -ENOMEM;
 
-		*len = म_माप(isp->smk_known);
-	पूर्ण
+		*len = strlen(isp->smk_known);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * smack_inode_link - Smack check on link
@@ -999,14 +998,14 @@ out_opt_err:
  * @dir: unused
  * @new_dentry: the new object
  *
- * Returns 0 अगर access is permitted, an error code otherwise
+ * Returns 0 if access is permitted, an error code otherwise
  */
-अटल पूर्णांक smack_inode_link(काष्ठा dentry *old_dentry, काष्ठा inode *dir,
-			    काष्ठा dentry *new_dentry)
-अणु
-	काष्ठा smack_known *isp;
-	काष्ठा smk_audit_info ad;
-	पूर्णांक rc;
+static int smack_inode_link(struct dentry *old_dentry, struct inode *dir,
+			    struct dentry *new_dentry)
+{
+	struct smack_known *isp;
+	struct smk_audit_info ad;
+	int rc;
 
 	smk_ad_init(&ad, __func__, LSM_AUDIT_DATA_DENTRY);
 	smk_ad_setfield_u_fs_path_dentry(&ad, old_dentry);
@@ -1015,104 +1014,104 @@ out_opt_err:
 	rc = smk_curacc(isp, MAY_WRITE, &ad);
 	rc = smk_bu_inode(d_backing_inode(old_dentry), MAY_WRITE, rc);
 
-	अगर (rc == 0 && d_is_positive(new_dentry)) अणु
+	if (rc == 0 && d_is_positive(new_dentry)) {
 		isp = smk_of_inode(d_backing_inode(new_dentry));
 		smk_ad_setfield_u_fs_path_dentry(&ad, new_dentry);
 		rc = smk_curacc(isp, MAY_WRITE, &ad);
 		rc = smk_bu_inode(d_backing_inode(new_dentry), MAY_WRITE, rc);
-	पूर्ण
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
  * smack_inode_unlink - Smack check on inode deletion
  * @dir: containing directory object
  * @dentry: file to unlink
  *
- * Returns 0 अगर current can ग_लिखो the containing directory
+ * Returns 0 if current can write the containing directory
  * and the object, error code otherwise
  */
-अटल पूर्णांक smack_inode_unlink(काष्ठा inode *dir, काष्ठा dentry *dentry)
-अणु
-	काष्ठा inode *ip = d_backing_inode(dentry);
-	काष्ठा smk_audit_info ad;
-	पूर्णांक rc;
+static int smack_inode_unlink(struct inode *dir, struct dentry *dentry)
+{
+	struct inode *ip = d_backing_inode(dentry);
+	struct smk_audit_info ad;
+	int rc;
 
 	smk_ad_init(&ad, __func__, LSM_AUDIT_DATA_DENTRY);
 	smk_ad_setfield_u_fs_path_dentry(&ad, dentry);
 
 	/*
-	 * You need ग_लिखो access to the thing you're unlinking
+	 * You need write access to the thing you're unlinking
 	 */
 	rc = smk_curacc(smk_of_inode(ip), MAY_WRITE, &ad);
 	rc = smk_bu_inode(ip, MAY_WRITE, rc);
-	अगर (rc == 0) अणु
+	if (rc == 0) {
 		/*
-		 * You also need ग_लिखो access to the containing directory
+		 * You also need write access to the containing directory
 		 */
 		smk_ad_init(&ad, __func__, LSM_AUDIT_DATA_INODE);
 		smk_ad_setfield_u_fs_inode(&ad, dir);
 		rc = smk_curacc(smk_of_inode(dir), MAY_WRITE, &ad);
 		rc = smk_bu_inode(dir, MAY_WRITE, rc);
-	पूर्ण
-	वापस rc;
-पूर्ण
+	}
+	return rc;
+}
 
 /**
- * smack_inode_सूची_हटाओ - Smack check on directory deletion
+ * smack_inode_rmdir - Smack check on directory deletion
  * @dir: containing directory object
  * @dentry: directory to unlink
  *
- * Returns 0 अगर current can ग_लिखो the containing directory
+ * Returns 0 if current can write the containing directory
  * and the directory, error code otherwise
  */
-अटल पूर्णांक smack_inode_सूची_हटाओ(काष्ठा inode *dir, काष्ठा dentry *dentry)
-अणु
-	काष्ठा smk_audit_info ad;
-	पूर्णांक rc;
+static int smack_inode_rmdir(struct inode *dir, struct dentry *dentry)
+{
+	struct smk_audit_info ad;
+	int rc;
 
 	smk_ad_init(&ad, __func__, LSM_AUDIT_DATA_DENTRY);
 	smk_ad_setfield_u_fs_path_dentry(&ad, dentry);
 
 	/*
-	 * You need ग_लिखो access to the thing you're removing
+	 * You need write access to the thing you're removing
 	 */
 	rc = smk_curacc(smk_of_inode(d_backing_inode(dentry)), MAY_WRITE, &ad);
 	rc = smk_bu_inode(d_backing_inode(dentry), MAY_WRITE, rc);
-	अगर (rc == 0) अणु
+	if (rc == 0) {
 		/*
-		 * You also need ग_लिखो access to the containing directory
+		 * You also need write access to the containing directory
 		 */
 		smk_ad_init(&ad, __func__, LSM_AUDIT_DATA_INODE);
 		smk_ad_setfield_u_fs_inode(&ad, dir);
 		rc = smk_curacc(smk_of_inode(dir), MAY_WRITE, &ad);
 		rc = smk_bu_inode(dir, MAY_WRITE, rc);
-	पूर्ण
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
- * smack_inode_नाम - Smack check on नाम
+ * smack_inode_rename - Smack check on rename
  * @old_inode: unused
  * @old_dentry: the old object
  * @new_inode: unused
  * @new_dentry: the new object
  *
- * Read and ग_लिखो access is required on both the old and
+ * Read and write access is required on both the old and
  * new directories.
  *
- * Returns 0 अगर access is permitted, an error code otherwise
+ * Returns 0 if access is permitted, an error code otherwise
  */
-अटल पूर्णांक smack_inode_नाम(काष्ठा inode *old_inode,
-			      काष्ठा dentry *old_dentry,
-			      काष्ठा inode *new_inode,
-			      काष्ठा dentry *new_dentry)
-अणु
-	पूर्णांक rc;
-	काष्ठा smack_known *isp;
-	काष्ठा smk_audit_info ad;
+static int smack_inode_rename(struct inode *old_inode,
+			      struct dentry *old_dentry,
+			      struct inode *new_inode,
+			      struct dentry *new_dentry)
+{
+	int rc;
+	struct smack_known *isp;
+	struct smk_audit_info ad;
 
 	smk_ad_init(&ad, __func__, LSM_AUDIT_DATA_DENTRY);
 	smk_ad_setfield_u_fs_path_dentry(&ad, old_dentry);
@@ -1121,14 +1120,14 @@ out_opt_err:
 	rc = smk_curacc(isp, MAY_READWRITE, &ad);
 	rc = smk_bu_inode(d_backing_inode(old_dentry), MAY_READWRITE, rc);
 
-	अगर (rc == 0 && d_is_positive(new_dentry)) अणु
+	if (rc == 0 && d_is_positive(new_dentry)) {
 		isp = smk_of_inode(d_backing_inode(new_dentry));
 		smk_ad_setfield_u_fs_path_dentry(&ad, new_dentry);
 		rc = smk_curacc(isp, MAY_READWRITE, &ad);
 		rc = smk_bu_inode(d_backing_inode(new_dentry), MAY_READWRITE, rc);
-	पूर्ण
-	वापस rc;
-पूर्ण
+	}
+	return rc;
+}
 
 /**
  * smack_inode_permission - Smack version of permission()
@@ -1137,83 +1136,83 @@ out_opt_err:
  *
  * This is the important Smack hook.
  *
- * Returns 0 अगर access is permitted, an error code otherwise
+ * Returns 0 if access is permitted, an error code otherwise
  */
-अटल पूर्णांक smack_inode_permission(काष्ठा inode *inode, पूर्णांक mask)
-अणु
-	काष्ठा superblock_smack *sbsp = smack_superblock(inode->i_sb);
-	काष्ठा smk_audit_info ad;
-	पूर्णांक no_block = mask & MAY_NOT_BLOCK;
-	पूर्णांक rc;
+static int smack_inode_permission(struct inode *inode, int mask)
+{
+	struct superblock_smack *sbsp = smack_superblock(inode->i_sb);
+	struct smk_audit_info ad;
+	int no_block = mask & MAY_NOT_BLOCK;
+	int rc;
 
 	mask &= (MAY_READ|MAY_WRITE|MAY_EXEC|MAY_APPEND);
 	/*
 	 * No permission to check. Existence test. Yup, it's there.
 	 */
-	अगर (mask == 0)
-		वापस 0;
+	if (mask == 0)
+		return 0;
 
-	अगर (sbsp->smk_flags & SMK_SB_UNTRUSTED) अणु
-		अगर (smk_of_inode(inode) != sbsp->smk_root)
-			वापस -EACCES;
-	पूर्ण
+	if (sbsp->smk_flags & SMK_SB_UNTRUSTED) {
+		if (smk_of_inode(inode) != sbsp->smk_root)
+			return -EACCES;
+	}
 
 	/* May be droppable after audit */
-	अगर (no_block)
-		वापस -ECHILD;
+	if (no_block)
+		return -ECHILD;
 	smk_ad_init(&ad, __func__, LSM_AUDIT_DATA_INODE);
 	smk_ad_setfield_u_fs_inode(&ad, inode);
 	rc = smk_curacc(smk_of_inode(inode), mask, &ad);
 	rc = smk_bu_inode(inode, mask, rc);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
- * smack_inode_setattr - Smack check क्रम setting attributes
+ * smack_inode_setattr - Smack check for setting attributes
  * @dentry: the object
- * @iattr: क्रम the क्रमce flag
+ * @iattr: for the force flag
  *
- * Returns 0 अगर access is permitted, an error code otherwise
+ * Returns 0 if access is permitted, an error code otherwise
  */
-अटल पूर्णांक smack_inode_setattr(काष्ठा dentry *dentry, काष्ठा iattr *iattr)
-अणु
-	काष्ठा smk_audit_info ad;
-	पूर्णांक rc;
+static int smack_inode_setattr(struct dentry *dentry, struct iattr *iattr)
+{
+	struct smk_audit_info ad;
+	int rc;
 
 	/*
-	 * Need to allow क्रम clearing the setuid bit.
+	 * Need to allow for clearing the setuid bit.
 	 */
-	अगर (iattr->ia_valid & ATTR_FORCE)
-		वापस 0;
+	if (iattr->ia_valid & ATTR_FORCE)
+		return 0;
 	smk_ad_init(&ad, __func__, LSM_AUDIT_DATA_DENTRY);
 	smk_ad_setfield_u_fs_path_dentry(&ad, dentry);
 
 	rc = smk_curacc(smk_of_inode(d_backing_inode(dentry)), MAY_WRITE, &ad);
 	rc = smk_bu_inode(d_backing_inode(dentry), MAY_WRITE, rc);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
- * smack_inode_getattr - Smack check क्रम getting attributes
+ * smack_inode_getattr - Smack check for getting attributes
  * @path: path to extract the info from
  *
- * Returns 0 अगर access is permitted, an error code otherwise
+ * Returns 0 if access is permitted, an error code otherwise
  */
-अटल पूर्णांक smack_inode_getattr(स्थिर काष्ठा path *path)
-अणु
-	काष्ठा smk_audit_info ad;
-	काष्ठा inode *inode = d_backing_inode(path->dentry);
-	पूर्णांक rc;
+static int smack_inode_getattr(const struct path *path)
+{
+	struct smk_audit_info ad;
+	struct inode *inode = d_backing_inode(path->dentry);
+	int rc;
 
 	smk_ad_init(&ad, __func__, LSM_AUDIT_DATA_PATH);
 	smk_ad_setfield_u_fs_path(&ad, *path);
 	rc = smk_curacc(smk_of_inode(inode), MAY_READ, &ad);
 	rc = smk_bu_inode(inode, MAY_READ, rc);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
- * smack_inode_setxattr - Smack check क्रम setting xattrs
+ * smack_inode_setxattr - Smack check for setting xattrs
  * @dentry: the object
  * @name: name of the attribute
  * @value: value of the attribute
@@ -1222,62 +1221,62 @@ out_opt_err:
  *
  * This protects the Smack attribute explicitly.
  *
- * Returns 0 अगर access is permitted, an error code otherwise
+ * Returns 0 if access is permitted, an error code otherwise
  */
-अटल पूर्णांक smack_inode_setxattr(काष्ठा user_namespace *mnt_userns,
-				काष्ठा dentry *dentry, स्थिर अक्षर *name,
-				स्थिर व्योम *value, माप_प्रकार size, पूर्णांक flags)
-अणु
-	काष्ठा smk_audit_info ad;
-	काष्ठा smack_known *skp;
-	पूर्णांक check_priv = 0;
-	पूर्णांक check_import = 0;
-	पूर्णांक check_star = 0;
-	पूर्णांक rc = 0;
+static int smack_inode_setxattr(struct user_namespace *mnt_userns,
+				struct dentry *dentry, const char *name,
+				const void *value, size_t size, int flags)
+{
+	struct smk_audit_info ad;
+	struct smack_known *skp;
+	int check_priv = 0;
+	int check_import = 0;
+	int check_star = 0;
+	int rc = 0;
 
 	/*
 	 * Check label validity here so import won't fail in post_setxattr
 	 */
-	अगर (म_भेद(name, XATTR_NAME_SMACK) == 0 ||
-	    म_भेद(name, XATTR_NAME_SMACKIPIN) == 0 ||
-	    म_भेद(name, XATTR_NAME_SMACKIPOUT) == 0) अणु
+	if (strcmp(name, XATTR_NAME_SMACK) == 0 ||
+	    strcmp(name, XATTR_NAME_SMACKIPIN) == 0 ||
+	    strcmp(name, XATTR_NAME_SMACKIPOUT) == 0) {
 		check_priv = 1;
 		check_import = 1;
-	पूर्ण अन्यथा अगर (म_भेद(name, XATTR_NAME_SMACKEXEC) == 0 ||
-		   म_भेद(name, XATTR_NAME_SMACKMMAP) == 0) अणु
+	} else if (strcmp(name, XATTR_NAME_SMACKEXEC) == 0 ||
+		   strcmp(name, XATTR_NAME_SMACKMMAP) == 0) {
 		check_priv = 1;
 		check_import = 1;
 		check_star = 1;
-	पूर्ण अन्यथा अगर (म_भेद(name, XATTR_NAME_SMACKTRANSMUTE) == 0) अणु
+	} else if (strcmp(name, XATTR_NAME_SMACKTRANSMUTE) == 0) {
 		check_priv = 1;
-		अगर (size != TRANS_TRUE_SIZE ||
-		    म_भेदन(value, TRANS_TRUE, TRANS_TRUE_SIZE) != 0)
+		if (size != TRANS_TRUE_SIZE ||
+		    strncmp(value, TRANS_TRUE, TRANS_TRUE_SIZE) != 0)
 			rc = -EINVAL;
-	पूर्ण अन्यथा
+	} else
 		rc = cap_inode_setxattr(dentry, name, value, size, flags);
 
-	अगर (check_priv && !smack_privileged(CAP_MAC_ADMIN))
+	if (check_priv && !smack_privileged(CAP_MAC_ADMIN))
 		rc = -EPERM;
 
-	अगर (rc == 0 && check_import) अणु
-		skp = size ? smk_import_entry(value, size) : शून्य;
-		अगर (IS_ERR(skp))
+	if (rc == 0 && check_import) {
+		skp = size ? smk_import_entry(value, size) : NULL;
+		if (IS_ERR(skp))
 			rc = PTR_ERR(skp);
-		अन्यथा अगर (skp == शून्य || (check_star &&
+		else if (skp == NULL || (check_star &&
 		    (skp == &smack_known_star || skp == &smack_known_web)))
 			rc = -EINVAL;
-	पूर्ण
+	}
 
 	smk_ad_init(&ad, __func__, LSM_AUDIT_DATA_DENTRY);
 	smk_ad_setfield_u_fs_path_dentry(&ad, dentry);
 
-	अगर (rc == 0) अणु
+	if (rc == 0) {
 		rc = smk_curacc(smk_of_inode(d_backing_inode(dentry)), MAY_WRITE, &ad);
 		rc = smk_bu_inode(d_backing_inode(dentry), MAY_WRITE, rc);
-	पूर्ण
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
  * smack_inode_post_setxattr - Apply the Smack update approved above
@@ -1287,118 +1286,118 @@ out_opt_err:
  * @size: attribute size
  * @flags: unused
  *
- * Set the poपूर्णांकer in the inode blob to the entry found
+ * Set the pointer in the inode blob to the entry found
  * in the master label list.
  */
-अटल व्योम smack_inode_post_setxattr(काष्ठा dentry *dentry, स्थिर अक्षर *name,
-				      स्थिर व्योम *value, माप_प्रकार size, पूर्णांक flags)
-अणु
-	काष्ठा smack_known *skp;
-	काष्ठा inode_smack *isp = smack_inode(d_backing_inode(dentry));
+static void smack_inode_post_setxattr(struct dentry *dentry, const char *name,
+				      const void *value, size_t size, int flags)
+{
+	struct smack_known *skp;
+	struct inode_smack *isp = smack_inode(d_backing_inode(dentry));
 
-	अगर (म_भेद(name, XATTR_NAME_SMACKTRANSMUTE) == 0) अणु
+	if (strcmp(name, XATTR_NAME_SMACKTRANSMUTE) == 0) {
 		isp->smk_flags |= SMK_INODE_TRANSMUTE;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (म_भेद(name, XATTR_NAME_SMACK) == 0) अणु
+	if (strcmp(name, XATTR_NAME_SMACK) == 0) {
 		skp = smk_import_entry(value, size);
-		अगर (!IS_ERR(skp))
+		if (!IS_ERR(skp))
 			isp->smk_inode = skp;
-	पूर्ण अन्यथा अगर (म_भेद(name, XATTR_NAME_SMACKEXEC) == 0) अणु
+	} else if (strcmp(name, XATTR_NAME_SMACKEXEC) == 0) {
 		skp = smk_import_entry(value, size);
-		अगर (!IS_ERR(skp))
+		if (!IS_ERR(skp))
 			isp->smk_task = skp;
-	पूर्ण अन्यथा अगर (म_भेद(name, XATTR_NAME_SMACKMMAP) == 0) अणु
+	} else if (strcmp(name, XATTR_NAME_SMACKMMAP) == 0) {
 		skp = smk_import_entry(value, size);
-		अगर (!IS_ERR(skp))
+		if (!IS_ERR(skp))
 			isp->smk_mmap = skp;
-	पूर्ण
+	}
 
-	वापस;
-पूर्ण
+	return;
+}
 
 /**
  * smack_inode_getxattr - Smack check on getxattr
  * @dentry: the object
  * @name: unused
  *
- * Returns 0 अगर access is permitted, an error code otherwise
+ * Returns 0 if access is permitted, an error code otherwise
  */
-अटल पूर्णांक smack_inode_getxattr(काष्ठा dentry *dentry, स्थिर अक्षर *name)
-अणु
-	काष्ठा smk_audit_info ad;
-	पूर्णांक rc;
+static int smack_inode_getxattr(struct dentry *dentry, const char *name)
+{
+	struct smk_audit_info ad;
+	int rc;
 
 	smk_ad_init(&ad, __func__, LSM_AUDIT_DATA_DENTRY);
 	smk_ad_setfield_u_fs_path_dentry(&ad, dentry);
 
 	rc = smk_curacc(smk_of_inode(d_backing_inode(dentry)), MAY_READ, &ad);
 	rc = smk_bu_inode(d_backing_inode(dentry), MAY_READ, rc);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
- * smack_inode_हटाओxattr - Smack check on हटाओxattr
+ * smack_inode_removexattr - Smack check on removexattr
  * @dentry: the object
  * @name: name of the attribute
  *
  * Removing the Smack attribute requires CAP_MAC_ADMIN
  *
- * Returns 0 अगर access is permitted, an error code otherwise
+ * Returns 0 if access is permitted, an error code otherwise
  */
-अटल पूर्णांक smack_inode_हटाओxattr(काष्ठा user_namespace *mnt_userns,
-				   काष्ठा dentry *dentry, स्थिर अक्षर *name)
-अणु
-	काष्ठा inode_smack *isp;
-	काष्ठा smk_audit_info ad;
-	पूर्णांक rc = 0;
+static int smack_inode_removexattr(struct user_namespace *mnt_userns,
+				   struct dentry *dentry, const char *name)
+{
+	struct inode_smack *isp;
+	struct smk_audit_info ad;
+	int rc = 0;
 
-	अगर (म_भेद(name, XATTR_NAME_SMACK) == 0 ||
-	    म_भेद(name, XATTR_NAME_SMACKIPIN) == 0 ||
-	    म_भेद(name, XATTR_NAME_SMACKIPOUT) == 0 ||
-	    म_भेद(name, XATTR_NAME_SMACKEXEC) == 0 ||
-	    म_भेद(name, XATTR_NAME_SMACKTRANSMUTE) == 0 ||
-	    म_भेद(name, XATTR_NAME_SMACKMMAP) == 0) अणु
-		अगर (!smack_privileged(CAP_MAC_ADMIN))
+	if (strcmp(name, XATTR_NAME_SMACK) == 0 ||
+	    strcmp(name, XATTR_NAME_SMACKIPIN) == 0 ||
+	    strcmp(name, XATTR_NAME_SMACKIPOUT) == 0 ||
+	    strcmp(name, XATTR_NAME_SMACKEXEC) == 0 ||
+	    strcmp(name, XATTR_NAME_SMACKTRANSMUTE) == 0 ||
+	    strcmp(name, XATTR_NAME_SMACKMMAP) == 0) {
+		if (!smack_privileged(CAP_MAC_ADMIN))
 			rc = -EPERM;
-	पूर्ण अन्यथा
-		rc = cap_inode_हटाओxattr(mnt_userns, dentry, name);
+	} else
+		rc = cap_inode_removexattr(mnt_userns, dentry, name);
 
-	अगर (rc != 0)
-		वापस rc;
+	if (rc != 0)
+		return rc;
 
 	smk_ad_init(&ad, __func__, LSM_AUDIT_DATA_DENTRY);
 	smk_ad_setfield_u_fs_path_dentry(&ad, dentry);
 
 	rc = smk_curacc(smk_of_inode(d_backing_inode(dentry)), MAY_WRITE, &ad);
 	rc = smk_bu_inode(d_backing_inode(dentry), MAY_WRITE, rc);
-	अगर (rc != 0)
-		वापस rc;
+	if (rc != 0)
+		return rc;
 
 	isp = smack_inode(d_backing_inode(dentry));
 	/*
-	 * Don't करो anything special क्रम these.
+	 * Don't do anything special for these.
 	 *	XATTR_NAME_SMACKIPIN
 	 *	XATTR_NAME_SMACKIPOUT
 	 */
-	अगर (म_भेद(name, XATTR_NAME_SMACK) == 0) अणु
-		काष्ठा super_block *sbp = dentry->d_sb;
-		काष्ठा superblock_smack *sbsp = smack_superblock(sbp);
+	if (strcmp(name, XATTR_NAME_SMACK) == 0) {
+		struct super_block *sbp = dentry->d_sb;
+		struct superblock_smack *sbsp = smack_superblock(sbp);
 
-		isp->smk_inode = sbsp->smk_शेष;
-	पूर्ण अन्यथा अगर (म_भेद(name, XATTR_NAME_SMACKEXEC) == 0)
-		isp->smk_task = शून्य;
-	अन्यथा अगर (म_भेद(name, XATTR_NAME_SMACKMMAP) == 0)
-		isp->smk_mmap = शून्य;
-	अन्यथा अगर (म_भेद(name, XATTR_NAME_SMACKTRANSMUTE) == 0)
+		isp->smk_inode = sbsp->smk_default;
+	} else if (strcmp(name, XATTR_NAME_SMACKEXEC) == 0)
+		isp->smk_task = NULL;
+	else if (strcmp(name, XATTR_NAME_SMACKMMAP) == 0)
+		isp->smk_mmap = NULL;
+	else if (strcmp(name, XATTR_NAME_SMACKTRANSMUTE) == 0)
 		isp->smk_flags &= ~SMK_INODE_TRANSMUTE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * smack_inode_माला_लोecurity - get smack xattrs
+ * smack_inode_getsecurity - get smack xattrs
  * @inode: the object
  * @name: attribute name
  * @buffer: where to put the result
@@ -1406,48 +1405,48 @@ out_opt_err:
  *
  * Returns the size of the attribute or an error code
  */
-अटल पूर्णांक smack_inode_माला_लोecurity(काष्ठा user_namespace *mnt_userns,
-				   काष्ठा inode *inode, स्थिर अक्षर *name,
-				   व्योम **buffer, bool alloc)
-अणु
-	काष्ठा socket_smack *ssp;
-	काष्ठा socket *sock;
-	काष्ठा super_block *sbp;
-	काष्ठा inode *ip = (काष्ठा inode *)inode;
-	काष्ठा smack_known *isp;
+static int smack_inode_getsecurity(struct user_namespace *mnt_userns,
+				   struct inode *inode, const char *name,
+				   void **buffer, bool alloc)
+{
+	struct socket_smack *ssp;
+	struct socket *sock;
+	struct super_block *sbp;
+	struct inode *ip = (struct inode *)inode;
+	struct smack_known *isp;
 
-	अगर (म_भेद(name, XATTR_SMACK_SUFFIX) == 0)
+	if (strcmp(name, XATTR_SMACK_SUFFIX) == 0)
 		isp = smk_of_inode(inode);
-	अन्यथा अणु
+	else {
 		/*
 		 * The rest of the Smack xattrs are only on sockets.
 		 */
 		sbp = ip->i_sb;
-		अगर (sbp->s_magic != SOCKFS_MAGIC)
-			वापस -EOPNOTSUPP;
+		if (sbp->s_magic != SOCKFS_MAGIC)
+			return -EOPNOTSUPP;
 
 		sock = SOCKET_I(ip);
-		अगर (sock == शून्य || sock->sk == शून्य)
-			वापस -EOPNOTSUPP;
+		if (sock == NULL || sock->sk == NULL)
+			return -EOPNOTSUPP;
 
 		ssp = sock->sk->sk_security;
 
-		अगर (म_भेद(name, XATTR_SMACK_IPIN) == 0)
+		if (strcmp(name, XATTR_SMACK_IPIN) == 0)
 			isp = ssp->smk_in;
-		अन्यथा अगर (म_भेद(name, XATTR_SMACK_IPOUT) == 0)
+		else if (strcmp(name, XATTR_SMACK_IPOUT) == 0)
 			isp = ssp->smk_out;
-		अन्यथा
-			वापस -EOPNOTSUPP;
-	पूर्ण
+		else
+			return -EOPNOTSUPP;
+	}
 
-	अगर (alloc) अणु
+	if (alloc) {
 		*buffer = kstrdup(isp->smk_known, GFP_KERNEL);
-		अगर (*buffer == शून्य)
-			वापस -ENOMEM;
-	पूर्ण
+		if (*buffer == NULL)
+			return -ENOMEM;
+	}
 
-	वापस म_माप(isp->smk_known);
-पूर्ण
+	return strlen(isp->smk_known);
+}
 
 
 /**
@@ -1456,28 +1455,28 @@ out_opt_err:
  * @buffer: where they go
  * @buffer_size: size of buffer
  */
-अटल पूर्णांक smack_inode_listsecurity(काष्ठा inode *inode, अक्षर *buffer,
-				    माप_प्रकार buffer_size)
-अणु
-	पूर्णांक len = माप(XATTR_NAME_SMACK);
+static int smack_inode_listsecurity(struct inode *inode, char *buffer,
+				    size_t buffer_size)
+{
+	int len = sizeof(XATTR_NAME_SMACK);
 
-	अगर (buffer != शून्य && len <= buffer_size)
-		स_नकल(buffer, XATTR_NAME_SMACK, len);
+	if (buffer != NULL && len <= buffer_size)
+		memcpy(buffer, XATTR_NAME_SMACK, len);
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
 /**
- * smack_inode_माला_लोecid - Extract inode's security id
+ * smack_inode_getsecid - Extract inode's security id
  * @inode: inode to extract the info from
  * @secid: where result will be saved
  */
-अटल व्योम smack_inode_माला_लोecid(काष्ठा inode *inode, u32 *secid)
-अणु
-	काष्ठा smack_known *skp = smk_of_inode(inode);
+static void smack_inode_getsecid(struct inode *inode, u32 *secid)
+{
+	struct smack_known *skp = smk_of_inode(inode);
 
 	*secid = skp->smk_secid;
-पूर्ण
+}
 
 /*
  * File Hooks
@@ -1486,92 +1485,92 @@ out_opt_err:
 /*
  * There is no smack_file_permission hook
  *
- * Should access checks be करोne on each पढ़ो or ग_लिखो?
+ * Should access checks be done on each read or write?
  * UNICOS and SELinux say yes.
- * Trusted Solaris, Trusted Irix, and just about everyone अन्यथा says no.
+ * Trusted Solaris, Trusted Irix, and just about everyone else says no.
  *
- * I'll say no क्रम now. Smack करोes not करो the frequent
- * label changing that SELinux करोes.
+ * I'll say no for now. Smack does not do the frequent
+ * label changing that SELinux does.
  */
 
 /**
  * smack_file_alloc_security - assign a file security blob
  * @file: the object
  *
- * The security blob क्रम a file is a poपूर्णांकer to the master
- * label list, so no allocation is करोne.
+ * The security blob for a file is a pointer to the master
+ * label list, so no allocation is done.
  *
- * f_security is the owner security inक्रमmation. It
- * isn't used on file access checks, it's क्रम send_sigio.
+ * f_security is the owner security information. It
+ * isn't used on file access checks, it's for send_sigio.
  *
  * Returns 0
  */
-अटल पूर्णांक smack_file_alloc_security(काष्ठा file *file)
-अणु
-	काष्ठा smack_known **blob = smack_file(file);
+static int smack_file_alloc_security(struct file *file)
+{
+	struct smack_known **blob = smack_file(file);
 
 	*blob = smk_of_current();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * smack_file_ioctl - Smack check on ioctls
  * @file: the object
- * @cmd: what to करो
+ * @cmd: what to do
  * @arg: unused
  *
  * Relies heavily on the correct use of the ioctl command conventions.
  *
- * Returns 0 अगर allowed, error code otherwise
+ * Returns 0 if allowed, error code otherwise
  */
-अटल पूर्णांक smack_file_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
-			    अचिन्हित दीर्घ arg)
-अणु
-	पूर्णांक rc = 0;
-	काष्ठा smk_audit_info ad;
-	काष्ठा inode *inode = file_inode(file);
+static int smack_file_ioctl(struct file *file, unsigned int cmd,
+			    unsigned long arg)
+{
+	int rc = 0;
+	struct smk_audit_info ad;
+	struct inode *inode = file_inode(file);
 
-	अगर (unlikely(IS_PRIVATE(inode)))
-		वापस 0;
+	if (unlikely(IS_PRIVATE(inode)))
+		return 0;
 
 	smk_ad_init(&ad, __func__, LSM_AUDIT_DATA_PATH);
 	smk_ad_setfield_u_fs_path(&ad, file->f_path);
 
-	अगर (_IOC_सूची(cmd) & _IOC_WRITE) अणु
+	if (_IOC_DIR(cmd) & _IOC_WRITE) {
 		rc = smk_curacc(smk_of_inode(inode), MAY_WRITE, &ad);
 		rc = smk_bu_file(file, MAY_WRITE, rc);
-	पूर्ण
+	}
 
-	अगर (rc == 0 && (_IOC_सूची(cmd) & _IOC_READ)) अणु
+	if (rc == 0 && (_IOC_DIR(cmd) & _IOC_READ)) {
 		rc = smk_curacc(smk_of_inode(inode), MAY_READ, &ad);
 		rc = smk_bu_file(file, MAY_READ, rc);
-	पूर्ण
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
  * smack_file_lock - Smack check on file locking
  * @file: the object
  * @cmd: unused
  *
- * Returns 0 अगर current has lock access, error code otherwise
+ * Returns 0 if current has lock access, error code otherwise
  */
-अटल पूर्णांक smack_file_lock(काष्ठा file *file, अचिन्हित पूर्णांक cmd)
-अणु
-	काष्ठा smk_audit_info ad;
-	पूर्णांक rc;
-	काष्ठा inode *inode = file_inode(file);
+static int smack_file_lock(struct file *file, unsigned int cmd)
+{
+	struct smk_audit_info ad;
+	int rc;
+	struct inode *inode = file_inode(file);
 
-	अगर (unlikely(IS_PRIVATE(inode)))
-		वापस 0;
+	if (unlikely(IS_PRIVATE(inode)))
+		return 0;
 
 	smk_ad_init(&ad, __func__, LSM_AUDIT_DATA_PATH);
 	smk_ad_setfield_u_fs_path(&ad, file->f_path);
 	rc = smk_curacc(smk_of_inode(inode), MAY_LOCK, &ad);
 	rc = smk_bu_file(file, MAY_LOCK, rc);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
  * smack_file_fcntl - Smack check on fcntl
@@ -1581,119 +1580,119 @@ out_opt_err:
  *
  * Generally these operations are harmless.
  * File locking operations present an obvious mechanism
- * क्रम passing inक्रमmation, so they require ग_लिखो access.
+ * for passing information, so they require write access.
  *
- * Returns 0 अगर current has access, error code otherwise
+ * Returns 0 if current has access, error code otherwise
  */
-अटल पूर्णांक smack_file_fcntl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
-			    अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा smk_audit_info ad;
-	पूर्णांक rc = 0;
-	काष्ठा inode *inode = file_inode(file);
+static int smack_file_fcntl(struct file *file, unsigned int cmd,
+			    unsigned long arg)
+{
+	struct smk_audit_info ad;
+	int rc = 0;
+	struct inode *inode = file_inode(file);
 
-	अगर (unlikely(IS_PRIVATE(inode)))
-		वापस 0;
+	if (unlikely(IS_PRIVATE(inode)))
+		return 0;
 
-	चयन (cmd) अणु
-	हाल F_GETLK:
-		अवरोध;
-	हाल F_SETLK:
-	हाल F_SETLKW:
+	switch (cmd) {
+	case F_GETLK:
+		break;
+	case F_SETLK:
+	case F_SETLKW:
 		smk_ad_init(&ad, __func__, LSM_AUDIT_DATA_PATH);
 		smk_ad_setfield_u_fs_path(&ad, file->f_path);
 		rc = smk_curacc(smk_of_inode(inode), MAY_LOCK, &ad);
 		rc = smk_bu_file(file, MAY_LOCK, rc);
-		अवरोध;
-	हाल F_SETOWN:
-	हाल F_SETSIG:
+		break;
+	case F_SETOWN:
+	case F_SETSIG:
 		smk_ad_init(&ad, __func__, LSM_AUDIT_DATA_PATH);
 		smk_ad_setfield_u_fs_path(&ad, file->f_path);
 		rc = smk_curacc(smk_of_inode(inode), MAY_WRITE, &ad);
 		rc = smk_bu_file(file, MAY_WRITE, rc);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
  * smack_mmap_file :
- * Check permissions क्रम a mmap operation.  The @file may be शून्य, e.g.
- * अगर mapping anonymous memory.
- * @file contains the file काष्ठाure क्रम file to map (may be शून्य).
+ * Check permissions for a mmap operation.  The @file may be NULL, e.g.
+ * if mapping anonymous memory.
+ * @file contains the file structure for file to map (may be NULL).
  * @reqprot contains the protection requested by the application.
  * @prot contains the protection that will be applied by the kernel.
  * @flags contains the operational flags.
- * Return 0 अगर permission is granted.
+ * Return 0 if permission is granted.
  */
-अटल पूर्णांक smack_mmap_file(काष्ठा file *file,
-			   अचिन्हित दीर्घ reqprot, अचिन्हित दीर्घ prot,
-			   अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा smack_known *skp;
-	काष्ठा smack_known *mkp;
-	काष्ठा smack_rule *srp;
-	काष्ठा task_smack *tsp;
-	काष्ठा smack_known *okp;
-	काष्ठा inode_smack *isp;
-	काष्ठा superblock_smack *sbsp;
-	पूर्णांक may;
-	पूर्णांक mmay;
-	पूर्णांक पंचांगay;
-	पूर्णांक rc;
+static int smack_mmap_file(struct file *file,
+			   unsigned long reqprot, unsigned long prot,
+			   unsigned long flags)
+{
+	struct smack_known *skp;
+	struct smack_known *mkp;
+	struct smack_rule *srp;
+	struct task_smack *tsp;
+	struct smack_known *okp;
+	struct inode_smack *isp;
+	struct superblock_smack *sbsp;
+	int may;
+	int mmay;
+	int tmay;
+	int rc;
 
-	अगर (file == शून्य)
-		वापस 0;
+	if (file == NULL)
+		return 0;
 
-	अगर (unlikely(IS_PRIVATE(file_inode(file))))
-		वापस 0;
+	if (unlikely(IS_PRIVATE(file_inode(file))))
+		return 0;
 
 	isp = smack_inode(file_inode(file));
-	अगर (isp->smk_mmap == शून्य)
-		वापस 0;
+	if (isp->smk_mmap == NULL)
+		return 0;
 	sbsp = smack_superblock(file_inode(file)->i_sb);
-	अगर (sbsp->smk_flags & SMK_SB_UNTRUSTED &&
+	if (sbsp->smk_flags & SMK_SB_UNTRUSTED &&
 	    isp->smk_mmap != sbsp->smk_root)
-		वापस -EACCES;
+		return -EACCES;
 	mkp = isp->smk_mmap;
 
 	tsp = smack_cred(current_cred());
 	skp = smk_of_current();
 	rc = 0;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	/*
 	 * For each Smack rule associated with the subject
-	 * label verअगरy that the SMACK64MMAP also has access
+	 * label verify that the SMACK64MMAP also has access
 	 * to that rule's object label.
 	 */
-	list_क्रम_each_entry_rcu(srp, &skp->smk_rules, list) अणु
+	list_for_each_entry_rcu(srp, &skp->smk_rules, list) {
 		okp = srp->smk_object;
 		/*
 		 * Matching labels always allows access.
 		 */
-		अगर (mkp->smk_known == okp->smk_known)
-			जारी;
+		if (mkp->smk_known == okp->smk_known)
+			continue;
 		/*
 		 * If there is a matching local rule take
-		 * that पूर्णांकo account as well.
+		 * that into account as well.
 		 */
 		may = smk_access_entry(srp->smk_subject->smk_known,
 				       okp->smk_known,
 				       &tsp->smk_rules);
-		अगर (may == -ENOENT)
+		if (may == -ENOENT)
 			may = srp->smk_access;
-		अन्यथा
+		else
 			may &= srp->smk_access;
 		/*
 		 * If may is zero the SMACK64MMAP subject can't
 		 * possibly have less access.
 		 */
-		अगर (may == 0)
-			जारी;
+		if (may == 0)
+			continue;
 
 		/*
 		 * Fetch the global list entry.
@@ -1702,170 +1701,170 @@ out_opt_err:
 		 */
 		mmay = smk_access_entry(mkp->smk_known, okp->smk_known,
 					&mkp->smk_rules);
-		अगर (mmay == -ENOENT) अणु
+		if (mmay == -ENOENT) {
 			rc = -EACCES;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		/*
-		 * If there is a local entry it modअगरies the
+		 * If there is a local entry it modifies the
 		 * potential access, too.
 		 */
-		पंचांगay = smk_access_entry(mkp->smk_known, okp->smk_known,
+		tmay = smk_access_entry(mkp->smk_known, okp->smk_known,
 					&tsp->smk_rules);
-		अगर (पंचांगay != -ENOENT)
-			mmay &= पंचांगay;
+		if (tmay != -ENOENT)
+			mmay &= tmay;
 
 		/*
 		 * If there is any access available to current that is
 		 * not available to a SMACK64MMAP subject
 		 * deny access.
 		 */
-		अगर ((may | mmay) != mmay) अणु
+		if ((may | mmay) != mmay) {
 			rc = -EACCES;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
  * smack_file_set_fowner - set the file security blob value
  * @file: object in question
  *
  */
-अटल व्योम smack_file_set_fowner(काष्ठा file *file)
-अणु
-	काष्ठा smack_known **blob = smack_file(file);
+static void smack_file_set_fowner(struct file *file)
+{
+	struct smack_known **blob = smack_file(file);
 
 	*blob = smk_of_current();
-पूर्ण
+}
 
 /**
  * smack_file_send_sigiotask - Smack on sigio
  * @tsk: The target task
- * @fown: the object the संकेत come from
+ * @fown: the object the signal come from
  * @signum: unused
  *
- * Allow a privileged task to get संकेतs even अगर it shouldn't
+ * Allow a privileged task to get signals even if it shouldn't
  *
- * Returns 0 अगर a subject with the object's smack could
- * ग_लिखो to the task, an error code otherwise.
+ * Returns 0 if a subject with the object's smack could
+ * write to the task, an error code otherwise.
  */
-अटल पूर्णांक smack_file_send_sigiotask(काष्ठा task_काष्ठा *tsk,
-				     काष्ठा fown_काष्ठा *fown, पूर्णांक signum)
-अणु
-	काष्ठा smack_known **blob;
-	काष्ठा smack_known *skp;
-	काष्ठा smack_known *tkp = smk_of_task(smack_cred(tsk->cred));
-	स्थिर काष्ठा cred *tcred;
-	काष्ठा file *file;
-	पूर्णांक rc;
-	काष्ठा smk_audit_info ad;
+static int smack_file_send_sigiotask(struct task_struct *tsk,
+				     struct fown_struct *fown, int signum)
+{
+	struct smack_known **blob;
+	struct smack_known *skp;
+	struct smack_known *tkp = smk_of_task(smack_cred(tsk->cred));
+	const struct cred *tcred;
+	struct file *file;
+	int rc;
+	struct smk_audit_info ad;
 
 	/*
-	 * काष्ठा fown_काष्ठा is never outside the context of a काष्ठा file
+	 * struct fown_struct is never outside the context of a struct file
 	 */
-	file = container_of(fown, काष्ठा file, f_owner);
+	file = container_of(fown, struct file, f_owner);
 
-	/* we करोn't log here as rc can be overriden */
+	/* we don't log here as rc can be overriden */
 	blob = smack_file(file);
 	skp = *blob;
-	rc = smk_access(skp, tkp, MAY_DELIVER, शून्य);
+	rc = smk_access(skp, tkp, MAY_DELIVER, NULL);
 	rc = smk_bu_note("sigiotask", skp, tkp, MAY_DELIVER, rc);
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	tcred = __task_cred(tsk);
-	अगर (rc != 0 && smack_privileged_cred(CAP_MAC_OVERRIDE, tcred))
+	if (rc != 0 && smack_privileged_cred(CAP_MAC_OVERRIDE, tcred))
 		rc = 0;
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
 	smk_ad_init(&ad, __func__, LSM_AUDIT_DATA_TASK);
 	smk_ad_setfield_u_tsk(&ad, tsk);
 	smack_log(skp->smk_known, tkp->smk_known, MAY_DELIVER, rc, &ad);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
  * smack_file_receive - Smack file receive check
  * @file: the object
  *
- * Returns 0 अगर current has access, error code otherwise
+ * Returns 0 if current has access, error code otherwise
  */
-अटल पूर्णांक smack_file_receive(काष्ठा file *file)
-अणु
-	पूर्णांक rc;
-	पूर्णांक may = 0;
-	काष्ठा smk_audit_info ad;
-	काष्ठा inode *inode = file_inode(file);
-	काष्ठा socket *sock;
-	काष्ठा task_smack *tsp;
-	काष्ठा socket_smack *ssp;
+static int smack_file_receive(struct file *file)
+{
+	int rc;
+	int may = 0;
+	struct smk_audit_info ad;
+	struct inode *inode = file_inode(file);
+	struct socket *sock;
+	struct task_smack *tsp;
+	struct socket_smack *ssp;
 
-	अगर (unlikely(IS_PRIVATE(inode)))
-		वापस 0;
+	if (unlikely(IS_PRIVATE(inode)))
+		return 0;
 
 	smk_ad_init(&ad, __func__, LSM_AUDIT_DATA_PATH);
 	smk_ad_setfield_u_fs_path(&ad, file->f_path);
 
-	अगर (inode->i_sb->s_magic == SOCKFS_MAGIC) अणु
+	if (inode->i_sb->s_magic == SOCKFS_MAGIC) {
 		sock = SOCKET_I(inode);
 		ssp = sock->sk->sk_security;
 		tsp = smack_cred(current_cred());
 		/*
-		 * If the receiving process can't ग_लिखो to the
-		 * passed socket or अगर the passed socket can't
-		 * ग_लिखो to the receiving process करोn't accept
+		 * If the receiving process can't write to the
+		 * passed socket or if the passed socket can't
+		 * write to the receiving process don't accept
 		 * the passed socket.
 		 */
 		rc = smk_access(tsp->smk_task, ssp->smk_out, MAY_WRITE, &ad);
 		rc = smk_bu_file(file, may, rc);
-		अगर (rc < 0)
-			वापस rc;
+		if (rc < 0)
+			return rc;
 		rc = smk_access(ssp->smk_in, tsp->smk_task, MAY_WRITE, &ad);
 		rc = smk_bu_file(file, may, rc);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 	/*
-	 * This code relies on biपंचांगasks.
+	 * This code relies on bitmasks.
 	 */
-	अगर (file->f_mode & FMODE_READ)
+	if (file->f_mode & FMODE_READ)
 		may = MAY_READ;
-	अगर (file->f_mode & FMODE_WRITE)
+	if (file->f_mode & FMODE_WRITE)
 		may |= MAY_WRITE;
 
 	rc = smk_curacc(smk_of_inode(inode), may, &ad);
 	rc = smk_bu_file(file, may, rc);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
- * smack_file_खोलो - Smack dentry खोलो processing
+ * smack_file_open - Smack dentry open processing
  * @file: the object
  *
- * Set the security blob in the file काष्ठाure.
- * Allow the खोलो only अगर the task has पढ़ो access. There are
- * many पढ़ो operations (e.g. ख_स्थिति) that you can करो with an
- * fd even अगर you have the file खोलो ग_लिखो-only.
+ * Set the security blob in the file structure.
+ * Allow the open only if the task has read access. There are
+ * many read operations (e.g. fstat) that you can do with an
+ * fd even if you have the file open write-only.
  *
- * Returns 0 अगर current has access, error code otherwise
+ * Returns 0 if current has access, error code otherwise
  */
-अटल पूर्णांक smack_file_खोलो(काष्ठा file *file)
-अणु
-	काष्ठा task_smack *tsp = smack_cred(file->f_cred);
-	काष्ठा inode *inode = file_inode(file);
-	काष्ठा smk_audit_info ad;
-	पूर्णांक rc;
+static int smack_file_open(struct file *file)
+{
+	struct task_smack *tsp = smack_cred(file->f_cred);
+	struct inode *inode = file_inode(file);
+	struct smk_audit_info ad;
+	int rc;
 
 	smk_ad_init(&ad, __func__, LSM_AUDIT_DATA_PATH);
 	smk_ad_setfield_u_fs_path(&ad, file->f_path);
 	rc = smk_tskacc(tsp, smk_of_inode(inode), MAY_READ, &ad);
 	rc = smk_bu_credfile(file->f_cred, file, MAY_READ, rc);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
  * Task hooks
@@ -1876,63 +1875,63 @@ out_opt_err:
  * @cred: the new credentials
  * @gfp: the atomicity of any memory allocations
  *
- * Prepare a blank set of credentials क्रम modअगरication.  This must allocate all
+ * Prepare a blank set of credentials for modification.  This must allocate all
  * the memory the LSM module might require such that cred_transfer() can
  * complete without error.
  */
-अटल पूर्णांक smack_cred_alloc_blank(काष्ठा cred *cred, gfp_t gfp)
-अणु
-	init_task_smack(smack_cred(cred), शून्य, शून्य);
-	वापस 0;
-पूर्ण
+static int smack_cred_alloc_blank(struct cred *cred, gfp_t gfp)
+{
+	init_task_smack(smack_cred(cred), NULL, NULL);
+	return 0;
+}
 
 
 /**
- * smack_cred_मुक्त - "free" task-level security credentials
+ * smack_cred_free - "free" task-level security credentials
  * @cred: the credentials in question
  *
  */
-अटल व्योम smack_cred_मुक्त(काष्ठा cred *cred)
-अणु
-	काष्ठा task_smack *tsp = smack_cred(cred);
-	काष्ठा smack_rule *rp;
-	काष्ठा list_head *l;
-	काष्ठा list_head *n;
+static void smack_cred_free(struct cred *cred)
+{
+	struct task_smack *tsp = smack_cred(cred);
+	struct smack_rule *rp;
+	struct list_head *l;
+	struct list_head *n;
 
 	smk_destroy_label_list(&tsp->smk_relabel);
 
-	list_क्रम_each_safe(l, n, &tsp->smk_rules) अणु
-		rp = list_entry(l, काष्ठा smack_rule, list);
+	list_for_each_safe(l, n, &tsp->smk_rules) {
+		rp = list_entry(l, struct smack_rule, list);
 		list_del(&rp->list);
-		kmem_cache_मुक्त(smack_rule_cache, rp);
-	पूर्ण
-पूर्ण
+		kmem_cache_free(smack_rule_cache, rp);
+	}
+}
 
 /**
- * smack_cred_prepare - prepare new set of credentials क्रम modअगरication
+ * smack_cred_prepare - prepare new set of credentials for modification
  * @new: the new credentials
  * @old: the original credentials
  * @gfp: the atomicity of any memory allocations
  *
- * Prepare a new set of credentials क्रम modअगरication.
+ * Prepare a new set of credentials for modification.
  */
-अटल पूर्णांक smack_cred_prepare(काष्ठा cred *new, स्थिर काष्ठा cred *old,
+static int smack_cred_prepare(struct cred *new, const struct cred *old,
 			      gfp_t gfp)
-अणु
-	काष्ठा task_smack *old_tsp = smack_cred(old);
-	काष्ठा task_smack *new_tsp = smack_cred(new);
-	पूर्णांक rc;
+{
+	struct task_smack *old_tsp = smack_cred(old);
+	struct task_smack *new_tsp = smack_cred(new);
+	int rc;
 
 	init_task_smack(new_tsp, old_tsp->smk_task, old_tsp->smk_task);
 
 	rc = smk_copy_rules(&new_tsp->smk_rules, &old_tsp->smk_rules, gfp);
-	अगर (rc != 0)
-		वापस rc;
+	if (rc != 0)
+		return rc;
 
 	rc = smk_copy_relabel(&new_tsp->smk_relabel, &old_tsp->smk_relabel,
 				gfp);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
  * smack_cred_transfer - Transfer the old credentials to the new credentials
@@ -1941,280 +1940,280 @@ out_opt_err:
  *
  * Fill in a set of blank credentials from another set of credentials.
  */
-अटल व्योम smack_cred_transfer(काष्ठा cred *new, स्थिर काष्ठा cred *old)
-अणु
-	काष्ठा task_smack *old_tsp = smack_cred(old);
-	काष्ठा task_smack *new_tsp = smack_cred(new);
+static void smack_cred_transfer(struct cred *new, const struct cred *old)
+{
+	struct task_smack *old_tsp = smack_cred(old);
+	struct task_smack *new_tsp = smack_cred(new);
 
 	new_tsp->smk_task = old_tsp->smk_task;
-	new_tsp->smk_विभाजनed = old_tsp->smk_task;
+	new_tsp->smk_forked = old_tsp->smk_task;
 	mutex_init(&new_tsp->smk_rules_lock);
 	INIT_LIST_HEAD(&new_tsp->smk_rules);
 
 	/* cbs copy rule list */
-पूर्ण
+}
 
 /**
- * smack_cred_माला_लोecid - get the secid corresponding to a creds काष्ठाure
+ * smack_cred_getsecid - get the secid corresponding to a creds structure
  * @cred: the object creds
  * @secid: where to put the result
  *
  * Sets the secid to contain a u32 version of the smack label.
  */
-अटल व्योम smack_cred_माला_लोecid(स्थिर काष्ठा cred *cred, u32 *secid)
-अणु
-	काष्ठा smack_known *skp;
+static void smack_cred_getsecid(const struct cred *cred, u32 *secid)
+{
+	struct smack_known *skp;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	skp = smk_of_task(smack_cred(cred));
 	*secid = skp->smk_secid;
-	rcu_पढ़ो_unlock();
-पूर्ण
+	rcu_read_unlock();
+}
 
 /**
  * smack_kernel_act_as - Set the subjective context in a set of credentials
- * @new: poपूर्णांकs to the set of credentials to be modअगरied.
- * @secid: specअगरies the security ID to be set
+ * @new: points to the set of credentials to be modified.
+ * @secid: specifies the security ID to be set
  *
- * Set the security data क्रम a kernel service.
+ * Set the security data for a kernel service.
  */
-अटल पूर्णांक smack_kernel_act_as(काष्ठा cred *new, u32 secid)
-अणु
-	काष्ठा task_smack *new_tsp = smack_cred(new);
+static int smack_kernel_act_as(struct cred *new, u32 secid)
+{
+	struct task_smack *new_tsp = smack_cred(new);
 
 	new_tsp->smk_task = smack_from_secid(secid);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * smack_kernel_create_files_as - Set the file creation label in a set of creds
- * @new: poपूर्णांकs to the set of credentials to be modअगरied
- * @inode: poपूर्णांकs to the inode to use as a reference
+ * @new: points to the set of credentials to be modified
+ * @inode: points to the inode to use as a reference
  *
  * Set the file creation context in a set of credentials to the same
- * as the objective context of the specअगरied inode
+ * as the objective context of the specified inode
  */
-अटल पूर्णांक smack_kernel_create_files_as(काष्ठा cred *new,
-					काष्ठा inode *inode)
-अणु
-	काष्ठा inode_smack *isp = smack_inode(inode);
-	काष्ठा task_smack *tsp = smack_cred(new);
+static int smack_kernel_create_files_as(struct cred *new,
+					struct inode *inode)
+{
+	struct inode_smack *isp = smack_inode(inode);
+	struct task_smack *tsp = smack_cred(new);
 
-	tsp->smk_विभाजनed = isp->smk_inode;
-	tsp->smk_task = tsp->smk_विभाजनed;
-	वापस 0;
-पूर्ण
+	tsp->smk_forked = isp->smk_inode;
+	tsp->smk_task = tsp->smk_forked;
+	return 0;
+}
 
 /**
  * smk_curacc_on_task - helper to log task related access
  * @p: the task object
  * @access: the access requested
- * @caller: name of the calling function क्रम audit
+ * @caller: name of the calling function for audit
  *
- * Return 0 अगर access is permitted
+ * Return 0 if access is permitted
  */
-अटल पूर्णांक smk_curacc_on_task(काष्ठा task_काष्ठा *p, पूर्णांक access,
-				स्थिर अक्षर *caller)
-अणु
-	काष्ठा smk_audit_info ad;
-	काष्ठा smack_known *skp = smk_of_task_काष्ठा_subj(p);
-	पूर्णांक rc;
+static int smk_curacc_on_task(struct task_struct *p, int access,
+				const char *caller)
+{
+	struct smk_audit_info ad;
+	struct smack_known *skp = smk_of_task_struct_subj(p);
+	int rc;
 
 	smk_ad_init(&ad, caller, LSM_AUDIT_DATA_TASK);
 	smk_ad_setfield_u_tsk(&ad, p);
 	rc = smk_curacc(skp, access, &ad);
 	rc = smk_bu_task(p, access, rc);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
  * smack_task_setpgid - Smack check on setting pgid
  * @p: the task object
  * @pgid: unused
  *
- * Return 0 अगर ग_लिखो access is permitted
+ * Return 0 if write access is permitted
  */
-अटल पूर्णांक smack_task_setpgid(काष्ठा task_काष्ठा *p, pid_t pgid)
-अणु
-	वापस smk_curacc_on_task(p, MAY_WRITE, __func__);
-पूर्ण
+static int smack_task_setpgid(struct task_struct *p, pid_t pgid)
+{
+	return smk_curacc_on_task(p, MAY_WRITE, __func__);
+}
 
 /**
- * smack_task_getpgid - Smack access check क्रम getpgid
+ * smack_task_getpgid - Smack access check for getpgid
  * @p: the object task
  *
- * Returns 0 अगर current can पढ़ो the object task, error code otherwise
+ * Returns 0 if current can read the object task, error code otherwise
  */
-अटल पूर्णांक smack_task_getpgid(काष्ठा task_काष्ठा *p)
-अणु
-	वापस smk_curacc_on_task(p, MAY_READ, __func__);
-पूर्ण
+static int smack_task_getpgid(struct task_struct *p)
+{
+	return smk_curacc_on_task(p, MAY_READ, __func__);
+}
 
 /**
- * smack_task_माला_लोid - Smack access check क्रम माला_लोid
+ * smack_task_getsid - Smack access check for getsid
  * @p: the object task
  *
- * Returns 0 अगर current can पढ़ो the object task, error code otherwise
+ * Returns 0 if current can read the object task, error code otherwise
  */
-अटल पूर्णांक smack_task_माला_लोid(काष्ठा task_काष्ठा *p)
-अणु
-	वापस smk_curacc_on_task(p, MAY_READ, __func__);
-पूर्ण
+static int smack_task_getsid(struct task_struct *p)
+{
+	return smk_curacc_on_task(p, MAY_READ, __func__);
+}
 
 /**
- * smack_task_माला_लोecid_subj - get the subjective secid of the task
+ * smack_task_getsecid_subj - get the subjective secid of the task
  * @p: the task
  * @secid: where to put the result
  *
  * Sets the secid to contain a u32 version of the task's subjective smack label.
  */
-अटल व्योम smack_task_माला_लोecid_subj(काष्ठा task_काष्ठा *p, u32 *secid)
-अणु
-	काष्ठा smack_known *skp = smk_of_task_काष्ठा_subj(p);
+static void smack_task_getsecid_subj(struct task_struct *p, u32 *secid)
+{
+	struct smack_known *skp = smk_of_task_struct_subj(p);
 
 	*secid = skp->smk_secid;
-पूर्ण
+}
 
 /**
- * smack_task_माला_लोecid_obj - get the objective secid of the task
+ * smack_task_getsecid_obj - get the objective secid of the task
  * @p: the task
  * @secid: where to put the result
  *
  * Sets the secid to contain a u32 version of the task's objective smack label.
  */
-अटल व्योम smack_task_माला_लोecid_obj(काष्ठा task_काष्ठा *p, u32 *secid)
-अणु
-	काष्ठा smack_known *skp = smk_of_task_काष्ठा_obj(p);
+static void smack_task_getsecid_obj(struct task_struct *p, u32 *secid)
+{
+	struct smack_known *skp = smk_of_task_struct_obj(p);
 
 	*secid = skp->smk_secid;
-पूर्ण
+}
 
 /**
  * smack_task_setnice - Smack check on setting nice
  * @p: the task object
  * @nice: unused
  *
- * Return 0 अगर ग_लिखो access is permitted
+ * Return 0 if write access is permitted
  */
-अटल पूर्णांक smack_task_setnice(काष्ठा task_काष्ठा *p, पूर्णांक nice)
-अणु
-	वापस smk_curacc_on_task(p, MAY_WRITE, __func__);
-पूर्ण
+static int smack_task_setnice(struct task_struct *p, int nice)
+{
+	return smk_curacc_on_task(p, MAY_WRITE, __func__);
+}
 
 /**
  * smack_task_setioprio - Smack check on setting ioprio
  * @p: the task object
  * @ioprio: unused
  *
- * Return 0 अगर ग_लिखो access is permitted
+ * Return 0 if write access is permitted
  */
-अटल पूर्णांक smack_task_setioprio(काष्ठा task_काष्ठा *p, पूर्णांक ioprio)
-अणु
-	वापस smk_curacc_on_task(p, MAY_WRITE, __func__);
-पूर्ण
+static int smack_task_setioprio(struct task_struct *p, int ioprio)
+{
+	return smk_curacc_on_task(p, MAY_WRITE, __func__);
+}
 
 /**
- * smack_task_getioprio - Smack check on पढ़ोing ioprio
+ * smack_task_getioprio - Smack check on reading ioprio
  * @p: the task object
  *
- * Return 0 अगर पढ़ो access is permitted
+ * Return 0 if read access is permitted
  */
-अटल पूर्णांक smack_task_getioprio(काष्ठा task_काष्ठा *p)
-अणु
-	वापस smk_curacc_on_task(p, MAY_READ, __func__);
-पूर्ण
+static int smack_task_getioprio(struct task_struct *p)
+{
+	return smk_curacc_on_task(p, MAY_READ, __func__);
+}
 
 /**
  * smack_task_setscheduler - Smack check on setting scheduler
  * @p: the task object
  *
- * Return 0 अगर पढ़ो access is permitted
+ * Return 0 if read access is permitted
  */
-अटल पूर्णांक smack_task_setscheduler(काष्ठा task_काष्ठा *p)
-अणु
-	वापस smk_curacc_on_task(p, MAY_WRITE, __func__);
-पूर्ण
+static int smack_task_setscheduler(struct task_struct *p)
+{
+	return smk_curacc_on_task(p, MAY_WRITE, __func__);
+}
 
 /**
- * smack_task_माला_लोcheduler - Smack check on पढ़ोing scheduler
+ * smack_task_getscheduler - Smack check on reading scheduler
  * @p: the task object
  *
- * Return 0 अगर पढ़ो access is permitted
+ * Return 0 if read access is permitted
  */
-अटल पूर्णांक smack_task_माला_लोcheduler(काष्ठा task_काष्ठा *p)
-अणु
-	वापस smk_curacc_on_task(p, MAY_READ, __func__);
-पूर्ण
+static int smack_task_getscheduler(struct task_struct *p)
+{
+	return smk_curacc_on_task(p, MAY_READ, __func__);
+}
 
 /**
  * smack_task_movememory - Smack check on moving memory
  * @p: the task object
  *
- * Return 0 अगर ग_लिखो access is permitted
+ * Return 0 if write access is permitted
  */
-अटल पूर्णांक smack_task_movememory(काष्ठा task_काष्ठा *p)
-अणु
-	वापस smk_curacc_on_task(p, MAY_WRITE, __func__);
-पूर्ण
+static int smack_task_movememory(struct task_struct *p)
+{
+	return smk_curacc_on_task(p, MAY_WRITE, __func__);
+}
 
 /**
- * smack_task_समाप्त - Smack check on संकेत delivery
+ * smack_task_kill - Smack check on signal delivery
  * @p: the task object
  * @info: unused
  * @sig: unused
- * @cred: identअगरies the cred to use in lieu of current's
+ * @cred: identifies the cred to use in lieu of current's
  *
- * Return 0 अगर ग_लिखो access is permitted
+ * Return 0 if write access is permitted
  *
  */
-अटल पूर्णांक smack_task_समाप्त(काष्ठा task_काष्ठा *p, काष्ठा kernel_siginfo *info,
-			   पूर्णांक sig, स्थिर काष्ठा cred *cred)
-अणु
-	काष्ठा smk_audit_info ad;
-	काष्ठा smack_known *skp;
-	काष्ठा smack_known *tkp = smk_of_task_काष्ठा_obj(p);
-	पूर्णांक rc;
+static int smack_task_kill(struct task_struct *p, struct kernel_siginfo *info,
+			   int sig, const struct cred *cred)
+{
+	struct smk_audit_info ad;
+	struct smack_known *skp;
+	struct smack_known *tkp = smk_of_task_struct_obj(p);
+	int rc;
 
-	अगर (!sig)
-		वापस 0; /* null संकेत; existence test */
+	if (!sig)
+		return 0; /* null signal; existence test */
 
 	smk_ad_init(&ad, __func__, LSM_AUDIT_DATA_TASK);
 	smk_ad_setfield_u_tsk(&ad, p);
 	/*
-	 * Sending a संकेत requires that the sender
-	 * can ग_लिखो the receiver.
+	 * Sending a signal requires that the sender
+	 * can write the receiver.
 	 */
-	अगर (cred == शून्य) अणु
+	if (cred == NULL) {
 		rc = smk_curacc(tkp, MAY_DELIVER, &ad);
 		rc = smk_bu_task(p, MAY_DELIVER, rc);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 	/*
 	 * If the cred isn't NULL we're dealing with some USB IO
-	 * specअगरic behavior. This is not clean. For one thing
-	 * we can't take privilege पूर्णांकo account.
+	 * specific behavior. This is not clean. For one thing
+	 * we can't take privilege into account.
 	 */
 	skp = smk_of_task(smack_cred(cred));
 	rc = smk_access(skp, tkp, MAY_DELIVER, &ad);
 	rc = smk_bu_note("USB signal", skp, tkp, MAY_DELIVER, rc);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
- * smack_task_to_inode - copy task smack पूर्णांकo the inode blob
+ * smack_task_to_inode - copy task smack into the inode blob
  * @p: task to copy from
  * @inode: inode to copy to
  *
- * Sets the smack poपूर्णांकer in the inode security blob
+ * Sets the smack pointer in the inode security blob
  */
-अटल व्योम smack_task_to_inode(काष्ठा task_काष्ठा *p, काष्ठा inode *inode)
-अणु
-	काष्ठा inode_smack *isp = smack_inode(inode);
-	काष्ठा smack_known *skp = smk_of_task_काष्ठा_obj(p);
+static void smack_task_to_inode(struct task_struct *p, struct inode *inode)
+{
+	struct inode_smack *isp = smack_inode(inode);
+	struct smack_known *skp = smk_of_task_struct_obj(p);
 
 	isp->smk_inode = skp;
 	isp->smk_flags |= SMK_INODE_INSTANT;
-पूर्ण
+}
 
 /*
  * Socket hooks.
@@ -2226,161 +2225,161 @@ out_opt_err:
  * @family: unused
  * @gfp_flags: memory allocation flags
  *
- * Assign Smack poपूर्णांकers to current
+ * Assign Smack pointers to current
  *
  * Returns 0 on success, -ENOMEM is there's no memory
  */
-अटल पूर्णांक smack_sk_alloc_security(काष्ठा sock *sk, पूर्णांक family, gfp_t gfp_flags)
-अणु
-	काष्ठा smack_known *skp = smk_of_current();
-	काष्ठा socket_smack *ssp;
+static int smack_sk_alloc_security(struct sock *sk, int family, gfp_t gfp_flags)
+{
+	struct smack_known *skp = smk_of_current();
+	struct socket_smack *ssp;
 
-	ssp = kzalloc(माप(काष्ठा socket_smack), gfp_flags);
-	अगर (ssp == शून्य)
-		वापस -ENOMEM;
+	ssp = kzalloc(sizeof(struct socket_smack), gfp_flags);
+	if (ssp == NULL)
+		return -ENOMEM;
 
 	/*
-	 * Sockets created by kernel thपढ़ोs receive web label.
+	 * Sockets created by kernel threads receive web label.
 	 */
-	अगर (unlikely(current->flags & PF_KTHREAD)) अणु
+	if (unlikely(current->flags & PF_KTHREAD)) {
 		ssp->smk_in = &smack_known_web;
 		ssp->smk_out = &smack_known_web;
-	पूर्ण अन्यथा अणु
+	} else {
 		ssp->smk_in = skp;
 		ssp->smk_out = skp;
-	पूर्ण
-	ssp->smk_packet = शून्य;
+	}
+	ssp->smk_packet = NULL;
 
 	sk->sk_security = ssp;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * smack_sk_मुक्त_security - Free a socket blob
+ * smack_sk_free_security - Free a socket blob
  * @sk: the socket
  *
- * Clears the blob poपूर्णांकer
+ * Clears the blob pointer
  */
-अटल व्योम smack_sk_मुक्त_security(काष्ठा sock *sk)
-अणु
-#अगर_घोषित SMACK_IPV6_PORT_LABELING
-	काष्ठा smk_port_label *spp;
+static void smack_sk_free_security(struct sock *sk)
+{
+#ifdef SMACK_IPV6_PORT_LABELING
+	struct smk_port_label *spp;
 
-	अगर (sk->sk_family == PF_INET6) अणु
-		rcu_पढ़ो_lock();
-		list_क्रम_each_entry_rcu(spp, &smk_ipv6_port_list, list) अणु
-			अगर (spp->smk_sock != sk)
-				जारी;
+	if (sk->sk_family == PF_INET6) {
+		rcu_read_lock();
+		list_for_each_entry_rcu(spp, &smk_ipv6_port_list, list) {
+			if (spp->smk_sock != sk)
+				continue;
 			spp->smk_can_reuse = 1;
-			अवरोध;
-		पूर्ण
-		rcu_पढ़ो_unlock();
-	पूर्ण
-#पूर्ण_अगर
-	kमुक्त(sk->sk_security);
-पूर्ण
+			break;
+		}
+		rcu_read_unlock();
+	}
+#endif
+	kfree(sk->sk_security);
+}
 
 /**
 * smack_ipv4host_label - check host based restrictions
 * @sip: the object end
 *
-* looks क्रम host based access restrictions
+* looks for host based access restrictions
 *
-* This version will only be appropriate क्रम really small sets of single label
-* hosts.  The caller is responsible क्रम ensuring that the RCU पढ़ो lock is
-* taken beक्रमe calling this function.
+* This version will only be appropriate for really small sets of single label
+* hosts.  The caller is responsible for ensuring that the RCU read lock is
+* taken before calling this function.
 *
-* Returns the label of the far end or शून्य अगर it's not special.
+* Returns the label of the far end or NULL if it's not special.
 */
-अटल काष्ठा smack_known *smack_ipv4host_label(काष्ठा sockaddr_in *sip)
-अणु
-	काष्ठा smk_net4addr *snp;
-	काष्ठा in_addr *siap = &sip->sin_addr;
+static struct smack_known *smack_ipv4host_label(struct sockaddr_in *sip)
+{
+	struct smk_net4addr *snp;
+	struct in_addr *siap = &sip->sin_addr;
 
-	अगर (siap->s_addr == 0)
-		वापस शून्य;
+	if (siap->s_addr == 0)
+		return NULL;
 
-	list_क्रम_each_entry_rcu(snp, &smk_net4addr_list, list)
+	list_for_each_entry_rcu(snp, &smk_net4addr_list, list)
 		/*
-		 * we अवरोध after finding the first match because
-		 * the list is sorted from दीर्घest to लघुest mask
-		 * so we have found the most specअगरic match
+		 * we break after finding the first match because
+		 * the list is sorted from longest to shortest mask
+		 * so we have found the most specific match
 		 */
-		अगर (snp->smk_host.s_addr ==
+		if (snp->smk_host.s_addr ==
 		    (siap->s_addr & snp->smk_mask.s_addr))
-			वापस snp->smk_label;
+			return snp->smk_label;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /*
- * smk_ipv6_localhost - Check क्रम local ipv6 host address
+ * smk_ipv6_localhost - Check for local ipv6 host address
  * @sip: the address
  *
- * Returns boolean true अगर this is the localhost address
+ * Returns boolean true if this is the localhost address
  */
-अटल bool smk_ipv6_localhost(काष्ठा sockaddr_in6 *sip)
-अणु
+static bool smk_ipv6_localhost(struct sockaddr_in6 *sip)
+{
 	__be16 *be16p = (__be16 *)&sip->sin6_addr;
 	__be32 *be32p = (__be32 *)&sip->sin6_addr;
 
-	अगर (be32p[0] == 0 && be32p[1] == 0 && be32p[2] == 0 && be16p[6] == 0 &&
+	if (be32p[0] == 0 && be32p[1] == 0 && be32p[2] == 0 && be16p[6] == 0 &&
 	    ntohs(be16p[7]) == 1)
-		वापस true;
-	वापस false;
-पूर्ण
+		return true;
+	return false;
+}
 
 /**
 * smack_ipv6host_label - check host based restrictions
 * @sip: the object end
 *
-* looks क्रम host based access restrictions
+* looks for host based access restrictions
 *
-* This version will only be appropriate क्रम really small sets of single label
-* hosts.  The caller is responsible क्रम ensuring that the RCU पढ़ो lock is
-* taken beक्रमe calling this function.
+* This version will only be appropriate for really small sets of single label
+* hosts.  The caller is responsible for ensuring that the RCU read lock is
+* taken before calling this function.
 *
-* Returns the label of the far end or शून्य अगर it's not special.
+* Returns the label of the far end or NULL if it's not special.
 */
-अटल काष्ठा smack_known *smack_ipv6host_label(काष्ठा sockaddr_in6 *sip)
-अणु
-	काष्ठा smk_net6addr *snp;
-	काष्ठा in6_addr *sap = &sip->sin6_addr;
-	पूर्णांक i;
-	पूर्णांक found = 0;
+static struct smack_known *smack_ipv6host_label(struct sockaddr_in6 *sip)
+{
+	struct smk_net6addr *snp;
+	struct in6_addr *sap = &sip->sin6_addr;
+	int i;
+	int found = 0;
 
 	/*
-	 * It's local. Don't look क्रम a host label.
+	 * It's local. Don't look for a host label.
 	 */
-	अगर (smk_ipv6_localhost(sip))
-		वापस शून्य;
+	if (smk_ipv6_localhost(sip))
+		return NULL;
 
-	list_क्रम_each_entry_rcu(snp, &smk_net6addr_list, list) अणु
+	list_for_each_entry_rcu(snp, &smk_net6addr_list, list) {
 		/*
-		 * If the label is शून्य the entry has
+		 * If the label is NULL the entry has
 		 * been renounced. Ignore it.
 		 */
-		अगर (snp->smk_label == शून्य)
-			जारी;
+		if (snp->smk_label == NULL)
+			continue;
 		/*
-		* we अवरोध after finding the first match because
-		* the list is sorted from दीर्घest to लघुest mask
-		* so we have found the most specअगरic match
+		* we break after finding the first match because
+		* the list is sorted from longest to shortest mask
+		* so we have found the most specific match
 		*/
-		क्रम (found = 1, i = 0; i < 8; i++) अणु
-			अगर ((sap->s6_addr16[i] & snp->smk_mask.s6_addr16[i]) !=
-			    snp->smk_host.s6_addr16[i]) अणु
+		for (found = 1, i = 0; i < 8; i++) {
+			if ((sap->s6_addr16[i] & snp->smk_mask.s6_addr16[i]) !=
+			    snp->smk_host.s6_addr16[i]) {
 				found = 0;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		अगर (found)
-			वापस snp->smk_label;
-	पूर्ण
+				break;
+			}
+		}
+		if (found)
+			return snp->smk_label;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /**
  * smack_netlbl_add - Set the secattr on a socket
@@ -2390,31 +2389,31 @@ out_opt_err:
  *
  * Returns 0 on success or an error code
  */
-अटल पूर्णांक smack_netlbl_add(काष्ठा sock *sk)
-अणु
-	काष्ठा socket_smack *ssp = sk->sk_security;
-	काष्ठा smack_known *skp = ssp->smk_out;
-	पूर्णांक rc;
+static int smack_netlbl_add(struct sock *sk)
+{
+	struct socket_smack *ssp = sk->sk_security;
+	struct smack_known *skp = ssp->smk_out;
+	int rc;
 
 	local_bh_disable();
 	bh_lock_sock_nested(sk);
 
 	rc = netlbl_sock_setattr(sk, sk->sk_family, &skp->smk_netlabel);
-	चयन (rc) अणु
-	हाल 0:
+	switch (rc) {
+	case 0:
 		ssp->smk_state = SMK_NETLBL_LABELED;
-		अवरोध;
-	हाल -EDESTADDRREQ:
+		break;
+	case -EDESTADDRREQ:
 		ssp->smk_state = SMK_NETLBL_REQSKB;
 		rc = 0;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	bh_unlock_sock(sk);
 	local_bh_enable();
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
  * smack_netlbl_delete - Remove the secattr from a socket
@@ -2422,15 +2421,15 @@ out_opt_err:
  *
  * Remove the outbound smack value from a socket
  */
-अटल व्योम smack_netlbl_delete(काष्ठा sock *sk)
-अणु
-	काष्ठा socket_smack *ssp = sk->sk_security;
+static void smack_netlbl_delete(struct sock *sk)
+{
+	struct socket_smack *ssp = sk->sk_security;
 
 	/*
-	 * Take the label off the socket अगर one is set.
+	 * Take the label off the socket if one is set.
 	 */
-	अगर (ssp->smk_state != SMK_NETLBL_LABELED)
-		वापस;
+	if (ssp->smk_state != SMK_NETLBL_LABELED)
+		return;
 
 	local_bh_disable();
 	bh_lock_sock_nested(sk);
@@ -2438,51 +2437,51 @@ out_opt_err:
 	bh_unlock_sock(sk);
 	local_bh_enable();
 	ssp->smk_state = SMK_NETLBL_UNLABELED;
-पूर्ण
+}
 
 /**
- * smk_ipv4_check - Perक्रमm IPv4 host access checks
+ * smk_ipv4_check - Perform IPv4 host access checks
  * @sk: the socket
  * @sap: the destination address
  *
- * Set the correct secattr क्रम the given socket based on the destination
- * address and perक्रमm any outbound access checks needed.
+ * Set the correct secattr for the given socket based on the destination
+ * address and perform any outbound access checks needed.
  *
  * Returns 0 on success or an error code.
  *
  */
-अटल पूर्णांक smk_ipv4_check(काष्ठा sock *sk, काष्ठा sockaddr_in *sap)
-अणु
-	काष्ठा smack_known *skp;
-	पूर्णांक rc = 0;
-	काष्ठा smack_known *hkp;
-	काष्ठा socket_smack *ssp = sk->sk_security;
-	काष्ठा smk_audit_info ad;
+static int smk_ipv4_check(struct sock *sk, struct sockaddr_in *sap)
+{
+	struct smack_known *skp;
+	int rc = 0;
+	struct smack_known *hkp;
+	struct socket_smack *ssp = sk->sk_security;
+	struct smk_audit_info ad;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	hkp = smack_ipv4host_label(sap);
-	अगर (hkp != शून्य) अणु
-#अगर_घोषित CONFIG_AUDIT
-		काष्ठा lsm_network_audit net;
+	if (hkp != NULL) {
+#ifdef CONFIG_AUDIT
+		struct lsm_network_audit net;
 
 		smk_ad_init_net(&ad, __func__, LSM_AUDIT_DATA_NET, &net);
 		ad.a.u.net->family = sap->sin_family;
 		ad.a.u.net->dport = sap->sin_port;
 		ad.a.u.net->v4info.daddr = sap->sin_addr.s_addr;
-#पूर्ण_अगर
+#endif
 		skp = ssp->smk_out;
 		rc = smk_access(skp, hkp, MAY_WRITE, &ad);
 		rc = smk_bu_note("IPv4 host check", skp, hkp, MAY_WRITE, rc);
 		/*
-		 * Clear the socket netlabel अगर it's set.
+		 * Clear the socket netlabel if it's set.
 		 */
-		अगर (!rc)
+		if (!rc)
 			smack_netlbl_delete(sk);
-	पूर्ण
-	rcu_पढ़ो_unlock();
+	}
+	rcu_read_unlock();
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
  * smk_ipv6_check - check Smack access
@@ -2493,31 +2492,31 @@ out_opt_err:
  *
  * Check an IPv6 access
  */
-अटल पूर्णांक smk_ipv6_check(काष्ठा smack_known *subject,
-				काष्ठा smack_known *object,
-				काष्ठा sockaddr_in6 *address, पूर्णांक act)
-अणु
-#अगर_घोषित CONFIG_AUDIT
-	काष्ठा lsm_network_audit net;
-#पूर्ण_अगर
-	काष्ठा smk_audit_info ad;
-	पूर्णांक rc;
+static int smk_ipv6_check(struct smack_known *subject,
+				struct smack_known *object,
+				struct sockaddr_in6 *address, int act)
+{
+#ifdef CONFIG_AUDIT
+	struct lsm_network_audit net;
+#endif
+	struct smk_audit_info ad;
+	int rc;
 
-#अगर_घोषित CONFIG_AUDIT
+#ifdef CONFIG_AUDIT
 	smk_ad_init_net(&ad, __func__, LSM_AUDIT_DATA_NET, &net);
 	ad.a.u.net->family = PF_INET6;
 	ad.a.u.net->dport = ntohs(address->sin6_port);
-	अगर (act == SMK_RECEIVING)
+	if (act == SMK_RECEIVING)
 		ad.a.u.net->v6info.saddr = address->sin6_addr;
-	अन्यथा
+	else
 		ad.a.u.net->v6info.daddr = address->sin6_addr;
-#पूर्ण_अगर
+#endif
 	rc = smk_access(subject, object, MAY_WRITE, &ad);
 	rc = smk_bu_note("IPv6 check", subject, object, MAY_WRITE, rc);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-#अगर_घोषित SMACK_IPV6_PORT_LABELING
+#ifdef SMACK_IPV6_PORT_LABELING
 /**
  * smk_ipv6_port_label - Smack port access table management
  * @sock: socket
@@ -2525,72 +2524,72 @@ out_opt_err:
  *
  * Create or update the port list entry
  */
-अटल व्योम smk_ipv6_port_label(काष्ठा socket *sock, काष्ठा sockaddr *address)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा sockaddr_in6 *addr6;
-	काष्ठा socket_smack *ssp = sock->sk->sk_security;
-	काष्ठा smk_port_label *spp;
-	अचिन्हित लघु port = 0;
+static void smk_ipv6_port_label(struct socket *sock, struct sockaddr *address)
+{
+	struct sock *sk = sock->sk;
+	struct sockaddr_in6 *addr6;
+	struct socket_smack *ssp = sock->sk->sk_security;
+	struct smk_port_label *spp;
+	unsigned short port = 0;
 
-	अगर (address == शून्य) अणु
+	if (address == NULL) {
 		/*
-		 * This operation is changing the Smack inक्रमmation
+		 * This operation is changing the Smack information
 		 * on the bound socket. Take the changes to the port
 		 * as well.
 		 */
-		rcu_पढ़ो_lock();
-		list_क्रम_each_entry_rcu(spp, &smk_ipv6_port_list, list) अणु
-			अगर (sk != spp->smk_sock)
-				जारी;
+		rcu_read_lock();
+		list_for_each_entry_rcu(spp, &smk_ipv6_port_list, list) {
+			if (sk != spp->smk_sock)
+				continue;
 			spp->smk_in = ssp->smk_in;
 			spp->smk_out = ssp->smk_out;
-			rcu_पढ़ो_unlock();
-			वापस;
-		पूर्ण
+			rcu_read_unlock();
+			return;
+		}
 		/*
-		 * A शून्य address is only used क्रम updating existing
+		 * A NULL address is only used for updating existing
 		 * bound entries. If there isn't one, it's OK.
 		 */
-		rcu_पढ़ो_unlock();
-		वापस;
-	पूर्ण
+		rcu_read_unlock();
+		return;
+	}
 
-	addr6 = (काष्ठा sockaddr_in6 *)address;
+	addr6 = (struct sockaddr_in6 *)address;
 	port = ntohs(addr6->sin6_port);
 	/*
-	 * This is a special हाल that is safely ignored.
+	 * This is a special case that is safely ignored.
 	 */
-	अगर (port == 0)
-		वापस;
+	if (port == 0)
+		return;
 
 	/*
-	 * Look क्रम an existing port list entry.
+	 * Look for an existing port list entry.
 	 * This is an indication that a port is getting reused.
 	 */
-	rcu_पढ़ो_lock();
-	list_क्रम_each_entry_rcu(spp, &smk_ipv6_port_list, list) अणु
-		अगर (spp->smk_port != port || spp->smk_sock_type != sock->type)
-			जारी;
-		अगर (spp->smk_can_reuse != 1) अणु
-			rcu_पढ़ो_unlock();
-			वापस;
-		पूर्ण
+	rcu_read_lock();
+	list_for_each_entry_rcu(spp, &smk_ipv6_port_list, list) {
+		if (spp->smk_port != port || spp->smk_sock_type != sock->type)
+			continue;
+		if (spp->smk_can_reuse != 1) {
+			rcu_read_unlock();
+			return;
+		}
 		spp->smk_port = port;
 		spp->smk_sock = sk;
 		spp->smk_in = ssp->smk_in;
 		spp->smk_out = ssp->smk_out;
 		spp->smk_can_reuse = 0;
-		rcu_पढ़ो_unlock();
-		वापस;
-	पूर्ण
-	rcu_पढ़ो_unlock();
+		rcu_read_unlock();
+		return;
+	}
+	rcu_read_unlock();
 	/*
 	 * A new port entry is required.
 	 */
-	spp = kzalloc(माप(*spp), GFP_KERNEL);
-	अगर (spp == शून्य)
-		वापस;
+	spp = kzalloc(sizeof(*spp), GFP_KERNEL);
+	if (spp == NULL)
+		return;
 
 	spp->smk_port = port;
 	spp->smk_sock = sk;
@@ -2602,9 +2601,9 @@ out_opt_err:
 	mutex_lock(&smack_ipv6_lock);
 	list_add_rcu(&spp->list, &smk_ipv6_port_list);
 	mutex_unlock(&smack_ipv6_lock);
-	वापस;
-पूर्ण
-#पूर्ण_अगर
+	return;
+}
+#endif
 
 /**
  * smk_ipv6_port_check - check Smack port access
@@ -2614,59 +2613,59 @@ out_opt_err:
  *
  * Create or update the port list entry
  */
-अटल पूर्णांक smk_ipv6_port_check(काष्ठा sock *sk, काष्ठा sockaddr_in6 *address,
-				पूर्णांक act)
-अणु
-	काष्ठा smk_port_label *spp;
-	काष्ठा socket_smack *ssp = sk->sk_security;
-	काष्ठा smack_known *skp = शून्य;
-	अचिन्हित लघु port;
-	काष्ठा smack_known *object;
+static int smk_ipv6_port_check(struct sock *sk, struct sockaddr_in6 *address,
+				int act)
+{
+	struct smk_port_label *spp;
+	struct socket_smack *ssp = sk->sk_security;
+	struct smack_known *skp = NULL;
+	unsigned short port;
+	struct smack_known *object;
 
-	अगर (act == SMK_RECEIVING) अणु
+	if (act == SMK_RECEIVING) {
 		skp = smack_ipv6host_label(address);
 		object = ssp->smk_in;
-	पूर्ण अन्यथा अणु
+	} else {
 		skp = ssp->smk_out;
 		object = smack_ipv6host_label(address);
-	पूर्ण
+	}
 
 	/*
 	 * The other end is a single label host.
 	 */
-	अगर (skp != शून्य && object != शून्य)
-		वापस smk_ipv6_check(skp, object, address, act);
-	अगर (skp == शून्य)
+	if (skp != NULL && object != NULL)
+		return smk_ipv6_check(skp, object, address, act);
+	if (skp == NULL)
 		skp = smack_net_ambient;
-	अगर (object == शून्य)
+	if (object == NULL)
 		object = smack_net_ambient;
 
 	/*
-	 * It's remote, so port lookup करोes no good.
+	 * It's remote, so port lookup does no good.
 	 */
-	अगर (!smk_ipv6_localhost(address))
-		वापस smk_ipv6_check(skp, object, address, act);
+	if (!smk_ipv6_localhost(address))
+		return smk_ipv6_check(skp, object, address, act);
 
 	/*
 	 * It's local so the send check has to have passed.
 	 */
-	अगर (act == SMK_RECEIVING)
-		वापस 0;
+	if (act == SMK_RECEIVING)
+		return 0;
 
 	port = ntohs(address->sin6_port);
-	rcu_पढ़ो_lock();
-	list_क्रम_each_entry_rcu(spp, &smk_ipv6_port_list, list) अणु
-		अगर (spp->smk_port != port || spp->smk_sock_type != sk->sk_type)
-			जारी;
+	rcu_read_lock();
+	list_for_each_entry_rcu(spp, &smk_ipv6_port_list, list) {
+		if (spp->smk_port != port || spp->smk_sock_type != sk->sk_type)
+			continue;
 		object = spp->smk_in;
-		अगर (act == SMK_CONNECTING)
+		if (act == SMK_CONNECTING)
 			ssp->smk_packet = spp->smk_out;
-		अवरोध;
-	पूर्ण
-	rcu_पढ़ो_unlock();
+		break;
+	}
+	rcu_read_unlock();
 
-	वापस smk_ipv6_check(skp, object, address, act);
-पूर्ण
+	return smk_ipv6_check(skp, object, address, act);
+}
 
 /**
  * smack_inode_setsecurity - set smack xattrs
@@ -2680,60 +2679,60 @@ out_opt_err:
  *
  * Returns 0 on success, or an error code
  */
-अटल पूर्णांक smack_inode_setsecurity(काष्ठा inode *inode, स्थिर अक्षर *name,
-				   स्थिर व्योम *value, माप_प्रकार size, पूर्णांक flags)
-अणु
-	काष्ठा smack_known *skp;
-	काष्ठा inode_smack *nsp = smack_inode(inode);
-	काष्ठा socket_smack *ssp;
-	काष्ठा socket *sock;
-	पूर्णांक rc = 0;
+static int smack_inode_setsecurity(struct inode *inode, const char *name,
+				   const void *value, size_t size, int flags)
+{
+	struct smack_known *skp;
+	struct inode_smack *nsp = smack_inode(inode);
+	struct socket_smack *ssp;
+	struct socket *sock;
+	int rc = 0;
 
-	अगर (value == शून्य || size > SMK_LONGLABEL || size == 0)
-		वापस -EINVAL;
+	if (value == NULL || size > SMK_LONGLABEL || size == 0)
+		return -EINVAL;
 
 	skp = smk_import_entry(value, size);
-	अगर (IS_ERR(skp))
-		वापस PTR_ERR(skp);
+	if (IS_ERR(skp))
+		return PTR_ERR(skp);
 
-	अगर (म_भेद(name, XATTR_SMACK_SUFFIX) == 0) अणु
+	if (strcmp(name, XATTR_SMACK_SUFFIX) == 0) {
 		nsp->smk_inode = skp;
 		nsp->smk_flags |= SMK_INODE_INSTANT;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	/*
 	 * The rest of the Smack xattrs are only on sockets.
 	 */
-	अगर (inode->i_sb->s_magic != SOCKFS_MAGIC)
-		वापस -EOPNOTSUPP;
+	if (inode->i_sb->s_magic != SOCKFS_MAGIC)
+		return -EOPNOTSUPP;
 
 	sock = SOCKET_I(inode);
-	अगर (sock == शून्य || sock->sk == शून्य)
-		वापस -EOPNOTSUPP;
+	if (sock == NULL || sock->sk == NULL)
+		return -EOPNOTSUPP;
 
 	ssp = sock->sk->sk_security;
 
-	अगर (म_भेद(name, XATTR_SMACK_IPIN) == 0)
+	if (strcmp(name, XATTR_SMACK_IPIN) == 0)
 		ssp->smk_in = skp;
-	अन्यथा अगर (म_भेद(name, XATTR_SMACK_IPOUT) == 0) अणु
+	else if (strcmp(name, XATTR_SMACK_IPOUT) == 0) {
 		ssp->smk_out = skp;
-		अगर (sock->sk->sk_family == PF_INET) अणु
+		if (sock->sk->sk_family == PF_INET) {
 			rc = smack_netlbl_add(sock->sk);
-			अगर (rc != 0)
-				prपूर्णांकk(KERN_WARNING
+			if (rc != 0)
+				printk(KERN_WARNING
 					"Smack: \"%s\" netlbl error %d.\n",
 					__func__, -rc);
-		पूर्ण
-	पूर्ण अन्यथा
-		वापस -EOPNOTSUPP;
+		}
+	} else
+		return -EOPNOTSUPP;
 
-#अगर_घोषित SMACK_IPV6_PORT_LABELING
-	अगर (sock->sk->sk_family == PF_INET6)
-		smk_ipv6_port_label(sock, शून्य);
-#पूर्ण_अगर
+#ifdef SMACK_IPV6_PORT_LABELING
+	if (sock->sk->sk_family == PF_INET6)
+		smk_ipv6_port_label(sock, NULL);
+#endif
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * smack_socket_post_create - finish socket setup
@@ -2743,59 +2742,59 @@ out_opt_err:
  * @protocol: unused
  * @kern: unused
  *
- * Sets the netlabel inक्रमmation on the socket
+ * Sets the netlabel information on the socket
  *
  * Returns 0 on success, and error code otherwise
  */
-अटल पूर्णांक smack_socket_post_create(काष्ठा socket *sock, पूर्णांक family,
-				    पूर्णांक type, पूर्णांक protocol, पूर्णांक kern)
-अणु
-	काष्ठा socket_smack *ssp;
+static int smack_socket_post_create(struct socket *sock, int family,
+				    int type, int protocol, int kern)
+{
+	struct socket_smack *ssp;
 
-	अगर (sock->sk == शून्य)
-		वापस 0;
+	if (sock->sk == NULL)
+		return 0;
 
 	/*
-	 * Sockets created by kernel thपढ़ोs receive web label.
+	 * Sockets created by kernel threads receive web label.
 	 */
-	अगर (unlikely(current->flags & PF_KTHREAD)) अणु
+	if (unlikely(current->flags & PF_KTHREAD)) {
 		ssp = sock->sk->sk_security;
 		ssp->smk_in = &smack_known_web;
 		ssp->smk_out = &smack_known_web;
-	पूर्ण
+	}
 
-	अगर (family != PF_INET)
-		वापस 0;
+	if (family != PF_INET)
+		return 0;
 	/*
 	 * Set the outbound netlbl.
 	 */
-	वापस smack_netlbl_add(sock->sk);
-पूर्ण
+	return smack_netlbl_add(sock->sk);
+}
 
 /**
  * smack_socket_socketpair - create socket pair
  * @socka: one socket
  * @sockb: another socket
  *
- * Cross reference the peer labels क्रम SO_PEERSEC
+ * Cross reference the peer labels for SO_PEERSEC
  *
  * Returns 0
  */
-अटल पूर्णांक smack_socket_socketpair(काष्ठा socket *socka,
-		                   काष्ठा socket *sockb)
-अणु
-	काष्ठा socket_smack *asp = socka->sk->sk_security;
-	काष्ठा socket_smack *bsp = sockb->sk->sk_security;
+static int smack_socket_socketpair(struct socket *socka,
+		                   struct socket *sockb)
+{
+	struct socket_smack *asp = socka->sk->sk_security;
+	struct socket_smack *bsp = sockb->sk->sk_security;
 
 	asp->smk_packet = bsp->smk_out;
 	bsp->smk_packet = asp->smk_out;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित SMACK_IPV6_PORT_LABELING
+#ifdef SMACK_IPV6_PORT_LABELING
 /**
- * smack_socket_bind - record port binding inक्रमmation.
+ * smack_socket_bind - record port binding information.
  * @sock: the socket
  * @address: the port address
  * @addrlen: size of the address
@@ -2804,18 +2803,18 @@ out_opt_err:
  *
  * Returns 0 on success, and error code otherwise
  */
-अटल पूर्णांक smack_socket_bind(काष्ठा socket *sock, काष्ठा sockaddr *address,
-				पूर्णांक addrlen)
-अणु
-	अगर (sock->sk != शून्य && sock->sk->sk_family == PF_INET6) अणु
-		अगर (addrlen < SIN6_LEN_RFC2133 ||
+static int smack_socket_bind(struct socket *sock, struct sockaddr *address,
+				int addrlen)
+{
+	if (sock->sk != NULL && sock->sk->sk_family == PF_INET6) {
+		if (addrlen < SIN6_LEN_RFC2133 ||
 		    address->sa_family != AF_INET6)
-			वापस -EINVAL;
+			return -EINVAL;
 		smk_ipv6_port_label(sock, address);
-	पूर्ण
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* SMACK_IPV6_PORT_LABELING */
+	}
+	return 0;
+}
+#endif /* SMACK_IPV6_PORT_LABELING */
 
 /**
  * smack_socket_connect - connect access check
@@ -2823,46 +2822,46 @@ out_opt_err:
  * @sap: the other end
  * @addrlen: size of sap
  *
- * Verअगरies that a connection may be possible
+ * Verifies that a connection may be possible
  *
  * Returns 0 on success, and error code otherwise
  */
-अटल पूर्णांक smack_socket_connect(काष्ठा socket *sock, काष्ठा sockaddr *sap,
-				पूर्णांक addrlen)
-अणु
-	पूर्णांक rc = 0;
+static int smack_socket_connect(struct socket *sock, struct sockaddr *sap,
+				int addrlen)
+{
+	int rc = 0;
 
-	अगर (sock->sk == शून्य)
-		वापस 0;
-	अगर (sock->sk->sk_family != PF_INET &&
+	if (sock->sk == NULL)
+		return 0;
+	if (sock->sk->sk_family != PF_INET &&
 	    (!IS_ENABLED(CONFIG_IPV6) || sock->sk->sk_family != PF_INET6))
-		वापस 0;
-	अगर (addrlen < दुरत्वend(काष्ठा sockaddr, sa_family))
-		वापस 0;
-	अगर (IS_ENABLED(CONFIG_IPV6) && sap->sa_family == AF_INET6) अणु
-		काष्ठा sockaddr_in6 *sip = (काष्ठा sockaddr_in6 *)sap;
-		काष्ठा smack_known *rsp = शून्य;
+		return 0;
+	if (addrlen < offsetofend(struct sockaddr, sa_family))
+		return 0;
+	if (IS_ENABLED(CONFIG_IPV6) && sap->sa_family == AF_INET6) {
+		struct sockaddr_in6 *sip = (struct sockaddr_in6 *)sap;
+		struct smack_known *rsp = NULL;
 
-		अगर (addrlen < SIN6_LEN_RFC2133)
-			वापस 0;
-		अगर (__is_defined(SMACK_IPV6_SECMARK_LABELING))
+		if (addrlen < SIN6_LEN_RFC2133)
+			return 0;
+		if (__is_defined(SMACK_IPV6_SECMARK_LABELING))
 			rsp = smack_ipv6host_label(sip);
-		अगर (rsp != शून्य) अणु
-			काष्ठा socket_smack *ssp = sock->sk->sk_security;
+		if (rsp != NULL) {
+			struct socket_smack *ssp = sock->sk->sk_security;
 
 			rc = smk_ipv6_check(ssp->smk_out, rsp, sip,
 					    SMK_CONNECTING);
-		पूर्ण
-		अगर (__is_defined(SMACK_IPV6_PORT_LABELING))
+		}
+		if (__is_defined(SMACK_IPV6_PORT_LABELING))
 			rc = smk_ipv6_port_check(sock->sk, sip, SMK_CONNECTING);
 
-		वापस rc;
-	पूर्ण
-	अगर (sap->sa_family != AF_INET || addrlen < माप(काष्ठा sockaddr_in))
-		वापस 0;
-	rc = smk_ipv4_check(sock->sk, (काष्ठा sockaddr_in *)sap);
-	वापस rc;
-पूर्ण
+		return rc;
+	}
+	if (sap->sa_family != AF_INET || addrlen < sizeof(struct sockaddr_in))
+		return 0;
+	rc = smk_ipv4_check(sock->sk, (struct sockaddr_in *)sap);
+	return rc;
+}
 
 /**
  * smack_flags_to_may - convert S_ to MAY_ values
@@ -2870,227 +2869,227 @@ out_opt_err:
  *
  * Returns the equivalent MAY_ value
  */
-अटल पूर्णांक smack_flags_to_may(पूर्णांक flags)
-अणु
-	पूर्णांक may = 0;
+static int smack_flags_to_may(int flags)
+{
+	int may = 0;
 
-	अगर (flags & S_IRUGO)
+	if (flags & S_IRUGO)
 		may |= MAY_READ;
-	अगर (flags & S_IWUGO)
+	if (flags & S_IWUGO)
 		may |= MAY_WRITE;
-	अगर (flags & S_IXUGO)
+	if (flags & S_IXUGO)
 		may |= MAY_EXEC;
 
-	वापस may;
-पूर्ण
+	return may;
+}
 
 /**
- * smack_msg_msg_alloc_security - Set the security blob क्रम msg_msg
+ * smack_msg_msg_alloc_security - Set the security blob for msg_msg
  * @msg: the object
  *
  * Returns 0
  */
-अटल पूर्णांक smack_msg_msg_alloc_security(काष्ठा msg_msg *msg)
-अणु
-	काष्ठा smack_known **blob = smack_msg_msg(msg);
+static int smack_msg_msg_alloc_security(struct msg_msg *msg)
+{
+	struct smack_known **blob = smack_msg_msg(msg);
 
 	*blob = smk_of_current();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * smack_of_ipc - the smack poपूर्णांकer क्रम the ipc
+ * smack_of_ipc - the smack pointer for the ipc
  * @isp: the object
  *
- * Returns a poपूर्णांकer to the smack value
+ * Returns a pointer to the smack value
  */
-अटल काष्ठा smack_known *smack_of_ipc(काष्ठा kern_ipc_perm *isp)
-अणु
-	काष्ठा smack_known **blob = smack_ipc(isp);
+static struct smack_known *smack_of_ipc(struct kern_ipc_perm *isp)
+{
+	struct smack_known **blob = smack_ipc(isp);
 
-	वापस *blob;
-पूर्ण
+	return *blob;
+}
 
 /**
- * smack_ipc_alloc_security - Set the security blob क्रम ipc
+ * smack_ipc_alloc_security - Set the security blob for ipc
  * @isp: the object
  *
  * Returns 0
  */
-अटल पूर्णांक smack_ipc_alloc_security(काष्ठा kern_ipc_perm *isp)
-अणु
-	काष्ठा smack_known **blob = smack_ipc(isp);
+static int smack_ipc_alloc_security(struct kern_ipc_perm *isp)
+{
+	struct smack_known **blob = smack_ipc(isp);
 
 	*blob = smk_of_current();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * smk_curacc_shm : check अगर current has access on shm
+ * smk_curacc_shm : check if current has access on shm
  * @isp : the object
  * @access : access requested
  *
- * Returns 0 अगर current has the requested access, error code otherwise
+ * Returns 0 if current has the requested access, error code otherwise
  */
-अटल पूर्णांक smk_curacc_shm(काष्ठा kern_ipc_perm *isp, पूर्णांक access)
-अणु
-	काष्ठा smack_known *ssp = smack_of_ipc(isp);
-	काष्ठा smk_audit_info ad;
-	पूर्णांक rc;
+static int smk_curacc_shm(struct kern_ipc_perm *isp, int access)
+{
+	struct smack_known *ssp = smack_of_ipc(isp);
+	struct smk_audit_info ad;
+	int rc;
 
-#अगर_घोषित CONFIG_AUDIT
+#ifdef CONFIG_AUDIT
 	smk_ad_init(&ad, __func__, LSM_AUDIT_DATA_IPC);
 	ad.a.u.ipc_id = isp->id;
-#पूर्ण_अगर
+#endif
 	rc = smk_curacc(ssp, access, &ad);
 	rc = smk_bu_current("shm", ssp, access, rc);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
- * smack_shm_associate - Smack access check क्रम shm
+ * smack_shm_associate - Smack access check for shm
  * @isp: the object
  * @shmflg: access requested
  *
- * Returns 0 अगर current has the requested access, error code otherwise
+ * Returns 0 if current has the requested access, error code otherwise
  */
-अटल पूर्णांक smack_shm_associate(काष्ठा kern_ipc_perm *isp, पूर्णांक shmflg)
-अणु
-	पूर्णांक may;
+static int smack_shm_associate(struct kern_ipc_perm *isp, int shmflg)
+{
+	int may;
 
 	may = smack_flags_to_may(shmflg);
-	वापस smk_curacc_shm(isp, may);
-पूर्ण
+	return smk_curacc_shm(isp, may);
+}
 
 /**
- * smack_shm_shmctl - Smack access check क्रम shm
+ * smack_shm_shmctl - Smack access check for shm
  * @isp: the object
- * @cmd: what it wants to करो
+ * @cmd: what it wants to do
  *
- * Returns 0 अगर current has the requested access, error code otherwise
+ * Returns 0 if current has the requested access, error code otherwise
  */
-अटल पूर्णांक smack_shm_shmctl(काष्ठा kern_ipc_perm *isp, पूर्णांक cmd)
-अणु
-	पूर्णांक may;
+static int smack_shm_shmctl(struct kern_ipc_perm *isp, int cmd)
+{
+	int may;
 
-	चयन (cmd) अणु
-	हाल IPC_STAT:
-	हाल SHM_STAT:
-	हाल SHM_STAT_ANY:
+	switch (cmd) {
+	case IPC_STAT:
+	case SHM_STAT:
+	case SHM_STAT_ANY:
 		may = MAY_READ;
-		अवरोध;
-	हाल IPC_SET:
-	हाल SHM_LOCK:
-	हाल SHM_UNLOCK:
-	हाल IPC_RMID:
+		break;
+	case IPC_SET:
+	case SHM_LOCK:
+	case SHM_UNLOCK:
+	case IPC_RMID:
 		may = MAY_READWRITE;
-		अवरोध;
-	हाल IPC_INFO:
-	हाल SHM_INFO:
+		break;
+	case IPC_INFO:
+	case SHM_INFO:
 		/*
-		 * System level inक्रमmation.
+		 * System level information.
 		 */
-		वापस 0;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	वापस smk_curacc_shm(isp, may);
-पूर्ण
+		return 0;
+	default:
+		return -EINVAL;
+	}
+	return smk_curacc_shm(isp, may);
+}
 
 /**
- * smack_shm_shmat - Smack access क्रम shmat
+ * smack_shm_shmat - Smack access for shmat
  * @isp: the object
  * @shmaddr: unused
  * @shmflg: access requested
  *
- * Returns 0 अगर current has the requested access, error code otherwise
+ * Returns 0 if current has the requested access, error code otherwise
  */
-अटल पूर्णांक smack_shm_shmat(काष्ठा kern_ipc_perm *isp, अक्षर __user *shmaddr,
-			   पूर्णांक shmflg)
-अणु
-	पूर्णांक may;
+static int smack_shm_shmat(struct kern_ipc_perm *isp, char __user *shmaddr,
+			   int shmflg)
+{
+	int may;
 
 	may = smack_flags_to_may(shmflg);
-	वापस smk_curacc_shm(isp, may);
-पूर्ण
+	return smk_curacc_shm(isp, may);
+}
 
 /**
- * smk_curacc_sem : check अगर current has access on sem
+ * smk_curacc_sem : check if current has access on sem
  * @isp : the object
  * @access : access requested
  *
- * Returns 0 अगर current has the requested access, error code otherwise
+ * Returns 0 if current has the requested access, error code otherwise
  */
-अटल पूर्णांक smk_curacc_sem(काष्ठा kern_ipc_perm *isp, पूर्णांक access)
-अणु
-	काष्ठा smack_known *ssp = smack_of_ipc(isp);
-	काष्ठा smk_audit_info ad;
-	पूर्णांक rc;
+static int smk_curacc_sem(struct kern_ipc_perm *isp, int access)
+{
+	struct smack_known *ssp = smack_of_ipc(isp);
+	struct smk_audit_info ad;
+	int rc;
 
-#अगर_घोषित CONFIG_AUDIT
+#ifdef CONFIG_AUDIT
 	smk_ad_init(&ad, __func__, LSM_AUDIT_DATA_IPC);
 	ad.a.u.ipc_id = isp->id;
-#पूर्ण_अगर
+#endif
 	rc = smk_curacc(ssp, access, &ad);
 	rc = smk_bu_current("sem", ssp, access, rc);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
- * smack_sem_associate - Smack access check क्रम sem
+ * smack_sem_associate - Smack access check for sem
  * @isp: the object
  * @semflg: access requested
  *
- * Returns 0 अगर current has the requested access, error code otherwise
+ * Returns 0 if current has the requested access, error code otherwise
  */
-अटल पूर्णांक smack_sem_associate(काष्ठा kern_ipc_perm *isp, पूर्णांक semflg)
-अणु
-	पूर्णांक may;
+static int smack_sem_associate(struct kern_ipc_perm *isp, int semflg)
+{
+	int may;
 
 	may = smack_flags_to_may(semflg);
-	वापस smk_curacc_sem(isp, may);
-पूर्ण
+	return smk_curacc_sem(isp, may);
+}
 
 /**
- * smack_sem_shmctl - Smack access check क्रम sem
+ * smack_sem_shmctl - Smack access check for sem
  * @isp: the object
- * @cmd: what it wants to करो
+ * @cmd: what it wants to do
  *
- * Returns 0 अगर current has the requested access, error code otherwise
+ * Returns 0 if current has the requested access, error code otherwise
  */
-अटल पूर्णांक smack_sem_semctl(काष्ठा kern_ipc_perm *isp, पूर्णांक cmd)
-अणु
-	पूर्णांक may;
+static int smack_sem_semctl(struct kern_ipc_perm *isp, int cmd)
+{
+	int may;
 
-	चयन (cmd) अणु
-	हाल GETPID:
-	हाल GETNCNT:
-	हाल GETZCNT:
-	हाल GETVAL:
-	हाल GETALL:
-	हाल IPC_STAT:
-	हाल SEM_STAT:
-	हाल SEM_STAT_ANY:
+	switch (cmd) {
+	case GETPID:
+	case GETNCNT:
+	case GETZCNT:
+	case GETVAL:
+	case GETALL:
+	case IPC_STAT:
+	case SEM_STAT:
+	case SEM_STAT_ANY:
 		may = MAY_READ;
-		अवरोध;
-	हाल SETVAL:
-	हाल SETALL:
-	हाल IPC_RMID:
-	हाल IPC_SET:
+		break;
+	case SETVAL:
+	case SETALL:
+	case IPC_RMID:
+	case IPC_SET:
 		may = MAY_READWRITE;
-		अवरोध;
-	हाल IPC_INFO:
-	हाल SEM_INFO:
+		break;
+	case IPC_INFO:
+	case SEM_INFO:
 		/*
-		 * System level inक्रमmation
+		 * System level information
 		 */
-		वापस 0;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		return 0;
+	default:
+		return -EINVAL;
+	}
 
-	वापस smk_curacc_sem(isp, may);
-पूर्ण
+	return smk_curacc_sem(isp, may);
+}
 
 /**
  * smack_sem_semop - Smack checks of semaphore operations
@@ -3099,321 +3098,321 @@ out_opt_err:
  * @nsops: unused
  * @alter: unused
  *
- * Treated as पढ़ो and ग_लिखो in all हालs.
+ * Treated as read and write in all cases.
  *
- * Returns 0 अगर access is allowed, error code otherwise
+ * Returns 0 if access is allowed, error code otherwise
  */
-अटल पूर्णांक smack_sem_semop(काष्ठा kern_ipc_perm *isp, काष्ठा sembuf *sops,
-			   अचिन्हित nsops, पूर्णांक alter)
-अणु
-	वापस smk_curacc_sem(isp, MAY_READWRITE);
-पूर्ण
+static int smack_sem_semop(struct kern_ipc_perm *isp, struct sembuf *sops,
+			   unsigned nsops, int alter)
+{
+	return smk_curacc_sem(isp, MAY_READWRITE);
+}
 
 /**
- * smk_curacc_msq : helper to check अगर current has access on msq
+ * smk_curacc_msq : helper to check if current has access on msq
  * @isp : the msq
  * @access : access requested
  *
- * वापस 0 अगर current has access, error otherwise
+ * return 0 if current has access, error otherwise
  */
-अटल पूर्णांक smk_curacc_msq(काष्ठा kern_ipc_perm *isp, पूर्णांक access)
-अणु
-	काष्ठा smack_known *msp = smack_of_ipc(isp);
-	काष्ठा smk_audit_info ad;
-	पूर्णांक rc;
+static int smk_curacc_msq(struct kern_ipc_perm *isp, int access)
+{
+	struct smack_known *msp = smack_of_ipc(isp);
+	struct smk_audit_info ad;
+	int rc;
 
-#अगर_घोषित CONFIG_AUDIT
+#ifdef CONFIG_AUDIT
 	smk_ad_init(&ad, __func__, LSM_AUDIT_DATA_IPC);
 	ad.a.u.ipc_id = isp->id;
-#पूर्ण_अगर
+#endif
 	rc = smk_curacc(msp, access, &ad);
 	rc = smk_bu_current("msq", msp, access, rc);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
- * smack_msg_queue_associate - Smack access check क्रम msg_queue
+ * smack_msg_queue_associate - Smack access check for msg_queue
  * @isp: the object
  * @msqflg: access requested
  *
- * Returns 0 अगर current has the requested access, error code otherwise
+ * Returns 0 if current has the requested access, error code otherwise
  */
-अटल पूर्णांक smack_msg_queue_associate(काष्ठा kern_ipc_perm *isp, पूर्णांक msqflg)
-अणु
-	पूर्णांक may;
+static int smack_msg_queue_associate(struct kern_ipc_perm *isp, int msqflg)
+{
+	int may;
 
 	may = smack_flags_to_may(msqflg);
-	वापस smk_curacc_msq(isp, may);
-पूर्ण
+	return smk_curacc_msq(isp, may);
+}
 
 /**
- * smack_msg_queue_msgctl - Smack access check क्रम msg_queue
+ * smack_msg_queue_msgctl - Smack access check for msg_queue
  * @isp: the object
- * @cmd: what it wants to करो
+ * @cmd: what it wants to do
  *
- * Returns 0 अगर current has the requested access, error code otherwise
+ * Returns 0 if current has the requested access, error code otherwise
  */
-अटल पूर्णांक smack_msg_queue_msgctl(काष्ठा kern_ipc_perm *isp, पूर्णांक cmd)
-अणु
-	पूर्णांक may;
+static int smack_msg_queue_msgctl(struct kern_ipc_perm *isp, int cmd)
+{
+	int may;
 
-	चयन (cmd) अणु
-	हाल IPC_STAT:
-	हाल MSG_STAT:
-	हाल MSG_STAT_ANY:
+	switch (cmd) {
+	case IPC_STAT:
+	case MSG_STAT:
+	case MSG_STAT_ANY:
 		may = MAY_READ;
-		अवरोध;
-	हाल IPC_SET:
-	हाल IPC_RMID:
+		break;
+	case IPC_SET:
+	case IPC_RMID:
 		may = MAY_READWRITE;
-		अवरोध;
-	हाल IPC_INFO:
-	हाल MSG_INFO:
+		break;
+	case IPC_INFO:
+	case MSG_INFO:
 		/*
-		 * System level inक्रमmation
+		 * System level information
 		 */
-		वापस 0;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		return 0;
+	default:
+		return -EINVAL;
+	}
 
-	वापस smk_curacc_msq(isp, may);
-पूर्ण
+	return smk_curacc_msq(isp, may);
+}
 
 /**
- * smack_msg_queue_msgsnd - Smack access check क्रम msg_queue
+ * smack_msg_queue_msgsnd - Smack access check for msg_queue
  * @isp: the object
  * @msg: unused
  * @msqflg: access requested
  *
- * Returns 0 अगर current has the requested access, error code otherwise
+ * Returns 0 if current has the requested access, error code otherwise
  */
-अटल पूर्णांक smack_msg_queue_msgsnd(काष्ठा kern_ipc_perm *isp, काष्ठा msg_msg *msg,
-				  पूर्णांक msqflg)
-अणु
-	पूर्णांक may;
+static int smack_msg_queue_msgsnd(struct kern_ipc_perm *isp, struct msg_msg *msg,
+				  int msqflg)
+{
+	int may;
 
 	may = smack_flags_to_may(msqflg);
-	वापस smk_curacc_msq(isp, may);
-पूर्ण
+	return smk_curacc_msq(isp, may);
+}
 
 /**
- * smack_msg_queue_msgsnd - Smack access check क्रम msg_queue
+ * smack_msg_queue_msgsnd - Smack access check for msg_queue
  * @isp: the object
  * @msg: unused
  * @target: unused
  * @type: unused
  * @mode: unused
  *
- * Returns 0 अगर current has पढ़ो and ग_लिखो access, error code otherwise
+ * Returns 0 if current has read and write access, error code otherwise
  */
-अटल पूर्णांक smack_msg_queue_msgrcv(काष्ठा kern_ipc_perm *isp, काष्ठा msg_msg *msg,
-			काष्ठा task_काष्ठा *target, दीर्घ type, पूर्णांक mode)
-अणु
-	वापस smk_curacc_msq(isp, MAY_READWRITE);
-पूर्ण
+static int smack_msg_queue_msgrcv(struct kern_ipc_perm *isp, struct msg_msg *msg,
+			struct task_struct *target, long type, int mode)
+{
+	return smk_curacc_msq(isp, MAY_READWRITE);
+}
 
 /**
- * smack_ipc_permission - Smack access क्रम ipc_permission()
+ * smack_ipc_permission - Smack access for ipc_permission()
  * @ipp: the object permissions
  * @flag: access requested
  *
- * Returns 0 अगर current has पढ़ो and ग_लिखो access, error code otherwise
+ * Returns 0 if current has read and write access, error code otherwise
  */
-अटल पूर्णांक smack_ipc_permission(काष्ठा kern_ipc_perm *ipp, लघु flag)
-अणु
-	काष्ठा smack_known **blob = smack_ipc(ipp);
-	काष्ठा smack_known *iskp = *blob;
-	पूर्णांक may = smack_flags_to_may(flag);
-	काष्ठा smk_audit_info ad;
-	पूर्णांक rc;
+static int smack_ipc_permission(struct kern_ipc_perm *ipp, short flag)
+{
+	struct smack_known **blob = smack_ipc(ipp);
+	struct smack_known *iskp = *blob;
+	int may = smack_flags_to_may(flag);
+	struct smk_audit_info ad;
+	int rc;
 
-#अगर_घोषित CONFIG_AUDIT
+#ifdef CONFIG_AUDIT
 	smk_ad_init(&ad, __func__, LSM_AUDIT_DATA_IPC);
 	ad.a.u.ipc_id = ipp->id;
-#पूर्ण_अगर
+#endif
 	rc = smk_curacc(iskp, may, &ad);
 	rc = smk_bu_current("svipc", iskp, may, rc);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
- * smack_ipc_माला_लोecid - Extract smack security id
+ * smack_ipc_getsecid - Extract smack security id
  * @ipp: the object permissions
  * @secid: where result will be saved
  */
-अटल व्योम smack_ipc_माला_लोecid(काष्ठा kern_ipc_perm *ipp, u32 *secid)
-अणु
-	काष्ठा smack_known **blob = smack_ipc(ipp);
-	काष्ठा smack_known *iskp = *blob;
+static void smack_ipc_getsecid(struct kern_ipc_perm *ipp, u32 *secid)
+{
+	struct smack_known **blob = smack_ipc(ipp);
+	struct smack_known *iskp = *blob;
 
 	*secid = iskp->smk_secid;
-पूर्ण
+}
 
 /**
  * smack_d_instantiate - Make sure the blob is correct on an inode
  * @opt_dentry: dentry where inode will be attached
  * @inode: the object
  *
- * Set the inode's security blob if it hasn't been करोne alपढ़ोy.
+ * Set the inode's security blob if it hasn't been done already.
  */
-अटल व्योम smack_d_instantiate(काष्ठा dentry *opt_dentry, काष्ठा inode *inode)
-अणु
-	काष्ठा super_block *sbp;
-	काष्ठा superblock_smack *sbsp;
-	काष्ठा inode_smack *isp;
-	काष्ठा smack_known *skp;
-	काष्ठा smack_known *ckp = smk_of_current();
-	काष्ठा smack_known *final;
-	अक्षर trattr[TRANS_TRUE_SIZE];
-	पूर्णांक transflag = 0;
-	पूर्णांक rc;
-	काष्ठा dentry *dp;
+static void smack_d_instantiate(struct dentry *opt_dentry, struct inode *inode)
+{
+	struct super_block *sbp;
+	struct superblock_smack *sbsp;
+	struct inode_smack *isp;
+	struct smack_known *skp;
+	struct smack_known *ckp = smk_of_current();
+	struct smack_known *final;
+	char trattr[TRANS_TRUE_SIZE];
+	int transflag = 0;
+	int rc;
+	struct dentry *dp;
 
-	अगर (inode == शून्य)
-		वापस;
+	if (inode == NULL)
+		return;
 
 	isp = smack_inode(inode);
 
 	/*
-	 * If the inode is alपढ़ोy instantiated
+	 * If the inode is already instantiated
 	 * take the quick way out
 	 */
-	अगर (isp->smk_flags & SMK_INODE_INSTANT)
-		वापस;
+	if (isp->smk_flags & SMK_INODE_INSTANT)
+		return;
 
 	sbp = inode->i_sb;
 	sbsp = smack_superblock(sbp);
 	/*
-	 * We're going to use the superblock शेष label
-	 * अगर there's no label on the file.
+	 * We're going to use the superblock default label
+	 * if there's no label on the file.
 	 */
-	final = sbsp->smk_शेष;
+	final = sbsp->smk_default;
 
 	/*
 	 * If this is the root inode the superblock
 	 * may be in the process of initialization.
-	 * If that is the हाल use the root value out
+	 * If that is the case use the root value out
 	 * of the superblock.
 	 */
-	अगर (opt_dentry->d_parent == opt_dentry) अणु
-		चयन (sbp->s_magic) अणु
-		हाल CGROUP_SUPER_MAGIC:
-		हाल CGROUP2_SUPER_MAGIC:
+	if (opt_dentry->d_parent == opt_dentry) {
+		switch (sbp->s_magic) {
+		case CGROUP_SUPER_MAGIC:
+		case CGROUP2_SUPER_MAGIC:
 			/*
-			 * The cgroup fileप्रणाली is never mounted,
+			 * The cgroup filesystem is never mounted,
 			 * so there's no opportunity to set the mount
 			 * options.
 			 */
 			sbsp->smk_root = &smack_known_star;
-			sbsp->smk_शेष = &smack_known_star;
+			sbsp->smk_default = &smack_known_star;
 			isp->smk_inode = sbsp->smk_root;
-			अवरोध;
-		हाल TMPFS_MAGIC:
+			break;
+		case TMPFS_MAGIC:
 			/*
-			 * What about shmem/पंचांगpfs anonymous files with dentry
-			 * obtained from d_alloc_pseuकरो()?
+			 * What about shmem/tmpfs anonymous files with dentry
+			 * obtained from d_alloc_pseudo()?
 			 */
 			isp->smk_inode = smk_of_current();
-			अवरोध;
-		हाल PIPEFS_MAGIC:
+			break;
+		case PIPEFS_MAGIC:
 			isp->smk_inode = smk_of_current();
-			अवरोध;
-		हाल SOCKFS_MAGIC:
+			break;
+		case SOCKFS_MAGIC:
 			/*
 			 * Socket access is controlled by the socket
-			 * काष्ठाures associated with the task involved.
+			 * structures associated with the task involved.
 			 */
 			isp->smk_inode = &smack_known_star;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			isp->smk_inode = sbsp->smk_root;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		isp->smk_flags |= SMK_INODE_INSTANT;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
 	 * This is pretty hackish.
-	 * Casey says that we shouldn't have to करो
-	 * file प्रणाली specअगरic code, but it करोes help
+	 * Casey says that we shouldn't have to do
+	 * file system specific code, but it does help
 	 * with keeping it simple.
 	 */
-	चयन (sbp->s_magic) अणु
-	हाल SMACK_MAGIC:
-	हाल CGROUP_SUPER_MAGIC:
-	हाल CGROUP2_SUPER_MAGIC:
+	switch (sbp->s_magic) {
+	case SMACK_MAGIC:
+	case CGROUP_SUPER_MAGIC:
+	case CGROUP2_SUPER_MAGIC:
 		/*
 		 * Casey says that it's a little embarrassing
-		 * that the smack file प्रणाली करोesn't करो
+		 * that the smack file system doesn't do
 		 * extended attributes.
 		 *
 		 * Cgroupfs is special
 		 */
 		final = &smack_known_star;
-		अवरोध;
-	हाल DEVPTS_SUPER_MAGIC:
+		break;
+	case DEVPTS_SUPER_MAGIC:
 		/*
 		 * devpts seems content with the label of the task.
 		 * Programs that change smack have to treat the
 		 * pty with respect.
 		 */
 		final = ckp;
-		अवरोध;
-	हाल PROC_SUPER_MAGIC:
+		break;
+	case PROC_SUPER_MAGIC:
 		/*
 		 * Casey says procfs appears not to care.
-		 * The superblock शेष suffices.
+		 * The superblock default suffices.
 		 */
-		अवरोध;
-	हाल TMPFS_MAGIC:
+		break;
+	case TMPFS_MAGIC:
 		/*
-		 * Device labels should come from the fileप्रणाली,
+		 * Device labels should come from the filesystem,
 		 * but watch out, because they're volitile,
 		 * getting recreated on every reboot.
 		 */
 		final = &smack_known_star;
 		/*
 		 * If a smack value has been set we want to use it,
-		 * but since पंचांगpfs isn't giving us the opportunity
+		 * but since tmpfs isn't giving us the opportunity
 		 * to set mount options simulate setting the
-		 * superblock शेष.
+		 * superblock default.
 		 */
 		fallthrough;
-	शेष:
+	default:
 		/*
-		 * This isn't an understood special हाल.
+		 * This isn't an understood special case.
 		 * Get the value from the xattr.
 		 */
 
 		/*
-		 * UNIX करोमुख्य sockets use lower level socket data.
+		 * UNIX domain sockets use lower level socket data.
 		 */
-		अगर (S_ISSOCK(inode->i_mode)) अणु
+		if (S_ISSOCK(inode->i_mode)) {
 			final = &smack_known_star;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		/*
 		 * No xattr support means, alas, no SMACK label.
-		 * Use the aक्रमeapplied शेष.
-		 * It would be curious अगर the label of the task
-		 * करोes not match that asचिन्हित.
+		 * Use the aforeapplied default.
+		 * It would be curious if the label of the task
+		 * does not match that assigned.
 		 */
-		अगर (!(inode->i_opflags & IOP_XATTR))
-		        अवरोध;
+		if (!(inode->i_opflags & IOP_XATTR))
+		        break;
 		/*
-		 * Get the dentry क्रम xattr.
+		 * Get the dentry for xattr.
 		 */
 		dp = dget(opt_dentry);
 		skp = smk_fetch(XATTR_NAME_SMACK, inode, dp);
-		अगर (!IS_ERR_OR_शून्य(skp))
+		if (!IS_ERR_OR_NULL(skp))
 			final = skp;
 
 		/*
 		 * Transmuting directory
 		 */
-		अगर (S_ISसूची(inode->i_mode)) अणु
+		if (S_ISDIR(inode->i_mode)) {
 			/*
 			 * If this is a new directory and the label was
 			 * transmuted when the inode was initialized
@@ -3423,51 +3422,51 @@ out_opt_err:
 			 * If there is a transmute attribute on the
 			 * directory mark the inode.
 			 */
-			अगर (isp->smk_flags & SMK_INODE_CHANGED) अणु
+			if (isp->smk_flags & SMK_INODE_CHANGED) {
 				isp->smk_flags &= ~SMK_INODE_CHANGED;
 				rc = __vfs_setxattr(&init_user_ns, dp, inode,
 					XATTR_NAME_SMACKTRANSMUTE,
 					TRANS_TRUE, TRANS_TRUE_SIZE,
 					0);
-			पूर्ण अन्यथा अणु
+			} else {
 				rc = __vfs_getxattr(dp, inode,
 					XATTR_NAME_SMACKTRANSMUTE, trattr,
 					TRANS_TRUE_SIZE);
-				अगर (rc >= 0 && म_भेदन(trattr, TRANS_TRUE,
+				if (rc >= 0 && strncmp(trattr, TRANS_TRUE,
 						       TRANS_TRUE_SIZE) != 0)
 					rc = -EINVAL;
-			पूर्ण
-			अगर (rc >= 0)
+			}
+			if (rc >= 0)
 				transflag = SMK_INODE_TRANSMUTE;
-		पूर्ण
+		}
 		/*
 		 * Don't let the exec or mmap label be "*" or "@".
 		 */
 		skp = smk_fetch(XATTR_NAME_SMACKEXEC, inode, dp);
-		अगर (IS_ERR(skp) || skp == &smack_known_star ||
+		if (IS_ERR(skp) || skp == &smack_known_star ||
 		    skp == &smack_known_web)
-			skp = शून्य;
+			skp = NULL;
 		isp->smk_task = skp;
 
 		skp = smk_fetch(XATTR_NAME_SMACKMMAP, inode, dp);
-		अगर (IS_ERR(skp) || skp == &smack_known_star ||
+		if (IS_ERR(skp) || skp == &smack_known_star ||
 		    skp == &smack_known_web)
-			skp = शून्य;
+			skp = NULL;
 		isp->smk_mmap = skp;
 
 		dput(dp);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (final == शून्य)
+	if (final == NULL)
 		isp->smk_inode = ckp;
-	अन्यथा
+	else
 		isp->smk_inode = final;
 
 	isp->smk_flags |= (SMK_INODE_INSTANT | transflag);
 
-	वापस;
-पूर्ण
+	return;
+}
 
 /**
  * smack_getprocattr - Smack process attribute access
@@ -3475,27 +3474,27 @@ out_opt_err:
  * @name: the name of the attribute in /proc/.../attr
  * @value: where to put the result
  *
- * Places a copy of the task Smack पूर्णांकo value
+ * Places a copy of the task Smack into value
  *
  * Returns the length of the smack label or an error code
  */
-अटल पूर्णांक smack_getprocattr(काष्ठा task_काष्ठा *p, अक्षर *name, अक्षर **value)
-अणु
-	काष्ठा smack_known *skp = smk_of_task_काष्ठा_subj(p);
-	अक्षर *cp;
-	पूर्णांक slen;
+static int smack_getprocattr(struct task_struct *p, char *name, char **value)
+{
+	struct smack_known *skp = smk_of_task_struct_subj(p);
+	char *cp;
+	int slen;
 
-	अगर (म_भेद(name, "current") != 0)
-		वापस -EINVAL;
+	if (strcmp(name, "current") != 0)
+		return -EINVAL;
 
 	cp = kstrdup(skp->smk_known, GFP_KERNEL);
-	अगर (cp == शून्य)
-		वापस -ENOMEM;
+	if (cp == NULL)
+		return -ENOMEM;
 
-	slen = म_माप(cp);
+	slen = strlen(cp);
 	*value = cp;
-	वापस slen;
-पूर्ण
+	return slen;
+}
 
 /**
  * smack_setprocattr - Smack process attribute setting
@@ -3508,48 +3507,48 @@ out_opt_err:
  *
  * Returns the length of the smack label or an error code
  */
-अटल पूर्णांक smack_setprocattr(स्थिर अक्षर *name, व्योम *value, माप_प्रकार size)
-अणु
-	काष्ठा task_smack *tsp = smack_cred(current_cred());
-	काष्ठा cred *new;
-	काष्ठा smack_known *skp;
-	काष्ठा smack_known_list_elem *sklep;
-	पूर्णांक rc;
+static int smack_setprocattr(const char *name, void *value, size_t size)
+{
+	struct task_smack *tsp = smack_cred(current_cred());
+	struct cred *new;
+	struct smack_known *skp;
+	struct smack_known_list_elem *sklep;
+	int rc;
 
-	अगर (!smack_privileged(CAP_MAC_ADMIN) && list_empty(&tsp->smk_relabel))
-		वापस -EPERM;
+	if (!smack_privileged(CAP_MAC_ADMIN) && list_empty(&tsp->smk_relabel))
+		return -EPERM;
 
-	अगर (value == शून्य || size == 0 || size >= SMK_LONGLABEL)
-		वापस -EINVAL;
+	if (value == NULL || size == 0 || size >= SMK_LONGLABEL)
+		return -EINVAL;
 
-	अगर (म_भेद(name, "current") != 0)
-		वापस -EINVAL;
+	if (strcmp(name, "current") != 0)
+		return -EINVAL;
 
 	skp = smk_import_entry(value, size);
-	अगर (IS_ERR(skp))
-		वापस PTR_ERR(skp);
+	if (IS_ERR(skp))
+		return PTR_ERR(skp);
 
 	/*
 	 * No process is ever allowed the web ("@") label
 	 * and the star ("*") label.
 	 */
-	अगर (skp == &smack_known_web || skp == &smack_known_star)
-		वापस -EINVAL;
+	if (skp == &smack_known_web || skp == &smack_known_star)
+		return -EINVAL;
 
-	अगर (!smack_privileged(CAP_MAC_ADMIN)) अणु
+	if (!smack_privileged(CAP_MAC_ADMIN)) {
 		rc = -EPERM;
-		list_क्रम_each_entry(sklep, &tsp->smk_relabel, list)
-			अगर (sklep->smk_label == skp) अणु
+		list_for_each_entry(sklep, &tsp->smk_relabel, list)
+			if (sklep->smk_label == skp) {
 				rc = 0;
-				अवरोध;
-			पूर्ण
-		अगर (rc)
-			वापस rc;
-	पूर्ण
+				break;
+			}
+		if (rc)
+			return rc;
+	}
 
 	new = prepare_creds();
-	अगर (new == शून्य)
-		वापस -ENOMEM;
+	if (new == NULL)
+		return -ENOMEM;
 
 	tsp = smack_cred(new);
 	tsp->smk_task = skp;
@@ -3559,8 +3558,8 @@ out_opt_err:
 	smk_destroy_label_list(&tsp->smk_relabel);
 
 	commit_creds(new);
-	वापस size;
-पूर्ण
+	return size;
+}
 
 /**
  * smack_unix_stream_connect - Smack access on UDS
@@ -3568,81 +3567,81 @@ out_opt_err:
  * @other: the other sock
  * @newsk: unused
  *
- * Return 0 अगर a subject with the smack of sock could access
+ * Return 0 if a subject with the smack of sock could access
  * an object with the smack of other, otherwise an error code
  */
-अटल पूर्णांक smack_unix_stream_connect(काष्ठा sock *sock,
-				     काष्ठा sock *other, काष्ठा sock *newsk)
-अणु
-	काष्ठा smack_known *skp;
-	काष्ठा smack_known *okp;
-	काष्ठा socket_smack *ssp = sock->sk_security;
-	काष्ठा socket_smack *osp = other->sk_security;
-	काष्ठा socket_smack *nsp = newsk->sk_security;
-	काष्ठा smk_audit_info ad;
-	पूर्णांक rc = 0;
-#अगर_घोषित CONFIG_AUDIT
-	काष्ठा lsm_network_audit net;
-#पूर्ण_अगर
+static int smack_unix_stream_connect(struct sock *sock,
+				     struct sock *other, struct sock *newsk)
+{
+	struct smack_known *skp;
+	struct smack_known *okp;
+	struct socket_smack *ssp = sock->sk_security;
+	struct socket_smack *osp = other->sk_security;
+	struct socket_smack *nsp = newsk->sk_security;
+	struct smk_audit_info ad;
+	int rc = 0;
+#ifdef CONFIG_AUDIT
+	struct lsm_network_audit net;
+#endif
 
-	अगर (!smack_privileged(CAP_MAC_OVERRIDE)) अणु
+	if (!smack_privileged(CAP_MAC_OVERRIDE)) {
 		skp = ssp->smk_out;
 		okp = osp->smk_in;
-#अगर_घोषित CONFIG_AUDIT
+#ifdef CONFIG_AUDIT
 		smk_ad_init_net(&ad, __func__, LSM_AUDIT_DATA_NET, &net);
 		smk_ad_setfield_u_net_sk(&ad, other);
-#पूर्ण_अगर
+#endif
 		rc = smk_access(skp, okp, MAY_WRITE, &ad);
 		rc = smk_bu_note("UDS connect", skp, okp, MAY_WRITE, rc);
-		अगर (rc == 0) अणु
+		if (rc == 0) {
 			okp = osp->smk_out;
 			skp = ssp->smk_in;
 			rc = smk_access(okp, skp, MAY_WRITE, &ad);
 			rc = smk_bu_note("UDS connect", okp, skp,
 						MAY_WRITE, rc);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/*
-	 * Cross reference the peer labels क्रम SO_PEERSEC.
+	 * Cross reference the peer labels for SO_PEERSEC.
 	 */
-	अगर (rc == 0) अणु
+	if (rc == 0) {
 		nsp->smk_packet = ssp->smk_out;
 		ssp->smk_packet = osp->smk_out;
-	पूर्ण
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
  * smack_unix_may_send - Smack access on UDS
  * @sock: one socket
  * @other: the other socket
  *
- * Return 0 अगर a subject with the smack of sock could access
+ * Return 0 if a subject with the smack of sock could access
  * an object with the smack of other, otherwise an error code
  */
-अटल पूर्णांक smack_unix_may_send(काष्ठा socket *sock, काष्ठा socket *other)
-अणु
-	काष्ठा socket_smack *ssp = sock->sk->sk_security;
-	काष्ठा socket_smack *osp = other->sk->sk_security;
-	काष्ठा smk_audit_info ad;
-	पूर्णांक rc;
+static int smack_unix_may_send(struct socket *sock, struct socket *other)
+{
+	struct socket_smack *ssp = sock->sk->sk_security;
+	struct socket_smack *osp = other->sk->sk_security;
+	struct smk_audit_info ad;
+	int rc;
 
-#अगर_घोषित CONFIG_AUDIT
-	काष्ठा lsm_network_audit net;
+#ifdef CONFIG_AUDIT
+	struct lsm_network_audit net;
 
 	smk_ad_init_net(&ad, __func__, LSM_AUDIT_DATA_NET, &net);
 	smk_ad_setfield_u_net_sk(&ad, other->sk);
-#पूर्ण_अगर
+#endif
 
-	अगर (smack_privileged(CAP_MAC_OVERRIDE))
-		वापस 0;
+	if (smack_privileged(CAP_MAC_OVERRIDE))
+		return 0;
 
 	rc = smk_access(ssp->smk_out, osp->smk_in, MAY_WRITE, &ad);
 	rc = smk_bu_note("UDS send", ssp->smk_out, osp->smk_in, MAY_WRITE, rc);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
  * smack_socket_sendmsg - Smack check based on destination host
@@ -3650,84 +3649,84 @@ out_opt_err:
  * @msg: the message
  * @size: the size of the message
  *
- * Return 0 अगर the current subject can ग_लिखो to the destination host.
- * For IPv4 this is only a question अगर the destination is a single label host.
+ * Return 0 if the current subject can write to the destination host.
+ * For IPv4 this is only a question if the destination is a single label host.
  * For IPv6 this is a check against the label of the port.
  */
-अटल पूर्णांक smack_socket_sendmsg(काष्ठा socket *sock, काष्ठा msghdr *msg,
-				पूर्णांक size)
-अणु
-	काष्ठा sockaddr_in *sip = (काष्ठा sockaddr_in *) msg->msg_name;
-#अगर IS_ENABLED(CONFIG_IPV6)
-	काष्ठा sockaddr_in6 *sap = (काष्ठा sockaddr_in6 *) msg->msg_name;
-#पूर्ण_अगर
-#अगर_घोषित SMACK_IPV6_SECMARK_LABELING
-	काष्ठा socket_smack *ssp = sock->sk->sk_security;
-	काष्ठा smack_known *rsp;
-#पूर्ण_अगर
-	पूर्णांक rc = 0;
+static int smack_socket_sendmsg(struct socket *sock, struct msghdr *msg,
+				int size)
+{
+	struct sockaddr_in *sip = (struct sockaddr_in *) msg->msg_name;
+#if IS_ENABLED(CONFIG_IPV6)
+	struct sockaddr_in6 *sap = (struct sockaddr_in6 *) msg->msg_name;
+#endif
+#ifdef SMACK_IPV6_SECMARK_LABELING
+	struct socket_smack *ssp = sock->sk->sk_security;
+	struct smack_known *rsp;
+#endif
+	int rc = 0;
 
 	/*
-	 * Perfectly reasonable क्रम this to be शून्य
+	 * Perfectly reasonable for this to be NULL
 	 */
-	अगर (sip == शून्य)
-		वापस 0;
+	if (sip == NULL)
+		return 0;
 
-	चयन (sock->sk->sk_family) अणु
-	हाल AF_INET:
-		अगर (msg->msg_namelen < माप(काष्ठा sockaddr_in) ||
+	switch (sock->sk->sk_family) {
+	case AF_INET:
+		if (msg->msg_namelen < sizeof(struct sockaddr_in) ||
 		    sip->sin_family != AF_INET)
-			वापस -EINVAL;
+			return -EINVAL;
 		rc = smk_ipv4_check(sock->sk, sip);
-		अवरोध;
-#अगर IS_ENABLED(CONFIG_IPV6)
-	हाल AF_INET6:
-		अगर (msg->msg_namelen < SIN6_LEN_RFC2133 ||
+		break;
+#if IS_ENABLED(CONFIG_IPV6)
+	case AF_INET6:
+		if (msg->msg_namelen < SIN6_LEN_RFC2133 ||
 		    sap->sin6_family != AF_INET6)
-			वापस -EINVAL;
-#अगर_घोषित SMACK_IPV6_SECMARK_LABELING
+			return -EINVAL;
+#ifdef SMACK_IPV6_SECMARK_LABELING
 		rsp = smack_ipv6host_label(sap);
-		अगर (rsp != शून्य)
+		if (rsp != NULL)
 			rc = smk_ipv6_check(ssp->smk_out, rsp, sap,
 						SMK_CONNECTING);
-#पूर्ण_अगर
-#अगर_घोषित SMACK_IPV6_PORT_LABELING
+#endif
+#ifdef SMACK_IPV6_PORT_LABELING
 		rc = smk_ipv6_port_check(sock->sk, sap, SMK_SENDING);
-#पूर्ण_अगर
-#पूर्ण_अगर /* IS_ENABLED(CONFIG_IPV6) */
-		अवरोध;
-	पूर्ण
-	वापस rc;
-पूर्ण
+#endif
+#endif /* IS_ENABLED(CONFIG_IPV6) */
+		break;
+	}
+	return rc;
+}
 
 /**
  * smack_from_secattr - Convert a netlabel attr.mls.lvl/attr.mls.cat pair to smack
  * @sap: netlabel secattr
- * @ssp: socket security inक्रमmation
+ * @ssp: socket security information
  *
- * Returns a poपूर्णांकer to a Smack label entry found on the label list.
+ * Returns a pointer to a Smack label entry found on the label list.
  */
-अटल काष्ठा smack_known *smack_from_secattr(काष्ठा netlbl_lsm_secattr *sap,
-						काष्ठा socket_smack *ssp)
-अणु
-	काष्ठा smack_known *skp;
-	पूर्णांक found = 0;
-	पूर्णांक acat;
-	पूर्णांक kcat;
+static struct smack_known *smack_from_secattr(struct netlbl_lsm_secattr *sap,
+						struct socket_smack *ssp)
+{
+	struct smack_known *skp;
+	int found = 0;
+	int acat;
+	int kcat;
 
 	/*
 	 * Netlabel found it in the cache.
 	 */
-	अगर ((sap->flags & NETLBL_SECATTR_CACHE) != 0)
-		वापस (काष्ठा smack_known *)sap->cache->data;
+	if ((sap->flags & NETLBL_SECATTR_CACHE) != 0)
+		return (struct smack_known *)sap->cache->data;
 
-	अगर ((sap->flags & NETLBL_SECATTR_SECID) != 0)
+	if ((sap->flags & NETLBL_SECATTR_SECID) != 0)
 		/*
 		 * Looks like a fallback, which gives us a secid.
 		 */
-		वापस smack_from_secid(sap->attr.secid);
+		return smack_from_secid(sap->attr.secid);
 
-	अगर ((sap->flags & NETLBL_SECATTR_MLS_LVL) != 0) अणु
+	if ((sap->flags & NETLBL_SECATTR_MLS_LVL) != 0) {
 		/*
 		 * Looks like a CIPSO packet.
 		 * If there are flags but no level netlabel isn't
@@ -3735,123 +3734,123 @@ out_opt_err:
 		 *
 		 * Look it up in the label table
 		 * Without guidance regarding the smack value
-		 * क्रम the packet fall back on the network
+		 * for the packet fall back on the network
 		 * ambient value.
 		 */
-		rcu_पढ़ो_lock();
-		list_क्रम_each_entry_rcu(skp, &smack_known_list, list) अणु
-			अगर (sap->attr.mls.lvl != skp->smk_netlabel.attr.mls.lvl)
-				जारी;
+		rcu_read_lock();
+		list_for_each_entry_rcu(skp, &smack_known_list, list) {
+			if (sap->attr.mls.lvl != skp->smk_netlabel.attr.mls.lvl)
+				continue;
 			/*
 			 * Compare the catsets. Use the netlbl APIs.
 			 */
-			अगर ((sap->flags & NETLBL_SECATTR_MLS_CAT) == 0) अणु
-				अगर ((skp->smk_netlabel.flags &
+			if ((sap->flags & NETLBL_SECATTR_MLS_CAT) == 0) {
+				if ((skp->smk_netlabel.flags &
 				     NETLBL_SECATTR_MLS_CAT) == 0)
 					found = 1;
-				अवरोध;
-			पूर्ण
-			क्रम (acat = -1, kcat = -1; acat == kcat; ) अणु
-				acat = netlbl_caपंचांगap_walk(sap->attr.mls.cat,
+				break;
+			}
+			for (acat = -1, kcat = -1; acat == kcat; ) {
+				acat = netlbl_catmap_walk(sap->attr.mls.cat,
 							  acat + 1);
-				kcat = netlbl_caपंचांगap_walk(
+				kcat = netlbl_catmap_walk(
 					skp->smk_netlabel.attr.mls.cat,
 					kcat + 1);
-				अगर (acat < 0 || kcat < 0)
-					अवरोध;
-			पूर्ण
-			अगर (acat == kcat) अणु
+				if (acat < 0 || kcat < 0)
+					break;
+			}
+			if (acat == kcat) {
 				found = 1;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		rcu_पढ़ो_unlock();
+				break;
+			}
+		}
+		rcu_read_unlock();
 
-		अगर (found)
-			वापस skp;
+		if (found)
+			return skp;
 
-		अगर (ssp != शून्य && ssp->smk_in == &smack_known_star)
-			वापस &smack_known_web;
-		वापस &smack_known_star;
-	पूर्ण
+		if (ssp != NULL && ssp->smk_in == &smack_known_star)
+			return &smack_known_web;
+		return &smack_known_star;
+	}
 	/*
 	 * Without guidance regarding the smack value
-	 * क्रम the packet fall back on the network
+	 * for the packet fall back on the network
 	 * ambient value.
 	 */
-	वापस smack_net_ambient;
-पूर्ण
+	return smack_net_ambient;
+}
 
-#अगर IS_ENABLED(CONFIG_IPV6)
-अटल पूर्णांक smk_skb_to_addr_ipv6(काष्ठा sk_buff *skb, काष्ठा sockaddr_in6 *sip)
-अणु
+#if IS_ENABLED(CONFIG_IPV6)
+static int smk_skb_to_addr_ipv6(struct sk_buff *skb, struct sockaddr_in6 *sip)
+{
 	u8 nexthdr;
-	पूर्णांक offset;
-	पूर्णांक proto = -EINVAL;
-	काष्ठा ipv6hdr _ipv6h;
-	काष्ठा ipv6hdr *ip6;
+	int offset;
+	int proto = -EINVAL;
+	struct ipv6hdr _ipv6h;
+	struct ipv6hdr *ip6;
 	__be16 frag_off;
-	काष्ठा tcphdr _tcph, *th;
-	काष्ठा udphdr _udph, *uh;
-	काष्ठा dccp_hdr _dccph, *dh;
+	struct tcphdr _tcph, *th;
+	struct udphdr _udph, *uh;
+	struct dccp_hdr _dccph, *dh;
 
 	sip->sin6_port = 0;
 
 	offset = skb_network_offset(skb);
-	ip6 = skb_header_poपूर्णांकer(skb, offset, माप(_ipv6h), &_ipv6h);
-	अगर (ip6 == शून्य)
-		वापस -EINVAL;
+	ip6 = skb_header_pointer(skb, offset, sizeof(_ipv6h), &_ipv6h);
+	if (ip6 == NULL)
+		return -EINVAL;
 	sip->sin6_addr = ip6->saddr;
 
 	nexthdr = ip6->nexthdr;
-	offset += माप(_ipv6h);
+	offset += sizeof(_ipv6h);
 	offset = ipv6_skip_exthdr(skb, offset, &nexthdr, &frag_off);
-	अगर (offset < 0)
-		वापस -EINVAL;
+	if (offset < 0)
+		return -EINVAL;
 
 	proto = nexthdr;
-	चयन (proto) अणु
-	हाल IPPROTO_TCP:
-		th = skb_header_poपूर्णांकer(skb, offset, माप(_tcph), &_tcph);
-		अगर (th != शून्य)
+	switch (proto) {
+	case IPPROTO_TCP:
+		th = skb_header_pointer(skb, offset, sizeof(_tcph), &_tcph);
+		if (th != NULL)
 			sip->sin6_port = th->source;
-		अवरोध;
-	हाल IPPROTO_UDP:
-	हाल IPPROTO_UDPLITE:
-		uh = skb_header_poपूर्णांकer(skb, offset, माप(_udph), &_udph);
-		अगर (uh != शून्य)
+		break;
+	case IPPROTO_UDP:
+	case IPPROTO_UDPLITE:
+		uh = skb_header_pointer(skb, offset, sizeof(_udph), &_udph);
+		if (uh != NULL)
 			sip->sin6_port = uh->source;
-		अवरोध;
-	हाल IPPROTO_DCCP:
-		dh = skb_header_poपूर्णांकer(skb, offset, माप(_dccph), &_dccph);
-		अगर (dh != शून्य)
+		break;
+	case IPPROTO_DCCP:
+		dh = skb_header_pointer(skb, offset, sizeof(_dccph), &_dccph);
+		if (dh != NULL)
 			sip->sin6_port = dh->dccph_sport;
-		अवरोध;
-	पूर्ण
-	वापस proto;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_IPV6 */
+		break;
+	}
+	return proto;
+}
+#endif /* CONFIG_IPV6 */
 
 /**
  * smack_from_skb - Smack data from the secmark in an skb
  * @skb: packet
  *
- * Returns smack_known of the secmark or शून्य अगर that won't work.
+ * Returns smack_known of the secmark or NULL if that won't work.
  */
-#अगर_घोषित CONFIG_NETWORK_SECMARK
-अटल काष्ठा smack_known *smack_from_skb(काष्ठा sk_buff *skb)
-अणु
-	अगर (skb == शून्य || skb->secmark == 0)
-		वापस शून्य;
+#ifdef CONFIG_NETWORK_SECMARK
+static struct smack_known *smack_from_skb(struct sk_buff *skb)
+{
+	if (skb == NULL || skb->secmark == 0)
+		return NULL;
 
-	वापस smack_from_secid(skb->secmark);
-पूर्ण
-#अन्यथा
-अटल अंतरभूत काष्ठा smack_known *smack_from_skb(काष्ठा sk_buff *skb)
-अणु
-	वापस शून्य;
-पूर्ण
-#पूर्ण_अगर
+	return smack_from_secid(skb->secmark);
+}
+#else
+static inline struct smack_known *smack_from_skb(struct sk_buff *skb)
+{
+	return NULL;
+}
+#endif
 
 /**
  * smack_from_netlbl - Smack data from the IP options in an skb
@@ -3862,125 +3861,125 @@ out_opt_err:
  * Find the Smack label in the IP options. If it hasn't been
  * added to the netlabel cache, add it here.
  *
- * Returns smack_known of the IP options or शून्य अगर that won't work.
+ * Returns smack_known of the IP options or NULL if that won't work.
  */
-अटल काष्ठा smack_known *smack_from_netlbl(स्थिर काष्ठा sock *sk, u16 family,
-					     काष्ठा sk_buff *skb)
-अणु
-	काष्ठा netlbl_lsm_secattr secattr;
-	काष्ठा socket_smack *ssp = शून्य;
-	काष्ठा smack_known *skp = शून्य;
+static struct smack_known *smack_from_netlbl(const struct sock *sk, u16 family,
+					     struct sk_buff *skb)
+{
+	struct netlbl_lsm_secattr secattr;
+	struct socket_smack *ssp = NULL;
+	struct smack_known *skp = NULL;
 
 	netlbl_secattr_init(&secattr);
 
-	अगर (sk)
+	if (sk)
 		ssp = sk->sk_security;
 
-	अगर (netlbl_skbuff_getattr(skb, family, &secattr) == 0) अणु
+	if (netlbl_skbuff_getattr(skb, family, &secattr) == 0) {
 		skp = smack_from_secattr(&secattr, ssp);
-		अगर (secattr.flags & NETLBL_SECATTR_CACHEABLE)
+		if (secattr.flags & NETLBL_SECATTR_CACHEABLE)
 			netlbl_cache_add(skb, family, &skp->smk_netlabel);
-	पूर्ण
+	}
 
 	netlbl_secattr_destroy(&secattr);
 
-	वापस skp;
-पूर्ण
+	return skp;
+}
 
 /**
  * smack_socket_sock_rcv_skb - Smack packet delivery access check
  * @sk: socket
  * @skb: packet
  *
- * Returns 0 अगर the packet should be delivered, an error code otherwise
+ * Returns 0 if the packet should be delivered, an error code otherwise
  */
-अटल पूर्णांक smack_socket_sock_rcv_skb(काष्ठा sock *sk, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा socket_smack *ssp = sk->sk_security;
-	काष्ठा smack_known *skp = शून्य;
-	पूर्णांक rc = 0;
-	काष्ठा smk_audit_info ad;
+static int smack_socket_sock_rcv_skb(struct sock *sk, struct sk_buff *skb)
+{
+	struct socket_smack *ssp = sk->sk_security;
+	struct smack_known *skp = NULL;
+	int rc = 0;
+	struct smk_audit_info ad;
 	u16 family = sk->sk_family;
-#अगर_घोषित CONFIG_AUDIT
-	काष्ठा lsm_network_audit net;
-#पूर्ण_अगर
-#अगर IS_ENABLED(CONFIG_IPV6)
-	काष्ठा sockaddr_in6 sadd;
-	पूर्णांक proto;
+#ifdef CONFIG_AUDIT
+	struct lsm_network_audit net;
+#endif
+#if IS_ENABLED(CONFIG_IPV6)
+	struct sockaddr_in6 sadd;
+	int proto;
 
-	अगर (family == PF_INET6 && skb->protocol == htons(ETH_P_IP))
+	if (family == PF_INET6 && skb->protocol == htons(ETH_P_IP))
 		family = PF_INET;
-#पूर्ण_अगर /* CONFIG_IPV6 */
+#endif /* CONFIG_IPV6 */
 
-	चयन (family) अणु
-	हाल PF_INET:
+	switch (family) {
+	case PF_INET:
 		/*
 		 * If there is a secmark use it rather than the CIPSO label.
 		 * If there is no secmark fall back to CIPSO.
 		 * The secmark is assumed to reflect policy better.
 		 */
 		skp = smack_from_skb(skb);
-		अगर (skp == शून्य) अणु
+		if (skp == NULL) {
 			skp = smack_from_netlbl(sk, family, skb);
-			अगर (skp == शून्य)
+			if (skp == NULL)
 				skp = smack_net_ambient;
-		पूर्ण
+		}
 
-#अगर_घोषित CONFIG_AUDIT
+#ifdef CONFIG_AUDIT
 		smk_ad_init_net(&ad, __func__, LSM_AUDIT_DATA_NET, &net);
 		ad.a.u.net->family = family;
-		ad.a.u.net->netअगर = skb->skb_iअगर;
-		ipv4_skb_to_auditdata(skb, &ad.a, शून्य);
-#पूर्ण_अगर
+		ad.a.u.net->netif = skb->skb_iif;
+		ipv4_skb_to_auditdata(skb, &ad.a, NULL);
+#endif
 		/*
 		 * Receiving a packet requires that the other end
-		 * be able to ग_लिखो here. Read access is not required.
+		 * be able to write here. Read access is not required.
 		 * This is the simplist possible security model
-		 * क्रम networking.
+		 * for networking.
 		 */
 		rc = smk_access(skp, ssp->smk_in, MAY_WRITE, &ad);
 		rc = smk_bu_note("IPv4 delivery", skp, ssp->smk_in,
 					MAY_WRITE, rc);
-		अगर (rc != 0)
+		if (rc != 0)
 			netlbl_skbuff_err(skb, family, rc, 0);
-		अवरोध;
-#अगर IS_ENABLED(CONFIG_IPV6)
-	हाल PF_INET6:
+		break;
+#if IS_ENABLED(CONFIG_IPV6)
+	case PF_INET6:
 		proto = smk_skb_to_addr_ipv6(skb, &sadd);
-		अगर (proto != IPPROTO_UDP && proto != IPPROTO_UDPLITE &&
+		if (proto != IPPROTO_UDP && proto != IPPROTO_UDPLITE &&
 		    proto != IPPROTO_TCP && proto != IPPROTO_DCCP)
-			अवरोध;
-#अगर_घोषित SMACK_IPV6_SECMARK_LABELING
+			break;
+#ifdef SMACK_IPV6_SECMARK_LABELING
 		skp = smack_from_skb(skb);
-		अगर (skp == शून्य) अणु
-			अगर (smk_ipv6_localhost(&sadd))
-				अवरोध;
+		if (skp == NULL) {
+			if (smk_ipv6_localhost(&sadd))
+				break;
 			skp = smack_ipv6host_label(&sadd);
-			अगर (skp == शून्य)
+			if (skp == NULL)
 				skp = smack_net_ambient;
-		पूर्ण
-#अगर_घोषित CONFIG_AUDIT
+		}
+#ifdef CONFIG_AUDIT
 		smk_ad_init_net(&ad, __func__, LSM_AUDIT_DATA_NET, &net);
 		ad.a.u.net->family = family;
-		ad.a.u.net->netअगर = skb->skb_iअगर;
-		ipv6_skb_to_auditdata(skb, &ad.a, शून्य);
-#पूर्ण_अगर /* CONFIG_AUDIT */
+		ad.a.u.net->netif = skb->skb_iif;
+		ipv6_skb_to_auditdata(skb, &ad.a, NULL);
+#endif /* CONFIG_AUDIT */
 		rc = smk_access(skp, ssp->smk_in, MAY_WRITE, &ad);
 		rc = smk_bu_note("IPv6 delivery", skp, ssp->smk_in,
 					MAY_WRITE, rc);
-#पूर्ण_अगर /* SMACK_IPV6_SECMARK_LABELING */
-#अगर_घोषित SMACK_IPV6_PORT_LABELING
+#endif /* SMACK_IPV6_SECMARK_LABELING */
+#ifdef SMACK_IPV6_PORT_LABELING
 		rc = smk_ipv6_port_check(sk, &sadd, SMK_RECEIVING);
-#पूर्ण_अगर /* SMACK_IPV6_PORT_LABELING */
-		अगर (rc != 0)
+#endif /* SMACK_IPV6_PORT_LABELING */
+		if (rc != 0)
 			icmpv6_send(skb, ICMPV6_DEST_UNREACH,
 					ICMPV6_ADM_PROHIBITED, 0);
-		अवरोध;
-#पूर्ण_अगर /* CONFIG_IPV6 */
-	पूर्ण
+		break;
+#endif /* CONFIG_IPV6 */
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
  * smack_socket_getpeersec_stream - pull in packet label
@@ -3989,120 +3988,120 @@ out_opt_err:
  * @optlen: size thereof
  * @len: max thereof
  *
- * वापसs zero on success, an error code otherwise
+ * returns zero on success, an error code otherwise
  */
-अटल पूर्णांक smack_socket_getpeersec_stream(काष्ठा socket *sock,
-					  अक्षर __user *optval,
-					  पूर्णांक __user *optlen, अचिन्हित len)
-अणु
-	काष्ठा socket_smack *ssp;
-	अक्षर *rcp = "";
-	पूर्णांक slen = 1;
-	पूर्णांक rc = 0;
+static int smack_socket_getpeersec_stream(struct socket *sock,
+					  char __user *optval,
+					  int __user *optlen, unsigned len)
+{
+	struct socket_smack *ssp;
+	char *rcp = "";
+	int slen = 1;
+	int rc = 0;
 
 	ssp = sock->sk->sk_security;
-	अगर (ssp->smk_packet != शून्य) अणु
+	if (ssp->smk_packet != NULL) {
 		rcp = ssp->smk_packet->smk_known;
-		slen = म_माप(rcp) + 1;
-	पूर्ण
+		slen = strlen(rcp) + 1;
+	}
 
-	अगर (slen > len)
-		rc = -दुस्फल;
-	अन्यथा अगर (copy_to_user(optval, rcp, slen) != 0)
+	if (slen > len)
+		rc = -ERANGE;
+	else if (copy_to_user(optval, rcp, slen) != 0)
 		rc = -EFAULT;
 
-	अगर (put_user(slen, optlen) != 0)
+	if (put_user(slen, optlen) != 0)
 		rc = -EFAULT;
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 
 /**
  * smack_socket_getpeersec_dgram - pull in packet label
  * @sock: the peer socket
  * @skb: packet data
- * @secid: poपूर्णांकer to where to put the secid of the packet
+ * @secid: pointer to where to put the secid of the packet
  *
  * Sets the netlabel socket state on sk from parent
  */
-अटल पूर्णांक smack_socket_getpeersec_dgram(काष्ठा socket *sock,
-					 काष्ठा sk_buff *skb, u32 *secid)
+static int smack_socket_getpeersec_dgram(struct socket *sock,
+					 struct sk_buff *skb, u32 *secid)
 
-अणु
-	काष्ठा socket_smack *ssp = शून्य;
-	काष्ठा smack_known *skp;
-	काष्ठा sock *sk = शून्य;
-	पूर्णांक family = PF_UNSPEC;
+{
+	struct socket_smack *ssp = NULL;
+	struct smack_known *skp;
+	struct sock *sk = NULL;
+	int family = PF_UNSPEC;
 	u32 s = 0;	/* 0 is the invalid secid */
 
-	अगर (skb != शून्य) अणु
-		अगर (skb->protocol == htons(ETH_P_IP))
+	if (skb != NULL) {
+		if (skb->protocol == htons(ETH_P_IP))
 			family = PF_INET;
-#अगर IS_ENABLED(CONFIG_IPV6)
-		अन्यथा अगर (skb->protocol == htons(ETH_P_IPV6))
+#if IS_ENABLED(CONFIG_IPV6)
+		else if (skb->protocol == htons(ETH_P_IPV6))
 			family = PF_INET6;
-#पूर्ण_अगर /* CONFIG_IPV6 */
-	पूर्ण
-	अगर (family == PF_UNSPEC && sock != शून्य)
+#endif /* CONFIG_IPV6 */
+	}
+	if (family == PF_UNSPEC && sock != NULL)
 		family = sock->sk->sk_family;
 
-	चयन (family) अणु
-	हाल PF_UNIX:
+	switch (family) {
+	case PF_UNIX:
 		ssp = sock->sk->sk_security;
 		s = ssp->smk_out->smk_secid;
-		अवरोध;
-	हाल PF_INET:
+		break;
+	case PF_INET:
 		skp = smack_from_skb(skb);
-		अगर (skp) अणु
+		if (skp) {
 			s = skp->smk_secid;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		/*
 		 * Translate what netlabel gave us.
 		 */
-		अगर (sock != शून्य)
+		if (sock != NULL)
 			sk = sock->sk;
 		skp = smack_from_netlbl(sk, family, skb);
-		अगर (skp != शून्य)
+		if (skp != NULL)
 			s = skp->smk_secid;
-		अवरोध;
-	हाल PF_INET6:
-#अगर_घोषित SMACK_IPV6_SECMARK_LABELING
+		break;
+	case PF_INET6:
+#ifdef SMACK_IPV6_SECMARK_LABELING
 		skp = smack_from_skb(skb);
-		अगर (skp)
+		if (skp)
 			s = skp->smk_secid;
-#पूर्ण_अगर
-		अवरोध;
-	पूर्ण
+#endif
+		break;
+	}
 	*secid = s;
-	अगर (s == 0)
-		वापस -EINVAL;
-	वापस 0;
-पूर्ण
+	if (s == 0)
+		return -EINVAL;
+	return 0;
+}
 
 /**
  * smack_sock_graft - Initialize a newly created socket with an existing sock
  * @sk: child sock
  * @parent: parent socket
  *
- * Set the smk_अणुin,outपूर्ण state of an existing sock based on the process that
+ * Set the smk_{in,out} state of an existing sock based on the process that
  * is creating the new socket.
  */
-अटल व्योम smack_sock_graft(काष्ठा sock *sk, काष्ठा socket *parent)
-अणु
-	काष्ठा socket_smack *ssp;
-	काष्ठा smack_known *skp = smk_of_current();
+static void smack_sock_graft(struct sock *sk, struct socket *parent)
+{
+	struct socket_smack *ssp;
+	struct smack_known *skp = smk_of_current();
 
-	अगर (sk == शून्य ||
+	if (sk == NULL ||
 	    (sk->sk_family != PF_INET && sk->sk_family != PF_INET6))
-		वापस;
+		return;
 
 	ssp = sk->sk_security;
 	ssp->smk_in = skp;
 	ssp->smk_out = skp;
-	/* cssp->smk_packet is alपढ़ोy set in smack_inet_csk_clone() */
-पूर्ण
+	/* cssp->smk_packet is already set in smack_inet_csk_clone() */
+}
 
 /**
  * smack_inet_conn_request - Smack access check on connect
@@ -4110,37 +4109,37 @@ out_opt_err:
  * @skb: packet
  * @req: unused
  *
- * Returns 0 अगर a task with the packet label could ग_लिखो to
+ * Returns 0 if a task with the packet label could write to
  * the socket, otherwise an error code
  */
-अटल पूर्णांक smack_inet_conn_request(स्थिर काष्ठा sock *sk, काष्ठा sk_buff *skb,
-				   काष्ठा request_sock *req)
-अणु
+static int smack_inet_conn_request(const struct sock *sk, struct sk_buff *skb,
+				   struct request_sock *req)
+{
 	u16 family = sk->sk_family;
-	काष्ठा smack_known *skp;
-	काष्ठा socket_smack *ssp = sk->sk_security;
-	काष्ठा sockaddr_in addr;
-	काष्ठा iphdr *hdr;
-	काष्ठा smack_known *hskp;
-	पूर्णांक rc;
-	काष्ठा smk_audit_info ad;
-#अगर_घोषित CONFIG_AUDIT
-	काष्ठा lsm_network_audit net;
-#पूर्ण_अगर
+	struct smack_known *skp;
+	struct socket_smack *ssp = sk->sk_security;
+	struct sockaddr_in addr;
+	struct iphdr *hdr;
+	struct smack_known *hskp;
+	int rc;
+	struct smk_audit_info ad;
+#ifdef CONFIG_AUDIT
+	struct lsm_network_audit net;
+#endif
 
-#अगर IS_ENABLED(CONFIG_IPV6)
-	अगर (family == PF_INET6) अणु
+#if IS_ENABLED(CONFIG_IPV6)
+	if (family == PF_INET6) {
 		/*
 		 * Handle mapped IPv4 packets arriving
 		 * via IPv6 sockets. Don't set up netlabel
 		 * processing on IPv6.
 		 */
-		अगर (skb->protocol == htons(ETH_P_IP))
+		if (skb->protocol == htons(ETH_P_IP))
 			family = PF_INET;
-		अन्यथा
-			वापस 0;
-	पूर्ण
-#पूर्ण_अगर /* CONFIG_IPV6 */
+		else
+			return 0;
+	}
+#endif /* CONFIG_IPV6 */
 
 	/*
 	 * If there is a secmark use it rather than the CIPSO label.
@@ -4148,26 +4147,26 @@ out_opt_err:
 	 * The secmark is assumed to reflect policy better.
 	 */
 	skp = smack_from_skb(skb);
-	अगर (skp == शून्य) अणु
+	if (skp == NULL) {
 		skp = smack_from_netlbl(sk, family, skb);
-		अगर (skp == शून्य)
+		if (skp == NULL)
 			skp = &smack_known_huh;
-	पूर्ण
+	}
 
-#अगर_घोषित CONFIG_AUDIT
+#ifdef CONFIG_AUDIT
 	smk_ad_init_net(&ad, __func__, LSM_AUDIT_DATA_NET, &net);
 	ad.a.u.net->family = family;
-	ad.a.u.net->netअगर = skb->skb_iअगर;
-	ipv4_skb_to_auditdata(skb, &ad.a, शून्य);
-#पूर्ण_अगर
+	ad.a.u.net->netif = skb->skb_iif;
+	ipv4_skb_to_auditdata(skb, &ad.a, NULL);
+#endif
 	/*
-	 * Receiving a packet requires that the other end be able to ग_लिखो
+	 * Receiving a packet requires that the other end be able to write
 	 * here. Read access is not required.
 	 */
 	rc = smk_access(skp, ssp->smk_in, MAY_WRITE, &ad);
 	rc = smk_bu_note("IPv4 connect", skp, ssp->smk_in, MAY_WRITE, rc);
-	अगर (rc != 0)
-		वापस rc;
+	if (rc != 0)
+		return rc;
 
 	/*
 	 * Save the peer's label in the request_sock so we can later setup
@@ -4176,43 +4175,43 @@ out_opt_err:
 	req->peer_secid = skp->smk_secid;
 
 	/*
-	 * We need to decide अगर we want to label the incoming connection here
-	 * अगर we करो we only need to label the request_sock and the stack will
+	 * We need to decide if we want to label the incoming connection here
+	 * if we do we only need to label the request_sock and the stack will
 	 * propagate the wire-label to the sock when it is created.
 	 */
 	hdr = ip_hdr(skb);
 	addr.sin_addr.s_addr = hdr->saddr;
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	hskp = smack_ipv4host_label(&addr);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	अगर (hskp == शून्य)
+	if (hskp == NULL)
 		rc = netlbl_req_setattr(req, &skp->smk_netlabel);
-	अन्यथा
+	else
 		netlbl_req_delattr(req);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
- * smack_inet_csk_clone - Copy the connection inक्रमmation to the new socket
+ * smack_inet_csk_clone - Copy the connection information to the new socket
  * @sk: the new socket
  * @req: the connection's request_sock
  *
  * Transfer the connection's peer label to the newly created socket.
  */
-अटल व्योम smack_inet_csk_clone(काष्ठा sock *sk,
-				 स्थिर काष्ठा request_sock *req)
-अणु
-	काष्ठा socket_smack *ssp = sk->sk_security;
-	काष्ठा smack_known *skp;
+static void smack_inet_csk_clone(struct sock *sk,
+				 const struct request_sock *req)
+{
+	struct socket_smack *ssp = sk->sk_security;
+	struct smack_known *skp;
 
-	अगर (req->peer_secid != 0) अणु
+	if (req->peer_secid != 0) {
 		skp = smack_from_secid(req->peer_secid);
 		ssp->smk_packet = skp;
-	पूर्ण अन्यथा
-		ssp->smk_packet = शून्य;
-पूर्ण
+	} else
+		ssp->smk_packet = NULL;
+}
 
 /*
  * Key management security hooks
@@ -4221,7 +4220,7 @@ out_opt_err:
  * The permission check is most likely too restrictive.
  * If you care about keys please have a look.
  */
-#अगर_घोषित CONFIG_KEYS
+#ifdef CONFIG_KEYS
 
 /**
  * smack_key_alloc - Set the key security blob
@@ -4233,207 +4232,207 @@ out_opt_err:
  *
  * Returns 0
  */
-अटल पूर्णांक smack_key_alloc(काष्ठा key *key, स्थिर काष्ठा cred *cred,
-			   अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा smack_known *skp = smk_of_task(smack_cred(cred));
+static int smack_key_alloc(struct key *key, const struct cred *cred,
+			   unsigned long flags)
+{
+	struct smack_known *skp = smk_of_task(smack_cred(cred));
 
 	key->security = skp;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * smack_key_मुक्त - Clear the key security blob
+ * smack_key_free - Clear the key security blob
  * @key: the object
  *
- * Clear the blob poपूर्णांकer
+ * Clear the blob pointer
  */
-अटल व्योम smack_key_मुक्त(काष्ठा key *key)
-अणु
-	key->security = शून्य;
-पूर्ण
+static void smack_key_free(struct key *key)
+{
+	key->security = NULL;
+}
 
 /**
  * smack_key_permission - Smack access on a key
- * @key_ref: माला_लो to the object
+ * @key_ref: gets to the object
  * @cred: the credentials to use
  * @need_perm: requested key permission
  *
- * Return 0 अगर the task has पढ़ो and ग_लिखो to the object,
+ * Return 0 if the task has read and write to the object,
  * an error code otherwise
  */
-अटल पूर्णांक smack_key_permission(key_ref_t key_ref,
-				स्थिर काष्ठा cred *cred,
-				क्रमागत key_need_perm need_perm)
-अणु
-	काष्ठा key *keyp;
-	काष्ठा smk_audit_info ad;
-	काष्ठा smack_known *tkp = smk_of_task(smack_cred(cred));
-	पूर्णांक request = 0;
-	पूर्णांक rc;
+static int smack_key_permission(key_ref_t key_ref,
+				const struct cred *cred,
+				enum key_need_perm need_perm)
+{
+	struct key *keyp;
+	struct smk_audit_info ad;
+	struct smack_known *tkp = smk_of_task(smack_cred(cred));
+	int request = 0;
+	int rc;
 
 	/*
 	 * Validate requested permissions
 	 */
-	चयन (need_perm) अणु
-	हाल KEY_NEED_READ:
-	हाल KEY_NEED_SEARCH:
-	हाल KEY_NEED_VIEW:
+	switch (need_perm) {
+	case KEY_NEED_READ:
+	case KEY_NEED_SEARCH:
+	case KEY_NEED_VIEW:
 		request |= MAY_READ;
-		अवरोध;
-	हाल KEY_NEED_WRITE:
-	हाल KEY_NEED_LINK:
-	हाल KEY_NEED_SETATTR:
+		break;
+	case KEY_NEED_WRITE:
+	case KEY_NEED_LINK:
+	case KEY_NEED_SETATTR:
 		request |= MAY_WRITE;
-		अवरोध;
-	हाल KEY_NEED_UNSPECIFIED:
-	हाल KEY_NEED_UNLINK:
-	हाल KEY_SYSADMIN_OVERRIDE:
-	हाल KEY_AUTHTOKEN_OVERRIDE:
-	हाल KEY_DEFER_PERM_CHECK:
-		वापस 0;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	case KEY_NEED_UNSPECIFIED:
+	case KEY_NEED_UNLINK:
+	case KEY_SYSADMIN_OVERRIDE:
+	case KEY_AUTHTOKEN_OVERRIDE:
+	case KEY_DEFER_PERM_CHECK:
+		return 0;
+	default:
+		return -EINVAL;
+	}
 
 	keyp = key_ref_to_ptr(key_ref);
-	अगर (keyp == शून्य)
-		वापस -EINVAL;
+	if (keyp == NULL)
+		return -EINVAL;
 	/*
 	 * If the key hasn't been initialized give it access so that
-	 * it may करो so.
+	 * it may do so.
 	 */
-	अगर (keyp->security == शून्य)
-		वापस 0;
+	if (keyp->security == NULL)
+		return 0;
 	/*
 	 * This should not occur
 	 */
-	अगर (tkp == शून्य)
-		वापस -EACCES;
+	if (tkp == NULL)
+		return -EACCES;
 
-	अगर (smack_privileged(CAP_MAC_OVERRIDE))
-		वापस 0;
+	if (smack_privileged(CAP_MAC_OVERRIDE))
+		return 0;
 
-#अगर_घोषित CONFIG_AUDIT
+#ifdef CONFIG_AUDIT
 	smk_ad_init(&ad, __func__, LSM_AUDIT_DATA_KEY);
-	ad.a.u.key_काष्ठा.key = keyp->serial;
-	ad.a.u.key_काष्ठा.key_desc = keyp->description;
-#पूर्ण_अगर
+	ad.a.u.key_struct.key = keyp->serial;
+	ad.a.u.key_struct.key_desc = keyp->description;
+#endif
 	rc = smk_access(tkp, keyp->security, request, &ad);
 	rc = smk_bu_note("key access", tkp, keyp->security, request, rc);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
- * smack_key_माला_लोecurity - Smack label tagging the key
- * @key poपूर्णांकs to the key to be queried
- * @_buffer poपूर्णांकs to a poपूर्णांकer that should be set to poपूर्णांक to the
- * resulting string (अगर no label or an error occurs).
- * Return the length of the string (including terminating NUL) or -ve अगर
+ * smack_key_getsecurity - Smack label tagging the key
+ * @key points to the key to be queried
+ * @_buffer points to a pointer that should be set to point to the
+ * resulting string (if no label or an error occurs).
+ * Return the length of the string (including terminating NUL) or -ve if
  * an error.
- * May also वापस 0 (and a शून्य buffer poपूर्णांकer) अगर there is no label.
+ * May also return 0 (and a NULL buffer pointer) if there is no label.
  */
-अटल पूर्णांक smack_key_माला_लोecurity(काष्ठा key *key, अक्षर **_buffer)
-अणु
-	काष्ठा smack_known *skp = key->security;
-	माप_प्रकार length;
-	अक्षर *copy;
+static int smack_key_getsecurity(struct key *key, char **_buffer)
+{
+	struct smack_known *skp = key->security;
+	size_t length;
+	char *copy;
 
-	अगर (key->security == शून्य) अणु
-		*_buffer = शून्य;
-		वापस 0;
-	पूर्ण
+	if (key->security == NULL) {
+		*_buffer = NULL;
+		return 0;
+	}
 
 	copy = kstrdup(skp->smk_known, GFP_KERNEL);
-	अगर (copy == शून्य)
-		वापस -ENOMEM;
-	length = म_माप(copy) + 1;
+	if (copy == NULL)
+		return -ENOMEM;
+	length = strlen(copy) + 1;
 
 	*_buffer = copy;
-	वापस length;
-पूर्ण
+	return length;
+}
 
 
-#अगर_घोषित CONFIG_KEY_NOTIFICATIONS
+#ifdef CONFIG_KEY_NOTIFICATIONS
 /**
- * smack_watch_key - Smack access to watch a key क्रम notअगरications.
+ * smack_watch_key - Smack access to watch a key for notifications.
  * @key: The key to be watched
  *
- * Return 0 अगर the @watch->cred has permission to पढ़ो from the key object and
+ * Return 0 if the @watch->cred has permission to read from the key object and
  * an error otherwise.
  */
-अटल पूर्णांक smack_watch_key(काष्ठा key *key)
-अणु
-	काष्ठा smk_audit_info ad;
-	काष्ठा smack_known *tkp = smk_of_current();
-	पूर्णांक rc;
+static int smack_watch_key(struct key *key)
+{
+	struct smk_audit_info ad;
+	struct smack_known *tkp = smk_of_current();
+	int rc;
 
-	अगर (key == शून्य)
-		वापस -EINVAL;
+	if (key == NULL)
+		return -EINVAL;
 	/*
 	 * If the key hasn't been initialized give it access so that
-	 * it may करो so.
+	 * it may do so.
 	 */
-	अगर (key->security == शून्य)
-		वापस 0;
+	if (key->security == NULL)
+		return 0;
 	/*
 	 * This should not occur
 	 */
-	अगर (tkp == शून्य)
-		वापस -EACCES;
+	if (tkp == NULL)
+		return -EACCES;
 
-	अगर (smack_privileged_cred(CAP_MAC_OVERRIDE, current_cred()))
-		वापस 0;
+	if (smack_privileged_cred(CAP_MAC_OVERRIDE, current_cred()))
+		return 0;
 
-#अगर_घोषित CONFIG_AUDIT
+#ifdef CONFIG_AUDIT
 	smk_ad_init(&ad, __func__, LSM_AUDIT_DATA_KEY);
-	ad.a.u.key_काष्ठा.key = key->serial;
-	ad.a.u.key_काष्ठा.key_desc = key->description;
-#पूर्ण_अगर
+	ad.a.u.key_struct.key = key->serial;
+	ad.a.u.key_struct.key_desc = key->description;
+#endif
 	rc = smk_access(tkp, key->security, MAY_READ, &ad);
 	rc = smk_bu_note("key watch", tkp, key->security, MAY_READ, rc);
-	वापस rc;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_KEY_NOTIFICATIONS */
-#पूर्ण_अगर /* CONFIG_KEYS */
+	return rc;
+}
+#endif /* CONFIG_KEY_NOTIFICATIONS */
+#endif /* CONFIG_KEYS */
 
-#अगर_घोषित CONFIG_WATCH_QUEUE
+#ifdef CONFIG_WATCH_QUEUE
 /**
- * smack_post_notअगरication - Smack access to post a notअगरication to a queue
+ * smack_post_notification - Smack access to post a notification to a queue
  * @w_cred: The credentials of the watcher.
- * @cred: The credentials of the event source (may be शून्य).
- * @n: The notअगरication message to be posted.
+ * @cred: The credentials of the event source (may be NULL).
+ * @n: The notification message to be posted.
  */
-अटल पूर्णांक smack_post_notअगरication(स्थिर काष्ठा cred *w_cred,
-				   स्थिर काष्ठा cred *cred,
-				   काष्ठा watch_notअगरication *n)
-अणु
-	काष्ठा smk_audit_info ad;
-	काष्ठा smack_known *subj, *obj;
-	पूर्णांक rc;
+static int smack_post_notification(const struct cred *w_cred,
+				   const struct cred *cred,
+				   struct watch_notification *n)
+{
+	struct smk_audit_info ad;
+	struct smack_known *subj, *obj;
+	int rc;
 
-	/* Always let मुख्यtenance notअगरications through. */
-	अगर (n->type == WATCH_TYPE_META)
-		वापस 0;
+	/* Always let maintenance notifications through. */
+	if (n->type == WATCH_TYPE_META)
+		return 0;
 
-	अगर (!cred)
-		वापस 0;
+	if (!cred)
+		return 0;
 	subj = smk_of_task(smack_cred(cred));
 	obj = smk_of_task(smack_cred(w_cred));
 
 	smk_ad_init(&ad, __func__, LSM_AUDIT_DATA_NOTIFICATION);
 	rc = smk_access(subj, obj, MAY_WRITE, &ad);
 	rc = smk_bu_note("notification", subj, obj, MAY_WRITE, rc);
-	वापस rc;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_WATCH_QUEUE */
+	return rc;
+}
+#endif /* CONFIG_WATCH_QUEUE */
 
 /*
  * Smack Audit hooks
  *
- * Audit requires a unique representation of each Smack specअगरic
+ * Audit requires a unique representation of each Smack specific
  * rule. This unique representation is used to distinguish the
- * object to be audited from reमुख्यing kernel objects and also
+ * object to be audited from remaining kernel objects and also
  * works as a glue between the audit hooks.
  *
  * Since repository entries are added but never deleted, we'll use
@@ -4441,153 +4440,153 @@ out_opt_err:
  * the needed unique representation. This also better fits the smack
  * model where nearly everything is a label.
  */
-#अगर_घोषित CONFIG_AUDIT
+#ifdef CONFIG_AUDIT
 
 /**
  * smack_audit_rule_init - Initialize a smack audit rule
  * @field: audit rule fields given from user-space (audit.h)
- * @op: required testing चालक (=, !=, >, <, ...)
+ * @op: required testing operator (=, !=, >, <, ...)
  * @rulestr: smack label to be audited
- * @vrule: poपूर्णांकer to save our own audit rule representation
+ * @vrule: pointer to save our own audit rule representation
  *
- * Prepare to audit हालs where (@field @op @rulestr) is true.
- * The label to be audited is created अगर necessay.
+ * Prepare to audit cases where (@field @op @rulestr) is true.
+ * The label to be audited is created if necessay.
  */
-अटल पूर्णांक smack_audit_rule_init(u32 field, u32 op, अक्षर *rulestr, व्योम **vrule)
-अणु
-	काष्ठा smack_known *skp;
-	अक्षर **rule = (अक्षर **)vrule;
-	*rule = शून्य;
+static int smack_audit_rule_init(u32 field, u32 op, char *rulestr, void **vrule)
+{
+	struct smack_known *skp;
+	char **rule = (char **)vrule;
+	*rule = NULL;
 
-	अगर (field != AUDIT_SUBJ_USER && field != AUDIT_OBJ_USER)
-		वापस -EINVAL;
+	if (field != AUDIT_SUBJ_USER && field != AUDIT_OBJ_USER)
+		return -EINVAL;
 
-	अगर (op != Audit_equal && op != Audit_not_equal)
-		वापस -EINVAL;
+	if (op != Audit_equal && op != Audit_not_equal)
+		return -EINVAL;
 
 	skp = smk_import_entry(rulestr, 0);
-	अगर (IS_ERR(skp))
-		वापस PTR_ERR(skp);
+	if (IS_ERR(skp))
+		return PTR_ERR(skp);
 
 	*rule = skp->smk_known;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * smack_audit_rule_known - Distinguish Smack audit rules
- * @krule: rule of पूर्णांकerest, in Audit kernel representation क्रमmat
+ * @krule: rule of interest, in Audit kernel representation format
  *
- * This is used to filter Smack rules from reमुख्यing Audit ones.
- * If it's proved that this rule beदीर्घs to us, the
- * audit_rule_match hook will be called to करो the final judgement.
+ * This is used to filter Smack rules from remaining Audit ones.
+ * If it's proved that this rule belongs to us, the
+ * audit_rule_match hook will be called to do the final judgement.
  */
-अटल पूर्णांक smack_audit_rule_known(काष्ठा audit_krule *krule)
-अणु
-	काष्ठा audit_field *f;
-	पूर्णांक i;
+static int smack_audit_rule_known(struct audit_krule *krule)
+{
+	struct audit_field *f;
+	int i;
 
-	क्रम (i = 0; i < krule->field_count; i++) अणु
+	for (i = 0; i < krule->field_count; i++) {
 		f = &krule->fields[i];
 
-		अगर (f->type == AUDIT_SUBJ_USER || f->type == AUDIT_OBJ_USER)
-			वापस 1;
-	पूर्ण
+		if (f->type == AUDIT_SUBJ_USER || f->type == AUDIT_OBJ_USER)
+			return 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * smack_audit_rule_match - Audit given object ?
- * @secid: security id क्रम identअगरying the object to test
+ * @secid: security id for identifying the object to test
  * @field: audit rule flags given from user-space
- * @op: required testing चालक
- * @vrule: smack पूर्णांकernal rule presentation
+ * @op: required testing operator
+ * @vrule: smack internal rule presentation
  *
  * The core Audit hook. It's used to take the decision of
  * whether to audit or not to audit a given object.
  */
-अटल पूर्णांक smack_audit_rule_match(u32 secid, u32 field, u32 op, व्योम *vrule)
-अणु
-	काष्ठा smack_known *skp;
-	अक्षर *rule = vrule;
+static int smack_audit_rule_match(u32 secid, u32 field, u32 op, void *vrule)
+{
+	struct smack_known *skp;
+	char *rule = vrule;
 
-	अगर (unlikely(!rule)) अणु
+	if (unlikely(!rule)) {
 		WARN_ONCE(1, "Smack: missing rule\n");
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
-	अगर (field != AUDIT_SUBJ_USER && field != AUDIT_OBJ_USER)
-		वापस 0;
+	if (field != AUDIT_SUBJ_USER && field != AUDIT_OBJ_USER)
+		return 0;
 
 	skp = smack_from_secid(secid);
 
 	/*
-	 * No need to करो string comparisons. If a match occurs,
-	 * both poपूर्णांकers will poपूर्णांक to the same smack_known
+	 * No need to do string comparisons. If a match occurs,
+	 * both pointers will point to the same smack_known
 	 * label.
 	 */
-	अगर (op == Audit_equal)
-		वापस (rule == skp->smk_known);
-	अगर (op == Audit_not_equal)
-		वापस (rule != skp->smk_known);
+	if (op == Audit_equal)
+		return (rule == skp->smk_known);
+	if (op == Audit_not_equal)
+		return (rule != skp->smk_known);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * There is no need क्रम a smack_audit_rule_मुक्त hook.
+ * There is no need for a smack_audit_rule_free hook.
  * No memory was allocated.
  */
 
-#पूर्ण_अगर /* CONFIG_AUDIT */
+#endif /* CONFIG_AUDIT */
 
 /**
- * smack_ismaclabel - check अगर xattr @name references a smack MAC label
+ * smack_ismaclabel - check if xattr @name references a smack MAC label
  * @name: Full xattr name to check.
  */
-अटल पूर्णांक smack_ismaclabel(स्थिर अक्षर *name)
-अणु
-	वापस (म_भेद(name, XATTR_SMACK_SUFFIX) == 0);
-पूर्ण
+static int smack_ismaclabel(const char *name)
+{
+	return (strcmp(name, XATTR_SMACK_SUFFIX) == 0);
+}
 
 
 /**
- * smack_secid_to_secctx - वापस the smack label क्रम a secid
- * @secid: incoming पूर्णांकeger
+ * smack_secid_to_secctx - return the smack label for a secid
+ * @secid: incoming integer
  * @secdata: destination
- * @seclen: how दीर्घ it is
+ * @seclen: how long it is
  *
- * Exists क्रम networking code.
+ * Exists for networking code.
  */
-अटल पूर्णांक smack_secid_to_secctx(u32 secid, अक्षर **secdata, u32 *seclen)
-अणु
-	काष्ठा smack_known *skp = smack_from_secid(secid);
+static int smack_secid_to_secctx(u32 secid, char **secdata, u32 *seclen)
+{
+	struct smack_known *skp = smack_from_secid(secid);
 
-	अगर (secdata)
+	if (secdata)
 		*secdata = skp->smk_known;
-	*seclen = म_माप(skp->smk_known);
-	वापस 0;
-पूर्ण
+	*seclen = strlen(skp->smk_known);
+	return 0;
+}
 
 /**
- * smack_secctx_to_secid - वापस the secid क्रम a smack label
+ * smack_secctx_to_secid - return the secid for a smack label
  * @secdata: smack label
- * @seclen: how दीर्घ result is
- * @secid: outgoing पूर्णांकeger
+ * @seclen: how long result is
+ * @secid: outgoing integer
  *
- * Exists क्रम audit and networking code.
+ * Exists for audit and networking code.
  */
-अटल पूर्णांक smack_secctx_to_secid(स्थिर अक्षर *secdata, u32 seclen, u32 *secid)
-अणु
-	काष्ठा smack_known *skp = smk_find_entry(secdata);
+static int smack_secctx_to_secid(const char *secdata, u32 seclen, u32 *secid)
+{
+	struct smack_known *skp = smk_find_entry(secdata);
 
-	अगर (skp)
+	if (skp)
 		*secid = skp->smk_secid;
-	अन्यथा
+	else
 		*secid = 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * There used to be a smack_release_secctx hook
@@ -4595,40 +4594,40 @@ out_opt_err:
  * Now that there's a list such a hook adds cost.
  */
 
-अटल पूर्णांक smack_inode_notअगरysecctx(काष्ठा inode *inode, व्योम *ctx, u32 ctxlen)
-अणु
-	वापस smack_inode_setsecurity(inode, XATTR_SMACK_SUFFIX, ctx,
+static int smack_inode_notifysecctx(struct inode *inode, void *ctx, u32 ctxlen)
+{
+	return smack_inode_setsecurity(inode, XATTR_SMACK_SUFFIX, ctx,
 				       ctxlen, 0);
-पूर्ण
+}
 
-अटल पूर्णांक smack_inode_setsecctx(काष्ठा dentry *dentry, व्योम *ctx, u32 ctxlen)
-अणु
-	वापस __vfs_setxattr_noperm(&init_user_ns, dentry, XATTR_NAME_SMACK,
+static int smack_inode_setsecctx(struct dentry *dentry, void *ctx, u32 ctxlen)
+{
+	return __vfs_setxattr_noperm(&init_user_ns, dentry, XATTR_NAME_SMACK,
 				     ctx, ctxlen, 0);
-पूर्ण
+}
 
-अटल पूर्णांक smack_inode_माला_लोecctx(काष्ठा inode *inode, व्योम **ctx, u32 *ctxlen)
-अणु
-	काष्ठा smack_known *skp = smk_of_inode(inode);
+static int smack_inode_getsecctx(struct inode *inode, void **ctx, u32 *ctxlen)
+{
+	struct smack_known *skp = smk_of_inode(inode);
 
 	*ctx = skp->smk_known;
-	*ctxlen = म_माप(skp->smk_known);
-	वापस 0;
-पूर्ण
+	*ctxlen = strlen(skp->smk_known);
+	return 0;
+}
 
-अटल पूर्णांक smack_inode_copy_up(काष्ठा dentry *dentry, काष्ठा cred **new)
-अणु
+static int smack_inode_copy_up(struct dentry *dentry, struct cred **new)
+{
 
-	काष्ठा task_smack *tsp;
-	काष्ठा smack_known *skp;
-	काष्ठा inode_smack *isp;
-	काष्ठा cred *new_creds = *new;
+	struct task_smack *tsp;
+	struct smack_known *skp;
+	struct inode_smack *isp;
+	struct cred *new_creds = *new;
 
-	अगर (new_creds == शून्य) अणु
+	if (new_creds == NULL) {
 		new_creds = prepare_creds();
-		अगर (new_creds == शून्य)
-			वापस -ENOMEM;
-	पूर्ण
+		if (new_creds == NULL)
+			return -ENOMEM;
+	}
 
 	tsp = smack_cred(new_creds);
 
@@ -4639,29 +4638,29 @@ out_opt_err:
 	skp = isp->smk_inode;
 	tsp->smk_task = skp;
 	*new = new_creds;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक smack_inode_copy_up_xattr(स्थिर अक्षर *name)
-अणु
+static int smack_inode_copy_up_xattr(const char *name)
+{
 	/*
-	 * Return 1 अगर this is the smack access Smack attribute.
+	 * Return 1 if this is the smack access Smack attribute.
 	 */
-	अगर (म_भेद(name, XATTR_NAME_SMACK) == 0)
-		वापस 1;
+	if (strcmp(name, XATTR_NAME_SMACK) == 0)
+		return 1;
 
-	वापस -EOPNOTSUPP;
-पूर्ण
+	return -EOPNOTSUPP;
+}
 
-अटल पूर्णांक smack_dentry_create_files_as(काष्ठा dentry *dentry, पूर्णांक mode,
-					काष्ठा qstr *name,
-					स्थिर काष्ठा cred *old,
-					काष्ठा cred *new)
-अणु
-	काष्ठा task_smack *otsp = smack_cred(old);
-	काष्ठा task_smack *ntsp = smack_cred(new);
-	काष्ठा inode_smack *isp;
-	पूर्णांक may;
+static int smack_dentry_create_files_as(struct dentry *dentry, int mode,
+					struct qstr *name,
+					const struct cred *old,
+					struct cred *new)
+{
+	struct task_smack *otsp = smack_cred(old);
+	struct task_smack *ntsp = smack_cred(new);
+	struct inode_smack *isp;
+	int may;
 
 	/*
 	 * Use the process credential unless all of
@@ -4674,34 +4673,34 @@ out_opt_err:
 	 */
 	isp = smack_inode(d_inode(dentry->d_parent));
 
-	अगर (isp->smk_flags & SMK_INODE_TRANSMUTE) अणु
-		rcu_पढ़ो_lock();
+	if (isp->smk_flags & SMK_INODE_TRANSMUTE) {
+		rcu_read_lock();
 		may = smk_access_entry(otsp->smk_task->smk_known,
 				       isp->smk_inode->smk_known,
 				       &otsp->smk_task->smk_rules);
-		rcu_पढ़ो_unlock();
+		rcu_read_unlock();
 
 		/*
 		 * If the directory is transmuting and the rule
 		 * providing access is transmuting use the containing
 		 * directory label instead of the process label.
 		 */
-		अगर (may > 0 && (may & MAY_TRANSMUTE))
+		if (may > 0 && (may & MAY_TRANSMUTE))
 			ntsp->smk_task = isp->smk_inode;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-काष्ठा lsm_blob_sizes smack_blob_sizes __lsm_ro_after_init = अणु
-	.lbs_cred = माप(काष्ठा task_smack),
-	.lbs_file = माप(काष्ठा smack_known *),
-	.lbs_inode = माप(काष्ठा inode_smack),
-	.lbs_ipc = माप(काष्ठा smack_known *),
-	.lbs_msg_msg = माप(काष्ठा smack_known *),
-	.lbs_superblock = माप(काष्ठा superblock_smack),
-पूर्ण;
+struct lsm_blob_sizes smack_blob_sizes __lsm_ro_after_init = {
+	.lbs_cred = sizeof(struct task_smack),
+	.lbs_file = sizeof(struct smack_known *),
+	.lbs_inode = sizeof(struct inode_smack),
+	.lbs_ipc = sizeof(struct smack_known *),
+	.lbs_msg_msg = sizeof(struct smack_known *),
+	.lbs_superblock = sizeof(struct superblock_smack),
+};
 
-अटल काष्ठा security_hook_list smack_hooks[] __lsm_ro_after_init = अणु
+static struct security_hook_list smack_hooks[] __lsm_ro_after_init = {
 	LSM_HOOK_INIT(ptrace_access_check, smack_ptrace_access_check),
 	LSM_HOOK_INIT(ptrace_traceme, smack_ptrace_traceme),
 	LSM_HOOK_INIT(syslog, smack_syslog),
@@ -4710,30 +4709,30 @@ out_opt_err:
 	LSM_HOOK_INIT(fs_context_parse_param, smack_fs_context_parse_param),
 
 	LSM_HOOK_INIT(sb_alloc_security, smack_sb_alloc_security),
-	LSM_HOOK_INIT(sb_मुक्त_mnt_opts, smack_मुक्त_mnt_opts),
+	LSM_HOOK_INIT(sb_free_mnt_opts, smack_free_mnt_opts),
 	LSM_HOOK_INIT(sb_eat_lsm_opts, smack_sb_eat_lsm_opts),
 	LSM_HOOK_INIT(sb_statfs, smack_sb_statfs),
 	LSM_HOOK_INIT(sb_set_mnt_opts, smack_set_mnt_opts),
 
-	LSM_HOOK_INIT(bprm_creds_क्रम_exec, smack_bprm_creds_क्रम_exec),
+	LSM_HOOK_INIT(bprm_creds_for_exec, smack_bprm_creds_for_exec),
 
 	LSM_HOOK_INIT(inode_alloc_security, smack_inode_alloc_security),
 	LSM_HOOK_INIT(inode_init_security, smack_inode_init_security),
 	LSM_HOOK_INIT(inode_link, smack_inode_link),
 	LSM_HOOK_INIT(inode_unlink, smack_inode_unlink),
-	LSM_HOOK_INIT(inode_सूची_हटाओ, smack_inode_सूची_हटाओ),
-	LSM_HOOK_INIT(inode_नाम, smack_inode_नाम),
+	LSM_HOOK_INIT(inode_rmdir, smack_inode_rmdir),
+	LSM_HOOK_INIT(inode_rename, smack_inode_rename),
 	LSM_HOOK_INIT(inode_permission, smack_inode_permission),
 	LSM_HOOK_INIT(inode_setattr, smack_inode_setattr),
 	LSM_HOOK_INIT(inode_getattr, smack_inode_getattr),
 	LSM_HOOK_INIT(inode_setxattr, smack_inode_setxattr),
 	LSM_HOOK_INIT(inode_post_setxattr, smack_inode_post_setxattr),
 	LSM_HOOK_INIT(inode_getxattr, smack_inode_getxattr),
-	LSM_HOOK_INIT(inode_हटाओxattr, smack_inode_हटाओxattr),
-	LSM_HOOK_INIT(inode_माला_लोecurity, smack_inode_माला_लोecurity),
+	LSM_HOOK_INIT(inode_removexattr, smack_inode_removexattr),
+	LSM_HOOK_INIT(inode_getsecurity, smack_inode_getsecurity),
 	LSM_HOOK_INIT(inode_setsecurity, smack_inode_setsecurity),
 	LSM_HOOK_INIT(inode_listsecurity, smack_inode_listsecurity),
-	LSM_HOOK_INIT(inode_माला_लोecid, smack_inode_माला_लोecid),
+	LSM_HOOK_INIT(inode_getsecid, smack_inode_getsecid),
 
 	LSM_HOOK_INIT(file_alloc_security, smack_file_alloc_security),
 	LSM_HOOK_INIT(file_ioctl, smack_file_ioctl),
@@ -4745,31 +4744,31 @@ out_opt_err:
 	LSM_HOOK_INIT(file_send_sigiotask, smack_file_send_sigiotask),
 	LSM_HOOK_INIT(file_receive, smack_file_receive),
 
-	LSM_HOOK_INIT(file_खोलो, smack_file_खोलो),
+	LSM_HOOK_INIT(file_open, smack_file_open),
 
 	LSM_HOOK_INIT(cred_alloc_blank, smack_cred_alloc_blank),
-	LSM_HOOK_INIT(cred_मुक्त, smack_cred_मुक्त),
+	LSM_HOOK_INIT(cred_free, smack_cred_free),
 	LSM_HOOK_INIT(cred_prepare, smack_cred_prepare),
 	LSM_HOOK_INIT(cred_transfer, smack_cred_transfer),
-	LSM_HOOK_INIT(cred_माला_लोecid, smack_cred_माला_लोecid),
+	LSM_HOOK_INIT(cred_getsecid, smack_cred_getsecid),
 	LSM_HOOK_INIT(kernel_act_as, smack_kernel_act_as),
 	LSM_HOOK_INIT(kernel_create_files_as, smack_kernel_create_files_as),
 	LSM_HOOK_INIT(task_setpgid, smack_task_setpgid),
 	LSM_HOOK_INIT(task_getpgid, smack_task_getpgid),
-	LSM_HOOK_INIT(task_माला_लोid, smack_task_माला_लोid),
-	LSM_HOOK_INIT(task_माला_लोecid_subj, smack_task_माला_लोecid_subj),
-	LSM_HOOK_INIT(task_माला_लोecid_obj, smack_task_माला_लोecid_obj),
+	LSM_HOOK_INIT(task_getsid, smack_task_getsid),
+	LSM_HOOK_INIT(task_getsecid_subj, smack_task_getsecid_subj),
+	LSM_HOOK_INIT(task_getsecid_obj, smack_task_getsecid_obj),
 	LSM_HOOK_INIT(task_setnice, smack_task_setnice),
 	LSM_HOOK_INIT(task_setioprio, smack_task_setioprio),
 	LSM_HOOK_INIT(task_getioprio, smack_task_getioprio),
 	LSM_HOOK_INIT(task_setscheduler, smack_task_setscheduler),
-	LSM_HOOK_INIT(task_माला_लोcheduler, smack_task_माला_लोcheduler),
+	LSM_HOOK_INIT(task_getscheduler, smack_task_getscheduler),
 	LSM_HOOK_INIT(task_movememory, smack_task_movememory),
-	LSM_HOOK_INIT(task_समाप्त, smack_task_समाप्त),
+	LSM_HOOK_INIT(task_kill, smack_task_kill),
 	LSM_HOOK_INIT(task_to_inode, smack_task_to_inode),
 
 	LSM_HOOK_INIT(ipc_permission, smack_ipc_permission),
-	LSM_HOOK_INIT(ipc_माला_लोecid, smack_ipc_माला_लोecid),
+	LSM_HOOK_INIT(ipc_getsecid, smack_ipc_getsecid),
 
 	LSM_HOOK_INIT(msg_msg_alloc_security, smack_msg_msg_alloc_security),
 
@@ -4799,62 +4798,62 @@ out_opt_err:
 
 	LSM_HOOK_INIT(socket_post_create, smack_socket_post_create),
 	LSM_HOOK_INIT(socket_socketpair, smack_socket_socketpair),
-#अगर_घोषित SMACK_IPV6_PORT_LABELING
+#ifdef SMACK_IPV6_PORT_LABELING
 	LSM_HOOK_INIT(socket_bind, smack_socket_bind),
-#पूर्ण_अगर
+#endif
 	LSM_HOOK_INIT(socket_connect, smack_socket_connect),
 	LSM_HOOK_INIT(socket_sendmsg, smack_socket_sendmsg),
 	LSM_HOOK_INIT(socket_sock_rcv_skb, smack_socket_sock_rcv_skb),
 	LSM_HOOK_INIT(socket_getpeersec_stream, smack_socket_getpeersec_stream),
 	LSM_HOOK_INIT(socket_getpeersec_dgram, smack_socket_getpeersec_dgram),
 	LSM_HOOK_INIT(sk_alloc_security, smack_sk_alloc_security),
-	LSM_HOOK_INIT(sk_मुक्त_security, smack_sk_मुक्त_security),
+	LSM_HOOK_INIT(sk_free_security, smack_sk_free_security),
 	LSM_HOOK_INIT(sock_graft, smack_sock_graft),
 	LSM_HOOK_INIT(inet_conn_request, smack_inet_conn_request),
 	LSM_HOOK_INIT(inet_csk_clone, smack_inet_csk_clone),
 
  /* key management security hooks */
-#अगर_घोषित CONFIG_KEYS
+#ifdef CONFIG_KEYS
 	LSM_HOOK_INIT(key_alloc, smack_key_alloc),
-	LSM_HOOK_INIT(key_मुक्त, smack_key_मुक्त),
+	LSM_HOOK_INIT(key_free, smack_key_free),
 	LSM_HOOK_INIT(key_permission, smack_key_permission),
-	LSM_HOOK_INIT(key_माला_लोecurity, smack_key_माला_लोecurity),
-#अगर_घोषित CONFIG_KEY_NOTIFICATIONS
+	LSM_HOOK_INIT(key_getsecurity, smack_key_getsecurity),
+#ifdef CONFIG_KEY_NOTIFICATIONS
 	LSM_HOOK_INIT(watch_key, smack_watch_key),
-#पूर्ण_अगर
-#पूर्ण_अगर /* CONFIG_KEYS */
+#endif
+#endif /* CONFIG_KEYS */
 
-#अगर_घोषित CONFIG_WATCH_QUEUE
-	LSM_HOOK_INIT(post_notअगरication, smack_post_notअगरication),
-#पूर्ण_अगर
+#ifdef CONFIG_WATCH_QUEUE
+	LSM_HOOK_INIT(post_notification, smack_post_notification),
+#endif
 
  /* Audit hooks */
-#अगर_घोषित CONFIG_AUDIT
+#ifdef CONFIG_AUDIT
 	LSM_HOOK_INIT(audit_rule_init, smack_audit_rule_init),
 	LSM_HOOK_INIT(audit_rule_known, smack_audit_rule_known),
 	LSM_HOOK_INIT(audit_rule_match, smack_audit_rule_match),
-#पूर्ण_अगर /* CONFIG_AUDIT */
+#endif /* CONFIG_AUDIT */
 
 	LSM_HOOK_INIT(ismaclabel, smack_ismaclabel),
 	LSM_HOOK_INIT(secid_to_secctx, smack_secid_to_secctx),
 	LSM_HOOK_INIT(secctx_to_secid, smack_secctx_to_secid),
-	LSM_HOOK_INIT(inode_notअगरysecctx, smack_inode_notअगरysecctx),
+	LSM_HOOK_INIT(inode_notifysecctx, smack_inode_notifysecctx),
 	LSM_HOOK_INIT(inode_setsecctx, smack_inode_setsecctx),
-	LSM_HOOK_INIT(inode_माला_लोecctx, smack_inode_माला_लोecctx),
+	LSM_HOOK_INIT(inode_getsecctx, smack_inode_getsecctx),
 	LSM_HOOK_INIT(inode_copy_up, smack_inode_copy_up),
 	LSM_HOOK_INIT(inode_copy_up_xattr, smack_inode_copy_up_xattr),
 	LSM_HOOK_INIT(dentry_create_files_as, smack_dentry_create_files_as),
-पूर्ण;
+};
 
 
-अटल __init व्योम init_smack_known_list(व्योम)
-अणु
+static __init void init_smack_known_list(void)
+{
 	/*
 	 * Initialize rule list locks
 	 */
 	mutex_init(&smack_known_huh.smk_rules_lock);
 	mutex_init(&smack_known_hat.smk_rules_lock);
-	mutex_init(&smack_known_न्यूनमान.smk_rules_lock);
+	mutex_init(&smack_known_floor.smk_rules_lock);
 	mutex_init(&smack_known_star.smk_rules_lock);
 	mutex_init(&smack_known_web.smk_rules_lock);
 	/*
@@ -4863,7 +4862,7 @@ out_opt_err:
 	INIT_LIST_HEAD(&smack_known_huh.smk_rules);
 	INIT_LIST_HEAD(&smack_known_hat.smk_rules);
 	INIT_LIST_HEAD(&smack_known_star.smk_rules);
-	INIT_LIST_HEAD(&smack_known_न्यूनमान.smk_rules);
+	INIT_LIST_HEAD(&smack_known_floor.smk_rules);
 	INIT_LIST_HEAD(&smack_known_web.smk_rules);
 	/*
 	 * Create the known labels list
@@ -4871,29 +4870,29 @@ out_opt_err:
 	smk_insert_entry(&smack_known_huh);
 	smk_insert_entry(&smack_known_hat);
 	smk_insert_entry(&smack_known_star);
-	smk_insert_entry(&smack_known_न्यूनमान);
+	smk_insert_entry(&smack_known_floor);
 	smk_insert_entry(&smack_known_web);
-पूर्ण
+}
 
 /**
- * smack_init - initialize the smack प्रणाली
+ * smack_init - initialize the smack system
  *
  * Returns 0 on success, -ENOMEM is there's no memory
  */
-अटल __init पूर्णांक smack_init(व्योम)
-अणु
-	काष्ठा cred *cred = (काष्ठा cred *) current->cred;
-	काष्ठा task_smack *tsp;
+static __init int smack_init(void)
+{
+	struct cred *cred = (struct cred *) current->cred;
+	struct task_smack *tsp;
 
 	smack_rule_cache = KMEM_CACHE(smack_rule, 0);
-	अगर (!smack_rule_cache)
-		वापस -ENOMEM;
+	if (!smack_rule_cache)
+		return -ENOMEM;
 
 	/*
-	 * Set the security state क्रम the initial task.
+	 * Set the security state for the initial task.
 	 */
 	tsp = smack_cred(cred);
-	init_task_smack(tsp, &smack_known_न्यूनमान, &smack_known_न्यूनमान);
+	init_task_smack(tsp, &smack_known_floor, &smack_known_floor);
 
 	/*
 	 * Register with LSM
@@ -4902,29 +4901,29 @@ out_opt_err:
 	smack_enabled = 1;
 
 	pr_info("Smack:  Initializing.\n");
-#अगर_घोषित CONFIG_SECURITY_SMACK_NETFILTER
+#ifdef CONFIG_SECURITY_SMACK_NETFILTER
 	pr_info("Smack:  Netfilter enabled.\n");
-#पूर्ण_अगर
-#अगर_घोषित SMACK_IPV6_PORT_LABELING
+#endif
+#ifdef SMACK_IPV6_PORT_LABELING
 	pr_info("Smack:  IPv6 port labeling enabled.\n");
-#पूर्ण_अगर
-#अगर_घोषित SMACK_IPV6_SECMARK_LABELING
+#endif
+#ifdef SMACK_IPV6_SECMARK_LABELING
 	pr_info("Smack:  IPv6 Netfilter enabled.\n");
-#पूर्ण_अगर
+#endif
 
 	/* initialize the smack_known_list */
 	init_smack_known_list();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Smack requires early initialization in order to label
  * all processes and objects when they are created.
  */
-DEFINE_LSM(smack) = अणु
+DEFINE_LSM(smack) = {
 	.name = "smack",
 	.flags = LSM_FLAG_LEGACY_MAJOR | LSM_FLAG_EXCLUSIVE,
 	.blobs = &smack_blob_sizes,
 	.init = smack_init,
-पूर्ण;
+};

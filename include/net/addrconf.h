@@ -1,505 +1,504 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ADDRCONF_H
-#घोषणा _ADDRCONF_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ADDRCONF_H
+#define _ADDRCONF_H
 
-#घोषणा MAX_RTR_SOLICITATIONS		-1		/* unlimited */
-#घोषणा RTR_SOLICITATION_INTERVAL	(4*HZ)
-#घोषणा RTR_SOLICITATION_MAX_INTERVAL	(3600*HZ)	/* 1 hour */
+#define MAX_RTR_SOLICITATIONS		-1		/* unlimited */
+#define RTR_SOLICITATION_INTERVAL	(4*HZ)
+#define RTR_SOLICITATION_MAX_INTERVAL	(3600*HZ)	/* 1 hour */
 
-#घोषणा TEMP_VALID_LIFETIME		(7*86400)
-#घोषणा TEMP_PREFERRED_LIFETIME		(86400)
-#घोषणा REGEN_MAX_RETRY			(3)
-#घोषणा MAX_DESYNC_FACTOR		(600)
+#define TEMP_VALID_LIFETIME		(7*86400)
+#define TEMP_PREFERRED_LIFETIME		(86400)
+#define REGEN_MAX_RETRY			(3)
+#define MAX_DESYNC_FACTOR		(600)
 
-#घोषणा ADDR_CHECK_FREQUENCY		(120*HZ)
+#define ADDR_CHECK_FREQUENCY		(120*HZ)
 
-#घोषणा IPV6_MAX_ADDRESSES		16
+#define IPV6_MAX_ADDRESSES		16
 
-#घोषणा ADDRCONF_TIMER_FUZZ_MINUS	(HZ > 50 ? HZ / 50 : 1)
-#घोषणा ADDRCONF_TIMER_FUZZ		(HZ / 4)
-#घोषणा ADDRCONF_TIMER_FUZZ_MAX		(HZ)
+#define ADDRCONF_TIMER_FUZZ_MINUS	(HZ > 50 ? HZ / 50 : 1)
+#define ADDRCONF_TIMER_FUZZ		(HZ / 4)
+#define ADDRCONF_TIMER_FUZZ_MAX		(HZ)
 
-#घोषणा ADDRCONF_NOTIFY_PRIORITY	0
+#define ADDRCONF_NOTIFY_PRIORITY	0
 
-#समावेश <linux/in.h>
-#समावेश <linux/in6.h>
+#include <linux/in.h>
+#include <linux/in6.h>
 
-काष्ठा prefix_info अणु
+struct prefix_info {
 	__u8			type;
 	__u8			length;
 	__u8			prefix_len;
 
-#अगर defined(__BIG_ENDIAN_BITFIELD)
+#if defined(__BIG_ENDIAN_BITFIELD)
 	__u8			onlink : 1,
-			 	स्वतःconf : 1,
+			 	autoconf : 1,
 				reserved : 6;
-#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
+#elif defined(__LITTLE_ENDIAN_BITFIELD)
 	__u8			reserved : 6,
-				स्वतःconf : 1,
+				autoconf : 1,
 				onlink : 1;
-#अन्यथा
-#त्रुटि "Please fix <asm/byteorder.h>"
-#पूर्ण_अगर
+#else
+#error "Please fix <asm/byteorder.h>"
+#endif
 	__be32			valid;
 	__be32			prefered;
 	__be32			reserved2;
 
-	काष्ठा in6_addr		prefix;
-पूर्ण;
+	struct in6_addr		prefix;
+};
 
-#समावेश <linux/ipv6.h>
-#समावेश <linux/netdevice.h>
-#समावेश <net/अगर_inet6.h>
-#समावेश <net/ipv6.h>
+#include <linux/ipv6.h>
+#include <linux/netdevice.h>
+#include <net/if_inet6.h>
+#include <net/ipv6.h>
 
-काष्ठा in6_validator_info अणु
-	काष्ठा in6_addr		i6vi_addr;
-	काष्ठा inet6_dev	*i6vi_dev;
-	काष्ठा netlink_ext_ack	*extack;
-पूर्ण;
+struct in6_validator_info {
+	struct in6_addr		i6vi_addr;
+	struct inet6_dev	*i6vi_dev;
+	struct netlink_ext_ack	*extack;
+};
 
-काष्ठा अगरa6_config अणु
-	स्थिर काष्ठा in6_addr	*pfx;
-	अचिन्हित पूर्णांक		plen;
+struct ifa6_config {
+	const struct in6_addr	*pfx;
+	unsigned int		plen;
 
-	स्थिर काष्ठा in6_addr	*peer_pfx;
+	const struct in6_addr	*peer_pfx;
 
 	u32			rt_priority;
-	u32			अगरa_flags;
+	u32			ifa_flags;
 	u32			preferred_lft;
 	u32			valid_lft;
 	u16			scope;
-पूर्ण;
+};
 
-पूर्णांक addrconf_init(व्योम);
-व्योम addrconf_cleanup(व्योम);
+int addrconf_init(void);
+void addrconf_cleanup(void);
 
-पूर्णांक addrconf_add_अगरaddr(काष्ठा net *net, व्योम __user *arg);
-पूर्णांक addrconf_del_अगरaddr(काष्ठा net *net, व्योम __user *arg);
-पूर्णांक addrconf_set_dstaddr(काष्ठा net *net, व्योम __user *arg);
+int addrconf_add_ifaddr(struct net *net, void __user *arg);
+int addrconf_del_ifaddr(struct net *net, void __user *arg);
+int addrconf_set_dstaddr(struct net *net, void __user *arg);
 
-पूर्णांक ipv6_chk_addr(काष्ठा net *net, स्थिर काष्ठा in6_addr *addr,
-		  स्थिर काष्ठा net_device *dev, पूर्णांक strict);
-पूर्णांक ipv6_chk_addr_and_flags(काष्ठा net *net, स्थिर काष्ठा in6_addr *addr,
-			    स्थिर काष्ठा net_device *dev, bool skip_dev_check,
-			    पूर्णांक strict, u32 banned_flags);
+int ipv6_chk_addr(struct net *net, const struct in6_addr *addr,
+		  const struct net_device *dev, int strict);
+int ipv6_chk_addr_and_flags(struct net *net, const struct in6_addr *addr,
+			    const struct net_device *dev, bool skip_dev_check,
+			    int strict, u32 banned_flags);
 
-#अगर defined(CONFIG_IPV6_MIP6) || defined(CONFIG_IPV6_MIP6_MODULE)
-पूर्णांक ipv6_chk_home_addr(काष्ठा net *net, स्थिर काष्ठा in6_addr *addr);
-#पूर्ण_अगर
+#if defined(CONFIG_IPV6_MIP6) || defined(CONFIG_IPV6_MIP6_MODULE)
+int ipv6_chk_home_addr(struct net *net, const struct in6_addr *addr);
+#endif
 
-पूर्णांक ipv6_chk_rpl_srh_loop(काष्ठा net *net, स्थिर काष्ठा in6_addr *segs,
-			  अचिन्हित अक्षर nsegs);
+int ipv6_chk_rpl_srh_loop(struct net *net, const struct in6_addr *segs,
+			  unsigned char nsegs);
 
-bool ipv6_chk_custom_prefix(स्थिर काष्ठा in6_addr *addr,
-				   स्थिर अचिन्हित पूर्णांक prefix_len,
-				   काष्ठा net_device *dev);
+bool ipv6_chk_custom_prefix(const struct in6_addr *addr,
+				   const unsigned int prefix_len,
+				   struct net_device *dev);
 
-पूर्णांक ipv6_chk_prefix(स्थिर काष्ठा in6_addr *addr, काष्ठा net_device *dev);
+int ipv6_chk_prefix(const struct in6_addr *addr, struct net_device *dev);
 
-काष्ठा net_device *ipv6_dev_find(काष्ठा net *net, स्थिर काष्ठा in6_addr *addr,
-				 काष्ठा net_device *dev);
+struct net_device *ipv6_dev_find(struct net *net, const struct in6_addr *addr,
+				 struct net_device *dev);
 
-काष्ठा inet6_अगरaddr *ipv6_get_अगरaddr(काष्ठा net *net,
-				     स्थिर काष्ठा in6_addr *addr,
-				     काष्ठा net_device *dev, पूर्णांक strict);
+struct inet6_ifaddr *ipv6_get_ifaddr(struct net *net,
+				     const struct in6_addr *addr,
+				     struct net_device *dev, int strict);
 
-पूर्णांक ipv6_dev_get_saddr(काष्ठा net *net, स्थिर काष्ठा net_device *dev,
-		       स्थिर काष्ठा in6_addr *daddr, अचिन्हित पूर्णांक srcprefs,
-		       काष्ठा in6_addr *saddr);
-पूर्णांक __ipv6_get_lladdr(काष्ठा inet6_dev *idev, काष्ठा in6_addr *addr,
+int ipv6_dev_get_saddr(struct net *net, const struct net_device *dev,
+		       const struct in6_addr *daddr, unsigned int srcprefs,
+		       struct in6_addr *saddr);
+int __ipv6_get_lladdr(struct inet6_dev *idev, struct in6_addr *addr,
 		      u32 banned_flags);
-पूर्णांक ipv6_get_lladdr(काष्ठा net_device *dev, काष्ठा in6_addr *addr,
+int ipv6_get_lladdr(struct net_device *dev, struct in6_addr *addr,
 		    u32 banned_flags);
-bool inet_rcv_saddr_equal(स्थिर काष्ठा sock *sk, स्थिर काष्ठा sock *sk2,
+bool inet_rcv_saddr_equal(const struct sock *sk, const struct sock *sk2,
 			  bool match_wildcard);
-bool inet_rcv_saddr_any(स्थिर काष्ठा sock *sk);
-व्योम addrconf_join_solict(काष्ठा net_device *dev, स्थिर काष्ठा in6_addr *addr);
-व्योम addrconf_leave_solict(काष्ठा inet6_dev *idev, स्थिर काष्ठा in6_addr *addr);
+bool inet_rcv_saddr_any(const struct sock *sk);
+void addrconf_join_solict(struct net_device *dev, const struct in6_addr *addr);
+void addrconf_leave_solict(struct inet6_dev *idev, const struct in6_addr *addr);
 
-व्योम addrconf_add_linklocal(काष्ठा inet6_dev *idev,
-			    स्थिर काष्ठा in6_addr *addr, u32 flags);
+void addrconf_add_linklocal(struct inet6_dev *idev,
+			    const struct in6_addr *addr, u32 flags);
 
-पूर्णांक addrconf_prefix_rcv_add_addr(काष्ठा net *net, काष्ठा net_device *dev,
-				 स्थिर काष्ठा prefix_info *pinfo,
-				 काष्ठा inet6_dev *in6_dev,
-				 स्थिर काष्ठा in6_addr *addr, पूर्णांक addr_type,
+int addrconf_prefix_rcv_add_addr(struct net *net, struct net_device *dev,
+				 const struct prefix_info *pinfo,
+				 struct inet6_dev *in6_dev,
+				 const struct in6_addr *addr, int addr_type,
 				 u32 addr_flags, bool sllao, bool tokenized,
 				 __u32 valid_lft, u32 prefered_lft);
 
-अटल अंतरभूत व्योम addrconf_addr_eui48_base(u8 *eui, स्थिर अक्षर *स्थिर addr)
-अणु
-	स_नकल(eui, addr, 3);
+static inline void addrconf_addr_eui48_base(u8 *eui, const char *const addr)
+{
+	memcpy(eui, addr, 3);
 	eui[3] = 0xFF;
 	eui[4] = 0xFE;
-	स_नकल(eui + 5, addr + 3, 3);
-पूर्ण
+	memcpy(eui + 5, addr + 3, 3);
+}
 
-अटल अंतरभूत व्योम addrconf_addr_eui48(u8 *eui, स्थिर अक्षर *स्थिर addr)
-अणु
+static inline void addrconf_addr_eui48(u8 *eui, const char *const addr)
+{
 	addrconf_addr_eui48_base(eui, addr);
 	eui[0] ^= 2;
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक addrconf_अगरid_eui48(u8 *eui, काष्ठा net_device *dev)
-अणु
-	अगर (dev->addr_len != ETH_ALEN)
-		वापस -1;
+static inline int addrconf_ifid_eui48(u8 *eui, struct net_device *dev)
+{
+	if (dev->addr_len != ETH_ALEN)
+		return -1;
 
 	/*
 	 * The zSeries OSA network cards can be shared among various
 	 * OS instances, but the OSA cards have only one MAC address.
 	 * This leads to duplicate address conflicts in conjunction
-	 * with IPv6 अगर more than one instance uses the same card.
+	 * with IPv6 if more than one instance uses the same card.
 	 *
-	 * The driver क्रम these cards can deliver a unique 16-bit
-	 * identअगरier क्रम each instance sharing the same card.  It is
-	 * placed instead of 0xFFFE in the पूर्णांकerface identअगरier.  The
-	 * "u" bit of the पूर्णांकerface identअगरier is not inverted in this
-	 * हाल.  Hence the resulting पूर्णांकerface identअगरier has local
+	 * The driver for these cards can deliver a unique 16-bit
+	 * identifier for each instance sharing the same card.  It is
+	 * placed instead of 0xFFFE in the interface identifier.  The
+	 * "u" bit of the interface identifier is not inverted in this
+	 * case.  Hence the resulting interface identifier has local
 	 * scope according to RFC2373.
 	 */
 
 	addrconf_addr_eui48_base(eui, dev->dev_addr);
 
-	अगर (dev->dev_id) अणु
+	if (dev->dev_id) {
 		eui[3] = (dev->dev_id >> 8) & 0xFF;
 		eui[4] = dev->dev_id & 0xFF;
-	पूर्ण अन्यथा अणु
+	} else {
 		eui[0] ^= 2;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ addrconf_समयout_fixup(u32 समयout,
-						   अचिन्हित पूर्णांक unit)
-अणु
-	अगर (समयout == 0xffffffff)
-		वापस ~0UL;
+static inline unsigned long addrconf_timeout_fixup(u32 timeout,
+						   unsigned int unit)
+{
+	if (timeout == 0xffffffff)
+		return ~0UL;
 
 	/*
-	 * Aव्योम arithmetic overflow.
-	 * Assuming unit is स्थिरant and non-zero, this "if" statement
+	 * Avoid arithmetic overflow.
+	 * Assuming unit is constant and non-zero, this "if" statement
 	 * will go away on 64bit archs.
 	 */
-	अगर (0xfffffffe > दीर्घ_उच्च / unit && समयout > दीर्घ_उच्च / unit)
-		वापस दीर्घ_उच्च / unit;
+	if (0xfffffffe > LONG_MAX / unit && timeout > LONG_MAX / unit)
+		return LONG_MAX / unit;
 
-	वापस समयout;
-पूर्ण
+	return timeout;
+}
 
-अटल अंतरभूत पूर्णांक addrconf_finite_समयout(अचिन्हित दीर्घ समयout)
-अणु
-	वापस ~समयout;
-पूर्ण
+static inline int addrconf_finite_timeout(unsigned long timeout)
+{
+	return ~timeout;
+}
 
 /*
- *	IPv6 Address Label subप्रणाली (addrlabel.c)
+ *	IPv6 Address Label subsystem (addrlabel.c)
  */
-पूर्णांक ipv6_addr_label_init(व्योम);
-व्योम ipv6_addr_label_cleanup(व्योम);
-पूर्णांक ipv6_addr_label_rtnl_रेजिस्टर(व्योम);
-u32 ipv6_addr_label(काष्ठा net *net, स्थिर काष्ठा in6_addr *addr,
-		    पूर्णांक type, पूर्णांक अगरindex);
+int ipv6_addr_label_init(void);
+void ipv6_addr_label_cleanup(void);
+int ipv6_addr_label_rtnl_register(void);
+u32 ipv6_addr_label(struct net *net, const struct in6_addr *addr,
+		    int type, int ifindex);
 
 /*
  *	multicast prototypes (mcast.c)
  */
-अटल अंतरभूत bool ipv6_mc_may_pull(काष्ठा sk_buff *skb,
-				    अचिन्हित पूर्णांक len)
-अणु
-	अगर (skb_transport_offset(skb) + ipv6_transport_len(skb) < len)
-		वापस false;
+static inline bool ipv6_mc_may_pull(struct sk_buff *skb,
+				    unsigned int len)
+{
+	if (skb_transport_offset(skb) + ipv6_transport_len(skb) < len)
+		return false;
 
-	वापस pskb_may_pull(skb, len);
-पूर्ण
+	return pskb_may_pull(skb, len);
+}
 
-पूर्णांक ipv6_sock_mc_join(काष्ठा sock *sk, पूर्णांक अगरindex,
-		      स्थिर काष्ठा in6_addr *addr);
-पूर्णांक ipv6_sock_mc_drop(काष्ठा sock *sk, पूर्णांक अगरindex,
-		      स्थिर काष्ठा in6_addr *addr);
-व्योम __ipv6_sock_mc_बंद(काष्ठा sock *sk);
-व्योम ipv6_sock_mc_बंद(काष्ठा sock *sk);
-bool inet6_mc_check(काष्ठा sock *sk, स्थिर काष्ठा in6_addr *mc_addr,
-		    स्थिर काष्ठा in6_addr *src_addr);
+int ipv6_sock_mc_join(struct sock *sk, int ifindex,
+		      const struct in6_addr *addr);
+int ipv6_sock_mc_drop(struct sock *sk, int ifindex,
+		      const struct in6_addr *addr);
+void __ipv6_sock_mc_close(struct sock *sk);
+void ipv6_sock_mc_close(struct sock *sk);
+bool inet6_mc_check(struct sock *sk, const struct in6_addr *mc_addr,
+		    const struct in6_addr *src_addr);
 
-पूर्णांक ipv6_dev_mc_inc(काष्ठा net_device *dev, स्थिर काष्ठा in6_addr *addr);
-पूर्णांक __ipv6_dev_mc_dec(काष्ठा inet6_dev *idev, स्थिर काष्ठा in6_addr *addr);
-पूर्णांक ipv6_dev_mc_dec(काष्ठा net_device *dev, स्थिर काष्ठा in6_addr *addr);
-व्योम ipv6_mc_up(काष्ठा inet6_dev *idev);
-व्योम ipv6_mc_करोwn(काष्ठा inet6_dev *idev);
-व्योम ipv6_mc_unmap(काष्ठा inet6_dev *idev);
-व्योम ipv6_mc_remap(काष्ठा inet6_dev *idev);
-व्योम ipv6_mc_init_dev(काष्ठा inet6_dev *idev);
-व्योम ipv6_mc_destroy_dev(काष्ठा inet6_dev *idev);
-पूर्णांक ipv6_mc_check_mld(काष्ठा sk_buff *skb);
-व्योम addrconf_dad_failure(काष्ठा sk_buff *skb, काष्ठा inet6_अगरaddr *अगरp);
+int ipv6_dev_mc_inc(struct net_device *dev, const struct in6_addr *addr);
+int __ipv6_dev_mc_dec(struct inet6_dev *idev, const struct in6_addr *addr);
+int ipv6_dev_mc_dec(struct net_device *dev, const struct in6_addr *addr);
+void ipv6_mc_up(struct inet6_dev *idev);
+void ipv6_mc_down(struct inet6_dev *idev);
+void ipv6_mc_unmap(struct inet6_dev *idev);
+void ipv6_mc_remap(struct inet6_dev *idev);
+void ipv6_mc_init_dev(struct inet6_dev *idev);
+void ipv6_mc_destroy_dev(struct inet6_dev *idev);
+int ipv6_mc_check_mld(struct sk_buff *skb);
+void addrconf_dad_failure(struct sk_buff *skb, struct inet6_ifaddr *ifp);
 
-bool ipv6_chk_mcast_addr(काष्ठा net_device *dev, स्थिर काष्ठा in6_addr *group,
-			 स्थिर काष्ठा in6_addr *src_addr);
+bool ipv6_chk_mcast_addr(struct net_device *dev, const struct in6_addr *group,
+			 const struct in6_addr *src_addr);
 
-व्योम ipv6_mc_dad_complete(काष्ठा inet6_dev *idev);
+void ipv6_mc_dad_complete(struct inet6_dev *idev);
 
 /*
- * identअगरy MLD packets क्रम MLD filter exceptions
+ * identify MLD packets for MLD filter exceptions
  */
-अटल अंतरभूत bool ipv6_is_mld(काष्ठा sk_buff *skb, पूर्णांक nexthdr, पूर्णांक offset)
-अणु
-	काष्ठा icmp6hdr *hdr;
+static inline bool ipv6_is_mld(struct sk_buff *skb, int nexthdr, int offset)
+{
+	struct icmp6hdr *hdr;
 
-	अगर (nexthdr != IPPROTO_ICMPV6 ||
-	    !pskb_network_may_pull(skb, offset + माप(काष्ठा icmp6hdr)))
-		वापस false;
+	if (nexthdr != IPPROTO_ICMPV6 ||
+	    !pskb_network_may_pull(skb, offset + sizeof(struct icmp6hdr)))
+		return false;
 
-	hdr = (काष्ठा icmp6hdr *)(skb_network_header(skb) + offset);
+	hdr = (struct icmp6hdr *)(skb_network_header(skb) + offset);
 
-	चयन (hdr->icmp6_type) अणु
-	हाल ICMPV6_MGM_QUERY:
-	हाल ICMPV6_MGM_REPORT:
-	हाल ICMPV6_MGM_REDUCTION:
-	हाल ICMPV6_MLD2_REPORT:
-		वापस true;
-	शेष:
-		अवरोध;
-	पूर्ण
-	वापस false;
-पूर्ण
+	switch (hdr->icmp6_type) {
+	case ICMPV6_MGM_QUERY:
+	case ICMPV6_MGM_REPORT:
+	case ICMPV6_MGM_REDUCTION:
+	case ICMPV6_MLD2_REPORT:
+		return true;
+	default:
+		break;
+	}
+	return false;
+}
 
-व्योम addrconf_prefix_rcv(काष्ठा net_device *dev,
-			 u8 *opt, पूर्णांक len, bool sllao);
+void addrconf_prefix_rcv(struct net_device *dev,
+			 u8 *opt, int len, bool sllao);
 
 /*
  *	anycast prototypes (anycast.c)
  */
-पूर्णांक ipv6_sock_ac_join(काष्ठा sock *sk, पूर्णांक अगरindex,
-		      स्थिर काष्ठा in6_addr *addr);
-पूर्णांक ipv6_sock_ac_drop(काष्ठा sock *sk, पूर्णांक अगरindex,
-		      स्थिर काष्ठा in6_addr *addr);
-व्योम __ipv6_sock_ac_बंद(काष्ठा sock *sk);
-व्योम ipv6_sock_ac_बंद(काष्ठा sock *sk);
+int ipv6_sock_ac_join(struct sock *sk, int ifindex,
+		      const struct in6_addr *addr);
+int ipv6_sock_ac_drop(struct sock *sk, int ifindex,
+		      const struct in6_addr *addr);
+void __ipv6_sock_ac_close(struct sock *sk);
+void ipv6_sock_ac_close(struct sock *sk);
 
-पूर्णांक __ipv6_dev_ac_inc(काष्ठा inet6_dev *idev, स्थिर काष्ठा in6_addr *addr);
-पूर्णांक __ipv6_dev_ac_dec(काष्ठा inet6_dev *idev, स्थिर काष्ठा in6_addr *addr);
-व्योम ipv6_ac_destroy_dev(काष्ठा inet6_dev *idev);
-bool ipv6_chk_acast_addr(काष्ठा net *net, काष्ठा net_device *dev,
-			 स्थिर काष्ठा in6_addr *addr);
-bool ipv6_chk_acast_addr_src(काष्ठा net *net, काष्ठा net_device *dev,
-			     स्थिर काष्ठा in6_addr *addr);
-पूर्णांक ipv6_anycast_init(व्योम);
-व्योम ipv6_anycast_cleanup(व्योम);
+int __ipv6_dev_ac_inc(struct inet6_dev *idev, const struct in6_addr *addr);
+int __ipv6_dev_ac_dec(struct inet6_dev *idev, const struct in6_addr *addr);
+void ipv6_ac_destroy_dev(struct inet6_dev *idev);
+bool ipv6_chk_acast_addr(struct net *net, struct net_device *dev,
+			 const struct in6_addr *addr);
+bool ipv6_chk_acast_addr_src(struct net *net, struct net_device *dev,
+			     const struct in6_addr *addr);
+int ipv6_anycast_init(void);
+void ipv6_anycast_cleanup(void);
 
-/* Device notअगरier */
-पूर्णांक रेजिस्टर_inet6addr_notअगरier(काष्ठा notअगरier_block *nb);
-पूर्णांक unरेजिस्टर_inet6addr_notअगरier(काष्ठा notअगरier_block *nb);
-पूर्णांक inet6addr_notअगरier_call_chain(अचिन्हित दीर्घ val, व्योम *v);
+/* Device notifier */
+int register_inet6addr_notifier(struct notifier_block *nb);
+int unregister_inet6addr_notifier(struct notifier_block *nb);
+int inet6addr_notifier_call_chain(unsigned long val, void *v);
 
-पूर्णांक रेजिस्टर_inet6addr_validator_notअगरier(काष्ठा notअगरier_block *nb);
-पूर्णांक unरेजिस्टर_inet6addr_validator_notअगरier(काष्ठा notअगरier_block *nb);
-पूर्णांक inet6addr_validator_notअगरier_call_chain(अचिन्हित दीर्घ val, व्योम *v);
+int register_inet6addr_validator_notifier(struct notifier_block *nb);
+int unregister_inet6addr_validator_notifier(struct notifier_block *nb);
+int inet6addr_validator_notifier_call_chain(unsigned long val, void *v);
 
-व्योम inet6_netconf_notअगरy_devconf(काष्ठा net *net, पूर्णांक event, पूर्णांक type,
-				  पूर्णांक अगरindex, काष्ठा ipv6_devconf *devconf);
+void inet6_netconf_notify_devconf(struct net *net, int event, int type,
+				  int ifindex, struct ipv6_devconf *devconf);
 
 /**
- * __in6_dev_get - get inet6_dev poपूर्णांकer from netdevice
+ * __in6_dev_get - get inet6_dev pointer from netdevice
  * @dev: network device
  *
- * Caller must hold rcu_पढ़ो_lock or RTNL, because this function
- * करोes not take a reference on the inet6_dev.
+ * Caller must hold rcu_read_lock or RTNL, because this function
+ * does not take a reference on the inet6_dev.
  */
-अटल अंतरभूत काष्ठा inet6_dev *__in6_dev_get(स्थिर काष्ठा net_device *dev)
-अणु
-	वापस rcu_dereference_rtnl(dev->ip6_ptr);
-पूर्ण
+static inline struct inet6_dev *__in6_dev_get(const struct net_device *dev)
+{
+	return rcu_dereference_rtnl(dev->ip6_ptr);
+}
 
 /**
- * __in6_dev_stats_get - get inet6_dev poपूर्णांकer क्रम stats
+ * __in6_dev_stats_get - get inet6_dev pointer for stats
  * @dev: network device
- * @skb: skb क्रम original incoming पूर्णांकerface अगर neeeded
+ * @skb: skb for original incoming interface if neeeded
  *
- * Caller must hold rcu_पढ़ो_lock or RTNL, because this function
- * करोes not take a reference on the inet6_dev.
+ * Caller must hold rcu_read_lock or RTNL, because this function
+ * does not take a reference on the inet6_dev.
  */
-अटल अंतरभूत काष्ठा inet6_dev *__in6_dev_stats_get(स्थिर काष्ठा net_device *dev,
-						    स्थिर काष्ठा sk_buff *skb)
-अणु
-	अगर (netअगर_is_l3_master(dev))
-		dev = dev_get_by_index_rcu(dev_net(dev), inet6_iअगर(skb));
-	वापस __in6_dev_get(dev);
-पूर्ण
+static inline struct inet6_dev *__in6_dev_stats_get(const struct net_device *dev,
+						    const struct sk_buff *skb)
+{
+	if (netif_is_l3_master(dev))
+		dev = dev_get_by_index_rcu(dev_net(dev), inet6_iif(skb));
+	return __in6_dev_get(dev);
+}
 
 /**
- * __in6_dev_get_safely - get inet6_dev poपूर्णांकer from netdevice
+ * __in6_dev_get_safely - get inet6_dev pointer from netdevice
  * @dev: network device
  *
  * This is a safer version of __in6_dev_get
  */
-अटल अंतरभूत काष्ठा inet6_dev *__in6_dev_get_safely(स्थिर काष्ठा net_device *dev)
-अणु
-	अगर (likely(dev))
-		वापस rcu_dereference_rtnl(dev->ip6_ptr);
-	अन्यथा
-		वापस शून्य;
-पूर्ण
+static inline struct inet6_dev *__in6_dev_get_safely(const struct net_device *dev)
+{
+	if (likely(dev))
+		return rcu_dereference_rtnl(dev->ip6_ptr);
+	else
+		return NULL;
+}
 
 /**
- * in6_dev_get - get inet6_dev poपूर्णांकer from netdevice
+ * in6_dev_get - get inet6_dev pointer from netdevice
  * @dev: network device
  *
  * This version can be used in any context, and takes a reference
  * on the inet6_dev. Callers must use in6_dev_put() later to
  * release this reference.
  */
-अटल अंतरभूत काष्ठा inet6_dev *in6_dev_get(स्थिर काष्ठा net_device *dev)
-अणु
-	काष्ठा inet6_dev *idev;
+static inline struct inet6_dev *in6_dev_get(const struct net_device *dev)
+{
+	struct inet6_dev *idev;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	idev = rcu_dereference(dev->ip6_ptr);
-	अगर (idev)
+	if (idev)
 		refcount_inc(&idev->refcnt);
-	rcu_पढ़ो_unlock();
-	वापस idev;
-पूर्ण
+	rcu_read_unlock();
+	return idev;
+}
 
-अटल अंतरभूत काष्ठा neigh_parms *__in6_dev_nd_parms_get_rcu(स्थिर काष्ठा net_device *dev)
-अणु
-	काष्ठा inet6_dev *idev = __in6_dev_get(dev);
+static inline struct neigh_parms *__in6_dev_nd_parms_get_rcu(const struct net_device *dev)
+{
+	struct inet6_dev *idev = __in6_dev_get(dev);
 
-	वापस idev ? idev->nd_parms : शून्य;
-पूर्ण
+	return idev ? idev->nd_parms : NULL;
+}
 
-व्योम in6_dev_finish_destroy(काष्ठा inet6_dev *idev);
+void in6_dev_finish_destroy(struct inet6_dev *idev);
 
-अटल अंतरभूत व्योम in6_dev_put(काष्ठा inet6_dev *idev)
-अणु
-	अगर (refcount_dec_and_test(&idev->refcnt))
+static inline void in6_dev_put(struct inet6_dev *idev)
+{
+	if (refcount_dec_and_test(&idev->refcnt))
 		in6_dev_finish_destroy(idev);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम in6_dev_put_clear(काष्ठा inet6_dev **pidev)
-अणु
-	काष्ठा inet6_dev *idev = *pidev;
+static inline void in6_dev_put_clear(struct inet6_dev **pidev)
+{
+	struct inet6_dev *idev = *pidev;
 
-	अगर (idev) अणु
+	if (idev) {
 		in6_dev_put(idev);
-		*pidev = शून्य;
-	पूर्ण
-पूर्ण
+		*pidev = NULL;
+	}
+}
 
-अटल अंतरभूत व्योम __in6_dev_put(काष्ठा inet6_dev *idev)
-अणु
+static inline void __in6_dev_put(struct inet6_dev *idev)
+{
 	refcount_dec(&idev->refcnt);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम in6_dev_hold(काष्ठा inet6_dev *idev)
-अणु
+static inline void in6_dev_hold(struct inet6_dev *idev)
+{
 	refcount_inc(&idev->refcnt);
-पूर्ण
+}
 
-/* called with rcu_पढ़ो_lock held */
-अटल अंतरभूत bool ip6_ignore_linkकरोwn(स्थिर काष्ठा net_device *dev)
-अणु
-	स्थिर काष्ठा inet6_dev *idev = __in6_dev_get(dev);
+/* called with rcu_read_lock held */
+static inline bool ip6_ignore_linkdown(const struct net_device *dev)
+{
+	const struct inet6_dev *idev = __in6_dev_get(dev);
 
-	वापस !!idev->cnf.ignore_routes_with_linkकरोwn;
-पूर्ण
+	return !!idev->cnf.ignore_routes_with_linkdown;
+}
 
-व्योम inet6_अगरa_finish_destroy(काष्ठा inet6_अगरaddr *अगरp);
+void inet6_ifa_finish_destroy(struct inet6_ifaddr *ifp);
 
-अटल अंतरभूत व्योम in6_अगरa_put(काष्ठा inet6_अगरaddr *अगरp)
-अणु
-	अगर (refcount_dec_and_test(&अगरp->refcnt))
-		inet6_अगरa_finish_destroy(अगरp);
-पूर्ण
+static inline void in6_ifa_put(struct inet6_ifaddr *ifp)
+{
+	if (refcount_dec_and_test(&ifp->refcnt))
+		inet6_ifa_finish_destroy(ifp);
+}
 
-अटल अंतरभूत व्योम __in6_अगरa_put(काष्ठा inet6_अगरaddr *अगरp)
-अणु
-	refcount_dec(&अगरp->refcnt);
-पूर्ण
+static inline void __in6_ifa_put(struct inet6_ifaddr *ifp)
+{
+	refcount_dec(&ifp->refcnt);
+}
 
-अटल अंतरभूत व्योम in6_अगरa_hold(काष्ठा inet6_अगरaddr *अगरp)
-अणु
-	refcount_inc(&अगरp->refcnt);
-पूर्ण
+static inline void in6_ifa_hold(struct inet6_ifaddr *ifp)
+{
+	refcount_inc(&ifp->refcnt);
+}
 
 
 /*
  *	compute link-local solicited-node multicast address
  */
 
-अटल अंतरभूत व्योम addrconf_addr_solict_mult(स्थिर काष्ठा in6_addr *addr,
-					     काष्ठा in6_addr *solicited)
-अणु
+static inline void addrconf_addr_solict_mult(const struct in6_addr *addr,
+					     struct in6_addr *solicited)
+{
 	ipv6_addr_set(solicited,
 		      htonl(0xFF020000), 0,
 		      htonl(0x1),
 		      htonl(0xFF000000) | addr->s6_addr32[3]);
-पूर्ण
+}
 
-अटल अंतरभूत bool ipv6_addr_is_ll_all_nodes(स्थिर काष्ठा in6_addr *addr)
-अणु
-#अगर defined(CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS) && BITS_PER_LONG == 64
-	__be64 *p = (__क्रमce __be64 *)addr;
-	वापस ((p[0] ^ cpu_to_be64(0xff02000000000000UL)) | (p[1] ^ cpu_to_be64(1))) == 0UL;
-#अन्यथा
-	वापस ((addr->s6_addr32[0] ^ htonl(0xff020000)) |
+static inline bool ipv6_addr_is_ll_all_nodes(const struct in6_addr *addr)
+{
+#if defined(CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS) && BITS_PER_LONG == 64
+	__be64 *p = (__force __be64 *)addr;
+	return ((p[0] ^ cpu_to_be64(0xff02000000000000UL)) | (p[1] ^ cpu_to_be64(1))) == 0UL;
+#else
+	return ((addr->s6_addr32[0] ^ htonl(0xff020000)) |
 		addr->s6_addr32[1] | addr->s6_addr32[2] |
 		(addr->s6_addr32[3] ^ htonl(0x00000001))) == 0;
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-अटल अंतरभूत bool ipv6_addr_is_ll_all_routers(स्थिर काष्ठा in6_addr *addr)
-अणु
-#अगर defined(CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS) && BITS_PER_LONG == 64
-	__be64 *p = (__क्रमce __be64 *)addr;
-	वापस ((p[0] ^ cpu_to_be64(0xff02000000000000UL)) | (p[1] ^ cpu_to_be64(2))) == 0UL;
-#अन्यथा
-	वापस ((addr->s6_addr32[0] ^ htonl(0xff020000)) |
+static inline bool ipv6_addr_is_ll_all_routers(const struct in6_addr *addr)
+{
+#if defined(CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS) && BITS_PER_LONG == 64
+	__be64 *p = (__force __be64 *)addr;
+	return ((p[0] ^ cpu_to_be64(0xff02000000000000UL)) | (p[1] ^ cpu_to_be64(2))) == 0UL;
+#else
+	return ((addr->s6_addr32[0] ^ htonl(0xff020000)) |
 		addr->s6_addr32[1] | addr->s6_addr32[2] |
 		(addr->s6_addr32[3] ^ htonl(0x00000002))) == 0;
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-अटल अंतरभूत bool ipv6_addr_is_isatap(स्थिर काष्ठा in6_addr *addr)
-अणु
-	वापस (addr->s6_addr32[2] | htonl(0x02000000)) == htonl(0x02005EFE);
-पूर्ण
+static inline bool ipv6_addr_is_isatap(const struct in6_addr *addr)
+{
+	return (addr->s6_addr32[2] | htonl(0x02000000)) == htonl(0x02005EFE);
+}
 
-अटल अंतरभूत bool ipv6_addr_is_solict_mult(स्थिर काष्ठा in6_addr *addr)
-अणु
-#अगर defined(CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS) && BITS_PER_LONG == 64
-	__be64 *p = (__क्रमce __be64 *)addr;
-	वापस ((p[0] ^ cpu_to_be64(0xff02000000000000UL)) |
+static inline bool ipv6_addr_is_solict_mult(const struct in6_addr *addr)
+{
+#if defined(CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS) && BITS_PER_LONG == 64
+	__be64 *p = (__force __be64 *)addr;
+	return ((p[0] ^ cpu_to_be64(0xff02000000000000UL)) |
 		((p[1] ^ cpu_to_be64(0x00000001ff000000UL)) &
 		 cpu_to_be64(0xffffffffff000000UL))) == 0UL;
-#अन्यथा
-	वापस ((addr->s6_addr32[0] ^ htonl(0xff020000)) |
+#else
+	return ((addr->s6_addr32[0] ^ htonl(0xff020000)) |
 		addr->s6_addr32[1] |
 		(addr->s6_addr32[2] ^ htonl(0x00000001)) |
 		(addr->s6_addr[12] ^ 0xff)) == 0;
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-अटल अंतरभूत bool ipv6_addr_is_all_snoopers(स्थिर काष्ठा in6_addr *addr)
-अणु
-#अगर defined(CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS) && BITS_PER_LONG == 64
-	__be64 *p = (__क्रमce __be64 *)addr;
+static inline bool ipv6_addr_is_all_snoopers(const struct in6_addr *addr)
+{
+#if defined(CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS) && BITS_PER_LONG == 64
+	__be64 *p = (__force __be64 *)addr;
 
-	वापस ((p[0] ^ cpu_to_be64(0xff02000000000000UL)) |
+	return ((p[0] ^ cpu_to_be64(0xff02000000000000UL)) |
 		(p[1] ^ cpu_to_be64(0x6a))) == 0UL;
-#अन्यथा
-	वापस ((addr->s6_addr32[0] ^ htonl(0xff020000)) |
+#else
+	return ((addr->s6_addr32[0] ^ htonl(0xff020000)) |
 		addr->s6_addr32[1] | addr->s6_addr32[2] |
 		(addr->s6_addr32[3] ^ htonl(0x0000006a))) == 0;
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-#अगर_घोषित CONFIG_PROC_FS
-पूर्णांक अगर6_proc_init(व्योम);
-व्योम अगर6_proc_निकास(व्योम);
-#पूर्ण_अगर
+#ifdef CONFIG_PROC_FS
+int if6_proc_init(void);
+void if6_proc_exit(void);
+#endif
 
-#पूर्ण_अगर
+#endif

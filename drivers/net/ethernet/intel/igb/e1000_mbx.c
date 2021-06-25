@@ -1,392 +1,391 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 2007 - 2018 Intel Corporation. */
 
-#समावेश "e1000_mbx.h"
+#include "e1000_mbx.h"
 
 /**
- *  igb_पढ़ो_mbx - Reads a message from the mailbox
- *  @hw: poपूर्णांकer to the HW काष्ठाure
+ *  igb_read_mbx - Reads a message from the mailbox
+ *  @hw: pointer to the HW structure
  *  @msg: The message buffer
  *  @size: Length of buffer
- *  @mbx_id: id of mailbox to पढ़ो
+ *  @mbx_id: id of mailbox to read
  *  @unlock: skip locking or not
  *
- *  वापसs SUCCESS अगर it successfully पढ़ो message from buffer
+ *  returns SUCCESS if it successfully read message from buffer
  **/
-s32 igb_पढ़ो_mbx(काष्ठा e1000_hw *hw, u32 *msg, u16 size, u16 mbx_id,
+s32 igb_read_mbx(struct e1000_hw *hw, u32 *msg, u16 size, u16 mbx_id,
 		 bool unlock)
-अणु
-	काष्ठा e1000_mbx_info *mbx = &hw->mbx;
+{
+	struct e1000_mbx_info *mbx = &hw->mbx;
 	s32 ret_val = -E1000_ERR_MBX;
 
-	/* limit पढ़ो to size of mailbox */
-	अगर (size > mbx->size)
+	/* limit read to size of mailbox */
+	if (size > mbx->size)
 		size = mbx->size;
 
-	अगर (mbx->ops.पढ़ो)
-		ret_val = mbx->ops.पढ़ो(hw, msg, size, mbx_id, unlock);
+	if (mbx->ops.read)
+		ret_val = mbx->ops.read(hw, msg, size, mbx_id, unlock);
 
-	वापस ret_val;
-पूर्ण
+	return ret_val;
+}
 
 /**
- *  igb_ग_लिखो_mbx - Write a message to the mailbox
- *  @hw: poपूर्णांकer to the HW काष्ठाure
+ *  igb_write_mbx - Write a message to the mailbox
+ *  @hw: pointer to the HW structure
  *  @msg: The message buffer
  *  @size: Length of buffer
- *  @mbx_id: id of mailbox to ग_लिखो
+ *  @mbx_id: id of mailbox to write
  *
- *  वापसs SUCCESS अगर it successfully copied message पूर्णांकo the buffer
+ *  returns SUCCESS if it successfully copied message into the buffer
  **/
-s32 igb_ग_लिखो_mbx(काष्ठा e1000_hw *hw, u32 *msg, u16 size, u16 mbx_id)
-अणु
-	काष्ठा e1000_mbx_info *mbx = &hw->mbx;
+s32 igb_write_mbx(struct e1000_hw *hw, u32 *msg, u16 size, u16 mbx_id)
+{
+	struct e1000_mbx_info *mbx = &hw->mbx;
 	s32 ret_val = 0;
 
-	अगर (size > mbx->size)
+	if (size > mbx->size)
 		ret_val = -E1000_ERR_MBX;
 
-	अन्यथा अगर (mbx->ops.ग_लिखो)
-		ret_val = mbx->ops.ग_लिखो(hw, msg, size, mbx_id);
+	else if (mbx->ops.write)
+		ret_val = mbx->ops.write(hw, msg, size, mbx_id);
 
-	वापस ret_val;
-पूर्ण
-
-/**
- *  igb_check_क्रम_msg - checks to see अगर someone sent us mail
- *  @hw: poपूर्णांकer to the HW काष्ठाure
- *  @mbx_id: id of mailbox to check
- *
- *  वापसs SUCCESS अगर the Status bit was found or अन्यथा ERR_MBX
- **/
-s32 igb_check_क्रम_msg(काष्ठा e1000_hw *hw, u16 mbx_id)
-अणु
-	काष्ठा e1000_mbx_info *mbx = &hw->mbx;
-	s32 ret_val = -E1000_ERR_MBX;
-
-	अगर (mbx->ops.check_क्रम_msg)
-		ret_val = mbx->ops.check_क्रम_msg(hw, mbx_id);
-
-	वापस ret_val;
-पूर्ण
+	return ret_val;
+}
 
 /**
- *  igb_check_क्रम_ack - checks to see अगर someone sent us ACK
- *  @hw: poपूर्णांकer to the HW काष्ठाure
+ *  igb_check_for_msg - checks to see if someone sent us mail
+ *  @hw: pointer to the HW structure
  *  @mbx_id: id of mailbox to check
  *
- *  वापसs SUCCESS अगर the Status bit was found or अन्यथा ERR_MBX
+ *  returns SUCCESS if the Status bit was found or else ERR_MBX
  **/
-s32 igb_check_क्रम_ack(काष्ठा e1000_hw *hw, u16 mbx_id)
-अणु
-	काष्ठा e1000_mbx_info *mbx = &hw->mbx;
+s32 igb_check_for_msg(struct e1000_hw *hw, u16 mbx_id)
+{
+	struct e1000_mbx_info *mbx = &hw->mbx;
 	s32 ret_val = -E1000_ERR_MBX;
 
-	अगर (mbx->ops.check_क्रम_ack)
-		ret_val = mbx->ops.check_क्रम_ack(hw, mbx_id);
+	if (mbx->ops.check_for_msg)
+		ret_val = mbx->ops.check_for_msg(hw, mbx_id);
 
-	वापस ret_val;
-पूर्ण
+	return ret_val;
+}
 
 /**
- *  igb_check_क्रम_rst - checks to see अगर other side has reset
- *  @hw: poपूर्णांकer to the HW काष्ठाure
+ *  igb_check_for_ack - checks to see if someone sent us ACK
+ *  @hw: pointer to the HW structure
  *  @mbx_id: id of mailbox to check
  *
- *  वापसs SUCCESS अगर the Status bit was found or अन्यथा ERR_MBX
+ *  returns SUCCESS if the Status bit was found or else ERR_MBX
  **/
-s32 igb_check_क्रम_rst(काष्ठा e1000_hw *hw, u16 mbx_id)
-अणु
-	काष्ठा e1000_mbx_info *mbx = &hw->mbx;
+s32 igb_check_for_ack(struct e1000_hw *hw, u16 mbx_id)
+{
+	struct e1000_mbx_info *mbx = &hw->mbx;
 	s32 ret_val = -E1000_ERR_MBX;
 
-	अगर (mbx->ops.check_क्रम_rst)
-		ret_val = mbx->ops.check_क्रम_rst(hw, mbx_id);
+	if (mbx->ops.check_for_ack)
+		ret_val = mbx->ops.check_for_ack(hw, mbx_id);
 
-	वापस ret_val;
-पूर्ण
+	return ret_val;
+}
+
+/**
+ *  igb_check_for_rst - checks to see if other side has reset
+ *  @hw: pointer to the HW structure
+ *  @mbx_id: id of mailbox to check
+ *
+ *  returns SUCCESS if the Status bit was found or else ERR_MBX
+ **/
+s32 igb_check_for_rst(struct e1000_hw *hw, u16 mbx_id)
+{
+	struct e1000_mbx_info *mbx = &hw->mbx;
+	s32 ret_val = -E1000_ERR_MBX;
+
+	if (mbx->ops.check_for_rst)
+		ret_val = mbx->ops.check_for_rst(hw, mbx_id);
+
+	return ret_val;
+}
 
 /**
  *  igb_unlock_mbx - unlock the mailbox
- *  @hw: poपूर्णांकer to the HW काष्ठाure
+ *  @hw: pointer to the HW structure
  *  @mbx_id: id of mailbox to check
  *
- *  वापसs SUCCESS अगर the mailbox was unlocked or अन्यथा ERR_MBX
+ *  returns SUCCESS if the mailbox was unlocked or else ERR_MBX
  **/
-s32 igb_unlock_mbx(काष्ठा e1000_hw *hw, u16 mbx_id)
-अणु
-	काष्ठा e1000_mbx_info *mbx = &hw->mbx;
+s32 igb_unlock_mbx(struct e1000_hw *hw, u16 mbx_id)
+{
+	struct e1000_mbx_info *mbx = &hw->mbx;
 	s32 ret_val = -E1000_ERR_MBX;
 
-	अगर (mbx->ops.unlock)
+	if (mbx->ops.unlock)
 		ret_val = mbx->ops.unlock(hw, mbx_id);
 
-	वापस ret_val;
-पूर्ण
+	return ret_val;
+}
 
 /**
- *  igb_poll_क्रम_msg - Wait क्रम message notअगरication
- *  @hw: poपूर्णांकer to the HW काष्ठाure
- *  @mbx_id: id of mailbox to ग_लिखो
+ *  igb_poll_for_msg - Wait for message notification
+ *  @hw: pointer to the HW structure
+ *  @mbx_id: id of mailbox to write
  *
- *  वापसs SUCCESS अगर it successfully received a message notअगरication
+ *  returns SUCCESS if it successfully received a message notification
  **/
-अटल s32 igb_poll_क्रम_msg(काष्ठा e1000_hw *hw, u16 mbx_id)
-अणु
-	काष्ठा e1000_mbx_info *mbx = &hw->mbx;
-	पूर्णांक countकरोwn = mbx->समयout;
+static s32 igb_poll_for_msg(struct e1000_hw *hw, u16 mbx_id)
+{
+	struct e1000_mbx_info *mbx = &hw->mbx;
+	int countdown = mbx->timeout;
 
-	अगर (!countकरोwn || !mbx->ops.check_क्रम_msg)
-		जाओ out;
+	if (!countdown || !mbx->ops.check_for_msg)
+		goto out;
 
-	जबतक (countकरोwn && mbx->ops.check_क्रम_msg(hw, mbx_id)) अणु
-		countकरोwn--;
-		अगर (!countकरोwn)
-			अवरोध;
+	while (countdown && mbx->ops.check_for_msg(hw, mbx_id)) {
+		countdown--;
+		if (!countdown)
+			break;
 		udelay(mbx->usec_delay);
-	पूर्ण
+	}
 
-	/* अगर we failed, all future posted messages fail until reset */
-	अगर (!countकरोwn)
-		mbx->समयout = 0;
+	/* if we failed, all future posted messages fail until reset */
+	if (!countdown)
+		mbx->timeout = 0;
 out:
-	वापस countकरोwn ? 0 : -E1000_ERR_MBX;
-पूर्ण
+	return countdown ? 0 : -E1000_ERR_MBX;
+}
 
 /**
- *  igb_poll_क्रम_ack - Wait क्रम message acknowledgement
- *  @hw: poपूर्णांकer to the HW काष्ठाure
- *  @mbx_id: id of mailbox to ग_लिखो
+ *  igb_poll_for_ack - Wait for message acknowledgement
+ *  @hw: pointer to the HW structure
+ *  @mbx_id: id of mailbox to write
  *
- *  वापसs SUCCESS अगर it successfully received a message acknowledgement
+ *  returns SUCCESS if it successfully received a message acknowledgement
  **/
-अटल s32 igb_poll_क्रम_ack(काष्ठा e1000_hw *hw, u16 mbx_id)
-अणु
-	काष्ठा e1000_mbx_info *mbx = &hw->mbx;
-	पूर्णांक countकरोwn = mbx->समयout;
+static s32 igb_poll_for_ack(struct e1000_hw *hw, u16 mbx_id)
+{
+	struct e1000_mbx_info *mbx = &hw->mbx;
+	int countdown = mbx->timeout;
 
-	अगर (!countकरोwn || !mbx->ops.check_क्रम_ack)
-		जाओ out;
+	if (!countdown || !mbx->ops.check_for_ack)
+		goto out;
 
-	जबतक (countकरोwn && mbx->ops.check_क्रम_ack(hw, mbx_id)) अणु
-		countकरोwn--;
-		अगर (!countकरोwn)
-			अवरोध;
+	while (countdown && mbx->ops.check_for_ack(hw, mbx_id)) {
+		countdown--;
+		if (!countdown)
+			break;
 		udelay(mbx->usec_delay);
-	पूर्ण
+	}
 
-	/* अगर we failed, all future posted messages fail until reset */
-	अगर (!countकरोwn)
-		mbx->समयout = 0;
+	/* if we failed, all future posted messages fail until reset */
+	if (!countdown)
+		mbx->timeout = 0;
 out:
-	वापस countकरोwn ? 0 : -E1000_ERR_MBX;
-पूर्ण
+	return countdown ? 0 : -E1000_ERR_MBX;
+}
 
 /**
- *  igb_पढ़ो_posted_mbx - Wait क्रम message notअगरication and receive message
- *  @hw: poपूर्णांकer to the HW काष्ठाure
+ *  igb_read_posted_mbx - Wait for message notification and receive message
+ *  @hw: pointer to the HW structure
  *  @msg: The message buffer
  *  @size: Length of buffer
- *  @mbx_id: id of mailbox to ग_लिखो
+ *  @mbx_id: id of mailbox to write
  *
- *  वापसs SUCCESS अगर it successfully received a message notअगरication and
- *  copied it पूर्णांकo the receive buffer.
+ *  returns SUCCESS if it successfully received a message notification and
+ *  copied it into the receive buffer.
  **/
-अटल s32 igb_पढ़ो_posted_mbx(काष्ठा e1000_hw *hw, u32 *msg, u16 size,
+static s32 igb_read_posted_mbx(struct e1000_hw *hw, u32 *msg, u16 size,
 			       u16 mbx_id)
-अणु
-	काष्ठा e1000_mbx_info *mbx = &hw->mbx;
+{
+	struct e1000_mbx_info *mbx = &hw->mbx;
 	s32 ret_val = -E1000_ERR_MBX;
 
-	अगर (!mbx->ops.पढ़ो)
-		जाओ out;
+	if (!mbx->ops.read)
+		goto out;
 
-	ret_val = igb_poll_क्रम_msg(hw, mbx_id);
+	ret_val = igb_poll_for_msg(hw, mbx_id);
 
-	अगर (!ret_val)
-		ret_val = mbx->ops.पढ़ो(hw, msg, size, mbx_id, true);
+	if (!ret_val)
+		ret_val = mbx->ops.read(hw, msg, size, mbx_id, true);
 out:
-	वापस ret_val;
-पूर्ण
+	return ret_val;
+}
 
 /**
- *  igb_ग_लिखो_posted_mbx - Write a message to the mailbox, रुको क्रम ack
- *  @hw: poपूर्णांकer to the HW काष्ठाure
+ *  igb_write_posted_mbx - Write a message to the mailbox, wait for ack
+ *  @hw: pointer to the HW structure
  *  @msg: The message buffer
  *  @size: Length of buffer
- *  @mbx_id: id of mailbox to ग_लिखो
+ *  @mbx_id: id of mailbox to write
  *
- *  वापसs SUCCESS अगर it successfully copied message पूर्णांकo the buffer and
- *  received an ack to that message within delay * समयout period
+ *  returns SUCCESS if it successfully copied message into the buffer and
+ *  received an ack to that message within delay * timeout period
  **/
-अटल s32 igb_ग_लिखो_posted_mbx(काष्ठा e1000_hw *hw, u32 *msg, u16 size,
+static s32 igb_write_posted_mbx(struct e1000_hw *hw, u32 *msg, u16 size,
 				u16 mbx_id)
-अणु
-	काष्ठा e1000_mbx_info *mbx = &hw->mbx;
+{
+	struct e1000_mbx_info *mbx = &hw->mbx;
 	s32 ret_val = -E1000_ERR_MBX;
 
-	/* निकास अगर either we can't write or there isn't a defined समयout */
-	अगर (!mbx->ops.ग_लिखो || !mbx->समयout)
-		जाओ out;
+	/* exit if either we can't write or there isn't a defined timeout */
+	if (!mbx->ops.write || !mbx->timeout)
+		goto out;
 
 	/* send msg */
-	ret_val = mbx->ops.ग_लिखो(hw, msg, size, mbx_id);
+	ret_val = mbx->ops.write(hw, msg, size, mbx_id);
 
-	/* अगर msg sent रुको until we receive an ack */
-	अगर (!ret_val)
-		ret_val = igb_poll_क्रम_ack(hw, mbx_id);
+	/* if msg sent wait until we receive an ack */
+	if (!ret_val)
+		ret_val = igb_poll_for_ack(hw, mbx_id);
 out:
-	वापस ret_val;
-पूर्ण
+	return ret_val;
+}
 
-अटल s32 igb_check_क्रम_bit_pf(काष्ठा e1000_hw *hw, u32 mask)
-अणु
+static s32 igb_check_for_bit_pf(struct e1000_hw *hw, u32 mask)
+{
 	u32 mbvficr = rd32(E1000_MBVFICR);
 	s32 ret_val = -E1000_ERR_MBX;
 
-	अगर (mbvficr & mask) अणु
+	if (mbvficr & mask) {
 		ret_val = 0;
 		wr32(E1000_MBVFICR, mask);
-	पूर्ण
+	}
 
-	वापस ret_val;
-पूर्ण
+	return ret_val;
+}
 
 /**
- *  igb_check_क्रम_msg_pf - checks to see अगर the VF has sent mail
- *  @hw: poपूर्णांकer to the HW काष्ठाure
+ *  igb_check_for_msg_pf - checks to see if the VF has sent mail
+ *  @hw: pointer to the HW structure
  *  @vf_number: the VF index
  *
- *  वापसs SUCCESS अगर the VF has set the Status bit or अन्यथा ERR_MBX
+ *  returns SUCCESS if the VF has set the Status bit or else ERR_MBX
  **/
-अटल s32 igb_check_क्रम_msg_pf(काष्ठा e1000_hw *hw, u16 vf_number)
-अणु
+static s32 igb_check_for_msg_pf(struct e1000_hw *hw, u16 vf_number)
+{
 	s32 ret_val = -E1000_ERR_MBX;
 
-	अगर (!igb_check_क्रम_bit_pf(hw, E1000_MBVFICR_VFREQ_VF1 << vf_number)) अणु
+	if (!igb_check_for_bit_pf(hw, E1000_MBVFICR_VFREQ_VF1 << vf_number)) {
 		ret_val = 0;
 		hw->mbx.stats.reqs++;
-	पूर्ण
+	}
 
-	वापस ret_val;
-पूर्ण
+	return ret_val;
+}
 
 /**
- *  igb_check_क्रम_ack_pf - checks to see अगर the VF has ACKed
- *  @hw: poपूर्णांकer to the HW काष्ठाure
+ *  igb_check_for_ack_pf - checks to see if the VF has ACKed
+ *  @hw: pointer to the HW structure
  *  @vf_number: the VF index
  *
- *  वापसs SUCCESS अगर the VF has set the Status bit or अन्यथा ERR_MBX
+ *  returns SUCCESS if the VF has set the Status bit or else ERR_MBX
  **/
-अटल s32 igb_check_क्रम_ack_pf(काष्ठा e1000_hw *hw, u16 vf_number)
-अणु
+static s32 igb_check_for_ack_pf(struct e1000_hw *hw, u16 vf_number)
+{
 	s32 ret_val = -E1000_ERR_MBX;
 
-	अगर (!igb_check_क्रम_bit_pf(hw, E1000_MBVFICR_VFACK_VF1 << vf_number)) अणु
+	if (!igb_check_for_bit_pf(hw, E1000_MBVFICR_VFACK_VF1 << vf_number)) {
 		ret_val = 0;
 		hw->mbx.stats.acks++;
-	पूर्ण
+	}
 
-	वापस ret_val;
-पूर्ण
+	return ret_val;
+}
 
 /**
- *  igb_check_क्रम_rst_pf - checks to see अगर the VF has reset
- *  @hw: poपूर्णांकer to the HW काष्ठाure
+ *  igb_check_for_rst_pf - checks to see if the VF has reset
+ *  @hw: pointer to the HW structure
  *  @vf_number: the VF index
  *
- *  वापसs SUCCESS अगर the VF has set the Status bit or अन्यथा ERR_MBX
+ *  returns SUCCESS if the VF has set the Status bit or else ERR_MBX
  **/
-अटल s32 igb_check_क्रम_rst_pf(काष्ठा e1000_hw *hw, u16 vf_number)
-अणु
+static s32 igb_check_for_rst_pf(struct e1000_hw *hw, u16 vf_number)
+{
 	u32 vflre = rd32(E1000_VFLRE);
 	s32 ret_val = -E1000_ERR_MBX;
 
-	अगर (vflre & BIT(vf_number)) अणु
+	if (vflre & BIT(vf_number)) {
 		ret_val = 0;
 		wr32(E1000_VFLRE, BIT(vf_number));
 		hw->mbx.stats.rsts++;
-	पूर्ण
+	}
 
-	वापस ret_val;
-पूर्ण
+	return ret_val;
+}
 
 /**
  *  igb_obtain_mbx_lock_pf - obtain mailbox lock
- *  @hw: poपूर्णांकer to the HW काष्ठाure
+ *  @hw: pointer to the HW structure
  *  @vf_number: the VF index
  *
- *  वापस SUCCESS अगर we obtained the mailbox lock
+ *  return SUCCESS if we obtained the mailbox lock
  **/
-अटल s32 igb_obtain_mbx_lock_pf(काष्ठा e1000_hw *hw, u16 vf_number)
-अणु
+static s32 igb_obtain_mbx_lock_pf(struct e1000_hw *hw, u16 vf_number)
+{
 	s32 ret_val = -E1000_ERR_MBX;
 	u32 p2v_mailbox;
-	पूर्णांक count = 10;
+	int count = 10;
 
-	करो अणु
+	do {
 		/* Take ownership of the buffer */
 		wr32(E1000_P2VMAILBOX(vf_number), E1000_P2VMAILBOX_PFU);
 
-		/* reserve mailbox क्रम vf use */
+		/* reserve mailbox for vf use */
 		p2v_mailbox = rd32(E1000_P2VMAILBOX(vf_number));
-		अगर (p2v_mailbox & E1000_P2VMAILBOX_PFU) अणु
+		if (p2v_mailbox & E1000_P2VMAILBOX_PFU) {
 			ret_val = 0;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		udelay(1000);
-	पूर्ण जबतक (count-- > 0);
+	} while (count-- > 0);
 
-	वापस ret_val;
-पूर्ण
+	return ret_val;
+}
 
 /**
  *  igb_release_mbx_lock_pf - release mailbox lock
- *  @hw: poपूर्णांकer to the HW काष्ठाure
+ *  @hw: pointer to the HW structure
  *  @vf_number: the VF index
  *
- *  वापस SUCCESS अगर we released the mailbox lock
+ *  return SUCCESS if we released the mailbox lock
  **/
-अटल s32 igb_release_mbx_lock_pf(काष्ठा e1000_hw *hw, u16 vf_number)
-अणु
+static s32 igb_release_mbx_lock_pf(struct e1000_hw *hw, u16 vf_number)
+{
 	u32 p2v_mailbox;
 
-	/* drop PF lock of mailbox, अगर set */
+	/* drop PF lock of mailbox, if set */
 	p2v_mailbox = rd32(E1000_P2VMAILBOX(vf_number));
-	अगर (p2v_mailbox & E1000_P2VMAILBOX_PFU)
+	if (p2v_mailbox & E1000_P2VMAILBOX_PFU)
 		wr32(E1000_P2VMAILBOX(vf_number),
 		     p2v_mailbox & ~E1000_P2VMAILBOX_PFU);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- *  igb_ग_लिखो_mbx_pf - Places a message in the mailbox
- *  @hw: poपूर्णांकer to the HW काष्ठाure
+ *  igb_write_mbx_pf - Places a message in the mailbox
+ *  @hw: pointer to the HW structure
  *  @msg: The message buffer
  *  @size: Length of buffer
  *  @vf_number: the VF index
  *
- *  वापसs SUCCESS अगर it successfully copied message पूर्णांकo the buffer
+ *  returns SUCCESS if it successfully copied message into the buffer
  **/
-अटल s32 igb_ग_लिखो_mbx_pf(काष्ठा e1000_hw *hw, u32 *msg, u16 size,
+static s32 igb_write_mbx_pf(struct e1000_hw *hw, u32 *msg, u16 size,
 			    u16 vf_number)
-अणु
+{
 	s32 ret_val;
 	u16 i;
 
 	/* lock the mailbox to prevent pf/vf race condition */
 	ret_val = igb_obtain_mbx_lock_pf(hw, vf_number);
-	अगर (ret_val)
-		जाओ out_no_ग_लिखो;
+	if (ret_val)
+		goto out_no_write;
 
 	/* flush msg and acks as we are overwriting the message buffer */
-	igb_check_क्रम_msg_pf(hw, vf_number);
-	igb_check_क्रम_ack_pf(hw, vf_number);
+	igb_check_for_msg_pf(hw, vf_number);
+	igb_check_for_ack_pf(hw, vf_number);
 
-	/* copy the caller specअगरied message to the mailbox memory buffer */
-	क्रम (i = 0; i < size; i++)
+	/* copy the caller specified message to the mailbox memory buffer */
+	for (i = 0; i < size; i++)
 		array_wr32(E1000_VMBMEM(vf_number), i, msg[i]);
 
 	/* Interrupt VF to tell it a message has been sent and release buffer*/
@@ -395,74 +394,74 @@ out:
 	/* update stats */
 	hw->mbx.stats.msgs_tx++;
 
-out_no_ग_लिखो:
-	वापस ret_val;
+out_no_write:
+	return ret_val;
 
-पूर्ण
+}
 
 /**
- *  igb_पढ़ो_mbx_pf - Read a message from the mailbox
- *  @hw: poपूर्णांकer to the HW काष्ठाure
+ *  igb_read_mbx_pf - Read a message from the mailbox
+ *  @hw: pointer to the HW structure
  *  @msg: The message buffer
  *  @size: Length of buffer
  *  @vf_number: the VF index
- *  @unlock: unlock the mailbox when करोne?
+ *  @unlock: unlock the mailbox when done?
  *
  *  This function copies a message from the mailbox buffer to the caller's
  *  memory buffer.  The presumption is that the caller knows that there was
- *  a message due to a VF request so no polling क्रम message is needed.
+ *  a message due to a VF request so no polling for message is needed.
  **/
-अटल s32 igb_पढ़ो_mbx_pf(काष्ठा e1000_hw *hw, u32 *msg, u16 size,
+static s32 igb_read_mbx_pf(struct e1000_hw *hw, u32 *msg, u16 size,
 			   u16 vf_number, bool unlock)
-अणु
+{
 	s32 ret_val;
 	u16 i;
 
 	/* lock the mailbox to prevent pf/vf race condition */
 	ret_val = igb_obtain_mbx_lock_pf(hw, vf_number);
-	अगर (ret_val)
-		जाओ out_no_पढ़ो;
+	if (ret_val)
+		goto out_no_read;
 
 	/* copy the message to the mailbox memory buffer */
-	क्रम (i = 0; i < size; i++)
+	for (i = 0; i < size; i++)
 		msg[i] = array_rd32(E1000_VMBMEM(vf_number), i);
 
 	/* Acknowledge the message and release mailbox lock (or not) */
-	अगर (unlock)
+	if (unlock)
 		wr32(E1000_P2VMAILBOX(vf_number), E1000_P2VMAILBOX_ACK);
-	अन्यथा
+	else
 		wr32(E1000_P2VMAILBOX(vf_number),
 		     E1000_P2VMAILBOX_ACK | E1000_P2VMAILBOX_PFU);
 
 	/* update stats */
 	hw->mbx.stats.msgs_rx++;
 
-out_no_पढ़ो:
-	वापस ret_val;
-पूर्ण
+out_no_read:
+	return ret_val;
+}
 
 /**
- *  igb_init_mbx_params_pf - set initial values क्रम pf mailbox
- *  @hw: poपूर्णांकer to the HW काष्ठाure
+ *  igb_init_mbx_params_pf - set initial values for pf mailbox
+ *  @hw: pointer to the HW structure
  *
- *  Initializes the hw->mbx काष्ठा to correct values क्रम pf mailbox
+ *  Initializes the hw->mbx struct to correct values for pf mailbox
  */
-s32 igb_init_mbx_params_pf(काष्ठा e1000_hw *hw)
-अणु
-	काष्ठा e1000_mbx_info *mbx = &hw->mbx;
+s32 igb_init_mbx_params_pf(struct e1000_hw *hw)
+{
+	struct e1000_mbx_info *mbx = &hw->mbx;
 
-	mbx->समयout = 0;
+	mbx->timeout = 0;
 	mbx->usec_delay = 0;
 
 	mbx->size = E1000_VFMAILBOX_SIZE;
 
-	mbx->ops.पढ़ो = igb_पढ़ो_mbx_pf;
-	mbx->ops.ग_लिखो = igb_ग_लिखो_mbx_pf;
-	mbx->ops.पढ़ो_posted = igb_पढ़ो_posted_mbx;
-	mbx->ops.ग_लिखो_posted = igb_ग_लिखो_posted_mbx;
-	mbx->ops.check_क्रम_msg = igb_check_क्रम_msg_pf;
-	mbx->ops.check_क्रम_ack = igb_check_क्रम_ack_pf;
-	mbx->ops.check_क्रम_rst = igb_check_क्रम_rst_pf;
+	mbx->ops.read = igb_read_mbx_pf;
+	mbx->ops.write = igb_write_mbx_pf;
+	mbx->ops.read_posted = igb_read_posted_mbx;
+	mbx->ops.write_posted = igb_write_posted_mbx;
+	mbx->ops.check_for_msg = igb_check_for_msg_pf;
+	mbx->ops.check_for_ack = igb_check_for_ack_pf;
+	mbx->ops.check_for_rst = igb_check_for_rst_pf;
 	mbx->ops.unlock = igb_release_mbx_lock_pf;
 
 	mbx->stats.msgs_tx = 0;
@@ -471,6 +470,6 @@ s32 igb_init_mbx_params_pf(काष्ठा e1000_hw *hw)
 	mbx->stats.acks = 0;
 	mbx->stats.rsts = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 

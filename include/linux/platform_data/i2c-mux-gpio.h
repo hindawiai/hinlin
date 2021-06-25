@@ -1,34 +1,33 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * i2c-mux-gpio पूर्णांकerface to platक्रमm code
+ * i2c-mux-gpio interface to platform code
  *
  * Peter Korsgaard <peter.korsgaard@barco.com>
  */
 
-#अगर_अघोषित _LINUX_I2C_MUX_GPIO_H
-#घोषणा _LINUX_I2C_MUX_GPIO_H
+#ifndef _LINUX_I2C_MUX_GPIO_H
+#define _LINUX_I2C_MUX_GPIO_H
 
-/* MUX has no specअगरic idle mode */
-#घोषणा I2C_MUX_GPIO_NO_IDLE	((अचिन्हित)-1)
+/* MUX has no specific idle mode */
+#define I2C_MUX_GPIO_NO_IDLE	((unsigned)-1)
 
 /**
- * काष्ठा i2c_mux_gpio_platक्रमm_data - Platक्रमm-dependent data क्रम i2c-mux-gpio
+ * struct i2c_mux_gpio_platform_data - Platform-dependent data for i2c-mux-gpio
  * @parent: Parent I2C bus adapter number
- * @base_nr: Base I2C bus number to number adapters from or zero क्रम dynamic
- * @values: Array of biपंचांगasks of GPIO settings (low/high) क्रम each
+ * @base_nr: Base I2C bus number to number adapters from or zero for dynamic
+ * @values: Array of bitmasks of GPIO settings (low/high) for each
  *	position
  * @n_values: Number of multiplexer positions (busses to instantiate)
- * @classes: Optional I2C स्वतः-detection classes
- * @idle: Biपंचांगask to ग_लिखो to MUX when idle or GPIO_I2CMUX_NO_IDLE अगर not used
+ * @classes: Optional I2C auto-detection classes
+ * @idle: Bitmask to write to MUX when idle or GPIO_I2CMUX_NO_IDLE if not used
  */
-काष्ठा i2c_mux_gpio_platक्रमm_data अणु
-	पूर्णांक parent;
-	पूर्णांक base_nr;
-	स्थिर अचिन्हित *values;
-	पूर्णांक n_values;
-	स्थिर अचिन्हित *classes;
-	अचिन्हित idle;
-पूर्ण;
+struct i2c_mux_gpio_platform_data {
+	int parent;
+	int base_nr;
+	const unsigned *values;
+	int n_values;
+	const unsigned *classes;
+	unsigned idle;
+};
 
-#पूर्ण_अगर /* _LINUX_I2C_MUX_GPIO_H */
+#endif /* _LINUX_I2C_MUX_GPIO_H */

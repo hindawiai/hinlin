@@ -1,198 +1,197 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * (C) COPYRIGHT 2018 ARM Limited. All rights reserved.
  * Author: James.Qian.Wang <james.qian.wang@arm.com>
  *
  */
-#समावेश "komeda_dev.h"
-#समावेश "komeda_kms.h"
+#include "komeda_dev.h"
+#include "komeda_kms.h"
 
-अटल पूर्णांक
-komeda_wb_init_data_flow(काष्ठा komeda_layer *wb_layer,
-			 काष्ठा drm_connector_state *conn_st,
-			 काष्ठा komeda_crtc_state *kcrtc_st,
-			 काष्ठा komeda_data_flow_cfg *dflow)
-अणु
-	काष्ठा drm_framebuffer *fb = conn_st->ग_लिखोback_job->fb;
+static int
+komeda_wb_init_data_flow(struct komeda_layer *wb_layer,
+			 struct drm_connector_state *conn_st,
+			 struct komeda_crtc_state *kcrtc_st,
+			 struct komeda_data_flow_cfg *dflow)
+{
+	struct drm_framebuffer *fb = conn_st->writeback_job->fb;
 
-	स_रखो(dflow, 0, माप(*dflow));
+	memset(dflow, 0, sizeof(*dflow));
 
 	dflow->out_w = fb->width;
 	dflow->out_h = fb->height;
 
-	/* the ग_लिखो back data comes from the compiz */
+	/* the write back data comes from the compiz */
 	pipeline_composition_size(kcrtc_st, &dflow->in_w, &dflow->in_h);
 	dflow->input.component = &wb_layer->base.pipeline->compiz->base;
-	/* compiz करोesn't output alpha */
+	/* compiz doesn't output alpha */
 	dflow->pixel_blend_mode = DRM_MODE_BLEND_PIXEL_NONE;
 	dflow->rot = DRM_MODE_ROTATE_0;
 
 	komeda_complete_data_flow_cfg(wb_layer, dflow, fb);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-komeda_wb_encoder_atomic_check(काष्ठा drm_encoder *encoder,
-			       काष्ठा drm_crtc_state *crtc_st,
-			       काष्ठा drm_connector_state *conn_st)
-अणु
-	काष्ठा komeda_crtc_state *kcrtc_st = to_kcrtc_st(crtc_st);
-	काष्ठा drm_ग_लिखोback_job *ग_लिखोback_job = conn_st->ग_लिखोback_job;
-	काष्ठा komeda_layer *wb_layer;
-	काष्ठा komeda_data_flow_cfg dflow;
-	पूर्णांक err;
+static int
+komeda_wb_encoder_atomic_check(struct drm_encoder *encoder,
+			       struct drm_crtc_state *crtc_st,
+			       struct drm_connector_state *conn_st)
+{
+	struct komeda_crtc_state *kcrtc_st = to_kcrtc_st(crtc_st);
+	struct drm_writeback_job *writeback_job = conn_st->writeback_job;
+	struct komeda_layer *wb_layer;
+	struct komeda_data_flow_cfg dflow;
+	int err;
 
-	अगर (!ग_लिखोback_job)
-		वापस 0;
+	if (!writeback_job)
+		return 0;
 
-	अगर (!crtc_st->active) अणु
+	if (!crtc_st->active) {
 		DRM_DEBUG_ATOMIC("Cannot write the composition result out on a inactive CRTC.\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	wb_layer = to_kconn(to_wb_conn(conn_st->connector))->wb_layer;
 
 	/*
-	 * No need क्रम a full modested when the only connector changed is the
-	 * ग_लिखोback connector.
+	 * No need for a full modested when the only connector changed is the
+	 * writeback connector.
 	 */
-	अगर (crtc_st->connectors_changed &&
+	if (crtc_st->connectors_changed &&
 	    is_only_changed_connector(crtc_st, conn_st->connector))
 		crtc_st->connectors_changed = false;
 
 	err = komeda_wb_init_data_flow(wb_layer, conn_st, kcrtc_st, &dflow);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (dflow.en_split)
+	if (dflow.en_split)
 		err = komeda_build_wb_split_data_flow(wb_layer,
 				conn_st, kcrtc_st, &dflow);
-	अन्यथा
+	else
 		err = komeda_build_wb_data_flow(wb_layer,
 				conn_st, kcrtc_st, &dflow);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल स्थिर काष्ठा drm_encoder_helper_funcs komeda_wb_encoder_helper_funcs = अणु
+static const struct drm_encoder_helper_funcs komeda_wb_encoder_helper_funcs = {
 	.atomic_check = komeda_wb_encoder_atomic_check,
-पूर्ण;
+};
 
-अटल पूर्णांक
-komeda_wb_connector_get_modes(काष्ठा drm_connector *connector)
-अणु
-	वापस 0;
-पूर्ण
+static int
+komeda_wb_connector_get_modes(struct drm_connector *connector)
+{
+	return 0;
+}
 
-अटल क्रमागत drm_mode_status
-komeda_wb_connector_mode_valid(काष्ठा drm_connector *connector,
-			       काष्ठा drm_display_mode *mode)
-अणु
-	काष्ठा drm_device *dev = connector->dev;
-	काष्ठा drm_mode_config *mode_config = &dev->mode_config;
-	पूर्णांक w = mode->hdisplay, h = mode->vdisplay;
+static enum drm_mode_status
+komeda_wb_connector_mode_valid(struct drm_connector *connector,
+			       struct drm_display_mode *mode)
+{
+	struct drm_device *dev = connector->dev;
+	struct drm_mode_config *mode_config = &dev->mode_config;
+	int w = mode->hdisplay, h = mode->vdisplay;
 
-	अगर ((w < mode_config->min_width) || (w > mode_config->max_width))
-		वापस MODE_BAD_HVALUE;
+	if ((w < mode_config->min_width) || (w > mode_config->max_width))
+		return MODE_BAD_HVALUE;
 
-	अगर ((h < mode_config->min_height) || (h > mode_config->max_height))
-		वापस MODE_BAD_VVALUE;
+	if ((h < mode_config->min_height) || (h > mode_config->max_height))
+		return MODE_BAD_VVALUE;
 
-	वापस MODE_OK;
-पूर्ण
+	return MODE_OK;
+}
 
-अटल स्थिर काष्ठा drm_connector_helper_funcs komeda_wb_conn_helper_funcs = अणु
+static const struct drm_connector_helper_funcs komeda_wb_conn_helper_funcs = {
 	.get_modes	= komeda_wb_connector_get_modes,
 	.mode_valid	= komeda_wb_connector_mode_valid,
-पूर्ण;
+};
 
-अटल क्रमागत drm_connector_status
-komeda_wb_connector_detect(काष्ठा drm_connector *connector, bool क्रमce)
-अणु
-	वापस connector_status_connected;
-पूर्ण
+static enum drm_connector_status
+komeda_wb_connector_detect(struct drm_connector *connector, bool force)
+{
+	return connector_status_connected;
+}
 
-अटल पूर्णांक
-komeda_wb_connector_fill_modes(काष्ठा drm_connector *connector,
-			       uपूर्णांक32_t maxX, uपूर्णांक32_t maxY)
-अणु
-	वापस 0;
-पूर्ण
+static int
+komeda_wb_connector_fill_modes(struct drm_connector *connector,
+			       uint32_t maxX, uint32_t maxY)
+{
+	return 0;
+}
 
-अटल व्योम komeda_wb_connector_destroy(काष्ठा drm_connector *connector)
-अणु
+static void komeda_wb_connector_destroy(struct drm_connector *connector)
+{
 	drm_connector_cleanup(connector);
-	kमुक्त(to_kconn(to_wb_conn(connector)));
-पूर्ण
+	kfree(to_kconn(to_wb_conn(connector)));
+}
 
-अटल स्थिर काष्ठा drm_connector_funcs komeda_wb_connector_funcs = अणु
+static const struct drm_connector_funcs komeda_wb_connector_funcs = {
 	.reset			= drm_atomic_helper_connector_reset,
 	.detect			= komeda_wb_connector_detect,
 	.fill_modes		= komeda_wb_connector_fill_modes,
 	.destroy		= komeda_wb_connector_destroy,
 	.atomic_duplicate_state	= drm_atomic_helper_connector_duplicate_state,
 	.atomic_destroy_state	= drm_atomic_helper_connector_destroy_state,
-पूर्ण;
+};
 
-अटल पूर्णांक komeda_wb_connector_add(काष्ठा komeda_kms_dev *kms,
-				   काष्ठा komeda_crtc *kcrtc)
-अणु
-	काष्ठा komeda_dev *mdev = kms->base.dev_निजी;
-	काष्ठा komeda_wb_connector *kwb_conn;
-	काष्ठा drm_ग_लिखोback_connector *wb_conn;
-	काष्ठा drm_display_info *info;
-	u32 *क्रमmats, n_क्रमmats = 0;
-	पूर्णांक err;
+static int komeda_wb_connector_add(struct komeda_kms_dev *kms,
+				   struct komeda_crtc *kcrtc)
+{
+	struct komeda_dev *mdev = kms->base.dev_private;
+	struct komeda_wb_connector *kwb_conn;
+	struct drm_writeback_connector *wb_conn;
+	struct drm_display_info *info;
+	u32 *formats, n_formats = 0;
+	int err;
 
-	अगर (!kcrtc->master->wb_layer)
-		वापस 0;
+	if (!kcrtc->master->wb_layer)
+		return 0;
 
-	kwb_conn = kzalloc(माप(*kwb_conn), GFP_KERNEL);
-	अगर (!kwb_conn)
-		वापस -ENOMEM;
+	kwb_conn = kzalloc(sizeof(*kwb_conn), GFP_KERNEL);
+	if (!kwb_conn)
+		return -ENOMEM;
 
 	kwb_conn->wb_layer = kcrtc->master->wb_layer;
 
 	wb_conn = &kwb_conn->base;
 	wb_conn->encoder.possible_crtcs = BIT(drm_crtc_index(&kcrtc->base));
 
-	क्रमmats = komeda_get_layer_fourcc_list(&mdev->fmt_tbl,
+	formats = komeda_get_layer_fourcc_list(&mdev->fmt_tbl,
 					       kwb_conn->wb_layer->layer_type,
-					       &n_क्रमmats);
+					       &n_formats);
 
-	err = drm_ग_लिखोback_connector_init(&kms->base, wb_conn,
+	err = drm_writeback_connector_init(&kms->base, wb_conn,
 					   &komeda_wb_connector_funcs,
 					   &komeda_wb_encoder_helper_funcs,
-					   क्रमmats, n_क्रमmats);
-	komeda_put_fourcc_list(क्रमmats);
-	अगर (err) अणु
-		kमुक्त(kwb_conn);
-		वापस err;
-	पूर्ण
+					   formats, n_formats);
+	komeda_put_fourcc_list(formats);
+	if (err) {
+		kfree(kwb_conn);
+		return err;
+	}
 
 	drm_connector_helper_add(&wb_conn->base, &komeda_wb_conn_helper_funcs);
 
 	info = &kwb_conn->base.base.display_info;
 	info->bpc = __fls(kcrtc->master->improc->supported_color_depths);
-	info->color_क्रमmats = kcrtc->master->improc->supported_color_क्रमmats;
+	info->color_formats = kcrtc->master->improc->supported_color_formats;
 
 	kcrtc->wb_conn = kwb_conn;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक komeda_kms_add_wb_connectors(काष्ठा komeda_kms_dev *kms,
-				 काष्ठा komeda_dev *mdev)
-अणु
-	पूर्णांक i, err;
+int komeda_kms_add_wb_connectors(struct komeda_kms_dev *kms,
+				 struct komeda_dev *mdev)
+{
+	int i, err;
 
-	क्रम (i = 0; i < kms->n_crtcs; i++) अणु
+	for (i = 0; i < kms->n_crtcs; i++) {
 		err = komeda_wb_connector_add(kms, &kms->crtcs[i]);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

@@ -1,320 +1,319 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * LEDs driver क्रम GPIOs
+ * LEDs driver for GPIOs
  *
  * Copyright (C) 2007 8D Technologies inc.
  * Raphael Assenat <raph@8d.com>
  * Copyright (C) 2008 Freescale Semiconductor, Inc.
  */
-#समावेश <linux/err.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/leds.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/property.h>
-#समावेश <linux/slab.h>
+#include <linux/err.h>
+#include <linux/gpio.h>
+#include <linux/gpio/consumer.h>
+#include <linux/kernel.h>
+#include <linux/leds.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/property.h>
+#include <linux/slab.h>
 
-काष्ठा gpio_led_data अणु
-	काष्ठा led_classdev cdev;
-	काष्ठा gpio_desc *gpiod;
+struct gpio_led_data {
+	struct led_classdev cdev;
+	struct gpio_desc *gpiod;
 	u8 can_sleep;
 	u8 blinking;
-	gpio_blink_set_t platक्रमm_gpio_blink_set;
-पूर्ण;
+	gpio_blink_set_t platform_gpio_blink_set;
+};
 
-अटल अंतरभूत काष्ठा gpio_led_data *
-			cdev_to_gpio_led_data(काष्ठा led_classdev *led_cdev)
-अणु
-	वापस container_of(led_cdev, काष्ठा gpio_led_data, cdev);
-पूर्ण
+static inline struct gpio_led_data *
+			cdev_to_gpio_led_data(struct led_classdev *led_cdev)
+{
+	return container_of(led_cdev, struct gpio_led_data, cdev);
+}
 
-अटल व्योम gpio_led_set(काष्ठा led_classdev *led_cdev,
-	क्रमागत led_brightness value)
-अणु
-	काष्ठा gpio_led_data *led_dat = cdev_to_gpio_led_data(led_cdev);
-	पूर्णांक level;
+static void gpio_led_set(struct led_classdev *led_cdev,
+	enum led_brightness value)
+{
+	struct gpio_led_data *led_dat = cdev_to_gpio_led_data(led_cdev);
+	int level;
 
-	अगर (value == LED_OFF)
+	if (value == LED_OFF)
 		level = 0;
-	अन्यथा
+	else
 		level = 1;
 
-	अगर (led_dat->blinking) अणु
-		led_dat->platक्रमm_gpio_blink_set(led_dat->gpiod, level,
-						 शून्य, शून्य);
+	if (led_dat->blinking) {
+		led_dat->platform_gpio_blink_set(led_dat->gpiod, level,
+						 NULL, NULL);
 		led_dat->blinking = 0;
-	पूर्ण अन्यथा अणु
-		अगर (led_dat->can_sleep)
+	} else {
+		if (led_dat->can_sleep)
 			gpiod_set_value_cansleep(led_dat->gpiod, level);
-		अन्यथा
+		else
 			gpiod_set_value(led_dat->gpiod, level);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक gpio_led_set_blocking(काष्ठा led_classdev *led_cdev,
-	क्रमागत led_brightness value)
-अणु
+static int gpio_led_set_blocking(struct led_classdev *led_cdev,
+	enum led_brightness value)
+{
 	gpio_led_set(led_cdev, value);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक gpio_blink_set(काष्ठा led_classdev *led_cdev,
-	अचिन्हित दीर्घ *delay_on, अचिन्हित दीर्घ *delay_off)
-अणु
-	काष्ठा gpio_led_data *led_dat = cdev_to_gpio_led_data(led_cdev);
+static int gpio_blink_set(struct led_classdev *led_cdev,
+	unsigned long *delay_on, unsigned long *delay_off)
+{
+	struct gpio_led_data *led_dat = cdev_to_gpio_led_data(led_cdev);
 
 	led_dat->blinking = 1;
-	वापस led_dat->platक्रमm_gpio_blink_set(led_dat->gpiod, GPIO_LED_BLINK,
+	return led_dat->platform_gpio_blink_set(led_dat->gpiod, GPIO_LED_BLINK,
 						delay_on, delay_off);
-पूर्ण
+}
 
-अटल पूर्णांक create_gpio_led(स्थिर काष्ठा gpio_led *ढाँचा,
-	काष्ठा gpio_led_data *led_dat, काष्ठा device *parent,
-	काष्ठा fwnode_handle *fwnode, gpio_blink_set_t blink_set)
-अणु
-	काष्ठा led_init_data init_data = अणुपूर्ण;
-	पूर्णांक ret, state;
+static int create_gpio_led(const struct gpio_led *template,
+	struct gpio_led_data *led_dat, struct device *parent,
+	struct fwnode_handle *fwnode, gpio_blink_set_t blink_set)
+{
+	struct led_init_data init_data = {};
+	int ret, state;
 
-	led_dat->cdev.शेष_trigger = ढाँचा->शेष_trigger;
+	led_dat->cdev.default_trigger = template->default_trigger;
 	led_dat->can_sleep = gpiod_cansleep(led_dat->gpiod);
-	अगर (!led_dat->can_sleep)
+	if (!led_dat->can_sleep)
 		led_dat->cdev.brightness_set = gpio_led_set;
-	अन्यथा
+	else
 		led_dat->cdev.brightness_set_blocking = gpio_led_set_blocking;
 	led_dat->blinking = 0;
-	अगर (blink_set) अणु
-		led_dat->platक्रमm_gpio_blink_set = blink_set;
+	if (blink_set) {
+		led_dat->platform_gpio_blink_set = blink_set;
 		led_dat->cdev.blink_set = gpio_blink_set;
-	पूर्ण
-	अगर (ढाँचा->शेष_state == LEDS_GPIO_DEFSTATE_KEEP) अणु
+	}
+	if (template->default_state == LEDS_GPIO_DEFSTATE_KEEP) {
 		state = gpiod_get_value_cansleep(led_dat->gpiod);
-		अगर (state < 0)
-			वापस state;
-	पूर्ण अन्यथा अणु
-		state = (ढाँचा->शेष_state == LEDS_GPIO_DEFSTATE_ON);
-	पूर्ण
+		if (state < 0)
+			return state;
+	} else {
+		state = (template->default_state == LEDS_GPIO_DEFSTATE_ON);
+	}
 	led_dat->cdev.brightness = state;
 	led_dat->cdev.max_brightness = 1;
-	अगर (!ढाँचा->retain_state_suspended)
+	if (!template->retain_state_suspended)
 		led_dat->cdev.flags |= LED_CORE_SUSPENDRESUME;
-	अगर (ढाँचा->panic_indicator)
+	if (template->panic_indicator)
 		led_dat->cdev.flags |= LED_PANIC_INDICATOR;
-	अगर (ढाँचा->retain_state_shutकरोwn)
+	if (template->retain_state_shutdown)
 		led_dat->cdev.flags |= LED_RETAIN_AT_SHUTDOWN;
 
 	ret = gpiod_direction_output(led_dat->gpiod, state);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	अगर (ढाँचा->name) अणु
-		led_dat->cdev.name = ढाँचा->name;
-		ret = devm_led_classdev_रेजिस्टर(parent, &led_dat->cdev);
-	पूर्ण अन्यथा अणु
+	if (template->name) {
+		led_dat->cdev.name = template->name;
+		ret = devm_led_classdev_register(parent, &led_dat->cdev);
+	} else {
 		init_data.fwnode = fwnode;
-		ret = devm_led_classdev_रेजिस्टर_ext(parent, &led_dat->cdev,
+		ret = devm_led_classdev_register_ext(parent, &led_dat->cdev,
 						     &init_data);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-काष्ठा gpio_leds_priv अणु
-	पूर्णांक num_leds;
-	काष्ठा gpio_led_data leds[];
-पूर्ण;
+struct gpio_leds_priv {
+	int num_leds;
+	struct gpio_led_data leds[];
+};
 
-अटल काष्ठा gpio_leds_priv *gpio_leds_create(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा fwnode_handle *child;
-	काष्ठा gpio_leds_priv *priv;
-	पूर्णांक count, ret;
+static struct gpio_leds_priv *gpio_leds_create(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct fwnode_handle *child;
+	struct gpio_leds_priv *priv;
+	int count, ret;
 
 	count = device_get_child_node_count(dev);
-	अगर (!count)
-		वापस ERR_PTR(-ENODEV);
+	if (!count)
+		return ERR_PTR(-ENODEV);
 
-	priv = devm_kzalloc(dev, काष्ठा_size(priv, leds, count), GFP_KERNEL);
-	अगर (!priv)
-		वापस ERR_PTR(-ENOMEM);
+	priv = devm_kzalloc(dev, struct_size(priv, leds, count), GFP_KERNEL);
+	if (!priv)
+		return ERR_PTR(-ENOMEM);
 
-	device_क्रम_each_child_node(dev, child) अणु
-		काष्ठा gpio_led_data *led_dat = &priv->leds[priv->num_leds];
-		काष्ठा gpio_led led = अणुपूर्ण;
-		स्थिर अक्षर *state = शून्य;
+	device_for_each_child_node(dev, child) {
+		struct gpio_led_data *led_dat = &priv->leds[priv->num_leds];
+		struct gpio_led led = {};
+		const char *state = NULL;
 
 		/*
 		 * Acquire gpiod from DT with uninitialized label, which
-		 * will be updated after LED class device is रेजिस्टरed,
+		 * will be updated after LED class device is registered,
 		 * Only then the final LED name is known.
 		 */
-		led.gpiod = devm_fwnode_get_gpiod_from_child(dev, शून्य, child,
+		led.gpiod = devm_fwnode_get_gpiod_from_child(dev, NULL, child,
 							     GPIOD_ASIS,
-							     शून्य);
-		अगर (IS_ERR(led.gpiod)) अणु
+							     NULL);
+		if (IS_ERR(led.gpiod)) {
 			fwnode_handle_put(child);
-			वापस ERR_CAST(led.gpiod);
-		पूर्ण
+			return ERR_CAST(led.gpiod);
+		}
 
 		led_dat->gpiod = led.gpiod;
 
-		अगर (!fwnode_property_पढ़ो_string(child, "default-state",
-						 &state)) अणु
-			अगर (!म_भेद(state, "keep"))
-				led.शेष_state = LEDS_GPIO_DEFSTATE_KEEP;
-			अन्यथा अगर (!म_भेद(state, "on"))
-				led.शेष_state = LEDS_GPIO_DEFSTATE_ON;
-			अन्यथा
-				led.शेष_state = LEDS_GPIO_DEFSTATE_OFF;
-		पूर्ण
+		if (!fwnode_property_read_string(child, "default-state",
+						 &state)) {
+			if (!strcmp(state, "keep"))
+				led.default_state = LEDS_GPIO_DEFSTATE_KEEP;
+			else if (!strcmp(state, "on"))
+				led.default_state = LEDS_GPIO_DEFSTATE_ON;
+			else
+				led.default_state = LEDS_GPIO_DEFSTATE_OFF;
+		}
 
-		अगर (fwnode_property_present(child, "retain-state-suspended"))
+		if (fwnode_property_present(child, "retain-state-suspended"))
 			led.retain_state_suspended = 1;
-		अगर (fwnode_property_present(child, "retain-state-shutdown"))
-			led.retain_state_shutकरोwn = 1;
-		अगर (fwnode_property_present(child, "panic-indicator"))
+		if (fwnode_property_present(child, "retain-state-shutdown"))
+			led.retain_state_shutdown = 1;
+		if (fwnode_property_present(child, "panic-indicator"))
 			led.panic_indicator = 1;
 
-		ret = create_gpio_led(&led, led_dat, dev, child, शून्य);
-		अगर (ret < 0) अणु
+		ret = create_gpio_led(&led, led_dat, dev, child, NULL);
+		if (ret < 0) {
 			fwnode_handle_put(child);
-			वापस ERR_PTR(ret);
-		पूर्ण
+			return ERR_PTR(ret);
+		}
 		/* Set gpiod label to match the corresponding LED name. */
 		gpiod_set_consumer_name(led_dat->gpiod,
 					led_dat->cdev.dev->kobj.name);
 		priv->num_leds++;
-	पूर्ण
+	}
 
-	वापस priv;
-पूर्ण
+	return priv;
+}
 
-अटल स्थिर काष्ठा of_device_id of_gpio_leds_match[] = अणु
-	अणु .compatible = "gpio-leds", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id of_gpio_leds_match[] = {
+	{ .compatible = "gpio-leds", },
+	{},
+};
 
 MODULE_DEVICE_TABLE(of, of_gpio_leds_match);
 
-अटल काष्ठा gpio_desc *gpio_led_get_gpiod(काष्ठा device *dev, पूर्णांक idx,
-					    स्थिर काष्ठा gpio_led *ढाँचा)
-अणु
-	काष्ठा gpio_desc *gpiod;
-	अचिन्हित दीर्घ flags = GPIOF_OUT_INIT_LOW;
-	पूर्णांक ret;
+static struct gpio_desc *gpio_led_get_gpiod(struct device *dev, int idx,
+					    const struct gpio_led *template)
+{
+	struct gpio_desc *gpiod;
+	unsigned long flags = GPIOF_OUT_INIT_LOW;
+	int ret;
 
 	/*
-	 * This means the LED करोes not come from the device tree
+	 * This means the LED does not come from the device tree
 	 * or ACPI, so let's try just getting it by index from the
-	 * device, this will hit the board file, अगर any and get
+	 * device, this will hit the board file, if any and get
 	 * the GPIO from there.
 	 */
-	gpiod = devm_gpiod_get_index(dev, शून्य, idx, GPIOD_OUT_LOW);
-	अगर (!IS_ERR(gpiod)) अणु
-		gpiod_set_consumer_name(gpiod, ढाँचा->name);
-		वापस gpiod;
-	पूर्ण
-	अगर (PTR_ERR(gpiod) != -ENOENT)
-		वापस gpiod;
+	gpiod = devm_gpiod_get_index(dev, NULL, idx, GPIOD_OUT_LOW);
+	if (!IS_ERR(gpiod)) {
+		gpiod_set_consumer_name(gpiod, template->name);
+		return gpiod;
+	}
+	if (PTR_ERR(gpiod) != -ENOENT)
+		return gpiod;
 
 	/*
-	 * This is the legacy code path क्रम platक्रमm code that
+	 * This is the legacy code path for platform code that
 	 * still uses GPIO numbers. Ultimately we would like to get
 	 * rid of this block completely.
 	 */
 
 	/* skip leds that aren't available */
-	अगर (!gpio_is_valid(ढाँचा->gpio))
-		वापस ERR_PTR(-ENOENT);
+	if (!gpio_is_valid(template->gpio))
+		return ERR_PTR(-ENOENT);
 
-	अगर (ढाँचा->active_low)
+	if (template->active_low)
 		flags |= GPIOF_ACTIVE_LOW;
 
-	ret = devm_gpio_request_one(dev, ढाँचा->gpio, flags,
-				    ढाँचा->name);
-	अगर (ret < 0)
-		वापस ERR_PTR(ret);
+	ret = devm_gpio_request_one(dev, template->gpio, flags,
+				    template->name);
+	if (ret < 0)
+		return ERR_PTR(ret);
 
-	gpiod = gpio_to_desc(ढाँचा->gpio);
-	अगर (!gpiod)
-		वापस ERR_PTR(-EINVAL);
+	gpiod = gpio_to_desc(template->gpio);
+	if (!gpiod)
+		return ERR_PTR(-EINVAL);
 
-	वापस gpiod;
-पूर्ण
+	return gpiod;
+}
 
-अटल पूर्णांक gpio_led_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा gpio_led_platक्रमm_data *pdata = dev_get_platdata(&pdev->dev);
-	काष्ठा gpio_leds_priv *priv;
-	पूर्णांक i, ret = 0;
+static int gpio_led_probe(struct platform_device *pdev)
+{
+	struct gpio_led_platform_data *pdata = dev_get_platdata(&pdev->dev);
+	struct gpio_leds_priv *priv;
+	int i, ret = 0;
 
-	अगर (pdata && pdata->num_leds) अणु
-		priv = devm_kzalloc(&pdev->dev, काष्ठा_size(priv, leds, pdata->num_leds),
+	if (pdata && pdata->num_leds) {
+		priv = devm_kzalloc(&pdev->dev, struct_size(priv, leds, pdata->num_leds),
 				    GFP_KERNEL);
-		अगर (!priv)
-			वापस -ENOMEM;
+		if (!priv)
+			return -ENOMEM;
 
 		priv->num_leds = pdata->num_leds;
-		क्रम (i = 0; i < priv->num_leds; i++) अणु
-			स्थिर काष्ठा gpio_led *ढाँचा = &pdata->leds[i];
-			काष्ठा gpio_led_data *led_dat = &priv->leds[i];
+		for (i = 0; i < priv->num_leds; i++) {
+			const struct gpio_led *template = &pdata->leds[i];
+			struct gpio_led_data *led_dat = &priv->leds[i];
 
-			अगर (ढाँचा->gpiod)
-				led_dat->gpiod = ढाँचा->gpiod;
-			अन्यथा
+			if (template->gpiod)
+				led_dat->gpiod = template->gpiod;
+			else
 				led_dat->gpiod =
 					gpio_led_get_gpiod(&pdev->dev,
-							   i, ढाँचा);
-			अगर (IS_ERR(led_dat->gpiod)) अणु
+							   i, template);
+			if (IS_ERR(led_dat->gpiod)) {
 				dev_info(&pdev->dev, "Skipping unavailable LED gpio %d (%s)\n",
-					 ढाँचा->gpio, ढाँचा->name);
-				जारी;
-			पूर्ण
+					 template->gpio, template->name);
+				continue;
+			}
 
-			ret = create_gpio_led(ढाँचा, led_dat,
-					      &pdev->dev, शून्य,
+			ret = create_gpio_led(template, led_dat,
+					      &pdev->dev, NULL,
 					      pdata->gpio_blink_set);
-			अगर (ret < 0)
-				वापस ret;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			if (ret < 0)
+				return ret;
+		}
+	} else {
 		priv = gpio_leds_create(pdev);
-		अगर (IS_ERR(priv))
-			वापस PTR_ERR(priv);
-	पूर्ण
+		if (IS_ERR(priv))
+			return PTR_ERR(priv);
+	}
 
-	platक्रमm_set_drvdata(pdev, priv);
+	platform_set_drvdata(pdev, priv);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम gpio_led_shutकरोwn(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा gpio_leds_priv *priv = platक्रमm_get_drvdata(pdev);
-	पूर्णांक i;
+static void gpio_led_shutdown(struct platform_device *pdev)
+{
+	struct gpio_leds_priv *priv = platform_get_drvdata(pdev);
+	int i;
 
-	क्रम (i = 0; i < priv->num_leds; i++) अणु
-		काष्ठा gpio_led_data *led = &priv->leds[i];
+	for (i = 0; i < priv->num_leds; i++) {
+		struct gpio_led_data *led = &priv->leds[i];
 
-		अगर (!(led->cdev.flags & LED_RETAIN_AT_SHUTDOWN))
+		if (!(led->cdev.flags & LED_RETAIN_AT_SHUTDOWN))
 			gpio_led_set(&led->cdev, LED_OFF);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल काष्ठा platक्रमm_driver gpio_led_driver = अणु
+static struct platform_driver gpio_led_driver = {
 	.probe		= gpio_led_probe,
-	.shutकरोwn	= gpio_led_shutकरोwn,
-	.driver		= अणु
+	.shutdown	= gpio_led_shutdown,
+	.driver		= {
 		.name	= "leds-gpio",
 		.of_match_table = of_gpio_leds_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(gpio_led_driver);
+module_platform_driver(gpio_led_driver);
 
 MODULE_AUTHOR("Raphael Assenat <raph@8d.com>, Trent Piepho <tpiepho@freescale.com>");
 MODULE_DESCRIPTION("GPIO LED driver");

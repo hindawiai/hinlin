@@ -1,16 +1,15 @@
-<शैली गुरु>
 /*
  * Cryptographic API.
  *
- * Glue code क्रम the SHA512 Secure Hash Algorithm assembler
- * implementation using supplemental SSE3 / AVX / AVX2 inकाष्ठाions.
+ * Glue code for the SHA512 Secure Hash Algorithm assembler
+ * implementation using supplemental SSE3 / AVX / AVX2 instructions.
  *
  * This file is based on sha512_generic.c
  *
  * Copyright (C) 2013 Intel Corporation
- * Author: Tim Chen <tim.c.chen@linux.पूर्णांकel.com>
+ * Author: Tim Chen <tim.c.chen@linux.intel.com>
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
  * Software Foundation; either version 2 of the License, or (at your option)
  * any later version.
@@ -26,304 +25,304 @@
  *
  */
 
-#घोषणा pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
 
-#समावेश <crypto/पूर्णांकernal/hash.h>
-#समावेश <crypto/पूर्णांकernal/simd.h>
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/types.h>
-#समावेश <crypto/sha2.h>
-#समावेश <crypto/sha512_base.h>
-#समावेश <यंत्र/simd.h>
+#include <crypto/internal/hash.h>
+#include <crypto/internal/simd.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/mm.h>
+#include <linux/string.h>
+#include <linux/types.h>
+#include <crypto/sha2.h>
+#include <crypto/sha512_base.h>
+#include <asm/simd.h>
 
-यंत्रlinkage व्योम sha512_transक्रमm_ssse3(काष्ठा sha512_state *state,
-				       स्थिर u8 *data, पूर्णांक blocks);
+asmlinkage void sha512_transform_ssse3(struct sha512_state *state,
+				       const u8 *data, int blocks);
 
-अटल पूर्णांक sha512_update(काष्ठा shash_desc *desc, स्थिर u8 *data,
-		       अचिन्हित पूर्णांक len, sha512_block_fn *sha512_xक्रमm)
-अणु
-	काष्ठा sha512_state *sctx = shash_desc_ctx(desc);
+static int sha512_update(struct shash_desc *desc, const u8 *data,
+		       unsigned int len, sha512_block_fn *sha512_xform)
+{
+	struct sha512_state *sctx = shash_desc_ctx(desc);
 
-	अगर (!crypto_simd_usable() ||
+	if (!crypto_simd_usable() ||
 	    (sctx->count[0] % SHA512_BLOCK_SIZE) + len < SHA512_BLOCK_SIZE)
-		वापस crypto_sha512_update(desc, data, len);
+		return crypto_sha512_update(desc, data, len);
 
 	/*
-	 * Make sure काष्ठा sha512_state begins directly with the SHA512
-	 * 512-bit पूर्णांकernal state, as this is what the यंत्र functions expect.
+	 * Make sure struct sha512_state begins directly with the SHA512
+	 * 512-bit internal state, as this is what the asm functions expect.
 	 */
-	BUILD_BUG_ON(दुरत्व(काष्ठा sha512_state, state) != 0);
+	BUILD_BUG_ON(offsetof(struct sha512_state, state) != 0);
 
 	kernel_fpu_begin();
-	sha512_base_करो_update(desc, data, len, sha512_xक्रमm);
+	sha512_base_do_update(desc, data, len, sha512_xform);
 	kernel_fpu_end();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sha512_finup(काष्ठा shash_desc *desc, स्थिर u8 *data,
-	      अचिन्हित पूर्णांक len, u8 *out, sha512_block_fn *sha512_xक्रमm)
-अणु
-	अगर (!crypto_simd_usable())
-		वापस crypto_sha512_finup(desc, data, len, out);
+static int sha512_finup(struct shash_desc *desc, const u8 *data,
+	      unsigned int len, u8 *out, sha512_block_fn *sha512_xform)
+{
+	if (!crypto_simd_usable())
+		return crypto_sha512_finup(desc, data, len, out);
 
 	kernel_fpu_begin();
-	अगर (len)
-		sha512_base_करो_update(desc, data, len, sha512_xक्रमm);
-	sha512_base_करो_finalize(desc, sha512_xक्रमm);
+	if (len)
+		sha512_base_do_update(desc, data, len, sha512_xform);
+	sha512_base_do_finalize(desc, sha512_xform);
 	kernel_fpu_end();
 
-	वापस sha512_base_finish(desc, out);
-पूर्ण
+	return sha512_base_finish(desc, out);
+}
 
-अटल पूर्णांक sha512_ssse3_update(काष्ठा shash_desc *desc, स्थिर u8 *data,
-		       अचिन्हित पूर्णांक len)
-अणु
-	वापस sha512_update(desc, data, len, sha512_transक्रमm_ssse3);
-पूर्ण
+static int sha512_ssse3_update(struct shash_desc *desc, const u8 *data,
+		       unsigned int len)
+{
+	return sha512_update(desc, data, len, sha512_transform_ssse3);
+}
 
-अटल पूर्णांक sha512_ssse3_finup(काष्ठा shash_desc *desc, स्थिर u8 *data,
-	      अचिन्हित पूर्णांक len, u8 *out)
-अणु
-	वापस sha512_finup(desc, data, len, out, sha512_transक्रमm_ssse3);
-पूर्ण
+static int sha512_ssse3_finup(struct shash_desc *desc, const u8 *data,
+	      unsigned int len, u8 *out)
+{
+	return sha512_finup(desc, data, len, out, sha512_transform_ssse3);
+}
 
-/* Add padding and वापस the message digest. */
-अटल पूर्णांक sha512_ssse3_final(काष्ठा shash_desc *desc, u8 *out)
-अणु
-	वापस sha512_ssse3_finup(desc, शून्य, 0, out);
-पूर्ण
+/* Add padding and return the message digest. */
+static int sha512_ssse3_final(struct shash_desc *desc, u8 *out)
+{
+	return sha512_ssse3_finup(desc, NULL, 0, out);
+}
 
-अटल काष्ठा shash_alg sha512_ssse3_algs[] = अणु अणु
+static struct shash_alg sha512_ssse3_algs[] = { {
 	.digestsize	=	SHA512_DIGEST_SIZE,
 	.init		=	sha512_base_init,
 	.update		=	sha512_ssse3_update,
 	.final		=	sha512_ssse3_final,
 	.finup		=	sha512_ssse3_finup,
-	.descsize	=	माप(काष्ठा sha512_state),
-	.base		=	अणु
+	.descsize	=	sizeof(struct sha512_state),
+	.base		=	{
 		.cra_name	=	"sha512",
 		.cra_driver_name =	"sha512-ssse3",
 		.cra_priority	=	150,
 		.cra_blocksize	=	SHA512_BLOCK_SIZE,
 		.cra_module	=	THIS_MODULE,
-	पूर्ण
-पूर्ण,  अणु
+	}
+},  {
 	.digestsize	=	SHA384_DIGEST_SIZE,
 	.init		=	sha384_base_init,
 	.update		=	sha512_ssse3_update,
 	.final		=	sha512_ssse3_final,
 	.finup		=	sha512_ssse3_finup,
-	.descsize	=	माप(काष्ठा sha512_state),
-	.base		=	अणु
+	.descsize	=	sizeof(struct sha512_state),
+	.base		=	{
 		.cra_name	=	"sha384",
 		.cra_driver_name =	"sha384-ssse3",
 		.cra_priority	=	150,
 		.cra_blocksize	=	SHA384_BLOCK_SIZE,
 		.cra_module	=	THIS_MODULE,
-	पूर्ण
-पूर्ण पूर्ण;
+	}
+} };
 
-अटल पूर्णांक रेजिस्टर_sha512_ssse3(व्योम)
-अणु
-	अगर (boot_cpu_has(X86_FEATURE_SSSE3))
-		वापस crypto_रेजिस्टर_shashes(sha512_ssse3_algs,
+static int register_sha512_ssse3(void)
+{
+	if (boot_cpu_has(X86_FEATURE_SSSE3))
+		return crypto_register_shashes(sha512_ssse3_algs,
 			ARRAY_SIZE(sha512_ssse3_algs));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम unरेजिस्टर_sha512_ssse3(व्योम)
-अणु
-	अगर (boot_cpu_has(X86_FEATURE_SSSE3))
-		crypto_unरेजिस्टर_shashes(sha512_ssse3_algs,
+static void unregister_sha512_ssse3(void)
+{
+	if (boot_cpu_has(X86_FEATURE_SSSE3))
+		crypto_unregister_shashes(sha512_ssse3_algs,
 			ARRAY_SIZE(sha512_ssse3_algs));
-पूर्ण
+}
 
-यंत्रlinkage व्योम sha512_transक्रमm_avx(काष्ठा sha512_state *state,
-				     स्थिर u8 *data, पूर्णांक blocks);
-अटल bool avx_usable(व्योम)
-अणु
-	अगर (!cpu_has_xfeatures(XFEATURE_MASK_SSE | XFEATURE_MASK_YMM, शून्य)) अणु
-		अगर (boot_cpu_has(X86_FEATURE_AVX))
+asmlinkage void sha512_transform_avx(struct sha512_state *state,
+				     const u8 *data, int blocks);
+static bool avx_usable(void)
+{
+	if (!cpu_has_xfeatures(XFEATURE_MASK_SSE | XFEATURE_MASK_YMM, NULL)) {
+		if (boot_cpu_has(X86_FEATURE_AVX))
 			pr_info("AVX detected but unusable.\n");
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक sha512_avx_update(काष्ठा shash_desc *desc, स्थिर u8 *data,
-		       अचिन्हित पूर्णांक len)
-अणु
-	वापस sha512_update(desc, data, len, sha512_transक्रमm_avx);
-पूर्ण
+static int sha512_avx_update(struct shash_desc *desc, const u8 *data,
+		       unsigned int len)
+{
+	return sha512_update(desc, data, len, sha512_transform_avx);
+}
 
-अटल पूर्णांक sha512_avx_finup(काष्ठा shash_desc *desc, स्थिर u8 *data,
-	      अचिन्हित पूर्णांक len, u8 *out)
-अणु
-	वापस sha512_finup(desc, data, len, out, sha512_transक्रमm_avx);
-पूर्ण
+static int sha512_avx_finup(struct shash_desc *desc, const u8 *data,
+	      unsigned int len, u8 *out)
+{
+	return sha512_finup(desc, data, len, out, sha512_transform_avx);
+}
 
-/* Add padding and वापस the message digest. */
-अटल पूर्णांक sha512_avx_final(काष्ठा shash_desc *desc, u8 *out)
-अणु
-	वापस sha512_avx_finup(desc, शून्य, 0, out);
-पूर्ण
+/* Add padding and return the message digest. */
+static int sha512_avx_final(struct shash_desc *desc, u8 *out)
+{
+	return sha512_avx_finup(desc, NULL, 0, out);
+}
 
-अटल काष्ठा shash_alg sha512_avx_algs[] = अणु अणु
+static struct shash_alg sha512_avx_algs[] = { {
 	.digestsize	=	SHA512_DIGEST_SIZE,
 	.init		=	sha512_base_init,
 	.update		=	sha512_avx_update,
 	.final		=	sha512_avx_final,
 	.finup		=	sha512_avx_finup,
-	.descsize	=	माप(काष्ठा sha512_state),
-	.base		=	अणु
+	.descsize	=	sizeof(struct sha512_state),
+	.base		=	{
 		.cra_name	=	"sha512",
 		.cra_driver_name =	"sha512-avx",
 		.cra_priority	=	160,
 		.cra_blocksize	=	SHA512_BLOCK_SIZE,
 		.cra_module	=	THIS_MODULE,
-	पूर्ण
-पूर्ण,  अणु
+	}
+},  {
 	.digestsize	=	SHA384_DIGEST_SIZE,
 	.init		=	sha384_base_init,
 	.update		=	sha512_avx_update,
 	.final		=	sha512_avx_final,
 	.finup		=	sha512_avx_finup,
-	.descsize	=	माप(काष्ठा sha512_state),
-	.base		=	अणु
+	.descsize	=	sizeof(struct sha512_state),
+	.base		=	{
 		.cra_name	=	"sha384",
 		.cra_driver_name =	"sha384-avx",
 		.cra_priority	=	160,
 		.cra_blocksize	=	SHA384_BLOCK_SIZE,
 		.cra_module	=	THIS_MODULE,
-	पूर्ण
-पूर्ण पूर्ण;
+	}
+} };
 
-अटल पूर्णांक रेजिस्टर_sha512_avx(व्योम)
-अणु
-	अगर (avx_usable())
-		वापस crypto_रेजिस्टर_shashes(sha512_avx_algs,
+static int register_sha512_avx(void)
+{
+	if (avx_usable())
+		return crypto_register_shashes(sha512_avx_algs,
 			ARRAY_SIZE(sha512_avx_algs));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम unरेजिस्टर_sha512_avx(व्योम)
-अणु
-	अगर (avx_usable())
-		crypto_unरेजिस्टर_shashes(sha512_avx_algs,
+static void unregister_sha512_avx(void)
+{
+	if (avx_usable())
+		crypto_unregister_shashes(sha512_avx_algs,
 			ARRAY_SIZE(sha512_avx_algs));
-पूर्ण
+}
 
-यंत्रlinkage व्योम sha512_transक्रमm_rorx(काष्ठा sha512_state *state,
-				      स्थिर u8 *data, पूर्णांक blocks);
+asmlinkage void sha512_transform_rorx(struct sha512_state *state,
+				      const u8 *data, int blocks);
 
-अटल पूर्णांक sha512_avx2_update(काष्ठा shash_desc *desc, स्थिर u8 *data,
-		       अचिन्हित पूर्णांक len)
-अणु
-	वापस sha512_update(desc, data, len, sha512_transक्रमm_rorx);
-पूर्ण
+static int sha512_avx2_update(struct shash_desc *desc, const u8 *data,
+		       unsigned int len)
+{
+	return sha512_update(desc, data, len, sha512_transform_rorx);
+}
 
-अटल पूर्णांक sha512_avx2_finup(काष्ठा shash_desc *desc, स्थिर u8 *data,
-	      अचिन्हित पूर्णांक len, u8 *out)
-अणु
-	वापस sha512_finup(desc, data, len, out, sha512_transक्रमm_rorx);
-पूर्ण
+static int sha512_avx2_finup(struct shash_desc *desc, const u8 *data,
+	      unsigned int len, u8 *out)
+{
+	return sha512_finup(desc, data, len, out, sha512_transform_rorx);
+}
 
-/* Add padding and वापस the message digest. */
-अटल पूर्णांक sha512_avx2_final(काष्ठा shash_desc *desc, u8 *out)
-अणु
-	वापस sha512_avx2_finup(desc, शून्य, 0, out);
-पूर्ण
+/* Add padding and return the message digest. */
+static int sha512_avx2_final(struct shash_desc *desc, u8 *out)
+{
+	return sha512_avx2_finup(desc, NULL, 0, out);
+}
 
-अटल काष्ठा shash_alg sha512_avx2_algs[] = अणु अणु
+static struct shash_alg sha512_avx2_algs[] = { {
 	.digestsize	=	SHA512_DIGEST_SIZE,
 	.init		=	sha512_base_init,
 	.update		=	sha512_avx2_update,
 	.final		=	sha512_avx2_final,
 	.finup		=	sha512_avx2_finup,
-	.descsize	=	माप(काष्ठा sha512_state),
-	.base		=	अणु
+	.descsize	=	sizeof(struct sha512_state),
+	.base		=	{
 		.cra_name	=	"sha512",
 		.cra_driver_name =	"sha512-avx2",
 		.cra_priority	=	170,
 		.cra_blocksize	=	SHA512_BLOCK_SIZE,
 		.cra_module	=	THIS_MODULE,
-	पूर्ण
-पूर्ण,  अणु
+	}
+},  {
 	.digestsize	=	SHA384_DIGEST_SIZE,
 	.init		=	sha384_base_init,
 	.update		=	sha512_avx2_update,
 	.final		=	sha512_avx2_final,
 	.finup		=	sha512_avx2_finup,
-	.descsize	=	माप(काष्ठा sha512_state),
-	.base		=	अणु
+	.descsize	=	sizeof(struct sha512_state),
+	.base		=	{
 		.cra_name	=	"sha384",
 		.cra_driver_name =	"sha384-avx2",
 		.cra_priority	=	170,
 		.cra_blocksize	=	SHA384_BLOCK_SIZE,
 		.cra_module	=	THIS_MODULE,
-	पूर्ण
-पूर्ण पूर्ण;
+	}
+} };
 
-अटल bool avx2_usable(व्योम)
-अणु
-	अगर (avx_usable() && boot_cpu_has(X86_FEATURE_AVX2) &&
+static bool avx2_usable(void)
+{
+	if (avx_usable() && boot_cpu_has(X86_FEATURE_AVX2) &&
 		    boot_cpu_has(X86_FEATURE_BMI2))
-		वापस true;
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल पूर्णांक रेजिस्टर_sha512_avx2(व्योम)
-अणु
-	अगर (avx2_usable())
-		वापस crypto_रेजिस्टर_shashes(sha512_avx2_algs,
+static int register_sha512_avx2(void)
+{
+	if (avx2_usable())
+		return crypto_register_shashes(sha512_avx2_algs,
 			ARRAY_SIZE(sha512_avx2_algs));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम unरेजिस्टर_sha512_avx2(व्योम)
-अणु
-	अगर (avx2_usable())
-		crypto_unरेजिस्टर_shashes(sha512_avx2_algs,
+static void unregister_sha512_avx2(void)
+{
+	if (avx2_usable())
+		crypto_unregister_shashes(sha512_avx2_algs,
 			ARRAY_SIZE(sha512_avx2_algs));
-पूर्ण
+}
 
-अटल पूर्णांक __init sha512_ssse3_mod_init(व्योम)
-अणु
+static int __init sha512_ssse3_mod_init(void)
+{
 
-	अगर (रेजिस्टर_sha512_ssse3())
-		जाओ fail;
+	if (register_sha512_ssse3())
+		goto fail;
 
-	अगर (रेजिस्टर_sha512_avx()) अणु
-		unरेजिस्टर_sha512_ssse3();
-		जाओ fail;
-	पूर्ण
+	if (register_sha512_avx()) {
+		unregister_sha512_ssse3();
+		goto fail;
+	}
 
-	अगर (रेजिस्टर_sha512_avx2()) अणु
-		unरेजिस्टर_sha512_avx();
-		unरेजिस्टर_sha512_ssse3();
-		जाओ fail;
-	पूर्ण
+	if (register_sha512_avx2()) {
+		unregister_sha512_avx();
+		unregister_sha512_ssse3();
+		goto fail;
+	}
 
-	वापस 0;
+	return 0;
 fail:
-	वापस -ENODEV;
-पूर्ण
+	return -ENODEV;
+}
 
-अटल व्योम __निकास sha512_ssse3_mod_fini(व्योम)
-अणु
-	unरेजिस्टर_sha512_avx2();
-	unरेजिस्टर_sha512_avx();
-	unरेजिस्टर_sha512_ssse3();
-पूर्ण
+static void __exit sha512_ssse3_mod_fini(void)
+{
+	unregister_sha512_avx2();
+	unregister_sha512_avx();
+	unregister_sha512_ssse3();
+}
 
 module_init(sha512_ssse3_mod_init);
-module_निकास(sha512_ssse3_mod_fini);
+module_exit(sha512_ssse3_mod_fini);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("SHA512 Secure Hash Algorithm, Supplemental SSE3 accelerated");

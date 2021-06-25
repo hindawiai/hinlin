@@ -1,110 +1,109 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * native hashtable management.
  *
  * SMP scalability work:
- *    Copyright (C) 2001 Anton Blanअक्षरd <anton@au.ibm.com>, IBM
+ *    Copyright (C) 2001 Anton Blanchard <anton@au.ibm.com>, IBM
  */
 
-#अघोषित DEBUG_LOW
+#undef DEBUG_LOW
 
-#समावेश <linux/spinlock.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/of.h>
-#समावेश <linux/processor.h>
-#समावेश <linux/thपढ़ोs.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/pgtable.h>
+#include <linux/spinlock.h>
+#include <linux/bitops.h>
+#include <linux/of.h>
+#include <linux/processor.h>
+#include <linux/threads.h>
+#include <linux/smp.h>
+#include <linux/pgtable.h>
 
-#समावेश <यंत्र/machdep.h>
-#समावेश <यंत्र/mmu.h>
-#समावेश <यंत्र/mmu_context.h>
-#समावेश <यंत्र/trace.h>
-#समावेश <यंत्र/tlb.h>
-#समावेश <यंत्र/cputable.h>
-#समावेश <यंत्र/udbg.h>
-#समावेश <यंत्र/kexec.h>
-#समावेश <यंत्र/ppc-opcode.h>
-#समावेश <यंत्र/feature-fixups.h>
+#include <asm/machdep.h>
+#include <asm/mmu.h>
+#include <asm/mmu_context.h>
+#include <asm/trace.h>
+#include <asm/tlb.h>
+#include <asm/cputable.h>
+#include <asm/udbg.h>
+#include <asm/kexec.h>
+#include <asm/ppc-opcode.h>
+#include <asm/feature-fixups.h>
 
-#समावेश <misc/cxl-base.h>
+#include <misc/cxl-base.h>
 
-#अगर_घोषित DEBUG_LOW
-#घोषणा DBG_LOW(fmt...) udbg_म_लिखो(fmt)
-#अन्यथा
-#घोषणा DBG_LOW(fmt...)
-#पूर्ण_अगर
+#ifdef DEBUG_LOW
+#define DBG_LOW(fmt...) udbg_printf(fmt)
+#else
+#define DBG_LOW(fmt...)
+#endif
 
-#अगर_घोषित __BIG_ENDIAN__
-#घोषणा HPTE_LOCK_BIT 3
-#अन्यथा
-#घोषणा HPTE_LOCK_BIT (56+3)
-#पूर्ण_अगर
+#ifdef __BIG_ENDIAN__
+#define HPTE_LOCK_BIT 3
+#else
+#define HPTE_LOCK_BIT (56+3)
+#endif
 
-अटल DEFINE_RAW_SPINLOCK(native_tlbie_lock);
+static DEFINE_RAW_SPINLOCK(native_tlbie_lock);
 
-अटल अंतरभूत व्योम tlbiel_hash_set_isa206(अचिन्हित पूर्णांक set, अचिन्हित पूर्णांक is)
-अणु
-	अचिन्हित दीर्घ rb;
+static inline void tlbiel_hash_set_isa206(unsigned int set, unsigned int is)
+{
+	unsigned long rb;
 
 	rb = (set << PPC_BITLSHIFT(51)) | (is << PPC_BITLSHIFT(53));
 
-	यंत्र अस्थिर("tlbiel %0" : : "r" (rb));
-पूर्ण
+	asm volatile("tlbiel %0" : : "r" (rb));
+}
 
 /*
- * tlbiel inकाष्ठाion क्रम hash, set invalidation
+ * tlbiel instruction for hash, set invalidation
  * i.e., r=1 and is=01 or is=10 or is=11
  */
-अटल __always_अंतरभूत व्योम tlbiel_hash_set_isa300(अचिन्हित पूर्णांक set, अचिन्हित पूर्णांक is,
-					अचिन्हित पूर्णांक pid,
-					अचिन्हित पूर्णांक ric, अचिन्हित पूर्णांक prs)
-अणु
-	अचिन्हित दीर्घ rb;
-	अचिन्हित दीर्घ rs;
-	अचिन्हित पूर्णांक r = 0; /* hash क्रमmat */
+static __always_inline void tlbiel_hash_set_isa300(unsigned int set, unsigned int is,
+					unsigned int pid,
+					unsigned int ric, unsigned int prs)
+{
+	unsigned long rb;
+	unsigned long rs;
+	unsigned int r = 0; /* hash format */
 
 	rb = (set << PPC_BITLSHIFT(51)) | (is << PPC_BITLSHIFT(53));
-	rs = ((अचिन्हित दीर्घ)pid << PPC_BITLSHIFT(31));
+	rs = ((unsigned long)pid << PPC_BITLSHIFT(31));
 
-	यंत्र अस्थिर(PPC_TLBIEL(%0, %1, %2, %3, %4)
+	asm volatile(PPC_TLBIEL(%0, %1, %2, %3, %4)
 		     : : "r"(rb), "r"(rs), "i"(ric), "i"(prs), "i"(r)
 		     : "memory");
-पूर्ण
+}
 
 
-अटल व्योम tlbiel_all_isa206(अचिन्हित पूर्णांक num_sets, अचिन्हित पूर्णांक is)
-अणु
-	अचिन्हित पूर्णांक set;
+static void tlbiel_all_isa206(unsigned int num_sets, unsigned int is)
+{
+	unsigned int set;
 
-	यंत्र अस्थिर("ptesync": : :"memory");
+	asm volatile("ptesync": : :"memory");
 
-	क्रम (set = 0; set < num_sets; set++)
+	for (set = 0; set < num_sets; set++)
 		tlbiel_hash_set_isa206(set, is);
 
 	ppc_after_tlbiel_barrier();
-पूर्ण
+}
 
-अटल व्योम tlbiel_all_isa300(अचिन्हित पूर्णांक num_sets, अचिन्हित पूर्णांक is)
-अणु
-	अचिन्हित पूर्णांक set;
+static void tlbiel_all_isa300(unsigned int num_sets, unsigned int is)
+{
+	unsigned int set;
 
-	यंत्र अस्थिर("ptesync": : :"memory");
+	asm volatile("ptesync": : :"memory");
 
 	/*
-	 * Flush the partition table cache अगर this is HV mode.
+	 * Flush the partition table cache if this is HV mode.
 	 */
-	अगर (early_cpu_has_feature(CPU_FTR_HVMODE))
+	if (early_cpu_has_feature(CPU_FTR_HVMODE))
 		tlbiel_hash_set_isa300(0, is, 0, 2, 0);
 
 	/*
 	 * Now invalidate the process table cache. UPRT=0 HPT modes (what
-	 * current hardware implements) करो not use the process table, but
+	 * current hardware implements) do not use the process table, but
 	 * add the flushes anyway.
 	 *
 	 * From ISA v3.0B p. 1078:
-	 *     The following क्रमms are invalid.
+	 *     The following forms are invalid.
 	 *      * PRS=1, R=0, and RIC!=2 (The only process-scoped
 	 *        HPT caching is of the Process Table.)
 	 */
@@ -115,50 +114,50 @@
 	 * partition scoped TLB translations, which may be flushed
 	 * in !HV mode.
 	 */
-	क्रम (set = 0; set < num_sets; set++)
+	for (set = 0; set < num_sets; set++)
 		tlbiel_hash_set_isa300(set, is, 0, 0, 0);
 
 	ppc_after_tlbiel_barrier();
 
-	यंत्र अस्थिर(PPC_ISA_3_0_INVALIDATE_ERAT "; isync" : : :"memory");
-पूर्ण
+	asm volatile(PPC_ISA_3_0_INVALIDATE_ERAT "; isync" : : :"memory");
+}
 
-व्योम hash__tlbiel_all(अचिन्हित पूर्णांक action)
-अणु
-	अचिन्हित पूर्णांक is;
+void hash__tlbiel_all(unsigned int action)
+{
+	unsigned int is;
 
-	चयन (action) अणु
-	हाल TLB_INVAL_SCOPE_GLOBAL:
+	switch (action) {
+	case TLB_INVAL_SCOPE_GLOBAL:
 		is = 3;
-		अवरोध;
-	हाल TLB_INVAL_SCOPE_LPID:
+		break;
+	case TLB_INVAL_SCOPE_LPID:
 		is = 2;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		BUG();
-	पूर्ण
+	}
 
-	अगर (early_cpu_has_feature(CPU_FTR_ARCH_300))
+	if (early_cpu_has_feature(CPU_FTR_ARCH_300))
 		tlbiel_all_isa300(POWER9_TLB_SETS_HASH, is);
-	अन्यथा अगर (early_cpu_has_feature(CPU_FTR_ARCH_207S))
+	else if (early_cpu_has_feature(CPU_FTR_ARCH_207S))
 		tlbiel_all_isa206(POWER8_TLB_SETS, is);
-	अन्यथा अगर (early_cpu_has_feature(CPU_FTR_ARCH_206))
+	else if (early_cpu_has_feature(CPU_FTR_ARCH_206))
 		tlbiel_all_isa206(POWER7_TLB_SETS, is);
-	अन्यथा
+	else
 		WARN(1, "%s called on pre-POWER7 CPU\n", __func__);
-पूर्ण
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ  ___tlbie(अचिन्हित दीर्घ vpn, पूर्णांक psize,
-						पूर्णांक apsize, पूर्णांक ssize)
-अणु
-	अचिन्हित दीर्घ va;
-	अचिन्हित पूर्णांक penc;
-	अचिन्हित दीर्घ sllp;
+static inline unsigned long  ___tlbie(unsigned long vpn, int psize,
+						int apsize, int ssize)
+{
+	unsigned long va;
+	unsigned int penc;
+	unsigned long sllp;
 
 	/*
-	 * We need 14 to 65 bits of va क्रम a tlibe of 4K page
-	 * With vpn we ignore the lower VPN_SHIFT bits alपढ़ोy.
-	 * And top two bits are alपढ़ोy ignored because we can
+	 * We need 14 to 65 bits of va for a tlibe of 4K page
+	 * With vpn we ignore the lower VPN_SHIFT bits already.
+	 * And top two bits are already ignored because we can
 	 * only accomodate 76 bits in a 64 bit vpn with a VPN_SHIFT
 	 * of 12.
 	 */
@@ -168,224 +167,224 @@
 	 * Older versions of the architecture (2.02 and earler) require the
 	 * masking of the top 16 bits.
 	 */
-	अगर (mmu_has_feature(MMU_FTR_TLBIE_CROP_VA))
+	if (mmu_has_feature(MMU_FTR_TLBIE_CROP_VA))
 		va &= ~(0xffffULL << 48);
 
-	चयन (psize) अणु
-	हाल MMU_PAGE_4K:
+	switch (psize) {
+	case MMU_PAGE_4K:
 		/* clear out bits after (52) [0....52.....63] */
 		va &= ~((1ul << (64 - 52)) - 1);
 		va |= ssize << 8;
 		sllp = get_sllp_encoding(apsize);
 		va |= sllp << 5;
-		यंत्र अस्थिर(ASM_FTR_IFCLR("tlbie %0,0", PPC_TLBIE(%1,%0), %2)
+		asm volatile(ASM_FTR_IFCLR("tlbie %0,0", PPC_TLBIE(%1,%0), %2)
 			     : : "r" (va), "r"(0), "i" (CPU_FTR_ARCH_206)
 			     : "memory");
-		अवरोध;
-	शेष:
+		break;
+	default:
 		/* We need 14 to 14 + i bits of va */
 		penc = mmu_psize_defs[psize].penc[apsize];
-		va &= ~((1ul << mmu_psize_defs[apsize].shअगरt) - 1);
+		va &= ~((1ul << mmu_psize_defs[apsize].shift) - 1);
 		va |= penc << 12;
 		va |= ssize << 8;
 		/*
 		 * AVAL bits:
-		 * We करोn't need all the bits, but rest of the bits
+		 * We don't need all the bits, but rest of the bits
 		 * must be ignored by the processor.
 		 * vpn cover upto 65 bits of va. (0...65) and we need
 		 * 58..64 bits of va.
 		 */
 		va |= (vpn & 0xfe); /* AVAL */
 		va |= 1; /* L */
-		यंत्र अस्थिर(ASM_FTR_IFCLR("tlbie %0,1", PPC_TLBIE(%1,%0), %2)
+		asm volatile(ASM_FTR_IFCLR("tlbie %0,1", PPC_TLBIE(%1,%0), %2)
 			     : : "r" (va), "r"(0), "i" (CPU_FTR_ARCH_206)
 			     : "memory");
-		अवरोध;
-	पूर्ण
-	वापस va;
-पूर्ण
+		break;
+	}
+	return va;
+}
 
-अटल अंतरभूत व्योम fixup_tlbie_vpn(अचिन्हित दीर्घ vpn, पूर्णांक psize,
-				   पूर्णांक apsize, पूर्णांक ssize)
-अणु
-	अगर (cpu_has_feature(CPU_FTR_P9_TLBIE_ERAT_BUG)) अणु
-		/* Radix flush क्रम a hash guest */
+static inline void fixup_tlbie_vpn(unsigned long vpn, int psize,
+				   int apsize, int ssize)
+{
+	if (cpu_has_feature(CPU_FTR_P9_TLBIE_ERAT_BUG)) {
+		/* Radix flush for a hash guest */
 
-		अचिन्हित दीर्घ rb,rs,prs,r,ric;
+		unsigned long rb,rs,prs,r,ric;
 
 		rb = PPC_BIT(52); /* IS = 2 */
 		rs = 0;  /* lpid = 0 */
 		prs = 0; /* partition scoped */
-		r = 1;   /* radix क्रमmat */
+		r = 1;   /* radix format */
 		ric = 0; /* RIC_FLSUH_TLB */
 
 		/*
-		 * Need the extra ptesync to make sure we करोn't
+		 * Need the extra ptesync to make sure we don't
 		 * re-order the tlbie
 		 */
-		यंत्र अस्थिर("ptesync": : :"memory");
-		यंत्र अस्थिर(PPC_TLBIE_5(%0, %4, %3, %2, %1)
+		asm volatile("ptesync": : :"memory");
+		asm volatile(PPC_TLBIE_5(%0, %4, %3, %2, %1)
 			     : : "r"(rb), "i"(r), "i"(prs),
 			       "i"(ric), "r"(rs) : "memory");
-	पूर्ण
+	}
 
 
-	अगर (cpu_has_feature(CPU_FTR_P9_TLBIE_STQ_BUG)) अणु
-		/* Need the extra ptesync to ensure we करोn't reorder tlbie*/
-		यंत्र अस्थिर("ptesync": : :"memory");
+	if (cpu_has_feature(CPU_FTR_P9_TLBIE_STQ_BUG)) {
+		/* Need the extra ptesync to ensure we don't reorder tlbie*/
+		asm volatile("ptesync": : :"memory");
 		___tlbie(vpn, psize, apsize, ssize);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम __tlbie(अचिन्हित दीर्घ vpn, पूर्णांक psize, पूर्णांक apsize, पूर्णांक ssize)
-अणु
-	अचिन्हित दीर्घ rb;
+static inline void __tlbie(unsigned long vpn, int psize, int apsize, int ssize)
+{
+	unsigned long rb;
 
 	rb = ___tlbie(vpn, psize, apsize, ssize);
 	trace_tlbie(0, 0, rb, 0, 0, 0, 0);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम __tlbiel(अचिन्हित दीर्घ vpn, पूर्णांक psize, पूर्णांक apsize, पूर्णांक ssize)
-अणु
-	अचिन्हित दीर्घ va;
-	अचिन्हित पूर्णांक penc;
-	अचिन्हित दीर्घ sllp;
+static inline void __tlbiel(unsigned long vpn, int psize, int apsize, int ssize)
+{
+	unsigned long va;
+	unsigned int penc;
+	unsigned long sllp;
 
-	/* VPN_SHIFT can be aपंचांगost 12 */
+	/* VPN_SHIFT can be atmost 12 */
 	va = vpn << VPN_SHIFT;
 	/*
 	 * clear top 16 bits of 64 bit va, non SLS segment
 	 * Older versions of the architecture (2.02 and earler) require the
 	 * masking of the top 16 bits.
 	 */
-	अगर (mmu_has_feature(MMU_FTR_TLBIE_CROP_VA))
+	if (mmu_has_feature(MMU_FTR_TLBIE_CROP_VA))
 		va &= ~(0xffffULL << 48);
 
-	चयन (psize) अणु
-	हाल MMU_PAGE_4K:
+	switch (psize) {
+	case MMU_PAGE_4K:
 		/* clear out bits after(52) [0....52.....63] */
 		va &= ~((1ul << (64 - 52)) - 1);
 		va |= ssize << 8;
 		sllp = get_sllp_encoding(apsize);
 		va |= sllp << 5;
-		यंत्र अस्थिर(ASM_FTR_IFSET("tlbiel %0", "tlbiel %0,0", %1)
+		asm volatile(ASM_FTR_IFSET("tlbiel %0", "tlbiel %0,0", %1)
 			     : : "r" (va), "i" (CPU_FTR_ARCH_206)
 			     : "memory");
-		अवरोध;
-	शेष:
+		break;
+	default:
 		/* We need 14 to 14 + i bits of va */
 		penc = mmu_psize_defs[psize].penc[apsize];
-		va &= ~((1ul << mmu_psize_defs[apsize].shअगरt) - 1);
+		va &= ~((1ul << mmu_psize_defs[apsize].shift) - 1);
 		va |= penc << 12;
 		va |= ssize << 8;
 		/*
 		 * AVAL bits:
-		 * We करोn't need all the bits, but rest of the bits
+		 * We don't need all the bits, but rest of the bits
 		 * must be ignored by the processor.
 		 * vpn cover upto 65 bits of va. (0...65) and we need
 		 * 58..64 bits of va.
 		 */
 		va |= (vpn & 0xfe);
 		va |= 1; /* L */
-		यंत्र अस्थिर(ASM_FTR_IFSET("tlbiel %0", "tlbiel %0,1", %1)
+		asm volatile(ASM_FTR_IFSET("tlbiel %0", "tlbiel %0,1", %1)
 			     : : "r" (va), "i" (CPU_FTR_ARCH_206)
 			     : "memory");
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	trace_tlbie(0, 1, va, 0, 0, 0, 0);
 
-पूर्ण
+}
 
-अटल अंतरभूत व्योम tlbie(अचिन्हित दीर्घ vpn, पूर्णांक psize, पूर्णांक apsize,
-			 पूर्णांक ssize, पूर्णांक local)
-अणु
-	अचिन्हित पूर्णांक use_local;
-	पूर्णांक lock_tlbie = !mmu_has_feature(MMU_FTR_LOCKLESS_TLBIE);
+static inline void tlbie(unsigned long vpn, int psize, int apsize,
+			 int ssize, int local)
+{
+	unsigned int use_local;
+	int lock_tlbie = !mmu_has_feature(MMU_FTR_LOCKLESS_TLBIE);
 
 	use_local = local && mmu_has_feature(MMU_FTR_TLBIEL) && !cxl_ctx_in_use();
 
-	अगर (use_local)
+	if (use_local)
 		use_local = mmu_psize_defs[psize].tlbiel;
-	अगर (lock_tlbie && !use_local)
+	if (lock_tlbie && !use_local)
 		raw_spin_lock(&native_tlbie_lock);
-	यंत्र अस्थिर("ptesync": : :"memory");
-	अगर (use_local) अणु
+	asm volatile("ptesync": : :"memory");
+	if (use_local) {
 		__tlbiel(vpn, psize, apsize, ssize);
 		ppc_after_tlbiel_barrier();
-	पूर्ण अन्यथा अणु
+	} else {
 		__tlbie(vpn, psize, apsize, ssize);
 		fixup_tlbie_vpn(vpn, psize, apsize, ssize);
-		यंत्र अस्थिर("eieio; tlbsync; ptesync": : :"memory");
-	पूर्ण
-	अगर (lock_tlbie && !use_local)
+		asm volatile("eieio; tlbsync; ptesync": : :"memory");
+	}
+	if (lock_tlbie && !use_local)
 		raw_spin_unlock(&native_tlbie_lock);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम native_lock_hpte(काष्ठा hash_pte *hptep)
-अणु
-	अचिन्हित दीर्घ *word = (अचिन्हित दीर्घ *)&hptep->v;
+static inline void native_lock_hpte(struct hash_pte *hptep)
+{
+	unsigned long *word = (unsigned long *)&hptep->v;
 
-	जबतक (1) अणु
-		अगर (!test_and_set_bit_lock(HPTE_LOCK_BIT, word))
-			अवरोध;
+	while (1) {
+		if (!test_and_set_bit_lock(HPTE_LOCK_BIT, word))
+			break;
 		spin_begin();
-		जबतक(test_bit(HPTE_LOCK_BIT, word))
+		while(test_bit(HPTE_LOCK_BIT, word))
 			spin_cpu_relax();
 		spin_end();
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम native_unlock_hpte(काष्ठा hash_pte *hptep)
-अणु
-	अचिन्हित दीर्घ *word = (अचिन्हित दीर्घ *)&hptep->v;
+static inline void native_unlock_hpte(struct hash_pte *hptep)
+{
+	unsigned long *word = (unsigned long *)&hptep->v;
 
 	clear_bit_unlock(HPTE_LOCK_BIT, word);
-पूर्ण
+}
 
-अटल दीर्घ native_hpte_insert(अचिन्हित दीर्घ hpte_group, अचिन्हित दीर्घ vpn,
-			अचिन्हित दीर्घ pa, अचिन्हित दीर्घ rflags,
-			अचिन्हित दीर्घ vflags, पूर्णांक psize, पूर्णांक apsize, पूर्णांक ssize)
-अणु
-	काष्ठा hash_pte *hptep = htab_address + hpte_group;
-	अचिन्हित दीर्घ hpte_v, hpte_r;
-	पूर्णांक i;
+static long native_hpte_insert(unsigned long hpte_group, unsigned long vpn,
+			unsigned long pa, unsigned long rflags,
+			unsigned long vflags, int psize, int apsize, int ssize)
+{
+	struct hash_pte *hptep = htab_address + hpte_group;
+	unsigned long hpte_v, hpte_r;
+	int i;
 
-	अगर (!(vflags & HPTE_V_BOLTED)) अणु
+	if (!(vflags & HPTE_V_BOLTED)) {
 		DBG_LOW("    insert(group=%lx, vpn=%016lx, pa=%016lx,"
 			" rflags=%lx, vflags=%lx, psize=%d)\n",
 			hpte_group, vpn, pa, rflags, vflags, psize);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < HPTES_PER_GROUP; i++) अणु
-		अगर (! (be64_to_cpu(hptep->v) & HPTE_V_VALID)) अणु
+	for (i = 0; i < HPTES_PER_GROUP; i++) {
+		if (! (be64_to_cpu(hptep->v) & HPTE_V_VALID)) {
 			/* retry with lock held */
 			native_lock_hpte(hptep);
-			अगर (! (be64_to_cpu(hptep->v) & HPTE_V_VALID))
-				अवरोध;
+			if (! (be64_to_cpu(hptep->v) & HPTE_V_VALID))
+				break;
 			native_unlock_hpte(hptep);
-		पूर्ण
+		}
 
 		hptep++;
-	पूर्ण
+	}
 
-	अगर (i == HPTES_PER_GROUP)
-		वापस -1;
+	if (i == HPTES_PER_GROUP)
+		return -1;
 
 	hpte_v = hpte_encode_v(vpn, psize, apsize, ssize) | vflags | HPTE_V_VALID;
 	hpte_r = hpte_encode_r(pa, psize, apsize) | rflags;
 
-	अगर (!(vflags & HPTE_V_BOLTED)) अणु
+	if (!(vflags & HPTE_V_BOLTED)) {
 		DBG_LOW(" i=%x hpte_v=%016lx, hpte_r=%016lx\n",
 			i, hpte_v, hpte_r);
-	पूर्ण
+	}
 
-	अगर (cpu_has_feature(CPU_FTR_ARCH_300)) अणु
+	if (cpu_has_feature(CPU_FTR_ARCH_300)) {
 		hpte_r = hpte_old_to_new_r(hpte_v, hpte_r);
 		hpte_v = hpte_old_to_new_v(hpte_v);
-	पूर्ण
+	}
 
 	hptep->r = cpu_to_be64(hpte_r);
-	/* Guarantee the second dword is visible beक्रमe the valid bit */
+	/* Guarantee the second dword is visible before the valid bit */
 	eieio();
 	/*
 	 * Now set the first dword including the valid bit
@@ -393,57 +392,57 @@
 	 */
 	hptep->v = cpu_to_be64(hpte_v);
 
-	__यंत्र__ __अस्थिर__ ("ptesync" : : : "memory");
+	__asm__ __volatile__ ("ptesync" : : : "memory");
 
-	वापस i | (!!(vflags & HPTE_V_SECONDARY) << 3);
-पूर्ण
+	return i | (!!(vflags & HPTE_V_SECONDARY) << 3);
+}
 
-अटल दीर्घ native_hpte_हटाओ(अचिन्हित दीर्घ hpte_group)
-अणु
-	काष्ठा hash_pte *hptep;
-	पूर्णांक i;
-	पूर्णांक slot_offset;
-	अचिन्हित दीर्घ hpte_v;
+static long native_hpte_remove(unsigned long hpte_group)
+{
+	struct hash_pte *hptep;
+	int i;
+	int slot_offset;
+	unsigned long hpte_v;
 
 	DBG_LOW("    remove(group=%lx)\n", hpte_group);
 
-	/* pick a अक्रमom entry to start at */
+	/* pick a random entry to start at */
 	slot_offset = mftb() & 0x7;
 
-	क्रम (i = 0; i < HPTES_PER_GROUP; i++) अणु
+	for (i = 0; i < HPTES_PER_GROUP; i++) {
 		hptep = htab_address + hpte_group + slot_offset;
 		hpte_v = be64_to_cpu(hptep->v);
 
-		अगर ((hpte_v & HPTE_V_VALID) && !(hpte_v & HPTE_V_BOLTED)) अणु
+		if ((hpte_v & HPTE_V_VALID) && !(hpte_v & HPTE_V_BOLTED)) {
 			/* retry with lock held */
 			native_lock_hpte(hptep);
 			hpte_v = be64_to_cpu(hptep->v);
-			अगर ((hpte_v & HPTE_V_VALID)
+			if ((hpte_v & HPTE_V_VALID)
 			    && !(hpte_v & HPTE_V_BOLTED))
-				अवरोध;
+				break;
 			native_unlock_hpte(hptep);
-		पूर्ण
+		}
 
 		slot_offset++;
 		slot_offset &= 0x7;
-	पूर्ण
+	}
 
-	अगर (i == HPTES_PER_GROUP)
-		वापस -1;
+	if (i == HPTES_PER_GROUP)
+		return -1;
 
 	/* Invalidate the hpte. NOTE: this also unlocks it */
 	hptep->v = 0;
 
-	वापस i;
-पूर्ण
+	return i;
+}
 
-अटल दीर्घ native_hpte_updatepp(अचिन्हित दीर्घ slot, अचिन्हित दीर्घ newpp,
-				 अचिन्हित दीर्घ vpn, पूर्णांक bpsize,
-				 पूर्णांक apsize, पूर्णांक ssize, अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा hash_pte *hptep = htab_address + slot;
-	अचिन्हित दीर्घ hpte_v, want_v;
-	पूर्णांक ret = 0, local = 0;
+static long native_hpte_updatepp(unsigned long slot, unsigned long newpp,
+				 unsigned long vpn, int bpsize,
+				 int apsize, int ssize, unsigned long flags)
+{
+	struct hash_pte *hptep = htab_address + slot;
+	unsigned long hpte_v, want_v;
+	int ret = 0, local = 0;
 
 	want_v = hpte_encode_avpn(vpn, bpsize, ssize);
 
@@ -452,110 +451,110 @@
 
 	hpte_v = hpte_get_old_v(hptep);
 	/*
-	 * We need to invalidate the TLB always because hpte_हटाओ करोesn't करो
-	 * a tlb invalidate. If a hash bucket माला_लो full, we "evict" a more/less
-	 * अक्रमom entry from it. When we करो that we करोn't invalidate the TLB
-	 * (hpte_हटाओ) because we assume the old translation is still
+	 * We need to invalidate the TLB always because hpte_remove doesn't do
+	 * a tlb invalidate. If a hash bucket gets full, we "evict" a more/less
+	 * random entry from it. When we do that we don't invalidate the TLB
+	 * (hpte_remove) because we assume the old translation is still
 	 * technically "valid".
 	 */
-	अगर (!HPTE_V_COMPARE(hpte_v, want_v) || !(hpte_v & HPTE_V_VALID)) अणु
+	if (!HPTE_V_COMPARE(hpte_v, want_v) || !(hpte_v & HPTE_V_VALID)) {
 		DBG_LOW(" -> miss\n");
 		ret = -1;
-	पूर्ण अन्यथा अणु
+	} else {
 		native_lock_hpte(hptep);
 		/* recheck with locks held */
 		hpte_v = hpte_get_old_v(hptep);
-		अगर (unlikely(!HPTE_V_COMPARE(hpte_v, want_v) ||
-			     !(hpte_v & HPTE_V_VALID))) अणु
+		if (unlikely(!HPTE_V_COMPARE(hpte_v, want_v) ||
+			     !(hpte_v & HPTE_V_VALID))) {
 			ret = -1;
-		पूर्ण अन्यथा अणु
+		} else {
 			DBG_LOW(" -> hit\n");
 			/* Update the HPTE */
 			hptep->r = cpu_to_be64((be64_to_cpu(hptep->r) &
 						~(HPTE_R_PPP | HPTE_R_N)) |
 					       (newpp & (HPTE_R_PPP | HPTE_R_N |
 							 HPTE_R_C)));
-		पूर्ण
+		}
 		native_unlock_hpte(hptep);
-	पूर्ण
+	}
 
-	अगर (flags & HPTE_LOCAL_UPDATE)
+	if (flags & HPTE_LOCAL_UPDATE)
 		local = 1;
 	/*
-	 * Ensure it is out of the tlb too अगर it is not a nohpte fault
+	 * Ensure it is out of the tlb too if it is not a nohpte fault
 	 */
-	अगर (!(flags & HPTE_NOHPTE_UPDATE))
+	if (!(flags & HPTE_NOHPTE_UPDATE))
 		tlbie(vpn, bpsize, apsize, ssize, local);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल दीर्घ __native_hpte_find(अचिन्हित दीर्घ want_v, अचिन्हित दीर्घ slot)
-अणु
-	काष्ठा hash_pte *hptep;
-	अचिन्हित दीर्घ hpte_v;
-	अचिन्हित दीर्घ i;
+static long __native_hpte_find(unsigned long want_v, unsigned long slot)
+{
+	struct hash_pte *hptep;
+	unsigned long hpte_v;
+	unsigned long i;
 
-	क्रम (i = 0; i < HPTES_PER_GROUP; i++) अणु
+	for (i = 0; i < HPTES_PER_GROUP; i++) {
 
 		hptep = htab_address + slot;
 		hpte_v = hpte_get_old_v(hptep);
-		अगर (HPTE_V_COMPARE(hpte_v, want_v) && (hpte_v & HPTE_V_VALID))
+		if (HPTE_V_COMPARE(hpte_v, want_v) && (hpte_v & HPTE_V_VALID))
 			/* HPTE matches */
-			वापस slot;
+			return slot;
 		++slot;
-	पूर्ण
+	}
 
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल दीर्घ native_hpte_find(अचिन्हित दीर्घ vpn, पूर्णांक psize, पूर्णांक ssize)
-अणु
-	अचिन्हित दीर्घ hpte_group;
-	अचिन्हित दीर्घ want_v;
-	अचिन्हित दीर्घ hash;
-	दीर्घ slot;
+static long native_hpte_find(unsigned long vpn, int psize, int ssize)
+{
+	unsigned long hpte_group;
+	unsigned long want_v;
+	unsigned long hash;
+	long slot;
 
-	hash = hpt_hash(vpn, mmu_psize_defs[psize].shअगरt, ssize);
+	hash = hpt_hash(vpn, mmu_psize_defs[psize].shift, ssize);
 	want_v = hpte_encode_avpn(vpn, psize, ssize);
 
 	/*
 	 * We try to keep bolted entries always in primary hash
-	 * But in some हाल we can find them in secondary too.
+	 * But in some case we can find them in secondary too.
 	 */
 	hpte_group = (hash & htab_hash_mask) * HPTES_PER_GROUP;
 	slot = __native_hpte_find(want_v, hpte_group);
-	अगर (slot < 0) अणु
+	if (slot < 0) {
 		/* Try in secondary */
 		hpte_group = (~hash & htab_hash_mask) * HPTES_PER_GROUP;
 		slot = __native_hpte_find(want_v, hpte_group);
-		अगर (slot < 0)
-			वापस -1;
-	पूर्ण
+		if (slot < 0)
+			return -1;
+	}
 
-	वापस slot;
-पूर्ण
+	return slot;
+}
 
 /*
  * Update the page protection bits. Intended to be used to create
- * guard pages क्रम kernel data काष्ठाures on pages which are bolted
+ * guard pages for kernel data structures on pages which are bolted
  * in the HPT. Assumes pages being operated on will not be stolen.
  *
  * No need to lock here because we should be the only user.
  */
-अटल व्योम native_hpte_updateboltedpp(अचिन्हित दीर्घ newpp, अचिन्हित दीर्घ ea,
-				       पूर्णांक psize, पूर्णांक ssize)
-अणु
-	अचिन्हित दीर्घ vpn;
-	अचिन्हित दीर्घ vsid;
-	दीर्घ slot;
-	काष्ठा hash_pte *hptep;
+static void native_hpte_updateboltedpp(unsigned long newpp, unsigned long ea,
+				       int psize, int ssize)
+{
+	unsigned long vpn;
+	unsigned long vsid;
+	long slot;
+	struct hash_pte *hptep;
 
 	vsid = get_kernel_vsid(ea, ssize);
 	vpn = hpt_vpn(ea, vsid, ssize);
 
 	slot = native_hpte_find(vpn, psize, ssize);
-	अगर (slot == -1)
+	if (slot == -1)
 		panic("could not find page to bolt\n");
 	hptep = htab_address + slot;
 
@@ -568,26 +567,26 @@
 	 * actual page size will be same.
 	 */
 	tlbie(vpn, psize, psize, ssize, 0);
-पूर्ण
+}
 
 /*
  * Remove a bolted kernel entry. Memory hotplug uses this.
  *
  * No need to lock here because we should be the only user.
  */
-अटल पूर्णांक native_hpte_हटाओbolted(अचिन्हित दीर्घ ea, पूर्णांक psize, पूर्णांक ssize)
-अणु
-	अचिन्हित दीर्घ vpn;
-	अचिन्हित दीर्घ vsid;
-	दीर्घ slot;
-	काष्ठा hash_pte *hptep;
+static int native_hpte_removebolted(unsigned long ea, int psize, int ssize)
+{
+	unsigned long vpn;
+	unsigned long vsid;
+	long slot;
+	struct hash_pte *hptep;
 
 	vsid = get_kernel_vsid(ea, ssize);
 	vpn = hpt_vpn(ea, vsid, ssize);
 
 	slot = native_hpte_find(vpn, psize, ssize);
-	अगर (slot == -1)
-		वापस -ENOENT;
+	if (slot == -1)
+		return -ENOENT;
 
 	hptep = htab_address + slot;
 
@@ -598,17 +597,17 @@
 
 	/* Invalidate the TLB */
 	tlbie(vpn, psize, psize, ssize, 0);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल व्योम native_hpte_invalidate(अचिन्हित दीर्घ slot, अचिन्हित दीर्घ vpn,
-				   पूर्णांक bpsize, पूर्णांक apsize, पूर्णांक ssize, पूर्णांक local)
-अणु
-	काष्ठा hash_pte *hptep = htab_address + slot;
-	अचिन्हित दीर्घ hpte_v;
-	अचिन्हित दीर्घ want_v;
-	अचिन्हित दीर्घ flags;
+static void native_hpte_invalidate(unsigned long slot, unsigned long vpn,
+				   int bpsize, int apsize, int ssize, int local)
+{
+	struct hash_pte *hptep = htab_address + slot;
+	unsigned long hpte_v;
+	unsigned long want_v;
+	unsigned long flags;
 
 	local_irq_save(flags);
 
@@ -617,58 +616,58 @@
 	want_v = hpte_encode_avpn(vpn, bpsize, ssize);
 	hpte_v = hpte_get_old_v(hptep);
 
-	अगर (HPTE_V_COMPARE(hpte_v, want_v) && (hpte_v & HPTE_V_VALID)) अणु
+	if (HPTE_V_COMPARE(hpte_v, want_v) && (hpte_v & HPTE_V_VALID)) {
 		native_lock_hpte(hptep);
 		/* recheck with locks held */
 		hpte_v = hpte_get_old_v(hptep);
 
-		अगर (HPTE_V_COMPARE(hpte_v, want_v) && (hpte_v & HPTE_V_VALID))
+		if (HPTE_V_COMPARE(hpte_v, want_v) && (hpte_v & HPTE_V_VALID))
 			/* Invalidate the hpte. NOTE: this also unlocks it */
 			hptep->v = 0;
-		अन्यथा
+		else
 			native_unlock_hpte(hptep);
-	पूर्ण
+	}
 	/*
-	 * We need to invalidate the TLB always because hpte_हटाओ करोesn't करो
-	 * a tlb invalidate. If a hash bucket माला_लो full, we "evict" a more/less
-	 * अक्रमom entry from it. When we करो that we करोn't invalidate the TLB
-	 * (hpte_हटाओ) because we assume the old translation is still
+	 * We need to invalidate the TLB always because hpte_remove doesn't do
+	 * a tlb invalidate. If a hash bucket gets full, we "evict" a more/less
+	 * random entry from it. When we do that we don't invalidate the TLB
+	 * (hpte_remove) because we assume the old translation is still
 	 * technically "valid".
 	 */
 	tlbie(vpn, bpsize, apsize, ssize, local);
 
 	local_irq_restore(flags);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_TRANSPARENT_HUGEPAGE
-अटल व्योम native_hugepage_invalidate(अचिन्हित दीर्घ vsid,
-				       अचिन्हित दीर्घ addr,
-				       अचिन्हित अक्षर *hpte_slot_array,
-				       पूर्णांक psize, पूर्णांक ssize, पूर्णांक local)
-अणु
-	पूर्णांक i;
-	काष्ठा hash_pte *hptep;
-	पूर्णांक actual_psize = MMU_PAGE_16M;
-	अचिन्हित पूर्णांक max_hpte_count, valid;
-	अचिन्हित दीर्घ flags, s_addr = addr;
-	अचिन्हित दीर्घ hpte_v, want_v, shअगरt;
-	अचिन्हित दीर्घ hidx, vpn = 0, hash, slot;
+#ifdef CONFIG_TRANSPARENT_HUGEPAGE
+static void native_hugepage_invalidate(unsigned long vsid,
+				       unsigned long addr,
+				       unsigned char *hpte_slot_array,
+				       int psize, int ssize, int local)
+{
+	int i;
+	struct hash_pte *hptep;
+	int actual_psize = MMU_PAGE_16M;
+	unsigned int max_hpte_count, valid;
+	unsigned long flags, s_addr = addr;
+	unsigned long hpte_v, want_v, shift;
+	unsigned long hidx, vpn = 0, hash, slot;
 
-	shअगरt = mmu_psize_defs[psize].shअगरt;
-	max_hpte_count = 1U << (PMD_SHIFT - shअगरt);
+	shift = mmu_psize_defs[psize].shift;
+	max_hpte_count = 1U << (PMD_SHIFT - shift);
 
 	local_irq_save(flags);
-	क्रम (i = 0; i < max_hpte_count; i++) अणु
+	for (i = 0; i < max_hpte_count; i++) {
 		valid = hpte_valid(hpte_slot_array, i);
-		अगर (!valid)
-			जारी;
+		if (!valid)
+			continue;
 		hidx =  hpte_hash_index(hpte_slot_array, i);
 
 		/* get the vpn */
-		addr = s_addr + (i * (1ul << shअगरt));
+		addr = s_addr + (i * (1ul << shift));
 		vpn = hpt_vpn(addr, vsid, ssize);
-		hash = hpt_hash(vpn, shअगरt, ssize);
-		अगर (hidx & _PTEIDX_SECONDARY)
+		hash = hpt_hash(vpn, shift, ssize);
+		if (hidx & _PTEIDX_SECONDARY)
 			hash = ~hash;
 
 		slot = (hash & htab_hash_mask) * HPTES_PER_GROUP;
@@ -678,134 +677,134 @@
 		want_v = hpte_encode_avpn(vpn, psize, ssize);
 		hpte_v = hpte_get_old_v(hptep);
 
-		/* Even अगर we miss, we need to invalidate the TLB */
-		अगर (HPTE_V_COMPARE(hpte_v, want_v) && (hpte_v & HPTE_V_VALID)) अणु
+		/* Even if we miss, we need to invalidate the TLB */
+		if (HPTE_V_COMPARE(hpte_v, want_v) && (hpte_v & HPTE_V_VALID)) {
 			/* recheck with locks held */
 			native_lock_hpte(hptep);
 			hpte_v = hpte_get_old_v(hptep);
 
-			अगर (HPTE_V_COMPARE(hpte_v, want_v) && (hpte_v & HPTE_V_VALID)) अणु
+			if (HPTE_V_COMPARE(hpte_v, want_v) && (hpte_v & HPTE_V_VALID)) {
 				/*
 				 * Invalidate the hpte. NOTE: this also unlocks it
 				 */
 
 				hptep->v = 0;
-			पूर्ण अन्यथा
+			} else
 				native_unlock_hpte(hptep);
-		पूर्ण
+		}
 		/*
-		 * We need to करो tlb invalidate क्रम all the address, tlbie
-		 * inकाष्ठाion compares entry_VA in tlb with the VA specअगरied
+		 * We need to do tlb invalidate for all the address, tlbie
+		 * instruction compares entry_VA in tlb with the VA specified
 		 * here
 		 */
 		tlbie(vpn, psize, actual_psize, ssize, local);
-	पूर्ण
+	}
 	local_irq_restore(flags);
-पूर्ण
-#अन्यथा
-अटल व्योम native_hugepage_invalidate(अचिन्हित दीर्घ vsid,
-				       अचिन्हित दीर्घ addr,
-				       अचिन्हित अक्षर *hpte_slot_array,
-				       पूर्णांक psize, पूर्णांक ssize, पूर्णांक local)
-अणु
+}
+#else
+static void native_hugepage_invalidate(unsigned long vsid,
+				       unsigned long addr,
+				       unsigned char *hpte_slot_array,
+				       int psize, int ssize, int local)
+{
 	WARN(1, "%s called without THP support\n", __func__);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-अटल व्योम hpte_decode(काष्ठा hash_pte *hpte, अचिन्हित दीर्घ slot,
-			पूर्णांक *psize, पूर्णांक *apsize, पूर्णांक *ssize, अचिन्हित दीर्घ *vpn)
-अणु
-	अचिन्हित दीर्घ avpn, pteg, vpi;
-	अचिन्हित दीर्घ hpte_v = be64_to_cpu(hpte->v);
-	अचिन्हित दीर्घ hpte_r = be64_to_cpu(hpte->r);
-	अचिन्हित दीर्घ vsid, seg_off;
-	पूर्णांक size, a_size, shअगरt;
+static void hpte_decode(struct hash_pte *hpte, unsigned long slot,
+			int *psize, int *apsize, int *ssize, unsigned long *vpn)
+{
+	unsigned long avpn, pteg, vpi;
+	unsigned long hpte_v = be64_to_cpu(hpte->v);
+	unsigned long hpte_r = be64_to_cpu(hpte->r);
+	unsigned long vsid, seg_off;
+	int size, a_size, shift;
 	/* Look at the 8 bit LP value */
-	अचिन्हित पूर्णांक lp = (hpte_r >> LP_SHIFT) & ((1 << LP_BITS) - 1);
+	unsigned int lp = (hpte_r >> LP_SHIFT) & ((1 << LP_BITS) - 1);
 
-	अगर (cpu_has_feature(CPU_FTR_ARCH_300)) अणु
+	if (cpu_has_feature(CPU_FTR_ARCH_300)) {
 		hpte_v = hpte_new_to_old_v(hpte_v, hpte_r);
 		hpte_r = hpte_new_to_old_r(hpte_r);
-	पूर्ण
-	अगर (!(hpte_v & HPTE_V_LARGE)) अणु
+	}
+	if (!(hpte_v & HPTE_V_LARGE)) {
 		size   = MMU_PAGE_4K;
 		a_size = MMU_PAGE_4K;
-	पूर्ण अन्यथा अणु
+	} else {
 		size = hpte_page_sizes[lp] & 0xf;
 		a_size = hpte_page_sizes[lp] >> 4;
-	पूर्ण
-	/* This works क्रम all page sizes, and क्रम 256M and 1T segments */
+	}
+	/* This works for all page sizes, and for 256M and 1T segments */
 	*ssize = hpte_v >> HPTE_V_SSIZE_SHIFT;
-	shअगरt = mmu_psize_defs[size].shअगरt;
+	shift = mmu_psize_defs[size].shift;
 
 	avpn = (HPTE_V_AVPN_VAL(hpte_v) & ~mmu_psize_defs[size].avpnm);
 	pteg = slot / HPTES_PER_GROUP;
-	अगर (hpte_v & HPTE_V_SECONDARY)
+	if (hpte_v & HPTE_V_SECONDARY)
 		pteg = ~pteg;
 
-	चयन (*ssize) अणु
-	हाल MMU_SEGSIZE_256M:
+	switch (*ssize) {
+	case MMU_SEGSIZE_256M:
 		/* We only have 28 - 23 bits of seg_off in avpn */
 		seg_off = (avpn & 0x1f) << 23;
 		vsid    =  avpn >> 5;
 		/* We can find more bits from the pteg value */
-		अगर (shअगरt < 23) अणु
+		if (shift < 23) {
 			vpi = (vsid ^ pteg) & htab_hash_mask;
-			seg_off |= vpi << shअगरt;
-		पूर्ण
+			seg_off |= vpi << shift;
+		}
 		*vpn = vsid << (SID_SHIFT - VPN_SHIFT) | seg_off >> VPN_SHIFT;
-		अवरोध;
-	हाल MMU_SEGSIZE_1T:
+		break;
+	case MMU_SEGSIZE_1T:
 		/* We only have 40 - 23 bits of seg_off in avpn */
 		seg_off = (avpn & 0x1ffff) << 23;
 		vsid    = avpn >> 17;
-		अगर (shअगरt < 23) अणु
+		if (shift < 23) {
 			vpi = (vsid ^ (vsid << 25) ^ pteg) & htab_hash_mask;
-			seg_off |= vpi << shअगरt;
-		पूर्ण
+			seg_off |= vpi << shift;
+		}
 		*vpn = vsid << (SID_SHIFT_1T - VPN_SHIFT) | seg_off >> VPN_SHIFT;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		*vpn = size = 0;
-	पूर्ण
+	}
 	*psize  = size;
 	*apsize = a_size;
-पूर्ण
+}
 
 /*
  * clear all mappings on kexec.  All cpus are in real mode (or they will
  * be when they isi), and we are the only one left.  We rely on our kernel
  * mapping being 0xC0's and the hardware ignoring those two real bits.
  *
- * This must be called with पूर्णांकerrupts disabled.
+ * This must be called with interrupts disabled.
  *
  * Taking the native_tlbie_lock is unsafe here due to the possibility of
  * lockdep being on. On pre POWER5 hardware, not taking the lock could
  * cause deadlock. POWER5 and newer not taking the lock is fine. This only
- * माला_लो called during boot beक्रमe secondary CPUs have come up and during
+ * gets called during boot before secondary CPUs have come up and during
  * crashdump and all bets are off anyway.
  *
  * TODO: add batching support when enabled.  remember, no dynamic memory here,
  * although there is the control page available...
  */
-अटल व्योम native_hpte_clear(व्योम)
-अणु
-	अचिन्हित दीर्घ vpn = 0;
-	अचिन्हित दीर्घ slot, slots;
-	काष्ठा hash_pte *hptep = htab_address;
-	अचिन्हित दीर्घ hpte_v;
-	अचिन्हित दीर्घ pteg_count;
-	पूर्णांक psize, apsize, ssize;
+static void native_hpte_clear(void)
+{
+	unsigned long vpn = 0;
+	unsigned long slot, slots;
+	struct hash_pte *hptep = htab_address;
+	unsigned long hpte_v;
+	unsigned long pteg_count;
+	int psize, apsize, ssize;
 
 	pteg_count = htab_hash_mask + 1;
 
 	slots = pteg_count * HPTES_PER_GROUP;
 
-	क्रम (slot = 0; slot < slots; slot++, hptep++) अणु
+	for (slot = 0; slot < slots; slot++, hptep++) {
 		/*
 		 * we could lock the pte here, but we are the only cpu
-		 * running,  right?  and क्रम crash dump, we probably
-		 * करोn't want to रुको क्रम a maybe bad cpu.
+		 * running,  right?  and for crash dump, we probably
+		 * don't want to wait for a maybe bad cpu.
 		 */
 		hpte_v = be64_to_cpu(hptep->v);
 
@@ -813,48 +812,48 @@
 		 * Call __tlbie() here rather than tlbie() since we can't take the
 		 * native_tlbie_lock.
 		 */
-		अगर (hpte_v & HPTE_V_VALID) अणु
+		if (hpte_v & HPTE_V_VALID) {
 			hpte_decode(hptep, slot, &psize, &apsize, &ssize, &vpn);
 			hptep->v = 0;
 			___tlbie(vpn, psize, apsize, ssize);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	यंत्र अस्थिर("eieio; tlbsync; ptesync":::"memory");
-पूर्ण
+	asm volatile("eieio; tlbsync; ptesync":::"memory");
+}
 
 /*
- * Batched hash table flush, we batch the tlbie's to aव्योम taking/releasing
- * the lock all the समय
+ * Batched hash table flush, we batch the tlbie's to avoid taking/releasing
+ * the lock all the time
  */
-अटल व्योम native_flush_hash_range(अचिन्हित दीर्घ number, पूर्णांक local)
-अणु
-	अचिन्हित दीर्घ vpn = 0;
-	अचिन्हित दीर्घ hash, index, hidx, shअगरt, slot;
-	काष्ठा hash_pte *hptep;
-	अचिन्हित दीर्घ hpte_v;
-	अचिन्हित दीर्घ want_v;
-	अचिन्हित दीर्घ flags;
+static void native_flush_hash_range(unsigned long number, int local)
+{
+	unsigned long vpn = 0;
+	unsigned long hash, index, hidx, shift, slot;
+	struct hash_pte *hptep;
+	unsigned long hpte_v;
+	unsigned long want_v;
+	unsigned long flags;
 	real_pte_t pte;
-	काष्ठा ppc64_tlb_batch *batch = this_cpu_ptr(&ppc64_tlb_batch);
-	अचिन्हित दीर्घ psize = batch->psize;
-	पूर्णांक ssize = batch->ssize;
-	पूर्णांक i;
-	अचिन्हित पूर्णांक use_local;
+	struct ppc64_tlb_batch *batch = this_cpu_ptr(&ppc64_tlb_batch);
+	unsigned long psize = batch->psize;
+	int ssize = batch->ssize;
+	int i;
+	unsigned int use_local;
 
 	use_local = local && mmu_has_feature(MMU_FTR_TLBIEL) &&
 		mmu_psize_defs[psize].tlbiel && !cxl_ctx_in_use();
 
 	local_irq_save(flags);
 
-	क्रम (i = 0; i < number; i++) अणु
+	for (i = 0; i < number; i++) {
 		vpn = batch->vpn[i];
 		pte = batch->pte[i];
 
-		pte_iterate_hashed_subpages(pte, psize, vpn, index, shअगरt) अणु
-			hash = hpt_hash(vpn, shअगरt, ssize);
+		pte_iterate_hashed_subpages(pte, psize, vpn, index, shift) {
+			hash = hpt_hash(vpn, shift, ssize);
 			hidx = __rpte_to_hidx(pte, index);
-			अगर (hidx & _PTEIDX_SECONDARY)
+			if (hidx & _PTEIDX_SECONDARY)
 				hash = ~hash;
 			slot = (hash & htab_hash_mask) * HPTES_PER_GROUP;
 			slot += hidx & _PTEIDX_GROUP_IX;
@@ -862,70 +861,70 @@
 			want_v = hpte_encode_avpn(vpn, psize, ssize);
 			hpte_v = hpte_get_old_v(hptep);
 
-			अगर (!HPTE_V_COMPARE(hpte_v, want_v) || !(hpte_v & HPTE_V_VALID))
-				जारी;
+			if (!HPTE_V_COMPARE(hpte_v, want_v) || !(hpte_v & HPTE_V_VALID))
+				continue;
 			/* lock and try again */
 			native_lock_hpte(hptep);
 			hpte_v = hpte_get_old_v(hptep);
 
-			अगर (!HPTE_V_COMPARE(hpte_v, want_v) || !(hpte_v & HPTE_V_VALID))
+			if (!HPTE_V_COMPARE(hpte_v, want_v) || !(hpte_v & HPTE_V_VALID))
 				native_unlock_hpte(hptep);
-			अन्यथा
+			else
 				hptep->v = 0;
 
-		पूर्ण pte_iterate_hashed_end();
-	पूर्ण
+		} pte_iterate_hashed_end();
+	}
 
-	अगर (use_local) अणु
-		यंत्र अस्थिर("ptesync":::"memory");
-		क्रम (i = 0; i < number; i++) अणु
+	if (use_local) {
+		asm volatile("ptesync":::"memory");
+		for (i = 0; i < number; i++) {
 			vpn = batch->vpn[i];
 			pte = batch->pte[i];
 
 			pte_iterate_hashed_subpages(pte, psize,
-						    vpn, index, shअगरt) अणु
+						    vpn, index, shift) {
 				__tlbiel(vpn, psize, psize, ssize);
-			पूर्ण pte_iterate_hashed_end();
-		पूर्ण
+			} pte_iterate_hashed_end();
+		}
 		ppc_after_tlbiel_barrier();
-	पूर्ण अन्यथा अणु
-		पूर्णांक lock_tlbie = !mmu_has_feature(MMU_FTR_LOCKLESS_TLBIE);
+	} else {
+		int lock_tlbie = !mmu_has_feature(MMU_FTR_LOCKLESS_TLBIE);
 
-		अगर (lock_tlbie)
+		if (lock_tlbie)
 			raw_spin_lock(&native_tlbie_lock);
 
-		यंत्र अस्थिर("ptesync":::"memory");
-		क्रम (i = 0; i < number; i++) अणु
+		asm volatile("ptesync":::"memory");
+		for (i = 0; i < number; i++) {
 			vpn = batch->vpn[i];
 			pte = batch->pte[i];
 
 			pte_iterate_hashed_subpages(pte, psize,
-						    vpn, index, shअगरt) अणु
+						    vpn, index, shift) {
 				__tlbie(vpn, psize, psize, ssize);
-			पूर्ण pte_iterate_hashed_end();
-		पूर्ण
+			} pte_iterate_hashed_end();
+		}
 		/*
-		 * Just करो one more with the last used values.
+		 * Just do one more with the last used values.
 		 */
 		fixup_tlbie_vpn(vpn, psize, psize, ssize);
-		यंत्र अस्थिर("eieio; tlbsync; ptesync":::"memory");
+		asm volatile("eieio; tlbsync; ptesync":::"memory");
 
-		अगर (lock_tlbie)
+		if (lock_tlbie)
 			raw_spin_unlock(&native_tlbie_lock);
-	पूर्ण
+	}
 
 	local_irq_restore(flags);
-पूर्ण
+}
 
-व्योम __init hpte_init_native(व्योम)
-अणु
+void __init hpte_init_native(void)
+{
 	mmu_hash_ops.hpte_invalidate	= native_hpte_invalidate;
 	mmu_hash_ops.hpte_updatepp	= native_hpte_updatepp;
 	mmu_hash_ops.hpte_updateboltedpp = native_hpte_updateboltedpp;
-	mmu_hash_ops.hpte_हटाओbolted = native_hpte_हटाओbolted;
+	mmu_hash_ops.hpte_removebolted = native_hpte_removebolted;
 	mmu_hash_ops.hpte_insert	= native_hpte_insert;
-	mmu_hash_ops.hpte_हटाओ	= native_hpte_हटाओ;
+	mmu_hash_ops.hpte_remove	= native_hpte_remove;
 	mmu_hash_ops.hpte_clear_all	= native_hpte_clear;
 	mmu_hash_ops.flush_hash_range = native_flush_hash_range;
 	mmu_hash_ops.hugepage_invalidate   = native_hugepage_invalidate;
-पूर्ण
+}

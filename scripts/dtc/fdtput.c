@@ -1,33 +1,32 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
  */
 
-#समावेश <निश्चित.स>
-#समावेश <प्रकार.स>
-#समावेश <getopt.h>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
+#include <assert.h>
+#include <ctype.h>
+#include <getopt.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-#समावेश <libfdt.h>
+#include <libfdt.h>
 
-#समावेश "util.h"
+#include "util.h"
 
 /* These are the operations we support */
-क्रमागत oper_type अणु
+enum oper_type {
 	OPER_WRITE_PROP,		/* Write a property in a node */
 	OPER_CREATE_NODE,		/* Create a new node */
-पूर्ण;
+};
 
-काष्ठा display_info अणु
-	क्रमागत oper_type oper;	/* operation to perक्रमm */
-	पूर्णांक type;		/* data type (s/i/u/x or 0 क्रम शेष) */
-	पूर्णांक size;		/* data size (1/2/4) */
-	पूर्णांक verbose;		/* verbose output */
-	पूर्णांक स्वतः_path;		/* स्वतःmatically create all path components */
-पूर्ण;
+struct display_info {
+	enum oper_type oper;	/* operation to perform */
+	int type;		/* data type (s/i/u/x or 0 for default) */
+	int size;		/* data size (1/2/4) */
+	int verbose;		/* verbose output */
+	int auto_path;		/* automatically create all path components */
+};
 
 
 /**
@@ -37,229 +36,229 @@
  * @param namelen	Length of node name, or -1 to use entire string
  * @param err		Error number to report (-FDT_ERR_...)
  */
-अटल व्योम report_error(स्थिर अक्षर *name, पूर्णांक namelen, पूर्णांक err)
-अणु
-	अगर (namelen == -1)
-		namelen = म_माप(name);
-	ख_लिखो(मानक_त्रुटि, "Error at '%1.*s': %s\n", namelen, name,
-		fdt_म_त्रुटि(err));
-पूर्ण
+static void report_error(const char *name, int namelen, int err)
+{
+	if (namelen == -1)
+		namelen = strlen(name);
+	fprintf(stderr, "Error at '%1.*s': %s\n", namelen, name,
+		fdt_strerror(err));
+}
 
 /**
  * Encode a series of arguments in a property value.
  *
- * @param disp		Display inक्रमmation / options
+ * @param disp		Display information / options
  * @param arg		List of arguments from command line
  * @param arg_count	Number of arguments (may be 0)
  * @param valuep	Returns buffer containing value
  * @param *value_len	Returns length of value encoded
  */
-अटल पूर्णांक encode_value(काष्ठा display_info *disp, अक्षर **arg, पूर्णांक arg_count,
-			अक्षर **valuep, पूर्णांक *value_len)
-अणु
-	अक्षर *value = शून्य;	/* holding area क्रम value */
-	पूर्णांक value_size = 0;	/* size of holding area */
-	अक्षर *ptr;		/* poपूर्णांकer to current value position */
-	पूर्णांक len;		/* length of this cell/string/byte */
-	पूर्णांक ival;
-	पूर्णांक upto;	/* the number of bytes we have written to buf */
-	अक्षर fmt[3];
+static int encode_value(struct display_info *disp, char **arg, int arg_count,
+			char **valuep, int *value_len)
+{
+	char *value = NULL;	/* holding area for value */
+	int value_size = 0;	/* size of holding area */
+	char *ptr;		/* pointer to current value position */
+	int len;		/* length of this cell/string/byte */
+	int ival;
+	int upto;	/* the number of bytes we have written to buf */
+	char fmt[3];
 
 	upto = 0;
 
-	अगर (disp->verbose)
-		ख_लिखो(मानक_त्रुटि, "Decoding value:\n");
+	if (disp->verbose)
+		fprintf(stderr, "Decoding value:\n");
 
 	fmt[0] = '%';
 	fmt[1] = disp->type ? disp->type : 'd';
 	fmt[2] = '\0';
-	क्रम (; arg_count > 0; arg++, arg_count--, upto += len) अणु
-		/* assume पूर्णांकeger unless told otherwise */
-		अगर (disp->type == 's')
-			len = म_माप(*arg) + 1;
-		अन्यथा
+	for (; arg_count > 0; arg++, arg_count--, upto += len) {
+		/* assume integer unless told otherwise */
+		if (disp->type == 's')
+			len = strlen(*arg) + 1;
+		else
 			len = disp->size == -1 ? 4 : disp->size;
 
-		/* enlarge our value buffer by a suitable margin अगर needed */
-		अगर (upto + len > value_size) अणु
+		/* enlarge our value buffer by a suitable margin if needed */
+		if (upto + len > value_size) {
 			value_size = (upto + len) + 500;
-			value = पुनः_स्मृति(value, value_size);
-			अगर (!value) अणु
-				ख_लिखो(मानक_त्रुटि, "Out of mmory: cannot alloc "
+			value = realloc(value, value_size);
+			if (!value) {
+				fprintf(stderr, "Out of mmory: cannot alloc "
 					"%d bytes\n", value_size);
-				वापस -1;
-			पूर्ण
-		पूर्ण
+				return -1;
+			}
+		}
 
 		ptr = value + upto;
-		अगर (disp->type == 's') अणु
-			स_नकल(ptr, *arg, len);
-			अगर (disp->verbose)
-				ख_लिखो(मानक_त्रुटि, "\tstring: '%s'\n", ptr);
-		पूर्ण अन्यथा अणु
-			पूर्णांक *iptr = (पूर्णांक *)ptr;
-			माला_पूछो(*arg, fmt, &ival);
-			अगर (len == 4)
+		if (disp->type == 's') {
+			memcpy(ptr, *arg, len);
+			if (disp->verbose)
+				fprintf(stderr, "\tstring: '%s'\n", ptr);
+		} else {
+			int *iptr = (int *)ptr;
+			sscanf(*arg, fmt, &ival);
+			if (len == 4)
 				*iptr = cpu_to_fdt32(ival);
-			अन्यथा
-				*ptr = (uपूर्णांक8_t)ival;
-			अगर (disp->verbose) अणु
-				ख_लिखो(मानक_त्रुटि, "\t%s: %d\n",
+			else
+				*ptr = (uint8_t)ival;
+			if (disp->verbose) {
+				fprintf(stderr, "\t%s: %d\n",
 					disp->size == 1 ? "byte" :
 					disp->size == 2 ? "short" : "int",
 					ival);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 	*value_len = upto;
 	*valuep = value;
-	अगर (disp->verbose)
-		ख_लिखो(मानक_त्रुटि, "Value size %d\n", upto);
-	वापस 0;
-पूर्ण
+	if (disp->verbose)
+		fprintf(stderr, "Value size %d\n", upto);
+	return 0;
+}
 
-अटल पूर्णांक store_key_value(व्योम *blob, स्थिर अक्षर *node_name,
-		स्थिर अक्षर *property, स्थिर अक्षर *buf, पूर्णांक len)
-अणु
-	पूर्णांक node;
-	पूर्णांक err;
+static int store_key_value(void *blob, const char *node_name,
+		const char *property, const char *buf, int len)
+{
+	int node;
+	int err;
 
 	node = fdt_path_offset(blob, node_name);
-	अगर (node < 0) अणु
+	if (node < 0) {
 		report_error(node_name, -1, node);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	err = fdt_setprop(blob, node, property, buf, len);
-	अगर (err) अणु
+	if (err) {
 		report_error(property, -1, err);
-		वापस -1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -1;
+	}
+	return 0;
+}
 
 /**
- * Create paths as needed क्रम all components of a path
+ * Create paths as needed for all components of a path
  *
- * Any components of the path that करो not exist are created. Errors are
+ * Any components of the path that do not exist are created. Errors are
  * reported.
  *
- * @param blob		FDT blob to ग_लिखो पूर्णांकo
+ * @param blob		FDT blob to write into
  * @param in_path	Path to process
- * @वापस 0 अगर ok, -1 on error
+ * @return 0 if ok, -1 on error
  */
-अटल पूर्णांक create_paths(व्योम *blob, स्थिर अक्षर *in_path)
-अणु
-	स्थिर अक्षर *path = in_path;
-	स्थिर अक्षर *sep;
-	पूर्णांक node, offset = 0;
+static int create_paths(void *blob, const char *in_path)
+{
+	const char *path = in_path;
+	const char *sep;
+	int node, offset = 0;
 
 	/* skip leading '/' */
-	जबतक (*path == '/')
+	while (*path == '/')
 		path++;
 
-	क्रम (sep = path; *sep; path = sep + 1, offset = node) अणु
-		/* equivalent to म_अक्षरnul(), but it requires _GNU_SOURCE */
-		sep = म_अक्षर(path, '/');
-		अगर (!sep)
-			sep = path + म_माप(path);
+	for (sep = path; *sep; path = sep + 1, offset = node) {
+		/* equivalent to strchrnul(), but it requires _GNU_SOURCE */
+		sep = strchr(path, '/');
+		if (!sep)
+			sep = path + strlen(path);
 
 		node = fdt_subnode_offset_namelen(blob, offset, path,
 				sep - path);
-		अगर (node == -FDT_ERR_NOTFOUND) अणु
+		if (node == -FDT_ERR_NOTFOUND) {
 			node = fdt_add_subnode_namelen(blob, offset, path,
 						       sep - path);
-		पूर्ण
-		अगर (node < 0) अणु
+		}
+		if (node < 0) {
 			report_error(path, sep - path, node);
-			वापस -1;
-		पूर्ण
-	पूर्ण
+			return -1;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * Create a new node in the fdt.
  *
- * This will overग_लिखो the node_name string. Any error is reported.
+ * This will overwrite the node_name string. Any error is reported.
  *
- * TODO: Perhaps create fdt_path_offset_namelen() so we करोn't need to करो this.
+ * TODO: Perhaps create fdt_path_offset_namelen() so we don't need to do this.
  *
- * @param blob		FDT blob to ग_लिखो पूर्णांकo
+ * @param blob		FDT blob to write into
  * @param node_name	Name of node to create
- * @वापस new node offset अगर found, or -1 on failure
+ * @return new node offset if found, or -1 on failure
  */
-अटल पूर्णांक create_node(व्योम *blob, स्थिर अक्षर *node_name)
-अणु
-	पूर्णांक node = 0;
-	अक्षर *p;
+static int create_node(void *blob, const char *node_name)
+{
+	int node = 0;
+	char *p;
 
-	p = म_खोजप(node_name, '/');
-	अगर (!p) अणु
+	p = strrchr(node_name, '/');
+	if (!p) {
 		report_error(node_name, -1, -FDT_ERR_BADPATH);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 	*p = '\0';
 
-	अगर (p > node_name) अणु
+	if (p > node_name) {
 		node = fdt_path_offset(blob, node_name);
-		अगर (node < 0) अणु
+		if (node < 0) {
 			report_error(node_name, -1, node);
-			वापस -1;
-		पूर्ण
-	पूर्ण
+			return -1;
+		}
+	}
 
 	node = fdt_add_subnode(blob, node, p + 1);
-	अगर (node < 0) अणु
+	if (node < 0) {
 		report_error(p + 1, -1, node);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक करो_fdtput(काष्ठा display_info *disp, स्थिर अक्षर *filename,
-		    अक्षर **arg, पूर्णांक arg_count)
-अणु
-	अक्षर *value;
-	अक्षर *blob;
-	पूर्णांक len, ret = 0;
+static int do_fdtput(struct display_info *disp, const char *filename,
+		    char **arg, int arg_count)
+{
+	char *value;
+	char *blob;
+	int len, ret = 0;
 
-	blob = utilfdt_पढ़ो(filename);
-	अगर (!blob)
-		वापस -1;
+	blob = utilfdt_read(filename);
+	if (!blob)
+		return -1;
 
-	चयन (disp->oper) अणु
-	हाल OPER_WRITE_PROP:
+	switch (disp->oper) {
+	case OPER_WRITE_PROP:
 		/*
-		 * Convert the arguments पूर्णांकo a single binary value, then
-		 * store them पूर्णांकo the property.
+		 * Convert the arguments into a single binary value, then
+		 * store them into the property.
 		 */
-		निश्चित(arg_count >= 2);
-		अगर (disp->स्वतः_path && create_paths(blob, *arg))
-			वापस -1;
-		अगर (encode_value(disp, arg + 2, arg_count - 2, &value, &len) ||
+		assert(arg_count >= 2);
+		if (disp->auto_path && create_paths(blob, *arg))
+			return -1;
+		if (encode_value(disp, arg + 2, arg_count - 2, &value, &len) ||
 			store_key_value(blob, *arg, arg[1], value, len))
 			ret = -1;
-		अवरोध;
-	हाल OPER_CREATE_NODE:
-		क्रम (; ret >= 0 && arg_count--; arg++) अणु
-			अगर (disp->स्वतः_path)
+		break;
+	case OPER_CREATE_NODE:
+		for (; ret >= 0 && arg_count--; arg++) {
+			if (disp->auto_path)
 				ret = create_paths(blob, *arg);
-			अन्यथा
+			else
 				ret = create_node(blob, *arg);
-		पूर्ण
-		अवरोध;
-	पूर्ण
-	अगर (ret >= 0)
-		ret = utilfdt_ग_लिखो(filename, blob);
+		}
+		break;
+	}
+	if (ret >= 0)
+		ret = utilfdt_write(filename, blob);
 
-	मुक्त(blob);
-	वापस ret;
-पूर्ण
+	free(blob);
+	return ret;
+}
 
-अटल स्थिर अक्षर *usage_msg =
+static const char *usage_msg =
 	"fdtput - write a property value to a device tree\n"
 	"\n"
 	"The command line arguments are joined together into a single value.\n"
@@ -275,75 +274,75 @@
 	"\t-h\t\tPrint this help\n\n"
 	USAGE_TYPE_MSG;
 
-अटल व्योम usage(स्थिर अक्षर *msg)
-अणु
-	अगर (msg)
-		ख_लिखो(मानक_त्रुटि, "Error: %s\n\n", msg);
+static void usage(const char *msg)
+{
+	if (msg)
+		fprintf(stderr, "Error: %s\n\n", msg);
 
-	ख_लिखो(मानक_त्रुटि, "%s", usage_msg);
-	निकास(2);
-पूर्ण
+	fprintf(stderr, "%s", usage_msg);
+	exit(2);
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
-अणु
-	काष्ठा display_info disp;
-	अक्षर *filename = शून्य;
+int main(int argc, char *argv[])
+{
+	struct display_info disp;
+	char *filename = NULL;
 
-	स_रखो(&disp, '\0', माप(disp));
+	memset(&disp, '\0', sizeof(disp));
 	disp.size = -1;
 	disp.oper = OPER_WRITE_PROP;
-	क्रम (;;) अणु
-		पूर्णांक c = getopt(argc, argv, "chpt:v");
-		अगर (c == -1)
-			अवरोध;
+	for (;;) {
+		int c = getopt(argc, argv, "chpt:v");
+		if (c == -1)
+			break;
 
 		/*
 		 * TODO: add options to:
 		 * - delete property
 		 * - delete node (optionally recursively)
-		 * - नाम node
-		 * - pack fdt beक्रमe writing
-		 * - set amount of मुक्त space when writing
-		 * - expand fdt अगर value करोesn't fit
+		 * - rename node
+		 * - pack fdt before writing
+		 * - set amount of free space when writing
+		 * - expand fdt if value doesn't fit
 		 */
-		चयन (c) अणु
-		हाल 'c':
+		switch (c) {
+		case 'c':
 			disp.oper = OPER_CREATE_NODE;
-			अवरोध;
-		हाल 'h':
-		हाल '?':
-			usage(शून्य);
-		हाल 'p':
-			disp.स्वतः_path = 1;
-			अवरोध;
-		हाल 't':
-			अगर (utilfdt_decode_type(optarg, &disp.type,
+			break;
+		case 'h':
+		case '?':
+			usage(NULL);
+		case 'p':
+			disp.auto_path = 1;
+			break;
+		case 't':
+			if (utilfdt_decode_type(optarg, &disp.type,
 					&disp.size))
 				usage("Invalid type string");
-			अवरोध;
+			break;
 
-		हाल 'v':
+		case 'v':
 			disp.verbose = 1;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (optind < argc)
+	if (optind < argc)
 		filename = argv[optind++];
-	अगर (!filename)
+	if (!filename)
 		usage("Missing filename");
 
 	argv += optind;
 	argc -= optind;
 
-	अगर (disp.oper == OPER_WRITE_PROP) अणु
-		अगर (argc < 1)
+	if (disp.oper == OPER_WRITE_PROP) {
+		if (argc < 1)
 			usage("Missing node");
-		अगर (argc < 2)
+		if (argc < 2)
 			usage("Missing property");
-	पूर्ण
+	}
 
-	अगर (करो_fdtput(&disp, filename, argv, argc))
-		वापस 1;
-	वापस 0;
-पूर्ण
+	if (do_fdtput(&disp, filename, argv, argc))
+		return 1;
+	return 0;
+}

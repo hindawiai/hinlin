@@ -1,136 +1,135 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0 OR BSD-3-Clause
+// SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
 /*
  * Copyright (C) 2005-2014, 2021 Intel Corporation
  * Copyright (C) 2015-2017 Intel Deutschland GmbH
  */
-#समावेश <linux/sched.h>
-#समावेश <linux/export.h>
+#include <linux/sched.h>
+#include <linux/export.h>
 
-#समावेश "iwl-drv.h"
-#समावेश "notif-wait.h"
+#include "iwl-drv.h"
+#include "notif-wait.h"
 
 
-व्योम iwl_notअगरication_रुको_init(काष्ठा iwl_notअगर_रुको_data *notअगर_रुको)
-अणु
-	spin_lock_init(&notअगर_रुको->notअगर_रुको_lock);
-	INIT_LIST_HEAD(&notअगर_रुको->notअगर_रुकोs);
-	init_रुकोqueue_head(&notअगर_रुको->notअगर_रुकोq);
-पूर्ण
-IWL_EXPORT_SYMBOL(iwl_notअगरication_रुको_init);
+void iwl_notification_wait_init(struct iwl_notif_wait_data *notif_wait)
+{
+	spin_lock_init(&notif_wait->notif_wait_lock);
+	INIT_LIST_HEAD(&notif_wait->notif_waits);
+	init_waitqueue_head(&notif_wait->notif_waitq);
+}
+IWL_EXPORT_SYMBOL(iwl_notification_wait_init);
 
-bool iwl_notअगरication_रुको(काष्ठा iwl_notअगर_रुको_data *notअगर_रुको,
-			   काष्ठा iwl_rx_packet *pkt)
-अणु
+bool iwl_notification_wait(struct iwl_notif_wait_data *notif_wait,
+			   struct iwl_rx_packet *pkt)
+{
 	bool triggered = false;
 
-	अगर (!list_empty(&notअगर_रुको->notअगर_रुकोs)) अणु
-		काष्ठा iwl_notअगरication_रुको *w;
+	if (!list_empty(&notif_wait->notif_waits)) {
+		struct iwl_notification_wait *w;
 
-		spin_lock_bh(&notअगर_रुको->notअगर_रुको_lock);
-		list_क्रम_each_entry(w, &notअगर_रुको->notअगर_रुकोs, list) अणु
-			पूर्णांक i;
+		spin_lock_bh(&notif_wait->notif_wait_lock);
+		list_for_each_entry(w, &notif_wait->notif_waits, list) {
+			int i;
 			bool found = false;
 
 			/*
-			 * If it alपढ़ोy finished (triggered) or has been
-			 * पातed then करोn't evaluate it again to aव्योम races,
+			 * If it already finished (triggered) or has been
+			 * aborted then don't evaluate it again to avoid races,
 			 * Otherwise the function could be called again even
-			 * though it वापसed true beक्रमe
+			 * though it returned true before
 			 */
-			अगर (w->triggered || w->पातed)
-				जारी;
+			if (w->triggered || w->aborted)
+				continue;
 
-			क्रम (i = 0; i < w->n_cmds; i++) अणु
+			for (i = 0; i < w->n_cmds; i++) {
 				u16 rec_id = WIDE_ID(pkt->hdr.group_id,
 						     pkt->hdr.cmd);
 
-				अगर (w->cmds[i] == rec_id ||
+				if (w->cmds[i] == rec_id ||
 				    (!iwl_cmd_groupid(w->cmds[i]) &&
-				     DEF_ID(w->cmds[i]) == rec_id)) अणु
+				     DEF_ID(w->cmds[i]) == rec_id)) {
 					found = true;
-					अवरोध;
-				पूर्ण
-			पूर्ण
-			अगर (!found)
-				जारी;
+					break;
+				}
+			}
+			if (!found)
+				continue;
 
-			अगर (!w->fn || w->fn(notअगर_रुको, pkt, w->fn_data)) अणु
+			if (!w->fn || w->fn(notif_wait, pkt, w->fn_data)) {
 				w->triggered = true;
 				triggered = true;
-			पूर्ण
-		पूर्ण
-		spin_unlock_bh(&notअगर_रुको->notअगर_रुको_lock);
-	पूर्ण
+			}
+		}
+		spin_unlock_bh(&notif_wait->notif_wait_lock);
+	}
 
-	वापस triggered;
-पूर्ण
-IWL_EXPORT_SYMBOL(iwl_notअगरication_रुको);
+	return triggered;
+}
+IWL_EXPORT_SYMBOL(iwl_notification_wait);
 
-व्योम iwl_पात_notअगरication_रुकोs(काष्ठा iwl_notअगर_रुको_data *notअगर_रुको)
-अणु
-	काष्ठा iwl_notअगरication_रुको *रुको_entry;
+void iwl_abort_notification_waits(struct iwl_notif_wait_data *notif_wait)
+{
+	struct iwl_notification_wait *wait_entry;
 
-	spin_lock_bh(&notअगर_रुको->notअगर_रुको_lock);
-	list_क्रम_each_entry(रुको_entry, &notअगर_रुको->notअगर_रुकोs, list)
-		रुको_entry->पातed = true;
-	spin_unlock_bh(&notअगर_रुको->notअगर_रुको_lock);
+	spin_lock_bh(&notif_wait->notif_wait_lock);
+	list_for_each_entry(wait_entry, &notif_wait->notif_waits, list)
+		wait_entry->aborted = true;
+	spin_unlock_bh(&notif_wait->notif_wait_lock);
 
-	wake_up_all(&notअगर_रुको->notअगर_रुकोq);
-पूर्ण
-IWL_EXPORT_SYMBOL(iwl_पात_notअगरication_रुकोs);
+	wake_up_all(&notif_wait->notif_waitq);
+}
+IWL_EXPORT_SYMBOL(iwl_abort_notification_waits);
 
-व्योम
-iwl_init_notअगरication_रुको(काष्ठा iwl_notअगर_रुको_data *notअगर_रुको,
-			   काष्ठा iwl_notअगरication_रुको *रुको_entry,
-			   स्थिर u16 *cmds, पूर्णांक n_cmds,
-			   bool (*fn)(काष्ठा iwl_notअगर_रुको_data *notअगर_रुको,
-				      काष्ठा iwl_rx_packet *pkt, व्योम *data),
-			   व्योम *fn_data)
-अणु
-	अगर (WARN_ON(n_cmds > MAX_NOTIF_CMDS))
+void
+iwl_init_notification_wait(struct iwl_notif_wait_data *notif_wait,
+			   struct iwl_notification_wait *wait_entry,
+			   const u16 *cmds, int n_cmds,
+			   bool (*fn)(struct iwl_notif_wait_data *notif_wait,
+				      struct iwl_rx_packet *pkt, void *data),
+			   void *fn_data)
+{
+	if (WARN_ON(n_cmds > MAX_NOTIF_CMDS))
 		n_cmds = MAX_NOTIF_CMDS;
 
-	रुको_entry->fn = fn;
-	रुको_entry->fn_data = fn_data;
-	रुको_entry->n_cmds = n_cmds;
-	स_नकल(रुको_entry->cmds, cmds, n_cmds * माप(u16));
-	रुको_entry->triggered = false;
-	रुको_entry->पातed = false;
+	wait_entry->fn = fn;
+	wait_entry->fn_data = fn_data;
+	wait_entry->n_cmds = n_cmds;
+	memcpy(wait_entry->cmds, cmds, n_cmds * sizeof(u16));
+	wait_entry->triggered = false;
+	wait_entry->aborted = false;
 
-	spin_lock_bh(&notअगर_रुको->notअगर_रुको_lock);
-	list_add(&रुको_entry->list, &notअगर_रुको->notअगर_रुकोs);
-	spin_unlock_bh(&notअगर_रुको->notअगर_रुको_lock);
-पूर्ण
-IWL_EXPORT_SYMBOL(iwl_init_notअगरication_रुको);
+	spin_lock_bh(&notif_wait->notif_wait_lock);
+	list_add(&wait_entry->list, &notif_wait->notif_waits);
+	spin_unlock_bh(&notif_wait->notif_wait_lock);
+}
+IWL_EXPORT_SYMBOL(iwl_init_notification_wait);
 
-व्योम iwl_हटाओ_notअगरication(काष्ठा iwl_notअगर_रुको_data *notअगर_रुको,
-			     काष्ठा iwl_notअगरication_रुको *रुको_entry)
-अणु
-	spin_lock_bh(&notअगर_रुको->notअगर_रुको_lock);
-	list_del(&रुको_entry->list);
-	spin_unlock_bh(&notअगर_रुको->notअगर_रुको_lock);
-पूर्ण
-IWL_EXPORT_SYMBOL(iwl_हटाओ_notअगरication);
+void iwl_remove_notification(struct iwl_notif_wait_data *notif_wait,
+			     struct iwl_notification_wait *wait_entry)
+{
+	spin_lock_bh(&notif_wait->notif_wait_lock);
+	list_del(&wait_entry->list);
+	spin_unlock_bh(&notif_wait->notif_wait_lock);
+}
+IWL_EXPORT_SYMBOL(iwl_remove_notification);
 
-पूर्णांक iwl_रुको_notअगरication(काष्ठा iwl_notअगर_रुको_data *notअगर_रुको,
-			  काष्ठा iwl_notअगरication_रुको *रुको_entry,
-			  अचिन्हित दीर्घ समयout)
-अणु
-	पूर्णांक ret;
+int iwl_wait_notification(struct iwl_notif_wait_data *notif_wait,
+			  struct iwl_notification_wait *wait_entry,
+			  unsigned long timeout)
+{
+	int ret;
 
-	ret = रुको_event_समयout(notअगर_रुको->notअगर_रुकोq,
-				 रुको_entry->triggered || रुको_entry->पातed,
-				 समयout);
+	ret = wait_event_timeout(notif_wait->notif_waitq,
+				 wait_entry->triggered || wait_entry->aborted,
+				 timeout);
 
-	iwl_हटाओ_notअगरication(notअगर_रुको, रुको_entry);
+	iwl_remove_notification(notif_wait, wait_entry);
 
-	अगर (रुको_entry->पातed)
-		वापस -EIO;
+	if (wait_entry->aborted)
+		return -EIO;
 
-	/* वापस value is always >= 0 */
-	अगर (ret <= 0)
-		वापस -ETIMEDOUT;
-	वापस 0;
-पूर्ण
-IWL_EXPORT_SYMBOL(iwl_रुको_notअगरication);
+	/* return value is always >= 0 */
+	if (ret <= 0)
+		return -ETIMEDOUT;
+	return 0;
+}
+IWL_EXPORT_SYMBOL(iwl_wait_notification);

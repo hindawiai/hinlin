@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /* -*- linux-c -*-
  *
  *	$Id: sysrq.h,v 1.3 1997/07/17 11:54:33 mj Exp $
@@ -10,75 +9,75 @@
  *
  *	(c) 2000 Crutcher Dunnavant <crutcher+kernel@datastacks.com>
  *	overhauled to use key registration
- *	based upon discusions in irc://irc.खोलोprojects.net/#kernelnewbies
+ *	based upon discusions in irc://irc.openprojects.net/#kernelnewbies
  */
 
-#अगर_अघोषित _LINUX_SYSRQ_H
-#घोषणा _LINUX_SYSRQ_H
+#ifndef _LINUX_SYSRQ_H
+#define _LINUX_SYSRQ_H
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/types.h>
+#include <linux/errno.h>
+#include <linux/types.h>
 
-/* Possible values of biपंचांगask क्रम enabling sysrq functions */
-/* 0x0001 is reserved क्रम enable everything */
-#घोषणा SYSRQ_ENABLE_LOG	0x0002
-#घोषणा SYSRQ_ENABLE_KEYBOARD	0x0004
-#घोषणा SYSRQ_ENABLE_DUMP	0x0008
-#घोषणा SYSRQ_ENABLE_SYNC	0x0010
-#घोषणा SYSRQ_ENABLE_REMOUNT	0x0020
-#घोषणा SYSRQ_ENABLE_SIGNAL	0x0040
-#घोषणा SYSRQ_ENABLE_BOOT	0x0080
-#घोषणा SYSRQ_ENABLE_RTNICE	0x0100
+/* Possible values of bitmask for enabling sysrq functions */
+/* 0x0001 is reserved for enable everything */
+#define SYSRQ_ENABLE_LOG	0x0002
+#define SYSRQ_ENABLE_KEYBOARD	0x0004
+#define SYSRQ_ENABLE_DUMP	0x0008
+#define SYSRQ_ENABLE_SYNC	0x0010
+#define SYSRQ_ENABLE_REMOUNT	0x0020
+#define SYSRQ_ENABLE_SIGNAL	0x0040
+#define SYSRQ_ENABLE_BOOT	0x0080
+#define SYSRQ_ENABLE_RTNICE	0x0100
 
-काष्ठा sysrq_key_op अणु
-	व्योम (* स्थिर handler)(पूर्णांक);
-	स्थिर अक्षर * स्थिर help_msg;
-	स्थिर अक्षर * स्थिर action_msg;
-	स्थिर पूर्णांक enable_mask;
-पूर्ण;
+struct sysrq_key_op {
+	void (* const handler)(int);
+	const char * const help_msg;
+	const char * const action_msg;
+	const int enable_mask;
+};
 
-#अगर_घोषित CONFIG_MAGIC_SYSRQ
+#ifdef CONFIG_MAGIC_SYSRQ
 
-/* Generic SysRq पूर्णांकerface -- you may call it from any device driver, supplying
- * ASCII code of the key, poपूर्णांकer to रेजिस्टरs and kbd/tty काष्ठाs (अगर they
- * are available -- अन्यथा शून्य's).
+/* Generic SysRq interface -- you may call it from any device driver, supplying
+ * ASCII code of the key, pointer to registers and kbd/tty structs (if they
+ * are available -- else NULL's).
  */
 
-व्योम handle_sysrq(पूर्णांक key);
-व्योम __handle_sysrq(पूर्णांक key, bool check_mask);
-पूर्णांक रेजिस्टर_sysrq_key(पूर्णांक key, स्थिर काष्ठा sysrq_key_op *op);
-पूर्णांक unरेजिस्टर_sysrq_key(पूर्णांक key, स्थिर काष्ठा sysrq_key_op *op);
-बाह्य स्थिर काष्ठा sysrq_key_op *__sysrq_reboot_op;
+void handle_sysrq(int key);
+void __handle_sysrq(int key, bool check_mask);
+int register_sysrq_key(int key, const struct sysrq_key_op *op);
+int unregister_sysrq_key(int key, const struct sysrq_key_op *op);
+extern const struct sysrq_key_op *__sysrq_reboot_op;
 
-पूर्णांक sysrq_toggle_support(पूर्णांक enable_mask);
-पूर्णांक sysrq_mask(व्योम);
+int sysrq_toggle_support(int enable_mask);
+int sysrq_mask(void);
 
-#अन्यथा
+#else
 
-अटल अंतरभूत व्योम handle_sysrq(पूर्णांक key)
-अणु
-पूर्ण
+static inline void handle_sysrq(int key)
+{
+}
 
-अटल अंतरभूत व्योम __handle_sysrq(पूर्णांक key, bool check_mask)
-अणु
-पूर्ण
+static inline void __handle_sysrq(int key, bool check_mask)
+{
+}
 
-अटल अंतरभूत पूर्णांक रेजिस्टर_sysrq_key(पूर्णांक key, स्थिर काष्ठा sysrq_key_op *op)
-अणु
-	वापस -EINVAL;
-पूर्ण
+static inline int register_sysrq_key(int key, const struct sysrq_key_op *op)
+{
+	return -EINVAL;
+}
 
-अटल अंतरभूत पूर्णांक unरेजिस्टर_sysrq_key(पूर्णांक key, स्थिर काष्ठा sysrq_key_op *op)
-अणु
-	वापस -EINVAL;
-पूर्ण
+static inline int unregister_sysrq_key(int key, const struct sysrq_key_op *op)
+{
+	return -EINVAL;
+}
 
-अटल अंतरभूत पूर्णांक sysrq_mask(व्योम)
-अणु
+static inline int sysrq_mask(void)
+{
 	/* Magic SysRq disabled mask */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#पूर्ण_अगर
+#endif
 
-#पूर्ण_अगर /* _LINUX_SYSRQ_H */
+#endif /* _LINUX_SYSRQ_H */

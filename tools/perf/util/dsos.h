@@ -1,41 +1,40 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __PERF_DSOS
-#घोषणा __PERF_DSOS
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __PERF_DSOS
+#define __PERF_DSOS
 
-#समावेश <stdbool.h>
-#समावेश <मानकपन.स>
-#समावेश <linux/list.h>
-#समावेश <linux/rbtree.h>
-#समावेश "rwsem.h"
+#include <stdbool.h>
+#include <stdio.h>
+#include <linux/list.h>
+#include <linux/rbtree.h>
+#include "rwsem.h"
 
-काष्ठा dso;
-काष्ठा dso_id;
+struct dso;
+struct dso_id;
 
 /*
- * DSOs are put पूर्णांकo both a list क्रम fast iteration and rbtree क्रम fast
- * दीर्घ name lookup.
+ * DSOs are put into both a list for fast iteration and rbtree for fast
+ * long name lookup.
  */
-काष्ठा dsos अणु
-	काष्ठा list_head    head;
-	काष्ठा rb_root	    root;	/* rbtree root sorted by दीर्घ name */
-	काष्ठा rw_semaphore lock;
-पूर्ण;
+struct dsos {
+	struct list_head    head;
+	struct rb_root	    root;	/* rbtree root sorted by long name */
+	struct rw_semaphore lock;
+};
 
-व्योम __dsos__add(काष्ठा dsos *dsos, काष्ठा dso *dso);
-व्योम dsos__add(काष्ठा dsos *dsos, काष्ठा dso *dso);
-काष्ठा dso *__dsos__addnew(काष्ठा dsos *dsos, स्थिर अक्षर *name);
-काष्ठा dso *__dsos__find(काष्ठा dsos *dsos, स्थिर अक्षर *name, bool cmp_लघु);
+void __dsos__add(struct dsos *dsos, struct dso *dso);
+void dsos__add(struct dsos *dsos, struct dso *dso);
+struct dso *__dsos__addnew(struct dsos *dsos, const char *name);
+struct dso *__dsos__find(struct dsos *dsos, const char *name, bool cmp_short);
 
-काष्ठा dso *dsos__findnew_id(काष्ठा dsos *dsos, स्थिर अक्षर *name, काष्ठा dso_id *id);
+struct dso *dsos__findnew_id(struct dsos *dsos, const char *name, struct dso_id *id);
  
-काष्ठा dso *__dsos__findnew_link_by_दीर्घname_id(काष्ठा rb_root *root, काष्ठा dso *dso,
-						स्थिर अक्षर *name, काष्ठा dso_id *id);
+struct dso *__dsos__findnew_link_by_longname_id(struct rb_root *root, struct dso *dso,
+						const char *name, struct dso_id *id);
 
-bool __dsos__पढ़ो_build_ids(काष्ठा list_head *head, bool with_hits);
+bool __dsos__read_build_ids(struct list_head *head, bool with_hits);
 
-माप_प्रकार __dsos__ख_लिखो_buildid(काष्ठा list_head *head, खाता *fp,
-			       bool (skip)(काष्ठा dso *dso, पूर्णांक parm), पूर्णांक parm);
-माप_प्रकार __dsos__ख_लिखो(काष्ठा list_head *head, खाता *fp);
+size_t __dsos__fprintf_buildid(struct list_head *head, FILE *fp,
+			       bool (skip)(struct dso *dso, int parm), int parm);
+size_t __dsos__fprintf(struct list_head *head, FILE *fp);
 
-#पूर्ण_अगर /* __PERF_DSOS */
+#endif /* __PERF_DSOS */

@@ -1,13 +1,12 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /* Copyright Altera Corporation (C) 2014. All rights reserved.
  */
 
-#अगर_अघोषित _ASM_NIOS2_TIMEX_H
-#घोषणा _ASM_NIOS2_TIMEX_H
+#ifndef _ASM_NIOS2_TIMEX_H
+#define _ASM_NIOS2_TIMEX_H
 
-प्रकार अचिन्हित दीर्घ cycles_t;
+typedef unsigned long cycles_t;
 
-बाह्य cycles_t get_cycles(व्योम);
+extern cycles_t get_cycles(void);
 
-#पूर्ण_अगर
+#endif

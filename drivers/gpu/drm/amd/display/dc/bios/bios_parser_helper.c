@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,68 +23,68 @@
  *
  */
 
-#समावेश "dm_services.h"
+#include "dm_services.h"
 
-#समावेश "atom.h"
+#include "atom.h"
 
-#समावेश "include/bios_parser_types.h"
-#समावेश "bios_parser_helper.h"
-#समावेश "command_table_helper.h"
-#समावेश "command_table.h"
-#समावेश "bios_parser_types_internal.h"
+#include "include/bios_parser_types.h"
+#include "bios_parser_helper.h"
+#include "command_table_helper.h"
+#include "command_table.h"
+#include "bios_parser_types_internal.h"
 
-uपूर्णांक8_t *bios_get_image(काष्ठा dc_bios *bp,
-	uपूर्णांक32_t offset,
-	uपूर्णांक32_t size)
-अणु
-	अगर (bp->bios && offset + size < bp->bios_size)
-		वापस bp->bios + offset;
-	अन्यथा
-		वापस शून्य;
-पूर्ण
+uint8_t *bios_get_image(struct dc_bios *bp,
+	uint32_t offset,
+	uint32_t size)
+{
+	if (bp->bios && offset + size < bp->bios_size)
+		return bp->bios + offset;
+	else
+		return NULL;
+}
 
-#समावेश "reg_helper.h"
+#include "reg_helper.h"
 
-#घोषणा CTX \
+#define CTX \
 	bios->ctx
-#घोषणा REG(reg)\
+#define REG(reg)\
 	(bios->regs->reg)
 
-#अघोषित FN
-#घोषणा FN(reg_name, field_name) \
+#undef FN
+#define FN(reg_name, field_name) \
 		ATOM_ ## field_name ## _SHIFT, ATOM_ ## field_name
 
 bool bios_is_accelerated_mode(
-	काष्ठा dc_bios *bios)
-अणु
-	uपूर्णांक32_t acc_mode;
+	struct dc_bios *bios)
+{
+	uint32_t acc_mode;
 	REG_GET(BIOS_SCRATCH_6, S6_ACC_MODE, &acc_mode);
-	वापस (acc_mode == 1);
-पूर्ण
+	return (acc_mode == 1);
+}
 
 
-व्योम bios_set_scratch_acc_mode_change(
-	काष्ठा dc_bios *bios,
-	uपूर्णांक32_t state)
-अणु
+void bios_set_scratch_acc_mode_change(
+	struct dc_bios *bios,
+	uint32_t state)
+{
 	REG_UPDATE(BIOS_SCRATCH_6, S6_ACC_MODE, state);
-पूर्ण
+}
 
 
-व्योम bios_set_scratch_critical_state(
-	काष्ठा dc_bios *bios,
+void bios_set_scratch_critical_state(
+	struct dc_bios *bios,
 	bool state)
-अणु
-	uपूर्णांक32_t critial_state = state ? 1 : 0;
+{
+	uint32_t critial_state = state ? 1 : 0;
 	REG_UPDATE(BIOS_SCRATCH_6, S6_CRITICAL_STATE, critial_state);
-पूर्ण
+}
 
-uपूर्णांक32_t bios_get_vga_enabled_displays(
-	काष्ठा dc_bios *bios)
-अणु
-	uपूर्णांक32_t active_disp = 1;
+uint32_t bios_get_vga_enabled_displays(
+	struct dc_bios *bios)
+{
+	uint32_t active_disp = 1;
 
 	active_disp = REG_READ(BIOS_SCRATCH_3) & 0XFFFF;
-	वापस active_disp;
-पूर्ण
+	return active_disp;
+}
 

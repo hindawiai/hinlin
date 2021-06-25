@@ -1,77 +1,76 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * PMC MSP EHCI (Host Controller Driver) क्रम USB.
+ * PMC MSP EHCI (Host Controller Driver) for USB.
  *
  * (C) Copyright 2006-2010 PMC-Sierra Inc
  */
 
 /* includes */
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/usb.h>
-#समावेश <msp_usb.h>
+#include <linux/platform_device.h>
+#include <linux/gpio.h>
+#include <linux/usb.h>
+#include <msp_usb.h>
 
 /* stream disable*/
-#घोषणा USB_CTRL_MODE_STREAM_DISABLE	0x10
+#define USB_CTRL_MODE_STREAM_DISABLE	0x10
 
 /* threshold */
-#घोषणा USB_CTRL_FIFO_THRESH		0x00300000
+#define USB_CTRL_FIFO_THRESH		0x00300000
 
-/* रेजिस्टर offset क्रम usb_mode */
-#घोषणा USB_EHCI_REG_USB_MODE		0x68
+/* register offset for usb_mode */
+#define USB_EHCI_REG_USB_MODE		0x68
 
-/* रेजिस्टर offset क्रम usb fअगरo */
-#घोषणा USB_EHCI_REG_USB_FIFO		0x24
+/* register offset for usb fifo */
+#define USB_EHCI_REG_USB_FIFO		0x24
 
-/* रेजिस्टर offset क्रम usb status */
-#घोषणा USB_EHCI_REG_USB_STATUS		0x44
+/* register offset for usb status */
+#define USB_EHCI_REG_USB_STATUS		0x44
 
 /* serial/parallel transceiver */
-#घोषणा USB_EHCI_REG_BIT_STAT_STS	(1<<29)
+#define USB_EHCI_REG_BIT_STAT_STS	(1<<29)
 
 /* TWI USB0 host device pin */
-#घोषणा MSP_PIN_USB0_HOST_DEV		49
+#define MSP_PIN_USB0_HOST_DEV		49
 
 /* TWI USB1 host device pin */
-#घोषणा MSP_PIN_USB1_HOST_DEV		50
+#define MSP_PIN_USB1_HOST_DEV		50
 
 
-अटल व्योम usb_hcd_tdi_set_mode(काष्ठा ehci_hcd *ehci)
-अणु
+static void usb_hcd_tdi_set_mode(struct ehci_hcd *ehci)
+{
 	u8 *base;
 	u8 *statreg;
-	u8 *fअगरoreg;
+	u8 *fiforeg;
 	u32 val;
-	काष्ठा ehci_regs *reg_base = ehci->regs;
+	struct ehci_regs *reg_base = ehci->regs;
 
-	/* get रेजिस्टर base */
+	/* get register base */
 	base = (u8 *)reg_base + USB_EHCI_REG_USB_MODE;
 	statreg = (u8 *)reg_base + USB_EHCI_REG_USB_STATUS;
-	fअगरoreg = (u8 *)reg_base + USB_EHCI_REG_USB_FIFO;
+	fiforeg = (u8 *)reg_base + USB_EHCI_REG_USB_FIFO;
 
 	/* Disable controller mode stream */
-	val = ehci_पढ़ोl(ehci, (u32 *)base);
-	ehci_ग_लिखोl(ehci, (val | USB_CTRL_MODE_STREAM_DISABLE),
+	val = ehci_readl(ehci, (u32 *)base);
+	ehci_writel(ehci, (val | USB_CTRL_MODE_STREAM_DISABLE),
 			(u32 *)base);
 
-	/* clear STS to select parallel transceiver पूर्णांकerface */
-	val = ehci_पढ़ोl(ehci, (u32 *)statreg);
+	/* clear STS to select parallel transceiver interface */
+	val = ehci_readl(ehci, (u32 *)statreg);
 	val = val & ~USB_EHCI_REG_BIT_STAT_STS;
-	ehci_ग_लिखोl(ehci, val, (u32 *)statreg);
+	ehci_writel(ehci, val, (u32 *)statreg);
 
-	/* ग_लिखो to set the proper fअगरo threshold */
-	ehci_ग_लिखोl(ehci, USB_CTRL_FIFO_THRESH, (u32 *)fअगरoreg);
+	/* write to set the proper fifo threshold */
+	ehci_writel(ehci, USB_CTRL_FIFO_THRESH, (u32 *)fiforeg);
 
 	/* set TWI GPIO USB_HOST_DEV pin high */
 	gpio_direction_output(MSP_PIN_USB0_HOST_DEV, 1);
-पूर्ण
+}
 
 /* called during probe() after chip reset completes */
-अटल पूर्णांक ehci_msp_setup(काष्ठा usb_hcd *hcd)
-अणु
-	काष्ठा ehci_hcd		*ehci = hcd_to_ehci(hcd);
-	पूर्णांक			retval;
+static int ehci_msp_setup(struct usb_hcd *hcd)
+{
+	struct ehci_hcd		*ehci = hcd_to_ehci(hcd);
+	int			retval;
 
 	ehci->big_endian_mmio = 1;
 	ehci->big_endian_desc = 1;
@@ -80,125 +79,125 @@
 	hcd->has_tt = 1;
 
 	retval = ehci_setup(hcd);
-	अगर (retval)
-		वापस retval;
+	if (retval)
+		return retval;
 
 	usb_hcd_tdi_set_mode(ehci);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
 
 /* configure so an HC device and id are always provided
  * always called with process context; sleeping is OK
  */
 
-अटल पूर्णांक usb_hcd_msp_map_regs(काष्ठा mspusb_device *dev)
-अणु
-	काष्ठा resource *res;
-	काष्ठा platक्रमm_device *pdev = &dev->dev;
+static int usb_hcd_msp_map_regs(struct mspusb_device *dev)
+{
+	struct resource *res;
+	struct platform_device *pdev = &dev->dev;
 	u32 res_len;
-	पूर्णांक retval;
+	int retval;
 
-	/* MAB रेजिस्टर space */
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 1);
-	अगर (res == शून्य)
-		वापस -ENOMEM;
+	/* MAB register space */
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 1);
+	if (res == NULL)
+		return -ENOMEM;
 	res_len = resource_size(res);
-	अगर (!request_mem_region(res->start, res_len, "mab regs"))
-		वापस -EBUSY;
+	if (!request_mem_region(res->start, res_len, "mab regs"))
+		return -EBUSY;
 
 	dev->mab_regs = ioremap(res->start, res_len);
-	अगर (dev->mab_regs == शून्य) अणु
+	if (dev->mab_regs == NULL) {
 		retval = -ENOMEM;
-		जाओ err1;
-	पूर्ण
+		goto err1;
+	}
 
-	/* MSP USB रेजिस्टर space */
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 2);
-	अगर (res == शून्य) अणु
+	/* MSP USB register space */
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 2);
+	if (res == NULL) {
 		retval = -ENOMEM;
-		जाओ err2;
-	पूर्ण
+		goto err2;
+	}
 	res_len = resource_size(res);
-	अगर (!request_mem_region(res->start, res_len, "usbid regs")) अणु
+	if (!request_mem_region(res->start, res_len, "usbid regs")) {
 		retval = -EBUSY;
-		जाओ err2;
-	पूर्ण
+		goto err2;
+	}
 	dev->usbid_regs = ioremap(res->start, res_len);
-	अगर (dev->usbid_regs == शून्य) अणु
+	if (dev->usbid_regs == NULL) {
 		retval = -ENOMEM;
-		जाओ err3;
-	पूर्ण
+		goto err3;
+	}
 
-	वापस 0;
+	return 0;
 err3:
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 2);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 2);
 	res_len = resource_size(res);
 	release_mem_region(res->start, res_len);
 err2:
 	iounmap(dev->mab_regs);
 err1:
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 1);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 1);
 	res_len = resource_size(res);
 	release_mem_region(res->start, res_len);
 	dev_err(&pdev->dev, "Failed to map non-EHCI regs.\n");
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
 /**
  * usb_hcd_msp_probe - initialize PMC MSP-based HCDs
- * @driver:	Poपूर्णांकer to hc driver instance
+ * @driver:	Pointer to hc driver instance
  * @dev:	USB controller to probe
  *
  * Context: task context, might sleep
  *
- * Allocates basic resources क्रम this USB host controller, and
- * then invokes the start() method क्रम the HCD associated with it
+ * Allocates basic resources for this USB host controller, and
+ * then invokes the start() method for the HCD associated with it
  * through the hotplug entry's driver_data.
  */
-पूर्णांक usb_hcd_msp_probe(स्थिर काष्ठा hc_driver *driver,
-			  काष्ठा platक्रमm_device *dev)
-अणु
-	पूर्णांक retval;
-	काष्ठा usb_hcd *hcd;
-	काष्ठा resource *res;
-	काष्ठा ehci_hcd		*ehci ;
+int usb_hcd_msp_probe(const struct hc_driver *driver,
+			  struct platform_device *dev)
+{
+	int retval;
+	struct usb_hcd *hcd;
+	struct resource *res;
+	struct ehci_hcd		*ehci ;
 
 	hcd = usb_create_hcd(driver, &dev->dev, "pmcmsp");
-	अगर (!hcd)
-		वापस -ENOMEM;
+	if (!hcd)
+		return -ENOMEM;
 
-	res = platक्रमm_get_resource(dev, IORESOURCE_MEM, 0);
-	अगर (res == शून्य) अणु
+	res = platform_get_resource(dev, IORESOURCE_MEM, 0);
+	if (res == NULL) {
 		pr_debug("No IOMEM resource info for %s.\n", dev->name);
 		retval = -ENOMEM;
-		जाओ err1;
-	पूर्ण
+		goto err1;
+	}
 	hcd->rsrc_start = res->start;
 	hcd->rsrc_len = resource_size(res);
-	अगर (!request_mem_region(hcd->rsrc_start, hcd->rsrc_len, dev->name)) अणु
+	if (!request_mem_region(hcd->rsrc_start, hcd->rsrc_len, dev->name)) {
 		retval = -EBUSY;
-		जाओ err1;
-	पूर्ण
+		goto err1;
+	}
 	hcd->regs = ioremap(hcd->rsrc_start, hcd->rsrc_len);
-	अगर (!hcd->regs) अणु
+	if (!hcd->regs) {
 		pr_debug("ioremap failed");
 		retval = -ENOMEM;
-		जाओ err2;
-	पूर्ण
+		goto err2;
+	}
 
-	res = platक्रमm_get_resource(dev, IORESOURCE_IRQ, 0);
-	अगर (res == शून्य) अणु
+	res = platform_get_resource(dev, IORESOURCE_IRQ, 0);
+	if (res == NULL) {
 		dev_err(&dev->dev, "No IRQ resource info for %s.\n", dev->name);
 		retval = -ENOMEM;
-		जाओ err3;
-	पूर्ण
+		goto err3;
+	}
 
-	/* Map non-EHCI रेजिस्टर spaces */
+	/* Map non-EHCI register spaces */
 	retval = usb_hcd_msp_map_regs(to_mspusb_device(dev));
-	अगर (retval != 0)
-		जाओ err3;
+	if (retval != 0)
+		goto err3;
 
 	ehci = hcd_to_ehci(hcd);
 	ehci->big_endian_mmio = 1;
@@ -206,12 +205,12 @@ err1:
 
 
 	retval = usb_add_hcd(hcd, res->start, IRQF_SHARED);
-	अगर (retval == 0) अणु
+	if (retval == 0) {
 		device_wakeup_enable(hcd->self.controller);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	usb_हटाओ_hcd(hcd);
+	usb_remove_hcd(hcd);
 err3:
 	iounmap(hcd->regs);
 err2:
@@ -219,36 +218,36 @@ err2:
 err1:
 	usb_put_hcd(hcd);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
 
 
 /**
- * usb_hcd_msp_हटाओ - shutकरोwn processing क्रम PMC MSP-based HCDs
- * @hcd: USB Host Controller being हटाओd
+ * usb_hcd_msp_remove - shutdown processing for PMC MSP-based HCDs
+ * @hcd: USB Host Controller being removed
  *
  * Context: task context, might sleep
  *
  * Reverses the effect of usb_hcd_msp_probe(), first invoking
- * the HCD's stop() method.  It is always called from a thपढ़ो
+ * the HCD's stop() method.  It is always called from a thread
  * context, normally "rmmod", "apmd", or something similar.
  *
  * may be called without controller electrically present
  * may be called with controller, bus, and devices active
  */
-अटल व्योम usb_hcd_msp_हटाओ(काष्ठा usb_hcd *hcd)
-अणु
-	usb_हटाओ_hcd(hcd);
+static void usb_hcd_msp_remove(struct usb_hcd *hcd)
+{
+	usb_remove_hcd(hcd);
 	iounmap(hcd->regs);
 	release_mem_region(hcd->rsrc_start, hcd->rsrc_len);
 	usb_put_hcd(hcd);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा hc_driver ehci_msp_hc_driver = अणु
+static const struct hc_driver ehci_msp_hc_driver = {
 	.description =		hcd_name,
 	.product_desc =		"PMC MSP EHCI",
-	.hcd_priv_size =	माप(काष्ठा ehci_hcd),
+	.hcd_priv_size =	sizeof(struct ehci_hcd),
 
 	/*
 	 * generic hardware linkage
@@ -257,10 +256,10 @@ err1:
 	.flags =		HCD_MEMORY | HCD_DMA | HCD_USB2 | HCD_BH,
 
 	/*
-	 * basic lअगरecycle operations
+	 * basic lifecycle operations
 	 */
 	.reset			= ehci_msp_setup,
-	.shutकरोwn		= ehci_shutकरोwn,
+	.shutdown		= ehci_shutdown,
 	.start			= ehci_run,
 	.stop			= ehci_stop,
 
@@ -269,8 +268,8 @@ err1:
 	 */
 	.urb_enqueue		= ehci_urb_enqueue,
 	.urb_dequeue		= ehci_urb_dequeue,
-	.endpoपूर्णांक_disable	= ehci_endpoपूर्णांक_disable,
-	.endpoपूर्णांक_reset		= ehci_endpoपूर्णांक_reset,
+	.endpoint_disable	= ehci_endpoint_disable,
+	.endpoint_reset		= ehci_endpoint_reset,
 
 	/*
 	 * scheduling support
@@ -288,42 +287,42 @@ err1:
 	.port_handed_over	= ehci_port_handed_over,
 
 	.clear_tt_buffer_complete	= ehci_clear_tt_buffer_complete,
-पूर्ण;
+};
 
-अटल पूर्णांक ehci_hcd_msp_drv_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक ret;
+static int ehci_hcd_msp_drv_probe(struct platform_device *pdev)
+{
+	int ret;
 
 	pr_debug("In ehci_hcd_msp_drv_probe");
 
-	अगर (usb_disabled())
-		वापस -ENODEV;
+	if (usb_disabled())
+		return -ENODEV;
 
 	gpio_request(MSP_PIN_USB0_HOST_DEV, "USB0_HOST_DEV_GPIO");
 
 	ret = usb_hcd_msp_probe(&ehci_msp_hc_driver, pdev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ehci_hcd_msp_drv_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा usb_hcd *hcd = platक्रमm_get_drvdata(pdev);
+static int ehci_hcd_msp_drv_remove(struct platform_device *pdev)
+{
+	struct usb_hcd *hcd = platform_get_drvdata(pdev);
 
-	usb_hcd_msp_हटाओ(hcd);
+	usb_hcd_msp_remove(hcd);
 
-	/* मुक्त TWI GPIO USB_HOST_DEV pin */
-	gpio_मुक्त(MSP_PIN_USB0_HOST_DEV);
+	/* free TWI GPIO USB_HOST_DEV pin */
+	gpio_free(MSP_PIN_USB0_HOST_DEV);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 MODULE_ALIAS("pmcmsp-ehci");
 
-अटल काष्ठा platक्रमm_driver ehci_hcd_msp_driver = अणु
+static struct platform_driver ehci_hcd_msp_driver = {
 	.probe		= ehci_hcd_msp_drv_probe,
-	.हटाओ		= ehci_hcd_msp_drv_हटाओ,
-	.driver		= अणु
+	.remove		= ehci_hcd_msp_drv_remove,
+	.driver		= {
 		.name	= "pmcmsp-ehci",
-	पूर्ण,
-पूर्ण;
+	},
+};

@@ -1,24 +1,23 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2013 - 2017 Intel Corporation.  All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -30,221 +29,221 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#समावेश <linux/debugfs.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/export.h>
+#include <linux/debugfs.h>
+#include <linux/seq_file.h>
+#include <linux/kernel.h>
+#include <linux/export.h>
 
-#समावेश "qib.h"
-#समावेश "qib_verbs.h"
-#समावेश "qib_debugfs.h"
+#include "qib.h"
+#include "qib_verbs.h"
+#include "qib_debugfs.h"
 
-अटल काष्ठा dentry *qib_dbg_root;
+static struct dentry *qib_dbg_root;
 
-#घोषणा DEBUGFS_खाता(name) \
-अटल स्थिर काष्ठा seq_operations _##name##_seq_ops = अणु \
+#define DEBUGFS_FILE(name) \
+static const struct seq_operations _##name##_seq_ops = { \
 	.start = _##name##_seq_start, \
 	.next  = _##name##_seq_next, \
 	.stop  = _##name##_seq_stop, \
 	.show  = _##name##_seq_show \
-पूर्ण; \
-अटल पूर्णांक _##name##_खोलो(काष्ठा inode *inode, काष्ठा file *s) \
-अणु \
-	काष्ठा seq_file *seq; \
-	पूर्णांक ret; \
-	ret =  seq_खोलो(s, &_##name##_seq_ops); \
-	अगर (ret) \
-		वापस ret; \
-	seq = s->निजी_data; \
-	seq->निजी = inode->i_निजी; \
-	वापस 0; \
-पूर्ण \
-अटल स्थिर काष्ठा file_operations _##name##_file_ops = अणु \
+}; \
+static int _##name##_open(struct inode *inode, struct file *s) \
+{ \
+	struct seq_file *seq; \
+	int ret; \
+	ret =  seq_open(s, &_##name##_seq_ops); \
+	if (ret) \
+		return ret; \
+	seq = s->private_data; \
+	seq->private = inode->i_private; \
+	return 0; \
+} \
+static const struct file_operations _##name##_file_ops = { \
 	.owner   = THIS_MODULE, \
-	.खोलो    = _##name##_खोलो, \
-	.पढ़ो    = seq_पढ़ो, \
+	.open    = _##name##_open, \
+	.read    = seq_read, \
 	.llseek  = seq_lseek, \
 	.release = seq_release \
-पूर्ण;
+};
 
-अटल व्योम *_opcode_stats_seq_start(काष्ठा seq_file *s, loff_t *pos)
-अणु
-	काष्ठा qib_opcode_stats_perctx *opstats;
+static void *_opcode_stats_seq_start(struct seq_file *s, loff_t *pos)
+{
+	struct qib_opcode_stats_perctx *opstats;
 
-	अगर (*pos >= ARRAY_SIZE(opstats->stats))
-		वापस शून्य;
-	वापस pos;
-पूर्ण
+	if (*pos >= ARRAY_SIZE(opstats->stats))
+		return NULL;
+	return pos;
+}
 
-अटल व्योम *_opcode_stats_seq_next(काष्ठा seq_file *s, व्योम *v, loff_t *pos)
-अणु
-	काष्ठा qib_opcode_stats_perctx *opstats;
+static void *_opcode_stats_seq_next(struct seq_file *s, void *v, loff_t *pos)
+{
+	struct qib_opcode_stats_perctx *opstats;
 
 	++*pos;
-	अगर (*pos >= ARRAY_SIZE(opstats->stats))
-		वापस शून्य;
-	वापस pos;
-पूर्ण
+	if (*pos >= ARRAY_SIZE(opstats->stats))
+		return NULL;
+	return pos;
+}
 
 
-अटल व्योम _opcode_stats_seq_stop(काष्ठा seq_file *s, व्योम *v)
-अणु
+static void _opcode_stats_seq_stop(struct seq_file *s, void *v)
+{
 	/* nothing allocated */
-पूर्ण
+}
 
-अटल पूर्णांक _opcode_stats_seq_show(काष्ठा seq_file *s, व्योम *v)
-अणु
+static int _opcode_stats_seq_show(struct seq_file *s, void *v)
+{
 	loff_t *spos = v;
 	loff_t i = *spos, j;
 	u64 n_packets = 0, n_bytes = 0;
-	काष्ठा qib_ibdev *ibd = (काष्ठा qib_ibdev *)s->निजी;
-	काष्ठा qib_devdata *dd = dd_from_dev(ibd);
+	struct qib_ibdev *ibd = (struct qib_ibdev *)s->private;
+	struct qib_devdata *dd = dd_from_dev(ibd);
 
-	क्रम (j = 0; j < dd->first_user_ctxt; j++) अणु
-		अगर (!dd->rcd[j])
-			जारी;
+	for (j = 0; j < dd->first_user_ctxt; j++) {
+		if (!dd->rcd[j])
+			continue;
 		n_packets += dd->rcd[j]->opstats->stats[i].n_packets;
 		n_bytes += dd->rcd[j]->opstats->stats[i].n_bytes;
-	पूर्ण
-	अगर (!n_packets && !n_bytes)
-		वापस SEQ_SKIP;
-	seq_म_लिखो(s, "%02llx %llu/%llu\n", i,
-		(अचिन्हित दीर्घ दीर्घ) n_packets,
-		(अचिन्हित दीर्घ दीर्घ) n_bytes);
+	}
+	if (!n_packets && !n_bytes)
+		return SEQ_SKIP;
+	seq_printf(s, "%02llx %llu/%llu\n", i,
+		(unsigned long long) n_packets,
+		(unsigned long long) n_bytes);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-DEBUGFS_खाता(opcode_stats)
+DEBUGFS_FILE(opcode_stats)
 
-अटल व्योम *_ctx_stats_seq_start(काष्ठा seq_file *s, loff_t *pos)
-अणु
-	काष्ठा qib_ibdev *ibd = (काष्ठा qib_ibdev *)s->निजी;
-	काष्ठा qib_devdata *dd = dd_from_dev(ibd);
+static void *_ctx_stats_seq_start(struct seq_file *s, loff_t *pos)
+{
+	struct qib_ibdev *ibd = (struct qib_ibdev *)s->private;
+	struct qib_devdata *dd = dd_from_dev(ibd);
 
-	अगर (!*pos)
-		वापस SEQ_START_TOKEN;
-	अगर (*pos >= dd->first_user_ctxt)
-		वापस शून्य;
-	वापस pos;
-पूर्ण
+	if (!*pos)
+		return SEQ_START_TOKEN;
+	if (*pos >= dd->first_user_ctxt)
+		return NULL;
+	return pos;
+}
 
-अटल व्योम *_ctx_stats_seq_next(काष्ठा seq_file *s, व्योम *v, loff_t *pos)
-अणु
-	काष्ठा qib_ibdev *ibd = (काष्ठा qib_ibdev *)s->निजी;
-	काष्ठा qib_devdata *dd = dd_from_dev(ibd);
+static void *_ctx_stats_seq_next(struct seq_file *s, void *v, loff_t *pos)
+{
+	struct qib_ibdev *ibd = (struct qib_ibdev *)s->private;
+	struct qib_devdata *dd = dd_from_dev(ibd);
 
-	अगर (v == SEQ_START_TOKEN)
-		वापस pos;
+	if (v == SEQ_START_TOKEN)
+		return pos;
 
 	++*pos;
-	अगर (*pos >= dd->first_user_ctxt)
-		वापस शून्य;
-	वापस pos;
-पूर्ण
+	if (*pos >= dd->first_user_ctxt)
+		return NULL;
+	return pos;
+}
 
-अटल व्योम _ctx_stats_seq_stop(काष्ठा seq_file *s, व्योम *v)
-अणु
+static void _ctx_stats_seq_stop(struct seq_file *s, void *v)
+{
 	/* nothing allocated */
-पूर्ण
+}
 
-अटल पूर्णांक _ctx_stats_seq_show(काष्ठा seq_file *s, व्योम *v)
-अणु
+static int _ctx_stats_seq_show(struct seq_file *s, void *v)
+{
 	loff_t *spos;
 	loff_t i, j;
 	u64 n_packets = 0;
-	काष्ठा qib_ibdev *ibd = (काष्ठा qib_ibdev *)s->निजी;
-	काष्ठा qib_devdata *dd = dd_from_dev(ibd);
+	struct qib_ibdev *ibd = (struct qib_ibdev *)s->private;
+	struct qib_devdata *dd = dd_from_dev(ibd);
 
-	अगर (v == SEQ_START_TOKEN) अणु
-		seq_माला_दो(s, "Ctx:npkts\n");
-		वापस 0;
-	पूर्ण
+	if (v == SEQ_START_TOKEN) {
+		seq_puts(s, "Ctx:npkts\n");
+		return 0;
+	}
 
 	spos = v;
 	i = *spos;
 
-	अगर (!dd->rcd[i])
-		वापस SEQ_SKIP;
+	if (!dd->rcd[i])
+		return SEQ_SKIP;
 
-	क्रम (j = 0; j < ARRAY_SIZE(dd->rcd[i]->opstats->stats); j++)
+	for (j = 0; j < ARRAY_SIZE(dd->rcd[i]->opstats->stats); j++)
 		n_packets += dd->rcd[i]->opstats->stats[j].n_packets;
 
-	अगर (!n_packets)
-		वापस SEQ_SKIP;
+	if (!n_packets)
+		return SEQ_SKIP;
 
-	seq_म_लिखो(s, "  %llu:%llu\n", i, n_packets);
-	वापस 0;
-पूर्ण
+	seq_printf(s, "  %llu:%llu\n", i, n_packets);
+	return 0;
+}
 
-DEBUGFS_खाता(ctx_stats)
+DEBUGFS_FILE(ctx_stats)
 
-अटल व्योम *_qp_stats_seq_start(काष्ठा seq_file *s, loff_t *pos)
+static void *_qp_stats_seq_start(struct seq_file *s, loff_t *pos)
 	__acquires(RCU)
-अणु
-	काष्ठा rvt_qp_iter *iter;
+{
+	struct rvt_qp_iter *iter;
 	loff_t n = *pos;
 
-	iter = rvt_qp_iter_init(s->निजी, 0, शून्य);
+	iter = rvt_qp_iter_init(s->private, 0, NULL);
 
-	/* stop calls rcu_पढ़ो_unlock */
-	rcu_पढ़ो_lock();
+	/* stop calls rcu_read_unlock */
+	rcu_read_lock();
 
-	अगर (!iter)
-		वापस शून्य;
+	if (!iter)
+		return NULL;
 
-	करो अणु
-		अगर (rvt_qp_iter_next(iter)) अणु
-			kमुक्त(iter);
-			वापस शून्य;
-		पूर्ण
-	पूर्ण जबतक (n--);
+	do {
+		if (rvt_qp_iter_next(iter)) {
+			kfree(iter);
+			return NULL;
+		}
+	} while (n--);
 
-	वापस iter;
-पूर्ण
+	return iter;
+}
 
-अटल व्योम *_qp_stats_seq_next(काष्ठा seq_file *s, व्योम *iter_ptr,
+static void *_qp_stats_seq_next(struct seq_file *s, void *iter_ptr,
 				   loff_t *pos)
 	__must_hold(RCU)
-अणु
-	काष्ठा rvt_qp_iter *iter = iter_ptr;
+{
+	struct rvt_qp_iter *iter = iter_ptr;
 
 	(*pos)++;
 
-	अगर (rvt_qp_iter_next(iter)) अणु
-		kमुक्त(iter);
-		वापस शून्य;
-	पूर्ण
+	if (rvt_qp_iter_next(iter)) {
+		kfree(iter);
+		return NULL;
+	}
 
-	वापस iter;
-पूर्ण
+	return iter;
+}
 
-अटल व्योम _qp_stats_seq_stop(काष्ठा seq_file *s, व्योम *iter_ptr)
+static void _qp_stats_seq_stop(struct seq_file *s, void *iter_ptr)
 	__releases(RCU)
-अणु
-	rcu_पढ़ो_unlock();
-पूर्ण
+{
+	rcu_read_unlock();
+}
 
-अटल पूर्णांक _qp_stats_seq_show(काष्ठा seq_file *s, व्योम *iter_ptr)
-अणु
-	काष्ठा rvt_qp_iter *iter = iter_ptr;
+static int _qp_stats_seq_show(struct seq_file *s, void *iter_ptr)
+{
+	struct rvt_qp_iter *iter = iter_ptr;
 
-	अगर (!iter)
-		वापस 0;
+	if (!iter)
+		return 0;
 
-	qib_qp_iter_prपूर्णांक(s, iter);
+	qib_qp_iter_print(s, iter);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-DEBUGFS_खाता(qp_stats)
+DEBUGFS_FILE(qp_stats)
 
-व्योम qib_dbg_ibdev_init(काष्ठा qib_ibdev *ibd)
-अणु
-	काष्ठा dentry *root;
-	अक्षर name[10];
+void qib_dbg_ibdev_init(struct qib_ibdev *ibd)
+{
+	struct dentry *root;
+	char name[10];
 
-	snम_लिखो(name, माप(name), "qib%d", dd_from_dev(ibd)->unit);
+	snprintf(name, sizeof(name), "qib%d", dd_from_dev(ibd)->unit);
 	root = debugfs_create_dir(name, qib_dbg_root);
 	ibd->qib_ibdev_dbg = root;
 
@@ -252,24 +251,24 @@ DEBUGFS_खाता(qp_stats)
 			    &_opcode_stats_file_ops);
 	debugfs_create_file("ctx_stats", 0400, root, ibd, &_ctx_stats_file_ops);
 	debugfs_create_file("qp_stats", 0400, root, ibd, &_qp_stats_file_ops);
-पूर्ण
+}
 
-व्योम qib_dbg_ibdev_निकास(काष्ठा qib_ibdev *ibd)
-अणु
-	अगर (!qib_dbg_root)
-		जाओ out;
-	debugfs_हटाओ_recursive(ibd->qib_ibdev_dbg);
+void qib_dbg_ibdev_exit(struct qib_ibdev *ibd)
+{
+	if (!qib_dbg_root)
+		goto out;
+	debugfs_remove_recursive(ibd->qib_ibdev_dbg);
 out:
-	ibd->qib_ibdev_dbg = शून्य;
-पूर्ण
+	ibd->qib_ibdev_dbg = NULL;
+}
 
-व्योम qib_dbg_init(व्योम)
-अणु
-	qib_dbg_root = debugfs_create_dir(QIB_DRV_NAME, शून्य);
-पूर्ण
+void qib_dbg_init(void)
+{
+	qib_dbg_root = debugfs_create_dir(QIB_DRV_NAME, NULL);
+}
 
-व्योम qib_dbg_निकास(व्योम)
-अणु
-	debugfs_हटाओ_recursive(qib_dbg_root);
-	qib_dbg_root = शून्य;
-पूर्ण
+void qib_dbg_exit(void)
+{
+	debugfs_remove_recursive(qib_dbg_root);
+	qib_dbg_root = NULL;
+}

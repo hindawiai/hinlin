@@ -1,43 +1,42 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ WITH Linux-syscall-note */
-#अगर_अघोषित _XT_CONNMARK_H
-#घोषणा _XT_CONNMARK_H
+/* SPDX-License-Identifier: GPL-2.0+ WITH Linux-syscall-note */
+#ifndef _XT_CONNMARK_H
+#define _XT_CONNMARK_H
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-/* Copyright (C) 2002,2004 MARA Systems AB <https://www.maraप्रणालीs.com>
- * by Henrik Nordstrom <hno@maraप्रणालीs.com>
+/* Copyright (C) 2002,2004 MARA Systems AB <https://www.marasystems.com>
+ * by Henrik Nordstrom <hno@marasystems.com>
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy
+ * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  */
 
-क्रमागत अणु
+enum {
 	XT_CONNMARK_SET = 0,
 	XT_CONNMARK_SAVE,
 	XT_CONNMARK_RESTORE
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	D_SHIFT_LEFT = 0,
 	D_SHIFT_RIGHT,
-पूर्ण;
+};
 
-काष्ठा xt_connmark_tginfo1 अणु
-	__u32 cपंचांगark, cपंचांगask, nfmask;
+struct xt_connmark_tginfo1 {
+	__u32 ctmark, ctmask, nfmask;
 	__u8 mode;
-पूर्ण;
+};
 
-काष्ठा xt_connmark_tginfo2 अणु
-	__u32 cपंचांगark, cपंचांगask, nfmask;
-	__u8 shअगरt_dir, shअगरt_bits, mode;
-पूर्ण;
+struct xt_connmark_tginfo2 {
+	__u32 ctmark, ctmask, nfmask;
+	__u8 shift_dir, shift_bits, mode;
+};
 
-काष्ठा xt_connmark_mtinfo1 अणु
+struct xt_connmark_mtinfo1 {
 	__u32 mark, mask;
 	__u8 invert;
-पूर्ण;
+};
 
-#पूर्ण_अगर /*_XT_CONNMARK_H*/
+#endif /*_XT_CONNMARK_H*/

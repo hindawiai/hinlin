@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,16 +22,16 @@
  * Authors: AMD
  *
  */
-#अगर_अघोषित __DCE_MEM_INPUT_H__
-#घोषणा __DCE_MEM_INPUT_H__
+#ifndef __DCE_MEM_INPUT_H__
+#define __DCE_MEM_INPUT_H__
 
-#समावेश "dc_hw_types.h"
-#समावेश "mem_input.h"
+#include "dc_hw_types.h"
+#include "mem_input.h"
 
-#घोषणा TO_DCE_MEM_INPUT(mem_input)\
-	container_of(mem_input, काष्ठा dce_mem_input, base)
+#define TO_DCE_MEM_INPUT(mem_input)\
+	container_of(mem_input, struct dce_mem_input, base)
 
-#घोषणा MI_DCE_BASE_REG_LIST(id)\
+#define MI_DCE_BASE_REG_LIST(id)\
 	SRI(GRPH_ENABLE, DCP, id),\
 	SRI(GRPH_CONTROL, DCP, id),\
 	SRI(GRPH_X_START, DCP, id),\
@@ -55,12 +54,12 @@
 	SRI(DPG_PIPE_STUTTER_CONTROL, DMIF_PG, id),\
 	SRI(DMIF_BUFFER_CONTROL, PIPE, id)
 
-#घोषणा MI_DCE_PTE_REG_LIST(id)\
+#define MI_DCE_PTE_REG_LIST(id)\
 	SRI(DVMM_PTE_CONTROL, DCP, id),\
 	SRI(DVMM_PTE_ARB_CONTROL, DCP, id)
 
-#अगर defined(CONFIG_DRM_AMD_DC_SI)
-#घोषणा MI_DCE6_REG_LIST(id)\
+#if defined(CONFIG_DRM_AMD_DC_SI)
+#define MI_DCE6_REG_LIST(id)\
 	SRI(GRPH_ENABLE, DCP, id),\
 	SRI(GRPH_CONTROL, DCP, id),\
 	SRI(GRPH_X_START, DCP, id),\
@@ -82,21 +81,21 @@
 	SRI(DPG_PIPE_URGENCY_CONTROL, DMIF_PG, id),\
 	SRI(DPG_PIPE_STUTTER_CONTROL, DMIF_PG, id),\
 	SRI(DMIF_BUFFER_CONTROL, PIPE, id)
-#पूर्ण_अगर
+#endif
 
-#घोषणा MI_DCE8_REG_LIST(id)\
+#define MI_DCE8_REG_LIST(id)\
 	MI_DCE_BASE_REG_LIST(id),\
 	SRI(DPG_PIPE_NB_PSTATE_CHANGE_CONTROL, DMIF_PG, id)
 
-#घोषणा MI_DCE11_2_REG_LIST(id)\
+#define MI_DCE11_2_REG_LIST(id)\
 	MI_DCE8_REG_LIST(id),\
 	SRI(GRPH_PIPE_OUTSTANDING_REQUEST_LIMIT, DCP, id)
 
-#घोषणा MI_DCE11_REG_LIST(id)\
+#define MI_DCE11_REG_LIST(id)\
 	MI_DCE11_2_REG_LIST(id),\
 	MI_DCE_PTE_REG_LIST(id)
 
-#घोषणा MI_DCE12_REG_LIST(id)\
+#define MI_DCE12_REG_LIST(id)\
 	MI_DCE_BASE_REG_LIST(id),\
 	MI_DCE_PTE_REG_LIST(id),\
 	SRI(GRPH_PIPE_OUTSTANDING_REQUEST_LIMIT, DCP, id),\
@@ -107,56 +106,56 @@
 	SR(DCHUB_AGP_BOT),\
 	SR(DCHUB_AGP_TOP)
 
-काष्ठा dce_mem_input_रेजिस्टरs अणु
+struct dce_mem_input_registers {
 	/* DCP */
-	uपूर्णांक32_t GRPH_ENABLE;
-	uपूर्णांक32_t GRPH_CONTROL;
-	uपूर्णांक32_t GRPH_X_START;
-	uपूर्णांक32_t GRPH_Y_START;
-	uपूर्णांक32_t GRPH_X_END;
-	uपूर्णांक32_t GRPH_Y_END;
-	uपूर्णांक32_t GRPH_PITCH;
-	uपूर्णांक32_t HW_ROTATION;
-	uपूर्णांक32_t GRPH_SWAP_CNTL;
-	uपूर्णांक32_t PRESCALE_GRPH_CONTROL;
-	uपूर्णांक32_t GRPH_PIPE_OUTSTANDING_REQUEST_LIMIT;
-	uपूर्णांक32_t DVMM_PTE_CONTROL;
-	uपूर्णांक32_t DVMM_PTE_ARB_CONTROL;
-	uपूर्णांक32_t GRPH_UPDATE;
-	uपूर्णांक32_t GRPH_FLIP_CONTROL;
-	uपूर्णांक32_t GRPH_PRIMARY_SURFACE_ADDRESS;
-	uपूर्णांक32_t GRPH_PRIMARY_SURFACE_ADDRESS_HIGH;
-	uपूर्णांक32_t GRPH_SECONDARY_SURFACE_ADDRESS;
-	uपूर्णांक32_t GRPH_SECONDARY_SURFACE_ADDRESS_HIGH;
+	uint32_t GRPH_ENABLE;
+	uint32_t GRPH_CONTROL;
+	uint32_t GRPH_X_START;
+	uint32_t GRPH_Y_START;
+	uint32_t GRPH_X_END;
+	uint32_t GRPH_Y_END;
+	uint32_t GRPH_PITCH;
+	uint32_t HW_ROTATION;
+	uint32_t GRPH_SWAP_CNTL;
+	uint32_t PRESCALE_GRPH_CONTROL;
+	uint32_t GRPH_PIPE_OUTSTANDING_REQUEST_LIMIT;
+	uint32_t DVMM_PTE_CONTROL;
+	uint32_t DVMM_PTE_ARB_CONTROL;
+	uint32_t GRPH_UPDATE;
+	uint32_t GRPH_FLIP_CONTROL;
+	uint32_t GRPH_PRIMARY_SURFACE_ADDRESS;
+	uint32_t GRPH_PRIMARY_SURFACE_ADDRESS_HIGH;
+	uint32_t GRPH_SECONDARY_SURFACE_ADDRESS;
+	uint32_t GRPH_SECONDARY_SURFACE_ADDRESS_HIGH;
 	/* DMIF_PG */
-	uपूर्णांक32_t DPG_PIPE_ARBITRATION_CONTROL1;
-#अगर defined(CONFIG_DRM_AMD_DC_SI)
-	uपूर्णांक32_t DPG_PIPE_ARBITRATION_CONTROL3;
-#पूर्ण_अगर
-	uपूर्णांक32_t DPG_WATERMARK_MASK_CONTROL;
-	uपूर्णांक32_t DPG_PIPE_URGENCY_CONTROL;
-	uपूर्णांक32_t DPG_PIPE_URGENT_LEVEL_CONTROL;
-	uपूर्णांक32_t DPG_PIPE_NB_PSTATE_CHANGE_CONTROL;
-	uपूर्णांक32_t DPG_PIPE_LOW_POWER_CONTROL;
-	uपूर्णांक32_t DPG_PIPE_STUTTER_CONTROL;
-	uपूर्णांक32_t DPG_PIPE_STUTTER_CONTROL2;
+	uint32_t DPG_PIPE_ARBITRATION_CONTROL1;
+#if defined(CONFIG_DRM_AMD_DC_SI)
+	uint32_t DPG_PIPE_ARBITRATION_CONTROL3;
+#endif
+	uint32_t DPG_WATERMARK_MASK_CONTROL;
+	uint32_t DPG_PIPE_URGENCY_CONTROL;
+	uint32_t DPG_PIPE_URGENT_LEVEL_CONTROL;
+	uint32_t DPG_PIPE_NB_PSTATE_CHANGE_CONTROL;
+	uint32_t DPG_PIPE_LOW_POWER_CONTROL;
+	uint32_t DPG_PIPE_STUTTER_CONTROL;
+	uint32_t DPG_PIPE_STUTTER_CONTROL2;
 	/* DCI */
-	uपूर्णांक32_t DMIF_BUFFER_CONTROL;
+	uint32_t DMIF_BUFFER_CONTROL;
 	/* MC_HUB */
-	uपूर्णांक32_t MC_HUB_RDREQ_DMIF_LIMIT;
+	uint32_t MC_HUB_RDREQ_DMIF_LIMIT;
 	/*DCHUB*/
-	uपूर्णांक32_t DCHUB_FB_LOCATION;
-	uपूर्णांक32_t DCHUB_AGP_BASE;
-	uपूर्णांक32_t DCHUB_AGP_BOT;
-	uपूर्णांक32_t DCHUB_AGP_TOP;
-पूर्ण;
+	uint32_t DCHUB_FB_LOCATION;
+	uint32_t DCHUB_AGP_BASE;
+	uint32_t DCHUB_AGP_BOT;
+	uint32_t DCHUB_AGP_TOP;
+};
 
-/* Set_Filed_क्रम_Block */
-#घोषणा SFB(blk_name, reg_name, field_name, post_fix)\
+/* Set_Filed_for_Block */
+#define SFB(blk_name, reg_name, field_name, post_fix)\
 	.field_name = blk_name ## reg_name ## __ ## field_name ## post_fix
 
-#अगर defined(CONFIG_DRM_AMD_DC_SI)
-#घोषणा MI_GFX6_TILE_MASK_SH_LIST(mask_sh, blk)\
+#if defined(CONFIG_DRM_AMD_DC_SI)
+#define MI_GFX6_TILE_MASK_SH_LIST(mask_sh, blk)\
 	SFB(blk, GRPH_CONTROL, GRPH_NUM_BANKS, mask_sh),\
 	SFB(blk, GRPH_CONTROL, GRPH_BANK_WIDTH, mask_sh),\
 	SFB(blk, GRPH_CONTROL, GRPH_BANK_HEIGHT, mask_sh),\
@@ -165,9 +164,9 @@
 	SFB(blk, GRPH_CONTROL, GRPH_PIPE_CONFIG, mask_sh),\
 	SFB(blk, GRPH_CONTROL, GRPH_ARRAY_MODE, mask_sh),\
 	SFB(blk, GRPH_CONTROL, GRPH_COLOR_EXPANSION_MODE, mask_sh)
-#पूर्ण_अगर
+#endif
 
-#घोषणा MI_GFX8_TILE_MASK_SH_LIST(mask_sh, blk)\
+#define MI_GFX8_TILE_MASK_SH_LIST(mask_sh, blk)\
 	SFB(blk, GRPH_CONTROL, GRPH_NUM_BANKS, mask_sh),\
 	SFB(blk, GRPH_CONTROL, GRPH_BANK_WIDTH, mask_sh),\
 	SFB(blk, GRPH_CONTROL, GRPH_BANK_HEIGHT, mask_sh),\
@@ -178,7 +177,7 @@
 	SFB(blk, GRPH_CONTROL, GRPH_ARRAY_MODE, mask_sh),\
 	SFB(blk, GRPH_CONTROL, GRPH_COLOR_EXPANSION_MODE, mask_sh)
 
-#घोषणा MI_DCP_MASK_SH_LIST(mask_sh, blk)\
+#define MI_DCP_MASK_SH_LIST(mask_sh, blk)\
 	SFB(blk, GRPH_ENABLE, GRPH_ENABLE, mask_sh),\
 	SFB(blk, GRPH_CONTROL, GRPH_DEPTH, mask_sh),\
 	SFB(blk, GRPH_CONTROL, GRPH_FORMAT, mask_sh),\
@@ -203,8 +202,8 @@
 	SFB(blk, GRPH_UPDATE, GRPH_UPDATE_LOCK, mask_sh),\
 	SFB(blk, GRPH_FLIP_CONTROL, GRPH_SURFACE_UPDATE_H_RETRACE_EN, mask_sh)
 
-#अगर defined(CONFIG_DRM_AMD_DC_SI)
-#घोषणा MI_DCP_MASK_SH_LIST_DCE6(mask_sh, blk)\
+#if defined(CONFIG_DRM_AMD_DC_SI)
+#define MI_DCP_MASK_SH_LIST_DCE6(mask_sh, blk)\
 	SFB(blk, GRPH_ENABLE, GRPH_ENABLE, mask_sh),\
 	SFB(blk, GRPH_CONTROL, GRPH_DEPTH, mask_sh),\
 	SFB(blk, GRPH_CONTROL, GRPH_FORMAT, mask_sh),\
@@ -227,20 +226,20 @@
 	SFB(blk, GRPH_UPDATE, GRPH_SURFACE_UPDATE_PENDING, mask_sh),\
 	SFB(blk, GRPH_UPDATE, GRPH_UPDATE_LOCK, mask_sh),\
 	SFB(blk, GRPH_FLIP_CONTROL, GRPH_SURFACE_UPDATE_H_RETRACE_EN, mask_sh)
-#पूर्ण_अगर
+#endif
 
-#घोषणा MI_DCP_DCE11_MASK_SH_LIST(mask_sh, blk)\
+#define MI_DCP_DCE11_MASK_SH_LIST(mask_sh, blk)\
 	SFB(blk, GRPH_PIPE_OUTSTANDING_REQUEST_LIMIT, GRPH_PIPE_OUTSTANDING_REQUEST_LIMIT, mask_sh)
 
-#घोषणा MI_DCP_PTE_MASK_SH_LIST(mask_sh, blk)\
+#define MI_DCP_PTE_MASK_SH_LIST(mask_sh, blk)\
 	SFB(blk, DVMM_PTE_CONTROL, DVMM_PAGE_WIDTH, mask_sh),\
 	SFB(blk, DVMM_PTE_CONTROL, DVMM_PAGE_HEIGHT, mask_sh),\
 	SFB(blk, DVMM_PTE_CONTROL, DVMM_MIN_PTE_BEFORE_FLIP, mask_sh),\
 	SFB(blk, DVMM_PTE_ARB_CONTROL, DVMM_PTE_REQ_PER_CHUNK, mask_sh),\
 	SFB(blk, DVMM_PTE_ARB_CONTROL, DVMM_MAX_PTE_REQ_OUTSTANDING, mask_sh)
 
-#अगर defined(CONFIG_DRM_AMD_DC_SI)
-#घोषणा MI_DMIF_PG_MASK_SH_LIST_DCE6(mask_sh, blk)\
+#if defined(CONFIG_DRM_AMD_DC_SI)
+#define MI_DMIF_PG_MASK_SH_LIST_DCE6(mask_sh, blk)\
 	SFB(blk, DPG_PIPE_ARBITRATION_CONTROL1, PIXEL_DURATION, mask_sh),\
 	SFB(blk, DPG_PIPE_URGENCY_CONTROL, URGENCY_LOW_WATERMARK, mask_sh),\
 	SFB(blk, DPG_PIPE_URGENCY_CONTROL, URGENCY_HIGH_WATERMARK, mask_sh),\
@@ -249,7 +248,7 @@
 	SF(PIPE0_DMIF_BUFFER_CONTROL, DMIF_BUFFERS_ALLOCATED, mask_sh),\
 	SF(PIPE0_DMIF_BUFFER_CONTROL, DMIF_BUFFERS_ALLOCATION_COMPLETED, mask_sh)
 
-#घोषणा MI_DMIF_PG_MASK_SH_DCE6(mask_sh, blk)\
+#define MI_DMIF_PG_MASK_SH_DCE6(mask_sh, blk)\
 	SFB(blk, DPG_PIPE_ARBITRATION_CONTROL3, URGENCY_WATERMARK_MASK, mask_sh),\
 	SFB(blk, DPG_PIPE_STUTTER_CONTROL, STUTTER_EXIT_SELF_REFRESH_WATERMARK_MASK, mask_sh),\
 	SFB(blk, DPG_PIPE_STUTTER_CONTROL, STUTTER_EXIT_SELF_REFRESH_WATERMARK, mask_sh),\
@@ -259,14 +258,14 @@
 	SFB(blk, DPG_PIPE_NB_PSTATE_CHANGE_CONTROL, NB_PSTATE_CHANGE_NOT_SELF_REFRESH_DURING_REQUEST, mask_sh),\
 	SFB(blk, DPG_PIPE_NB_PSTATE_CHANGE_CONTROL, NB_PSTATE_CHANGE_WATERMARK, mask_sh)
 
-#घोषणा MI_DCE6_MASK_SH_LIST(mask_sh)\
+#define MI_DCE6_MASK_SH_LIST(mask_sh)\
 	MI_DCP_MASK_SH_LIST_DCE6(mask_sh, ),\
 	MI_DMIF_PG_MASK_SH_LIST_DCE6(mask_sh, ),\
 	MI_DMIF_PG_MASK_SH_DCE6(mask_sh, ),\
 	MI_GFX6_TILE_MASK_SH_LIST(mask_sh, )
-#पूर्ण_अगर
+#endif
 
-#घोषणा MI_DMIF_PG_MASK_SH_LIST(mask_sh, blk)\
+#define MI_DMIF_PG_MASK_SH_LIST(mask_sh, blk)\
 	SFB(blk, DPG_PIPE_ARBITRATION_CONTROL1, PIXEL_DURATION, mask_sh),\
 	SFB(blk, DPG_WATERMARK_MASK_CONTROL, URGENCY_WATERMARK_MASK, mask_sh),\
 	SFB(blk, DPG_WATERMARK_MASK_CONTROL, STUTTER_EXIT_SELF_REFRESH_WATERMARK_MASK, mask_sh),\
@@ -277,7 +276,7 @@
 	SF(PIPE0_DMIF_BUFFER_CONTROL, DMIF_BUFFERS_ALLOCATED, mask_sh),\
 	SF(PIPE0_DMIF_BUFFER_CONTROL, DMIF_BUFFERS_ALLOCATION_COMPLETED, mask_sh)
 
-#घोषणा MI_DMIF_PG_MASK_SH_DCE(mask_sh, blk)\
+#define MI_DMIF_PG_MASK_SH_DCE(mask_sh, blk)\
 	SFB(blk, DPG_PIPE_STUTTER_CONTROL, STUTTER_EXIT_SELF_REFRESH_WATERMARK, mask_sh),\
 	SFB(blk, DPG_WATERMARK_MASK_CONTROL, NB_PSTATE_CHANGE_WATERMARK_MASK, mask_sh),\
 	SFB(blk, DPG_PIPE_NB_PSTATE_CHANGE_CONTROL, NB_PSTATE_CHANGE_ENABLE, mask_sh),\
@@ -285,28 +284,28 @@
 	SFB(blk, DPG_PIPE_NB_PSTATE_CHANGE_CONTROL, NB_PSTATE_CHANGE_NOT_SELF_REFRESH_DURING_REQUEST, mask_sh),\
 	SFB(blk, DPG_PIPE_NB_PSTATE_CHANGE_CONTROL, NB_PSTATE_CHANGE_WATERMARK, mask_sh)
 
-#घोषणा MI_DCE8_MASK_SH_LIST(mask_sh)\
+#define MI_DCE8_MASK_SH_LIST(mask_sh)\
 	MI_DCP_MASK_SH_LIST(mask_sh, ),\
 	MI_DMIF_PG_MASK_SH_LIST(mask_sh, ),\
 	MI_DMIF_PG_MASK_SH_DCE(mask_sh, ),\
 	MI_GFX8_TILE_MASK_SH_LIST(mask_sh, )
 
-#घोषणा MI_DCE11_2_MASK_SH_LIST(mask_sh)\
+#define MI_DCE11_2_MASK_SH_LIST(mask_sh)\
 	MI_DCE8_MASK_SH_LIST(mask_sh),\
 	MI_DCP_DCE11_MASK_SH_LIST(mask_sh, )
 
-#घोषणा MI_DCE11_MASK_SH_LIST(mask_sh)\
+#define MI_DCE11_MASK_SH_LIST(mask_sh)\
 	MI_DCE11_2_MASK_SH_LIST(mask_sh),\
 	MI_DCP_PTE_MASK_SH_LIST(mask_sh, )
 
-#घोषणा MI_GFX9_TILE_MASK_SH_LIST(mask_sh, blk)\
+#define MI_GFX9_TILE_MASK_SH_LIST(mask_sh, blk)\
 	SFB(blk, GRPH_CONTROL, GRPH_SW_MODE, mask_sh),\
 	SFB(blk, GRPH_CONTROL, GRPH_SE_ENABLE, mask_sh),\
 	SFB(blk, GRPH_CONTROL, GRPH_NUM_SHADER_ENGINES, mask_sh),\
 	SFB(blk, GRPH_CONTROL, GRPH_NUM_PIPES, mask_sh),\
 	SFB(blk, GRPH_CONTROL, GRPH_COLOR_EXPANSION_MODE, mask_sh)
 
-#घोषणा MI_DCE12_DMIF_PG_MASK_SH_LIST(mask_sh, blk)\
+#define MI_DCE12_DMIF_PG_MASK_SH_LIST(mask_sh, blk)\
 	SFB(blk, DPG_PIPE_STUTTER_CONTROL2, STUTTER_EXIT_SELF_REFRESH_WATERMARK, mask_sh),\
 	SFB(blk, DPG_PIPE_STUTTER_CONTROL2, STUTTER_ENTER_SELF_REFRESH_WATERMARK, mask_sh),\
 	SFB(blk, DPG_PIPE_URGENT_LEVEL_CONTROL, URGENT_LEVEL_LOW_WATERMARK, mask_sh),\
@@ -319,14 +318,14 @@
 	SFB(blk, DPG_PIPE_LOW_POWER_CONTROL, PSTATE_CHANGE_NOT_SELF_REFRESH_DURING_REQUEST, mask_sh),\
 	SFB(blk, DPG_PIPE_LOW_POWER_CONTROL, PSTATE_CHANGE_WATERMARK, mask_sh)
 
-#घोषणा MI_GFX9_DCHUB_MASK_SH_LIST(mask_sh)\
+#define MI_GFX9_DCHUB_MASK_SH_LIST(mask_sh)\
 	SF(DCHUB_FB_LOCATION, FB_TOP, mask_sh),\
 	SF(DCHUB_FB_LOCATION, FB_BASE, mask_sh),\
 	SF(DCHUB_AGP_BASE, AGP_BASE, mask_sh),\
 	SF(DCHUB_AGP_BOT, AGP_BOT, mask_sh),\
 	SF(DCHUB_AGP_TOP, AGP_TOP, mask_sh)
 
-#घोषणा MI_DCE12_MASK_SH_LIST(mask_sh)\
+#define MI_DCE12_MASK_SH_LIST(mask_sh)\
 	MI_DCP_MASK_SH_LIST(mask_sh, DCP0_),\
 	SF(DCP0_GRPH_SECONDARY_SURFACE_ADDRESS, GRPH_SECONDARY_DFQ_ENABLE, mask_sh),\
 	MI_DCP_DCE11_MASK_SH_LIST(mask_sh, DCP0_),\
@@ -336,7 +335,7 @@
 	MI_GFX9_TILE_MASK_SH_LIST(mask_sh, DCP0_),\
 	MI_GFX9_DCHUB_MASK_SH_LIST(mask_sh)
 
-#घोषणा MI_REG_FIELD_LIST(type) \
+#define MI_REG_FIELD_LIST(type) \
 	type GRPH_ENABLE; \
 	type GRPH_X_START; \
 	type GRPH_Y_START; \
@@ -409,60 +408,60 @@
 	type AGP_TOP; \
 	type AGP_BOT; \
 
-काष्ठा dce_mem_input_shअगरt अणु
-	MI_REG_FIELD_LIST(uपूर्णांक8_t)
-पूर्ण;
+struct dce_mem_input_shift {
+	MI_REG_FIELD_LIST(uint8_t)
+};
 
-काष्ठा dce_mem_input_mask अणु
-	MI_REG_FIELD_LIST(uपूर्णांक32_t)
-पूर्ण;
+struct dce_mem_input_mask {
+	MI_REG_FIELD_LIST(uint32_t)
+};
 
-काष्ठा dce_mem_input_wa अणु
-	uपूर्णांक8_t single_head_rdreq_dmअगर_limit;
-पूर्ण;
+struct dce_mem_input_wa {
+	uint8_t single_head_rdreq_dmif_limit;
+};
 
-काष्ठा dce_mem_input अणु
-	काष्ठा mem_input base;
+struct dce_mem_input {
+	struct mem_input base;
 
-	स्थिर काष्ठा dce_mem_input_रेजिस्टरs *regs;
-	स्थिर काष्ठा dce_mem_input_shअगरt *shअगरts;
-	स्थिर काष्ठा dce_mem_input_mask *masks;
+	const struct dce_mem_input_registers *regs;
+	const struct dce_mem_input_shift *shifts;
+	const struct dce_mem_input_mask *masks;
 
-	काष्ठा dce_mem_input_wa wa;
-पूर्ण;
+	struct dce_mem_input_wa wa;
+};
 
-व्योम dce_mem_input_स्थिरruct(
-	काष्ठा dce_mem_input *dce_mi,
-	काष्ठा dc_context *ctx,
-	पूर्णांक inst,
-	स्थिर काष्ठा dce_mem_input_रेजिस्टरs *regs,
-	स्थिर काष्ठा dce_mem_input_shअगरt *mi_shअगरt,
-	स्थिर काष्ठा dce_mem_input_mask *mi_mask);
+void dce_mem_input_construct(
+	struct dce_mem_input *dce_mi,
+	struct dc_context *ctx,
+	int inst,
+	const struct dce_mem_input_registers *regs,
+	const struct dce_mem_input_shift *mi_shift,
+	const struct dce_mem_input_mask *mi_mask);
 
-#अगर defined(CONFIG_DRM_AMD_DC_SI)
-व्योम dce60_mem_input_स्थिरruct(
-	काष्ठा dce_mem_input *dce_mi,
-	काष्ठा dc_context *ctx,
-	पूर्णांक inst,
-	स्थिर काष्ठा dce_mem_input_रेजिस्टरs *regs,
-	स्थिर काष्ठा dce_mem_input_shअगरt *mi_shअगरt,
-	स्थिर काष्ठा dce_mem_input_mask *mi_mask);
-#पूर्ण_अगर
+#if defined(CONFIG_DRM_AMD_DC_SI)
+void dce60_mem_input_construct(
+	struct dce_mem_input *dce_mi,
+	struct dc_context *ctx,
+	int inst,
+	const struct dce_mem_input_registers *regs,
+	const struct dce_mem_input_shift *mi_shift,
+	const struct dce_mem_input_mask *mi_mask);
+#endif
 
-व्योम dce112_mem_input_स्थिरruct(
-	काष्ठा dce_mem_input *dce_mi,
-	काष्ठा dc_context *ctx,
-	पूर्णांक inst,
-	स्थिर काष्ठा dce_mem_input_रेजिस्टरs *regs,
-	स्थिर काष्ठा dce_mem_input_shअगरt *mi_shअगरt,
-	स्थिर काष्ठा dce_mem_input_mask *mi_mask);
+void dce112_mem_input_construct(
+	struct dce_mem_input *dce_mi,
+	struct dc_context *ctx,
+	int inst,
+	const struct dce_mem_input_registers *regs,
+	const struct dce_mem_input_shift *mi_shift,
+	const struct dce_mem_input_mask *mi_mask);
 
-व्योम dce120_mem_input_स्थिरruct(
-	काष्ठा dce_mem_input *dce_mi,
-	काष्ठा dc_context *ctx,
-	पूर्णांक inst,
-	स्थिर काष्ठा dce_mem_input_रेजिस्टरs *regs,
-	स्थिर काष्ठा dce_mem_input_shअगरt *mi_shअगरt,
-	स्थिर काष्ठा dce_mem_input_mask *mi_mask);
+void dce120_mem_input_construct(
+	struct dce_mem_input *dce_mi,
+	struct dc_context *ctx,
+	int inst,
+	const struct dce_mem_input_registers *regs,
+	const struct dce_mem_input_shift *mi_shift,
+	const struct dce_mem_input_mask *mi_mask);
 
-#पूर्ण_अगर /*__DCE_MEM_INPUT_H__*/
+#endif /*__DCE_MEM_INPUT_H__*/

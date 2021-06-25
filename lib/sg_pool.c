@@ -1,75 +1,74 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-#समावेश <linux/module.h>
-#समावेश <linux/scatterlist.h>
-#समावेश <linux/mempool.h>
-#समावेश <linux/slab.h>
+// SPDX-License-Identifier: GPL-2.0-only
+#include <linux/module.h>
+#include <linux/scatterlist.h>
+#include <linux/mempool.h>
+#include <linux/slab.h>
 
-#घोषणा SG_MEMPOOL_NR		ARRAY_SIZE(sg_pools)
-#घोषणा SG_MEMPOOL_SIZE		2
+#define SG_MEMPOOL_NR		ARRAY_SIZE(sg_pools)
+#define SG_MEMPOOL_SIZE		2
 
-काष्ठा sg_pool अणु
-	माप_प्रकार		size;
-	अक्षर		*name;
-	काष्ठा kmem_cache	*slab;
+struct sg_pool {
+	size_t		size;
+	char		*name;
+	struct kmem_cache	*slab;
 	mempool_t	*pool;
-पूर्ण;
+};
 
-#घोषणा SP(x) अणु .size = x, "sgpool-" __stringअगरy(x) पूर्ण
-#अगर (SG_CHUNK_SIZE < 32)
-#त्रुटि SG_CHUNK_SIZE is too small (must be 32 or greater)
-#पूर्ण_अगर
-अटल काष्ठा sg_pool sg_pools[] = अणु
+#define SP(x) { .size = x, "sgpool-" __stringify(x) }
+#if (SG_CHUNK_SIZE < 32)
+#error SG_CHUNK_SIZE is too small (must be 32 or greater)
+#endif
+static struct sg_pool sg_pools[] = {
 	SP(8),
 	SP(16),
-#अगर (SG_CHUNK_SIZE > 32)
+#if (SG_CHUNK_SIZE > 32)
 	SP(32),
-#अगर (SG_CHUNK_SIZE > 64)
+#if (SG_CHUNK_SIZE > 64)
 	SP(64),
-#अगर (SG_CHUNK_SIZE > 128)
+#if (SG_CHUNK_SIZE > 128)
 	SP(128),
-#अगर (SG_CHUNK_SIZE > 256)
-#त्रुटि SG_CHUNK_SIZE is too large (256 MAX)
-#पूर्ण_अगर
-#पूर्ण_अगर
-#पूर्ण_अगर
-#पूर्ण_अगर
+#if (SG_CHUNK_SIZE > 256)
+#error SG_CHUNK_SIZE is too large (256 MAX)
+#endif
+#endif
+#endif
+#endif
 	SP(SG_CHUNK_SIZE)
-पूर्ण;
-#अघोषित SP
+};
+#undef SP
 
-अटल अंतरभूत अचिन्हित पूर्णांक sg_pool_index(अचिन्हित लघु nents)
-अणु
-	अचिन्हित पूर्णांक index;
+static inline unsigned int sg_pool_index(unsigned short nents)
+{
+	unsigned int index;
 
 	BUG_ON(nents > SG_CHUNK_SIZE);
 
-	अगर (nents <= 8)
+	if (nents <= 8)
 		index = 0;
-	अन्यथा
+	else
 		index = get_count_order(nents) - 3;
 
-	वापस index;
-पूर्ण
+	return index;
+}
 
-अटल व्योम sg_pool_मुक्त(काष्ठा scatterlist *sgl, अचिन्हित पूर्णांक nents)
-अणु
-	काष्ठा sg_pool *sgp;
-
-	sgp = sg_pools + sg_pool_index(nents);
-	mempool_मुक्त(sgl, sgp->pool);
-पूर्ण
-
-अटल काष्ठा scatterlist *sg_pool_alloc(अचिन्हित पूर्णांक nents, gfp_t gfp_mask)
-अणु
-	काष्ठा sg_pool *sgp;
+static void sg_pool_free(struct scatterlist *sgl, unsigned int nents)
+{
+	struct sg_pool *sgp;
 
 	sgp = sg_pools + sg_pool_index(nents);
-	वापस mempool_alloc(sgp->pool, gfp_mask);
-पूर्ण
+	mempool_free(sgl, sgp->pool);
+}
+
+static struct scatterlist *sg_pool_alloc(unsigned int nents, gfp_t gfp_mask)
+{
+	struct sg_pool *sgp;
+
+	sgp = sg_pools + sg_pool_index(nents);
+	return mempool_alloc(sgp->pool, gfp_mask);
+}
 
 /**
- * sg_मुक्त_table_chained - Free a previously mapped sg table
+ * sg_free_table_chained - Free a previously mapped sg table
  * @table:	The sg table header to use
  * @nents_first_chunk: size of the first_chunk SGL passed to
  *		sg_alloc_table_chained
@@ -82,18 +81,18 @@
  *    to sg_alloc_table_chained().
  *
  **/
-व्योम sg_मुक्त_table_chained(काष्ठा sg_table *table,
-		अचिन्हित nents_first_chunk)
-अणु
-	अगर (table->orig_nents <= nents_first_chunk)
-		वापस;
+void sg_free_table_chained(struct sg_table *table,
+		unsigned nents_first_chunk)
+{
+	if (table->orig_nents <= nents_first_chunk)
+		return;
 
-	अगर (nents_first_chunk == 1)
+	if (nents_first_chunk == 1)
 		nents_first_chunk = 0;
 
-	__sg_मुक्त_table(table, SG_CHUNK_SIZE, nents_first_chunk, sg_pool_मुक्त);
-पूर्ण
-EXPORT_SYMBOL_GPL(sg_मुक्त_table_chained);
+	__sg_free_table(table, SG_CHUNK_SIZE, nents_first_chunk, sg_pool_free);
+}
+EXPORT_SYMBOL_GPL(sg_free_table_chained);
 
 /**
  * sg_alloc_table_chained - Allocate and chain SGLs in an sg table
@@ -105,88 +104,88 @@ EXPORT_SYMBOL_GPL(sg_मुक्त_table_chained);
  *  Description:
  *    Allocate and chain SGLs in an sg table. If @nents@ is larger than
  *    @nents_first_chunk a chained sg table will be setup. @first_chunk is
- *    ignored अगर nents_first_chunk <= 1 because user expects the SGL poपूर्णांकs
+ *    ignored if nents_first_chunk <= 1 because user expects the SGL points
  *    non-chain SGL.
  *
  **/
-पूर्णांक sg_alloc_table_chained(काष्ठा sg_table *table, पूर्णांक nents,
-		काष्ठा scatterlist *first_chunk, अचिन्हित nents_first_chunk)
-अणु
-	पूर्णांक ret;
+int sg_alloc_table_chained(struct sg_table *table, int nents,
+		struct scatterlist *first_chunk, unsigned nents_first_chunk)
+{
+	int ret;
 
 	BUG_ON(!nents);
 
-	अगर (first_chunk && nents_first_chunk) अणु
-		अगर (nents <= nents_first_chunk) अणु
+	if (first_chunk && nents_first_chunk) {
+		if (nents <= nents_first_chunk) {
 			table->nents = table->orig_nents = nents;
 			sg_init_table(table->sgl, nents);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
 	/* User supposes that the 1st SGL includes real entry */
-	अगर (nents_first_chunk <= 1) अणु
-		first_chunk = शून्य;
+	if (nents_first_chunk <= 1) {
+		first_chunk = NULL;
 		nents_first_chunk = 0;
-	पूर्ण
+	}
 
 	ret = __sg_alloc_table(table, nents, SG_CHUNK_SIZE,
 			       first_chunk, nents_first_chunk,
 			       GFP_ATOMIC, sg_pool_alloc);
-	अगर (unlikely(ret))
-		sg_मुक्त_table_chained(table, nents_first_chunk);
-	वापस ret;
-पूर्ण
+	if (unlikely(ret))
+		sg_free_table_chained(table, nents_first_chunk);
+	return ret;
+}
 EXPORT_SYMBOL_GPL(sg_alloc_table_chained);
 
-अटल __init पूर्णांक sg_pool_init(व्योम)
-अणु
-	पूर्णांक i;
+static __init int sg_pool_init(void)
+{
+	int i;
 
-	क्रम (i = 0; i < SG_MEMPOOL_NR; i++) अणु
-		काष्ठा sg_pool *sgp = sg_pools + i;
-		पूर्णांक size = sgp->size * माप(काष्ठा scatterlist);
+	for (i = 0; i < SG_MEMPOOL_NR; i++) {
+		struct sg_pool *sgp = sg_pools + i;
+		int size = sgp->size * sizeof(struct scatterlist);
 
 		sgp->slab = kmem_cache_create(sgp->name, size, 0,
-				SLAB_HWCACHE_ALIGN, शून्य);
-		अगर (!sgp->slab) अणु
-			prपूर्णांकk(KERN_ERR "SG_POOL: can't init sg slab %s\n",
+				SLAB_HWCACHE_ALIGN, NULL);
+		if (!sgp->slab) {
+			printk(KERN_ERR "SG_POOL: can't init sg slab %s\n",
 					sgp->name);
-			जाओ cleanup_sdb;
-		पूर्ण
+			goto cleanup_sdb;
+		}
 
 		sgp->pool = mempool_create_slab_pool(SG_MEMPOOL_SIZE,
 						     sgp->slab);
-		अगर (!sgp->pool) अणु
-			prपूर्णांकk(KERN_ERR "SG_POOL: can't init sg mempool %s\n",
+		if (!sgp->pool) {
+			printk(KERN_ERR "SG_POOL: can't init sg mempool %s\n",
 					sgp->name);
-			जाओ cleanup_sdb;
-		पूर्ण
-	पूर्ण
+			goto cleanup_sdb;
+		}
+	}
 
-	वापस 0;
+	return 0;
 
 cleanup_sdb:
-	क्रम (i = 0; i < SG_MEMPOOL_NR; i++) अणु
-		काष्ठा sg_pool *sgp = sg_pools + i;
+	for (i = 0; i < SG_MEMPOOL_NR; i++) {
+		struct sg_pool *sgp = sg_pools + i;
 
 		mempool_destroy(sgp->pool);
 		kmem_cache_destroy(sgp->slab);
-	पूर्ण
+	}
 
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-अटल __निकास व्योम sg_pool_निकास(व्योम)
-अणु
-	पूर्णांक i;
+static __exit void sg_pool_exit(void)
+{
+	int i;
 
-	क्रम (i = 0; i < SG_MEMPOOL_NR; i++) अणु
-		काष्ठा sg_pool *sgp = sg_pools + i;
+	for (i = 0; i < SG_MEMPOOL_NR; i++) {
+		struct sg_pool *sgp = sg_pools + i;
 		mempool_destroy(sgp->pool);
 		kmem_cache_destroy(sgp->slab);
-	पूर्ण
-पूर्ण
+	}
+}
 
 module_init(sg_pool_init);
-module_निकास(sg_pool_निकास);
+module_exit(sg_pool_exit);

@@ -1,87 +1,86 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * arch/arm/kernel/crunch.c
- * Cirrus MaverickCrunch context चयनing and handling
+ * Cirrus MaverickCrunch context switching and handling
  *
  * Copyright (C) 2006 Lennert Buytenhek <buytenh@wantstofly.org>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/संकेत.स>
-#समावेश <linux/sched.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/signal.h>
+#include <linux/sched.h>
+#include <linux/init.h>
+#include <linux/io.h>
 
-#समावेश <यंत्र/thपढ़ो_notअगरy.h>
+#include <asm/thread_notify.h>
 
-#समावेश "soc.h"
+#include "soc.h"
 
-काष्ठा crunch_state *crunch_owner;
+struct crunch_state *crunch_owner;
 
-व्योम crunch_task_release(काष्ठा thपढ़ो_info *thपढ़ो)
-अणु
+void crunch_task_release(struct thread_info *thread)
+{
 	local_irq_disable();
-	अगर (crunch_owner == &thपढ़ो->crunchstate)
-		crunch_owner = शून्य;
+	if (crunch_owner == &thread->crunchstate)
+		crunch_owner = NULL;
 	local_irq_enable();
-पूर्ण
+}
 
-अटल पूर्णांक crunch_enabled(u32 devcfg)
-अणु
-	वापस !!(devcfg & EP93XX_SYSCON_DEVCFG_CPENA);
-पूर्ण
+static int crunch_enabled(u32 devcfg)
+{
+	return !!(devcfg & EP93XX_SYSCON_DEVCFG_CPENA);
+}
 
-अटल पूर्णांक crunch_करो(काष्ठा notअगरier_block *self, अचिन्हित दीर्घ cmd, व्योम *t)
-अणु
-	काष्ठा thपढ़ो_info *thपढ़ो = (काष्ठा thपढ़ो_info *)t;
-	काष्ठा crunch_state *crunch_state;
+static int crunch_do(struct notifier_block *self, unsigned long cmd, void *t)
+{
+	struct thread_info *thread = (struct thread_info *)t;
+	struct crunch_state *crunch_state;
 	u32 devcfg;
 
-	crunch_state = &thपढ़ो->crunchstate;
+	crunch_state = &thread->crunchstate;
 
-	चयन (cmd) अणु
-	हाल THREAD_NOTIFY_FLUSH:
-		स_रखो(crunch_state, 0, माप(*crunch_state));
+	switch (cmd) {
+	case THREAD_NOTIFY_FLUSH:
+		memset(crunch_state, 0, sizeof(*crunch_state));
 
 		/*
-		 * FALLTHROUGH: Ensure we करोn't try to overग_लिखो our newly
-		 * initialised state inक्रमmation on the first fault.
+		 * FALLTHROUGH: Ensure we don't try to overwrite our newly
+		 * initialised state information on the first fault.
 		 */
 		fallthrough;
 
-	हाल THREAD_NOTIFY_EXIT:
-		crunch_task_release(thपढ़ो);
-		अवरोध;
+	case THREAD_NOTIFY_EXIT:
+		crunch_task_release(thread);
+		break;
 
-	हाल THREAD_NOTIFY_SWITCH:
-		devcfg = __raw_पढ़ोl(EP93XX_SYSCON_DEVCFG);
-		अगर (crunch_enabled(devcfg) || crunch_owner == crunch_state) अणु
+	case THREAD_NOTIFY_SWITCH:
+		devcfg = __raw_readl(EP93XX_SYSCON_DEVCFG);
+		if (crunch_enabled(devcfg) || crunch_owner == crunch_state) {
 			/*
-			 * We करोn't use ep93xx_syscon_swlocked_ग_लिखो() here
-			 * because we are on the context चयन path and
-			 * preemption is alपढ़ोy disabled.
+			 * We don't use ep93xx_syscon_swlocked_write() here
+			 * because we are on the context switch path and
+			 * preemption is already disabled.
 			 */
 			devcfg ^= EP93XX_SYSCON_DEVCFG_CPENA;
-			__raw_ग_लिखोl(0xaa, EP93XX_SYSCON_SWLOCK);
-			__raw_ग_लिखोl(devcfg, EP93XX_SYSCON_DEVCFG);
-		पूर्ण
-		अवरोध;
-	पूर्ण
+			__raw_writel(0xaa, EP93XX_SYSCON_SWLOCK);
+			__raw_writel(devcfg, EP93XX_SYSCON_DEVCFG);
+		}
+		break;
+	}
 
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
-अटल काष्ठा notअगरier_block crunch_notअगरier_block = अणु
-	.notअगरier_call	= crunch_करो,
-पूर्ण;
+static struct notifier_block crunch_notifier_block = {
+	.notifier_call	= crunch_do,
+};
 
-पूर्णांक __init crunch_init(व्योम)
-अणु
-	thपढ़ो_रेजिस्टर_notअगरier(&crunch_notअगरier_block);
+int __init crunch_init(void)
+{
+	thread_register_notifier(&crunch_notifier_block);
 	elf_hwcap |= HWCAP_CRUNCH;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

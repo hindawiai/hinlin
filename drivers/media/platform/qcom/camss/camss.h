@@ -1,122 +1,121 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * camss.h
  *
- * Qualcomm MSM Camera Subप्रणाली - Core
+ * Qualcomm MSM Camera Subsystem - Core
  *
  * Copyright (c) 2015, The Linux Foundation. All rights reserved.
  * Copyright (C) 2015-2018 Linaro Ltd.
  */
-#अगर_अघोषित QC_MSM_CAMSS_H
-#घोषणा QC_MSM_CAMSS_H
+#ifndef QC_MSM_CAMSS_H
+#define QC_MSM_CAMSS_H
 
-#समावेश <linux/device.h>
-#समावेश <linux/types.h>
-#समावेश <media/v4l2-async.h>
-#समावेश <media/v4l2-device.h>
-#समावेश <media/v4l2-subdev.h>
-#समावेश <media/media-device.h>
-#समावेश <media/media-entity.h>
+#include <linux/device.h>
+#include <linux/types.h>
+#include <media/v4l2-async.h>
+#include <media/v4l2-device.h>
+#include <media/v4l2-subdev.h>
+#include <media/media-device.h>
+#include <media/media-entity.h>
 
-#समावेश "camss-csid.h"
-#समावेश "camss-csiphy.h"
-#समावेश "camss-ispif.h"
-#समावेश "camss-vfe.h"
+#include "camss-csid.h"
+#include "camss-csiphy.h"
+#include "camss-ispif.h"
+#include "camss-vfe.h"
 
-#घोषणा to_camss(ptr_module)	\
-	container_of(ptr_module, काष्ठा camss, ptr_module)
+#define to_camss(ptr_module)	\
+	container_of(ptr_module, struct camss, ptr_module)
 
-#घोषणा to_device(ptr_module)	\
+#define to_device(ptr_module)	\
 	(to_camss(ptr_module)->dev)
 
-#घोषणा module_poपूर्णांकer(ptr_module, index)	\
-	((स्थिर काष्ठा ptr_module##_device (*)[]) &(ptr_module[-(index)]))
+#define module_pointer(ptr_module, index)	\
+	((const struct ptr_module##_device (*)[]) &(ptr_module[-(index)]))
 
-#घोषणा to_camss_index(ptr_module, index)	\
-	container_of(module_poपूर्णांकer(ptr_module, index),	\
-		     काष्ठा camss, ptr_module)
+#define to_camss_index(ptr_module, index)	\
+	container_of(module_pointer(ptr_module, index),	\
+		     struct camss, ptr_module)
 
-#घोषणा to_device_index(ptr_module, index)	\
+#define to_device_index(ptr_module, index)	\
 	(to_camss_index(ptr_module, index)->dev)
 
-#घोषणा CAMSS_RES_MAX 17
+#define CAMSS_RES_MAX 17
 
-काष्ठा resources अणु
-	अक्षर *regulator[CAMSS_RES_MAX];
-	अक्षर *घड़ी[CAMSS_RES_MAX];
-	u32 घड़ी_rate[CAMSS_RES_MAX][CAMSS_RES_MAX];
-	अक्षर *reg[CAMSS_RES_MAX];
-	अक्षर *पूर्णांकerrupt[CAMSS_RES_MAX];
-पूर्ण;
+struct resources {
+	char *regulator[CAMSS_RES_MAX];
+	char *clock[CAMSS_RES_MAX];
+	u32 clock_rate[CAMSS_RES_MAX][CAMSS_RES_MAX];
+	char *reg[CAMSS_RES_MAX];
+	char *interrupt[CAMSS_RES_MAX];
+};
 
-काष्ठा resources_ispअगर अणु
-	अक्षर *घड़ी[CAMSS_RES_MAX];
-	अक्षर *घड़ी_क्रम_reset[CAMSS_RES_MAX];
-	अक्षर *reg[CAMSS_RES_MAX];
-	अक्षर *पूर्णांकerrupt;
-पूर्ण;
+struct resources_ispif {
+	char *clock[CAMSS_RES_MAX];
+	char *clock_for_reset[CAMSS_RES_MAX];
+	char *reg[CAMSS_RES_MAX];
+	char *interrupt;
+};
 
-क्रमागत pm_करोमुख्य अणु
+enum pm_domain {
 	PM_DOMAIN_VFE0 = 0,
 	PM_DOMAIN_VFE1 = 1,
 	PM_DOMAIN_GEN1_COUNT = 2,	/* CAMSS series of ISPs */
 	PM_DOMAIN_VFELITE = 2,		/* VFELITE / TOP GDSC */
 	PM_DOMAIN_GEN2_COUNT = 3,	/* Titan series of ISPs */
-पूर्ण;
+};
 
-क्रमागत camss_version अणु
+enum camss_version {
 	CAMSS_8x16,
 	CAMSS_8x96,
 	CAMSS_660,
 	CAMSS_845,
-पूर्ण;
+};
 
-काष्ठा camss अणु
-	क्रमागत camss_version version;
-	काष्ठा v4l2_device v4l2_dev;
-	काष्ठा v4l2_async_notअगरier notअगरier;
-	काष्ठा media_device media_dev;
-	काष्ठा device *dev;
-	पूर्णांक csiphy_num;
-	काष्ठा csiphy_device *csiphy;
-	पूर्णांक csid_num;
-	काष्ठा csid_device *csid;
-	काष्ठा ispअगर_device *ispअगर;
-	पूर्णांक vfe_num;
-	काष्ठा vfe_device *vfe;
+struct camss {
+	enum camss_version version;
+	struct v4l2_device v4l2_dev;
+	struct v4l2_async_notifier notifier;
+	struct media_device media_dev;
+	struct device *dev;
+	int csiphy_num;
+	struct csiphy_device *csiphy;
+	int csid_num;
+	struct csid_device *csid;
+	struct ispif_device *ispif;
+	int vfe_num;
+	struct vfe_device *vfe;
 	atomic_t ref_count;
-	काष्ठा device *genpd[PM_DOMAIN_GEN2_COUNT];
-	काष्ठा device_link *genpd_link[PM_DOMAIN_GEN2_COUNT];
-पूर्ण;
+	struct device *genpd[PM_DOMAIN_GEN2_COUNT];
+	struct device_link *genpd_link[PM_DOMAIN_GEN2_COUNT];
+};
 
-काष्ठा camss_camera_पूर्णांकerface अणु
+struct camss_camera_interface {
 	u8 csiphy_id;
-	काष्ठा csiphy_csi2_cfg csi2;
-पूर्ण;
+	struct csiphy_csi2_cfg csi2;
+};
 
-काष्ठा camss_async_subdev अणु
-	काष्ठा v4l2_async_subdev asd; /* must be first */
-	काष्ठा camss_camera_पूर्णांकerface पूर्णांकerface;
-पूर्ण;
+struct camss_async_subdev {
+	struct v4l2_async_subdev asd; /* must be first */
+	struct camss_camera_interface interface;
+};
 
-काष्ठा camss_घड़ी अणु
-	काष्ठा clk *clk;
-	स्थिर अक्षर *name;
+struct camss_clock {
+	struct clk *clk;
+	const char *name;
 	u32 *freq;
 	u32 nfreqs;
-पूर्ण;
+};
 
-व्योम camss_add_घड़ी_margin(u64 *rate);
-पूर्णांक camss_enable_घड़ीs(पूर्णांक nघड़ीs, काष्ठा camss_घड़ी *घड़ी,
-			काष्ठा device *dev);
-व्योम camss_disable_घड़ीs(पूर्णांक nघड़ीs, काष्ठा camss_घड़ी *घड़ी);
-काष्ठा media_entity *camss_find_sensor(काष्ठा media_entity *entity);
-s64 camss_get_link_freq(काष्ठा media_entity *entity, अचिन्हित पूर्णांक bpp,
-			अचिन्हित पूर्णांक lanes);
-पूर्णांक camss_get_pixel_घड़ी(काष्ठा media_entity *entity, u64 *pixel_घड़ी);
-पूर्णांक camss_pm_करोमुख्य_on(काष्ठा camss *camss, पूर्णांक id);
-व्योम camss_pm_करोमुख्य_off(काष्ठा camss *camss, पूर्णांक id);
-व्योम camss_delete(काष्ठा camss *camss);
+void camss_add_clock_margin(u64 *rate);
+int camss_enable_clocks(int nclocks, struct camss_clock *clock,
+			struct device *dev);
+void camss_disable_clocks(int nclocks, struct camss_clock *clock);
+struct media_entity *camss_find_sensor(struct media_entity *entity);
+s64 camss_get_link_freq(struct media_entity *entity, unsigned int bpp,
+			unsigned int lanes);
+int camss_get_pixel_clock(struct media_entity *entity, u64 *pixel_clock);
+int camss_pm_domain_on(struct camss *camss, int id);
+void camss_pm_domain_off(struct camss *camss, int id);
+void camss_delete(struct camss *camss);
 
-#पूर्ण_अगर /* QC_MSM_CAMSS_H */
+#endif /* QC_MSM_CAMSS_H */

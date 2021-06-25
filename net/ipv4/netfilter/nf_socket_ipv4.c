@@ -1,56 +1,55 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2007-2008 BalaBit IT Ltd.
  * Author: Krisztian Kovacs
  */
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
-#समावेश <linux/module.h>
-#समावेश <linux/skbuff.h>
-#समावेश <net/tcp.h>
-#समावेश <net/udp.h>
-#समावेश <net/icmp.h>
-#समावेश <net/sock.h>
-#समावेश <net/inet_sock.h>
-#समावेश <net/netfilter/nf_socket.h>
-#अगर IS_ENABLED(CONFIG_NF_CONNTRACK)
-#समावेश <net/netfilter/nf_conntrack.h>
-#पूर्ण_अगर
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/module.h>
+#include <linux/skbuff.h>
+#include <net/tcp.h>
+#include <net/udp.h>
+#include <net/icmp.h>
+#include <net/sock.h>
+#include <net/inet_sock.h>
+#include <net/netfilter/nf_socket.h>
+#if IS_ENABLED(CONFIG_NF_CONNTRACK)
+#include <net/netfilter/nf_conntrack.h>
+#endif
 
-अटल पूर्णांक
-extract_icmp4_fields(स्थिर काष्ठा sk_buff *skb, u8 *protocol,
+static int
+extract_icmp4_fields(const struct sk_buff *skb, u8 *protocol,
 		     __be32 *raddr, __be32 *laddr,
 		     __be16 *rport, __be16 *lport)
-अणु
-	अचिन्हित पूर्णांक outside_hdrlen = ip_hdrlen(skb);
-	काष्ठा iphdr *inside_iph, _inside_iph;
-	काष्ठा icmphdr *icmph, _icmph;
+{
+	unsigned int outside_hdrlen = ip_hdrlen(skb);
+	struct iphdr *inside_iph, _inside_iph;
+	struct icmphdr *icmph, _icmph;
 	__be16 *ports, _ports[2];
 
-	icmph = skb_header_poपूर्णांकer(skb, outside_hdrlen,
-				   माप(_icmph), &_icmph);
-	अगर (icmph == शून्य)
-		वापस 1;
+	icmph = skb_header_pointer(skb, outside_hdrlen,
+				   sizeof(_icmph), &_icmph);
+	if (icmph == NULL)
+		return 1;
 
-	अगर (!icmp_is_err(icmph->type))
-		वापस 1;
+	if (!icmp_is_err(icmph->type))
+		return 1;
 
-	inside_iph = skb_header_poपूर्णांकer(skb, outside_hdrlen +
-					माप(काष्ठा icmphdr),
-					माप(_inside_iph), &_inside_iph);
-	अगर (inside_iph == शून्य)
-		वापस 1;
+	inside_iph = skb_header_pointer(skb, outside_hdrlen +
+					sizeof(struct icmphdr),
+					sizeof(_inside_iph), &_inside_iph);
+	if (inside_iph == NULL)
+		return 1;
 
-	अगर (inside_iph->protocol != IPPROTO_TCP &&
+	if (inside_iph->protocol != IPPROTO_TCP &&
 	    inside_iph->protocol != IPPROTO_UDP)
-		वापस 1;
+		return 1;
 
-	ports = skb_header_poपूर्णांकer(skb, outside_hdrlen +
-				   माप(काष्ठा icmphdr) +
+	ports = skb_header_pointer(skb, outside_hdrlen +
+				   sizeof(struct icmphdr) +
 				   (inside_iph->ihl << 2),
-				   माप(_ports), &_ports);
-	अगर (ports == शून्य)
-		वापस 1;
+				   sizeof(_ports), &_ports);
+	if (ports == NULL)
+		return 1;
 
 	/* the inside IP packet is the one quoted from our side, thus
 	 * its saddr is the local address */
@@ -60,93 +59,93 @@ extract_icmp4_fields(स्थिर काष्ठा sk_buff *skb, u8 *protoc
 	*raddr = inside_iph->daddr;
 	*rport = ports[1];
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा sock *
-nf_socket_get_sock_v4(काष्ठा net *net, काष्ठा sk_buff *skb, स्थिर पूर्णांक करोff,
-		      स्थिर u8 protocol,
-		      स्थिर __be32 saddr, स्थिर __be32 daddr,
-		      स्थिर __be16 sport, स्थिर __be16 dport,
-		      स्थिर काष्ठा net_device *in)
-अणु
-	चयन (protocol) अणु
-	हाल IPPROTO_TCP:
-		वापस inet_lookup(net, &tcp_hashinfo, skb, करोff,
+static struct sock *
+nf_socket_get_sock_v4(struct net *net, struct sk_buff *skb, const int doff,
+		      const u8 protocol,
+		      const __be32 saddr, const __be32 daddr,
+		      const __be16 sport, const __be16 dport,
+		      const struct net_device *in)
+{
+	switch (protocol) {
+	case IPPROTO_TCP:
+		return inet_lookup(net, &tcp_hashinfo, skb, doff,
 				   saddr, sport, daddr, dport,
-				   in->अगरindex);
-	हाल IPPROTO_UDP:
-		वापस udp4_lib_lookup(net, saddr, sport, daddr, dport,
-				       in->अगरindex);
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+				   in->ifindex);
+	case IPPROTO_UDP:
+		return udp4_lib_lookup(net, saddr, sport, daddr, dport,
+				       in->ifindex);
+	}
+	return NULL;
+}
 
-काष्ठा sock *nf_sk_lookup_slow_v4(काष्ठा net *net, स्थिर काष्ठा sk_buff *skb,
-				  स्थिर काष्ठा net_device *indev)
-अणु
+struct sock *nf_sk_lookup_slow_v4(struct net *net, const struct sk_buff *skb,
+				  const struct net_device *indev)
+{
 	__be32 daddr, saddr;
 	__be16 dport, sport;
-	स्थिर काष्ठा iphdr *iph = ip_hdr(skb);
-	काष्ठा sk_buff *data_skb = शून्य;
+	const struct iphdr *iph = ip_hdr(skb);
+	struct sk_buff *data_skb = NULL;
 	u8 protocol;
-#अगर IS_ENABLED(CONFIG_NF_CONNTRACK)
-	क्रमागत ip_conntrack_info ctinfo;
-	काष्ठा nf_conn स्थिर *ct;
-#पूर्ण_अगर
-	पूर्णांक करोff = 0;
+#if IS_ENABLED(CONFIG_NF_CONNTRACK)
+	enum ip_conntrack_info ctinfo;
+	struct nf_conn const *ct;
+#endif
+	int doff = 0;
 
-	अगर (iph->protocol == IPPROTO_UDP || iph->protocol == IPPROTO_TCP) अणु
-		काष्ठा tcphdr _hdr;
-		काष्ठा udphdr *hp;
+	if (iph->protocol == IPPROTO_UDP || iph->protocol == IPPROTO_TCP) {
+		struct tcphdr _hdr;
+		struct udphdr *hp;
 
-		hp = skb_header_poपूर्णांकer(skb, ip_hdrlen(skb),
+		hp = skb_header_pointer(skb, ip_hdrlen(skb),
 					iph->protocol == IPPROTO_UDP ?
-					माप(*hp) : माप(_hdr), &_hdr);
-		अगर (hp == शून्य)
-			वापस शून्य;
+					sizeof(*hp) : sizeof(_hdr), &_hdr);
+		if (hp == NULL)
+			return NULL;
 
 		protocol = iph->protocol;
 		saddr = iph->saddr;
 		sport = hp->source;
 		daddr = iph->daddr;
 		dport = hp->dest;
-		data_skb = (काष्ठा sk_buff *)skb;
-		करोff = iph->protocol == IPPROTO_TCP ?
-			ip_hdrlen(skb) + __tcp_hdrlen((काष्ठा tcphdr *)hp) :
-			ip_hdrlen(skb) + माप(*hp);
+		data_skb = (struct sk_buff *)skb;
+		doff = iph->protocol == IPPROTO_TCP ?
+			ip_hdrlen(skb) + __tcp_hdrlen((struct tcphdr *)hp) :
+			ip_hdrlen(skb) + sizeof(*hp);
 
-	पूर्ण अन्यथा अगर (iph->protocol == IPPROTO_ICMP) अणु
-		अगर (extract_icmp4_fields(skb, &protocol, &saddr, &daddr,
+	} else if (iph->protocol == IPPROTO_ICMP) {
+		if (extract_icmp4_fields(skb, &protocol, &saddr, &daddr,
 					 &sport, &dport))
-			वापस शून्य;
-	पूर्ण अन्यथा अणु
-		वापस शून्य;
-	पूर्ण
+			return NULL;
+	} else {
+		return NULL;
+	}
 
-#अगर IS_ENABLED(CONFIG_NF_CONNTRACK)
+#if IS_ENABLED(CONFIG_NF_CONNTRACK)
 	/* Do the lookup with the original socket address in
-	 * हाल this is a reply packet of an established
+	 * case this is a reply packet of an established
 	 * SNAT-ted connection.
 	 */
 	ct = nf_ct_get(skb, &ctinfo);
-	अगर (ct &&
+	if (ct &&
 	    ((iph->protocol != IPPROTO_ICMP &&
 	      ctinfo == IP_CT_ESTABLISHED_REPLY) ||
 	     (iph->protocol == IPPROTO_ICMP &&
 	      ctinfo == IP_CT_RELATED_REPLY)) &&
-	    (ct->status & IPS_SRC_NAT_DONE)) अणु
+	    (ct->status & IPS_SRC_NAT_DONE)) {
 
-		daddr = ct->tuplehash[IP_CT_सूची_ORIGINAL].tuple.src.u3.ip;
+		daddr = ct->tuplehash[IP_CT_DIR_ORIGINAL].tuple.src.u3.ip;
 		dport = (iph->protocol == IPPROTO_TCP) ?
-			ct->tuplehash[IP_CT_सूची_ORIGINAL].tuple.src.u.tcp.port :
-			ct->tuplehash[IP_CT_सूची_ORIGINAL].tuple.src.u.udp.port;
-	पूर्ण
-#पूर्ण_अगर
+			ct->tuplehash[IP_CT_DIR_ORIGINAL].tuple.src.u.tcp.port :
+			ct->tuplehash[IP_CT_DIR_ORIGINAL].tuple.src.u.udp.port;
+	}
+#endif
 
-	वापस nf_socket_get_sock_v4(net, data_skb, करोff, protocol, saddr,
+	return nf_socket_get_sock_v4(net, data_skb, doff, protocol, saddr,
 				     daddr, sport, dport, indev);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(nf_sk_lookup_slow_v4);
 
 MODULE_LICENSE("GPL");

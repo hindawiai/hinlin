@@ -1,32 +1,31 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 
-#अगर_अघोषित __ABI_CSKY_PTRACE_H
-#घोषणा __ABI_CSKY_PTRACE_H
+#ifndef __ABI_CSKY_PTRACE_H
+#define __ABI_CSKY_PTRACE_H
 
-काष्ठा चयन_stack अणु
-#अगर_घोषित CONFIG_CPU_HAS_HILO
-	अचिन्हित दीर्घ rhi;
-	अचिन्हित दीर्घ rlo;
-	अचिन्हित दीर्घ cr14;
-	अचिन्हित दीर्घ pad;
-#पूर्ण_अगर
-	अचिन्हित दीर्घ r4;
-	अचिन्हित दीर्घ r5;
-	अचिन्हित दीर्घ r6;
-	अचिन्हित दीर्घ r7;
-	अचिन्हित दीर्घ r8;
-	अचिन्हित दीर्घ r9;
-	अचिन्हित दीर्घ r10;
-	अचिन्हित दीर्घ r11;
+struct switch_stack {
+#ifdef CONFIG_CPU_HAS_HILO
+	unsigned long rhi;
+	unsigned long rlo;
+	unsigned long cr14;
+	unsigned long pad;
+#endif
+	unsigned long r4;
+	unsigned long r5;
+	unsigned long r6;
+	unsigned long r7;
+	unsigned long r8;
+	unsigned long r9;
+	unsigned long r10;
+	unsigned long r11;
 
-	अचिन्हित दीर्घ r15;
-	अचिन्हित दीर्घ r16;
-	अचिन्हित दीर्घ r17;
-	अचिन्हित दीर्घ r26;
-	अचिन्हित दीर्घ r27;
-	अचिन्हित दीर्घ r28;
-	अचिन्हित दीर्घ r29;
-	अचिन्हित दीर्घ r30;
-पूर्ण;
-#पूर्ण_अगर /* __ABI_CSKY_PTRACE_H */
+	unsigned long r15;
+	unsigned long r16;
+	unsigned long r17;
+	unsigned long r26;
+	unsigned long r27;
+	unsigned long r28;
+	unsigned long r29;
+	unsigned long r30;
+};
+#endif /* __ABI_CSKY_PTRACE_H */

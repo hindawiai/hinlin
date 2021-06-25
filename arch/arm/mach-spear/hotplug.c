@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * linux/arch/arm/mach-spear13xx/hotplug.c
  *
@@ -8,19 +7,19 @@
  *
  * based upon linux/arch/arm/mach-realview/hotplug.c
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/smp.h>
-#समावेश <यंत्र/cp15.h>
-#समावेश <यंत्र/smp_plat.h>
+#include <linux/kernel.h>
+#include <linux/errno.h>
+#include <linux/smp.h>
+#include <asm/cp15.h>
+#include <asm/smp_plat.h>
 
-#समावेश "generic.h"
+#include "generic.h"
 
-अटल अंतरभूत व्योम cpu_enter_lowघातer(व्योम)
-अणु
-	अचिन्हित पूर्णांक v;
+static inline void cpu_enter_lowpower(void)
+{
+	unsigned int v;
 
-	यंत्र अस्थिर(
+	asm volatile(
 	"	mcr	p15, 0, %1, c7, c5, 0\n"
 	"	dsb\n"
 	/*
@@ -35,13 +34,13 @@
 	: "=&r" (v)
 	: "r" (0), "Ir" (CR_C)
 	: "cc", "memory");
-पूर्ण
+}
 
-अटल अंतरभूत व्योम cpu_leave_lowघातer(व्योम)
-अणु
-	अचिन्हित पूर्णांक v;
+static inline void cpu_leave_lowpower(void)
+{
+	unsigned int v;
 
-	यंत्र अस्थिर("mrc	p15, 0, %0, c1, c0, 0\n"
+	asm volatile("mrc	p15, 0, %0, c1, c0, 0\n"
 	"	orr	%0, %0, %1\n"
 	"	mcr	p15, 0, %0, c1, c0, 0\n"
 	"	mrc	p15, 0, %0, c1, c0, 1\n"
@@ -50,19 +49,19 @@
 	: "=&r" (v)
 	: "Ir" (CR_C)
 	: "cc");
-पूर्ण
+}
 
-अटल अंतरभूत व्योम spear13xx_करो_lowघातer(अचिन्हित पूर्णांक cpu, पूर्णांक *spurious)
-अणु
-	क्रम (;;) अणु
+static inline void spear13xx_do_lowpower(unsigned int cpu, int *spurious)
+{
+	for (;;) {
 		wfi();
 
-		अगर (spear_pen_release == cpu) अणु
+		if (spear_pen_release == cpu) {
 			/*
-			 * OK, proper wakeup, we're करोne
+			 * OK, proper wakeup, we're done
 			 */
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		/*
 		 * Getting here, means that we have come out of WFI without
@@ -72,30 +71,30 @@
 		 * its occurrence.
 		 */
 		(*spurious)++;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * platक्रमm-specअगरic code to shutकरोwn a CPU
+ * platform-specific code to shutdown a CPU
  *
  * Called with IRQs disabled
  */
-व्योम spear13xx_cpu_die(अचिन्हित पूर्णांक cpu)
-अणु
-	पूर्णांक spurious = 0;
+void spear13xx_cpu_die(unsigned int cpu)
+{
+	int spurious = 0;
 
 	/*
-	 * we're पढ़ोy क्रम shutकरोwn now, so करो it
+	 * we're ready for shutdown now, so do it
 	 */
-	cpu_enter_lowघातer();
-	spear13xx_करो_lowघातer(cpu, &spurious);
+	cpu_enter_lowpower();
+	spear13xx_do_lowpower(cpu, &spurious);
 
 	/*
-	 * bring this CPU back पूर्णांकo the world of cache
-	 * coherency, and then restore पूर्णांकerrupts
+	 * bring this CPU back into the world of cache
+	 * coherency, and then restore interrupts
 	 */
-	cpu_leave_lowघातer();
+	cpu_leave_lowpower();
 
-	अगर (spurious)
+	if (spurious)
 		pr_warn("CPU%u: %u spurious wakeup calls\n", cpu, spurious);
-पूर्ण
+}

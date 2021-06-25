@@ -1,17 +1,16 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Packet network namespace
  */
-#अगर_अघोषित __NETNS_PACKET_H__
-#घोषणा __NETNS_PACKET_H__
+#ifndef __NETNS_PACKET_H__
+#define __NETNS_PACKET_H__
 
-#समावेश <linux/rculist.h>
-#समावेश <linux/mutex.h>
+#include <linux/rculist.h>
+#include <linux/mutex.h>
 
-काष्ठा netns_packet अणु
-	काष्ठा mutex		sklist_lock;
-	काष्ठा hlist_head	sklist;
-पूर्ण;
+struct netns_packet {
+	struct mutex		sklist_lock;
+	struct hlist_head	sklist;
+};
 
-#पूर्ण_अगर /* __NETNS_PACKET_H__ */
+#endif /* __NETNS_PACKET_H__ */

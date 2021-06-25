@@ -1,90 +1,89 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 
 /*
- * FPDT support क्रम exporting boot and suspend/resume perक्रमmance data
+ * FPDT support for exporting boot and suspend/resume performance data
  *
  * Copyright (C) 2021 Intel Corporation. All rights reserved.
  */
 
-#घोषणा pr_fmt(fmt) "ACPI FPDT: " fmt
+#define pr_fmt(fmt) "ACPI FPDT: " fmt
 
-#समावेश <linux/acpi.h>
+#include <linux/acpi.h>
 
 /*
  * FPDT contains ACPI table header and a number of fpdt_subtable_entries.
- * Each fpdt_subtable_entry poपूर्णांकs to a subtable: FBPT or S3PT.
+ * Each fpdt_subtable_entry points to a subtable: FBPT or S3PT.
  * Each FPDT subtable (FBPT/S3PT) is composed of a fpdt_subtable_header
- * and a number of fpdt perक्रमmance records.
- * Each FPDT perक्रमmance record is composed of a fpdt_record_header and
- * perक्रमmance data fields, क्रम boot or suspend or resume phase.
+ * and a number of fpdt performance records.
+ * Each FPDT performance record is composed of a fpdt_record_header and
+ * performance data fields, for boot or suspend or resume phase.
  */
-क्रमागत fpdt_subtable_type अणु
+enum fpdt_subtable_type {
 	SUBTABLE_FBPT,
 	SUBTABLE_S3PT,
-पूर्ण;
+};
 
-काष्ठा fpdt_subtable_entry अणु
-	u16 type;		/* refer to क्रमागत fpdt_subtable_type */
+struct fpdt_subtable_entry {
+	u16 type;		/* refer to enum fpdt_subtable_type */
 	u8 length;
 	u8 revision;
 	u32 reserved;
 	u64 address;		/* physical address of the S3PT/FBPT table */
-पूर्ण;
+};
 
-काष्ठा fpdt_subtable_header अणु
+struct fpdt_subtable_header {
 	u32 signature;
 	u32 length;
-पूर्ण;
+};
 
-क्रमागत fpdt_record_type अणु
+enum fpdt_record_type {
 	RECORD_S3_RESUME,
 	RECORD_S3_SUSPEND,
 	RECORD_BOOT,
-पूर्ण;
+};
 
-काष्ठा fpdt_record_header अणु
-	u16 type;		/* refer to क्रमागत fpdt_record_type */
+struct fpdt_record_header {
+	u16 type;		/* refer to enum fpdt_record_type */
 	u8 length;
 	u8 revision;
-पूर्ण;
+};
 
-काष्ठा resume_perक्रमmance_record अणु
-	काष्ठा fpdt_record_header header;
+struct resume_performance_record {
+	struct fpdt_record_header header;
 	u32 resume_count;
 	u64 resume_prev;
 	u64 resume_avg;
-पूर्ण __attribute__((packed));
+} __attribute__((packed));
 
-काष्ठा boot_perक्रमmance_record अणु
-	काष्ठा fpdt_record_header header;
+struct boot_performance_record {
+	struct fpdt_record_header header;
 	u32 reserved;
 	u64 firmware_start;
 	u64 bootloader_load;
 	u64 bootloader_launch;
-	u64 निकासbootservice_start;
-	u64 निकासbootservice_end;
-पूर्ण __attribute__((packed));
+	u64 exitbootservice_start;
+	u64 exitbootservice_end;
+} __attribute__((packed));
 
-काष्ठा suspend_perक्रमmance_record अणु
-	काष्ठा fpdt_record_header header;
+struct suspend_performance_record {
+	struct fpdt_record_header header;
 	u64 suspend_start;
 	u64 suspend_end;
-पूर्ण __attribute__((packed));
+} __attribute__((packed));
 
 
-अटल काष्ठा resume_perक्रमmance_record *record_resume;
-अटल काष्ठा suspend_perक्रमmance_record *record_suspend;
-अटल काष्ठा boot_perक्रमmance_record *record_boot;
+static struct resume_performance_record *record_resume;
+static struct suspend_performance_record *record_suspend;
+static struct boot_performance_record *record_boot;
 
-#घोषणा FPDT_ATTR(phase, name)	\
-अटल sमाप_प्रकार name##_show(काष्ठा kobject *kobj,	\
-		 काष्ठा kobj_attribute *attr, अक्षर *buf)	\
-अणु	\
-	वापस प्र_लिखो(buf, "%llu\n", record_##phase->name);	\
-पूर्ण	\
-अटल काष्ठा kobj_attribute name##_attr =	\
-__ATTR(name##_ns, 0444, name##_show, शून्य)
+#define FPDT_ATTR(phase, name)	\
+static ssize_t name##_show(struct kobject *kobj,	\
+		 struct kobj_attribute *attr, char *buf)	\
+{	\
+	return sprintf(buf, "%llu\n", record_##phase->name);	\
+}	\
+static struct kobj_attribute name##_attr =	\
+__ATTR(name##_ns, 0444, name##_show, NULL)
 
 FPDT_ATTR(resume, resume_prev);
 FPDT_ATTR(resume, resume_avg);
@@ -93,173 +92,173 @@ FPDT_ATTR(suspend, suspend_end);
 FPDT_ATTR(boot, firmware_start);
 FPDT_ATTR(boot, bootloader_load);
 FPDT_ATTR(boot, bootloader_launch);
-FPDT_ATTR(boot, निकासbootservice_start);
-FPDT_ATTR(boot, निकासbootservice_end);
+FPDT_ATTR(boot, exitbootservice_start);
+FPDT_ATTR(boot, exitbootservice_end);
 
-अटल sमाप_प्रकार resume_count_show(काष्ठा kobject *kobj,
-				 काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "%u\n", record_resume->resume_count);
-पूर्ण
+static ssize_t resume_count_show(struct kobject *kobj,
+				 struct kobj_attribute *attr, char *buf)
+{
+	return sprintf(buf, "%u\n", record_resume->resume_count);
+}
 
-अटल काष्ठा kobj_attribute resume_count_attr =
+static struct kobj_attribute resume_count_attr =
 __ATTR_RO(resume_count);
 
-अटल काष्ठा attribute *resume_attrs[] = अणु
+static struct attribute *resume_attrs[] = {
 	&resume_count_attr.attr,
 	&resume_prev_attr.attr,
 	&resume_avg_attr.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group resume_attr_group = अणु
+static const struct attribute_group resume_attr_group = {
 	.attrs = resume_attrs,
 	.name = "resume",
-पूर्ण;
+};
 
-अटल काष्ठा attribute *suspend_attrs[] = अणु
+static struct attribute *suspend_attrs[] = {
 	&suspend_start_attr.attr,
 	&suspend_end_attr.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group suspend_attr_group = अणु
+static const struct attribute_group suspend_attr_group = {
 	.attrs = suspend_attrs,
 	.name = "suspend",
-पूर्ण;
+};
 
-अटल काष्ठा attribute *boot_attrs[] = अणु
+static struct attribute *boot_attrs[] = {
 	&firmware_start_attr.attr,
 	&bootloader_load_attr.attr,
 	&bootloader_launch_attr.attr,
-	&निकासbootservice_start_attr.attr,
-	&निकासbootservice_end_attr.attr,
-	शून्य
-पूर्ण;
+	&exitbootservice_start_attr.attr,
+	&exitbootservice_end_attr.attr,
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group boot_attr_group = अणु
+static const struct attribute_group boot_attr_group = {
 	.attrs = boot_attrs,
 	.name = "boot",
-पूर्ण;
+};
 
-अटल काष्ठा kobject *fpdt_kobj;
+static struct kobject *fpdt_kobj;
 
-अटल पूर्णांक fpdt_process_subtable(u64 address, u32 subtable_type)
-अणु
-	काष्ठा fpdt_subtable_header *subtable_header;
-	काष्ठा fpdt_record_header *record_header;
-	अक्षर *signature = (subtable_type == SUBTABLE_FBPT ? "FBPT" : "S3PT");
+static int fpdt_process_subtable(u64 address, u32 subtable_type)
+{
+	struct fpdt_subtable_header *subtable_header;
+	struct fpdt_record_header *record_header;
+	char *signature = (subtable_type == SUBTABLE_FBPT ? "FBPT" : "S3PT");
 	u32 length, offset;
-	पूर्णांक result;
+	int result;
 
-	subtable_header = acpi_os_map_memory(address, माप(*subtable_header));
-	अगर (!subtable_header)
-		वापस -ENOMEM;
+	subtable_header = acpi_os_map_memory(address, sizeof(*subtable_header));
+	if (!subtable_header)
+		return -ENOMEM;
 
-	अगर (म_भेदन((अक्षर *)&subtable_header->signature, signature, 4)) अणु
+	if (strncmp((char *)&subtable_header->signature, signature, 4)) {
 		pr_info(FW_BUG "subtable signature and type mismatch!\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	length = subtable_header->length;
-	acpi_os_unmap_memory(subtable_header, माप(*subtable_header));
+	acpi_os_unmap_memory(subtable_header, sizeof(*subtable_header));
 
 	subtable_header = acpi_os_map_memory(address, length);
-	अगर (!subtable_header)
-		वापस -ENOMEM;
+	if (!subtable_header)
+		return -ENOMEM;
 
-	offset = माप(*subtable_header);
-	जबतक (offset < length) अणु
-		record_header = (व्योम *)subtable_header + offset;
+	offset = sizeof(*subtable_header);
+	while (offset < length) {
+		record_header = (void *)subtable_header + offset;
 		offset += record_header->length;
 
-		चयन (record_header->type) अणु
-		हाल RECORD_S3_RESUME:
-			अगर (subtable_type != SUBTABLE_S3PT) अणु
+		switch (record_header->type) {
+		case RECORD_S3_RESUME:
+			if (subtable_type != SUBTABLE_S3PT) {
 				pr_err(FW_BUG "Invalid record %d for subtable %s\n",
 				     record_header->type, signature);
-				वापस -EINVAL;
-			पूर्ण
-			अगर (record_resume) अणु
+				return -EINVAL;
+			}
+			if (record_resume) {
 				pr_err("Duplicate resume performance record found.\n");
-				जारी;
-			पूर्ण
-			record_resume = (काष्ठा resume_perक्रमmance_record *)record_header;
+				continue;
+			}
+			record_resume = (struct resume_performance_record *)record_header;
 			result = sysfs_create_group(fpdt_kobj, &resume_attr_group);
-			अगर (result)
-				वापस result;
-			अवरोध;
-		हाल RECORD_S3_SUSPEND:
-			अगर (subtable_type != SUBTABLE_S3PT) अणु
+			if (result)
+				return result;
+			break;
+		case RECORD_S3_SUSPEND:
+			if (subtable_type != SUBTABLE_S3PT) {
 				pr_err(FW_BUG "Invalid %d for subtable %s\n",
 				     record_header->type, signature);
-				जारी;
-			पूर्ण
-			अगर (record_suspend) अणु
+				continue;
+			}
+			if (record_suspend) {
 				pr_err("Duplicate suspend performance record found.\n");
-				जारी;
-			पूर्ण
-			record_suspend = (काष्ठा suspend_perक्रमmance_record *)record_header;
+				continue;
+			}
+			record_suspend = (struct suspend_performance_record *)record_header;
 			result = sysfs_create_group(fpdt_kobj, &suspend_attr_group);
-			अगर (result)
-				वापस result;
-			अवरोध;
-		हाल RECORD_BOOT:
-			अगर (subtable_type != SUBTABLE_FBPT) अणु
+			if (result)
+				return result;
+			break;
+		case RECORD_BOOT:
+			if (subtable_type != SUBTABLE_FBPT) {
 				pr_err(FW_BUG "Invalid %d for subtable %s\n",
 				     record_header->type, signature);
-				वापस -EINVAL;
-			पूर्ण
-			अगर (record_boot) अणु
+				return -EINVAL;
+			}
+			if (record_boot) {
 				pr_err("Duplicate boot performance record found.\n");
-				जारी;
-			पूर्ण
-			record_boot = (काष्ठा boot_perक्रमmance_record *)record_header;
+				continue;
+			}
+			record_boot = (struct boot_performance_record *)record_header;
 			result = sysfs_create_group(fpdt_kobj, &boot_attr_group);
-			अगर (result)
-				वापस result;
-			अवरोध;
+			if (result)
+				return result;
+			break;
 
-		शेष:
+		default:
 			pr_err(FW_BUG "Invalid record %d found.\n", record_header->type);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return -EINVAL;
+		}
+	}
+	return 0;
+}
 
-अटल पूर्णांक __init acpi_init_fpdt(व्योम)
-अणु
+static int __init acpi_init_fpdt(void)
+{
 	acpi_status status;
-	काष्ठा acpi_table_header *header;
-	काष्ठा fpdt_subtable_entry *subtable;
-	u32 offset = माप(*header);
+	struct acpi_table_header *header;
+	struct fpdt_subtable_entry *subtable;
+	u32 offset = sizeof(*header);
 
 	status = acpi_get_table(ACPI_SIG_FPDT, 0, &header);
 
-	अगर (ACPI_FAILURE(status))
-		वापस 0;
+	if (ACPI_FAILURE(status))
+		return 0;
 
 	fpdt_kobj = kobject_create_and_add("fpdt", acpi_kobj);
-	अगर (!fpdt_kobj)
-		वापस -ENOMEM;
+	if (!fpdt_kobj)
+		return -ENOMEM;
 
-	जबतक (offset < header->length) अणु
-		subtable = (व्योम *)header + offset;
-		चयन (subtable->type) अणु
-		हाल SUBTABLE_FBPT:
-		हाल SUBTABLE_S3PT:
+	while (offset < header->length) {
+		subtable = (void *)header + offset;
+		switch (subtable->type) {
+		case SUBTABLE_FBPT:
+		case SUBTABLE_S3PT:
 			fpdt_process_subtable(subtable->address,
 					      subtable->type);
-			अवरोध;
-		शेष:
+			break;
+		default:
 			pr_info(FW_BUG "Invalid subtable type %d found.\n",
 			       subtable->type);
-			अवरोध;
-		पूर्ण
-		offset += माप(*subtable);
-	पूर्ण
-	वापस 0;
-पूर्ण
+			break;
+		}
+		offset += sizeof(*subtable);
+	}
+	return 0;
+}
 
 fs_initcall(acpi_init_fpdt);

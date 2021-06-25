@@ -1,471 +1,470 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 1992, 1998-2004 Linus Torvalds, Ingo Molnar
  *
- * This file contains spurious पूर्णांकerrupt handling.
+ * This file contains spurious interrupt handling.
  */
 
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/module.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/समयr.h>
+#include <linux/jiffies.h>
+#include <linux/irq.h>
+#include <linux/module.h>
+#include <linux/interrupt.h>
+#include <linux/moduleparam.h>
+#include <linux/timer.h>
 
-#समावेश "internals.h"
+#include "internals.h"
 
-अटल पूर्णांक irqfixup __पढ़ो_mostly;
+static int irqfixup __read_mostly;
 
-#घोषणा POLL_SPURIOUS_IRQ_INTERVAL (HZ/10)
-अटल व्योम poll_spurious_irqs(काष्ठा समयr_list *unused);
-अटल DEFINE_TIMER(poll_spurious_irq_समयr, poll_spurious_irqs);
-अटल पूर्णांक irq_poll_cpu;
-अटल atomic_t irq_poll_active;
+#define POLL_SPURIOUS_IRQ_INTERVAL (HZ/10)
+static void poll_spurious_irqs(struct timer_list *unused);
+static DEFINE_TIMER(poll_spurious_irq_timer, poll_spurious_irqs);
+static int irq_poll_cpu;
+static atomic_t irq_poll_active;
 
 /*
- * We रुको here क्रम a poller to finish.
+ * We wait here for a poller to finish.
  *
- * If the poll runs on this CPU, then we yell loudly and वापस
- * false. That will leave the पूर्णांकerrupt line disabled in the worst
- * हाल, but it should never happen.
+ * If the poll runs on this CPU, then we yell loudly and return
+ * false. That will leave the interrupt line disabled in the worst
+ * case, but it should never happen.
  *
- * We रुको until the poller is करोne and then recheck disabled and
- * action (about to be disabled). Only अगर it's still active, we वापस
+ * We wait until the poller is done and then recheck disabled and
+ * action (about to be disabled). Only if it's still active, we return
  * true and let the handler run.
  */
-bool irq_रुको_क्रम_poll(काष्ठा irq_desc *desc)
+bool irq_wait_for_poll(struct irq_desc *desc)
 	__must_hold(&desc->lock)
-अणु
-	अगर (WARN_ONCE(irq_poll_cpu == smp_processor_id(),
+{
+	if (WARN_ONCE(irq_poll_cpu == smp_processor_id(),
 		      "irq poll in progress on cpu %d for irq %d\n",
 		      smp_processor_id(), desc->irq_data.irq))
-		वापस false;
+		return false;
 
-#अगर_घोषित CONFIG_SMP
-	करो अणु
+#ifdef CONFIG_SMP
+	do {
 		raw_spin_unlock(&desc->lock);
-		जबतक (irqd_irq_inprogress(&desc->irq_data))
+		while (irqd_irq_inprogress(&desc->irq_data))
 			cpu_relax();
 		raw_spin_lock(&desc->lock);
-	पूर्ण जबतक (irqd_irq_inprogress(&desc->irq_data));
-	/* Might have been disabled in meanसमय */
-	वापस !irqd_irq_disabled(&desc->irq_data) && desc->action;
-#अन्यथा
-	वापस false;
-#पूर्ण_अगर
-पूर्ण
+	} while (irqd_irq_inprogress(&desc->irq_data));
+	/* Might have been disabled in meantime */
+	return !irqd_irq_disabled(&desc->irq_data) && desc->action;
+#else
+	return false;
+#endif
+}
 
 
 /*
- * Recovery handler क्रम misrouted पूर्णांकerrupts.
+ * Recovery handler for misrouted interrupts.
  */
-अटल पूर्णांक try_one_irq(काष्ठा irq_desc *desc, bool क्रमce)
-अणु
-	irqवापस_t ret = IRQ_NONE;
-	काष्ठा irqaction *action;
+static int try_one_irq(struct irq_desc *desc, bool force)
+{
+	irqreturn_t ret = IRQ_NONE;
+	struct irqaction *action;
 
 	raw_spin_lock(&desc->lock);
 
 	/*
-	 * PER_CPU, nested thपढ़ो पूर्णांकerrupts and पूर्णांकerrupts explicitly
+	 * PER_CPU, nested thread interrupts and interrupts explicitly
 	 * marked polled are excluded from polling.
 	 */
-	अगर (irq_settings_is_per_cpu(desc) ||
-	    irq_settings_is_nested_thपढ़ो(desc) ||
+	if (irq_settings_is_per_cpu(desc) ||
+	    irq_settings_is_nested_thread(desc) ||
 	    irq_settings_is_polled(desc))
-		जाओ out;
+		goto out;
 
 	/*
-	 * Do not poll disabled पूर्णांकerrupts unless the spurious
+	 * Do not poll disabled interrupts unless the spurious
 	 * disabled poller asks explicitly.
 	 */
-	अगर (irqd_irq_disabled(&desc->irq_data) && !क्रमce)
-		जाओ out;
+	if (irqd_irq_disabled(&desc->irq_data) && !force)
+		goto out;
 
 	/*
 	 * All handlers must agree on IRQF_SHARED, so we test just the
 	 * first.
 	 */
 	action = desc->action;
-	अगर (!action || !(action->flags & IRQF_SHARED) ||
+	if (!action || !(action->flags & IRQF_SHARED) ||
 	    (action->flags & __IRQF_TIMER))
-		जाओ out;
+		goto out;
 
-	/* Alपढ़ोy running on another processor */
-	अगर (irqd_irq_inprogress(&desc->irq_data)) अणु
+	/* Already running on another processor */
+	if (irqd_irq_inprogress(&desc->irq_data)) {
 		/*
-		 * Alपढ़ोy running: If it is shared get the other
-		 * CPU to go looking क्रम our mystery पूर्णांकerrupt too
+		 * Already running: If it is shared get the other
+		 * CPU to go looking for our mystery interrupt too
 		 */
 		desc->istate |= IRQS_PENDING;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* Mark it poll in progress */
 	desc->istate |= IRQS_POLL_INPROGRESS;
-	करो अणु
-		अगर (handle_irq_event(desc) == IRQ_HANDLED)
+	do {
+		if (handle_irq_event(desc) == IRQ_HANDLED)
 			ret = IRQ_HANDLED;
 		/* Make sure that there is still a valid action */
 		action = desc->action;
-	पूर्ण जबतक ((desc->istate & IRQS_PENDING) && action);
+	} while ((desc->istate & IRQS_PENDING) && action);
 	desc->istate &= ~IRQS_POLL_INPROGRESS;
 out:
 	raw_spin_unlock(&desc->lock);
-	वापस ret == IRQ_HANDLED;
-पूर्ण
+	return ret == IRQ_HANDLED;
+}
 
-अटल पूर्णांक misrouted_irq(पूर्णांक irq)
-अणु
-	काष्ठा irq_desc *desc;
-	पूर्णांक i, ok = 0;
+static int misrouted_irq(int irq)
+{
+	struct irq_desc *desc;
+	int i, ok = 0;
 
-	अगर (atomic_inc_वापस(&irq_poll_active) != 1)
-		जाओ out;
+	if (atomic_inc_return(&irq_poll_active) != 1)
+		goto out;
 
 	irq_poll_cpu = smp_processor_id();
 
-	क्रम_each_irq_desc(i, desc) अणु
-		अगर (!i)
-			 जारी;
+	for_each_irq_desc(i, desc) {
+		if (!i)
+			 continue;
 
-		अगर (i == irq)	/* Alपढ़ोy tried */
-			जारी;
+		if (i == irq)	/* Already tried */
+			continue;
 
-		अगर (try_one_irq(desc, false))
+		if (try_one_irq(desc, false))
 			ok = 1;
-	पूर्ण
+	}
 out:
 	atomic_dec(&irq_poll_active);
 	/* So the caller can adjust the irq error counts */
-	वापस ok;
-पूर्ण
+	return ok;
+}
 
-अटल व्योम poll_spurious_irqs(काष्ठा समयr_list *unused)
-अणु
-	काष्ठा irq_desc *desc;
-	पूर्णांक i;
+static void poll_spurious_irqs(struct timer_list *unused)
+{
+	struct irq_desc *desc;
+	int i;
 
-	अगर (atomic_inc_वापस(&irq_poll_active) != 1)
-		जाओ out;
+	if (atomic_inc_return(&irq_poll_active) != 1)
+		goto out;
 	irq_poll_cpu = smp_processor_id();
 
-	क्रम_each_irq_desc(i, desc) अणु
-		अचिन्हित पूर्णांक state;
+	for_each_irq_desc(i, desc) {
+		unsigned int state;
 
-		अगर (!i)
-			 जारी;
+		if (!i)
+			 continue;
 
-		/* Racy but it करोesn't matter */
+		/* Racy but it doesn't matter */
 		state = desc->istate;
 		barrier();
-		अगर (!(state & IRQS_SPURIOUS_DISABLED))
-			जारी;
+		if (!(state & IRQS_SPURIOUS_DISABLED))
+			continue;
 
 		local_irq_disable();
 		try_one_irq(desc, true);
 		local_irq_enable();
-	पूर्ण
+	}
 out:
 	atomic_dec(&irq_poll_active);
-	mod_समयr(&poll_spurious_irq_समयr,
-		  jअगरfies + POLL_SPURIOUS_IRQ_INTERVAL);
-पूर्ण
+	mod_timer(&poll_spurious_irq_timer,
+		  jiffies + POLL_SPURIOUS_IRQ_INTERVAL);
+}
 
-अटल अंतरभूत पूर्णांक bad_action_ret(irqवापस_t action_ret)
-अणु
-	अचिन्हित पूर्णांक r = action_ret;
+static inline int bad_action_ret(irqreturn_t action_ret)
+{
+	unsigned int r = action_ret;
 
-	अगर (likely(r <= (IRQ_HANDLED | IRQ_WAKE_THREAD)))
-		वापस 0;
-	वापस 1;
-पूर्ण
+	if (likely(r <= (IRQ_HANDLED | IRQ_WAKE_THREAD)))
+		return 0;
+	return 1;
+}
 
 /*
- * If 99,900 of the previous 100,000 पूर्णांकerrupts have not been handled
+ * If 99,900 of the previous 100,000 interrupts have not been handled
  * then assume that the IRQ is stuck in some manner. Drop a diagnostic
  * and try to turn the IRQ off.
  *
- * (The other 100-of-100,000 पूर्णांकerrupts may have been a correctly
+ * (The other 100-of-100,000 interrupts may have been a correctly
  *  functioning device sharing an IRQ with the failing one)
  */
-अटल व्योम __report_bad_irq(काष्ठा irq_desc *desc, irqवापस_t action_ret)
-अणु
-	अचिन्हित पूर्णांक irq = irq_desc_get_irq(desc);
-	काष्ठा irqaction *action;
-	अचिन्हित दीर्घ flags;
+static void __report_bad_irq(struct irq_desc *desc, irqreturn_t action_ret)
+{
+	unsigned int irq = irq_desc_get_irq(desc);
+	struct irqaction *action;
+	unsigned long flags;
 
-	अगर (bad_action_ret(action_ret)) अणु
-		prपूर्णांकk(KERN_ERR "irq event %d: bogus return value %x\n",
+	if (bad_action_ret(action_ret)) {
+		printk(KERN_ERR "irq event %d: bogus return value %x\n",
 				irq, action_ret);
-	पूर्ण अन्यथा अणु
-		prपूर्णांकk(KERN_ERR "irq %d: nobody cared (try booting with "
+	} else {
+		printk(KERN_ERR "irq %d: nobody cared (try booting with "
 				"the \"irqpoll\" option)\n", irq);
-	पूर्ण
+	}
 	dump_stack();
-	prपूर्णांकk(KERN_ERR "handlers:\n");
+	printk(KERN_ERR "handlers:\n");
 
 	/*
-	 * We need to take desc->lock here. note_पूर्णांकerrupt() is called
+	 * We need to take desc->lock here. note_interrupt() is called
 	 * w/o desc->lock held, but IRQ_PROGRESS set. We might race
-	 * with something अन्यथा removing an action. It's ok to take
+	 * with something else removing an action. It's ok to take
 	 * desc->lock here. See synchronize_irq().
 	 */
 	raw_spin_lock_irqsave(&desc->lock, flags);
-	क्रम_each_action_of_desc(desc, action) अणु
-		prपूर्णांकk(KERN_ERR "[<%p>] %ps", action->handler, action->handler);
-		अगर (action->thपढ़ो_fn)
-			prपूर्णांकk(KERN_CONT " threaded [<%p>] %ps",
-					action->thपढ़ो_fn, action->thपढ़ो_fn);
-		prपूर्णांकk(KERN_CONT "\n");
-	पूर्ण
+	for_each_action_of_desc(desc, action) {
+		printk(KERN_ERR "[<%p>] %ps", action->handler, action->handler);
+		if (action->thread_fn)
+			printk(KERN_CONT " threaded [<%p>] %ps",
+					action->thread_fn, action->thread_fn);
+		printk(KERN_CONT "\n");
+	}
 	raw_spin_unlock_irqrestore(&desc->lock, flags);
-पूर्ण
+}
 
-अटल व्योम report_bad_irq(काष्ठा irq_desc *desc, irqवापस_t action_ret)
-अणु
-	अटल पूर्णांक count = 100;
+static void report_bad_irq(struct irq_desc *desc, irqreturn_t action_ret)
+{
+	static int count = 100;
 
-	अगर (count > 0) अणु
+	if (count > 0) {
 		count--;
 		__report_bad_irq(desc, action_ret);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत पूर्णांक
-try_misrouted_irq(अचिन्हित पूर्णांक irq, काष्ठा irq_desc *desc,
-		  irqवापस_t action_ret)
-अणु
-	काष्ठा irqaction *action;
+static inline int
+try_misrouted_irq(unsigned int irq, struct irq_desc *desc,
+		  irqreturn_t action_ret)
+{
+	struct irqaction *action;
 
-	अगर (!irqfixup)
-		वापस 0;
+	if (!irqfixup)
+		return 0;
 
-	/* We didn't actually handle the IRQ - see अगर it was misrouted? */
-	अगर (action_ret == IRQ_NONE)
-		वापस 1;
+	/* We didn't actually handle the IRQ - see if it was misrouted? */
+	if (action_ret == IRQ_NONE)
+		return 1;
 
 	/*
-	 * But क्रम 'irqfixup == 2' we also करो it क्रम handled पूर्णांकerrupts अगर
-	 * they are marked as IRQF_IRQPOLL (or क्रम irq zero, which is the
-	 * traditional PC समयr पूर्णांकerrupt.. Legacy)
+	 * But for 'irqfixup == 2' we also do it for handled interrupts if
+	 * they are marked as IRQF_IRQPOLL (or for irq zero, which is the
+	 * traditional PC timer interrupt.. Legacy)
 	 */
-	अगर (irqfixup < 2)
-		वापस 0;
+	if (irqfixup < 2)
+		return 0;
 
-	अगर (!irq)
-		वापस 1;
+	if (!irq)
+		return 1;
 
 	/*
-	 * Since we करोn't get the descriptor lock, "action" can
-	 * change under us.  We करोn't really care, but we don't
-	 * want to follow a शून्य poपूर्णांकer. So tell the compiler to
+	 * Since we don't get the descriptor lock, "action" can
+	 * change under us.  We don't really care, but we don't
+	 * want to follow a NULL pointer. So tell the compiler to
 	 * just load it once by using a barrier.
 	 */
 	action = desc->action;
 	barrier();
-	वापस action && (action->flags & IRQF_IRQPOLL);
-पूर्ण
+	return action && (action->flags & IRQF_IRQPOLL);
+}
 
-#घोषणा SPURIOUS_DEFERRED	0x80000000
+#define SPURIOUS_DEFERRED	0x80000000
 
-व्योम note_पूर्णांकerrupt(काष्ठा irq_desc *desc, irqवापस_t action_ret)
-अणु
-	अचिन्हित पूर्णांक irq;
+void note_interrupt(struct irq_desc *desc, irqreturn_t action_ret)
+{
+	unsigned int irq;
 
-	अगर (desc->istate & IRQS_POLL_INPROGRESS ||
+	if (desc->istate & IRQS_POLL_INPROGRESS ||
 	    irq_settings_is_polled(desc))
-		वापस;
+		return;
 
-	अगर (bad_action_ret(action_ret)) अणु
+	if (bad_action_ret(action_ret)) {
 		report_bad_irq(desc, action_ret);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
-	 * We cannot call note_पूर्णांकerrupt from the thपढ़ोed handler
+	 * We cannot call note_interrupt from the threaded handler
 	 * because we need to look at the compound of all handlers
-	 * (primary and thपढ़ोed). Aside of that in the thपढ़ोed
-	 * shared हाल we have no serialization against an incoming
-	 * hardware पूर्णांकerrupt जबतक we are dealing with a thपढ़ोed
+	 * (primary and threaded). Aside of that in the threaded
+	 * shared case we have no serialization against an incoming
+	 * hardware interrupt while we are dealing with a threaded
 	 * result.
 	 *
-	 * So in हाल a thपढ़ो is woken, we just note the fact and
-	 * defer the analysis to the next hardware पूर्णांकerrupt.
+	 * So in case a thread is woken, we just note the fact and
+	 * defer the analysis to the next hardware interrupt.
 	 *
-	 * The thपढ़ोed handlers store whether they successfully
-	 * handled an पूर्णांकerrupt and we check whether that number
+	 * The threaded handlers store whether they successfully
+	 * handled an interrupt and we check whether that number
 	 * changed versus the last invocation.
 	 *
-	 * We could handle all पूर्णांकerrupts with the delayed by one
-	 * mechanism, but क्रम the non क्रमced thपढ़ोed हाल we'd just
-	 * add poपूर्णांकless overhead to the straight hardirq पूर्णांकerrupts
-	 * क्रम the sake of a few lines less code.
+	 * We could handle all interrupts with the delayed by one
+	 * mechanism, but for the non forced threaded case we'd just
+	 * add pointless overhead to the straight hardirq interrupts
+	 * for the sake of a few lines less code.
 	 */
-	अगर (action_ret & IRQ_WAKE_THREAD) अणु
+	if (action_ret & IRQ_WAKE_THREAD) {
 		/*
-		 * There is a thपढ़ो woken. Check whether one of the
-		 * shared primary handlers वापसed IRQ_HANDLED. If
+		 * There is a thread woken. Check whether one of the
+		 * shared primary handlers returned IRQ_HANDLED. If
 		 * not we defer the spurious detection to the next
-		 * पूर्णांकerrupt.
+		 * interrupt.
 		 */
-		अगर (action_ret == IRQ_WAKE_THREAD) अणु
-			पूर्णांक handled;
+		if (action_ret == IRQ_WAKE_THREAD) {
+			int handled;
 			/*
-			 * We use bit 31 of thपढ़ो_handled_last to
+			 * We use bit 31 of thread_handled_last to
 			 * denote the deferred spurious detection
 			 * active. No locking necessary as
-			 * thपढ़ो_handled_last is only accessed here
+			 * thread_handled_last is only accessed here
 			 * and we have the guarantee that hard
-			 * पूर्णांकerrupts are not reentrant.
+			 * interrupts are not reentrant.
 			 */
-			अगर (!(desc->thपढ़ोs_handled_last & SPURIOUS_DEFERRED)) अणु
-				desc->thपढ़ोs_handled_last |= SPURIOUS_DEFERRED;
-				वापस;
-			पूर्ण
+			if (!(desc->threads_handled_last & SPURIOUS_DEFERRED)) {
+				desc->threads_handled_last |= SPURIOUS_DEFERRED;
+				return;
+			}
 			/*
-			 * Check whether one of the thपढ़ोed handlers
-			 * वापसed IRQ_HANDLED since the last
-			 * पूर्णांकerrupt happened.
+			 * Check whether one of the threaded handlers
+			 * returned IRQ_HANDLED since the last
+			 * interrupt happened.
 			 *
 			 * For simplicity we just set bit 31, as it is
-			 * set in thपढ़ोs_handled_last as well. So we
-			 * aव्योम extra masking. And we really करो not
+			 * set in threads_handled_last as well. So we
+			 * avoid extra masking. And we really do not
 			 * care about the high bits of the handled
 			 * count. We just care about the count being
-			 * dअगरferent than the one we saw beक्रमe.
+			 * different than the one we saw before.
 			 */
-			handled = atomic_पढ़ो(&desc->thपढ़ोs_handled);
+			handled = atomic_read(&desc->threads_handled);
 			handled |= SPURIOUS_DEFERRED;
-			अगर (handled != desc->thपढ़ोs_handled_last) अणु
+			if (handled != desc->threads_handled_last) {
 				action_ret = IRQ_HANDLED;
 				/*
 				 * Note: We keep the SPURIOUS_DEFERRED
 				 * bit set. We are handling the
 				 * previous invocation right now.
-				 * Keep it क्रम the current one, so the
-				 * next hardware पूर्णांकerrupt will
-				 * account क्रम it.
+				 * Keep it for the current one, so the
+				 * next hardware interrupt will
+				 * account for it.
 				 */
-				desc->thपढ़ोs_handled_last = handled;
-			पूर्ण अन्यथा अणु
+				desc->threads_handled_last = handled;
+			} else {
 				/*
-				 * None of the thपढ़ोed handlers felt
-				 * responsible क्रम the last पूर्णांकerrupt
+				 * None of the threaded handlers felt
+				 * responsible for the last interrupt
 				 *
 				 * We keep the SPURIOUS_DEFERRED bit
-				 * set in thपढ़ोs_handled_last as we
-				 * need to account क्रम the current
-				 * पूर्णांकerrupt as well.
+				 * set in threads_handled_last as we
+				 * need to account for the current
+				 * interrupt as well.
 				 */
 				action_ret = IRQ_NONE;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			/*
-			 * One of the primary handlers वापसed
-			 * IRQ_HANDLED. So we करोn't care about the
-			 * thपढ़ोed handlers on the same line. Clear
+			 * One of the primary handlers returned
+			 * IRQ_HANDLED. So we don't care about the
+			 * threaded handlers on the same line. Clear
 			 * the deferred detection bit.
 			 *
 			 * In theory we could/should check whether the
 			 * deferred bit is set and take the result of
-			 * the previous run पूर्णांकo account here as
+			 * the previous run into account here as
 			 * well. But it's really not worth the
-			 * trouble. If every other पूर्णांकerrupt is
+			 * trouble. If every other interrupt is
 			 * handled we never trigger the spurious
-			 * detector. And अगर this is just the one out
+			 * detector. And if this is just the one out
 			 * of 100k unhandled ones which is handled
 			 * then we merily delay the spurious detection
-			 * by one hard पूर्णांकerrupt. Not a real problem.
+			 * by one hard interrupt. Not a real problem.
 			 */
-			desc->thपढ़ोs_handled_last &= ~SPURIOUS_DEFERRED;
-		पूर्ण
-	पूर्ण
+			desc->threads_handled_last &= ~SPURIOUS_DEFERRED;
+		}
+	}
 
-	अगर (unlikely(action_ret == IRQ_NONE)) अणु
+	if (unlikely(action_ret == IRQ_NONE)) {
 		/*
 		 * If we are seeing only the odd spurious IRQ caused by
-		 * bus asynchronicity then करोn't eventually trigger an error,
-		 * otherwise the counter becomes a करोomsday समयr क्रम otherwise
-		 * working प्रणालीs
+		 * bus asynchronicity then don't eventually trigger an error,
+		 * otherwise the counter becomes a doomsday timer for otherwise
+		 * working systems
 		 */
-		अगर (समय_after(jअगरfies, desc->last_unhandled + HZ/10))
+		if (time_after(jiffies, desc->last_unhandled + HZ/10))
 			desc->irqs_unhandled = 1;
-		अन्यथा
+		else
 			desc->irqs_unhandled++;
-		desc->last_unhandled = jअगरfies;
-	पूर्ण
+		desc->last_unhandled = jiffies;
+	}
 
 	irq = irq_desc_get_irq(desc);
-	अगर (unlikely(try_misrouted_irq(irq, desc, action_ret))) अणु
-		पूर्णांक ok = misrouted_irq(irq);
-		अगर (action_ret == IRQ_NONE)
+	if (unlikely(try_misrouted_irq(irq, desc, action_ret))) {
+		int ok = misrouted_irq(irq);
+		if (action_ret == IRQ_NONE)
 			desc->irqs_unhandled -= ok;
-	पूर्ण
+	}
 
-	अगर (likely(!desc->irqs_unhandled))
-		वापस;
+	if (likely(!desc->irqs_unhandled))
+		return;
 
-	/* Now getting पूर्णांकo unhandled irq detection */
+	/* Now getting into unhandled irq detection */
 	desc->irq_count++;
-	अगर (likely(desc->irq_count < 100000))
-		वापस;
+	if (likely(desc->irq_count < 100000))
+		return;
 
 	desc->irq_count = 0;
-	अगर (unlikely(desc->irqs_unhandled > 99900)) अणु
+	if (unlikely(desc->irqs_unhandled > 99900)) {
 		/*
-		 * The पूर्णांकerrupt is stuck
+		 * The interrupt is stuck
 		 */
 		__report_bad_irq(desc, action_ret);
 		/*
-		 * Now समाप्त the IRQ
+		 * Now kill the IRQ
 		 */
-		prपूर्णांकk(KERN_EMERG "Disabling IRQ #%d\n", irq);
+		printk(KERN_EMERG "Disabling IRQ #%d\n", irq);
 		desc->istate |= IRQS_SPURIOUS_DISABLED;
 		desc->depth++;
 		irq_disable(desc);
 
-		mod_समयr(&poll_spurious_irq_समयr,
-			  jअगरfies + POLL_SPURIOUS_IRQ_INTERVAL);
-	पूर्ण
+		mod_timer(&poll_spurious_irq_timer,
+			  jiffies + POLL_SPURIOUS_IRQ_INTERVAL);
+	}
 	desc->irqs_unhandled = 0;
-पूर्ण
+}
 
-bool noirqdebug __पढ़ो_mostly;
+bool noirqdebug __read_mostly;
 
-पूर्णांक noirqdebug_setup(अक्षर *str)
-अणु
+int noirqdebug_setup(char *str)
+{
 	noirqdebug = 1;
-	prपूर्णांकk(KERN_INFO "IRQ lockup detection disabled\n");
+	printk(KERN_INFO "IRQ lockup detection disabled\n");
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 __setup("noirqdebug", noirqdebug_setup);
 module_param(noirqdebug, bool, 0644);
 MODULE_PARM_DESC(noirqdebug, "Disable irq lockup detection when true");
 
-अटल पूर्णांक __init irqfixup_setup(अक्षर *str)
-अणु
+static int __init irqfixup_setup(char *str)
+{
 	irqfixup = 1;
-	prपूर्णांकk(KERN_WARNING "Misrouted IRQ fixup support enabled.\n");
-	prपूर्णांकk(KERN_WARNING "This may impact system performance.\n");
+	printk(KERN_WARNING "Misrouted IRQ fixup support enabled.\n");
+	printk(KERN_WARNING "This may impact system performance.\n");
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 __setup("irqfixup", irqfixup_setup);
-module_param(irqfixup, पूर्णांक, 0644);
+module_param(irqfixup, int, 0644);
 
-अटल पूर्णांक __init irqpoll_setup(अक्षर *str)
-अणु
+static int __init irqpoll_setup(char *str)
+{
 	irqfixup = 2;
-	prपूर्णांकk(KERN_WARNING "Misrouted IRQ fixup and polling support "
+	printk(KERN_WARNING "Misrouted IRQ fixup and polling support "
 				"enabled\n");
-	prपूर्णांकk(KERN_WARNING "This may significantly impact system "
+	printk(KERN_WARNING "This may significantly impact system "
 				"performance\n");
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 __setup("irqpoll", irqpoll_setup);

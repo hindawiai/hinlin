@@ -1,24 +1,23 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/types.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/console.h>
-#समावेश <यंत्र/hvsi.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/types.h>
+#include <linux/delay.h>
+#include <linux/slab.h>
+#include <linux/console.h>
+#include <asm/hvsi.h>
 
-#समावेश "hvc_console.h"
+#include "hvc_console.h"
 
-अटल पूर्णांक hvsi_send_packet(काष्ठा hvsi_priv *pv, काष्ठा hvsi_header *packet)
-अणु
-	packet->seqno = cpu_to_be16(atomic_inc_वापस(&pv->seqno));
+static int hvsi_send_packet(struct hvsi_priv *pv, struct hvsi_header *packet)
+{
+	packet->seqno = cpu_to_be16(atomic_inc_return(&pv->seqno));
 
 	/* Assumes that always succeeds, works in practice */
-	वापस pv->put_अक्षरs(pv->termno, (अक्षर *)packet, packet->len);
-पूर्ण
+	return pv->put_chars(pv->termno, (char *)packet, packet->len);
+}
 
-अटल व्योम hvsi_start_handshake(काष्ठा hvsi_priv *pv)
-अणु
-	काष्ठा hvsi_query q;
+static void hvsi_start_handshake(struct hvsi_priv *pv)
+{
+	struct hvsi_query q;
 
 	/* Reset state */
 	pv->established = 0;
@@ -28,310 +27,310 @@
 
 	/* Send version query */
 	q.hdr.type = VS_QUERY_PACKET_HEADER;
-	q.hdr.len = माप(काष्ठा hvsi_query);
+	q.hdr.len = sizeof(struct hvsi_query);
 	q.verb = cpu_to_be16(VSV_SEND_VERSION_NUMBER);
 	hvsi_send_packet(pv, &q.hdr);
-पूर्ण
+}
 
-अटल पूर्णांक hvsi_send_बंद(काष्ठा hvsi_priv *pv)
-अणु
-	काष्ठा hvsi_control ctrl;
+static int hvsi_send_close(struct hvsi_priv *pv)
+{
+	struct hvsi_control ctrl;
 
 	pv->established = 0;
 
 	ctrl.hdr.type = VS_CONTROL_PACKET_HEADER;
-	ctrl.hdr.len = माप(काष्ठा hvsi_control);
+	ctrl.hdr.len = sizeof(struct hvsi_control);
 	ctrl.verb = cpu_to_be16(VSV_CLOSE_PROTOCOL);
-	वापस hvsi_send_packet(pv, &ctrl.hdr);
-पूर्ण
+	return hvsi_send_packet(pv, &ctrl.hdr);
+}
 
-अटल व्योम hvsi_cd_change(काष्ठा hvsi_priv *pv, पूर्णांक cd)
-अणु
-	अगर (cd)
+static void hvsi_cd_change(struct hvsi_priv *pv, int cd)
+{
+	if (cd)
 		pv->mctrl |= TIOCM_CD;
-	अन्यथा अणु
+	else {
 		pv->mctrl &= ~TIOCM_CD;
 
 		/* We copy the existing hvsi driver semantics
 		 * here which are to trigger a hangup when
 		 * we get a carrier loss.
 		 * Closing our connection to the server will
-		 * करो just that.
+		 * do just that.
 		 */
-		अगर (!pv->is_console && pv->खोलोed) अणु
+		if (!pv->is_console && pv->opened) {
 			pr_devel("HVSI@%x Carrier lost, hanging up !\n",
 				 pv->termno);
-			hvsi_send_बंद(pv);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			hvsi_send_close(pv);
+		}
+	}
+}
 
-अटल व्योम hvsi_got_control(काष्ठा hvsi_priv *pv)
-अणु
-	काष्ठा hvsi_control *pkt = (काष्ठा hvsi_control *)pv->inbuf;
+static void hvsi_got_control(struct hvsi_priv *pv)
+{
+	struct hvsi_control *pkt = (struct hvsi_control *)pv->inbuf;
 
-	चयन (be16_to_cpu(pkt->verb)) अणु
-	हाल VSV_CLOSE_PROTOCOL:
+	switch (be16_to_cpu(pkt->verb)) {
+	case VSV_CLOSE_PROTOCOL:
 		/* We restart the handshaking */
 		hvsi_start_handshake(pv);
-		अवरोध;
-	हाल VSV_MODEM_CTL_UPDATE:
+		break;
+	case VSV_MODEM_CTL_UPDATE:
 		/* Transition of carrier detect */
 		hvsi_cd_change(pv, be32_to_cpu(pkt->word) & HVSI_TSCD);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम hvsi_got_query(काष्ठा hvsi_priv *pv)
-अणु
-	काष्ठा hvsi_query *pkt = (काष्ठा hvsi_query *)pv->inbuf;
-	काष्ठा hvsi_query_response r;
+static void hvsi_got_query(struct hvsi_priv *pv)
+{
+	struct hvsi_query *pkt = (struct hvsi_query *)pv->inbuf;
+	struct hvsi_query_response r;
 
 	/* We only handle version queries */
-	अगर (be16_to_cpu(pkt->verb) != VSV_SEND_VERSION_NUMBER)
-		वापस;
+	if (be16_to_cpu(pkt->verb) != VSV_SEND_VERSION_NUMBER)
+		return;
 
 	pr_devel("HVSI@%x: Got version query, sending response...\n",
 		 pv->termno);
 
 	/* Send version response */
 	r.hdr.type = VS_QUERY_RESPONSE_PACKET_HEADER;
-	r.hdr.len = माप(काष्ठा hvsi_query_response);
+	r.hdr.len = sizeof(struct hvsi_query_response);
 	r.verb = cpu_to_be16(VSV_SEND_VERSION_NUMBER);
 	r.u.version = HVSI_VERSION;
 	r.query_seqno = pkt->hdr.seqno;
 	hvsi_send_packet(pv, &r.hdr);
 
-	/* Assume protocol is खोलो now */
+	/* Assume protocol is open now */
 	pv->established = 1;
-पूर्ण
+}
 
-अटल व्योम hvsi_got_response(काष्ठा hvsi_priv *pv)
-अणु
-	काष्ठा hvsi_query_response *r =
-		(काष्ठा hvsi_query_response *)pv->inbuf;
+static void hvsi_got_response(struct hvsi_priv *pv)
+{
+	struct hvsi_query_response *r =
+		(struct hvsi_query_response *)pv->inbuf;
 
-	चयन(r->verb) अणु
-	हाल VSV_SEND_MODEM_CTL_STATUS:
+	switch(r->verb) {
+	case VSV_SEND_MODEM_CTL_STATUS:
 		hvsi_cd_change(pv, be32_to_cpu(r->u.mctrl_word) & HVSI_TSCD);
 		pv->mctrl_update = 1;
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल पूर्णांक hvsi_check_packet(काष्ठा hvsi_priv *pv)
-अणु
+static int hvsi_check_packet(struct hvsi_priv *pv)
+{
 	u8 len, type;
 
 	/* Check header validity. If it's invalid, we ditch
 	 * the whole buffer and hope we eventually resync
 	 */
-	अगर (pv->inbuf[0] < 0xfc) अणु
+	if (pv->inbuf[0] < 0xfc) {
 		pv->inbuf_len = pv->inbuf_pktlen = 0;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	type = pv->inbuf[0];
 	len = pv->inbuf[1];
 
 	/* Packet incomplete ? */
-	अगर (pv->inbuf_len < len)
-		वापस 0;
+	if (pv->inbuf_len < len)
+		return 0;
 
 	pr_devel("HVSI@%x: Got packet type %x len %d bytes:\n",
 		 pv->termno, type, len);
 
 	/* We have a packet, yay ! Handle it */
-	चयन(type) अणु
-	हाल VS_DATA_PACKET_HEADER:
+	switch(type) {
+	case VS_DATA_PACKET_HEADER:
 		pv->inbuf_pktlen = len - 4;
 		pv->inbuf_cur = 4;
-		वापस 1;
-	हाल VS_CONTROL_PACKET_HEADER:
+		return 1;
+	case VS_CONTROL_PACKET_HEADER:
 		hvsi_got_control(pv);
-		अवरोध;
-	हाल VS_QUERY_PACKET_HEADER:
+		break;
+	case VS_QUERY_PACKET_HEADER:
 		hvsi_got_query(pv);
-		अवरोध;
-	हाल VS_QUERY_RESPONSE_PACKET_HEADER:
+		break;
+	case VS_QUERY_RESPONSE_PACKET_HEADER:
 		hvsi_got_response(pv);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	/* Swallow packet and retry */
 	pv->inbuf_len -= len;
-	स_हटाओ(pv->inbuf, &pv->inbuf[len], pv->inbuf_len);
-	वापस 1;
-पूर्ण
+	memmove(pv->inbuf, &pv->inbuf[len], pv->inbuf_len);
+	return 1;
+}
 
-अटल पूर्णांक hvsi_get_packet(काष्ठा hvsi_priv *pv)
-अणु
-	/* If we have room in the buffer, ask HV क्रम more */
-	अगर (pv->inbuf_len < HVSI_INBUF_SIZE)
-		pv->inbuf_len += pv->get_अक्षरs(pv->termno,
+static int hvsi_get_packet(struct hvsi_priv *pv)
+{
+	/* If we have room in the buffer, ask HV for more */
+	if (pv->inbuf_len < HVSI_INBUF_SIZE)
+		pv->inbuf_len += pv->get_chars(pv->termno,
 					     &pv->inbuf[pv->inbuf_len],
 					     HVSI_INBUF_SIZE - pv->inbuf_len);
 	/*
-	 * If we have at least 4 bytes in the buffer, check क्रम
+	 * If we have at least 4 bytes in the buffer, check for
 	 * a full packet and retry
 	 */
-	अगर (pv->inbuf_len >= 4)
-		वापस hvsi_check_packet(pv);
-	वापस 0;
-पूर्ण
+	if (pv->inbuf_len >= 4)
+		return hvsi_check_packet(pv);
+	return 0;
+}
 
-पूर्णांक hvsilib_get_अक्षरs(काष्ठा hvsi_priv *pv, अक्षर *buf, पूर्णांक count)
-अणु
-	अचिन्हित पूर्णांक tries, पढ़ो = 0;
+int hvsilib_get_chars(struct hvsi_priv *pv, char *buf, int count)
+{
+	unsigned int tries, read = 0;
 
-	अगर (WARN_ON(!pv))
-		वापस -ENXIO;
+	if (WARN_ON(!pv))
+		return -ENXIO;
 
-	/* If we aren't open, don't करो anything in order to aव्योम races
+	/* If we aren't open, don't do anything in order to avoid races
 	 * with connection establishment. The hvc core will call this
-	 * beक्रमe we have वापसed from notअगरier_add(), and we need to
-	 * aव्योम multiple users playing with the receive buffer
+	 * before we have returned from notifier_add(), and we need to
+	 * avoid multiple users playing with the receive buffer
 	 */
-	अगर (!pv->खोलोed)
-		वापस 0;
+	if (!pv->opened)
+		return 0;
 
 	/* We try twice, once with what data we have and once more
 	 * after we try to fetch some more from the hypervisor
 	 */
-	क्रम (tries = 1; count && tries < 2; tries++) अणु
+	for (tries = 1; count && tries < 2; tries++) {
 		/* Consume existing data packet */
-		अगर (pv->inbuf_pktlen) अणु
-			अचिन्हित पूर्णांक l = min(count, (पूर्णांक)pv->inbuf_pktlen);
-			स_नकल(&buf[पढ़ो], &pv->inbuf[pv->inbuf_cur], l);
+		if (pv->inbuf_pktlen) {
+			unsigned int l = min(count, (int)pv->inbuf_pktlen);
+			memcpy(&buf[read], &pv->inbuf[pv->inbuf_cur], l);
 			pv->inbuf_cur += l;
 			pv->inbuf_pktlen -= l;
 			count -= l;
-			पढ़ो += l;
-		पूर्ण
-		अगर (count == 0)
-			अवरोध;
+			read += l;
+		}
+		if (count == 0)
+			break;
 
-		/* Data packet fully consumed, move करोwn remaning data */
-		अगर (pv->inbuf_cur) अणु
+		/* Data packet fully consumed, move down remaning data */
+		if (pv->inbuf_cur) {
 			pv->inbuf_len -= pv->inbuf_cur;
-			स_हटाओ(pv->inbuf, &pv->inbuf[pv->inbuf_cur],
+			memmove(pv->inbuf, &pv->inbuf[pv->inbuf_cur],
 				pv->inbuf_len);
 			pv->inbuf_cur = 0;
-		पूर्ण
+		}
 
 		/* Try to get another packet */
-		अगर (hvsi_get_packet(pv))
+		if (hvsi_get_packet(pv))
 			tries--;
-	पूर्ण
-	अगर (!pv->established) अणु
+	}
+	if (!pv->established) {
 		pr_devel("HVSI@%x: returning -EPIPE\n", pv->termno);
-		वापस -EPIPE;
-	पूर्ण
-	वापस पढ़ो;
-पूर्ण
+		return -EPIPE;
+	}
+	return read;
+}
 
-पूर्णांक hvsilib_put_अक्षरs(काष्ठा hvsi_priv *pv, स्थिर अक्षर *buf, पूर्णांक count)
-अणु
-	काष्ठा hvsi_data dp;
-	पूर्णांक rc, adjcount = min(count, HVSI_MAX_OUTGOING_DATA);
+int hvsilib_put_chars(struct hvsi_priv *pv, const char *buf, int count)
+{
+	struct hvsi_data dp;
+	int rc, adjcount = min(count, HVSI_MAX_OUTGOING_DATA);
 
-	अगर (WARN_ON(!pv))
-		वापस -ENODEV;
+	if (WARN_ON(!pv))
+		return -ENODEV;
 
 	dp.hdr.type = VS_DATA_PACKET_HEADER;
-	dp.hdr.len = adjcount + माप(काष्ठा hvsi_header);
-	स_नकल(dp.data, buf, adjcount);
+	dp.hdr.len = adjcount + sizeof(struct hvsi_header);
+	memcpy(dp.data, buf, adjcount);
 	rc = hvsi_send_packet(pv, &dp.hdr);
-	अगर (rc <= 0)
-		वापस rc;
-	वापस adjcount;
-पूर्ण
+	if (rc <= 0)
+		return rc;
+	return adjcount;
+}
 
-अटल व्योम maybe_msleep(अचिन्हित दीर्घ ms)
-अणु
+static void maybe_msleep(unsigned long ms)
+{
 	/* During early boot, IRQs are disabled, use mdelay */
-	अगर (irqs_disabled())
+	if (irqs_disabled())
 		mdelay(ms);
-	अन्यथा
+	else
 		msleep(ms);
-पूर्ण
+}
 
-पूर्णांक hvsilib_पढ़ो_mctrl(काष्ठा hvsi_priv *pv)
-अणु
-	काष्ठा hvsi_query q;
-	पूर्णांक rc, समयout;
+int hvsilib_read_mctrl(struct hvsi_priv *pv)
+{
+	struct hvsi_query q;
+	int rc, timeout;
 
 	pr_devel("HVSI@%x: Querying modem control status...\n",
 		 pv->termno);
 
 	pv->mctrl_update = 0;
 	q.hdr.type = VS_QUERY_PACKET_HEADER;
-	q.hdr.len = माप(काष्ठा hvsi_query);
+	q.hdr.len = sizeof(struct hvsi_query);
 	q.verb = cpu_to_be16(VSV_SEND_MODEM_CTL_STATUS);
 	rc = hvsi_send_packet(pv, &q.hdr);
-	अगर (rc <= 0) अणु
+	if (rc <= 0) {
 		pr_devel("HVSI@%x: Error %d...\n", pv->termno, rc);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
-	/* Try क्रम up to 200ms */
-	क्रम (समयout = 0; समयout < 20; समयout++) अणु
-		अगर (!pv->established)
-			वापस -ENXIO;
-		अगर (pv->mctrl_update)
-			वापस 0;
-		अगर (!hvsi_get_packet(pv))
+	/* Try for up to 200ms */
+	for (timeout = 0; timeout < 20; timeout++) {
+		if (!pv->established)
+			return -ENXIO;
+		if (pv->mctrl_update)
+			return 0;
+		if (!hvsi_get_packet(pv))
 			maybe_msleep(10);
-	पूर्ण
-	वापस -EIO;
-पूर्ण
+	}
+	return -EIO;
+}
 
-पूर्णांक hvsilib_ग_लिखो_mctrl(काष्ठा hvsi_priv *pv, पूर्णांक dtr)
-अणु
-	काष्ठा hvsi_control ctrl;
-	अचिन्हित लघु mctrl;
+int hvsilib_write_mctrl(struct hvsi_priv *pv, int dtr)
+{
+	struct hvsi_control ctrl;
+	unsigned short mctrl;
 
 	mctrl = pv->mctrl;
-	अगर (dtr)
+	if (dtr)
 		mctrl |= TIOCM_DTR;
-	अन्यथा
+	else
 		mctrl &= ~TIOCM_DTR;
-	अगर (mctrl == pv->mctrl)
-		वापस 0;
+	if (mctrl == pv->mctrl)
+		return 0;
 	pv->mctrl = mctrl;
 
 	pr_devel("HVSI@%x: %s DTR...\n", pv->termno,
 		 dtr ? "Setting" : "Clearing");
 
 	ctrl.hdr.type = VS_CONTROL_PACKET_HEADER,
-	ctrl.hdr.len = माप(काष्ठा hvsi_control);
+	ctrl.hdr.len = sizeof(struct hvsi_control);
 	ctrl.verb = cpu_to_be16(VSV_SET_MODEM_CTL);
 	ctrl.mask = cpu_to_be32(HVSI_TSDTR);
 	ctrl.word = cpu_to_be32(dtr ? HVSI_TSDTR : 0);
-	वापस hvsi_send_packet(pv, &ctrl.hdr);
-पूर्ण
+	return hvsi_send_packet(pv, &ctrl.hdr);
+}
 
-व्योम hvsilib_establish(काष्ठा hvsi_priv *pv)
-अणु
-	पूर्णांक समयout;
+void hvsilib_establish(struct hvsi_priv *pv)
+{
+	int timeout;
 
 	pr_devel("HVSI@%x: Establishing...\n", pv->termno);
 
-	/* Try क्रम up to 200ms, there can be a packet to
-	 * start the process रुकोing क्रम us...
+	/* Try for up to 200ms, there can be a packet to
+	 * start the process waiting for us...
 	 */
-	क्रम (समयout = 0; समयout < 20; समयout++) अणु
-		अगर (pv->established)
-			जाओ established;
-		अगर (!hvsi_get_packet(pv))
+	for (timeout = 0; timeout < 20; timeout++) {
+		if (pv->established)
+			goto established;
+		if (!hvsi_get_packet(pv))
 			maybe_msleep(10);
-	पूर्ण
+	}
 
-	/* Failed, send a बंद connection packet just
-	 * in हाल
+	/* Failed, send a close connection packet just
+	 * in case
 	 */
 	pr_devel("HVSI@%x:   ... sending close\n", pv->termno);
 
-	hvsi_send_बंद(pv);
+	hvsi_send_close(pv);
 
 	/* Then restart handshake */
 
@@ -341,85 +340,85 @@
 
 	pr_devel("HVSI@%x:   ... waiting handshake\n", pv->termno);
 
-	/* Try क्रम up to 400ms */
-	क्रम (समयout = 0; समयout < 40; समयout++) अणु
-		अगर (pv->established)
-			जाओ established;
-		अगर (!hvsi_get_packet(pv))
+	/* Try for up to 400ms */
+	for (timeout = 0; timeout < 40; timeout++) {
+		if (pv->established)
+			goto established;
+		if (!hvsi_get_packet(pv))
 			maybe_msleep(10);
-	पूर्ण
+	}
 
-	अगर (!pv->established) अणु
+	if (!pv->established) {
 		pr_devel("HVSI@%x: Timeout handshaking, giving up !\n",
 			 pv->termno);
-		वापस;
-	पूर्ण
+		return;
+	}
  established:
 	/* Query modem control lines */
 
 	pr_devel("HVSI@%x:   ... established, reading mctrl\n", pv->termno);
 
-	hvsilib_पढ़ो_mctrl(pv);
+	hvsilib_read_mctrl(pv);
 
 	/* Set our own DTR */
 
 	pr_devel("HVSI@%x:   ... setting mctrl\n", pv->termno);
 
-	hvsilib_ग_लिखो_mctrl(pv, 1);
+	hvsilib_write_mctrl(pv, 1);
 
-	/* Set the खोलोed flag so पढ़ोs are allowed */
+	/* Set the opened flag so reads are allowed */
 	wmb();
-	pv->खोलोed = 1;
-पूर्ण
+	pv->opened = 1;
+}
 
-पूर्णांक hvsilib_खोलो(काष्ठा hvsi_priv *pv, काष्ठा hvc_काष्ठा *hp)
-अणु
+int hvsilib_open(struct hvsi_priv *pv, struct hvc_struct *hp)
+{
 	pr_devel("HVSI@%x: open !\n", pv->termno);
 
-	/* Keep track of the tty data काष्ठाure */
+	/* Keep track of the tty data structure */
 	pv->tty = tty_port_tty_get(&hp->port);
 
 	hvsilib_establish(pv);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम hvsilib_बंद(काष्ठा hvsi_priv *pv, काष्ठा hvc_काष्ठा *hp)
-अणु
-	अचिन्हित दीर्घ flags;
+void hvsilib_close(struct hvsi_priv *pv, struct hvc_struct *hp)
+{
+	unsigned long flags;
 
 	pr_devel("HVSI@%x: close !\n", pv->termno);
 
-	अगर (!pv->is_console) अणु
+	if (!pv->is_console) {
 		pr_devel("HVSI@%x: Not a console, tearing down\n",
 			 pv->termno);
 
-		/* Clear खोलोed, synchronize with khvcd */
+		/* Clear opened, synchronize with khvcd */
 		spin_lock_irqsave(&hp->lock, flags);
-		pv->खोलोed = 0;
+		pv->opened = 0;
 		spin_unlock_irqrestore(&hp->lock, flags);
 
 		/* Clear our own DTR */
-		अगर (!pv->tty || (pv->tty->termios.c_cflag & HUPCL))
-			hvsilib_ग_लिखो_mctrl(pv, 0);
+		if (!pv->tty || (pv->tty->termios.c_cflag & HUPCL))
+			hvsilib_write_mctrl(pv, 0);
 
-		/* Tear करोwn the connection */
-		hvsi_send_बंद(pv);
-	पूर्ण
+		/* Tear down the connection */
+		hvsi_send_close(pv);
+	}
 
 	tty_kref_put(pv->tty);
-	pv->tty = शून्य;
-पूर्ण
+	pv->tty = NULL;
+}
 
-व्योम hvsilib_init(काष्ठा hvsi_priv *pv,
-		  पूर्णांक (*get_अक्षरs)(uपूर्णांक32_t termno, अक्षर *buf, पूर्णांक count),
-		  पूर्णांक (*put_अक्षरs)(uपूर्णांक32_t termno, स्थिर अक्षर *buf,
-				   पूर्णांक count),
-		  पूर्णांक termno, पूर्णांक is_console)
-अणु
-	स_रखो(pv, 0, माप(*pv));
-	pv->get_अक्षरs = get_अक्षरs;
-	pv->put_अक्षरs = put_अक्षरs;
+void hvsilib_init(struct hvsi_priv *pv,
+		  int (*get_chars)(uint32_t termno, char *buf, int count),
+		  int (*put_chars)(uint32_t termno, const char *buf,
+				   int count),
+		  int termno, int is_console)
+{
+	memset(pv, 0, sizeof(*pv));
+	pv->get_chars = get_chars;
+	pv->put_chars = put_chars;
 	pv->termno = termno;
 	pv->is_console = is_console;
-पूर्ण
+}

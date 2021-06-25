@@ -1,24 +1,23 @@
-<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Chris Dearman (chris@mips.com)
  * Copyright (C) 2007 Mips Technologies, Inc.
  * Copyright (C) 2014 Imagination Technologies Ltd.
  */
-#अगर_अघोषित __ASM_MACH_MIPS_KERNEL_ENTRY_INIT_H
-#घोषणा __ASM_MACH_MIPS_KERNEL_ENTRY_INIT_H
+#ifndef __ASM_MACH_MIPS_KERNEL_ENTRY_INIT_H
+#define __ASM_MACH_MIPS_KERNEL_ENTRY_INIT_H
 
-#समावेश <यंत्र/regdef.h>
-#समावेश <यंत्र/mipsregs.h>
+#include <asm/regdef.h>
+#include <asm/mipsregs.h>
 
 	/*
-	 * Prepare segments क्रम EVA boot:
+	 * Prepare segments for EVA boot:
 	 *
-	 * This is in हाल the processor boots in legacy configuration
-	 * (SI_EVAReset is de-निश्चितed and CONFIG5.K == 0)
+	 * This is in case the processor boots in legacy configuration
+	 * (SI_EVAReset is de-asserted and CONFIG5.K == 0)
 	 *
 	 * ========================= Mappings =============================
 	 * Virtual memory           Physical memory           Mapping
@@ -33,17 +32,17 @@
 	 *
 	 * Lowmem is expanded to 2GB
 	 *
-	 * The following code uses the t0, t1, t2 and ra रेजिस्टरs without
+	 * The following code uses the t0, t1, t2 and ra registers without
 	 * previously preserving them.
 	 *
 	 */
-	.macro	platक्रमm_eva_init
+	.macro	platform_eva_init
 
 	.set	push
 	.set	reorder
 	/*
 	 * Get Config.K0 value and use it to program
-	 * the segmentation रेजिस्टरs
+	 * the segmentation registers
 	 */
 	mfc0    t1, CP0_CONFIG
 	andi	t1, 0x7 /* CCA */
@@ -93,7 +92,7 @@
 
 	.macro	kernel_entry_setup
 
-#अगर_घोषित CONFIG_EVA
+#ifdef CONFIG_EVA
 	sync
 	ehb
 
@@ -107,17 +106,17 @@
 	sll     t0, t0, 6   /* SC bit */
 	bgez    t0, 9f
 
-	platक्रमm_eva_init
+	platform_eva_init
 	b       0f
 9:
 	/* Assume we came from YAMON... */
-	PTR_LA	v0, 0x9fc00534	/* YAMON prपूर्णांक */
+	PTR_LA	v0, 0x9fc00534	/* YAMON print */
 	lw	v0, (v0)
 	move	a0, zero
 	PTR_LA  a1, nonsc_processor
 	jal	v0
 
-	PTR_LA	v0, 0x9fc00520	/* YAMON निकास */
+	PTR_LA	v0, 0x9fc00520	/* YAMON exit */
 	lw	v0, (v0)
 	li	a0, 1
 	jal	v0
@@ -128,19 +127,19 @@
 nonsc_processor:
 	.asciz  "EVA kernel requires a MIPS core with Segment Control implemented\n"
 	__FINIT
-#पूर्ण_अगर /* CONFIG_EVA */
+#endif /* CONFIG_EVA */
 0:
 	.endm
 
 /*
- * Do SMP slave processor setup necessary beक्रमe we can safely execute C code.
+ * Do SMP slave processor setup necessary before we can safely execute C code.
  */
 	.macro	smp_slave_setup
-#अगर_घोषित CONFIG_EVA
+#ifdef CONFIG_EVA
 	sync
 	ehb
-	platक्रमm_eva_init
-#पूर्ण_अगर
+	platform_eva_init
+#endif
 	.endm
 
-#पूर्ण_अगर /* __ASM_MACH_MIPS_KERNEL_ENTRY_INIT_H */
+#endif /* __ASM_MACH_MIPS_KERNEL_ENTRY_INIT_H */

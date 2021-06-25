@@ -1,57 +1,56 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-/* net/aपंचांग/common.h - ATM sockets (common part क्रम PVC and SVC) */
+/* SPDX-License-Identifier: GPL-2.0 */
+/* net/atm/common.h - ATM sockets (common part for PVC and SVC) */
 
 /* Written 1995-2000 by Werner Almesberger, EPFL LRC/ICA */
 
 
-#अगर_अघोषित NET_ATM_COMMON_H
-#घोषणा NET_ATM_COMMON_H
+#ifndef NET_ATM_COMMON_H
+#define NET_ATM_COMMON_H
 
-#समावेश <linux/net.h>
-#समावेश <linux/poll.h> /* क्रम poll_table */
+#include <linux/net.h>
+#include <linux/poll.h> /* for poll_table */
 
 
-पूर्णांक vcc_create(काष्ठा net *net, काष्ठा socket *sock, पूर्णांक protocol, पूर्णांक family, पूर्णांक kern);
-पूर्णांक vcc_release(काष्ठा socket *sock);
-पूर्णांक vcc_connect(काष्ठा socket *sock, पूर्णांक itf, लघु vpi, पूर्णांक vci);
-पूर्णांक vcc_recvmsg(काष्ठा socket *sock, काष्ठा msghdr *msg, माप_प्रकार size,
-		पूर्णांक flags);
-पूर्णांक vcc_sendmsg(काष्ठा socket *sock, काष्ठा msghdr *m, माप_प्रकार total_len);
-__poll_t vcc_poll(काष्ठा file *file, काष्ठा socket *sock, poll_table *रुको);
-पूर्णांक vcc_ioctl(काष्ठा socket *sock, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg);
-पूर्णांक vcc_compat_ioctl(काष्ठा socket *sock, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg);
-पूर्णांक vcc_setsockopt(काष्ठा socket *sock, पूर्णांक level, पूर्णांक optname,
-		   sockptr_t optval, अचिन्हित पूर्णांक optlen);
-पूर्णांक vcc_माला_लोockopt(काष्ठा socket *sock, पूर्णांक level, पूर्णांक optname,
-		   अक्षर __user *optval, पूर्णांक __user *optlen);
-व्योम vcc_process_recv_queue(काष्ठा aपंचांग_vcc *vcc);
+int vcc_create(struct net *net, struct socket *sock, int protocol, int family, int kern);
+int vcc_release(struct socket *sock);
+int vcc_connect(struct socket *sock, int itf, short vpi, int vci);
+int vcc_recvmsg(struct socket *sock, struct msghdr *msg, size_t size,
+		int flags);
+int vcc_sendmsg(struct socket *sock, struct msghdr *m, size_t total_len);
+__poll_t vcc_poll(struct file *file, struct socket *sock, poll_table *wait);
+int vcc_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg);
+int vcc_compat_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg);
+int vcc_setsockopt(struct socket *sock, int level, int optname,
+		   sockptr_t optval, unsigned int optlen);
+int vcc_getsockopt(struct socket *sock, int level, int optname,
+		   char __user *optval, int __user *optlen);
+void vcc_process_recv_queue(struct atm_vcc *vcc);
 
-पूर्णांक aपंचांगpvc_init(व्योम);
-व्योम aपंचांगpvc_निकास(व्योम);
-पूर्णांक aपंचांगsvc_init(व्योम);
-व्योम aपंचांगsvc_निकास(व्योम);
-पूर्णांक aपंचांग_sysfs_init(व्योम);
-व्योम aपंचांग_sysfs_निकास(व्योम);
+int atmpvc_init(void);
+void atmpvc_exit(void);
+int atmsvc_init(void);
+void atmsvc_exit(void);
+int atm_sysfs_init(void);
+void atm_sysfs_exit(void);
 
-#अगर_घोषित CONFIG_PROC_FS
-पूर्णांक aपंचांग_proc_init(व्योम);
-व्योम aपंचांग_proc_निकास(व्योम);
-#अन्यथा
-अटल अंतरभूत पूर्णांक aपंचांग_proc_init(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+#ifdef CONFIG_PROC_FS
+int atm_proc_init(void);
+void atm_proc_exit(void);
+#else
+static inline int atm_proc_init(void)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम aपंचांग_proc_निकास(व्योम)
-अणु
+static inline void atm_proc_exit(void)
+{
 	/* nothing */
-पूर्ण
-#पूर्ण_अगर /* CONFIG_PROC_FS */
+}
+#endif /* CONFIG_PROC_FS */
 
 /* SVC */
-पूर्णांक svc_change_qos(काष्ठा aपंचांग_vcc *vcc,काष्ठा aपंचांग_qos *qos);
+int svc_change_qos(struct atm_vcc *vcc,struct atm_qos *qos);
 
-व्योम aपंचांग_dev_release_vccs(काष्ठा aपंचांग_dev *dev);
+void atm_dev_release_vccs(struct atm_dev *dev);
 
-#पूर्ण_अगर
+#endif

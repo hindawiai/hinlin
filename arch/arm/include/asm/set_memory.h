@@ -1,22 +1,21 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 1999-2002 Russell King
  */
 
-#अगर_अघोषित _ASMARM_SET_MEMORY_H
-#घोषणा _ASMARM_SET_MEMORY_H
+#ifndef _ASMARM_SET_MEMORY_H
+#define _ASMARM_SET_MEMORY_H
 
-#अगर_घोषित CONFIG_MMU
-पूर्णांक set_memory_ro(अचिन्हित दीर्घ addr, पूर्णांक numpages);
-पूर्णांक set_memory_rw(अचिन्हित दीर्घ addr, पूर्णांक numpages);
-पूर्णांक set_memory_x(अचिन्हित दीर्घ addr, पूर्णांक numpages);
-पूर्णांक set_memory_nx(अचिन्हित दीर्घ addr, पूर्णांक numpages);
-#अन्यथा
-अटल अंतरभूत पूर्णांक set_memory_ro(अचिन्हित दीर्घ addr, पूर्णांक numpages) अणु वापस 0; पूर्ण
-अटल अंतरभूत पूर्णांक set_memory_rw(अचिन्हित दीर्घ addr, पूर्णांक numpages) अणु वापस 0; पूर्ण
-अटल अंतरभूत पूर्णांक set_memory_x(अचिन्हित दीर्घ addr, पूर्णांक numpages) अणु वापस 0; पूर्ण
-अटल अंतरभूत पूर्णांक set_memory_nx(अचिन्हित दीर्घ addr, पूर्णांक numpages) अणु वापस 0; पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_MMU
+int set_memory_ro(unsigned long addr, int numpages);
+int set_memory_rw(unsigned long addr, int numpages);
+int set_memory_x(unsigned long addr, int numpages);
+int set_memory_nx(unsigned long addr, int numpages);
+#else
+static inline int set_memory_ro(unsigned long addr, int numpages) { return 0; }
+static inline int set_memory_rw(unsigned long addr, int numpages) { return 0; }
+static inline int set_memory_x(unsigned long addr, int numpages) { return 0; }
+static inline int set_memory_nx(unsigned long addr, int numpages) { return 0; }
+#endif
 
-#पूर्ण_अगर
+#endif

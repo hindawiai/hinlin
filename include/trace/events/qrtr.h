@@ -1,13 +1,12 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अघोषित TRACE_SYSTEM
-#घोषणा TRACE_SYSTEM qrtr
+/* SPDX-License-Identifier: GPL-2.0 */
+#undef TRACE_SYSTEM
+#define TRACE_SYSTEM qrtr
 
-#अगर !defined(_TRACE_QRTR_H) || defined(TRACE_HEADER_MULTI_READ)
-#घोषणा _TRACE_QRTR_H
+#if !defined(_TRACE_QRTR_H) || defined(TRACE_HEADER_MULTI_READ)
+#define _TRACE_QRTR_H
 
-#समावेश <linux/qrtr.h>
-#समावेश <linux/tracepoपूर्णांक.h>
+#include <linux/qrtr.h>
+#include <linux/tracepoint.h>
 
 TRACE_EVENT(qrtr_ns_service_announce_new,
 
@@ -29,7 +28,7 @@ TRACE_EVENT(qrtr_ns_service_announce_new,
 		__entry->port = port;
 	),
 
-	TP_prपूर्णांकk("advertising new server [%d:%x]@[%d:%d]",
+	TP_printk("advertising new server [%d:%x]@[%d:%d]",
 		  __entry->service, __entry->instance, __entry->node,
 		  __entry->port
 	)
@@ -55,7 +54,7 @@ TRACE_EVENT(qrtr_ns_service_announce_del,
 		__entry->port = port;
 	),
 
-	TP_prपूर्णांकk("advertising removal of server [%d:%x]@[%d:%d]",
+	TP_printk("advertising removal of server [%d:%x]@[%d:%d]",
 		  __entry->service, __entry->instance, __entry->node,
 		  __entry->port
 	)
@@ -81,7 +80,7 @@ TRACE_EVENT(qrtr_ns_server_add,
 		__entry->port = port;
 	),
 
-	TP_prपूर्णांकk("add server [%d:%x]@[%d:%d]",
+	TP_printk("add server [%d:%x]@[%d:%d]",
 		  __entry->service, __entry->instance, __entry->node,
 		  __entry->port
 	)
@@ -89,7 +88,7 @@ TRACE_EVENT(qrtr_ns_server_add,
 
 TRACE_EVENT(qrtr_ns_message,
 
-	TP_PROTO(स्थिर अक्षर * स्थिर ctrl_pkt_str, __u32 sq_node, __u32 sq_port),
+	TP_PROTO(const char * const ctrl_pkt_str, __u32 sq_node, __u32 sq_port),
 
 	TP_ARGS(ctrl_pkt_str, sq_node, sq_port),
 
@@ -105,12 +104,12 @@ TRACE_EVENT(qrtr_ns_message,
 		__entry->sq_port = sq_port;
 	),
 
-	TP_prपूर्णांकk("%s from %d:%d",
+	TP_printk("%s from %d:%d",
 		  __get_str(ctrl_pkt_str), __entry->sq_node, __entry->sq_port
 	)
 );
 
-#पूर्ण_अगर /* _TRACE_QRTR_H */
+#endif /* _TRACE_QRTR_H */
 
 /* This part must be outside protection */
-#समावेश <trace/define_trace.h>
+#include <trace/define_trace.h>

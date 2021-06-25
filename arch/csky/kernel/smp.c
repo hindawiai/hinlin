@@ -1,273 +1,272 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/kernel_स्थिति.स>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/cpu.h>
-#समावेश <linux/percpu.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/err.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/irq_work.h>
-#समावेश <linux/irqकरोमुख्य.h>
-#समावेश <linux/of.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/sched/task_stack.h>
-#समावेश <linux/sched/mm.h>
-#समावेश <linux/sched/hotplug.h>
-#समावेश <यंत्र/irq.h>
-#समावेश <यंत्र/traps.h>
-#समावेश <यंत्र/sections.h>
-#समावेश <यंत्र/mmu_context.h>
-#अगर_घोषित CONFIG_CPU_HAS_FPU
-#समावेश <abi/fpu.h>
-#पूर्ण_अगर
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/mm.h>
+#include <linux/sched.h>
+#include <linux/kernel_stat.h>
+#include <linux/notifier.h>
+#include <linux/cpu.h>
+#include <linux/percpu.h>
+#include <linux/delay.h>
+#include <linux/err.h>
+#include <linux/irq.h>
+#include <linux/irq_work.h>
+#include <linux/irqdomain.h>
+#include <linux/of.h>
+#include <linux/seq_file.h>
+#include <linux/sched/task_stack.h>
+#include <linux/sched/mm.h>
+#include <linux/sched/hotplug.h>
+#include <asm/irq.h>
+#include <asm/traps.h>
+#include <asm/sections.h>
+#include <asm/mmu_context.h>
+#ifdef CONFIG_CPU_HAS_FPU
+#include <abi/fpu.h>
+#endif
 
-क्रमागत ipi_message_type अणु
+enum ipi_message_type {
 	IPI_EMPTY,
 	IPI_RESCHEDULE,
 	IPI_CALL_FUNC,
 	IPI_IRQ_WORK,
 	IPI_MAX
-पूर्ण;
+};
 
-काष्ठा ipi_data_काष्ठा अणु
-	अचिन्हित दीर्घ bits ____cacheline_aligned;
-	अचिन्हित दीर्घ stats[IPI_MAX] ____cacheline_aligned;
-पूर्ण;
-अटल DEFINE_PER_CPU(काष्ठा ipi_data_काष्ठा, ipi_data);
+struct ipi_data_struct {
+	unsigned long bits ____cacheline_aligned;
+	unsigned long stats[IPI_MAX] ____cacheline_aligned;
+};
+static DEFINE_PER_CPU(struct ipi_data_struct, ipi_data);
 
-अटल irqवापस_t handle_ipi(पूर्णांक irq, व्योम *dev)
-अणु
-	अचिन्हित दीर्घ *stats = this_cpu_ptr(&ipi_data)->stats;
+static irqreturn_t handle_ipi(int irq, void *dev)
+{
+	unsigned long *stats = this_cpu_ptr(&ipi_data)->stats;
 
-	जबतक (true) अणु
-		अचिन्हित दीर्घ ops;
+	while (true) {
+		unsigned long ops;
 
 		ops = xchg(&this_cpu_ptr(&ipi_data)->bits, 0);
-		अगर (ops == 0)
-			वापस IRQ_HANDLED;
+		if (ops == 0)
+			return IRQ_HANDLED;
 
-		अगर (ops & (1 << IPI_RESCHEDULE)) अणु
+		if (ops & (1 << IPI_RESCHEDULE)) {
 			stats[IPI_RESCHEDULE]++;
 			scheduler_ipi();
-		पूर्ण
+		}
 
-		अगर (ops & (1 << IPI_CALL_FUNC)) अणु
+		if (ops & (1 << IPI_CALL_FUNC)) {
 			stats[IPI_CALL_FUNC]++;
-			generic_smp_call_function_पूर्णांकerrupt();
-		पूर्ण
+			generic_smp_call_function_interrupt();
+		}
 
-		अगर (ops & (1 << IPI_IRQ_WORK)) अणु
+		if (ops & (1 << IPI_IRQ_WORK)) {
 			stats[IPI_IRQ_WORK]++;
 			irq_work_run();
-		पूर्ण
+		}
 
 		BUG_ON((ops >> IPI_MAX) != 0);
-	पूर्ण
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम (*send_arch_ipi)(स्थिर काष्ठा cpumask *mask);
+static void (*send_arch_ipi)(const struct cpumask *mask);
 
-अटल पूर्णांक ipi_irq;
-व्योम __init set_send_ipi(व्योम (*func)(स्थिर काष्ठा cpumask *mask), पूर्णांक irq)
-अणु
-	अगर (send_arch_ipi)
-		वापस;
+static int ipi_irq;
+void __init set_send_ipi(void (*func)(const struct cpumask *mask), int irq)
+{
+	if (send_arch_ipi)
+		return;
 
 	send_arch_ipi = func;
 	ipi_irq = irq;
-पूर्ण
+}
 
-अटल व्योम
-send_ipi_message(स्थिर काष्ठा cpumask *to_whom, क्रमागत ipi_message_type operation)
-अणु
-	पूर्णांक i;
+static void
+send_ipi_message(const struct cpumask *to_whom, enum ipi_message_type operation)
+{
+	int i;
 
-	क्रम_each_cpu(i, to_whom)
+	for_each_cpu(i, to_whom)
 		set_bit(operation, &per_cpu_ptr(&ipi_data, i)->bits);
 
 	smp_mb();
 	send_arch_ipi(to_whom);
-पूर्ण
+}
 
-अटल स्थिर अक्षर * स्थिर ipi_names[] = अणु
+static const char * const ipi_names[] = {
 	[IPI_EMPTY]		= "Empty interrupts",
 	[IPI_RESCHEDULE]	= "Rescheduling interrupts",
 	[IPI_CALL_FUNC]		= "Function call interrupts",
 	[IPI_IRQ_WORK]		= "Irq work interrupts",
-पूर्ण;
+};
 
-पूर्णांक arch_show_पूर्णांकerrupts(काष्ठा seq_file *p, पूर्णांक prec)
-अणु
-	अचिन्हित पूर्णांक cpu, i;
+int arch_show_interrupts(struct seq_file *p, int prec)
+{
+	unsigned int cpu, i;
 
-	क्रम (i = 0; i < IPI_MAX; i++) अणु
-		seq_म_लिखो(p, "%*s%u:%s", prec - 1, "IPI", i,
+	for (i = 0; i < IPI_MAX; i++) {
+		seq_printf(p, "%*s%u:%s", prec - 1, "IPI", i,
 			   prec >= 4 ? " " : "");
-		क्रम_each_online_cpu(cpu)
-			seq_म_लिखो(p, "%10lu ",
+		for_each_online_cpu(cpu)
+			seq_printf(p, "%10lu ",
 				per_cpu_ptr(&ipi_data, cpu)->stats[i]);
-		seq_म_लिखो(p, " %s\n", ipi_names[i]);
-	पूर्ण
+		seq_printf(p, " %s\n", ipi_names[i]);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम arch_send_call_function_ipi_mask(काष्ठा cpumask *mask)
-अणु
+void arch_send_call_function_ipi_mask(struct cpumask *mask)
+{
 	send_ipi_message(mask, IPI_CALL_FUNC);
-पूर्ण
+}
 
-व्योम arch_send_call_function_single_ipi(पूर्णांक cpu)
-अणु
+void arch_send_call_function_single_ipi(int cpu)
+{
 	send_ipi_message(cpumask_of(cpu), IPI_CALL_FUNC);
-पूर्ण
+}
 
-अटल व्योम ipi_stop(व्योम *unused)
-अणु
-	जबतक (1);
-पूर्ण
+static void ipi_stop(void *unused)
+{
+	while (1);
+}
 
-व्योम smp_send_stop(व्योम)
-अणु
-	on_each_cpu(ipi_stop, शून्य, 1);
-पूर्ण
+void smp_send_stop(void)
+{
+	on_each_cpu(ipi_stop, NULL, 1);
+}
 
-व्योम smp_send_reschedule(पूर्णांक cpu)
-अणु
+void smp_send_reschedule(int cpu)
+{
 	send_ipi_message(cpumask_of(cpu), IPI_RESCHEDULE);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_IRQ_WORK
-व्योम arch_irq_work_उठाओ(व्योम)
-अणु
+#ifdef CONFIG_IRQ_WORK
+void arch_irq_work_raise(void)
+{
 	send_ipi_message(cpumask_of(smp_processor_id()), IPI_IRQ_WORK);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-व्योम __init smp_prepare_boot_cpu(व्योम)
-अणु
-पूर्ण
+void __init smp_prepare_boot_cpu(void)
+{
+}
 
-व्योम __init smp_prepare_cpus(अचिन्हित पूर्णांक max_cpus)
-अणु
-पूर्ण
+void __init smp_prepare_cpus(unsigned int max_cpus)
+{
+}
 
-अटल पूर्णांक ipi_dummy_dev;
+static int ipi_dummy_dev;
 
-व्योम __init setup_smp_ipi(व्योम)
-अणु
-	पूर्णांक rc;
+void __init setup_smp_ipi(void)
+{
+	int rc;
 
-	अगर (ipi_irq == 0)
-		वापस;
+	if (ipi_irq == 0)
+		return;
 
 	rc = request_percpu_irq(ipi_irq, handle_ipi, "IPI Interrupt",
 				&ipi_dummy_dev);
-	अगर (rc)
+	if (rc)
 		panic("%s IRQ request failed\n", __func__);
 
 	enable_percpu_irq(ipi_irq, 0);
-पूर्ण
+}
 
-व्योम __init setup_smp(व्योम)
-अणु
-	काष्ठा device_node *node = शून्य;
-	पूर्णांक cpu;
+void __init setup_smp(void)
+{
+	struct device_node *node = NULL;
+	int cpu;
 
-	क्रम_each_of_cpu_node(node) अणु
-		अगर (!of_device_is_available(node))
-			जारी;
+	for_each_of_cpu_node(node) {
+		if (!of_device_is_available(node))
+			continue;
 
-		अगर (of_property_पढ़ो_u32(node, "reg", &cpu))
-			जारी;
+		if (of_property_read_u32(node, "reg", &cpu))
+			continue;
 
-		अगर (cpu >= NR_CPUS)
-			जारी;
+		if (cpu >= NR_CPUS)
+			continue;
 
 		set_cpu_possible(cpu, true);
 		set_cpu_present(cpu, true);
-	पूर्ण
-पूर्ण
+	}
+}
 
-बाह्य व्योम _start_smp_secondary(व्योम);
+extern void _start_smp_secondary(void);
 
-अस्थिर अचिन्हित पूर्णांक secondary_hपूर्णांक;
-अस्थिर अचिन्हित पूर्णांक secondary_hपूर्णांक2;
-अस्थिर अचिन्हित पूर्णांक secondary_ccr;
-अस्थिर अचिन्हित पूर्णांक secondary_stack;
-अस्थिर अचिन्हित पूर्णांक secondary_msa1;
-अस्थिर अचिन्हित पूर्णांक secondary_pgd;
+volatile unsigned int secondary_hint;
+volatile unsigned int secondary_hint2;
+volatile unsigned int secondary_ccr;
+volatile unsigned int secondary_stack;
+volatile unsigned int secondary_msa1;
+volatile unsigned int secondary_pgd;
 
-पूर्णांक __cpu_up(अचिन्हित पूर्णांक cpu, काष्ठा task_काष्ठा *tidle)
-अणु
-	अचिन्हित दीर्घ mask = 1 << cpu;
+int __cpu_up(unsigned int cpu, struct task_struct *tidle)
+{
+	unsigned long mask = 1 << cpu;
 
 	secondary_stack =
-		(अचिन्हित पूर्णांक) task_stack_page(tidle) + THREAD_SIZE - 8;
-	secondary_hपूर्णांक = mfcr("cr31");
-	secondary_hपूर्णांक2 = mfcr("cr<21, 1>");
+		(unsigned int) task_stack_page(tidle) + THREAD_SIZE - 8;
+	secondary_hint = mfcr("cr31");
+	secondary_hint2 = mfcr("cr<21, 1>");
 	secondary_ccr  = mfcr("cr18");
-	secondary_msa1 = पढ़ो_mmu_msa1();
+	secondary_msa1 = read_mmu_msa1();
 	secondary_pgd = mfcr("cr<29, 15>");
 
 	/*
 	 * Because other CPUs are in reset status, we must flush data
 	 * from cache to out and secondary CPUs use them in
-	 * csky_start_secondary(व्योम)
+	 * csky_start_secondary(void)
 	 */
 	mtcr("cr17", 0x22);
 
-	अगर (mask & mfcr("cr<29, 0>")) अणु
+	if (mask & mfcr("cr<29, 0>")) {
 		send_arch_ipi(cpumask_of(cpu));
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Enable cpu in SMP reset ctrl reg */
 		mask |= mfcr("cr<29, 0>");
 		mtcr("cr<29, 0>", mask);
-	पूर्ण
+	}
 
-	/* Wait क्रम the cpu online */
-	जबतक (!cpu_online(cpu));
+	/* Wait for the cpu online */
+	while (!cpu_online(cpu));
 
 	secondary_stack = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम __init smp_cpus_करोne(अचिन्हित पूर्णांक max_cpus)
-अणु
-पूर्ण
+void __init smp_cpus_done(unsigned int max_cpus)
+{
+}
 
-पूर्णांक setup_profiling_समयr(अचिन्हित पूर्णांक multiplier)
-अणु
-	वापस -EINVAL;
-पूर्ण
+int setup_profiling_timer(unsigned int multiplier)
+{
+	return -EINVAL;
+}
 
-व्योम csky_start_secondary(व्योम)
-अणु
-	काष्ठा mm_काष्ठा *mm = &init_mm;
-	अचिन्हित पूर्णांक cpu = smp_processor_id();
+void csky_start_secondary(void)
+{
+	struct mm_struct *mm = &init_mm;
+	unsigned int cpu = smp_processor_id();
 
-	mtcr("cr31", secondary_hपूर्णांक);
-	mtcr("cr<21, 1>", secondary_hपूर्णांक2);
+	mtcr("cr31", secondary_hint);
+	mtcr("cr<21, 1>", secondary_hint2);
 	mtcr("cr18", secondary_ccr);
 
 	mtcr("vbr", vec_base);
 
 	flush_tlb_all();
-	ग_लिखो_mmu_pagemask(0);
+	write_mmu_pagemask(0);
 
-#अगर_घोषित CONFIG_CPU_HAS_FPU
+#ifdef CONFIG_CPU_HAS_FPU
 	init_fpu();
-#पूर्ण_अगर
+#endif
 
 	enable_percpu_irq(ipi_irq, 0);
 
@@ -276,7 +275,7 @@ send_ipi_message(स्थिर काष्ठा cpumask *to_whom, क्र�
 	current->active_mm = mm;
 	cpumask_set_cpu(cpu, mm_cpumask(mm));
 
-	notअगरy_cpu_starting(cpu);
+	notify_cpu_starting(cpu);
 	set_cpu_online(cpu, true);
 
 	pr_info("CPU%u Online: %s...\n", cpu, __func__);
@@ -284,12 +283,12 @@ send_ipi_message(स्थिर काष्ठा cpumask *to_whom, क्र�
 	local_irq_enable();
 	preempt_disable();
 	cpu_startup_entry(CPUHP_AP_ONLINE_IDLE);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_HOTPLUG_CPU
-पूर्णांक __cpu_disable(व्योम)
-अणु
-	अचिन्हित पूर्णांक cpu = smp_processor_id();
+#ifdef CONFIG_HOTPLUG_CPU
+int __cpu_disable(void)
+{
+	unsigned int cpu = smp_processor_id();
 
 	set_cpu_online(cpu, false);
 
@@ -297,34 +296,34 @@ send_ipi_message(स्थिर काष्ठा cpumask *to_whom, क्र�
 
 	clear_tasks_mm_cpumask(cpu);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम __cpu_die(अचिन्हित पूर्णांक cpu)
-अणु
-	अगर (!cpu_रुको_death(cpu, 5)) अणु
+void __cpu_die(unsigned int cpu)
+{
+	if (!cpu_wait_death(cpu, 5)) {
 		pr_crit("CPU%u: shutdown failed\n", cpu);
-		वापस;
-	पूर्ण
+		return;
+	}
 	pr_notice("CPU%u: shutdown\n", cpu);
-पूर्ण
+}
 
-व्योम arch_cpu_idle_dead(व्योम)
-अणु
-	idle_task_निकास();
+void arch_cpu_idle_dead(void)
+{
+	idle_task_exit();
 
 	cpu_report_death();
 
-	जबतक (!secondary_stack)
+	while (!secondary_stack)
 		arch_cpu_idle();
 
 	local_irq_disable();
 
-	यंत्र अस्थिर(
+	asm volatile(
 		"mov	sp, %0\n"
 		"mov	r8, %0\n"
 		"jmpi	csky_start_secondary"
 		:
 		: "r" (secondary_stack));
-पूर्ण
-#पूर्ण_अगर
+}
+#endif

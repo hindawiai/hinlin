@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * l4f00242t03.c -- support क्रम Epson L4F00242T03 LCD
+ * l4f00242t03.c -- support for Epson L4F00242T03 LCD
  *
  * Copyright 2007-2009 Freescale Semiconductor, Inc. All Rights Reserved.
  *
@@ -9,30 +8,30 @@
  *	Inspired by Marek Vasut work in l4f00242t03.c
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/device.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/module.h>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/lcd.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/regulator/consumer.h>
-#समावेश <linux/spi/spi.h>
+#include <linux/device.h>
+#include <linux/kernel.h>
+#include <linux/delay.h>
+#include <linux/module.h>
+#include <linux/gpio/consumer.h>
+#include <linux/lcd.h>
+#include <linux/slab.h>
+#include <linux/regulator/consumer.h>
+#include <linux/spi/spi.h>
 
-काष्ठा l4f00242t03_priv अणु
-	काष्ठा spi_device	*spi;
-	काष्ठा lcd_device	*ld;
-	पूर्णांक lcd_state;
-	काष्ठा regulator *io_reg;
-	काष्ठा regulator *core_reg;
-	काष्ठा gpio_desc *reset;
-	काष्ठा gpio_desc *enable;
-पूर्ण;
+struct l4f00242t03_priv {
+	struct spi_device	*spi;
+	struct lcd_device	*ld;
+	int lcd_state;
+	struct regulator *io_reg;
+	struct regulator *core_reg;
+	struct gpio_desc *reset;
+	struct gpio_desc *enable;
+};
 
-अटल व्योम l4f00242t03_reset(काष्ठा gpio_desc *gpiod)
-अणु
+static void l4f00242t03_reset(struct gpio_desc *gpiod)
+{
 	pr_debug("l4f00242t03_reset.\n");
 	gpiod_set_value(gpiod, 1);
 	mdelay(100);
@@ -40,52 +39,52 @@
 	mdelay(10);	/* tRES >= 100us */
 	gpiod_set_value(gpiod, 1);
 	mdelay(20);
-पूर्ण
+}
 
-#घोषणा param(x) ((x) | 0x100)
+#define param(x) ((x) | 0x100)
 
-अटल व्योम l4f00242t03_lcd_init(काष्ठा spi_device *spi)
-अणु
-	काष्ठा l4f00242t03_priv *priv = spi_get_drvdata(spi);
-	स्थिर u16 cmd[] = अणु 0x36, param(0), 0x3A, param(0x60) पूर्ण;
-	पूर्णांक ret;
+static void l4f00242t03_lcd_init(struct spi_device *spi)
+{
+	struct l4f00242t03_priv *priv = spi_get_drvdata(spi);
+	const u16 cmd[] = { 0x36, param(0), 0x3A, param(0x60) };
+	int ret;
 
 	dev_dbg(&spi->dev, "initializing LCD\n");
 
 	ret = regulator_set_voltage(priv->io_reg, 1800000, 1800000);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&spi->dev, "failed to set the IO regulator voltage.\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 	ret = regulator_enable(priv->io_reg);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&spi->dev, "failed to enable the IO regulator.\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	ret = regulator_set_voltage(priv->core_reg, 2800000, 2800000);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&spi->dev, "failed to set the core regulator voltage.\n");
 		regulator_disable(priv->io_reg);
-		वापस;
-	पूर्ण
+		return;
+	}
 	ret = regulator_enable(priv->core_reg);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&spi->dev, "failed to enable the core regulator.\n");
 		regulator_disable(priv->io_reg);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	l4f00242t03_reset(priv->reset);
 
 	gpiod_set_value(priv->enable, 1);
 	msleep(60);
-	spi_ग_लिखो(spi, (स्थिर u8 *)cmd, ARRAY_SIZE(cmd) * माप(u16));
-पूर्ण
+	spi_write(spi, (const u8 *)cmd, ARRAY_SIZE(cmd) * sizeof(u16));
+}
 
-अटल व्योम l4f00242t03_lcd_घातerकरोwn(काष्ठा spi_device *spi)
-अणु
-	काष्ठा l4f00242t03_priv *priv = spi_get_drvdata(spi);
+static void l4f00242t03_lcd_powerdown(struct spi_device *spi)
+{
+	struct l4f00242t03_priv *priv = spi_get_drvdata(spi);
 
 	dev_dbg(&spi->dev, "Powering down LCD\n");
 
@@ -93,85 +92,85 @@
 
 	regulator_disable(priv->io_reg);
 	regulator_disable(priv->core_reg);
-पूर्ण
+}
 
-अटल पूर्णांक l4f00242t03_lcd_घातer_get(काष्ठा lcd_device *ld)
-अणु
-	काष्ठा l4f00242t03_priv *priv = lcd_get_data(ld);
+static int l4f00242t03_lcd_power_get(struct lcd_device *ld)
+{
+	struct l4f00242t03_priv *priv = lcd_get_data(ld);
 
-	वापस priv->lcd_state;
-पूर्ण
+	return priv->lcd_state;
+}
 
-अटल पूर्णांक l4f00242t03_lcd_घातer_set(काष्ठा lcd_device *ld, पूर्णांक घातer)
-अणु
-	काष्ठा l4f00242t03_priv *priv = lcd_get_data(ld);
-	काष्ठा spi_device *spi = priv->spi;
+static int l4f00242t03_lcd_power_set(struct lcd_device *ld, int power)
+{
+	struct l4f00242t03_priv *priv = lcd_get_data(ld);
+	struct spi_device *spi = priv->spi;
 
-	स्थिर u16 slpout = 0x11;
-	स्थिर u16 dison = 0x29;
+	const u16 slpout = 0x11;
+	const u16 dison = 0x29;
 
-	स्थिर u16 slpin = 0x10;
-	स्थिर u16 disoff = 0x28;
+	const u16 slpin = 0x10;
+	const u16 disoff = 0x28;
 
-	अगर (घातer <= FB_BLANK_NORMAL) अणु
-		अगर (priv->lcd_state <= FB_BLANK_NORMAL) अणु
+	if (power <= FB_BLANK_NORMAL) {
+		if (priv->lcd_state <= FB_BLANK_NORMAL) {
 			/* Do nothing, the LCD is running */
-		पूर्ण अन्यथा अगर (priv->lcd_state < FB_BLANK_POWERDOWN) अणु
+		} else if (priv->lcd_state < FB_BLANK_POWERDOWN) {
 			dev_dbg(&spi->dev, "Resuming LCD\n");
 
-			spi_ग_लिखो(spi, (स्थिर u8 *)&slpout, माप(u16));
+			spi_write(spi, (const u8 *)&slpout, sizeof(u16));
 			msleep(60);
-			spi_ग_लिखो(spi, (स्थिर u8 *)&dison, माप(u16));
-		पूर्ण अन्यथा अणु
+			spi_write(spi, (const u8 *)&dison, sizeof(u16));
+		} else {
 			/* priv->lcd_state == FB_BLANK_POWERDOWN */
 			l4f00242t03_lcd_init(spi);
 			priv->lcd_state = FB_BLANK_VSYNC_SUSPEND;
-			l4f00242t03_lcd_घातer_set(priv->ld, घातer);
-		पूर्ण
-	पूर्ण अन्यथा अगर (घातer < FB_BLANK_POWERDOWN) अणु
-		अगर (priv->lcd_state <= FB_BLANK_NORMAL) अणु
+			l4f00242t03_lcd_power_set(priv->ld, power);
+		}
+	} else if (power < FB_BLANK_POWERDOWN) {
+		if (priv->lcd_state <= FB_BLANK_NORMAL) {
 			/* Send the display in standby */
 			dev_dbg(&spi->dev, "Standby the LCD\n");
 
-			spi_ग_लिखो(spi, (स्थिर u8 *)&disoff, माप(u16));
+			spi_write(spi, (const u8 *)&disoff, sizeof(u16));
 			msleep(60);
-			spi_ग_लिखो(spi, (स्थिर u8 *)&slpin, माप(u16));
-		पूर्ण अन्यथा अगर (priv->lcd_state < FB_BLANK_POWERDOWN) अणु
-			/* Do nothing, the LCD is alपढ़ोy in standby */
-		पूर्ण अन्यथा अणु
+			spi_write(spi, (const u8 *)&slpin, sizeof(u16));
+		} else if (priv->lcd_state < FB_BLANK_POWERDOWN) {
+			/* Do nothing, the LCD is already in standby */
+		} else {
 			/* priv->lcd_state == FB_BLANK_POWERDOWN */
 			l4f00242t03_lcd_init(spi);
 			priv->lcd_state = FB_BLANK_UNBLANK;
-			l4f00242t03_lcd_घातer_set(ld, घातer);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		/* घातer == FB_BLANK_POWERDOWN */
-		अगर (priv->lcd_state != FB_BLANK_POWERDOWN) अणु
-			/* Clear the screen beक्रमe shutting करोwn */
-			spi_ग_लिखो(spi, (स्थिर u8 *)&disoff, माप(u16));
+			l4f00242t03_lcd_power_set(ld, power);
+		}
+	} else {
+		/* power == FB_BLANK_POWERDOWN */
+		if (priv->lcd_state != FB_BLANK_POWERDOWN) {
+			/* Clear the screen before shutting down */
+			spi_write(spi, (const u8 *)&disoff, sizeof(u16));
 			msleep(60);
-			l4f00242t03_lcd_घातerकरोwn(spi);
-		पूर्ण
-	पूर्ण
+			l4f00242t03_lcd_powerdown(spi);
+		}
+	}
 
-	priv->lcd_state = घातer;
+	priv->lcd_state = power;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा lcd_ops l4f_ops = अणु
-	.set_घातer	= l4f00242t03_lcd_घातer_set,
-	.get_घातer	= l4f00242t03_lcd_घातer_get,
-पूर्ण;
+static struct lcd_ops l4f_ops = {
+	.set_power	= l4f00242t03_lcd_power_set,
+	.get_power	= l4f00242t03_lcd_power_get,
+};
 
-अटल पूर्णांक l4f00242t03_probe(काष्ठा spi_device *spi)
-अणु
-	काष्ठा l4f00242t03_priv *priv;
+static int l4f00242t03_probe(struct spi_device *spi)
+{
+	struct l4f00242t03_priv *priv;
 
-	priv = devm_kzalloc(&spi->dev, माप(काष्ठा l4f00242t03_priv),
+	priv = devm_kzalloc(&spi->dev, sizeof(struct l4f00242t03_priv),
 				GFP_KERNEL);
-	अगर (priv == शून्य)
-		वापस -ENOMEM;
+	if (priv == NULL)
+		return -ENOMEM;
 
 	spi_set_drvdata(spi, priv);
 	spi->bits_per_word = 9;
@@ -180,75 +179,75 @@
 	priv->spi = spi;
 
 	priv->reset = devm_gpiod_get(&spi->dev, "reset", GPIOD_OUT_HIGH);
-	अगर (IS_ERR(priv->reset)) अणु
+	if (IS_ERR(priv->reset)) {
 		dev_err(&spi->dev,
 			"Unable to get the lcd l4f00242t03 reset gpio.\n");
-		वापस PTR_ERR(priv->reset);
-	पूर्ण
+		return PTR_ERR(priv->reset);
+	}
 	gpiod_set_consumer_name(priv->reset, "lcd l4f00242t03 reset");
 
 	priv->enable = devm_gpiod_get(&spi->dev, "enable", GPIOD_OUT_LOW);
-	अगर (IS_ERR(priv->enable)) अणु
+	if (IS_ERR(priv->enable)) {
 		dev_err(&spi->dev,
 			"Unable to get the lcd l4f00242t03 data en gpio.\n");
-		वापस PTR_ERR(priv->enable);
-	पूर्ण
+		return PTR_ERR(priv->enable);
+	}
 	gpiod_set_consumer_name(priv->enable, "lcd l4f00242t03 data enable");
 
 	priv->io_reg = devm_regulator_get(&spi->dev, "vdd");
-	अगर (IS_ERR(priv->io_reg)) अणु
+	if (IS_ERR(priv->io_reg)) {
 		dev_err(&spi->dev, "%s: Unable to get the IO regulator\n",
 		       __func__);
-		वापस PTR_ERR(priv->io_reg);
-	पूर्ण
+		return PTR_ERR(priv->io_reg);
+	}
 
 	priv->core_reg = devm_regulator_get(&spi->dev, "vcore");
-	अगर (IS_ERR(priv->core_reg)) अणु
+	if (IS_ERR(priv->core_reg)) {
 		dev_err(&spi->dev, "%s: Unable to get the core regulator\n",
 		       __func__);
-		वापस PTR_ERR(priv->core_reg);
-	पूर्ण
+		return PTR_ERR(priv->core_reg);
+	}
 
-	priv->ld = devm_lcd_device_रेजिस्टर(&spi->dev, "l4f00242t03", &spi->dev,
+	priv->ld = devm_lcd_device_register(&spi->dev, "l4f00242t03", &spi->dev,
 					priv, &l4f_ops);
-	अगर (IS_ERR(priv->ld))
-		वापस PTR_ERR(priv->ld);
+	if (IS_ERR(priv->ld))
+		return PTR_ERR(priv->ld);
 
 	/* Init the LCD */
 	l4f00242t03_lcd_init(spi);
 	priv->lcd_state = FB_BLANK_VSYNC_SUSPEND;
-	l4f00242t03_lcd_घातer_set(priv->ld, FB_BLANK_UNBLANK);
+	l4f00242t03_lcd_power_set(priv->ld, FB_BLANK_UNBLANK);
 
 	dev_info(&spi->dev, "Epson l4f00242t03 lcd probed.\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक l4f00242t03_हटाओ(काष्ठा spi_device *spi)
-अणु
-	काष्ठा l4f00242t03_priv *priv = spi_get_drvdata(spi);
+static int l4f00242t03_remove(struct spi_device *spi)
+{
+	struct l4f00242t03_priv *priv = spi_get_drvdata(spi);
 
-	l4f00242t03_lcd_घातer_set(priv->ld, FB_BLANK_POWERDOWN);
-	वापस 0;
-पूर्ण
+	l4f00242t03_lcd_power_set(priv->ld, FB_BLANK_POWERDOWN);
+	return 0;
+}
 
-अटल व्योम l4f00242t03_shutकरोwn(काष्ठा spi_device *spi)
-अणु
-	काष्ठा l4f00242t03_priv *priv = spi_get_drvdata(spi);
+static void l4f00242t03_shutdown(struct spi_device *spi)
+{
+	struct l4f00242t03_priv *priv = spi_get_drvdata(spi);
 
-	अगर (priv)
-		l4f00242t03_lcd_घातer_set(priv->ld, FB_BLANK_POWERDOWN);
+	if (priv)
+		l4f00242t03_lcd_power_set(priv->ld, FB_BLANK_POWERDOWN);
 
-पूर्ण
+}
 
-अटल काष्ठा spi_driver l4f00242t03_driver = अणु
-	.driver = अणु
+static struct spi_driver l4f00242t03_driver = {
+	.driver = {
 		.name	= "l4f00242t03",
-	पूर्ण,
+	},
 	.probe		= l4f00242t03_probe,
-	.हटाओ		= l4f00242t03_हटाओ,
-	.shutकरोwn	= l4f00242t03_shutकरोwn,
-पूर्ण;
+	.remove		= l4f00242t03_remove,
+	.shutdown	= l4f00242t03_shutdown,
+};
 
 module_spi_driver(l4f00242t03_driver);
 

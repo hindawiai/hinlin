@@ -1,325 +1,324 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Motorola CPCAP PMIC RTC driver
  *
  * Based on cpcap-regulator.c from Motorola Linux kernel tree
  * Copyright (C) 2009 Motorola, Inc.
  *
- * Rewritten क्रम मुख्यline kernel
+ * Rewritten for mainline kernel
  *  - use DT
  *  - use regmap
- *  - use standard पूर्णांकerrupt framework
+ *  - use standard interrupt framework
  *  - use managed device resources
- *  - हटाओ custom "secure clock daemon" helpers
+ *  - remove custom "secure clock daemon" helpers
  *
  * Copyright (C) 2017 Sebastian Reichel <sre@kernel.org>
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mod_devicetable.h>
-#समावेश <linux/init.h>
-#समावेश <linux/device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/rtc.h>
-#समावेश <linux/err.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/mfd/motorola-cpcap.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/sched.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/mod_devicetable.h>
+#include <linux/init.h>
+#include <linux/device.h>
+#include <linux/platform_device.h>
+#include <linux/rtc.h>
+#include <linux/err.h>
+#include <linux/regmap.h>
+#include <linux/mfd/motorola-cpcap.h>
+#include <linux/slab.h>
+#include <linux/sched.h>
 
-#घोषणा SECS_PER_DAY 86400
-#घोषणा DAY_MASK  0x7FFF
-#घोषणा TOD1_MASK 0x00FF
-#घोषणा TOD2_MASK 0x01FF
+#define SECS_PER_DAY 86400
+#define DAY_MASK  0x7FFF
+#define TOD1_MASK 0x00FF
+#define TOD2_MASK 0x01FF
 
-काष्ठा cpcap_समय अणु
-	पूर्णांक day;
-	पूर्णांक tod1;
-	पूर्णांक tod2;
-पूर्ण;
+struct cpcap_time {
+	int day;
+	int tod1;
+	int tod2;
+};
 
-काष्ठा cpcap_rtc अणु
-	काष्ठा regmap *regmap;
-	काष्ठा rtc_device *rtc_dev;
-	u16 venकरोr;
-	पूर्णांक alarm_irq;
+struct cpcap_rtc {
+	struct regmap *regmap;
+	struct rtc_device *rtc_dev;
+	u16 vendor;
+	int alarm_irq;
 	bool alarm_enabled;
-	पूर्णांक update_irq;
+	int update_irq;
 	bool update_enabled;
-पूर्ण;
+};
 
-अटल व्योम cpcap2rtc_समय(काष्ठा rtc_समय *rtc, काष्ठा cpcap_समय *cpcap)
-अणु
-	अचिन्हित दीर्घ पूर्णांक tod;
-	अचिन्हित दीर्घ पूर्णांक समय;
+static void cpcap2rtc_time(struct rtc_time *rtc, struct cpcap_time *cpcap)
+{
+	unsigned long int tod;
+	unsigned long int time;
 
 	tod = (cpcap->tod1 & TOD1_MASK) | ((cpcap->tod2 & TOD2_MASK) << 8);
-	समय = tod + ((cpcap->day & DAY_MASK) * SECS_PER_DAY);
+	time = tod + ((cpcap->day & DAY_MASK) * SECS_PER_DAY);
 
-	rtc_समय64_to_पंचांग(समय, rtc);
-पूर्ण
+	rtc_time64_to_tm(time, rtc);
+}
 
-अटल व्योम rtc2cpcap_समय(काष्ठा cpcap_समय *cpcap, काष्ठा rtc_समय *rtc)
-अणु
-	अचिन्हित दीर्घ समय;
+static void rtc2cpcap_time(struct cpcap_time *cpcap, struct rtc_time *rtc)
+{
+	unsigned long time;
 
-	समय = rtc_पंचांग_to_समय64(rtc);
+	time = rtc_tm_to_time64(rtc);
 
-	cpcap->day = समय / SECS_PER_DAY;
-	समय %= SECS_PER_DAY;
-	cpcap->tod2 = (समय >> 8) & TOD2_MASK;
-	cpcap->tod1 = समय & TOD1_MASK;
-पूर्ण
+	cpcap->day = time / SECS_PER_DAY;
+	time %= SECS_PER_DAY;
+	cpcap->tod2 = (time >> 8) & TOD2_MASK;
+	cpcap->tod1 = time & TOD1_MASK;
+}
 
-अटल पूर्णांक cpcap_rtc_alarm_irq_enable(काष्ठा device *dev, अचिन्हित पूर्णांक enabled)
-अणु
-	काष्ठा cpcap_rtc *rtc = dev_get_drvdata(dev);
+static int cpcap_rtc_alarm_irq_enable(struct device *dev, unsigned int enabled)
+{
+	struct cpcap_rtc *rtc = dev_get_drvdata(dev);
 
-	अगर (rtc->alarm_enabled == enabled)
-		वापस 0;
+	if (rtc->alarm_enabled == enabled)
+		return 0;
 
-	अगर (enabled)
+	if (enabled)
 		enable_irq(rtc->alarm_irq);
-	अन्यथा
+	else
 		disable_irq(rtc->alarm_irq);
 
 	rtc->alarm_enabled = !!enabled;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cpcap_rtc_पढ़ो_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
-अणु
-	काष्ठा cpcap_rtc *rtc;
-	काष्ठा cpcap_समय cpcap_पंचांग;
-	पूर्णांक temp_tod2;
-	पूर्णांक ret;
+static int cpcap_rtc_read_time(struct device *dev, struct rtc_time *tm)
+{
+	struct cpcap_rtc *rtc;
+	struct cpcap_time cpcap_tm;
+	int temp_tod2;
+	int ret;
 
 	rtc = dev_get_drvdata(dev);
 
-	ret = regmap_पढ़ो(rtc->regmap, CPCAP_REG_TOD2, &temp_tod2);
-	ret |= regmap_पढ़ो(rtc->regmap, CPCAP_REG_DAY, &cpcap_पंचांग.day);
-	ret |= regmap_पढ़ो(rtc->regmap, CPCAP_REG_TOD1, &cpcap_पंचांग.tod1);
-	ret |= regmap_पढ़ो(rtc->regmap, CPCAP_REG_TOD2, &cpcap_पंचांग.tod2);
+	ret = regmap_read(rtc->regmap, CPCAP_REG_TOD2, &temp_tod2);
+	ret |= regmap_read(rtc->regmap, CPCAP_REG_DAY, &cpcap_tm.day);
+	ret |= regmap_read(rtc->regmap, CPCAP_REG_TOD1, &cpcap_tm.tod1);
+	ret |= regmap_read(rtc->regmap, CPCAP_REG_TOD2, &cpcap_tm.tod2);
 
-	अगर (temp_tod2 > cpcap_पंचांग.tod2)
-		ret |= regmap_पढ़ो(rtc->regmap, CPCAP_REG_DAY, &cpcap_पंचांग.day);
+	if (temp_tod2 > cpcap_tm.tod2)
+		ret |= regmap_read(rtc->regmap, CPCAP_REG_DAY, &cpcap_tm.day);
 
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Failed to read time\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	cpcap2rtc_समय(पंचांग, &cpcap_पंचांग);
+	cpcap2rtc_time(tm, &cpcap_tm);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cpcap_rtc_set_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
-अणु
-	काष्ठा cpcap_rtc *rtc;
-	काष्ठा cpcap_समय cpcap_पंचांग;
-	पूर्णांक ret = 0;
+static int cpcap_rtc_set_time(struct device *dev, struct rtc_time *tm)
+{
+	struct cpcap_rtc *rtc;
+	struct cpcap_time cpcap_tm;
+	int ret = 0;
 
 	rtc = dev_get_drvdata(dev);
 
-	rtc2cpcap_समय(&cpcap_पंचांग, पंचांग);
+	rtc2cpcap_time(&cpcap_tm, tm);
 
-	अगर (rtc->alarm_enabled)
+	if (rtc->alarm_enabled)
 		disable_irq(rtc->alarm_irq);
-	अगर (rtc->update_enabled)
+	if (rtc->update_enabled)
 		disable_irq(rtc->update_irq);
 
-	अगर (rtc->venकरोr == CPCAP_VENDOR_ST) अणु
-		/* The TOD1 and TOD2 रेजिस्टरs MUST be written in this order
-		 * क्रम the change to properly set.
+	if (rtc->vendor == CPCAP_VENDOR_ST) {
+		/* The TOD1 and TOD2 registers MUST be written in this order
+		 * for the change to properly set.
 		 */
 		ret |= regmap_update_bits(rtc->regmap, CPCAP_REG_TOD1,
-					  TOD1_MASK, cpcap_पंचांग.tod1);
+					  TOD1_MASK, cpcap_tm.tod1);
 		ret |= regmap_update_bits(rtc->regmap, CPCAP_REG_TOD2,
-					  TOD2_MASK, cpcap_पंचांग.tod2);
+					  TOD2_MASK, cpcap_tm.tod2);
 		ret |= regmap_update_bits(rtc->regmap, CPCAP_REG_DAY,
-					  DAY_MASK, cpcap_पंचांग.day);
-	पूर्ण अन्यथा अणु
+					  DAY_MASK, cpcap_tm.day);
+	} else {
 		/* Clearing the upper lower 8 bits of the TOD guarantees that
-		 * the upper half of TOD (TOD2) will not increment क्रम 0xFF RTC
-		 * ticks (255 seconds).  During this समय we can safely ग_लिखो
+		 * the upper half of TOD (TOD2) will not increment for 0xFF RTC
+		 * ticks (255 seconds).  During this time we can safely write
 		 * to DAY, TOD2, then TOD1 (in that order) and expect RTC to be
-		 * synchronized to the exact समय requested upon the final ग_लिखो
+		 * synchronized to the exact time requested upon the final write
 		 * to TOD1.
 		 */
 		ret |= regmap_update_bits(rtc->regmap, CPCAP_REG_TOD1,
 					  TOD1_MASK, 0);
 		ret |= regmap_update_bits(rtc->regmap, CPCAP_REG_DAY,
-					  DAY_MASK, cpcap_पंचांग.day);
+					  DAY_MASK, cpcap_tm.day);
 		ret |= regmap_update_bits(rtc->regmap, CPCAP_REG_TOD2,
-					  TOD2_MASK, cpcap_पंचांग.tod2);
+					  TOD2_MASK, cpcap_tm.tod2);
 		ret |= regmap_update_bits(rtc->regmap, CPCAP_REG_TOD1,
-					  TOD1_MASK, cpcap_पंचांग.tod1);
-	पूर्ण
+					  TOD1_MASK, cpcap_tm.tod1);
+	}
 
-	अगर (rtc->update_enabled)
+	if (rtc->update_enabled)
 		enable_irq(rtc->update_irq);
-	अगर (rtc->alarm_enabled)
+	if (rtc->alarm_enabled)
 		enable_irq(rtc->alarm_irq);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक cpcap_rtc_पढ़ो_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alrm)
-अणु
-	काष्ठा cpcap_rtc *rtc;
-	काष्ठा cpcap_समय cpcap_पंचांग;
-	पूर्णांक ret;
+static int cpcap_rtc_read_alarm(struct device *dev, struct rtc_wkalrm *alrm)
+{
+	struct cpcap_rtc *rtc;
+	struct cpcap_time cpcap_tm;
+	int ret;
 
 	rtc = dev_get_drvdata(dev);
 
 	alrm->enabled = rtc->alarm_enabled;
 
-	ret = regmap_पढ़ो(rtc->regmap, CPCAP_REG_DAYA, &cpcap_पंचांग.day);
-	ret |= regmap_पढ़ो(rtc->regmap, CPCAP_REG_TODA2, &cpcap_पंचांग.tod2);
-	ret |= regmap_पढ़ो(rtc->regmap, CPCAP_REG_TODA1, &cpcap_पंचांग.tod1);
+	ret = regmap_read(rtc->regmap, CPCAP_REG_DAYA, &cpcap_tm.day);
+	ret |= regmap_read(rtc->regmap, CPCAP_REG_TODA2, &cpcap_tm.tod2);
+	ret |= regmap_read(rtc->regmap, CPCAP_REG_TODA1, &cpcap_tm.tod1);
 
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Failed to read time\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	cpcap2rtc_समय(&alrm->समय, &cpcap_पंचांग);
-	वापस rtc_valid_पंचांग(&alrm->समय);
-पूर्ण
+	cpcap2rtc_time(&alrm->time, &cpcap_tm);
+	return rtc_valid_tm(&alrm->time);
+}
 
-अटल पूर्णांक cpcap_rtc_set_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alrm)
-अणु
-	काष्ठा cpcap_rtc *rtc;
-	काष्ठा cpcap_समय cpcap_पंचांग;
-	पूर्णांक ret;
+static int cpcap_rtc_set_alarm(struct device *dev, struct rtc_wkalrm *alrm)
+{
+	struct cpcap_rtc *rtc;
+	struct cpcap_time cpcap_tm;
+	int ret;
 
 	rtc = dev_get_drvdata(dev);
 
-	rtc2cpcap_समय(&cpcap_पंचांग, &alrm->समय);
+	rtc2cpcap_time(&cpcap_tm, &alrm->time);
 
-	अगर (rtc->alarm_enabled)
+	if (rtc->alarm_enabled)
 		disable_irq(rtc->alarm_irq);
 
 	ret = regmap_update_bits(rtc->regmap, CPCAP_REG_DAYA, DAY_MASK,
-				 cpcap_पंचांग.day);
+				 cpcap_tm.day);
 	ret |= regmap_update_bits(rtc->regmap, CPCAP_REG_TODA2, TOD2_MASK,
-				  cpcap_पंचांग.tod2);
+				  cpcap_tm.tod2);
 	ret |= regmap_update_bits(rtc->regmap, CPCAP_REG_TODA1, TOD1_MASK,
-				  cpcap_पंचांग.tod1);
+				  cpcap_tm.tod1);
 
-	अगर (!ret) अणु
+	if (!ret) {
 		enable_irq(rtc->alarm_irq);
 		rtc->alarm_enabled = true;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा rtc_class_ops cpcap_rtc_ops = अणु
-	.पढ़ो_समय		= cpcap_rtc_पढ़ो_समय,
-	.set_समय		= cpcap_rtc_set_समय,
-	.पढ़ो_alarm		= cpcap_rtc_पढ़ो_alarm,
+static const struct rtc_class_ops cpcap_rtc_ops = {
+	.read_time		= cpcap_rtc_read_time,
+	.set_time		= cpcap_rtc_set_time,
+	.read_alarm		= cpcap_rtc_read_alarm,
 	.set_alarm		= cpcap_rtc_set_alarm,
 	.alarm_irq_enable	= cpcap_rtc_alarm_irq_enable,
-पूर्ण;
+};
 
-अटल irqवापस_t cpcap_rtc_alarm_irq(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा cpcap_rtc *rtc = data;
+static irqreturn_t cpcap_rtc_alarm_irq(int irq, void *data)
+{
+	struct cpcap_rtc *rtc = data;
 
 	rtc_update_irq(rtc->rtc_dev, 1, RTC_AF | RTC_IRQF);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t cpcap_rtc_update_irq(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा cpcap_rtc *rtc = data;
+static irqreturn_t cpcap_rtc_update_irq(int irq, void *data)
+{
+	struct cpcap_rtc *rtc = data;
 
 	rtc_update_irq(rtc->rtc_dev, 1, RTC_UF | RTC_IRQF);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक cpcap_rtc_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा cpcap_rtc *rtc;
-	पूर्णांक err;
+static int cpcap_rtc_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct cpcap_rtc *rtc;
+	int err;
 
-	rtc = devm_kzalloc(dev, माप(*rtc), GFP_KERNEL);
-	अगर (!rtc)
-		वापस -ENOMEM;
+	rtc = devm_kzalloc(dev, sizeof(*rtc), GFP_KERNEL);
+	if (!rtc)
+		return -ENOMEM;
 
-	rtc->regmap = dev_get_regmap(dev->parent, शून्य);
-	अगर (!rtc->regmap)
-		वापस -ENODEV;
+	rtc->regmap = dev_get_regmap(dev->parent, NULL);
+	if (!rtc->regmap)
+		return -ENODEV;
 
-	platक्रमm_set_drvdata(pdev, rtc);
+	platform_set_drvdata(pdev, rtc);
 	rtc->rtc_dev = devm_rtc_allocate_device(dev);
-	अगर (IS_ERR(rtc->rtc_dev))
-		वापस PTR_ERR(rtc->rtc_dev);
+	if (IS_ERR(rtc->rtc_dev))
+		return PTR_ERR(rtc->rtc_dev);
 
 	rtc->rtc_dev->ops = &cpcap_rtc_ops;
-	rtc->rtc_dev->range_max = (समयu64_t) (DAY_MASK + 1) * SECS_PER_DAY - 1;
+	rtc->rtc_dev->range_max = (timeu64_t) (DAY_MASK + 1) * SECS_PER_DAY - 1;
 
-	err = cpcap_get_venकरोr(dev, rtc->regmap, &rtc->venकरोr);
-	अगर (err)
-		वापस err;
+	err = cpcap_get_vendor(dev, rtc->regmap, &rtc->vendor);
+	if (err)
+		return err;
 
-	rtc->alarm_irq = platक्रमm_get_irq(pdev, 0);
-	err = devm_request_thपढ़ोed_irq(dev, rtc->alarm_irq, शून्य,
+	rtc->alarm_irq = platform_get_irq(pdev, 0);
+	err = devm_request_threaded_irq(dev, rtc->alarm_irq, NULL,
 					cpcap_rtc_alarm_irq,
 					IRQF_TRIGGER_NONE | IRQF_ONESHOT,
 					"rtc_alarm", rtc);
-	अगर (err) अणु
+	if (err) {
 		dev_err(dev, "Could not request alarm irq: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 	disable_irq(rtc->alarm_irq);
 
-	/* Stock Android uses the 1 Hz पूर्णांकerrupt क्रम "secure clock daemon",
-	 * which is not supported by the मुख्यline kernel. The मुख्यline kernel
-	 * करोes not use the irq at the moment, but we explicitly request and
-	 * disable it, so that its masked and करोes not wake up the processor
+	/* Stock Android uses the 1 Hz interrupt for "secure clock daemon",
+	 * which is not supported by the mainline kernel. The mainline kernel
+	 * does not use the irq at the moment, but we explicitly request and
+	 * disable it, so that its masked and does not wake up the processor
 	 * every second.
 	 */
-	rtc->update_irq = platक्रमm_get_irq(pdev, 1);
-	err = devm_request_thपढ़ोed_irq(dev, rtc->update_irq, शून्य,
+	rtc->update_irq = platform_get_irq(pdev, 1);
+	err = devm_request_threaded_irq(dev, rtc->update_irq, NULL,
 					cpcap_rtc_update_irq,
 					IRQF_TRIGGER_NONE | IRQF_ONESHOT,
 					"rtc_1hz", rtc);
-	अगर (err) अणु
+	if (err) {
 		dev_err(dev, "Could not request update irq: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 	disable_irq(rtc->update_irq);
 
 	err = device_init_wakeup(dev, 1);
-	अगर (err) अणु
+	if (err) {
 		dev_err(dev, "wakeup initialization failed (%d)\n", err);
-		/* ignore error and जारी without wakeup support */
-	पूर्ण
+		/* ignore error and continue without wakeup support */
+	}
 
-	वापस devm_rtc_रेजिस्टर_device(rtc->rtc_dev);
-पूर्ण
+	return devm_rtc_register_device(rtc->rtc_dev);
+}
 
-अटल स्थिर काष्ठा of_device_id cpcap_rtc_of_match[] = अणु
-	अणु .compatible = "motorola,cpcap-rtc", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id cpcap_rtc_of_match[] = {
+	{ .compatible = "motorola,cpcap-rtc", },
+	{},
+};
 MODULE_DEVICE_TABLE(of, cpcap_rtc_of_match);
 
-अटल काष्ठा platक्रमm_driver cpcap_rtc_driver = अणु
+static struct platform_driver cpcap_rtc_driver = {
 	.probe		= cpcap_rtc_probe,
-	.driver		= अणु
+	.driver		= {
 		.name	= "cpcap-rtc",
 		.of_match_table = cpcap_rtc_of_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(cpcap_rtc_driver);
+module_platform_driver(cpcap_rtc_driver);
 
 MODULE_ALIAS("platform:cpcap-rtc");
 MODULE_DESCRIPTION("CPCAP RTC driver");

@@ -1,25 +1,24 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB
+// SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
 /*
  * Copyright (c) 2018, Mellanox Technologies inc.  All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -32,47 +31,47 @@
  * SOFTWARE.
  */
 
-#समावेश "rdma_core.h"
-#समावेश "uverbs.h"
-#समावेश <rdma/uverbs_std_types.h>
+#include "rdma_core.h"
+#include "uverbs.h"
+#include <rdma/uverbs_std_types.h>
 
-अटल पूर्णांक uverbs_मुक्त_counters(काष्ठा ib_uobject *uobject,
-				क्रमागत rdma_हटाओ_reason why,
-				काष्ठा uverbs_attr_bundle *attrs)
-अणु
-	काष्ठा ib_counters *counters = uobject->object;
-	पूर्णांक ret;
+static int uverbs_free_counters(struct ib_uobject *uobject,
+				enum rdma_remove_reason why,
+				struct uverbs_attr_bundle *attrs)
+{
+	struct ib_counters *counters = uobject->object;
+	int ret;
 
-	अगर (atomic_पढ़ो(&counters->usecnt))
-		वापस -EBUSY;
+	if (atomic_read(&counters->usecnt))
+		return -EBUSY;
 
 	ret = counters->device->ops.destroy_counters(counters);
-	अगर (ret)
-		वापस ret;
-	kमुक्त(counters);
-	वापस 0;
-पूर्ण
+	if (ret)
+		return ret;
+	kfree(counters);
+	return 0;
+}
 
-अटल पूर्णांक UVERBS_HANDLER(UVERBS_METHOD_COUNTERS_CREATE)(
-	काष्ठा uverbs_attr_bundle *attrs)
-अणु
-	काष्ठा ib_uobject *uobj = uverbs_attr_get_uobject(
+static int UVERBS_HANDLER(UVERBS_METHOD_COUNTERS_CREATE)(
+	struct uverbs_attr_bundle *attrs)
+{
+	struct ib_uobject *uobj = uverbs_attr_get_uobject(
 		attrs, UVERBS_ATTR_CREATE_COUNTERS_HANDLE);
-	काष्ठा ib_device *ib_dev = attrs->context->device;
-	काष्ठा ib_counters *counters;
-	पूर्णांक ret;
+	struct ib_device *ib_dev = attrs->context->device;
+	struct ib_counters *counters;
+	int ret;
 
 	/*
-	 * This check should be हटाओd once the infraकाष्ठाure
-	 * have the ability to हटाओ methods from parse tree once
+	 * This check should be removed once the infrastructure
+	 * have the ability to remove methods from parse tree once
 	 * such condition is met.
 	 */
-	अगर (!ib_dev->ops.create_counters)
-		वापस -EOPNOTSUPP;
+	if (!ib_dev->ops.create_counters)
+		return -EOPNOTSUPP;
 
 	counters = rdma_zalloc_drv_obj(ib_dev, ib_counters);
-	अगर (!counters)
-		वापस -ENOMEM;
+	if (!counters)
+		return -ENOMEM;
 
 	counters->device = ib_dev;
 	counters->uobject = uobj;
@@ -80,48 +79,48 @@
 	atomic_set(&counters->usecnt, 0);
 
 	ret = ib_dev->ops.create_counters(counters, attrs);
-	अगर (ret)
-		kमुक्त(counters);
+	if (ret)
+		kfree(counters);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक UVERBS_HANDLER(UVERBS_METHOD_COUNTERS_READ)(
-	काष्ठा uverbs_attr_bundle *attrs)
-अणु
-	काष्ठा ib_counters_पढ़ो_attr पढ़ो_attr = अणुपूर्ण;
-	स्थिर काष्ठा uverbs_attr *uattr;
-	काष्ठा ib_counters *counters =
+static int UVERBS_HANDLER(UVERBS_METHOD_COUNTERS_READ)(
+	struct uverbs_attr_bundle *attrs)
+{
+	struct ib_counters_read_attr read_attr = {};
+	const struct uverbs_attr *uattr;
+	struct ib_counters *counters =
 		uverbs_attr_get_obj(attrs, UVERBS_ATTR_READ_COUNTERS_HANDLE);
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!counters->device->ops.पढ़ो_counters)
-		वापस -EOPNOTSUPP;
+	if (!counters->device->ops.read_counters)
+		return -EOPNOTSUPP;
 
-	अगर (!atomic_पढ़ो(&counters->usecnt))
-		वापस -EINVAL;
+	if (!atomic_read(&counters->usecnt))
+		return -EINVAL;
 
-	ret = uverbs_get_flags32(&पढ़ो_attr.flags, attrs,
+	ret = uverbs_get_flags32(&read_attr.flags, attrs,
 				 UVERBS_ATTR_READ_COUNTERS_FLAGS,
 				 IB_UVERBS_READ_COUNTERS_PREFER_CACHED);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	uattr = uverbs_attr_get(attrs, UVERBS_ATTR_READ_COUNTERS_BUFF);
-	पढ़ो_attr.ncounters = uattr->ptr_attr.len / माप(u64);
-	पढ़ो_attr.counters_buff = uverbs_zalloc(
-		attrs, array_size(पढ़ो_attr.ncounters, माप(u64)));
-	अगर (IS_ERR(पढ़ो_attr.counters_buff))
-		वापस PTR_ERR(पढ़ो_attr.counters_buff);
+	read_attr.ncounters = uattr->ptr_attr.len / sizeof(u64);
+	read_attr.counters_buff = uverbs_zalloc(
+		attrs, array_size(read_attr.ncounters, sizeof(u64)));
+	if (IS_ERR(read_attr.counters_buff))
+		return PTR_ERR(read_attr.counters_buff);
 
-	ret = counters->device->ops.पढ़ो_counters(counters, &पढ़ो_attr, attrs);
-	अगर (ret)
-		वापस ret;
+	ret = counters->device->ops.read_counters(counters, &read_attr, attrs);
+	if (ret)
+		return ret;
 
-	वापस uverbs_copy_to(attrs, UVERBS_ATTR_READ_COUNTERS_BUFF,
-			      पढ़ो_attr.counters_buff,
-			      पढ़ो_attr.ncounters * माप(u64));
-पूर्ण
+	return uverbs_copy_to(attrs, UVERBS_ATTR_READ_COUNTERS_BUFF,
+			      read_attr.counters_buff,
+			      read_attr.ncounters * sizeof(u64));
+}
 
 DECLARE_UVERBS_NAMED_METHOD(
 	UVERBS_METHOD_COUNTERS_CREATE,
@@ -147,16 +146,16 @@ DECLARE_UVERBS_NAMED_METHOD(
 			    UVERBS_ATTR_MIN_SIZE(0),
 			    UA_MANDATORY),
 	UVERBS_ATTR_FLAGS_IN(UVERBS_ATTR_READ_COUNTERS_FLAGS,
-			     क्रमागत ib_uverbs_पढ़ो_counters_flags));
+			     enum ib_uverbs_read_counters_flags));
 
 DECLARE_UVERBS_NAMED_OBJECT(UVERBS_OBJECT_COUNTERS,
-			    UVERBS_TYPE_ALLOC_IDR(uverbs_मुक्त_counters),
+			    UVERBS_TYPE_ALLOC_IDR(uverbs_free_counters),
 			    &UVERBS_METHOD(UVERBS_METHOD_COUNTERS_CREATE),
 			    &UVERBS_METHOD(UVERBS_METHOD_COUNTERS_DESTROY),
 			    &UVERBS_METHOD(UVERBS_METHOD_COUNTERS_READ));
 
-स्थिर काष्ठा uapi_definition uverbs_def_obj_counters[] = अणु
+const struct uapi_definition uverbs_def_obj_counters[] = {
 	UAPI_DEF_CHAIN_OBJ_TREE_NAMED(UVERBS_OBJECT_COUNTERS,
 				      UAPI_DEF_OBJ_NEEDS_FN(destroy_counters)),
-	अणुपूर्ण
-पूर्ण;
+	{}
+};

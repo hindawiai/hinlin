@@ -1,120 +1,119 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Hauppauge HD PVR USB driver
  *
- * Copyright (C) 2001-2004 Greg Kroah-Harपंचांगan (greg@kroah.com)
+ * Copyright (C) 2001-2004 Greg Kroah-Hartman (greg@kroah.com)
  * Copyright (C) 2008      Janne Grunau (j@jannau.net)
  * Copyright (C) 2008      John Poet
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/atomic.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/i2c.h>
+#include <linux/kernel.h>
+#include <linux/errno.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/module.h>
+#include <linux/uaccess.h>
+#include <linux/atomic.h>
+#include <linux/usb.h>
+#include <linux/mutex.h>
+#include <linux/i2c.h>
 
-#समावेश <linux/videodev2.h>
-#समावेश <media/v4l2-dev.h>
-#समावेश <media/v4l2-common.h>
+#include <linux/videodev2.h>
+#include <media/v4l2-dev.h>
+#include <media/v4l2-common.h>
 
-#समावेश "hdpvr.h"
+#include "hdpvr.h"
 
-अटल पूर्णांक video_nr[HDPVR_MAX] = अणु[0 ... (HDPVR_MAX - 1)] = UNSETपूर्ण;
-module_param_array(video_nr, पूर्णांक, शून्य, 0);
+static int video_nr[HDPVR_MAX] = {[0 ... (HDPVR_MAX - 1)] = UNSET};
+module_param_array(video_nr, int, NULL, 0);
 MODULE_PARM_DESC(video_nr, "video device number (-1=Auto)");
 
-/* holds the number of currently रेजिस्टरed devices */
-अटल atomic_t dev_nr = ATOMIC_INIT(-1);
+/* holds the number of currently registered devices */
+static atomic_t dev_nr = ATOMIC_INIT(-1);
 
-पूर्णांक hdpvr_debug;
-module_param(hdpvr_debug, पूर्णांक, S_IRUGO|S_IWUSR);
+int hdpvr_debug;
+module_param(hdpvr_debug, int, S_IRUGO|S_IWUSR);
 MODULE_PARM_DESC(hdpvr_debug, "enable debugging output");
 
-अटल uपूर्णांक शेष_video_input = HDPVR_VIDEO_INPUTS;
-module_param(शेष_video_input, uपूर्णांक, S_IRUGO|S_IWUSR);
-MODULE_PARM_DESC(शेष_video_input, "default video input: 0=Component / 1=S-Video / 2=Composite");
+static uint default_video_input = HDPVR_VIDEO_INPUTS;
+module_param(default_video_input, uint, S_IRUGO|S_IWUSR);
+MODULE_PARM_DESC(default_video_input, "default video input: 0=Component / 1=S-Video / 2=Composite");
 
-अटल uपूर्णांक शेष_audio_input = HDPVR_AUDIO_INPUTS;
-module_param(शेष_audio_input, uपूर्णांक, S_IRUGO|S_IWUSR);
-MODULE_PARM_DESC(शेष_audio_input, "default audio input: 0=RCA back / 1=RCA front / 2=S/PDIF");
+static uint default_audio_input = HDPVR_AUDIO_INPUTS;
+module_param(default_audio_input, uint, S_IRUGO|S_IWUSR);
+MODULE_PARM_DESC(default_audio_input, "default audio input: 0=RCA back / 1=RCA front / 2=S/PDIF");
 
-अटल bool boost_audio;
+static bool boost_audio;
 module_param(boost_audio, bool, S_IRUGO|S_IWUSR);
 MODULE_PARM_DESC(boost_audio, "boost the audio signal");
 
 
 /* table of devices that work with this driver */
-अटल स्थिर काष्ठा usb_device_id hdpvr_table[] = अणु
-	अणु USB_DEVICE(HD_PVR_VENDOR_ID, HD_PVR_PRODUCT_ID) पूर्ण,
-	अणु USB_DEVICE(HD_PVR_VENDOR_ID, HD_PVR_PRODUCT_ID1) पूर्ण,
-	अणु USB_DEVICE(HD_PVR_VENDOR_ID, HD_PVR_PRODUCT_ID2) पूर्ण,
-	अणु USB_DEVICE(HD_PVR_VENDOR_ID, HD_PVR_PRODUCT_ID3) पूर्ण,
-	अणु USB_DEVICE(HD_PVR_VENDOR_ID, HD_PVR_PRODUCT_ID4) पूर्ण,
-	अणु पूर्ण					/* Terminating entry */
-पूर्ण;
+static const struct usb_device_id hdpvr_table[] = {
+	{ USB_DEVICE(HD_PVR_VENDOR_ID, HD_PVR_PRODUCT_ID) },
+	{ USB_DEVICE(HD_PVR_VENDOR_ID, HD_PVR_PRODUCT_ID1) },
+	{ USB_DEVICE(HD_PVR_VENDOR_ID, HD_PVR_PRODUCT_ID2) },
+	{ USB_DEVICE(HD_PVR_VENDOR_ID, HD_PVR_PRODUCT_ID3) },
+	{ USB_DEVICE(HD_PVR_VENDOR_ID, HD_PVR_PRODUCT_ID4) },
+	{ }					/* Terminating entry */
+};
 MODULE_DEVICE_TABLE(usb, hdpvr_table);
 
 
-व्योम hdpvr_delete(काष्ठा hdpvr_device *dev)
-अणु
-	hdpvr_मुक्त_buffers(dev);
+void hdpvr_delete(struct hdpvr_device *dev)
+{
+	hdpvr_free_buffers(dev);
 	usb_put_dev(dev->udev);
-पूर्ण
+}
 
-अटल व्योम challenge(u8 *bytes)
-अणु
+static void challenge(u8 *bytes)
+{
 	__le64 *i64P;
-	u64 पंचांगp64;
-	uपूर्णांक i, idx;
+	u64 tmp64;
+	uint i, idx;
 
-	क्रम (idx = 0; idx < 32; ++idx) अणु
+	for (idx = 0; idx < 32; ++idx) {
 
-		अगर (idx & 0x3)
+		if (idx & 0x3)
 			bytes[(idx >> 3) + 3] = bytes[(idx >> 2) & 0x3];
 
-		चयन (idx & 0x3) अणु
-		हाल 0x3:
+		switch (idx & 0x3) {
+		case 0x3:
 			bytes[2] += bytes[3] * 4 + bytes[4] + bytes[5];
 			bytes[4] += bytes[(idx & 0x1) * 2] * 9 + 9;
-			अवरोध;
-		हाल 0x1:
+			break;
+		case 0x1:
 			bytes[0] *= 8;
 			bytes[0] += 7*idx + 4;
 			bytes[6] += bytes[3] * 3;
-			अवरोध;
-		हाल 0x0:
+			break;
+		case 0x0:
 			bytes[3 - (idx >> 3)] = bytes[idx >> 2];
 			bytes[5] += bytes[6] * 3;
-			क्रम (i = 0; i < 3; i++)
+			for (i = 0; i < 3; i++)
 				bytes[3] *= bytes[3] + 1;
-			अवरोध;
-		हाल 0x2:
-			क्रम (i = 0; i < 3; i++)
+			break;
+		case 0x2:
+			for (i = 0; i < 3; i++)
 				bytes[1] *= bytes[6] + 1;
-			क्रम (i = 0; i < 3; i++) अणु
+			for (i = 0; i < 3; i++) {
 				i64P = (__le64 *)bytes;
-				पंचांगp64 = le64_to_cpup(i64P);
-				पंचांगp64 = पंचांगp64 + (पंचांगp64 << (bytes[7] & 0x0f));
-				*i64P = cpu_to_le64(पंचांगp64);
-			पूर्ण
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+				tmp64 = le64_to_cpup(i64P);
+				tmp64 = tmp64 + (tmp64 << (bytes[7] & 0x0f));
+				*i64P = cpu_to_le64(tmp64);
+			}
+			break;
+		}
+	}
+}
 
-/* try to init the device like the winकरोws driver */
-अटल पूर्णांक device_authorization(काष्ठा hdpvr_device *dev)
-अणु
+/* try to init the device like the windows driver */
+static int device_authorization(struct hdpvr_device *dev)
+{
 
-	पूर्णांक ret, retval = -ENOMEM;
-	अक्षर request_type = 0x38, rcv_request = 0x81;
-	अक्षर *response;
+	int ret, retval = -ENOMEM;
+	char request_type = 0x38, rcv_request = 0x81;
+	char *response;
 
 	mutex_lock(&dev->usbc_mutex);
 	ret = usb_control_msg(dev->udev,
@@ -123,18 +122,18 @@ MODULE_DEVICE_TABLE(usb, hdpvr_table);
 			      0x0400, 0x0003,
 			      dev->usbc_buf, 46,
 			      10000);
-	अगर (ret != 46) अणु
+	if (ret != 46) {
 		v4l2_err(&dev->v4l2_dev,
 			 "unexpected answer of status request, len %d\n", ret);
-		जाओ unlock;
-	पूर्ण
-#अगर_घोषित HDPVR_DEBUG
-	अन्यथा अणु
+		goto unlock;
+	}
+#ifdef HDPVR_DEBUG
+	else {
 		v4l2_dbg(MSG_INFO, hdpvr_debug, &dev->v4l2_dev,
 			 "Status request returned, len %d: %46ph\n",
 			 ret, dev->usbc_buf);
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
 	dev->fw_ver = dev->usbc_buf[1];
 
@@ -142,42 +141,42 @@ MODULE_DEVICE_TABLE(usb, hdpvr_table);
 	v4l2_info(&dev->v4l2_dev, "firmware version 0x%x dated %s\n",
 			  dev->fw_ver, &dev->usbc_buf[2]);
 
-	अगर (dev->fw_ver > 0x15) अणु
+	if (dev->fw_ver > 0x15) {
 		dev->options.brightness	= 0x80;
 		dev->options.contrast	= 0x40;
 		dev->options.hue	= 0xf;
 		dev->options.saturation	= 0x40;
 		dev->options.sharpness	= 0x80;
-	पूर्ण
+	}
 
-	चयन (dev->fw_ver) अणु
-	हाल HDPVR_FIRMWARE_VERSION:
+	switch (dev->fw_ver) {
+	case HDPVR_FIRMWARE_VERSION:
 		dev->flags &= ~HDPVR_FLAG_AC3_CAP;
-		अवरोध;
-	हाल HDPVR_FIRMWARE_VERSION_AC3:
-	हाल HDPVR_FIRMWARE_VERSION_0X12:
-	हाल HDPVR_FIRMWARE_VERSION_0X15:
-	हाल HDPVR_FIRMWARE_VERSION_0X1E:
+		break;
+	case HDPVR_FIRMWARE_VERSION_AC3:
+	case HDPVR_FIRMWARE_VERSION_0X12:
+	case HDPVR_FIRMWARE_VERSION_0X15:
+	case HDPVR_FIRMWARE_VERSION_0X1E:
 		dev->flags |= HDPVR_FLAG_AC3_CAP;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		v4l2_info(&dev->v4l2_dev, "untested firmware, the driver might not work.\n");
-		अगर (dev->fw_ver >= HDPVR_FIRMWARE_VERSION_AC3)
+		if (dev->fw_ver >= HDPVR_FIRMWARE_VERSION_AC3)
 			dev->flags |= HDPVR_FLAG_AC3_CAP;
-		अन्यथा
+		else
 			dev->flags &= ~HDPVR_FLAG_AC3_CAP;
-	पूर्ण
+	}
 
 	response = dev->usbc_buf+38;
-#अगर_घोषित HDPVR_DEBUG
+#ifdef HDPVR_DEBUG
 	v4l2_dbg(MSG_INFO, hdpvr_debug, &dev->v4l2_dev, "challenge: %8ph\n",
 		 response);
-#पूर्ण_अगर
+#endif
 	challenge(response);
-#अगर_घोषित HDPVR_DEBUG
+#ifdef HDPVR_DEBUG
 	v4l2_dbg(MSG_INFO, hdpvr_debug, &dev->v4l2_dev, " response: %8ph\n",
 		 response);
-#पूर्ण_अगर
+#endif
 
 	msleep(100);
 	ret = usb_control_msg(dev->udev,
@@ -192,18 +191,18 @@ MODULE_DEVICE_TABLE(usb, hdpvr_table);
 	retval = ret != 8;
 unlock:
 	mutex_unlock(&dev->usbc_mutex);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल पूर्णांक hdpvr_device_init(काष्ठा hdpvr_device *dev)
-अणु
-	पूर्णांक ret;
+static int hdpvr_device_init(struct hdpvr_device *dev)
+{
+	int ret;
 	u8 *buf;
 
-	अगर (device_authorization(dev))
-		वापस -EACCES;
+	if (device_authorization(dev))
+		return -EACCES;
 
-	/* शेष options क्रम init */
+	/* default options for init */
 	hdpvr_set_options(dev);
 
 	/* set filter options */
@@ -241,10 +240,10 @@ unlock:
 	mutex_unlock(&dev->usbc_mutex);
 
 	dev->status = STATUS_IDLE;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा hdpvr_options hdpvr_शेष_options = अणु
+static const struct hdpvr_options hdpvr_default_options = {
 	.video_std	= HDPVR_60HZ,
 	.video_input	= HDPVR_COMPONENT,
 	.audio_input	= HDPVR_RCA_BACK,
@@ -253,173 +252,173 @@ unlock:
 	.bitrate_mode	= HDPVR_CONSTANT,
 	.gop_mode	= HDPVR_SIMPLE_IDR_GOP,
 	.audio_codec	= V4L2_MPEG_AUDIO_ENCODING_AAC,
-	/* original picture controls क्रम firmware version <= 0x15 */
-	/* updated in device_authorization() क्रम newer firmware */
+	/* original picture controls for firmware version <= 0x15 */
+	/* updated in device_authorization() for newer firmware */
 	.brightness	= 0x86,
 	.contrast	= 0x80,
 	.hue		= 0x80,
 	.saturation	= 0x80,
 	.sharpness	= 0x80,
-पूर्ण;
+};
 
-अटल पूर्णांक hdpvr_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकerface,
-		       स्थिर काष्ठा usb_device_id *id)
-अणु
-	काष्ठा hdpvr_device *dev;
-	काष्ठा usb_host_पूर्णांकerface *अगरace_desc;
-	काष्ठा usb_endpoपूर्णांक_descriptor *endpoपूर्णांक;
-#अगर IS_ENABLED(CONFIG_I2C)
-	काष्ठा i2c_client *client;
-#पूर्ण_अगर
-	माप_प्रकार buffer_size;
-	पूर्णांक i;
-	पूर्णांक dev_num;
-	पूर्णांक retval = -ENOMEM;
+static int hdpvr_probe(struct usb_interface *interface,
+		       const struct usb_device_id *id)
+{
+	struct hdpvr_device *dev;
+	struct usb_host_interface *iface_desc;
+	struct usb_endpoint_descriptor *endpoint;
+#if IS_ENABLED(CONFIG_I2C)
+	struct i2c_client *client;
+#endif
+	size_t buffer_size;
+	int i;
+	int dev_num;
+	int retval = -ENOMEM;
 
-	/* allocate memory क्रम our device state and initialize it */
-	dev = kzalloc(माप(*dev), GFP_KERNEL);
-	अगर (!dev) अणु
-		dev_err(&पूर्णांकerface->dev, "Out of memory\n");
-		जाओ error;
-	पूर्ण
+	/* allocate memory for our device state and initialize it */
+	dev = kzalloc(sizeof(*dev), GFP_KERNEL);
+	if (!dev) {
+		dev_err(&interface->dev, "Out of memory\n");
+		goto error;
+	}
 
 	/* init video transfer queues first of all */
 	/* to prevent oops in hdpvr_delete() on error paths */
-	INIT_LIST_HEAD(&dev->मुक्त_buff_list);
+	INIT_LIST_HEAD(&dev->free_buff_list);
 	INIT_LIST_HEAD(&dev->rec_buff_list);
 
-	/* रेजिस्टर v4l2_device early so it can be used क्रम prपूर्णांकks */
-	अगर (v4l2_device_रेजिस्टर(&पूर्णांकerface->dev, &dev->v4l2_dev)) अणु
-		dev_err(&पूर्णांकerface->dev, "v4l2_device_register failed\n");
-		जाओ error_मुक्त_dev;
-	पूर्ण
+	/* register v4l2_device early so it can be used for printks */
+	if (v4l2_device_register(&interface->dev, &dev->v4l2_dev)) {
+		dev_err(&interface->dev, "v4l2_device_register failed\n");
+		goto error_free_dev;
+	}
 
 	mutex_init(&dev->io_mutex);
 	mutex_init(&dev->i2c_mutex);
 	mutex_init(&dev->usbc_mutex);
-	dev->usbc_buf = kदो_स्मृति(64, GFP_KERNEL);
-	अगर (!dev->usbc_buf) अणु
+	dev->usbc_buf = kmalloc(64, GFP_KERNEL);
+	if (!dev->usbc_buf) {
 		v4l2_err(&dev->v4l2_dev, "Out of memory\n");
-		जाओ error_v4l2_unरेजिस्टर;
-	पूर्ण
+		goto error_v4l2_unregister;
+	}
 
-	init_रुकोqueue_head(&dev->रुको_buffer);
-	init_रुकोqueue_head(&dev->रुको_data);
+	init_waitqueue_head(&dev->wait_buffer);
+	init_waitqueue_head(&dev->wait_data);
 
-	dev->options = hdpvr_शेष_options;
+	dev->options = hdpvr_default_options;
 
-	अगर (शेष_video_input < HDPVR_VIDEO_INPUTS)
-		dev->options.video_input = शेष_video_input;
+	if (default_video_input < HDPVR_VIDEO_INPUTS)
+		dev->options.video_input = default_video_input;
 
-	अगर (शेष_audio_input < HDPVR_AUDIO_INPUTS) अणु
-		dev->options.audio_input = शेष_audio_input;
-		अगर (शेष_audio_input == HDPVR_SPDIF)
+	if (default_audio_input < HDPVR_AUDIO_INPUTS) {
+		dev->options.audio_input = default_audio_input;
+		if (default_audio_input == HDPVR_SPDIF)
 			dev->options.audio_codec =
 				V4L2_MPEG_AUDIO_ENCODING_AC3;
-	पूर्ण
+	}
 
-	dev->udev = usb_get_dev(पूर्णांकerface_to_usbdev(पूर्णांकerface));
+	dev->udev = usb_get_dev(interface_to_usbdev(interface));
 
-	/* set up the endpoपूर्णांक inक्रमmation */
-	/* use only the first bulk-in and bulk-out endpoपूर्णांकs */
-	अगरace_desc = पूर्णांकerface->cur_altsetting;
-	क्रम (i = 0; i < अगरace_desc->desc.bNumEndpoपूर्णांकs; ++i) अणु
-		endpoपूर्णांक = &अगरace_desc->endpoपूर्णांक[i].desc;
+	/* set up the endpoint information */
+	/* use only the first bulk-in and bulk-out endpoints */
+	iface_desc = interface->cur_altsetting;
+	for (i = 0; i < iface_desc->desc.bNumEndpoints; ++i) {
+		endpoint = &iface_desc->endpoint[i].desc;
 
-		अगर (!dev->bulk_in_endpoपूर्णांकAddr &&
-		    usb_endpoपूर्णांक_is_bulk_in(endpoपूर्णांक)) अणु
-			/* USB पूर्णांकerface description is buggy, reported max
-			 * packet size is 512 bytes, winकरोws driver uses 8192 */
+		if (!dev->bulk_in_endpointAddr &&
+		    usb_endpoint_is_bulk_in(endpoint)) {
+			/* USB interface description is buggy, reported max
+			 * packet size is 512 bytes, windows driver uses 8192 */
 			buffer_size = 8192;
 			dev->bulk_in_size = buffer_size;
-			dev->bulk_in_endpoपूर्णांकAddr = endpoपूर्णांक->bEndpoपूर्णांकAddress;
-		पूर्ण
+			dev->bulk_in_endpointAddr = endpoint->bEndpointAddress;
+		}
 
-	पूर्ण
-	अगर (!dev->bulk_in_endpoपूर्णांकAddr) अणु
+	}
+	if (!dev->bulk_in_endpointAddr) {
 		v4l2_err(&dev->v4l2_dev, "Could not find bulk-in endpoint\n");
-		जाओ error_put_usb;
-	पूर्ण
+		goto error_put_usb;
+	}
 
 	/* init the device */
-	अगर (hdpvr_device_init(dev)) अणु
+	if (hdpvr_device_init(dev)) {
 		v4l2_err(&dev->v4l2_dev, "device init failed\n");
-		जाओ error_put_usb;
-	पूर्ण
+		goto error_put_usb;
+	}
 
 	mutex_lock(&dev->io_mutex);
-	अगर (hdpvr_alloc_buffers(dev, NUM_BUFFERS)) अणु
+	if (hdpvr_alloc_buffers(dev, NUM_BUFFERS)) {
 		mutex_unlock(&dev->io_mutex);
 		v4l2_err(&dev->v4l2_dev,
 			 "allocating transfer buffers failed\n");
-		जाओ error_put_usb;
-	पूर्ण
+		goto error_put_usb;
+	}
 	mutex_unlock(&dev->io_mutex);
 
-#अगर IS_ENABLED(CONFIG_I2C)
-	retval = hdpvr_रेजिस्टर_i2c_adapter(dev);
-	अगर (retval < 0) अणु
+#if IS_ENABLED(CONFIG_I2C)
+	retval = hdpvr_register_i2c_adapter(dev);
+	if (retval < 0) {
 		v4l2_err(&dev->v4l2_dev, "i2c adapter register failed\n");
-		जाओ error_मुक्त_buffers;
-	पूर्ण
+		goto error_free_buffers;
+	}
 
-	client = hdpvr_रेजिस्टर_ir_i2c(dev);
-	अगर (IS_ERR(client)) अणु
+	client = hdpvr_register_ir_i2c(dev);
+	if (IS_ERR(client)) {
 		v4l2_err(&dev->v4l2_dev, "i2c IR device register failed\n");
 		retval = PTR_ERR(client);
-		जाओ reg_fail;
-	पूर्ण
-#पूर्ण_अगर
+		goto reg_fail;
+	}
+#endif
 
-	dev_num = atomic_inc_वापस(&dev_nr);
-	अगर (dev_num >= HDPVR_MAX) अणु
+	dev_num = atomic_inc_return(&dev_nr);
+	if (dev_num >= HDPVR_MAX) {
 		v4l2_err(&dev->v4l2_dev,
 			 "max device number reached, device register failed\n");
 		atomic_dec(&dev_nr);
 		retval = -ENODEV;
-		जाओ reg_fail;
-	पूर्ण
+		goto reg_fail;
+	}
 
-	retval = hdpvr_रेजिस्टर_videodev(dev, &पूर्णांकerface->dev,
+	retval = hdpvr_register_videodev(dev, &interface->dev,
 				    video_nr[dev_num]);
-	अगर (retval < 0) अणु
+	if (retval < 0) {
 		v4l2_err(&dev->v4l2_dev, "registering videodev failed\n");
-		जाओ reg_fail;
-	पूर्ण
+		goto reg_fail;
+	}
 
 	/* let the user know what node this device is now attached to */
 	v4l2_info(&dev->v4l2_dev, "device now attached to %s\n",
 		  video_device_node_name(&dev->video_dev));
-	वापस 0;
+	return 0;
 
 reg_fail:
-#अगर IS_ENABLED(CONFIG_I2C)
+#if IS_ENABLED(CONFIG_I2C)
 	i2c_del_adapter(&dev->i2c_adapter);
-error_मुक्त_buffers:
-#पूर्ण_अगर
-	hdpvr_मुक्त_buffers(dev);
+error_free_buffers:
+#endif
+	hdpvr_free_buffers(dev);
 error_put_usb:
 	usb_put_dev(dev->udev);
-	kमुक्त(dev->usbc_buf);
-error_v4l2_unरेजिस्टर:
-	v4l2_device_unरेजिस्टर(&dev->v4l2_dev);
-error_मुक्त_dev:
-	kमुक्त(dev);
+	kfree(dev->usbc_buf);
+error_v4l2_unregister:
+	v4l2_device_unregister(&dev->v4l2_dev);
+error_free_dev:
+	kfree(dev);
 error:
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल व्योम hdpvr_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकerface)
-अणु
-	काष्ठा hdpvr_device *dev = to_hdpvr_dev(usb_get_पूर्णांकfdata(पूर्णांकerface));
+static void hdpvr_disconnect(struct usb_interface *interface)
+{
+	struct hdpvr_device *dev = to_hdpvr_dev(usb_get_intfdata(interface));
 
 	v4l2_info(&dev->v4l2_dev, "device %s disconnected\n",
 		  video_device_node_name(&dev->video_dev));
 	/* prevent more I/O from starting and stop any ongoing */
 	mutex_lock(&dev->io_mutex);
 	dev->status = STATUS_DISCONNECTED;
-	wake_up_पूर्णांकerruptible(&dev->रुको_data);
-	wake_up_पूर्णांकerruptible(&dev->रुको_buffer);
+	wake_up_interruptible(&dev->wait_data);
+	wake_up_interruptible(&dev->wait_buffer);
 	mutex_unlock(&dev->io_mutex);
 	v4l2_device_disconnect(&dev->v4l2_dev);
 	msleep(100);
@@ -427,20 +426,20 @@ error:
 	mutex_lock(&dev->io_mutex);
 	hdpvr_cancel_queue(dev);
 	mutex_unlock(&dev->io_mutex);
-#अगर IS_ENABLED(CONFIG_I2C)
+#if IS_ENABLED(CONFIG_I2C)
 	i2c_del_adapter(&dev->i2c_adapter);
-#पूर्ण_अगर
-	video_unरेजिस्टर_device(&dev->video_dev);
+#endif
+	video_unregister_device(&dev->video_dev);
 	atomic_dec(&dev_nr);
-पूर्ण
+}
 
 
-अटल काष्ठा usb_driver hdpvr_usb_driver = अणु
+static struct usb_driver hdpvr_usb_driver = {
 	.name =		"hdpvr",
 	.probe =	hdpvr_probe,
 	.disconnect =	hdpvr_disconnect,
 	.id_table =	hdpvr_table,
-पूर्ण;
+};
 
 module_usb_driver(hdpvr_usb_driver);
 

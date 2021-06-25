@@ -1,9 +1,8 @@
-<शैली गुरु>
 /*
  * af_llc.c - LLC User Interface SAPs
  * Description:
  *   Functions in this module are implementation of socket based llc
- *   communications क्रम the Linux operating प्रणाली. Support of llc class
+ *   communications for the Linux operating system. Support of llc class
  *   one and class two is provided via SOCK_DGRAM and SOCK_STREAM
  *   respectively.
  *
@@ -12,147 +11,147 @@
  *   connections.
  *
  * Copyright (c) 2001 by Jay Schulist <jschlst@samba.org>
- *		 2002-2003 by Arnalकरो Carvalho de Melo <acme@conectiva.com.br>
+ *		 2002-2003 by Arnaldo Carvalho de Melo <acme@conectiva.com.br>
  *
- * This program can be redistributed or modअगरied under the terms of the
+ * This program can be redistributed or modified under the terms of the
  * GNU General Public License as published by the Free Software Foundation.
  * This program is distributed without any warranty or implied warranty
- * of merchantability or fitness क्रम a particular purpose.
+ * of merchantability or fitness for a particular purpose.
  *
- * See the GNU General Public License क्रम more details.
+ * See the GNU General Public License for more details.
  */
-#समावेश <linux/compiler.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/rtnetlink.h>
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/sched/संकेत.स>
+#include <linux/compiler.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/rtnetlink.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/sched/signal.h>
 
-#समावेश <net/llc.h>
-#समावेश <net/llc_sap.h>
-#समावेश <net/llc_pdu.h>
-#समावेश <net/llc_conn.h>
-#समावेश <net/tcp_states.h>
+#include <net/llc.h>
+#include <net/llc_sap.h>
+#include <net/llc_pdu.h>
+#include <net/llc_conn.h>
+#include <net/tcp_states.h>
 
 /* remember: uninitialized global data is zeroed because its in .bss */
-अटल u16 llc_ui_sap_last_स्वतःport = LLC_SAP_DYN_START;
-अटल u16 llc_ui_sap_link_no_max[256];
-अटल काष्ठा sockaddr_llc llc_ui_addrnull;
-अटल स्थिर काष्ठा proto_ops llc_ui_ops;
+static u16 llc_ui_sap_last_autoport = LLC_SAP_DYN_START;
+static u16 llc_ui_sap_link_no_max[256];
+static struct sockaddr_llc llc_ui_addrnull;
+static const struct proto_ops llc_ui_ops;
 
-अटल bool llc_ui_रुको_क्रम_conn(काष्ठा sock *sk, दीर्घ समयout);
-अटल पूर्णांक llc_ui_रुको_क्रम_disc(काष्ठा sock *sk, दीर्घ समयout);
-अटल पूर्णांक llc_ui_रुको_क्रम_busy_core(काष्ठा sock *sk, दीर्घ समयout);
+static bool llc_ui_wait_for_conn(struct sock *sk, long timeout);
+static int llc_ui_wait_for_disc(struct sock *sk, long timeout);
+static int llc_ui_wait_for_busy_core(struct sock *sk, long timeout);
 
-#अगर 0
-#घोषणा dprपूर्णांकk(args...) prपूर्णांकk(KERN_DEBUG args)
-#अन्यथा
-#घोषणा dprपूर्णांकk(args...) करो अणुपूर्ण जबतक (0)
-#पूर्ण_अगर
+#if 0
+#define dprintk(args...) printk(KERN_DEBUG args)
+#else
+#define dprintk(args...) do {} while (0)
+#endif
 
 /* Maybe we'll add some more in the future. */
-#घोषणा LLC_CMSG_PKTINFO	1
+#define LLC_CMSG_PKTINFO	1
 
 
 /**
- *	llc_ui_next_link_no - वापस the next unused link number क्रम a sap
+ *	llc_ui_next_link_no - return the next unused link number for a sap
  *	@sap: Address of sap to get link number from.
  *
- *	Return the next unused link number क्रम a given sap.
+ *	Return the next unused link number for a given sap.
  */
-अटल अंतरभूत u16 llc_ui_next_link_no(पूर्णांक sap)
-अणु
-	वापस llc_ui_sap_link_no_max[sap]++;
-पूर्ण
+static inline u16 llc_ui_next_link_no(int sap)
+{
+	return llc_ui_sap_link_no_max[sap]++;
+}
 
 /**
- *	llc_proto_type - वापस eth protocol क्रम ARP header type
+ *	llc_proto_type - return eth protocol for ARP header type
  *	@arphrd: ARP header type.
  *
- *	Given an ARP header type वापस the corresponding ethernet protocol.
+ *	Given an ARP header type return the corresponding ethernet protocol.
  */
-अटल अंतरभूत __be16 llc_proto_type(u16 arphrd)
-अणु
-	वापस htons(ETH_P_802_2);
-पूर्ण
+static inline __be16 llc_proto_type(u16 arphrd)
+{
+	return htons(ETH_P_802_2);
+}
 
 /**
- *	llc_ui_addr_null - determines अगर a address काष्ठाure is null
- *	@addr: Address to test अगर null.
+ *	llc_ui_addr_null - determines if a address structure is null
+ *	@addr: Address to test if null.
  */
-अटल अंतरभूत u8 llc_ui_addr_null(काष्ठा sockaddr_llc *addr)
-अणु
-	वापस !स_भेद(addr, &llc_ui_addrnull, माप(*addr));
-पूर्ण
+static inline u8 llc_ui_addr_null(struct sockaddr_llc *addr)
+{
+	return !memcmp(addr, &llc_ui_addrnull, sizeof(*addr));
+}
 
 /**
- *	llc_ui_header_len - वापस length of llc header based on operation
+ *	llc_ui_header_len - return length of llc header based on operation
  *	@sk: Socket which contains a valid llc socket type.
- *	@addr: Complete sockaddr_llc काष्ठाure received from the user.
+ *	@addr: Complete sockaddr_llc structure received from the user.
  *
  *	Provide the length of the llc header depending on what kind of
- *	operation the user would like to perक्रमm and the type of socket.
+ *	operation the user would like to perform and the type of socket.
  *	Returns the correct llc header length.
  */
-अटल अंतरभूत u8 llc_ui_header_len(काष्ठा sock *sk, काष्ठा sockaddr_llc *addr)
-अणु
+static inline u8 llc_ui_header_len(struct sock *sk, struct sockaddr_llc *addr)
+{
 	u8 rc = LLC_PDU_LEN_U;
 
-	अगर (addr->sllc_test || addr->sllc_xid)
+	if (addr->sllc_test || addr->sllc_xid)
 		rc = LLC_PDU_LEN_U;
-	अन्यथा अगर (sk->sk_type == SOCK_STREAM)
+	else if (sk->sk_type == SOCK_STREAM)
 		rc = LLC_PDU_LEN_I;
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
  *	llc_ui_send_data - send data via reliable llc2 connection
  *	@sk: Connection the socket is using.
  *	@skb: Data the user wishes to send.
- *	@noblock: can we block रुकोing क्रम data?
+ *	@noblock: can we block waiting for data?
  *
  *	Send data via reliable llc2 connection.
- *	Returns 0 upon success, non-zero अगर action did not succeed.
+ *	Returns 0 upon success, non-zero if action did not succeed.
  *
  *	This function always consumes a reference to the skb.
  */
-अटल पूर्णांक llc_ui_send_data(काष्ठा sock* sk, काष्ठा sk_buff *skb, पूर्णांक noblock)
-अणु
-	काष्ठा llc_sock* llc = llc_sk(sk);
+static int llc_ui_send_data(struct sock* sk, struct sk_buff *skb, int noblock)
+{
+	struct llc_sock* llc = llc_sk(sk);
 
-	अगर (unlikely(llc_data_accept_state(llc->state) ||
+	if (unlikely(llc_data_accept_state(llc->state) ||
 		     llc->remote_busy_flag ||
-		     llc->p_flag)) अणु
-		दीर्घ समयout = sock_sndसमयo(sk, noblock);
-		पूर्णांक rc;
+		     llc->p_flag)) {
+		long timeout = sock_sndtimeo(sk, noblock);
+		int rc;
 
-		rc = llc_ui_रुको_क्रम_busy_core(sk, समयout);
-		अगर (rc) अणु
-			kमुक्त_skb(skb);
-			वापस rc;
-		पूर्ण
-	पूर्ण
-	वापस llc_build_and_send_pkt(sk, skb);
-पूर्ण
+		rc = llc_ui_wait_for_busy_core(sk, timeout);
+		if (rc) {
+			kfree_skb(skb);
+			return rc;
+		}
+	}
+	return llc_build_and_send_pkt(sk, skb);
+}
 
-अटल व्योम llc_ui_sk_init(काष्ठा socket *sock, काष्ठा sock *sk)
-अणु
+static void llc_ui_sk_init(struct socket *sock, struct sock *sk)
+{
 	sock_graft(sk, sock);
 	sk->sk_type	= sock->type;
 	sock->ops	= &llc_ui_ops;
-पूर्ण
+}
 
-अटल काष्ठा proto llc_proto = अणु
+static struct proto llc_proto = {
 	.name	  = "LLC",
 	.owner	  = THIS_MODULE,
-	.obj_size = माप(काष्ठा llc_sock),
+	.obj_size = sizeof(struct llc_sock),
 	.slab_flags = SLAB_TYPESAFE_BY_RCU,
-पूर्ण;
+};
 
 /**
  *	llc_ui_create - alloc and init a new llc_ui socket
- *	@net: network namespace (must be शेष network)
+ *	@net: network namespace (must be default network)
  *	@sock: Socket to initialize and attach allocated sk to.
  *	@protocol: Unused.
  *	@kern: on behalf of kernel or userspace
@@ -161,240 +160,240 @@
  *	socket type we have available.
  *	Returns 0 upon success, negative upon failure.
  */
-अटल पूर्णांक llc_ui_create(काष्ठा net *net, काष्ठा socket *sock, पूर्णांक protocol,
-			 पूर्णांक kern)
-अणु
-	काष्ठा sock *sk;
-	पूर्णांक rc = -ESOCKTNOSUPPORT;
+static int llc_ui_create(struct net *net, struct socket *sock, int protocol,
+			 int kern)
+{
+	struct sock *sk;
+	int rc = -ESOCKTNOSUPPORT;
 
-	अगर (!ns_capable(net->user_ns, CAP_NET_RAW))
-		वापस -EPERM;
+	if (!ns_capable(net->user_ns, CAP_NET_RAW))
+		return -EPERM;
 
-	अगर (!net_eq(net, &init_net))
-		वापस -EAFNOSUPPORT;
+	if (!net_eq(net, &init_net))
+		return -EAFNOSUPPORT;
 
-	अगर (likely(sock->type == SOCK_DGRAM || sock->type == SOCK_STREAM)) अणु
+	if (likely(sock->type == SOCK_DGRAM || sock->type == SOCK_STREAM)) {
 		rc = -ENOMEM;
 		sk = llc_sk_alloc(net, PF_LLC, GFP_KERNEL, &llc_proto, kern);
-		अगर (sk) अणु
+		if (sk) {
 			rc = 0;
 			llc_ui_sk_init(sock, sk);
-		पूर्ण
-	पूर्ण
-	वापस rc;
-पूर्ण
+		}
+	}
+	return rc;
+}
 
 /**
- *	llc_ui_release - shutकरोwn socket
+ *	llc_ui_release - shutdown socket
  *	@sock: Socket to release.
  *
- *	Shutकरोwn and deallocate an existing socket.
+ *	Shutdown and deallocate an existing socket.
  */
-अटल पूर्णांक llc_ui_release(काष्ठा socket *sock)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा llc_sock *llc;
+static int llc_ui_release(struct socket *sock)
+{
+	struct sock *sk = sock->sk;
+	struct llc_sock *llc;
 
-	अगर (unlikely(sk == शून्य))
-		जाओ out;
+	if (unlikely(sk == NULL))
+		goto out;
 	sock_hold(sk);
 	lock_sock(sk);
 	llc = llc_sk(sk);
-	dprपूर्णांकk("%s: closing local(%02X) remote(%02X)\n", __func__,
+	dprintk("%s: closing local(%02X) remote(%02X)\n", __func__,
 		llc->laddr.lsap, llc->daddr.lsap);
-	अगर (!llc_send_disc(sk))
-		llc_ui_रुको_क्रम_disc(sk, sk->sk_rcvसमयo);
-	अगर (!sock_flag(sk, SOCK_ZAPPED)) अणु
-		काष्ठा llc_sap *sap = llc->sap;
+	if (!llc_send_disc(sk))
+		llc_ui_wait_for_disc(sk, sk->sk_rcvtimeo);
+	if (!sock_flag(sk, SOCK_ZAPPED)) {
+		struct llc_sap *sap = llc->sap;
 
-		/* Hold this क्रम release_sock(), so that llc_backlog_rcv()
+		/* Hold this for release_sock(), so that llc_backlog_rcv()
 		 * could still use it.
 		 */
 		llc_sap_hold(sap);
-		llc_sap_हटाओ_socket(llc->sap, sk);
+		llc_sap_remove_socket(llc->sap, sk);
 		release_sock(sk);
 		llc_sap_put(sap);
-	पूर्ण अन्यथा अणु
+	} else {
 		release_sock(sk);
-	पूर्ण
-	अगर (llc->dev)
+	}
+	if (llc->dev)
 		dev_put(llc->dev);
 	sock_put(sk);
-	llc_sk_मुक्त(sk);
+	llc_sk_free(sk);
 out:
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- *	llc_ui_स्वतःport - provide dynamically allocate SAP number
+ *	llc_ui_autoport - provide dynamically allocate SAP number
  *
  *	Provide the caller with a dynamically allocated SAP number according
  *	to the rules that are set in this function. Returns: 0, upon failure,
  *	SAP number otherwise.
  */
-अटल पूर्णांक llc_ui_स्वतःport(व्योम)
-अणु
-	काष्ठा llc_sap *sap;
-	पूर्णांक i, tries = 0;
+static int llc_ui_autoport(void)
+{
+	struct llc_sap *sap;
+	int i, tries = 0;
 
-	जबतक (tries < LLC_SAP_DYN_TRIES) अणु
-		क्रम (i = llc_ui_sap_last_स्वतःport;
-		     i < LLC_SAP_DYN_STOP; i += 2) अणु
+	while (tries < LLC_SAP_DYN_TRIES) {
+		for (i = llc_ui_sap_last_autoport;
+		     i < LLC_SAP_DYN_STOP; i += 2) {
 			sap = llc_sap_find(i);
-			अगर (!sap) अणु
-				llc_ui_sap_last_स्वतःport = i + 2;
-				जाओ out;
-			पूर्ण
+			if (!sap) {
+				llc_ui_sap_last_autoport = i + 2;
+				goto out;
+			}
 			llc_sap_put(sap);
-		पूर्ण
-		llc_ui_sap_last_स्वतःport = LLC_SAP_DYN_START;
+		}
+		llc_ui_sap_last_autoport = LLC_SAP_DYN_START;
 		tries++;
-	पूर्ण
+	}
 	i = 0;
 out:
-	वापस i;
-पूर्ण
+	return i;
+}
 
 /**
- *	llc_ui_स्वतःbind - स्वतःmatically bind a socket to a sap
+ *	llc_ui_autobind - automatically bind a socket to a sap
  *	@sock: socket to bind
  *	@addr: address to connect to
  *
  * 	Used by llc_ui_connect and llc_ui_sendmsg when the user hasn't
- * 	specअगरically used llc_ui_bind to bind to an specअगरic address/sap
+ * 	specifically used llc_ui_bind to bind to an specific address/sap
  *
  *	Returns: 0 upon success, negative otherwise.
  */
-अटल पूर्णांक llc_ui_स्वतःbind(काष्ठा socket *sock, काष्ठा sockaddr_llc *addr)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा llc_sock *llc = llc_sk(sk);
-	काष्ठा llc_sap *sap;
-	पूर्णांक rc = -EINVAL;
+static int llc_ui_autobind(struct socket *sock, struct sockaddr_llc *addr)
+{
+	struct sock *sk = sock->sk;
+	struct llc_sock *llc = llc_sk(sk);
+	struct llc_sap *sap;
+	int rc = -EINVAL;
 
-	अगर (!sock_flag(sk, SOCK_ZAPPED))
-		जाओ out;
-	अगर (!addr->sllc_arphrd)
+	if (!sock_flag(sk, SOCK_ZAPPED))
+		goto out;
+	if (!addr->sllc_arphrd)
 		addr->sllc_arphrd = ARPHRD_ETHER;
-	अगर (addr->sllc_arphrd != ARPHRD_ETHER)
-		जाओ out;
+	if (addr->sllc_arphrd != ARPHRD_ETHER)
+		goto out;
 	rc = -ENODEV;
-	अगर (sk->sk_bound_dev_अगर) अणु
-		llc->dev = dev_get_by_index(&init_net, sk->sk_bound_dev_अगर);
-		अगर (llc->dev && addr->sllc_arphrd != llc->dev->type) अणु
+	if (sk->sk_bound_dev_if) {
+		llc->dev = dev_get_by_index(&init_net, sk->sk_bound_dev_if);
+		if (llc->dev && addr->sllc_arphrd != llc->dev->type) {
 			dev_put(llc->dev);
-			llc->dev = शून्य;
-		पूर्ण
-	पूर्ण अन्यथा
+			llc->dev = NULL;
+		}
+	} else
 		llc->dev = dev_getfirstbyhwtype(&init_net, addr->sllc_arphrd);
-	अगर (!llc->dev)
-		जाओ out;
+	if (!llc->dev)
+		goto out;
 	rc = -EUSERS;
-	llc->laddr.lsap = llc_ui_स्वतःport();
-	अगर (!llc->laddr.lsap)
-		जाओ out;
+	llc->laddr.lsap = llc_ui_autoport();
+	if (!llc->laddr.lsap)
+		goto out;
 	rc = -EBUSY; /* some other network layer is using the sap */
-	sap = llc_sap_खोलो(llc->laddr.lsap, शून्य);
-	अगर (!sap)
-		जाओ out;
-	स_नकल(llc->laddr.mac, llc->dev->dev_addr, IFHWADDRLEN);
-	स_नकल(&llc->addr, addr, माप(llc->addr));
+	sap = llc_sap_open(llc->laddr.lsap, NULL);
+	if (!sap)
+		goto out;
+	memcpy(llc->laddr.mac, llc->dev->dev_addr, IFHWADDRLEN);
+	memcpy(&llc->addr, addr, sizeof(llc->addr));
 	/* assign new connection to its SAP */
 	llc_sap_add_socket(sap, sk);
 	sock_reset_flag(sk, SOCK_ZAPPED);
 	rc = 0;
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
- *	llc_ui_bind - bind a socket to a specअगरic address.
+ *	llc_ui_bind - bind a socket to a specific address.
  *	@sock: Socket to bind an address to.
  *	@uaddr: Address the user wants the socket bound to.
- *	@addrlen: Length of the uaddr काष्ठाure.
+ *	@addrlen: Length of the uaddr structure.
  *
- *	Bind a socket to a specअगरic address. For llc a user is able to bind to
- *	a specअगरic sap only or mac + sap.
- *	If the user desires to bind to a specअगरic mac + sap, it is possible to
+ *	Bind a socket to a specific address. For llc a user is able to bind to
+ *	a specific sap only or mac + sap.
+ *	If the user desires to bind to a specific mac + sap, it is possible to
  *	have multiple sap connections via multiple macs.
- *	Bind and स्वतःbind क्रम that matter must enक्रमce the correct sap usage
- *	otherwise all hell will अवरोध loose.
+ *	Bind and autobind for that matter must enforce the correct sap usage
+ *	otherwise all hell will break loose.
  *	Returns: 0 upon success, negative otherwise.
  */
-अटल पूर्णांक llc_ui_bind(काष्ठा socket *sock, काष्ठा sockaddr *uaddr, पूर्णांक addrlen)
-अणु
-	काष्ठा sockaddr_llc *addr = (काष्ठा sockaddr_llc *)uaddr;
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा llc_sock *llc = llc_sk(sk);
-	काष्ठा llc_sap *sap;
-	पूर्णांक rc = -EINVAL;
+static int llc_ui_bind(struct socket *sock, struct sockaddr *uaddr, int addrlen)
+{
+	struct sockaddr_llc *addr = (struct sockaddr_llc *)uaddr;
+	struct sock *sk = sock->sk;
+	struct llc_sock *llc = llc_sk(sk);
+	struct llc_sap *sap;
+	int rc = -EINVAL;
 
 	lock_sock(sk);
-	अगर (unlikely(!sock_flag(sk, SOCK_ZAPPED) || addrlen != माप(*addr)))
-		जाओ out;
+	if (unlikely(!sock_flag(sk, SOCK_ZAPPED) || addrlen != sizeof(*addr)))
+		goto out;
 	rc = -EAFNOSUPPORT;
-	अगर (!addr->sllc_arphrd)
+	if (!addr->sllc_arphrd)
 		addr->sllc_arphrd = ARPHRD_ETHER;
-	अगर (unlikely(addr->sllc_family != AF_LLC || addr->sllc_arphrd != ARPHRD_ETHER))
-		जाओ out;
-	dprपूर्णांकk("%s: binding %02X\n", __func__, addr->sllc_sap);
+	if (unlikely(addr->sllc_family != AF_LLC || addr->sllc_arphrd != ARPHRD_ETHER))
+		goto out;
+	dprintk("%s: binding %02X\n", __func__, addr->sllc_sap);
 	rc = -ENODEV;
-	rcu_पढ़ो_lock();
-	अगर (sk->sk_bound_dev_अगर) अणु
-		llc->dev = dev_get_by_index_rcu(&init_net, sk->sk_bound_dev_अगर);
-		अगर (llc->dev) अणु
-			अगर (is_zero_ether_addr(addr->sllc_mac))
-				स_नकल(addr->sllc_mac, llc->dev->dev_addr,
+	rcu_read_lock();
+	if (sk->sk_bound_dev_if) {
+		llc->dev = dev_get_by_index_rcu(&init_net, sk->sk_bound_dev_if);
+		if (llc->dev) {
+			if (is_zero_ether_addr(addr->sllc_mac))
+				memcpy(addr->sllc_mac, llc->dev->dev_addr,
 				       IFHWADDRLEN);
-			अगर (addr->sllc_arphrd != llc->dev->type ||
+			if (addr->sllc_arphrd != llc->dev->type ||
 			    !ether_addr_equal(addr->sllc_mac,
-					      llc->dev->dev_addr)) अणु
+					      llc->dev->dev_addr)) {
 				rc = -EINVAL;
-				llc->dev = शून्य;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा
+				llc->dev = NULL;
+			}
+		}
+	} else
 		llc->dev = dev_getbyhwaddr_rcu(&init_net, addr->sllc_arphrd,
 					   addr->sllc_mac);
-	अगर (llc->dev)
+	if (llc->dev)
 		dev_hold(llc->dev);
-	rcu_पढ़ो_unlock();
-	अगर (!llc->dev)
-		जाओ out;
-	अगर (!addr->sllc_sap) अणु
+	rcu_read_unlock();
+	if (!llc->dev)
+		goto out;
+	if (!addr->sllc_sap) {
 		rc = -EUSERS;
-		addr->sllc_sap = llc_ui_स्वतःport();
-		अगर (!addr->sllc_sap)
-			जाओ out;
-	पूर्ण
+		addr->sllc_sap = llc_ui_autoport();
+		if (!addr->sllc_sap)
+			goto out;
+	}
 	sap = llc_sap_find(addr->sllc_sap);
-	अगर (!sap) अणु
-		sap = llc_sap_खोलो(addr->sllc_sap, शून्य);
+	if (!sap) {
+		sap = llc_sap_open(addr->sllc_sap, NULL);
 		rc = -EBUSY; /* some other network layer is using the sap */
-		अगर (!sap)
-			जाओ out;
-	पूर्ण अन्यथा अणु
-		काष्ठा llc_addr laddr, daddr;
-		काष्ठा sock *ask;
+		if (!sap)
+			goto out;
+	} else {
+		struct llc_addr laddr, daddr;
+		struct sock *ask;
 
-		स_रखो(&laddr, 0, माप(laddr));
-		स_रखो(&daddr, 0, माप(daddr));
+		memset(&laddr, 0, sizeof(laddr));
+		memset(&daddr, 0, sizeof(daddr));
 		/*
-		 * FIXME: check अगर the address is multicast,
-		 * 	  only SOCK_DGRAM can करो this.
+		 * FIXME: check if the address is multicast,
+		 * 	  only SOCK_DGRAM can do this.
 		 */
-		स_नकल(laddr.mac, addr->sllc_mac, IFHWADDRLEN);
+		memcpy(laddr.mac, addr->sllc_mac, IFHWADDRLEN);
 		laddr.lsap = addr->sllc_sap;
 		rc = -EADDRINUSE; /* mac + sap clash. */
 		ask = llc_lookup_established(sap, &daddr, &laddr);
-		अगर (ask) अणु
+		if (ask) {
 			sock_put(ask);
-			जाओ out_put;
-		पूर्ण
-	पूर्ण
+			goto out_put;
+		}
+	}
 	llc->laddr.lsap = addr->sllc_sap;
-	स_नकल(llc->laddr.mac, addr->sllc_mac, IFHWADDRLEN);
-	स_नकल(&llc->addr, addr, माप(llc->addr));
+	memcpy(llc->laddr.mac, addr->sllc_mac, IFHWADDRLEN);
+	memcpy(&llc->addr, addr, sizeof(llc->addr));
 	/* assign new connection to its SAP */
 	llc_sap_add_socket(sap, sk);
 	sock_reset_flag(sk, SOCK_ZAPPED);
@@ -403,119 +402,119 @@ out_put:
 	llc_sap_put(sap);
 out:
 	release_sock(sk);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
- *	llc_ui_shutकरोwn - shutकरोwn a connect llc2 socket.
- *	@sock: Socket to shutकरोwn.
- *	@how: What part of the socket to shutकरोwn.
+ *	llc_ui_shutdown - shutdown a connect llc2 socket.
+ *	@sock: Socket to shutdown.
+ *	@how: What part of the socket to shutdown.
  *
- *	Shutकरोwn a connected llc2 socket. Currently this function only supports
- *	shutting करोwn both sends and receives (2), we could probably make this
- *	function such that a user can shutकरोwn only half the connection but not
+ *	Shutdown a connected llc2 socket. Currently this function only supports
+ *	shutting down both sends and receives (2), we could probably make this
+ *	function such that a user can shutdown only half the connection but not
  *	right now.
  *	Returns: 0 upon success, negative otherwise.
  */
-अटल पूर्णांक llc_ui_shutकरोwn(काष्ठा socket *sock, पूर्णांक how)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	पूर्णांक rc = -ENOTCONN;
+static int llc_ui_shutdown(struct socket *sock, int how)
+{
+	struct sock *sk = sock->sk;
+	int rc = -ENOTCONN;
 
 	lock_sock(sk);
-	अगर (unlikely(sk->sk_state != TCP_ESTABLISHED))
-		जाओ out;
+	if (unlikely(sk->sk_state != TCP_ESTABLISHED))
+		goto out;
 	rc = -EINVAL;
-	अगर (how != 2)
-		जाओ out;
+	if (how != 2)
+		goto out;
 	rc = llc_send_disc(sk);
-	अगर (!rc)
-		rc = llc_ui_रुको_क्रम_disc(sk, sk->sk_rcvसमयo);
+	if (!rc)
+		rc = llc_ui_wait_for_disc(sk, sk->sk_rcvtimeo);
 	/* Wake up anyone sleeping in poll */
 	sk->sk_state_change(sk);
 out:
 	release_sock(sk);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
  *	llc_ui_connect - Connect to a remote llc2 mac + sap.
  *	@sock: Socket which will be connected to the remote destination.
  *	@uaddr: Remote and possibly the local address of the new connection.
- *	@addrlen: Size of uaddr काष्ठाure.
- *	@flags: Operational flags specअगरied by the user.
+ *	@addrlen: Size of uaddr structure.
+ *	@flags: Operational flags specified by the user.
  *
- *	Connect to a remote llc2 mac + sap. The caller must specअगरy the
+ *	Connect to a remote llc2 mac + sap. The caller must specify the
  *	destination mac and address to connect to. If the user hasn't previously
- *	called bind(2) with a smac the address of the first पूर्णांकerface of the
- *	specअगरied arp type will be used.
- *	This function will स्वतःbind अगर user did not previously call bind.
+ *	called bind(2) with a smac the address of the first interface of the
+ *	specified arp type will be used.
+ *	This function will autobind if user did not previously call bind.
  *	Returns: 0 upon success, negative otherwise.
  */
-अटल पूर्णांक llc_ui_connect(काष्ठा socket *sock, काष्ठा sockaddr *uaddr,
-			  पूर्णांक addrlen, पूर्णांक flags)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा llc_sock *llc = llc_sk(sk);
-	काष्ठा sockaddr_llc *addr = (काष्ठा sockaddr_llc *)uaddr;
-	पूर्णांक rc = -EINVAL;
+static int llc_ui_connect(struct socket *sock, struct sockaddr *uaddr,
+			  int addrlen, int flags)
+{
+	struct sock *sk = sock->sk;
+	struct llc_sock *llc = llc_sk(sk);
+	struct sockaddr_llc *addr = (struct sockaddr_llc *)uaddr;
+	int rc = -EINVAL;
 
 	lock_sock(sk);
-	अगर (unlikely(addrlen != माप(*addr)))
-		जाओ out;
+	if (unlikely(addrlen != sizeof(*addr)))
+		goto out;
 	rc = -EAFNOSUPPORT;
-	अगर (unlikely(addr->sllc_family != AF_LLC))
-		जाओ out;
-	अगर (unlikely(sk->sk_type != SOCK_STREAM))
-		जाओ out;
+	if (unlikely(addr->sllc_family != AF_LLC))
+		goto out;
+	if (unlikely(sk->sk_type != SOCK_STREAM))
+		goto out;
 	rc = -EALREADY;
-	अगर (unlikely(sock->state == SS_CONNECTING))
-		जाओ out;
-	/* bind connection to sap अगर user hasn't करोne it. */
-	अगर (sock_flag(sk, SOCK_ZAPPED)) अणु
+	if (unlikely(sock->state == SS_CONNECTING))
+		goto out;
+	/* bind connection to sap if user hasn't done it. */
+	if (sock_flag(sk, SOCK_ZAPPED)) {
 		/* bind to sap with null dev, exclusive */
-		rc = llc_ui_स्वतःbind(sock, addr);
-		अगर (rc)
-			जाओ out;
-	पूर्ण
+		rc = llc_ui_autobind(sock, addr);
+		if (rc)
+			goto out;
+	}
 	llc->daddr.lsap = addr->sllc_sap;
-	स_नकल(llc->daddr.mac, addr->sllc_mac, IFHWADDRLEN);
+	memcpy(llc->daddr.mac, addr->sllc_mac, IFHWADDRLEN);
 	sock->state = SS_CONNECTING;
 	sk->sk_state   = TCP_SYN_SENT;
 	llc->link   = llc_ui_next_link_no(llc->sap->laddr.lsap);
 	rc = llc_establish_connection(sk, llc->dev->dev_addr,
 				      addr->sllc_mac, addr->sllc_sap);
-	अगर (rc) अणु
-		dprपूर्णांकk("%s: llc_ui_send_conn failed :-(\n", __func__);
+	if (rc) {
+		dprintk("%s: llc_ui_send_conn failed :-(\n", __func__);
 		sock->state  = SS_UNCONNECTED;
 		sk->sk_state = TCP_CLOSE;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (sk->sk_state == TCP_SYN_SENT) अणु
-		स्थिर दीर्घ समयo = sock_sndसमयo(sk, flags & O_NONBLOCK);
+	if (sk->sk_state == TCP_SYN_SENT) {
+		const long timeo = sock_sndtimeo(sk, flags & O_NONBLOCK);
 
-		अगर (!समयo || !llc_ui_रुको_क्रम_conn(sk, समयo))
-			जाओ out;
+		if (!timeo || !llc_ui_wait_for_conn(sk, timeo))
+			goto out;
 
-		rc = sock_पूर्णांकr_त्रुटि_सं(समयo);
-		अगर (संकेत_pending(current))
-			जाओ out;
-	पूर्ण
+		rc = sock_intr_errno(timeo);
+		if (signal_pending(current))
+			goto out;
+	}
 
-	अगर (sk->sk_state == TCP_CLOSE)
-		जाओ sock_error;
+	if (sk->sk_state == TCP_CLOSE)
+		goto sock_error;
 
 	sock->state = SS_CONNECTED;
 	rc = 0;
 out:
 	release_sock(sk);
-	वापस rc;
+	return rc;
 sock_error:
 	rc = sock_error(sk) ? : -ECONNABORTED;
 	sock->state = SS_UNCONNECTED;
-	जाओ out;
-पूर्ण
+	goto out;
+}
 
 /**
  *	llc_ui_listen - allow a normal socket to accept incoming connections
@@ -525,177 +524,177 @@ sock_error:
  *	Allow a normal socket to accept incoming connections.
  *	Returns 0 upon success, negative otherwise.
  */
-अटल पूर्णांक llc_ui_listen(काष्ठा socket *sock, पूर्णांक backlog)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	पूर्णांक rc = -EINVAL;
+static int llc_ui_listen(struct socket *sock, int backlog)
+{
+	struct sock *sk = sock->sk;
+	int rc = -EINVAL;
 
 	lock_sock(sk);
-	अगर (unlikely(sock->state != SS_UNCONNECTED))
-		जाओ out;
+	if (unlikely(sock->state != SS_UNCONNECTED))
+		goto out;
 	rc = -EOPNOTSUPP;
-	अगर (unlikely(sk->sk_type != SOCK_STREAM))
-		जाओ out;
+	if (unlikely(sk->sk_type != SOCK_STREAM))
+		goto out;
 	rc = -EAGAIN;
-	अगर (sock_flag(sk, SOCK_ZAPPED))
-		जाओ out;
+	if (sock_flag(sk, SOCK_ZAPPED))
+		goto out;
 	rc = 0;
-	अगर (!(अचिन्हित पूर्णांक)backlog)	/* BSDism */
+	if (!(unsigned int)backlog)	/* BSDism */
 		backlog = 1;
 	sk->sk_max_ack_backlog = backlog;
-	अगर (sk->sk_state != TCP_LISTEN) अणु
+	if (sk->sk_state != TCP_LISTEN) {
 		sk->sk_ack_backlog = 0;
 		sk->sk_state	   = TCP_LISTEN;
-	पूर्ण
+	}
 	sk->sk_socket->flags |= __SO_ACCEPTCON;
 out:
 	release_sock(sk);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक llc_ui_रुको_क्रम_disc(काष्ठा sock *sk, दीर्घ समयout)
-अणु
-	DEFINE_WAIT_FUNC(रुको, woken_wake_function);
-	पूर्णांक rc = 0;
+static int llc_ui_wait_for_disc(struct sock *sk, long timeout)
+{
+	DEFINE_WAIT_FUNC(wait, woken_wake_function);
+	int rc = 0;
 
-	add_रुको_queue(sk_sleep(sk), &रुको);
-	जबतक (1) अणु
-		अगर (sk_रुको_event(sk, &समयout, sk->sk_state == TCP_CLOSE, &रुको))
-			अवरोध;
+	add_wait_queue(sk_sleep(sk), &wait);
+	while (1) {
+		if (sk_wait_event(sk, &timeout, sk->sk_state == TCP_CLOSE, &wait))
+			break;
 		rc = -ERESTARTSYS;
-		अगर (संकेत_pending(current))
-			अवरोध;
+		if (signal_pending(current))
+			break;
 		rc = -EAGAIN;
-		अगर (!समयout)
-			अवरोध;
+		if (!timeout)
+			break;
 		rc = 0;
-	पूर्ण
-	हटाओ_रुको_queue(sk_sleep(sk), &रुको);
-	वापस rc;
-पूर्ण
+	}
+	remove_wait_queue(sk_sleep(sk), &wait);
+	return rc;
+}
 
-अटल bool llc_ui_रुको_क्रम_conn(काष्ठा sock *sk, दीर्घ समयout)
-अणु
-	DEFINE_WAIT_FUNC(रुको, woken_wake_function);
+static bool llc_ui_wait_for_conn(struct sock *sk, long timeout)
+{
+	DEFINE_WAIT_FUNC(wait, woken_wake_function);
 
-	add_रुको_queue(sk_sleep(sk), &रुको);
-	जबतक (1) अणु
-		अगर (sk_रुको_event(sk, &समयout, sk->sk_state != TCP_SYN_SENT, &रुको))
-			अवरोध;
-		अगर (संकेत_pending(current) || !समयout)
-			अवरोध;
-	पूर्ण
-	हटाओ_रुको_queue(sk_sleep(sk), &रुको);
-	वापस समयout;
-पूर्ण
+	add_wait_queue(sk_sleep(sk), &wait);
+	while (1) {
+		if (sk_wait_event(sk, &timeout, sk->sk_state != TCP_SYN_SENT, &wait))
+			break;
+		if (signal_pending(current) || !timeout)
+			break;
+	}
+	remove_wait_queue(sk_sleep(sk), &wait);
+	return timeout;
+}
 
-अटल पूर्णांक llc_ui_रुको_क्रम_busy_core(काष्ठा sock *sk, दीर्घ समयout)
-अणु
-	DEFINE_WAIT_FUNC(रुको, woken_wake_function);
-	काष्ठा llc_sock *llc = llc_sk(sk);
-	पूर्णांक rc;
+static int llc_ui_wait_for_busy_core(struct sock *sk, long timeout)
+{
+	DEFINE_WAIT_FUNC(wait, woken_wake_function);
+	struct llc_sock *llc = llc_sk(sk);
+	int rc;
 
-	add_रुको_queue(sk_sleep(sk), &रुको);
-	जबतक (1) अणु
+	add_wait_queue(sk_sleep(sk), &wait);
+	while (1) {
 		rc = 0;
-		अगर (sk_रुको_event(sk, &समयout,
-				  (sk->sk_shutकरोwn & RCV_SHUTDOWN) ||
+		if (sk_wait_event(sk, &timeout,
+				  (sk->sk_shutdown & RCV_SHUTDOWN) ||
 				  (!llc_data_accept_state(llc->state) &&
 				   !llc->remote_busy_flag &&
-				   !llc->p_flag), &रुको))
-			अवरोध;
+				   !llc->p_flag), &wait))
+			break;
 		rc = -ERESTARTSYS;
-		अगर (संकेत_pending(current))
-			अवरोध;
+		if (signal_pending(current))
+			break;
 		rc = -EAGAIN;
-		अगर (!समयout)
-			अवरोध;
-	पूर्ण
-	हटाओ_रुको_queue(sk_sleep(sk), &रुको);
-	वापस rc;
-पूर्ण
+		if (!timeout)
+			break;
+	}
+	remove_wait_queue(sk_sleep(sk), &wait);
+	return rc;
+}
 
-अटल पूर्णांक llc_रुको_data(काष्ठा sock *sk, दीर्घ समयo)
-अणु
-	पूर्णांक rc;
+static int llc_wait_data(struct sock *sk, long timeo)
+{
+	int rc;
 
-	जबतक (1) अणु
+	while (1) {
 		/*
 		 * POSIX 1003.1g mandates this order.
 		 */
 		rc = sock_error(sk);
-		अगर (rc)
-			अवरोध;
+		if (rc)
+			break;
 		rc = 0;
-		अगर (sk->sk_shutकरोwn & RCV_SHUTDOWN)
-			अवरोध;
+		if (sk->sk_shutdown & RCV_SHUTDOWN)
+			break;
 		rc = -EAGAIN;
-		अगर (!समयo)
-			अवरोध;
-		rc = sock_पूर्णांकr_त्रुटि_सं(समयo);
-		अगर (संकेत_pending(current))
-			अवरोध;
+		if (!timeo)
+			break;
+		rc = sock_intr_errno(timeo);
+		if (signal_pending(current))
+			break;
 		rc = 0;
-		अगर (sk_रुको_data(sk, &समयo, शून्य))
-			अवरोध;
-	पूर्ण
-	वापस rc;
-पूर्ण
+		if (sk_wait_data(sk, &timeo, NULL))
+			break;
+	}
+	return rc;
+}
 
-अटल व्योम llc_cmsg_rcv(काष्ठा msghdr *msg, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा llc_sock *llc = llc_sk(skb->sk);
+static void llc_cmsg_rcv(struct msghdr *msg, struct sk_buff *skb)
+{
+	struct llc_sock *llc = llc_sk(skb->sk);
 
-	अगर (llc->cmsg_flags & LLC_CMSG_PKTINFO) अणु
-		काष्ठा llc_pktinfo info;
+	if (llc->cmsg_flags & LLC_CMSG_PKTINFO) {
+		struct llc_pktinfo info;
 
-		स_रखो(&info, 0, माप(info));
-		info.lpi_अगरindex = llc_sk(skb->sk)->dev->अगरindex;
+		memset(&info, 0, sizeof(info));
+		info.lpi_ifindex = llc_sk(skb->sk)->dev->ifindex;
 		llc_pdu_decode_dsap(skb, &info.lpi_sap);
 		llc_pdu_decode_da(skb, info.lpi_mac);
-		put_cmsg(msg, SOL_LLC, LLC_OPT_PKTINFO, माप(info), &info);
-	पूर्ण
-पूर्ण
+		put_cmsg(msg, SOL_LLC, LLC_OPT_PKTINFO, sizeof(info), &info);
+	}
+}
 
 /**
  *	llc_ui_accept - accept a new incoming connection.
  *	@sock: Socket which connections arrive on.
  *	@newsock: Socket to move incoming connection to.
- *	@flags: User specअगरied operational flags.
- *	@kern: If the socket is kernel पूर्णांकernal
+ *	@flags: User specified operational flags.
+ *	@kern: If the socket is kernel internal
  *
  *	Accept a new incoming connection.
  *	Returns 0 upon success, negative otherwise.
  */
-अटल पूर्णांक llc_ui_accept(काष्ठा socket *sock, काष्ठा socket *newsock, पूर्णांक flags,
+static int llc_ui_accept(struct socket *sock, struct socket *newsock, int flags,
 			 bool kern)
-अणु
-	काष्ठा sock *sk = sock->sk, *newsk;
-	काष्ठा llc_sock *llc, *newllc;
-	काष्ठा sk_buff *skb;
-	पूर्णांक rc = -EOPNOTSUPP;
+{
+	struct sock *sk = sock->sk, *newsk;
+	struct llc_sock *llc, *newllc;
+	struct sk_buff *skb;
+	int rc = -EOPNOTSUPP;
 
-	dprपूर्णांकk("%s: accepting on %02X\n", __func__,
+	dprintk("%s: accepting on %02X\n", __func__,
 		llc_sk(sk)->laddr.lsap);
 	lock_sock(sk);
-	अगर (unlikely(sk->sk_type != SOCK_STREAM))
-		जाओ out;
+	if (unlikely(sk->sk_type != SOCK_STREAM))
+		goto out;
 	rc = -EINVAL;
-	अगर (unlikely(sock->state != SS_UNCONNECTED ||
+	if (unlikely(sock->state != SS_UNCONNECTED ||
 		     sk->sk_state != TCP_LISTEN))
-		जाओ out;
-	/* रुको क्रम a connection to arrive. */
-	अगर (skb_queue_empty(&sk->sk_receive_queue)) अणु
-		rc = llc_रुको_data(sk, sk->sk_rcvसमयo);
-		अगर (rc)
-			जाओ out;
-	पूर्ण
-	dprपूर्णांकk("%s: got a new connection on %02X\n", __func__,
+		goto out;
+	/* wait for a connection to arrive. */
+	if (skb_queue_empty(&sk->sk_receive_queue)) {
+		rc = llc_wait_data(sk, sk->sk_rcvtimeo);
+		if (rc)
+			goto out;
+	}
+	dprintk("%s: got a new connection on %02X\n", __func__,
 		llc_sk(sk)->laddr.lsap);
 	skb = skb_dequeue(&sk->sk_receive_queue);
 	rc = -EINVAL;
-	अगर (!skb->sk)
-		जाओ मुक्तs;
+	if (!skb->sk)
+		goto frees;
 	rc = 0;
 	newsk = skb->sk;
 	/* attach connection to a new socket. */
@@ -705,491 +704,491 @@ out:
 	newsock->state		= SS_CONNECTED;
 	llc			= llc_sk(sk);
 	newllc			= llc_sk(newsk);
-	स_नकल(&newllc->addr, &llc->addr, माप(newllc->addr));
+	memcpy(&newllc->addr, &llc->addr, sizeof(newllc->addr));
 	newllc->link = llc_ui_next_link_no(newllc->laddr.lsap);
 
-	/* put original socket back पूर्णांकo a clean listen state. */
+	/* put original socket back into a clean listen state. */
 	sk->sk_state = TCP_LISTEN;
-	sk_acceptq_हटाओd(sk);
-	dprपूर्णांकk("%s: ok success on %02X, client on %02X\n", __func__,
+	sk_acceptq_removed(sk);
+	dprintk("%s: ok success on %02X, client on %02X\n", __func__,
 		llc_sk(sk)->addr.sllc_sap, newllc->daddr.lsap);
-मुक्तs:
-	kमुक्त_skb(skb);
+frees:
+	kfree_skb(skb);
 out:
 	release_sock(sk);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
  *	llc_ui_recvmsg - copy received data to the socket user.
  *	@sock: Socket to copy data from.
- *	@msg: Various user space related inक्रमmation.
+ *	@msg: Various user space related information.
  *	@len: Size of user buffer.
- *	@flags: User specअगरied flags.
+ *	@flags: User specified flags.
  *
  *	Copy received data to the socket user.
  *	Returns non-negative upon success, negative otherwise.
  */
-अटल पूर्णांक llc_ui_recvmsg(काष्ठा socket *sock, काष्ठा msghdr *msg, माप_प्रकार len,
-			  पूर्णांक flags)
-अणु
-	DECLARE_SOCKADDR(काष्ठा sockaddr_llc *, uaddr, msg->msg_name);
-	स्थिर पूर्णांक nonblock = flags & MSG_DONTWAIT;
-	काष्ठा sk_buff *skb = शून्य;
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा llc_sock *llc = llc_sk(sk);
-	माप_प्रकार copied = 0;
+static int llc_ui_recvmsg(struct socket *sock, struct msghdr *msg, size_t len,
+			  int flags)
+{
+	DECLARE_SOCKADDR(struct sockaddr_llc *, uaddr, msg->msg_name);
+	const int nonblock = flags & MSG_DONTWAIT;
+	struct sk_buff *skb = NULL;
+	struct sock *sk = sock->sk;
+	struct llc_sock *llc = llc_sk(sk);
+	size_t copied = 0;
 	u32 peek_seq = 0;
 	u32 *seq, skb_len;
-	अचिन्हित दीर्घ used;
-	पूर्णांक target;	/* Read at least this many bytes */
-	दीर्घ समयo;
+	unsigned long used;
+	int target;	/* Read at least this many bytes */
+	long timeo;
 
 	lock_sock(sk);
 	copied = -ENOTCONN;
-	अगर (unlikely(sk->sk_type == SOCK_STREAM && sk->sk_state == TCP_LISTEN))
-		जाओ out;
+	if (unlikely(sk->sk_type == SOCK_STREAM && sk->sk_state == TCP_LISTEN))
+		goto out;
 
-	समयo = sock_rcvसमयo(sk, nonblock);
+	timeo = sock_rcvtimeo(sk, nonblock);
 
 	seq = &llc->copied_seq;
-	अगर (flags & MSG_PEEK) अणु
+	if (flags & MSG_PEEK) {
 		peek_seq = llc->copied_seq;
 		seq = &peek_seq;
-	पूर्ण
+	}
 
 	target = sock_rcvlowat(sk, flags & MSG_WAITALL, len);
 	copied = 0;
 
-	करो अणु
+	do {
 		u32 offset;
 
 		/*
-		 * We need to check संकेतs first, to get correct SIGURG
-		 * handling. FIXME: Need to check this करोesn't impact 1003.1g
-		 * and move it करोwn to the bottom of the loop
+		 * We need to check signals first, to get correct SIGURG
+		 * handling. FIXME: Need to check this doesn't impact 1003.1g
+		 * and move it down to the bottom of the loop
 		 */
-		अगर (संकेत_pending(current)) अणु
-			अगर (copied)
-				अवरोध;
-			copied = समयo ? sock_पूर्णांकr_त्रुटि_सं(समयo) : -EAGAIN;
-			अवरोध;
-		पूर्ण
+		if (signal_pending(current)) {
+			if (copied)
+				break;
+			copied = timeo ? sock_intr_errno(timeo) : -EAGAIN;
+			break;
+		}
 
 		/* Next get a buffer. */
 
 		skb = skb_peek(&sk->sk_receive_queue);
-		अगर (skb) अणु
+		if (skb) {
 			offset = *seq;
-			जाओ found_ok_skb;
-		पूर्ण
-		/* Well, अगर we have backlog, try to process it now yet. */
+			goto found_ok_skb;
+		}
+		/* Well, if we have backlog, try to process it now yet. */
 
-		अगर (copied >= target && !READ_ONCE(sk->sk_backlog.tail))
-			अवरोध;
+		if (copied >= target && !READ_ONCE(sk->sk_backlog.tail))
+			break;
 
-		अगर (copied) अणु
-			अगर (sk->sk_err ||
+		if (copied) {
+			if (sk->sk_err ||
 			    sk->sk_state == TCP_CLOSE ||
-			    (sk->sk_shutकरोwn & RCV_SHUTDOWN) ||
-			    !समयo ||
+			    (sk->sk_shutdown & RCV_SHUTDOWN) ||
+			    !timeo ||
 			    (flags & MSG_PEEK))
-				अवरोध;
-		पूर्ण अन्यथा अणु
-			अगर (sock_flag(sk, SOCK_DONE))
-				अवरोध;
+				break;
+		} else {
+			if (sock_flag(sk, SOCK_DONE))
+				break;
 
-			अगर (sk->sk_err) अणु
+			if (sk->sk_err) {
 				copied = sock_error(sk);
-				अवरोध;
-			पूर्ण
-			अगर (sk->sk_shutकरोwn & RCV_SHUTDOWN)
-				अवरोध;
+				break;
+			}
+			if (sk->sk_shutdown & RCV_SHUTDOWN)
+				break;
 
-			अगर (sk->sk_type == SOCK_STREAM && sk->sk_state == TCP_CLOSE) अणु
-				अगर (!sock_flag(sk, SOCK_DONE)) अणु
+			if (sk->sk_type == SOCK_STREAM && sk->sk_state == TCP_CLOSE) {
+				if (!sock_flag(sk, SOCK_DONE)) {
 					/*
-					 * This occurs when user tries to पढ़ो
+					 * This occurs when user tries to read
 					 * from never connected socket.
 					 */
 					copied = -ENOTCONN;
-					अवरोध;
-				पूर्ण
-				अवरोध;
-			पूर्ण
-			अगर (!समयo) अणु
+					break;
+				}
+				break;
+			}
+			if (!timeo) {
 				copied = -EAGAIN;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 
-		अगर (copied >= target) अणु /* Do not sleep, just process backlog. */
+		if (copied >= target) { /* Do not sleep, just process backlog. */
 			release_sock(sk);
 			lock_sock(sk);
-		पूर्ण अन्यथा
-			sk_रुको_data(sk, &समयo, शून्य);
+		} else
+			sk_wait_data(sk, &timeo, NULL);
 
-		अगर ((flags & MSG_PEEK) && peek_seq != llc->copied_seq) अणु
+		if ((flags & MSG_PEEK) && peek_seq != llc->copied_seq) {
 			net_dbg_ratelimited("LLC(%s:%d): Application bug, race in MSG_PEEK\n",
 					    current->comm,
 					    task_pid_nr(current));
 			peek_seq = llc->copied_seq;
-		पूर्ण
-		जारी;
+		}
+		continue;
 	found_ok_skb:
 		skb_len = skb->len;
 		/* Ok so how much can we use? */
 		used = skb->len - offset;
-		अगर (len < used)
+		if (len < used)
 			used = len;
 
-		अगर (!(flags & MSG_TRUNC)) अणु
-			पूर्णांक rc = skb_copy_datagram_msg(skb, offset, msg, used);
-			अगर (rc) अणु
+		if (!(flags & MSG_TRUNC)) {
+			int rc = skb_copy_datagram_msg(skb, offset, msg, used);
+			if (rc) {
 				/* Exception. Bailout! */
-				अगर (!copied)
+				if (!copied)
 					copied = -EFAULT;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 
 		*seq += used;
 		copied += used;
 		len -= used;
 
 		/* For non stream protcols we get one packet per recvmsg call */
-		अगर (sk->sk_type != SOCK_STREAM)
-			जाओ copy_uaddr;
+		if (sk->sk_type != SOCK_STREAM)
+			goto copy_uaddr;
 
-		अगर (!(flags & MSG_PEEK)) अणु
+		if (!(flags & MSG_PEEK)) {
 			skb_unlink(skb, &sk->sk_receive_queue);
-			kमुक्त_skb(skb);
+			kfree_skb(skb);
 			*seq = 0;
-		पूर्ण
+		}
 
-		/* Partial पढ़ो */
-		अगर (used + offset < skb_len)
-			जारी;
-	पूर्ण जबतक (len > 0);
+		/* Partial read */
+		if (used + offset < skb_len)
+			continue;
+	} while (len > 0);
 
 out:
 	release_sock(sk);
-	वापस copied;
+	return copied;
 copy_uaddr:
-	अगर (uaddr != शून्य && skb != शून्य) अणु
-		स_नकल(uaddr, llc_ui_skb_cb(skb), माप(*uaddr));
-		msg->msg_namelen = माप(*uaddr);
-	पूर्ण
-	अगर (llc_sk(sk)->cmsg_flags)
+	if (uaddr != NULL && skb != NULL) {
+		memcpy(uaddr, llc_ui_skb_cb(skb), sizeof(*uaddr));
+		msg->msg_namelen = sizeof(*uaddr);
+	}
+	if (llc_sk(sk)->cmsg_flags)
 		llc_cmsg_rcv(msg, skb);
 
-	अगर (!(flags & MSG_PEEK)) अणु
+	if (!(flags & MSG_PEEK)) {
 		skb_unlink(skb, &sk->sk_receive_queue);
-		kमुक्त_skb(skb);
+		kfree_skb(skb);
 		*seq = 0;
-	पूर्ण
+	}
 
-	जाओ out;
-पूर्ण
+	goto out;
+}
 
 /**
  *	llc_ui_sendmsg - Transmit data provided by the socket user.
  *	@sock: Socket to transmit data from.
- *	@msg: Various user related inक्रमmation.
+ *	@msg: Various user related information.
  *	@len: Length of data to transmit.
  *
  *	Transmit data provided by the socket user.
  *	Returns non-negative upon success, negative otherwise.
  */
-अटल पूर्णांक llc_ui_sendmsg(काष्ठा socket *sock, काष्ठा msghdr *msg, माप_प्रकार len)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा llc_sock *llc = llc_sk(sk);
-	DECLARE_SOCKADDR(काष्ठा sockaddr_llc *, addr, msg->msg_name);
-	पूर्णांक flags = msg->msg_flags;
-	पूर्णांक noblock = flags & MSG_DONTWAIT;
-	काष्ठा sk_buff *skb = शून्य;
-	माप_प्रकार size = 0;
-	पूर्णांक rc = -EINVAL, copied = 0, hdrlen;
+static int llc_ui_sendmsg(struct socket *sock, struct msghdr *msg, size_t len)
+{
+	struct sock *sk = sock->sk;
+	struct llc_sock *llc = llc_sk(sk);
+	DECLARE_SOCKADDR(struct sockaddr_llc *, addr, msg->msg_name);
+	int flags = msg->msg_flags;
+	int noblock = flags & MSG_DONTWAIT;
+	struct sk_buff *skb = NULL;
+	size_t size = 0;
+	int rc = -EINVAL, copied = 0, hdrlen;
 
-	dprपूर्णांकk("%s: sending from %02X to %02X\n", __func__,
+	dprintk("%s: sending from %02X to %02X\n", __func__,
 		llc->laddr.lsap, llc->daddr.lsap);
 	lock_sock(sk);
-	अगर (addr) अणु
-		अगर (msg->msg_namelen < माप(*addr))
-			जाओ out;
-	पूर्ण अन्यथा अणु
-		अगर (llc_ui_addr_null(&llc->addr))
-			जाओ out;
+	if (addr) {
+		if (msg->msg_namelen < sizeof(*addr))
+			goto out;
+	} else {
+		if (llc_ui_addr_null(&llc->addr))
+			goto out;
 		addr = &llc->addr;
-	पूर्ण
-	/* must bind connection to sap अगर user hasn't करोne it. */
-	अगर (sock_flag(sk, SOCK_ZAPPED)) अणु
+	}
+	/* must bind connection to sap if user hasn't done it. */
+	if (sock_flag(sk, SOCK_ZAPPED)) {
 		/* bind to sap with null dev, exclusive. */
-		rc = llc_ui_स्वतःbind(sock, addr);
-		अगर (rc)
-			जाओ out;
-	पूर्ण
+		rc = llc_ui_autobind(sock, addr);
+		if (rc)
+			goto out;
+	}
 	hdrlen = llc->dev->hard_header_len + llc_ui_header_len(sk, addr);
 	size = hdrlen + len;
-	अगर (size > llc->dev->mtu)
+	if (size > llc->dev->mtu)
 		size = llc->dev->mtu;
 	copied = size - hdrlen;
 	rc = -EINVAL;
-	अगर (copied < 0)
-		जाओ out;
+	if (copied < 0)
+		goto out;
 	release_sock(sk);
 	skb = sock_alloc_send_skb(sk, size, noblock, &rc);
 	lock_sock(sk);
-	अगर (!skb)
-		जाओ out;
+	if (!skb)
+		goto out;
 	skb->dev      = llc->dev;
 	skb->protocol = llc_proto_type(addr->sllc_arphrd);
 	skb_reserve(skb, hdrlen);
-	rc = स_नकल_from_msg(skb_put(skb, copied), msg, copied);
-	अगर (rc)
-		जाओ out;
-	अगर (sk->sk_type == SOCK_DGRAM || addr->sllc_ua) अणु
+	rc = memcpy_from_msg(skb_put(skb, copied), msg, copied);
+	if (rc)
+		goto out;
+	if (sk->sk_type == SOCK_DGRAM || addr->sllc_ua) {
 		llc_build_and_send_ui_pkt(llc->sap, skb, addr->sllc_mac,
 					  addr->sllc_sap);
-		skb = शून्य;
-		जाओ out;
-	पूर्ण
-	अगर (addr->sllc_test) अणु
+		skb = NULL;
+		goto out;
+	}
+	if (addr->sllc_test) {
 		llc_build_and_send_test_pkt(llc->sap, skb, addr->sllc_mac,
 					    addr->sllc_sap);
-		skb = शून्य;
-		जाओ out;
-	पूर्ण
-	अगर (addr->sllc_xid) अणु
+		skb = NULL;
+		goto out;
+	}
+	if (addr->sllc_xid) {
 		llc_build_and_send_xid_pkt(llc->sap, skb, addr->sllc_mac,
 					   addr->sllc_sap);
-		skb = शून्य;
-		जाओ out;
-	पूर्ण
+		skb = NULL;
+		goto out;
+	}
 	rc = -ENOPROTOOPT;
-	अगर (!(sk->sk_type == SOCK_STREAM && !addr->sllc_ua))
-		जाओ out;
+	if (!(sk->sk_type == SOCK_STREAM && !addr->sllc_ua))
+		goto out;
 	rc = llc_ui_send_data(sk, skb, noblock);
-	skb = शून्य;
+	skb = NULL;
 out:
-	kमुक्त_skb(skb);
-	अगर (rc)
-		dprपूर्णांकk("%s: failed sending from %02X to %02X: %d\n",
+	kfree_skb(skb);
+	if (rc)
+		dprintk("%s: failed sending from %02X to %02X: %d\n",
 			__func__, llc->laddr.lsap, llc->daddr.lsap, rc);
 	release_sock(sk);
-	वापस rc ? : copied;
-पूर्ण
+	return rc ? : copied;
+}
 
 /**
- *	llc_ui_getname - वापस the address info of a socket
+ *	llc_ui_getname - return the address info of a socket
  *	@sock: Socket to get address of.
- *	@uaddr: Address काष्ठाure to वापस inक्रमmation.
- *	@peer: Does user want local or remote address inक्रमmation.
+ *	@uaddr: Address structure to return information.
+ *	@peer: Does user want local or remote address information.
  *
- *	Return the address inक्रमmation of a socket.
+ *	Return the address information of a socket.
  */
-अटल पूर्णांक llc_ui_getname(काष्ठा socket *sock, काष्ठा sockaddr *uaddr,
-			  पूर्णांक peer)
-अणु
-	काष्ठा sockaddr_llc sllc;
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा llc_sock *llc = llc_sk(sk);
-	पूर्णांक rc = -EBADF;
+static int llc_ui_getname(struct socket *sock, struct sockaddr *uaddr,
+			  int peer)
+{
+	struct sockaddr_llc sllc;
+	struct sock *sk = sock->sk;
+	struct llc_sock *llc = llc_sk(sk);
+	int rc = -EBADF;
 
-	स_रखो(&sllc, 0, माप(sllc));
+	memset(&sllc, 0, sizeof(sllc));
 	lock_sock(sk);
-	अगर (sock_flag(sk, SOCK_ZAPPED))
-		जाओ out;
-	अगर (peer) अणु
+	if (sock_flag(sk, SOCK_ZAPPED))
+		goto out;
+	if (peer) {
 		rc = -ENOTCONN;
-		अगर (sk->sk_state != TCP_ESTABLISHED)
-			जाओ out;
-		अगर(llc->dev)
+		if (sk->sk_state != TCP_ESTABLISHED)
+			goto out;
+		if(llc->dev)
 			sllc.sllc_arphrd = llc->dev->type;
 		sllc.sllc_sap = llc->daddr.lsap;
-		स_नकल(&sllc.sllc_mac, &llc->daddr.mac, IFHWADDRLEN);
-	पूर्ण अन्यथा अणु
+		memcpy(&sllc.sllc_mac, &llc->daddr.mac, IFHWADDRLEN);
+	} else {
 		rc = -EINVAL;
-		अगर (!llc->sap)
-			जाओ out;
+		if (!llc->sap)
+			goto out;
 		sllc.sllc_sap = llc->sap->laddr.lsap;
 
-		अगर (llc->dev) अणु
+		if (llc->dev) {
 			sllc.sllc_arphrd = llc->dev->type;
-			स_नकल(&sllc.sllc_mac, llc->dev->dev_addr,
+			memcpy(&sllc.sllc_mac, llc->dev->dev_addr,
 			       IFHWADDRLEN);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	sllc.sllc_family = AF_LLC;
-	स_नकल(uaddr, &sllc, माप(sllc));
-	rc = माप(sllc);
+	memcpy(uaddr, &sllc, sizeof(sllc));
+	rc = sizeof(sllc);
 out:
 	release_sock(sk);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
- *	llc_ui_ioctl - io controls क्रम PF_LLC
+ *	llc_ui_ioctl - io controls for PF_LLC
  *	@sock: Socket to get/set info
  *	@cmd: command
- *	@arg: optional argument क्रम cmd
+ *	@arg: optional argument for cmd
  *
  *	get/set info on llc sockets
  */
-अटल पूर्णांक llc_ui_ioctl(काष्ठा socket *sock, अचिन्हित पूर्णांक cmd,
-			अचिन्हित दीर्घ arg)
-अणु
-	वापस -ENOIOCTLCMD;
-पूर्ण
+static int llc_ui_ioctl(struct socket *sock, unsigned int cmd,
+			unsigned long arg)
+{
+	return -ENOIOCTLCMD;
+}
 
 /**
- *	llc_ui_setsockopt - set various connection specअगरic parameters.
+ *	llc_ui_setsockopt - set various connection specific parameters.
  *	@sock: Socket to set options on.
  *	@level: Socket level user is requesting operations on.
  *	@optname: Operation name.
  *	@optval: User provided operation data.
  *	@optlen: Length of optval.
  *
- *	Set various connection specअगरic parameters.
+ *	Set various connection specific parameters.
  */
-अटल पूर्णांक llc_ui_setsockopt(काष्ठा socket *sock, पूर्णांक level, पूर्णांक optname,
-			     sockptr_t optval, अचिन्हित पूर्णांक optlen)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा llc_sock *llc = llc_sk(sk);
-	अचिन्हित पूर्णांक opt;
-	पूर्णांक rc = -EINVAL;
+static int llc_ui_setsockopt(struct socket *sock, int level, int optname,
+			     sockptr_t optval, unsigned int optlen)
+{
+	struct sock *sk = sock->sk;
+	struct llc_sock *llc = llc_sk(sk);
+	unsigned int opt;
+	int rc = -EINVAL;
 
 	lock_sock(sk);
-	अगर (unlikely(level != SOL_LLC || optlen != माप(पूर्णांक)))
-		जाओ out;
-	rc = copy_from_sockptr(&opt, optval, माप(opt));
-	अगर (rc)
-		जाओ out;
+	if (unlikely(level != SOL_LLC || optlen != sizeof(int)))
+		goto out;
+	rc = copy_from_sockptr(&opt, optval, sizeof(opt));
+	if (rc)
+		goto out;
 	rc = -EINVAL;
-	चयन (optname) अणु
-	हाल LLC_OPT_RETRY:
-		अगर (opt > LLC_OPT_MAX_RETRY)
-			जाओ out;
+	switch (optname) {
+	case LLC_OPT_RETRY:
+		if (opt > LLC_OPT_MAX_RETRY)
+			goto out;
 		llc->n2 = opt;
-		अवरोध;
-	हाल LLC_OPT_SIZE:
-		अगर (opt > LLC_OPT_MAX_SIZE)
-			जाओ out;
+		break;
+	case LLC_OPT_SIZE:
+		if (opt > LLC_OPT_MAX_SIZE)
+			goto out;
 		llc->n1 = opt;
-		अवरोध;
-	हाल LLC_OPT_ACK_TMR_EXP:
-		अगर (opt > LLC_OPT_MAX_ACK_TMR_EXP)
-			जाओ out;
-		llc->ack_समयr.expire = opt * HZ;
-		अवरोध;
-	हाल LLC_OPT_P_TMR_EXP:
-		अगर (opt > LLC_OPT_MAX_P_TMR_EXP)
-			जाओ out;
-		llc->pf_cycle_समयr.expire = opt * HZ;
-		अवरोध;
-	हाल LLC_OPT_REJ_TMR_EXP:
-		अगर (opt > LLC_OPT_MAX_REJ_TMR_EXP)
-			जाओ out;
-		llc->rej_sent_समयr.expire = opt * HZ;
-		अवरोध;
-	हाल LLC_OPT_BUSY_TMR_EXP:
-		अगर (opt > LLC_OPT_MAX_BUSY_TMR_EXP)
-			जाओ out;
-		llc->busy_state_समयr.expire = opt * HZ;
-		अवरोध;
-	हाल LLC_OPT_TX_WIN:
-		अगर (opt > LLC_OPT_MAX_WIN)
-			जाओ out;
+		break;
+	case LLC_OPT_ACK_TMR_EXP:
+		if (opt > LLC_OPT_MAX_ACK_TMR_EXP)
+			goto out;
+		llc->ack_timer.expire = opt * HZ;
+		break;
+	case LLC_OPT_P_TMR_EXP:
+		if (opt > LLC_OPT_MAX_P_TMR_EXP)
+			goto out;
+		llc->pf_cycle_timer.expire = opt * HZ;
+		break;
+	case LLC_OPT_REJ_TMR_EXP:
+		if (opt > LLC_OPT_MAX_REJ_TMR_EXP)
+			goto out;
+		llc->rej_sent_timer.expire = opt * HZ;
+		break;
+	case LLC_OPT_BUSY_TMR_EXP:
+		if (opt > LLC_OPT_MAX_BUSY_TMR_EXP)
+			goto out;
+		llc->busy_state_timer.expire = opt * HZ;
+		break;
+	case LLC_OPT_TX_WIN:
+		if (opt > LLC_OPT_MAX_WIN)
+			goto out;
 		llc->k = opt;
-		अवरोध;
-	हाल LLC_OPT_RX_WIN:
-		अगर (opt > LLC_OPT_MAX_WIN)
-			जाओ out;
+		break;
+	case LLC_OPT_RX_WIN:
+		if (opt > LLC_OPT_MAX_WIN)
+			goto out;
 		llc->rw = opt;
-		अवरोध;
-	हाल LLC_OPT_PKTINFO:
-		अगर (opt)
+		break;
+	case LLC_OPT_PKTINFO:
+		if (opt)
 			llc->cmsg_flags |= LLC_CMSG_PKTINFO;
-		अन्यथा
+		else
 			llc->cmsg_flags &= ~LLC_CMSG_PKTINFO;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		rc = -ENOPROTOOPT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	rc = 0;
 out:
 	release_sock(sk);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
- *	llc_ui_माला_लोockopt - get connection specअगरic socket info
- *	@sock: Socket to get inक्रमmation from.
+ *	llc_ui_getsockopt - get connection specific socket info
+ *	@sock: Socket to get information from.
  *	@level: Socket level user is requesting operations on.
  *	@optname: Operation name.
- *	@optval: Variable to वापस operation data in.
+ *	@optval: Variable to return operation data in.
  *	@optlen: Length of optval.
  *
- *	Get connection specअगरic socket inक्रमmation.
+ *	Get connection specific socket information.
  */
-अटल पूर्णांक llc_ui_माला_लोockopt(काष्ठा socket *sock, पूर्णांक level, पूर्णांक optname,
-			     अक्षर __user *optval, पूर्णांक __user *optlen)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा llc_sock *llc = llc_sk(sk);
-	पूर्णांक val = 0, len = 0, rc = -EINVAL;
+static int llc_ui_getsockopt(struct socket *sock, int level, int optname,
+			     char __user *optval, int __user *optlen)
+{
+	struct sock *sk = sock->sk;
+	struct llc_sock *llc = llc_sk(sk);
+	int val = 0, len = 0, rc = -EINVAL;
 
 	lock_sock(sk);
-	अगर (unlikely(level != SOL_LLC))
-		जाओ out;
+	if (unlikely(level != SOL_LLC))
+		goto out;
 	rc = get_user(len, optlen);
-	अगर (rc)
-		जाओ out;
+	if (rc)
+		goto out;
 	rc = -EINVAL;
-	अगर (len != माप(पूर्णांक))
-		जाओ out;
-	चयन (optname) अणु
-	हाल LLC_OPT_RETRY:
-		val = llc->n2;					अवरोध;
-	हाल LLC_OPT_SIZE:
-		val = llc->n1;					अवरोध;
-	हाल LLC_OPT_ACK_TMR_EXP:
-		val = llc->ack_समयr.expire / HZ;		अवरोध;
-	हाल LLC_OPT_P_TMR_EXP:
-		val = llc->pf_cycle_समयr.expire / HZ;		अवरोध;
-	हाल LLC_OPT_REJ_TMR_EXP:
-		val = llc->rej_sent_समयr.expire / HZ;		अवरोध;
-	हाल LLC_OPT_BUSY_TMR_EXP:
-		val = llc->busy_state_समयr.expire / HZ;	अवरोध;
-	हाल LLC_OPT_TX_WIN:
-		val = llc->k;				अवरोध;
-	हाल LLC_OPT_RX_WIN:
-		val = llc->rw;				अवरोध;
-	हाल LLC_OPT_PKTINFO:
+	if (len != sizeof(int))
+		goto out;
+	switch (optname) {
+	case LLC_OPT_RETRY:
+		val = llc->n2;					break;
+	case LLC_OPT_SIZE:
+		val = llc->n1;					break;
+	case LLC_OPT_ACK_TMR_EXP:
+		val = llc->ack_timer.expire / HZ;		break;
+	case LLC_OPT_P_TMR_EXP:
+		val = llc->pf_cycle_timer.expire / HZ;		break;
+	case LLC_OPT_REJ_TMR_EXP:
+		val = llc->rej_sent_timer.expire / HZ;		break;
+	case LLC_OPT_BUSY_TMR_EXP:
+		val = llc->busy_state_timer.expire / HZ;	break;
+	case LLC_OPT_TX_WIN:
+		val = llc->k;				break;
+	case LLC_OPT_RX_WIN:
+		val = llc->rw;				break;
+	case LLC_OPT_PKTINFO:
 		val = (llc->cmsg_flags & LLC_CMSG_PKTINFO) != 0;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		rc = -ENOPROTOOPT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	rc = 0;
-	अगर (put_user(len, optlen) || copy_to_user(optval, &val, len))
+	if (put_user(len, optlen) || copy_to_user(optval, &val, len))
 		rc = -EFAULT;
 out:
 	release_sock(sk);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल स्थिर काष्ठा net_proto_family llc_ui_family_ops = अणु
+static const struct net_proto_family llc_ui_family_ops = {
 	.family = PF_LLC,
 	.create = llc_ui_create,
 	.owner	= THIS_MODULE,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा proto_ops llc_ui_ops = अणु
+static const struct proto_ops llc_ui_ops = {
 	.family	     = PF_LLC,
 	.owner       = THIS_MODULE,
 	.release     = llc_ui_release,
@@ -1201,74 +1200,74 @@ out:
 	.poll	     = datagram_poll,
 	.ioctl       = llc_ui_ioctl,
 	.listen      = llc_ui_listen,
-	.shutकरोwn    = llc_ui_shutकरोwn,
+	.shutdown    = llc_ui_shutdown,
 	.setsockopt  = llc_ui_setsockopt,
-	.माला_लोockopt  = llc_ui_माला_लोockopt,
+	.getsockopt  = llc_ui_getsockopt,
 	.sendmsg     = llc_ui_sendmsg,
 	.recvmsg     = llc_ui_recvmsg,
 	.mmap	     = sock_no_mmap,
 	.sendpage    = sock_no_sendpage,
-पूर्ण;
+};
 
-अटल स्थिर अक्षर llc_proc_err_msg[] __initस्थिर =
+static const char llc_proc_err_msg[] __initconst =
 	KERN_CRIT "LLC: Unable to register the proc_fs entries\n";
-अटल स्थिर अक्षर llc_sysctl_err_msg[] __initस्थिर =
+static const char llc_sysctl_err_msg[] __initconst =
 	KERN_CRIT "LLC: Unable to register the sysctl entries\n";
-अटल स्थिर अक्षर llc_sock_err_msg[] __initस्थिर =
+static const char llc_sock_err_msg[] __initconst =
 	KERN_CRIT "LLC: Unable to register the network family\n";
 
-अटल पूर्णांक __init llc2_init(व्योम)
-अणु
-	पूर्णांक rc = proto_रेजिस्टर(&llc_proto, 0);
+static int __init llc2_init(void)
+{
+	int rc = proto_register(&llc_proto, 0);
 
-	अगर (rc != 0)
-		जाओ out;
+	if (rc != 0)
+		goto out;
 
 	llc_build_offset_table();
 	llc_station_init();
-	llc_ui_sap_last_स्वतःport = LLC_SAP_DYN_START;
+	llc_ui_sap_last_autoport = LLC_SAP_DYN_START;
 	rc = llc_proc_init();
-	अगर (rc != 0) अणु
-		prपूर्णांकk(llc_proc_err_msg);
-		जाओ out_station;
-	पूर्ण
+	if (rc != 0) {
+		printk(llc_proc_err_msg);
+		goto out_station;
+	}
 	rc = llc_sysctl_init();
-	अगर (rc) अणु
-		prपूर्णांकk(llc_sysctl_err_msg);
-		जाओ out_proc;
-	पूर्ण
-	rc = sock_रेजिस्टर(&llc_ui_family_ops);
-	अगर (rc) अणु
-		prपूर्णांकk(llc_sock_err_msg);
-		जाओ out_sysctl;
-	पूर्ण
+	if (rc) {
+		printk(llc_sysctl_err_msg);
+		goto out_proc;
+	}
+	rc = sock_register(&llc_ui_family_ops);
+	if (rc) {
+		printk(llc_sock_err_msg);
+		goto out_sysctl;
+	}
 	llc_add_pack(LLC_DEST_SAP, llc_sap_handler);
 	llc_add_pack(LLC_DEST_CONN, llc_conn_handler);
 out:
-	वापस rc;
+	return rc;
 out_sysctl:
-	llc_sysctl_निकास();
+	llc_sysctl_exit();
 out_proc:
-	llc_proc_निकास();
+	llc_proc_exit();
 out_station:
-	llc_station_निकास();
-	proto_unरेजिस्टर(&llc_proto);
-	जाओ out;
-पूर्ण
+	llc_station_exit();
+	proto_unregister(&llc_proto);
+	goto out;
+}
 
-अटल व्योम __निकास llc2_निकास(व्योम)
-अणु
-	llc_station_निकास();
-	llc_हटाओ_pack(LLC_DEST_SAP);
-	llc_हटाओ_pack(LLC_DEST_CONN);
-	sock_unरेजिस्टर(PF_LLC);
-	llc_proc_निकास();
-	llc_sysctl_निकास();
-	proto_unरेजिस्टर(&llc_proto);
-पूर्ण
+static void __exit llc2_exit(void)
+{
+	llc_station_exit();
+	llc_remove_pack(LLC_DEST_SAP);
+	llc_remove_pack(LLC_DEST_CONN);
+	sock_unregister(PF_LLC);
+	llc_proc_exit();
+	llc_sysctl_exit();
+	proto_unregister(&llc_proto);
+}
 
 module_init(llc2_init);
-module_निकास(llc2_निकास);
+module_exit(llc2_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Procom 1997, Jay Schullist 2001, Arnaldo C. Melo 2001-2003");

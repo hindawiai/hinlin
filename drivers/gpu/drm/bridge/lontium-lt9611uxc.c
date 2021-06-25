@@ -1,190 +1,189 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2018, The Linux Foundation. All rights reserved.
  * Copyright (c) 2019-2020. Linaro Limited.
  */
 
-#समावेश <linux/firmware.h>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/of_graph.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/regulator/consumer.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/workqueue.h>
+#include <linux/firmware.h>
+#include <linux/gpio/consumer.h>
+#include <linux/interrupt.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <linux/of_graph.h>
+#include <linux/platform_device.h>
+#include <linux/regmap.h>
+#include <linux/regulator/consumer.h>
+#include <linux/wait.h>
+#include <linux/workqueue.h>
 
-#समावेश <sound/hdmi-codec.h>
+#include <sound/hdmi-codec.h>
 
-#समावेश <drm/drm_atomic_helper.h>
-#समावेश <drm/drm_bridge.h>
-#समावेश <drm/drm_mipi_dsi.h>
-#समावेश <drm/drm_prपूर्णांक.h>
-#समावेश <drm/drm_probe_helper.h>
+#include <drm/drm_atomic_helper.h>
+#include <drm/drm_bridge.h>
+#include <drm/drm_mipi_dsi.h>
+#include <drm/drm_print.h>
+#include <drm/drm_probe_helper.h>
 
-#घोषणा EDID_BLOCK_SIZE	128
-#घोषणा EDID_NUM_BLOCKS	2
+#define EDID_BLOCK_SIZE	128
+#define EDID_NUM_BLOCKS	2
 
-काष्ठा lt9611uxc अणु
-	काष्ठा device *dev;
-	काष्ठा drm_bridge bridge;
-	काष्ठा drm_connector connector;
+struct lt9611uxc {
+	struct device *dev;
+	struct drm_bridge bridge;
+	struct drm_connector connector;
 
-	काष्ठा regmap *regmap;
-	/* Protects all accesses to रेजिस्टरs by stopping the on-chip MCU */
-	काष्ठा mutex ocm_lock;
+	struct regmap *regmap;
+	/* Protects all accesses to registers by stopping the on-chip MCU */
+	struct mutex ocm_lock;
 
-	काष्ठा रुको_queue_head wq;
-	काष्ठा work_काष्ठा work;
+	struct wait_queue_head wq;
+	struct work_struct work;
 
-	काष्ठा device_node *dsi0_node;
-	काष्ठा device_node *dsi1_node;
-	काष्ठा mipi_dsi_device *dsi0;
-	काष्ठा mipi_dsi_device *dsi1;
-	काष्ठा platक्रमm_device *audio_pdev;
+	struct device_node *dsi0_node;
+	struct device_node *dsi1_node;
+	struct mipi_dsi_device *dsi0;
+	struct mipi_dsi_device *dsi1;
+	struct platform_device *audio_pdev;
 
-	काष्ठा gpio_desc *reset_gpio;
-	काष्ठा gpio_desc *enable_gpio;
+	struct gpio_desc *reset_gpio;
+	struct gpio_desc *enable_gpio;
 
-	काष्ठा regulator_bulk_data supplies[2];
+	struct regulator_bulk_data supplies[2];
 
-	काष्ठा i2c_client *client;
+	struct i2c_client *client;
 
 	bool hpd_supported;
-	bool edid_पढ़ो;
-	/* can be accessed from dअगरferent thपढ़ोs, so protect this with ocm_lock */
+	bool edid_read;
+	/* can be accessed from different threads, so protect this with ocm_lock */
 	bool hdmi_connected;
-	uपूर्णांक8_t fw_version;
-पूर्ण;
+	uint8_t fw_version;
+};
 
-#घोषणा LT9611_PAGE_CONTROL	0xff
+#define LT9611_PAGE_CONTROL	0xff
 
-अटल स्थिर काष्ठा regmap_range_cfg lt9611uxc_ranges[] = अणु
-	अणु
+static const struct regmap_range_cfg lt9611uxc_ranges[] = {
+	{
 		.name = "register_range",
 		.range_min =  0,
 		.range_max = 0xd0ff,
 		.selector_reg = LT9611_PAGE_CONTROL,
 		.selector_mask = 0xff,
-		.selector_shअगरt = 0,
-		.winकरोw_start = 0,
-		.winकरोw_len = 0x100,
-	पूर्ण,
-पूर्ण;
+		.selector_shift = 0,
+		.window_start = 0,
+		.window_len = 0x100,
+	},
+};
 
-अटल स्थिर काष्ठा regmap_config lt9611uxc_regmap_config = अणु
+static const struct regmap_config lt9611uxc_regmap_config = {
 	.reg_bits = 8,
 	.val_bits = 8,
-	.max_रेजिस्टर = 0xffff,
+	.max_register = 0xffff,
 	.ranges = lt9611uxc_ranges,
 	.num_ranges = ARRAY_SIZE(lt9611uxc_ranges),
-पूर्ण;
+};
 
-काष्ठा lt9611uxc_mode अणु
+struct lt9611uxc_mode {
 	u16 hdisplay;
 	u16 vdisplay;
 	u8 vrefresh;
-पूर्ण;
+};
 
 /*
  * This chip supports only a fixed set of modes.
  * Enumerate them here to check whether the mode is supported.
  */
-अटल काष्ठा lt9611uxc_mode lt9611uxc_modes[] = अणु
-	अणु 1920, 1080, 60 पूर्ण,
-	अणु 1920, 1080, 30 पूर्ण,
-	अणु 1920, 1080, 25 पूर्ण,
-	अणु 1366, 768, 60 पूर्ण,
-	अणु 1360, 768, 60 पूर्ण,
-	अणु 1280, 1024, 60 पूर्ण,
-	अणु 1280, 800, 60 पूर्ण,
-	अणु 1280, 720, 60 पूर्ण,
-	अणु 1280, 720, 50 पूर्ण,
-	अणु 1280, 720, 30 पूर्ण,
-	अणु 1152, 864, 60 पूर्ण,
-	अणु 1024, 768, 60 पूर्ण,
-	अणु 800, 600, 60 पूर्ण,
-	अणु 720, 576, 50 पूर्ण,
-	अणु 720, 480, 60 पूर्ण,
-	अणु 640, 480, 60 पूर्ण,
-पूर्ण;
+static struct lt9611uxc_mode lt9611uxc_modes[] = {
+	{ 1920, 1080, 60 },
+	{ 1920, 1080, 30 },
+	{ 1920, 1080, 25 },
+	{ 1366, 768, 60 },
+	{ 1360, 768, 60 },
+	{ 1280, 1024, 60 },
+	{ 1280, 800, 60 },
+	{ 1280, 720, 60 },
+	{ 1280, 720, 50 },
+	{ 1280, 720, 30 },
+	{ 1152, 864, 60 },
+	{ 1024, 768, 60 },
+	{ 800, 600, 60 },
+	{ 720, 576, 50 },
+	{ 720, 480, 60 },
+	{ 640, 480, 60 },
+};
 
-अटल काष्ठा lt9611uxc *bridge_to_lt9611uxc(काष्ठा drm_bridge *bridge)
-अणु
-	वापस container_of(bridge, काष्ठा lt9611uxc, bridge);
-पूर्ण
+static struct lt9611uxc *bridge_to_lt9611uxc(struct drm_bridge *bridge)
+{
+	return container_of(bridge, struct lt9611uxc, bridge);
+}
 
-अटल काष्ठा lt9611uxc *connector_to_lt9611uxc(काष्ठा drm_connector *connector)
-अणु
-	वापस container_of(connector, काष्ठा lt9611uxc, connector);
-पूर्ण
+static struct lt9611uxc *connector_to_lt9611uxc(struct drm_connector *connector)
+{
+	return container_of(connector, struct lt9611uxc, connector);
+}
 
-अटल व्योम lt9611uxc_lock(काष्ठा lt9611uxc *lt9611uxc)
-अणु
+static void lt9611uxc_lock(struct lt9611uxc *lt9611uxc)
+{
 	mutex_lock(&lt9611uxc->ocm_lock);
-	regmap_ग_लिखो(lt9611uxc->regmap, 0x80ee, 0x01);
-पूर्ण
+	regmap_write(lt9611uxc->regmap, 0x80ee, 0x01);
+}
 
-अटल व्योम lt9611uxc_unlock(काष्ठा lt9611uxc *lt9611uxc)
-अणु
-	regmap_ग_लिखो(lt9611uxc->regmap, 0x80ee, 0x00);
+static void lt9611uxc_unlock(struct lt9611uxc *lt9611uxc)
+{
+	regmap_write(lt9611uxc->regmap, 0x80ee, 0x00);
 	msleep(50);
 	mutex_unlock(&lt9611uxc->ocm_lock);
-पूर्ण
+}
 
-अटल irqवापस_t lt9611uxc_irq_thपढ़ो_handler(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा lt9611uxc *lt9611uxc = dev_id;
-	अचिन्हित पूर्णांक irq_status = 0;
-	अचिन्हित पूर्णांक hpd_status = 0;
+static irqreturn_t lt9611uxc_irq_thread_handler(int irq, void *dev_id)
+{
+	struct lt9611uxc *lt9611uxc = dev_id;
+	unsigned int irq_status = 0;
+	unsigned int hpd_status = 0;
 
 	lt9611uxc_lock(lt9611uxc);
 
-	regmap_पढ़ो(lt9611uxc->regmap, 0xb022, &irq_status);
-	regmap_पढ़ो(lt9611uxc->regmap, 0xb023, &hpd_status);
-	अगर (irq_status)
-		regmap_ग_लिखो(lt9611uxc->regmap, 0xb022, 0);
+	regmap_read(lt9611uxc->regmap, 0xb022, &irq_status);
+	regmap_read(lt9611uxc->regmap, 0xb023, &hpd_status);
+	if (irq_status)
+		regmap_write(lt9611uxc->regmap, 0xb022, 0);
 
-	अगर (irq_status & BIT(0)) अणु
-		lt9611uxc->edid_पढ़ो = !!(hpd_status & BIT(0));
+	if (irq_status & BIT(0)) {
+		lt9611uxc->edid_read = !!(hpd_status & BIT(0));
 		wake_up_all(&lt9611uxc->wq);
-	पूर्ण
+	}
 
-	अगर (irq_status & BIT(1)) अणु
+	if (irq_status & BIT(1)) {
 		lt9611uxc->hdmi_connected = hpd_status & BIT(1);
 		schedule_work(&lt9611uxc->work);
-	पूर्ण
+	}
 
 	lt9611uxc_unlock(lt9611uxc);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम lt9611uxc_hpd_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा lt9611uxc *lt9611uxc = container_of(work, काष्ठा lt9611uxc, work);
+static void lt9611uxc_hpd_work(struct work_struct *work)
+{
+	struct lt9611uxc *lt9611uxc = container_of(work, struct lt9611uxc, work);
 	bool connected;
 
-	अगर (lt9611uxc->connector.dev)
+	if (lt9611uxc->connector.dev)
 		drm_kms_helper_hotplug_event(lt9611uxc->connector.dev);
-	अन्यथा अणु
+	else {
 
 		mutex_lock(&lt9611uxc->ocm_lock);
 		connected = lt9611uxc->hdmi_connected;
 		mutex_unlock(&lt9611uxc->ocm_lock);
 
-		drm_bridge_hpd_notअगरy(&lt9611uxc->bridge,
+		drm_bridge_hpd_notify(&lt9611uxc->bridge,
 				      connected ?
 				      connector_status_connected :
 				      connector_status_disconnected);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम lt9611uxc_reset(काष्ठा lt9611uxc *lt9611uxc)
-अणु
+static void lt9611uxc_reset(struct lt9611uxc *lt9611uxc)
+{
 	gpiod_set_value_cansleep(lt9611uxc->reset_gpio, 1);
 	msleep(20);
 
@@ -193,229 +192,229 @@
 
 	gpiod_set_value_cansleep(lt9611uxc->reset_gpio, 1);
 	msleep(300);
-पूर्ण
+}
 
-अटल व्योम lt9611uxc_निश्चित_5v(काष्ठा lt9611uxc *lt9611uxc)
-अणु
-	अगर (!lt9611uxc->enable_gpio)
-		वापस;
+static void lt9611uxc_assert_5v(struct lt9611uxc *lt9611uxc)
+{
+	if (!lt9611uxc->enable_gpio)
+		return;
 
 	gpiod_set_value_cansleep(lt9611uxc->enable_gpio, 1);
 	msleep(20);
-पूर्ण
+}
 
-अटल पूर्णांक lt9611uxc_regulator_init(काष्ठा lt9611uxc *lt9611uxc)
-अणु
-	पूर्णांक ret;
+static int lt9611uxc_regulator_init(struct lt9611uxc *lt9611uxc)
+{
+	int ret;
 
 	lt9611uxc->supplies[0].supply = "vdd";
 	lt9611uxc->supplies[1].supply = "vcc";
 
 	ret = devm_regulator_bulk_get(lt9611uxc->dev, 2, lt9611uxc->supplies);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस regulator_set_load(lt9611uxc->supplies[0].consumer, 200000);
-पूर्ण
+	return regulator_set_load(lt9611uxc->supplies[0].consumer, 200000);
+}
 
-अटल पूर्णांक lt9611uxc_regulator_enable(काष्ठा lt9611uxc *lt9611uxc)
-अणु
-	पूर्णांक ret;
+static int lt9611uxc_regulator_enable(struct lt9611uxc *lt9611uxc)
+{
+	int ret;
 
 	ret = regulator_enable(lt9611uxc->supplies[0].consumer);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	usleep_range(1000, 10000); /* 50000 according to dtsi */
 
 	ret = regulator_enable(lt9611uxc->supplies[1].consumer);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		regulator_disable(lt9611uxc->supplies[0].consumer);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा lt9611uxc_mode *lt9611uxc_find_mode(स्थिर काष्ठा drm_display_mode *mode)
-अणु
-	पूर्णांक i;
+static struct lt9611uxc_mode *lt9611uxc_find_mode(const struct drm_display_mode *mode)
+{
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(lt9611uxc_modes); i++) अणु
-		अगर (lt9611uxc_modes[i].hdisplay == mode->hdisplay &&
+	for (i = 0; i < ARRAY_SIZE(lt9611uxc_modes); i++) {
+		if (lt9611uxc_modes[i].hdisplay == mode->hdisplay &&
 		    lt9611uxc_modes[i].vdisplay == mode->vdisplay &&
-		    lt9611uxc_modes[i].vrefresh == drm_mode_vrefresh(mode)) अणु
-			वापस &lt9611uxc_modes[i];
-		पूर्ण
-	पूर्ण
+		    lt9611uxc_modes[i].vrefresh == drm_mode_vrefresh(mode)) {
+			return &lt9611uxc_modes[i];
+		}
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा mipi_dsi_device *lt9611uxc_attach_dsi(काष्ठा lt9611uxc *lt9611uxc,
-						    काष्ठा device_node *dsi_node)
-अणु
-	स्थिर काष्ठा mipi_dsi_device_info info = अणु "lt9611uxc", 0, शून्य पूर्ण;
-	काष्ठा mipi_dsi_device *dsi;
-	काष्ठा mipi_dsi_host *host;
-	पूर्णांक ret;
+static struct mipi_dsi_device *lt9611uxc_attach_dsi(struct lt9611uxc *lt9611uxc,
+						    struct device_node *dsi_node)
+{
+	const struct mipi_dsi_device_info info = { "lt9611uxc", 0, NULL };
+	struct mipi_dsi_device *dsi;
+	struct mipi_dsi_host *host;
+	int ret;
 
 	host = of_find_mipi_dsi_host_by_node(dsi_node);
-	अगर (!host) अणु
+	if (!host) {
 		dev_err(lt9611uxc->dev, "failed to find dsi host\n");
-		वापस ERR_PTR(-EPROBE_DEFER);
-	पूर्ण
+		return ERR_PTR(-EPROBE_DEFER);
+	}
 
-	dsi = mipi_dsi_device_रेजिस्टर_full(host, &info);
-	अगर (IS_ERR(dsi)) अणु
+	dsi = mipi_dsi_device_register_full(host, &info);
+	if (IS_ERR(dsi)) {
 		dev_err(lt9611uxc->dev, "failed to create dsi device\n");
-		वापस dsi;
-	पूर्ण
+		return dsi;
+	}
 
 	dsi->lanes = 4;
-	dsi->क्रमmat = MIPI_DSI_FMT_RGB888;
+	dsi->format = MIPI_DSI_FMT_RGB888;
 	dsi->mode_flags = MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_VIDEO_SYNC_PULSE |
 			  MIPI_DSI_MODE_VIDEO_HSE;
 
 	ret = mipi_dsi_attach(dsi);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(lt9611uxc->dev, "failed to attach dsi to host\n");
-		mipi_dsi_device_unरेजिस्टर(dsi);
-		वापस ERR_PTR(ret);
-	पूर्ण
+		mipi_dsi_device_unregister(dsi);
+		return ERR_PTR(ret);
+	}
 
-	वापस dsi;
-पूर्ण
+	return dsi;
+}
 
-अटल पूर्णांक lt9611uxc_connector_get_modes(काष्ठा drm_connector *connector)
-अणु
-	काष्ठा lt9611uxc *lt9611uxc = connector_to_lt9611uxc(connector);
-	अचिन्हित पूर्णांक count;
-	काष्ठा edid *edid;
+static int lt9611uxc_connector_get_modes(struct drm_connector *connector)
+{
+	struct lt9611uxc *lt9611uxc = connector_to_lt9611uxc(connector);
+	unsigned int count;
+	struct edid *edid;
 
 	edid = lt9611uxc->bridge.funcs->get_edid(&lt9611uxc->bridge, connector);
 	drm_connector_update_edid_property(connector, edid);
 	count = drm_add_edid_modes(connector, edid);
-	kमुक्त(edid);
+	kfree(edid);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल क्रमागत drm_connector_status lt9611uxc_connector_detect(काष्ठा drm_connector *connector,
-							    bool क्रमce)
-अणु
-	काष्ठा lt9611uxc *lt9611uxc = connector_to_lt9611uxc(connector);
+static enum drm_connector_status lt9611uxc_connector_detect(struct drm_connector *connector,
+							    bool force)
+{
+	struct lt9611uxc *lt9611uxc = connector_to_lt9611uxc(connector);
 
-	वापस lt9611uxc->bridge.funcs->detect(&lt9611uxc->bridge);
-पूर्ण
+	return lt9611uxc->bridge.funcs->detect(&lt9611uxc->bridge);
+}
 
-अटल क्रमागत drm_mode_status lt9611uxc_connector_mode_valid(काष्ठा drm_connector *connector,
-							   काष्ठा drm_display_mode *mode)
-अणु
-	काष्ठा lt9611uxc_mode *lt9611uxc_mode = lt9611uxc_find_mode(mode);
+static enum drm_mode_status lt9611uxc_connector_mode_valid(struct drm_connector *connector,
+							   struct drm_display_mode *mode)
+{
+	struct lt9611uxc_mode *lt9611uxc_mode = lt9611uxc_find_mode(mode);
 
-	वापस lt9611uxc_mode ? MODE_OK : MODE_BAD;
-पूर्ण
+	return lt9611uxc_mode ? MODE_OK : MODE_BAD;
+}
 
-अटल स्थिर काष्ठा drm_connector_helper_funcs lt9611uxc_bridge_connector_helper_funcs = अणु
+static const struct drm_connector_helper_funcs lt9611uxc_bridge_connector_helper_funcs = {
 	.get_modes = lt9611uxc_connector_get_modes,
 	.mode_valid = lt9611uxc_connector_mode_valid,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा drm_connector_funcs lt9611uxc_bridge_connector_funcs = अणु
+static const struct drm_connector_funcs lt9611uxc_bridge_connector_funcs = {
 	.fill_modes = drm_helper_probe_single_connector_modes,
 	.detect = lt9611uxc_connector_detect,
 	.destroy = drm_connector_cleanup,
 	.reset = drm_atomic_helper_connector_reset,
 	.atomic_duplicate_state = drm_atomic_helper_connector_duplicate_state,
 	.atomic_destroy_state = drm_atomic_helper_connector_destroy_state,
-पूर्ण;
+};
 
-अटल पूर्णांक lt9611uxc_connector_init(काष्ठा drm_bridge *bridge, काष्ठा lt9611uxc *lt9611uxc)
-अणु
-	पूर्णांक ret;
+static int lt9611uxc_connector_init(struct drm_bridge *bridge, struct lt9611uxc *lt9611uxc)
+{
+	int ret;
 
-	अगर (!bridge->encoder) अणु
+	if (!bridge->encoder) {
 		DRM_ERROR("Parent encoder object not found");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	drm_connector_helper_add(&lt9611uxc->connector,
 				 &lt9611uxc_bridge_connector_helper_funcs);
 	ret = drm_connector_init(bridge->dev, &lt9611uxc->connector,
 				 &lt9611uxc_bridge_connector_funcs,
 				 DRM_MODE_CONNECTOR_HDMIA);
-	अगर (ret) अणु
+	if (ret) {
 		DRM_ERROR("Failed to initialize connector with drm\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस drm_connector_attach_encoder(&lt9611uxc->connector, bridge->encoder);
-पूर्ण
+	return drm_connector_attach_encoder(&lt9611uxc->connector, bridge->encoder);
+}
 
-अटल व्योम lt9611uxc_bridge_detach(काष्ठा drm_bridge *bridge)
-अणु
-	काष्ठा lt9611uxc *lt9611uxc = bridge_to_lt9611uxc(bridge);
+static void lt9611uxc_bridge_detach(struct drm_bridge *bridge)
+{
+	struct lt9611uxc *lt9611uxc = bridge_to_lt9611uxc(bridge);
 
-	अगर (lt9611uxc->dsi1) अणु
+	if (lt9611uxc->dsi1) {
 		mipi_dsi_detach(lt9611uxc->dsi1);
-		mipi_dsi_device_unरेजिस्टर(lt9611uxc->dsi1);
-	पूर्ण
+		mipi_dsi_device_unregister(lt9611uxc->dsi1);
+	}
 
 	mipi_dsi_detach(lt9611uxc->dsi0);
-	mipi_dsi_device_unरेजिस्टर(lt9611uxc->dsi0);
-पूर्ण
+	mipi_dsi_device_unregister(lt9611uxc->dsi0);
+}
 
-अटल पूर्णांक lt9611uxc_bridge_attach(काष्ठा drm_bridge *bridge,
-				   क्रमागत drm_bridge_attach_flags flags)
-अणु
-	काष्ठा lt9611uxc *lt9611uxc = bridge_to_lt9611uxc(bridge);
-	पूर्णांक ret;
+static int lt9611uxc_bridge_attach(struct drm_bridge *bridge,
+				   enum drm_bridge_attach_flags flags)
+{
+	struct lt9611uxc *lt9611uxc = bridge_to_lt9611uxc(bridge);
+	int ret;
 
-	अगर (!(flags & DRM_BRIDGE_ATTACH_NO_CONNECTOR)) अणु
+	if (!(flags & DRM_BRIDGE_ATTACH_NO_CONNECTOR)) {
 		ret = lt9611uxc_connector_init(bridge, lt9611uxc);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
+		if (ret < 0)
+			return ret;
+	}
 
 	/* Attach primary DSI */
 	lt9611uxc->dsi0 = lt9611uxc_attach_dsi(lt9611uxc, lt9611uxc->dsi0_node);
-	अगर (IS_ERR(lt9611uxc->dsi0))
-		वापस PTR_ERR(lt9611uxc->dsi0);
+	if (IS_ERR(lt9611uxc->dsi0))
+		return PTR_ERR(lt9611uxc->dsi0);
 
-	/* Attach secondary DSI, अगर specअगरied */
-	अगर (lt9611uxc->dsi1_node) अणु
+	/* Attach secondary DSI, if specified */
+	if (lt9611uxc->dsi1_node) {
 		lt9611uxc->dsi1 = lt9611uxc_attach_dsi(lt9611uxc, lt9611uxc->dsi1_node);
-		अगर (IS_ERR(lt9611uxc->dsi1)) अणु
+		if (IS_ERR(lt9611uxc->dsi1)) {
 			ret = PTR_ERR(lt9611uxc->dsi1);
-			जाओ err_unरेजिस्टर_dsi0;
-		पूर्ण
-	पूर्ण
+			goto err_unregister_dsi0;
+		}
+	}
 
-	वापस 0;
+	return 0;
 
-err_unरेजिस्टर_dsi0:
+err_unregister_dsi0:
 	mipi_dsi_detach(lt9611uxc->dsi0);
-	mipi_dsi_device_unरेजिस्टर(lt9611uxc->dsi0);
+	mipi_dsi_device_unregister(lt9611uxc->dsi0);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल क्रमागत drm_mode_status
-lt9611uxc_bridge_mode_valid(काष्ठा drm_bridge *bridge,
-			    स्थिर काष्ठा drm_display_info *info,
-			    स्थिर काष्ठा drm_display_mode *mode)
-अणु
-	काष्ठा lt9611uxc_mode *lt9611uxc_mode;
+static enum drm_mode_status
+lt9611uxc_bridge_mode_valid(struct drm_bridge *bridge,
+			    const struct drm_display_info *info,
+			    const struct drm_display_mode *mode)
+{
+	struct lt9611uxc_mode *lt9611uxc_mode;
 
 	lt9611uxc_mode = lt9611uxc_find_mode(mode);
 
-	वापस lt9611uxc_mode ? MODE_OK : MODE_BAD;
-पूर्ण
+	return lt9611uxc_mode ? MODE_OK : MODE_BAD;
+}
 
-अटल व्योम lt9611uxc_video_setup(काष्ठा lt9611uxc *lt9611uxc,
-				  स्थिर काष्ठा drm_display_mode *mode)
-अणु
+static void lt9611uxc_video_setup(struct lt9611uxc *lt9611uxc,
+				  const struct drm_display_mode *mode)
+{
 	u32 h_total, hactive, hsync_len, hfront_porch;
 	u32 v_total, vactive, vsync_len, vfront_porch;
 
@@ -430,266 +429,266 @@ lt9611uxc_bridge_mode_valid(काष्ठा drm_bridge *bridge,
 	vsync_len = mode->vsync_end - mode->vsync_start;
 	vfront_porch = mode->vsync_start - mode->vdisplay;
 
-	regmap_ग_लिखो(lt9611uxc->regmap, 0xd00d, (u8)(v_total / 256));
-	regmap_ग_लिखो(lt9611uxc->regmap, 0xd00e, (u8)(v_total % 256));
+	regmap_write(lt9611uxc->regmap, 0xd00d, (u8)(v_total / 256));
+	regmap_write(lt9611uxc->regmap, 0xd00e, (u8)(v_total % 256));
 
-	regmap_ग_लिखो(lt9611uxc->regmap, 0xd00f, (u8)(vactive / 256));
-	regmap_ग_लिखो(lt9611uxc->regmap, 0xd010, (u8)(vactive % 256));
+	regmap_write(lt9611uxc->regmap, 0xd00f, (u8)(vactive / 256));
+	regmap_write(lt9611uxc->regmap, 0xd010, (u8)(vactive % 256));
 
-	regmap_ग_लिखो(lt9611uxc->regmap, 0xd011, (u8)(h_total / 256));
-	regmap_ग_लिखो(lt9611uxc->regmap, 0xd012, (u8)(h_total % 256));
+	regmap_write(lt9611uxc->regmap, 0xd011, (u8)(h_total / 256));
+	regmap_write(lt9611uxc->regmap, 0xd012, (u8)(h_total % 256));
 
-	regmap_ग_लिखो(lt9611uxc->regmap, 0xd013, (u8)(hactive / 256));
-	regmap_ग_लिखो(lt9611uxc->regmap, 0xd014, (u8)(hactive % 256));
+	regmap_write(lt9611uxc->regmap, 0xd013, (u8)(hactive / 256));
+	regmap_write(lt9611uxc->regmap, 0xd014, (u8)(hactive % 256));
 
-	regmap_ग_लिखो(lt9611uxc->regmap, 0xd015, (u8)(vsync_len % 256));
+	regmap_write(lt9611uxc->regmap, 0xd015, (u8)(vsync_len % 256));
 
 	regmap_update_bits(lt9611uxc->regmap, 0xd016, 0xf, (u8)(hsync_len / 256));
-	regmap_ग_लिखो(lt9611uxc->regmap, 0xd017, (u8)(hsync_len % 256));
+	regmap_write(lt9611uxc->regmap, 0xd017, (u8)(hsync_len % 256));
 
 	regmap_update_bits(lt9611uxc->regmap, 0xd018, 0xf, (u8)(vfront_porch / 256));
-	regmap_ग_लिखो(lt9611uxc->regmap, 0xd019, (u8)(vfront_porch % 256));
+	regmap_write(lt9611uxc->regmap, 0xd019, (u8)(vfront_porch % 256));
 
 	regmap_update_bits(lt9611uxc->regmap, 0xd01a, 0xf, (u8)(hfront_porch / 256));
-	regmap_ग_लिखो(lt9611uxc->regmap, 0xd01b, (u8)(hfront_porch % 256));
-पूर्ण
+	regmap_write(lt9611uxc->regmap, 0xd01b, (u8)(hfront_porch % 256));
+}
 
-अटल व्योम lt9611uxc_bridge_mode_set(काष्ठा drm_bridge *bridge,
-				      स्थिर काष्ठा drm_display_mode *mode,
-				      स्थिर काष्ठा drm_display_mode *adj_mode)
-अणु
-	काष्ठा lt9611uxc *lt9611uxc = bridge_to_lt9611uxc(bridge);
+static void lt9611uxc_bridge_mode_set(struct drm_bridge *bridge,
+				      const struct drm_display_mode *mode,
+				      const struct drm_display_mode *adj_mode)
+{
+	struct lt9611uxc *lt9611uxc = bridge_to_lt9611uxc(bridge);
 
 	lt9611uxc_lock(lt9611uxc);
 	lt9611uxc_video_setup(lt9611uxc, mode);
 	lt9611uxc_unlock(lt9611uxc);
-पूर्ण
+}
 
-अटल क्रमागत drm_connector_status lt9611uxc_bridge_detect(काष्ठा drm_bridge *bridge)
-अणु
-	काष्ठा lt9611uxc *lt9611uxc = bridge_to_lt9611uxc(bridge);
-	अचिन्हित पूर्णांक reg_val = 0;
-	पूर्णांक ret;
+static enum drm_connector_status lt9611uxc_bridge_detect(struct drm_bridge *bridge)
+{
+	struct lt9611uxc *lt9611uxc = bridge_to_lt9611uxc(bridge);
+	unsigned int reg_val = 0;
+	int ret;
 	bool connected = true;
 
 	lt9611uxc_lock(lt9611uxc);
 
-	अगर (lt9611uxc->hpd_supported) अणु
-		ret = regmap_पढ़ो(lt9611uxc->regmap, 0xb023, &reg_val);
+	if (lt9611uxc->hpd_supported) {
+		ret = regmap_read(lt9611uxc->regmap, 0xb023, &reg_val);
 
-		अगर (ret)
+		if (ret)
 			dev_err(lt9611uxc->dev, "failed to read hpd status: %d\n", ret);
-		अन्यथा
+		else
 			connected  = reg_val & BIT(1);
-	पूर्ण
+	}
 	lt9611uxc->hdmi_connected = connected;
 
 	lt9611uxc_unlock(lt9611uxc);
 
-	वापस connected ?  connector_status_connected :
+	return connected ?  connector_status_connected :
 				connector_status_disconnected;
-पूर्ण
+}
 
-अटल पूर्णांक lt9611uxc_रुको_क्रम_edid(काष्ठा lt9611uxc *lt9611uxc)
-अणु
-	वापस रुको_event_पूर्णांकerruptible_समयout(lt9611uxc->wq, lt9611uxc->edid_पढ़ो,
-			msecs_to_jअगरfies(500));
-पूर्ण
+static int lt9611uxc_wait_for_edid(struct lt9611uxc *lt9611uxc)
+{
+	return wait_event_interruptible_timeout(lt9611uxc->wq, lt9611uxc->edid_read,
+			msecs_to_jiffies(500));
+}
 
-अटल पूर्णांक lt9611uxc_get_edid_block(व्योम *data, u8 *buf, अचिन्हित पूर्णांक block, माप_प्रकार len)
-अणु
-	काष्ठा lt9611uxc *lt9611uxc = data;
-	पूर्णांक ret;
+static int lt9611uxc_get_edid_block(void *data, u8 *buf, unsigned int block, size_t len)
+{
+	struct lt9611uxc *lt9611uxc = data;
+	int ret;
 
-	अगर (len > EDID_BLOCK_SIZE)
-		वापस -EINVAL;
+	if (len > EDID_BLOCK_SIZE)
+		return -EINVAL;
 
-	अगर (block >= EDID_NUM_BLOCKS)
-		वापस -EINVAL;
+	if (block >= EDID_NUM_BLOCKS)
+		return -EINVAL;
 
 	lt9611uxc_lock(lt9611uxc);
 
-	regmap_ग_लिखो(lt9611uxc->regmap, 0xb00b, 0x10);
+	regmap_write(lt9611uxc->regmap, 0xb00b, 0x10);
 
-	regmap_ग_लिखो(lt9611uxc->regmap, 0xb00a, block * EDID_BLOCK_SIZE);
+	regmap_write(lt9611uxc->regmap, 0xb00a, block * EDID_BLOCK_SIZE);
 
-	ret = regmap_noinc_पढ़ो(lt9611uxc->regmap, 0xb0b0, buf, len);
-	अगर (ret)
+	ret = regmap_noinc_read(lt9611uxc->regmap, 0xb0b0, buf, len);
+	if (ret)
 		dev_err(lt9611uxc->dev, "edid read failed: %d\n", ret);
 
 	lt9611uxc_unlock(lt9611uxc);
 
-	वापस 0;
-पूर्ण;
+	return 0;
+};
 
-अटल काष्ठा edid *lt9611uxc_bridge_get_edid(काष्ठा drm_bridge *bridge,
-					      काष्ठा drm_connector *connector)
-अणु
-	काष्ठा lt9611uxc *lt9611uxc = bridge_to_lt9611uxc(bridge);
-	पूर्णांक ret;
+static struct edid *lt9611uxc_bridge_get_edid(struct drm_bridge *bridge,
+					      struct drm_connector *connector)
+{
+	struct lt9611uxc *lt9611uxc = bridge_to_lt9611uxc(bridge);
+	int ret;
 
-	ret = lt9611uxc_रुको_क्रम_edid(lt9611uxc);
-	अगर (ret < 0) अणु
+	ret = lt9611uxc_wait_for_edid(lt9611uxc);
+	if (ret < 0) {
 		dev_err(lt9611uxc->dev, "wait for EDID failed: %d\n", ret);
-		वापस शून्य;
-	पूर्ण अन्यथा अगर (ret == 0) अणु
+		return NULL;
+	} else if (ret == 0) {
 		dev_err(lt9611uxc->dev, "wait for EDID timeout\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	वापस drm_करो_get_edid(connector, lt9611uxc_get_edid_block, lt9611uxc);
-पूर्ण
+	return drm_do_get_edid(connector, lt9611uxc_get_edid_block, lt9611uxc);
+}
 
-अटल स्थिर काष्ठा drm_bridge_funcs lt9611uxc_bridge_funcs = अणु
+static const struct drm_bridge_funcs lt9611uxc_bridge_funcs = {
 	.attach = lt9611uxc_bridge_attach,
 	.detach = lt9611uxc_bridge_detach,
 	.mode_valid = lt9611uxc_bridge_mode_valid,
 	.mode_set = lt9611uxc_bridge_mode_set,
 	.detect = lt9611uxc_bridge_detect,
 	.get_edid = lt9611uxc_bridge_get_edid,
-पूर्ण;
+};
 
-अटल पूर्णांक lt9611uxc_parse_dt(काष्ठा device *dev,
-			      काष्ठा lt9611uxc *lt9611uxc)
-अणु
+static int lt9611uxc_parse_dt(struct device *dev,
+			      struct lt9611uxc *lt9611uxc)
+{
 	lt9611uxc->dsi0_node = of_graph_get_remote_node(dev->of_node, 0, -1);
-	अगर (!lt9611uxc->dsi0_node) अणु
+	if (!lt9611uxc->dsi0_node) {
 		dev_err(lt9611uxc->dev, "failed to get remote node for primary dsi\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	lt9611uxc->dsi1_node = of_graph_get_remote_node(dev->of_node, 1, -1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lt9611uxc_gpio_init(काष्ठा lt9611uxc *lt9611uxc)
-अणु
-	काष्ठा device *dev = lt9611uxc->dev;
+static int lt9611uxc_gpio_init(struct lt9611uxc *lt9611uxc)
+{
+	struct device *dev = lt9611uxc->dev;
 
 	lt9611uxc->reset_gpio = devm_gpiod_get(dev, "reset", GPIOD_OUT_HIGH);
-	अगर (IS_ERR(lt9611uxc->reset_gpio)) अणु
+	if (IS_ERR(lt9611uxc->reset_gpio)) {
 		dev_err(dev, "failed to acquire reset gpio\n");
-		वापस PTR_ERR(lt9611uxc->reset_gpio);
-	पूर्ण
+		return PTR_ERR(lt9611uxc->reset_gpio);
+	}
 
 	lt9611uxc->enable_gpio = devm_gpiod_get_optional(dev, "enable", GPIOD_OUT_LOW);
-	अगर (IS_ERR(lt9611uxc->enable_gpio)) अणु
+	if (IS_ERR(lt9611uxc->enable_gpio)) {
 		dev_err(dev, "failed to acquire enable gpio\n");
-		वापस PTR_ERR(lt9611uxc->enable_gpio);
-	पूर्ण
+		return PTR_ERR(lt9611uxc->enable_gpio);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lt9611uxc_पढ़ो_device_rev(काष्ठा lt9611uxc *lt9611uxc)
-अणु
-	अचिन्हित पूर्णांक rev0, rev1, rev2;
-	पूर्णांक ret;
+static int lt9611uxc_read_device_rev(struct lt9611uxc *lt9611uxc)
+{
+	unsigned int rev0, rev1, rev2;
+	int ret;
 
 	lt9611uxc_lock(lt9611uxc);
 
-	ret = regmap_पढ़ो(lt9611uxc->regmap, 0x8100, &rev0);
-	ret |= regmap_पढ़ो(lt9611uxc->regmap, 0x8101, &rev1);
-	ret |= regmap_पढ़ो(lt9611uxc->regmap, 0x8102, &rev2);
-	अगर (ret)
+	ret = regmap_read(lt9611uxc->regmap, 0x8100, &rev0);
+	ret |= regmap_read(lt9611uxc->regmap, 0x8101, &rev1);
+	ret |= regmap_read(lt9611uxc->regmap, 0x8102, &rev2);
+	if (ret)
 		dev_err(lt9611uxc->dev, "failed to read revision: %d\n", ret);
-	अन्यथा
+	else
 		dev_info(lt9611uxc->dev, "LT9611 revision: 0x%02x.%02x.%02x\n", rev0, rev1, rev2);
 
 	lt9611uxc_unlock(lt9611uxc);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक lt9611uxc_पढ़ो_version(काष्ठा lt9611uxc *lt9611uxc)
-अणु
-	अचिन्हित पूर्णांक rev;
-	पूर्णांक ret;
+static int lt9611uxc_read_version(struct lt9611uxc *lt9611uxc)
+{
+	unsigned int rev;
+	int ret;
 
 	lt9611uxc_lock(lt9611uxc);
 
-	ret = regmap_पढ़ो(lt9611uxc->regmap, 0xb021, &rev);
-	अगर (ret)
+	ret = regmap_read(lt9611uxc->regmap, 0xb021, &rev);
+	if (ret)
 		dev_err(lt9611uxc->dev, "failed to read revision: %d\n", ret);
-	अन्यथा
+	else
 		dev_info(lt9611uxc->dev, "LT9611 version: 0x%02x\n", rev);
 
 	lt9611uxc_unlock(lt9611uxc);
 
-	वापस ret < 0 ? ret : rev;
-पूर्ण
+	return ret < 0 ? ret : rev;
+}
 
-अटल पूर्णांक lt9611uxc_hdmi_hw_params(काष्ठा device *dev, व्योम *data,
-				    काष्ठा hdmi_codec_daअगरmt *fmt,
-				    काष्ठा hdmi_codec_params *hparms)
-अणु
+static int lt9611uxc_hdmi_hw_params(struct device *dev, void *data,
+				    struct hdmi_codec_daifmt *fmt,
+				    struct hdmi_codec_params *hparms)
+{
 	/*
-	 * LT9611UXC will स्वतःmatically detect rate and sample size, so no need
+	 * LT9611UXC will automatically detect rate and sample size, so no need
 	 * to setup anything here.
 	 */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम lt9611uxc_audio_shutकरोwn(काष्ठा device *dev, व्योम *data)
-अणु
-पूर्ण
+static void lt9611uxc_audio_shutdown(struct device *dev, void *data)
+{
+}
 
-अटल पूर्णांक lt9611uxc_hdmi_i2s_get_dai_id(काष्ठा snd_soc_component *component,
-					 काष्ठा device_node *endpoपूर्णांक)
-अणु
-	काष्ठा of_endpoपूर्णांक of_ep;
-	पूर्णांक ret;
+static int lt9611uxc_hdmi_i2s_get_dai_id(struct snd_soc_component *component,
+					 struct device_node *endpoint)
+{
+	struct of_endpoint of_ep;
+	int ret;
 
-	ret = of_graph_parse_endpoपूर्णांक(endpoपूर्णांक, &of_ep);
-	अगर (ret < 0)
-		वापस ret;
+	ret = of_graph_parse_endpoint(endpoint, &of_ep);
+	if (ret < 0)
+		return ret;
 
 	/*
 	 * HDMI sound should be located as reg = <2>
 	 * Then, it is sound port 0
 	 */
-	अगर (of_ep.port == 2)
-		वापस 0;
+	if (of_ep.port == 2)
+		return 0;
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल स्थिर काष्ठा hdmi_codec_ops lt9611uxc_codec_ops = अणु
+static const struct hdmi_codec_ops lt9611uxc_codec_ops = {
 	.hw_params	= lt9611uxc_hdmi_hw_params,
-	.audio_shutकरोwn = lt9611uxc_audio_shutकरोwn,
+	.audio_shutdown = lt9611uxc_audio_shutdown,
 	.get_dai_id	= lt9611uxc_hdmi_i2s_get_dai_id,
-पूर्ण;
+};
 
-अटल पूर्णांक lt9611uxc_audio_init(काष्ठा device *dev, काष्ठा lt9611uxc *lt9611uxc)
-अणु
-	काष्ठा hdmi_codec_pdata codec_data = अणु
+static int lt9611uxc_audio_init(struct device *dev, struct lt9611uxc *lt9611uxc)
+{
+	struct hdmi_codec_pdata codec_data = {
 		.ops = &lt9611uxc_codec_ops,
 		.max_i2s_channels = 2,
 		.i2s = 1,
 		.data = lt9611uxc,
-	पूर्ण;
+	};
 
 	lt9611uxc->audio_pdev =
-		platक्रमm_device_रेजिस्टर_data(dev, HDMI_CODEC_DRV_NAME,
+		platform_device_register_data(dev, HDMI_CODEC_DRV_NAME,
 					      PLATFORM_DEVID_AUTO,
-					      &codec_data, माप(codec_data));
+					      &codec_data, sizeof(codec_data));
 
-	वापस PTR_ERR_OR_ZERO(lt9611uxc->audio_pdev);
-पूर्ण
+	return PTR_ERR_OR_ZERO(lt9611uxc->audio_pdev);
+}
 
-अटल व्योम lt9611uxc_audio_निकास(काष्ठा lt9611uxc *lt9611uxc)
-अणु
-	अगर (lt9611uxc->audio_pdev) अणु
-		platक्रमm_device_unरेजिस्टर(lt9611uxc->audio_pdev);
-		lt9611uxc->audio_pdev = शून्य;
-	पूर्ण
-पूर्ण
+static void lt9611uxc_audio_exit(struct lt9611uxc *lt9611uxc)
+{
+	if (lt9611uxc->audio_pdev) {
+		platform_device_unregister(lt9611uxc->audio_pdev);
+		lt9611uxc->audio_pdev = NULL;
+	}
+}
 
-#घोषणा LT9611UXC_FW_PAGE_SIZE 32
-अटल व्योम lt9611uxc_firmware_ग_लिखो_page(काष्ठा lt9611uxc *lt9611uxc, u16 addr, स्थिर u8 *buf)
-अणु
-	काष्ठा reg_sequence seq_ग_लिखो_prepare[] = अणु
+#define LT9611UXC_FW_PAGE_SIZE 32
+static void lt9611uxc_firmware_write_page(struct lt9611uxc *lt9611uxc, u16 addr, const u8 *buf)
+{
+	struct reg_sequence seq_write_prepare[] = {
 		REG_SEQ0(0x805a, 0x04),
 		REG_SEQ0(0x805a, 0x00),
 
@@ -697,29 +696,29 @@ lt9611uxc_bridge_mode_valid(काष्ठा drm_bridge *bridge,
 		REG_SEQ0(0x805a, 0x20),
 		REG_SEQ0(0x805a, 0x00),
 		REG_SEQ0(0x8058, 0x21),
-	पूर्ण;
+	};
 
-	काष्ठा reg_sequence seq_ग_लिखो_addr[] = अणु
+	struct reg_sequence seq_write_addr[] = {
 		REG_SEQ0(0x805b, (addr >> 16) & 0xff),
 		REG_SEQ0(0x805c, (addr >> 8) & 0xff),
 		REG_SEQ0(0x805d, addr & 0xff),
 		REG_SEQ0(0x805a, 0x10),
 		REG_SEQ0(0x805a, 0x00),
-	पूर्ण;
+	};
 
-	regmap_ग_लिखो(lt9611uxc->regmap, 0x8108, 0xbf);
+	regmap_write(lt9611uxc->regmap, 0x8108, 0xbf);
 	msleep(20);
-	regmap_ग_लिखो(lt9611uxc->regmap, 0x8108, 0xff);
+	regmap_write(lt9611uxc->regmap, 0x8108, 0xff);
 	msleep(20);
-	regmap_multi_reg_ग_लिखो(lt9611uxc->regmap, seq_ग_लिखो_prepare, ARRAY_SIZE(seq_ग_लिखो_prepare));
-	regmap_noinc_ग_लिखो(lt9611uxc->regmap, 0x8059, buf, LT9611UXC_FW_PAGE_SIZE);
-	regmap_multi_reg_ग_लिखो(lt9611uxc->regmap, seq_ग_लिखो_addr, ARRAY_SIZE(seq_ग_लिखो_addr));
+	regmap_multi_reg_write(lt9611uxc->regmap, seq_write_prepare, ARRAY_SIZE(seq_write_prepare));
+	regmap_noinc_write(lt9611uxc->regmap, 0x8059, buf, LT9611UXC_FW_PAGE_SIZE);
+	regmap_multi_reg_write(lt9611uxc->regmap, seq_write_addr, ARRAY_SIZE(seq_write_addr));
 	msleep(20);
-पूर्ण
+}
 
-अटल व्योम lt9611uxc_firmware_पढ़ो_page(काष्ठा lt9611uxc *lt9611uxc, u16 addr, अक्षर *buf)
-अणु
-	काष्ठा reg_sequence seq_पढ़ो_page[] = अणु
+static void lt9611uxc_firmware_read_page(struct lt9611uxc *lt9611uxc, u16 addr, char *buf)
+{
+	struct reg_sequence seq_read_page[] = {
 		REG_SEQ0(0x805a, 0xa0),
 		REG_SEQ0(0x805a, 0x80),
 		REG_SEQ0(0x805b, (addr >> 16) & 0xff),
@@ -728,54 +727,54 @@ lt9611uxc_bridge_mode_valid(काष्ठा drm_bridge *bridge,
 		REG_SEQ0(0x805a, 0x90),
 		REG_SEQ0(0x805a, 0x80),
 		REG_SEQ0(0x8058, 0x21),
-	पूर्ण;
+	};
 
-	regmap_multi_reg_ग_लिखो(lt9611uxc->regmap, seq_पढ़ो_page, ARRAY_SIZE(seq_पढ़ो_page));
-	regmap_noinc_पढ़ो(lt9611uxc->regmap, 0x805f, buf, LT9611UXC_FW_PAGE_SIZE);
-पूर्ण
+	regmap_multi_reg_write(lt9611uxc->regmap, seq_read_page, ARRAY_SIZE(seq_read_page));
+	regmap_noinc_read(lt9611uxc->regmap, 0x805f, buf, LT9611UXC_FW_PAGE_SIZE);
+}
 
-अटल अक्षर *lt9611uxc_firmware_पढ़ो(काष्ठा lt9611uxc *lt9611uxc, माप_प्रकार size)
-अणु
-	काष्ठा reg_sequence seq_पढ़ो_setup[] = अणु
+static char *lt9611uxc_firmware_read(struct lt9611uxc *lt9611uxc, size_t size)
+{
+	struct reg_sequence seq_read_setup[] = {
 		REG_SEQ0(0x805a, 0x84),
 		REG_SEQ0(0x805a, 0x80),
-	पूर्ण;
+	};
 
-	अक्षर *पढ़ोbuf;
+	char *readbuf;
 	u16 offset;
 
-	पढ़ोbuf = kzalloc(ALIGN(size, 32), GFP_KERNEL);
-	अगर (!पढ़ोbuf)
-		वापस शून्य;
+	readbuf = kzalloc(ALIGN(size, 32), GFP_KERNEL);
+	if (!readbuf)
+		return NULL;
 
-	regmap_multi_reg_ग_लिखो(lt9611uxc->regmap, seq_पढ़ो_setup, ARRAY_SIZE(seq_पढ़ो_setup));
+	regmap_multi_reg_write(lt9611uxc->regmap, seq_read_setup, ARRAY_SIZE(seq_read_setup));
 
-	क्रम (offset = 0;
+	for (offset = 0;
 	     offset < size;
 	     offset += LT9611UXC_FW_PAGE_SIZE)
-		lt9611uxc_firmware_पढ़ो_page(lt9611uxc, offset, &पढ़ोbuf[offset]);
+		lt9611uxc_firmware_read_page(lt9611uxc, offset, &readbuf[offset]);
 
-	वापस पढ़ोbuf;
-पूर्ण
+	return readbuf;
+}
 
-अटल पूर्णांक lt9611uxc_firmware_update(काष्ठा lt9611uxc *lt9611uxc)
-अणु
-	पूर्णांक ret;
+static int lt9611uxc_firmware_update(struct lt9611uxc *lt9611uxc)
+{
+	int ret;
 	u16 offset;
-	माप_प्रकार reमुख्य;
-	अक्षर *पढ़ोbuf;
-	स्थिर काष्ठा firmware *fw;
+	size_t remain;
+	char *readbuf;
+	const struct firmware *fw;
 
-	काष्ठा reg_sequence seq_setup[] = अणु
+	struct reg_sequence seq_setup[] = {
 		REG_SEQ0(0x805e, 0xdf),
 		REG_SEQ0(0x8058, 0x00),
 		REG_SEQ0(0x8059, 0x50),
 		REG_SEQ0(0x805a, 0x10),
 		REG_SEQ0(0x805a, 0x00),
-	पूर्ण;
+	};
 
 
-	काष्ठा reg_sequence seq_block_erase[] = अणु
+	struct reg_sequence seq_block_erase[] = {
 		REG_SEQ0(0x805a, 0x04),
 		REG_SEQ0(0x805a, 0x00),
 		REG_SEQ0(0x805b, 0x00),
@@ -783,202 +782,202 @@ lt9611uxc_bridge_mode_valid(काष्ठा drm_bridge *bridge,
 		REG_SEQ0(0x805d, 0x00),
 		REG_SEQ0(0x805a, 0x01),
 		REG_SEQ0(0x805a, 0x00),
-	पूर्ण;
+	};
 
 	ret = request_firmware(&fw, "lt9611uxc_fw.bin", lt9611uxc->dev);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	dev_info(lt9611uxc->dev, "Updating firmware\n");
 	lt9611uxc_lock(lt9611uxc);
 
-	regmap_multi_reg_ग_लिखो(lt9611uxc->regmap, seq_setup, ARRAY_SIZE(seq_setup));
+	regmap_multi_reg_write(lt9611uxc->regmap, seq_setup, ARRAY_SIZE(seq_setup));
 
 	/*
-	 * Need erase block 2 बारs here. Someबार, block erase can fail.
+	 * Need erase block 2 timess here. Sometimes, block erase can fail.
 	 * This is a workaroud.
 	 */
-	regmap_multi_reg_ग_लिखो(lt9611uxc->regmap, seq_block_erase, ARRAY_SIZE(seq_block_erase));
+	regmap_multi_reg_write(lt9611uxc->regmap, seq_block_erase, ARRAY_SIZE(seq_block_erase));
 	msleep(3000);
-	regmap_multi_reg_ग_लिखो(lt9611uxc->regmap, seq_block_erase, ARRAY_SIZE(seq_block_erase));
+	regmap_multi_reg_write(lt9611uxc->regmap, seq_block_erase, ARRAY_SIZE(seq_block_erase));
 	msleep(3000);
 
-	क्रम (offset = 0, reमुख्य = fw->size;
-	     reमुख्य >= LT9611UXC_FW_PAGE_SIZE;
-	     offset += LT9611UXC_FW_PAGE_SIZE, reमुख्य -= LT9611UXC_FW_PAGE_SIZE)
-		lt9611uxc_firmware_ग_लिखो_page(lt9611uxc, offset, fw->data + offset);
+	for (offset = 0, remain = fw->size;
+	     remain >= LT9611UXC_FW_PAGE_SIZE;
+	     offset += LT9611UXC_FW_PAGE_SIZE, remain -= LT9611UXC_FW_PAGE_SIZE)
+		lt9611uxc_firmware_write_page(lt9611uxc, offset, fw->data + offset);
 
-	अगर (reमुख्य > 0) अणु
-		अक्षर buf[LT9611UXC_FW_PAGE_SIZE];
+	if (remain > 0) {
+		char buf[LT9611UXC_FW_PAGE_SIZE];
 
-		स_रखो(buf, 0xff, LT9611UXC_FW_PAGE_SIZE);
-		स_नकल(buf, fw->data + offset, reमुख्य);
-		lt9611uxc_firmware_ग_लिखो_page(lt9611uxc, offset, buf);
-	पूर्ण
+		memset(buf, 0xff, LT9611UXC_FW_PAGE_SIZE);
+		memcpy(buf, fw->data + offset, remain);
+		lt9611uxc_firmware_write_page(lt9611uxc, offset, buf);
+	}
 	msleep(20);
 
-	पढ़ोbuf = lt9611uxc_firmware_पढ़ो(lt9611uxc, fw->size);
-	अगर (!पढ़ोbuf) अणु
+	readbuf = lt9611uxc_firmware_read(lt9611uxc, fw->size);
+	if (!readbuf) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (!स_भेद(पढ़ोbuf, fw->data, fw->size)) अणु
+	if (!memcmp(readbuf, fw->data, fw->size)) {
 		dev_err(lt9611uxc->dev, "Firmware update failed\n");
-		prपूर्णांक_hex_dump(KERN_ERR, "fw: ", DUMP_PREFIX_OFFSET, 16, 1, पढ़ोbuf, fw->size, false);
+		print_hex_dump(KERN_ERR, "fw: ", DUMP_PREFIX_OFFSET, 16, 1, readbuf, fw->size, false);
 		ret = -EINVAL;
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_info(lt9611uxc->dev, "Firmware updates successfully\n");
 		ret = 0;
-	पूर्ण
-	kमुक्त(पढ़ोbuf);
+	}
+	kfree(readbuf);
 
 out:
 	lt9611uxc_unlock(lt9611uxc);
 	lt9611uxc_reset(lt9611uxc);
 	release_firmware(fw);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार lt9611uxc_firmware_store(काष्ठा device *dev, काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार len)
-अणु
-	काष्ठा lt9611uxc *lt9611uxc = dev_get_drvdata(dev);
-	पूर्णांक ret;
+static ssize_t lt9611uxc_firmware_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t len)
+{
+	struct lt9611uxc *lt9611uxc = dev_get_drvdata(dev);
+	int ret;
 
 	ret = lt9611uxc_firmware_update(lt9611uxc);
-	अगर (ret < 0)
-		वापस ret;
-	वापस len;
-पूर्ण
+	if (ret < 0)
+		return ret;
+	return len;
+}
 
-अटल sमाप_प्रकार lt9611uxc_firmware_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा lt9611uxc *lt9611uxc = dev_get_drvdata(dev);
+static ssize_t lt9611uxc_firmware_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	struct lt9611uxc *lt9611uxc = dev_get_drvdata(dev);
 
-	वापस sysfs_emit(buf, "%02x\n", lt9611uxc->fw_version);
-पूर्ण
+	return sysfs_emit(buf, "%02x\n", lt9611uxc->fw_version);
+}
 
-अटल DEVICE_ATTR_RW(lt9611uxc_firmware);
+static DEVICE_ATTR_RW(lt9611uxc_firmware);
 
-अटल काष्ठा attribute *lt9611uxc_attrs[] = अणु
+static struct attribute *lt9611uxc_attrs[] = {
 	&dev_attr_lt9611uxc_firmware.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group lt9611uxc_attr_group = अणु
+static const struct attribute_group lt9611uxc_attr_group = {
 	.attrs = lt9611uxc_attrs,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा attribute_group *lt9611uxc_attr_groups[] = अणु
+static const struct attribute_group *lt9611uxc_attr_groups[] = {
 	&lt9611uxc_attr_group,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल पूर्णांक lt9611uxc_probe(काष्ठा i2c_client *client,
-			   स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा lt9611uxc *lt9611uxc;
-	काष्ठा device *dev = &client->dev;
-	पूर्णांक ret;
+static int lt9611uxc_probe(struct i2c_client *client,
+			   const struct i2c_device_id *id)
+{
+	struct lt9611uxc *lt9611uxc;
+	struct device *dev = &client->dev;
+	int ret;
 	bool fw_updated = false;
 
-	अगर (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C)) अणु
+	if (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C)) {
 		dev_err(dev, "device doesn't support I2C\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	lt9611uxc = devm_kzalloc(dev, माप(*lt9611uxc), GFP_KERNEL);
-	अगर (!lt9611uxc)
-		वापस -ENOMEM;
+	lt9611uxc = devm_kzalloc(dev, sizeof(*lt9611uxc), GFP_KERNEL);
+	if (!lt9611uxc)
+		return -ENOMEM;
 
 	lt9611uxc->dev = &client->dev;
 	lt9611uxc->client = client;
 	mutex_init(&lt9611uxc->ocm_lock);
 
 	lt9611uxc->regmap = devm_regmap_init_i2c(client, &lt9611uxc_regmap_config);
-	अगर (IS_ERR(lt9611uxc->regmap)) अणु
+	if (IS_ERR(lt9611uxc->regmap)) {
 		dev_err(lt9611uxc->dev, "regmap i2c init failed\n");
-		वापस PTR_ERR(lt9611uxc->regmap);
-	पूर्ण
+		return PTR_ERR(lt9611uxc->regmap);
+	}
 
 	ret = lt9611uxc_parse_dt(&client->dev, lt9611uxc);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "failed to parse device tree\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = lt9611uxc_gpio_init(lt9611uxc);
-	अगर (ret < 0)
-		जाओ err_of_put;
+	if (ret < 0)
+		goto err_of_put;
 
 	ret = lt9611uxc_regulator_init(lt9611uxc);
-	अगर (ret < 0)
-		जाओ err_of_put;
+	if (ret < 0)
+		goto err_of_put;
 
-	lt9611uxc_निश्चित_5v(lt9611uxc);
+	lt9611uxc_assert_5v(lt9611uxc);
 
 	ret = lt9611uxc_regulator_enable(lt9611uxc);
-	अगर (ret)
-		जाओ err_of_put;
+	if (ret)
+		goto err_of_put;
 
 	lt9611uxc_reset(lt9611uxc);
 
-	ret = lt9611uxc_पढ़ो_device_rev(lt9611uxc);
-	अगर (ret) अणु
+	ret = lt9611uxc_read_device_rev(lt9611uxc);
+	if (ret) {
 		dev_err(dev, "failed to read chip rev\n");
-		जाओ err_disable_regulators;
-	पूर्ण
+		goto err_disable_regulators;
+	}
 
 retry:
-	ret = lt9611uxc_पढ़ो_version(lt9611uxc);
-	अगर (ret < 0) अणु
+	ret = lt9611uxc_read_version(lt9611uxc);
+	if (ret < 0) {
 		dev_err(dev, "failed to read FW version\n");
-		जाओ err_disable_regulators;
-	पूर्ण अन्यथा अगर (ret == 0) अणु
-		अगर (!fw_updated) अणु
+		goto err_disable_regulators;
+	} else if (ret == 0) {
+		if (!fw_updated) {
 			fw_updated = true;
 			dev_err(dev, "FW version 0, enforcing firmware update\n");
 			ret = lt9611uxc_firmware_update(lt9611uxc);
-			अगर (ret < 0)
-				जाओ err_disable_regulators;
-			अन्यथा
-				जाओ retry;
-		पूर्ण अन्यथा अणु
+			if (ret < 0)
+				goto err_disable_regulators;
+			else
+				goto retry;
+		} else {
 			dev_err(dev, "FW version 0, update failed\n");
 			ret = -EOPNOTSUPP;
-			जाओ err_disable_regulators;
-		पूर्ण
-	पूर्ण अन्यथा अगर (ret < 0x40) अणु
+			goto err_disable_regulators;
+		}
+	} else if (ret < 0x40) {
 		dev_info(dev, "FW version 0x%x, HPD not supported\n", ret);
-	पूर्ण अन्यथा अणु
+	} else {
 		lt9611uxc->hpd_supported = true;
-	पूर्ण
+	}
 	lt9611uxc->fw_version = ret;
 
-	init_रुकोqueue_head(&lt9611uxc->wq);
+	init_waitqueue_head(&lt9611uxc->wq);
 	INIT_WORK(&lt9611uxc->work, lt9611uxc_hpd_work);
 
-	ret = devm_request_thपढ़ोed_irq(dev, client->irq, शून्य,
-					lt9611uxc_irq_thपढ़ो_handler,
+	ret = devm_request_threaded_irq(dev, client->irq, NULL,
+					lt9611uxc_irq_thread_handler,
 					IRQF_ONESHOT, "lt9611uxc", lt9611uxc);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "failed to request irq\n");
-		जाओ err_disable_regulators;
-	पूर्ण
+		goto err_disable_regulators;
+	}
 
 	i2c_set_clientdata(client, lt9611uxc);
 
 	lt9611uxc->bridge.funcs = &lt9611uxc_bridge_funcs;
 	lt9611uxc->bridge.of_node = client->dev.of_node;
 	lt9611uxc->bridge.ops = DRM_BRIDGE_OP_DETECT | DRM_BRIDGE_OP_EDID;
-	अगर (lt9611uxc->hpd_supported)
+	if (lt9611uxc->hpd_supported)
 		lt9611uxc->bridge.ops |= DRM_BRIDGE_OP_HPD;
 	lt9611uxc->bridge.type = DRM_MODE_CONNECTOR_HDMIA;
 
 	drm_bridge_add(&lt9611uxc->bridge);
 
-	वापस lt9611uxc_audio_init(dev, lt9611uxc);
+	return lt9611uxc_audio_init(dev, lt9611uxc);
 
 err_disable_regulators:
 	regulator_bulk_disable(ARRAY_SIZE(lt9611uxc->supplies), lt9611uxc->supplies);
@@ -987,17 +986,17 @@ err_of_put:
 	of_node_put(lt9611uxc->dsi1_node);
 	of_node_put(lt9611uxc->dsi0_node);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक lt9611uxc_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा lt9611uxc *lt9611uxc = i2c_get_clientdata(client);
+static int lt9611uxc_remove(struct i2c_client *client)
+{
+	struct lt9611uxc *lt9611uxc = i2c_get_clientdata(client);
 
 	disable_irq(client->irq);
 	flush_scheduled_work();
-	lt9611uxc_audio_निकास(lt9611uxc);
-	drm_bridge_हटाओ(&lt9611uxc->bridge);
+	lt9611uxc_audio_exit(lt9611uxc);
+	drm_bridge_remove(&lt9611uxc->bridge);
 
 	mutex_destroy(&lt9611uxc->ocm_lock);
 
@@ -1006,30 +1005,30 @@ err_of_put:
 	of_node_put(lt9611uxc->dsi1_node);
 	of_node_put(lt9611uxc->dsi0_node);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा i2c_device_id lt9611uxc_id[] = अणु
-	अणु "lontium,lt9611uxc", 0 पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+static struct i2c_device_id lt9611uxc_id[] = {
+	{ "lontium,lt9611uxc", 0 },
+	{ /* sentinel */ }
+};
 
-अटल स्थिर काष्ठा of_device_id lt9611uxc_match_table[] = अणु
-	अणु .compatible = "lontium,lt9611uxc" पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+static const struct of_device_id lt9611uxc_match_table[] = {
+	{ .compatible = "lontium,lt9611uxc" },
+	{ /* sentinel */ }
+};
 MODULE_DEVICE_TABLE(of, lt9611uxc_match_table);
 
-अटल काष्ठा i2c_driver lt9611uxc_driver = अणु
-	.driver = अणु
+static struct i2c_driver lt9611uxc_driver = {
+	.driver = {
 		.name = "lt9611uxc",
 		.of_match_table = lt9611uxc_match_table,
 		.dev_groups = lt9611uxc_attr_groups,
-	पूर्ण,
+	},
 	.probe = lt9611uxc_probe,
-	.हटाओ = lt9611uxc_हटाओ,
+	.remove = lt9611uxc_remove,
 	.id_table = lt9611uxc_id,
-पूर्ण;
+};
 module_i2c_driver(lt9611uxc_driver);
 
 MODULE_AUTHOR("Dmitry Baryshkov <dmitry.baryshkov@linaro.org>");

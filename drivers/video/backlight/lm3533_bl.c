@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * lm3533-bl.c -- LM3533 Backlight driver
  *
@@ -8,393 +7,393 @@
  * Author: Johan Hovold <jhovold@gmail.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/backlight.h>
-#समावेश <linux/fb.h>
-#समावेश <linux/slab.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/platform_device.h>
+#include <linux/backlight.h>
+#include <linux/fb.h>
+#include <linux/slab.h>
 
-#समावेश <linux/mfd/lm3533.h>
-
-
-#घोषणा LM3533_HVCTRLBANK_COUNT		2
-#घोषणा LM3533_BL_MAX_BRIGHTNESS	255
-
-#घोषणा LM3533_REG_CTRLBANK_AB_BCONF	0x1a
+#include <linux/mfd/lm3533.h>
 
 
-काष्ठा lm3533_bl अणु
-	काष्ठा lm3533 *lm3533;
-	काष्ठा lm3533_ctrlbank cb;
-	काष्ठा backlight_device *bd;
-	पूर्णांक id;
-पूर्ण;
+#define LM3533_HVCTRLBANK_COUNT		2
+#define LM3533_BL_MAX_BRIGHTNESS	255
+
+#define LM3533_REG_CTRLBANK_AB_BCONF	0x1a
 
 
-अटल अंतरभूत पूर्णांक lm3533_bl_get_ctrlbank_id(काष्ठा lm3533_bl *bl)
-अणु
-	वापस bl->id;
-पूर्ण
+struct lm3533_bl {
+	struct lm3533 *lm3533;
+	struct lm3533_ctrlbank cb;
+	struct backlight_device *bd;
+	int id;
+};
 
-अटल पूर्णांक lm3533_bl_update_status(काष्ठा backlight_device *bd)
-अणु
-	काष्ठा lm3533_bl *bl = bl_get_data(bd);
 
-	वापस lm3533_ctrlbank_set_brightness(&bl->cb, backlight_get_brightness(bd));
-पूर्ण
+static inline int lm3533_bl_get_ctrlbank_id(struct lm3533_bl *bl)
+{
+	return bl->id;
+}
 
-अटल पूर्णांक lm3533_bl_get_brightness(काष्ठा backlight_device *bd)
-अणु
-	काष्ठा lm3533_bl *bl = bl_get_data(bd);
+static int lm3533_bl_update_status(struct backlight_device *bd)
+{
+	struct lm3533_bl *bl = bl_get_data(bd);
+
+	return lm3533_ctrlbank_set_brightness(&bl->cb, backlight_get_brightness(bd));
+}
+
+static int lm3533_bl_get_brightness(struct backlight_device *bd)
+{
+	struct lm3533_bl *bl = bl_get_data(bd);
 	u8 val;
-	पूर्णांक ret;
+	int ret;
 
 	ret = lm3533_ctrlbank_get_brightness(&bl->cb, &val);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल स्थिर काष्ठा backlight_ops lm3533_bl_ops = अणु
+static const struct backlight_ops lm3533_bl_ops = {
 	.get_brightness	= lm3533_bl_get_brightness,
 	.update_status	= lm3533_bl_update_status,
-पूर्ण;
+};
 
-अटल sमाप_प्रकार show_id(काष्ठा device *dev,
-				काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा lm3533_bl *bl = dev_get_drvdata(dev);
+static ssize_t show_id(struct device *dev,
+				struct device_attribute *attr, char *buf)
+{
+	struct lm3533_bl *bl = dev_get_drvdata(dev);
 
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%d\n", bl->id);
-पूर्ण
+	return scnprintf(buf, PAGE_SIZE, "%d\n", bl->id);
+}
 
-अटल sमाप_प्रकार show_als_channel(काष्ठा device *dev,
-				काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा lm3533_bl *bl = dev_get_drvdata(dev);
-	अचिन्हित channel = lm3533_bl_get_ctrlbank_id(bl);
+static ssize_t show_als_channel(struct device *dev,
+				struct device_attribute *attr, char *buf)
+{
+	struct lm3533_bl *bl = dev_get_drvdata(dev);
+	unsigned channel = lm3533_bl_get_ctrlbank_id(bl);
 
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%u\n", channel);
-पूर्ण
+	return scnprintf(buf, PAGE_SIZE, "%u\n", channel);
+}
 
-अटल sमाप_प्रकार show_als_en(काष्ठा device *dev,
-				काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा lm3533_bl *bl = dev_get_drvdata(dev);
-	पूर्णांक ctrlbank = lm3533_bl_get_ctrlbank_id(bl);
+static ssize_t show_als_en(struct device *dev,
+				struct device_attribute *attr, char *buf)
+{
+	struct lm3533_bl *bl = dev_get_drvdata(dev);
+	int ctrlbank = lm3533_bl_get_ctrlbank_id(bl);
 	u8 val;
 	u8 mask;
 	bool enable;
-	पूर्णांक ret;
+	int ret;
 
-	ret = lm3533_पढ़ो(bl->lm3533, LM3533_REG_CTRLBANK_AB_BCONF, &val);
-	अगर (ret)
-		वापस ret;
+	ret = lm3533_read(bl->lm3533, LM3533_REG_CTRLBANK_AB_BCONF, &val);
+	if (ret)
+		return ret;
 
 	mask = 1 << (2 * ctrlbank);
 	enable = val & mask;
 
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%d\n", enable);
-पूर्ण
+	return scnprintf(buf, PAGE_SIZE, "%d\n", enable);
+}
 
-अटल sमाप_प्रकार store_als_en(काष्ठा device *dev,
-					काष्ठा device_attribute *attr,
-					स्थिर अक्षर *buf, माप_प्रकार len)
-अणु
-	काष्ठा lm3533_bl *bl = dev_get_drvdata(dev);
-	पूर्णांक ctrlbank = lm3533_bl_get_ctrlbank_id(bl);
-	पूर्णांक enable;
+static ssize_t store_als_en(struct device *dev,
+					struct device_attribute *attr,
+					const char *buf, size_t len)
+{
+	struct lm3533_bl *bl = dev_get_drvdata(dev);
+	int ctrlbank = lm3533_bl_get_ctrlbank_id(bl);
+	int enable;
 	u8 val;
 	u8 mask;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (kstrtoपूर्णांक(buf, 0, &enable))
-		वापस -EINVAL;
+	if (kstrtoint(buf, 0, &enable))
+		return -EINVAL;
 
 	mask = 1 << (2 * ctrlbank);
 
-	अगर (enable)
+	if (enable)
 		val = mask;
-	अन्यथा
+	else
 		val = 0;
 
 	ret = lm3533_update(bl->lm3533, LM3533_REG_CTRLBANK_AB_BCONF, val,
 									mask);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल sमाप_प्रकार show_linear(काष्ठा device *dev,
-				काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा lm3533_bl *bl = dev_get_drvdata(dev);
+static ssize_t show_linear(struct device *dev,
+				struct device_attribute *attr, char *buf)
+{
+	struct lm3533_bl *bl = dev_get_drvdata(dev);
 	u8 val;
 	u8 mask;
-	पूर्णांक linear;
-	पूर्णांक ret;
+	int linear;
+	int ret;
 
-	ret = lm3533_पढ़ो(bl->lm3533, LM3533_REG_CTRLBANK_AB_BCONF, &val);
-	अगर (ret)
-		वापस ret;
+	ret = lm3533_read(bl->lm3533, LM3533_REG_CTRLBANK_AB_BCONF, &val);
+	if (ret)
+		return ret;
 
 	mask = 1 << (2 * lm3533_bl_get_ctrlbank_id(bl) + 1);
 
-	अगर (val & mask)
+	if (val & mask)
 		linear = 1;
-	अन्यथा
+	else
 		linear = 0;
 
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%x\n", linear);
-पूर्ण
+	return scnprintf(buf, PAGE_SIZE, "%x\n", linear);
+}
 
-अटल sमाप_प्रकार store_linear(काष्ठा device *dev,
-					काष्ठा device_attribute *attr,
-					स्थिर अक्षर *buf, माप_प्रकार len)
-अणु
-	काष्ठा lm3533_bl *bl = dev_get_drvdata(dev);
-	अचिन्हित दीर्घ linear;
+static ssize_t store_linear(struct device *dev,
+					struct device_attribute *attr,
+					const char *buf, size_t len)
+{
+	struct lm3533_bl *bl = dev_get_drvdata(dev);
+	unsigned long linear;
 	u8 mask;
 	u8 val;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (kम_से_अदीर्घ(buf, 0, &linear))
-		वापस -EINVAL;
+	if (kstrtoul(buf, 0, &linear))
+		return -EINVAL;
 
 	mask = 1 << (2 * lm3533_bl_get_ctrlbank_id(bl) + 1);
 
-	अगर (linear)
+	if (linear)
 		val = mask;
-	अन्यथा
+	else
 		val = 0;
 
 	ret = lm3533_update(bl->lm3533, LM3533_REG_CTRLBANK_AB_BCONF, val,
 									mask);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल sमाप_प्रकार show_pwm(काष्ठा device *dev,
-					काष्ठा device_attribute *attr,
-					अक्षर *buf)
-अणु
-	काष्ठा lm3533_bl *bl = dev_get_drvdata(dev);
+static ssize_t show_pwm(struct device *dev,
+					struct device_attribute *attr,
+					char *buf)
+{
+	struct lm3533_bl *bl = dev_get_drvdata(dev);
 	u8 val;
-	पूर्णांक ret;
+	int ret;
 
 	ret = lm3533_ctrlbank_get_pwm(&bl->cb, &val);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%u\n", val);
-पूर्ण
+	return scnprintf(buf, PAGE_SIZE, "%u\n", val);
+}
 
-अटल sमाप_प्रकार store_pwm(काष्ठा device *dev,
-					काष्ठा device_attribute *attr,
-					स्थिर अक्षर *buf, माप_प्रकार len)
-अणु
-	काष्ठा lm3533_bl *bl = dev_get_drvdata(dev);
+static ssize_t store_pwm(struct device *dev,
+					struct device_attribute *attr,
+					const char *buf, size_t len)
+{
+	struct lm3533_bl *bl = dev_get_drvdata(dev);
 	u8 val;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (kstrtou8(buf, 0, &val))
-		वापस -EINVAL;
+	if (kstrtou8(buf, 0, &val))
+		return -EINVAL;
 
 	ret = lm3533_ctrlbank_set_pwm(&bl->cb, val);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल LM3533_ATTR_RO(als_channel);
-अटल LM3533_ATTR_RW(als_en);
-अटल LM3533_ATTR_RO(id);
-अटल LM3533_ATTR_RW(linear);
-अटल LM3533_ATTR_RW(pwm);
+static LM3533_ATTR_RO(als_channel);
+static LM3533_ATTR_RW(als_en);
+static LM3533_ATTR_RO(id);
+static LM3533_ATTR_RW(linear);
+static LM3533_ATTR_RW(pwm);
 
-अटल काष्ठा attribute *lm3533_bl_attributes[] = अणु
+static struct attribute *lm3533_bl_attributes[] = {
 	&dev_attr_als_channel.attr,
 	&dev_attr_als_en.attr,
 	&dev_attr_id.attr,
 	&dev_attr_linear.attr,
 	&dev_attr_pwm.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल umode_t lm3533_bl_attr_is_visible(काष्ठा kobject *kobj,
-					     काष्ठा attribute *attr, पूर्णांक n)
-अणु
-	काष्ठा device *dev = kobj_to_dev(kobj);
-	काष्ठा lm3533_bl *bl = dev_get_drvdata(dev);
+static umode_t lm3533_bl_attr_is_visible(struct kobject *kobj,
+					     struct attribute *attr, int n)
+{
+	struct device *dev = kobj_to_dev(kobj);
+	struct lm3533_bl *bl = dev_get_drvdata(dev);
 	umode_t mode = attr->mode;
 
-	अगर (attr == &dev_attr_als_channel.attr ||
-					attr == &dev_attr_als_en.attr) अणु
-		अगर (!bl->lm3533->have_als)
+	if (attr == &dev_attr_als_channel.attr ||
+					attr == &dev_attr_als_en.attr) {
+		if (!bl->lm3533->have_als)
 			mode = 0;
-	पूर्ण
+	}
 
-	वापस mode;
-पूर्ण;
+	return mode;
+};
 
-अटल काष्ठा attribute_group lm3533_bl_attribute_group = अणु
+static struct attribute_group lm3533_bl_attribute_group = {
 	.is_visible	= lm3533_bl_attr_is_visible,
 	.attrs		= lm3533_bl_attributes
-पूर्ण;
+};
 
-अटल पूर्णांक lm3533_bl_setup(काष्ठा lm3533_bl *bl,
-					काष्ठा lm3533_bl_platक्रमm_data *pdata)
-अणु
-	पूर्णांक ret;
+static int lm3533_bl_setup(struct lm3533_bl *bl,
+					struct lm3533_bl_platform_data *pdata)
+{
+	int ret;
 
 	ret = lm3533_ctrlbank_set_max_current(&bl->cb, pdata->max_current);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस lm3533_ctrlbank_set_pwm(&bl->cb, pdata->pwm);
-पूर्ण
+	return lm3533_ctrlbank_set_pwm(&bl->cb, pdata->pwm);
+}
 
-अटल पूर्णांक lm3533_bl_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा lm3533 *lm3533;
-	काष्ठा lm3533_bl_platक्रमm_data *pdata;
-	काष्ठा lm3533_bl *bl;
-	काष्ठा backlight_device *bd;
-	काष्ठा backlight_properties props;
-	पूर्णांक ret;
+static int lm3533_bl_probe(struct platform_device *pdev)
+{
+	struct lm3533 *lm3533;
+	struct lm3533_bl_platform_data *pdata;
+	struct lm3533_bl *bl;
+	struct backlight_device *bd;
+	struct backlight_properties props;
+	int ret;
 
 	dev_dbg(&pdev->dev, "%s\n", __func__);
 
 	lm3533 = dev_get_drvdata(pdev->dev.parent);
-	अगर (!lm3533)
-		वापस -EINVAL;
+	if (!lm3533)
+		return -EINVAL;
 
 	pdata = dev_get_platdata(&pdev->dev);
-	अगर (!pdata) अणु
+	if (!pdata) {
 		dev_err(&pdev->dev, "no platform data\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (pdev->id < 0 || pdev->id >= LM3533_HVCTRLBANK_COUNT) अणु
+	if (pdev->id < 0 || pdev->id >= LM3533_HVCTRLBANK_COUNT) {
 		dev_err(&pdev->dev, "illegal backlight id %d\n", pdev->id);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	bl = devm_kzalloc(&pdev->dev, माप(*bl), GFP_KERNEL);
-	अगर (!bl)
-		वापस -ENOMEM;
+	bl = devm_kzalloc(&pdev->dev, sizeof(*bl), GFP_KERNEL);
+	if (!bl)
+		return -ENOMEM;
 
 	bl->lm3533 = lm3533;
 	bl->id = pdev->id;
 
 	bl->cb.lm3533 = lm3533;
 	bl->cb.id = lm3533_bl_get_ctrlbank_id(bl);
-	bl->cb.dev = शून्य;			/* until रेजिस्टरed */
+	bl->cb.dev = NULL;			/* until registered */
 
-	स_रखो(&props, 0, माप(props));
+	memset(&props, 0, sizeof(props));
 	props.type = BACKLIGHT_RAW;
 	props.max_brightness = LM3533_BL_MAX_BRIGHTNESS;
-	props.brightness = pdata->शेष_brightness;
-	bd = devm_backlight_device_रेजिस्टर(&pdev->dev, pdata->name,
+	props.brightness = pdata->default_brightness;
+	bd = devm_backlight_device_register(&pdev->dev, pdata->name,
 					pdev->dev.parent, bl, &lm3533_bl_ops,
 					&props);
-	अगर (IS_ERR(bd)) अणु
+	if (IS_ERR(bd)) {
 		dev_err(&pdev->dev, "failed to register backlight device\n");
-		वापस PTR_ERR(bd);
-	पूर्ण
+		return PTR_ERR(bd);
+	}
 
 	bl->bd = bd;
 	bl->cb.dev = &bl->bd->dev;
 
-	platक्रमm_set_drvdata(pdev, bl);
+	platform_set_drvdata(pdev, bl);
 
 	ret = sysfs_create_group(&bd->dev.kobj, &lm3533_bl_attribute_group);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&pdev->dev, "failed to create sysfs attributes\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	backlight_update_status(bd);
 
 	ret = lm3533_bl_setup(bl, pdata);
-	अगर (ret)
-		जाओ err_sysfs_हटाओ;
+	if (ret)
+		goto err_sysfs_remove;
 
 	ret = lm3533_ctrlbank_enable(&bl->cb);
-	अगर (ret)
-		जाओ err_sysfs_हटाओ;
+	if (ret)
+		goto err_sysfs_remove;
 
-	वापस 0;
+	return 0;
 
-err_sysfs_हटाओ:
-	sysfs_हटाओ_group(&bd->dev.kobj, &lm3533_bl_attribute_group);
+err_sysfs_remove:
+	sysfs_remove_group(&bd->dev.kobj, &lm3533_bl_attribute_group);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक lm3533_bl_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा lm3533_bl *bl = platक्रमm_get_drvdata(pdev);
-	काष्ठा backlight_device *bd = bl->bd;
+static int lm3533_bl_remove(struct platform_device *pdev)
+{
+	struct lm3533_bl *bl = platform_get_drvdata(pdev);
+	struct backlight_device *bd = bl->bd;
 
 	dev_dbg(&bd->dev, "%s\n", __func__);
 
-	bd->props.घातer = FB_BLANK_POWERDOWN;
+	bd->props.power = FB_BLANK_POWERDOWN;
 	bd->props.brightness = 0;
 
 	lm3533_ctrlbank_disable(&bl->cb);
-	sysfs_हटाओ_group(&bd->dev.kobj, &lm3533_bl_attribute_group);
+	sysfs_remove_group(&bd->dev.kobj, &lm3533_bl_attribute_group);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक lm3533_bl_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा lm3533_bl *bl = dev_get_drvdata(dev);
-
-	dev_dbg(dev, "%s\n", __func__);
-
-	वापस lm3533_ctrlbank_disable(&bl->cb);
-पूर्ण
-
-अटल पूर्णांक lm3533_bl_resume(काष्ठा device *dev)
-अणु
-	काष्ठा lm3533_bl *bl = dev_get_drvdata(dev);
+#ifdef CONFIG_PM_SLEEP
+static int lm3533_bl_suspend(struct device *dev)
+{
+	struct lm3533_bl *bl = dev_get_drvdata(dev);
 
 	dev_dbg(dev, "%s\n", __func__);
 
-	वापस lm3533_ctrlbank_enable(&bl->cb);
-पूर्ण
-#पूर्ण_अगर
+	return lm3533_ctrlbank_disable(&bl->cb);
+}
 
-अटल SIMPLE_DEV_PM_OPS(lm3533_bl_pm_ops, lm3533_bl_suspend, lm3533_bl_resume);
+static int lm3533_bl_resume(struct device *dev)
+{
+	struct lm3533_bl *bl = dev_get_drvdata(dev);
 
-अटल व्योम lm3533_bl_shutकरोwn(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा lm3533_bl *bl = platक्रमm_get_drvdata(pdev);
+	dev_dbg(dev, "%s\n", __func__);
+
+	return lm3533_ctrlbank_enable(&bl->cb);
+}
+#endif
+
+static SIMPLE_DEV_PM_OPS(lm3533_bl_pm_ops, lm3533_bl_suspend, lm3533_bl_resume);
+
+static void lm3533_bl_shutdown(struct platform_device *pdev)
+{
+	struct lm3533_bl *bl = platform_get_drvdata(pdev);
 
 	dev_dbg(&pdev->dev, "%s\n", __func__);
 
 	lm3533_ctrlbank_disable(&bl->cb);
-पूर्ण
+}
 
-अटल काष्ठा platक्रमm_driver lm3533_bl_driver = अणु
-	.driver = अणु
+static struct platform_driver lm3533_bl_driver = {
+	.driver = {
 		.name	= "lm3533-backlight",
 		.pm	= &lm3533_bl_pm_ops,
-	पूर्ण,
+	},
 	.probe		= lm3533_bl_probe,
-	.हटाओ		= lm3533_bl_हटाओ,
-	.shutकरोwn	= lm3533_bl_shutकरोwn,
-पूर्ण;
-module_platक्रमm_driver(lm3533_bl_driver);
+	.remove		= lm3533_bl_remove,
+	.shutdown	= lm3533_bl_shutdown,
+};
+module_platform_driver(lm3533_bl_driver);
 
 MODULE_AUTHOR("Johan Hovold <jhovold@gmail.com>");
 MODULE_DESCRIPTION("LM3533 Backlight driver");

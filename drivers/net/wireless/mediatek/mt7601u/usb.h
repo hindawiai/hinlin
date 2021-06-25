@@ -1,37 +1,36 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2015 Jakub Kicinski <kubakici@wp.pl>
  */
 
-#अगर_अघोषित __MT7601U_USB_H
-#घोषणा __MT7601U_USB_H
+#ifndef __MT7601U_USB_H
+#define __MT7601U_USB_H
 
-#समावेश "mt7601u.h"
+#include "mt7601u.h"
 
-#घोषणा MT7601U_FIRMWARE	"mt7601u.bin"
+#define MT7601U_FIRMWARE	"mt7601u.bin"
 
-#घोषणा MT_VEND_REQ_MAX_RETRY	10
-#घोषणा MT_VEND_REQ_TOUT_MS	300
+#define MT_VEND_REQ_MAX_RETRY	10
+#define MT_VEND_REQ_TOUT_MS	300
 
-#घोषणा MT_VEND_DEV_MODE_RESET	1
+#define MT_VEND_DEV_MODE_RESET	1
 
-#घोषणा MT_VEND_BUF		माप(__le32)
+#define MT_VEND_BUF		sizeof(__le32)
 
-क्रमागत mt_venकरोr_req अणु
+enum mt_vendor_req {
 	MT_VEND_DEV_MODE = 1,
 	MT_VEND_WRITE = 2,
 	MT_VEND_MULTI_READ = 7,
 	MT_VEND_WRITE_FCE = 0x42,
-पूर्ण;
+};
 
-क्रमागत mt_usb_ep_in अणु
+enum mt_usb_ep_in {
 	MT_EP_IN_PKT_RX,
 	MT_EP_IN_CMD_RESP,
 	__MT_EP_IN_MAX,
-पूर्ण;
+};
 
-क्रमागत mt_usb_ep_out अणु
+enum mt_usb_ep_out {
 	MT_EP_OUT_INBAND_CMD,
 	MT_EP_OUT_AC_BK,
 	MT_EP_OUT_AC_BE,
@@ -39,34 +38,34 @@
 	MT_EP_OUT_AC_VO,
 	MT_EP_OUT_HCCA,
 	__MT_EP_OUT_MAX,
-पूर्ण;
+};
 
-अटल अंतरभूत काष्ठा usb_device *mt7601u_to_usb_dev(काष्ठा mt7601u_dev *mt7601u)
-अणु
-	वापस पूर्णांकerface_to_usbdev(to_usb_पूर्णांकerface(mt7601u->dev));
-पूर्ण
+static inline struct usb_device *mt7601u_to_usb_dev(struct mt7601u_dev *mt7601u)
+{
+	return interface_to_usbdev(to_usb_interface(mt7601u->dev));
+}
 
-अटल अंतरभूत bool mt7601u_urb_has_error(काष्ठा urb *urb)
-अणु
-	वापस urb->status &&
+static inline bool mt7601u_urb_has_error(struct urb *urb)
+{
+	return urb->status &&
 		urb->status != -ENOENT &&
 		urb->status != -ECONNRESET &&
 		urb->status != -ESHUTDOWN;
-पूर्ण
+}
 
-bool mt7601u_usb_alloc_buf(काष्ठा mt7601u_dev *dev, माप_प्रकार len,
-			   काष्ठा mt7601u_dma_buf *buf);
-व्योम mt7601u_usb_मुक्त_buf(काष्ठा mt7601u_dev *dev, काष्ठा mt7601u_dma_buf *buf);
-पूर्णांक mt7601u_usb_submit_buf(काष्ठा mt7601u_dev *dev, पूर्णांक dir, पूर्णांक ep_idx,
-			   काष्ठा mt7601u_dma_buf *buf, gfp_t gfp,
-			   usb_complete_t complete_fn, व्योम *context);
-व्योम mt7601u_complete_urb(काष्ठा urb *urb);
+bool mt7601u_usb_alloc_buf(struct mt7601u_dev *dev, size_t len,
+			   struct mt7601u_dma_buf *buf);
+void mt7601u_usb_free_buf(struct mt7601u_dev *dev, struct mt7601u_dma_buf *buf);
+int mt7601u_usb_submit_buf(struct mt7601u_dev *dev, int dir, int ep_idx,
+			   struct mt7601u_dma_buf *buf, gfp_t gfp,
+			   usb_complete_t complete_fn, void *context);
+void mt7601u_complete_urb(struct urb *urb);
 
-पूर्णांक mt7601u_venकरोr_request(काष्ठा mt7601u_dev *dev, स्थिर u8 req,
-			   स्थिर u8 direction, स्थिर u16 val, स्थिर u16 offset,
-			   व्योम *buf, स्थिर माप_प्रकार buflen);
-व्योम mt7601u_venकरोr_reset(काष्ठा mt7601u_dev *dev);
-पूर्णांक mt7601u_venकरोr_single_wr(काष्ठा mt7601u_dev *dev, स्थिर u8 req,
-			     स्थिर u16 offset, स्थिर u32 val);
+int mt7601u_vendor_request(struct mt7601u_dev *dev, const u8 req,
+			   const u8 direction, const u16 val, const u16 offset,
+			   void *buf, const size_t buflen);
+void mt7601u_vendor_reset(struct mt7601u_dev *dev);
+int mt7601u_vendor_single_wr(struct mt7601u_dev *dev, const u8 req,
+			     const u16 offset, const u32 val);
 
-#पूर्ण_अगर
+#endif

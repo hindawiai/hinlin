@@ -1,53 +1,52 @@
-<शैली गुरु>
 /*
  * linux/drivers/video/console/softcursor.c
  *
- * Generic software cursor क्रम frame buffer devices
+ * Generic software cursor for frame buffer devices
  *
  *  Created 14 Nov 2002 by James Simmons
  *
  * This file is subject to the terms and conditions of the GNU General
- * Public License.  See the file COPYING in the मुख्य directory of this
- * archive क्रम more details.
+ * Public License.  See the file COPYING in the main directory of this
+ * archive for more details.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/fb.h>
-#समावेश <linux/slab.h>
+#include <linux/module.h>
+#include <linux/string.h>
+#include <linux/fb.h>
+#include <linux/slab.h>
 
-#समावेश <यंत्र/पन.स>
+#include <asm/io.h>
 
-#समावेश "fbcon.h"
+#include "fbcon.h"
 
-पूर्णांक soft_cursor(काष्ठा fb_info *info, काष्ठा fb_cursor *cursor)
-अणु
-	काष्ठा fbcon_ops *ops = info->fbcon_par;
-	अचिन्हित पूर्णांक scan_align = info->pixmap.scan_align - 1;
-	अचिन्हित पूर्णांक buf_align = info->pixmap.buf_align - 1;
-	अचिन्हित पूर्णांक i, size, dsize, s_pitch, d_pitch;
-	काष्ठा fb_image *image;
+int soft_cursor(struct fb_info *info, struct fb_cursor *cursor)
+{
+	struct fbcon_ops *ops = info->fbcon_par;
+	unsigned int scan_align = info->pixmap.scan_align - 1;
+	unsigned int buf_align = info->pixmap.buf_align - 1;
+	unsigned int i, size, dsize, s_pitch, d_pitch;
+	struct fb_image *image;
 	u8 *src, *dst;
 
-	अगर (info->state != FBINFO_STATE_RUNNING)
-		वापस 0;
+	if (info->state != FBINFO_STATE_RUNNING)
+		return 0;
 
 	s_pitch = (cursor->image.width + 7) >> 3;
 	dsize = s_pitch * cursor->image.height;
 
-	अगर (dsize + माप(काष्ठा fb_image) != ops->cursor_size) अणु
-		kमुक्त(ops->cursor_src);
-		ops->cursor_size = dsize + माप(काष्ठा fb_image);
+	if (dsize + sizeof(struct fb_image) != ops->cursor_size) {
+		kfree(ops->cursor_src);
+		ops->cursor_size = dsize + sizeof(struct fb_image);
 
-		ops->cursor_src = kदो_स्मृति(ops->cursor_size, GFP_ATOMIC);
-		अगर (!ops->cursor_src) अणु
+		ops->cursor_src = kmalloc(ops->cursor_size, GFP_ATOMIC);
+		if (!ops->cursor_src) {
 			ops->cursor_size = 0;
-			वापस -ENOMEM;
-		पूर्ण
-	पूर्ण
+			return -ENOMEM;
+		}
+	}
 
-	src = ops->cursor_src + माप(काष्ठा fb_image);
-	image = (काष्ठा fb_image *)ops->cursor_src;
+	src = ops->cursor_src + sizeof(struct fb_image);
+	image = (struct fb_image *)ops->cursor_src;
 	*image = cursor->image;
 	d_pitch = (s_pitch + scan_align) & ~scan_align;
 
@@ -55,23 +54,23 @@
 	size &= ~buf_align;
 	dst = fb_get_buffer_offset(info, &info->pixmap, size);
 
-	अगर (cursor->enable) अणु
-		चयन (cursor->rop) अणु
-		हाल ROP_XOR:
-			क्रम (i = 0; i < dsize; i++)
+	if (cursor->enable) {
+		switch (cursor->rop) {
+		case ROP_XOR:
+			for (i = 0; i < dsize; i++)
 				src[i] = image->data[i] ^ cursor->mask[i];
-			अवरोध;
-		हाल ROP_COPY:
-		शेष:
-			क्रम (i = 0; i < dsize; i++)
+			break;
+		case ROP_COPY:
+		default:
+			for (i = 0; i < dsize; i++)
 				src[i] = image->data[i] & cursor->mask[i];
-			अवरोध;
-		पूर्ण
-	पूर्ण अन्यथा
-		स_नकल(src, image->data, dsize);
+			break;
+		}
+	} else
+		memcpy(src, image->data, dsize);
 
 	fb_pad_aligned_buffer(dst, d_pitch, src, s_pitch, image->height);
 	image->data = dst;
 	info->fbops->fb_imageblit(info, image);
-	वापस 0;
-पूर्ण
+	return 0;
+}

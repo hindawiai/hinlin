@@ -1,29 +1,28 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Header file क्रम FPGA Accelerated Function Unit (AFU) Driver
+ * Header file for FPGA Accelerated Function Unit (AFU) Driver
  *
  * Copyright (C) 2017-2018 Intel Corporation, Inc.
  *
  * Authors:
- *     Wu Hao <hao.wu@पूर्णांकel.com>
- *     Xiao Guangrong <guangrong.xiao@linux.पूर्णांकel.com>
- *     Joseph Grecco <joe.grecco@पूर्णांकel.com>
- *     Enno Luebbers <enno.luebbers@पूर्णांकel.com>
- *     Tim Whisonant <tim.whisonant@पूर्णांकel.com>
- *     Ananda Ravuri <ananda.ravuri@पूर्णांकel.com>
- *     Henry Mitchel <henry.mitchel@पूर्णांकel.com>
+ *     Wu Hao <hao.wu@intel.com>
+ *     Xiao Guangrong <guangrong.xiao@linux.intel.com>
+ *     Joseph Grecco <joe.grecco@intel.com>
+ *     Enno Luebbers <enno.luebbers@intel.com>
+ *     Tim Whisonant <tim.whisonant@intel.com>
+ *     Ananda Ravuri <ananda.ravuri@intel.com>
+ *     Henry Mitchel <henry.mitchel@intel.com>
  */
 
-#अगर_अघोषित __DFL_AFU_H
-#घोषणा __DFL_AFU_H
+#ifndef __DFL_AFU_H
+#define __DFL_AFU_H
 
-#समावेश <linux/mm.h>
+#include <linux/mm.h>
 
-#समावेश "dfl.h"
+#include "dfl.h"
 
 /**
- * काष्ठा dfl_afu_mmio_region - afu mmio region data काष्ठाure
+ * struct dfl_afu_mmio_region - afu mmio region data structure
  *
  * @index: region index.
  * @flags: region flags (access permission).
@@ -32,79 +31,79 @@
  * @phys: region's physical address.
  * @node: node to add to afu feature dev's region list.
  */
-काष्ठा dfl_afu_mmio_region अणु
+struct dfl_afu_mmio_region {
 	u32 index;
 	u32 flags;
 	u64 size;
 	u64 offset;
 	u64 phys;
-	काष्ठा list_head node;
-पूर्ण;
+	struct list_head node;
+};
 
 /**
- * काष्ठा fpga_afu_dma_region - afu DMA region data काष्ठाure
+ * struct fpga_afu_dma_region - afu DMA region data structure
  *
- * @user_addr: region userspace भव address.
+ * @user_addr: region userspace virtual address.
  * @length: region length.
- * @iova: region IO भव address.
+ * @iova: region IO virtual address.
  * @pages: ptr to pages of this region.
  * @node: rb tree node.
- * @in_use: flag to indicate अगर this region is in_use.
+ * @in_use: flag to indicate if this region is in_use.
  */
-काष्ठा dfl_afu_dma_region अणु
+struct dfl_afu_dma_region {
 	u64 user_addr;
 	u64 length;
 	u64 iova;
-	काष्ठा page **pages;
-	काष्ठा rb_node node;
+	struct page **pages;
+	struct rb_node node;
 	bool in_use;
-पूर्ण;
+};
 
 /**
- * काष्ठा dfl_afu - afu device data काष्ठाure
+ * struct dfl_afu - afu device data structure
  *
  * @region_cur_offset: current region offset from start to the device fd.
  * @num_regions: num of mmio regions.
  * @regions: the mmio region linked list of this afu feature device.
  * @dma_regions: root of dma regions rb tree.
  * @num_umsgs: num of umsgs.
- * @pdata: afu platक्रमm device's pdata.
+ * @pdata: afu platform device's pdata.
  */
-काष्ठा dfl_afu अणु
+struct dfl_afu {
 	u64 region_cur_offset;
-	पूर्णांक num_regions;
+	int num_regions;
 	u8 num_umsgs;
-	काष्ठा list_head regions;
-	काष्ठा rb_root dma_regions;
+	struct list_head regions;
+	struct rb_root dma_regions;
 
-	काष्ठा dfl_feature_platक्रमm_data *pdata;
-पूर्ण;
+	struct dfl_feature_platform_data *pdata;
+};
 
 /* hold pdata->lock when call __afu_port_enable/disable */
-पूर्णांक __afu_port_enable(काष्ठा platक्रमm_device *pdev);
-पूर्णांक __afu_port_disable(काष्ठा platक्रमm_device *pdev);
+int __afu_port_enable(struct platform_device *pdev);
+int __afu_port_disable(struct platform_device *pdev);
 
-व्योम afu_mmio_region_init(काष्ठा dfl_feature_platक्रमm_data *pdata);
-पूर्णांक afu_mmio_region_add(काष्ठा dfl_feature_platक्रमm_data *pdata,
+void afu_mmio_region_init(struct dfl_feature_platform_data *pdata);
+int afu_mmio_region_add(struct dfl_feature_platform_data *pdata,
 			u32 region_index, u64 region_size, u64 phys, u32 flags);
-व्योम afu_mmio_region_destroy(काष्ठा dfl_feature_platक्रमm_data *pdata);
-पूर्णांक afu_mmio_region_get_by_index(काष्ठा dfl_feature_platक्रमm_data *pdata,
+void afu_mmio_region_destroy(struct dfl_feature_platform_data *pdata);
+int afu_mmio_region_get_by_index(struct dfl_feature_platform_data *pdata,
 				 u32 region_index,
-				 काष्ठा dfl_afu_mmio_region *pregion);
-पूर्णांक afu_mmio_region_get_by_offset(काष्ठा dfl_feature_platक्रमm_data *pdata,
+				 struct dfl_afu_mmio_region *pregion);
+int afu_mmio_region_get_by_offset(struct dfl_feature_platform_data *pdata,
 				  u64 offset, u64 size,
-				  काष्ठा dfl_afu_mmio_region *pregion);
-व्योम afu_dma_region_init(काष्ठा dfl_feature_platक्रमm_data *pdata);
-व्योम afu_dma_region_destroy(काष्ठा dfl_feature_platक्रमm_data *pdata);
-पूर्णांक afu_dma_map_region(काष्ठा dfl_feature_platक्रमm_data *pdata,
+				  struct dfl_afu_mmio_region *pregion);
+void afu_dma_region_init(struct dfl_feature_platform_data *pdata);
+void afu_dma_region_destroy(struct dfl_feature_platform_data *pdata);
+int afu_dma_map_region(struct dfl_feature_platform_data *pdata,
 		       u64 user_addr, u64 length, u64 *iova);
-पूर्णांक afu_dma_unmap_region(काष्ठा dfl_feature_platक्रमm_data *pdata, u64 iova);
-काष्ठा dfl_afu_dma_region *
-afu_dma_region_find(काष्ठा dfl_feature_platक्रमm_data *pdata,
+int afu_dma_unmap_region(struct dfl_feature_platform_data *pdata, u64 iova);
+struct dfl_afu_dma_region *
+afu_dma_region_find(struct dfl_feature_platform_data *pdata,
 		    u64 iova, u64 size);
 
-बाह्य स्थिर काष्ठा dfl_feature_ops port_err_ops;
-बाह्य स्थिर काष्ठा dfl_feature_id port_err_id_table[];
-बाह्य स्थिर काष्ठा attribute_group port_err_group;
+extern const struct dfl_feature_ops port_err_ops;
+extern const struct dfl_feature_id port_err_id_table[];
+extern const struct attribute_group port_err_group;
 
-#पूर्ण_अगर /* __DFL_AFU_H */
+#endif /* __DFL_AFU_H */

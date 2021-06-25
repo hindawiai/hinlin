@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Broadcom NetXtreme-E RoCE driver.
  *
@@ -8,25 +7,25 @@
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * BSD license below:
  *
- * Redistribution and use in source and binary क्रमms, with or without
- * modअगरication, are permitted provided that the following conditions
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary क्रमm must reproduce the above copyright
+ * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
- *    the करोcumentation and/or other materials provided with the
+ *    the documentation and/or other materials provided with the
  *    distribution.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS''
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
  * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
  * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS
- * BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
  * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
@@ -38,10 +37,10 @@
  *
  */
 
-#अगर_अघोषित __BNXT_RE_HW_STATS_H__
-#घोषणा __BNXT_RE_HW_STATS_H__
+#ifndef __BNXT_RE_HW_STATS_H__
+#define __BNXT_RE_HW_STATS_H__
 
-क्रमागत bnxt_re_hw_stats अणु
+enum bnxt_re_hw_stats {
 	BNXT_RE_ACTIVE_QP,
 	BNXT_RE_ACTIVE_SRQ,
 	BNXT_RE_ACTIVE_CQ,
@@ -95,11 +94,11 @@
 	BNXT_RE_RES_RX_PCI_ERR,
 	BNXT_RE_OUT_OF_SEQ_ERR,
 	BNXT_RE_NUM_COUNTERS
-पूर्ण;
+};
 
-काष्ठा rdma_hw_stats *bnxt_re_ib_alloc_hw_stats(काष्ठा ib_device *ibdev,
+struct rdma_hw_stats *bnxt_re_ib_alloc_hw_stats(struct ib_device *ibdev,
 						u32 port_num);
-पूर्णांक bnxt_re_ib_get_hw_stats(काष्ठा ib_device *ibdev,
-			    काष्ठा rdma_hw_stats *stats,
-			    u32 port, पूर्णांक index);
-#पूर्ण_अगर /* __BNXT_RE_HW_STATS_H__ */
+int bnxt_re_ib_get_hw_stats(struct ib_device *ibdev,
+			    struct rdma_hw_stats *stats,
+			    u32 port, int index);
+#endif /* __BNXT_RE_HW_STATS_H__ */

@@ -1,19 +1,18 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  *
  *  Copyright (C) 2010 John Crispin <john@phrozen.org>
  */
 
-#अगर_अघोषित _LANTIQ_PLATFORM_H__
-#घोषणा _LANTIQ_PLATFORM_H__
+#ifndef _LANTIQ_PLATFORM_H__
+#define _LANTIQ_PLATFORM_H__
 
-#समावेश <linux/socket.h>
+#include <linux/socket.h>
 
-/* काष्ठा used to pass info to network drivers */
-काष्ठा ltq_eth_data अणु
-	काष्ठा sockaddr mac;
-	पूर्णांक mii_mode;
-पूर्ण;
+/* struct used to pass info to network drivers */
+struct ltq_eth_data {
+	struct sockaddr mac;
+	int mii_mode;
+};
 
-#पूर्ण_अगर
+#endif

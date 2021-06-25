@@ -1,179 +1,178 @@
-<शैली गुरु>
 /*
  * TI HECC (CAN) device driver
  *
  * This driver supports TI's HECC (High End CAN Controller module) and the
- * specs क्रम the same is available at <http://www.ti.com>
+ * specs for the same is available at <http://www.ti.com>
  *
  * Copyright (C) 2009 Texas Instruments Incorporated - http://www.ti.com/
  * Copyright (C) 2019 Jeroen Hofstee <jhofstee@victronenergy.com>
  *
- * This program is मुक्त software; you can redistribute it and/or
- * modअगरy it under the terms of the GNU General Public License as
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
  * published by the Free Software Foundation version 2.
  *
  * This program is distributed as is WITHOUT ANY WARRANTY of any
  * kind, whether express or implied; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License क्रम more details.
+ * GNU General Public License for more details.
  *
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/types.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/regulator/consumer.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/interrupt.h>
+#include <linux/errno.h>
+#include <linux/netdevice.h>
+#include <linux/skbuff.h>
+#include <linux/platform_device.h>
+#include <linux/clk.h>
+#include <linux/io.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/regulator/consumer.h>
 
-#समावेश <linux/can/dev.h>
-#समावेश <linux/can/error.h>
-#समावेश <linux/can/led.h>
-#समावेश <linux/can/rx-offload.h>
+#include <linux/can/dev.h>
+#include <linux/can/error.h>
+#include <linux/can/led.h>
+#include <linux/can/rx-offload.h>
 
-#घोषणा DRV_NAME "ti_hecc"
-#घोषणा HECC_MODULE_VERSION     "0.7"
+#define DRV_NAME "ti_hecc"
+#define HECC_MODULE_VERSION     "0.7"
 MODULE_VERSION(HECC_MODULE_VERSION);
-#घोषणा DRV_DESC "TI High End CAN Controller Driver " HECC_MODULE_VERSION
+#define DRV_DESC "TI High End CAN Controller Driver " HECC_MODULE_VERSION
 
 /* TX / RX Mailbox Configuration */
-#घोषणा HECC_MAX_MAILBOXES	32	/* hardware mailboxes - करो not change */
-#घोषणा MAX_TX_PRIO		0x3F	/* hardware value - करो not change */
+#define HECC_MAX_MAILBOXES	32	/* hardware mailboxes - do not change */
+#define MAX_TX_PRIO		0x3F	/* hardware value - do not change */
 
 /* Important Note: TX mailbox configuration
- * TX mailboxes should be restricted to the number of SKB buffers to aव्योम
- * मुख्यtaining SKB buffers separately. TX mailboxes should be a घातer of 2
- * क्रम the mailbox logic to work.  Top mailbox numbers are reserved क्रम RX
- * and lower mailboxes क्रम TX.
+ * TX mailboxes should be restricted to the number of SKB buffers to avoid
+ * maintaining SKB buffers separately. TX mailboxes should be a power of 2
+ * for the mailbox logic to work.  Top mailbox numbers are reserved for RX
+ * and lower mailboxes for TX.
  *
  * HECC_MAX_TX_MBOX	HECC_MB_TX_SHIFT
- * 4 (शेष)		2
+ * 4 (default)		2
  * 8			3
  * 16			4
  */
-#घोषणा HECC_MB_TX_SHIFT	2 /* as per table above */
-#घोषणा HECC_MAX_TX_MBOX	BIT(HECC_MB_TX_SHIFT)
+#define HECC_MB_TX_SHIFT	2 /* as per table above */
+#define HECC_MAX_TX_MBOX	BIT(HECC_MB_TX_SHIFT)
 
-#घोषणा HECC_TX_PRIO_SHIFT	(HECC_MB_TX_SHIFT)
-#घोषणा HECC_TX_PRIO_MASK	(MAX_TX_PRIO << HECC_MB_TX_SHIFT)
-#घोषणा HECC_TX_MB_MASK		(HECC_MAX_TX_MBOX - 1)
-#घोषणा HECC_TX_MASK		((HECC_MAX_TX_MBOX - 1) | HECC_TX_PRIO_MASK)
+#define HECC_TX_PRIO_SHIFT	(HECC_MB_TX_SHIFT)
+#define HECC_TX_PRIO_MASK	(MAX_TX_PRIO << HECC_MB_TX_SHIFT)
+#define HECC_TX_MB_MASK		(HECC_MAX_TX_MBOX - 1)
+#define HECC_TX_MASK		((HECC_MAX_TX_MBOX - 1) | HECC_TX_PRIO_MASK)
 
 /* RX mailbox configuration
  *
- * The reमुख्यing mailboxes are used क्रम reception and are delivered
- * based on their बारtamp, to aव्योम a hardware race when CANME is
- * changed जबतक CAN-bus traffic is being received.
+ * The remaining mailboxes are used for reception and are delivered
+ * based on their timestamp, to avoid a hardware race when CANME is
+ * changed while CAN-bus traffic is being received.
  */
-#घोषणा HECC_MAX_RX_MBOX	(HECC_MAX_MAILBOXES - HECC_MAX_TX_MBOX)
-#घोषणा HECC_RX_FIRST_MBOX	(HECC_MAX_MAILBOXES - 1)
-#घोषणा HECC_RX_LAST_MBOX	(HECC_MAX_TX_MBOX)
+#define HECC_MAX_RX_MBOX	(HECC_MAX_MAILBOXES - HECC_MAX_TX_MBOX)
+#define HECC_RX_FIRST_MBOX	(HECC_MAX_MAILBOXES - 1)
+#define HECC_RX_LAST_MBOX	(HECC_MAX_TX_MBOX)
 
-/* TI HECC module रेजिस्टरs */
-#घोषणा HECC_CANME		0x0	/* Mailbox enable */
-#घोषणा HECC_CANMD		0x4	/* Mailbox direction */
-#घोषणा HECC_CANTRS		0x8	/* Transmit request set */
-#घोषणा HECC_CANTRR		0xC	/* Transmit request */
-#घोषणा HECC_CANTA		0x10	/* Transmission acknowledge */
-#घोषणा HECC_CANAA		0x14	/* Abort acknowledge */
-#घोषणा HECC_CANRMP		0x18	/* Receive message pending */
-#घोषणा HECC_CANRML		0x1C	/* Receive message lost */
-#घोषणा HECC_CANRFP		0x20	/* Remote frame pending */
-#घोषणा HECC_CANGAM		0x24	/* SECC only:Global acceptance mask */
-#घोषणा HECC_CANMC		0x28	/* Master control */
-#घोषणा HECC_CANBTC		0x2C	/* Bit timing configuration */
-#घोषणा HECC_CANES		0x30	/* Error and status */
-#घोषणा HECC_CANTEC		0x34	/* Transmit error counter */
-#घोषणा HECC_CANREC		0x38	/* Receive error counter */
-#घोषणा HECC_CANGIF0		0x3C	/* Global पूर्णांकerrupt flag 0 */
-#घोषणा HECC_CANGIM		0x40	/* Global पूर्णांकerrupt mask */
-#घोषणा HECC_CANGIF1		0x44	/* Global पूर्णांकerrupt flag 1 */
-#घोषणा HECC_CANMIM		0x48	/* Mailbox पूर्णांकerrupt mask */
-#घोषणा HECC_CANMIL		0x4C	/* Mailbox पूर्णांकerrupt level */
-#घोषणा HECC_CANOPC		0x50	/* Overग_लिखो protection control */
-#घोषणा HECC_CANTIOC		0x54	/* Transmit I/O control */
-#घोषणा HECC_CANRIOC		0x58	/* Receive I/O control */
-#घोषणा HECC_CANLNT		0x5C	/* HECC only: Local network समय */
-#घोषणा HECC_CANTOC		0x60	/* HECC only: Time-out control */
-#घोषणा HECC_CANTOS		0x64	/* HECC only: Time-out status */
-#घोषणा HECC_CANTIOCE		0x68	/* SCC only:Enhanced TX I/O control */
-#घोषणा HECC_CANRIOCE		0x6C	/* SCC only:Enhanced RX I/O control */
+/* TI HECC module registers */
+#define HECC_CANME		0x0	/* Mailbox enable */
+#define HECC_CANMD		0x4	/* Mailbox direction */
+#define HECC_CANTRS		0x8	/* Transmit request set */
+#define HECC_CANTRR		0xC	/* Transmit request */
+#define HECC_CANTA		0x10	/* Transmission acknowledge */
+#define HECC_CANAA		0x14	/* Abort acknowledge */
+#define HECC_CANRMP		0x18	/* Receive message pending */
+#define HECC_CANRML		0x1C	/* Receive message lost */
+#define HECC_CANRFP		0x20	/* Remote frame pending */
+#define HECC_CANGAM		0x24	/* SECC only:Global acceptance mask */
+#define HECC_CANMC		0x28	/* Master control */
+#define HECC_CANBTC		0x2C	/* Bit timing configuration */
+#define HECC_CANES		0x30	/* Error and status */
+#define HECC_CANTEC		0x34	/* Transmit error counter */
+#define HECC_CANREC		0x38	/* Receive error counter */
+#define HECC_CANGIF0		0x3C	/* Global interrupt flag 0 */
+#define HECC_CANGIM		0x40	/* Global interrupt mask */
+#define HECC_CANGIF1		0x44	/* Global interrupt flag 1 */
+#define HECC_CANMIM		0x48	/* Mailbox interrupt mask */
+#define HECC_CANMIL		0x4C	/* Mailbox interrupt level */
+#define HECC_CANOPC		0x50	/* Overwrite protection control */
+#define HECC_CANTIOC		0x54	/* Transmit I/O control */
+#define HECC_CANRIOC		0x58	/* Receive I/O control */
+#define HECC_CANLNT		0x5C	/* HECC only: Local network time */
+#define HECC_CANTOC		0x60	/* HECC only: Time-out control */
+#define HECC_CANTOS		0x64	/* HECC only: Time-out status */
+#define HECC_CANTIOCE		0x68	/* SCC only:Enhanced TX I/O control */
+#define HECC_CANRIOCE		0x6C	/* SCC only:Enhanced RX I/O control */
 
-/* TI HECC RAM रेजिस्टरs */
-#घोषणा HECC_CANMOTS		0x80	/* Message object समय stamp */
+/* TI HECC RAM registers */
+#define HECC_CANMOTS		0x80	/* Message object time stamp */
 
-/* Mailbox रेजिस्टरs */
-#घोषणा HECC_CANMID		0x0
-#घोषणा HECC_CANMCF		0x4
-#घोषणा HECC_CANMDL		0x8
-#घोषणा HECC_CANMDH		0xC
+/* Mailbox registers */
+#define HECC_CANMID		0x0
+#define HECC_CANMCF		0x4
+#define HECC_CANMDL		0x8
+#define HECC_CANMDH		0xC
 
-#घोषणा HECC_SET_REG		0xFFFFFFFF
-#घोषणा HECC_CANID_MASK		0x3FF	/* 18 bits mask क्रम extended id's */
-#घोषणा HECC_CCE_WAIT_COUNT     100	/* Wait क्रम ~1 sec क्रम CCE bit */
+#define HECC_SET_REG		0xFFFFFFFF
+#define HECC_CANID_MASK		0x3FF	/* 18 bits mask for extended id's */
+#define HECC_CCE_WAIT_COUNT     100	/* Wait for ~1 sec for CCE bit */
 
-#घोषणा HECC_CANMC_SCM		BIT(13)	/* SCC compat mode */
-#घोषणा HECC_CANMC_CCR		BIT(12)	/* Change config request */
-#घोषणा HECC_CANMC_PDR		BIT(11)	/* Local Power करोwn - क्रम sleep mode */
-#घोषणा HECC_CANMC_ABO		BIT(7)	/* Auto Bus On */
-#घोषणा HECC_CANMC_STM		BIT(6)	/* Self test mode - loopback */
-#घोषणा HECC_CANMC_SRES		BIT(5)	/* Software reset */
+#define HECC_CANMC_SCM		BIT(13)	/* SCC compat mode */
+#define HECC_CANMC_CCR		BIT(12)	/* Change config request */
+#define HECC_CANMC_PDR		BIT(11)	/* Local Power down - for sleep mode */
+#define HECC_CANMC_ABO		BIT(7)	/* Auto Bus On */
+#define HECC_CANMC_STM		BIT(6)	/* Self test mode - loopback */
+#define HECC_CANMC_SRES		BIT(5)	/* Software reset */
 
-#घोषणा HECC_CANTIOC_EN		BIT(3)	/* Enable CAN TX I/O pin */
-#घोषणा HECC_CANRIOC_EN		BIT(3)	/* Enable CAN RX I/O pin */
+#define HECC_CANTIOC_EN		BIT(3)	/* Enable CAN TX I/O pin */
+#define HECC_CANRIOC_EN		BIT(3)	/* Enable CAN RX I/O pin */
 
-#घोषणा HECC_CANMID_IDE		BIT(31)	/* Extended frame क्रमmat */
-#घोषणा HECC_CANMID_AME		BIT(30)	/* Acceptance mask enable */
-#घोषणा HECC_CANMID_AAM		BIT(29)	/* Auto answer mode */
+#define HECC_CANMID_IDE		BIT(31)	/* Extended frame format */
+#define HECC_CANMID_AME		BIT(30)	/* Acceptance mask enable */
+#define HECC_CANMID_AAM		BIT(29)	/* Auto answer mode */
 
-#घोषणा HECC_CANES_FE		BIT(24)	/* क्रमm error */
-#घोषणा HECC_CANES_BE		BIT(23)	/* bit error */
-#घोषणा HECC_CANES_SA1		BIT(22)	/* stuck at करोminant error */
-#घोषणा HECC_CANES_CRCE		BIT(21)	/* CRC error */
-#घोषणा HECC_CANES_SE		BIT(20)	/* stuff bit error */
-#घोषणा HECC_CANES_ACKE		BIT(19)	/* ack error */
-#घोषणा HECC_CANES_BO		BIT(18)	/* Bus off status */
-#घोषणा HECC_CANES_EP		BIT(17)	/* Error passive status */
-#घोषणा HECC_CANES_EW		BIT(16)	/* Error warning status */
-#घोषणा HECC_CANES_SMA		BIT(5)	/* suspend mode ack */
-#घोषणा HECC_CANES_CCE		BIT(4)	/* Change config enabled */
-#घोषणा HECC_CANES_PDA		BIT(3)	/* Power करोwn mode ack */
+#define HECC_CANES_FE		BIT(24)	/* form error */
+#define HECC_CANES_BE		BIT(23)	/* bit error */
+#define HECC_CANES_SA1		BIT(22)	/* stuck at dominant error */
+#define HECC_CANES_CRCE		BIT(21)	/* CRC error */
+#define HECC_CANES_SE		BIT(20)	/* stuff bit error */
+#define HECC_CANES_ACKE		BIT(19)	/* ack error */
+#define HECC_CANES_BO		BIT(18)	/* Bus off status */
+#define HECC_CANES_EP		BIT(17)	/* Error passive status */
+#define HECC_CANES_EW		BIT(16)	/* Error warning status */
+#define HECC_CANES_SMA		BIT(5)	/* suspend mode ack */
+#define HECC_CANES_CCE		BIT(4)	/* Change config enabled */
+#define HECC_CANES_PDA		BIT(3)	/* Power down mode ack */
 
-#घोषणा HECC_CANBTC_SAM		BIT(7)	/* sample poपूर्णांकs */
+#define HECC_CANBTC_SAM		BIT(7)	/* sample points */
 
-#घोषणा HECC_BUS_ERROR		(HECC_CANES_FE | HECC_CANES_BE |\
+#define HECC_BUS_ERROR		(HECC_CANES_FE | HECC_CANES_BE |\
 				HECC_CANES_CRCE | HECC_CANES_SE |\
 				HECC_CANES_ACKE)
-#घोषणा HECC_CANES_FLAGS	(HECC_BUS_ERROR | HECC_CANES_BO |\
+#define HECC_CANES_FLAGS	(HECC_BUS_ERROR | HECC_CANES_BO |\
 				HECC_CANES_EP | HECC_CANES_EW)
 
-#घोषणा HECC_CANMCF_RTR		BIT(4)	/* Remote transmit request */
+#define HECC_CANMCF_RTR		BIT(4)	/* Remote transmit request */
 
-#घोषणा HECC_CANGIF_MAIF	BIT(17)	/* Message alarm पूर्णांकerrupt */
-#घोषणा HECC_CANGIF_TCOIF	BIT(16) /* Timer counter overflow पूर्णांक */
-#घोषणा HECC_CANGIF_GMIF	BIT(15)	/* Global mailbox पूर्णांकerrupt */
-#घोषणा HECC_CANGIF_AAIF	BIT(14)	/* Abort ack पूर्णांकerrupt */
-#घोषणा HECC_CANGIF_WDIF	BIT(13)	/* Write denied पूर्णांकerrupt */
-#घोषणा HECC_CANGIF_WUIF	BIT(12)	/* Wake up पूर्णांकerrupt */
-#घोषणा HECC_CANGIF_RMLIF	BIT(11)	/* Receive message lost पूर्णांकerrupt */
-#घोषणा HECC_CANGIF_BOIF	BIT(10)	/* Bus off पूर्णांकerrupt */
-#घोषणा HECC_CANGIF_EPIF	BIT(9)	/* Error passive पूर्णांकerrupt */
-#घोषणा HECC_CANGIF_WLIF	BIT(8)	/* Warning level पूर्णांकerrupt */
-#घोषणा HECC_CANGIF_MBOX_MASK	0x1F	/* Mailbox number mask */
-#घोषणा HECC_CANGIM_I1EN	BIT(1)	/* Int line 1 enable */
-#घोषणा HECC_CANGIM_I0EN	BIT(0)	/* Int line 0 enable */
-#घोषणा HECC_CANGIM_DEF_MASK	0x700	/* only busoff/warning/passive */
-#घोषणा HECC_CANGIM_SIL		BIT(2)	/* प्रणाली पूर्णांकerrupts to पूर्णांक line 1 */
+#define HECC_CANGIF_MAIF	BIT(17)	/* Message alarm interrupt */
+#define HECC_CANGIF_TCOIF	BIT(16) /* Timer counter overflow int */
+#define HECC_CANGIF_GMIF	BIT(15)	/* Global mailbox interrupt */
+#define HECC_CANGIF_AAIF	BIT(14)	/* Abort ack interrupt */
+#define HECC_CANGIF_WDIF	BIT(13)	/* Write denied interrupt */
+#define HECC_CANGIF_WUIF	BIT(12)	/* Wake up interrupt */
+#define HECC_CANGIF_RMLIF	BIT(11)	/* Receive message lost interrupt */
+#define HECC_CANGIF_BOIF	BIT(10)	/* Bus off interrupt */
+#define HECC_CANGIF_EPIF	BIT(9)	/* Error passive interrupt */
+#define HECC_CANGIF_WLIF	BIT(8)	/* Warning level interrupt */
+#define HECC_CANGIF_MBOX_MASK	0x1F	/* Mailbox number mask */
+#define HECC_CANGIM_I1EN	BIT(1)	/* Int line 1 enable */
+#define HECC_CANGIM_I0EN	BIT(0)	/* Int line 0 enable */
+#define HECC_CANGIM_DEF_MASK	0x700	/* only busoff/warning/passive */
+#define HECC_CANGIM_SIL		BIT(2)	/* system interrupts to int line 1 */
 
-/* CAN Bittiming स्थिरants as per HECC specs */
-अटल स्थिर काष्ठा can_bittiming_स्थिर ti_hecc_bittiming_स्थिर = अणु
+/* CAN Bittiming constants as per HECC specs */
+static const struct can_bittiming_const ti_hecc_bittiming_const = {
 	.name = DRV_NAME,
 	.tseg1_min = 1,
 	.tseg1_max = 16,
@@ -183,186 +182,186 @@ MODULE_VERSION(HECC_MODULE_VERSION);
 	.brp_min = 1,
 	.brp_max = 256,
 	.brp_inc = 1,
-पूर्ण;
+};
 
-काष्ठा ti_hecc_priv अणु
-	काष्ठा can_priv can;	/* MUST be first member/field */
-	काष्ठा can_rx_offload offload;
-	काष्ठा net_device *ndev;
-	काष्ठा clk *clk;
-	व्योम __iomem *base;
-	व्योम __iomem *hecc_ram;
-	व्योम __iomem *mbx;
-	bool use_hecc1पूर्णांक;
-	spinlock_t mbx_lock; /* CANME रेजिस्टर needs protection */
+struct ti_hecc_priv {
+	struct can_priv can;	/* MUST be first member/field */
+	struct can_rx_offload offload;
+	struct net_device *ndev;
+	struct clk *clk;
+	void __iomem *base;
+	void __iomem *hecc_ram;
+	void __iomem *mbx;
+	bool use_hecc1int;
+	spinlock_t mbx_lock; /* CANME register needs protection */
 	u32 tx_head;
 	u32 tx_tail;
-	काष्ठा regulator *reg_xceiver;
-पूर्ण;
+	struct regulator *reg_xceiver;
+};
 
-अटल अंतरभूत पूर्णांक get_tx_head_mb(काष्ठा ti_hecc_priv *priv)
-अणु
-	वापस priv->tx_head & HECC_TX_MB_MASK;
-पूर्ण
+static inline int get_tx_head_mb(struct ti_hecc_priv *priv)
+{
+	return priv->tx_head & HECC_TX_MB_MASK;
+}
 
-अटल अंतरभूत पूर्णांक get_tx_tail_mb(काष्ठा ti_hecc_priv *priv)
-अणु
-	वापस priv->tx_tail & HECC_TX_MB_MASK;
-पूर्ण
+static inline int get_tx_tail_mb(struct ti_hecc_priv *priv)
+{
+	return priv->tx_tail & HECC_TX_MB_MASK;
+}
 
-अटल अंतरभूत पूर्णांक get_tx_head_prio(काष्ठा ti_hecc_priv *priv)
-अणु
-	वापस (priv->tx_head >> HECC_TX_PRIO_SHIFT) & MAX_TX_PRIO;
-पूर्ण
+static inline int get_tx_head_prio(struct ti_hecc_priv *priv)
+{
+	return (priv->tx_head >> HECC_TX_PRIO_SHIFT) & MAX_TX_PRIO;
+}
 
-अटल अंतरभूत व्योम hecc_ग_लिखो_lam(काष्ठा ti_hecc_priv *priv, u32 mbxno, u32 val)
-अणु
-	__raw_ग_लिखोl(val, priv->hecc_ram + mbxno * 4);
-पूर्ण
+static inline void hecc_write_lam(struct ti_hecc_priv *priv, u32 mbxno, u32 val)
+{
+	__raw_writel(val, priv->hecc_ram + mbxno * 4);
+}
 
-अटल अंतरभूत u32 hecc_पढ़ो_stamp(काष्ठा ti_hecc_priv *priv, u32 mbxno)
-अणु
-	वापस __raw_पढ़ोl(priv->hecc_ram + HECC_CANMOTS + mbxno * 4);
-पूर्ण
+static inline u32 hecc_read_stamp(struct ti_hecc_priv *priv, u32 mbxno)
+{
+	return __raw_readl(priv->hecc_ram + HECC_CANMOTS + mbxno * 4);
+}
 
-अटल अंतरभूत व्योम hecc_ग_लिखो_mbx(काष्ठा ti_hecc_priv *priv, u32 mbxno,
+static inline void hecc_write_mbx(struct ti_hecc_priv *priv, u32 mbxno,
 				  u32 reg, u32 val)
-अणु
-	__raw_ग_लिखोl(val, priv->mbx + mbxno * 0x10 + reg);
-पूर्ण
+{
+	__raw_writel(val, priv->mbx + mbxno * 0x10 + reg);
+}
 
-अटल अंतरभूत u32 hecc_पढ़ो_mbx(काष्ठा ti_hecc_priv *priv, u32 mbxno, u32 reg)
-अणु
-	वापस __raw_पढ़ोl(priv->mbx + mbxno * 0x10 + reg);
-पूर्ण
+static inline u32 hecc_read_mbx(struct ti_hecc_priv *priv, u32 mbxno, u32 reg)
+{
+	return __raw_readl(priv->mbx + mbxno * 0x10 + reg);
+}
 
-अटल अंतरभूत व्योम hecc_ग_लिखो(काष्ठा ti_hecc_priv *priv, u32 reg, u32 val)
-अणु
-	__raw_ग_लिखोl(val, priv->base + reg);
-पूर्ण
+static inline void hecc_write(struct ti_hecc_priv *priv, u32 reg, u32 val)
+{
+	__raw_writel(val, priv->base + reg);
+}
 
-अटल अंतरभूत u32 hecc_पढ़ो(काष्ठा ti_hecc_priv *priv, पूर्णांक reg)
-अणु
-	वापस __raw_पढ़ोl(priv->base + reg);
-पूर्ण
+static inline u32 hecc_read(struct ti_hecc_priv *priv, int reg)
+{
+	return __raw_readl(priv->base + reg);
+}
 
-अटल अंतरभूत व्योम hecc_set_bit(काष्ठा ti_hecc_priv *priv, पूर्णांक reg,
+static inline void hecc_set_bit(struct ti_hecc_priv *priv, int reg,
 				u32 bit_mask)
-अणु
-	hecc_ग_लिखो(priv, reg, hecc_पढ़ो(priv, reg) | bit_mask);
-पूर्ण
+{
+	hecc_write(priv, reg, hecc_read(priv, reg) | bit_mask);
+}
 
-अटल अंतरभूत व्योम hecc_clear_bit(काष्ठा ti_hecc_priv *priv, पूर्णांक reg,
+static inline void hecc_clear_bit(struct ti_hecc_priv *priv, int reg,
 				  u32 bit_mask)
-अणु
-	hecc_ग_लिखो(priv, reg, hecc_पढ़ो(priv, reg) & ~bit_mask);
-पूर्ण
+{
+	hecc_write(priv, reg, hecc_read(priv, reg) & ~bit_mask);
+}
 
-अटल अंतरभूत u32 hecc_get_bit(काष्ठा ti_hecc_priv *priv, पूर्णांक reg, u32 bit_mask)
-अणु
-	वापस (hecc_पढ़ो(priv, reg) & bit_mask) ? 1 : 0;
-पूर्ण
+static inline u32 hecc_get_bit(struct ti_hecc_priv *priv, int reg, u32 bit_mask)
+{
+	return (hecc_read(priv, reg) & bit_mask) ? 1 : 0;
+}
 
-अटल पूर्णांक ti_hecc_set_btc(काष्ठा ti_hecc_priv *priv)
-अणु
-	काष्ठा can_bittiming *bit_timing = &priv->can.bittiming;
+static int ti_hecc_set_btc(struct ti_hecc_priv *priv)
+{
+	struct can_bittiming *bit_timing = &priv->can.bittiming;
 	u32 can_btc;
 
 	can_btc = (bit_timing->phase_seg2 - 1) & 0x7;
 	can_btc |= ((bit_timing->phase_seg1 + bit_timing->prop_seg - 1)
 			& 0xF) << 3;
-	अगर (priv->can.ctrlmode & CAN_CTRLMODE_3_SAMPLES) अणु
-		अगर (bit_timing->brp > 4)
+	if (priv->can.ctrlmode & CAN_CTRLMODE_3_SAMPLES) {
+		if (bit_timing->brp > 4)
 			can_btc |= HECC_CANBTC_SAM;
-		अन्यथा
+		else
 			netdev_warn(priv->ndev,
 				    "WARN: Triple sampling not set due to h/w limitations");
-	पूर्ण
+	}
 	can_btc |= ((bit_timing->sjw - 1) & 0x3) << 8;
 	can_btc |= ((bit_timing->brp - 1) & 0xFF) << 16;
 
-	/* ERM being set to 0 by शेष meaning resync at falling edge */
+	/* ERM being set to 0 by default meaning resync at falling edge */
 
-	hecc_ग_लिखो(priv, HECC_CANBTC, can_btc);
+	hecc_write(priv, HECC_CANBTC, can_btc);
 	netdev_info(priv->ndev, "setting CANBTC=%#x\n", can_btc);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ti_hecc_transceiver_चयन(स्थिर काष्ठा ti_hecc_priv *priv,
-				      पूर्णांक on)
-अणु
-	अगर (!priv->reg_xceiver)
-		वापस 0;
+static int ti_hecc_transceiver_switch(const struct ti_hecc_priv *priv,
+				      int on)
+{
+	if (!priv->reg_xceiver)
+		return 0;
 
-	अगर (on)
-		वापस regulator_enable(priv->reg_xceiver);
-	अन्यथा
-		वापस regulator_disable(priv->reg_xceiver);
-पूर्ण
+	if (on)
+		return regulator_enable(priv->reg_xceiver);
+	else
+		return regulator_disable(priv->reg_xceiver);
+}
 
-अटल व्योम ti_hecc_reset(काष्ठा net_device *ndev)
-अणु
+static void ti_hecc_reset(struct net_device *ndev)
+{
 	u32 cnt;
-	काष्ठा ti_hecc_priv *priv = netdev_priv(ndev);
+	struct ti_hecc_priv *priv = netdev_priv(ndev);
 
 	netdev_dbg(ndev, "resetting hecc ...\n");
 	hecc_set_bit(priv, HECC_CANMC, HECC_CANMC_SRES);
 
-	/* Set change control request and रुको till enabled */
+	/* Set change control request and wait till enabled */
 	hecc_set_bit(priv, HECC_CANMC, HECC_CANMC_CCR);
 
-	/* INFO: It has been observed that at बार CCE bit may not be
-	 * set and hw seems to be ok even अगर this bit is not set so
+	/* INFO: It has been observed that at times CCE bit may not be
+	 * set and hw seems to be ok even if this bit is not set so
 	 * timing out with a timing of 1ms to respect the specs
 	 */
 	cnt = HECC_CCE_WAIT_COUNT;
-	जबतक (!hecc_get_bit(priv, HECC_CANES, HECC_CANES_CCE) && cnt != 0) अणु
+	while (!hecc_get_bit(priv, HECC_CANES, HECC_CANES_CCE) && cnt != 0) {
 		--cnt;
 		udelay(10);
-	पूर्ण
+	}
 
 	/* Note: On HECC, BTC can be programmed only in initialization mode, so
 	 * it is expected that the can bittiming parameters are set via ip
-	 * utility beक्रमe the device is खोलोed
+	 * utility before the device is opened
 	 */
 	ti_hecc_set_btc(priv);
 
-	/* Clear CCR (and CANMC रेजिस्टर) and रुको क्रम CCE = 0 enable */
-	hecc_ग_लिखो(priv, HECC_CANMC, 0);
+	/* Clear CCR (and CANMC register) and wait for CCE = 0 enable */
+	hecc_write(priv, HECC_CANMC, 0);
 
-	/* INFO: CAN net stack handles bus off and hence disabling स्वतः-bus-on
+	/* INFO: CAN net stack handles bus off and hence disabling auto-bus-on
 	 * hecc_set_bit(priv, HECC_CANMC, HECC_CANMC_ABO);
 	 */
 
-	/* INFO: It has been observed that at बार CCE bit may not be
-	 * set and hw seems to be ok even अगर this bit is not set so
+	/* INFO: It has been observed that at times CCE bit may not be
+	 * set and hw seems to be ok even if this bit is not set so
 	 */
 	cnt = HECC_CCE_WAIT_COUNT;
-	जबतक (hecc_get_bit(priv, HECC_CANES, HECC_CANES_CCE) && cnt != 0) अणु
+	while (hecc_get_bit(priv, HECC_CANES, HECC_CANES_CCE) && cnt != 0) {
 		--cnt;
 		udelay(10);
-	पूर्ण
+	}
 
 	/* Enable TX and RX I/O Control pins */
-	hecc_ग_लिखो(priv, HECC_CANTIOC, HECC_CANTIOC_EN);
-	hecc_ग_लिखो(priv, HECC_CANRIOC, HECC_CANRIOC_EN);
+	hecc_write(priv, HECC_CANTIOC, HECC_CANTIOC_EN);
+	hecc_write(priv, HECC_CANRIOC, HECC_CANRIOC_EN);
 
-	/* Clear रेजिस्टरs क्रम clean operation */
-	hecc_ग_लिखो(priv, HECC_CANTA, HECC_SET_REG);
-	hecc_ग_लिखो(priv, HECC_CANRMP, HECC_SET_REG);
-	hecc_ग_लिखो(priv, HECC_CANGIF0, HECC_SET_REG);
-	hecc_ग_लिखो(priv, HECC_CANGIF1, HECC_SET_REG);
-	hecc_ग_लिखो(priv, HECC_CANME, 0);
-	hecc_ग_लिखो(priv, HECC_CANMD, 0);
+	/* Clear registers for clean operation */
+	hecc_write(priv, HECC_CANTA, HECC_SET_REG);
+	hecc_write(priv, HECC_CANRMP, HECC_SET_REG);
+	hecc_write(priv, HECC_CANGIF0, HECC_SET_REG);
+	hecc_write(priv, HECC_CANGIF1, HECC_SET_REG);
+	hecc_write(priv, HECC_CANME, 0);
+	hecc_write(priv, HECC_CANMD, 0);
 
 	/* SCC compat mode NOT supported (and not needed too) */
 	hecc_set_bit(priv, HECC_CANMC, HECC_CANMC_SCM);
-पूर्ण
+}
 
-अटल व्योम ti_hecc_start(काष्ठा net_device *ndev)
-अणु
-	काष्ठा ti_hecc_priv *priv = netdev_priv(ndev);
+static void ti_hecc_start(struct net_device *ndev)
+{
+	struct ti_hecc_priv *priv = netdev_priv(ndev);
 	u32 cnt, mbxno, mbx_mask;
 
 	/* put HECC in initialization mode and set btc */
@@ -371,92 +370,92 @@ MODULE_VERSION(HECC_MODULE_VERSION);
 	priv->tx_head = HECC_TX_MASK;
 	priv->tx_tail = HECC_TX_MASK;
 
-	/* Enable local and global acceptance mask रेजिस्टरs */
-	hecc_ग_लिखो(priv, HECC_CANGAM, HECC_SET_REG);
+	/* Enable local and global acceptance mask registers */
+	hecc_write(priv, HECC_CANGAM, HECC_SET_REG);
 
 	/* Prepare configured mailboxes to receive messages */
-	क्रम (cnt = 0; cnt < HECC_MAX_RX_MBOX; cnt++) अणु
+	for (cnt = 0; cnt < HECC_MAX_RX_MBOX; cnt++) {
 		mbxno = HECC_MAX_MAILBOXES - 1 - cnt;
 		mbx_mask = BIT(mbxno);
 		hecc_clear_bit(priv, HECC_CANME, mbx_mask);
-		hecc_ग_लिखो_mbx(priv, mbxno, HECC_CANMID, HECC_CANMID_AME);
-		hecc_ग_लिखो_lam(priv, mbxno, HECC_SET_REG);
+		hecc_write_mbx(priv, mbxno, HECC_CANMID, HECC_CANMID_AME);
+		hecc_write_lam(priv, mbxno, HECC_SET_REG);
 		hecc_set_bit(priv, HECC_CANMD, mbx_mask);
 		hecc_set_bit(priv, HECC_CANME, mbx_mask);
 		hecc_set_bit(priv, HECC_CANMIM, mbx_mask);
-	पूर्ण
+	}
 
-	/* Enable tx पूर्णांकerrupts */
+	/* Enable tx interrupts */
 	hecc_set_bit(priv, HECC_CANMIM, BIT(HECC_MAX_TX_MBOX) - 1);
 
-	/* Prevent message over-ग_लिखो to create a rx fअगरo, but not क्रम
+	/* Prevent message over-write to create a rx fifo, but not for
 	 * the lowest priority mailbox, since that allows detecting
 	 * overflows instead of the hardware silently dropping the
 	 * messages.
 	 */
 	mbx_mask = ~BIT(HECC_RX_LAST_MBOX);
-	hecc_ग_लिखो(priv, HECC_CANOPC, mbx_mask);
+	hecc_write(priv, HECC_CANOPC, mbx_mask);
 
-	/* Enable पूर्णांकerrupts */
-	अगर (priv->use_hecc1पूर्णांक) अणु
-		hecc_ग_लिखो(priv, HECC_CANMIL, HECC_SET_REG);
-		hecc_ग_लिखो(priv, HECC_CANGIM, HECC_CANGIM_DEF_MASK |
+	/* Enable interrupts */
+	if (priv->use_hecc1int) {
+		hecc_write(priv, HECC_CANMIL, HECC_SET_REG);
+		hecc_write(priv, HECC_CANGIM, HECC_CANGIM_DEF_MASK |
 			HECC_CANGIM_I1EN | HECC_CANGIM_SIL);
-	पूर्ण अन्यथा अणु
-		hecc_ग_लिखो(priv, HECC_CANMIL, 0);
-		hecc_ग_लिखो(priv, HECC_CANGIM,
+	} else {
+		hecc_write(priv, HECC_CANMIL, 0);
+		hecc_write(priv, HECC_CANGIM,
 			   HECC_CANGIM_DEF_MASK | HECC_CANGIM_I0EN);
-	पूर्ण
+	}
 	priv->can.state = CAN_STATE_ERROR_ACTIVE;
-पूर्ण
+}
 
-अटल व्योम ti_hecc_stop(काष्ठा net_device *ndev)
-अणु
-	काष्ठा ti_hecc_priv *priv = netdev_priv(ndev);
+static void ti_hecc_stop(struct net_device *ndev)
+{
+	struct ti_hecc_priv *priv = netdev_priv(ndev);
 
 	/* Disable the CPK; stop sending, erroring and acking */
 	hecc_set_bit(priv, HECC_CANMC, HECC_CANMC_CCR);
 
-	/* Disable पूर्णांकerrupts and disable mailboxes */
-	hecc_ग_लिखो(priv, HECC_CANGIM, 0);
-	hecc_ग_लिखो(priv, HECC_CANMIM, 0);
-	hecc_ग_लिखो(priv, HECC_CANME, 0);
+	/* Disable interrupts and disable mailboxes */
+	hecc_write(priv, HECC_CANGIM, 0);
+	hecc_write(priv, HECC_CANMIM, 0);
+	hecc_write(priv, HECC_CANME, 0);
 	priv->can.state = CAN_STATE_STOPPED;
-पूर्ण
+}
 
-अटल पूर्णांक ti_hecc_करो_set_mode(काष्ठा net_device *ndev, क्रमागत can_mode mode)
-अणु
-	पूर्णांक ret = 0;
+static int ti_hecc_do_set_mode(struct net_device *ndev, enum can_mode mode)
+{
+	int ret = 0;
 
-	चयन (mode) अणु
-	हाल CAN_MODE_START:
+	switch (mode) {
+	case CAN_MODE_START:
 		ti_hecc_start(ndev);
-		netअगर_wake_queue(ndev);
-		अवरोध;
-	शेष:
+		netif_wake_queue(ndev);
+		break;
+	default:
 		ret = -EOPNOTSUPP;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ti_hecc_get_berr_counter(स्थिर काष्ठा net_device *ndev,
-				    काष्ठा can_berr_counter *bec)
-अणु
-	काष्ठा ti_hecc_priv *priv = netdev_priv(ndev);
+static int ti_hecc_get_berr_counter(const struct net_device *ndev,
+				    struct can_berr_counter *bec)
+{
+	struct ti_hecc_priv *priv = netdev_priv(ndev);
 
-	bec->txerr = hecc_पढ़ो(priv, HECC_CANTEC);
-	bec->rxerr = hecc_पढ़ो(priv, HECC_CANREC);
+	bec->txerr = hecc_read(priv, HECC_CANTEC);
+	bec->rxerr = hecc_read(priv, HECC_CANREC);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* ti_hecc_xmit: HECC Transmit
  *
  * The transmit mailboxes start from 0 to HECC_MAX_TX_MBOX. In HECC the
- * priority of the mailbox क्रम transmission is dependent upon priority setting
- * field in mailbox रेजिस्टरs. The mailbox with highest value in priority field
+ * priority of the mailbox for transmission is dependent upon priority setting
+ * field in mailbox registers. The mailbox with highest value in priority field
  * is transmitted first. Only when two mailboxes have the same value in
  * priority field the highest numbered mailbox is transmitted first.
  *
@@ -469,582 +468,582 @@ MODULE_VERSION(HECC_MODULE_VERSION);
  * restart at highest numbered mailbox with highest priority.
  *
  * Two counters (head and tail) are used to track the next mailbox to transmit
- * and to track the echo buffer क्रम alपढ़ोy transmitted mailbox. The queue
+ * and to track the echo buffer for already transmitted mailbox. The queue
  * is stopped when all the mailboxes are busy or when there is a priority
  * value roll-over happens.
  */
-अटल netdev_tx_t ti_hecc_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *ndev)
-अणु
-	काष्ठा ti_hecc_priv *priv = netdev_priv(ndev);
-	काष्ठा can_frame *cf = (काष्ठा can_frame *)skb->data;
+static netdev_tx_t ti_hecc_xmit(struct sk_buff *skb, struct net_device *ndev)
+{
+	struct ti_hecc_priv *priv = netdev_priv(ndev);
+	struct can_frame *cf = (struct can_frame *)skb->data;
 	u32 mbxno, mbx_mask, data;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
-	अगर (can_dropped_invalid_skb(ndev, skb))
-		वापस NETDEV_TX_OK;
+	if (can_dropped_invalid_skb(ndev, skb))
+		return NETDEV_TX_OK;
 
 	mbxno = get_tx_head_mb(priv);
 	mbx_mask = BIT(mbxno);
 	spin_lock_irqsave(&priv->mbx_lock, flags);
-	अगर (unlikely(hecc_पढ़ो(priv, HECC_CANME) & mbx_mask)) अणु
+	if (unlikely(hecc_read(priv, HECC_CANME) & mbx_mask)) {
 		spin_unlock_irqrestore(&priv->mbx_lock, flags);
-		netअगर_stop_queue(ndev);
+		netif_stop_queue(ndev);
 		netdev_err(priv->ndev,
 			   "BUG: TX mbx not ready tx_head=%08X, tx_tail=%08X\n",
 			   priv->tx_head, priv->tx_tail);
-		वापस NETDEV_TX_BUSY;
-	पूर्ण
+		return NETDEV_TX_BUSY;
+	}
 	spin_unlock_irqrestore(&priv->mbx_lock, flags);
 
-	/* Prepare mailbox क्रम transmission */
+	/* Prepare mailbox for transmission */
 	data = cf->len | (get_tx_head_prio(priv) << 8);
-	अगर (cf->can_id & CAN_RTR_FLAG) /* Remote transmission request */
+	if (cf->can_id & CAN_RTR_FLAG) /* Remote transmission request */
 		data |= HECC_CANMCF_RTR;
-	hecc_ग_लिखो_mbx(priv, mbxno, HECC_CANMCF, data);
+	hecc_write_mbx(priv, mbxno, HECC_CANMCF, data);
 
-	अगर (cf->can_id & CAN_EFF_FLAG) /* Extended frame क्रमmat */
+	if (cf->can_id & CAN_EFF_FLAG) /* Extended frame format */
 		data = (cf->can_id & CAN_EFF_MASK) | HECC_CANMID_IDE;
-	अन्यथा /* Standard frame क्रमmat */
+	else /* Standard frame format */
 		data = (cf->can_id & CAN_SFF_MASK) << 18;
-	hecc_ग_लिखो_mbx(priv, mbxno, HECC_CANMID, data);
-	hecc_ग_लिखो_mbx(priv, mbxno, HECC_CANMDL,
+	hecc_write_mbx(priv, mbxno, HECC_CANMID, data);
+	hecc_write_mbx(priv, mbxno, HECC_CANMDL,
 		       be32_to_cpu(*(__be32 *)(cf->data)));
-	अगर (cf->len > 4)
-		hecc_ग_लिखो_mbx(priv, mbxno, HECC_CANMDH,
+	if (cf->len > 4)
+		hecc_write_mbx(priv, mbxno, HECC_CANMDH,
 			       be32_to_cpu(*(__be32 *)(cf->data + 4)));
-	अन्यथा
+	else
 		*(u32 *)(cf->data + 4) = 0;
 	can_put_echo_skb(skb, ndev, mbxno, 0);
 
 	spin_lock_irqsave(&priv->mbx_lock, flags);
 	--priv->tx_head;
-	अगर ((hecc_पढ़ो(priv, HECC_CANME) & BIT(get_tx_head_mb(priv))) ||
-	    (priv->tx_head & HECC_TX_MASK) == HECC_TX_MASK) अणु
-		netअगर_stop_queue(ndev);
-	पूर्ण
+	if ((hecc_read(priv, HECC_CANME) & BIT(get_tx_head_mb(priv))) ||
+	    (priv->tx_head & HECC_TX_MASK) == HECC_TX_MASK) {
+		netif_stop_queue(ndev);
+	}
 	hecc_set_bit(priv, HECC_CANME, mbx_mask);
 	spin_unlock_irqrestore(&priv->mbx_lock, flags);
 
-	hecc_ग_लिखो(priv, HECC_CANTRS, mbx_mask);
+	hecc_write(priv, HECC_CANTRS, mbx_mask);
 
-	वापस NETDEV_TX_OK;
-पूर्ण
+	return NETDEV_TX_OK;
+}
 
-अटल अंतरभूत
-काष्ठा ti_hecc_priv *rx_offload_to_priv(काष्ठा can_rx_offload *offload)
-अणु
-	वापस container_of(offload, काष्ठा ti_hecc_priv, offload);
-पूर्ण
+static inline
+struct ti_hecc_priv *rx_offload_to_priv(struct can_rx_offload *offload)
+{
+	return container_of(offload, struct ti_hecc_priv, offload);
+}
 
-अटल काष्ठा sk_buff *ti_hecc_mailbox_पढ़ो(काष्ठा can_rx_offload *offload,
-					    अचिन्हित पूर्णांक mbxno, u32 *बारtamp,
+static struct sk_buff *ti_hecc_mailbox_read(struct can_rx_offload *offload,
+					    unsigned int mbxno, u32 *timestamp,
 					    bool drop)
-अणु
-	काष्ठा ti_hecc_priv *priv = rx_offload_to_priv(offload);
-	काष्ठा sk_buff *skb;
-	काष्ठा can_frame *cf;
+{
+	struct ti_hecc_priv *priv = rx_offload_to_priv(offload);
+	struct sk_buff *skb;
+	struct can_frame *cf;
 	u32 data, mbx_mask;
 
 	mbx_mask = BIT(mbxno);
 
-	अगर (unlikely(drop)) अणु
+	if (unlikely(drop)) {
 		skb = ERR_PTR(-ENOBUFS);
-		जाओ mark_as_पढ़ो;
-	पूर्ण
+		goto mark_as_read;
+	}
 
 	skb = alloc_can_skb(offload->dev, &cf);
-	अगर (unlikely(!skb)) अणु
+	if (unlikely(!skb)) {
 		skb = ERR_PTR(-ENOMEM);
-		जाओ mark_as_पढ़ो;
-	पूर्ण
+		goto mark_as_read;
+	}
 
-	data = hecc_पढ़ो_mbx(priv, mbxno, HECC_CANMID);
-	अगर (data & HECC_CANMID_IDE)
+	data = hecc_read_mbx(priv, mbxno, HECC_CANMID);
+	if (data & HECC_CANMID_IDE)
 		cf->can_id = (data & CAN_EFF_MASK) | CAN_EFF_FLAG;
-	अन्यथा
+	else
 		cf->can_id = (data >> 18) & CAN_SFF_MASK;
 
-	data = hecc_पढ़ो_mbx(priv, mbxno, HECC_CANMCF);
-	अगर (data & HECC_CANMCF_RTR)
+	data = hecc_read_mbx(priv, mbxno, HECC_CANMCF);
+	if (data & HECC_CANMCF_RTR)
 		cf->can_id |= CAN_RTR_FLAG;
 	cf->len = can_cc_dlc2len(data & 0xF);
 
-	data = hecc_पढ़ो_mbx(priv, mbxno, HECC_CANMDL);
+	data = hecc_read_mbx(priv, mbxno, HECC_CANMDL);
 	*(__be32 *)(cf->data) = cpu_to_be32(data);
-	अगर (cf->len > 4) अणु
-		data = hecc_पढ़ो_mbx(priv, mbxno, HECC_CANMDH);
+	if (cf->len > 4) {
+		data = hecc_read_mbx(priv, mbxno, HECC_CANMDH);
 		*(__be32 *)(cf->data + 4) = cpu_to_be32(data);
-	पूर्ण
+	}
 
-	*बारtamp = hecc_पढ़ो_stamp(priv, mbxno);
+	*timestamp = hecc_read_stamp(priv, mbxno);
 
-	/* Check क्रम FIFO overrun.
+	/* Check for FIFO overrun.
 	 *
-	 * All but the last RX mailbox have activated overग_लिखो
-	 * protection. So skip check क्रम overrun, अगर we're not
+	 * All but the last RX mailbox have activated overwrite
+	 * protection. So skip check for overrun, if we're not
 	 * handling the last RX mailbox.
 	 *
-	 * As the overग_लिखो protection क्रम the last RX mailbox is
-	 * disabled, the CAN core might update जबतक we're पढ़ोing
+	 * As the overwrite protection for the last RX mailbox is
+	 * disabled, the CAN core might update while we're reading
 	 * it. This means the skb might be inconsistent.
 	 *
 	 * Return an error to let rx-offload discard this CAN frame.
 	 */
-	अगर (unlikely(mbxno == HECC_RX_LAST_MBOX &&
-		     hecc_पढ़ो(priv, HECC_CANRML) & mbx_mask))
+	if (unlikely(mbxno == HECC_RX_LAST_MBOX &&
+		     hecc_read(priv, HECC_CANRML) & mbx_mask))
 		skb = ERR_PTR(-ENOBUFS);
 
- mark_as_पढ़ो:
-	hecc_ग_लिखो(priv, HECC_CANRMP, mbx_mask);
+ mark_as_read:
+	hecc_write(priv, HECC_CANRMP, mbx_mask);
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-अटल पूर्णांक ti_hecc_error(काष्ठा net_device *ndev, पूर्णांक पूर्णांक_status,
-			 पूर्णांक err_status)
-अणु
-	काष्ठा ti_hecc_priv *priv = netdev_priv(ndev);
-	काष्ठा can_frame *cf;
-	काष्ठा sk_buff *skb;
-	u32 बारtamp;
-	पूर्णांक err;
+static int ti_hecc_error(struct net_device *ndev, int int_status,
+			 int err_status)
+{
+	struct ti_hecc_priv *priv = netdev_priv(ndev);
+	struct can_frame *cf;
+	struct sk_buff *skb;
+	u32 timestamp;
+	int err;
 
-	अगर (err_status & HECC_BUS_ERROR) अणु
+	if (err_status & HECC_BUS_ERROR) {
 		/* propagate the error condition to the can stack */
 		skb = alloc_can_err_skb(ndev, &cf);
-		अगर (!skb) अणु
-			अगर (net_ratelimit())
+		if (!skb) {
+			if (net_ratelimit())
 				netdev_err(priv->ndev,
 					   "%s: alloc_can_err_skb() failed\n",
 					   __func__);
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 
 		++priv->can.can_stats.bus_error;
 		cf->can_id |= CAN_ERR_BUSERROR | CAN_ERR_PROT;
-		अगर (err_status & HECC_CANES_FE)
+		if (err_status & HECC_CANES_FE)
 			cf->data[2] |= CAN_ERR_PROT_FORM;
-		अगर (err_status & HECC_CANES_BE)
+		if (err_status & HECC_CANES_BE)
 			cf->data[2] |= CAN_ERR_PROT_BIT;
-		अगर (err_status & HECC_CANES_SE)
+		if (err_status & HECC_CANES_SE)
 			cf->data[2] |= CAN_ERR_PROT_STUFF;
-		अगर (err_status & HECC_CANES_CRCE)
+		if (err_status & HECC_CANES_CRCE)
 			cf->data[3] = CAN_ERR_PROT_LOC_CRC_SEQ;
-		अगर (err_status & HECC_CANES_ACKE)
+		if (err_status & HECC_CANES_ACKE)
 			cf->data[3] = CAN_ERR_PROT_LOC_ACK;
 
-		बारtamp = hecc_पढ़ो(priv, HECC_CANLNT);
+		timestamp = hecc_read(priv, HECC_CANLNT);
 		err = can_rx_offload_queue_sorted(&priv->offload, skb,
-						  बारtamp);
-		अगर (err)
-			ndev->stats.rx_fअगरo_errors++;
-	पूर्ण
+						  timestamp);
+		if (err)
+			ndev->stats.rx_fifo_errors++;
+	}
 
-	hecc_ग_लिखो(priv, HECC_CANES, HECC_CANES_FLAGS);
+	hecc_write(priv, HECC_CANES, HECC_CANES_FLAGS);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ti_hecc_change_state(काष्ठा net_device *ndev,
-				 क्रमागत can_state rx_state,
-				 क्रमागत can_state tx_state)
-अणु
-	काष्ठा ti_hecc_priv *priv = netdev_priv(ndev);
-	काष्ठा can_frame *cf;
-	काष्ठा sk_buff *skb;
-	u32 बारtamp;
-	पूर्णांक err;
+static void ti_hecc_change_state(struct net_device *ndev,
+				 enum can_state rx_state,
+				 enum can_state tx_state)
+{
+	struct ti_hecc_priv *priv = netdev_priv(ndev);
+	struct can_frame *cf;
+	struct sk_buff *skb;
+	u32 timestamp;
+	int err;
 
 	skb = alloc_can_err_skb(priv->ndev, &cf);
-	अगर (unlikely(!skb)) अणु
+	if (unlikely(!skb)) {
 		priv->can.state = max(tx_state, rx_state);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	can_change_state(priv->ndev, cf, tx_state, rx_state);
 
-	अगर (max(tx_state, rx_state) != CAN_STATE_BUS_OFF) अणु
-		cf->data[6] = hecc_पढ़ो(priv, HECC_CANTEC);
-		cf->data[7] = hecc_पढ़ो(priv, HECC_CANREC);
-	पूर्ण
+	if (max(tx_state, rx_state) != CAN_STATE_BUS_OFF) {
+		cf->data[6] = hecc_read(priv, HECC_CANTEC);
+		cf->data[7] = hecc_read(priv, HECC_CANREC);
+	}
 
-	बारtamp = hecc_पढ़ो(priv, HECC_CANLNT);
-	err = can_rx_offload_queue_sorted(&priv->offload, skb, बारtamp);
-	अगर (err)
-		ndev->stats.rx_fअगरo_errors++;
-पूर्ण
+	timestamp = hecc_read(priv, HECC_CANLNT);
+	err = can_rx_offload_queue_sorted(&priv->offload, skb, timestamp);
+	if (err)
+		ndev->stats.rx_fifo_errors++;
+}
 
-अटल irqवापस_t ti_hecc_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा net_device *ndev = (काष्ठा net_device *)dev_id;
-	काष्ठा ti_hecc_priv *priv = netdev_priv(ndev);
-	काष्ठा net_device_stats *stats = &ndev->stats;
-	u32 mbxno, mbx_mask, पूर्णांक_status, err_status, stamp;
-	अचिन्हित दीर्घ flags, rx_pending;
+static irqreturn_t ti_hecc_interrupt(int irq, void *dev_id)
+{
+	struct net_device *ndev = (struct net_device *)dev_id;
+	struct ti_hecc_priv *priv = netdev_priv(ndev);
+	struct net_device_stats *stats = &ndev->stats;
+	u32 mbxno, mbx_mask, int_status, err_status, stamp;
+	unsigned long flags, rx_pending;
 	u32 handled = 0;
 
-	पूर्णांक_status = hecc_पढ़ो(priv,
-			       priv->use_hecc1पूर्णांक ?
+	int_status = hecc_read(priv,
+			       priv->use_hecc1int ?
 			       HECC_CANGIF1 : HECC_CANGIF0);
 
-	अगर (!पूर्णांक_status)
-		वापस IRQ_NONE;
+	if (!int_status)
+		return IRQ_NONE;
 
-	err_status = hecc_पढ़ो(priv, HECC_CANES);
-	अगर (unlikely(err_status & HECC_CANES_FLAGS))
-		ti_hecc_error(ndev, पूर्णांक_status, err_status);
+	err_status = hecc_read(priv, HECC_CANES);
+	if (unlikely(err_status & HECC_CANES_FLAGS))
+		ti_hecc_error(ndev, int_status, err_status);
 
-	अगर (unlikely(पूर्णांक_status & HECC_CANGIM_DEF_MASK)) अणु
-		क्रमागत can_state rx_state, tx_state;
-		u32 rec = hecc_पढ़ो(priv, HECC_CANREC);
-		u32 tec = hecc_पढ़ो(priv, HECC_CANTEC);
+	if (unlikely(int_status & HECC_CANGIM_DEF_MASK)) {
+		enum can_state rx_state, tx_state;
+		u32 rec = hecc_read(priv, HECC_CANREC);
+		u32 tec = hecc_read(priv, HECC_CANTEC);
 
-		अगर (पूर्णांक_status & HECC_CANGIF_WLIF) अणु
+		if (int_status & HECC_CANGIF_WLIF) {
 			handled |= HECC_CANGIF_WLIF;
 			rx_state = rec >= tec ? CAN_STATE_ERROR_WARNING : 0;
 			tx_state = rec <= tec ? CAN_STATE_ERROR_WARNING : 0;
 			netdev_dbg(priv->ndev, "Error Warning interrupt\n");
 			ti_hecc_change_state(ndev, rx_state, tx_state);
-		पूर्ण
+		}
 
-		अगर (पूर्णांक_status & HECC_CANGIF_EPIF) अणु
+		if (int_status & HECC_CANGIF_EPIF) {
 			handled |= HECC_CANGIF_EPIF;
 			rx_state = rec >= tec ? CAN_STATE_ERROR_PASSIVE : 0;
 			tx_state = rec <= tec ? CAN_STATE_ERROR_PASSIVE : 0;
 			netdev_dbg(priv->ndev, "Error passive interrupt\n");
 			ti_hecc_change_state(ndev, rx_state, tx_state);
-		पूर्ण
+		}
 
-		अगर (पूर्णांक_status & HECC_CANGIF_BOIF) अणु
+		if (int_status & HECC_CANGIF_BOIF) {
 			handled |= HECC_CANGIF_BOIF;
 			rx_state = CAN_STATE_BUS_OFF;
 			tx_state = CAN_STATE_BUS_OFF;
 			netdev_dbg(priv->ndev, "Bus off interrupt\n");
 
-			/* Disable all पूर्णांकerrupts */
-			hecc_ग_लिखो(priv, HECC_CANGIM, 0);
+			/* Disable all interrupts */
+			hecc_write(priv, HECC_CANGIM, 0);
 			can_bus_off(ndev);
 			ti_hecc_change_state(ndev, rx_state, tx_state);
-		पूर्ण
-	पूर्ण अन्यथा अगर (unlikely(priv->can.state != CAN_STATE_ERROR_ACTIVE)) अणु
-		क्रमागत can_state new_state, tx_state, rx_state;
-		u32 rec = hecc_पढ़ो(priv, HECC_CANREC);
-		u32 tec = hecc_पढ़ो(priv, HECC_CANTEC);
+		}
+	} else if (unlikely(priv->can.state != CAN_STATE_ERROR_ACTIVE)) {
+		enum can_state new_state, tx_state, rx_state;
+		u32 rec = hecc_read(priv, HECC_CANREC);
+		u32 tec = hecc_read(priv, HECC_CANTEC);
 
-		अगर (rec >= 128 || tec >= 128)
+		if (rec >= 128 || tec >= 128)
 			new_state = CAN_STATE_ERROR_PASSIVE;
-		अन्यथा अगर (rec >= 96 || tec >= 96)
+		else if (rec >= 96 || tec >= 96)
 			new_state = CAN_STATE_ERROR_WARNING;
-		अन्यथा
+		else
 			new_state = CAN_STATE_ERROR_ACTIVE;
 
-		अगर (new_state < priv->can.state) अणु
+		if (new_state < priv->can.state) {
 			rx_state = rec >= tec ? new_state : 0;
 			tx_state = rec <= tec ? new_state : 0;
 			ti_hecc_change_state(ndev, rx_state, tx_state);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (पूर्णांक_status & HECC_CANGIF_GMIF) अणु
-		जबतक (priv->tx_tail - priv->tx_head > 0) अणु
+	if (int_status & HECC_CANGIF_GMIF) {
+		while (priv->tx_tail - priv->tx_head > 0) {
 			mbxno = get_tx_tail_mb(priv);
 			mbx_mask = BIT(mbxno);
-			अगर (!(mbx_mask & hecc_पढ़ो(priv, HECC_CANTA)))
-				अवरोध;
-			hecc_ग_लिखो(priv, HECC_CANTA, mbx_mask);
+			if (!(mbx_mask & hecc_read(priv, HECC_CANTA)))
+				break;
+			hecc_write(priv, HECC_CANTA, mbx_mask);
 			spin_lock_irqsave(&priv->mbx_lock, flags);
 			hecc_clear_bit(priv, HECC_CANME, mbx_mask);
 			spin_unlock_irqrestore(&priv->mbx_lock, flags);
-			stamp = hecc_पढ़ो_stamp(priv, mbxno);
+			stamp = hecc_read_stamp(priv, mbxno);
 			stats->tx_bytes +=
 				can_rx_offload_get_echo_skb(&priv->offload,
-							    mbxno, stamp, शून्य);
+							    mbxno, stamp, NULL);
 			stats->tx_packets++;
 			can_led_event(ndev, CAN_LED_EVENT_TX);
 			--priv->tx_tail;
-		पूर्ण
+		}
 
-		/* restart queue अगर wrap-up or अगर queue stalled on last pkt */
-		अगर ((priv->tx_head == priv->tx_tail &&
+		/* restart queue if wrap-up or if queue stalled on last pkt */
+		if ((priv->tx_head == priv->tx_tail &&
 		     ((priv->tx_head & HECC_TX_MASK) != HECC_TX_MASK)) ||
 		    (((priv->tx_tail & HECC_TX_MASK) == HECC_TX_MASK) &&
 		     ((priv->tx_head & HECC_TX_MASK) == HECC_TX_MASK)))
-			netअगर_wake_queue(ndev);
+			netif_wake_queue(ndev);
 
 		/* offload RX mailboxes and let NAPI deliver them */
-		जबतक ((rx_pending = hecc_पढ़ो(priv, HECC_CANRMP))) अणु
-			can_rx_offload_irq_offload_बारtamp(&priv->offload,
+		while ((rx_pending = hecc_read(priv, HECC_CANRMP))) {
+			can_rx_offload_irq_offload_timestamp(&priv->offload,
 							     rx_pending);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* clear all पूर्णांकerrupt conditions - पढ़ो back to aव्योम spurious पूर्णांकs */
-	अगर (priv->use_hecc1पूर्णांक) अणु
-		hecc_ग_लिखो(priv, HECC_CANGIF1, handled);
-		पूर्णांक_status = hecc_पढ़ो(priv, HECC_CANGIF1);
-	पूर्ण अन्यथा अणु
-		hecc_ग_लिखो(priv, HECC_CANGIF0, handled);
-		पूर्णांक_status = hecc_पढ़ो(priv, HECC_CANGIF0);
-	पूर्ण
+	/* clear all interrupt conditions - read back to avoid spurious ints */
+	if (priv->use_hecc1int) {
+		hecc_write(priv, HECC_CANGIF1, handled);
+		int_status = hecc_read(priv, HECC_CANGIF1);
+	} else {
+		hecc_write(priv, HECC_CANGIF0, handled);
+		int_status = hecc_read(priv, HECC_CANGIF0);
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक ti_hecc_खोलो(काष्ठा net_device *ndev)
-अणु
-	काष्ठा ti_hecc_priv *priv = netdev_priv(ndev);
-	पूर्णांक err;
+static int ti_hecc_open(struct net_device *ndev)
+{
+	struct ti_hecc_priv *priv = netdev_priv(ndev);
+	int err;
 
-	err = request_irq(ndev->irq, ti_hecc_पूर्णांकerrupt, IRQF_SHARED,
+	err = request_irq(ndev->irq, ti_hecc_interrupt, IRQF_SHARED,
 			  ndev->name, ndev);
-	अगर (err) अणु
+	if (err) {
 		netdev_err(ndev, "error requesting interrupt\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	ti_hecc_transceiver_चयन(priv, 1);
+	ti_hecc_transceiver_switch(priv, 1);
 
 	/* Open common can device */
-	err = खोलो_candev(ndev);
-	अगर (err) अणु
+	err = open_candev(ndev);
+	if (err) {
 		netdev_err(ndev, "open_candev() failed %d\n", err);
-		ti_hecc_transceiver_चयन(priv, 0);
-		मुक्त_irq(ndev->irq, ndev);
-		वापस err;
-	पूर्ण
+		ti_hecc_transceiver_switch(priv, 0);
+		free_irq(ndev->irq, ndev);
+		return err;
+	}
 
 	can_led_event(ndev, CAN_LED_EVENT_OPEN);
 
 	ti_hecc_start(ndev);
 	can_rx_offload_enable(&priv->offload);
-	netअगर_start_queue(ndev);
+	netif_start_queue(ndev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ti_hecc_बंद(काष्ठा net_device *ndev)
-अणु
-	काष्ठा ti_hecc_priv *priv = netdev_priv(ndev);
+static int ti_hecc_close(struct net_device *ndev)
+{
+	struct ti_hecc_priv *priv = netdev_priv(ndev);
 
-	netअगर_stop_queue(ndev);
+	netif_stop_queue(ndev);
 	can_rx_offload_disable(&priv->offload);
 	ti_hecc_stop(ndev);
-	मुक्त_irq(ndev->irq, ndev);
-	बंद_candev(ndev);
-	ti_hecc_transceiver_चयन(priv, 0);
+	free_irq(ndev->irq, ndev);
+	close_candev(ndev);
+	ti_hecc_transceiver_switch(priv, 0);
 
 	can_led_event(ndev, CAN_LED_EVENT_STOP);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा net_device_ops ti_hecc_netdev_ops = अणु
-	.nकरो_खोलो		= ti_hecc_खोलो,
-	.nकरो_stop		= ti_hecc_बंद,
-	.nकरो_start_xmit		= ti_hecc_xmit,
-	.nकरो_change_mtu		= can_change_mtu,
-पूर्ण;
+static const struct net_device_ops ti_hecc_netdev_ops = {
+	.ndo_open		= ti_hecc_open,
+	.ndo_stop		= ti_hecc_close,
+	.ndo_start_xmit		= ti_hecc_xmit,
+	.ndo_change_mtu		= can_change_mtu,
+};
 
-अटल स्थिर काष्ठा of_device_id ti_hecc_dt_ids[] = अणु
-	अणु
+static const struct of_device_id ti_hecc_dt_ids[] = {
+	{
 		.compatible = "ti,am3517-hecc",
-	पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+	},
+	{ }
+};
 MODULE_DEVICE_TABLE(of, ti_hecc_dt_ids);
 
-अटल पूर्णांक ti_hecc_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा net_device *ndev = (काष्ठा net_device *)0;
-	काष्ठा ti_hecc_priv *priv;
-	काष्ठा device_node *np = pdev->dev.of_node;
-	काष्ठा resource *irq;
-	काष्ठा regulator *reg_xceiver;
-	पूर्णांक err = -ENODEV;
+static int ti_hecc_probe(struct platform_device *pdev)
+{
+	struct net_device *ndev = (struct net_device *)0;
+	struct ti_hecc_priv *priv;
+	struct device_node *np = pdev->dev.of_node;
+	struct resource *irq;
+	struct regulator *reg_xceiver;
+	int err = -ENODEV;
 
-	अगर (!IS_ENABLED(CONFIG_OF) || !np)
-		वापस -EINVAL;
+	if (!IS_ENABLED(CONFIG_OF) || !np)
+		return -EINVAL;
 
 	reg_xceiver = devm_regulator_get(&pdev->dev, "xceiver");
-	अगर (PTR_ERR(reg_xceiver) == -EPROBE_DEFER)
-		वापस -EPROBE_DEFER;
-	अन्यथा अगर (IS_ERR(reg_xceiver))
-		reg_xceiver = शून्य;
+	if (PTR_ERR(reg_xceiver) == -EPROBE_DEFER)
+		return -EPROBE_DEFER;
+	else if (IS_ERR(reg_xceiver))
+		reg_xceiver = NULL;
 
-	ndev = alloc_candev(माप(काष्ठा ti_hecc_priv), HECC_MAX_TX_MBOX);
-	अगर (!ndev) अणु
+	ndev = alloc_candev(sizeof(struct ti_hecc_priv), HECC_MAX_TX_MBOX);
+	if (!ndev) {
 		dev_err(&pdev->dev, "alloc_candev failed\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	priv = netdev_priv(ndev);
 
 	/* handle hecc memory */
-	priv->base = devm_platक्रमm_ioremap_resource_byname(pdev, "hecc");
-	अगर (IS_ERR(priv->base)) अणु
+	priv->base = devm_platform_ioremap_resource_byname(pdev, "hecc");
+	if (IS_ERR(priv->base)) {
 		dev_err(&pdev->dev, "hecc ioremap failed\n");
 		err = PTR_ERR(priv->base);
-		जाओ probe_निकास_candev;
-	पूर्ण
+		goto probe_exit_candev;
+	}
 
 	/* handle hecc-ram memory */
-	priv->hecc_ram = devm_platक्रमm_ioremap_resource_byname(pdev,
+	priv->hecc_ram = devm_platform_ioremap_resource_byname(pdev,
 							       "hecc-ram");
-	अगर (IS_ERR(priv->hecc_ram)) अणु
+	if (IS_ERR(priv->hecc_ram)) {
 		dev_err(&pdev->dev, "hecc-ram ioremap failed\n");
 		err = PTR_ERR(priv->hecc_ram);
-		जाओ probe_निकास_candev;
-	पूर्ण
+		goto probe_exit_candev;
+	}
 
 	/* handle mbx memory */
-	priv->mbx = devm_platक्रमm_ioremap_resource_byname(pdev, "mbx");
-	अगर (IS_ERR(priv->mbx)) अणु
+	priv->mbx = devm_platform_ioremap_resource_byname(pdev, "mbx");
+	if (IS_ERR(priv->mbx)) {
 		dev_err(&pdev->dev, "mbx ioremap failed\n");
 		err = PTR_ERR(priv->mbx);
-		जाओ probe_निकास_candev;
-	पूर्ण
+		goto probe_exit_candev;
+	}
 
-	irq = platक्रमm_get_resource(pdev, IORESOURCE_IRQ, 0);
-	अगर (!irq) अणु
+	irq = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
+	if (!irq) {
 		dev_err(&pdev->dev, "No irq resource\n");
-		जाओ probe_निकास_candev;
-	पूर्ण
+		goto probe_exit_candev;
+	}
 
 	priv->ndev = ndev;
 	priv->reg_xceiver = reg_xceiver;
-	priv->use_hecc1पूर्णांक = of_property_पढ़ो_bool(np, "ti,use-hecc1int");
+	priv->use_hecc1int = of_property_read_bool(np, "ti,use-hecc1int");
 
-	priv->can.bittiming_स्थिर = &ti_hecc_bittiming_स्थिर;
-	priv->can.करो_set_mode = ti_hecc_करो_set_mode;
-	priv->can.करो_get_berr_counter = ti_hecc_get_berr_counter;
+	priv->can.bittiming_const = &ti_hecc_bittiming_const;
+	priv->can.do_set_mode = ti_hecc_do_set_mode;
+	priv->can.do_get_berr_counter = ti_hecc_get_berr_counter;
 	priv->can.ctrlmode_supported = CAN_CTRLMODE_3_SAMPLES;
 
 	spin_lock_init(&priv->mbx_lock);
 	ndev->irq = irq->start;
 	ndev->flags |= IFF_ECHO;
-	platक्रमm_set_drvdata(pdev, ndev);
+	platform_set_drvdata(pdev, ndev);
 	SET_NETDEV_DEV(ndev, &pdev->dev);
 	ndev->netdev_ops = &ti_hecc_netdev_ops;
 
 	priv->clk = clk_get(&pdev->dev, "hecc_ck");
-	अगर (IS_ERR(priv->clk)) अणु
+	if (IS_ERR(priv->clk)) {
 		dev_err(&pdev->dev, "No clock available\n");
 		err = PTR_ERR(priv->clk);
-		priv->clk = शून्य;
-		जाओ probe_निकास_candev;
-	पूर्ण
-	priv->can.घड़ी.freq = clk_get_rate(priv->clk);
+		priv->clk = NULL;
+		goto probe_exit_candev;
+	}
+	priv->can.clock.freq = clk_get_rate(priv->clk);
 
 	err = clk_prepare_enable(priv->clk);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev, "clk_prepare_enable() failed\n");
-		जाओ probe_निकास_release_clk;
-	पूर्ण
+		goto probe_exit_release_clk;
+	}
 
-	priv->offload.mailbox_पढ़ो = ti_hecc_mailbox_पढ़ो;
+	priv->offload.mailbox_read = ti_hecc_mailbox_read;
 	priv->offload.mb_first = HECC_RX_FIRST_MBOX;
 	priv->offload.mb_last = HECC_RX_LAST_MBOX;
-	err = can_rx_offload_add_बारtamp(ndev, &priv->offload);
-	अगर (err) अणु
+	err = can_rx_offload_add_timestamp(ndev, &priv->offload);
+	if (err) {
 		dev_err(&pdev->dev, "can_rx_offload_add_timestamp() failed\n");
-		जाओ probe_निकास_disable_clk;
-	पूर्ण
+		goto probe_exit_disable_clk;
+	}
 
-	err = रेजिस्टर_candev(ndev);
-	अगर (err) अणु
+	err = register_candev(ndev);
+	if (err) {
 		dev_err(&pdev->dev, "register_candev() failed\n");
-		जाओ probe_निकास_offload;
-	पूर्ण
+		goto probe_exit_offload;
+	}
 
 	devm_can_led_init(ndev);
 
 	dev_info(&pdev->dev, "device registered (reg_base=%p, irq=%u)\n",
 		 priv->base, (u32)ndev->irq);
 
-	वापस 0;
+	return 0;
 
-probe_निकास_offload:
+probe_exit_offload:
 	can_rx_offload_del(&priv->offload);
-probe_निकास_disable_clk:
+probe_exit_disable_clk:
 	clk_disable_unprepare(priv->clk);
-probe_निकास_release_clk:
+probe_exit_release_clk:
 	clk_put(priv->clk);
-probe_निकास_candev:
-	मुक्त_candev(ndev);
+probe_exit_candev:
+	free_candev(ndev);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक ti_hecc_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा net_device *ndev = platक्रमm_get_drvdata(pdev);
-	काष्ठा ti_hecc_priv *priv = netdev_priv(ndev);
+static int ti_hecc_remove(struct platform_device *pdev)
+{
+	struct net_device *ndev = platform_get_drvdata(pdev);
+	struct ti_hecc_priv *priv = netdev_priv(ndev);
 
-	unरेजिस्टर_candev(ndev);
+	unregister_candev(ndev);
 	clk_disable_unprepare(priv->clk);
 	clk_put(priv->clk);
 	can_rx_offload_del(&priv->offload);
-	मुक्त_candev(ndev);
+	free_candev(ndev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक ti_hecc_suspend(काष्ठा platक्रमm_device *pdev, pm_message_t state)
-अणु
-	काष्ठा net_device *dev = platक्रमm_get_drvdata(pdev);
-	काष्ठा ti_hecc_priv *priv = netdev_priv(dev);
+#ifdef CONFIG_PM
+static int ti_hecc_suspend(struct platform_device *pdev, pm_message_t state)
+{
+	struct net_device *dev = platform_get_drvdata(pdev);
+	struct ti_hecc_priv *priv = netdev_priv(dev);
 
-	अगर (netअगर_running(dev)) अणु
-		netअगर_stop_queue(dev);
-		netअगर_device_detach(dev);
-	पूर्ण
+	if (netif_running(dev)) {
+		netif_stop_queue(dev);
+		netif_device_detach(dev);
+	}
 
 	hecc_set_bit(priv, HECC_CANMC, HECC_CANMC_PDR);
 	priv->can.state = CAN_STATE_SLEEPING;
 
 	clk_disable_unprepare(priv->clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ti_hecc_resume(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा net_device *dev = platक्रमm_get_drvdata(pdev);
-	काष्ठा ti_hecc_priv *priv = netdev_priv(dev);
-	पूर्णांक err;
+static int ti_hecc_resume(struct platform_device *pdev)
+{
+	struct net_device *dev = platform_get_drvdata(pdev);
+	struct ti_hecc_priv *priv = netdev_priv(dev);
+	int err;
 
 	err = clk_prepare_enable(priv->clk);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	hecc_clear_bit(priv, HECC_CANMC, HECC_CANMC_PDR);
 	priv->can.state = CAN_STATE_ERROR_ACTIVE;
 
-	अगर (netअगर_running(dev)) अणु
-		netअगर_device_attach(dev);
-		netअगर_start_queue(dev);
-	पूर्ण
+	if (netif_running(dev)) {
+		netif_device_attach(dev);
+		netif_start_queue(dev);
+	}
 
-	वापस 0;
-पूर्ण
-#अन्यथा
-#घोषणा ti_hecc_suspend शून्य
-#घोषणा ti_hecc_resume शून्य
-#पूर्ण_अगर
+	return 0;
+}
+#else
+#define ti_hecc_suspend NULL
+#define ti_hecc_resume NULL
+#endif
 
-/* TI HECC netdevice driver: platक्रमm driver काष्ठाure */
-अटल काष्ठा platक्रमm_driver ti_hecc_driver = अणु
-	.driver = अणु
+/* TI HECC netdevice driver: platform driver structure */
+static struct platform_driver ti_hecc_driver = {
+	.driver = {
 		.name    = DRV_NAME,
 		.of_match_table = ti_hecc_dt_ids,
-	पूर्ण,
+	},
 	.probe = ti_hecc_probe,
-	.हटाओ = ti_hecc_हटाओ,
+	.remove = ti_hecc_remove,
 	.suspend = ti_hecc_suspend,
 	.resume = ti_hecc_resume,
-पूर्ण;
+};
 
-module_platक्रमm_driver(ti_hecc_driver);
+module_platform_driver(ti_hecc_driver);
 
 MODULE_AUTHOR("Anant Gole <anantgole@ti.com>");
 MODULE_LICENSE("GPL v2");

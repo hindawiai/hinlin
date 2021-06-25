@@ -1,6 +1,5 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
-अटल uपूर्णांक32_t gf100_pmu_data[] = अणु
+/* SPDX-License-Identifier: MIT */
+static uint32_t gf100_pmu_data[] = {
 /* 0x0000: proc_kern */
 	0x52544e49,
 	0x00000000,
@@ -158,13 +157,11 @@
 	0x00000000,
 	0x00000000,
 /* 0x0268: proc_list_tail */
-/* 0x0268: समय_prev */
+/* 0x0268: time_prev */
 	0x00000000,
-/* 0x026c: समय_next */
+/* 0x026c: time_next */
 	0x00000000,
-/* 0x0270: fअगरo_queue */
-	0x00000000,
-	0x00000000,
+/* 0x0270: fifo_queue */
 	0x00000000,
 	0x00000000,
 	0x00000000,
@@ -195,7 +192,9 @@
 	0x00000000,
 	0x00000000,
 	0x00000000,
-/* 0x02f0: rfअगरo_queue */
+	0x00000000,
+	0x00000000,
+/* 0x02f0: rfifo_queue */
 	0x00000000,
 	0x00000000,
 	0x00000000,
@@ -916,9 +915,9 @@
 	0x00000000,
 	0x00000000,
 	0x00000000,
-पूर्ण;
+};
 
-अटल uपूर्णांक32_t gf100_pmu_code[] = अणु
+static uint32_t gf100_pmu_code[] = {
 	0x03920ef5,
 /* 0x0004: rd32 */
 	0x07a007f1,
@@ -928,7 +927,7 @@
 	0xf101d3f0,
 	0xb607ac07,
 	0x0dd00604,
-/* 0x0023: rd32_रुको */
+/* 0x0023: rd32_wait */
 	0xf104bd00,
 	0xb607acd7,
 	0xddcf06d4,
@@ -948,7 +947,7 @@
 	0xf101d3f0,
 	0xb607ac07,
 	0x0dd00604,
-/* 0x006b: wr32_रुको */
+/* 0x006b: wr32_wait */
 	0xf104bd00,
 	0xb607acd7,
 	0xddcf06d4,
@@ -965,12 +964,12 @@
 	0xb80298bb,
 	0x1ef4069e,
 	0xfc80fcf1,
-/* 0x00a3: रुको */
+/* 0x00a3: wait */
 	0xf900f890,
 	0xf080f990,
 	0x84b62c87,
 	0x0088cf06,
-/* 0x00b0: रुको_loop */
+/* 0x00b0: wait_loop */
 	0xf402eeb9,
 	0xdab90421,
 	0x04adfd02,
@@ -980,9 +979,9 @@
 	0xbb0099cf,
 	0x9bb80298,
 	0xdf1ef406,
-/* 0x00d4: रुको_करोne */
+/* 0x00d4: wait_done */
 	0x90fc80fc,
-/* 0x00da: पूर्णांकr_watchकरोg */
+/* 0x00da: intr_watchdog */
 	0xe99800f8,
 	0x0096b003,
 	0x982a0bf4,
@@ -991,18 +990,18 @@
 	0xf501d7f0,
 	0xbd02d121,
 	0x150ef494,
-/* 0x00f8: पूर्णांकr_watchकरोg_next_समय */
+/* 0x00f8: intr_watchdog_next_time */
 	0xb09b0a98,
 	0x0bf400a6,
 	0x069ab809,
-/* 0x0107: पूर्णांकr_watchकरोg_next_समय_set */
+/* 0x0107: intr_watchdog_next_time_set */
 	0x80061cf4,
-/* 0x010a: पूर्णांकr_watchकरोg_next_proc */
+/* 0x010a: intr_watchdog_next_proc */
 	0xe9809b09,
 	0x58e0b603,
 	0x0268e6b1,
 	0xf8c61bf4,
-/* 0x0119: पूर्णांकr */
+/* 0x0119: intr */
 	0xbd00f900,
 	0xf980f904,
 	0xf9a0f990,
@@ -1028,7 +1027,7 @@
 	0x04b63407,
 	0x0009d006,
 	0x098004bd,
-/* 0x017d: पूर्णांकr_skip_watchकरोg */
+/* 0x017d: intr_skip_watchdog */
 	0x0089e49a,
 	0x480bf408,
 	0x068897f1,
@@ -1045,11 +1044,11 @@
 	0xc007f1c0,
 	0x0604b604,
 	0xbd000cd0,
-/* 0x01bd: पूर्णांकr_subपूर्णांकr_skip_fअगरo */
+/* 0x01bd: intr_subintr_skip_fifo */
 	0x8807f104,
 	0x0604b606,
 	0xbd0009d0,
-/* 0x01c9: पूर्णांकr_skip_subपूर्णांकr */
+/* 0x01c9: intr_skip_subintr */
 	0xe097f104,
 	0xfd90bd00,
 	0x07f00489,
@@ -1090,7 +1089,7 @@
 	0xd7f100f8,
 	0xd3f000cb,
 	0xecedff00,
-/* 0x0256: समयr */
+/* 0x0256: timer */
 	0x90f900f8,
 	0x32f480f9,
 	0x03f89810,
@@ -1113,16 +1112,16 @@
 	0xf406e0b8,
 	0xe8b8090b,
 	0x111cf406,
-/* 0x02ac: समयr_reset */
+/* 0x02ac: timer_reset */
 	0xb63407f0,
 	0x0ed00604,
 	0x8004bd00,
-/* 0x02ba: समयr_enable */
+/* 0x02ba: timer_enable */
 	0x87f09a0e,
 	0x3807f001,
 	0xd00604b6,
 	0x04bd0008,
-/* 0x02c8: समयr_करोne */
+/* 0x02c8: timer_done */
 	0xfc1031f4,
 	0xf890fc80,
 /* 0x02d1: send_proc */
@@ -1140,7 +1139,7 @@
 	0xb6038b80,
 	0x94f00190,
 	0x04e98007,
-/* 0x030b: send_करोne */
+/* 0x030b: send_done */
 	0xfc0231f4,
 	0xf880fc90,
 /* 0x0311: find */
@@ -1152,7 +1151,7 @@
 	0x80b6100b,
 	0x6886b158,
 	0xf01bf402,
-/* 0x032f: find_करोne */
+/* 0x032f: find_done */
 	0xb90132f4,
 	0x80fc028e,
 /* 0x0336: send */
@@ -1179,7 +1178,7 @@
 	0xf0fca5f9,
 	0xf400f8fe,
 	0xf0fc0131,
-/* 0x038c: recv_करोne */
+/* 0x038c: recv_done */
 	0x90fc80fc,
 /* 0x0392: init */
 	0x17f100f8,
@@ -1254,13 +1253,13 @@
 	0x04b604b0,
 	0x000ed006,
 	0x0ef404bd,
-/* 0x04a5: host_send_करोne */
+/* 0x04a5: host_send_done */
 /* 0x04a7: host_recv */
 	0xf100f8ba,
 	0xf14e4917,
 	0xb8525413,
 	0x0bf406e1,
-/* 0x04b5: host_recv_रुको */
+/* 0x04b5: host_recv_wait */
 	0xcc17f1aa,
 	0x0614b604,
 	0xf10011cf,
@@ -1327,7 +1326,7 @@
 	0xe007f104,
 	0x0604b607,
 	0xbd0006d0,
-/* 0x05b5: memx_func_enter_रुको */
+/* 0x05b5: memx_func_enter_wait */
 	0xc067f104,
 	0x0664b607,
 	0xf00066cf,
@@ -1343,7 +1342,7 @@
 	0x07f10467,
 	0x04b607e4,
 	0x0006d006,
-/* 0x05ee: memx_func_leave_रुको */
+/* 0x05ee: memx_func_leave_wait */
 	0x67f104bd,
 	0x64b607c0,
 	0x0066cf06,
@@ -1371,27 +1370,27 @@
 	0x60f90587,
 	0xd0fc80f9,
 	0x21f4e0fc,
-/* 0x065b: memx_func_रुको_vblank */
+/* 0x065b: memx_func_wait_vblank */
 	0x9800f840,
 	0x66b00016,
 	0x120bf400,
 	0xf40166b0,
 	0x0ef4060b,
-/* 0x066d: memx_func_रुको_vblank_head1 */
+/* 0x066d: memx_func_wait_vblank_head1 */
 	0x2077f02c,
-/* 0x0673: memx_func_रुको_vblank_head0 */
+/* 0x0673: memx_func_wait_vblank_head0 */
 	0xf0060ef4,
-/* 0x0676: memx_func_रुको_vblank_0 */
+/* 0x0676: memx_func_wait_vblank_0 */
 	0x67f10877,
 	0x64b607c4,
 	0x0066cf06,
 	0xf40467fd,
-/* 0x0686: memx_func_रुको_vblank_1 */
+/* 0x0686: memx_func_wait_vblank_1 */
 	0x67f1f31b,
 	0x64b607c4,
 	0x0066cf06,
 	0xf40467fd,
-/* 0x0696: memx_func_रुको_vblank_fini */
+/* 0x0696: memx_func_wait_vblank_fini */
 	0x10b6f30b,
 /* 0x069b: memx_func_wr32 */
 	0x9800f804,
@@ -1401,7 +1400,7 @@
 	0xe0fcd0fc,
 	0xb64021f4,
 	0x1bf40242,
-/* 0x06b7: memx_func_रुको */
+/* 0x06b7: memx_func_wait */
 	0xf000f8e9,
 	0x84b62c87,
 	0x0088cf06,
@@ -1483,7 +1482,7 @@
 	0xfd0033cf,
 	0x0bf40431,
 	0x0131f406,
-/* 0x07b4: i2c_sense_scl_करोne */
+/* 0x07b4: i2c_sense_scl_done */
 /* 0x07b6: i2c_sense_sda */
 	0x32f400f8,
 	0xc437f101,
@@ -1491,18 +1490,18 @@
 	0xfd0033cf,
 	0x0bf40432,
 	0x0131f406,
-/* 0x07cc: i2c_sense_sda_करोne */
-/* 0x07ce: i2c_उठाओ_scl */
+/* 0x07cc: i2c_sense_sda_done */
+/* 0x07ce: i2c_raise_scl */
 	0x40f900f8,
 	0x089847f1,
 	0xf50137f0,
-/* 0x07db: i2c_उठाओ_scl_रुको */
+/* 0x07db: i2c_raise_scl_wait */
 	0xf1075a21,
 	0xf403e8e7,
 	0x21f57e21,
 	0x01f4079e,
 	0x0142b609,
-/* 0x07ef: i2c_उठाओ_scl_करोne */
+/* 0x07ef: i2c_raise_scl_done */
 	0xfcef1bf4,
 /* 0x07f3: i2c_start */
 	0xf500f840,
@@ -1582,7 +1581,7 @@
 	0xf41388e7,
 	0x3cf07e21,
 	0x0131f401,
-/* 0x0908: i2c_bitr_करोne */
+/* 0x0908: i2c_bitr_done */
 /* 0x090a: i2c_get_byte */
 	0x57f000f8,
 	0x0847f000,
@@ -1605,7 +1604,7 @@
 	0x75fd50bd,
 	0xf550fc04,
 	0xb6088221,
-/* 0x095a: i2c_get_byte_करोne */
+/* 0x095a: i2c_get_byte_done */
 	0x00f80464,
 /* 0x095c: i2c_put_byte */
 /* 0x095f: i2c_put_byte_next */
@@ -1631,7 +1630,7 @@
 	0x0076bb0f,
 	0xf40136b0,
 	0x32f4061b,
-/* 0x09b5: i2c_put_byte_करोne */
+/* 0x09b5: i2c_put_byte_done */
 /* 0x09b7: i2c_addr */
 	0xbb00f801,
 	0x65b60076,
@@ -1651,7 +1650,7 @@
 	0xfc0475fd,
 	0x5c21f550,
 	0x0464b609,
-/* 0x09fc: i2c_addr_करोne */
+/* 0x09fc: i2c_addr_done */
 /* 0x09fe: i2c_acquire_addr */
 	0xcec700f8,
 	0x02e4b6f8,
@@ -1751,13 +1750,13 @@
 	0xf4091bf4,
 	0x0ef40232,
 /* 0x0b71: i2c_recv_not_wr08 */
-/* 0x0b71: i2c_recv_करोne */
+/* 0x0b71: i2c_recv_done */
 	0xf8cec703,
 	0x0a1c21f5,
 	0xd0fce0fc,
 	0xb90a12f4,
 	0x21f5027c,
-/* 0x0b86: i2c_recv_निकास */
+/* 0x0b86: i2c_recv_exit */
 	0x00f80336,
 /* 0x0b88: i2c_init */
 /* 0x0b8a: test_recv */
@@ -1862,4 +1861,4 @@
 	0x00000000,
 	0x00000000,
 	0x00000000,
-पूर्ण;
+};

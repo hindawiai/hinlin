@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  *  S390 version
  *    Copyright IBM Corp. 1999
@@ -10,13 +9,13 @@
  */
 
 /*
- * This is included by init/मुख्य.c to check क्रम architecture-dependent bugs.
+ * This is included by init/main.c to check for architecture-dependent bugs.
  *
  * Needs:
- *      व्योम check_bugs(व्योम);
+ *      void check_bugs(void);
  */
 
-अटल अंतरभूत व्योम check_bugs(व्योम)
-अणु
+static inline void check_bugs(void)
+{
   /* s390 has no bugs ... */
-पूर्ण
+}

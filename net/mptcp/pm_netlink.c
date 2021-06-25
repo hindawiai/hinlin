@@ -1,496 +1,495 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Multipath TCP
  *
  * Copyright (c) 2020, Red Hat, Inc.
  */
 
-#घोषणा pr_fmt(fmt) "MPTCP: " fmt
+#define pr_fmt(fmt) "MPTCP: " fmt
 
-#समावेश <linux/inet.h>
-#समावेश <linux/kernel.h>
-#समावेश <net/tcp.h>
-#समावेश <net/netns/generic.h>
-#समावेश <net/mptcp.h>
-#समावेश <net/genetlink.h>
-#समावेश <uapi/linux/mptcp.h>
+#include <linux/inet.h>
+#include <linux/kernel.h>
+#include <net/tcp.h>
+#include <net/netns/generic.h>
+#include <net/mptcp.h>
+#include <net/genetlink.h>
+#include <uapi/linux/mptcp.h>
 
-#समावेश "protocol.h"
-#समावेश "mib.h"
+#include "protocol.h"
+#include "mib.h"
 
-/* क्रमward declaration */
-अटल काष्ठा genl_family mptcp_genl_family;
+/* forward declaration */
+static struct genl_family mptcp_genl_family;
 
-अटल पूर्णांक pm_nl_pernet_id;
+static int pm_nl_pernet_id;
 
-काष्ठा mptcp_pm_addr_entry अणु
-	काष्ठा list_head	list;
-	काष्ठा mptcp_addr_info	addr;
+struct mptcp_pm_addr_entry {
+	struct list_head	list;
+	struct mptcp_addr_info	addr;
 	u8			flags;
-	पूर्णांक			अगरindex;
-	काष्ठा rcu_head		rcu;
-	काष्ठा socket		*lsk;
-पूर्ण;
+	int			ifindex;
+	struct rcu_head		rcu;
+	struct socket		*lsk;
+};
 
-काष्ठा mptcp_pm_add_entry अणु
-	काष्ठा list_head	list;
-	काष्ठा mptcp_addr_info	addr;
-	काष्ठा समयr_list	add_समयr;
-	काष्ठा mptcp_sock	*sock;
-	u8			retrans_बार;
-पूर्ण;
+struct mptcp_pm_add_entry {
+	struct list_head	list;
+	struct mptcp_addr_info	addr;
+	struct timer_list	add_timer;
+	struct mptcp_sock	*sock;
+	u8			retrans_times;
+};
 
-#घोषणा MAX_ADDR_ID		255
-#घोषणा BITMAP_SZ DIV_ROUND_UP(MAX_ADDR_ID + 1, BITS_PER_LONG)
+#define MAX_ADDR_ID		255
+#define BITMAP_SZ DIV_ROUND_UP(MAX_ADDR_ID + 1, BITS_PER_LONG)
 
-काष्ठा pm_nl_pernet अणु
+struct pm_nl_pernet {
 	/* protects pernet updates */
 	spinlock_t		lock;
-	काष्ठा list_head	local_addr_list;
-	अचिन्हित पूर्णांक		addrs;
-	अचिन्हित पूर्णांक		add_addr_संकेत_max;
-	अचिन्हित पूर्णांक		add_addr_accept_max;
-	अचिन्हित पूर्णांक		local_addr_max;
-	अचिन्हित पूर्णांक		subflows_max;
-	अचिन्हित पूर्णांक		next_id;
-	अचिन्हित दीर्घ		id_biपंचांगap[BITMAP_SZ];
-पूर्ण;
+	struct list_head	local_addr_list;
+	unsigned int		addrs;
+	unsigned int		add_addr_signal_max;
+	unsigned int		add_addr_accept_max;
+	unsigned int		local_addr_max;
+	unsigned int		subflows_max;
+	unsigned int		next_id;
+	unsigned long		id_bitmap[BITMAP_SZ];
+};
 
-#घोषणा MPTCP_PM_ADDR_MAX	8
-#घोषणा ADD_ADDR_RETRANS_MAX	3
+#define MPTCP_PM_ADDR_MAX	8
+#define ADD_ADDR_RETRANS_MAX	3
 
-अटल bool addresses_equal(स्थिर काष्ठा mptcp_addr_info *a,
-			    काष्ठा mptcp_addr_info *b, bool use_port)
-अणु
+static bool addresses_equal(const struct mptcp_addr_info *a,
+			    struct mptcp_addr_info *b, bool use_port)
+{
 	bool addr_equals = false;
 
-	अगर (a->family == b->family) अणु
-		अगर (a->family == AF_INET)
+	if (a->family == b->family) {
+		if (a->family == AF_INET)
 			addr_equals = a->addr.s_addr == b->addr.s_addr;
-#अगर IS_ENABLED(CONFIG_MPTCP_IPV6)
-		अन्यथा
+#if IS_ENABLED(CONFIG_MPTCP_IPV6)
+		else
 			addr_equals = !ipv6_addr_cmp(&a->addr6, &b->addr6);
-	पूर्ण अन्यथा अगर (a->family == AF_INET) अणु
-		अगर (ipv6_addr_v4mapped(&b->addr6))
+	} else if (a->family == AF_INET) {
+		if (ipv6_addr_v4mapped(&b->addr6))
 			addr_equals = a->addr.s_addr == b->addr6.s6_addr32[3];
-	पूर्ण अन्यथा अगर (b->family == AF_INET) अणु
-		अगर (ipv6_addr_v4mapped(&a->addr6))
+	} else if (b->family == AF_INET) {
+		if (ipv6_addr_v4mapped(&a->addr6))
 			addr_equals = a->addr6.s6_addr32[3] == b->addr.s_addr;
-#पूर्ण_अगर
-	पूर्ण
+#endif
+	}
 
-	अगर (!addr_equals)
-		वापस false;
-	अगर (!use_port)
-		वापस true;
+	if (!addr_equals)
+		return false;
+	if (!use_port)
+		return true;
 
-	वापस a->port == b->port;
-पूर्ण
+	return a->port == b->port;
+}
 
-अटल bool address_zero(स्थिर काष्ठा mptcp_addr_info *addr)
-अणु
-	काष्ठा mptcp_addr_info zero;
+static bool address_zero(const struct mptcp_addr_info *addr)
+{
+	struct mptcp_addr_info zero;
 
-	स_रखो(&zero, 0, माप(zero));
+	memset(&zero, 0, sizeof(zero));
 	zero.family = addr->family;
 
-	वापस addresses_equal(addr, &zero, true);
-पूर्ण
+	return addresses_equal(addr, &zero, true);
+}
 
-अटल व्योम local_address(स्थिर काष्ठा sock_common *skc,
-			  काष्ठा mptcp_addr_info *addr)
-अणु
+static void local_address(const struct sock_common *skc,
+			  struct mptcp_addr_info *addr)
+{
 	addr->family = skc->skc_family;
 	addr->port = htons(skc->skc_num);
-	अगर (addr->family == AF_INET)
+	if (addr->family == AF_INET)
 		addr->addr.s_addr = skc->skc_rcv_saddr;
-#अगर IS_ENABLED(CONFIG_MPTCP_IPV6)
-	अन्यथा अगर (addr->family == AF_INET6)
+#if IS_ENABLED(CONFIG_MPTCP_IPV6)
+	else if (addr->family == AF_INET6)
 		addr->addr6 = skc->skc_v6_rcv_saddr;
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-अटल व्योम remote_address(स्थिर काष्ठा sock_common *skc,
-			   काष्ठा mptcp_addr_info *addr)
-अणु
+static void remote_address(const struct sock_common *skc,
+			   struct mptcp_addr_info *addr)
+{
 	addr->family = skc->skc_family;
 	addr->port = skc->skc_dport;
-	अगर (addr->family == AF_INET)
+	if (addr->family == AF_INET)
 		addr->addr.s_addr = skc->skc_daddr;
-#अगर IS_ENABLED(CONFIG_MPTCP_IPV6)
-	अन्यथा अगर (addr->family == AF_INET6)
+#if IS_ENABLED(CONFIG_MPTCP_IPV6)
+	else if (addr->family == AF_INET6)
 		addr->addr6 = skc->skc_v6_daddr;
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-अटल bool lookup_subflow_by_saddr(स्थिर काष्ठा list_head *list,
-				    काष्ठा mptcp_addr_info *saddr)
-अणु
-	काष्ठा mptcp_subflow_context *subflow;
-	काष्ठा mptcp_addr_info cur;
-	काष्ठा sock_common *skc;
+static bool lookup_subflow_by_saddr(const struct list_head *list,
+				    struct mptcp_addr_info *saddr)
+{
+	struct mptcp_subflow_context *subflow;
+	struct mptcp_addr_info cur;
+	struct sock_common *skc;
 
-	list_क्रम_each_entry(subflow, list, node) अणु
-		skc = (काष्ठा sock_common *)mptcp_subflow_tcp_sock(subflow);
+	list_for_each_entry(subflow, list, node) {
+		skc = (struct sock_common *)mptcp_subflow_tcp_sock(subflow);
 
 		local_address(skc, &cur);
-		अगर (addresses_equal(&cur, saddr, saddr->port))
-			वापस true;
-	पूर्ण
+		if (addresses_equal(&cur, saddr, saddr->port))
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल bool lookup_subflow_by_daddr(स्थिर काष्ठा list_head *list,
-				    काष्ठा mptcp_addr_info *daddr)
-अणु
-	काष्ठा mptcp_subflow_context *subflow;
-	काष्ठा mptcp_addr_info cur;
-	काष्ठा sock_common *skc;
+static bool lookup_subflow_by_daddr(const struct list_head *list,
+				    struct mptcp_addr_info *daddr)
+{
+	struct mptcp_subflow_context *subflow;
+	struct mptcp_addr_info cur;
+	struct sock_common *skc;
 
-	list_क्रम_each_entry(subflow, list, node) अणु
-		skc = (काष्ठा sock_common *)mptcp_subflow_tcp_sock(subflow);
+	list_for_each_entry(subflow, list, node) {
+		skc = (struct sock_common *)mptcp_subflow_tcp_sock(subflow);
 
 		remote_address(skc, &cur);
-		अगर (addresses_equal(&cur, daddr, daddr->port))
-			वापस true;
-	पूर्ण
+		if (addresses_equal(&cur, daddr, daddr->port))
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल काष्ठा mptcp_pm_addr_entry *
-select_local_address(स्थिर काष्ठा pm_nl_pernet *pernet,
-		     काष्ठा mptcp_sock *msk)
-अणु
-	काष्ठा mptcp_pm_addr_entry *entry, *ret = शून्य;
-	काष्ठा sock *sk = (काष्ठा sock *)msk;
+static struct mptcp_pm_addr_entry *
+select_local_address(const struct pm_nl_pernet *pernet,
+		     struct mptcp_sock *msk)
+{
+	struct mptcp_pm_addr_entry *entry, *ret = NULL;
+	struct sock *sk = (struct sock *)msk;
 
 	msk_owned_by_me(msk);
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	__mptcp_flush_join_list(msk);
-	list_क्रम_each_entry_rcu(entry, &pernet->local_addr_list, list) अणु
-		अगर (!(entry->flags & MPTCP_PM_ADDR_FLAG_SUBFLOW))
-			जारी;
+	list_for_each_entry_rcu(entry, &pernet->local_addr_list, list) {
+		if (!(entry->flags & MPTCP_PM_ADDR_FLAG_SUBFLOW))
+			continue;
 
-		अगर (entry->addr.family != sk->sk_family) अणु
-#अगर IS_ENABLED(CONFIG_MPTCP_IPV6)
-			अगर ((entry->addr.family == AF_INET &&
+		if (entry->addr.family != sk->sk_family) {
+#if IS_ENABLED(CONFIG_MPTCP_IPV6)
+			if ((entry->addr.family == AF_INET &&
 			     !ipv6_addr_v4mapped(&sk->sk_v6_daddr)) ||
 			    (sk->sk_family == AF_INET &&
 			     !ipv6_addr_v4mapped(&entry->addr.addr6)))
-#पूर्ण_अगर
-				जारी;
-		पूर्ण
+#endif
+				continue;
+		}
 
-		/* aव्योम any address alपढ़ोy in use by subflows and
+		/* avoid any address already in use by subflows and
 		 * pending join
 		 */
-		अगर (!lookup_subflow_by_saddr(&msk->conn_list, &entry->addr)) अणु
+		if (!lookup_subflow_by_saddr(&msk->conn_list, &entry->addr)) {
 			ret = entry;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	rcu_पढ़ो_unlock();
-	वापस ret;
-पूर्ण
+			break;
+		}
+	}
+	rcu_read_unlock();
+	return ret;
+}
 
-अटल काष्ठा mptcp_pm_addr_entry *
-select_संकेत_address(काष्ठा pm_nl_pernet *pernet, अचिन्हित पूर्णांक pos)
-अणु
-	काष्ठा mptcp_pm_addr_entry *entry, *ret = शून्य;
-	पूर्णांक i = 0;
+static struct mptcp_pm_addr_entry *
+select_signal_address(struct pm_nl_pernet *pernet, unsigned int pos)
+{
+	struct mptcp_pm_addr_entry *entry, *ret = NULL;
+	int i = 0;
 
-	rcu_पढ़ो_lock();
-	/* करो not keep any additional per socket state, just संकेत
+	rcu_read_lock();
+	/* do not keep any additional per socket state, just signal
 	 * the address list in order.
-	 * Note: removal from the local address list during the msk lअगरe-cycle
+	 * Note: removal from the local address list during the msk life-cycle
 	 * can lead to additional addresses not being announced.
 	 */
-	list_क्रम_each_entry_rcu(entry, &pernet->local_addr_list, list) अणु
-		अगर (!(entry->flags & MPTCP_PM_ADDR_FLAG_SIGNAL))
-			जारी;
-		अगर (i++ == pos) अणु
+	list_for_each_entry_rcu(entry, &pernet->local_addr_list, list) {
+		if (!(entry->flags & MPTCP_PM_ADDR_FLAG_SIGNAL))
+			continue;
+		if (i++ == pos) {
 			ret = entry;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	rcu_पढ़ो_unlock();
-	वापस ret;
-पूर्ण
+			break;
+		}
+	}
+	rcu_read_unlock();
+	return ret;
+}
 
-अचिन्हित पूर्णांक mptcp_pm_get_add_addr_संकेत_max(काष्ठा mptcp_sock *msk)
-अणु
-	काष्ठा pm_nl_pernet *pernet;
+unsigned int mptcp_pm_get_add_addr_signal_max(struct mptcp_sock *msk)
+{
+	struct pm_nl_pernet *pernet;
 
-	pernet = net_generic(sock_net((काष्ठा sock *)msk), pm_nl_pernet_id);
-	वापस READ_ONCE(pernet->add_addr_संकेत_max);
-पूर्ण
-EXPORT_SYMBOL_GPL(mptcp_pm_get_add_addr_संकेत_max);
+	pernet = net_generic(sock_net((struct sock *)msk), pm_nl_pernet_id);
+	return READ_ONCE(pernet->add_addr_signal_max);
+}
+EXPORT_SYMBOL_GPL(mptcp_pm_get_add_addr_signal_max);
 
-अचिन्हित पूर्णांक mptcp_pm_get_add_addr_accept_max(काष्ठा mptcp_sock *msk)
-अणु
-	काष्ठा pm_nl_pernet *pernet;
+unsigned int mptcp_pm_get_add_addr_accept_max(struct mptcp_sock *msk)
+{
+	struct pm_nl_pernet *pernet;
 
-	pernet = net_generic(sock_net((काष्ठा sock *)msk), pm_nl_pernet_id);
-	वापस READ_ONCE(pernet->add_addr_accept_max);
-पूर्ण
+	pernet = net_generic(sock_net((struct sock *)msk), pm_nl_pernet_id);
+	return READ_ONCE(pernet->add_addr_accept_max);
+}
 EXPORT_SYMBOL_GPL(mptcp_pm_get_add_addr_accept_max);
 
-अचिन्हित पूर्णांक mptcp_pm_get_subflows_max(काष्ठा mptcp_sock *msk)
-अणु
-	काष्ठा pm_nl_pernet *pernet;
+unsigned int mptcp_pm_get_subflows_max(struct mptcp_sock *msk)
+{
+	struct pm_nl_pernet *pernet;
 
-	pernet = net_generic(sock_net((काष्ठा sock *)msk), pm_nl_pernet_id);
-	वापस READ_ONCE(pernet->subflows_max);
-पूर्ण
+	pernet = net_generic(sock_net((struct sock *)msk), pm_nl_pernet_id);
+	return READ_ONCE(pernet->subflows_max);
+}
 EXPORT_SYMBOL_GPL(mptcp_pm_get_subflows_max);
 
-अचिन्हित पूर्णांक mptcp_pm_get_local_addr_max(काष्ठा mptcp_sock *msk)
-अणु
-	काष्ठा pm_nl_pernet *pernet;
+unsigned int mptcp_pm_get_local_addr_max(struct mptcp_sock *msk)
+{
+	struct pm_nl_pernet *pernet;
 
-	pernet = net_generic(sock_net((काष्ठा sock *)msk), pm_nl_pernet_id);
-	वापस READ_ONCE(pernet->local_addr_max);
-पूर्ण
+	pernet = net_generic(sock_net((struct sock *)msk), pm_nl_pernet_id);
+	return READ_ONCE(pernet->local_addr_max);
+}
 EXPORT_SYMBOL_GPL(mptcp_pm_get_local_addr_max);
 
-अटल व्योम check_work_pending(काष्ठा mptcp_sock *msk)
-अणु
-	अगर (msk->pm.add_addr_संकेतed == mptcp_pm_get_add_addr_संकेत_max(msk) &&
+static void check_work_pending(struct mptcp_sock *msk)
+{
+	if (msk->pm.add_addr_signaled == mptcp_pm_get_add_addr_signal_max(msk) &&
 	    (msk->pm.local_addr_used == mptcp_pm_get_local_addr_max(msk) ||
 	     msk->pm.subflows == mptcp_pm_get_subflows_max(msk)))
 		WRITE_ONCE(msk->pm.work_pending, false);
-पूर्ण
+}
 
-काष्ठा mptcp_pm_add_entry *
-mptcp_lookup_anno_list_by_saddr(काष्ठा mptcp_sock *msk,
-				काष्ठा mptcp_addr_info *addr)
-अणु
-	काष्ठा mptcp_pm_add_entry *entry;
+struct mptcp_pm_add_entry *
+mptcp_lookup_anno_list_by_saddr(struct mptcp_sock *msk,
+				struct mptcp_addr_info *addr)
+{
+	struct mptcp_pm_add_entry *entry;
 
-	lockdep_निश्चित_held(&msk->pm.lock);
+	lockdep_assert_held(&msk->pm.lock);
 
-	list_क्रम_each_entry(entry, &msk->pm.anno_list, list) अणु
-		अगर (addresses_equal(&entry->addr, addr, true))
-			वापस entry;
-	पूर्ण
+	list_for_each_entry(entry, &msk->pm.anno_list, list) {
+		if (addresses_equal(&entry->addr, addr, true))
+			return entry;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-bool mptcp_pm_sport_in_anno_list(काष्ठा mptcp_sock *msk, स्थिर काष्ठा sock *sk)
-अणु
-	काष्ठा mptcp_pm_add_entry *entry;
-	काष्ठा mptcp_addr_info saddr;
+bool mptcp_pm_sport_in_anno_list(struct mptcp_sock *msk, const struct sock *sk)
+{
+	struct mptcp_pm_add_entry *entry;
+	struct mptcp_addr_info saddr;
 	bool ret = false;
 
-	local_address((काष्ठा sock_common *)sk, &saddr);
+	local_address((struct sock_common *)sk, &saddr);
 
 	spin_lock_bh(&msk->pm.lock);
-	list_क्रम_each_entry(entry, &msk->pm.anno_list, list) अणु
-		अगर (addresses_equal(&entry->addr, &saddr, true)) अणु
+	list_for_each_entry(entry, &msk->pm.anno_list, list) {
+		if (addresses_equal(&entry->addr, &saddr, true)) {
 			ret = true;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 out:
 	spin_unlock_bh(&msk->pm.lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम mptcp_pm_add_समयr(काष्ठा समयr_list *समयr)
-अणु
-	काष्ठा mptcp_pm_add_entry *entry = from_समयr(entry, समयr, add_समयr);
-	काष्ठा mptcp_sock *msk = entry->sock;
-	काष्ठा sock *sk = (काष्ठा sock *)msk;
+static void mptcp_pm_add_timer(struct timer_list *timer)
+{
+	struct mptcp_pm_add_entry *entry = from_timer(entry, timer, add_timer);
+	struct mptcp_sock *msk = entry->sock;
+	struct sock *sk = (struct sock *)msk;
 
 	pr_debug("msk=%p", msk);
 
-	अगर (!msk)
-		वापस;
+	if (!msk)
+		return;
 
-	अगर (inet_sk_state_load(sk) == TCP_CLOSE)
-		वापस;
+	if (inet_sk_state_load(sk) == TCP_CLOSE)
+		return;
 
-	अगर (!entry->addr.id)
-		वापस;
+	if (!entry->addr.id)
+		return;
 
-	अगर (mptcp_pm_should_add_संकेत(msk)) अणु
-		sk_reset_समयr(sk, समयr, jअगरfies + TCP_RTO_MAX / 8);
-		जाओ out;
-	पूर्ण
+	if (mptcp_pm_should_add_signal(msk)) {
+		sk_reset_timer(sk, timer, jiffies + TCP_RTO_MAX / 8);
+		goto out;
+	}
 
 	spin_lock_bh(&msk->pm.lock);
 
-	अगर (!mptcp_pm_should_add_संकेत(msk)) अणु
+	if (!mptcp_pm_should_add_signal(msk)) {
 		pr_debug("retransmit ADD_ADDR id=%d", entry->addr.id);
 		mptcp_pm_announce_addr(msk, &entry->addr, false);
 		mptcp_pm_add_addr_send_ack(msk);
-		entry->retrans_बार++;
-	पूर्ण
+		entry->retrans_times++;
+	}
 
-	अगर (entry->retrans_बार < ADD_ADDR_RETRANS_MAX)
-		sk_reset_समयr(sk, समयr,
-			       jअगरfies + mptcp_get_add_addr_समयout(sock_net(sk)));
+	if (entry->retrans_times < ADD_ADDR_RETRANS_MAX)
+		sk_reset_timer(sk, timer,
+			       jiffies + mptcp_get_add_addr_timeout(sock_net(sk)));
 
 	spin_unlock_bh(&msk->pm.lock);
 
-	अगर (entry->retrans_बार == ADD_ADDR_RETRANS_MAX)
+	if (entry->retrans_times == ADD_ADDR_RETRANS_MAX)
 		mptcp_pm_subflow_established(msk);
 
 out:
 	__sock_put(sk);
-पूर्ण
+}
 
-काष्ठा mptcp_pm_add_entry *
-mptcp_pm_del_add_समयr(काष्ठा mptcp_sock *msk,
-		       काष्ठा mptcp_addr_info *addr, bool check_id)
-अणु
-	काष्ठा mptcp_pm_add_entry *entry;
-	काष्ठा sock *sk = (काष्ठा sock *)msk;
+struct mptcp_pm_add_entry *
+mptcp_pm_del_add_timer(struct mptcp_sock *msk,
+		       struct mptcp_addr_info *addr, bool check_id)
+{
+	struct mptcp_pm_add_entry *entry;
+	struct sock *sk = (struct sock *)msk;
 
 	spin_lock_bh(&msk->pm.lock);
 	entry = mptcp_lookup_anno_list_by_saddr(msk, addr);
-	अगर (entry && (!check_id || entry->addr.id == addr->id))
-		entry->retrans_बार = ADD_ADDR_RETRANS_MAX;
+	if (entry && (!check_id || entry->addr.id == addr->id))
+		entry->retrans_times = ADD_ADDR_RETRANS_MAX;
 	spin_unlock_bh(&msk->pm.lock);
 
-	अगर (entry && (!check_id || entry->addr.id == addr->id))
-		sk_stop_समयr_sync(sk, &entry->add_समयr);
+	if (entry && (!check_id || entry->addr.id == addr->id))
+		sk_stop_timer_sync(sk, &entry->add_timer);
 
-	वापस entry;
-पूर्ण
+	return entry;
+}
 
-अटल bool mptcp_pm_alloc_anno_list(काष्ठा mptcp_sock *msk,
-				     काष्ठा mptcp_pm_addr_entry *entry)
-अणु
-	काष्ठा mptcp_pm_add_entry *add_entry = शून्य;
-	काष्ठा sock *sk = (काष्ठा sock *)msk;
-	काष्ठा net *net = sock_net(sk);
+static bool mptcp_pm_alloc_anno_list(struct mptcp_sock *msk,
+				     struct mptcp_pm_addr_entry *entry)
+{
+	struct mptcp_pm_add_entry *add_entry = NULL;
+	struct sock *sk = (struct sock *)msk;
+	struct net *net = sock_net(sk);
 
-	lockdep_निश्चित_held(&msk->pm.lock);
+	lockdep_assert_held(&msk->pm.lock);
 
-	अगर (mptcp_lookup_anno_list_by_saddr(msk, &entry->addr))
-		वापस false;
+	if (mptcp_lookup_anno_list_by_saddr(msk, &entry->addr))
+		return false;
 
-	add_entry = kदो_स्मृति(माप(*add_entry), GFP_ATOMIC);
-	अगर (!add_entry)
-		वापस false;
+	add_entry = kmalloc(sizeof(*add_entry), GFP_ATOMIC);
+	if (!add_entry)
+		return false;
 
 	list_add(&add_entry->list, &msk->pm.anno_list);
 
 	add_entry->addr = entry->addr;
 	add_entry->sock = msk;
-	add_entry->retrans_बार = 0;
+	add_entry->retrans_times = 0;
 
-	समयr_setup(&add_entry->add_समयr, mptcp_pm_add_समयr, 0);
-	sk_reset_समयr(sk, &add_entry->add_समयr,
-		       jअगरfies + mptcp_get_add_addr_समयout(net));
+	timer_setup(&add_entry->add_timer, mptcp_pm_add_timer, 0);
+	sk_reset_timer(sk, &add_entry->add_timer,
+		       jiffies + mptcp_get_add_addr_timeout(net));
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-व्योम mptcp_pm_मुक्त_anno_list(काष्ठा mptcp_sock *msk)
-अणु
-	काष्ठा mptcp_pm_add_entry *entry, *पंचांगp;
-	काष्ठा sock *sk = (काष्ठा sock *)msk;
-	LIST_HEAD(मुक्त_list);
+void mptcp_pm_free_anno_list(struct mptcp_sock *msk)
+{
+	struct mptcp_pm_add_entry *entry, *tmp;
+	struct sock *sk = (struct sock *)msk;
+	LIST_HEAD(free_list);
 
 	pr_debug("msk=%p", msk);
 
 	spin_lock_bh(&msk->pm.lock);
-	list_splice_init(&msk->pm.anno_list, &मुक्त_list);
+	list_splice_init(&msk->pm.anno_list, &free_list);
 	spin_unlock_bh(&msk->pm.lock);
 
-	list_क्रम_each_entry_safe(entry, पंचांगp, &मुक्त_list, list) अणु
-		sk_stop_समयr_sync(sk, &entry->add_समयr);
-		kमुक्त(entry);
-	पूर्ण
-पूर्ण
+	list_for_each_entry_safe(entry, tmp, &free_list, list) {
+		sk_stop_timer_sync(sk, &entry->add_timer);
+		kfree(entry);
+	}
+}
 
-अटल व्योम mptcp_pm_create_subflow_or_संकेत_addr(काष्ठा mptcp_sock *msk)
-अणु
-	काष्ठा sock *sk = (काष्ठा sock *)msk;
-	काष्ठा mptcp_pm_addr_entry *local;
-	अचिन्हित पूर्णांक add_addr_संकेत_max;
-	अचिन्हित पूर्णांक local_addr_max;
-	काष्ठा pm_nl_pernet *pernet;
-	अचिन्हित पूर्णांक subflows_max;
+static void mptcp_pm_create_subflow_or_signal_addr(struct mptcp_sock *msk)
+{
+	struct sock *sk = (struct sock *)msk;
+	struct mptcp_pm_addr_entry *local;
+	unsigned int add_addr_signal_max;
+	unsigned int local_addr_max;
+	struct pm_nl_pernet *pernet;
+	unsigned int subflows_max;
 
 	pernet = net_generic(sock_net(sk), pm_nl_pernet_id);
 
-	add_addr_संकेत_max = mptcp_pm_get_add_addr_संकेत_max(msk);
+	add_addr_signal_max = mptcp_pm_get_add_addr_signal_max(msk);
 	local_addr_max = mptcp_pm_get_local_addr_max(msk);
 	subflows_max = mptcp_pm_get_subflows_max(msk);
 
 	pr_debug("local %d:%d signal %d:%d subflows %d:%d\n",
 		 msk->pm.local_addr_used, local_addr_max,
-		 msk->pm.add_addr_संकेतed, add_addr_संकेत_max,
+		 msk->pm.add_addr_signaled, add_addr_signal_max,
 		 msk->pm.subflows, subflows_max);
 
-	/* check first क्रम announce */
-	अगर (msk->pm.add_addr_संकेतed < add_addr_संकेत_max) अणु
-		local = select_संकेत_address(pernet,
-					      msk->pm.add_addr_संकेतed);
+	/* check first for announce */
+	if (msk->pm.add_addr_signaled < add_addr_signal_max) {
+		local = select_signal_address(pernet,
+					      msk->pm.add_addr_signaled);
 
-		अगर (local) अणु
-			अगर (mptcp_pm_alloc_anno_list(msk, local)) अणु
-				msk->pm.add_addr_संकेतed++;
+		if (local) {
+			if (mptcp_pm_alloc_anno_list(msk, local)) {
+				msk->pm.add_addr_signaled++;
 				mptcp_pm_announce_addr(msk, &local->addr, false);
 				mptcp_pm_nl_addr_send_ack(msk);
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			/* pick failed, aव्योम fourther attempts later */
-			msk->pm.local_addr_used = add_addr_संकेत_max;
-		पूर्ण
+			}
+		} else {
+			/* pick failed, avoid fourther attempts later */
+			msk->pm.local_addr_used = add_addr_signal_max;
+		}
 
 		check_work_pending(msk);
-	पूर्ण
+	}
 
-	/* check अगर should create a new subflow */
-	अगर (msk->pm.local_addr_used < local_addr_max &&
-	    msk->pm.subflows < subflows_max) अणु
+	/* check if should create a new subflow */
+	if (msk->pm.local_addr_used < local_addr_max &&
+	    msk->pm.subflows < subflows_max) {
 		local = select_local_address(pernet, msk);
-		अगर (local) अणु
-			काष्ठा mptcp_addr_info remote = अणु 0 पूर्ण;
+		if (local) {
+			struct mptcp_addr_info remote = { 0 };
 
 			msk->pm.local_addr_used++;
 			msk->pm.subflows++;
 			check_work_pending(msk);
-			remote_address((काष्ठा sock_common *)sk, &remote);
+			remote_address((struct sock_common *)sk, &remote);
 			spin_unlock_bh(&msk->pm.lock);
 			__mptcp_subflow_connect(sk, &local->addr, &remote,
-						local->flags, local->अगरindex);
+						local->flags, local->ifindex);
 			spin_lock_bh(&msk->pm.lock);
-			वापस;
-		पूर्ण
+			return;
+		}
 
-		/* lookup failed, aव्योम fourther attempts later */
+		/* lookup failed, avoid fourther attempts later */
 		msk->pm.local_addr_used = local_addr_max;
 		check_work_pending(msk);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम mptcp_pm_nl_fully_established(काष्ठा mptcp_sock *msk)
-अणु
-	mptcp_pm_create_subflow_or_संकेत_addr(msk);
-पूर्ण
+static void mptcp_pm_nl_fully_established(struct mptcp_sock *msk)
+{
+	mptcp_pm_create_subflow_or_signal_addr(msk);
+}
 
-अटल व्योम mptcp_pm_nl_subflow_established(काष्ठा mptcp_sock *msk)
-अणु
-	mptcp_pm_create_subflow_or_संकेत_addr(msk);
-पूर्ण
+static void mptcp_pm_nl_subflow_established(struct mptcp_sock *msk)
+{
+	mptcp_pm_create_subflow_or_signal_addr(msk);
+}
 
-अटल व्योम mptcp_pm_nl_add_addr_received(काष्ठा mptcp_sock *msk)
-अणु
-	काष्ठा sock *sk = (काष्ठा sock *)msk;
-	अचिन्हित पूर्णांक add_addr_accept_max;
-	काष्ठा mptcp_addr_info remote;
-	काष्ठा mptcp_addr_info local;
-	अचिन्हित पूर्णांक subflows_max;
+static void mptcp_pm_nl_add_addr_received(struct mptcp_sock *msk)
+{
+	struct sock *sk = (struct sock *)msk;
+	unsigned int add_addr_accept_max;
+	struct mptcp_addr_info remote;
+	struct mptcp_addr_info local;
+	unsigned int subflows_max;
 
 	add_addr_accept_max = mptcp_pm_get_add_addr_accept_max(msk);
 	subflows_max = mptcp_pm_get_subflows_max(msk);
@@ -499,22 +498,22 @@ mptcp_pm_del_add_समयr(काष्ठा mptcp_sock *msk,
 		 msk->pm.add_addr_accepted, add_addr_accept_max,
 		 msk->pm.remote.family);
 
-	अगर (lookup_subflow_by_daddr(&msk->conn_list, &msk->pm.remote))
-		जाओ add_addr_echo;
+	if (lookup_subflow_by_daddr(&msk->conn_list, &msk->pm.remote))
+		goto add_addr_echo;
 
 	msk->pm.add_addr_accepted++;
 	msk->pm.subflows++;
-	अगर (msk->pm.add_addr_accepted >= add_addr_accept_max ||
+	if (msk->pm.add_addr_accepted >= add_addr_accept_max ||
 	    msk->pm.subflows >= subflows_max)
 		WRITE_ONCE(msk->pm.accept_addr, false);
 
-	/* connect to the specअगरied remote address, using whatever
+	/* connect to the specified remote address, using whatever
 	 * local address the routing configuration will pick.
 	 */
 	remote = msk->pm.remote;
-	अगर (!remote.port)
+	if (!remote.port)
 		remote.port = sk->sk_dport;
-	स_रखो(&local, 0, माप(local));
+	memset(&local, 0, sizeof(local));
 	local.family = remote.family;
 
 	spin_unlock_bh(&msk->pm.lock);
@@ -524,53 +523,53 @@ mptcp_pm_del_add_समयr(काष्ठा mptcp_sock *msk,
 add_addr_echo:
 	mptcp_pm_announce_addr(msk, &msk->pm.remote, true);
 	mptcp_pm_nl_addr_send_ack(msk);
-पूर्ण
+}
 
-व्योम mptcp_pm_nl_addr_send_ack(काष्ठा mptcp_sock *msk)
-अणु
-	काष्ठा mptcp_subflow_context *subflow;
+void mptcp_pm_nl_addr_send_ack(struct mptcp_sock *msk)
+{
+	struct mptcp_subflow_context *subflow;
 
 	msk_owned_by_me(msk);
-	lockdep_निश्चित_held(&msk->pm.lock);
+	lockdep_assert_held(&msk->pm.lock);
 
-	अगर (!mptcp_pm_should_add_संकेत(msk) &&
-	    !mptcp_pm_should_rm_संकेत(msk))
-		वापस;
+	if (!mptcp_pm_should_add_signal(msk) &&
+	    !mptcp_pm_should_rm_signal(msk))
+		return;
 
 	__mptcp_flush_join_list(msk);
 	subflow = list_first_entry_or_null(&msk->conn_list, typeof(*subflow), node);
-	अगर (subflow) अणु
-		काष्ठा sock *ssk = mptcp_subflow_tcp_sock(subflow);
+	if (subflow) {
+		struct sock *ssk = mptcp_subflow_tcp_sock(subflow);
 
 		spin_unlock_bh(&msk->pm.lock);
 		pr_debug("send ack for %s%s%s",
-			 mptcp_pm_should_add_संकेत(msk) ? "add_addr" : "rm_addr",
-			 mptcp_pm_should_add_संकेत_ipv6(msk) ? " [ipv6]" : "",
-			 mptcp_pm_should_add_संकेत_port(msk) ? " [port]" : "");
+			 mptcp_pm_should_add_signal(msk) ? "add_addr" : "rm_addr",
+			 mptcp_pm_should_add_signal_ipv6(msk) ? " [ipv6]" : "",
+			 mptcp_pm_should_add_signal_port(msk) ? " [port]" : "");
 
 		lock_sock(ssk);
 		tcp_send_ack(ssk);
 		release_sock(ssk);
 		spin_lock_bh(&msk->pm.lock);
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक mptcp_pm_nl_mp_prio_send_ack(काष्ठा mptcp_sock *msk,
-				 काष्ठा mptcp_addr_info *addr,
+int mptcp_pm_nl_mp_prio_send_ack(struct mptcp_sock *msk,
+				 struct mptcp_addr_info *addr,
 				 u8 bkup)
-अणु
-	काष्ठा mptcp_subflow_context *subflow;
+{
+	struct mptcp_subflow_context *subflow;
 
 	pr_debug("bkup=%d", bkup);
 
-	mptcp_क्रम_each_subflow(msk, subflow) अणु
-		काष्ठा sock *ssk = mptcp_subflow_tcp_sock(subflow);
-		काष्ठा sock *sk = (काष्ठा sock *)msk;
-		काष्ठा mptcp_addr_info local;
+	mptcp_for_each_subflow(msk, subflow) {
+		struct sock *ssk = mptcp_subflow_tcp_sock(subflow);
+		struct sock *sk = (struct sock *)msk;
+		struct mptcp_addr_info local;
 
-		local_address((काष्ठा sock_common *)ssk, &local);
-		अगर (!addresses_equal(&local, addr, addr->port))
-			जारी;
+		local_address((struct sock_common *)ssk, &local);
+		if (!addresses_equal(&local, addr, addr->port))
+			continue;
 
 		subflow->backup = bkup;
 		subflow->send_mp_prio = 1;
@@ -584,18 +583,18 @@ add_addr_echo:
 		release_sock(ssk);
 		spin_lock_bh(&msk->pm.lock);
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल व्योम mptcp_pm_nl_rm_addr_or_subflow(काष्ठा mptcp_sock *msk,
-					   स्थिर काष्ठा mptcp_rm_list *rm_list,
-					   क्रमागत linux_mptcp_mib_field rm_type)
-अणु
-	काष्ठा mptcp_subflow_context *subflow, *पंचांगp;
-	काष्ठा sock *sk = (काष्ठा sock *)msk;
+static void mptcp_pm_nl_rm_addr_or_subflow(struct mptcp_sock *msk,
+					   const struct mptcp_rm_list *rm_list,
+					   enum linux_mptcp_mib_field rm_type)
+{
+	struct mptcp_subflow_context *subflow, *tmp;
+	struct sock *sk = (struct sock *)msk;
 	u8 i;
 
 	pr_debug("%s rm_list_nr %d",
@@ -603,150 +602,150 @@ add_addr_echo:
 
 	msk_owned_by_me(msk);
 
-	अगर (!rm_list->nr)
-		वापस;
+	if (!rm_list->nr)
+		return;
 
-	अगर (list_empty(&msk->conn_list))
-		वापस;
+	if (list_empty(&msk->conn_list))
+		return;
 
-	क्रम (i = 0; i < rm_list->nr; i++) अणु
-		list_क्रम_each_entry_safe(subflow, पंचांगp, &msk->conn_list, node) अणु
-			काष्ठा sock *ssk = mptcp_subflow_tcp_sock(subflow);
-			पूर्णांक how = RCV_SHUTDOWN | SEND_SHUTDOWN;
+	for (i = 0; i < rm_list->nr; i++) {
+		list_for_each_entry_safe(subflow, tmp, &msk->conn_list, node) {
+			struct sock *ssk = mptcp_subflow_tcp_sock(subflow);
+			int how = RCV_SHUTDOWN | SEND_SHUTDOWN;
 			u8 id = subflow->local_id;
 
-			अगर (rm_type == MPTCP_MIB_RMADDR)
+			if (rm_type == MPTCP_MIB_RMADDR)
 				id = subflow->remote_id;
 
-			अगर (rm_list->ids[i] != id)
-				जारी;
+			if (rm_list->ids[i] != id)
+				continue;
 
 			pr_debug(" -> %s rm_list_ids[%d]=%u local_id=%u remote_id=%u",
 				 rm_type == MPTCP_MIB_RMADDR ? "address" : "subflow",
 				 i, rm_list->ids[i], subflow->local_id, subflow->remote_id);
 			spin_unlock_bh(&msk->pm.lock);
-			mptcp_subflow_shutकरोwn(sk, ssk, how);
-			mptcp_बंद_ssk(sk, ssk, subflow);
+			mptcp_subflow_shutdown(sk, ssk, how);
+			mptcp_close_ssk(sk, ssk, subflow);
 			spin_lock_bh(&msk->pm.lock);
 
-			अगर (rm_type == MPTCP_MIB_RMADDR) अणु
+			if (rm_type == MPTCP_MIB_RMADDR) {
 				msk->pm.add_addr_accepted--;
 				WRITE_ONCE(msk->pm.accept_addr, true);
-			पूर्ण अन्यथा अगर (rm_type == MPTCP_MIB_RMSUBFLOW) अणु
+			} else if (rm_type == MPTCP_MIB_RMSUBFLOW) {
 				msk->pm.local_addr_used--;
-			पूर्ण
+			}
 			msk->pm.subflows--;
 			__MPTCP_INC_STATS(sock_net(sk), rm_type);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम mptcp_pm_nl_rm_addr_received(काष्ठा mptcp_sock *msk)
-अणु
+static void mptcp_pm_nl_rm_addr_received(struct mptcp_sock *msk)
+{
 	mptcp_pm_nl_rm_addr_or_subflow(msk, &msk->pm.rm_list_rx, MPTCP_MIB_RMADDR);
-पूर्ण
+}
 
-व्योम mptcp_pm_nl_rm_subflow_received(काष्ठा mptcp_sock *msk,
-				     स्थिर काष्ठा mptcp_rm_list *rm_list)
-अणु
+void mptcp_pm_nl_rm_subflow_received(struct mptcp_sock *msk,
+				     const struct mptcp_rm_list *rm_list)
+{
 	mptcp_pm_nl_rm_addr_or_subflow(msk, rm_list, MPTCP_MIB_RMSUBFLOW);
-पूर्ण
+}
 
-व्योम mptcp_pm_nl_work(काष्ठा mptcp_sock *msk)
-अणु
-	काष्ठा mptcp_pm_data *pm = &msk->pm;
+void mptcp_pm_nl_work(struct mptcp_sock *msk)
+{
+	struct mptcp_pm_data *pm = &msk->pm;
 
 	msk_owned_by_me(msk);
 
 	spin_lock_bh(&msk->pm.lock);
 
 	pr_debug("msk=%p status=%x", msk, pm->status);
-	अगर (pm->status & BIT(MPTCP_PM_ADD_ADDR_RECEIVED)) अणु
+	if (pm->status & BIT(MPTCP_PM_ADD_ADDR_RECEIVED)) {
 		pm->status &= ~BIT(MPTCP_PM_ADD_ADDR_RECEIVED);
 		mptcp_pm_nl_add_addr_received(msk);
-	पूर्ण
-	अगर (pm->status & BIT(MPTCP_PM_ADD_ADDR_SEND_ACK)) अणु
+	}
+	if (pm->status & BIT(MPTCP_PM_ADD_ADDR_SEND_ACK)) {
 		pm->status &= ~BIT(MPTCP_PM_ADD_ADDR_SEND_ACK);
 		mptcp_pm_nl_addr_send_ack(msk);
-	पूर्ण
-	अगर (pm->status & BIT(MPTCP_PM_RM_ADDR_RECEIVED)) अणु
+	}
+	if (pm->status & BIT(MPTCP_PM_RM_ADDR_RECEIVED)) {
 		pm->status &= ~BIT(MPTCP_PM_RM_ADDR_RECEIVED);
 		mptcp_pm_nl_rm_addr_received(msk);
-	पूर्ण
-	अगर (pm->status & BIT(MPTCP_PM_ESTABLISHED)) अणु
+	}
+	if (pm->status & BIT(MPTCP_PM_ESTABLISHED)) {
 		pm->status &= ~BIT(MPTCP_PM_ESTABLISHED);
 		mptcp_pm_nl_fully_established(msk);
-	पूर्ण
-	अगर (pm->status & BIT(MPTCP_PM_SUBFLOW_ESTABLISHED)) अणु
+	}
+	if (pm->status & BIT(MPTCP_PM_SUBFLOW_ESTABLISHED)) {
 		pm->status &= ~BIT(MPTCP_PM_SUBFLOW_ESTABLISHED);
 		mptcp_pm_nl_subflow_established(msk);
-	पूर्ण
+	}
 
 	spin_unlock_bh(&msk->pm.lock);
-पूर्ण
+}
 
-अटल bool address_use_port(काष्ठा mptcp_pm_addr_entry *entry)
-अणु
-	वापस (entry->flags &
+static bool address_use_port(struct mptcp_pm_addr_entry *entry)
+{
+	return (entry->flags &
 		(MPTCP_PM_ADDR_FLAG_SIGNAL | MPTCP_PM_ADDR_FLAG_SUBFLOW)) ==
 		MPTCP_PM_ADDR_FLAG_SIGNAL;
-पूर्ण
+}
 
-अटल पूर्णांक mptcp_pm_nl_append_new_local_addr(काष्ठा pm_nl_pernet *pernet,
-					     काष्ठा mptcp_pm_addr_entry *entry)
-अणु
-	काष्ठा mptcp_pm_addr_entry *cur;
-	अचिन्हित पूर्णांक addr_max;
-	पूर्णांक ret = -EINVAL;
+static int mptcp_pm_nl_append_new_local_addr(struct pm_nl_pernet *pernet,
+					     struct mptcp_pm_addr_entry *entry)
+{
+	struct mptcp_pm_addr_entry *cur;
+	unsigned int addr_max;
+	int ret = -EINVAL;
 
 	spin_lock_bh(&pernet->lock);
-	/* to keep the code simple, करोn't करो IDR-like allocation क्रम address ID,
+	/* to keep the code simple, don't do IDR-like allocation for address ID,
 	 * just bail when we exceed limits
 	 */
-	अगर (pernet->next_id == MAX_ADDR_ID)
+	if (pernet->next_id == MAX_ADDR_ID)
 		pernet->next_id = 1;
-	अगर (pernet->addrs >= MPTCP_PM_ADDR_MAX)
-		जाओ out;
-	अगर (test_bit(entry->addr.id, pernet->id_biपंचांगap))
-		जाओ out;
+	if (pernet->addrs >= MPTCP_PM_ADDR_MAX)
+		goto out;
+	if (test_bit(entry->addr.id, pernet->id_bitmap))
+		goto out;
 
-	/* करो not insert duplicate address, dअगरferentiate on port only
+	/* do not insert duplicate address, differentiate on port only
 	 * singled addresses
 	 */
-	list_क्रम_each_entry(cur, &pernet->local_addr_list, list) अणु
-		अगर (addresses_equal(&cur->addr, &entry->addr,
+	list_for_each_entry(cur, &pernet->local_addr_list, list) {
+		if (addresses_equal(&cur->addr, &entry->addr,
 				    address_use_port(entry) &&
 				    address_use_port(cur)))
-			जाओ out;
-	पूर्ण
+			goto out;
+	}
 
-	अगर (!entry->addr.id) अणु
+	if (!entry->addr.id) {
 find_next:
-		entry->addr.id = find_next_zero_bit(pernet->id_biपंचांगap,
+		entry->addr.id = find_next_zero_bit(pernet->id_bitmap,
 						    MAX_ADDR_ID + 1,
 						    pernet->next_id);
-		अगर ((!entry->addr.id || entry->addr.id > MAX_ADDR_ID) &&
-		    pernet->next_id != 1) अणु
+		if ((!entry->addr.id || entry->addr.id > MAX_ADDR_ID) &&
+		    pernet->next_id != 1) {
 			pernet->next_id = 1;
-			जाओ find_next;
-		पूर्ण
-	पूर्ण
+			goto find_next;
+		}
+	}
 
-	अगर (!entry->addr.id || entry->addr.id > MAX_ADDR_ID)
-		जाओ out;
+	if (!entry->addr.id || entry->addr.id > MAX_ADDR_ID)
+		goto out;
 
-	__set_bit(entry->addr.id, pernet->id_biपंचांगap);
-	अगर (entry->addr.id > pernet->next_id)
+	__set_bit(entry->addr.id, pernet->id_bitmap);
+	if (entry->addr.id > pernet->next_id)
 		pernet->next_id = entry->addr.id;
 
-	अगर (entry->flags & MPTCP_PM_ADDR_FLAG_SIGNAL) अणु
-		addr_max = pernet->add_addr_संकेत_max;
-		WRITE_ONCE(pernet->add_addr_संकेत_max, addr_max + 1);
-	पूर्ण
-	अगर (entry->flags & MPTCP_PM_ADDR_FLAG_SUBFLOW) अणु
+	if (entry->flags & MPTCP_PM_ADDR_FLAG_SIGNAL) {
+		addr_max = pernet->add_addr_signal_max;
+		WRITE_ONCE(pernet->add_addr_signal_max, addr_max + 1);
+	}
+	if (entry->flags & MPTCP_PM_ADDR_FLAG_SUBFLOW) {
 		addr_max = pernet->local_addr_max;
 		WRITE_ONCE(pernet->local_addr_max, addr_max + 1);
-	पूर्ण
+	}
 
 	pernet->addrs++;
 	list_add_tail_rcu(&entry->list, &pernet->local_addr_list);
@@ -754,435 +753,435 @@ find_next:
 
 out:
 	spin_unlock_bh(&pernet->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक mptcp_pm_nl_create_listen_socket(काष्ठा sock *sk,
-					    काष्ठा mptcp_pm_addr_entry *entry)
-अणु
-	काष्ठा sockaddr_storage addr;
-	काष्ठा mptcp_sock *msk;
-	काष्ठा socket *ssock;
-	पूर्णांक backlog = 1024;
-	पूर्णांक err;
+static int mptcp_pm_nl_create_listen_socket(struct sock *sk,
+					    struct mptcp_pm_addr_entry *entry)
+{
+	struct sockaddr_storage addr;
+	struct mptcp_sock *msk;
+	struct socket *ssock;
+	int backlog = 1024;
+	int err;
 
 	err = sock_create_kern(sock_net(sk), entry->addr.family,
 			       SOCK_STREAM, IPPROTO_MPTCP, &entry->lsk);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	msk = mptcp_sk(entry->lsk->sk);
-	अगर (!msk) अणु
+	if (!msk) {
 		err = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ssock = __mptcp_nmpc_socket(msk);
-	अगर (!ssock) अणु
+	if (!ssock) {
 		err = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	mptcp_info2sockaddr(&entry->addr, &addr, entry->addr.family);
-	err = kernel_bind(ssock, (काष्ठा sockaddr *)&addr,
-			  माप(काष्ठा sockaddr_in));
-	अगर (err) अणु
+	err = kernel_bind(ssock, (struct sockaddr *)&addr,
+			  sizeof(struct sockaddr_in));
+	if (err) {
 		pr_warn("kernel_bind error, err=%d", err);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	err = kernel_listen(ssock, backlog);
-	अगर (err) अणु
+	if (err) {
 		pr_warn("kernel_listen error, err=%d", err);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	वापस 0;
+	return 0;
 
 out:
 	sock_release(entry->lsk);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक mptcp_pm_nl_get_local_id(काष्ठा mptcp_sock *msk, काष्ठा sock_common *skc)
-अणु
-	काष्ठा mptcp_pm_addr_entry *entry;
-	काष्ठा mptcp_addr_info skc_local;
-	काष्ठा mptcp_addr_info msk_local;
-	काष्ठा pm_nl_pernet *pernet;
-	पूर्णांक ret = -1;
+int mptcp_pm_nl_get_local_id(struct mptcp_sock *msk, struct sock_common *skc)
+{
+	struct mptcp_pm_addr_entry *entry;
+	struct mptcp_addr_info skc_local;
+	struct mptcp_addr_info msk_local;
+	struct pm_nl_pernet *pernet;
+	int ret = -1;
 
-	अगर (WARN_ON_ONCE(!msk))
-		वापस -1;
+	if (WARN_ON_ONCE(!msk))
+		return -1;
 
-	/* The 0 ID mapping is defined by the first subflow, copied पूर्णांकo the msk
+	/* The 0 ID mapping is defined by the first subflow, copied into the msk
 	 * addr
 	 */
-	local_address((काष्ठा sock_common *)msk, &msk_local);
-	local_address((काष्ठा sock_common *)skc, &skc_local);
-	अगर (addresses_equal(&msk_local, &skc_local, false))
-		वापस 0;
+	local_address((struct sock_common *)msk, &msk_local);
+	local_address((struct sock_common *)skc, &skc_local);
+	if (addresses_equal(&msk_local, &skc_local, false))
+		return 0;
 
-	अगर (address_zero(&skc_local))
-		वापस 0;
+	if (address_zero(&skc_local))
+		return 0;
 
-	pernet = net_generic(sock_net((काष्ठा sock *)msk), pm_nl_pernet_id);
+	pernet = net_generic(sock_net((struct sock *)msk), pm_nl_pernet_id);
 
-	rcu_पढ़ो_lock();
-	list_क्रम_each_entry_rcu(entry, &pernet->local_addr_list, list) अणु
-		अगर (addresses_equal(&entry->addr, &skc_local, entry->addr.port)) अणु
+	rcu_read_lock();
+	list_for_each_entry_rcu(entry, &pernet->local_addr_list, list) {
+		if (addresses_equal(&entry->addr, &skc_local, entry->addr.port)) {
 			ret = entry->addr.id;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	rcu_पढ़ो_unlock();
-	अगर (ret >= 0)
-		वापस ret;
+			break;
+		}
+	}
+	rcu_read_unlock();
+	if (ret >= 0)
+		return ret;
 
 	/* address not found, add to local list */
-	entry = kदो_स्मृति(माप(*entry), GFP_ATOMIC);
-	अगर (!entry)
-		वापस -ENOMEM;
+	entry = kmalloc(sizeof(*entry), GFP_ATOMIC);
+	if (!entry)
+		return -ENOMEM;
 
 	entry->addr = skc_local;
 	entry->addr.id = 0;
 	entry->addr.port = 0;
-	entry->अगरindex = 0;
+	entry->ifindex = 0;
 	entry->flags = 0;
-	entry->lsk = शून्य;
+	entry->lsk = NULL;
 	ret = mptcp_pm_nl_append_new_local_addr(pernet, entry);
-	अगर (ret < 0)
-		kमुक्त(entry);
+	if (ret < 0)
+		kfree(entry);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम mptcp_pm_nl_data_init(काष्ठा mptcp_sock *msk)
-अणु
-	काष्ठा mptcp_pm_data *pm = &msk->pm;
+void mptcp_pm_nl_data_init(struct mptcp_sock *msk)
+{
+	struct mptcp_pm_data *pm = &msk->pm;
 	bool subflows;
 
 	subflows = !!mptcp_pm_get_subflows_max(msk);
 	WRITE_ONCE(pm->work_pending, (!!mptcp_pm_get_local_addr_max(msk) && subflows) ||
-		   !!mptcp_pm_get_add_addr_संकेत_max(msk));
+		   !!mptcp_pm_get_add_addr_signal_max(msk));
 	WRITE_ONCE(pm->accept_addr, !!mptcp_pm_get_add_addr_accept_max(msk) && subflows);
 	WRITE_ONCE(pm->accept_subflow, subflows);
-पूर्ण
+}
 
-#घोषणा MPTCP_PM_CMD_GRP_OFFSET       0
-#घोषणा MPTCP_PM_EV_GRP_OFFSET        1
+#define MPTCP_PM_CMD_GRP_OFFSET       0
+#define MPTCP_PM_EV_GRP_OFFSET        1
 
-अटल स्थिर काष्ठा genl_multicast_group mptcp_pm_mcgrps[] = अणु
-	[MPTCP_PM_CMD_GRP_OFFSET]	= अणु .name = MPTCP_PM_CMD_GRP_NAME, पूर्ण,
-	[MPTCP_PM_EV_GRP_OFFSET]        = अणु .name = MPTCP_PM_EV_GRP_NAME,
+static const struct genl_multicast_group mptcp_pm_mcgrps[] = {
+	[MPTCP_PM_CMD_GRP_OFFSET]	= { .name = MPTCP_PM_CMD_GRP_NAME, },
+	[MPTCP_PM_EV_GRP_OFFSET]        = { .name = MPTCP_PM_EV_GRP_NAME,
 					    .flags = GENL_UNS_ADMIN_PERM,
-					  पूर्ण,
-पूर्ण;
+					  },
+};
 
-अटल स्थिर काष्ठा nla_policy
-mptcp_pm_addr_policy[MPTCP_PM_ADDR_ATTR_MAX + 1] = अणु
-	[MPTCP_PM_ADDR_ATTR_FAMILY]	= अणु .type	= NLA_U16,	पूर्ण,
-	[MPTCP_PM_ADDR_ATTR_ID]		= अणु .type	= NLA_U8,	पूर्ण,
-	[MPTCP_PM_ADDR_ATTR_ADDR4]	= अणु .type	= NLA_U32,	पूर्ण,
+static const struct nla_policy
+mptcp_pm_addr_policy[MPTCP_PM_ADDR_ATTR_MAX + 1] = {
+	[MPTCP_PM_ADDR_ATTR_FAMILY]	= { .type	= NLA_U16,	},
+	[MPTCP_PM_ADDR_ATTR_ID]		= { .type	= NLA_U8,	},
+	[MPTCP_PM_ADDR_ATTR_ADDR4]	= { .type	= NLA_U32,	},
 	[MPTCP_PM_ADDR_ATTR_ADDR6]	=
-		NLA_POLICY_EXACT_LEN(माप(काष्ठा in6_addr)),
-	[MPTCP_PM_ADDR_ATTR_PORT]	= अणु .type	= NLA_U16	पूर्ण,
-	[MPTCP_PM_ADDR_ATTR_FLAGS]	= अणु .type	= NLA_U32	पूर्ण,
-	[MPTCP_PM_ADDR_ATTR_IF_IDX]     = अणु .type	= NLA_S32	पूर्ण,
-पूर्ण;
+		NLA_POLICY_EXACT_LEN(sizeof(struct in6_addr)),
+	[MPTCP_PM_ADDR_ATTR_PORT]	= { .type	= NLA_U16	},
+	[MPTCP_PM_ADDR_ATTR_FLAGS]	= { .type	= NLA_U32	},
+	[MPTCP_PM_ADDR_ATTR_IF_IDX]     = { .type	= NLA_S32	},
+};
 
-अटल स्थिर काष्ठा nla_policy mptcp_pm_policy[MPTCP_PM_ATTR_MAX + 1] = अणु
+static const struct nla_policy mptcp_pm_policy[MPTCP_PM_ATTR_MAX + 1] = {
 	[MPTCP_PM_ATTR_ADDR]		=
 					NLA_POLICY_NESTED(mptcp_pm_addr_policy),
-	[MPTCP_PM_ATTR_RCV_ADD_ADDRS]	= अणु .type	= NLA_U32,	पूर्ण,
-	[MPTCP_PM_ATTR_SUBFLOWS]	= अणु .type	= NLA_U32,	पूर्ण,
-पूर्ण;
+	[MPTCP_PM_ATTR_RCV_ADD_ADDRS]	= { .type	= NLA_U32,	},
+	[MPTCP_PM_ATTR_SUBFLOWS]	= { .type	= NLA_U32,	},
+};
 
-अटल पूर्णांक mptcp_pm_family_to_addr(पूर्णांक family)
-अणु
-#अगर IS_ENABLED(CONFIG_MPTCP_IPV6)
-	अगर (family == AF_INET6)
-		वापस MPTCP_PM_ADDR_ATTR_ADDR6;
-#पूर्ण_अगर
-	वापस MPTCP_PM_ADDR_ATTR_ADDR4;
-पूर्ण
+static int mptcp_pm_family_to_addr(int family)
+{
+#if IS_ENABLED(CONFIG_MPTCP_IPV6)
+	if (family == AF_INET6)
+		return MPTCP_PM_ADDR_ATTR_ADDR6;
+#endif
+	return MPTCP_PM_ADDR_ATTR_ADDR4;
+}
 
-अटल पूर्णांक mptcp_pm_parse_addr(काष्ठा nlattr *attr, काष्ठा genl_info *info,
+static int mptcp_pm_parse_addr(struct nlattr *attr, struct genl_info *info,
 			       bool require_family,
-			       काष्ठा mptcp_pm_addr_entry *entry)
-अणु
-	काष्ठा nlattr *tb[MPTCP_PM_ADDR_ATTR_MAX + 1];
-	पूर्णांक err, addr_addr;
+			       struct mptcp_pm_addr_entry *entry)
+{
+	struct nlattr *tb[MPTCP_PM_ADDR_ATTR_MAX + 1];
+	int err, addr_addr;
 
-	अगर (!attr) अणु
+	if (!attr) {
 		GENL_SET_ERR_MSG(info, "missing address info");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* no validation needed - was alपढ़ोy करोne via nested policy */
+	/* no validation needed - was already done via nested policy */
 	err = nla_parse_nested_deprecated(tb, MPTCP_PM_ADDR_ATTR_MAX, attr,
 					  mptcp_pm_addr_policy, info->extack);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	स_रखो(entry, 0, माप(*entry));
-	अगर (!tb[MPTCP_PM_ADDR_ATTR_FAMILY]) अणु
-		अगर (!require_family)
-			जाओ skip_family;
+	memset(entry, 0, sizeof(*entry));
+	if (!tb[MPTCP_PM_ADDR_ATTR_FAMILY]) {
+		if (!require_family)
+			goto skip_family;
 
 		NL_SET_ERR_MSG_ATTR(info->extack, attr,
 				    "missing family");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	entry->addr.family = nla_get_u16(tb[MPTCP_PM_ADDR_ATTR_FAMILY]);
-	अगर (entry->addr.family != AF_INET
-#अगर IS_ENABLED(CONFIG_MPTCP_IPV6)
+	if (entry->addr.family != AF_INET
+#if IS_ENABLED(CONFIG_MPTCP_IPV6)
 	    && entry->addr.family != AF_INET6
-#पूर्ण_अगर
-	    ) अणु
+#endif
+	    ) {
 		NL_SET_ERR_MSG_ATTR(info->extack, attr,
 				    "unknown address family");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	addr_addr = mptcp_pm_family_to_addr(entry->addr.family);
-	अगर (!tb[addr_addr]) अणु
+	if (!tb[addr_addr]) {
 		NL_SET_ERR_MSG_ATTR(info->extack, attr,
 				    "missing address data");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-#अगर IS_ENABLED(CONFIG_MPTCP_IPV6)
-	अगर (entry->addr.family == AF_INET6)
+#if IS_ENABLED(CONFIG_MPTCP_IPV6)
+	if (entry->addr.family == AF_INET6)
 		entry->addr.addr6 = nla_get_in6_addr(tb[addr_addr]);
-	अन्यथा
-#पूर्ण_अगर
+	else
+#endif
 		entry->addr.addr.s_addr = nla_get_in_addr(tb[addr_addr]);
 
 skip_family:
-	अगर (tb[MPTCP_PM_ADDR_ATTR_IF_IDX]) अणु
+	if (tb[MPTCP_PM_ADDR_ATTR_IF_IDX]) {
 		u32 val = nla_get_s32(tb[MPTCP_PM_ADDR_ATTR_IF_IDX]);
 
-		entry->अगरindex = val;
-	पूर्ण
+		entry->ifindex = val;
+	}
 
-	अगर (tb[MPTCP_PM_ADDR_ATTR_ID])
+	if (tb[MPTCP_PM_ADDR_ATTR_ID])
 		entry->addr.id = nla_get_u8(tb[MPTCP_PM_ADDR_ATTR_ID]);
 
-	अगर (tb[MPTCP_PM_ADDR_ATTR_FLAGS])
+	if (tb[MPTCP_PM_ADDR_ATTR_FLAGS])
 		entry->flags = nla_get_u32(tb[MPTCP_PM_ADDR_ATTR_FLAGS]);
 
-	अगर (tb[MPTCP_PM_ADDR_ATTR_PORT])
+	if (tb[MPTCP_PM_ADDR_ATTR_PORT])
 		entry->addr.port = htons(nla_get_u16(tb[MPTCP_PM_ADDR_ATTR_PORT]));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा pm_nl_pernet *genl_info_pm_nl(काष्ठा genl_info *info)
-अणु
-	वापस net_generic(genl_info_net(info), pm_nl_pernet_id);
-पूर्ण
+static struct pm_nl_pernet *genl_info_pm_nl(struct genl_info *info)
+{
+	return net_generic(genl_info_net(info), pm_nl_pernet_id);
+}
 
-अटल पूर्णांक mptcp_nl_add_subflow_or_संकेत_addr(काष्ठा net *net)
-अणु
-	काष्ठा mptcp_sock *msk;
-	दीर्घ s_slot = 0, s_num = 0;
+static int mptcp_nl_add_subflow_or_signal_addr(struct net *net)
+{
+	struct mptcp_sock *msk;
+	long s_slot = 0, s_num = 0;
 
-	जबतक ((msk = mptcp_token_iter_next(net, &s_slot, &s_num)) != शून्य) अणु
-		काष्ठा sock *sk = (काष्ठा sock *)msk;
+	while ((msk = mptcp_token_iter_next(net, &s_slot, &s_num)) != NULL) {
+		struct sock *sk = (struct sock *)msk;
 
-		अगर (!READ_ONCE(msk->fully_established))
-			जाओ next;
+		if (!READ_ONCE(msk->fully_established))
+			goto next;
 
 		lock_sock(sk);
 		spin_lock_bh(&msk->pm.lock);
-		mptcp_pm_create_subflow_or_संकेत_addr(msk);
+		mptcp_pm_create_subflow_or_signal_addr(msk);
 		spin_unlock_bh(&msk->pm.lock);
 		release_sock(sk);
 
 next:
 		sock_put(sk);
 		cond_resched();
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mptcp_nl_cmd_add_addr(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
-अणु
-	काष्ठा nlattr *attr = info->attrs[MPTCP_PM_ATTR_ADDR];
-	काष्ठा pm_nl_pernet *pernet = genl_info_pm_nl(info);
-	काष्ठा mptcp_pm_addr_entry addr, *entry;
-	पूर्णांक ret;
+static int mptcp_nl_cmd_add_addr(struct sk_buff *skb, struct genl_info *info)
+{
+	struct nlattr *attr = info->attrs[MPTCP_PM_ATTR_ADDR];
+	struct pm_nl_pernet *pernet = genl_info_pm_nl(info);
+	struct mptcp_pm_addr_entry addr, *entry;
+	int ret;
 
 	ret = mptcp_pm_parse_addr(attr, info, true, &addr);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	entry = kदो_स्मृति(माप(*entry), GFP_KERNEL);
-	अगर (!entry) अणु
+	entry = kmalloc(sizeof(*entry), GFP_KERNEL);
+	if (!entry) {
 		GENL_SET_ERR_MSG(info, "can't allocate addr");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	*entry = addr;
-	अगर (entry->addr.port) अणु
+	if (entry->addr.port) {
 		ret = mptcp_pm_nl_create_listen_socket(skb->sk, entry);
-		अगर (ret) अणु
+		if (ret) {
 			GENL_SET_ERR_MSG(info, "create listen socket error");
-			kमुक्त(entry);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			kfree(entry);
+			return ret;
+		}
+	}
 	ret = mptcp_pm_nl_append_new_local_addr(pernet, entry);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		GENL_SET_ERR_MSG(info, "too many addresses or duplicate one");
-		अगर (entry->lsk)
+		if (entry->lsk)
 			sock_release(entry->lsk);
-		kमुक्त(entry);
-		वापस ret;
-	पूर्ण
+		kfree(entry);
+		return ret;
+	}
 
-	mptcp_nl_add_subflow_or_संकेत_addr(sock_net(skb->sk));
+	mptcp_nl_add_subflow_or_signal_addr(sock_net(skb->sk));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा mptcp_pm_addr_entry *
-__lookup_addr_by_id(काष्ठा pm_nl_pernet *pernet, अचिन्हित पूर्णांक id)
-अणु
-	काष्ठा mptcp_pm_addr_entry *entry;
+static struct mptcp_pm_addr_entry *
+__lookup_addr_by_id(struct pm_nl_pernet *pernet, unsigned int id)
+{
+	struct mptcp_pm_addr_entry *entry;
 
-	list_क्रम_each_entry(entry, &pernet->local_addr_list, list) अणु
-		अगर (entry->addr.id == id)
-			वापस entry;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	list_for_each_entry(entry, &pernet->local_addr_list, list) {
+		if (entry->addr.id == id)
+			return entry;
+	}
+	return NULL;
+}
 
-अटल bool हटाओ_anno_list_by_saddr(काष्ठा mptcp_sock *msk,
-				      काष्ठा mptcp_addr_info *addr)
-अणु
-	काष्ठा mptcp_pm_add_entry *entry;
+static bool remove_anno_list_by_saddr(struct mptcp_sock *msk,
+				      struct mptcp_addr_info *addr)
+{
+	struct mptcp_pm_add_entry *entry;
 
-	entry = mptcp_pm_del_add_समयr(msk, addr, false);
-	अगर (entry) अणु
+	entry = mptcp_pm_del_add_timer(msk, addr, false);
+	if (entry) {
 		list_del(&entry->list);
-		kमुक्त(entry);
-		वापस true;
-	पूर्ण
+		kfree(entry);
+		return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल bool mptcp_pm_हटाओ_anno_addr(काष्ठा mptcp_sock *msk,
-				      काष्ठा mptcp_addr_info *addr,
-				      bool क्रमce)
-अणु
-	काष्ठा mptcp_rm_list list = अणु .nr = 0 पूर्ण;
+static bool mptcp_pm_remove_anno_addr(struct mptcp_sock *msk,
+				      struct mptcp_addr_info *addr,
+				      bool force)
+{
+	struct mptcp_rm_list list = { .nr = 0 };
 	bool ret;
 
 	list.ids[list.nr++] = addr->id;
 
-	ret = हटाओ_anno_list_by_saddr(msk, addr);
-	अगर (ret || क्रमce) अणु
+	ret = remove_anno_list_by_saddr(msk, addr);
+	if (ret || force) {
 		spin_lock_bh(&msk->pm.lock);
-		mptcp_pm_हटाओ_addr(msk, &list);
+		mptcp_pm_remove_addr(msk, &list);
 		spin_unlock_bh(&msk->pm.lock);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल पूर्णांक mptcp_nl_हटाओ_subflow_and_संकेत_addr(काष्ठा net *net,
-						   काष्ठा mptcp_addr_info *addr)
-अणु
-	काष्ठा mptcp_sock *msk;
-	दीर्घ s_slot = 0, s_num = 0;
-	काष्ठा mptcp_rm_list list = अणु .nr = 0 पूर्ण;
+static int mptcp_nl_remove_subflow_and_signal_addr(struct net *net,
+						   struct mptcp_addr_info *addr)
+{
+	struct mptcp_sock *msk;
+	long s_slot = 0, s_num = 0;
+	struct mptcp_rm_list list = { .nr = 0 };
 
 	pr_debug("remove_id=%d", addr->id);
 
 	list.ids[list.nr++] = addr->id;
 
-	जबतक ((msk = mptcp_token_iter_next(net, &s_slot, &s_num)) != शून्य) अणु
-		काष्ठा sock *sk = (काष्ठा sock *)msk;
-		bool हटाओ_subflow;
+	while ((msk = mptcp_token_iter_next(net, &s_slot, &s_num)) != NULL) {
+		struct sock *sk = (struct sock *)msk;
+		bool remove_subflow;
 
-		अगर (list_empty(&msk->conn_list)) अणु
-			mptcp_pm_हटाओ_anno_addr(msk, addr, false);
-			जाओ next;
-		पूर्ण
+		if (list_empty(&msk->conn_list)) {
+			mptcp_pm_remove_anno_addr(msk, addr, false);
+			goto next;
+		}
 
 		lock_sock(sk);
-		हटाओ_subflow = lookup_subflow_by_saddr(&msk->conn_list, addr);
-		mptcp_pm_हटाओ_anno_addr(msk, addr, हटाओ_subflow);
-		अगर (हटाओ_subflow)
-			mptcp_pm_हटाओ_subflow(msk, &list);
+		remove_subflow = lookup_subflow_by_saddr(&msk->conn_list, addr);
+		mptcp_pm_remove_anno_addr(msk, addr, remove_subflow);
+		if (remove_subflow)
+			mptcp_pm_remove_subflow(msk, &list);
 		release_sock(sk);
 
 next:
 		sock_put(sk);
 		cond_resched();
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा addr_entry_release_work अणु
-	काष्ठा rcu_work	rwork;
-	काष्ठा mptcp_pm_addr_entry *entry;
-पूर्ण;
+struct addr_entry_release_work {
+	struct rcu_work	rwork;
+	struct mptcp_pm_addr_entry *entry;
+};
 
-अटल व्योम mptcp_pm_release_addr_entry(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा addr_entry_release_work *w;
-	काष्ठा mptcp_pm_addr_entry *entry;
+static void mptcp_pm_release_addr_entry(struct work_struct *work)
+{
+	struct addr_entry_release_work *w;
+	struct mptcp_pm_addr_entry *entry;
 
-	w = container_of(to_rcu_work(work), काष्ठा addr_entry_release_work, rwork);
+	w = container_of(to_rcu_work(work), struct addr_entry_release_work, rwork);
 	entry = w->entry;
-	अगर (entry) अणु
-		अगर (entry->lsk)
+	if (entry) {
+		if (entry->lsk)
 			sock_release(entry->lsk);
-		kमुक्त(entry);
-	पूर्ण
-	kमुक्त(w);
-पूर्ण
+		kfree(entry);
+	}
+	kfree(w);
+}
 
-अटल व्योम mptcp_pm_मुक्त_addr_entry(काष्ठा mptcp_pm_addr_entry *entry)
-अणु
-	काष्ठा addr_entry_release_work *w;
+static void mptcp_pm_free_addr_entry(struct mptcp_pm_addr_entry *entry)
+{
+	struct addr_entry_release_work *w;
 
-	w = kदो_स्मृति(माप(*w), GFP_ATOMIC);
-	अगर (w) अणु
+	w = kmalloc(sizeof(*w), GFP_ATOMIC);
+	if (w) {
 		INIT_RCU_WORK(&w->rwork, mptcp_pm_release_addr_entry);
 		w->entry = entry;
-		queue_rcu_work(प्रणाली_wq, &w->rwork);
-	पूर्ण
-पूर्ण
+		queue_rcu_work(system_wq, &w->rwork);
+	}
+}
 
-अटल पूर्णांक mptcp_nl_हटाओ_id_zero_address(काष्ठा net *net,
-					   काष्ठा mptcp_addr_info *addr)
-अणु
-	काष्ठा mptcp_rm_list list = अणु .nr = 0 पूर्ण;
-	दीर्घ s_slot = 0, s_num = 0;
-	काष्ठा mptcp_sock *msk;
+static int mptcp_nl_remove_id_zero_address(struct net *net,
+					   struct mptcp_addr_info *addr)
+{
+	struct mptcp_rm_list list = { .nr = 0 };
+	long s_slot = 0, s_num = 0;
+	struct mptcp_sock *msk;
 
 	list.ids[list.nr++] = 0;
 
-	जबतक ((msk = mptcp_token_iter_next(net, &s_slot, &s_num)) != शून्य) अणु
-		काष्ठा sock *sk = (काष्ठा sock *)msk;
-		काष्ठा mptcp_addr_info msk_local;
+	while ((msk = mptcp_token_iter_next(net, &s_slot, &s_num)) != NULL) {
+		struct sock *sk = (struct sock *)msk;
+		struct mptcp_addr_info msk_local;
 
-		अगर (list_empty(&msk->conn_list))
-			जाओ next;
+		if (list_empty(&msk->conn_list))
+			goto next;
 
-		local_address((काष्ठा sock_common *)msk, &msk_local);
-		अगर (!addresses_equal(&msk_local, addr, addr->port))
-			जाओ next;
+		local_address((struct sock_common *)msk, &msk_local);
+		if (!addresses_equal(&msk_local, addr, addr->port))
+			goto next;
 
 		lock_sock(sk);
 		spin_lock_bh(&msk->pm.lock);
-		mptcp_pm_हटाओ_addr(msk, &list);
+		mptcp_pm_remove_addr(msk, &list);
 		mptcp_pm_nl_rm_subflow_received(msk, &list);
 		spin_unlock_bh(&msk->pm.lock);
 		release_sock(sk);
@@ -1190,361 +1189,361 @@ next:
 next:
 		sock_put(sk);
 		cond_resched();
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mptcp_nl_cmd_del_addr(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
-अणु
-	काष्ठा nlattr *attr = info->attrs[MPTCP_PM_ATTR_ADDR];
-	काष्ठा pm_nl_pernet *pernet = genl_info_pm_nl(info);
-	काष्ठा mptcp_pm_addr_entry addr, *entry;
-	अचिन्हित पूर्णांक addr_max;
-	पूर्णांक ret;
+static int mptcp_nl_cmd_del_addr(struct sk_buff *skb, struct genl_info *info)
+{
+	struct nlattr *attr = info->attrs[MPTCP_PM_ATTR_ADDR];
+	struct pm_nl_pernet *pernet = genl_info_pm_nl(info);
+	struct mptcp_pm_addr_entry addr, *entry;
+	unsigned int addr_max;
+	int ret;
 
 	ret = mptcp_pm_parse_addr(attr, info, false, &addr);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	/* the zero id address is special: the first address used by the msk
-	 * always माला_लो such an id, so dअगरferent subflows can have dअगरferent zero
-	 * id addresses. Additionally zero id is not accounted क्रम in id_biपंचांगap.
-	 * Let's use an 'mptcp_rm_list' instead of the common हटाओ code.
+	 * always gets such an id, so different subflows can have different zero
+	 * id addresses. Additionally zero id is not accounted for in id_bitmap.
+	 * Let's use an 'mptcp_rm_list' instead of the common remove code.
 	 */
-	अगर (addr.addr.id == 0)
-		वापस mptcp_nl_हटाओ_id_zero_address(sock_net(skb->sk), &addr.addr);
+	if (addr.addr.id == 0)
+		return mptcp_nl_remove_id_zero_address(sock_net(skb->sk), &addr.addr);
 
 	spin_lock_bh(&pernet->lock);
 	entry = __lookup_addr_by_id(pernet, addr.addr.id);
-	अगर (!entry) अणु
+	if (!entry) {
 		GENL_SET_ERR_MSG(info, "address not found");
 		spin_unlock_bh(&pernet->lock);
-		वापस -EINVAL;
-	पूर्ण
-	अगर (entry->flags & MPTCP_PM_ADDR_FLAG_SIGNAL) अणु
-		addr_max = pernet->add_addr_संकेत_max;
-		WRITE_ONCE(pernet->add_addr_संकेत_max, addr_max - 1);
-	पूर्ण
-	अगर (entry->flags & MPTCP_PM_ADDR_FLAG_SUBFLOW) अणु
+		return -EINVAL;
+	}
+	if (entry->flags & MPTCP_PM_ADDR_FLAG_SIGNAL) {
+		addr_max = pernet->add_addr_signal_max;
+		WRITE_ONCE(pernet->add_addr_signal_max, addr_max - 1);
+	}
+	if (entry->flags & MPTCP_PM_ADDR_FLAG_SUBFLOW) {
 		addr_max = pernet->local_addr_max;
 		WRITE_ONCE(pernet->local_addr_max, addr_max - 1);
-	पूर्ण
+	}
 
 	pernet->addrs--;
 	list_del_rcu(&entry->list);
-	__clear_bit(entry->addr.id, pernet->id_biपंचांगap);
+	__clear_bit(entry->addr.id, pernet->id_bitmap);
 	spin_unlock_bh(&pernet->lock);
 
-	mptcp_nl_हटाओ_subflow_and_संकेत_addr(sock_net(skb->sk), &entry->addr);
-	mptcp_pm_मुक्त_addr_entry(entry);
+	mptcp_nl_remove_subflow_and_signal_addr(sock_net(skb->sk), &entry->addr);
+	mptcp_pm_free_addr_entry(entry);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम mptcp_pm_हटाओ_addrs_and_subflows(काष्ठा mptcp_sock *msk,
-					       काष्ठा list_head *rm_list)
-अणु
-	काष्ठा mptcp_rm_list alist = अणु .nr = 0 पूर्ण, slist = अणु .nr = 0 पूर्ण;
-	काष्ठा mptcp_pm_addr_entry *entry;
+static void mptcp_pm_remove_addrs_and_subflows(struct mptcp_sock *msk,
+					       struct list_head *rm_list)
+{
+	struct mptcp_rm_list alist = { .nr = 0 }, slist = { .nr = 0 };
+	struct mptcp_pm_addr_entry *entry;
 
-	list_क्रम_each_entry(entry, rm_list, list) अणु
-		अगर (lookup_subflow_by_saddr(&msk->conn_list, &entry->addr) &&
+	list_for_each_entry(entry, rm_list, list) {
+		if (lookup_subflow_by_saddr(&msk->conn_list, &entry->addr) &&
 		    alist.nr < MPTCP_RM_IDS_MAX &&
-		    slist.nr < MPTCP_RM_IDS_MAX) अणु
+		    slist.nr < MPTCP_RM_IDS_MAX) {
 			alist.ids[alist.nr++] = entry->addr.id;
 			slist.ids[slist.nr++] = entry->addr.id;
-		पूर्ण अन्यथा अगर (हटाओ_anno_list_by_saddr(msk, &entry->addr) &&
-			 alist.nr < MPTCP_RM_IDS_MAX) अणु
+		} else if (remove_anno_list_by_saddr(msk, &entry->addr) &&
+			 alist.nr < MPTCP_RM_IDS_MAX) {
 			alist.ids[alist.nr++] = entry->addr.id;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (alist.nr) अणु
+	if (alist.nr) {
 		spin_lock_bh(&msk->pm.lock);
-		mptcp_pm_हटाओ_addr(msk, &alist);
+		mptcp_pm_remove_addr(msk, &alist);
 		spin_unlock_bh(&msk->pm.lock);
-	पूर्ण
-	अगर (slist.nr)
-		mptcp_pm_हटाओ_subflow(msk, &slist);
-पूर्ण
+	}
+	if (slist.nr)
+		mptcp_pm_remove_subflow(msk, &slist);
+}
 
-अटल व्योम mptcp_nl_हटाओ_addrs_list(काष्ठा net *net,
-				       काष्ठा list_head *rm_list)
-अणु
-	दीर्घ s_slot = 0, s_num = 0;
-	काष्ठा mptcp_sock *msk;
+static void mptcp_nl_remove_addrs_list(struct net *net,
+				       struct list_head *rm_list)
+{
+	long s_slot = 0, s_num = 0;
+	struct mptcp_sock *msk;
 
-	अगर (list_empty(rm_list))
-		वापस;
+	if (list_empty(rm_list))
+		return;
 
-	जबतक ((msk = mptcp_token_iter_next(net, &s_slot, &s_num)) != शून्य) अणु
-		काष्ठा sock *sk = (काष्ठा sock *)msk;
+	while ((msk = mptcp_token_iter_next(net, &s_slot, &s_num)) != NULL) {
+		struct sock *sk = (struct sock *)msk;
 
 		lock_sock(sk);
-		mptcp_pm_हटाओ_addrs_and_subflows(msk, rm_list);
+		mptcp_pm_remove_addrs_and_subflows(msk, rm_list);
 		release_sock(sk);
 
 		sock_put(sk);
 		cond_resched();
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम __flush_addrs(काष्ठा list_head *list)
-अणु
-	जबतक (!list_empty(list)) अणु
-		काष्ठा mptcp_pm_addr_entry *cur;
+static void __flush_addrs(struct list_head *list)
+{
+	while (!list_empty(list)) {
+		struct mptcp_pm_addr_entry *cur;
 
 		cur = list_entry(list->next,
-				 काष्ठा mptcp_pm_addr_entry, list);
+				 struct mptcp_pm_addr_entry, list);
 		list_del_rcu(&cur->list);
-		mptcp_pm_मुक्त_addr_entry(cur);
-	पूर्ण
-पूर्ण
+		mptcp_pm_free_addr_entry(cur);
+	}
+}
 
-अटल व्योम __reset_counters(काष्ठा pm_nl_pernet *pernet)
-अणु
-	WRITE_ONCE(pernet->add_addr_संकेत_max, 0);
+static void __reset_counters(struct pm_nl_pernet *pernet)
+{
+	WRITE_ONCE(pernet->add_addr_signal_max, 0);
 	WRITE_ONCE(pernet->add_addr_accept_max, 0);
 	WRITE_ONCE(pernet->local_addr_max, 0);
 	pernet->addrs = 0;
-पूर्ण
+}
 
-अटल पूर्णांक mptcp_nl_cmd_flush_addrs(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
-अणु
-	काष्ठा pm_nl_pernet *pernet = genl_info_pm_nl(info);
-	LIST_HEAD(मुक्त_list);
+static int mptcp_nl_cmd_flush_addrs(struct sk_buff *skb, struct genl_info *info)
+{
+	struct pm_nl_pernet *pernet = genl_info_pm_nl(info);
+	LIST_HEAD(free_list);
 
 	spin_lock_bh(&pernet->lock);
-	list_splice_init(&pernet->local_addr_list, &मुक्त_list);
+	list_splice_init(&pernet->local_addr_list, &free_list);
 	__reset_counters(pernet);
 	pernet->next_id = 1;
-	biपंचांगap_zero(pernet->id_biपंचांगap, MAX_ADDR_ID + 1);
+	bitmap_zero(pernet->id_bitmap, MAX_ADDR_ID + 1);
 	spin_unlock_bh(&pernet->lock);
-	mptcp_nl_हटाओ_addrs_list(sock_net(skb->sk), &मुक्त_list);
-	__flush_addrs(&मुक्त_list);
-	वापस 0;
-पूर्ण
+	mptcp_nl_remove_addrs_list(sock_net(skb->sk), &free_list);
+	__flush_addrs(&free_list);
+	return 0;
+}
 
-अटल पूर्णांक mptcp_nl_fill_addr(काष्ठा sk_buff *skb,
-			      काष्ठा mptcp_pm_addr_entry *entry)
-अणु
-	काष्ठा mptcp_addr_info *addr = &entry->addr;
-	काष्ठा nlattr *attr;
+static int mptcp_nl_fill_addr(struct sk_buff *skb,
+			      struct mptcp_pm_addr_entry *entry)
+{
+	struct mptcp_addr_info *addr = &entry->addr;
+	struct nlattr *attr;
 
 	attr = nla_nest_start(skb, MPTCP_PM_ATTR_ADDR);
-	अगर (!attr)
-		वापस -EMSGSIZE;
+	if (!attr)
+		return -EMSGSIZE;
 
-	अगर (nla_put_u16(skb, MPTCP_PM_ADDR_ATTR_FAMILY, addr->family))
-		जाओ nla_put_failure;
-	अगर (nla_put_u16(skb, MPTCP_PM_ADDR_ATTR_PORT, ntohs(addr->port)))
-		जाओ nla_put_failure;
-	अगर (nla_put_u8(skb, MPTCP_PM_ADDR_ATTR_ID, addr->id))
-		जाओ nla_put_failure;
-	अगर (nla_put_u32(skb, MPTCP_PM_ADDR_ATTR_FLAGS, entry->flags))
-		जाओ nla_put_failure;
-	अगर (entry->अगरindex &&
-	    nla_put_s32(skb, MPTCP_PM_ADDR_ATTR_IF_IDX, entry->अगरindex))
-		जाओ nla_put_failure;
+	if (nla_put_u16(skb, MPTCP_PM_ADDR_ATTR_FAMILY, addr->family))
+		goto nla_put_failure;
+	if (nla_put_u16(skb, MPTCP_PM_ADDR_ATTR_PORT, ntohs(addr->port)))
+		goto nla_put_failure;
+	if (nla_put_u8(skb, MPTCP_PM_ADDR_ATTR_ID, addr->id))
+		goto nla_put_failure;
+	if (nla_put_u32(skb, MPTCP_PM_ADDR_ATTR_FLAGS, entry->flags))
+		goto nla_put_failure;
+	if (entry->ifindex &&
+	    nla_put_s32(skb, MPTCP_PM_ADDR_ATTR_IF_IDX, entry->ifindex))
+		goto nla_put_failure;
 
-	अगर (addr->family == AF_INET &&
+	if (addr->family == AF_INET &&
 	    nla_put_in_addr(skb, MPTCP_PM_ADDR_ATTR_ADDR4,
 			    addr->addr.s_addr))
-		जाओ nla_put_failure;
-#अगर IS_ENABLED(CONFIG_MPTCP_IPV6)
-	अन्यथा अगर (addr->family == AF_INET6 &&
+		goto nla_put_failure;
+#if IS_ENABLED(CONFIG_MPTCP_IPV6)
+	else if (addr->family == AF_INET6 &&
 		 nla_put_in6_addr(skb, MPTCP_PM_ADDR_ATTR_ADDR6, &addr->addr6))
-		जाओ nla_put_failure;
-#पूर्ण_अगर
+		goto nla_put_failure;
+#endif
 	nla_nest_end(skb, attr);
-	वापस 0;
+	return 0;
 
 nla_put_failure:
 	nla_nest_cancel(skb, attr);
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-अटल पूर्णांक mptcp_nl_cmd_get_addr(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
-अणु
-	काष्ठा nlattr *attr = info->attrs[MPTCP_PM_ATTR_ADDR];
-	काष्ठा pm_nl_pernet *pernet = genl_info_pm_nl(info);
-	काष्ठा mptcp_pm_addr_entry addr, *entry;
-	काष्ठा sk_buff *msg;
-	व्योम *reply;
-	पूर्णांक ret;
+static int mptcp_nl_cmd_get_addr(struct sk_buff *skb, struct genl_info *info)
+{
+	struct nlattr *attr = info->attrs[MPTCP_PM_ATTR_ADDR];
+	struct pm_nl_pernet *pernet = genl_info_pm_nl(info);
+	struct mptcp_pm_addr_entry addr, *entry;
+	struct sk_buff *msg;
+	void *reply;
+	int ret;
 
 	ret = mptcp_pm_parse_addr(attr, info, false, &addr);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	अगर (!msg)
-		वापस -ENOMEM;
+	if (!msg)
+		return -ENOMEM;
 
 	reply = genlmsg_put_reply(msg, info, &mptcp_genl_family, 0,
 				  info->genlhdr->cmd);
-	अगर (!reply) अणु
+	if (!reply) {
 		GENL_SET_ERR_MSG(info, "not enough space in Netlink message");
 		ret = -EMSGSIZE;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	spin_lock_bh(&pernet->lock);
 	entry = __lookup_addr_by_id(pernet, addr.addr.id);
-	अगर (!entry) अणु
+	if (!entry) {
 		GENL_SET_ERR_MSG(info, "address not found");
 		ret = -EINVAL;
-		जाओ unlock_fail;
-	पूर्ण
+		goto unlock_fail;
+	}
 
 	ret = mptcp_nl_fill_addr(msg, entry);
-	अगर (ret)
-		जाओ unlock_fail;
+	if (ret)
+		goto unlock_fail;
 
 	genlmsg_end(msg, reply);
 	ret = genlmsg_reply(msg, info);
 	spin_unlock_bh(&pernet->lock);
-	वापस ret;
+	return ret;
 
 unlock_fail:
 	spin_unlock_bh(&pernet->lock);
 
 fail:
-	nlmsg_मुक्त(msg);
-	वापस ret;
-पूर्ण
+	nlmsg_free(msg);
+	return ret;
+}
 
-अटल पूर्णांक mptcp_nl_cmd_dump_addrs(काष्ठा sk_buff *msg,
-				   काष्ठा netlink_callback *cb)
-अणु
-	काष्ठा net *net = sock_net(msg->sk);
-	काष्ठा mptcp_pm_addr_entry *entry;
-	काष्ठा pm_nl_pernet *pernet;
-	पूर्णांक id = cb->args[0];
-	व्योम *hdr;
-	पूर्णांक i;
+static int mptcp_nl_cmd_dump_addrs(struct sk_buff *msg,
+				   struct netlink_callback *cb)
+{
+	struct net *net = sock_net(msg->sk);
+	struct mptcp_pm_addr_entry *entry;
+	struct pm_nl_pernet *pernet;
+	int id = cb->args[0];
+	void *hdr;
+	int i;
 
 	pernet = net_generic(net, pm_nl_pernet_id);
 
 	spin_lock_bh(&pernet->lock);
-	क्रम (i = id; i < MAX_ADDR_ID + 1; i++) अणु
-		अगर (test_bit(i, pernet->id_biपंचांगap)) अणु
+	for (i = id; i < MAX_ADDR_ID + 1; i++) {
+		if (test_bit(i, pernet->id_bitmap)) {
 			entry = __lookup_addr_by_id(pernet, i);
-			अगर (!entry)
-				अवरोध;
+			if (!entry)
+				break;
 
-			अगर (entry->addr.id <= id)
-				जारी;
+			if (entry->addr.id <= id)
+				continue;
 
 			hdr = genlmsg_put(msg, NETLINK_CB(cb->skb).portid,
 					  cb->nlh->nlmsg_seq, &mptcp_genl_family,
 					  NLM_F_MULTI, MPTCP_PM_CMD_GET_ADDR);
-			अगर (!hdr)
-				अवरोध;
+			if (!hdr)
+				break;
 
-			अगर (mptcp_nl_fill_addr(msg, entry) < 0) अणु
+			if (mptcp_nl_fill_addr(msg, entry) < 0) {
 				genlmsg_cancel(msg, hdr);
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
 			id = entry->addr.id;
 			genlmsg_end(msg, hdr);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	spin_unlock_bh(&pernet->lock);
 
 	cb->args[0] = id;
-	वापस msg->len;
-पूर्ण
+	return msg->len;
+}
 
-अटल पूर्णांक parse_limit(काष्ठा genl_info *info, पूर्णांक id, अचिन्हित पूर्णांक *limit)
-अणु
-	काष्ठा nlattr *attr = info->attrs[id];
+static int parse_limit(struct genl_info *info, int id, unsigned int *limit)
+{
+	struct nlattr *attr = info->attrs[id];
 
-	अगर (!attr)
-		वापस 0;
+	if (!attr)
+		return 0;
 
 	*limit = nla_get_u32(attr);
-	अगर (*limit > MPTCP_PM_ADDR_MAX) अणु
+	if (*limit > MPTCP_PM_ADDR_MAX) {
 		GENL_SET_ERR_MSG(info, "limit greater than maximum");
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EINVAL;
+	}
+	return 0;
+}
 
-अटल पूर्णांक
-mptcp_nl_cmd_set_limits(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
-अणु
-	काष्ठा pm_nl_pernet *pernet = genl_info_pm_nl(info);
-	अचिन्हित पूर्णांक rcv_addrs, subflows;
-	पूर्णांक ret;
+static int
+mptcp_nl_cmd_set_limits(struct sk_buff *skb, struct genl_info *info)
+{
+	struct pm_nl_pernet *pernet = genl_info_pm_nl(info);
+	unsigned int rcv_addrs, subflows;
+	int ret;
 
 	spin_lock_bh(&pernet->lock);
 	rcv_addrs = pernet->add_addr_accept_max;
 	ret = parse_limit(info, MPTCP_PM_ATTR_RCV_ADD_ADDRS, &rcv_addrs);
-	अगर (ret)
-		जाओ unlock;
+	if (ret)
+		goto unlock;
 
 	subflows = pernet->subflows_max;
 	ret = parse_limit(info, MPTCP_PM_ATTR_SUBFLOWS, &subflows);
-	अगर (ret)
-		जाओ unlock;
+	if (ret)
+		goto unlock;
 
 	WRITE_ONCE(pernet->add_addr_accept_max, rcv_addrs);
 	WRITE_ONCE(pernet->subflows_max, subflows);
 
 unlock:
 	spin_unlock_bh(&pernet->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक
-mptcp_nl_cmd_get_limits(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
-अणु
-	काष्ठा pm_nl_pernet *pernet = genl_info_pm_nl(info);
-	काष्ठा sk_buff *msg;
-	व्योम *reply;
+static int
+mptcp_nl_cmd_get_limits(struct sk_buff *skb, struct genl_info *info)
+{
+	struct pm_nl_pernet *pernet = genl_info_pm_nl(info);
+	struct sk_buff *msg;
+	void *reply;
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	अगर (!msg)
-		वापस -ENOMEM;
+	if (!msg)
+		return -ENOMEM;
 
 	reply = genlmsg_put_reply(msg, info, &mptcp_genl_family, 0,
 				  MPTCP_PM_CMD_GET_LIMITS);
-	अगर (!reply)
-		जाओ fail;
+	if (!reply)
+		goto fail;
 
-	अगर (nla_put_u32(msg, MPTCP_PM_ATTR_RCV_ADD_ADDRS,
+	if (nla_put_u32(msg, MPTCP_PM_ATTR_RCV_ADD_ADDRS,
 			READ_ONCE(pernet->add_addr_accept_max)))
-		जाओ fail;
+		goto fail;
 
-	अगर (nla_put_u32(msg, MPTCP_PM_ATTR_SUBFLOWS,
+	if (nla_put_u32(msg, MPTCP_PM_ATTR_SUBFLOWS,
 			READ_ONCE(pernet->subflows_max)))
-		जाओ fail;
+		goto fail;
 
 	genlmsg_end(msg, reply);
-	वापस genlmsg_reply(msg, info);
+	return genlmsg_reply(msg, info);
 
 fail:
 	GENL_SET_ERR_MSG(info, "not enough space in Netlink message");
-	nlmsg_मुक्त(msg);
-	वापस -EMSGSIZE;
-पूर्ण
+	nlmsg_free(msg);
+	return -EMSGSIZE;
+}
 
-अटल पूर्णांक mptcp_nl_addr_backup(काष्ठा net *net,
-				काष्ठा mptcp_addr_info *addr,
+static int mptcp_nl_addr_backup(struct net *net,
+				struct mptcp_addr_info *addr,
 				u8 bkup)
-अणु
-	दीर्घ s_slot = 0, s_num = 0;
-	काष्ठा mptcp_sock *msk;
-	पूर्णांक ret = -EINVAL;
+{
+	long s_slot = 0, s_num = 0;
+	struct mptcp_sock *msk;
+	int ret = -EINVAL;
 
-	जबतक ((msk = mptcp_token_iter_next(net, &s_slot, &s_num)) != शून्य) अणु
-		काष्ठा sock *sk = (काष्ठा sock *)msk;
+	while ((msk = mptcp_token_iter_next(net, &s_slot, &s_num)) != NULL) {
+		struct sock *sk = (struct sock *)msk;
 
-		अगर (list_empty(&msk->conn_list))
-			जाओ next;
+		if (list_empty(&msk->conn_list))
+			goto next;
 
 		lock_sock(sk);
 		spin_lock_bh(&msk->pm.lock);
@@ -1555,348 +1554,348 @@ fail:
 next:
 		sock_put(sk);
 		cond_resched();
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक mptcp_nl_cmd_set_flags(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
-अणु
-	काष्ठा nlattr *attr = info->attrs[MPTCP_PM_ATTR_ADDR];
-	काष्ठा pm_nl_pernet *pernet = genl_info_pm_nl(info);
-	काष्ठा mptcp_pm_addr_entry addr, *entry;
-	काष्ठा net *net = sock_net(skb->sk);
+static int mptcp_nl_cmd_set_flags(struct sk_buff *skb, struct genl_info *info)
+{
+	struct nlattr *attr = info->attrs[MPTCP_PM_ATTR_ADDR];
+	struct pm_nl_pernet *pernet = genl_info_pm_nl(info);
+	struct mptcp_pm_addr_entry addr, *entry;
+	struct net *net = sock_net(skb->sk);
 	u8 bkup = 0;
-	पूर्णांक ret;
+	int ret;
 
 	ret = mptcp_pm_parse_addr(attr, info, true, &addr);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	अगर (addr.flags & MPTCP_PM_ADDR_FLAG_BACKUP)
+	if (addr.flags & MPTCP_PM_ADDR_FLAG_BACKUP)
 		bkup = 1;
 
-	list_क्रम_each_entry(entry, &pernet->local_addr_list, list) अणु
-		अगर (addresses_equal(&entry->addr, &addr.addr, true)) अणु
+	list_for_each_entry(entry, &pernet->local_addr_list, list) {
+		if (addresses_equal(&entry->addr, &addr.addr, true)) {
 			ret = mptcp_nl_addr_backup(net, &entry->addr, bkup);
-			अगर (ret)
-				वापस ret;
+			if (ret)
+				return ret;
 
-			अगर (bkup)
+			if (bkup)
 				entry->flags |= MPTCP_PM_ADDR_FLAG_BACKUP;
-			अन्यथा
+			else
 				entry->flags &= ~MPTCP_PM_ADDR_FLAG_BACKUP;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mptcp_nl_mcast_send(काष्ठा net *net, काष्ठा sk_buff *nlskb, gfp_t gfp)
-अणु
+static void mptcp_nl_mcast_send(struct net *net, struct sk_buff *nlskb, gfp_t gfp)
+{
 	genlmsg_multicast_netns(&mptcp_genl_family, net,
 				nlskb, 0, MPTCP_PM_EV_GRP_OFFSET, gfp);
-पूर्ण
+}
 
-अटल पूर्णांक mptcp_event_add_subflow(काष्ठा sk_buff *skb, स्थिर काष्ठा sock *ssk)
-अणु
-	स्थिर काष्ठा inet_sock *issk = inet_sk(ssk);
-	स्थिर काष्ठा mptcp_subflow_context *sf;
+static int mptcp_event_add_subflow(struct sk_buff *skb, const struct sock *ssk)
+{
+	const struct inet_sock *issk = inet_sk(ssk);
+	const struct mptcp_subflow_context *sf;
 
-	अगर (nla_put_u16(skb, MPTCP_ATTR_FAMILY, ssk->sk_family))
-		वापस -EMSGSIZE;
+	if (nla_put_u16(skb, MPTCP_ATTR_FAMILY, ssk->sk_family))
+		return -EMSGSIZE;
 
-	चयन (ssk->sk_family) अणु
-	हाल AF_INET:
-		अगर (nla_put_in_addr(skb, MPTCP_ATTR_SADDR4, issk->inet_saddr))
-			वापस -EMSGSIZE;
-		अगर (nla_put_in_addr(skb, MPTCP_ATTR_DADDR4, issk->inet_daddr))
-			वापस -EMSGSIZE;
-		अवरोध;
-#अगर IS_ENABLED(CONFIG_MPTCP_IPV6)
-	हाल AF_INET6: अणु
-		स्थिर काष्ठा ipv6_pinfo *np = inet6_sk(ssk);
+	switch (ssk->sk_family) {
+	case AF_INET:
+		if (nla_put_in_addr(skb, MPTCP_ATTR_SADDR4, issk->inet_saddr))
+			return -EMSGSIZE;
+		if (nla_put_in_addr(skb, MPTCP_ATTR_DADDR4, issk->inet_daddr))
+			return -EMSGSIZE;
+		break;
+#if IS_ENABLED(CONFIG_MPTCP_IPV6)
+	case AF_INET6: {
+		const struct ipv6_pinfo *np = inet6_sk(ssk);
 
-		अगर (nla_put_in6_addr(skb, MPTCP_ATTR_SADDR6, &np->saddr))
-			वापस -EMSGSIZE;
-		अगर (nla_put_in6_addr(skb, MPTCP_ATTR_DADDR6, &ssk->sk_v6_daddr))
-			वापस -EMSGSIZE;
-		अवरोध;
-	पूर्ण
-#पूर्ण_अगर
-	शेष:
+		if (nla_put_in6_addr(skb, MPTCP_ATTR_SADDR6, &np->saddr))
+			return -EMSGSIZE;
+		if (nla_put_in6_addr(skb, MPTCP_ATTR_DADDR6, &ssk->sk_v6_daddr))
+			return -EMSGSIZE;
+		break;
+	}
+#endif
+	default:
 		WARN_ON_ONCE(1);
-		वापस -EMSGSIZE;
-	पूर्ण
+		return -EMSGSIZE;
+	}
 
-	अगर (nla_put_be16(skb, MPTCP_ATTR_SPORT, issk->inet_sport))
-		वापस -EMSGSIZE;
-	अगर (nla_put_be16(skb, MPTCP_ATTR_DPORT, issk->inet_dport))
-		वापस -EMSGSIZE;
+	if (nla_put_be16(skb, MPTCP_ATTR_SPORT, issk->inet_sport))
+		return -EMSGSIZE;
+	if (nla_put_be16(skb, MPTCP_ATTR_DPORT, issk->inet_dport))
+		return -EMSGSIZE;
 
 	sf = mptcp_subflow_ctx(ssk);
-	अगर (WARN_ON_ONCE(!sf))
-		वापस -EINVAL;
+	if (WARN_ON_ONCE(!sf))
+		return -EINVAL;
 
-	अगर (nla_put_u8(skb, MPTCP_ATTR_LOC_ID, sf->local_id))
-		वापस -EMSGSIZE;
+	if (nla_put_u8(skb, MPTCP_ATTR_LOC_ID, sf->local_id))
+		return -EMSGSIZE;
 
-	अगर (nla_put_u8(skb, MPTCP_ATTR_REM_ID, sf->remote_id))
-		वापस -EMSGSIZE;
+	if (nla_put_u8(skb, MPTCP_ATTR_REM_ID, sf->remote_id))
+		return -EMSGSIZE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mptcp_event_put_token_and_ssk(काष्ठा sk_buff *skb,
-					 स्थिर काष्ठा mptcp_sock *msk,
-					 स्थिर काष्ठा sock *ssk)
-अणु
-	स्थिर काष्ठा sock *sk = (स्थिर काष्ठा sock *)msk;
-	स्थिर काष्ठा mptcp_subflow_context *sf;
+static int mptcp_event_put_token_and_ssk(struct sk_buff *skb,
+					 const struct mptcp_sock *msk,
+					 const struct sock *ssk)
+{
+	const struct sock *sk = (const struct sock *)msk;
+	const struct mptcp_subflow_context *sf;
 	u8 sk_err;
 
-	अगर (nla_put_u32(skb, MPTCP_ATTR_TOKEN, msk->token))
-		वापस -EMSGSIZE;
+	if (nla_put_u32(skb, MPTCP_ATTR_TOKEN, msk->token))
+		return -EMSGSIZE;
 
-	अगर (mptcp_event_add_subflow(skb, ssk))
-		वापस -EMSGSIZE;
+	if (mptcp_event_add_subflow(skb, ssk))
+		return -EMSGSIZE;
 
 	sf = mptcp_subflow_ctx(ssk);
-	अगर (WARN_ON_ONCE(!sf))
-		वापस -EINVAL;
+	if (WARN_ON_ONCE(!sf))
+		return -EINVAL;
 
-	अगर (nla_put_u8(skb, MPTCP_ATTR_BACKUP, sf->backup))
-		वापस -EMSGSIZE;
+	if (nla_put_u8(skb, MPTCP_ATTR_BACKUP, sf->backup))
+		return -EMSGSIZE;
 
-	अगर (ssk->sk_bound_dev_अगर &&
-	    nla_put_s32(skb, MPTCP_ATTR_IF_IDX, ssk->sk_bound_dev_अगर))
-		वापस -EMSGSIZE;
+	if (ssk->sk_bound_dev_if &&
+	    nla_put_s32(skb, MPTCP_ATTR_IF_IDX, ssk->sk_bound_dev_if))
+		return -EMSGSIZE;
 
 	sk_err = ssk->sk_err;
-	अगर (sk_err && sk->sk_state == TCP_ESTABLISHED &&
+	if (sk_err && sk->sk_state == TCP_ESTABLISHED &&
 	    nla_put_u8(skb, MPTCP_ATTR_ERROR, sk_err))
-		वापस -EMSGSIZE;
+		return -EMSGSIZE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mptcp_event_sub_established(काष्ठा sk_buff *skb,
-				       स्थिर काष्ठा mptcp_sock *msk,
-				       स्थिर काष्ठा sock *ssk)
-अणु
-	वापस mptcp_event_put_token_and_ssk(skb, msk, ssk);
-पूर्ण
+static int mptcp_event_sub_established(struct sk_buff *skb,
+				       const struct mptcp_sock *msk,
+				       const struct sock *ssk)
+{
+	return mptcp_event_put_token_and_ssk(skb, msk, ssk);
+}
 
-अटल पूर्णांक mptcp_event_sub_बंदd(काष्ठा sk_buff *skb,
-				  स्थिर काष्ठा mptcp_sock *msk,
-				  स्थिर काष्ठा sock *ssk)
-अणु
-	स्थिर काष्ठा mptcp_subflow_context *sf;
+static int mptcp_event_sub_closed(struct sk_buff *skb,
+				  const struct mptcp_sock *msk,
+				  const struct sock *ssk)
+{
+	const struct mptcp_subflow_context *sf;
 
-	अगर (mptcp_event_put_token_and_ssk(skb, msk, ssk))
-		वापस -EMSGSIZE;
+	if (mptcp_event_put_token_and_ssk(skb, msk, ssk))
+		return -EMSGSIZE;
 
 	sf = mptcp_subflow_ctx(ssk);
-	अगर (!sf->reset_seen)
-		वापस 0;
+	if (!sf->reset_seen)
+		return 0;
 
-	अगर (nla_put_u32(skb, MPTCP_ATTR_RESET_REASON, sf->reset_reason))
-		वापस -EMSGSIZE;
+	if (nla_put_u32(skb, MPTCP_ATTR_RESET_REASON, sf->reset_reason))
+		return -EMSGSIZE;
 
-	अगर (nla_put_u32(skb, MPTCP_ATTR_RESET_FLAGS, sf->reset_transient))
-		वापस -EMSGSIZE;
+	if (nla_put_u32(skb, MPTCP_ATTR_RESET_FLAGS, sf->reset_transient))
+		return -EMSGSIZE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mptcp_event_created(काष्ठा sk_buff *skb,
-			       स्थिर काष्ठा mptcp_sock *msk,
-			       स्थिर काष्ठा sock *ssk)
-अणु
-	पूर्णांक err = nla_put_u32(skb, MPTCP_ATTR_TOKEN, msk->token);
+static int mptcp_event_created(struct sk_buff *skb,
+			       const struct mptcp_sock *msk,
+			       const struct sock *ssk)
+{
+	int err = nla_put_u32(skb, MPTCP_ATTR_TOKEN, msk->token);
 
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	वापस mptcp_event_add_subflow(skb, ssk);
-पूर्ण
+	return mptcp_event_add_subflow(skb, ssk);
+}
 
-व्योम mptcp_event_addr_हटाओd(स्थिर काष्ठा mptcp_sock *msk, uपूर्णांक8_t id)
-अणु
-	काष्ठा net *net = sock_net((स्थिर काष्ठा sock *)msk);
-	काष्ठा nlmsghdr *nlh;
-	काष्ठा sk_buff *skb;
+void mptcp_event_addr_removed(const struct mptcp_sock *msk, uint8_t id)
+{
+	struct net *net = sock_net((const struct sock *)msk);
+	struct nlmsghdr *nlh;
+	struct sk_buff *skb;
 
-	अगर (!genl_has_listeners(&mptcp_genl_family, net, MPTCP_PM_EV_GRP_OFFSET))
-		वापस;
+	if (!genl_has_listeners(&mptcp_genl_family, net, MPTCP_PM_EV_GRP_OFFSET))
+		return;
 
 	skb = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_ATOMIC);
-	अगर (!skb)
-		वापस;
+	if (!skb)
+		return;
 
 	nlh = genlmsg_put(skb, 0, 0, &mptcp_genl_family, 0, MPTCP_EVENT_REMOVED);
-	अगर (!nlh)
-		जाओ nla_put_failure;
+	if (!nlh)
+		goto nla_put_failure;
 
-	अगर (nla_put_u32(skb, MPTCP_ATTR_TOKEN, msk->token))
-		जाओ nla_put_failure;
+	if (nla_put_u32(skb, MPTCP_ATTR_TOKEN, msk->token))
+		goto nla_put_failure;
 
-	अगर (nla_put_u8(skb, MPTCP_ATTR_REM_ID, id))
-		जाओ nla_put_failure;
+	if (nla_put_u8(skb, MPTCP_ATTR_REM_ID, id))
+		goto nla_put_failure;
 
 	genlmsg_end(skb, nlh);
 	mptcp_nl_mcast_send(net, skb, GFP_ATOMIC);
-	वापस;
+	return;
 
 nla_put_failure:
-	kमुक्त_skb(skb);
-पूर्ण
+	kfree_skb(skb);
+}
 
-व्योम mptcp_event_addr_announced(स्थिर काष्ठा mptcp_sock *msk,
-				स्थिर काष्ठा mptcp_addr_info *info)
-अणु
-	काष्ठा net *net = sock_net((स्थिर काष्ठा sock *)msk);
-	काष्ठा nlmsghdr *nlh;
-	काष्ठा sk_buff *skb;
+void mptcp_event_addr_announced(const struct mptcp_sock *msk,
+				const struct mptcp_addr_info *info)
+{
+	struct net *net = sock_net((const struct sock *)msk);
+	struct nlmsghdr *nlh;
+	struct sk_buff *skb;
 
-	अगर (!genl_has_listeners(&mptcp_genl_family, net, MPTCP_PM_EV_GRP_OFFSET))
-		वापस;
+	if (!genl_has_listeners(&mptcp_genl_family, net, MPTCP_PM_EV_GRP_OFFSET))
+		return;
 
 	skb = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_ATOMIC);
-	अगर (!skb)
-		वापस;
+	if (!skb)
+		return;
 
 	nlh = genlmsg_put(skb, 0, 0, &mptcp_genl_family, 0,
 			  MPTCP_EVENT_ANNOUNCED);
-	अगर (!nlh)
-		जाओ nla_put_failure;
+	if (!nlh)
+		goto nla_put_failure;
 
-	अगर (nla_put_u32(skb, MPTCP_ATTR_TOKEN, msk->token))
-		जाओ nla_put_failure;
+	if (nla_put_u32(skb, MPTCP_ATTR_TOKEN, msk->token))
+		goto nla_put_failure;
 
-	अगर (nla_put_u8(skb, MPTCP_ATTR_REM_ID, info->id))
-		जाओ nla_put_failure;
+	if (nla_put_u8(skb, MPTCP_ATTR_REM_ID, info->id))
+		goto nla_put_failure;
 
-	अगर (nla_put_be16(skb, MPTCP_ATTR_DPORT, info->port))
-		जाओ nla_put_failure;
+	if (nla_put_be16(skb, MPTCP_ATTR_DPORT, info->port))
+		goto nla_put_failure;
 
-	चयन (info->family) अणु
-	हाल AF_INET:
-		अगर (nla_put_in_addr(skb, MPTCP_ATTR_DADDR4, info->addr.s_addr))
-			जाओ nla_put_failure;
-		अवरोध;
-#अगर IS_ENABLED(CONFIG_MPTCP_IPV6)
-	हाल AF_INET6:
-		अगर (nla_put_in6_addr(skb, MPTCP_ATTR_DADDR6, &info->addr6))
-			जाओ nla_put_failure;
-		अवरोध;
-#पूर्ण_अगर
-	शेष:
+	switch (info->family) {
+	case AF_INET:
+		if (nla_put_in_addr(skb, MPTCP_ATTR_DADDR4, info->addr.s_addr))
+			goto nla_put_failure;
+		break;
+#if IS_ENABLED(CONFIG_MPTCP_IPV6)
+	case AF_INET6:
+		if (nla_put_in6_addr(skb, MPTCP_ATTR_DADDR6, &info->addr6))
+			goto nla_put_failure;
+		break;
+#endif
+	default:
 		WARN_ON_ONCE(1);
-		जाओ nla_put_failure;
-	पूर्ण
+		goto nla_put_failure;
+	}
 
 	genlmsg_end(skb, nlh);
 	mptcp_nl_mcast_send(net, skb, GFP_ATOMIC);
-	वापस;
+	return;
 
 nla_put_failure:
-	kमुक्त_skb(skb);
-पूर्ण
+	kfree_skb(skb);
+}
 
-व्योम mptcp_event(क्रमागत mptcp_event_type type, स्थिर काष्ठा mptcp_sock *msk,
-		 स्थिर काष्ठा sock *ssk, gfp_t gfp)
-अणु
-	काष्ठा net *net = sock_net((स्थिर काष्ठा sock *)msk);
-	काष्ठा nlmsghdr *nlh;
-	काष्ठा sk_buff *skb;
+void mptcp_event(enum mptcp_event_type type, const struct mptcp_sock *msk,
+		 const struct sock *ssk, gfp_t gfp)
+{
+	struct net *net = sock_net((const struct sock *)msk);
+	struct nlmsghdr *nlh;
+	struct sk_buff *skb;
 
-	अगर (!genl_has_listeners(&mptcp_genl_family, net, MPTCP_PM_EV_GRP_OFFSET))
-		वापस;
+	if (!genl_has_listeners(&mptcp_genl_family, net, MPTCP_PM_EV_GRP_OFFSET))
+		return;
 
 	skb = nlmsg_new(NLMSG_DEFAULT_SIZE, gfp);
-	अगर (!skb)
-		वापस;
+	if (!skb)
+		return;
 
 	nlh = genlmsg_put(skb, 0, 0, &mptcp_genl_family, 0, type);
-	अगर (!nlh)
-		जाओ nla_put_failure;
+	if (!nlh)
+		goto nla_put_failure;
 
-	चयन (type) अणु
-	हाल MPTCP_EVENT_UNSPEC:
+	switch (type) {
+	case MPTCP_EVENT_UNSPEC:
 		WARN_ON_ONCE(1);
-		अवरोध;
-	हाल MPTCP_EVENT_CREATED:
-	हाल MPTCP_EVENT_ESTABLISHED:
-		अगर (mptcp_event_created(skb, msk, ssk) < 0)
-			जाओ nla_put_failure;
-		अवरोध;
-	हाल MPTCP_EVENT_CLOSED:
-		अगर (nla_put_u32(skb, MPTCP_ATTR_TOKEN, msk->token) < 0)
-			जाओ nla_put_failure;
-		अवरोध;
-	हाल MPTCP_EVENT_ANNOUNCED:
-	हाल MPTCP_EVENT_REMOVED:
-		/* call mptcp_event_addr_announced()/हटाओd instead */
+		break;
+	case MPTCP_EVENT_CREATED:
+	case MPTCP_EVENT_ESTABLISHED:
+		if (mptcp_event_created(skb, msk, ssk) < 0)
+			goto nla_put_failure;
+		break;
+	case MPTCP_EVENT_CLOSED:
+		if (nla_put_u32(skb, MPTCP_ATTR_TOKEN, msk->token) < 0)
+			goto nla_put_failure;
+		break;
+	case MPTCP_EVENT_ANNOUNCED:
+	case MPTCP_EVENT_REMOVED:
+		/* call mptcp_event_addr_announced()/removed instead */
 		WARN_ON_ONCE(1);
-		अवरोध;
-	हाल MPTCP_EVENT_SUB_ESTABLISHED:
-	हाल MPTCP_EVENT_SUB_PRIORITY:
-		अगर (mptcp_event_sub_established(skb, msk, ssk) < 0)
-			जाओ nla_put_failure;
-		अवरोध;
-	हाल MPTCP_EVENT_SUB_CLOSED:
-		अगर (mptcp_event_sub_बंदd(skb, msk, ssk) < 0)
-			जाओ nla_put_failure;
-		अवरोध;
-	पूर्ण
+		break;
+	case MPTCP_EVENT_SUB_ESTABLISHED:
+	case MPTCP_EVENT_SUB_PRIORITY:
+		if (mptcp_event_sub_established(skb, msk, ssk) < 0)
+			goto nla_put_failure;
+		break;
+	case MPTCP_EVENT_SUB_CLOSED:
+		if (mptcp_event_sub_closed(skb, msk, ssk) < 0)
+			goto nla_put_failure;
+		break;
+	}
 
 	genlmsg_end(skb, nlh);
 	mptcp_nl_mcast_send(net, skb, gfp);
-	वापस;
+	return;
 
 nla_put_failure:
-	kमुक्त_skb(skb);
-पूर्ण
+	kfree_skb(skb);
+}
 
-अटल स्थिर काष्ठा genl_small_ops mptcp_pm_ops[] = अणु
-	अणु
+static const struct genl_small_ops mptcp_pm_ops[] = {
+	{
 		.cmd    = MPTCP_PM_CMD_ADD_ADDR,
-		.करोit   = mptcp_nl_cmd_add_addr,
+		.doit   = mptcp_nl_cmd_add_addr,
 		.flags  = GENL_ADMIN_PERM,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd    = MPTCP_PM_CMD_DEL_ADDR,
-		.करोit   = mptcp_nl_cmd_del_addr,
+		.doit   = mptcp_nl_cmd_del_addr,
 		.flags  = GENL_ADMIN_PERM,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd    = MPTCP_PM_CMD_FLUSH_ADDRS,
-		.करोit   = mptcp_nl_cmd_flush_addrs,
+		.doit   = mptcp_nl_cmd_flush_addrs,
 		.flags  = GENL_ADMIN_PERM,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd    = MPTCP_PM_CMD_GET_ADDR,
-		.करोit   = mptcp_nl_cmd_get_addr,
+		.doit   = mptcp_nl_cmd_get_addr,
 		.dumpit   = mptcp_nl_cmd_dump_addrs,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd    = MPTCP_PM_CMD_SET_LIMITS,
-		.करोit   = mptcp_nl_cmd_set_limits,
+		.doit   = mptcp_nl_cmd_set_limits,
 		.flags  = GENL_ADMIN_PERM,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd    = MPTCP_PM_CMD_GET_LIMITS,
-		.करोit   = mptcp_nl_cmd_get_limits,
-	पूर्ण,
-	अणु
+		.doit   = mptcp_nl_cmd_get_limits,
+	},
+	{
 		.cmd    = MPTCP_PM_CMD_SET_FLAGS,
-		.करोit   = mptcp_nl_cmd_set_flags,
+		.doit   = mptcp_nl_cmd_set_flags,
 		.flags  = GENL_ADMIN_PERM,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा genl_family mptcp_genl_family __ro_after_init = अणु
+static struct genl_family mptcp_genl_family __ro_after_init = {
 	.name		= MPTCP_PM_NAME,
 	.version	= MPTCP_PM_VER,
 	.maxattr	= MPTCP_PM_ATTR_MAX,
@@ -1907,46 +1906,46 @@ nla_put_failure:
 	.n_small_ops	= ARRAY_SIZE(mptcp_pm_ops),
 	.mcgrps		= mptcp_pm_mcgrps,
 	.n_mcgrps	= ARRAY_SIZE(mptcp_pm_mcgrps),
-पूर्ण;
+};
 
-अटल पूर्णांक __net_init pm_nl_init_net(काष्ठा net *net)
-अणु
-	काष्ठा pm_nl_pernet *pernet = net_generic(net, pm_nl_pernet_id);
+static int __net_init pm_nl_init_net(struct net *net)
+{
+	struct pm_nl_pernet *pernet = net_generic(net, pm_nl_pernet_id);
 
 	INIT_LIST_HEAD_RCU(&pernet->local_addr_list);
 	__reset_counters(pernet);
 	pernet->next_id = 1;
-	biपंचांगap_zero(pernet->id_biपंचांगap, MAX_ADDR_ID + 1);
+	bitmap_zero(pernet->id_bitmap, MAX_ADDR_ID + 1);
 	spin_lock_init(&pernet->lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __net_निकास pm_nl_निकास_net(काष्ठा list_head *net_list)
-अणु
-	काष्ठा net *net;
+static void __net_exit pm_nl_exit_net(struct list_head *net_list)
+{
+	struct net *net;
 
-	list_क्रम_each_entry(net, net_list, निकास_list) अणु
-		काष्ठा pm_nl_pernet *pernet = net_generic(net, pm_nl_pernet_id);
+	list_for_each_entry(net, net_list, exit_list) {
+		struct pm_nl_pernet *pernet = net_generic(net, pm_nl_pernet_id);
 
-		/* net is हटाओd from namespace list, can't race with
-		 * other modअगरiers
+		/* net is removed from namespace list, can't race with
+		 * other modifiers
 		 */
 		__flush_addrs(&pernet->local_addr_list);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल काष्ठा pernet_operations mptcp_pm_pernet_ops = अणु
+static struct pernet_operations mptcp_pm_pernet_ops = {
 	.init = pm_nl_init_net,
-	.निकास_batch = pm_nl_निकास_net,
+	.exit_batch = pm_nl_exit_net,
 	.id = &pm_nl_pernet_id,
-	.size = माप(काष्ठा pm_nl_pernet),
-पूर्ण;
+	.size = sizeof(struct pm_nl_pernet),
+};
 
-व्योम __init mptcp_pm_nl_init(व्योम)
-अणु
-	अगर (रेजिस्टर_pernet_subsys(&mptcp_pm_pernet_ops) < 0)
+void __init mptcp_pm_nl_init(void)
+{
+	if (register_pernet_subsys(&mptcp_pm_pernet_ops) < 0)
 		panic("Failed to register MPTCP PM pernet subsystem.\n");
 
-	अगर (genl_रेजिस्टर_family(&mptcp_genl_family))
+	if (genl_register_family(&mptcp_genl_family))
 		panic("Failed to register MPTCP PM netlink family\n");
-पूर्ण
+}

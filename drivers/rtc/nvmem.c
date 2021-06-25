@@ -1,31 +1,30 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * RTC subप्रणाली, nvmem पूर्णांकerface
+ * RTC subsystem, nvmem interface
  *
  * Copyright (C) 2017 Alexandre Belloni
  */
 
-#समावेश <linux/err.h>
-#समावेश <linux/types.h>
-#समावेश <linux/nvmem-consumer.h>
-#समावेश <linux/rtc.h>
+#include <linux/err.h>
+#include <linux/types.h>
+#include <linux/nvmem-consumer.h>
+#include <linux/rtc.h>
 
-पूर्णांक devm_rtc_nvmem_रेजिस्टर(काष्ठा rtc_device *rtc,
-		       काष्ठा nvmem_config *nvmem_config)
-अणु
-	काष्ठा device *dev = rtc->dev.parent;
-	काष्ठा nvmem_device *nvmem;
+int devm_rtc_nvmem_register(struct rtc_device *rtc,
+		       struct nvmem_config *nvmem_config)
+{
+	struct device *dev = rtc->dev.parent;
+	struct nvmem_device *nvmem;
 
-	अगर (!nvmem_config)
-		वापस -ENODEV;
+	if (!nvmem_config)
+		return -ENODEV;
 
 	nvmem_config->dev = dev;
 	nvmem_config->owner = rtc->owner;
-	nvmem = devm_nvmem_रेजिस्टर(dev, nvmem_config);
-	अगर (IS_ERR(nvmem))
+	nvmem = devm_nvmem_register(dev, nvmem_config);
+	if (IS_ERR(nvmem))
 		dev_err(dev, "failed to register nvmem device for RTC\n");
 
-	वापस PTR_ERR_OR_ZERO(nvmem);
-पूर्ण
-EXPORT_SYMBOL_GPL(devm_rtc_nvmem_रेजिस्टर);
+	return PTR_ERR_OR_ZERO(nvmem);
+}
+EXPORT_SYMBOL_GPL(devm_rtc_nvmem_register);

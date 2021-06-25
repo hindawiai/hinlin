@@ -1,153 +1,152 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Functions क्रम saving/restoring console.
+ * Functions for saving/restoring console.
  *
  * Originally from swsusp.
  */
 
-#समावेश <linux/console.h>
-#समावेश <linux/vt_kern.h>
-#समावेश <linux/kbd_kern.h>
-#समावेश <linux/vt.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश "power.h"
+#include <linux/console.h>
+#include <linux/vt_kern.h>
+#include <linux/kbd_kern.h>
+#include <linux/vt.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include "power.h"
 
-#घोषणा SUSPEND_CONSOLE	(MAX_NR_CONSOLES-1)
+#define SUSPEND_CONSOLE	(MAX_NR_CONSOLES-1)
 
-अटल पूर्णांक orig_fgconsole, orig_kmsg;
+static int orig_fgconsole, orig_kmsg;
 
-अटल DEFINE_MUTEX(vt_चयन_mutex);
+static DEFINE_MUTEX(vt_switch_mutex);
 
-काष्ठा pm_vt_चयन अणु
-	काष्ठा list_head head;
-	काष्ठा device *dev;
+struct pm_vt_switch {
+	struct list_head head;
+	struct device *dev;
 	bool required;
-पूर्ण;
+};
 
-अटल LIST_HEAD(pm_vt_चयन_list);
+static LIST_HEAD(pm_vt_switch_list);
 
 
 /**
- * pm_vt_चयन_required - indicate VT चयन at suspend requirements
+ * pm_vt_switch_required - indicate VT switch at suspend requirements
  * @dev: device
- * @required: अगर true, caller needs VT चयन at suspend/resume समय
+ * @required: if true, caller needs VT switch at suspend/resume time
  *
- * The dअगरferent console drivers may or may not require VT चयनes across
+ * The different console drivers may or may not require VT switches across
  * suspend/resume, depending on how they handle restoring video state and
  * what may be running.
  *
- * Drivers can indicate support क्रम चयनless suspend/resume, which can
- * save समय and flicker, by using this routine and passing 'false' as
- * the argument.  If any loaded driver needs VT चयनing, or the
+ * Drivers can indicate support for switchless suspend/resume, which can
+ * save time and flicker, by using this routine and passing 'false' as
+ * the argument.  If any loaded driver needs VT switching, or the
  * no_console_suspend argument has been passed on the command line, VT
- * चयनes will occur.
+ * switches will occur.
  */
-व्योम pm_vt_चयन_required(काष्ठा device *dev, bool required)
-अणु
-	काष्ठा pm_vt_चयन *entry, *पंचांगp;
+void pm_vt_switch_required(struct device *dev, bool required)
+{
+	struct pm_vt_switch *entry, *tmp;
 
-	mutex_lock(&vt_चयन_mutex);
-	list_क्रम_each_entry(पंचांगp, &pm_vt_चयन_list, head) अणु
-		अगर (पंचांगp->dev == dev) अणु
-			/* alपढ़ोy रेजिस्टरed, update requirement */
-			पंचांगp->required = required;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+	mutex_lock(&vt_switch_mutex);
+	list_for_each_entry(tmp, &pm_vt_switch_list, head) {
+		if (tmp->dev == dev) {
+			/* already registered, update requirement */
+			tmp->required = required;
+			goto out;
+		}
+	}
 
-	entry = kदो_स्मृति(माप(*entry), GFP_KERNEL);
-	अगर (!entry)
-		जाओ out;
+	entry = kmalloc(sizeof(*entry), GFP_KERNEL);
+	if (!entry)
+		goto out;
 
 	entry->required = required;
 	entry->dev = dev;
 
-	list_add(&entry->head, &pm_vt_चयन_list);
+	list_add(&entry->head, &pm_vt_switch_list);
 out:
-	mutex_unlock(&vt_चयन_mutex);
-पूर्ण
-EXPORT_SYMBOL(pm_vt_चयन_required);
+	mutex_unlock(&vt_switch_mutex);
+}
+EXPORT_SYMBOL(pm_vt_switch_required);
 
 /**
- * pm_vt_चयन_unरेजिस्टर - stop tracking a device's VT चयनing needs
+ * pm_vt_switch_unregister - stop tracking a device's VT switching needs
  * @dev: device
  *
- * Remove @dev from the vt चयन list.
+ * Remove @dev from the vt switch list.
  */
-व्योम pm_vt_चयन_unरेजिस्टर(काष्ठा device *dev)
-अणु
-	काष्ठा pm_vt_चयन *पंचांगp;
+void pm_vt_switch_unregister(struct device *dev)
+{
+	struct pm_vt_switch *tmp;
 
-	mutex_lock(&vt_चयन_mutex);
-	list_क्रम_each_entry(पंचांगp, &pm_vt_चयन_list, head) अणु
-		अगर (पंचांगp->dev == dev) अणु
-			list_del(&पंचांगp->head);
-			kमुक्त(पंचांगp);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	mutex_unlock(&vt_चयन_mutex);
-पूर्ण
-EXPORT_SYMBOL(pm_vt_चयन_unरेजिस्टर);
+	mutex_lock(&vt_switch_mutex);
+	list_for_each_entry(tmp, &pm_vt_switch_list, head) {
+		if (tmp->dev == dev) {
+			list_del(&tmp->head);
+			kfree(tmp);
+			break;
+		}
+	}
+	mutex_unlock(&vt_switch_mutex);
+}
+EXPORT_SYMBOL(pm_vt_switch_unregister);
 
 /*
- * There are three हालs when a VT चयन on suspend/resume are required:
+ * There are three cases when a VT switch on suspend/resume are required:
  *   1) no driver has indicated a requirement one way or another, so preserve
  *      the old behavior
  *   2) console suspend is disabled, we want to see debug messages across
  *      suspend/resume
- *   3) any रेजिस्टरed driver indicates it needs a VT चयन
+ *   3) any registered driver indicates it needs a VT switch
  *
  * If none of these conditions is present, meaning we have at least one driver
- * that करोesn't need the चयन, and none that करो, we can aव्योम it to make
+ * that doesn't need the switch, and none that do, we can avoid it to make
  * resume look a little prettier (and suspend too, but that's usually hidden,
  * e.g. when closing the lid on a laptop).
  */
-अटल bool pm_vt_चयन(व्योम)
-अणु
-	काष्ठा pm_vt_चयन *entry;
+static bool pm_vt_switch(void)
+{
+	struct pm_vt_switch *entry;
 	bool ret = true;
 
-	mutex_lock(&vt_चयन_mutex);
-	अगर (list_empty(&pm_vt_चयन_list))
-		जाओ out;
+	mutex_lock(&vt_switch_mutex);
+	if (list_empty(&pm_vt_switch_list))
+		goto out;
 
-	अगर (!console_suspend_enabled)
-		जाओ out;
+	if (!console_suspend_enabled)
+		goto out;
 
-	list_क्रम_each_entry(entry, &pm_vt_चयन_list, head) अणु
-		अगर (entry->required)
-			जाओ out;
-	पूर्ण
+	list_for_each_entry(entry, &pm_vt_switch_list, head) {
+		if (entry->required)
+			goto out;
+	}
 
 	ret = false;
 out:
-	mutex_unlock(&vt_चयन_mutex);
-	वापस ret;
-पूर्ण
+	mutex_unlock(&vt_switch_mutex);
+	return ret;
+}
 
-व्योम pm_prepare_console(व्योम)
-अणु
-	अगर (!pm_vt_चयन())
-		वापस;
+void pm_prepare_console(void)
+{
+	if (!pm_vt_switch())
+		return;
 
 	orig_fgconsole = vt_move_to_console(SUSPEND_CONSOLE, 1);
-	अगर (orig_fgconsole < 0)
-		वापस;
+	if (orig_fgconsole < 0)
+		return;
 
 	orig_kmsg = vt_kmsg_redirect(SUSPEND_CONSOLE);
-	वापस;
-पूर्ण
+	return;
+}
 
-व्योम pm_restore_console(व्योम)
-अणु
-	अगर (!pm_vt_चयन())
-		वापस;
+void pm_restore_console(void)
+{
+	if (!pm_vt_switch())
+		return;
 
-	अगर (orig_fgconsole >= 0) अणु
+	if (orig_fgconsole >= 0) {
 		vt_move_to_console(orig_fgconsole, 0);
 		vt_kmsg_redirect(orig_kmsg);
-	पूर्ण
-पूर्ण
+	}
+}

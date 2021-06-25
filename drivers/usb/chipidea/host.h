@@ -1,31 +1,30 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __DRIVERS_USB_CHIPIDEA_HOST_H
-#घोषणा __DRIVERS_USB_CHIPIDEA_HOST_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __DRIVERS_USB_CHIPIDEA_HOST_H
+#define __DRIVERS_USB_CHIPIDEA_HOST_H
 
-#अगर_घोषित CONFIG_USB_CHIPIDEA_HOST
+#ifdef CONFIG_USB_CHIPIDEA_HOST
 
-पूर्णांक ci_hdrc_host_init(काष्ठा ci_hdrc *ci);
-व्योम ci_hdrc_host_destroy(काष्ठा ci_hdrc *ci);
-व्योम ci_hdrc_host_driver_init(व्योम);
+int ci_hdrc_host_init(struct ci_hdrc *ci);
+void ci_hdrc_host_destroy(struct ci_hdrc *ci);
+void ci_hdrc_host_driver_init(void);
 
-#अन्यथा
+#else
 
-अटल अंतरभूत पूर्णांक ci_hdrc_host_init(काष्ठा ci_hdrc *ci)
-अणु
-	वापस -ENXIO;
-पूर्ण
+static inline int ci_hdrc_host_init(struct ci_hdrc *ci)
+{
+	return -ENXIO;
+}
 
-अटल अंतरभूत व्योम ci_hdrc_host_destroy(काष्ठा ci_hdrc *ci)
-अणु
+static inline void ci_hdrc_host_destroy(struct ci_hdrc *ci)
+{
 
-पूर्ण
+}
 
-अटल अंतरभूत व्योम ci_hdrc_host_driver_init(व्योम)
-अणु
+static inline void ci_hdrc_host_driver_init(void)
+{
 
-पूर्ण
+}
 
-#पूर्ण_अगर
+#endif
 
-#पूर्ण_अगर /* __DRIVERS_USB_CHIPIDEA_HOST_H */
+#endif /* __DRIVERS_USB_CHIPIDEA_HOST_H */

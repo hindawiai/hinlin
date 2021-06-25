@@ -1,129 +1,128 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/kernel.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/kprobes.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/stop_machine.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/kernel.h>
+#include <linux/spinlock.h>
+#include <linux/kprobes.h>
+#include <linux/mm.h>
+#include <linux/stop_machine.h>
 
-#समावेश <यंत्र/cacheflush.h>
-#समावेश <यंत्र/fixmap.h>
-#समावेश <यंत्र/smp_plat.h>
-#समावेश <यंत्र/opcodes.h>
-#समावेश <यंत्र/patch.h>
+#include <asm/cacheflush.h>
+#include <asm/fixmap.h>
+#include <asm/smp_plat.h>
+#include <asm/opcodes.h>
+#include <asm/patch.h>
 
-काष्ठा patch अणु
-	व्योम *addr;
-	अचिन्हित पूर्णांक insn;
-पूर्ण;
+struct patch {
+	void *addr;
+	unsigned int insn;
+};
 
-#अगर_घोषित CONFIG_MMU
-अटल DEFINE_RAW_SPINLOCK(patch_lock);
+#ifdef CONFIG_MMU
+static DEFINE_RAW_SPINLOCK(patch_lock);
 
-अटल व्योम __kprobes *patch_map(व्योम *addr, पूर्णांक fixmap, अचिन्हित दीर्घ *flags)
-अणु
-	अचिन्हित पूर्णांक uपूर्णांकaddr = (uपूर्णांकptr_t) addr;
-	bool module = !core_kernel_text(uपूर्णांकaddr);
-	काष्ठा page *page;
+static void __kprobes *patch_map(void *addr, int fixmap, unsigned long *flags)
+{
+	unsigned int uintaddr = (uintptr_t) addr;
+	bool module = !core_kernel_text(uintaddr);
+	struct page *page;
 
-	अगर (module && IS_ENABLED(CONFIG_STRICT_MODULE_RWX))
-		page = vदो_स्मृति_to_page(addr);
-	अन्यथा अगर (!module && IS_ENABLED(CONFIG_STRICT_KERNEL_RWX))
+	if (module && IS_ENABLED(CONFIG_STRICT_MODULE_RWX))
+		page = vmalloc_to_page(addr);
+	else if (!module && IS_ENABLED(CONFIG_STRICT_KERNEL_RWX))
 		page = virt_to_page(addr);
-	अन्यथा
-		वापस addr;
+	else
+		return addr;
 
-	अगर (flags)
+	if (flags)
 		raw_spin_lock_irqsave(&patch_lock, *flags);
 
 	set_fixmap(fixmap, page_to_phys(page));
 
-	वापस (व्योम *) (__fix_to_virt(fixmap) + (uपूर्णांकaddr & ~PAGE_MASK));
-पूर्ण
+	return (void *) (__fix_to_virt(fixmap) + (uintaddr & ~PAGE_MASK));
+}
 
-अटल व्योम __kprobes patch_unmap(पूर्णांक fixmap, अचिन्हित दीर्घ *flags)
-अणु
+static void __kprobes patch_unmap(int fixmap, unsigned long *flags)
+{
 	clear_fixmap(fixmap);
 
-	अगर (flags)
+	if (flags)
 		raw_spin_unlock_irqrestore(&patch_lock, *flags);
-पूर्ण
-#अन्यथा
-अटल व्योम __kprobes *patch_map(व्योम *addr, पूर्णांक fixmap, अचिन्हित दीर्घ *flags)
-अणु
-	वापस addr;
-पूर्ण
-अटल व्योम __kprobes patch_unmap(पूर्णांक fixmap, अचिन्हित दीर्घ *flags) अणु पूर्ण
-#पूर्ण_अगर
+}
+#else
+static void __kprobes *patch_map(void *addr, int fixmap, unsigned long *flags)
+{
+	return addr;
+}
+static void __kprobes patch_unmap(int fixmap, unsigned long *flags) { }
+#endif
 
-व्योम __kprobes __patch_text_real(व्योम *addr, अचिन्हित पूर्णांक insn, bool remap)
-अणु
+void __kprobes __patch_text_real(void *addr, unsigned int insn, bool remap)
+{
 	bool thumb2 = IS_ENABLED(CONFIG_THUMB2_KERNEL);
-	अचिन्हित पूर्णांक uपूर्णांकaddr = (uपूर्णांकptr_t) addr;
+	unsigned int uintaddr = (uintptr_t) addr;
 	bool twopage = false;
-	अचिन्हित दीर्घ flags;
-	व्योम *waddr = addr;
-	पूर्णांक size;
+	unsigned long flags;
+	void *waddr = addr;
+	int size;
 
-	अगर (remap)
+	if (remap)
 		waddr = patch_map(addr, FIX_TEXT_POKE0, &flags);
 
-	अगर (thumb2 && __opcode_is_thumb16(insn)) अणु
+	if (thumb2 && __opcode_is_thumb16(insn)) {
 		*(u16 *)waddr = __opcode_to_mem_thumb16(insn);
-		size = माप(u16);
-	पूर्ण अन्यथा अगर (thumb2 && (uपूर्णांकaddr & 2)) अणु
+		size = sizeof(u16);
+	} else if (thumb2 && (uintaddr & 2)) {
 		u16 first = __opcode_thumb32_first(insn);
 		u16 second = __opcode_thumb32_second(insn);
 		u16 *addrh0 = waddr;
 		u16 *addrh1 = waddr + 2;
 
-		twopage = (uपूर्णांकaddr & ~PAGE_MASK) == PAGE_SIZE - 2;
-		अगर (twopage && remap)
-			addrh1 = patch_map(addr + 2, FIX_TEXT_POKE1, शून्य);
+		twopage = (uintaddr & ~PAGE_MASK) == PAGE_SIZE - 2;
+		if (twopage && remap)
+			addrh1 = patch_map(addr + 2, FIX_TEXT_POKE1, NULL);
 
 		*addrh0 = __opcode_to_mem_thumb16(first);
 		*addrh1 = __opcode_to_mem_thumb16(second);
 
-		अगर (twopage && addrh1 != addr + 2) अणु
+		if (twopage && addrh1 != addr + 2) {
 			flush_kernel_vmap_range(addrh1, 2);
-			patch_unmap(FIX_TEXT_POKE1, शून्य);
-		पूर्ण
+			patch_unmap(FIX_TEXT_POKE1, NULL);
+		}
 
-		size = माप(u32);
-	पूर्ण अन्यथा अणु
-		अगर (thumb2)
+		size = sizeof(u32);
+	} else {
+		if (thumb2)
 			insn = __opcode_to_mem_thumb32(insn);
-		अन्यथा
+		else
 			insn = __opcode_to_mem_arm(insn);
 
 		*(u32 *)waddr = insn;
-		size = माप(u32);
-	पूर्ण
+		size = sizeof(u32);
+	}
 
-	अगर (waddr != addr) अणु
+	if (waddr != addr) {
 		flush_kernel_vmap_range(waddr, twopage ? size / 2 : size);
 		patch_unmap(FIX_TEXT_POKE0, &flags);
-	पूर्ण
+	}
 
-	flush_icache_range((uपूर्णांकptr_t)(addr),
-			   (uपूर्णांकptr_t)(addr) + size);
-पूर्ण
+	flush_icache_range((uintptr_t)(addr),
+			   (uintptr_t)(addr) + size);
+}
 
-अटल पूर्णांक __kprobes patch_text_stop_machine(व्योम *data)
-अणु
-	काष्ठा patch *patch = data;
+static int __kprobes patch_text_stop_machine(void *data)
+{
+	struct patch *patch = data;
 
 	__patch_text(patch->addr, patch->insn);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम __kprobes patch_text(व्योम *addr, अचिन्हित पूर्णांक insn)
-अणु
-	काष्ठा patch patch = अणु
+void __kprobes patch_text(void *addr, unsigned int insn)
+{
+	struct patch patch = {
 		.addr = addr,
 		.insn = insn,
-	पूर्ण;
+	};
 
-	stop_machine_cpuslocked(patch_text_stop_machine, &patch, शून्य);
-पूर्ण
+	stop_machine_cpuslocked(patch_text_stop_machine, &patch, NULL);
+}

@@ -1,55 +1,54 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) STRATO AG 2013.  All rights reserved.
  */
 
-#समावेश <linux/uuid.h>
-#समावेश <यंत्र/unaligned.h>
-#समावेश "ctree.h"
-#समावेश "transaction.h"
-#समावेश "disk-io.h"
-#समावेश "print-tree.h"
+#include <linux/uuid.h>
+#include <asm/unaligned.h>
+#include "ctree.h"
+#include "transaction.h"
+#include "disk-io.h"
+#include "print-tree.h"
 
 
-अटल व्योम btrfs_uuid_to_key(u8 *uuid, u8 type, काष्ठा btrfs_key *key)
-अणु
+static void btrfs_uuid_to_key(u8 *uuid, u8 type, struct btrfs_key *key)
+{
 	key->type = type;
 	key->objectid = get_unaligned_le64(uuid);
-	key->offset = get_unaligned_le64(uuid + माप(u64));
-पूर्ण
+	key->offset = get_unaligned_le64(uuid + sizeof(u64));
+}
 
-/* वापस -ENOENT क्रम !found, < 0 क्रम errors, or 0 अगर an item was found */
-अटल पूर्णांक btrfs_uuid_tree_lookup(काष्ठा btrfs_root *uuid_root, u8 *uuid,
+/* return -ENOENT for !found, < 0 for errors, or 0 if an item was found */
+static int btrfs_uuid_tree_lookup(struct btrfs_root *uuid_root, u8 *uuid,
 				  u8 type, u64 subid)
-अणु
-	पूर्णांक ret;
-	काष्ठा btrfs_path *path = शून्य;
-	काष्ठा extent_buffer *eb;
-	पूर्णांक slot;
+{
+	int ret;
+	struct btrfs_path *path = NULL;
+	struct extent_buffer *eb;
+	int slot;
 	u32 item_size;
-	अचिन्हित दीर्घ offset;
-	काष्ठा btrfs_key key;
+	unsigned long offset;
+	struct btrfs_key key;
 
-	अगर (WARN_ON_ONCE(!uuid_root)) अणु
+	if (WARN_ON_ONCE(!uuid_root)) {
 		ret = -ENOENT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	path = btrfs_alloc_path();
-	अगर (!path) अणु
+	if (!path) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	btrfs_uuid_to_key(uuid, type, &key);
-	ret = btrfs_search_slot(शून्य, uuid_root, &key, path, 0, 0);
-	अगर (ret < 0) अणु
-		जाओ out;
-	पूर्ण अन्यथा अगर (ret > 0) अणु
+	ret = btrfs_search_slot(NULL, uuid_root, &key, path, 0, 0);
+	if (ret < 0) {
+		goto out;
+	} else if (ret > 0) {
 		ret = -ENOENT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	eb = path->nodes[0];
 	slot = path->slots[0];
@@ -57,335 +56,335 @@
 	offset = btrfs_item_ptr_offset(eb, slot);
 	ret = -ENOENT;
 
-	अगर (!IS_ALIGNED(item_size, माप(u64))) अणु
+	if (!IS_ALIGNED(item_size, sizeof(u64))) {
 		btrfs_warn(uuid_root->fs_info,
 			   "uuid item with illegal size %lu!",
-			   (अचिन्हित दीर्घ)item_size);
-		जाओ out;
-	पूर्ण
-	जबतक (item_size) अणु
+			   (unsigned long)item_size);
+		goto out;
+	}
+	while (item_size) {
 		__le64 data;
 
-		पढ़ो_extent_buffer(eb, &data, offset, माप(data));
-		अगर (le64_to_cpu(data) == subid) अणु
+		read_extent_buffer(eb, &data, offset, sizeof(data));
+		if (le64_to_cpu(data) == subid) {
 			ret = 0;
-			अवरोध;
-		पूर्ण
-		offset += माप(data);
-		item_size -= माप(data);
-	पूर्ण
+			break;
+		}
+		offset += sizeof(data);
+		item_size -= sizeof(data);
+	}
 
 out:
-	btrfs_मुक्त_path(path);
-	वापस ret;
-पूर्ण
+	btrfs_free_path(path);
+	return ret;
+}
 
-पूर्णांक btrfs_uuid_tree_add(काष्ठा btrfs_trans_handle *trans, u8 *uuid, u8 type,
+int btrfs_uuid_tree_add(struct btrfs_trans_handle *trans, u8 *uuid, u8 type,
 			u64 subid_cpu)
-अणु
-	काष्ठा btrfs_fs_info *fs_info = trans->fs_info;
-	काष्ठा btrfs_root *uuid_root = fs_info->uuid_root;
-	पूर्णांक ret;
-	काष्ठा btrfs_path *path = शून्य;
-	काष्ठा btrfs_key key;
-	काष्ठा extent_buffer *eb;
-	पूर्णांक slot;
-	अचिन्हित दीर्घ offset;
+{
+	struct btrfs_fs_info *fs_info = trans->fs_info;
+	struct btrfs_root *uuid_root = fs_info->uuid_root;
+	int ret;
+	struct btrfs_path *path = NULL;
+	struct btrfs_key key;
+	struct extent_buffer *eb;
+	int slot;
+	unsigned long offset;
 	__le64 subid_le;
 
 	ret = btrfs_uuid_tree_lookup(uuid_root, uuid, type, subid_cpu);
-	अगर (ret != -ENOENT)
-		वापस ret;
+	if (ret != -ENOENT)
+		return ret;
 
-	अगर (WARN_ON_ONCE(!uuid_root)) अणु
+	if (WARN_ON_ONCE(!uuid_root)) {
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	btrfs_uuid_to_key(uuid, type, &key);
 
 	path = btrfs_alloc_path();
-	अगर (!path) अणु
+	if (!path) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = btrfs_insert_empty_item(trans, uuid_root, path, &key,
-				      माप(subid_le));
-	अगर (ret >= 0) अणु
-		/* Add an item क्रम the type क्रम the first समय */
+				      sizeof(subid_le));
+	if (ret >= 0) {
+		/* Add an item for the type for the first time */
 		eb = path->nodes[0];
 		slot = path->slots[0];
 		offset = btrfs_item_ptr_offset(eb, slot);
-	पूर्ण अन्यथा अगर (ret == -EEXIST) अणु
+	} else if (ret == -EEXIST) {
 		/*
-		 * An item with that type alपढ़ोy exists.
+		 * An item with that type already exists.
 		 * Extend the item and store the new subid at the end.
 		 */
-		btrfs_extend_item(path, माप(subid_le));
+		btrfs_extend_item(path, sizeof(subid_le));
 		eb = path->nodes[0];
 		slot = path->slots[0];
 		offset = btrfs_item_ptr_offset(eb, slot);
-		offset += btrfs_item_size_nr(eb, slot) - माप(subid_le);
-	पूर्ण अन्यथा अणु
+		offset += btrfs_item_size_nr(eb, slot) - sizeof(subid_le);
+	} else {
 		btrfs_warn(fs_info,
 			   "insert uuid item failed %d (0x%016llx, 0x%016llx) type %u!",
 			   ret, key.objectid, key.offset, type);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = 0;
 	subid_le = cpu_to_le64(subid_cpu);
-	ग_लिखो_extent_buffer(eb, &subid_le, offset, माप(subid_le));
+	write_extent_buffer(eb, &subid_le, offset, sizeof(subid_le));
 	btrfs_mark_buffer_dirty(eb);
 
 out:
-	btrfs_मुक्त_path(path);
-	वापस ret;
-पूर्ण
+	btrfs_free_path(path);
+	return ret;
+}
 
-पूर्णांक btrfs_uuid_tree_हटाओ(काष्ठा btrfs_trans_handle *trans, u8 *uuid, u8 type,
+int btrfs_uuid_tree_remove(struct btrfs_trans_handle *trans, u8 *uuid, u8 type,
 			u64 subid)
-अणु
-	काष्ठा btrfs_fs_info *fs_info = trans->fs_info;
-	काष्ठा btrfs_root *uuid_root = fs_info->uuid_root;
-	पूर्णांक ret;
-	काष्ठा btrfs_path *path = शून्य;
-	काष्ठा btrfs_key key;
-	काष्ठा extent_buffer *eb;
-	पूर्णांक slot;
-	अचिन्हित दीर्घ offset;
+{
+	struct btrfs_fs_info *fs_info = trans->fs_info;
+	struct btrfs_root *uuid_root = fs_info->uuid_root;
+	int ret;
+	struct btrfs_path *path = NULL;
+	struct btrfs_key key;
+	struct extent_buffer *eb;
+	int slot;
+	unsigned long offset;
 	u32 item_size;
-	अचिन्हित दीर्घ move_dst;
-	अचिन्हित दीर्घ move_src;
-	अचिन्हित दीर्घ move_len;
+	unsigned long move_dst;
+	unsigned long move_src;
+	unsigned long move_len;
 
-	अगर (WARN_ON_ONCE(!uuid_root)) अणु
+	if (WARN_ON_ONCE(!uuid_root)) {
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	btrfs_uuid_to_key(uuid, type, &key);
 
 	path = btrfs_alloc_path();
-	अगर (!path) अणु
+	if (!path) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = btrfs_search_slot(trans, uuid_root, &key, path, -1, 1);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		btrfs_warn(fs_info, "error %d while searching for uuid item!",
 			   ret);
-		जाओ out;
-	पूर्ण
-	अगर (ret > 0) अणु
+		goto out;
+	}
+	if (ret > 0) {
 		ret = -ENOENT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	eb = path->nodes[0];
 	slot = path->slots[0];
 	offset = btrfs_item_ptr_offset(eb, slot);
 	item_size = btrfs_item_size_nr(eb, slot);
-	अगर (!IS_ALIGNED(item_size, माप(u64))) अणु
+	if (!IS_ALIGNED(item_size, sizeof(u64))) {
 		btrfs_warn(fs_info, "uuid item with illegal size %lu!",
-			   (अचिन्हित दीर्घ)item_size);
+			   (unsigned long)item_size);
 		ret = -ENOENT;
-		जाओ out;
-	पूर्ण
-	जबतक (item_size) अणु
-		__le64 पढ़ो_subid;
+		goto out;
+	}
+	while (item_size) {
+		__le64 read_subid;
 
-		पढ़ो_extent_buffer(eb, &पढ़ो_subid, offset, माप(पढ़ो_subid));
-		अगर (le64_to_cpu(पढ़ो_subid) == subid)
-			अवरोध;
-		offset += माप(पढ़ो_subid);
-		item_size -= माप(पढ़ो_subid);
-	पूर्ण
+		read_extent_buffer(eb, &read_subid, offset, sizeof(read_subid));
+		if (le64_to_cpu(read_subid) == subid)
+			break;
+		offset += sizeof(read_subid);
+		item_size -= sizeof(read_subid);
+	}
 
-	अगर (!item_size) अणु
+	if (!item_size) {
 		ret = -ENOENT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	item_size = btrfs_item_size_nr(eb, slot);
-	अगर (item_size == माप(subid)) अणु
+	if (item_size == sizeof(subid)) {
 		ret = btrfs_del_item(trans, uuid_root, path);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	move_dst = offset;
-	move_src = offset + माप(subid);
+	move_src = offset + sizeof(subid);
 	move_len = item_size - (move_src - btrfs_item_ptr_offset(eb, slot));
-	स_हटाओ_extent_buffer(eb, move_dst, move_src, move_len);
-	btrfs_truncate_item(path, item_size - माप(subid), 1);
+	memmove_extent_buffer(eb, move_dst, move_src, move_len);
+	btrfs_truncate_item(path, item_size - sizeof(subid), 1);
 
 out:
-	btrfs_मुक्त_path(path);
-	वापस ret;
-पूर्ण
+	btrfs_free_path(path);
+	return ret;
+}
 
-अटल पूर्णांक btrfs_uuid_iter_rem(काष्ठा btrfs_root *uuid_root, u8 *uuid, u8 type,
+static int btrfs_uuid_iter_rem(struct btrfs_root *uuid_root, u8 *uuid, u8 type,
 			       u64 subid)
-अणु
-	काष्ठा btrfs_trans_handle *trans;
-	पूर्णांक ret;
+{
+	struct btrfs_trans_handle *trans;
+	int ret;
 
-	/* 1 - क्रम the uuid item */
+	/* 1 - for the uuid item */
 	trans = btrfs_start_transaction(uuid_root, 1);
-	अगर (IS_ERR(trans)) अणु
+	if (IS_ERR(trans)) {
 		ret = PTR_ERR(trans);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	ret = btrfs_uuid_tree_हटाओ(trans, uuid, type, subid);
+	ret = btrfs_uuid_tree_remove(trans, uuid, type, subid);
 	btrfs_end_transaction(trans);
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Check अगर there's an matching subvolume क्रम given UUID
+ * Check if there's an matching subvolume for given UUID
  *
  * Return:
  * 0	check succeeded, the entry is not outdated
- * > 0	अगर the check failed, the caller should हटाओ the entry
- * < 0	अगर an error occurred
+ * > 0	if the check failed, the caller should remove the entry
+ * < 0	if an error occurred
  */
-अटल पूर्णांक btrfs_check_uuid_tree_entry(काष्ठा btrfs_fs_info *fs_info,
+static int btrfs_check_uuid_tree_entry(struct btrfs_fs_info *fs_info,
 				       u8 *uuid, u8 type, u64 subvolid)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा btrfs_root *subvol_root;
+{
+	int ret = 0;
+	struct btrfs_root *subvol_root;
 
-	अगर (type != BTRFS_UUID_KEY_SUBVOL &&
+	if (type != BTRFS_UUID_KEY_SUBVOL &&
 	    type != BTRFS_UUID_KEY_RECEIVED_SUBVOL)
-		जाओ out;
+		goto out;
 
 	subvol_root = btrfs_get_fs_root(fs_info, subvolid, true);
-	अगर (IS_ERR(subvol_root)) अणु
+	if (IS_ERR(subvol_root)) {
 		ret = PTR_ERR(subvol_root);
-		अगर (ret == -ENOENT)
+		if (ret == -ENOENT)
 			ret = 1;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	चयन (type) अणु
-	हाल BTRFS_UUID_KEY_SUBVOL:
-		अगर (स_भेद(uuid, subvol_root->root_item.uuid, BTRFS_UUID_SIZE))
+	switch (type) {
+	case BTRFS_UUID_KEY_SUBVOL:
+		if (memcmp(uuid, subvol_root->root_item.uuid, BTRFS_UUID_SIZE))
 			ret = 1;
-		अवरोध;
-	हाल BTRFS_UUID_KEY_RECEIVED_SUBVOL:
-		अगर (स_भेद(uuid, subvol_root->root_item.received_uuid,
+		break;
+	case BTRFS_UUID_KEY_RECEIVED_SUBVOL:
+		if (memcmp(uuid, subvol_root->root_item.received_uuid,
 			   BTRFS_UUID_SIZE))
 			ret = 1;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	btrfs_put_root(subvol_root);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक btrfs_uuid_tree_iterate(काष्ठा btrfs_fs_info *fs_info)
-अणु
-	काष्ठा btrfs_root *root = fs_info->uuid_root;
-	काष्ठा btrfs_key key;
-	काष्ठा btrfs_path *path;
-	पूर्णांक ret = 0;
-	काष्ठा extent_buffer *leaf;
-	पूर्णांक slot;
+int btrfs_uuid_tree_iterate(struct btrfs_fs_info *fs_info)
+{
+	struct btrfs_root *root = fs_info->uuid_root;
+	struct btrfs_key key;
+	struct btrfs_path *path;
+	int ret = 0;
+	struct extent_buffer *leaf;
+	int slot;
 	u32 item_size;
-	अचिन्हित दीर्घ offset;
+	unsigned long offset;
 
 	path = btrfs_alloc_path();
-	अगर (!path) अणु
+	if (!path) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	key.objectid = 0;
 	key.type = 0;
 	key.offset = 0;
 
 again_search_slot:
-	ret = btrfs_search_क्रमward(root, &key, path, BTRFS_OLDEST_GENERATION);
-	अगर (ret) अणु
-		अगर (ret > 0)
+	ret = btrfs_search_forward(root, &key, path, BTRFS_OLDEST_GENERATION);
+	if (ret) {
+		if (ret > 0)
 			ret = 0;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	जबतक (1) अणु
-		अगर (btrfs_fs_closing(fs_info)) अणु
+	while (1) {
+		if (btrfs_fs_closing(fs_info)) {
 			ret = -EINTR;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		cond_resched();
 		leaf = path->nodes[0];
 		slot = path->slots[0];
 		btrfs_item_key_to_cpu(leaf, &key, slot);
 
-		अगर (key.type != BTRFS_UUID_KEY_SUBVOL &&
+		if (key.type != BTRFS_UUID_KEY_SUBVOL &&
 		    key.type != BTRFS_UUID_KEY_RECEIVED_SUBVOL)
-			जाओ skip;
+			goto skip;
 
 		offset = btrfs_item_ptr_offset(leaf, slot);
 		item_size = btrfs_item_size_nr(leaf, slot);
-		अगर (!IS_ALIGNED(item_size, माप(u64))) अणु
+		if (!IS_ALIGNED(item_size, sizeof(u64))) {
 			btrfs_warn(fs_info,
 				   "uuid item with illegal size %lu!",
-				   (अचिन्हित दीर्घ)item_size);
-			जाओ skip;
-		पूर्ण
-		जबतक (item_size) अणु
+				   (unsigned long)item_size);
+			goto skip;
+		}
+		while (item_size) {
 			u8 uuid[BTRFS_UUID_SIZE];
 			__le64 subid_le;
 			u64 subid_cpu;
 
 			put_unaligned_le64(key.objectid, uuid);
-			put_unaligned_le64(key.offset, uuid + माप(u64));
-			पढ़ो_extent_buffer(leaf, &subid_le, offset,
-					   माप(subid_le));
+			put_unaligned_le64(key.offset, uuid + sizeof(u64));
+			read_extent_buffer(leaf, &subid_le, offset,
+					   sizeof(subid_le));
 			subid_cpu = le64_to_cpu(subid_le);
 			ret = btrfs_check_uuid_tree_entry(fs_info, uuid,
 							  key.type, subid_cpu);
-			अगर (ret < 0)
-				जाओ out;
-			अगर (ret > 0) अणु
+			if (ret < 0)
+				goto out;
+			if (ret > 0) {
 				btrfs_release_path(path);
 				ret = btrfs_uuid_iter_rem(root, uuid, key.type,
 							  subid_cpu);
-				अगर (ret == 0) अणु
+				if (ret == 0) {
 					/*
 					 * this might look inefficient, but the
-					 * justअगरication is that it is an
-					 * exception that check_func वापसs 1,
-					 * and that in the regular हाल only one
+					 * justification is that it is an
+					 * exception that check_func returns 1,
+					 * and that in the regular case only one
 					 * entry per UUID exists.
 					 */
-					जाओ again_search_slot;
-				पूर्ण
-				अगर (ret < 0 && ret != -ENOENT)
-					जाओ out;
+					goto again_search_slot;
+				}
+				if (ret < 0 && ret != -ENOENT)
+					goto out;
 				key.offset++;
-				जाओ again_search_slot;
-			पूर्ण
-			item_size -= माप(subid_le);
-			offset += माप(subid_le);
-		पूर्ण
+				goto again_search_slot;
+			}
+			item_size -= sizeof(subid_le);
+			offset += sizeof(subid_le);
+		}
 
 skip:
 		ret = btrfs_next_item(root, path);
-		अगर (ret == 0)
-			जारी;
-		अन्यथा अगर (ret > 0)
+		if (ret == 0)
+			continue;
+		else if (ret > 0)
 			ret = 0;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 out:
-	btrfs_मुक्त_path(path);
-	वापस ret;
-पूर्ण
+	btrfs_free_path(path);
+	return ret;
+}

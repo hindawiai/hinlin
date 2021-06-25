@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  *  BSG helper library
  *
@@ -7,68 +6,68 @@
  *  Copyright (C) 2011   Red Hat, Inc.  All rights reserved.
  *  Copyright (C) 2011   Mike Christie
  */
-#अगर_अघोषित _BLK_BSG_
-#घोषणा _BLK_BSG_
+#ifndef _BLK_BSG_
+#define _BLK_BSG_
 
-#समावेश <linux/blkdev.h>
-#समावेश <scsi/scsi_request.h>
+#include <linux/blkdev.h>
+#include <scsi/scsi_request.h>
 
-काष्ठा request;
-काष्ठा device;
-काष्ठा scatterlist;
-काष्ठा request_queue;
+struct request;
+struct device;
+struct scatterlist;
+struct request_queue;
 
-प्रकार पूर्णांक (bsg_job_fn) (काष्ठा bsg_job *);
-प्रकार क्रमागत blk_eh_समयr_वापस (bsg_समयout_fn)(काष्ठा request *);
+typedef int (bsg_job_fn) (struct bsg_job *);
+typedef enum blk_eh_timer_return (bsg_timeout_fn)(struct request *);
 
-काष्ठा bsg_buffer अणु
-	अचिन्हित पूर्णांक payload_len;
-	पूर्णांक sg_cnt;
-	काष्ठा scatterlist *sg_list;
-पूर्ण;
+struct bsg_buffer {
+	unsigned int payload_len;
+	int sg_cnt;
+	struct scatterlist *sg_list;
+};
 
-काष्ठा bsg_job अणु
-	काष्ठा device *dev;
+struct bsg_job {
+	struct device *dev;
 
-	काष्ठा kref kref;
+	struct kref kref;
 
-	अचिन्हित पूर्णांक समयout;
+	unsigned int timeout;
 
-	/* Transport/driver specअगरic request/reply काष्ठाs */
-	व्योम *request;
-	व्योम *reply;
+	/* Transport/driver specific request/reply structs */
+	void *request;
+	void *reply;
 
-	अचिन्हित पूर्णांक request_len;
-	अचिन्हित पूर्णांक reply_len;
+	unsigned int request_len;
+	unsigned int reply_len;
 	/*
-	 * On entry : reply_len indicates the buffer size allocated क्रम
+	 * On entry : reply_len indicates the buffer size allocated for
 	 * the reply.
 	 *
 	 * Upon completion : the message handler must set reply_len
-	 *  to indicates the size of the reply to be वापसed to the
+	 *  to indicates the size of the reply to be returned to the
 	 *  caller.
 	 */
 
-	/* DMA payloads क्रम the request/response */
-	काष्ठा bsg_buffer request_payload;
-	काष्ठा bsg_buffer reply_payload;
+	/* DMA payloads for the request/response */
+	struct bsg_buffer request_payload;
+	struct bsg_buffer reply_payload;
 
-	पूर्णांक result;
-	अचिन्हित पूर्णांक reply_payload_rcv_len;
+	int result;
+	unsigned int reply_payload_rcv_len;
 
 	/* BIDI support */
-	काष्ठा request *bidi_rq;
-	काष्ठा bio *bidi_bio;
+	struct request *bidi_rq;
+	struct bio *bidi_bio;
 
-	व्योम *dd_data;		/* Used क्रम driver-specअगरic storage */
-पूर्ण;
+	void *dd_data;		/* Used for driver-specific storage */
+};
 
-व्योम bsg_job_करोne(काष्ठा bsg_job *job, पूर्णांक result,
-		  अचिन्हित पूर्णांक reply_payload_rcv_len);
-काष्ठा request_queue *bsg_setup_queue(काष्ठा device *dev, स्थिर अक्षर *name,
-		bsg_job_fn *job_fn, bsg_समयout_fn *समयout, पूर्णांक dd_job_size);
-व्योम bsg_हटाओ_queue(काष्ठा request_queue *q);
-व्योम bsg_job_put(काष्ठा bsg_job *job);
-पूर्णांक __must_check bsg_job_get(काष्ठा bsg_job *job);
+void bsg_job_done(struct bsg_job *job, int result,
+		  unsigned int reply_payload_rcv_len);
+struct request_queue *bsg_setup_queue(struct device *dev, const char *name,
+		bsg_job_fn *job_fn, bsg_timeout_fn *timeout, int dd_job_size);
+void bsg_remove_queue(struct request_queue *q);
+void bsg_job_put(struct bsg_job *job);
+int __must_check bsg_job_get(struct bsg_job *job);
 
-#पूर्ण_अगर
+#endif

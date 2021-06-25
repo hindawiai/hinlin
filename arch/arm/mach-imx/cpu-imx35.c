@@ -1,47 +1,46 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * MX35 CPU type detection
  *
  * Copyright (c) 2009 Daniel Mack <daniel@caiaq.de>
  */
-#समावेश <linux/module.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/पन.स>
+#include <linux/module.h>
+#include <linux/of_address.h>
+#include <linux/io.h>
 
-#समावेश "hardware.h"
-#समावेश "iim.h"
+#include "hardware.h"
+#include "iim.h"
 
-अटल पूर्णांक mx35_cpu_rev = -1;
+static int mx35_cpu_rev = -1;
 
-अटल पूर्णांक mx35_पढ़ो_cpu_rev(व्योम)
-अणु
-	व्योम __iomem *iim_base;
-	काष्ठा device_node *np;
+static int mx35_read_cpu_rev(void)
+{
+	void __iomem *iim_base;
+	struct device_node *np;
 	u32 rev;
 
-	np = of_find_compatible_node(शून्य, शून्य, "fsl,imx35-iim");
+	np = of_find_compatible_node(NULL, NULL, "fsl,imx35-iim");
 	iim_base = of_iomap(np, 0);
 	BUG_ON(!iim_base);
 
-	rev = imx_पढ़ोl(iim_base + MXC_IIMSREV);
-	चयन (rev) अणु
-	हाल 0x00:
-		वापस IMX_CHIP_REVISION_1_0;
-	हाल 0x10:
-		वापस IMX_CHIP_REVISION_2_0;
-	हाल 0x11:
-		वापस IMX_CHIP_REVISION_2_1;
-	शेष:
-		वापस IMX_CHIP_REVISION_UNKNOWN;
-	पूर्ण
-पूर्ण
+	rev = imx_readl(iim_base + MXC_IIMSREV);
+	switch (rev) {
+	case 0x00:
+		return IMX_CHIP_REVISION_1_0;
+	case 0x10:
+		return IMX_CHIP_REVISION_2_0;
+	case 0x11:
+		return IMX_CHIP_REVISION_2_1;
+	default:
+		return IMX_CHIP_REVISION_UNKNOWN;
+	}
+}
 
-पूर्णांक mx35_revision(व्योम)
-अणु
-	अगर (mx35_cpu_rev == -1)
-		mx35_cpu_rev = mx35_पढ़ो_cpu_rev();
+int mx35_revision(void)
+{
+	if (mx35_cpu_rev == -1)
+		mx35_cpu_rev = mx35_read_cpu_rev();
 
-	वापस mx35_cpu_rev;
-पूर्ण
+	return mx35_cpu_rev;
+}
 EXPORT_SYMBOL(mx35_revision);

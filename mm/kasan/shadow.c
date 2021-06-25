@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * This file contains KASAN runसमय code that manages shaकरोw memory क्रम
+ * This file contains KASAN runtime code that manages shadow memory for
  * generic and software tag-based KASAN modes.
  *
  * Copyright (c) 2014 Samsung Electronics Co., Ltd.
@@ -11,518 +10,518 @@
  *        Andrey Konovalov <andreyknvl@gmail.com>
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/kasan.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/kfence.h>
-#समावेश <linux/kmemleak.h>
-#समावेश <linux/memory.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/types.h>
-#समावेश <linux/vदो_स्मृति.h>
+#include <linux/init.h>
+#include <linux/kasan.h>
+#include <linux/kernel.h>
+#include <linux/kfence.h>
+#include <linux/kmemleak.h>
+#include <linux/memory.h>
+#include <linux/mm.h>
+#include <linux/string.h>
+#include <linux/types.h>
+#include <linux/vmalloc.h>
 
-#समावेश <यंत्र/cacheflush.h>
-#समावेश <यंत्र/tlbflush.h>
+#include <asm/cacheflush.h>
+#include <asm/tlbflush.h>
 
-#समावेश "kasan.h"
+#include "kasan.h"
 
-bool __kasan_check_पढ़ो(स्थिर अस्थिर व्योम *p, अचिन्हित पूर्णांक size)
-अणु
-	वापस kasan_check_range((अचिन्हित दीर्घ)p, size, false, _RET_IP_);
-पूर्ण
-EXPORT_SYMBOL(__kasan_check_पढ़ो);
+bool __kasan_check_read(const volatile void *p, unsigned int size)
+{
+	return kasan_check_range((unsigned long)p, size, false, _RET_IP_);
+}
+EXPORT_SYMBOL(__kasan_check_read);
 
-bool __kasan_check_ग_लिखो(स्थिर अस्थिर व्योम *p, अचिन्हित पूर्णांक size)
-अणु
-	वापस kasan_check_range((अचिन्हित दीर्घ)p, size, true, _RET_IP_);
-पूर्ण
-EXPORT_SYMBOL(__kasan_check_ग_लिखो);
+bool __kasan_check_write(const volatile void *p, unsigned int size)
+{
+	return kasan_check_range((unsigned long)p, size, true, _RET_IP_);
+}
+EXPORT_SYMBOL(__kasan_check_write);
 
-#अघोषित स_रखो
-व्योम *स_रखो(व्योम *addr, पूर्णांक c, माप_प्रकार len)
-अणु
-	अगर (!kasan_check_range((अचिन्हित दीर्घ)addr, len, true, _RET_IP_))
-		वापस शून्य;
+#undef memset
+void *memset(void *addr, int c, size_t len)
+{
+	if (!kasan_check_range((unsigned long)addr, len, true, _RET_IP_))
+		return NULL;
 
-	वापस __स_रखो(addr, c, len);
-पूर्ण
+	return __memset(addr, c, len);
+}
 
-#अगर_घोषित __HAVE_ARCH_MEMMOVE
-#अघोषित स_हटाओ
-व्योम *स_हटाओ(व्योम *dest, स्थिर व्योम *src, माप_प्रकार len)
-अणु
-	अगर (!kasan_check_range((अचिन्हित दीर्घ)src, len, false, _RET_IP_) ||
-	    !kasan_check_range((अचिन्हित दीर्घ)dest, len, true, _RET_IP_))
-		वापस शून्य;
+#ifdef __HAVE_ARCH_MEMMOVE
+#undef memmove
+void *memmove(void *dest, const void *src, size_t len)
+{
+	if (!kasan_check_range((unsigned long)src, len, false, _RET_IP_) ||
+	    !kasan_check_range((unsigned long)dest, len, true, _RET_IP_))
+		return NULL;
 
-	वापस __स_हटाओ(dest, src, len);
-पूर्ण
-#पूर्ण_अगर
+	return __memmove(dest, src, len);
+}
+#endif
 
-#अघोषित स_नकल
-व्योम *स_नकल(व्योम *dest, स्थिर व्योम *src, माप_प्रकार len)
-अणु
-	अगर (!kasan_check_range((अचिन्हित दीर्घ)src, len, false, _RET_IP_) ||
-	    !kasan_check_range((अचिन्हित दीर्घ)dest, len, true, _RET_IP_))
-		वापस शून्य;
+#undef memcpy
+void *memcpy(void *dest, const void *src, size_t len)
+{
+	if (!kasan_check_range((unsigned long)src, len, false, _RET_IP_) ||
+	    !kasan_check_range((unsigned long)dest, len, true, _RET_IP_))
+		return NULL;
 
-	वापस __स_नकल(dest, src, len);
-पूर्ण
+	return __memcpy(dest, src, len);
+}
 
-व्योम kasan_poison(स्थिर व्योम *addr, माप_प्रकार size, u8 value, bool init)
-अणु
-	व्योम *shaकरोw_start, *shaकरोw_end;
+void kasan_poison(const void *addr, size_t size, u8 value, bool init)
+{
+	void *shadow_start, *shadow_end;
 
 	/*
-	 * Perक्रमm shaकरोw offset calculation based on untagged address, as
+	 * Perform shadow offset calculation based on untagged address, as
 	 * some of the callers (e.g. kasan_poison_object_data) pass tagged
 	 * addresses to this function.
 	 */
 	addr = kasan_reset_tag(addr);
 
-	/* Skip KFENCE memory अगर called explicitly outside of sl*b. */
-	अगर (is_kfence_address(addr))
-		वापस;
+	/* Skip KFENCE memory if called explicitly outside of sl*b. */
+	if (is_kfence_address(addr))
+		return;
 
-	अगर (WARN_ON((अचिन्हित दीर्घ)addr & KASAN_GRANULE_MASK))
-		वापस;
-	अगर (WARN_ON(size & KASAN_GRANULE_MASK))
-		वापस;
+	if (WARN_ON((unsigned long)addr & KASAN_GRANULE_MASK))
+		return;
+	if (WARN_ON(size & KASAN_GRANULE_MASK))
+		return;
 
-	shaकरोw_start = kasan_mem_to_shaकरोw(addr);
-	shaकरोw_end = kasan_mem_to_shaकरोw(addr + size);
+	shadow_start = kasan_mem_to_shadow(addr);
+	shadow_end = kasan_mem_to_shadow(addr + size);
 
-	__स_रखो(shaकरोw_start, value, shaकरोw_end - shaकरोw_start);
-पूर्ण
+	__memset(shadow_start, value, shadow_end - shadow_start);
+}
 EXPORT_SYMBOL(kasan_poison);
 
-#अगर_घोषित CONFIG_KASAN_GENERIC
-व्योम kasan_poison_last_granule(स्थिर व्योम *addr, माप_प्रकार size)
-अणु
-	अगर (size & KASAN_GRANULE_MASK) अणु
-		u8 *shaकरोw = (u8 *)kasan_mem_to_shaकरोw(addr + size);
-		*shaकरोw = size & KASAN_GRANULE_MASK;
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_KASAN_GENERIC
+void kasan_poison_last_granule(const void *addr, size_t size)
+{
+	if (size & KASAN_GRANULE_MASK) {
+		u8 *shadow = (u8 *)kasan_mem_to_shadow(addr + size);
+		*shadow = size & KASAN_GRANULE_MASK;
+	}
+}
+#endif
 
-व्योम kasan_unpoison(स्थिर व्योम *addr, माप_प्रकार size, bool init)
-अणु
+void kasan_unpoison(const void *addr, size_t size, bool init)
+{
 	u8 tag = get_tag(addr);
 
 	/*
-	 * Perक्रमm shaकरोw offset calculation based on untagged address, as
+	 * Perform shadow offset calculation based on untagged address, as
 	 * some of the callers (e.g. kasan_unpoison_object_data) pass tagged
 	 * addresses to this function.
 	 */
 	addr = kasan_reset_tag(addr);
 
 	/*
-	 * Skip KFENCE memory अगर called explicitly outside of sl*b. Also note
+	 * Skip KFENCE memory if called explicitly outside of sl*b. Also note
 	 * that calls to ksize(), where size is not a multiple of machine-word
 	 * size, would otherwise poison the invalid portion of the word.
 	 */
-	अगर (is_kfence_address(addr))
-		वापस;
+	if (is_kfence_address(addr))
+		return;
 
-	अगर (WARN_ON((अचिन्हित दीर्घ)addr & KASAN_GRANULE_MASK))
-		वापस;
+	if (WARN_ON((unsigned long)addr & KASAN_GRANULE_MASK))
+		return;
 
 	/* Unpoison all granules that cover the object. */
 	kasan_poison(addr, round_up(size, KASAN_GRANULE_SIZE), tag, false);
 
-	/* Partially poison the last granule क्रम the generic mode. */
-	अगर (IS_ENABLED(CONFIG_KASAN_GENERIC))
+	/* Partially poison the last granule for the generic mode. */
+	if (IS_ENABLED(CONFIG_KASAN_GENERIC))
 		kasan_poison_last_granule(addr, size);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_MEMORY_HOTPLUG
-अटल bool shaकरोw_mapped(अचिन्हित दीर्घ addr)
-अणु
+#ifdef CONFIG_MEMORY_HOTPLUG
+static bool shadow_mapped(unsigned long addr)
+{
 	pgd_t *pgd = pgd_offset_k(addr);
 	p4d_t *p4d;
 	pud_t *pud;
 	pmd_t *pmd;
 	pte_t *pte;
 
-	अगर (pgd_none(*pgd))
-		वापस false;
+	if (pgd_none(*pgd))
+		return false;
 	p4d = p4d_offset(pgd, addr);
-	अगर (p4d_none(*p4d))
-		वापस false;
+	if (p4d_none(*p4d))
+		return false;
 	pud = pud_offset(p4d, addr);
-	अगर (pud_none(*pud))
-		वापस false;
+	if (pud_none(*pud))
+		return false;
 
 	/*
 	 * We can't use pud_large() or pud_huge(), the first one is
-	 * arch-specअगरic, the last one depends on HUGETLB_PAGE.  So let's abuse
-	 * pud_bad(), अगर pud is bad then it's bad because it's huge.
+	 * arch-specific, the last one depends on HUGETLB_PAGE.  So let's abuse
+	 * pud_bad(), if pud is bad then it's bad because it's huge.
 	 */
-	अगर (pud_bad(*pud))
-		वापस true;
+	if (pud_bad(*pud))
+		return true;
 	pmd = pmd_offset(pud, addr);
-	अगर (pmd_none(*pmd))
-		वापस false;
+	if (pmd_none(*pmd))
+		return false;
 
-	अगर (pmd_bad(*pmd))
-		वापस true;
+	if (pmd_bad(*pmd))
+		return true;
 	pte = pte_offset_kernel(pmd, addr);
-	वापस !pte_none(*pte);
-पूर्ण
+	return !pte_none(*pte);
+}
 
-अटल पूर्णांक __meminit kasan_mem_notअगरier(काष्ठा notअगरier_block *nb,
-			अचिन्हित दीर्घ action, व्योम *data)
-अणु
-	काष्ठा memory_notअगरy *mem_data = data;
-	अचिन्हित दीर्घ nr_shaकरोw_pages, start_kaddr, shaकरोw_start;
-	अचिन्हित दीर्घ shaकरोw_end, shaकरोw_size;
+static int __meminit kasan_mem_notifier(struct notifier_block *nb,
+			unsigned long action, void *data)
+{
+	struct memory_notify *mem_data = data;
+	unsigned long nr_shadow_pages, start_kaddr, shadow_start;
+	unsigned long shadow_end, shadow_size;
 
-	nr_shaकरोw_pages = mem_data->nr_pages >> KASAN_SHADOW_SCALE_SHIFT;
-	start_kaddr = (अचिन्हित दीर्घ)pfn_to_kaddr(mem_data->start_pfn);
-	shaकरोw_start = (अचिन्हित दीर्घ)kasan_mem_to_shaकरोw((व्योम *)start_kaddr);
-	shaकरोw_size = nr_shaकरोw_pages << PAGE_SHIFT;
-	shaकरोw_end = shaकरोw_start + shaकरोw_size;
+	nr_shadow_pages = mem_data->nr_pages >> KASAN_SHADOW_SCALE_SHIFT;
+	start_kaddr = (unsigned long)pfn_to_kaddr(mem_data->start_pfn);
+	shadow_start = (unsigned long)kasan_mem_to_shadow((void *)start_kaddr);
+	shadow_size = nr_shadow_pages << PAGE_SHIFT;
+	shadow_end = shadow_start + shadow_size;
 
-	अगर (WARN_ON(mem_data->nr_pages % KASAN_GRANULE_SIZE) ||
+	if (WARN_ON(mem_data->nr_pages % KASAN_GRANULE_SIZE) ||
 		WARN_ON(start_kaddr % KASAN_MEMORY_PER_SHADOW_PAGE))
-		वापस NOTIFY_BAD;
+		return NOTIFY_BAD;
 
-	चयन (action) अणु
-	हाल MEM_GOING_ONLINE: अणु
-		व्योम *ret;
+	switch (action) {
+	case MEM_GOING_ONLINE: {
+		void *ret;
 
 		/*
-		 * If shaकरोw is mapped alपढ़ोy than it must have been mapped
-		 * during the boot. This could happen अगर we onlining previously
+		 * If shadow is mapped already than it must have been mapped
+		 * during the boot. This could happen if we onlining previously
 		 * offlined memory.
 		 */
-		अगर (shaकरोw_mapped(shaकरोw_start))
-			वापस NOTIFY_OK;
+		if (shadow_mapped(shadow_start))
+			return NOTIFY_OK;
 
-		ret = __vदो_स्मृति_node_range(shaकरोw_size, PAGE_SIZE, shaकरोw_start,
-					shaकरोw_end, GFP_KERNEL,
+		ret = __vmalloc_node_range(shadow_size, PAGE_SIZE, shadow_start,
+					shadow_end, GFP_KERNEL,
 					PAGE_KERNEL, VM_NO_GUARD,
 					pfn_to_nid(mem_data->start_pfn),
-					__builtin_वापस_address(0));
-		अगर (!ret)
-			वापस NOTIFY_BAD;
+					__builtin_return_address(0));
+		if (!ret)
+			return NOTIFY_BAD;
 
 		kmemleak_ignore(ret);
-		वापस NOTIFY_OK;
-	पूर्ण
-	हाल MEM_CANCEL_ONLINE:
-	हाल MEM_OFFLINE: अणु
-		काष्ठा vm_काष्ठा *vm;
+		return NOTIFY_OK;
+	}
+	case MEM_CANCEL_ONLINE:
+	case MEM_OFFLINE: {
+		struct vm_struct *vm;
 
 		/*
-		 * shaकरोw_start was either mapped during boot by kasan_init()
-		 * or during memory online by __vदो_स्मृति_node_range().
-		 * In the latter हाल we can use vमुक्त() to मुक्त shaकरोw.
-		 * Non-शून्य result of the find_vm_area() will tell us अगर
-		 * that was the second हाल.
+		 * shadow_start was either mapped during boot by kasan_init()
+		 * or during memory online by __vmalloc_node_range().
+		 * In the latter case we can use vfree() to free shadow.
+		 * Non-NULL result of the find_vm_area() will tell us if
+		 * that was the second case.
 		 *
-		 * Currently it's not possible to मुक्त shaकरोw mapped
+		 * Currently it's not possible to free shadow mapped
 		 * during boot by kasan_init(). It's because the code
-		 * to करो that hasn't been written yet. So we'll just
+		 * to do that hasn't been written yet. So we'll just
 		 * leak the memory.
 		 */
-		vm = find_vm_area((व्योम *)shaकरोw_start);
-		अगर (vm)
-			vमुक्त((व्योम *)shaकरोw_start);
-	पूर्ण
-	पूर्ण
+		vm = find_vm_area((void *)shadow_start);
+		if (vm)
+			vfree((void *)shadow_start);
+	}
+	}
 
-	वापस NOTIFY_OK;
-पूर्ण
+	return NOTIFY_OK;
+}
 
-अटल पूर्णांक __init kasan_memhotplug_init(व्योम)
-अणु
-	hotplug_memory_notअगरier(kasan_mem_notअगरier, 0);
+static int __init kasan_memhotplug_init(void)
+{
+	hotplug_memory_notifier(kasan_mem_notifier, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 core_initcall(kasan_memhotplug_init);
-#पूर्ण_अगर
+#endif
 
-#अगर_घोषित CONFIG_KASAN_VMALLOC
+#ifdef CONFIG_KASAN_VMALLOC
 
-अटल पूर्णांक kasan_populate_vदो_स्मृति_pte(pte_t *ptep, अचिन्हित दीर्घ addr,
-				      व्योम *unused)
-अणु
-	अचिन्हित दीर्घ page;
+static int kasan_populate_vmalloc_pte(pte_t *ptep, unsigned long addr,
+				      void *unused)
+{
+	unsigned long page;
 	pte_t pte;
 
-	अगर (likely(!pte_none(*ptep)))
-		वापस 0;
+	if (likely(!pte_none(*ptep)))
+		return 0;
 
-	page = __get_मुक्त_page(GFP_KERNEL);
-	अगर (!page)
-		वापस -ENOMEM;
+	page = __get_free_page(GFP_KERNEL);
+	if (!page)
+		return -ENOMEM;
 
-	स_रखो((व्योम *)page, KASAN_VMALLOC_INVALID, PAGE_SIZE);
+	memset((void *)page, KASAN_VMALLOC_INVALID, PAGE_SIZE);
 	pte = pfn_pte(PFN_DOWN(__pa(page)), PAGE_KERNEL);
 
 	spin_lock(&init_mm.page_table_lock);
-	अगर (likely(pte_none(*ptep))) अणु
+	if (likely(pte_none(*ptep))) {
 		set_pte_at(&init_mm, addr, ptep, pte);
 		page = 0;
-	पूर्ण
+	}
 	spin_unlock(&init_mm.page_table_lock);
-	अगर (page)
-		मुक्त_page(page);
-	वापस 0;
-पूर्ण
+	if (page)
+		free_page(page);
+	return 0;
+}
 
-पूर्णांक kasan_populate_vदो_स्मृति(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ size)
-अणु
-	अचिन्हित दीर्घ shaकरोw_start, shaकरोw_end;
-	पूर्णांक ret;
+int kasan_populate_vmalloc(unsigned long addr, unsigned long size)
+{
+	unsigned long shadow_start, shadow_end;
+	int ret;
 
-	अगर (!is_vदो_स्मृति_or_module_addr((व्योम *)addr))
-		वापस 0;
+	if (!is_vmalloc_or_module_addr((void *)addr))
+		return 0;
 
-	shaकरोw_start = (अचिन्हित दीर्घ)kasan_mem_to_shaकरोw((व्योम *)addr);
-	shaकरोw_start = ALIGN_DOWN(shaकरोw_start, PAGE_SIZE);
-	shaकरोw_end = (अचिन्हित दीर्घ)kasan_mem_to_shaकरोw((व्योम *)addr + size);
-	shaकरोw_end = ALIGN(shaकरोw_end, PAGE_SIZE);
+	shadow_start = (unsigned long)kasan_mem_to_shadow((void *)addr);
+	shadow_start = ALIGN_DOWN(shadow_start, PAGE_SIZE);
+	shadow_end = (unsigned long)kasan_mem_to_shadow((void *)addr + size);
+	shadow_end = ALIGN(shadow_end, PAGE_SIZE);
 
-	ret = apply_to_page_range(&init_mm, shaकरोw_start,
-				  shaकरोw_end - shaकरोw_start,
-				  kasan_populate_vदो_स्मृति_pte, शून्य);
-	अगर (ret)
-		वापस ret;
+	ret = apply_to_page_range(&init_mm, shadow_start,
+				  shadow_end - shadow_start,
+				  kasan_populate_vmalloc_pte, NULL);
+	if (ret)
+		return ret;
 
-	flush_cache_vmap(shaकरोw_start, shaकरोw_end);
+	flush_cache_vmap(shadow_start, shadow_end);
 
 	/*
-	 * We need to be careful about पूर्णांकer-cpu effects here. Consider:
+	 * We need to be careful about inter-cpu effects here. Consider:
 	 *
 	 *   CPU#0				  CPU#1
-	 * WRITE_ONCE(p, vदो_स्मृति(100));		जबतक (x = READ_ONCE(p)) ;
+	 * WRITE_ONCE(p, vmalloc(100));		while (x = READ_ONCE(p)) ;
 	 *					p[99] = 1;
 	 *
 	 * With compiler instrumentation, that ends up looking like this:
 	 *
 	 *   CPU#0				  CPU#1
-	 * // vदो_स्मृति() allocates memory
+	 * // vmalloc() allocates memory
 	 * // let a = area->addr
-	 * // we reach kasan_populate_vदो_स्मृति
+	 * // we reach kasan_populate_vmalloc
 	 * // and call kasan_unpoison:
-	 * STORE shaकरोw(a), unpoison_val
+	 * STORE shadow(a), unpoison_val
 	 * ...
-	 * STORE shaकरोw(a+99), unpoison_val	x = LOAD p
-	 * // rest of vदो_स्मृति process		<data dependency>
-	 * STORE p, a				LOAD shaकरोw(x+99)
+	 * STORE shadow(a+99), unpoison_val	x = LOAD p
+	 * // rest of vmalloc process		<data dependency>
+	 * STORE p, a				LOAD shadow(x+99)
 	 *
-	 * If there is no barrier between the end of unpoisoning the shaकरोw
+	 * If there is no barrier between the end of unpoisoning the shadow
 	 * and the store of the result to p, the stores could be committed
-	 * in a dअगरferent order by CPU#0, and CPU#1 could erroneously observe
-	 * poison in the shaकरोw.
+	 * in a different order by CPU#0, and CPU#1 could erroneously observe
+	 * poison in the shadow.
 	 *
 	 * We need some sort of barrier between the stores.
 	 *
-	 * In the vदो_स्मृति() हाल, this is provided by a smp_wmb() in
+	 * In the vmalloc() case, this is provided by a smp_wmb() in
 	 * clear_vm_uninitialized_flag(). In the per-cpu allocator and in
-	 * get_vm_area() and मित्रs, the caller माला_लो shaकरोw allocated but
-	 * करोesn't have any pages mapped पूर्णांकo the भव address space that
+	 * get_vm_area() and friends, the caller gets shadow allocated but
+	 * doesn't have any pages mapped into the virtual address space that
 	 * has been reserved. Mapping those pages in will involve taking and
 	 * releasing a page-table lock, which will provide the barrier.
 	 */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Poison the shaकरोw क्रम a vदो_स्मृति region. Called as part of the
- * मुक्तing process at the समय the region is मुक्तd.
+ * Poison the shadow for a vmalloc region. Called as part of the
+ * freeing process at the time the region is freed.
  */
-व्योम kasan_poison_vदो_स्मृति(स्थिर व्योम *start, अचिन्हित दीर्घ size)
-अणु
-	अगर (!is_vदो_स्मृति_or_module_addr(start))
-		वापस;
+void kasan_poison_vmalloc(const void *start, unsigned long size)
+{
+	if (!is_vmalloc_or_module_addr(start))
+		return;
 
 	size = round_up(size, KASAN_GRANULE_SIZE);
 	kasan_poison(start, size, KASAN_VMALLOC_INVALID, false);
-पूर्ण
+}
 
-व्योम kasan_unpoison_vदो_स्मृति(स्थिर व्योम *start, अचिन्हित दीर्घ size)
-अणु
-	अगर (!is_vदो_स्मृति_or_module_addr(start))
-		वापस;
+void kasan_unpoison_vmalloc(const void *start, unsigned long size)
+{
+	if (!is_vmalloc_or_module_addr(start))
+		return;
 
 	kasan_unpoison(start, size, false);
-पूर्ण
+}
 
-अटल पूर्णांक kasan_depopulate_vदो_स्मृति_pte(pte_t *ptep, अचिन्हित दीर्घ addr,
-					व्योम *unused)
-अणु
-	अचिन्हित दीर्घ page;
+static int kasan_depopulate_vmalloc_pte(pte_t *ptep, unsigned long addr,
+					void *unused)
+{
+	unsigned long page;
 
-	page = (अचिन्हित दीर्घ)__va(pte_pfn(*ptep) << PAGE_SHIFT);
+	page = (unsigned long)__va(pte_pfn(*ptep) << PAGE_SHIFT);
 
 	spin_lock(&init_mm.page_table_lock);
 
-	अगर (likely(!pte_none(*ptep))) अणु
+	if (likely(!pte_none(*ptep))) {
 		pte_clear(&init_mm, addr, ptep);
-		मुक्त_page(page);
-	पूर्ण
+		free_page(page);
+	}
 	spin_unlock(&init_mm.page_table_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Release the backing क्रम the vदो_स्मृति region [start, end), which
- * lies within the मुक्त region [मुक्त_region_start, मुक्त_region_end).
+ * Release the backing for the vmalloc region [start, end), which
+ * lies within the free region [free_region_start, free_region_end).
  *
- * This can be run lazily, दीर्घ after the region was मुक्तd. It runs
- * under vmap_area_lock, so it's not safe to पूर्णांकeract with the vदो_स्मृति/vmap
- * infraकाष्ठाure.
+ * This can be run lazily, long after the region was freed. It runs
+ * under vmap_area_lock, so it's not safe to interact with the vmalloc/vmap
+ * infrastructure.
  *
- * How करोes this work?
+ * How does this work?
  * -------------------
  *
  * We have a region that is page aligned, labeled as A.
- * That might not map onto the shaकरोw in a way that is page-aligned:
+ * That might not map onto the shadow in a way that is page-aligned:
  *
  *                    start                     end
  *                    v                         v
- * |????????|????????|AAAAAAAA|AA....AA|AAAAAAAA|????????| < vदो_स्मृति
+ * |????????|????????|AAAAAAAA|AA....AA|AAAAAAAA|????????| < vmalloc
  *  -------- -------- --------          -------- --------
  *      |        |       |                 |        |
  *      |        |       |         /-------/        |
  *      \-------\|/------/         |/---------------/
  *              |||                ||
- *             |??AAAAAA|AAAAAAAA|AA??????|                < shaकरोw
+ *             |??AAAAAA|AAAAAAAA|AA??????|                < shadow
  *                 (1)      (2)      (3)
  *
- * First we align the start upwards and the end करोwnwards, so that the
- * shaकरोw of the region aligns with shaकरोw page boundaries. In the
- * example, this gives us the shaकरोw page (2). This is the shaकरोw entirely
+ * First we align the start upwards and the end downwards, so that the
+ * shadow of the region aligns with shadow page boundaries. In the
+ * example, this gives us the shadow page (2). This is the shadow entirely
  * covered by this allocation.
  *
- * Then we have the tricky bits. We want to know अगर we can मुक्त the
- * partially covered shaकरोw pages - (1) and (3) in the example. For this,
- * we are given the start and end of the मुक्त region that contains this
+ * Then we have the tricky bits. We want to know if we can free the
+ * partially covered shadow pages - (1) and (3) in the example. For this,
+ * we are given the start and end of the free region that contains this
  * allocation. Extending our previous example, we could have:
  *
- *  मुक्त_region_start                                    मुक्त_region_end
+ *  free_region_start                                    free_region_end
  *  |                 start                     end      |
  *  v                 v                         v        v
- * |FFFFFFFF|FFFFFFFF|AAAAAAAA|AA....AA|AAAAAAAA|FFFFFFFF| < vदो_स्मृति
+ * |FFFFFFFF|FFFFFFFF|AAAAAAAA|AA....AA|AAAAAAAA|FFFFFFFF| < vmalloc
  *  -------- -------- --------          -------- --------
  *      |        |       |                 |        |
  *      |        |       |         /-------/        |
  *      \-------\|/------/         |/---------------/
  *              |||                ||
- *             |FFAAAAAA|AAAAAAAA|AAF?????|                < shaकरोw
+ *             |FFAAAAAA|AAAAAAAA|AAF?????|                < shadow
  *                 (1)      (2)      (3)
  *
- * Once again, we align the start of the मुक्त region up, and the end of
- * the मुक्त region करोwn so that the shaकरोw is page aligned. So we can मुक्त
+ * Once again, we align the start of the free region up, and the end of
+ * the free region down so that the shadow is page aligned. So we can free
  * page (1) - we know no allocation currently uses anything in that page,
- * because all of it is in the vदो_स्मृति मुक्त region. But we cannot मुक्त
+ * because all of it is in the vmalloc free region. But we cannot free
  * page (3), because we can't be sure that the rest of it is unused.
  *
- * We only consider pages that contain part of the original region क्रम
- * मुक्तing: we करोn't try to free other pages from the free region or we'd
- * end up trying to मुक्त huge chunks of भव address space.
+ * We only consider pages that contain part of the original region for
+ * freeing: we don't try to free other pages from the free region or we'd
+ * end up trying to free huge chunks of virtual address space.
  *
  * Concurrency
  * -----------
  *
- * How करो we know that we're not मुक्तing a page that is simultaneously
- * being used क्रम a fresh allocation in kasan_populate_vदो_स्मृति(_pte)?
+ * How do we know that we're not freeing a page that is simultaneously
+ * being used for a fresh allocation in kasan_populate_vmalloc(_pte)?
  *
- * We _can_ have kasan_release_vदो_स्मृति and kasan_populate_vदो_स्मृति running
- * at the same समय. While we run under मुक्त_vmap_area_lock, the population
- * code करोes not.
+ * We _can_ have kasan_release_vmalloc and kasan_populate_vmalloc running
+ * at the same time. While we run under free_vmap_area_lock, the population
+ * code does not.
  *
- * मुक्त_vmap_area_lock instead operates to ensure that the larger range
- * [मुक्त_region_start, मुक्त_region_end) is safe: because __alloc_vmap_area and
- * the per-cpu region-finding algorithm both run under मुक्त_vmap_area_lock,
- * no space identअगरied as मुक्त will become used जबतक we are running. This
- * means that so दीर्घ as we are careful with alignment and only मुक्त shaकरोw
- * pages entirely covered by the मुक्त region, we will not run in to any
- * trouble - any simultaneous allocations will be क्रम disjoपूर्णांक regions.
+ * free_vmap_area_lock instead operates to ensure that the larger range
+ * [free_region_start, free_region_end) is safe: because __alloc_vmap_area and
+ * the per-cpu region-finding algorithm both run under free_vmap_area_lock,
+ * no space identified as free will become used while we are running. This
+ * means that so long as we are careful with alignment and only free shadow
+ * pages entirely covered by the free region, we will not run in to any
+ * trouble - any simultaneous allocations will be for disjoint regions.
  */
-व्योम kasan_release_vदो_स्मृति(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end,
-			   अचिन्हित दीर्घ मुक्त_region_start,
-			   अचिन्हित दीर्घ मुक्त_region_end)
-अणु
-	व्योम *shaकरोw_start, *shaकरोw_end;
-	अचिन्हित दीर्घ region_start, region_end;
-	अचिन्हित दीर्घ size;
+void kasan_release_vmalloc(unsigned long start, unsigned long end,
+			   unsigned long free_region_start,
+			   unsigned long free_region_end)
+{
+	void *shadow_start, *shadow_end;
+	unsigned long region_start, region_end;
+	unsigned long size;
 
 	region_start = ALIGN(start, KASAN_MEMORY_PER_SHADOW_PAGE);
 	region_end = ALIGN_DOWN(end, KASAN_MEMORY_PER_SHADOW_PAGE);
 
-	मुक्त_region_start = ALIGN(मुक्त_region_start, KASAN_MEMORY_PER_SHADOW_PAGE);
+	free_region_start = ALIGN(free_region_start, KASAN_MEMORY_PER_SHADOW_PAGE);
 
-	अगर (start != region_start &&
-	    मुक्त_region_start < region_start)
+	if (start != region_start &&
+	    free_region_start < region_start)
 		region_start -= KASAN_MEMORY_PER_SHADOW_PAGE;
 
-	मुक्त_region_end = ALIGN_DOWN(मुक्त_region_end, KASAN_MEMORY_PER_SHADOW_PAGE);
+	free_region_end = ALIGN_DOWN(free_region_end, KASAN_MEMORY_PER_SHADOW_PAGE);
 
-	अगर (end != region_end &&
-	    मुक्त_region_end > region_end)
+	if (end != region_end &&
+	    free_region_end > region_end)
 		region_end += KASAN_MEMORY_PER_SHADOW_PAGE;
 
-	shaकरोw_start = kasan_mem_to_shaकरोw((व्योम *)region_start);
-	shaकरोw_end = kasan_mem_to_shaकरोw((व्योम *)region_end);
+	shadow_start = kasan_mem_to_shadow((void *)region_start);
+	shadow_end = kasan_mem_to_shadow((void *)region_end);
 
-	अगर (shaकरोw_end > shaकरोw_start) अणु
-		size = shaकरोw_end - shaकरोw_start;
+	if (shadow_end > shadow_start) {
+		size = shadow_end - shadow_start;
 		apply_to_existing_page_range(&init_mm,
-					     (अचिन्हित दीर्घ)shaकरोw_start,
-					     size, kasan_depopulate_vदो_स्मृति_pte,
-					     शून्य);
-		flush_tlb_kernel_range((अचिन्हित दीर्घ)shaकरोw_start,
-				       (अचिन्हित दीर्घ)shaकरोw_end);
-	पूर्ण
-पूर्ण
+					     (unsigned long)shadow_start,
+					     size, kasan_depopulate_vmalloc_pte,
+					     NULL);
+		flush_tlb_kernel_range((unsigned long)shadow_start,
+				       (unsigned long)shadow_end);
+	}
+}
 
-#अन्यथा /* CONFIG_KASAN_VMALLOC */
+#else /* CONFIG_KASAN_VMALLOC */
 
-पूर्णांक kasan_module_alloc(व्योम *addr, माप_प्रकार size)
-अणु
-	व्योम *ret;
-	माप_प्रकार scaled_size;
-	माप_प्रकार shaकरोw_size;
-	अचिन्हित दीर्घ shaकरोw_start;
+int kasan_module_alloc(void *addr, size_t size)
+{
+	void *ret;
+	size_t scaled_size;
+	size_t shadow_size;
+	unsigned long shadow_start;
 
-	shaकरोw_start = (अचिन्हित दीर्घ)kasan_mem_to_shaकरोw(addr);
+	shadow_start = (unsigned long)kasan_mem_to_shadow(addr);
 	scaled_size = (size + KASAN_GRANULE_SIZE - 1) >>
 				KASAN_SHADOW_SCALE_SHIFT;
-	shaकरोw_size = round_up(scaled_size, PAGE_SIZE);
+	shadow_size = round_up(scaled_size, PAGE_SIZE);
 
-	अगर (WARN_ON(!PAGE_ALIGNED(shaकरोw_start)))
-		वापस -EINVAL;
+	if (WARN_ON(!PAGE_ALIGNED(shadow_start)))
+		return -EINVAL;
 
-	ret = __vदो_स्मृति_node_range(shaकरोw_size, 1, shaकरोw_start,
-			shaकरोw_start + shaकरोw_size,
+	ret = __vmalloc_node_range(shadow_size, 1, shadow_start,
+			shadow_start + shadow_size,
 			GFP_KERNEL,
 			PAGE_KERNEL, VM_NO_GUARD, NUMA_NO_NODE,
-			__builtin_वापस_address(0));
+			__builtin_return_address(0));
 
-	अगर (ret) अणु
-		__स_रखो(ret, KASAN_SHADOW_INIT, shaकरोw_size);
+	if (ret) {
+		__memset(ret, KASAN_SHADOW_INIT, shadow_size);
 		find_vm_area(addr)->flags |= VM_KASAN;
 		kmemleak_ignore(ret);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-व्योम kasan_मुक्त_shaकरोw(स्थिर काष्ठा vm_काष्ठा *vm)
-अणु
-	अगर (vm->flags & VM_KASAN)
-		vमुक्त(kasan_mem_to_shaकरोw(vm->addr));
-पूर्ण
+void kasan_free_shadow(const struct vm_struct *vm)
+{
+	if (vm->flags & VM_KASAN)
+		vfree(kasan_mem_to_shadow(vm->addr));
+}
 
-#पूर्ण_अगर
+#endif

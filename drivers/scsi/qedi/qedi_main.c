@@ -1,93 +1,92 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * QLogic iSCSI Offload Driver
  * Copyright (c) 2016 Cavium Inc.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/अगर_arp.h>
-#समावेश <scsi/iscsi_अगर.h>
-#समावेश <linux/inet.h>
-#समावेश <net/arp.h>
-#समावेश <linux/list.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/अगर_vlan.h>
-#समावेश <linux/cpu.h>
-#समावेश <linux/iscsi_boot_sysfs.h>
+#include <linux/module.h>
+#include <linux/pci.h>
+#include <linux/kernel.h>
+#include <linux/if_arp.h>
+#include <scsi/iscsi_if.h>
+#include <linux/inet.h>
+#include <net/arp.h>
+#include <linux/list.h>
+#include <linux/kthread.h>
+#include <linux/mm.h>
+#include <linux/if_vlan.h>
+#include <linux/cpu.h>
+#include <linux/iscsi_boot_sysfs.h>
 
-#समावेश <scsi/scsi_cmnd.h>
-#समावेश <scsi/scsi_device.h>
-#समावेश <scsi/scsi_eh.h>
-#समावेश <scsi/scsi_host.h>
-#समावेश <scsi/scsi.h>
+#include <scsi/scsi_cmnd.h>
+#include <scsi/scsi_device.h>
+#include <scsi/scsi_eh.h>
+#include <scsi/scsi_host.h>
+#include <scsi/scsi.h>
 
-#समावेश "qedi.h"
-#समावेश "qedi_gbl.h"
-#समावेश "qedi_iscsi.h"
+#include "qedi.h"
+#include "qedi_gbl.h"
+#include "qedi_iscsi.h"
 
-अटल uपूर्णांक qedi_qed_debug;
-module_param(qedi_qed_debug, uपूर्णांक, 0644);
+static uint qedi_qed_debug;
+module_param(qedi_qed_debug, uint, 0644);
 MODULE_PARM_DESC(qedi_qed_debug, " QED debug level 0 (default)");
 
-अटल uपूर्णांक qedi_fw_debug;
-module_param(qedi_fw_debug, uपूर्णांक, 0644);
+static uint qedi_fw_debug;
+module_param(qedi_fw_debug, uint, 0644);
 MODULE_PARM_DESC(qedi_fw_debug, " Firmware debug level 0(default) to 3");
 
-uपूर्णांक qedi_dbg_log = QEDI_LOG_WARN | QEDI_LOG_SCSI_TM;
-module_param(qedi_dbg_log, uपूर्णांक, 0644);
+uint qedi_dbg_log = QEDI_LOG_WARN | QEDI_LOG_SCSI_TM;
+module_param(qedi_dbg_log, uint, 0644);
 MODULE_PARM_DESC(qedi_dbg_log, " Default debug level");
 
-uपूर्णांक qedi_io_tracing;
-module_param(qedi_io_tracing, uपूर्णांक, 0644);
+uint qedi_io_tracing;
+module_param(qedi_io_tracing, uint, 0644);
 MODULE_PARM_DESC(qedi_io_tracing,
 		 " Enable logging of SCSI requests/completions into trace buffer. (default off).");
 
-अटल uपूर्णांक qedi_ll2_buf_size = 0x400;
-module_param(qedi_ll2_buf_size, uपूर्णांक, 0644);
+static uint qedi_ll2_buf_size = 0x400;
+module_param(qedi_ll2_buf_size, uint, 0644);
 MODULE_PARM_DESC(qedi_ll2_buf_size,
 		 "parameter to set ping packet size, default - 0x400, Jumbo packets - 0x2400.");
 
-अटल uपूर्णांक qedi_flags_override;
-module_param(qedi_flags_override, uपूर्णांक, 0644);
+static uint qedi_flags_override;
+module_param(qedi_flags_override, uint, 0644);
 MODULE_PARM_DESC(qedi_flags_override, "Disable/Enable MFW error flags bits action.");
 
-स्थिर काष्ठा qed_iscsi_ops *qedi_ops;
-अटल काष्ठा scsi_transport_ढाँचा *qedi_scsi_transport;
-अटल काष्ठा pci_driver qedi_pci_driver;
-अटल DEFINE_PER_CPU(काष्ठा qedi_percpu_s, qedi_percpu);
-अटल LIST_HEAD(qedi_udev_list);
+const struct qed_iscsi_ops *qedi_ops;
+static struct scsi_transport_template *qedi_scsi_transport;
+static struct pci_driver qedi_pci_driver;
+static DEFINE_PER_CPU(struct qedi_percpu_s, qedi_percpu);
+static LIST_HEAD(qedi_udev_list);
 /* Static function declaration */
-अटल पूर्णांक qedi_alloc_global_queues(काष्ठा qedi_ctx *qedi);
-अटल व्योम qedi_मुक्त_global_queues(काष्ठा qedi_ctx *qedi);
-अटल काष्ठा qedi_cmd *qedi_get_cmd_from_tid(काष्ठा qedi_ctx *qedi, u32 tid);
-अटल व्योम qedi_reset_uio_rings(काष्ठा qedi_uio_dev *udev);
-अटल व्योम qedi_ll2_मुक्त_skbs(काष्ठा qedi_ctx *qedi);
-अटल काष्ठा nvm_iscsi_block *qedi_get_nvram_block(काष्ठा qedi_ctx *qedi);
-अटल व्योम qedi_recovery_handler(काष्ठा work_काष्ठा *work);
-अटल व्योम qedi_schedule_hw_err_handler(व्योम *dev,
-					 क्रमागत qed_hw_err_type err_type);
+static int qedi_alloc_global_queues(struct qedi_ctx *qedi);
+static void qedi_free_global_queues(struct qedi_ctx *qedi);
+static struct qedi_cmd *qedi_get_cmd_from_tid(struct qedi_ctx *qedi, u32 tid);
+static void qedi_reset_uio_rings(struct qedi_uio_dev *udev);
+static void qedi_ll2_free_skbs(struct qedi_ctx *qedi);
+static struct nvm_iscsi_block *qedi_get_nvram_block(struct qedi_ctx *qedi);
+static void qedi_recovery_handler(struct work_struct *work);
+static void qedi_schedule_hw_err_handler(void *dev,
+					 enum qed_hw_err_type err_type);
 
-अटल पूर्णांक qedi_iscsi_event_cb(व्योम *context, u8 fw_event_code, व्योम *fw_handle)
-अणु
-	काष्ठा qedi_ctx *qedi;
-	काष्ठा qedi_endpoपूर्णांक *qedi_ep;
-	काष्ठा iscsi_eqe_data *data;
-	पूर्णांक rval = 0;
+static int qedi_iscsi_event_cb(void *context, u8 fw_event_code, void *fw_handle)
+{
+	struct qedi_ctx *qedi;
+	struct qedi_endpoint *qedi_ep;
+	struct iscsi_eqe_data *data;
+	int rval = 0;
 
-	अगर (!context || !fw_handle) अणु
-		QEDI_ERR(शून्य, "Recv event with ctx NULL\n");
-		वापस -EINVAL;
-	पूर्ण
+	if (!context || !fw_handle) {
+		QEDI_ERR(NULL, "Recv event with ctx NULL\n");
+		return -EINVAL;
+	}
 
-	qedi = (काष्ठा qedi_ctx *)context;
+	qedi = (struct qedi_ctx *)context;
 	QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_INFO,
 		  "Recv Event %d fw_handle %p\n", fw_event_code, fw_handle);
 
-	data = (काष्ठा iscsi_eqe_data *)fw_handle;
+	data = (struct iscsi_eqe_data *)fw_handle;
 	QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_INFO,
 		  "icid=0x%x conn_id=0x%x err-code=0x%x error-pdu-opcode-reserved=0x%x\n",
 		   data->icid, data->conn_id, data->error_code,
@@ -95,55 +94,55 @@ MODULE_PARM_DESC(qedi_flags_override, "Disable/Enable MFW error flags bits actio
 
 	qedi_ep = qedi->ep_tbl[data->icid];
 
-	अगर (!qedi_ep) अणु
+	if (!qedi_ep) {
 		QEDI_WARN(&qedi->dbg_ctx,
 			  "Cannot process event, ep already disconnected, cid=0x%x\n",
 			   data->icid);
 		WARN_ON(1);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	चयन (fw_event_code) अणु
-	हाल ISCSI_EVENT_TYPE_ASYN_CONNECT_COMPLETE:
-		अगर (qedi_ep->state == EP_STATE_OFLDCONN_START)
+	switch (fw_event_code) {
+	case ISCSI_EVENT_TYPE_ASYN_CONNECT_COMPLETE:
+		if (qedi_ep->state == EP_STATE_OFLDCONN_START)
 			qedi_ep->state = EP_STATE_OFLDCONN_COMPL;
 
-		wake_up_पूर्णांकerruptible(&qedi_ep->tcp_ofld_रुको);
-		अवरोध;
-	हाल ISCSI_EVENT_TYPE_ASYN_TERMINATE_DONE:
+		wake_up_interruptible(&qedi_ep->tcp_ofld_wait);
+		break;
+	case ISCSI_EVENT_TYPE_ASYN_TERMINATE_DONE:
 		qedi_ep->state = EP_STATE_DISCONN_COMPL;
-		wake_up_पूर्णांकerruptible(&qedi_ep->tcp_ofld_रुको);
-		अवरोध;
-	हाल ISCSI_EVENT_TYPE_ISCSI_CONN_ERROR:
+		wake_up_interruptible(&qedi_ep->tcp_ofld_wait);
+		break;
+	case ISCSI_EVENT_TYPE_ISCSI_CONN_ERROR:
 		qedi_process_iscsi_error(qedi_ep, data);
-		अवरोध;
-	हाल ISCSI_EVENT_TYPE_ASYN_ABORT_RCVD:
-	हाल ISCSI_EVENT_TYPE_ASYN_SYN_RCVD:
-	हाल ISCSI_EVENT_TYPE_ASYN_MAX_RT_TIME:
-	हाल ISCSI_EVENT_TYPE_ASYN_MAX_RT_CNT:
-	हाल ISCSI_EVENT_TYPE_ASYN_MAX_KA_PROBES_CNT:
-	हाल ISCSI_EVENT_TYPE_ASYN_FIN_WAIT2:
-	हाल ISCSI_EVENT_TYPE_TCP_CONN_ERROR:
+		break;
+	case ISCSI_EVENT_TYPE_ASYN_ABORT_RCVD:
+	case ISCSI_EVENT_TYPE_ASYN_SYN_RCVD:
+	case ISCSI_EVENT_TYPE_ASYN_MAX_RT_TIME:
+	case ISCSI_EVENT_TYPE_ASYN_MAX_RT_CNT:
+	case ISCSI_EVENT_TYPE_ASYN_MAX_KA_PROBES_CNT:
+	case ISCSI_EVENT_TYPE_ASYN_FIN_WAIT2:
+	case ISCSI_EVENT_TYPE_TCP_CONN_ERROR:
 		qedi_process_tcp_error(qedi_ep, data);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		QEDI_ERR(&qedi->dbg_ctx, "Recv Unknown Event %u\n",
 			 fw_event_code);
-	पूर्ण
+	}
 
-	वापस rval;
-पूर्ण
+	return rval;
+}
 
-अटल पूर्णांक qedi_uio_खोलो(काष्ठा uio_info *uinfo, काष्ठा inode *inode)
-अणु
-	काष्ठा qedi_uio_dev *udev = uinfo->priv;
-	काष्ठा qedi_ctx *qedi = udev->qedi;
+static int qedi_uio_open(struct uio_info *uinfo, struct inode *inode)
+{
+	struct qedi_uio_dev *udev = uinfo->priv;
+	struct qedi_ctx *qedi = udev->qedi;
 
-	अगर (!capable(CAP_NET_ADMIN))
-		वापस -EPERM;
+	if (!capable(CAP_NET_ADMIN))
+		return -EPERM;
 
-	अगर (udev->uio_dev != -1)
-		वापस -EBUSY;
+	if (udev->uio_dev != -1)
+		return -EBUSY;
 
 	rtnl_lock();
 	udev->uio_dev = iminor(inode);
@@ -151,61 +150,61 @@ MODULE_PARM_DESC(qedi_flags_override, "Disable/Enable MFW error flags bits actio
 	set_bit(UIO_DEV_OPENED, &qedi->flags);
 	rtnl_unlock();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक qedi_uio_बंद(काष्ठा uio_info *uinfo, काष्ठा inode *inode)
-अणु
-	काष्ठा qedi_uio_dev *udev = uinfo->priv;
-	काष्ठा qedi_ctx *qedi = udev->qedi;
+static int qedi_uio_close(struct uio_info *uinfo, struct inode *inode)
+{
+	struct qedi_uio_dev *udev = uinfo->priv;
+	struct qedi_ctx *qedi = udev->qedi;
 
 	udev->uio_dev = -1;
 	clear_bit(UIO_DEV_OPENED, &qedi->flags);
-	qedi_ll2_मुक्त_skbs(qedi);
-	वापस 0;
-पूर्ण
+	qedi_ll2_free_skbs(qedi);
+	return 0;
+}
 
-अटल व्योम __qedi_मुक्त_uio_rings(काष्ठा qedi_uio_dev *udev)
-अणु
-	अगर (udev->uctrl) अणु
-		मुक्त_page((अचिन्हित दीर्घ)udev->uctrl);
-		udev->uctrl = शून्य;
-	पूर्ण
+static void __qedi_free_uio_rings(struct qedi_uio_dev *udev)
+{
+	if (udev->uctrl) {
+		free_page((unsigned long)udev->uctrl);
+		udev->uctrl = NULL;
+	}
 
-	अगर (udev->ll2_ring) अणु
-		मुक्त_page((अचिन्हित दीर्घ)udev->ll2_ring);
-		udev->ll2_ring = शून्य;
-	पूर्ण
+	if (udev->ll2_ring) {
+		free_page((unsigned long)udev->ll2_ring);
+		udev->ll2_ring = NULL;
+	}
 
-	अगर (udev->ll2_buf) अणु
-		मुक्त_pages((अचिन्हित दीर्घ)udev->ll2_buf, 2);
-		udev->ll2_buf = शून्य;
-	पूर्ण
-पूर्ण
+	if (udev->ll2_buf) {
+		free_pages((unsigned long)udev->ll2_buf, 2);
+		udev->ll2_buf = NULL;
+	}
+}
 
-अटल व्योम __qedi_मुक्त_uio(काष्ठा qedi_uio_dev *udev)
-अणु
-	uio_unरेजिस्टर_device(&udev->qedi_uinfo);
+static void __qedi_free_uio(struct qedi_uio_dev *udev)
+{
+	uio_unregister_device(&udev->qedi_uinfo);
 
-	__qedi_मुक्त_uio_rings(udev);
+	__qedi_free_uio_rings(udev);
 
 	pci_dev_put(udev->pdev);
-	kमुक्त(udev);
-पूर्ण
+	kfree(udev);
+}
 
-अटल व्योम qedi_मुक्त_uio(काष्ठा qedi_uio_dev *udev)
-अणु
-	अगर (!udev)
-		वापस;
+static void qedi_free_uio(struct qedi_uio_dev *udev)
+{
+	if (!udev)
+		return;
 
 	list_del_init(&udev->list);
-	__qedi_मुक्त_uio(udev);
-पूर्ण
+	__qedi_free_uio(udev);
+}
 
-अटल व्योम qedi_reset_uio_rings(काष्ठा qedi_uio_dev *udev)
-अणु
-	काष्ठा qedi_ctx *qedi = शून्य;
-	काष्ठा qedi_uio_ctrl *uctrl = शून्य;
+static void qedi_reset_uio_rings(struct qedi_uio_dev *udev)
+{
+	struct qedi_ctx *qedi = NULL;
+	struct qedi_uio_ctrl *uctrl = NULL;
 
 	qedi = udev->qedi;
 	uctrl = udev->uctrl;
@@ -216,69 +215,69 @@ MODULE_PARM_DESC(qedi_flags_override, "Disable/Enable MFW error flags bits actio
 	uctrl->hw_rx_bd_prod = 0;
 	uctrl->host_rx_bd_cons = 0;
 
-	स_रखो(udev->ll2_ring, 0, udev->ll2_ring_size);
-	स_रखो(udev->ll2_buf, 0, udev->ll2_buf_size);
+	memset(udev->ll2_ring, 0, udev->ll2_ring_size);
+	memset(udev->ll2_buf, 0, udev->ll2_buf_size);
 	spin_unlock_bh(&qedi->ll2_lock);
-पूर्ण
+}
 
-अटल पूर्णांक __qedi_alloc_uio_rings(काष्ठा qedi_uio_dev *udev)
-अणु
-	पूर्णांक rc = 0;
+static int __qedi_alloc_uio_rings(struct qedi_uio_dev *udev)
+{
+	int rc = 0;
 
-	अगर (udev->ll2_ring || udev->ll2_buf)
-		वापस rc;
+	if (udev->ll2_ring || udev->ll2_buf)
+		return rc;
 
-	/* Memory क्रम control area.  */
-	udev->uctrl = (व्योम *)get_zeroed_page(GFP_KERNEL);
-	अगर (!udev->uctrl)
-		वापस -ENOMEM;
+	/* Memory for control area.  */
+	udev->uctrl = (void *)get_zeroed_page(GFP_KERNEL);
+	if (!udev->uctrl)
+		return -ENOMEM;
 
-	/* Allocating memory क्रम LL2 ring  */
+	/* Allocating memory for LL2 ring  */
 	udev->ll2_ring_size = QEDI_PAGE_SIZE;
-	udev->ll2_ring = (व्योम *)get_zeroed_page(GFP_KERNEL | __GFP_COMP);
-	अगर (!udev->ll2_ring) अणु
+	udev->ll2_ring = (void *)get_zeroed_page(GFP_KERNEL | __GFP_COMP);
+	if (!udev->ll2_ring) {
 		rc = -ENOMEM;
-		जाओ निकास_alloc_ring;
-	पूर्ण
+		goto exit_alloc_ring;
+	}
 
-	/* Allocating memory क्रम Tx/Rx pkt buffer */
+	/* Allocating memory for Tx/Rx pkt buffer */
 	udev->ll2_buf_size = TX_RX_RING * qedi_ll2_buf_size;
 	udev->ll2_buf_size = QEDI_PAGE_ALIGN(udev->ll2_buf_size);
-	udev->ll2_buf = (व्योम *)__get_मुक्त_pages(GFP_KERNEL | __GFP_COMP |
+	udev->ll2_buf = (void *)__get_free_pages(GFP_KERNEL | __GFP_COMP |
 						 __GFP_ZERO, 2);
-	अगर (!udev->ll2_buf) अणु
+	if (!udev->ll2_buf) {
 		rc = -ENOMEM;
-		जाओ निकास_alloc_buf;
-	पूर्ण
-	वापस rc;
+		goto exit_alloc_buf;
+	}
+	return rc;
 
-निकास_alloc_buf:
-	मुक्त_page((अचिन्हित दीर्घ)udev->ll2_ring);
-	udev->ll2_ring = शून्य;
-निकास_alloc_ring:
-	वापस rc;
-पूर्ण
+exit_alloc_buf:
+	free_page((unsigned long)udev->ll2_ring);
+	udev->ll2_ring = NULL;
+exit_alloc_ring:
+	return rc;
+}
 
-अटल पूर्णांक qedi_alloc_uio_rings(काष्ठा qedi_ctx *qedi)
-अणु
-	काष्ठा qedi_uio_dev *udev = शून्य;
-	पूर्णांक rc = 0;
+static int qedi_alloc_uio_rings(struct qedi_ctx *qedi)
+{
+	struct qedi_uio_dev *udev = NULL;
+	int rc = 0;
 
-	list_क्रम_each_entry(udev, &qedi_udev_list, list) अणु
-		अगर (udev->pdev == qedi->pdev) अणु
+	list_for_each_entry(udev, &qedi_udev_list, list) {
+		if (udev->pdev == qedi->pdev) {
 			udev->qedi = qedi;
-			अगर (__qedi_alloc_uio_rings(udev)) अणु
-				udev->qedi = शून्य;
-				वापस -ENOMEM;
-			पूर्ण
+			if (__qedi_alloc_uio_rings(udev)) {
+				udev->qedi = NULL;
+				return -ENOMEM;
+			}
 			qedi->udev = udev;
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
-	udev = kzalloc(माप(*udev), GFP_KERNEL);
-	अगर (!udev)
-		जाओ err_udev;
+	udev = kzalloc(sizeof(*udev), GFP_KERNEL);
+	if (!udev)
+		goto err_udev;
 
 	udev->uio_dev = -1;
 
@@ -286,8 +285,8 @@ MODULE_PARM_DESC(qedi_flags_override, "Disable/Enable MFW error flags bits actio
 	udev->pdev = qedi->pdev;
 
 	rc = __qedi_alloc_uio_rings(udev);
-	अगर (rc)
-		जाओ err_uctrl;
+	if (rc)
+		goto err_uctrl;
 
 	list_add(&udev->list, &qedi_udev_list);
 
@@ -296,34 +295,34 @@ MODULE_PARM_DESC(qedi_flags_override, "Disable/Enable MFW error flags bits actio
 
 	udev->tx_pkt = udev->ll2_buf;
 	udev->rx_pkt = udev->ll2_buf + qedi_ll2_buf_size;
-	वापस 0;
+	return 0;
 
  err_uctrl:
-	kमुक्त(udev);
+	kfree(udev);
  err_udev:
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-अटल पूर्णांक qedi_init_uio(काष्ठा qedi_ctx *qedi)
-अणु
-	काष्ठा qedi_uio_dev *udev = qedi->udev;
-	काष्ठा uio_info *uinfo;
-	पूर्णांक ret = 0;
+static int qedi_init_uio(struct qedi_ctx *qedi)
+{
+	struct qedi_uio_dev *udev = qedi->udev;
+	struct uio_info *uinfo;
+	int ret = 0;
 
-	अगर (!udev)
-		वापस -ENOMEM;
+	if (!udev)
+		return -ENOMEM;
 
 	uinfo = &udev->qedi_uinfo;
 
-	uinfo->mem[0].addr = (अचिन्हित दीर्घ)udev->uctrl;
-	uinfo->mem[0].size = माप(काष्ठा qedi_uio_ctrl);
+	uinfo->mem[0].addr = (unsigned long)udev->uctrl;
+	uinfo->mem[0].size = sizeof(struct qedi_uio_ctrl);
 	uinfo->mem[0].memtype = UIO_MEM_LOGICAL;
 
-	uinfo->mem[1].addr = (अचिन्हित दीर्घ)udev->ll2_ring;
+	uinfo->mem[1].addr = (unsigned long)udev->ll2_ring;
 	uinfo->mem[1].size = udev->ll2_ring_size;
 	uinfo->mem[1].memtype = UIO_MEM_LOGICAL;
 
-	uinfo->mem[2].addr = (अचिन्हित दीर्घ)udev->ll2_buf;
+	uinfo->mem[2].addr = (unsigned long)udev->ll2_buf;
 	uinfo->mem[2].size = udev->ll2_buf_size;
 	uinfo->mem[2].memtype = UIO_MEM_LOGICAL;
 
@@ -331,315 +330,315 @@ MODULE_PARM_DESC(qedi_flags_override, "Disable/Enable MFW error flags bits actio
 	uinfo->version = QEDI_MODULE_VERSION;
 	uinfo->irq = UIO_IRQ_CUSTOM;
 
-	uinfo->खोलो = qedi_uio_खोलो;
-	uinfo->release = qedi_uio_बंद;
+	uinfo->open = qedi_uio_open;
+	uinfo->release = qedi_uio_close;
 
-	अगर (udev->uio_dev == -1) अणु
-		अगर (!uinfo->priv) अणु
+	if (udev->uio_dev == -1) {
+		if (!uinfo->priv) {
 			uinfo->priv = udev;
 
-			ret = uio_रेजिस्टर_device(&udev->pdev->dev, uinfo);
-			अगर (ret) अणु
+			ret = uio_register_device(&udev->pdev->dev, uinfo);
+			if (ret) {
 				QEDI_ERR(&qedi->dbg_ctx,
 					 "UIO registration failed\n");
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक qedi_alloc_and_init_sb(काष्ठा qedi_ctx *qedi,
-				  काष्ठा qed_sb_info *sb_info, u16 sb_id)
-अणु
-	काष्ठा status_block_e4 *sb_virt;
+static int qedi_alloc_and_init_sb(struct qedi_ctx *qedi,
+				  struct qed_sb_info *sb_info, u16 sb_id)
+{
+	struct status_block_e4 *sb_virt;
 	dma_addr_t sb_phys;
-	पूर्णांक ret;
+	int ret;
 
 	sb_virt = dma_alloc_coherent(&qedi->pdev->dev,
-				     माप(काष्ठा status_block_e4), &sb_phys,
+				     sizeof(struct status_block_e4), &sb_phys,
 				     GFP_KERNEL);
-	अगर (!sb_virt) अणु
+	if (!sb_virt) {
 		QEDI_ERR(&qedi->dbg_ctx,
 			 "Status block allocation failed for id = %d.\n",
 			  sb_id);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	ret = qedi_ops->common->sb_init(qedi->cdev, sb_info, sb_virt, sb_phys,
 				       sb_id, QED_SB_TYPE_STORAGE);
-	अगर (ret) अणु
+	if (ret) {
 		QEDI_ERR(&qedi->dbg_ctx,
 			 "Status block initialization failed for id = %d.\n",
 			  sb_id);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम qedi_मुक्त_sb(काष्ठा qedi_ctx *qedi)
-अणु
-	काष्ठा qed_sb_info *sb_info;
-	पूर्णांक id;
+static void qedi_free_sb(struct qedi_ctx *qedi)
+{
+	struct qed_sb_info *sb_info;
+	int id;
 
-	क्रम (id = 0; id < MIN_NUM_CPUS_MSIX(qedi); id++) अणु
+	for (id = 0; id < MIN_NUM_CPUS_MSIX(qedi); id++) {
 		sb_info = &qedi->sb_array[id];
-		अगर (sb_info->sb_virt)
-			dma_मुक्त_coherent(&qedi->pdev->dev,
-					  माप(*sb_info->sb_virt),
-					  (व्योम *)sb_info->sb_virt,
+		if (sb_info->sb_virt)
+			dma_free_coherent(&qedi->pdev->dev,
+					  sizeof(*sb_info->sb_virt),
+					  (void *)sb_info->sb_virt,
 					  sb_info->sb_phys);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम qedi_मुक्त_fp(काष्ठा qedi_ctx *qedi)
-अणु
-	kमुक्त(qedi->fp_array);
-	kमुक्त(qedi->sb_array);
-पूर्ण
+static void qedi_free_fp(struct qedi_ctx *qedi)
+{
+	kfree(qedi->fp_array);
+	kfree(qedi->sb_array);
+}
 
-अटल व्योम qedi_destroy_fp(काष्ठा qedi_ctx *qedi)
-अणु
-	qedi_मुक्त_sb(qedi);
-	qedi_मुक्त_fp(qedi);
-पूर्ण
+static void qedi_destroy_fp(struct qedi_ctx *qedi)
+{
+	qedi_free_sb(qedi);
+	qedi_free_fp(qedi);
+}
 
-अटल पूर्णांक qedi_alloc_fp(काष्ठा qedi_ctx *qedi)
-अणु
-	पूर्णांक ret = 0;
+static int qedi_alloc_fp(struct qedi_ctx *qedi)
+{
+	int ret = 0;
 
-	qedi->fp_array = kसुस्मृति(MIN_NUM_CPUS_MSIX(qedi),
-				 माप(काष्ठा qedi_fastpath), GFP_KERNEL);
-	अगर (!qedi->fp_array) अणु
+	qedi->fp_array = kcalloc(MIN_NUM_CPUS_MSIX(qedi),
+				 sizeof(struct qedi_fastpath), GFP_KERNEL);
+	if (!qedi->fp_array) {
 		QEDI_ERR(&qedi->dbg_ctx,
 			 "fastpath fp array allocation failed.\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	qedi->sb_array = kसुस्मृति(MIN_NUM_CPUS_MSIX(qedi),
-				 माप(काष्ठा qed_sb_info), GFP_KERNEL);
-	अगर (!qedi->sb_array) अणु
+	qedi->sb_array = kcalloc(MIN_NUM_CPUS_MSIX(qedi),
+				 sizeof(struct qed_sb_info), GFP_KERNEL);
+	if (!qedi->sb_array) {
 		QEDI_ERR(&qedi->dbg_ctx,
 			 "fastpath sb array allocation failed.\n");
 		ret = -ENOMEM;
-		जाओ मुक्त_fp;
-	पूर्ण
+		goto free_fp;
+	}
 
-	वापस ret;
+	return ret;
 
-मुक्त_fp:
-	qedi_मुक्त_fp(qedi);
-	वापस ret;
-पूर्ण
+free_fp:
+	qedi_free_fp(qedi);
+	return ret;
+}
 
-अटल व्योम qedi_पूर्णांक_fp(काष्ठा qedi_ctx *qedi)
-अणु
-	काष्ठा qedi_fastpath *fp;
-	पूर्णांक id;
+static void qedi_int_fp(struct qedi_ctx *qedi)
+{
+	struct qedi_fastpath *fp;
+	int id;
 
-	स_रखो(qedi->fp_array, 0, MIN_NUM_CPUS_MSIX(qedi) *
-	       माप(*qedi->fp_array));
-	स_रखो(qedi->sb_array, 0, MIN_NUM_CPUS_MSIX(qedi) *
-	       माप(*qedi->sb_array));
+	memset(qedi->fp_array, 0, MIN_NUM_CPUS_MSIX(qedi) *
+	       sizeof(*qedi->fp_array));
+	memset(qedi->sb_array, 0, MIN_NUM_CPUS_MSIX(qedi) *
+	       sizeof(*qedi->sb_array));
 
-	क्रम (id = 0; id < MIN_NUM_CPUS_MSIX(qedi); id++) अणु
+	for (id = 0; id < MIN_NUM_CPUS_MSIX(qedi); id++) {
 		fp = &qedi->fp_array[id];
 		fp->sb_info = &qedi->sb_array[id];
 		fp->sb_id = id;
 		fp->qedi = qedi;
-		snम_लिखो(fp->name, माप(fp->name), "%s-fp-%d",
+		snprintf(fp->name, sizeof(fp->name), "%s-fp-%d",
 			 "qedi", id);
 
 		/* fp_array[i] ---- irq cookie
-		 * So init data which is needed in पूर्णांक ctx
+		 * So init data which is needed in int ctx
 		 */
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक qedi_prepare_fp(काष्ठा qedi_ctx *qedi)
-अणु
-	काष्ठा qedi_fastpath *fp;
-	पूर्णांक id, ret = 0;
+static int qedi_prepare_fp(struct qedi_ctx *qedi)
+{
+	struct qedi_fastpath *fp;
+	int id, ret = 0;
 
 	ret = qedi_alloc_fp(qedi);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
-	qedi_पूर्णांक_fp(qedi);
+	qedi_int_fp(qedi);
 
-	क्रम (id = 0; id < MIN_NUM_CPUS_MSIX(qedi); id++) अणु
+	for (id = 0; id < MIN_NUM_CPUS_MSIX(qedi); id++) {
 		fp = &qedi->fp_array[id];
 		ret = qedi_alloc_and_init_sb(qedi, fp->sb_info, fp->sb_id);
-		अगर (ret) अणु
+		if (ret) {
 			QEDI_ERR(&qedi->dbg_ctx,
 				 "SB allocation and initialization failed.\n");
 			ret = -EIO;
-			जाओ err_init;
-		पूर्ण
-	पूर्ण
+			goto err_init;
+		}
+	}
 
-	वापस 0;
+	return 0;
 
 err_init:
-	qedi_मुक्त_sb(qedi);
-	qedi_मुक्त_fp(qedi);
+	qedi_free_sb(qedi);
+	qedi_free_fp(qedi);
 err:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक qedi_setup_cid_que(काष्ठा qedi_ctx *qedi)
-अणु
-	पूर्णांक i;
+static int qedi_setup_cid_que(struct qedi_ctx *qedi)
+{
+	int i;
 
-	qedi->cid_que.cid_que_base = kदो_स्मृति_array(qedi->max_active_conns,
-						   माप(u32), GFP_KERNEL);
-	अगर (!qedi->cid_que.cid_que_base)
-		वापस -ENOMEM;
+	qedi->cid_que.cid_que_base = kmalloc_array(qedi->max_active_conns,
+						   sizeof(u32), GFP_KERNEL);
+	if (!qedi->cid_que.cid_que_base)
+		return -ENOMEM;
 
-	qedi->cid_que.conn_cid_tbl = kदो_स्मृति_array(qedi->max_active_conns,
-						   माप(काष्ठा qedi_conn *),
+	qedi->cid_que.conn_cid_tbl = kmalloc_array(qedi->max_active_conns,
+						   sizeof(struct qedi_conn *),
 						   GFP_KERNEL);
-	अगर (!qedi->cid_que.conn_cid_tbl) अणु
-		kमुक्त(qedi->cid_que.cid_que_base);
-		qedi->cid_que.cid_que_base = शून्य;
-		वापस -ENOMEM;
-	पूर्ण
+	if (!qedi->cid_que.conn_cid_tbl) {
+		kfree(qedi->cid_que.cid_que_base);
+		qedi->cid_que.cid_que_base = NULL;
+		return -ENOMEM;
+	}
 
 	qedi->cid_que.cid_que = (u32 *)qedi->cid_que.cid_que_base;
 	qedi->cid_que.cid_q_prod_idx = 0;
 	qedi->cid_que.cid_q_cons_idx = 0;
 	qedi->cid_que.cid_q_max_idx = qedi->max_active_conns;
-	qedi->cid_que.cid_मुक्त_cnt = qedi->max_active_conns;
+	qedi->cid_que.cid_free_cnt = qedi->max_active_conns;
 
-	क्रम (i = 0; i < qedi->max_active_conns; i++) अणु
+	for (i = 0; i < qedi->max_active_conns; i++) {
 		qedi->cid_que.cid_que[i] = i;
-		qedi->cid_que.conn_cid_tbl[i] = शून्य;
-	पूर्ण
+		qedi->cid_que.conn_cid_tbl[i] = NULL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम qedi_release_cid_que(काष्ठा qedi_ctx *qedi)
-अणु
-	kमुक्त(qedi->cid_que.cid_que_base);
-	qedi->cid_que.cid_que_base = शून्य;
+static void qedi_release_cid_que(struct qedi_ctx *qedi)
+{
+	kfree(qedi->cid_que.cid_que_base);
+	qedi->cid_que.cid_que_base = NULL;
 
-	kमुक्त(qedi->cid_que.conn_cid_tbl);
-	qedi->cid_que.conn_cid_tbl = शून्य;
-पूर्ण
+	kfree(qedi->cid_que.conn_cid_tbl);
+	qedi->cid_que.conn_cid_tbl = NULL;
+}
 
-अटल पूर्णांक qedi_init_id_tbl(काष्ठा qedi_portid_tbl *id_tbl, u16 size,
+static int qedi_init_id_tbl(struct qedi_portid_tbl *id_tbl, u16 size,
 			    u16 start_id, u16 next)
-अणु
+{
 	id_tbl->start = start_id;
 	id_tbl->max = size;
 	id_tbl->next = next;
 	spin_lock_init(&id_tbl->lock);
-	id_tbl->table = kसुस्मृति(BITS_TO_LONGS(size), माप(दीर्घ), GFP_KERNEL);
-	अगर (!id_tbl->table)
-		वापस -ENOMEM;
+	id_tbl->table = kcalloc(BITS_TO_LONGS(size), sizeof(long), GFP_KERNEL);
+	if (!id_tbl->table)
+		return -ENOMEM;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम qedi_मुक्त_id_tbl(काष्ठा qedi_portid_tbl *id_tbl)
-अणु
-	kमुक्त(id_tbl->table);
-	id_tbl->table = शून्य;
-पूर्ण
+static void qedi_free_id_tbl(struct qedi_portid_tbl *id_tbl)
+{
+	kfree(id_tbl->table);
+	id_tbl->table = NULL;
+}
 
-पूर्णांक qedi_alloc_id(काष्ठा qedi_portid_tbl *id_tbl, u16 id)
-अणु
-	पूर्णांक ret = -1;
+int qedi_alloc_id(struct qedi_portid_tbl *id_tbl, u16 id)
+{
+	int ret = -1;
 
 	id -= id_tbl->start;
-	अगर (id >= id_tbl->max)
-		वापस ret;
+	if (id >= id_tbl->max)
+		return ret;
 
 	spin_lock(&id_tbl->lock);
-	अगर (!test_bit(id, id_tbl->table)) अणु
+	if (!test_bit(id, id_tbl->table)) {
 		set_bit(id, id_tbl->table);
 		ret = 0;
-	पूर्ण
+	}
 	spin_unlock(&id_tbl->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-u16 qedi_alloc_new_id(काष्ठा qedi_portid_tbl *id_tbl)
-अणु
+u16 qedi_alloc_new_id(struct qedi_portid_tbl *id_tbl)
+{
 	u16 id;
 
 	spin_lock(&id_tbl->lock);
 	id = find_next_zero_bit(id_tbl->table, id_tbl->max, id_tbl->next);
-	अगर (id >= id_tbl->max) अणु
+	if (id >= id_tbl->max) {
 		id = QEDI_LOCAL_PORT_INVALID;
-		अगर (id_tbl->next != 0) अणु
+		if (id_tbl->next != 0) {
 			id = find_first_zero_bit(id_tbl->table, id_tbl->next);
-			अगर (id >= id_tbl->next)
+			if (id >= id_tbl->next)
 				id = QEDI_LOCAL_PORT_INVALID;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (id < id_tbl->max) अणु
+	if (id < id_tbl->max) {
 		set_bit(id, id_tbl->table);
 		id_tbl->next = (id + 1) & (id_tbl->max - 1);
 		id += id_tbl->start;
-	पूर्ण
+	}
 
 	spin_unlock(&id_tbl->lock);
 
-	वापस id;
-पूर्ण
+	return id;
+}
 
-व्योम qedi_मुक्त_id(काष्ठा qedi_portid_tbl *id_tbl, u16 id)
-अणु
-	अगर (id == QEDI_LOCAL_PORT_INVALID)
-		वापस;
+void qedi_free_id(struct qedi_portid_tbl *id_tbl, u16 id)
+{
+	if (id == QEDI_LOCAL_PORT_INVALID)
+		return;
 
 	id -= id_tbl->start;
-	अगर (id >= id_tbl->max)
-		वापस;
+	if (id >= id_tbl->max)
+		return;
 
 	clear_bit(id, id_tbl->table);
-पूर्ण
+}
 
-अटल व्योम qedi_cm_मुक्त_mem(काष्ठा qedi_ctx *qedi)
-अणु
-	kमुक्त(qedi->ep_tbl);
-	qedi->ep_tbl = शून्य;
-	qedi_मुक्त_id_tbl(&qedi->lcl_port_tbl);
-पूर्ण
+static void qedi_cm_free_mem(struct qedi_ctx *qedi)
+{
+	kfree(qedi->ep_tbl);
+	qedi->ep_tbl = NULL;
+	qedi_free_id_tbl(&qedi->lcl_port_tbl);
+}
 
-अटल पूर्णांक qedi_cm_alloc_mem(काष्ठा qedi_ctx *qedi)
-अणु
+static int qedi_cm_alloc_mem(struct qedi_ctx *qedi)
+{
 	u16 port_id;
 
 	qedi->ep_tbl = kzalloc((qedi->max_active_conns *
-				माप(काष्ठा qedi_endpoपूर्णांक *)), GFP_KERNEL);
-	अगर (!qedi->ep_tbl)
-		वापस -ENOMEM;
-	port_id = pअक्रमom_u32() % QEDI_LOCAL_PORT_RANGE;
-	अगर (qedi_init_id_tbl(&qedi->lcl_port_tbl, QEDI_LOCAL_PORT_RANGE,
-			     QEDI_LOCAL_PORT_MIN, port_id)) अणु
-		qedi_cm_मुक्त_mem(qedi);
-		वापस -ENOMEM;
-	पूर्ण
+				sizeof(struct qedi_endpoint *)), GFP_KERNEL);
+	if (!qedi->ep_tbl)
+		return -ENOMEM;
+	port_id = prandom_u32() % QEDI_LOCAL_PORT_RANGE;
+	if (qedi_init_id_tbl(&qedi->lcl_port_tbl, QEDI_LOCAL_PORT_RANGE,
+			     QEDI_LOCAL_PORT_MIN, port_id)) {
+		qedi_cm_free_mem(qedi);
+		return -ENOMEM;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा qedi_ctx *qedi_host_alloc(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा Scsi_Host *shost;
-	काष्ठा qedi_ctx *qedi = शून्य;
+static struct qedi_ctx *qedi_host_alloc(struct pci_dev *pdev)
+{
+	struct Scsi_Host *shost;
+	struct qedi_ctx *qedi = NULL;
 
-	shost = iscsi_host_alloc(&qedi_host_ढाँचा,
-				 माप(काष्ठा qedi_ctx), 0);
-	अगर (!shost) अणु
-		QEDI_ERR(शून्य, "Could not allocate shost\n");
-		जाओ निकास_setup_shost;
-	पूर्ण
+	shost = iscsi_host_alloc(&qedi_host_template,
+				 sizeof(struct qedi_ctx), 0);
+	if (!shost) {
+		QEDI_ERR(NULL, "Could not allocate shost\n");
+		goto exit_setup_shost;
+	}
 
 	shost->max_id = QEDI_MAX_ISCSI_CONNS_PER_HBA;
 	shost->max_channel = 0;
@@ -648,7 +647,7 @@ u16 qedi_alloc_new_id(काष्ठा qedi_portid_tbl *id_tbl)
 	shost->transportt = qedi_scsi_transport;
 
 	qedi = iscsi_host_priv(shost);
-	स_रखो(qedi, 0, माप(*qedi));
+	memset(qedi, 0, sizeof(*qedi));
 	qedi->shost = shost;
 	qedi->dbg_ctx.host_no = shost->host_no;
 	qedi->pdev = pdev;
@@ -660,94 +659,94 @@ u16 qedi_alloc_new_id(काष्ठा qedi_portid_tbl *id_tbl)
 
 	pci_set_drvdata(pdev, qedi);
 
-निकास_setup_shost:
-	वापस qedi;
-पूर्ण
+exit_setup_shost:
+	return qedi;
+}
 
-अटल पूर्णांक qedi_ll2_rx(व्योम *cookie, काष्ठा sk_buff *skb, u32 arg1, u32 arg2)
-अणु
-	काष्ठा qedi_ctx *qedi = (काष्ठा qedi_ctx *)cookie;
-	काष्ठा skb_work_list *work;
-	काष्ठा ethhdr *eh;
+static int qedi_ll2_rx(void *cookie, struct sk_buff *skb, u32 arg1, u32 arg2)
+{
+	struct qedi_ctx *qedi = (struct qedi_ctx *)cookie;
+	struct skb_work_list *work;
+	struct ethhdr *eh;
 
-	अगर (!qedi) अणु
-		QEDI_ERR(शून्य, "qedi is NULL\n");
-		वापस -1;
-	पूर्ण
+	if (!qedi) {
+		QEDI_ERR(NULL, "qedi is NULL\n");
+		return -1;
+	}
 
-	अगर (!test_bit(UIO_DEV_OPENED, &qedi->flags)) अणु
+	if (!test_bit(UIO_DEV_OPENED, &qedi->flags)) {
 		QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_UIO,
 			  "UIO DEV is not opened\n");
-		kमुक्त_skb(skb);
-		वापस 0;
-	पूर्ण
+		kfree_skb(skb);
+		return 0;
+	}
 
-	eh = (काष्ठा ethhdr *)skb->data;
-	/* Unकरो VLAN encapsulation */
-	अगर (eh->h_proto == htons(ETH_P_8021Q)) अणु
-		स_हटाओ((u8 *)eh + VLAN_HLEN, eh, ETH_ALEN * 2);
-		eh = (काष्ठा ethhdr *)skb_pull(skb, VLAN_HLEN);
+	eh = (struct ethhdr *)skb->data;
+	/* Undo VLAN encapsulation */
+	if (eh->h_proto == htons(ETH_P_8021Q)) {
+		memmove((u8 *)eh + VLAN_HLEN, eh, ETH_ALEN * 2);
+		eh = (struct ethhdr *)skb_pull(skb, VLAN_HLEN);
 		skb_reset_mac_header(skb);
-	पूर्ण
+	}
 
-	/* Filter out non FIP/FCoE frames here to मुक्त them faster */
-	अगर (eh->h_proto != htons(ETH_P_ARP) &&
+	/* Filter out non FIP/FCoE frames here to free them faster */
+	if (eh->h_proto != htons(ETH_P_ARP) &&
 	    eh->h_proto != htons(ETH_P_IP) &&
-	    eh->h_proto != htons(ETH_P_IPV6)) अणु
+	    eh->h_proto != htons(ETH_P_IPV6)) {
 		QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_LL2,
 			  "Dropping frame ethertype [0x%x] len [0x%x].\n",
 			  eh->h_proto, skb->len);
-		kमुक्त_skb(skb);
-		वापस 0;
-	पूर्ण
+		kfree_skb(skb);
+		return 0;
+	}
 
 	QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_LL2,
 		  "Allowed frame ethertype [0x%x] len [0x%x].\n",
 		  eh->h_proto, skb->len);
 
-	work = kzalloc(माप(*work), GFP_ATOMIC);
-	अगर (!work) अणु
+	work = kzalloc(sizeof(*work), GFP_ATOMIC);
+	if (!work) {
 		QEDI_WARN(&qedi->dbg_ctx,
 			  "Could not allocate work so dropping frame.\n");
-		kमुक्त_skb(skb);
-		वापस 0;
-	पूर्ण
+		kfree_skb(skb);
+		return 0;
+	}
 
 	INIT_LIST_HEAD(&work->list);
 	work->skb = skb;
 
-	अगर (skb_vlan_tag_present(skb))
+	if (skb_vlan_tag_present(skb))
 		work->vlan_id = skb_vlan_tag_get(skb);
 
-	अगर (work->vlan_id)
+	if (work->vlan_id)
 		__vlan_insert_tag(work->skb, htons(ETH_P_8021Q), work->vlan_id);
 
 	spin_lock_bh(&qedi->ll2_lock);
 	list_add_tail(&work->list, &qedi->ll2_skb_list);
 	spin_unlock_bh(&qedi->ll2_lock);
 
-	wake_up_process(qedi->ll2_recv_thपढ़ो);
+	wake_up_process(qedi->ll2_recv_thread);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* map this skb to iscsiuio mmaped region */
-अटल पूर्णांक qedi_ll2_process_skb(काष्ठा qedi_ctx *qedi, काष्ठा sk_buff *skb,
+static int qedi_ll2_process_skb(struct qedi_ctx *qedi, struct sk_buff *skb,
 				u16 vlan_id)
-अणु
-	काष्ठा qedi_uio_dev *udev = शून्य;
-	काष्ठा qedi_uio_ctrl *uctrl = शून्य;
-	काष्ठा qedi_rx_bd rxbd;
-	काष्ठा qedi_rx_bd *p_rxbd;
+{
+	struct qedi_uio_dev *udev = NULL;
+	struct qedi_uio_ctrl *uctrl = NULL;
+	struct qedi_rx_bd rxbd;
+	struct qedi_rx_bd *p_rxbd;
 	u32 rx_bd_prod;
-	व्योम *pkt;
-	पूर्णांक len = 0;
+	void *pkt;
+	int len = 0;
 	u32 prod;
 
-	अगर (!qedi) अणु
-		QEDI_ERR(शून्य, "qedi is NULL\n");
-		वापस -1;
-	पूर्ण
+	if (!qedi) {
+		QEDI_ERR(NULL, "qedi is NULL\n");
+		return -1;
+	}
 
 	udev = qedi->udev;
 	uctrl = udev->uctrl;
@@ -757,19 +756,19 @@ u16 qedi_alloc_new_id(काष्ठा qedi_portid_tbl *id_tbl)
 
 	pkt = udev->rx_pkt + (prod * qedi_ll2_buf_size);
 	len = min_t(u32, skb->len, (u32)qedi_ll2_buf_size);
-	स_नकल(pkt, skb->data, len);
+	memcpy(pkt, skb->data, len);
 
-	स_रखो(&rxbd, 0, माप(rxbd));
+	memset(&rxbd, 0, sizeof(rxbd));
 	rxbd.rx_pkt_index = prod;
 	rxbd.rx_pkt_len = len;
 	rxbd.vlan_id = vlan_id;
 
 	uctrl->hw_rx_bd_prod = (uctrl->hw_rx_bd_prod + 1) % QEDI_NUM_RX_BD;
 	rx_bd_prod = uctrl->hw_rx_bd_prod;
-	p_rxbd = (काष्ठा qedi_rx_bd *)udev->ll2_ring;
+	p_rxbd = (struct qedi_rx_bd *)udev->ll2_ring;
 	p_rxbd += rx_bd_prod;
 
-	स_नकल(p_rxbd, &rxbd, माप(rxbd));
+	memcpy(p_rxbd, &rxbd, sizeof(rxbd));
 
 	QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_LL2,
 		  "hw_rx_prod [%d] prod [%d] hw_rx_bd_prod [%d] rx_pkt_idx [%d] rx_len [%d].\n",
@@ -781,55 +780,55 @@ u16 qedi_alloc_new_id(काष्ठा qedi_portid_tbl *id_tbl)
 
 	uctrl->hw_rx_prod = prod;
 
-	/* notअगरy the iscsiuio about new packet */
-	uio_event_notअगरy(&udev->qedi_uinfo);
+	/* notify the iscsiuio about new packet */
+	uio_event_notify(&udev->qedi_uinfo);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम qedi_ll2_मुक्त_skbs(काष्ठा qedi_ctx *qedi)
-अणु
-	काष्ठा skb_work_list *work, *work_पंचांगp;
+static void qedi_ll2_free_skbs(struct qedi_ctx *qedi)
+{
+	struct skb_work_list *work, *work_tmp;
 
 	spin_lock_bh(&qedi->ll2_lock);
-	list_क्रम_each_entry_safe(work, work_पंचांगp, &qedi->ll2_skb_list, list) अणु
+	list_for_each_entry_safe(work, work_tmp, &qedi->ll2_skb_list, list) {
 		list_del(&work->list);
-		kमुक्त_skb(work->skb);
-		kमुक्त(work);
-	पूर्ण
+		kfree_skb(work->skb);
+		kfree(work);
+	}
 	spin_unlock_bh(&qedi->ll2_lock);
-पूर्ण
+}
 
-अटल पूर्णांक qedi_ll2_recv_thपढ़ो(व्योम *arg)
-अणु
-	काष्ठा qedi_ctx *qedi = (काष्ठा qedi_ctx *)arg;
-	काष्ठा skb_work_list *work, *work_पंचांगp;
+static int qedi_ll2_recv_thread(void *arg)
+{
+	struct qedi_ctx *qedi = (struct qedi_ctx *)arg;
+	struct skb_work_list *work, *work_tmp;
 
 	set_user_nice(current, -20);
 
-	जबतक (!kthपढ़ो_should_stop()) अणु
+	while (!kthread_should_stop()) {
 		spin_lock_bh(&qedi->ll2_lock);
-		list_क्रम_each_entry_safe(work, work_पंचांगp, &qedi->ll2_skb_list,
-					 list) अणु
+		list_for_each_entry_safe(work, work_tmp, &qedi->ll2_skb_list,
+					 list) {
 			list_del(&work->list);
 			qedi_ll2_process_skb(qedi, work->skb, work->vlan_id);
-			kमुक्त_skb(work->skb);
-			kमुक्त(work);
-		पूर्ण
+			kfree_skb(work->skb);
+			kfree(work);
+		}
 		set_current_state(TASK_INTERRUPTIBLE);
 		spin_unlock_bh(&qedi->ll2_lock);
 		schedule();
-	पूर्ण
+	}
 
 	__set_current_state(TASK_RUNNING);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक qedi_set_iscsi_pf_param(काष्ठा qedi_ctx *qedi)
-अणु
+static int qedi_set_iscsi_pf_param(struct qedi_ctx *qedi)
+{
 	u8 num_sq_pages;
 	u32 log_page_size;
-	पूर्णांक rval = 0;
+	int rval = 0;
 
 
 	num_sq_pages = (MAX_OUTSTANDING_TASKS_PER_CON * 8) / QEDI_PAGE_SIZE;
@@ -839,48 +838,48 @@ u16 qedi_alloc_new_id(काष्ठा qedi_portid_tbl *id_tbl)
 	QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_INFO,
 		  "Number of CQ count is %d\n", qedi->num_queues);
 
-	स_रखो(&qedi->pf_params.iscsi_pf_params, 0,
-	       माप(qedi->pf_params.iscsi_pf_params));
+	memset(&qedi->pf_params.iscsi_pf_params, 0,
+	       sizeof(qedi->pf_params.iscsi_pf_params));
 
 	qedi->p_cpuq = dma_alloc_coherent(&qedi->pdev->dev,
-			qedi->num_queues * माप(काष्ठा qedi_glbl_q_params),
+			qedi->num_queues * sizeof(struct qedi_glbl_q_params),
 			&qedi->hw_p_cpuq, GFP_KERNEL);
-	अगर (!qedi->p_cpuq) अणु
+	if (!qedi->p_cpuq) {
 		QEDI_ERR(&qedi->dbg_ctx, "dma_alloc_coherent fail\n");
 		rval = -1;
-		जाओ err_alloc_mem;
-	पूर्ण
+		goto err_alloc_mem;
+	}
 
 	rval = qedi_alloc_global_queues(qedi);
-	अगर (rval) अणु
+	if (rval) {
 		QEDI_ERR(&qedi->dbg_ctx, "Global queue allocation failed.\n");
 		rval = -1;
-		जाओ err_alloc_mem;
-	पूर्ण
+		goto err_alloc_mem;
+	}
 
 	qedi->pf_params.iscsi_pf_params.num_cons = QEDI_MAX_ISCSI_CONNS_PER_HBA;
 	qedi->pf_params.iscsi_pf_params.num_tasks = QEDI_MAX_ISCSI_TASK;
-	qedi->pf_params.iscsi_pf_params.half_way_बंद_समयout = 10;
+	qedi->pf_params.iscsi_pf_params.half_way_close_timeout = 10;
 	qedi->pf_params.iscsi_pf_params.num_sq_pages_in_ring = num_sq_pages;
 	qedi->pf_params.iscsi_pf_params.num_r2tq_pages_in_ring = num_sq_pages;
 	qedi->pf_params.iscsi_pf_params.num_uhq_pages_in_ring = num_sq_pages;
 	qedi->pf_params.iscsi_pf_params.num_queues = qedi->num_queues;
 	qedi->pf_params.iscsi_pf_params.debug_mode = qedi_fw_debug;
-	qedi->pf_params.iscsi_pf_params.two_msl_समयr = 4000;
+	qedi->pf_params.iscsi_pf_params.two_msl_timer = 4000;
 	qedi->pf_params.iscsi_pf_params.max_fin_rt = 2;
 
-	क्रम (log_page_size = 0 ; log_page_size < 32 ; log_page_size++) अणु
-		अगर ((1 << log_page_size) == QEDI_PAGE_SIZE)
-			अवरोध;
-	पूर्ण
+	for (log_page_size = 0 ; log_page_size < 32 ; log_page_size++) {
+		if ((1 << log_page_size) == QEDI_PAGE_SIZE)
+			break;
+	}
 	qedi->pf_params.iscsi_pf_params.log_page_size = log_page_size;
 
 	qedi->pf_params.iscsi_pf_params.glbl_q_params_addr =
 							   (u64)qedi->hw_p_cpuq;
 
 	/* RQ BDQ initializations.
-	 * rq_num_entries: suggested value क्रम Initiator is 16 (4KB RQ)
-	 * rqe_log_size: 8 क्रम 256B RQE
+	 * rq_num_entries: suggested value for Initiator is 16 (4KB RQ)
+	 * rqe_log_size: 8 for 256B RQE
 	 */
 	qedi->pf_params.iscsi_pf_params.rqe_log_size = 8;
 	/* BDQ address and size */
@@ -897,90 +896,90 @@ u16 qedi_alloc_new_id(काष्ठा qedi_portid_tbl *id_tbl)
 	qedi->pf_params.iscsi_pf_params.gl_cmd_pi = 1;
 
 err_alloc_mem:
-	वापस rval;
-पूर्ण
+	return rval;
+}
 
-/* Free DMA coherent memory क्रम array of queue poपूर्णांकers we pass to qed */
-अटल व्योम qedi_मुक्त_iscsi_pf_param(काष्ठा qedi_ctx *qedi)
-अणु
-	माप_प्रकार size = 0;
+/* Free DMA coherent memory for array of queue pointers we pass to qed */
+static void qedi_free_iscsi_pf_param(struct qedi_ctx *qedi)
+{
+	size_t size = 0;
 
-	अगर (qedi->p_cpuq) अणु
-		size = qedi->num_queues * माप(काष्ठा qedi_glbl_q_params);
-		dma_मुक्त_coherent(&qedi->pdev->dev, size, qedi->p_cpuq,
+	if (qedi->p_cpuq) {
+		size = qedi->num_queues * sizeof(struct qedi_glbl_q_params);
+		dma_free_coherent(&qedi->pdev->dev, size, qedi->p_cpuq,
 				    qedi->hw_p_cpuq);
-	पूर्ण
+	}
 
-	qedi_मुक्त_global_queues(qedi);
+	qedi_free_global_queues(qedi);
 
-	kमुक्त(qedi->global_queues);
-पूर्ण
+	kfree(qedi->global_queues);
+}
 
-अटल व्योम qedi_get_boot_tgt_info(काष्ठा nvm_iscsi_block *block,
-				   काष्ठा qedi_boot_target *tgt, u8 index)
-अणु
+static void qedi_get_boot_tgt_info(struct nvm_iscsi_block *block,
+				   struct qedi_boot_target *tgt, u8 index)
+{
 	u32 ipv6_en;
 
 	ipv6_en = !!(block->generic.ctrl_flags &
 		     NVM_ISCSI_CFG_GEN_IPV6_ENABLED);
 
-	snम_लिखो(tgt->iscsi_name, माप(tgt->iscsi_name), "%s",
+	snprintf(tgt->iscsi_name, sizeof(tgt->iscsi_name), "%s",
 		 block->target[index].target_name.byte);
 
 	tgt->ipv6_en = ipv6_en;
 
-	अगर (ipv6_en)
-		snम_लिखो(tgt->ip_addr, IPV6_LEN, "%pI6\n",
+	if (ipv6_en)
+		snprintf(tgt->ip_addr, IPV6_LEN, "%pI6\n",
 			 block->target[index].ipv6_addr.byte);
-	अन्यथा
-		snम_लिखो(tgt->ip_addr, IPV4_LEN, "%pI4\n",
+	else
+		snprintf(tgt->ip_addr, IPV4_LEN, "%pI4\n",
 			 block->target[index].ipv4_addr.byte);
-पूर्ण
+}
 
-अटल पूर्णांक qedi_find_boot_info(काष्ठा qedi_ctx *qedi,
-			       काष्ठा qed_mfw_tlv_iscsi *iscsi,
-			       काष्ठा nvm_iscsi_block *block)
-अणु
-	काष्ठा qedi_boot_target *pri_tgt = शून्य, *sec_tgt = शून्य;
+static int qedi_find_boot_info(struct qedi_ctx *qedi,
+			       struct qed_mfw_tlv_iscsi *iscsi,
+			       struct nvm_iscsi_block *block)
+{
+	struct qedi_boot_target *pri_tgt = NULL, *sec_tgt = NULL;
 	u32 pri_ctrl_flags = 0, sec_ctrl_flags = 0, found = 0;
-	काष्ठा iscsi_cls_session *cls_sess;
-	काष्ठा iscsi_cls_conn *cls_conn;
-	काष्ठा qedi_conn *qedi_conn;
-	काष्ठा iscsi_session *sess;
-	काष्ठा iscsi_conn *conn;
-	अक्षर ep_ip_addr[64];
-	पूर्णांक i, ret = 0;
+	struct iscsi_cls_session *cls_sess;
+	struct iscsi_cls_conn *cls_conn;
+	struct qedi_conn *qedi_conn;
+	struct iscsi_session *sess;
+	struct iscsi_conn *conn;
+	char ep_ip_addr[64];
+	int i, ret = 0;
 
 	pri_ctrl_flags = !!(block->target[0].ctrl_flags &
 					NVM_ISCSI_CFG_TARGET_ENABLED);
-	अगर (pri_ctrl_flags) अणु
-		pri_tgt = kzalloc(माप(*pri_tgt), GFP_KERNEL);
-		अगर (!pri_tgt)
-			वापस -1;
+	if (pri_ctrl_flags) {
+		pri_tgt = kzalloc(sizeof(*pri_tgt), GFP_KERNEL);
+		if (!pri_tgt)
+			return -1;
 		qedi_get_boot_tgt_info(block, pri_tgt, 0);
-	पूर्ण
+	}
 
 	sec_ctrl_flags = !!(block->target[1].ctrl_flags &
 					NVM_ISCSI_CFG_TARGET_ENABLED);
-	अगर (sec_ctrl_flags) अणु
-		sec_tgt = kzalloc(माप(*sec_tgt), GFP_KERNEL);
-		अगर (!sec_tgt) अणु
+	if (sec_ctrl_flags) {
+		sec_tgt = kzalloc(sizeof(*sec_tgt), GFP_KERNEL);
+		if (!sec_tgt) {
 			ret = -1;
-			जाओ मुक्त_tgt;
-		पूर्ण
+			goto free_tgt;
+		}
 		qedi_get_boot_tgt_info(block, sec_tgt, 1);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < qedi->max_active_conns; i++) अणु
+	for (i = 0; i < qedi->max_active_conns; i++) {
 		qedi_conn = qedi_get_conn_from_id(qedi, i);
-		अगर (!qedi_conn)
-			जारी;
+		if (!qedi_conn)
+			continue;
 
-		अगर (qedi_conn->ep->ip_type == TCP_IPV4)
-			snम_लिखो(ep_ip_addr, IPV4_LEN, "%pI4\n",
+		if (qedi_conn->ep->ip_type == TCP_IPV4)
+			snprintf(ep_ip_addr, IPV4_LEN, "%pI4\n",
 				 qedi_conn->ep->dst_addr);
-		अन्यथा
-			snम_लिखो(ep_ip_addr, IPV6_LEN, "%pI6\n",
+		else
+			snprintf(ep_ip_addr, IPV6_LEN, "%pI6\n",
 				 qedi_conn->ep->dst_addr);
 
 		cls_conn = qedi_conn->cls_conn;
@@ -988,91 +987,91 @@ err_alloc_mem:
 		cls_sess = iscsi_conn_to_session(cls_conn);
 		sess = cls_sess->dd_data;
 
-		अगर (!iscsi_is_session_online(cls_sess))
-			जारी;
+		if (!iscsi_is_session_online(cls_sess))
+			continue;
 
-		अगर (!sess->targetname)
-			जारी;
+		if (!sess->targetname)
+			continue;
 
-		अगर (pri_ctrl_flags) अणु
-			अगर (!म_भेद(pri_tgt->iscsi_name, sess->targetname) &&
-			    !म_भेद(pri_tgt->ip_addr, ep_ip_addr)) अणु
+		if (pri_ctrl_flags) {
+			if (!strcmp(pri_tgt->iscsi_name, sess->targetname) &&
+			    !strcmp(pri_tgt->ip_addr, ep_ip_addr)) {
 				found = 1;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 
-		अगर (sec_ctrl_flags) अणु
-			अगर (!म_भेद(sec_tgt->iscsi_name, sess->targetname) &&
-			    !म_भेद(sec_tgt->ip_addr, ep_ip_addr)) अणु
+		if (sec_ctrl_flags) {
+			if (!strcmp(sec_tgt->iscsi_name, sess->targetname) &&
+			    !strcmp(sec_tgt->ip_addr, ep_ip_addr)) {
 				found = 1;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				break;
+			}
+		}
+	}
 
-	अगर (found) अणु
-		अगर (conn->hdrdgst_en) अणु
+	if (found) {
+		if (conn->hdrdgst_en) {
 			iscsi->header_digest_set = true;
 			iscsi->header_digest = 1;
-		पूर्ण
+		}
 
-		अगर (conn->datadgst_en) अणु
+		if (conn->datadgst_en) {
 			iscsi->data_digest_set = true;
 			iscsi->data_digest = 1;
-		पूर्ण
+		}
 		iscsi->boot_taget_portal_set = true;
 		iscsi->boot_taget_portal = sess->tpgt;
 
-	पूर्ण अन्यथा अणु
+	} else {
 		ret = -1;
-	पूर्ण
+	}
 
-	अगर (sec_ctrl_flags)
-		kमुक्त(sec_tgt);
-मुक्त_tgt:
-	अगर (pri_ctrl_flags)
-		kमुक्त(pri_tgt);
+	if (sec_ctrl_flags)
+		kfree(sec_tgt);
+free_tgt:
+	if (pri_ctrl_flags)
+		kfree(pri_tgt);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम qedi_get_generic_tlv_data(व्योम *dev, काष्ठा qed_generic_tlvs *data)
-अणु
-	काष्ठा qedi_ctx *qedi;
+static void qedi_get_generic_tlv_data(void *dev, struct qed_generic_tlvs *data)
+{
+	struct qedi_ctx *qedi;
 
-	अगर (!dev) अणु
-		QEDI_INFO(शून्य, QEDI_LOG_EVT,
+	if (!dev) {
+		QEDI_INFO(NULL, QEDI_LOG_EVT,
 			  "dev is NULL so ignoring get_generic_tlv_data request.\n");
-		वापस;
-	पूर्ण
-	qedi = (काष्ठा qedi_ctx *)dev;
+		return;
+	}
+	qedi = (struct qedi_ctx *)dev;
 
-	स_रखो(data, 0, माप(काष्ठा qed_generic_tlvs));
+	memset(data, 0, sizeof(struct qed_generic_tlvs));
 	ether_addr_copy(data->mac[0], qedi->mac);
-पूर्ण
+}
 
 /*
  * Protocol TLV handler
  */
-अटल व्योम qedi_get_protocol_tlv_data(व्योम *dev, व्योम *data)
-अणु
-	काष्ठा qed_mfw_tlv_iscsi *iscsi = data;
-	काष्ठा qed_iscsi_stats *fw_iscsi_stats;
-	काष्ठा nvm_iscsi_block *block = शून्य;
+static void qedi_get_protocol_tlv_data(void *dev, void *data)
+{
+	struct qed_mfw_tlv_iscsi *iscsi = data;
+	struct qed_iscsi_stats *fw_iscsi_stats;
+	struct nvm_iscsi_block *block = NULL;
 	u32 chap_en = 0, mchap_en = 0;
-	काष्ठा qedi_ctx *qedi = dev;
-	पूर्णांक rval = 0;
+	struct qedi_ctx *qedi = dev;
+	int rval = 0;
 
-	fw_iscsi_stats = kदो_स्मृति(माप(*fw_iscsi_stats), GFP_KERNEL);
-	अगर (!fw_iscsi_stats) अणु
+	fw_iscsi_stats = kmalloc(sizeof(*fw_iscsi_stats), GFP_KERNEL);
+	if (!fw_iscsi_stats) {
 		QEDI_ERR(&qedi->dbg_ctx,
 			 "Could not allocate memory for fw_iscsi_stats.\n");
-		जाओ निकास_get_data;
-	पूर्ण
+		goto exit_get_data;
+	}
 
 	mutex_lock(&qedi->stats_lock);
-	/* Query firmware क्रम offload stats */
+	/* Query firmware for offload stats */
 	qedi_ops->get_stats(qedi->cdev, fw_iscsi_stats);
 	mutex_unlock(&qedi->stats_lock);
 
@@ -1087,7 +1086,7 @@ err_alloc_mem:
 	iscsi->frame_size_set = true;
 	iscsi->frame_size = qedi->ll2_mtu;
 	block = qedi_get_nvram_block(qedi);
-	अगर (block) अणु
+	if (block) {
 		chap_en = !!(block->generic.ctrl_flags &
 			     NVM_ISCSI_CFG_GEN_CHAP_ENABLED);
 		mchap_en = !!(block->generic.ctrl_flags &
@@ -1095,9 +1094,9 @@ err_alloc_mem:
 
 		iscsi->auth_method_set = (chap_en || mchap_en) ? true : false;
 		iscsi->auth_method = 1;
-		अगर (chap_en)
+		if (chap_en)
 			iscsi->auth_method = 2;
-		अगर (mchap_en)
+		if (mchap_en)
 			iscsi->auth_method = 3;
 
 		iscsi->tx_desc_size_set = true;
@@ -1107,172 +1106,172 @@ err_alloc_mem:
 
 		/* tpgt, hdr digest, data digest */
 		rval = qedi_find_boot_info(qedi, iscsi, block);
-		अगर (rval)
+		if (rval)
 			QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_INFO,
 				  "Boot target not set");
-	पूर्ण
+	}
 
-	kमुक्त(fw_iscsi_stats);
-निकास_get_data:
-	वापस;
-पूर्ण
+	kfree(fw_iscsi_stats);
+exit_get_data:
+	return;
+}
 
-व्योम qedi_schedule_hw_err_handler(व्योम *dev,
-				  क्रमागत qed_hw_err_type err_type)
-अणु
-	काष्ठा qedi_ctx *qedi = (काष्ठा qedi_ctx *)dev;
-	अचिन्हित दीर्घ override_flags = qedi_flags_override;
+void qedi_schedule_hw_err_handler(void *dev,
+				  enum qed_hw_err_type err_type)
+{
+	struct qedi_ctx *qedi = (struct qedi_ctx *)dev;
+	unsigned long override_flags = qedi_flags_override;
 
-	अगर (override_flags && test_bit(QEDI_ERR_OVERRIDE_EN, &override_flags))
+	if (override_flags && test_bit(QEDI_ERR_OVERRIDE_EN, &override_flags))
 		qedi->qedi_err_flags = qedi_flags_override;
 
 	QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_INFO,
 		  "HW error handler scheduled, err=%d err_flags=0x%x\n",
 		  err_type, qedi->qedi_err_flags);
 
-	चयन (err_type) अणु
-	हाल QED_HW_ERR_FAN_FAIL:
+	switch (err_type) {
+	case QED_HW_ERR_FAN_FAIL:
 		schedule_delayed_work(&qedi->board_disable_work, 0);
-		अवरोध;
-	हाल QED_HW_ERR_MFW_RESP_FAIL:
-	हाल QED_HW_ERR_HW_ATTN:
-	हाल QED_HW_ERR_DMAE_FAIL:
-	हाल QED_HW_ERR_RAMROD_FAIL:
-	हाल QED_HW_ERR_FW_ASSERT:
-		/* Prevent HW attentions from being reनिश्चितed */
-		अगर (test_bit(QEDI_ERR_ATTN_CLR_EN, &qedi->qedi_err_flags))
+		break;
+	case QED_HW_ERR_MFW_RESP_FAIL:
+	case QED_HW_ERR_HW_ATTN:
+	case QED_HW_ERR_DMAE_FAIL:
+	case QED_HW_ERR_RAMROD_FAIL:
+	case QED_HW_ERR_FW_ASSERT:
+		/* Prevent HW attentions from being reasserted */
+		if (test_bit(QEDI_ERR_ATTN_CLR_EN, &qedi->qedi_err_flags))
 			qedi_ops->common->attn_clr_enable(qedi->cdev, true);
 
-		अगर (err_type == QED_HW_ERR_RAMROD_FAIL &&
+		if (err_type == QED_HW_ERR_RAMROD_FAIL &&
 		    test_bit(QEDI_ERR_IS_RECOVERABLE, &qedi->qedi_err_flags))
 			qedi_ops->common->recovery_process(qedi->cdev);
 
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 
-अटल व्योम qedi_schedule_recovery_handler(व्योम *dev)
-अणु
-	काष्ठा qedi_ctx *qedi = dev;
+static void qedi_schedule_recovery_handler(void *dev)
+{
+	struct qedi_ctx *qedi = dev;
 
 	QEDI_ERR(&qedi->dbg_ctx, "Recovery handler scheduled.\n");
 
-	अगर (test_and_set_bit(QEDI_IN_RECOVERY, &qedi->flags))
-		वापस;
+	if (test_and_set_bit(QEDI_IN_RECOVERY, &qedi->flags))
+		return;
 
 	atomic_set(&qedi->link_state, QEDI_LINK_DOWN);
 
 	schedule_delayed_work(&qedi->recovery_work, 0);
-पूर्ण
+}
 
-अटल व्योम qedi_set_conn_recovery(काष्ठा iscsi_cls_session *cls_session)
-अणु
-	काष्ठा iscsi_session *session = cls_session->dd_data;
-	काष्ठा iscsi_conn *conn = session->leadconn;
-	काष्ठा qedi_conn *qedi_conn = conn->dd_data;
+static void qedi_set_conn_recovery(struct iscsi_cls_session *cls_session)
+{
+	struct iscsi_session *session = cls_session->dd_data;
+	struct iscsi_conn *conn = session->leadconn;
+	struct qedi_conn *qedi_conn = conn->dd_data;
 
 	qedi_start_conn_recovery(qedi_conn->qedi, qedi_conn);
-पूर्ण
+}
 
-अटल व्योम qedi_link_update(व्योम *dev, काष्ठा qed_link_output *link)
-अणु
-	काष्ठा qedi_ctx *qedi = (काष्ठा qedi_ctx *)dev;
+static void qedi_link_update(void *dev, struct qed_link_output *link)
+{
+	struct qedi_ctx *qedi = (struct qedi_ctx *)dev;
 
-	अगर (link->link_up) अणु
+	if (link->link_up) {
 		QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_INFO, "Link Up event.\n");
 		atomic_set(&qedi->link_state, QEDI_LINK_UP);
-	पूर्ण अन्यथा अणु
+	} else {
 		QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_INFO,
 			  "Link Down event.\n");
 		atomic_set(&qedi->link_state, QEDI_LINK_DOWN);
-		iscsi_host_क्रम_each_session(qedi->shost, qedi_set_conn_recovery);
-	पूर्ण
-पूर्ण
+		iscsi_host_for_each_session(qedi->shost, qedi_set_conn_recovery);
+	}
+}
 
-अटल काष्ठा qed_iscsi_cb_ops qedi_cb_ops = अणु
-	अणु
+static struct qed_iscsi_cb_ops qedi_cb_ops = {
+	{
 		.link_update =		qedi_link_update,
 		.schedule_recovery_handler = qedi_schedule_recovery_handler,
 		.schedule_hw_err_handler = qedi_schedule_hw_err_handler,
 		.get_protocol_tlv_data = qedi_get_protocol_tlv_data,
 		.get_generic_tlv_data = qedi_get_generic_tlv_data,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल पूर्णांक qedi_queue_cqe(काष्ठा qedi_ctx *qedi, जोड़ iscsi_cqe *cqe,
-			  u16 que_idx, काष्ठा qedi_percpu_s *p)
-अणु
-	काष्ठा qedi_work *qedi_work;
-	काष्ठा qedi_conn *q_conn;
-	काष्ठा qedi_cmd *qedi_cmd;
+static int qedi_queue_cqe(struct qedi_ctx *qedi, union iscsi_cqe *cqe,
+			  u16 que_idx, struct qedi_percpu_s *p)
+{
+	struct qedi_work *qedi_work;
+	struct qedi_conn *q_conn;
+	struct qedi_cmd *qedi_cmd;
 	u32 iscsi_cid;
-	पूर्णांक rc = 0;
+	int rc = 0;
 
 	iscsi_cid  = cqe->cqe_common.conn_id;
 	q_conn = qedi->cid_que.conn_cid_tbl[iscsi_cid];
-	अगर (!q_conn) अणु
+	if (!q_conn) {
 		QEDI_WARN(&qedi->dbg_ctx,
 			  "Session no longer exists for cid=0x%x!!\n",
 			  iscsi_cid);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	चयन (cqe->cqe_common.cqe_type) अणु
-	हाल ISCSI_CQE_TYPE_SOLICITED:
-	हाल ISCSI_CQE_TYPE_SOLICITED_WITH_SENSE:
+	switch (cqe->cqe_common.cqe_type) {
+	case ISCSI_CQE_TYPE_SOLICITED:
+	case ISCSI_CQE_TYPE_SOLICITED_WITH_SENSE:
 		qedi_cmd = qedi_get_cmd_from_tid(qedi, cqe->cqe_solicited.itid);
-		अगर (!qedi_cmd) अणु
+		if (!qedi_cmd) {
 			rc = -1;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		INIT_LIST_HEAD(&qedi_cmd->cqe_work.list);
 		qedi_cmd->cqe_work.qedi = qedi;
-		स_नकल(&qedi_cmd->cqe_work.cqe, cqe, माप(जोड़ iscsi_cqe));
+		memcpy(&qedi_cmd->cqe_work.cqe, cqe, sizeof(union iscsi_cqe));
 		qedi_cmd->cqe_work.que_idx = que_idx;
 		qedi_cmd->cqe_work.is_solicited = true;
 		list_add_tail(&qedi_cmd->cqe_work.list, &p->work_list);
-		अवरोध;
-	हाल ISCSI_CQE_TYPE_UNSOLICITED:
-	हाल ISCSI_CQE_TYPE_DUMMY:
-	हाल ISCSI_CQE_TYPE_TASK_CLEANUP:
-		qedi_work = kzalloc(माप(*qedi_work), GFP_ATOMIC);
-		अगर (!qedi_work) अणु
+		break;
+	case ISCSI_CQE_TYPE_UNSOLICITED:
+	case ISCSI_CQE_TYPE_DUMMY:
+	case ISCSI_CQE_TYPE_TASK_CLEANUP:
+		qedi_work = kzalloc(sizeof(*qedi_work), GFP_ATOMIC);
+		if (!qedi_work) {
 			rc = -1;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		INIT_LIST_HEAD(&qedi_work->list);
 		qedi_work->qedi = qedi;
-		स_नकल(&qedi_work->cqe, cqe, माप(जोड़ iscsi_cqe));
+		memcpy(&qedi_work->cqe, cqe, sizeof(union iscsi_cqe));
 		qedi_work->que_idx = que_idx;
 		qedi_work->is_solicited = false;
 		list_add_tail(&qedi_work->list, &p->work_list);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		rc = -1;
 		QEDI_ERR(&qedi->dbg_ctx, "FW Error cqe.\n");
-	पूर्ण
-	वापस rc;
-पूर्ण
+	}
+	return rc;
+}
 
-अटल bool qedi_process_completions(काष्ठा qedi_fastpath *fp)
-अणु
-	काष्ठा qedi_ctx *qedi = fp->qedi;
-	काष्ठा qed_sb_info *sb_info = fp->sb_info;
-	काष्ठा status_block_e4 *sb = sb_info->sb_virt;
-	काष्ठा qedi_percpu_s *p = शून्य;
-	काष्ठा global_queue *que;
+static bool qedi_process_completions(struct qedi_fastpath *fp)
+{
+	struct qedi_ctx *qedi = fp->qedi;
+	struct qed_sb_info *sb_info = fp->sb_info;
+	struct status_block_e4 *sb = sb_info->sb_virt;
+	struct qedi_percpu_s *p = NULL;
+	struct global_queue *que;
 	u16 prod_idx;
-	अचिन्हित दीर्घ flags;
-	जोड़ iscsi_cqe *cqe;
-	पूर्णांक cpu;
-	पूर्णांक ret;
+	unsigned long flags;
+	union iscsi_cqe *cqe;
+	int cpu;
+	int ret;
 
 	/* Get the current firmware producer index */
 	prod_idx = sb->pi_array[QEDI_PROTO_CQ_PROD_IDX];
 
-	अगर (prod_idx >= QEDI_CQ_SIZE)
+	if (prod_idx >= QEDI_CQ_SIZE)
 		prod_idx = prod_idx % QEDI_CQ_SIZE;
 
 	que = qedi->global_queues[fp->sb_id];
@@ -1280,15 +1279,15 @@ err_alloc_mem:
 		  "Before: global queue=%p prod_idx=%d cons_idx=%d, sb_id=%d\n",
 		  que, prod_idx, que->cq_cons_idx, fp->sb_id);
 
-	qedi->पूर्णांकr_cpu = fp->sb_id;
+	qedi->intr_cpu = fp->sb_id;
 	cpu = smp_processor_id();
 	p = &per_cpu(qedi_percpu, cpu);
 
-	अगर (unlikely(!p->iothपढ़ो))
+	if (unlikely(!p->iothread))
 		WARN_ON(1);
 
 	spin_lock_irqsave(&p->p_work_lock, flags);
-	जबतक (que->cq_cons_idx != prod_idx) अणु
+	while (que->cq_cons_idx != prod_idx) {
 		cqe = &que->cq[que->cq_cons_idx];
 
 		QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_IO,
@@ -1296,27 +1295,27 @@ err_alloc_mem:
 			  cqe, prod_idx, que->cq_cons_idx);
 
 		ret = qedi_queue_cqe(qedi, cqe, fp->sb_id, p);
-		अगर (ret)
+		if (ret)
 			QEDI_WARN(&qedi->dbg_ctx,
 				  "Dropping CQE 0x%x for cid=0x%x.\n",
 				  que->cq_cons_idx, cqe->cqe_common.conn_id);
 
 		que->cq_cons_idx++;
-		अगर (que->cq_cons_idx == QEDI_CQ_SIZE)
+		if (que->cq_cons_idx == QEDI_CQ_SIZE)
 			que->cq_cons_idx = 0;
-	पूर्ण
-	wake_up_process(p->iothपढ़ो);
+	}
+	wake_up_process(p->iothread);
 	spin_unlock_irqrestore(&p->p_work_lock, flags);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool qedi_fp_has_work(काष्ठा qedi_fastpath *fp)
-अणु
-	काष्ठा qedi_ctx *qedi = fp->qedi;
-	काष्ठा global_queue *que;
-	काष्ठा qed_sb_info *sb_info = fp->sb_info;
-	काष्ठा status_block_e4 *sb = sb_info->sb_virt;
+static bool qedi_fp_has_work(struct qedi_fastpath *fp)
+{
+	struct qedi_ctx *qedi = fp->qedi;
+	struct global_queue *que;
+	struct qed_sb_info *sb_info = fp->sb_info;
+	struct status_block_e4 *sb = sb_info->sb_virt;
 	u16 prod_idx;
 
 	barrier();
@@ -1324,91 +1323,91 @@ err_alloc_mem:
 	/* Get the current firmware producer index */
 	prod_idx = sb->pi_array[QEDI_PROTO_CQ_PROD_IDX];
 
-	/* Get the poपूर्णांकer to the global CQ this completion is on */
+	/* Get the pointer to the global CQ this completion is on */
 	que = qedi->global_queues[fp->sb_id];
 
-	/* prod idx wrap around uपूर्णांक16 */
-	अगर (prod_idx >= QEDI_CQ_SIZE)
+	/* prod idx wrap around uint16 */
+	if (prod_idx >= QEDI_CQ_SIZE)
 		prod_idx = prod_idx % QEDI_CQ_SIZE;
 
-	वापस (que->cq_cons_idx != prod_idx);
-पूर्ण
+	return (que->cq_cons_idx != prod_idx);
+}
 
 /* MSI-X fastpath handler code */
-अटल irqवापस_t qedi_msix_handler(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा qedi_fastpath *fp = dev_id;
-	काष्ठा qedi_ctx *qedi = fp->qedi;
-	bool wake_io_thपढ़ो = true;
+static irqreturn_t qedi_msix_handler(int irq, void *dev_id)
+{
+	struct qedi_fastpath *fp = dev_id;
+	struct qedi_ctx *qedi = fp->qedi;
+	bool wake_io_thread = true;
 
 	qed_sb_ack(fp->sb_info, IGU_INT_DISABLE, 0);
 
 process_again:
-	wake_io_thपढ़ो = qedi_process_completions(fp);
-	अगर (wake_io_thपढ़ो) अणु
+	wake_io_thread = qedi_process_completions(fp);
+	if (wake_io_thread) {
 		QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_DISC,
 			  "process already running\n");
-	पूर्ण
+	}
 
-	अगर (!qedi_fp_has_work(fp))
+	if (!qedi_fp_has_work(fp))
 		qed_sb_update_sb_idx(fp->sb_info);
 
-	/* Check क्रम more work */
+	/* Check for more work */
 	rmb();
 
-	अगर (!qedi_fp_has_work(fp))
+	if (!qedi_fp_has_work(fp))
 		qed_sb_ack(fp->sb_info, IGU_INT_ENABLE, 1);
-	अन्यथा
-		जाओ process_again;
+	else
+		goto process_again;
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-/* simd handler क्रम MSI/INTa */
-अटल व्योम qedi_simd_पूर्णांक_handler(व्योम *cookie)
-अणु
-	/* Cookie is qedi_ctx काष्ठा */
-	काष्ठा qedi_ctx *qedi = (काष्ठा qedi_ctx *)cookie;
+/* simd handler for MSI/INTa */
+static void qedi_simd_int_handler(void *cookie)
+{
+	/* Cookie is qedi_ctx struct */
+	struct qedi_ctx *qedi = (struct qedi_ctx *)cookie;
 
 	QEDI_WARN(&qedi->dbg_ctx, "qedi=%p.\n", qedi);
-पूर्ण
+}
 
-#घोषणा QEDI_SIMD_HANDLER_NUM		0
-अटल व्योम qedi_sync_मुक्त_irqs(काष्ठा qedi_ctx *qedi)
-अणु
-	पूर्णांक i;
+#define QEDI_SIMD_HANDLER_NUM		0
+static void qedi_sync_free_irqs(struct qedi_ctx *qedi)
+{
+	int i;
 	u16 idx;
 
-	अगर (qedi->पूर्णांक_info.msix_cnt) अणु
-		क्रम (i = 0; i < qedi->पूर्णांक_info.used_cnt; i++) अणु
+	if (qedi->int_info.msix_cnt) {
+		for (i = 0; i < qedi->int_info.used_cnt; i++) {
 			idx = i * qedi->dev_info.common.num_hwfns +
 			qedi_ops->common->get_affin_hwfn_idx(qedi->cdev);
 
 			QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_INFO,
 				  "Freeing IRQ #%d vector_idx=%d.\n", i, idx);
 
-			synchronize_irq(qedi->पूर्णांक_info.msix[idx].vector);
-			irq_set_affinity_hपूर्णांक(qedi->पूर्णांक_info.msix[idx].vector,
-					      शून्य);
-			मुक्त_irq(qedi->पूर्णांक_info.msix[idx].vector,
+			synchronize_irq(qedi->int_info.msix[idx].vector);
+			irq_set_affinity_hint(qedi->int_info.msix[idx].vector,
+					      NULL);
+			free_irq(qedi->int_info.msix[idx].vector,
 				 &qedi->fp_array[i]);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		qedi_ops->common->simd_handler_clean(qedi->cdev,
 						     QEDI_SIMD_HANDLER_NUM);
-	पूर्ण
+	}
 
-	qedi->पूर्णांक_info.used_cnt = 0;
-	qedi_ops->common->set_fp_पूर्णांक(qedi->cdev, 0);
-पूर्ण
+	qedi->int_info.used_cnt = 0;
+	qedi_ops->common->set_fp_int(qedi->cdev, 0);
+}
 
-अटल पूर्णांक qedi_request_msix_irq(काष्ठा qedi_ctx *qedi)
-अणु
-	पूर्णांक i, rc, cpu;
+static int qedi_request_msix_irq(struct qedi_ctx *qedi)
+{
+	int i, rc, cpu;
 	u16 idx;
 
 	cpu = cpumask_first(cpu_online_mask);
-	क्रम (i = 0; i < qedi->msix_count; i++) अणु
+	for (i = 0; i < qedi->msix_count; i++) {
 		idx = i * qedi->dev_info.common.num_hwfns +
 			  qedi_ops->common->get_affin_hwfn_idx(qedi->cdev);
 
@@ -1417,147 +1416,147 @@ process_again:
 			  qedi->dev_info.common.num_hwfns,
 			  qedi_ops->common->get_affin_hwfn_idx(qedi->cdev));
 
-		rc = request_irq(qedi->पूर्णांक_info.msix[idx].vector,
+		rc = request_irq(qedi->int_info.msix[idx].vector,
 				 qedi_msix_handler, 0, "qedi",
 				 &qedi->fp_array[i]);
-		अगर (rc) अणु
+		if (rc) {
 			QEDI_WARN(&qedi->dbg_ctx, "request_irq failed.\n");
-			qedi_sync_मुक्त_irqs(qedi);
-			वापस rc;
-		पूर्ण
-		qedi->पूर्णांक_info.used_cnt++;
-		rc = irq_set_affinity_hपूर्णांक(qedi->पूर्णांक_info.msix[idx].vector,
+			qedi_sync_free_irqs(qedi);
+			return rc;
+		}
+		qedi->int_info.used_cnt++;
+		rc = irq_set_affinity_hint(qedi->int_info.msix[idx].vector,
 					   get_cpu_mask(cpu));
 		cpu = cpumask_next(cpu, cpu_online_mask);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक qedi_setup_पूर्णांक(काष्ठा qedi_ctx *qedi)
-अणु
-	पूर्णांक rc = 0;
+static int qedi_setup_int(struct qedi_ctx *qedi)
+{
+	int rc = 0;
 
-	rc = qedi_ops->common->set_fp_पूर्णांक(qedi->cdev, qedi->num_queues);
-	अगर (rc < 0)
-		जाओ निकास_setup_पूर्णांक;
+	rc = qedi_ops->common->set_fp_int(qedi->cdev, qedi->num_queues);
+	if (rc < 0)
+		goto exit_setup_int;
 
 	qedi->msix_count = rc;
 
-	rc = qedi_ops->common->get_fp_पूर्णांक(qedi->cdev, &qedi->पूर्णांक_info);
-	अगर (rc)
-		जाओ निकास_setup_पूर्णांक;
+	rc = qedi_ops->common->get_fp_int(qedi->cdev, &qedi->int_info);
+	if (rc)
+		goto exit_setup_int;
 
 	QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_DISC,
 		  "Number of msix_cnt = 0x%x num of cpus = 0x%x\n",
-		   qedi->पूर्णांक_info.msix_cnt, num_online_cpus());
+		   qedi->int_info.msix_cnt, num_online_cpus());
 
-	अगर (qedi->पूर्णांक_info.msix_cnt) अणु
+	if (qedi->int_info.msix_cnt) {
 		rc = qedi_request_msix_irq(qedi);
-		जाओ निकास_setup_पूर्णांक;
-	पूर्ण अन्यथा अणु
+		goto exit_setup_int;
+	} else {
 		qedi_ops->common->simd_handler_config(qedi->cdev, &qedi,
 						      QEDI_SIMD_HANDLER_NUM,
-						      qedi_simd_पूर्णांक_handler);
-		qedi->पूर्णांक_info.used_cnt = 1;
-	पूर्ण
+						      qedi_simd_int_handler);
+		qedi->int_info.used_cnt = 1;
+	}
 
-निकास_setup_पूर्णांक:
-	वापस rc;
-पूर्ण
+exit_setup_int:
+	return rc;
+}
 
-अटल व्योम qedi_मुक्त_nvm_iscsi_cfg(काष्ठा qedi_ctx *qedi)
-अणु
-	अगर (qedi->iscsi_image)
-		dma_मुक्त_coherent(&qedi->pdev->dev,
-				  माप(काष्ठा qedi_nvm_iscsi_image),
+static void qedi_free_nvm_iscsi_cfg(struct qedi_ctx *qedi)
+{
+	if (qedi->iscsi_image)
+		dma_free_coherent(&qedi->pdev->dev,
+				  sizeof(struct qedi_nvm_iscsi_image),
 				  qedi->iscsi_image, qedi->nvm_buf_dma);
-पूर्ण
+}
 
-अटल पूर्णांक qedi_alloc_nvm_iscsi_cfg(काष्ठा qedi_ctx *qedi)
-अणु
+static int qedi_alloc_nvm_iscsi_cfg(struct qedi_ctx *qedi)
+{
 	qedi->iscsi_image = dma_alloc_coherent(&qedi->pdev->dev,
-					       माप(काष्ठा qedi_nvm_iscsi_image),
+					       sizeof(struct qedi_nvm_iscsi_image),
 					       &qedi->nvm_buf_dma, GFP_KERNEL);
-	अगर (!qedi->iscsi_image) अणु
+	if (!qedi->iscsi_image) {
 		QEDI_ERR(&qedi->dbg_ctx, "Could not allocate NVM BUF.\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_INFO,
 		  "NVM BUF addr=0x%p dma=0x%llx.\n", qedi->iscsi_image,
 		  qedi->nvm_buf_dma);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम qedi_मुक्त_bdq(काष्ठा qedi_ctx *qedi)
-अणु
-	पूर्णांक i;
+static void qedi_free_bdq(struct qedi_ctx *qedi)
+{
+	int i;
 
-	अगर (qedi->bdq_pbl_list)
-		dma_मुक्त_coherent(&qedi->pdev->dev, QEDI_PAGE_SIZE,
+	if (qedi->bdq_pbl_list)
+		dma_free_coherent(&qedi->pdev->dev, QEDI_PAGE_SIZE,
 				  qedi->bdq_pbl_list, qedi->bdq_pbl_list_dma);
 
-	अगर (qedi->bdq_pbl)
-		dma_मुक्त_coherent(&qedi->pdev->dev, qedi->bdq_pbl_mem_size,
+	if (qedi->bdq_pbl)
+		dma_free_coherent(&qedi->pdev->dev, qedi->bdq_pbl_mem_size,
 				  qedi->bdq_pbl, qedi->bdq_pbl_dma);
 
-	क्रम (i = 0; i < QEDI_BDQ_NUM; i++) अणु
-		अगर (qedi->bdq[i].buf_addr) अणु
-			dma_मुक्त_coherent(&qedi->pdev->dev, QEDI_BDQ_BUF_SIZE,
+	for (i = 0; i < QEDI_BDQ_NUM; i++) {
+		if (qedi->bdq[i].buf_addr) {
+			dma_free_coherent(&qedi->pdev->dev, QEDI_BDQ_BUF_SIZE,
 					  qedi->bdq[i].buf_addr,
 					  qedi->bdq[i].buf_dma);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम qedi_मुक्त_global_queues(काष्ठा qedi_ctx *qedi)
-अणु
-	पूर्णांक i;
-	काष्ठा global_queue **gl = qedi->global_queues;
+static void qedi_free_global_queues(struct qedi_ctx *qedi)
+{
+	int i;
+	struct global_queue **gl = qedi->global_queues;
 
-	क्रम (i = 0; i < qedi->num_queues; i++) अणु
-		अगर (!gl[i])
-			जारी;
+	for (i = 0; i < qedi->num_queues; i++) {
+		if (!gl[i])
+			continue;
 
-		अगर (gl[i]->cq)
-			dma_मुक्त_coherent(&qedi->pdev->dev, gl[i]->cq_mem_size,
+		if (gl[i]->cq)
+			dma_free_coherent(&qedi->pdev->dev, gl[i]->cq_mem_size,
 					  gl[i]->cq, gl[i]->cq_dma);
-		अगर (gl[i]->cq_pbl)
-			dma_मुक्त_coherent(&qedi->pdev->dev, gl[i]->cq_pbl_size,
+		if (gl[i]->cq_pbl)
+			dma_free_coherent(&qedi->pdev->dev, gl[i]->cq_pbl_size,
 					  gl[i]->cq_pbl, gl[i]->cq_pbl_dma);
 
-		kमुक्त(gl[i]);
-	पूर्ण
-	qedi_मुक्त_bdq(qedi);
-	qedi_मुक्त_nvm_iscsi_cfg(qedi);
-पूर्ण
+		kfree(gl[i]);
+	}
+	qedi_free_bdq(qedi);
+	qedi_free_nvm_iscsi_cfg(qedi);
+}
 
-अटल पूर्णांक qedi_alloc_bdq(काष्ठा qedi_ctx *qedi)
-अणु
-	पूर्णांक i;
-	काष्ठा scsi_bd *pbl;
+static int qedi_alloc_bdq(struct qedi_ctx *qedi)
+{
+	int i;
+	struct scsi_bd *pbl;
 	u64 *list;
 	dma_addr_t page;
 
-	/* Alloc dma memory क्रम BDQ buffers */
-	क्रम (i = 0; i < QEDI_BDQ_NUM; i++) अणु
+	/* Alloc dma memory for BDQ buffers */
+	for (i = 0; i < QEDI_BDQ_NUM; i++) {
 		qedi->bdq[i].buf_addr =
 				dma_alloc_coherent(&qedi->pdev->dev,
 						   QEDI_BDQ_BUF_SIZE,
 						   &qedi->bdq[i].buf_dma,
 						   GFP_KERNEL);
-		अगर (!qedi->bdq[i].buf_addr) अणु
+		if (!qedi->bdq[i].buf_addr) {
 			QEDI_ERR(&qedi->dbg_ctx,
 				 "Could not allocate BDQ buffer %d.\n", i);
-			वापस -ENOMEM;
-		पूर्ण
-	पूर्ण
+			return -ENOMEM;
+		}
+	}
 
-	/* Alloc dma memory क्रम BDQ page buffer list */
-	qedi->bdq_pbl_mem_size = QEDI_BDQ_NUM * माप(काष्ठा scsi_bd);
+	/* Alloc dma memory for BDQ page buffer list */
+	qedi->bdq_pbl_mem_size = QEDI_BDQ_NUM * sizeof(struct scsi_bd);
 	qedi->bdq_pbl_mem_size = ALIGN(qedi->bdq_pbl_mem_size, QEDI_PAGE_SIZE);
-	qedi->rq_num_entries = qedi->bdq_pbl_mem_size / माप(काष्ठा scsi_bd);
+	qedi->rq_num_entries = qedi->bdq_pbl_mem_size / sizeof(struct scsi_bd);
 
 	QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_CONN, "rq_num_entries = %d.\n",
 		  qedi->rq_num_entries);
@@ -1565,17 +1564,17 @@ process_again:
 	qedi->bdq_pbl = dma_alloc_coherent(&qedi->pdev->dev,
 					   qedi->bdq_pbl_mem_size,
 					   &qedi->bdq_pbl_dma, GFP_KERNEL);
-	अगर (!qedi->bdq_pbl) अणु
+	if (!qedi->bdq_pbl) {
 		QEDI_ERR(&qedi->dbg_ctx, "Could not allocate BDQ PBL.\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	/*
-	 * Populate BDQ PBL with physical and भव address of inभागidual
+	 * Populate BDQ PBL with physical and virtual address of individual
 	 * BDQ buffers
 	 */
-	pbl = (काष्ठा scsi_bd  *)qedi->bdq_pbl;
-	क्रम (i = 0; i < QEDI_BDQ_NUM; i++) अणु
+	pbl = (struct scsi_bd  *)qedi->bdq_pbl;
+	for (i = 0; i < QEDI_BDQ_NUM; i++) {
 		pbl->address.hi =
 				cpu_to_le32(QEDI_U64_HI(qedi->bdq[i].buf_dma));
 		pbl->address.lo =
@@ -1588,105 +1587,105 @@ process_again:
 		pbl->opaque.iscsi_opaque.reserved_zero[2] = 0;
 		pbl->opaque.iscsi_opaque.opaque = cpu_to_le16(i);
 		pbl++;
-	पूर्ण
+	}
 
 	/* Allocate list of PBL pages */
 	qedi->bdq_pbl_list = dma_alloc_coherent(&qedi->pdev->dev,
 						QEDI_PAGE_SIZE,
 						&qedi->bdq_pbl_list_dma,
 						GFP_KERNEL);
-	अगर (!qedi->bdq_pbl_list) अणु
+	if (!qedi->bdq_pbl_list) {
 		QEDI_ERR(&qedi->dbg_ctx,
 			 "Could not allocate list of PBL pages.\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	/*
-	 * Now populate PBL list with pages that contain poपूर्णांकers to the
-	 * inभागidual buffers.
+	 * Now populate PBL list with pages that contain pointers to the
+	 * individual buffers.
 	 */
 	qedi->bdq_pbl_list_num_entries = qedi->bdq_pbl_mem_size /
 					 QEDI_PAGE_SIZE;
 	list = (u64 *)qedi->bdq_pbl_list;
 	page = qedi->bdq_pbl_list_dma;
-	क्रम (i = 0; i < qedi->bdq_pbl_list_num_entries; i++) अणु
+	for (i = 0; i < qedi->bdq_pbl_list_num_entries; i++) {
 		*list = qedi->bdq_pbl_dma;
 		list++;
 		page += QEDI_PAGE_SIZE;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक qedi_alloc_global_queues(काष्ठा qedi_ctx *qedi)
-अणु
+static int qedi_alloc_global_queues(struct qedi_ctx *qedi)
+{
 	u32 *list;
-	पूर्णांक i;
-	पूर्णांक status = 0, rc;
+	int i;
+	int status = 0, rc;
 	u32 *pbl;
 	dma_addr_t page;
-	पूर्णांक num_pages;
+	int num_pages;
 
 	/*
 	 * Number of global queues (CQ / RQ). This should
-	 * be <= number of available MSIX vectors क्रम the PF
+	 * be <= number of available MSIX vectors for the PF
 	 */
-	अगर (!qedi->num_queues) अणु
+	if (!qedi->num_queues) {
 		QEDI_ERR(&qedi->dbg_ctx, "No MSI-X vectors available!\n");
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
 	/* Make sure we allocated the PBL that will contain the physical
 	 * addresses of our queues
 	 */
-	अगर (!qedi->p_cpuq) अणु
+	if (!qedi->p_cpuq) {
 		status = 1;
-		जाओ mem_alloc_failure;
-	पूर्ण
+		goto mem_alloc_failure;
+	}
 
-	qedi->global_queues = kzalloc((माप(काष्ठा global_queue *) *
+	qedi->global_queues = kzalloc((sizeof(struct global_queue *) *
 				       qedi->num_queues), GFP_KERNEL);
-	अगर (!qedi->global_queues) अणु
+	if (!qedi->global_queues) {
 		QEDI_ERR(&qedi->dbg_ctx,
 			 "Unable to allocate global queues array ptr memory\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_DISC,
 		  "qedi->global_queues=%p.\n", qedi->global_queues);
 
-	/* Allocate DMA coherent buffers क्रम BDQ */
+	/* Allocate DMA coherent buffers for BDQ */
 	rc = qedi_alloc_bdq(qedi);
-	अगर (rc)
-		जाओ mem_alloc_failure;
+	if (rc)
+		goto mem_alloc_failure;
 
-	/* Allocate DMA coherent buffers क्रम NVM_ISCSI_CFG */
+	/* Allocate DMA coherent buffers for NVM_ISCSI_CFG */
 	rc = qedi_alloc_nvm_iscsi_cfg(qedi);
-	अगर (rc)
-		जाओ mem_alloc_failure;
+	if (rc)
+		goto mem_alloc_failure;
 
-	/* Allocate a CQ and an associated PBL क्रम each MSI-X
+	/* Allocate a CQ and an associated PBL for each MSI-X
 	 * vector.
 	 */
-	क्रम (i = 0; i < qedi->num_queues; i++) अणु
+	for (i = 0; i < qedi->num_queues; i++) {
 		qedi->global_queues[i] =
-					kzalloc(माप(*qedi->global_queues[0]),
+					kzalloc(sizeof(*qedi->global_queues[0]),
 						GFP_KERNEL);
-		अगर (!qedi->global_queues[i]) अणु
+		if (!qedi->global_queues[i]) {
 			QEDI_ERR(&qedi->dbg_ctx,
 				 "Unable to allocation global queue %d.\n", i);
 			status = -ENOMEM;
-			जाओ mem_alloc_failure;
-		पूर्ण
+			goto mem_alloc_failure;
+		}
 
 		qedi->global_queues[i]->cq_mem_size =
-		    (QEDI_CQ_SIZE + 8) * माप(जोड़ iscsi_cqe);
+		    (QEDI_CQ_SIZE + 8) * sizeof(union iscsi_cqe);
 		qedi->global_queues[i]->cq_mem_size =
 		    (qedi->global_queues[i]->cq_mem_size +
 		    (QEDI_PAGE_SIZE - 1));
 
 		qedi->global_queues[i]->cq_pbl_size =
 		    (qedi->global_queues[i]->cq_mem_size /
-		    QEDI_PAGE_SIZE) * माप(व्योम *);
+		    QEDI_PAGE_SIZE) * sizeof(void *);
 		qedi->global_queues[i]->cq_pbl_size =
 		    (qedi->global_queues[i]->cq_pbl_size +
 		    (QEDI_PAGE_SIZE - 1));
@@ -1696,23 +1695,23 @@ process_again:
 								&qedi->global_queues[i]->cq_dma,
 								GFP_KERNEL);
 
-		अगर (!qedi->global_queues[i]->cq) अणु
+		if (!qedi->global_queues[i]->cq) {
 			QEDI_WARN(&qedi->dbg_ctx,
 				  "Could not allocate cq.\n");
 			status = -ENOMEM;
-			जाओ mem_alloc_failure;
-		पूर्ण
+			goto mem_alloc_failure;
+		}
 		qedi->global_queues[i]->cq_pbl = dma_alloc_coherent(&qedi->pdev->dev,
 								    qedi->global_queues[i]->cq_pbl_size,
 								    &qedi->global_queues[i]->cq_pbl_dma,
 								    GFP_KERNEL);
 
-		अगर (!qedi->global_queues[i]->cq_pbl) अणु
+		if (!qedi->global_queues[i]->cq_pbl) {
 			QEDI_WARN(&qedi->dbg_ctx,
 				  "Could not allocate cq PBL.\n");
 			status = -ENOMEM;
-			जाओ mem_alloc_failure;
-		पूर्ण
+			goto mem_alloc_failure;
+		}
 
 		/* Create PBL */
 		num_pages = qedi->global_queues[i]->cq_mem_size /
@@ -1720,24 +1719,24 @@ process_again:
 		page = qedi->global_queues[i]->cq_dma;
 		pbl = (u32 *)qedi->global_queues[i]->cq_pbl;
 
-		जबतक (num_pages--) अणु
+		while (num_pages--) {
 			*pbl = (u32)page;
 			pbl++;
 			*pbl = (u32)((u64)page >> 32);
 			pbl++;
 			page += QEDI_PAGE_SIZE;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	list = (u32 *)qedi->p_cpuq;
 
 	/*
-	 * The list is built as follows: CQ#0 PBL poपूर्णांकer, RQ#0 PBL poपूर्णांकer,
-	 * CQ#1 PBL poपूर्णांकer, RQ#1 PBL poपूर्णांकer, etc.  Each PBL poपूर्णांकer poपूर्णांकs
-	 * to the physical address which contains an array of poपूर्णांकers to the
-	 * physical addresses of the specअगरic queue pages.
+	 * The list is built as follows: CQ#0 PBL pointer, RQ#0 PBL pointer,
+	 * CQ#1 PBL pointer, RQ#1 PBL pointer, etc.  Each PBL pointer points
+	 * to the physical address which contains an array of pointers to the
+	 * physical addresses of the specific queue pages.
 	 */
-	क्रम (i = 0; i < qedi->num_queues; i++) अणु
+	for (i = 0; i < qedi->num_queues; i++) {
 		*list = (u32)qedi->global_queues[i]->cq_pbl_dma;
 		list++;
 		*list = (u32)((u64)qedi->global_queues[i]->cq_pbl_dma >> 32);
@@ -1747,314 +1746,314 @@ process_again:
 		list++;
 		*list = (u32)((u64)0 >> 32);
 		list++;
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 mem_alloc_failure:
-	qedi_मुक्त_global_queues(qedi);
-	वापस status;
-पूर्ण
+	qedi_free_global_queues(qedi);
+	return status;
+}
 
-पूर्णांक qedi_alloc_sq(काष्ठा qedi_ctx *qedi, काष्ठा qedi_endpoपूर्णांक *ep)
-अणु
-	पूर्णांक rval = 0;
+int qedi_alloc_sq(struct qedi_ctx *qedi, struct qedi_endpoint *ep)
+{
+	int rval = 0;
 	u32 *pbl;
 	dma_addr_t page;
-	पूर्णांक num_pages;
+	int num_pages;
 
-	अगर (!ep)
-		वापस -EIO;
+	if (!ep)
+		return -EIO;
 
 	/* Calculate appropriate queue and PBL sizes */
-	ep->sq_mem_size = QEDI_SQ_SIZE * माप(काष्ठा iscsi_wqe);
+	ep->sq_mem_size = QEDI_SQ_SIZE * sizeof(struct iscsi_wqe);
 	ep->sq_mem_size += QEDI_PAGE_SIZE - 1;
 
-	ep->sq_pbl_size = (ep->sq_mem_size / QEDI_PAGE_SIZE) * माप(व्योम *);
+	ep->sq_pbl_size = (ep->sq_mem_size / QEDI_PAGE_SIZE) * sizeof(void *);
 	ep->sq_pbl_size = ep->sq_pbl_size + QEDI_PAGE_SIZE;
 
 	ep->sq = dma_alloc_coherent(&qedi->pdev->dev, ep->sq_mem_size,
 				    &ep->sq_dma, GFP_KERNEL);
-	अगर (!ep->sq) अणु
+	if (!ep->sq) {
 		QEDI_WARN(&qedi->dbg_ctx,
 			  "Could not allocate send queue.\n");
 		rval = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	ep->sq_pbl = dma_alloc_coherent(&qedi->pdev->dev, ep->sq_pbl_size,
 					&ep->sq_pbl_dma, GFP_KERNEL);
-	अगर (!ep->sq_pbl) अणु
+	if (!ep->sq_pbl) {
 		QEDI_WARN(&qedi->dbg_ctx,
 			  "Could not allocate send queue PBL.\n");
 		rval = -ENOMEM;
-		जाओ out_मुक्त_sq;
-	पूर्ण
+		goto out_free_sq;
+	}
 
 	/* Create PBL */
 	num_pages = ep->sq_mem_size / QEDI_PAGE_SIZE;
 	page = ep->sq_dma;
 	pbl = (u32 *)ep->sq_pbl;
 
-	जबतक (num_pages--) अणु
+	while (num_pages--) {
 		*pbl = (u32)page;
 		pbl++;
 		*pbl = (u32)((u64)page >> 32);
 		pbl++;
 		page += QEDI_PAGE_SIZE;
-	पूर्ण
+	}
 
-	वापस rval;
+	return rval;
 
-out_मुक्त_sq:
-	dma_मुक्त_coherent(&qedi->pdev->dev, ep->sq_mem_size, ep->sq,
+out_free_sq:
+	dma_free_coherent(&qedi->pdev->dev, ep->sq_mem_size, ep->sq,
 			  ep->sq_dma);
 out:
-	वापस rval;
-पूर्ण
+	return rval;
+}
 
-व्योम qedi_मुक्त_sq(काष्ठा qedi_ctx *qedi, काष्ठा qedi_endpoपूर्णांक *ep)
-अणु
-	अगर (ep->sq_pbl)
-		dma_मुक्त_coherent(&qedi->pdev->dev, ep->sq_pbl_size, ep->sq_pbl,
+void qedi_free_sq(struct qedi_ctx *qedi, struct qedi_endpoint *ep)
+{
+	if (ep->sq_pbl)
+		dma_free_coherent(&qedi->pdev->dev, ep->sq_pbl_size, ep->sq_pbl,
 				  ep->sq_pbl_dma);
-	अगर (ep->sq)
-		dma_मुक्त_coherent(&qedi->pdev->dev, ep->sq_mem_size, ep->sq,
+	if (ep->sq)
+		dma_free_coherent(&qedi->pdev->dev, ep->sq_mem_size, ep->sq,
 				  ep->sq_dma);
-पूर्ण
+}
 
-पूर्णांक qedi_get_task_idx(काष्ठा qedi_ctx *qedi)
-अणु
-	s16 पंचांगp_idx;
+int qedi_get_task_idx(struct qedi_ctx *qedi)
+{
+	s16 tmp_idx;
 
 again:
-	पंचांगp_idx = find_first_zero_bit(qedi->task_idx_map,
+	tmp_idx = find_first_zero_bit(qedi->task_idx_map,
 				      MAX_ISCSI_TASK_ENTRIES);
 
-	अगर (पंचांगp_idx >= MAX_ISCSI_TASK_ENTRIES) अणु
+	if (tmp_idx >= MAX_ISCSI_TASK_ENTRIES) {
 		QEDI_ERR(&qedi->dbg_ctx, "FW task context pool is full.\n");
-		पंचांगp_idx = -1;
-		जाओ err_idx;
-	पूर्ण
+		tmp_idx = -1;
+		goto err_idx;
+	}
 
-	अगर (test_and_set_bit(पंचांगp_idx, qedi->task_idx_map))
-		जाओ again;
+	if (test_and_set_bit(tmp_idx, qedi->task_idx_map))
+		goto again;
 
 err_idx:
-	वापस पंचांगp_idx;
-पूर्ण
+	return tmp_idx;
+}
 
-व्योम qedi_clear_task_idx(काष्ठा qedi_ctx *qedi, पूर्णांक idx)
-अणु
-	अगर (!test_and_clear_bit(idx, qedi->task_idx_map))
+void qedi_clear_task_idx(struct qedi_ctx *qedi, int idx)
+{
+	if (!test_and_clear_bit(idx, qedi->task_idx_map))
 		QEDI_ERR(&qedi->dbg_ctx,
 			 "FW task context, already cleared, tid=0x%x\n", idx);
-पूर्ण
+}
 
-व्योम qedi_update_itt_map(काष्ठा qedi_ctx *qedi, u32 tid, u32 proto_itt,
-			 काष्ठा qedi_cmd *cmd)
-अणु
+void qedi_update_itt_map(struct qedi_ctx *qedi, u32 tid, u32 proto_itt,
+			 struct qedi_cmd *cmd)
+{
 	qedi->itt_map[tid].itt = proto_itt;
 	qedi->itt_map[tid].p_cmd = cmd;
 
 	QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_CONN,
 		  "update itt map tid=0x%x, with proto itt=0x%x\n", tid,
 		  qedi->itt_map[tid].itt);
-पूर्ण
+}
 
-व्योम qedi_get_task_tid(काष्ठा qedi_ctx *qedi, u32 itt, s16 *tid)
-अणु
+void qedi_get_task_tid(struct qedi_ctx *qedi, u32 itt, s16 *tid)
+{
 	u16 i;
 
-	क्रम (i = 0; i < MAX_ISCSI_TASK_ENTRIES; i++) अणु
-		अगर (qedi->itt_map[i].itt == itt) अणु
+	for (i = 0; i < MAX_ISCSI_TASK_ENTRIES; i++) {
+		if (qedi->itt_map[i].itt == itt) {
 			*tid = i;
 			QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_CONN,
 				  "Ref itt=0x%x, found at tid=0x%x\n",
 				  itt, *tid);
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 
 	WARN_ON(1);
-पूर्ण
+}
 
-व्योम qedi_get_proto_itt(काष्ठा qedi_ctx *qedi, u32 tid, u32 *proto_itt)
-अणु
+void qedi_get_proto_itt(struct qedi_ctx *qedi, u32 tid, u32 *proto_itt)
+{
 	*proto_itt = qedi->itt_map[tid].itt;
 	QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_CONN,
 		  "Get itt map tid [0x%x with proto itt[0x%x]",
 		  tid, *proto_itt);
-पूर्ण
+}
 
-काष्ठा qedi_cmd *qedi_get_cmd_from_tid(काष्ठा qedi_ctx *qedi, u32 tid)
-अणु
-	काष्ठा qedi_cmd *cmd = शून्य;
+struct qedi_cmd *qedi_get_cmd_from_tid(struct qedi_ctx *qedi, u32 tid)
+{
+	struct qedi_cmd *cmd = NULL;
 
-	अगर (tid >= MAX_ISCSI_TASK_ENTRIES)
-		वापस शून्य;
+	if (tid >= MAX_ISCSI_TASK_ENTRIES)
+		return NULL;
 
 	cmd = qedi->itt_map[tid].p_cmd;
-	अगर (cmd->task_id != tid)
-		वापस शून्य;
+	if (cmd->task_id != tid)
+		return NULL;
 
-	qedi->itt_map[tid].p_cmd = शून्य;
+	qedi->itt_map[tid].p_cmd = NULL;
 
-	वापस cmd;
-पूर्ण
+	return cmd;
+}
 
-अटल पूर्णांक qedi_alloc_itt(काष्ठा qedi_ctx *qedi)
-अणु
-	qedi->itt_map = kसुस्मृति(MAX_ISCSI_TASK_ENTRIES,
-				माप(काष्ठा qedi_itt_map), GFP_KERNEL);
-	अगर (!qedi->itt_map) अणु
+static int qedi_alloc_itt(struct qedi_ctx *qedi)
+{
+	qedi->itt_map = kcalloc(MAX_ISCSI_TASK_ENTRIES,
+				sizeof(struct qedi_itt_map), GFP_KERNEL);
+	if (!qedi->itt_map) {
 		QEDI_ERR(&qedi->dbg_ctx,
 			 "Unable to allocate itt map array memory\n");
-		वापस -ENOMEM;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -ENOMEM;
+	}
+	return 0;
+}
 
-अटल व्योम qedi_मुक्त_itt(काष्ठा qedi_ctx *qedi)
-अणु
-	kमुक्त(qedi->itt_map);
-पूर्ण
+static void qedi_free_itt(struct qedi_ctx *qedi)
+{
+	kfree(qedi->itt_map);
+}
 
-अटल काष्ठा qed_ll2_cb_ops qedi_ll2_cb_ops = अणु
+static struct qed_ll2_cb_ops qedi_ll2_cb_ops = {
 	.rx_cb = qedi_ll2_rx,
-	.tx_cb = शून्य,
-पूर्ण;
+	.tx_cb = NULL,
+};
 
-अटल पूर्णांक qedi_percpu_io_thपढ़ो(व्योम *arg)
-अणु
-	काष्ठा qedi_percpu_s *p = arg;
-	काष्ठा qedi_work *work, *पंचांगp;
-	अचिन्हित दीर्घ flags;
+static int qedi_percpu_io_thread(void *arg)
+{
+	struct qedi_percpu_s *p = arg;
+	struct qedi_work *work, *tmp;
+	unsigned long flags;
 	LIST_HEAD(work_list);
 
 	set_user_nice(current, -20);
 
-	जबतक (!kthपढ़ो_should_stop()) अणु
+	while (!kthread_should_stop()) {
 		spin_lock_irqsave(&p->p_work_lock, flags);
-		जबतक (!list_empty(&p->work_list)) अणु
+		while (!list_empty(&p->work_list)) {
 			list_splice_init(&p->work_list, &work_list);
 			spin_unlock_irqrestore(&p->p_work_lock, flags);
 
-			list_क्रम_each_entry_safe(work, पंचांगp, &work_list, list) अणु
+			list_for_each_entry_safe(work, tmp, &work_list, list) {
 				list_del_init(&work->list);
 				qedi_fp_process_cqes(work);
-				अगर (!work->is_solicited)
-					kमुक्त(work);
-			पूर्ण
+				if (!work->is_solicited)
+					kfree(work);
+			}
 			cond_resched();
 			spin_lock_irqsave(&p->p_work_lock, flags);
-		पूर्ण
+		}
 		set_current_state(TASK_INTERRUPTIBLE);
 		spin_unlock_irqrestore(&p->p_work_lock, flags);
 		schedule();
-	पूर्ण
+	}
 	__set_current_state(TASK_RUNNING);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक qedi_cpu_online(अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा qedi_percpu_s *p = this_cpu_ptr(&qedi_percpu);
-	काष्ठा task_काष्ठा *thपढ़ो;
+static int qedi_cpu_online(unsigned int cpu)
+{
+	struct qedi_percpu_s *p = this_cpu_ptr(&qedi_percpu);
+	struct task_struct *thread;
 
-	thपढ़ो = kthपढ़ो_create_on_node(qedi_percpu_io_thपढ़ो, (व्योम *)p,
+	thread = kthread_create_on_node(qedi_percpu_io_thread, (void *)p,
 					cpu_to_node(cpu),
 					"qedi_thread/%d", cpu);
-	अगर (IS_ERR(thपढ़ो))
-		वापस PTR_ERR(thपढ़ो);
+	if (IS_ERR(thread))
+		return PTR_ERR(thread);
 
-	kthपढ़ो_bind(thपढ़ो, cpu);
-	p->iothपढ़ो = thपढ़ो;
-	wake_up_process(thपढ़ो);
-	वापस 0;
-पूर्ण
+	kthread_bind(thread, cpu);
+	p->iothread = thread;
+	wake_up_process(thread);
+	return 0;
+}
 
-अटल पूर्णांक qedi_cpu_offline(अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा qedi_percpu_s *p = this_cpu_ptr(&qedi_percpu);
-	काष्ठा qedi_work *work, *पंचांगp;
-	काष्ठा task_काष्ठा *thपढ़ो;
+static int qedi_cpu_offline(unsigned int cpu)
+{
+	struct qedi_percpu_s *p = this_cpu_ptr(&qedi_percpu);
+	struct qedi_work *work, *tmp;
+	struct task_struct *thread;
 
 	spin_lock_bh(&p->p_work_lock);
-	thपढ़ो = p->iothपढ़ो;
-	p->iothपढ़ो = शून्य;
+	thread = p->iothread;
+	p->iothread = NULL;
 
-	list_क्रम_each_entry_safe(work, पंचांगp, &p->work_list, list) अणु
+	list_for_each_entry_safe(work, tmp, &p->work_list, list) {
 		list_del_init(&work->list);
 		qedi_fp_process_cqes(work);
-		अगर (!work->is_solicited)
-			kमुक्त(work);
-	पूर्ण
+		if (!work->is_solicited)
+			kfree(work);
+	}
 
 	spin_unlock_bh(&p->p_work_lock);
-	अगर (thपढ़ो)
-		kthपढ़ो_stop(thपढ़ो);
-	वापस 0;
-पूर्ण
+	if (thread)
+		kthread_stop(thread);
+	return 0;
+}
 
-व्योम qedi_reset_host_mtu(काष्ठा qedi_ctx *qedi, u16 mtu)
-अणु
-	काष्ठा qed_ll2_params params;
+void qedi_reset_host_mtu(struct qedi_ctx *qedi, u16 mtu)
+{
+	struct qed_ll2_params params;
 
 	qedi_recover_all_conns(qedi);
 
 	qedi_ops->ll2->stop(qedi->cdev);
-	qedi_ll2_मुक्त_skbs(qedi);
+	qedi_ll2_free_skbs(qedi);
 
 	QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_INFO, "old MTU %u, new MTU %u\n",
 		  qedi->ll2_mtu, mtu);
-	स_रखो(&params, 0, माप(params));
+	memset(&params, 0, sizeof(params));
 	qedi->ll2_mtu = mtu;
 	params.mtu = qedi->ll2_mtu + IPV6_HDR_LEN + TCP_HDR_LEN;
 	params.drop_ttl0_packets = 0;
 	params.rx_vlan_stripping = 1;
 	ether_addr_copy(params.ll2_mac_address, qedi->dev_info.common.hw_mac);
 	qedi_ops->ll2->start(qedi->cdev, &params);
-पूर्ण
+}
 
 /*
- * qedi_get_nvram_block: - Scan through the iSCSI NVRAM block (जबतक accounting
- * क्रम gaps) क्रम the matching असलolute-pf-id of the QEDI device.
+ * qedi_get_nvram_block: - Scan through the iSCSI NVRAM block (while accounting
+ * for gaps) for the matching absolute-pf-id of the QEDI device.
  */
-अटल काष्ठा nvm_iscsi_block *
-qedi_get_nvram_block(काष्ठा qedi_ctx *qedi)
-अणु
-	पूर्णांक i;
+static struct nvm_iscsi_block *
+qedi_get_nvram_block(struct qedi_ctx *qedi)
+{
+	int i;
 	u8 pf;
 	u32 flags;
-	काष्ठा nvm_iscsi_block *block;
+	struct nvm_iscsi_block *block;
 
-	pf = qedi->dev_info.common.असल_pf_id;
+	pf = qedi->dev_info.common.abs_pf_id;
 	block = &qedi->iscsi_image->iscsi_cfg.block[0];
-	क्रम (i = 0; i < NUM_OF_ISCSI_PF_SUPPORTED; i++, block++) अणु
+	for (i = 0; i < NUM_OF_ISCSI_PF_SUPPORTED; i++, block++) {
 		flags = ((block->id) & NVM_ISCSI_CFG_BLK_CTRL_FLAG_MASK) >>
 			NVM_ISCSI_CFG_BLK_CTRL_FLAG_OFFSET;
-		अगर (flags & (NVM_ISCSI_CFG_BLK_CTRL_FLAG_IS_NOT_EMPTY |
+		if (flags & (NVM_ISCSI_CFG_BLK_CTRL_FLAG_IS_NOT_EMPTY |
 				NVM_ISCSI_CFG_BLK_CTRL_FLAG_PF_MAPPED) &&
 			(pf == (block->id & NVM_ISCSI_CFG_BLK_MAPPED_PF_ID_MASK)
 				>> NVM_ISCSI_CFG_BLK_MAPPED_PF_ID_OFFSET))
-			वापस block;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+			return block;
+	}
+	return NULL;
+}
 
-अटल sमाप_प्रकार qedi_show_boot_eth_info(व्योम *data, पूर्णांक type, अक्षर *buf)
-अणु
-	काष्ठा qedi_ctx *qedi = data;
-	काष्ठा nvm_iscsi_initiator *initiator;
-	पूर्णांक rc = 1;
+static ssize_t qedi_show_boot_eth_info(void *data, int type, char *buf)
+{
+	struct qedi_ctx *qedi = data;
+	struct nvm_iscsi_initiator *initiator;
+	int rc = 1;
 	u32 ipv6_en, dhcp_en, ip_len;
-	काष्ठा nvm_iscsi_block *block;
-	अक्षर *fmt, *ip, *sub, *gw;
+	struct nvm_iscsi_block *block;
+	char *fmt, *ip, *sub, *gw;
 
 	block = qedi_get_nvram_block(qedi);
-	अगर (!block)
-		वापस 0;
+	if (!block)
+		return 0;
 
 	initiator = &block->initiator;
 	ipv6_en = block->generic.ctrl_flags &
@@ -2069,127 +2068,127 @@ qedi_get_nvram_block(काष्ठा qedi_ctx *qedi)
 	      initiator->ipv4.subnet_mask.byte;
 	gw = ipv6_en ? initiator->ipv6.gateway.byte :
 	     initiator->ipv4.gateway.byte;
-	/* DHCP IP adjusपंचांगents. */
+	/* DHCP IP adjustments. */
 	fmt = dhcp_en ? "%s\n" : fmt;
-	अगर (dhcp_en) अणु
+	if (dhcp_en) {
 		ip = ipv6_en ? "0::0" : "0.0.0.0";
 		sub = ip;
 		gw = ip;
 		ip_len = ipv6_en ? 5 : 8;
-	पूर्ण
+	}
 
-	चयन (type) अणु
-	हाल ISCSI_BOOT_ETH_IP_ADDR:
-		rc = snम_लिखो(buf, ip_len, fmt, ip);
-		अवरोध;
-	हाल ISCSI_BOOT_ETH_SUBNET_MASK:
-		rc = snम_लिखो(buf, ip_len, fmt, sub);
-		अवरोध;
-	हाल ISCSI_BOOT_ETH_GATEWAY:
-		rc = snम_लिखो(buf, ip_len, fmt, gw);
-		अवरोध;
-	हाल ISCSI_BOOT_ETH_FLAGS:
-		rc = snम_लिखो(buf, 3, "%hhd\n",
+	switch (type) {
+	case ISCSI_BOOT_ETH_IP_ADDR:
+		rc = snprintf(buf, ip_len, fmt, ip);
+		break;
+	case ISCSI_BOOT_ETH_SUBNET_MASK:
+		rc = snprintf(buf, ip_len, fmt, sub);
+		break;
+	case ISCSI_BOOT_ETH_GATEWAY:
+		rc = snprintf(buf, ip_len, fmt, gw);
+		break;
+	case ISCSI_BOOT_ETH_FLAGS:
+		rc = snprintf(buf, 3, "%hhd\n",
 			      SYSFS_FLAG_FW_SEL_BOOT);
-		अवरोध;
-	हाल ISCSI_BOOT_ETH_INDEX:
-		rc = snम_लिखो(buf, 3, "0\n");
-		अवरोध;
-	हाल ISCSI_BOOT_ETH_MAC:
-		rc = sysfs_क्रमmat_mac(buf, qedi->mac, ETH_ALEN);
-		अवरोध;
-	हाल ISCSI_BOOT_ETH_VLAN:
-		rc = snम_लिखो(buf, 12, "%d\n",
+		break;
+	case ISCSI_BOOT_ETH_INDEX:
+		rc = snprintf(buf, 3, "0\n");
+		break;
+	case ISCSI_BOOT_ETH_MAC:
+		rc = sysfs_format_mac(buf, qedi->mac, ETH_ALEN);
+		break;
+	case ISCSI_BOOT_ETH_VLAN:
+		rc = snprintf(buf, 12, "%d\n",
 			      GET_FIELD2(initiator->generic_cont0,
 					 NVM_ISCSI_CFG_INITIATOR_VLAN));
-		अवरोध;
-	हाल ISCSI_BOOT_ETH_ORIGIN:
-		अगर (dhcp_en)
-			rc = snम_लिखो(buf, 3, "3\n");
-		अवरोध;
-	शेष:
+		break;
+	case ISCSI_BOOT_ETH_ORIGIN:
+		if (dhcp_en)
+			rc = snprintf(buf, 3, "3\n");
+		break;
+	default:
 		rc = 0;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल umode_t qedi_eth_get_attr_visibility(व्योम *data, पूर्णांक type)
-अणु
-	पूर्णांक rc = 1;
+static umode_t qedi_eth_get_attr_visibility(void *data, int type)
+{
+	int rc = 1;
 
-	चयन (type) अणु
-	हाल ISCSI_BOOT_ETH_FLAGS:
-	हाल ISCSI_BOOT_ETH_MAC:
-	हाल ISCSI_BOOT_ETH_INDEX:
-	हाल ISCSI_BOOT_ETH_IP_ADDR:
-	हाल ISCSI_BOOT_ETH_SUBNET_MASK:
-	हाल ISCSI_BOOT_ETH_GATEWAY:
-	हाल ISCSI_BOOT_ETH_ORIGIN:
-	हाल ISCSI_BOOT_ETH_VLAN:
+	switch (type) {
+	case ISCSI_BOOT_ETH_FLAGS:
+	case ISCSI_BOOT_ETH_MAC:
+	case ISCSI_BOOT_ETH_INDEX:
+	case ISCSI_BOOT_ETH_IP_ADDR:
+	case ISCSI_BOOT_ETH_SUBNET_MASK:
+	case ISCSI_BOOT_ETH_GATEWAY:
+	case ISCSI_BOOT_ETH_ORIGIN:
+	case ISCSI_BOOT_ETH_VLAN:
 		rc = 0444;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		rc = 0;
-		अवरोध;
-	पूर्ण
-	वापस rc;
-पूर्ण
+		break;
+	}
+	return rc;
+}
 
-अटल sमाप_प्रकार qedi_show_boot_ini_info(व्योम *data, पूर्णांक type, अक्षर *buf)
-अणु
-	काष्ठा qedi_ctx *qedi = data;
-	काष्ठा nvm_iscsi_initiator *initiator;
-	पूर्णांक rc;
-	काष्ठा nvm_iscsi_block *block;
+static ssize_t qedi_show_boot_ini_info(void *data, int type, char *buf)
+{
+	struct qedi_ctx *qedi = data;
+	struct nvm_iscsi_initiator *initiator;
+	int rc;
+	struct nvm_iscsi_block *block;
 
 	block = qedi_get_nvram_block(qedi);
-	अगर (!block)
-		वापस 0;
+	if (!block)
+		return 0;
 
 	initiator = &block->initiator;
 
-	चयन (type) अणु
-	हाल ISCSI_BOOT_INI_INITIATOR_NAME:
-		rc = प्र_लिखो(buf, "%.*s\n", NVM_ISCSI_CFG_ISCSI_NAME_MAX_LEN,
+	switch (type) {
+	case ISCSI_BOOT_INI_INITIATOR_NAME:
+		rc = sprintf(buf, "%.*s\n", NVM_ISCSI_CFG_ISCSI_NAME_MAX_LEN,
 			     initiator->initiator_name.byte);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		rc = 0;
-		अवरोध;
-	पूर्ण
-	वापस rc;
-पूर्ण
+		break;
+	}
+	return rc;
+}
 
-अटल umode_t qedi_ini_get_attr_visibility(व्योम *data, पूर्णांक type)
-अणु
-	पूर्णांक rc;
+static umode_t qedi_ini_get_attr_visibility(void *data, int type)
+{
+	int rc;
 
-	चयन (type) अणु
-	हाल ISCSI_BOOT_INI_INITIATOR_NAME:
+	switch (type) {
+	case ISCSI_BOOT_INI_INITIATOR_NAME:
 		rc = 0444;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		rc = 0;
-		अवरोध;
-	पूर्ण
-	वापस rc;
-पूर्ण
+		break;
+	}
+	return rc;
+}
 
-अटल sमाप_प्रकार
-qedi_show_boot_tgt_info(काष्ठा qedi_ctx *qedi, पूर्णांक type,
-			अक्षर *buf, क्रमागत qedi_nvm_tgts idx)
-अणु
-	पूर्णांक rc = 1;
+static ssize_t
+qedi_show_boot_tgt_info(struct qedi_ctx *qedi, int type,
+			char *buf, enum qedi_nvm_tgts idx)
+{
+	int rc = 1;
 	u32 ctrl_flags, ipv6_en, chap_en, mchap_en, ip_len;
-	काष्ठा nvm_iscsi_block *block;
-	अक्षर *chap_name, *chap_secret;
-	अक्षर *mchap_name, *mchap_secret;
+	struct nvm_iscsi_block *block;
+	char *chap_name, *chap_secret;
+	char *mchap_name, *mchap_secret;
 
 	block = qedi_get_nvram_block(qedi);
-	अगर (!block)
-		जाओ निकास_show_tgt_info;
+	if (!block)
+		goto exit_show_tgt_info;
 
 	QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_EVT,
 		  "Port:%d, tgt_idx:%d\n",
@@ -2198,375 +2197,375 @@ qedi_show_boot_tgt_info(काष्ठा qedi_ctx *qedi, पूर्णां
 	ctrl_flags = block->target[idx].ctrl_flags &
 		     NVM_ISCSI_CFG_TARGET_ENABLED;
 
-	अगर (!ctrl_flags) अणु
+	if (!ctrl_flags) {
 		QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_EVT,
 			  "Target disabled\n");
-		जाओ निकास_show_tgt_info;
-	पूर्ण
+		goto exit_show_tgt_info;
+	}
 
 	ipv6_en = block->generic.ctrl_flags &
 		  NVM_ISCSI_CFG_GEN_IPV6_ENABLED;
 	ip_len = ipv6_en ? IPV6_LEN : IPV4_LEN;
 	chap_en = block->generic.ctrl_flags &
 		  NVM_ISCSI_CFG_GEN_CHAP_ENABLED;
-	chap_name = chap_en ? block->initiator.chap_name.byte : शून्य;
-	chap_secret = chap_en ? block->initiator.chap_password.byte : शून्य;
+	chap_name = chap_en ? block->initiator.chap_name.byte : NULL;
+	chap_secret = chap_en ? block->initiator.chap_password.byte : NULL;
 
 	mchap_en = block->generic.ctrl_flags &
 		  NVM_ISCSI_CFG_GEN_CHAP_MUTUAL_ENABLED;
-	mchap_name = mchap_en ? block->target[idx].chap_name.byte : शून्य;
-	mchap_secret = mchap_en ? block->target[idx].chap_password.byte : शून्य;
+	mchap_name = mchap_en ? block->target[idx].chap_name.byte : NULL;
+	mchap_secret = mchap_en ? block->target[idx].chap_password.byte : NULL;
 
-	चयन (type) अणु
-	हाल ISCSI_BOOT_TGT_NAME:
-		rc = प्र_लिखो(buf, "%.*s\n", NVM_ISCSI_CFG_ISCSI_NAME_MAX_LEN,
+	switch (type) {
+	case ISCSI_BOOT_TGT_NAME:
+		rc = sprintf(buf, "%.*s\n", NVM_ISCSI_CFG_ISCSI_NAME_MAX_LEN,
 			     block->target[idx].target_name.byte);
-		अवरोध;
-	हाल ISCSI_BOOT_TGT_IP_ADDR:
-		अगर (ipv6_en)
-			rc = snम_लिखो(buf, ip_len, "%pI6\n",
+		break;
+	case ISCSI_BOOT_TGT_IP_ADDR:
+		if (ipv6_en)
+			rc = snprintf(buf, ip_len, "%pI6\n",
 				      block->target[idx].ipv6_addr.byte);
-		अन्यथा
-			rc = snम_लिखो(buf, ip_len, "%pI4\n",
+		else
+			rc = snprintf(buf, ip_len, "%pI4\n",
 				      block->target[idx].ipv4_addr.byte);
-		अवरोध;
-	हाल ISCSI_BOOT_TGT_PORT:
-		rc = snम_लिखो(buf, 12, "%d\n",
+		break;
+	case ISCSI_BOOT_TGT_PORT:
+		rc = snprintf(buf, 12, "%d\n",
 			      GET_FIELD2(block->target[idx].generic_cont0,
 					 NVM_ISCSI_CFG_TARGET_TCP_PORT));
-		अवरोध;
-	हाल ISCSI_BOOT_TGT_LUN:
-		rc = snम_लिखो(buf, 22, "%.*d\n",
+		break;
+	case ISCSI_BOOT_TGT_LUN:
+		rc = snprintf(buf, 22, "%.*d\n",
 			      block->target[idx].lun.value[1],
 			      block->target[idx].lun.value[0]);
-		अवरोध;
-	हाल ISCSI_BOOT_TGT_CHAP_NAME:
-		rc = प्र_लिखो(buf, "%.*s\n", NVM_ISCSI_CFG_CHAP_NAME_MAX_LEN,
+		break;
+	case ISCSI_BOOT_TGT_CHAP_NAME:
+		rc = sprintf(buf, "%.*s\n", NVM_ISCSI_CFG_CHAP_NAME_MAX_LEN,
 			     chap_name);
-		अवरोध;
-	हाल ISCSI_BOOT_TGT_CHAP_SECRET:
-		rc = प्र_लिखो(buf, "%.*s\n", NVM_ISCSI_CFG_CHAP_PWD_MAX_LEN,
+		break;
+	case ISCSI_BOOT_TGT_CHAP_SECRET:
+		rc = sprintf(buf, "%.*s\n", NVM_ISCSI_CFG_CHAP_PWD_MAX_LEN,
 			     chap_secret);
-		अवरोध;
-	हाल ISCSI_BOOT_TGT_REV_CHAP_NAME:
-		rc = प्र_लिखो(buf, "%.*s\n", NVM_ISCSI_CFG_CHAP_NAME_MAX_LEN,
+		break;
+	case ISCSI_BOOT_TGT_REV_CHAP_NAME:
+		rc = sprintf(buf, "%.*s\n", NVM_ISCSI_CFG_CHAP_NAME_MAX_LEN,
 			     mchap_name);
-		अवरोध;
-	हाल ISCSI_BOOT_TGT_REV_CHAP_SECRET:
-		rc = प्र_लिखो(buf, "%.*s\n", NVM_ISCSI_CFG_CHAP_PWD_MAX_LEN,
+		break;
+	case ISCSI_BOOT_TGT_REV_CHAP_SECRET:
+		rc = sprintf(buf, "%.*s\n", NVM_ISCSI_CFG_CHAP_PWD_MAX_LEN,
 			     mchap_secret);
-		अवरोध;
-	हाल ISCSI_BOOT_TGT_FLAGS:
-		rc = snम_लिखो(buf, 3, "%hhd\n", SYSFS_FLAG_FW_SEL_BOOT);
-		अवरोध;
-	हाल ISCSI_BOOT_TGT_NIC_ASSOC:
-		rc = snम_लिखो(buf, 3, "0\n");
-		अवरोध;
-	शेष:
+		break;
+	case ISCSI_BOOT_TGT_FLAGS:
+		rc = snprintf(buf, 3, "%hhd\n", SYSFS_FLAG_FW_SEL_BOOT);
+		break;
+	case ISCSI_BOOT_TGT_NIC_ASSOC:
+		rc = snprintf(buf, 3, "0\n");
+		break;
+	default:
 		rc = 0;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-निकास_show_tgt_info:
-	वापस rc;
-पूर्ण
+exit_show_tgt_info:
+	return rc;
+}
 
-अटल sमाप_प्रकार qedi_show_boot_tgt_pri_info(व्योम *data, पूर्णांक type, अक्षर *buf)
-अणु
-	काष्ठा qedi_ctx *qedi = data;
+static ssize_t qedi_show_boot_tgt_pri_info(void *data, int type, char *buf)
+{
+	struct qedi_ctx *qedi = data;
 
-	वापस qedi_show_boot_tgt_info(qedi, type, buf, QEDI_NVM_TGT_PRI);
-पूर्ण
+	return qedi_show_boot_tgt_info(qedi, type, buf, QEDI_NVM_TGT_PRI);
+}
 
-अटल sमाप_प्रकार qedi_show_boot_tgt_sec_info(व्योम *data, पूर्णांक type, अक्षर *buf)
-अणु
-	काष्ठा qedi_ctx *qedi = data;
+static ssize_t qedi_show_boot_tgt_sec_info(void *data, int type, char *buf)
+{
+	struct qedi_ctx *qedi = data;
 
-	वापस qedi_show_boot_tgt_info(qedi, type, buf, QEDI_NVM_TGT_SEC);
-पूर्ण
+	return qedi_show_boot_tgt_info(qedi, type, buf, QEDI_NVM_TGT_SEC);
+}
 
-अटल umode_t qedi_tgt_get_attr_visibility(व्योम *data, पूर्णांक type)
-अणु
-	पूर्णांक rc;
+static umode_t qedi_tgt_get_attr_visibility(void *data, int type)
+{
+	int rc;
 
-	चयन (type) अणु
-	हाल ISCSI_BOOT_TGT_NAME:
-	हाल ISCSI_BOOT_TGT_IP_ADDR:
-	हाल ISCSI_BOOT_TGT_PORT:
-	हाल ISCSI_BOOT_TGT_LUN:
-	हाल ISCSI_BOOT_TGT_CHAP_NAME:
-	हाल ISCSI_BOOT_TGT_CHAP_SECRET:
-	हाल ISCSI_BOOT_TGT_REV_CHAP_NAME:
-	हाल ISCSI_BOOT_TGT_REV_CHAP_SECRET:
-	हाल ISCSI_BOOT_TGT_NIC_ASSOC:
-	हाल ISCSI_BOOT_TGT_FLAGS:
+	switch (type) {
+	case ISCSI_BOOT_TGT_NAME:
+	case ISCSI_BOOT_TGT_IP_ADDR:
+	case ISCSI_BOOT_TGT_PORT:
+	case ISCSI_BOOT_TGT_LUN:
+	case ISCSI_BOOT_TGT_CHAP_NAME:
+	case ISCSI_BOOT_TGT_CHAP_SECRET:
+	case ISCSI_BOOT_TGT_REV_CHAP_NAME:
+	case ISCSI_BOOT_TGT_REV_CHAP_SECRET:
+	case ISCSI_BOOT_TGT_NIC_ASSOC:
+	case ISCSI_BOOT_TGT_FLAGS:
 		rc = 0444;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		rc = 0;
-		अवरोध;
-	पूर्ण
-	वापस rc;
-पूर्ण
+		break;
+	}
+	return rc;
+}
 
-अटल व्योम qedi_boot_release(व्योम *data)
-अणु
-	काष्ठा qedi_ctx *qedi = data;
+static void qedi_boot_release(void *data)
+{
+	struct qedi_ctx *qedi = data;
 
 	scsi_host_put(qedi->shost);
-पूर्ण
+}
 
-अटल पूर्णांक qedi_get_boot_info(काष्ठा qedi_ctx *qedi)
-अणु
-	पूर्णांक ret = 1;
+static int qedi_get_boot_info(struct qedi_ctx *qedi)
+{
+	int ret = 1;
 
 	QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_INFO,
 		  "Get NVM iSCSI CFG image\n");
 	ret = qedi_ops->common->nvm_get_image(qedi->cdev,
 					      QED_NVM_IMAGE_ISCSI_CFG,
-					      (अक्षर *)qedi->iscsi_image,
-					      माप(काष्ठा qedi_nvm_iscsi_image));
-	अगर (ret)
+					      (char *)qedi->iscsi_image,
+					      sizeof(struct qedi_nvm_iscsi_image));
+	if (ret)
 		QEDI_ERR(&qedi->dbg_ctx,
 			 "Could not get NVM image. ret = %d\n", ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक qedi_setup_boot_info(काष्ठा qedi_ctx *qedi)
-अणु
-	काष्ठा iscsi_boot_kobj *boot_kobj;
+static int qedi_setup_boot_info(struct qedi_ctx *qedi)
+{
+	struct iscsi_boot_kobj *boot_kobj;
 
-	अगर (qedi_get_boot_info(qedi))
-		वापस -EPERM;
+	if (qedi_get_boot_info(qedi))
+		return -EPERM;
 
 	qedi->boot_kset = iscsi_boot_create_host_kset(qedi->shost->host_no);
-	अगर (!qedi->boot_kset)
-		जाओ kset_मुक्त;
+	if (!qedi->boot_kset)
+		goto kset_free;
 
-	अगर (!scsi_host_get(qedi->shost))
-		जाओ kset_मुक्त;
+	if (!scsi_host_get(qedi->shost))
+		goto kset_free;
 
 	boot_kobj = iscsi_boot_create_target(qedi->boot_kset, 0, qedi,
 					     qedi_show_boot_tgt_pri_info,
 					     qedi_tgt_get_attr_visibility,
 					     qedi_boot_release);
-	अगर (!boot_kobj)
-		जाओ put_host;
+	if (!boot_kobj)
+		goto put_host;
 
-	अगर (!scsi_host_get(qedi->shost))
-		जाओ kset_मुक्त;
+	if (!scsi_host_get(qedi->shost))
+		goto kset_free;
 
 	boot_kobj = iscsi_boot_create_target(qedi->boot_kset, 1, qedi,
 					     qedi_show_boot_tgt_sec_info,
 					     qedi_tgt_get_attr_visibility,
 					     qedi_boot_release);
-	अगर (!boot_kobj)
-		जाओ put_host;
+	if (!boot_kobj)
+		goto put_host;
 
-	अगर (!scsi_host_get(qedi->shost))
-		जाओ kset_मुक्त;
+	if (!scsi_host_get(qedi->shost))
+		goto kset_free;
 
 	boot_kobj = iscsi_boot_create_initiator(qedi->boot_kset, 0, qedi,
 						qedi_show_boot_ini_info,
 						qedi_ini_get_attr_visibility,
 						qedi_boot_release);
-	अगर (!boot_kobj)
-		जाओ put_host;
+	if (!boot_kobj)
+		goto put_host;
 
-	अगर (!scsi_host_get(qedi->shost))
-		जाओ kset_मुक्त;
+	if (!scsi_host_get(qedi->shost))
+		goto kset_free;
 
 	boot_kobj = iscsi_boot_create_ethernet(qedi->boot_kset, 0, qedi,
 					       qedi_show_boot_eth_info,
 					       qedi_eth_get_attr_visibility,
 					       qedi_boot_release);
-	अगर (!boot_kobj)
-		जाओ put_host;
+	if (!boot_kobj)
+		goto put_host;
 
-	वापस 0;
+	return 0;
 
 put_host:
 	scsi_host_put(qedi->shost);
-kset_मुक्त:
+kset_free:
 	iscsi_boot_destroy_kset(qedi->boot_kset);
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-अटल pci_ers_result_t qedi_io_error_detected(काष्ठा pci_dev *pdev,
+static pci_ers_result_t qedi_io_error_detected(struct pci_dev *pdev,
 					       pci_channel_state_t state)
-अणु
-	काष्ठा qedi_ctx *qedi = pci_get_drvdata(pdev);
+{
+	struct qedi_ctx *qedi = pci_get_drvdata(pdev);
 
 	QEDI_ERR(&qedi->dbg_ctx, "%s: PCI error detected [%d]\n",
 		 __func__, state);
 
-	अगर (test_and_set_bit(QEDI_IN_RECOVERY, &qedi->flags)) अणु
+	if (test_and_set_bit(QEDI_IN_RECOVERY, &qedi->flags)) {
 		QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_INFO,
 			  "Recovery already in progress.\n");
-		वापस PCI_ERS_RESULT_NONE;
-	पूर्ण
+		return PCI_ERS_RESULT_NONE;
+	}
 
 	qedi_ops->common->recovery_process(qedi->cdev);
 
-	वापस PCI_ERS_RESULT_CAN_RECOVER;
-पूर्ण
+	return PCI_ERS_RESULT_CAN_RECOVER;
+}
 
-अटल व्योम __qedi_हटाओ(काष्ठा pci_dev *pdev, पूर्णांक mode)
-अणु
-	काष्ठा qedi_ctx *qedi = pci_get_drvdata(pdev);
-	पूर्णांक rval;
+static void __qedi_remove(struct pci_dev *pdev, int mode)
+{
+	struct qedi_ctx *qedi = pci_get_drvdata(pdev);
+	int rval;
 	u16 retry = 10;
 
-	अगर (mode == QEDI_MODE_SHUTDOWN)
-		iscsi_host_क्रम_each_session(qedi->shost,
+	if (mode == QEDI_MODE_SHUTDOWN)
+		iscsi_host_for_each_session(qedi->shost,
 					    qedi_clear_session_ctx);
 
-	अगर (mode == QEDI_MODE_NORMAL || mode == QEDI_MODE_SHUTDOWN) अणु
-		अगर (qedi->पंचांगf_thपढ़ो) अणु
-			flush_workqueue(qedi->पंचांगf_thपढ़ो);
-			destroy_workqueue(qedi->पंचांगf_thपढ़ो);
-			qedi->पंचांगf_thपढ़ो = शून्य;
-		पूर्ण
+	if (mode == QEDI_MODE_NORMAL || mode == QEDI_MODE_SHUTDOWN) {
+		if (qedi->tmf_thread) {
+			flush_workqueue(qedi->tmf_thread);
+			destroy_workqueue(qedi->tmf_thread);
+			qedi->tmf_thread = NULL;
+		}
 
-		अगर (qedi->offload_thपढ़ो) अणु
-			flush_workqueue(qedi->offload_thपढ़ो);
-			destroy_workqueue(qedi->offload_thपढ़ो);
-			qedi->offload_thपढ़ो = शून्य;
-		पूर्ण
-	पूर्ण
+		if (qedi->offload_thread) {
+			flush_workqueue(qedi->offload_thread);
+			destroy_workqueue(qedi->offload_thread);
+			qedi->offload_thread = NULL;
+		}
+	}
 
-#अगर_घोषित CONFIG_DEBUG_FS
-	qedi_dbg_host_निकास(&qedi->dbg_ctx);
-#पूर्ण_अगर
-	अगर (!test_bit(QEDI_IN_OFFLINE, &qedi->flags))
-		qedi_ops->common->set_घातer_state(qedi->cdev, PCI_D0);
+#ifdef CONFIG_DEBUG_FS
+	qedi_dbg_host_exit(&qedi->dbg_ctx);
+#endif
+	if (!test_bit(QEDI_IN_OFFLINE, &qedi->flags))
+		qedi_ops->common->set_power_state(qedi->cdev, PCI_D0);
 
-	qedi_sync_मुक्त_irqs(qedi);
+	qedi_sync_free_irqs(qedi);
 
-	अगर (!test_bit(QEDI_IN_OFFLINE, &qedi->flags)) अणु
-		जबतक (retry--) अणु
+	if (!test_bit(QEDI_IN_OFFLINE, &qedi->flags)) {
+		while (retry--) {
 			rval = qedi_ops->stop(qedi->cdev);
-			अगर (rval < 0)
+			if (rval < 0)
 				msleep(1000);
-			अन्यथा
-				अवरोध;
-		पूर्ण
+			else
+				break;
+		}
 		qedi_ops->ll2->stop(qedi->cdev);
-	पूर्ण
+	}
 
-	qedi_मुक्त_iscsi_pf_param(qedi);
+	qedi_free_iscsi_pf_param(qedi);
 
 	rval = qedi_ops->common->update_drv_state(qedi->cdev, false);
-	अगर (rval)
+	if (rval)
 		QEDI_ERR(&qedi->dbg_ctx, "Failed to send drv state to MFW\n");
 
-	अगर (!test_bit(QEDI_IN_OFFLINE, &qedi->flags)) अणु
+	if (!test_bit(QEDI_IN_OFFLINE, &qedi->flags)) {
 		qedi_ops->common->slowpath_stop(qedi->cdev);
-		qedi_ops->common->हटाओ(qedi->cdev);
-	पूर्ण
+		qedi_ops->common->remove(qedi->cdev);
+	}
 
 	qedi_destroy_fp(qedi);
 
-	अगर (mode == QEDI_MODE_NORMAL || mode == QEDI_MODE_SHUTDOWN) अणु
+	if (mode == QEDI_MODE_NORMAL || mode == QEDI_MODE_SHUTDOWN) {
 		qedi_release_cid_que(qedi);
-		qedi_cm_मुक्त_mem(qedi);
-		qedi_मुक्त_uio(qedi->udev);
-		qedi_मुक्त_itt(qedi);
+		qedi_cm_free_mem(qedi);
+		qedi_free_uio(qedi->udev);
+		qedi_free_itt(qedi);
 
-		अगर (qedi->ll2_recv_thपढ़ो) अणु
-			kthपढ़ो_stop(qedi->ll2_recv_thपढ़ो);
-			qedi->ll2_recv_thपढ़ो = शून्य;
-		पूर्ण
-		qedi_ll2_मुक्त_skbs(qedi);
+		if (qedi->ll2_recv_thread) {
+			kthread_stop(qedi->ll2_recv_thread);
+			qedi->ll2_recv_thread = NULL;
+		}
+		qedi_ll2_free_skbs(qedi);
 
-		अगर (qedi->boot_kset)
+		if (qedi->boot_kset)
 			iscsi_boot_destroy_kset(qedi->boot_kset);
 
-		iscsi_host_हटाओ(qedi->shost);
-		iscsi_host_मुक्त(qedi->shost);
-	पूर्ण
-पूर्ण
+		iscsi_host_remove(qedi->shost);
+		iscsi_host_free(qedi->shost);
+	}
+}
 
-अटल व्योम qedi_board_disable_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा qedi_ctx *qedi =
-			container_of(work, काष्ठा qedi_ctx,
+static void qedi_board_disable_work(struct work_struct *work)
+{
+	struct qedi_ctx *qedi =
+			container_of(work, struct qedi_ctx,
 				     board_disable_work.work);
 
 	QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_INFO,
 		  "Fan failure, Unloading firmware context.\n");
 
-	अगर (test_and_set_bit(QEDI_IN_SHUTDOWN, &qedi->flags))
-		वापस;
+	if (test_and_set_bit(QEDI_IN_SHUTDOWN, &qedi->flags))
+		return;
 
-	__qedi_हटाओ(qedi->pdev, QEDI_MODE_SHUTDOWN);
-पूर्ण
+	__qedi_remove(qedi->pdev, QEDI_MODE_SHUTDOWN);
+}
 
-अटल व्योम qedi_shutकरोwn(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा qedi_ctx *qedi = pci_get_drvdata(pdev);
+static void qedi_shutdown(struct pci_dev *pdev)
+{
+	struct qedi_ctx *qedi = pci_get_drvdata(pdev);
 
 	QEDI_ERR(&qedi->dbg_ctx, "%s: Shutdown qedi\n", __func__);
-	अगर (test_and_set_bit(QEDI_IN_SHUTDOWN, &qedi->flags))
-		वापस;
-	__qedi_हटाओ(pdev, QEDI_MODE_SHUTDOWN);
-पूर्ण
+	if (test_and_set_bit(QEDI_IN_SHUTDOWN, &qedi->flags))
+		return;
+	__qedi_remove(pdev, QEDI_MODE_SHUTDOWN);
+}
 
-अटल पूर्णांक __qedi_probe(काष्ठा pci_dev *pdev, पूर्णांक mode)
-अणु
-	काष्ठा qedi_ctx *qedi;
-	काष्ठा qed_ll2_params params;
+static int __qedi_probe(struct pci_dev *pdev, int mode)
+{
+	struct qedi_ctx *qedi;
+	struct qed_ll2_params params;
 	u8 dp_level = 0;
 	bool is_vf = false;
-	अक्षर host_buf[16];
-	काष्ठा qed_link_params link_params;
-	काष्ठा qed_slowpath_params sp_params;
-	काष्ठा qed_probe_params qed_params;
-	व्योम *task_start, *task_end;
-	पूर्णांक rc;
+	char host_buf[16];
+	struct qed_link_params link_params;
+	struct qed_slowpath_params sp_params;
+	struct qed_probe_params qed_params;
+	void *task_start, *task_end;
+	int rc;
 	u16 retry = 10;
 
-	अगर (mode != QEDI_MODE_RECOVERY) अणु
+	if (mode != QEDI_MODE_RECOVERY) {
 		qedi = qedi_host_alloc(pdev);
-		अगर (!qedi) अणु
+		if (!qedi) {
 			rc = -ENOMEM;
-			जाओ निकास_probe;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			goto exit_probe;
+		}
+	} else {
 		qedi = pci_get_drvdata(pdev);
-	पूर्ण
+	}
 
 retry_probe:
-	अगर (mode == QEDI_MODE_RECOVERY)
+	if (mode == QEDI_MODE_RECOVERY)
 		msleep(2000);
 
-	स_रखो(&qed_params, 0, माप(qed_params));
+	memset(&qed_params, 0, sizeof(qed_params));
 	qed_params.protocol = QED_PROTOCOL_ISCSI;
 	qed_params.dp_module = qedi_qed_debug;
 	qed_params.dp_level = dp_level;
 	qed_params.is_vf = is_vf;
 	qedi->cdev = qedi_ops->common->probe(pdev, &qed_params);
-	अगर (!qedi->cdev) अणु
-		अगर (mode == QEDI_MODE_RECOVERY && retry) अणु
+	if (!qedi->cdev) {
+		if (mode == QEDI_MODE_RECOVERY && retry) {
 			QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_INFO,
 				  "Retry %d initialize hardware\n", retry);
 			retry--;
-			जाओ retry_probe;
-		पूर्ण
+			goto retry_probe;
+		}
 
 		rc = -ENODEV;
 		QEDI_ERR(&qedi->dbg_ctx, "Cannot initialize hardware\n");
-		जाओ मुक्त_host;
-	पूर्ण
+		goto free_host;
+	}
 
 	set_bit(QEDI_ERR_ATTN_CLR_EN, &qedi->qedi_err_flags);
 	set_bit(QEDI_ERR_IS_RECOVERABLE, &qedi->qedi_err_flags);
 	atomic_set(&qedi->link_state, QEDI_LINK_DOWN);
 
 	rc = qedi_ops->fill_dev_info(qedi->cdev, &qedi->dev_info);
-	अगर (rc)
-		जाओ मुक्त_host;
+	if (rc)
+		goto free_host;
 
 	QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_INFO,
 		  "dev_info: num_hwfns=%d affin_hwfn_idx=%d.\n",
@@ -2574,52 +2573,52 @@ retry_probe:
 		  qedi_ops->common->get_affin_hwfn_idx(qedi->cdev));
 
 	rc = qedi_set_iscsi_pf_param(qedi);
-	अगर (rc) अणु
+	if (rc) {
 		rc = -ENOMEM;
 		QEDI_ERR(&qedi->dbg_ctx,
 			 "Set iSCSI pf param fail\n");
-		जाओ मुक्त_host;
-	पूर्ण
+		goto free_host;
+	}
 
 	qedi_ops->common->update_pf_params(qedi->cdev, &qedi->pf_params);
 
 	rc = qedi_prepare_fp(qedi);
-	अगर (rc) अणु
+	if (rc) {
 		QEDI_ERR(&qedi->dbg_ctx, "Cannot start slowpath.\n");
-		जाओ मुक्त_pf_params;
-	पूर्ण
+		goto free_pf_params;
+	}
 
 	/* Start the Slowpath-process */
-	स_रखो(&sp_params, 0, माप(काष्ठा qed_slowpath_params));
-	sp_params.पूर्णांक_mode = QED_INT_MODE_MSIX;
+	memset(&sp_params, 0, sizeof(struct qed_slowpath_params));
+	sp_params.int_mode = QED_INT_MODE_MSIX;
 	sp_params.drv_major = QEDI_DRIVER_MAJOR_VER;
 	sp_params.drv_minor = QEDI_DRIVER_MINOR_VER;
 	sp_params.drv_rev = QEDI_DRIVER_REV_VER;
 	sp_params.drv_eng = QEDI_DRIVER_ENG_VER;
 	strlcpy(sp_params.name, "qedi iSCSI", QED_DRV_VER_STR_SIZE);
 	rc = qedi_ops->common->slowpath_start(qedi->cdev, &sp_params);
-	अगर (rc) अणु
+	if (rc) {
 		QEDI_ERR(&qedi->dbg_ctx, "Cannot start slowpath\n");
-		जाओ stop_hw;
-	पूर्ण
+		goto stop_hw;
+	}
 
-	/* update_pf_params needs to be called beक्रमe and after slowpath
+	/* update_pf_params needs to be called before and after slowpath
 	 * start
 	 */
 	qedi_ops->common->update_pf_params(qedi->cdev, &qedi->pf_params);
 
-	rc = qedi_setup_पूर्णांक(qedi);
-	अगर (rc)
-		जाओ stop_iscsi_func;
+	rc = qedi_setup_int(qedi);
+	if (rc)
+		goto stop_iscsi_func;
 
-	qedi_ops->common->set_घातer_state(qedi->cdev, PCI_D0);
+	qedi_ops->common->set_power_state(qedi->cdev, PCI_D0);
 
-	/* Learn inक्रमmation crucial क्रम qedi to progress */
+	/* Learn information crucial for qedi to progress */
 	rc = qedi_ops->fill_dev_info(qedi->cdev, &qedi->dev_info);
-	अगर (rc)
-		जाओ stop_iscsi_func;
+	if (rc)
+		goto stop_iscsi_func;
 
-	/* Record BDQ producer करोorbell addresses */
+	/* Record BDQ producer doorbell addresses */
 	qedi->bdq_primary_prod = qedi->dev_info.primary_dbq_rq_addr;
 	qedi->bdq_secondary_prod = qedi->dev_info.secondary_bdq_rq_addr;
 	QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_DISC,
@@ -2628,36 +2627,36 @@ retry_probe:
 		  qedi->bdq_secondary_prod);
 
 	/*
-	 * We need to ग_लिखो the number of BDs in the BDQ we've pपुनः_स्मृतिated so
-	 * the f/w will करो a prefetch and we'll get an unsolicited CQE when a
+	 * We need to write the number of BDs in the BDQ we've preallocated so
+	 * the f/w will do a prefetch and we'll get an unsolicited CQE when a
 	 * packet arrives.
 	 */
 	qedi->bdq_prod_idx = QEDI_BDQ_NUM;
 	QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_DISC,
 		  "Writing %d to primary and secondary BDQ doorbell registers.\n",
 		  qedi->bdq_prod_idx);
-	ग_लिखोw(qedi->bdq_prod_idx, qedi->bdq_primary_prod);
-	पढ़ोw(qedi->bdq_primary_prod);
-	ग_लिखोw(qedi->bdq_prod_idx, qedi->bdq_secondary_prod);
-	पढ़ोw(qedi->bdq_secondary_prod);
+	writew(qedi->bdq_prod_idx, qedi->bdq_primary_prod);
+	readw(qedi->bdq_primary_prod);
+	writew(qedi->bdq_prod_idx, qedi->bdq_secondary_prod);
+	readw(qedi->bdq_secondary_prod);
 
 	ether_addr_copy(qedi->mac, qedi->dev_info.common.hw_mac);
 	QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_DISC, "MAC address is %pM.\n",
 		  qedi->mac);
 
-	snम_लिखो(host_buf, माप(host_buf), "host_%d", qedi->shost->host_no);
+	snprintf(host_buf, sizeof(host_buf), "host_%d", qedi->shost->host_no);
 	qedi_ops->common->set_name(qedi->cdev, host_buf);
 
-	qedi_ops->रेजिस्टर_ops(qedi->cdev, &qedi_cb_ops, qedi);
+	qedi_ops->register_ops(qedi->cdev, &qedi_cb_ops, qedi);
 
-	स_रखो(&params, 0, माप(params));
+	memset(&params, 0, sizeof(params));
 	params.mtu = DEF_PATH_MTU + IPV6_HDR_LEN + TCP_HDR_LEN;
 	qedi->ll2_mtu = DEF_PATH_MTU;
 	params.drop_ttl0_packets = 0;
 	params.rx_vlan_stripping = 1;
 	ether_addr_copy(params.ll2_mac_address, qedi->dev_info.common.hw_mac);
 
-	अगर (mode != QEDI_MODE_RECOVERY) अणु
+	if (mode != QEDI_MODE_RECOVERY) {
 		/* set up rx path */
 		INIT_LIST_HEAD(&qedi->ll2_skb_list);
 		spin_lock_init(&qedi->ll2_lock);
@@ -2665,23 +2664,23 @@ retry_probe:
 		spin_lock_init(&qedi->hba_lock);
 		spin_lock_init(&qedi->task_idx_lock);
 		mutex_init(&qedi->stats_lock);
-	पूर्ण
-	qedi_ops->ll2->रेजिस्टर_cb_ops(qedi->cdev, &qedi_ll2_cb_ops, qedi);
+	}
+	qedi_ops->ll2->register_cb_ops(qedi->cdev, &qedi_ll2_cb_ops, qedi);
 	qedi_ops->ll2->start(qedi->cdev, &params);
 
-	अगर (mode != QEDI_MODE_RECOVERY) अणु
-		qedi->ll2_recv_thपढ़ो = kthपढ़ो_run(qedi_ll2_recv_thपढ़ो,
-						    (व्योम *)qedi,
+	if (mode != QEDI_MODE_RECOVERY) {
+		qedi->ll2_recv_thread = kthread_run(qedi_ll2_recv_thread,
+						    (void *)qedi,
 						    "qedi_ll2_thread");
-	पूर्ण
+	}
 
 	rc = qedi_ops->start(qedi->cdev, &qedi->tasks,
 			     qedi, qedi_iscsi_event_cb);
-	अगर (rc) अणु
+	if (rc) {
 		rc = -ENODEV;
 		QEDI_ERR(&qedi->dbg_ctx, "Cannot start iSCSI function\n");
-		जाओ stop_slowpath;
-	पूर्ण
+		goto stop_slowpath;
+	}
 
 	task_start = qedi_get_task_mem(&qedi->tasks, 0);
 	task_end = qedi_get_task_mem(&qedi->tasks, MAX_TID_BLOCKS_ISCSI - 1);
@@ -2689,260 +2688,260 @@ retry_probe:
 		  "Task context start=%p, end=%p block_size=%u.\n",
 		   task_start, task_end, qedi->tasks.size);
 
-	स_रखो(&link_params, 0, माप(link_params));
+	memset(&link_params, 0, sizeof(link_params));
 	link_params.link_up = true;
 	rc = qedi_ops->common->set_link(qedi->cdev, &link_params);
-	अगर (rc) अणु
+	if (rc) {
 		QEDI_WARN(&qedi->dbg_ctx, "Link set up failed.\n");
 		atomic_set(&qedi->link_state, QEDI_LINK_DOWN);
-	पूर्ण
+	}
 
-#अगर_घोषित CONFIG_DEBUG_FS
+#ifdef CONFIG_DEBUG_FS
 	qedi_dbg_host_init(&qedi->dbg_ctx, qedi_debugfs_ops,
 			   qedi_dbg_fops);
-#पूर्ण_अगर
+#endif
 	QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_INFO,
 		  "QLogic FastLinQ iSCSI Module qedi %s, FW %d.%d.%d.%d\n",
 		  QEDI_MODULE_VERSION, FW_MAJOR_VERSION, FW_MINOR_VERSION,
 		  FW_REVISION_VERSION, FW_ENGINEERING_VERSION);
 
-	अगर (mode == QEDI_MODE_NORMAL) अणु
-		अगर (iscsi_host_add(qedi->shost, &pdev->dev)) अणु
+	if (mode == QEDI_MODE_NORMAL) {
+		if (iscsi_host_add(qedi->shost, &pdev->dev)) {
 			QEDI_ERR(&qedi->dbg_ctx,
 				 "Could not add iscsi host\n");
 			rc = -ENOMEM;
-			जाओ हटाओ_host;
-		पूर्ण
+			goto remove_host;
+		}
 
 		/* Allocate uio buffers */
 		rc = qedi_alloc_uio_rings(qedi);
-		अगर (rc) अणु
+		if (rc) {
 			QEDI_ERR(&qedi->dbg_ctx,
 				 "UIO alloc ring failed err=%d\n", rc);
-			जाओ हटाओ_host;
-		पूर्ण
+			goto remove_host;
+		}
 
 		rc = qedi_init_uio(qedi);
-		अगर (rc) अणु
+		if (rc) {
 			QEDI_ERR(&qedi->dbg_ctx,
 				 "UIO init failed, err=%d\n", rc);
-			जाओ मुक्त_uio;
-		पूर्ण
+			goto free_uio;
+		}
 
 		/* host the array on iscsi_conn */
 		rc = qedi_setup_cid_que(qedi);
-		अगर (rc) अणु
+		if (rc) {
 			QEDI_ERR(&qedi->dbg_ctx,
 				 "Could not setup cid que\n");
-			जाओ मुक्त_uio;
-		पूर्ण
+			goto free_uio;
+		}
 
 		rc = qedi_cm_alloc_mem(qedi);
-		अगर (rc) अणु
+		if (rc) {
 			QEDI_ERR(&qedi->dbg_ctx,
 				 "Could not alloc cm memory\n");
-			जाओ मुक्त_cid_que;
-		पूर्ण
+			goto free_cid_que;
+		}
 
 		rc = qedi_alloc_itt(qedi);
-		अगर (rc) अणु
+		if (rc) {
 			QEDI_ERR(&qedi->dbg_ctx,
 				 "Could not alloc itt memory\n");
-			जाओ मुक्त_cid_que;
-		पूर्ण
+			goto free_cid_que;
+		}
 
-		प्र_लिखो(host_buf, "host_%d", qedi->shost->host_no);
-		qedi->पंचांगf_thपढ़ो = create_singlethपढ़ो_workqueue(host_buf);
-		अगर (!qedi->पंचांगf_thपढ़ो) अणु
+		sprintf(host_buf, "host_%d", qedi->shost->host_no);
+		qedi->tmf_thread = create_singlethread_workqueue(host_buf);
+		if (!qedi->tmf_thread) {
 			QEDI_ERR(&qedi->dbg_ctx,
 				 "Unable to start tmf thread!\n");
 			rc = -ENODEV;
-			जाओ मुक्त_cid_que;
-		पूर्ण
+			goto free_cid_que;
+		}
 
-		प्र_लिखो(host_buf, "qedi_ofld%d", qedi->shost->host_no);
-		qedi->offload_thपढ़ो = create_workqueue(host_buf);
-		अगर (!qedi->offload_thपढ़ो) अणु
+		sprintf(host_buf, "qedi_ofld%d", qedi->shost->host_no);
+		qedi->offload_thread = create_workqueue(host_buf);
+		if (!qedi->offload_thread) {
 			QEDI_ERR(&qedi->dbg_ctx,
 				 "Unable to start offload thread!\n");
 			rc = -ENODEV;
-			जाओ मुक्त_पंचांगf_thपढ़ो;
-		पूर्ण
+			goto free_tmf_thread;
+		}
 
 		INIT_DELAYED_WORK(&qedi->recovery_work, qedi_recovery_handler);
 		INIT_DELAYED_WORK(&qedi->board_disable_work,
 				  qedi_board_disable_work);
 
-		/* F/w needs 1st task context memory entry क्रम perक्रमmance */
+		/* F/w needs 1st task context memory entry for performance */
 		set_bit(QEDI_RESERVE_TASK_ID, qedi->task_idx_map);
 		atomic_set(&qedi->num_offloads, 0);
 
-		अगर (qedi_setup_boot_info(qedi))
+		if (qedi_setup_boot_info(qedi))
 			QEDI_ERR(&qedi->dbg_ctx,
 				 "No iSCSI boot target configured\n");
 
 		rc = qedi_ops->common->update_drv_state(qedi->cdev, true);
-		अगर (rc)
+		if (rc)
 			QEDI_ERR(&qedi->dbg_ctx,
 				 "Failed to send drv state to MFW\n");
 
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
-मुक्त_पंचांगf_thपढ़ो:
-	destroy_workqueue(qedi->पंचांगf_thपढ़ो);
-मुक्त_cid_que:
+free_tmf_thread:
+	destroy_workqueue(qedi->tmf_thread);
+free_cid_que:
 	qedi_release_cid_que(qedi);
-मुक्त_uio:
-	qedi_मुक्त_uio(qedi->udev);
-हटाओ_host:
-#अगर_घोषित CONFIG_DEBUG_FS
-	qedi_dbg_host_निकास(&qedi->dbg_ctx);
-#पूर्ण_अगर
-	iscsi_host_हटाओ(qedi->shost);
+free_uio:
+	qedi_free_uio(qedi->udev);
+remove_host:
+#ifdef CONFIG_DEBUG_FS
+	qedi_dbg_host_exit(&qedi->dbg_ctx);
+#endif
+	iscsi_host_remove(qedi->shost);
 stop_iscsi_func:
 	qedi_ops->stop(qedi->cdev);
 stop_slowpath:
 	qedi_ops->common->slowpath_stop(qedi->cdev);
 stop_hw:
-	qedi_ops->common->हटाओ(qedi->cdev);
-मुक्त_pf_params:
-	qedi_मुक्त_iscsi_pf_param(qedi);
-मुक्त_host:
-	iscsi_host_मुक्त(qedi->shost);
-निकास_probe:
-	वापस rc;
-पूर्ण
+	qedi_ops->common->remove(qedi->cdev);
+free_pf_params:
+	qedi_free_iscsi_pf_param(qedi);
+free_host:
+	iscsi_host_free(qedi->shost);
+exit_probe:
+	return rc;
+}
 
-अटल व्योम qedi_mark_conn_recovery(काष्ठा iscsi_cls_session *cls_session)
-अणु
-	काष्ठा iscsi_session *session = cls_session->dd_data;
-	काष्ठा iscsi_conn *conn = session->leadconn;
-	काष्ठा qedi_conn *qedi_conn = conn->dd_data;
+static void qedi_mark_conn_recovery(struct iscsi_cls_session *cls_session)
+{
+	struct iscsi_session *session = cls_session->dd_data;
+	struct iscsi_conn *conn = session->leadconn;
+	struct qedi_conn *qedi_conn = conn->dd_data;
 
 	iscsi_conn_failure(qedi_conn->cls_conn->dd_data, ISCSI_ERR_CONN_FAILED);
-पूर्ण
+}
 
-अटल व्योम qedi_recovery_handler(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा qedi_ctx *qedi =
-			container_of(work, काष्ठा qedi_ctx, recovery_work.work);
+static void qedi_recovery_handler(struct work_struct *work)
+{
+	struct qedi_ctx *qedi =
+			container_of(work, struct qedi_ctx, recovery_work.work);
 
-	iscsi_host_क्रम_each_session(qedi->shost, qedi_mark_conn_recovery);
+	iscsi_host_for_each_session(qedi->shost, qedi_mark_conn_recovery);
 
 	/* Call common_ops->recovery_prolog to allow the MFW to quiesce
 	 * any PCI transactions.
 	 */
 	qedi_ops->common->recovery_prolog(qedi->cdev);
 
-	__qedi_हटाओ(qedi->pdev, QEDI_MODE_RECOVERY);
+	__qedi_remove(qedi->pdev, QEDI_MODE_RECOVERY);
 	__qedi_probe(qedi->pdev, QEDI_MODE_RECOVERY);
 	clear_bit(QEDI_IN_RECOVERY, &qedi->flags);
-पूर्ण
+}
 
-अटल पूर्णांक qedi_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *id)
-अणु
-	वापस __qedi_probe(pdev, QEDI_MODE_NORMAL);
-पूर्ण
+static int qedi_probe(struct pci_dev *pdev, const struct pci_device_id *id)
+{
+	return __qedi_probe(pdev, QEDI_MODE_NORMAL);
+}
 
-अटल व्योम qedi_हटाओ(काष्ठा pci_dev *pdev)
-अणु
-	__qedi_हटाओ(pdev, QEDI_MODE_NORMAL);
-पूर्ण
+static void qedi_remove(struct pci_dev *pdev)
+{
+	__qedi_remove(pdev, QEDI_MODE_NORMAL);
+}
 
-अटल काष्ठा pci_device_id qedi_pci_tbl[] = अणु
-	अणु PCI_DEVICE(PCI_VENDOR_ID_QLOGIC, 0x165E) पूर्ण,
-	अणु PCI_DEVICE(PCI_VENDOR_ID_QLOGIC, 0x8084) पूर्ण,
-	अणु 0 पूर्ण,
-पूर्ण;
+static struct pci_device_id qedi_pci_tbl[] = {
+	{ PCI_DEVICE(PCI_VENDOR_ID_QLOGIC, 0x165E) },
+	{ PCI_DEVICE(PCI_VENDOR_ID_QLOGIC, 0x8084) },
+	{ 0 },
+};
 MODULE_DEVICE_TABLE(pci, qedi_pci_tbl);
 
-अटल क्रमागत cpuhp_state qedi_cpuhp_state;
+static enum cpuhp_state qedi_cpuhp_state;
 
-अटल काष्ठा pci_error_handlers qedi_err_handler = अणु
+static struct pci_error_handlers qedi_err_handler = {
 	.error_detected = qedi_io_error_detected,
-पूर्ण;
+};
 
-अटल काष्ठा pci_driver qedi_pci_driver = अणु
+static struct pci_driver qedi_pci_driver = {
 	.name = QEDI_MODULE_NAME,
 	.id_table = qedi_pci_tbl,
 	.probe = qedi_probe,
-	.हटाओ = qedi_हटाओ,
-	.shutकरोwn = qedi_shutकरोwn,
+	.remove = qedi_remove,
+	.shutdown = qedi_shutdown,
 	.err_handler = &qedi_err_handler,
-पूर्ण;
+};
 
-अटल पूर्णांक __init qedi_init(व्योम)
-अणु
-	काष्ठा qedi_percpu_s *p;
-	पूर्णांक cpu, rc = 0;
+static int __init qedi_init(void)
+{
+	struct qedi_percpu_s *p;
+	int cpu, rc = 0;
 
 	qedi_ops = qed_get_iscsi_ops();
-	अगर (!qedi_ops) अणु
-		QEDI_ERR(शून्य, "Failed to get qed iSCSI operations\n");
-		वापस -EINVAL;
-	पूर्ण
+	if (!qedi_ops) {
+		QEDI_ERR(NULL, "Failed to get qed iSCSI operations\n");
+		return -EINVAL;
+	}
 
-#अगर_घोषित CONFIG_DEBUG_FS
+#ifdef CONFIG_DEBUG_FS
 	qedi_dbg_init("qedi");
-#पूर्ण_अगर
+#endif
 
-	qedi_scsi_transport = iscsi_रेजिस्टर_transport(&qedi_iscsi_transport);
-	अगर (!qedi_scsi_transport) अणु
-		QEDI_ERR(शून्य, "Could not register qedi transport");
+	qedi_scsi_transport = iscsi_register_transport(&qedi_iscsi_transport);
+	if (!qedi_scsi_transport) {
+		QEDI_ERR(NULL, "Could not register qedi transport");
 		rc = -ENOMEM;
-		जाओ निकास_qedi_init_1;
-	पूर्ण
+		goto exit_qedi_init_1;
+	}
 
-	क्रम_each_possible_cpu(cpu) अणु
+	for_each_possible_cpu(cpu) {
 		p = &per_cpu(qedi_percpu, cpu);
 		INIT_LIST_HEAD(&p->work_list);
 		spin_lock_init(&p->p_work_lock);
-		p->iothपढ़ो = शून्य;
-	पूर्ण
+		p->iothread = NULL;
+	}
 
 	rc = cpuhp_setup_state(CPUHP_AP_ONLINE_DYN, "scsi/qedi:online",
 			       qedi_cpu_online, qedi_cpu_offline);
-	अगर (rc < 0)
-		जाओ निकास_qedi_init_2;
+	if (rc < 0)
+		goto exit_qedi_init_2;
 	qedi_cpuhp_state = rc;
 
-	rc = pci_रेजिस्टर_driver(&qedi_pci_driver);
-	अगर (rc) अणु
-		QEDI_ERR(शून्य, "Failed to register driver\n");
-		जाओ निकास_qedi_hp;
-	पूर्ण
+	rc = pci_register_driver(&qedi_pci_driver);
+	if (rc) {
+		QEDI_ERR(NULL, "Failed to register driver\n");
+		goto exit_qedi_hp;
+	}
 
-	वापस 0;
+	return 0;
 
-निकास_qedi_hp:
-	cpuhp_हटाओ_state(qedi_cpuhp_state);
-निकास_qedi_init_2:
-	iscsi_unरेजिस्टर_transport(&qedi_iscsi_transport);
-निकास_qedi_init_1:
-#अगर_घोषित CONFIG_DEBUG_FS
-	qedi_dbg_निकास();
-#पूर्ण_अगर
+exit_qedi_hp:
+	cpuhp_remove_state(qedi_cpuhp_state);
+exit_qedi_init_2:
+	iscsi_unregister_transport(&qedi_iscsi_transport);
+exit_qedi_init_1:
+#ifdef CONFIG_DEBUG_FS
+	qedi_dbg_exit();
+#endif
 	qed_put_iscsi_ops();
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम __निकास qedi_cleanup(व्योम)
-अणु
-	pci_unरेजिस्टर_driver(&qedi_pci_driver);
-	cpuhp_हटाओ_state(qedi_cpuhp_state);
-	iscsi_unरेजिस्टर_transport(&qedi_iscsi_transport);
+static void __exit qedi_cleanup(void)
+{
+	pci_unregister_driver(&qedi_pci_driver);
+	cpuhp_remove_state(qedi_cpuhp_state);
+	iscsi_unregister_transport(&qedi_iscsi_transport);
 
-#अगर_घोषित CONFIG_DEBUG_FS
-	qedi_dbg_निकास();
-#पूर्ण_अगर
+#ifdef CONFIG_DEBUG_FS
+	qedi_dbg_exit();
+#endif
 	qed_put_iscsi_ops();
-पूर्ण
+}
 
 MODULE_DESCRIPTION("QLogic FastLinQ 4xxxx iSCSI Module");
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("QLogic Corporation");
 MODULE_VERSION(QEDI_MODULE_VERSION);
 module_init(qedi_init);
-module_निकास(qedi_cleanup);
+module_exit(qedi_cleanup);

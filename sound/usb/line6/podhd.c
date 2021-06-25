@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Line 6 Pod HD
  *
@@ -8,19 +7,19 @@
  * Copyright (C) 2017 Hans P. Moller <hmoller@uc.cl>
  */
 
-#समावेश <linux/usb.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
-#समावेश <sound/core.h>
-#समावेश <sound/control.h>
-#समावेश <sound/pcm.h>
+#include <linux/usb.h>
+#include <linux/slab.h>
+#include <linux/module.h>
+#include <sound/core.h>
+#include <sound/control.h>
+#include <sound/pcm.h>
 
-#समावेश "driver.h"
-#समावेश "pcm.h"
+#include "driver.h"
+#include "pcm.h"
 
-#घोषणा PODHD_STARTUP_DELAY 500
+#define PODHD_STARTUP_DELAY 500
 
-क्रमागत अणु
+enum {
 	LINE6_PODHD300,
 	LINE6_PODHD400,
 	LINE6_PODHD500,
@@ -28,40 +27,40 @@
 	LINE6_PODX3LIVE,
 	LINE6_PODHD500X,
 	LINE6_PODHDDESKTOP
-पूर्ण;
+};
 
-काष्ठा usb_line6_podhd अणु
+struct usb_line6_podhd {
 	/* Generic Line 6 USB data */
-	काष्ठा usb_line6 line6;
+	struct usb_line6 line6;
 
 	/* Serial number of device */
 	u32 serial_number;
 
 	/* Firmware version */
-	पूर्णांक firmware_version;
+	int firmware_version;
 
 	/* Monitor level */
-	पूर्णांक monitor_level;
-पूर्ण;
+	int monitor_level;
+};
 
-#घोषणा line6_to_podhd(x)	container_of(x, काष्ठा usb_line6_podhd, line6)
+#define line6_to_podhd(x)	container_of(x, struct usb_line6_podhd, line6)
 
-अटल स्थिर काष्ठा snd_ratden podhd_ratden = अणु
+static const struct snd_ratden podhd_ratden = {
 	.num_min = 48000,
 	.num_max = 48000,
 	.num_step = 1,
 	.den = 1,
-पूर्ण;
+};
 
-अटल काष्ठा line6_pcm_properties podhd_pcm_properties = अणु
-	.playback_hw = अणु
+static struct line6_pcm_properties podhd_pcm_properties = {
+	.playback_hw = {
 				  .info = (SNDRV_PCM_INFO_MMAP |
 					   SNDRV_PCM_INFO_INTERLEAVED |
 					   SNDRV_PCM_INFO_BLOCK_TRANSFER |
 					   SNDRV_PCM_INFO_MMAP_VALID |
 					   SNDRV_PCM_INFO_PAUSE |
 					   SNDRV_PCM_INFO_SYNC_START),
-				  .क्रमmats = SNDRV_PCM_FMTBIT_S24_3LE,
+				  .formats = SNDRV_PCM_FMTBIT_S24_3LE,
 				  .rates = SNDRV_PCM_RATE_48000,
 				  .rate_min = 48000,
 				  .rate_max = 48000,
@@ -71,14 +70,14 @@
 				  .period_bytes_min = 64,
 				  .period_bytes_max = 8192,
 				  .periods_min = 1,
-				  .periods_max = 1024पूर्ण,
-	.capture_hw = अणु
+				  .periods_max = 1024},
+	.capture_hw = {
 				 .info = (SNDRV_PCM_INFO_MMAP |
 					  SNDRV_PCM_INFO_INTERLEAVED |
 					  SNDRV_PCM_INFO_BLOCK_TRANSFER |
 					  SNDRV_PCM_INFO_MMAP_VALID |
 					  SNDRV_PCM_INFO_SYNC_START),
-				 .क्रमmats = SNDRV_PCM_FMTBIT_S24_3LE,
+				 .formats = SNDRV_PCM_FMTBIT_S24_3LE,
 				 .rates = SNDRV_PCM_RATE_48000,
 				 .rate_min = 48000,
 				 .rate_max = 48000,
@@ -88,22 +87,22 @@
 				 .period_bytes_min = 64,
 				 .period_bytes_max = 8192,
 				 .periods_min = 1,
-				 .periods_max = 1024पूर्ण,
-	.rates = अणु
+				 .periods_max = 1024},
+	.rates = {
 			    .nrats = 1,
-			    .rats = &podhd_ratdenपूर्ण,
+			    .rats = &podhd_ratden},
 	.bytes_per_channel = 3 /* SNDRV_PCM_FMTBIT_S24_3LE */
-पूर्ण;
+};
 
-अटल काष्ठा line6_pcm_properties podx3_pcm_properties = अणु
-	.playback_hw = अणु
+static struct line6_pcm_properties podx3_pcm_properties = {
+	.playback_hw = {
 				  .info = (SNDRV_PCM_INFO_MMAP |
 					   SNDRV_PCM_INFO_INTERLEAVED |
 					   SNDRV_PCM_INFO_BLOCK_TRANSFER |
 					   SNDRV_PCM_INFO_MMAP_VALID |
 					   SNDRV_PCM_INFO_PAUSE |
 					   SNDRV_PCM_INFO_SYNC_START),
-				  .क्रमmats = SNDRV_PCM_FMTBIT_S24_3LE,
+				  .formats = SNDRV_PCM_FMTBIT_S24_3LE,
 				  .rates = SNDRV_PCM_RATE_48000,
 				  .rate_min = 48000,
 				  .rate_max = 48000,
@@ -113,18 +112,18 @@
 				  .period_bytes_min = 64,
 				  .period_bytes_max = 8192,
 				  .periods_min = 1,
-				  .periods_max = 1024पूर्ण,
-	.capture_hw = अणु
+				  .periods_max = 1024},
+	.capture_hw = {
 				 .info = (SNDRV_PCM_INFO_MMAP |
 					  SNDRV_PCM_INFO_INTERLEAVED |
 					  SNDRV_PCM_INFO_BLOCK_TRANSFER |
 					  SNDRV_PCM_INFO_MMAP_VALID |
 					  SNDRV_PCM_INFO_SYNC_START),
-				 .क्रमmats = SNDRV_PCM_FMTBIT_S24_3LE,
+				 .formats = SNDRV_PCM_FMTBIT_S24_3LE,
 				 .rates = SNDRV_PCM_RATE_48000,
 				 .rate_min = 48000,
 				 .rate_max = 48000,
-				 /* 1+2: Main संकेत (out), 3+4: Tone 1,
+				 /* 1+2: Main signal (out), 3+4: Tone 1,
 				  * 5+6: Tone 2, 7+8: raw
 				  */
 				 .channels_min = 8,
@@ -133,124 +132,124 @@
 				 .period_bytes_min = 64,
 				 .period_bytes_max = 8192,
 				 .periods_min = 1,
-				 .periods_max = 1024पूर्ण,
-	.rates = अणु
+				 .periods_max = 1024},
+	.rates = {
 			    .nrats = 1,
-			    .rats = &podhd_ratdenपूर्ण,
+			    .rats = &podhd_ratden},
 	.bytes_per_channel = 3 /* SNDRV_PCM_FMTBIT_S24_3LE */
-पूर्ण;
-अटल काष्ठा usb_driver podhd_driver;
+};
+static struct usb_driver podhd_driver;
 
-अटल sमाप_प्रकार serial_number_show(काष्ठा device *dev,
-				  काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा snd_card *card = dev_to_snd_card(dev);
-	काष्ठा usb_line6_podhd *pod = card->निजी_data;
+static ssize_t serial_number_show(struct device *dev,
+				  struct device_attribute *attr, char *buf)
+{
+	struct snd_card *card = dev_to_snd_card(dev);
+	struct usb_line6_podhd *pod = card->private_data;
 
-	वापस प्र_लिखो(buf, "%u\n", pod->serial_number);
-पूर्ण
+	return sprintf(buf, "%u\n", pod->serial_number);
+}
 
-अटल sमाप_प्रकार firmware_version_show(काष्ठा device *dev,
-				     काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा snd_card *card = dev_to_snd_card(dev);
-	काष्ठा usb_line6_podhd *pod = card->निजी_data;
+static ssize_t firmware_version_show(struct device *dev,
+				     struct device_attribute *attr, char *buf)
+{
+	struct snd_card *card = dev_to_snd_card(dev);
+	struct usb_line6_podhd *pod = card->private_data;
 
-	वापस प्र_लिखो(buf, "%06x\n", pod->firmware_version);
-पूर्ण
+	return sprintf(buf, "%06x\n", pod->firmware_version);
+}
 
-अटल DEVICE_ATTR_RO(firmware_version);
-अटल DEVICE_ATTR_RO(serial_number);
+static DEVICE_ATTR_RO(firmware_version);
+static DEVICE_ATTR_RO(serial_number);
 
-अटल काष्ठा attribute *podhd_dev_attrs[] = अणु
+static struct attribute *podhd_dev_attrs[] = {
 	&dev_attr_firmware_version.attr,
 	&dev_attr_serial_number.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group podhd_dev_attr_group = अणु
+static const struct attribute_group podhd_dev_attr_group = {
 	.name = "podhd",
 	.attrs = podhd_dev_attrs,
-पूर्ण;
+};
 
 /*
  * POD X3 startup procedure.
  *
  * May be compatible with other POD HD's, since it's also similar to the
- * previous POD setup. In any हाल, it करोesn't seem to be required क्रम the
- * audio nor bulk पूर्णांकerfaces to work.
+ * previous POD setup. In any case, it doesn't seem to be required for the
+ * audio nor bulk interfaces to work.
  */
 
-अटल पूर्णांक podhd_dev_start(काष्ठा usb_line6_podhd *pod)
-अणु
-	पूर्णांक ret;
+static int podhd_dev_start(struct usb_line6_podhd *pod)
+{
+	int ret;
 	u8 init_bytes[8];
-	पूर्णांक i;
-	काष्ठा usb_device *usbdev = pod->line6.usbdev;
+	int i;
+	struct usb_device *usbdev = pod->line6.usbdev;
 
 	ret = usb_control_msg_send(usbdev, 0,
-					0x67, USB_TYPE_VENDOR | USB_RECIP_DEVICE | USB_सूची_OUT,
+					0x67, USB_TYPE_VENDOR | USB_RECIP_DEVICE | USB_DIR_OUT,
 					0x11, 0,
-					शून्य, 0, LINE6_TIMEOUT * HZ, GFP_KERNEL);
-	अगर (ret) अणु
-		dev_err(pod->line6.अगरcdev, "read request failed (error %d)\n", ret);
-		जाओ निकास;
-	पूर्ण
+					NULL, 0, LINE6_TIMEOUT * HZ, GFP_KERNEL);
+	if (ret) {
+		dev_err(pod->line6.ifcdev, "read request failed (error %d)\n", ret);
+		goto exit;
+	}
 
 	/* NOTE: looks like some kind of ping message */
 	ret = usb_control_msg_recv(usbdev, 0, 0x67,
-					USB_TYPE_VENDOR | USB_RECIP_DEVICE | USB_सूची_IN,
+					USB_TYPE_VENDOR | USB_RECIP_DEVICE | USB_DIR_IN,
 					0x11, 0x0,
 					init_bytes, 3, LINE6_TIMEOUT * HZ, GFP_KERNEL);
-	अगर (ret) अणु
-		dev_err(pod->line6.अगरcdev,
+	if (ret) {
+		dev_err(pod->line6.ifcdev,
 			"receive length failed (error %d)\n", ret);
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	pod->firmware_version =
 		(init_bytes[0] << 16) | (init_bytes[1] << 8) | (init_bytes[2] << 0);
 
-	क्रम (i = 0; i <= 16; i++) अणु
-		ret = line6_पढ़ो_data(&pod->line6, 0xf000 + 0x08 * i, init_bytes, 8);
-		अगर (ret < 0)
-			जाओ निकास;
-	पूर्ण
+	for (i = 0; i <= 16; i++) {
+		ret = line6_read_data(&pod->line6, 0xf000 + 0x08 * i, init_bytes, 8);
+		if (ret < 0)
+			goto exit;
+	}
 
 	ret = usb_control_msg_send(usbdev, 0,
 					USB_REQ_SET_FEATURE,
-					USB_TYPE_STANDARD | USB_RECIP_DEVICE | USB_सूची_OUT,
+					USB_TYPE_STANDARD | USB_RECIP_DEVICE | USB_DIR_OUT,
 					1, 0,
-					शून्य, 0, LINE6_TIMEOUT * HZ, GFP_KERNEL);
-निकास:
-	वापस ret;
-पूर्ण
+					NULL, 0, LINE6_TIMEOUT * HZ, GFP_KERNEL);
+exit:
+	return ret;
+}
 
-अटल व्योम podhd_startup(काष्ठा usb_line6 *line6)
-अणु
-	काष्ठा usb_line6_podhd *pod = line6_to_podhd(line6);
+static void podhd_startup(struct usb_line6 *line6)
+{
+	struct usb_line6_podhd *pod = line6_to_podhd(line6);
 
 	podhd_dev_start(pod);
-	line6_पढ़ो_serial_number(&pod->line6, &pod->serial_number);
-	अगर (snd_card_रेजिस्टर(line6->card))
-		dev_err(line6->अगरcdev, "Failed to register POD HD card.\n");
-पूर्ण
+	line6_read_serial_number(&pod->line6, &pod->serial_number);
+	if (snd_card_register(line6->card))
+		dev_err(line6->ifcdev, "Failed to register POD HD card.\n");
+}
 
-अटल व्योम podhd_disconnect(काष्ठा usb_line6 *line6)
-अणु
-	काष्ठा usb_line6_podhd *pod = line6_to_podhd(line6);
+static void podhd_disconnect(struct usb_line6 *line6)
+{
+	struct usb_line6_podhd *pod = line6_to_podhd(line6);
 
-	अगर (pod->line6.properties->capabilities & LINE6_CAP_CONTROL_INFO) अणु
-		काष्ठा usb_पूर्णांकerface *पूर्णांकf;
+	if (pod->line6.properties->capabilities & LINE6_CAP_CONTROL_INFO) {
+		struct usb_interface *intf;
 
-		पूर्णांकf = usb_अगरnum_to_अगर(line6->usbdev,
-					pod->line6.properties->ctrl_अगर);
-		अगर (पूर्णांकf)
-			usb_driver_release_पूर्णांकerface(&podhd_driver, पूर्णांकf);
-	पूर्ण
-पूर्ण
+		intf = usb_ifnum_to_if(line6->usbdev,
+					pod->line6.properties->ctrl_if);
+		if (intf)
+			usb_driver_release_interface(&podhd_driver, intf);
+	}
+}
 
-अटल स्थिर अचिन्हित पूर्णांक भग्न_zero_to_one_lookup[] = अणु
+static const unsigned int float_zero_to_one_lookup[] = {
 0x00000000, 0x3c23d70a, 0x3ca3d70a, 0x3cf5c28f, 0x3d23d70a, 0x3d4ccccd,
 0x3d75c28f, 0x3d8f5c29, 0x3da3d70a, 0x3db851ec, 0x3dcccccd, 0x3de147ae,
 0x3df5c28f, 0x3e051eb8, 0x3e0f5c29, 0x3e19999a, 0x3e23d70a, 0x3e2e147b,
@@ -268,12 +267,12 @@
 0x3f570a3d, 0x3f59999a, 0x3f5c28f6, 0x3f5eb852, 0x3f6147ae, 0x3f63d70a,
 0x3f666666, 0x3f68f5c3, 0x3f6b851f, 0x3f6e147b, 0x3f70a3d7, 0x3f733333,
 0x3f75c28f, 0x3f7851ec, 0x3f7ae148, 0x3f7d70a4, 0x3f800000
-पूर्ण;
+};
 
-अटल व्योम podhd_set_monitor_level(काष्ठा usb_line6_podhd *podhd, पूर्णांक value)
-अणु
-	अचिन्हित पूर्णांक fl;
-	अटल स्थिर अचिन्हित अक्षर msg[16] = अणु
+static void podhd_set_monitor_level(struct usb_line6_podhd *podhd, int value)
+{
+	unsigned int fl;
+	static const unsigned char msg[16] = {
 		/* Chunk is 0xc bytes (without first word) */
 		0x0c, 0x00,
 		/* First chunk in the message */
@@ -284,170 +283,170 @@
 		0x04, 0x41,
 		/* Unknown */
 		0x04, 0x00, 0x13, 0x00,
-		/* Volume, LE भग्न32, 0.0 - 1.0 */
+		/* Volume, LE float32, 0.0 - 1.0 */
 		0x00, 0x00, 0x00, 0x00
-	पूर्ण;
-	अचिन्हित अक्षर *buf;
+	};
+	unsigned char *buf;
 
-	buf = kmemdup(msg, माप(msg), GFP_KERNEL);
-	अगर (!buf)
-		वापस;
+	buf = kmemdup(msg, sizeof(msg), GFP_KERNEL);
+	if (!buf)
+		return;
 
-	अगर (value < 0)
+	if (value < 0)
 		value = 0;
 
-	अगर (value >= ARRAY_SIZE(भग्न_zero_to_one_lookup))
-		value = ARRAY_SIZE(भग्न_zero_to_one_lookup) - 1;
+	if (value >= ARRAY_SIZE(float_zero_to_one_lookup))
+		value = ARRAY_SIZE(float_zero_to_one_lookup) - 1;
 
-	fl = भग्न_zero_to_one_lookup[value];
+	fl = float_zero_to_one_lookup[value];
 
 	buf[12] = (fl >> 0) & 0xff;
 	buf[13] = (fl >> 8) & 0xff;
 	buf[14] = (fl >> 16) & 0xff;
 	buf[15] = (fl >> 24) & 0xff;
 
-	line6_send_raw_message(&podhd->line6, buf, माप(msg));
-	kमुक्त(buf);
+	line6_send_raw_message(&podhd->line6, buf, sizeof(msg));
+	kfree(buf);
 
 	podhd->monitor_level = value;
-पूर्ण
+}
 
 /* control info callback */
-अटल पूर्णांक snd_podhd_control_monitor_info(काष्ठा snd_kcontrol *kcontrol,
-					काष्ठा snd_ctl_elem_info *uinfo)
-अणु
+static int snd_podhd_control_monitor_info(struct snd_kcontrol *kcontrol,
+					struct snd_ctl_elem_info *uinfo)
+{
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 1;
-	uinfo->value.पूर्णांकeger.min = 0;
-	uinfo->value.पूर्णांकeger.max = 100;
-	uinfo->value.पूर्णांकeger.step = 1;
-	वापस 0;
-पूर्ण
+	uinfo->value.integer.min = 0;
+	uinfo->value.integer.max = 100;
+	uinfo->value.integer.step = 1;
+	return 0;
+}
 
 /* control get callback */
-अटल पूर्णांक snd_podhd_control_monitor_get(काष्ठा snd_kcontrol *kcontrol,
-				       काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_line6_pcm *line6pcm = snd_kcontrol_chip(kcontrol);
-	काष्ठा usb_line6_podhd *podhd = line6_to_podhd(line6pcm->line6);
+static int snd_podhd_control_monitor_get(struct snd_kcontrol *kcontrol,
+				       struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_line6_pcm *line6pcm = snd_kcontrol_chip(kcontrol);
+	struct usb_line6_podhd *podhd = line6_to_podhd(line6pcm->line6);
 
-	ucontrol->value.पूर्णांकeger.value[0] = podhd->monitor_level;
-	वापस 0;
-पूर्ण
+	ucontrol->value.integer.value[0] = podhd->monitor_level;
+	return 0;
+}
 
 /* control put callback */
-अटल पूर्णांक snd_podhd_control_monitor_put(काष्ठा snd_kcontrol *kcontrol,
-				       काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_line6_pcm *line6pcm = snd_kcontrol_chip(kcontrol);
-	काष्ठा usb_line6_podhd *podhd = line6_to_podhd(line6pcm->line6);
+static int snd_podhd_control_monitor_put(struct snd_kcontrol *kcontrol,
+				       struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_line6_pcm *line6pcm = snd_kcontrol_chip(kcontrol);
+	struct usb_line6_podhd *podhd = line6_to_podhd(line6pcm->line6);
 
-	अगर (ucontrol->value.पूर्णांकeger.value[0] == podhd->monitor_level)
-		वापस 0;
+	if (ucontrol->value.integer.value[0] == podhd->monitor_level)
+		return 0;
 
-	podhd_set_monitor_level(podhd, ucontrol->value.पूर्णांकeger.value[0]);
-	वापस 1;
-पूर्ण
+	podhd_set_monitor_level(podhd, ucontrol->value.integer.value[0]);
+	return 1;
+}
 
 /* control definition */
-अटल स्थिर काष्ठा snd_kcontrol_new podhd_control_monitor = अणु
-	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+static const struct snd_kcontrol_new podhd_control_monitor = {
+	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name = "Monitor Playback Volume",
 	.index = 0,
 	.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
 	.info = snd_podhd_control_monitor_info,
 	.get = snd_podhd_control_monitor_get,
 	.put = snd_podhd_control_monitor_put
-पूर्ण;
+};
 
 /*
 	Try to init POD HD device.
 */
-अटल पूर्णांक podhd_init(काष्ठा usb_line6 *line6,
-		      स्थिर काष्ठा usb_device_id *id)
-अणु
-	पूर्णांक err;
-	काष्ठा usb_line6_podhd *pod = line6_to_podhd(line6);
-	काष्ठा usb_पूर्णांकerface *पूर्णांकf;
+static int podhd_init(struct usb_line6 *line6,
+		      const struct usb_device_id *id)
+{
+	int err;
+	struct usb_line6_podhd *pod = line6_to_podhd(line6);
+	struct usb_interface *intf;
 
 	line6->disconnect = podhd_disconnect;
 	line6->startup = podhd_startup;
 
-	अगर (pod->line6.properties->capabilities & LINE6_CAP_CONTROL) अणु
-		/* claim the data पूर्णांकerface */
-		पूर्णांकf = usb_अगरnum_to_अगर(line6->usbdev,
-					pod->line6.properties->ctrl_अगर);
-		अगर (!पूर्णांकf) अणु
-			dev_err(pod->line6.अगरcdev, "interface %d not found\n",
-				pod->line6.properties->ctrl_अगर);
-			वापस -ENODEV;
-		पूर्ण
+	if (pod->line6.properties->capabilities & LINE6_CAP_CONTROL) {
+		/* claim the data interface */
+		intf = usb_ifnum_to_if(line6->usbdev,
+					pod->line6.properties->ctrl_if);
+		if (!intf) {
+			dev_err(pod->line6.ifcdev, "interface %d not found\n",
+				pod->line6.properties->ctrl_if);
+			return -ENODEV;
+		}
 
-		err = usb_driver_claim_पूर्णांकerface(&podhd_driver, पूर्णांकf, शून्य);
-		अगर (err != 0) अणु
-			dev_err(pod->line6.अगरcdev, "can't claim interface %d, error %d\n",
-				pod->line6.properties->ctrl_अगर, err);
-			वापस err;
-		पूर्ण
-	पूर्ण
+		err = usb_driver_claim_interface(&podhd_driver, intf, NULL);
+		if (err != 0) {
+			dev_err(pod->line6.ifcdev, "can't claim interface %d, error %d\n",
+				pod->line6.properties->ctrl_if, err);
+			return err;
+		}
+	}
 
-	अगर (pod->line6.properties->capabilities & LINE6_CAP_CONTROL_INFO) अणु
+	if (pod->line6.properties->capabilities & LINE6_CAP_CONTROL_INFO) {
 		/* create sysfs entries: */
 		err = snd_card_add_dev_attr(line6->card, &podhd_dev_attr_group);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+		if (err < 0)
+			return err;
+	}
 
-	अगर (pod->line6.properties->capabilities & LINE6_CAP_PCM) अणु
-		/* initialize PCM subप्रणाली: */
+	if (pod->line6.properties->capabilities & LINE6_CAP_PCM) {
+		/* initialize PCM subsystem: */
 		err = line6_init_pcm(line6,
 			(id->driver_info == LINE6_PODX3 ||
 			id->driver_info == LINE6_PODX3LIVE) ? &podx3_pcm_properties :
 			&podhd_pcm_properties);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+		if (err < 0)
+			return err;
+	}
 
-	अगर (pod->line6.properties->capabilities & LINE6_CAP_HWMON_CTL) अणु
+	if (pod->line6.properties->capabilities & LINE6_CAP_HWMON_CTL) {
 		podhd_set_monitor_level(pod, 100);
 		err = snd_ctl_add(line6->card,
 				  snd_ctl_new1(&podhd_control_monitor,
 					       line6->line6pcm));
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+		if (err < 0)
+			return err;
+	}
 
-	अगर (!(pod->line6.properties->capabilities & LINE6_CAP_CONTROL_INFO)) अणु
-		/* रेजिस्टर USB audio प्रणाली directly */
-		वापस snd_card_रेजिस्टर(line6->card);
-	पूर्ण
+	if (!(pod->line6.properties->capabilities & LINE6_CAP_CONTROL_INFO)) {
+		/* register USB audio system directly */
+		return snd_card_register(line6->card);
+	}
 
-	/* init device and delay रेजिस्टरing */
+	/* init device and delay registering */
 	schedule_delayed_work(&line6->startup_work,
-			      msecs_to_jअगरfies(PODHD_STARTUP_DELAY));
-	वापस 0;
-पूर्ण
+			      msecs_to_jiffies(PODHD_STARTUP_DELAY));
+	return 0;
+}
 
-#घोषणा LINE6_DEVICE(prod) USB_DEVICE(0x0e41, prod)
-#घोषणा LINE6_IF_NUM(prod, n) USB_DEVICE_INTERFACE_NUMBER(0x0e41, prod, n)
+#define LINE6_DEVICE(prod) USB_DEVICE(0x0e41, prod)
+#define LINE6_IF_NUM(prod, n) USB_DEVICE_INTERFACE_NUMBER(0x0e41, prod, n)
 
 /* table of devices that work with this driver */
-अटल स्थिर काष्ठा usb_device_id podhd_id_table[] = अणु
-	/* TODO: no need to alloc data पूर्णांकerfaces when only audio is used */
-	अणु LINE6_DEVICE(0x5057),    .driver_info = LINE6_PODHD300 पूर्ण,
-	अणु LINE6_DEVICE(0x5058),    .driver_info = LINE6_PODHD400 पूर्ण,
-	अणु LINE6_IF_NUM(0x414D, 0), .driver_info = LINE6_PODHD500 पूर्ण,
-	अणु LINE6_IF_NUM(0x414A, 0), .driver_info = LINE6_PODX3 पूर्ण,
-	अणु LINE6_IF_NUM(0x414B, 0), .driver_info = LINE6_PODX3LIVE पूर्ण,
-	अणु LINE6_IF_NUM(0x4159, 0), .driver_info = LINE6_PODHD500X पूर्ण,
-	अणु LINE6_IF_NUM(0x4156, 0), .driver_info = LINE6_PODHDDESKTOP पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct usb_device_id podhd_id_table[] = {
+	/* TODO: no need to alloc data interfaces when only audio is used */
+	{ LINE6_DEVICE(0x5057),    .driver_info = LINE6_PODHD300 },
+	{ LINE6_DEVICE(0x5058),    .driver_info = LINE6_PODHD400 },
+	{ LINE6_IF_NUM(0x414D, 0), .driver_info = LINE6_PODHD500 },
+	{ LINE6_IF_NUM(0x414A, 0), .driver_info = LINE6_PODX3 },
+	{ LINE6_IF_NUM(0x414B, 0), .driver_info = LINE6_PODX3LIVE },
+	{ LINE6_IF_NUM(0x4159, 0), .driver_info = LINE6_PODHD500X },
+	{ LINE6_IF_NUM(0x4156, 0), .driver_info = LINE6_PODHDDESKTOP },
+	{}
+};
 
 MODULE_DEVICE_TABLE(usb, podhd_id_table);
 
-अटल स्थिर काष्ठा line6_properties podhd_properties_table[] = अणु
-	[LINE6_PODHD300] = अणु
+static const struct line6_properties podhd_properties_table[] = {
+	[LINE6_PODHD300] = {
 		.id = "PODHD300",
 		.name = "POD HD300",
 		.capabilities	= LINE6_CAP_PCM
@@ -457,8 +456,8 @@ MODULE_DEVICE_TABLE(usb, podhd_id_table);
 		.ep_ctrl_w = 0x03,
 		.ep_audio_r = 0x82,
 		.ep_audio_w = 0x01,
-	पूर्ण,
-	[LINE6_PODHD400] = अणु
+	},
+	[LINE6_PODHD400] = {
 		.id = "PODHD400",
 		.name = "POD HD400",
 		.capabilities	= LINE6_CAP_PCM
@@ -468,20 +467,20 @@ MODULE_DEVICE_TABLE(usb, podhd_id_table);
 		.ep_ctrl_w = 0x03,
 		.ep_audio_r = 0x82,
 		.ep_audio_w = 0x01,
-	पूर्ण,
-	[LINE6_PODHD500] = अणु
+	},
+	[LINE6_PODHD500] = {
 		.id = "PODHD500",
 		.name = "POD HD500",
 		.capabilities	= LINE6_CAP_PCM | LINE6_CAP_CONTROL
 				| LINE6_CAP_HWMON | LINE6_CAP_HWMON_CTL,
 		.altsetting = 1,
-		.ctrl_अगर = 1,
+		.ctrl_if = 1,
 		.ep_ctrl_r = 0x81,
 		.ep_ctrl_w = 0x01,
 		.ep_audio_r = 0x86,
 		.ep_audio_w = 0x02,
-	पूर्ण,
-	[LINE6_PODX3] = अणु
+	},
+	[LINE6_PODX3] = {
 		.id = "PODX3",
 		.name = "POD X3",
 		.capabilities	= LINE6_CAP_CONTROL | LINE6_CAP_CONTROL_INFO
@@ -489,11 +488,11 @@ MODULE_DEVICE_TABLE(usb, podhd_id_table);
 		.altsetting = 1,
 		.ep_ctrl_r = 0x81,
 		.ep_ctrl_w = 0x01,
-		.ctrl_अगर = 1,
+		.ctrl_if = 1,
 		.ep_audio_r = 0x86,
 		.ep_audio_w = 0x02,
-	पूर्ण,
-	[LINE6_PODX3LIVE] = अणु
+	},
+	[LINE6_PODX3LIVE] = {
 		.id = "PODX3LIVE",
 		.name = "POD X3 LIVE",
 		.capabilities	= LINE6_CAP_CONTROL | LINE6_CAP_CONTROL_INFO
@@ -501,11 +500,11 @@ MODULE_DEVICE_TABLE(usb, podhd_id_table);
 		.altsetting = 1,
 		.ep_ctrl_r = 0x81,
 		.ep_ctrl_w = 0x01,
-		.ctrl_अगर = 1,
+		.ctrl_if = 1,
 		.ep_audio_r = 0x86,
 		.ep_audio_w = 0x02,
-	पूर्ण,
-	[LINE6_PODHD500X] = अणु
+	},
+	[LINE6_PODHD500X] = {
 		.id = "PODHD500X",
 		.name = "POD HD500X",
 		.capabilities	= LINE6_CAP_CONTROL
@@ -513,11 +512,11 @@ MODULE_DEVICE_TABLE(usb, podhd_id_table);
 		.altsetting = 1,
 		.ep_ctrl_r = 0x81,
 		.ep_ctrl_w = 0x01,
-		.ctrl_अगर = 1,
+		.ctrl_if = 1,
 		.ep_audio_r = 0x86,
 		.ep_audio_w = 0x02,
-	पूर्ण,
-	[LINE6_PODHDDESKTOP] = अणु
+	},
+	[LINE6_PODHDDESKTOP] = {
 		.id = "PODHDDESKTOP",
 		.name = "POD HDDESKTOP",
 		.capabilities    = LINE6_CAP_CONTROL
@@ -525,34 +524,34 @@ MODULE_DEVICE_TABLE(usb, podhd_id_table);
 		.altsetting = 1,
 		.ep_ctrl_r = 0x81,
 		.ep_ctrl_w = 0x01,
-		.ctrl_अगर = 1,
+		.ctrl_if = 1,
 		.ep_audio_r = 0x86,
 		.ep_audio_w = 0x02,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /*
 	Probe USB device.
 */
-अटल पूर्णांक podhd_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकerface,
-		       स्थिर काष्ठा usb_device_id *id)
-अणु
-	वापस line6_probe(पूर्णांकerface, id, "Line6-PODHD",
+static int podhd_probe(struct usb_interface *interface,
+		       const struct usb_device_id *id)
+{
+	return line6_probe(interface, id, "Line6-PODHD",
 			   &podhd_properties_table[id->driver_info],
-			   podhd_init, माप(काष्ठा usb_line6_podhd));
-पूर्ण
+			   podhd_init, sizeof(struct usb_line6_podhd));
+}
 
-अटल काष्ठा usb_driver podhd_driver = अणु
+static struct usb_driver podhd_driver = {
 	.name = KBUILD_MODNAME,
 	.probe = podhd_probe,
 	.disconnect = line6_disconnect,
-#अगर_घोषित CONFIG_PM
+#ifdef CONFIG_PM
 	.suspend = line6_suspend,
 	.resume = line6_resume,
 	.reset_resume = line6_resume,
-#पूर्ण_अगर
+#endif
 	.id_table = podhd_id_table,
-पूर्ण;
+};
 
 module_usb_driver(podhd_driver);
 

@@ -1,27 +1,26 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2005 Mips Technologies
  * Author: Chris Dearman, chris@mips.com derived from fpu.h
  */
-#अगर_अघोषित _ASM_DSP_H
-#घोषणा _ASM_DSP_H
+#ifndef _ASM_DSP_H
+#define _ASM_DSP_H
 
-#समावेश <यंत्र/cpu.h>
-#समावेश <यंत्र/cpu-features.h>
-#समावेश <यंत्र/hazards.h>
-#समावेश <यंत्र/mipsregs.h>
+#include <asm/cpu.h>
+#include <asm/cpu-features.h>
+#include <asm/hazards.h>
+#include <asm/mipsregs.h>
 
-#घोषणा DSP_DEFAULT	0x00000000
-#घोषणा DSP_MASK	0x3f
+#define DSP_DEFAULT	0x00000000
+#define DSP_MASK	0x3f
 
-#घोषणा __enable_dsp_hazard()						\
-करो अणु									\
-	यंत्र("_ehb");							\
-पूर्ण जबतक (0)
+#define __enable_dsp_hazard()						\
+do {									\
+	asm("_ehb");							\
+} while (0)
 
-अटल अंतरभूत व्योम __init_dsp(व्योम)
-अणु
+static inline void __init_dsp(void)
+{
 	mthi1(0);
 	mtlo1(0);
 	mthi2(0);
@@ -29,54 +28,54 @@
 	mthi3(0);
 	mtlo3(0);
 	wrdsp(DSP_DEFAULT, DSP_MASK);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम init_dsp(व्योम)
-अणु
-	अगर (cpu_has_dsp)
+static inline void init_dsp(void)
+{
+	if (cpu_has_dsp)
 		__init_dsp();
-पूर्ण
+}
 
-#घोषणा __save_dsp(tsk)							\
-करो अणु									\
-	tsk->thपढ़ो.dsp.dspr[0] = mfhi1();				\
-	tsk->thपढ़ो.dsp.dspr[1] = mflo1();				\
-	tsk->thपढ़ो.dsp.dspr[2] = mfhi2();				\
-	tsk->thपढ़ो.dsp.dspr[3] = mflo2();				\
-	tsk->thपढ़ो.dsp.dspr[4] = mfhi3();				\
-	tsk->thपढ़ो.dsp.dspr[5] = mflo3();				\
-	tsk->thपढ़ो.dsp.dspcontrol = rddsp(DSP_MASK);			\
-पूर्ण जबतक (0)
+#define __save_dsp(tsk)							\
+do {									\
+	tsk->thread.dsp.dspr[0] = mfhi1();				\
+	tsk->thread.dsp.dspr[1] = mflo1();				\
+	tsk->thread.dsp.dspr[2] = mfhi2();				\
+	tsk->thread.dsp.dspr[3] = mflo2();				\
+	tsk->thread.dsp.dspr[4] = mfhi3();				\
+	tsk->thread.dsp.dspr[5] = mflo3();				\
+	tsk->thread.dsp.dspcontrol = rddsp(DSP_MASK);			\
+} while (0)
 
-#घोषणा save_dsp(tsk)							\
-करो अणु									\
-	अगर (cpu_has_dsp)						\
+#define save_dsp(tsk)							\
+do {									\
+	if (cpu_has_dsp)						\
 		__save_dsp(tsk);					\
-पूर्ण जबतक (0)
+} while (0)
 
-#घोषणा __restore_dsp(tsk)						\
-करो अणु									\
-	mthi1(tsk->thपढ़ो.dsp.dspr[0]);					\
-	mtlo1(tsk->thपढ़ो.dsp.dspr[1]);					\
-	mthi2(tsk->thपढ़ो.dsp.dspr[2]);					\
-	mtlo2(tsk->thपढ़ो.dsp.dspr[3]);					\
-	mthi3(tsk->thपढ़ो.dsp.dspr[4]);					\
-	mtlo3(tsk->thपढ़ो.dsp.dspr[5]);					\
-	wrdsp(tsk->thपढ़ो.dsp.dspcontrol, DSP_MASK);			\
-पूर्ण जबतक (0)
+#define __restore_dsp(tsk)						\
+do {									\
+	mthi1(tsk->thread.dsp.dspr[0]);					\
+	mtlo1(tsk->thread.dsp.dspr[1]);					\
+	mthi2(tsk->thread.dsp.dspr[2]);					\
+	mtlo2(tsk->thread.dsp.dspr[3]);					\
+	mthi3(tsk->thread.dsp.dspr[4]);					\
+	mtlo3(tsk->thread.dsp.dspr[5]);					\
+	wrdsp(tsk->thread.dsp.dspcontrol, DSP_MASK);			\
+} while (0)
 
-#घोषणा restore_dsp(tsk)						\
-करो अणु									\
-	अगर (cpu_has_dsp)						\
+#define restore_dsp(tsk)						\
+do {									\
+	if (cpu_has_dsp)						\
 		__restore_dsp(tsk);					\
-पूर्ण जबतक (0)
+} while (0)
 
-#घोषणा __get_dsp_regs(tsk)						\
-(अणु									\
-	अगर (tsk == current)						\
+#define __get_dsp_regs(tsk)						\
+({									\
+	if (tsk == current)						\
 		__save_dsp(current);					\
 									\
-	tsk->thपढ़ो.dsp.dspr;						\
-पूर्ण)
+	tsk->thread.dsp.dspr;						\
+})
 
-#पूर्ण_अगर /* _ASM_DSP_H */
+#endif /* _ASM_DSP_H */

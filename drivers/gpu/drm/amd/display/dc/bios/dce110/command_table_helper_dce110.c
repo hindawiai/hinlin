@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,302 +23,302 @@
  *
  */
 
-#समावेश "dm_services.h"
+#include "dm_services.h"
 
-#समावेश "atom.h"
+#include "atom.h"
 
-#समावेश "include/bios_parser_types.h"
+#include "include/bios_parser_types.h"
 
-#समावेश "../command_table_helper.h"
+#include "../command_table_helper.h"
 
-अटल uपूर्णांक8_t phy_id_to_atom(क्रमागत transmitter t)
-अणु
-	uपूर्णांक8_t atom_phy_id;
+static uint8_t phy_id_to_atom(enum transmitter t)
+{
+	uint8_t atom_phy_id;
 
-	चयन (t) अणु
-	हाल TRANSMITTER_UNIPHY_A:
+	switch (t) {
+	case TRANSMITTER_UNIPHY_A:
 		atom_phy_id = ATOM_PHY_ID_UNIPHYA;
-		अवरोध;
-	हाल TRANSMITTER_UNIPHY_B:
+		break;
+	case TRANSMITTER_UNIPHY_B:
 		atom_phy_id = ATOM_PHY_ID_UNIPHYB;
-		अवरोध;
-	हाल TRANSMITTER_UNIPHY_C:
+		break;
+	case TRANSMITTER_UNIPHY_C:
 		atom_phy_id = ATOM_PHY_ID_UNIPHYC;
-		अवरोध;
-	हाल TRANSMITTER_UNIPHY_D:
+		break;
+	case TRANSMITTER_UNIPHY_D:
 		atom_phy_id = ATOM_PHY_ID_UNIPHYD;
-		अवरोध;
-	हाल TRANSMITTER_UNIPHY_E:
+		break;
+	case TRANSMITTER_UNIPHY_E:
 		atom_phy_id = ATOM_PHY_ID_UNIPHYE;
-		अवरोध;
-	हाल TRANSMITTER_UNIPHY_F:
+		break;
+	case TRANSMITTER_UNIPHY_F:
 		atom_phy_id = ATOM_PHY_ID_UNIPHYF;
-		अवरोध;
-	हाल TRANSMITTER_UNIPHY_G:
+		break;
+	case TRANSMITTER_UNIPHY_G:
 		atom_phy_id = ATOM_PHY_ID_UNIPHYG;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		atom_phy_id = ATOM_PHY_ID_UNIPHYA;
-		अवरोध;
-	पूर्ण
-	वापस atom_phy_id;
-पूर्ण
+		break;
+	}
+	return atom_phy_id;
+}
 
-अटल uपूर्णांक8_t संकेत_type_to_atom_dig_mode(क्रमागत संकेत_type s)
-अणु
-	uपूर्णांक8_t atom_dig_mode = ATOM_TRANSMITTER_DIGMODE_V5_DP;
+static uint8_t signal_type_to_atom_dig_mode(enum signal_type s)
+{
+	uint8_t atom_dig_mode = ATOM_TRANSMITTER_DIGMODE_V5_DP;
 
-	चयन (s) अणु
-	हाल SIGNAL_TYPE_DISPLAY_PORT:
-	हाल SIGNAL_TYPE_EDP:
+	switch (s) {
+	case SIGNAL_TYPE_DISPLAY_PORT:
+	case SIGNAL_TYPE_EDP:
 		atom_dig_mode = ATOM_TRANSMITTER_DIGMODE_V5_DP;
-		अवरोध;
-	हाल SIGNAL_TYPE_LVDS:
+		break;
+	case SIGNAL_TYPE_LVDS:
 		atom_dig_mode = ATOM_TRANSMITTER_DIGMODE_V5_LVDS;
-		अवरोध;
-	हाल SIGNAL_TYPE_DVI_SINGLE_LINK:
-	हाल SIGNAL_TYPE_DVI_DUAL_LINK:
+		break;
+	case SIGNAL_TYPE_DVI_SINGLE_LINK:
+	case SIGNAL_TYPE_DVI_DUAL_LINK:
 		atom_dig_mode = ATOM_TRANSMITTER_DIGMODE_V5_DVI;
-		अवरोध;
-	हाल SIGNAL_TYPE_HDMI_TYPE_A:
+		break;
+	case SIGNAL_TYPE_HDMI_TYPE_A:
 		atom_dig_mode = ATOM_TRANSMITTER_DIGMODE_V5_HDMI;
-		अवरोध;
-	हाल SIGNAL_TYPE_DISPLAY_PORT_MST:
+		break;
+	case SIGNAL_TYPE_DISPLAY_PORT_MST:
 		atom_dig_mode = ATOM_TRANSMITTER_DIGMODE_V5_DP_MST;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		atom_dig_mode = ATOM_TRANSMITTER_DIGMODE_V5_DVI;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस atom_dig_mode;
-पूर्ण
+	return atom_dig_mode;
+}
 
-अटल uपूर्णांक8_t घड़ी_source_id_to_atom_phy_clk_src_id(
-		क्रमागत घड़ी_source_id id)
-अणु
-	uपूर्णांक8_t atom_phy_clk_src_id = 0;
+static uint8_t clock_source_id_to_atom_phy_clk_src_id(
+		enum clock_source_id id)
+{
+	uint8_t atom_phy_clk_src_id = 0;
 
-	चयन (id) अणु
-	हाल CLOCK_SOURCE_ID_PLL0:
+	switch (id) {
+	case CLOCK_SOURCE_ID_PLL0:
 		atom_phy_clk_src_id = ATOM_TRANSMITTER_CONFIG_V5_P0PLL;
-		अवरोध;
-	हाल CLOCK_SOURCE_ID_PLL1:
+		break;
+	case CLOCK_SOURCE_ID_PLL1:
 		atom_phy_clk_src_id = ATOM_TRANSMITTER_CONFIG_V5_P1PLL;
-		अवरोध;
-	हाल CLOCK_SOURCE_ID_PLL2:
+		break;
+	case CLOCK_SOURCE_ID_PLL2:
 		atom_phy_clk_src_id = ATOM_TRANSMITTER_CONFIG_V5_P2PLL;
-		अवरोध;
-	हाल CLOCK_SOURCE_ID_EXTERNAL:
+		break;
+	case CLOCK_SOURCE_ID_EXTERNAL:
 		atom_phy_clk_src_id = ATOM_TRANSMITTER_CONFIG_V5_REFCLK_SRC_EXT;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		atom_phy_clk_src_id = ATOM_TRANSMITTER_CONFIG_V5_P1PLL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस atom_phy_clk_src_id >> 2;
-पूर्ण
+	return atom_phy_clk_src_id >> 2;
+}
 
-अटल uपूर्णांक8_t hpd_sel_to_atom(क्रमागत hpd_source_id id)
-अणु
-	uपूर्णांक8_t atom_hpd_sel = 0;
+static uint8_t hpd_sel_to_atom(enum hpd_source_id id)
+{
+	uint8_t atom_hpd_sel = 0;
 
-	चयन (id) अणु
-	हाल HPD_SOURCEID1:
+	switch (id) {
+	case HPD_SOURCEID1:
 		atom_hpd_sel = ATOM_TRANSMITTER_CONFIG_V5_HPD1_SEL;
-		अवरोध;
-	हाल HPD_SOURCEID2:
+		break;
+	case HPD_SOURCEID2:
 		atom_hpd_sel = ATOM_TRANSMITTER_CONFIG_V5_HPD2_SEL;
-		अवरोध;
-	हाल HPD_SOURCEID3:
+		break;
+	case HPD_SOURCEID3:
 		atom_hpd_sel = ATOM_TRANSMITTER_CONFIG_V5_HPD3_SEL;
-		अवरोध;
-	हाल HPD_SOURCEID4:
+		break;
+	case HPD_SOURCEID4:
 		atom_hpd_sel = ATOM_TRANSMITTER_CONFIG_V5_HPD4_SEL;
-		अवरोध;
-	हाल HPD_SOURCEID5:
+		break;
+	case HPD_SOURCEID5:
 		atom_hpd_sel = ATOM_TRANSMITTER_CONFIG_V5_HPD5_SEL;
-		अवरोध;
-	हाल HPD_SOURCEID6:
+		break;
+	case HPD_SOURCEID6:
 		atom_hpd_sel = ATOM_TRANSMITTER_CONFIG_V5_HPD6_SEL;
-		अवरोध;
-	हाल HPD_SOURCEID_UNKNOWN:
-	शेष:
+		break;
+	case HPD_SOURCEID_UNKNOWN:
+	default:
 		atom_hpd_sel = 0;
-		अवरोध;
-	पूर्ण
-	वापस atom_hpd_sel >> 4;
-पूर्ण
+		break;
+	}
+	return atom_hpd_sel >> 4;
+}
 
-अटल uपूर्णांक8_t dig_encoder_sel_to_atom(क्रमागत engine_id id)
-अणु
+static uint8_t dig_encoder_sel_to_atom(enum engine_id id)
+{
 	/* On any ASIC after DCE80, we manually program the DIG_FE
 	 * selection (see connect_dig_be_to_fe function of the link
-	 * encoder), so translation should always वापस 0 (no FE).
+	 * encoder), so translation should always return 0 (no FE).
 	 */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool घड़ी_source_id_to_atom(
-	क्रमागत घड़ी_source_id id,
-	uपूर्णांक32_t *atom_pll_id)
-अणु
+static bool clock_source_id_to_atom(
+	enum clock_source_id id,
+	uint32_t *atom_pll_id)
+{
 	bool result = true;
 
-	अगर (atom_pll_id != शून्य)
-		चयन (id) अणु
-		हाल CLOCK_SOURCE_ID_PLL0:
+	if (atom_pll_id != NULL)
+		switch (id) {
+		case CLOCK_SOURCE_ID_PLL0:
 			*atom_pll_id = ATOM_PPLL0;
-			अवरोध;
-		हाल CLOCK_SOURCE_ID_PLL1:
+			break;
+		case CLOCK_SOURCE_ID_PLL1:
 			*atom_pll_id = ATOM_PPLL1;
-			अवरोध;
-		हाल CLOCK_SOURCE_ID_PLL2:
+			break;
+		case CLOCK_SOURCE_ID_PLL2:
 			*atom_pll_id = ATOM_PPLL2;
-			अवरोध;
-		हाल CLOCK_SOURCE_ID_EXTERNAL:
+			break;
+		case CLOCK_SOURCE_ID_EXTERNAL:
 			*atom_pll_id = ATOM_PPLL_INVALID;
-			अवरोध;
-		हाल CLOCK_SOURCE_ID_DFS:
+			break;
+		case CLOCK_SOURCE_ID_DFS:
 			*atom_pll_id = ATOM_EXT_PLL1;
-			अवरोध;
-		हाल CLOCK_SOURCE_ID_VCE:
-			/* क्रम VCE encoding,
+			break;
+		case CLOCK_SOURCE_ID_VCE:
+			/* for VCE encoding,
 			 * we need to pass in ATOM_PPLL_INVALID
 			 */
 			*atom_pll_id = ATOM_PPLL_INVALID;
-			अवरोध;
-		हाल CLOCK_SOURCE_ID_DP_DTO:
+			break;
+		case CLOCK_SOURCE_ID_DP_DTO:
 			/* When programming DP DTO PLL ID should be invalid */
 			*atom_pll_id = ATOM_PPLL_INVALID;
-			अवरोध;
-		हाल CLOCK_SOURCE_ID_UNDEFINED:
+			break;
+		case CLOCK_SOURCE_ID_UNDEFINED:
 			/* Should not happen */
 			*atom_pll_id = ATOM_PPLL_INVALID;
 			result = false;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			result = false;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल bool engine_bp_to_atom(क्रमागत engine_id id, uपूर्णांक32_t *atom_engine_id)
-अणु
+static bool engine_bp_to_atom(enum engine_id id, uint32_t *atom_engine_id)
+{
 	bool result = false;
 
-	अगर (atom_engine_id != शून्य)
-		चयन (id) अणु
-		हाल ENGINE_ID_DIGA:
+	if (atom_engine_id != NULL)
+		switch (id) {
+		case ENGINE_ID_DIGA:
 			*atom_engine_id = ASIC_INT_DIG1_ENCODER_ID;
 			result = true;
-			अवरोध;
-		हाल ENGINE_ID_DIGB:
+			break;
+		case ENGINE_ID_DIGB:
 			*atom_engine_id = ASIC_INT_DIG2_ENCODER_ID;
 			result = true;
-			अवरोध;
-		हाल ENGINE_ID_DIGC:
+			break;
+		case ENGINE_ID_DIGC:
 			*atom_engine_id = ASIC_INT_DIG3_ENCODER_ID;
 			result = true;
-			अवरोध;
-		हाल ENGINE_ID_DIGD:
+			break;
+		case ENGINE_ID_DIGD:
 			*atom_engine_id = ASIC_INT_DIG4_ENCODER_ID;
 			result = true;
-			अवरोध;
-		हाल ENGINE_ID_DIGE:
+			break;
+		case ENGINE_ID_DIGE:
 			*atom_engine_id = ASIC_INT_DIG5_ENCODER_ID;
 			result = true;
-			अवरोध;
-		हाल ENGINE_ID_DIGF:
+			break;
+		case ENGINE_ID_DIGF:
 			*atom_engine_id = ASIC_INT_DIG6_ENCODER_ID;
 			result = true;
-			अवरोध;
-		हाल ENGINE_ID_DIGG:
+			break;
+		case ENGINE_ID_DIGG:
 			*atom_engine_id = ASIC_INT_DIG7_ENCODER_ID;
 			result = true;
-			अवरोध;
-		हाल ENGINE_ID_DACA:
+			break;
+		case ENGINE_ID_DACA:
 			*atom_engine_id = ASIC_INT_DAC1_ENCODER_ID;
 			result = true;
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
+			break;
+		default:
+			break;
+		}
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल uपूर्णांक8_t encoder_action_to_atom(क्रमागत bp_encoder_control_action action)
-अणु
-	uपूर्णांक8_t atom_action = 0;
+static uint8_t encoder_action_to_atom(enum bp_encoder_control_action action)
+{
+	uint8_t atom_action = 0;
 
-	चयन (action) अणु
-	हाल ENCODER_CONTROL_ENABLE:
+	switch (action) {
+	case ENCODER_CONTROL_ENABLE:
 		atom_action = ATOM_ENABLE;
-		अवरोध;
-	हाल ENCODER_CONTROL_DISABLE:
+		break;
+	case ENCODER_CONTROL_DISABLE:
 		atom_action = ATOM_DISABLE;
-		अवरोध;
-	हाल ENCODER_CONTROL_SETUP:
+		break;
+	case ENCODER_CONTROL_SETUP:
 		atom_action = ATOM_ENCODER_CMD_SETUP;
-		अवरोध;
-	हाल ENCODER_CONTROL_INIT:
+		break;
+	case ENCODER_CONTROL_INIT:
 		atom_action = ATOM_ENCODER_INIT;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		BREAK_TO_DEBUGGER(); /* Unhandle action in driver.!! */
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस atom_action;
-पूर्ण
+	return atom_action;
+}
 
-अटल uपूर्णांक8_t disp_घातer_gating_action_to_atom(
-	क्रमागत bp_pipe_control_action action)
-अणु
-	uपूर्णांक8_t atom_pipe_action = 0;
+static uint8_t disp_power_gating_action_to_atom(
+	enum bp_pipe_control_action action)
+{
+	uint8_t atom_pipe_action = 0;
 
-	चयन (action) अणु
-	हाल ASIC_PIPE_DISABLE:
+	switch (action) {
+	case ASIC_PIPE_DISABLE:
 		atom_pipe_action = ATOM_DISABLE;
-		अवरोध;
-	हाल ASIC_PIPE_ENABLE:
+		break;
+	case ASIC_PIPE_ENABLE:
 		atom_pipe_action = ATOM_ENABLE;
-		अवरोध;
-	हाल ASIC_PIPE_INIT:
+		break;
+	case ASIC_PIPE_INIT:
 		atom_pipe_action = ATOM_INIT;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ASSERT_CRITICAL(false); /* Unhandle action in driver! */
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस atom_pipe_action;
-पूर्ण
+	return atom_pipe_action;
+}
 
 /* function table */
-अटल स्थिर काष्ठा command_table_helper command_table_helper_funcs = अणु
+static const struct command_table_helper command_table_helper_funcs = {
 	.controller_id_to_atom = dal_cmd_table_helper_controller_id_to_atom,
 	.encoder_action_to_atom = encoder_action_to_atom,
 	.engine_bp_to_atom = engine_bp_to_atom,
-	.घड़ी_source_id_to_atom = घड़ी_source_id_to_atom,
-	.घड़ी_source_id_to_atom_phy_clk_src_id =
-			घड़ी_source_id_to_atom_phy_clk_src_id,
-	.संकेत_type_to_atom_dig_mode = संकेत_type_to_atom_dig_mode,
+	.clock_source_id_to_atom = clock_source_id_to_atom,
+	.clock_source_id_to_atom_phy_clk_src_id =
+			clock_source_id_to_atom_phy_clk_src_id,
+	.signal_type_to_atom_dig_mode = signal_type_to_atom_dig_mode,
 	.hpd_sel_to_atom = hpd_sel_to_atom,
 	.dig_encoder_sel_to_atom = dig_encoder_sel_to_atom,
 	.phy_id_to_atom = phy_id_to_atom,
-	.disp_घातer_gating_action_to_atom = disp_घातer_gating_action_to_atom,
-	.assign_control_parameter = शून्य,
-	.घड़ी_source_id_to_ref_clk_src = शून्य,
-	.transmitter_bp_to_atom = शून्य,
+	.disp_power_gating_action_to_atom = disp_power_gating_action_to_atom,
+	.assign_control_parameter = NULL,
+	.clock_source_id_to_ref_clk_src = NULL,
+	.transmitter_bp_to_atom = NULL,
 	.encoder_id_to_atom = dal_cmd_table_helper_encoder_id_to_atom,
 	.encoder_mode_bp_to_atom = dal_cmd_table_helper_encoder_mode_bp_to_atom,
-पूर्ण;
+};
 
 /*
  * dal_cmd_tbl_helper_dce110_get_table
@@ -328,10 +327,10 @@
  * Initialize command table helper functions
  *
  * @param
- * स्थिर काष्ठा command_table_helper **h - [out] काष्ठा of functions
+ * const struct command_table_helper **h - [out] struct of functions
  *
  */
-स्थिर काष्ठा command_table_helper *dal_cmd_tbl_helper_dce110_get_table(व्योम)
-अणु
-	वापस &command_table_helper_funcs;
-पूर्ण
+const struct command_table_helper *dal_cmd_tbl_helper_dce110_get_table(void)
+{
+	return &command_table_helper_funcs;
+}

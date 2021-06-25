@@ -1,163 +1,162 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Cryptographic API.
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/crypto.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/lzo.h>
-#समावेश <crypto/पूर्णांकernal/scompress.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/crypto.h>
+#include <linux/vmalloc.h>
+#include <linux/mm.h>
+#include <linux/lzo.h>
+#include <crypto/internal/scompress.h>
 
-काष्ठा lzo_ctx अणु
-	व्योम *lzo_comp_mem;
-पूर्ण;
+struct lzo_ctx {
+	void *lzo_comp_mem;
+};
 
-अटल व्योम *lzo_alloc_ctx(काष्ठा crypto_scomp *tfm)
-अणु
-	व्योम *ctx;
+static void *lzo_alloc_ctx(struct crypto_scomp *tfm)
+{
+	void *ctx;
 
-	ctx = kvदो_स्मृति(LZO1X_MEM_COMPRESS, GFP_KERNEL);
-	अगर (!ctx)
-		वापस ERR_PTR(-ENOMEM);
+	ctx = kvmalloc(LZO1X_MEM_COMPRESS, GFP_KERNEL);
+	if (!ctx)
+		return ERR_PTR(-ENOMEM);
 
-	वापस ctx;
-पूर्ण
+	return ctx;
+}
 
-अटल पूर्णांक lzo_init(काष्ठा crypto_tfm *tfm)
-अणु
-	काष्ठा lzo_ctx *ctx = crypto_tfm_ctx(tfm);
+static int lzo_init(struct crypto_tfm *tfm)
+{
+	struct lzo_ctx *ctx = crypto_tfm_ctx(tfm);
 
-	ctx->lzo_comp_mem = lzo_alloc_ctx(शून्य);
-	अगर (IS_ERR(ctx->lzo_comp_mem))
-		वापस -ENOMEM;
+	ctx->lzo_comp_mem = lzo_alloc_ctx(NULL);
+	if (IS_ERR(ctx->lzo_comp_mem))
+		return -ENOMEM;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम lzo_मुक्त_ctx(काष्ठा crypto_scomp *tfm, व्योम *ctx)
-अणु
-	kvमुक्त(ctx);
-पूर्ण
+static void lzo_free_ctx(struct crypto_scomp *tfm, void *ctx)
+{
+	kvfree(ctx);
+}
 
-अटल व्योम lzo_निकास(काष्ठा crypto_tfm *tfm)
-अणु
-	काष्ठा lzo_ctx *ctx = crypto_tfm_ctx(tfm);
+static void lzo_exit(struct crypto_tfm *tfm)
+{
+	struct lzo_ctx *ctx = crypto_tfm_ctx(tfm);
 
-	lzo_मुक्त_ctx(शून्य, ctx->lzo_comp_mem);
-पूर्ण
+	lzo_free_ctx(NULL, ctx->lzo_comp_mem);
+}
 
-अटल पूर्णांक __lzo_compress(स्थिर u8 *src, अचिन्हित पूर्णांक slen,
-			  u8 *dst, अचिन्हित पूर्णांक *dlen, व्योम *ctx)
-अणु
-	माप_प्रकार पंचांगp_len = *dlen; /* माप_प्रकार(uदीर्घ) <-> uपूर्णांक on 64 bit */
-	पूर्णांक err;
+static int __lzo_compress(const u8 *src, unsigned int slen,
+			  u8 *dst, unsigned int *dlen, void *ctx)
+{
+	size_t tmp_len = *dlen; /* size_t(ulong) <-> uint on 64 bit */
+	int err;
 
-	err = lzo1x_1_compress(src, slen, dst, &पंचांगp_len, ctx);
+	err = lzo1x_1_compress(src, slen, dst, &tmp_len, ctx);
 
-	अगर (err != LZO_E_OK)
-		वापस -EINVAL;
+	if (err != LZO_E_OK)
+		return -EINVAL;
 
-	*dlen = पंचांगp_len;
-	वापस 0;
-पूर्ण
+	*dlen = tmp_len;
+	return 0;
+}
 
-अटल पूर्णांक lzo_compress(काष्ठा crypto_tfm *tfm, स्थिर u8 *src,
-			अचिन्हित पूर्णांक slen, u8 *dst, अचिन्हित पूर्णांक *dlen)
-अणु
-	काष्ठा lzo_ctx *ctx = crypto_tfm_ctx(tfm);
+static int lzo_compress(struct crypto_tfm *tfm, const u8 *src,
+			unsigned int slen, u8 *dst, unsigned int *dlen)
+{
+	struct lzo_ctx *ctx = crypto_tfm_ctx(tfm);
 
-	वापस __lzo_compress(src, slen, dst, dlen, ctx->lzo_comp_mem);
-पूर्ण
+	return __lzo_compress(src, slen, dst, dlen, ctx->lzo_comp_mem);
+}
 
-अटल पूर्णांक lzo_scompress(काष्ठा crypto_scomp *tfm, स्थिर u8 *src,
-			 अचिन्हित पूर्णांक slen, u8 *dst, अचिन्हित पूर्णांक *dlen,
-			 व्योम *ctx)
-अणु
-	वापस __lzo_compress(src, slen, dst, dlen, ctx);
-पूर्ण
+static int lzo_scompress(struct crypto_scomp *tfm, const u8 *src,
+			 unsigned int slen, u8 *dst, unsigned int *dlen,
+			 void *ctx)
+{
+	return __lzo_compress(src, slen, dst, dlen, ctx);
+}
 
-अटल पूर्णांक __lzo_decompress(स्थिर u8 *src, अचिन्हित पूर्णांक slen,
-			    u8 *dst, अचिन्हित पूर्णांक *dlen)
-अणु
-	पूर्णांक err;
-	माप_प्रकार पंचांगp_len = *dlen; /* माप_प्रकार(uदीर्घ) <-> uपूर्णांक on 64 bit */
+static int __lzo_decompress(const u8 *src, unsigned int slen,
+			    u8 *dst, unsigned int *dlen)
+{
+	int err;
+	size_t tmp_len = *dlen; /* size_t(ulong) <-> uint on 64 bit */
 
-	err = lzo1x_decompress_safe(src, slen, dst, &पंचांगp_len);
+	err = lzo1x_decompress_safe(src, slen, dst, &tmp_len);
 
-	अगर (err != LZO_E_OK)
-		वापस -EINVAL;
+	if (err != LZO_E_OK)
+		return -EINVAL;
 
-	*dlen = पंचांगp_len;
-	वापस 0;
-पूर्ण
+	*dlen = tmp_len;
+	return 0;
+}
 
-अटल पूर्णांक lzo_decompress(काष्ठा crypto_tfm *tfm, स्थिर u8 *src,
-			  अचिन्हित पूर्णांक slen, u8 *dst, अचिन्हित पूर्णांक *dlen)
-अणु
-	वापस __lzo_decompress(src, slen, dst, dlen);
-पूर्ण
+static int lzo_decompress(struct crypto_tfm *tfm, const u8 *src,
+			  unsigned int slen, u8 *dst, unsigned int *dlen)
+{
+	return __lzo_decompress(src, slen, dst, dlen);
+}
 
-अटल पूर्णांक lzo_sdecompress(काष्ठा crypto_scomp *tfm, स्थिर u8 *src,
-			   अचिन्हित पूर्णांक slen, u8 *dst, अचिन्हित पूर्णांक *dlen,
-			   व्योम *ctx)
-अणु
-	वापस __lzo_decompress(src, slen, dst, dlen);
-पूर्ण
+static int lzo_sdecompress(struct crypto_scomp *tfm, const u8 *src,
+			   unsigned int slen, u8 *dst, unsigned int *dlen,
+			   void *ctx)
+{
+	return __lzo_decompress(src, slen, dst, dlen);
+}
 
-अटल काष्ठा crypto_alg alg = अणु
+static struct crypto_alg alg = {
 	.cra_name		= "lzo",
 	.cra_driver_name	= "lzo-generic",
 	.cra_flags		= CRYPTO_ALG_TYPE_COMPRESS,
-	.cra_ctxsize		= माप(काष्ठा lzo_ctx),
+	.cra_ctxsize		= sizeof(struct lzo_ctx),
 	.cra_module		= THIS_MODULE,
 	.cra_init		= lzo_init,
-	.cra_निकास		= lzo_निकास,
-	.cra_u			= अणु .compress = अणु
+	.cra_exit		= lzo_exit,
+	.cra_u			= { .compress = {
 	.coa_compress		= lzo_compress,
-	.coa_decompress		= lzo_decompress पूर्ण पूर्ण
-पूर्ण;
+	.coa_decompress		= lzo_decompress } }
+};
 
-अटल काष्ठा scomp_alg scomp = अणु
+static struct scomp_alg scomp = {
 	.alloc_ctx		= lzo_alloc_ctx,
-	.मुक्त_ctx		= lzo_मुक्त_ctx,
+	.free_ctx		= lzo_free_ctx,
 	.compress		= lzo_scompress,
 	.decompress		= lzo_sdecompress,
-	.base			= अणु
+	.base			= {
 		.cra_name	= "lzo",
 		.cra_driver_name = "lzo-scomp",
 		.cra_module	 = THIS_MODULE,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल पूर्णांक __init lzo_mod_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init lzo_mod_init(void)
+{
+	int ret;
 
-	ret = crypto_रेजिस्टर_alg(&alg);
-	अगर (ret)
-		वापस ret;
+	ret = crypto_register_alg(&alg);
+	if (ret)
+		return ret;
 
-	ret = crypto_रेजिस्टर_scomp(&scomp);
-	अगर (ret) अणु
-		crypto_unरेजिस्टर_alg(&alg);
-		वापस ret;
-	पूर्ण
+	ret = crypto_register_scomp(&scomp);
+	if (ret) {
+		crypto_unregister_alg(&alg);
+		return ret;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम __निकास lzo_mod_fini(व्योम)
-अणु
-	crypto_unरेजिस्टर_alg(&alg);
-	crypto_unरेजिस्टर_scomp(&scomp);
-पूर्ण
+static void __exit lzo_mod_fini(void)
+{
+	crypto_unregister_alg(&alg);
+	crypto_unregister_scomp(&scomp);
+}
 
 subsys_initcall(lzo_mod_init);
-module_निकास(lzo_mod_fini);
+module_exit(lzo_mod_fini);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("LZO Compression Algorithm");

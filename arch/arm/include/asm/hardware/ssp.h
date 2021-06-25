@@ -1,26 +1,25 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  *  ssp.h
  *
  *  Copyright (C) 2003 Russell King, All Rights Reserved.
  */
-#अगर_अघोषित SSP_H
-#घोषणा SSP_H
+#ifndef SSP_H
+#define SSP_H
 
-काष्ठा ssp_state अणु
-	अचिन्हित पूर्णांक	cr0;
-	अचिन्हित पूर्णांक	cr1;
-पूर्ण;
+struct ssp_state {
+	unsigned int	cr0;
+	unsigned int	cr1;
+};
 
-पूर्णांक ssp_ग_लिखो_word(u16 data);
-पूर्णांक ssp_पढ़ो_word(u16 *data);
-पूर्णांक ssp_flush(व्योम);
-व्योम ssp_enable(व्योम);
-व्योम ssp_disable(व्योम);
-व्योम ssp_save_state(काष्ठा ssp_state *ssp);
-व्योम ssp_restore_state(काष्ठा ssp_state *ssp);
-पूर्णांक ssp_init(व्योम);
-व्योम ssp_निकास(व्योम);
+int ssp_write_word(u16 data);
+int ssp_read_word(u16 *data);
+int ssp_flush(void);
+void ssp_enable(void);
+void ssp_disable(void);
+void ssp_save_state(struct ssp_state *ssp);
+void ssp_restore_state(struct ssp_state *ssp);
+int ssp_init(void);
+void ssp_exit(void);
 
-#पूर्ण_अगर
+#endif

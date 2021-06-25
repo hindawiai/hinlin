@@ -1,25 +1,24 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Partial Parity Log क्रम closing the RAID5 ग_लिखो hole
+ * Partial Parity Log for closing the RAID5 write hole
  * Copyright (c) 2017, Intel Corporation.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/crc32c.h>
-#समावेश <linux/async_tx.h>
-#समावेश <linux/raid/md_p.h>
-#समावेश "md.h"
-#समावेश "raid5.h"
-#समावेश "raid5-log.h"
+#include <linux/kernel.h>
+#include <linux/blkdev.h>
+#include <linux/slab.h>
+#include <linux/crc32c.h>
+#include <linux/async_tx.h>
+#include <linux/raid/md_p.h>
+#include "md.h"
+#include "raid5.h"
+#include "raid5-log.h"
 
 /*
- * PPL consists of a 4KB header (काष्ठा ppl_header) and at least 128KB क्रम
+ * PPL consists of a 4KB header (struct ppl_header) and at least 128KB for
  * partial parity data. The header contains an array of entries
- * (काष्ठा ppl_header_entry) which describe the logged ग_लिखो requests.
- * Partial parity क्रम the entries comes after the header, written in the same
+ * (struct ppl_header_entry) which describe the logged write requests.
+ * Partial parity for the entries comes after the header, written in the same
  * sequence as the entries:
  *
  * Header
@@ -27,15 +26,15 @@
  *   ...
  *   entryN
  * PP data
- *   PP क्रम entry0
+ *   PP for entry0
  *   ...
- *   PP क्रम entryN
+ *   PP for entryN
  *
  * An entry describes one or more consecutive stripe_heads, up to a full
- * stripe. The modअगरed raid data chunks क्रमm an m-by-n matrix, where m is the
- * number of stripe_heads in the entry and n is the number of modअगरied data
- * disks. Every stripe_head in the entry must ग_लिखो to the same data disks.
- * An example of a valid हाल described by a single entry (ग_लिखोs to the first
+ * stripe. The modifed raid data chunks form an m-by-n matrix, where m is the
+ * number of stripe_heads in the entry and n is the number of modified data
+ * disks. Every stripe_head in the entry must write to the same data disks.
+ * An example of a valid case described by a single entry (writes to the first
  * stripe of a 4 disk array, 16k chunk size):
  *
  * sh->sector   dd0   dd1   dd2    ppl
@@ -46,204 +45,204 @@
  * 24         | -W- | -W- | --- | | pp |   pp_size = 3 * 4k
  *            +-----+-----+-----+ +----+
  *
- * data_sector is the first raid sector of the modअगरied data, data_size is the
- * total size of modअगरied data and pp_size is the size of partial parity क्रम
- * this entry. Entries क्रम full stripe ग_लिखोs contain no partial parity
- * (pp_size = 0), they only mark the stripes क्रम which parity should be
- * recalculated after an unclean shutकरोwn. Every entry holds a checksum of its
+ * data_sector is the first raid sector of the modified data, data_size is the
+ * total size of modified data and pp_size is the size of partial parity for
+ * this entry. Entries for full stripe writes contain no partial parity
+ * (pp_size = 0), they only mark the stripes for which parity should be
+ * recalculated after an unclean shutdown. Every entry holds a checksum of its
  * partial parity, the header also has a checksum of the header itself.
  *
- * A ग_लिखो request is always logged to the PPL instance stored on the parity
+ * A write request is always logged to the PPL instance stored on the parity
  * disk of the corresponding stripe. For each member disk there is one ppl_log
- * used to handle logging क्रम this disk, independently from others. They are
- * grouped in child_logs array in काष्ठा ppl_conf, which is asचिन्हित to
- * r5conf->log_निजी.
+ * used to handle logging for this disk, independently from others. They are
+ * grouped in child_logs array in struct ppl_conf, which is assigned to
+ * r5conf->log_private.
  *
- * ppl_io_unit represents a full PPL ग_लिखो, header_page contains the ppl_header.
- * PPL entries क्रम logged stripes are added in ppl_log_stripe(). A stripe_head
- * can be appended to the last entry अगर it meets the conditions क्रम a valid
+ * ppl_io_unit represents a full PPL write, header_page contains the ppl_header.
+ * PPL entries for logged stripes are added in ppl_log_stripe(). A stripe_head
+ * can be appended to the last entry if it meets the conditions for a valid
  * entry described above, otherwise a new entry is added. Checksums of entries
  * are calculated incrementally as stripes containing partial parity are being
  * added. ppl_submit_iounit() calculates the checksum of the header and submits
- * a bio containing the header page and partial parity pages (sh->ppl_page) क्रम
- * all stripes of the io_unit. When the PPL ग_लिखो completes, the stripes
+ * a bio containing the header page and partial parity pages (sh->ppl_page) for
+ * all stripes of the io_unit. When the PPL write completes, the stripes
  * associated with the io_unit are released and raid5d starts writing their data
- * and parity. When all stripes are written, the io_unit is मुक्तd and the next
+ * and parity. When all stripes are written, the io_unit is freed and the next
  * can be submitted.
  *
  * An io_unit is used to gather stripes until it is submitted or becomes full
- * (अगर the maximum number of entries or size of PPL is reached). Another io_unit
+ * (if the maximum number of entries or size of PPL is reached). Another io_unit
  * can't be submitted until the previous has completed (PPL and stripe
  * data+parity is written). The log->io_list tracks all io_units of a log
- * (क्रम a single member disk). New io_units are added to the end of the list
- * and the first io_unit is submitted, अगर it is not submitted alपढ़ोy.
+ * (for a single member disk). New io_units are added to the end of the list
+ * and the first io_unit is submitted, if it is not submitted already.
  * The current io_unit accepting new stripes is always at the end of the list.
  *
- * If ग_लिखो-back cache is enabled क्रम any of the disks in the array, its data
- * must be flushed beक्रमe next io_unit is submitted.
+ * If write-back cache is enabled for any of the disks in the array, its data
+ * must be flushed before next io_unit is submitted.
  */
 
-#घोषणा PPL_SPACE_SIZE (128 * 1024)
+#define PPL_SPACE_SIZE (128 * 1024)
 
-काष्ठा ppl_conf अणु
-	काष्ठा mddev *mddev;
+struct ppl_conf {
+	struct mddev *mddev;
 
-	/* array of child logs, one क्रम each raid disk */
-	काष्ठा ppl_log *child_logs;
-	पूर्णांक count;
+	/* array of child logs, one for each raid disk */
+	struct ppl_log *child_logs;
+	int count;
 
-	पूर्णांक block_size;		/* the logical block size used क्रम data_sector
+	int block_size;		/* the logical block size used for data_sector
 				 * in ppl_header_entry */
-	u32 signature;		/* raid array identअगरier */
-	atomic64_t seq;		/* current log ग_लिखो sequence number */
+	u32 signature;		/* raid array identifier */
+	atomic64_t seq;		/* current log write sequence number */
 
-	काष्ठा kmem_cache *io_kc;
+	struct kmem_cache *io_kc;
 	mempool_t io_pool;
-	काष्ठा bio_set bs;
-	काष्ठा bio_set flush_bs;
+	struct bio_set bs;
+	struct bio_set flush_bs;
 
-	/* used only क्रम recovery */
-	पूर्णांक recovered_entries;
-	पूर्णांक mismatch_count;
+	/* used only for recovery */
+	int recovered_entries;
+	int mismatch_count;
 
-	/* stripes to retry अगर failed to allocate io_unit */
-	काष्ठा list_head no_mem_stripes;
+	/* stripes to retry if failed to allocate io_unit */
+	struct list_head no_mem_stripes;
 	spinlock_t no_mem_stripes_lock;
 
-	अचिन्हित लघु ग_लिखो_hपूर्णांक;
-पूर्ण;
+	unsigned short write_hint;
+};
 
-काष्ठा ppl_log अणु
-	काष्ठा ppl_conf *ppl_conf;	/* shared between all log instances */
+struct ppl_log {
+	struct ppl_conf *ppl_conf;	/* shared between all log instances */
 
-	काष्ठा md_rdev *rdev;		/* array member disk associated with
+	struct md_rdev *rdev;		/* array member disk associated with
 					 * this log instance */
-	काष्ठा mutex io_mutex;
-	काष्ठा ppl_io_unit *current_io;	/* current io_unit accepting new data
+	struct mutex io_mutex;
+	struct ppl_io_unit *current_io;	/* current io_unit accepting new data
 					 * always at the end of io_list */
 	spinlock_t io_list_lock;
-	काष्ठा list_head io_list;	/* all io_units of this log */
+	struct list_head io_list;	/* all io_units of this log */
 
 	sector_t next_io_sector;
-	अचिन्हित पूर्णांक entry_space;
+	unsigned int entry_space;
 	bool use_multippl;
 	bool wb_cache_on;
-	अचिन्हित दीर्घ disk_flush_biपंचांगap;
-पूर्ण;
+	unsigned long disk_flush_bitmap;
+};
 
-#घोषणा PPL_IO_INLINE_BVECS 32
+#define PPL_IO_INLINE_BVECS 32
 
-काष्ठा ppl_io_unit अणु
-	काष्ठा ppl_log *log;
+struct ppl_io_unit {
+	struct ppl_log *log;
 
-	काष्ठा page *header_page;	/* क्रम ppl_header */
+	struct page *header_page;	/* for ppl_header */
 
-	अचिन्हित पूर्णांक entries_count;	/* number of entries in ppl_header */
-	अचिन्हित पूर्णांक pp_size;		/* total size current of partial parity */
+	unsigned int entries_count;	/* number of entries in ppl_header */
+	unsigned int pp_size;		/* total size current of partial parity */
 
-	u64 seq;			/* sequence number of this log ग_लिखो */
-	काष्ठा list_head log_sibling;	/* log->io_list */
+	u64 seq;			/* sequence number of this log write */
+	struct list_head log_sibling;	/* log->io_list */
 
-	काष्ठा list_head stripe_list;	/* stripes added to the io_unit */
+	struct list_head stripe_list;	/* stripes added to the io_unit */
 	atomic_t pending_stripes;	/* how many stripes not written to raid */
 	atomic_t pending_flushes;	/* how many disk flushes are in progress */
 
-	bool submitted;			/* true अगर ग_लिखो to log started */
+	bool submitted;			/* true if write to log started */
 
-	/* अंतरभूत bio and its biovec क्रम submitting the iounit */
-	काष्ठा bio bio;
-	काष्ठा bio_vec biovec[PPL_IO_INLINE_BVECS];
-पूर्ण;
+	/* inline bio and its biovec for submitting the iounit */
+	struct bio bio;
+	struct bio_vec biovec[PPL_IO_INLINE_BVECS];
+};
 
-काष्ठा dma_async_tx_descriptor *
-ops_run_partial_parity(काष्ठा stripe_head *sh, काष्ठा raid5_percpu *percpu,
-		       काष्ठा dma_async_tx_descriptor *tx)
-अणु
-	पूर्णांक disks = sh->disks;
-	काष्ठा page **srcs = percpu->scribble;
-	पूर्णांक count = 0, pd_idx = sh->pd_idx, i;
-	काष्ठा async_submit_ctl submit;
+struct dma_async_tx_descriptor *
+ops_run_partial_parity(struct stripe_head *sh, struct raid5_percpu *percpu,
+		       struct dma_async_tx_descriptor *tx)
+{
+	int disks = sh->disks;
+	struct page **srcs = percpu->scribble;
+	int count = 0, pd_idx = sh->pd_idx, i;
+	struct async_submit_ctl submit;
 
-	pr_debug("%s: stripe %llu\n", __func__, (अचिन्हित दीर्घ दीर्घ)sh->sector);
+	pr_debug("%s: stripe %llu\n", __func__, (unsigned long long)sh->sector);
 
 	/*
 	 * Partial parity is the XOR of stripe data chunks that are not changed
-	 * during the ग_लिखो request. Depending on available data
-	 * (पढ़ो-modअगरy-ग_लिखो vs. reस्थिरruct-ग_लिखो हाल) we calculate it
-	 * dअगरferently.
+	 * during the write request. Depending on available data
+	 * (read-modify-write vs. reconstruct-write case) we calculate it
+	 * differently.
 	 */
-	अगर (sh->reस्थिरruct_state == reस्थिरruct_state_prexor_drain_run) अणु
+	if (sh->reconstruct_state == reconstruct_state_prexor_drain_run) {
 		/*
 		 * rmw: xor old data and parity from updated disks
 		 * This is calculated earlier by ops_run_prexor5() so just copy
 		 * the parity dev page.
 		 */
 		srcs[count++] = sh->dev[pd_idx].page;
-	पूर्ण अन्यथा अगर (sh->reस्थिरruct_state == reस्थिरruct_state_drain_run) अणु
+	} else if (sh->reconstruct_state == reconstruct_state_drain_run) {
 		/* rcw: xor data from all not updated disks */
-		क्रम (i = disks; i--;) अणु
-			काष्ठा r5dev *dev = &sh->dev[i];
-			अगर (test_bit(R5_UPTODATE, &dev->flags))
+		for (i = disks; i--;) {
+			struct r5dev *dev = &sh->dev[i];
+			if (test_bit(R5_UPTODATE, &dev->flags))
 				srcs[count++] = dev->page;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		वापस tx;
-	पूर्ण
+		}
+	} else {
+		return tx;
+	}
 
 	init_async_submit(&submit, ASYNC_TX_FENCE|ASYNC_TX_XOR_ZERO_DST, tx,
-			  शून्य, sh, (व्योम *) (srcs + sh->disks + 2));
+			  NULL, sh, (void *) (srcs + sh->disks + 2));
 
-	अगर (count == 1)
-		tx = async_स_नकल(sh->ppl_page, srcs[0], 0, 0, PAGE_SIZE,
+	if (count == 1)
+		tx = async_memcpy(sh->ppl_page, srcs[0], 0, 0, PAGE_SIZE,
 				  &submit);
-	अन्यथा
+	else
 		tx = async_xor(sh->ppl_page, srcs, 0, count, PAGE_SIZE,
 			       &submit);
 
-	वापस tx;
-पूर्ण
+	return tx;
+}
 
-अटल व्योम *ppl_io_pool_alloc(gfp_t gfp_mask, व्योम *pool_data)
-अणु
-	काष्ठा kmem_cache *kc = pool_data;
-	काष्ठा ppl_io_unit *io;
+static void *ppl_io_pool_alloc(gfp_t gfp_mask, void *pool_data)
+{
+	struct kmem_cache *kc = pool_data;
+	struct ppl_io_unit *io;
 
 	io = kmem_cache_alloc(kc, gfp_mask);
-	अगर (!io)
-		वापस शून्य;
+	if (!io)
+		return NULL;
 
 	io->header_page = alloc_page(gfp_mask);
-	अगर (!io->header_page) अणु
-		kmem_cache_मुक्त(kc, io);
-		वापस शून्य;
-	पूर्ण
+	if (!io->header_page) {
+		kmem_cache_free(kc, io);
+		return NULL;
+	}
 
-	वापस io;
-पूर्ण
+	return io;
+}
 
-अटल व्योम ppl_io_pool_मुक्त(व्योम *element, व्योम *pool_data)
-अणु
-	काष्ठा kmem_cache *kc = pool_data;
-	काष्ठा ppl_io_unit *io = element;
+static void ppl_io_pool_free(void *element, void *pool_data)
+{
+	struct kmem_cache *kc = pool_data;
+	struct ppl_io_unit *io = element;
 
-	__मुक्त_page(io->header_page);
-	kmem_cache_मुक्त(kc, io);
-पूर्ण
+	__free_page(io->header_page);
+	kmem_cache_free(kc, io);
+}
 
-अटल काष्ठा ppl_io_unit *ppl_new_iounit(काष्ठा ppl_log *log,
-					  काष्ठा stripe_head *sh)
-अणु
-	काष्ठा ppl_conf *ppl_conf = log->ppl_conf;
-	काष्ठा ppl_io_unit *io;
-	काष्ठा ppl_header *pplhdr;
-	काष्ठा page *header_page;
+static struct ppl_io_unit *ppl_new_iounit(struct ppl_log *log,
+					  struct stripe_head *sh)
+{
+	struct ppl_conf *ppl_conf = log->ppl_conf;
+	struct ppl_io_unit *io;
+	struct ppl_header *pplhdr;
+	struct page *header_page;
 
 	io = mempool_alloc(&ppl_conf->io_pool, GFP_NOWAIT);
-	अगर (!io)
-		वापस शून्य;
+	if (!io)
+		return NULL;
 
 	header_page = io->header_page;
-	स_रखो(io, 0, माप(*io));
+	memset(io, 0, sizeof(*io));
 	io->header_page = header_page;
 
 	io->log = log;
@@ -255,196 +254,196 @@ ops_run_partial_parity(काष्ठा stripe_head *sh, काष्ठा ra
 
 	pplhdr = page_address(io->header_page);
 	clear_page(pplhdr);
-	स_रखो(pplhdr->reserved, 0xff, PPL_HDR_RESERVED);
+	memset(pplhdr->reserved, 0xff, PPL_HDR_RESERVED);
 	pplhdr->signature = cpu_to_le32(ppl_conf->signature);
 
-	io->seq = atomic64_add_वापस(1, &ppl_conf->seq);
+	io->seq = atomic64_add_return(1, &ppl_conf->seq);
 	pplhdr->generation = cpu_to_le64(io->seq);
 
-	वापस io;
-पूर्ण
+	return io;
+}
 
-अटल पूर्णांक ppl_log_stripe(काष्ठा ppl_log *log, काष्ठा stripe_head *sh)
-अणु
-	काष्ठा ppl_io_unit *io = log->current_io;
-	काष्ठा ppl_header_entry *e = शून्य;
-	काष्ठा ppl_header *pplhdr;
-	पूर्णांक i;
+static int ppl_log_stripe(struct ppl_log *log, struct stripe_head *sh)
+{
+	struct ppl_io_unit *io = log->current_io;
+	struct ppl_header_entry *e = NULL;
+	struct ppl_header *pplhdr;
+	int i;
 	sector_t data_sector = 0;
-	पूर्णांक data_disks = 0;
-	काष्ठा r5conf *conf = sh->raid_conf;
+	int data_disks = 0;
+	struct r5conf *conf = sh->raid_conf;
 
-	pr_debug("%s: stripe: %llu\n", __func__, (अचिन्हित दीर्घ दीर्घ)sh->sector);
+	pr_debug("%s: stripe: %llu\n", __func__, (unsigned long long)sh->sector);
 
-	/* check अगर current io_unit is full */
-	अगर (io && (io->pp_size == log->entry_space ||
-		   io->entries_count == PPL_HDR_MAX_ENTRIES)) अणु
+	/* check if current io_unit is full */
+	if (io && (io->pp_size == log->entry_space ||
+		   io->entries_count == PPL_HDR_MAX_ENTRIES)) {
 		pr_debug("%s: add io_unit blocked by seq: %llu\n",
 			 __func__, io->seq);
-		io = शून्य;
-	पूर्ण
+		io = NULL;
+	}
 
-	/* add a new unit अगर there is none or the current is full */
-	अगर (!io) अणु
+	/* add a new unit if there is none or the current is full */
+	if (!io) {
 		io = ppl_new_iounit(log, sh);
-		अगर (!io)
-			वापस -ENOMEM;
+		if (!io)
+			return -ENOMEM;
 		spin_lock_irq(&log->io_list_lock);
 		list_add_tail(&io->log_sibling, &log->io_list);
 		spin_unlock_irq(&log->io_list_lock);
 
 		log->current_io = io;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < sh->disks; i++) अणु
-		काष्ठा r5dev *dev = &sh->dev[i];
+	for (i = 0; i < sh->disks; i++) {
+		struct r5dev *dev = &sh->dev[i];
 
-		अगर (i != sh->pd_idx && test_bit(R5_Wantग_लिखो, &dev->flags)) अणु
-			अगर (!data_disks || dev->sector < data_sector)
+		if (i != sh->pd_idx && test_bit(R5_Wantwrite, &dev->flags)) {
+			if (!data_disks || dev->sector < data_sector)
 				data_sector = dev->sector;
 			data_disks++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	BUG_ON(!data_disks);
 
 	pr_debug("%s: seq: %llu data_sector: %llu data_disks: %d\n", __func__,
-		 io->seq, (अचिन्हित दीर्घ दीर्घ)data_sector, data_disks);
+		 io->seq, (unsigned long long)data_sector, data_disks);
 
 	pplhdr = page_address(io->header_page);
 
-	अगर (io->entries_count > 0) अणु
-		काष्ठा ppl_header_entry *last =
+	if (io->entries_count > 0) {
+		struct ppl_header_entry *last =
 				&pplhdr->entries[io->entries_count - 1];
-		काष्ठा stripe_head *sh_last = list_last_entry(
-				&io->stripe_list, काष्ठा stripe_head, log_list);
+		struct stripe_head *sh_last = list_last_entry(
+				&io->stripe_list, struct stripe_head, log_list);
 		u64 data_sector_last = le64_to_cpu(last->data_sector);
 		u32 data_size_last = le32_to_cpu(last->data_size);
 
 		/*
-		 * Check अगर we can append the stripe to the last entry. It must
-		 * be just after the last logged stripe and ग_लिखो to the same
-		 * disks. Use bit shअगरt and logarithm to aव्योम 64-bit भागision.
+		 * Check if we can append the stripe to the last entry. It must
+		 * be just after the last logged stripe and write to the same
+		 * disks. Use bit shift and logarithm to avoid 64-bit division.
 		 */
-		अगर ((sh->sector == sh_last->sector + RAID5_STRIPE_SECTORS(conf)) &&
+		if ((sh->sector == sh_last->sector + RAID5_STRIPE_SECTORS(conf)) &&
 		    (data_sector >> ilog2(conf->chunk_sectors) ==
 		     data_sector_last >> ilog2(conf->chunk_sectors)) &&
 		    ((data_sector - data_sector_last) * data_disks ==
 		     data_size_last >> 9))
 			e = last;
-	पूर्ण
+	}
 
-	अगर (!e) अणु
+	if (!e) {
 		e = &pplhdr->entries[io->entries_count++];
 		e->data_sector = cpu_to_le64(data_sector);
 		e->parity_disk = cpu_to_le32(sh->pd_idx);
 		e->checksum = cpu_to_le32(~0);
-	पूर्ण
+	}
 
 	le32_add_cpu(&e->data_size, data_disks << PAGE_SHIFT);
 
-	/* करोn't ग_लिखो any PP अगर full stripe ग_लिखो */
-	अगर (!test_bit(STRIPE_FULL_WRITE, &sh->state)) अणु
+	/* don't write any PP if full stripe write */
+	if (!test_bit(STRIPE_FULL_WRITE, &sh->state)) {
 		le32_add_cpu(&e->pp_size, PAGE_SIZE);
 		io->pp_size += PAGE_SIZE;
 		e->checksum = cpu_to_le32(crc32c_le(le32_to_cpu(e->checksum),
 						    page_address(sh->ppl_page),
 						    PAGE_SIZE));
-	पूर्ण
+	}
 
 	list_add_tail(&sh->log_list, &io->stripe_list);
 	atomic_inc(&io->pending_stripes);
 	sh->ppl_io = io;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक ppl_ग_लिखो_stripe(काष्ठा r5conf *conf, काष्ठा stripe_head *sh)
-अणु
-	काष्ठा ppl_conf *ppl_conf = conf->log_निजी;
-	काष्ठा ppl_io_unit *io = sh->ppl_io;
-	काष्ठा ppl_log *log;
+int ppl_write_stripe(struct r5conf *conf, struct stripe_head *sh)
+{
+	struct ppl_conf *ppl_conf = conf->log_private;
+	struct ppl_io_unit *io = sh->ppl_io;
+	struct ppl_log *log;
 
-	अगर (io || test_bit(STRIPE_SYNCING, &sh->state) || !sh->ppl_page ||
-	    !test_bit(R5_Wantग_लिखो, &sh->dev[sh->pd_idx].flags) ||
-	    !test_bit(R5_Insync, &sh->dev[sh->pd_idx].flags)) अणु
+	if (io || test_bit(STRIPE_SYNCING, &sh->state) || !sh->ppl_page ||
+	    !test_bit(R5_Wantwrite, &sh->dev[sh->pd_idx].flags) ||
+	    !test_bit(R5_Insync, &sh->dev[sh->pd_idx].flags)) {
 		clear_bit(STRIPE_LOG_TRAPPED, &sh->state);
-		वापस -EAGAIN;
-	पूर्ण
+		return -EAGAIN;
+	}
 
 	log = &ppl_conf->child_logs[sh->pd_idx];
 
 	mutex_lock(&log->io_mutex);
 
-	अगर (!log->rdev || test_bit(Faulty, &log->rdev->flags)) अणु
+	if (!log->rdev || test_bit(Faulty, &log->rdev->flags)) {
 		mutex_unlock(&log->io_mutex);
-		वापस -EAGAIN;
-	पूर्ण
+		return -EAGAIN;
+	}
 
 	set_bit(STRIPE_LOG_TRAPPED, &sh->state);
 	clear_bit(STRIPE_DELAYED, &sh->state);
 	atomic_inc(&sh->count);
 
-	अगर (ppl_log_stripe(log, sh)) अणु
+	if (ppl_log_stripe(log, sh)) {
 		spin_lock_irq(&ppl_conf->no_mem_stripes_lock);
 		list_add_tail(&sh->log_list, &ppl_conf->no_mem_stripes);
 		spin_unlock_irq(&ppl_conf->no_mem_stripes_lock);
-	पूर्ण
+	}
 
 	mutex_unlock(&log->io_mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ppl_log_endio(काष्ठा bio *bio)
-अणु
-	काष्ठा ppl_io_unit *io = bio->bi_निजी;
-	काष्ठा ppl_log *log = io->log;
-	काष्ठा ppl_conf *ppl_conf = log->ppl_conf;
-	काष्ठा stripe_head *sh, *next;
+static void ppl_log_endio(struct bio *bio)
+{
+	struct ppl_io_unit *io = bio->bi_private;
+	struct ppl_log *log = io->log;
+	struct ppl_conf *ppl_conf = log->ppl_conf;
+	struct stripe_head *sh, *next;
 
 	pr_debug("%s: seq: %llu\n", __func__, io->seq);
 
-	अगर (bio->bi_status)
+	if (bio->bi_status)
 		md_error(ppl_conf->mddev, log->rdev);
 
-	list_क्रम_each_entry_safe(sh, next, &io->stripe_list, log_list) अणु
+	list_for_each_entry_safe(sh, next, &io->stripe_list, log_list) {
 		list_del_init(&sh->log_list);
 
 		set_bit(STRIPE_HANDLE, &sh->state);
 		raid5_release_stripe(sh);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम ppl_submit_iounit_bio(काष्ठा ppl_io_unit *io, काष्ठा bio *bio)
-अणु
-	अक्षर b[BDEVNAME_SIZE];
+static void ppl_submit_iounit_bio(struct ppl_io_unit *io, struct bio *bio)
+{
+	char b[BDEVNAME_SIZE];
 
 	pr_debug("%s: seq: %llu size: %u sector: %llu dev: %s\n",
 		 __func__, io->seq, bio->bi_iter.bi_size,
-		 (अचिन्हित दीर्घ दीर्घ)bio->bi_iter.bi_sector,
+		 (unsigned long long)bio->bi_iter.bi_sector,
 		 bio_devname(bio, b));
 
 	submit_bio(bio);
-पूर्ण
+}
 
-अटल व्योम ppl_submit_iounit(काष्ठा ppl_io_unit *io)
-अणु
-	काष्ठा ppl_log *log = io->log;
-	काष्ठा ppl_conf *ppl_conf = log->ppl_conf;
-	काष्ठा ppl_header *pplhdr = page_address(io->header_page);
-	काष्ठा bio *bio = &io->bio;
-	काष्ठा stripe_head *sh;
-	पूर्णांक i;
+static void ppl_submit_iounit(struct ppl_io_unit *io)
+{
+	struct ppl_log *log = io->log;
+	struct ppl_conf *ppl_conf = log->ppl_conf;
+	struct ppl_header *pplhdr = page_address(io->header_page);
+	struct bio *bio = &io->bio;
+	struct stripe_head *sh;
+	int i;
 
-	bio->bi_निजी = io;
+	bio->bi_private = io;
 
-	अगर (!log->rdev || test_bit(Faulty, &log->rdev->flags)) अणु
+	if (!log->rdev || test_bit(Faulty, &log->rdev->flags)) {
 		ppl_log_endio(bio);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	क्रम (i = 0; i < io->entries_count; i++) अणु
-		काष्ठा ppl_header_entry *e = &pplhdr->entries[i];
+	for (i = 0; i < io->entries_count; i++) {
+		struct ppl_header_entry *e = &pplhdr->entries[i];
 
 		pr_debug("%s: seq: %llu entry: %d data_sector: %llu pp_size: %u data_size: %u\n",
 			 __func__, io->seq, i, le64_to_cpu(e->data_sector),
@@ -453,13 +452,13 @@ ops_run_partial_parity(काष्ठा stripe_head *sh, काष्ठा ra
 		e->data_sector = cpu_to_le64(le64_to_cpu(e->data_sector) >>
 					     ilog2(ppl_conf->block_size >> 9));
 		e->checksum = cpu_to_le32(~le32_to_cpu(e->checksum));
-	पूर्ण
+	}
 
 	pplhdr->entries_count = cpu_to_le32(io->entries_count);
 	pplhdr->checksum = cpu_to_le32(~crc32c_le(~0, pplhdr, PPL_HEADER_SIZE));
 
-	/* Rewind the buffer अगर current PPL is larger then reमुख्यing space */
-	अगर (log->use_multippl &&
+	/* Rewind the buffer if current PPL is larger then remaining space */
+	if (log->use_multippl &&
 	    log->rdev->ppl.sector + log->rdev->ppl.size - log->next_io_sector <
 	    (PPL_HEADER_SIZE + io->pp_size) >> 9)
 		log->next_io_sector = log->rdev->ppl.sector;
@@ -470,93 +469,93 @@ ops_run_partial_parity(काष्ठा stripe_head *sh, काष्ठा ra
 	bio_set_dev(bio, log->rdev->bdev);
 	bio->bi_iter.bi_sector = log->next_io_sector;
 	bio_add_page(bio, io->header_page, PAGE_SIZE, 0);
-	bio->bi_ग_लिखो_hपूर्णांक = ppl_conf->ग_लिखो_hपूर्णांक;
+	bio->bi_write_hint = ppl_conf->write_hint;
 
 	pr_debug("%s: log->current_io_sector: %llu\n", __func__,
-	    (अचिन्हित दीर्घ दीर्घ)log->next_io_sector);
+	    (unsigned long long)log->next_io_sector);
 
-	अगर (log->use_multippl)
+	if (log->use_multippl)
 		log->next_io_sector += (PPL_HEADER_SIZE + io->pp_size) >> 9;
 
-	WARN_ON(log->disk_flush_biपंचांगap != 0);
+	WARN_ON(log->disk_flush_bitmap != 0);
 
-	list_क्रम_each_entry(sh, &io->stripe_list, log_list) अणु
-		क्रम (i = 0; i < sh->disks; i++) अणु
-			काष्ठा r5dev *dev = &sh->dev[i];
+	list_for_each_entry(sh, &io->stripe_list, log_list) {
+		for (i = 0; i < sh->disks; i++) {
+			struct r5dev *dev = &sh->dev[i];
 
-			अगर ((ppl_conf->child_logs[i].wb_cache_on) &&
-			    (test_bit(R5_Wantग_लिखो, &dev->flags))) अणु
-				set_bit(i, &log->disk_flush_biपंचांगap);
-			पूर्ण
-		पूर्ण
+			if ((ppl_conf->child_logs[i].wb_cache_on) &&
+			    (test_bit(R5_Wantwrite, &dev->flags))) {
+				set_bit(i, &log->disk_flush_bitmap);
+			}
+		}
 
-		/* entries क्रम full stripe ग_लिखोs have no partial parity */
-		अगर (test_bit(STRIPE_FULL_WRITE, &sh->state))
-			जारी;
+		/* entries for full stripe writes have no partial parity */
+		if (test_bit(STRIPE_FULL_WRITE, &sh->state))
+			continue;
 
-		अगर (!bio_add_page(bio, sh->ppl_page, PAGE_SIZE, 0)) अणु
-			काष्ठा bio *prev = bio;
+		if (!bio_add_page(bio, sh->ppl_page, PAGE_SIZE, 0)) {
+			struct bio *prev = bio;
 
 			bio = bio_alloc_bioset(GFP_NOIO, BIO_MAX_VECS,
 					       &ppl_conf->bs);
 			bio->bi_opf = prev->bi_opf;
-			bio->bi_ग_लिखो_hपूर्णांक = prev->bi_ग_लिखो_hपूर्णांक;
+			bio->bi_write_hint = prev->bi_write_hint;
 			bio_copy_dev(bio, prev);
 			bio->bi_iter.bi_sector = bio_end_sector(prev);
 			bio_add_page(bio, sh->ppl_page, PAGE_SIZE, 0);
 
 			bio_chain(bio, prev);
 			ppl_submit_iounit_bio(io, prev);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	ppl_submit_iounit_bio(io, bio);
-पूर्ण
+}
 
-अटल व्योम ppl_submit_current_io(काष्ठा ppl_log *log)
-अणु
-	काष्ठा ppl_io_unit *io;
+static void ppl_submit_current_io(struct ppl_log *log)
+{
+	struct ppl_io_unit *io;
 
 	spin_lock_irq(&log->io_list_lock);
 
-	io = list_first_entry_or_null(&log->io_list, काष्ठा ppl_io_unit,
+	io = list_first_entry_or_null(&log->io_list, struct ppl_io_unit,
 				      log_sibling);
-	अगर (io && io->submitted)
-		io = शून्य;
+	if (io && io->submitted)
+		io = NULL;
 
 	spin_unlock_irq(&log->io_list_lock);
 
-	अगर (io) अणु
+	if (io) {
 		io->submitted = true;
 
-		अगर (io == log->current_io)
-			log->current_io = शून्य;
+		if (io == log->current_io)
+			log->current_io = NULL;
 
 		ppl_submit_iounit(io);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम ppl_ग_लिखो_stripe_run(काष्ठा r5conf *conf)
-अणु
-	काष्ठा ppl_conf *ppl_conf = conf->log_निजी;
-	काष्ठा ppl_log *log;
-	पूर्णांक i;
+void ppl_write_stripe_run(struct r5conf *conf)
+{
+	struct ppl_conf *ppl_conf = conf->log_private;
+	struct ppl_log *log;
+	int i;
 
-	क्रम (i = 0; i < ppl_conf->count; i++) अणु
+	for (i = 0; i < ppl_conf->count; i++) {
 		log = &ppl_conf->child_logs[i];
 
 		mutex_lock(&log->io_mutex);
 		ppl_submit_current_io(log);
 		mutex_unlock(&log->io_mutex);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम ppl_io_unit_finished(काष्ठा ppl_io_unit *io)
-अणु
-	काष्ठा ppl_log *log = io->log;
-	काष्ठा ppl_conf *ppl_conf = log->ppl_conf;
-	काष्ठा r5conf *conf = ppl_conf->mddev->निजी;
-	अचिन्हित दीर्घ flags;
+static void ppl_io_unit_finished(struct ppl_io_unit *io)
+{
+	struct ppl_log *log = io->log;
+	struct ppl_conf *ppl_conf = log->ppl_conf;
+	struct r5conf *conf = ppl_conf->mddev->private;
+	unsigned long flags;
 
 	pr_debug("%s: seq: %llu\n", __func__, io->seq);
 
@@ -566,81 +565,81 @@ ops_run_partial_parity(काष्ठा stripe_head *sh, काष्ठा ra
 	list_del(&io->log_sibling);
 	spin_unlock(&log->io_list_lock);
 
-	mempool_मुक्त(io, &ppl_conf->io_pool);
+	mempool_free(io, &ppl_conf->io_pool);
 
 	spin_lock(&ppl_conf->no_mem_stripes_lock);
-	अगर (!list_empty(&ppl_conf->no_mem_stripes)) अणु
-		काष्ठा stripe_head *sh;
+	if (!list_empty(&ppl_conf->no_mem_stripes)) {
+		struct stripe_head *sh;
 
 		sh = list_first_entry(&ppl_conf->no_mem_stripes,
-				      काष्ठा stripe_head, log_list);
+				      struct stripe_head, log_list);
 		list_del_init(&sh->log_list);
 		set_bit(STRIPE_HANDLE, &sh->state);
 		raid5_release_stripe(sh);
-	पूर्ण
+	}
 	spin_unlock(&ppl_conf->no_mem_stripes_lock);
 
 	local_irq_restore(flags);
 
-	wake_up(&conf->रुको_क्रम_quiescent);
-पूर्ण
+	wake_up(&conf->wait_for_quiescent);
+}
 
-अटल व्योम ppl_flush_endio(काष्ठा bio *bio)
-अणु
-	काष्ठा ppl_io_unit *io = bio->bi_निजी;
-	काष्ठा ppl_log *log = io->log;
-	काष्ठा ppl_conf *ppl_conf = log->ppl_conf;
-	काष्ठा r5conf *conf = ppl_conf->mddev->निजी;
-	अक्षर b[BDEVNAME_SIZE];
+static void ppl_flush_endio(struct bio *bio)
+{
+	struct ppl_io_unit *io = bio->bi_private;
+	struct ppl_log *log = io->log;
+	struct ppl_conf *ppl_conf = log->ppl_conf;
+	struct r5conf *conf = ppl_conf->mddev->private;
+	char b[BDEVNAME_SIZE];
 
 	pr_debug("%s: dev: %s\n", __func__, bio_devname(bio, b));
 
-	अगर (bio->bi_status) अणु
-		काष्ठा md_rdev *rdev;
+	if (bio->bi_status) {
+		struct md_rdev *rdev;
 
-		rcu_पढ़ो_lock();
+		rcu_read_lock();
 		rdev = md_find_rdev_rcu(conf->mddev, bio_dev(bio));
-		अगर (rdev)
+		if (rdev)
 			md_error(rdev->mddev, rdev);
-		rcu_पढ़ो_unlock();
-	पूर्ण
+		rcu_read_unlock();
+	}
 
 	bio_put(bio);
 
-	अगर (atomic_dec_and_test(&io->pending_flushes)) अणु
+	if (atomic_dec_and_test(&io->pending_flushes)) {
 		ppl_io_unit_finished(io);
-		md_wakeup_thपढ़ो(conf->mddev->thपढ़ो);
-	पूर्ण
-पूर्ण
+		md_wakeup_thread(conf->mddev->thread);
+	}
+}
 
-अटल व्योम ppl_करो_flush(काष्ठा ppl_io_unit *io)
-अणु
-	काष्ठा ppl_log *log = io->log;
-	काष्ठा ppl_conf *ppl_conf = log->ppl_conf;
-	काष्ठा r5conf *conf = ppl_conf->mddev->निजी;
-	पूर्णांक raid_disks = conf->raid_disks;
-	पूर्णांक flushed_disks = 0;
-	पूर्णांक i;
+static void ppl_do_flush(struct ppl_io_unit *io)
+{
+	struct ppl_log *log = io->log;
+	struct ppl_conf *ppl_conf = log->ppl_conf;
+	struct r5conf *conf = ppl_conf->mddev->private;
+	int raid_disks = conf->raid_disks;
+	int flushed_disks = 0;
+	int i;
 
 	atomic_set(&io->pending_flushes, raid_disks);
 
-	क्रम_each_set_bit(i, &log->disk_flush_biपंचांगap, raid_disks) अणु
-		काष्ठा md_rdev *rdev;
-		काष्ठा block_device *bdev = शून्य;
+	for_each_set_bit(i, &log->disk_flush_bitmap, raid_disks) {
+		struct md_rdev *rdev;
+		struct block_device *bdev = NULL;
 
-		rcu_पढ़ो_lock();
+		rcu_read_lock();
 		rdev = rcu_dereference(conf->disks[i].rdev);
-		अगर (rdev && !test_bit(Faulty, &rdev->flags))
+		if (rdev && !test_bit(Faulty, &rdev->flags))
 			bdev = rdev->bdev;
-		rcu_पढ़ो_unlock();
+		rcu_read_unlock();
 
-		अगर (bdev) अणु
-			काष्ठा bio *bio;
-			अक्षर b[BDEVNAME_SIZE];
+		if (bdev) {
+			struct bio *bio;
+			char b[BDEVNAME_SIZE];
 
 			bio = bio_alloc_bioset(GFP_NOIO, 0, &ppl_conf->flush_bs);
 			bio_set_dev(bio, bdev);
-			bio->bi_निजी = io;
+			bio->bi_private = io;
 			bio->bi_opf = REQ_OP_WRITE | REQ_PREFLUSH;
 			bio->bi_end_io = ppl_flush_endio;
 
@@ -649,97 +648,97 @@ ops_run_partial_parity(काष्ठा stripe_head *sh, काष्ठा ra
 
 			submit_bio(bio);
 			flushed_disks++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	log->disk_flush_biपंचांगap = 0;
+	log->disk_flush_bitmap = 0;
 
-	क्रम (i = flushed_disks ; i < raid_disks; i++) अणु
-		अगर (atomic_dec_and_test(&io->pending_flushes))
+	for (i = flushed_disks ; i < raid_disks; i++) {
+		if (atomic_dec_and_test(&io->pending_flushes))
 			ppl_io_unit_finished(io);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत bool ppl_no_io_unit_submitted(काष्ठा r5conf *conf,
-					    काष्ठा ppl_log *log)
-अणु
-	काष्ठा ppl_io_unit *io;
+static inline bool ppl_no_io_unit_submitted(struct r5conf *conf,
+					    struct ppl_log *log)
+{
+	struct ppl_io_unit *io;
 
-	io = list_first_entry_or_null(&log->io_list, काष्ठा ppl_io_unit,
+	io = list_first_entry_or_null(&log->io_list, struct ppl_io_unit,
 				      log_sibling);
 
-	वापस !io || !io->submitted;
-पूर्ण
+	return !io || !io->submitted;
+}
 
-व्योम ppl_quiesce(काष्ठा r5conf *conf, पूर्णांक quiesce)
-अणु
-	काष्ठा ppl_conf *ppl_conf = conf->log_निजी;
-	पूर्णांक i;
+void ppl_quiesce(struct r5conf *conf, int quiesce)
+{
+	struct ppl_conf *ppl_conf = conf->log_private;
+	int i;
 
-	अगर (quiesce) अणु
-		क्रम (i = 0; i < ppl_conf->count; i++) अणु
-			काष्ठा ppl_log *log = &ppl_conf->child_logs[i];
+	if (quiesce) {
+		for (i = 0; i < ppl_conf->count; i++) {
+			struct ppl_log *log = &ppl_conf->child_logs[i];
 
 			spin_lock_irq(&log->io_list_lock);
-			रुको_event_lock_irq(conf->रुको_क्रम_quiescent,
+			wait_event_lock_irq(conf->wait_for_quiescent,
 					    ppl_no_io_unit_submitted(conf, log),
 					    log->io_list_lock);
 			spin_unlock_irq(&log->io_list_lock);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-पूर्णांक ppl_handle_flush_request(काष्ठा r5l_log *log, काष्ठा bio *bio)
-अणु
-	अगर (bio->bi_iter.bi_size == 0) अणु
+int ppl_handle_flush_request(struct r5l_log *log, struct bio *bio)
+{
+	if (bio->bi_iter.bi_size == 0) {
 		bio_endio(bio);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	bio->bi_opf &= ~REQ_PREFLUSH;
-	वापस -EAGAIN;
-पूर्ण
+	return -EAGAIN;
+}
 
-व्योम ppl_stripe_ग_लिखो_finished(काष्ठा stripe_head *sh)
-अणु
-	काष्ठा ppl_io_unit *io;
+void ppl_stripe_write_finished(struct stripe_head *sh)
+{
+	struct ppl_io_unit *io;
 
 	io = sh->ppl_io;
-	sh->ppl_io = शून्य;
+	sh->ppl_io = NULL;
 
-	अगर (io && atomic_dec_and_test(&io->pending_stripes)) अणु
-		अगर (io->log->disk_flush_biपंचांगap)
-			ppl_करो_flush(io);
-		अन्यथा
+	if (io && atomic_dec_and_test(&io->pending_stripes)) {
+		if (io->log->disk_flush_bitmap)
+			ppl_do_flush(io);
+		else
 			ppl_io_unit_finished(io);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम ppl_xor(पूर्णांक size, काष्ठा page *page1, काष्ठा page *page2)
-अणु
-	काष्ठा async_submit_ctl submit;
-	काष्ठा dma_async_tx_descriptor *tx;
-	काष्ठा page *xor_srcs[] = अणु page1, page2 पूर्ण;
+static void ppl_xor(int size, struct page *page1, struct page *page2)
+{
+	struct async_submit_ctl submit;
+	struct dma_async_tx_descriptor *tx;
+	struct page *xor_srcs[] = { page1, page2 };
 
 	init_async_submit(&submit, ASYNC_TX_ACK|ASYNC_TX_XOR_DROP_DST,
-			  शून्य, शून्य, शून्य, शून्य);
+			  NULL, NULL, NULL, NULL);
 	tx = async_xor(page1, xor_srcs, 0, 2, size, &submit);
 
 	async_tx_quiesce(&tx);
-पूर्ण
+}
 
 /*
- * PPL recovery strategy: xor partial parity and data from all modअगरied data
- * disks within a stripe and ग_लिखो the result as the new stripe parity. If all
- * stripe data disks are modअगरied (full stripe ग_लिखो), no partial parity is
+ * PPL recovery strategy: xor partial parity and data from all modified data
+ * disks within a stripe and write the result as the new stripe parity. If all
+ * stripe data disks are modified (full stripe write), no partial parity is
  * available, so just xor the data disks.
  *
- * Recovery of a PPL entry shall occur only अगर all modअगरied data disks are
- * available and पढ़ो from all of them succeeds.
+ * Recovery of a PPL entry shall occur only if all modified data disks are
+ * available and read from all of them succeeds.
  *
- * A PPL entry applies to a stripe, partial parity size क्रम an entry is at most
- * the size of the chunk. Examples of possible हालs क्रम a single entry:
+ * A PPL entry applies to a stripe, partial parity size for an entry is at most
+ * the size of the chunk. Examples of possible cases for a single entry:
  *
- * हाल 0: single data disk ग_लिखो:
+ * case 0: single data disk write:
  *   data0    data1    data2     ppl        parity
  * +--------+--------+--------+           +--------------------+
  * | ------ | ------ | ------ | +----+    | (no change)        |
@@ -749,7 +748,7 @@ ops_run_partial_parity(काष्ठा stripe_head *sh, काष्ठा ra
  * +--------+--------+--------+           +--------------------+
  * pp_size = data_size
  *
- * हाल 1: more than one data disk ग_लिखो:
+ * case 1: more than one data disk write:
  *   data0    data1    data2     ppl        parity
  * +--------+--------+--------+           +--------------------+
  * | ------ | ------ | ------ | +----+    | (no change)        |
@@ -757,9 +756,9 @@ ops_run_partial_parity(काष्ठा stripe_head *sh, काष्ठा ra
  * | -data- | -data- | ------ | | pp | -> | data0 ^ data1 ^ pp |
  * | ------ | ------ | ------ | +----+    | (no change)        |
  * +--------+--------+--------+           +--------------------+
- * pp_size = data_size / modअगरied_data_disks
+ * pp_size = data_size / modified_data_disks
  *
- * हाल 2: ग_लिखो to all data disks (also full stripe ग_लिखो):
+ * case 2: write to all data disks (also full stripe write):
  *   data0    data1    data2                parity
  * +--------+--------+--------+           +--------------------+
  * | ------ | ------ | ------ |           | (no change)        |
@@ -769,11 +768,11 @@ ops_run_partial_parity(काष्ठा stripe_head *sh, काष्ठा ra
  * +--------+--------+--------+           +--------------------+
  * pp_size = 0
  *
- * The following हालs are possible only in other implementations. The recovery
- * code can handle them, but they are not generated at runसमय because they can
- * be reduced to हालs 0, 1 and 2:
+ * The following cases are possible only in other implementations. The recovery
+ * code can handle them, but they are not generated at runtime because they can
+ * be reduced to cases 0, 1 and 2:
  *
- * हाल 3:
+ * case 3:
  *   data0    data1    data2     ppl        parity
  * +--------+--------+--------+ +----+    +--------------------+
  * | ------ | -data- | -data- | | pp |    | data1 ^ data2 ^ pp |
@@ -783,7 +782,7 @@ ops_run_partial_parity(काष्ठा stripe_head *sh, काष्ठा ra
  * +--------+--------+--------+ +----+    +--------------------+
  * pp_size = chunk_size
  *
- * हाल 4:
+ * case 4:
  *   data0    data1    data2     ppl        parity
  * +--------+--------+--------+ +----+    +--------------------+
  * | ------ | -data- | ------ | | pp |    | data1 ^ pp         |
@@ -793,80 +792,80 @@ ops_run_partial_parity(काष्ठा stripe_head *sh, काष्ठा ra
  * +--------+--------+--------+ +----+    +--------------------+
  * pp_size = chunk_size
  */
-अटल पूर्णांक ppl_recover_entry(काष्ठा ppl_log *log, काष्ठा ppl_header_entry *e,
+static int ppl_recover_entry(struct ppl_log *log, struct ppl_header_entry *e,
 			     sector_t ppl_sector)
-अणु
-	काष्ठा ppl_conf *ppl_conf = log->ppl_conf;
-	काष्ठा mddev *mddev = ppl_conf->mddev;
-	काष्ठा r5conf *conf = mddev->निजी;
-	पूर्णांक block_size = ppl_conf->block_size;
-	काष्ठा page *page1;
-	काष्ठा page *page2;
+{
+	struct ppl_conf *ppl_conf = log->ppl_conf;
+	struct mddev *mddev = ppl_conf->mddev;
+	struct r5conf *conf = mddev->private;
+	int block_size = ppl_conf->block_size;
+	struct page *page1;
+	struct page *page2;
 	sector_t r_sector_first;
 	sector_t r_sector_last;
-	पूर्णांक strip_sectors;
-	पूर्णांक data_disks;
-	पूर्णांक i;
-	पूर्णांक ret = 0;
-	अक्षर b[BDEVNAME_SIZE];
-	अचिन्हित पूर्णांक pp_size = le32_to_cpu(e->pp_size);
-	अचिन्हित पूर्णांक data_size = le32_to_cpu(e->data_size);
+	int strip_sectors;
+	int data_disks;
+	int i;
+	int ret = 0;
+	char b[BDEVNAME_SIZE];
+	unsigned int pp_size = le32_to_cpu(e->pp_size);
+	unsigned int data_size = le32_to_cpu(e->data_size);
 
 	page1 = alloc_page(GFP_KERNEL);
 	page2 = alloc_page(GFP_KERNEL);
 
-	अगर (!page1 || !page2) अणु
+	if (!page1 || !page2) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	r_sector_first = le64_to_cpu(e->data_sector) * (block_size >> 9);
 
-	अगर ((pp_size >> 9) < conf->chunk_sectors) अणु
-		अगर (pp_size > 0) अणु
+	if ((pp_size >> 9) < conf->chunk_sectors) {
+		if (pp_size > 0) {
 			data_disks = data_size / pp_size;
 			strip_sectors = pp_size >> 9;
-		पूर्ण अन्यथा अणु
+		} else {
 			data_disks = conf->raid_disks - conf->max_degraded;
 			strip_sectors = (data_size >> 9) / data_disks;
-		पूर्ण
+		}
 		r_sector_last = r_sector_first +
 				(data_disks - 1) * conf->chunk_sectors +
 				strip_sectors;
-	पूर्ण अन्यथा अणु
+	} else {
 		data_disks = conf->raid_disks - conf->max_degraded;
 		strip_sectors = conf->chunk_sectors;
 		r_sector_last = r_sector_first + (data_size >> 9);
-	पूर्ण
+	}
 
 	pr_debug("%s: array sector first: %llu last: %llu\n", __func__,
-		 (अचिन्हित दीर्घ दीर्घ)r_sector_first,
-		 (अचिन्हित दीर्घ दीर्घ)r_sector_last);
+		 (unsigned long long)r_sector_first,
+		 (unsigned long long)r_sector_last);
 
-	/* अगर start and end is 4k aligned, use a 4k block */
-	अगर (block_size == 512 &&
+	/* if start and end is 4k aligned, use a 4k block */
+	if (block_size == 512 &&
 	    (r_sector_first & (RAID5_STRIPE_SECTORS(conf) - 1)) == 0 &&
 	    (r_sector_last & (RAID5_STRIPE_SECTORS(conf) - 1)) == 0)
 		block_size = RAID5_STRIPE_SIZE(conf);
 
 	/* iterate through blocks in strip */
-	क्रम (i = 0; i < strip_sectors; i += (block_size >> 9)) अणु
+	for (i = 0; i < strip_sectors; i += (block_size >> 9)) {
 		bool update_parity = false;
 		sector_t parity_sector;
-		काष्ठा md_rdev *parity_rdev;
-		काष्ठा stripe_head sh;
-		पूर्णांक disk;
-		पूर्णांक indent = 0;
+		struct md_rdev *parity_rdev;
+		struct stripe_head sh;
+		int disk;
+		int indent = 0;
 
 		pr_debug("%s:%*s iter %d start\n", __func__, indent, "", i);
 		indent += 2;
 
-		स_रखो(page_address(page1), 0, PAGE_SIZE);
+		memset(page_address(page1), 0, PAGE_SIZE);
 
 		/* iterate through data member disks */
-		क्रम (disk = 0; disk < data_disks; disk++) अणु
-			पूर्णांक dd_idx;
-			काष्ठा md_rdev *rdev;
+		for (disk = 0; disk < data_disks; disk++) {
+			int dd_idx;
+			struct md_rdev *rdev;
 			sector_t sector;
 			sector_t r_sector = r_sector_first + i +
 					    (disk * conf->chunk_sectors);
@@ -875,70 +874,70 @@ ops_run_partial_parity(काष्ठा stripe_head *sh, काष्ठा ra
 				 __func__, indent, "", disk);
 			indent += 2;
 
-			अगर (r_sector >= r_sector_last) अणु
+			if (r_sector >= r_sector_last) {
 				pr_debug("%s:%*s array sector %llu doesn't need parity update\n",
 					 __func__, indent, "",
-					 (अचिन्हित दीर्घ दीर्घ)r_sector);
+					 (unsigned long long)r_sector);
 				indent -= 2;
-				जारी;
-			पूर्ण
+				continue;
+			}
 
 			update_parity = true;
 
 			/* map raid sector to member disk */
 			sector = raid5_compute_sector(conf, r_sector, 0,
-						      &dd_idx, शून्य);
+						      &dd_idx, NULL);
 			pr_debug("%s:%*s processing array sector %llu => data member disk %d, sector %llu\n",
 				 __func__, indent, "",
-				 (अचिन्हित दीर्घ दीर्घ)r_sector, dd_idx,
-				 (अचिन्हित दीर्घ दीर्घ)sector);
+				 (unsigned long long)r_sector, dd_idx,
+				 (unsigned long long)sector);
 
 			rdev = conf->disks[dd_idx].rdev;
-			अगर (!rdev || (!test_bit(In_sync, &rdev->flags) &&
-				      sector >= rdev->recovery_offset)) अणु
+			if (!rdev || (!test_bit(In_sync, &rdev->flags) &&
+				      sector >= rdev->recovery_offset)) {
 				pr_debug("%s:%*s data member disk %d missing\n",
 					 __func__, indent, "", dd_idx);
 				update_parity = false;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
 			pr_debug("%s:%*s reading data member disk %s sector %llu\n",
 				 __func__, indent, "", bdevname(rdev->bdev, b),
-				 (अचिन्हित दीर्घ दीर्घ)sector);
-			अगर (!sync_page_io(rdev, sector, block_size, page2,
-					REQ_OP_READ, 0, false)) अणु
+				 (unsigned long long)sector);
+			if (!sync_page_io(rdev, sector, block_size, page2,
+					REQ_OP_READ, 0, false)) {
 				md_error(mddev, rdev);
 				pr_debug("%s:%*s read failed!\n", __func__,
 					 indent, "");
 				ret = -EIO;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 
 			ppl_xor(block_size, page1, page2);
 
 			indent -= 2;
-		पूर्ण
+		}
 
-		अगर (!update_parity)
-			जारी;
+		if (!update_parity)
+			continue;
 
-		अगर (pp_size > 0) अणु
+		if (pp_size > 0) {
 			pr_debug("%s:%*s reading pp disk sector %llu\n",
 				 __func__, indent, "",
-				 (अचिन्हित दीर्घ दीर्घ)(ppl_sector + i));
-			अगर (!sync_page_io(log->rdev,
+				 (unsigned long long)(ppl_sector + i));
+			if (!sync_page_io(log->rdev,
 					ppl_sector - log->rdev->data_offset + i,
 					block_size, page2, REQ_OP_READ, 0,
-					false)) अणु
+					false)) {
 				pr_debug("%s:%*s read failed!\n", __func__,
 					 indent, "");
 				md_error(mddev, log->rdev);
 				ret = -EIO;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 
 			ppl_xor(block_size, page1, page2);
-		पूर्ण
+		}
 
 		/* map raid sector to parity disk */
 		parity_sector = raid5_compute_sector(conf, r_sector_first + i,
@@ -949,170 +948,170 @@ ops_run_partial_parity(काष्ठा stripe_head *sh, काष्ठा ra
 		BUG_ON(parity_rdev->bdev->bd_dev != log->rdev->bdev->bd_dev);
 		pr_debug("%s:%*s write parity at sector %llu, disk %s\n",
 			 __func__, indent, "",
-			 (अचिन्हित दीर्घ दीर्घ)parity_sector,
+			 (unsigned long long)parity_sector,
 			 bdevname(parity_rdev->bdev, b));
-		अगर (!sync_page_io(parity_rdev, parity_sector, block_size,
-				page1, REQ_OP_WRITE, 0, false)) अणु
+		if (!sync_page_io(parity_rdev, parity_sector, block_size,
+				page1, REQ_OP_WRITE, 0, false)) {
 			pr_debug("%s:%*s parity write error!\n", __func__,
 				 indent, "");
 			md_error(mddev, parity_rdev);
 			ret = -EIO;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 out:
-	अगर (page1)
-		__मुक्त_page(page1);
-	अगर (page2)
-		__मुक्त_page(page2);
-	वापस ret;
-पूर्ण
+	if (page1)
+		__free_page(page1);
+	if (page2)
+		__free_page(page2);
+	return ret;
+}
 
-अटल पूर्णांक ppl_recover(काष्ठा ppl_log *log, काष्ठा ppl_header *pplhdr,
+static int ppl_recover(struct ppl_log *log, struct ppl_header *pplhdr,
 		       sector_t offset)
-अणु
-	काष्ठा ppl_conf *ppl_conf = log->ppl_conf;
-	काष्ठा md_rdev *rdev = log->rdev;
-	काष्ठा mddev *mddev = rdev->mddev;
+{
+	struct ppl_conf *ppl_conf = log->ppl_conf;
+	struct md_rdev *rdev = log->rdev;
+	struct mddev *mddev = rdev->mddev;
 	sector_t ppl_sector = rdev->ppl.sector + offset +
 			      (PPL_HEADER_SIZE >> 9);
-	काष्ठा page *page;
-	पूर्णांक i;
-	पूर्णांक ret = 0;
+	struct page *page;
+	int i;
+	int ret = 0;
 
 	page = alloc_page(GFP_KERNEL);
-	अगर (!page)
-		वापस -ENOMEM;
+	if (!page)
+		return -ENOMEM;
 
 	/* iterate through all PPL entries saved */
-	क्रम (i = 0; i < le32_to_cpu(pplhdr->entries_count); i++) अणु
-		काष्ठा ppl_header_entry *e = &pplhdr->entries[i];
+	for (i = 0; i < le32_to_cpu(pplhdr->entries_count); i++) {
+		struct ppl_header_entry *e = &pplhdr->entries[i];
 		u32 pp_size = le32_to_cpu(e->pp_size);
 		sector_t sector = ppl_sector;
-		पूर्णांक ppl_entry_sectors = pp_size >> 9;
+		int ppl_entry_sectors = pp_size >> 9;
 		u32 crc, crc_stored;
 
 		pr_debug("%s: disk: %d entry: %d ppl_sector: %llu pp_size: %u\n",
 			 __func__, rdev->raid_disk, i,
-			 (अचिन्हित दीर्घ दीर्घ)ppl_sector, pp_size);
+			 (unsigned long long)ppl_sector, pp_size);
 
 		crc = ~0;
 		crc_stored = le32_to_cpu(e->checksum);
 
-		/* पढ़ो parial parity क्रम this entry and calculate its checksum */
-		जबतक (pp_size) अणु
-			पूर्णांक s = pp_size > PAGE_SIZE ? PAGE_SIZE : pp_size;
+		/* read parial parity for this entry and calculate its checksum */
+		while (pp_size) {
+			int s = pp_size > PAGE_SIZE ? PAGE_SIZE : pp_size;
 
-			अगर (!sync_page_io(rdev, sector - rdev->data_offset,
-					s, page, REQ_OP_READ, 0, false)) अणु
+			if (!sync_page_io(rdev, sector - rdev->data_offset,
+					s, page, REQ_OP_READ, 0, false)) {
 				md_error(mddev, rdev);
 				ret = -EIO;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 
 			crc = crc32c_le(crc, page_address(page), s);
 
 			pp_size -= s;
 			sector += s >> 9;
-		पूर्ण
+		}
 
 		crc = ~crc;
 
-		अगर (crc != crc_stored) अणु
+		if (crc != crc_stored) {
 			/*
-			 * Don't recover this entry अगर the checksum करोes not
+			 * Don't recover this entry if the checksum does not
 			 * match, but keep going and try to recover other
 			 * entries.
 			 */
 			pr_debug("%s: ppl entry crc does not match: stored: 0x%x calculated: 0x%x\n",
 				 __func__, crc_stored, crc);
 			ppl_conf->mismatch_count++;
-		पूर्ण अन्यथा अणु
+		} else {
 			ret = ppl_recover_entry(log, e, ppl_sector);
-			अगर (ret)
-				जाओ out;
+			if (ret)
+				goto out;
 			ppl_conf->recovered_entries++;
-		पूर्ण
+		}
 
 		ppl_sector += ppl_entry_sectors;
-	पूर्ण
+	}
 
-	/* flush the disk cache after recovery अगर necessary */
+	/* flush the disk cache after recovery if necessary */
 	ret = blkdev_issue_flush(rdev->bdev);
 out:
-	__मुक्त_page(page);
-	वापस ret;
-पूर्ण
+	__free_page(page);
+	return ret;
+}
 
-अटल पूर्णांक ppl_ग_लिखो_empty_header(काष्ठा ppl_log *log)
-अणु
-	काष्ठा page *page;
-	काष्ठा ppl_header *pplhdr;
-	काष्ठा md_rdev *rdev = log->rdev;
-	पूर्णांक ret = 0;
+static int ppl_write_empty_header(struct ppl_log *log)
+{
+	struct page *page;
+	struct ppl_header *pplhdr;
+	struct md_rdev *rdev = log->rdev;
+	int ret = 0;
 
 	pr_debug("%s: disk: %d ppl_sector: %llu\n", __func__,
-		 rdev->raid_disk, (अचिन्हित दीर्घ दीर्घ)rdev->ppl.sector);
+		 rdev->raid_disk, (unsigned long long)rdev->ppl.sector);
 
 	page = alloc_page(GFP_NOIO | __GFP_ZERO);
-	अगर (!page)
-		वापस -ENOMEM;
+	if (!page)
+		return -ENOMEM;
 
 	pplhdr = page_address(page);
-	/* zero out PPL space to aव्योम collision with old PPLs */
+	/* zero out PPL space to avoid collision with old PPLs */
 	blkdev_issue_zeroout(rdev->bdev, rdev->ppl.sector,
 			    log->rdev->ppl.size, GFP_NOIO, 0);
-	स_रखो(pplhdr->reserved, 0xff, PPL_HDR_RESERVED);
+	memset(pplhdr->reserved, 0xff, PPL_HDR_RESERVED);
 	pplhdr->signature = cpu_to_le32(log->ppl_conf->signature);
 	pplhdr->checksum = cpu_to_le32(~crc32c_le(~0, pplhdr, PAGE_SIZE));
 
-	अगर (!sync_page_io(rdev, rdev->ppl.sector - rdev->data_offset,
+	if (!sync_page_io(rdev, rdev->ppl.sector - rdev->data_offset,
 			  PPL_HEADER_SIZE, page, REQ_OP_WRITE | REQ_SYNC |
-			  REQ_FUA, 0, false)) अणु
+			  REQ_FUA, 0, false)) {
 		md_error(rdev->mddev, rdev);
 		ret = -EIO;
-	पूर्ण
+	}
 
-	__मुक्त_page(page);
-	वापस ret;
-पूर्ण
+	__free_page(page);
+	return ret;
+}
 
-अटल पूर्णांक ppl_load_distributed(काष्ठा ppl_log *log)
-अणु
-	काष्ठा ppl_conf *ppl_conf = log->ppl_conf;
-	काष्ठा md_rdev *rdev = log->rdev;
-	काष्ठा mddev *mddev = rdev->mddev;
-	काष्ठा page *page, *page2, *पंचांगp;
-	काष्ठा ppl_header *pplhdr = शून्य, *prev_pplhdr = शून्य;
+static int ppl_load_distributed(struct ppl_log *log)
+{
+	struct ppl_conf *ppl_conf = log->ppl_conf;
+	struct md_rdev *rdev = log->rdev;
+	struct mddev *mddev = rdev->mddev;
+	struct page *page, *page2, *tmp;
+	struct ppl_header *pplhdr = NULL, *prev_pplhdr = NULL;
 	u32 crc, crc_stored;
 	u32 signature;
-	पूर्णांक ret = 0, i;
+	int ret = 0, i;
 	sector_t pplhdr_offset = 0, prev_pplhdr_offset = 0;
 
 	pr_debug("%s: disk: %d\n", __func__, rdev->raid_disk);
-	/* पढ़ो PPL headers, find the recent one */
+	/* read PPL headers, find the recent one */
 	page = alloc_page(GFP_KERNEL);
-	अगर (!page)
-		वापस -ENOMEM;
+	if (!page)
+		return -ENOMEM;
 
 	page2 = alloc_page(GFP_KERNEL);
-	अगर (!page2) अणु
-		__मुक्त_page(page);
-		वापस -ENOMEM;
-	पूर्ण
+	if (!page2) {
+		__free_page(page);
+		return -ENOMEM;
+	}
 
-	/* searching ppl area क्रम latest ppl */
-	जबतक (pplhdr_offset < rdev->ppl.size - (PPL_HEADER_SIZE >> 9)) अणु
-		अगर (!sync_page_io(rdev,
+	/* searching ppl area for latest ppl */
+	while (pplhdr_offset < rdev->ppl.size - (PPL_HEADER_SIZE >> 9)) {
+		if (!sync_page_io(rdev,
 				  rdev->ppl.sector - rdev->data_offset +
 				  pplhdr_offset, PAGE_SIZE, page, REQ_OP_READ,
-				  0, false)) अणु
+				  0, false)) {
 			md_error(mddev, rdev);
 			ret = -EIO;
-			/* अगर not able to पढ़ो - करोn't recover any PPL */
-			pplhdr = शून्य;
-			अवरोध;
-		पूर्ण
+			/* if not able to read - don't recover any PPL */
+			pplhdr = NULL;
+			break;
+		}
 		pplhdr = page_address(page);
 
 		/* check header validity */
@@ -1120,304 +1119,304 @@ out:
 		pplhdr->checksum = 0;
 		crc = ~crc32c_le(~0, pplhdr, PAGE_SIZE);
 
-		अगर (crc_stored != crc) अणु
+		if (crc_stored != crc) {
 			pr_debug("%s: ppl header crc does not match: stored: 0x%x calculated: 0x%x (offset: %llu)\n",
 				 __func__, crc_stored, crc,
-				 (अचिन्हित दीर्घ दीर्घ)pplhdr_offset);
+				 (unsigned long long)pplhdr_offset);
 			pplhdr = prev_pplhdr;
 			pplhdr_offset = prev_pplhdr_offset;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		signature = le32_to_cpu(pplhdr->signature);
 
-		अगर (mddev->बाह्यal) अणु
+		if (mddev->external) {
 			/*
-			 * For बाह्यal metadata the header signature is set and
+			 * For external metadata the header signature is set and
 			 * validated in userspace.
 			 */
 			ppl_conf->signature = signature;
-		पूर्ण अन्यथा अगर (ppl_conf->signature != signature) अणु
+		} else if (ppl_conf->signature != signature) {
 			pr_debug("%s: ppl header signature does not match: stored: 0x%x configured: 0x%x (offset: %llu)\n",
 				 __func__, signature, ppl_conf->signature,
-				 (अचिन्हित दीर्घ दीर्घ)pplhdr_offset);
+				 (unsigned long long)pplhdr_offset);
 			pplhdr = prev_pplhdr;
 			pplhdr_offset = prev_pplhdr_offset;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (prev_pplhdr && le64_to_cpu(prev_pplhdr->generation) >
-		    le64_to_cpu(pplhdr->generation)) अणु
+		if (prev_pplhdr && le64_to_cpu(prev_pplhdr->generation) >
+		    le64_to_cpu(pplhdr->generation)) {
 			/* previous was newest */
 			pplhdr = prev_pplhdr;
 			pplhdr_offset = prev_pplhdr_offset;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		prev_pplhdr_offset = pplhdr_offset;
 		prev_pplhdr = pplhdr;
 
-		पंचांगp = page;
+		tmp = page;
 		page = page2;
-		page2 = पंचांगp;
+		page2 = tmp;
 
 		/* calculate next potential ppl offset */
-		क्रम (i = 0; i < le32_to_cpu(pplhdr->entries_count); i++)
+		for (i = 0; i < le32_to_cpu(pplhdr->entries_count); i++)
 			pplhdr_offset +=
 			    le32_to_cpu(pplhdr->entries[i].pp_size) >> 9;
 		pplhdr_offset += PPL_HEADER_SIZE >> 9;
-	पूर्ण
+	}
 
 	/* no valid ppl found */
-	अगर (!pplhdr)
+	if (!pplhdr)
 		ppl_conf->mismatch_count++;
-	अन्यथा
+	else
 		pr_debug("%s: latest PPL found at offset: %llu, with generation: %llu\n",
-		    __func__, (अचिन्हित दीर्घ दीर्घ)pplhdr_offset,
+		    __func__, (unsigned long long)pplhdr_offset,
 		    le64_to_cpu(pplhdr->generation));
 
-	/* attempt to recover from log अगर we are starting a dirty array */
-	अगर (pplhdr && !mddev->pers && mddev->recovery_cp != MaxSector)
+	/* attempt to recover from log if we are starting a dirty array */
+	if (pplhdr && !mddev->pers && mddev->recovery_cp != MaxSector)
 		ret = ppl_recover(log, pplhdr, pplhdr_offset);
 
-	/* ग_लिखो empty header अगर we are starting the array */
-	अगर (!ret && !mddev->pers)
-		ret = ppl_ग_लिखो_empty_header(log);
+	/* write empty header if we are starting the array */
+	if (!ret && !mddev->pers)
+		ret = ppl_write_empty_header(log);
 
-	__मुक्त_page(page);
-	__मुक्त_page(page2);
+	__free_page(page);
+	__free_page(page2);
 
 	pr_debug("%s: return: %d mismatch_count: %d recovered_entries: %d\n",
 		 __func__, ret, ppl_conf->mismatch_count,
 		 ppl_conf->recovered_entries);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ppl_load(काष्ठा ppl_conf *ppl_conf)
-अणु
-	पूर्णांक ret = 0;
+static int ppl_load(struct ppl_conf *ppl_conf)
+{
+	int ret = 0;
 	u32 signature = 0;
 	bool signature_set = false;
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < ppl_conf->count; i++) अणु
-		काष्ठा ppl_log *log = &ppl_conf->child_logs[i];
+	for (i = 0; i < ppl_conf->count; i++) {
+		struct ppl_log *log = &ppl_conf->child_logs[i];
 
 		/* skip missing drive */
-		अगर (!log->rdev)
-			जारी;
+		if (!log->rdev)
+			continue;
 
 		ret = ppl_load_distributed(log);
-		अगर (ret)
-			अवरोध;
+		if (ret)
+			break;
 
 		/*
-		 * For बाह्यal metadata we can't check अगर the signature is
-		 * correct on a single drive, but we can check अगर it is the same
+		 * For external metadata we can't check if the signature is
+		 * correct on a single drive, but we can check if it is the same
 		 * on all drives.
 		 */
-		अगर (ppl_conf->mddev->बाह्यal) अणु
-			अगर (!signature_set) अणु
+		if (ppl_conf->mddev->external) {
+			if (!signature_set) {
 				signature = ppl_conf->signature;
 				signature_set = true;
-			पूर्ण अन्यथा अगर (signature != ppl_conf->signature) अणु
+			} else if (signature != ppl_conf->signature) {
 				pr_warn("md/raid:%s: PPL header signature does not match on all member drives\n",
 					mdname(ppl_conf->mddev));
 				ret = -EINVAL;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				break;
+			}
+		}
+	}
 
 	pr_debug("%s: return: %d mismatch_count: %d recovered_entries: %d\n",
 		 __func__, ret, ppl_conf->mismatch_count,
 		 ppl_conf->recovered_entries);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम __ppl_निकास_log(काष्ठा ppl_conf *ppl_conf)
-अणु
+static void __ppl_exit_log(struct ppl_conf *ppl_conf)
+{
 	clear_bit(MD_HAS_PPL, &ppl_conf->mddev->flags);
 	clear_bit(MD_HAS_MULTIPLE_PPLS, &ppl_conf->mddev->flags);
 
-	kमुक्त(ppl_conf->child_logs);
+	kfree(ppl_conf->child_logs);
 
-	bioset_निकास(&ppl_conf->bs);
-	bioset_निकास(&ppl_conf->flush_bs);
-	mempool_निकास(&ppl_conf->io_pool);
+	bioset_exit(&ppl_conf->bs);
+	bioset_exit(&ppl_conf->flush_bs);
+	mempool_exit(&ppl_conf->io_pool);
 	kmem_cache_destroy(ppl_conf->io_kc);
 
-	kमुक्त(ppl_conf);
-पूर्ण
+	kfree(ppl_conf);
+}
 
-व्योम ppl_निकास_log(काष्ठा r5conf *conf)
-अणु
-	काष्ठा ppl_conf *ppl_conf = conf->log_निजी;
+void ppl_exit_log(struct r5conf *conf)
+{
+	struct ppl_conf *ppl_conf = conf->log_private;
 
-	अगर (ppl_conf) अणु
-		__ppl_निकास_log(ppl_conf);
-		conf->log_निजी = शून्य;
-	पूर्ण
-पूर्ण
+	if (ppl_conf) {
+		__ppl_exit_log(ppl_conf);
+		conf->log_private = NULL;
+	}
+}
 
-अटल पूर्णांक ppl_validate_rdev(काष्ठा md_rdev *rdev)
-अणु
-	अक्षर b[BDEVNAME_SIZE];
-	पूर्णांक ppl_data_sectors;
-	पूर्णांक ppl_size_new;
+static int ppl_validate_rdev(struct md_rdev *rdev)
+{
+	char b[BDEVNAME_SIZE];
+	int ppl_data_sectors;
+	int ppl_size_new;
 
 	/*
 	 * The configured PPL size must be enough to store
 	 * the header and (at the very least) partial parity
-	 * क्रम one stripe. Round it करोwn to ensure the data
-	 * space is cleanly भागisible by stripe size.
+	 * for one stripe. Round it down to ensure the data
+	 * space is cleanly divisible by stripe size.
 	 */
 	ppl_data_sectors = rdev->ppl.size - (PPL_HEADER_SIZE >> 9);
 
-	अगर (ppl_data_sectors > 0)
-		ppl_data_sectors = roundकरोwn(ppl_data_sectors,
-				RAID5_STRIPE_SECTORS((काष्ठा r5conf *)rdev->mddev->निजी));
+	if (ppl_data_sectors > 0)
+		ppl_data_sectors = rounddown(ppl_data_sectors,
+				RAID5_STRIPE_SECTORS((struct r5conf *)rdev->mddev->private));
 
-	अगर (ppl_data_sectors <= 0) अणु
+	if (ppl_data_sectors <= 0) {
 		pr_warn("md/raid:%s: PPL space too small on %s\n",
 			mdname(rdev->mddev), bdevname(rdev->bdev, b));
-		वापस -ENOSPC;
-	पूर्ण
+		return -ENOSPC;
+	}
 
 	ppl_size_new = ppl_data_sectors + (PPL_HEADER_SIZE >> 9);
 
-	अगर ((rdev->ppl.sector < rdev->data_offset &&
+	if ((rdev->ppl.sector < rdev->data_offset &&
 	     rdev->ppl.sector + ppl_size_new > rdev->data_offset) ||
 	    (rdev->ppl.sector >= rdev->data_offset &&
-	     rdev->data_offset + rdev->sectors > rdev->ppl.sector)) अणु
+	     rdev->data_offset + rdev->sectors > rdev->ppl.sector)) {
 		pr_warn("md/raid:%s: PPL space overlaps with data on %s\n",
 			mdname(rdev->mddev), bdevname(rdev->bdev, b));
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!rdev->mddev->बाह्यal &&
+	if (!rdev->mddev->external &&
 	    ((rdev->ppl.offset > 0 && rdev->ppl.offset < (rdev->sb_size >> 9)) ||
-	     (rdev->ppl.offset <= 0 && rdev->ppl.offset + ppl_size_new > 0))) अणु
+	     (rdev->ppl.offset <= 0 && rdev->ppl.offset + ppl_size_new > 0))) {
 		pr_warn("md/raid:%s: PPL space overlaps with superblock on %s\n",
 			mdname(rdev->mddev), bdevname(rdev->bdev, b));
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	rdev->ppl.size = ppl_size_new;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ppl_init_child_log(काष्ठा ppl_log *log, काष्ठा md_rdev *rdev)
-अणु
-	काष्ठा request_queue *q;
+static void ppl_init_child_log(struct ppl_log *log, struct md_rdev *rdev)
+{
+	struct request_queue *q;
 
-	अगर ((rdev->ppl.size << 9) >= (PPL_SPACE_SIZE +
-				      PPL_HEADER_SIZE) * 2) अणु
+	if ((rdev->ppl.size << 9) >= (PPL_SPACE_SIZE +
+				      PPL_HEADER_SIZE) * 2) {
 		log->use_multippl = true;
 		set_bit(MD_HAS_MULTIPLE_PPLS,
 			&log->ppl_conf->mddev->flags);
 		log->entry_space = PPL_SPACE_SIZE;
-	पूर्ण अन्यथा अणु
+	} else {
 		log->use_multippl = false;
 		log->entry_space = (log->rdev->ppl.size << 9) -
 				   PPL_HEADER_SIZE;
-	पूर्ण
+	}
 	log->next_io_sector = rdev->ppl.sector;
 
 	q = bdev_get_queue(rdev->bdev);
-	अगर (test_bit(QUEUE_FLAG_WC, &q->queue_flags))
+	if (test_bit(QUEUE_FLAG_WC, &q->queue_flags))
 		log->wb_cache_on = true;
-पूर्ण
+}
 
-पूर्णांक ppl_init_log(काष्ठा r5conf *conf)
-अणु
-	काष्ठा ppl_conf *ppl_conf;
-	काष्ठा mddev *mddev = conf->mddev;
-	पूर्णांक ret = 0;
-	पूर्णांक max_disks;
-	पूर्णांक i;
+int ppl_init_log(struct r5conf *conf)
+{
+	struct ppl_conf *ppl_conf;
+	struct mddev *mddev = conf->mddev;
+	int ret = 0;
+	int max_disks;
+	int i;
 
 	pr_debug("md/raid:%s: enabling distributed Partial Parity Log\n",
 		 mdname(conf->mddev));
 
-	अगर (PAGE_SIZE != 4096)
-		वापस -EINVAL;
+	if (PAGE_SIZE != 4096)
+		return -EINVAL;
 
-	अगर (mddev->level != 5) अणु
+	if (mddev->level != 5) {
 		pr_warn("md/raid:%s PPL is not compatible with raid level %d\n",
 			mdname(mddev), mddev->level);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (mddev->biपंचांगap_info.file || mddev->biपंचांगap_info.offset) अणु
+	if (mddev->bitmap_info.file || mddev->bitmap_info.offset) {
 		pr_warn("md/raid:%s PPL is not compatible with bitmap\n",
 			mdname(mddev));
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (test_bit(MD_HAS_JOURNAL, &mddev->flags)) अणु
+	if (test_bit(MD_HAS_JOURNAL, &mddev->flags)) {
 		pr_warn("md/raid:%s PPL is not compatible with journal\n",
 			mdname(mddev));
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	max_disks = माप_field(काष्ठा ppl_log, disk_flush_biपंचांगap) *
+	max_disks = sizeof_field(struct ppl_log, disk_flush_bitmap) *
 		BITS_PER_BYTE;
-	अगर (conf->raid_disks > max_disks) अणु
+	if (conf->raid_disks > max_disks) {
 		pr_warn("md/raid:%s PPL doesn't support over %d disks in the array\n",
 			mdname(mddev), max_disks);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ppl_conf = kzalloc(माप(काष्ठा ppl_conf), GFP_KERNEL);
-	अगर (!ppl_conf)
-		वापस -ENOMEM;
+	ppl_conf = kzalloc(sizeof(struct ppl_conf), GFP_KERNEL);
+	if (!ppl_conf)
+		return -ENOMEM;
 
 	ppl_conf->mddev = mddev;
 
 	ppl_conf->io_kc = KMEM_CACHE(ppl_io_unit, 0);
-	अगर (!ppl_conf->io_kc) अणु
+	if (!ppl_conf->io_kc) {
 		ret = -ENOMEM;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	ret = mempool_init(&ppl_conf->io_pool, conf->raid_disks, ppl_io_pool_alloc,
-			   ppl_io_pool_मुक्त, ppl_conf->io_kc);
-	अगर (ret)
-		जाओ err;
+			   ppl_io_pool_free, ppl_conf->io_kc);
+	if (ret)
+		goto err;
 
 	ret = bioset_init(&ppl_conf->bs, conf->raid_disks, 0, BIOSET_NEED_BVECS);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	ret = bioset_init(&ppl_conf->flush_bs, conf->raid_disks, 0, 0);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	ppl_conf->count = conf->raid_disks;
-	ppl_conf->child_logs = kसुस्मृति(ppl_conf->count, माप(काष्ठा ppl_log),
+	ppl_conf->child_logs = kcalloc(ppl_conf->count, sizeof(struct ppl_log),
 				       GFP_KERNEL);
-	अगर (!ppl_conf->child_logs) अणु
+	if (!ppl_conf->child_logs) {
 		ret = -ENOMEM;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	atomic64_set(&ppl_conf->seq, 0);
 	INIT_LIST_HEAD(&ppl_conf->no_mem_stripes);
 	spin_lock_init(&ppl_conf->no_mem_stripes_lock);
-	ppl_conf->ग_लिखो_hपूर्णांक = RWH_WRITE_LIFE_NOT_SET;
+	ppl_conf->write_hint = RWH_WRITE_LIFE_NOT_SET;
 
-	अगर (!mddev->बाह्यal) अणु
-		ppl_conf->signature = ~crc32c_le(~0, mddev->uuid, माप(mddev->uuid));
+	if (!mddev->external) {
+		ppl_conf->signature = ~crc32c_le(~0, mddev->uuid, sizeof(mddev->uuid));
 		ppl_conf->block_size = 512;
-	पूर्ण अन्यथा अणु
+	} else {
 		ppl_conf->block_size = queue_logical_block_size(mddev->queue);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < ppl_conf->count; i++) अणु
-		काष्ठा ppl_log *log = &ppl_conf->child_logs[i];
-		काष्ठा md_rdev *rdev = conf->disks[i].rdev;
+	for (i = 0; i < ppl_conf->count; i++) {
+		struct ppl_log *log = &ppl_conf->child_logs[i];
+		struct md_rdev *rdev = conf->disks[i].rdev;
 
 		mutex_init(&log->io_mutex);
 		spin_lock_init(&log->io_list_lock);
@@ -1426,135 +1425,135 @@ out:
 		log->ppl_conf = ppl_conf;
 		log->rdev = rdev;
 
-		अगर (rdev) अणु
+		if (rdev) {
 			ret = ppl_validate_rdev(rdev);
-			अगर (ret)
-				जाओ err;
+			if (ret)
+				goto err;
 
 			ppl_init_child_log(log, rdev);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* load and possibly recover the logs from the member disks */
 	ret = ppl_load(ppl_conf);
 
-	अगर (ret) अणु
-		जाओ err;
-	पूर्ण अन्यथा अगर (!mddev->pers && mddev->recovery_cp == 0 &&
+	if (ret) {
+		goto err;
+	} else if (!mddev->pers && mddev->recovery_cp == 0 &&
 		   ppl_conf->recovered_entries > 0 &&
-		   ppl_conf->mismatch_count == 0) अणु
+		   ppl_conf->mismatch_count == 0) {
 		/*
 		 * If we are starting a dirty array and the recovery succeeds
 		 * without any issues, set the array as clean.
 		 */
 		mddev->recovery_cp = MaxSector;
 		set_bit(MD_SB_CHANGE_CLEAN, &mddev->sb_flags);
-	पूर्ण अन्यथा अगर (mddev->pers && ppl_conf->mismatch_count > 0) अणु
-		/* no mismatch allowed when enabling PPL क्रम a running array */
+	} else if (mddev->pers && ppl_conf->mismatch_count > 0) {
+		/* no mismatch allowed when enabling PPL for a running array */
 		ret = -EINVAL;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	conf->log_निजी = ppl_conf;
+	conf->log_private = ppl_conf;
 	set_bit(MD_HAS_PPL, &ppl_conf->mddev->flags);
 
-	वापस 0;
+	return 0;
 err:
-	__ppl_निकास_log(ppl_conf);
-	वापस ret;
-पूर्ण
+	__ppl_exit_log(ppl_conf);
+	return ret;
+}
 
-पूर्णांक ppl_modअगरy_log(काष्ठा r5conf *conf, काष्ठा md_rdev *rdev, bool add)
-अणु
-	काष्ठा ppl_conf *ppl_conf = conf->log_निजी;
-	काष्ठा ppl_log *log;
-	पूर्णांक ret = 0;
-	अक्षर b[BDEVNAME_SIZE];
+int ppl_modify_log(struct r5conf *conf, struct md_rdev *rdev, bool add)
+{
+	struct ppl_conf *ppl_conf = conf->log_private;
+	struct ppl_log *log;
+	int ret = 0;
+	char b[BDEVNAME_SIZE];
 
-	अगर (!rdev)
-		वापस -EINVAL;
+	if (!rdev)
+		return -EINVAL;
 
 	pr_debug("%s: disk: %d operation: %s dev: %s\n",
 		 __func__, rdev->raid_disk, add ? "add" : "remove",
 		 bdevname(rdev->bdev, b));
 
-	अगर (rdev->raid_disk < 0)
-		वापस 0;
+	if (rdev->raid_disk < 0)
+		return 0;
 
-	अगर (rdev->raid_disk >= ppl_conf->count)
-		वापस -ENODEV;
+	if (rdev->raid_disk >= ppl_conf->count)
+		return -ENODEV;
 
 	log = &ppl_conf->child_logs[rdev->raid_disk];
 
 	mutex_lock(&log->io_mutex);
-	अगर (add) अणु
+	if (add) {
 		ret = ppl_validate_rdev(rdev);
-		अगर (!ret) अणु
+		if (!ret) {
 			log->rdev = rdev;
-			ret = ppl_ग_लिखो_empty_header(log);
+			ret = ppl_write_empty_header(log);
 			ppl_init_child_log(log, rdev);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		log->rdev = शून्य;
-	पूर्ण
+		}
+	} else {
+		log->rdev = NULL;
+	}
 	mutex_unlock(&log->io_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार
-ppl_ग_लिखो_hपूर्णांक_show(काष्ठा mddev *mddev, अक्षर *buf)
-अणु
-	माप_प्रकार ret = 0;
-	काष्ठा r5conf *conf;
-	काष्ठा ppl_conf *ppl_conf = शून्य;
+static ssize_t
+ppl_write_hint_show(struct mddev *mddev, char *buf)
+{
+	size_t ret = 0;
+	struct r5conf *conf;
+	struct ppl_conf *ppl_conf = NULL;
 
 	spin_lock(&mddev->lock);
-	conf = mddev->निजी;
-	अगर (conf && raid5_has_ppl(conf))
-		ppl_conf = conf->log_निजी;
-	ret = प्र_लिखो(buf, "%d\n", ppl_conf ? ppl_conf->ग_लिखो_hपूर्णांक : 0);
+	conf = mddev->private;
+	if (conf && raid5_has_ppl(conf))
+		ppl_conf = conf->log_private;
+	ret = sprintf(buf, "%d\n", ppl_conf ? ppl_conf->write_hint : 0);
 	spin_unlock(&mddev->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार
-ppl_ग_लिखो_hपूर्णांक_store(काष्ठा mddev *mddev, स्थिर अक्षर *page, माप_प्रकार len)
-अणु
-	काष्ठा r5conf *conf;
-	काष्ठा ppl_conf *ppl_conf;
-	पूर्णांक err = 0;
-	अचिन्हित लघु new;
+static ssize_t
+ppl_write_hint_store(struct mddev *mddev, const char *page, size_t len)
+{
+	struct r5conf *conf;
+	struct ppl_conf *ppl_conf;
+	int err = 0;
+	unsigned short new;
 
-	अगर (len >= PAGE_SIZE)
-		वापस -EINVAL;
-	अगर (kstrtou16(page, 10, &new))
-		वापस -EINVAL;
+	if (len >= PAGE_SIZE)
+		return -EINVAL;
+	if (kstrtou16(page, 10, &new))
+		return -EINVAL;
 
 	err = mddev_lock(mddev);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	conf = mddev->निजी;
-	अगर (!conf) अणु
+	conf = mddev->private;
+	if (!conf) {
 		err = -ENODEV;
-	पूर्ण अन्यथा अगर (raid5_has_ppl(conf)) अणु
-		ppl_conf = conf->log_निजी;
-		अगर (!ppl_conf)
+	} else if (raid5_has_ppl(conf)) {
+		ppl_conf = conf->log_private;
+		if (!ppl_conf)
 			err = -EINVAL;
-		अन्यथा
-			ppl_conf->ग_लिखो_hपूर्णांक = new;
-	पूर्ण अन्यथा अणु
+		else
+			ppl_conf->write_hint = new;
+	} else {
 		err = -EINVAL;
-	पूर्ण
+	}
 
 	mddev_unlock(mddev);
 
-	वापस err ?: len;
-पूर्ण
+	return err ?: len;
+}
 
-काष्ठा md_sysfs_entry
-ppl_ग_लिखो_hपूर्णांक = __ATTR(ppl_ग_लिखो_hपूर्णांक, S_IRUGO | S_IWUSR,
-			ppl_ग_लिखो_hपूर्णांक_show,
-			ppl_ग_लिखो_hपूर्णांक_store);
+struct md_sysfs_entry
+ppl_write_hint = __ATTR(ppl_write_hint, S_IRUGO | S_IWUSR,
+			ppl_write_hint_show,
+			ppl_write_hint_store);

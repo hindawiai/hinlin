@@ -1,68 +1,67 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * File: arch/arm/plat-omap/fb.c
  *
- * Framebuffer device registration क्रम TI OMAP platक्रमms
+ * Framebuffer device registration for TI OMAP platforms
  *
  * Copyright (C) 2006 Nokia Corporation
  * Author: Imre Deak <imre.deak@nokia.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/init.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/memblock.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/omapfb.h>
-#समावेश <linux/dma-mapping.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/mm.h>
+#include <linux/init.h>
+#include <linux/platform_device.h>
+#include <linux/memblock.h>
+#include <linux/io.h>
+#include <linux/omapfb.h>
+#include <linux/dma-mapping.h>
 
-#समावेश <यंत्र/mach/map.h>
+#include <asm/mach/map.h>
 
-#अगर IS_ENABLED(CONFIG_FB_OMAP)
+#if IS_ENABLED(CONFIG_FB_OMAP)
 
-अटल bool omapfb_lcd_configured;
-अटल काष्ठा omapfb_platक्रमm_data omapfb_config;
+static bool omapfb_lcd_configured;
+static struct omapfb_platform_data omapfb_config;
 
-अटल u64 omap_fb_dma_mask = ~(u32)0;
+static u64 omap_fb_dma_mask = ~(u32)0;
 
-अटल काष्ठा platक्रमm_device omap_fb_device = अणु
+static struct platform_device omap_fb_device = {
 	.name		= "omapfb",
 	.id		= -1,
-	.dev = अणु
+	.dev = {
 		.dma_mask		= &omap_fb_dma_mask,
 		.coherent_dma_mask	= DMA_BIT_MASK(32),
-		.platक्रमm_data		= &omapfb_config,
-	पूर्ण,
+		.platform_data		= &omapfb_config,
+	},
 	.num_resources = 0,
-पूर्ण;
+};
 
-व्योम __init omapfb_set_lcd_config(स्थिर काष्ठा omap_lcd_config *config)
-अणु
+void __init omapfb_set_lcd_config(const struct omap_lcd_config *config)
+{
 	omapfb_config.lcd = *config;
 	omapfb_lcd_configured = true;
-पूर्ण
+}
 
-अटल पूर्णांक __init omap_init_fb(व्योम)
-अणु
+static int __init omap_init_fb(void)
+{
 	/*
 	 * If the board file has not set the lcd config with
-	 * omapfb_set_lcd_config(), करोn't bother रेजिस्टरing the omapfb device
+	 * omapfb_set_lcd_config(), don't bother registering the omapfb device
 	 */
-	अगर (!omapfb_lcd_configured)
-		वापस 0;
+	if (!omapfb_lcd_configured)
+		return 0;
 
-	वापस platक्रमm_device_रेजिस्टर(&omap_fb_device);
-पूर्ण
+	return platform_device_register(&omap_fb_device);
+}
 
 arch_initcall(omap_init_fb);
 
-#अन्यथा
+#else
 
-व्योम __init omapfb_set_lcd_config(स्थिर काष्ठा omap_lcd_config *config)
-अणु
-पूर्ण
+void __init omapfb_set_lcd_config(const struct omap_lcd_config *config)
+{
+}
 
-#पूर्ण_अगर
+#endif

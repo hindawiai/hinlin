@@ -1,8 +1,7 @@
-<शैली गुरु>
 /*
  * arch/arm/plat-spear/include/plat/uncompress.h
  *
- * Serial port stubs क्रम kernel decompress status messages
+ * Serial port stubs for kernel decompress status messages
  *
  * Copyright (C) 2009 ST Microelectronics
  * Viresh Kumar <vireshk@kernel.org>
@@ -12,32 +11,32 @@
  * warranty of any kind, whether express or implied.
  */
 
-#समावेश <linux/पन.स>
-#समावेश <linux/amba/serial.h>
-#समावेश <mach/spear.h>
+#include <linux/io.h>
+#include <linux/amba/serial.h>
+#include <mach/spear.h>
 
-#अगर_अघोषित __PLAT_UNCOMPRESS_H
-#घोषणा __PLAT_UNCOMPRESS_H
+#ifndef __PLAT_UNCOMPRESS_H
+#define __PLAT_UNCOMPRESS_H
 /*
- * This करोes not append a newline
+ * This does not append a newline
  */
-अटल अंतरभूत व्योम अ_दो(पूर्णांक c)
-अणु
-	व्योम __iomem *base = (व्योम __iomem *)SPEAR_DBG_UART_BASE;
+static inline void putc(int c)
+{
+	void __iomem *base = (void __iomem *)SPEAR_DBG_UART_BASE;
 
-	जबतक (पढ़ोl_relaxed(base + UART01x_FR) & UART01x_FR_TXFF)
+	while (readl_relaxed(base + UART01x_FR) & UART01x_FR_TXFF)
 		barrier();
 
-	ग_लिखोl_relaxed(c, base + UART01x_DR);
-पूर्ण
+	writel_relaxed(c, base + UART01x_DR);
+}
 
-अटल अंतरभूत व्योम flush(व्योम)
-अणु
-पूर्ण
+static inline void flush(void)
+{
+}
 
 /*
- * nothing to करो
+ * nothing to do
  */
-#घोषणा arch_decomp_setup()
+#define arch_decomp_setup()
 
-#पूर्ण_अगर /* __PLAT_UNCOMPRESS_H */
+#endif /* __PLAT_UNCOMPRESS_H */

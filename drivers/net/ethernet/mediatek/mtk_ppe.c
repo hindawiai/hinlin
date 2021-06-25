@@ -1,27 +1,26 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (C) 2020 Felix Fietkau <nbd@nbd.name> */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/iopoll.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश "mtk_ppe.h"
-#समावेश "mtk_ppe_regs.h"
+#include <linux/kernel.h>
+#include <linux/io.h>
+#include <linux/iopoll.h>
+#include <linux/etherdevice.h>
+#include <linux/platform_device.h>
+#include "mtk_ppe.h"
+#include "mtk_ppe_regs.h"
 
-अटल व्योम ppe_w32(काष्ठा mtk_ppe *ppe, u32 reg, u32 val)
-अणु
-	ग_लिखोl(val, ppe->base + reg);
-पूर्ण
+static void ppe_w32(struct mtk_ppe *ppe, u32 reg, u32 val)
+{
+	writel(val, ppe->base + reg);
+}
 
-अटल u32 ppe_r32(काष्ठा mtk_ppe *ppe, u32 reg)
-अणु
-	वापस पढ़ोl(ppe->base + reg);
-पूर्ण
+static u32 ppe_r32(struct mtk_ppe *ppe, u32 reg)
+{
+	return readl(ppe->base + reg);
+}
 
-अटल u32 ppe_m32(काष्ठा mtk_ppe *ppe, u32 reg, u32 mask, u32 set)
-अणु
+static u32 ppe_m32(struct mtk_ppe *ppe, u32 reg, u32 mask, u32 set)
+{
 	u32 val;
 
 	val = ppe_r32(ppe, reg);
@@ -29,69 +28,69 @@
 	val |= set;
 	ppe_w32(ppe, reg, val);
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल u32 ppe_set(काष्ठा mtk_ppe *ppe, u32 reg, u32 val)
-अणु
-	वापस ppe_m32(ppe, reg, 0, val);
-पूर्ण
+static u32 ppe_set(struct mtk_ppe *ppe, u32 reg, u32 val)
+{
+	return ppe_m32(ppe, reg, 0, val);
+}
 
-अटल u32 ppe_clear(काष्ठा mtk_ppe *ppe, u32 reg, u32 val)
-अणु
-	वापस ppe_m32(ppe, reg, val, 0);
-पूर्ण
+static u32 ppe_clear(struct mtk_ppe *ppe, u32 reg, u32 val)
+{
+	return ppe_m32(ppe, reg, val, 0);
+}
 
-अटल पूर्णांक mtk_ppe_रुको_busy(काष्ठा mtk_ppe *ppe)
-अणु
-	पूर्णांक ret;
+static int mtk_ppe_wait_busy(struct mtk_ppe *ppe)
+{
+	int ret;
 	u32 val;
 
-	ret = पढ़ोl_poll_समयout(ppe->base + MTK_PPE_GLO_CFG, val,
+	ret = readl_poll_timeout(ppe->base + MTK_PPE_GLO_CFG, val,
 				 !(val & MTK_PPE_GLO_CFG_BUSY),
 				 20, MTK_PPE_WAIT_TIMEOUT_US);
 
-	अगर (ret)
+	if (ret)
 		dev_err(ppe->dev, "PPE table busy");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम mtk_ppe_cache_clear(काष्ठा mtk_ppe *ppe)
-अणु
+static void mtk_ppe_cache_clear(struct mtk_ppe *ppe)
+{
 	ppe_set(ppe, MTK_PPE_CACHE_CTL, MTK_PPE_CACHE_CTL_CLEAR);
 	ppe_clear(ppe, MTK_PPE_CACHE_CTL, MTK_PPE_CACHE_CTL_CLEAR);
-पूर्ण
+}
 
-अटल व्योम mtk_ppe_cache_enable(काष्ठा mtk_ppe *ppe, bool enable)
-अणु
+static void mtk_ppe_cache_enable(struct mtk_ppe *ppe, bool enable)
+{
 	mtk_ppe_cache_clear(ppe);
 
 	ppe_m32(ppe, MTK_PPE_CACHE_CTL, MTK_PPE_CACHE_CTL_EN,
 		enable * MTK_PPE_CACHE_CTL_EN);
-पूर्ण
+}
 
-अटल u32 mtk_ppe_hash_entry(काष्ठा mtk_foe_entry *e)
-अणु
+static u32 mtk_ppe_hash_entry(struct mtk_foe_entry *e)
+{
 	u32 hv1, hv2, hv3;
 	u32 hash;
 
-	चयन (FIELD_GET(MTK_FOE_IB1_PACKET_TYPE, e->ib1)) अणु
-		हाल MTK_PPE_PKT_TYPE_BRIDGE:
+	switch (FIELD_GET(MTK_FOE_IB1_PACKET_TYPE, e->ib1)) {
+		case MTK_PPE_PKT_TYPE_BRIDGE:
 			hv1 = e->bridge.src_mac_lo;
 			hv1 ^= ((e->bridge.src_mac_hi & 0xffff) << 16);
 			hv2 = e->bridge.src_mac_hi >> 16;
 			hv2 ^= e->bridge.dest_mac_lo;
 			hv3 = e->bridge.dest_mac_hi;
-			अवरोध;
-		हाल MTK_PPE_PKT_TYPE_IPV4_ROUTE:
-		हाल MTK_PPE_PKT_TYPE_IPV4_HNAPT:
+			break;
+		case MTK_PPE_PKT_TYPE_IPV4_ROUTE:
+		case MTK_PPE_PKT_TYPE_IPV4_HNAPT:
 			hv1 = e->ipv4.orig.ports;
 			hv2 = e->ipv4.orig.dest_ip;
 			hv3 = e->ipv4.orig.src_ip;
-			अवरोध;
-		हाल MTK_PPE_PKT_TYPE_IPV6_ROUTE_3T:
-		हाल MTK_PPE_PKT_TYPE_IPV6_ROUTE_5T:
+			break;
+		case MTK_PPE_PKT_TYPE_IPV6_ROUTE_3T:
+		case MTK_PPE_PKT_TYPE_IPV6_ROUTE_5T:
 			hv1 = e->ipv6.src_ip[3] ^ e->ipv6.dest_ip[3];
 			hv1 ^= e->ipv6.ports;
 
@@ -100,13 +99,13 @@
 
 			hv3 = e->ipv6.src_ip[1] ^ e->ipv6.dest_ip[1];
 			hv3 ^= e->ipv6.src_ip[0];
-			अवरोध;
-		हाल MTK_PPE_PKT_TYPE_IPV4_DSLITE:
-		हाल MTK_PPE_PKT_TYPE_IPV6_6RD:
-		शेष:
+			break;
+		case MTK_PPE_PKT_TYPE_IPV4_DSLITE:
+		case MTK_PPE_PKT_TYPE_IPV6_6RD:
+		default:
 			WARN_ON_ONCE(1);
-			वापस MTK_PPE_HASH_MASK;
-	पूर्ण
+			return MTK_PPE_HASH_MASK;
+	}
 
 	hash = (hv1 & hv2) | ((~hv1) & hv3);
 	hash = (hash >> 24) | ((hash & 0xffffff) << 8);
@@ -115,38 +114,38 @@
 	hash <<= 1;
 	hash &= MTK_PPE_ENTRIES - 1;
 
-	वापस hash;
-पूर्ण
+	return hash;
+}
 
-अटल अंतरभूत काष्ठा mtk_foe_mac_info *
-mtk_foe_entry_l2(काष्ठा mtk_foe_entry *entry)
-अणु
-	पूर्णांक type = FIELD_GET(MTK_FOE_IB1_PACKET_TYPE, entry->ib1);
+static inline struct mtk_foe_mac_info *
+mtk_foe_entry_l2(struct mtk_foe_entry *entry)
+{
+	int type = FIELD_GET(MTK_FOE_IB1_PACKET_TYPE, entry->ib1);
 
-	अगर (type >= MTK_PPE_PKT_TYPE_IPV4_DSLITE)
-		वापस &entry->ipv6.l2;
+	if (type >= MTK_PPE_PKT_TYPE_IPV4_DSLITE)
+		return &entry->ipv6.l2;
 
-	वापस &entry->ipv4.l2;
-पूर्ण
+	return &entry->ipv4.l2;
+}
 
-अटल अंतरभूत u32 *
-mtk_foe_entry_ib2(काष्ठा mtk_foe_entry *entry)
-अणु
-	पूर्णांक type = FIELD_GET(MTK_FOE_IB1_PACKET_TYPE, entry->ib1);
+static inline u32 *
+mtk_foe_entry_ib2(struct mtk_foe_entry *entry)
+{
+	int type = FIELD_GET(MTK_FOE_IB1_PACKET_TYPE, entry->ib1);
 
-	अगर (type >= MTK_PPE_PKT_TYPE_IPV4_DSLITE)
-		वापस &entry->ipv6.ib2;
+	if (type >= MTK_PPE_PKT_TYPE_IPV4_DSLITE)
+		return &entry->ipv6.ib2;
 
-	वापस &entry->ipv4.ib2;
-पूर्ण
+	return &entry->ipv4.ib2;
+}
 
-पूर्णांक mtk_foe_entry_prepare(काष्ठा mtk_foe_entry *entry, पूर्णांक type, पूर्णांक l4proto,
+int mtk_foe_entry_prepare(struct mtk_foe_entry *entry, int type, int l4proto,
 			  u8 pse_port, u8 *src_mac, u8 *dest_mac)
-अणु
-	काष्ठा mtk_foe_mac_info *l2;
+{
+	struct mtk_foe_mac_info *l2;
 	u32 ports_pad, val;
 
-	स_रखो(entry, 0, माप(*entry));
+	memset(entry, 0, sizeof(*entry));
 
 	val = FIELD_PREP(MTK_FOE_IB1_STATE, MTK_FOE_STATE_BIND) |
 	      FIELD_PREP(MTK_FOE_IB1_PACKET_TYPE, type) |
@@ -159,38 +158,38 @@ mtk_foe_entry_ib2(काष्ठा mtk_foe_entry *entry)
 	      FIELD_PREP(MTK_FOE_IB2_PORT_AG, 0x1f) |
 	      FIELD_PREP(MTK_FOE_IB2_DEST_PORT, pse_port);
 
-	अगर (is_multicast_ether_addr(dest_mac))
+	if (is_multicast_ether_addr(dest_mac))
 		val |= MTK_FOE_IB2_MULTICAST;
 
 	ports_pad = 0xa5a5a500 | (l4proto & 0xff);
-	अगर (type == MTK_PPE_PKT_TYPE_IPV4_ROUTE)
+	if (type == MTK_PPE_PKT_TYPE_IPV4_ROUTE)
 		entry->ipv4.orig.ports = ports_pad;
-	अगर (type == MTK_PPE_PKT_TYPE_IPV6_ROUTE_3T)
+	if (type == MTK_PPE_PKT_TYPE_IPV6_ROUTE_3T)
 		entry->ipv6.ports = ports_pad;
 
-	अगर (type >= MTK_PPE_PKT_TYPE_IPV4_DSLITE) अणु
+	if (type >= MTK_PPE_PKT_TYPE_IPV4_DSLITE) {
 		entry->ipv6.ib2 = val;
 		l2 = &entry->ipv6.l2;
-	पूर्ण अन्यथा अणु
+	} else {
 		entry->ipv4.ib2 = val;
 		l2 = &entry->ipv4.l2;
-	पूर्ण
+	}
 
 	l2->dest_mac_hi = get_unaligned_be32(dest_mac);
 	l2->dest_mac_lo = get_unaligned_be16(dest_mac + 4);
 	l2->src_mac_hi = get_unaligned_be32(src_mac);
 	l2->src_mac_lo = get_unaligned_be16(src_mac + 4);
 
-	अगर (type >= MTK_PPE_PKT_TYPE_IPV6_ROUTE_3T)
+	if (type >= MTK_PPE_PKT_TYPE_IPV6_ROUTE_3T)
 		l2->etype = ETH_P_IPV6;
-	अन्यथा
+	else
 		l2->etype = ETH_P_IP;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक mtk_foe_entry_set_pse_port(काष्ठा mtk_foe_entry *entry, u8 port)
-अणु
+int mtk_foe_entry_set_pse_port(struct mtk_foe_entry *entry, u8 port)
+{
 	u32 *ib2 = mtk_foe_entry_ib2(entry);
 	u32 val;
 
@@ -199,164 +198,164 @@ mtk_foe_entry_ib2(काष्ठा mtk_foe_entry *entry)
 	val |= FIELD_PREP(MTK_FOE_IB2_DEST_PORT, port);
 	*ib2 = val;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक mtk_foe_entry_set_ipv4_tuple(काष्ठा mtk_foe_entry *entry, bool egress,
+int mtk_foe_entry_set_ipv4_tuple(struct mtk_foe_entry *entry, bool egress,
 				 __be32 src_addr, __be16 src_port,
 				 __be32 dest_addr, __be16 dest_port)
-अणु
-	पूर्णांक type = FIELD_GET(MTK_FOE_IB1_PACKET_TYPE, entry->ib1);
-	काष्ठा mtk_ipv4_tuple *t;
+{
+	int type = FIELD_GET(MTK_FOE_IB1_PACKET_TYPE, entry->ib1);
+	struct mtk_ipv4_tuple *t;
 
-	चयन (type) अणु
-	हाल MTK_PPE_PKT_TYPE_IPV4_HNAPT:
-		अगर (egress) अणु
+	switch (type) {
+	case MTK_PPE_PKT_TYPE_IPV4_HNAPT:
+		if (egress) {
 			t = &entry->ipv4.new;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		fallthrough;
-	हाल MTK_PPE_PKT_TYPE_IPV4_DSLITE:
-	हाल MTK_PPE_PKT_TYPE_IPV4_ROUTE:
+	case MTK_PPE_PKT_TYPE_IPV4_DSLITE:
+	case MTK_PPE_PKT_TYPE_IPV4_ROUTE:
 		t = &entry->ipv4.orig;
-		अवरोध;
-	हाल MTK_PPE_PKT_TYPE_IPV6_6RD:
+		break;
+	case MTK_PPE_PKT_TYPE_IPV6_6RD:
 		entry->ipv6_6rd.tunnel_src_ip = be32_to_cpu(src_addr);
 		entry->ipv6_6rd.tunnel_dest_ip = be32_to_cpu(dest_addr);
-		वापस 0;
-	शेष:
+		return 0;
+	default:
 		WARN_ON_ONCE(1);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	t->src_ip = be32_to_cpu(src_addr);
 	t->dest_ip = be32_to_cpu(dest_addr);
 
-	अगर (type == MTK_PPE_PKT_TYPE_IPV4_ROUTE)
-		वापस 0;
+	if (type == MTK_PPE_PKT_TYPE_IPV4_ROUTE)
+		return 0;
 
 	t->src_port = be16_to_cpu(src_port);
 	t->dest_port = be16_to_cpu(dest_port);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक mtk_foe_entry_set_ipv6_tuple(काष्ठा mtk_foe_entry *entry,
+int mtk_foe_entry_set_ipv6_tuple(struct mtk_foe_entry *entry,
 				 __be32 *src_addr, __be16 src_port,
 				 __be32 *dest_addr, __be16 dest_port)
-अणु
-	पूर्णांक type = FIELD_GET(MTK_FOE_IB1_PACKET_TYPE, entry->ib1);
+{
+	int type = FIELD_GET(MTK_FOE_IB1_PACKET_TYPE, entry->ib1);
 	u32 *src, *dest;
-	पूर्णांक i;
+	int i;
 
-	चयन (type) अणु
-	हाल MTK_PPE_PKT_TYPE_IPV4_DSLITE:
+	switch (type) {
+	case MTK_PPE_PKT_TYPE_IPV4_DSLITE:
 		src = entry->dslite.tunnel_src_ip;
 		dest = entry->dslite.tunnel_dest_ip;
-		अवरोध;
-	हाल MTK_PPE_PKT_TYPE_IPV6_ROUTE_5T:
-	हाल MTK_PPE_PKT_TYPE_IPV6_6RD:
+		break;
+	case MTK_PPE_PKT_TYPE_IPV6_ROUTE_5T:
+	case MTK_PPE_PKT_TYPE_IPV6_6RD:
 		entry->ipv6.src_port = be16_to_cpu(src_port);
 		entry->ipv6.dest_port = be16_to_cpu(dest_port);
 		fallthrough;
-	हाल MTK_PPE_PKT_TYPE_IPV6_ROUTE_3T:
+	case MTK_PPE_PKT_TYPE_IPV6_ROUTE_3T:
 		src = entry->ipv6.src_ip;
 		dest = entry->ipv6.dest_ip;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		WARN_ON_ONCE(1);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	क्रम (i = 0; i < 4; i++)
+	for (i = 0; i < 4; i++)
 		src[i] = be32_to_cpu(src_addr[i]);
-	क्रम (i = 0; i < 4; i++)
+	for (i = 0; i < 4; i++)
 		dest[i] = be32_to_cpu(dest_addr[i]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक mtk_foe_entry_set_dsa(काष्ठा mtk_foe_entry *entry, पूर्णांक port)
-अणु
-	काष्ठा mtk_foe_mac_info *l2 = mtk_foe_entry_l2(entry);
+int mtk_foe_entry_set_dsa(struct mtk_foe_entry *entry, int port)
+{
+	struct mtk_foe_mac_info *l2 = mtk_foe_entry_l2(entry);
 
 	l2->etype = BIT(port);
 
-	अगर (!(entry->ib1 & MTK_FOE_IB1_BIND_VLAN_LAYER))
+	if (!(entry->ib1 & MTK_FOE_IB1_BIND_VLAN_LAYER))
 		entry->ib1 |= FIELD_PREP(MTK_FOE_IB1_BIND_VLAN_LAYER, 1);
-	अन्यथा
+	else
 		l2->etype |= BIT(8);
 
 	entry->ib1 &= ~MTK_FOE_IB1_BIND_VLAN_TAG;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक mtk_foe_entry_set_vlan(काष्ठा mtk_foe_entry *entry, पूर्णांक vid)
-अणु
-	काष्ठा mtk_foe_mac_info *l2 = mtk_foe_entry_l2(entry);
+int mtk_foe_entry_set_vlan(struct mtk_foe_entry *entry, int vid)
+{
+	struct mtk_foe_mac_info *l2 = mtk_foe_entry_l2(entry);
 
-	चयन (FIELD_GET(MTK_FOE_IB1_BIND_VLAN_LAYER, entry->ib1)) अणु
-	हाल 0:
+	switch (FIELD_GET(MTK_FOE_IB1_BIND_VLAN_LAYER, entry->ib1)) {
+	case 0:
 		entry->ib1 |= MTK_FOE_IB1_BIND_VLAN_TAG |
 			      FIELD_PREP(MTK_FOE_IB1_BIND_VLAN_LAYER, 1);
 		l2->vlan1 = vid;
-		वापस 0;
-	हाल 1:
-		अगर (!(entry->ib1 & MTK_FOE_IB1_BIND_VLAN_TAG)) अणु
+		return 0;
+	case 1:
+		if (!(entry->ib1 & MTK_FOE_IB1_BIND_VLAN_TAG)) {
 			l2->vlan1 = vid;
 			l2->etype |= BIT(8);
-		पूर्ण अन्यथा अणु
+		} else {
 			l2->vlan2 = vid;
 			entry->ib1 += FIELD_PREP(MTK_FOE_IB1_BIND_VLAN_LAYER, 1);
-		पूर्ण
-		वापस 0;
-	शेष:
-		वापस -ENOSPC;
-	पूर्ण
-पूर्ण
+		}
+		return 0;
+	default:
+		return -ENOSPC;
+	}
+}
 
-पूर्णांक mtk_foe_entry_set_pppoe(काष्ठा mtk_foe_entry *entry, पूर्णांक sid)
-अणु
-	काष्ठा mtk_foe_mac_info *l2 = mtk_foe_entry_l2(entry);
+int mtk_foe_entry_set_pppoe(struct mtk_foe_entry *entry, int sid)
+{
+	struct mtk_foe_mac_info *l2 = mtk_foe_entry_l2(entry);
 
-	अगर (!(entry->ib1 & MTK_FOE_IB1_BIND_VLAN_LAYER) ||
+	if (!(entry->ib1 & MTK_FOE_IB1_BIND_VLAN_LAYER) ||
 	    (entry->ib1 & MTK_FOE_IB1_BIND_VLAN_TAG))
 		l2->etype = ETH_P_PPP_SES;
 
 	entry->ib1 |= MTK_FOE_IB1_BIND_PPPOE;
 	l2->pppoe_id = sid;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत bool mtk_foe_entry_usable(काष्ठा mtk_foe_entry *entry)
-अणु
-	वापस !(entry->ib1 & MTK_FOE_IB1_STATIC) &&
+static inline bool mtk_foe_entry_usable(struct mtk_foe_entry *entry)
+{
+	return !(entry->ib1 & MTK_FOE_IB1_STATIC) &&
 	       FIELD_GET(MTK_FOE_IB1_STATE, entry->ib1) != MTK_FOE_STATE_BIND;
-पूर्ण
+}
 
-पूर्णांक mtk_foe_entry_commit(काष्ठा mtk_ppe *ppe, काष्ठा mtk_foe_entry *entry,
-			 u16 बारtamp)
-अणु
-	काष्ठा mtk_foe_entry *hwe;
+int mtk_foe_entry_commit(struct mtk_ppe *ppe, struct mtk_foe_entry *entry,
+			 u16 timestamp)
+{
+	struct mtk_foe_entry *hwe;
 	u32 hash;
 
-	बारtamp &= MTK_FOE_IB1_BIND_TIMESTAMP;
+	timestamp &= MTK_FOE_IB1_BIND_TIMESTAMP;
 	entry->ib1 &= ~MTK_FOE_IB1_BIND_TIMESTAMP;
-	entry->ib1 |= FIELD_PREP(MTK_FOE_IB1_BIND_TIMESTAMP, बारtamp);
+	entry->ib1 |= FIELD_PREP(MTK_FOE_IB1_BIND_TIMESTAMP, timestamp);
 
 	hash = mtk_ppe_hash_entry(entry);
 	hwe = &ppe->foe_table[hash];
-	अगर (!mtk_foe_entry_usable(hwe)) अणु
+	if (!mtk_foe_entry_usable(hwe)) {
 		hwe++;
 		hash++;
 
-		अगर (!mtk_foe_entry_usable(hwe))
-			वापस -ENOSPC;
-	पूर्ण
+		if (!mtk_foe_entry_usable(hwe))
+			return -ENOSPC;
+	}
 
-	स_नकल(&hwe->data, &entry->data, माप(hwe->data));
+	memcpy(&hwe->data, &entry->data, sizeof(hwe->data));
 	wmb();
 	hwe->ib1 = entry->ib1;
 
@@ -364,13 +363,13 @@ mtk_foe_entry_ib2(काष्ठा mtk_foe_entry *entry)
 
 	mtk_ppe_cache_clear(ppe);
 
-	वापस hash;
-पूर्ण
+	return hash;
+}
 
-पूर्णांक mtk_ppe_init(काष्ठा mtk_ppe *ppe, काष्ठा device *dev, व्योम __iomem *base,
-		 पूर्णांक version)
-अणु
-	काष्ठा mtk_foe_entry *foe;
+int mtk_ppe_init(struct mtk_ppe *ppe, struct device *dev, void __iomem *base,
+		 int version)
+{
+	struct mtk_foe_entry *foe;
 
 	/* need to allocate a separate device, since it PPE DMA access is
 	 * not coherent.
@@ -379,36 +378,36 @@ mtk_foe_entry_ib2(काष्ठा mtk_foe_entry *entry)
 	ppe->dev = dev;
 	ppe->version = version;
 
-	foe = dmam_alloc_coherent(ppe->dev, MTK_PPE_ENTRIES * माप(*foe),
+	foe = dmam_alloc_coherent(ppe->dev, MTK_PPE_ENTRIES * sizeof(*foe),
 				  &ppe->foe_phys, GFP_KERNEL);
-	अगर (!foe)
-		वापस -ENOMEM;
+	if (!foe)
+		return -ENOMEM;
 
 	ppe->foe_table = foe;
 
 	mtk_ppe_debugfs_init(ppe);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mtk_ppe_init_foe_table(काष्ठा mtk_ppe *ppe)
-अणु
-	अटल स्थिर u8 skip[] = अणु 12, 25, 38, 51, 76, 89, 102 पूर्ण;
-	पूर्णांक i, k;
+static void mtk_ppe_init_foe_table(struct mtk_ppe *ppe)
+{
+	static const u8 skip[] = { 12, 25, 38, 51, 76, 89, 102 };
+	int i, k;
 
-	स_रखो(ppe->foe_table, 0, MTK_PPE_ENTRIES * माप(ppe->foe_table));
+	memset(ppe->foe_table, 0, MTK_PPE_ENTRIES * sizeof(ppe->foe_table));
 
-	अगर (!IS_ENABLED(CONFIG_SOC_MT7621))
-		वापस;
+	if (!IS_ENABLED(CONFIG_SOC_MT7621))
+		return;
 
 	/* skip all entries that cross the 1024 byte boundary */
-	क्रम (i = 0; i < MTK_PPE_ENTRIES; i += 128)
-		क्रम (k = 0; k < ARRAY_SIZE(skip); k++)
+	for (i = 0; i < MTK_PPE_ENTRIES; i += 128)
+		for (k = 0; k < ARRAY_SIZE(skip); k++)
 			ppe->foe_table[i + skip[k]].ib1 |= MTK_FOE_IB1_STATIC;
-पूर्ण
+}
 
-पूर्णांक mtk_ppe_start(काष्ठा mtk_ppe *ppe)
-अणु
+int mtk_ppe_start(struct mtk_ppe *ppe)
+{
 	u32 val;
 
 	mtk_ppe_init_foe_table(ppe);
@@ -480,15 +479,15 @@ mtk_foe_entry_ib2(काष्ठा mtk_foe_entry *entry)
 
 	ppe_w32(ppe, MTK_PPE_DEFAULT_CPU_PORT, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक mtk_ppe_stop(काष्ठा mtk_ppe *ppe)
-अणु
+int mtk_ppe_stop(struct mtk_ppe *ppe)
+{
 	u32 val;
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < MTK_PPE_ENTRIES; i++)
+	for (i = 0; i < MTK_PPE_ENTRIES; i++)
 		ppe->foe_table[i].ib1 = FIELD_PREP(MTK_FOE_IB1_STATE,
 						   MTK_FOE_STATE_INVALID);
 
@@ -506,5 +505,5 @@ mtk_foe_entry_ib2(काष्ठा mtk_foe_entry *entry)
 	      MTK_PPE_TB_CFG_AGE_TCP_FIN;
 	ppe_clear(ppe, MTK_PPE_TB_CFG, val);
 
-	वापस mtk_ppe_रुको_busy(ppe);
-पूर्ण
+	return mtk_ppe_wait_busy(ppe);
+}

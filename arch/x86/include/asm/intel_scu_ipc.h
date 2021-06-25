@@ -1,69 +1,68 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_X86_INTEL_SCU_IPC_H_
-#घोषणा  _ASM_X86_INTEL_SCU_IPC_H_
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_X86_INTEL_SCU_IPC_H_
+#define  _ASM_X86_INTEL_SCU_IPC_H_
 
-#समावेश <linux/ioport.h>
+#include <linux/ioport.h>
 
-काष्ठा device;
-काष्ठा पूर्णांकel_scu_ipc_dev;
+struct device;
+struct intel_scu_ipc_dev;
 
 /**
- * काष्ठा पूर्णांकel_scu_ipc_data - Data used to configure SCU IPC
- * @mem: Base address of SCU IPC MMIO रेजिस्टरs
- * @irq: The IRQ number used क्रम SCU (optional)
+ * struct intel_scu_ipc_data - Data used to configure SCU IPC
+ * @mem: Base address of SCU IPC MMIO registers
+ * @irq: The IRQ number used for SCU (optional)
  */
-काष्ठा पूर्णांकel_scu_ipc_data अणु
-	काष्ठा resource mem;
-	पूर्णांक irq;
-पूर्ण;
+struct intel_scu_ipc_data {
+	struct resource mem;
+	int irq;
+};
 
-काष्ठा पूर्णांकel_scu_ipc_dev *
-__पूर्णांकel_scu_ipc_रेजिस्टर(काष्ठा device *parent,
-			 स्थिर काष्ठा पूर्णांकel_scu_ipc_data *scu_data,
-			 काष्ठा module *owner);
+struct intel_scu_ipc_dev *
+__intel_scu_ipc_register(struct device *parent,
+			 const struct intel_scu_ipc_data *scu_data,
+			 struct module *owner);
 
-#घोषणा पूर्णांकel_scu_ipc_रेजिस्टर(parent, scu_data)  \
-	__पूर्णांकel_scu_ipc_रेजिस्टर(parent, scu_data, THIS_MODULE)
+#define intel_scu_ipc_register(parent, scu_data)  \
+	__intel_scu_ipc_register(parent, scu_data, THIS_MODULE)
 
-व्योम पूर्णांकel_scu_ipc_unरेजिस्टर(काष्ठा पूर्णांकel_scu_ipc_dev *scu);
+void intel_scu_ipc_unregister(struct intel_scu_ipc_dev *scu);
 
-काष्ठा पूर्णांकel_scu_ipc_dev *
-__devm_पूर्णांकel_scu_ipc_रेजिस्टर(काष्ठा device *parent,
-			      स्थिर काष्ठा पूर्णांकel_scu_ipc_data *scu_data,
-			      काष्ठा module *owner);
+struct intel_scu_ipc_dev *
+__devm_intel_scu_ipc_register(struct device *parent,
+			      const struct intel_scu_ipc_data *scu_data,
+			      struct module *owner);
 
-#घोषणा devm_पूर्णांकel_scu_ipc_रेजिस्टर(parent, scu_data)  \
-	__devm_पूर्णांकel_scu_ipc_रेजिस्टर(parent, scu_data, THIS_MODULE)
+#define devm_intel_scu_ipc_register(parent, scu_data)  \
+	__devm_intel_scu_ipc_register(parent, scu_data, THIS_MODULE)
 
-काष्ठा पूर्णांकel_scu_ipc_dev *पूर्णांकel_scu_ipc_dev_get(व्योम);
-व्योम पूर्णांकel_scu_ipc_dev_put(काष्ठा पूर्णांकel_scu_ipc_dev *scu);
-काष्ठा पूर्णांकel_scu_ipc_dev *devm_पूर्णांकel_scu_ipc_dev_get(काष्ठा device *dev);
+struct intel_scu_ipc_dev *intel_scu_ipc_dev_get(void);
+void intel_scu_ipc_dev_put(struct intel_scu_ipc_dev *scu);
+struct intel_scu_ipc_dev *devm_intel_scu_ipc_dev_get(struct device *dev);
 
-पूर्णांक पूर्णांकel_scu_ipc_dev_ioपढ़ो8(काष्ठा पूर्णांकel_scu_ipc_dev *scu, u16 addr,
+int intel_scu_ipc_dev_ioread8(struct intel_scu_ipc_dev *scu, u16 addr,
 			      u8 *data);
-पूर्णांक पूर्णांकel_scu_ipc_dev_ioग_लिखो8(काष्ठा पूर्णांकel_scu_ipc_dev *scu, u16 addr,
+int intel_scu_ipc_dev_iowrite8(struct intel_scu_ipc_dev *scu, u16 addr,
 			       u8 data);
-पूर्णांक पूर्णांकel_scu_ipc_dev_पढ़ोv(काष्ठा पूर्णांकel_scu_ipc_dev *scu, u16 *addr,
-			    u8 *data, माप_प्रकार len);
-पूर्णांक पूर्णांकel_scu_ipc_dev_ग_लिखोv(काष्ठा पूर्णांकel_scu_ipc_dev *scu, u16 *addr,
-			     u8 *data, माप_प्रकार len);
+int intel_scu_ipc_dev_readv(struct intel_scu_ipc_dev *scu, u16 *addr,
+			    u8 *data, size_t len);
+int intel_scu_ipc_dev_writev(struct intel_scu_ipc_dev *scu, u16 *addr,
+			     u8 *data, size_t len);
 
-पूर्णांक पूर्णांकel_scu_ipc_dev_update(काष्ठा पूर्णांकel_scu_ipc_dev *scu, u16 addr,
+int intel_scu_ipc_dev_update(struct intel_scu_ipc_dev *scu, u16 addr,
 			     u8 data, u8 mask);
 
-पूर्णांक पूर्णांकel_scu_ipc_dev_simple_command(काष्ठा पूर्णांकel_scu_ipc_dev *scu, पूर्णांक cmd,
-				     पूर्णांक sub);
-पूर्णांक पूर्णांकel_scu_ipc_dev_command_with_size(काष्ठा पूर्णांकel_scu_ipc_dev *scu, पूर्णांक cmd,
-					पूर्णांक sub, स्थिर व्योम *in, माप_प्रकार inlen,
-					माप_प्रकार size, व्योम *out, माप_प्रकार outlen);
+int intel_scu_ipc_dev_simple_command(struct intel_scu_ipc_dev *scu, int cmd,
+				     int sub);
+int intel_scu_ipc_dev_command_with_size(struct intel_scu_ipc_dev *scu, int cmd,
+					int sub, const void *in, size_t inlen,
+					size_t size, void *out, size_t outlen);
 
-अटल अंतरभूत पूर्णांक पूर्णांकel_scu_ipc_dev_command(काष्ठा पूर्णांकel_scu_ipc_dev *scu, पूर्णांक cmd,
-					    पूर्णांक sub, स्थिर व्योम *in, माप_प्रकार inlen,
-					    व्योम *out, माप_प्रकार outlen)
-अणु
-	वापस पूर्णांकel_scu_ipc_dev_command_with_size(scu, cmd, sub, in, inlen,
+static inline int intel_scu_ipc_dev_command(struct intel_scu_ipc_dev *scu, int cmd,
+					    int sub, const void *in, size_t inlen,
+					    void *out, size_t outlen)
+{
+	return intel_scu_ipc_dev_command_with_size(scu, cmd, sub, in, inlen,
 						   inlen, out, outlen);
-पूर्ण
+}
 
-#पूर्ण_अगर
+#endif

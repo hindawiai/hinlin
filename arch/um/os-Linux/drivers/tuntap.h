@@ -1,22 +1,21 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /* 
- * Copyright (C) 2001 - 2007 Jeff Dike (jdike@अणुaddtoit,linux.पूर्णांकelपूर्ण.com)
+ * Copyright (C) 2001 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
  */
 
-#अगर_अघोषित __UM_TUNTAP_H
-#घोषणा __UM_TUNTAP_H
+#ifndef __UM_TUNTAP_H
+#define __UM_TUNTAP_H
 
-#समावेश <net_user.h>
+#include <net_user.h>
 
-काष्ठा tuntap_data अणु
-	अक्षर *dev_name;
-	पूर्णांक fixed_config;
-	अक्षर *gate_addr;
-	पूर्णांक fd;
-	व्योम *dev;
-पूर्ण;
+struct tuntap_data {
+	char *dev_name;
+	int fixed_config;
+	char *gate_addr;
+	int fd;
+	void *dev;
+};
 
-बाह्य स्थिर काष्ठा net_user_info tuntap_user_info;
+extern const struct net_user_info tuntap_user_info;
 
-#पूर्ण_अगर
+#endif

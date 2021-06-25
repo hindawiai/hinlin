@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2004, 2007-2010, 2011-2012 Synopsys, Inc. (www.synopsys.com)
  *
@@ -11,11 +10,11 @@
  *   worked around by adding memory clobber to ip_fast_csum( )
  *
  * vineetg: May 2010
- *  -Rewrote ip_fast_cscum( ) and csum_fold( ) with fast अंतरभूत यंत्र
+ *  -Rewrote ip_fast_cscum( ) and csum_fold( ) with fast inline asm
  */
 
-#अगर_अघोषित _ASM_ARC_CHECKSUM_H
-#घोषणा _ASM_ARC_CHECKSUM_H
+#ifndef _ASM_ARC_CHECKSUM_H
+#define _ASM_ARC_CHECKSUM_H
 
 /*
  *	Fold a partial checksum
@@ -23,25 +22,25 @@
  *  The 2 swords comprising the 32bit sum are added, any carry to 16th bit
  *  added back and final sword result inverted.
  */
-अटल अंतरभूत __sum16 csum_fold(__wsum s)
-अणु
-	अचिन्हित r = s << 16 | s >> 16;	/* ror */
+static inline __sum16 csum_fold(__wsum s)
+{
+	unsigned r = s << 16 | s >> 16;	/* ror */
 	s = ~s;
 	s -= r;
-	वापस s >> 16;
-पूर्ण
+	return s >> 16;
+}
 
 /*
- *	This is a version of ip_compute_csum() optimized क्रम IP headers,
+ *	This is a version of ip_compute_csum() optimized for IP headers,
  *	which always checksum on 4 octet boundaries.
  */
-अटल अंतरभूत __sum16
-ip_fast_csum(स्थिर व्योम *iph, अचिन्हित पूर्णांक ihl)
-अणु
-	स्थिर व्योम *ptr = iph;
-	अचिन्हित पूर्णांक पंचांगp, पंचांगp2, sum;
+static inline __sum16
+ip_fast_csum(const void *iph, unsigned int ihl)
+{
+	const void *ptr = iph;
+	unsigned int tmp, tmp2, sum;
 
-	__यंत्र__(
+	__asm__(
 	"	ld.ab  %0, [%3, 4]		\n"
 	"	ld.ab  %2, [%3, 4]		\n"
 	"	sub    %1, %4, 2		\n"
@@ -56,22 +55,22 @@ ip_fast_csum(स्थिर व्योम *iph, अचिन्हित प�
 	"	adc.f  %0, %0, %1		\n"
 	"1:	adc.f  %0, %0, %2		\n"
 	"	add.cs %0,%0,1			\n"
-	: "=&r"(sum), "=r"(पंचांगp), "=&r"(पंचांगp2), "+&r" (ptr)
+	: "=&r"(sum), "=r"(tmp), "=&r"(tmp2), "+&r" (ptr)
 	: "r"(ihl)
 	: "cc", "lp_count", "memory");
 
-	वापस csum_fold(sum);
-पूर्ण
+	return csum_fold(sum);
+}
 
 /*
- * TCP pseuकरो Header is 12 bytes:
+ * TCP pseudo Header is 12 bytes:
  * SA [4], DA [4], zeroes [1], Proto[1], TCP Seg(hdr+data) Len [2]
  */
-अटल अंतरभूत __wsum
+static inline __wsum
 csum_tcpudp_nofold(__be32 saddr, __be32 daddr, __u32 len,
 		   __u8 proto, __wsum sum)
-अणु
-	__यंत्र__ __अस्थिर__(
+{
+	__asm__ __volatile__(
 	"	add.f %0, %0, %1	\n"
 	"	adc.f %0, %0, %2	\n"
 	"	adc.f %0, %0, %3	\n"
@@ -79,21 +78,21 @@ csum_tcpudp_nofold(__be32 saddr, __be32 daddr, __u32 len,
 	"	adc   %0, %0, 0		\n"
 	: "+&r"(sum)
 	: "r"(saddr), "r"(daddr),
-#अगर_घोषित CONFIG_CPU_BIG_ENDIAN
+#ifdef CONFIG_CPU_BIG_ENDIAN
 	  "r"(len),
-#अन्यथा
+#else
 	  "r"(len << 8),
-#पूर्ण_अगर
+#endif
 	  "r"(htons(proto))
 	: "cc");
 
-	वापस sum;
-पूर्ण
+	return sum;
+}
 
-#घोषणा csum_fold csum_fold
-#घोषणा ip_fast_csum ip_fast_csum
-#घोषणा csum_tcpudp_nofold csum_tcpudp_nofold
+#define csum_fold csum_fold
+#define ip_fast_csum ip_fast_csum
+#define csum_tcpudp_nofold csum_tcpudp_nofold
 
-#समावेश <यंत्र-generic/checksum.h>
+#include <asm-generic/checksum.h>
 
-#पूर्ण_अगर /* _ASM_ARC_CHECKSUM_H */
+#endif /* _ASM_ARC_CHECKSUM_H */

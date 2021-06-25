@@ -1,363 +1,362 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Memory mapped I/O tracing
  *
  * Copyright (C) 2008 Pekka Paalanen <pq@iki.fi>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/mmiotrace.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/समय.स>
+#include <linux/kernel.h>
+#include <linux/mmiotrace.h>
+#include <linux/pci.h>
+#include <linux/slab.h>
+#include <linux/time.h>
 
-#समावेश <linux/atomic.h>
+#include <linux/atomic.h>
 
-#समावेश "trace.h"
-#समावेश "trace_output.h"
+#include "trace.h"
+#include "trace_output.h"
 
-काष्ठा header_iter अणु
-	काष्ठा pci_dev *dev;
-पूर्ण;
+struct header_iter {
+	struct pci_dev *dev;
+};
 
-अटल काष्ठा trace_array *mmio_trace_array;
-अटल bool overrun_detected;
-अटल अचिन्हित दीर्घ prev_overruns;
-अटल atomic_t dropped_count;
+static struct trace_array *mmio_trace_array;
+static bool overrun_detected;
+static unsigned long prev_overruns;
+static atomic_t dropped_count;
 
-अटल व्योम mmio_reset_data(काष्ठा trace_array *tr)
-अणु
+static void mmio_reset_data(struct trace_array *tr)
+{
 	overrun_detected = false;
 	prev_overruns = 0;
 
 	tracing_reset_online_cpus(&tr->array_buffer);
-पूर्ण
+}
 
-अटल पूर्णांक mmio_trace_init(काष्ठा trace_array *tr)
-अणु
+static int mmio_trace_init(struct trace_array *tr)
+{
 	pr_debug("in %s\n", __func__);
 	mmio_trace_array = tr;
 
 	mmio_reset_data(tr);
 	enable_mmiotrace();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mmio_trace_reset(काष्ठा trace_array *tr)
-अणु
+static void mmio_trace_reset(struct trace_array *tr)
+{
 	pr_debug("in %s\n", __func__);
 
 	disable_mmiotrace();
 	mmio_reset_data(tr);
-	mmio_trace_array = शून्य;
-पूर्ण
+	mmio_trace_array = NULL;
+}
 
-अटल व्योम mmio_trace_start(काष्ठा trace_array *tr)
-अणु
+static void mmio_trace_start(struct trace_array *tr)
+{
 	pr_debug("in %s\n", __func__);
 	mmio_reset_data(tr);
-पूर्ण
+}
 
-अटल व्योम mmio_prपूर्णांक_pcidev(काष्ठा trace_seq *s, स्थिर काष्ठा pci_dev *dev)
-अणु
-	पूर्णांक i;
-	resource_माप_प्रकार start, end;
-	स्थिर काष्ठा pci_driver *drv = pci_dev_driver(dev);
+static void mmio_print_pcidev(struct trace_seq *s, const struct pci_dev *dev)
+{
+	int i;
+	resource_size_t start, end;
+	const struct pci_driver *drv = pci_dev_driver(dev);
 
-	trace_seq_म_लिखो(s, "PCIDEV %02x%02x %04x%04x %x",
+	trace_seq_printf(s, "PCIDEV %02x%02x %04x%04x %x",
 			 dev->bus->number, dev->devfn,
-			 dev->venकरोr, dev->device, dev->irq);
-	क्रम (i = 0; i < 7; i++) अणु
+			 dev->vendor, dev->device, dev->irq);
+	for (i = 0; i < 7; i++) {
 		start = dev->resource[i].start;
-		trace_seq_म_लिखो(s, " %llx",
-			(अचिन्हित दीर्घ दीर्घ)(start |
+		trace_seq_printf(s, " %llx",
+			(unsigned long long)(start |
 			(dev->resource[i].flags & PCI_REGION_FLAG_MASK)));
-	पूर्ण
-	क्रम (i = 0; i < 7; i++) अणु
+	}
+	for (i = 0; i < 7; i++) {
 		start = dev->resource[i].start;
 		end = dev->resource[i].end;
-		trace_seq_म_लिखो(s, " %llx",
+		trace_seq_printf(s, " %llx",
 			dev->resource[i].start < dev->resource[i].end ?
-			(अचिन्हित दीर्घ दीर्घ)(end - start) + 1 : 0);
-	पूर्ण
-	अगर (drv)
-		trace_seq_म_लिखो(s, " %s\n", drv->name);
-	अन्यथा
-		trace_seq_माला_दो(s, " \n");
-पूर्ण
+			(unsigned long long)(end - start) + 1 : 0);
+	}
+	if (drv)
+		trace_seq_printf(s, " %s\n", drv->name);
+	else
+		trace_seq_puts(s, " \n");
+}
 
-अटल व्योम destroy_header_iter(काष्ठा header_iter *hiter)
-अणु
-	अगर (!hiter)
-		वापस;
+static void destroy_header_iter(struct header_iter *hiter)
+{
+	if (!hiter)
+		return;
 	pci_dev_put(hiter->dev);
-	kमुक्त(hiter);
-पूर्ण
+	kfree(hiter);
+}
 
-अटल व्योम mmio_pipe_खोलो(काष्ठा trace_iterator *iter)
-अणु
-	काष्ठा header_iter *hiter;
-	काष्ठा trace_seq *s = &iter->seq;
+static void mmio_pipe_open(struct trace_iterator *iter)
+{
+	struct header_iter *hiter;
+	struct trace_seq *s = &iter->seq;
 
-	trace_seq_माला_दो(s, "VERSION 20070824\n");
+	trace_seq_puts(s, "VERSION 20070824\n");
 
-	hiter = kzalloc(माप(*hiter), GFP_KERNEL);
-	अगर (!hiter)
-		वापस;
+	hiter = kzalloc(sizeof(*hiter), GFP_KERNEL);
+	if (!hiter)
+		return;
 
-	hiter->dev = pci_get_device(PCI_ANY_ID, PCI_ANY_ID, शून्य);
-	iter->निजी = hiter;
-पूर्ण
+	hiter->dev = pci_get_device(PCI_ANY_ID, PCI_ANY_ID, NULL);
+	iter->private = hiter;
+}
 
-/* XXX: This is not called when the pipe is बंदd! */
-अटल व्योम mmio_बंद(काष्ठा trace_iterator *iter)
-अणु
-	काष्ठा header_iter *hiter = iter->निजी;
+/* XXX: This is not called when the pipe is closed! */
+static void mmio_close(struct trace_iterator *iter)
+{
+	struct header_iter *hiter = iter->private;
 	destroy_header_iter(hiter);
-	iter->निजी = शून्य;
-पूर्ण
+	iter->private = NULL;
+}
 
-अटल अचिन्हित दीर्घ count_overruns(काष्ठा trace_iterator *iter)
-अणु
-	अचिन्हित दीर्घ cnt = atomic_xchg(&dropped_count, 0);
-	अचिन्हित दीर्घ over = ring_buffer_overruns(iter->array_buffer->buffer);
+static unsigned long count_overruns(struct trace_iterator *iter)
+{
+	unsigned long cnt = atomic_xchg(&dropped_count, 0);
+	unsigned long over = ring_buffer_overruns(iter->array_buffer->buffer);
 
-	अगर (over > prev_overruns)
+	if (over > prev_overruns)
 		cnt += over - prev_overruns;
 	prev_overruns = over;
-	वापस cnt;
-पूर्ण
+	return cnt;
+}
 
-अटल sमाप_प्रकार mmio_पढ़ो(काष्ठा trace_iterator *iter, काष्ठा file *filp,
-				अक्षर __user *ubuf, माप_प्रकार cnt, loff_t *ppos)
-अणु
-	sमाप_प्रकार ret;
-	काष्ठा header_iter *hiter = iter->निजी;
-	काष्ठा trace_seq *s = &iter->seq;
-	अचिन्हित दीर्घ n;
+static ssize_t mmio_read(struct trace_iterator *iter, struct file *filp,
+				char __user *ubuf, size_t cnt, loff_t *ppos)
+{
+	ssize_t ret;
+	struct header_iter *hiter = iter->private;
+	struct trace_seq *s = &iter->seq;
+	unsigned long n;
 
 	n = count_overruns(iter);
-	अगर (n) अणु
+	if (n) {
 		/* XXX: This is later than where events were lost. */
-		trace_seq_म_लिखो(s, "MARK 0.000000 Lost %lu events.\n", n);
-		अगर (!overrun_detected)
+		trace_seq_printf(s, "MARK 0.000000 Lost %lu events.\n", n);
+		if (!overrun_detected)
 			pr_warn("mmiotrace has lost events\n");
 		overrun_detected = true;
-		जाओ prपूर्णांक_out;
-	पूर्ण
+		goto print_out;
+	}
 
-	अगर (!hiter)
-		वापस 0;
+	if (!hiter)
+		return 0;
 
-	mmio_prपूर्णांक_pcidev(s, hiter->dev);
+	mmio_print_pcidev(s, hiter->dev);
 	hiter->dev = pci_get_device(PCI_ANY_ID, PCI_ANY_ID, hiter->dev);
 
-	अगर (!hiter->dev) अणु
+	if (!hiter->dev) {
 		destroy_header_iter(hiter);
-		iter->निजी = शून्य;
-	पूर्ण
+		iter->private = NULL;
+	}
 
-prपूर्णांक_out:
+print_out:
 	ret = trace_seq_to_user(s, ubuf, cnt);
-	वापस (ret == -EBUSY) ? 0 : ret;
-पूर्ण
+	return (ret == -EBUSY) ? 0 : ret;
+}
 
-अटल क्रमागत prपूर्णांक_line_t mmio_prपूर्णांक_rw(काष्ठा trace_iterator *iter)
-अणु
-	काष्ठा trace_entry *entry = iter->ent;
-	काष्ठा trace_mmiotrace_rw *field;
-	काष्ठा mmiotrace_rw *rw;
-	काष्ठा trace_seq *s	= &iter->seq;
-	अचिन्हित दीर्घ दीर्घ t	= ns2usecs(iter->ts);
-	अचिन्हित दीर्घ usec_rem	= करो_भाग(t, USEC_PER_SEC);
-	अचिन्हित secs		= (अचिन्हित दीर्घ)t;
+static enum print_line_t mmio_print_rw(struct trace_iterator *iter)
+{
+	struct trace_entry *entry = iter->ent;
+	struct trace_mmiotrace_rw *field;
+	struct mmiotrace_rw *rw;
+	struct trace_seq *s	= &iter->seq;
+	unsigned long long t	= ns2usecs(iter->ts);
+	unsigned long usec_rem	= do_div(t, USEC_PER_SEC);
+	unsigned secs		= (unsigned long)t;
 
 	trace_assign_type(field, entry);
 	rw = &field->rw;
 
-	चयन (rw->opcode) अणु
-	हाल MMIO_READ:
-		trace_seq_म_लिखो(s,
+	switch (rw->opcode) {
+	case MMIO_READ:
+		trace_seq_printf(s,
 			"R %d %u.%06lu %d 0x%llx 0x%lx 0x%lx %d\n",
 			rw->width, secs, usec_rem, rw->map_id,
-			(अचिन्हित दीर्घ दीर्घ)rw->phys,
+			(unsigned long long)rw->phys,
 			rw->value, rw->pc, 0);
-		अवरोध;
-	हाल MMIO_WRITE:
-		trace_seq_म_लिखो(s,
+		break;
+	case MMIO_WRITE:
+		trace_seq_printf(s,
 			"W %d %u.%06lu %d 0x%llx 0x%lx 0x%lx %d\n",
 			rw->width, secs, usec_rem, rw->map_id,
-			(अचिन्हित दीर्घ दीर्घ)rw->phys,
+			(unsigned long long)rw->phys,
 			rw->value, rw->pc, 0);
-		अवरोध;
-	हाल MMIO_UNKNOWN_OP:
-		trace_seq_म_लिखो(s,
+		break;
+	case MMIO_UNKNOWN_OP:
+		trace_seq_printf(s,
 			"UNKNOWN %u.%06lu %d 0x%llx %02lx,%02lx,"
 			"%02lx 0x%lx %d\n",
 			secs, usec_rem, rw->map_id,
-			(अचिन्हित दीर्घ दीर्घ)rw->phys,
+			(unsigned long long)rw->phys,
 			(rw->value >> 16) & 0xff, (rw->value >> 8) & 0xff,
 			(rw->value >> 0) & 0xff, rw->pc, 0);
-		अवरोध;
-	शेष:
-		trace_seq_माला_दो(s, "rw what?\n");
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		trace_seq_puts(s, "rw what?\n");
+		break;
+	}
 
-	वापस trace_handle_वापस(s);
-पूर्ण
+	return trace_handle_return(s);
+}
 
-अटल क्रमागत prपूर्णांक_line_t mmio_prपूर्णांक_map(काष्ठा trace_iterator *iter)
-अणु
-	काष्ठा trace_entry *entry = iter->ent;
-	काष्ठा trace_mmiotrace_map *field;
-	काष्ठा mmiotrace_map *m;
-	काष्ठा trace_seq *s	= &iter->seq;
-	अचिन्हित दीर्घ दीर्घ t	= ns2usecs(iter->ts);
-	अचिन्हित दीर्घ usec_rem	= करो_भाग(t, USEC_PER_SEC);
-	अचिन्हित secs		= (अचिन्हित दीर्घ)t;
+static enum print_line_t mmio_print_map(struct trace_iterator *iter)
+{
+	struct trace_entry *entry = iter->ent;
+	struct trace_mmiotrace_map *field;
+	struct mmiotrace_map *m;
+	struct trace_seq *s	= &iter->seq;
+	unsigned long long t	= ns2usecs(iter->ts);
+	unsigned long usec_rem	= do_div(t, USEC_PER_SEC);
+	unsigned secs		= (unsigned long)t;
 
 	trace_assign_type(field, entry);
 	m = &field->map;
 
-	चयन (m->opcode) अणु
-	हाल MMIO_PROBE:
-		trace_seq_म_लिखो(s,
+	switch (m->opcode) {
+	case MMIO_PROBE:
+		trace_seq_printf(s,
 			"MAP %u.%06lu %d 0x%llx 0x%lx 0x%lx 0x%lx %d\n",
 			secs, usec_rem, m->map_id,
-			(अचिन्हित दीर्घ दीर्घ)m->phys, m->virt, m->len,
+			(unsigned long long)m->phys, m->virt, m->len,
 			0UL, 0);
-		अवरोध;
-	हाल MMIO_UNPROBE:
-		trace_seq_म_लिखो(s,
+		break;
+	case MMIO_UNPROBE:
+		trace_seq_printf(s,
 			"UNMAP %u.%06lu %d 0x%lx %d\n",
 			secs, usec_rem, m->map_id, 0UL, 0);
-		अवरोध;
-	शेष:
-		trace_seq_माला_दो(s, "map what?\n");
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		trace_seq_puts(s, "map what?\n");
+		break;
+	}
 
-	वापस trace_handle_वापस(s);
-पूर्ण
+	return trace_handle_return(s);
+}
 
-अटल क्रमागत prपूर्णांक_line_t mmio_prपूर्णांक_mark(काष्ठा trace_iterator *iter)
-अणु
-	काष्ठा trace_entry *entry = iter->ent;
-	काष्ठा prपूर्णांक_entry *prपूर्णांक = (काष्ठा prपूर्णांक_entry *)entry;
-	स्थिर अक्षर *msg		= prपूर्णांक->buf;
-	काष्ठा trace_seq *s	= &iter->seq;
-	अचिन्हित दीर्घ दीर्घ t	= ns2usecs(iter->ts);
-	अचिन्हित दीर्घ usec_rem	= करो_भाग(t, USEC_PER_SEC);
-	अचिन्हित secs		= (अचिन्हित दीर्घ)t;
+static enum print_line_t mmio_print_mark(struct trace_iterator *iter)
+{
+	struct trace_entry *entry = iter->ent;
+	struct print_entry *print = (struct print_entry *)entry;
+	const char *msg		= print->buf;
+	struct trace_seq *s	= &iter->seq;
+	unsigned long long t	= ns2usecs(iter->ts);
+	unsigned long usec_rem	= do_div(t, USEC_PER_SEC);
+	unsigned secs		= (unsigned long)t;
 
 	/* The trailing newline must be in the message. */
-	trace_seq_म_लिखो(s, "MARK %u.%06lu %s", secs, usec_rem, msg);
+	trace_seq_printf(s, "MARK %u.%06lu %s", secs, usec_rem, msg);
 
-	वापस trace_handle_वापस(s);
-पूर्ण
+	return trace_handle_return(s);
+}
 
-अटल क्रमागत prपूर्णांक_line_t mmio_prपूर्णांक_line(काष्ठा trace_iterator *iter)
-अणु
-	चयन (iter->ent->type) अणु
-	हाल TRACE_MMIO_RW:
-		वापस mmio_prपूर्णांक_rw(iter);
-	हाल TRACE_MMIO_MAP:
-		वापस mmio_prपूर्णांक_map(iter);
-	हाल TRACE_PRINT:
-		वापस mmio_prपूर्णांक_mark(iter);
-	शेष:
-		वापस TRACE_TYPE_HANDLED; /* ignore unknown entries */
-	पूर्ण
-पूर्ण
+static enum print_line_t mmio_print_line(struct trace_iterator *iter)
+{
+	switch (iter->ent->type) {
+	case TRACE_MMIO_RW:
+		return mmio_print_rw(iter);
+	case TRACE_MMIO_MAP:
+		return mmio_print_map(iter);
+	case TRACE_PRINT:
+		return mmio_print_mark(iter);
+	default:
+		return TRACE_TYPE_HANDLED; /* ignore unknown entries */
+	}
+}
 
-अटल काष्ठा tracer mmio_tracer __पढ़ो_mostly =
-अणु
+static struct tracer mmio_tracer __read_mostly =
+{
 	.name		= "mmiotrace",
 	.init		= mmio_trace_init,
 	.reset		= mmio_trace_reset,
 	.start		= mmio_trace_start,
-	.pipe_खोलो	= mmio_pipe_खोलो,
-	.बंद		= mmio_बंद,
-	.पढ़ो		= mmio_पढ़ो,
-	.prपूर्णांक_line	= mmio_prपूर्णांक_line,
+	.pipe_open	= mmio_pipe_open,
+	.close		= mmio_close,
+	.read		= mmio_read,
+	.print_line	= mmio_print_line,
 	.noboot		= true,
-पूर्ण;
+};
 
-__init अटल पूर्णांक init_mmio_trace(व्योम)
-अणु
-	वापस रेजिस्टर_tracer(&mmio_tracer);
-पूर्ण
+__init static int init_mmio_trace(void)
+{
+	return register_tracer(&mmio_tracer);
+}
 device_initcall(init_mmio_trace);
 
-अटल व्योम __trace_mmiotrace_rw(काष्ठा trace_array *tr,
-				काष्ठा trace_array_cpu *data,
-				काष्ठा mmiotrace_rw *rw)
-अणु
-	काष्ठा trace_event_call *call = &event_mmiotrace_rw;
-	काष्ठा trace_buffer *buffer = tr->array_buffer.buffer;
-	काष्ठा ring_buffer_event *event;
-	काष्ठा trace_mmiotrace_rw *entry;
-	अचिन्हित पूर्णांक trace_ctx;
+static void __trace_mmiotrace_rw(struct trace_array *tr,
+				struct trace_array_cpu *data,
+				struct mmiotrace_rw *rw)
+{
+	struct trace_event_call *call = &event_mmiotrace_rw;
+	struct trace_buffer *buffer = tr->array_buffer.buffer;
+	struct ring_buffer_event *event;
+	struct trace_mmiotrace_rw *entry;
+	unsigned int trace_ctx;
 
 	trace_ctx = tracing_gen_ctx_flags(0);
 	event = trace_buffer_lock_reserve(buffer, TRACE_MMIO_RW,
-					  माप(*entry), trace_ctx);
-	अगर (!event) अणु
+					  sizeof(*entry), trace_ctx);
+	if (!event) {
 		atomic_inc(&dropped_count);
-		वापस;
-	पूर्ण
+		return;
+	}
 	entry	= ring_buffer_event_data(event);
 	entry->rw			= *rw;
 
-	अगर (!call_filter_check_discard(call, entry, buffer, event))
+	if (!call_filter_check_discard(call, entry, buffer, event))
 		trace_buffer_unlock_commit(tr, buffer, event, trace_ctx);
-पूर्ण
+}
 
-व्योम mmio_trace_rw(काष्ठा mmiotrace_rw *rw)
-अणु
-	काष्ठा trace_array *tr = mmio_trace_array;
-	काष्ठा trace_array_cpu *data = per_cpu_ptr(tr->array_buffer.data, smp_processor_id());
+void mmio_trace_rw(struct mmiotrace_rw *rw)
+{
+	struct trace_array *tr = mmio_trace_array;
+	struct trace_array_cpu *data = per_cpu_ptr(tr->array_buffer.data, smp_processor_id());
 	__trace_mmiotrace_rw(tr, data, rw);
-पूर्ण
+}
 
-अटल व्योम __trace_mmiotrace_map(काष्ठा trace_array *tr,
-				काष्ठा trace_array_cpu *data,
-				काष्ठा mmiotrace_map *map)
-अणु
-	काष्ठा trace_event_call *call = &event_mmiotrace_map;
-	काष्ठा trace_buffer *buffer = tr->array_buffer.buffer;
-	काष्ठा ring_buffer_event *event;
-	काष्ठा trace_mmiotrace_map *entry;
-	अचिन्हित पूर्णांक trace_ctx;
+static void __trace_mmiotrace_map(struct trace_array *tr,
+				struct trace_array_cpu *data,
+				struct mmiotrace_map *map)
+{
+	struct trace_event_call *call = &event_mmiotrace_map;
+	struct trace_buffer *buffer = tr->array_buffer.buffer;
+	struct ring_buffer_event *event;
+	struct trace_mmiotrace_map *entry;
+	unsigned int trace_ctx;
 
 	trace_ctx = tracing_gen_ctx_flags(0);
 	event = trace_buffer_lock_reserve(buffer, TRACE_MMIO_MAP,
-					  माप(*entry), trace_ctx);
-	अगर (!event) अणु
+					  sizeof(*entry), trace_ctx);
+	if (!event) {
 		atomic_inc(&dropped_count);
-		वापस;
-	पूर्ण
+		return;
+	}
 	entry	= ring_buffer_event_data(event);
 	entry->map			= *map;
 
-	अगर (!call_filter_check_discard(call, entry, buffer, event))
+	if (!call_filter_check_discard(call, entry, buffer, event))
 		trace_buffer_unlock_commit(tr, buffer, event, trace_ctx);
-पूर्ण
+}
 
-व्योम mmio_trace_mapping(काष्ठा mmiotrace_map *map)
-अणु
-	काष्ठा trace_array *tr = mmio_trace_array;
-	काष्ठा trace_array_cpu *data;
+void mmio_trace_mapping(struct mmiotrace_map *map)
+{
+	struct trace_array *tr = mmio_trace_array;
+	struct trace_array_cpu *data;
 
 	preempt_disable();
 	data = per_cpu_ptr(tr->array_buffer.data, smp_processor_id());
 	__trace_mmiotrace_map(tr, data, map);
 	preempt_enable();
-पूर्ण
+}
 
-पूर्णांक mmio_trace_prपूर्णांकk(स्थिर अक्षर *fmt, बहु_सूची args)
-अणु
-	वापस trace_vprपूर्णांकk(0, fmt, args);
-पूर्ण
+int mmio_trace_printk(const char *fmt, va_list args)
+{
+	return trace_vprintk(0, fmt, args);
+}

@@ -1,51 +1,50 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause-Clear
+// SPDX-License-Identifier: BSD-3-Clause-Clear
 /*
  * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  */
 
-#समावेश <crypto/hash.h>
-#समावेश "core.h"
-#समावेश "dp_tx.h"
-#समावेश "hal_tx.h"
-#समावेश "hif.h"
-#समावेश "debug.h"
-#समावेश "dp_rx.h"
-#समावेश "peer.h"
+#include <crypto/hash.h>
+#include "core.h"
+#include "dp_tx.h"
+#include "hal_tx.h"
+#include "hif.h"
+#include "debug.h"
+#include "dp_rx.h"
+#include "peer.h"
 
-अटल व्योम ath11k_dp_htt_htc_tx_complete(काष्ठा ath11k_base *ab,
-					  काष्ठा sk_buff *skb)
-अणु
-	dev_kमुक्त_skb_any(skb);
-पूर्ण
+static void ath11k_dp_htt_htc_tx_complete(struct ath11k_base *ab,
+					  struct sk_buff *skb)
+{
+	dev_kfree_skb_any(skb);
+}
 
-व्योम ath11k_dp_peer_cleanup(काष्ठा ath11k *ar, पूर्णांक vdev_id, स्थिर u8 *addr)
-अणु
-	काष्ठा ath11k_base *ab = ar->ab;
-	काष्ठा ath11k_peer *peer;
+void ath11k_dp_peer_cleanup(struct ath11k *ar, int vdev_id, const u8 *addr)
+{
+	struct ath11k_base *ab = ar->ab;
+	struct ath11k_peer *peer;
 
-	/* TODO: Any other peer specअगरic DP cleanup */
+	/* TODO: Any other peer specific DP cleanup */
 
 	spin_lock_bh(&ab->base_lock);
 	peer = ath11k_peer_find(ab, vdev_id, addr);
-	अगर (!peer) अणु
+	if (!peer) {
 		ath11k_warn(ab, "failed to lookup peer %pM on vdev %d\n",
 			    addr, vdev_id);
 		spin_unlock_bh(&ab->base_lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	ath11k_peer_rx_tid_cleanup(ar, peer);
-	crypto_मुक्त_shash(peer->tfm_mmic);
+	crypto_free_shash(peer->tfm_mmic);
 	spin_unlock_bh(&ab->base_lock);
-पूर्ण
+}
 
-पूर्णांक ath11k_dp_peer_setup(काष्ठा ath11k *ar, पूर्णांक vdev_id, स्थिर u8 *addr)
-अणु
-	काष्ठा ath11k_base *ab = ar->ab;
-	काष्ठा ath11k_peer *peer;
+int ath11k_dp_peer_setup(struct ath11k *ar, int vdev_id, const u8 *addr)
+{
+	struct ath11k_base *ab = ar->ab;
+	struct ath11k_peer *peer;
 	u32 reo_dest;
-	पूर्णांक ret = 0, tid;
+	int ret = 0, tid;
 
 	/* NOTE: reo_dest ring id starts from 1 unlike mac_id which starts from 0 */
 	reo_dest = ar->dp.mac_id + 1;
@@ -53,391 +52,391 @@
 					WMI_PEER_SET_DEFAULT_ROUTING,
 					DP_RX_HASH_ENABLE | (reo_dest << 1));
 
-	अगर (ret) अणु
+	if (ret) {
 		ath11k_warn(ab, "failed to set default routing %d peer :%pM vdev_id :%d\n",
 			    ret, addr, vdev_id);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	क्रम (tid = 0; tid <= IEEE80211_NUM_TIDS; tid++) अणु
+	for (tid = 0; tid <= IEEE80211_NUM_TIDS; tid++) {
 		ret = ath11k_peer_rx_tid_setup(ar, addr, vdev_id, tid, 1, 0,
 					       HAL_PN_TYPE_NONE);
-		अगर (ret) अणु
+		if (ret) {
 			ath11k_warn(ab, "failed to setup rxd tid queue for tid %d: %d\n",
 				    tid, ret);
-			जाओ peer_clean;
-		पूर्ण
-	पूर्ण
+			goto peer_clean;
+		}
+	}
 
 	ret = ath11k_peer_rx_frag_setup(ar, addr, vdev_id);
-	अगर (ret) अणु
+	if (ret) {
 		ath11k_warn(ab, "failed to setup rx defrag context\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* TODO: Setup other peer specअगरic resource used in data path */
+	/* TODO: Setup other peer specific resource used in data path */
 
-	वापस 0;
+	return 0;
 
 peer_clean:
 	spin_lock_bh(&ab->base_lock);
 
 	peer = ath11k_peer_find(ab, vdev_id, addr);
-	अगर (!peer) अणु
+	if (!peer) {
 		ath11k_warn(ab, "failed to find the peer to del rx tid\n");
 		spin_unlock_bh(&ab->base_lock);
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
-	क्रम (; tid >= 0; tid--)
+	for (; tid >= 0; tid--)
 		ath11k_peer_rx_tid_delete(ar, peer, tid);
 
 	spin_unlock_bh(&ab->base_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम ath11k_dp_srng_cleanup(काष्ठा ath11k_base *ab, काष्ठा dp_srng *ring)
-अणु
-	अगर (!ring->vaddr_unaligned)
-		वापस;
+void ath11k_dp_srng_cleanup(struct ath11k_base *ab, struct dp_srng *ring)
+{
+	if (!ring->vaddr_unaligned)
+		return;
 
-	dma_मुक्त_coherent(ab->dev, ring->size, ring->vaddr_unaligned,
+	dma_free_coherent(ab->dev, ring->size, ring->vaddr_unaligned,
 			  ring->paddr_unaligned);
 
-	ring->vaddr_unaligned = शून्य;
-पूर्ण
+	ring->vaddr_unaligned = NULL;
+}
 
-अटल पूर्णांक ath11k_dp_srng_find_ring_in_mask(पूर्णांक ring_num, स्थिर u8 *grp_mask)
-अणु
-	पूर्णांक ext_group_num;
+static int ath11k_dp_srng_find_ring_in_mask(int ring_num, const u8 *grp_mask)
+{
+	int ext_group_num;
 	u8 mask = 1 << ring_num;
 
-	क्रम (ext_group_num = 0; ext_group_num < ATH11K_EXT_IRQ_GRP_NUM_MAX;
-	     ext_group_num++) अणु
-		अगर (mask & grp_mask[ext_group_num])
-			वापस ext_group_num;
-	पूर्ण
+	for (ext_group_num = 0; ext_group_num < ATH11K_EXT_IRQ_GRP_NUM_MAX;
+	     ext_group_num++) {
+		if (mask & grp_mask[ext_group_num])
+			return ext_group_num;
+	}
 
-	वापस -ENOENT;
-पूर्ण
+	return -ENOENT;
+}
 
-अटल पूर्णांक ath11k_dp_srng_calculate_msi_group(काष्ठा ath11k_base *ab,
-					      क्रमागत hal_ring_type type, पूर्णांक ring_num)
-अणु
-	स्थिर u8 *grp_mask;
+static int ath11k_dp_srng_calculate_msi_group(struct ath11k_base *ab,
+					      enum hal_ring_type type, int ring_num)
+{
+	const u8 *grp_mask;
 
-	चयन (type) अणु
-	हाल HAL_WBM2SW_RELEASE:
-		अगर (ring_num < 3) अणु
+	switch (type) {
+	case HAL_WBM2SW_RELEASE:
+		if (ring_num < 3) {
 			grp_mask = &ab->hw_params.ring_mask->tx[0];
-		पूर्ण अन्यथा अगर (ring_num == 3) अणु
+		} else if (ring_num == 3) {
 			grp_mask = &ab->hw_params.ring_mask->rx_wbm_rel[0];
 			ring_num = 0;
-		पूर्ण अन्यथा अणु
-			वापस -ENOENT;
-		पूर्ण
-		अवरोध;
-	हाल HAL_REO_EXCEPTION:
+		} else {
+			return -ENOENT;
+		}
+		break;
+	case HAL_REO_EXCEPTION:
 		grp_mask = &ab->hw_params.ring_mask->rx_err[0];
-		अवरोध;
-	हाल HAL_REO_DST:
+		break;
+	case HAL_REO_DST:
 		grp_mask = &ab->hw_params.ring_mask->rx[0];
-		अवरोध;
-	हाल HAL_REO_STATUS:
+		break;
+	case HAL_REO_STATUS:
 		grp_mask = &ab->hw_params.ring_mask->reo_status[0];
-		अवरोध;
-	हाल HAL_RXDMA_MONITOR_STATUS:
-	हाल HAL_RXDMA_MONITOR_DST:
+		break;
+	case HAL_RXDMA_MONITOR_STATUS:
+	case HAL_RXDMA_MONITOR_DST:
 		grp_mask = &ab->hw_params.ring_mask->rx_mon_status[0];
-		अवरोध;
-	हाल HAL_RXDMA_DST:
+		break;
+	case HAL_RXDMA_DST:
 		grp_mask = &ab->hw_params.ring_mask->rxdma2host[0];
-		अवरोध;
-	हाल HAL_RXDMA_BUF:
+		break;
+	case HAL_RXDMA_BUF:
 		grp_mask = &ab->hw_params.ring_mask->host2rxdma[0];
-		अवरोध;
-	हाल HAL_RXDMA_MONITOR_BUF:
-	हाल HAL_TCL_DATA:
-	हाल HAL_TCL_CMD:
-	हाल HAL_REO_CMD:
-	हाल HAL_SW2WBM_RELEASE:
-	हाल HAL_WBM_IDLE_LINK:
-	हाल HAL_TCL_STATUS:
-	हाल HAL_REO_REINJECT:
-	हाल HAL_CE_SRC:
-	हाल HAL_CE_DST:
-	हाल HAL_CE_DST_STATUS:
-	शेष:
-		वापस -ENOENT;
-	पूर्ण
+		break;
+	case HAL_RXDMA_MONITOR_BUF:
+	case HAL_TCL_DATA:
+	case HAL_TCL_CMD:
+	case HAL_REO_CMD:
+	case HAL_SW2WBM_RELEASE:
+	case HAL_WBM_IDLE_LINK:
+	case HAL_TCL_STATUS:
+	case HAL_REO_REINJECT:
+	case HAL_CE_SRC:
+	case HAL_CE_DST:
+	case HAL_CE_DST_STATUS:
+	default:
+		return -ENOENT;
+	}
 
-	वापस ath11k_dp_srng_find_ring_in_mask(ring_num, grp_mask);
-पूर्ण
+	return ath11k_dp_srng_find_ring_in_mask(ring_num, grp_mask);
+}
 
-अटल व्योम ath11k_dp_srng_msi_setup(काष्ठा ath11k_base *ab,
-				     काष्ठा hal_srng_params *ring_params,
-				     क्रमागत hal_ring_type type, पूर्णांक ring_num)
-अणु
-	पूर्णांक msi_group_number, msi_data_count;
+static void ath11k_dp_srng_msi_setup(struct ath11k_base *ab,
+				     struct hal_srng_params *ring_params,
+				     enum hal_ring_type type, int ring_num)
+{
+	int msi_group_number, msi_data_count;
 	u32 msi_data_start, msi_irq_start, addr_lo, addr_hi;
-	पूर्णांक ret;
+	int ret;
 
 	ret = ath11k_get_user_msi_vector(ab, "DP",
 					 &msi_data_count, &msi_data_start,
 					 &msi_irq_start);
-	अगर (ret)
-		वापस;
+	if (ret)
+		return;
 
 	msi_group_number = ath11k_dp_srng_calculate_msi_group(ab, type,
 							      ring_num);
-	अगर (msi_group_number < 0) अणु
+	if (msi_group_number < 0) {
 		ath11k_dbg(ab, ATH11K_DBG_PCI,
 			   "ring not part of an ext_group; ring_type: %d,ring_num %d",
 			   type, ring_num);
 		ring_params->msi_addr = 0;
 		ring_params->msi_data = 0;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (msi_group_number > msi_data_count) अणु
+	if (msi_group_number > msi_data_count) {
 		ath11k_dbg(ab, ATH11K_DBG_PCI,
 			   "multiple msi_groups share one msi, msi_group_num %d",
 			   msi_group_number);
-	पूर्ण
+	}
 
 	ath11k_get_msi_address(ab, &addr_lo, &addr_hi);
 
 	ring_params->msi_addr = addr_lo;
-	ring_params->msi_addr |= (dma_addr_t)(((uपूर्णांक64_t)addr_hi) << 32);
+	ring_params->msi_addr |= (dma_addr_t)(((uint64_t)addr_hi) << 32);
 	ring_params->msi_data = (msi_group_number % msi_data_count)
 		+ msi_data_start;
 	ring_params->flags |= HAL_SRNG_FLAGS_MSI_INTR;
-पूर्ण
+}
 
-पूर्णांक ath11k_dp_srng_setup(काष्ठा ath11k_base *ab, काष्ठा dp_srng *ring,
-			 क्रमागत hal_ring_type type, पूर्णांक ring_num,
-			 पूर्णांक mac_id, पूर्णांक num_entries)
-अणु
-	काष्ठा hal_srng_params params = अणु 0 पूर्ण;
-	पूर्णांक entry_sz = ath11k_hal_srng_get_entrysize(ab, type);
-	पूर्णांक max_entries = ath11k_hal_srng_get_max_entries(ab, type);
-	पूर्णांक ret;
+int ath11k_dp_srng_setup(struct ath11k_base *ab, struct dp_srng *ring,
+			 enum hal_ring_type type, int ring_num,
+			 int mac_id, int num_entries)
+{
+	struct hal_srng_params params = { 0 };
+	int entry_sz = ath11k_hal_srng_get_entrysize(ab, type);
+	int max_entries = ath11k_hal_srng_get_max_entries(ab, type);
+	int ret;
 
-	अगर (max_entries < 0 || entry_sz < 0)
-		वापस -EINVAL;
+	if (max_entries < 0 || entry_sz < 0)
+		return -EINVAL;
 
-	अगर (num_entries > max_entries)
+	if (num_entries > max_entries)
 		num_entries = max_entries;
 
 	ring->size = (num_entries * entry_sz) + HAL_RING_BASE_ALIGN - 1;
 	ring->vaddr_unaligned = dma_alloc_coherent(ab->dev, ring->size,
 						   &ring->paddr_unaligned,
 						   GFP_KERNEL);
-	अगर (!ring->vaddr_unaligned)
-		वापस -ENOMEM;
+	if (!ring->vaddr_unaligned)
+		return -ENOMEM;
 
 	ring->vaddr = PTR_ALIGN(ring->vaddr_unaligned, HAL_RING_BASE_ALIGN);
-	ring->paddr = ring->paddr_unaligned + ((अचिन्हित दीर्घ)ring->vaddr -
-		      (अचिन्हित दीर्घ)ring->vaddr_unaligned);
+	ring->paddr = ring->paddr_unaligned + ((unsigned long)ring->vaddr -
+		      (unsigned long)ring->vaddr_unaligned);
 
 	params.ring_base_vaddr = ring->vaddr;
 	params.ring_base_paddr = ring->paddr;
 	params.num_entries = num_entries;
 	ath11k_dp_srng_msi_setup(ab, &params, type, ring_num + mac_id);
 
-	चयन (type) अणु
-	हाल HAL_REO_DST:
-		params.पूर्णांकr_batch_cntr_thres_entries =
+	switch (type) {
+	case HAL_REO_DST:
+		params.intr_batch_cntr_thres_entries =
 					HAL_SRNG_INT_BATCH_THRESHOLD_RX;
-		params.पूर्णांकr_समयr_thres_us = HAL_SRNG_INT_TIMER_THRESHOLD_RX;
-		अवरोध;
-	हाल HAL_RXDMA_BUF:
-	हाल HAL_RXDMA_MONITOR_BUF:
-	हाल HAL_RXDMA_MONITOR_STATUS:
+		params.intr_timer_thres_us = HAL_SRNG_INT_TIMER_THRESHOLD_RX;
+		break;
+	case HAL_RXDMA_BUF:
+	case HAL_RXDMA_MONITOR_BUF:
+	case HAL_RXDMA_MONITOR_STATUS:
 		params.low_threshold = num_entries >> 3;
 		params.flags |= HAL_SRNG_FLAGS_LOW_THRESH_INTR_EN;
-		params.पूर्णांकr_batch_cntr_thres_entries = 0;
-		params.पूर्णांकr_समयr_thres_us = HAL_SRNG_INT_TIMER_THRESHOLD_RX;
-		अवरोध;
-	हाल HAL_WBM2SW_RELEASE:
-		अगर (ring_num < 3) अणु
-			params.पूर्णांकr_batch_cntr_thres_entries =
+		params.intr_batch_cntr_thres_entries = 0;
+		params.intr_timer_thres_us = HAL_SRNG_INT_TIMER_THRESHOLD_RX;
+		break;
+	case HAL_WBM2SW_RELEASE:
+		if (ring_num < 3) {
+			params.intr_batch_cntr_thres_entries =
 					HAL_SRNG_INT_BATCH_THRESHOLD_TX;
-			params.पूर्णांकr_समयr_thres_us =
+			params.intr_timer_thres_us =
 					HAL_SRNG_INT_TIMER_THRESHOLD_TX;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		/* follow through when ring_num >= 3 */
 		fallthrough;
-	हाल HAL_REO_EXCEPTION:
-	हाल HAL_REO_REINJECT:
-	हाल HAL_REO_CMD:
-	हाल HAL_REO_STATUS:
-	हाल HAL_TCL_DATA:
-	हाल HAL_TCL_CMD:
-	हाल HAL_TCL_STATUS:
-	हाल HAL_WBM_IDLE_LINK:
-	हाल HAL_SW2WBM_RELEASE:
-	हाल HAL_RXDMA_DST:
-	हाल HAL_RXDMA_MONITOR_DST:
-	हाल HAL_RXDMA_MONITOR_DESC:
-		params.पूर्णांकr_batch_cntr_thres_entries =
+	case HAL_REO_EXCEPTION:
+	case HAL_REO_REINJECT:
+	case HAL_REO_CMD:
+	case HAL_REO_STATUS:
+	case HAL_TCL_DATA:
+	case HAL_TCL_CMD:
+	case HAL_TCL_STATUS:
+	case HAL_WBM_IDLE_LINK:
+	case HAL_SW2WBM_RELEASE:
+	case HAL_RXDMA_DST:
+	case HAL_RXDMA_MONITOR_DST:
+	case HAL_RXDMA_MONITOR_DESC:
+		params.intr_batch_cntr_thres_entries =
 					HAL_SRNG_INT_BATCH_THRESHOLD_OTHER;
-		params.पूर्णांकr_समयr_thres_us = HAL_SRNG_INT_TIMER_THRESHOLD_OTHER;
-		अवरोध;
-	हाल HAL_RXDMA_सूची_BUF:
-		अवरोध;
-	शेष:
+		params.intr_timer_thres_us = HAL_SRNG_INT_TIMER_THRESHOLD_OTHER;
+		break;
+	case HAL_RXDMA_DIR_BUF:
+		break;
+	default:
 		ath11k_warn(ab, "Not a valid ring type in dp :%d\n", type);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	ret = ath11k_hal_srng_setup(ab, type, ring_num, mac_id, &params);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		ath11k_warn(ab, "failed to setup srng: %d ring_id %d\n",
 			    ret, ring_num);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ring->ring_id = ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम ath11k_dp_stop_shaकरोw_समयrs(काष्ठा ath11k_base *ab)
-अणु
-	पूर्णांक i;
+void ath11k_dp_stop_shadow_timers(struct ath11k_base *ab)
+{
+	int i;
 
-	अगर (!ab->hw_params.supports_shaकरोw_regs)
-		वापस;
+	if (!ab->hw_params.supports_shadow_regs)
+		return;
 
-	क्रम (i = 0; i < DP_TCL_NUM_RING_MAX; i++)
-		ath11k_dp_shaकरोw_stop_समयr(ab, &ab->dp.tx_ring_समयr[i]);
+	for (i = 0; i < DP_TCL_NUM_RING_MAX; i++)
+		ath11k_dp_shadow_stop_timer(ab, &ab->dp.tx_ring_timer[i]);
 
-	ath11k_dp_shaकरोw_stop_समयr(ab, &ab->dp.reo_cmd_समयr);
-पूर्ण
+	ath11k_dp_shadow_stop_timer(ab, &ab->dp.reo_cmd_timer);
+}
 
-अटल व्योम ath11k_dp_srng_common_cleanup(काष्ठा ath11k_base *ab)
-अणु
-	काष्ठा ath11k_dp *dp = &ab->dp;
-	पूर्णांक i;
+static void ath11k_dp_srng_common_cleanup(struct ath11k_base *ab)
+{
+	struct ath11k_dp *dp = &ab->dp;
+	int i;
 
-	ath11k_dp_stop_shaकरोw_समयrs(ab);
+	ath11k_dp_stop_shadow_timers(ab);
 	ath11k_dp_srng_cleanup(ab, &dp->wbm_desc_rel_ring);
 	ath11k_dp_srng_cleanup(ab, &dp->tcl_cmd_ring);
 	ath11k_dp_srng_cleanup(ab, &dp->tcl_status_ring);
-	क्रम (i = 0; i < DP_TCL_NUM_RING_MAX; i++) अणु
+	for (i = 0; i < DP_TCL_NUM_RING_MAX; i++) {
 		ath11k_dp_srng_cleanup(ab, &dp->tx_ring[i].tcl_data_ring);
 		ath11k_dp_srng_cleanup(ab, &dp->tx_ring[i].tcl_comp_ring);
-	पूर्ण
+	}
 	ath11k_dp_srng_cleanup(ab, &dp->reo_reinject_ring);
 	ath11k_dp_srng_cleanup(ab, &dp->rx_rel_ring);
 	ath11k_dp_srng_cleanup(ab, &dp->reo_except_ring);
 	ath11k_dp_srng_cleanup(ab, &dp->reo_cmd_ring);
 	ath11k_dp_srng_cleanup(ab, &dp->reo_status_ring);
-पूर्ण
+}
 
-अटल पूर्णांक ath11k_dp_srng_common_setup(काष्ठा ath11k_base *ab)
-अणु
-	काष्ठा ath11k_dp *dp = &ab->dp;
-	काष्ठा hal_srng *srng;
-	पूर्णांक i, ret;
+static int ath11k_dp_srng_common_setup(struct ath11k_base *ab)
+{
+	struct ath11k_dp *dp = &ab->dp;
+	struct hal_srng *srng;
+	int i, ret;
 	u32 ring_hash_map;
 
 	ret = ath11k_dp_srng_setup(ab, &dp->wbm_desc_rel_ring,
 				   HAL_SW2WBM_RELEASE, 0, 0,
 				   DP_WBM_RELEASE_RING_SIZE);
-	अगर (ret) अणु
+	if (ret) {
 		ath11k_warn(ab, "failed to set up wbm2sw_release ring :%d\n",
 			    ret);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	ret = ath11k_dp_srng_setup(ab, &dp->tcl_cmd_ring, HAL_TCL_CMD, 0, 0,
 				   DP_TCL_CMD_RING_SIZE);
-	अगर (ret) अणु
+	if (ret) {
 		ath11k_warn(ab, "failed to set up tcl_cmd ring :%d\n", ret);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	ret = ath11k_dp_srng_setup(ab, &dp->tcl_status_ring, HAL_TCL_STATUS,
 				   0, 0, DP_TCL_STATUS_RING_SIZE);
-	अगर (ret) अणु
+	if (ret) {
 		ath11k_warn(ab, "failed to set up tcl_status ring :%d\n", ret);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	क्रम (i = 0; i < DP_TCL_NUM_RING_MAX; i++) अणु
+	for (i = 0; i < DP_TCL_NUM_RING_MAX; i++) {
 		ret = ath11k_dp_srng_setup(ab, &dp->tx_ring[i].tcl_data_ring,
 					   HAL_TCL_DATA, i, 0,
 					   DP_TCL_DATA_RING_SIZE);
-		अगर (ret) अणु
+		if (ret) {
 			ath11k_warn(ab, "failed to set up tcl_data ring (%d) :%d\n",
 				    i, ret);
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
 		ret = ath11k_dp_srng_setup(ab, &dp->tx_ring[i].tcl_comp_ring,
 					   HAL_WBM2SW_RELEASE, i, 0,
 					   DP_TX_COMP_RING_SIZE);
-		अगर (ret) अणु
+		if (ret) {
 			ath11k_warn(ab, "failed to set up tcl_comp ring (%d) :%d\n",
 				    i, ret);
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
 		srng = &ab->hal.srng_list[dp->tx_ring[i].tcl_data_ring.ring_id];
 		ath11k_hal_tx_init_data_ring(ab, srng);
 
-		ath11k_dp_shaकरोw_init_समयr(ab, &dp->tx_ring_समयr[i],
+		ath11k_dp_shadow_init_timer(ab, &dp->tx_ring_timer[i],
 					    ATH11K_SHADOW_DP_TIMER_INTERVAL,
 					    dp->tx_ring[i].tcl_data_ring.ring_id);
-	पूर्ण
+	}
 
 	ret = ath11k_dp_srng_setup(ab, &dp->reo_reinject_ring, HAL_REO_REINJECT,
 				   0, 0, DP_REO_REINJECT_RING_SIZE);
-	अगर (ret) अणु
+	if (ret) {
 		ath11k_warn(ab, "failed to set up reo_reinject ring :%d\n",
 			    ret);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	ret = ath11k_dp_srng_setup(ab, &dp->rx_rel_ring, HAL_WBM2SW_RELEASE,
 				   3, 0, DP_RX_RELEASE_RING_SIZE);
-	अगर (ret) अणु
+	if (ret) {
 		ath11k_warn(ab, "failed to set up rx_rel ring :%d\n", ret);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	ret = ath11k_dp_srng_setup(ab, &dp->reo_except_ring, HAL_REO_EXCEPTION,
 				   0, 0, DP_REO_EXCEPTION_RING_SIZE);
-	अगर (ret) अणु
+	if (ret) {
 		ath11k_warn(ab, "failed to set up reo_exception ring :%d\n",
 			    ret);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	ret = ath11k_dp_srng_setup(ab, &dp->reo_cmd_ring, HAL_REO_CMD,
 				   0, 0, DP_REO_CMD_RING_SIZE);
-	अगर (ret) अणु
+	if (ret) {
 		ath11k_warn(ab, "failed to set up reo_cmd ring :%d\n", ret);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	srng = &ab->hal.srng_list[dp->reo_cmd_ring.ring_id];
 	ath11k_hal_reo_init_cmd_ring(ab, srng);
 
-	ath11k_dp_shaकरोw_init_समयr(ab, &dp->reo_cmd_समयr,
+	ath11k_dp_shadow_init_timer(ab, &dp->reo_cmd_timer,
 				    ATH11K_SHADOW_CTRL_TIMER_INTERVAL,
 				    dp->reo_cmd_ring.ring_id);
 
 	ret = ath11k_dp_srng_setup(ab, &dp->reo_status_ring, HAL_REO_STATUS,
 				   0, 0, DP_REO_STATUS_RING_SIZE);
-	अगर (ret) अणु
+	if (ret) {
 		ath11k_warn(ab, "failed to set up reo_status ring :%d\n", ret);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	/* When hash based routing of rx packet is enabled, 32 entries to map
 	 * the hash values to the ring will be configured. Each hash entry uses
@@ -455,179 +454,179 @@ peer_clean:
 
 	ath11k_hal_reo_hw_setup(ab, ring_hash_map);
 
-	वापस 0;
+	return 0;
 
 err:
 	ath11k_dp_srng_common_cleanup(ab);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम ath11k_dp_scatter_idle_link_desc_cleanup(काष्ठा ath11k_base *ab)
-अणु
-	काष्ठा ath11k_dp *dp = &ab->dp;
-	काष्ठा hal_wbm_idle_scatter_list *slist = dp->scatter_list;
-	पूर्णांक i;
+static void ath11k_dp_scatter_idle_link_desc_cleanup(struct ath11k_base *ab)
+{
+	struct ath11k_dp *dp = &ab->dp;
+	struct hal_wbm_idle_scatter_list *slist = dp->scatter_list;
+	int i;
 
-	क्रम (i = 0; i < DP_IDLE_SCATTER_BUFS_MAX; i++) अणु
-		अगर (!slist[i].vaddr)
-			जारी;
+	for (i = 0; i < DP_IDLE_SCATTER_BUFS_MAX; i++) {
+		if (!slist[i].vaddr)
+			continue;
 
-		dma_मुक्त_coherent(ab->dev, HAL_WBM_IDLE_SCATTER_BUF_SIZE_MAX,
+		dma_free_coherent(ab->dev, HAL_WBM_IDLE_SCATTER_BUF_SIZE_MAX,
 				  slist[i].vaddr, slist[i].paddr);
-		slist[i].vaddr = शून्य;
-	पूर्ण
-पूर्ण
+		slist[i].vaddr = NULL;
+	}
+}
 
-अटल पूर्णांक ath11k_dp_scatter_idle_link_desc_setup(काष्ठा ath11k_base *ab,
-						  पूर्णांक size,
+static int ath11k_dp_scatter_idle_link_desc_setup(struct ath11k_base *ab,
+						  int size,
 						  u32 n_link_desc_bank,
 						  u32 n_link_desc,
 						  u32 last_bank_sz)
-अणु
-	काष्ठा ath11k_dp *dp = &ab->dp;
-	काष्ठा dp_link_desc_bank *link_desc_banks = dp->link_desc_banks;
-	काष्ठा hal_wbm_idle_scatter_list *slist = dp->scatter_list;
+{
+	struct ath11k_dp *dp = &ab->dp;
+	struct dp_link_desc_bank *link_desc_banks = dp->link_desc_banks;
+	struct hal_wbm_idle_scatter_list *slist = dp->scatter_list;
 	u32 n_entries_per_buf;
-	पूर्णांक num_scatter_buf, scatter_idx;
-	काष्ठा hal_wbm_link_desc *scatter_buf;
-	पूर्णांक align_bytes, n_entries;
+	int num_scatter_buf, scatter_idx;
+	struct hal_wbm_link_desc *scatter_buf;
+	int align_bytes, n_entries;
 	dma_addr_t paddr;
-	पूर्णांक rem_entries;
-	पूर्णांक i;
-	पूर्णांक ret = 0;
+	int rem_entries;
+	int i;
+	int ret = 0;
 	u32 end_offset;
 
 	n_entries_per_buf = HAL_WBM_IDLE_SCATTER_BUF_SIZE /
 		ath11k_hal_srng_get_entrysize(ab, HAL_WBM_IDLE_LINK);
 	num_scatter_buf = DIV_ROUND_UP(size, HAL_WBM_IDLE_SCATTER_BUF_SIZE);
 
-	अगर (num_scatter_buf > DP_IDLE_SCATTER_BUFS_MAX)
-		वापस -EINVAL;
+	if (num_scatter_buf > DP_IDLE_SCATTER_BUFS_MAX)
+		return -EINVAL;
 
-	क्रम (i = 0; i < num_scatter_buf; i++) अणु
+	for (i = 0; i < num_scatter_buf; i++) {
 		slist[i].vaddr = dma_alloc_coherent(ab->dev,
 						    HAL_WBM_IDLE_SCATTER_BUF_SIZE_MAX,
 						    &slist[i].paddr, GFP_KERNEL);
-		अगर (!slist[i].vaddr) अणु
+		if (!slist[i].vaddr) {
 			ret = -ENOMEM;
-			जाओ err;
-		पूर्ण
-	पूर्ण
+			goto err;
+		}
+	}
 
 	scatter_idx = 0;
 	scatter_buf = slist[scatter_idx].vaddr;
 	rem_entries = n_entries_per_buf;
 
-	क्रम (i = 0; i < n_link_desc_bank; i++) अणु
+	for (i = 0; i < n_link_desc_bank; i++) {
 		align_bytes = link_desc_banks[i].vaddr -
 			      link_desc_banks[i].vaddr_unaligned;
 		n_entries = (DP_LINK_DESC_ALLOC_SIZE_THRESH - align_bytes) /
 			     HAL_LINK_DESC_SIZE;
 		paddr = link_desc_banks[i].paddr;
-		जबतक (n_entries) अणु
+		while (n_entries) {
 			ath11k_hal_set_link_desc_addr(scatter_buf, i, paddr);
 			n_entries--;
 			paddr += HAL_LINK_DESC_SIZE;
-			अगर (rem_entries) अणु
+			if (rem_entries) {
 				rem_entries--;
 				scatter_buf++;
-				जारी;
-			पूर्ण
+				continue;
+			}
 
 			rem_entries = n_entries_per_buf;
 			scatter_idx++;
 			scatter_buf = slist[scatter_idx].vaddr;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	end_offset = (scatter_buf - slist[scatter_idx].vaddr) *
-		     माप(काष्ठा hal_wbm_link_desc);
+		     sizeof(struct hal_wbm_link_desc);
 	ath11k_hal_setup_link_idle_list(ab, slist, num_scatter_buf,
 					n_link_desc, end_offset);
 
-	वापस 0;
+	return 0;
 
 err:
 	ath11k_dp_scatter_idle_link_desc_cleanup(ab);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम
-ath11k_dp_link_desc_bank_मुक्त(काष्ठा ath11k_base *ab,
-			      काष्ठा dp_link_desc_bank *link_desc_banks)
-अणु
-	पूर्णांक i;
+static void
+ath11k_dp_link_desc_bank_free(struct ath11k_base *ab,
+			      struct dp_link_desc_bank *link_desc_banks)
+{
+	int i;
 
-	क्रम (i = 0; i < DP_LINK_DESC_BANKS_MAX; i++) अणु
-		अगर (link_desc_banks[i].vaddr_unaligned) अणु
-			dma_मुक्त_coherent(ab->dev,
+	for (i = 0; i < DP_LINK_DESC_BANKS_MAX; i++) {
+		if (link_desc_banks[i].vaddr_unaligned) {
+			dma_free_coherent(ab->dev,
 					  link_desc_banks[i].size,
 					  link_desc_banks[i].vaddr_unaligned,
 					  link_desc_banks[i].paddr_unaligned);
-			link_desc_banks[i].vaddr_unaligned = शून्य;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			link_desc_banks[i].vaddr_unaligned = NULL;
+		}
+	}
+}
 
-अटल पूर्णांक ath11k_dp_link_desc_bank_alloc(काष्ठा ath11k_base *ab,
-					  काष्ठा dp_link_desc_bank *desc_bank,
-					  पूर्णांक n_link_desc_bank,
-					  पूर्णांक last_bank_sz)
-अणु
-	काष्ठा ath11k_dp *dp = &ab->dp;
-	पूर्णांक i;
-	पूर्णांक ret = 0;
-	पूर्णांक desc_sz = DP_LINK_DESC_ALLOC_SIZE_THRESH;
+static int ath11k_dp_link_desc_bank_alloc(struct ath11k_base *ab,
+					  struct dp_link_desc_bank *desc_bank,
+					  int n_link_desc_bank,
+					  int last_bank_sz)
+{
+	struct ath11k_dp *dp = &ab->dp;
+	int i;
+	int ret = 0;
+	int desc_sz = DP_LINK_DESC_ALLOC_SIZE_THRESH;
 
-	क्रम (i = 0; i < n_link_desc_bank; i++) अणु
-		अगर (i == (n_link_desc_bank - 1) && last_bank_sz)
+	for (i = 0; i < n_link_desc_bank; i++) {
+		if (i == (n_link_desc_bank - 1) && last_bank_sz)
 			desc_sz = last_bank_sz;
 
 		desc_bank[i].vaddr_unaligned =
 					dma_alloc_coherent(ab->dev, desc_sz,
 							   &desc_bank[i].paddr_unaligned,
 							   GFP_KERNEL);
-		अगर (!desc_bank[i].vaddr_unaligned) अणु
+		if (!desc_bank[i].vaddr_unaligned) {
 			ret = -ENOMEM;
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
 		desc_bank[i].vaddr = PTR_ALIGN(desc_bank[i].vaddr_unaligned,
 					       HAL_LINK_DESC_ALIGN);
 		desc_bank[i].paddr = desc_bank[i].paddr_unaligned +
-				     ((अचिन्हित दीर्घ)desc_bank[i].vaddr -
-				      (अचिन्हित दीर्घ)desc_bank[i].vaddr_unaligned);
+				     ((unsigned long)desc_bank[i].vaddr -
+				      (unsigned long)desc_bank[i].vaddr_unaligned);
 		desc_bank[i].size = desc_sz;
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 err:
-	ath11k_dp_link_desc_bank_मुक्त(ab, dp->link_desc_banks);
+	ath11k_dp_link_desc_bank_free(ab, dp->link_desc_banks);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम ath11k_dp_link_desc_cleanup(काष्ठा ath11k_base *ab,
-				 काष्ठा dp_link_desc_bank *desc_bank,
-				 u32 ring_type, काष्ठा dp_srng *ring)
-अणु
-	ath11k_dp_link_desc_bank_मुक्त(ab, desc_bank);
+void ath11k_dp_link_desc_cleanup(struct ath11k_base *ab,
+				 struct dp_link_desc_bank *desc_bank,
+				 u32 ring_type, struct dp_srng *ring)
+{
+	ath11k_dp_link_desc_bank_free(ab, desc_bank);
 
-	अगर (ring_type != HAL_RXDMA_MONITOR_DESC) अणु
+	if (ring_type != HAL_RXDMA_MONITOR_DESC) {
 		ath11k_dp_srng_cleanup(ab, ring);
 		ath11k_dp_scatter_idle_link_desc_cleanup(ab);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक ath11k_wbm_idle_ring_setup(काष्ठा ath11k_base *ab, u32 *n_link_desc)
-अणु
-	काष्ठा ath11k_dp *dp = &ab->dp;
+static int ath11k_wbm_idle_ring_setup(struct ath11k_base *ab, u32 *n_link_desc)
+{
+	struct ath11k_dp *dp = &ab->dp;
 	u32 n_mpdu_link_desc, n_mpdu_queue_desc;
 	u32 n_tx_msdu_link_desc, n_rx_msdu_link_desc;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	n_mpdu_link_desc = (DP_NUM_TIDS_MAX * DP_AVG_MPDUS_PER_TID_MAX) /
 			   HAL_NUM_MPDUS_PER_LINK_DESC;
@@ -646,37 +645,37 @@ err:
 	*n_link_desc = n_mpdu_link_desc + n_mpdu_queue_desc +
 		      n_tx_msdu_link_desc + n_rx_msdu_link_desc;
 
-	अगर (*n_link_desc & (*n_link_desc - 1))
+	if (*n_link_desc & (*n_link_desc - 1))
 		*n_link_desc = 1 << fls(*n_link_desc);
 
 	ret = ath11k_dp_srng_setup(ab, &dp->wbm_idle_ring,
 				   HAL_WBM_IDLE_LINK, 0, 0, *n_link_desc);
-	अगर (ret) अणु
+	if (ret) {
 		ath11k_warn(ab, "failed to setup wbm_idle_ring: %d\n", ret);
-		वापस ret;
-	पूर्ण
-	वापस ret;
-पूर्ण
+		return ret;
+	}
+	return ret;
+}
 
-पूर्णांक ath11k_dp_link_desc_setup(काष्ठा ath11k_base *ab,
-			      काष्ठा dp_link_desc_bank *link_desc_banks,
-			      u32 ring_type, काष्ठा hal_srng *srng,
+int ath11k_dp_link_desc_setup(struct ath11k_base *ab,
+			      struct dp_link_desc_bank *link_desc_banks,
+			      u32 ring_type, struct hal_srng *srng,
 			      u32 n_link_desc)
-अणु
+{
 	u32 tot_mem_sz;
 	u32 n_link_desc_bank, last_bank_sz;
 	u32 entry_sz, align_bytes, n_entries;
 	u32 paddr;
 	u32 *desc;
-	पूर्णांक i, ret;
+	int i, ret;
 
 	tot_mem_sz = n_link_desc * HAL_LINK_DESC_SIZE;
 	tot_mem_sz += HAL_LINK_DESC_ALIGN;
 
-	अगर (tot_mem_sz <= DP_LINK_DESC_ALLOC_SIZE_THRESH) अणु
+	if (tot_mem_sz <= DP_LINK_DESC_ALLOC_SIZE_THRESH) {
 		n_link_desc_bank = 1;
 		last_bank_sz = tot_mem_sz;
-	पूर्ण अन्यथा अणु
+	} else {
 		n_link_desc_bank = tot_mem_sz /
 				   (DP_LINK_DESC_ALLOC_SIZE_THRESH -
 				    HAL_LINK_DESC_ALIGN);
@@ -684,246 +683,246 @@ err:
 			       (DP_LINK_DESC_ALLOC_SIZE_THRESH -
 				HAL_LINK_DESC_ALIGN);
 
-		अगर (last_bank_sz)
+		if (last_bank_sz)
 			n_link_desc_bank += 1;
-	पूर्ण
+	}
 
-	अगर (n_link_desc_bank > DP_LINK_DESC_BANKS_MAX)
-		वापस -EINVAL;
+	if (n_link_desc_bank > DP_LINK_DESC_BANKS_MAX)
+		return -EINVAL;
 
 	ret = ath11k_dp_link_desc_bank_alloc(ab, link_desc_banks,
 					     n_link_desc_bank, last_bank_sz);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* Setup link desc idle list क्रम HW पूर्णांकernal usage */
+	/* Setup link desc idle list for HW internal usage */
 	entry_sz = ath11k_hal_srng_get_entrysize(ab, ring_type);
 	tot_mem_sz = entry_sz * n_link_desc;
 
 	/* Setup scatter desc list when the total memory requirement is more */
-	अगर (tot_mem_sz > DP_LINK_DESC_ALLOC_SIZE_THRESH &&
-	    ring_type != HAL_RXDMA_MONITOR_DESC) अणु
+	if (tot_mem_sz > DP_LINK_DESC_ALLOC_SIZE_THRESH &&
+	    ring_type != HAL_RXDMA_MONITOR_DESC) {
 		ret = ath11k_dp_scatter_idle_link_desc_setup(ab, tot_mem_sz,
 							     n_link_desc_bank,
 							     n_link_desc,
 							     last_bank_sz);
-		अगर (ret) अणु
+		if (ret) {
 			ath11k_warn(ab, "failed to setup scatting idle list descriptor :%d\n",
 				    ret);
-			जाओ fail_desc_bank_मुक्त;
-		पूर्ण
+			goto fail_desc_bank_free;
+		}
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	spin_lock_bh(&srng->lock);
 
 	ath11k_hal_srng_access_begin(ab, srng);
 
-	क्रम (i = 0; i < n_link_desc_bank; i++) अणु
+	for (i = 0; i < n_link_desc_bank; i++) {
 		align_bytes = link_desc_banks[i].vaddr -
 			      link_desc_banks[i].vaddr_unaligned;
 		n_entries = (link_desc_banks[i].size - align_bytes) /
 			    HAL_LINK_DESC_SIZE;
 		paddr = link_desc_banks[i].paddr;
-		जबतक (n_entries &&
-		       (desc = ath11k_hal_srng_src_get_next_entry(ab, srng))) अणु
-			ath11k_hal_set_link_desc_addr((काष्ठा hal_wbm_link_desc *)desc,
+		while (n_entries &&
+		       (desc = ath11k_hal_srng_src_get_next_entry(ab, srng))) {
+			ath11k_hal_set_link_desc_addr((struct hal_wbm_link_desc *)desc,
 						      i, paddr);
 			n_entries--;
 			paddr += HAL_LINK_DESC_SIZE;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	ath11k_hal_srng_access_end(ab, srng);
 
 	spin_unlock_bh(&srng->lock);
 
-	वापस 0;
+	return 0;
 
-fail_desc_bank_मुक्त:
-	ath11k_dp_link_desc_bank_मुक्त(ab, link_desc_banks);
+fail_desc_bank_free:
+	ath11k_dp_link_desc_bank_free(ab, link_desc_banks);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक ath11k_dp_service_srng(काष्ठा ath11k_base *ab,
-			   काष्ठा ath11k_ext_irq_grp *irq_grp,
-			   पूर्णांक budget)
-अणु
-	काष्ठा napi_काष्ठा *napi = &irq_grp->napi;
-	पूर्णांक grp_id = irq_grp->grp_id;
-	पूर्णांक work_करोne = 0;
-	पूर्णांक i = 0, j;
-	पूर्णांक tot_work_करोne = 0;
+int ath11k_dp_service_srng(struct ath11k_base *ab,
+			   struct ath11k_ext_irq_grp *irq_grp,
+			   int budget)
+{
+	struct napi_struct *napi = &irq_grp->napi;
+	int grp_id = irq_grp->grp_id;
+	int work_done = 0;
+	int i = 0, j;
+	int tot_work_done = 0;
 
-	जबतक (ab->hw_params.ring_mask->tx[grp_id] >> i) अणु
-		अगर (ab->hw_params.ring_mask->tx[grp_id] & BIT(i))
+	while (ab->hw_params.ring_mask->tx[grp_id] >> i) {
+		if (ab->hw_params.ring_mask->tx[grp_id] & BIT(i))
 			ath11k_dp_tx_completion_handler(ab, i);
 		i++;
-	पूर्ण
+	}
 
-	अगर (ab->hw_params.ring_mask->rx_err[grp_id]) अणु
-		work_करोne = ath11k_dp_process_rx_err(ab, napi, budget);
-		budget -= work_करोne;
-		tot_work_करोne += work_करोne;
-		अगर (budget <= 0)
-			जाओ करोne;
-	पूर्ण
+	if (ab->hw_params.ring_mask->rx_err[grp_id]) {
+		work_done = ath11k_dp_process_rx_err(ab, napi, budget);
+		budget -= work_done;
+		tot_work_done += work_done;
+		if (budget <= 0)
+			goto done;
+	}
 
-	अगर (ab->hw_params.ring_mask->rx_wbm_rel[grp_id]) अणु
-		work_करोne = ath11k_dp_rx_process_wbm_err(ab,
+	if (ab->hw_params.ring_mask->rx_wbm_rel[grp_id]) {
+		work_done = ath11k_dp_rx_process_wbm_err(ab,
 							 napi,
 							 budget);
-		budget -= work_करोne;
-		tot_work_करोne += work_करोne;
+		budget -= work_done;
+		tot_work_done += work_done;
 
-		अगर (budget <= 0)
-			जाओ करोne;
-	पूर्ण
+		if (budget <= 0)
+			goto done;
+	}
 
-	अगर (ab->hw_params.ring_mask->rx[grp_id]) अणु
+	if (ab->hw_params.ring_mask->rx[grp_id]) {
 		i =  fls(ab->hw_params.ring_mask->rx[grp_id]) - 1;
-		work_करोne = ath11k_dp_process_rx(ab, i, napi,
+		work_done = ath11k_dp_process_rx(ab, i, napi,
 						 budget);
-		budget -= work_करोne;
-		tot_work_करोne += work_करोne;
-		अगर (budget <= 0)
-			जाओ करोne;
-	पूर्ण
+		budget -= work_done;
+		tot_work_done += work_done;
+		if (budget <= 0)
+			goto done;
+	}
 
-	अगर (ab->hw_params.ring_mask->rx_mon_status[grp_id]) अणु
-		क्रम (i = 0; i < ab->num_radios; i++) अणु
-			क्रम (j = 0; j < ab->hw_params.num_rxmda_per_pdev; j++) अणु
-				पूर्णांक id = i * ab->hw_params.num_rxmda_per_pdev + j;
+	if (ab->hw_params.ring_mask->rx_mon_status[grp_id]) {
+		for (i = 0; i < ab->num_radios; i++) {
+			for (j = 0; j < ab->hw_params.num_rxmda_per_pdev; j++) {
+				int id = i * ab->hw_params.num_rxmda_per_pdev + j;
 
-				अगर (ab->hw_params.ring_mask->rx_mon_status[grp_id] &
-					BIT(id)) अणु
-					work_करोne =
+				if (ab->hw_params.ring_mask->rx_mon_status[grp_id] &
+					BIT(id)) {
+					work_done =
 					ath11k_dp_rx_process_mon_rings(ab,
 								       id,
 								       napi, budget);
-					budget -= work_करोne;
-					tot_work_करोne += work_करोne;
+					budget -= work_done;
+					tot_work_done += work_done;
 
-					अगर (budget <= 0)
-						जाओ करोne;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
+					if (budget <= 0)
+						goto done;
+				}
+			}
+		}
+	}
 
-	अगर (ab->hw_params.ring_mask->reo_status[grp_id])
+	if (ab->hw_params.ring_mask->reo_status[grp_id])
 		ath11k_dp_process_reo_status(ab);
 
-	क्रम (i = 0; i < ab->num_radios; i++) अणु
-		क्रम (j = 0; j < ab->hw_params.num_rxmda_per_pdev; j++) अणु
-			पूर्णांक id = i * ab->hw_params.num_rxmda_per_pdev + j;
+	for (i = 0; i < ab->num_radios; i++) {
+		for (j = 0; j < ab->hw_params.num_rxmda_per_pdev; j++) {
+			int id = i * ab->hw_params.num_rxmda_per_pdev + j;
 
-			अगर (ab->hw_params.ring_mask->rxdma2host[grp_id] & BIT(id)) अणु
-				work_करोne = ath11k_dp_process_rxdma_err(ab, id, budget);
-				budget -= work_करोne;
-				tot_work_करोne += work_करोne;
-			पूर्ण
+			if (ab->hw_params.ring_mask->rxdma2host[grp_id] & BIT(id)) {
+				work_done = ath11k_dp_process_rxdma_err(ab, id, budget);
+				budget -= work_done;
+				tot_work_done += work_done;
+			}
 
-			अगर (budget <= 0)
-				जाओ करोne;
+			if (budget <= 0)
+				goto done;
 
-			अगर (ab->hw_params.ring_mask->host2rxdma[grp_id] & BIT(id)) अणु
-				काष्ठा ath11k *ar = ath11k_ab_to_ar(ab, id);
-				काष्ठा ath11k_pdev_dp *dp = &ar->dp;
-				काष्ठा dp_rxdma_ring *rx_ring = &dp->rx_refill_buf_ring;
+			if (ab->hw_params.ring_mask->host2rxdma[grp_id] & BIT(id)) {
+				struct ath11k *ar = ath11k_ab_to_ar(ab, id);
+				struct ath11k_pdev_dp *dp = &ar->dp;
+				struct dp_rxdma_ring *rx_ring = &dp->rx_refill_buf_ring;
 
 				ath11k_dp_rxbufs_replenish(ab, id, rx_ring, 0,
 							   HAL_RX_BUF_RBM_SW3_BM);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	/* TODO: Implement handler क्रम other पूर्णांकerrupts */
+			}
+		}
+	}
+	/* TODO: Implement handler for other interrupts */
 
-करोne:
-	वापस tot_work_करोne;
-पूर्ण
+done:
+	return tot_work_done;
+}
 EXPORT_SYMBOL(ath11k_dp_service_srng);
 
-व्योम ath11k_dp_pdev_मुक्त(काष्ठा ath11k_base *ab)
-अणु
-	काष्ठा ath11k *ar;
-	पूर्णांक i;
+void ath11k_dp_pdev_free(struct ath11k_base *ab)
+{
+	struct ath11k *ar;
+	int i;
 
-	del_समयr_sync(&ab->mon_reap_समयr);
+	del_timer_sync(&ab->mon_reap_timer);
 
-	क्रम (i = 0; i < ab->num_radios; i++) अणु
+	for (i = 0; i < ab->num_radios; i++) {
 		ar = ab->pdevs[i].ar;
-		ath11k_dp_rx_pdev_मुक्त(ab, i);
-		ath11k_debugfs_unरेजिस्टर(ar);
+		ath11k_dp_rx_pdev_free(ab, i);
+		ath11k_debugfs_unregister(ar);
 		ath11k_dp_rx_pdev_mon_detach(ar);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम ath11k_dp_pdev_pre_alloc(काष्ठा ath11k_base *ab)
-अणु
-	काष्ठा ath11k *ar;
-	काष्ठा ath11k_pdev_dp *dp;
-	पूर्णांक i;
-	पूर्णांक j;
+void ath11k_dp_pdev_pre_alloc(struct ath11k_base *ab)
+{
+	struct ath11k *ar;
+	struct ath11k_pdev_dp *dp;
+	int i;
+	int j;
 
-	क्रम (i = 0; i <  ab->num_radios; i++) अणु
+	for (i = 0; i <  ab->num_radios; i++) {
 		ar = ab->pdevs[i].ar;
 		dp = &ar->dp;
 		dp->mac_id = i;
 		idr_init(&dp->rx_refill_buf_ring.bufs_idr);
 		spin_lock_init(&dp->rx_refill_buf_ring.idr_lock);
 		atomic_set(&dp->num_tx_pending, 0);
-		init_रुकोqueue_head(&dp->tx_empty_रुकोq);
-		क्रम (j = 0; j < ab->hw_params.num_rxmda_per_pdev; j++) अणु
+		init_waitqueue_head(&dp->tx_empty_waitq);
+		for (j = 0; j < ab->hw_params.num_rxmda_per_pdev; j++) {
 			idr_init(&dp->rx_mon_status_refill_ring[j].bufs_idr);
 			spin_lock_init(&dp->rx_mon_status_refill_ring[j].idr_lock);
-		पूर्ण
+		}
 		idr_init(&dp->rxdma_mon_buf_ring.bufs_idr);
 		spin_lock_init(&dp->rxdma_mon_buf_ring.idr_lock);
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक ath11k_dp_pdev_alloc(काष्ठा ath11k_base *ab)
-अणु
-	काष्ठा ath11k *ar;
-	पूर्णांक ret;
-	पूर्णांक i;
+int ath11k_dp_pdev_alloc(struct ath11k_base *ab)
+{
+	struct ath11k *ar;
+	int ret;
+	int i;
 
-	/* TODO:Per-pdev rx ring unlike tx ring which is mapped to dअगरferent AC's */
-	क्रम (i = 0; i < ab->num_radios; i++) अणु
+	/* TODO:Per-pdev rx ring unlike tx ring which is mapped to different AC's */
+	for (i = 0; i < ab->num_radios; i++) {
 		ar = ab->pdevs[i].ar;
 		ret = ath11k_dp_rx_pdev_alloc(ab, i);
-		अगर (ret) अणु
+		if (ret) {
 			ath11k_warn(ab, "failed to allocate pdev rx for pdev_id :%d\n",
 				    i);
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 		ret = ath11k_dp_rx_pdev_mon_attach(ar);
-		अगर (ret) अणु
+		if (ret) {
 			ath11k_warn(ab, "failed to initialize mon pdev %d\n",
 				    i);
-			जाओ err;
-		पूर्ण
-	पूर्ण
+			goto err;
+		}
+	}
 
-	वापस 0;
+	return 0;
 
 err:
-	ath11k_dp_pdev_मुक्त(ab);
+	ath11k_dp_pdev_free(ab);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक ath11k_dp_htt_connect(काष्ठा ath11k_dp *dp)
-अणु
-	काष्ठा ath11k_htc_svc_conn_req conn_req;
-	काष्ठा ath11k_htc_svc_conn_resp conn_resp;
-	पूर्णांक status;
+int ath11k_dp_htt_connect(struct ath11k_dp *dp)
+{
+	struct ath11k_htc_svc_conn_req conn_req;
+	struct ath11k_htc_svc_conn_resp conn_resp;
+	int status;
 
-	स_रखो(&conn_req, 0, माप(conn_req));
-	स_रखो(&conn_resp, 0, माप(conn_resp));
+	memset(&conn_req, 0, sizeof(conn_req));
+	memset(&conn_resp, 0, sizeof(conn_resp));
 
 	conn_req.ep_ops.ep_tx_complete = ath11k_dp_htt_htc_tx_complete;
 	conn_req.ep_ops.ep_rx_complete = ath11k_dp_htt_htc_t2h_msg_handler;
@@ -934,73 +933,73 @@ err:
 	status = ath11k_htc_connect_service(&dp->ab->htc, &conn_req,
 					    &conn_resp);
 
-	अगर (status)
-		वापस status;
+	if (status)
+		return status;
 
 	dp->eid = conn_resp.eid;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ath11k_dp_update_vdev_search(काष्ठा ath11k_vअगर *arvअगर)
-अणु
-	 /* When v2_map_support is true:क्रम STA mode, enable address
+static void ath11k_dp_update_vdev_search(struct ath11k_vif *arvif)
+{
+	 /* When v2_map_support is true:for STA mode, enable address
 	  * search index, tcl uses ast_hash value in the descriptor.
-	  * When v2_map_support is false: क्रम STA mode, करोnt' enable
+	  * When v2_map_support is false: for STA mode, dont' enable
 	  * address search index.
 	  */
-	चयन (arvअगर->vdev_type) अणु
-	हाल WMI_VDEV_TYPE_STA:
-		अगर (arvअगर->ar->ab->hw_params.htt_peer_map_v2) अणु
-			arvअगर->hal_addr_search_flags = HAL_TX_ADDRX_EN;
-			arvअगर->search_type = HAL_TX_ADDR_SEARCH_INDEX;
-		पूर्ण अन्यथा अणु
-			arvअगर->hal_addr_search_flags = HAL_TX_ADDRY_EN;
-			arvअगर->search_type = HAL_TX_ADDR_SEARCH_DEFAULT;
-		पूर्ण
-		अवरोध;
-	हाल WMI_VDEV_TYPE_AP:
-	हाल WMI_VDEV_TYPE_IBSS:
-		arvअगर->hal_addr_search_flags = HAL_TX_ADDRX_EN;
-		arvअगर->search_type = HAL_TX_ADDR_SEARCH_DEFAULT;
-		अवरोध;
-	हाल WMI_VDEV_TYPE_MONITOR:
-	शेष:
-		वापस;
-	पूर्ण
-पूर्ण
+	switch (arvif->vdev_type) {
+	case WMI_VDEV_TYPE_STA:
+		if (arvif->ar->ab->hw_params.htt_peer_map_v2) {
+			arvif->hal_addr_search_flags = HAL_TX_ADDRX_EN;
+			arvif->search_type = HAL_TX_ADDR_SEARCH_INDEX;
+		} else {
+			arvif->hal_addr_search_flags = HAL_TX_ADDRY_EN;
+			arvif->search_type = HAL_TX_ADDR_SEARCH_DEFAULT;
+		}
+		break;
+	case WMI_VDEV_TYPE_AP:
+	case WMI_VDEV_TYPE_IBSS:
+		arvif->hal_addr_search_flags = HAL_TX_ADDRX_EN;
+		arvif->search_type = HAL_TX_ADDR_SEARCH_DEFAULT;
+		break;
+	case WMI_VDEV_TYPE_MONITOR:
+	default:
+		return;
+	}
+}
 
-व्योम ath11k_dp_vdev_tx_attach(काष्ठा ath11k *ar, काष्ठा ath11k_vअगर *arvअगर)
-अणु
-	arvअगर->tcl_metadata |= FIELD_PREP(HTT_TCL_META_DATA_TYPE, 1) |
+void ath11k_dp_vdev_tx_attach(struct ath11k *ar, struct ath11k_vif *arvif)
+{
+	arvif->tcl_metadata |= FIELD_PREP(HTT_TCL_META_DATA_TYPE, 1) |
 			       FIELD_PREP(HTT_TCL_META_DATA_VDEV_ID,
-					  arvअगर->vdev_id) |
+					  arvif->vdev_id) |
 			       FIELD_PREP(HTT_TCL_META_DATA_PDEV_ID,
 					  ar->pdev->pdev_id);
 
-	/* set HTT extension valid bit to 0 by शेष */
-	arvअगर->tcl_metadata &= ~HTT_TCL_META_DATA_VALID_HTT;
+	/* set HTT extension valid bit to 0 by default */
+	arvif->tcl_metadata &= ~HTT_TCL_META_DATA_VALID_HTT;
 
-	ath11k_dp_update_vdev_search(arvअगर);
-पूर्ण
+	ath11k_dp_update_vdev_search(arvif);
+}
 
-अटल पूर्णांक ath11k_dp_tx_pending_cleanup(पूर्णांक buf_id, व्योम *skb, व्योम *ctx)
-अणु
-	काष्ठा ath11k_base *ab = (काष्ठा ath11k_base *)ctx;
-	काष्ठा sk_buff *msdu = skb;
+static int ath11k_dp_tx_pending_cleanup(int buf_id, void *skb, void *ctx)
+{
+	struct ath11k_base *ab = (struct ath11k_base *)ctx;
+	struct sk_buff *msdu = skb;
 
 	dma_unmap_single(ab->dev, ATH11K_SKB_CB(msdu)->paddr, msdu->len,
 			 DMA_TO_DEVICE);
 
-	dev_kमुक्त_skb_any(msdu);
+	dev_kfree_skb_any(msdu);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम ath11k_dp_मुक्त(काष्ठा ath11k_base *ab)
-अणु
-	काष्ठा ath11k_dp *dp = &ab->dp;
-	पूर्णांक i;
+void ath11k_dp_free(struct ath11k_base *ab)
+{
+	struct ath11k_dp *dp = &ab->dp;
+	int i;
 
 	ath11k_dp_link_desc_cleanup(ab, dp->link_desc_banks,
 				    HAL_WBM_IDLE_LINK, &dp->wbm_idle_ring);
@@ -1009,26 +1008,26 @@ err:
 
 	ath11k_dp_reo_cmd_list_cleanup(ab);
 
-	क्रम (i = 0; i < DP_TCL_NUM_RING_MAX; i++) अणु
+	for (i = 0; i < DP_TCL_NUM_RING_MAX; i++) {
 		spin_lock_bh(&dp->tx_ring[i].tx_idr_lock);
-		idr_क्रम_each(&dp->tx_ring[i].txbuf_idr,
+		idr_for_each(&dp->tx_ring[i].txbuf_idr,
 			     ath11k_dp_tx_pending_cleanup, ab);
 		idr_destroy(&dp->tx_ring[i].txbuf_idr);
 		spin_unlock_bh(&dp->tx_ring[i].tx_idr_lock);
-		kमुक्त(dp->tx_ring[i].tx_status);
-	पूर्ण
+		kfree(dp->tx_ring[i].tx_status);
+	}
 
 	/* Deinit any SOC level resource */
-पूर्ण
+}
 
-पूर्णांक ath11k_dp_alloc(काष्ठा ath11k_base *ab)
-अणु
-	काष्ठा ath11k_dp *dp = &ab->dp;
-	काष्ठा hal_srng *srng = शून्य;
-	माप_प्रकार size = 0;
+int ath11k_dp_alloc(struct ath11k_base *ab)
+{
+	struct ath11k_dp *dp = &ab->dp;
+	struct hal_srng *srng = NULL;
+	size_t size = 0;
 	u32 n_link_desc = 0;
-	पूर्णांक ret;
-	पूर्णांक i;
+	int ret;
+	int i;
 
 	dp->ab = ab;
 
@@ -1039,46 +1038,46 @@ err:
 	dp->reo_cmd_cache_flush_count = 0;
 
 	ret = ath11k_wbm_idle_ring_setup(ab, &n_link_desc);
-	अगर (ret) अणु
+	if (ret) {
 		ath11k_warn(ab, "failed to setup wbm_idle_ring: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	srng = &ab->hal.srng_list[dp->wbm_idle_ring.ring_id];
 
 	ret = ath11k_dp_link_desc_setup(ab, dp->link_desc_banks,
 					HAL_WBM_IDLE_LINK, srng, n_link_desc);
-	अगर (ret) अणु
+	if (ret) {
 		ath11k_warn(ab, "failed to setup link desc: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = ath11k_dp_srng_common_setup(ab);
-	अगर (ret)
-		जाओ fail_link_desc_cleanup;
+	if (ret)
+		goto fail_link_desc_cleanup;
 
-	size = माप(काष्ठा hal_wbm_release_ring) * DP_TX_COMP_RING_SIZE;
+	size = sizeof(struct hal_wbm_release_ring) * DP_TX_COMP_RING_SIZE;
 
-	क्रम (i = 0; i < DP_TCL_NUM_RING_MAX; i++) अणु
+	for (i = 0; i < DP_TCL_NUM_RING_MAX; i++) {
 		idr_init(&dp->tx_ring[i].txbuf_idr);
 		spin_lock_init(&dp->tx_ring[i].tx_idr_lock);
 		dp->tx_ring[i].tcl_data_ring_id = i;
 
 		dp->tx_ring[i].tx_status_head = 0;
 		dp->tx_ring[i].tx_status_tail = DP_TX_COMP_RING_SIZE - 1;
-		dp->tx_ring[i].tx_status = kदो_स्मृति(size, GFP_KERNEL);
-		अगर (!dp->tx_ring[i].tx_status) अणु
+		dp->tx_ring[i].tx_status = kmalloc(size, GFP_KERNEL);
+		if (!dp->tx_ring[i].tx_status) {
 			ret = -ENOMEM;
-			जाओ fail_cmn_srng_cleanup;
-		पूर्ण
-	पूर्ण
+			goto fail_cmn_srng_cleanup;
+		}
+	}
 
-	क्रम (i = 0; i < HAL_DSCP_TID_MAP_TBL_NUM_ENTRIES_MAX; i++)
+	for (i = 0; i < HAL_DSCP_TID_MAP_TBL_NUM_ENTRIES_MAX; i++)
 		ath11k_hal_tx_set_dscp_tid_map(ab, i);
 
-	/* Init any SOC level resource क्रम DP */
+	/* Init any SOC level resource for DP */
 
-	वापस 0;
+	return 0;
 
 fail_cmn_srng_cleanup:
 	ath11k_dp_srng_common_cleanup(ab);
@@ -1087,80 +1086,80 @@ fail_link_desc_cleanup:
 	ath11k_dp_link_desc_cleanup(ab, dp->link_desc_banks,
 				    HAL_WBM_IDLE_LINK, &dp->wbm_idle_ring);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम ath11k_dp_shaकरोw_समयr_handler(काष्ठा समयr_list *t)
-अणु
-	काष्ठा ath11k_hp_update_समयr *update_समयr = from_समयr(update_समयr,
-								 t, समयr);
-	काष्ठा ath11k_base *ab = update_समयr->ab;
-	काष्ठा hal_srng	*srng = &ab->hal.srng_list[update_समयr->ring_id];
+static void ath11k_dp_shadow_timer_handler(struct timer_list *t)
+{
+	struct ath11k_hp_update_timer *update_timer = from_timer(update_timer,
+								 t, timer);
+	struct ath11k_base *ab = update_timer->ab;
+	struct hal_srng	*srng = &ab->hal.srng_list[update_timer->ring_id];
 
 	spin_lock_bh(&srng->lock);
 
-	/* when the समयr is fired, the handler checks whether there
+	/* when the timer is fired, the handler checks whether there
 	 * are new TX happened. The handler updates HP only when there
-	 * are no TX operations during the समयout पूर्णांकerval, and stop
-	 * the समयr. Timer will be started again when TX happens again.
+	 * are no TX operations during the timeout interval, and stop
+	 * the timer. Timer will be started again when TX happens again.
 	 */
-	अगर (update_समयr->समयr_tx_num != update_समयr->tx_num) अणु
-		update_समयr->समयr_tx_num = update_समयr->tx_num;
-		mod_समयr(&update_समयr->समयr, jअगरfies +
-		  msecs_to_jअगरfies(update_समयr->पूर्णांकerval));
-	पूर्ण अन्यथा अणु
-		update_समयr->started = false;
-		ath11k_hal_srng_shaकरोw_update_hp_tp(ab, srng);
-	पूर्ण
+	if (update_timer->timer_tx_num != update_timer->tx_num) {
+		update_timer->timer_tx_num = update_timer->tx_num;
+		mod_timer(&update_timer->timer, jiffies +
+		  msecs_to_jiffies(update_timer->interval));
+	} else {
+		update_timer->started = false;
+		ath11k_hal_srng_shadow_update_hp_tp(ab, srng);
+	}
 
 	spin_unlock_bh(&srng->lock);
-पूर्ण
+}
 
-व्योम ath11k_dp_shaकरोw_start_समयr(काष्ठा ath11k_base *ab,
-				  काष्ठा hal_srng *srng,
-				  काष्ठा ath11k_hp_update_समयr *update_समयr)
-अणु
-	lockdep_निश्चित_held(&srng->lock);
+void ath11k_dp_shadow_start_timer(struct ath11k_base *ab,
+				  struct hal_srng *srng,
+				  struct ath11k_hp_update_timer *update_timer)
+{
+	lockdep_assert_held(&srng->lock);
 
-	अगर (!ab->hw_params.supports_shaकरोw_regs)
-		वापस;
+	if (!ab->hw_params.supports_shadow_regs)
+		return;
 
-	update_समयr->tx_num++;
+	update_timer->tx_num++;
 
-	अगर (update_समयr->started)
-		वापस;
+	if (update_timer->started)
+		return;
 
-	update_समयr->started = true;
-	update_समयr->समयr_tx_num = update_समयr->tx_num;
-	mod_समयr(&update_समयr->समयr, jअगरfies +
-		  msecs_to_jअगरfies(update_समयr->पूर्णांकerval));
-पूर्ण
+	update_timer->started = true;
+	update_timer->timer_tx_num = update_timer->tx_num;
+	mod_timer(&update_timer->timer, jiffies +
+		  msecs_to_jiffies(update_timer->interval));
+}
 
-व्योम ath11k_dp_shaकरोw_stop_समयr(काष्ठा ath11k_base *ab,
-				 काष्ठा ath11k_hp_update_समयr *update_समयr)
-अणु
-	अगर (!ab->hw_params.supports_shaकरोw_regs)
-		वापस;
+void ath11k_dp_shadow_stop_timer(struct ath11k_base *ab,
+				 struct ath11k_hp_update_timer *update_timer)
+{
+	if (!ab->hw_params.supports_shadow_regs)
+		return;
 
-	अगर (!update_समयr->init)
-		वापस;
+	if (!update_timer->init)
+		return;
 
-	del_समयr_sync(&update_समयr->समयr);
-पूर्ण
+	del_timer_sync(&update_timer->timer);
+}
 
-व्योम ath11k_dp_shaकरोw_init_समयr(काष्ठा ath11k_base *ab,
-				 काष्ठा ath11k_hp_update_समयr *update_समयr,
-				 u32 पूर्णांकerval, u32 ring_id)
-अणु
-	अगर (!ab->hw_params.supports_shaकरोw_regs)
-		वापस;
+void ath11k_dp_shadow_init_timer(struct ath11k_base *ab,
+				 struct ath11k_hp_update_timer *update_timer,
+				 u32 interval, u32 ring_id)
+{
+	if (!ab->hw_params.supports_shadow_regs)
+		return;
 
-	update_समयr->tx_num = 0;
-	update_समयr->समयr_tx_num = 0;
-	update_समयr->ab = ab;
-	update_समयr->ring_id = ring_id;
-	update_समयr->पूर्णांकerval = पूर्णांकerval;
-	update_समयr->init = true;
-	समयr_setup(&update_समयr->समयr,
-		    ath11k_dp_shaकरोw_समयr_handler, 0);
-पूर्ण
+	update_timer->tx_num = 0;
+	update_timer->timer_tx_num = 0;
+	update_timer->ab = ab;
+	update_timer->ring_id = ring_id;
+	update_timer->interval = interval;
+	update_timer->init = true;
+	timer_setup(&update_timer->timer,
+		    ath11k_dp_shadow_timer_handler, 0);
+}

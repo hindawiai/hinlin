@@ -1,20 +1,19 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *	xt_connmark - Netfilter module to operate on connection marks
  *
- *	Copyright (C) 2002,2004 MARA Systems AB <https://www.maraप्रणालीs.com>
- *	by Henrik Nordstrom <hno@maraप्रणालीs.com>
- *	Copyright तऊ CC Computer Consultants GmbH, 2007 - 2008
- *	Jan Engelhardt <jengelh@meकरोzas.de>
+ *	Copyright (C) 2002,2004 MARA Systems AB <https://www.marasystems.com>
+ *	by Henrik Nordstrom <hno@marasystems.com>
+ *	Copyright © CC Computer Consultants GmbH, 2007 - 2008
+ *	Jan Engelhardt <jengelh@medozas.de>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/skbuff.h>
-#समावेश <net/netfilter/nf_conntrack.h>
-#समावेश <net/netfilter/nf_conntrack_ecache.h>
-#समावेश <linux/netfilter/x_tables.h>
-#समावेश <linux/netfilter/xt_connmark.h>
+#include <linux/module.h>
+#include <linux/skbuff.h>
+#include <net/netfilter/nf_conntrack.h>
+#include <net/netfilter/nf_conntrack_ecache.h>
+#include <linux/netfilter/x_tables.h>
+#include <linux/netfilter/xt_connmark.h>
 
 MODULE_AUTHOR("Henrik Nordstrom <hno@marasystems.com>");
 MODULE_DESCRIPTION("Xtables: connection mark operations");
@@ -24,184 +23,184 @@ MODULE_ALIAS("ip6t_CONNMARK");
 MODULE_ALIAS("ipt_connmark");
 MODULE_ALIAS("ip6t_connmark");
 
-अटल अचिन्हित पूर्णांक
-connmark_tg_shअगरt(काष्ठा sk_buff *skb, स्थिर काष्ठा xt_connmark_tginfo2 *info)
-अणु
-	क्रमागत ip_conntrack_info ctinfo;
-	u_पूर्णांक32_t new_targeपंचांगark;
-	काष्ठा nf_conn *ct;
-	u_पूर्णांक32_t newmark;
+static unsigned int
+connmark_tg_shift(struct sk_buff *skb, const struct xt_connmark_tginfo2 *info)
+{
+	enum ip_conntrack_info ctinfo;
+	u_int32_t new_targetmark;
+	struct nf_conn *ct;
+	u_int32_t newmark;
 
 	ct = nf_ct_get(skb, &ctinfo);
-	अगर (ct == शून्य)
-		वापस XT_CONTINUE;
+	if (ct == NULL)
+		return XT_CONTINUE;
 
-	चयन (info->mode) अणु
-	हाल XT_CONNMARK_SET:
-		newmark = (ct->mark & ~info->cपंचांगask) ^ info->cपंचांगark;
-		अगर (info->shअगरt_dir == D_SHIFT_RIGHT)
-			newmark >>= info->shअगरt_bits;
-		अन्यथा
-			newmark <<= info->shअगरt_bits;
+	switch (info->mode) {
+	case XT_CONNMARK_SET:
+		newmark = (ct->mark & ~info->ctmask) ^ info->ctmark;
+		if (info->shift_dir == D_SHIFT_RIGHT)
+			newmark >>= info->shift_bits;
+		else
+			newmark <<= info->shift_bits;
 
-		अगर (ct->mark != newmark) अणु
+		if (ct->mark != newmark) {
 			ct->mark = newmark;
 			nf_conntrack_event_cache(IPCT_MARK, ct);
-		पूर्ण
-		अवरोध;
-	हाल XT_CONNMARK_SAVE:
-		new_targeपंचांगark = (skb->mark & info->nfmask);
-		अगर (info->shअगरt_dir == D_SHIFT_RIGHT)
-			new_targeपंचांगark >>= info->shअगरt_bits;
-		अन्यथा
-			new_targeपंचांगark <<= info->shअगरt_bits;
+		}
+		break;
+	case XT_CONNMARK_SAVE:
+		new_targetmark = (skb->mark & info->nfmask);
+		if (info->shift_dir == D_SHIFT_RIGHT)
+			new_targetmark >>= info->shift_bits;
+		else
+			new_targetmark <<= info->shift_bits;
 
-		newmark = (ct->mark & ~info->cपंचांगask) ^
-			  new_targeपंचांगark;
-		अगर (ct->mark != newmark) अणु
+		newmark = (ct->mark & ~info->ctmask) ^
+			  new_targetmark;
+		if (ct->mark != newmark) {
 			ct->mark = newmark;
 			nf_conntrack_event_cache(IPCT_MARK, ct);
-		पूर्ण
-		अवरोध;
-	हाल XT_CONNMARK_RESTORE:
-		new_targeपंचांगark = (ct->mark & info->cपंचांगask);
-		अगर (info->shअगरt_dir == D_SHIFT_RIGHT)
-			new_targeपंचांगark >>= info->shअगरt_bits;
-		अन्यथा
-			new_targeपंचांगark <<= info->shअगरt_bits;
+		}
+		break;
+	case XT_CONNMARK_RESTORE:
+		new_targetmark = (ct->mark & info->ctmask);
+		if (info->shift_dir == D_SHIFT_RIGHT)
+			new_targetmark >>= info->shift_bits;
+		else
+			new_targetmark <<= info->shift_bits;
 
 		newmark = (skb->mark & ~info->nfmask) ^
-			  new_targeपंचांगark;
+			  new_targetmark;
 		skb->mark = newmark;
-		अवरोध;
-	पूर्ण
-	वापस XT_CONTINUE;
-पूर्ण
+		break;
+	}
+	return XT_CONTINUE;
+}
 
-अटल अचिन्हित पूर्णांक
-connmark_tg(काष्ठा sk_buff *skb, स्थिर काष्ठा xt_action_param *par)
-अणु
-	स्थिर काष्ठा xt_connmark_tginfo1 *info = par->targinfo;
-	स्थिर काष्ठा xt_connmark_tginfo2 info2 = अणु
-		.cपंचांगark	= info->cपंचांगark,
-		.cपंचांगask	= info->cपंचांगask,
+static unsigned int
+connmark_tg(struct sk_buff *skb, const struct xt_action_param *par)
+{
+	const struct xt_connmark_tginfo1 *info = par->targinfo;
+	const struct xt_connmark_tginfo2 info2 = {
+		.ctmark	= info->ctmark,
+		.ctmask	= info->ctmask,
 		.nfmask	= info->nfmask,
 		.mode	= info->mode,
-	पूर्ण;
+	};
 
-	वापस connmark_tg_shअगरt(skb, &info2);
-पूर्ण
+	return connmark_tg_shift(skb, &info2);
+}
 
-अटल अचिन्हित पूर्णांक
-connmark_tg_v2(काष्ठा sk_buff *skb, स्थिर काष्ठा xt_action_param *par)
-अणु
-	स्थिर काष्ठा xt_connmark_tginfo2 *info = par->targinfo;
+static unsigned int
+connmark_tg_v2(struct sk_buff *skb, const struct xt_action_param *par)
+{
+	const struct xt_connmark_tginfo2 *info = par->targinfo;
 
-	वापस connmark_tg_shअगरt(skb, info);
-पूर्ण
+	return connmark_tg_shift(skb, info);
+}
 
-अटल पूर्णांक connmark_tg_check(स्थिर काष्ठा xt_tgchk_param *par)
-अणु
-	पूर्णांक ret;
+static int connmark_tg_check(const struct xt_tgchk_param *par)
+{
+	int ret;
 
 	ret = nf_ct_netns_get(par->net, par->family);
-	अगर (ret < 0)
+	if (ret < 0)
 		pr_info_ratelimited("cannot load conntrack support for proto=%u\n",
 				    par->family);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम connmark_tg_destroy(स्थिर काष्ठा xt_tgdtor_param *par)
-अणु
+static void connmark_tg_destroy(const struct xt_tgdtor_param *par)
+{
 	nf_ct_netns_put(par->net, par->family);
-पूर्ण
+}
 
-अटल bool
-connmark_mt(स्थिर काष्ठा sk_buff *skb, काष्ठा xt_action_param *par)
-अणु
-	स्थिर काष्ठा xt_connmark_mtinfo1 *info = par->matchinfo;
-	क्रमागत ip_conntrack_info ctinfo;
-	स्थिर काष्ठा nf_conn *ct;
+static bool
+connmark_mt(const struct sk_buff *skb, struct xt_action_param *par)
+{
+	const struct xt_connmark_mtinfo1 *info = par->matchinfo;
+	enum ip_conntrack_info ctinfo;
+	const struct nf_conn *ct;
 
 	ct = nf_ct_get(skb, &ctinfo);
-	अगर (ct == शून्य)
-		वापस false;
+	if (ct == NULL)
+		return false;
 
-	वापस ((ct->mark & info->mask) == info->mark) ^ info->invert;
-पूर्ण
+	return ((ct->mark & info->mask) == info->mark) ^ info->invert;
+}
 
-अटल पूर्णांक connmark_mt_check(स्थिर काष्ठा xt_mtchk_param *par)
-अणु
-	पूर्णांक ret;
+static int connmark_mt_check(const struct xt_mtchk_param *par)
+{
+	int ret;
 
 	ret = nf_ct_netns_get(par->net, par->family);
-	अगर (ret < 0)
+	if (ret < 0)
 		pr_info_ratelimited("cannot load conntrack support for proto=%u\n",
 				    par->family);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम connmark_mt_destroy(स्थिर काष्ठा xt_mtdtor_param *par)
-अणु
+static void connmark_mt_destroy(const struct xt_mtdtor_param *par)
+{
 	nf_ct_netns_put(par->net, par->family);
-पूर्ण
+}
 
-अटल काष्ठा xt_target connmark_tg_reg[] __पढ़ो_mostly = अणु
-	अणु
+static struct xt_target connmark_tg_reg[] __read_mostly = {
+	{
 		.name           = "CONNMARK",
 		.revision       = 1,
 		.family         = NFPROTO_UNSPEC,
 		.checkentry     = connmark_tg_check,
 		.target         = connmark_tg,
-		.tarमाला_लोize     = माप(काष्ठा xt_connmark_tginfo1),
+		.targetsize     = sizeof(struct xt_connmark_tginfo1),
 		.destroy        = connmark_tg_destroy,
 		.me             = THIS_MODULE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name           = "CONNMARK",
 		.revision       = 2,
 		.family         = NFPROTO_UNSPEC,
 		.checkentry     = connmark_tg_check,
 		.target         = connmark_tg_v2,
-		.tarमाला_लोize     = माप(काष्ठा xt_connmark_tginfo2),
+		.targetsize     = sizeof(struct xt_connmark_tginfo2),
 		.destroy        = connmark_tg_destroy,
 		.me             = THIS_MODULE,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल काष्ठा xt_match connmark_mt_reg __पढ़ो_mostly = अणु
+static struct xt_match connmark_mt_reg __read_mostly = {
 	.name           = "connmark",
 	.revision       = 1,
 	.family         = NFPROTO_UNSPEC,
 	.checkentry     = connmark_mt_check,
 	.match          = connmark_mt,
-	.matchsize      = माप(काष्ठा xt_connmark_mtinfo1),
+	.matchsize      = sizeof(struct xt_connmark_mtinfo1),
 	.destroy        = connmark_mt_destroy,
 	.me             = THIS_MODULE,
-पूर्ण;
+};
 
-अटल पूर्णांक __init connmark_mt_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init connmark_mt_init(void)
+{
+	int ret;
 
-	ret = xt_रेजिस्टर_tarमाला_लो(connmark_tg_reg,
+	ret = xt_register_targets(connmark_tg_reg,
 				  ARRAY_SIZE(connmark_tg_reg));
-	अगर (ret < 0)
-		वापस ret;
-	ret = xt_रेजिस्टर_match(&connmark_mt_reg);
-	अगर (ret < 0) अणु
-		xt_unरेजिस्टर_tarमाला_लो(connmark_tg_reg,
+	if (ret < 0)
+		return ret;
+	ret = xt_register_match(&connmark_mt_reg);
+	if (ret < 0) {
+		xt_unregister_targets(connmark_tg_reg,
 				      ARRAY_SIZE(connmark_tg_reg));
-		वापस ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return ret;
+	}
+	return 0;
+}
 
-अटल व्योम __निकास connmark_mt_निकास(व्योम)
-अणु
-	xt_unरेजिस्टर_match(&connmark_mt_reg);
-	xt_unरेजिस्टर_tarमाला_लो(connmark_tg_reg, ARRAY_SIZE(connmark_tg_reg));
-पूर्ण
+static void __exit connmark_mt_exit(void)
+{
+	xt_unregister_match(&connmark_mt_reg);
+	xt_unregister_targets(connmark_tg_reg, ARRAY_SIZE(connmark_tg_reg));
+}
 
 module_init(connmark_mt_init);
-module_निकास(connmark_mt_निकास);
+module_exit(connmark_mt_exit);

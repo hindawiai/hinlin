@@ -1,63 +1,62 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/spinlock.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/init.h>
-#समावेश <linux/pgtable.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/spinlock.h>
+#include <linux/errno.h>
+#include <linux/init.h>
+#include <linux/pgtable.h>
 
-#समावेश <यंत्र/proto.h>
-#समावेश <यंत्र/cpufeature.h>
+#include <asm/proto.h>
+#include <asm/cpufeature.h>
 
-अटल पूर्णांक disable_nx;
+static int disable_nx;
 
 /*
  * noexec = on|off
  *
- * Control non-executable mappings क्रम processes.
+ * Control non-executable mappings for processes.
  *
  * on      Enable
  * off     Disable
  */
-अटल पूर्णांक __init noexec_setup(अक्षर *str)
-अणु
-	अगर (!str)
-		वापस -EINVAL;
-	अगर (!म_भेदन(str, "on", 2)) अणु
+static int __init noexec_setup(char *str)
+{
+	if (!str)
+		return -EINVAL;
+	if (!strncmp(str, "on", 2)) {
 		disable_nx = 0;
-	पूर्ण अन्यथा अगर (!म_भेदन(str, "off", 3)) अणु
+	} else if (!strncmp(str, "off", 3)) {
 		disable_nx = 1;
-	पूर्ण
+	}
 	x86_configure_nx();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 early_param("noexec", noexec_setup);
 
-व्योम x86_configure_nx(व्योम)
-अणु
-	अगर (boot_cpu_has(X86_FEATURE_NX) && !disable_nx)
+void x86_configure_nx(void)
+{
+	if (boot_cpu_has(X86_FEATURE_NX) && !disable_nx)
 		__supported_pte_mask |= _PAGE_NX;
-	अन्यथा
+	else
 		__supported_pte_mask &= ~_PAGE_NX;
-पूर्ण
+}
 
-व्योम __init x86_report_nx(व्योम)
-अणु
-	अगर (!boot_cpu_has(X86_FEATURE_NX)) अणु
-		prपूर्णांकk(KERN_NOTICE "Notice: NX (Execute Disable) protection "
+void __init x86_report_nx(void)
+{
+	if (!boot_cpu_has(X86_FEATURE_NX)) {
+		printk(KERN_NOTICE "Notice: NX (Execute Disable) protection "
 		       "missing in CPU!\n");
-	पूर्ण अन्यथा अणु
-#अगर defined(CONFIG_X86_64) || defined(CONFIG_X86_PAE)
-		अगर (disable_nx) अणु
-			prपूर्णांकk(KERN_INFO "NX (Execute Disable) protection: "
+	} else {
+#if defined(CONFIG_X86_64) || defined(CONFIG_X86_PAE)
+		if (disable_nx) {
+			printk(KERN_INFO "NX (Execute Disable) protection: "
 			       "disabled by kernel command line option\n");
-		पूर्ण अन्यथा अणु
-			prपूर्णांकk(KERN_INFO "NX (Execute Disable) protection: "
+		} else {
+			printk(KERN_INFO "NX (Execute Disable) protection: "
 			       "active\n");
-		पूर्ण
-#अन्यथा
+		}
+#else
 		/* 32bit non-PAE kernel, NX cannot be used */
-		prपूर्णांकk(KERN_NOTICE "Notice: NX (Execute Disable) protection "
+		printk(KERN_NOTICE "Notice: NX (Execute Disable) protection "
 		       "cannot be enabled: non-PAE kernel!\n");
-#पूर्ण_अगर
-	पूर्ण
-पूर्ण
+#endif
+	}
+}

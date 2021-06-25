@@ -1,36 +1,35 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+
+/* SPDX-License-Identifier: GPL-2.0+
  *
  * Copyright 2013 Ideas On Board SPRL
  * Copyright 2013, 2014 Horms Solutions Ltd.
  *
- * Contact: Laurent Pinअक्षरt <laurent.pinअक्षरt@ideasonboard.com>
+ * Contact: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
  * Contact: Simon Horman <horms@verge.net.au>
  */
 
-#अगर_अघोषित __LINUX_CLK_RENESAS_H_
-#घोषणा __LINUX_CLK_RENESAS_H_
+#ifndef __LINUX_CLK_RENESAS_H_
+#define __LINUX_CLK_RENESAS_H_
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-काष्ठा device;
-काष्ठा device_node;
-काष्ठा generic_pm_करोमुख्य;
+struct device;
+struct device_node;
+struct generic_pm_domain;
 
-व्योम cpg_mstp_add_clk_करोमुख्य(काष्ठा device_node *np);
-#अगर_घोषित CONFIG_CLK_RENESAS_CPG_MSTP
-पूर्णांक cpg_mstp_attach_dev(काष्ठा generic_pm_करोमुख्य *unused, काष्ठा device *dev);
-व्योम cpg_mstp_detach_dev(काष्ठा generic_pm_करोमुख्य *unused, काष्ठा device *dev);
-#अन्यथा
-#घोषणा cpg_mstp_attach_dev	शून्य
-#घोषणा cpg_mstp_detach_dev	शून्य
-#पूर्ण_अगर
+void cpg_mstp_add_clk_domain(struct device_node *np);
+#ifdef CONFIG_CLK_RENESAS_CPG_MSTP
+int cpg_mstp_attach_dev(struct generic_pm_domain *unused, struct device *dev);
+void cpg_mstp_detach_dev(struct generic_pm_domain *unused, struct device *dev);
+#else
+#define cpg_mstp_attach_dev	NULL
+#define cpg_mstp_detach_dev	NULL
+#endif
 
-#अगर_घोषित CONFIG_CLK_RENESAS_CPG_MSSR
-पूर्णांक cpg_mssr_attach_dev(काष्ठा generic_pm_करोमुख्य *unused, काष्ठा device *dev);
-व्योम cpg_mssr_detach_dev(काष्ठा generic_pm_करोमुख्य *unused, काष्ठा device *dev);
-#अन्यथा
-#घोषणा cpg_mssr_attach_dev	शून्य
-#घोषणा cpg_mssr_detach_dev	शून्य
-#पूर्ण_अगर
-#पूर्ण_अगर
+#ifdef CONFIG_CLK_RENESAS_CPG_MSSR
+int cpg_mssr_attach_dev(struct generic_pm_domain *unused, struct device *dev);
+void cpg_mssr_detach_dev(struct generic_pm_domain *unused, struct device *dev);
+#else
+#define cpg_mssr_attach_dev	NULL
+#define cpg_mssr_detach_dev	NULL
+#endif
+#endif

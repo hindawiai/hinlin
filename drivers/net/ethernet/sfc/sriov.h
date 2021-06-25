@@ -1,26 +1,25 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /****************************************************************************
- * Driver क्रम Solarflare network controllers and boards
+ * Driver for Solarflare network controllers and boards
  * Copyright 2014-2015 Solarflare Communications Inc.
  */
 
-#अगर_अघोषित EFX_SRIOV_H
-#घोषणा EFX_SRIOV_H
+#ifndef EFX_SRIOV_H
+#define EFX_SRIOV_H
 
-#समावेश "net_driver.h"
+#include "net_driver.h"
 
-#अगर_घोषित CONFIG_SFC_SRIOV
+#ifdef CONFIG_SFC_SRIOV
 
-पूर्णांक efx_sriov_set_vf_mac(काष्ठा net_device *net_dev, पूर्णांक vf_i, u8 *mac);
-पूर्णांक efx_sriov_set_vf_vlan(काष्ठा net_device *net_dev, पूर्णांक vf_i, u16 vlan,
+int efx_sriov_set_vf_mac(struct net_device *net_dev, int vf_i, u8 *mac);
+int efx_sriov_set_vf_vlan(struct net_device *net_dev, int vf_i, u16 vlan,
 			  u8 qos, __be16 vlan_proto);
-पूर्णांक efx_sriov_set_vf_spoofchk(काष्ठा net_device *net_dev, पूर्णांक vf_i,
+int efx_sriov_set_vf_spoofchk(struct net_device *net_dev, int vf_i,
 			      bool spoofchk);
-पूर्णांक efx_sriov_get_vf_config(काष्ठा net_device *net_dev, पूर्णांक vf_i,
-			    काष्ठा अगरla_vf_info *ivi);
-पूर्णांक efx_sriov_set_vf_link_state(काष्ठा net_device *net_dev, पूर्णांक vf_i,
-				पूर्णांक link_state);
-#पूर्ण_अगर /* CONFIG_SFC_SRIOV */
+int efx_sriov_get_vf_config(struct net_device *net_dev, int vf_i,
+			    struct ifla_vf_info *ivi);
+int efx_sriov_set_vf_link_state(struct net_device *net_dev, int vf_i,
+				int link_state);
+#endif /* CONFIG_SFC_SRIOV */
 
-#पूर्ण_अगर /* EFX_SRIOV_H */
+#endif /* EFX_SRIOV_H */

@@ -1,37 +1,36 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- *	अक्षरacter device driver क्रम पढ़ोing z/VM प्रणाली service records
+ *	character device driver for reading z/VM system service records
  *
  *
  *	Copyright IBM Corp. 2004, 2009
- *	अक्षरacter device driver क्रम पढ़ोing z/VM प्रणाली service records,
+ *	character device driver for reading z/VM system service records,
  *	Version 1.0
  *	Author(s): Xenia Tkatschow <xenia@us.ibm.com>
  *		   Stefan Weinhuber <wein@de.ibm.com>
  *
  */
 
-#घोषणा KMSG_COMPONENT "vmlogrdr"
-#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#define KMSG_COMPONENT "vmlogrdr"
+#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/types.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/atomic.h>
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/cpcmd.h>
-#समावेश <यंत्र/debug.h>
-#समावेश <यंत्र/ebcdic.h>
-#समावेश <net/iucv/iucv.h>
-#समावेश <linux/kmod.h>
-#समावेश <linux/cdev.h>
-#समावेश <linux/device.h>
-#समावेश <linux/माला.स>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/errno.h>
+#include <linux/types.h>
+#include <linux/interrupt.h>
+#include <linux/spinlock.h>
+#include <linux/atomic.h>
+#include <linux/uaccess.h>
+#include <asm/cpcmd.h>
+#include <asm/debug.h>
+#include <asm/ebcdic.h>
+#include <net/iucv/iucv.h>
+#include <linux/kmod.h>
+#include <linux/cdev.h>
+#include <linux/device.h>
+#include <linux/string.h>
 
 MODULE_AUTHOR
 	("(C) 2004 IBM Corporation by Xenia Tkatschow (xenia@us.ibm.com)\n"
@@ -42,722 +41,722 @@ MODULE_LICENSE("GPL");
 
 
 /*
- * The size of the buffer क्रम iucv data transfer is one page,
- * but in addition to the data we पढ़ो from iucv we also
- * place an पूर्णांकeger and some अक्षरacters पूर्णांकo that buffer,
- * so the maximum size क्रम record data is a little less then
+ * The size of the buffer for iucv data transfer is one page,
+ * but in addition to the data we read from iucv we also
+ * place an integer and some characters into that buffer,
+ * so the maximum size for record data is a little less then
  * one page.
  */
-#घोषणा NET_BUFFER_SIZE	(PAGE_SIZE - माप(पूर्णांक) - माप(FENCE))
+#define NET_BUFFER_SIZE	(PAGE_SIZE - sizeof(int) - sizeof(FENCE))
 
 /*
  * The elements that are concurrently accessed by bottom halves are
- * connection_established, iucv_path_severed, local_पूर्णांकerrupt_buffer
- * and receive_पढ़ोy. The first three can be रक्षित by
- * priv_lock.  receive_पढ़ोy is atomic, so it can be incremented and
+ * connection_established, iucv_path_severed, local_interrupt_buffer
+ * and receive_ready. The first three can be protected by
+ * priv_lock.  receive_ready is atomic, so it can be incremented and
  * decremented without holding a lock.
- * The variable dev_in_use needs to be रक्षित by the lock, since
- * it's a flag used by खोलो to make sure that the device is खोलोed only
- * by one user at the same समय.
+ * The variable dev_in_use needs to be protected by the lock, since
+ * it's a flag used by open to make sure that the device is opened only
+ * by one user at the same time.
  */
-काष्ठा vmlogrdr_priv_t अणु
-	अक्षर प्रणाली_service[8];
-	अक्षर पूर्णांकernal_name[8];
-	अक्षर recording_name[8];
-	काष्ठा iucv_path *path;
-	पूर्णांक connection_established;
-	पूर्णांक iucv_path_severed;
-	काष्ठा iucv_message local_पूर्णांकerrupt_buffer;
-	atomic_t receive_पढ़ोy;
-	पूर्णांक minor_num;
-	अक्षर * buffer;
-	अक्षर * current_position;
-	पूर्णांक reमुख्यing;
-	uदीर्घ residual_length;
-	पूर्णांक buffer_मुक्त;
-	पूर्णांक dev_in_use; /* 1: alपढ़ोy खोलोed, 0: not खोलोed*/
+struct vmlogrdr_priv_t {
+	char system_service[8];
+	char internal_name[8];
+	char recording_name[8];
+	struct iucv_path *path;
+	int connection_established;
+	int iucv_path_severed;
+	struct iucv_message local_interrupt_buffer;
+	atomic_t receive_ready;
+	int minor_num;
+	char * buffer;
+	char * current_position;
+	int remaining;
+	ulong residual_length;
+	int buffer_free;
+	int dev_in_use; /* 1: already opened, 0: not opened*/
 	spinlock_t priv_lock;
-	काष्ठा device  *device;
-	काष्ठा device  *class_device;
-	पूर्णांक स्वतःrecording;
-	पूर्णांक स्वतःpurge;
-पूर्ण;
+	struct device  *device;
+	struct device  *class_device;
+	int autorecording;
+	int autopurge;
+};
 
 
 /*
- * File operation काष्ठाure क्रम vmlogrdr devices
+ * File operation structure for vmlogrdr devices
  */
-अटल पूर्णांक vmlogrdr_खोलो(काष्ठा inode *, काष्ठा file *);
-अटल पूर्णांक vmlogrdr_release(काष्ठा inode *, काष्ठा file *);
-अटल sमाप_प्रकार vmlogrdr_पढ़ो (काष्ठा file *filp, अक्षर __user *data,
-			      माप_प्रकार count, loff_t * ppos);
+static int vmlogrdr_open(struct inode *, struct file *);
+static int vmlogrdr_release(struct inode *, struct file *);
+static ssize_t vmlogrdr_read (struct file *filp, char __user *data,
+			      size_t count, loff_t * ppos);
 
-अटल स्थिर काष्ठा file_operations vmlogrdr_fops = अणु
+static const struct file_operations vmlogrdr_fops = {
 	.owner   = THIS_MODULE,
-	.खोलो    = vmlogrdr_खोलो,
+	.open    = vmlogrdr_open,
 	.release = vmlogrdr_release,
-	.पढ़ो    = vmlogrdr_पढ़ो,
+	.read    = vmlogrdr_read,
 	.llseek  = no_llseek,
-पूर्ण;
+};
 
 
-अटल व्योम vmlogrdr_iucv_path_complete(काष्ठा iucv_path *, u8 *ipuser);
-अटल व्योम vmlogrdr_iucv_path_severed(काष्ठा iucv_path *, u8 *ipuser);
-अटल व्योम vmlogrdr_iucv_message_pending(काष्ठा iucv_path *,
-					  काष्ठा iucv_message *);
+static void vmlogrdr_iucv_path_complete(struct iucv_path *, u8 *ipuser);
+static void vmlogrdr_iucv_path_severed(struct iucv_path *, u8 *ipuser);
+static void vmlogrdr_iucv_message_pending(struct iucv_path *,
+					  struct iucv_message *);
 
 
-अटल काष्ठा iucv_handler vmlogrdr_iucv_handler = अणु
+static struct iucv_handler vmlogrdr_iucv_handler = {
 	.path_complete	 = vmlogrdr_iucv_path_complete,
 	.path_severed	 = vmlogrdr_iucv_path_severed,
 	.message_pending = vmlogrdr_iucv_message_pending,
-पूर्ण;
+};
 
 
-अटल DECLARE_WAIT_QUEUE_HEAD(conn_रुको_queue);
-अटल DECLARE_WAIT_QUEUE_HEAD(पढ़ो_रुको_queue);
+static DECLARE_WAIT_QUEUE_HEAD(conn_wait_queue);
+static DECLARE_WAIT_QUEUE_HEAD(read_wait_queue);
 
 /*
- * poपूर्णांकer to प्रणाली service निजी काष्ठाure
+ * pointer to system service private structure
  * minor number 0 --> logrec
  * minor number 1 --> account
  * minor number 2 --> symptom
  */
 
-अटल काष्ठा vmlogrdr_priv_t sys_ser[] = अणु
-	अणु .प्रणाली_service = "*LOGREC ",
-	  .पूर्णांकernal_name  = "logrec",
+static struct vmlogrdr_priv_t sys_ser[] = {
+	{ .system_service = "*LOGREC ",
+	  .internal_name  = "logrec",
 	  .recording_name = "EREP",
 	  .minor_num      = 0,
-	  .buffer_मुक्त    = 1,
+	  .buffer_free    = 1,
 	  .priv_lock	  = __SPIN_LOCK_UNLOCKED(sys_ser[0].priv_lock),
-	  .स्वतःrecording  = 1,
-	  .स्वतःpurge      = 1,
-	पूर्ण,
-	अणु .प्रणाली_service = "*ACCOUNT",
-	  .पूर्णांकernal_name  = "account",
+	  .autorecording  = 1,
+	  .autopurge      = 1,
+	},
+	{ .system_service = "*ACCOUNT",
+	  .internal_name  = "account",
 	  .recording_name = "ACCOUNT",
 	  .minor_num      = 1,
-	  .buffer_मुक्त    = 1,
+	  .buffer_free    = 1,
 	  .priv_lock	  = __SPIN_LOCK_UNLOCKED(sys_ser[1].priv_lock),
-	  .स्वतःrecording  = 1,
-	  .स्वतःpurge      = 1,
-	पूर्ण,
-	अणु .प्रणाली_service = "*SYMPTOM",
-	  .पूर्णांकernal_name  = "symptom",
+	  .autorecording  = 1,
+	  .autopurge      = 1,
+	},
+	{ .system_service = "*SYMPTOM",
+	  .internal_name  = "symptom",
 	  .recording_name = "SYMPTOM",
 	  .minor_num      = 2,
-	  .buffer_मुक्त    = 1,
+	  .buffer_free    = 1,
 	  .priv_lock	  = __SPIN_LOCK_UNLOCKED(sys_ser[2].priv_lock),
-	  .स्वतःrecording  = 1,
-	  .स्वतःpurge      = 1,
-	पूर्ण
-पूर्ण;
+	  .autorecording  = 1,
+	  .autopurge      = 1,
+	}
+};
 
-#घोषणा MAXMINOR  ARRAY_SIZE(sys_ser)
+#define MAXMINOR  ARRAY_SIZE(sys_ser)
 
-अटल अक्षर FENCE[] = अणु"EOR"पूर्ण;
-अटल पूर्णांक vmlogrdr_major = 0;
-अटल काष्ठा cdev  *vmlogrdr_cdev = शून्य;
-अटल पूर्णांक recording_class_AB;
+static char FENCE[] = {"EOR"};
+static int vmlogrdr_major = 0;
+static struct cdev  *vmlogrdr_cdev = NULL;
+static int recording_class_AB;
 
 
-अटल व्योम vmlogrdr_iucv_path_complete(काष्ठा iucv_path *path, u8 *ipuser)
-अणु
-	काष्ठा vmlogrdr_priv_t * logptr = path->निजी;
+static void vmlogrdr_iucv_path_complete(struct iucv_path *path, u8 *ipuser)
+{
+	struct vmlogrdr_priv_t * logptr = path->private;
 
 	spin_lock(&logptr->priv_lock);
 	logptr->connection_established = 1;
 	spin_unlock(&logptr->priv_lock);
-	wake_up(&conn_रुको_queue);
-पूर्ण
+	wake_up(&conn_wait_queue);
+}
 
 
-अटल व्योम vmlogrdr_iucv_path_severed(काष्ठा iucv_path *path, u8 *ipuser)
-अणु
-	काष्ठा vmlogrdr_priv_t * logptr = path->निजी;
+static void vmlogrdr_iucv_path_severed(struct iucv_path *path, u8 *ipuser)
+{
+	struct vmlogrdr_priv_t * logptr = path->private;
 	u8 reason = (u8) ipuser[8];
 
 	pr_err("vmlogrdr: connection severed with reason %i\n", reason);
 
-	iucv_path_sever(path, शून्य);
-	kमुक्त(path);
-	logptr->path = शून्य;
+	iucv_path_sever(path, NULL);
+	kfree(path);
+	logptr->path = NULL;
 
 	spin_lock(&logptr->priv_lock);
 	logptr->connection_established = 0;
 	logptr->iucv_path_severed = 1;
 	spin_unlock(&logptr->priv_lock);
 
-	wake_up(&conn_रुको_queue);
-	/* just in हाल we're sleeping रुकोing क्रम a record */
-	wake_up_पूर्णांकerruptible(&पढ़ो_रुको_queue);
-पूर्ण
+	wake_up(&conn_wait_queue);
+	/* just in case we're sleeping waiting for a record */
+	wake_up_interruptible(&read_wait_queue);
+}
 
 
-अटल व्योम vmlogrdr_iucv_message_pending(काष्ठा iucv_path *path,
-					  काष्ठा iucv_message *msg)
-अणु
-	काष्ठा vmlogrdr_priv_t * logptr = path->निजी;
+static void vmlogrdr_iucv_message_pending(struct iucv_path *path,
+					  struct iucv_message *msg)
+{
+	struct vmlogrdr_priv_t * logptr = path->private;
 
 	/*
 	 * This function is the bottom half so it should be quick.
-	 * Copy the बाह्यal पूर्णांकerrupt data पूर्णांकo our local eib and increment
+	 * Copy the external interrupt data into our local eib and increment
 	 * the usage count
 	 */
 	spin_lock(&logptr->priv_lock);
-	स_नकल(&logptr->local_पूर्णांकerrupt_buffer, msg, माप(*msg));
-	atomic_inc(&logptr->receive_पढ़ोy);
+	memcpy(&logptr->local_interrupt_buffer, msg, sizeof(*msg));
+	atomic_inc(&logptr->receive_ready);
 	spin_unlock(&logptr->priv_lock);
-	wake_up_पूर्णांकerruptible(&पढ़ो_रुको_queue);
-पूर्ण
+	wake_up_interruptible(&read_wait_queue);
+}
 
 
-अटल पूर्णांक vmlogrdr_get_recording_class_AB(व्योम)
-अणु
-	अटल स्थिर अक्षर cp_command[] = "QUERY COMMAND RECORDING ";
-	अक्षर cp_response[80];
-	अक्षर *tail;
-	पूर्णांक len,i;
+static int vmlogrdr_get_recording_class_AB(void)
+{
+	static const char cp_command[] = "QUERY COMMAND RECORDING ";
+	char cp_response[80];
+	char *tail;
+	int len,i;
 
-	cpcmd(cp_command, cp_response, माप(cp_response), शून्य);
-	len = strnlen(cp_response,माप(cp_response));
+	cpcmd(cp_command, cp_response, sizeof(cp_response), NULL);
+	len = strnlen(cp_response,sizeof(cp_response));
 	// now the parsing
 	tail=strnchr(cp_response,len,'=');
-	अगर (!tail)
-		वापस 0;
+	if (!tail)
+		return 0;
 	tail++;
-	अगर (!म_भेदन("ANY",tail,3))
-		वापस 1;
-	अगर (!म_भेदन("NONE",tail,4))
-		वापस 0;
+	if (!strncmp("ANY",tail,3))
+		return 1;
+	if (!strncmp("NONE",tail,4))
+		return 0;
 	/*
-	 * expect comma separated list of classes here, अगर one of them
-	 * is A or B वापस 1 otherwise 0
+	 * expect comma separated list of classes here, if one of them
+	 * is A or B return 1 otherwise 0
 	 */
-        क्रम (i=tail-cp_response; i<len; i++)
-		अगर ( cp_response[i]=='A' || cp_response[i]=='B' )
-			वापस 1;
-	वापस 0;
-पूर्ण
+        for (i=tail-cp_response; i<len; i++)
+		if ( cp_response[i]=='A' || cp_response[i]=='B' )
+			return 1;
+	return 0;
+}
 
 
-अटल पूर्णांक vmlogrdr_recording(काष्ठा vmlogrdr_priv_t * logptr,
-			      पूर्णांक action, पूर्णांक purge)
-अणु
+static int vmlogrdr_recording(struct vmlogrdr_priv_t * logptr,
+			      int action, int purge)
+{
 
-	अक्षर cp_command[80];
-	अक्षर cp_response[160];
-	अक्षर *onoff, *qid_string;
-	पूर्णांक rc;
+	char cp_command[80];
+	char cp_response[160];
+	char *onoff, *qid_string;
+	int rc;
 
 	onoff = ((action == 1) ? "ON" : "OFF");
 	qid_string = ((recording_class_AB == 1) ? " QID * " : "");
 
 	/*
 	 * The recording commands needs to be called with option QID
-	 * क्रम guests that have previlege classes A or B.
-	 * Purging has to be करोne as separate step, because recording
-	 * can't be चयनed on as दीर्घ as records are on the queue.
-	 * Doing both at the same समय करोesn't work.
+	 * for guests that have previlege classes A or B.
+	 * Purging has to be done as separate step, because recording
+	 * can't be switched on as long as records are on the queue.
+	 * Doing both at the same time doesn't work.
 	 */
-	अगर (purge && (action == 1)) अणु
-		स_रखो(cp_command, 0x00, माप(cp_command));
-		स_रखो(cp_response, 0x00, माप(cp_response));
-		snम_लिखो(cp_command, माप(cp_command),
+	if (purge && (action == 1)) {
+		memset(cp_command, 0x00, sizeof(cp_command));
+		memset(cp_response, 0x00, sizeof(cp_response));
+		snprintf(cp_command, sizeof(cp_command),
 			 "RECORDING %s PURGE %s",
 			 logptr->recording_name,
 			 qid_string);
-		cpcmd(cp_command, cp_response, माप(cp_response), शून्य);
-	पूर्ण
+		cpcmd(cp_command, cp_response, sizeof(cp_response), NULL);
+	}
 
-	स_रखो(cp_command, 0x00, माप(cp_command));
-	स_रखो(cp_response, 0x00, माप(cp_response));
-	snम_लिखो(cp_command, माप(cp_command), "RECORDING %s %s %s",
+	memset(cp_command, 0x00, sizeof(cp_command));
+	memset(cp_response, 0x00, sizeof(cp_response));
+	snprintf(cp_command, sizeof(cp_command), "RECORDING %s %s %s",
 		logptr->recording_name,
 		onoff,
 		qid_string);
-	cpcmd(cp_command, cp_response, माप(cp_response), शून्य);
+	cpcmd(cp_command, cp_response, sizeof(cp_response), NULL);
 	/* The recording command will usually answer with 'Command complete'
-	 * on success, but when the specअगरic service was never connected
-	 * beक्रमe then there might be an additional inक्रमmational message
-	 * 'HCPCRC8072I Recording entry not found' beक्रमe the
-	 * 'Command complete'. So I use म_माला rather then the म_भेदन.
+	 * on success, but when the specific service was never connected
+	 * before then there might be an additional informational message
+	 * 'HCPCRC8072I Recording entry not found' before the
+	 * 'Command complete'. So I use strstr rather then the strncmp.
 	 */
-	अगर (म_माला(cp_response,"Command complete"))
+	if (strstr(cp_response,"Command complete"))
 		rc = 0;
-	अन्यथा
+	else
 		rc = -EIO;
 	/*
-	 * If we turn recording off, we have to purge any reमुख्यing records
+	 * If we turn recording off, we have to purge any remaining records
 	 * afterwards, as a large number of queued records may impact z/VM
-	 * perक्रमmance.
+	 * performance.
 	 */
-	अगर (purge && (action == 0)) अणु
-		स_रखो(cp_command, 0x00, माप(cp_command));
-		स_रखो(cp_response, 0x00, माप(cp_response));
-		snम_लिखो(cp_command, माप(cp_command),
+	if (purge && (action == 0)) {
+		memset(cp_command, 0x00, sizeof(cp_command));
+		memset(cp_response, 0x00, sizeof(cp_response));
+		snprintf(cp_command, sizeof(cp_command),
 			 "RECORDING %s PURGE %s",
 			 logptr->recording_name,
 			 qid_string);
-		cpcmd(cp_command, cp_response, माप(cp_response), शून्य);
-	पूर्ण
+		cpcmd(cp_command, cp_response, sizeof(cp_response), NULL);
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 
-अटल पूर्णांक vmlogrdr_खोलो (काष्ठा inode *inode, काष्ठा file *filp)
-अणु
-	पूर्णांक dev_num = 0;
-	काष्ठा vmlogrdr_priv_t * logptr = शून्य;
-	पूर्णांक connect_rc = 0;
-	पूर्णांक ret;
+static int vmlogrdr_open (struct inode *inode, struct file *filp)
+{
+	int dev_num = 0;
+	struct vmlogrdr_priv_t * logptr = NULL;
+	int connect_rc = 0;
+	int ret;
 
 	dev_num = iminor(inode);
-	अगर (dev_num >= MAXMINOR)
-		वापस -ENODEV;
+	if (dev_num >= MAXMINOR)
+		return -ENODEV;
 	logptr = &sys_ser[dev_num];
 
 	/*
-	 * only allow क्रम blocking पढ़ोs to be खोलो
+	 * only allow for blocking reads to be open
 	 */
-	अगर (filp->f_flags & O_NONBLOCK)
-		वापस -EOPNOTSUPP;
+	if (filp->f_flags & O_NONBLOCK)
+		return -EOPNOTSUPP;
 
-	/* Besure this device hasn't alपढ़ोy been खोलोed */
+	/* Besure this device hasn't already been opened */
 	spin_lock_bh(&logptr->priv_lock);
-	अगर (logptr->dev_in_use)	अणु
+	if (logptr->dev_in_use)	{
 		spin_unlock_bh(&logptr->priv_lock);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 	logptr->dev_in_use = 1;
 	logptr->connection_established = 0;
 	logptr->iucv_path_severed = 0;
-	atomic_set(&logptr->receive_पढ़ोy, 0);
-	logptr->buffer_मुक्त = 1;
+	atomic_set(&logptr->receive_ready, 0);
+	logptr->buffer_free = 1;
 	spin_unlock_bh(&logptr->priv_lock);
 
 	/* set the file options */
-	filp->निजी_data = logptr;
+	filp->private_data = logptr;
 
-	/* start recording क्रम this service*/
-	अगर (logptr->स्वतःrecording) अणु
-		ret = vmlogrdr_recording(logptr,1,logptr->स्वतःpurge);
-		अगर (ret)
+	/* start recording for this service*/
+	if (logptr->autorecording) {
+		ret = vmlogrdr_recording(logptr,1,logptr->autopurge);
+		if (ret)
 			pr_warn("vmlogrdr: failed to start recording automatically\n");
-	पूर्ण
+	}
 
-	/* create connection to the प्रणाली service */
+	/* create connection to the system service */
 	logptr->path = iucv_path_alloc(10, 0, GFP_KERNEL);
-	अगर (!logptr->path)
-		जाओ out_dev;
+	if (!logptr->path)
+		goto out_dev;
 	connect_rc = iucv_path_connect(logptr->path, &vmlogrdr_iucv_handler,
-				       logptr->प्रणाली_service, शून्य, शून्य,
+				       logptr->system_service, NULL, NULL,
 				       logptr);
-	अगर (connect_rc) अणु
+	if (connect_rc) {
 		pr_err("vmlogrdr: iucv connection to %s "
 		       "failed with rc %i \n",
-		       logptr->प्रणाली_service, connect_rc);
-		जाओ out_path;
-	पूर्ण
+		       logptr->system_service, connect_rc);
+		goto out_path;
+	}
 
-	/* We've issued the connect and now we must रुको क्रम a
+	/* We've issued the connect and now we must wait for a
 	 * ConnectionComplete or ConnectinSevered Interrupt
-	 * beक्रमe we can जारी to process.
+	 * before we can continue to process.
 	 */
-	रुको_event(conn_रुको_queue, (logptr->connection_established)
+	wait_event(conn_wait_queue, (logptr->connection_established)
 		   || (logptr->iucv_path_severed));
-	अगर (logptr->iucv_path_severed)
-		जाओ out_record;
-	nonseekable_खोलो(inode, filp);
-	वापस 0;
+	if (logptr->iucv_path_severed)
+		goto out_record;
+	nonseekable_open(inode, filp);
+	return 0;
 
 out_record:
-	अगर (logptr->स्वतःrecording)
-		vmlogrdr_recording(logptr,0,logptr->स्वतःpurge);
+	if (logptr->autorecording)
+		vmlogrdr_recording(logptr,0,logptr->autopurge);
 out_path:
-	kमुक्त(logptr->path);	/* kमुक्त(शून्य) is ok. */
-	logptr->path = शून्य;
+	kfree(logptr->path);	/* kfree(NULL) is ok. */
+	logptr->path = NULL;
 out_dev:
 	logptr->dev_in_use = 0;
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
 
-अटल पूर्णांक vmlogrdr_release (काष्ठा inode *inode, काष्ठा file *filp)
-अणु
-	पूर्णांक ret;
+static int vmlogrdr_release (struct inode *inode, struct file *filp)
+{
+	int ret;
 
-	काष्ठा vmlogrdr_priv_t * logptr = filp->निजी_data;
+	struct vmlogrdr_priv_t * logptr = filp->private_data;
 
-	iucv_path_sever(logptr->path, शून्य);
-	kमुक्त(logptr->path);
-	logptr->path = शून्य;
-	अगर (logptr->स्वतःrecording) अणु
-		ret = vmlogrdr_recording(logptr,0,logptr->स्वतःpurge);
-		अगर (ret)
+	iucv_path_sever(logptr->path, NULL);
+	kfree(logptr->path);
+	logptr->path = NULL;
+	if (logptr->autorecording) {
+		ret = vmlogrdr_recording(logptr,0,logptr->autopurge);
+		if (ret)
 			pr_warn("vmlogrdr: failed to stop recording automatically\n");
-	पूर्ण
+	}
 	logptr->dev_in_use = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक vmlogrdr_receive_data(काष्ठा vmlogrdr_priv_t *priv)
-अणु
-	पूर्णांक rc, *temp;
+static int vmlogrdr_receive_data(struct vmlogrdr_priv_t *priv)
+{
+	int rc, *temp;
 	/* we need to keep track of two data sizes here:
 	 * The number of bytes we need to receive from iucv and
-	 * the total number of bytes we actually ग_लिखो पूर्णांकo the buffer.
+	 * the total number of bytes we actually write into the buffer.
 	 */
-	पूर्णांक user_data_count, iucv_data_count;
-	अक्षर * buffer;
+	int user_data_count, iucv_data_count;
+	char * buffer;
 
-	अगर (atomic_पढ़ो(&priv->receive_पढ़ोy)) अणु
+	if (atomic_read(&priv->receive_ready)) {
 		spin_lock_bh(&priv->priv_lock);
-		अगर (priv->residual_length)अणु
+		if (priv->residual_length){
 			/* receive second half of a record */
 			iucv_data_count = priv->residual_length;
 			user_data_count = 0;
 			buffer = priv->buffer;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* receive a new record:
-			 * We need to वापस the total length of the record
+			 * We need to return the total length of the record
                          * + size of FENCE in the first 4 bytes of the buffer.
 		         */
-			iucv_data_count = priv->local_पूर्णांकerrupt_buffer.length;
-			user_data_count = माप(पूर्णांक);
-			temp = (पूर्णांक*)priv->buffer;
-			*temp= iucv_data_count + माप(FENCE);
-			buffer = priv->buffer + माप(पूर्णांक);
-		पूर्ण
+			iucv_data_count = priv->local_interrupt_buffer.length;
+			user_data_count = sizeof(int);
+			temp = (int*)priv->buffer;
+			*temp= iucv_data_count + sizeof(FENCE);
+			buffer = priv->buffer + sizeof(int);
+		}
 		/*
 		 * If the record is bigger than our buffer, we receive only
 		 * a part of it. We can get the rest later.
 		 */
-		अगर (iucv_data_count > NET_BUFFER_SIZE)
+		if (iucv_data_count > NET_BUFFER_SIZE)
 			iucv_data_count = NET_BUFFER_SIZE;
 		rc = iucv_message_receive(priv->path,
-					  &priv->local_पूर्णांकerrupt_buffer,
+					  &priv->local_interrupt_buffer,
 					  0, buffer, iucv_data_count,
 					  &priv->residual_length);
 		spin_unlock_bh(&priv->priv_lock);
 		/* An rc of 5 indicates that the record was bigger than
-		 * the buffer, which is OK क्रम us. A 9 indicates that the
-		 * record was purged beक्रम we could receive it.
+		 * the buffer, which is OK for us. A 9 indicates that the
+		 * record was purged befor we could receive it.
 		 */
-		अगर (rc == 5)
+		if (rc == 5)
 			rc = 0;
-		अगर (rc == 9)
-			atomic_set(&priv->receive_पढ़ोy, 0);
-	पूर्ण अन्यथा अणु
+		if (rc == 9)
+			atomic_set(&priv->receive_ready, 0);
+	} else {
 		rc = 1;
-	पूर्ण
-	अगर (!rc) अणु
-		priv->buffer_मुक्त = 0;
+	}
+	if (!rc) {
+		priv->buffer_free = 0;
  		user_data_count += iucv_data_count;
 		priv->current_position = priv->buffer;
-		अगर (priv->residual_length == 0)अणु
+		if (priv->residual_length == 0){
 			/* the whole record has been captured,
 			 * now add the fence */
-			atomic_dec(&priv->receive_पढ़ोy);
+			atomic_dec(&priv->receive_ready);
 			buffer = priv->buffer + user_data_count;
-			स_नकल(buffer, FENCE, माप(FENCE));
-			user_data_count += माप(FENCE);
-		पूर्ण
-		priv->reमुख्यing = user_data_count;
-	पूर्ण
+			memcpy(buffer, FENCE, sizeof(FENCE));
+			user_data_count += sizeof(FENCE);
+		}
+		priv->remaining = user_data_count;
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 
-अटल sमाप_प्रकार vmlogrdr_पढ़ो(काष्ठा file *filp, अक्षर __user *data,
-			     माप_प्रकार count, loff_t * ppos)
-अणु
-	पूर्णांक rc;
-	काष्ठा vmlogrdr_priv_t * priv = filp->निजी_data;
+static ssize_t vmlogrdr_read(struct file *filp, char __user *data,
+			     size_t count, loff_t * ppos)
+{
+	int rc;
+	struct vmlogrdr_priv_t * priv = filp->private_data;
 
-	जबतक (priv->buffer_मुक्त) अणु
+	while (priv->buffer_free) {
 		rc = vmlogrdr_receive_data(priv);
-		अगर (rc) अणु
-			rc = रुको_event_पूर्णांकerruptible(पढ़ो_रुको_queue,
-					atomic_पढ़ो(&priv->receive_पढ़ोy));
-			अगर (rc)
-				वापस rc;
-		पूर्ण
-	पूर्ण
+		if (rc) {
+			rc = wait_event_interruptible(read_wait_queue,
+					atomic_read(&priv->receive_ready));
+			if (rc)
+				return rc;
+		}
+	}
 	/* copy only up to end of record */
-	अगर (count > priv->reमुख्यing)
-		count = priv->reमुख्यing;
+	if (count > priv->remaining)
+		count = priv->remaining;
 
-	अगर (copy_to_user(data, priv->current_position, count))
-		वापस -EFAULT;
+	if (copy_to_user(data, priv->current_position, count))
+		return -EFAULT;
 
 	*ppos += count;
 	priv->current_position += count;
-	priv->reमुख्यing -= count;
+	priv->remaining -= count;
 
-	/* अगर all data has been transferred, set buffer मुक्त */
-	अगर (priv->reमुख्यing == 0)
-		priv->buffer_मुक्त = 1;
+	/* if all data has been transferred, set buffer free */
+	if (priv->remaining == 0)
+		priv->buffer_free = 1;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार vmlogrdr_स्वतःpurge_store(काष्ठा device * dev,
-					काष्ठा device_attribute *attr,
-					स्थिर अक्षर * buf, माप_प्रकार count)
-अणु
-	काष्ठा vmlogrdr_priv_t *priv = dev_get_drvdata(dev);
-	sमाप_प्रकार ret = count;
+static ssize_t vmlogrdr_autopurge_store(struct device * dev,
+					struct device_attribute *attr,
+					const char * buf, size_t count)
+{
+	struct vmlogrdr_priv_t *priv = dev_get_drvdata(dev);
+	ssize_t ret = count;
 
-	चयन (buf[0]) अणु
-	हाल '0':
-		priv->स्वतःpurge=0;
-		अवरोध;
-	हाल '1':
-		priv->स्वतःpurge=1;
-		अवरोध;
-	शेष:
+	switch (buf[0]) {
+	case '0':
+		priv->autopurge=0;
+		break;
+	case '1':
+		priv->autopurge=1;
+		break;
+	default:
 		ret = -EINVAL;
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
 
-अटल sमाप_प्रकार vmlogrdr_स्वतःpurge_show(काष्ठा device *dev,
-				       काष्ठा device_attribute *attr,
-				       अक्षर *buf)
-अणु
-	काष्ठा vmlogrdr_priv_t *priv = dev_get_drvdata(dev);
-	वापस प्र_लिखो(buf, "%u\n", priv->स्वतःpurge);
-पूर्ण
+static ssize_t vmlogrdr_autopurge_show(struct device *dev,
+				       struct device_attribute *attr,
+				       char *buf)
+{
+	struct vmlogrdr_priv_t *priv = dev_get_drvdata(dev);
+	return sprintf(buf, "%u\n", priv->autopurge);
+}
 
 
-अटल DEVICE_ATTR(स्वतःpurge, 0644, vmlogrdr_स्वतःpurge_show,
-		   vmlogrdr_स्वतःpurge_store);
+static DEVICE_ATTR(autopurge, 0644, vmlogrdr_autopurge_show,
+		   vmlogrdr_autopurge_store);
 
 
-अटल sमाप_प्रकार vmlogrdr_purge_store(काष्ठा device * dev,
-				    काष्ठा device_attribute *attr,
-				    स्थिर अक्षर * buf, माप_प्रकार count)
-अणु
+static ssize_t vmlogrdr_purge_store(struct device * dev,
+				    struct device_attribute *attr,
+				    const char * buf, size_t count)
+{
 
-	अक्षर cp_command[80];
-	अक्षर cp_response[80];
-	काष्ठा vmlogrdr_priv_t *priv = dev_get_drvdata(dev);
+	char cp_command[80];
+	char cp_response[80];
+	struct vmlogrdr_priv_t *priv = dev_get_drvdata(dev);
 
-	अगर (buf[0] != '1')
-		वापस -EINVAL;
+	if (buf[0] != '1')
+		return -EINVAL;
 
-	स_रखो(cp_command, 0x00, माप(cp_command));
-	स_रखो(cp_response, 0x00, माप(cp_response));
+	memset(cp_command, 0x00, sizeof(cp_command));
+	memset(cp_response, 0x00, sizeof(cp_response));
 
         /*
 	 * The recording command needs to be called with option QID
-	 * क्रम guests that have previlege classes A or B.
+	 * for guests that have previlege classes A or B.
 	 * Other guests will not recognize the command and we have to
 	 * issue the same command without the QID parameter.
 	 */
 
-	अगर (recording_class_AB)
-		snम_लिखो(cp_command, माप(cp_command),
+	if (recording_class_AB)
+		snprintf(cp_command, sizeof(cp_command),
 			 "RECORDING %s PURGE QID * ",
 			 priv->recording_name);
-	अन्यथा
-		snम_लिखो(cp_command, माप(cp_command),
+	else
+		snprintf(cp_command, sizeof(cp_command),
 			 "RECORDING %s PURGE ",
 			 priv->recording_name);
 
-	cpcmd(cp_command, cp_response, माप(cp_response), शून्य);
+	cpcmd(cp_command, cp_response, sizeof(cp_response), NULL);
 
-	वापस count;
-पूर्ण
-
-
-अटल DEVICE_ATTR(purge, 0200, शून्य, vmlogrdr_purge_store);
+	return count;
+}
 
 
-अटल sमाप_प्रकार vmlogrdr_स्वतःrecording_store(काष्ठा device *dev,
-					    काष्ठा device_attribute *attr,
-					    स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा vmlogrdr_priv_t *priv = dev_get_drvdata(dev);
-	sमाप_प्रकार ret = count;
+static DEVICE_ATTR(purge, 0200, NULL, vmlogrdr_purge_store);
 
-	चयन (buf[0]) अणु
-	हाल '0':
-		priv->स्वतःrecording=0;
-		अवरोध;
-	हाल '1':
-		priv->स्वतःrecording=1;
-		अवरोध;
-	शेष:
+
+static ssize_t vmlogrdr_autorecording_store(struct device *dev,
+					    struct device_attribute *attr,
+					    const char *buf, size_t count)
+{
+	struct vmlogrdr_priv_t *priv = dev_get_drvdata(dev);
+	ssize_t ret = count;
+
+	switch (buf[0]) {
+	case '0':
+		priv->autorecording=0;
+		break;
+	case '1':
+		priv->autorecording=1;
+		break;
+	default:
 		ret = -EINVAL;
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
 
-अटल sमाप_प्रकार vmlogrdr_स्वतःrecording_show(काष्ठा device *dev,
-					   काष्ठा device_attribute *attr,
-					   अक्षर *buf)
-अणु
-	काष्ठा vmlogrdr_priv_t *priv = dev_get_drvdata(dev);
-	वापस प्र_लिखो(buf, "%u\n", priv->स्वतःrecording);
-पूर्ण
+static ssize_t vmlogrdr_autorecording_show(struct device *dev,
+					   struct device_attribute *attr,
+					   char *buf)
+{
+	struct vmlogrdr_priv_t *priv = dev_get_drvdata(dev);
+	return sprintf(buf, "%u\n", priv->autorecording);
+}
 
 
-अटल DEVICE_ATTR(स्वतःrecording, 0644, vmlogrdr_स्वतःrecording_show,
-		   vmlogrdr_स्वतःrecording_store);
+static DEVICE_ATTR(autorecording, 0644, vmlogrdr_autorecording_show,
+		   vmlogrdr_autorecording_store);
 
 
-अटल sमाप_प्रकार vmlogrdr_recording_store(काष्ठा device * dev,
-					काष्ठा device_attribute *attr,
-					स्थिर अक्षर * buf, माप_प्रकार count)
-अणु
-	काष्ठा vmlogrdr_priv_t *priv = dev_get_drvdata(dev);
-	sमाप_प्रकार ret;
+static ssize_t vmlogrdr_recording_store(struct device * dev,
+					struct device_attribute *attr,
+					const char * buf, size_t count)
+{
+	struct vmlogrdr_priv_t *priv = dev_get_drvdata(dev);
+	ssize_t ret;
 
-	चयन (buf[0]) अणु
-	हाल '0':
+	switch (buf[0]) {
+	case '0':
 		ret = vmlogrdr_recording(priv,0,0);
-		अवरोध;
-	हाल '1':
+		break;
+	case '1':
 		ret = vmlogrdr_recording(priv,1,0);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EINVAL;
-	पूर्ण
-	अगर (ret)
-		वापस ret;
-	अन्यथा
-		वापस count;
+	}
+	if (ret)
+		return ret;
+	else
+		return count;
 
-पूर्ण
-
-
-अटल DEVICE_ATTR(recording, 0200, शून्य, vmlogrdr_recording_store);
+}
 
 
-अटल sमाप_प्रकार recording_status_show(काष्ठा device_driver *driver, अक्षर *buf)
-अणु
-	अटल स्थिर अक्षर cp_command[] = "QUERY RECORDING ";
-	पूर्णांक len;
+static DEVICE_ATTR(recording, 0200, NULL, vmlogrdr_recording_store);
 
-	cpcmd(cp_command, buf, 4096, शून्य);
-	len = म_माप(buf);
-	वापस len;
-पूर्ण
-अटल DRIVER_ATTR_RO(recording_status);
-अटल काष्ठा attribute *vmlogrdr_drv_attrs[] = अणु
+
+static ssize_t recording_status_show(struct device_driver *driver, char *buf)
+{
+	static const char cp_command[] = "QUERY RECORDING ";
+	int len;
+
+	cpcmd(cp_command, buf, 4096, NULL);
+	len = strlen(buf);
+	return len;
+}
+static DRIVER_ATTR_RO(recording_status);
+static struct attribute *vmlogrdr_drv_attrs[] = {
 	&driver_attr_recording_status.attr,
-	शून्य,
-पूर्ण;
-अटल काष्ठा attribute_group vmlogrdr_drv_attr_group = अणु
+	NULL,
+};
+static struct attribute_group vmlogrdr_drv_attr_group = {
 	.attrs = vmlogrdr_drv_attrs,
-पूर्ण;
-अटल स्थिर काष्ठा attribute_group *vmlogrdr_drv_attr_groups[] = अणु
+};
+static const struct attribute_group *vmlogrdr_drv_attr_groups[] = {
 	&vmlogrdr_drv_attr_group,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल काष्ठा attribute *vmlogrdr_attrs[] = अणु
-	&dev_attr_स्वतःpurge.attr,
+static struct attribute *vmlogrdr_attrs[] = {
+	&dev_attr_autopurge.attr,
 	&dev_attr_purge.attr,
-	&dev_attr_स्वतःrecording.attr,
+	&dev_attr_autorecording.attr,
 	&dev_attr_recording.attr,
-	शून्य,
-पूर्ण;
-अटल काष्ठा attribute_group vmlogrdr_attr_group = अणु
+	NULL,
+};
+static struct attribute_group vmlogrdr_attr_group = {
 	.attrs = vmlogrdr_attrs,
-पूर्ण;
-अटल स्थिर काष्ठा attribute_group *vmlogrdr_attr_groups[] = अणु
+};
+static const struct attribute_group *vmlogrdr_attr_groups[] = {
 	&vmlogrdr_attr_group,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल पूर्णांक vmlogrdr_pm_prepare(काष्ठा device *dev)
-अणु
-	पूर्णांक rc;
-	काष्ठा vmlogrdr_priv_t *priv = dev_get_drvdata(dev);
+static int vmlogrdr_pm_prepare(struct device *dev)
+{
+	int rc;
+	struct vmlogrdr_priv_t *priv = dev_get_drvdata(dev);
 
 	rc = 0;
-	अगर (priv) अणु
+	if (priv) {
 		spin_lock_bh(&priv->priv_lock);
-		अगर (priv->dev_in_use)
+		if (priv->dev_in_use)
 			rc = -EBUSY;
 		spin_unlock_bh(&priv->priv_lock);
-	पूर्ण
-	अगर (rc)
+	}
+	if (rc)
 		pr_err("vmlogrdr: device %s is busy. Refuse to suspend.\n",
 		       dev_name(dev));
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 
-अटल स्थिर काष्ठा dev_pm_ops vmlogrdr_pm_ops = अणु
+static const struct dev_pm_ops vmlogrdr_pm_ops = {
 	.prepare = vmlogrdr_pm_prepare,
-पूर्ण;
+};
 
-अटल काष्ठा class *vmlogrdr_class;
-अटल काष्ठा device_driver vmlogrdr_driver = अणु
+static struct class *vmlogrdr_class;
+static struct device_driver vmlogrdr_driver = {
 	.name = "vmlogrdr",
 	.bus  = &iucv_bus,
 	.pm = &vmlogrdr_pm_ops,
 	.groups = vmlogrdr_drv_attr_groups,
-पूर्ण;
+};
 
-अटल पूर्णांक vmlogrdr_रेजिस्टर_driver(व्योम)
-अणु
-	पूर्णांक ret;
+static int vmlogrdr_register_driver(void)
+{
+	int ret;
 
 	/* Register with iucv driver */
-	ret = iucv_रेजिस्टर(&vmlogrdr_iucv_handler, 1);
-	अगर (ret)
-		जाओ out;
+	ret = iucv_register(&vmlogrdr_iucv_handler, 1);
+	if (ret)
+		goto out;
 
-	ret = driver_रेजिस्टर(&vmlogrdr_driver);
-	अगर (ret)
-		जाओ out_iucv;
+	ret = driver_register(&vmlogrdr_driver);
+	if (ret)
+		goto out_iucv;
 
 	vmlogrdr_class = class_create(THIS_MODULE, "vmlogrdr");
-	अगर (IS_ERR(vmlogrdr_class)) अणु
+	if (IS_ERR(vmlogrdr_class)) {
 		ret = PTR_ERR(vmlogrdr_class);
-		vmlogrdr_class = शून्य;
-		जाओ out_driver;
-	पूर्ण
-	वापस 0;
+		vmlogrdr_class = NULL;
+		goto out_driver;
+	}
+	return 0;
 
 out_driver:
-	driver_unरेजिस्टर(&vmlogrdr_driver);
+	driver_unregister(&vmlogrdr_driver);
 out_iucv:
-	iucv_unरेजिस्टर(&vmlogrdr_iucv_handler, 1);
+	iucv_unregister(&vmlogrdr_iucv_handler, 1);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
-अटल व्योम vmlogrdr_unरेजिस्टर_driver(व्योम)
-अणु
+static void vmlogrdr_unregister_driver(void)
+{
 	class_destroy(vmlogrdr_class);
-	vmlogrdr_class = शून्य;
-	driver_unरेजिस्टर(&vmlogrdr_driver);
-	iucv_unरेजिस्टर(&vmlogrdr_iucv_handler, 1);
-पूर्ण
+	vmlogrdr_class = NULL;
+	driver_unregister(&vmlogrdr_driver);
+	iucv_unregister(&vmlogrdr_iucv_handler, 1);
+}
 
 
-अटल पूर्णांक vmlogrdr_रेजिस्टर_device(काष्ठा vmlogrdr_priv_t *priv)
-अणु
-	काष्ठा device *dev;
-	पूर्णांक ret;
+static int vmlogrdr_register_device(struct vmlogrdr_priv_t *priv)
+{
+	struct device *dev;
+	int ret;
 
-	dev = kzalloc(माप(काष्ठा device), GFP_KERNEL);
-	अगर (dev) अणु
-		dev_set_name(dev, "%s", priv->पूर्णांकernal_name);
+	dev = kzalloc(sizeof(struct device), GFP_KERNEL);
+	if (dev) {
+		dev_set_name(dev, "%s", priv->internal_name);
 		dev->bus = &iucv_bus;
 		dev->parent = iucv_root;
 		dev->driver = &vmlogrdr_driver;
@@ -766,138 +765,138 @@ out:
 		/*
 		 * The release function could be called after the
 		 * module has been unloaded. It's _only_ task is to
-		 * मुक्त the काष्ठा. Thereक्रमe, we specअगरy kमुक्त()
+		 * free the struct. Therefore, we specify kfree()
 		 * directly here. (Probably a little bit obfuscating
-		 * but legiसमय ...).
+		 * but legitime ...).
 		 */
-		dev->release = (व्योम (*)(काष्ठा device *))kमुक्त;
-	पूर्ण अन्यथा
-		वापस -ENOMEM;
-	ret = device_रेजिस्टर(dev);
-	अगर (ret) अणु
+		dev->release = (void (*)(struct device *))kfree;
+	} else
+		return -ENOMEM;
+	ret = device_register(dev);
+	if (ret) {
 		put_device(dev);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	priv->class_device = device_create(vmlogrdr_class, dev,
 					   MKDEV(vmlogrdr_major,
 						 priv->minor_num),
 					   priv, "%s", dev_name(dev));
-	अगर (IS_ERR(priv->class_device)) अणु
+	if (IS_ERR(priv->class_device)) {
 		ret = PTR_ERR(priv->class_device);
-		priv->class_device=शून्य;
-		device_unरेजिस्टर(dev);
-		वापस ret;
-	पूर्ण
+		priv->class_device=NULL;
+		device_unregister(dev);
+		return ret;
+	}
 	priv->device = dev;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक vmlogrdr_unरेजिस्टर_device(काष्ठा vmlogrdr_priv_t *priv)
-अणु
+static int vmlogrdr_unregister_device(struct vmlogrdr_priv_t *priv)
+{
 	device_destroy(vmlogrdr_class, MKDEV(vmlogrdr_major, priv->minor_num));
-	अगर (priv->device != शून्य) अणु
-		device_unरेजिस्टर(priv->device);
-		priv->device=शून्य;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	if (priv->device != NULL) {
+		device_unregister(priv->device);
+		priv->device=NULL;
+	}
+	return 0;
+}
 
 
-अटल पूर्णांक vmlogrdr_रेजिस्टर_cdev(dev_t dev)
-अणु
-	पूर्णांक rc = 0;
+static int vmlogrdr_register_cdev(dev_t dev)
+{
+	int rc = 0;
 	vmlogrdr_cdev = cdev_alloc();
-	अगर (!vmlogrdr_cdev) अणु
-		वापस -ENOMEM;
-	पूर्ण
+	if (!vmlogrdr_cdev) {
+		return -ENOMEM;
+	}
 	vmlogrdr_cdev->owner = THIS_MODULE;
 	vmlogrdr_cdev->ops = &vmlogrdr_fops;
 	rc = cdev_add(vmlogrdr_cdev, dev, MAXMINOR);
-	अगर (!rc)
-		वापस 0;
+	if (!rc)
+		return 0;
 
-	// cleanup: cdev is not fully रेजिस्टरed, no cdev_del here!
+	// cleanup: cdev is not fully registered, no cdev_del here!
 	kobject_put(&vmlogrdr_cdev->kobj);
-	vmlogrdr_cdev=शून्य;
-	वापस rc;
-पूर्ण
+	vmlogrdr_cdev=NULL;
+	return rc;
+}
 
 
-अटल व्योम vmlogrdr_cleanup(व्योम)
-अणु
-        पूर्णांक i;
+static void vmlogrdr_cleanup(void)
+{
+        int i;
 
-	अगर (vmlogrdr_cdev) अणु
+	if (vmlogrdr_cdev) {
 		cdev_del(vmlogrdr_cdev);
-		vmlogrdr_cdev=शून्य;
-	पूर्ण
-	क्रम (i=0; i < MAXMINOR; ++i ) अणु
-		vmlogrdr_unरेजिस्टर_device(&sys_ser[i]);
-		मुक्त_page((अचिन्हित दीर्घ)sys_ser[i].buffer);
-	पूर्ण
-	vmlogrdr_unरेजिस्टर_driver();
-	अगर (vmlogrdr_major) अणु
-		unरेजिस्टर_chrdev_region(MKDEV(vmlogrdr_major, 0), MAXMINOR);
+		vmlogrdr_cdev=NULL;
+	}
+	for (i=0; i < MAXMINOR; ++i ) {
+		vmlogrdr_unregister_device(&sys_ser[i]);
+		free_page((unsigned long)sys_ser[i].buffer);
+	}
+	vmlogrdr_unregister_driver();
+	if (vmlogrdr_major) {
+		unregister_chrdev_region(MKDEV(vmlogrdr_major, 0), MAXMINOR);
 		vmlogrdr_major=0;
-	पूर्ण
-पूर्ण
+	}
+}
 
 
-अटल पूर्णांक __init vmlogrdr_init(व्योम)
-अणु
-	पूर्णांक rc;
-	पूर्णांक i;
+static int __init vmlogrdr_init(void)
+{
+	int rc;
+	int i;
 	dev_t dev;
 
-	अगर (! MACHINE_IS_VM) अणु
+	if (! MACHINE_IS_VM) {
 		pr_err("not running under VM, driver not loaded.\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
         recording_class_AB = vmlogrdr_get_recording_class_AB();
 
 	rc = alloc_chrdev_region(&dev, 0, MAXMINOR, "vmlogrdr");
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 	vmlogrdr_major = MAJOR(dev);
 
-	rc=vmlogrdr_रेजिस्टर_driver();
-	अगर (rc)
-		जाओ cleanup;
+	rc=vmlogrdr_register_driver();
+	if (rc)
+		goto cleanup;
 
-	क्रम (i=0; i < MAXMINOR; ++i ) अणु
-		sys_ser[i].buffer = (अक्षर *) get_zeroed_page(GFP_KERNEL | GFP_DMA);
-		अगर (!sys_ser[i].buffer) अणु
+	for (i=0; i < MAXMINOR; ++i ) {
+		sys_ser[i].buffer = (char *) get_zeroed_page(GFP_KERNEL | GFP_DMA);
+		if (!sys_ser[i].buffer) {
 			rc = -ENOMEM;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		sys_ser[i].current_position = sys_ser[i].buffer;
-		rc=vmlogrdr_रेजिस्टर_device(&sys_ser[i]);
-		अगर (rc)
-			अवरोध;
-	पूर्ण
-	अगर (rc)
-		जाओ cleanup;
+		rc=vmlogrdr_register_device(&sys_ser[i]);
+		if (rc)
+			break;
+	}
+	if (rc)
+		goto cleanup;
 
-	rc = vmlogrdr_रेजिस्टर_cdev(dev);
-	अगर (rc)
-		जाओ cleanup;
-	वापस 0;
+	rc = vmlogrdr_register_cdev(dev);
+	if (rc)
+		goto cleanup;
+	return 0;
 
 cleanup:
 	vmlogrdr_cleanup();
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 
-अटल व्योम __निकास vmlogrdr_निकास(व्योम)
-अणु
+static void __exit vmlogrdr_exit(void)
+{
 	vmlogrdr_cleanup();
-	वापस;
-पूर्ण
+	return;
+}
 
 
 module_init(vmlogrdr_init);
-module_निकास(vmlogrdr_निकास);
+module_exit(vmlogrdr_exit);

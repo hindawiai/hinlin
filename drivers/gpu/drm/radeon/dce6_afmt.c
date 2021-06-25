@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,20 +20,20 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#समावेश <linux/hdmi.h>
+#include <linux/hdmi.h>
 
-#समावेश "dce6_afmt.h"
-#समावेश "radeon.h"
-#समावेश "radeon_audio.h"
-#समावेश "sid.h"
+#include "dce6_afmt.h"
+#include "radeon.h"
+#include "radeon_audio.h"
+#include "sid.h"
 
-#घोषणा DCE8_DCCG_AUDIO_DTO1_PHASE	0x05b8
-#घोषणा DCE8_DCCG_AUDIO_DTO1_MODULE	0x05bc
+#define DCE8_DCCG_AUDIO_DTO1_PHASE	0x05b8
+#define DCE8_DCCG_AUDIO_DTO1_MODULE	0x05bc
 
-u32 dce6_endpoपूर्णांक_rreg(काष्ठा radeon_device *rdev,
+u32 dce6_endpoint_rreg(struct radeon_device *rdev,
 			      u32 block_offset, u32 reg)
-अणु
-	अचिन्हित दीर्घ flags;
+{
+	unsigned long flags;
 	u32 r;
 
 	spin_lock_irqsave(&rdev->end_idx_lock, flags);
@@ -42,279 +41,279 @@ u32 dce6_endpoपूर्णांक_rreg(काष्ठा radeon_device *rd
 	r = RREG32(AZ_F0_CODEC_ENDPOINT_DATA + block_offset);
 	spin_unlock_irqrestore(&rdev->end_idx_lock, flags);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-व्योम dce6_endpoपूर्णांक_wreg(काष्ठा radeon_device *rdev,
+void dce6_endpoint_wreg(struct radeon_device *rdev,
 			       u32 block_offset, u32 reg, u32 v)
-अणु
-	अचिन्हित दीर्घ flags;
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&rdev->end_idx_lock, flags);
-	अगर (ASIC_IS_DCE8(rdev))
+	if (ASIC_IS_DCE8(rdev))
 		WREG32(AZ_F0_CODEC_ENDPOINT_INDEX + block_offset, reg);
-	अन्यथा
+	else
 		WREG32(AZ_F0_CODEC_ENDPOINT_INDEX + block_offset,
 		       AZ_ENDPOINT_REG_WRITE_EN | AZ_ENDPOINT_REG_INDEX(reg));
 	WREG32(AZ_F0_CODEC_ENDPOINT_DATA + block_offset, v);
 	spin_unlock_irqrestore(&rdev->end_idx_lock, flags);
-पूर्ण
+}
 
-अटल व्योम dce6_afmt_get_connected_pins(काष्ठा radeon_device *rdev)
-अणु
-	पूर्णांक i;
-	u32 offset, पंचांगp;
+static void dce6_afmt_get_connected_pins(struct radeon_device *rdev)
+{
+	int i;
+	u32 offset, tmp;
 
-	क्रम (i = 0; i < rdev->audio.num_pins; i++) अणु
+	for (i = 0; i < rdev->audio.num_pins; i++) {
 		offset = rdev->audio.pin[i].offset;
-		पंचांगp = RREG32_ENDPOINT(offset,
+		tmp = RREG32_ENDPOINT(offset,
 				      AZ_F0_CODEC_PIN_CONTROL_RESPONSE_CONFIGURATION_DEFAULT);
-		अगर (((पंचांगp & PORT_CONNECTIVITY_MASK) >> PORT_CONNECTIVITY_SHIFT) == 1)
+		if (((tmp & PORT_CONNECTIVITY_MASK) >> PORT_CONNECTIVITY_SHIFT) == 1)
 			rdev->audio.pin[i].connected = false;
-		अन्यथा
+		else
 			rdev->audio.pin[i].connected = true;
-	पूर्ण
-पूर्ण
+	}
+}
 
-काष्ठा r600_audio_pin *dce6_audio_get_pin(काष्ठा radeon_device *rdev)
-अणु
-	काष्ठा drm_encoder *encoder;
-	काष्ठा radeon_encoder *radeon_encoder;
-	काष्ठा radeon_encoder_atom_dig *dig;
-	काष्ठा r600_audio_pin *pin = शून्य;
-	पूर्णांक i, pin_count;
+struct r600_audio_pin *dce6_audio_get_pin(struct radeon_device *rdev)
+{
+	struct drm_encoder *encoder;
+	struct radeon_encoder *radeon_encoder;
+	struct radeon_encoder_atom_dig *dig;
+	struct r600_audio_pin *pin = NULL;
+	int i, pin_count;
 
 	dce6_afmt_get_connected_pins(rdev);
 
-	क्रम (i = 0; i < rdev->audio.num_pins; i++) अणु
-		अगर (rdev->audio.pin[i].connected) अणु
+	for (i = 0; i < rdev->audio.num_pins; i++) {
+		if (rdev->audio.pin[i].connected) {
 			pin = &rdev->audio.pin[i];
 			pin_count = 0;
 
-			list_क्रम_each_entry(encoder, &rdev->ddev->mode_config.encoder_list, head) अणु
-				अगर (radeon_encoder_is_digital(encoder)) अणु
+			list_for_each_entry(encoder, &rdev->ddev->mode_config.encoder_list, head) {
+				if (radeon_encoder_is_digital(encoder)) {
 					radeon_encoder = to_radeon_encoder(encoder);
 					dig = radeon_encoder->enc_priv;
-					अगर (dig->pin == pin)
+					if (dig->pin == pin)
 						pin_count++;
-				पूर्ण
-			पूर्ण
+				}
+			}
 
-			अगर (pin_count == 0)
-				वापस pin;
-		पूर्ण
-	पूर्ण
-	अगर (!pin)
+			if (pin_count == 0)
+				return pin;
+		}
+	}
+	if (!pin)
 		DRM_ERROR("No connected audio pins found!\n");
-	वापस pin;
-पूर्ण
+	return pin;
+}
 
-व्योम dce6_afmt_select_pin(काष्ठा drm_encoder *encoder)
-अणु
-	काष्ठा radeon_device *rdev = encoder->dev->dev_निजी;
-	काष्ठा radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
-	काष्ठा radeon_encoder_atom_dig *dig = radeon_encoder->enc_priv;
+void dce6_afmt_select_pin(struct drm_encoder *encoder)
+{
+	struct radeon_device *rdev = encoder->dev->dev_private;
+	struct radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
+	struct radeon_encoder_atom_dig *dig = radeon_encoder->enc_priv;
 
-	अगर (!dig || !dig->afmt || !dig->pin)
-		वापस;
+	if (!dig || !dig->afmt || !dig->pin)
+		return;
 
 	WREG32(AFMT_AUDIO_SRC_CONTROL +  dig->afmt->offset,
 	       AFMT_AUDIO_SRC_SELECT(dig->pin->id));
-पूर्ण
+}
 
-व्योम dce6_afmt_ग_लिखो_latency_fields(काष्ठा drm_encoder *encoder,
-				    काष्ठा drm_connector *connector,
-				    काष्ठा drm_display_mode *mode)
-अणु
-	काष्ठा radeon_device *rdev = encoder->dev->dev_निजी;
-	काष्ठा radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
-	काष्ठा radeon_encoder_atom_dig *dig = radeon_encoder->enc_priv;
-	u32 पंचांगp = 0;
+void dce6_afmt_write_latency_fields(struct drm_encoder *encoder,
+				    struct drm_connector *connector,
+				    struct drm_display_mode *mode)
+{
+	struct radeon_device *rdev = encoder->dev->dev_private;
+	struct radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
+	struct radeon_encoder_atom_dig *dig = radeon_encoder->enc_priv;
+	u32 tmp = 0;
 
-	अगर (!dig || !dig->afmt || !dig->pin)
-		वापस;
+	if (!dig || !dig->afmt || !dig->pin)
+		return;
 
-	अगर (mode->flags & DRM_MODE_FLAG_INTERLACE) अणु
-		अगर (connector->latency_present[1])
-			पंचांगp = VIDEO_LIPSYNC(connector->video_latency[1]) |
+	if (mode->flags & DRM_MODE_FLAG_INTERLACE) {
+		if (connector->latency_present[1])
+			tmp = VIDEO_LIPSYNC(connector->video_latency[1]) |
 				AUDIO_LIPSYNC(connector->audio_latency[1]);
-		अन्यथा
-			पंचांगp = VIDEO_LIPSYNC(0) | AUDIO_LIPSYNC(0);
-	पूर्ण अन्यथा अणु
-		अगर (connector->latency_present[0])
-			पंचांगp = VIDEO_LIPSYNC(connector->video_latency[0]) |
+		else
+			tmp = VIDEO_LIPSYNC(0) | AUDIO_LIPSYNC(0);
+	} else {
+		if (connector->latency_present[0])
+			tmp = VIDEO_LIPSYNC(connector->video_latency[0]) |
 				AUDIO_LIPSYNC(connector->audio_latency[0]);
-		अन्यथा
-			पंचांगp = VIDEO_LIPSYNC(0) | AUDIO_LIPSYNC(0);
-	पूर्ण
+		else
+			tmp = VIDEO_LIPSYNC(0) | AUDIO_LIPSYNC(0);
+	}
 	WREG32_ENDPOINT(dig->pin->offset,
-			AZ_F0_CODEC_PIN_CONTROL_RESPONSE_LIPSYNC, पंचांगp);
-पूर्ण
+			AZ_F0_CODEC_PIN_CONTROL_RESPONSE_LIPSYNC, tmp);
+}
 
-व्योम dce6_afmt_hdmi_ग_लिखो_speaker_allocation(काष्ठा drm_encoder *encoder,
-					     u8 *sadb, पूर्णांक sad_count)
-अणु
-	काष्ठा radeon_device *rdev = encoder->dev->dev_निजी;
-	काष्ठा radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
-	काष्ठा radeon_encoder_atom_dig *dig = radeon_encoder->enc_priv;
-	u32 पंचांगp;
+void dce6_afmt_hdmi_write_speaker_allocation(struct drm_encoder *encoder,
+					     u8 *sadb, int sad_count)
+{
+	struct radeon_device *rdev = encoder->dev->dev_private;
+	struct radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
+	struct radeon_encoder_atom_dig *dig = radeon_encoder->enc_priv;
+	u32 tmp;
 
-	अगर (!dig || !dig->afmt || !dig->pin)
-		वापस;
+	if (!dig || !dig->afmt || !dig->pin)
+		return;
 
 	/* program the speaker allocation */
-	पंचांगp = RREG32_ENDPOINT(dig->pin->offset,
+	tmp = RREG32_ENDPOINT(dig->pin->offset,
 			      AZ_F0_CODEC_PIN_CONTROL_CHANNEL_SPEAKER);
-	पंचांगp &= ~(DP_CONNECTION | SPEAKER_ALLOCATION_MASK);
+	tmp &= ~(DP_CONNECTION | SPEAKER_ALLOCATION_MASK);
 	/* set HDMI mode */
-	पंचांगp |= HDMI_CONNECTION;
-	अगर (sad_count)
-		पंचांगp |= SPEAKER_ALLOCATION(sadb[0]);
-	अन्यथा
-		पंचांगp |= SPEAKER_ALLOCATION(5); /* stereo */
+	tmp |= HDMI_CONNECTION;
+	if (sad_count)
+		tmp |= SPEAKER_ALLOCATION(sadb[0]);
+	else
+		tmp |= SPEAKER_ALLOCATION(5); /* stereo */
 	WREG32_ENDPOINT(dig->pin->offset,
-			AZ_F0_CODEC_PIN_CONTROL_CHANNEL_SPEAKER, पंचांगp);
-पूर्ण
+			AZ_F0_CODEC_PIN_CONTROL_CHANNEL_SPEAKER, tmp);
+}
 
-व्योम dce6_afmt_dp_ग_लिखो_speaker_allocation(काष्ठा drm_encoder *encoder,
-					   u8 *sadb, पूर्णांक sad_count)
-अणु
-	काष्ठा radeon_device *rdev = encoder->dev->dev_निजी;
-	काष्ठा radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
-	काष्ठा radeon_encoder_atom_dig *dig = radeon_encoder->enc_priv;
-	u32 पंचांगp;
+void dce6_afmt_dp_write_speaker_allocation(struct drm_encoder *encoder,
+					   u8 *sadb, int sad_count)
+{
+	struct radeon_device *rdev = encoder->dev->dev_private;
+	struct radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
+	struct radeon_encoder_atom_dig *dig = radeon_encoder->enc_priv;
+	u32 tmp;
 
-	अगर (!dig || !dig->afmt || !dig->pin)
-		वापस;
+	if (!dig || !dig->afmt || !dig->pin)
+		return;
 
 	/* program the speaker allocation */
-	पंचांगp = RREG32_ENDPOINT(dig->pin->offset,
+	tmp = RREG32_ENDPOINT(dig->pin->offset,
 			      AZ_F0_CODEC_PIN_CONTROL_CHANNEL_SPEAKER);
-	पंचांगp &= ~(HDMI_CONNECTION | SPEAKER_ALLOCATION_MASK);
+	tmp &= ~(HDMI_CONNECTION | SPEAKER_ALLOCATION_MASK);
 	/* set DP mode */
-	पंचांगp |= DP_CONNECTION;
-	अगर (sad_count)
-		पंचांगp |= SPEAKER_ALLOCATION(sadb[0]);
-	अन्यथा
-		पंचांगp |= SPEAKER_ALLOCATION(5); /* stereo */
+	tmp |= DP_CONNECTION;
+	if (sad_count)
+		tmp |= SPEAKER_ALLOCATION(sadb[0]);
+	else
+		tmp |= SPEAKER_ALLOCATION(5); /* stereo */
 	WREG32_ENDPOINT(dig->pin->offset,
-			AZ_F0_CODEC_PIN_CONTROL_CHANNEL_SPEAKER, पंचांगp);
-पूर्ण
+			AZ_F0_CODEC_PIN_CONTROL_CHANNEL_SPEAKER, tmp);
+}
 
-व्योम dce6_afmt_ग_लिखो_sad_regs(काष्ठा drm_encoder *encoder,
-			      काष्ठा cea_sad *sads, पूर्णांक sad_count)
-अणु
-	पूर्णांक i;
-	काष्ठा radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
-	काष्ठा radeon_encoder_atom_dig *dig = radeon_encoder->enc_priv;
-	काष्ठा radeon_device *rdev = encoder->dev->dev_निजी;
-	अटल स्थिर u16 eld_reg_to_type[][2] = अणु
-		अणु AZ_F0_CODEC_PIN_CONTROL_AUDIO_DESCRIPTOR0, HDMI_AUDIO_CODING_TYPE_PCM पूर्ण,
-		अणु AZ_F0_CODEC_PIN_CONTROL_AUDIO_DESCRIPTOR1, HDMI_AUDIO_CODING_TYPE_AC3 पूर्ण,
-		अणु AZ_F0_CODEC_PIN_CONTROL_AUDIO_DESCRIPTOR2, HDMI_AUDIO_CODING_TYPE_MPEG1 पूर्ण,
-		अणु AZ_F0_CODEC_PIN_CONTROL_AUDIO_DESCRIPTOR3, HDMI_AUDIO_CODING_TYPE_MP3 पूर्ण,
-		अणु AZ_F0_CODEC_PIN_CONTROL_AUDIO_DESCRIPTOR4, HDMI_AUDIO_CODING_TYPE_MPEG2 पूर्ण,
-		अणु AZ_F0_CODEC_PIN_CONTROL_AUDIO_DESCRIPTOR5, HDMI_AUDIO_CODING_TYPE_AAC_LC पूर्ण,
-		अणु AZ_F0_CODEC_PIN_CONTROL_AUDIO_DESCRIPTOR6, HDMI_AUDIO_CODING_TYPE_DTS पूर्ण,
-		अणु AZ_F0_CODEC_PIN_CONTROL_AUDIO_DESCRIPTOR7, HDMI_AUDIO_CODING_TYPE_ATRAC पूर्ण,
-		अणु AZ_F0_CODEC_PIN_CONTROL_AUDIO_DESCRIPTOR9, HDMI_AUDIO_CODING_TYPE_EAC3 पूर्ण,
-		अणु AZ_F0_CODEC_PIN_CONTROL_AUDIO_DESCRIPTOR10, HDMI_AUDIO_CODING_TYPE_DTS_HD पूर्ण,
-		अणु AZ_F0_CODEC_PIN_CONTROL_AUDIO_DESCRIPTOR11, HDMI_AUDIO_CODING_TYPE_MLP पूर्ण,
-		अणु AZ_F0_CODEC_PIN_CONTROL_AUDIO_DESCRIPTOR13, HDMI_AUDIO_CODING_TYPE_WMA_PRO पूर्ण,
-	पूर्ण;
+void dce6_afmt_write_sad_regs(struct drm_encoder *encoder,
+			      struct cea_sad *sads, int sad_count)
+{
+	int i;
+	struct radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
+	struct radeon_encoder_atom_dig *dig = radeon_encoder->enc_priv;
+	struct radeon_device *rdev = encoder->dev->dev_private;
+	static const u16 eld_reg_to_type[][2] = {
+		{ AZ_F0_CODEC_PIN_CONTROL_AUDIO_DESCRIPTOR0, HDMI_AUDIO_CODING_TYPE_PCM },
+		{ AZ_F0_CODEC_PIN_CONTROL_AUDIO_DESCRIPTOR1, HDMI_AUDIO_CODING_TYPE_AC3 },
+		{ AZ_F0_CODEC_PIN_CONTROL_AUDIO_DESCRIPTOR2, HDMI_AUDIO_CODING_TYPE_MPEG1 },
+		{ AZ_F0_CODEC_PIN_CONTROL_AUDIO_DESCRIPTOR3, HDMI_AUDIO_CODING_TYPE_MP3 },
+		{ AZ_F0_CODEC_PIN_CONTROL_AUDIO_DESCRIPTOR4, HDMI_AUDIO_CODING_TYPE_MPEG2 },
+		{ AZ_F0_CODEC_PIN_CONTROL_AUDIO_DESCRIPTOR5, HDMI_AUDIO_CODING_TYPE_AAC_LC },
+		{ AZ_F0_CODEC_PIN_CONTROL_AUDIO_DESCRIPTOR6, HDMI_AUDIO_CODING_TYPE_DTS },
+		{ AZ_F0_CODEC_PIN_CONTROL_AUDIO_DESCRIPTOR7, HDMI_AUDIO_CODING_TYPE_ATRAC },
+		{ AZ_F0_CODEC_PIN_CONTROL_AUDIO_DESCRIPTOR9, HDMI_AUDIO_CODING_TYPE_EAC3 },
+		{ AZ_F0_CODEC_PIN_CONTROL_AUDIO_DESCRIPTOR10, HDMI_AUDIO_CODING_TYPE_DTS_HD },
+		{ AZ_F0_CODEC_PIN_CONTROL_AUDIO_DESCRIPTOR11, HDMI_AUDIO_CODING_TYPE_MLP },
+		{ AZ_F0_CODEC_PIN_CONTROL_AUDIO_DESCRIPTOR13, HDMI_AUDIO_CODING_TYPE_WMA_PRO },
+	};
 
-	अगर (!dig || !dig->afmt || !dig->pin)
-		वापस;
+	if (!dig || !dig->afmt || !dig->pin)
+		return;
 
-	क्रम (i = 0; i < ARRAY_SIZE(eld_reg_to_type); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(eld_reg_to_type); i++) {
 		u32 value = 0;
 		u8 stereo_freqs = 0;
-		पूर्णांक max_channels = -1;
-		पूर्णांक j;
+		int max_channels = -1;
+		int j;
 
-		क्रम (j = 0; j < sad_count; j++) अणु
-			काष्ठा cea_sad *sad = &sads[j];
+		for (j = 0; j < sad_count; j++) {
+			struct cea_sad *sad = &sads[j];
 
-			अगर (sad->क्रमmat == eld_reg_to_type[i][1]) अणु
-				अगर (sad->channels > max_channels) अणु
+			if (sad->format == eld_reg_to_type[i][1]) {
+				if (sad->channels > max_channels) {
 					value = MAX_CHANNELS(sad->channels) |
 						DESCRIPTOR_BYTE_2(sad->byte2) |
 						SUPPORTED_FREQUENCIES(sad->freq);
 					max_channels = sad->channels;
-				पूर्ण
+				}
 
-				अगर (sad->क्रमmat == HDMI_AUDIO_CODING_TYPE_PCM)
+				if (sad->format == HDMI_AUDIO_CODING_TYPE_PCM)
 					stereo_freqs |= sad->freq;
-				अन्यथा
-					अवरोध;
-			पूर्ण
-		पूर्ण
+				else
+					break;
+			}
+		}
 
 		value |= SUPPORTED_FREQUENCIES_STEREO(stereo_freqs);
 
 		WREG32_ENDPOINT(dig->pin->offset, eld_reg_to_type[i][0], value);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम dce6_audio_enable(काष्ठा radeon_device *rdev,
-		       काष्ठा r600_audio_pin *pin,
+void dce6_audio_enable(struct radeon_device *rdev,
+		       struct r600_audio_pin *pin,
 		       u8 enable_mask)
-अणु
-	अगर (!pin)
-		वापस;
+{
+	if (!pin)
+		return;
 
 	WREG32_ENDPOINT(pin->offset, AZ_F0_CODEC_PIN_CONTROL_HOT_PLUG_CONTROL,
 			enable_mask ? AUDIO_ENABLED : 0);
-पूर्ण
+}
 
-व्योम dce6_hdmi_audio_set_dto(काष्ठा radeon_device *rdev,
-			     काष्ठा radeon_crtc *crtc, अचिन्हित पूर्णांक घड़ी)
-अणु
-	/* Two dtos; generally use dto0 क्रम HDMI */
+void dce6_hdmi_audio_set_dto(struct radeon_device *rdev,
+			     struct radeon_crtc *crtc, unsigned int clock)
+{
+	/* Two dtos; generally use dto0 for HDMI */
 	u32 value = 0;
 
-	अगर (crtc)
+	if (crtc)
 		value |= DCCG_AUDIO_DTO0_SOURCE_SEL(crtc->crtc_id);
 
 	WREG32(DCCG_AUDIO_DTO_SOURCE, value);
 
-	/* Express [24MHz / target pixel घड़ी] as an exact rational
-	 * number (coefficient of two पूर्णांकeger numbers.  DCCG_AUDIO_DTOx_PHASE
+	/* Express [24MHz / target pixel clock] as an exact rational
+	 * number (coefficient of two integer numbers.  DCCG_AUDIO_DTOx_PHASE
 	 * is the numerator, DCCG_AUDIO_DTOx_MODULE is the denominator
 	 */
 	WREG32(DCCG_AUDIO_DTO0_PHASE, 24000);
-	WREG32(DCCG_AUDIO_DTO0_MODULE, घड़ी);
-पूर्ण
+	WREG32(DCCG_AUDIO_DTO0_MODULE, clock);
+}
 
-व्योम dce6_dp_audio_set_dto(काष्ठा radeon_device *rdev,
-			   काष्ठा radeon_crtc *crtc, अचिन्हित पूर्णांक घड़ी)
-अणु
-	/* Two dtos; generally use dto1 क्रम DP */
+void dce6_dp_audio_set_dto(struct radeon_device *rdev,
+			   struct radeon_crtc *crtc, unsigned int clock)
+{
+	/* Two dtos; generally use dto1 for DP */
 	u32 value = 0;
 	value |= DCCG_AUDIO_DTO_SEL;
 
-	अगर (crtc)
+	if (crtc)
 		value |= DCCG_AUDIO_DTO0_SOURCE_SEL(crtc->crtc_id);
 
 	WREG32(DCCG_AUDIO_DTO_SOURCE, value);
 
-	/* Express [24MHz / target pixel घड़ी] as an exact rational
-	 * number (coefficient of two पूर्णांकeger numbers.  DCCG_AUDIO_DTOx_PHASE
+	/* Express [24MHz / target pixel clock] as an exact rational
+	 * number (coefficient of two integer numbers.  DCCG_AUDIO_DTOx_PHASE
 	 * is the numerator, DCCG_AUDIO_DTOx_MODULE is the denominator
 	 */
-	अगर (ASIC_IS_DCE8(rdev)) अणु
-		अचिन्हित पूर्णांक भाग = (RREG32(DENTIST_DISPCLK_CNTL) &
+	if (ASIC_IS_DCE8(rdev)) {
+		unsigned int div = (RREG32(DENTIST_DISPCLK_CNTL) &
 			DENTIST_DPREFCLK_WDIVIDER_MASK) >>
 			DENTIST_DPREFCLK_WDIVIDER_SHIFT;
-		भाग = radeon_audio_decode_dfs_भाग(भाग);
+		div = radeon_audio_decode_dfs_div(div);
 
-		अगर (भाग)
-			घड़ी = घड़ी * 100 / भाग;
+		if (div)
+			clock = clock * 100 / div;
 
 		WREG32(DCE8_DCCG_AUDIO_DTO1_PHASE, 24000);
-		WREG32(DCE8_DCCG_AUDIO_DTO1_MODULE, घड़ी);
-	पूर्ण अन्यथा अणु
+		WREG32(DCE8_DCCG_AUDIO_DTO1_MODULE, clock);
+	} else {
 		WREG32(DCCG_AUDIO_DTO1_PHASE, 24000);
-		WREG32(DCCG_AUDIO_DTO1_MODULE, घड़ी);
-	पूर्ण
-पूर्ण
+		WREG32(DCCG_AUDIO_DTO1_MODULE, clock);
+	}
+}

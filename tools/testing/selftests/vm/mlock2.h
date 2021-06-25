@@ -1,64 +1,63 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#समावेश <syscall.h>
-#समावेश <त्रुटिसं.स>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
+/* SPDX-License-Identifier: GPL-2.0 */
+#include <syscall.h>
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
 
-#अगर_अघोषित MLOCK_ONFAULT
-#घोषणा MLOCK_ONFAULT 1
-#पूर्ण_अगर
+#ifndef MLOCK_ONFAULT
+#define MLOCK_ONFAULT 1
+#endif
 
-#अगर_अघोषित MCL_ONFAULT
-#घोषणा MCL_ONFAULT (MCL_FUTURE << 1)
-#पूर्ण_अगर
+#ifndef MCL_ONFAULT
+#define MCL_ONFAULT (MCL_FUTURE << 1)
+#endif
 
-अटल पूर्णांक mlock2_(व्योम *start, माप_प्रकार len, पूर्णांक flags)
-अणु
-#अगर_घोषित __NR_mlock2
-	वापस syscall(__NR_mlock2, start, len, flags);
-#अन्यथा
-	त्रुटि_सं = ENOSYS;
-	वापस -1;
-#पूर्ण_अगर
-पूर्ण
+static int mlock2_(void *start, size_t len, int flags)
+{
+#ifdef __NR_mlock2
+	return syscall(__NR_mlock2, start, len, flags);
+#else
+	errno = ENOSYS;
+	return -1;
+#endif
+}
 
-अटल खाता *seek_to_smaps_entry(अचिन्हित दीर्घ addr)
-अणु
-	खाता *file;
-	अक्षर *line = शून्य;
-	माप_प्रकार size = 0;
-	अचिन्हित दीर्घ start, end;
-	अक्षर perms[5];
-	अचिन्हित दीर्घ offset;
-	अक्षर dev[32];
-	अचिन्हित दीर्घ inode;
-	अक्षर path[बफ_मान];
+static FILE *seek_to_smaps_entry(unsigned long addr)
+{
+	FILE *file;
+	char *line = NULL;
+	size_t size = 0;
+	unsigned long start, end;
+	char perms[5];
+	unsigned long offset;
+	char dev[32];
+	unsigned long inode;
+	char path[BUFSIZ];
 
-	file = ख_खोलो("/proc/self/smaps", "r");
-	अगर (!file) अणु
-		लिखो_त्रुटि("fopen smaps");
-		_निकास(1);
-	पूर्ण
+	file = fopen("/proc/self/smaps", "r");
+	if (!file) {
+		perror("fopen smaps");
+		_exit(1);
+	}
 
-	जबतक (getline(&line, &size, file) > 0) अणु
-		अगर (माला_पूछो(line, "%lx-%lx %s %lx %s %lu %s\n",
+	while (getline(&line, &size, file) > 0) {
+		if (sscanf(line, "%lx-%lx %s %lx %s %lu %s\n",
 			   &start, &end, perms, &offset, dev, &inode, path) < 6)
-			जाओ next;
+			goto next;
 
-		अगर (start <= addr && addr < end)
-			जाओ out;
+		if (start <= addr && addr < end)
+			goto out;
 
 next:
-		मुक्त(line);
-		line = शून्य;
+		free(line);
+		line = NULL;
 		size = 0;
-	पूर्ण
+	}
 
-	ख_बंद(file);
-	file = शून्य;
+	fclose(file);
+	file = NULL;
 
 out:
-	मुक्त(line);
-	वापस file;
-पूर्ण
+	free(line);
+	return file;
+}

@@ -1,28 +1,27 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright 2017 Omnibond Systems, L.L.C.
  */
 
-#समावेश "protocol.h"
-#समावेश "orangefs-kernel.h"
-#समावेश "orangefs-bufmap.h"
+#include "protocol.h"
+#include "orangefs-kernel.h"
+#include "orangefs-bufmap.h"
 
-काष्ठा orangefs_dir_part अणु
-	काष्ठा orangefs_dir_part *next;
-	माप_प्रकार len;
-पूर्ण;
+struct orangefs_dir_part {
+	struct orangefs_dir_part *next;
+	size_t len;
+};
 
-काष्ठा orangefs_dir अणु
+struct orangefs_dir {
 	__u64 token;
-	काष्ठा orangefs_dir_part *part;
+	struct orangefs_dir_part *part;
 	loff_t end;
-	पूर्णांक error;
-पूर्ण;
+	int error;
+};
 
-#घोषणा PART_SHIFT (24)
-#घोषणा PART_SIZE (1<<24)
-#घोषणा PART_MASK (~(PART_SIZE - 1))
+#define PART_SHIFT (24)
+#define PART_SIZE (1<<24)
+#define PART_MASK (~(PART_SIZE - 1))
 
 /*
  * There can be up to 512 directory entries.  Each entry is encoded as
@@ -34,15 +33,15 @@
  * 16 bytes: khandle
  * padding to 8 bytes
  *
- * The trailer_buf starts with a काष्ठा orangefs_सूची_पढ़ो_response_s
+ * The trailer_buf starts with a struct orangefs_readdir_response_s
  * which must be skipped to get to the directory data.
  *
  * The data which is received from the userspace daemon is termed a
- * part and is stored in a linked list in हाल more than one part is
- * needed क्रम a large directory.
+ * part and is stored in a linked list in case more than one part is
+ * needed for a large directory.
  *
- * The position poपूर्णांकer (ctx->pos) encodes the part and offset on which
- * to begin पढ़ोing at.  Bits above PART_SHIFT encode the part and bits
+ * The position pointer (ctx->pos) encodes the part and offset on which
+ * to begin reading at.  Bits above PART_SHIFT encode the part and bits
  * below PART_SHIFT encode the offset.  Parts are stored in a linked
  * list which grows as data is received from the server.  The overhead
  * associated with managing the list is presumed to be small compared to
@@ -52,354 +51,354 @@
  * part list.  Data is parsed from the current position as it is needed.
  * When data is determined to be corrupt, it is either because the
  * userspace component has sent back corrupt data or because the file
- * poपूर्णांकer has been moved to an invalid location.  Since the two cannot
- * be dअगरferentiated, वापस EIO.
+ * pointer has been moved to an invalid location.  Since the two cannot
+ * be differentiated, return EIO.
  *
  * Part zero is synthesized to contains `.' and `..'.  Part one is the
  * first part of the part list.
  */
 
-अटल पूर्णांक करो_सूची_पढ़ो(काष्ठा orangefs_inode_s *oi,
-    काष्ठा orangefs_dir *od, काष्ठा dentry *dentry,
-    काष्ठा orangefs_kernel_op_s *op)
-अणु
-	काष्ठा orangefs_सूची_पढ़ो_response_s *resp;
-	पूर्णांक bufi, r;
+static int do_readdir(struct orangefs_inode_s *oi,
+    struct orangefs_dir *od, struct dentry *dentry,
+    struct orangefs_kernel_op_s *op)
+{
+	struct orangefs_readdir_response_s *resp;
+	int bufi, r;
 
 	/*
-	 * Despite the badly named field, सूची_पढ़ो करोes not use shared
-	 * memory.  However, there are a limited number of सूची_पढ़ो
+	 * Despite the badly named field, readdir does not use shared
+	 * memory.  However, there are a limited number of readdir
 	 * slots, which must be allocated here.  This flag simply tells
-	 * the op scheduler to वापस the op here क्रम retry.
+	 * the op scheduler to return the op here for retry.
 	 */
 	op->uses_shared_memory = 1;
-	op->upcall.req.सूची_पढ़ो.refn = oi->refn;
-	op->upcall.req.सूची_पढ़ो.token = od->token;
-	op->upcall.req.सूची_पढ़ो.max_dirent_count =
-	    ORANGEFS_MAX_सूचीENT_COUNT_READसूची;
+	op->upcall.req.readdir.refn = oi->refn;
+	op->upcall.req.readdir.token = od->token;
+	op->upcall.req.readdir.max_dirent_count =
+	    ORANGEFS_MAX_DIRENT_COUNT_READDIR;
 
 again:
-	bufi = orangefs_सूची_पढ़ो_index_get();
-	अगर (bufi < 0) अणु
+	bufi = orangefs_readdir_index_get();
+	if (bufi < 0) {
 		od->error = bufi;
-		वापस bufi;
-	पूर्ण
+		return bufi;
+	}
 
-	op->upcall.req.सूची_पढ़ो.buf_index = bufi;
+	op->upcall.req.readdir.buf_index = bufi;
 
 	r = service_operation(op, "orangefs_readdir",
-	    get_पूर्णांकerruptible_flag(dentry->d_inode));
+	    get_interruptible_flag(dentry->d_inode));
 
-	orangefs_सूची_पढ़ो_index_put(bufi);
+	orangefs_readdir_index_put(bufi);
 
-	अगर (op_state_purged(op)) अणु
-		अगर (r == -EAGAIN) अणु
-			vमुक्त(op->करोwncall.trailer_buf);
-			जाओ again;
-		पूर्ण अन्यथा अगर (r == -EIO) अणु
-			vमुक्त(op->करोwncall.trailer_buf);
+	if (op_state_purged(op)) {
+		if (r == -EAGAIN) {
+			vfree(op->downcall.trailer_buf);
+			goto again;
+		} else if (r == -EIO) {
+			vfree(op->downcall.trailer_buf);
 			od->error = r;
-			वापस r;
-		पूर्ण
-	पूर्ण
+			return r;
+		}
+	}
 
-	अगर (r < 0) अणु
-		vमुक्त(op->करोwncall.trailer_buf);
+	if (r < 0) {
+		vfree(op->downcall.trailer_buf);
 		od->error = r;
-		वापस r;
-	पूर्ण अन्यथा अगर (op->करोwncall.status) अणु
-		vमुक्त(op->करोwncall.trailer_buf);
-		od->error = op->करोwncall.status;
-		वापस op->करोwncall.status;
-	पूर्ण
+		return r;
+	} else if (op->downcall.status) {
+		vfree(op->downcall.trailer_buf);
+		od->error = op->downcall.status;
+		return op->downcall.status;
+	}
 
 	/*
-	 * The maximum size is size per entry बार the 512 entries plus
+	 * The maximum size is size per entry times the 512 entries plus
 	 * the header.  This is well under the limit.
 	 */
-	अगर (op->करोwncall.trailer_size > PART_SIZE) अणु
-		vमुक्त(op->करोwncall.trailer_buf);
+	if (op->downcall.trailer_size > PART_SIZE) {
+		vfree(op->downcall.trailer_buf);
 		od->error = -EIO;
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	resp = (काष्ठा orangefs_सूची_पढ़ो_response_s *)
-	    op->करोwncall.trailer_buf;
+	resp = (struct orangefs_readdir_response_s *)
+	    op->downcall.trailer_buf;
 	od->token = resp->token;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक parse_सूची_पढ़ो(काष्ठा orangefs_dir *od,
-    काष्ठा orangefs_kernel_op_s *op)
-अणु
-	काष्ठा orangefs_dir_part *part, *new;
-	माप_प्रकार count;
+static int parse_readdir(struct orangefs_dir *od,
+    struct orangefs_kernel_op_s *op)
+{
+	struct orangefs_dir_part *part, *new;
+	size_t count;
 
 	count = 1;
 	part = od->part;
-	जबतक (part) अणु
+	while (part) {
 		count++;
-		अगर (part->next)
+		if (part->next)
 			part = part->next;
-		अन्यथा
-			अवरोध;
-	पूर्ण
+		else
+			break;
+	}
 
-	new = (व्योम *)op->करोwncall.trailer_buf;
-	new->next = शून्य;
-	new->len = op->करोwncall.trailer_size -
-	    माप(काष्ठा orangefs_सूची_पढ़ो_response_s);
-	अगर (!od->part)
+	new = (void *)op->downcall.trailer_buf;
+	new->next = NULL;
+	new->len = op->downcall.trailer_size -
+	    sizeof(struct orangefs_readdir_response_s);
+	if (!od->part)
 		od->part = new;
-	अन्यथा
+	else
 		part->next = new;
 	count++;
 	od->end = count << PART_SHIFT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक orangefs_dir_more(काष्ठा orangefs_inode_s *oi,
-    काष्ठा orangefs_dir *od, काष्ठा dentry *dentry)
-अणु
-	काष्ठा orangefs_kernel_op_s *op;
-	पूर्णांक r;
+static int orangefs_dir_more(struct orangefs_inode_s *oi,
+    struct orangefs_dir *od, struct dentry *dentry)
+{
+	struct orangefs_kernel_op_s *op;
+	int r;
 
-	op = op_alloc(ORANGEFS_VFS_OP_READसूची);
-	अगर (!op) अणु
+	op = op_alloc(ORANGEFS_VFS_OP_READDIR);
+	if (!op) {
 		od->error = -ENOMEM;
-		वापस -ENOMEM;
-	पूर्ण
-	r = करो_सूची_पढ़ो(oi, od, dentry, op);
-	अगर (r) अणु
+		return -ENOMEM;
+	}
+	r = do_readdir(oi, od, dentry, op);
+	if (r) {
 		od->error = r;
-		जाओ out;
-	पूर्ण
-	r = parse_सूची_पढ़ो(od, op);
-	अगर (r) अणु
+		goto out;
+	}
+	r = parse_readdir(od, op);
+	if (r) {
 		od->error = r;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	od->error = 0;
 out:
 	op_release(op);
-	वापस od->error;
-पूर्ण
+	return od->error;
+}
 
-अटल पूर्णांक fill_from_part(काष्ठा orangefs_dir_part *part,
-    काष्ठा dir_context *ctx)
-अणु
-	स्थिर पूर्णांक offset = माप(काष्ठा orangefs_सूची_पढ़ो_response_s);
-	काष्ठा orangefs_khandle *khandle;
+static int fill_from_part(struct orangefs_dir_part *part,
+    struct dir_context *ctx)
+{
+	const int offset = sizeof(struct orangefs_readdir_response_s);
+	struct orangefs_khandle *khandle;
 	__u32 *len, padlen;
 	loff_t i;
-	अक्षर *s;
+	char *s;
 	i = ctx->pos & ~PART_MASK;
 
 	/* The file offset from userspace is too large. */
-	अगर (i > part->len)
-		वापस 1;
+	if (i > part->len)
+		return 1;
 
 	/*
-	 * If the seek poपूर्णांकer is positioned just beक्रमe an entry it
+	 * If the seek pointer is positioned just before an entry it
 	 * should find the next entry.
 	 */
-	अगर (i % 8)
+	if (i % 8)
 		i = i + (8 - i%8)%8;
 
-	जबतक (i < part->len) अणु
-		अगर (part->len < i + माप *len)
-			अवरोध;
-		len = (व्योम *)part + offset + i;
+	while (i < part->len) {
+		if (part->len < i + sizeof *len)
+			break;
+		len = (void *)part + offset + i;
 		/*
 		 * len is the size of the string itself.  padlen is the
 		 * total size of the encoded string.
 		 */
-		padlen = (माप *len + *len + 1) +
-		    (8 - (माप *len + *len + 1)%8)%8;
-		अगर (part->len < i + padlen + माप *khandle)
-			जाओ next;
-		s = (व्योम *)part + offset + i + माप *len;
-		अगर (s[*len] != 0)
-			जाओ next;
-		khandle = (व्योम *)part + offset + i + padlen;
-		अगर (!dir_emit(ctx, s, *len,
+		padlen = (sizeof *len + *len + 1) +
+		    (8 - (sizeof *len + *len + 1)%8)%8;
+		if (part->len < i + padlen + sizeof *khandle)
+			goto next;
+		s = (void *)part + offset + i + sizeof *len;
+		if (s[*len] != 0)
+			goto next;
+		khandle = (void *)part + offset + i + padlen;
+		if (!dir_emit(ctx, s, *len,
 		    orangefs_khandle_to_ino(khandle),
 		    DT_UNKNOWN))
-			वापस 0;
-		i += padlen + माप *khandle;
+			return 0;
+		i += padlen + sizeof *khandle;
 		i = i + (8 - i%8)%8;
 		BUG_ON(i > part->len);
 		ctx->pos = (ctx->pos & PART_MASK) | i;
-		जारी;
+		continue;
 next:
 		i += 8;
-	पूर्ण
-	वापस 1;
-पूर्ण
+	}
+	return 1;
+}
 
-अटल पूर्णांक orangefs_dir_fill(काष्ठा orangefs_inode_s *oi,
-    काष्ठा orangefs_dir *od, काष्ठा dentry *dentry,
-    काष्ठा dir_context *ctx)
-अणु
-	काष्ठा orangefs_dir_part *part;
-	माप_प्रकार count;
+static int orangefs_dir_fill(struct orangefs_inode_s *oi,
+    struct orangefs_dir *od, struct dentry *dentry,
+    struct dir_context *ctx)
+{
+	struct orangefs_dir_part *part;
+	size_t count;
 
 	count = ((ctx->pos & PART_MASK) >> PART_SHIFT) - 1;
 
 	part = od->part;
-	जबतक (part->next && count) अणु
+	while (part->next && count) {
 		count--;
 		part = part->next;
-	पूर्ण
+	}
 	/* This means the userspace file offset is invalid. */
-	अगर (count) अणु
+	if (count) {
 		od->error = -EIO;
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	जबतक (part && part->len) अणु
-		पूर्णांक r;
+	while (part && part->len) {
+		int r;
 		r = fill_from_part(part, ctx);
-		अगर (r < 0) अणु
+		if (r < 0) {
 			od->error = r;
-			वापस r;
-		पूर्ण अन्यथा अगर (r == 0) अणु
+			return r;
+		} else if (r == 0) {
 			/* Userspace buffer is full. */
-			अवरोध;
-		पूर्ण अन्यथा अणु
+			break;
+		} else {
 			/*
 			 * The part ran out of data.  Move to the next
 			 * part. */
 			ctx->pos = (ctx->pos & PART_MASK) +
 			    (1 << PART_SHIFT);
 			part = part->next;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+	}
+	return 0;
+}
 
-अटल loff_t orangefs_dir_llseek(काष्ठा file *file, loff_t offset,
-    पूर्णांक whence)
-अणु
-	काष्ठा orangefs_dir *od = file->निजी_data;
+static loff_t orangefs_dir_llseek(struct file *file, loff_t offset,
+    int whence)
+{
+	struct orangefs_dir *od = file->private_data;
 	/*
 	 * Delete the stored data so userspace sees new directory
 	 * entries.
 	 */
-	अगर (!whence && offset < od->end) अणु
-		काष्ठा orangefs_dir_part *part = od->part;
-		जबतक (part) अणु
-			काष्ठा orangefs_dir_part *next = part->next;
-			vमुक्त(part);
+	if (!whence && offset < od->end) {
+		struct orangefs_dir_part *part = od->part;
+		while (part) {
+			struct orangefs_dir_part *next = part->next;
+			vfree(part);
 			part = next;
-		पूर्ण
+		}
 		od->token = ORANGEFS_ITERATE_START;
-		od->part = शून्य;
+		od->part = NULL;
 		od->end = 1 << PART_SHIFT;
-	पूर्ण
-	वापस शेष_llseek(file, offset, whence);
-पूर्ण
+	}
+	return default_llseek(file, offset, whence);
+}
 
-अटल पूर्णांक orangefs_dir_iterate(काष्ठा file *file,
-    काष्ठा dir_context *ctx)
-अणु
-	काष्ठा orangefs_inode_s *oi;
-	काष्ठा orangefs_dir *od;
-	काष्ठा dentry *dentry;
-	पूर्णांक r;
+static int orangefs_dir_iterate(struct file *file,
+    struct dir_context *ctx)
+{
+	struct orangefs_inode_s *oi;
+	struct orangefs_dir *od;
+	struct dentry *dentry;
+	int r;
 
 	dentry = file->f_path.dentry;
 	oi = ORANGEFS_I(dentry->d_inode);
-	od = file->निजी_data;
+	od = file->private_data;
 
-	अगर (od->error)
-		वापस od->error;
+	if (od->error)
+		return od->error;
 
-	अगर (ctx->pos == 0) अणु
-		अगर (!dir_emit_करोt(file, ctx))
-			वापस 0;
+	if (ctx->pos == 0) {
+		if (!dir_emit_dot(file, ctx))
+			return 0;
 		ctx->pos++;
-	पूर्ण
-	अगर (ctx->pos == 1) अणु
-		अगर (!dir_emit_करोtकरोt(file, ctx))
-			वापस 0;
+	}
+	if (ctx->pos == 1) {
+		if (!dir_emit_dotdot(file, ctx))
+			return 0;
 		ctx->pos = 1 << PART_SHIFT;
-	पूर्ण
+	}
 
 	/*
 	 * The seek position is in the first synthesized part but is not
 	 * valid.
 	 */
-	अगर ((ctx->pos & PART_MASK) == 0)
-		वापस -EIO;
+	if ((ctx->pos & PART_MASK) == 0)
+		return -EIO;
 
 	r = 0;
 
 	/*
-	 * Must पढ़ो more अगर the user has sought past what has been पढ़ो
+	 * Must read more if the user has sought past what has been read
 	 * so far.  Stop a user who has sought past the end.
 	 */
-	जबतक (od->token != ORANGEFS_ITERATE_END &&
-	    ctx->pos > od->end) अणु
+	while (od->token != ORANGEFS_ITERATE_END &&
+	    ctx->pos > od->end) {
 		r = orangefs_dir_more(oi, od, dentry);
-		अगर (r)
-			वापस r;
-	पूर्ण
-	अगर (od->token == ORANGEFS_ITERATE_END && ctx->pos > od->end)
-		वापस -EIO;
+		if (r)
+			return r;
+	}
+	if (od->token == ORANGEFS_ITERATE_END && ctx->pos > od->end)
+		return -EIO;
 
-	/* Then try to fill अगर there's any left in the buffer. */
-	अगर (ctx->pos < od->end) अणु
+	/* Then try to fill if there's any left in the buffer. */
+	if (ctx->pos < od->end) {
 		r = orangefs_dir_fill(oi, od, dentry, ctx);
-		अगर (r)
-			वापस r;
-	पूर्ण
+		if (r)
+			return r;
+	}
 
 	/* Finally get some more and try to fill. */
-	अगर (od->token != ORANGEFS_ITERATE_END) अणु
+	if (od->token != ORANGEFS_ITERATE_END) {
 		r = orangefs_dir_more(oi, od, dentry);
-		अगर (r)
-			वापस r;
+		if (r)
+			return r;
 		r = orangefs_dir_fill(oi, od, dentry, ctx);
-	पूर्ण
+	}
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक orangefs_dir_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा orangefs_dir *od;
-	file->निजी_data = kदो_स्मृति(माप(काष्ठा orangefs_dir),
+static int orangefs_dir_open(struct inode *inode, struct file *file)
+{
+	struct orangefs_dir *od;
+	file->private_data = kmalloc(sizeof(struct orangefs_dir),
 	    GFP_KERNEL);
-	अगर (!file->निजी_data)
-		वापस -ENOMEM;
-	od = file->निजी_data;
+	if (!file->private_data)
+		return -ENOMEM;
+	od = file->private_data;
 	od->token = ORANGEFS_ITERATE_START;
-	od->part = शून्य;
+	od->part = NULL;
 	od->end = 1 << PART_SHIFT;
 	od->error = 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक orangefs_dir_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा orangefs_dir *od = file->निजी_data;
-	काष्ठा orangefs_dir_part *part = od->part;
-	जबतक (part) अणु
-		काष्ठा orangefs_dir_part *next = part->next;
-		vमुक्त(part);
+static int orangefs_dir_release(struct inode *inode, struct file *file)
+{
+	struct orangefs_dir *od = file->private_data;
+	struct orangefs_dir_part *part = od->part;
+	while (part) {
+		struct orangefs_dir_part *next = part->next;
+		vfree(part);
 		part = next;
-	पूर्ण
-	kमुक्त(od);
-	वापस 0;
-पूर्ण
+	}
+	kfree(od);
+	return 0;
+}
 
-स्थिर काष्ठा file_operations orangefs_dir_operations = अणु
+const struct file_operations orangefs_dir_operations = {
 	.llseek = orangefs_dir_llseek,
-	.पढ़ो = generic_पढ़ो_dir,
+	.read = generic_read_dir,
 	.iterate = orangefs_dir_iterate,
-	.खोलो = orangefs_dir_खोलो,
+	.open = orangefs_dir_open,
 	.release = orangefs_dir_release
-पूर्ण;
+};

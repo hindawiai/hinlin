@@ -1,50 +1,49 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright IBM Corp. 2020
  *
- * Author(s): Alexandra Wपूर्णांकer <wपूर्णांकera@linux.ibm.com>
+ * Author(s): Alexandra Winter <wintera@linux.ibm.com>
  *
- * Interface क्रम Channel Subप्रणाली Call
+ * Interface for Channel Subsystem Call
  */
-#अगर_अघोषित _ASM_S390_CHSC_H
-#घोषणा _ASM_S390_CHSC_H
+#ifndef _ASM_S390_CHSC_H
+#define _ASM_S390_CHSC_H
 
-#समावेश <uapi/यंत्र/chsc.h>
+#include <uapi/asm/chsc.h>
 
 /**
- * Operation codes क्रम CHSC PNSO:
+ * Operation codes for CHSC PNSO:
  *    PNSO_OC_NET_BRIDGE_INFO - only addresses that are visible to a bridgeport
  *    PNSO_OC_NET_ADDR_INFO   - all addresses
  */
-#घोषणा PNSO_OC_NET_BRIDGE_INFO		0
-#घोषणा PNSO_OC_NET_ADDR_INFO		3
+#define PNSO_OC_NET_BRIDGE_INFO		0
+#define PNSO_OC_NET_ADDR_INFO		3
 /**
- * काष्ठा chsc_pnso_naid_l2 - network address inक्रमmation descriptor
- * @nit:  Network पूर्णांकerface token
+ * struct chsc_pnso_naid_l2 - network address information descriptor
+ * @nit:  Network interface token
  * @addr_lnid: network address and logical network id (VLAN ID)
  */
-काष्ठा chsc_pnso_naid_l2 अणु
+struct chsc_pnso_naid_l2 {
 	u64 nit;
-	काष्ठा अणु u8 mac[6]; u16 lnid; पूर्ण addr_lnid;
-पूर्ण __packed;
+	struct { u8 mac[6]; u16 lnid; } addr_lnid;
+} __packed;
 
-काष्ठा chsc_pnso_resume_token अणु
+struct chsc_pnso_resume_token {
 	u64 t1;
 	u64 t2;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा chsc_pnso_naihdr अणु
-	काष्ठा chsc_pnso_resume_token resume_token;
+struct chsc_pnso_naihdr {
+	struct chsc_pnso_resume_token resume_token;
 	u32:32;
 	u32 instance;
 	u32:24;
 	u8 naids;
 	u32 reserved[3];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा chsc_pnso_area अणु
-	काष्ठा chsc_header request;
+struct chsc_pnso_area {
+	struct chsc_header request;
 	u8:2;
 	u8 m:1;
 	u8:5;
@@ -57,14 +56,14 @@
 	u16:16;
 	u8 oc;
 	u32:24;
-	काष्ठा chsc_pnso_resume_token resume_token;
+	struct chsc_pnso_resume_token resume_token;
 	u32 n:1;
 	u32:31;
 	u32 reserved[3];
-	काष्ठा chsc_header response;
+	struct chsc_header response;
 	u32:32;
-	काष्ठा chsc_pnso_naihdr naihdr;
-	काष्ठा chsc_pnso_naid_l2 entries[0];
-पूर्ण __packed __aligned(PAGE_SIZE);
+	struct chsc_pnso_naihdr naihdr;
+	struct chsc_pnso_naid_l2 entries[0];
+} __packed __aligned(PAGE_SIZE);
 
-#पूर्ण_अगर /* _ASM_S390_CHSC_H */
+#endif /* _ASM_S390_CHSC_H */

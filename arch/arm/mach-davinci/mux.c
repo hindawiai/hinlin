@@ -1,6 +1,5 @@
-<शैली गुरु>
 /*
- * Utility to set the DAVINCI MUX रेजिस्टर from a table in mux.h
+ * Utility to set the DAVINCI MUX register from a table in mux.h
  *
  * Author: Vladimir Barinov, MontaVista Software, Inc. <source@mvista.com>
  *
@@ -17,101 +16,101 @@
  * Copyright (C) 2008 Texas Instruments.
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/spinlock.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/spinlock.h>
 
-#समावेश <mach/mux.h>
-#समावेश <mach/common.h>
+#include <mach/mux.h>
+#include <mach/common.h>
 
-अटल व्योम __iomem *pinmux_base;
+static void __iomem *pinmux_base;
 
 /*
- * Sets the DAVINCI MUX रेजिस्टर based on the table
+ * Sets the DAVINCI MUX register based on the table
  */
-पूर्णांक davinci_cfg_reg(स्थिर अचिन्हित दीर्घ index)
-अणु
-	अटल DEFINE_SPINLOCK(mux_spin_lock);
-	काष्ठा davinci_soc_info *soc_info = &davinci_soc_info;
-	अचिन्हित दीर्घ flags;
-	स्थिर काष्ठा mux_config *cfg;
-	अचिन्हित पूर्णांक reg_orig = 0, reg = 0;
-	अचिन्हित पूर्णांक mask, warn = 0;
+int davinci_cfg_reg(const unsigned long index)
+{
+	static DEFINE_SPINLOCK(mux_spin_lock);
+	struct davinci_soc_info *soc_info = &davinci_soc_info;
+	unsigned long flags;
+	const struct mux_config *cfg;
+	unsigned int reg_orig = 0, reg = 0;
+	unsigned int mask, warn = 0;
 
-	अगर (WARN_ON(!soc_info->pinmux_pins))
-		वापस -ENODEV;
+	if (WARN_ON(!soc_info->pinmux_pins))
+		return -ENODEV;
 
-	अगर (!pinmux_base) अणु
+	if (!pinmux_base) {
 		pinmux_base = ioremap(soc_info->pinmux_base, SZ_4K);
-		अगर (WARN_ON(!pinmux_base))
-			वापस -ENOMEM;
-	पूर्ण
+		if (WARN_ON(!pinmux_base))
+			return -ENOMEM;
+	}
 
-	अगर (index >= soc_info->pinmux_pins_num) अणु
+	if (index >= soc_info->pinmux_pins_num) {
 		pr_err("Invalid pin mux index: %lu (%lu)\n",
 		       index, soc_info->pinmux_pins_num);
 		dump_stack();
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	cfg = &soc_info->pinmux_pins[index];
 
-	अगर (cfg->name == शून्य) अणु
+	if (cfg->name == NULL) {
 		pr_err("No entry for the specified index\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	/* Update the mux रेजिस्टर in question */
-	अगर (cfg->mask) अणु
-		अचिन्हित	पंचांगp1, पंचांगp2;
+	/* Update the mux register in question */
+	if (cfg->mask) {
+		unsigned	tmp1, tmp2;
 
 		spin_lock_irqsave(&mux_spin_lock, flags);
-		reg_orig = __raw_पढ़ोl(pinmux_base + cfg->mux_reg);
+		reg_orig = __raw_readl(pinmux_base + cfg->mux_reg);
 
 		mask = (cfg->mask << cfg->mask_offset);
-		पंचांगp1 = reg_orig & mask;
+		tmp1 = reg_orig & mask;
 		reg = reg_orig & ~mask;
 
-		पंचांगp2 = (cfg->mode << cfg->mask_offset);
-		reg |= पंचांगp2;
+		tmp2 = (cfg->mode << cfg->mask_offset);
+		reg |= tmp2;
 
-		अगर (पंचांगp1 != पंचांगp2)
+		if (tmp1 != tmp2)
 			warn = 1;
 
-		__raw_ग_लिखोl(reg, pinmux_base + cfg->mux_reg);
+		__raw_writel(reg, pinmux_base + cfg->mux_reg);
 		spin_unlock_irqrestore(&mux_spin_lock, flags);
-	पूर्ण
+	}
 
-	अगर (warn) अणु
-#अगर_घोषित CONFIG_DAVINCI_MUX_WARNINGS
+	if (warn) {
+#ifdef CONFIG_DAVINCI_MUX_WARNINGS
 		pr_warn("initialized %s\n", cfg->name);
-#पूर्ण_अगर
-	पूर्ण
+#endif
+	}
 
-#अगर_घोषित CONFIG_DAVINCI_MUX_DEBUG
-	अगर (cfg->debug || warn) अणु
+#ifdef CONFIG_DAVINCI_MUX_DEBUG
+	if (cfg->debug || warn) {
 		pr_warn("Setting register %s\n", cfg->name);
 		pr_warn("   %s (0x%08x) = 0x%08x -> 0x%08x\n",
 			cfg->mux_reg_name, cfg->mux_reg, reg_orig, reg);
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(davinci_cfg_reg);
 
-पूर्णांक davinci_cfg_reg_list(स्थिर लघु pins[])
-अणु
-	पूर्णांक i, error = -EINVAL;
+int davinci_cfg_reg_list(const short pins[])
+{
+	int i, error = -EINVAL;
 
-	अगर (pins)
-		क्रम (i = 0; pins[i] >= 0; i++) अणु
+	if (pins)
+		for (i = 0; pins[i] >= 0; i++) {
 			error = davinci_cfg_reg(pins[i]);
-			अगर (error)
-				अवरोध;
-		पूर्ण
+			if (error)
+				break;
+		}
 
-	वापस error;
-पूर्ण
+	return error;
+}

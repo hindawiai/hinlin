@@ -1,53 +1,52 @@
-<शैली गुरु>
 /******************************************************************************
- * tpmअगर.h
+ * tpmif.h
  *
- * TPM I/O पूर्णांकerface क्रम Xen guest OSes, v2
+ * TPM I/O interface for Xen guest OSes, v2
  *
- * This file is in the खुला करोमुख्य.
+ * This file is in the public domain.
  *
  */
 
-#अगर_अघोषित __XEN_PUBLIC_IO_TPMIF_H__
-#घोषणा __XEN_PUBLIC_IO_TPMIF_H__
+#ifndef __XEN_PUBLIC_IO_TPMIF_H__
+#define __XEN_PUBLIC_IO_TPMIF_H__
 
 /*
  * Xenbus state machine
  *
- * Device खोलो:
+ * Device open:
  *   1. Both ends start in XenbusStateInitialising
- *   2. Backend transitions to InitWait (frontend करोes not रुको on this step)
+ *   2. Backend transitions to InitWait (frontend does not wait on this step)
  *   3. Frontend populates ring-ref, event-channel, feature-protocol-v2
  *   4. Frontend transitions to Initialised
- *   5. Backend maps grant and event channel, verअगरies feature-protocol-v2
+ *   5. Backend maps grant and event channel, verifies feature-protocol-v2
  *   6. Backend transitions to Connected
- *   7. Frontend verअगरies feature-protocol-v2, transitions to Connected
+ *   7. Frontend verifies feature-protocol-v2, transitions to Connected
  *
- * Device बंद:
+ * Device close:
  *   1. State is changed to XenbusStateClosing
  *   2. Frontend transitions to Closed
  *   3. Backend unmaps grant and event, changes state to InitWait
  */
 
-क्रमागत vtpm_shared_page_state अणु
+enum vtpm_shared_page_state {
 	VTPM_STATE_IDLE,         /* no contents / vTPM idle / cancel complete */
-	VTPM_STATE_SUBMIT,       /* request पढ़ोy / vTPM working */
-	VTPM_STATE_FINISH,       /* response पढ़ोy / vTPM idle */
+	VTPM_STATE_SUBMIT,       /* request ready / vTPM working */
+	VTPM_STATE_FINISH,       /* response ready / vTPM idle */
 	VTPM_STATE_CANCEL,       /* cancel requested / vTPM working */
-पूर्ण;
-/* The backend should only change state to IDLE or FINISH, जबतक the
+};
+/* The backend should only change state to IDLE or FINISH, while the
  * frontend should only change to SUBMIT or CANCEL. */
 
 
-काष्ठा vtpm_shared_page अणु
-	uपूर्णांक32_t length;         /* request/response length in bytes */
+struct vtpm_shared_page {
+	uint32_t length;         /* request/response length in bytes */
 
-	uपूर्णांक8_t state;           /* क्रमागत vtpm_shared_page_state */
-	uपूर्णांक8_t locality;        /* क्रम the current request */
-	uपूर्णांक8_t pad;
+	uint8_t state;           /* enum vtpm_shared_page_state */
+	uint8_t locality;        /* for the current request */
+	uint8_t pad;
 
-	uपूर्णांक8_t nr_extra_pages;  /* extra pages क्रम दीर्घ packets; may be zero */
-	uपूर्णांक32_t extra_pages[]; /* grant IDs; length in nr_extra_pages */
-पूर्ण;
+	uint8_t nr_extra_pages;  /* extra pages for long packets; may be zero */
+	uint32_t extra_pages[]; /* grant IDs; length in nr_extra_pages */
+};
 
-#पूर्ण_अगर
+#endif

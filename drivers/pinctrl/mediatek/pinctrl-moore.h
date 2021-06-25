@@ -1,52 +1,51 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) 2017-2018 MediaTek Inc.
  *
  * Author: Sean Wang <sean.wang@mediatek.com>
  *
  */
-#अगर_अघोषित __PINCTRL_MOORE_H
-#घोषणा __PINCTRL_MOORE_H
+#ifndef __PINCTRL_MOORE_H
+#define __PINCTRL_MOORE_H
 
-#समावेश <linux/पन.स>
-#समावेश <linux/init.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pinctrl/pinctrl.h>
-#समावेश <linux/pinctrl/pinmux.h>
-#समावेश <linux/pinctrl/pinconf.h>
-#समावेश <linux/pinctrl/pinconf-generic.h>
+#include <linux/io.h>
+#include <linux/init.h>
+#include <linux/of.h>
+#include <linux/of_platform.h>
+#include <linux/platform_device.h>
+#include <linux/pinctrl/pinctrl.h>
+#include <linux/pinctrl/pinmux.h>
+#include <linux/pinctrl/pinconf.h>
+#include <linux/pinctrl/pinconf-generic.h>
 
-#समावेश "../core.h"
-#समावेश "../pinconf.h"
-#समावेश "../pinmux.h"
-#समावेश "mtk-eint.h"
-#समावेश "pinctrl-mtk-common-v2.h"
+#include "../core.h"
+#include "../pinconf.h"
+#include "../pinmux.h"
+#include "mtk-eint.h"
+#include "pinctrl-mtk-common-v2.h"
 
-#घोषणा MTK_RANGE(_a)		अणु .range = (_a), .nranges = ARRAY_SIZE(_a), पूर्ण
+#define MTK_RANGE(_a)		{ .range = (_a), .nranges = ARRAY_SIZE(_a), }
 
-#घोषणा MTK_PIN(_number, _name, _eपूर्णांक_m, _eपूर्णांक_n, _drv_n) अणु	\
+#define MTK_PIN(_number, _name, _eint_m, _eint_n, _drv_n) {	\
 		.number = _number,			\
 		.name = _name,				\
-		.eपूर्णांक = अणु				\
-			.eपूर्णांक_m = _eपूर्णांक_m,		\
-			.eपूर्णांक_n = _eपूर्णांक_n,		\
-		पूर्ण,					\
+		.eint = {				\
+			.eint_m = _eint_m,		\
+			.eint_n = _eint_n,		\
+		},					\
 		.drv_n = _drv_n,			\
-		.funcs = शून्य,				\
-	पूर्ण
+		.funcs = NULL,				\
+	}
 
-#घोषणा PINCTRL_PIN_GROUP(name, id)			\
-	अणु						\
+#define PINCTRL_PIN_GROUP(name, id)			\
+	{						\
 		name,					\
 		id##_pins,				\
 		ARRAY_SIZE(id##_pins),			\
 		id##_funcs,				\
-	पूर्ण
+	}
 
-पूर्णांक mtk_moore_pinctrl_probe(काष्ठा platक्रमm_device *pdev,
-			    स्थिर काष्ठा mtk_pin_soc *soc);
+int mtk_moore_pinctrl_probe(struct platform_device *pdev,
+			    const struct mtk_pin_soc *soc);
 
-#पूर्ण_अगर /* __PINCTRL_MOORE_H */
+#endif /* __PINCTRL_MOORE_H */

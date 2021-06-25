@@ -1,21 +1,20 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 //
 // Freescale imx6sl pinctrl driver
 //
 // Author: Shawn Guo <shawn.guo@linaro.org>
 // Copyright (C) 2013 Freescale Semiconductor, Inc.
 
-#समावेश <linux/err.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/pinctrl/pinctrl.h>
+#include <linux/err.h>
+#include <linux/init.h>
+#include <linux/io.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/pinctrl/pinctrl.h>
 
-#समावेश "pinctrl-imx.h"
+#include "pinctrl-imx.h"
 
-क्रमागत imx6sl_pads अणु
+enum imx6sl_pads {
 	MX6SL_PAD_RESERVE0 = 0,
 	MX6SL_PAD_RESERVE1 = 1,
 	MX6SL_PAD_RESERVE2 = 2,
@@ -185,10 +184,10 @@
 	MX6SL_PAD_UART1_RXD = 166,
 	MX6SL_PAD_UART1_TXD = 167,
 	MX6SL_PAD_WDOG_B = 168,
-पूर्ण;
+};
 
-/* Pad names क्रम the pinmux subप्रणाली */
-अटल स्थिर काष्ठा pinctrl_pin_desc imx6sl_pinctrl_pads[] = अणु
+/* Pad names for the pinmux subsystem */
+static const struct pinctrl_pin_desc imx6sl_pinctrl_pads[] = {
 	IMX_PINCTRL_PIN(MX6SL_PAD_RESERVE0),
 	IMX_PINCTRL_PIN(MX6SL_PAD_RESERVE1),
 	IMX_PINCTRL_PIN(MX6SL_PAD_RESERVE2),
@@ -358,35 +357,35 @@
 	IMX_PINCTRL_PIN(MX6SL_PAD_UART1_RXD),
 	IMX_PINCTRL_PIN(MX6SL_PAD_UART1_TXD),
 	IMX_PINCTRL_PIN(MX6SL_PAD_WDOG_B),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा imx_pinctrl_soc_info imx6sl_pinctrl_info = अणु
+static const struct imx_pinctrl_soc_info imx6sl_pinctrl_info = {
 	.pins = imx6sl_pinctrl_pads,
 	.npins = ARRAY_SIZE(imx6sl_pinctrl_pads),
 	.gpr_compatible = "fsl,imx6sl-iomuxc-gpr",
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id imx6sl_pinctrl_of_match[] = अणु
-	अणु .compatible = "fsl,imx6sl-iomuxc", पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+static const struct of_device_id imx6sl_pinctrl_of_match[] = {
+	{ .compatible = "fsl,imx6sl-iomuxc", },
+	{ /* sentinel */ }
+};
 
-अटल पूर्णांक imx6sl_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	वापस imx_pinctrl_probe(pdev, &imx6sl_pinctrl_info);
-पूर्ण
+static int imx6sl_pinctrl_probe(struct platform_device *pdev)
+{
+	return imx_pinctrl_probe(pdev, &imx6sl_pinctrl_info);
+}
 
-अटल काष्ठा platक्रमm_driver imx6sl_pinctrl_driver = अणु
-	.driver = अणु
+static struct platform_driver imx6sl_pinctrl_driver = {
+	.driver = {
 		.name = "imx6sl-pinctrl",
 		.of_match_table = imx6sl_pinctrl_of_match,
 		.suppress_bind_attrs = true,
-	पूर्ण,
+	},
 	.probe = imx6sl_pinctrl_probe,
-पूर्ण;
+};
 
-अटल पूर्णांक __init imx6sl_pinctrl_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&imx6sl_pinctrl_driver);
-पूर्ण
+static int __init imx6sl_pinctrl_init(void)
+{
+	return platform_driver_register(&imx6sl_pinctrl_driver);
+}
 arch_initcall(imx6sl_pinctrl_init);

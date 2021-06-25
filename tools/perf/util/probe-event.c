@@ -1,300 +1,299 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * probe-event.c : perf-probe definition to probe_events क्रमmat converter
+ * probe-event.c : perf-probe definition to probe_events format converter
  *
  * Written by Masami Hiramatsu <mhiramat@redhat.com>
  */
 
-#समावेश <पूर्णांकtypes.h>
-#समावेश <sys/utsname.h>
-#समावेश <sys/types.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <fcntl.h>
-#समावेश <त्रुटिसं.स>
-#समावेश <मानकपन.स>
-#समावेश <unistd.h>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <मानकतर्क.स>
-#समावेश <सीमा.स>
-#समावेश <elf.h>
+#include <inttypes.h>
+#include <sys/utsname.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdarg.h>
+#include <limits.h>
+#include <elf.h>
 
-#समावेश "build-id.h"
-#समावेश "event.h"
-#समावेश "namespaces.h"
-#समावेश "strlist.h"
-#समावेश "strfilter.h"
-#समावेश "debug.h"
-#समावेश "dso.h"
-#समावेश "color.h"
-#समावेश "map.h"
-#समावेश "maps.h"
-#समावेश "symbol.h"
-#समावेश <api/fs/fs.h>
-#समावेश "trace-event.h"	/* For __maybe_unused */
-#समावेश "probe-event.h"
-#समावेश "probe-finder.h"
-#समावेश "probe-file.h"
-#समावेश "session.h"
-#समावेश "string2.h"
-#समावेश "strbuf.h"
+#include "build-id.h"
+#include "event.h"
+#include "namespaces.h"
+#include "strlist.h"
+#include "strfilter.h"
+#include "debug.h"
+#include "dso.h"
+#include "color.h"
+#include "map.h"
+#include "maps.h"
+#include "symbol.h"
+#include <api/fs/fs.h>
+#include "trace-event.h"	/* For __maybe_unused */
+#include "probe-event.h"
+#include "probe-finder.h"
+#include "probe-file.h"
+#include "session.h"
+#include "string2.h"
+#include "strbuf.h"
 
-#समावेश <subcmd/pager.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/zभाग.स>
+#include <subcmd/pager.h>
+#include <linux/ctype.h>
+#include <linux/zalloc.h>
 
-#अगर_घोषित HAVE_DEBUGINFOD_SUPPORT
-#समावेश <elfutils/debuginfod.h>
-#पूर्ण_अगर
+#ifdef HAVE_DEBUGINFOD_SUPPORT
+#include <elfutils/debuginfod.h>
+#endif
 
-#घोषणा PERFPROBE_GROUP "probe"
+#define PERFPROBE_GROUP "probe"
 
 bool probe_event_dry_run;	/* Dry run flag */
-काष्ठा probe_conf probe_conf = अणु .magic_num = DEFAULT_PROBE_MAGIC_NUM पूर्ण;
+struct probe_conf probe_conf = { .magic_num = DEFAULT_PROBE_MAGIC_NUM };
 
-#घोषणा semantic_error(msg ...) pr_err("Semantic error :" msg)
+#define semantic_error(msg ...) pr_err("Semantic error :" msg)
 
-पूर्णांक e_snम_लिखो(अक्षर *str, माप_प्रकार size, स्थिर अक्षर *क्रमmat, ...)
-अणु
-	पूर्णांक ret;
-	बहु_सूची ap;
-	बहु_शुरू(ap, क्रमmat);
-	ret = vsnम_लिखो(str, size, क्रमmat, ap);
-	बहु_पूर्ण(ap);
-	अगर (ret >= (पूर्णांक)size)
+int e_snprintf(char *str, size_t size, const char *format, ...)
+{
+	int ret;
+	va_list ap;
+	va_start(ap, format);
+	ret = vsnprintf(str, size, format, ap);
+	va_end(ap);
+	if (ret >= (int)size)
 		ret = -E2BIG;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा machine *host_machine;
+static struct machine *host_machine;
 
 /* Initialize symbol maps and path of vmlinux/modules */
-पूर्णांक init_probe_symbol_maps(bool user_only)
-अणु
-	पूर्णांक ret;
+int init_probe_symbol_maps(bool user_only)
+{
+	int ret;
 
 	symbol_conf.sort_by_name = true;
 	symbol_conf.allow_aliases = true;
-	ret = symbol__init(शून्य);
-	अगर (ret < 0) अणु
+	ret = symbol__init(NULL);
+	if (ret < 0) {
 		pr_debug("Failed to init symbol map.\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (host_machine || user_only)	/* alपढ़ोy initialized */
-		वापस 0;
+	if (host_machine || user_only)	/* already initialized */
+		return 0;
 
-	अगर (symbol_conf.vmlinux_name)
+	if (symbol_conf.vmlinux_name)
 		pr_debug("Use vmlinux: %s\n", symbol_conf.vmlinux_name);
 
 	host_machine = machine__new_host();
-	अगर (!host_machine) अणु
+	if (!host_machine) {
 		pr_debug("machine__new_host() failed.\n");
-		symbol__निकास();
+		symbol__exit();
 		ret = -1;
-	पूर्ण
+	}
 out:
-	अगर (ret < 0)
+	if (ret < 0)
 		pr_warning("Failed to init vmlinux path.\n");
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम निकास_probe_symbol_maps(व्योम)
-अणु
+void exit_probe_symbol_maps(void)
+{
 	machine__delete(host_machine);
-	host_machine = शून्य;
-	symbol__निकास();
-पूर्ण
+	host_machine = NULL;
+	symbol__exit();
+}
 
-अटल काष्ठा ref_reloc_sym *kernel_get_ref_reloc_sym(काष्ठा map **pmap)
-अणु
-	/* kmap->ref_reloc_sym should be set अगर host_machine is initialized */
-	काष्ठा kmap *kmap;
-	काष्ठा map *map = machine__kernel_map(host_machine);
+static struct ref_reloc_sym *kernel_get_ref_reloc_sym(struct map **pmap)
+{
+	/* kmap->ref_reloc_sym should be set if host_machine is initialized */
+	struct kmap *kmap;
+	struct map *map = machine__kernel_map(host_machine);
 
-	अगर (map__load(map) < 0)
-		वापस शून्य;
+	if (map__load(map) < 0)
+		return NULL;
 
 	kmap = map__kmap(map);
-	अगर (!kmap)
-		वापस शून्य;
+	if (!kmap)
+		return NULL;
 
-	अगर (pmap)
+	if (pmap)
 		*pmap = map;
 
-	वापस kmap->ref_reloc_sym;
-पूर्ण
+	return kmap->ref_reloc_sym;
+}
 
-अटल पूर्णांक kernel_get_symbol_address_by_name(स्थिर अक्षर *name, u64 *addr,
+static int kernel_get_symbol_address_by_name(const char *name, u64 *addr,
 					     bool reloc, bool reladdr)
-अणु
-	काष्ठा ref_reloc_sym *reloc_sym;
-	काष्ठा symbol *sym;
-	काष्ठा map *map;
+{
+	struct ref_reloc_sym *reloc_sym;
+	struct symbol *sym;
+	struct map *map;
 
 	/* ref_reloc_sym is just a label. Need a special fix*/
 	reloc_sym = kernel_get_ref_reloc_sym(&map);
-	अगर (reloc_sym && म_भेद(name, reloc_sym->name) == 0)
+	if (reloc_sym && strcmp(name, reloc_sym->name) == 0)
 		*addr = (!map->reloc || reloc) ? reloc_sym->addr :
 			reloc_sym->unrelocated_addr;
-	अन्यथा अणु
+	else {
 		sym = machine__find_kernel_symbol_by_name(host_machine, name, &map);
-		अगर (!sym)
-			वापस -ENOENT;
+		if (!sym)
+			return -ENOENT;
 		*addr = map->unmap_ip(map, sym->start) -
 			((reloc) ? 0 : map->reloc) -
 			((reladdr) ? map->start : 0);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल काष्ठा map *kernel_get_module_map(स्थिर अक्षर *module)
-अणु
-	काष्ठा maps *maps = machine__kernel_maps(host_machine);
-	काष्ठा map *pos;
+static struct map *kernel_get_module_map(const char *module)
+{
+	struct maps *maps = machine__kernel_maps(host_machine);
+	struct map *pos;
 
 	/* A file path -- this is an offline module */
-	अगर (module && म_अक्षर(module, '/'))
-		वापस dso__new_map(module);
+	if (module && strchr(module, '/'))
+		return dso__new_map(module);
 
-	अगर (!module) अणु
+	if (!module) {
 		pos = machine__kernel_map(host_machine);
-		वापस map__get(pos);
-	पूर्ण
+		return map__get(pos);
+	}
 
-	maps__क्रम_each_entry(maps, pos) अणु
-		/* लघु_name is "[module]" */
-		अगर (म_भेदन(pos->dso->लघु_name + 1, module,
-			    pos->dso->लघु_name_len - 2) == 0 &&
-		    module[pos->dso->लघु_name_len - 2] == '\0') अणु
-			वापस map__get(pos);
-		पूर्ण
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	maps__for_each_entry(maps, pos) {
+		/* short_name is "[module]" */
+		if (strncmp(pos->dso->short_name + 1, module,
+			    pos->dso->short_name_len - 2) == 0 &&
+		    module[pos->dso->short_name_len - 2] == '\0') {
+			return map__get(pos);
+		}
+	}
+	return NULL;
+}
 
-काष्ठा map *get_target_map(स्थिर अक्षर *target, काष्ठा nsinfo *nsi, bool user)
-अणु
+struct map *get_target_map(const char *target, struct nsinfo *nsi, bool user)
+{
 	/* Init maps of given executable or kernel */
-	अगर (user) अणु
-		काष्ठा map *map;
+	if (user) {
+		struct map *map;
 
 		map = dso__new_map(target);
-		अगर (map && map->dso)
+		if (map && map->dso)
 			map->dso->nsinfo = nsinfo__get(nsi);
-		वापस map;
-	पूर्ण अन्यथा अणु
-		वापस kernel_get_module_map(target);
-	पूर्ण
-पूर्ण
+		return map;
+	} else {
+		return kernel_get_module_map(target);
+	}
+}
 
-अटल पूर्णांक convert_exec_to_group(स्थिर अक्षर *exec, अक्षर **result)
-अणु
-	अक्षर *ptr1, *ptr2, *exec_copy;
-	अक्षर buf[64];
-	पूर्णांक ret;
+static int convert_exec_to_group(const char *exec, char **result)
+{
+	char *ptr1, *ptr2, *exec_copy;
+	char buf[64];
+	int ret;
 
 	exec_copy = strdup(exec);
-	अगर (!exec_copy)
-		वापस -ENOMEM;
+	if (!exec_copy)
+		return -ENOMEM;
 
 	ptr1 = basename(exec_copy);
-	अगर (!ptr1) अणु
+	if (!ptr1) {
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	क्रम (ptr2 = ptr1; *ptr2 != '\0'; ptr2++) अणु
-		अगर (!है_अक्षर_अंक(*ptr2) && *ptr2 != '_') अणु
+	for (ptr2 = ptr1; *ptr2 != '\0'; ptr2++) {
+		if (!isalnum(*ptr2) && *ptr2 != '_') {
 			*ptr2 = '\0';
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	ret = e_snम_लिखो(buf, 64, "%s_%s", PERFPROBE_GROUP, ptr1);
-	अगर (ret < 0)
-		जाओ out;
+	ret = e_snprintf(buf, 64, "%s_%s", PERFPROBE_GROUP, ptr1);
+	if (ret < 0)
+		goto out;
 
 	*result = strdup(buf);
 	ret = *result ? 0 : -ENOMEM;
 
 out:
-	मुक्त(exec_copy);
-	वापस ret;
-पूर्ण
+	free(exec_copy);
+	return ret;
+}
 
-अटल व्योम clear_perf_probe_poपूर्णांक(काष्ठा perf_probe_poपूर्णांक *pp)
-अणु
-	zमुक्त(&pp->file);
-	zमुक्त(&pp->function);
-	zमुक्त(&pp->lazy_line);
-पूर्ण
+static void clear_perf_probe_point(struct perf_probe_point *pp)
+{
+	zfree(&pp->file);
+	zfree(&pp->function);
+	zfree(&pp->lazy_line);
+}
 
-अटल व्योम clear_probe_trace_events(काष्ठा probe_trace_event *tevs, पूर्णांक ntevs)
-अणु
-	पूर्णांक i;
+static void clear_probe_trace_events(struct probe_trace_event *tevs, int ntevs)
+{
+	int i;
 
-	क्रम (i = 0; i < ntevs; i++)
+	for (i = 0; i < ntevs; i++)
 		clear_probe_trace_event(tevs + i);
-पूर्ण
+}
 
-अटल bool kprobe_blacklist__listed(अचिन्हित दीर्घ address);
-अटल bool kprobe_warn_out_range(स्थिर अक्षर *symbol, अचिन्हित दीर्घ address)
-अणु
-	काष्ठा map *map;
+static bool kprobe_blacklist__listed(unsigned long address);
+static bool kprobe_warn_out_range(const char *symbol, unsigned long address)
+{
+	struct map *map;
 	bool ret = false;
 
-	map = kernel_get_module_map(शून्य);
-	अगर (map) अणु
+	map = kernel_get_module_map(NULL);
+	if (map) {
 		ret = address <= map->start || map->end < address;
-		अगर (ret)
+		if (ret)
 			pr_warning("%s is out of .text, skip it.\n", symbol);
 		map__put(map);
-	पूर्ण
-	अगर (!ret && kprobe_blacklist__listed(address)) अणु
+	}
+	if (!ret && kprobe_blacklist__listed(address)) {
 		pr_warning("%s is blacklisted function, skip it.\n", symbol);
 		ret = true;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * @module can be module name of module file path. In हाल of path,
+ * @module can be module name of module file path. In case of path,
  * inspect elf and find out what is actual module name.
- * Caller has to मुक्त mod_name after using it.
+ * Caller has to free mod_name after using it.
  */
-अटल अक्षर *find_module_name(स्थिर अक्षर *module)
-अणु
-	पूर्णांक fd;
+static char *find_module_name(const char *module)
+{
+	int fd;
 	Elf *elf;
 	GElf_Ehdr ehdr;
 	GElf_Shdr shdr;
 	Elf_Data *data;
 	Elf_Scn *sec;
-	अक्षर *mod_name = शून्य;
-	पूर्णांक name_offset;
+	char *mod_name = NULL;
+	int name_offset;
 
-	fd = खोलो(module, O_RDONLY);
-	अगर (fd < 0)
-		वापस शून्य;
+	fd = open(module, O_RDONLY);
+	if (fd < 0)
+		return NULL;
 
-	elf = elf_begin(fd, PERF_ELF_C_READ_MMAP, शून्य);
-	अगर (elf == शून्य)
-		जाओ elf_err;
+	elf = elf_begin(fd, PERF_ELF_C_READ_MMAP, NULL);
+	if (elf == NULL)
+		goto elf_err;
 
-	अगर (gelf_getehdr(elf, &ehdr) == शून्य)
-		जाओ ret_err;
+	if (gelf_getehdr(elf, &ehdr) == NULL)
+		goto ret_err;
 
 	sec = elf_section_by_name(elf, &ehdr, &shdr,
-			".gnu.linkonce.this_module", शून्य);
-	अगर (!sec)
-		जाओ ret_err;
+			".gnu.linkonce.this_module", NULL);
+	if (!sec)
+		goto ret_err;
 
-	data = elf_getdata(sec, शून्य);
-	अगर (!data || !data->d_buf)
-		जाओ ret_err;
+	data = elf_getdata(sec, NULL);
+	if (!data || !data->d_buf)
+		goto ret_err;
 
 	/*
 	 * NOTE:
@@ -302,1008 +301,1008 @@ out:
 	 * maps to 'struct module' from linux/module.h. This section contains
 	 * actual module name which will be used by kernel after loading it.
 	 * But, we cannot use 'struct module' here since linux/module.h is not
-	 * exposed to user-space. Offset of 'name' has reमुख्यed same from दीर्घ
-	 * समय, so hardcoding it here.
+	 * exposed to user-space. Offset of 'name' has remained same from long
+	 * time, so hardcoding it here.
 	 */
-	अगर (ehdr.e_ident[EI_CLASS] == ELFCLASS32)
+	if (ehdr.e_ident[EI_CLASS] == ELFCLASS32)
 		name_offset = 12;
-	अन्यथा	/* expect ELFCLASS64 by शेष */
+	else	/* expect ELFCLASS64 by default */
 		name_offset = 24;
 
-	mod_name = strdup((अक्षर *)data->d_buf + name_offset);
+	mod_name = strdup((char *)data->d_buf + name_offset);
 
 ret_err:
 	elf_end(elf);
 elf_err:
-	बंद(fd);
-	वापस mod_name;
-पूर्ण
+	close(fd);
+	return mod_name;
+}
 
-#अगर_घोषित HAVE_DWARF_SUPPORT
+#ifdef HAVE_DWARF_SUPPORT
 
-अटल पूर्णांक kernel_get_module_dso(स्थिर अक्षर *module, काष्ठा dso **pdso)
-अणु
-	काष्ठा dso *dso;
-	काष्ठा map *map;
-	स्थिर अक्षर *vmlinux_name;
-	पूर्णांक ret = 0;
+static int kernel_get_module_dso(const char *module, struct dso **pdso)
+{
+	struct dso *dso;
+	struct map *map;
+	const char *vmlinux_name;
+	int ret = 0;
 
-	अगर (module) अणु
-		अक्षर module_name[128];
+	if (module) {
+		char module_name[128];
 
-		snम_लिखो(module_name, माप(module_name), "[%s]", module);
+		snprintf(module_name, sizeof(module_name), "[%s]", module);
 		map = maps__find_by_name(&host_machine->kmaps, module_name);
-		अगर (map) अणु
+		if (map) {
 			dso = map->dso;
-			जाओ found;
-		पूर्ण
+			goto found;
+		}
 		pr_debug("Failed to find module %s.\n", module);
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
 	map = machine__kernel_map(host_machine);
 	dso = map->dso;
-	अगर (!dso->has_build_id)
-		dso__पढ़ो_running_kernel_build_id(dso, host_machine);
+	if (!dso->has_build_id)
+		dso__read_running_kernel_build_id(dso, host_machine);
 
 	vmlinux_name = symbol_conf.vmlinux_name;
-	dso->load_त्रुटि_सं = 0;
-	अगर (vmlinux_name)
+	dso->load_errno = 0;
+	if (vmlinux_name)
 		ret = dso__load_vmlinux(dso, map, vmlinux_name, false);
-	अन्यथा
+	else
 		ret = dso__load_vmlinux_path(dso, map);
 found:
 	*pdso = dso;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Some binaries like glibc have special symbols which are on the symbol
  * table, but not in the debuginfo. If we can find the address of the
- * symbol from map, we can translate the address back to the probe poपूर्णांक.
+ * symbol from map, we can translate the address back to the probe point.
  */
-अटल पूर्णांक find_alternative_probe_poपूर्णांक(काष्ठा debuginfo *dinfo,
-					काष्ठा perf_probe_poपूर्णांक *pp,
-					काष्ठा perf_probe_poपूर्णांक *result,
-					स्थिर अक्षर *target, काष्ठा nsinfo *nsi,
+static int find_alternative_probe_point(struct debuginfo *dinfo,
+					struct perf_probe_point *pp,
+					struct perf_probe_point *result,
+					const char *target, struct nsinfo *nsi,
 					bool uprobes)
-अणु
-	काष्ठा map *map = शून्य;
-	काष्ठा symbol *sym;
+{
+	struct map *map = NULL;
+	struct symbol *sym;
 	u64 address = 0;
-	पूर्णांक ret = -ENOENT;
+	int ret = -ENOENT;
 
-	/* This can work only क्रम function-name based one */
-	अगर (!pp->function || pp->file)
-		वापस -ENOTSUP;
+	/* This can work only for function-name based one */
+	if (!pp->function || pp->file)
+		return -ENOTSUP;
 
 	map = get_target_map(target, nsi, uprobes);
-	अगर (!map)
-		वापस -EINVAL;
+	if (!map)
+		return -EINVAL;
 
 	/* Find the address of given function */
-	map__क्रम_each_symbol_by_name(map, pp->function, sym) अणु
-		अगर (uprobes) अणु
+	map__for_each_symbol_by_name(map, pp->function, sym) {
+		if (uprobes) {
 			address = sym->start;
-			अगर (sym->type == STT_GNU_IFUNC)
+			if (sym->type == STT_GNU_IFUNC)
 				pr_warning("Warning: The probe function (%s) is a GNU indirect function.\n"
 					   "Consider identifying the final function used at run time and set the probe directly on that.\n",
 					   pp->function);
-		पूर्ण अन्यथा
+		} else
 			address = map->unmap_ip(map, sym->start) - map->reloc;
-		अवरोध;
-	पूर्ण
-	अगर (!address) अणु
+		break;
+	}
+	if (!address) {
 		ret = -ENOENT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	pr_debug("Symbol %s address found : %" PRIx64 "\n",
 			pp->function, address);
 
-	ret = debuginfo__find_probe_poपूर्णांक(dinfo, (अचिन्हित दीर्घ)address,
+	ret = debuginfo__find_probe_point(dinfo, (unsigned long)address,
 					  result);
-	अगर (ret <= 0)
+	if (ret <= 0)
 		ret = (!ret) ? -ENOENT : ret;
-	अन्यथा अणु
+	else {
 		result->offset += pp->offset;
 		result->line += pp->line;
 		result->retprobe = pp->retprobe;
 		ret = 0;
-	पूर्ण
+	}
 
 out:
 	map__put(map);
-	वापस ret;
+	return ret;
 
-पूर्ण
+}
 
-अटल पूर्णांक get_alternative_probe_event(काष्ठा debuginfo *dinfo,
-				       काष्ठा perf_probe_event *pev,
-				       काष्ठा perf_probe_poपूर्णांक *पंचांगp)
-अणु
-	पूर्णांक ret;
+static int get_alternative_probe_event(struct debuginfo *dinfo,
+				       struct perf_probe_event *pev,
+				       struct perf_probe_point *tmp)
+{
+	int ret;
 
-	स_नकल(पंचांगp, &pev->poपूर्णांक, माप(*पंचांगp));
-	स_रखो(&pev->poपूर्णांक, 0, माप(pev->poपूर्णांक));
-	ret = find_alternative_probe_poपूर्णांक(dinfo, पंचांगp, &pev->poपूर्णांक, pev->target,
+	memcpy(tmp, &pev->point, sizeof(*tmp));
+	memset(&pev->point, 0, sizeof(pev->point));
+	ret = find_alternative_probe_point(dinfo, tmp, &pev->point, pev->target,
 					   pev->nsi, pev->uprobes);
-	अगर (ret < 0)
-		स_नकल(&pev->poपूर्णांक, पंचांगp, माप(*पंचांगp));
+	if (ret < 0)
+		memcpy(&pev->point, tmp, sizeof(*tmp));
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक get_alternative_line_range(काष्ठा debuginfo *dinfo,
-				      काष्ठा line_range *lr,
-				      स्थिर अक्षर *target, bool user)
-अणु
-	काष्ठा perf_probe_poपूर्णांक pp = अणु .function = lr->function,
+static int get_alternative_line_range(struct debuginfo *dinfo,
+				      struct line_range *lr,
+				      const char *target, bool user)
+{
+	struct perf_probe_point pp = { .function = lr->function,
 				       .file = lr->file,
-				       .line = lr->start पूर्ण;
-	काष्ठा perf_probe_poपूर्णांक result;
-	पूर्णांक ret, len = 0;
+				       .line = lr->start };
+	struct perf_probe_point result;
+	int ret, len = 0;
 
-	स_रखो(&result, 0, माप(result));
+	memset(&result, 0, sizeof(result));
 
-	अगर (lr->end != पूर्णांक_उच्च)
+	if (lr->end != INT_MAX)
 		len = lr->end - lr->start;
-	ret = find_alternative_probe_poपूर्णांक(dinfo, &pp, &result,
-					   target, शून्य, user);
-	अगर (!ret) अणु
+	ret = find_alternative_probe_point(dinfo, &pp, &result,
+					   target, NULL, user);
+	if (!ret) {
 		lr->function = result.function;
 		lr->file = result.file;
 		lr->start = result.line;
-		अगर (lr->end != पूर्णांक_उच्च)
+		if (lr->end != INT_MAX)
 			lr->end = lr->start + len;
-		clear_perf_probe_poपूर्णांक(&pp);
-	पूर्ण
-	वापस ret;
-पूर्ण
+		clear_perf_probe_point(&pp);
+	}
+	return ret;
+}
 
-#अगर_घोषित HAVE_DEBUGINFOD_SUPPORT
-अटल काष्ठा debuginfo *खोलो_from_debuginfod(काष्ठा dso *dso, काष्ठा nsinfo *nsi,
+#ifdef HAVE_DEBUGINFOD_SUPPORT
+static struct debuginfo *open_from_debuginfod(struct dso *dso, struct nsinfo *nsi,
 					      bool silent)
-अणु
+{
 	debuginfod_client *c = debuginfod_begin();
-	अक्षर sbuild_id[SBUILD_ID_SIZE + 1];
-	काष्ठा debuginfo *ret = शून्य;
-	काष्ठा nscookie nsc;
-	अक्षर *path;
-	पूर्णांक fd;
+	char sbuild_id[SBUILD_ID_SIZE + 1];
+	struct debuginfo *ret = NULL;
+	struct nscookie nsc;
+	char *path;
+	int fd;
 
-	अगर (!c)
-		वापस शून्य;
+	if (!c)
+		return NULL;
 
-	build_id__प्र_लिखो(&dso->bid, sbuild_id);
-	fd = debuginfod_find_debuginfo(c, (स्थिर अचिन्हित अक्षर *)sbuild_id,
+	build_id__sprintf(&dso->bid, sbuild_id);
+	fd = debuginfod_find_debuginfo(c, (const unsigned char *)sbuild_id,
 					0, &path);
-	अगर (fd >= 0)
-		बंद(fd);
+	if (fd >= 0)
+		close(fd);
 	debuginfod_end(c);
-	अगर (fd < 0) अणु
-		अगर (!silent)
+	if (fd < 0) {
+		if (!silent)
 			pr_debug("Failed to find debuginfo in debuginfod.\n");
-		वापस शून्य;
-	पूर्ण
-	अगर (!silent)
+		return NULL;
+	}
+	if (!silent)
 		pr_debug("Load debuginfo from debuginfod (%s)\n", path);
 
 	nsinfo__mountns_enter(nsi, &nsc);
-	ret = debuginfo__new((स्थिर अक्षर *)path);
-	nsinfo__mountns_निकास(&nsc);
-	वापस ret;
-पूर्ण
-#अन्यथा
-अटल अंतरभूत
-काष्ठा debuginfo *खोलो_from_debuginfod(काष्ठा dso *dso __maybe_unused,
-				       काष्ठा nsinfo *nsi __maybe_unused,
+	ret = debuginfo__new((const char *)path);
+	nsinfo__mountns_exit(&nsc);
+	return ret;
+}
+#else
+static inline
+struct debuginfo *open_from_debuginfod(struct dso *dso __maybe_unused,
+				       struct nsinfo *nsi __maybe_unused,
 				       bool silent __maybe_unused)
-अणु
-	वापस शून्य;
-पूर्ण
-#पूर्ण_अगर
+{
+	return NULL;
+}
+#endif
 
 /* Open new debuginfo of given module */
-अटल काष्ठा debuginfo *खोलो_debuginfo(स्थिर अक्षर *module, काष्ठा nsinfo *nsi,
+static struct debuginfo *open_debuginfo(const char *module, struct nsinfo *nsi,
 					bool silent)
-अणु
-	स्थिर अक्षर *path = module;
-	अक्षर reason[STRERR_बफ_मानE];
-	काष्ठा debuginfo *ret = शून्य;
-	काष्ठा dso *dso = शून्य;
-	काष्ठा nscookie nsc;
-	पूर्णांक err;
+{
+	const char *path = module;
+	char reason[STRERR_BUFSIZE];
+	struct debuginfo *ret = NULL;
+	struct dso *dso = NULL;
+	struct nscookie nsc;
+	int err;
 
-	अगर (!module || !म_अक्षर(module, '/')) अणु
+	if (!module || !strchr(module, '/')) {
 		err = kernel_get_module_dso(module, &dso);
-		अगर (err < 0) अणु
-			अगर (!dso || dso->load_त्रुटि_सं == 0) अणु
-				अगर (!str_error_r(-err, reason, STRERR_बफ_मानE))
-					म_नकल(reason, "(unknown)");
-			पूर्ण अन्यथा
-				dso__म_त्रुटि_load(dso, reason, STRERR_बफ_मानE);
-			अगर (dso)
-				ret = खोलो_from_debuginfod(dso, nsi, silent);
-			अगर (ret)
-				वापस ret;
-			अगर (!silent) अणु
-				अगर (module)
+		if (err < 0) {
+			if (!dso || dso->load_errno == 0) {
+				if (!str_error_r(-err, reason, STRERR_BUFSIZE))
+					strcpy(reason, "(unknown)");
+			} else
+				dso__strerror_load(dso, reason, STRERR_BUFSIZE);
+			if (dso)
+				ret = open_from_debuginfod(dso, nsi, silent);
+			if (ret)
+				return ret;
+			if (!silent) {
+				if (module)
 					pr_err("Module %s is not loaded, please specify its full path name.\n", module);
-				अन्यथा
+				else
 					pr_err("Failed to find the path for the kernel: %s\n", reason);
-			पूर्ण
-			वापस शून्य;
-		पूर्ण
-		path = dso->दीर्घ_name;
-	पूर्ण
+			}
+			return NULL;
+		}
+		path = dso->long_name;
+	}
 	nsinfo__mountns_enter(nsi, &nsc);
 	ret = debuginfo__new(path);
-	अगर (!ret && !silent) अणु
+	if (!ret && !silent) {
 		pr_warning("The %s file has no debug information.\n", path);
-		अगर (!module || !strtailcmp(path, ".ko"))
+		if (!module || !strtailcmp(path, ".ko"))
 			pr_warning("Rebuild with CONFIG_DEBUG_INFO=y, ");
-		अन्यथा
+		else
 			pr_warning("Rebuild with -g, ");
 		pr_warning("or install an appropriate debuginfo package.\n");
-	पूर्ण
-	nsinfo__mountns_निकास(&nsc);
-	वापस ret;
-पूर्ण
+	}
+	nsinfo__mountns_exit(&nsc);
+	return ret;
+}
 
 /* For caching the last debuginfo */
-अटल काष्ठा debuginfo *debuginfo_cache;
-अटल अक्षर *debuginfo_cache_path;
+static struct debuginfo *debuginfo_cache;
+static char *debuginfo_cache_path;
 
-अटल काष्ठा debuginfo *debuginfo_cache__खोलो(स्थिर अक्षर *module, bool silent)
-अणु
-	स्थिर अक्षर *path = module;
+static struct debuginfo *debuginfo_cache__open(const char *module, bool silent)
+{
+	const char *path = module;
 
-	/* If the module is शून्य, it should be the kernel. */
-	अगर (!module)
+	/* If the module is NULL, it should be the kernel. */
+	if (!module)
 		path = "kernel";
 
-	अगर (debuginfo_cache_path && !म_भेद(debuginfo_cache_path, path))
-		जाओ out;
+	if (debuginfo_cache_path && !strcmp(debuginfo_cache_path, path))
+		goto out;
 
 	/* Copy module path */
-	मुक्त(debuginfo_cache_path);
+	free(debuginfo_cache_path);
 	debuginfo_cache_path = strdup(path);
-	अगर (!debuginfo_cache_path) अणु
+	if (!debuginfo_cache_path) {
 		debuginfo__delete(debuginfo_cache);
-		debuginfo_cache = शून्य;
-		जाओ out;
-	पूर्ण
+		debuginfo_cache = NULL;
+		goto out;
+	}
 
-	debuginfo_cache = खोलो_debuginfo(module, शून्य, silent);
-	अगर (!debuginfo_cache)
-		zमुक्त(&debuginfo_cache_path);
+	debuginfo_cache = open_debuginfo(module, NULL, silent);
+	if (!debuginfo_cache)
+		zfree(&debuginfo_cache_path);
 out:
-	वापस debuginfo_cache;
-पूर्ण
+	return debuginfo_cache;
+}
 
-अटल व्योम debuginfo_cache__निकास(व्योम)
-अणु
+static void debuginfo_cache__exit(void)
+{
 	debuginfo__delete(debuginfo_cache);
-	debuginfo_cache = शून्य;
-	zमुक्त(&debuginfo_cache_path);
-पूर्ण
+	debuginfo_cache = NULL;
+	zfree(&debuginfo_cache_path);
+}
 
 
-अटल पूर्णांक get_text_start_address(स्थिर अक्षर *exec, अचिन्हित दीर्घ *address,
-				  काष्ठा nsinfo *nsi)
-अणु
+static int get_text_start_address(const char *exec, unsigned long *address,
+				  struct nsinfo *nsi)
+{
 	Elf *elf;
 	GElf_Ehdr ehdr;
 	GElf_Shdr shdr;
-	पूर्णांक fd, ret = -ENOENT;
-	काष्ठा nscookie nsc;
+	int fd, ret = -ENOENT;
+	struct nscookie nsc;
 
 	nsinfo__mountns_enter(nsi, &nsc);
-	fd = खोलो(exec, O_RDONLY);
-	nsinfo__mountns_निकास(&nsc);
-	अगर (fd < 0)
-		वापस -त्रुटि_सं;
+	fd = open(exec, O_RDONLY);
+	nsinfo__mountns_exit(&nsc);
+	if (fd < 0)
+		return -errno;
 
-	elf = elf_begin(fd, PERF_ELF_C_READ_MMAP, शून्य);
-	अगर (elf == शून्य) अणु
+	elf = elf_begin(fd, PERF_ELF_C_READ_MMAP, NULL);
+	if (elf == NULL) {
 		ret = -EINVAL;
-		जाओ out_बंद;
-	पूर्ण
+		goto out_close;
+	}
 
-	अगर (gelf_getehdr(elf, &ehdr) == शून्य)
-		जाओ out;
+	if (gelf_getehdr(elf, &ehdr) == NULL)
+		goto out;
 
-	अगर (!elf_section_by_name(elf, &ehdr, &shdr, ".text", शून्य))
-		जाओ out;
+	if (!elf_section_by_name(elf, &ehdr, &shdr, ".text", NULL))
+		goto out;
 
 	*address = shdr.sh_addr - shdr.sh_offset;
 	ret = 0;
 out:
 	elf_end(elf);
-out_बंद:
-	बंद(fd);
+out_close:
+	close(fd);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Convert trace poपूर्णांक to probe poपूर्णांक with debuginfo
+ * Convert trace point to probe point with debuginfo
  */
-अटल पूर्णांक find_perf_probe_poपूर्णांक_from_dwarf(काष्ठा probe_trace_poपूर्णांक *tp,
-					    काष्ठा perf_probe_poपूर्णांक *pp,
+static int find_perf_probe_point_from_dwarf(struct probe_trace_point *tp,
+					    struct perf_probe_point *pp,
 					    bool is_kprobe)
-अणु
-	काष्ठा debuginfo *dinfo = शून्य;
-	अचिन्हित दीर्घ stext = 0;
+{
+	struct debuginfo *dinfo = NULL;
+	unsigned long stext = 0;
 	u64 addr = tp->address;
-	पूर्णांक ret = -ENOENT;
+	int ret = -ENOENT;
 
 	/* convert the address to dwarf address */
-	अगर (!is_kprobe) अणु
-		अगर (!addr) अणु
+	if (!is_kprobe) {
+		if (!addr) {
 			ret = -EINVAL;
-			जाओ error;
-		पूर्ण
-		ret = get_text_start_address(tp->module, &stext, शून्य);
-		अगर (ret < 0)
-			जाओ error;
+			goto error;
+		}
+		ret = get_text_start_address(tp->module, &stext, NULL);
+		if (ret < 0)
+			goto error;
 		addr += stext;
-	पूर्ण अन्यथा अगर (tp->symbol) अणु
-		/* If the module is given, this वापसs relative address */
+	} else if (tp->symbol) {
+		/* If the module is given, this returns relative address */
 		ret = kernel_get_symbol_address_by_name(tp->symbol, &addr,
 							false, !!tp->module);
-		अगर (ret != 0)
-			जाओ error;
+		if (ret != 0)
+			goto error;
 		addr += tp->offset;
-	पूर्ण
+	}
 
 	pr_debug("try to find information at %" PRIx64 " in %s\n", addr,
 		 tp->module ? : "kernel");
 
-	dinfo = debuginfo_cache__खोलो(tp->module, verbose <= 0);
-	अगर (dinfo)
-		ret = debuginfo__find_probe_poपूर्णांक(dinfo,
-						 (अचिन्हित दीर्घ)addr, pp);
-	अन्यथा
+	dinfo = debuginfo_cache__open(tp->module, verbose <= 0);
+	if (dinfo)
+		ret = debuginfo__find_probe_point(dinfo,
+						 (unsigned long)addr, pp);
+	else
 		ret = -ENOENT;
 
-	अगर (ret > 0) अणु
+	if (ret > 0) {
 		pp->retprobe = tp->retprobe;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 error:
 	pr_debug("Failed to find corresponding probes from debuginfo.\n");
-	वापस ret ? : -ENOENT;
-पूर्ण
+	return ret ? : -ENOENT;
+}
 
 /* Adjust symbol name and address */
-अटल पूर्णांक post_process_probe_trace_poपूर्णांक(काष्ठा probe_trace_poपूर्णांक *tp,
-					   काष्ठा map *map, अचिन्हित दीर्घ offs)
-अणु
-	काष्ठा symbol *sym;
+static int post_process_probe_trace_point(struct probe_trace_point *tp,
+					   struct map *map, unsigned long offs)
+{
+	struct symbol *sym;
 	u64 addr = tp->address - offs;
 
 	sym = map__find_symbol(map, addr);
-	अगर (!sym)
-		वापस -ENOENT;
+	if (!sym)
+		return -ENOENT;
 
-	अगर (म_भेद(sym->name, tp->symbol)) अणु
-		/* If we have no realname, use symbol क्रम it */
-		अगर (!tp->realname)
+	if (strcmp(sym->name, tp->symbol)) {
+		/* If we have no realname, use symbol for it */
+		if (!tp->realname)
 			tp->realname = tp->symbol;
-		अन्यथा
-			मुक्त(tp->symbol);
+		else
+			free(tp->symbol);
 		tp->symbol = strdup(sym->name);
-		अगर (!tp->symbol)
-			वापस -ENOMEM;
-	पूर्ण
+		if (!tp->symbol)
+			return -ENOMEM;
+	}
 	tp->offset = addr - sym->start;
 	tp->address -= offs;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Rename DWARF symbols to ELF symbols -- gcc someबार optimizes functions
- * and generate new symbols with suffixes such as .स्थिरprop.N or .isra.N
+ * Rename DWARF symbols to ELF symbols -- gcc sometimes optimizes functions
+ * and generate new symbols with suffixes such as .constprop.N or .isra.N
  * etc. Since those symbols are not recorded in DWARF, we have to find
  * correct generated symbols from offline ELF binary.
- * For online kernel or uprobes we करोn't need this because those are
- * rebased on _text, or alपढ़ोy a section relative address.
+ * For online kernel or uprobes we don't need this because those are
+ * rebased on _text, or already a section relative address.
  */
-अटल पूर्णांक
-post_process_offline_probe_trace_events(काष्ठा probe_trace_event *tevs,
-					पूर्णांक ntevs, स्थिर अक्षर *pathname)
-अणु
-	काष्ठा map *map;
-	अचिन्हित दीर्घ stext = 0;
-	पूर्णांक i, ret = 0;
+static int
+post_process_offline_probe_trace_events(struct probe_trace_event *tevs,
+					int ntevs, const char *pathname)
+{
+	struct map *map;
+	unsigned long stext = 0;
+	int i, ret = 0;
 
-	/* Prepare a map क्रम offline binary */
+	/* Prepare a map for offline binary */
 	map = dso__new_map(pathname);
-	अगर (!map || get_text_start_address(pathname, &stext, शून्य) < 0) अणु
+	if (!map || get_text_start_address(pathname, &stext, NULL) < 0) {
 		pr_warning("Failed to get ELF symbols for %s\n", pathname);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	क्रम (i = 0; i < ntevs; i++) अणु
-		ret = post_process_probe_trace_poपूर्णांक(&tevs[i].poपूर्णांक,
+	for (i = 0; i < ntevs; i++) {
+		ret = post_process_probe_trace_point(&tevs[i].point,
 						     map, stext);
-		अगर (ret < 0)
-			अवरोध;
-	पूर्ण
+		if (ret < 0)
+			break;
+	}
 	map__put(map);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक add_exec_to_probe_trace_events(काष्ठा probe_trace_event *tevs,
-					  पूर्णांक ntevs, स्थिर अक्षर *exec,
-					  काष्ठा nsinfo *nsi)
-अणु
-	पूर्णांक i, ret = 0;
-	अचिन्हित दीर्घ stext = 0;
+static int add_exec_to_probe_trace_events(struct probe_trace_event *tevs,
+					  int ntevs, const char *exec,
+					  struct nsinfo *nsi)
+{
+	int i, ret = 0;
+	unsigned long stext = 0;
 
-	अगर (!exec)
-		वापस 0;
+	if (!exec)
+		return 0;
 
 	ret = get_text_start_address(exec, &stext, nsi);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	क्रम (i = 0; i < ntevs && ret >= 0; i++) अणु
-		/* poपूर्णांक.address is the address of poपूर्णांक.symbol + poपूर्णांक.offset */
-		tevs[i].poपूर्णांक.address -= stext;
-		tevs[i].poपूर्णांक.module = strdup(exec);
-		अगर (!tevs[i].poपूर्णांक.module) अणु
+	for (i = 0; i < ntevs && ret >= 0; i++) {
+		/* point.address is the address of point.symbol + point.offset */
+		tevs[i].point.address -= stext;
+		tevs[i].point.module = strdup(exec);
+		if (!tevs[i].point.module) {
 			ret = -ENOMEM;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		tevs[i].uprobes = true;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक
-post_process_module_probe_trace_events(काष्ठा probe_trace_event *tevs,
-				       पूर्णांक ntevs, स्थिर अक्षर *module,
-				       काष्ठा debuginfo *dinfo)
-अणु
+static int
+post_process_module_probe_trace_events(struct probe_trace_event *tevs,
+				       int ntevs, const char *module,
+				       struct debuginfo *dinfo)
+{
 	Dwarf_Addr text_offs = 0;
-	पूर्णांक i, ret = 0;
-	अक्षर *mod_name = शून्य;
-	काष्ठा map *map;
+	int i, ret = 0;
+	char *mod_name = NULL;
+	struct map *map;
 
-	अगर (!module)
-		वापस 0;
+	if (!module)
+		return 0;
 
-	map = get_target_map(module, शून्य, false);
-	अगर (!map || debuginfo__get_text_offset(dinfo, &text_offs, true) < 0) अणु
+	map = get_target_map(module, NULL, false);
+	if (!map || debuginfo__get_text_offset(dinfo, &text_offs, true) < 0) {
 		pr_warning("Failed to get ELF symbols for %s\n", module);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	mod_name = find_module_name(module);
-	क्रम (i = 0; i < ntevs; i++) अणु
-		ret = post_process_probe_trace_poपूर्णांक(&tevs[i].poपूर्णांक,
-						map, (अचिन्हित दीर्घ)text_offs);
-		अगर (ret < 0)
-			अवरोध;
-		tevs[i].poपूर्णांक.module =
+	for (i = 0; i < ntevs; i++) {
+		ret = post_process_probe_trace_point(&tevs[i].point,
+						map, (unsigned long)text_offs);
+		if (ret < 0)
+			break;
+		tevs[i].point.module =
 			strdup(mod_name ? mod_name : module);
-		अगर (!tevs[i].poपूर्णांक.module) अणु
+		if (!tevs[i].point.module) {
 			ret = -ENOMEM;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	मुक्त(mod_name);
+	free(mod_name);
 	map__put(map);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक
-post_process_kernel_probe_trace_events(काष्ठा probe_trace_event *tevs,
-				       पूर्णांक ntevs)
-अणु
-	काष्ठा ref_reloc_sym *reloc_sym;
-	काष्ठा map *map;
-	अक्षर *पंचांगp;
-	पूर्णांक i, skipped = 0;
+static int
+post_process_kernel_probe_trace_events(struct probe_trace_event *tevs,
+				       int ntevs)
+{
+	struct ref_reloc_sym *reloc_sym;
+	struct map *map;
+	char *tmp;
+	int i, skipped = 0;
 
-	/* Skip post process अगर the target is an offline kernel */
-	अगर (symbol_conf.ignore_vmlinux_buildid)
-		वापस post_process_offline_probe_trace_events(tevs, ntevs,
+	/* Skip post process if the target is an offline kernel */
+	if (symbol_conf.ignore_vmlinux_buildid)
+		return post_process_offline_probe_trace_events(tevs, ntevs,
 						symbol_conf.vmlinux_name);
 
 	reloc_sym = kernel_get_ref_reloc_sym(&map);
-	अगर (!reloc_sym) अणु
+	if (!reloc_sym) {
 		pr_warning("Relocated base symbol is not found!\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	क्रम (i = 0; i < ntevs; i++) अणु
-		अगर (!tevs[i].poपूर्णांक.address)
-			जारी;
-		अगर (tevs[i].poपूर्णांक.retprobe && !kretprobe_offset_is_supported())
-			जारी;
+	for (i = 0; i < ntevs; i++) {
+		if (!tevs[i].point.address)
+			continue;
+		if (tevs[i].point.retprobe && !kretprobe_offset_is_supported())
+			continue;
 		/*
-		 * If we found a wrong one, mark it by शून्य symbol.
+		 * If we found a wrong one, mark it by NULL symbol.
 		 * Since addresses in debuginfo is same as objdump, we need
 		 * to convert it to addresses on memory.
 		 */
-		अगर (kprobe_warn_out_range(tevs[i].poपूर्णांक.symbol,
-			map__objdump_2mem(map, tevs[i].poपूर्णांक.address))) अणु
-			पंचांगp = शून्य;
+		if (kprobe_warn_out_range(tevs[i].point.symbol,
+			map__objdump_2mem(map, tevs[i].point.address))) {
+			tmp = NULL;
 			skipped++;
-		पूर्ण अन्यथा अणु
-			पंचांगp = strdup(reloc_sym->name);
-			अगर (!पंचांगp)
-				वापस -ENOMEM;
-		पूर्ण
-		/* If we have no realname, use symbol क्रम it */
-		अगर (!tevs[i].poपूर्णांक.realname)
-			tevs[i].poपूर्णांक.realname = tevs[i].poपूर्णांक.symbol;
-		अन्यथा
-			मुक्त(tevs[i].poपूर्णांक.symbol);
-		tevs[i].poपूर्णांक.symbol = पंचांगp;
-		tevs[i].poपूर्णांक.offset = tevs[i].poपूर्णांक.address -
+		} else {
+			tmp = strdup(reloc_sym->name);
+			if (!tmp)
+				return -ENOMEM;
+		}
+		/* If we have no realname, use symbol for it */
+		if (!tevs[i].point.realname)
+			tevs[i].point.realname = tevs[i].point.symbol;
+		else
+			free(tevs[i].point.symbol);
+		tevs[i].point.symbol = tmp;
+		tevs[i].point.offset = tevs[i].point.address -
 			(map->reloc ? reloc_sym->unrelocated_addr :
 				      reloc_sym->addr);
-	पूर्ण
-	वापस skipped;
-पूर्ण
+	}
+	return skipped;
+}
 
-व्योम __weak
-arch__post_process_probe_trace_events(काष्ठा perf_probe_event *pev __maybe_unused,
-				      पूर्णांक ntevs __maybe_unused)
-अणु
-पूर्ण
+void __weak
+arch__post_process_probe_trace_events(struct perf_probe_event *pev __maybe_unused,
+				      int ntevs __maybe_unused)
+{
+}
 
 /* Post processing the probe events */
-अटल पूर्णांक post_process_probe_trace_events(काष्ठा perf_probe_event *pev,
-					   काष्ठा probe_trace_event *tevs,
-					   पूर्णांक ntevs, स्थिर अक्षर *module,
-					   bool uprobe, काष्ठा debuginfo *dinfo)
-अणु
-	पूर्णांक ret;
+static int post_process_probe_trace_events(struct perf_probe_event *pev,
+					   struct probe_trace_event *tevs,
+					   int ntevs, const char *module,
+					   bool uprobe, struct debuginfo *dinfo)
+{
+	int ret;
 
-	अगर (uprobe)
+	if (uprobe)
 		ret = add_exec_to_probe_trace_events(tevs, ntevs, module,
 						     pev->nsi);
-	अन्यथा अगर (module)
-		/* Currently ref_reloc_sym based probe is not क्रम drivers */
+	else if (module)
+		/* Currently ref_reloc_sym based probe is not for drivers */
 		ret = post_process_module_probe_trace_events(tevs, ntevs,
 							     module, dinfo);
-	अन्यथा
+	else
 		ret = post_process_kernel_probe_trace_events(tevs, ntevs);
 
-	अगर (ret >= 0)
+	if (ret >= 0)
 		arch__post_process_probe_trace_events(pev, ntevs);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* Try to find perf_probe_event with debuginfo */
-अटल पूर्णांक try_to_find_probe_trace_events(काष्ठा perf_probe_event *pev,
-					  काष्ठा probe_trace_event **tevs)
-अणु
+static int try_to_find_probe_trace_events(struct perf_probe_event *pev,
+					  struct probe_trace_event **tevs)
+{
 	bool need_dwarf = perf_probe_event_need_dwarf(pev);
-	काष्ठा perf_probe_poपूर्णांक पंचांगp;
-	काष्ठा debuginfo *dinfo;
-	पूर्णांक ntevs, ret = 0;
+	struct perf_probe_point tmp;
+	struct debuginfo *dinfo;
+	int ntevs, ret = 0;
 
-	/* Workaround क्रम gcc #98776 issue.
+	/* Workaround for gcc #98776 issue.
 	 * Perf failed to add kretprobe event with debuginfo of vmlinux which is
 	 * compiled by gcc with -fpatchable-function-entry option enabled. The
-	 * same issue with kernel module. The retprobe करोesn`t need debuginfo.
+	 * same issue with kernel module. The retprobe doesn`t need debuginfo.
 	 * This workaround solution use map to query the probe function address
-	 * क्रम retprobe event.
+	 * for retprobe event.
 	 */
-	अगर (pev->poपूर्णांक.retprobe)
-		वापस 0;
+	if (pev->point.retprobe)
+		return 0;
 
-	dinfo = खोलो_debuginfo(pev->target, pev->nsi, !need_dwarf);
-	अगर (!dinfo) अणु
-		अगर (need_dwarf)
-			वापस -ENOENT;
+	dinfo = open_debuginfo(pev->target, pev->nsi, !need_dwarf);
+	if (!dinfo) {
+		if (need_dwarf)
+			return -ENOENT;
 		pr_debug("Could not open debuginfo. Try to use symbols.\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	pr_debug("Try to find probe point from debuginfo.\n");
 	/* Searching trace events corresponding to a probe event */
 	ntevs = debuginfo__find_trace_events(dinfo, pev, tevs);
 
-	अगर (ntevs == 0)	अणु  /* Not found, retry with an alternative */
-		ret = get_alternative_probe_event(dinfo, pev, &पंचांगp);
-		अगर (!ret) अणु
+	if (ntevs == 0)	{  /* Not found, retry with an alternative */
+		ret = get_alternative_probe_event(dinfo, pev, &tmp);
+		if (!ret) {
 			ntevs = debuginfo__find_trace_events(dinfo, pev, tevs);
 			/*
-			 * Write back to the original probe_event क्रम
+			 * Write back to the original probe_event for
 			 * setting appropriate (user given) event name
 			 */
-			clear_perf_probe_poपूर्णांक(&pev->poपूर्णांक);
-			स_नकल(&pev->poपूर्णांक, &पंचांगp, माप(पंचांगp));
-		पूर्ण
-	पूर्ण
+			clear_perf_probe_point(&pev->point);
+			memcpy(&pev->point, &tmp, sizeof(tmp));
+		}
+	}
 
-	अगर (ntevs > 0) अणु	/* Succeeded to find trace events */
+	if (ntevs > 0) {	/* Succeeded to find trace events */
 		pr_debug("Found %d probe_trace_events.\n", ntevs);
 		ret = post_process_probe_trace_events(pev, *tevs, ntevs,
 					pev->target, pev->uprobes, dinfo);
-		अगर (ret < 0 || ret == ntevs) अणु
+		if (ret < 0 || ret == ntevs) {
 			pr_debug("Post processing failed or all events are skipped. (%d)\n", ret);
 			clear_probe_trace_events(*tevs, ntevs);
-			zमुक्त(tevs);
+			zfree(tevs);
 			ntevs = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	debuginfo__delete(dinfo);
 
-	अगर (ntevs == 0)	अणु	/* No error but failed to find probe poपूर्णांक. */
+	if (ntevs == 0)	{	/* No error but failed to find probe point. */
 		pr_warning("Probe point '%s' not found.\n",
-			   synthesize_perf_probe_poपूर्णांक(&pev->poपूर्णांक));
-		वापस -ENOENT;
-	पूर्ण अन्यथा अगर (ntevs < 0) अणु
+			   synthesize_perf_probe_point(&pev->point));
+		return -ENOENT;
+	} else if (ntevs < 0) {
 		/* Error path : ntevs < 0 */
 		pr_debug("An error occurred in debuginfo analysis (%d).\n", ntevs);
-		अगर (ntevs == -EBADF)
+		if (ntevs == -EBADF)
 			pr_warning("Warning: No dwarf info found in the vmlinux - "
 				"please rebuild kernel with CONFIG_DEBUG_INFO=y.\n");
-		अगर (!need_dwarf) अणु
+		if (!need_dwarf) {
 			pr_debug("Trying to use symbols.\n");
-			वापस 0;
-		पूर्ण
-	पूर्ण
-	वापस ntevs;
-पूर्ण
+			return 0;
+		}
+	}
+	return ntevs;
+}
 
-#घोषणा LINEBUF_SIZE 256
-#घोषणा NR_ADDITIONAL_LINES 2
+#define LINEBUF_SIZE 256
+#define NR_ADDITIONAL_LINES 2
 
-अटल पूर्णांक __show_one_line(खाता *fp, पूर्णांक l, bool skip, bool show_num)
-अणु
-	अक्षर buf[LINEBUF_SIZE], sbuf[STRERR_बफ_मानE];
-	स्थिर अक्षर *color = show_num ? "" : PERF_COLOR_BLUE;
-	स्थिर अक्षर *prefix = शून्य;
+static int __show_one_line(FILE *fp, int l, bool skip, bool show_num)
+{
+	char buf[LINEBUF_SIZE], sbuf[STRERR_BUFSIZE];
+	const char *color = show_num ? "" : PERF_COLOR_BLUE;
+	const char *prefix = NULL;
 
-	करो अणु
-		अगर (ख_माला_लो(buf, LINEBUF_SIZE, fp) == शून्य)
-			जाओ error;
-		अगर (skip)
-			जारी;
-		अगर (!prefix) अणु
+	do {
+		if (fgets(buf, LINEBUF_SIZE, fp) == NULL)
+			goto error;
+		if (skip)
+			continue;
+		if (!prefix) {
 			prefix = show_num ? "%7d  " : "         ";
-			color_ख_लिखो(मानक_निकास, color, prefix, l);
-		पूर्ण
-		color_ख_लिखो(मानक_निकास, color, "%s", buf);
+			color_fprintf(stdout, color, prefix, l);
+		}
+		color_fprintf(stdout, color, "%s", buf);
 
-	पूर्ण जबतक (म_अक्षर(buf, '\n') == शून्य);
+	} while (strchr(buf, '\n') == NULL);
 
-	वापस 1;
+	return 1;
 error:
-	अगर (ख_त्रुटि(fp)) अणु
+	if (ferror(fp)) {
 		pr_warning("File read error: %s\n",
-			   str_error_r(त्रुटि_सं, sbuf, माप(sbuf)));
-		वापस -1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+			   str_error_r(errno, sbuf, sizeof(sbuf)));
+		return -1;
+	}
+	return 0;
+}
 
-अटल पूर्णांक _show_one_line(खाता *fp, पूर्णांक l, bool skip, bool show_num)
-अणु
-	पूर्णांक rv = __show_one_line(fp, l, skip, show_num);
-	अगर (rv == 0) अणु
+static int _show_one_line(FILE *fp, int l, bool skip, bool show_num)
+{
+	int rv = __show_one_line(fp, l, skip, show_num);
+	if (rv == 0) {
 		pr_warning("Source file is shorter than expected.\n");
 		rv = -1;
-	पूर्ण
-	वापस rv;
-पूर्ण
+	}
+	return rv;
+}
 
-#घोषणा show_one_line_with_num(f,l)	_show_one_line(f,l,false,true)
-#घोषणा show_one_line(f,l)		_show_one_line(f,l,false,false)
-#घोषणा skip_one_line(f,l)		_show_one_line(f,l,true,false)
-#घोषणा show_one_line_or_eof(f,l)	__show_one_line(f,l,false,false)
+#define show_one_line_with_num(f,l)	_show_one_line(f,l,false,true)
+#define show_one_line(f,l)		_show_one_line(f,l,false,false)
+#define skip_one_line(f,l)		_show_one_line(f,l,true,false)
+#define show_one_line_or_eof(f,l)	__show_one_line(f,l,false,false)
 
 /*
  * Show line-range always requires debuginfo to find source file and
  * line number.
  */
-अटल पूर्णांक __show_line_range(काष्ठा line_range *lr, स्थिर अक्षर *module,
+static int __show_line_range(struct line_range *lr, const char *module,
 			     bool user)
-अणु
-	काष्ठा build_id bid;
-	पूर्णांक l = 1;
-	काष्ठा पूर्णांक_node *ln;
-	काष्ठा debuginfo *dinfo;
-	खाता *fp;
-	पूर्णांक ret;
-	अक्षर *पंचांगp;
-	अक्षर sbuf[STRERR_बफ_मानE];
-	अक्षर sbuild_id[SBUILD_ID_SIZE] = "";
+{
+	struct build_id bid;
+	int l = 1;
+	struct int_node *ln;
+	struct debuginfo *dinfo;
+	FILE *fp;
+	int ret;
+	char *tmp;
+	char sbuf[STRERR_BUFSIZE];
+	char sbuild_id[SBUILD_ID_SIZE] = "";
 
 	/* Search a line range */
-	dinfo = खोलो_debuginfo(module, शून्य, false);
-	अगर (!dinfo)
-		वापस -ENOENT;
+	dinfo = open_debuginfo(module, NULL, false);
+	if (!dinfo)
+		return -ENOENT;
 
 	ret = debuginfo__find_line_range(dinfo, lr);
-	अगर (!ret) अणु	/* Not found, retry with an alternative */
+	if (!ret) {	/* Not found, retry with an alternative */
 		ret = get_alternative_line_range(dinfo, lr, module, user);
-		अगर (!ret)
+		if (!ret)
 			ret = debuginfo__find_line_range(dinfo, lr);
-	पूर्ण
-	अगर (dinfo->build_id) अणु
+	}
+	if (dinfo->build_id) {
 		build_id__init(&bid, dinfo->build_id, BUILD_ID_SIZE);
-		build_id__प्र_लिखो(&bid, sbuild_id);
-	पूर्ण
+		build_id__sprintf(&bid, sbuild_id);
+	}
 	debuginfo__delete(dinfo);
-	अगर (ret == 0 || ret == -ENOENT) अणु
+	if (ret == 0 || ret == -ENOENT) {
 		pr_warning("Specified source line is not found.\n");
-		वापस -ENOENT;
-	पूर्ण अन्यथा अगर (ret < 0) अणु
+		return -ENOENT;
+	} else if (ret < 0) {
 		pr_warning("Debuginfo analysis failed.\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* Convert source file path */
-	पंचांगp = lr->path;
-	ret = find_source_path(पंचांगp, sbuild_id, lr->comp_dir, &lr->path);
+	tmp = lr->path;
+	ret = find_source_path(tmp, sbuild_id, lr->comp_dir, &lr->path);
 
-	/* Free old path when new path is asचिन्हित */
-	अगर (पंचांगp != lr->path)
-		मुक्त(पंचांगp);
+	/* Free old path when new path is assigned */
+	if (tmp != lr->path)
+		free(tmp);
 
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		pr_warning("Failed to find source file path.\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	setup_pager();
 
-	अगर (lr->function)
-		ख_लिखो(मानक_निकास, "<%s@%s:%d>\n", lr->function, lr->path,
+	if (lr->function)
+		fprintf(stdout, "<%s@%s:%d>\n", lr->function, lr->path,
 			lr->start - lr->offset);
-	अन्यथा
-		ख_लिखो(मानक_निकास, "<%s:%d>\n", lr->path, lr->start);
+	else
+		fprintf(stdout, "<%s:%d>\n", lr->path, lr->start);
 
-	fp = ख_खोलो(lr->path, "r");
-	अगर (fp == शून्य) अणु
+	fp = fopen(lr->path, "r");
+	if (fp == NULL) {
 		pr_warning("Failed to open %s: %s\n", lr->path,
-			   str_error_r(त्रुटि_सं, sbuf, माप(sbuf)));
-		वापस -त्रुटि_सं;
-	पूर्ण
+			   str_error_r(errno, sbuf, sizeof(sbuf)));
+		return -errno;
+	}
 	/* Skip to starting line number */
-	जबतक (l < lr->start) अणु
+	while (l < lr->start) {
 		ret = skip_one_line(fp, l++);
-		अगर (ret < 0)
-			जाओ end;
-	पूर्ण
+		if (ret < 0)
+			goto end;
+	}
 
-	पूर्णांकlist__क्रम_each_entry(ln, lr->line_list) अणु
-		क्रम (; ln->i > (अचिन्हित दीर्घ)l; l++) अणु
+	intlist__for_each_entry(ln, lr->line_list) {
+		for (; ln->i > (unsigned long)l; l++) {
 			ret = show_one_line(fp, l - lr->offset);
-			अगर (ret < 0)
-				जाओ end;
-		पूर्ण
+			if (ret < 0)
+				goto end;
+		}
 		ret = show_one_line_with_num(fp, l++ - lr->offset);
-		अगर (ret < 0)
-			जाओ end;
-	पूर्ण
+		if (ret < 0)
+			goto end;
+	}
 
-	अगर (lr->end == पूर्णांक_उच्च)
+	if (lr->end == INT_MAX)
 		lr->end = l + NR_ADDITIONAL_LINES;
-	जबतक (l <= lr->end) अणु
+	while (l <= lr->end) {
 		ret = show_one_line_or_eof(fp, l++ - lr->offset);
-		अगर (ret <= 0)
-			अवरोध;
-	पूर्ण
+		if (ret <= 0)
+			break;
+	}
 end:
-	ख_बंद(fp);
-	वापस ret;
-पूर्ण
+	fclose(fp);
+	return ret;
+}
 
-पूर्णांक show_line_range(काष्ठा line_range *lr, स्थिर अक्षर *module,
-		    काष्ठा nsinfo *nsi, bool user)
-अणु
-	पूर्णांक ret;
-	काष्ठा nscookie nsc;
+int show_line_range(struct line_range *lr, const char *module,
+		    struct nsinfo *nsi, bool user)
+{
+	int ret;
+	struct nscookie nsc;
 
 	ret = init_probe_symbol_maps(user);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 	nsinfo__mountns_enter(nsi, &nsc);
 	ret = __show_line_range(lr, module, user);
-	nsinfo__mountns_निकास(&nsc);
-	निकास_probe_symbol_maps();
+	nsinfo__mountns_exit(&nsc);
+	exit_probe_symbol_maps();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक show_available_vars_at(काष्ठा debuginfo *dinfo,
-				  काष्ठा perf_probe_event *pev,
-				  काष्ठा strfilter *_filter)
-अणु
-	अक्षर *buf;
-	पूर्णांक ret, i, nvars;
-	काष्ठा str_node *node;
-	काष्ठा variable_list *vls = शून्य, *vl;
-	काष्ठा perf_probe_poपूर्णांक पंचांगp;
-	स्थिर अक्षर *var;
+static int show_available_vars_at(struct debuginfo *dinfo,
+				  struct perf_probe_event *pev,
+				  struct strfilter *_filter)
+{
+	char *buf;
+	int ret, i, nvars;
+	struct str_node *node;
+	struct variable_list *vls = NULL, *vl;
+	struct perf_probe_point tmp;
+	const char *var;
 
-	buf = synthesize_perf_probe_poपूर्णांक(&pev->poपूर्णांक);
-	अगर (!buf)
-		वापस -EINVAL;
+	buf = synthesize_perf_probe_point(&pev->point);
+	if (!buf)
+		return -EINVAL;
 	pr_debug("Searching variables at %s\n", buf);
 
 	ret = debuginfo__find_available_vars_at(dinfo, pev, &vls);
-	अगर (!ret) अणु  /* Not found, retry with an alternative */
-		ret = get_alternative_probe_event(dinfo, pev, &पंचांगp);
-		अगर (!ret) अणु
+	if (!ret) {  /* Not found, retry with an alternative */
+		ret = get_alternative_probe_event(dinfo, pev, &tmp);
+		if (!ret) {
 			ret = debuginfo__find_available_vars_at(dinfo, pev,
 								&vls);
-			/* Release the old probe_poपूर्णांक */
-			clear_perf_probe_poपूर्णांक(&पंचांगp);
-		पूर्ण
-	पूर्ण
-	अगर (ret <= 0) अणु
-		अगर (ret == 0 || ret == -ENOENT) अणु
+			/* Release the old probe_point */
+			clear_perf_probe_point(&tmp);
+		}
+	}
+	if (ret <= 0) {
+		if (ret == 0 || ret == -ENOENT) {
 			pr_err("Failed to find the address of %s\n", buf);
 			ret = -ENOENT;
-		पूर्ण अन्यथा
+		} else
 			pr_warning("Debuginfo analysis failed.\n");
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
 	/* Some variables are found */
-	ख_लिखो(मानक_निकास, "Available variables at %s\n", buf);
-	क्रम (i = 0; i < ret; i++) अणु
+	fprintf(stdout, "Available variables at %s\n", buf);
+	for (i = 0; i < ret; i++) {
 		vl = &vls[i];
 		/*
-		 * A probe poपूर्णांक might be converted to
-		 * several trace poपूर्णांकs.
+		 * A probe point might be converted to
+		 * several trace points.
 		 */
-		ख_लिखो(मानक_निकास, "\t@<%s+%lu>\n", vl->poपूर्णांक.symbol,
-			vl->poपूर्णांक.offset);
-		zमुक्त(&vl->poपूर्णांक.symbol);
+		fprintf(stdout, "\t@<%s+%lu>\n", vl->point.symbol,
+			vl->point.offset);
+		zfree(&vl->point.symbol);
 		nvars = 0;
-		अगर (vl->vars) अणु
-			strlist__क्रम_each_entry(node, vl->vars) अणु
-				var = म_अक्षर(node->s, '\t') + 1;
-				अगर (strfilter__compare(_filter, var)) अणु
-					ख_लिखो(मानक_निकास, "\t\t%s\n", node->s);
+		if (vl->vars) {
+			strlist__for_each_entry(node, vl->vars) {
+				var = strchr(node->s, '\t') + 1;
+				if (strfilter__compare(_filter, var)) {
+					fprintf(stdout, "\t\t%s\n", node->s);
 					nvars++;
-				पूर्ण
-			पूर्ण
+				}
+			}
 			strlist__delete(vl->vars);
-		पूर्ण
-		अगर (nvars == 0)
-			ख_लिखो(मानक_निकास, "\t\t(No matched variables)\n");
-	पूर्ण
-	मुक्त(vls);
+		}
+		if (nvars == 0)
+			fprintf(stdout, "\t\t(No matched variables)\n");
+	}
+	free(vls);
 end:
-	मुक्त(buf);
-	वापस ret;
-पूर्ण
+	free(buf);
+	return ret;
+}
 
-/* Show available variables on given probe poपूर्णांक */
-पूर्णांक show_available_vars(काष्ठा perf_probe_event *pevs, पूर्णांक npevs,
-			काष्ठा strfilter *_filter)
-अणु
-	पूर्णांक i, ret = 0;
-	काष्ठा debuginfo *dinfo;
+/* Show available variables on given probe point */
+int show_available_vars(struct perf_probe_event *pevs, int npevs,
+			struct strfilter *_filter)
+{
+	int i, ret = 0;
+	struct debuginfo *dinfo;
 
 	ret = init_probe_symbol_maps(pevs->uprobes);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	dinfo = खोलो_debuginfo(pevs->target, pevs->nsi, false);
-	अगर (!dinfo) अणु
+	dinfo = open_debuginfo(pevs->target, pevs->nsi, false);
+	if (!dinfo) {
 		ret = -ENOENT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	setup_pager();
 
-	क्रम (i = 0; i < npevs && ret >= 0; i++)
+	for (i = 0; i < npevs && ret >= 0; i++)
 		ret = show_available_vars_at(dinfo, &pevs[i], _filter);
 
 	debuginfo__delete(dinfo);
 out:
-	निकास_probe_symbol_maps();
-	वापस ret;
-पूर्ण
+	exit_probe_symbol_maps();
+	return ret;
+}
 
-#अन्यथा	/* !HAVE_DWARF_SUPPORT */
+#else	/* !HAVE_DWARF_SUPPORT */
 
-अटल व्योम debuginfo_cache__निकास(व्योम)
-अणु
-पूर्ण
+static void debuginfo_cache__exit(void)
+{
+}
 
-अटल पूर्णांक
-find_perf_probe_poपूर्णांक_from_dwarf(काष्ठा probe_trace_poपूर्णांक *tp __maybe_unused,
-				 काष्ठा perf_probe_poपूर्णांक *pp __maybe_unused,
+static int
+find_perf_probe_point_from_dwarf(struct probe_trace_point *tp __maybe_unused,
+				 struct perf_probe_point *pp __maybe_unused,
 				 bool is_kprobe __maybe_unused)
-अणु
-	वापस -ENOSYS;
-पूर्ण
+{
+	return -ENOSYS;
+}
 
-अटल पूर्णांक try_to_find_probe_trace_events(काष्ठा perf_probe_event *pev,
-				काष्ठा probe_trace_event **tevs __maybe_unused)
-अणु
-	अगर (perf_probe_event_need_dwarf(pev)) अणु
+static int try_to_find_probe_trace_events(struct perf_probe_event *pev,
+				struct probe_trace_event **tevs __maybe_unused)
+{
+	if (perf_probe_event_need_dwarf(pev)) {
 		pr_warning("Debuginfo-analysis is not supported.\n");
-		वापस -ENOSYS;
-	पूर्ण
+		return -ENOSYS;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक show_line_range(काष्ठा line_range *lr __maybe_unused,
-		    स्थिर अक्षर *module __maybe_unused,
-		    काष्ठा nsinfo *nsi __maybe_unused,
+int show_line_range(struct line_range *lr __maybe_unused,
+		    const char *module __maybe_unused,
+		    struct nsinfo *nsi __maybe_unused,
 		    bool user __maybe_unused)
-अणु
+{
 	pr_warning("Debuginfo-analysis is not supported.\n");
-	वापस -ENOSYS;
-पूर्ण
+	return -ENOSYS;
+}
 
-पूर्णांक show_available_vars(काष्ठा perf_probe_event *pevs __maybe_unused,
-			पूर्णांक npevs __maybe_unused,
-			काष्ठा strfilter *filter __maybe_unused)
-अणु
+int show_available_vars(struct perf_probe_event *pevs __maybe_unused,
+			int npevs __maybe_unused,
+			struct strfilter *filter __maybe_unused)
+{
 	pr_warning("Debuginfo-analysis is not supported.\n");
-	वापस -ENOSYS;
-पूर्ण
-#पूर्ण_अगर
+	return -ENOSYS;
+}
+#endif
 
-व्योम line_range__clear(काष्ठा line_range *lr)
-अणु
-	zमुक्त(&lr->function);
-	zमुक्त(&lr->file);
-	zमुक्त(&lr->path);
-	zमुक्त(&lr->comp_dir);
-	पूर्णांकlist__delete(lr->line_list);
-पूर्ण
+void line_range__clear(struct line_range *lr)
+{
+	zfree(&lr->function);
+	zfree(&lr->file);
+	zfree(&lr->path);
+	zfree(&lr->comp_dir);
+	intlist__delete(lr->line_list);
+}
 
-पूर्णांक line_range__init(काष्ठा line_range *lr)
-अणु
-	स_रखो(lr, 0, माप(*lr));
-	lr->line_list = पूर्णांकlist__new(शून्य);
-	अगर (!lr->line_list)
-		वापस -ENOMEM;
-	अन्यथा
-		वापस 0;
-पूर्ण
+int line_range__init(struct line_range *lr)
+{
+	memset(lr, 0, sizeof(*lr));
+	lr->line_list = intlist__new(NULL);
+	if (!lr->line_list)
+		return -ENOMEM;
+	else
+		return 0;
+}
 
-अटल पूर्णांक parse_line_num(अक्षर **ptr, पूर्णांक *val, स्थिर अक्षर *what)
-अणु
-	स्थिर अक्षर *start = *ptr;
+static int parse_line_num(char **ptr, int *val, const char *what)
+{
+	const char *start = *ptr;
 
-	त्रुटि_सं = 0;
-	*val = म_से_दीर्घ(*ptr, ptr, 0);
-	अगर (त्रुटि_सं || *ptr == start) अणु
+	errno = 0;
+	*val = strtol(*ptr, ptr, 0);
+	if (errno || *ptr == start) {
 		semantic_error("'%s' is not a valid number.\n", what);
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EINVAL;
+	}
+	return 0;
+}
 
-/* Check the name is good क्रम event, group or function */
-अटल bool is_c_func_name(स्थिर अक्षर *name)
-अणु
-	अगर (!है_अक्षर(*name) && *name != '_')
-		वापस false;
-	जबतक (*++name != '\0') अणु
-		अगर (!है_अक्षर(*name) && !है_अंक(*name) && *name != '_')
-			वापस false;
-	पूर्ण
-	वापस true;
-पूर्ण
+/* Check the name is good for event, group or function */
+static bool is_c_func_name(const char *name)
+{
+	if (!isalpha(*name) && *name != '_')
+		return false;
+	while (*++name != '\0') {
+		if (!isalpha(*name) && !isdigit(*name) && *name != '_')
+			return false;
+	}
+	return true;
+}
 
 /*
  * Stuff 'lr' according to the line range described by 'arg'.
@@ -1312,33 +1311,33 @@ find_perf_probe_poपूर्णांक_from_dwarf(काष्ठा probe_t
  *         SRC[:SLN[+NUM|-ELN]]
  *         FNC[@SRC][:SLN[+NUM|-ELN]]
  */
-पूर्णांक parse_line_range_desc(स्थिर अक्षर *arg, काष्ठा line_range *lr)
-अणु
-	अक्षर *range, *file, *name = strdup(arg);
-	पूर्णांक err;
+int parse_line_range_desc(const char *arg, struct line_range *lr)
+{
+	char *range, *file, *name = strdup(arg);
+	int err;
 
-	अगर (!name)
-		वापस -ENOMEM;
+	if (!name)
+		return -ENOMEM;
 
 	lr->start = 0;
-	lr->end = पूर्णांक_उच्च;
+	lr->end = INT_MAX;
 
-	range = म_अक्षर(name, ':');
-	अगर (range) अणु
+	range = strchr(name, ':');
+	if (range) {
 		*range++ = '\0';
 
 		err = parse_line_num(&range, &lr->start, "start line");
-		अगर (err)
-			जाओ err;
+		if (err)
+			goto err;
 
-		अगर (*range == '+' || *range == '-') अणु
-			स्थिर अक्षर c = *range++;
+		if (*range == '+' || *range == '-') {
+			const char c = *range++;
 
 			err = parse_line_num(&range, &lr->end, "end line");
-			अगर (err)
-				जाओ err;
+			if (err)
+				goto err;
 
-			अगर (c == '+') अणु
+			if (c == '+') {
 				lr->end += lr->start;
 				/*
 				 * Adjust the number of lines here.
@@ -1347,876 +1346,876 @@ find_perf_probe_poपूर्णांक_from_dwarf(काष्ठा probe_t
 				 * the start of line.
 				 */
 				lr->end--;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		pr_debug("Line range is %d to %d\n", lr->start, lr->end);
 
 		err = -EINVAL;
-		अगर (lr->start > lr->end) अणु
+		if (lr->start > lr->end) {
 			semantic_error("Start line must be smaller"
 				       " than end line.\n");
-			जाओ err;
-		पूर्ण
-		अगर (*range != '\0') अणु
+			goto err;
+		}
+		if (*range != '\0') {
 			semantic_error("Tailing with invalid str '%s'.\n", range);
-			जाओ err;
-		पूर्ण
-	पूर्ण
+			goto err;
+		}
+	}
 
-	file = म_अक्षर(name, '@');
-	अगर (file) अणु
+	file = strchr(name, '@');
+	if (file) {
 		*file = '\0';
 		lr->file = strdup(++file);
-		अगर (lr->file == शून्य) अणु
+		if (lr->file == NULL) {
 			err = -ENOMEM;
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 		lr->function = name;
-	पूर्ण अन्यथा अगर (म_अक्षर(name, '/') || strchr(name, '.'))
+	} else if (strchr(name, '/') || strchr(name, '.'))
 		lr->file = name;
-	अन्यथा अगर (is_c_func_name(name))/* We reuse it क्रम checking funcname */
+	else if (is_c_func_name(name))/* We reuse it for checking funcname */
 		lr->function = name;
-	अन्यथा अणु	/* Invalid name */
+	else {	/* Invalid name */
 		semantic_error("'%s' is not a valid function name.\n", name);
 		err = -EINVAL;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	वापस 0;
+	return 0;
 err:
-	मुक्त(name);
-	वापस err;
-पूर्ण
+	free(name);
+	return err;
+}
 
-अटल पूर्णांक parse_perf_probe_event_name(अक्षर **arg, काष्ठा perf_probe_event *pev)
-अणु
-	अक्षर *ptr;
+static int parse_perf_probe_event_name(char **arg, struct perf_probe_event *pev)
+{
+	char *ptr;
 
 	ptr = strpbrk_esc(*arg, ":");
-	अगर (ptr) अणु
+	if (ptr) {
 		*ptr = '\0';
-		अगर (!pev->sdt && !is_c_func_name(*arg))
-			जाओ ng_name;
+		if (!pev->sdt && !is_c_func_name(*arg))
+			goto ng_name;
 		pev->group = strdup_esc(*arg);
-		अगर (!pev->group)
-			वापस -ENOMEM;
+		if (!pev->group)
+			return -ENOMEM;
 		*arg = ptr + 1;
-	पूर्ण अन्यथा
-		pev->group = शून्य;
+	} else
+		pev->group = NULL;
 
 	pev->event = strdup_esc(*arg);
-	अगर (pev->event == शून्य)
-		वापस -ENOMEM;
+	if (pev->event == NULL)
+		return -ENOMEM;
 
-	अगर (!pev->sdt && !is_c_func_name(pev->event)) अणु
-		zमुक्त(&pev->event);
+	if (!pev->sdt && !is_c_func_name(pev->event)) {
+		zfree(&pev->event);
 ng_name:
-		zमुक्त(&pev->group);
+		zfree(&pev->group);
 		semantic_error("%s is bad for event name -it must "
 			       "follow C symbol-naming rule.\n", *arg);
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EINVAL;
+	}
+	return 0;
+}
 
-/* Parse probepoपूर्णांक definition. */
-अटल पूर्णांक parse_perf_probe_poपूर्णांक(अक्षर *arg, काष्ठा perf_probe_event *pev)
-अणु
-	काष्ठा perf_probe_poपूर्णांक *pp = &pev->poपूर्णांक;
-	अक्षर *ptr, *पंचांगp;
-	अक्षर c, nc = 0;
+/* Parse probepoint definition. */
+static int parse_perf_probe_point(char *arg, struct perf_probe_event *pev)
+{
+	struct perf_probe_point *pp = &pev->point;
+	char *ptr, *tmp;
+	char c, nc = 0;
 	bool file_spec = false;
-	पूर्णांक ret;
+	int ret;
 
 	/*
 	 * <Syntax>
 	 * perf probe [GRP:][EVENT=]SRC[:LN|;PTN]
-	 * perf probe [GRP:][EVENT=]FUNC[@SRC][+OFFS|%वापस|:LN|;PAT]
+	 * perf probe [GRP:][EVENT=]FUNC[@SRC][+OFFS|%return|:LN|;PAT]
 	 * perf probe %[GRP:]SDT_EVENT
 	 */
-	अगर (!arg)
-		वापस -EINVAL;
+	if (!arg)
+		return -EINVAL;
 
-	अगर (is_sdt_event(arg)) अणु
+	if (is_sdt_event(arg)) {
 		pev->sdt = true;
-		अगर (arg[0] == '%')
+		if (arg[0] == '%')
 			arg++;
-	पूर्ण
+	}
 
 	ptr = strpbrk_esc(arg, ";=@+%");
-	अगर (pev->sdt) अणु
-		अगर (ptr) अणु
-			अगर (*ptr != '@') अणु
+	if (pev->sdt) {
+		if (ptr) {
+			if (*ptr != '@') {
 				semantic_error("%s must be an SDT name.\n",
 					       arg);
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 			/* This must be a target file name or build id */
-			पंचांगp = build_id_cache__complement(ptr + 1);
-			अगर (पंचांगp) अणु
-				pev->target = build_id_cache__origname(पंचांगp);
-				मुक्त(पंचांगp);
-			पूर्ण अन्यथा
+			tmp = build_id_cache__complement(ptr + 1);
+			if (tmp) {
+				pev->target = build_id_cache__origname(tmp);
+				free(tmp);
+			} else
 				pev->target = strdup_esc(ptr + 1);
-			अगर (!pev->target)
-				वापस -ENOMEM;
+			if (!pev->target)
+				return -ENOMEM;
 			*ptr = '\0';
-		पूर्ण
+		}
 		ret = parse_perf_probe_event_name(&arg, pev);
-		अगर (ret == 0) अणु
-			अगर (aप्र_लिखो(&pev->poपूर्णांक.function, "%%%s", pev->event) < 0)
-				ret = -त्रुटि_सं;
-		पूर्ण
-		वापस ret;
-	पूर्ण
+		if (ret == 0) {
+			if (asprintf(&pev->point.function, "%%%s", pev->event) < 0)
+				ret = -errno;
+		}
+		return ret;
+	}
 
-	अगर (ptr && *ptr == '=') अणु	/* Event name */
+	if (ptr && *ptr == '=') {	/* Event name */
 		*ptr = '\0';
-		पंचांगp = ptr + 1;
+		tmp = ptr + 1;
 		ret = parse_perf_probe_event_name(&arg, pev);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 
-		arg = पंचांगp;
-	पूर्ण
+		arg = tmp;
+	}
 
 	/*
 	 * Check arg is function or file name and copy it.
 	 *
-	 * We consider arg to be a file spec अगर and only अगर it satisfies
+	 * We consider arg to be a file spec if and only if it satisfies
 	 * all of the below criteria::
-	 * - it करोes not include any of "+@%",
+	 * - it does not include any of "+@%",
 	 * - it includes one of ":;", and
 	 * - it has a period '.' in the name.
 	 *
-	 * Otherwise, we consider arg to be a function specअगरication.
+	 * Otherwise, we consider arg to be a function specification.
 	 */
-	अगर (!strpbrk_esc(arg, "+@%")) अणु
+	if (!strpbrk_esc(arg, "+@%")) {
 		ptr = strpbrk_esc(arg, ";:");
-		/* This is a file spec अगर it includes a '.' beक्रमe ; or : */
-		अगर (ptr && स_प्रथम(arg, '.', ptr - arg))
+		/* This is a file spec if it includes a '.' before ; or : */
+		if (ptr && memchr(arg, '.', ptr - arg))
 			file_spec = true;
-	पूर्ण
+	}
 
 	ptr = strpbrk_esc(arg, ";:+@%");
-	अगर (ptr) अणु
+	if (ptr) {
 		nc = *ptr;
 		*ptr++ = '\0';
-	पूर्ण
+	}
 
-	अगर (arg[0] == '\0')
-		पंचांगp = शून्य;
-	अन्यथा अणु
-		पंचांगp = strdup_esc(arg);
-		अगर (पंचांगp == शून्य)
-			वापस -ENOMEM;
-	पूर्ण
+	if (arg[0] == '\0')
+		tmp = NULL;
+	else {
+		tmp = strdup_esc(arg);
+		if (tmp == NULL)
+			return -ENOMEM;
+	}
 
-	अगर (file_spec)
-		pp->file = पंचांगp;
-	अन्यथा अणु
-		pp->function = पंचांगp;
+	if (file_spec)
+		pp->file = tmp;
+	else {
+		pp->function = tmp;
 
 		/*
-		 * Keep pp->function even अगर this is असलolute address,
-		 * so it can mark whether असल_address is valid.
+		 * Keep pp->function even if this is absolute address,
+		 * so it can mark whether abs_address is valid.
 		 * Which make 'perf probe lib.bin 0x0' possible.
 		 *
-		 * Note that checking length of पंचांगp is not needed
-		 * because when we access पंचांगp[1] we know पंचांगp[0] is '0',
-		 * so पंचांगp[1] should always valid (but could be '\0').
+		 * Note that checking length of tmp is not needed
+		 * because when we access tmp[1] we know tmp[0] is '0',
+		 * so tmp[1] should always valid (but could be '\0').
 		 */
-		अगर (पंचांगp && !म_भेदन(पंचांगp, "0x", 2)) अणु
-			pp->असल_address = म_से_अदीर्घ(pp->function, &पंचांगp, 0);
-			अगर (*पंचांगp != '\0') अणु
+		if (tmp && !strncmp(tmp, "0x", 2)) {
+			pp->abs_address = strtoul(pp->function, &tmp, 0);
+			if (*tmp != '\0') {
 				semantic_error("Invalid absolute address.\n");
-				वापस -EINVAL;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				return -EINVAL;
+			}
+		}
+	}
 
 	/* Parse other options */
-	जबतक (ptr) अणु
+	while (ptr) {
 		arg = ptr;
 		c = nc;
-		अगर (c == ';') अणु	/* Lazy pattern must be the last part */
+		if (c == ';') {	/* Lazy pattern must be the last part */
 			pp->lazy_line = strdup(arg); /* let leave escapes */
-			अगर (pp->lazy_line == शून्य)
-				वापस -ENOMEM;
-			अवरोध;
-		पूर्ण
+			if (pp->lazy_line == NULL)
+				return -ENOMEM;
+			break;
+		}
 		ptr = strpbrk_esc(arg, ";:+@%");
-		अगर (ptr) अणु
+		if (ptr) {
 			nc = *ptr;
 			*ptr++ = '\0';
-		पूर्ण
-		चयन (c) अणु
-		हाल ':':	/* Line number */
-			pp->line = म_से_अदीर्घ(arg, &पंचांगp, 0);
-			अगर (*पंचांगp != '\0') अणु
+		}
+		switch (c) {
+		case ':':	/* Line number */
+			pp->line = strtoul(arg, &tmp, 0);
+			if (*tmp != '\0') {
 				semantic_error("There is non-digit char"
 					       " in line number.\n");
-				वापस -EINVAL;
-			पूर्ण
-			अवरोध;
-		हाल '+':	/* Byte offset from a symbol */
-			pp->offset = म_से_अदीर्घ(arg, &पंचांगp, 0);
-			अगर (*पंचांगp != '\0') अणु
+				return -EINVAL;
+			}
+			break;
+		case '+':	/* Byte offset from a symbol */
+			pp->offset = strtoul(arg, &tmp, 0);
+			if (*tmp != '\0') {
 				semantic_error("There is non-digit character"
 						" in offset.\n");
-				वापस -EINVAL;
-			पूर्ण
-			अवरोध;
-		हाल '@':	/* File name */
-			अगर (pp->file) अणु
+				return -EINVAL;
+			}
+			break;
+		case '@':	/* File name */
+			if (pp->file) {
 				semantic_error("SRC@SRC is not allowed.\n");
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 			pp->file = strdup_esc(arg);
-			अगर (pp->file == शून्य)
-				वापस -ENOMEM;
-			अवरोध;
-		हाल '%':	/* Probe places */
-			अगर (म_भेद(arg, "return") == 0) अणु
+			if (pp->file == NULL)
+				return -ENOMEM;
+			break;
+		case '%':	/* Probe places */
+			if (strcmp(arg, "return") == 0) {
 				pp->retprobe = 1;
-			पूर्ण अन्यथा अणु	/* Others not supported yet */
+			} else {	/* Others not supported yet */
 				semantic_error("%%%s is not supported.\n", arg);
-				वापस -ENOTSUP;
-			पूर्ण
-			अवरोध;
-		शेष:	/* Buggy हाल */
+				return -ENOTSUP;
+			}
+			break;
+		default:	/* Buggy case */
 			pr_err("This program has a bug at %s:%d.\n",
-				__खाता__, __LINE__);
-			वापस -ENOTSUP;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+				__FILE__, __LINE__);
+			return -ENOTSUP;
+			break;
+		}
+	}
 
 	/* Exclusion check */
-	अगर (pp->lazy_line && pp->line) अणु
+	if (pp->lazy_line && pp->line) {
 		semantic_error("Lazy pattern can't be used with"
 			       " line number.\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (pp->lazy_line && pp->offset) अणु
+	if (pp->lazy_line && pp->offset) {
 		semantic_error("Lazy pattern can't be used with offset.\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (pp->line && pp->offset) अणु
+	if (pp->line && pp->offset) {
 		semantic_error("Offset can't be used with line number.\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!pp->line && !pp->lazy_line && pp->file && !pp->function) अणु
+	if (!pp->line && !pp->lazy_line && pp->file && !pp->function) {
 		semantic_error("File always requires line number or "
 			       "lazy pattern.\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (pp->offset && !pp->function) अणु
+	if (pp->offset && !pp->function) {
 		semantic_error("Offset requires an entry function.\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर ((pp->offset || pp->line || pp->lazy_line) && pp->retprobe) अणु
+	if ((pp->offset || pp->line || pp->lazy_line) && pp->retprobe) {
 		semantic_error("Offset/Line/Lazy pattern can't be used with "
 			       "return probe.\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	pr_debug("symbol:%s file:%s line:%d offset:%lu return:%d lazy:%s\n",
 		 pp->function, pp->file, pp->line, pp->offset, pp->retprobe,
 		 pp->lazy_line);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Parse perf-probe event argument */
-अटल पूर्णांक parse_perf_probe_arg(अक्षर *str, काष्ठा perf_probe_arg *arg)
-अणु
-	अक्षर *पंचांगp, *goodname;
-	काष्ठा perf_probe_arg_field **fieldp;
+static int parse_perf_probe_arg(char *str, struct perf_probe_arg *arg)
+{
+	char *tmp, *goodname;
+	struct perf_probe_arg_field **fieldp;
 
 	pr_debug("parsing arg: %s into ", str);
 
-	पंचांगp = म_अक्षर(str, '=');
-	अगर (पंचांगp) अणु
-		arg->name = strndup(str, पंचांगp - str);
-		अगर (arg->name == शून्य)
-			वापस -ENOMEM;
+	tmp = strchr(str, '=');
+	if (tmp) {
+		arg->name = strndup(str, tmp - str);
+		if (arg->name == NULL)
+			return -ENOMEM;
 		pr_debug("name:%s ", arg->name);
-		str = पंचांगp + 1;
-	पूर्ण
+		str = tmp + 1;
+	}
 
-	पंचांगp = म_अक्षर(str, '@');
-	अगर (पंचांगp && पंचांगp != str && !म_भेद(पंचांगp + 1, "user")) अणु /* user attr */
-		अगर (!user_access_is_supported()) अणु
+	tmp = strchr(str, '@');
+	if (tmp && tmp != str && !strcmp(tmp + 1, "user")) { /* user attr */
+		if (!user_access_is_supported()) {
 			semantic_error("ftrace does not support user access\n");
-			वापस -EINVAL;
-		पूर्ण
-		*पंचांगp = '\0';
+			return -EINVAL;
+		}
+		*tmp = '\0';
 		arg->user_access = true;
 		pr_debug("user_access ");
-	पूर्ण
+	}
 
-	पंचांगp = म_अक्षर(str, ':');
-	अगर (पंचांगp) अणु	/* Type setting */
-		*पंचांगp = '\0';
-		arg->type = strdup(पंचांगp + 1);
-		अगर (arg->type == शून्य)
-			वापस -ENOMEM;
+	tmp = strchr(str, ':');
+	if (tmp) {	/* Type setting */
+		*tmp = '\0';
+		arg->type = strdup(tmp + 1);
+		if (arg->type == NULL)
+			return -ENOMEM;
 		pr_debug("type:%s ", arg->type);
-	पूर्ण
+	}
 
-	पंचांगp = strpbrk(str, "-.[");
-	अगर (!is_c_varname(str) || !पंचांगp) अणु
-		/* A variable, रेजिस्टर, symbol or special value */
+	tmp = strpbrk(str, "-.[");
+	if (!is_c_varname(str) || !tmp) {
+		/* A variable, register, symbol or special value */
 		arg->var = strdup(str);
-		अगर (arg->var == शून्य)
-			वापस -ENOMEM;
+		if (arg->var == NULL)
+			return -ENOMEM;
 		pr_debug("%s\n", arg->var);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* Structure fields or array element */
-	arg->var = strndup(str, पंचांगp - str);
-	अगर (arg->var == शून्य)
-		वापस -ENOMEM;
+	arg->var = strndup(str, tmp - str);
+	if (arg->var == NULL)
+		return -ENOMEM;
 	goodname = arg->var;
 	pr_debug("%s, ", arg->var);
 	fieldp = &arg->field;
 
-	करो अणु
-		*fieldp = zalloc(माप(काष्ठा perf_probe_arg_field));
-		अगर (*fieldp == शून्य)
-			वापस -ENOMEM;
-		अगर (*पंचांगp == '[') अणु	/* Array */
-			str = पंचांगp;
-			(*fieldp)->index = म_से_दीर्घ(str + 1, &पंचांगp, 0);
+	do {
+		*fieldp = zalloc(sizeof(struct perf_probe_arg_field));
+		if (*fieldp == NULL)
+			return -ENOMEM;
+		if (*tmp == '[') {	/* Array */
+			str = tmp;
+			(*fieldp)->index = strtol(str + 1, &tmp, 0);
 			(*fieldp)->ref = true;
-			अगर (*पंचांगp != ']' || पंचांगp == str + 1) अणु
+			if (*tmp != ']' || tmp == str + 1) {
 				semantic_error("Array index must be a"
 						" number.\n");
-				वापस -EINVAL;
-			पूर्ण
-			पंचांगp++;
-			अगर (*पंचांगp == '\0')
-				पंचांगp = शून्य;
-		पूर्ण अन्यथा अणु		/* Structure */
-			अगर (*पंचांगp == '.') अणु
-				str = पंचांगp + 1;
+				return -EINVAL;
+			}
+			tmp++;
+			if (*tmp == '\0')
+				tmp = NULL;
+		} else {		/* Structure */
+			if (*tmp == '.') {
+				str = tmp + 1;
 				(*fieldp)->ref = false;
-			पूर्ण अन्यथा अगर (पंचांगp[1] == '>') अणु
-				str = पंचांगp + 2;
+			} else if (tmp[1] == '>') {
+				str = tmp + 2;
 				(*fieldp)->ref = true;
-			पूर्ण अन्यथा अणु
+			} else {
 				semantic_error("Argument parse error: %s\n",
 					       str);
-				वापस -EINVAL;
-			पूर्ण
-			पंचांगp = strpbrk(str, "-.[");
-		पूर्ण
-		अगर (पंचांगp) अणु
-			(*fieldp)->name = strndup(str, पंचांगp - str);
-			अगर ((*fieldp)->name == शून्य)
-				वापस -ENOMEM;
-			अगर (*str != '[')
+				return -EINVAL;
+			}
+			tmp = strpbrk(str, "-.[");
+		}
+		if (tmp) {
+			(*fieldp)->name = strndup(str, tmp - str);
+			if ((*fieldp)->name == NULL)
+				return -ENOMEM;
+			if (*str != '[')
 				goodname = (*fieldp)->name;
 			pr_debug("%s(%d), ", (*fieldp)->name, (*fieldp)->ref);
 			fieldp = &(*fieldp)->next;
-		पूर्ण
-	पूर्ण जबतक (पंचांगp);
+		}
+	} while (tmp);
 	(*fieldp)->name = strdup(str);
-	अगर ((*fieldp)->name == शून्य)
-		वापस -ENOMEM;
-	अगर (*str != '[')
+	if ((*fieldp)->name == NULL)
+		return -ENOMEM;
+	if (*str != '[')
 		goodname = (*fieldp)->name;
 	pr_debug("%s(%d)\n", (*fieldp)->name, (*fieldp)->ref);
 
-	/* If no name is specअगरied, set the last field name (not array index)*/
-	अगर (!arg->name) अणु
+	/* If no name is specified, set the last field name (not array index)*/
+	if (!arg->name) {
 		arg->name = strdup(goodname);
-		अगर (arg->name == शून्य)
-			वापस -ENOMEM;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (arg->name == NULL)
+			return -ENOMEM;
+	}
+	return 0;
+}
 
 /* Parse perf-probe event command */
-पूर्णांक parse_perf_probe_command(स्थिर अक्षर *cmd, काष्ठा perf_probe_event *pev)
-अणु
-	अक्षर **argv;
-	पूर्णांक argc, i, ret = 0;
+int parse_perf_probe_command(const char *cmd, struct perf_probe_event *pev)
+{
+	char **argv;
+	int argc, i, ret = 0;
 
 	argv = argv_split(cmd, &argc);
-	अगर (!argv) अणु
+	if (!argv) {
 		pr_debug("Failed to split arguments.\n");
-		वापस -ENOMEM;
-	पूर्ण
-	अगर (argc - 1 > MAX_PROBE_ARGS) अणु
+		return -ENOMEM;
+	}
+	if (argc - 1 > MAX_PROBE_ARGS) {
 		semantic_error("Too many probe arguments (%d).\n", argc - 1);
-		ret = -दुस्फल;
-		जाओ out;
-	पूर्ण
-	/* Parse probe poपूर्णांक */
-	ret = parse_perf_probe_poपूर्णांक(argv[0], pev);
-	अगर (ret < 0)
-		जाओ out;
+		ret = -ERANGE;
+		goto out;
+	}
+	/* Parse probe point */
+	ret = parse_perf_probe_point(argv[0], pev);
+	if (ret < 0)
+		goto out;
 
-	/* Generate event name अगर needed */
-	अगर (!pev->event && pev->poपूर्णांक.function && pev->poपूर्णांक.line
-			&& !pev->poपूर्णांक.lazy_line && !pev->poपूर्णांक.offset) अणु
-		अगर (aप्र_लिखो(&pev->event, "%s_L%d", pev->poपूर्णांक.function,
-			pev->poपूर्णांक.line) < 0)
-			वापस -ENOMEM;
-	पूर्ण
+	/* Generate event name if needed */
+	if (!pev->event && pev->point.function && pev->point.line
+			&& !pev->point.lazy_line && !pev->point.offset) {
+		if (asprintf(&pev->event, "%s_L%d", pev->point.function,
+			pev->point.line) < 0)
+			return -ENOMEM;
+	}
 
-	/* Copy arguments and ensure वापस probe has no C argument */
+	/* Copy arguments and ensure return probe has no C argument */
 	pev->nargs = argc - 1;
-	pev->args = zalloc(माप(काष्ठा perf_probe_arg) * pev->nargs);
-	अगर (pev->args == शून्य) अणु
+	pev->args = zalloc(sizeof(struct perf_probe_arg) * pev->nargs);
+	if (pev->args == NULL) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
-	क्रम (i = 0; i < pev->nargs && ret >= 0; i++) अणु
+		goto out;
+	}
+	for (i = 0; i < pev->nargs && ret >= 0; i++) {
 		ret = parse_perf_probe_arg(argv[i + 1], &pev->args[i]);
-		अगर (ret >= 0 &&
-		    is_c_varname(pev->args[i].var) && pev->poपूर्णांक.retprobe) अणु
+		if (ret >= 0 &&
+		    is_c_varname(pev->args[i].var) && pev->point.retprobe) {
 			semantic_error("You can't specify local variable for"
 				       " kretprobe.\n");
 			ret = -EINVAL;
-		पूर्ण
-	पूर्ण
+		}
+	}
 out:
-	argv_मुक्त(argv);
+	argv_free(argv);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* Returns true अगर *any* ARG is either C variable, $params or $vars. */
-bool perf_probe_with_var(काष्ठा perf_probe_event *pev)
-अणु
-	पूर्णांक i = 0;
+/* Returns true if *any* ARG is either C variable, $params or $vars. */
+bool perf_probe_with_var(struct perf_probe_event *pev)
+{
+	int i = 0;
 
-	क्रम (i = 0; i < pev->nargs; i++)
-		अगर (is_c_varname(pev->args[i].var)              ||
-		    !म_भेद(pev->args[i].var, PROBE_ARG_PARAMS) ||
-		    !म_भेद(pev->args[i].var, PROBE_ARG_VARS))
-			वापस true;
-	वापस false;
-पूर्ण
+	for (i = 0; i < pev->nargs; i++)
+		if (is_c_varname(pev->args[i].var)              ||
+		    !strcmp(pev->args[i].var, PROBE_ARG_PARAMS) ||
+		    !strcmp(pev->args[i].var, PROBE_ARG_VARS))
+			return true;
+	return false;
+}
 
-/* Return true अगर this perf_probe_event requires debuginfo */
-bool perf_probe_event_need_dwarf(काष्ठा perf_probe_event *pev)
-अणु
-	अगर (pev->poपूर्णांक.file || pev->poपूर्णांक.line || pev->poपूर्णांक.lazy_line)
-		वापस true;
+/* Return true if this perf_probe_event requires debuginfo */
+bool perf_probe_event_need_dwarf(struct perf_probe_event *pev)
+{
+	if (pev->point.file || pev->point.line || pev->point.lazy_line)
+		return true;
 
-	अगर (perf_probe_with_var(pev))
-		वापस true;
+	if (perf_probe_with_var(pev))
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-/* Parse probe_events event पूर्णांकo काष्ठा probe_poपूर्णांक */
-पूर्णांक parse_probe_trace_command(स्थिर अक्षर *cmd, काष्ठा probe_trace_event *tev)
-अणु
-	काष्ठा probe_trace_poपूर्णांक *tp = &tev->poपूर्णांक;
-	अक्षर pr;
-	अक्षर *p;
-	अक्षर *argv0_str = शून्य, *fmt, *fmt1_str, *fmt2_str, *fmt3_str;
-	पूर्णांक ret, i, argc;
-	अक्षर **argv;
+/* Parse probe_events event into struct probe_point */
+int parse_probe_trace_command(const char *cmd, struct probe_trace_event *tev)
+{
+	struct probe_trace_point *tp = &tev->point;
+	char pr;
+	char *p;
+	char *argv0_str = NULL, *fmt, *fmt1_str, *fmt2_str, *fmt3_str;
+	int ret, i, argc;
+	char **argv;
 
 	pr_debug("Parsing probe_events: %s\n", cmd);
 	argv = argv_split(cmd, &argc);
-	अगर (!argv) अणु
+	if (!argv) {
 		pr_debug("Failed to split arguments.\n");
-		वापस -ENOMEM;
-	पूर्ण
-	अगर (argc < 2) अणु
+		return -ENOMEM;
+	}
+	if (argc < 2) {
 		semantic_error("Too few probe arguments.\n");
-		ret = -दुस्फल;
-		जाओ out;
-	पूर्ण
+		ret = -ERANGE;
+		goto out;
+	}
 
 	/* Scan event and group name. */
 	argv0_str = strdup(argv[0]);
-	अगर (argv0_str == शून्य) अणु
+	if (argv0_str == NULL) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
-	fmt1_str = म_मोहर_r(argv0_str, ":", &fmt);
-	fmt2_str = म_मोहर_r(शून्य, "/", &fmt);
-	fmt3_str = म_मोहर_r(शून्य, " \t", &fmt);
-	अगर (fmt1_str == शून्य || fmt2_str == शून्य || fmt3_str == शून्य) अणु
+		goto out;
+	}
+	fmt1_str = strtok_r(argv0_str, ":", &fmt);
+	fmt2_str = strtok_r(NULL, "/", &fmt);
+	fmt3_str = strtok_r(NULL, " \t", &fmt);
+	if (fmt1_str == NULL || fmt2_str == NULL || fmt3_str == NULL) {
 		semantic_error("Failed to parse event name: %s\n", argv[0]);
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	pr = fmt1_str[0];
 	tev->group = strdup(fmt2_str);
 	tev->event = strdup(fmt3_str);
-	अगर (tev->group == शून्य || tev->event == शून्य) अणु
+	if (tev->group == NULL || tev->event == NULL) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	pr_debug("Group:%s Event:%s probe:%c\n", tev->group, tev->event, pr);
 
 	tp->retprobe = (pr == 'r');
 
-	/* Scan module name(अगर there), function name and offset */
-	p = म_अक्षर(argv[1], ':');
-	अगर (p) अणु
+	/* Scan module name(if there), function name and offset */
+	p = strchr(argv[1], ':');
+	if (p) {
 		tp->module = strndup(argv[1], p - argv[1]);
-		अगर (!tp->module) अणु
+		if (!tp->module) {
 			ret = -ENOMEM;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		tev->uprobes = (tp->module[0] == '/');
 		p++;
-	पूर्ण अन्यथा
+	} else
 		p = argv[1];
-	fmt1_str = म_मोहर_r(p, "+", &fmt);
+	fmt1_str = strtok_r(p, "+", &fmt);
 	/* only the address started with 0x */
-	अगर (fmt1_str[0] == '0')	अणु
+	if (fmt1_str[0] == '0')	{
 		/*
-		 * Fix a special हाल:
-		 * अगर address == 0, kernel reports something like:
-		 * p:probe_libc/असल_0 /lib/libc-2.18.so:0x          (null) arg1=%ax
+		 * Fix a special case:
+		 * if address == 0, kernel reports something like:
+		 * p:probe_libc/abs_0 /lib/libc-2.18.so:0x          (null) arg1=%ax
 		 * Newer kernel may fix that, but we want to
 		 * support old kernel also.
 		 */
-		अगर (म_भेद(fmt1_str, "0x") == 0) अणु
-			अगर (!argv[2] || म_भेद(argv[2], "(null)")) अणु
+		if (strcmp(fmt1_str, "0x") == 0) {
+			if (!argv[2] || strcmp(argv[2], "(null)")) {
 				ret = -EINVAL;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 			tp->address = 0;
 
-			मुक्त(argv[2]);
-			क्रम (i = 2; argv[i + 1] != शून्य; i++)
+			free(argv[2]);
+			for (i = 2; argv[i + 1] != NULL; i++)
 				argv[i] = argv[i + 1];
 
-			argv[i] = शून्य;
+			argv[i] = NULL;
 			argc -= 1;
-		पूर्ण अन्यथा
-			tp->address = म_से_अदीर्घ(fmt1_str, शून्य, 0);
-	पूर्ण अन्यथा अणु
+		} else
+			tp->address = strtoul(fmt1_str, NULL, 0);
+	} else {
 		/* Only the symbol-based probe has offset */
 		tp->symbol = strdup(fmt1_str);
-		अगर (tp->symbol == शून्य) अणु
+		if (tp->symbol == NULL) {
 			ret = -ENOMEM;
-			जाओ out;
-		पूर्ण
-		fmt2_str = म_मोहर_r(शून्य, "", &fmt);
-		अगर (fmt2_str == शून्य)
+			goto out;
+		}
+		fmt2_str = strtok_r(NULL, "", &fmt);
+		if (fmt2_str == NULL)
 			tp->offset = 0;
-		अन्यथा
-			tp->offset = म_से_अदीर्घ(fmt2_str, शून्य, 10);
-	पूर्ण
+		else
+			tp->offset = strtoul(fmt2_str, NULL, 10);
+	}
 
-	अगर (tev->uprobes) अणु
-		fmt2_str = म_अक्षर(p, '(');
-		अगर (fmt2_str)
-			tp->ref_ctr_offset = म_से_अदीर्घ(fmt2_str + 1, शून्य, 0);
-	पूर्ण
+	if (tev->uprobes) {
+		fmt2_str = strchr(p, '(');
+		if (fmt2_str)
+			tp->ref_ctr_offset = strtoul(fmt2_str + 1, NULL, 0);
+	}
 
 	tev->nargs = argc - 2;
-	tev->args = zalloc(माप(काष्ठा probe_trace_arg) * tev->nargs);
-	अगर (tev->args == शून्य) अणु
+	tev->args = zalloc(sizeof(struct probe_trace_arg) * tev->nargs);
+	if (tev->args == NULL) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
-	क्रम (i = 0; i < tev->nargs; i++) अणु
-		p = म_अक्षर(argv[i + 2], '=');
-		अगर (p)	/* We करोn't need which रेजिस्टर is asचिन्हित. */
+		goto out;
+	}
+	for (i = 0; i < tev->nargs; i++) {
+		p = strchr(argv[i + 2], '=');
+		if (p)	/* We don't need which register is assigned. */
 			*p++ = '\0';
-		अन्यथा
+		else
 			p = argv[i + 2];
 		tev->args[i].name = strdup(argv[i + 2]);
 		/* TODO: parse regs and offset */
 		tev->args[i].value = strdup(p);
-		अगर (tev->args[i].name == शून्य || tev->args[i].value == शून्य) अणु
+		if (tev->args[i].name == NULL || tev->args[i].value == NULL) {
 			ret = -ENOMEM;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 	ret = 0;
 out:
-	मुक्त(argv0_str);
-	argv_मुक्त(argv);
-	वापस ret;
-पूर्ण
+	free(argv0_str);
+	argv_free(argv);
+	return ret;
+}
 
 /* Compose only probe arg */
-अक्षर *synthesize_perf_probe_arg(काष्ठा perf_probe_arg *pa)
-अणु
-	काष्ठा perf_probe_arg_field *field = pa->field;
-	काष्ठा strbuf buf;
-	अक्षर *ret = शून्य;
-	पूर्णांक err;
+char *synthesize_perf_probe_arg(struct perf_probe_arg *pa)
+{
+	struct perf_probe_arg_field *field = pa->field;
+	struct strbuf buf;
+	char *ret = NULL;
+	int err;
 
-	अगर (strbuf_init(&buf, 64) < 0)
-		वापस शून्य;
+	if (strbuf_init(&buf, 64) < 0)
+		return NULL;
 
-	अगर (pa->name && pa->var)
+	if (pa->name && pa->var)
 		err = strbuf_addf(&buf, "%s=%s", pa->name, pa->var);
-	अन्यथा
+	else
 		err = strbuf_addstr(&buf, pa->name ?: pa->var);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
-	जबतक (field) अणु
-		अगर (field->name[0] == '[')
+	while (field) {
+		if (field->name[0] == '[')
 			err = strbuf_addstr(&buf, field->name);
-		अन्यथा
+		else
 			err = strbuf_addf(&buf, "%s%s", field->ref ? "->" : ".",
 					  field->name);
 		field = field->next;
-		अगर (err)
-			जाओ out;
-	पूर्ण
+		if (err)
+			goto out;
+	}
 
-	अगर (pa->type)
-		अगर (strbuf_addf(&buf, ":%s", pa->type) < 0)
-			जाओ out;
+	if (pa->type)
+		if (strbuf_addf(&buf, ":%s", pa->type) < 0)
+			goto out;
 
-	ret = strbuf_detach(&buf, शून्य);
+	ret = strbuf_detach(&buf, NULL);
 out:
 	strbuf_release(&buf);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* Compose only probe poपूर्णांक (not argument) */
-अक्षर *synthesize_perf_probe_poपूर्णांक(काष्ठा perf_probe_poपूर्णांक *pp)
-अणु
-	काष्ठा strbuf buf;
-	अक्षर *पंचांगp, *ret = शून्य;
-	पूर्णांक len, err = 0;
+/* Compose only probe point (not argument) */
+char *synthesize_perf_probe_point(struct perf_probe_point *pp)
+{
+	struct strbuf buf;
+	char *tmp, *ret = NULL;
+	int len, err = 0;
 
-	अगर (strbuf_init(&buf, 64) < 0)
-		वापस शून्य;
+	if (strbuf_init(&buf, 64) < 0)
+		return NULL;
 
-	अगर (pp->function) अणु
-		अगर (strbuf_addstr(&buf, pp->function) < 0)
-			जाओ out;
-		अगर (pp->offset)
+	if (pp->function) {
+		if (strbuf_addstr(&buf, pp->function) < 0)
+			goto out;
+		if (pp->offset)
 			err = strbuf_addf(&buf, "+%lu", pp->offset);
-		अन्यथा अगर (pp->line)
+		else if (pp->line)
 			err = strbuf_addf(&buf, ":%d", pp->line);
-		अन्यथा अगर (pp->retprobe)
+		else if (pp->retprobe)
 			err = strbuf_addstr(&buf, "%return");
-		अगर (err)
-			जाओ out;
-	पूर्ण
-	अगर (pp->file) अणु
-		पंचांगp = pp->file;
-		len = म_माप(पंचांगp);
-		अगर (len > 30) अणु
-			पंचांगp = म_अक्षर(pp->file + len - 30, '/');
-			पंचांगp = पंचांगp ? पंचांगp + 1 : pp->file + len - 30;
-		पूर्ण
-		err = strbuf_addf(&buf, "@%s", पंचांगp);
-		अगर (!err && !pp->function && pp->line)
+		if (err)
+			goto out;
+	}
+	if (pp->file) {
+		tmp = pp->file;
+		len = strlen(tmp);
+		if (len > 30) {
+			tmp = strchr(pp->file + len - 30, '/');
+			tmp = tmp ? tmp + 1 : pp->file + len - 30;
+		}
+		err = strbuf_addf(&buf, "@%s", tmp);
+		if (!err && !pp->function && pp->line)
 			err = strbuf_addf(&buf, ":%d", pp->line);
-	पूर्ण
-	अगर (!err)
-		ret = strbuf_detach(&buf, शून्य);
+	}
+	if (!err)
+		ret = strbuf_detach(&buf, NULL);
 out:
 	strbuf_release(&buf);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अक्षर *synthesize_perf_probe_command(काष्ठा perf_probe_event *pev)
-अणु
-	काष्ठा strbuf buf;
-	अक्षर *पंचांगp, *ret = शून्य;
-	पूर्णांक i;
+char *synthesize_perf_probe_command(struct perf_probe_event *pev)
+{
+	struct strbuf buf;
+	char *tmp, *ret = NULL;
+	int i;
 
-	अगर (strbuf_init(&buf, 64))
-		वापस शून्य;
-	अगर (pev->event)
-		अगर (strbuf_addf(&buf, "%s:%s=", pev->group ?: PERFPROBE_GROUP,
+	if (strbuf_init(&buf, 64))
+		return NULL;
+	if (pev->event)
+		if (strbuf_addf(&buf, "%s:%s=", pev->group ?: PERFPROBE_GROUP,
 				pev->event) < 0)
-			जाओ out;
+			goto out;
 
-	पंचांगp = synthesize_perf_probe_poपूर्णांक(&pev->poपूर्णांक);
-	अगर (!पंचांगp || strbuf_addstr(&buf, पंचांगp) < 0)
-		जाओ out;
-	मुक्त(पंचांगp);
+	tmp = synthesize_perf_probe_point(&pev->point);
+	if (!tmp || strbuf_addstr(&buf, tmp) < 0)
+		goto out;
+	free(tmp);
 
-	क्रम (i = 0; i < pev->nargs; i++) अणु
-		पंचांगp = synthesize_perf_probe_arg(pev->args + i);
-		अगर (!पंचांगp || strbuf_addf(&buf, " %s", पंचांगp) < 0)
-			जाओ out;
-		मुक्त(पंचांगp);
-	पूर्ण
+	for (i = 0; i < pev->nargs; i++) {
+		tmp = synthesize_perf_probe_arg(pev->args + i);
+		if (!tmp || strbuf_addf(&buf, " %s", tmp) < 0)
+			goto out;
+		free(tmp);
+	}
 
-	ret = strbuf_detach(&buf, शून्य);
+	ret = strbuf_detach(&buf, NULL);
 out:
 	strbuf_release(&buf);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक __synthesize_probe_trace_arg_ref(काष्ठा probe_trace_arg_ref *ref,
-					    काष्ठा strbuf *buf, पूर्णांक depth)
-अणु
-	पूर्णांक err;
-	अगर (ref->next) अणु
+static int __synthesize_probe_trace_arg_ref(struct probe_trace_arg_ref *ref,
+					    struct strbuf *buf, int depth)
+{
+	int err;
+	if (ref->next) {
 		depth = __synthesize_probe_trace_arg_ref(ref->next, buf,
 							 depth + 1);
-		अगर (depth < 0)
-			वापस depth;
-	पूर्ण
-	अगर (ref->user_access)
+		if (depth < 0)
+			return depth;
+	}
+	if (ref->user_access)
 		err = strbuf_addf(buf, "%s%ld(", "+u", ref->offset);
-	अन्यथा
+	else
 		err = strbuf_addf(buf, "%+ld(", ref->offset);
-	वापस (err < 0) ? err : depth;
-पूर्ण
+	return (err < 0) ? err : depth;
+}
 
-अटल पूर्णांक synthesize_probe_trace_arg(काष्ठा probe_trace_arg *arg,
-				      काष्ठा strbuf *buf)
-अणु
-	काष्ठा probe_trace_arg_ref *ref = arg->ref;
-	पूर्णांक depth = 0, err;
+static int synthesize_probe_trace_arg(struct probe_trace_arg *arg,
+				      struct strbuf *buf)
+{
+	struct probe_trace_arg_ref *ref = arg->ref;
+	int depth = 0, err;
 
 	/* Argument name or separator */
-	अगर (arg->name)
+	if (arg->name)
 		err = strbuf_addf(buf, " %s=", arg->name);
-	अन्यथा
+	else
 		err = strbuf_addch(buf, ' ');
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	/* Special हाल: @XXX */
-	अगर (arg->value[0] == '@' && arg->ref)
+	/* Special case: @XXX */
+	if (arg->value[0] == '@' && arg->ref)
 			ref = ref->next;
 
 	/* Dereferencing arguments */
-	अगर (ref) अणु
+	if (ref) {
 		depth = __synthesize_probe_trace_arg_ref(ref, buf, 1);
-		अगर (depth < 0)
-			वापस depth;
-	पूर्ण
+		if (depth < 0)
+			return depth;
+	}
 
-	/* Prपूर्णांक argument value */
-	अगर (arg->value[0] == '@' && arg->ref)
+	/* Print argument value */
+	if (arg->value[0] == '@' && arg->ref)
 		err = strbuf_addf(buf, "%s%+ld", arg->value, arg->ref->offset);
-	अन्यथा
+	else
 		err = strbuf_addstr(buf, arg->value);
 
 	/* Closing */
-	जबतक (!err && depth--)
+	while (!err && depth--)
 		err = strbuf_addch(buf, ')');
 
-	/* Prपूर्णांक argument type */
-	अगर (!err && arg->type)
+	/* Print argument type */
+	if (!err && arg->type)
 		err = strbuf_addf(buf, ":%s", arg->type);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक
-synthesize_uprobe_trace_def(काष्ठा probe_trace_event *tev, काष्ठा strbuf *buf)
-अणु
-	काष्ठा probe_trace_poपूर्णांक *tp = &tev->poपूर्णांक;
-	पूर्णांक err;
+static int
+synthesize_uprobe_trace_def(struct probe_trace_event *tev, struct strbuf *buf)
+{
+	struct probe_trace_point *tp = &tev->point;
+	int err;
 
 	err = strbuf_addf(buf, "%s:0x%lx", tp->module, tp->address);
 
-	अगर (err >= 0 && tp->ref_ctr_offset) अणु
-		अगर (!uprobe_ref_ctr_is_supported())
-			वापस -1;
+	if (err >= 0 && tp->ref_ctr_offset) {
+		if (!uprobe_ref_ctr_is_supported())
+			return -1;
 		err = strbuf_addf(buf, "(0x%lx)", tp->ref_ctr_offset);
-	पूर्ण
-	वापस err >= 0 ? 0 : -1;
-पूर्ण
+	}
+	return err >= 0 ? 0 : -1;
+}
 
-अक्षर *synthesize_probe_trace_command(काष्ठा probe_trace_event *tev)
-अणु
-	काष्ठा probe_trace_poपूर्णांक *tp = &tev->poपूर्णांक;
-	काष्ठा strbuf buf;
-	अक्षर *ret = शून्य;
-	पूर्णांक i, err;
+char *synthesize_probe_trace_command(struct probe_trace_event *tev)
+{
+	struct probe_trace_point *tp = &tev->point;
+	struct strbuf buf;
+	char *ret = NULL;
+	int i, err;
 
 	/* Uprobes must have tp->module */
-	अगर (tev->uprobes && !tp->module)
-		वापस शून्य;
+	if (tev->uprobes && !tp->module)
+		return NULL;
 
-	अगर (strbuf_init(&buf, 32) < 0)
-		वापस शून्य;
+	if (strbuf_init(&buf, 32) < 0)
+		return NULL;
 
-	अगर (strbuf_addf(&buf, "%c:%s/%s ", tp->retprobe ? 'r' : 'p',
+	if (strbuf_addf(&buf, "%c:%s/%s ", tp->retprobe ? 'r' : 'p',
 			tev->group, tev->event) < 0)
-		जाओ error;
+		goto error;
 	/*
-	 * If tp->address == 0, then this poपूर्णांक must be a
-	 * असलolute address uprobe.
-	 * try_to_find_असलolute_address() should have made
+	 * If tp->address == 0, then this point must be a
+	 * absolute address uprobe.
+	 * try_to_find_absolute_address() should have made
 	 * tp->symbol to "0x0".
 	 */
-	अगर (tev->uprobes && !tp->address) अणु
-		अगर (!tp->symbol || म_भेद(tp->symbol, "0x0"))
-			जाओ error;
-	पूर्ण
+	if (tev->uprobes && !tp->address) {
+		if (!tp->symbol || strcmp(tp->symbol, "0x0"))
+			goto error;
+	}
 
-	/* Use the tp->address क्रम uprobes */
-	अगर (tev->uprobes) अणु
+	/* Use the tp->address for uprobes */
+	if (tev->uprobes) {
 		err = synthesize_uprobe_trace_def(tev, &buf);
-	पूर्ण अन्यथा अगर (!म_भेदन(tp->symbol, "0x", 2)) अणु
-		/* Absolute address. See try_to_find_असलolute_address() */
+	} else if (!strncmp(tp->symbol, "0x", 2)) {
+		/* Absolute address. See try_to_find_absolute_address() */
 		err = strbuf_addf(&buf, "%s%s0x%lx", tp->module ?: "",
 				  tp->module ? ":" : "", tp->address);
-	पूर्ण अन्यथा अणु
+	} else {
 		err = strbuf_addf(&buf, "%s%s%s+%lu", tp->module ?: "",
 				tp->module ? ":" : "", tp->symbol, tp->offset);
-	पूर्ण
+	}
 
-	अगर (err)
-		जाओ error;
+	if (err)
+		goto error;
 
-	क्रम (i = 0; i < tev->nargs; i++)
-		अगर (synthesize_probe_trace_arg(&tev->args[i], &buf) < 0)
-			जाओ error;
+	for (i = 0; i < tev->nargs; i++)
+		if (synthesize_probe_trace_arg(&tev->args[i], &buf) < 0)
+			goto error;
 
-	ret = strbuf_detach(&buf, शून्य);
+	ret = strbuf_detach(&buf, NULL);
 error:
 	strbuf_release(&buf);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक find_perf_probe_poपूर्णांक_from_map(काष्ठा probe_trace_poपूर्णांक *tp,
-					  काष्ठा perf_probe_poपूर्णांक *pp,
+static int find_perf_probe_point_from_map(struct probe_trace_point *tp,
+					  struct perf_probe_point *pp,
 					  bool is_kprobe)
-अणु
-	काष्ठा symbol *sym = शून्य;
-	काष्ठा map *map = शून्य;
+{
+	struct symbol *sym = NULL;
+	struct map *map = NULL;
 	u64 addr = tp->address;
-	पूर्णांक ret = -ENOENT;
+	int ret = -ENOENT;
 
-	अगर (!is_kprobe) अणु
+	if (!is_kprobe) {
 		map = dso__new_map(tp->module);
-		अगर (!map)
-			जाओ out;
+		if (!map)
+			goto out;
 		sym = map__find_symbol(map, addr);
-	पूर्ण अन्यथा अणु
-		अगर (tp->symbol && !addr) अणु
-			अगर (kernel_get_symbol_address_by_name(tp->symbol,
+	} else {
+		if (tp->symbol && !addr) {
+			if (kernel_get_symbol_address_by_name(tp->symbol,
 						&addr, true, false) < 0)
-				जाओ out;
-		पूर्ण
-		अगर (addr) अणु
+				goto out;
+		}
+		if (addr) {
 			addr += tp->offset;
 			sym = machine__find_kernel_symbol(host_machine, addr, &map);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!sym)
-		जाओ out;
+	if (!sym)
+		goto out;
 
 	pp->retprobe = tp->retprobe;
 	pp->offset = addr - map->unmap_ip(map, sym->start);
@@ -2224,677 +2223,677 @@ error:
 	ret = pp->function ? 0 : -ENOMEM;
 
 out:
-	अगर (map && !is_kprobe) अणु
+	if (map && !is_kprobe) {
 		map__put(map);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक convert_to_perf_probe_poपूर्णांक(काष्ठा probe_trace_poपूर्णांक *tp,
-				       काष्ठा perf_probe_poपूर्णांक *pp,
+static int convert_to_perf_probe_point(struct probe_trace_point *tp,
+				       struct perf_probe_point *pp,
 				       bool is_kprobe)
-अणु
-	अक्षर buf[128];
-	पूर्णांक ret;
+{
+	char buf[128];
+	int ret;
 
-	ret = find_perf_probe_poपूर्णांक_from_dwarf(tp, pp, is_kprobe);
-	अगर (!ret)
-		वापस 0;
-	ret = find_perf_probe_poपूर्णांक_from_map(tp, pp, is_kprobe);
-	अगर (!ret)
-		वापस 0;
+	ret = find_perf_probe_point_from_dwarf(tp, pp, is_kprobe);
+	if (!ret)
+		return 0;
+	ret = find_perf_probe_point_from_map(tp, pp, is_kprobe);
+	if (!ret)
+		return 0;
 
 	pr_debug("Failed to find probe point from both of dwarf and map.\n");
 
-	अगर (tp->symbol) अणु
+	if (tp->symbol) {
 		pp->function = strdup(tp->symbol);
 		pp->offset = tp->offset;
-	पूर्ण अन्यथा अणु
-		ret = e_snम_लिखो(buf, 128, "0x%" PRIx64, (u64)tp->address);
-		अगर (ret < 0)
-			वापस ret;
+	} else {
+		ret = e_snprintf(buf, 128, "0x%" PRIx64, (u64)tp->address);
+		if (ret < 0)
+			return ret;
 		pp->function = strdup(buf);
 		pp->offset = 0;
-	पूर्ण
-	अगर (pp->function == शून्य)
-		वापस -ENOMEM;
+	}
+	if (pp->function == NULL)
+		return -ENOMEM;
 
 	pp->retprobe = tp->retprobe;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक convert_to_perf_probe_event(काष्ठा probe_trace_event *tev,
-			       काष्ठा perf_probe_event *pev, bool is_kprobe)
-अणु
-	काष्ठा strbuf buf = STRBUF_INIT;
-	पूर्णांक i, ret;
+static int convert_to_perf_probe_event(struct probe_trace_event *tev,
+			       struct perf_probe_event *pev, bool is_kprobe)
+{
+	struct strbuf buf = STRBUF_INIT;
+	int i, ret;
 
 	/* Convert event/group name */
 	pev->event = strdup(tev->event);
 	pev->group = strdup(tev->group);
-	अगर (pev->event == शून्य || pev->group == शून्य)
-		वापस -ENOMEM;
+	if (pev->event == NULL || pev->group == NULL)
+		return -ENOMEM;
 
-	/* Convert trace_poपूर्णांक to probe_poपूर्णांक */
-	ret = convert_to_perf_probe_poपूर्णांक(&tev->poपूर्णांक, &pev->poपूर्णांक, is_kprobe);
-	अगर (ret < 0)
-		वापस ret;
+	/* Convert trace_point to probe_point */
+	ret = convert_to_perf_probe_point(&tev->point, &pev->point, is_kprobe);
+	if (ret < 0)
+		return ret;
 
 	/* Convert trace_arg to probe_arg */
 	pev->nargs = tev->nargs;
-	pev->args = zalloc(माप(काष्ठा perf_probe_arg) * pev->nargs);
-	अगर (pev->args == शून्य)
-		वापस -ENOMEM;
-	क्रम (i = 0; i < tev->nargs && ret >= 0; i++) अणु
-		अगर (tev->args[i].name)
+	pev->args = zalloc(sizeof(struct perf_probe_arg) * pev->nargs);
+	if (pev->args == NULL)
+		return -ENOMEM;
+	for (i = 0; i < tev->nargs && ret >= 0; i++) {
+		if (tev->args[i].name)
 			pev->args[i].name = strdup(tev->args[i].name);
-		अन्यथा अणु
-			अगर ((ret = strbuf_init(&buf, 32)) < 0)
-				जाओ error;
+		else {
+			if ((ret = strbuf_init(&buf, 32)) < 0)
+				goto error;
 			ret = synthesize_probe_trace_arg(&tev->args[i], &buf);
-			pev->args[i].name = strbuf_detach(&buf, शून्य);
-		पूर्ण
-		अगर (pev->args[i].name == शून्य && ret >= 0)
+			pev->args[i].name = strbuf_detach(&buf, NULL);
+		}
+		if (pev->args[i].name == NULL && ret >= 0)
 			ret = -ENOMEM;
-	पूर्ण
+	}
 error:
-	अगर (ret < 0)
+	if (ret < 0)
 		clear_perf_probe_event(pev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम clear_perf_probe_event(काष्ठा perf_probe_event *pev)
-अणु
-	काष्ठा perf_probe_arg_field *field, *next;
-	पूर्णांक i;
+void clear_perf_probe_event(struct perf_probe_event *pev)
+{
+	struct perf_probe_arg_field *field, *next;
+	int i;
 
-	zमुक्त(&pev->event);
-	zमुक्त(&pev->group);
-	zमुक्त(&pev->target);
-	clear_perf_probe_poपूर्णांक(&pev->poपूर्णांक);
+	zfree(&pev->event);
+	zfree(&pev->group);
+	zfree(&pev->target);
+	clear_perf_probe_point(&pev->point);
 
-	क्रम (i = 0; i < pev->nargs; i++) अणु
-		zमुक्त(&pev->args[i].name);
-		zमुक्त(&pev->args[i].var);
-		zमुक्त(&pev->args[i].type);
+	for (i = 0; i < pev->nargs; i++) {
+		zfree(&pev->args[i].name);
+		zfree(&pev->args[i].var);
+		zfree(&pev->args[i].type);
 		field = pev->args[i].field;
-		जबतक (field) अणु
+		while (field) {
 			next = field->next;
-			zमुक्त(&field->name);
-			मुक्त(field);
+			zfree(&field->name);
+			free(field);
 			field = next;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	pev->nargs = 0;
-	zमुक्त(&pev->args);
-पूर्ण
+	zfree(&pev->args);
+}
 
-#घोषणा strdup_or_जाओ(str, label)	\
-(अणु अक्षर *__p = शून्य; अगर (str && !(__p = strdup(str))) जाओ label; __p; पूर्ण)
+#define strdup_or_goto(str, label)	\
+({ char *__p = NULL; if (str && !(__p = strdup(str))) goto label; __p; })
 
-अटल पूर्णांक perf_probe_poपूर्णांक__copy(काष्ठा perf_probe_poपूर्णांक *dst,
-				  काष्ठा perf_probe_poपूर्णांक *src)
-अणु
-	dst->file = strdup_or_जाओ(src->file, out_err);
-	dst->function = strdup_or_जाओ(src->function, out_err);
-	dst->lazy_line = strdup_or_जाओ(src->lazy_line, out_err);
+static int perf_probe_point__copy(struct perf_probe_point *dst,
+				  struct perf_probe_point *src)
+{
+	dst->file = strdup_or_goto(src->file, out_err);
+	dst->function = strdup_or_goto(src->function, out_err);
+	dst->lazy_line = strdup_or_goto(src->lazy_line, out_err);
 	dst->line = src->line;
 	dst->retprobe = src->retprobe;
 	dst->offset = src->offset;
-	वापस 0;
+	return 0;
 
 out_err:
-	clear_perf_probe_poपूर्णांक(dst);
-	वापस -ENOMEM;
-पूर्ण
+	clear_perf_probe_point(dst);
+	return -ENOMEM;
+}
 
-अटल पूर्णांक perf_probe_arg__copy(काष्ठा perf_probe_arg *dst,
-				काष्ठा perf_probe_arg *src)
-अणु
-	काष्ठा perf_probe_arg_field *field, **ppfield;
+static int perf_probe_arg__copy(struct perf_probe_arg *dst,
+				struct perf_probe_arg *src)
+{
+	struct perf_probe_arg_field *field, **ppfield;
 
-	dst->name = strdup_or_जाओ(src->name, out_err);
-	dst->var = strdup_or_जाओ(src->var, out_err);
-	dst->type = strdup_or_जाओ(src->type, out_err);
+	dst->name = strdup_or_goto(src->name, out_err);
+	dst->var = strdup_or_goto(src->var, out_err);
+	dst->type = strdup_or_goto(src->type, out_err);
 
 	field = src->field;
 	ppfield = &(dst->field);
-	जबतक (field) अणु
-		*ppfield = zalloc(माप(*field));
-		अगर (!*ppfield)
-			जाओ out_err;
-		(*ppfield)->name = strdup_or_जाओ(field->name, out_err);
+	while (field) {
+		*ppfield = zalloc(sizeof(*field));
+		if (!*ppfield)
+			goto out_err;
+		(*ppfield)->name = strdup_or_goto(field->name, out_err);
 		(*ppfield)->index = field->index;
 		(*ppfield)->ref = field->ref;
 		field = field->next;
 		ppfield = &((*ppfield)->next);
-	पूर्ण
-	वापस 0;
+	}
+	return 0;
 out_err:
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-पूर्णांक perf_probe_event__copy(काष्ठा perf_probe_event *dst,
-			   काष्ठा perf_probe_event *src)
-अणु
-	पूर्णांक i;
+int perf_probe_event__copy(struct perf_probe_event *dst,
+			   struct perf_probe_event *src)
+{
+	int i;
 
-	dst->event = strdup_or_जाओ(src->event, out_err);
-	dst->group = strdup_or_जाओ(src->group, out_err);
-	dst->target = strdup_or_जाओ(src->target, out_err);
+	dst->event = strdup_or_goto(src->event, out_err);
+	dst->group = strdup_or_goto(src->group, out_err);
+	dst->target = strdup_or_goto(src->target, out_err);
 	dst->uprobes = src->uprobes;
 
-	अगर (perf_probe_poपूर्णांक__copy(&dst->poपूर्णांक, &src->poपूर्णांक) < 0)
-		जाओ out_err;
+	if (perf_probe_point__copy(&dst->point, &src->point) < 0)
+		goto out_err;
 
-	dst->args = zalloc(माप(काष्ठा perf_probe_arg) * src->nargs);
-	अगर (!dst->args)
-		जाओ out_err;
+	dst->args = zalloc(sizeof(struct perf_probe_arg) * src->nargs);
+	if (!dst->args)
+		goto out_err;
 	dst->nargs = src->nargs;
 
-	क्रम (i = 0; i < src->nargs; i++)
-		अगर (perf_probe_arg__copy(&dst->args[i], &src->args[i]) < 0)
-			जाओ out_err;
-	वापस 0;
+	for (i = 0; i < src->nargs; i++)
+		if (perf_probe_arg__copy(&dst->args[i], &src->args[i]) < 0)
+			goto out_err;
+	return 0;
 
 out_err:
 	clear_perf_probe_event(dst);
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-व्योम clear_probe_trace_event(काष्ठा probe_trace_event *tev)
-अणु
-	काष्ठा probe_trace_arg_ref *ref, *next;
-	पूर्णांक i;
+void clear_probe_trace_event(struct probe_trace_event *tev)
+{
+	struct probe_trace_arg_ref *ref, *next;
+	int i;
 
-	zमुक्त(&tev->event);
-	zमुक्त(&tev->group);
-	zमुक्त(&tev->poपूर्णांक.symbol);
-	zमुक्त(&tev->poपूर्णांक.realname);
-	zमुक्त(&tev->poपूर्णांक.module);
-	क्रम (i = 0; i < tev->nargs; i++) अणु
-		zमुक्त(&tev->args[i].name);
-		zमुक्त(&tev->args[i].value);
-		zमुक्त(&tev->args[i].type);
+	zfree(&tev->event);
+	zfree(&tev->group);
+	zfree(&tev->point.symbol);
+	zfree(&tev->point.realname);
+	zfree(&tev->point.module);
+	for (i = 0; i < tev->nargs; i++) {
+		zfree(&tev->args[i].name);
+		zfree(&tev->args[i].value);
+		zfree(&tev->args[i].type);
 		ref = tev->args[i].ref;
-		जबतक (ref) अणु
+		while (ref) {
 			next = ref->next;
-			मुक्त(ref);
+			free(ref);
 			ref = next;
-		पूर्ण
-	पूर्ण
-	zमुक्त(&tev->args);
+		}
+	}
+	zfree(&tev->args);
 	tev->nargs = 0;
-पूर्ण
+}
 
-काष्ठा kprobe_blacklist_node अणु
-	काष्ठा list_head list;
-	अचिन्हित दीर्घ start;
-	अचिन्हित दीर्घ end;
-	अक्षर *symbol;
-पूर्ण;
+struct kprobe_blacklist_node {
+	struct list_head list;
+	unsigned long start;
+	unsigned long end;
+	char *symbol;
+};
 
-अटल व्योम kprobe_blacklist__delete(काष्ठा list_head *blacklist)
-अणु
-	काष्ठा kprobe_blacklist_node *node;
+static void kprobe_blacklist__delete(struct list_head *blacklist)
+{
+	struct kprobe_blacklist_node *node;
 
-	जबतक (!list_empty(blacklist)) अणु
+	while (!list_empty(blacklist)) {
 		node = list_first_entry(blacklist,
-					काष्ठा kprobe_blacklist_node, list);
+					struct kprobe_blacklist_node, list);
 		list_del_init(&node->list);
-		zमुक्त(&node->symbol);
-		मुक्त(node);
-	पूर्ण
-पूर्ण
+		zfree(&node->symbol);
+		free(node);
+	}
+}
 
-अटल पूर्णांक kprobe_blacklist__load(काष्ठा list_head *blacklist)
-अणु
-	काष्ठा kprobe_blacklist_node *node;
-	स्थिर अक्षर *__debugfs = debugfs__mountpoपूर्णांक();
-	अक्षर buf[PATH_MAX], *p;
-	खाता *fp;
-	पूर्णांक ret;
+static int kprobe_blacklist__load(struct list_head *blacklist)
+{
+	struct kprobe_blacklist_node *node;
+	const char *__debugfs = debugfs__mountpoint();
+	char buf[PATH_MAX], *p;
+	FILE *fp;
+	int ret;
 
-	अगर (__debugfs == शून्य)
-		वापस -ENOTSUP;
+	if (__debugfs == NULL)
+		return -ENOTSUP;
 
-	ret = e_snम_लिखो(buf, PATH_MAX, "%s/kprobes/blacklist", __debugfs);
-	अगर (ret < 0)
-		वापस ret;
+	ret = e_snprintf(buf, PATH_MAX, "%s/kprobes/blacklist", __debugfs);
+	if (ret < 0)
+		return ret;
 
-	fp = ख_खोलो(buf, "r");
-	अगर (!fp)
-		वापस -त्रुटि_सं;
+	fp = fopen(buf, "r");
+	if (!fp)
+		return -errno;
 
 	ret = 0;
-	जबतक (ख_माला_लो(buf, PATH_MAX, fp)) अणु
-		node = zalloc(माप(*node));
-		अगर (!node) अणु
+	while (fgets(buf, PATH_MAX, fp)) {
+		node = zalloc(sizeof(*node));
+		if (!node) {
 			ret = -ENOMEM;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		INIT_LIST_HEAD(&node->list);
 		list_add_tail(&node->list, blacklist);
-		अगर (माला_पूछो(buf, "0x%lx-0x%lx", &node->start, &node->end) != 2) अणु
+		if (sscanf(buf, "0x%lx-0x%lx", &node->start, &node->end) != 2) {
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
-		p = म_अक्षर(buf, '\t');
-		अगर (p) अणु
+			break;
+		}
+		p = strchr(buf, '\t');
+		if (p) {
 			p++;
-			अगर (p[म_माप(p) - 1] == '\n')
-				p[म_माप(p) - 1] = '\0';
-		पूर्ण अन्यथा
-			p = (अक्षर *)"unknown";
+			if (p[strlen(p) - 1] == '\n')
+				p[strlen(p) - 1] = '\0';
+		} else
+			p = (char *)"unknown";
 		node->symbol = strdup(p);
-		अगर (!node->symbol) अणु
+		if (!node->symbol) {
 			ret = -ENOMEM;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		pr_debug2("Blacklist: 0x%lx-0x%lx, %s\n",
 			  node->start, node->end, node->symbol);
 		ret++;
-	पूर्ण
-	अगर (ret < 0)
+	}
+	if (ret < 0)
 		kprobe_blacklist__delete(blacklist);
-	ख_बंद(fp);
+	fclose(fp);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा kprobe_blacklist_node *
-kprobe_blacklist__find_by_address(काष्ठा list_head *blacklist,
-				  अचिन्हित दीर्घ address)
-अणु
-	काष्ठा kprobe_blacklist_node *node;
+static struct kprobe_blacklist_node *
+kprobe_blacklist__find_by_address(struct list_head *blacklist,
+				  unsigned long address)
+{
+	struct kprobe_blacklist_node *node;
 
-	list_क्रम_each_entry(node, blacklist, list) अणु
-		अगर (node->start <= address && address < node->end)
-			वापस node;
-	पूर्ण
+	list_for_each_entry(node, blacklist, list) {
+		if (node->start <= address && address < node->end)
+			return node;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल LIST_HEAD(kprobe_blacklist);
+static LIST_HEAD(kprobe_blacklist);
 
-अटल व्योम kprobe_blacklist__init(व्योम)
-अणु
-	अगर (!list_empty(&kprobe_blacklist))
-		वापस;
+static void kprobe_blacklist__init(void)
+{
+	if (!list_empty(&kprobe_blacklist))
+		return;
 
-	अगर (kprobe_blacklist__load(&kprobe_blacklist) < 0)
+	if (kprobe_blacklist__load(&kprobe_blacklist) < 0)
 		pr_debug("No kprobe blacklist support, ignored\n");
-पूर्ण
+}
 
-अटल व्योम kprobe_blacklist__release(व्योम)
-अणु
+static void kprobe_blacklist__release(void)
+{
 	kprobe_blacklist__delete(&kprobe_blacklist);
-पूर्ण
+}
 
-अटल bool kprobe_blacklist__listed(अचिन्हित दीर्घ address)
-अणु
-	वापस !!kprobe_blacklist__find_by_address(&kprobe_blacklist, address);
-पूर्ण
+static bool kprobe_blacklist__listed(unsigned long address)
+{
+	return !!kprobe_blacklist__find_by_address(&kprobe_blacklist, address);
+}
 
-अटल पूर्णांक perf_probe_event__प्र_लिखो(स्थिर अक्षर *group, स्थिर अक्षर *event,
-				     काष्ठा perf_probe_event *pev,
-				     स्थिर अक्षर *module,
-				     काष्ठा strbuf *result)
-अणु
-	पूर्णांक i, ret;
-	अक्षर *buf;
+static int perf_probe_event__sprintf(const char *group, const char *event,
+				     struct perf_probe_event *pev,
+				     const char *module,
+				     struct strbuf *result)
+{
+	int i, ret;
+	char *buf;
 
-	अगर (aप्र_लिखो(&buf, "%s:%s", group, event) < 0)
-		वापस -त्रुटि_सं;
+	if (asprintf(&buf, "%s:%s", group, event) < 0)
+		return -errno;
 	ret = strbuf_addf(result, "  %-20s (on ", buf);
-	मुक्त(buf);
-	अगर (ret)
-		वापस ret;
+	free(buf);
+	if (ret)
+		return ret;
 
-	/* Synthesize only event probe poपूर्णांक */
-	buf = synthesize_perf_probe_poपूर्णांक(&pev->poपूर्णांक);
-	अगर (!buf)
-		वापस -ENOMEM;
+	/* Synthesize only event probe point */
+	buf = synthesize_perf_probe_point(&pev->point);
+	if (!buf)
+		return -ENOMEM;
 	ret = strbuf_addstr(result, buf);
-	मुक्त(buf);
+	free(buf);
 
-	अगर (!ret && module)
+	if (!ret && module)
 		ret = strbuf_addf(result, " in %s", module);
 
-	अगर (!ret && pev->nargs > 0) अणु
+	if (!ret && pev->nargs > 0) {
 		ret = strbuf_add(result, " with", 5);
-		क्रम (i = 0; !ret && i < pev->nargs; i++) अणु
+		for (i = 0; !ret && i < pev->nargs; i++) {
 			buf = synthesize_perf_probe_arg(&pev->args[i]);
-			अगर (!buf)
-				वापस -ENOMEM;
+			if (!buf)
+				return -ENOMEM;
 			ret = strbuf_addf(result, " %s", buf);
-			मुक्त(buf);
-		पूर्ण
-	पूर्ण
-	अगर (!ret)
+			free(buf);
+		}
+	}
+	if (!ret)
 		ret = strbuf_addch(result, ')');
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* Show an event */
-पूर्णांक show_perf_probe_event(स्थिर अक्षर *group, स्थिर अक्षर *event,
-			  काष्ठा perf_probe_event *pev,
-			  स्थिर अक्षर *module, bool use_मानक_निकास)
-अणु
-	काष्ठा strbuf buf = STRBUF_INIT;
-	पूर्णांक ret;
+int show_perf_probe_event(const char *group, const char *event,
+			  struct perf_probe_event *pev,
+			  const char *module, bool use_stdout)
+{
+	struct strbuf buf = STRBUF_INIT;
+	int ret;
 
-	ret = perf_probe_event__प्र_लिखो(group, event, pev, module, &buf);
-	अगर (ret >= 0) अणु
-		अगर (use_मानक_निकास)
-			म_लिखो("%s\n", buf.buf);
-		अन्यथा
+	ret = perf_probe_event__sprintf(group, event, pev, module, &buf);
+	if (ret >= 0) {
+		if (use_stdout)
+			printf("%s\n", buf.buf);
+		else
 			pr_info("%s\n", buf.buf);
-	पूर्ण
+	}
 	strbuf_release(&buf);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल bool filter_probe_trace_event(काष्ठा probe_trace_event *tev,
-				     काष्ठा strfilter *filter)
-अणु
-	अक्षर पंचांगp[128];
+static bool filter_probe_trace_event(struct probe_trace_event *tev,
+				     struct strfilter *filter)
+{
+	char tmp[128];
 
 	/* At first, check the event name itself */
-	अगर (strfilter__compare(filter, tev->event))
-		वापस true;
+	if (strfilter__compare(filter, tev->event))
+		return true;
 
 	/* Next, check the combination of name and group */
-	अगर (e_snम_लिखो(पंचांगp, 128, "%s:%s", tev->group, tev->event) < 0)
-		वापस false;
-	वापस strfilter__compare(filter, पंचांगp);
-पूर्ण
+	if (e_snprintf(tmp, 128, "%s:%s", tev->group, tev->event) < 0)
+		return false;
+	return strfilter__compare(filter, tmp);
+}
 
-अटल पूर्णांक __show_perf_probe_events(पूर्णांक fd, bool is_kprobe,
-				    काष्ठा strfilter *filter)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा probe_trace_event tev;
-	काष्ठा perf_probe_event pev;
-	काष्ठा strlist *rawlist;
-	काष्ठा str_node *ent;
+static int __show_perf_probe_events(int fd, bool is_kprobe,
+				    struct strfilter *filter)
+{
+	int ret = 0;
+	struct probe_trace_event tev;
+	struct perf_probe_event pev;
+	struct strlist *rawlist;
+	struct str_node *ent;
 
-	स_रखो(&tev, 0, माप(tev));
-	स_रखो(&pev, 0, माप(pev));
+	memset(&tev, 0, sizeof(tev));
+	memset(&pev, 0, sizeof(pev));
 
 	rawlist = probe_file__get_rawlist(fd);
-	अगर (!rawlist)
-		वापस -ENOMEM;
+	if (!rawlist)
+		return -ENOMEM;
 
-	strlist__क्रम_each_entry(ent, rawlist) अणु
+	strlist__for_each_entry(ent, rawlist) {
 		ret = parse_probe_trace_command(ent->s, &tev);
-		अगर (ret >= 0) अणु
-			अगर (!filter_probe_trace_event(&tev, filter))
-				जाओ next;
+		if (ret >= 0) {
+			if (!filter_probe_trace_event(&tev, filter))
+				goto next;
 			ret = convert_to_perf_probe_event(&tev, &pev,
 								is_kprobe);
-			अगर (ret < 0)
-				जाओ next;
+			if (ret < 0)
+				goto next;
 			ret = show_perf_probe_event(pev.group, pev.event,
-						    &pev, tev.poपूर्णांक.module,
+						    &pev, tev.point.module,
 						    true);
-		पूर्ण
+		}
 next:
 		clear_perf_probe_event(&pev);
 		clear_probe_trace_event(&tev);
-		अगर (ret < 0)
-			अवरोध;
-	पूर्ण
+		if (ret < 0)
+			break;
+	}
 	strlist__delete(rawlist);
-	/* Cleanup cached debuginfo अगर needed */
-	debuginfo_cache__निकास();
+	/* Cleanup cached debuginfo if needed */
+	debuginfo_cache__exit();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* List up current perf-probe events */
-पूर्णांक show_perf_probe_events(काष्ठा strfilter *filter)
-अणु
-	पूर्णांक kp_fd, up_fd, ret;
+int show_perf_probe_events(struct strfilter *filter)
+{
+	int kp_fd, up_fd, ret;
 
 	setup_pager();
 
-	अगर (probe_conf.cache)
-		वापस probe_cache__show_all_caches(filter);
+	if (probe_conf.cache)
+		return probe_cache__show_all_caches(filter);
 
 	ret = init_probe_symbol_maps(false);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	ret = probe_file__खोलो_both(&kp_fd, &up_fd, 0);
-	अगर (ret < 0)
-		वापस ret;
+	ret = probe_file__open_both(&kp_fd, &up_fd, 0);
+	if (ret < 0)
+		return ret;
 
-	अगर (kp_fd >= 0)
+	if (kp_fd >= 0)
 		ret = __show_perf_probe_events(kp_fd, true, filter);
-	अगर (up_fd >= 0 && ret >= 0)
+	if (up_fd >= 0 && ret >= 0)
 		ret = __show_perf_probe_events(up_fd, false, filter);
-	अगर (kp_fd > 0)
-		बंद(kp_fd);
-	अगर (up_fd > 0)
-		बंद(up_fd);
-	निकास_probe_symbol_maps();
+	if (kp_fd > 0)
+		close(kp_fd);
+	if (up_fd > 0)
+		close(up_fd);
+	exit_probe_symbol_maps();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक get_new_event_name(अक्षर *buf, माप_प्रकार len, स्थिर अक्षर *base,
-			      काष्ठा strlist *namelist, bool ret_event,
+static int get_new_event_name(char *buf, size_t len, const char *base,
+			      struct strlist *namelist, bool ret_event,
 			      bool allow_suffix)
-अणु
-	पूर्णांक i, ret;
-	अक्षर *p, *nbase;
+{
+	int i, ret;
+	char *p, *nbase;
 
-	अगर (*base == '.')
+	if (*base == '.')
 		base++;
 	nbase = strdup(base);
-	अगर (!nbase)
-		वापस -ENOMEM;
+	if (!nbase)
+		return -ENOMEM;
 
-	/* Cut off the करोt suffixes (e.g. .स्थिर, .isra) and version suffixes */
+	/* Cut off the dot suffixes (e.g. .const, .isra) and version suffixes */
 	p = strpbrk(nbase, ".@");
-	अगर (p && p != nbase)
+	if (p && p != nbase)
 		*p = '\0';
 
 	/* Try no suffix number */
-	ret = e_snम_लिखो(buf, len, "%s%s", nbase, ret_event ? "__return" : "");
-	अगर (ret < 0) अणु
+	ret = e_snprintf(buf, len, "%s%s", nbase, ret_event ? "__return" : "");
+	if (ret < 0) {
 		pr_debug("snprintf() failed: %d\n", ret);
-		जाओ out;
-	पूर्ण
-	अगर (!strlist__has_entry(namelist, buf))
-		जाओ out;
+		goto out;
+	}
+	if (!strlist__has_entry(namelist, buf))
+		goto out;
 
-	अगर (!allow_suffix) अणु
+	if (!allow_suffix) {
 		pr_warning("Error: event \"%s\" already exists.\n"
 			   " Hint: Remove existing event by 'perf probe -d'\n"
 			   "       or force duplicates by 'perf probe -f'\n"
 			   "       or set 'force=yes' in BPF source.\n",
 			   buf);
 		ret = -EEXIST;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* Try to add suffix */
-	क्रम (i = 1; i < MAX_EVENT_INDEX; i++) अणु
-		ret = e_snम_लिखो(buf, len, "%s_%d", nbase, i);
-		अगर (ret < 0) अणु
+	for (i = 1; i < MAX_EVENT_INDEX; i++) {
+		ret = e_snprintf(buf, len, "%s_%d", nbase, i);
+		if (ret < 0) {
 			pr_debug("snprintf() failed: %d\n", ret);
-			जाओ out;
-		पूर्ण
-		अगर (!strlist__has_entry(namelist, buf))
-			अवरोध;
-	पूर्ण
-	अगर (i == MAX_EVENT_INDEX) अणु
+			goto out;
+		}
+		if (!strlist__has_entry(namelist, buf))
+			break;
+	}
+	if (i == MAX_EVENT_INDEX) {
 		pr_warning("Too many events are on the same function.\n");
-		ret = -दुस्फल;
-	पूर्ण
+		ret = -ERANGE;
+	}
 
 out:
-	मुक्त(nbase);
+	free(nbase);
 
 	/* Final validation */
-	अगर (ret >= 0 && !is_c_func_name(buf)) अणु
+	if (ret >= 0 && !is_c_func_name(buf)) {
 		pr_warning("Internal error: \"%s\" is an invalid event name.\n",
 			   buf);
 		ret = -EINVAL;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* Warn अगर the current kernel's uprobe implementation is old */
-अटल व्योम warn_uprobe_event_compat(काष्ठा probe_trace_event *tev)
-अणु
-	पूर्णांक i;
-	अक्षर *buf = synthesize_probe_trace_command(tev);
-	काष्ठा probe_trace_poपूर्णांक *tp = &tev->poपूर्णांक;
+/* Warn if the current kernel's uprobe implementation is old */
+static void warn_uprobe_event_compat(struct probe_trace_event *tev)
+{
+	int i;
+	char *buf = synthesize_probe_trace_command(tev);
+	struct probe_trace_point *tp = &tev->point;
 
-	अगर (tp->ref_ctr_offset && !uprobe_ref_ctr_is_supported()) अणु
+	if (tp->ref_ctr_offset && !uprobe_ref_ctr_is_supported()) {
 		pr_warning("A semaphore is associated with %s:%s and "
 			   "seems your kernel doesn't support it.\n",
 			   tev->group, tev->event);
-	पूर्ण
+	}
 
-	/* Old uprobe event करोesn't support memory dereference */
-	अगर (!tev->uprobes || tev->nargs == 0 || !buf)
-		जाओ out;
+	/* Old uprobe event doesn't support memory dereference */
+	if (!tev->uprobes || tev->nargs == 0 || !buf)
+		goto out;
 
-	क्रम (i = 0; i < tev->nargs; i++)
-		अगर (strglobmatch(tev->args[i].value, "[$@+-]*")) अणु
+	for (i = 0; i < tev->nargs; i++)
+		if (strglobmatch(tev->args[i].value, "[$@+-]*")) {
 			pr_warning("Please upgrade your kernel to at least "
 				   "3.14 to have access to feature %s\n",
 				   tev->args[i].value);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 out:
-	मुक्त(buf);
-पूर्ण
+	free(buf);
+}
 
 /* Set new name from original perf_probe_event and namelist */
-अटल पूर्णांक probe_trace_event__set_name(काष्ठा probe_trace_event *tev,
-				       काष्ठा perf_probe_event *pev,
-				       काष्ठा strlist *namelist,
+static int probe_trace_event__set_name(struct probe_trace_event *tev,
+				       struct perf_probe_event *pev,
+				       struct strlist *namelist,
 				       bool allow_suffix)
-अणु
-	स्थिर अक्षर *event, *group;
-	अक्षर buf[64];
-	पूर्णांक ret;
+{
+	const char *event, *group;
+	char buf[64];
+	int ret;
 
-	/* If probe_event or trace_event alपढ़ोy have the name, reuse it */
-	अगर (pev->event && !pev->sdt)
+	/* If probe_event or trace_event already have the name, reuse it */
+	if (pev->event && !pev->sdt)
 		event = pev->event;
-	अन्यथा अगर (tev->event)
+	else if (tev->event)
 		event = tev->event;
-	अन्यथा अणु
-		/* Or generate new one from probe poपूर्णांक */
-		अगर (pev->poपूर्णांक.function &&
-			(म_भेदन(pev->poपूर्णांक.function, "0x", 2) != 0) &&
-			!strisglob(pev->poपूर्णांक.function))
-			event = pev->poपूर्णांक.function;
-		अन्यथा
-			event = tev->poपूर्णांक.realname;
-	पूर्ण
-	अगर (pev->group && !pev->sdt)
+	else {
+		/* Or generate new one from probe point */
+		if (pev->point.function &&
+			(strncmp(pev->point.function, "0x", 2) != 0) &&
+			!strisglob(pev->point.function))
+			event = pev->point.function;
+		else
+			event = tev->point.realname;
+	}
+	if (pev->group && !pev->sdt)
 		group = pev->group;
-	अन्यथा अगर (tev->group)
+	else if (tev->group)
 		group = tev->group;
-	अन्यथा
+	else
 		group = PERFPROBE_GROUP;
 
 	/* Get an unused new event name */
 	ret = get_new_event_name(buf, 64, event, namelist,
-				 tev->poपूर्णांक.retprobe, allow_suffix);
-	अगर (ret < 0)
-		वापस ret;
+				 tev->point.retprobe, allow_suffix);
+	if (ret < 0)
+		return ret;
 
 	event = buf;
 
 	tev->event = strdup(event);
 	tev->group = strdup(group);
-	अगर (tev->event == शून्य || tev->group == शून्य)
-		वापस -ENOMEM;
+	if (tev->event == NULL || tev->group == NULL)
+		return -ENOMEM;
 
 	/*
-	 * Add new event name to namelist अगर multiprobe event is NOT
-	 * supported, since we have to use new event name क्रम following
-	 * probes in that हाल.
+	 * Add new event name to namelist if multiprobe event is NOT
+	 * supported, since we have to use new event name for following
+	 * probes in that case.
 	 */
-	अगर (!multiprobe_event_is_supported())
+	if (!multiprobe_event_is_supported())
 		strlist__add(namelist, event);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __खोलो_probe_file_and_namelist(bool uprobe,
-					  काष्ठा strlist **namelist)
-अणु
-	पूर्णांक fd;
+static int __open_probe_file_and_namelist(bool uprobe,
+					  struct strlist **namelist)
+{
+	int fd;
 
-	fd = probe_file__खोलो(PF_FL_RW | (uprobe ? PF_FL_UPROBE : 0));
-	अगर (fd < 0)
-		वापस fd;
+	fd = probe_file__open(PF_FL_RW | (uprobe ? PF_FL_UPROBE : 0));
+	if (fd < 0)
+		return fd;
 
 	/* Get current event names */
 	*namelist = probe_file__get_namelist(fd);
-	अगर (!(*namelist)) अणु
+	if (!(*namelist)) {
 		pr_debug("Failed to get current event list.\n");
-		बंद(fd);
-		वापस -ENOMEM;
-	पूर्ण
-	वापस fd;
-पूर्ण
+		close(fd);
+		return -ENOMEM;
+	}
+	return fd;
+}
 
-अटल पूर्णांक __add_probe_trace_events(काष्ठा perf_probe_event *pev,
-				     काष्ठा probe_trace_event *tevs,
-				     पूर्णांक ntevs, bool allow_suffix)
-अणु
-	पूर्णांक i, fd[2] = अणु-1, -1पूर्ण, up, ret;
-	काष्ठा probe_trace_event *tev = शून्य;
-	काष्ठा probe_cache *cache = शून्य;
-	काष्ठा strlist *namelist[2] = अणुशून्य, शून्यपूर्ण;
-	काष्ठा nscookie nsc;
+static int __add_probe_trace_events(struct perf_probe_event *pev,
+				     struct probe_trace_event *tevs,
+				     int ntevs, bool allow_suffix)
+{
+	int i, fd[2] = {-1, -1}, up, ret;
+	struct probe_trace_event *tev = NULL;
+	struct probe_cache *cache = NULL;
+	struct strlist *namelist[2] = {NULL, NULL};
+	struct nscookie nsc;
 
 	up = pev->uprobes ? 1 : 0;
-	fd[up] = __खोलो_probe_file_and_namelist(up, &namelist[up]);
-	अगर (fd[up] < 0)
-		वापस fd[up];
+	fd[up] = __open_probe_file_and_namelist(up, &namelist[up]);
+	if (fd[up] < 0)
+		return fd[up];
 
 	ret = 0;
-	क्रम (i = 0; i < ntevs; i++) अणु
+	for (i = 0; i < ntevs; i++) {
 		tev = &tevs[i];
 		up = tev->uprobes ? 1 : 0;
-		अगर (fd[up] == -1) अणु	/* Open the kprobe/uprobe_events */
-			fd[up] = __खोलो_probe_file_and_namelist(up,
+		if (fd[up] == -1) {	/* Open the kprobe/uprobe_events */
+			fd[up] = __open_probe_file_and_namelist(up,
 								&namelist[up]);
-			अगर (fd[up] < 0)
-				जाओ बंद_out;
-		पूर्ण
-		/* Skip अगर the symbol is out of .text or blacklisted */
-		अगर (!tev->poपूर्णांक.symbol && !pev->uprobes)
-			जारी;
+			if (fd[up] < 0)
+				goto close_out;
+		}
+		/* Skip if the symbol is out of .text or blacklisted */
+		if (!tev->point.symbol && !pev->uprobes)
+			continue;
 
-		/* Set new name क्रम tev (and update namelist) */
+		/* Set new name for tev (and update namelist) */
 		ret = probe_trace_event__set_name(tev, pev, namelist[up],
 						  allow_suffix);
-		अगर (ret < 0)
-			अवरोध;
+		if (ret < 0)
+			break;
 
 		nsinfo__mountns_enter(pev->nsi, &nsc);
 		ret = probe_file__add_event(fd[up], tev);
-		nsinfo__mountns_निकास(&nsc);
-		अगर (ret < 0)
-			अवरोध;
+		nsinfo__mountns_exit(&nsc);
+		if (ret < 0)
+			break;
 
 		/*
 		 * Probes after the first probe which comes from same
@@ -2903,778 +2902,778 @@ out:
 		 * one code line.
 		 */
 		allow_suffix = true;
-	पूर्ण
-	अगर (ret == -EINVAL && pev->uprobes)
+	}
+	if (ret == -EINVAL && pev->uprobes)
 		warn_uprobe_event_compat(tev);
-	अगर (ret == 0 && probe_conf.cache) अणु
+	if (ret == 0 && probe_conf.cache) {
 		cache = probe_cache__new(pev->target, pev->nsi);
-		अगर (!cache ||
+		if (!cache ||
 		    probe_cache__add_entry(cache, pev, tevs, ntevs) < 0 ||
 		    probe_cache__commit(cache) < 0)
 			pr_warning("Failed to add event to probe cache\n");
 		probe_cache__delete(cache);
-	पूर्ण
+	}
 
-बंद_out:
-	क्रम (up = 0; up < 2; up++) अणु
+close_out:
+	for (up = 0; up < 2; up++) {
 		strlist__delete(namelist[up]);
-		अगर (fd[up] >= 0)
-			बंद(fd[up]);
-	पूर्ण
-	वापस ret;
-पूर्ण
+		if (fd[up] >= 0)
+			close(fd[up]);
+	}
+	return ret;
+}
 
-अटल पूर्णांक find_probe_functions(काष्ठा map *map, अक्षर *name,
-				काष्ठा symbol **syms)
-अणु
-	पूर्णांक found = 0;
-	काष्ठा symbol *sym;
-	काष्ठा rb_node *पंचांगp;
-	स्थिर अक्षर *norm, *ver;
-	अक्षर *buf = शून्य;
+static int find_probe_functions(struct map *map, char *name,
+				struct symbol **syms)
+{
+	int found = 0;
+	struct symbol *sym;
+	struct rb_node *tmp;
+	const char *norm, *ver;
+	char *buf = NULL;
 	bool cut_version = true;
 
-	अगर (map__load(map) < 0)
-		वापस 0;
+	if (map__load(map) < 0)
+		return 0;
 
-	/* If user gives a version, करोn't cut off the version from symbols */
-	अगर (म_अक्षर(name, '@'))
+	/* If user gives a version, don't cut off the version from symbols */
+	if (strchr(name, '@'))
 		cut_version = false;
 
-	map__क्रम_each_symbol(map, sym, पंचांगp) अणु
+	map__for_each_symbol(map, sym, tmp) {
 		norm = arch__normalize_symbol_name(sym->name);
-		अगर (!norm)
-			जारी;
+		if (!norm)
+			continue;
 
-		अगर (cut_version) अणु
-			/* We करोn't care about शेष symbol or not */
-			ver = म_अक्षर(norm, '@');
-			अगर (ver) अणु
+		if (cut_version) {
+			/* We don't care about default symbol or not */
+			ver = strchr(norm, '@');
+			if (ver) {
 				buf = strndup(norm, ver - norm);
-				अगर (!buf)
-					वापस -ENOMEM;
+				if (!buf)
+					return -ENOMEM;
 				norm = buf;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अगर (strglobmatch(norm, name)) अणु
+		if (strglobmatch(norm, name)) {
 			found++;
-			अगर (syms && found < probe_conf.max_probes)
+			if (syms && found < probe_conf.max_probes)
 				syms[found - 1] = sym;
-		पूर्ण
-		अगर (buf)
-			zमुक्त(&buf);
-	पूर्ण
+		}
+		if (buf)
+			zfree(&buf);
+	}
 
-	वापस found;
-पूर्ण
+	return found;
+}
 
-व्योम __weak arch__fix_tev_from_maps(काष्ठा perf_probe_event *pev __maybe_unused,
-				काष्ठा probe_trace_event *tev __maybe_unused,
-				काष्ठा map *map __maybe_unused,
-				काष्ठा symbol *sym __maybe_unused) अणु पूर्ण
+void __weak arch__fix_tev_from_maps(struct perf_probe_event *pev __maybe_unused,
+				struct probe_trace_event *tev __maybe_unused,
+				struct map *map __maybe_unused,
+				struct symbol *sym __maybe_unused) { }
 
 /*
  * Find probe function addresses from map.
  * Return an error or the number of found probe_trace_event
  */
-अटल पूर्णांक find_probe_trace_events_from_map(काष्ठा perf_probe_event *pev,
-					    काष्ठा probe_trace_event **tevs)
-अणु
-	काष्ठा map *map = शून्य;
-	काष्ठा ref_reloc_sym *reloc_sym = शून्य;
-	काष्ठा symbol *sym;
-	काष्ठा symbol **syms = शून्य;
-	काष्ठा probe_trace_event *tev;
-	काष्ठा perf_probe_poपूर्णांक *pp = &pev->poपूर्णांक;
-	काष्ठा probe_trace_poपूर्णांक *tp;
-	पूर्णांक num_matched_functions;
-	पूर्णांक ret, i, j, skipped = 0;
-	अक्षर *mod_name;
+static int find_probe_trace_events_from_map(struct perf_probe_event *pev,
+					    struct probe_trace_event **tevs)
+{
+	struct map *map = NULL;
+	struct ref_reloc_sym *reloc_sym = NULL;
+	struct symbol *sym;
+	struct symbol **syms = NULL;
+	struct probe_trace_event *tev;
+	struct perf_probe_point *pp = &pev->point;
+	struct probe_trace_point *tp;
+	int num_matched_functions;
+	int ret, i, j, skipped = 0;
+	char *mod_name;
 
 	map = get_target_map(pev->target, pev->nsi, pev->uprobes);
-	अगर (!map) अणु
+	if (!map) {
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	syms = दो_स्मृति(माप(काष्ठा symbol *) * probe_conf.max_probes);
-	अगर (!syms) अणु
+	syms = malloc(sizeof(struct symbol *) * probe_conf.max_probes);
+	if (!syms) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
-	 * Load matched symbols: Since the dअगरferent local symbols may have
-	 * same name but dअगरferent addresses, this lists all the symbols.
+	 * Load matched symbols: Since the different local symbols may have
+	 * same name but different addresses, this lists all the symbols.
 	 */
 	num_matched_functions = find_probe_functions(map, pp->function, syms);
-	अगर (num_matched_functions <= 0) अणु
+	if (num_matched_functions <= 0) {
 		pr_err("Failed to find symbol %s in %s\n", pp->function,
 			pev->target ? : "kernel");
 		ret = -ENOENT;
-		जाओ out;
-	पूर्ण अन्यथा अगर (num_matched_functions > probe_conf.max_probes) अणु
+		goto out;
+	} else if (num_matched_functions > probe_conf.max_probes) {
 		pr_err("Too many functions matched in %s\n",
 			pev->target ? : "kernel");
 		ret = -E2BIG;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* Note that the symbols in the kmodule are not relocated */
-	अगर (!pev->uprobes && !pev->target &&
-			(!pp->retprobe || kretprobe_offset_is_supported())) अणु
-		reloc_sym = kernel_get_ref_reloc_sym(शून्य);
-		अगर (!reloc_sym) अणु
+	if (!pev->uprobes && !pev->target &&
+			(!pp->retprobe || kretprobe_offset_is_supported())) {
+		reloc_sym = kernel_get_ref_reloc_sym(NULL);
+		if (!reloc_sym) {
 			pr_warning("Relocated base symbol is not found!\n");
 			ret = -EINVAL;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 	/* Setup result trace-probe-events */
-	*tevs = zalloc(माप(*tev) * num_matched_functions);
-	अगर (!*tevs) अणु
+	*tevs = zalloc(sizeof(*tev) * num_matched_functions);
+	if (!*tevs) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = 0;
 
-	क्रम (j = 0; j < num_matched_functions; j++) अणु
+	for (j = 0; j < num_matched_functions; j++) {
 		sym = syms[j];
 
 		/* There can be duplicated symbols in the map */
-		क्रम (i = 0; i < j; i++)
-			अगर (sym->start == syms[i]->start) अणु
+		for (i = 0; i < j; i++)
+			if (sym->start == syms[i]->start) {
 				pr_debug("Found duplicated symbol %s @ %" PRIx64 "\n",
 					 sym->name, sym->start);
-				अवरोध;
-			पूर्ण
-		अगर (i != j)
-			जारी;
+				break;
+			}
+		if (i != j)
+			continue;
 
 		tev = (*tevs) + ret;
-		tp = &tev->poपूर्णांक;
-		अगर (ret == num_matched_functions) अणु
+		tp = &tev->point;
+		if (ret == num_matched_functions) {
 			pr_warning("Too many symbols are listed. Skip it.\n");
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		ret++;
 
-		अगर (pp->offset > sym->end - sym->start) अणु
+		if (pp->offset > sym->end - sym->start) {
 			pr_warning("Offset %ld is bigger than the size of %s\n",
 				   pp->offset, sym->name);
 			ret = -ENOENT;
-			जाओ err_out;
-		पूर्ण
-		/* Add one probe poपूर्णांक */
+			goto err_out;
+		}
+		/* Add one probe point */
 		tp->address = map->unmap_ip(map, sym->start) + pp->offset;
 
 		/* Check the kprobe (not in module) is within .text  */
-		अगर (!pev->uprobes && !pev->target &&
-		    kprobe_warn_out_range(sym->name, tp->address)) अणु
-			tp->symbol = शून्य;	/* Skip it */
+		if (!pev->uprobes && !pev->target &&
+		    kprobe_warn_out_range(sym->name, tp->address)) {
+			tp->symbol = NULL;	/* Skip it */
 			skipped++;
-		पूर्ण अन्यथा अगर (reloc_sym) अणु
-			tp->symbol = strdup_or_जाओ(reloc_sym->name, nomem_out);
+		} else if (reloc_sym) {
+			tp->symbol = strdup_or_goto(reloc_sym->name, nomem_out);
 			tp->offset = tp->address - reloc_sym->addr;
-		पूर्ण अन्यथा अणु
-			tp->symbol = strdup_or_जाओ(sym->name, nomem_out);
+		} else {
+			tp->symbol = strdup_or_goto(sym->name, nomem_out);
 			tp->offset = pp->offset;
-		पूर्ण
-		tp->realname = strdup_or_जाओ(sym->name, nomem_out);
+		}
+		tp->realname = strdup_or_goto(sym->name, nomem_out);
 
 		tp->retprobe = pp->retprobe;
-		अगर (pev->target) अणु
-			अगर (pev->uprobes) अणु
-				tev->poपूर्णांक.module = strdup_or_जाओ(pev->target,
+		if (pev->target) {
+			if (pev->uprobes) {
+				tev->point.module = strdup_or_goto(pev->target,
 								   nomem_out);
-			पूर्ण अन्यथा अणु
+			} else {
 				mod_name = find_module_name(pev->target);
-				tev->poपूर्णांक.module =
+				tev->point.module =
 					strdup(mod_name ? mod_name : pev->target);
-				मुक्त(mod_name);
-				अगर (!tev->poपूर्णांक.module)
-					जाओ nomem_out;
-			पूर्ण
-		पूर्ण
+				free(mod_name);
+				if (!tev->point.module)
+					goto nomem_out;
+			}
+		}
 		tev->uprobes = pev->uprobes;
 		tev->nargs = pev->nargs;
-		अगर (tev->nargs) अणु
-			tev->args = zalloc(माप(काष्ठा probe_trace_arg) *
+		if (tev->nargs) {
+			tev->args = zalloc(sizeof(struct probe_trace_arg) *
 					   tev->nargs);
-			अगर (tev->args == शून्य)
-				जाओ nomem_out;
-		पूर्ण
-		क्रम (i = 0; i < tev->nargs; i++) अणु
-			अगर (pev->args[i].name)
+			if (tev->args == NULL)
+				goto nomem_out;
+		}
+		for (i = 0; i < tev->nargs; i++) {
+			if (pev->args[i].name)
 				tev->args[i].name =
-					strdup_or_जाओ(pev->args[i].name,
+					strdup_or_goto(pev->args[i].name,
 							nomem_out);
 
-			tev->args[i].value = strdup_or_जाओ(pev->args[i].var,
+			tev->args[i].value = strdup_or_goto(pev->args[i].var,
 							    nomem_out);
-			अगर (pev->args[i].type)
+			if (pev->args[i].type)
 				tev->args[i].type =
-					strdup_or_जाओ(pev->args[i].type,
+					strdup_or_goto(pev->args[i].type,
 							nomem_out);
-		पूर्ण
+		}
 		arch__fix_tev_from_maps(pev, tev, map, sym);
-	पूर्ण
-	अगर (ret == skipped) अणु
+	}
+	if (ret == skipped) {
 		ret = -ENOENT;
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 
 out:
 	map__put(map);
-	मुक्त(syms);
-	वापस ret;
+	free(syms);
+	return ret;
 
 nomem_out:
 	ret = -ENOMEM;
 err_out:
 	clear_probe_trace_events(*tevs, num_matched_functions);
-	zमुक्त(tevs);
-	जाओ out;
-पूर्ण
+	zfree(tevs);
+	goto out;
+}
 
-अटल पूर्णांक try_to_find_असलolute_address(काष्ठा perf_probe_event *pev,
-					काष्ठा probe_trace_event **tevs)
-अणु
-	काष्ठा perf_probe_poपूर्णांक *pp = &pev->poपूर्णांक;
-	काष्ठा probe_trace_event *tev;
-	काष्ठा probe_trace_poपूर्णांक *tp;
-	पूर्णांक i, err;
+static int try_to_find_absolute_address(struct perf_probe_event *pev,
+					struct probe_trace_event **tevs)
+{
+	struct perf_probe_point *pp = &pev->point;
+	struct probe_trace_event *tev;
+	struct probe_trace_point *tp;
+	int i, err;
 
-	अगर (!(pev->poपूर्णांक.function && !म_भेदन(pev->poपूर्णांक.function, "0x", 2)))
-		वापस -EINVAL;
-	अगर (perf_probe_event_need_dwarf(pev))
-		वापस -EINVAL;
+	if (!(pev->point.function && !strncmp(pev->point.function, "0x", 2)))
+		return -EINVAL;
+	if (perf_probe_event_need_dwarf(pev))
+		return -EINVAL;
 
 	/*
 	 * This is 'perf probe /lib/libc.so 0xabcd'. Try to probe at
-	 * असलolute address.
+	 * absolute address.
 	 *
 	 * Only one tev can be generated by this.
 	 */
-	*tevs = zalloc(माप(*tev));
-	अगर (!*tevs)
-		वापस -ENOMEM;
+	*tevs = zalloc(sizeof(*tev));
+	if (!*tevs)
+		return -ENOMEM;
 
 	tev = *tevs;
-	tp = &tev->poपूर्णांक;
+	tp = &tev->point;
 
 	/*
 	 * Don't use tp->offset, use address directly, because
 	 * in synthesize_probe_trace_command() address cannot be
 	 * zero.
 	 */
-	tp->address = pev->poपूर्णांक.असल_address;
+	tp->address = pev->point.abs_address;
 	tp->retprobe = pp->retprobe;
 	tev->uprobes = pev->uprobes;
 
 	err = -ENOMEM;
 	/*
 	 * Give it a '0x' leading symbol name.
-	 * In __add_probe_trace_events, a शून्य symbol is पूर्णांकerpreted as
+	 * In __add_probe_trace_events, a NULL symbol is interpreted as
 	 * invalid.
 	 */
-	अगर (aप्र_लिखो(&tp->symbol, "0x%lx", tp->address) < 0)
-		जाओ errout;
+	if (asprintf(&tp->symbol, "0x%lx", tp->address) < 0)
+		goto errout;
 
 	/* For kprobe, check range */
-	अगर ((!tev->uprobes) &&
-	    (kprobe_warn_out_range(tev->poपूर्णांक.symbol,
-				   tev->poपूर्णांक.address))) अणु
+	if ((!tev->uprobes) &&
+	    (kprobe_warn_out_range(tev->point.symbol,
+				   tev->point.address))) {
 		err = -EACCES;
-		जाओ errout;
-	पूर्ण
+		goto errout;
+	}
 
-	अगर (aप्र_लिखो(&tp->realname, "abs_%lx", tp->address) < 0)
-		जाओ errout;
+	if (asprintf(&tp->realname, "abs_%lx", tp->address) < 0)
+		goto errout;
 
-	अगर (pev->target) अणु
+	if (pev->target) {
 		tp->module = strdup(pev->target);
-		अगर (!tp->module)
-			जाओ errout;
-	पूर्ण
+		if (!tp->module)
+			goto errout;
+	}
 
-	अगर (tev->group) अणु
+	if (tev->group) {
 		tev->group = strdup(pev->group);
-		अगर (!tev->group)
-			जाओ errout;
-	पूर्ण
+		if (!tev->group)
+			goto errout;
+	}
 
-	अगर (pev->event) अणु
+	if (pev->event) {
 		tev->event = strdup(pev->event);
-		अगर (!tev->event)
-			जाओ errout;
-	पूर्ण
+		if (!tev->event)
+			goto errout;
+	}
 
 	tev->nargs = pev->nargs;
-	tev->args = zalloc(माप(काष्ठा probe_trace_arg) * tev->nargs);
-	अगर (!tev->args)
-		जाओ errout;
+	tev->args = zalloc(sizeof(struct probe_trace_arg) * tev->nargs);
+	if (!tev->args)
+		goto errout;
 
-	क्रम (i = 0; i < tev->nargs; i++)
+	for (i = 0; i < tev->nargs; i++)
 		copy_to_probe_trace_arg(&tev->args[i], &pev->args[i]);
 
-	वापस 1;
+	return 1;
 
 errout:
 	clear_probe_trace_events(*tevs, 1);
-	*tevs = शून्य;
-	वापस err;
-पूर्ण
+	*tevs = NULL;
+	return err;
+}
 
 /* Concatenate two arrays */
-अटल व्योम *memcat(व्योम *a, माप_प्रकार sz_a, व्योम *b, माप_प्रकार sz_b)
-अणु
-	व्योम *ret;
+static void *memcat(void *a, size_t sz_a, void *b, size_t sz_b)
+{
+	void *ret;
 
-	ret = दो_स्मृति(sz_a + sz_b);
-	अगर (ret) अणु
-		स_नकल(ret, a, sz_a);
-		स_नकल(ret + sz_a, b, sz_b);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	ret = malloc(sz_a + sz_b);
+	if (ret) {
+		memcpy(ret, a, sz_a);
+		memcpy(ret + sz_a, b, sz_b);
+	}
+	return ret;
+}
 
-अटल पूर्णांक
-concat_probe_trace_events(काष्ठा probe_trace_event **tevs, पूर्णांक *ntevs,
-			  काष्ठा probe_trace_event **tevs2, पूर्णांक ntevs2)
-अणु
-	काष्ठा probe_trace_event *new_tevs;
-	पूर्णांक ret = 0;
+static int
+concat_probe_trace_events(struct probe_trace_event **tevs, int *ntevs,
+			  struct probe_trace_event **tevs2, int ntevs2)
+{
+	struct probe_trace_event *new_tevs;
+	int ret = 0;
 
-	अगर (*ntevs == 0) अणु
+	if (*ntevs == 0) {
 		*tevs = *tevs2;
 		*ntevs = ntevs2;
-		*tevs2 = शून्य;
-		वापस 0;
-	पूर्ण
+		*tevs2 = NULL;
+		return 0;
+	}
 
-	अगर (*ntevs + ntevs2 > probe_conf.max_probes)
+	if (*ntevs + ntevs2 > probe_conf.max_probes)
 		ret = -E2BIG;
-	अन्यथा अणु
+	else {
 		/* Concatenate the array of probe_trace_event */
-		new_tevs = memcat(*tevs, (*ntevs) * माप(**tevs),
-				  *tevs2, ntevs2 * माप(**tevs2));
-		अगर (!new_tevs)
+		new_tevs = memcat(*tevs, (*ntevs) * sizeof(**tevs),
+				  *tevs2, ntevs2 * sizeof(**tevs2));
+		if (!new_tevs)
 			ret = -ENOMEM;
-		अन्यथा अणु
-			मुक्त(*tevs);
+		else {
+			free(*tevs);
 			*tevs = new_tevs;
 			*ntevs += ntevs2;
-		पूर्ण
-	पूर्ण
-	अगर (ret < 0)
+		}
+	}
+	if (ret < 0)
 		clear_probe_trace_events(*tevs2, ntevs2);
-	zमुक्त(tevs2);
+	zfree(tevs2);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Try to find probe_trace_event from given probe caches. Return the number
- * of cached events found, अगर an error occurs वापस the error.
+ * of cached events found, if an error occurs return the error.
  */
-अटल पूर्णांक find_cached_events(काष्ठा perf_probe_event *pev,
-			      काष्ठा probe_trace_event **tevs,
-			      स्थिर अक्षर *target)
-अणु
-	काष्ठा probe_cache *cache;
-	काष्ठा probe_cache_entry *entry;
-	काष्ठा probe_trace_event *पंचांगp_tevs = शून्य;
-	पूर्णांक ntevs = 0;
-	पूर्णांक ret = 0;
+static int find_cached_events(struct perf_probe_event *pev,
+			      struct probe_trace_event **tevs,
+			      const char *target)
+{
+	struct probe_cache *cache;
+	struct probe_cache_entry *entry;
+	struct probe_trace_event *tmp_tevs = NULL;
+	int ntevs = 0;
+	int ret = 0;
 
 	cache = probe_cache__new(target, pev->nsi);
-	/* Return 0 ("not found") अगर the target has no probe cache. */
-	अगर (!cache)
-		वापस 0;
+	/* Return 0 ("not found") if the target has no probe cache. */
+	if (!cache)
+		return 0;
 
-	क्रम_each_probe_cache_entry(entry, cache) अणु
+	for_each_probe_cache_entry(entry, cache) {
 		/* Skip the cache entry which has no name */
-		अगर (!entry->pev.event || !entry->pev.group)
-			जारी;
-		अगर ((!pev->group || strglobmatch(entry->pev.group, pev->group)) &&
-		    strglobmatch(entry->pev.event, pev->event)) अणु
-			ret = probe_cache_entry__get_event(entry, &पंचांगp_tevs);
-			अगर (ret > 0)
+		if (!entry->pev.event || !entry->pev.group)
+			continue;
+		if ((!pev->group || strglobmatch(entry->pev.group, pev->group)) &&
+		    strglobmatch(entry->pev.event, pev->event)) {
+			ret = probe_cache_entry__get_event(entry, &tmp_tevs);
+			if (ret > 0)
 				ret = concat_probe_trace_events(tevs, &ntevs,
-								&पंचांगp_tevs, ret);
-			अगर (ret < 0)
-				अवरोध;
-		पूर्ण
-	पूर्ण
+								&tmp_tevs, ret);
+			if (ret < 0)
+				break;
+		}
+	}
 	probe_cache__delete(cache);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		clear_probe_trace_events(*tevs, ntevs);
-		zमुक्त(tevs);
-	पूर्ण अन्यथा अणु
+		zfree(tevs);
+	} else {
 		ret = ntevs;
-		अगर (ntevs > 0 && target && target[0] == '/')
+		if (ntevs > 0 && target && target[0] == '/')
 			pev->uprobes = true;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* Try to find probe_trace_event from all probe caches */
-अटल पूर्णांक find_cached_events_all(काष्ठा perf_probe_event *pev,
-				   काष्ठा probe_trace_event **tevs)
-अणु
-	काष्ठा probe_trace_event *पंचांगp_tevs = शून्य;
-	काष्ठा strlist *bidlist;
-	काष्ठा str_node *nd;
-	अक्षर *pathname;
-	पूर्णांक ntevs = 0;
-	पूर्णांक ret;
+static int find_cached_events_all(struct perf_probe_event *pev,
+				   struct probe_trace_event **tevs)
+{
+	struct probe_trace_event *tmp_tevs = NULL;
+	struct strlist *bidlist;
+	struct str_node *nd;
+	char *pathname;
+	int ntevs = 0;
+	int ret;
 
 	/* Get the buildid list of all valid caches */
 	bidlist = build_id_cache__list_all(true);
-	अगर (!bidlist) अणु
-		ret = -त्रुटि_सं;
+	if (!bidlist) {
+		ret = -errno;
 		pr_debug("Failed to get buildids: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = 0;
-	strlist__क्रम_each_entry(nd, bidlist) अणु
+	strlist__for_each_entry(nd, bidlist) {
 		pathname = build_id_cache__origname(nd->s);
-		ret = find_cached_events(pev, &पंचांगp_tevs, pathname);
-		/* In the हाल of cnt == 0, we just skip it */
-		अगर (ret > 0)
+		ret = find_cached_events(pev, &tmp_tevs, pathname);
+		/* In the case of cnt == 0, we just skip it */
+		if (ret > 0)
 			ret = concat_probe_trace_events(tevs, &ntevs,
-							&पंचांगp_tevs, ret);
-		मुक्त(pathname);
-		अगर (ret < 0)
-			अवरोध;
-	पूर्ण
+							&tmp_tevs, ret);
+		free(pathname);
+		if (ret < 0)
+			break;
+	}
 	strlist__delete(bidlist);
 
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		clear_probe_trace_events(*tevs, ntevs);
-		zमुक्त(tevs);
-	पूर्ण अन्यथा
+		zfree(tevs);
+	} else
 		ret = ntevs;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक find_probe_trace_events_from_cache(काष्ठा perf_probe_event *pev,
-					      काष्ठा probe_trace_event **tevs)
-अणु
-	काष्ठा probe_cache *cache;
-	काष्ठा probe_cache_entry *entry;
-	काष्ठा probe_trace_event *tev;
-	काष्ठा str_node *node;
-	पूर्णांक ret, i;
+static int find_probe_trace_events_from_cache(struct perf_probe_event *pev,
+					      struct probe_trace_event **tevs)
+{
+	struct probe_cache *cache;
+	struct probe_cache_entry *entry;
+	struct probe_trace_event *tev;
+	struct str_node *node;
+	int ret, i;
 
-	अगर (pev->sdt) अणु
+	if (pev->sdt) {
 		/* For SDT/cached events, we use special search functions */
-		अगर (!pev->target)
-			वापस find_cached_events_all(pev, tevs);
-		अन्यथा
-			वापस find_cached_events(pev, tevs, pev->target);
-	पूर्ण
+		if (!pev->target)
+			return find_cached_events_all(pev, tevs);
+		else
+			return find_cached_events(pev, tevs, pev->target);
+	}
 	cache = probe_cache__new(pev->target, pev->nsi);
-	अगर (!cache)
-		वापस 0;
+	if (!cache)
+		return 0;
 
 	entry = probe_cache__find(cache, pev);
-	अगर (!entry) अणु
+	if (!entry) {
 		/* SDT must be in the cache */
 		ret = pev->sdt ? -ENOENT : 0;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = strlist__nr_entries(entry->tevlist);
-	अगर (ret > probe_conf.max_probes) अणु
+	if (ret > probe_conf.max_probes) {
 		pr_debug("Too many entries matched in the cache of %s\n",
 			 pev->target ? : "kernel");
 		ret = -E2BIG;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	*tevs = zalloc(ret * माप(*tev));
-	अगर (!*tevs) अणु
+	*tevs = zalloc(ret * sizeof(*tev));
+	if (!*tevs) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	i = 0;
-	strlist__क्रम_each_entry(node, entry->tevlist) अणु
+	strlist__for_each_entry(node, entry->tevlist) {
 		tev = &(*tevs)[i++];
 		ret = parse_probe_trace_command(node->s, tev);
-		अगर (ret < 0)
-			जाओ out;
+		if (ret < 0)
+			goto out;
 		/* Set the uprobes attribute as same as original */
 		tev->uprobes = pev->uprobes;
-	पूर्ण
+	}
 	ret = i;
 
 out:
 	probe_cache__delete(cache);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक convert_to_probe_trace_events(काष्ठा perf_probe_event *pev,
-					 काष्ठा probe_trace_event **tevs)
-अणु
-	पूर्णांक ret;
+static int convert_to_probe_trace_events(struct perf_probe_event *pev,
+					 struct probe_trace_event **tevs)
+{
+	int ret;
 
-	अगर (!pev->group && !pev->sdt) अणु
-		/* Set group name अगर not given */
-		अगर (!pev->uprobes) अणु
+	if (!pev->group && !pev->sdt) {
+		/* Set group name if not given */
+		if (!pev->uprobes) {
 			pev->group = strdup(PERFPROBE_GROUP);
 			ret = pev->group ? 0 : -ENOMEM;
-		पूर्ण अन्यथा
+		} else
 			ret = convert_exec_to_group(pev->target, &pev->group);
-		अगर (ret != 0) अणु
+		if (ret != 0) {
 			pr_warning("Failed to make a group name.\n");
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	ret = try_to_find_असलolute_address(pev, tevs);
-	अगर (ret > 0)
-		वापस ret;
+	ret = try_to_find_absolute_address(pev, tevs);
+	if (ret > 0)
+		return ret;
 
 	/* At first, we need to lookup cache entry */
 	ret = find_probe_trace_events_from_cache(pev, tevs);
-	अगर (ret > 0 || pev->sdt)	/* SDT can be found only in the cache */
-		वापस ret == 0 ? -ENOENT : ret; /* Found in probe cache */
+	if (ret > 0 || pev->sdt)	/* SDT can be found only in the cache */
+		return ret == 0 ? -ENOENT : ret; /* Found in probe cache */
 
 	/* Convert perf_probe_event with debuginfo */
 	ret = try_to_find_probe_trace_events(pev, tevs);
-	अगर (ret != 0)
-		वापस ret;	/* Found in debuginfo or got an error */
+	if (ret != 0)
+		return ret;	/* Found in debuginfo or got an error */
 
-	वापस find_probe_trace_events_from_map(pev, tevs);
-पूर्ण
+	return find_probe_trace_events_from_map(pev, tevs);
+}
 
-पूर्णांक convert_perf_probe_events(काष्ठा perf_probe_event *pevs, पूर्णांक npevs)
-अणु
-	पूर्णांक i, ret;
+int convert_perf_probe_events(struct perf_probe_event *pevs, int npevs)
+{
+	int i, ret;
 
 	/* Loop 1: convert all events */
-	क्रम (i = 0; i < npevs; i++) अणु
-		/* Init kprobe blacklist अगर needed */
-		अगर (!pevs[i].uprobes)
+	for (i = 0; i < npevs; i++) {
+		/* Init kprobe blacklist if needed */
+		if (!pevs[i].uprobes)
 			kprobe_blacklist__init();
 		/* Convert with or without debuginfo */
 		ret  = convert_to_probe_trace_events(&pevs[i], &pevs[i].tevs);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 		pevs[i].ntevs = ret;
-	पूर्ण
-	/* This just release blacklist only अगर allocated */
+	}
+	/* This just release blacklist only if allocated */
 	kprobe_blacklist__release();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक show_probe_trace_event(काष्ठा probe_trace_event *tev)
-अणु
-	अक्षर *buf = synthesize_probe_trace_command(tev);
+static int show_probe_trace_event(struct probe_trace_event *tev)
+{
+	char *buf = synthesize_probe_trace_command(tev);
 
-	अगर (!buf) अणु
+	if (!buf) {
 		pr_debug("Failed to synthesize probe trace event.\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* Showing definition always go मानक_निकास */
-	म_लिखो("%s\n", buf);
-	मुक्त(buf);
+	/* Showing definition always go stdout */
+	printf("%s\n", buf);
+	free(buf);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक show_probe_trace_events(काष्ठा perf_probe_event *pevs, पूर्णांक npevs)
-अणु
-	काष्ठा strlist *namelist = strlist__new(शून्य, शून्य);
-	काष्ठा probe_trace_event *tev;
-	काष्ठा perf_probe_event *pev;
-	पूर्णांक i, j, ret = 0;
+int show_probe_trace_events(struct perf_probe_event *pevs, int npevs)
+{
+	struct strlist *namelist = strlist__new(NULL, NULL);
+	struct probe_trace_event *tev;
+	struct perf_probe_event *pev;
+	int i, j, ret = 0;
 
-	अगर (!namelist)
-		वापस -ENOMEM;
+	if (!namelist)
+		return -ENOMEM;
 
-	क्रम (j = 0; j < npevs && !ret; j++) अणु
+	for (j = 0; j < npevs && !ret; j++) {
 		pev = &pevs[j];
-		क्रम (i = 0; i < pev->ntevs && !ret; i++) अणु
+		for (i = 0; i < pev->ntevs && !ret; i++) {
 			tev = &pev->tevs[i];
-			/* Skip अगर the symbol is out of .text or blacklisted */
-			अगर (!tev->poपूर्णांक.symbol && !pev->uprobes)
-				जारी;
+			/* Skip if the symbol is out of .text or blacklisted */
+			if (!tev->point.symbol && !pev->uprobes)
+				continue;
 
-			/* Set new name क्रम tev (and update namelist) */
+			/* Set new name for tev (and update namelist) */
 			ret = probe_trace_event__set_name(tev, pev,
 							  namelist, true);
-			अगर (!ret)
+			if (!ret)
 				ret = show_probe_trace_event(tev);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	strlist__delete(namelist);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक apply_perf_probe_events(काष्ठा perf_probe_event *pevs, पूर्णांक npevs)
-अणु
-	पूर्णांक i, ret = 0;
+int apply_perf_probe_events(struct perf_probe_event *pevs, int npevs)
+{
+	int i, ret = 0;
 
 	/* Loop 2: add all events */
-	क्रम (i = 0; i < npevs; i++) अणु
+	for (i = 0; i < npevs; i++) {
 		ret = __add_probe_trace_events(&pevs[i], pevs[i].tevs,
 					       pevs[i].ntevs,
-					       probe_conf.क्रमce_add);
-		अगर (ret < 0)
-			अवरोध;
-	पूर्ण
-	वापस ret;
-पूर्ण
+					       probe_conf.force_add);
+		if (ret < 0)
+			break;
+	}
+	return ret;
+}
 
-व्योम cleanup_perf_probe_events(काष्ठा perf_probe_event *pevs, पूर्णांक npevs)
-अणु
-	पूर्णांक i, j;
-	काष्ठा perf_probe_event *pev;
+void cleanup_perf_probe_events(struct perf_probe_event *pevs, int npevs)
+{
+	int i, j;
+	struct perf_probe_event *pev;
 
-	/* Loop 3: cleanup and मुक्त trace events  */
-	क्रम (i = 0; i < npevs; i++) अणु
+	/* Loop 3: cleanup and free trace events  */
+	for (i = 0; i < npevs; i++) {
 		pev = &pevs[i];
-		क्रम (j = 0; j < pevs[i].ntevs; j++)
+		for (j = 0; j < pevs[i].ntevs; j++)
 			clear_probe_trace_event(&pevs[i].tevs[j]);
-		zमुक्त(&pevs[i].tevs);
+		zfree(&pevs[i].tevs);
 		pevs[i].ntevs = 0;
 		nsinfo__zput(pev->nsi);
 		clear_perf_probe_event(&pevs[i]);
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक add_perf_probe_events(काष्ठा perf_probe_event *pevs, पूर्णांक npevs)
-अणु
-	पूर्णांक ret;
+int add_perf_probe_events(struct perf_probe_event *pevs, int npevs)
+{
+	int ret;
 
 	ret = init_probe_symbol_maps(pevs->uprobes);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	ret = convert_perf_probe_events(pevs, npevs);
-	अगर (ret == 0)
+	if (ret == 0)
 		ret = apply_perf_probe_events(pevs, npevs);
 
 	cleanup_perf_probe_events(pevs, npevs);
 
-	निकास_probe_symbol_maps();
-	वापस ret;
-पूर्ण
+	exit_probe_symbol_maps();
+	return ret;
+}
 
-पूर्णांक del_perf_probe_events(काष्ठा strfilter *filter)
-अणु
-	पूर्णांक ret, ret2, ufd = -1, kfd = -1;
-	अक्षर *str = strfilter__string(filter);
+int del_perf_probe_events(struct strfilter *filter)
+{
+	int ret, ret2, ufd = -1, kfd = -1;
+	char *str = strfilter__string(filter);
 
-	अगर (!str)
-		वापस -EINVAL;
+	if (!str)
+		return -EINVAL;
 
 	/* Get current event names */
-	ret = probe_file__खोलो_both(&kfd, &ufd, PF_FL_RW);
-	अगर (ret < 0)
-		जाओ out;
+	ret = probe_file__open_both(&kfd, &ufd, PF_FL_RW);
+	if (ret < 0)
+		goto out;
 
 	ret = probe_file__del_events(kfd, filter);
-	अगर (ret < 0 && ret != -ENOENT)
-		जाओ error;
+	if (ret < 0 && ret != -ENOENT)
+		goto error;
 
 	ret2 = probe_file__del_events(ufd, filter);
-	अगर (ret2 < 0 && ret2 != -ENOENT) अणु
+	if (ret2 < 0 && ret2 != -ENOENT) {
 		ret = ret2;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 	ret = 0;
 
 error:
-	अगर (kfd >= 0)
-		बंद(kfd);
-	अगर (ufd >= 0)
-		बंद(ufd);
+	if (kfd >= 0)
+		close(kfd);
+	if (ufd >= 0)
+		close(ufd);
 out:
-	मुक्त(str);
+	free(str);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक show_available_funcs(स्थिर अक्षर *target, काष्ठा nsinfo *nsi,
-			 काष्ठा strfilter *_filter, bool user)
-अणु
-        काष्ठा rb_node *nd;
-	काष्ठा map *map;
-	पूर्णांक ret;
+int show_available_funcs(const char *target, struct nsinfo *nsi,
+			 struct strfilter *_filter, bool user)
+{
+        struct rb_node *nd;
+	struct map *map;
+	int ret;
 
 	ret = init_probe_symbol_maps(user);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	/* Get a symbol map */
 	map = get_target_map(target, nsi, user);
-	अगर (!map) अणु
+	if (!map) {
 		pr_err("Failed to get a map for %s\n", (target) ? : "kernel");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	ret = map__load(map);
-	अगर (ret) अणु
-		अगर (ret == -2) अणु
-			अक्षर *str = strfilter__string(_filter);
+	if (ret) {
+		if (ret == -2) {
+			char *str = strfilter__string(_filter);
 			pr_err("Failed to find symbols matched to \"%s\"\n",
 			       str);
-			मुक्त(str);
-		पूर्ण अन्यथा
+			free(str);
+		} else
 			pr_err("Failed to load symbols in %s\n",
 			       (target) ? : "kernel");
-		जाओ end;
-	पूर्ण
-	अगर (!dso__sorted_by_name(map->dso))
+		goto end;
+	}
+	if (!dso__sorted_by_name(map->dso))
 		dso__sort_by_name(map->dso);
 
 	/* Show all (filtered) symbols */
 	setup_pager();
 
-	क्रम (nd = rb_first_cached(&map->dso->symbol_names); nd;
-	     nd = rb_next(nd)) अणु
-		काष्ठा symbol_name_rb_node *pos = rb_entry(nd, काष्ठा symbol_name_rb_node, rb_node);
+	for (nd = rb_first_cached(&map->dso->symbol_names); nd;
+	     nd = rb_next(nd)) {
+		struct symbol_name_rb_node *pos = rb_entry(nd, struct symbol_name_rb_node, rb_node);
 
-		अगर (strfilter__compare(_filter, pos->sym.name))
-			म_लिखो("%s\n", pos->sym.name);
-	पूर्ण
+		if (strfilter__compare(_filter, pos->sym.name))
+			printf("%s\n", pos->sym.name);
+	}
 end:
 	map__put(map);
-	निकास_probe_symbol_maps();
+	exit_probe_symbol_maps();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक copy_to_probe_trace_arg(काष्ठा probe_trace_arg *tvar,
-			    काष्ठा perf_probe_arg *pvar)
-अणु
+int copy_to_probe_trace_arg(struct probe_trace_arg *tvar,
+			    struct perf_probe_arg *pvar)
+{
 	tvar->value = strdup(pvar->var);
-	अगर (tvar->value == शून्य)
-		वापस -ENOMEM;
-	अगर (pvar->type) अणु
+	if (tvar->value == NULL)
+		return -ENOMEM;
+	if (pvar->type) {
 		tvar->type = strdup(pvar->type);
-		अगर (tvar->type == शून्य)
-			वापस -ENOMEM;
-	पूर्ण
-	अगर (pvar->name) अणु
+		if (tvar->type == NULL)
+			return -ENOMEM;
+	}
+	if (pvar->name) {
 		tvar->name = strdup(pvar->name);
-		अगर (tvar->name == शून्य)
-			वापस -ENOMEM;
-	पूर्ण अन्यथा
-		tvar->name = शून्य;
-	वापस 0;
-पूर्ण
+		if (tvar->name == NULL)
+			return -ENOMEM;
+	} else
+		tvar->name = NULL;
+	return 0;
+}

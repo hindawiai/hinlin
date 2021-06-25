@@ -1,196 +1,195 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * पंचांगon.h contains data काष्ठाures and स्थिरants used by TMON
+ * tmon.h contains data structures and constants used by TMON
  *
  * Copyright (C) 2012 Intel Corporation. All rights reserved.
  *
- * Author Name Jacob Pan <jacob.jun.pan@linux.पूर्णांकel.com>
+ * Author Name Jacob Pan <jacob.jun.pan@linux.intel.com>
  */
 
-#अगर_अघोषित TMON_H
-#घोषणा TMON_H
+#ifndef TMON_H
+#define TMON_H
 
-#घोषणा MAX_DISP_TEMP 125
-#घोषणा MAX_CTRL_TEMP 105
-#घोषणा MIN_CTRL_TEMP 40
-#घोषणा MAX_NR_TZONE 16
-#घोषणा MAX_NR_CDEV 32
-#घोषणा MAX_NR_TRIP 16
-#घोषणा MAX_NR_CDEV_TRIP 12 /* number of cooling devices that can bind
+#define MAX_DISP_TEMP 125
+#define MAX_CTRL_TEMP 105
+#define MIN_CTRL_TEMP 40
+#define MAX_NR_TZONE 16
+#define MAX_NR_CDEV 32
+#define MAX_NR_TRIP 16
+#define MAX_NR_CDEV_TRIP 12 /* number of cooling devices that can bind
 			     * to a thermal zone trip.
 			     */
-#घोषणा MAX_TEMP_KC 140000
-/* starting अक्षर position to draw sensor data, such as tz names
- * trip poपूर्णांक list, etc.
+#define MAX_TEMP_KC 140000
+/* starting char position to draw sensor data, such as tz names
+ * trip point list, etc.
  */
-#घोषणा DATA_LEFT_ALIGN 10
-#घोषणा NR_LINES_TZDATA 1
-#घोषणा TMON_LOG_खाता "/var/tmp/tmon.log"
+#define DATA_LEFT_ALIGN 10
+#define NR_LINES_TZDATA 1
+#define TMON_LOG_FILE "/var/tmp/tmon.log"
 
-बाह्य अचिन्हित दीर्घ tickसमय;
-बाह्य द्विगुन समय_elapsed;
-बाह्य अचिन्हित दीर्घ target_temp_user;
-बाह्य पूर्णांक dialogue_on;
-बाह्य अक्षर ctrl_cdev[];
-बाह्य pthपढ़ो_mutex_t input_lock;
-बाह्य पूर्णांक पंचांगon_निकास;
-बाह्य पूर्णांक target_thermal_zone;
-/* use fixed size record to simplअगरy data processing and transfer
- * TBD: more info to be added, e.g. programmable trip poपूर्णांक data.
+extern unsigned long ticktime;
+extern double time_elapsed;
+extern unsigned long target_temp_user;
+extern int dialogue_on;
+extern char ctrl_cdev[];
+extern pthread_mutex_t input_lock;
+extern int tmon_exit;
+extern int target_thermal_zone;
+/* use fixed size record to simplify data processing and transfer
+ * TBD: more info to be added, e.g. programmable trip point data.
 */
-काष्ठा thermal_data_record अणु
-	काष्ठा समयval tv;
-	अचिन्हित दीर्घ temp[MAX_NR_TZONE];
-	द्विगुन pid_out_pct;
-पूर्ण;
+struct thermal_data_record {
+	struct timeval tv;
+	unsigned long temp[MAX_NR_TZONE];
+	double pid_out_pct;
+};
 
-काष्ठा cdev_info अणु
-	अक्षर type[64];
-	पूर्णांक instance;
-	अचिन्हित दीर्घ max_state;
-	अचिन्हित दीर्घ cur_state;
-	अचिन्हित दीर्घ flag;
-पूर्ण;
+struct cdev_info {
+	char type[64];
+	int instance;
+	unsigned long max_state;
+	unsigned long cur_state;
+	unsigned long flag;
+};
 
-क्रमागत trip_type अणु
+enum trip_type {
 	THERMAL_TRIP_CRITICAL,
 	THERMAL_TRIP_HOT,
 	THERMAL_TRIP_PASSIVE,
 	THERMAL_TRIP_ACTIVE,
 	NR_THERMAL_TRIP_TYPE,
-पूर्ण;
+};
 
-काष्ठा trip_poपूर्णांक अणु
-	क्रमागत trip_type type;
-	अचिन्हित दीर्घ temp;
-	अचिन्हित दीर्घ hysteresis;
-	पूर्णांक attribute; /* programmability etc. */
-पूर्ण;
+struct trip_point {
+	enum trip_type type;
+	unsigned long temp;
+	unsigned long hysteresis;
+	int attribute; /* programmability etc. */
+};
 
-/* thermal zone configuration inक्रमmation, binding with cooling devices could
- * change at runसमय.
+/* thermal zone configuration information, binding with cooling devices could
+ * change at runtime.
  */
-काष्ठा tz_info अणु
-	अक्षर type[256]; /* e.g. acpitz */
-	पूर्णांक instance;
-	पूर्णांक passive; /* active zone has passive node to क्रमce passive mode */
-	पूर्णांक nr_cdev; /* number of cooling device binded */
-	पूर्णांक nr_trip_pts;
-	काष्ठा trip_poपूर्णांक tp[MAX_NR_TRIP];
-	अचिन्हित दीर्घ cdev_binding; /* biपंचांगap क्रम attached cdevs */
-	/* cdev bind trip poपूर्णांकs, allow one cdev bind to multiple trips */
-	अचिन्हित दीर्घ trip_binding[MAX_NR_CDEV];
-पूर्ण;
+struct tz_info {
+	char type[256]; /* e.g. acpitz */
+	int instance;
+	int passive; /* active zone has passive node to force passive mode */
+	int nr_cdev; /* number of cooling device binded */
+	int nr_trip_pts;
+	struct trip_point tp[MAX_NR_TRIP];
+	unsigned long cdev_binding; /* bitmap for attached cdevs */
+	/* cdev bind trip points, allow one cdev bind to multiple trips */
+	unsigned long trip_binding[MAX_NR_CDEV];
+};
 
-काष्ठा पंचांगon_platक्रमm_data अणु
-	पूर्णांक nr_tz_sensor;
-	पूर्णांक nr_cooling_dev;
+struct tmon_platform_data {
+	int nr_tz_sensor;
+	int nr_cooling_dev;
 	/* keep track of instance ids since there might be gaps */
-	पूर्णांक max_tz_instance;
-	पूर्णांक max_cdev_instance;
-	काष्ठा tz_info *tzi;
-	काष्ठा cdev_info *cdi;
-पूर्ण;
+	int max_tz_instance;
+	int max_cdev_instance;
+	struct tz_info *tzi;
+	struct cdev_info *cdi;
+};
 
-काष्ठा control_ops अणु
-	व्योम (*set_ratio)(अचिन्हित दीर्घ ratio);
-	अचिन्हित दीर्घ (*get_ratio)(अचिन्हित दीर्घ ratio);
+struct control_ops {
+	void (*set_ratio)(unsigned long ratio);
+	unsigned long (*get_ratio)(unsigned long ratio);
 
-पूर्ण;
+};
 
-क्रमागत cdev_types अणु
+enum cdev_types {
 	CDEV_TYPE_PROC,
 	CDEV_TYPE_FAN,
 	CDEV_TYPE_MEM,
 	CDEV_TYPE_NR,
-पूर्ण;
+};
 
-/* REVISIT: the idea is to group sensors अगर possible, e.g. on पूर्णांकel mid
+/* REVISIT: the idea is to group sensors if possible, e.g. on intel mid
  * we have "skin0", "skin1", "sys", "msicdie"
- * on DPTF enabled प्रणालीs, we might have PCH, TSKN, TAMB, etc.
+ * on DPTF enabled systems, we might have PCH, TSKN, TAMB, etc.
  */
-क्रमागत tzone_types अणु
+enum tzone_types {
 	TZONE_TYPE_ACPI,
 	TZONE_TYPE_PCH,
 	TZONE_TYPE_NR,
-पूर्ण;
+};
 
-/* limit the output of PID controller adjusपंचांगent */
-#घोषणा LIMIT_HIGH (95)
-#घोषणा LIMIT_LOW  (2)
+/* limit the output of PID controller adjustment */
+#define LIMIT_HIGH (95)
+#define LIMIT_LOW  (2)
 
-काष्ठा pid_params अणु
-	द्विगुन kp;  /* Controller gain from Dialog Box */
-	द्विगुन ki;  /* Time-स्थिरant क्रम I action from Dialog Box */
-	द्विगुन kd;  /* Time-स्थिरant क्रम D action from Dialog Box */
-	द्विगुन ts;
-	द्विगुन k_lpf;
+struct pid_params {
+	double kp;  /* Controller gain from Dialog Box */
+	double ki;  /* Time-constant for I action from Dialog Box */
+	double kd;  /* Time-constant for D action from Dialog Box */
+	double ts;
+	double k_lpf;
 
-	द्विगुन t_target;
-	द्विगुन y_k;
-पूर्ण;
+	double t_target;
+	double y_k;
+};
 
-बाह्य पूर्णांक init_thermal_controller(व्योम);
-बाह्य व्योम controller_handler(स्थिर द्विगुन xk, द्विगुन *yk);
+extern int init_thermal_controller(void);
+extern void controller_handler(const double xk, double *yk);
 
-बाह्य काष्ठा पंचांगon_platक्रमm_data ptdata;
-बाह्य काष्ठा pid_params p_param;
+extern struct tmon_platform_data ptdata;
+extern struct pid_params p_param;
 
-बाह्य खाता *पंचांगon_log;
-बाह्य पूर्णांक cur_thermal_record; /* index to the trec array */
-बाह्य काष्ठा thermal_data_record trec[];
-बाह्य स्थिर अक्षर *trip_type_name[];
-बाह्य अचिन्हित दीर्घ no_control;
+extern FILE *tmon_log;
+extern int cur_thermal_record; /* index to the trec array */
+extern struct thermal_data_record trec[];
+extern const char *trip_type_name[];
+extern unsigned long no_control;
 
-बाह्य व्योम initialize_curses(व्योम);
-बाह्य व्योम show_controller_stats(अक्षर *line);
-बाह्य व्योम show_title_bar(व्योम);
-बाह्य व्योम setup_winकरोws(व्योम);
-बाह्य व्योम disable_tui(व्योम);
-बाह्य व्योम show_sensors_w(व्योम);
-बाह्य व्योम show_data_w(व्योम);
-बाह्य व्योम ग_लिखो_status_bar(पूर्णांक x, अक्षर *line);
-बाह्य व्योम show_control_w();
+extern void initialize_curses(void);
+extern void show_controller_stats(char *line);
+extern void show_title_bar(void);
+extern void setup_windows(void);
+extern void disable_tui(void);
+extern void show_sensors_w(void);
+extern void show_data_w(void);
+extern void write_status_bar(int x, char *line);
+extern void show_control_w();
 
-बाह्य व्योम show_cooling_device(व्योम);
-बाह्य व्योम show_dialogue(व्योम);
-बाह्य पूर्णांक update_thermal_data(व्योम);
+extern void show_cooling_device(void);
+extern void show_dialogue(void);
+extern int update_thermal_data(void);
 
-बाह्य पूर्णांक probe_thermal_sysfs(व्योम);
-बाह्य व्योम मुक्त_thermal_data(व्योम);
-बाह्य	व्योम resize_handler(पूर्णांक sig);
-बाह्य व्योम set_ctrl_state(अचिन्हित दीर्घ state);
-बाह्य व्योम get_ctrl_state(अचिन्हित दीर्घ *state);
-बाह्य व्योम *handle_tui_events(व्योम *arg);
-बाह्य पूर्णांक sysfs_set_uदीर्घ(अक्षर *path, अक्षर *filename, अचिन्हित दीर्घ val);
-बाह्य पूर्णांक zone_instance_to_index(पूर्णांक zone_inst);
-बाह्य व्योम बंद_winकरोws(व्योम);
+extern int probe_thermal_sysfs(void);
+extern void free_thermal_data(void);
+extern	void resize_handler(int sig);
+extern void set_ctrl_state(unsigned long state);
+extern void get_ctrl_state(unsigned long *state);
+extern void *handle_tui_events(void *arg);
+extern int sysfs_set_ulong(char *path, char *filename, unsigned long val);
+extern int zone_instance_to_index(int zone_inst);
+extern void close_windows(void);
 
-#घोषणा PT_COLOR_DEFAULT    1
-#घोषणा PT_COLOR_HEADER_BAR 2
-#घोषणा PT_COLOR_ERROR      3
-#घोषणा PT_COLOR_RED        4
-#घोषणा PT_COLOR_YELLOW     5
-#घोषणा PT_COLOR_GREEN      6
-#घोषणा PT_COLOR_BRIGHT     7
-#घोषणा PT_COLOR_BLUE	    8
+#define PT_COLOR_DEFAULT    1
+#define PT_COLOR_HEADER_BAR 2
+#define PT_COLOR_ERROR      3
+#define PT_COLOR_RED        4
+#define PT_COLOR_YELLOW     5
+#define PT_COLOR_GREEN      6
+#define PT_COLOR_BRIGHT     7
+#define PT_COLOR_BLUE	    8
 
-/* each thermal zone uses 12 अक्षरs, 8 क्रम name, 2 क्रम instance, 2 space
- * also used to list trip poपूर्णांकs in क्रमms of AAAC, which represents
+/* each thermal zone uses 12 chars, 8 for name, 2 for instance, 2 space
+ * also used to list trip points in forms of AAAC, which represents
  * A: Active
  * C: Critical
  */
-#घोषणा TZONE_RECORD_SIZE 12
-#घोषणा TZ_LEFT_ALIGN 32
-#घोषणा CDEV_NAME_SIZE 20
-#घोषणा CDEV_FLAG_IN_CONTROL (1 << 0)
+#define TZONE_RECORD_SIZE 12
+#define TZ_LEFT_ALIGN 32
+#define CDEV_NAME_SIZE 20
+#define CDEV_FLAG_IN_CONTROL (1 << 0)
 
 /* dialogue box starts */
-#घोषणा DIAG_X 48
-#घोषणा DIAG_Y 8
-#घोषणा THERMAL_SYSFS "/sys/class/thermal"
-#घोषणा CDEV "cooling_device"
-#घोषणा TZONE "thermal_zone"
-#घोषणा TDATA_LEFT 16
-#पूर्ण_अगर /* TMON_H */
+#define DIAG_X 48
+#define DIAG_Y 8
+#define THERMAL_SYSFS "/sys/class/thermal"
+#define CDEV "cooling_device"
+#define TZONE "thermal_zone"
+#define TDATA_LEFT 16
+#endif /* TMON_H */

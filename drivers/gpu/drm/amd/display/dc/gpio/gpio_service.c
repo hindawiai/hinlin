@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -28,627 +27,627 @@
  * Pre-requisites: headers required by header of this unit
  */
 
-#समावेश <linux/slab.h>
+#include <linux/slab.h>
 
-#समावेश "dm_services.h"
-#समावेश "include/gpio_interface.h"
-#समावेश "include/gpio_service_interface.h"
-#समावेश "hw_translate.h"
-#समावेश "hw_factory.h"
+#include "dm_services.h"
+#include "include/gpio_interface.h"
+#include "include/gpio_service_interface.h"
+#include "hw_translate.h"
+#include "hw_factory.h"
 
 /*
  * Header of this unit
  */
 
-#समावेश "gpio_service.h"
+#include "gpio_service.h"
 
 /*
  * Post-requisites: headers required by this unit
  */
 
-#समावेश "hw_gpio.h"
+#include "hw_gpio.h"
 
 /*
  * @brief
  * Public API.
  */
 
-काष्ठा gpio_service *dal_gpio_service_create(
-	क्रमागत dce_version dce_version_major,
-	क्रमागत dce_version dce_version_minor,
-	काष्ठा dc_context *ctx)
-अणु
-	काष्ठा gpio_service *service;
-	uपूर्णांक32_t index_of_id;
+struct gpio_service *dal_gpio_service_create(
+	enum dce_version dce_version_major,
+	enum dce_version dce_version_minor,
+	struct dc_context *ctx)
+{
+	struct gpio_service *service;
+	uint32_t index_of_id;
 
-	service = kzalloc(माप(काष्ठा gpio_service), GFP_KERNEL);
+	service = kzalloc(sizeof(struct gpio_service), GFP_KERNEL);
 
-	अगर (!service) अणु
+	if (!service) {
 		BREAK_TO_DEBUGGER();
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	अगर (!dal_hw_translate_init(&service->translate, dce_version_major,
-			dce_version_minor)) अणु
+	if (!dal_hw_translate_init(&service->translate, dce_version_major,
+			dce_version_minor)) {
 		BREAK_TO_DEBUGGER();
-		जाओ failure_1;
-	पूर्ण
+		goto failure_1;
+	}
 
-	अगर (!dal_hw_factory_init(&service->factory, dce_version_major,
-			dce_version_minor)) अणु
+	if (!dal_hw_factory_init(&service->factory, dce_version_major,
+			dce_version_minor)) {
 		BREAK_TO_DEBUGGER();
-		जाओ failure_1;
-	पूर्ण
+		goto failure_1;
+	}
 
 	/* allocate and initialize busyness storage */
-	अणु
+	{
 		index_of_id = 0;
 		service->ctx = ctx;
 
-		करो अणु
-			uपूर्णांक32_t number_of_bits =
+		do {
+			uint32_t number_of_bits =
 				service->factory.number_of_pins[index_of_id];
-			uपूर्णांक32_t i = 0;
+			uint32_t i = 0;
 
-			अगर (number_of_bits)  अणु
+			if (number_of_bits)  {
 				service->busyness[index_of_id] =
-					kसुस्मृति(number_of_bits, माप(अक्षर),
+					kcalloc(number_of_bits, sizeof(char),
 						GFP_KERNEL);
 
-				अगर (!service->busyness[index_of_id]) अणु
+				if (!service->busyness[index_of_id]) {
 					BREAK_TO_DEBUGGER();
-					जाओ failure_2;
-				पूर्ण
+					goto failure_2;
+				}
 
-				करो अणु
+				do {
 					service->busyness[index_of_id][i] = 0;
 					++i;
-				पूर्ण जबतक (i < number_of_bits);
-			पूर्ण अन्यथा अणु
-				service->busyness[index_of_id] = शून्य;
-			पूर्ण
+				} while (i < number_of_bits);
+			} else {
+				service->busyness[index_of_id] = NULL;
+			}
 
 			++index_of_id;
-		पूर्ण जबतक (index_of_id < GPIO_ID_COUNT);
-	पूर्ण
+		} while (index_of_id < GPIO_ID_COUNT);
+	}
 
-	वापस service;
+	return service;
 
 failure_2:
-	जबतक (index_of_id) अणु
+	while (index_of_id) {
 		--index_of_id;
-		kमुक्त(service->busyness[index_of_id]);
-	पूर्ण
+		kfree(service->busyness[index_of_id]);
+	}
 
 failure_1:
-	kमुक्त(service);
+	kfree(service);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-काष्ठा gpio *dal_gpio_service_create_irq(
-	काष्ठा gpio_service *service,
-	uपूर्णांक32_t offset,
-	uपूर्णांक32_t mask)
-अणु
-	क्रमागत gpio_id id;
-	uपूर्णांक32_t en;
+struct gpio *dal_gpio_service_create_irq(
+	struct gpio_service *service,
+	uint32_t offset,
+	uint32_t mask)
+{
+	enum gpio_id id;
+	uint32_t en;
 
-	अगर (!service->translate.funcs->offset_to_id(offset, mask, &id, &en)) अणु
+	if (!service->translate.funcs->offset_to_id(offset, mask, &id, &en)) {
 		ASSERT_CRITICAL(false);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	वापस dal_gpio_create_irq(service, id, en);
-पूर्ण
+	return dal_gpio_create_irq(service, id, en);
+}
 
-काष्ठा gpio *dal_gpio_service_create_generic_mux(
-	काष्ठा gpio_service *service,
-	uपूर्णांक32_t offset,
-	uपूर्णांक32_t mask)
-अणु
-	क्रमागत gpio_id id;
-	uपूर्णांक32_t en;
-	काष्ठा gpio *generic;
+struct gpio *dal_gpio_service_create_generic_mux(
+	struct gpio_service *service,
+	uint32_t offset,
+	uint32_t mask)
+{
+	enum gpio_id id;
+	uint32_t en;
+	struct gpio *generic;
 
-	अगर (!service->translate.funcs->offset_to_id(offset, mask, &id, &en)) अणु
+	if (!service->translate.funcs->offset_to_id(offset, mask, &id, &en)) {
 		ASSERT_CRITICAL(false);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	generic = dal_gpio_create(
 		service, id, en, GPIO_PIN_OUTPUT_STATE_DEFAULT);
 
-	वापस generic;
-पूर्ण
+	return generic;
+}
 
-व्योम dal_gpio_destroy_generic_mux(
-	काष्ठा gpio **mux)
-अणु
-	अगर (!mux || !*mux) अणु
+void dal_gpio_destroy_generic_mux(
+	struct gpio **mux)
+{
+	if (!mux || !*mux) {
 		ASSERT_CRITICAL(false);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	dal_gpio_destroy(mux);
-	kमुक्त(*mux);
+	kfree(*mux);
 
-	*mux = शून्य;
-पूर्ण
+	*mux = NULL;
+}
 
-काष्ठा gpio_pin_info dal_gpio_get_generic_pin_info(
-	काष्ठा gpio_service *service,
-	क्रमागत gpio_id id,
-	uपूर्णांक32_t en)
-अणु
-	काष्ठा gpio_pin_info pin;
+struct gpio_pin_info dal_gpio_get_generic_pin_info(
+	struct gpio_service *service,
+	enum gpio_id id,
+	uint32_t en)
+{
+	struct gpio_pin_info pin;
 
-	अगर (service->translate.funcs->id_to_offset) अणु
+	if (service->translate.funcs->id_to_offset) {
 		service->translate.funcs->id_to_offset(id, en, &pin);
-	पूर्ण अन्यथा अणु
+	} else {
 		pin.mask = 0xFFFFFFFF;
 		pin.offset = 0xFFFFFFFF;
-	पूर्ण
+	}
 
-	वापस pin;
-पूर्ण
+	return pin;
+}
 
-व्योम dal_gpio_service_destroy(
-	काष्ठा gpio_service **ptr)
-अणु
-	अगर (!ptr || !*ptr) अणु
+void dal_gpio_service_destroy(
+	struct gpio_service **ptr)
+{
+	if (!ptr || !*ptr) {
 		BREAK_TO_DEBUGGER();
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* मुक्त business storage */
-	अणु
-		uपूर्णांक32_t index_of_id = 0;
+	/* free business storage */
+	{
+		uint32_t index_of_id = 0;
 
-		करो अणु
-			kमुक्त((*ptr)->busyness[index_of_id]);
+		do {
+			kfree((*ptr)->busyness[index_of_id]);
 
 			++index_of_id;
-		पूर्ण जबतक (index_of_id < GPIO_ID_COUNT);
-	पूर्ण
+		} while (index_of_id < GPIO_ID_COUNT);
+	}
 
-	kमुक्त(*ptr);
+	kfree(*ptr);
 
-	*ptr = शून्य;
-पूर्ण
+	*ptr = NULL;
+}
 
-क्रमागत gpio_result dal_mux_setup_config(
-	काष्ठा gpio *mux,
-	काष्ठा gpio_generic_mux_config *config)
-अणु
-	काष्ठा gpio_config_data config_data;
+enum gpio_result dal_mux_setup_config(
+	struct gpio *mux,
+	struct gpio_generic_mux_config *config)
+{
+	struct gpio_config_data config_data;
 
-	अगर (!config)
-		वापस GPIO_RESULT_INVALID_DATA;
+	if (!config)
+		return GPIO_RESULT_INVALID_DATA;
 
 	config_data.config.generic_mux = *config;
 	config_data.type = GPIO_CONFIG_TYPE_GENERIC_MUX;
 
-	वापस dal_gpio_set_config(mux, &config_data);
-पूर्ण
+	return dal_gpio_set_config(mux, &config_data);
+}
 
 /*
  * @brief
  * Private API.
  */
 
-अटल bool is_pin_busy(
-	स्थिर काष्ठा gpio_service *service,
-	क्रमागत gpio_id id,
-	uपूर्णांक32_t en)
-अणु
-	वापस service->busyness[id][en];
-पूर्ण
+static bool is_pin_busy(
+	const struct gpio_service *service,
+	enum gpio_id id,
+	uint32_t en)
+{
+	return service->busyness[id][en];
+}
 
-अटल व्योम set_pin_busy(
-	काष्ठा gpio_service *service,
-	क्रमागत gpio_id id,
-	uपूर्णांक32_t en)
-अणु
+static void set_pin_busy(
+	struct gpio_service *service,
+	enum gpio_id id,
+	uint32_t en)
+{
 	service->busyness[id][en] = true;
-पूर्ण
+}
 
-अटल व्योम set_pin_मुक्त(
-	काष्ठा gpio_service *service,
-	क्रमागत gpio_id id,
-	uपूर्णांक32_t en)
-अणु
+static void set_pin_free(
+	struct gpio_service *service,
+	enum gpio_id id,
+	uint32_t en)
+{
 	service->busyness[id][en] = false;
-पूर्ण
+}
 
-क्रमागत gpio_result dal_gpio_service_lock(
-	काष्ठा gpio_service *service,
-	क्रमागत gpio_id id,
-	uपूर्णांक32_t en)
-अणु
-	अगर (!service->busyness[id]) अणु
+enum gpio_result dal_gpio_service_lock(
+	struct gpio_service *service,
+	enum gpio_id id,
+	uint32_t en)
+{
+	if (!service->busyness[id]) {
 		ASSERT_CRITICAL(false);
-		वापस GPIO_RESULT_OPEN_FAILED;
-	पूर्ण
+		return GPIO_RESULT_OPEN_FAILED;
+	}
 
 	set_pin_busy(service, id, en);
-	वापस GPIO_RESULT_OK;
-पूर्ण
+	return GPIO_RESULT_OK;
+}
 
-क्रमागत gpio_result dal_gpio_service_unlock(
-	काष्ठा gpio_service *service,
-	क्रमागत gpio_id id,
-	uपूर्णांक32_t en)
-अणु
-	अगर (!service->busyness[id]) अणु
+enum gpio_result dal_gpio_service_unlock(
+	struct gpio_service *service,
+	enum gpio_id id,
+	uint32_t en)
+{
+	if (!service->busyness[id]) {
 		ASSERT_CRITICAL(false);
-		वापस GPIO_RESULT_OPEN_FAILED;
-	पूर्ण
+		return GPIO_RESULT_OPEN_FAILED;
+	}
 
-	set_pin_मुक्त(service, id, en);
-	वापस GPIO_RESULT_OK;
-पूर्ण
+	set_pin_free(service, id, en);
+	return GPIO_RESULT_OK;
+}
 
-क्रमागत gpio_result dal_gpio_service_खोलो(
-	काष्ठा gpio *gpio)
-अणु
-	काष्ठा gpio_service *service = gpio->service;
-	क्रमागत gpio_id id = gpio->id;
-	uपूर्णांक32_t en = gpio->en;
-	क्रमागत gpio_mode mode = gpio->mode;
+enum gpio_result dal_gpio_service_open(
+	struct gpio *gpio)
+{
+	struct gpio_service *service = gpio->service;
+	enum gpio_id id = gpio->id;
+	uint32_t en = gpio->en;
+	enum gpio_mode mode = gpio->mode;
 
-	काष्ठा hw_gpio_pin **pin = &gpio->pin;
+	struct hw_gpio_pin **pin = &gpio->pin;
 
 
-	अगर (!service->busyness[id]) अणु
+	if (!service->busyness[id]) {
 		ASSERT_CRITICAL(false);
-		वापस GPIO_RESULT_OPEN_FAILED;
-	पूर्ण
+		return GPIO_RESULT_OPEN_FAILED;
+	}
 
-	अगर (is_pin_busy(service, id, en)) अणु
+	if (is_pin_busy(service, id, en)) {
 		ASSERT_CRITICAL(false);
-		वापस GPIO_RESULT_DEVICE_BUSY;
-	पूर्ण
+		return GPIO_RESULT_DEVICE_BUSY;
+	}
 
-	चयन (id) अणु
-	हाल GPIO_ID_DDC_DATA:
+	switch (id) {
+	case GPIO_ID_DDC_DATA:
 		*pin = service->factory.funcs->get_ddc_pin(gpio);
-		service->factory.funcs->define_ddc_रेजिस्टरs(*pin, en);
-	अवरोध;
-	हाल GPIO_ID_DDC_CLOCK:
+		service->factory.funcs->define_ddc_registers(*pin, en);
+	break;
+	case GPIO_ID_DDC_CLOCK:
 		*pin = service->factory.funcs->get_ddc_pin(gpio);
-		service->factory.funcs->define_ddc_रेजिस्टरs(*pin, en);
-	अवरोध;
-	हाल GPIO_ID_GENERIC:
+		service->factory.funcs->define_ddc_registers(*pin, en);
+	break;
+	case GPIO_ID_GENERIC:
 		*pin = service->factory.funcs->get_generic_pin(gpio);
-		service->factory.funcs->define_generic_रेजिस्टरs(*pin, en);
-	अवरोध;
-	हाल GPIO_ID_HPD:
+		service->factory.funcs->define_generic_registers(*pin, en);
+	break;
+	case GPIO_ID_HPD:
 		*pin = service->factory.funcs->get_hpd_pin(gpio);
-		service->factory.funcs->define_hpd_रेजिस्टरs(*pin, en);
-	अवरोध;
+		service->factory.funcs->define_hpd_registers(*pin, en);
+	break;
 
-	//TODO: gsl and sync support? create_sync and create_gsl are शून्य
-	हाल GPIO_ID_SYNC:
-	हाल GPIO_ID_GSL:
-	अवरोध;
-	शेष:
+	//TODO: gsl and sync support? create_sync and create_gsl are NULL
+	case GPIO_ID_SYNC:
+	case GPIO_ID_GSL:
+	break;
+	default:
 		ASSERT_CRITICAL(false);
-		वापस GPIO_RESULT_NON_SPECIFIC_ERROR;
-	पूर्ण
+		return GPIO_RESULT_NON_SPECIFIC_ERROR;
+	}
 
-	अगर (!*pin) अणु
+	if (!*pin) {
 		ASSERT_CRITICAL(false);
-		वापस GPIO_RESULT_NON_SPECIFIC_ERROR;
-	पूर्ण
+		return GPIO_RESULT_NON_SPECIFIC_ERROR;
+	}
 
-	अगर (!(*pin)->funcs->खोलो(*pin, mode)) अणु
+	if (!(*pin)->funcs->open(*pin, mode)) {
 		ASSERT_CRITICAL(false);
-		dal_gpio_service_बंद(service, pin);
-		वापस GPIO_RESULT_OPEN_FAILED;
-	पूर्ण
+		dal_gpio_service_close(service, pin);
+		return GPIO_RESULT_OPEN_FAILED;
+	}
 
 	set_pin_busy(service, id, en);
-	वापस GPIO_RESULT_OK;
-पूर्ण
+	return GPIO_RESULT_OK;
+}
 
-व्योम dal_gpio_service_बंद(
-	काष्ठा gpio_service *service,
-	काष्ठा hw_gpio_pin **ptr)
-अणु
-	काष्ठा hw_gpio_pin *pin;
+void dal_gpio_service_close(
+	struct gpio_service *service,
+	struct hw_gpio_pin **ptr)
+{
+	struct hw_gpio_pin *pin;
 
-	अगर (!ptr) अणु
+	if (!ptr) {
 		ASSERT_CRITICAL(false);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	pin = *ptr;
 
-	अगर (pin) अणु
-		set_pin_मुक्त(service, pin->id, pin->en);
+	if (pin) {
+		set_pin_free(service, pin->id, pin->en);
 
-		pin->funcs->बंद(pin);
+		pin->funcs->close(pin);
 
-		*ptr = शून्य;
-	पूर्ण
-पूर्ण
+		*ptr = NULL;
+	}
+}
 
-क्रमागत dc_irq_source dal_irq_get_source(
-	स्थिर काष्ठा gpio *irq)
-अणु
-	क्रमागत gpio_id id = dal_gpio_get_id(irq);
+enum dc_irq_source dal_irq_get_source(
+	const struct gpio *irq)
+{
+	enum gpio_id id = dal_gpio_get_id(irq);
 
-	चयन (id) अणु
-	हाल GPIO_ID_HPD:
-		वापस (क्रमागत dc_irq_source)(DC_IRQ_SOURCE_HPD1 +
-			dal_gpio_get_क्रमागत(irq));
-	हाल GPIO_ID_GPIO_PAD:
-		वापस (क्रमागत dc_irq_source)(DC_IRQ_SOURCE_GPIOPAD0 +
-			dal_gpio_get_क्रमागत(irq));
-	शेष:
-		वापस DC_IRQ_SOURCE_INVALID;
-	पूर्ण
-पूर्ण
+	switch (id) {
+	case GPIO_ID_HPD:
+		return (enum dc_irq_source)(DC_IRQ_SOURCE_HPD1 +
+			dal_gpio_get_enum(irq));
+	case GPIO_ID_GPIO_PAD:
+		return (enum dc_irq_source)(DC_IRQ_SOURCE_GPIOPAD0 +
+			dal_gpio_get_enum(irq));
+	default:
+		return DC_IRQ_SOURCE_INVALID;
+	}
+}
 
-क्रमागत dc_irq_source dal_irq_get_rx_source(
-	स्थिर काष्ठा gpio *irq)
-अणु
-	क्रमागत gpio_id id = dal_gpio_get_id(irq);
+enum dc_irq_source dal_irq_get_rx_source(
+	const struct gpio *irq)
+{
+	enum gpio_id id = dal_gpio_get_id(irq);
 
-	चयन (id) अणु
-	हाल GPIO_ID_HPD:
-		वापस (क्रमागत dc_irq_source)(DC_IRQ_SOURCE_HPD1RX +
-			dal_gpio_get_क्रमागत(irq));
-	शेष:
-		वापस DC_IRQ_SOURCE_INVALID;
-	पूर्ण
-पूर्ण
+	switch (id) {
+	case GPIO_ID_HPD:
+		return (enum dc_irq_source)(DC_IRQ_SOURCE_HPD1RX +
+			dal_gpio_get_enum(irq));
+	default:
+		return DC_IRQ_SOURCE_INVALID;
+	}
+}
 
-क्रमागत gpio_result dal_irq_setup_hpd_filter(
-	काष्ठा gpio *irq,
-	काष्ठा gpio_hpd_config *config)
-अणु
-	काष्ठा gpio_config_data config_data;
+enum gpio_result dal_irq_setup_hpd_filter(
+	struct gpio *irq,
+	struct gpio_hpd_config *config)
+{
+	struct gpio_config_data config_data;
 
-	अगर (!config)
-		वापस GPIO_RESULT_INVALID_DATA;
+	if (!config)
+		return GPIO_RESULT_INVALID_DATA;
 
 	config_data.type = GPIO_CONFIG_TYPE_HPD;
 	config_data.config.hpd = *config;
 
-	वापस dal_gpio_set_config(irq, &config_data);
-पूर्ण
+	return dal_gpio_set_config(irq, &config_data);
+}
 
 /*
  * @brief
- * Creation and deकाष्ठाion
+ * Creation and destruction
  */
 
-काष्ठा gpio *dal_gpio_create_irq(
-	काष्ठा gpio_service *service,
-	क्रमागत gpio_id id,
-	uपूर्णांक32_t en)
-अणु
-	काष्ठा gpio *irq;
+struct gpio *dal_gpio_create_irq(
+	struct gpio_service *service,
+	enum gpio_id id,
+	uint32_t en)
+{
+	struct gpio *irq;
 
-	चयन (id) अणु
-	हाल GPIO_ID_HPD:
-	हाल GPIO_ID_GPIO_PAD:
-	अवरोध;
-	शेष:
+	switch (id) {
+	case GPIO_ID_HPD:
+	case GPIO_ID_GPIO_PAD:
+	break;
+	default:
 		id = GPIO_ID_HPD;
 		ASSERT_CRITICAL(false);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	irq = dal_gpio_create(
 		service, id, en, GPIO_PIN_OUTPUT_STATE_DEFAULT);
 
-	अगर (irq)
-		वापस irq;
+	if (irq)
+		return irq;
 
 	ASSERT_CRITICAL(false);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-व्योम dal_gpio_destroy_irq(
-	काष्ठा gpio **irq)
-अणु
-	अगर (!irq || !*irq) अणु
+void dal_gpio_destroy_irq(
+	struct gpio **irq)
+{
+	if (!irq || !*irq) {
 		ASSERT_CRITICAL(false);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	dal_gpio_destroy(irq);
-	kमुक्त(*irq);
+	kfree(*irq);
 
-	*irq = शून्य;
-पूर्ण
+	*irq = NULL;
+}
 
-काष्ठा ddc *dal_gpio_create_ddc(
-	काष्ठा gpio_service *service,
-	uपूर्णांक32_t offset,
-	uपूर्णांक32_t mask,
-	काष्ठा gpio_ddc_hw_info *info)
-अणु
-	क्रमागत gpio_id id;
-	uपूर्णांक32_t en;
-	काष्ठा ddc *ddc;
+struct ddc *dal_gpio_create_ddc(
+	struct gpio_service *service,
+	uint32_t offset,
+	uint32_t mask,
+	struct gpio_ddc_hw_info *info)
+{
+	enum gpio_id id;
+	uint32_t en;
+	struct ddc *ddc;
 
-	अगर (!service->translate.funcs->offset_to_id(offset, mask, &id, &en))
-		वापस शून्य;
+	if (!service->translate.funcs->offset_to_id(offset, mask, &id, &en))
+		return NULL;
 
-	ddc = kzalloc(माप(काष्ठा ddc), GFP_KERNEL);
+	ddc = kzalloc(sizeof(struct ddc), GFP_KERNEL);
 
-	अगर (!ddc) अणु
+	if (!ddc) {
 		BREAK_TO_DEBUGGER();
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	ddc->pin_data = dal_gpio_create(
 		service, GPIO_ID_DDC_DATA, en, GPIO_PIN_OUTPUT_STATE_DEFAULT);
 
-	अगर (!ddc->pin_data) अणु
+	if (!ddc->pin_data) {
 		BREAK_TO_DEBUGGER();
-		जाओ failure_1;
-	पूर्ण
+		goto failure_1;
+	}
 
-	ddc->pin_घड़ी = dal_gpio_create(
+	ddc->pin_clock = dal_gpio_create(
 		service, GPIO_ID_DDC_CLOCK, en, GPIO_PIN_OUTPUT_STATE_DEFAULT);
 
-	अगर (!ddc->pin_घड़ी) अणु
+	if (!ddc->pin_clock) {
 		BREAK_TO_DEBUGGER();
-		जाओ failure_2;
-	पूर्ण
+		goto failure_2;
+	}
 
 	ddc->hw_info = *info;
 
 	ddc->ctx = service->ctx;
 
-	वापस ddc;
+	return ddc;
 
 failure_2:
 	dal_gpio_destroy(&ddc->pin_data);
 
 failure_1:
-	kमुक्त(ddc);
+	kfree(ddc);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-व्योम dal_gpio_destroy_ddc(
-	काष्ठा ddc **ddc)
-अणु
-	अगर (!ddc || !*ddc) अणु
+void dal_gpio_destroy_ddc(
+	struct ddc **ddc)
+{
+	if (!ddc || !*ddc) {
 		BREAK_TO_DEBUGGER();
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	dal_ddc_बंद(*ddc);
+	dal_ddc_close(*ddc);
 	dal_gpio_destroy(&(*ddc)->pin_data);
-	dal_gpio_destroy(&(*ddc)->pin_घड़ी);
-	kमुक्त(*ddc);
+	dal_gpio_destroy(&(*ddc)->pin_clock);
+	kfree(*ddc);
 
-	*ddc = शून्य;
-पूर्ण
+	*ddc = NULL;
+}
 
-क्रमागत gpio_result dal_ddc_खोलो(
-	काष्ठा ddc *ddc,
-	क्रमागत gpio_mode mode,
-	क्रमागत gpio_ddc_config_type config_type)
-अणु
-	क्रमागत gpio_result result;
+enum gpio_result dal_ddc_open(
+	struct ddc *ddc,
+	enum gpio_mode mode,
+	enum gpio_ddc_config_type config_type)
+{
+	enum gpio_result result;
 
-	काष्ठा gpio_config_data config_data;
-	काष्ठा hw_gpio *hw_data;
-	काष्ठा hw_gpio *hw_घड़ी;
+	struct gpio_config_data config_data;
+	struct hw_gpio *hw_data;
+	struct hw_gpio *hw_clock;
 
-	result = dal_gpio_खोलो_ex(ddc->pin_data, mode);
+	result = dal_gpio_open_ex(ddc->pin_data, mode);
 
-	अगर (result != GPIO_RESULT_OK) अणु
+	if (result != GPIO_RESULT_OK) {
 		BREAK_TO_DEBUGGER();
-		वापस result;
-	पूर्ण
+		return result;
+	}
 
-	result = dal_gpio_खोलो_ex(ddc->pin_घड़ी, mode);
+	result = dal_gpio_open_ex(ddc->pin_clock, mode);
 
-	अगर (result != GPIO_RESULT_OK) अणु
+	if (result != GPIO_RESULT_OK) {
 		BREAK_TO_DEBUGGER();
-		जाओ failure;
-	पूर्ण
+		goto failure;
+	}
 
-	/* DDC घड़ी and data pins should beदीर्घ
+	/* DDC clock and data pins should belong
 	 * to the same DDC block id,
 	 * we use the data pin to set the pad mode. */
 
-	अगर (mode == GPIO_MODE_INPUT)
+	if (mode == GPIO_MODE_INPUT)
 		/* this is from detect_sink_type,
 		 * we need extra delay there */
 		config_data.type = GPIO_CONFIG_TYPE_I2C_AUX_DUAL_MODE;
-	अन्यथा
+	else
 		config_data.type = GPIO_CONFIG_TYPE_DDC;
 
 	config_data.config.ddc.type = config_type;
 
 	hw_data = FROM_HW_GPIO_PIN(ddc->pin_data->pin);
-	hw_घड़ी = FROM_HW_GPIO_PIN(ddc->pin_घड़ी->pin);
+	hw_clock = FROM_HW_GPIO_PIN(ddc->pin_clock->pin);
 
 	config_data.config.ddc.data_en_bit_present = hw_data->store.en != 0;
-	config_data.config.ddc.घड़ी_en_bit_present = hw_घड़ी->store.en != 0;
+	config_data.config.ddc.clock_en_bit_present = hw_clock->store.en != 0;
 
 	result = dal_gpio_set_config(ddc->pin_data, &config_data);
 
-	अगर (result == GPIO_RESULT_OK)
-		वापस result;
+	if (result == GPIO_RESULT_OK)
+		return result;
 
 	BREAK_TO_DEBUGGER();
 
-	dal_gpio_बंद(ddc->pin_घड़ी);
+	dal_gpio_close(ddc->pin_clock);
 
 failure:
-	dal_gpio_बंद(ddc->pin_data);
+	dal_gpio_close(ddc->pin_data);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-क्रमागत gpio_result dal_ddc_change_mode(
-	काष्ठा ddc *ddc,
-	क्रमागत gpio_mode mode)
-अणु
-	क्रमागत gpio_result result;
+enum gpio_result dal_ddc_change_mode(
+	struct ddc *ddc,
+	enum gpio_mode mode)
+{
+	enum gpio_result result;
 
-	क्रमागत gpio_mode original_mode =
+	enum gpio_mode original_mode =
 		dal_gpio_get_mode(ddc->pin_data);
 
 	result = dal_gpio_change_mode(ddc->pin_data, mode);
 
-	/* [anaumov] DAL2 code वापसs GPIO_RESULT_NON_SPECIFIC_ERROR
-	 * in हाल of failures;
-	 * set_mode() is so that, in हाल of failure,
+	/* [anaumov] DAL2 code returns GPIO_RESULT_NON_SPECIFIC_ERROR
+	 * in case of failures;
+	 * set_mode() is so that, in case of failure,
 	 * we must explicitly set original mode */
 
-	अगर (result != GPIO_RESULT_OK)
-		जाओ failure;
+	if (result != GPIO_RESULT_OK)
+		goto failure;
 
-	result = dal_gpio_change_mode(ddc->pin_घड़ी, mode);
+	result = dal_gpio_change_mode(ddc->pin_clock, mode);
 
-	अगर (result == GPIO_RESULT_OK)
-		वापस result;
+	if (result == GPIO_RESULT_OK)
+		return result;
 
-	dal_gpio_change_mode(ddc->pin_घड़ी, original_mode);
+	dal_gpio_change_mode(ddc->pin_clock, original_mode);
 
 failure:
 	dal_gpio_change_mode(ddc->pin_data, original_mode);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-क्रमागत gpio_ddc_line dal_ddc_get_line(
-	स्थिर काष्ठा ddc *ddc)
-अणु
-	वापस (क्रमागत gpio_ddc_line)dal_gpio_get_क्रमागत(ddc->pin_data);
-पूर्ण
+enum gpio_ddc_line dal_ddc_get_line(
+	const struct ddc *ddc)
+{
+	return (enum gpio_ddc_line)dal_gpio_get_enum(ddc->pin_data);
+}
 
-क्रमागत gpio_result dal_ddc_set_config(
-	काष्ठा ddc *ddc,
-	क्रमागत gpio_ddc_config_type config_type)
-अणु
-	काष्ठा gpio_config_data config_data;
+enum gpio_result dal_ddc_set_config(
+	struct ddc *ddc,
+	enum gpio_ddc_config_type config_type)
+{
+	struct gpio_config_data config_data;
 
 	config_data.type = GPIO_CONFIG_TYPE_DDC;
 
 	config_data.config.ddc.type = config_type;
 	config_data.config.ddc.data_en_bit_present = false;
-	config_data.config.ddc.घड़ी_en_bit_present = false;
+	config_data.config.ddc.clock_en_bit_present = false;
 
-	वापस dal_gpio_set_config(ddc->pin_data, &config_data);
-पूर्ण
+	return dal_gpio_set_config(ddc->pin_data, &config_data);
+}
 
-व्योम dal_ddc_बंद(
-	काष्ठा ddc *ddc)
-अणु
-	dal_gpio_बंद(ddc->pin_घड़ी);
-	dal_gpio_बंद(ddc->pin_data);
-पूर्ण
+void dal_ddc_close(
+	struct ddc *ddc)
+{
+	dal_gpio_close(ddc->pin_clock);
+	dal_gpio_close(ddc->pin_data);
+}
 

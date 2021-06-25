@@ -1,203 +1,202 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0 or BSD-3-Clause
+// SPDX-License-Identifier: GPL-2.0 or BSD-3-Clause
 /*
- * Northstar Plus चयन SerDes/SGMII PHY मुख्य logic
+ * Northstar Plus switch SerDes/SGMII PHY main logic
  *
  * Copyright (C) 2018 Florian Fainelli <f.fainelli@gmail.com>
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/delay.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/phy.h>
-#समावेश <linux/phylink.h>
-#समावेश <net/dsa.h>
+#include <linux/delay.h>
+#include <linux/kernel.h>
+#include <linux/phy.h>
+#include <linux/phylink.h>
+#include <net/dsa.h>
 
-#समावेश "b53_priv.h"
-#समावेश "b53_serdes.h"
-#समावेश "b53_regs.h"
+#include "b53_priv.h"
+#include "b53_serdes.h"
+#include "b53_regs.h"
 
-अटल व्योम b53_serdes_ग_लिखो_blk(काष्ठा b53_device *dev, u8 offset, u16 block,
+static void b53_serdes_write_blk(struct b53_device *dev, u8 offset, u16 block,
 				 u16 value)
-अणु
-	b53_ग_लिखो16(dev, B53_SERDES_PAGE, B53_SERDES_BLKADDR, block);
-	b53_ग_लिखो16(dev, B53_SERDES_PAGE, offset, value);
-पूर्ण
+{
+	b53_write16(dev, B53_SERDES_PAGE, B53_SERDES_BLKADDR, block);
+	b53_write16(dev, B53_SERDES_PAGE, offset, value);
+}
 
-अटल u16 b53_serdes_पढ़ो_blk(काष्ठा b53_device *dev, u8 offset, u16 block)
-अणु
+static u16 b53_serdes_read_blk(struct b53_device *dev, u8 offset, u16 block)
+{
 	u16 value;
 
-	b53_ग_लिखो16(dev, B53_SERDES_PAGE, B53_SERDES_BLKADDR, block);
-	b53_पढ़ो16(dev, B53_SERDES_PAGE, offset, &value);
+	b53_write16(dev, B53_SERDES_PAGE, B53_SERDES_BLKADDR, block);
+	b53_read16(dev, B53_SERDES_PAGE, offset, &value);
 
-	वापस value;
-पूर्ण
+	return value;
+}
 
-अटल व्योम b53_serdes_set_lane(काष्ठा b53_device *dev, u8 lane)
-अणु
-	अगर (dev->serdes_lane == lane)
-		वापस;
+static void b53_serdes_set_lane(struct b53_device *dev, u8 lane)
+{
+	if (dev->serdes_lane == lane)
+		return;
 
 	WARN_ON(lane > 1);
 
-	b53_serdes_ग_लिखो_blk(dev, B53_SERDES_LANE,
+	b53_serdes_write_blk(dev, B53_SERDES_LANE,
 			     SERDES_XGXSBLK0_BLOCKADDRESS, lane);
 	dev->serdes_lane = lane;
-पूर्ण
+}
 
-अटल व्योम b53_serdes_ग_लिखो(काष्ठा b53_device *dev, u8 lane,
+static void b53_serdes_write(struct b53_device *dev, u8 lane,
 			     u8 offset, u16 block, u16 value)
-अणु
+{
 	b53_serdes_set_lane(dev, lane);
-	b53_serdes_ग_लिखो_blk(dev, offset, block, value);
-पूर्ण
+	b53_serdes_write_blk(dev, offset, block, value);
+}
 
-अटल u16 b53_serdes_पढ़ो(काष्ठा b53_device *dev, u8 lane,
+static u16 b53_serdes_read(struct b53_device *dev, u8 lane,
 			   u8 offset, u16 block)
-अणु
+{
 	b53_serdes_set_lane(dev, lane);
-	वापस b53_serdes_पढ़ो_blk(dev, offset, block);
-पूर्ण
+	return b53_serdes_read_blk(dev, offset, block);
+}
 
-व्योम b53_serdes_config(काष्ठा b53_device *dev, पूर्णांक port, अचिन्हित पूर्णांक mode,
-		       स्थिर काष्ठा phylink_link_state *state)
-अणु
+void b53_serdes_config(struct b53_device *dev, int port, unsigned int mode,
+		       const struct phylink_link_state *state)
+{
 	u8 lane = b53_serdes_map_lane(dev, port);
 	u16 reg;
 
-	अगर (lane == B53_INVALID_LANE)
-		वापस;
+	if (lane == B53_INVALID_LANE)
+		return;
 
-	reg = b53_serdes_पढ़ो(dev, lane, B53_SERDES_DIGITAL_CONTROL(1),
+	reg = b53_serdes_read(dev, lane, B53_SERDES_DIGITAL_CONTROL(1),
 			      SERDES_DIGITAL_BLK);
-	अगर (state->पूर्णांकerface == PHY_INTERFACE_MODE_1000BASEX)
+	if (state->interface == PHY_INTERFACE_MODE_1000BASEX)
 		reg |= FIBER_MODE_1000X;
-	अन्यथा
+	else
 		reg &= ~FIBER_MODE_1000X;
-	b53_serdes_ग_लिखो(dev, lane, B53_SERDES_DIGITAL_CONTROL(1),
+	b53_serdes_write(dev, lane, B53_SERDES_DIGITAL_CONTROL(1),
 			 SERDES_DIGITAL_BLK, reg);
-पूर्ण
+}
 EXPORT_SYMBOL(b53_serdes_config);
 
-व्योम b53_serdes_an_restart(काष्ठा b53_device *dev, पूर्णांक port)
-अणु
+void b53_serdes_an_restart(struct b53_device *dev, int port)
+{
 	u8 lane = b53_serdes_map_lane(dev, port);
 	u16 reg;
 
-	अगर (lane == B53_INVALID_LANE)
-		वापस;
+	if (lane == B53_INVALID_LANE)
+		return;
 
-	reg = b53_serdes_पढ़ो(dev, lane, B53_SERDES_MII_REG(MII_BMCR),
+	reg = b53_serdes_read(dev, lane, B53_SERDES_MII_REG(MII_BMCR),
 			      SERDES_MII_BLK);
 	reg |= BMCR_ANRESTART;
-	b53_serdes_ग_लिखो(dev, lane, B53_SERDES_MII_REG(MII_BMCR),
+	b53_serdes_write(dev, lane, B53_SERDES_MII_REG(MII_BMCR),
 			 SERDES_MII_BLK, reg);
-पूर्ण
+}
 EXPORT_SYMBOL(b53_serdes_an_restart);
 
-पूर्णांक b53_serdes_link_state(काष्ठा b53_device *dev, पूर्णांक port,
-			  काष्ठा phylink_link_state *state)
-अणु
+int b53_serdes_link_state(struct b53_device *dev, int port,
+			  struct phylink_link_state *state)
+{
 	u8 lane = b53_serdes_map_lane(dev, port);
 	u16 dig, bmsr;
 
-	अगर (lane == B53_INVALID_LANE)
-		वापस 1;
+	if (lane == B53_INVALID_LANE)
+		return 1;
 
-	dig = b53_serdes_पढ़ो(dev, lane, B53_SERDES_DIGITAL_STATUS,
+	dig = b53_serdes_read(dev, lane, B53_SERDES_DIGITAL_STATUS,
 			      SERDES_DIGITAL_BLK);
-	bmsr = b53_serdes_पढ़ो(dev, lane, B53_SERDES_MII_REG(MII_BMSR),
+	bmsr = b53_serdes_read(dev, lane, B53_SERDES_MII_REG(MII_BMSR),
 			       SERDES_MII_BLK);
 
-	चयन ((dig >> SPEED_STATUS_SHIFT) & SPEED_STATUS_MASK) अणु
-	हाल SPEED_STATUS_10:
+	switch ((dig >> SPEED_STATUS_SHIFT) & SPEED_STATUS_MASK) {
+	case SPEED_STATUS_10:
 		state->speed = SPEED_10;
-		अवरोध;
-	हाल SPEED_STATUS_100:
+		break;
+	case SPEED_STATUS_100:
 		state->speed = SPEED_100;
-		अवरोध;
-	हाल SPEED_STATUS_1000:
+		break;
+	case SPEED_STATUS_1000:
 		state->speed = SPEED_1000;
-		अवरोध;
-	शेष:
-	हाल SPEED_STATUS_2500:
+		break;
+	default:
+	case SPEED_STATUS_2500:
 		state->speed = SPEED_2500;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	state->duplex = dig & DUPLEX_STATUS ? DUPLEX_FULL : DUPLEX_HALF;
 	state->an_complete = !!(bmsr & BMSR_ANEGCOMPLETE);
 	state->link = !!(dig & LINK_STATUS);
-	अगर (dig & PAUSE_RESOLUTION_RX_SIDE)
-		state->छोड़ो |= MLO_PAUSE_RX;
-	अगर (dig & PAUSE_RESOLUTION_TX_SIDE)
-		state->छोड़ो |= MLO_PAUSE_TX;
+	if (dig & PAUSE_RESOLUTION_RX_SIDE)
+		state->pause |= MLO_PAUSE_RX;
+	if (dig & PAUSE_RESOLUTION_TX_SIDE)
+		state->pause |= MLO_PAUSE_TX;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(b53_serdes_link_state);
 
-व्योम b53_serdes_link_set(काष्ठा b53_device *dev, पूर्णांक port, अचिन्हित पूर्णांक mode,
-			 phy_पूर्णांकerface_t पूर्णांकerface, bool link_up)
-अणु
+void b53_serdes_link_set(struct b53_device *dev, int port, unsigned int mode,
+			 phy_interface_t interface, bool link_up)
+{
 	u8 lane = b53_serdes_map_lane(dev, port);
 	u16 reg;
 
-	अगर (lane == B53_INVALID_LANE)
-		वापस;
+	if (lane == B53_INVALID_LANE)
+		return;
 
-	reg = b53_serdes_पढ़ो(dev, lane, B53_SERDES_MII_REG(MII_BMCR),
+	reg = b53_serdes_read(dev, lane, B53_SERDES_MII_REG(MII_BMCR),
 			      SERDES_MII_BLK);
-	अगर (link_up)
+	if (link_up)
 		reg &= ~BMCR_PDOWN;
-	अन्यथा
+	else
 		reg |= BMCR_PDOWN;
-	b53_serdes_ग_लिखो(dev, lane, B53_SERDES_MII_REG(MII_BMCR),
+	b53_serdes_write(dev, lane, B53_SERDES_MII_REG(MII_BMCR),
 			 SERDES_MII_BLK, reg);
-पूर्ण
+}
 EXPORT_SYMBOL(b53_serdes_link_set);
 
-व्योम b53_serdes_phylink_validate(काष्ठा b53_device *dev, पूर्णांक port,
-				 अचिन्हित दीर्घ *supported,
-				 काष्ठा phylink_link_state *state)
-अणु
+void b53_serdes_phylink_validate(struct b53_device *dev, int port,
+				 unsigned long *supported,
+				 struct phylink_link_state *state)
+{
 	u8 lane = b53_serdes_map_lane(dev, port);
 
-	अगर (lane == B53_INVALID_LANE)
-		वापस;
+	if (lane == B53_INVALID_LANE)
+		return;
 
-	चयन (lane) अणु
-	हाल 0:
+	switch (lane) {
+	case 0:
 		phylink_set(supported, 2500baseX_Full);
 		fallthrough;
-	हाल 1:
+	case 1:
 		phylink_set(supported, 1000baseX_Full);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 EXPORT_SYMBOL(b53_serdes_phylink_validate);
 
-पूर्णांक b53_serdes_init(काष्ठा b53_device *dev, पूर्णांक port)
-अणु
+int b53_serdes_init(struct b53_device *dev, int port)
+{
 	u8 lane = b53_serdes_map_lane(dev, port);
 	u16 id0, msb, lsb;
 
-	अगर (lane == B53_INVALID_LANE)
-		वापस -EINVAL;
+	if (lane == B53_INVALID_LANE)
+		return -EINVAL;
 
-	id0 = b53_serdes_पढ़ो(dev, lane, B53_SERDES_ID0, SERDES_ID0);
-	msb = b53_serdes_पढ़ो(dev, lane, B53_SERDES_MII_REG(MII_PHYSID1),
+	id0 = b53_serdes_read(dev, lane, B53_SERDES_ID0, SERDES_ID0);
+	msb = b53_serdes_read(dev, lane, B53_SERDES_MII_REG(MII_PHYSID1),
 			      SERDES_MII_BLK);
-	lsb = b53_serdes_पढ़ो(dev, lane, B53_SERDES_MII_REG(MII_PHYSID2),
+	lsb = b53_serdes_read(dev, lane, B53_SERDES_MII_REG(MII_PHYSID2),
 			      SERDES_MII_BLK);
-	अगर (id0 == 0 || id0 == 0xffff) अणु
+	if (id0 == 0 || id0 == 0xffff) {
 		dev_err(dev->dev, "SerDes not initialized, check settings\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	dev_info(dev->dev,
 		 "SerDes lane %d, model: %d, rev %c%d (OUI: 0x%08x)\n",
@@ -206,8 +205,8 @@ EXPORT_SYMBOL(b53_serdes_phylink_validate);
 		 (id0 >> SERDES_ID0_REV_NUM_SHIFT) & SERDES_ID0_REV_NUM_MASK,
 		 (u32)msb << 16 | lsb);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(b53_serdes_init);
 
 MODULE_AUTHOR("Florian Fainelli <f.fainelli@gmail.com>");

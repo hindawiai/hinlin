@@ -1,323 +1,322 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * mv64x60_wdt.c - MV64X60 (Marvell Discovery) watchकरोg userspace पूर्णांकerface
+ * mv64x60_wdt.c - MV64X60 (Marvell Discovery) watchdog userspace interface
  *
  * Author: James Chapman <jchapman@katalix.com>
  *
- * Platक्रमm-specअगरic setup code should configure the करोg to generate
- * पूर्णांकerrupt or reset as required.  This code only enables/disables
- * and services the watchकरोg.
+ * Platform-specific setup code should configure the dog to generate
+ * interrupt or reset as required.  This code only enables/disables
+ * and services the watchdog.
  *
  * Derived from mpc8xx_wdt.c, with the following copyright.
  *
  * 2002 (c) Florian Schirmer <jolt@tuxbox.org>
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/fs.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/module.h>
-#समावेश <linux/watchकरोg.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/mv643xx.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/पन.स>
+#include <linux/fs.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/miscdevice.h>
+#include <linux/module.h>
+#include <linux/watchdog.h>
+#include <linux/platform_device.h>
+#include <linux/mv643xx.h>
+#include <linux/uaccess.h>
+#include <linux/io.h>
 
-#घोषणा MV64x60_WDT_WDC_OFFSET	0
+#define MV64x60_WDT_WDC_OFFSET	0
 
 /*
- * The watchकरोg configuration रेजिस्टर contains a pair of 2-bit fields,
+ * The watchdog configuration register contains a pair of 2-bit fields,
  *   1.  a reload field, bits 27-26, which triggers a reload of
- *       the countकरोwn रेजिस्टर, and
+ *       the countdown register, and
  *   2.  an enable field, bits 25-24, which toggles between
- *       enabling and disabling the watchकरोg समयr.
- * Bit 31 is a पढ़ो-only field which indicates whether the
- * watchकरोg समयr is currently enabled.
+ *       enabling and disabling the watchdog timer.
+ * Bit 31 is a read-only field which indicates whether the
+ * watchdog timer is currently enabled.
  *
- * The low 24 bits contain the समयr reload value.
+ * The low 24 bits contain the timer reload value.
  */
-#घोषणा MV64x60_WDC_ENABLE_SHIFT	24
-#घोषणा MV64x60_WDC_SERVICE_SHIFT	26
-#घोषणा MV64x60_WDC_ENABLED_SHIFT	31
+#define MV64x60_WDC_ENABLE_SHIFT	24
+#define MV64x60_WDC_SERVICE_SHIFT	26
+#define MV64x60_WDC_ENABLED_SHIFT	31
 
-#घोषणा MV64x60_WDC_ENABLED_TRUE	1
-#घोषणा MV64x60_WDC_ENABLED_FALSE	0
+#define MV64x60_WDC_ENABLED_TRUE	1
+#define MV64x60_WDC_ENABLED_FALSE	0
 
 /* Flags bits */
-#घोषणा MV64x60_WDOG_FLAG_OPENED	0
+#define MV64x60_WDOG_FLAG_OPENED	0
 
-अटल अचिन्हित दीर्घ wdt_flags;
-अटल पूर्णांक wdt_status;
-अटल व्योम __iomem *mv64x60_wdt_regs;
-अटल पूर्णांक mv64x60_wdt_समयout;
-अटल पूर्णांक mv64x60_wdt_count;
-अटल अचिन्हित पूर्णांक bus_clk;
-अटल अक्षर expect_बंद;
-अटल DEFINE_SPINLOCK(mv64x60_wdt_spinlock);
+static unsigned long wdt_flags;
+static int wdt_status;
+static void __iomem *mv64x60_wdt_regs;
+static int mv64x60_wdt_timeout;
+static int mv64x60_wdt_count;
+static unsigned int bus_clk;
+static char expect_close;
+static DEFINE_SPINLOCK(mv64x60_wdt_spinlock);
 
-अटल bool nowayout = WATCHDOG_NOWAYOUT;
+static bool nowayout = WATCHDOG_NOWAYOUT;
 module_param(nowayout, bool, 0);
 MODULE_PARM_DESC(nowayout,
 		"Watchdog cannot be stopped once started (default="
 				__MODULE_STRING(WATCHDOG_NOWAYOUT) ")");
 
-अटल पूर्णांक mv64x60_wdt_toggle_wdc(पूर्णांक enabled_predicate, पूर्णांक field_shअगरt)
-अणु
+static int mv64x60_wdt_toggle_wdc(int enabled_predicate, int field_shift)
+{
 	u32 data;
 	u32 enabled;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	spin_lock(&mv64x60_wdt_spinlock);
-	data = पढ़ोl(mv64x60_wdt_regs + MV64x60_WDT_WDC_OFFSET);
+	data = readl(mv64x60_wdt_regs + MV64x60_WDT_WDC_OFFSET);
 	enabled = (data >> MV64x60_WDC_ENABLED_SHIFT) & 1;
 
-	/* only toggle the requested field अगर enabled state matches predicate */
-	अगर ((enabled ^ enabled_predicate) == 0) अणु
-		/* We ग_लिखो a 1, then a 2 -- to the appropriate field */
-		data = (1 << field_shअगरt) | mv64x60_wdt_count;
-		ग_लिखोl(data, mv64x60_wdt_regs + MV64x60_WDT_WDC_OFFSET);
+	/* only toggle the requested field if enabled state matches predicate */
+	if ((enabled ^ enabled_predicate) == 0) {
+		/* We write a 1, then a 2 -- to the appropriate field */
+		data = (1 << field_shift) | mv64x60_wdt_count;
+		writel(data, mv64x60_wdt_regs + MV64x60_WDT_WDC_OFFSET);
 
-		data = (2 << field_shअगरt) | mv64x60_wdt_count;
-		ग_लिखोl(data, mv64x60_wdt_regs + MV64x60_WDT_WDC_OFFSET);
+		data = (2 << field_shift) | mv64x60_wdt_count;
+		writel(data, mv64x60_wdt_regs + MV64x60_WDT_WDC_OFFSET);
 		ret = 1;
-	पूर्ण
+	}
 	spin_unlock(&mv64x60_wdt_spinlock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम mv64x60_wdt_service(व्योम)
-अणु
+static void mv64x60_wdt_service(void)
+{
 	mv64x60_wdt_toggle_wdc(MV64x60_WDC_ENABLED_TRUE,
 			       MV64x60_WDC_SERVICE_SHIFT);
-पूर्ण
+}
 
-अटल व्योम mv64x60_wdt_handler_enable(व्योम)
-अणु
-	अगर (mv64x60_wdt_toggle_wdc(MV64x60_WDC_ENABLED_FALSE,
-				   MV64x60_WDC_ENABLE_SHIFT)) अणु
+static void mv64x60_wdt_handler_enable(void)
+{
+	if (mv64x60_wdt_toggle_wdc(MV64x60_WDC_ENABLED_FALSE,
+				   MV64x60_WDC_ENABLE_SHIFT)) {
 		mv64x60_wdt_service();
 		pr_notice("watchdog activated\n");
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम mv64x60_wdt_handler_disable(व्योम)
-अणु
-	अगर (mv64x60_wdt_toggle_wdc(MV64x60_WDC_ENABLED_TRUE,
+static void mv64x60_wdt_handler_disable(void)
+{
+	if (mv64x60_wdt_toggle_wdc(MV64x60_WDC_ENABLED_TRUE,
 				   MV64x60_WDC_ENABLE_SHIFT))
 		pr_notice("watchdog deactivated\n");
-पूर्ण
+}
 
-अटल व्योम mv64x60_wdt_set_समयout(अचिन्हित पूर्णांक समयout)
-अणु
+static void mv64x60_wdt_set_timeout(unsigned int timeout)
+{
 	/* maximum bus cycle count is 0xFFFFFFFF */
-	अगर (समयout > 0xFFFFFFFF / bus_clk)
-		समयout = 0xFFFFFFFF / bus_clk;
+	if (timeout > 0xFFFFFFFF / bus_clk)
+		timeout = 0xFFFFFFFF / bus_clk;
 
-	mv64x60_wdt_count = समयout * bus_clk >> 8;
-	mv64x60_wdt_समयout = समयout;
-पूर्ण
+	mv64x60_wdt_count = timeout * bus_clk >> 8;
+	mv64x60_wdt_timeout = timeout;
+}
 
-अटल पूर्णांक mv64x60_wdt_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	अगर (test_and_set_bit(MV64x60_WDOG_FLAG_OPENED, &wdt_flags))
-		वापस -EBUSY;
+static int mv64x60_wdt_open(struct inode *inode, struct file *file)
+{
+	if (test_and_set_bit(MV64x60_WDOG_FLAG_OPENED, &wdt_flags))
+		return -EBUSY;
 
-	अगर (nowayout)
+	if (nowayout)
 		__module_get(THIS_MODULE);
 
 	mv64x60_wdt_handler_enable();
 
-	वापस stream_खोलो(inode, file);
-पूर्ण
+	return stream_open(inode, file);
+}
 
-अटल पूर्णांक mv64x60_wdt_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	अगर (expect_बंद == 42)
+static int mv64x60_wdt_release(struct inode *inode, struct file *file)
+{
+	if (expect_close == 42)
 		mv64x60_wdt_handler_disable();
-	अन्यथा अणु
+	else {
 		pr_crit("unexpected close, not stopping timer!\n");
 		mv64x60_wdt_service();
-	पूर्ण
-	expect_बंद = 0;
+	}
+	expect_close = 0;
 
 	clear_bit(MV64x60_WDOG_FLAG_OPENED, &wdt_flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार mv64x60_wdt_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *data,
-				 माप_प्रकार len, loff_t *ppos)
-अणु
-	अगर (len) अणु
-		अगर (!nowayout) अणु
-			माप_प्रकार i;
+static ssize_t mv64x60_wdt_write(struct file *file, const char __user *data,
+				 size_t len, loff_t *ppos)
+{
+	if (len) {
+		if (!nowayout) {
+			size_t i;
 
-			expect_बंद = 0;
+			expect_close = 0;
 
-			क्रम (i = 0; i != len; i++) अणु
-				अक्षर c;
-				अगर (get_user(c, data + i))
-					वापस -EFAULT;
-				अगर (c == 'V')
-					expect_बंद = 42;
-			पूर्ण
-		पूर्ण
+			for (i = 0; i != len; i++) {
+				char c;
+				if (get_user(c, data + i))
+					return -EFAULT;
+				if (c == 'V')
+					expect_close = 42;
+			}
+		}
 		mv64x60_wdt_service();
-	पूर्ण
+	}
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल दीर्घ mv64x60_wdt_ioctl(काष्ठा file *file,
-					अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	पूर्णांक समयout;
-	पूर्णांक options;
-	व्योम __user *argp = (व्योम __user *)arg;
-	अटल स्थिर काष्ठा watchकरोg_info info = अणु
+static long mv64x60_wdt_ioctl(struct file *file,
+					unsigned int cmd, unsigned long arg)
+{
+	int timeout;
+	int options;
+	void __user *argp = (void __user *)arg;
+	static const struct watchdog_info info = {
 		.options =	WDIOF_SETTIMEOUT	|
 				WDIOF_MAGICCLOSE	|
 				WDIOF_KEEPALIVEPING,
 		.firmware_version = 0,
 		.identity = "MV64x60 watchdog",
-	पूर्ण;
+	};
 
-	चयन (cmd) अणु
-	हाल WDIOC_GETSUPPORT:
-		अगर (copy_to_user(argp, &info, माप(info)))
-			वापस -EFAULT;
-		अवरोध;
+	switch (cmd) {
+	case WDIOC_GETSUPPORT:
+		if (copy_to_user(argp, &info, sizeof(info)))
+			return -EFAULT;
+		break;
 
-	हाल WDIOC_GETSTATUS:
-	हाल WDIOC_GETBOOTSTATUS:
-		अगर (put_user(wdt_status, (पूर्णांक __user *)argp))
-			वापस -EFAULT;
+	case WDIOC_GETSTATUS:
+	case WDIOC_GETBOOTSTATUS:
+		if (put_user(wdt_status, (int __user *)argp))
+			return -EFAULT;
 		wdt_status &= ~WDIOF_KEEPALIVEPING;
-		अवरोध;
+		break;
 
-	हाल WDIOC_GETTEMP:
-		वापस -EOPNOTSUPP;
+	case WDIOC_GETTEMP:
+		return -EOPNOTSUPP;
 
-	हाल WDIOC_SETOPTIONS:
-		अगर (get_user(options, (पूर्णांक __user *)argp))
-			वापस -EFAULT;
+	case WDIOC_SETOPTIONS:
+		if (get_user(options, (int __user *)argp))
+			return -EFAULT;
 
-		अगर (options & WDIOS_DISABLECARD)
+		if (options & WDIOS_DISABLECARD)
 			mv64x60_wdt_handler_disable();
 
-		अगर (options & WDIOS_ENABLECARD)
+		if (options & WDIOS_ENABLECARD)
 			mv64x60_wdt_handler_enable();
-		अवरोध;
+		break;
 
-	हाल WDIOC_KEEPALIVE:
+	case WDIOC_KEEPALIVE:
 		mv64x60_wdt_service();
 		wdt_status |= WDIOF_KEEPALIVEPING;
-		अवरोध;
+		break;
 
-	हाल WDIOC_SETTIMEOUT:
-		अगर (get_user(समयout, (पूर्णांक __user *)argp))
-			वापस -EFAULT;
-		mv64x60_wdt_set_समयout(समयout);
+	case WDIOC_SETTIMEOUT:
+		if (get_user(timeout, (int __user *)argp))
+			return -EFAULT;
+		mv64x60_wdt_set_timeout(timeout);
 		fallthrough;
 
-	हाल WDIOC_GETTIMEOUT:
-		अगर (put_user(mv64x60_wdt_समयout, (पूर्णांक __user *)argp))
-			वापस -EFAULT;
-		अवरोध;
+	case WDIOC_GETTIMEOUT:
+		if (put_user(mv64x60_wdt_timeout, (int __user *)argp))
+			return -EFAULT;
+		break;
 
-	शेष:
-		वापस -ENOTTY;
-	पूर्ण
+	default:
+		return -ENOTTY;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा file_operations mv64x60_wdt_fops = अणु
+static const struct file_operations mv64x60_wdt_fops = {
 	.owner = THIS_MODULE,
 	.llseek = no_llseek,
-	.ग_लिखो = mv64x60_wdt_ग_लिखो,
+	.write = mv64x60_wdt_write,
 	.unlocked_ioctl = mv64x60_wdt_ioctl,
 	.compat_ioctl = compat_ptr_ioctl,
-	.खोलो = mv64x60_wdt_खोलो,
+	.open = mv64x60_wdt_open,
 	.release = mv64x60_wdt_release,
-पूर्ण;
+};
 
-अटल काष्ठा miscdevice mv64x60_wdt_miscdev = अणु
+static struct miscdevice mv64x60_wdt_miscdev = {
 	.minor = WATCHDOG_MINOR,
 	.name = "watchdog",
 	.fops = &mv64x60_wdt_fops,
-पूर्ण;
+};
 
-अटल पूर्णांक mv64x60_wdt_probe(काष्ठा platक्रमm_device *dev)
-अणु
-	काष्ठा mv64x60_wdt_pdata *pdata = dev_get_platdata(&dev->dev);
-	काष्ठा resource *r;
-	पूर्णांक समयout = 10;
+static int mv64x60_wdt_probe(struct platform_device *dev)
+{
+	struct mv64x60_wdt_pdata *pdata = dev_get_platdata(&dev->dev);
+	struct resource *r;
+	int timeout = 10;
 
 	bus_clk = 133;			/* in MHz */
-	अगर (pdata) अणु
-		समयout = pdata->समयout;
+	if (pdata) {
+		timeout = pdata->timeout;
 		bus_clk = pdata->bus_clk;
-	पूर्ण
+	}
 
 	/* Since bus_clk is truncated MHz, actual frequency could be
-	 * up to 1MHz higher.  Round up, since it's better to समय out
+	 * up to 1MHz higher.  Round up, since it's better to time out
 	 * too late than too soon.
 	 */
 	bus_clk++;
 	bus_clk *= 1000000;		/* convert to Hz */
 
-	r = platक्रमm_get_resource(dev, IORESOURCE_MEM, 0);
-	अगर (!r)
-		वापस -ENODEV;
+	r = platform_get_resource(dev, IORESOURCE_MEM, 0);
+	if (!r)
+		return -ENODEV;
 
 	mv64x60_wdt_regs = devm_ioremap(&dev->dev, r->start, resource_size(r));
-	अगर (mv64x60_wdt_regs == शून्य)
-		वापस -ENOMEM;
+	if (mv64x60_wdt_regs == NULL)
+		return -ENOMEM;
 
-	mv64x60_wdt_set_समयout(समयout);
+	mv64x60_wdt_set_timeout(timeout);
 
-	mv64x60_wdt_handler_disable();	/* in हाल समयr was alपढ़ोy running */
+	mv64x60_wdt_handler_disable();	/* in case timer was already running */
 
-	वापस misc_रेजिस्टर(&mv64x60_wdt_miscdev);
-पूर्ण
+	return misc_register(&mv64x60_wdt_miscdev);
+}
 
-अटल पूर्णांक mv64x60_wdt_हटाओ(काष्ठा platक्रमm_device *dev)
-अणु
-	misc_deरेजिस्टर(&mv64x60_wdt_miscdev);
+static int mv64x60_wdt_remove(struct platform_device *dev)
+{
+	misc_deregister(&mv64x60_wdt_miscdev);
 
 	mv64x60_wdt_handler_disable();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver mv64x60_wdt_driver = अणु
+static struct platform_driver mv64x60_wdt_driver = {
 	.probe = mv64x60_wdt_probe,
-	.हटाओ = mv64x60_wdt_हटाओ,
-	.driver = अणु
+	.remove = mv64x60_wdt_remove,
+	.driver = {
 		.name = MV64x60_WDT_NAME,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init mv64x60_wdt_init(व्योम)
-अणु
+static int __init mv64x60_wdt_init(void)
+{
 	pr_info("MV64x60 watchdog driver\n");
 
-	वापस platक्रमm_driver_रेजिस्टर(&mv64x60_wdt_driver);
-पूर्ण
+	return platform_driver_register(&mv64x60_wdt_driver);
+}
 
-अटल व्योम __निकास mv64x60_wdt_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&mv64x60_wdt_driver);
-पूर्ण
+static void __exit mv64x60_wdt_exit(void)
+{
+	platform_driver_unregister(&mv64x60_wdt_driver);
+}
 
 module_init(mv64x60_wdt_init);
-module_निकास(mv64x60_wdt_निकास);
+module_exit(mv64x60_wdt_exit);
 
 MODULE_AUTHOR("James Chapman <jchapman@katalix.com>");
 MODULE_DESCRIPTION("MV64x60 watchdog driver");

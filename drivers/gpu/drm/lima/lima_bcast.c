@@ -1,63 +1,62 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0 OR MIT
+// SPDX-License-Identifier: GPL-2.0 OR MIT
 /* Copyright 2018-2019 Qiang Yu <yuq825@gmail.com> */
 
-#समावेश <linux/पन.स>
-#समावेश <linux/device.h>
+#include <linux/io.h>
+#include <linux/device.h>
 
-#समावेश "lima_device.h"
-#समावेश "lima_bcast.h"
-#समावेश "lima_regs.h"
+#include "lima_device.h"
+#include "lima_bcast.h"
+#include "lima_regs.h"
 
-#घोषणा bcast_ग_लिखो(reg, data) ग_लिखोl(data, ip->iomem + reg)
-#घोषणा bcast_पढ़ो(reg) पढ़ोl(ip->iomem + reg)
+#define bcast_write(reg, data) writel(data, ip->iomem + reg)
+#define bcast_read(reg) readl(ip->iomem + reg)
 
-व्योम lima_bcast_enable(काष्ठा lima_device *dev, पूर्णांक num_pp)
-अणु
-	काष्ठा lima_sched_pipe *pipe = dev->pipe + lima_pipe_pp;
-	काष्ठा lima_ip *ip = dev->ip + lima_ip_bcast;
-	पूर्णांक i, mask = bcast_पढ़ो(LIMA_BCAST_BROADCAST_MASK) & 0xffff0000;
+void lima_bcast_enable(struct lima_device *dev, int num_pp)
+{
+	struct lima_sched_pipe *pipe = dev->pipe + lima_pipe_pp;
+	struct lima_ip *ip = dev->ip + lima_ip_bcast;
+	int i, mask = bcast_read(LIMA_BCAST_BROADCAST_MASK) & 0xffff0000;
 
-	क्रम (i = 0; i < num_pp; i++) अणु
-		काष्ठा lima_ip *pp = pipe->processor[i];
+	for (i = 0; i < num_pp; i++) {
+		struct lima_ip *pp = pipe->processor[i];
 
 		mask |= 1 << (pp->id - lima_ip_pp0);
-	पूर्ण
+	}
 
-	bcast_ग_लिखो(LIMA_BCAST_BROADCAST_MASK, mask);
-पूर्ण
+	bcast_write(LIMA_BCAST_BROADCAST_MASK, mask);
+}
 
-अटल पूर्णांक lima_bcast_hw_init(काष्ठा lima_ip *ip)
-अणु
-	bcast_ग_लिखो(LIMA_BCAST_BROADCAST_MASK, ip->data.mask << 16);
-	bcast_ग_लिखो(LIMA_BCAST_INTERRUPT_MASK, ip->data.mask);
-	वापस 0;
-पूर्ण
+static int lima_bcast_hw_init(struct lima_ip *ip)
+{
+	bcast_write(LIMA_BCAST_BROADCAST_MASK, ip->data.mask << 16);
+	bcast_write(LIMA_BCAST_INTERRUPT_MASK, ip->data.mask);
+	return 0;
+}
 
-पूर्णांक lima_bcast_resume(काष्ठा lima_ip *ip)
-अणु
-	वापस lima_bcast_hw_init(ip);
-पूर्ण
+int lima_bcast_resume(struct lima_ip *ip)
+{
+	return lima_bcast_hw_init(ip);
+}
 
-व्योम lima_bcast_suspend(काष्ठा lima_ip *ip)
-अणु
+void lima_bcast_suspend(struct lima_ip *ip)
+{
 
-पूर्ण
+}
 
-पूर्णांक lima_bcast_init(काष्ठा lima_ip *ip)
-अणु
-	पूर्णांक i;
+int lima_bcast_init(struct lima_ip *ip)
+{
+	int i;
 
-	क्रम (i = lima_ip_pp0; i <= lima_ip_pp7; i++) अणु
-		अगर (ip->dev->ip[i].present)
+	for (i = lima_ip_pp0; i <= lima_ip_pp7; i++) {
+		if (ip->dev->ip[i].present)
 			ip->data.mask |= 1 << (i - lima_ip_pp0);
-	पूर्ण
+	}
 
-	वापस lima_bcast_hw_init(ip);
-पूर्ण
+	return lima_bcast_hw_init(ip);
+}
 
-व्योम lima_bcast_fini(काष्ठा lima_ip *ip)
-अणु
+void lima_bcast_fini(struct lima_ip *ip)
+{
 
-पूर्ण
+}
 

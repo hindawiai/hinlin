@@ -1,8 +1,7 @@
-<शैली गुरु>
-SECTIONS अणु
-	.m68k_fixup : अणु
+SECTIONS {
+	.m68k_fixup : {
 		__start_fixup = .;
 		*(.m68k_fixup)
 		__stop_fixup = .;
-	पूर्ण
-पूर्ण
+	}
+}

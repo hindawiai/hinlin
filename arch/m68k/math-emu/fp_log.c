@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
 
-  fp_trig.c: भग्नing-poपूर्णांक math routines क्रम the Linux-m68k
-  भग्नing poपूर्णांक emulator.
+  fp_trig.c: floating-point math routines for the Linux-m68k
+  floating point emulator.
 
   Copyright (c) 1998-1999 David Huggins-Daines / Roman Zippel.
 
-  I hereby give permission, मुक्त of अक्षरge, to copy, modअगरy, and
-  redistribute this software, in source or binary क्रमm, provided that
+  I hereby give permission, free of charge, to copy, modify, and
+  redistribute this software, in source or binary form, provided that
   the above copyright notice and the following disclaimer are included
   in all such copies.
 
@@ -16,59 +15,59 @@
 
 */
 
-#समावेश "fp_emu.h"
+#include "fp_emu.h"
 
-अटल स्थिर काष्ठा fp_ext fp_one =
-अणु
+static const struct fp_ext fp_one =
+{
 	.exp = 0x3fff,
-पूर्ण;
+};
 
-बाह्य काष्ठा fp_ext *fp_fadd(काष्ठा fp_ext *dest, स्थिर काष्ठा fp_ext *src);
-बाह्य काष्ठा fp_ext *fp_fभाग(काष्ठा fp_ext *dest, स्थिर काष्ठा fp_ext *src);
+extern struct fp_ext *fp_fadd(struct fp_ext *dest, const struct fp_ext *src);
+extern struct fp_ext *fp_fdiv(struct fp_ext *dest, const struct fp_ext *src);
 
-काष्ठा fp_ext *
-fp_fवर्ग_मूल(काष्ठा fp_ext *dest, काष्ठा fp_ext *src)
-अणु
-	काष्ठा fp_ext पंचांगp, src2;
-	पूर्णांक i, exp;
+struct fp_ext *
+fp_fsqrt(struct fp_ext *dest, struct fp_ext *src)
+{
+	struct fp_ext tmp, src2;
+	int i, exp;
 
-	dprपूर्णांक(PINSTR, "fsqrt\n");
+	dprint(PINSTR, "fsqrt\n");
 
 	fp_monadic_check(dest, src);
 
-	अगर (IS_ZERO(dest))
-		वापस dest;
+	if (IS_ZERO(dest))
+		return dest;
 
-	अगर (dest->sign) अणु
+	if (dest->sign) {
 		fp_set_nan(dest);
-		वापस dest;
-	पूर्ण
-	अगर (IS_INF(dest))
-		वापस dest;
+		return dest;
+	}
+	if (IS_INF(dest))
+		return dest;
 
 	/*
-	 *		 वर्ग_मूल(m) * 2^(p)	, अगर e = 2*p
-	 * वर्ग_मूल(m*2^e) =
-	 *		 वर्ग_मूल(2*m) * 2^(p)	, अगर e = 2*p + 1
+	 *		 sqrt(m) * 2^(p)	, if e = 2*p
+	 * sqrt(m*2^e) =
+	 *		 sqrt(2*m) * 2^(p)	, if e = 2*p + 1
 	 *
 	 * So we use the last bit of the exponent to decide whether to
 	 * use the m or 2*m.
 	 *
 	 * Since only the fractional part of the mantissa is stored and
-	 * the पूर्णांकeger part is assumed to be one, we place a 1 or 2 पूर्णांकo
-	 * the fixed poपूर्णांक representation.
+	 * the integer part is assumed to be one, we place a 1 or 2 into
+	 * the fixed point representation.
 	 */
 	exp = dest->exp;
 	dest->exp = 0x3FFF;
-	अगर (!(exp & 1))		/* lowest bit of exponent is set */
+	if (!(exp & 1))		/* lowest bit of exponent is set */
 		dest->exp++;
 	fp_copy_ext(&src2, dest);
 
 	/*
-	 * The taylor row around a क्रम वर्ग_मूल(x) is:
-	 *	वर्ग_मूल(x) = वर्ग_मूल(a) + 1/(2*वर्ग_मूल(a))*(x-a) + R
+	 * The taylor row around a for sqrt(x) is:
+	 *	sqrt(x) = sqrt(a) + 1/(2*sqrt(a))*(x-a) + R
 	 * With a=1 this gives:
-	 *	वर्ग_मूल(x) = 1 + 1/2*(x-1)
+	 *	sqrt(x) = 1 + 1/2*(x-1)
 	 *		= 1/2*(1+x)
 	 */
 	fp_fadd(dest, &fp_one);
@@ -77,7 +76,7 @@ fp_fवर्ग_मूल(काष्ठा fp_ext *dest, काष्ठा f
 	/*
 	 * We now apply the newton rule to the function
 	 *	f(x) := x^2 - r
-	 * which has a null poपूर्णांक on x = वर्ग_मूल(r).
+	 * which has a null point on x = sqrt(r).
 	 *
 	 * It gives:
 	 *	x' := x - f(x)/f'(x)
@@ -86,135 +85,135 @@ fp_fवर्ग_मूल(काष्ठा fp_ext *dest, काष्ठा f
 	 *          = (2*x - x + r/x)/2
 	 *	    = (x + r/x)/2
 	 */
-	क्रम (i = 0; i < 9; i++) अणु
-		fp_copy_ext(&पंचांगp, &src2);
+	for (i = 0; i < 9; i++) {
+		fp_copy_ext(&tmp, &src2);
 
-		fp_fभाग(&पंचांगp, dest);
-		fp_fadd(dest, &पंचांगp);
+		fp_fdiv(&tmp, dest);
+		fp_fadd(dest, &tmp);
 		dest->exp--;
-	पूर्ण
+	}
 
 	dest->exp += (exp - 0x3FFF) / 2;
 
-	वापस dest;
-पूर्ण
+	return dest;
+}
 
-काष्ठा fp_ext *
-fp_fetoxm1(काष्ठा fp_ext *dest, काष्ठा fp_ext *src)
-अणु
-	uprपूर्णांक("fetoxm1\n");
-
-	fp_monadic_check(dest, src);
-
-	वापस dest;
-पूर्ण
-
-काष्ठा fp_ext *
-fp_fetox(काष्ठा fp_ext *dest, काष्ठा fp_ext *src)
-अणु
-	uprपूर्णांक("fetox\n");
+struct fp_ext *
+fp_fetoxm1(struct fp_ext *dest, struct fp_ext *src)
+{
+	uprint("fetoxm1\n");
 
 	fp_monadic_check(dest, src);
 
-	वापस dest;
-पूर्ण
+	return dest;
+}
 
-काष्ठा fp_ext *
-fp_ftwotox(काष्ठा fp_ext *dest, काष्ठा fp_ext *src)
-अणु
-	uprपूर्णांक("ftwotox\n");
-
-	fp_monadic_check(dest, src);
-
-	वापस dest;
-पूर्ण
-
-काष्ठा fp_ext *
-fp_ftentox(काष्ठा fp_ext *dest, काष्ठा fp_ext *src)
-अणु
-	uprपूर्णांक("ftentox\n");
+struct fp_ext *
+fp_fetox(struct fp_ext *dest, struct fp_ext *src)
+{
+	uprint("fetox\n");
 
 	fp_monadic_check(dest, src);
 
-	वापस dest;
-पूर्ण
+	return dest;
+}
 
-काष्ठा fp_ext *
-fp_flogn(काष्ठा fp_ext *dest, काष्ठा fp_ext *src)
-अणु
-	uprपूर्णांक("flogn\n");
-
-	fp_monadic_check(dest, src);
-
-	वापस dest;
-पूर्ण
-
-काष्ठा fp_ext *
-fp_flognp1(काष्ठा fp_ext *dest, काष्ठा fp_ext *src)
-अणु
-	uprपूर्णांक("flognp1\n");
+struct fp_ext *
+fp_ftwotox(struct fp_ext *dest, struct fp_ext *src)
+{
+	uprint("ftwotox\n");
 
 	fp_monadic_check(dest, src);
 
-	वापस dest;
-पूर्ण
+	return dest;
+}
 
-काष्ठा fp_ext *
-fp_flog10(काष्ठा fp_ext *dest, काष्ठा fp_ext *src)
-अणु
-	uprपूर्णांक("flog10\n");
-
-	fp_monadic_check(dest, src);
-
-	वापस dest;
-पूर्ण
-
-काष्ठा fp_ext *
-fp_flog2(काष्ठा fp_ext *dest, काष्ठा fp_ext *src)
-अणु
-	uprपूर्णांक("flog2\n");
+struct fp_ext *
+fp_ftentox(struct fp_ext *dest, struct fp_ext *src)
+{
+	uprint("ftentox\n");
 
 	fp_monadic_check(dest, src);
 
-	वापस dest;
-पूर्ण
+	return dest;
+}
 
-काष्ठा fp_ext *
-fp_fgetexp(काष्ठा fp_ext *dest, काष्ठा fp_ext *src)
-अणु
-	dprपूर्णांक(PINSTR, "fgetexp\n");
+struct fp_ext *
+fp_flogn(struct fp_ext *dest, struct fp_ext *src)
+{
+	uprint("flogn\n");
 
 	fp_monadic_check(dest, src);
 
-	अगर (IS_INF(dest)) अणु
+	return dest;
+}
+
+struct fp_ext *
+fp_flognp1(struct fp_ext *dest, struct fp_ext *src)
+{
+	uprint("flognp1\n");
+
+	fp_monadic_check(dest, src);
+
+	return dest;
+}
+
+struct fp_ext *
+fp_flog10(struct fp_ext *dest, struct fp_ext *src)
+{
+	uprint("flog10\n");
+
+	fp_monadic_check(dest, src);
+
+	return dest;
+}
+
+struct fp_ext *
+fp_flog2(struct fp_ext *dest, struct fp_ext *src)
+{
+	uprint("flog2\n");
+
+	fp_monadic_check(dest, src);
+
+	return dest;
+}
+
+struct fp_ext *
+fp_fgetexp(struct fp_ext *dest, struct fp_ext *src)
+{
+	dprint(PINSTR, "fgetexp\n");
+
+	fp_monadic_check(dest, src);
+
+	if (IS_INF(dest)) {
 		fp_set_nan(dest);
-		वापस dest;
-	पूर्ण
-	अगर (IS_ZERO(dest))
-		वापस dest;
+		return dest;
+	}
+	if (IS_ZERO(dest))
+		return dest;
 
-	fp_conv_दीर्घ2ext(dest, (पूर्णांक)dest->exp - 0x3FFF);
+	fp_conv_long2ext(dest, (int)dest->exp - 0x3FFF);
 
 	fp_normalize_ext(dest);
 
-	वापस dest;
-पूर्ण
+	return dest;
+}
 
-काष्ठा fp_ext *
-fp_fgeपंचांगan(काष्ठा fp_ext *dest, काष्ठा fp_ext *src)
-अणु
-	dprपूर्णांक(PINSTR, "fgetman\n");
+struct fp_ext *
+fp_fgetman(struct fp_ext *dest, struct fp_ext *src)
+{
+	dprint(PINSTR, "fgetman\n");
 
 	fp_monadic_check(dest, src);
 
-	अगर (IS_ZERO(dest))
-		वापस dest;
+	if (IS_ZERO(dest))
+		return dest;
 
-	अगर (IS_INF(dest))
-		वापस dest;
+	if (IS_INF(dest))
+		return dest;
 
 	dest->exp = 0x3FFF;
 
-	वापस dest;
-पूर्ण
+	return dest;
+}
 

@@ -1,28 +1,27 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित ERR_H
-#घोषणा ERR_H
-#घोषणा MAX_ERRNO	4095
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef ERR_H
+#define ERR_H
+#define MAX_ERRNO	4095
 
-#घोषणा IS_ERR_VALUE(x) unlikely((x) >= (अचिन्हित दीर्घ)-MAX_ERRNO)
+#define IS_ERR_VALUE(x) unlikely((x) >= (unsigned long)-MAX_ERRNO)
 
-अटल अंतरभूत व्योम * __must_check ERR_PTR(दीर्घ error)
-अणु
-	वापस (व्योम *) error;
-पूर्ण
+static inline void * __must_check ERR_PTR(long error)
+{
+	return (void *) error;
+}
 
-अटल अंतरभूत दीर्घ __must_check PTR_ERR(स्थिर व्योम *ptr)
-अणु
-	वापस (दीर्घ) ptr;
-पूर्ण
+static inline long __must_check PTR_ERR(const void *ptr)
+{
+	return (long) ptr;
+}
 
-अटल अंतरभूत दीर्घ __must_check IS_ERR(स्थिर व्योम *ptr)
-अणु
-	वापस IS_ERR_VALUE((अचिन्हित दीर्घ)ptr);
-पूर्ण
+static inline long __must_check IS_ERR(const void *ptr)
+{
+	return IS_ERR_VALUE((unsigned long)ptr);
+}
 
-अटल अंतरभूत दीर्घ __must_check IS_ERR_OR_शून्य(स्थिर व्योम *ptr)
-अणु
-	वापस !ptr || IS_ERR_VALUE((अचिन्हित दीर्घ)ptr);
-पूर्ण
-#पूर्ण_अगर /* ERR_H */
+static inline long __must_check IS_ERR_OR_NULL(const void *ptr)
+{
+	return !ptr || IS_ERR_VALUE((unsigned long)ptr);
+}
+#endif /* ERR_H */

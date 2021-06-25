@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *  S390 version
  *    Copyright IBM Corp. 1999, 2000
@@ -14,405 +13,405 @@
  * 'Traps.c' handles hardware traps and faults after we have saved some
  * state in 'asm.s'.
  */
-#समावेश "asm/irqflags.h"
-#समावेश "asm/ptrace.h"
-#समावेश <linux/kprobes.h>
-#समावेश <linux/kdebug.h>
-#समावेश <linux/अक्रमomize_kstack.h>
-#समावेश <linux/extable.h>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/sched/debug.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/cpu.h>
-#समावेश <linux/entry-common.h>
-#समावेश <यंत्र/fpu/api.h>
-#समावेश <यंत्र/vसमय.स>
-#समावेश "entry.h"
+#include "asm/irqflags.h"
+#include "asm/ptrace.h"
+#include <linux/kprobes.h>
+#include <linux/kdebug.h>
+#include <linux/randomize_kstack.h>
+#include <linux/extable.h>
+#include <linux/ptrace.h>
+#include <linux/sched.h>
+#include <linux/sched/debug.h>
+#include <linux/mm.h>
+#include <linux/slab.h>
+#include <linux/uaccess.h>
+#include <linux/cpu.h>
+#include <linux/entry-common.h>
+#include <asm/fpu/api.h>
+#include <asm/vtime.h>
+#include "entry.h"
 
-अटल अंतरभूत व्योम __user *get_trap_ip(काष्ठा pt_regs *regs)
-अणु
-	अचिन्हित दीर्घ address;
+static inline void __user *get_trap_ip(struct pt_regs *regs)
+{
+	unsigned long address;
 
-	अगर (regs->पूर्णांक_code & 0x200)
-		address = *(अचिन्हित दीर्घ *)(current->thपढ़ो.trap_tdb + 24);
-	अन्यथा
+	if (regs->int_code & 0x200)
+		address = *(unsigned long *)(current->thread.trap_tdb + 24);
+	else
 		address = regs->psw.addr;
-	वापस (व्योम __user *) (address - (regs->पूर्णांक_code >> 16));
-पूर्ण
+	return (void __user *) (address - (regs->int_code >> 16));
+}
 
-पूर्णांक is_valid_bugaddr(अचिन्हित दीर्घ addr)
-अणु
-	वापस 1;
-पूर्ण
+int is_valid_bugaddr(unsigned long addr)
+{
+	return 1;
+}
 
-व्योम करो_report_trap(काष्ठा pt_regs *regs, पूर्णांक si_signo, पूर्णांक si_code, अक्षर *str)
-अणु
-	अगर (user_mode(regs)) अणु
-		क्रमce_sig_fault(si_signo, si_code, get_trap_ip(regs));
+void do_report_trap(struct pt_regs *regs, int si_signo, int si_code, char *str)
+{
+	if (user_mode(regs)) {
+		force_sig_fault(si_signo, si_code, get_trap_ip(regs));
 		report_user_fault(regs, si_signo, 0);
-        पूर्ण अन्यथा अणु
-                स्थिर काष्ठा exception_table_entry *fixup;
+        } else {
+                const struct exception_table_entry *fixup;
 		fixup = s390_search_extables(regs->psw.addr);
-		अगर (!fixup || !ex_handle(fixup, regs))
+		if (!fixup || !ex_handle(fixup, regs))
 			die(regs, str);
-        पूर्ण
-पूर्ण
+        }
+}
 
-अटल व्योम करो_trap(काष्ठा pt_regs *regs, पूर्णांक si_signo, पूर्णांक si_code, अक्षर *str)
-अणु
-	अगर (notअगरy_die(DIE_TRAP, str, regs, 0,
-		       regs->पूर्णांक_code, si_signo) == NOTIFY_STOP)
-		वापस;
-	करो_report_trap(regs, si_signo, si_code, str);
-पूर्ण
-NOKPROBE_SYMBOL(करो_trap);
+static void do_trap(struct pt_regs *regs, int si_signo, int si_code, char *str)
+{
+	if (notify_die(DIE_TRAP, str, regs, 0,
+		       regs->int_code, si_signo) == NOTIFY_STOP)
+		return;
+	do_report_trap(regs, si_signo, si_code, str);
+}
+NOKPROBE_SYMBOL(do_trap);
 
-व्योम करो_per_trap(काष्ठा pt_regs *regs)
-अणु
-	अगर (notअगरy_die(DIE_SSTEP, "sstep", regs, 0, 0, SIGTRAP) == NOTIFY_STOP)
-		वापस;
-	अगर (!current->ptrace)
-		वापस;
-	क्रमce_sig_fault(SIGTRAP, TRAP_HWBKPT,
-		(व्योम __क्रमce __user *) current->thपढ़ो.per_event.address);
-पूर्ण
-NOKPROBE_SYMBOL(करो_per_trap);
+void do_per_trap(struct pt_regs *regs)
+{
+	if (notify_die(DIE_SSTEP, "sstep", regs, 0, 0, SIGTRAP) == NOTIFY_STOP)
+		return;
+	if (!current->ptrace)
+		return;
+	force_sig_fault(SIGTRAP, TRAP_HWBKPT,
+		(void __force __user *) current->thread.per_event.address);
+}
+NOKPROBE_SYMBOL(do_per_trap);
 
-अटल व्योम शेष_trap_handler(काष्ठा pt_regs *regs)
-अणु
-	अगर (user_mode(regs)) अणु
-		report_user_fault(regs, संक_अंश, 0);
-		करो_निकास(संक_अंश);
-	पूर्ण अन्यथा
+static void default_trap_handler(struct pt_regs *regs)
+{
+	if (user_mode(regs)) {
+		report_user_fault(regs, SIGSEGV, 0);
+		do_exit(SIGSEGV);
+	} else
 		die(regs, "Unknown program exception");
-पूर्ण
+}
 
-#घोषणा DO_ERROR_INFO(name, signr, sicode, str) \
-अटल व्योम name(काष्ठा pt_regs *regs)		\
-अणु						\
-	करो_trap(regs, signr, sicode, str);	\
-पूर्ण
+#define DO_ERROR_INFO(name, signr, sicode, str) \
+static void name(struct pt_regs *regs)		\
+{						\
+	do_trap(regs, signr, sicode, str);	\
+}
 
-DO_ERROR_INFO(addressing_exception, संक_अवैध, ILL_ILLADR,
+DO_ERROR_INFO(addressing_exception, SIGILL, ILL_ILLADR,
 	      "addressing exception")
-DO_ERROR_INFO(execute_exception, संक_अवैध, ILL_ILLOPN,
+DO_ERROR_INFO(execute_exception, SIGILL, ILL_ILLOPN,
 	      "execute exception")
-DO_ERROR_INFO(भागide_exception, संक_भ_त्रुटि, FPE_INTDIV,
+DO_ERROR_INFO(divide_exception, SIGFPE, FPE_INTDIV,
 	      "fixpoint divide exception")
-DO_ERROR_INFO(overflow_exception, संक_भ_त्रुटि, FPE_INTOVF,
+DO_ERROR_INFO(overflow_exception, SIGFPE, FPE_INTOVF,
 	      "fixpoint overflow exception")
-DO_ERROR_INFO(hfp_overflow_exception, संक_भ_त्रुटि, FPE_FLTOVF,
+DO_ERROR_INFO(hfp_overflow_exception, SIGFPE, FPE_FLTOVF,
 	      "HFP overflow exception")
-DO_ERROR_INFO(hfp_underflow_exception, संक_भ_त्रुटि, FPE_FLTUND,
+DO_ERROR_INFO(hfp_underflow_exception, SIGFPE, FPE_FLTUND,
 	      "HFP underflow exception")
-DO_ERROR_INFO(hfp_signअगरicance_exception, संक_भ_त्रुटि, FPE_FLTRES,
+DO_ERROR_INFO(hfp_significance_exception, SIGFPE, FPE_FLTRES,
 	      "HFP significance exception")
-DO_ERROR_INFO(hfp_भागide_exception, संक_भ_त्रुटि, FPE_FLTDIV,
+DO_ERROR_INFO(hfp_divide_exception, SIGFPE, FPE_FLTDIV,
 	      "HFP divide exception")
-DO_ERROR_INFO(hfp_वर्ग_मूल_exception, संक_भ_त्रुटि, FPE_FLTINV,
+DO_ERROR_INFO(hfp_sqrt_exception, SIGFPE, FPE_FLTINV,
 	      "HFP square root exception")
-DO_ERROR_INFO(opeअक्रम_exception, संक_अवैध, ILL_ILLOPN,
+DO_ERROR_INFO(operand_exception, SIGILL, ILL_ILLOPN,
 	      "operand exception")
-DO_ERROR_INFO(privileged_op, संक_अवैध, ILL_PRVOPC,
+DO_ERROR_INFO(privileged_op, SIGILL, ILL_PRVOPC,
 	      "privileged operation")
-DO_ERROR_INFO(special_op_exception, संक_अवैध, ILL_ILLOPN,
+DO_ERROR_INFO(special_op_exception, SIGILL, ILL_ILLOPN,
 	      "special operation exception")
-DO_ERROR_INFO(transaction_exception, संक_अवैध, ILL_ILLOPN,
+DO_ERROR_INFO(transaction_exception, SIGILL, ILL_ILLOPN,
 	      "transaction constraint exception")
 
-अटल अंतरभूत व्योम करो_fp_trap(काष्ठा pt_regs *regs, __u32 fpc)
-अणु
-	पूर्णांक si_code = 0;
+static inline void do_fp_trap(struct pt_regs *regs, __u32 fpc)
+{
+	int si_code = 0;
 	/* FPC[2] is Data Exception Code */
-	अगर ((fpc & 0x00000300) == 0) अणु
-		/* bits 6 and 7 of DXC are 0 अगरf IEEE exception */
-		अगर (fpc & 0x8000) /* invalid fp operation */
+	if ((fpc & 0x00000300) == 0) {
+		/* bits 6 and 7 of DXC are 0 iff IEEE exception */
+		if (fpc & 0x8000) /* invalid fp operation */
 			si_code = FPE_FLTINV;
-		अन्यथा अगर (fpc & 0x4000) /* भाग by 0 */
+		else if (fpc & 0x4000) /* div by 0 */
 			si_code = FPE_FLTDIV;
-		अन्यथा अगर (fpc & 0x2000) /* overflow */
+		else if (fpc & 0x2000) /* overflow */
 			si_code = FPE_FLTOVF;
-		अन्यथा अगर (fpc & 0x1000) /* underflow */
+		else if (fpc & 0x1000) /* underflow */
 			si_code = FPE_FLTUND;
-		अन्यथा अगर (fpc & 0x0800) /* inexact */
+		else if (fpc & 0x0800) /* inexact */
 			si_code = FPE_FLTRES;
-	पूर्ण
-	करो_trap(regs, संक_भ_त्रुटि, si_code, "floating point exception");
-पूर्ण
+	}
+	do_trap(regs, SIGFPE, si_code, "floating point exception");
+}
 
-अटल व्योम translation_exception(काष्ठा pt_regs *regs)
-अणु
+static void translation_exception(struct pt_regs *regs)
+{
 	/* May never happen. */
 	panic("Translation exception");
-पूर्ण
+}
 
-अटल व्योम illegal_op(काष्ठा pt_regs *regs)
-अणु
+static void illegal_op(struct pt_regs *regs)
+{
         __u8 opcode[6];
 	__u16 __user *location;
-	पूर्णांक is_uprobe_insn = 0;
-	पूर्णांक संकेत = 0;
+	int is_uprobe_insn = 0;
+	int signal = 0;
 
 	location = get_trap_ip(regs);
 
-	अगर (user_mode(regs)) अणु
-		अगर (get_user(*((__u16 *) opcode), (__u16 __user *) location))
-			वापस;
-		अगर (*((__u16 *) opcode) == S390_BREAKPOINT_U16) अणु
-			अगर (current->ptrace)
-				क्रमce_sig_fault(SIGTRAP, TRAP_BRKPT, location);
-			अन्यथा
-				संकेत = संक_अवैध;
-#अगर_घोषित CONFIG_UPROBES
-		पूर्ण अन्यथा अगर (*((__u16 *) opcode) == UPROBE_SWBP_INSN) अणु
+	if (user_mode(regs)) {
+		if (get_user(*((__u16 *) opcode), (__u16 __user *) location))
+			return;
+		if (*((__u16 *) opcode) == S390_BREAKPOINT_U16) {
+			if (current->ptrace)
+				force_sig_fault(SIGTRAP, TRAP_BRKPT, location);
+			else
+				signal = SIGILL;
+#ifdef CONFIG_UPROBES
+		} else if (*((__u16 *) opcode) == UPROBE_SWBP_INSN) {
 			is_uprobe_insn = 1;
-#पूर्ण_अगर
-		पूर्ण अन्यथा
-			संकेत = संक_अवैध;
-	पूर्ण
+#endif
+		} else
+			signal = SIGILL;
+	}
 	/*
 	 * We got either an illegal op in kernel mode, or user space trapped
-	 * on a uprobes illegal inकाष्ठाion. See अगर kprobes or uprobes picks
-	 * it up. If not, संक_अवैध.
+	 * on a uprobes illegal instruction. See if kprobes or uprobes picks
+	 * it up. If not, SIGILL.
 	 */
-	अगर (is_uprobe_insn || !user_mode(regs)) अणु
-		अगर (notअगरy_die(DIE_BPT, "bpt", regs, 0,
+	if (is_uprobe_insn || !user_mode(regs)) {
+		if (notify_die(DIE_BPT, "bpt", regs, 0,
 			       3, SIGTRAP) != NOTIFY_STOP)
-			संकेत = संक_अवैध;
-	पूर्ण
-	अगर (संकेत)
-		करो_trap(regs, संकेत, ILL_ILLOPC, "illegal operation");
-पूर्ण
+			signal = SIGILL;
+	}
+	if (signal)
+		do_trap(regs, signal, ILL_ILLOPC, "illegal operation");
+}
 NOKPROBE_SYMBOL(illegal_op);
 
-DO_ERROR_INFO(specअगरication_exception, संक_अवैध, ILL_ILLOPN,
+DO_ERROR_INFO(specification_exception, SIGILL, ILL_ILLOPN,
 	      "specification exception");
 
-अटल व्योम vector_exception(काष्ठा pt_regs *regs)
-अणु
-	पूर्णांक si_code, vic;
+static void vector_exception(struct pt_regs *regs)
+{
+	int si_code, vic;
 
-	अगर (!MACHINE_HAS_VX) अणु
-		करो_trap(regs, संक_अवैध, ILL_ILLOPN, "illegal operation");
-		वापस;
-	पूर्ण
+	if (!MACHINE_HAS_VX) {
+		do_trap(regs, SIGILL, ILL_ILLOPN, "illegal operation");
+		return;
+	}
 
-	/* get vector पूर्णांकerrupt code from fpc */
+	/* get vector interrupt code from fpc */
 	save_fpu_regs();
-	vic = (current->thपढ़ो.fpu.fpc & 0xf00) >> 8;
-	चयन (vic) अणु
-	हाल 1: /* invalid vector operation */
+	vic = (current->thread.fpu.fpc & 0xf00) >> 8;
+	switch (vic) {
+	case 1: /* invalid vector operation */
 		si_code = FPE_FLTINV;
-		अवरोध;
-	हाल 2: /* भागision by zero */
+		break;
+	case 2: /* division by zero */
 		si_code = FPE_FLTDIV;
-		अवरोध;
-	हाल 3: /* overflow */
+		break;
+	case 3: /* overflow */
 		si_code = FPE_FLTOVF;
-		अवरोध;
-	हाल 4: /* underflow */
+		break;
+	case 4: /* underflow */
 		si_code = FPE_FLTUND;
-		अवरोध;
-	हाल 5:	/* inexact */
+		break;
+	case 5:	/* inexact */
 		si_code = FPE_FLTRES;
-		अवरोध;
-	शेष: /* unknown cause */
+		break;
+	default: /* unknown cause */
 		si_code = 0;
-	पूर्ण
-	करो_trap(regs, संक_भ_त्रुटि, si_code, "vector exception");
-पूर्ण
+	}
+	do_trap(regs, SIGFPE, si_code, "vector exception");
+}
 
-अटल व्योम data_exception(काष्ठा pt_regs *regs)
-अणु
+static void data_exception(struct pt_regs *regs)
+{
 	save_fpu_regs();
-	अगर (current->thपढ़ो.fpu.fpc & FPC_DXC_MASK)
-		करो_fp_trap(regs, current->thपढ़ो.fpu.fpc);
-	अन्यथा
-		करो_trap(regs, संक_अवैध, ILL_ILLOPN, "data exception");
-पूर्ण
+	if (current->thread.fpu.fpc & FPC_DXC_MASK)
+		do_fp_trap(regs, current->thread.fpu.fpc);
+	else
+		do_trap(regs, SIGILL, ILL_ILLOPN, "data exception");
+}
 
-अटल व्योम space_चयन_exception(काष्ठा pt_regs *regs)
-अणु
+static void space_switch_exception(struct pt_regs *regs)
+{
 	/* Set user psw back to home space mode. */
-	अगर (user_mode(regs))
+	if (user_mode(regs))
 		regs->psw.mask |= PSW_ASC_HOME;
-	/* Send संक_अवैध. */
-	करो_trap(regs, संक_अवैध, ILL_PRVOPC, "space switch event");
-पूर्ण
+	/* Send SIGILL. */
+	do_trap(regs, SIGILL, ILL_PRVOPC, "space switch event");
+}
 
-अटल व्योम monitor_event_exception(काष्ठा pt_regs *regs)
-अणु
-	स्थिर काष्ठा exception_table_entry *fixup;
+static void monitor_event_exception(struct pt_regs *regs)
+{
+	const struct exception_table_entry *fixup;
 
-	अगर (user_mode(regs))
-		वापस;
+	if (user_mode(regs))
+		return;
 
-	चयन (report_bug(regs->psw.addr - (regs->पूर्णांक_code >> 16), regs)) अणु
-	हाल BUG_TRAP_TYPE_NONE:
+	switch (report_bug(regs->psw.addr - (regs->int_code >> 16), regs)) {
+	case BUG_TRAP_TYPE_NONE:
 		fixup = s390_search_extables(regs->psw.addr);
-		अगर (fixup)
+		if (fixup)
 			ex_handle(fixup, regs);
-		अवरोध;
-	हाल BUG_TRAP_TYPE_WARN:
-		अवरोध;
-	हाल BUG_TRAP_TYPE_BUG:
+		break;
+	case BUG_TRAP_TYPE_WARN:
+		break;
+	case BUG_TRAP_TYPE_BUG:
 		die(regs, "monitor event");
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-व्योम kernel_stack_overflow(काष्ठा pt_regs *regs)
-अणु
+void kernel_stack_overflow(struct pt_regs *regs)
+{
 	bust_spinlocks(1);
-	prपूर्णांकk("Kernel stack overflow.\n");
+	printk("Kernel stack overflow.\n");
 	show_regs(regs);
 	bust_spinlocks(0);
 	panic("Corrupt kernel stack, can't continue.");
-पूर्ण
+}
 NOKPROBE_SYMBOL(kernel_stack_overflow);
 
-अटल व्योम __init test_monitor_call(व्योम)
-अणु
-	पूर्णांक val = 1;
+static void __init test_monitor_call(void)
+{
+	int val = 1;
 
-	यंत्र अस्थिर(
+	asm volatile(
 		"	mc	0,0\n"
 		"0:	xgr	%0,%0\n"
 		"1:\n"
 		EX_TABLE(0b,1b)
 		: "+d" (val));
-	अगर (!val)
+	if (!val)
 		panic("Monitor call doesn't work!\n");
-पूर्ण
+}
 
-व्योम __init trap_init(व्योम)
-अणु
+void __init trap_init(void)
+{
 	sort_extable(__start_dma_ex_table, __stop_dma_ex_table);
 	local_mcck_enable();
 	test_monitor_call();
-पूर्ण
+}
 
-अटल व्योम (*pgm_check_table[128])(काष्ठा pt_regs *regs);
+static void (*pgm_check_table[128])(struct pt_regs *regs);
 
-व्योम noinstr __करो_pgm_check(काष्ठा pt_regs *regs)
-अणु
-	अचिन्हित दीर्घ last_अवरोध = S390_lowcore.अवरोधing_event_addr;
-	अचिन्हित पूर्णांक trapnr, syscall_redirect = 0;
+void noinstr __do_pgm_check(struct pt_regs *regs)
+{
+	unsigned long last_break = S390_lowcore.breaking_event_addr;
+	unsigned int trapnr, syscall_redirect = 0;
 	irqentry_state_t state;
 
-	add_अक्रमom_kstack_offset();
-	regs->पूर्णांक_code = *(u32 *)&S390_lowcore.pgm_ilc;
-	regs->पूर्णांक_parm_दीर्घ = S390_lowcore.trans_exc_code;
+	add_random_kstack_offset();
+	regs->int_code = *(u32 *)&S390_lowcore.pgm_ilc;
+	regs->int_parm_long = S390_lowcore.trans_exc_code;
 
 	state = irqentry_enter(regs);
 
-	अगर (user_mode(regs)) अणु
-		update_समयr_sys();
-		अगर (last_अवरोध < 4096)
-			last_अवरोध = 1;
-		current->thपढ़ो.last_अवरोध = last_अवरोध;
-		regs->args[0] = last_अवरोध;
-	पूर्ण
+	if (user_mode(regs)) {
+		update_timer_sys();
+		if (last_break < 4096)
+			last_break = 1;
+		current->thread.last_break = last_break;
+		regs->args[0] = last_break;
+	}
 
-	अगर (S390_lowcore.pgm_code & 0x0200) अणु
-		/* transaction पात */
-		स_नकल(&current->thपढ़ो.trap_tdb, &S390_lowcore.pgm_tdb, 256);
-	पूर्ण
+	if (S390_lowcore.pgm_code & 0x0200) {
+		/* transaction abort */
+		memcpy(&current->thread.trap_tdb, &S390_lowcore.pgm_tdb, 256);
+	}
 
-	अगर (S390_lowcore.pgm_code & PGM_INT_CODE_PER) अणु
-		अगर (user_mode(regs)) अणु
-			काष्ठा per_event *ev = &current->thपढ़ो.per_event;
+	if (S390_lowcore.pgm_code & PGM_INT_CODE_PER) {
+		if (user_mode(regs)) {
+			struct per_event *ev = &current->thread.per_event;
 
-			set_thपढ़ो_flag(TIF_PER_TRAP);
+			set_thread_flag(TIF_PER_TRAP);
 			ev->address = S390_lowcore.per_address;
 			ev->cause = *(u16 *)&S390_lowcore.per_code;
 			ev->paid = S390_lowcore.per_access_id;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* PER event in kernel is kprobes */
 			__arch_local_irq_ssm(regs->psw.mask & ~PSW_MASK_PER);
-			करो_per_trap(regs);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			do_per_trap(regs);
+			goto out;
+		}
+	}
 
-	अगर (!irqs_disabled_flags(regs->psw.mask))
+	if (!irqs_disabled_flags(regs->psw.mask))
 		trace_hardirqs_on();
 	__arch_local_irq_ssm(regs->psw.mask & ~PSW_MASK_PER);
 
-	trapnr = regs->पूर्णांक_code & PGM_INT_CODE_MASK;
-	अगर (trapnr)
+	trapnr = regs->int_code & PGM_INT_CODE_MASK;
+	if (trapnr)
 		pgm_check_table[trapnr](regs);
 	syscall_redirect = user_mode(regs) && test_pt_regs_flag(regs, PIF_SYSCALL);
 out:
 	local_irq_disable();
-	irqentry_निकास(regs, state);
+	irqentry_exit(regs, state);
 
-	अगर (syscall_redirect) अणु
+	if (syscall_redirect) {
 		enter_from_user_mode(regs);
 		local_irq_enable();
 		regs->orig_gpr2 = regs->gprs[2];
-		करो_syscall(regs);
-		निकास_to_user_mode();
-	पूर्ण
-पूर्ण
+		do_syscall(regs);
+		exit_to_user_mode();
+	}
+}
 
 /*
  * The program check table contains exactly 128 (0x00-0x7f) entries. Each
  * line defines the function to be called corresponding to the program check
- * पूर्णांकerruption code.
+ * interruption code.
  */
-अटल व्योम (*pgm_check_table[128])(काष्ठा pt_regs *regs) = अणु
-	[0x00]		= शेष_trap_handler,
+static void (*pgm_check_table[128])(struct pt_regs *regs) = {
+	[0x00]		= default_trap_handler,
 	[0x01]		= illegal_op,
 	[0x02]		= privileged_op,
 	[0x03]		= execute_exception,
-	[0x04]		= करो_protection_exception,
+	[0x04]		= do_protection_exception,
 	[0x05]		= addressing_exception,
-	[0x06]		= specअगरication_exception,
+	[0x06]		= specification_exception,
 	[0x07]		= data_exception,
 	[0x08]		= overflow_exception,
-	[0x09]		= भागide_exception,
+	[0x09]		= divide_exception,
 	[0x0a]		= overflow_exception,
-	[0x0b]		= भागide_exception,
+	[0x0b]		= divide_exception,
 	[0x0c]		= hfp_overflow_exception,
 	[0x0d]		= hfp_underflow_exception,
-	[0x0e]		= hfp_signअगरicance_exception,
-	[0x0f]		= hfp_भागide_exception,
-	[0x10]		= करो_dat_exception,
-	[0x11]		= करो_dat_exception,
+	[0x0e]		= hfp_significance_exception,
+	[0x0f]		= hfp_divide_exception,
+	[0x10]		= do_dat_exception,
+	[0x11]		= do_dat_exception,
 	[0x12]		= translation_exception,
 	[0x13]		= special_op_exception,
-	[0x14]		= शेष_trap_handler,
-	[0x15]		= opeअक्रम_exception,
-	[0x16]		= शेष_trap_handler,
-	[0x17]		= शेष_trap_handler,
+	[0x14]		= default_trap_handler,
+	[0x15]		= operand_exception,
+	[0x16]		= default_trap_handler,
+	[0x17]		= default_trap_handler,
 	[0x18]		= transaction_exception,
-	[0x19]		= शेष_trap_handler,
-	[0x1a]		= शेष_trap_handler,
+	[0x19]		= default_trap_handler,
+	[0x1a]		= default_trap_handler,
 	[0x1b]		= vector_exception,
-	[0x1c]		= space_चयन_exception,
-	[0x1d]		= hfp_वर्ग_मूल_exception,
-	[0x1e ... 0x37] = शेष_trap_handler,
-	[0x38]		= करो_dat_exception,
-	[0x39]		= करो_dat_exception,
-	[0x3a]		= करो_dat_exception,
-	[0x3b]		= करो_dat_exception,
-	[0x3c]		= शेष_trap_handler,
-	[0x3d]		= करो_secure_storage_access,
-	[0x3e]		= करो_non_secure_storage_access,
-	[0x3f]		= करो_secure_storage_violation,
+	[0x1c]		= space_switch_exception,
+	[0x1d]		= hfp_sqrt_exception,
+	[0x1e ... 0x37] = default_trap_handler,
+	[0x38]		= do_dat_exception,
+	[0x39]		= do_dat_exception,
+	[0x3a]		= do_dat_exception,
+	[0x3b]		= do_dat_exception,
+	[0x3c]		= default_trap_handler,
+	[0x3d]		= do_secure_storage_access,
+	[0x3e]		= do_non_secure_storage_access,
+	[0x3f]		= do_secure_storage_violation,
 	[0x40]		= monitor_event_exception,
-	[0x41 ... 0x7f] = शेष_trap_handler,
-पूर्ण;
+	[0x41 ... 0x7f] = default_trap_handler,
+};
 
-#घोषणा COND_TRAP(x) यंत्र(			\
-	".weak " __stringअगरy(x) "\n\t"		\
-	".set  " __stringअगरy(x) ","		\
-	__stringअगरy(शेष_trap_handler))
+#define COND_TRAP(x) asm(			\
+	".weak " __stringify(x) "\n\t"		\
+	".set  " __stringify(x) ","		\
+	__stringify(default_trap_handler))
 
-COND_TRAP(करो_secure_storage_access);
-COND_TRAP(करो_non_secure_storage_access);
-COND_TRAP(करो_secure_storage_violation);
+COND_TRAP(do_secure_storage_access);
+COND_TRAP(do_non_secure_storage_access);
+COND_TRAP(do_secure_storage_violation);

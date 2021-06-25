@@ -1,12 +1,11 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _SELINUX_POLICYCAP_NAMES_H_
-#घोषणा _SELINUX_POLICYCAP_NAMES_H_
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _SELINUX_POLICYCAP_NAMES_H_
+#define _SELINUX_POLICYCAP_NAMES_H_
 
-#समावेश "policycap.h"
+#include "policycap.h"
 
 /* Policy capability names */
-स्थिर अक्षर *selinux_policycap_names[__POLICYDB_CAPABILITY_MAX] = अणु
+const char *selinux_policycap_names[__POLICYDB_CAPABILITY_MAX] = {
 	"network_peer_controls",
 	"open_perms",
 	"extended_socket_class",
@@ -14,6 +13,6 @@
 	"cgroup_seclabel",
 	"nnp_nosuid_transition",
 	"genfs_seclabel_symlinks"
-पूर्ण;
+};
 
-#पूर्ण_अगर /* _SELINUX_POLICYCAP_NAMES_H_ */
+#endif /* _SELINUX_POLICYCAP_NAMES_H_ */

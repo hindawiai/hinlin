@@ -1,59 +1,58 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2014 Linaro Ltd
  *
  * Author: Ulf Hansson <ulf.hansson@linaro.org>
  */
-#अगर_अघोषित _MMC_CORE_PWRSEQ_H
-#घोषणा _MMC_CORE_PWRSEQ_H
+#ifndef _MMC_CORE_PWRSEQ_H
+#define _MMC_CORE_PWRSEQ_H
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-काष्ठा mmc_host;
-काष्ठा device;
-काष्ठा module;
+struct mmc_host;
+struct device;
+struct module;
 
-काष्ठा mmc_pwrseq_ops अणु
-	व्योम (*pre_घातer_on)(काष्ठा mmc_host *host);
-	व्योम (*post_घातer_on)(काष्ठा mmc_host *host);
-	व्योम (*घातer_off)(काष्ठा mmc_host *host);
-	व्योम (*reset)(काष्ठा mmc_host *host);
-पूर्ण;
+struct mmc_pwrseq_ops {
+	void (*pre_power_on)(struct mmc_host *host);
+	void (*post_power_on)(struct mmc_host *host);
+	void (*power_off)(struct mmc_host *host);
+	void (*reset)(struct mmc_host *host);
+};
 
-काष्ठा mmc_pwrseq अणु
-	स्थिर काष्ठा mmc_pwrseq_ops *ops;
-	काष्ठा device *dev;
-	काष्ठा list_head pwrseq_node;
-	काष्ठा module *owner;
-पूर्ण;
+struct mmc_pwrseq {
+	const struct mmc_pwrseq_ops *ops;
+	struct device *dev;
+	struct list_head pwrseq_node;
+	struct module *owner;
+};
 
-#अगर_घोषित CONFIG_OF
+#ifdef CONFIG_OF
 
-पूर्णांक mmc_pwrseq_रेजिस्टर(काष्ठा mmc_pwrseq *pwrseq);
-व्योम mmc_pwrseq_unरेजिस्टर(काष्ठा mmc_pwrseq *pwrseq);
+int mmc_pwrseq_register(struct mmc_pwrseq *pwrseq);
+void mmc_pwrseq_unregister(struct mmc_pwrseq *pwrseq);
 
-पूर्णांक mmc_pwrseq_alloc(काष्ठा mmc_host *host);
-व्योम mmc_pwrseq_pre_घातer_on(काष्ठा mmc_host *host);
-व्योम mmc_pwrseq_post_घातer_on(काष्ठा mmc_host *host);
-व्योम mmc_pwrseq_घातer_off(काष्ठा mmc_host *host);
-व्योम mmc_pwrseq_reset(काष्ठा mmc_host *host);
-व्योम mmc_pwrseq_मुक्त(काष्ठा mmc_host *host);
+int mmc_pwrseq_alloc(struct mmc_host *host);
+void mmc_pwrseq_pre_power_on(struct mmc_host *host);
+void mmc_pwrseq_post_power_on(struct mmc_host *host);
+void mmc_pwrseq_power_off(struct mmc_host *host);
+void mmc_pwrseq_reset(struct mmc_host *host);
+void mmc_pwrseq_free(struct mmc_host *host);
 
-#अन्यथा
+#else
 
-अटल अंतरभूत पूर्णांक mmc_pwrseq_रेजिस्टर(काष्ठा mmc_pwrseq *pwrseq)
-अणु
-	वापस -ENOSYS;
-पूर्ण
-अटल अंतरभूत व्योम mmc_pwrseq_unरेजिस्टर(काष्ठा mmc_pwrseq *pwrseq) अणुपूर्ण
-अटल अंतरभूत पूर्णांक mmc_pwrseq_alloc(काष्ठा mmc_host *host) अणु वापस 0; पूर्ण
-अटल अंतरभूत व्योम mmc_pwrseq_pre_घातer_on(काष्ठा mmc_host *host) अणुपूर्ण
-अटल अंतरभूत व्योम mmc_pwrseq_post_घातer_on(काष्ठा mmc_host *host) अणुपूर्ण
-अटल अंतरभूत व्योम mmc_pwrseq_घातer_off(काष्ठा mmc_host *host) अणुपूर्ण
-अटल अंतरभूत व्योम mmc_pwrseq_reset(काष्ठा mmc_host *host) अणुपूर्ण
-अटल अंतरभूत व्योम mmc_pwrseq_मुक्त(काष्ठा mmc_host *host) अणुपूर्ण
+static inline int mmc_pwrseq_register(struct mmc_pwrseq *pwrseq)
+{
+	return -ENOSYS;
+}
+static inline void mmc_pwrseq_unregister(struct mmc_pwrseq *pwrseq) {}
+static inline int mmc_pwrseq_alloc(struct mmc_host *host) { return 0; }
+static inline void mmc_pwrseq_pre_power_on(struct mmc_host *host) {}
+static inline void mmc_pwrseq_post_power_on(struct mmc_host *host) {}
+static inline void mmc_pwrseq_power_off(struct mmc_host *host) {}
+static inline void mmc_pwrseq_reset(struct mmc_host *host) {}
+static inline void mmc_pwrseq_free(struct mmc_host *host) {}
 
-#पूर्ण_अगर
+#endif
 
-#पूर्ण_अगर
+#endif

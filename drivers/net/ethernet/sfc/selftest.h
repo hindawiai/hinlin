@@ -1,53 +1,52 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /****************************************************************************
- * Driver क्रम Solarflare network controllers and boards
+ * Driver for Solarflare network controllers and boards
  * Copyright 2005-2006 Fen Systems Ltd.
  * Copyright 2006-2012 Solarflare Communications Inc.
  */
 
-#अगर_अघोषित EFX_SELFTEST_H
-#घोषणा EFX_SELFTEST_H
+#ifndef EFX_SELFTEST_H
+#define EFX_SELFTEST_H
 
-#समावेश "net_driver.h"
+#include "net_driver.h"
 
 /*
  * Self tests
  */
 
-काष्ठा efx_loopback_self_tests अणु
-	पूर्णांक tx_sent[EFX_MAX_TXQ_PER_CHANNEL];
-	पूर्णांक tx_करोne[EFX_MAX_TXQ_PER_CHANNEL];
-	पूर्णांक rx_good;
-	पूर्णांक rx_bad;
-पूर्ण;
+struct efx_loopback_self_tests {
+	int tx_sent[EFX_MAX_TXQ_PER_CHANNEL];
+	int tx_done[EFX_MAX_TXQ_PER_CHANNEL];
+	int rx_good;
+	int rx_bad;
+};
 
-#घोषणा EFX_MAX_PHY_TESTS 20
+#define EFX_MAX_PHY_TESTS 20
 
 /* Efx self test results
  * For fields which are not counters, 1 indicates success and -1
  * indicates failure; 0 indicates test could not be run.
  */
-काष्ठा efx_self_tests अणु
+struct efx_self_tests {
 	/* online tests */
-	पूर्णांक phy_alive;
-	पूर्णांक nvram;
-	पूर्णांक पूर्णांकerrupt;
-	पूर्णांक eventq_dma[EFX_MAX_CHANNELS];
-	पूर्णांक eventq_पूर्णांक[EFX_MAX_CHANNELS];
+	int phy_alive;
+	int nvram;
+	int interrupt;
+	int eventq_dma[EFX_MAX_CHANNELS];
+	int eventq_int[EFX_MAX_CHANNELS];
 	/* offline tests */
-	पूर्णांक memory;
-	पूर्णांक रेजिस्टरs;
-	पूर्णांक phy_ext[EFX_MAX_PHY_TESTS];
-	काष्ठा efx_loopback_self_tests loopback[LOOPBACK_TEST_MAX + 1];
-पूर्ण;
+	int memory;
+	int registers;
+	int phy_ext[EFX_MAX_PHY_TESTS];
+	struct efx_loopback_self_tests loopback[LOOPBACK_TEST_MAX + 1];
+};
 
-व्योम efx_loopback_rx_packet(काष्ठा efx_nic *efx, स्थिर अक्षर *buf_ptr,
-			    पूर्णांक pkt_len);
-पूर्णांक efx_selftest(काष्ठा efx_nic *efx, काष्ठा efx_self_tests *tests,
-		 अचिन्हित flags);
-व्योम efx_selftest_async_init(काष्ठा efx_nic *efx);
-व्योम efx_selftest_async_start(काष्ठा efx_nic *efx);
-व्योम efx_selftest_async_cancel(काष्ठा efx_nic *efx);
+void efx_loopback_rx_packet(struct efx_nic *efx, const char *buf_ptr,
+			    int pkt_len);
+int efx_selftest(struct efx_nic *efx, struct efx_self_tests *tests,
+		 unsigned flags);
+void efx_selftest_async_init(struct efx_nic *efx);
+void efx_selftest_async_start(struct efx_nic *efx);
+void efx_selftest_async_cancel(struct efx_nic *efx);
 
-#पूर्ण_अगर /* EFX_SELFTEST_H */
+#endif /* EFX_SELFTEST_H */

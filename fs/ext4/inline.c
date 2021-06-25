@@ -1,1998 +1,1997 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: LGPL-2.1
+// SPDX-License-Identifier: LGPL-2.1
 /*
  * Copyright (c) 2012 Taobao.
  * Written by Tao Ma <boyu.mt@taobao.com>
  */
 
-#समावेश <linux/iomap.h>
-#समावेश <linux/fiemap.h>
-#समावेश <linux/iversion.h>
+#include <linux/iomap.h>
+#include <linux/fiemap.h>
+#include <linux/iversion.h>
 
-#समावेश "ext4_jbd2.h"
-#समावेश "ext4.h"
-#समावेश "xattr.h"
-#समावेश "truncate.h"
+#include "ext4_jbd2.h"
+#include "ext4.h"
+#include "xattr.h"
+#include "truncate.h"
 
-#घोषणा EXT4_XATTR_SYSTEM_DATA	"data"
-#घोषणा EXT4_MIN_INLINE_DATA_SIZE	((माप(__le32) * EXT4_N_BLOCKS))
-#घोषणा EXT4_INLINE_DOTDOT_OFFSET	2
-#घोषणा EXT4_INLINE_DOTDOT_SIZE		4
+#define EXT4_XATTR_SYSTEM_DATA	"data"
+#define EXT4_MIN_INLINE_DATA_SIZE	((sizeof(__le32) * EXT4_N_BLOCKS))
+#define EXT4_INLINE_DOTDOT_OFFSET	2
+#define EXT4_INLINE_DOTDOT_SIZE		4
 
-अटल पूर्णांक ext4_get_अंतरभूत_size(काष्ठा inode *inode)
-अणु
-	अगर (EXT4_I(inode)->i_अंतरभूत_off)
-		वापस EXT4_I(inode)->i_अंतरभूत_size;
+static int ext4_get_inline_size(struct inode *inode)
+{
+	if (EXT4_I(inode)->i_inline_off)
+		return EXT4_I(inode)->i_inline_size;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक get_max_अंतरभूत_xattr_value_size(काष्ठा inode *inode,
-					   काष्ठा ext4_iloc *iloc)
-अणु
-	काष्ठा ext4_xattr_ibody_header *header;
-	काष्ठा ext4_xattr_entry *entry;
-	काष्ठा ext4_inode *raw_inode;
-	पूर्णांक मुक्त, min_offs;
+static int get_max_inline_xattr_value_size(struct inode *inode,
+					   struct ext4_iloc *iloc)
+{
+	struct ext4_xattr_ibody_header *header;
+	struct ext4_xattr_entry *entry;
+	struct ext4_inode *raw_inode;
+	int free, min_offs;
 
 	min_offs = EXT4_SB(inode->i_sb)->s_inode_size -
 			EXT4_GOOD_OLD_INODE_SIZE -
 			EXT4_I(inode)->i_extra_isize -
-			माप(काष्ठा ext4_xattr_ibody_header);
+			sizeof(struct ext4_xattr_ibody_header);
 
 	/*
-	 * We need to subtract another माप(__u32) since an in-inode xattr
+	 * We need to subtract another sizeof(__u32) since an in-inode xattr
 	 * needs an empty 4 bytes to indicate the gap between the xattr entry
 	 * and the name/value pair.
 	 */
-	अगर (!ext4_test_inode_state(inode, EXT4_STATE_XATTR))
-		वापस EXT4_XATTR_SIZE(min_offs -
-			EXT4_XATTR_LEN(म_माप(EXT4_XATTR_SYSTEM_DATA)) -
-			EXT4_XATTR_ROUND - माप(__u32));
+	if (!ext4_test_inode_state(inode, EXT4_STATE_XATTR))
+		return EXT4_XATTR_SIZE(min_offs -
+			EXT4_XATTR_LEN(strlen(EXT4_XATTR_SYSTEM_DATA)) -
+			EXT4_XATTR_ROUND - sizeof(__u32));
 
 	raw_inode = ext4_raw_inode(iloc);
 	header = IHDR(inode, raw_inode);
 	entry = IFIRST(header);
 
 	/* Compute min_offs. */
-	क्रम (; !IS_LAST_ENTRY(entry); entry = EXT4_XATTR_NEXT(entry)) अणु
-		अगर (!entry->e_value_inum && entry->e_value_size) अणु
-			माप_प्रकार offs = le16_to_cpu(entry->e_value_offs);
-			अगर (offs < min_offs)
+	for (; !IS_LAST_ENTRY(entry); entry = EXT4_XATTR_NEXT(entry)) {
+		if (!entry->e_value_inum && entry->e_value_size) {
+			size_t offs = le16_to_cpu(entry->e_value_offs);
+			if (offs < min_offs)
 				min_offs = offs;
-		पूर्ण
-	पूर्ण
-	मुक्त = min_offs -
-		((व्योम *)entry - (व्योम *)IFIRST(header)) - माप(__u32);
+		}
+	}
+	free = min_offs -
+		((void *)entry - (void *)IFIRST(header)) - sizeof(__u32);
 
-	अगर (EXT4_I(inode)->i_अंतरभूत_off) अणु
-		entry = (काष्ठा ext4_xattr_entry *)
-			((व्योम *)raw_inode + EXT4_I(inode)->i_अंतरभूत_off);
+	if (EXT4_I(inode)->i_inline_off) {
+		entry = (struct ext4_xattr_entry *)
+			((void *)raw_inode + EXT4_I(inode)->i_inline_off);
 
-		मुक्त += EXT4_XATTR_SIZE(le32_to_cpu(entry->e_value_size));
-		जाओ out;
-	पूर्ण
+		free += EXT4_XATTR_SIZE(le32_to_cpu(entry->e_value_size));
+		goto out;
+	}
 
-	मुक्त -= EXT4_XATTR_LEN(म_माप(EXT4_XATTR_SYSTEM_DATA));
+	free -= EXT4_XATTR_LEN(strlen(EXT4_XATTR_SYSTEM_DATA));
 
-	अगर (मुक्त > EXT4_XATTR_ROUND)
-		मुक्त = EXT4_XATTR_SIZE(मुक्त - EXT4_XATTR_ROUND);
-	अन्यथा
-		मुक्त = 0;
+	if (free > EXT4_XATTR_ROUND)
+		free = EXT4_XATTR_SIZE(free - EXT4_XATTR_ROUND);
+	else
+		free = 0;
 
 out:
-	वापस मुक्त;
-पूर्ण
+	return free;
+}
 
 /*
  * Get the maximum size we now can store in an inode.
  * If we can't find the space for a xattr entry, don't use the space
- * of the extents since we have no space to indicate the अंतरभूत data.
+ * of the extents since we have no space to indicate the inline data.
  */
-पूर्णांक ext4_get_max_अंतरभूत_size(काष्ठा inode *inode)
-अणु
-	पूर्णांक error, max_अंतरभूत_size;
-	काष्ठा ext4_iloc iloc;
+int ext4_get_max_inline_size(struct inode *inode)
+{
+	int error, max_inline_size;
+	struct ext4_iloc iloc;
 
-	अगर (EXT4_I(inode)->i_extra_isize == 0)
-		वापस 0;
+	if (EXT4_I(inode)->i_extra_isize == 0)
+		return 0;
 
 	error = ext4_get_inode_loc(inode, &iloc);
-	अगर (error) अणु
+	if (error) {
 		ext4_error_inode_err(inode, __func__, __LINE__, 0, -error,
 				     "can't get inode location %lu",
 				     inode->i_ino);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	करोwn_पढ़ो(&EXT4_I(inode)->xattr_sem);
-	max_अंतरभूत_size = get_max_अंतरभूत_xattr_value_size(inode, &iloc);
-	up_पढ़ो(&EXT4_I(inode)->xattr_sem);
+	down_read(&EXT4_I(inode)->xattr_sem);
+	max_inline_size = get_max_inline_xattr_value_size(inode, &iloc);
+	up_read(&EXT4_I(inode)->xattr_sem);
 
-	brअन्यथा(iloc.bh);
+	brelse(iloc.bh);
 
-	अगर (!max_अंतरभूत_size)
-		वापस 0;
+	if (!max_inline_size)
+		return 0;
 
-	वापस max_अंतरभूत_size + EXT4_MIN_INLINE_DATA_SIZE;
-पूर्ण
+	return max_inline_size + EXT4_MIN_INLINE_DATA_SIZE;
+}
 
 /*
- * this function करोes not take xattr_sem, which is OK because it is
- * currently only used in a code path coming क्रमm ext4_iget, beक्रमe
+ * this function does not take xattr_sem, which is OK because it is
+ * currently only used in a code path coming form ext4_iget, before
  * the new inode has been unlocked
  */
-पूर्णांक ext4_find_अंतरभूत_data_nolock(काष्ठा inode *inode)
-अणु
-	काष्ठा ext4_xattr_ibody_find is = अणु
-		.s = अणु .not_found = -ENODATA, पूर्ण,
-	पूर्ण;
-	काष्ठा ext4_xattr_info i = अणु
+int ext4_find_inline_data_nolock(struct inode *inode)
+{
+	struct ext4_xattr_ibody_find is = {
+		.s = { .not_found = -ENODATA, },
+	};
+	struct ext4_xattr_info i = {
 		.name_index = EXT4_XATTR_INDEX_SYSTEM,
 		.name = EXT4_XATTR_SYSTEM_DATA,
-	पूर्ण;
-	पूर्णांक error;
+	};
+	int error;
 
-	अगर (EXT4_I(inode)->i_extra_isize == 0)
-		वापस 0;
+	if (EXT4_I(inode)->i_extra_isize == 0)
+		return 0;
 
 	error = ext4_get_inode_loc(inode, &is.iloc);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	error = ext4_xattr_ibody_find(inode, &i, &is);
-	अगर (error)
-		जाओ out;
+	if (error)
+		goto out;
 
-	अगर (!is.s.not_found) अणु
-		अगर (is.s.here->e_value_inum) अणु
+	if (!is.s.not_found) {
+		if (is.s.here->e_value_inum) {
 			EXT4_ERROR_INODE(inode, "inline data xattr refers "
 					 "to an external xattr inode");
 			error = -EFSCORRUPTED;
-			जाओ out;
-		पूर्ण
-		EXT4_I(inode)->i_अंतरभूत_off = (u16)((व्योम *)is.s.here -
-					(व्योम *)ext4_raw_inode(&is.iloc));
-		EXT4_I(inode)->i_अंतरभूत_size = EXT4_MIN_INLINE_DATA_SIZE +
+			goto out;
+		}
+		EXT4_I(inode)->i_inline_off = (u16)((void *)is.s.here -
+					(void *)ext4_raw_inode(&is.iloc));
+		EXT4_I(inode)->i_inline_size = EXT4_MIN_INLINE_DATA_SIZE +
 				le32_to_cpu(is.s.here->e_value_size);
 		ext4_set_inode_state(inode, EXT4_STATE_MAY_INLINE_DATA);
-	पूर्ण
+	}
 out:
-	brअन्यथा(is.iloc.bh);
-	वापस error;
-पूर्ण
+	brelse(is.iloc.bh);
+	return error;
+}
 
-अटल पूर्णांक ext4_पढ़ो_अंतरभूत_data(काष्ठा inode *inode, व्योम *buffer,
-				 अचिन्हित पूर्णांक len,
-				 काष्ठा ext4_iloc *iloc)
-अणु
-	काष्ठा ext4_xattr_entry *entry;
-	काष्ठा ext4_xattr_ibody_header *header;
-	पूर्णांक cp_len = 0;
-	काष्ठा ext4_inode *raw_inode;
+static int ext4_read_inline_data(struct inode *inode, void *buffer,
+				 unsigned int len,
+				 struct ext4_iloc *iloc)
+{
+	struct ext4_xattr_entry *entry;
+	struct ext4_xattr_ibody_header *header;
+	int cp_len = 0;
+	struct ext4_inode *raw_inode;
 
-	अगर (!len)
-		वापस 0;
+	if (!len)
+		return 0;
 
-	BUG_ON(len > EXT4_I(inode)->i_अंतरभूत_size);
+	BUG_ON(len > EXT4_I(inode)->i_inline_size);
 
 	cp_len = len < EXT4_MIN_INLINE_DATA_SIZE ?
 			len : EXT4_MIN_INLINE_DATA_SIZE;
 
 	raw_inode = ext4_raw_inode(iloc);
-	स_नकल(buffer, (व्योम *)(raw_inode->i_block), cp_len);
+	memcpy(buffer, (void *)(raw_inode->i_block), cp_len);
 
 	len -= cp_len;
 	buffer += cp_len;
 
-	अगर (!len)
-		जाओ out;
+	if (!len)
+		goto out;
 
 	header = IHDR(inode, raw_inode);
-	entry = (काष्ठा ext4_xattr_entry *)((व्योम *)raw_inode +
-					    EXT4_I(inode)->i_अंतरभूत_off);
-	len = min_t(अचिन्हित पूर्णांक, len,
-		    (अचिन्हित पूर्णांक)le32_to_cpu(entry->e_value_size));
+	entry = (struct ext4_xattr_entry *)((void *)raw_inode +
+					    EXT4_I(inode)->i_inline_off);
+	len = min_t(unsigned int, len,
+		    (unsigned int)le32_to_cpu(entry->e_value_size));
 
-	स_नकल(buffer,
-	       (व्योम *)IFIRST(header) + le16_to_cpu(entry->e_value_offs), len);
+	memcpy(buffer,
+	       (void *)IFIRST(header) + le16_to_cpu(entry->e_value_offs), len);
 	cp_len += len;
 
 out:
-	वापस cp_len;
-पूर्ण
+	return cp_len;
+}
 
 /*
- * ग_लिखो the buffer to the अंतरभूत inode.
- * If 'create' is set, we don't need to करो the extra copy in the xattr
- * value since it is alपढ़ोy handled by ext4_xattr_ibody_अंतरभूत_set.
- * That saves us one स_नकल.
+ * write the buffer to the inline inode.
+ * If 'create' is set, we don't need to do the extra copy in the xattr
+ * value since it is already handled by ext4_xattr_ibody_inline_set.
+ * That saves us one memcpy.
  */
-अटल व्योम ext4_ग_लिखो_अंतरभूत_data(काष्ठा inode *inode, काष्ठा ext4_iloc *iloc,
-				   व्योम *buffer, loff_t pos, अचिन्हित पूर्णांक len)
-अणु
-	काष्ठा ext4_xattr_entry *entry;
-	काष्ठा ext4_xattr_ibody_header *header;
-	काष्ठा ext4_inode *raw_inode;
-	पूर्णांक cp_len = 0;
+static void ext4_write_inline_data(struct inode *inode, struct ext4_iloc *iloc,
+				   void *buffer, loff_t pos, unsigned int len)
+{
+	struct ext4_xattr_entry *entry;
+	struct ext4_xattr_ibody_header *header;
+	struct ext4_inode *raw_inode;
+	int cp_len = 0;
 
-	अगर (unlikely(ext4_क्रमced_shutकरोwn(EXT4_SB(inode->i_sb))))
-		वापस;
+	if (unlikely(ext4_forced_shutdown(EXT4_SB(inode->i_sb))))
+		return;
 
-	BUG_ON(!EXT4_I(inode)->i_अंतरभूत_off);
-	BUG_ON(pos + len > EXT4_I(inode)->i_अंतरभूत_size);
+	BUG_ON(!EXT4_I(inode)->i_inline_off);
+	BUG_ON(pos + len > EXT4_I(inode)->i_inline_size);
 
 	raw_inode = ext4_raw_inode(iloc);
 	buffer += pos;
 
-	अगर (pos < EXT4_MIN_INLINE_DATA_SIZE) अणु
+	if (pos < EXT4_MIN_INLINE_DATA_SIZE) {
 		cp_len = pos + len > EXT4_MIN_INLINE_DATA_SIZE ?
 			 EXT4_MIN_INLINE_DATA_SIZE - pos : len;
-		स_नकल((व्योम *)raw_inode->i_block + pos, buffer, cp_len);
+		memcpy((void *)raw_inode->i_block + pos, buffer, cp_len);
 
 		len -= cp_len;
 		buffer += cp_len;
 		pos += cp_len;
-	पूर्ण
+	}
 
-	अगर (!len)
-		वापस;
+	if (!len)
+		return;
 
 	pos -= EXT4_MIN_INLINE_DATA_SIZE;
 	header = IHDR(inode, raw_inode);
-	entry = (काष्ठा ext4_xattr_entry *)((व्योम *)raw_inode +
-					    EXT4_I(inode)->i_अंतरभूत_off);
+	entry = (struct ext4_xattr_entry *)((void *)raw_inode +
+					    EXT4_I(inode)->i_inline_off);
 
-	स_नकल((व्योम *)IFIRST(header) + le16_to_cpu(entry->e_value_offs) + pos,
+	memcpy((void *)IFIRST(header) + le16_to_cpu(entry->e_value_offs) + pos,
 	       buffer, len);
-पूर्ण
+}
 
-अटल पूर्णांक ext4_create_अंतरभूत_data(handle_t *handle,
-				   काष्ठा inode *inode, अचिन्हित len)
-अणु
-	पूर्णांक error;
-	व्योम *value = शून्य;
-	काष्ठा ext4_xattr_ibody_find is = अणु
-		.s = अणु .not_found = -ENODATA, पूर्ण,
-	पूर्ण;
-	काष्ठा ext4_xattr_info i = अणु
+static int ext4_create_inline_data(handle_t *handle,
+				   struct inode *inode, unsigned len)
+{
+	int error;
+	void *value = NULL;
+	struct ext4_xattr_ibody_find is = {
+		.s = { .not_found = -ENODATA, },
+	};
+	struct ext4_xattr_info i = {
 		.name_index = EXT4_XATTR_INDEX_SYSTEM,
 		.name = EXT4_XATTR_SYSTEM_DATA,
-	पूर्ण;
+	};
 
 	error = ext4_get_inode_loc(inode, &is.iloc);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	BUFFER_TRACE(is.iloc.bh, "get_write_access");
-	error = ext4_journal_get_ग_लिखो_access(handle, is.iloc.bh);
-	अगर (error)
-		जाओ out;
+	error = ext4_journal_get_write_access(handle, is.iloc.bh);
+	if (error)
+		goto out;
 
-	अगर (len > EXT4_MIN_INLINE_DATA_SIZE) अणु
+	if (len > EXT4_MIN_INLINE_DATA_SIZE) {
 		value = EXT4_ZERO_XATTR_VALUE;
 		len -= EXT4_MIN_INLINE_DATA_SIZE;
-	पूर्ण अन्यथा अणु
+	} else {
 		value = "";
 		len = 0;
-	पूर्ण
+	}
 
 	/* Insert the xttr entry. */
 	i.value = value;
 	i.value_len = len;
 
 	error = ext4_xattr_ibody_find(inode, &i, &is);
-	अगर (error)
-		जाओ out;
+	if (error)
+		goto out;
 
 	BUG_ON(!is.s.not_found);
 
-	error = ext4_xattr_ibody_अंतरभूत_set(handle, inode, &i, &is);
-	अगर (error) अणु
-		अगर (error == -ENOSPC)
+	error = ext4_xattr_ibody_inline_set(handle, inode, &i, &is);
+	if (error) {
+		if (error == -ENOSPC)
 			ext4_clear_inode_state(inode,
 					       EXT4_STATE_MAY_INLINE_DATA);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	स_रखो((व्योम *)ext4_raw_inode(&is.iloc)->i_block,
+	memset((void *)ext4_raw_inode(&is.iloc)->i_block,
 		0, EXT4_MIN_INLINE_DATA_SIZE);
 
-	EXT4_I(inode)->i_अंतरभूत_off = (u16)((व्योम *)is.s.here -
-				      (व्योम *)ext4_raw_inode(&is.iloc));
-	EXT4_I(inode)->i_अंतरभूत_size = len + EXT4_MIN_INLINE_DATA_SIZE;
+	EXT4_I(inode)->i_inline_off = (u16)((void *)is.s.here -
+				      (void *)ext4_raw_inode(&is.iloc));
+	EXT4_I(inode)->i_inline_size = len + EXT4_MIN_INLINE_DATA_SIZE;
 	ext4_clear_inode_flag(inode, EXT4_INODE_EXTENTS);
 	ext4_set_inode_flag(inode, EXT4_INODE_INLINE_DATA);
 	get_bh(is.iloc.bh);
 	error = ext4_mark_iloc_dirty(handle, inode, &is.iloc);
 
 out:
-	brअन्यथा(is.iloc.bh);
-	वापस error;
-पूर्ण
+	brelse(is.iloc.bh);
+	return error;
+}
 
-अटल पूर्णांक ext4_update_अंतरभूत_data(handle_t *handle, काष्ठा inode *inode,
-				   अचिन्हित पूर्णांक len)
-अणु
-	पूर्णांक error;
-	व्योम *value = शून्य;
-	काष्ठा ext4_xattr_ibody_find is = अणु
-		.s = अणु .not_found = -ENODATA, पूर्ण,
-	पूर्ण;
-	काष्ठा ext4_xattr_info i = अणु
+static int ext4_update_inline_data(handle_t *handle, struct inode *inode,
+				   unsigned int len)
+{
+	int error;
+	void *value = NULL;
+	struct ext4_xattr_ibody_find is = {
+		.s = { .not_found = -ENODATA, },
+	};
+	struct ext4_xattr_info i = {
 		.name_index = EXT4_XATTR_INDEX_SYSTEM,
 		.name = EXT4_XATTR_SYSTEM_DATA,
-	पूर्ण;
+	};
 
-	/* If the old space is ok, ग_लिखो the data directly. */
-	अगर (len <= EXT4_I(inode)->i_अंतरभूत_size)
-		वापस 0;
+	/* If the old space is ok, write the data directly. */
+	if (len <= EXT4_I(inode)->i_inline_size)
+		return 0;
 
 	error = ext4_get_inode_loc(inode, &is.iloc);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	error = ext4_xattr_ibody_find(inode, &i, &is);
-	अगर (error)
-		जाओ out;
+	if (error)
+		goto out;
 
 	BUG_ON(is.s.not_found);
 
 	len -= EXT4_MIN_INLINE_DATA_SIZE;
 	value = kzalloc(len, GFP_NOFS);
-	अगर (!value) अणु
+	if (!value) {
 		error = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	error = ext4_xattr_ibody_get(inode, i.name_index, i.name,
 				     value, len);
-	अगर (error == -ENODATA)
-		जाओ out;
+	if (error == -ENODATA)
+		goto out;
 
 	BUFFER_TRACE(is.iloc.bh, "get_write_access");
-	error = ext4_journal_get_ग_लिखो_access(handle, is.iloc.bh);
-	अगर (error)
-		जाओ out;
+	error = ext4_journal_get_write_access(handle, is.iloc.bh);
+	if (error)
+		goto out;
 
 	/* Update the xattr entry. */
 	i.value = value;
 	i.value_len = len;
 
-	error = ext4_xattr_ibody_अंतरभूत_set(handle, inode, &i, &is);
-	अगर (error)
-		जाओ out;
+	error = ext4_xattr_ibody_inline_set(handle, inode, &i, &is);
+	if (error)
+		goto out;
 
-	EXT4_I(inode)->i_अंतरभूत_off = (u16)((व्योम *)is.s.here -
-				      (व्योम *)ext4_raw_inode(&is.iloc));
-	EXT4_I(inode)->i_अंतरभूत_size = EXT4_MIN_INLINE_DATA_SIZE +
+	EXT4_I(inode)->i_inline_off = (u16)((void *)is.s.here -
+				      (void *)ext4_raw_inode(&is.iloc));
+	EXT4_I(inode)->i_inline_size = EXT4_MIN_INLINE_DATA_SIZE +
 				le32_to_cpu(is.s.here->e_value_size);
 	ext4_set_inode_state(inode, EXT4_STATE_MAY_INLINE_DATA);
 	get_bh(is.iloc.bh);
 	error = ext4_mark_iloc_dirty(handle, inode, &is.iloc);
 
 out:
-	kमुक्त(value);
-	brअन्यथा(is.iloc.bh);
-	वापस error;
-पूर्ण
+	kfree(value);
+	brelse(is.iloc.bh);
+	return error;
+}
 
-अटल पूर्णांक ext4_prepare_अंतरभूत_data(handle_t *handle, काष्ठा inode *inode,
-				    अचिन्हित पूर्णांक len)
-अणु
-	पूर्णांक ret, size, no_expand;
-	काष्ठा ext4_inode_info *ei = EXT4_I(inode);
+static int ext4_prepare_inline_data(handle_t *handle, struct inode *inode,
+				    unsigned int len)
+{
+	int ret, size, no_expand;
+	struct ext4_inode_info *ei = EXT4_I(inode);
 
-	अगर (!ext4_test_inode_state(inode, EXT4_STATE_MAY_INLINE_DATA))
-		वापस -ENOSPC;
+	if (!ext4_test_inode_state(inode, EXT4_STATE_MAY_INLINE_DATA))
+		return -ENOSPC;
 
-	size = ext4_get_max_अंतरभूत_size(inode);
-	अगर (size < len)
-		वापस -ENOSPC;
+	size = ext4_get_max_inline_size(inode);
+	if (size < len)
+		return -ENOSPC;
 
-	ext4_ग_लिखो_lock_xattr(inode, &no_expand);
+	ext4_write_lock_xattr(inode, &no_expand);
 
-	अगर (ei->i_अंतरभूत_off)
-		ret = ext4_update_अंतरभूत_data(handle, inode, len);
-	अन्यथा
-		ret = ext4_create_अंतरभूत_data(handle, inode, len);
+	if (ei->i_inline_off)
+		ret = ext4_update_inline_data(handle, inode, len);
+	else
+		ret = ext4_create_inline_data(handle, inode, len);
 
-	ext4_ग_लिखो_unlock_xattr(inode, &no_expand);
-	वापस ret;
-पूर्ण
+	ext4_write_unlock_xattr(inode, &no_expand);
+	return ret;
+}
 
-अटल पूर्णांक ext4_destroy_अंतरभूत_data_nolock(handle_t *handle,
-					   काष्ठा inode *inode)
-अणु
-	काष्ठा ext4_inode_info *ei = EXT4_I(inode);
-	काष्ठा ext4_xattr_ibody_find is = अणु
-		.s = अणु .not_found = 0, पूर्ण,
-	पूर्ण;
-	काष्ठा ext4_xattr_info i = अणु
+static int ext4_destroy_inline_data_nolock(handle_t *handle,
+					   struct inode *inode)
+{
+	struct ext4_inode_info *ei = EXT4_I(inode);
+	struct ext4_xattr_ibody_find is = {
+		.s = { .not_found = 0, },
+	};
+	struct ext4_xattr_info i = {
 		.name_index = EXT4_XATTR_INDEX_SYSTEM,
 		.name = EXT4_XATTR_SYSTEM_DATA,
-		.value = शून्य,
+		.value = NULL,
 		.value_len = 0,
-	पूर्ण;
-	पूर्णांक error;
+	};
+	int error;
 
-	अगर (!ei->i_अंतरभूत_off)
-		वापस 0;
+	if (!ei->i_inline_off)
+		return 0;
 
 	error = ext4_get_inode_loc(inode, &is.iloc);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	error = ext4_xattr_ibody_find(inode, &i, &is);
-	अगर (error)
-		जाओ out;
+	if (error)
+		goto out;
 
 	BUFFER_TRACE(is.iloc.bh, "get_write_access");
-	error = ext4_journal_get_ग_लिखो_access(handle, is.iloc.bh);
-	अगर (error)
-		जाओ out;
+	error = ext4_journal_get_write_access(handle, is.iloc.bh);
+	if (error)
+		goto out;
 
-	error = ext4_xattr_ibody_अंतरभूत_set(handle, inode, &i, &is);
-	अगर (error)
-		जाओ out;
+	error = ext4_xattr_ibody_inline_set(handle, inode, &i, &is);
+	if (error)
+		goto out;
 
-	स_रखो((व्योम *)ext4_raw_inode(&is.iloc)->i_block,
+	memset((void *)ext4_raw_inode(&is.iloc)->i_block,
 		0, EXT4_MIN_INLINE_DATA_SIZE);
-	स_रखो(ei->i_data, 0, EXT4_MIN_INLINE_DATA_SIZE);
+	memset(ei->i_data, 0, EXT4_MIN_INLINE_DATA_SIZE);
 
-	अगर (ext4_has_feature_extents(inode->i_sb)) अणु
-		अगर (S_ISसूची(inode->i_mode) ||
-		    S_ISREG(inode->i_mode) || S_ISLNK(inode->i_mode)) अणु
+	if (ext4_has_feature_extents(inode->i_sb)) {
+		if (S_ISDIR(inode->i_mode) ||
+		    S_ISREG(inode->i_mode) || S_ISLNK(inode->i_mode)) {
 			ext4_set_inode_flag(inode, EXT4_INODE_EXTENTS);
 			ext4_ext_tree_init(handle, inode);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	ext4_clear_inode_flag(inode, EXT4_INODE_INLINE_DATA);
 
 	get_bh(is.iloc.bh);
 	error = ext4_mark_iloc_dirty(handle, inode, &is.iloc);
 
-	EXT4_I(inode)->i_अंतरभूत_off = 0;
-	EXT4_I(inode)->i_अंतरभूत_size = 0;
+	EXT4_I(inode)->i_inline_off = 0;
+	EXT4_I(inode)->i_inline_size = 0;
 	ext4_clear_inode_state(inode, EXT4_STATE_MAY_INLINE_DATA);
 out:
-	brअन्यथा(is.iloc.bh);
-	अगर (error == -ENODATA)
+	brelse(is.iloc.bh);
+	if (error == -ENODATA)
 		error = 0;
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक ext4_पढ़ो_अंतरभूत_page(काष्ठा inode *inode, काष्ठा page *page)
-अणु
-	व्योम *kaddr;
-	पूर्णांक ret = 0;
-	माप_प्रकार len;
-	काष्ठा ext4_iloc iloc;
+static int ext4_read_inline_page(struct inode *inode, struct page *page)
+{
+	void *kaddr;
+	int ret = 0;
+	size_t len;
+	struct ext4_iloc iloc;
 
 	BUG_ON(!PageLocked(page));
-	BUG_ON(!ext4_has_अंतरभूत_data(inode));
+	BUG_ON(!ext4_has_inline_data(inode));
 	BUG_ON(page->index);
 
-	अगर (!EXT4_I(inode)->i_अंतरभूत_off) अणु
+	if (!EXT4_I(inode)->i_inline_off) {
 		ext4_warning(inode->i_sb, "inode %lu doesn't have inline data.",
 			     inode->i_ino);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = ext4_get_inode_loc(inode, &iloc);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	len = min_t(माप_प्रकार, ext4_get_अंतरभूत_size(inode), i_size_पढ़ो(inode));
+	len = min_t(size_t, ext4_get_inline_size(inode), i_size_read(inode));
 	kaddr = kmap_atomic(page);
-	ret = ext4_पढ़ो_अंतरभूत_data(inode, kaddr, len, &iloc);
+	ret = ext4_read_inline_data(inode, kaddr, len, &iloc);
 	flush_dcache_page(page);
 	kunmap_atomic(kaddr);
 	zero_user_segment(page, len, PAGE_SIZE);
 	SetPageUptodate(page);
-	brअन्यथा(iloc.bh);
+	brelse(iloc.bh);
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक ext4_पढ़ोpage_अंतरभूत(काष्ठा inode *inode, काष्ठा page *page)
-अणु
-	पूर्णांक ret = 0;
+int ext4_readpage_inline(struct inode *inode, struct page *page)
+{
+	int ret = 0;
 
-	करोwn_पढ़ो(&EXT4_I(inode)->xattr_sem);
-	अगर (!ext4_has_अंतरभूत_data(inode)) अणु
-		up_पढ़ो(&EXT4_I(inode)->xattr_sem);
-		वापस -EAGAIN;
-	पूर्ण
+	down_read(&EXT4_I(inode)->xattr_sem);
+	if (!ext4_has_inline_data(inode)) {
+		up_read(&EXT4_I(inode)->xattr_sem);
+		return -EAGAIN;
+	}
 
 	/*
-	 * Current अंतरभूत data can only exist in the 1st page,
-	 * So क्रम all the other pages, just set them uptodate.
+	 * Current inline data can only exist in the 1st page,
+	 * So for all the other pages, just set them uptodate.
 	 */
-	अगर (!page->index)
-		ret = ext4_पढ़ो_अंतरभूत_page(inode, page);
-	अन्यथा अगर (!PageUptodate(page)) अणु
+	if (!page->index)
+		ret = ext4_read_inline_page(inode, page);
+	else if (!PageUptodate(page)) {
 		zero_user_segment(page, 0, PAGE_SIZE);
 		SetPageUptodate(page);
-	पूर्ण
+	}
 
-	up_पढ़ो(&EXT4_I(inode)->xattr_sem);
+	up_read(&EXT4_I(inode)->xattr_sem);
 
 	unlock_page(page);
-	वापस ret >= 0 ? 0 : ret;
-पूर्ण
+	return ret >= 0 ? 0 : ret;
+}
 
-अटल पूर्णांक ext4_convert_अंतरभूत_data_to_extent(काष्ठा address_space *mapping,
-					      काष्ठा inode *inode,
-					      अचिन्हित flags)
-अणु
-	पूर्णांक ret, needed_blocks, no_expand;
-	handle_t *handle = शून्य;
-	पूर्णांक retries = 0, sem_held = 0;
-	काष्ठा page *page = शून्य;
-	अचिन्हित from, to;
-	काष्ठा ext4_iloc iloc;
+static int ext4_convert_inline_data_to_extent(struct address_space *mapping,
+					      struct inode *inode,
+					      unsigned flags)
+{
+	int ret, needed_blocks, no_expand;
+	handle_t *handle = NULL;
+	int retries = 0, sem_held = 0;
+	struct page *page = NULL;
+	unsigned from, to;
+	struct ext4_iloc iloc;
 
-	अगर (!ext4_has_अंतरभूत_data(inode)) अणु
+	if (!ext4_has_inline_data(inode)) {
 		/*
-		 * clear the flag so that no new ग_लिखो
+		 * clear the flag so that no new write
 		 * will trap here again.
 		 */
 		ext4_clear_inode_state(inode, EXT4_STATE_MAY_INLINE_DATA);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	needed_blocks = ext4_ग_लिखोpage_trans_blocks(inode);
+	needed_blocks = ext4_writepage_trans_blocks(inode);
 
 	ret = ext4_get_inode_loc(inode, &iloc);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 retry:
 	handle = ext4_journal_start(inode, EXT4_HT_WRITE_PAGE, needed_blocks);
-	अगर (IS_ERR(handle)) अणु
+	if (IS_ERR(handle)) {
 		ret = PTR_ERR(handle);
-		handle = शून्य;
-		जाओ out;
-	पूर्ण
+		handle = NULL;
+		goto out;
+	}
 
-	/* We cannot recurse पूर्णांकo the fileप्रणाली as the transaction is alपढ़ोy
+	/* We cannot recurse into the filesystem as the transaction is already
 	 * started */
 	flags |= AOP_FLAG_NOFS;
 
-	page = grab_cache_page_ग_लिखो_begin(mapping, 0, flags);
-	अगर (!page) अणु
+	page = grab_cache_page_write_begin(mapping, 0, flags);
+	if (!page) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	ext4_ग_लिखो_lock_xattr(inode, &no_expand);
+	ext4_write_lock_xattr(inode, &no_expand);
 	sem_held = 1;
-	/* If some one has alपढ़ोy करोne this क्रम us, just निकास. */
-	अगर (!ext4_has_अंतरभूत_data(inode)) अणु
+	/* If some one has already done this for us, just exit. */
+	if (!ext4_has_inline_data(inode)) {
 		ret = 0;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	from = 0;
-	to = ext4_get_अंतरभूत_size(inode);
-	अगर (!PageUptodate(page)) अणु
-		ret = ext4_पढ़ो_अंतरभूत_page(inode, page);
-		अगर (ret < 0)
-			जाओ out;
-	पूर्ण
+	to = ext4_get_inline_size(inode);
+	if (!PageUptodate(page)) {
+		ret = ext4_read_inline_page(inode, page);
+		if (ret < 0)
+			goto out;
+	}
 
-	ret = ext4_destroy_अंतरभूत_data_nolock(handle, inode);
-	अगर (ret)
-		जाओ out;
+	ret = ext4_destroy_inline_data_nolock(handle, inode);
+	if (ret)
+		goto out;
 
-	अगर (ext4_should_dioपढ़ो_nolock(inode)) अणु
-		ret = __block_ग_लिखो_begin(page, from, to,
+	if (ext4_should_dioread_nolock(inode)) {
+		ret = __block_write_begin(page, from, to,
 					  ext4_get_block_unwritten);
-	पूर्ण अन्यथा
-		ret = __block_ग_लिखो_begin(page, from, to, ext4_get_block);
+	} else
+		ret = __block_write_begin(page, from, to, ext4_get_block);
 
-	अगर (!ret && ext4_should_journal_data(inode)) अणु
+	if (!ret && ext4_should_journal_data(inode)) {
 		ret = ext4_walk_page_buffers(handle, page_buffers(page),
-					     from, to, शून्य,
-					     करो_journal_get_ग_लिखो_access);
-	पूर्ण
+					     from, to, NULL,
+					     do_journal_get_write_access);
+	}
 
-	अगर (ret) अणु
+	if (ret) {
 		unlock_page(page);
 		put_page(page);
-		page = शून्य;
+		page = NULL;
 		ext4_orphan_add(handle, inode);
-		ext4_ग_लिखो_unlock_xattr(inode, &no_expand);
+		ext4_write_unlock_xattr(inode, &no_expand);
 		sem_held = 0;
 		ext4_journal_stop(handle);
-		handle = शून्य;
-		ext4_truncate_failed_ग_लिखो(inode);
+		handle = NULL;
+		ext4_truncate_failed_write(inode);
 		/*
 		 * If truncate failed early the inode might
 		 * still be on the orphan list; we need to
-		 * make sure the inode is हटाओd from the
-		 * orphan list in that हाल.
+		 * make sure the inode is removed from the
+		 * orphan list in that case.
 		 */
-		अगर (inode->i_nlink)
-			ext4_orphan_del(शून्य, inode);
-	पूर्ण
+		if (inode->i_nlink)
+			ext4_orphan_del(NULL, inode);
+	}
 
-	अगर (ret == -ENOSPC && ext4_should_retry_alloc(inode->i_sb, &retries))
-		जाओ retry;
+	if (ret == -ENOSPC && ext4_should_retry_alloc(inode->i_sb, &retries))
+		goto retry;
 
-	अगर (page)
-		block_commit_ग_लिखो(page, from, to);
+	if (page)
+		block_commit_write(page, from, to);
 out:
-	अगर (page) अणु
+	if (page) {
 		unlock_page(page);
 		put_page(page);
-	पूर्ण
-	अगर (sem_held)
-		ext4_ग_लिखो_unlock_xattr(inode, &no_expand);
-	अगर (handle)
+	}
+	if (sem_held)
+		ext4_write_unlock_xattr(inode, &no_expand);
+	if (handle)
 		ext4_journal_stop(handle);
-	brअन्यथा(iloc.bh);
-	वापस ret;
-पूर्ण
+	brelse(iloc.bh);
+	return ret;
+}
 
 /*
- * Try to ग_लिखो data in the inode.
- * If the inode has अंतरभूत data, check whether the new ग_लिखो can be
+ * Try to write data in the inode.
+ * If the inode has inline data, check whether the new write can be
  * in the inode also. If not, create the page the handle, move the data
- * to the page make it update and let the later codes create extent क्रम it.
+ * to the page make it update and let the later codes create extent for it.
  */
-पूर्णांक ext4_try_to_ग_लिखो_अंतरभूत_data(काष्ठा address_space *mapping,
-				  काष्ठा inode *inode,
-				  loff_t pos, अचिन्हित len,
-				  अचिन्हित flags,
-				  काष्ठा page **pagep)
-अणु
-	पूर्णांक ret;
+int ext4_try_to_write_inline_data(struct address_space *mapping,
+				  struct inode *inode,
+				  loff_t pos, unsigned len,
+				  unsigned flags,
+				  struct page **pagep)
+{
+	int ret;
 	handle_t *handle;
-	काष्ठा page *page;
-	काष्ठा ext4_iloc iloc;
+	struct page *page;
+	struct ext4_iloc iloc;
 
-	अगर (pos + len > ext4_get_max_अंतरभूत_size(inode))
-		जाओ convert;
+	if (pos + len > ext4_get_max_inline_size(inode))
+		goto convert;
 
 	ret = ext4_get_inode_loc(inode, &iloc);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/*
-	 * The possible ग_लिखो could happen in the inode,
+	 * The possible write could happen in the inode,
 	 * so try to reserve the space in inode first.
 	 */
 	handle = ext4_journal_start(inode, EXT4_HT_INODE, 1);
-	अगर (IS_ERR(handle)) अणु
+	if (IS_ERR(handle)) {
 		ret = PTR_ERR(handle);
-		handle = शून्य;
-		जाओ out;
-	पूर्ण
+		handle = NULL;
+		goto out;
+	}
 
-	ret = ext4_prepare_अंतरभूत_data(handle, inode, pos + len);
-	अगर (ret && ret != -ENOSPC)
-		जाओ out;
+	ret = ext4_prepare_inline_data(handle, inode, pos + len);
+	if (ret && ret != -ENOSPC)
+		goto out;
 
-	/* We करोn't have space in अंतरभूत inode, so convert it to extent. */
-	अगर (ret == -ENOSPC) अणु
+	/* We don't have space in inline inode, so convert it to extent. */
+	if (ret == -ENOSPC) {
 		ext4_journal_stop(handle);
-		brअन्यथा(iloc.bh);
-		जाओ convert;
-	पूर्ण
+		brelse(iloc.bh);
+		goto convert;
+	}
 
-	ret = ext4_journal_get_ग_लिखो_access(handle, iloc.bh);
-	अगर (ret)
-		जाओ out;
+	ret = ext4_journal_get_write_access(handle, iloc.bh);
+	if (ret)
+		goto out;
 
 	flags |= AOP_FLAG_NOFS;
 
-	page = grab_cache_page_ग_लिखो_begin(mapping, 0, flags);
-	अगर (!page) अणु
+	page = grab_cache_page_write_begin(mapping, 0, flags);
+	if (!page) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	*pagep = page;
-	करोwn_पढ़ो(&EXT4_I(inode)->xattr_sem);
-	अगर (!ext4_has_अंतरभूत_data(inode)) अणु
+	down_read(&EXT4_I(inode)->xattr_sem);
+	if (!ext4_has_inline_data(inode)) {
 		ret = 0;
 		unlock_page(page);
 		put_page(page);
-		जाओ out_up_पढ़ो;
-	पूर्ण
+		goto out_up_read;
+	}
 
-	अगर (!PageUptodate(page)) अणु
-		ret = ext4_पढ़ो_अंतरभूत_page(inode, page);
-		अगर (ret < 0) अणु
+	if (!PageUptodate(page)) {
+		ret = ext4_read_inline_page(inode, page);
+		if (ret < 0) {
 			unlock_page(page);
 			put_page(page);
-			जाओ out_up_पढ़ो;
-		पूर्ण
-	पूर्ण
+			goto out_up_read;
+		}
+	}
 
 	ret = 1;
-	handle = शून्य;
-out_up_पढ़ो:
-	up_पढ़ो(&EXT4_I(inode)->xattr_sem);
+	handle = NULL;
+out_up_read:
+	up_read(&EXT4_I(inode)->xattr_sem);
 out:
-	अगर (handle && (ret != 1))
+	if (handle && (ret != 1))
 		ext4_journal_stop(handle);
-	brअन्यथा(iloc.bh);
-	वापस ret;
+	brelse(iloc.bh);
+	return ret;
 convert:
-	वापस ext4_convert_अंतरभूत_data_to_extent(mapping,
+	return ext4_convert_inline_data_to_extent(mapping,
 						  inode, flags);
-पूर्ण
+}
 
-पूर्णांक ext4_ग_लिखो_अंतरभूत_data_end(काष्ठा inode *inode, loff_t pos, अचिन्हित len,
-			       अचिन्हित copied, काष्ठा page *page)
-अणु
-	पूर्णांक ret, no_expand;
-	व्योम *kaddr;
-	काष्ठा ext4_iloc iloc;
+int ext4_write_inline_data_end(struct inode *inode, loff_t pos, unsigned len,
+			       unsigned copied, struct page *page)
+{
+	int ret, no_expand;
+	void *kaddr;
+	struct ext4_iloc iloc;
 
-	अगर (unlikely(copied < len)) अणु
-		अगर (!PageUptodate(page)) अणु
+	if (unlikely(copied < len)) {
+		if (!PageUptodate(page)) {
 			copied = 0;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 	ret = ext4_get_inode_loc(inode, &iloc);
-	अगर (ret) अणु
+	if (ret) {
 		ext4_std_error(inode->i_sb, ret);
 		copied = 0;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	ext4_ग_लिखो_lock_xattr(inode, &no_expand);
-	BUG_ON(!ext4_has_अंतरभूत_data(inode));
+	ext4_write_lock_xattr(inode, &no_expand);
+	BUG_ON(!ext4_has_inline_data(inode));
 
 	kaddr = kmap_atomic(page);
-	ext4_ग_लिखो_अंतरभूत_data(inode, &iloc, kaddr, pos, len);
+	ext4_write_inline_data(inode, &iloc, kaddr, pos, len);
 	kunmap_atomic(kaddr);
 	SetPageUptodate(page);
-	/* clear page dirty so that ग_लिखोpages wouldn't work क्रम us. */
+	/* clear page dirty so that writepages wouldn't work for us. */
 	ClearPageDirty(page);
 
-	ext4_ग_लिखो_unlock_xattr(inode, &no_expand);
-	brअन्यथा(iloc.bh);
+	ext4_write_unlock_xattr(inode, &no_expand);
+	brelse(iloc.bh);
 	mark_inode_dirty(inode);
 out:
-	वापस copied;
-पूर्ण
+	return copied;
+}
 
-काष्ठा buffer_head *
-ext4_journalled_ग_लिखो_अंतरभूत_data(काष्ठा inode *inode,
-				  अचिन्हित len,
-				  काष्ठा page *page)
-अणु
-	पूर्णांक ret, no_expand;
-	व्योम *kaddr;
-	काष्ठा ext4_iloc iloc;
+struct buffer_head *
+ext4_journalled_write_inline_data(struct inode *inode,
+				  unsigned len,
+				  struct page *page)
+{
+	int ret, no_expand;
+	void *kaddr;
+	struct ext4_iloc iloc;
 
 	ret = ext4_get_inode_loc(inode, &iloc);
-	अगर (ret) अणु
+	if (ret) {
 		ext4_std_error(inode->i_sb, ret);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	ext4_ग_लिखो_lock_xattr(inode, &no_expand);
+	ext4_write_lock_xattr(inode, &no_expand);
 	kaddr = kmap_atomic(page);
-	ext4_ग_लिखो_अंतरभूत_data(inode, &iloc, kaddr, 0, len);
+	ext4_write_inline_data(inode, &iloc, kaddr, 0, len);
 	kunmap_atomic(kaddr);
-	ext4_ग_लिखो_unlock_xattr(inode, &no_expand);
+	ext4_write_unlock_xattr(inode, &no_expand);
 
-	वापस iloc.bh;
-पूर्ण
+	return iloc.bh;
+}
 
 /*
- * Try to make the page cache and handle पढ़ोy क्रम the अंतरभूत data हाल.
- * We can call this function in 2 हालs:
- * 1. The inode is created and the first ग_लिखो exceeds अंतरभूत size. We can
+ * Try to make the page cache and handle ready for the inline data case.
+ * We can call this function in 2 cases:
+ * 1. The inode is created and the first write exceeds inline size. We can
  *    clear the inode state safely.
- * 2. The inode has अंतरभूत data, then we need to पढ़ो the data, make it
- *    update and dirty so that ext4_da_ग_लिखोpages can handle it. We करोn't
+ * 2. The inode has inline data, then we need to read the data, make it
+ *    update and dirty so that ext4_da_writepages can handle it. We don't
  *    need to start the journal since the file's metadata isn't changed now.
  */
-अटल पूर्णांक ext4_da_convert_अंतरभूत_data_to_extent(काष्ठा address_space *mapping,
-						 काष्ठा inode *inode,
-						 अचिन्हित flags,
-						 व्योम **fsdata)
-अणु
-	पूर्णांक ret = 0, अंतरभूत_size;
-	काष्ठा page *page;
+static int ext4_da_convert_inline_data_to_extent(struct address_space *mapping,
+						 struct inode *inode,
+						 unsigned flags,
+						 void **fsdata)
+{
+	int ret = 0, inline_size;
+	struct page *page;
 
-	page = grab_cache_page_ग_लिखो_begin(mapping, 0, flags);
-	अगर (!page)
-		वापस -ENOMEM;
+	page = grab_cache_page_write_begin(mapping, 0, flags);
+	if (!page)
+		return -ENOMEM;
 
-	करोwn_पढ़ो(&EXT4_I(inode)->xattr_sem);
-	अगर (!ext4_has_अंतरभूत_data(inode)) अणु
+	down_read(&EXT4_I(inode)->xattr_sem);
+	if (!ext4_has_inline_data(inode)) {
 		ext4_clear_inode_state(inode, EXT4_STATE_MAY_INLINE_DATA);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अंतरभूत_size = ext4_get_अंतरभूत_size(inode);
+	inline_size = ext4_get_inline_size(inode);
 
-	अगर (!PageUptodate(page)) अणु
-		ret = ext4_पढ़ो_अंतरभूत_page(inode, page);
-		अगर (ret < 0)
-			जाओ out;
-	पूर्ण
+	if (!PageUptodate(page)) {
+		ret = ext4_read_inline_page(inode, page);
+		if (ret < 0)
+			goto out;
+	}
 
-	ret = __block_ग_लिखो_begin(page, 0, अंतरभूत_size,
+	ret = __block_write_begin(page, 0, inline_size,
 				  ext4_da_get_block_prep);
-	अगर (ret) अणु
-		up_पढ़ो(&EXT4_I(inode)->xattr_sem);
+	if (ret) {
+		up_read(&EXT4_I(inode)->xattr_sem);
 		unlock_page(page);
 		put_page(page);
-		ext4_truncate_failed_ग_लिखो(inode);
-		वापस ret;
-	पूर्ण
+		ext4_truncate_failed_write(inode);
+		return ret;
+	}
 
 	SetPageDirty(page);
 	SetPageUptodate(page);
 	ext4_clear_inode_state(inode, EXT4_STATE_MAY_INLINE_DATA);
-	*fsdata = (व्योम *)CONVERT_INLINE_DATA;
+	*fsdata = (void *)CONVERT_INLINE_DATA;
 
 out:
-	up_पढ़ो(&EXT4_I(inode)->xattr_sem);
-	अगर (page) अणु
+	up_read(&EXT4_I(inode)->xattr_sem);
+	if (page) {
 		unlock_page(page);
 		put_page(page);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
 /*
- * Prepare the ग_लिखो क्रम the अंतरभूत data.
- * If the data can be written पूर्णांकo the inode, we just पढ़ो
+ * Prepare the write for the inline data.
+ * If the data can be written into the inode, we just read
  * the page and make it uptodate, and start the journal.
- * Otherwise पढ़ो the page, makes it dirty so that it can be
- * handle in ग_लिखोpages(the i_disksize update is left to the
- * normal ext4_da_ग_लिखो_end).
+ * Otherwise read the page, makes it dirty so that it can be
+ * handle in writepages(the i_disksize update is left to the
+ * normal ext4_da_write_end).
  */
-पूर्णांक ext4_da_ग_लिखो_अंतरभूत_data_begin(काष्ठा address_space *mapping,
-				    काष्ठा inode *inode,
-				    loff_t pos, अचिन्हित len,
-				    अचिन्हित flags,
-				    काष्ठा page **pagep,
-				    व्योम **fsdata)
-अणु
-	पूर्णांक ret, अंतरभूत_size;
+int ext4_da_write_inline_data_begin(struct address_space *mapping,
+				    struct inode *inode,
+				    loff_t pos, unsigned len,
+				    unsigned flags,
+				    struct page **pagep,
+				    void **fsdata)
+{
+	int ret, inline_size;
 	handle_t *handle;
-	काष्ठा page *page;
-	काष्ठा ext4_iloc iloc;
-	पूर्णांक retries = 0;
+	struct page *page;
+	struct ext4_iloc iloc;
+	int retries = 0;
 
 	ret = ext4_get_inode_loc(inode, &iloc);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 retry_journal:
 	handle = ext4_journal_start(inode, EXT4_HT_INODE, 1);
-	अगर (IS_ERR(handle)) अणु
+	if (IS_ERR(handle)) {
 		ret = PTR_ERR(handle);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अंतरभूत_size = ext4_get_max_अंतरभूत_size(inode);
+	inline_size = ext4_get_max_inline_size(inode);
 
 	ret = -ENOSPC;
-	अगर (अंतरभूत_size >= pos + len) अणु
-		ret = ext4_prepare_अंतरभूत_data(handle, inode, pos + len);
-		अगर (ret && ret != -ENOSPC)
-			जाओ out_journal;
-	पूर्ण
+	if (inline_size >= pos + len) {
+		ret = ext4_prepare_inline_data(handle, inode, pos + len);
+		if (ret && ret != -ENOSPC)
+			goto out_journal;
+	}
 
 	/*
-	 * We cannot recurse पूर्णांकo the fileप्रणाली as the transaction
-	 * is alपढ़ोy started.
+	 * We cannot recurse into the filesystem as the transaction
+	 * is already started.
 	 */
 	flags |= AOP_FLAG_NOFS;
 
-	अगर (ret == -ENOSPC) अणु
+	if (ret == -ENOSPC) {
 		ext4_journal_stop(handle);
-		ret = ext4_da_convert_अंतरभूत_data_to_extent(mapping,
+		ret = ext4_da_convert_inline_data_to_extent(mapping,
 							    inode,
 							    flags,
 							    fsdata);
-		अगर (ret == -ENOSPC &&
+		if (ret == -ENOSPC &&
 		    ext4_should_retry_alloc(inode->i_sb, &retries))
-			जाओ retry_journal;
-		जाओ out;
-	पूर्ण
+			goto retry_journal;
+		goto out;
+	}
 
-	page = grab_cache_page_ग_लिखो_begin(mapping, 0, flags);
-	अगर (!page) अणु
+	page = grab_cache_page_write_begin(mapping, 0, flags);
+	if (!page) {
 		ret = -ENOMEM;
-		जाओ out_journal;
-	पूर्ण
+		goto out_journal;
+	}
 
-	करोwn_पढ़ो(&EXT4_I(inode)->xattr_sem);
-	अगर (!ext4_has_अंतरभूत_data(inode)) अणु
+	down_read(&EXT4_I(inode)->xattr_sem);
+	if (!ext4_has_inline_data(inode)) {
 		ret = 0;
-		जाओ out_release_page;
-	पूर्ण
+		goto out_release_page;
+	}
 
-	अगर (!PageUptodate(page)) अणु
-		ret = ext4_पढ़ो_अंतरभूत_page(inode, page);
-		अगर (ret < 0)
-			जाओ out_release_page;
-	पूर्ण
-	ret = ext4_journal_get_ग_लिखो_access(handle, iloc.bh);
-	अगर (ret)
-		जाओ out_release_page;
+	if (!PageUptodate(page)) {
+		ret = ext4_read_inline_page(inode, page);
+		if (ret < 0)
+			goto out_release_page;
+	}
+	ret = ext4_journal_get_write_access(handle, iloc.bh);
+	if (ret)
+		goto out_release_page;
 
-	up_पढ़ो(&EXT4_I(inode)->xattr_sem);
+	up_read(&EXT4_I(inode)->xattr_sem);
 	*pagep = page;
-	brअन्यथा(iloc.bh);
-	वापस 1;
+	brelse(iloc.bh);
+	return 1;
 out_release_page:
-	up_पढ़ो(&EXT4_I(inode)->xattr_sem);
+	up_read(&EXT4_I(inode)->xattr_sem);
 	unlock_page(page);
 	put_page(page);
 out_journal:
 	ext4_journal_stop(handle);
 out:
-	brअन्यथा(iloc.bh);
-	वापस ret;
-पूर्ण
+	brelse(iloc.bh);
+	return ret;
+}
 
-पूर्णांक ext4_da_ग_लिखो_अंतरभूत_data_end(काष्ठा inode *inode, loff_t pos,
-				  अचिन्हित len, अचिन्हित copied,
-				  काष्ठा page *page)
-अणु
-	पूर्णांक ret;
+int ext4_da_write_inline_data_end(struct inode *inode, loff_t pos,
+				  unsigned len, unsigned copied,
+				  struct page *page)
+{
+	int ret;
 
-	ret = ext4_ग_लिखो_अंतरभूत_data_end(inode, pos, len, copied, page);
-	अगर (ret < 0) अणु
+	ret = ext4_write_inline_data_end(inode, pos, len, copied, page);
+	if (ret < 0) {
 		unlock_page(page);
 		put_page(page);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	copied = ret;
 
 	/*
-	 * No need to use i_size_पढ़ो() here, the i_size
+	 * No need to use i_size_read() here, the i_size
 	 * cannot change under us because we hold i_mutex.
 	 *
-	 * But it's important to update i_size जबतक still holding page lock:
-	 * page ग_लिखोout could otherwise come in and zero beyond i_size.
+	 * But it's important to update i_size while still holding page lock:
+	 * page writeout could otherwise come in and zero beyond i_size.
 	 */
-	अगर (pos+copied > inode->i_size)
-		i_size_ग_लिखो(inode, pos+copied);
+	if (pos+copied > inode->i_size)
+		i_size_write(inode, pos+copied);
 	unlock_page(page);
 	put_page(page);
 
 	/*
 	 * Don't mark the inode dirty under page lock. First, it unnecessarily
-	 * makes the holding समय of page lock दीर्घer. Second, it क्रमces lock
-	 * ordering of page lock and transaction start क्रम journaling
-	 * fileप्रणालीs.
+	 * makes the holding time of page lock longer. Second, it forces lock
+	 * ordering of page lock and transaction start for journaling
+	 * filesystems.
 	 */
 	mark_inode_dirty(inode);
 
-	वापस copied;
-पूर्ण
+	return copied;
+}
 
-#अगर_घोषित INLINE_सूची_DEBUG
-व्योम ext4_show_अंतरभूत_dir(काष्ठा inode *dir, काष्ठा buffer_head *bh,
-			  व्योम *अंतरभूत_start, पूर्णांक अंतरभूत_size)
-अणु
-	पूर्णांक offset;
-	अचिन्हित लघु de_len;
-	काष्ठा ext4_dir_entry_2 *de = अंतरभूत_start;
-	व्योम *dlimit = अंतरभूत_start + अंतरभूत_size;
+#ifdef INLINE_DIR_DEBUG
+void ext4_show_inline_dir(struct inode *dir, struct buffer_head *bh,
+			  void *inline_start, int inline_size)
+{
+	int offset;
+	unsigned short de_len;
+	struct ext4_dir_entry_2 *de = inline_start;
+	void *dlimit = inline_start + inline_size;
 
-	trace_prपूर्णांकk("inode %lu\n", dir->i_ino);
+	trace_printk("inode %lu\n", dir->i_ino);
 	offset = 0;
-	जबतक ((व्योम *)de < dlimit) अणु
-		de_len = ext4_rec_len_from_disk(de->rec_len, अंतरभूत_size);
-		trace_prपूर्णांकk("de: off %u rlen %u name %.*s nlen %u ino %u\n",
+	while ((void *)de < dlimit) {
+		de_len = ext4_rec_len_from_disk(de->rec_len, inline_size);
+		trace_printk("de: off %u rlen %u name %.*s nlen %u ino %u\n",
 			     offset, de_len, de->name_len, de->name,
 			     de->name_len, le32_to_cpu(de->inode));
-		अगर (ext4_check_dir_entry(dir, शून्य, de, bh,
-					 अंतरभूत_start, अंतरभूत_size, offset))
+		if (ext4_check_dir_entry(dir, NULL, de, bh,
+					 inline_start, inline_size, offset))
 			BUG();
 
 		offset += de_len;
-		de = (काष्ठा ext4_dir_entry_2 *) ((अक्षर *) de + de_len);
-	पूर्ण
-पूर्ण
-#अन्यथा
-#घोषणा ext4_show_अंतरभूत_dir(dir, bh, अंतरभूत_start, अंतरभूत_size)
-#पूर्ण_अगर
+		de = (struct ext4_dir_entry_2 *) ((char *) de + de_len);
+	}
+}
+#else
+#define ext4_show_inline_dir(dir, bh, inline_start, inline_size)
+#endif
 
 /*
- * Add a new entry पूर्णांकo a अंतरभूत dir.
- * It will वापस -ENOSPC अगर no space is available, and -EIO
- * and -EEXIST अगर directory entry alपढ़ोy exists.
+ * Add a new entry into a inline dir.
+ * It will return -ENOSPC if no space is available, and -EIO
+ * and -EEXIST if directory entry already exists.
  */
-अटल पूर्णांक ext4_add_dirent_to_अंतरभूत(handle_t *handle,
-				     काष्ठा ext4_filename *fname,
-				     काष्ठा inode *dir,
-				     काष्ठा inode *inode,
-				     काष्ठा ext4_iloc *iloc,
-				     व्योम *अंतरभूत_start, पूर्णांक अंतरभूत_size)
-अणु
-	पूर्णांक		err;
-	काष्ठा ext4_dir_entry_2 *de;
+static int ext4_add_dirent_to_inline(handle_t *handle,
+				     struct ext4_filename *fname,
+				     struct inode *dir,
+				     struct inode *inode,
+				     struct ext4_iloc *iloc,
+				     void *inline_start, int inline_size)
+{
+	int		err;
+	struct ext4_dir_entry_2 *de;
 
-	err = ext4_find_dest_de(dir, inode, iloc->bh, अंतरभूत_start,
-				अंतरभूत_size, fname, &de);
-	अगर (err)
-		वापस err;
+	err = ext4_find_dest_de(dir, inode, iloc->bh, inline_start,
+				inline_size, fname, &de);
+	if (err)
+		return err;
 
 	BUFFER_TRACE(iloc->bh, "get_write_access");
-	err = ext4_journal_get_ग_लिखो_access(handle, iloc->bh);
-	अगर (err)
-		वापस err;
-	ext4_insert_dentry(dir, inode, de, अंतरभूत_size, fname);
+	err = ext4_journal_get_write_access(handle, iloc->bh);
+	if (err)
+		return err;
+	ext4_insert_dentry(dir, inode, de, inline_size, fname);
 
-	ext4_show_अंतरभूत_dir(dir, iloc->bh, अंतरभूत_start, अंतरभूत_size);
+	ext4_show_inline_dir(dir, iloc->bh, inline_start, inline_size);
 
 	/*
-	 * XXX shouldn't update any बार until successful
+	 * XXX shouldn't update any times until successful
 	 * completion of syscall, but too many callers depend
 	 * on this.
 	 *
 	 * XXX similarly, too many callers depend on
-	 * ext4_new_inode() setting the बार, but error
+	 * ext4_new_inode() setting the times, but error
 	 * recovery deletes the inode, so the worst that can
-	 * happen is that the बार are slightly out of date
-	 * and/or dअगरferent from the directory change समय.
+	 * happen is that the times are slightly out of date
+	 * and/or different from the directory change time.
 	 */
-	dir->i_mसमय = dir->i_स_समय = current_समय(dir);
+	dir->i_mtime = dir->i_ctime = current_time(dir);
 	ext4_update_dx_flag(dir);
 	inode_inc_iversion(dir);
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल व्योम *ext4_get_अंतरभूत_xattr_pos(काष्ठा inode *inode,
-				       काष्ठा ext4_iloc *iloc)
-अणु
-	काष्ठा ext4_xattr_entry *entry;
-	काष्ठा ext4_xattr_ibody_header *header;
+static void *ext4_get_inline_xattr_pos(struct inode *inode,
+				       struct ext4_iloc *iloc)
+{
+	struct ext4_xattr_entry *entry;
+	struct ext4_xattr_ibody_header *header;
 
-	BUG_ON(!EXT4_I(inode)->i_अंतरभूत_off);
+	BUG_ON(!EXT4_I(inode)->i_inline_off);
 
 	header = IHDR(inode, ext4_raw_inode(iloc));
-	entry = (काष्ठा ext4_xattr_entry *)((व्योम *)ext4_raw_inode(iloc) +
-					    EXT4_I(inode)->i_अंतरभूत_off);
+	entry = (struct ext4_xattr_entry *)((void *)ext4_raw_inode(iloc) +
+					    EXT4_I(inode)->i_inline_off);
 
-	वापस (व्योम *)IFIRST(header) + le16_to_cpu(entry->e_value_offs);
-पूर्ण
+	return (void *)IFIRST(header) + le16_to_cpu(entry->e_value_offs);
+}
 
 /* Set the final de to cover the whole block. */
-अटल व्योम ext4_update_final_de(व्योम *de_buf, पूर्णांक old_size, पूर्णांक new_size)
-अणु
-	काष्ठा ext4_dir_entry_2 *de, *prev_de;
-	व्योम *limit;
-	पूर्णांक de_len;
+static void ext4_update_final_de(void *de_buf, int old_size, int new_size)
+{
+	struct ext4_dir_entry_2 *de, *prev_de;
+	void *limit;
+	int de_len;
 
-	de = (काष्ठा ext4_dir_entry_2 *)de_buf;
-	अगर (old_size) अणु
+	de = (struct ext4_dir_entry_2 *)de_buf;
+	if (old_size) {
 		limit = de_buf + old_size;
-		करो अणु
+		do {
 			prev_de = de;
 			de_len = ext4_rec_len_from_disk(de->rec_len, old_size);
 			de_buf += de_len;
-			de = (काष्ठा ext4_dir_entry_2 *)de_buf;
-		पूर्ण जबतक (de_buf < limit);
+			de = (struct ext4_dir_entry_2 *)de_buf;
+		} while (de_buf < limit);
 
 		prev_de->rec_len = ext4_rec_len_to_disk(de_len + new_size -
 							old_size, new_size);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* this is just created, so create an empty entry. */
 		de->inode = 0;
 		de->rec_len = ext4_rec_len_to_disk(new_size, new_size);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक ext4_update_अंतरभूत_dir(handle_t *handle, काष्ठा inode *dir,
-				  काष्ठा ext4_iloc *iloc)
-अणु
-	पूर्णांक ret;
-	पूर्णांक old_size = EXT4_I(dir)->i_अंतरभूत_size - EXT4_MIN_INLINE_DATA_SIZE;
-	पूर्णांक new_size = get_max_अंतरभूत_xattr_value_size(dir, iloc);
+static int ext4_update_inline_dir(handle_t *handle, struct inode *dir,
+				  struct ext4_iloc *iloc)
+{
+	int ret;
+	int old_size = EXT4_I(dir)->i_inline_size - EXT4_MIN_INLINE_DATA_SIZE;
+	int new_size = get_max_inline_xattr_value_size(dir, iloc);
 
-	अगर (new_size - old_size <= ext4_dir_rec_len(1, शून्य))
-		वापस -ENOSPC;
+	if (new_size - old_size <= ext4_dir_rec_len(1, NULL))
+		return -ENOSPC;
 
-	ret = ext4_update_अंतरभूत_data(handle, dir,
+	ret = ext4_update_inline_data(handle, dir,
 				      new_size + EXT4_MIN_INLINE_DATA_SIZE);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ext4_update_final_de(ext4_get_अंतरभूत_xattr_pos(dir, iloc), old_size,
-			     EXT4_I(dir)->i_अंतरभूत_size -
+	ext4_update_final_de(ext4_get_inline_xattr_pos(dir, iloc), old_size,
+			     EXT4_I(dir)->i_inline_size -
 						EXT4_MIN_INLINE_DATA_SIZE);
-	dir->i_size = EXT4_I(dir)->i_disksize = EXT4_I(dir)->i_अंतरभूत_size;
-	वापस 0;
-पूर्ण
+	dir->i_size = EXT4_I(dir)->i_disksize = EXT4_I(dir)->i_inline_size;
+	return 0;
+}
 
-अटल व्योम ext4_restore_अंतरभूत_data(handle_t *handle, काष्ठा inode *inode,
-				     काष्ठा ext4_iloc *iloc,
-				     व्योम *buf, पूर्णांक अंतरभूत_size)
-अणु
-	ext4_create_अंतरभूत_data(handle, inode, अंतरभूत_size);
-	ext4_ग_लिखो_अंतरभूत_data(inode, iloc, buf, 0, अंतरभूत_size);
+static void ext4_restore_inline_data(handle_t *handle, struct inode *inode,
+				     struct ext4_iloc *iloc,
+				     void *buf, int inline_size)
+{
+	ext4_create_inline_data(handle, inode, inline_size);
+	ext4_write_inline_data(inode, iloc, buf, 0, inline_size);
 	ext4_set_inode_state(inode, EXT4_STATE_MAY_INLINE_DATA);
-पूर्ण
+}
 
-अटल पूर्णांक ext4_finish_convert_अंतरभूत_dir(handle_t *handle,
-					  काष्ठा inode *inode,
-					  काष्ठा buffer_head *dir_block,
-					  व्योम *buf,
-					  पूर्णांक अंतरभूत_size)
-अणु
-	पूर्णांक err, csum_size = 0, header_size = 0;
-	काष्ठा ext4_dir_entry_2 *de;
-	व्योम *target = dir_block->b_data;
+static int ext4_finish_convert_inline_dir(handle_t *handle,
+					  struct inode *inode,
+					  struct buffer_head *dir_block,
+					  void *buf,
+					  int inline_size)
+{
+	int err, csum_size = 0, header_size = 0;
+	struct ext4_dir_entry_2 *de;
+	void *target = dir_block->b_data;
 
 	/*
-	 * First create "." and ".." and then copy the dir inक्रमmation
+	 * First create "." and ".." and then copy the dir information
 	 * back to the block.
 	 */
-	de = (काष्ठा ext4_dir_entry_2 *)target;
-	de = ext4_init_करोt_करोtकरोt(inode, de,
+	de = (struct ext4_dir_entry_2 *)target;
+	de = ext4_init_dot_dotdot(inode, de,
 		inode->i_sb->s_blocksize, csum_size,
-		le32_to_cpu(((काष्ठा ext4_dir_entry_2 *)buf)->inode), 1);
-	header_size = (व्योम *)de - target;
+		le32_to_cpu(((struct ext4_dir_entry_2 *)buf)->inode), 1);
+	header_size = (void *)de - target;
 
-	स_नकल((व्योम *)de, buf + EXT4_INLINE_DOTDOT_SIZE,
-		अंतरभूत_size - EXT4_INLINE_DOTDOT_SIZE);
+	memcpy((void *)de, buf + EXT4_INLINE_DOTDOT_SIZE,
+		inline_size - EXT4_INLINE_DOTDOT_SIZE);
 
-	अगर (ext4_has_metadata_csum(inode->i_sb))
-		csum_size = माप(काष्ठा ext4_dir_entry_tail);
+	if (ext4_has_metadata_csum(inode->i_sb))
+		csum_size = sizeof(struct ext4_dir_entry_tail);
 
 	inode->i_size = inode->i_sb->s_blocksize;
-	i_size_ग_लिखो(inode, inode->i_sb->s_blocksize);
+	i_size_write(inode, inode->i_sb->s_blocksize);
 	EXT4_I(inode)->i_disksize = inode->i_sb->s_blocksize;
 	ext4_update_final_de(dir_block->b_data,
-			अंतरभूत_size - EXT4_INLINE_DOTDOT_SIZE + header_size,
+			inline_size - EXT4_INLINE_DOTDOT_SIZE + header_size,
 			inode->i_sb->s_blocksize - csum_size);
 
-	अगर (csum_size)
+	if (csum_size)
 		ext4_initialize_dirent_tail(dir_block,
 					    inode->i_sb->s_blocksize);
 	set_buffer_uptodate(dir_block);
 	err = ext4_handle_dirty_dirblock(handle, inode, dir_block);
-	अगर (err)
-		वापस err;
-	set_buffer_verअगरied(dir_block);
-	वापस ext4_mark_inode_dirty(handle, inode);
-पूर्ण
+	if (err)
+		return err;
+	set_buffer_verified(dir_block);
+	return ext4_mark_inode_dirty(handle, inode);
+}
 
-अटल पूर्णांक ext4_convert_अंतरभूत_data_nolock(handle_t *handle,
-					   काष्ठा inode *inode,
-					   काष्ठा ext4_iloc *iloc)
-अणु
-	पूर्णांक error;
-	व्योम *buf = शून्य;
-	काष्ठा buffer_head *data_bh = शून्य;
-	काष्ठा ext4_map_blocks map;
-	पूर्णांक अंतरभूत_size;
+static int ext4_convert_inline_data_nolock(handle_t *handle,
+					   struct inode *inode,
+					   struct ext4_iloc *iloc)
+{
+	int error;
+	void *buf = NULL;
+	struct buffer_head *data_bh = NULL;
+	struct ext4_map_blocks map;
+	int inline_size;
 
-	अंतरभूत_size = ext4_get_अंतरभूत_size(inode);
-	buf = kदो_स्मृति(अंतरभूत_size, GFP_NOFS);
-	अगर (!buf) अणु
+	inline_size = ext4_get_inline_size(inode);
+	buf = kmalloc(inline_size, GFP_NOFS);
+	if (!buf) {
 		error = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	error = ext4_पढ़ो_अंतरभूत_data(inode, buf, अंतरभूत_size, iloc);
-	अगर (error < 0)
-		जाओ out;
+	error = ext4_read_inline_data(inode, buf, inline_size, iloc);
+	if (error < 0)
+		goto out;
 
 	/*
-	 * Make sure the अंतरभूत directory entries pass checks beक्रमe we try to
-	 * convert them, so that we aव्योम touching stuff that needs fsck.
+	 * Make sure the inline directory entries pass checks before we try to
+	 * convert them, so that we avoid touching stuff that needs fsck.
 	 */
-	अगर (S_ISसूची(inode->i_mode)) अणु
+	if (S_ISDIR(inode->i_mode)) {
 		error = ext4_check_all_de(inode, iloc->bh,
 					buf + EXT4_INLINE_DOTDOT_SIZE,
-					अंतरभूत_size - EXT4_INLINE_DOTDOT_SIZE);
-		अगर (error)
-			जाओ out;
-	पूर्ण
+					inline_size - EXT4_INLINE_DOTDOT_SIZE);
+		if (error)
+			goto out;
+	}
 
-	error = ext4_destroy_अंतरभूत_data_nolock(handle, inode);
-	अगर (error)
-		जाओ out;
+	error = ext4_destroy_inline_data_nolock(handle, inode);
+	if (error)
+		goto out;
 
 	map.m_lblk = 0;
 	map.m_len = 1;
 	map.m_flags = 0;
 	error = ext4_map_blocks(handle, inode, &map, EXT4_GET_BLOCKS_CREATE);
-	अगर (error < 0)
-		जाओ out_restore;
-	अगर (!(map.m_flags & EXT4_MAP_MAPPED)) अणु
+	if (error < 0)
+		goto out_restore;
+	if (!(map.m_flags & EXT4_MAP_MAPPED)) {
 		error = -EIO;
-		जाओ out_restore;
-	पूर्ण
+		goto out_restore;
+	}
 
 	data_bh = sb_getblk(inode->i_sb, map.m_pblk);
-	अगर (!data_bh) अणु
+	if (!data_bh) {
 		error = -ENOMEM;
-		जाओ out_restore;
-	पूर्ण
+		goto out_restore;
+	}
 
 	lock_buffer(data_bh);
 	error = ext4_journal_get_create_access(handle, data_bh);
-	अगर (error) अणु
+	if (error) {
 		unlock_buffer(data_bh);
 		error = -EIO;
-		जाओ out_restore;
-	पूर्ण
-	स_रखो(data_bh->b_data, 0, inode->i_sb->s_blocksize);
+		goto out_restore;
+	}
+	memset(data_bh->b_data, 0, inode->i_sb->s_blocksize);
 
-	अगर (!S_ISसूची(inode->i_mode)) अणु
-		स_नकल(data_bh->b_data, buf, अंतरभूत_size);
+	if (!S_ISDIR(inode->i_mode)) {
+		memcpy(data_bh->b_data, buf, inline_size);
 		set_buffer_uptodate(data_bh);
 		error = ext4_handle_dirty_metadata(handle,
 						   inode, data_bh);
-	पूर्ण अन्यथा अणु
-		error = ext4_finish_convert_अंतरभूत_dir(handle, inode, data_bh,
-						       buf, अंतरभूत_size);
-	पूर्ण
+	} else {
+		error = ext4_finish_convert_inline_dir(handle, inode, data_bh,
+						       buf, inline_size);
+	}
 
 	unlock_buffer(data_bh);
 out_restore:
-	अगर (error)
-		ext4_restore_अंतरभूत_data(handle, inode, iloc, buf, अंतरभूत_size);
+	if (error)
+		ext4_restore_inline_data(handle, inode, iloc, buf, inline_size);
 
 out:
-	brअन्यथा(data_bh);
-	kमुक्त(buf);
-	वापस error;
-पूर्ण
+	brelse(data_bh);
+	kfree(buf);
+	return error;
+}
 
 /*
- * Try to add the new entry to the अंतरभूत data.
- * If succeeds, वापस 0. If not, extended the अंतरभूत dir and copied data to
+ * Try to add the new entry to the inline data.
+ * If succeeds, return 0. If not, extended the inline dir and copied data to
  * the new created block.
  */
-पूर्णांक ext4_try_add_अंतरभूत_entry(handle_t *handle, काष्ठा ext4_filename *fname,
-			      काष्ठा inode *dir, काष्ठा inode *inode)
-अणु
-	पूर्णांक ret, ret2, अंतरभूत_size, no_expand;
-	व्योम *अंतरभूत_start;
-	काष्ठा ext4_iloc iloc;
+int ext4_try_add_inline_entry(handle_t *handle, struct ext4_filename *fname,
+			      struct inode *dir, struct inode *inode)
+{
+	int ret, ret2, inline_size, no_expand;
+	void *inline_start;
+	struct ext4_iloc iloc;
 
 	ret = ext4_get_inode_loc(dir, &iloc);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ext4_ग_लिखो_lock_xattr(dir, &no_expand);
-	अगर (!ext4_has_अंतरभूत_data(dir))
-		जाओ out;
+	ext4_write_lock_xattr(dir, &no_expand);
+	if (!ext4_has_inline_data(dir))
+		goto out;
 
-	अंतरभूत_start = (व्योम *)ext4_raw_inode(&iloc)->i_block +
+	inline_start = (void *)ext4_raw_inode(&iloc)->i_block +
 						 EXT4_INLINE_DOTDOT_SIZE;
-	अंतरभूत_size = EXT4_MIN_INLINE_DATA_SIZE - EXT4_INLINE_DOTDOT_SIZE;
+	inline_size = EXT4_MIN_INLINE_DATA_SIZE - EXT4_INLINE_DOTDOT_SIZE;
 
-	ret = ext4_add_dirent_to_अंतरभूत(handle, fname, dir, inode, &iloc,
-					अंतरभूत_start, अंतरभूत_size);
-	अगर (ret != -ENOSPC)
-		जाओ out;
+	ret = ext4_add_dirent_to_inline(handle, fname, dir, inode, &iloc,
+					inline_start, inline_size);
+	if (ret != -ENOSPC)
+		goto out;
 
-	/* check whether it can be inserted to अंतरभूत xattr space. */
-	अंतरभूत_size = EXT4_I(dir)->i_अंतरभूत_size -
+	/* check whether it can be inserted to inline xattr space. */
+	inline_size = EXT4_I(dir)->i_inline_size -
 			EXT4_MIN_INLINE_DATA_SIZE;
-	अगर (!अंतरभूत_size) अणु
+	if (!inline_size) {
 		/* Try to use the xattr space.*/
-		ret = ext4_update_अंतरभूत_dir(handle, dir, &iloc);
-		अगर (ret && ret != -ENOSPC)
-			जाओ out;
+		ret = ext4_update_inline_dir(handle, dir, &iloc);
+		if (ret && ret != -ENOSPC)
+			goto out;
 
-		अंतरभूत_size = EXT4_I(dir)->i_अंतरभूत_size -
+		inline_size = EXT4_I(dir)->i_inline_size -
 				EXT4_MIN_INLINE_DATA_SIZE;
-	पूर्ण
+	}
 
-	अगर (अंतरभूत_size) अणु
-		अंतरभूत_start = ext4_get_अंतरभूत_xattr_pos(dir, &iloc);
+	if (inline_size) {
+		inline_start = ext4_get_inline_xattr_pos(dir, &iloc);
 
-		ret = ext4_add_dirent_to_अंतरभूत(handle, fname, dir,
-						inode, &iloc, अंतरभूत_start,
-						अंतरभूत_size);
+		ret = ext4_add_dirent_to_inline(handle, fname, dir,
+						inode, &iloc, inline_start,
+						inline_size);
 
-		अगर (ret != -ENOSPC)
-			जाओ out;
-	पूर्ण
+		if (ret != -ENOSPC)
+			goto out;
+	}
 
 	/*
-	 * The अंतरभूत space is filled up, so create a new block क्रम it.
-	 * As the extent tree will be created, we have to save the अंतरभूत
+	 * The inline space is filled up, so create a new block for it.
+	 * As the extent tree will be created, we have to save the inline
 	 * dir first.
 	 */
-	ret = ext4_convert_अंतरभूत_data_nolock(handle, dir, &iloc);
+	ret = ext4_convert_inline_data_nolock(handle, dir, &iloc);
 
 out:
-	ext4_ग_लिखो_unlock_xattr(dir, &no_expand);
+	ext4_write_unlock_xattr(dir, &no_expand);
 	ret2 = ext4_mark_inode_dirty(handle, dir);
-	अगर (unlikely(ret2 && !ret))
+	if (unlikely(ret2 && !ret))
 		ret = ret2;
-	brअन्यथा(iloc.bh);
-	वापस ret;
-पूर्ण
+	brelse(iloc.bh);
+	return ret;
+}
 
 /*
- * This function fills a red-black tree with inक्रमmation from an
- * अंतरभूतd dir.  It वापसs the number directory entries loaded
- * पूर्णांकo the tree.  If there is an error it is वापसed in err.
+ * This function fills a red-black tree with information from an
+ * inlined dir.  It returns the number directory entries loaded
+ * into the tree.  If there is an error it is returned in err.
  */
-पूर्णांक ext4_अंतरभूतdir_to_tree(काष्ठा file *dir_file,
-			   काष्ठा inode *dir, ext4_lblk_t block,
-			   काष्ठा dx_hash_info *hinfo,
+int ext4_inlinedir_to_tree(struct file *dir_file,
+			   struct inode *dir, ext4_lblk_t block,
+			   struct dx_hash_info *hinfo,
 			   __u32 start_hash, __u32 start_minor_hash,
-			   पूर्णांक *has_अंतरभूत_data)
-अणु
-	पूर्णांक err = 0, count = 0;
-	अचिन्हित पूर्णांक parent_ino;
-	पूर्णांक pos;
-	काष्ठा ext4_dir_entry_2 *de;
-	काष्ठा inode *inode = file_inode(dir_file);
-	पूर्णांक ret, अंतरभूत_size = 0;
-	काष्ठा ext4_iloc iloc;
-	व्योम *dir_buf = शून्य;
-	काष्ठा ext4_dir_entry_2 fake;
-	काष्ठा fscrypt_str पंचांगp_str;
+			   int *has_inline_data)
+{
+	int err = 0, count = 0;
+	unsigned int parent_ino;
+	int pos;
+	struct ext4_dir_entry_2 *de;
+	struct inode *inode = file_inode(dir_file);
+	int ret, inline_size = 0;
+	struct ext4_iloc iloc;
+	void *dir_buf = NULL;
+	struct ext4_dir_entry_2 fake;
+	struct fscrypt_str tmp_str;
 
 	ret = ext4_get_inode_loc(inode, &iloc);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	करोwn_पढ़ो(&EXT4_I(inode)->xattr_sem);
-	अगर (!ext4_has_अंतरभूत_data(inode)) अणु
-		up_पढ़ो(&EXT4_I(inode)->xattr_sem);
-		*has_अंतरभूत_data = 0;
-		जाओ out;
-	पूर्ण
+	down_read(&EXT4_I(inode)->xattr_sem);
+	if (!ext4_has_inline_data(inode)) {
+		up_read(&EXT4_I(inode)->xattr_sem);
+		*has_inline_data = 0;
+		goto out;
+	}
 
-	अंतरभूत_size = ext4_get_अंतरभूत_size(inode);
-	dir_buf = kदो_स्मृति(अंतरभूत_size, GFP_NOFS);
-	अगर (!dir_buf) अणु
+	inline_size = ext4_get_inline_size(inode);
+	dir_buf = kmalloc(inline_size, GFP_NOFS);
+	if (!dir_buf) {
 		ret = -ENOMEM;
-		up_पढ़ो(&EXT4_I(inode)->xattr_sem);
-		जाओ out;
-	पूर्ण
+		up_read(&EXT4_I(inode)->xattr_sem);
+		goto out;
+	}
 
-	ret = ext4_पढ़ो_अंतरभूत_data(inode, dir_buf, अंतरभूत_size, &iloc);
-	up_पढ़ो(&EXT4_I(inode)->xattr_sem);
-	अगर (ret < 0)
-		जाओ out;
+	ret = ext4_read_inline_data(inode, dir_buf, inline_size, &iloc);
+	up_read(&EXT4_I(inode)->xattr_sem);
+	if (ret < 0)
+		goto out;
 
 	pos = 0;
-	parent_ino = le32_to_cpu(((काष्ठा ext4_dir_entry_2 *)dir_buf)->inode);
-	जबतक (pos < अंतरभूत_size) अणु
+	parent_ino = le32_to_cpu(((struct ext4_dir_entry_2 *)dir_buf)->inode);
+	while (pos < inline_size) {
 		/*
-		 * As अंतरभूतd dir करोesn't store any information about '.' and
+		 * As inlined dir doesn't store any information about '.' and
 		 * only the inode number of '..' is stored, we have to handle
-		 * them dअगरferently.
+		 * them differently.
 		 */
-		अगर (pos == 0) अणु
+		if (pos == 0) {
 			fake.inode = cpu_to_le32(inode->i_ino);
 			fake.name_len = 1;
-			म_नकल(fake.name, ".");
+			strcpy(fake.name, ".");
 			fake.rec_len = ext4_rec_len_to_disk(
-					  ext4_dir_rec_len(fake.name_len, शून्य),
-					  अंतरभूत_size);
-			ext4_set_de_type(inode->i_sb, &fake, S_IFसूची);
+					  ext4_dir_rec_len(fake.name_len, NULL),
+					  inline_size);
+			ext4_set_de_type(inode->i_sb, &fake, S_IFDIR);
 			de = &fake;
 			pos = EXT4_INLINE_DOTDOT_OFFSET;
-		पूर्ण अन्यथा अगर (pos == EXT4_INLINE_DOTDOT_OFFSET) अणु
+		} else if (pos == EXT4_INLINE_DOTDOT_OFFSET) {
 			fake.inode = cpu_to_le32(parent_ino);
 			fake.name_len = 2;
-			म_नकल(fake.name, "..");
+			strcpy(fake.name, "..");
 			fake.rec_len = ext4_rec_len_to_disk(
-					  ext4_dir_rec_len(fake.name_len, शून्य),
-					  अंतरभूत_size);
-			ext4_set_de_type(inode->i_sb, &fake, S_IFसूची);
+					  ext4_dir_rec_len(fake.name_len, NULL),
+					  inline_size);
+			ext4_set_de_type(inode->i_sb, &fake, S_IFDIR);
 			de = &fake;
 			pos = EXT4_INLINE_DOTDOT_SIZE;
-		पूर्ण अन्यथा अणु
-			de = (काष्ठा ext4_dir_entry_2 *)(dir_buf + pos);
-			pos += ext4_rec_len_from_disk(de->rec_len, अंतरभूत_size);
-			अगर (ext4_check_dir_entry(inode, dir_file, de,
+		} else {
+			de = (struct ext4_dir_entry_2 *)(dir_buf + pos);
+			pos += ext4_rec_len_from_disk(de->rec_len, inline_size);
+			if (ext4_check_dir_entry(inode, dir_file, de,
 					 iloc.bh, dir_buf,
-					 अंतरभूत_size, pos)) अणु
+					 inline_size, pos)) {
 				ret = count;
-				जाओ out;
-			पूर्ण
-		पूर्ण
+				goto out;
+			}
+		}
 
-		अगर (ext4_hash_in_dirent(dir)) अणु
-			hinfo->hash = EXT4_सूचीENT_HASH(de);
-			hinfo->minor_hash = EXT4_सूचीENT_MINOR_HASH(de);
-		पूर्ण अन्यथा अणु
+		if (ext4_hash_in_dirent(dir)) {
+			hinfo->hash = EXT4_DIRENT_HASH(de);
+			hinfo->minor_hash = EXT4_DIRENT_MINOR_HASH(de);
+		} else {
 			ext4fs_dirhash(dir, de->name, de->name_len, hinfo);
-		पूर्ण
-		अगर ((hinfo->hash < start_hash) ||
+		}
+		if ((hinfo->hash < start_hash) ||
 		    ((hinfo->hash == start_hash) &&
 		     (hinfo->minor_hash < start_minor_hash)))
-			जारी;
-		अगर (de->inode == 0)
-			जारी;
-		पंचांगp_str.name = de->name;
-		पंचांगp_str.len = de->name_len;
+			continue;
+		if (de->inode == 0)
+			continue;
+		tmp_str.name = de->name;
+		tmp_str.len = de->name_len;
 		err = ext4_htree_store_dirent(dir_file, hinfo->hash,
-					      hinfo->minor_hash, de, &पंचांगp_str);
-		अगर (err) अणु
+					      hinfo->minor_hash, de, &tmp_str);
+		if (err) {
 			ret = err;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		count++;
-	पूर्ण
+	}
 	ret = count;
 out:
-	kमुक्त(dir_buf);
-	brअन्यथा(iloc.bh);
-	वापस ret;
-पूर्ण
+	kfree(dir_buf);
+	brelse(iloc.bh);
+	return ret;
+}
 
 /*
  * So this function is called when the volume is mkfsed with
  * dir_index disabled. In order to keep f_pos persistent
- * after we convert from an अंतरभूतd dir to a blocked based,
- * we just pretend that we are a normal dir and वापस the
- * offset as अगर '.' and '..' really take place.
+ * after we convert from an inlined dir to a blocked based,
+ * we just pretend that we are a normal dir and return the
+ * offset as if '.' and '..' really take place.
  *
  */
-पूर्णांक ext4_पढ़ो_अंतरभूत_dir(काष्ठा file *file,
-			 काष्ठा dir_context *ctx,
-			 पूर्णांक *has_अंतरभूत_data)
-अणु
-	अचिन्हित पूर्णांक offset, parent_ino;
-	पूर्णांक i;
-	काष्ठा ext4_dir_entry_2 *de;
-	काष्ठा super_block *sb;
-	काष्ठा inode *inode = file_inode(file);
-	पूर्णांक ret, अंतरभूत_size = 0;
-	काष्ठा ext4_iloc iloc;
-	व्योम *dir_buf = शून्य;
-	पूर्णांक करोtकरोt_offset, करोtकरोt_size, extra_offset, extra_size;
+int ext4_read_inline_dir(struct file *file,
+			 struct dir_context *ctx,
+			 int *has_inline_data)
+{
+	unsigned int offset, parent_ino;
+	int i;
+	struct ext4_dir_entry_2 *de;
+	struct super_block *sb;
+	struct inode *inode = file_inode(file);
+	int ret, inline_size = 0;
+	struct ext4_iloc iloc;
+	void *dir_buf = NULL;
+	int dotdot_offset, dotdot_size, extra_offset, extra_size;
 
 	ret = ext4_get_inode_loc(inode, &iloc);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	करोwn_पढ़ो(&EXT4_I(inode)->xattr_sem);
-	अगर (!ext4_has_अंतरभूत_data(inode)) अणु
-		up_पढ़ो(&EXT4_I(inode)->xattr_sem);
-		*has_अंतरभूत_data = 0;
-		जाओ out;
-	पूर्ण
+	down_read(&EXT4_I(inode)->xattr_sem);
+	if (!ext4_has_inline_data(inode)) {
+		up_read(&EXT4_I(inode)->xattr_sem);
+		*has_inline_data = 0;
+		goto out;
+	}
 
-	अंतरभूत_size = ext4_get_अंतरभूत_size(inode);
-	dir_buf = kदो_स्मृति(अंतरभूत_size, GFP_NOFS);
-	अगर (!dir_buf) अणु
+	inline_size = ext4_get_inline_size(inode);
+	dir_buf = kmalloc(inline_size, GFP_NOFS);
+	if (!dir_buf) {
 		ret = -ENOMEM;
-		up_पढ़ो(&EXT4_I(inode)->xattr_sem);
-		जाओ out;
-	पूर्ण
+		up_read(&EXT4_I(inode)->xattr_sem);
+		goto out;
+	}
 
-	ret = ext4_पढ़ो_अंतरभूत_data(inode, dir_buf, अंतरभूत_size, &iloc);
-	up_पढ़ो(&EXT4_I(inode)->xattr_sem);
-	अगर (ret < 0)
-		जाओ out;
+	ret = ext4_read_inline_data(inode, dir_buf, inline_size, &iloc);
+	up_read(&EXT4_I(inode)->xattr_sem);
+	if (ret < 0)
+		goto out;
 
 	ret = 0;
 	sb = inode->i_sb;
-	parent_ino = le32_to_cpu(((काष्ठा ext4_dir_entry_2 *)dir_buf)->inode);
+	parent_ino = le32_to_cpu(((struct ext4_dir_entry_2 *)dir_buf)->inode);
 	offset = ctx->pos;
 
 	/*
-	 * करोtकरोt_offset and करोtकरोt_size is the real offset and
-	 * size क्रम ".." and "." अगर the dir is block based जबतक
-	 * the real size क्रम them are only EXT4_INLINE_DOTDOT_SIZE.
+	 * dotdot_offset and dotdot_size is the real offset and
+	 * size for ".." and "." if the dir is block based while
+	 * the real size for them are only EXT4_INLINE_DOTDOT_SIZE.
 	 * So we will use extra_offset and extra_size to indicate them
-	 * during the अंतरभूत dir iteration.
+	 * during the inline dir iteration.
 	 */
-	करोtकरोt_offset = ext4_dir_rec_len(1, शून्य);
-	करोtकरोt_size = करोtकरोt_offset + ext4_dir_rec_len(2, शून्य);
-	extra_offset = करोtकरोt_size - EXT4_INLINE_DOTDOT_SIZE;
-	extra_size = extra_offset + अंतरभूत_size;
+	dotdot_offset = ext4_dir_rec_len(1, NULL);
+	dotdot_size = dotdot_offset + ext4_dir_rec_len(2, NULL);
+	extra_offset = dotdot_size - EXT4_INLINE_DOTDOT_SIZE;
+	extra_size = extra_offset + inline_size;
 
 	/*
 	 * If the version has changed since the last call to
-	 * सूची_पढ़ो(2), then we might be poपूर्णांकing to an invalid
-	 * dirent right now.  Scan from the start of the अंतरभूत
+	 * readdir(2), then we might be pointing to an invalid
+	 * dirent right now.  Scan from the start of the inline
 	 * dir to make sure.
 	 */
-	अगर (!inode_eq_iversion(inode, file->f_version)) अणु
-		क्रम (i = 0; i < extra_size && i < offset;) अणु
+	if (!inode_eq_iversion(inode, file->f_version)) {
+		for (i = 0; i < extra_size && i < offset;) {
 			/*
 			 * "." is with offset 0 and
-			 * ".." is करोtकरोt_offset.
+			 * ".." is dotdot_offset.
 			 */
-			अगर (!i) अणु
-				i = करोtकरोt_offset;
-				जारी;
-			पूर्ण अन्यथा अगर (i == करोtकरोt_offset) अणु
-				i = करोtकरोt_size;
-				जारी;
-			पूर्ण
-			/* क्रम other entry, the real offset in
+			if (!i) {
+				i = dotdot_offset;
+				continue;
+			} else if (i == dotdot_offset) {
+				i = dotdot_size;
+				continue;
+			}
+			/* for other entry, the real offset in
 			 * the buf has to be tuned accordingly.
 			 */
-			de = (काष्ठा ext4_dir_entry_2 *)
+			de = (struct ext4_dir_entry_2 *)
 				(dir_buf + i - extra_offset);
-			/* It's too expensive to करो a full
-			 * dirent test each समय round this
-			 * loop, but we करो have to test at
+			/* It's too expensive to do a full
+			 * dirent test each time round this
+			 * loop, but we do have to test at
 			 * least that it is non-zero.  A
 			 * failure will be detected in the
 			 * dirent test below. */
-			अगर (ext4_rec_len_from_disk(de->rec_len, extra_size)
-				< ext4_dir_rec_len(1, शून्य))
-				अवरोध;
+			if (ext4_rec_len_from_disk(de->rec_len, extra_size)
+				< ext4_dir_rec_len(1, NULL))
+				break;
 			i += ext4_rec_len_from_disk(de->rec_len,
 						    extra_size);
-		पूर्ण
+		}
 		offset = i;
 		ctx->pos = offset;
 		file->f_version = inode_query_iversion(inode);
-	पूर्ण
+	}
 
-	जबतक (ctx->pos < extra_size) अणु
-		अगर (ctx->pos == 0) अणु
-			अगर (!dir_emit(ctx, ".", 1, inode->i_ino, DT_सूची))
-				जाओ out;
-			ctx->pos = करोtकरोt_offset;
-			जारी;
-		पूर्ण
+	while (ctx->pos < extra_size) {
+		if (ctx->pos == 0) {
+			if (!dir_emit(ctx, ".", 1, inode->i_ino, DT_DIR))
+				goto out;
+			ctx->pos = dotdot_offset;
+			continue;
+		}
 
-		अगर (ctx->pos == करोtकरोt_offset) अणु
-			अगर (!dir_emit(ctx, "..", 2, parent_ino, DT_सूची))
-				जाओ out;
-			ctx->pos = करोtकरोt_size;
-			जारी;
-		पूर्ण
+		if (ctx->pos == dotdot_offset) {
+			if (!dir_emit(ctx, "..", 2, parent_ino, DT_DIR))
+				goto out;
+			ctx->pos = dotdot_size;
+			continue;
+		}
 
-		de = (काष्ठा ext4_dir_entry_2 *)
+		de = (struct ext4_dir_entry_2 *)
 			(dir_buf + ctx->pos - extra_offset);
-		अगर (ext4_check_dir_entry(inode, file, de, iloc.bh, dir_buf,
+		if (ext4_check_dir_entry(inode, file, de, iloc.bh, dir_buf,
 					 extra_size, ctx->pos))
-			जाओ out;
-		अगर (le32_to_cpu(de->inode)) अणु
-			अगर (!dir_emit(ctx, de->name, de->name_len,
+			goto out;
+		if (le32_to_cpu(de->inode)) {
+			if (!dir_emit(ctx, de->name, de->name_len,
 				      le32_to_cpu(de->inode),
 				      get_dtype(sb, de->file_type)))
-				जाओ out;
-		पूर्ण
+				goto out;
+		}
 		ctx->pos += ext4_rec_len_from_disk(de->rec_len, extra_size);
-	पूर्ण
+	}
 out:
-	kमुक्त(dir_buf);
-	brअन्यथा(iloc.bh);
-	वापस ret;
-पूर्ण
+	kfree(dir_buf);
+	brelse(iloc.bh);
+	return ret;
+}
 
-काष्ठा buffer_head *ext4_get_first_अंतरभूत_block(काष्ठा inode *inode,
-					काष्ठा ext4_dir_entry_2 **parent_de,
-					पूर्णांक *retval)
-अणु
-	काष्ठा ext4_iloc iloc;
+struct buffer_head *ext4_get_first_inline_block(struct inode *inode,
+					struct ext4_dir_entry_2 **parent_de,
+					int *retval)
+{
+	struct ext4_iloc iloc;
 
 	*retval = ext4_get_inode_loc(inode, &iloc);
-	अगर (*retval)
-		वापस शून्य;
+	if (*retval)
+		return NULL;
 
-	*parent_de = (काष्ठा ext4_dir_entry_2 *)ext4_raw_inode(&iloc)->i_block;
+	*parent_de = (struct ext4_dir_entry_2 *)ext4_raw_inode(&iloc)->i_block;
 
-	वापस iloc.bh;
-पूर्ण
+	return iloc.bh;
+}
 
 /*
- * Try to create the अंतरभूत data क्रम the new dir.
- * If it succeeds, वापस 0, otherwise वापस the error.
- * In हाल of ENOSPC, the caller should create the normal disk layout dir.
+ * Try to create the inline data for the new dir.
+ * If it succeeds, return 0, otherwise return the error.
+ * In case of ENOSPC, the caller should create the normal disk layout dir.
  */
-पूर्णांक ext4_try_create_अंतरभूत_dir(handle_t *handle, काष्ठा inode *parent,
-			       काष्ठा inode *inode)
-अणु
-	पूर्णांक ret, अंतरभूत_size = EXT4_MIN_INLINE_DATA_SIZE;
-	काष्ठा ext4_iloc iloc;
-	काष्ठा ext4_dir_entry_2 *de;
+int ext4_try_create_inline_dir(handle_t *handle, struct inode *parent,
+			       struct inode *inode)
+{
+	int ret, inline_size = EXT4_MIN_INLINE_DATA_SIZE;
+	struct ext4_iloc iloc;
+	struct ext4_dir_entry_2 *de;
 
 	ret = ext4_get_inode_loc(inode, &iloc);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = ext4_prepare_अंतरभूत_data(handle, inode, अंतरभूत_size);
-	अगर (ret)
-		जाओ out;
+	ret = ext4_prepare_inline_data(handle, inode, inline_size);
+	if (ret)
+		goto out;
 
 	/*
-	 * For अंतरभूत dir, we only save the inode inक्रमmation क्रम the ".."
+	 * For inline dir, we only save the inode information for the ".."
 	 * and create a fake dentry to cover the left space.
 	 */
-	de = (काष्ठा ext4_dir_entry_2 *)ext4_raw_inode(&iloc)->i_block;
+	de = (struct ext4_dir_entry_2 *)ext4_raw_inode(&iloc)->i_block;
 	de->inode = cpu_to_le32(parent->i_ino);
-	de = (काष्ठा ext4_dir_entry_2 *)((व्योम *)de + EXT4_INLINE_DOTDOT_SIZE);
+	de = (struct ext4_dir_entry_2 *)((void *)de + EXT4_INLINE_DOTDOT_SIZE);
 	de->inode = 0;
 	de->rec_len = ext4_rec_len_to_disk(
-				अंतरभूत_size - EXT4_INLINE_DOTDOT_SIZE,
-				अंतरभूत_size);
+				inline_size - EXT4_INLINE_DOTDOT_SIZE,
+				inline_size);
 	set_nlink(inode, 2);
-	inode->i_size = EXT4_I(inode)->i_disksize = अंतरभूत_size;
+	inode->i_size = EXT4_I(inode)->i_disksize = inline_size;
 out:
-	brअन्यथा(iloc.bh);
-	वापस ret;
-पूर्ण
+	brelse(iloc.bh);
+	return ret;
+}
 
-काष्ठा buffer_head *ext4_find_अंतरभूत_entry(काष्ठा inode *dir,
-					काष्ठा ext4_filename *fname,
-					काष्ठा ext4_dir_entry_2 **res_dir,
-					पूर्णांक *has_अंतरभूत_data)
-अणु
-	पूर्णांक ret;
-	काष्ठा ext4_iloc iloc;
-	व्योम *अंतरभूत_start;
-	पूर्णांक अंतरभूत_size;
+struct buffer_head *ext4_find_inline_entry(struct inode *dir,
+					struct ext4_filename *fname,
+					struct ext4_dir_entry_2 **res_dir,
+					int *has_inline_data)
+{
+	int ret;
+	struct ext4_iloc iloc;
+	void *inline_start;
+	int inline_size;
 
-	अगर (ext4_get_inode_loc(dir, &iloc))
-		वापस शून्य;
+	if (ext4_get_inode_loc(dir, &iloc))
+		return NULL;
 
-	करोwn_पढ़ो(&EXT4_I(dir)->xattr_sem);
-	अगर (!ext4_has_अंतरभूत_data(dir)) अणु
-		*has_अंतरभूत_data = 0;
-		जाओ out;
-	पूर्ण
+	down_read(&EXT4_I(dir)->xattr_sem);
+	if (!ext4_has_inline_data(dir)) {
+		*has_inline_data = 0;
+		goto out;
+	}
 
-	अंतरभूत_start = (व्योम *)ext4_raw_inode(&iloc)->i_block +
+	inline_start = (void *)ext4_raw_inode(&iloc)->i_block +
 						EXT4_INLINE_DOTDOT_SIZE;
-	अंतरभूत_size = EXT4_MIN_INLINE_DATA_SIZE - EXT4_INLINE_DOTDOT_SIZE;
-	ret = ext4_search_dir(iloc.bh, अंतरभूत_start, अंतरभूत_size,
+	inline_size = EXT4_MIN_INLINE_DATA_SIZE - EXT4_INLINE_DOTDOT_SIZE;
+	ret = ext4_search_dir(iloc.bh, inline_start, inline_size,
 			      dir, fname, 0, res_dir);
-	अगर (ret == 1)
-		जाओ out_find;
-	अगर (ret < 0)
-		जाओ out;
+	if (ret == 1)
+		goto out_find;
+	if (ret < 0)
+		goto out;
 
-	अगर (ext4_get_अंतरभूत_size(dir) == EXT4_MIN_INLINE_DATA_SIZE)
-		जाओ out;
+	if (ext4_get_inline_size(dir) == EXT4_MIN_INLINE_DATA_SIZE)
+		goto out;
 
-	अंतरभूत_start = ext4_get_अंतरभूत_xattr_pos(dir, &iloc);
-	अंतरभूत_size = ext4_get_अंतरभूत_size(dir) - EXT4_MIN_INLINE_DATA_SIZE;
+	inline_start = ext4_get_inline_xattr_pos(dir, &iloc);
+	inline_size = ext4_get_inline_size(dir) - EXT4_MIN_INLINE_DATA_SIZE;
 
-	ret = ext4_search_dir(iloc.bh, अंतरभूत_start, अंतरभूत_size,
+	ret = ext4_search_dir(iloc.bh, inline_start, inline_size,
 			      dir, fname, 0, res_dir);
-	अगर (ret == 1)
-		जाओ out_find;
+	if (ret == 1)
+		goto out_find;
 
 out:
-	brअन्यथा(iloc.bh);
-	iloc.bh = शून्य;
+	brelse(iloc.bh);
+	iloc.bh = NULL;
 out_find:
-	up_पढ़ो(&EXT4_I(dir)->xattr_sem);
-	वापस iloc.bh;
-पूर्ण
+	up_read(&EXT4_I(dir)->xattr_sem);
+	return iloc.bh;
+}
 
-पूर्णांक ext4_delete_अंतरभूत_entry(handle_t *handle,
-			     काष्ठा inode *dir,
-			     काष्ठा ext4_dir_entry_2 *de_del,
-			     काष्ठा buffer_head *bh,
-			     पूर्णांक *has_अंतरभूत_data)
-अणु
-	पूर्णांक err, अंतरभूत_size, no_expand;
-	काष्ठा ext4_iloc iloc;
-	व्योम *अंतरभूत_start;
+int ext4_delete_inline_entry(handle_t *handle,
+			     struct inode *dir,
+			     struct ext4_dir_entry_2 *de_del,
+			     struct buffer_head *bh,
+			     int *has_inline_data)
+{
+	int err, inline_size, no_expand;
+	struct ext4_iloc iloc;
+	void *inline_start;
 
 	err = ext4_get_inode_loc(dir, &iloc);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	ext4_ग_लिखो_lock_xattr(dir, &no_expand);
-	अगर (!ext4_has_अंतरभूत_data(dir)) अणु
-		*has_अंतरभूत_data = 0;
-		जाओ out;
-	पूर्ण
+	ext4_write_lock_xattr(dir, &no_expand);
+	if (!ext4_has_inline_data(dir)) {
+		*has_inline_data = 0;
+		goto out;
+	}
 
-	अगर ((व्योम *)de_del - ((व्योम *)ext4_raw_inode(&iloc)->i_block) <
-		EXT4_MIN_INLINE_DATA_SIZE) अणु
-		अंतरभूत_start = (व्योम *)ext4_raw_inode(&iloc)->i_block +
+	if ((void *)de_del - ((void *)ext4_raw_inode(&iloc)->i_block) <
+		EXT4_MIN_INLINE_DATA_SIZE) {
+		inline_start = (void *)ext4_raw_inode(&iloc)->i_block +
 					EXT4_INLINE_DOTDOT_SIZE;
-		अंतरभूत_size = EXT4_MIN_INLINE_DATA_SIZE -
+		inline_size = EXT4_MIN_INLINE_DATA_SIZE -
 				EXT4_INLINE_DOTDOT_SIZE;
-	पूर्ण अन्यथा अणु
-		अंतरभूत_start = ext4_get_अंतरभूत_xattr_pos(dir, &iloc);
-		अंतरभूत_size = ext4_get_अंतरभूत_size(dir) -
+	} else {
+		inline_start = ext4_get_inline_xattr_pos(dir, &iloc);
+		inline_size = ext4_get_inline_size(dir) -
 				EXT4_MIN_INLINE_DATA_SIZE;
-	पूर्ण
+	}
 
 	BUFFER_TRACE(bh, "get_write_access");
-	err = ext4_journal_get_ग_लिखो_access(handle, bh);
-	अगर (err)
-		जाओ out;
+	err = ext4_journal_get_write_access(handle, bh);
+	if (err)
+		goto out;
 
 	err = ext4_generic_delete_entry(dir, de_del, bh,
-					अंतरभूत_start, अंतरभूत_size, 0);
-	अगर (err)
-		जाओ out;
+					inline_start, inline_size, 0);
+	if (err)
+		goto out;
 
-	ext4_show_अंतरभूत_dir(dir, iloc.bh, अंतरभूत_start, अंतरभूत_size);
+	ext4_show_inline_dir(dir, iloc.bh, inline_start, inline_size);
 out:
-	ext4_ग_लिखो_unlock_xattr(dir, &no_expand);
-	अगर (likely(err == 0))
+	ext4_write_unlock_xattr(dir, &no_expand);
+	if (likely(err == 0))
 		err = ext4_mark_inode_dirty(handle, dir);
-	brअन्यथा(iloc.bh);
-	अगर (err != -ENOENT)
+	brelse(iloc.bh);
+	if (err != -ENOENT)
 		ext4_std_error(dir->i_sb, err);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
- * Get the अंतरभूत dentry at offset.
+ * Get the inline dentry at offset.
  */
-अटल अंतरभूत काष्ठा ext4_dir_entry_2 *
-ext4_get_अंतरभूत_entry(काष्ठा inode *inode,
-		      काष्ठा ext4_iloc *iloc,
-		      अचिन्हित पूर्णांक offset,
-		      व्योम **अंतरभूत_start,
-		      पूर्णांक *अंतरभूत_size)
-अणु
-	व्योम *अंतरभूत_pos;
+static inline struct ext4_dir_entry_2 *
+ext4_get_inline_entry(struct inode *inode,
+		      struct ext4_iloc *iloc,
+		      unsigned int offset,
+		      void **inline_start,
+		      int *inline_size)
+{
+	void *inline_pos;
 
-	BUG_ON(offset > ext4_get_अंतरभूत_size(inode));
+	BUG_ON(offset > ext4_get_inline_size(inode));
 
-	अगर (offset < EXT4_MIN_INLINE_DATA_SIZE) अणु
-		अंतरभूत_pos = (व्योम *)ext4_raw_inode(iloc)->i_block;
-		*अंतरभूत_size = EXT4_MIN_INLINE_DATA_SIZE;
-	पूर्ण अन्यथा अणु
-		अंतरभूत_pos = ext4_get_अंतरभूत_xattr_pos(inode, iloc);
+	if (offset < EXT4_MIN_INLINE_DATA_SIZE) {
+		inline_pos = (void *)ext4_raw_inode(iloc)->i_block;
+		*inline_size = EXT4_MIN_INLINE_DATA_SIZE;
+	} else {
+		inline_pos = ext4_get_inline_xattr_pos(inode, iloc);
 		offset -= EXT4_MIN_INLINE_DATA_SIZE;
-		*अंतरभूत_size = ext4_get_अंतरभूत_size(inode) -
+		*inline_size = ext4_get_inline_size(inode) -
 				EXT4_MIN_INLINE_DATA_SIZE;
-	पूर्ण
+	}
 
-	अगर (अंतरभूत_start)
-		*अंतरभूत_start = अंतरभूत_pos;
-	वापस (काष्ठा ext4_dir_entry_2 *)(अंतरभूत_pos + offset);
-पूर्ण
+	if (inline_start)
+		*inline_start = inline_pos;
+	return (struct ext4_dir_entry_2 *)(inline_pos + offset);
+}
 
-bool empty_अंतरभूत_dir(काष्ठा inode *dir, पूर्णांक *has_अंतरभूत_data)
-अणु
-	पूर्णांक err, अंतरभूत_size;
-	काष्ठा ext4_iloc iloc;
-	माप_प्रकार अंतरभूत_len;
-	व्योम *अंतरभूत_pos;
-	अचिन्हित पूर्णांक offset;
-	काष्ठा ext4_dir_entry_2 *de;
+bool empty_inline_dir(struct inode *dir, int *has_inline_data)
+{
+	int err, inline_size;
+	struct ext4_iloc iloc;
+	size_t inline_len;
+	void *inline_pos;
+	unsigned int offset;
+	struct ext4_dir_entry_2 *de;
 	bool ret = true;
 
 	err = ext4_get_inode_loc(dir, &iloc);
-	अगर (err) अणु
+	if (err) {
 		EXT4_ERROR_INODE_ERR(dir, -err,
 				     "error %d getting inode %lu block",
 				     err, dir->i_ino);
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	करोwn_पढ़ो(&EXT4_I(dir)->xattr_sem);
-	अगर (!ext4_has_अंतरभूत_data(dir)) अणु
-		*has_अंतरभूत_data = 0;
-		जाओ out;
-	पूर्ण
+	down_read(&EXT4_I(dir)->xattr_sem);
+	if (!ext4_has_inline_data(dir)) {
+		*has_inline_data = 0;
+		goto out;
+	}
 
-	de = (काष्ठा ext4_dir_entry_2 *)ext4_raw_inode(&iloc)->i_block;
-	अगर (!le32_to_cpu(de->inode)) अणु
+	de = (struct ext4_dir_entry_2 *)ext4_raw_inode(&iloc)->i_block;
+	if (!le32_to_cpu(de->inode)) {
 		ext4_warning(dir->i_sb,
 			     "bad inline directory (dir #%lu) - no `..'",
 			     dir->i_ino);
 		ret = true;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अंतरभूत_len = ext4_get_अंतरभूत_size(dir);
+	inline_len = ext4_get_inline_size(dir);
 	offset = EXT4_INLINE_DOTDOT_SIZE;
-	जबतक (offset < अंतरभूत_len) अणु
-		de = ext4_get_अंतरभूत_entry(dir, &iloc, offset,
-					   &अंतरभूत_pos, &अंतरभूत_size);
-		अगर (ext4_check_dir_entry(dir, शून्य, de,
-					 iloc.bh, अंतरभूत_pos,
-					 अंतरभूत_size, offset)) अणु
+	while (offset < inline_len) {
+		de = ext4_get_inline_entry(dir, &iloc, offset,
+					   &inline_pos, &inline_size);
+		if (ext4_check_dir_entry(dir, NULL, de,
+					 iloc.bh, inline_pos,
+					 inline_size, offset)) {
 			ext4_warning(dir->i_sb,
 				     "bad inline directory (dir #%lu) - "
 				     "inode %u, rec_len %u, name_len %d"
 				     "inline size %d",
 				     dir->i_ino, le32_to_cpu(de->inode),
 				     le16_to_cpu(de->rec_len), de->name_len,
-				     अंतरभूत_size);
+				     inline_size);
 			ret = true;
-			जाओ out;
-		पूर्ण
-		अगर (le32_to_cpu(de->inode)) अणु
+			goto out;
+		}
+		if (le32_to_cpu(de->inode)) {
 			ret = false;
-			जाओ out;
-		पूर्ण
-		offset += ext4_rec_len_from_disk(de->rec_len, अंतरभूत_size);
-	पूर्ण
+			goto out;
+		}
+		offset += ext4_rec_len_from_disk(de->rec_len, inline_size);
+	}
 
 out:
-	up_पढ़ो(&EXT4_I(dir)->xattr_sem);
-	brअन्यथा(iloc.bh);
-	वापस ret;
-पूर्ण
+	up_read(&EXT4_I(dir)->xattr_sem);
+	brelse(iloc.bh);
+	return ret;
+}
 
-पूर्णांक ext4_destroy_अंतरभूत_data(handle_t *handle, काष्ठा inode *inode)
-अणु
-	पूर्णांक ret, no_expand;
+int ext4_destroy_inline_data(handle_t *handle, struct inode *inode)
+{
+	int ret, no_expand;
 
-	ext4_ग_लिखो_lock_xattr(inode, &no_expand);
-	ret = ext4_destroy_अंतरभूत_data_nolock(handle, inode);
-	ext4_ग_लिखो_unlock_xattr(inode, &no_expand);
+	ext4_write_lock_xattr(inode, &no_expand);
+	ret = ext4_destroy_inline_data_nolock(handle, inode);
+	ext4_write_unlock_xattr(inode, &no_expand);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक ext4_अंतरभूत_data_iomap(काष्ठा inode *inode, काष्ठा iomap *iomap)
-अणु
+int ext4_inline_data_iomap(struct inode *inode, struct iomap *iomap)
+{
 	__u64 addr;
-	पूर्णांक error = -EAGAIN;
-	काष्ठा ext4_iloc iloc;
+	int error = -EAGAIN;
+	struct ext4_iloc iloc;
 
-	करोwn_पढ़ो(&EXT4_I(inode)->xattr_sem);
-	अगर (!ext4_has_अंतरभूत_data(inode))
-		जाओ out;
+	down_read(&EXT4_I(inode)->xattr_sem);
+	if (!ext4_has_inline_data(inode))
+		goto out;
 
 	error = ext4_get_inode_loc(inode, &iloc);
-	अगर (error)
-		जाओ out;
+	if (error)
+		goto out;
 
 	addr = (__u64)iloc.bh->b_blocknr << inode->i_sb->s_blocksize_bits;
-	addr += (अक्षर *)ext4_raw_inode(&iloc) - iloc.bh->b_data;
-	addr += दुरत्व(काष्ठा ext4_inode, i_block);
+	addr += (char *)ext4_raw_inode(&iloc) - iloc.bh->b_data;
+	addr += offsetof(struct ext4_inode, i_block);
 
-	brअन्यथा(iloc.bh);
+	brelse(iloc.bh);
 
 	iomap->addr = addr;
 	iomap->offset = 0;
-	iomap->length = min_t(loff_t, ext4_get_अंतरभूत_size(inode),
-			      i_size_पढ़ो(inode));
+	iomap->length = min_t(loff_t, ext4_get_inline_size(inode),
+			      i_size_read(inode));
 	iomap->type = IOMAP_INLINE;
 	iomap->flags = 0;
 
 out:
-	up_पढ़ो(&EXT4_I(inode)->xattr_sem);
-	वापस error;
-पूर्ण
+	up_read(&EXT4_I(inode)->xattr_sem);
+	return error;
+}
 
-पूर्णांक ext4_अंतरभूत_data_truncate(काष्ठा inode *inode, पूर्णांक *has_अंतरभूत)
-अणु
+int ext4_inline_data_truncate(struct inode *inode, int *has_inline)
+{
 	handle_t *handle;
-	पूर्णांक अंतरभूत_size, value_len, needed_blocks, no_expand, err = 0;
-	माप_प्रकार i_size;
-	व्योम *value = शून्य;
-	काष्ठा ext4_xattr_ibody_find is = अणु
-		.s = अणु .not_found = -ENODATA, पूर्ण,
-	पूर्ण;
-	काष्ठा ext4_xattr_info i = अणु
+	int inline_size, value_len, needed_blocks, no_expand, err = 0;
+	size_t i_size;
+	void *value = NULL;
+	struct ext4_xattr_ibody_find is = {
+		.s = { .not_found = -ENODATA, },
+	};
+	struct ext4_xattr_info i = {
 		.name_index = EXT4_XATTR_INDEX_SYSTEM,
 		.name = EXT4_XATTR_SYSTEM_DATA,
-	पूर्ण;
+	};
 
 
-	needed_blocks = ext4_ग_लिखोpage_trans_blocks(inode);
+	needed_blocks = ext4_writepage_trans_blocks(inode);
 	handle = ext4_journal_start(inode, EXT4_HT_INODE, needed_blocks);
-	अगर (IS_ERR(handle))
-		वापस PTR_ERR(handle);
+	if (IS_ERR(handle))
+		return PTR_ERR(handle);
 
-	ext4_ग_लिखो_lock_xattr(inode, &no_expand);
-	अगर (!ext4_has_अंतरभूत_data(inode)) अणु
-		ext4_ग_लिखो_unlock_xattr(inode, &no_expand);
-		*has_अंतरभूत = 0;
+	ext4_write_lock_xattr(inode, &no_expand);
+	if (!ext4_has_inline_data(inode)) {
+		ext4_write_unlock_xattr(inode, &no_expand);
+		*has_inline = 0;
 		ext4_journal_stop(handle);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर ((err = ext4_orphan_add(handle, inode)) != 0)
-		जाओ out;
+	if ((err = ext4_orphan_add(handle, inode)) != 0)
+		goto out;
 
-	अगर ((err = ext4_get_inode_loc(inode, &is.iloc)) != 0)
-		जाओ out;
+	if ((err = ext4_get_inode_loc(inode, &is.iloc)) != 0)
+		goto out;
 
-	करोwn_ग_लिखो(&EXT4_I(inode)->i_data_sem);
+	down_write(&EXT4_I(inode)->i_data_sem);
 	i_size = inode->i_size;
-	अंतरभूत_size = ext4_get_अंतरभूत_size(inode);
+	inline_size = ext4_get_inline_size(inode);
 	EXT4_I(inode)->i_disksize = i_size;
 
-	अगर (i_size < अंतरभूत_size) अणु
+	if (i_size < inline_size) {
 		/* Clear the content in the xattr space. */
-		अगर (अंतरभूत_size > EXT4_MIN_INLINE_DATA_SIZE) अणु
-			अगर ((err = ext4_xattr_ibody_find(inode, &i, &is)) != 0)
-				जाओ out_error;
+		if (inline_size > EXT4_MIN_INLINE_DATA_SIZE) {
+			if ((err = ext4_xattr_ibody_find(inode, &i, &is)) != 0)
+				goto out_error;
 
 			BUG_ON(is.s.not_found);
 
 			value_len = le32_to_cpu(is.s.here->e_value_size);
-			value = kदो_स्मृति(value_len, GFP_NOFS);
-			अगर (!value) अणु
+			value = kmalloc(value_len, GFP_NOFS);
+			if (!value) {
 				err = -ENOMEM;
-				जाओ out_error;
-			पूर्ण
+				goto out_error;
+			}
 
 			err = ext4_xattr_ibody_get(inode, i.name_index,
 						   i.name, value, value_len);
-			अगर (err <= 0)
-				जाओ out_error;
+			if (err <= 0)
+				goto out_error;
 
 			i.value = value;
 			i.value_len = i_size > EXT4_MIN_INLINE_DATA_SIZE ?
 					i_size - EXT4_MIN_INLINE_DATA_SIZE : 0;
-			err = ext4_xattr_ibody_अंतरभूत_set(handle, inode,
+			err = ext4_xattr_ibody_inline_set(handle, inode,
 							  &i, &is);
-			अगर (err)
-				जाओ out_error;
-		पूर्ण
+			if (err)
+				goto out_error;
+		}
 
 		/* Clear the content within i_blocks. */
-		अगर (i_size < EXT4_MIN_INLINE_DATA_SIZE) अणु
-			व्योम *p = (व्योम *) ext4_raw_inode(&is.iloc)->i_block;
-			स_रखो(p + i_size, 0,
+		if (i_size < EXT4_MIN_INLINE_DATA_SIZE) {
+			void *p = (void *) ext4_raw_inode(&is.iloc)->i_block;
+			memset(p + i_size, 0,
 			       EXT4_MIN_INLINE_DATA_SIZE - i_size);
-		पूर्ण
+		}
 
-		EXT4_I(inode)->i_अंतरभूत_size = i_size <
+		EXT4_I(inode)->i_inline_size = i_size <
 					EXT4_MIN_INLINE_DATA_SIZE ?
 					EXT4_MIN_INLINE_DATA_SIZE : i_size;
-	पूर्ण
+	}
 
 out_error:
-	up_ग_लिखो(&EXT4_I(inode)->i_data_sem);
+	up_write(&EXT4_I(inode)->i_data_sem);
 out:
-	brअन्यथा(is.iloc.bh);
-	ext4_ग_लिखो_unlock_xattr(inode, &no_expand);
-	kमुक्त(value);
-	अगर (inode->i_nlink)
+	brelse(is.iloc.bh);
+	ext4_write_unlock_xattr(inode, &no_expand);
+	kfree(value);
+	if (inode->i_nlink)
 		ext4_orphan_del(handle, inode);
 
-	अगर (err == 0) अणु
-		inode->i_mसमय = inode->i_स_समय = current_समय(inode);
+	if (err == 0) {
+		inode->i_mtime = inode->i_ctime = current_time(inode);
 		err = ext4_mark_inode_dirty(handle, inode);
-		अगर (IS_SYNC(inode))
+		if (IS_SYNC(inode))
 			ext4_handle_sync(handle);
-	पूर्ण
+	}
 	ext4_journal_stop(handle);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक ext4_convert_अंतरभूत_data(काष्ठा inode *inode)
-अणु
-	पूर्णांक error, needed_blocks, no_expand;
+int ext4_convert_inline_data(struct inode *inode)
+{
+	int error, needed_blocks, no_expand;
 	handle_t *handle;
-	काष्ठा ext4_iloc iloc;
+	struct ext4_iloc iloc;
 
-	अगर (!ext4_has_अंतरभूत_data(inode)) अणु
+	if (!ext4_has_inline_data(inode)) {
 		ext4_clear_inode_state(inode, EXT4_STATE_MAY_INLINE_DATA);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	needed_blocks = ext4_ग_लिखोpage_trans_blocks(inode);
+	needed_blocks = ext4_writepage_trans_blocks(inode);
 
-	iloc.bh = शून्य;
+	iloc.bh = NULL;
 	error = ext4_get_inode_loc(inode, &iloc);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	handle = ext4_journal_start(inode, EXT4_HT_WRITE_PAGE, needed_blocks);
-	अगर (IS_ERR(handle)) अणु
+	if (IS_ERR(handle)) {
 		error = PTR_ERR(handle);
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
-	ext4_ग_लिखो_lock_xattr(inode, &no_expand);
-	अगर (ext4_has_अंतरभूत_data(inode))
-		error = ext4_convert_अंतरभूत_data_nolock(handle, inode, &iloc);
-	ext4_ग_लिखो_unlock_xattr(inode, &no_expand);
+	ext4_write_lock_xattr(inode, &no_expand);
+	if (ext4_has_inline_data(inode))
+		error = ext4_convert_inline_data_nolock(handle, inode, &iloc);
+	ext4_write_unlock_xattr(inode, &no_expand);
 	ext4_journal_stop(handle);
-out_मुक्त:
-	brअन्यथा(iloc.bh);
-	वापस error;
-पूर्ण
+out_free:
+	brelse(iloc.bh);
+	return error;
+}

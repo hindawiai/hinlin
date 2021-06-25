@@ -1,184 +1,183 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Landlock test helpers
  *
- * Copyright तऊ 2017-2020 Mickaथ+l Salaथञn <mic@digikod.net>
- * Copyright तऊ 2019-2020 ANSSI
- * Copyright तऊ 2021 Microsoft Corporation
+ * Copyright © 2017-2020 Mickaël Salaün <mic@digikod.net>
+ * Copyright © 2019-2020 ANSSI
+ * Copyright © 2021 Microsoft Corporation
  */
 
-#समावेश <त्रुटिसं.स>
-#समावेश <linux/landlock.h>
-#समावेश <sys/capability.h>
-#समावेश <sys/syscall.h>
-#समावेश <sys/types.h>
-#समावेश <sys/रुको.h>
-#समावेश <unistd.h>
+#include <errno.h>
+#include <linux/landlock.h>
+#include <sys/capability.h>
+#include <sys/syscall.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
-#समावेश "../kselftest_harness.h"
+#include "../kselftest_harness.h"
 
-#अगर_अघोषित ARRAY_SIZE
-#घोषणा ARRAY_SIZE(x) (माप(x) / माप((x)[0]))
-#पूर्ण_अगर
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+#endif
 
 /*
  * TEST_F_FORK() is useful when a test drop privileges but the corresponding
- * FIXTURE_TEARDOWN() requires them (e.g. to हटाओ files from a directory
- * where ग_लिखो actions are denied).  For convenience, FIXTURE_TEARDOWN() is
+ * FIXTURE_TEARDOWN() requires them (e.g. to remove files from a directory
+ * where write actions are denied).  For convenience, FIXTURE_TEARDOWN() is
  * also called when the test failed, but not when FIXTURE_SETUP() failed.  For
- * this to be possible, we must not call पात() but instead निकास smoothly
- * (hence the step prपूर्णांक).
+ * this to be possible, we must not call abort() but instead exit smoothly
+ * (hence the step print).
  */
-#घोषणा TEST_F_FORK(fixture_name, test_name) \
-	अटल व्योम fixture_name##_##test_name##_child( \
-		काष्ठा __test_metadata *_metadata, \
+#define TEST_F_FORK(fixture_name, test_name) \
+	static void fixture_name##_##test_name##_child( \
+		struct __test_metadata *_metadata, \
 		FIXTURE_DATA(fixture_name) *self, \
-		स्थिर FIXTURE_VARIANT(fixture_name) *variant); \
+		const FIXTURE_VARIANT(fixture_name) *variant); \
 	TEST_F(fixture_name, test_name) \
-	अणु \
-		पूर्णांक status; \
-		स्थिर pid_t child = विभाजन(); \
-		अगर (child < 0) \
-			पात(); \
-		अगर (child == 0) अणु \
-			_metadata->no_prपूर्णांक = 1; \
+	{ \
+		int status; \
+		const pid_t child = fork(); \
+		if (child < 0) \
+			abort(); \
+		if (child == 0) { \
+			_metadata->no_print = 1; \
 			fixture_name##_##test_name##_child(_metadata, self, variant); \
-			अगर (_metadata->skip) \
-				_निकास(255); \
-			अगर (_metadata->passed) \
-				_निकास(0); \
-			_निकास(_metadata->step); \
-		पूर्ण \
-		अगर (child != रुकोpid(child, &status, 0)) \
-			पात(); \
-		अगर (WIFSIGNALED(status) || !WIFEXITED(status)) अणु \
+			if (_metadata->skip) \
+				_exit(255); \
+			if (_metadata->passed) \
+				_exit(0); \
+			_exit(_metadata->step); \
+		} \
+		if (child != waitpid(child, &status, 0)) \
+			abort(); \
+		if (WIFSIGNALED(status) || !WIFEXITED(status)) { \
 			_metadata->passed = 0; \
 			_metadata->step = 1; \
-			वापस; \
-		पूर्ण \
-		चयन (WEXITSTATUS(status)) अणु \
-		हाल 0: \
+			return; \
+		} \
+		switch (WEXITSTATUS(status)) { \
+		case 0: \
 			_metadata->passed = 1; \
-			अवरोध; \
-		हाल 255: \
+			break; \
+		case 255: \
 			_metadata->passed = 1; \
 			_metadata->skip = 1; \
-			अवरोध; \
-		शेष: \
+			break; \
+		default: \
 			_metadata->passed = 0; \
 			_metadata->step = WEXITSTATUS(status); \
-			अवरोध; \
-		पूर्ण \
-	पूर्ण \
-	अटल व्योम fixture_name##_##test_name##_child( \
-		काष्ठा __test_metadata __attribute__((unused)) *_metadata, \
+			break; \
+		} \
+	} \
+	static void fixture_name##_##test_name##_child( \
+		struct __test_metadata __attribute__((unused)) *_metadata, \
 		FIXTURE_DATA(fixture_name) __attribute__((unused)) *self, \
-		स्थिर FIXTURE_VARIANT(fixture_name) \
+		const FIXTURE_VARIANT(fixture_name) \
 			__attribute__((unused)) *variant)
 
-#अगर_अघोषित landlock_create_ruleset
-अटल अंतरभूत पूर्णांक landlock_create_ruleset(
-		स्थिर काष्ठा landlock_ruleset_attr *स्थिर attr,
-		स्थिर माप_प्रकार size, स्थिर __u32 flags)
-अणु
-	वापस syscall(__NR_landlock_create_ruleset, attr, size, flags);
-पूर्ण
-#पूर्ण_अगर
+#ifndef landlock_create_ruleset
+static inline int landlock_create_ruleset(
+		const struct landlock_ruleset_attr *const attr,
+		const size_t size, const __u32 flags)
+{
+	return syscall(__NR_landlock_create_ruleset, attr, size, flags);
+}
+#endif
 
-#अगर_अघोषित landlock_add_rule
-अटल अंतरभूत पूर्णांक landlock_add_rule(स्थिर पूर्णांक ruleset_fd,
-		स्थिर क्रमागत landlock_rule_type rule_type,
-		स्थिर व्योम *स्थिर rule_attr, स्थिर __u32 flags)
-अणु
-	वापस syscall(__NR_landlock_add_rule, ruleset_fd, rule_type,
+#ifndef landlock_add_rule
+static inline int landlock_add_rule(const int ruleset_fd,
+		const enum landlock_rule_type rule_type,
+		const void *const rule_attr, const __u32 flags)
+{
+	return syscall(__NR_landlock_add_rule, ruleset_fd, rule_type,
 			rule_attr, flags);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-#अगर_अघोषित landlock_restrict_self
-अटल अंतरभूत पूर्णांक landlock_restrict_self(स्थिर पूर्णांक ruleset_fd,
-		स्थिर __u32 flags)
-अणु
-	वापस syscall(__NR_landlock_restrict_self, ruleset_fd, flags);
-पूर्ण
-#पूर्ण_अगर
+#ifndef landlock_restrict_self
+static inline int landlock_restrict_self(const int ruleset_fd,
+		const __u32 flags)
+{
+	return syscall(__NR_landlock_restrict_self, ruleset_fd, flags);
+}
+#endif
 
-अटल व्योम _init_caps(काष्ठा __test_metadata *स्थिर _metadata, bool drop_all)
-अणु
+static void _init_caps(struct __test_metadata *const _metadata, bool drop_all)
+{
 	cap_t cap_p;
-	/* Only these three capabilities are useful क्रम the tests. */
-	स्थिर cap_value_t caps[] = अणु
+	/* Only these three capabilities are useful for the tests. */
+	const cap_value_t caps[] = {
 		CAP_DAC_OVERRIDE,
 		CAP_MKNOD,
 		CAP_SYS_ADMIN,
 		CAP_SYS_CHROOT,
-	पूर्ण;
+	};
 
 	cap_p = cap_get_proc();
-	EXPECT_NE(शून्य, cap_p) अणु
-		TH_LOG("Failed to cap_get_proc: %s", म_त्रुटि(त्रुटि_सं));
-	पूर्ण
-	EXPECT_NE(-1, cap_clear(cap_p)) अणु
-		TH_LOG("Failed to cap_clear: %s", म_त्रुटि(त्रुटि_सं));
-	पूर्ण
-	अगर (!drop_all) अणु
+	EXPECT_NE(NULL, cap_p) {
+		TH_LOG("Failed to cap_get_proc: %s", strerror(errno));
+	}
+	EXPECT_NE(-1, cap_clear(cap_p)) {
+		TH_LOG("Failed to cap_clear: %s", strerror(errno));
+	}
+	if (!drop_all) {
 		EXPECT_NE(-1, cap_set_flag(cap_p, CAP_PERMITTED,
-					ARRAY_SIZE(caps), caps, CAP_SET)) अणु
-			TH_LOG("Failed to cap_set_flag: %s", म_त्रुटि(त्रुटि_सं));
-		पूर्ण
-	पूर्ण
-	EXPECT_NE(-1, cap_set_proc(cap_p)) अणु
-		TH_LOG("Failed to cap_set_proc: %s", म_त्रुटि(त्रुटि_सं));
-	पूर्ण
-	EXPECT_NE(-1, cap_मुक्त(cap_p)) अणु
-		TH_LOG("Failed to cap_free: %s", म_त्रुटि(त्रुटि_सं));
-	पूर्ण
-पूर्ण
+					ARRAY_SIZE(caps), caps, CAP_SET)) {
+			TH_LOG("Failed to cap_set_flag: %s", strerror(errno));
+		}
+	}
+	EXPECT_NE(-1, cap_set_proc(cap_p)) {
+		TH_LOG("Failed to cap_set_proc: %s", strerror(errno));
+	}
+	EXPECT_NE(-1, cap_free(cap_p)) {
+		TH_LOG("Failed to cap_free: %s", strerror(errno));
+	}
+}
 
 /* We cannot put such helpers in a library because of kselftest_harness.h . */
 __attribute__((__unused__))
-अटल व्योम disable_caps(काष्ठा __test_metadata *स्थिर _metadata)
-अणु
+static void disable_caps(struct __test_metadata *const _metadata)
+{
 	_init_caps(_metadata, false);
-पूर्ण
+}
 
 __attribute__((__unused__))
-अटल व्योम drop_caps(काष्ठा __test_metadata *स्थिर _metadata)
-अणु
+static void drop_caps(struct __test_metadata *const _metadata)
+{
 	_init_caps(_metadata, true);
-पूर्ण
+}
 
-अटल व्योम _effective_cap(काष्ठा __test_metadata *स्थिर _metadata,
-		स्थिर cap_value_t caps, स्थिर cap_flag_value_t value)
-अणु
+static void _effective_cap(struct __test_metadata *const _metadata,
+		const cap_value_t caps, const cap_flag_value_t value)
+{
 	cap_t cap_p;
 
 	cap_p = cap_get_proc();
-	EXPECT_NE(शून्य, cap_p) अणु
-		TH_LOG("Failed to cap_get_proc: %s", म_त्रुटि(त्रुटि_सं));
-	पूर्ण
-	EXPECT_NE(-1, cap_set_flag(cap_p, CAP_EFFECTIVE, 1, &caps, value)) अणु
-		TH_LOG("Failed to cap_set_flag: %s", म_त्रुटि(त्रुटि_सं));
-	पूर्ण
-	EXPECT_NE(-1, cap_set_proc(cap_p)) अणु
-		TH_LOG("Failed to cap_set_proc: %s", म_त्रुटि(त्रुटि_सं));
-	पूर्ण
-	EXPECT_NE(-1, cap_मुक्त(cap_p)) अणु
-		TH_LOG("Failed to cap_free: %s", म_त्रुटि(त्रुटि_सं));
-	पूर्ण
-पूर्ण
+	EXPECT_NE(NULL, cap_p) {
+		TH_LOG("Failed to cap_get_proc: %s", strerror(errno));
+	}
+	EXPECT_NE(-1, cap_set_flag(cap_p, CAP_EFFECTIVE, 1, &caps, value)) {
+		TH_LOG("Failed to cap_set_flag: %s", strerror(errno));
+	}
+	EXPECT_NE(-1, cap_set_proc(cap_p)) {
+		TH_LOG("Failed to cap_set_proc: %s", strerror(errno));
+	}
+	EXPECT_NE(-1, cap_free(cap_p)) {
+		TH_LOG("Failed to cap_free: %s", strerror(errno));
+	}
+}
 
 __attribute__((__unused__))
-अटल व्योम set_cap(काष्ठा __test_metadata *स्थिर _metadata,
-		स्थिर cap_value_t caps)
-अणु
+static void set_cap(struct __test_metadata *const _metadata,
+		const cap_value_t caps)
+{
 	_effective_cap(_metadata, caps, CAP_SET);
-पूर्ण
+}
 
 __attribute__((__unused__))
-अटल व्योम clear_cap(काष्ठा __test_metadata *स्थिर _metadata,
-		स्थिर cap_value_t caps)
-अणु
+static void clear_cap(struct __test_metadata *const _metadata,
+		const cap_value_t caps)
+{
 	_effective_cap(_metadata, caps, CAP_CLEAR);
-पूर्ण
+}

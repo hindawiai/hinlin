@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2017 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,120 +19,120 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#समावेश "nouveau_vmm.h"
-#समावेश "nouveau_drv.h"
-#समावेश "nouveau_bo.h"
-#समावेश "nouveau_svm.h"
-#समावेश "nouveau_mem.h"
+#include "nouveau_vmm.h"
+#include "nouveau_drv.h"
+#include "nouveau_bo.h"
+#include "nouveau_svm.h"
+#include "nouveau_mem.h"
 
-व्योम
-nouveau_vma_unmap(काष्ठा nouveau_vma *vma)
-अणु
-	अगर (vma->mem) अणु
-		nvअगर_vmm_unmap(&vma->vmm->vmm, vma->addr);
-		vma->mem = शून्य;
-	पूर्ण
-पूर्ण
+void
+nouveau_vma_unmap(struct nouveau_vma *vma)
+{
+	if (vma->mem) {
+		nvif_vmm_unmap(&vma->vmm->vmm, vma->addr);
+		vma->mem = NULL;
+	}
+}
 
-पूर्णांक
-nouveau_vma_map(काष्ठा nouveau_vma *vma, काष्ठा nouveau_mem *mem)
-अणु
-	काष्ठा nvअगर_vma पंचांगp = अणु .addr = vma->addr पूर्ण;
-	पूर्णांक ret = nouveau_mem_map(mem, &vma->vmm->vmm, &पंचांगp);
-	अगर (ret)
-		वापस ret;
+int
+nouveau_vma_map(struct nouveau_vma *vma, struct nouveau_mem *mem)
+{
+	struct nvif_vma tmp = { .addr = vma->addr };
+	int ret = nouveau_mem_map(mem, &vma->vmm->vmm, &tmp);
+	if (ret)
+		return ret;
 	vma->mem = mem;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा nouveau_vma *
-nouveau_vma_find(काष्ठा nouveau_bo *nvbo, काष्ठा nouveau_vmm *vmm)
-अणु
-	काष्ठा nouveau_vma *vma;
+struct nouveau_vma *
+nouveau_vma_find(struct nouveau_bo *nvbo, struct nouveau_vmm *vmm)
+{
+	struct nouveau_vma *vma;
 
-	list_क्रम_each_entry(vma, &nvbo->vma_list, head) अणु
-		अगर (vma->vmm == vmm)
-			वापस vma;
-	पूर्ण
+	list_for_each_entry(vma, &nvbo->vma_list, head) {
+		if (vma->vmm == vmm)
+			return vma;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-व्योम
-nouveau_vma_del(काष्ठा nouveau_vma **pvma)
-अणु
-	काष्ठा nouveau_vma *vma = *pvma;
-	अगर (vma && --vma->refs <= 0) अणु
-		अगर (likely(vma->addr != ~0ULL)) अणु
-			काष्ठा nvअगर_vma पंचांगp = अणु .addr = vma->addr, .size = 1 पूर्ण;
-			nvअगर_vmm_put(&vma->vmm->vmm, &पंचांगp);
-		पूर्ण
+void
+nouveau_vma_del(struct nouveau_vma **pvma)
+{
+	struct nouveau_vma *vma = *pvma;
+	if (vma && --vma->refs <= 0) {
+		if (likely(vma->addr != ~0ULL)) {
+			struct nvif_vma tmp = { .addr = vma->addr, .size = 1 };
+			nvif_vmm_put(&vma->vmm->vmm, &tmp);
+		}
 		list_del(&vma->head);
-		kमुक्त(*pvma);
-	पूर्ण
-	*pvma = शून्य;
-पूर्ण
+		kfree(*pvma);
+	}
+	*pvma = NULL;
+}
 
-पूर्णांक
-nouveau_vma_new(काष्ठा nouveau_bo *nvbo, काष्ठा nouveau_vmm *vmm,
-		काष्ठा nouveau_vma **pvma)
-अणु
-	काष्ठा nouveau_mem *mem = nouveau_mem(&nvbo->bo.mem);
-	काष्ठा nouveau_vma *vma;
-	काष्ठा nvअगर_vma पंचांगp;
-	पूर्णांक ret;
+int
+nouveau_vma_new(struct nouveau_bo *nvbo, struct nouveau_vmm *vmm,
+		struct nouveau_vma **pvma)
+{
+	struct nouveau_mem *mem = nouveau_mem(&nvbo->bo.mem);
+	struct nouveau_vma *vma;
+	struct nvif_vma tmp;
+	int ret;
 
-	अगर ((vma = *pvma = nouveau_vma_find(nvbo, vmm))) अणु
+	if ((vma = *pvma = nouveau_vma_find(nvbo, vmm))) {
 		vma->refs++;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (!(vma = *pvma = kदो_स्मृति(माप(*vma), GFP_KERNEL)))
-		वापस -ENOMEM;
+	if (!(vma = *pvma = kmalloc(sizeof(*vma), GFP_KERNEL)))
+		return -ENOMEM;
 	vma->vmm = vmm;
 	vma->refs = 1;
 	vma->addr = ~0ULL;
-	vma->mem = शून्य;
-	vma->fence = शून्य;
+	vma->mem = NULL;
+	vma->fence = NULL;
 	list_add_tail(&vma->head, &nvbo->vma_list);
 
-	अगर (nvbo->bo.mem.mem_type != TTM_PL_SYSTEM &&
-	    mem->mem.page == nvbo->page) अणु
-		ret = nvअगर_vmm_get(&vmm->vmm, LAZY, false, mem->mem.page, 0,
-				   mem->mem.size, &पंचांगp);
-		अगर (ret)
-			जाओ करोne;
+	if (nvbo->bo.mem.mem_type != TTM_PL_SYSTEM &&
+	    mem->mem.page == nvbo->page) {
+		ret = nvif_vmm_get(&vmm->vmm, LAZY, false, mem->mem.page, 0,
+				   mem->mem.size, &tmp);
+		if (ret)
+			goto done;
 
-		vma->addr = पंचांगp.addr;
+		vma->addr = tmp.addr;
 		ret = nouveau_vma_map(vma, mem);
-	पूर्ण अन्यथा अणु
-		ret = nvअगर_vmm_get(&vmm->vmm, PTES, false, mem->mem.page, 0,
-				   mem->mem.size, &पंचांगp);
-		vma->addr = पंचांगp.addr;
-	पूर्ण
+	} else {
+		ret = nvif_vmm_get(&vmm->vmm, PTES, false, mem->mem.page, 0,
+				   mem->mem.size, &tmp);
+		vma->addr = tmp.addr;
+	}
 
-करोne:
-	अगर (ret)
+done:
+	if (ret)
 		nouveau_vma_del(pvma);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम
-nouveau_vmm_fini(काष्ठा nouveau_vmm *vmm)
-अणु
+void
+nouveau_vmm_fini(struct nouveau_vmm *vmm)
+{
 	nouveau_svmm_fini(&vmm->svmm);
-	nvअगर_vmm_dtor(&vmm->vmm);
-	vmm->cli = शून्य;
-पूर्ण
+	nvif_vmm_dtor(&vmm->vmm);
+	vmm->cli = NULL;
+}
 
-पूर्णांक
-nouveau_vmm_init(काष्ठा nouveau_cli *cli, s32 oclass, काष्ठा nouveau_vmm *vmm)
-अणु
-	पूर्णांक ret = nvअगर_vmm_ctor(&cli->mmu, "drmVmm", oclass, false, PAGE_SIZE,
-				0, शून्य, 0, &vmm->vmm);
-	अगर (ret)
-		वापस ret;
+int
+nouveau_vmm_init(struct nouveau_cli *cli, s32 oclass, struct nouveau_vmm *vmm)
+{
+	int ret = nvif_vmm_ctor(&cli->mmu, "drmVmm", oclass, false, PAGE_SIZE,
+				0, NULL, 0, &vmm->vmm);
+	if (ret)
+		return ret;
 
 	vmm->cli = cli;
-	वापस 0;
-पूर्ण
+	return 0;
+}

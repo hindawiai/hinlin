@@ -1,9 +1,8 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * ehci-omap.c - driver क्रम USBHOST on OMAP3/4 processors
+ * ehci-omap.c - driver for USBHOST on OMAP3/4 processors
  *
- * Bus Glue क्रम the EHCI controllers in OMAP3/4
+ * Bus Glue for the EHCI controllers in OMAP3/4
  * Tested on several OMAP3 boards, and OMAP4 Pandaboard
  *
  * Copyright (C) 2007-2013 Texas Instruments, Inc.
@@ -18,290 +17,290 @@
  * Based on "ehci-fsl.c" and "ehci-au1xxx.c" ehci glue layers
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/usb/ulpi.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/clk.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/usb/hcd.h>
-#समावेश <linux/of.h>
-#समावेश <linux/dma-mapping.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/io.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
+#include <linux/usb/ulpi.h>
+#include <linux/pm_runtime.h>
+#include <linux/clk.h>
+#include <linux/usb.h>
+#include <linux/usb/hcd.h>
+#include <linux/of.h>
+#include <linux/dma-mapping.h>
 
-#समावेश "ehci.h"
+#include "ehci.h"
 
-#समावेश <linux/platक्रमm_data/usb-omap.h>
+#include <linux/platform_data/usb-omap.h>
 
 /* EHCI Register Set */
-#घोषणा EHCI_INSNREG04					(0xA0)
-#घोषणा EHCI_INSNREG04_DISABLE_UNSUSPEND		(1 << 5)
-#घोषणा	EHCI_INSNREG05_ULPI				(0xA4)
-#घोषणा	EHCI_INSNREG05_ULPI_CONTROL_SHIFT		31
-#घोषणा	EHCI_INSNREG05_ULPI_PORTSEL_SHIFT		24
-#घोषणा	EHCI_INSNREG05_ULPI_OPSEL_SHIFT			22
-#घोषणा	EHCI_INSNREG05_ULPI_REGADD_SHIFT		16
-#घोषणा	EHCI_INSNREG05_ULPI_EXTREGADD_SHIFT		8
-#घोषणा	EHCI_INSNREG05_ULPI_WRDATA_SHIFT		0
+#define EHCI_INSNREG04					(0xA0)
+#define EHCI_INSNREG04_DISABLE_UNSUSPEND		(1 << 5)
+#define	EHCI_INSNREG05_ULPI				(0xA4)
+#define	EHCI_INSNREG05_ULPI_CONTROL_SHIFT		31
+#define	EHCI_INSNREG05_ULPI_PORTSEL_SHIFT		24
+#define	EHCI_INSNREG05_ULPI_OPSEL_SHIFT			22
+#define	EHCI_INSNREG05_ULPI_REGADD_SHIFT		16
+#define	EHCI_INSNREG05_ULPI_EXTREGADD_SHIFT		8
+#define	EHCI_INSNREG05_ULPI_WRDATA_SHIFT		0
 
-#घोषणा DRIVER_DESC "OMAP-EHCI Host Controller driver"
+#define DRIVER_DESC "OMAP-EHCI Host Controller driver"
 
-अटल स्थिर अक्षर hcd_name[] = "ehci-omap";
+static const char hcd_name[] = "ehci-omap";
 
 /*-------------------------------------------------------------------------*/
 
-काष्ठा omap_hcd अणु
-	काष्ठा usb_phy *phy[OMAP3_HS_USB_PORTS]; /* one PHY क्रम each port */
-	पूर्णांक nports;
-पूर्ण;
+struct omap_hcd {
+	struct usb_phy *phy[OMAP3_HS_USB_PORTS]; /* one PHY for each port */
+	int nports;
+};
 
-अटल अंतरभूत व्योम ehci_ग_लिखो(व्योम __iomem *base, u32 reg, u32 val)
-अणु
-	__raw_ग_लिखोl(val, base + reg);
-पूर्ण
+static inline void ehci_write(void __iomem *base, u32 reg, u32 val)
+{
+	__raw_writel(val, base + reg);
+}
 
-अटल अंतरभूत u32 ehci_पढ़ो(व्योम __iomem *base, u32 reg)
-अणु
-	वापस __raw_पढ़ोl(base + reg);
-पूर्ण
+static inline u32 ehci_read(void __iomem *base, u32 reg)
+{
+	return __raw_readl(base + reg);
+}
 
 /* configure so an HC device and id are always provided */
 /* always called with process context; sleeping is OK */
 
-अटल काष्ठा hc_driver __पढ़ो_mostly ehci_omap_hc_driver;
+static struct hc_driver __read_mostly ehci_omap_hc_driver;
 
-अटल स्थिर काष्ठा ehci_driver_overrides ehci_omap_overrides __initस्थिर = अणु
-	.extra_priv_size = माप(काष्ठा omap_hcd),
-पूर्ण;
+static const struct ehci_driver_overrides ehci_omap_overrides __initconst = {
+	.extra_priv_size = sizeof(struct omap_hcd),
+};
 
 /**
  * ehci_hcd_omap_probe - initialize TI-based HCDs
- * @pdev: Poपूर्णांकer to this platक्रमm device's inक्रमmation
+ * @pdev: Pointer to this platform device's information
  *
- * Allocates basic resources क्रम this USB host controller, and
- * then invokes the start() method क्रम the HCD associated with it
+ * Allocates basic resources for this USB host controller, and
+ * then invokes the start() method for the HCD associated with it
  * through the hotplug entry's driver_data.
  */
-अटल पूर्णांक ehci_hcd_omap_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा usbhs_omap_platक्रमm_data *pdata = dev_get_platdata(dev);
-	काष्ठा resource	*res;
-	काष्ठा usb_hcd	*hcd;
-	व्योम __iomem *regs;
-	पूर्णांक ret;
-	पूर्णांक irq;
-	पूर्णांक i;
-	काष्ठा omap_hcd	*omap;
+static int ehci_hcd_omap_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct usbhs_omap_platform_data *pdata = dev_get_platdata(dev);
+	struct resource	*res;
+	struct usb_hcd	*hcd;
+	void __iomem *regs;
+	int ret;
+	int irq;
+	int i;
+	struct omap_hcd	*omap;
 
-	अगर (usb_disabled())
-		वापस -ENODEV;
+	if (usb_disabled())
+		return -ENODEV;
 
-	अगर (!dev->parent) अणु
+	if (!dev->parent) {
 		dev_err(dev, "Missing parent device\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	/* For DT boot, get platक्रमm data from parent. i.e. usbhshost */
-	अगर (dev->of_node) अणु
+	/* For DT boot, get platform data from parent. i.e. usbhshost */
+	if (dev->of_node) {
 		pdata = dev_get_platdata(dev->parent);
-		dev->platक्रमm_data = pdata;
-	पूर्ण
+		dev->platform_data = pdata;
+	}
 
-	अगर (!pdata) अणु
+	if (!pdata) {
 		dev_err(dev, "Missing platform data\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq < 0)
-		वापस irq;
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0)
+		return irq;
 
-	res =  platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res =  platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	regs = devm_ioremap_resource(dev, res);
-	अगर (IS_ERR(regs))
-		वापस PTR_ERR(regs);
+	if (IS_ERR(regs))
+		return PTR_ERR(regs);
 
 	/*
-	 * Right now device-tree probed devices करोn't get dma_mask set.
-	 * Since shared usb code relies on it, set it here क्रम now.
+	 * Right now device-tree probed devices don't get dma_mask set.
+	 * Since shared usb code relies on it, set it here for now.
 	 * Once we have dma capability bindings this can go away.
 	 */
 	ret = dma_coerce_mask_and_coherent(dev, DMA_BIT_MASK(32));
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = -ENODEV;
 	hcd = usb_create_hcd(&ehci_omap_hc_driver, dev,
 			dev_name(dev));
-	अगर (!hcd) अणु
+	if (!hcd) {
 		dev_err(dev, "Failed to create HCD\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	hcd->rsrc_start = res->start;
 	hcd->rsrc_len = resource_size(res);
 	hcd->regs = regs;
 	hcd_to_ehci(hcd)->caps = regs;
 
-	omap = (काष्ठा omap_hcd *)hcd_to_ehci(hcd)->priv;
+	omap = (struct omap_hcd *)hcd_to_ehci(hcd)->priv;
 	omap->nports = pdata->nports;
 
-	platक्रमm_set_drvdata(pdev, hcd);
+	platform_set_drvdata(pdev, hcd);
 
-	/* get the PHY devices अगर needed */
-	क्रम (i = 0 ; i < omap->nports ; i++) अणु
-		काष्ठा usb_phy *phy;
+	/* get the PHY devices if needed */
+	for (i = 0 ; i < omap->nports ; i++) {
+		struct usb_phy *phy;
 
 		/* get the PHY device */
 		phy = devm_usb_get_phy_by_phandle(dev, "phys", i);
-		अगर (IS_ERR(phy)) अणु
+		if (IS_ERR(phy)) {
 			ret = PTR_ERR(phy);
-			अगर (ret == -ENODEV) अणु /* no PHY */
-				phy = शून्य;
-				जारी;
-			पूर्ण
+			if (ret == -ENODEV) { /* no PHY */
+				phy = NULL;
+				continue;
+			}
 
-			अगर (ret != -EPROBE_DEFER)
+			if (ret != -EPROBE_DEFER)
 				dev_err(dev, "Can't get PHY for port %d: %d\n",
 					i, ret);
-			जाओ err_phy;
-		पूर्ण
+			goto err_phy;
+		}
 
 		omap->phy[i] = phy;
 
-		अगर (pdata->port_mode[i] == OMAP_EHCI_PORT_MODE_PHY) अणु
+		if (pdata->port_mode[i] == OMAP_EHCI_PORT_MODE_PHY) {
 			usb_phy_init(omap->phy[i]);
 			/* bring PHY out of suspend */
 			usb_phy_set_suspend(omap->phy[i], 0);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	pm_runसमय_enable(dev);
-	pm_runसमय_get_sync(dev);
+	pm_runtime_enable(dev);
+	pm_runtime_get_sync(dev);
 
 	/*
-	 * An unकरोcumented "feature" in the OMAP3 EHCI controller,
+	 * An undocumented "feature" in the OMAP3 EHCI controller,
 	 * causes suspended ports to be taken out of suspend when
-	 * the USBCMD.Run/Stop bit is cleared (क्रम example when
-	 * we करो ehci_bus_suspend).
-	 * This अवरोधs suspend-resume अगर the root-hub is allowed
-	 * to suspend. Writing 1 to this unकरोcumented रेजिस्टर bit
+	 * the USBCMD.Run/Stop bit is cleared (for example when
+	 * we do ehci_bus_suspend).
+	 * This breaks suspend-resume if the root-hub is allowed
+	 * to suspend. Writing 1 to this undocumented register bit
 	 * disables this feature and restores normal behavior.
 	 */
-	ehci_ग_लिखो(regs, EHCI_INSNREG04,
+	ehci_write(regs, EHCI_INSNREG04,
 				EHCI_INSNREG04_DISABLE_UNSUSPEND);
 
 	ret = usb_add_hcd(hcd, irq, IRQF_SHARED);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "failed to add hcd with err %d\n", ret);
-		जाओ err_pm_runसमय;
-	पूर्ण
+		goto err_pm_runtime;
+	}
 	device_wakeup_enable(hcd->self.controller);
 
 	/*
-	 * Bring PHYs out of reset क्रम non PHY modes.
+	 * Bring PHYs out of reset for non PHY modes.
 	 * Even though HSIC mode is a PHY-less mode, the reset
 	 * line exists between the chips and can be modelled
-	 * as a PHY device क्रम reset control.
+	 * as a PHY device for reset control.
 	 */
-	क्रम (i = 0; i < omap->nports; i++) अणु
-		अगर (!omap->phy[i] ||
+	for (i = 0; i < omap->nports; i++) {
+		if (!omap->phy[i] ||
 		     pdata->port_mode[i] == OMAP_EHCI_PORT_MODE_PHY)
-			जारी;
+			continue;
 
 		usb_phy_init(omap->phy[i]);
 		/* bring PHY out of suspend */
 		usb_phy_set_suspend(omap->phy[i], 0);
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
-err_pm_runसमय:
-	pm_runसमय_put_sync(dev);
-	pm_runसमय_disable(dev);
+err_pm_runtime:
+	pm_runtime_put_sync(dev);
+	pm_runtime_disable(dev);
 
 err_phy:
-	क्रम (i = 0; i < omap->nports; i++) अणु
-		अगर (omap->phy[i])
-			usb_phy_shutकरोwn(omap->phy[i]);
-	पूर्ण
+	for (i = 0; i < omap->nports; i++) {
+		if (omap->phy[i])
+			usb_phy_shutdown(omap->phy[i]);
+	}
 
 	usb_put_hcd(hcd);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
 /**
- * ehci_hcd_omap_हटाओ - shutकरोwn processing क्रम EHCI HCDs
- * @pdev: USB Host Controller being हटाओd
+ * ehci_hcd_omap_remove - shutdown processing for EHCI HCDs
+ * @pdev: USB Host Controller being removed
  *
  * Reverses the effect of usb_ehci_hcd_omap_probe(), first invoking
- * the HCD's stop() method.  It is always called from a thपढ़ो
+ * the HCD's stop() method.  It is always called from a thread
  * context, normally "rmmod", "apmd", or something similar.
  */
-अटल पूर्णांक ehci_hcd_omap_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा usb_hcd *hcd = dev_get_drvdata(dev);
-	काष्ठा omap_hcd *omap = (काष्ठा omap_hcd *)hcd_to_ehci(hcd)->priv;
-	पूर्णांक i;
+static int ehci_hcd_omap_remove(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct usb_hcd *hcd = dev_get_drvdata(dev);
+	struct omap_hcd *omap = (struct omap_hcd *)hcd_to_ehci(hcd)->priv;
+	int i;
 
-	usb_हटाओ_hcd(hcd);
+	usb_remove_hcd(hcd);
 
-	क्रम (i = 0; i < omap->nports; i++) अणु
-		अगर (omap->phy[i])
-			usb_phy_shutकरोwn(omap->phy[i]);
-	पूर्ण
+	for (i = 0; i < omap->nports; i++) {
+		if (omap->phy[i])
+			usb_phy_shutdown(omap->phy[i]);
+	}
 
 	usb_put_hcd(hcd);
-	pm_runसमय_put_sync(dev);
-	pm_runसमय_disable(dev);
+	pm_runtime_put_sync(dev);
+	pm_runtime_disable(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id omap_ehci_dt_ids[] = अणु
-	अणु .compatible = "ti,ehci-omap" पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id omap_ehci_dt_ids[] = {
+	{ .compatible = "ti,ehci-omap" },
+	{ }
+};
 
 MODULE_DEVICE_TABLE(of, omap_ehci_dt_ids);
 
-अटल काष्ठा platक्रमm_driver ehci_hcd_omap_driver = अणु
+static struct platform_driver ehci_hcd_omap_driver = {
 	.probe			= ehci_hcd_omap_probe,
-	.हटाओ			= ehci_hcd_omap_हटाओ,
-	.shutकरोwn		= usb_hcd_platक्रमm_shutकरोwn,
+	.remove			= ehci_hcd_omap_remove,
+	.shutdown		= usb_hcd_platform_shutdown,
 	/*.suspend		= ehci_hcd_omap_suspend, */
 	/*.resume		= ehci_hcd_omap_resume, */
-	.driver = अणु
+	.driver = {
 		.name		= hcd_name,
 		.of_match_table = omap_ehci_dt_ids,
-	पूर्ण
-पूर्ण;
+	}
+};
 
 /*-------------------------------------------------------------------------*/
 
-अटल पूर्णांक __init ehci_omap_init(व्योम)
-अणु
-	अगर (usb_disabled())
-		वापस -ENODEV;
+static int __init ehci_omap_init(void)
+{
+	if (usb_disabled())
+		return -ENODEV;
 
 	pr_info("%s: " DRIVER_DESC "\n", hcd_name);
 
 	ehci_init_driver(&ehci_omap_hc_driver, &ehci_omap_overrides);
-	वापस platक्रमm_driver_रेजिस्टर(&ehci_hcd_omap_driver);
-पूर्ण
+	return platform_driver_register(&ehci_hcd_omap_driver);
+}
 module_init(ehci_omap_init);
 
-अटल व्योम __निकास ehci_omap_cleanup(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&ehci_hcd_omap_driver);
-पूर्ण
-module_निकास(ehci_omap_cleanup);
+static void __exit ehci_omap_cleanup(void)
+{
+	platform_driver_unregister(&ehci_hcd_omap_driver);
+}
+module_exit(ehci_omap_cleanup);
 
 MODULE_ALIAS("platform:ehci-omap");
 MODULE_AUTHOR("Texas Instruments, Inc.");

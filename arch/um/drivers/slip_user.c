@@ -1,46 +1,45 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2007 Jeff Dike (jdike@अणुaddtoit,linux.पूर्णांकelपूर्ण.com)
+ * Copyright (C) 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
  */
 
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <unistd.h>
-#समावेश <त्रुटिसं.स>
-#समावेश <fcntl.h>
-#समावेश <माला.स>
-#समावेश <termios.h>
-#समावेश <sys/रुको.h>
-#समावेश <net_user.h>
-#समावेश <os.h>
-#समावेश "slip.h"
-#समावेश <um_दो_स्मृति.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <string.h>
+#include <termios.h>
+#include <sys/wait.h>
+#include <net_user.h>
+#include <os.h>
+#include "slip.h"
+#include <um_malloc.h>
 
-अटल पूर्णांक slip_user_init(व्योम *data, व्योम *dev)
-अणु
-	काष्ठा slip_data *pri = data;
+static int slip_user_init(void *data, void *dev)
+{
+	struct slip_data *pri = data;
 
 	pri->dev = dev;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक set_up_tty(पूर्णांक fd)
-अणु
-	पूर्णांक i;
-	काष्ठा termios tios;
+static int set_up_tty(int fd)
+{
+	int i;
+	struct termios tios;
 
-	अगर (tcgetattr(fd, &tios) < 0) अणु
-		prपूर्णांकk(UM_KERN_ERR "could not get initial terminal "
+	if (tcgetattr(fd, &tios) < 0) {
+		printk(UM_KERN_ERR "could not get initial terminal "
 		       "attributes\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	tios.c_cflag = CS8 | CREAD | HUPCL | CLOCAL;
-	tios.c_अगरlag = IGNBRK | IGNPAR;
+	tios.c_iflag = IGNBRK | IGNPAR;
 	tios.c_oflag = 0;
 	tios.c_lflag = 0;
-	क्रम (i = 0; i < NCCS; i++)
+	for (i = 0; i < NCCS; i++)
 		tios.c_cc[i] = 0;
 	tios.c_cc[VMIN] = 1;
 	tios.c_cc[VTIME] = 0;
@@ -48,205 +47,205 @@
 	cfsetospeed(&tios, B38400);
 	cfsetispeed(&tios, B38400);
 
-	अगर (tcsetattr(fd, TCSAFLUSH, &tios) < 0) अणु
-		prपूर्णांकk(UM_KERN_ERR "failed to set terminal attributes\n");
-		वापस -1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	if (tcsetattr(fd, TCSAFLUSH, &tios) < 0) {
+		printk(UM_KERN_ERR "failed to set terminal attributes\n");
+		return -1;
+	}
+	return 0;
+}
 
-काष्ठा slip_pre_exec_data अणु
-	पूर्णांक मानक_निवेश_fd;
-	पूर्णांक मानक_निकास_fd;
-	पूर्णांक बंद_me;
-पूर्ण;
+struct slip_pre_exec_data {
+	int stdin_fd;
+	int stdout_fd;
+	int close_me;
+};
 
-अटल व्योम slip_pre_exec(व्योम *arg)
-अणु
-	काष्ठा slip_pre_exec_data *data = arg;
+static void slip_pre_exec(void *arg)
+{
+	struct slip_pre_exec_data *data = arg;
 
-	अगर (data->मानक_निवेश_fd >= 0)
-		dup2(data->मानक_निवेश_fd, 0);
-	dup2(data->मानक_निकास_fd, 1);
-	अगर (data->बंद_me >= 0)
-		बंद(data->बंद_me);
-पूर्ण
+	if (data->stdin_fd >= 0)
+		dup2(data->stdin_fd, 0);
+	dup2(data->stdout_fd, 1);
+	if (data->close_me >= 0)
+		close(data->close_me);
+}
 
-अटल पूर्णांक slip_tramp(अक्षर **argv, पूर्णांक fd)
-अणु
-	काष्ठा slip_pre_exec_data pe_data;
-	अक्षर *output;
-	पूर्णांक pid, fds[2], err, output_len;
+static int slip_tramp(char **argv, int fd)
+{
+	struct slip_pre_exec_data pe_data;
+	char *output;
+	int pid, fds[2], err, output_len;
 
 	err = os_pipe(fds, 1, 0);
-	अगर (err < 0) अणु
-		prपूर्णांकk(UM_KERN_ERR "slip_tramp : pipe failed, err = %d\n",
+	if (err < 0) {
+		printk(UM_KERN_ERR "slip_tramp : pipe failed, err = %d\n",
 		       -err);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	err = 0;
-	pe_data.मानक_निवेश_fd = fd;
-	pe_data.मानक_निकास_fd = fds[1];
-	pe_data.बंद_me = fds[0];
+	pe_data.stdin_fd = fd;
+	pe_data.stdout_fd = fds[1];
+	pe_data.close_me = fds[0];
 	err = run_helper(slip_pre_exec, &pe_data, argv);
-	अगर (err < 0)
-		जाओ out_बंद;
+	if (err < 0)
+		goto out_close;
 	pid = err;
 
 	output_len = UM_KERN_PAGE_SIZE;
-	output = uml_kदो_स्मृति(output_len, UM_GFP_KERNEL);
-	अगर (output == शून्य) अणु
-		prपूर्णांकk(UM_KERN_ERR "slip_tramp : failed to allocate output "
+	output = uml_kmalloc(output_len, UM_GFP_KERNEL);
+	if (output == NULL) {
+		printk(UM_KERN_ERR "slip_tramp : failed to allocate output "
 		       "buffer\n");
-		os_समाप्त_process(pid, 1);
+		os_kill_process(pid, 1);
 		err = -ENOMEM;
-		जाओ out_बंद;
-	पूर्ण
+		goto out_close;
+	}
 
-	बंद(fds[1]);
-	पढ़ो_output(fds[0], output, output_len);
-	prपूर्णांकk("%s", output);
+	close(fds[1]);
+	read_output(fds[0], output, output_len);
+	printk("%s", output);
 
-	err = helper_रुको(pid);
-	बंद(fds[0]);
+	err = helper_wait(pid);
+	close(fds[0]);
 
-	kमुक्त(output);
-	वापस err;
+	kfree(output);
+	return err;
 
-out_बंद:
-	बंद(fds[0]);
-	बंद(fds[1]);
+out_close:
+	close(fds[0]);
+	close(fds[1]);
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक slip_खोलो(व्योम *data)
-अणु
-	काष्ठा slip_data *pri = data;
-	अक्षर version_buf[माप("nnnnn\0")];
-	अक्षर gate_buf[माप("nnn.nnn.nnn.nnn\0")];
-	अक्षर *argv[] = अणु "uml_net", version_buf, "slip", "up", gate_buf,
-			 शून्य पूर्ण;
-	पूर्णांक sfd, mfd, err;
+static int slip_open(void *data)
+{
+	struct slip_data *pri = data;
+	char version_buf[sizeof("nnnnn\0")];
+	char gate_buf[sizeof("nnn.nnn.nnn.nnn\0")];
+	char *argv[] = { "uml_net", version_buf, "slip", "up", gate_buf,
+			 NULL };
+	int sfd, mfd, err;
 
 	err = get_pty();
-	अगर (err < 0) अणु
-		prपूर्णांकk(UM_KERN_ERR "slip-open : Failed to open pty, err = %d\n",
+	if (err < 0) {
+		printk(UM_KERN_ERR "slip-open : Failed to open pty, err = %d\n",
 		       -err);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	mfd = err;
 
-	err = खोलो(ptsname(mfd), O_RDWR, 0);
-	अगर (err < 0) अणु
-		prपूर्णांकk(UM_KERN_ERR "Couldn't open tty for slip line, "
+	err = open(ptsname(mfd), O_RDWR, 0);
+	if (err < 0) {
+		printk(UM_KERN_ERR "Couldn't open tty for slip line, "
 		       "err = %d\n", -err);
-		जाओ out_बंद;
-	पूर्ण
+		goto out_close;
+	}
 	sfd = err;
 
-	अगर (set_up_tty(sfd))
-		जाओ out_बंद2;
+	if (set_up_tty(sfd))
+		goto out_close2;
 
 	pri->slave = sfd;
 	pri->slip.pos = 0;
 	pri->slip.esc = 0;
-	अगर (pri->gate_addr != शून्य) अणु
-		प्र_लिखो(version_buf, "%d", UML_NET_VERSION);
-		म_नकल(gate_buf, pri->gate_addr);
+	if (pri->gate_addr != NULL) {
+		sprintf(version_buf, "%d", UML_NET_VERSION);
+		strcpy(gate_buf, pri->gate_addr);
 
 		err = slip_tramp(argv, sfd);
 
-		अगर (err < 0) अणु
-			prपूर्णांकk(UM_KERN_ERR "slip_tramp failed - err = %d\n",
+		if (err < 0) {
+			printk(UM_KERN_ERR "slip_tramp failed - err = %d\n",
 			       -err);
-			जाओ out_बंद2;
-		पूर्ण
-		err = os_get_अगरname(pri->slave, pri->name);
-		अगर (err < 0) अणु
-			prपूर्णांकk(UM_KERN_ERR "get_ifname failed, err = %d\n",
+			goto out_close2;
+		}
+		err = os_get_ifname(pri->slave, pri->name);
+		if (err < 0) {
+			printk(UM_KERN_ERR "get_ifname failed, err = %d\n",
 			       -err);
-			जाओ out_बंद2;
-		पूर्ण
-		iter_addresses(pri->dev, खोलो_addr, pri->name);
-	पूर्ण
-	अन्यथा अणु
+			goto out_close2;
+		}
+		iter_addresses(pri->dev, open_addr, pri->name);
+	}
+	else {
 		err = os_set_slip(sfd);
-		अगर (err < 0) अणु
-			prपूर्णांकk(UM_KERN_ERR "Failed to set slip discipline "
+		if (err < 0) {
+			printk(UM_KERN_ERR "Failed to set slip discipline "
 			       "encapsulation - err = %d\n", -err);
-			जाओ out_बंद2;
-		पूर्ण
-	पूर्ण
-	वापस mfd;
-out_बंद2:
-	बंद(sfd);
-out_बंद:
-	बंद(mfd);
+			goto out_close2;
+		}
+	}
+	return mfd;
+out_close2:
+	close(sfd);
+out_close:
+	close(mfd);
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम slip_बंद(पूर्णांक fd, व्योम *data)
-अणु
-	काष्ठा slip_data *pri = data;
-	अक्षर version_buf[माप("nnnnn\0")];
-	अक्षर *argv[] = अणु "uml_net", version_buf, "slip", "down", pri->name,
-			 शून्य पूर्ण;
-	पूर्णांक err;
+static void slip_close(int fd, void *data)
+{
+	struct slip_data *pri = data;
+	char version_buf[sizeof("nnnnn\0")];
+	char *argv[] = { "uml_net", version_buf, "slip", "down", pri->name,
+			 NULL };
+	int err;
 
-	अगर (pri->gate_addr != शून्य)
-		iter_addresses(pri->dev, बंद_addr, pri->name);
+	if (pri->gate_addr != NULL)
+		iter_addresses(pri->dev, close_addr, pri->name);
 
-	प्र_लिखो(version_buf, "%d", UML_NET_VERSION);
+	sprintf(version_buf, "%d", UML_NET_VERSION);
 
 	err = slip_tramp(argv, pri->slave);
 
-	अगर (err != 0)
-		prपूर्णांकk(UM_KERN_ERR "slip_tramp failed - errno = %d\n", -err);
-	बंद(fd);
-	बंद(pri->slave);
+	if (err != 0)
+		printk(UM_KERN_ERR "slip_tramp failed - errno = %d\n", -err);
+	close(fd);
+	close(pri->slave);
 	pri->slave = -1;
-पूर्ण
+}
 
-पूर्णांक slip_user_पढ़ो(पूर्णांक fd, व्योम *buf, पूर्णांक len, काष्ठा slip_data *pri)
-अणु
-	वापस slip_proto_पढ़ो(fd, buf, len, &pri->slip);
-पूर्ण
+int slip_user_read(int fd, void *buf, int len, struct slip_data *pri)
+{
+	return slip_proto_read(fd, buf, len, &pri->slip);
+}
 
-पूर्णांक slip_user_ग_लिखो(पूर्णांक fd, व्योम *buf, पूर्णांक len, काष्ठा slip_data *pri)
-अणु
-	वापस slip_proto_ग_लिखो(fd, buf, len, &pri->slip);
-पूर्ण
+int slip_user_write(int fd, void *buf, int len, struct slip_data *pri)
+{
+	return slip_proto_write(fd, buf, len, &pri->slip);
+}
 
-अटल व्योम slip_add_addr(अचिन्हित अक्षर *addr, अचिन्हित अक्षर *neपंचांगask,
-			  व्योम *data)
-अणु
-	काष्ठा slip_data *pri = data;
+static void slip_add_addr(unsigned char *addr, unsigned char *netmask,
+			  void *data)
+{
+	struct slip_data *pri = data;
 
-	अगर (pri->slave < 0)
-		वापस;
-	खोलो_addr(addr, neपंचांगask, pri->name);
-पूर्ण
+	if (pri->slave < 0)
+		return;
+	open_addr(addr, netmask, pri->name);
+}
 
-अटल व्योम slip_del_addr(अचिन्हित अक्षर *addr, अचिन्हित अक्षर *neपंचांगask,
-			    व्योम *data)
-अणु
-	काष्ठा slip_data *pri = data;
+static void slip_del_addr(unsigned char *addr, unsigned char *netmask,
+			    void *data)
+{
+	struct slip_data *pri = data;
 
-	अगर (pri->slave < 0)
-		वापस;
-	बंद_addr(addr, neपंचांगask, pri->name);
-पूर्ण
+	if (pri->slave < 0)
+		return;
+	close_addr(addr, netmask, pri->name);
+}
 
-स्थिर काष्ठा net_user_info slip_user_info = अणु
+const struct net_user_info slip_user_info = {
 	.init		= slip_user_init,
-	.खोलो		= slip_खोलो,
-	.बंद	 	= slip_बंद,
-	.हटाओ	 	= शून्य,
+	.open		= slip_open,
+	.close	 	= slip_close,
+	.remove	 	= NULL,
 	.add_address	= slip_add_addr,
 	.delete_address = slip_del_addr,
 	.mtu		= BUF_SIZE,
 	.max_packet	= BUF_SIZE,
-पूर्ण;
+};

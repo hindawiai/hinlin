@@ -1,218 +1,217 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * ADIS16203 Programmable 360 Degrees Inclinometer
  *
  * Copyright 2010 Analog Devices Inc.
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/device.h>
+#include <linux/delay.h>
+#include <linux/device.h>
 
-#समावेश <linux/iio/buffer.h>
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/iio/imu/adis.h>
-#समावेश <linux/iio/sysfs.h>
+#include <linux/iio/buffer.h>
+#include <linux/iio/iio.h>
+#include <linux/iio/imu/adis.h>
+#include <linux/iio/sysfs.h>
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spi/spi.h>
-#समावेश <linux/sysfs.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <linux/slab.h>
+#include <linux/spi/spi.h>
+#include <linux/sysfs.h>
 
-#घोषणा ADIS16203_STARTUP_DELAY 220 /* ms */
+#define ADIS16203_STARTUP_DELAY 220 /* ms */
 
-/* Flash memory ग_लिखो count */
-#घोषणा ADIS16203_FLASH_CNT      0x00
+/* Flash memory write count */
+#define ADIS16203_FLASH_CNT      0x00
 
-/* Output, घातer supply */
-#घोषणा ADIS16203_SUPPLY_OUT     0x02
+/* Output, power supply */
+#define ADIS16203_SUPPLY_OUT     0x02
 
 /* Output, auxiliary ADC input */
-#घोषणा ADIS16203_AUX_ADC        0x08
+#define ADIS16203_AUX_ADC        0x08
 
 /* Output, temperature */
-#घोषणा ADIS16203_TEMP_OUT       0x0A
+#define ADIS16203_TEMP_OUT       0x0A
 
 /* Output, x-axis inclination */
-#घोषणा ADIS16203_XINCL_OUT      0x0C
+#define ADIS16203_XINCL_OUT      0x0C
 
 /* Output, y-axis inclination */
-#घोषणा ADIS16203_YINCL_OUT      0x0E
+#define ADIS16203_YINCL_OUT      0x0E
 
 /* Incline null calibration */
-#घोषणा ADIS16203_INCL_शून्य      0x18
+#define ADIS16203_INCL_NULL      0x18
 
 /* Alarm 1 amplitude threshold */
-#घोषणा ADIS16203_ALM_MAG1       0x20
+#define ADIS16203_ALM_MAG1       0x20
 
 /* Alarm 2 amplitude threshold */
-#घोषणा ADIS16203_ALM_MAG2       0x22
+#define ADIS16203_ALM_MAG2       0x22
 
 /* Alarm 1, sample period */
-#घोषणा ADIS16203_ALM_SMPL1      0x24
+#define ADIS16203_ALM_SMPL1      0x24
 
 /* Alarm 2, sample period */
-#घोषणा ADIS16203_ALM_SMPL2      0x26
+#define ADIS16203_ALM_SMPL2      0x26
 
 /* Alarm control */
-#घोषणा ADIS16203_ALM_CTRL       0x28
+#define ADIS16203_ALM_CTRL       0x28
 
 /* Auxiliary DAC data */
-#घोषणा ADIS16203_AUX_DAC        0x30
+#define ADIS16203_AUX_DAC        0x30
 
 /* General-purpose digital input/output control */
-#घोषणा ADIS16203_GPIO_CTRL      0x32
+#define ADIS16203_GPIO_CTRL      0x32
 
 /* Miscellaneous control */
-#घोषणा ADIS16203_MSC_CTRL       0x34
+#define ADIS16203_MSC_CTRL       0x34
 
 /* Internal sample period (rate) control */
-#घोषणा ADIS16203_SMPL_PRD       0x36
+#define ADIS16203_SMPL_PRD       0x36
 
 /* Operation, filter configuration */
-#घोषणा ADIS16203_AVG_CNT        0x38
+#define ADIS16203_AVG_CNT        0x38
 
 /* Operation, sleep mode control */
-#घोषणा ADIS16203_SLP_CNT        0x3A
+#define ADIS16203_SLP_CNT        0x3A
 
-/* Diagnostics, प्रणाली status रेजिस्टर */
-#घोषणा ADIS16203_DIAG_STAT      0x3C
+/* Diagnostics, system status register */
+#define ADIS16203_DIAG_STAT      0x3C
 
-/* Operation, प्रणाली command रेजिस्टर */
-#घोषणा ADIS16203_GLOB_CMD       0x3E
+/* Operation, system command register */
+#define ADIS16203_GLOB_CMD       0x3E
 
 /* MSC_CTRL */
 
-/* Self-test at घातer-on: 1 = disabled, 0 = enabled */
-#घोषणा ADIS16203_MSC_CTRL_PWRUP_SELF_TEST      BIT(10)
+/* Self-test at power-on: 1 = disabled, 0 = enabled */
+#define ADIS16203_MSC_CTRL_PWRUP_SELF_TEST      BIT(10)
 
-/* Reverses rotation of both inclination outमाला_दो */
-#घोषणा ADIS16203_MSC_CTRL_REVERSE_ROT_EN       BIT(9)
+/* Reverses rotation of both inclination outputs */
+#define ADIS16203_MSC_CTRL_REVERSE_ROT_EN       BIT(9)
 
 /* Self-test enable */
-#घोषणा ADIS16203_MSC_CTRL_SELF_TEST_EN         BIT(8)
+#define ADIS16203_MSC_CTRL_SELF_TEST_EN         BIT(8)
 
-/* Data-पढ़ोy enable: 1 = enabled, 0 = disabled */
-#घोषणा ADIS16203_MSC_CTRL_DATA_RDY_EN          BIT(2)
+/* Data-ready enable: 1 = enabled, 0 = disabled */
+#define ADIS16203_MSC_CTRL_DATA_RDY_EN          BIT(2)
 
-/* Data-पढ़ोy polarity: 1 = active high, 0 = active low */
-#घोषणा ADIS16203_MSC_CTRL_ACTIVE_HIGH          BIT(1)
+/* Data-ready polarity: 1 = active high, 0 = active low */
+#define ADIS16203_MSC_CTRL_ACTIVE_HIGH          BIT(1)
 
-/* Data-पढ़ोy line selection: 1 = DIO1, 0 = DIO0 */
-#घोषणा ADIS16203_MSC_CTRL_DATA_RDY_DIO1        BIT(0)
+/* Data-ready line selection: 1 = DIO1, 0 = DIO0 */
+#define ADIS16203_MSC_CTRL_DATA_RDY_DIO1        BIT(0)
 
 /* DIAG_STAT */
 
 /* Alarm 2 status: 1 = alarm active, 0 = alarm inactive */
-#घोषणा ADIS16203_DIAG_STAT_ALARM2        BIT(9)
+#define ADIS16203_DIAG_STAT_ALARM2        BIT(9)
 
 /* Alarm 1 status: 1 = alarm active, 0 = alarm inactive */
-#घोषणा ADIS16203_DIAG_STAT_ALARM1        BIT(8)
+#define ADIS16203_DIAG_STAT_ALARM1        BIT(8)
 
 /* Self-test diagnostic error flag */
-#घोषणा ADIS16203_DIAG_STAT_SELFTEST_FAIL_BIT 5
+#define ADIS16203_DIAG_STAT_SELFTEST_FAIL_BIT 5
 
 /* SPI communications failure */
-#घोषणा ADIS16203_DIAG_STAT_SPI_FAIL_BIT      3
+#define ADIS16203_DIAG_STAT_SPI_FAIL_BIT      3
 
 /* Flash update failure */
-#घोषणा ADIS16203_DIAG_STAT_FLASH_UPT_BIT     2
+#define ADIS16203_DIAG_STAT_FLASH_UPT_BIT     2
 
 /* Power supply above 3.625 V */
-#घोषणा ADIS16203_DIAG_STAT_POWER_HIGH_BIT    1
+#define ADIS16203_DIAG_STAT_POWER_HIGH_BIT    1
 
 /* Power supply below 2.975 V */
-#घोषणा ADIS16203_DIAG_STAT_POWER_LOW_BIT     0
+#define ADIS16203_DIAG_STAT_POWER_LOW_BIT     0
 
 /* GLOB_CMD */
 
-#घोषणा ADIS16203_GLOB_CMD_SW_RESET     BIT(7)
-#घोषणा ADIS16203_GLOB_CMD_CLEAR_STAT   BIT(4)
-#घोषणा ADIS16203_GLOB_CMD_FACTORY_CAL  BIT(1)
+#define ADIS16203_GLOB_CMD_SW_RESET     BIT(7)
+#define ADIS16203_GLOB_CMD_CLEAR_STAT   BIT(4)
+#define ADIS16203_GLOB_CMD_FACTORY_CAL  BIT(1)
 
-#घोषणा ADIS16203_ERROR_ACTIVE          BIT(14)
+#define ADIS16203_ERROR_ACTIVE          BIT(14)
 
-क्रमागत adis16203_scan अणु
+enum adis16203_scan {
 	 ADIS16203_SCAN_INCLI_X,
 	 ADIS16203_SCAN_INCLI_Y,
 	 ADIS16203_SCAN_SUPPLY,
 	 ADIS16203_SCAN_AUX_ADC,
 	 ADIS16203_SCAN_TEMP,
-पूर्ण;
+};
 
-#घोषणा DRIVER_NAME		"adis16203"
+#define DRIVER_NAME		"adis16203"
 
-अटल स्थिर u8 adis16203_addresses[] = अणु
-	[ADIS16203_SCAN_INCLI_X] = ADIS16203_INCL_शून्य,
-पूर्ण;
+static const u8 adis16203_addresses[] = {
+	[ADIS16203_SCAN_INCLI_X] = ADIS16203_INCL_NULL,
+};
 
-अटल पूर्णांक adis16203_ग_लिखो_raw(काष्ठा iio_dev *indio_dev,
-			       काष्ठा iio_chan_spec स्थिर *chan,
-			       पूर्णांक val,
-			       पूर्णांक val2,
-			       दीर्घ mask)
-अणु
-	काष्ठा adis *st = iio_priv(indio_dev);
+static int adis16203_write_raw(struct iio_dev *indio_dev,
+			       struct iio_chan_spec const *chan,
+			       int val,
+			       int val2,
+			       long mask)
+{
+	struct adis *st = iio_priv(indio_dev);
 	/* currently only one writable parameter which keeps this simple */
 	u8 addr = adis16203_addresses[chan->scan_index];
 
-	वापस adis_ग_लिखो_reg_16(st, addr, val & 0x3FFF);
-पूर्ण
+	return adis_write_reg_16(st, addr, val & 0x3FFF);
+}
 
-अटल पूर्णांक adis16203_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
-			      काष्ठा iio_chan_spec स्थिर *chan,
-			      पूर्णांक *val, पूर्णांक *val2,
-			      दीर्घ mask)
-अणु
-	काष्ठा adis *st = iio_priv(indio_dev);
-	पूर्णांक ret;
+static int adis16203_read_raw(struct iio_dev *indio_dev,
+			      struct iio_chan_spec const *chan,
+			      int *val, int *val2,
+			      long mask)
+{
+	struct adis *st = iio_priv(indio_dev);
+	int ret;
 	u8 addr;
 	s16 val16;
 
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_RAW:
-		वापस adis_single_conversion(indio_dev, chan,
+	switch (mask) {
+	case IIO_CHAN_INFO_RAW:
+		return adis_single_conversion(indio_dev, chan,
 				ADIS16203_ERROR_ACTIVE, val);
-	हाल IIO_CHAN_INFO_SCALE:
-		चयन (chan->type) अणु
-		हाल IIO_VOLTAGE:
-			अगर (chan->channel == 0) अणु
+	case IIO_CHAN_INFO_SCALE:
+		switch (chan->type) {
+		case IIO_VOLTAGE:
+			if (chan->channel == 0) {
 				*val = 1;
 				*val2 = 220000; /* 1.22 mV */
-			पूर्ण अन्यथा अणु
+			} else {
 				*val = 0;
 				*val2 = 610000; /* 0.61 mV */
-			पूर्ण
-			वापस IIO_VAL_INT_PLUS_MICRO;
-		हाल IIO_TEMP:
+			}
+			return IIO_VAL_INT_PLUS_MICRO;
+		case IIO_TEMP:
 			*val = -470; /* -0.47 C */
 			*val2 = 0;
-			वापस IIO_VAL_INT_PLUS_MICRO;
-		हाल IIO_INCLI:
+			return IIO_VAL_INT_PLUS_MICRO;
+		case IIO_INCLI:
 			*val = 0;
 			*val2 = 25000; /* 0.025 degree */
-			वापस IIO_VAL_INT_PLUS_MICRO;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-	हाल IIO_CHAN_INFO_OFFSET:
+			return IIO_VAL_INT_PLUS_MICRO;
+		default:
+			return -EINVAL;
+		}
+	case IIO_CHAN_INFO_OFFSET:
 		*val = 25000 / -470 - 1278; /* 25 C = 1278 */
-		वापस IIO_VAL_INT;
-	हाल IIO_CHAN_INFO_CALIBBIAS:
+		return IIO_VAL_INT;
+	case IIO_CHAN_INFO_CALIBBIAS:
 		addr = adis16203_addresses[chan->scan_index];
-		ret = adis_पढ़ो_reg_16(st, addr, &val16);
-		अगर (ret)
-			वापस ret;
+		ret = adis_read_reg_16(st, addr, &val16);
+		if (ret)
+			return ret;
 		*val = sign_extend32(val16, 13);
-		वापस IIO_VAL_INT;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+		return IIO_VAL_INT;
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल स्थिर काष्ठा iio_chan_spec adis16203_channels[] = अणु
+static const struct iio_chan_spec adis16203_channels[] = {
 	ADIS_SUPPLY_CHAN(ADIS16203_SUPPLY_OUT, ADIS16203_SCAN_SUPPLY, 0, 12),
 	ADIS_AUX_ADC_CHAN(ADIS16203_AUX_ADC, ADIS16203_SCAN_AUX_ADC, 0, 12),
 	ADIS_INCLI_CHAN(X, ADIS16203_XINCL_OUT, ADIS16203_SCAN_INCLI_X,
@@ -222,38 +221,38 @@
 			0, 0, 14),
 	ADIS_TEMP_CHAN(ADIS16203_TEMP_OUT, ADIS16203_SCAN_TEMP, 0, 12),
 	IIO_CHAN_SOFT_TIMESTAMP(5),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा iio_info adis16203_info = अणु
-	.पढ़ो_raw = adis16203_पढ़ो_raw,
-	.ग_लिखो_raw = adis16203_ग_लिखो_raw,
+static const struct iio_info adis16203_info = {
+	.read_raw = adis16203_read_raw,
+	.write_raw = adis16203_write_raw,
 	.update_scan_mode = adis_update_scan_mode,
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर adis16203_status_error_msgs[] = अणु
+static const char * const adis16203_status_error_msgs[] = {
 	[ADIS16203_DIAG_STAT_SELFTEST_FAIL_BIT] = "Self test failure",
 	[ADIS16203_DIAG_STAT_SPI_FAIL_BIT] = "SPI failure",
 	[ADIS16203_DIAG_STAT_FLASH_UPT_BIT] = "Flash update failed",
 	[ADIS16203_DIAG_STAT_POWER_HIGH_BIT] = "Power supply above 3.625V",
 	[ADIS16203_DIAG_STAT_POWER_LOW_BIT] = "Power supply below 2.975V",
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा adis_समयout adis16203_समयouts = अणु
+static const struct adis_timeout adis16203_timeouts = {
 	.reset_ms = ADIS16203_STARTUP_DELAY,
 	.sw_reset_ms = ADIS16203_STARTUP_DELAY,
 	.self_test_ms = ADIS16203_STARTUP_DELAY
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा adis_data adis16203_data = अणु
-	.पढ़ो_delay = 20,
+static const struct adis_data adis16203_data = {
+	.read_delay = 20,
 	.msc_ctrl_reg = ADIS16203_MSC_CTRL,
 	.glob_cmd_reg = ADIS16203_GLOB_CMD,
 	.diag_stat_reg = ADIS16203_DIAG_STAT,
 
 	.self_test_mask = ADIS16203_MSC_CTRL_SELF_TEST_EN,
 	.self_test_reg = ADIS16203_MSC_CTRL,
-	.self_test_no_स्वतःclear = true,
-	.समयouts = &adis16203_समयouts,
+	.self_test_no_autoclear = true,
+	.timeouts = &adis16203_timeouts,
 
 	.status_error_msgs = adis16203_status_error_msgs,
 	.status_error_mask = BIT(ADIS16203_DIAG_STAT_SELFTEST_FAIL_BIT) |
@@ -261,58 +260,58 @@
 		BIT(ADIS16203_DIAG_STAT_FLASH_UPT_BIT) |
 		BIT(ADIS16203_DIAG_STAT_POWER_HIGH_BIT) |
 		BIT(ADIS16203_DIAG_STAT_POWER_LOW_BIT),
-पूर्ण;
+};
 
-अटल पूर्णांक adis16203_probe(काष्ठा spi_device *spi)
-अणु
-	पूर्णांक ret;
-	काष्ठा iio_dev *indio_dev;
-	काष्ठा adis *st;
+static int adis16203_probe(struct spi_device *spi)
+{
+	int ret;
+	struct iio_dev *indio_dev;
+	struct adis *st;
 
 	/* setup the industrialio driver allocated elements */
-	indio_dev = devm_iio_device_alloc(&spi->dev, माप(*st));
-	अगर (!indio_dev)
-		वापस -ENOMEM;
+	indio_dev = devm_iio_device_alloc(&spi->dev, sizeof(*st));
+	if (!indio_dev)
+		return -ENOMEM;
 	st = iio_priv(indio_dev);
-	/* this is only used क्रम removal purposes */
+	/* this is only used for removal purposes */
 	spi_set_drvdata(spi, indio_dev);
 
 	indio_dev->name = spi->dev.driver->name;
 	indio_dev->channels = adis16203_channels;
 	indio_dev->num_channels = ARRAY_SIZE(adis16203_channels);
 	indio_dev->info = &adis16203_info;
-	indio_dev->modes = INDIO_सूचीECT_MODE;
+	indio_dev->modes = INDIO_DIRECT_MODE;
 
 	ret = adis_init(st, indio_dev, spi, &adis16203_data);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = devm_adis_setup_buffer_and_trigger(st, indio_dev, शून्य);
-	अगर (ret)
-		वापस ret;
+	ret = devm_adis_setup_buffer_and_trigger(st, indio_dev, NULL);
+	if (ret)
+		return ret;
 
-	/* Get the device पूर्णांकo a sane initial state */
+	/* Get the device into a sane initial state */
 	ret = adis_initial_startup(st);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस devm_iio_device_रेजिस्टर(&spi->dev, indio_dev);
-पूर्ण
+	return devm_iio_device_register(&spi->dev, indio_dev);
+}
 
-अटल स्थिर काष्ठा of_device_id adis16203_of_match[] = अणु
-	अणु .compatible = "adi,adis16203" पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct of_device_id adis16203_of_match[] = {
+	{ .compatible = "adi,adis16203" },
+	{ },
+};
 
 MODULE_DEVICE_TABLE(of, adis16203_of_match);
 
-अटल काष्ठा spi_driver adis16203_driver = अणु
-	.driver = अणु
+static struct spi_driver adis16203_driver = {
+	.driver = {
 		.name = "adis16203",
 		.of_match_table = adis16203_of_match,
-	पूर्ण,
+	},
 	.probe = adis16203_probe,
-पूर्ण;
+};
 module_spi_driver(adis16203_driver);
 
 MODULE_AUTHOR("Barry Song <21cnbao@gmail.com>");

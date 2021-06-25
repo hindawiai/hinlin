@@ -1,8 +1,7 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <slang.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <slang.h>
 
-पूर्णांक मुख्य(व्योम)
-अणु
-	वापस SLsmg_init_smg();
-पूर्ण
+int main(void)
+{
+	return SLsmg_init_smg();
+}

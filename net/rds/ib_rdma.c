@@ -1,24 +1,23 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2006, 2018 Oracle and/or its affiliates. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -31,50 +30,50 @@
  * SOFTWARE.
  *
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/rculist.h>
-#समावेश <linux/llist.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/rculist.h>
+#include <linux/llist.h>
 
-#समावेश "rds_single_path.h"
-#समावेश "ib_mr.h"
-#समावेश "rds.h"
+#include "rds_single_path.h"
+#include "ib_mr.h"
+#include "rds.h"
 
-काष्ठा workqueue_काष्ठा *rds_ib_mr_wq;
-काष्ठा rds_ib_dereg_odp_mr अणु
-	काष्ठा work_काष्ठा work;
-	काष्ठा ib_mr *mr;
-पूर्ण;
+struct workqueue_struct *rds_ib_mr_wq;
+struct rds_ib_dereg_odp_mr {
+	struct work_struct work;
+	struct ib_mr *mr;
+};
 
-अटल व्योम rds_ib_odp_mr_worker(काष्ठा work_काष्ठा *work);
+static void rds_ib_odp_mr_worker(struct work_struct *work);
 
-अटल काष्ठा rds_ib_device *rds_ib_get_device(__be32 ipaddr)
-अणु
-	काष्ठा rds_ib_device *rds_ibdev;
-	काष्ठा rds_ib_ipaddr *i_ipaddr;
+static struct rds_ib_device *rds_ib_get_device(__be32 ipaddr)
+{
+	struct rds_ib_device *rds_ibdev;
+	struct rds_ib_ipaddr *i_ipaddr;
 
-	rcu_पढ़ो_lock();
-	list_क्रम_each_entry_rcu(rds_ibdev, &rds_ib_devices, list) अणु
-		list_क्रम_each_entry_rcu(i_ipaddr, &rds_ibdev->ipaddr_list, list) अणु
-			अगर (i_ipaddr->ipaddr == ipaddr) अणु
+	rcu_read_lock();
+	list_for_each_entry_rcu(rds_ibdev, &rds_ib_devices, list) {
+		list_for_each_entry_rcu(i_ipaddr, &rds_ibdev->ipaddr_list, list) {
+			if (i_ipaddr->ipaddr == ipaddr) {
 				refcount_inc(&rds_ibdev->refcount);
-				rcu_पढ़ो_unlock();
-				वापस rds_ibdev;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	rcu_पढ़ो_unlock();
+				rcu_read_unlock();
+				return rds_ibdev;
+			}
+		}
+	}
+	rcu_read_unlock();
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक rds_ib_add_ipaddr(काष्ठा rds_ib_device *rds_ibdev, __be32 ipaddr)
-अणु
-	काष्ठा rds_ib_ipaddr *i_ipaddr;
+static int rds_ib_add_ipaddr(struct rds_ib_device *rds_ibdev, __be32 ipaddr)
+{
+	struct rds_ib_ipaddr *i_ipaddr;
 
-	i_ipaddr = kदो_स्मृति(माप *i_ipaddr, GFP_KERNEL);
-	अगर (!i_ipaddr)
-		वापस -ENOMEM;
+	i_ipaddr = kmalloc(sizeof *i_ipaddr, GFP_KERNEL);
+	if (!i_ipaddr)
+		return -ENOMEM;
 
 	i_ipaddr->ipaddr = ipaddr;
 
@@ -82,51 +81,51 @@
 	list_add_tail_rcu(&i_ipaddr->list, &rds_ibdev->ipaddr_list);
 	spin_unlock_irq(&rds_ibdev->spinlock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम rds_ib_हटाओ_ipaddr(काष्ठा rds_ib_device *rds_ibdev, __be32 ipaddr)
-अणु
-	काष्ठा rds_ib_ipaddr *i_ipaddr;
-	काष्ठा rds_ib_ipaddr *to_मुक्त = शून्य;
+static void rds_ib_remove_ipaddr(struct rds_ib_device *rds_ibdev, __be32 ipaddr)
+{
+	struct rds_ib_ipaddr *i_ipaddr;
+	struct rds_ib_ipaddr *to_free = NULL;
 
 
 	spin_lock_irq(&rds_ibdev->spinlock);
-	list_क्रम_each_entry_rcu(i_ipaddr, &rds_ibdev->ipaddr_list, list) अणु
-		अगर (i_ipaddr->ipaddr == ipaddr) अणु
+	list_for_each_entry_rcu(i_ipaddr, &rds_ibdev->ipaddr_list, list) {
+		if (i_ipaddr->ipaddr == ipaddr) {
 			list_del_rcu(&i_ipaddr->list);
-			to_मुक्त = i_ipaddr;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			to_free = i_ipaddr;
+			break;
+		}
+	}
 	spin_unlock_irq(&rds_ibdev->spinlock);
 
-	अगर (to_मुक्त)
-		kमुक्त_rcu(to_मुक्त, rcu);
-पूर्ण
+	if (to_free)
+		kfree_rcu(to_free, rcu);
+}
 
-पूर्णांक rds_ib_update_ipaddr(काष्ठा rds_ib_device *rds_ibdev,
-			 काष्ठा in6_addr *ipaddr)
-अणु
-	काष्ठा rds_ib_device *rds_ibdev_old;
+int rds_ib_update_ipaddr(struct rds_ib_device *rds_ibdev,
+			 struct in6_addr *ipaddr)
+{
+	struct rds_ib_device *rds_ibdev_old;
 
 	rds_ibdev_old = rds_ib_get_device(ipaddr->s6_addr32[3]);
-	अगर (!rds_ibdev_old)
-		वापस rds_ib_add_ipaddr(rds_ibdev, ipaddr->s6_addr32[3]);
+	if (!rds_ibdev_old)
+		return rds_ib_add_ipaddr(rds_ibdev, ipaddr->s6_addr32[3]);
 
-	अगर (rds_ibdev_old != rds_ibdev) अणु
-		rds_ib_हटाओ_ipaddr(rds_ibdev_old, ipaddr->s6_addr32[3]);
+	if (rds_ibdev_old != rds_ibdev) {
+		rds_ib_remove_ipaddr(rds_ibdev_old, ipaddr->s6_addr32[3]);
 		rds_ib_dev_put(rds_ibdev_old);
-		वापस rds_ib_add_ipaddr(rds_ibdev, ipaddr->s6_addr32[3]);
-	पूर्ण
+		return rds_ib_add_ipaddr(rds_ibdev, ipaddr->s6_addr32[3]);
+	}
 	rds_ib_dev_put(rds_ibdev_old);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम rds_ib_add_conn(काष्ठा rds_ib_device *rds_ibdev, काष्ठा rds_connection *conn)
-अणु
-	काष्ठा rds_ib_connection *ic = conn->c_transport_data;
+void rds_ib_add_conn(struct rds_ib_device *rds_ibdev, struct rds_connection *conn)
+{
+	struct rds_ib_connection *ic = conn->c_transport_data;
 
 	/* conn was previously on the nodev_conns_list */
 	spin_lock_irq(&ib_nodev_conns_lock);
@@ -141,11 +140,11 @@
 
 	ic->rds_ibdev = rds_ibdev;
 	refcount_inc(&rds_ibdev->refcount);
-पूर्ण
+}
 
-व्योम rds_ib_हटाओ_conn(काष्ठा rds_ib_device *rds_ibdev, काष्ठा rds_connection *conn)
-अणु
-	काष्ठा rds_ib_connection *ic = conn->c_transport_data;
+void rds_ib_remove_conn(struct rds_ib_device *rds_ibdev, struct rds_connection *conn)
+{
+	struct rds_ib_connection *ic = conn->c_transport_data;
 
 	/* place conn on nodev_conns_list */
 	spin_lock(&ib_nodev_conns_lock);
@@ -159,443 +158,443 @@
 
 	spin_unlock(&ib_nodev_conns_lock);
 
-	ic->rds_ibdev = शून्य;
+	ic->rds_ibdev = NULL;
 	rds_ib_dev_put(rds_ibdev);
-पूर्ण
+}
 
-व्योम rds_ib_destroy_nodev_conns(व्योम)
-अणु
-	काष्ठा rds_ib_connection *ic, *_ic;
-	LIST_HEAD(पंचांगp_list);
+void rds_ib_destroy_nodev_conns(void)
+{
+	struct rds_ib_connection *ic, *_ic;
+	LIST_HEAD(tmp_list);
 
-	/* aव्योम calling conn_destroy with irqs off */
+	/* avoid calling conn_destroy with irqs off */
 	spin_lock_irq(&ib_nodev_conns_lock);
-	list_splice(&ib_nodev_conns, &पंचांगp_list);
+	list_splice(&ib_nodev_conns, &tmp_list);
 	spin_unlock_irq(&ib_nodev_conns_lock);
 
-	list_क्रम_each_entry_safe(ic, _ic, &पंचांगp_list, ib_node)
+	list_for_each_entry_safe(ic, _ic, &tmp_list, ib_node)
 		rds_conn_destroy(ic->conn);
-पूर्ण
+}
 
-व्योम rds_ib_get_mr_info(काष्ठा rds_ib_device *rds_ibdev, काष्ठा rds_info_rdma_connection *iinfo)
-अणु
-	काष्ठा rds_ib_mr_pool *pool_1m = rds_ibdev->mr_1m_pool;
+void rds_ib_get_mr_info(struct rds_ib_device *rds_ibdev, struct rds_info_rdma_connection *iinfo)
+{
+	struct rds_ib_mr_pool *pool_1m = rds_ibdev->mr_1m_pool;
 
 	iinfo->rdma_mr_max = pool_1m->max_items;
 	iinfo->rdma_mr_size = pool_1m->max_pages;
-पूर्ण
+}
 
-#अगर IS_ENABLED(CONFIG_IPV6)
-व्योम rds6_ib_get_mr_info(काष्ठा rds_ib_device *rds_ibdev,
-			 काष्ठा rds6_info_rdma_connection *iinfo6)
-अणु
-	काष्ठा rds_ib_mr_pool *pool_1m = rds_ibdev->mr_1m_pool;
+#if IS_ENABLED(CONFIG_IPV6)
+void rds6_ib_get_mr_info(struct rds_ib_device *rds_ibdev,
+			 struct rds6_info_rdma_connection *iinfo6)
+{
+	struct rds_ib_mr_pool *pool_1m = rds_ibdev->mr_1m_pool;
 
 	iinfo6->rdma_mr_max = pool_1m->max_items;
 	iinfo6->rdma_mr_size = pool_1m->max_pages;
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-काष्ठा rds_ib_mr *rds_ib_reuse_mr(काष्ठा rds_ib_mr_pool *pool)
-अणु
-	काष्ठा rds_ib_mr *ibmr = शून्य;
-	काष्ठा llist_node *ret;
-	अचिन्हित दीर्घ flags;
+struct rds_ib_mr *rds_ib_reuse_mr(struct rds_ib_mr_pool *pool)
+{
+	struct rds_ib_mr *ibmr = NULL;
+	struct llist_node *ret;
+	unsigned long flags;
 
 	spin_lock_irqsave(&pool->clean_lock, flags);
 	ret = llist_del_first(&pool->clean_list);
 	spin_unlock_irqrestore(&pool->clean_lock, flags);
-	अगर (ret) अणु
-		ibmr = llist_entry(ret, काष्ठा rds_ib_mr, llnode);
-		अगर (pool->pool_type == RDS_IB_MR_8K_POOL)
+	if (ret) {
+		ibmr = llist_entry(ret, struct rds_ib_mr, llnode);
+		if (pool->pool_type == RDS_IB_MR_8K_POOL)
 			rds_ib_stats_inc(s_ib_rdma_mr_8k_reused);
-		अन्यथा
+		else
 			rds_ib_stats_inc(s_ib_rdma_mr_1m_reused);
-	पूर्ण
+	}
 
-	वापस ibmr;
-पूर्ण
+	return ibmr;
+}
 
-व्योम rds_ib_sync_mr(व्योम *trans_निजी, पूर्णांक direction)
-अणु
-	काष्ठा rds_ib_mr *ibmr = trans_निजी;
-	काष्ठा rds_ib_device *rds_ibdev = ibmr->device;
+void rds_ib_sync_mr(void *trans_private, int direction)
+{
+	struct rds_ib_mr *ibmr = trans_private;
+	struct rds_ib_device *rds_ibdev = ibmr->device;
 
-	अगर (ibmr->odp)
-		वापस;
+	if (ibmr->odp)
+		return;
 
-	चयन (direction) अणु
-	हाल DMA_FROM_DEVICE:
-		ib_dma_sync_sg_क्रम_cpu(rds_ibdev->dev, ibmr->sg,
-			ibmr->sg_dma_len, DMA_BIसूचीECTIONAL);
-		अवरोध;
-	हाल DMA_TO_DEVICE:
-		ib_dma_sync_sg_क्रम_device(rds_ibdev->dev, ibmr->sg,
-			ibmr->sg_dma_len, DMA_BIसूचीECTIONAL);
-		अवरोध;
-	पूर्ण
-पूर्ण
+	switch (direction) {
+	case DMA_FROM_DEVICE:
+		ib_dma_sync_sg_for_cpu(rds_ibdev->dev, ibmr->sg,
+			ibmr->sg_dma_len, DMA_BIDIRECTIONAL);
+		break;
+	case DMA_TO_DEVICE:
+		ib_dma_sync_sg_for_device(rds_ibdev->dev, ibmr->sg,
+			ibmr->sg_dma_len, DMA_BIDIRECTIONAL);
+		break;
+	}
+}
 
-व्योम __rds_ib_tearकरोwn_mr(काष्ठा rds_ib_mr *ibmr)
-अणु
-	काष्ठा rds_ib_device *rds_ibdev = ibmr->device;
+void __rds_ib_teardown_mr(struct rds_ib_mr *ibmr)
+{
+	struct rds_ib_device *rds_ibdev = ibmr->device;
 
-	अगर (ibmr->sg_dma_len) अणु
+	if (ibmr->sg_dma_len) {
 		ib_dma_unmap_sg(rds_ibdev->dev,
 				ibmr->sg, ibmr->sg_len,
-				DMA_BIसूचीECTIONAL);
+				DMA_BIDIRECTIONAL);
 		ibmr->sg_dma_len = 0;
-	पूर्ण
+	}
 
 	/* Release the s/g list */
-	अगर (ibmr->sg_len) अणु
-		अचिन्हित पूर्णांक i;
+	if (ibmr->sg_len) {
+		unsigned int i;
 
-		क्रम (i = 0; i < ibmr->sg_len; ++i) अणु
-			काष्ठा page *page = sg_page(&ibmr->sg[i]);
+		for (i = 0; i < ibmr->sg_len; ++i) {
+			struct page *page = sg_page(&ibmr->sg[i]);
 
 			/* FIXME we need a way to tell a r/w MR
 			 * from a r/o MR */
 			WARN_ON(!page->mapping && irqs_disabled());
 			set_page_dirty(page);
 			put_page(page);
-		पूर्ण
-		kमुक्त(ibmr->sg);
+		}
+		kfree(ibmr->sg);
 
-		ibmr->sg = शून्य;
+		ibmr->sg = NULL;
 		ibmr->sg_len = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम rds_ib_tearकरोwn_mr(काष्ठा rds_ib_mr *ibmr)
-अणु
-	अचिन्हित पूर्णांक pinned = ibmr->sg_len;
+void rds_ib_teardown_mr(struct rds_ib_mr *ibmr)
+{
+	unsigned int pinned = ibmr->sg_len;
 
-	__rds_ib_tearकरोwn_mr(ibmr);
-	अगर (pinned) अणु
-		काष्ठा rds_ib_mr_pool *pool = ibmr->pool;
+	__rds_ib_teardown_mr(ibmr);
+	if (pinned) {
+		struct rds_ib_mr_pool *pool = ibmr->pool;
 
-		atomic_sub(pinned, &pool->मुक्त_pinned);
-	पूर्ण
-पूर्ण
+		atomic_sub(pinned, &pool->free_pinned);
+	}
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक rds_ib_flush_goal(काष्ठा rds_ib_mr_pool *pool, पूर्णांक मुक्त_all)
-अणु
-	अचिन्हित पूर्णांक item_count;
+static inline unsigned int rds_ib_flush_goal(struct rds_ib_mr_pool *pool, int free_all)
+{
+	unsigned int item_count;
 
-	item_count = atomic_पढ़ो(&pool->item_count);
-	अगर (मुक्त_all)
-		वापस item_count;
+	item_count = atomic_read(&pool->item_count);
+	if (free_all)
+		return item_count;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * given an llist of mrs, put them all पूर्णांकo the list_head क्रम more processing
+ * given an llist of mrs, put them all into the list_head for more processing
  */
-अटल अचिन्हित पूर्णांक llist_append_to_list(काष्ठा llist_head *llist,
-					 काष्ठा list_head *list)
-अणु
-	काष्ठा rds_ib_mr *ibmr;
-	काष्ठा llist_node *node;
-	काष्ठा llist_node *next;
-	अचिन्हित पूर्णांक count = 0;
+static unsigned int llist_append_to_list(struct llist_head *llist,
+					 struct list_head *list)
+{
+	struct rds_ib_mr *ibmr;
+	struct llist_node *node;
+	struct llist_node *next;
+	unsigned int count = 0;
 
 	node = llist_del_all(llist);
-	जबतक (node) अणु
+	while (node) {
 		next = node->next;
-		ibmr = llist_entry(node, काष्ठा rds_ib_mr, llnode);
+		ibmr = llist_entry(node, struct rds_ib_mr, llnode);
 		list_add_tail(&ibmr->unmap_list, list);
 		node = next;
 		count++;
-	पूर्ण
-	वापस count;
-पूर्ण
+	}
+	return count;
+}
 
 /*
- * this takes a list head of mrs and turns it पूर्णांकo linked llist nodes
+ * this takes a list head of mrs and turns it into linked llist nodes
  * of clusters.  Each cluster has linked llist nodes of
- * MR_CLUSTER_SIZE mrs that are पढ़ोy क्रम reuse.
+ * MR_CLUSTER_SIZE mrs that are ready for reuse.
  */
-अटल व्योम list_to_llist_nodes(काष्ठा list_head *list,
-				काष्ठा llist_node **nodes_head,
-				काष्ठा llist_node **nodes_tail)
-अणु
-	काष्ठा rds_ib_mr *ibmr;
-	काष्ठा llist_node *cur = शून्य;
-	काष्ठा llist_node **next = nodes_head;
+static void list_to_llist_nodes(struct list_head *list,
+				struct llist_node **nodes_head,
+				struct llist_node **nodes_tail)
+{
+	struct rds_ib_mr *ibmr;
+	struct llist_node *cur = NULL;
+	struct llist_node **next = nodes_head;
 
-	list_क्रम_each_entry(ibmr, list, unmap_list) अणु
+	list_for_each_entry(ibmr, list, unmap_list) {
 		cur = &ibmr->llnode;
 		*next = cur;
 		next = &cur->next;
-	पूर्ण
-	*next = शून्य;
+	}
+	*next = NULL;
 	*nodes_tail = cur;
-पूर्ण
+}
 
 /*
  * Flush our pool of MRs.
  * At a minimum, all currently unused MRs are unmapped.
  * If the number of MRs allocated exceeds the limit, we also try
- * to मुक्त as many MRs as needed to get back to this limit.
+ * to free as many MRs as needed to get back to this limit.
  */
-पूर्णांक rds_ib_flush_mr_pool(काष्ठा rds_ib_mr_pool *pool,
-			 पूर्णांक मुक्त_all, काष्ठा rds_ib_mr **ibmr_ret)
-अणु
-	काष्ठा rds_ib_mr *ibmr;
-	काष्ठा llist_node *clean_nodes;
-	काष्ठा llist_node *clean_tail;
+int rds_ib_flush_mr_pool(struct rds_ib_mr_pool *pool,
+			 int free_all, struct rds_ib_mr **ibmr_ret)
+{
+	struct rds_ib_mr *ibmr;
+	struct llist_node *clean_nodes;
+	struct llist_node *clean_tail;
 	LIST_HEAD(unmap_list);
-	अचिन्हित दीर्घ unpinned = 0;
-	अचिन्हित पूर्णांक nमुक्तd = 0, dirty_to_clean = 0, मुक्त_goal;
+	unsigned long unpinned = 0;
+	unsigned int nfreed = 0, dirty_to_clean = 0, free_goal;
 
-	अगर (pool->pool_type == RDS_IB_MR_8K_POOL)
+	if (pool->pool_type == RDS_IB_MR_8K_POOL)
 		rds_ib_stats_inc(s_ib_rdma_mr_8k_pool_flush);
-	अन्यथा
+	else
 		rds_ib_stats_inc(s_ib_rdma_mr_1m_pool_flush);
 
-	अगर (ibmr_ret) अणु
-		DEFINE_WAIT(रुको);
-		जबतक (!mutex_trylock(&pool->flush_lock)) अणु
+	if (ibmr_ret) {
+		DEFINE_WAIT(wait);
+		while (!mutex_trylock(&pool->flush_lock)) {
 			ibmr = rds_ib_reuse_mr(pool);
-			अगर (ibmr) अणु
+			if (ibmr) {
 				*ibmr_ret = ibmr;
-				finish_रुको(&pool->flush_रुको, &रुको);
-				जाओ out_nolock;
-			पूर्ण
+				finish_wait(&pool->flush_wait, &wait);
+				goto out_nolock;
+			}
 
-			prepare_to_रुको(&pool->flush_रुको, &रुको,
+			prepare_to_wait(&pool->flush_wait, &wait,
 					TASK_UNINTERRUPTIBLE);
-			अगर (llist_empty(&pool->clean_list))
+			if (llist_empty(&pool->clean_list))
 				schedule();
 
 			ibmr = rds_ib_reuse_mr(pool);
-			अगर (ibmr) अणु
+			if (ibmr) {
 				*ibmr_ret = ibmr;
-				finish_रुको(&pool->flush_रुको, &रुको);
-				जाओ out_nolock;
-			पूर्ण
-		पूर्ण
-		finish_रुको(&pool->flush_रुको, &रुको);
-	पूर्ण अन्यथा
+				finish_wait(&pool->flush_wait, &wait);
+				goto out_nolock;
+			}
+		}
+		finish_wait(&pool->flush_wait, &wait);
+	} else
 		mutex_lock(&pool->flush_lock);
 
-	अगर (ibmr_ret) अणु
+	if (ibmr_ret) {
 		ibmr = rds_ib_reuse_mr(pool);
-		अगर (ibmr) अणु
+		if (ibmr) {
 			*ibmr_ret = ibmr;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 	/* Get the list of all MRs to be dropped. Ordering matters -
-	 * we want to put drop_list ahead of मुक्त_list.
+	 * we want to put drop_list ahead of free_list.
 	 */
 	dirty_to_clean = llist_append_to_list(&pool->drop_list, &unmap_list);
-	dirty_to_clean += llist_append_to_list(&pool->मुक्त_list, &unmap_list);
-	अगर (मुक्त_all) अणु
-		अचिन्हित दीर्घ flags;
+	dirty_to_clean += llist_append_to_list(&pool->free_list, &unmap_list);
+	if (free_all) {
+		unsigned long flags;
 
 		spin_lock_irqsave(&pool->clean_lock, flags);
 		llist_append_to_list(&pool->clean_list, &unmap_list);
 		spin_unlock_irqrestore(&pool->clean_lock, flags);
-	पूर्ण
+	}
 
-	मुक्त_goal = rds_ib_flush_goal(pool, मुक्त_all);
+	free_goal = rds_ib_flush_goal(pool, free_all);
 
-	अगर (list_empty(&unmap_list))
-		जाओ out;
+	if (list_empty(&unmap_list))
+		goto out;
 
-	rds_ib_unreg_frmr(&unmap_list, &nमुक्तd, &unpinned, मुक्त_goal);
+	rds_ib_unreg_frmr(&unmap_list, &nfreed, &unpinned, free_goal);
 
-	अगर (!list_empty(&unmap_list)) अणु
-		अचिन्हित दीर्घ flags;
+	if (!list_empty(&unmap_list)) {
+		unsigned long flags;
 
 		list_to_llist_nodes(&unmap_list, &clean_nodes, &clean_tail);
-		अगर (ibmr_ret) अणु
-			*ibmr_ret = llist_entry(clean_nodes, काष्ठा rds_ib_mr, llnode);
+		if (ibmr_ret) {
+			*ibmr_ret = llist_entry(clean_nodes, struct rds_ib_mr, llnode);
 			clean_nodes = clean_nodes->next;
-		पूर्ण
+		}
 		/* more than one entry in llist nodes */
-		अगर (clean_nodes) अणु
+		if (clean_nodes) {
 			spin_lock_irqsave(&pool->clean_lock, flags);
 			llist_add_batch(clean_nodes, clean_tail,
 					&pool->clean_list);
 			spin_unlock_irqrestore(&pool->clean_lock, flags);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	atomic_sub(unpinned, &pool->मुक्त_pinned);
+	atomic_sub(unpinned, &pool->free_pinned);
 	atomic_sub(dirty_to_clean, &pool->dirty_count);
-	atomic_sub(nमुक्तd, &pool->item_count);
+	atomic_sub(nfreed, &pool->item_count);
 
 out:
 	mutex_unlock(&pool->flush_lock);
-	अगर (रुकोqueue_active(&pool->flush_रुको))
-		wake_up(&pool->flush_रुको);
+	if (waitqueue_active(&pool->flush_wait))
+		wake_up(&pool->flush_wait);
 out_nolock:
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा rds_ib_mr *rds_ib_try_reuse_ibmr(काष्ठा rds_ib_mr_pool *pool)
-अणु
-	काष्ठा rds_ib_mr *ibmr = शून्य;
-	पूर्णांक iter = 0;
+struct rds_ib_mr *rds_ib_try_reuse_ibmr(struct rds_ib_mr_pool *pool)
+{
+	struct rds_ib_mr *ibmr = NULL;
+	int iter = 0;
 
-	जबतक (1) अणु
+	while (1) {
 		ibmr = rds_ib_reuse_mr(pool);
-		अगर (ibmr)
-			वापस ibmr;
+		if (ibmr)
+			return ibmr;
 
-		अगर (atomic_inc_वापस(&pool->item_count) <= pool->max_items)
-			अवरोध;
+		if (atomic_inc_return(&pool->item_count) <= pool->max_items)
+			break;
 
 		atomic_dec(&pool->item_count);
 
-		अगर (++iter > 2) अणु
-			अगर (pool->pool_type == RDS_IB_MR_8K_POOL)
+		if (++iter > 2) {
+			if (pool->pool_type == RDS_IB_MR_8K_POOL)
 				rds_ib_stats_inc(s_ib_rdma_mr_8k_pool_depleted);
-			अन्यथा
+			else
 				rds_ib_stats_inc(s_ib_rdma_mr_1m_pool_depleted);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		/* We करो have some empty MRs. Flush them out. */
-		अगर (pool->pool_type == RDS_IB_MR_8K_POOL)
-			rds_ib_stats_inc(s_ib_rdma_mr_8k_pool_रुको);
-		अन्यथा
-			rds_ib_stats_inc(s_ib_rdma_mr_1m_pool_रुको);
+		/* We do have some empty MRs. Flush them out. */
+		if (pool->pool_type == RDS_IB_MR_8K_POOL)
+			rds_ib_stats_inc(s_ib_rdma_mr_8k_pool_wait);
+		else
+			rds_ib_stats_inc(s_ib_rdma_mr_1m_pool_wait);
 
 		rds_ib_flush_mr_pool(pool, 0, &ibmr);
-		अगर (ibmr)
-			वापस ibmr;
-	पूर्ण
+		if (ibmr)
+			return ibmr;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम rds_ib_mr_pool_flush_worker(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा rds_ib_mr_pool *pool = container_of(work, काष्ठा rds_ib_mr_pool, flush_worker.work);
+static void rds_ib_mr_pool_flush_worker(struct work_struct *work)
+{
+	struct rds_ib_mr_pool *pool = container_of(work, struct rds_ib_mr_pool, flush_worker.work);
 
-	rds_ib_flush_mr_pool(pool, 0, शून्य);
-पूर्ण
+	rds_ib_flush_mr_pool(pool, 0, NULL);
+}
 
-व्योम rds_ib_मुक्त_mr(व्योम *trans_निजी, पूर्णांक invalidate)
-अणु
-	काष्ठा rds_ib_mr *ibmr = trans_निजी;
-	काष्ठा rds_ib_mr_pool *pool = ibmr->pool;
-	काष्ठा rds_ib_device *rds_ibdev = ibmr->device;
+void rds_ib_free_mr(void *trans_private, int invalidate)
+{
+	struct rds_ib_mr *ibmr = trans_private;
+	struct rds_ib_mr_pool *pool = ibmr->pool;
+	struct rds_ib_device *rds_ibdev = ibmr->device;
 
 	rdsdebug("RDS/IB: free_mr nents %u\n", ibmr->sg_len);
 
-	अगर (ibmr->odp) अणु
+	if (ibmr->odp) {
 		/* A MR created and marked as use_once. We use delayed work,
-		 * because there is a change that we are in पूर्णांकerrupt and can't
+		 * because there is a change that we are in interrupt and can't
 		 * call to ib_dereg_mr() directly.
 		 */
 		INIT_DELAYED_WORK(&ibmr->work, rds_ib_odp_mr_worker);
 		queue_delayed_work(rds_ib_mr_wq, &ibmr->work, 0);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* Return it to the pool's मुक्त list */
-	rds_ib_मुक्त_frmr_list(ibmr);
+	/* Return it to the pool's free list */
+	rds_ib_free_frmr_list(ibmr);
 
-	atomic_add(ibmr->sg_len, &pool->मुक्त_pinned);
+	atomic_add(ibmr->sg_len, &pool->free_pinned);
 	atomic_inc(&pool->dirty_count);
 
 	/* If we've pinned too many pages, request a flush */
-	अगर (atomic_पढ़ो(&pool->मुक्त_pinned) >= pool->max_मुक्त_pinned ||
-	    atomic_पढ़ो(&pool->dirty_count) >= pool->max_items / 5)
+	if (atomic_read(&pool->free_pinned) >= pool->max_free_pinned ||
+	    atomic_read(&pool->dirty_count) >= pool->max_items / 5)
 		queue_delayed_work(rds_ib_mr_wq, &pool->flush_worker, 10);
 
-	अगर (invalidate) अणु
-		अगर (likely(!in_पूर्णांकerrupt())) अणु
-			rds_ib_flush_mr_pool(pool, 0, शून्य);
-		पूर्ण अन्यथा अणु
-			/* We get here अगर the user created a MR marked
-			 * as use_once and invalidate at the same समय.
+	if (invalidate) {
+		if (likely(!in_interrupt())) {
+			rds_ib_flush_mr_pool(pool, 0, NULL);
+		} else {
+			/* We get here if the user created a MR marked
+			 * as use_once and invalidate at the same time.
 			 */
 			queue_delayed_work(rds_ib_mr_wq,
 					   &pool->flush_worker, 10);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	rds_ib_dev_put(rds_ibdev);
-पूर्ण
+}
 
-व्योम rds_ib_flush_mrs(व्योम)
-अणु
-	काष्ठा rds_ib_device *rds_ibdev;
+void rds_ib_flush_mrs(void)
+{
+	struct rds_ib_device *rds_ibdev;
 
-	करोwn_पढ़ो(&rds_ib_devices_lock);
-	list_क्रम_each_entry(rds_ibdev, &rds_ib_devices, list) अणु
-		अगर (rds_ibdev->mr_8k_pool)
-			rds_ib_flush_mr_pool(rds_ibdev->mr_8k_pool, 0, शून्य);
+	down_read(&rds_ib_devices_lock);
+	list_for_each_entry(rds_ibdev, &rds_ib_devices, list) {
+		if (rds_ibdev->mr_8k_pool)
+			rds_ib_flush_mr_pool(rds_ibdev->mr_8k_pool, 0, NULL);
 
-		अगर (rds_ibdev->mr_1m_pool)
-			rds_ib_flush_mr_pool(rds_ibdev->mr_1m_pool, 0, शून्य);
-	पूर्ण
-	up_पढ़ो(&rds_ib_devices_lock);
-पूर्ण
+		if (rds_ibdev->mr_1m_pool)
+			rds_ib_flush_mr_pool(rds_ibdev->mr_1m_pool, 0, NULL);
+	}
+	up_read(&rds_ib_devices_lock);
+}
 
-u32 rds_ib_get_lkey(व्योम *trans_निजी)
-अणु
-	काष्ठा rds_ib_mr *ibmr = trans_निजी;
+u32 rds_ib_get_lkey(void *trans_private)
+{
+	struct rds_ib_mr *ibmr = trans_private;
 
-	वापस ibmr->u.mr->lkey;
-पूर्ण
+	return ibmr->u.mr->lkey;
+}
 
-व्योम *rds_ib_get_mr(काष्ठा scatterlist *sg, अचिन्हित दीर्घ nents,
-		    काष्ठा rds_sock *rs, u32 *key_ret,
-		    काष्ठा rds_connection *conn,
-		    u64 start, u64 length, पूर्णांक need_odp)
-अणु
-	काष्ठा rds_ib_device *rds_ibdev;
-	काष्ठा rds_ib_mr *ibmr = शून्य;
-	काष्ठा rds_ib_connection *ic = शून्य;
-	पूर्णांक ret;
+void *rds_ib_get_mr(struct scatterlist *sg, unsigned long nents,
+		    struct rds_sock *rs, u32 *key_ret,
+		    struct rds_connection *conn,
+		    u64 start, u64 length, int need_odp)
+{
+	struct rds_ib_device *rds_ibdev;
+	struct rds_ib_mr *ibmr = NULL;
+	struct rds_ib_connection *ic = NULL;
+	int ret;
 
 	rds_ibdev = rds_ib_get_device(rs->rs_bound_addr.s6_addr32[3]);
-	अगर (!rds_ibdev) अणु
+	if (!rds_ibdev) {
 		ret = -ENODEV;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (need_odp == ODP_ZEROBASED || need_odp == ODP_VIRTUAL) अणु
+	if (need_odp == ODP_ZEROBASED || need_odp == ODP_VIRTUAL) {
 		u64 virt_addr = need_odp == ODP_ZEROBASED ? 0 : start;
-		पूर्णांक access_flags =
+		int access_flags =
 			(IB_ACCESS_LOCAL_WRITE | IB_ACCESS_REMOTE_READ |
 			 IB_ACCESS_REMOTE_WRITE | IB_ACCESS_REMOTE_ATOMIC |
 			 IB_ACCESS_ON_DEMAND);
-		काष्ठा ib_sge sge = अणुपूर्ण;
-		काष्ठा ib_mr *ib_mr;
+		struct ib_sge sge = {};
+		struct ib_mr *ib_mr;
 
-		अगर (!rds_ibdev->odp_capable) अणु
+		if (!rds_ibdev->odp_capable) {
 			ret = -EOPNOTSUPP;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		ib_mr = ib_reg_user_mr(rds_ibdev->pd, start, length, virt_addr,
 				       access_flags);
 
-		अगर (IS_ERR(ib_mr)) अणु
+		if (IS_ERR(ib_mr)) {
 			rdsdebug("rds_ib_get_user_mr returned %d\n",
 				 IS_ERR(ib_mr));
 			ret = PTR_ERR(ib_mr);
-			जाओ out;
-		पूर्ण
-		अगर (key_ret)
+			goto out;
+		}
+		if (key_ret)
 			*key_ret = ib_mr->rkey;
 
-		ibmr = kzalloc(माप(*ibmr), GFP_KERNEL);
-		अगर (!ibmr) अणु
+		ibmr = kzalloc(sizeof(*ibmr), GFP_KERNEL);
+		if (!ibmr) {
 			ib_dereg_mr(ib_mr);
 			ret = -ENOMEM;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		ibmr->u.mr = ib_mr;
 		ibmr->odp = 1;
 
@@ -606,97 +605,97 @@ u32 rds_ib_get_lkey(व्योम *trans_निजी)
 		ib_advise_mr(rds_ibdev->pd,
 			     IB_UVERBS_ADVISE_MR_ADVICE_PREFETCH_WRITE,
 			     IB_UVERBS_ADVISE_MR_FLAG_FLUSH, &sge, 1);
-		वापस ibmr;
-	पूर्ण
+		return ibmr;
+	}
 
-	अगर (conn)
+	if (conn)
 		ic = conn->c_transport_data;
 
-	अगर (!rds_ibdev->mr_8k_pool || !rds_ibdev->mr_1m_pool) अणु
+	if (!rds_ibdev->mr_8k_pool || !rds_ibdev->mr_1m_pool) {
 		ret = -ENODEV;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ibmr = rds_ib_reg_frmr(rds_ibdev, ic, sg, nents, key_ret);
-	अगर (IS_ERR(ibmr)) अणु
+	if (IS_ERR(ibmr)) {
 		ret = PTR_ERR(ibmr);
 		pr_warn("RDS/IB: rds_ib_get_mr failed (errno=%d)\n", ret);
-	पूर्ण अन्यथा अणु
-		वापस ibmr;
-	पूर्ण
+	} else {
+		return ibmr;
+	}
 
  out:
-	अगर (rds_ibdev)
+	if (rds_ibdev)
 		rds_ib_dev_put(rds_ibdev);
 
-	वापस ERR_PTR(ret);
-पूर्ण
+	return ERR_PTR(ret);
+}
 
-व्योम rds_ib_destroy_mr_pool(काष्ठा rds_ib_mr_pool *pool)
-अणु
+void rds_ib_destroy_mr_pool(struct rds_ib_mr_pool *pool)
+{
 	cancel_delayed_work_sync(&pool->flush_worker);
-	rds_ib_flush_mr_pool(pool, 1, शून्य);
-	WARN_ON(atomic_पढ़ो(&pool->item_count));
-	WARN_ON(atomic_पढ़ो(&pool->मुक्त_pinned));
-	kमुक्त(pool);
-पूर्ण
+	rds_ib_flush_mr_pool(pool, 1, NULL);
+	WARN_ON(atomic_read(&pool->item_count));
+	WARN_ON(atomic_read(&pool->free_pinned));
+	kfree(pool);
+}
 
-काष्ठा rds_ib_mr_pool *rds_ib_create_mr_pool(काष्ठा rds_ib_device *rds_ibdev,
-					     पूर्णांक pool_type)
-अणु
-	काष्ठा rds_ib_mr_pool *pool;
+struct rds_ib_mr_pool *rds_ib_create_mr_pool(struct rds_ib_device *rds_ibdev,
+					     int pool_type)
+{
+	struct rds_ib_mr_pool *pool;
 
-	pool = kzalloc(माप(*pool), GFP_KERNEL);
-	अगर (!pool)
-		वापस ERR_PTR(-ENOMEM);
+	pool = kzalloc(sizeof(*pool), GFP_KERNEL);
+	if (!pool)
+		return ERR_PTR(-ENOMEM);
 
 	pool->pool_type = pool_type;
-	init_llist_head(&pool->मुक्त_list);
+	init_llist_head(&pool->free_list);
 	init_llist_head(&pool->drop_list);
 	init_llist_head(&pool->clean_list);
 	spin_lock_init(&pool->clean_lock);
 	mutex_init(&pool->flush_lock);
-	init_रुकोqueue_head(&pool->flush_रुको);
+	init_waitqueue_head(&pool->flush_wait);
 	INIT_DELAYED_WORK(&pool->flush_worker, rds_ib_mr_pool_flush_worker);
 
-	अगर (pool_type == RDS_IB_MR_1M_POOL) अणु
-		/* +1 allows क्रम unaligned MRs */
+	if (pool_type == RDS_IB_MR_1M_POOL) {
+		/* +1 allows for unaligned MRs */
 		pool->max_pages = RDS_MR_1M_MSG_SIZE + 1;
 		pool->max_items = rds_ibdev->max_1m_mrs;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* pool_type == RDS_IB_MR_8K_POOL */
 		pool->max_pages = RDS_MR_8K_MSG_SIZE + 1;
 		pool->max_items = rds_ibdev->max_8k_mrs;
-	पूर्ण
+	}
 
-	pool->max_मुक्त_pinned = pool->max_items * pool->max_pages / 4;
+	pool->max_free_pinned = pool->max_items * pool->max_pages / 4;
 	pool->max_items_soft = rds_ibdev->max_mrs * 3 / 4;
 
-	वापस pool;
-पूर्ण
+	return pool;
+}
 
-पूर्णांक rds_ib_mr_init(व्योम)
-अणु
+int rds_ib_mr_init(void)
+{
 	rds_ib_mr_wq = alloc_workqueue("rds_mr_flushd", WQ_MEM_RECLAIM, 0);
-	अगर (!rds_ib_mr_wq)
-		वापस -ENOMEM;
-	वापस 0;
-पूर्ण
+	if (!rds_ib_mr_wq)
+		return -ENOMEM;
+	return 0;
+}
 
-/* By the समय this is called all the IB devices should have been torn करोwn and
- * had their pools मुक्तd.  As each pool is मुक्तd its work काष्ठा is रुकोed on,
- * so the pool flushing work queue should be idle by the समय we get here.
+/* By the time this is called all the IB devices should have been torn down and
+ * had their pools freed.  As each pool is freed its work struct is waited on,
+ * so the pool flushing work queue should be idle by the time we get here.
  */
-व्योम rds_ib_mr_निकास(व्योम)
-अणु
+void rds_ib_mr_exit(void)
+{
 	destroy_workqueue(rds_ib_mr_wq);
-पूर्ण
+}
 
-अटल व्योम rds_ib_odp_mr_worker(काष्ठा work_काष्ठा  *work)
-अणु
-	काष्ठा rds_ib_mr *ibmr;
+static void rds_ib_odp_mr_worker(struct work_struct  *work)
+{
+	struct rds_ib_mr *ibmr;
 
-	ibmr = container_of(work, काष्ठा rds_ib_mr, work.work);
+	ibmr = container_of(work, struct rds_ib_mr, work.work);
 	ib_dereg_mr(ibmr->u.mr);
-	kमुक्त(ibmr);
-पूर्ण
+	kfree(ibmr);
+}

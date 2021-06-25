@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,50 +22,50 @@
  * Authors: Ben Skeggs
  * 	    Martin Peres
  */
-#समावेश "priv.h"
+#include "priv.h"
 
-#समावेश <subdev/fuse.h>
+#include <subdev/fuse.h>
 
-पूर्णांक
-g84_temp_get(काष्ठा nvkm_therm *therm)
-अणु
-	काष्ठा nvkm_device *device = therm->subdev.device;
+int
+g84_temp_get(struct nvkm_therm *therm)
+{
+	struct nvkm_device *device = therm->subdev.device;
 
-	अगर (nvkm_fuse_पढ़ो(device->fuse, 0x1a8) == 1)
-		वापस nvkm_rd32(device, 0x20400);
-	अन्यथा
-		वापस -ENODEV;
-पूर्ण
+	if (nvkm_fuse_read(device->fuse, 0x1a8) == 1)
+		return nvkm_rd32(device, 0x20400);
+	else
+		return -ENODEV;
+}
 
-व्योम
-g84_sensor_setup(काष्ठा nvkm_therm *therm)
-अणु
-	काष्ठा nvkm_device *device = therm->subdev.device;
+void
+g84_sensor_setup(struct nvkm_therm *therm)
+{
+	struct nvkm_device *device = therm->subdev.device;
 
-	/* enable temperature पढ़ोing क्रम cards with insane शेषs */
-	अगर (nvkm_fuse_पढ़ो(device->fuse, 0x1a8) == 1) अणु
+	/* enable temperature reading for cards with insane defaults */
+	if (nvkm_fuse_read(device->fuse, 0x1a8) == 1) {
 		nvkm_mask(device, 0x20008, 0x80008000, 0x80000000);
 		nvkm_mask(device, 0x2000c, 0x80000003, 0x00000000);
-		mdelay(20); /* रुको क्रम the temperature to stabilize */
-	पूर्ण
-पूर्ण
+		mdelay(20); /* wait for the temperature to stabilize */
+	}
+}
 
-अटल व्योम
-g84_therm_program_alarms(काष्ठा nvkm_therm *therm)
-अणु
-	काष्ठा nvbios_therm_sensor *sensor = &therm->bios_sensor;
-	काष्ठा nvkm_subdev *subdev = &therm->subdev;
-	काष्ठा nvkm_device *device = subdev->device;
-	अचिन्हित दीर्घ flags;
+static void
+g84_therm_program_alarms(struct nvkm_therm *therm)
+{
+	struct nvbios_therm_sensor *sensor = &therm->bios_sensor;
+	struct nvkm_subdev *subdev = &therm->subdev;
+	struct nvkm_device *device = subdev->device;
+	unsigned long flags;
 
 	spin_lock_irqsave(&therm->sensor.alarm_program_lock, flags);
 
-	/* enable RISING and FALLING IRQs क्रम shutकरोwn, THRS 0, 1, 2 and 4 */
+	/* enable RISING and FALLING IRQs for shutdown, THRS 0, 1, 2 and 4 */
 	nvkm_wr32(device, 0x20000, 0x000003ff);
 
-	/* shutकरोwn: The computer should be shutकरोwn when reached */
-	nvkm_wr32(device, 0x20484, sensor->thrs_shutकरोwn.hysteresis);
-	nvkm_wr32(device, 0x20480, sensor->thrs_shutकरोwn.temp);
+	/* shutdown: The computer should be shutdown when reached */
+	nvkm_wr32(device, 0x20484, sensor->thrs_shutdown.hysteresis);
+	nvkm_wr32(device, 0x20480, sensor->thrs_shutdown.temp);
 
 	/* THRS_1 : fan boost*/
 	nvkm_wr32(device, 0x204c4, sensor->thrs_fan_boost.temp);
@@ -74,127 +73,127 @@ g84_therm_program_alarms(काष्ठा nvkm_therm *therm)
 	/* THRS_2 : critical */
 	nvkm_wr32(device, 0x204c0, sensor->thrs_critical.temp);
 
-	/* THRS_4 : करोwn घड़ी */
-	nvkm_wr32(device, 0x20414, sensor->thrs_करोwn_घड़ी.temp);
+	/* THRS_4 : down clock */
+	nvkm_wr32(device, 0x20414, sensor->thrs_down_clock.temp);
 	spin_unlock_irqrestore(&therm->sensor.alarm_program_lock, flags);
 
 	nvkm_debug(subdev,
 		   "Programmed thresholds [ %d(%d), %d(%d), %d(%d), %d(%d) ]\n",
 		   sensor->thrs_fan_boost.temp,
 		   sensor->thrs_fan_boost.hysteresis,
-		   sensor->thrs_करोwn_घड़ी.temp,
-		   sensor->thrs_करोwn_घड़ी.hysteresis,
+		   sensor->thrs_down_clock.temp,
+		   sensor->thrs_down_clock.hysteresis,
 		   sensor->thrs_critical.temp,
 		   sensor->thrs_critical.hysteresis,
-		   sensor->thrs_shutकरोwn.temp,
-		   sensor->thrs_shutकरोwn.hysteresis);
+		   sensor->thrs_shutdown.temp,
+		   sensor->thrs_shutdown.hysteresis);
 
-पूर्ण
+}
 
 /* must be called with alarm_program_lock taken ! */
-अटल व्योम
-g84_therm_threshold_hyst_emulation(काष्ठा nvkm_therm *therm,
-				   uपूर्णांक32_t thrs_reg, u8 status_bit,
-				   स्थिर काष्ठा nvbios_therm_threshold *thrs,
-				   क्रमागत nvkm_therm_thrs thrs_name)
-अणु
-	काष्ठा nvkm_device *device = therm->subdev.device;
-	क्रमागत nvkm_therm_thrs_direction direction;
-	क्रमागत nvkm_therm_thrs_state prev_state, new_state;
-	पूर्णांक temp, cur;
+static void
+g84_therm_threshold_hyst_emulation(struct nvkm_therm *therm,
+				   uint32_t thrs_reg, u8 status_bit,
+				   const struct nvbios_therm_threshold *thrs,
+				   enum nvkm_therm_thrs thrs_name)
+{
+	struct nvkm_device *device = therm->subdev.device;
+	enum nvkm_therm_thrs_direction direction;
+	enum nvkm_therm_thrs_state prev_state, new_state;
+	int temp, cur;
 
 	prev_state = nvkm_therm_sensor_get_threshold_state(therm, thrs_name);
 	temp = nvkm_rd32(device, thrs_reg);
 
 	/* program the next threshold */
-	अगर (temp == thrs->temp) अणु
+	if (temp == thrs->temp) {
 		nvkm_wr32(device, thrs_reg, thrs->temp - thrs->hysteresis);
 		new_state = NVKM_THERM_THRS_HIGHER;
-	पूर्ण अन्यथा अणु
+	} else {
 		nvkm_wr32(device, thrs_reg, thrs->temp);
 		new_state = NVKM_THERM_THRS_LOWER;
-	पूर्ण
+	}
 
-	/* fix the state (in हाल someone reprogrammed the alarms) */
+	/* fix the state (in case someone reprogrammed the alarms) */
 	cur = therm->func->temp_get(therm);
-	अगर (new_state == NVKM_THERM_THRS_LOWER && cur > thrs->temp)
+	if (new_state == NVKM_THERM_THRS_LOWER && cur > thrs->temp)
 		new_state = NVKM_THERM_THRS_HIGHER;
-	अन्यथा अगर (new_state == NVKM_THERM_THRS_HIGHER &&
+	else if (new_state == NVKM_THERM_THRS_HIGHER &&
 		cur < thrs->temp - thrs->hysteresis)
 		new_state = NVKM_THERM_THRS_LOWER;
 	nvkm_therm_sensor_set_threshold_state(therm, thrs_name, new_state);
 
 	/* find the direction */
-	अगर (prev_state < new_state)
+	if (prev_state < new_state)
 		direction = NVKM_THERM_THRS_RISING;
-	अन्यथा अगर (prev_state > new_state)
+	else if (prev_state > new_state)
 		direction = NVKM_THERM_THRS_FALLING;
-	अन्यथा
-		वापस;
+	else
+		return;
 
 	/* advertise a change in direction */
 	nvkm_therm_sensor_event(therm, thrs_name, direction);
-पूर्ण
+}
 
-अटल व्योम
-g84_therm_पूर्णांकr(काष्ठा nvkm_therm *therm)
-अणु
-	काष्ठा nvkm_subdev *subdev = &therm->subdev;
-	काष्ठा nvkm_device *device = subdev->device;
-	काष्ठा nvbios_therm_sensor *sensor = &therm->bios_sensor;
-	अचिन्हित दीर्घ flags;
-	uपूर्णांक32_t पूर्णांकr;
+static void
+g84_therm_intr(struct nvkm_therm *therm)
+{
+	struct nvkm_subdev *subdev = &therm->subdev;
+	struct nvkm_device *device = subdev->device;
+	struct nvbios_therm_sensor *sensor = &therm->bios_sensor;
+	unsigned long flags;
+	uint32_t intr;
 
 	spin_lock_irqsave(&therm->sensor.alarm_program_lock, flags);
 
-	पूर्णांकr = nvkm_rd32(device, 0x20100) & 0x3ff;
+	intr = nvkm_rd32(device, 0x20100) & 0x3ff;
 
-	/* THRS_4: करोwnघड़ी */
-	अगर (पूर्णांकr & 0x002) अणु
+	/* THRS_4: downclock */
+	if (intr & 0x002) {
 		g84_therm_threshold_hyst_emulation(therm, 0x20414, 24,
-						   &sensor->thrs_करोwn_घड़ी,
+						   &sensor->thrs_down_clock,
 						   NVKM_THERM_THRS_DOWNCLOCK);
-		पूर्णांकr &= ~0x002;
-	पूर्ण
+		intr &= ~0x002;
+	}
 
-	/* shutकरोwn */
-	अगर (पूर्णांकr & 0x004) अणु
+	/* shutdown */
+	if (intr & 0x004) {
 		g84_therm_threshold_hyst_emulation(therm, 0x20480, 20,
-						   &sensor->thrs_shutकरोwn,
+						   &sensor->thrs_shutdown,
 						   NVKM_THERM_THRS_SHUTDOWN);
-		पूर्णांकr &= ~0x004;
-	पूर्ण
+		intr &= ~0x004;
+	}
 
 	/* THRS_1 : fan boost */
-	अगर (पूर्णांकr & 0x008) अणु
+	if (intr & 0x008) {
 		g84_therm_threshold_hyst_emulation(therm, 0x204c4, 21,
 						   &sensor->thrs_fan_boost,
 						   NVKM_THERM_THRS_FANBOOST);
-		पूर्णांकr &= ~0x008;
-	पूर्ण
+		intr &= ~0x008;
+	}
 
 	/* THRS_2 : critical */
-	अगर (पूर्णांकr & 0x010) अणु
+	if (intr & 0x010) {
 		g84_therm_threshold_hyst_emulation(therm, 0x204c0, 22,
 						   &sensor->thrs_critical,
 						   NVKM_THERM_THRS_CRITICAL);
-		पूर्णांकr &= ~0x010;
-	पूर्ण
+		intr &= ~0x010;
+	}
 
-	अगर (पूर्णांकr)
-		nvkm_error(subdev, "intr %08x\n", पूर्णांकr);
+	if (intr)
+		nvkm_error(subdev, "intr %08x\n", intr);
 
 	/* ACK everything */
 	nvkm_wr32(device, 0x20100, 0xffffffff);
 	nvkm_wr32(device, 0x1100, 0x10000); /* PBUS */
 
 	spin_unlock_irqrestore(&therm->sensor.alarm_program_lock, flags);
-पूर्ण
+}
 
-व्योम
-g84_therm_fini(काष्ठा nvkm_therm *therm)
-अणु
-	काष्ठा nvkm_device *device = therm->subdev.device;
+void
+g84_therm_fini(struct nvkm_therm *therm)
+{
+	struct nvkm_device *device = therm->subdev.device;
 
 	/* Disable PTherm IRQs */
 	nvkm_wr32(device, 0x20000, 0x00000000);
@@ -202,38 +201,38 @@ g84_therm_fini(काष्ठा nvkm_therm *therm)
 	/* ACK all PTherm IRQs */
 	nvkm_wr32(device, 0x20100, 0xffffffff);
 	nvkm_wr32(device, 0x1100, 0x10000); /* PBUS */
-पूर्ण
+}
 
-व्योम
-g84_therm_init(काष्ठा nvkm_therm *therm)
-अणु
+void
+g84_therm_init(struct nvkm_therm *therm)
+{
 	g84_sensor_setup(therm);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा nvkm_therm_func
-g84_therm = अणु
+static const struct nvkm_therm_func
+g84_therm = {
 	.init = g84_therm_init,
 	.fini = g84_therm_fini,
-	.पूर्णांकr = g84_therm_पूर्णांकr,
+	.intr = g84_therm_intr,
 	.pwm_ctrl = nv50_fan_pwm_ctrl,
 	.pwm_get = nv50_fan_pwm_get,
 	.pwm_set = nv50_fan_pwm_set,
-	.pwm_घड़ी = nv50_fan_pwm_घड़ी,
+	.pwm_clock = nv50_fan_pwm_clock,
 	.temp_get = g84_temp_get,
 	.program_alarms = g84_therm_program_alarms,
-पूर्ण;
+};
 
-पूर्णांक
-g84_therm_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst,
-	      काष्ठा nvkm_therm **ptherm)
-अणु
-	काष्ठा nvkm_therm *therm;
-	पूर्णांक ret;
+int
+g84_therm_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst,
+	      struct nvkm_therm **ptherm)
+{
+	struct nvkm_therm *therm;
+	int ret;
 
 	ret = nvkm_therm_new_(&g84_therm, device, type, inst, &therm);
 	*ptherm = therm;
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* init the thresholds */
 	nvkm_therm_sensor_set_threshold_state(therm, NVKM_THERM_THRS_SHUTDOWN,
@@ -244,5 +243,5 @@ g84_therm_new(काष्ठा nvkm_device *device, क्रमागत nvkm
 						     NVKM_THERM_THRS_LOWER);
 	nvkm_therm_sensor_set_threshold_state(therm, NVKM_THERM_THRS_DOWNCLOCK,
 						     NVKM_THERM_THRS_LOWER);
-	वापस 0;
-पूर्ण
+	return 0;
+}

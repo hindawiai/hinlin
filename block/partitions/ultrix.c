@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *  fs/partitions/ultrix.c
  *
@@ -8,42 +7,42 @@
  *  Re-organised Jul 1999 Russell King
  */
 
-#समावेश "check.h"
+#include "check.h"
 
-पूर्णांक ultrix_partition(काष्ठा parsed_partitions *state)
-अणु
-	पूर्णांक i;
+int ultrix_partition(struct parsed_partitions *state)
+{
+	int i;
 	Sector sect;
-	अचिन्हित अक्षर *data;
-	काष्ठा ultrix_disklabel अणु
-		s32	pt_magic;	/* magic no. indicating part. info निकासs */
-		s32	pt_valid;	/* set by driver अगर pt is current */
-		काष्ठा  pt_info अणु
+	unsigned char *data;
+	struct ultrix_disklabel {
+		s32	pt_magic;	/* magic no. indicating part. info exits */
+		s32	pt_valid;	/* set by driver if pt is current */
+		struct  pt_info {
 			s32		pi_nblocks; /* no. of sectors */
-			u32		pi_blkoff;  /* block offset क्रम start */
-		पूर्ण pt_part[8];
-	पूर्ण *label;
+			u32		pi_blkoff;  /* block offset for start */
+		} pt_part[8];
+	} *label;
 
-#घोषणा PT_MAGIC	0x032957	/* Partition magic number */
-#घोषणा PT_VALID	1		/* Indicates अगर काष्ठा is valid */
+#define PT_MAGIC	0x032957	/* Partition magic number */
+#define PT_VALID	1		/* Indicates if struct is valid */
 
-	data = पढ़ो_part_sector(state, (16384 - माप(*label))/512, &sect);
-	अगर (!data)
-		वापस -1;
+	data = read_part_sector(state, (16384 - sizeof(*label))/512, &sect);
+	if (!data)
+		return -1;
 	
-	label = (काष्ठा ultrix_disklabel *)(data + 512 - माप(*label));
+	label = (struct ultrix_disklabel *)(data + 512 - sizeof(*label));
 
-	अगर (label->pt_magic == PT_MAGIC && label->pt_valid == PT_VALID) अणु
-		क्रम (i=0; i<8; i++)
-			अगर (label->pt_part[i].pi_nblocks)
+	if (label->pt_magic == PT_MAGIC && label->pt_valid == PT_VALID) {
+		for (i=0; i<8; i++)
+			if (label->pt_part[i].pi_nblocks)
 				put_partition(state, i+1, 
 					      label->pt_part[i].pi_blkoff,
 					      label->pt_part[i].pi_nblocks);
 		put_dev_sector(sect);
 		strlcat(state->pp_buf, "\n", PAGE_SIZE);
-		वापस 1;
-	पूर्ण अन्यथा अणु
+		return 1;
+	} else {
 		put_dev_sector(sect);
-		वापस 0;
-	पूर्ण
-पूर्ण
+		return 0;
+	}
+}

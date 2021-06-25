@@ -1,79 +1,78 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2000-2006 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
-#अगर_अघोषित __XFS_SUPPORT_MRLOCK_H__
-#घोषणा __XFS_SUPPORT_MRLOCK_H__
+#ifndef __XFS_SUPPORT_MRLOCK_H__
+#define __XFS_SUPPORT_MRLOCK_H__
 
-#समावेश <linux/rwsem.h>
+#include <linux/rwsem.h>
 
-प्रकार काष्ठा अणु
-	काष्ठा rw_semaphore	mr_lock;
-#अगर defined(DEBUG) || defined(XFS_WARN)
-	पूर्णांक			mr_ग_लिखोr;
-#पूर्ण_अगर
-पूर्ण mrlock_t;
+typedef struct {
+	struct rw_semaphore	mr_lock;
+#if defined(DEBUG) || defined(XFS_WARN)
+	int			mr_writer;
+#endif
+} mrlock_t;
 
-#अगर defined(DEBUG) || defined(XFS_WARN)
-#घोषणा mrinit(mrp, name)	\
-	करो अणु (mrp)->mr_ग_लिखोr = 0; init_rwsem(&(mrp)->mr_lock); पूर्ण जबतक (0)
-#अन्यथा
-#घोषणा mrinit(mrp, name)	\
-	करो अणु init_rwsem(&(mrp)->mr_lock); पूर्ण जबतक (0)
-#पूर्ण_अगर
+#if defined(DEBUG) || defined(XFS_WARN)
+#define mrinit(mrp, name)	\
+	do { (mrp)->mr_writer = 0; init_rwsem(&(mrp)->mr_lock); } while (0)
+#else
+#define mrinit(mrp, name)	\
+	do { init_rwsem(&(mrp)->mr_lock); } while (0)
+#endif
 
-#घोषणा mrlock_init(mrp, t,n,s)	mrinit(mrp, n)
-#घोषणा mrमुक्त(mrp)		करो अणु पूर्ण जबतक (0)
+#define mrlock_init(mrp, t,n,s)	mrinit(mrp, n)
+#define mrfree(mrp)		do { } while (0)
 
-अटल अंतरभूत व्योम mraccess_nested(mrlock_t *mrp, पूर्णांक subclass)
-अणु
-	करोwn_पढ़ो_nested(&mrp->mr_lock, subclass);
-पूर्ण
+static inline void mraccess_nested(mrlock_t *mrp, int subclass)
+{
+	down_read_nested(&mrp->mr_lock, subclass);
+}
 
-अटल अंतरभूत व्योम mrupdate_nested(mrlock_t *mrp, पूर्णांक subclass)
-अणु
-	करोwn_ग_लिखो_nested(&mrp->mr_lock, subclass);
-#अगर defined(DEBUG) || defined(XFS_WARN)
-	mrp->mr_ग_लिखोr = 1;
-#पूर्ण_अगर
-पूर्ण
+static inline void mrupdate_nested(mrlock_t *mrp, int subclass)
+{
+	down_write_nested(&mrp->mr_lock, subclass);
+#if defined(DEBUG) || defined(XFS_WARN)
+	mrp->mr_writer = 1;
+#endif
+}
 
-अटल अंतरभूत पूर्णांक mrtryaccess(mrlock_t *mrp)
-अणु
-	वापस करोwn_पढ़ो_trylock(&mrp->mr_lock);
-पूर्ण
+static inline int mrtryaccess(mrlock_t *mrp)
+{
+	return down_read_trylock(&mrp->mr_lock);
+}
 
-अटल अंतरभूत पूर्णांक mrtryupdate(mrlock_t *mrp)
-अणु
-	अगर (!करोwn_ग_लिखो_trylock(&mrp->mr_lock))
-		वापस 0;
-#अगर defined(DEBUG) || defined(XFS_WARN)
-	mrp->mr_ग_लिखोr = 1;
-#पूर्ण_अगर
-	वापस 1;
-पूर्ण
+static inline int mrtryupdate(mrlock_t *mrp)
+{
+	if (!down_write_trylock(&mrp->mr_lock))
+		return 0;
+#if defined(DEBUG) || defined(XFS_WARN)
+	mrp->mr_writer = 1;
+#endif
+	return 1;
+}
 
-अटल अंतरभूत व्योम mrunlock_excl(mrlock_t *mrp)
-अणु
-#अगर defined(DEBUG) || defined(XFS_WARN)
-	mrp->mr_ग_लिखोr = 0;
-#पूर्ण_अगर
-	up_ग_लिखो(&mrp->mr_lock);
-पूर्ण
+static inline void mrunlock_excl(mrlock_t *mrp)
+{
+#if defined(DEBUG) || defined(XFS_WARN)
+	mrp->mr_writer = 0;
+#endif
+	up_write(&mrp->mr_lock);
+}
 
-अटल अंतरभूत व्योम mrunlock_shared(mrlock_t *mrp)
-अणु
-	up_पढ़ो(&mrp->mr_lock);
-पूर्ण
+static inline void mrunlock_shared(mrlock_t *mrp)
+{
+	up_read(&mrp->mr_lock);
+}
 
-अटल अंतरभूत व्योम mrdemote(mrlock_t *mrp)
-अणु
-#अगर defined(DEBUG) || defined(XFS_WARN)
-	mrp->mr_ग_लिखोr = 0;
-#पूर्ण_अगर
-	करोwngrade_ग_लिखो(&mrp->mr_lock);
-पूर्ण
+static inline void mrdemote(mrlock_t *mrp)
+{
+#if defined(DEBUG) || defined(XFS_WARN)
+	mrp->mr_writer = 0;
+#endif
+	downgrade_write(&mrp->mr_lock);
+}
 
-#पूर्ण_अगर /* __XFS_SUPPORT_MRLOCK_H__ */
+#endif /* __XFS_SUPPORT_MRLOCK_H__ */

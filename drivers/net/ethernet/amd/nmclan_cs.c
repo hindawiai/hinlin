@@ -1,10 +1,9 @@
-<शैली गुरु>
 /* ----------------------------------------------------------------------------
-Linux PCMCIA ethernet adapter driver क्रम the New Media Ethernet LAN.
+Linux PCMCIA ethernet adapter driver for the New Media Ethernet LAN.
   nmclan_cs.c,v 0.16 1995/07/01 06:42:17 rpao Exp rpao
 
   The Ethernet LAN uses the Advanced Micro Devices (AMD) Am79C940 Media
-  Access Controller क्रम Ethernet (MACE).  It is essentially the Am2150
+  Access Controller for Ethernet (MACE).  It is essentially the Am2150
   PCMCIA Ethernet card contained in the Am2150 Demo Kit.
 
 Written by Roger C. Pao <rpao@paonet.org>
@@ -30,7 +29,7 @@ References
   Dean Siasoyco, New Media Corporation
   Ken Lesniak, Silicon Graphics, Inc. <lesniak@boston.sgi.com>
   Donald Becker <becker@scyld.com>
-  David Hinds <dahinds@users.sourceक्रमge.net>
+  David Hinds <dahinds@users.sourceforge.net>
 
   The Linux client driver is based on the 3c589_cs.c client driver by
   David Hinds.
@@ -39,10 +38,10 @@ References
   the 8390.c driver, and the example skeleton.c kernel code, which are
   by Donald Becker.
 
-  The Am2150 network driver hardware पूर्णांकerface code is based on the
-  OS/9000 driver क्रम the New Media Ethernet LAN by Eric Mears.
+  The Am2150 network driver hardware interface code is based on the
+  OS/9000 driver for the New Media Ethernet LAN by Eric Mears.
 
-  Special thanks क्रम testing and help in debugging this driver goes
+  Special thanks for testing and help in debugging this driver goes
   to Ken Lesniak.
 
 -------------------------------------------------------------------------------
@@ -55,15 +54,15 @@ Driver Notes and Issues
 
 2. rc.pcmcia may require loading pcmcia_core with io_speed=300:
    'insmod pcmcia_core.o io_speed=300'.
-   This will aव्योम problems with fast प्रणालीs which causes rx_framecnt
-   to वापस अक्रमom values.
+   This will avoid problems with fast systems which causes rx_framecnt
+   to return random values.
 
-3. If hot extraction करोes not work क्रम you, use 'ifconfig eth0 down'
-   beक्रमe extraction.
+3. If hot extraction does not work for you, use 'ifconfig eth0 down'
+   before extraction.
 
-4. There is a bad slow-करोwn problem in this driver.
+4. There is a bad slow-down problem in this driver.
 
-5. Future: Multicast processing.  In the meanसमय, करो _not_ compile your
+5. Future: Multicast processing.  In the meantime, do _not_ compile your
    kernel with multicast ip enabled.
 
 -------------------------------------------------------------------------------
@@ -82,13 +81,13 @@ Log: nmclan_cs.c,v
  *
  * Revision 0.14  1995/05/23  03:19:30  rpao
  * Added, in nmclan_config(), "tuple.Attributes = 0;".
- * Modअगरied MACE ID check to ignore chip revision level.
- * Aव्योम tx_मुक्त_frames race condition between _start_xmit and _पूर्णांकerrupt.
+ * Modified MACE ID check to ignore chip revision level.
+ * Avoid tx_free_frames race condition between _start_xmit and _interrupt.
  *
  * Revision 0.13  1995/05/18  05:56:34  rpao
  * Statistics changes.
  * Bug fix: nmclan_reset did not enable TX and RX: call restore_multicast_list.
- * Bug fix: mace_पूर्णांकerrupt checks ~MACE_IMR_DEFAULT.  Fixes driver lockup.
+ * Bug fix: mace_interrupt checks ~MACE_IMR_DEFAULT.  Fixes driver lockup.
  *
  * Revision 0.12  1995/05/14  00:12:23  rpao
  * Statistics overhaul.
@@ -96,202 +95,202 @@ Log: nmclan_cs.c,v
 
 95/05/13 rpao	V0.10a
 		Bug fix: MACE statistics counters used wrong I/O ports.
-		Bug fix: mace_पूर्णांकerrupt() needed to allow statistics to be
-		processed without RX or TX पूर्णांकerrupts pending.
+		Bug fix: mace_interrupt() needed to allow statistics to be
+		processed without RX or TX interrupts pending.
 95/05/11 rpao	V0.10
 		Multiple transmit request processing.
-		Modअगरied statistics to use MACE counters where possible.
+		Modified statistics to use MACE counters where possible.
 95/05/10 rpao	V0.09 Bug fix: Must use IO_DATA_PATH_WIDTH_AUTO.
 		*Released
 95/05/10 rpao	V0.08
-		Bug fix: Make all non-exported functions निजी by using
-		अटल keyword.
-		Bug fix: Test IntrCnt _beक्रमe_ पढ़ोing MACE_IR.
+		Bug fix: Make all non-exported functions private by using
+		static keyword.
+		Bug fix: Test IntrCnt _before_ reading MACE_IR.
 95/05/10 rpao	V0.07 Statistics.
-95/05/09 rpao	V0.06 Fix rx_framecnt problem by addition of PCIC रुको states.
+95/05/09 rpao	V0.06 Fix rx_framecnt problem by addition of PCIC wait states.
 
 ---------------------------------------------------------------------------- */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#घोषणा DRV_NAME	"nmclan_cs"
+#define DRV_NAME	"nmclan_cs"
 
 /* ----------------------------------------------------------------------------
 Conditional Compilation Options
 ---------------------------------------------------------------------------- */
 
-#घोषणा MULTI_TX			0
-#घोषणा RESET_ON_TIMEOUT		1
-#घोषणा TX_INTERRUPTABLE		1
-#घोषणा RESET_XILINX			0
+#define MULTI_TX			0
+#define RESET_ON_TIMEOUT		1
+#define TX_INTERRUPTABLE		1
+#define RESET_XILINX			0
 
 /* ----------------------------------------------------------------------------
 Include Files
 ---------------------------------------------------------------------------- */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/समयr.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/in.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/ethtool.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/अगर_arp.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/bitops.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/ptrace.h>
+#include <linux/slab.h>
+#include <linux/string.h>
+#include <linux/timer.h>
+#include <linux/interrupt.h>
+#include <linux/in.h>
+#include <linux/delay.h>
+#include <linux/ethtool.h>
+#include <linux/netdevice.h>
+#include <linux/etherdevice.h>
+#include <linux/skbuff.h>
+#include <linux/if_arp.h>
+#include <linux/ioport.h>
+#include <linux/bitops.h>
 
-#समावेश <pcmcia/cisreg.h>
-#समावेश <pcmcia/cistpl.h>
-#समावेश <pcmcia/ds.h>
+#include <pcmcia/cisreg.h>
+#include <pcmcia/cistpl.h>
+#include <pcmcia/ds.h>
 
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/पन.स>
+#include <linux/uaccess.h>
+#include <asm/io.h>
 
 /* ----------------------------------------------------------------------------
 Defines
 ---------------------------------------------------------------------------- */
 
-#घोषणा MACE_LADRF_LEN			8
+#define MACE_LADRF_LEN			8
 					/* 8 bytes in Logical Address Filter */
 
 /* Loop Control Defines */
-#घोषणा MACE_MAX_IR_ITERATIONS		10
-#घोषणा MACE_MAX_RX_ITERATIONS		12
+#define MACE_MAX_IR_ITERATIONS		10
+#define MACE_MAX_RX_ITERATIONS		12
 	/*
 	TBD: Dean brought this up, and I assumed the hardware would
 	handle it:
 
 	If MACE_MAX_RX_ITERATIONS is > 1, rx_framecnt may still be
-	non-zero when the isr निकासs.  We may not get another पूर्णांकerrupt
-	to process the reमुख्यing packets क्रम some समय.
+	non-zero when the isr exits.  We may not get another interrupt
+	to process the remaining packets for some time.
 	*/
 
 /*
 The Am2150 has a Xilinx XC3042 field programmable gate array (FPGA)
-which manages the पूर्णांकerface between the MACE and the PCMCIA bus.  It
-also includes buffer management क्रम the 32K x 8 SRAM to control up to
-four transmit and 12 receive frames at a समय.
+which manages the interface between the MACE and the PCMCIA bus.  It
+also includes buffer management for the 32K x 8 SRAM to control up to
+four transmit and 12 receive frames at a time.
 */
-#घोषणा AM2150_MAX_TX_FRAMES		4
-#घोषणा AM2150_MAX_RX_FRAMES		12
+#define AM2150_MAX_TX_FRAMES		4
+#define AM2150_MAX_RX_FRAMES		12
 
 /* Am2150 Ethernet Card I/O Mapping */
-#घोषणा AM2150_RCV			0x00
-#घोषणा AM2150_XMT			0x04
-#घोषणा AM2150_XMT_SKIP			0x09
-#घोषणा AM2150_RCV_NEXT			0x0A
-#घोषणा AM2150_RCV_FRAME_COUNT		0x0B
-#घोषणा AM2150_MACE_BANK		0x0C
-#घोषणा AM2150_MACE_BASE		0x10
+#define AM2150_RCV			0x00
+#define AM2150_XMT			0x04
+#define AM2150_XMT_SKIP			0x09
+#define AM2150_RCV_NEXT			0x0A
+#define AM2150_RCV_FRAME_COUNT		0x0B
+#define AM2150_MACE_BANK		0x0C
+#define AM2150_MACE_BASE		0x10
 
 /* MACE Registers */
-#घोषणा MACE_RCVFIFO			0
-#घोषणा MACE_XMTFIFO			1
-#घोषणा MACE_XMTFC			2
-#घोषणा MACE_XMTFS			3
-#घोषणा MACE_XMTRC			4
-#घोषणा MACE_RCVFC			5
-#घोषणा MACE_RCVFS			6
-#घोषणा MACE_FIFOFC			7
-#घोषणा MACE_IR				8
-#घोषणा MACE_IMR			9
-#घोषणा MACE_PR				10
-#घोषणा MACE_BIUCC			11
-#घोषणा MACE_FIFOCC			12
-#घोषणा MACE_MACCC			13
-#घोषणा MACE_PLSCC			14
-#घोषणा MACE_PHYCC			15
-#घोषणा MACE_CHIPIDL			16
-#घोषणा MACE_CHIPIDH			17
-#घोषणा MACE_IAC			18
+#define MACE_RCVFIFO			0
+#define MACE_XMTFIFO			1
+#define MACE_XMTFC			2
+#define MACE_XMTFS			3
+#define MACE_XMTRC			4
+#define MACE_RCVFC			5
+#define MACE_RCVFS			6
+#define MACE_FIFOFC			7
+#define MACE_IR				8
+#define MACE_IMR			9
+#define MACE_PR				10
+#define MACE_BIUCC			11
+#define MACE_FIFOCC			12
+#define MACE_MACCC			13
+#define MACE_PLSCC			14
+#define MACE_PHYCC			15
+#define MACE_CHIPIDL			16
+#define MACE_CHIPIDH			17
+#define MACE_IAC			18
 /* Reserved */
-#घोषणा MACE_LADRF			20
-#घोषणा MACE_PADR			21
+#define MACE_LADRF			20
+#define MACE_PADR			21
 /* Reserved */
 /* Reserved */
-#घोषणा MACE_MPC			24
+#define MACE_MPC			24
 /* Reserved */
-#घोषणा MACE_RNTPC			26
-#घोषणा MACE_RCVCC			27
+#define MACE_RNTPC			26
+#define MACE_RCVCC			27
 /* Reserved */
-#घोषणा MACE_UTR			29
-#घोषणा MACE_RTR1			30
-#घोषणा MACE_RTR2			31
+#define MACE_UTR			29
+#define MACE_RTR1			30
+#define MACE_RTR2			31
 
 /* MACE Bit Masks */
-#घोषणा MACE_XMTRC_EXDEF		0x80
-#घोषणा MACE_XMTRC_XMTRC		0x0F
+#define MACE_XMTRC_EXDEF		0x80
+#define MACE_XMTRC_XMTRC		0x0F
 
-#घोषणा MACE_XMTFS_XMTSV		0x80
-#घोषणा MACE_XMTFS_UFLO			0x40
-#घोषणा MACE_XMTFS_LCOL			0x20
-#घोषणा MACE_XMTFS_MORE			0x10
-#घोषणा MACE_XMTFS_ONE			0x08
-#घोषणा MACE_XMTFS_DEFER		0x04
-#घोषणा MACE_XMTFS_LCAR			0x02
-#घोषणा MACE_XMTFS_RTRY			0x01
+#define MACE_XMTFS_XMTSV		0x80
+#define MACE_XMTFS_UFLO			0x40
+#define MACE_XMTFS_LCOL			0x20
+#define MACE_XMTFS_MORE			0x10
+#define MACE_XMTFS_ONE			0x08
+#define MACE_XMTFS_DEFER		0x04
+#define MACE_XMTFS_LCAR			0x02
+#define MACE_XMTFS_RTRY			0x01
 
-#घोषणा MACE_RCVFS_RCVSTS		0xF000
-#घोषणा MACE_RCVFS_OFLO			0x8000
-#घोषणा MACE_RCVFS_CLSN			0x4000
-#घोषणा MACE_RCVFS_FRAM			0x2000
-#घोषणा MACE_RCVFS_FCS			0x1000
+#define MACE_RCVFS_RCVSTS		0xF000
+#define MACE_RCVFS_OFLO			0x8000
+#define MACE_RCVFS_CLSN			0x4000
+#define MACE_RCVFS_FRAM			0x2000
+#define MACE_RCVFS_FCS			0x1000
 
-#घोषणा MACE_FIFOFC_RCVFC		0xF0
-#घोषणा MACE_FIFOFC_XMTFC		0x0F
+#define MACE_FIFOFC_RCVFC		0xF0
+#define MACE_FIFOFC_XMTFC		0x0F
 
-#घोषणा MACE_IR_JAB			0x80
-#घोषणा MACE_IR_BABL			0x40
-#घोषणा MACE_IR_CERR			0x20
-#घोषणा MACE_IR_RCVCCO			0x10
-#घोषणा MACE_IR_RNTPCO			0x08
-#घोषणा MACE_IR_MPCO			0x04
-#घोषणा MACE_IR_RCVINT			0x02
-#घोषणा MACE_IR_XMTINT			0x01
+#define MACE_IR_JAB			0x80
+#define MACE_IR_BABL			0x40
+#define MACE_IR_CERR			0x20
+#define MACE_IR_RCVCCO			0x10
+#define MACE_IR_RNTPCO			0x08
+#define MACE_IR_MPCO			0x04
+#define MACE_IR_RCVINT			0x02
+#define MACE_IR_XMTINT			0x01
 
-#घोषणा MACE_MACCC_PROM			0x80
-#घोषणा MACE_MACCC_DXMT2PD		0x40
-#घोषणा MACE_MACCC_EMBA			0x20
-#घोषणा MACE_MACCC_RESERVED		0x10
-#घोषणा MACE_MACCC_DRCVPA		0x08
-#घोषणा MACE_MACCC_DRCVBC		0x04
-#घोषणा MACE_MACCC_ENXMT		0x02
-#घोषणा MACE_MACCC_ENRCV		0x01
+#define MACE_MACCC_PROM			0x80
+#define MACE_MACCC_DXMT2PD		0x40
+#define MACE_MACCC_EMBA			0x20
+#define MACE_MACCC_RESERVED		0x10
+#define MACE_MACCC_DRCVPA		0x08
+#define MACE_MACCC_DRCVBC		0x04
+#define MACE_MACCC_ENXMT		0x02
+#define MACE_MACCC_ENRCV		0x01
 
-#घोषणा MACE_PHYCC_LNKFL		0x80
-#घोषणा MACE_PHYCC_DLNKTST		0x40
-#घोषणा MACE_PHYCC_REVPOL		0x20
-#घोषणा MACE_PHYCC_DAPC			0x10
-#घोषणा MACE_PHYCC_LRT			0x08
-#घोषणा MACE_PHYCC_ASEL			0x04
-#घोषणा MACE_PHYCC_RWAKE		0x02
-#घोषणा MACE_PHYCC_AWAKE		0x01
+#define MACE_PHYCC_LNKFL		0x80
+#define MACE_PHYCC_DLNKTST		0x40
+#define MACE_PHYCC_REVPOL		0x20
+#define MACE_PHYCC_DAPC			0x10
+#define MACE_PHYCC_LRT			0x08
+#define MACE_PHYCC_ASEL			0x04
+#define MACE_PHYCC_RWAKE		0x02
+#define MACE_PHYCC_AWAKE		0x01
 
-#घोषणा MACE_IAC_ADDRCHG		0x80
-#घोषणा MACE_IAC_PHYADDR		0x04
-#घोषणा MACE_IAC_LOGADDR		0x02
+#define MACE_IAC_ADDRCHG		0x80
+#define MACE_IAC_PHYADDR		0x04
+#define MACE_IAC_LOGADDR		0x02
 
-#घोषणा MACE_UTR_RTRE			0x80
-#घोषणा MACE_UTR_RTRD			0x40
-#घोषणा MACE_UTR_RPA			0x20
-#घोषणा MACE_UTR_FCOLL			0x10
-#घोषणा MACE_UTR_RCVFCSE		0x08
-#घोषणा MACE_UTR_LOOP_INCL_MENDEC	0x06
-#घोषणा MACE_UTR_LOOP_NO_MENDEC		0x04
-#घोषणा MACE_UTR_LOOP_EXTERNAL		0x02
-#घोषणा MACE_UTR_LOOP_NONE		0x00
-#घोषणा MACE_UTR_RESERVED		0x01
+#define MACE_UTR_RTRE			0x80
+#define MACE_UTR_RTRD			0x40
+#define MACE_UTR_RPA			0x20
+#define MACE_UTR_FCOLL			0x10
+#define MACE_UTR_RCVFCSE		0x08
+#define MACE_UTR_LOOP_INCL_MENDEC	0x06
+#define MACE_UTR_LOOP_NO_MENDEC		0x04
+#define MACE_UTR_LOOP_EXTERNAL		0x02
+#define MACE_UTR_LOOP_NONE		0x00
+#define MACE_UTR_RESERVED		0x01
 
-/* Switch MACE रेजिस्टर bank (only 0 and 1 are valid) */
-#घोषणा MACEBANK(win_num) outb((win_num), ioaddr + AM2150_MACE_BANK)
+/* Switch MACE register bank (only 0 and 1 are valid) */
+#define MACEBANK(win_num) outb((win_num), ioaddr + AM2150_MACE_BANK)
 
-#घोषणा MACE_IMR_DEFAULT \
+#define MACE_IMR_DEFAULT \
   (0xFF - \
     ( \
       MACE_IR_CERR | \
@@ -302,81 +301,81 @@ four transmit and 12 receive frames at a समय.
       MACE_IR_XMTINT \
     ) \
   )
-#अघोषित MACE_IMR_DEFAULT
-#घोषणा MACE_IMR_DEFAULT 0x00 /* New statistics handling: grab everything */
+#undef MACE_IMR_DEFAULT
+#define MACE_IMR_DEFAULT 0x00 /* New statistics handling: grab everything */
 
-#घोषणा TX_TIMEOUT		((400*HZ)/1000)
+#define TX_TIMEOUT		((400*HZ)/1000)
 
 /* ----------------------------------------------------------------------------
 Type Definitions
 ---------------------------------------------------------------------------- */
 
-प्रकार काष्ठा _mace_statistics अणु
+typedef struct _mace_statistics {
     /* MACE_XMTFS */
-    पूर्णांक xmtsv;
-    पूर्णांक uflo;
-    पूर्णांक lcol;
-    पूर्णांक more;
-    पूर्णांक one;
-    पूर्णांक defer;
-    पूर्णांक lcar;
-    पूर्णांक rtry;
+    int xmtsv;
+    int uflo;
+    int lcol;
+    int more;
+    int one;
+    int defer;
+    int lcar;
+    int rtry;
 
     /* MACE_XMTRC */
-    पूर्णांक exdef;
-    पूर्णांक xmtrc;
+    int exdef;
+    int xmtrc;
 
     /* RFS1--Receive Status (RCVSTS) */
-    पूर्णांक oflo;
-    पूर्णांक clsn;
-    पूर्णांक fram;
-    पूर्णांक fcs;
+    int oflo;
+    int clsn;
+    int fram;
+    int fcs;
 
     /* RFS2--Runt Packet Count (RNTPC) */
-    पूर्णांक rfs_rntpc;
+    int rfs_rntpc;
 
     /* RFS3--Receive Collision Count (RCVCC) */
-    पूर्णांक rfs_rcvcc;
+    int rfs_rcvcc;
 
     /* MACE_IR */
-    पूर्णांक jab;
-    पूर्णांक babl;
-    पूर्णांक cerr;
-    पूर्णांक rcvcco;
-    पूर्णांक rntpco;
-    पूर्णांक mpco;
+    int jab;
+    int babl;
+    int cerr;
+    int rcvcco;
+    int rntpco;
+    int mpco;
 
     /* MACE_MPC */
-    पूर्णांक mpc;
+    int mpc;
 
     /* MACE_RNTPC */
-    पूर्णांक rntpc;
+    int rntpc;
 
     /* MACE_RCVCC */
-    पूर्णांक rcvcc;
-पूर्ण mace_statistics;
+    int rcvcc;
+} mace_statistics;
 
-प्रकार काष्ठा _mace_निजी अणु
-	काष्ठा pcmcia_device	*p_dev;
+typedef struct _mace_private {
+	struct pcmcia_device	*p_dev;
     mace_statistics mace_stats; /* MACE chip statistics counters */
 
     /* restore_multicast_list() state variables */
-    पूर्णांक multicast_ladrf[MACE_LADRF_LEN]; /* Logical address filter */
-    पूर्णांक multicast_num_addrs;
+    int multicast_ladrf[MACE_LADRF_LEN]; /* Logical address filter */
+    int multicast_num_addrs;
 
-    अक्षर tx_मुक्त_frames; /* Number of मुक्त transmit frame buffers */
-    अक्षर tx_irq_disabled; /* MACE TX पूर्णांकerrupt disabled */
+    char tx_free_frames; /* Number of free transmit frame buffers */
+    char tx_irq_disabled; /* MACE TX interrupt disabled */
 
-    spinlock_t bank_lock; /* Must be held अगर you step off bank 0 */
-पूर्ण mace_निजी;
+    spinlock_t bank_lock; /* Must be held if you step off bank 0 */
+} mace_private;
 
 /* ----------------------------------------------------------------------------
 Private Global Variables
 ---------------------------------------------------------------------------- */
 
-अटल स्थिर अक्षर *अगर_names[]=अणु
+static const char *if_names[]={
     "Auto", "10baseT", "BNC",
-पूर्ण;
+};
 
 /* ----------------------------------------------------------------------------
 Parameters
@@ -387,59 +386,59 @@ Parameters
 MODULE_DESCRIPTION("New Media PCMCIA ethernet driver");
 MODULE_LICENSE("GPL");
 
-#घोषणा INT_MODULE_PARM(n, v) अटल पूर्णांक n = v; module_param(n, पूर्णांक, 0)
+#define INT_MODULE_PARM(n, v) static int n = v; module_param(n, int, 0)
 
-/* 0=स्वतः, 1=10baseT, 2 = 10base2, शेष=स्वतः */
-INT_MODULE_PARM(अगर_port, 0);
+/* 0=auto, 1=10baseT, 2 = 10base2, default=auto */
+INT_MODULE_PARM(if_port, 0);
 
 
 /* ----------------------------------------------------------------------------
 Function Prototypes
 ---------------------------------------------------------------------------- */
 
-अटल पूर्णांक nmclan_config(काष्ठा pcmcia_device *link);
-अटल व्योम nmclan_release(काष्ठा pcmcia_device *link);
+static int nmclan_config(struct pcmcia_device *link);
+static void nmclan_release(struct pcmcia_device *link);
 
-अटल व्योम nmclan_reset(काष्ठा net_device *dev);
-अटल पूर्णांक mace_config(काष्ठा net_device *dev, काष्ठा अगरmap *map);
-अटल पूर्णांक mace_खोलो(काष्ठा net_device *dev);
-अटल पूर्णांक mace_बंद(काष्ठा net_device *dev);
-अटल netdev_tx_t mace_start_xmit(काष्ठा sk_buff *skb,
-					 काष्ठा net_device *dev);
-अटल व्योम mace_tx_समयout(काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue);
-अटल irqवापस_t mace_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id);
-अटल काष्ठा net_device_stats *mace_get_stats(काष्ठा net_device *dev);
-अटल पूर्णांक mace_rx(काष्ठा net_device *dev, अचिन्हित अक्षर RxCnt);
-अटल व्योम restore_multicast_list(काष्ठा net_device *dev);
-अटल व्योम set_multicast_list(काष्ठा net_device *dev);
-अटल स्थिर काष्ठा ethtool_ops netdev_ethtool_ops;
+static void nmclan_reset(struct net_device *dev);
+static int mace_config(struct net_device *dev, struct ifmap *map);
+static int mace_open(struct net_device *dev);
+static int mace_close(struct net_device *dev);
+static netdev_tx_t mace_start_xmit(struct sk_buff *skb,
+					 struct net_device *dev);
+static void mace_tx_timeout(struct net_device *dev, unsigned int txqueue);
+static irqreturn_t mace_interrupt(int irq, void *dev_id);
+static struct net_device_stats *mace_get_stats(struct net_device *dev);
+static int mace_rx(struct net_device *dev, unsigned char RxCnt);
+static void restore_multicast_list(struct net_device *dev);
+static void set_multicast_list(struct net_device *dev);
+static const struct ethtool_ops netdev_ethtool_ops;
 
 
-अटल व्योम nmclan_detach(काष्ठा pcmcia_device *p_dev);
+static void nmclan_detach(struct pcmcia_device *p_dev);
 
-अटल स्थिर काष्ठा net_device_ops mace_netdev_ops = अणु
-	.nकरो_खोलो		= mace_खोलो,
-	.nकरो_stop		= mace_बंद,
-	.nकरो_start_xmit		= mace_start_xmit,
-	.nकरो_tx_समयout		= mace_tx_समयout,
-	.nकरो_set_config		= mace_config,
-	.nकरो_get_stats		= mace_get_stats,
-	.nकरो_set_rx_mode	= set_multicast_list,
-	.nकरो_set_mac_address 	= eth_mac_addr,
-	.nकरो_validate_addr	= eth_validate_addr,
-पूर्ण;
+static const struct net_device_ops mace_netdev_ops = {
+	.ndo_open		= mace_open,
+	.ndo_stop		= mace_close,
+	.ndo_start_xmit		= mace_start_xmit,
+	.ndo_tx_timeout		= mace_tx_timeout,
+	.ndo_set_config		= mace_config,
+	.ndo_get_stats		= mace_get_stats,
+	.ndo_set_rx_mode	= set_multicast_list,
+	.ndo_set_mac_address 	= eth_mac_addr,
+	.ndo_validate_addr	= eth_validate_addr,
+};
 
-अटल पूर्णांक nmclan_probe(काष्ठा pcmcia_device *link)
-अणु
-    mace_निजी *lp;
-    काष्ठा net_device *dev;
+static int nmclan_probe(struct pcmcia_device *link)
+{
+    mace_private *lp;
+    struct net_device *dev;
 
     dev_dbg(&link->dev, "nmclan_attach()\n");
 
     /* Create new ethernet device */
-    dev = alloc_etherdev(माप(mace_निजी));
-    अगर (!dev)
-	    वापस -ENOMEM;
+    dev = alloc_etherdev(sizeof(mace_private));
+    if (!dev)
+	    return -ENOMEM;
     lp = netdev_priv(dev);
     lp->p_dev = link;
     link->priv = dev;
@@ -451,108 +450,108 @@ Function Prototypes
     link->config_index = 1;
     link->config_regs = PRESENT_OPTION;
 
-    lp->tx_मुक्त_frames=AM2150_MAX_TX_FRAMES;
+    lp->tx_free_frames=AM2150_MAX_TX_FRAMES;
 
     dev->netdev_ops = &mace_netdev_ops;
     dev->ethtool_ops = &netdev_ethtool_ops;
-    dev->watchकरोg_समयo = TX_TIMEOUT;
+    dev->watchdog_timeo = TX_TIMEOUT;
 
-    वापस nmclan_config(link);
-पूर्ण /* nmclan_attach */
+    return nmclan_config(link);
+} /* nmclan_attach */
 
-अटल व्योम nmclan_detach(काष्ठा pcmcia_device *link)
-अणु
-    काष्ठा net_device *dev = link->priv;
+static void nmclan_detach(struct pcmcia_device *link)
+{
+    struct net_device *dev = link->priv;
 
     dev_dbg(&link->dev, "nmclan_detach\n");
 
-    unरेजिस्टर_netdev(dev);
+    unregister_netdev(dev);
 
     nmclan_release(link);
 
-    मुक्त_netdev(dev);
-पूर्ण /* nmclan_detach */
+    free_netdev(dev);
+} /* nmclan_detach */
 
 /* ----------------------------------------------------------------------------
-mace_पढ़ो
-	Reads a MACE रेजिस्टर.  This is bank independent; however, the
-	caller must ensure that this call is not पूर्णांकerruptable.  We are
+mace_read
+	Reads a MACE register.  This is bank independent; however, the
+	caller must ensure that this call is not interruptable.  We are
 	assuming that during normal operation, the MACE is always in
 	bank 0.
 ---------------------------------------------------------------------------- */
-अटल पूर्णांक mace_पढ़ो(mace_निजी *lp, अचिन्हित पूर्णांक ioaddr, पूर्णांक reg)
-अणु
-  पूर्णांक data = 0xFF;
-  अचिन्हित दीर्घ flags;
+static int mace_read(mace_private *lp, unsigned int ioaddr, int reg)
+{
+  int data = 0xFF;
+  unsigned long flags;
 
-  चयन (reg >> 4) अणु
-    हाल 0: /* रेजिस्टर 0-15 */
+  switch (reg >> 4) {
+    case 0: /* register 0-15 */
       data = inb(ioaddr + AM2150_MACE_BASE + reg);
-      अवरोध;
-    हाल 1: /* रेजिस्टर 16-31 */
+      break;
+    case 1: /* register 16-31 */
       spin_lock_irqsave(&lp->bank_lock, flags);
       MACEBANK(1);
       data = inb(ioaddr + AM2150_MACE_BASE + (reg & 0x0F));
       MACEBANK(0);
       spin_unlock_irqrestore(&lp->bank_lock, flags);
-      अवरोध;
-  पूर्ण
-  वापस data & 0xFF;
-पूर्ण /* mace_पढ़ो */
+      break;
+  }
+  return data & 0xFF;
+} /* mace_read */
 
 /* ----------------------------------------------------------------------------
-mace_ग_लिखो
-	Writes to a MACE रेजिस्टर.  This is bank independent; however,
-	the caller must ensure that this call is not पूर्णांकerruptable.  We
+mace_write
+	Writes to a MACE register.  This is bank independent; however,
+	the caller must ensure that this call is not interruptable.  We
 	are assuming that during normal operation, the MACE is always in
 	bank 0.
 ---------------------------------------------------------------------------- */
-अटल व्योम mace_ग_लिखो(mace_निजी *lp, अचिन्हित पूर्णांक ioaddr, पूर्णांक reg,
-		       पूर्णांक data)
-अणु
-  अचिन्हित दीर्घ flags;
+static void mace_write(mace_private *lp, unsigned int ioaddr, int reg,
+		       int data)
+{
+  unsigned long flags;
 
-  चयन (reg >> 4) अणु
-    हाल 0: /* रेजिस्टर 0-15 */
+  switch (reg >> 4) {
+    case 0: /* register 0-15 */
       outb(data & 0xFF, ioaddr + AM2150_MACE_BASE + reg);
-      अवरोध;
-    हाल 1: /* रेजिस्टर 16-31 */
+      break;
+    case 1: /* register 16-31 */
       spin_lock_irqsave(&lp->bank_lock, flags);
       MACEBANK(1);
       outb(data & 0xFF, ioaddr + AM2150_MACE_BASE + (reg & 0x0F));
       MACEBANK(0);
       spin_unlock_irqrestore(&lp->bank_lock, flags);
-      अवरोध;
-  पूर्ण
-पूर्ण /* mace_ग_लिखो */
+      break;
+  }
+} /* mace_write */
 
 /* ----------------------------------------------------------------------------
 mace_init
 	Resets the MACE chip.
 ---------------------------------------------------------------------------- */
-अटल पूर्णांक mace_init(mace_निजी *lp, अचिन्हित पूर्णांक ioaddr, अक्षर *enet_addr)
-अणु
-  पूर्णांक i;
-  पूर्णांक ct = 0;
+static int mace_init(mace_private *lp, unsigned int ioaddr, char *enet_addr)
+{
+  int i;
+  int ct = 0;
 
   /* MACE Software reset */
-  mace_ग_लिखो(lp, ioaddr, MACE_BIUCC, 1);
-  जबतक (mace_पढ़ो(lp, ioaddr, MACE_BIUCC) & 0x01) अणु
-    /* Wait क्रम reset bit to be cleared स्वतःmatically after <= 200ns */;
-    अगर(++ct > 500)
-    अणु
+  mace_write(lp, ioaddr, MACE_BIUCC, 1);
+  while (mace_read(lp, ioaddr, MACE_BIUCC) & 0x01) {
+    /* Wait for reset bit to be cleared automatically after <= 200ns */;
+    if(++ct > 500)
+    {
 	pr_err("reset failed, card removed?\n");
-    	वापस -1;
-    पूर्ण
+    	return -1;
+    }
     udelay(1);
-  पूर्ण
-  mace_ग_लिखो(lp, ioaddr, MACE_BIUCC, 0);
+  }
+  mace_write(lp, ioaddr, MACE_BIUCC, 0);
 
   /* The Am2150 requires that the MACE FIFOs operate in burst mode. */
-  mace_ग_लिखो(lp, ioaddr, MACE_FIFOCC, 0x0F);
+  mace_write(lp, ioaddr, MACE_FIFOCC, 0x0F);
 
-  mace_ग_लिखो(lp,ioaddr, MACE_RCVFC, 0); /* Disable Auto Strip Receive */
-  mace_ग_लिखो(lp, ioaddr, MACE_IMR, 0xFF); /* Disable all पूर्णांकerrupts until _खोलो */
+  mace_write(lp,ioaddr, MACE_RCVFC, 0); /* Disable Auto Strip Receive */
+  mace_write(lp, ioaddr, MACE_IMR, 0xFF); /* Disable all interrupts until _open */
 
   /*
    * Bit 2-1 PORTSEL[1-0] Port Select.
@@ -562,68 +561,68 @@ mace_init
    * 11 GPSI
    * For this card, only the first two are valid.
    * So, PLSCC should be set to
-   * 0x00 क्रम 10Base-2
-   * 0x02 क्रम 10Base-T
+   * 0x00 for 10Base-2
+   * 0x02 for 10Base-T
    * Or just set ASEL in PHYCC below!
    */
-  चयन (अगर_port) अणु
-    हाल 1:
-      mace_ग_लिखो(lp, ioaddr, MACE_PLSCC, 0x02);
-      अवरोध;
-    हाल 2:
-      mace_ग_लिखो(lp, ioaddr, MACE_PLSCC, 0x00);
-      अवरोध;
-    शेष:
-      mace_ग_लिखो(lp, ioaddr, MACE_PHYCC, /* ASEL */ 4);
+  switch (if_port) {
+    case 1:
+      mace_write(lp, ioaddr, MACE_PLSCC, 0x02);
+      break;
+    case 2:
+      mace_write(lp, ioaddr, MACE_PLSCC, 0x00);
+      break;
+    default:
+      mace_write(lp, ioaddr, MACE_PHYCC, /* ASEL */ 4);
       /* ASEL Auto Select.  When set, the PORTSEL[1-0] bits are overridden,
-	 and the MACE device will स्वतःmatically select the operating media
-	 पूर्णांकerface port. */
-      अवरोध;
-  पूर्ण
+	 and the MACE device will automatically select the operating media
+	 interface port. */
+      break;
+  }
 
-  mace_ग_लिखो(lp, ioaddr, MACE_IAC, MACE_IAC_ADDRCHG | MACE_IAC_PHYADDR);
+  mace_write(lp, ioaddr, MACE_IAC, MACE_IAC_ADDRCHG | MACE_IAC_PHYADDR);
   /* Poll ADDRCHG bit */
   ct = 0;
-  जबतक (mace_पढ़ो(lp, ioaddr, MACE_IAC) & MACE_IAC_ADDRCHG)
-  अणु
-  	अगर(++ ct > 500)
-  	अणु
+  while (mace_read(lp, ioaddr, MACE_IAC) & MACE_IAC_ADDRCHG)
+  {
+  	if(++ ct > 500)
+  	{
 		pr_err("ADDRCHG timeout, card removed?\n");
-  		वापस -1;
-  	पूर्ण
-  पूर्ण
-  /* Set PADR रेजिस्टर */
-  क्रम (i = 0; i < ETH_ALEN; i++)
-    mace_ग_लिखो(lp, ioaddr, MACE_PADR, enet_addr[i]);
+  		return -1;
+  	}
+  }
+  /* Set PADR register */
+  for (i = 0; i < ETH_ALEN; i++)
+    mace_write(lp, ioaddr, MACE_PADR, enet_addr[i]);
 
   /* MAC Configuration Control Register should be written last */
   /* Let set_multicast_list set this. */
-  /* mace_ग_लिखो(lp, ioaddr, MACE_MACCC, MACE_MACCC_ENXMT | MACE_MACCC_ENRCV); */
-  mace_ग_लिखो(lp, ioaddr, MACE_MACCC, 0x00);
-  वापस 0;
-पूर्ण /* mace_init */
+  /* mace_write(lp, ioaddr, MACE_MACCC, MACE_MACCC_ENXMT | MACE_MACCC_ENRCV); */
+  mace_write(lp, ioaddr, MACE_MACCC, 0x00);
+  return 0;
+} /* mace_init */
 
-अटल पूर्णांक nmclan_config(काष्ठा pcmcia_device *link)
-अणु
-  काष्ठा net_device *dev = link->priv;
-  mace_निजी *lp = netdev_priv(dev);
+static int nmclan_config(struct pcmcia_device *link)
+{
+  struct net_device *dev = link->priv;
+  mace_private *lp = netdev_priv(dev);
   u8 *buf;
-  माप_प्रकार len;
-  पूर्णांक i, ret;
-  अचिन्हित पूर्णांक ioaddr;
+  size_t len;
+  int i, ret;
+  unsigned int ioaddr;
 
   dev_dbg(&link->dev, "nmclan_config\n");
 
   link->io_lines = 5;
   ret = pcmcia_request_io(link);
-  अगर (ret)
-	  जाओ failed;
-  ret = pcmcia_request_irq(link, mace_पूर्णांकerrupt);
-  अगर (ret)
-	  जाओ failed;
+  if (ret)
+	  goto failed;
+  ret = pcmcia_request_irq(link, mace_interrupt);
+  if (ret)
+	  goto failed;
   ret = pcmcia_enable_device(link);
-  अगर (ret)
-	  जाओ failed;
+  if (ret)
+	  goto failed;
 
   dev->irq = link->irq;
   dev->base_addr = link->resource[0]->start;
@@ -632,465 +631,465 @@ mace_init
 
   /* Read the ethernet address from the CIS. */
   len = pcmcia_get_tuple(link, 0x80, &buf);
-  अगर (!buf || len < ETH_ALEN) अणु
-	  kमुक्त(buf);
-	  जाओ failed;
-  पूर्ण
-  स_नकल(dev->dev_addr, buf, ETH_ALEN);
-  kमुक्त(buf);
+  if (!buf || len < ETH_ALEN) {
+	  kfree(buf);
+	  goto failed;
+  }
+  memcpy(dev->dev_addr, buf, ETH_ALEN);
+  kfree(buf);
 
-  /* Verअगरy configuration by पढ़ोing the MACE ID. */
-  अणु
-    अक्षर sig[2];
+  /* Verify configuration by reading the MACE ID. */
+  {
+    char sig[2];
 
-    sig[0] = mace_पढ़ो(lp, ioaddr, MACE_CHIPIDL);
-    sig[1] = mace_पढ़ो(lp, ioaddr, MACE_CHIPIDH);
-    अगर ((sig[0] == 0x40) && ((sig[1] & 0x0F) == 0x09)) अणु
+    sig[0] = mace_read(lp, ioaddr, MACE_CHIPIDL);
+    sig[1] = mace_read(lp, ioaddr, MACE_CHIPIDH);
+    if ((sig[0] == 0x40) && ((sig[1] & 0x0F) == 0x09)) {
       dev_dbg(&link->dev, "nmclan_cs configured: mace id=%x %x\n",
 	    sig[0], sig[1]);
-    पूर्ण अन्यथा अणु
+    } else {
       pr_notice("mace id not found: %x %x should be 0x40 0x?9\n",
 		sig[0], sig[1]);
-      वापस -ENODEV;
-    पूर्ण
-  पूर्ण
+      return -ENODEV;
+    }
+  }
 
-  अगर(mace_init(lp, ioaddr, dev->dev_addr) == -1)
-  	जाओ failed;
+  if(mace_init(lp, ioaddr, dev->dev_addr) == -1)
+  	goto failed;
 
-  /* The अगर_port symbol can be set when the module is loaded */
-  अगर (अगर_port <= 2)
-    dev->अगर_port = अगर_port;
-  अन्यथा
+  /* The if_port symbol can be set when the module is loaded */
+  if (if_port <= 2)
+    dev->if_port = if_port;
+  else
     pr_notice("invalid if_port requested\n");
 
   SET_NETDEV_DEV(dev, &link->dev);
 
-  i = रेजिस्टर_netdev(dev);
-  अगर (i != 0) अणु
+  i = register_netdev(dev);
+  if (i != 0) {
     pr_notice("register_netdev() failed\n");
-    जाओ failed;
-  पूर्ण
+    goto failed;
+  }
 
   netdev_info(dev, "nmclan: port %#3lx, irq %d, %s port, hw_addr %pM\n",
-	      dev->base_addr, dev->irq, अगर_names[dev->अगर_port], dev->dev_addr);
-  वापस 0;
+	      dev->base_addr, dev->irq, if_names[dev->if_port], dev->dev_addr);
+  return 0;
 
 failed:
 	nmclan_release(link);
-	वापस -ENODEV;
-पूर्ण /* nmclan_config */
+	return -ENODEV;
+} /* nmclan_config */
 
-अटल व्योम nmclan_release(काष्ठा pcmcia_device *link)
-अणु
+static void nmclan_release(struct pcmcia_device *link)
+{
 	dev_dbg(&link->dev, "nmclan_release\n");
 	pcmcia_disable_device(link);
-पूर्ण
+}
 
-अटल पूर्णांक nmclan_suspend(काष्ठा pcmcia_device *link)
-अणु
-	काष्ठा net_device *dev = link->priv;
+static int nmclan_suspend(struct pcmcia_device *link)
+{
+	struct net_device *dev = link->priv;
 
-	अगर (link->खोलो)
-		netअगर_device_detach(dev);
+	if (link->open)
+		netif_device_detach(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nmclan_resume(काष्ठा pcmcia_device *link)
-अणु
-	काष्ठा net_device *dev = link->priv;
+static int nmclan_resume(struct pcmcia_device *link)
+{
+	struct net_device *dev = link->priv;
 
-	अगर (link->खोलो) अणु
+	if (link->open) {
 		nmclan_reset(dev);
-		netअगर_device_attach(dev);
-	पूर्ण
+		netif_device_attach(dev);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /* ----------------------------------------------------------------------------
 nmclan_reset
-	Reset and restore all of the Xilinx and MACE रेजिस्टरs.
+	Reset and restore all of the Xilinx and MACE registers.
 ---------------------------------------------------------------------------- */
-अटल व्योम nmclan_reset(काष्ठा net_device *dev)
-अणु
-  mace_निजी *lp = netdev_priv(dev);
+static void nmclan_reset(struct net_device *dev)
+{
+  mace_private *lp = netdev_priv(dev);
 
-#अगर RESET_XILINX
-  काष्ठा pcmcia_device *link = &lp->link;
+#if RESET_XILINX
+  struct pcmcia_device *link = &lp->link;
   u8 OrigCorValue;
 
   /* Save original COR value */
-  pcmcia_पढ़ो_config_byte(link, CISREG_COR, &OrigCorValue);
+  pcmcia_read_config_byte(link, CISREG_COR, &OrigCorValue);
 
   /* Reset Xilinx */
   dev_dbg(&link->dev, "nmclan_reset: OrigCorValue=0x%x, resetting...\n",
 	OrigCorValue);
-  pcmcia_ग_लिखो_config_byte(link, CISREG_COR, COR_SOFT_RESET);
-  /* Need to रुको क्रम 20 ms क्रम PCMCIA to finish reset. */
+  pcmcia_write_config_byte(link, CISREG_COR, COR_SOFT_RESET);
+  /* Need to wait for 20 ms for PCMCIA to finish reset. */
 
   /* Restore original COR configuration index */
-  pcmcia_ग_लिखो_config_byte(link, CISREG_COR,
+  pcmcia_write_config_byte(link, CISREG_COR,
 			  (COR_LEVEL_REQ | (OrigCorValue & COR_CONFIG_MASK)));
-  /* Xilinx is now completely reset aदीर्घ with the MACE chip. */
-  lp->tx_मुक्त_frames=AM2150_MAX_TX_FRAMES;
+  /* Xilinx is now completely reset along with the MACE chip. */
+  lp->tx_free_frames=AM2150_MAX_TX_FRAMES;
 
-#पूर्ण_अगर /* #अगर RESET_XILINX */
+#endif /* #if RESET_XILINX */
 
-  /* Xilinx is now completely reset aदीर्घ with the MACE chip. */
-  lp->tx_मुक्त_frames=AM2150_MAX_TX_FRAMES;
+  /* Xilinx is now completely reset along with the MACE chip. */
+  lp->tx_free_frames=AM2150_MAX_TX_FRAMES;
 
-  /* Reinitialize the MACE chip क्रम operation. */
+  /* Reinitialize the MACE chip for operation. */
   mace_init(lp, dev->base_addr, dev->dev_addr);
-  mace_ग_लिखो(lp, dev->base_addr, MACE_IMR, MACE_IMR_DEFAULT);
+  mace_write(lp, dev->base_addr, MACE_IMR, MACE_IMR_DEFAULT);
 
   /* Restore the multicast list and enable TX and RX. */
   restore_multicast_list(dev);
-पूर्ण /* nmclan_reset */
+} /* nmclan_reset */
 
 /* ----------------------------------------------------------------------------
 mace_config
-	[Someone tell me what this is supposed to करो?  Is अगर_port a defined
+	[Someone tell me what this is supposed to do?  Is if_port a defined
 	standard?  If so, there should be defines to indicate 1=10Base-T,
-	2=10Base-2, etc. including limited स्वतःmatic detection.]
+	2=10Base-2, etc. including limited automatic detection.]
 ---------------------------------------------------------------------------- */
-अटल पूर्णांक mace_config(काष्ठा net_device *dev, काष्ठा अगरmap *map)
-अणु
-  अगर ((map->port != (u_अक्षर)(-1)) && (map->port != dev->अगर_port)) अणु
-    अगर (map->port <= 2) अणु
-      dev->अगर_port = map->port;
-      netdev_info(dev, "switched to %s port\n", अगर_names[dev->अगर_port]);
-    पूर्ण अन्यथा
-      वापस -EINVAL;
-  पूर्ण
-  वापस 0;
-पूर्ण /* mace_config */
+static int mace_config(struct net_device *dev, struct ifmap *map)
+{
+  if ((map->port != (u_char)(-1)) && (map->port != dev->if_port)) {
+    if (map->port <= 2) {
+      dev->if_port = map->port;
+      netdev_info(dev, "switched to %s port\n", if_names[dev->if_port]);
+    } else
+      return -EINVAL;
+  }
+  return 0;
+} /* mace_config */
 
 /* ----------------------------------------------------------------------------
-mace_खोलो
+mace_open
 	Open device driver.
 ---------------------------------------------------------------------------- */
-अटल पूर्णांक mace_खोलो(काष्ठा net_device *dev)
-अणु
-  अचिन्हित पूर्णांक ioaddr = dev->base_addr;
-  mace_निजी *lp = netdev_priv(dev);
-  काष्ठा pcmcia_device *link = lp->p_dev;
+static int mace_open(struct net_device *dev)
+{
+  unsigned int ioaddr = dev->base_addr;
+  mace_private *lp = netdev_priv(dev);
+  struct pcmcia_device *link = lp->p_dev;
 
-  अगर (!pcmcia_dev_present(link))
-    वापस -ENODEV;
+  if (!pcmcia_dev_present(link))
+    return -ENODEV;
 
-  link->खोलो++;
+  link->open++;
 
   MACEBANK(0);
 
-  netअगर_start_queue(dev);
+  netif_start_queue(dev);
   nmclan_reset(dev);
 
-  वापस 0; /* Always succeed */
-पूर्ण /* mace_खोलो */
+  return 0; /* Always succeed */
+} /* mace_open */
 
 /* ----------------------------------------------------------------------------
-mace_बंद
+mace_close
 	Closes device driver.
 ---------------------------------------------------------------------------- */
-अटल पूर्णांक mace_बंद(काष्ठा net_device *dev)
-अणु
-  अचिन्हित पूर्णांक ioaddr = dev->base_addr;
-  mace_निजी *lp = netdev_priv(dev);
-  काष्ठा pcmcia_device *link = lp->p_dev;
+static int mace_close(struct net_device *dev)
+{
+  unsigned int ioaddr = dev->base_addr;
+  mace_private *lp = netdev_priv(dev);
+  struct pcmcia_device *link = lp->p_dev;
 
   dev_dbg(&link->dev, "%s: shutting down ethercard.\n", dev->name);
 
-  /* Mask off all पूर्णांकerrupts from the MACE chip. */
+  /* Mask off all interrupts from the MACE chip. */
   outb(0xFF, ioaddr + AM2150_MACE_BASE + MACE_IMR);
 
-  link->खोलो--;
-  netअगर_stop_queue(dev);
+  link->open--;
+  netif_stop_queue(dev);
 
-  वापस 0;
-पूर्ण /* mace_बंद */
+  return 0;
+} /* mace_close */
 
-अटल व्योम netdev_get_drvinfo(काष्ठा net_device *dev,
-			       काष्ठा ethtool_drvinfo *info)
-अणु
-	strlcpy(info->driver, DRV_NAME, माप(info->driver));
-	snम_लिखो(info->bus_info, माप(info->bus_info),
+static void netdev_get_drvinfo(struct net_device *dev,
+			       struct ethtool_drvinfo *info)
+{
+	strlcpy(info->driver, DRV_NAME, sizeof(info->driver));
+	snprintf(info->bus_info, sizeof(info->bus_info),
 		"PCMCIA 0x%lx", dev->base_addr);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा ethtool_ops netdev_ethtool_ops = अणु
+static const struct ethtool_ops netdev_ethtool_ops = {
 	.get_drvinfo		= netdev_get_drvinfo,
-पूर्ण;
+};
 
 /* ----------------------------------------------------------------------------
 mace_start_xmit
 	This routine begins the packet transmit function.  When completed,
-	it will generate a transmit पूर्णांकerrupt.
+	it will generate a transmit interrupt.
 
-	According to /usr/src/linux/net/inet/dev.c, अगर _start_xmit
-	वापसs 0, the "packet is now solely the responsibility of the
+	According to /usr/src/linux/net/inet/dev.c, if _start_xmit
+	returns 0, the "packet is now solely the responsibility of the
 	driver."  If _start_xmit returns non-zero, the "transmission
-	failed, put skb back पूर्णांकo a list."
+	failed, put skb back into a list."
 ---------------------------------------------------------------------------- */
 
-अटल व्योम mace_tx_समयout(काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue)
-अणु
-  mace_निजी *lp = netdev_priv(dev);
-  काष्ठा pcmcia_device *link = lp->p_dev;
+static void mace_tx_timeout(struct net_device *dev, unsigned int txqueue)
+{
+  mace_private *lp = netdev_priv(dev);
+  struct pcmcia_device *link = lp->p_dev;
 
   netdev_notice(dev, "transmit timed out -- ");
-#अगर RESET_ON_TIMEOUT
+#if RESET_ON_TIMEOUT
   pr_cont("resetting card\n");
   pcmcia_reset_card(link->socket);
-#अन्यथा /* #अगर RESET_ON_TIMEOUT */
+#else /* #if RESET_ON_TIMEOUT */
   pr_cont("NOT resetting card\n");
-#पूर्ण_अगर /* #अगर RESET_ON_TIMEOUT */
-  netअगर_trans_update(dev); /* prevent tx समयout */
-  netअगर_wake_queue(dev);
-पूर्ण
+#endif /* #if RESET_ON_TIMEOUT */
+  netif_trans_update(dev); /* prevent tx timeout */
+  netif_wake_queue(dev);
+}
 
-अटल netdev_tx_t mace_start_xmit(काष्ठा sk_buff *skb,
-					 काष्ठा net_device *dev)
-अणु
-  mace_निजी *lp = netdev_priv(dev);
-  अचिन्हित पूर्णांक ioaddr = dev->base_addr;
+static netdev_tx_t mace_start_xmit(struct sk_buff *skb,
+					 struct net_device *dev)
+{
+  mace_private *lp = netdev_priv(dev);
+  unsigned int ioaddr = dev->base_addr;
 
-  netअगर_stop_queue(dev);
+  netif_stop_queue(dev);
 
   pr_debug("%s: mace_start_xmit(length = %ld) called.\n",
-	dev->name, (दीर्घ)skb->len);
+	dev->name, (long)skb->len);
 
-#अगर (!TX_INTERRUPTABLE)
-  /* Disable MACE TX पूर्णांकerrupts. */
+#if (!TX_INTERRUPTABLE)
+  /* Disable MACE TX interrupts. */
   outb(MACE_IMR_DEFAULT | MACE_IR_XMTINT,
     ioaddr + AM2150_MACE_BASE + MACE_IMR);
   lp->tx_irq_disabled=1;
-#पूर्ण_अगर /* #अगर (!TX_INTERRUPTABLE) */
+#endif /* #if (!TX_INTERRUPTABLE) */
 
-  अणु
-    /* This block must not be पूर्णांकerrupted by another transmit request!
-       mace_tx_समयout will take care of समयr-based retransmissions from
-       the upper layers.  The पूर्णांकerrupt handler is guaranteed never to
-       service a transmit पूर्णांकerrupt जबतक we are in here.
+  {
+    /* This block must not be interrupted by another transmit request!
+       mace_tx_timeout will take care of timer-based retransmissions from
+       the upper layers.  The interrupt handler is guaranteed never to
+       service a transmit interrupt while we are in here.
     */
 
     dev->stats.tx_bytes += skb->len;
-    lp->tx_मुक्त_frames--;
+    lp->tx_free_frames--;
 
     /* WARNING: Write the _exact_ number of bytes written in the header! */
     /* Put out the word header [must be an outw()] . . . */
     outw(skb->len, ioaddr + AM2150_XMT);
     /* . . . and the packet [may be any combination of outw() and outb()] */
     outsw(ioaddr + AM2150_XMT, skb->data, skb->len >> 1);
-    अगर (skb->len & 1) अणु
+    if (skb->len & 1) {
       /* Odd byte transfer */
       outb(skb->data[skb->len-1], ioaddr + AM2150_XMT);
-    पूर्ण
+    }
 
-#अगर MULTI_TX
-    अगर (lp->tx_मुक्त_frames > 0)
-      netअगर_start_queue(dev);
-#पूर्ण_अगर /* #अगर MULTI_TX */
-  पूर्ण
+#if MULTI_TX
+    if (lp->tx_free_frames > 0)
+      netif_start_queue(dev);
+#endif /* #if MULTI_TX */
+  }
 
-#अगर (!TX_INTERRUPTABLE)
-  /* Re-enable MACE TX पूर्णांकerrupts. */
+#if (!TX_INTERRUPTABLE)
+  /* Re-enable MACE TX interrupts. */
   lp->tx_irq_disabled=0;
   outb(MACE_IMR_DEFAULT, ioaddr + AM2150_MACE_BASE + MACE_IMR);
-#पूर्ण_अगर /* #अगर (!TX_INTERRUPTABLE) */
+#endif /* #if (!TX_INTERRUPTABLE) */
 
-  dev_kमुक्त_skb(skb);
+  dev_kfree_skb(skb);
 
-  वापस NETDEV_TX_OK;
-पूर्ण /* mace_start_xmit */
+  return NETDEV_TX_OK;
+} /* mace_start_xmit */
 
 /* ----------------------------------------------------------------------------
-mace_पूर्णांकerrupt
-	The पूर्णांकerrupt handler.
+mace_interrupt
+	The interrupt handler.
 ---------------------------------------------------------------------------- */
-अटल irqवापस_t mace_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-  काष्ठा net_device *dev = (काष्ठा net_device *) dev_id;
-  mace_निजी *lp = netdev_priv(dev);
-  अचिन्हित पूर्णांक ioaddr;
-  पूर्णांक status;
-  पूर्णांक IntrCnt = MACE_MAX_IR_ITERATIONS;
+static irqreturn_t mace_interrupt(int irq, void *dev_id)
+{
+  struct net_device *dev = (struct net_device *) dev_id;
+  mace_private *lp = netdev_priv(dev);
+  unsigned int ioaddr;
+  int status;
+  int IntrCnt = MACE_MAX_IR_ITERATIONS;
 
-  अगर (dev == शून्य) अणु
+  if (dev == NULL) {
     pr_debug("mace_interrupt(): irq 0x%X for unknown device.\n",
 	  irq);
-    वापस IRQ_NONE;
-  पूर्ण
+    return IRQ_NONE;
+  }
 
   ioaddr = dev->base_addr;
 
-  अगर (lp->tx_irq_disabled) अणु
-    स्थिर अक्षर *msg;
-    अगर (lp->tx_irq_disabled)
+  if (lp->tx_irq_disabled) {
+    const char *msg;
+    if (lp->tx_irq_disabled)
       msg = "Interrupt with tx_irq_disabled";
-    अन्यथा
+    else
       msg = "Re-entering the interrupt handler";
     netdev_notice(dev, "%s [isr=%02X, imr=%02X]\n",
 		  msg,
 		  inb(ioaddr + AM2150_MACE_BASE + MACE_IR),
 		  inb(ioaddr + AM2150_MACE_BASE + MACE_IMR));
-    /* WARNING: MACE_IR has been पढ़ो! */
-    वापस IRQ_NONE;
-  पूर्ण
+    /* WARNING: MACE_IR has been read! */
+    return IRQ_NONE;
+  }
 
-  अगर (!netअगर_device_present(dev)) अणु
+  if (!netif_device_present(dev)) {
     netdev_dbg(dev, "interrupt from dead card\n");
-    वापस IRQ_NONE;
-  पूर्ण
+    return IRQ_NONE;
+  }
 
-  करो अणु
+  do {
     /* WARNING: MACE_IR is a READ/CLEAR port! */
     status = inb(ioaddr + AM2150_MACE_BASE + MACE_IR);
-    अगर (!(status & ~MACE_IMR_DEFAULT) && IntrCnt == MACE_MAX_IR_ITERATIONS)
-      वापस IRQ_NONE;
+    if (!(status & ~MACE_IMR_DEFAULT) && IntrCnt == MACE_MAX_IR_ITERATIONS)
+      return IRQ_NONE;
 
     pr_debug("mace_interrupt: irq 0x%X status 0x%X.\n", irq, status);
 
-    अगर (status & MACE_IR_RCVINT) अणु
+    if (status & MACE_IR_RCVINT) {
       mace_rx(dev, MACE_MAX_RX_ITERATIONS);
-    पूर्ण
+    }
 
-    अगर (status & MACE_IR_XMTINT) अणु
-      अचिन्हित अक्षर fअगरofc;
-      अचिन्हित अक्षर xmtrc;
-      अचिन्हित अक्षर xmtfs;
+    if (status & MACE_IR_XMTINT) {
+      unsigned char fifofc;
+      unsigned char xmtrc;
+      unsigned char xmtfs;
 
-      fअगरofc = inb(ioaddr + AM2150_MACE_BASE + MACE_FIFOFC);
-      अगर ((fअगरofc & MACE_FIFOFC_XMTFC)==0) अणु
+      fifofc = inb(ioaddr + AM2150_MACE_BASE + MACE_FIFOFC);
+      if ((fifofc & MACE_FIFOFC_XMTFC)==0) {
 	dev->stats.tx_errors++;
 	outb(0xFF, ioaddr + AM2150_XMT_SKIP);
-      पूर्ण
+      }
 
       /* Transmit Retry Count (XMTRC, reg 4) */
       xmtrc = inb(ioaddr + AM2150_MACE_BASE + MACE_XMTRC);
-      अगर (xmtrc & MACE_XMTRC_EXDEF) lp->mace_stats.exdef++;
+      if (xmtrc & MACE_XMTRC_EXDEF) lp->mace_stats.exdef++;
       lp->mace_stats.xmtrc += (xmtrc & MACE_XMTRC_XMTRC);
 
-      अगर (
+      if (
         (xmtfs = inb(ioaddr + AM2150_MACE_BASE + MACE_XMTFS)) &
         MACE_XMTFS_XMTSV /* Transmit Status Valid */
-      ) अणु
+      ) {
 	lp->mace_stats.xmtsv++;
 
-	अगर (xmtfs & ~MACE_XMTFS_XMTSV) अणु
-	  अगर (xmtfs & MACE_XMTFS_UFLO) अणु
-	    /* Underflow.  Indicates that the Transmit FIFO emptied beक्रमe
+	if (xmtfs & ~MACE_XMTFS_XMTSV) {
+	  if (xmtfs & MACE_XMTFS_UFLO) {
+	    /* Underflow.  Indicates that the Transmit FIFO emptied before
 	       the end of frame was reached. */
 	    lp->mace_stats.uflo++;
-	  पूर्ण
-	  अगर (xmtfs & MACE_XMTFS_LCOL) अणु
+	  }
+	  if (xmtfs & MACE_XMTFS_LCOL) {
 	    /* Late Collision */
 	    lp->mace_stats.lcol++;
-	  पूर्ण
-	  अगर (xmtfs & MACE_XMTFS_MORE) अणु
+	  }
+	  if (xmtfs & MACE_XMTFS_MORE) {
 	    /* MORE than one retry was needed */
 	    lp->mace_stats.more++;
-	  पूर्ण
-	  अगर (xmtfs & MACE_XMTFS_ONE) अणु
+	  }
+	  if (xmtfs & MACE_XMTFS_ONE) {
 	    /* Exactly ONE retry occurred */
 	    lp->mace_stats.one++;
-	  पूर्ण
-	  अगर (xmtfs & MACE_XMTFS_DEFER) अणु
+	  }
+	  if (xmtfs & MACE_XMTFS_DEFER) {
 	    /* Transmission was defered */
 	    lp->mace_stats.defer++;
-	  पूर्ण
-	  अगर (xmtfs & MACE_XMTFS_LCAR) अणु
+	  }
+	  if (xmtfs & MACE_XMTFS_LCAR) {
 	    /* Loss of carrier */
 	    lp->mace_stats.lcar++;
-	  पूर्ण
-	  अगर (xmtfs & MACE_XMTFS_RTRY) अणु
-	    /* Retry error: transmit पातed after 16 attempts */
+	  }
+	  if (xmtfs & MACE_XMTFS_RTRY) {
+	    /* Retry error: transmit aborted after 16 attempts */
 	    lp->mace_stats.rtry++;
-	  पूर्ण
-        पूर्ण /* अगर (xmtfs & ~MACE_XMTFS_XMTSV) */
+	  }
+        } /* if (xmtfs & ~MACE_XMTFS_XMTSV) */
 
-      पूर्ण /* अगर (xmtfs & MACE_XMTFS_XMTSV) */
+      } /* if (xmtfs & MACE_XMTFS_XMTSV) */
 
       dev->stats.tx_packets++;
-      lp->tx_मुक्त_frames++;
-      netअगर_wake_queue(dev);
-    पूर्ण /* अगर (status & MACE_IR_XMTINT) */
+      lp->tx_free_frames++;
+      netif_wake_queue(dev);
+    } /* if (status & MACE_IR_XMTINT) */
 
-    अगर (status & ~MACE_IMR_DEFAULT & ~MACE_IR_RCVINT & ~MACE_IR_XMTINT) अणु
-      अगर (status & MACE_IR_JAB) अणु
+    if (status & ~MACE_IMR_DEFAULT & ~MACE_IR_RCVINT & ~MACE_IR_XMTINT) {
+      if (status & MACE_IR_JAB) {
         /* Jabber Error.  Excessive transmit duration (20-150ms). */
         lp->mace_stats.jab++;
-      पूर्ण
-      अगर (status & MACE_IR_BABL) अणु
+      }
+      if (status & MACE_IR_BABL) {
         /* Babble Error.  >1518 bytes transmitted. */
         lp->mace_stats.babl++;
-      पूर्ण
-      अगर (status & MACE_IR_CERR) अणु
-	/* Collision Error.  CERR indicates the असलence of the
+      }
+      if (status & MACE_IR_CERR) {
+	/* Collision Error.  CERR indicates the absence of the
 	   Signal Quality Error Test message after a packet
 	   transmission. */
         lp->mace_stats.cerr++;
-      पूर्ण
-      अगर (status & MACE_IR_RCVCCO) अणु
+      }
+      if (status & MACE_IR_RCVCCO) {
         /* Receive Collision Count Overflow; */
         lp->mace_stats.rcvcco++;
-      पूर्ण
-      अगर (status & MACE_IR_RNTPCO) अणु
+      }
+      if (status & MACE_IR_RNTPCO) {
         /* Runt Packet Count Overflow */
         lp->mace_stats.rntpco++;
-      पूर्ण
-      अगर (status & MACE_IR_MPCO) अणु
+      }
+      if (status & MACE_IR_MPCO) {
         /* Missed Packet Count Overflow */
         lp->mace_stats.mpco++;
-      पूर्ण
-    पूर्ण /* अगर (status & ~MACE_IMR_DEFAULT & ~MACE_IR_RCVINT & ~MACE_IR_XMTINT) */
+      }
+    } /* if (status & ~MACE_IMR_DEFAULT & ~MACE_IR_RCVINT & ~MACE_IR_XMTINT) */
 
-  पूर्ण जबतक ((status & ~MACE_IMR_DEFAULT) && (--IntrCnt));
+  } while ((status & ~MACE_IMR_DEFAULT) && (--IntrCnt));
 
-  वापस IRQ_HANDLED;
-पूर्ण /* mace_पूर्णांकerrupt */
+  return IRQ_HANDLED;
+} /* mace_interrupt */
 
 /* ----------------------------------------------------------------------------
 mace_rx
 	Receives packets.
 ---------------------------------------------------------------------------- */
-अटल पूर्णांक mace_rx(काष्ठा net_device *dev, अचिन्हित अक्षर RxCnt)
-अणु
-  mace_निजी *lp = netdev_priv(dev);
-  अचिन्हित पूर्णांक ioaddr = dev->base_addr;
-  अचिन्हित अक्षर rx_framecnt;
-  अचिन्हित लघु rx_status;
+static int mace_rx(struct net_device *dev, unsigned char RxCnt)
+{
+  mace_private *lp = netdev_priv(dev);
+  unsigned int ioaddr = dev->base_addr;
+  unsigned char rx_framecnt;
+  unsigned short rx_status;
 
-  जबतक (
+  while (
     ((rx_framecnt = inb(ioaddr + AM2150_RCV_FRAME_COUNT)) > 0) &&
-    (rx_framecnt <= 12) && /* rx_framecnt==0xFF अगर card is extracted. */
+    (rx_framecnt <= 12) && /* rx_framecnt==0xFF if card is extracted. */
     (RxCnt--)
-  ) अणु
+  ) {
     rx_status = inw(ioaddr + AM2150_RCV);
 
     pr_debug("%s: in mace_rx(), framecnt 0x%X, rx_status"
 	  " 0x%X.\n", dev->name, rx_framecnt, rx_status);
 
-    अगर (rx_status & MACE_RCVFS_RCVSTS) अणु /* Error, update stats. */
+    if (rx_status & MACE_RCVFS_RCVSTS) { /* Error, update stats. */
       dev->stats.rx_errors++;
-      अगर (rx_status & MACE_RCVFS_OFLO) अणु
+      if (rx_status & MACE_RCVFS_OFLO) {
         lp->mace_stats.oflo++;
-      पूर्ण
-      अगर (rx_status & MACE_RCVFS_CLSN) अणु
+      }
+      if (rx_status & MACE_RCVFS_CLSN) {
         lp->mace_stats.clsn++;
-      पूर्ण
-      अगर (rx_status & MACE_RCVFS_FRAM) अणु
+      }
+      if (rx_status & MACE_RCVFS_FRAM) {
 	lp->mace_stats.fram++;
-      पूर्ण
-      अगर (rx_status & MACE_RCVFS_FCS) अणु
+      }
+      if (rx_status & MACE_RCVFS_FCS) {
         lp->mace_stats.fcs++;
-      पूर्ण
-    पूर्ण अन्यथा अणु
-      लघु pkt_len = (rx_status & ~MACE_RCVFS_RCVSTS) - 4;
+      }
+    } else {
+      short pkt_len = (rx_status & ~MACE_RCVFS_RCVSTS) - 4;
         /* Auto Strip is off, always subtract 4 */
-      काष्ठा sk_buff *skb;
+      struct sk_buff *skb;
 
       lp->mace_stats.rfs_rntpc += inb(ioaddr + AM2150_RCV);
         /* runt packet count */
@@ -1102,66 +1101,66 @@ mace_rx
 
       skb = netdev_alloc_skb(dev, pkt_len + 2);
 
-      अगर (skb != शून्य) अणु
+      if (skb != NULL) {
 	skb_reserve(skb, 2);
 	insw(ioaddr + AM2150_RCV, skb_put(skb, pkt_len), pkt_len>>1);
-	अगर (pkt_len & 1)
-	    *(skb_tail_poपूर्णांकer(skb) - 1) = inb(ioaddr + AM2150_RCV);
+	if (pkt_len & 1)
+	    *(skb_tail_pointer(skb) - 1) = inb(ioaddr + AM2150_RCV);
 	skb->protocol = eth_type_trans(skb, dev);
 
-	netअगर_rx(skb); /* Send the packet to the upper (protocol) layers. */
+	netif_rx(skb); /* Send the packet to the upper (protocol) layers. */
 
 	dev->stats.rx_packets++;
 	dev->stats.rx_bytes += pkt_len;
 	outb(0xFF, ioaddr + AM2150_RCV_NEXT); /* skip to next frame */
-	जारी;
-      पूर्ण अन्यथा अणु
+	continue;
+      } else {
 	pr_debug("%s: couldn't allocate a sk_buff of size"
 	      " %d.\n", dev->name, pkt_len);
 	dev->stats.rx_dropped++;
-      पूर्ण
-    पूर्ण
+      }
+    }
     outb(0xFF, ioaddr + AM2150_RCV_NEXT); /* skip to next frame */
-  पूर्ण /* जबतक */
+  } /* while */
 
-  वापस 0;
-पूर्ण /* mace_rx */
+  return 0;
+} /* mace_rx */
 
 /* ----------------------------------------------------------------------------
 pr_linux_stats
 ---------------------------------------------------------------------------- */
-अटल व्योम pr_linux_stats(काष्ठा net_device_stats *pstats)
-अणु
+static void pr_linux_stats(struct net_device_stats *pstats)
+{
   pr_debug("pr_linux_stats\n");
   pr_debug(" rx_packets=%-7ld        tx_packets=%ld\n",
-	(दीर्घ)pstats->rx_packets, (दीर्घ)pstats->tx_packets);
+	(long)pstats->rx_packets, (long)pstats->tx_packets);
   pr_debug(" rx_errors=%-7ld         tx_errors=%ld\n",
-	(दीर्घ)pstats->rx_errors, (दीर्घ)pstats->tx_errors);
+	(long)pstats->rx_errors, (long)pstats->tx_errors);
   pr_debug(" rx_dropped=%-7ld        tx_dropped=%ld\n",
-	(दीर्घ)pstats->rx_dropped, (दीर्घ)pstats->tx_dropped);
+	(long)pstats->rx_dropped, (long)pstats->tx_dropped);
   pr_debug(" multicast=%-7ld         collisions=%ld\n",
-	(दीर्घ)pstats->multicast, (दीर्घ)pstats->collisions);
+	(long)pstats->multicast, (long)pstats->collisions);
 
   pr_debug(" rx_length_errors=%-7ld  rx_over_errors=%ld\n",
-	(दीर्घ)pstats->rx_length_errors, (दीर्घ)pstats->rx_over_errors);
+	(long)pstats->rx_length_errors, (long)pstats->rx_over_errors);
   pr_debug(" rx_crc_errors=%-7ld     rx_frame_errors=%ld\n",
-	(दीर्घ)pstats->rx_crc_errors, (दीर्घ)pstats->rx_frame_errors);
+	(long)pstats->rx_crc_errors, (long)pstats->rx_frame_errors);
   pr_debug(" rx_fifo_errors=%-7ld    rx_missed_errors=%ld\n",
-	(दीर्घ)pstats->rx_fअगरo_errors, (दीर्घ)pstats->rx_missed_errors);
+	(long)pstats->rx_fifo_errors, (long)pstats->rx_missed_errors);
 
   pr_debug(" tx_aborted_errors=%-7ld tx_carrier_errors=%ld\n",
-	(दीर्घ)pstats->tx_पातed_errors, (दीर्घ)pstats->tx_carrier_errors);
+	(long)pstats->tx_aborted_errors, (long)pstats->tx_carrier_errors);
   pr_debug(" tx_fifo_errors=%-7ld    tx_heartbeat_errors=%ld\n",
-	(दीर्घ)pstats->tx_fअगरo_errors, (दीर्घ)pstats->tx_heartbeat_errors);
+	(long)pstats->tx_fifo_errors, (long)pstats->tx_heartbeat_errors);
   pr_debug(" tx_window_errors=%ld\n",
-	(दीर्घ)pstats->tx_winकरोw_errors);
-पूर्ण /* pr_linux_stats */
+	(long)pstats->tx_window_errors);
+} /* pr_linux_stats */
 
 /* ----------------------------------------------------------------------------
 pr_mace_stats
 ---------------------------------------------------------------------------- */
-अटल व्योम pr_mace_stats(mace_statistics *pstats)
-अणु
+static void pr_mace_stats(mace_statistics *pstats)
+{
   pr_debug("pr_mace_stats\n");
 
   pr_debug(" xmtsv=%-7d             uflo=%d\n",
@@ -1205,41 +1204,41 @@ pr_mace_stats
   /* MACE_RCVCC */
   pr_debug(" rcvcc=%d\n", pstats->rcvcc);
 
-पूर्ण /* pr_mace_stats */
+} /* pr_mace_stats */
 
 /* ----------------------------------------------------------------------------
 update_stats
-	Update statistics.  We change to रेजिस्टर winकरोw 1, so this
-	should be run single-thपढ़ोed अगर the device is active. This is
-	expected to be a rare operation, and it's simpler क्रम the rest
-	of the driver to assume that winकरोw 0 is always valid rather
-	than use a special winकरोw-state variable.
+	Update statistics.  We change to register window 1, so this
+	should be run single-threaded if the device is active. This is
+	expected to be a rare operation, and it's simpler for the rest
+	of the driver to assume that window 0 is always valid rather
+	than use a special window-state variable.
 
 	oflo & uflo should _never_ occur since it would mean the Xilinx
 	was not able to transfer data between the MACE FIFO and the
 	card's SRAM fast enough.  If this happens, something is
 	seriously wrong with the hardware.
 ---------------------------------------------------------------------------- */
-अटल व्योम update_stats(अचिन्हित पूर्णांक ioaddr, काष्ठा net_device *dev)
-अणु
-  mace_निजी *lp = netdev_priv(dev);
+static void update_stats(unsigned int ioaddr, struct net_device *dev)
+{
+  mace_private *lp = netdev_priv(dev);
 
-  lp->mace_stats.rcvcc += mace_पढ़ो(lp, ioaddr, MACE_RCVCC);
-  lp->mace_stats.rntpc += mace_पढ़ो(lp, ioaddr, MACE_RNTPC);
-  lp->mace_stats.mpc += mace_पढ़ो(lp, ioaddr, MACE_MPC);
-  /* At this poपूर्णांक, mace_stats is fully updated क्रम this call.
+  lp->mace_stats.rcvcc += mace_read(lp, ioaddr, MACE_RCVCC);
+  lp->mace_stats.rntpc += mace_read(lp, ioaddr, MACE_RNTPC);
+  lp->mace_stats.mpc += mace_read(lp, ioaddr, MACE_MPC);
+  /* At this point, mace_stats is fully updated for this call.
      We may now update the netdev stats. */
 
-  /* The MACE has no equivalent क्रम netdev stats field which are commented
+  /* The MACE has no equivalent for netdev stats field which are commented
      out. */
 
   /* dev->stats.multicast; */
   dev->stats.collisions =
     lp->mace_stats.rcvcco * 256 + lp->mace_stats.rcvcc;
-    /* Collision: The MACE may retry sending a packet 15 बार
-       beक्रमe giving up.  The retry count is in XMTRC.
-       Does each retry स्थिरitute a collision?
-       If so, why करोesn't the RCVCC record these collisions? */
+    /* Collision: The MACE may retry sending a packet 15 times
+       before giving up.  The retry count is in XMTRC.
+       Does each retry constitute a collision?
+       If so, why doesn't the RCVCC record these collisions? */
 
   /* detailed rx_errors: */
   dev->stats.rx_length_errors =
@@ -1247,26 +1246,26 @@ update_stats
   /* dev->stats.rx_over_errors */
   dev->stats.rx_crc_errors = lp->mace_stats.fcs;
   dev->stats.rx_frame_errors = lp->mace_stats.fram;
-  dev->stats.rx_fअगरo_errors = lp->mace_stats.oflo;
+  dev->stats.rx_fifo_errors = lp->mace_stats.oflo;
   dev->stats.rx_missed_errors =
     lp->mace_stats.mpco * 256 + lp->mace_stats.mpc;
 
   /* detailed tx_errors */
-  dev->stats.tx_पातed_errors = lp->mace_stats.rtry;
+  dev->stats.tx_aborted_errors = lp->mace_stats.rtry;
   dev->stats.tx_carrier_errors = lp->mace_stats.lcar;
     /* LCAR usually results from bad cabling. */
-  dev->stats.tx_fअगरo_errors = lp->mace_stats.uflo;
+  dev->stats.tx_fifo_errors = lp->mace_stats.uflo;
   dev->stats.tx_heartbeat_errors = lp->mace_stats.cerr;
-  /* dev->stats.tx_winकरोw_errors; */
-पूर्ण /* update_stats */
+  /* dev->stats.tx_window_errors; */
+} /* update_stats */
 
 /* ----------------------------------------------------------------------------
 mace_get_stats
 	Gathers ethernet statistics from the MACE chip.
 ---------------------------------------------------------------------------- */
-अटल काष्ठा net_device_stats *mace_get_stats(काष्ठा net_device *dev)
-अणु
-  mace_निजी *lp = netdev_priv(dev);
+static struct net_device_stats *mace_get_stats(struct net_device *dev)
+{
+  mace_private *lp = netdev_priv(dev);
 
   update_stats(dev->base_addr, dev);
 
@@ -1274,235 +1273,235 @@ mace_get_stats
   pr_linux_stats(&dev->stats);
   pr_mace_stats(&lp->mace_stats);
 
-  वापस &dev->stats;
-पूर्ण /* net_device_stats */
+  return &dev->stats;
+} /* net_device_stats */
 
 /* ----------------------------------------------------------------------------
 updateCRC
-	Modअगरied from Am79C90 data sheet.
+	Modified from Am79C90 data sheet.
 ---------------------------------------------------------------------------- */
 
-#अगर_घोषित BROKEN_MULTICAST
+#ifdef BROKEN_MULTICAST
 
-अटल व्योम updateCRC(पूर्णांक *CRC, पूर्णांक bit)
-अणु
-  अटल स्थिर पूर्णांक poly[]=अणु
+static void updateCRC(int *CRC, int bit)
+{
+  static const int poly[]={
     1,1,1,0, 1,1,0,1,
     1,0,1,1, 1,0,0,0,
     1,0,0,0, 0,0,1,1,
     0,0,1,0, 0,0,0,0
-  पूर्ण; /* CRC polynomial.  poly[n] = coefficient of the x**n term of the
+  }; /* CRC polynomial.  poly[n] = coefficient of the x**n term of the
 	CRC generator polynomial. */
 
-  पूर्णांक j;
+  int j;
 
-  /* shअगरt CRC and control bit (CRC[32]) */
-  क्रम (j = 32; j > 0; j--)
+  /* shift CRC and control bit (CRC[32]) */
+  for (j = 32; j > 0; j--)
     CRC[j] = CRC[j-1];
   CRC[0] = 0;
 
   /* If bit XOR(control bit) = 1, set CRC = CRC XOR polynomial. */
-  अगर (bit ^ CRC[32])
-    क्रम (j = 0; j < 32; j++)
+  if (bit ^ CRC[32])
+    for (j = 0; j < 32; j++)
       CRC[j] ^= poly[j];
-पूर्ण /* updateCRC */
+} /* updateCRC */
 
 /* ----------------------------------------------------------------------------
 BuildLAF
 	Build logical address filter.
-	Modअगरied from Am79C90 data sheet.
+	Modified from Am79C90 data sheet.
 
 Input
 	ladrf: logical address filter (contents initialized to 0)
 	adr: ethernet address
 ---------------------------------------------------------------------------- */
-अटल व्योम BuildLAF(पूर्णांक *ladrf, पूर्णांक *adr)
-अणु
-  पूर्णांक CRC[33]=अणु1पूर्ण; /* CRC रेजिस्टर, 1 word/bit + extra control bit */
+static void BuildLAF(int *ladrf, int *adr)
+{
+  int CRC[33]={1}; /* CRC register, 1 word/bit + extra control bit */
 
-  पूर्णांक i, byte; /* temporary array indices */
-  पूर्णांक hashcode; /* the output object */
+  int i, byte; /* temporary array indices */
+  int hashcode; /* the output object */
 
   CRC[32]=0;
 
-  क्रम (byte = 0; byte < 6; byte++)
-    क्रम (i = 0; i < 8; i++)
+  for (byte = 0; byte < 6; byte++)
+    for (i = 0; i < 8; i++)
       updateCRC(CRC, (adr[byte] >> i) & 1);
 
   hashcode = 0;
-  क्रम (i = 0; i < 6; i++)
+  for (i = 0; i < 6; i++)
     hashcode = (hashcode << 1) + CRC[i];
 
   byte = hashcode >> 3;
   ladrf[byte] |= (1 << (hashcode & 7));
 
-#अगर_घोषित PCMCIA_DEBUG
-  अगर (0)
-    prपूर्णांकk(KERN_DEBUG "    adr =%pM\n", adr);
-  prपूर्णांकk(KERN_DEBUG "    hashcode = %d(decimal), ladrf[0:63] =", hashcode);
-  क्रम (i = 0; i < 8; i++)
+#ifdef PCMCIA_DEBUG
+  if (0)
+    printk(KERN_DEBUG "    adr =%pM\n", adr);
+  printk(KERN_DEBUG "    hashcode = %d(decimal), ladrf[0:63] =", hashcode);
+  for (i = 0; i < 8; i++)
     pr_cont(" %02X", ladrf[i]);
   pr_cont("\n");
-#पूर्ण_अगर
-पूर्ण /* BuildLAF */
+#endif
+} /* BuildLAF */
 
 /* ----------------------------------------------------------------------------
 restore_multicast_list
-	Restores the multicast filter क्रम MACE chip to the last
+	Restores the multicast filter for MACE chip to the last
 	set_multicast_list() call.
 
 Input
 	multicast_num_addrs
 	multicast_ladrf[]
 ---------------------------------------------------------------------------- */
-अटल व्योम restore_multicast_list(काष्ठा net_device *dev)
-अणु
-  mace_निजी *lp = netdev_priv(dev);
-  पूर्णांक num_addrs = lp->multicast_num_addrs;
-  पूर्णांक *ladrf = lp->multicast_ladrf;
-  अचिन्हित पूर्णांक ioaddr = dev->base_addr;
-  पूर्णांक i;
+static void restore_multicast_list(struct net_device *dev)
+{
+  mace_private *lp = netdev_priv(dev);
+  int num_addrs = lp->multicast_num_addrs;
+  int *ladrf = lp->multicast_ladrf;
+  unsigned int ioaddr = dev->base_addr;
+  int i;
 
   pr_debug("%s: restoring Rx mode to %d addresses.\n",
 	dev->name, num_addrs);
 
-  अगर (num_addrs > 0) अणु
+  if (num_addrs > 0) {
 
     pr_debug("Attempt to restore multicast list detected.\n");
 
-    mace_ग_लिखो(lp, ioaddr, MACE_IAC, MACE_IAC_ADDRCHG | MACE_IAC_LOGADDR);
+    mace_write(lp, ioaddr, MACE_IAC, MACE_IAC_ADDRCHG | MACE_IAC_LOGADDR);
     /* Poll ADDRCHG bit */
-    जबतक (mace_पढ़ो(lp, ioaddr, MACE_IAC) & MACE_IAC_ADDRCHG)
+    while (mace_read(lp, ioaddr, MACE_IAC) & MACE_IAC_ADDRCHG)
       ;
-    /* Set LADRF रेजिस्टर */
-    क्रम (i = 0; i < MACE_LADRF_LEN; i++)
-      mace_ग_लिखो(lp, ioaddr, MACE_LADRF, ladrf[i]);
+    /* Set LADRF register */
+    for (i = 0; i < MACE_LADRF_LEN; i++)
+      mace_write(lp, ioaddr, MACE_LADRF, ladrf[i]);
 
-    mace_ग_लिखो(lp, ioaddr, MACE_UTR, MACE_UTR_RCVFCSE | MACE_UTR_LOOP_EXTERNAL);
-    mace_ग_लिखो(lp, ioaddr, MACE_MACCC, MACE_MACCC_ENXMT | MACE_MACCC_ENRCV);
+    mace_write(lp, ioaddr, MACE_UTR, MACE_UTR_RCVFCSE | MACE_UTR_LOOP_EXTERNAL);
+    mace_write(lp, ioaddr, MACE_MACCC, MACE_MACCC_ENXMT | MACE_MACCC_ENRCV);
 
-  पूर्ण अन्यथा अगर (num_addrs < 0) अणु
+  } else if (num_addrs < 0) {
 
     /* Promiscuous mode: receive all packets */
-    mace_ग_लिखो(lp, ioaddr, MACE_UTR, MACE_UTR_LOOP_EXTERNAL);
-    mace_ग_लिखो(lp, ioaddr, MACE_MACCC,
+    mace_write(lp, ioaddr, MACE_UTR, MACE_UTR_LOOP_EXTERNAL);
+    mace_write(lp, ioaddr, MACE_MACCC,
       MACE_MACCC_PROM | MACE_MACCC_ENXMT | MACE_MACCC_ENRCV
     );
 
-  पूर्ण अन्यथा अणु
+  } else {
 
     /* Normal mode */
-    mace_ग_लिखो(lp, ioaddr, MACE_UTR, MACE_UTR_LOOP_EXTERNAL);
-    mace_ग_लिखो(lp, ioaddr, MACE_MACCC, MACE_MACCC_ENXMT | MACE_MACCC_ENRCV);
+    mace_write(lp, ioaddr, MACE_UTR, MACE_UTR_LOOP_EXTERNAL);
+    mace_write(lp, ioaddr, MACE_MACCC, MACE_MACCC_ENXMT | MACE_MACCC_ENRCV);
 
-  पूर्ण
-पूर्ण /* restore_multicast_list */
+  }
+} /* restore_multicast_list */
 
 /* ----------------------------------------------------------------------------
 set_multicast_list
-	Set or clear the multicast filter क्रम this adaptor.
+	Set or clear the multicast filter for this adaptor.
 
 Input
 	num_addrs == -1	Promiscuous mode, receive all packets
 	num_addrs == 0	Normal mode, clear multicast list
-	num_addrs > 0	Multicast mode, receive normal and MC packets, and करो
-			best-efक्रमt filtering.
+	num_addrs > 0	Multicast mode, receive normal and MC packets, and do
+			best-effort filtering.
 Output
 	multicast_num_addrs
 	multicast_ladrf[]
 ---------------------------------------------------------------------------- */
 
-अटल व्योम set_multicast_list(काष्ठा net_device *dev)
-अणु
-  mace_निजी *lp = netdev_priv(dev);
-  पूर्णांक adr[ETH_ALEN] = अणु0पूर्ण; /* Ethernet address */
-  काष्ठा netdev_hw_addr *ha;
+static void set_multicast_list(struct net_device *dev)
+{
+  mace_private *lp = netdev_priv(dev);
+  int adr[ETH_ALEN] = {0}; /* Ethernet address */
+  struct netdev_hw_addr *ha;
 
-#अगर_घोषित PCMCIA_DEBUG
-  अणु
-    अटल पूर्णांक old;
-    अगर (netdev_mc_count(dev) != old) अणु
+#ifdef PCMCIA_DEBUG
+  {
+    static int old;
+    if (netdev_mc_count(dev) != old) {
       old = netdev_mc_count(dev);
       pr_debug("%s: setting Rx mode to %d addresses.\n",
 	    dev->name, old);
-    पूर्ण
-  पूर्ण
-#पूर्ण_अगर
+    }
+  }
+#endif
 
   /* Set multicast_num_addrs. */
   lp->multicast_num_addrs = netdev_mc_count(dev);
 
   /* Set multicast_ladrf. */
-  अगर (num_addrs > 0) अणु
+  if (num_addrs > 0) {
     /* Calculate multicast logical address filter */
-    स_रखो(lp->multicast_ladrf, 0, MACE_LADRF_LEN);
-    netdev_क्रम_each_mc_addr(ha, dev) अणु
-      स_नकल(adr, ha->addr, ETH_ALEN);
+    memset(lp->multicast_ladrf, 0, MACE_LADRF_LEN);
+    netdev_for_each_mc_addr(ha, dev) {
+      memcpy(adr, ha->addr, ETH_ALEN);
       BuildLAF(lp->multicast_ladrf, adr);
-    पूर्ण
-  पूर्ण
+    }
+  }
 
   restore_multicast_list(dev);
 
-पूर्ण /* set_multicast_list */
+} /* set_multicast_list */
 
-#पूर्ण_अगर /* BROKEN_MULTICAST */
+#endif /* BROKEN_MULTICAST */
 
-अटल व्योम restore_multicast_list(काष्ठा net_device *dev)
-अणु
-  अचिन्हित पूर्णांक ioaddr = dev->base_addr;
-  mace_निजी *lp = netdev_priv(dev);
+static void restore_multicast_list(struct net_device *dev)
+{
+  unsigned int ioaddr = dev->base_addr;
+  mace_private *lp = netdev_priv(dev);
 
   pr_debug("%s: restoring Rx mode to %d addresses.\n", dev->name,
 	lp->multicast_num_addrs);
 
-  अगर (dev->flags & IFF_PROMISC) अणु
+  if (dev->flags & IFF_PROMISC) {
     /* Promiscuous mode: receive all packets */
-    mace_ग_लिखो(lp,ioaddr, MACE_UTR, MACE_UTR_LOOP_EXTERNAL);
-    mace_ग_लिखो(lp, ioaddr, MACE_MACCC,
+    mace_write(lp,ioaddr, MACE_UTR, MACE_UTR_LOOP_EXTERNAL);
+    mace_write(lp, ioaddr, MACE_MACCC,
       MACE_MACCC_PROM | MACE_MACCC_ENXMT | MACE_MACCC_ENRCV
     );
-  पूर्ण अन्यथा अणु
+  } else {
     /* Normal mode */
-    mace_ग_लिखो(lp, ioaddr, MACE_UTR, MACE_UTR_LOOP_EXTERNAL);
-    mace_ग_लिखो(lp, ioaddr, MACE_MACCC, MACE_MACCC_ENXMT | MACE_MACCC_ENRCV);
-  पूर्ण
-पूर्ण /* restore_multicast_list */
+    mace_write(lp, ioaddr, MACE_UTR, MACE_UTR_LOOP_EXTERNAL);
+    mace_write(lp, ioaddr, MACE_MACCC, MACE_MACCC_ENXMT | MACE_MACCC_ENRCV);
+  }
+} /* restore_multicast_list */
 
-अटल व्योम set_multicast_list(काष्ठा net_device *dev)
-अणु
-  mace_निजी *lp = netdev_priv(dev);
+static void set_multicast_list(struct net_device *dev)
+{
+  mace_private *lp = netdev_priv(dev);
 
-#अगर_घोषित PCMCIA_DEBUG
-  अणु
-    अटल पूर्णांक old;
-    अगर (netdev_mc_count(dev) != old) अणु
+#ifdef PCMCIA_DEBUG
+  {
+    static int old;
+    if (netdev_mc_count(dev) != old) {
       old = netdev_mc_count(dev);
       pr_debug("%s: setting Rx mode to %d addresses.\n",
 	    dev->name, old);
-    पूर्ण
-  पूर्ण
-#पूर्ण_अगर
+    }
+  }
+#endif
 
   lp->multicast_num_addrs = netdev_mc_count(dev);
   restore_multicast_list(dev);
 
-पूर्ण /* set_multicast_list */
+} /* set_multicast_list */
 
-अटल स्थिर काष्ठा pcmcia_device_id nmclan_ids[] = अणु
+static const struct pcmcia_device_id nmclan_ids[] = {
 	PCMCIA_DEVICE_PROD_ID12("New Media Corporation", "Ethernet", 0x085a850b, 0x00b2e941),
 	PCMCIA_DEVICE_PROD_ID12("Portable Add-ons", "Ethernet+", 0xebf1d60, 0xad673aaf),
-	PCMCIA_DEVICE_शून्य,
-पूर्ण;
+	PCMCIA_DEVICE_NULL,
+};
 MODULE_DEVICE_TABLE(pcmcia, nmclan_ids);
 
-अटल काष्ठा pcmcia_driver nmclan_cs_driver = अणु
+static struct pcmcia_driver nmclan_cs_driver = {
 	.owner		= THIS_MODULE,
 	.name		= "nmclan_cs",
 	.probe		= nmclan_probe,
-	.हटाओ		= nmclan_detach,
+	.remove		= nmclan_detach,
 	.id_table       = nmclan_ids,
 	.suspend	= nmclan_suspend,
 	.resume		= nmclan_resume,
-पूर्ण;
+};
 module_pcmcia_driver(nmclan_cs_driver);

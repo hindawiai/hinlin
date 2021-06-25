@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*****************************************************************************/
 /*
  *           moxa.c  -- MOXA Intellio family multiport serial driver.
@@ -8,164 +7,164 @@
  *      Copyright (c) 2007 Jiri Slaby <jirislaby@gmail.com>
  *
  *      This code is loosely based on the Linux serial driver, written by
- *      Linus Torvalds, Theoकरोre T'so and others.
+ *      Linus Torvalds, Theodore T'so and others.
  */
 
 /*
  *    MOXA Intellio Series Driver
- *      क्रम             : LINUX
+ *      for             : LINUX
  *      date            : 1999/1/7
  *      version         : 5.1
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/firmware.h>
-#समावेश <linux/संकेत.स>
-#समावेश <linux/sched.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/tty.h>
-#समावेश <linux/tty_flip.h>
-#समावेश <linux/major.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/fcntl.h>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/serial.h>
-#समावेश <linux/tty_driver.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/init.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/ratelimit.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/mm.h>
+#include <linux/ioport.h>
+#include <linux/errno.h>
+#include <linux/firmware.h>
+#include <linux/signal.h>
+#include <linux/sched.h>
+#include <linux/timer.h>
+#include <linux/interrupt.h>
+#include <linux/tty.h>
+#include <linux/tty_flip.h>
+#include <linux/major.h>
+#include <linux/string.h>
+#include <linux/fcntl.h>
+#include <linux/ptrace.h>
+#include <linux/serial.h>
+#include <linux/tty_driver.h>
+#include <linux/delay.h>
+#include <linux/pci.h>
+#include <linux/init.h>
+#include <linux/bitops.h>
+#include <linux/slab.h>
+#include <linux/ratelimit.h>
 
-#समावेश <यंत्र/पन.स>
-#समावेश <linux/uaccess.h>
+#include <asm/io.h>
+#include <linux/uaccess.h>
 
-#समावेश "moxa.h"
+#include "moxa.h"
 
-#घोषणा MOXA_VERSION		"6.0k"
+#define MOXA_VERSION		"6.0k"
 
-#घोषणा MOXA_FW_HDRLEN		32
+#define MOXA_FW_HDRLEN		32
 
-#घोषणा MOXAMAJOR		172
+#define MOXAMAJOR		172
 
-#घोषणा MAX_BOARDS		4	/* Don't change this value */
-#घोषणा MAX_PORTS_PER_BOARD	32	/* Don't change this value */
-#घोषणा MAX_PORTS		(MAX_BOARDS * MAX_PORTS_PER_BOARD)
+#define MAX_BOARDS		4	/* Don't change this value */
+#define MAX_PORTS_PER_BOARD	32	/* Don't change this value */
+#define MAX_PORTS		(MAX_BOARDS * MAX_PORTS_PER_BOARD)
 
-#घोषणा MOXA_IS_320(brd) ((brd)->boardType == MOXA_BOARD_C320_ISA || \
+#define MOXA_IS_320(brd) ((brd)->boardType == MOXA_BOARD_C320_ISA || \
 		(brd)->boardType == MOXA_BOARD_C320_PCI)
 
 /*
- *    Define the Moxa PCI venकरोr and device IDs.
+ *    Define the Moxa PCI vendor and device IDs.
  */
-#घोषणा MOXA_BUS_TYPE_ISA	0
-#घोषणा MOXA_BUS_TYPE_PCI	1
+#define MOXA_BUS_TYPE_ISA	0
+#define MOXA_BUS_TYPE_PCI	1
 
-क्रमागत अणु
+enum {
 	MOXA_BOARD_C218_PCI = 1,
 	MOXA_BOARD_C218_ISA,
 	MOXA_BOARD_C320_PCI,
 	MOXA_BOARD_C320_ISA,
 	MOXA_BOARD_CP204J,
-पूर्ण;
+};
 
-अटल अक्षर *moxa_brdname[] =
-अणु
+static char *moxa_brdname[] =
+{
 	"C218 Turbo PCI series",
 	"C218 Turbo ISA series",
 	"C320 Turbo PCI series",
 	"C320 Turbo ISA series",
 	"CP-204J series",
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_PCI
-अटल स्थिर काष्ठा pci_device_id moxa_pcibrds[] = अणु
-	अणु PCI_DEVICE(PCI_VENDOR_ID_MOXA, PCI_DEVICE_ID_MOXA_C218),
-		.driver_data = MOXA_BOARD_C218_PCI पूर्ण,
-	अणु PCI_DEVICE(PCI_VENDOR_ID_MOXA, PCI_DEVICE_ID_MOXA_C320),
-		.driver_data = MOXA_BOARD_C320_PCI पूर्ण,
-	अणु PCI_DEVICE(PCI_VENDOR_ID_MOXA, PCI_DEVICE_ID_MOXA_CP204J),
-		.driver_data = MOXA_BOARD_CP204J पूर्ण,
-	अणु 0 पूर्ण
-पूर्ण;
+#ifdef CONFIG_PCI
+static const struct pci_device_id moxa_pcibrds[] = {
+	{ PCI_DEVICE(PCI_VENDOR_ID_MOXA, PCI_DEVICE_ID_MOXA_C218),
+		.driver_data = MOXA_BOARD_C218_PCI },
+	{ PCI_DEVICE(PCI_VENDOR_ID_MOXA, PCI_DEVICE_ID_MOXA_C320),
+		.driver_data = MOXA_BOARD_C320_PCI },
+	{ PCI_DEVICE(PCI_VENDOR_ID_MOXA, PCI_DEVICE_ID_MOXA_CP204J),
+		.driver_data = MOXA_BOARD_CP204J },
+	{ 0 }
+};
 MODULE_DEVICE_TABLE(pci, moxa_pcibrds);
-#पूर्ण_अगर /* CONFIG_PCI */
+#endif /* CONFIG_PCI */
 
-काष्ठा moxa_port;
+struct moxa_port;
 
-अटल काष्ठा moxa_board_conf अणु
-	पूर्णांक boardType;
-	पूर्णांक numPorts;
-	पूर्णांक busType;
+static struct moxa_board_conf {
+	int boardType;
+	int numPorts;
+	int busType;
 
-	अचिन्हित पूर्णांक पढ़ोy;
+	unsigned int ready;
 
-	काष्ठा moxa_port *ports;
+	struct moxa_port *ports;
 
-	व्योम __iomem *basemem;
-	व्योम __iomem *पूर्णांकNdx;
-	व्योम __iomem *पूर्णांकPend;
-	व्योम __iomem *पूर्णांकTable;
-पूर्ण moxa_boards[MAX_BOARDS];
+	void __iomem *basemem;
+	void __iomem *intNdx;
+	void __iomem *intPend;
+	void __iomem *intTable;
+} moxa_boards[MAX_BOARDS];
 
-काष्ठा mxser_mstatus अणु
+struct mxser_mstatus {
 	tcflag_t cflag;
-	पूर्णांक cts;
-	पूर्णांक dsr;
-	पूर्णांक ri;
-	पूर्णांक dcd;
-पूर्ण;
+	int cts;
+	int dsr;
+	int ri;
+	int dcd;
+};
 
-काष्ठा moxaq_str अणु
-	पूर्णांक inq;
-	पूर्णांक outq;
-पूर्ण;
+struct moxaq_str {
+	int inq;
+	int outq;
+};
 
-काष्ठा moxa_port अणु
-	काष्ठा tty_port port;
-	काष्ठा moxa_board_conf *board;
-	व्योम __iomem *tableAddr;
+struct moxa_port {
+	struct tty_port port;
+	struct moxa_board_conf *board;
+	void __iomem *tableAddr;
 
-	पूर्णांक type;
-	पूर्णांक cflag;
-	अचिन्हित दीर्घ statusflags;
+	int type;
+	int cflag;
+	unsigned long statusflags;
 
 	u8 DCDState;		/* Protected by the port lock */
 	u8 lineCtrl;
 	u8 lowChkFlag;
-पूर्ण;
+};
 
-काष्ठा mon_str अणु
-	पूर्णांक tick;
-	पूर्णांक rxcnt[MAX_PORTS];
-	पूर्णांक txcnt[MAX_PORTS];
-पूर्ण;
+struct mon_str {
+	int tick;
+	int rxcnt[MAX_PORTS];
+	int txcnt[MAX_PORTS];
+};
 
 /* statusflags */
-#घोषणा TXSTOPPED	1
-#घोषणा LOWWAIT 	2
-#घोषणा EMPTYWAIT	3
+#define TXSTOPPED	1
+#define LOWWAIT 	2
+#define EMPTYWAIT	3
 
 
-#घोषणा WAKEUP_CHARS		256
+#define WAKEUP_CHARS		256
 
-अटल पूर्णांक ttymajor = MOXAMAJOR;
-अटल काष्ठा mon_str moxaLog;
-अटल अचिन्हित पूर्णांक moxaFuncTout = HZ / 2;
-अटल अचिन्हित पूर्णांक moxaLowWaterChk;
-अटल DEFINE_MUTEX(moxa_खोलोlock);
-अटल DEFINE_SPINLOCK(moxa_lock);
+static int ttymajor = MOXAMAJOR;
+static struct mon_str moxaLog;
+static unsigned int moxaFuncTout = HZ / 2;
+static unsigned int moxaLowWaterChk;
+static DEFINE_MUTEX(moxa_openlock);
+static DEFINE_SPINLOCK(moxa_lock);
 
-अटल अचिन्हित दीर्घ baseaddr[MAX_BOARDS];
-अटल अचिन्हित पूर्णांक type[MAX_BOARDS];
-अटल अचिन्हित पूर्णांक numports[MAX_BOARDS];
-अटल काष्ठा tty_port moxa_service_port;
+static unsigned long baseaddr[MAX_BOARDS];
+static unsigned int type[MAX_BOARDS];
+static unsigned int numports[MAX_BOARDS];
+static struct tty_port moxa_service_port;
 
 MODULE_AUTHOR("William Chen");
 MODULE_DESCRIPTION("MOXA Intellio Family Multiport Board Device Driver");
@@ -174,861 +173,861 @@ MODULE_FIRMWARE("c218tunx.cod");
 MODULE_FIRMWARE("cp204unx.cod");
 MODULE_FIRMWARE("c320tunx.cod");
 
-module_param_array(type, uपूर्णांक, शून्य, 0);
+module_param_array(type, uint, NULL, 0);
 MODULE_PARM_DESC(type, "card type: C218=2, C320=4");
-module_param_hw_array(baseaddr, uदीर्घ, ioport, शून्य, 0);
+module_param_hw_array(baseaddr, ulong, ioport, NULL, 0);
 MODULE_PARM_DESC(baseaddr, "base address");
-module_param_array(numports, uपूर्णांक, शून्य, 0);
+module_param_array(numports, uint, NULL, 0);
 MODULE_PARM_DESC(numports, "numports (ignored for C218)");
 
-module_param(ttymajor, पूर्णांक, 0);
+module_param(ttymajor, int, 0);
 
 /*
- * अटल functions:
+ * static functions:
  */
-अटल पूर्णांक moxa_खोलो(काष्ठा tty_काष्ठा *, काष्ठा file *);
-अटल व्योम moxa_बंद(काष्ठा tty_काष्ठा *, काष्ठा file *);
-अटल पूर्णांक moxa_ग_लिखो(काष्ठा tty_काष्ठा *, स्थिर अचिन्हित अक्षर *, पूर्णांक);
-अटल पूर्णांक moxa_ग_लिखो_room(काष्ठा tty_काष्ठा *);
-अटल व्योम moxa_flush_buffer(काष्ठा tty_काष्ठा *);
-अटल पूर्णांक moxa_अक्षरs_in_buffer(काष्ठा tty_काष्ठा *);
-अटल व्योम moxa_set_termios(काष्ठा tty_काष्ठा *, काष्ठा ktermios *);
-अटल व्योम moxa_stop(काष्ठा tty_काष्ठा *);
-अटल व्योम moxa_start(काष्ठा tty_काष्ठा *);
-अटल व्योम moxa_hangup(काष्ठा tty_काष्ठा *);
-अटल पूर्णांक moxa_tiocmget(काष्ठा tty_काष्ठा *tty);
-अटल पूर्णांक moxa_tiocmset(काष्ठा tty_काष्ठा *tty,
-			 अचिन्हित पूर्णांक set, अचिन्हित पूर्णांक clear);
-अटल व्योम moxa_poll(काष्ठा समयr_list *);
-अटल व्योम moxa_set_tty_param(काष्ठा tty_काष्ठा *, काष्ठा ktermios *);
-अटल व्योम moxa_shutकरोwn(काष्ठा tty_port *);
-अटल पूर्णांक moxa_carrier_उठाओd(काष्ठा tty_port *);
-अटल व्योम moxa_dtr_rts(काष्ठा tty_port *, पूर्णांक);
+static int moxa_open(struct tty_struct *, struct file *);
+static void moxa_close(struct tty_struct *, struct file *);
+static int moxa_write(struct tty_struct *, const unsigned char *, int);
+static int moxa_write_room(struct tty_struct *);
+static void moxa_flush_buffer(struct tty_struct *);
+static int moxa_chars_in_buffer(struct tty_struct *);
+static void moxa_set_termios(struct tty_struct *, struct ktermios *);
+static void moxa_stop(struct tty_struct *);
+static void moxa_start(struct tty_struct *);
+static void moxa_hangup(struct tty_struct *);
+static int moxa_tiocmget(struct tty_struct *tty);
+static int moxa_tiocmset(struct tty_struct *tty,
+			 unsigned int set, unsigned int clear);
+static void moxa_poll(struct timer_list *);
+static void moxa_set_tty_param(struct tty_struct *, struct ktermios *);
+static void moxa_shutdown(struct tty_port *);
+static int moxa_carrier_raised(struct tty_port *);
+static void moxa_dtr_rts(struct tty_port *, int);
 /*
- * moxa board पूर्णांकerface functions:
+ * moxa board interface functions:
  */
-अटल व्योम MoxaPortEnable(काष्ठा moxa_port *);
-अटल व्योम MoxaPortDisable(काष्ठा moxa_port *);
-अटल पूर्णांक MoxaPortSetTermio(काष्ठा moxa_port *, काष्ठा ktermios *, speed_t);
-अटल पूर्णांक MoxaPortGetLineOut(काष्ठा moxa_port *, पूर्णांक *, पूर्णांक *);
-अटल व्योम MoxaPortLineCtrl(काष्ठा moxa_port *, पूर्णांक, पूर्णांक);
-अटल व्योम MoxaPortFlowCtrl(काष्ठा moxa_port *, पूर्णांक, पूर्णांक, पूर्णांक, पूर्णांक, पूर्णांक);
-अटल पूर्णांक MoxaPortLineStatus(काष्ठा moxa_port *);
-अटल व्योम MoxaPortFlushData(काष्ठा moxa_port *, पूर्णांक);
-अटल पूर्णांक MoxaPortWriteData(काष्ठा tty_काष्ठा *, स्थिर अचिन्हित अक्षर *, पूर्णांक);
-अटल पूर्णांक MoxaPortReadData(काष्ठा moxa_port *);
-अटल पूर्णांक MoxaPortTxQueue(काष्ठा moxa_port *);
-अटल पूर्णांक MoxaPortRxQueue(काष्ठा moxa_port *);
-अटल पूर्णांक MoxaPortTxFree(काष्ठा moxa_port *);
-अटल व्योम MoxaPortTxDisable(काष्ठा moxa_port *);
-अटल व्योम MoxaPortTxEnable(काष्ठा moxa_port *);
-अटल पूर्णांक moxa_get_serial_info(काष्ठा tty_काष्ठा *, काष्ठा serial_काष्ठा *);
-अटल पूर्णांक moxa_set_serial_info(काष्ठा tty_काष्ठा *, काष्ठा serial_काष्ठा *);
-अटल व्योम MoxaSetFअगरo(काष्ठा moxa_port *port, पूर्णांक enable);
+static void MoxaPortEnable(struct moxa_port *);
+static void MoxaPortDisable(struct moxa_port *);
+static int MoxaPortSetTermio(struct moxa_port *, struct ktermios *, speed_t);
+static int MoxaPortGetLineOut(struct moxa_port *, int *, int *);
+static void MoxaPortLineCtrl(struct moxa_port *, int, int);
+static void MoxaPortFlowCtrl(struct moxa_port *, int, int, int, int, int);
+static int MoxaPortLineStatus(struct moxa_port *);
+static void MoxaPortFlushData(struct moxa_port *, int);
+static int MoxaPortWriteData(struct tty_struct *, const unsigned char *, int);
+static int MoxaPortReadData(struct moxa_port *);
+static int MoxaPortTxQueue(struct moxa_port *);
+static int MoxaPortRxQueue(struct moxa_port *);
+static int MoxaPortTxFree(struct moxa_port *);
+static void MoxaPortTxDisable(struct moxa_port *);
+static void MoxaPortTxEnable(struct moxa_port *);
+static int moxa_get_serial_info(struct tty_struct *, struct serial_struct *);
+static int moxa_set_serial_info(struct tty_struct *, struct serial_struct *);
+static void MoxaSetFifo(struct moxa_port *port, int enable);
 
 /*
  * I/O functions
  */
 
-अटल DEFINE_SPINLOCK(moxafunc_lock);
+static DEFINE_SPINLOCK(moxafunc_lock);
 
-अटल व्योम moxa_रुको_finish(व्योम __iomem *ofsAddr)
-अणु
-	अचिन्हित दीर्घ end = jअगरfies + moxaFuncTout;
+static void moxa_wait_finish(void __iomem *ofsAddr)
+{
+	unsigned long end = jiffies + moxaFuncTout;
 
-	जबतक (पढ़ोw(ofsAddr + FuncCode) != 0)
-		अगर (समय_after(jअगरfies, end))
-			वापस;
-	अगर (पढ़ोw(ofsAddr + FuncCode) != 0)
-		prपूर्णांकk_ratelimited(KERN_WARNING "moxa function expired\n");
-पूर्ण
+	while (readw(ofsAddr + FuncCode) != 0)
+		if (time_after(jiffies, end))
+			return;
+	if (readw(ofsAddr + FuncCode) != 0)
+		printk_ratelimited(KERN_WARNING "moxa function expired\n");
+}
 
-अटल व्योम moxafunc(व्योम __iomem *ofsAddr, u16 cmd, u16 arg)
-अणु
-        अचिन्हित दीर्घ flags;
+static void moxafunc(void __iomem *ofsAddr, u16 cmd, u16 arg)
+{
+        unsigned long flags;
         spin_lock_irqsave(&moxafunc_lock, flags);
-	ग_लिखोw(arg, ofsAddr + FuncArg);
-	ग_लिखोw(cmd, ofsAddr + FuncCode);
-	moxa_रुको_finish(ofsAddr);
+	writew(arg, ofsAddr + FuncArg);
+	writew(cmd, ofsAddr + FuncCode);
+	moxa_wait_finish(ofsAddr);
 	spin_unlock_irqrestore(&moxafunc_lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक moxafuncret(व्योम __iomem *ofsAddr, u16 cmd, u16 arg)
-अणु
-        अचिन्हित दीर्घ flags;
+static int moxafuncret(void __iomem *ofsAddr, u16 cmd, u16 arg)
+{
+        unsigned long flags;
         u16 ret;
         spin_lock_irqsave(&moxafunc_lock, flags);
-	ग_लिखोw(arg, ofsAddr + FuncArg);
-	ग_लिखोw(cmd, ofsAddr + FuncCode);
-	moxa_रुको_finish(ofsAddr);
-	ret = पढ़ोw(ofsAddr + FuncArg);
+	writew(arg, ofsAddr + FuncArg);
+	writew(cmd, ofsAddr + FuncCode);
+	moxa_wait_finish(ofsAddr);
+	ret = readw(ofsAddr + FuncArg);
 	spin_unlock_irqrestore(&moxafunc_lock, flags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम moxa_low_water_check(व्योम __iomem *ofsAddr)
-अणु
+static void moxa_low_water_check(void __iomem *ofsAddr)
+{
 	u16 rptr, wptr, mask, len;
 
-	अगर (पढ़ोb(ofsAddr + FlagStat) & Xoff_state) अणु
-		rptr = पढ़ोw(ofsAddr + RXrptr);
-		wptr = पढ़ोw(ofsAddr + RXwptr);
-		mask = पढ़ोw(ofsAddr + RX_mask);
+	if (readb(ofsAddr + FlagStat) & Xoff_state) {
+		rptr = readw(ofsAddr + RXrptr);
+		wptr = readw(ofsAddr + RXwptr);
+		mask = readw(ofsAddr + RX_mask);
 		len = (wptr - rptr) & mask;
-		अगर (len <= Low_water)
+		if (len <= Low_water)
 			moxafunc(ofsAddr, FC_SendXon, 0);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * TTY operations
  */
 
-अटल पूर्णांक moxa_ioctl(काष्ठा tty_काष्ठा *tty,
-		      अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा moxa_port *ch = tty->driver_data;
-	व्योम __user *argp = (व्योम __user *)arg;
-	पूर्णांक status, ret = 0;
+static int moxa_ioctl(struct tty_struct *tty,
+		      unsigned int cmd, unsigned long arg)
+{
+	struct moxa_port *ch = tty->driver_data;
+	void __user *argp = (void __user *)arg;
+	int status, ret = 0;
 
-	अगर (tty->index == MAX_PORTS) अणु
-		अगर (cmd != MOXA_GETDATACOUNT && cmd != MOXA_GET_IOQUEUE &&
+	if (tty->index == MAX_PORTS) {
+		if (cmd != MOXA_GETDATACOUNT && cmd != MOXA_GET_IOQUEUE &&
 				cmd != MOXA_GETMSTATUS)
-			वापस -EINVAL;
-	पूर्ण अन्यथा अगर (!ch)
-		वापस -ENODEV;
+			return -EINVAL;
+	} else if (!ch)
+		return -ENODEV;
 
-	चयन (cmd) अणु
-	हाल MOXA_GETDATACOUNT:
-		moxaLog.tick = jअगरfies;
-		अगर (copy_to_user(argp, &moxaLog, माप(moxaLog)))
+	switch (cmd) {
+	case MOXA_GETDATACOUNT:
+		moxaLog.tick = jiffies;
+		if (copy_to_user(argp, &moxaLog, sizeof(moxaLog)))
 			ret = -EFAULT;
-		अवरोध;
-	हाल MOXA_FLUSH_QUEUE:
+		break;
+	case MOXA_FLUSH_QUEUE:
 		MoxaPortFlushData(ch, arg);
-		अवरोध;
-	हाल MOXA_GET_IOQUEUE: अणु
-		काष्ठा moxaq_str __user *argm = argp;
-		काष्ठा moxaq_str पंचांगp;
-		काष्ठा moxa_port *p;
-		अचिन्हित पूर्णांक i, j;
+		break;
+	case MOXA_GET_IOQUEUE: {
+		struct moxaq_str __user *argm = argp;
+		struct moxaq_str tmp;
+		struct moxa_port *p;
+		unsigned int i, j;
 
-		क्रम (i = 0; i < MAX_BOARDS; i++) अणु
+		for (i = 0; i < MAX_BOARDS; i++) {
 			p = moxa_boards[i].ports;
-			क्रम (j = 0; j < MAX_PORTS_PER_BOARD; j++, p++, argm++) अणु
-				स_रखो(&पंचांगp, 0, माप(पंचांगp));
+			for (j = 0; j < MAX_PORTS_PER_BOARD; j++, p++, argm++) {
+				memset(&tmp, 0, sizeof(tmp));
 				spin_lock_bh(&moxa_lock);
-				अगर (moxa_boards[i].पढ़ोy) अणु
-					पंचांगp.inq = MoxaPortRxQueue(p);
-					पंचांगp.outq = MoxaPortTxQueue(p);
-				पूर्ण
+				if (moxa_boards[i].ready) {
+					tmp.inq = MoxaPortRxQueue(p);
+					tmp.outq = MoxaPortTxQueue(p);
+				}
 				spin_unlock_bh(&moxa_lock);
-				अगर (copy_to_user(argm, &पंचांगp, माप(पंचांगp)))
-					वापस -EFAULT;
-			पूर्ण
-		पूर्ण
-		अवरोध;
-	पूर्ण हाल MOXA_GET_OQUEUE:
+				if (copy_to_user(argm, &tmp, sizeof(tmp)))
+					return -EFAULT;
+			}
+		}
+		break;
+	} case MOXA_GET_OQUEUE:
 		status = MoxaPortTxQueue(ch);
-		ret = put_user(status, (अचिन्हित दीर्घ __user *)argp);
-		अवरोध;
-	हाल MOXA_GET_IQUEUE:
+		ret = put_user(status, (unsigned long __user *)argp);
+		break;
+	case MOXA_GET_IQUEUE:
 		status = MoxaPortRxQueue(ch);
-		ret = put_user(status, (अचिन्हित दीर्घ __user *)argp);
-		अवरोध;
-	हाल MOXA_GETMSTATUS: अणु
-		काष्ठा mxser_mstatus __user *argm = argp;
-		काष्ठा mxser_mstatus पंचांगp;
-		काष्ठा moxa_port *p;
-		अचिन्हित पूर्णांक i, j;
+		ret = put_user(status, (unsigned long __user *)argp);
+		break;
+	case MOXA_GETMSTATUS: {
+		struct mxser_mstatus __user *argm = argp;
+		struct mxser_mstatus tmp;
+		struct moxa_port *p;
+		unsigned int i, j;
 
-		क्रम (i = 0; i < MAX_BOARDS; i++) अणु
+		for (i = 0; i < MAX_BOARDS; i++) {
 			p = moxa_boards[i].ports;
-			क्रम (j = 0; j < MAX_PORTS_PER_BOARD; j++, p++, argm++) अणु
-				काष्ठा tty_काष्ठा *ttyp;
-				स_रखो(&पंचांगp, 0, माप(पंचांगp));
+			for (j = 0; j < MAX_PORTS_PER_BOARD; j++, p++, argm++) {
+				struct tty_struct *ttyp;
+				memset(&tmp, 0, sizeof(tmp));
 				spin_lock_bh(&moxa_lock);
-				अगर (!moxa_boards[i].पढ़ोy) अणु
+				if (!moxa_boards[i].ready) {
 				        spin_unlock_bh(&moxa_lock);
-					जाओ copy;
-                                पूर्ण
+					goto copy;
+                                }
 
 				status = MoxaPortLineStatus(p);
 				spin_unlock_bh(&moxa_lock);
 
-				अगर (status & 1)
-					पंचांगp.cts = 1;
-				अगर (status & 2)
-					पंचांगp.dsr = 1;
-				अगर (status & 4)
-					पंचांगp.dcd = 1;
+				if (status & 1)
+					tmp.cts = 1;
+				if (status & 2)
+					tmp.dsr = 1;
+				if (status & 4)
+					tmp.dcd = 1;
 
 				ttyp = tty_port_tty_get(&p->port);
-				अगर (!ttyp)
-					पंचांगp.cflag = p->cflag;
-				अन्यथा
-					पंचांगp.cflag = ttyp->termios.c_cflag;
+				if (!ttyp)
+					tmp.cflag = p->cflag;
+				else
+					tmp.cflag = ttyp->termios.c_cflag;
 				tty_kref_put(ttyp);
 copy:
-				अगर (copy_to_user(argm, &पंचांगp, माप(पंचांगp)))
-					वापस -EFAULT;
-			पूर्ण
-		पूर्ण
-		अवरोध;
-	पूर्ण
-	शेष:
+				if (copy_to_user(argm, &tmp, sizeof(tmp)))
+					return -EFAULT;
+			}
+		}
+		break;
+	}
+	default:
 		ret = -ENOIOCTLCMD;
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल पूर्णांक moxa_अवरोध_ctl(काष्ठा tty_काष्ठा *tty, पूर्णांक state)
-अणु
-	काष्ठा moxa_port *port = tty->driver_data;
+static int moxa_break_ctl(struct tty_struct *tty, int state)
+{
+	struct moxa_port *port = tty->driver_data;
 
 	moxafunc(port->tableAddr, state ? FC_SendBreak : FC_StopBreak,
 			Magic_code);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा tty_operations moxa_ops = अणु
-	.खोलो = moxa_खोलो,
-	.बंद = moxa_बंद,
-	.ग_लिखो = moxa_ग_लिखो,
-	.ग_लिखो_room = moxa_ग_लिखो_room,
+static const struct tty_operations moxa_ops = {
+	.open = moxa_open,
+	.close = moxa_close,
+	.write = moxa_write,
+	.write_room = moxa_write_room,
 	.flush_buffer = moxa_flush_buffer,
-	.अक्षरs_in_buffer = moxa_अक्षरs_in_buffer,
+	.chars_in_buffer = moxa_chars_in_buffer,
 	.ioctl = moxa_ioctl,
 	.set_termios = moxa_set_termios,
 	.stop = moxa_stop,
 	.start = moxa_start,
 	.hangup = moxa_hangup,
-	.अवरोध_ctl = moxa_अवरोध_ctl,
+	.break_ctl = moxa_break_ctl,
 	.tiocmget = moxa_tiocmget,
 	.tiocmset = moxa_tiocmset,
 	.set_serial = moxa_set_serial_info,
 	.get_serial = moxa_get_serial_info,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा tty_port_operations moxa_port_ops = अणु
-	.carrier_उठाओd = moxa_carrier_उठाओd,
+static const struct tty_port_operations moxa_port_ops = {
+	.carrier_raised = moxa_carrier_raised,
 	.dtr_rts = moxa_dtr_rts,
-	.shutकरोwn = moxa_shutकरोwn,
-पूर्ण;
+	.shutdown = moxa_shutdown,
+};
 
-अटल काष्ठा tty_driver *moxaDriver;
-अटल DEFINE_TIMER(moxaTimer, moxa_poll);
+static struct tty_driver *moxaDriver;
+static DEFINE_TIMER(moxaTimer, moxa_poll);
 
 /*
  * HW init
  */
 
-अटल पूर्णांक moxa_check_fw_model(काष्ठा moxa_board_conf *brd, u8 model)
-अणु
-	चयन (brd->boardType) अणु
-	हाल MOXA_BOARD_C218_ISA:
-	हाल MOXA_BOARD_C218_PCI:
-		अगर (model != 1)
-			जाओ err;
-		अवरोध;
-	हाल MOXA_BOARD_CP204J:
-		अगर (model != 3)
-			जाओ err;
-		अवरोध;
-	शेष:
-		अगर (model != 2)
-			जाओ err;
-		अवरोध;
-	पूर्ण
-	वापस 0;
+static int moxa_check_fw_model(struct moxa_board_conf *brd, u8 model)
+{
+	switch (brd->boardType) {
+	case MOXA_BOARD_C218_ISA:
+	case MOXA_BOARD_C218_PCI:
+		if (model != 1)
+			goto err;
+		break;
+	case MOXA_BOARD_CP204J:
+		if (model != 3)
+			goto err;
+		break;
+	default:
+		if (model != 2)
+			goto err;
+		break;
+	}
+	return 0;
 err:
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक moxa_check_fw(स्थिर व्योम *ptr)
-अणु
-	स्थिर __le16 *lptr = ptr;
+static int moxa_check_fw(const void *ptr)
+{
+	const __le16 *lptr = ptr;
 
-	अगर (*lptr != cpu_to_le16(0x7980))
-		वापस -EINVAL;
+	if (*lptr != cpu_to_le16(0x7980))
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक moxa_load_bios(काष्ठा moxa_board_conf *brd, स्थिर u8 *buf,
-		माप_प्रकार len)
-अणु
-	व्योम __iomem *baseAddr = brd->basemem;
-	u16 पंचांगp;
+static int moxa_load_bios(struct moxa_board_conf *brd, const u8 *buf,
+		size_t len)
+{
+	void __iomem *baseAddr = brd->basemem;
+	u16 tmp;
 
-	ग_लिखोb(HW_reset, baseAddr + Control_reg);	/* reset */
+	writeb(HW_reset, baseAddr + Control_reg);	/* reset */
 	msleep(10);
-	स_रखो_io(baseAddr, 0, 4096);
-	स_नकल_toio(baseAddr, buf, len);	/* करोwnload BIOS */
-	ग_लिखोb(0, baseAddr + Control_reg);	/* restart */
+	memset_io(baseAddr, 0, 4096);
+	memcpy_toio(baseAddr, buf, len);	/* download BIOS */
+	writeb(0, baseAddr + Control_reg);	/* restart */
 
 	msleep(2000);
 
-	चयन (brd->boardType) अणु
-	हाल MOXA_BOARD_C218_ISA:
-	हाल MOXA_BOARD_C218_PCI:
-		पंचांगp = पढ़ोw(baseAddr + C218_key);
-		अगर (पंचांगp != C218_KeyCode)
-			जाओ err;
-		अवरोध;
-	हाल MOXA_BOARD_CP204J:
-		पंचांगp = पढ़ोw(baseAddr + C218_key);
-		अगर (पंचांगp != CP204J_KeyCode)
-			जाओ err;
-		अवरोध;
-	शेष:
-		पंचांगp = पढ़ोw(baseAddr + C320_key);
-		अगर (पंचांगp != C320_KeyCode)
-			जाओ err;
-		पंचांगp = पढ़ोw(baseAddr + C320_status);
-		अगर (पंचांगp != STS_init) अणु
-			prपूर्णांकk(KERN_ERR "MOXA: bios upload failed -- CPU/Basic "
+	switch (brd->boardType) {
+	case MOXA_BOARD_C218_ISA:
+	case MOXA_BOARD_C218_PCI:
+		tmp = readw(baseAddr + C218_key);
+		if (tmp != C218_KeyCode)
+			goto err;
+		break;
+	case MOXA_BOARD_CP204J:
+		tmp = readw(baseAddr + C218_key);
+		if (tmp != CP204J_KeyCode)
+			goto err;
+		break;
+	default:
+		tmp = readw(baseAddr + C320_key);
+		if (tmp != C320_KeyCode)
+			goto err;
+		tmp = readw(baseAddr + C320_status);
+		if (tmp != STS_init) {
+			printk(KERN_ERR "MOXA: bios upload failed -- CPU/Basic "
 					"module not found\n");
-			वापस -EIO;
-		पूर्ण
-		अवरोध;
-	पूर्ण
+			return -EIO;
+		}
+		break;
+	}
 
-	वापस 0;
+	return 0;
 err:
-	prपूर्णांकk(KERN_ERR "MOXA: bios upload failed -- board not found\n");
-	वापस -EIO;
-पूर्ण
+	printk(KERN_ERR "MOXA: bios upload failed -- board not found\n");
+	return -EIO;
+}
 
-अटल पूर्णांक moxa_load_320b(काष्ठा moxa_board_conf *brd, स्थिर u8 *ptr,
-		माप_प्रकार len)
-अणु
-	व्योम __iomem *baseAddr = brd->basemem;
+static int moxa_load_320b(struct moxa_board_conf *brd, const u8 *ptr,
+		size_t len)
+{
+	void __iomem *baseAddr = brd->basemem;
 
-	अगर (len < 7168) अणु
-		prपूर्णांकk(KERN_ERR "MOXA: invalid 320 bios -- too short\n");
-		वापस -EINVAL;
-	पूर्ण
+	if (len < 7168) {
+		printk(KERN_ERR "MOXA: invalid 320 bios -- too short\n");
+		return -EINVAL;
+	}
 
-	ग_लिखोw(len - 7168 - 2, baseAddr + C320bapi_len);
-	ग_लिखोb(1, baseAddr + Control_reg);	/* Select Page 1 */
-	स_नकल_toio(baseAddr + DynPage_addr, ptr, 7168);
-	ग_लिखोb(2, baseAddr + Control_reg);	/* Select Page 2 */
-	स_नकल_toio(baseAddr + DynPage_addr, ptr + 7168, len - 7168);
+	writew(len - 7168 - 2, baseAddr + C320bapi_len);
+	writeb(1, baseAddr + Control_reg);	/* Select Page 1 */
+	memcpy_toio(baseAddr + DynPage_addr, ptr, 7168);
+	writeb(2, baseAddr + Control_reg);	/* Select Page 2 */
+	memcpy_toio(baseAddr + DynPage_addr, ptr + 7168, len - 7168);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक moxa_real_load_code(काष्ठा moxa_board_conf *brd, स्थिर व्योम *ptr,
-		माप_प्रकार len)
-अणु
-	व्योम __iomem *baseAddr = brd->basemem;
-	स्थिर __le16 *uptr = ptr;
-	माप_प्रकार wlen, len2, j;
-	अचिन्हित दीर्घ key, loadbuf, loadlen, checksum, checksum_ok;
-	अचिन्हित पूर्णांक i, retry;
+static int moxa_real_load_code(struct moxa_board_conf *brd, const void *ptr,
+		size_t len)
+{
+	void __iomem *baseAddr = brd->basemem;
+	const __le16 *uptr = ptr;
+	size_t wlen, len2, j;
+	unsigned long key, loadbuf, loadlen, checksum, checksum_ok;
+	unsigned int i, retry;
 	u16 usum, keycode;
 
 	keycode = (brd->boardType == MOXA_BOARD_CP204J) ? CP204J_KeyCode :
 				C218_KeyCode;
 
-	चयन (brd->boardType) अणु
-	हाल MOXA_BOARD_CP204J:
-	हाल MOXA_BOARD_C218_ISA:
-	हाल MOXA_BOARD_C218_PCI:
+	switch (brd->boardType) {
+	case MOXA_BOARD_CP204J:
+	case MOXA_BOARD_C218_ISA:
+	case MOXA_BOARD_C218_PCI:
 		key = C218_key;
 		loadbuf = C218_LoadBuf;
 		loadlen = C218DLoad_len;
 		checksum = C218check_sum;
 		checksum_ok = C218chksum_ok;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		key = C320_key;
 		keycode = C320_KeyCode;
 		loadbuf = C320_LoadBuf;
 		loadlen = C320DLoad_len;
 		checksum = C320check_sum;
 		checksum_ok = C320chksum_ok;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	usum = 0;
 	wlen = len >> 1;
-	क्रम (i = 0; i < wlen; i++)
+	for (i = 0; i < wlen; i++)
 		usum += le16_to_cpu(uptr[i]);
 	retry = 0;
-	करो अणु
+	do {
 		wlen = len >> 1;
 		j = 0;
-		जबतक (wlen) अणु
+		while (wlen) {
 			len2 = (wlen > 2048) ? 2048 : wlen;
 			wlen -= len2;
-			स_नकल_toio(baseAddr + loadbuf, ptr + j, len2 << 1);
+			memcpy_toio(baseAddr + loadbuf, ptr + j, len2 << 1);
 			j += len2 << 1;
 
-			ग_लिखोw(len2, baseAddr + loadlen);
-			ग_लिखोw(0, baseAddr + key);
-			क्रम (i = 0; i < 100; i++) अणु
-				अगर (पढ़ोw(baseAddr + key) == keycode)
-					अवरोध;
+			writew(len2, baseAddr + loadlen);
+			writew(0, baseAddr + key);
+			for (i = 0; i < 100; i++) {
+				if (readw(baseAddr + key) == keycode)
+					break;
 				msleep(10);
-			पूर्ण
-			अगर (पढ़ोw(baseAddr + key) != keycode)
-				वापस -EIO;
-		पूर्ण
-		ग_लिखोw(0, baseAddr + loadlen);
-		ग_लिखोw(usum, baseAddr + checksum);
-		ग_लिखोw(0, baseAddr + key);
-		क्रम (i = 0; i < 100; i++) अणु
-			अगर (पढ़ोw(baseAddr + key) == keycode)
-				अवरोध;
+			}
+			if (readw(baseAddr + key) != keycode)
+				return -EIO;
+		}
+		writew(0, baseAddr + loadlen);
+		writew(usum, baseAddr + checksum);
+		writew(0, baseAddr + key);
+		for (i = 0; i < 100; i++) {
+			if (readw(baseAddr + key) == keycode)
+				break;
 			msleep(10);
-		पूर्ण
+		}
 		retry++;
-	पूर्ण जबतक ((पढ़ोb(baseAddr + checksum_ok) != 1) && (retry < 3));
-	अगर (पढ़ोb(baseAddr + checksum_ok) != 1)
-		वापस -EIO;
+	} while ((readb(baseAddr + checksum_ok) != 1) && (retry < 3));
+	if (readb(baseAddr + checksum_ok) != 1)
+		return -EIO;
 
-	ग_लिखोw(0, baseAddr + key);
-	क्रम (i = 0; i < 600; i++) अणु
-		अगर (पढ़ोw(baseAddr + Magic_no) == Magic_code)
-			अवरोध;
+	writew(0, baseAddr + key);
+	for (i = 0; i < 600; i++) {
+		if (readw(baseAddr + Magic_no) == Magic_code)
+			break;
 		msleep(10);
-	पूर्ण
-	अगर (पढ़ोw(baseAddr + Magic_no) != Magic_code)
-		वापस -EIO;
+	}
+	if (readw(baseAddr + Magic_no) != Magic_code)
+		return -EIO;
 
-	अगर (MOXA_IS_320(brd)) अणु
-		अगर (brd->busType == MOXA_BUS_TYPE_PCI) अणु	/* ASIC board */
-			ग_लिखोw(0x3800, baseAddr + TMS320_PORT1);
-			ग_लिखोw(0x3900, baseAddr + TMS320_PORT2);
-			ग_लिखोw(28499, baseAddr + TMS320_CLOCK);
-		पूर्ण अन्यथा अणु
-			ग_लिखोw(0x3200, baseAddr + TMS320_PORT1);
-			ग_लिखोw(0x3400, baseAddr + TMS320_PORT2);
-			ग_लिखोw(19999, baseAddr + TMS320_CLOCK);
-		पूर्ण
-	पूर्ण
-	ग_लिखोw(1, baseAddr + Disable_IRQ);
-	ग_लिखोw(0, baseAddr + Magic_no);
-	क्रम (i = 0; i < 500; i++) अणु
-		अगर (पढ़ोw(baseAddr + Magic_no) == Magic_code)
-			अवरोध;
+	if (MOXA_IS_320(brd)) {
+		if (brd->busType == MOXA_BUS_TYPE_PCI) {	/* ASIC board */
+			writew(0x3800, baseAddr + TMS320_PORT1);
+			writew(0x3900, baseAddr + TMS320_PORT2);
+			writew(28499, baseAddr + TMS320_CLOCK);
+		} else {
+			writew(0x3200, baseAddr + TMS320_PORT1);
+			writew(0x3400, baseAddr + TMS320_PORT2);
+			writew(19999, baseAddr + TMS320_CLOCK);
+		}
+	}
+	writew(1, baseAddr + Disable_IRQ);
+	writew(0, baseAddr + Magic_no);
+	for (i = 0; i < 500; i++) {
+		if (readw(baseAddr + Magic_no) == Magic_code)
+			break;
 		msleep(10);
-	पूर्ण
-	अगर (पढ़ोw(baseAddr + Magic_no) != Magic_code)
-		वापस -EIO;
+	}
+	if (readw(baseAddr + Magic_no) != Magic_code)
+		return -EIO;
 
-	अगर (MOXA_IS_320(brd)) अणु
-		j = पढ़ोw(baseAddr + Module_cnt);
-		अगर (j <= 0)
-			वापस -EIO;
+	if (MOXA_IS_320(brd)) {
+		j = readw(baseAddr + Module_cnt);
+		if (j <= 0)
+			return -EIO;
 		brd->numPorts = j * 8;
-		ग_लिखोw(j, baseAddr + Module_no);
-		ग_लिखोw(0, baseAddr + Magic_no);
-		क्रम (i = 0; i < 600; i++) अणु
-			अगर (पढ़ोw(baseAddr + Magic_no) == Magic_code)
-				अवरोध;
+		writew(j, baseAddr + Module_no);
+		writew(0, baseAddr + Magic_no);
+		for (i = 0; i < 600; i++) {
+			if (readw(baseAddr + Magic_no) == Magic_code)
+				break;
 			msleep(10);
-		पूर्ण
-		अगर (पढ़ोw(baseAddr + Magic_no) != Magic_code)
-			वापस -EIO;
-	पूर्ण
-	brd->पूर्णांकNdx = baseAddr + IRQindex;
-	brd->पूर्णांकPend = baseAddr + IRQpending;
-	brd->पूर्णांकTable = baseAddr + IRQtable;
+		}
+		if (readw(baseAddr + Magic_no) != Magic_code)
+			return -EIO;
+	}
+	brd->intNdx = baseAddr + IRQindex;
+	brd->intPend = baseAddr + IRQpending;
+	brd->intTable = baseAddr + IRQtable;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक moxa_load_code(काष्ठा moxa_board_conf *brd, स्थिर व्योम *ptr,
-		माप_प्रकार len)
-अणु
-	व्योम __iomem *ofsAddr, *baseAddr = brd->basemem;
-	काष्ठा moxa_port *port;
-	पूर्णांक retval, i;
+static int moxa_load_code(struct moxa_board_conf *brd, const void *ptr,
+		size_t len)
+{
+	void __iomem *ofsAddr, *baseAddr = brd->basemem;
+	struct moxa_port *port;
+	int retval, i;
 
-	अगर (len % 2) अणु
-		prपूर्णांकk(KERN_ERR "MOXA: bios length is not even\n");
-		वापस -EINVAL;
-	पूर्ण
+	if (len % 2) {
+		printk(KERN_ERR "MOXA: bios length is not even\n");
+		return -EINVAL;
+	}
 
 	retval = moxa_real_load_code(brd, ptr, len); /* may change numPorts */
-	अगर (retval)
-		वापस retval;
+	if (retval)
+		return retval;
 
-	चयन (brd->boardType) अणु
-	हाल MOXA_BOARD_C218_ISA:
-	हाल MOXA_BOARD_C218_PCI:
-	हाल MOXA_BOARD_CP204J:
+	switch (brd->boardType) {
+	case MOXA_BOARD_C218_ISA:
+	case MOXA_BOARD_C218_PCI:
+	case MOXA_BOARD_CP204J:
 		port = brd->ports;
-		क्रम (i = 0; i < brd->numPorts; i++, port++) अणु
+		for (i = 0; i < brd->numPorts; i++, port++) {
 			port->board = brd;
 			port->DCDState = 0;
 			port->tableAddr = baseAddr + Extern_table +
 					Extern_size * i;
 			ofsAddr = port->tableAddr;
-			ग_लिखोw(C218rx_mask, ofsAddr + RX_mask);
-			ग_लिखोw(C218tx_mask, ofsAddr + TX_mask);
-			ग_लिखोw(C218rx_spage + i * C218buf_pageno, ofsAddr + Page_rxb);
-			ग_लिखोw(पढ़ोw(ofsAddr + Page_rxb) + C218rx_pageno, ofsAddr + EndPage_rxb);
+			writew(C218rx_mask, ofsAddr + RX_mask);
+			writew(C218tx_mask, ofsAddr + TX_mask);
+			writew(C218rx_spage + i * C218buf_pageno, ofsAddr + Page_rxb);
+			writew(readw(ofsAddr + Page_rxb) + C218rx_pageno, ofsAddr + EndPage_rxb);
 
-			ग_लिखोw(C218tx_spage + i * C218buf_pageno, ofsAddr + Page_txb);
-			ग_लिखोw(पढ़ोw(ofsAddr + Page_txb) + C218tx_pageno, ofsAddr + EndPage_txb);
+			writew(C218tx_spage + i * C218buf_pageno, ofsAddr + Page_txb);
+			writew(readw(ofsAddr + Page_txb) + C218tx_pageno, ofsAddr + EndPage_txb);
 
-		पूर्ण
-		अवरोध;
-	शेष:
+		}
+		break;
+	default:
 		port = brd->ports;
-		क्रम (i = 0; i < brd->numPorts; i++, port++) अणु
+		for (i = 0; i < brd->numPorts; i++, port++) {
 			port->board = brd;
 			port->DCDState = 0;
 			port->tableAddr = baseAddr + Extern_table +
 					Extern_size * i;
 			ofsAddr = port->tableAddr;
-			चयन (brd->numPorts) अणु
-			हाल 8:
-				ग_लिखोw(C320p8rx_mask, ofsAddr + RX_mask);
-				ग_लिखोw(C320p8tx_mask, ofsAddr + TX_mask);
-				ग_लिखोw(C320p8rx_spage + i * C320p8buf_pgno, ofsAddr + Page_rxb);
-				ग_लिखोw(पढ़ोw(ofsAddr + Page_rxb) + C320p8rx_pgno, ofsAddr + EndPage_rxb);
-				ग_लिखोw(C320p8tx_spage + i * C320p8buf_pgno, ofsAddr + Page_txb);
-				ग_लिखोw(पढ़ोw(ofsAddr + Page_txb) + C320p8tx_pgno, ofsAddr + EndPage_txb);
+			switch (brd->numPorts) {
+			case 8:
+				writew(C320p8rx_mask, ofsAddr + RX_mask);
+				writew(C320p8tx_mask, ofsAddr + TX_mask);
+				writew(C320p8rx_spage + i * C320p8buf_pgno, ofsAddr + Page_rxb);
+				writew(readw(ofsAddr + Page_rxb) + C320p8rx_pgno, ofsAddr + EndPage_rxb);
+				writew(C320p8tx_spage + i * C320p8buf_pgno, ofsAddr + Page_txb);
+				writew(readw(ofsAddr + Page_txb) + C320p8tx_pgno, ofsAddr + EndPage_txb);
 
-				अवरोध;
-			हाल 16:
-				ग_लिखोw(C320p16rx_mask, ofsAddr + RX_mask);
-				ग_लिखोw(C320p16tx_mask, ofsAddr + TX_mask);
-				ग_लिखोw(C320p16rx_spage + i * C320p16buf_pgno, ofsAddr + Page_rxb);
-				ग_लिखोw(पढ़ोw(ofsAddr + Page_rxb) + C320p16rx_pgno, ofsAddr + EndPage_rxb);
-				ग_लिखोw(C320p16tx_spage + i * C320p16buf_pgno, ofsAddr + Page_txb);
-				ग_लिखोw(पढ़ोw(ofsAddr + Page_txb) + C320p16tx_pgno, ofsAddr + EndPage_txb);
-				अवरोध;
+				break;
+			case 16:
+				writew(C320p16rx_mask, ofsAddr + RX_mask);
+				writew(C320p16tx_mask, ofsAddr + TX_mask);
+				writew(C320p16rx_spage + i * C320p16buf_pgno, ofsAddr + Page_rxb);
+				writew(readw(ofsAddr + Page_rxb) + C320p16rx_pgno, ofsAddr + EndPage_rxb);
+				writew(C320p16tx_spage + i * C320p16buf_pgno, ofsAddr + Page_txb);
+				writew(readw(ofsAddr + Page_txb) + C320p16tx_pgno, ofsAddr + EndPage_txb);
+				break;
 
-			हाल 24:
-				ग_लिखोw(C320p24rx_mask, ofsAddr + RX_mask);
-				ग_लिखोw(C320p24tx_mask, ofsAddr + TX_mask);
-				ग_लिखोw(C320p24rx_spage + i * C320p24buf_pgno, ofsAddr + Page_rxb);
-				ग_लिखोw(पढ़ोw(ofsAddr + Page_rxb) + C320p24rx_pgno, ofsAddr + EndPage_rxb);
-				ग_लिखोw(C320p24tx_spage + i * C320p24buf_pgno, ofsAddr + Page_txb);
-				ग_लिखोw(पढ़ोw(ofsAddr + Page_txb), ofsAddr + EndPage_txb);
-				अवरोध;
-			हाल 32:
-				ग_लिखोw(C320p32rx_mask, ofsAddr + RX_mask);
-				ग_लिखोw(C320p32tx_mask, ofsAddr + TX_mask);
-				ग_लिखोw(C320p32tx_ofs, ofsAddr + Ofs_txb);
-				ग_लिखोw(C320p32rx_spage + i * C320p32buf_pgno, ofsAddr + Page_rxb);
-				ग_लिखोw(पढ़ोb(ofsAddr + Page_rxb), ofsAddr + EndPage_rxb);
-				ग_लिखोw(C320p32tx_spage + i * C320p32buf_pgno, ofsAddr + Page_txb);
-				ग_लिखोw(पढ़ोw(ofsAddr + Page_txb), ofsAddr + EndPage_txb);
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+			case 24:
+				writew(C320p24rx_mask, ofsAddr + RX_mask);
+				writew(C320p24tx_mask, ofsAddr + TX_mask);
+				writew(C320p24rx_spage + i * C320p24buf_pgno, ofsAddr + Page_rxb);
+				writew(readw(ofsAddr + Page_rxb) + C320p24rx_pgno, ofsAddr + EndPage_rxb);
+				writew(C320p24tx_spage + i * C320p24buf_pgno, ofsAddr + Page_txb);
+				writew(readw(ofsAddr + Page_txb), ofsAddr + EndPage_txb);
+				break;
+			case 32:
+				writew(C320p32rx_mask, ofsAddr + RX_mask);
+				writew(C320p32tx_mask, ofsAddr + TX_mask);
+				writew(C320p32tx_ofs, ofsAddr + Ofs_txb);
+				writew(C320p32rx_spage + i * C320p32buf_pgno, ofsAddr + Page_rxb);
+				writew(readb(ofsAddr + Page_rxb), ofsAddr + EndPage_rxb);
+				writew(C320p32tx_spage + i * C320p32buf_pgno, ofsAddr + Page_txb);
+				writew(readw(ofsAddr + Page_txb), ofsAddr + EndPage_txb);
+				break;
+			}
+		}
+		break;
+	}
+	return 0;
+}
 
-अटल पूर्णांक moxa_load_fw(काष्ठा moxa_board_conf *brd, स्थिर काष्ठा firmware *fw)
-अणु
-	स्थिर व्योम *ptr = fw->data;
-	अक्षर rsn[64];
+static int moxa_load_fw(struct moxa_board_conf *brd, const struct firmware *fw)
+{
+	const void *ptr = fw->data;
+	char rsn[64];
 	u16 lens[5];
-	माप_प्रकार len;
-	अचिन्हित पूर्णांक a, lenp, lencnt;
-	पूर्णांक ret = -EINVAL;
-	काष्ठा अणु
+	size_t len;
+	unsigned int a, lenp, lencnt;
+	int ret = -EINVAL;
+	struct {
 		__le32 magic;	/* 0x34303430 */
 		u8 reserved1[2];
 		u8 type;	/* UNIX = 3 */
 		u8 model;	/* C218T=1, C320T=2, CP204=3 */
 		u8 reserved2[8];
 		__le16 len[5];
-	पूर्ण स्थिर *hdr = ptr;
+	} const *hdr = ptr;
 
 	BUILD_BUG_ON(ARRAY_SIZE(hdr->len) != ARRAY_SIZE(lens));
 
-	अगर (fw->size < MOXA_FW_HDRLEN) अणु
-		म_नकल(rsn, "too short (even header won't fit)");
-		जाओ err;
-	पूर्ण
-	अगर (hdr->magic != cpu_to_le32(0x30343034)) अणु
-		प्र_लिखो(rsn, "bad magic: %.8x", le32_to_cpu(hdr->magic));
-		जाओ err;
-	पूर्ण
-	अगर (hdr->type != 3) अणु
-		प्र_लिखो(rsn, "not for linux, type is %u", hdr->type);
-		जाओ err;
-	पूर्ण
-	अगर (moxa_check_fw_model(brd, hdr->model)) अणु
-		प्र_लिखो(rsn, "not for this card, model is %u", hdr->model);
-		जाओ err;
-	पूर्ण
+	if (fw->size < MOXA_FW_HDRLEN) {
+		strcpy(rsn, "too short (even header won't fit)");
+		goto err;
+	}
+	if (hdr->magic != cpu_to_le32(0x30343034)) {
+		sprintf(rsn, "bad magic: %.8x", le32_to_cpu(hdr->magic));
+		goto err;
+	}
+	if (hdr->type != 3) {
+		sprintf(rsn, "not for linux, type is %u", hdr->type);
+		goto err;
+	}
+	if (moxa_check_fw_model(brd, hdr->model)) {
+		sprintf(rsn, "not for this card, model is %u", hdr->model);
+		goto err;
+	}
 
 	len = MOXA_FW_HDRLEN;
 	lencnt = hdr->model == 2 ? 5 : 3;
-	क्रम (a = 0; a < ARRAY_SIZE(lens); a++) अणु
+	for (a = 0; a < ARRAY_SIZE(lens); a++) {
 		lens[a] = le16_to_cpu(hdr->len[a]);
-		अगर (lens[a] && len + lens[a] <= fw->size &&
+		if (lens[a] && len + lens[a] <= fw->size &&
 				moxa_check_fw(&fw->data[len]))
-			prपूर्णांकk(KERN_WARNING "MOXA firmware: unexpected input "
+			printk(KERN_WARNING "MOXA firmware: unexpected input "
 				"at offset %u, but going on\n", (u32)len);
-		अगर (!lens[a] && a < lencnt) अणु
-			प्र_लिखो(rsn, "too few entries in fw file");
-			जाओ err;
-		पूर्ण
+		if (!lens[a] && a < lencnt) {
+			sprintf(rsn, "too few entries in fw file");
+			goto err;
+		}
 		len += lens[a];
-	पूर्ण
+	}
 
-	अगर (len != fw->size) अणु
-		प्र_लिखो(rsn, "bad length: %u (should be %u)", (u32)fw->size,
+	if (len != fw->size) {
+		sprintf(rsn, "bad length: %u (should be %u)", (u32)fw->size,
 				(u32)len);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	ptr += MOXA_FW_HDRLEN;
 	lenp = 0; /* bios */
 
-	म_नकल(rsn, "read above");
+	strcpy(rsn, "read above");
 
 	ret = moxa_load_bios(brd, ptr, lens[lenp]);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
-	/* we skip the tty section (lens[1]), since we करोn't need it */
+	/* we skip the tty section (lens[1]), since we don't need it */
 	ptr += lens[lenp] + lens[lenp + 1];
 	lenp += 2; /* comm */
 
-	अगर (hdr->model == 2) अणु
+	if (hdr->model == 2) {
 		ret = moxa_load_320b(brd, ptr, lens[lenp]);
-		अगर (ret)
-			जाओ err;
+		if (ret)
+			goto err;
 		/* skip another tty */
 		ptr += lens[lenp] + lens[lenp + 1];
 		lenp += 2;
-	पूर्ण
+	}
 
 	ret = moxa_load_code(brd, ptr, lens[lenp]);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
-	वापस 0;
+	return 0;
 err:
-	prपूर्णांकk(KERN_ERR "firmware failed to load, reason: %s\n", rsn);
-	वापस ret;
-पूर्ण
+	printk(KERN_ERR "firmware failed to load, reason: %s\n", rsn);
+	return ret;
+}
 
-अटल पूर्णांक moxa_init_board(काष्ठा moxa_board_conf *brd, काष्ठा device *dev)
-अणु
-	स्थिर काष्ठा firmware *fw;
-	स्थिर अक्षर *file;
-	काष्ठा moxa_port *p;
-	अचिन्हित पूर्णांक i, first_idx;
-	पूर्णांक ret;
+static int moxa_init_board(struct moxa_board_conf *brd, struct device *dev)
+{
+	const struct firmware *fw;
+	const char *file;
+	struct moxa_port *p;
+	unsigned int i, first_idx;
+	int ret;
 
-	brd->ports = kसुस्मृति(MAX_PORTS_PER_BOARD, माप(*brd->ports),
+	brd->ports = kcalloc(MAX_PORTS_PER_BOARD, sizeof(*brd->ports),
 			GFP_KERNEL);
-	अगर (brd->ports == शून्य) अणु
-		prपूर्णांकk(KERN_ERR "cannot allocate memory for ports\n");
+	if (brd->ports == NULL) {
+		printk(KERN_ERR "cannot allocate memory for ports\n");
 		ret = -ENOMEM;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	क्रम (i = 0, p = brd->ports; i < MAX_PORTS_PER_BOARD; i++, p++) अणु
+	for (i = 0, p = brd->ports; i < MAX_PORTS_PER_BOARD; i++, p++) {
 		tty_port_init(&p->port);
 		p->port.ops = &moxa_port_ops;
 		p->type = PORT_16550A;
 		p->cflag = B9600 | CS8 | CREAD | CLOCAL | HUPCL;
-	पूर्ण
+	}
 
-	चयन (brd->boardType) अणु
-	हाल MOXA_BOARD_C218_ISA:
-	हाल MOXA_BOARD_C218_PCI:
+	switch (brd->boardType) {
+	case MOXA_BOARD_C218_ISA:
+	case MOXA_BOARD_C218_PCI:
 		file = "c218tunx.cod";
-		अवरोध;
-	हाल MOXA_BOARD_CP204J:
+		break;
+	case MOXA_BOARD_CP204J:
 		file = "cp204unx.cod";
-		अवरोध;
-	शेष:
+		break;
+	default:
 		file = "c320tunx.cod";
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	ret = request_firmware(&fw, file, dev);
-	अगर (ret) अणु
-		prपूर्णांकk(KERN_ERR "MOXA: request_firmware failed. Make sure "
+	if (ret) {
+		printk(KERN_ERR "MOXA: request_firmware failed. Make sure "
 				"you've placed '%s' file into your firmware "
 				"loader directory (e.g. /lib/firmware)\n",
 				file);
-		जाओ err_मुक्त;
-	पूर्ण
+		goto err_free;
+	}
 
 	ret = moxa_load_fw(brd, fw);
 
 	release_firmware(fw);
 
-	अगर (ret)
-		जाओ err_मुक्त;
+	if (ret)
+		goto err_free;
 
 	spin_lock_bh(&moxa_lock);
-	brd->पढ़ोy = 1;
-	अगर (!समयr_pending(&moxaTimer))
-		mod_समयr(&moxaTimer, jअगरfies + HZ / 50);
+	brd->ready = 1;
+	if (!timer_pending(&moxaTimer))
+		mod_timer(&moxaTimer, jiffies + HZ / 50);
 	spin_unlock_bh(&moxa_lock);
 
 	first_idx = (brd - moxa_boards) * MAX_PORTS_PER_BOARD;
-	क्रम (i = 0; i < brd->numPorts; i++)
-		tty_port_रेजिस्टर_device(&brd->ports[i].port, moxaDriver,
+	for (i = 0; i < brd->numPorts; i++)
+		tty_port_register_device(&brd->ports[i].port, moxaDriver,
 				first_idx + i, dev);
 
-	वापस 0;
-err_मुक्त:
-	क्रम (i = 0; i < MAX_PORTS_PER_BOARD; i++)
+	return 0;
+err_free:
+	for (i = 0; i < MAX_PORTS_PER_BOARD; i++)
 		tty_port_destroy(&brd->ports[i].port);
-	kमुक्त(brd->ports);
+	kfree(brd->ports);
 err:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम moxa_board_deinit(काष्ठा moxa_board_conf *brd)
-अणु
-	अचिन्हित पूर्णांक a, खोलोed, first_idx;
+static void moxa_board_deinit(struct moxa_board_conf *brd)
+{
+	unsigned int a, opened, first_idx;
 
-	mutex_lock(&moxa_खोलोlock);
+	mutex_lock(&moxa_openlock);
 	spin_lock_bh(&moxa_lock);
-	brd->पढ़ोy = 0;
+	brd->ready = 0;
 	spin_unlock_bh(&moxa_lock);
 
 	/* pci hot-un-plug support */
-	क्रम (a = 0; a < brd->numPorts; a++)
-		अगर (tty_port_initialized(&brd->ports[a].port))
+	for (a = 0; a < brd->numPorts; a++)
+		if (tty_port_initialized(&brd->ports[a].port))
 			tty_port_tty_hangup(&brd->ports[a].port, false);
 
-	क्रम (a = 0; a < MAX_PORTS_PER_BOARD; a++)
+	for (a = 0; a < MAX_PORTS_PER_BOARD; a++)
 		tty_port_destroy(&brd->ports[a].port);
 
-	जबतक (1) अणु
-		खोलोed = 0;
-		क्रम (a = 0; a < brd->numPorts; a++)
-			अगर (tty_port_initialized(&brd->ports[a].port))
-				खोलोed++;
-		mutex_unlock(&moxa_खोलोlock);
-		अगर (!खोलोed)
-			अवरोध;
+	while (1) {
+		opened = 0;
+		for (a = 0; a < brd->numPorts; a++)
+			if (tty_port_initialized(&brd->ports[a].port))
+				opened++;
+		mutex_unlock(&moxa_openlock);
+		if (!opened)
+			break;
 		msleep(50);
-		mutex_lock(&moxa_खोलोlock);
-	पूर्ण
+		mutex_lock(&moxa_openlock);
+	}
 
 	first_idx = (brd - moxa_boards) * MAX_PORTS_PER_BOARD;
-	क्रम (a = 0; a < brd->numPorts; a++)
-		tty_unरेजिस्टर_device(moxaDriver, first_idx + a);
+	for (a = 0; a < brd->numPorts; a++)
+		tty_unregister_device(moxaDriver, first_idx + a);
 
 	iounmap(brd->basemem);
-	brd->basemem = शून्य;
-	kमुक्त(brd->ports);
-पूर्ण
+	brd->basemem = NULL;
+	kfree(brd->ports);
+}
 
-#अगर_घोषित CONFIG_PCI
-अटल पूर्णांक moxa_pci_probe(काष्ठा pci_dev *pdev,
-		स्थिर काष्ठा pci_device_id *ent)
-अणु
-	काष्ठा moxa_board_conf *board;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक board_type = ent->driver_data;
-	पूर्णांक retval;
+#ifdef CONFIG_PCI
+static int moxa_pci_probe(struct pci_dev *pdev,
+		const struct pci_device_id *ent)
+{
+	struct moxa_board_conf *board;
+	unsigned int i;
+	int board_type = ent->driver_data;
+	int retval;
 
 	retval = pci_enable_device(pdev);
-	अगर (retval) अणु
+	if (retval) {
 		dev_err(&pdev->dev, "can't enable pci device\n");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	क्रम (i = 0; i < MAX_BOARDS; i++)
-		अगर (moxa_boards[i].basemem == शून्य)
-			अवरोध;
+	for (i = 0; i < MAX_BOARDS; i++)
+		if (moxa_boards[i].basemem == NULL)
+			break;
 
 	retval = -ENODEV;
-	अगर (i >= MAX_BOARDS) अणु
+	if (i >= MAX_BOARDS) {
 		dev_warn(&pdev->dev, "more than %u MOXA Intellio family boards "
 				"found. Board is ignored.\n", MAX_BOARDS);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	board = &moxa_boards[i];
 
 	retval = pci_request_region(pdev, 2, "moxa-base");
-	अगर (retval) अणु
+	if (retval) {
 		dev_err(&pdev->dev, "can't request pci region 2\n");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	board->basemem = ioremap(pci_resource_start(pdev, 2), 0x4000);
-	अगर (board->basemem == शून्य) अणु
+	if (board->basemem == NULL) {
 		dev_err(&pdev->dev, "can't remap io space 2\n");
 		retval = -ENOMEM;
-		जाओ err_reg;
-	पूर्ण
+		goto err_reg;
+	}
 
 	board->boardType = board_type;
-	चयन (board_type) अणु
-	हाल MOXA_BOARD_C218_ISA:
-	हाल MOXA_BOARD_C218_PCI:
+	switch (board_type) {
+	case MOXA_BOARD_C218_ISA:
+	case MOXA_BOARD_C218_PCI:
 		board->numPorts = 8;
-		अवरोध;
+		break;
 
-	हाल MOXA_BOARD_CP204J:
+	case MOXA_BOARD_CP204J:
 		board->numPorts = 4;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		board->numPorts = 0;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	board->busType = MOXA_BUS_TYPE_PCI;
 
 	retval = moxa_init_board(board, &pdev->dev);
-	अगर (retval)
-		जाओ err_base;
+	if (retval)
+		goto err_base;
 
 	pci_set_drvdata(pdev, board);
 
 	dev_info(&pdev->dev, "board '%s' ready (%u ports, firmware loaded)\n",
 			moxa_brdname[board_type - 1], board->numPorts);
 
-	वापस 0;
+	return 0;
 err_base:
 	iounmap(board->basemem);
-	board->basemem = शून्य;
+	board->basemem = NULL;
 err_reg:
 	pci_release_region(pdev, 2);
 err:
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल व्योम moxa_pci_हटाओ(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा moxa_board_conf *brd = pci_get_drvdata(pdev);
+static void moxa_pci_remove(struct pci_dev *pdev)
+{
+	struct moxa_board_conf *brd = pci_get_drvdata(pdev);
 
 	moxa_board_deinit(brd);
 
 	pci_release_region(pdev, 2);
-पूर्ण
+}
 
-अटल काष्ठा pci_driver moxa_pci_driver = अणु
+static struct pci_driver moxa_pci_driver = {
 	.name = "moxa",
 	.id_table = moxa_pcibrds,
 	.probe = moxa_pci_probe,
-	.हटाओ = moxa_pci_हटाओ
-पूर्ण;
-#पूर्ण_अगर /* CONFIG_PCI */
+	.remove = moxa_pci_remove
+};
+#endif /* CONFIG_PCI */
 
-अटल पूर्णांक __init moxa_init(व्योम)
-अणु
-	अचिन्हित पूर्णांक isabrds = 0;
-	पूर्णांक retval = 0;
-	काष्ठा moxa_board_conf *brd = moxa_boards;
-	अचिन्हित पूर्णांक i;
+static int __init moxa_init(void)
+{
+	unsigned int isabrds = 0;
+	int retval = 0;
+	struct moxa_board_conf *brd = moxa_boards;
+	unsigned int i;
 
-	prपूर्णांकk(KERN_INFO "MOXA Intellio family driver version %s\n",
+	printk(KERN_INFO "MOXA Intellio family driver version %s\n",
 			MOXA_VERSION);
 
 	tty_port_init(&moxa_service_port);
@@ -1036,8 +1035,8 @@ err:
 	moxaDriver = tty_alloc_driver(MAX_PORTS + 1,
 			TTY_DRIVER_REAL_RAW |
 			TTY_DRIVER_DYNAMIC_DEV);
-	अगर (IS_ERR(moxaDriver))
-		वापस PTR_ERR(moxaDriver);
+	if (IS_ERR(moxaDriver))
+		return PTR_ERR(moxaDriver);
 
 	moxaDriver->name = "ttyMX";
 	moxaDriver->major = ttymajor;
@@ -1049,22 +1048,22 @@ err:
 	moxaDriver->init_termios.c_ispeed = 9600;
 	moxaDriver->init_termios.c_ospeed = 9600;
 	tty_set_operations(moxaDriver, &moxa_ops);
-	/* Having one more port only क्रम ioctls is ugly */
+	/* Having one more port only for ioctls is ugly */
 	tty_port_link_device(&moxa_service_port, moxaDriver, MAX_PORTS);
 
-	अगर (tty_रेजिस्टर_driver(moxaDriver)) अणु
-		prपूर्णांकk(KERN_ERR "can't register MOXA Smartio tty driver!\n");
+	if (tty_register_driver(moxaDriver)) {
+		printk(KERN_ERR "can't register MOXA Smartio tty driver!\n");
 		put_tty_driver(moxaDriver);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	/* Find the boards defined from module args. */
 
-	क्रम (i = 0; i < MAX_BOARDS; i++) अणु
-		अगर (!baseaddr[i])
-			अवरोध;
-		अगर (type[i] == MOXA_BOARD_C218_ISA ||
-				type[i] == MOXA_BOARD_C320_ISA) अणु
+	for (i = 0; i < MAX_BOARDS; i++) {
+		if (!baseaddr[i])
+			break;
+		if (type[i] == MOXA_BOARD_C218_ISA ||
+				type[i] == MOXA_BOARD_C320_ISA) {
 			pr_debug("Moxa board %2d: %s board(baseAddr=%lx)\n",
 					isabrds + 1, moxa_brdname[type[i] - 1],
 					baseaddr[i]);
@@ -1073,448 +1072,448 @@ err:
 					numports[i];
 			brd->busType = MOXA_BUS_TYPE_ISA;
 			brd->basemem = ioremap(baseaddr[i], 0x4000);
-			अगर (!brd->basemem) अणु
-				prपूर्णांकk(KERN_ERR "MOXA: can't remap %lx\n",
+			if (!brd->basemem) {
+				printk(KERN_ERR "MOXA: can't remap %lx\n",
 						baseaddr[i]);
-				जारी;
-			पूर्ण
-			अगर (moxa_init_board(brd, शून्य)) अणु
+				continue;
+			}
+			if (moxa_init_board(brd, NULL)) {
 				iounmap(brd->basemem);
-				brd->basemem = शून्य;
-				जारी;
-			पूर्ण
+				brd->basemem = NULL;
+				continue;
+			}
 
-			prपूर्णांकk(KERN_INFO "MOXA isa board found at 0x%.8lx and "
+			printk(KERN_INFO "MOXA isa board found at 0x%.8lx and "
 					"ready (%u ports, firmware loaded)\n",
 					baseaddr[i], brd->numPorts);
 
 			brd++;
 			isabrds++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-#अगर_घोषित CONFIG_PCI
-	retval = pci_रेजिस्टर_driver(&moxa_pci_driver);
-	अगर (retval) अणु
-		prपूर्णांकk(KERN_ERR "Can't register MOXA pci driver!\n");
-		अगर (isabrds)
+#ifdef CONFIG_PCI
+	retval = pci_register_driver(&moxa_pci_driver);
+	if (retval) {
+		printk(KERN_ERR "Can't register MOXA pci driver!\n");
+		if (isabrds)
 			retval = 0;
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल व्योम __निकास moxa_निकास(व्योम)
-अणु
-	अचिन्हित पूर्णांक i;
+static void __exit moxa_exit(void)
+{
+	unsigned int i;
 
-#अगर_घोषित CONFIG_PCI
-	pci_unरेजिस्टर_driver(&moxa_pci_driver);
-#पूर्ण_अगर
+#ifdef CONFIG_PCI
+	pci_unregister_driver(&moxa_pci_driver);
+#endif
 
-	क्रम (i = 0; i < MAX_BOARDS; i++) /* ISA boards */
-		अगर (moxa_boards[i].पढ़ोy)
+	for (i = 0; i < MAX_BOARDS; i++) /* ISA boards */
+		if (moxa_boards[i].ready)
 			moxa_board_deinit(&moxa_boards[i]);
 
-	del_समयr_sync(&moxaTimer);
+	del_timer_sync(&moxaTimer);
 
-	tty_unरेजिस्टर_driver(moxaDriver);
+	tty_unregister_driver(moxaDriver);
 	put_tty_driver(moxaDriver);
-पूर्ण
+}
 
 module_init(moxa_init);
-module_निकास(moxa_निकास);
+module_exit(moxa_exit);
 
-अटल व्योम moxa_shutकरोwn(काष्ठा tty_port *port)
-अणु
-	काष्ठा moxa_port *ch = container_of(port, काष्ठा moxa_port, port);
+static void moxa_shutdown(struct tty_port *port)
+{
+	struct moxa_port *ch = container_of(port, struct moxa_port, port);
         MoxaPortDisable(ch);
 	MoxaPortFlushData(ch, 2);
-पूर्ण
+}
 
-अटल पूर्णांक moxa_carrier_उठाओd(काष्ठा tty_port *port)
-अणु
-	काष्ठा moxa_port *ch = container_of(port, काष्ठा moxa_port, port);
-	पूर्णांक dcd;
+static int moxa_carrier_raised(struct tty_port *port)
+{
+	struct moxa_port *ch = container_of(port, struct moxa_port, port);
+	int dcd;
 
 	spin_lock_irq(&port->lock);
 	dcd = ch->DCDState;
 	spin_unlock_irq(&port->lock);
-	वापस dcd;
-पूर्ण
+	return dcd;
+}
 
-अटल व्योम moxa_dtr_rts(काष्ठा tty_port *port, पूर्णांक onoff)
-अणु
-	काष्ठा moxa_port *ch = container_of(port, काष्ठा moxa_port, port);
+static void moxa_dtr_rts(struct tty_port *port, int onoff)
+{
+	struct moxa_port *ch = container_of(port, struct moxa_port, port);
 	MoxaPortLineCtrl(ch, onoff, onoff);
-पूर्ण
+}
 
 
-अटल पूर्णांक moxa_खोलो(काष्ठा tty_काष्ठा *tty, काष्ठा file *filp)
-अणु
-	काष्ठा moxa_board_conf *brd;
-	काष्ठा moxa_port *ch;
-	पूर्णांक port;
+static int moxa_open(struct tty_struct *tty, struct file *filp)
+{
+	struct moxa_board_conf *brd;
+	struct moxa_port *ch;
+	int port;
 
 	port = tty->index;
-	अगर (port == MAX_PORTS) अणु
-		वापस capable(CAP_SYS_ADMIN) ? 0 : -EPERM;
-	पूर्ण
-	अगर (mutex_lock_पूर्णांकerruptible(&moxa_खोलोlock))
-		वापस -ERESTARTSYS;
+	if (port == MAX_PORTS) {
+		return capable(CAP_SYS_ADMIN) ? 0 : -EPERM;
+	}
+	if (mutex_lock_interruptible(&moxa_openlock))
+		return -ERESTARTSYS;
 	brd = &moxa_boards[port / MAX_PORTS_PER_BOARD];
-	अगर (!brd->पढ़ोy) अणु
-		mutex_unlock(&moxa_खोलोlock);
-		वापस -ENODEV;
-	पूर्ण
+	if (!brd->ready) {
+		mutex_unlock(&moxa_openlock);
+		return -ENODEV;
+	}
 
-	अगर (port % MAX_PORTS_PER_BOARD >= brd->numPorts) अणु
-		mutex_unlock(&moxa_खोलोlock);
-		वापस -ENODEV;
-	पूर्ण
+	if (port % MAX_PORTS_PER_BOARD >= brd->numPorts) {
+		mutex_unlock(&moxa_openlock);
+		return -ENODEV;
+	}
 
 	ch = &brd->ports[port % MAX_PORTS_PER_BOARD];
 	ch->port.count++;
 	tty->driver_data = ch;
 	tty_port_tty_set(&ch->port, tty);
 	mutex_lock(&ch->port.mutex);
-	अगर (!tty_port_initialized(&ch->port)) अणु
+	if (!tty_port_initialized(&ch->port)) {
 		ch->statusflags = 0;
 		moxa_set_tty_param(tty, &tty->termios);
 		MoxaPortLineCtrl(ch, 1, 1);
 		MoxaPortEnable(ch);
-		MoxaSetFअगरo(ch, ch->type == PORT_16550A);
+		MoxaSetFifo(ch, ch->type == PORT_16550A);
 		tty_port_set_initialized(&ch->port, 1);
-	पूर्ण
+	}
 	mutex_unlock(&ch->port.mutex);
-	mutex_unlock(&moxa_खोलोlock);
+	mutex_unlock(&moxa_openlock);
 
-	वापस tty_port_block_til_पढ़ोy(&ch->port, tty, filp);
-पूर्ण
+	return tty_port_block_til_ready(&ch->port, tty, filp);
+}
 
-अटल व्योम moxa_बंद(काष्ठा tty_काष्ठा *tty, काष्ठा file *filp)
-अणु
-	काष्ठा moxa_port *ch = tty->driver_data;
+static void moxa_close(struct tty_struct *tty, struct file *filp)
+{
+	struct moxa_port *ch = tty->driver_data;
 	ch->cflag = tty->termios.c_cflag;
-	tty_port_बंद(&ch->port, tty, filp);
-पूर्ण
+	tty_port_close(&ch->port, tty, filp);
+}
 
-अटल पूर्णांक moxa_ग_लिखो(काष्ठा tty_काष्ठा *tty,
-		      स्थिर अचिन्हित अक्षर *buf, पूर्णांक count)
-अणु
-	काष्ठा moxa_port *ch = tty->driver_data;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक len;
+static int moxa_write(struct tty_struct *tty,
+		      const unsigned char *buf, int count)
+{
+	struct moxa_port *ch = tty->driver_data;
+	unsigned long flags;
+	int len;
 
-	अगर (ch == शून्य)
-		वापस 0;
+	if (ch == NULL)
+		return 0;
 
 	spin_lock_irqsave(&moxa_lock, flags);
 	len = MoxaPortWriteData(tty, buf, count);
 	spin_unlock_irqrestore(&moxa_lock, flags);
 
 	set_bit(LOWWAIT, &ch->statusflags);
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल पूर्णांक moxa_ग_लिखो_room(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा moxa_port *ch;
+static int moxa_write_room(struct tty_struct *tty)
+{
+	struct moxa_port *ch;
 
-	अगर (tty->stopped)
-		वापस 0;
+	if (tty->stopped)
+		return 0;
 	ch = tty->driver_data;
-	अगर (ch == शून्य)
-		वापस 0;
-	वापस MoxaPortTxFree(ch);
-पूर्ण
+	if (ch == NULL)
+		return 0;
+	return MoxaPortTxFree(ch);
+}
 
-अटल व्योम moxa_flush_buffer(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा moxa_port *ch = tty->driver_data;
+static void moxa_flush_buffer(struct tty_struct *tty)
+{
+	struct moxa_port *ch = tty->driver_data;
 
-	अगर (ch == शून्य)
-		वापस;
+	if (ch == NULL)
+		return;
 	MoxaPortFlushData(ch, 1);
 	tty_wakeup(tty);
-पूर्ण
+}
 
-अटल पूर्णांक moxa_अक्षरs_in_buffer(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा moxa_port *ch = tty->driver_data;
-	पूर्णांक अक्षरs;
+static int moxa_chars_in_buffer(struct tty_struct *tty)
+{
+	struct moxa_port *ch = tty->driver_data;
+	int chars;
 
-	अक्षरs = MoxaPortTxQueue(ch);
-	अगर (अक्षरs)
+	chars = MoxaPortTxQueue(ch);
+	if (chars)
 		/*
-		 * Make it possible to wakeup anything रुकोing क्रम output
+		 * Make it possible to wakeup anything waiting for output
 		 * in tty_ioctl.c, etc.
 		 */
         	set_bit(EMPTYWAIT, &ch->statusflags);
-	वापस अक्षरs;
-पूर्ण
+	return chars;
+}
 
-अटल पूर्णांक moxa_tiocmget(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा moxa_port *ch = tty->driver_data;
-	पूर्णांक flag = 0, dtr, rts;
+static int moxa_tiocmget(struct tty_struct *tty)
+{
+	struct moxa_port *ch = tty->driver_data;
+	int flag = 0, dtr, rts;
 
 	MoxaPortGetLineOut(ch, &dtr, &rts);
-	अगर (dtr)
+	if (dtr)
 		flag |= TIOCM_DTR;
-	अगर (rts)
+	if (rts)
 		flag |= TIOCM_RTS;
 	dtr = MoxaPortLineStatus(ch);
-	अगर (dtr & 1)
+	if (dtr & 1)
 		flag |= TIOCM_CTS;
-	अगर (dtr & 2)
+	if (dtr & 2)
 		flag |= TIOCM_DSR;
-	अगर (dtr & 4)
+	if (dtr & 4)
 		flag |= TIOCM_CD;
-	वापस flag;
-पूर्ण
+	return flag;
+}
 
-अटल पूर्णांक moxa_tiocmset(काष्ठा tty_काष्ठा *tty,
-			 अचिन्हित पूर्णांक set, अचिन्हित पूर्णांक clear)
-अणु
-	काष्ठा moxa_port *ch;
-	पूर्णांक dtr, rts;
+static int moxa_tiocmset(struct tty_struct *tty,
+			 unsigned int set, unsigned int clear)
+{
+	struct moxa_port *ch;
+	int dtr, rts;
 
-	mutex_lock(&moxa_खोलोlock);
+	mutex_lock(&moxa_openlock);
 	ch = tty->driver_data;
-	अगर (!ch) अणु
-		mutex_unlock(&moxa_खोलोlock);
-		वापस -EINVAL;
-	पूर्ण
+	if (!ch) {
+		mutex_unlock(&moxa_openlock);
+		return -EINVAL;
+	}
 
 	MoxaPortGetLineOut(ch, &dtr, &rts);
-	अगर (set & TIOCM_RTS)
+	if (set & TIOCM_RTS)
 		rts = 1;
-	अगर (set & TIOCM_DTR)
+	if (set & TIOCM_DTR)
 		dtr = 1;
-	अगर (clear & TIOCM_RTS)
+	if (clear & TIOCM_RTS)
 		rts = 0;
-	अगर (clear & TIOCM_DTR)
+	if (clear & TIOCM_DTR)
 		dtr = 0;
 	MoxaPortLineCtrl(ch, dtr, rts);
-	mutex_unlock(&moxa_खोलोlock);
-	वापस 0;
-पूर्ण
+	mutex_unlock(&moxa_openlock);
+	return 0;
+}
 
-अटल व्योम moxa_set_termios(काष्ठा tty_काष्ठा *tty,
-		काष्ठा ktermios *old_termios)
-अणु
-	काष्ठा moxa_port *ch = tty->driver_data;
+static void moxa_set_termios(struct tty_struct *tty,
+		struct ktermios *old_termios)
+{
+	struct moxa_port *ch = tty->driver_data;
 
-	अगर (ch == शून्य)
-		वापस;
+	if (ch == NULL)
+		return;
 	moxa_set_tty_param(tty, old_termios);
-	अगर (!(old_termios->c_cflag & CLOCAL) && C_CLOCAL(tty))
-		wake_up_पूर्णांकerruptible(&ch->port.खोलो_रुको);
-पूर्ण
+	if (!(old_termios->c_cflag & CLOCAL) && C_CLOCAL(tty))
+		wake_up_interruptible(&ch->port.open_wait);
+}
 
-अटल व्योम moxa_stop(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा moxa_port *ch = tty->driver_data;
+static void moxa_stop(struct tty_struct *tty)
+{
+	struct moxa_port *ch = tty->driver_data;
 
-	अगर (ch == शून्य)
-		वापस;
+	if (ch == NULL)
+		return;
 	MoxaPortTxDisable(ch);
 	set_bit(TXSTOPPED, &ch->statusflags);
-पूर्ण
+}
 
 
-अटल व्योम moxa_start(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा moxa_port *ch = tty->driver_data;
+static void moxa_start(struct tty_struct *tty)
+{
+	struct moxa_port *ch = tty->driver_data;
 
-	अगर (ch == शून्य)
-		वापस;
+	if (ch == NULL)
+		return;
 
-	अगर (!test_bit(TXSTOPPED, &ch->statusflags))
-		वापस;
+	if (!test_bit(TXSTOPPED, &ch->statusflags))
+		return;
 
 	MoxaPortTxEnable(ch);
 	clear_bit(TXSTOPPED, &ch->statusflags);
-पूर्ण
+}
 
-अटल व्योम moxa_hangup(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा moxa_port *ch = tty->driver_data;
+static void moxa_hangup(struct tty_struct *tty)
+{
+	struct moxa_port *ch = tty->driver_data;
 	tty_port_hangup(&ch->port);
-पूर्ण
+}
 
-अटल व्योम moxa_new_dcdstate(काष्ठा moxa_port *p, u8 dcd)
-अणु
-	अचिन्हित दीर्घ flags;
+static void moxa_new_dcdstate(struct moxa_port *p, u8 dcd)
+{
+	unsigned long flags;
 	dcd = !!dcd;
 
 	spin_lock_irqsave(&p->port.lock, flags);
-	अगर (dcd != p->DCDState) अणु
+	if (dcd != p->DCDState) {
         	p->DCDState = dcd;
         	spin_unlock_irqrestore(&p->port.lock, flags);
-		अगर (!dcd)
+		if (!dcd)
 			tty_port_tty_hangup(&p->port, true);
-	पूर्ण
-	अन्यथा
+	}
+	else
 		spin_unlock_irqrestore(&p->port.lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक moxa_poll_port(काष्ठा moxa_port *p, अचिन्हित पूर्णांक handle,
+static int moxa_poll_port(struct moxa_port *p, unsigned int handle,
 		u16 __iomem *ip)
-अणु
-	काष्ठा tty_काष्ठा *tty = tty_port_tty_get(&p->port);
-	व्योम __iomem *ofsAddr;
-	अचिन्हित पूर्णांक inited = tty_port_initialized(&p->port);
-	u16 पूर्णांकr;
+{
+	struct tty_struct *tty = tty_port_tty_get(&p->port);
+	void __iomem *ofsAddr;
+	unsigned int inited = tty_port_initialized(&p->port);
+	u16 intr;
 
-	अगर (tty) अणु
-		अगर (test_bit(EMPTYWAIT, &p->statusflags) &&
-				MoxaPortTxQueue(p) == 0) अणु
+	if (tty) {
+		if (test_bit(EMPTYWAIT, &p->statusflags) &&
+				MoxaPortTxQueue(p) == 0) {
 			clear_bit(EMPTYWAIT, &p->statusflags);
 			tty_wakeup(tty);
-		पूर्ण
-		अगर (test_bit(LOWWAIT, &p->statusflags) && !tty->stopped &&
-				MoxaPortTxQueue(p) <= WAKEUP_CHARS) अणु
+		}
+		if (test_bit(LOWWAIT, &p->statusflags) && !tty->stopped &&
+				MoxaPortTxQueue(p) <= WAKEUP_CHARS) {
 			clear_bit(LOWWAIT, &p->statusflags);
 			tty_wakeup(tty);
-		पूर्ण
+		}
 
-		अगर (inited && !tty_throttled(tty) &&
-				MoxaPortRxQueue(p) > 0) अणु /* RX */
+		if (inited && !tty_throttled(tty) &&
+				MoxaPortRxQueue(p) > 0) { /* RX */
 			MoxaPortReadData(p);
 			tty_schedule_flip(&p->port);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		clear_bit(EMPTYWAIT, &p->statusflags);
 		MoxaPortFlushData(p, 0); /* flush RX */
-	पूर्ण
+	}
 
-	अगर (!handle) /* nothing अन्यथा to करो */
-		जाओ put;
+	if (!handle) /* nothing else to do */
+		goto put;
 
-	पूर्णांकr = पढ़ोw(ip); /* port irq status */
-	अगर (पूर्णांकr == 0)
-		जाओ put;
+	intr = readw(ip); /* port irq status */
+	if (intr == 0)
+		goto put;
 
-	ग_लिखोw(0, ip); /* ACK port */
+	writew(0, ip); /* ACK port */
 	ofsAddr = p->tableAddr;
-	अगर (पूर्णांकr & IntrTx) /* disable tx पूर्णांकr */
-		ग_लिखोw(पढ़ोw(ofsAddr + HostStat) & ~WakeupTx,
+	if (intr & IntrTx) /* disable tx intr */
+		writew(readw(ofsAddr + HostStat) & ~WakeupTx,
 				ofsAddr + HostStat);
 
-	अगर (!inited)
-		जाओ put;
+	if (!inited)
+		goto put;
 
-	अगर (tty && (पूर्णांकr & IntrBreak) && !I_IGNBRK(tty)) अणु /* BREAK */
-		tty_insert_flip_अक्षर(&p->port, 0, TTY_BREAK);
+	if (tty && (intr & IntrBreak) && !I_IGNBRK(tty)) { /* BREAK */
+		tty_insert_flip_char(&p->port, 0, TTY_BREAK);
 		tty_schedule_flip(&p->port);
-	पूर्ण
+	}
 
-	अगर (पूर्णांकr & IntrLine)
-		moxa_new_dcdstate(p, पढ़ोb(ofsAddr + FlagStat) & DCD_state);
+	if (intr & IntrLine)
+		moxa_new_dcdstate(p, readb(ofsAddr + FlagStat) & DCD_state);
 put:
 	tty_kref_put(tty);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम moxa_poll(काष्ठा समयr_list *unused)
-अणु
-	काष्ठा moxa_board_conf *brd;
+static void moxa_poll(struct timer_list *unused)
+{
+	struct moxa_board_conf *brd;
 	u16 __iomem *ip;
-	अचिन्हित पूर्णांक card, port, served = 0;
+	unsigned int card, port, served = 0;
 
 	spin_lock(&moxa_lock);
-	क्रम (card = 0; card < MAX_BOARDS; card++) अणु
+	for (card = 0; card < MAX_BOARDS; card++) {
 		brd = &moxa_boards[card];
-		अगर (!brd->पढ़ोy)
-			जारी;
+		if (!brd->ready)
+			continue;
 
 		served++;
 
-		ip = शून्य;
-		अगर (पढ़ोb(brd->पूर्णांकPend) == 0xff)
-			ip = brd->पूर्णांकTable + पढ़ोb(brd->पूर्णांकNdx);
+		ip = NULL;
+		if (readb(brd->intPend) == 0xff)
+			ip = brd->intTable + readb(brd->intNdx);
 
-		क्रम (port = 0; port < brd->numPorts; port++)
+		for (port = 0; port < brd->numPorts; port++)
 			moxa_poll_port(&brd->ports[port], !!ip, ip + port);
 
-		अगर (ip)
-			ग_लिखोb(0, brd->पूर्णांकPend); /* ACK */
+		if (ip)
+			writeb(0, brd->intPend); /* ACK */
 
-		अगर (moxaLowWaterChk) अणु
-			काष्ठा moxa_port *p = brd->ports;
-			क्रम (port = 0; port < brd->numPorts; port++, p++)
-				अगर (p->lowChkFlag) अणु
+		if (moxaLowWaterChk) {
+			struct moxa_port *p = brd->ports;
+			for (port = 0; port < brd->numPorts; port++, p++)
+				if (p->lowChkFlag) {
 					p->lowChkFlag = 0;
 					moxa_low_water_check(p->tableAddr);
-				पूर्ण
-		पूर्ण
-	पूर्ण
+				}
+		}
+	}
 	moxaLowWaterChk = 0;
 
-	अगर (served)
-		mod_समयr(&moxaTimer, jअगरfies + HZ / 50);
+	if (served)
+		mod_timer(&moxaTimer, jiffies + HZ / 50);
 	spin_unlock(&moxa_lock);
-पूर्ण
+}
 
 /******************************************************************************/
 
-अटल व्योम moxa_set_tty_param(काष्ठा tty_काष्ठा *tty, काष्ठा ktermios *old_termios)
-अणु
-	रेजिस्टर काष्ठा ktermios *ts = &tty->termios;
-	काष्ठा moxa_port *ch = tty->driver_data;
-	पूर्णांक rts, cts, txflow, rxflow, xany, baud;
+static void moxa_set_tty_param(struct tty_struct *tty, struct ktermios *old_termios)
+{
+	register struct ktermios *ts = &tty->termios;
+	struct moxa_port *ch = tty->driver_data;
+	int rts, cts, txflow, rxflow, xany, baud;
 
 	rts = cts = txflow = rxflow = xany = 0;
-	अगर (ts->c_cflag & CRTSCTS)
+	if (ts->c_cflag & CRTSCTS)
 		rts = cts = 1;
-	अगर (ts->c_अगरlag & IXON)
+	if (ts->c_iflag & IXON)
 		txflow = 1;
-	अगर (ts->c_अगरlag & IXOFF)
+	if (ts->c_iflag & IXOFF)
 		rxflow = 1;
-	अगर (ts->c_अगरlag & IXANY)
+	if (ts->c_iflag & IXANY)
 		xany = 1;
 
 	MoxaPortFlowCtrl(ch, rts, cts, txflow, rxflow, xany);
 	baud = MoxaPortSetTermio(ch, ts, tty_get_baud_rate(tty));
-	अगर (baud == -1)
+	if (baud == -1)
 		baud = tty_termios_baud_rate(old_termios);
-	/* Not put the baud rate पूर्णांकo the termios data */
+	/* Not put the baud rate into the termios data */
 	tty_encode_baud_rate(tty, baud, baud);
-पूर्ण
+}
 
 /*****************************************************************************
  *	Driver level functions: 					     *
  *****************************************************************************/
 
-अटल व्योम MoxaPortFlushData(काष्ठा moxa_port *port, पूर्णांक mode)
-अणु
-	व्योम __iomem *ofsAddr;
-	अगर (mode < 0 || mode > 2)
-		वापस;
+static void MoxaPortFlushData(struct moxa_port *port, int mode)
+{
+	void __iomem *ofsAddr;
+	if (mode < 0 || mode > 2)
+		return;
 	ofsAddr = port->tableAddr;
 	moxafunc(ofsAddr, FC_FlushQueue, mode);
-	अगर (mode != 1) अणु
+	if (mode != 1) {
 		port->lowChkFlag = 0;
 		moxa_low_water_check(ofsAddr);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  *    Moxa Port Number Description:
  *
  *      MOXA serial driver supports up to 4 MOXA-C218/C320 boards. And,
- *      the port number using in MOXA driver functions will be 0 to 31 क्रम
- *      first MOXA board, 32 to 63 क्रम second, 64 to 95 क्रम third and 96
- *      to 127 क्रम fourth. For example, अगर you setup three MOXA boards,
+ *      the port number using in MOXA driver functions will be 0 to 31 for
+ *      first MOXA board, 32 to 63 for second, 64 to 95 for third and 96
+ *      to 127 for fourth. For example, if you setup three MOXA boards,
  *      first board is C218, second board is C320-16 and third board is
  *      C320-32. The port number of first board (C218 - 8 ports) is from
- *      0 to 7. The port number of second board (C320 - 16 ports) is क्रमm
+ *      0 to 7. The port number of second board (C320 - 16 ports) is form
  *      32 to 47. The port number of third board (C320 - 32 ports) is from
- *      64 to 95. And those port numbers क्रमm 8 to 31, 48 to 63 and 96 to
+ *      64 to 95. And those port numbers form 8 to 31, 48 to 63 and 96 to
  *      127 will be invalid.
  *
  *
@@ -1523,42 +1522,42 @@ put:
  *      Function 1:     Driver initialization routine, this routine must be
  *                      called when initialized driver.
  *      Syntax:
- *      व्योम MoxaDriverInit();
+ *      void MoxaDriverInit();
  *
  *
- *      Function 2:     Moxa driver निजी IOCTL command processing.
+ *      Function 2:     Moxa driver private IOCTL command processing.
  *      Syntax:
- *      पूर्णांक  MoxaDriverIoctl(अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg, पूर्णांक port);
+ *      int  MoxaDriverIoctl(unsigned int cmd, unsigned long arg, int port);
  *
- *           अचिन्हित पूर्णांक cmd   : IOCTL command
- *           अचिन्हित दीर्घ arg  : IOCTL argument
- *           पूर्णांक port           : port number (0 - 127)
+ *           unsigned int cmd   : IOCTL command
+ *           unsigned long arg  : IOCTL argument
+ *           int port           : port number (0 - 127)
  *
- *           वापस:    0  (OK)
+ *           return:    0  (OK)
  *                      -EINVAL
  *                      -ENOIOCTLCMD
  *
  *
  *      Function 6:     Enable this port to start Tx/Rx data.
  *      Syntax:
- *      व्योम MoxaPortEnable(पूर्णांक port);
- *           पूर्णांक port           : port number (0 - 127)
+ *      void MoxaPortEnable(int port);
+ *           int port           : port number (0 - 127)
  *
  *
  *      Function 7:     Disable this port
  *      Syntax:
- *      व्योम MoxaPortDisable(पूर्णांक port);
- *           पूर्णांक port           : port number (0 - 127)
+ *      void MoxaPortDisable(int port);
+ *           int port           : port number (0 - 127)
  *
  *
  *      Function 10:    Setting baud rate of this port.
  *      Syntax:
- *      speed_t MoxaPortSetBaud(पूर्णांक port, speed_t baud);
- *           पूर्णांक port           : port number (0 - 127)
- *           दीर्घ baud          : baud rate (50 - 115200)
+ *      speed_t MoxaPortSetBaud(int port, speed_t baud);
+ *           int port           : port number (0 - 127)
+ *           long baud          : baud rate (50 - 115200)
  *
- *           वापस:    0       : this port is invalid or baud < 50
- *                      50 - 115200 : the real baud rate set to the port, अगर
+ *           return:    0       : this port is invalid or baud < 50
+ *                      50 - 115200 : the real baud rate set to the port, if
  *                                    the argument baud is large than maximun
  *                                    available baud rate, the real setting
  *                                    baud rate will be the maximun baud rate.
@@ -1566,65 +1565,65 @@ put:
  *
  *      Function 12:    Configure the port.
  *      Syntax:
- *      पूर्णांक  MoxaPortSetTermio(पूर्णांक port, काष्ठा ktermios *termio, speed_t baud);
- *           पूर्णांक port           : port number (0 - 127)
- *           काष्ठा ktermios * termio : termio काष्ठाure poपूर्णांकer
+ *      int  MoxaPortSetTermio(int port, struct ktermios *termio, speed_t baud);
+ *           int port           : port number (0 - 127)
+ *           struct ktermios * termio : termio structure pointer
  *	     speed_t baud	: baud rate
  *
- *           वापस:    -1      : this port is invalid or termio == शून्य
+ *           return:    -1      : this port is invalid or termio == NULL
  *                      0       : setting O.K.
  *
  *
  *      Function 13:    Get the DTR/RTS state of this port.
  *      Syntax:
- *      पूर्णांक  MoxaPortGetLineOut(पूर्णांक port, पूर्णांक *dtrState, पूर्णांक *rtsState);
- *           पूर्णांक port           : port number (0 - 127)
- *           पूर्णांक * dtrState     : poपूर्णांकer to INT to receive the current DTR
- *                                state. (अगर शून्य, this function will not
- *                                ग_लिखो to this address)
- *           पूर्णांक * rtsState     : poपूर्णांकer to INT to receive the current RTS
- *                                state. (अगर शून्य, this function will not
- *                                ग_लिखो to this address)
+ *      int  MoxaPortGetLineOut(int port, int *dtrState, int *rtsState);
+ *           int port           : port number (0 - 127)
+ *           int * dtrState     : pointer to INT to receive the current DTR
+ *                                state. (if NULL, this function will not
+ *                                write to this address)
+ *           int * rtsState     : pointer to INT to receive the current RTS
+ *                                state. (if NULL, this function will not
+ *                                write to this address)
  *
- *           वापस:    -1      : this port is invalid
+ *           return:    -1      : this port is invalid
  *                      0       : O.K.
  *
  *
  *      Function 14:    Setting the DTR/RTS output state of this port.
  *      Syntax:
- *      व्योम MoxaPortLineCtrl(पूर्णांक port, पूर्णांक dtrState, पूर्णांक rtsState);
- *           पूर्णांक port           : port number (0 - 127)
- *           पूर्णांक dtrState       : DTR output state (0: off, 1: on)
- *           पूर्णांक rtsState       : RTS output state (0: off, 1: on)
+ *      void MoxaPortLineCtrl(int port, int dtrState, int rtsState);
+ *           int port           : port number (0 - 127)
+ *           int dtrState       : DTR output state (0: off, 1: on)
+ *           int rtsState       : RTS output state (0: off, 1: on)
  *
  *
  *      Function 15:    Setting the flow control of this port.
  *      Syntax:
- *      व्योम MoxaPortFlowCtrl(पूर्णांक port, पूर्णांक rtsFlow, पूर्णांक ctsFlow, पूर्णांक rxFlow,
- *                            पूर्णांक txFlow,पूर्णांक xany);
- *           पूर्णांक port           : port number (0 - 127)
- *           पूर्णांक rtsFlow        : H/W RTS flow control (0: no, 1: yes)
- *           पूर्णांक ctsFlow        : H/W CTS flow control (0: no, 1: yes)
- *           पूर्णांक rxFlow         : S/W Rx XON/XOFF flow control (0: no, 1: yes)
- *           पूर्णांक txFlow         : S/W Tx XON/XOFF flow control (0: no, 1: yes)
- *           पूर्णांक xany           : S/W XANY flow control (0: no, 1: yes)
+ *      void MoxaPortFlowCtrl(int port, int rtsFlow, int ctsFlow, int rxFlow,
+ *                            int txFlow,int xany);
+ *           int port           : port number (0 - 127)
+ *           int rtsFlow        : H/W RTS flow control (0: no, 1: yes)
+ *           int ctsFlow        : H/W CTS flow control (0: no, 1: yes)
+ *           int rxFlow         : S/W Rx XON/XOFF flow control (0: no, 1: yes)
+ *           int txFlow         : S/W Tx XON/XOFF flow control (0: no, 1: yes)
+ *           int xany           : S/W XANY flow control (0: no, 1: yes)
  *
  *
  *      Function 16:    Get ths line status of this port
  *      Syntax:
- *      पूर्णांक  MoxaPortLineStatus(पूर्णांक port);
- *           पूर्णांक port           : port number (0 - 127)
+ *      int  MoxaPortLineStatus(int port);
+ *           int port           : port number (0 - 127)
  *
- *           वापस:    Bit 0 - CTS state (0: off, 1: on)
+ *           return:    Bit 0 - CTS state (0: off, 1: on)
  *                      Bit 1 - DSR state (0: off, 1: on)
  *                      Bit 2 - DCD state (0: off, 1: on)
  *
  *
  *      Function 19:    Flush the Rx/Tx buffer data of this port.
  *      Syntax:
- *      व्योम MoxaPortFlushData(पूर्णांक port, पूर्णांक mode);
- *           पूर्णांक port           : port number (0 - 127)
- *           पूर्णांक mode    
+ *      void MoxaPortFlushData(int port, int mode);
+ *           int port           : port number (0 - 127)
+ *           int mode    
  *                      0       : flush the Rx buffer 
  *                      1       : flush the Tx buffer 
  *                      2       : flush the Rx and Tx buffer 
@@ -1632,80 +1631,80 @@ put:
  *
  *      Function 20:    Write data.
  *      Syntax:
- *      पूर्णांक  MoxaPortWriteData(पूर्णांक port, अचिन्हित अक्षर * buffer, पूर्णांक length);
- *           पूर्णांक port           : port number (0 - 127)
- *           अचिन्हित अक्षर * buffer     : poपूर्णांकer to ग_लिखो data buffer.
- *           पूर्णांक length         : ग_लिखो data length
+ *      int  MoxaPortWriteData(int port, unsigned char * buffer, int length);
+ *           int port           : port number (0 - 127)
+ *           unsigned char * buffer     : pointer to write data buffer.
+ *           int length         : write data length
  *
- *           वापस:    0 - length      : real ग_लिखो data length
+ *           return:    0 - length      : real write data length
  *
  *
  *      Function 21:    Read data.
  *      Syntax:
- *      पूर्णांक  MoxaPortReadData(पूर्णांक port, काष्ठा tty_काष्ठा *tty);
- *           पूर्णांक port           : port number (0 - 127)
- *	     काष्ठा tty_काष्ठा *tty : tty क्रम data
+ *      int  MoxaPortReadData(int port, struct tty_struct *tty);
+ *           int port           : port number (0 - 127)
+ *	     struct tty_struct *tty : tty for data
  *
- *           वापस:    0 - length      : real पढ़ो data length
+ *           return:    0 - length      : real read data length
  *
  *
  *      Function 24:    Get the Tx buffer current queued data bytes
  *      Syntax:
- *      पूर्णांक  MoxaPortTxQueue(पूर्णांक port);
- *           पूर्णांक port           : port number (0 - 127)
+ *      int  MoxaPortTxQueue(int port);
+ *           int port           : port number (0 - 127)
  *
- *           वापस:    ..      : Tx buffer current queued data bytes
+ *           return:    ..      : Tx buffer current queued data bytes
  *
  *
- *      Function 25:    Get the Tx buffer current मुक्त space
+ *      Function 25:    Get the Tx buffer current free space
  *      Syntax:
- *      पूर्णांक  MoxaPortTxFree(पूर्णांक port);
- *           पूर्णांक port           : port number (0 - 127)
+ *      int  MoxaPortTxFree(int port);
+ *           int port           : port number (0 - 127)
  *
- *           वापस:    ..      : Tx buffer current मुक्त space
+ *           return:    ..      : Tx buffer current free space
  *
  *
  *      Function 26:    Get the Rx buffer current queued data bytes
  *      Syntax:
- *      पूर्णांक  MoxaPortRxQueue(पूर्णांक port);
- *           पूर्णांक port           : port number (0 - 127)
+ *      int  MoxaPortRxQueue(int port);
+ *           int port           : port number (0 - 127)
  *
- *           वापस:    ..      : Rx buffer current queued data bytes
+ *           return:    ..      : Rx buffer current queued data bytes
  *
  *
  *      Function 28:    Disable port data transmission.
  *      Syntax:
- *      व्योम MoxaPortTxDisable(पूर्णांक port);
- *           पूर्णांक port           : port number (0 - 127)
+ *      void MoxaPortTxDisable(int port);
+ *           int port           : port number (0 - 127)
  *
  *
  *      Function 29:    Enable port data transmission.
  *      Syntax:
- *      व्योम MoxaPortTxEnable(पूर्णांक port);
- *           पूर्णांक port           : port number (0 - 127)
+ *      void MoxaPortTxEnable(int port);
+ *           int port           : port number (0 - 127)
  *
  *
- *      Function 31:    Get the received BREAK संकेत count and reset it.
+ *      Function 31:    Get the received BREAK signal count and reset it.
  *      Syntax:
- *      पूर्णांक  MoxaPortResetBrkCnt(पूर्णांक port);
- *           पूर्णांक port           : port number (0 - 127)
+ *      int  MoxaPortResetBrkCnt(int port);
+ *           int port           : port number (0 - 127)
  *
- *           वापस:    0 - ..  : BREAK संकेत count
+ *           return:    0 - ..  : BREAK signal count
  *
  *
  */
 
-अटल व्योम MoxaPortEnable(काष्ठा moxa_port *port)
-अणु
-	व्योम __iomem *ofsAddr;
+static void MoxaPortEnable(struct moxa_port *port)
+{
+	void __iomem *ofsAddr;
 	u16 lowwater = 512;
 
 	ofsAddr = port->tableAddr;
-	ग_लिखोw(lowwater, ofsAddr + Low_water);
-	अगर (MOXA_IS_320(port->board))
+	writew(lowwater, ofsAddr + Low_water);
+	if (MOXA_IS_320(port->board))
 		moxafunc(ofsAddr, FC_SetBreakIrq, 0);
-	अन्यथा
-		ग_लिखोw(पढ़ोw(ofsAddr + HostStat) | WakeupBreak,
+	else
+		writew(readw(ofsAddr + HostStat) | WakeupBreak,
 				ofsAddr + HostStat);
 
 	moxafunc(ofsAddr, FC_SetLineIrq, Magic_code);
@@ -1713,370 +1712,370 @@ put:
 
 	moxafunc(ofsAddr, FC_EnableCH, Magic_code);
 	MoxaPortLineStatus(port);
-पूर्ण
+}
 
-अटल व्योम MoxaPortDisable(काष्ठा moxa_port *port)
-अणु
-	व्योम __iomem *ofsAddr = port->tableAddr;
+static void MoxaPortDisable(struct moxa_port *port)
+{
+	void __iomem *ofsAddr = port->tableAddr;
 
 	moxafunc(ofsAddr, FC_SetFlowCtl, 0);	/* disable flow control */
 	moxafunc(ofsAddr, FC_ClrLineIrq, Magic_code);
-	ग_लिखोw(0, ofsAddr + HostStat);
+	writew(0, ofsAddr + HostStat);
 	moxafunc(ofsAddr, FC_DisableCH, Magic_code);
-पूर्ण
+}
 
-अटल speed_t MoxaPortSetBaud(काष्ठा moxa_port *port, speed_t baud)
-अणु
-	व्योम __iomem *ofsAddr = port->tableAddr;
-	अचिन्हित पूर्णांक घड़ी, val;
+static speed_t MoxaPortSetBaud(struct moxa_port *port, speed_t baud)
+{
+	void __iomem *ofsAddr = port->tableAddr;
+	unsigned int clock, val;
 	speed_t max;
 
 	max = MOXA_IS_320(port->board) ? 460800 : 921600;
-	अगर (baud < 50)
-		वापस 0;
-	अगर (baud > max)
+	if (baud < 50)
+		return 0;
+	if (baud > max)
 		baud = max;
-	घड़ी = 921600;
-	val = घड़ी / baud;
+	clock = 921600;
+	val = clock / baud;
 	moxafunc(ofsAddr, FC_SetBaud, val);
-	baud = घड़ी / val;
-	वापस baud;
-पूर्ण
+	baud = clock / val;
+	return baud;
+}
 
-अटल पूर्णांक MoxaPortSetTermio(काष्ठा moxa_port *port, काष्ठा ktermios *termio,
+static int MoxaPortSetTermio(struct moxa_port *port, struct ktermios *termio,
 		speed_t baud)
-अणु
-	व्योम __iomem *ofsAddr;
+{
+	void __iomem *ofsAddr;
 	tcflag_t mode = 0;
 
 	ofsAddr = port->tableAddr;
 
 	mode = termio->c_cflag & CSIZE;
-	अगर (mode == CS5)
+	if (mode == CS5)
 		mode = MX_CS5;
-	अन्यथा अगर (mode == CS6)
+	else if (mode == CS6)
 		mode = MX_CS6;
-	अन्यथा अगर (mode == CS7)
+	else if (mode == CS7)
 		mode = MX_CS7;
-	अन्यथा अगर (mode == CS8)
+	else if (mode == CS8)
 		mode = MX_CS8;
 
-	अगर (termio->c_cflag & CSTOPB) अणु
-		अगर (mode == MX_CS5)
+	if (termio->c_cflag & CSTOPB) {
+		if (mode == MX_CS5)
 			mode |= MX_STOP15;
-		अन्यथा
+		else
 			mode |= MX_STOP2;
-	पूर्ण अन्यथा
+	} else
 		mode |= MX_STOP1;
 
-	अगर (termio->c_cflag & PARENB) अणु
-		अगर (termio->c_cflag & PARODD) अणु
-			अगर (termio->c_cflag & CMSPAR)
+	if (termio->c_cflag & PARENB) {
+		if (termio->c_cflag & PARODD) {
+			if (termio->c_cflag & CMSPAR)
 				mode |= MX_PARMARK;
-			अन्यथा
+			else
 				mode |= MX_PARODD;
-		पूर्ण अन्यथा अणु
-			अगर (termio->c_cflag & CMSPAR)
+		} else {
+			if (termio->c_cflag & CMSPAR)
 				mode |= MX_PARSPACE;
-			अन्यथा
+			else
 				mode |= MX_PAREVEN;
-		पूर्ण
-	पूर्ण अन्यथा
+		}
+	} else
 		mode |= MX_PARNONE;
 
 	moxafunc(ofsAddr, FC_SetDataMode, (u16)mode);
 
-	अगर (MOXA_IS_320(port->board) && baud >= 921600)
-		वापस -1;
+	if (MOXA_IS_320(port->board) && baud >= 921600)
+		return -1;
 
 	baud = MoxaPortSetBaud(port, baud);
 
-	अगर (termio->c_अगरlag & (IXON | IXOFF | IXANY)) अणु
+	if (termio->c_iflag & (IXON | IXOFF | IXANY)) {
 	        spin_lock_irq(&moxafunc_lock);
-		ग_लिखोb(termio->c_cc[VSTART], ofsAddr + FuncArg);
-		ग_लिखोb(termio->c_cc[VSTOP], ofsAddr + FuncArg1);
-		ग_लिखोb(FC_SetXonXoff, ofsAddr + FuncCode);
-		moxa_रुको_finish(ofsAddr);
+		writeb(termio->c_cc[VSTART], ofsAddr + FuncArg);
+		writeb(termio->c_cc[VSTOP], ofsAddr + FuncArg1);
+		writeb(FC_SetXonXoff, ofsAddr + FuncCode);
+		moxa_wait_finish(ofsAddr);
 		spin_unlock_irq(&moxafunc_lock);
 
-	पूर्ण
-	वापस baud;
-पूर्ण
+	}
+	return baud;
+}
 
-अटल पूर्णांक MoxaPortGetLineOut(काष्ठा moxa_port *port, पूर्णांक *dtrState,
-		पूर्णांक *rtsState)
-अणु
-	अगर (dtrState)
+static int MoxaPortGetLineOut(struct moxa_port *port, int *dtrState,
+		int *rtsState)
+{
+	if (dtrState)
 		*dtrState = !!(port->lineCtrl & DTR_ON);
-	अगर (rtsState)
+	if (rtsState)
 		*rtsState = !!(port->lineCtrl & RTS_ON);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम MoxaPortLineCtrl(काष्ठा moxa_port *port, पूर्णांक dtr, पूर्णांक rts)
-अणु
+static void MoxaPortLineCtrl(struct moxa_port *port, int dtr, int rts)
+{
 	u8 mode = 0;
 
-	अगर (dtr)
+	if (dtr)
 		mode |= DTR_ON;
-	अगर (rts)
+	if (rts)
 		mode |= RTS_ON;
 	port->lineCtrl = mode;
 	moxafunc(port->tableAddr, FC_LineControl, mode);
-पूर्ण
+}
 
-अटल व्योम MoxaPortFlowCtrl(काष्ठा moxa_port *port, पूर्णांक rts, पूर्णांक cts,
-		पूर्णांक txflow, पूर्णांक rxflow, पूर्णांक txany)
-अणु
-	पूर्णांक mode = 0;
+static void MoxaPortFlowCtrl(struct moxa_port *port, int rts, int cts,
+		int txflow, int rxflow, int txany)
+{
+	int mode = 0;
 
-	अगर (rts)
+	if (rts)
 		mode |= RTS_FlowCtl;
-	अगर (cts)
+	if (cts)
 		mode |= CTS_FlowCtl;
-	अगर (txflow)
+	if (txflow)
 		mode |= Tx_FlowCtl;
-	अगर (rxflow)
+	if (rxflow)
 		mode |= Rx_FlowCtl;
-	अगर (txany)
+	if (txany)
 		mode |= IXM_IXANY;
 	moxafunc(port->tableAddr, FC_SetFlowCtl, mode);
-पूर्ण
+}
 
-अटल पूर्णांक MoxaPortLineStatus(काष्ठा moxa_port *port)
-अणु
-	व्योम __iomem *ofsAddr;
-	पूर्णांक val;
+static int MoxaPortLineStatus(struct moxa_port *port)
+{
+	void __iomem *ofsAddr;
+	int val;
 
 	ofsAddr = port->tableAddr;
-	अगर (MOXA_IS_320(port->board))
+	if (MOXA_IS_320(port->board))
 		val = moxafuncret(ofsAddr, FC_LineStatus, 0);
-	अन्यथा
-		val = पढ़ोw(ofsAddr + FlagStat) >> 4;
+	else
+		val = readw(ofsAddr + FlagStat) >> 4;
 	val &= 0x0B;
-	अगर (val & 8)
+	if (val & 8)
 		val |= 4;
 	moxa_new_dcdstate(port, val & 8);
 	val &= 7;
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल पूर्णांक MoxaPortWriteData(काष्ठा tty_काष्ठा *tty,
-		स्थिर अचिन्हित अक्षर *buffer, पूर्णांक len)
-अणु
-	काष्ठा moxa_port *port = tty->driver_data;
-	व्योम __iomem *baseAddr, *ofsAddr, *ofs;
-	अचिन्हित पूर्णांक c, total;
+static int MoxaPortWriteData(struct tty_struct *tty,
+		const unsigned char *buffer, int len)
+{
+	struct moxa_port *port = tty->driver_data;
+	void __iomem *baseAddr, *ofsAddr, *ofs;
+	unsigned int c, total;
 	u16 head, tail, tx_mask, spage, epage;
 	u16 pageno, pageofs, bufhead;
 
 	ofsAddr = port->tableAddr;
 	baseAddr = port->board->basemem;
-	tx_mask = पढ़ोw(ofsAddr + TX_mask);
-	spage = पढ़ोw(ofsAddr + Page_txb);
-	epage = पढ़ोw(ofsAddr + EndPage_txb);
-	tail = पढ़ोw(ofsAddr + TXwptr);
-	head = पढ़ोw(ofsAddr + TXrptr);
+	tx_mask = readw(ofsAddr + TX_mask);
+	spage = readw(ofsAddr + Page_txb);
+	epage = readw(ofsAddr + EndPage_txb);
+	tail = readw(ofsAddr + TXwptr);
+	head = readw(ofsAddr + TXrptr);
 	c = (head > tail) ? (head - tail - 1) : (head - tail + tx_mask);
-	अगर (c > len)
+	if (c > len)
 		c = len;
 	moxaLog.txcnt[port->port.tty->index] += c;
 	total = c;
-	अगर (spage == epage) अणु
-		bufhead = पढ़ोw(ofsAddr + Ofs_txb);
-		ग_लिखोw(spage, baseAddr + Control_reg);
-		जबतक (c > 0) अणु
-			अगर (head > tail)
+	if (spage == epage) {
+		bufhead = readw(ofsAddr + Ofs_txb);
+		writew(spage, baseAddr + Control_reg);
+		while (c > 0) {
+			if (head > tail)
 				len = head - tail - 1;
-			अन्यथा
+			else
 				len = tx_mask + 1 - tail;
 			len = (c > len) ? len : c;
 			ofs = baseAddr + DynPage_addr + bufhead + tail;
-			स_नकल_toio(ofs, buffer, len);
+			memcpy_toio(ofs, buffer, len);
 			buffer += len;
 			tail = (tail + len) & tx_mask;
 			c -= len;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		pageno = spage + (tail >> 13);
 		pageofs = tail & Page_mask;
-		जबतक (c > 0) अणु
+		while (c > 0) {
 			len = Page_size - pageofs;
-			अगर (len > c)
+			if (len > c)
 				len = c;
-			ग_लिखोb(pageno, baseAddr + Control_reg);
+			writeb(pageno, baseAddr + Control_reg);
 			ofs = baseAddr + DynPage_addr + pageofs;
-			स_नकल_toio(ofs, buffer, len);
+			memcpy_toio(ofs, buffer, len);
 			buffer += len;
-			अगर (++pageno == epage)
+			if (++pageno == epage)
 				pageno = spage;
 			pageofs = 0;
 			c -= len;
-		पूर्ण
+		}
 		tail = (tail + total) & tx_mask;
-	पूर्ण
-	ग_लिखोw(tail, ofsAddr + TXwptr);
-	ग_लिखोb(1, ofsAddr + CD180TXirq);	/* start to send */
-	वापस total;
-पूर्ण
+	}
+	writew(tail, ofsAddr + TXwptr);
+	writeb(1, ofsAddr + CD180TXirq);	/* start to send */
+	return total;
+}
 
-अटल पूर्णांक MoxaPortReadData(काष्ठा moxa_port *port)
-अणु
-	काष्ठा tty_काष्ठा *tty = port->port.tty;
-	अचिन्हित अक्षर *dst;
-	व्योम __iomem *baseAddr, *ofsAddr, *ofs;
-	अचिन्हित पूर्णांक count, len, total;
+static int MoxaPortReadData(struct moxa_port *port)
+{
+	struct tty_struct *tty = port->port.tty;
+	unsigned char *dst;
+	void __iomem *baseAddr, *ofsAddr, *ofs;
+	unsigned int count, len, total;
 	u16 tail, rx_mask, spage, epage;
 	u16 pageno, pageofs, bufhead, head;
 
 	ofsAddr = port->tableAddr;
 	baseAddr = port->board->basemem;
-	head = पढ़ोw(ofsAddr + RXrptr);
-	tail = पढ़ोw(ofsAddr + RXwptr);
-	rx_mask = पढ़ोw(ofsAddr + RX_mask);
-	spage = पढ़ोw(ofsAddr + Page_rxb);
-	epage = पढ़ोw(ofsAddr + EndPage_rxb);
+	head = readw(ofsAddr + RXrptr);
+	tail = readw(ofsAddr + RXwptr);
+	rx_mask = readw(ofsAddr + RX_mask);
+	spage = readw(ofsAddr + Page_rxb);
+	epage = readw(ofsAddr + EndPage_rxb);
 	count = (tail >= head) ? (tail - head) : (tail - head + rx_mask + 1);
-	अगर (count == 0)
-		वापस 0;
+	if (count == 0)
+		return 0;
 
 	total = count;
 	moxaLog.rxcnt[tty->index] += total;
-	अगर (spage == epage) अणु
-		bufhead = पढ़ोw(ofsAddr + Ofs_rxb);
-		ग_लिखोw(spage, baseAddr + Control_reg);
-		जबतक (count > 0) अणु
+	if (spage == epage) {
+		bufhead = readw(ofsAddr + Ofs_rxb);
+		writew(spage, baseAddr + Control_reg);
+		while (count > 0) {
 			ofs = baseAddr + DynPage_addr + bufhead + head;
 			len = (tail >= head) ? (tail - head) :
 					(rx_mask + 1 - head);
 			len = tty_prepare_flip_string(&port->port, &dst,
 					min(len, count));
-			स_नकल_fromio(dst, ofs, len);
+			memcpy_fromio(dst, ofs, len);
 			head = (head + len) & rx_mask;
 			count -= len;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		pageno = spage + (head >> 13);
 		pageofs = head & Page_mask;
-		जबतक (count > 0) अणु
-			ग_लिखोw(pageno, baseAddr + Control_reg);
+		while (count > 0) {
+			writew(pageno, baseAddr + Control_reg);
 			ofs = baseAddr + DynPage_addr + pageofs;
 			len = tty_prepare_flip_string(&port->port, &dst,
 					min(Page_size - pageofs, count));
-			स_नकल_fromio(dst, ofs, len);
+			memcpy_fromio(dst, ofs, len);
 
 			count -= len;
 			pageofs = (pageofs + len) & Page_mask;
-			अगर (pageofs == 0 && ++pageno == epage)
+			if (pageofs == 0 && ++pageno == epage)
 				pageno = spage;
-		पूर्ण
+		}
 		head = (head + total) & rx_mask;
-	पूर्ण
-	ग_लिखोw(head, ofsAddr + RXrptr);
-	अगर (पढ़ोb(ofsAddr + FlagStat) & Xoff_state) अणु
+	}
+	writew(head, ofsAddr + RXrptr);
+	if (readb(ofsAddr + FlagStat) & Xoff_state) {
 		moxaLowWaterChk = 1;
 		port->lowChkFlag = 1;
-	पूर्ण
-	वापस total;
-पूर्ण
+	}
+	return total;
+}
 
 
-अटल पूर्णांक MoxaPortTxQueue(काष्ठा moxa_port *port)
-अणु
-	व्योम __iomem *ofsAddr = port->tableAddr;
+static int MoxaPortTxQueue(struct moxa_port *port)
+{
+	void __iomem *ofsAddr = port->tableAddr;
 	u16 rptr, wptr, mask;
 
-	rptr = पढ़ोw(ofsAddr + TXrptr);
-	wptr = पढ़ोw(ofsAddr + TXwptr);
-	mask = पढ़ोw(ofsAddr + TX_mask);
-	वापस (wptr - rptr) & mask;
-पूर्ण
+	rptr = readw(ofsAddr + TXrptr);
+	wptr = readw(ofsAddr + TXwptr);
+	mask = readw(ofsAddr + TX_mask);
+	return (wptr - rptr) & mask;
+}
 
-अटल पूर्णांक MoxaPortTxFree(काष्ठा moxa_port *port)
-अणु
-	व्योम __iomem *ofsAddr = port->tableAddr;
+static int MoxaPortTxFree(struct moxa_port *port)
+{
+	void __iomem *ofsAddr = port->tableAddr;
 	u16 rptr, wptr, mask;
 
-	rptr = पढ़ोw(ofsAddr + TXrptr);
-	wptr = पढ़ोw(ofsAddr + TXwptr);
-	mask = पढ़ोw(ofsAddr + TX_mask);
-	वापस mask - ((wptr - rptr) & mask);
-पूर्ण
+	rptr = readw(ofsAddr + TXrptr);
+	wptr = readw(ofsAddr + TXwptr);
+	mask = readw(ofsAddr + TX_mask);
+	return mask - ((wptr - rptr) & mask);
+}
 
-अटल पूर्णांक MoxaPortRxQueue(काष्ठा moxa_port *port)
-अणु
-	व्योम __iomem *ofsAddr = port->tableAddr;
+static int MoxaPortRxQueue(struct moxa_port *port)
+{
+	void __iomem *ofsAddr = port->tableAddr;
 	u16 rptr, wptr, mask;
 
-	rptr = पढ़ोw(ofsAddr + RXrptr);
-	wptr = पढ़ोw(ofsAddr + RXwptr);
-	mask = पढ़ोw(ofsAddr + RX_mask);
-	वापस (wptr - rptr) & mask;
-पूर्ण
+	rptr = readw(ofsAddr + RXrptr);
+	wptr = readw(ofsAddr + RXwptr);
+	mask = readw(ofsAddr + RX_mask);
+	return (wptr - rptr) & mask;
+}
 
-अटल व्योम MoxaPortTxDisable(काष्ठा moxa_port *port)
-अणु
+static void MoxaPortTxDisable(struct moxa_port *port)
+{
 	moxafunc(port->tableAddr, FC_SetXoffState, Magic_code);
-पूर्ण
+}
 
-अटल व्योम MoxaPortTxEnable(काष्ठा moxa_port *port)
-अणु
+static void MoxaPortTxEnable(struct moxa_port *port)
+{
 	moxafunc(port->tableAddr, FC_SetXonState, Magic_code);
-पूर्ण
+}
 
-अटल पूर्णांक moxa_get_serial_info(काष्ठा tty_काष्ठा *tty,
-		काष्ठा serial_काष्ठा *ss)
-अणु
-	काष्ठा moxa_port *info = tty->driver_data;
+static int moxa_get_serial_info(struct tty_struct *tty,
+		struct serial_struct *ss)
+{
+	struct moxa_port *info = tty->driver_data;
 
-	अगर (tty->index == MAX_PORTS)
-		वापस -EINVAL;
-	अगर (!info)
-		वापस -ENODEV;
+	if (tty->index == MAX_PORTS)
+		return -EINVAL;
+	if (!info)
+		return -ENODEV;
 	mutex_lock(&info->port.mutex);
 	ss->type = info->type,
 	ss->line = info->port.tty->index,
 	ss->flags = info->port.flags,
 	ss->baud_base = 921600,
-	ss->बंद_delay = jअगरfies_to_msecs(info->port.बंद_delay) / 10;
+	ss->close_delay = jiffies_to_msecs(info->port.close_delay) / 10;
 	mutex_unlock(&info->port.mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक moxa_set_serial_info(काष्ठा tty_काष्ठा *tty,
-		काष्ठा serial_काष्ठा *ss)
-अणु
-	काष्ठा moxa_port *info = tty->driver_data;
-	अचिन्हित पूर्णांक बंद_delay;
+static int moxa_set_serial_info(struct tty_struct *tty,
+		struct serial_struct *ss)
+{
+	struct moxa_port *info = tty->driver_data;
+	unsigned int close_delay;
 
-	अगर (tty->index == MAX_PORTS)
-		वापस -EINVAL;
-	अगर (!info)
-		वापस -ENODEV;
+	if (tty->index == MAX_PORTS)
+		return -EINVAL;
+	if (!info)
+		return -ENODEV;
 
-	बंद_delay = msecs_to_jअगरfies(ss->बंद_delay * 10);
+	close_delay = msecs_to_jiffies(ss->close_delay * 10);
 
 	mutex_lock(&info->port.mutex);
-	अगर (!capable(CAP_SYS_ADMIN)) अणु
-		अगर (बंद_delay != info->port.बंद_delay ||
+	if (!capable(CAP_SYS_ADMIN)) {
+		if (close_delay != info->port.close_delay ||
 		    ss->type != info->type ||
 		    ((ss->flags & ~ASYNC_USR_MASK) !=
-		     (info->port.flags & ~ASYNC_USR_MASK))) अणु
+		     (info->port.flags & ~ASYNC_USR_MASK))) {
 			mutex_unlock(&info->port.mutex);
-			वापस -EPERM;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		info->port.बंद_delay = बंद_delay;
+			return -EPERM;
+		}
+	} else {
+		info->port.close_delay = close_delay;
 
-		MoxaSetFअगरo(info, ss->type == PORT_16550A);
+		MoxaSetFifo(info, ss->type == PORT_16550A);
 
 		info->type = ss->type;
-	पूर्ण
+	}
 	mutex_unlock(&info->port.mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 
@@ -2084,15 +2083,15 @@ put:
  *	Static local functions: 					     *
  *****************************************************************************/
 
-अटल व्योम MoxaSetFअगरo(काष्ठा moxa_port *port, पूर्णांक enable)
-अणु
-	व्योम __iomem *ofsAddr = port->tableAddr;
+static void MoxaSetFifo(struct moxa_port *port, int enable)
+{
+	void __iomem *ofsAddr = port->tableAddr;
 
-	अगर (!enable) अणु
+	if (!enable) {
 		moxafunc(ofsAddr, FC_SetRxFIFOTrig, 0);
 		moxafunc(ofsAddr, FC_SetTxFIFOCnt, 1);
-	पूर्ण अन्यथा अणु
+	} else {
 		moxafunc(ofsAddr, FC_SetRxFIFOTrig, 3);
 		moxafunc(ofsAddr, FC_SetTxFIFOCnt, 16);
-	पूर्ण
-पूर्ण
+	}
+}

@@ -1,219 +1,218 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2008-2009 Patrick McHardy <kaber@trash.net>
  *
  * Development of this code funded by Astaro AG (http://www.astaro.com/)
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/netlink.h>
-#समावेश <linux/netfilter.h>
-#समावेश <linux/अगर_arp.h>
-#समावेश <linux/netfilter/nf_tables.h>
-#समावेश <net/netfilter/nf_tables_core.h>
-#समावेश <net/netfilter/nf_tables_offload.h>
-#समावेश <net/netfilter/nf_tables.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/netlink.h>
+#include <linux/netfilter.h>
+#include <linux/if_arp.h>
+#include <linux/netfilter/nf_tables.h>
+#include <net/netfilter/nf_tables_core.h>
+#include <net/netfilter/nf_tables_offload.h>
+#include <net/netfilter/nf_tables.h>
 
-काष्ठा nft_cmp_expr अणु
-	काष्ठा nft_data		data;
+struct nft_cmp_expr {
+	struct nft_data		data;
 	u8			sreg;
 	u8			len;
-	क्रमागत nft_cmp_ops	op:8;
-पूर्ण;
+	enum nft_cmp_ops	op:8;
+};
 
-व्योम nft_cmp_eval(स्थिर काष्ठा nft_expr *expr,
-		  काष्ठा nft_regs *regs,
-		  स्थिर काष्ठा nft_pktinfo *pkt)
-अणु
-	स्थिर काष्ठा nft_cmp_expr *priv = nft_expr_priv(expr);
-	पूर्णांक d;
+void nft_cmp_eval(const struct nft_expr *expr,
+		  struct nft_regs *regs,
+		  const struct nft_pktinfo *pkt)
+{
+	const struct nft_cmp_expr *priv = nft_expr_priv(expr);
+	int d;
 
-	d = स_भेद(&regs->data[priv->sreg], &priv->data, priv->len);
-	चयन (priv->op) अणु
-	हाल NFT_CMP_EQ:
-		अगर (d != 0)
-			जाओ mismatch;
-		अवरोध;
-	हाल NFT_CMP_NEQ:
-		अगर (d == 0)
-			जाओ mismatch;
-		अवरोध;
-	हाल NFT_CMP_LT:
-		अगर (d == 0)
-			जाओ mismatch;
+	d = memcmp(&regs->data[priv->sreg], &priv->data, priv->len);
+	switch (priv->op) {
+	case NFT_CMP_EQ:
+		if (d != 0)
+			goto mismatch;
+		break;
+	case NFT_CMP_NEQ:
+		if (d == 0)
+			goto mismatch;
+		break;
+	case NFT_CMP_LT:
+		if (d == 0)
+			goto mismatch;
 		fallthrough;
-	हाल NFT_CMP_LTE:
-		अगर (d > 0)
-			जाओ mismatch;
-		अवरोध;
-	हाल NFT_CMP_GT:
-		अगर (d == 0)
-			जाओ mismatch;
+	case NFT_CMP_LTE:
+		if (d > 0)
+			goto mismatch;
+		break;
+	case NFT_CMP_GT:
+		if (d == 0)
+			goto mismatch;
 		fallthrough;
-	हाल NFT_CMP_GTE:
-		अगर (d < 0)
-			जाओ mismatch;
-		अवरोध;
-	पूर्ण
-	वापस;
+	case NFT_CMP_GTE:
+		if (d < 0)
+			goto mismatch;
+		break;
+	}
+	return;
 
 mismatch:
 	regs->verdict.code = NFT_BREAK;
-पूर्ण
+}
 
-अटल स्थिर काष्ठा nla_policy nft_cmp_policy[NFTA_CMP_MAX + 1] = अणु
-	[NFTA_CMP_SREG]		= अणु .type = NLA_U32 पूर्ण,
-	[NFTA_CMP_OP]		= अणु .type = NLA_U32 पूर्ण,
-	[NFTA_CMP_DATA]		= अणु .type = NLA_NESTED पूर्ण,
-पूर्ण;
+static const struct nla_policy nft_cmp_policy[NFTA_CMP_MAX + 1] = {
+	[NFTA_CMP_SREG]		= { .type = NLA_U32 },
+	[NFTA_CMP_OP]		= { .type = NLA_U32 },
+	[NFTA_CMP_DATA]		= { .type = NLA_NESTED },
+};
 
-अटल पूर्णांक nft_cmp_init(स्थिर काष्ठा nft_ctx *ctx, स्थिर काष्ठा nft_expr *expr,
-			स्थिर काष्ठा nlattr * स्थिर tb[])
-अणु
-	काष्ठा nft_cmp_expr *priv = nft_expr_priv(expr);
-	काष्ठा nft_data_desc desc;
-	पूर्णांक err;
+static int nft_cmp_init(const struct nft_ctx *ctx, const struct nft_expr *expr,
+			const struct nlattr * const tb[])
+{
+	struct nft_cmp_expr *priv = nft_expr_priv(expr);
+	struct nft_data_desc desc;
+	int err;
 
-	err = nft_data_init(शून्य, &priv->data, माप(priv->data), &desc,
+	err = nft_data_init(NULL, &priv->data, sizeof(priv->data), &desc,
 			    tb[NFTA_CMP_DATA]);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	अगर (desc.type != NFT_DATA_VALUE) अणु
+	if (desc.type != NFT_DATA_VALUE) {
 		err = -EINVAL;
 		nft_data_release(&priv->data, desc.type);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	err = nft_parse_रेजिस्टर_load(tb[NFTA_CMP_SREG], &priv->sreg, desc.len);
-	अगर (err < 0)
-		वापस err;
+	err = nft_parse_register_load(tb[NFTA_CMP_SREG], &priv->sreg, desc.len);
+	if (err < 0)
+		return err;
 
 	priv->op  = ntohl(nla_get_be32(tb[NFTA_CMP_OP]));
 	priv->len = desc.len;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nft_cmp_dump(काष्ठा sk_buff *skb, स्थिर काष्ठा nft_expr *expr)
-अणु
-	स्थिर काष्ठा nft_cmp_expr *priv = nft_expr_priv(expr);
+static int nft_cmp_dump(struct sk_buff *skb, const struct nft_expr *expr)
+{
+	const struct nft_cmp_expr *priv = nft_expr_priv(expr);
 
-	अगर (nft_dump_रेजिस्टर(skb, NFTA_CMP_SREG, priv->sreg))
-		जाओ nla_put_failure;
-	अगर (nla_put_be32(skb, NFTA_CMP_OP, htonl(priv->op)))
-		जाओ nla_put_failure;
+	if (nft_dump_register(skb, NFTA_CMP_SREG, priv->sreg))
+		goto nla_put_failure;
+	if (nla_put_be32(skb, NFTA_CMP_OP, htonl(priv->op)))
+		goto nla_put_failure;
 
-	अगर (nft_data_dump(skb, NFTA_CMP_DATA, &priv->data,
+	if (nft_data_dump(skb, NFTA_CMP_DATA, &priv->data,
 			  NFT_DATA_VALUE, priv->len) < 0)
-		जाओ nla_put_failure;
-	वापस 0;
+		goto nla_put_failure;
+	return 0;
 
 nla_put_failure:
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-जोड़ nft_cmp_offload_data अणु
+union nft_cmp_offload_data {
 	u16	val16;
 	u32	val32;
 	u64	val64;
-पूर्ण;
+};
 
-अटल व्योम nft_payload_n2h(जोड़ nft_cmp_offload_data *data,
-			    स्थिर u8 *val, u32 len)
-अणु
-	चयन (len) अणु
-	हाल 2:
+static void nft_payload_n2h(union nft_cmp_offload_data *data,
+			    const u8 *val, u32 len)
+{
+	switch (len) {
+	case 2:
 		data->val16 = ntohs(*((u16 *)val));
-		अवरोध;
-	हाल 4:
+		break;
+	case 4:
 		data->val32 = ntohl(*((u32 *)val));
-		अवरोध;
-	हाल 8:
+		break;
+	case 8:
 		data->val64 = be64_to_cpu(*((u64 *)val));
-		अवरोध;
-	शेष:
+		break;
+	default:
 		WARN_ON_ONCE(1);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल पूर्णांक __nft_cmp_offload(काष्ठा nft_offload_ctx *ctx,
-			     काष्ठा nft_flow_rule *flow,
-			     स्थिर काष्ठा nft_cmp_expr *priv)
-अणु
-	काष्ठा nft_offload_reg *reg = &ctx->regs[priv->sreg];
-	जोड़ nft_cmp_offload_data _data, _datamask;
+static int __nft_cmp_offload(struct nft_offload_ctx *ctx,
+			     struct nft_flow_rule *flow,
+			     const struct nft_cmp_expr *priv)
+{
+	struct nft_offload_reg *reg = &ctx->regs[priv->sreg];
+	union nft_cmp_offload_data _data, _datamask;
 	u8 *mask = (u8 *)&flow->match.mask;
 	u8 *key = (u8 *)&flow->match.key;
 	u8 *data, *datamask;
 
-	अगर (priv->op != NFT_CMP_EQ || priv->len > reg->len)
-		वापस -EOPNOTSUPP;
+	if (priv->op != NFT_CMP_EQ || priv->len > reg->len)
+		return -EOPNOTSUPP;
 
-	अगर (reg->flags & NFT_OFFLOAD_F_NETWORK2HOST) अणु
+	if (reg->flags & NFT_OFFLOAD_F_NETWORK2HOST) {
 		nft_payload_n2h(&_data, (u8 *)&priv->data, reg->len);
 		nft_payload_n2h(&_datamask, (u8 *)&reg->mask, reg->len);
 		data = (u8 *)&_data;
 		datamask = (u8 *)&_datamask;
-	पूर्ण अन्यथा अणु
+	} else {
 		data = (u8 *)&priv->data;
 		datamask = (u8 *)&reg->mask;
-	पूर्ण
+	}
 
-	स_नकल(key + reg->offset, data, reg->len);
-	स_नकल(mask + reg->offset, datamask, reg->len);
+	memcpy(key + reg->offset, data, reg->len);
+	memcpy(mask + reg->offset, datamask, reg->len);
 
 	flow->match.dissector.used_keys |= BIT(reg->key);
 	flow->match.dissector.offset[reg->key] = reg->base_offset;
 
-	अगर (reg->key == FLOW_DISSECTOR_KEY_META &&
-	    reg->offset == दुरत्व(काष्ठा nft_flow_key, meta.ingress_अगरtype) &&
+	if (reg->key == FLOW_DISSECTOR_KEY_META &&
+	    reg->offset == offsetof(struct nft_flow_key, meta.ingress_iftype) &&
 	    nft_reg_load16(priv->data.data) != ARPHRD_ETHER)
-		वापस -EOPNOTSUPP;
+		return -EOPNOTSUPP;
 
 	nft_offload_update_dependency(ctx, &priv->data, reg->len);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nft_cmp_offload(काष्ठा nft_offload_ctx *ctx,
-			   काष्ठा nft_flow_rule *flow,
-			   स्थिर काष्ठा nft_expr *expr)
-अणु
-	स्थिर काष्ठा nft_cmp_expr *priv = nft_expr_priv(expr);
+static int nft_cmp_offload(struct nft_offload_ctx *ctx,
+			   struct nft_flow_rule *flow,
+			   const struct nft_expr *expr)
+{
+	const struct nft_cmp_expr *priv = nft_expr_priv(expr);
 
-	वापस __nft_cmp_offload(ctx, flow, priv);
-पूर्ण
+	return __nft_cmp_offload(ctx, flow, priv);
+}
 
-अटल स्थिर काष्ठा nft_expr_ops nft_cmp_ops = अणु
+static const struct nft_expr_ops nft_cmp_ops = {
 	.type		= &nft_cmp_type,
-	.size		= NFT_EXPR_SIZE(माप(काष्ठा nft_cmp_expr)),
+	.size		= NFT_EXPR_SIZE(sizeof(struct nft_cmp_expr)),
 	.eval		= nft_cmp_eval,
 	.init		= nft_cmp_init,
 	.dump		= nft_cmp_dump,
 	.offload	= nft_cmp_offload,
-पूर्ण;
+};
 
-अटल पूर्णांक nft_cmp_fast_init(स्थिर काष्ठा nft_ctx *ctx,
-			     स्थिर काष्ठा nft_expr *expr,
-			     स्थिर काष्ठा nlattr * स्थिर tb[])
-अणु
-	काष्ठा nft_cmp_fast_expr *priv = nft_expr_priv(expr);
-	काष्ठा nft_data_desc desc;
-	काष्ठा nft_data data;
-	पूर्णांक err;
+static int nft_cmp_fast_init(const struct nft_ctx *ctx,
+			     const struct nft_expr *expr,
+			     const struct nlattr * const tb[])
+{
+	struct nft_cmp_fast_expr *priv = nft_expr_priv(expr);
+	struct nft_data_desc desc;
+	struct nft_data data;
+	int err;
 
-	err = nft_data_init(शून्य, &data, माप(data), &desc,
+	err = nft_data_init(NULL, &data, sizeof(data), &desc,
 			    tb[NFTA_CMP_DATA]);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	err = nft_parse_रेजिस्टर_load(tb[NFTA_CMP_SREG], &priv->sreg, desc.len);
-	अगर (err < 0)
-		वापस err;
+	err = nft_parse_register_load(tb[NFTA_CMP_SREG], &priv->sreg, desc.len);
+	if (err < 0)
+		return err;
 
 	desc.len *= BITS_PER_BYTE;
 
@@ -221,105 +220,105 @@ nla_put_failure:
 	priv->data = data.data[0] & priv->mask;
 	priv->len  = desc.len;
 	priv->inv  = ntohl(nla_get_be32(tb[NFTA_CMP_OP])) != NFT_CMP_EQ;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nft_cmp_fast_offload(काष्ठा nft_offload_ctx *ctx,
-				काष्ठा nft_flow_rule *flow,
-				स्थिर काष्ठा nft_expr *expr)
-अणु
-	स्थिर काष्ठा nft_cmp_fast_expr *priv = nft_expr_priv(expr);
-	काष्ठा nft_cmp_expr cmp = अणु
-		.data	= अणु
-			.data	= अणु
+static int nft_cmp_fast_offload(struct nft_offload_ctx *ctx,
+				struct nft_flow_rule *flow,
+				const struct nft_expr *expr)
+{
+	const struct nft_cmp_fast_expr *priv = nft_expr_priv(expr);
+	struct nft_cmp_expr cmp = {
+		.data	= {
+			.data	= {
 				[0] = priv->data,
-			पूर्ण,
-		पूर्ण,
+			},
+		},
 		.sreg	= priv->sreg,
 		.len	= priv->len / BITS_PER_BYTE,
 		.op	= priv->inv ? NFT_CMP_NEQ : NFT_CMP_EQ,
-	पूर्ण;
+	};
 
-	वापस __nft_cmp_offload(ctx, flow, &cmp);
-पूर्ण
+	return __nft_cmp_offload(ctx, flow, &cmp);
+}
 
-अटल पूर्णांक nft_cmp_fast_dump(काष्ठा sk_buff *skb, स्थिर काष्ठा nft_expr *expr)
-अणु
-	स्थिर काष्ठा nft_cmp_fast_expr *priv = nft_expr_priv(expr);
-	क्रमागत nft_cmp_ops op = priv->inv ? NFT_CMP_NEQ : NFT_CMP_EQ;
-	काष्ठा nft_data data;
+static int nft_cmp_fast_dump(struct sk_buff *skb, const struct nft_expr *expr)
+{
+	const struct nft_cmp_fast_expr *priv = nft_expr_priv(expr);
+	enum nft_cmp_ops op = priv->inv ? NFT_CMP_NEQ : NFT_CMP_EQ;
+	struct nft_data data;
 
-	अगर (nft_dump_रेजिस्टर(skb, NFTA_CMP_SREG, priv->sreg))
-		जाओ nla_put_failure;
-	अगर (nla_put_be32(skb, NFTA_CMP_OP, htonl(op)))
-		जाओ nla_put_failure;
+	if (nft_dump_register(skb, NFTA_CMP_SREG, priv->sreg))
+		goto nla_put_failure;
+	if (nla_put_be32(skb, NFTA_CMP_OP, htonl(op)))
+		goto nla_put_failure;
 
 	data.data[0] = priv->data;
-	अगर (nft_data_dump(skb, NFTA_CMP_DATA, &data,
+	if (nft_data_dump(skb, NFTA_CMP_DATA, &data,
 			  NFT_DATA_VALUE, priv->len / BITS_PER_BYTE) < 0)
-		जाओ nla_put_failure;
-	वापस 0;
+		goto nla_put_failure;
+	return 0;
 
 nla_put_failure:
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-स्थिर काष्ठा nft_expr_ops nft_cmp_fast_ops = अणु
+const struct nft_expr_ops nft_cmp_fast_ops = {
 	.type		= &nft_cmp_type,
-	.size		= NFT_EXPR_SIZE(माप(काष्ठा nft_cmp_fast_expr)),
-	.eval		= शून्य,	/* अंतरभूतd */
+	.size		= NFT_EXPR_SIZE(sizeof(struct nft_cmp_fast_expr)),
+	.eval		= NULL,	/* inlined */
 	.init		= nft_cmp_fast_init,
 	.dump		= nft_cmp_fast_dump,
 	.offload	= nft_cmp_fast_offload,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा nft_expr_ops *
-nft_cmp_select_ops(स्थिर काष्ठा nft_ctx *ctx, स्थिर काष्ठा nlattr * स्थिर tb[])
-अणु
-	काष्ठा nft_data_desc desc;
-	काष्ठा nft_data data;
-	क्रमागत nft_cmp_ops op;
-	पूर्णांक err;
+static const struct nft_expr_ops *
+nft_cmp_select_ops(const struct nft_ctx *ctx, const struct nlattr * const tb[])
+{
+	struct nft_data_desc desc;
+	struct nft_data data;
+	enum nft_cmp_ops op;
+	int err;
 
-	अगर (tb[NFTA_CMP_SREG] == शून्य ||
-	    tb[NFTA_CMP_OP] == शून्य ||
-	    tb[NFTA_CMP_DATA] == शून्य)
-		वापस ERR_PTR(-EINVAL);
+	if (tb[NFTA_CMP_SREG] == NULL ||
+	    tb[NFTA_CMP_OP] == NULL ||
+	    tb[NFTA_CMP_DATA] == NULL)
+		return ERR_PTR(-EINVAL);
 
 	op = ntohl(nla_get_be32(tb[NFTA_CMP_OP]));
-	चयन (op) अणु
-	हाल NFT_CMP_EQ:
-	हाल NFT_CMP_NEQ:
-	हाल NFT_CMP_LT:
-	हाल NFT_CMP_LTE:
-	हाल NFT_CMP_GT:
-	हाल NFT_CMP_GTE:
-		अवरोध;
-	शेष:
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+	switch (op) {
+	case NFT_CMP_EQ:
+	case NFT_CMP_NEQ:
+	case NFT_CMP_LT:
+	case NFT_CMP_LTE:
+	case NFT_CMP_GT:
+	case NFT_CMP_GTE:
+		break;
+	default:
+		return ERR_PTR(-EINVAL);
+	}
 
-	err = nft_data_init(शून्य, &data, माप(data), &desc,
+	err = nft_data_init(NULL, &data, sizeof(data), &desc,
 			    tb[NFTA_CMP_DATA]);
-	अगर (err < 0)
-		वापस ERR_PTR(err);
+	if (err < 0)
+		return ERR_PTR(err);
 
-	अगर (desc.type != NFT_DATA_VALUE)
-		जाओ err1;
+	if (desc.type != NFT_DATA_VALUE)
+		goto err1;
 
-	अगर (desc.len <= माप(u32) && (op == NFT_CMP_EQ || op == NFT_CMP_NEQ))
-		वापस &nft_cmp_fast_ops;
+	if (desc.len <= sizeof(u32) && (op == NFT_CMP_EQ || op == NFT_CMP_NEQ))
+		return &nft_cmp_fast_ops;
 
-	वापस &nft_cmp_ops;
+	return &nft_cmp_ops;
 err1:
 	nft_data_release(&data, desc.type);
-	वापस ERR_PTR(-EINVAL);
-पूर्ण
+	return ERR_PTR(-EINVAL);
+}
 
-काष्ठा nft_expr_type nft_cmp_type __पढ़ो_mostly = अणु
+struct nft_expr_type nft_cmp_type __read_mostly = {
 	.name		= "cmp",
 	.select_ops	= nft_cmp_select_ops,
 	.policy		= nft_cmp_policy,
 	.maxattr	= NFTA_CMP_MAX,
 	.owner		= THIS_MODULE,
-पूर्ण;
+};

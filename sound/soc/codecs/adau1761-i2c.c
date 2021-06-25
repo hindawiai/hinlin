@@ -1,69 +1,68 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Driver क्रम ADAU1361/ADAU1461/ADAU1761/ADAU1961 codec
+ * Driver for ADAU1361/ADAU1461/ADAU1761/ADAU1961 codec
  *
  * Copyright 2014 Analog Devices Inc.
  *  Author: Lars-Peter Clausen <lars@metafoo.de>
  */
 
-#समावेश <linux/i2c.h>
-#समावेश <linux/mod_devicetable.h>
-#समावेश <linux/module.h>
-#समावेश <linux/regmap.h>
-#समावेश <sound/soc.h>
+#include <linux/i2c.h>
+#include <linux/mod_devicetable.h>
+#include <linux/module.h>
+#include <linux/regmap.h>
+#include <sound/soc.h>
 
-#समावेश "adau1761.h"
+#include "adau1761.h"
 
-अटल पूर्णांक adau1761_i2c_probe(काष्ठा i2c_client *client,
-	स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा regmap_config config;
+static int adau1761_i2c_probe(struct i2c_client *client,
+	const struct i2c_device_id *id)
+{
+	struct regmap_config config;
 
 	config = adau1761_regmap_config;
 	config.val_bits = 8;
 	config.reg_bits = 16;
 
-	वापस adau1761_probe(&client->dev,
+	return adau1761_probe(&client->dev,
 		devm_regmap_init_i2c(client, &config),
-		id->driver_data, शून्य);
-पूर्ण
+		id->driver_data, NULL);
+}
 
-अटल पूर्णांक adau1761_i2c_हटाओ(काष्ठा i2c_client *client)
-अणु
-	adau17x1_हटाओ(&client->dev);
-	वापस 0;
-पूर्ण
+static int adau1761_i2c_remove(struct i2c_client *client)
+{
+	adau17x1_remove(&client->dev);
+	return 0;
+}
 
-अटल स्थिर काष्ठा i2c_device_id adau1761_i2c_ids[] = अणु
-	अणु "adau1361", ADAU1361 पूर्ण,
-	अणु "adau1461", ADAU1761 पूर्ण,
-	अणु "adau1761", ADAU1761 पूर्ण,
-	अणु "adau1961", ADAU1361 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id adau1761_i2c_ids[] = {
+	{ "adau1361", ADAU1361 },
+	{ "adau1461", ADAU1761 },
+	{ "adau1761", ADAU1761 },
+	{ "adau1961", ADAU1361 },
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, adau1761_i2c_ids);
 
-#अगर defined(CONFIG_OF)
-अटल स्थिर काष्ठा of_device_id adau1761_i2c_dt_ids[] = अणु
-	अणु .compatible = "adi,adau1361", पूर्ण,
-	अणु .compatible = "adi,adau1461", पूर्ण,
-	अणु .compatible = "adi,adau1761", पूर्ण,
-	अणु .compatible = "adi,adau1961", पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+#if defined(CONFIG_OF)
+static const struct of_device_id adau1761_i2c_dt_ids[] = {
+	{ .compatible = "adi,adau1361", },
+	{ .compatible = "adi,adau1461", },
+	{ .compatible = "adi,adau1761", },
+	{ .compatible = "adi,adau1961", },
+	{ },
+};
 MODULE_DEVICE_TABLE(of, adau1761_i2c_dt_ids);
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा i2c_driver adau1761_i2c_driver = अणु
-	.driver = अणु
+static struct i2c_driver adau1761_i2c_driver = {
+	.driver = {
 		.name = "adau1761",
 		.of_match_table = of_match_ptr(adau1761_i2c_dt_ids),
-	पूर्ण,
+	},
 	.probe = adau1761_i2c_probe,
-	.हटाओ = adau1761_i2c_हटाओ,
+	.remove = adau1761_i2c_remove,
 	.id_table = adau1761_i2c_ids,
-पूर्ण;
+};
 module_i2c_driver(adau1761_i2c_driver);
 
 MODULE_DESCRIPTION("ASoC ADAU1361/ADAU1461/ADAU1761/ADAU1961 CODEC I2C driver");

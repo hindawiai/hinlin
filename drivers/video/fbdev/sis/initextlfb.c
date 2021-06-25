@@ -1,219 +1,218 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * SiS 300/540/630[S]/730[S]
  * SiS 315[E|PRO]/550/[M]65x/[M]66x[F|M|G]X/[M]74x[GX]/330/[M]76x[GX]
  * XGI V3XT/V5/V8, Z7
- * frame buffer driver क्रम Linux kernels >= 2.4.14 and >=2.6.3
+ * frame buffer driver for Linux kernels >= 2.4.14 and >=2.6.3
  *
- * Linux kernel specअगरic extensions to init.c/init301.c
+ * Linux kernel specific extensions to init.c/init301.c
  *
  * Copyright (C) 2001-2005 Thomas Winischhofer, Vienna, Austria.
  *
  * Author:	Thomas Winischhofer <thomas@winischhofer.net>
  */
 
-#समावेश "initdef.h"
-#समावेश "vgatypes.h"
-#समावेश "vstruct.h"
+#include "initdef.h"
+#include "vgatypes.h"
+#include "vstruct.h"
 
-#समावेश <linux/types.h>
-#समावेश <linux/fb.h>
+#include <linux/types.h>
+#include <linux/fb.h>
 
-पूर्णांक		sisfb_mode_rate_to_dघड़ी(काष्ठा SiS_Private *SiS_Pr,
-			अचिन्हित अक्षर modeno, अचिन्हित अक्षर rateindex);
-पूर्णांक		sisfb_mode_rate_to_ddata(काष्ठा SiS_Private *SiS_Pr, अचिन्हित अक्षर modeno,
-			अचिन्हित अक्षर rateindex, काष्ठा fb_var_screeninfo *var);
-bool		sisfb_gettotalfrommode(काष्ठा SiS_Private *SiS_Pr, अचिन्हित अक्षर modeno,
-			पूर्णांक *htotal, पूर्णांक *vtotal, अचिन्हित अक्षर rateindex);
+int		sisfb_mode_rate_to_dclock(struct SiS_Private *SiS_Pr,
+			unsigned char modeno, unsigned char rateindex);
+int		sisfb_mode_rate_to_ddata(struct SiS_Private *SiS_Pr, unsigned char modeno,
+			unsigned char rateindex, struct fb_var_screeninfo *var);
+bool		sisfb_gettotalfrommode(struct SiS_Private *SiS_Pr, unsigned char modeno,
+			int *htotal, int *vtotal, unsigned char rateindex);
 
-बाह्य bool	SiSInitPtr(काष्ठा SiS_Private *SiS_Pr);
-बाह्य bool	SiS_SearchModeID(काष्ठा SiS_Private *SiS_Pr, अचिन्हित लघु *ModeNo,
-			अचिन्हित लघु *ModeIdIndex);
-बाह्य व्योम	SiS_Generic_ConvertCRData(काष्ठा SiS_Private *SiS_Pr, अचिन्हित अक्षर *crdata,
-			पूर्णांक xres, पूर्णांक yres, काष्ठा fb_var_screeninfo *var, bool ग_लिखोres);
+extern bool	SiSInitPtr(struct SiS_Private *SiS_Pr);
+extern bool	SiS_SearchModeID(struct SiS_Private *SiS_Pr, unsigned short *ModeNo,
+			unsigned short *ModeIdIndex);
+extern void	SiS_Generic_ConvertCRData(struct SiS_Private *SiS_Pr, unsigned char *crdata,
+			int xres, int yres, struct fb_var_screeninfo *var, bool writeres);
 
-पूर्णांक
-sisfb_mode_rate_to_dघड़ी(काष्ठा SiS_Private *SiS_Pr, अचिन्हित अक्षर modeno,
-			अचिन्हित अक्षर rateindex)
-अणु
-    अचिन्हित लघु ModeNo = modeno;
-    अचिन्हित लघु ModeIdIndex = 0, ClockIndex = 0;
-    अचिन्हित लघु RRTI = 0;
-    पूर्णांक Clock;
+int
+sisfb_mode_rate_to_dclock(struct SiS_Private *SiS_Pr, unsigned char modeno,
+			unsigned char rateindex)
+{
+    unsigned short ModeNo = modeno;
+    unsigned short ModeIdIndex = 0, ClockIndex = 0;
+    unsigned short RRTI = 0;
+    int Clock;
 
-    अगर(!SiSInitPtr(SiS_Pr)) वापस 65000;
+    if(!SiSInitPtr(SiS_Pr)) return 65000;
 
-    अगर(rateindex > 0) rateindex--;
+    if(rateindex > 0) rateindex--;
 
-#अगर_घोषित CONFIG_FB_SIS_315
-    चयन(ModeNo) अणु
-    हाल 0x5a: ModeNo = 0x50; अवरोध;
-    हाल 0x5b: ModeNo = 0x56;
-    पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_FB_SIS_315
+    switch(ModeNo) {
+    case 0x5a: ModeNo = 0x50; break;
+    case 0x5b: ModeNo = 0x56;
+    }
+#endif
 
-    अगर(!(SiS_SearchModeID(SiS_Pr, &ModeNo, &ModeIdIndex))) अणु
-       prपूर्णांकk(KERN_ERR "Could not find mode %x\n", ModeNo);
-       वापस 65000;
-    पूर्ण
+    if(!(SiS_SearchModeID(SiS_Pr, &ModeNo, &ModeIdIndex))) {
+       printk(KERN_ERR "Could not find mode %x\n", ModeNo);
+       return 65000;
+    }
 
     RRTI = SiS_Pr->SiS_EModeIDTable[ModeIdIndex].REFindex;
 
-    अगर(SiS_Pr->SiS_RefIndex[RRTI].Ext_InfoFlag & HaveWideTiming) अणु
-       अगर(SiS_Pr->SiS_UseWide == 1) अणु
+    if(SiS_Pr->SiS_RefIndex[RRTI].Ext_InfoFlag & HaveWideTiming) {
+       if(SiS_Pr->SiS_UseWide == 1) {
 	  /* Wide screen: Ignore rateindex */
 	  ClockIndex = SiS_Pr->SiS_RefIndex[RRTI].Ext_CRTVCLK_WIDE;
-       पूर्ण अन्यथा अणु
+       } else {
 	  RRTI += rateindex;
 	  ClockIndex = SiS_Pr->SiS_RefIndex[RRTI].Ext_CRTVCLK_NORM;
-       पूर्ण
-    पूर्ण अन्यथा अणु
+       }
+    } else {
        RRTI += rateindex;
        ClockIndex = SiS_Pr->SiS_RefIndex[RRTI].Ext_CRTVCLK;
-    पूर्ण
+    }
 
     Clock = SiS_Pr->SiS_VCLKData[ClockIndex].CLOCK * 1000;
 
-    वापस Clock;
-पूर्ण
+    return Clock;
+}
 
-पूर्णांक
-sisfb_mode_rate_to_ddata(काष्ठा SiS_Private *SiS_Pr, अचिन्हित अक्षर modeno,
-			अचिन्हित अक्षर rateindex, काष्ठा fb_var_screeninfo *var)
-अणु
-    अचिन्हित लघु ModeNo = modeno;
-    अचिन्हित लघु ModeIdIndex = 0, index = 0, RRTI = 0;
-    पूर्णांक            j;
+int
+sisfb_mode_rate_to_ddata(struct SiS_Private *SiS_Pr, unsigned char modeno,
+			unsigned char rateindex, struct fb_var_screeninfo *var)
+{
+    unsigned short ModeNo = modeno;
+    unsigned short ModeIdIndex = 0, index = 0, RRTI = 0;
+    int            j;
 
-    अगर(!SiSInitPtr(SiS_Pr)) वापस 0;
+    if(!SiSInitPtr(SiS_Pr)) return 0;
 
-    अगर(rateindex > 0) rateindex--;
+    if(rateindex > 0) rateindex--;
 
-#अगर_घोषित CONFIG_FB_SIS_315
-    चयन(ModeNo) अणु
-       हाल 0x5a: ModeNo = 0x50; अवरोध;
-       हाल 0x5b: ModeNo = 0x56;
-    पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_FB_SIS_315
+    switch(ModeNo) {
+       case 0x5a: ModeNo = 0x50; break;
+       case 0x5b: ModeNo = 0x56;
+    }
+#endif
 
-    अगर(!(SiS_SearchModeID(SiS_Pr, &ModeNo, &ModeIdIndex))) वापस 0;
+    if(!(SiS_SearchModeID(SiS_Pr, &ModeNo, &ModeIdIndex))) return 0;
 
     RRTI = SiS_Pr->SiS_EModeIDTable[ModeIdIndex].REFindex;
-    अगर(SiS_Pr->SiS_RefIndex[RRTI].Ext_InfoFlag & HaveWideTiming) अणु
-       अगर(SiS_Pr->SiS_UseWide == 1) अणु
+    if(SiS_Pr->SiS_RefIndex[RRTI].Ext_InfoFlag & HaveWideTiming) {
+       if(SiS_Pr->SiS_UseWide == 1) {
 	  /* Wide screen: Ignore rateindex */
 	  index = SiS_Pr->SiS_RefIndex[RRTI].Ext_CRT1CRTC_WIDE;
-       पूर्ण अन्यथा अणु
+       } else {
 	  RRTI += rateindex;
 	  index = SiS_Pr->SiS_RefIndex[RRTI].Ext_CRT1CRTC_NORM;
-       पूर्ण
-    पूर्ण अन्यथा अणु
+       }
+    } else {
        RRTI += rateindex;
        index = SiS_Pr->SiS_RefIndex[RRTI].Ext_CRT1CRTC;
-    पूर्ण
+    }
 
     SiS_Generic_ConvertCRData(SiS_Pr,
-			(अचिन्हित अक्षर *)&SiS_Pr->SiS_CRT1Table[index].CR[0],
+			(unsigned char *)&SiS_Pr->SiS_CRT1Table[index].CR[0],
 			SiS_Pr->SiS_RefIndex[RRTI].XRes,
 			SiS_Pr->SiS_RefIndex[RRTI].YRes,
 			var, false);
 
-    अगर(SiS_Pr->SiS_RefIndex[RRTI].Ext_InfoFlag & 0x8000)
+    if(SiS_Pr->SiS_RefIndex[RRTI].Ext_InfoFlag & 0x8000)
        var->sync &= ~FB_SYNC_VERT_HIGH_ACT;
-    अन्यथा
+    else
        var->sync |= FB_SYNC_VERT_HIGH_ACT;
 
-    अगर(SiS_Pr->SiS_RefIndex[RRTI].Ext_InfoFlag & 0x4000)
+    if(SiS_Pr->SiS_RefIndex[RRTI].Ext_InfoFlag & 0x4000)
        var->sync &= ~FB_SYNC_HOR_HIGH_ACT;
-    अन्यथा
+    else
        var->sync |= FB_SYNC_HOR_HIGH_ACT;
 
     var->vmode = FB_VMODE_NONINTERLACED;
-    अगर(SiS_Pr->SiS_RefIndex[RRTI].Ext_InfoFlag & 0x0080)
+    if(SiS_Pr->SiS_RefIndex[RRTI].Ext_InfoFlag & 0x0080)
        var->vmode = FB_VMODE_INTERLACED;
-    अन्यथा अणु
+    else {
        j = 0;
-       जबतक(SiS_Pr->SiS_EModeIDTable[j].Ext_ModeID != 0xff) अणु
-	  अगर(SiS_Pr->SiS_EModeIDTable[j].Ext_ModeID ==
-	                  SiS_Pr->SiS_RefIndex[RRTI].ModeID) अणु
-	      अगर(SiS_Pr->SiS_EModeIDTable[j].Ext_ModeFlag & DoubleScanMode) अणु
+       while(SiS_Pr->SiS_EModeIDTable[j].Ext_ModeID != 0xff) {
+	  if(SiS_Pr->SiS_EModeIDTable[j].Ext_ModeID ==
+	                  SiS_Pr->SiS_RefIndex[RRTI].ModeID) {
+	      if(SiS_Pr->SiS_EModeIDTable[j].Ext_ModeFlag & DoubleScanMode) {
 	      	  var->vmode = FB_VMODE_DOUBLE;
-	      पूर्ण
-	      अवरोध;
-	  पूर्ण
+	      }
+	      break;
+	  }
 	  j++;
-       पूर्ण
-    पूर्ण
+       }
+    }
 
-    अगर((var->vmode & FB_VMODE_MASK) == FB_VMODE_INTERLACED) अणु
-#अगर 0  /* Do this? */
+    if((var->vmode & FB_VMODE_MASK) == FB_VMODE_INTERLACED) {
+#if 0  /* Do this? */
        var->upper_margin <<= 1;
        var->lower_margin <<= 1;
        var->vsync_len <<= 1;
-#पूर्ण_अगर
-    पूर्ण अन्यथा अगर((var->vmode & FB_VMODE_MASK) == FB_VMODE_DOUBLE) अणु
+#endif
+    } else if((var->vmode & FB_VMODE_MASK) == FB_VMODE_DOUBLE) {
        var->upper_margin >>= 1;
        var->lower_margin >>= 1;
        var->vsync_len >>= 1;
-    पूर्ण
+    }
 
-    वापस 1;
-पूर्ण
+    return 1;
+}
 
 bool
-sisfb_gettotalfrommode(काष्ठा SiS_Private *SiS_Pr, अचिन्हित अक्षर modeno, पूर्णांक *htotal,
-			पूर्णांक *vtotal, अचिन्हित अक्षर rateindex)
-अणु
-    अचिन्हित लघु ModeNo = modeno;
-    अचिन्हित लघु ModeIdIndex = 0, CRT1Index = 0;
-    अचिन्हित लघु RRTI = 0;
-    अचिन्हित अक्षर  sr_data, cr_data, cr_data2;
+sisfb_gettotalfrommode(struct SiS_Private *SiS_Pr, unsigned char modeno, int *htotal,
+			int *vtotal, unsigned char rateindex)
+{
+    unsigned short ModeNo = modeno;
+    unsigned short ModeIdIndex = 0, CRT1Index = 0;
+    unsigned short RRTI = 0;
+    unsigned char  sr_data, cr_data, cr_data2;
 
-    अगर(!SiSInitPtr(SiS_Pr)) वापस false;
+    if(!SiSInitPtr(SiS_Pr)) return false;
 
-    अगर(rateindex > 0) rateindex--;
+    if(rateindex > 0) rateindex--;
 
-#अगर_घोषित CONFIG_FB_SIS_315
-    चयन(ModeNo) अणु
-       हाल 0x5a: ModeNo = 0x50; अवरोध;
-       हाल 0x5b: ModeNo = 0x56;
-    पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_FB_SIS_315
+    switch(ModeNo) {
+       case 0x5a: ModeNo = 0x50; break;
+       case 0x5b: ModeNo = 0x56;
+    }
+#endif
 
-    अगर(!(SiS_SearchModeID(SiS_Pr, &ModeNo, &ModeIdIndex))) वापस false;
+    if(!(SiS_SearchModeID(SiS_Pr, &ModeNo, &ModeIdIndex))) return false;
 
     RRTI = SiS_Pr->SiS_EModeIDTable[ModeIdIndex].REFindex;
-    अगर(SiS_Pr->SiS_RefIndex[RRTI].Ext_InfoFlag & HaveWideTiming) अणु
-       अगर(SiS_Pr->SiS_UseWide == 1) अणु
+    if(SiS_Pr->SiS_RefIndex[RRTI].Ext_InfoFlag & HaveWideTiming) {
+       if(SiS_Pr->SiS_UseWide == 1) {
 	  /* Wide screen: Ignore rateindex */
 	  CRT1Index = SiS_Pr->SiS_RefIndex[RRTI].Ext_CRT1CRTC_WIDE;
-       पूर्ण अन्यथा अणु
+       } else {
 	  RRTI += rateindex;
 	  CRT1Index = SiS_Pr->SiS_RefIndex[RRTI].Ext_CRT1CRTC_NORM;
-       पूर्ण
-    पूर्ण अन्यथा अणु
+       }
+    } else {
        RRTI += rateindex;
        CRT1Index = SiS_Pr->SiS_RefIndex[RRTI].Ext_CRT1CRTC;
-    पूर्ण
+    }
 
     sr_data = SiS_Pr->SiS_CRT1Table[CRT1Index].CR[14];
     cr_data = SiS_Pr->SiS_CRT1Table[CRT1Index].CR[0];
-    *htotal = (((cr_data & 0xff) | ((अचिन्हित लघु) (sr_data & 0x03) << 8)) + 5) * 8;
+    *htotal = (((cr_data & 0xff) | ((unsigned short) (sr_data & 0x03) << 8)) + 5) * 8;
 
     sr_data = SiS_Pr->SiS_CRT1Table[CRT1Index].CR[13];
     cr_data = SiS_Pr->SiS_CRT1Table[CRT1Index].CR[6];
     cr_data2 = SiS_Pr->SiS_CRT1Table[CRT1Index].CR[7];
     *vtotal = ((cr_data & 0xFF) |
-	       ((अचिन्हित लघु)(cr_data2 & 0x01) <<  8) |
-	       ((अचिन्हित लघु)(cr_data2 & 0x20) <<  4) |
-	       ((अचिन्हित लघु)(sr_data  & 0x01) << 10)) + 2;
+	       ((unsigned short)(cr_data2 & 0x01) <<  8) |
+	       ((unsigned short)(cr_data2 & 0x20) <<  4) |
+	       ((unsigned short)(sr_data  & 0x01) << 10)) + 2;
 
-    अगर(SiS_Pr->SiS_RefIndex[RRTI].Ext_InfoFlag & InterlaceMode)
+    if(SiS_Pr->SiS_RefIndex[RRTI].Ext_InfoFlag & InterlaceMode)
        *vtotal *= 2;
 
-    वापस true;
-पूर्ण
+    return true;
+}
 
 
 

@@ -1,82 +1,81 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /* L2TPv3 IP encapsulation support
  *
  * Copyright (c) 2008,2009,2010 Katalix Systems Ltd
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <यंत्र/ioctls.h>
-#समावेश <linux/icmp.h>
-#समावेश <linux/module.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/अक्रमom.h>
-#समावेश <linux/socket.h>
-#समावेश <linux/l2tp.h>
-#समावेश <linux/in.h>
-#समावेश <net/sock.h>
-#समावेश <net/ip.h>
-#समावेश <net/icmp.h>
-#समावेश <net/udp.h>
-#समावेश <net/inet_common.h>
-#समावेश <net/tcp_states.h>
-#समावेश <net/protocol.h>
-#समावेश <net/xfrm.h>
+#include <asm/ioctls.h>
+#include <linux/icmp.h>
+#include <linux/module.h>
+#include <linux/skbuff.h>
+#include <linux/random.h>
+#include <linux/socket.h>
+#include <linux/l2tp.h>
+#include <linux/in.h>
+#include <net/sock.h>
+#include <net/ip.h>
+#include <net/icmp.h>
+#include <net/udp.h>
+#include <net/inet_common.h>
+#include <net/tcp_states.h>
+#include <net/protocol.h>
+#include <net/xfrm.h>
 
-#समावेश "l2tp_core.h"
+#include "l2tp_core.h"
 
-काष्ठा l2tp_ip_sock अणु
+struct l2tp_ip_sock {
 	/* inet_sock has to be the first member of l2tp_ip_sock */
-	काष्ठा inet_sock	inet;
+	struct inet_sock	inet;
 
 	u32			conn_id;
 	u32			peer_conn_id;
-पूर्ण;
+};
 
-अटल DEFINE_RWLOCK(l2tp_ip_lock);
-अटल काष्ठा hlist_head l2tp_ip_table;
-अटल काष्ठा hlist_head l2tp_ip_bind_table;
+static DEFINE_RWLOCK(l2tp_ip_lock);
+static struct hlist_head l2tp_ip_table;
+static struct hlist_head l2tp_ip_bind_table;
 
-अटल अंतरभूत काष्ठा l2tp_ip_sock *l2tp_ip_sk(स्थिर काष्ठा sock *sk)
-अणु
-	वापस (काष्ठा l2tp_ip_sock *)sk;
-पूर्ण
+static inline struct l2tp_ip_sock *l2tp_ip_sk(const struct sock *sk)
+{
+	return (struct l2tp_ip_sock *)sk;
+}
 
-अटल काष्ठा sock *__l2tp_ip_bind_lookup(स्थिर काष्ठा net *net, __be32 laddr,
-					  __be32 raddr, पूर्णांक dअगर, u32 tunnel_id)
-अणु
-	काष्ठा sock *sk;
+static struct sock *__l2tp_ip_bind_lookup(const struct net *net, __be32 laddr,
+					  __be32 raddr, int dif, u32 tunnel_id)
+{
+	struct sock *sk;
 
-	sk_क्रम_each_bound(sk, &l2tp_ip_bind_table) अणु
-		स्थिर काष्ठा l2tp_ip_sock *l2tp = l2tp_ip_sk(sk);
-		स्थिर काष्ठा inet_sock *inet = inet_sk(sk);
+	sk_for_each_bound(sk, &l2tp_ip_bind_table) {
+		const struct l2tp_ip_sock *l2tp = l2tp_ip_sk(sk);
+		const struct inet_sock *inet = inet_sk(sk);
 
-		अगर (!net_eq(sock_net(sk), net))
-			जारी;
+		if (!net_eq(sock_net(sk), net))
+			continue;
 
-		अगर (sk->sk_bound_dev_अगर && dअगर && sk->sk_bound_dev_अगर != dअगर)
-			जारी;
+		if (sk->sk_bound_dev_if && dif && sk->sk_bound_dev_if != dif)
+			continue;
 
-		अगर (inet->inet_rcv_saddr && laddr &&
+		if (inet->inet_rcv_saddr && laddr &&
 		    inet->inet_rcv_saddr != laddr)
-			जारी;
+			continue;
 
-		अगर (inet->inet_daddr && raddr && inet->inet_daddr != raddr)
-			जारी;
+		if (inet->inet_daddr && raddr && inet->inet_daddr != raddr)
+			continue;
 
-		अगर (l2tp->conn_id != tunnel_id)
-			जारी;
+		if (l2tp->conn_id != tunnel_id)
+			continue;
 
-		जाओ found;
-	पूर्ण
+		goto found;
+	}
 
-	sk = शून्य;
+	sk = NULL;
 found:
-	वापस sk;
-पूर्ण
+	return sk;
+}
 
-/* When processing receive frames, there are two हालs to
+/* When processing receive frames, there are two cases to
  * consider. Data frames consist of a non-zero session-id and an
  * optional cookie. Control frames consist of a regular L2TP header
  * preceded by 32-bits of zeros.
@@ -109,21 +108,21 @@ found:
  *
  * All control frames are passed to userspace.
  */
-अटल पूर्णांक l2tp_ip_recv(काष्ठा sk_buff *skb)
-अणु
-	काष्ठा net *net = dev_net(skb->dev);
-	काष्ठा sock *sk;
+static int l2tp_ip_recv(struct sk_buff *skb)
+{
+	struct net *net = dev_net(skb->dev);
+	struct sock *sk;
 	u32 session_id;
 	u32 tunnel_id;
-	अचिन्हित अक्षर *ptr, *optr;
-	काष्ठा l2tp_session *session;
-	काष्ठा l2tp_tunnel *tunnel = शून्य;
-	काष्ठा iphdr *iph;
+	unsigned char *ptr, *optr;
+	struct l2tp_session *session;
+	struct l2tp_tunnel *tunnel = NULL;
+	struct iphdr *iph;
 
-	अगर (!pskb_may_pull(skb, 4))
-		जाओ discard;
+	if (!pskb_may_pull(skb, 4))
+		goto discard;
 
-	/* Poपूर्णांक to L2TP header */
+	/* Point to L2TP header */
 	optr = skb->data;
 	ptr = skb->data;
 	session_id = ntohl(*((__be32 *)ptr));
@@ -133,166 +132,166 @@ found:
 	 * the session_id. If it is 0, the packet is a L2TP control
 	 * frame and the session_id value can be discarded.
 	 */
-	अगर (session_id == 0) अणु
+	if (session_id == 0) {
 		__skb_pull(skb, 4);
-		जाओ pass_up;
-	पूर्ण
+		goto pass_up;
+	}
 
 	/* Ok, this is a data packet. Lookup the session. */
 	session = l2tp_session_get(net, session_id);
-	अगर (!session)
-		जाओ discard;
+	if (!session)
+		goto discard;
 
 	tunnel = session->tunnel;
-	अगर (!tunnel)
-		जाओ discard_sess;
+	if (!tunnel)
+		goto discard_sess;
 
-	अगर (l2tp_v3_ensure_opt_in_linear(session, skb, &ptr, &optr))
-		जाओ discard_sess;
+	if (l2tp_v3_ensure_opt_in_linear(session, skb, &ptr, &optr))
+		goto discard_sess;
 
 	l2tp_recv_common(session, skb, ptr, optr, 0, skb->len);
 	l2tp_session_dec_refcount(session);
 
-	वापस 0;
+	return 0;
 
 pass_up:
 	/* Get the tunnel_id from the L2TP header */
-	अगर (!pskb_may_pull(skb, 12))
-		जाओ discard;
+	if (!pskb_may_pull(skb, 12))
+		goto discard;
 
-	अगर ((skb->data[0] & 0xc0) != 0xc0)
-		जाओ discard;
+	if ((skb->data[0] & 0xc0) != 0xc0)
+		goto discard;
 
 	tunnel_id = ntohl(*(__be32 *)&skb->data[4]);
-	iph = (काष्ठा iphdr *)skb_network_header(skb);
+	iph = (struct iphdr *)skb_network_header(skb);
 
-	पढ़ो_lock_bh(&l2tp_ip_lock);
-	sk = __l2tp_ip_bind_lookup(net, iph->daddr, iph->saddr, inet_iअगर(skb),
+	read_lock_bh(&l2tp_ip_lock);
+	sk = __l2tp_ip_bind_lookup(net, iph->daddr, iph->saddr, inet_iif(skb),
 				   tunnel_id);
-	अगर (!sk) अणु
-		पढ़ो_unlock_bh(&l2tp_ip_lock);
-		जाओ discard;
-	पूर्ण
+	if (!sk) {
+		read_unlock_bh(&l2tp_ip_lock);
+		goto discard;
+	}
 	sock_hold(sk);
-	पढ़ो_unlock_bh(&l2tp_ip_lock);
+	read_unlock_bh(&l2tp_ip_lock);
 
-	अगर (!xfrm4_policy_check(sk, XFRM_POLICY_IN, skb))
-		जाओ discard_put;
+	if (!xfrm4_policy_check(sk, XFRM_POLICY_IN, skb))
+		goto discard_put;
 
 	nf_reset_ct(skb);
 
-	वापस sk_receive_skb(sk, skb, 1);
+	return sk_receive_skb(sk, skb, 1);
 
 discard_sess:
 	l2tp_session_dec_refcount(session);
-	जाओ discard;
+	goto discard;
 
 discard_put:
 	sock_put(sk);
 
 discard:
-	kमुक्त_skb(skb);
-	वापस 0;
-पूर्ण
+	kfree_skb(skb);
+	return 0;
+}
 
-अटल पूर्णांक l2tp_ip_hash(काष्ठा sock *sk)
-अणु
-	अगर (sk_unhashed(sk)) अणु
-		ग_लिखो_lock_bh(&l2tp_ip_lock);
+static int l2tp_ip_hash(struct sock *sk)
+{
+	if (sk_unhashed(sk)) {
+		write_lock_bh(&l2tp_ip_lock);
 		sk_add_node(sk, &l2tp_ip_table);
-		ग_लिखो_unlock_bh(&l2tp_ip_lock);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		write_unlock_bh(&l2tp_ip_lock);
+	}
+	return 0;
+}
 
-अटल व्योम l2tp_ip_unhash(काष्ठा sock *sk)
-अणु
-	अगर (sk_unhashed(sk))
-		वापस;
-	ग_लिखो_lock_bh(&l2tp_ip_lock);
+static void l2tp_ip_unhash(struct sock *sk)
+{
+	if (sk_unhashed(sk))
+		return;
+	write_lock_bh(&l2tp_ip_lock);
 	sk_del_node_init(sk);
-	ग_लिखो_unlock_bh(&l2tp_ip_lock);
-पूर्ण
+	write_unlock_bh(&l2tp_ip_lock);
+}
 
-अटल पूर्णांक l2tp_ip_खोलो(काष्ठा sock *sk)
-अणु
-	/* Prevent स्वतःbind. We करोn't have ports. */
+static int l2tp_ip_open(struct sock *sk)
+{
+	/* Prevent autobind. We don't have ports. */
 	inet_sk(sk)->inet_num = IPPROTO_L2TP;
 
 	l2tp_ip_hash(sk);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम l2tp_ip_बंद(काष्ठा sock *sk, दीर्घ समयout)
-अणु
-	ग_लिखो_lock_bh(&l2tp_ip_lock);
+static void l2tp_ip_close(struct sock *sk, long timeout)
+{
+	write_lock_bh(&l2tp_ip_lock);
 	hlist_del_init(&sk->sk_bind_node);
 	sk_del_node_init(sk);
-	ग_लिखो_unlock_bh(&l2tp_ip_lock);
+	write_unlock_bh(&l2tp_ip_lock);
 	sk_common_release(sk);
-पूर्ण
+}
 
-अटल व्योम l2tp_ip_destroy_sock(काष्ठा sock *sk)
-अणु
-	काष्ठा l2tp_tunnel *tunnel = l2tp_sk_to_tunnel(sk);
-	काष्ठा sk_buff *skb;
+static void l2tp_ip_destroy_sock(struct sock *sk)
+{
+	struct l2tp_tunnel *tunnel = l2tp_sk_to_tunnel(sk);
+	struct sk_buff *skb;
 
-	जबतक ((skb = __skb_dequeue_tail(&sk->sk_ग_लिखो_queue)) != शून्य)
-		kमुक्त_skb(skb);
+	while ((skb = __skb_dequeue_tail(&sk->sk_write_queue)) != NULL)
+		kfree_skb(skb);
 
-	अगर (tunnel)
+	if (tunnel)
 		l2tp_tunnel_delete(tunnel);
-पूर्ण
+}
 
-अटल पूर्णांक l2tp_ip_bind(काष्ठा sock *sk, काष्ठा sockaddr *uaddr, पूर्णांक addr_len)
-अणु
-	काष्ठा inet_sock *inet = inet_sk(sk);
-	काष्ठा sockaddr_l2tpip *addr = (काष्ठा sockaddr_l2tpip *)uaddr;
-	काष्ठा net *net = sock_net(sk);
-	पूर्णांक ret;
-	पूर्णांक chk_addr_ret;
+static int l2tp_ip_bind(struct sock *sk, struct sockaddr *uaddr, int addr_len)
+{
+	struct inet_sock *inet = inet_sk(sk);
+	struct sockaddr_l2tpip *addr = (struct sockaddr_l2tpip *)uaddr;
+	struct net *net = sock_net(sk);
+	int ret;
+	int chk_addr_ret;
 
-	अगर (addr_len < माप(काष्ठा sockaddr_l2tpip))
-		वापस -EINVAL;
-	अगर (addr->l2tp_family != AF_INET)
-		वापस -EINVAL;
+	if (addr_len < sizeof(struct sockaddr_l2tpip))
+		return -EINVAL;
+	if (addr->l2tp_family != AF_INET)
+		return -EINVAL;
 
 	lock_sock(sk);
 
 	ret = -EINVAL;
-	अगर (!sock_flag(sk, SOCK_ZAPPED))
-		जाओ out;
+	if (!sock_flag(sk, SOCK_ZAPPED))
+		goto out;
 
-	अगर (sk->sk_state != TCP_CLOSE)
-		जाओ out;
+	if (sk->sk_state != TCP_CLOSE)
+		goto out;
 
 	chk_addr_ret = inet_addr_type(net, addr->l2tp_addr.s_addr);
 	ret = -EADDRNOTAVAIL;
-	अगर (addr->l2tp_addr.s_addr && chk_addr_ret != RTN_LOCAL &&
+	if (addr->l2tp_addr.s_addr && chk_addr_ret != RTN_LOCAL &&
 	    chk_addr_ret != RTN_MULTICAST && chk_addr_ret != RTN_BROADCAST)
-		जाओ out;
+		goto out;
 
-	अगर (addr->l2tp_addr.s_addr) अणु
+	if (addr->l2tp_addr.s_addr) {
 		inet->inet_rcv_saddr = addr->l2tp_addr.s_addr;
 		inet->inet_saddr = addr->l2tp_addr.s_addr;
-	पूर्ण
-	अगर (chk_addr_ret == RTN_MULTICAST || chk_addr_ret == RTN_BROADCAST)
+	}
+	if (chk_addr_ret == RTN_MULTICAST || chk_addr_ret == RTN_BROADCAST)
 		inet->inet_saddr = 0;  /* Use device */
 
-	ग_लिखो_lock_bh(&l2tp_ip_lock);
-	अगर (__l2tp_ip_bind_lookup(net, addr->l2tp_addr.s_addr, 0,
-				  sk->sk_bound_dev_अगर, addr->l2tp_conn_id)) अणु
-		ग_लिखो_unlock_bh(&l2tp_ip_lock);
+	write_lock_bh(&l2tp_ip_lock);
+	if (__l2tp_ip_bind_lookup(net, addr->l2tp_addr.s_addr, 0,
+				  sk->sk_bound_dev_if, addr->l2tp_conn_id)) {
+		write_unlock_bh(&l2tp_ip_lock);
 		ret = -EADDRINUSE;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	sk_dst_reset(sk);
 	l2tp_ip_sk(sk)->conn_id = addr->l2tp_conn_id;
 
 	sk_add_bind_node(sk, &l2tp_ip_bind_table);
 	sk_del_node_init(sk);
-	ग_लिखो_unlock_bh(&l2tp_ip_lock);
+	write_unlock_bh(&l2tp_ip_lock);
 
 	ret = 0;
 	sock_reset_flag(sk, SOCK_ZAPPED);
@@ -300,312 +299,312 @@ discard:
 out:
 	release_sock(sk);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक l2tp_ip_connect(काष्ठा sock *sk, काष्ठा sockaddr *uaddr, पूर्णांक addr_len)
-अणु
-	काष्ठा sockaddr_l2tpip *lsa = (काष्ठा sockaddr_l2tpip *)uaddr;
-	पूर्णांक rc;
+static int l2tp_ip_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len)
+{
+	struct sockaddr_l2tpip *lsa = (struct sockaddr_l2tpip *)uaddr;
+	int rc;
 
-	अगर (addr_len < माप(*lsa))
-		वापस -EINVAL;
+	if (addr_len < sizeof(*lsa))
+		return -EINVAL;
 
-	अगर (ipv4_is_multicast(lsa->l2tp_addr.s_addr))
-		वापस -EINVAL;
+	if (ipv4_is_multicast(lsa->l2tp_addr.s_addr))
+		return -EINVAL;
 
 	lock_sock(sk);
 
-	/* Must bind first - स्वतःbinding करोes not work */
-	अगर (sock_flag(sk, SOCK_ZAPPED)) अणु
+	/* Must bind first - autobinding does not work */
+	if (sock_flag(sk, SOCK_ZAPPED)) {
 		rc = -EINVAL;
-		जाओ out_sk;
-	पूर्ण
+		goto out_sk;
+	}
 
 	rc = __ip4_datagram_connect(sk, uaddr, addr_len);
-	अगर (rc < 0)
-		जाओ out_sk;
+	if (rc < 0)
+		goto out_sk;
 
 	l2tp_ip_sk(sk)->peer_conn_id = lsa->l2tp_conn_id;
 
-	ग_लिखो_lock_bh(&l2tp_ip_lock);
+	write_lock_bh(&l2tp_ip_lock);
 	hlist_del_init(&sk->sk_bind_node);
 	sk_add_bind_node(sk, &l2tp_ip_bind_table);
-	ग_लिखो_unlock_bh(&l2tp_ip_lock);
+	write_unlock_bh(&l2tp_ip_lock);
 
 out_sk:
 	release_sock(sk);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक l2tp_ip_disconnect(काष्ठा sock *sk, पूर्णांक flags)
-अणु
-	अगर (sock_flag(sk, SOCK_ZAPPED))
-		वापस 0;
+static int l2tp_ip_disconnect(struct sock *sk, int flags)
+{
+	if (sock_flag(sk, SOCK_ZAPPED))
+		return 0;
 
-	वापस __udp_disconnect(sk, flags);
-पूर्ण
+	return __udp_disconnect(sk, flags);
+}
 
-अटल पूर्णांक l2tp_ip_getname(काष्ठा socket *sock, काष्ठा sockaddr *uaddr,
-			   पूर्णांक peer)
-अणु
-	काष्ठा sock *sk		= sock->sk;
-	काष्ठा inet_sock *inet	= inet_sk(sk);
-	काष्ठा l2tp_ip_sock *lsk = l2tp_ip_sk(sk);
-	काष्ठा sockaddr_l2tpip *lsa = (काष्ठा sockaddr_l2tpip *)uaddr;
+static int l2tp_ip_getname(struct socket *sock, struct sockaddr *uaddr,
+			   int peer)
+{
+	struct sock *sk		= sock->sk;
+	struct inet_sock *inet	= inet_sk(sk);
+	struct l2tp_ip_sock *lsk = l2tp_ip_sk(sk);
+	struct sockaddr_l2tpip *lsa = (struct sockaddr_l2tpip *)uaddr;
 
-	स_रखो(lsa, 0, माप(*lsa));
+	memset(lsa, 0, sizeof(*lsa));
 	lsa->l2tp_family = AF_INET;
-	अगर (peer) अणु
-		अगर (!inet->inet_dport)
-			वापस -ENOTCONN;
+	if (peer) {
+		if (!inet->inet_dport)
+			return -ENOTCONN;
 		lsa->l2tp_conn_id = lsk->peer_conn_id;
 		lsa->l2tp_addr.s_addr = inet->inet_daddr;
-	पूर्ण अन्यथा अणु
+	} else {
 		__be32 addr = inet->inet_rcv_saddr;
 
-		अगर (!addr)
+		if (!addr)
 			addr = inet->inet_saddr;
 		lsa->l2tp_conn_id = lsk->conn_id;
 		lsa->l2tp_addr.s_addr = addr;
-	पूर्ण
-	वापस माप(*lsa);
-पूर्ण
+	}
+	return sizeof(*lsa);
+}
 
-अटल पूर्णांक l2tp_ip_backlog_recv(काष्ठा sock *sk, काष्ठा sk_buff *skb)
-अणु
-	पूर्णांक rc;
+static int l2tp_ip_backlog_recv(struct sock *sk, struct sk_buff *skb)
+{
+	int rc;
 
-	/* Charge it to the socket, dropping अगर the queue is full. */
+	/* Charge it to the socket, dropping if the queue is full. */
 	rc = sock_queue_rcv_skb(sk, skb);
-	अगर (rc < 0)
-		जाओ drop;
+	if (rc < 0)
+		goto drop;
 
-	वापस 0;
+	return 0;
 
 drop:
 	IP_INC_STATS(sock_net(sk), IPSTATS_MIB_INDISCARDS);
-	kमुक्त_skb(skb);
-	वापस 0;
-पूर्ण
+	kfree_skb(skb);
+	return 0;
+}
 
 /* Userspace will call sendmsg() on the tunnel socket to send L2TP
  * control frames.
  */
-अटल पूर्णांक l2tp_ip_sendmsg(काष्ठा sock *sk, काष्ठा msghdr *msg, माप_प्रकार len)
-अणु
-	काष्ठा sk_buff *skb;
-	पूर्णांक rc;
-	काष्ठा inet_sock *inet = inet_sk(sk);
-	काष्ठा rtable *rt = शून्य;
-	काष्ठा flowi4 *fl4;
-	पूर्णांक connected = 0;
+static int l2tp_ip_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
+{
+	struct sk_buff *skb;
+	int rc;
+	struct inet_sock *inet = inet_sk(sk);
+	struct rtable *rt = NULL;
+	struct flowi4 *fl4;
+	int connected = 0;
 	__be32 daddr;
 
 	lock_sock(sk);
 
 	rc = -ENOTCONN;
-	अगर (sock_flag(sk, SOCK_DEAD))
-		जाओ out;
+	if (sock_flag(sk, SOCK_DEAD))
+		goto out;
 
-	/* Get and verअगरy the address. */
-	अगर (msg->msg_name) अणु
-		DECLARE_SOCKADDR(काष्ठा sockaddr_l2tpip *, lip, msg->msg_name);
+	/* Get and verify the address. */
+	if (msg->msg_name) {
+		DECLARE_SOCKADDR(struct sockaddr_l2tpip *, lip, msg->msg_name);
 
 		rc = -EINVAL;
-		अगर (msg->msg_namelen < माप(*lip))
-			जाओ out;
+		if (msg->msg_namelen < sizeof(*lip))
+			goto out;
 
-		अगर (lip->l2tp_family != AF_INET) अणु
+		if (lip->l2tp_family != AF_INET) {
 			rc = -EAFNOSUPPORT;
-			अगर (lip->l2tp_family != AF_UNSPEC)
-				जाओ out;
-		पूर्ण
+			if (lip->l2tp_family != AF_UNSPEC)
+				goto out;
+		}
 
 		daddr = lip->l2tp_addr.s_addr;
-	पूर्ण अन्यथा अणु
+	} else {
 		rc = -EDESTADDRREQ;
-		अगर (sk->sk_state != TCP_ESTABLISHED)
-			जाओ out;
+		if (sk->sk_state != TCP_ESTABLISHED)
+			goto out;
 
 		daddr = inet->inet_daddr;
 		connected = 1;
-	पूर्ण
+	}
 
 	/* Allocate a socket buffer */
 	rc = -ENOMEM;
-	skb = sock_wदो_स्मृति(sk, 2 + NET_SKB_PAD + माप(काष्ठा iphdr) +
+	skb = sock_wmalloc(sk, 2 + NET_SKB_PAD + sizeof(struct iphdr) +
 			   4 + len, 0, GFP_KERNEL);
-	अगर (!skb)
-		जाओ error;
+	if (!skb)
+		goto error;
 
-	/* Reserve space क्रम headers, putting IP header on 4-byte boundary. */
+	/* Reserve space for headers, putting IP header on 4-byte boundary. */
 	skb_reserve(skb, 2 + NET_SKB_PAD);
 	skb_reset_network_header(skb);
-	skb_reserve(skb, माप(काष्ठा iphdr));
+	skb_reserve(skb, sizeof(struct iphdr));
 	skb_reset_transport_header(skb);
 
 	/* Insert 0 session_id */
 	*((__be32 *)skb_put(skb, 4)) = 0;
 
-	/* Copy user data पूर्णांकo skb */
-	rc = स_नकल_from_msg(skb_put(skb, len), msg, len);
-	अगर (rc < 0) अणु
-		kमुक्त_skb(skb);
-		जाओ error;
-	पूर्ण
+	/* Copy user data into skb */
+	rc = memcpy_from_msg(skb_put(skb, len), msg, len);
+	if (rc < 0) {
+		kfree_skb(skb);
+		goto error;
+	}
 
 	fl4 = &inet->cork.fl.u.ip4;
-	अगर (connected)
-		rt = (काष्ठा rtable *)__sk_dst_check(sk, 0);
+	if (connected)
+		rt = (struct rtable *)__sk_dst_check(sk, 0);
 
-	rcu_पढ़ो_lock();
-	अगर (!rt) अणु
-		स्थिर काष्ठा ip_options_rcu *inet_opt;
+	rcu_read_lock();
+	if (!rt) {
+		const struct ip_options_rcu *inet_opt;
 
 		inet_opt = rcu_dereference(inet->inet_opt);
 
-		/* Use correct destination address अगर we have options. */
-		अगर (inet_opt && inet_opt->opt.srr)
+		/* Use correct destination address if we have options. */
+		if (inet_opt && inet_opt->opt.srr)
 			daddr = inet_opt->opt.faddr;
 
 		/* If this fails, retransmit mechanism of transport layer will
-		 * keep trying until route appears or the connection बार
+		 * keep trying until route appears or the connection times
 		 * itself out.
 		 */
 		rt = ip_route_output_ports(sock_net(sk), fl4, sk,
 					   daddr, inet->inet_saddr,
 					   inet->inet_dport, inet->inet_sport,
 					   sk->sk_protocol, RT_CONN_FLAGS(sk),
-					   sk->sk_bound_dev_अगर);
-		अगर (IS_ERR(rt))
-			जाओ no_route;
-		अगर (connected) अणु
+					   sk->sk_bound_dev_if);
+		if (IS_ERR(rt))
+			goto no_route;
+		if (connected) {
 			sk_setup_caps(sk, &rt->dst);
-		पूर्ण अन्यथा अणु
+		} else {
 			skb_dst_set(skb, &rt->dst);
-			जाओ xmit;
-		पूर्ण
-	पूर्ण
+			goto xmit;
+		}
+	}
 
-	/* We करोnt need to clone dst here, it is guaranteed to not disappear.
-	 *  __dev_xmit_skb() might क्रमce a refcount अगर needed.
+	/* We dont need to clone dst here, it is guaranteed to not disappear.
+	 *  __dev_xmit_skb() might force a refcount if needed.
 	 */
 	skb_dst_set_noref(skb, &rt->dst);
 
 xmit:
-	/* Queue the packet to IP क्रम output */
+	/* Queue the packet to IP for output */
 	rc = ip_queue_xmit(sk, skb, &inet->cork.fl);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
 error:
-	अगर (rc >= 0)
+	if (rc >= 0)
 		rc = len;
 
 out:
 	release_sock(sk);
-	वापस rc;
+	return rc;
 
 no_route:
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 	IP_INC_STATS(sock_net(sk), IPSTATS_MIB_OUTNOROUTES);
-	kमुक्त_skb(skb);
+	kfree_skb(skb);
 	rc = -EHOSTUNREACH;
-	जाओ out;
-पूर्ण
+	goto out;
+}
 
-अटल पूर्णांक l2tp_ip_recvmsg(काष्ठा sock *sk, काष्ठा msghdr *msg,
-			   माप_प्रकार len, पूर्णांक noblock, पूर्णांक flags, पूर्णांक *addr_len)
-अणु
-	काष्ठा inet_sock *inet = inet_sk(sk);
-	माप_प्रकार copied = 0;
-	पूर्णांक err = -EOPNOTSUPP;
-	DECLARE_SOCKADDR(काष्ठा sockaddr_in *, sin, msg->msg_name);
-	काष्ठा sk_buff *skb;
+static int l2tp_ip_recvmsg(struct sock *sk, struct msghdr *msg,
+			   size_t len, int noblock, int flags, int *addr_len)
+{
+	struct inet_sock *inet = inet_sk(sk);
+	size_t copied = 0;
+	int err = -EOPNOTSUPP;
+	DECLARE_SOCKADDR(struct sockaddr_in *, sin, msg->msg_name);
+	struct sk_buff *skb;
 
-	अगर (flags & MSG_OOB)
-		जाओ out;
+	if (flags & MSG_OOB)
+		goto out;
 
 	skb = skb_recv_datagram(sk, flags, noblock, &err);
-	अगर (!skb)
-		जाओ out;
+	if (!skb)
+		goto out;
 
 	copied = skb->len;
-	अगर (len < copied) अणु
+	if (len < copied) {
 		msg->msg_flags |= MSG_TRUNC;
 		copied = len;
-	पूर्ण
+	}
 
 	err = skb_copy_datagram_msg(skb, 0, msg, copied);
-	अगर (err)
-		जाओ करोne;
+	if (err)
+		goto done;
 
-	sock_recv_बारtamp(msg, sk, skb);
+	sock_recv_timestamp(msg, sk, skb);
 
 	/* Copy the address. */
-	अगर (sin) अणु
+	if (sin) {
 		sin->sin_family = AF_INET;
 		sin->sin_addr.s_addr = ip_hdr(skb)->saddr;
 		sin->sin_port = 0;
-		स_रखो(&sin->sin_zero, 0, माप(sin->sin_zero));
-		*addr_len = माप(*sin);
-	पूर्ण
-	अगर (inet->cmsg_flags)
+		memset(&sin->sin_zero, 0, sizeof(sin->sin_zero));
+		*addr_len = sizeof(*sin);
+	}
+	if (inet->cmsg_flags)
 		ip_cmsg_recv(msg, skb);
-	अगर (flags & MSG_TRUNC)
+	if (flags & MSG_TRUNC)
 		copied = skb->len;
-करोne:
-	skb_मुक्त_datagram(sk, skb);
+done:
+	skb_free_datagram(sk, skb);
 out:
-	वापस err ? err : copied;
-पूर्ण
+	return err ? err : copied;
+}
 
-पूर्णांक l2tp_ioctl(काष्ठा sock *sk, पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा sk_buff *skb;
-	पूर्णांक amount;
+int l2tp_ioctl(struct sock *sk, int cmd, unsigned long arg)
+{
+	struct sk_buff *skb;
+	int amount;
 
-	चयन (cmd) अणु
-	हाल SIOCOUTQ:
+	switch (cmd) {
+	case SIOCOUTQ:
 		amount = sk_wmem_alloc_get(sk);
-		अवरोध;
-	हाल SIOCINQ:
+		break;
+	case SIOCINQ:
 		spin_lock_bh(&sk->sk_receive_queue.lock);
 		skb = skb_peek(&sk->sk_receive_queue);
 		amount = skb ? skb->len : 0;
 		spin_unlock_bh(&sk->sk_receive_queue.lock);
-		अवरोध;
+		break;
 
-	शेष:
-		वापस -ENOIOCTLCMD;
-	पूर्ण
+	default:
+		return -ENOIOCTLCMD;
+	}
 
-	वापस put_user(amount, (पूर्णांक __user *)arg);
-पूर्ण
+	return put_user(amount, (int __user *)arg);
+}
 EXPORT_SYMBOL_GPL(l2tp_ioctl);
 
-अटल काष्ठा proto l2tp_ip_prot = अणु
+static struct proto l2tp_ip_prot = {
 	.name		   = "L2TP/IP",
 	.owner		   = THIS_MODULE,
-	.init		   = l2tp_ip_खोलो,
-	.बंद		   = l2tp_ip_बंद,
+	.init		   = l2tp_ip_open,
+	.close		   = l2tp_ip_close,
 	.bind		   = l2tp_ip_bind,
 	.connect	   = l2tp_ip_connect,
 	.disconnect	   = l2tp_ip_disconnect,
 	.ioctl		   = l2tp_ioctl,
 	.destroy	   = l2tp_ip_destroy_sock,
 	.setsockopt	   = ip_setsockopt,
-	.माला_लोockopt	   = ip_माला_लोockopt,
+	.getsockopt	   = ip_getsockopt,
 	.sendmsg	   = l2tp_ip_sendmsg,
 	.recvmsg	   = l2tp_ip_recvmsg,
 	.backlog_rcv	   = l2tp_ip_backlog_recv,
 	.hash		   = l2tp_ip_hash,
 	.unhash		   = l2tp_ip_unhash,
-	.obj_size	   = माप(काष्ठा l2tp_ip_sock),
-पूर्ण;
+	.obj_size	   = sizeof(struct l2tp_ip_sock),
+};
 
-अटल स्थिर काष्ठा proto_ops l2tp_ip_ops = अणु
+static const struct proto_ops l2tp_ip_ops = {
 	.family		   = PF_INET,
 	.owner		   = THIS_MODULE,
 	.release	   = inet_release,
@@ -618,67 +617,67 @@ EXPORT_SYMBOL_GPL(l2tp_ioctl);
 	.ioctl		   = inet_ioctl,
 	.gettstamp	   = sock_gettstamp,
 	.listen		   = sock_no_listen,
-	.shutकरोwn	   = inet_shutकरोwn,
+	.shutdown	   = inet_shutdown,
 	.setsockopt	   = sock_common_setsockopt,
-	.माला_लोockopt	   = sock_common_माला_लोockopt,
+	.getsockopt	   = sock_common_getsockopt,
 	.sendmsg	   = inet_sendmsg,
 	.recvmsg	   = sock_common_recvmsg,
 	.mmap		   = sock_no_mmap,
 	.sendpage	   = sock_no_sendpage,
-पूर्ण;
+};
 
-अटल काष्ठा inet_protosw l2tp_ip_protosw = अणु
+static struct inet_protosw l2tp_ip_protosw = {
 	.type		= SOCK_DGRAM,
 	.protocol	= IPPROTO_L2TP,
 	.prot		= &l2tp_ip_prot,
 	.ops		= &l2tp_ip_ops,
-पूर्ण;
+};
 
-अटल काष्ठा net_protocol l2tp_ip_protocol __पढ़ो_mostly = अणु
+static struct net_protocol l2tp_ip_protocol __read_mostly = {
 	.handler	= l2tp_ip_recv,
 	.netns_ok	= 1,
-पूर्ण;
+};
 
-अटल पूर्णांक __init l2tp_ip_init(व्योम)
-अणु
-	पूर्णांक err;
+static int __init l2tp_ip_init(void)
+{
+	int err;
 
 	pr_info("L2TP IP encapsulation support (L2TPv3)\n");
 
-	err = proto_रेजिस्टर(&l2tp_ip_prot, 1);
-	अगर (err != 0)
-		जाओ out;
+	err = proto_register(&l2tp_ip_prot, 1);
+	if (err != 0)
+		goto out;
 
 	err = inet_add_protocol(&l2tp_ip_protocol, IPPROTO_L2TP);
-	अगर (err)
-		जाओ out1;
+	if (err)
+		goto out1;
 
-	inet_रेजिस्टर_protosw(&l2tp_ip_protosw);
-	वापस 0;
+	inet_register_protosw(&l2tp_ip_protosw);
+	return 0;
 
 out1:
-	proto_unरेजिस्टर(&l2tp_ip_prot);
+	proto_unregister(&l2tp_ip_prot);
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम __निकास l2tp_ip_निकास(व्योम)
-अणु
-	inet_unरेजिस्टर_protosw(&l2tp_ip_protosw);
+static void __exit l2tp_ip_exit(void)
+{
+	inet_unregister_protosw(&l2tp_ip_protosw);
 	inet_del_protocol(&l2tp_ip_protocol, IPPROTO_L2TP);
-	proto_unरेजिस्टर(&l2tp_ip_prot);
-पूर्ण
+	proto_unregister(&l2tp_ip_prot);
+}
 
 module_init(l2tp_ip_init);
-module_निकास(l2tp_ip_निकास);
+module_exit(l2tp_ip_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("James Chapman <jchapman@katalix.com>");
 MODULE_DESCRIPTION("L2TP over IP");
 MODULE_VERSION("1.0");
 
-/* Use the value of SOCK_DGRAM (2) directory, because __stringअगरy करोesn't like
- * क्रमागतs
+/* Use the value of SOCK_DGRAM (2) directory, because __stringify doesn't like
+ * enums
  */
 MODULE_ALIAS_NET_PF_PROTO_TYPE(PF_INET, 2, IPPROTO_L2TP);
 MODULE_ALIAS_NET_PF_PROTO(PF_INET, IPPROTO_L2TP);

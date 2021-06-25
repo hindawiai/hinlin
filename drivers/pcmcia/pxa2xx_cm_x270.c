@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * linux/drivers/pcmcia/pxa/pxa_cm_x270.c
  *
@@ -7,23 +6,23 @@
  * Mike Rapoport <mike@compulab.co.il>
  */
 
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/export.h>
+#include <linux/platform_device.h>
+#include <linux/irq.h>
+#include <linux/delay.h>
+#include <linux/gpio.h>
+#include <linux/export.h>
 
-#समावेश "soc_common.h"
+#include "soc_common.h"
 
-#घोषणा GPIO_PCMCIA_S0_CD_VALID	(84)
-#घोषणा GPIO_PCMCIA_S0_RDYINT	(82)
-#घोषणा GPIO_PCMCIA_RESET	(53)
+#define GPIO_PCMCIA_S0_CD_VALID	(84)
+#define GPIO_PCMCIA_S0_RDYINT	(82)
+#define GPIO_PCMCIA_RESET	(53)
 
-अटल पूर्णांक cmx270_pcmcia_hw_init(काष्ठा soc_pcmcia_socket *skt)
-अणु
-	पूर्णांक ret = gpio_request(GPIO_PCMCIA_RESET, "PCCard reset");
-	अगर (ret)
-		वापस ret;
+static int cmx270_pcmcia_hw_init(struct soc_pcmcia_socket *skt)
+{
+	int ret = gpio_request(GPIO_PCMCIA_RESET, "PCCard reset");
+	if (ret)
+		return ret;
 	gpio_direction_output(GPIO_PCMCIA_RESET, 0);
 
 	skt->stat[SOC_STAT_CD].gpio = GPIO_PCMCIA_S0_CD_VALID;
@@ -31,74 +30,74 @@
 	skt->stat[SOC_STAT_RDY].gpio = GPIO_PCMCIA_S0_RDYINT;
 	skt->stat[SOC_STAT_RDY].name = "PCMCIA0 RDY";
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम cmx270_pcmcia_shutकरोwn(काष्ठा soc_pcmcia_socket *skt)
-अणु
-	gpio_मुक्त(GPIO_PCMCIA_RESET);
-पूर्ण
+static void cmx270_pcmcia_shutdown(struct soc_pcmcia_socket *skt)
+{
+	gpio_free(GPIO_PCMCIA_RESET);
+}
 
 
-अटल व्योम cmx270_pcmcia_socket_state(काष्ठा soc_pcmcia_socket *skt,
-				       काष्ठा pcmcia_state *state)
-अणु
+static void cmx270_pcmcia_socket_state(struct soc_pcmcia_socket *skt,
+				       struct pcmcia_state *state)
+{
 	state->vs_3v  = 0;
 	state->vs_Xv  = 0;
-पूर्ण
+}
 
 
-अटल पूर्णांक cmx270_pcmcia_configure_socket(काष्ठा soc_pcmcia_socket *skt,
-					  स्थिर socket_state_t *state)
-अणु
-	चयन (skt->nr) अणु
-	हाल 0:
-		अगर (state->flags & SS_RESET) अणु
+static int cmx270_pcmcia_configure_socket(struct soc_pcmcia_socket *skt,
+					  const socket_state_t *state)
+{
+	switch (skt->nr) {
+	case 0:
+		if (state->flags & SS_RESET) {
 			gpio_set_value(GPIO_PCMCIA_RESET, 1);
 			udelay(10);
 			gpio_set_value(GPIO_PCMCIA_RESET, 0);
-		पूर्ण
-		अवरोध;
-	पूर्ण
+		}
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा pcmcia_low_level cmx270_pcmcia_ops __initdata = अणु
+static struct pcmcia_low_level cmx270_pcmcia_ops __initdata = {
 	.owner			= THIS_MODULE,
 	.hw_init		= cmx270_pcmcia_hw_init,
-	.hw_shutकरोwn		= cmx270_pcmcia_shutकरोwn,
+	.hw_shutdown		= cmx270_pcmcia_shutdown,
 	.socket_state		= cmx270_pcmcia_socket_state,
 	.configure_socket	= cmx270_pcmcia_configure_socket,
 	.nr			= 1,
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device *cmx270_pcmcia_device;
+static struct platform_device *cmx270_pcmcia_device;
 
-पूर्णांक __init cmx270_pcmcia_init(व्योम)
-अणु
-	पूर्णांक ret;
+int __init cmx270_pcmcia_init(void)
+{
+	int ret;
 
-	cmx270_pcmcia_device = platक्रमm_device_alloc("pxa2xx-pcmcia", -1);
+	cmx270_pcmcia_device = platform_device_alloc("pxa2xx-pcmcia", -1);
 
-	अगर (!cmx270_pcmcia_device)
-		वापस -ENOMEM;
+	if (!cmx270_pcmcia_device)
+		return -ENOMEM;
 
-	ret = platक्रमm_device_add_data(cmx270_pcmcia_device, &cmx270_pcmcia_ops,
-				       माप(cmx270_pcmcia_ops));
+	ret = platform_device_add_data(cmx270_pcmcia_device, &cmx270_pcmcia_ops,
+				       sizeof(cmx270_pcmcia_ops));
 
-	अगर (ret == 0) अणु
-		prपूर्णांकk(KERN_INFO "Registering cm-x270 PCMCIA interface.\n");
-		ret = platक्रमm_device_add(cmx270_pcmcia_device);
-	पूर्ण
+	if (ret == 0) {
+		printk(KERN_INFO "Registering cm-x270 PCMCIA interface.\n");
+		ret = platform_device_add(cmx270_pcmcia_device);
+	}
 
-	अगर (ret)
-		platक्रमm_device_put(cmx270_pcmcia_device);
+	if (ret)
+		platform_device_put(cmx270_pcmcia_device);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम __निकास cmx270_pcmcia_निकास(व्योम)
-अणु
-	platक्रमm_device_unरेजिस्टर(cmx270_pcmcia_device);
-पूर्ण
+void __exit cmx270_pcmcia_exit(void)
+{
+	platform_device_unregister(cmx270_pcmcia_device);
+}

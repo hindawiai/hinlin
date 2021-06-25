@@ -1,57 +1,56 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
     bt866 - BT866 Digital Video Encoder (Rockwell Part)
 
     Copyright (C) 1999 Mike Bernson <mike@mlb.org>
     Copyright (C) 1998 Dave Perks <dperks@ibm.net>
 
-    Modअगरications क्रम LML33/DC10plus unअगरied driver
-    Copyright (C) 2000 Serguei Miriकरोnov <mirsev@cicese.mx>
+    Modifications for LML33/DC10plus unified driver
+    Copyright (C) 2000 Serguei Miridonov <mirsev@cicese.mx>
 
-    This code was modअगरy/ported from the saa7111 driver written
+    This code was modify/ported from the saa7111 driver written
     by Dave Perks.
 
-    This code was adapted क्रम the bt866 by Christer Weinigel and ported
+    This code was adapted for the bt866 by Christer Weinigel and ported
     to 2.6 by Martin Samuelsson.
 
 */
 
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/ioctl.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/videodev2.h>
-#समावेश <media/v4l2-device.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/slab.h>
+#include <linux/ioctl.h>
+#include <linux/uaccess.h>
+#include <linux/i2c.h>
+#include <linux/videodev2.h>
+#include <media/v4l2-device.h>
 
 MODULE_DESCRIPTION("Brooktree-866 video encoder driver");
 MODULE_AUTHOR("Mike Bernson & Dave Perks");
 MODULE_LICENSE("GPL");
 
-अटल पूर्णांक debug;
-module_param(debug, पूर्णांक, 0);
+static int debug;
+module_param(debug, int, 0);
 MODULE_PARM_DESC(debug, "Debug level (0-1)");
 
 
 /* ----------------------------------------------------------------------- */
 
-काष्ठा bt866 अणु
-	काष्ठा v4l2_subdev sd;
+struct bt866 {
+	struct v4l2_subdev sd;
 	u8 reg[256];
-पूर्ण;
+};
 
-अटल अंतरभूत काष्ठा bt866 *to_bt866(काष्ठा v4l2_subdev *sd)
-अणु
-	वापस container_of(sd, काष्ठा bt866, sd);
-पूर्ण
+static inline struct bt866 *to_bt866(struct v4l2_subdev *sd)
+{
+	return container_of(sd, struct bt866, sd);
+}
 
-अटल पूर्णांक bt866_ग_लिखो(काष्ठा bt866 *encoder, u8 subaddr, u8 data)
-अणु
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(&encoder->sd);
+static int bt866_write(struct bt866 *encoder, u8 subaddr, u8 data)
+{
+	struct i2c_client *client = v4l2_get_subdevdata(&encoder->sd);
 	u8 buffer[2];
-	पूर्णांक err;
+	int err;
 
 	buffer[0] = subaddr;
 	buffer[1] = data;
@@ -60,36 +59,36 @@ MODULE_PARM_DESC(debug, "Debug level (0-1)");
 
 	v4l_dbg(1, debug, client, "write 0x%02x = 0x%02x\n", subaddr, data);
 
-	क्रम (err = 0; err < 3;) अणु
-		अगर (i2c_master_send(client, buffer, 2) == 2)
-			अवरोध;
+	for (err = 0; err < 3;) {
+		if (i2c_master_send(client, buffer, 2) == 2)
+			break;
 		err++;
 		v4l_warn(client, "error #%d writing to 0x%02x\n",
 				err, subaddr);
-		schedule_समयout_पूर्णांकerruptible(msecs_to_jअगरfies(100));
-	पूर्ण
-	अगर (err == 3) अणु
+		schedule_timeout_interruptible(msecs_to_jiffies(100));
+	}
+	if (err == 3) {
 		v4l_warn(client, "giving up\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bt866_s_std_output(काष्ठा v4l2_subdev *sd, v4l2_std_id std)
-अणु
-	v4l2_dbg(1, debug, sd, "set norm %llx\n", (अचिन्हित दीर्घ दीर्घ)std);
+static int bt866_s_std_output(struct v4l2_subdev *sd, v4l2_std_id std)
+{
+	v4l2_dbg(1, debug, sd, "set norm %llx\n", (unsigned long long)std);
 
 	/* Only PAL supported by this driver at the moment! */
-	अगर (!(std & V4L2_STD_NTSC))
-		वापस -EINVAL;
-	वापस 0;
-पूर्ण
+	if (!(std & V4L2_STD_NTSC))
+		return -EINVAL;
+	return 0;
+}
 
-अटल पूर्णांक bt866_s_routing(काष्ठा v4l2_subdev *sd,
+static int bt866_s_routing(struct v4l2_subdev *sd,
 			   u32 input, u32 output, u32 config)
-अणु
-	अटल स्थिर __u8 init[] = अणु
+{
+	static const __u8 init[] = {
 		0xc8, 0xcc, /* CRSCALE */
 		0xca, 0x91, /* CBSCALE */
 		0xcc, 0x24, /* YC16 | OSDNUM */
@@ -115,103 +114,103 @@ MODULE_PARM_DESC(debug, "Debug level (0-1)");
 		0x6A, 0x41, 0x8A, 0xD4, 0xcA, 0x64, /* red */
 		0x6C, 0x23, 0x8C, 0x72, 0xcC, 0xD4, /* blue */
 		0x6E, 0x10, 0x8E, 0x80, 0xcE, 0x80, /* black */
-	पूर्ण;
-	काष्ठा bt866 *encoder = to_bt866(sd);
+	};
+	struct bt866 *encoder = to_bt866(sd);
 	u8 val;
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(init) / 2; i += 2)
-		bt866_ग_लिखो(encoder, init[i], init[i+1]);
+	for (i = 0; i < ARRAY_SIZE(init) / 2; i += 2)
+		bt866_write(encoder, init[i], init[i+1]);
 
 	val = encoder->reg[0xdc];
 
-	अगर (input == 0)
+	if (input == 0)
 		val |= 0x40; /* CBSWAP */
-	अन्यथा
+	else
 		val &= ~0x40; /* !CBSWAP */
 
-	bt866_ग_लिखो(encoder, 0xdc, val);
+	bt866_write(encoder, 0xdc, val);
 
 	val = encoder->reg[0xcc];
-	अगर (input == 2)
+	if (input == 2)
 		val |= 0x01; /* OSDBAR */
-	अन्यथा
+	else
 		val &= ~0x01; /* !OSDBAR */
-	bt866_ग_लिखो(encoder, 0xcc, val);
+	bt866_write(encoder, 0xcc, val);
 
 	v4l2_dbg(1, debug, sd, "set input %d\n", input);
 
-	चयन (input) अणु
-	हाल 0:
-	हाल 1:
-	हाल 2:
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	switch (input) {
+	case 0:
+	case 1:
+	case 2:
+		break;
+	default:
+		return -EINVAL;
+	}
+	return 0;
+}
 
-#अगर 0
+#if 0
 /* Code to setup square pixels, might be of some use in the future,
    but is currently unused. */
 	val = encoder->reg[0xdc];
-	अगर (*iarg)
+	if (*iarg)
 		val |= 1; /* SQUARE */
-	अन्यथा
+	else
 		val &= ~1; /* !SQUARE */
-	bt866_ग_लिखो(client, 0xdc, val);
-#पूर्ण_अगर
+	bt866_write(client, 0xdc, val);
+#endif
 
 /* ----------------------------------------------------------------------- */
 
-अटल स्थिर काष्ठा v4l2_subdev_video_ops bt866_video_ops = अणु
+static const struct v4l2_subdev_video_ops bt866_video_ops = {
 	.s_std_output = bt866_s_std_output,
 	.s_routing = bt866_s_routing,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_ops bt866_ops = अणु
+static const struct v4l2_subdev_ops bt866_ops = {
 	.video = &bt866_video_ops,
-पूर्ण;
+};
 
-अटल पूर्णांक bt866_probe(काष्ठा i2c_client *client,
-			स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा bt866 *encoder;
-	काष्ठा v4l2_subdev *sd;
+static int bt866_probe(struct i2c_client *client,
+			const struct i2c_device_id *id)
+{
+	struct bt866 *encoder;
+	struct v4l2_subdev *sd;
 
 	v4l_info(client, "chip found @ 0x%x (%s)\n",
 			client->addr << 1, client->adapter->name);
 
-	encoder = devm_kzalloc(&client->dev, माप(*encoder), GFP_KERNEL);
-	अगर (encoder == शून्य)
-		वापस -ENOMEM;
+	encoder = devm_kzalloc(&client->dev, sizeof(*encoder), GFP_KERNEL);
+	if (encoder == NULL)
+		return -ENOMEM;
 	sd = &encoder->sd;
 	v4l2_i2c_subdev_init(sd, client, &bt866_ops);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bt866_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा v4l2_subdev *sd = i2c_get_clientdata(client);
+static int bt866_remove(struct i2c_client *client)
+{
+	struct v4l2_subdev *sd = i2c_get_clientdata(client);
 
-	v4l2_device_unरेजिस्टर_subdev(sd);
-	वापस 0;
-पूर्ण
+	v4l2_device_unregister_subdev(sd);
+	return 0;
+}
 
-अटल स्थिर काष्ठा i2c_device_id bt866_id[] = अणु
-	अणु "bt866", 0 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id bt866_id[] = {
+	{ "bt866", 0 },
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, bt866_id);
 
-अटल काष्ठा i2c_driver bt866_driver = अणु
-	.driver = अणु
+static struct i2c_driver bt866_driver = {
+	.driver = {
 		.name	= "bt866",
-	पूर्ण,
+	},
 	.probe		= bt866_probe,
-	.हटाओ		= bt866_हटाओ,
+	.remove		= bt866_remove,
 	.id_table	= bt866_id,
-पूर्ण;
+};
 
 module_i2c_driver(bt866_driver);

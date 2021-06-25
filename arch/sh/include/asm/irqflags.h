@@ -1,11 +1,10 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ASM_SH_IRQFLAGS_H
-#घोषणा __ASM_SH_IRQFLAGS_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ASM_SH_IRQFLAGS_H
+#define __ASM_SH_IRQFLAGS_H
 
-#घोषणा ARCH_IRQ_DISABLED	0xf0
-#घोषणा ARCH_IRQ_ENABLED	0x00
+#define ARCH_IRQ_DISABLED	0xf0
+#define ARCH_IRQ_ENABLED	0x00
 
-#समावेश <यंत्र-generic/irqflags.h>
+#include <asm-generic/irqflags.h>
 
-#पूर्ण_अगर /* __ASM_SH_IRQFLAGS_H */
+#endif /* __ASM_SH_IRQFLAGS_H */

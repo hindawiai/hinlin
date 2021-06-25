@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2014 Chelsio, Inc. All rights reserved.
  * Copyright (c) 2014 Intel Corporation. All rights reserved.
@@ -6,20 +5,20 @@
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *	  copyright notice, this list of conditions and the following
  *	  disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *	  copyright notice, this list of conditions and the following
- *	  disclaimer in the करोcumentation and/or other materials
+ *	  disclaimer in the documentation and/or other materials
  *	  provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -32,98 +31,98 @@
  * SOFTWARE.
  */
 
-#समावेश "iwpm_util.h"
+#include "iwpm_util.h"
 
-#घोषणा IWPM_MAPINFO_HASH_SIZE	512
-#घोषणा IWPM_MAPINFO_HASH_MASK	(IWPM_MAPINFO_HASH_SIZE - 1)
-#घोषणा IWPM_REMINFO_HASH_SIZE	64
-#घोषणा IWPM_REMINFO_HASH_MASK	(IWPM_REMINFO_HASH_SIZE - 1)
-#घोषणा IWPM_MSG_SIZE		512
+#define IWPM_MAPINFO_HASH_SIZE	512
+#define IWPM_MAPINFO_HASH_MASK	(IWPM_MAPINFO_HASH_SIZE - 1)
+#define IWPM_REMINFO_HASH_SIZE	64
+#define IWPM_REMINFO_HASH_MASK	(IWPM_REMINFO_HASH_SIZE - 1)
+#define IWPM_MSG_SIZE		512
 
-अटल LIST_HEAD(iwpm_nlmsg_req_list);
-अटल DEFINE_SPINLOCK(iwpm_nlmsg_req_lock);
+static LIST_HEAD(iwpm_nlmsg_req_list);
+static DEFINE_SPINLOCK(iwpm_nlmsg_req_lock);
 
-अटल काष्ठा hlist_head *iwpm_hash_bucket;
-अटल DEFINE_SPINLOCK(iwpm_mapinfo_lock);
+static struct hlist_head *iwpm_hash_bucket;
+static DEFINE_SPINLOCK(iwpm_mapinfo_lock);
 
-अटल काष्ठा hlist_head *iwpm_reminfo_bucket;
-अटल DEFINE_SPINLOCK(iwpm_reminfo_lock);
+static struct hlist_head *iwpm_reminfo_bucket;
+static DEFINE_SPINLOCK(iwpm_reminfo_lock);
 
-अटल DEFINE_MUTEX(iwpm_admin_lock);
-अटल काष्ठा iwpm_admin_data iwpm_admin;
+static DEFINE_MUTEX(iwpm_admin_lock);
+static struct iwpm_admin_data iwpm_admin;
 
 /**
- * iwpm_init - Allocate resources क्रम the iwarp port mapper
+ * iwpm_init - Allocate resources for the iwarp port mapper
  * @nl_client: The index of the netlink client
  *
- * Should be called when network पूर्णांकerface goes up.
+ * Should be called when network interface goes up.
  */
-पूर्णांक iwpm_init(u8 nl_client)
-अणु
-	पूर्णांक ret = 0;
+int iwpm_init(u8 nl_client)
+{
+	int ret = 0;
 	mutex_lock(&iwpm_admin_lock);
-	अगर (atomic_पढ़ो(&iwpm_admin.refcount) == 0) अणु
-		iwpm_hash_bucket = kसुस्मृति(IWPM_MAPINFO_HASH_SIZE,
-					   माप(काष्ठा hlist_head),
+	if (atomic_read(&iwpm_admin.refcount) == 0) {
+		iwpm_hash_bucket = kcalloc(IWPM_MAPINFO_HASH_SIZE,
+					   sizeof(struct hlist_head),
 					   GFP_KERNEL);
-		अगर (!iwpm_hash_bucket) अणु
+		if (!iwpm_hash_bucket) {
 			ret = -ENOMEM;
-			जाओ init_निकास;
-		पूर्ण
-		iwpm_reminfo_bucket = kसुस्मृति(IWPM_REMINFO_HASH_SIZE,
-					      माप(काष्ठा hlist_head),
+			goto init_exit;
+		}
+		iwpm_reminfo_bucket = kcalloc(IWPM_REMINFO_HASH_SIZE,
+					      sizeof(struct hlist_head),
 					      GFP_KERNEL);
-		अगर (!iwpm_reminfo_bucket) अणु
-			kमुक्त(iwpm_hash_bucket);
+		if (!iwpm_reminfo_bucket) {
+			kfree(iwpm_hash_bucket);
 			ret = -ENOMEM;
-			जाओ init_निकास;
-		पूर्ण
-	पूर्ण
+			goto init_exit;
+		}
+	}
 	atomic_inc(&iwpm_admin.refcount);
-init_निकास:
+init_exit:
 	mutex_unlock(&iwpm_admin_lock);
-	अगर (!ret) अणु
+	if (!ret) {
 		iwpm_set_valid(nl_client, 1);
 		iwpm_set_registration(nl_client, IWPM_REG_UNDEF);
 		pr_debug("%s: Mapinfo and reminfo tables are created\n",
 				__func__);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल व्योम मुक्त_hash_bucket(व्योम);
-अटल व्योम मुक्त_reminfo_bucket(व्योम);
+static void free_hash_bucket(void);
+static void free_reminfo_bucket(void);
 
 /**
- * iwpm_निकास - Deallocate resources क्रम the iwarp port mapper
+ * iwpm_exit - Deallocate resources for the iwarp port mapper
  * @nl_client: The index of the netlink client
  *
- * Should be called when network पूर्णांकerface goes करोwn.
+ * Should be called when network interface goes down.
  */
-पूर्णांक iwpm_निकास(u8 nl_client)
-अणु
+int iwpm_exit(u8 nl_client)
+{
 
-	अगर (!iwpm_valid_client(nl_client))
-		वापस -EINVAL;
+	if (!iwpm_valid_client(nl_client))
+		return -EINVAL;
 	mutex_lock(&iwpm_admin_lock);
-	अगर (atomic_पढ़ो(&iwpm_admin.refcount) == 0) अणु
+	if (atomic_read(&iwpm_admin.refcount) == 0) {
 		mutex_unlock(&iwpm_admin_lock);
 		pr_err("%s Incorrect usage - negative refcount\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
-	अगर (atomic_dec_and_test(&iwpm_admin.refcount)) अणु
-		मुक्त_hash_bucket();
-		मुक्त_reminfo_bucket();
+		return -EINVAL;
+	}
+	if (atomic_dec_and_test(&iwpm_admin.refcount)) {
+		free_hash_bucket();
+		free_reminfo_bucket();
 		pr_debug("%s: Resources are destroyed\n", __func__);
-	पूर्ण
+	}
 	mutex_unlock(&iwpm_admin_lock);
 	iwpm_set_valid(nl_client, 0);
 	iwpm_set_registration(nl_client, IWPM_REG_UNDEF);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा hlist_head *get_mapinfo_hash_bucket(काष्ठा sockaddr_storage *,
-					       काष्ठा sockaddr_storage *);
+static struct hlist_head *get_mapinfo_hash_bucket(struct sockaddr_storage *,
+					       struct sockaddr_storage *);
 
 /**
  * iwpm_create_mapinfo - Store local and mapped IPv4/IPv6 address
@@ -133,153 +132,153 @@ init_निकास:
  * @nl_client: The index of the netlink client
  * @map_flags: IWPM mapping flags
  */
-पूर्णांक iwpm_create_mapinfo(काष्ठा sockaddr_storage *local_sockaddr,
-			काष्ठा sockaddr_storage *mapped_sockaddr,
+int iwpm_create_mapinfo(struct sockaddr_storage *local_sockaddr,
+			struct sockaddr_storage *mapped_sockaddr,
 			u8 nl_client, u32 map_flags)
-अणु
-	काष्ठा hlist_head *hash_bucket_head = शून्य;
-	काष्ठा iwpm_mapping_info *map_info;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret = -EINVAL;
+{
+	struct hlist_head *hash_bucket_head = NULL;
+	struct iwpm_mapping_info *map_info;
+	unsigned long flags;
+	int ret = -EINVAL;
 
-	अगर (!iwpm_valid_client(nl_client))
-		वापस ret;
-	map_info = kzalloc(माप(काष्ठा iwpm_mapping_info), GFP_KERNEL);
-	अगर (!map_info)
-		वापस -ENOMEM;
+	if (!iwpm_valid_client(nl_client))
+		return ret;
+	map_info = kzalloc(sizeof(struct iwpm_mapping_info), GFP_KERNEL);
+	if (!map_info)
+		return -ENOMEM;
 
-	स_नकल(&map_info->local_sockaddr, local_sockaddr,
-	       माप(काष्ठा sockaddr_storage));
-	स_नकल(&map_info->mapped_sockaddr, mapped_sockaddr,
-	       माप(काष्ठा sockaddr_storage));
+	memcpy(&map_info->local_sockaddr, local_sockaddr,
+	       sizeof(struct sockaddr_storage));
+	memcpy(&map_info->mapped_sockaddr, mapped_sockaddr,
+	       sizeof(struct sockaddr_storage));
 	map_info->nl_client = nl_client;
 	map_info->map_flags = map_flags;
 
 	spin_lock_irqsave(&iwpm_mapinfo_lock, flags);
-	अगर (iwpm_hash_bucket) अणु
+	if (iwpm_hash_bucket) {
 		hash_bucket_head = get_mapinfo_hash_bucket(
 					&map_info->local_sockaddr,
 					&map_info->mapped_sockaddr);
-		अगर (hash_bucket_head) अणु
+		if (hash_bucket_head) {
 			hlist_add_head(&map_info->hlist_node, hash_bucket_head);
 			ret = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	spin_unlock_irqrestore(&iwpm_mapinfo_lock, flags);
 
-	अगर (!hash_bucket_head)
-		kमुक्त(map_info);
-	वापस ret;
-पूर्ण
+	if (!hash_bucket_head)
+		kfree(map_info);
+	return ret;
+}
 
 /**
- * iwpm_हटाओ_mapinfo - Remove local and mapped IPv4/IPv6 address
+ * iwpm_remove_mapinfo - Remove local and mapped IPv4/IPv6 address
  *                       info from the hash table
  * @local_sockaddr: Local ip/tcp address
  * @mapped_local_addr: Mapped local ip/tcp address
  *
- * Returns err code अगर mapping info is not found in the hash table,
- * otherwise वापसs 0
+ * Returns err code if mapping info is not found in the hash table,
+ * otherwise returns 0
  */
-पूर्णांक iwpm_हटाओ_mapinfo(काष्ठा sockaddr_storage *local_sockaddr,
-			काष्ठा sockaddr_storage *mapped_local_addr)
-अणु
-	काष्ठा hlist_node *पंचांगp_hlist_node;
-	काष्ठा hlist_head *hash_bucket_head;
-	काष्ठा iwpm_mapping_info *map_info = शून्य;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret = -EINVAL;
+int iwpm_remove_mapinfo(struct sockaddr_storage *local_sockaddr,
+			struct sockaddr_storage *mapped_local_addr)
+{
+	struct hlist_node *tmp_hlist_node;
+	struct hlist_head *hash_bucket_head;
+	struct iwpm_mapping_info *map_info = NULL;
+	unsigned long flags;
+	int ret = -EINVAL;
 
 	spin_lock_irqsave(&iwpm_mapinfo_lock, flags);
-	अगर (iwpm_hash_bucket) अणु
+	if (iwpm_hash_bucket) {
 		hash_bucket_head = get_mapinfo_hash_bucket(
 					local_sockaddr,
 					mapped_local_addr);
-		अगर (!hash_bucket_head)
-			जाओ हटाओ_mapinfo_निकास;
+		if (!hash_bucket_head)
+			goto remove_mapinfo_exit;
 
-		hlist_क्रम_each_entry_safe(map_info, पंचांगp_hlist_node,
-					hash_bucket_head, hlist_node) अणु
+		hlist_for_each_entry_safe(map_info, tmp_hlist_node,
+					hash_bucket_head, hlist_node) {
 
-			अगर (!iwpm_compare_sockaddr(&map_info->mapped_sockaddr,
-						mapped_local_addr)) अणु
+			if (!iwpm_compare_sockaddr(&map_info->mapped_sockaddr,
+						mapped_local_addr)) {
 
 				hlist_del_init(&map_info->hlist_node);
-				kमुक्त(map_info);
+				kfree(map_info);
 				ret = 0;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-हटाओ_mapinfo_निकास:
+				break;
+			}
+		}
+	}
+remove_mapinfo_exit:
 	spin_unlock_irqrestore(&iwpm_mapinfo_lock, flags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम मुक्त_hash_bucket(व्योम)
-अणु
-	काष्ठा hlist_node *पंचांगp_hlist_node;
-	काष्ठा iwpm_mapping_info *map_info;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक i;
+static void free_hash_bucket(void)
+{
+	struct hlist_node *tmp_hlist_node;
+	struct iwpm_mapping_info *map_info;
+	unsigned long flags;
+	int i;
 
-	/* हटाओ all the mapinfo data from the list */
+	/* remove all the mapinfo data from the list */
 	spin_lock_irqsave(&iwpm_mapinfo_lock, flags);
-	क्रम (i = 0; i < IWPM_MAPINFO_HASH_SIZE; i++) अणु
-		hlist_क्रम_each_entry_safe(map_info, पंचांगp_hlist_node,
-			&iwpm_hash_bucket[i], hlist_node) अणु
+	for (i = 0; i < IWPM_MAPINFO_HASH_SIZE; i++) {
+		hlist_for_each_entry_safe(map_info, tmp_hlist_node,
+			&iwpm_hash_bucket[i], hlist_node) {
 
 				hlist_del_init(&map_info->hlist_node);
-				kमुक्त(map_info);
-			पूर्ण
-	पूर्ण
-	/* मुक्त the hash list */
-	kमुक्त(iwpm_hash_bucket);
-	iwpm_hash_bucket = शून्य;
+				kfree(map_info);
+			}
+	}
+	/* free the hash list */
+	kfree(iwpm_hash_bucket);
+	iwpm_hash_bucket = NULL;
 	spin_unlock_irqrestore(&iwpm_mapinfo_lock, flags);
-पूर्ण
+}
 
-अटल व्योम मुक्त_reminfo_bucket(व्योम)
-अणु
-	काष्ठा hlist_node *पंचांगp_hlist_node;
-	काष्ठा iwpm_remote_info *rem_info;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक i;
+static void free_reminfo_bucket(void)
+{
+	struct hlist_node *tmp_hlist_node;
+	struct iwpm_remote_info *rem_info;
+	unsigned long flags;
+	int i;
 
-	/* हटाओ all the remote info from the list */
+	/* remove all the remote info from the list */
 	spin_lock_irqsave(&iwpm_reminfo_lock, flags);
-	क्रम (i = 0; i < IWPM_REMINFO_HASH_SIZE; i++) अणु
-		hlist_क्रम_each_entry_safe(rem_info, पंचांगp_hlist_node,
-			&iwpm_reminfo_bucket[i], hlist_node) अणु
+	for (i = 0; i < IWPM_REMINFO_HASH_SIZE; i++) {
+		hlist_for_each_entry_safe(rem_info, tmp_hlist_node,
+			&iwpm_reminfo_bucket[i], hlist_node) {
 
 				hlist_del_init(&rem_info->hlist_node);
-				kमुक्त(rem_info);
-			पूर्ण
-	पूर्ण
-	/* मुक्त the hash list */
-	kमुक्त(iwpm_reminfo_bucket);
-	iwpm_reminfo_bucket = शून्य;
+				kfree(rem_info);
+			}
+	}
+	/* free the hash list */
+	kfree(iwpm_reminfo_bucket);
+	iwpm_reminfo_bucket = NULL;
 	spin_unlock_irqrestore(&iwpm_reminfo_lock, flags);
-पूर्ण
+}
 
-अटल काष्ठा hlist_head *get_reminfo_hash_bucket(काष्ठा sockaddr_storage *,
-						काष्ठा sockaddr_storage *);
+static struct hlist_head *get_reminfo_hash_bucket(struct sockaddr_storage *,
+						struct sockaddr_storage *);
 
-व्योम iwpm_add_remote_info(काष्ठा iwpm_remote_info *rem_info)
-अणु
-	काष्ठा hlist_head *hash_bucket_head;
-	अचिन्हित दीर्घ flags;
+void iwpm_add_remote_info(struct iwpm_remote_info *rem_info)
+{
+	struct hlist_head *hash_bucket_head;
+	unsigned long flags;
 
 	spin_lock_irqsave(&iwpm_reminfo_lock, flags);
-	अगर (iwpm_reminfo_bucket) अणु
+	if (iwpm_reminfo_bucket) {
 		hash_bucket_head = get_reminfo_hash_bucket(
 					&rem_info->mapped_loc_sockaddr,
 					&rem_info->mapped_rem_sockaddr);
-		अगर (hash_bucket_head)
+		if (hash_bucket_head)
 			hlist_add_head(&rem_info->hlist_node, hash_bucket_head);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&iwpm_reminfo_lock, flags);
-पूर्ण
+}
 
 /**
  * iwpm_get_remote_info - Get the remote connecting peer address info
@@ -290,64 +289,64 @@ init_निकास:
  * @nl_client: The index of the netlink client
  *
  * The remote address info is retrieved and provided to the client in
- * the remote_addr. After that it is हटाओd from the hash table
+ * the remote_addr. After that it is removed from the hash table
  */
-पूर्णांक iwpm_get_remote_info(काष्ठा sockaddr_storage *mapped_loc_addr,
-			 काष्ठा sockaddr_storage *mapped_rem_addr,
-			 काष्ठा sockaddr_storage *remote_addr,
+int iwpm_get_remote_info(struct sockaddr_storage *mapped_loc_addr,
+			 struct sockaddr_storage *mapped_rem_addr,
+			 struct sockaddr_storage *remote_addr,
 			 u8 nl_client)
-अणु
-	काष्ठा hlist_node *पंचांगp_hlist_node;
-	काष्ठा hlist_head *hash_bucket_head;
-	काष्ठा iwpm_remote_info *rem_info = शून्य;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret = -EINVAL;
+{
+	struct hlist_node *tmp_hlist_node;
+	struct hlist_head *hash_bucket_head;
+	struct iwpm_remote_info *rem_info = NULL;
+	unsigned long flags;
+	int ret = -EINVAL;
 
-	अगर (!iwpm_valid_client(nl_client)) अणु
+	if (!iwpm_valid_client(nl_client)) {
 		pr_info("%s: Invalid client = %d\n", __func__, nl_client);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	spin_lock_irqsave(&iwpm_reminfo_lock, flags);
-	अगर (iwpm_reminfo_bucket) अणु
+	if (iwpm_reminfo_bucket) {
 		hash_bucket_head = get_reminfo_hash_bucket(
 					mapped_loc_addr,
 					mapped_rem_addr);
-		अगर (!hash_bucket_head)
-			जाओ get_remote_info_निकास;
-		hlist_क्रम_each_entry_safe(rem_info, पंचांगp_hlist_node,
-					hash_bucket_head, hlist_node) अणु
+		if (!hash_bucket_head)
+			goto get_remote_info_exit;
+		hlist_for_each_entry_safe(rem_info, tmp_hlist_node,
+					hash_bucket_head, hlist_node) {
 
-			अगर (!iwpm_compare_sockaddr(&rem_info->mapped_loc_sockaddr,
+			if (!iwpm_compare_sockaddr(&rem_info->mapped_loc_sockaddr,
 				mapped_loc_addr) &&
 				!iwpm_compare_sockaddr(&rem_info->mapped_rem_sockaddr,
-				mapped_rem_addr)) अणु
+				mapped_rem_addr)) {
 
-				स_नकल(remote_addr, &rem_info->remote_sockaddr,
-					माप(काष्ठा sockaddr_storage));
-				iwpm_prपूर्णांक_sockaddr(remote_addr,
+				memcpy(remote_addr, &rem_info->remote_sockaddr,
+					sizeof(struct sockaddr_storage));
+				iwpm_print_sockaddr(remote_addr,
 						"get_remote_info: Remote sockaddr:");
 
 				hlist_del_init(&rem_info->hlist_node);
-				kमुक्त(rem_info);
+				kfree(rem_info);
 				ret = 0;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-get_remote_info_निकास:
+				break;
+			}
+		}
+	}
+get_remote_info_exit:
 	spin_unlock_irqrestore(&iwpm_reminfo_lock, flags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-काष्ठा iwpm_nlmsg_request *iwpm_get_nlmsg_request(__u32 nlmsg_seq,
+struct iwpm_nlmsg_request *iwpm_get_nlmsg_request(__u32 nlmsg_seq,
 					u8 nl_client, gfp_t gfp)
-अणु
-	काष्ठा iwpm_nlmsg_request *nlmsg_request = शून्य;
-	अचिन्हित दीर्घ flags;
+{
+	struct iwpm_nlmsg_request *nlmsg_request = NULL;
+	unsigned long flags;
 
-	nlmsg_request = kzalloc(माप(काष्ठा iwpm_nlmsg_request), gfp);
-	अगर (!nlmsg_request)
-		वापस शून्य;
+	nlmsg_request = kzalloc(sizeof(struct iwpm_nlmsg_request), gfp);
+	if (!nlmsg_request)
+		return NULL;
 
 	spin_lock_irqsave(&iwpm_nlmsg_req_lock, flags);
 	list_add_tail(&nlmsg_request->inprocess_list, &iwpm_nlmsg_req_list);
@@ -357,482 +356,482 @@ get_remote_info_निकास:
 	kref_get(&nlmsg_request->kref);
 	nlmsg_request->nlmsg_seq = nlmsg_seq;
 	nlmsg_request->nl_client = nl_client;
-	nlmsg_request->request_करोne = 0;
+	nlmsg_request->request_done = 0;
 	nlmsg_request->err_code = 0;
 	sema_init(&nlmsg_request->sem, 1);
-	करोwn(&nlmsg_request->sem);
-	वापस nlmsg_request;
-पूर्ण
+	down(&nlmsg_request->sem);
+	return nlmsg_request;
+}
 
-व्योम iwpm_मुक्त_nlmsg_request(काष्ठा kref *kref)
-अणु
-	काष्ठा iwpm_nlmsg_request *nlmsg_request;
-	अचिन्हित दीर्घ flags;
+void iwpm_free_nlmsg_request(struct kref *kref)
+{
+	struct iwpm_nlmsg_request *nlmsg_request;
+	unsigned long flags;
 
-	nlmsg_request = container_of(kref, काष्ठा iwpm_nlmsg_request, kref);
+	nlmsg_request = container_of(kref, struct iwpm_nlmsg_request, kref);
 
 	spin_lock_irqsave(&iwpm_nlmsg_req_lock, flags);
 	list_del_init(&nlmsg_request->inprocess_list);
 	spin_unlock_irqrestore(&iwpm_nlmsg_req_lock, flags);
 
-	अगर (!nlmsg_request->request_करोne)
+	if (!nlmsg_request->request_done)
 		pr_debug("%s Freeing incomplete nlmsg request (seq = %u).\n",
 			__func__, nlmsg_request->nlmsg_seq);
-	kमुक्त(nlmsg_request);
-पूर्ण
+	kfree(nlmsg_request);
+}
 
-काष्ठा iwpm_nlmsg_request *iwpm_find_nlmsg_request(__u32 echo_seq)
-अणु
-	काष्ठा iwpm_nlmsg_request *nlmsg_request;
-	काष्ठा iwpm_nlmsg_request *found_request = शून्य;
-	अचिन्हित दीर्घ flags;
+struct iwpm_nlmsg_request *iwpm_find_nlmsg_request(__u32 echo_seq)
+{
+	struct iwpm_nlmsg_request *nlmsg_request;
+	struct iwpm_nlmsg_request *found_request = NULL;
+	unsigned long flags;
 
 	spin_lock_irqsave(&iwpm_nlmsg_req_lock, flags);
-	list_क्रम_each_entry(nlmsg_request, &iwpm_nlmsg_req_list,
-			    inprocess_list) अणु
-		अगर (nlmsg_request->nlmsg_seq == echo_seq) अणु
+	list_for_each_entry(nlmsg_request, &iwpm_nlmsg_req_list,
+			    inprocess_list) {
+		if (nlmsg_request->nlmsg_seq == echo_seq) {
 			found_request = nlmsg_request;
 			kref_get(&nlmsg_request->kref);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	spin_unlock_irqrestore(&iwpm_nlmsg_req_lock, flags);
-	वापस found_request;
-पूर्ण
+	return found_request;
+}
 
-पूर्णांक iwpm_रुको_complete_req(काष्ठा iwpm_nlmsg_request *nlmsg_request)
-अणु
-	पूर्णांक ret;
+int iwpm_wait_complete_req(struct iwpm_nlmsg_request *nlmsg_request)
+{
+	int ret;
 
-	ret = करोwn_समयout(&nlmsg_request->sem, IWPM_NL_TIMEOUT);
-	अगर (ret) अणु
+	ret = down_timeout(&nlmsg_request->sem, IWPM_NL_TIMEOUT);
+	if (ret) {
 		ret = -EINVAL;
 		pr_info("%s: Timeout %d sec for netlink request (seq = %u)\n",
 			__func__, (IWPM_NL_TIMEOUT/HZ), nlmsg_request->nlmsg_seq);
-	पूर्ण अन्यथा अणु
+	} else {
 		ret = nlmsg_request->err_code;
-	पूर्ण
-	kref_put(&nlmsg_request->kref, iwpm_मुक्त_nlmsg_request);
-	वापस ret;
-पूर्ण
+	}
+	kref_put(&nlmsg_request->kref, iwpm_free_nlmsg_request);
+	return ret;
+}
 
-पूर्णांक iwpm_get_nlmsg_seq(व्योम)
-अणु
-	वापस atomic_inc_वापस(&iwpm_admin.nlmsg_seq);
-पूर्ण
+int iwpm_get_nlmsg_seq(void)
+{
+	return atomic_inc_return(&iwpm_admin.nlmsg_seq);
+}
 
-पूर्णांक iwpm_valid_client(u8 nl_client)
-अणु
-	वापस iwpm_admin.client_list[nl_client];
-पूर्ण
+int iwpm_valid_client(u8 nl_client)
+{
+	return iwpm_admin.client_list[nl_client];
+}
 
-व्योम iwpm_set_valid(u8 nl_client, पूर्णांक valid)
-अणु
+void iwpm_set_valid(u8 nl_client, int valid)
+{
 	iwpm_admin.client_list[nl_client] = valid;
-पूर्ण
+}
 
 /* valid client */
 u32 iwpm_get_registration(u8 nl_client)
-अणु
-	वापस iwpm_admin.reg_list[nl_client];
-पूर्ण
+{
+	return iwpm_admin.reg_list[nl_client];
+}
 
 /* valid client */
-व्योम iwpm_set_registration(u8 nl_client, u32 reg)
-अणु
+void iwpm_set_registration(u8 nl_client, u32 reg)
+{
 	iwpm_admin.reg_list[nl_client] = reg;
-पूर्ण
+}
 
 /* valid client */
 u32 iwpm_check_registration(u8 nl_client, u32 reg)
-अणु
-	वापस (iwpm_get_registration(nl_client) & reg);
-पूर्ण
+{
+	return (iwpm_get_registration(nl_client) & reg);
+}
 
-पूर्णांक iwpm_compare_sockaddr(काष्ठा sockaddr_storage *a_sockaddr,
-				काष्ठा sockaddr_storage *b_sockaddr)
-अणु
-	अगर (a_sockaddr->ss_family != b_sockaddr->ss_family)
-		वापस 1;
-	अगर (a_sockaddr->ss_family == AF_INET) अणु
-		काष्ठा sockaddr_in *a4_sockaddr =
-			(काष्ठा sockaddr_in *)a_sockaddr;
-		काष्ठा sockaddr_in *b4_sockaddr =
-			(काष्ठा sockaddr_in *)b_sockaddr;
-		अगर (!स_भेद(&a4_sockaddr->sin_addr,
-			&b4_sockaddr->sin_addr, माप(काष्ठा in_addr))
+int iwpm_compare_sockaddr(struct sockaddr_storage *a_sockaddr,
+				struct sockaddr_storage *b_sockaddr)
+{
+	if (a_sockaddr->ss_family != b_sockaddr->ss_family)
+		return 1;
+	if (a_sockaddr->ss_family == AF_INET) {
+		struct sockaddr_in *a4_sockaddr =
+			(struct sockaddr_in *)a_sockaddr;
+		struct sockaddr_in *b4_sockaddr =
+			(struct sockaddr_in *)b_sockaddr;
+		if (!memcmp(&a4_sockaddr->sin_addr,
+			&b4_sockaddr->sin_addr, sizeof(struct in_addr))
 			&& a4_sockaddr->sin_port == b4_sockaddr->sin_port)
-				वापस 0;
+				return 0;
 
-	पूर्ण अन्यथा अगर (a_sockaddr->ss_family == AF_INET6) अणु
-		काष्ठा sockaddr_in6 *a6_sockaddr =
-			(काष्ठा sockaddr_in6 *)a_sockaddr;
-		काष्ठा sockaddr_in6 *b6_sockaddr =
-			(काष्ठा sockaddr_in6 *)b_sockaddr;
-		अगर (!स_भेद(&a6_sockaddr->sin6_addr,
-			&b6_sockaddr->sin6_addr, माप(काष्ठा in6_addr))
+	} else if (a_sockaddr->ss_family == AF_INET6) {
+		struct sockaddr_in6 *a6_sockaddr =
+			(struct sockaddr_in6 *)a_sockaddr;
+		struct sockaddr_in6 *b6_sockaddr =
+			(struct sockaddr_in6 *)b_sockaddr;
+		if (!memcmp(&a6_sockaddr->sin6_addr,
+			&b6_sockaddr->sin6_addr, sizeof(struct in6_addr))
 			&& a6_sockaddr->sin6_port == b6_sockaddr->sin6_port)
-				वापस 0;
+				return 0;
 
-	पूर्ण अन्यथा अणु
+	} else {
 		pr_err("%s: Invalid sockaddr family\n", __func__);
-	पूर्ण
-	वापस 1;
-पूर्ण
+	}
+	return 1;
+}
 
-काष्ठा sk_buff *iwpm_create_nlmsg(u32 nl_op, काष्ठा nlmsghdr **nlh,
-						पूर्णांक nl_client)
-अणु
-	काष्ठा sk_buff *skb = शून्य;
+struct sk_buff *iwpm_create_nlmsg(u32 nl_op, struct nlmsghdr **nlh,
+						int nl_client)
+{
+	struct sk_buff *skb = NULL;
 
 	skb = dev_alloc_skb(IWPM_MSG_SIZE);
-	अगर (!skb)
-		जाओ create_nlmsg_निकास;
+	if (!skb)
+		goto create_nlmsg_exit;
 
-	अगर (!(ibnl_put_msg(skb, nlh, 0, 0, nl_client, nl_op,
-			   NLM_F_REQUEST))) अणु
+	if (!(ibnl_put_msg(skb, nlh, 0, 0, nl_client, nl_op,
+			   NLM_F_REQUEST))) {
 		pr_warn("%s: Unable to put the nlmsg header\n", __func__);
-		dev_kमुक्त_skb(skb);
-		skb = शून्य;
-	पूर्ण
-create_nlmsg_निकास:
-	वापस skb;
-पूर्ण
+		dev_kfree_skb(skb);
+		skb = NULL;
+	}
+create_nlmsg_exit:
+	return skb;
+}
 
-पूर्णांक iwpm_parse_nlmsg(काष्ठा netlink_callback *cb, पूर्णांक policy_max,
-				   स्थिर काष्ठा nla_policy *nlmsg_policy,
-				   काष्ठा nlattr *nltb[], स्थिर अक्षर *msg_type)
-अणु
-	पूर्णांक nlh_len = 0;
-	पूर्णांक ret;
-	स्थिर अक्षर *err_str = "";
+int iwpm_parse_nlmsg(struct netlink_callback *cb, int policy_max,
+				   const struct nla_policy *nlmsg_policy,
+				   struct nlattr *nltb[], const char *msg_type)
+{
+	int nlh_len = 0;
+	int ret;
+	const char *err_str = "";
 
 	ret = nlmsg_validate_deprecated(cb->nlh, nlh_len, policy_max - 1,
-					nlmsg_policy, शून्य);
-	अगर (ret) अणु
+					nlmsg_policy, NULL);
+	if (ret) {
 		err_str = "Invalid attribute";
-		जाओ parse_nlmsg_error;
-	पूर्ण
+		goto parse_nlmsg_error;
+	}
 	ret = nlmsg_parse_deprecated(cb->nlh, nlh_len, nltb, policy_max - 1,
-				     nlmsg_policy, शून्य);
-	अगर (ret) अणु
+				     nlmsg_policy, NULL);
+	if (ret) {
 		err_str = "Unable to parse the nlmsg";
-		जाओ parse_nlmsg_error;
-	पूर्ण
+		goto parse_nlmsg_error;
+	}
 	ret = iwpm_validate_nlmsg_attr(nltb, policy_max);
-	अगर (ret) अणु
+	if (ret) {
 		err_str = "Invalid NULL attribute";
-		जाओ parse_nlmsg_error;
-	पूर्ण
-	वापस 0;
+		goto parse_nlmsg_error;
+	}
+	return 0;
 parse_nlmsg_error:
 	pr_warn("%s: %s (msg type %s ret = %d)\n",
 			__func__, err_str, msg_type, ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम iwpm_prपूर्णांक_sockaddr(काष्ठा sockaddr_storage *sockaddr, अक्षर *msg)
-अणु
-	काष्ठा sockaddr_in6 *sockaddr_v6;
-	काष्ठा sockaddr_in *sockaddr_v4;
+void iwpm_print_sockaddr(struct sockaddr_storage *sockaddr, char *msg)
+{
+	struct sockaddr_in6 *sockaddr_v6;
+	struct sockaddr_in *sockaddr_v4;
 
-	चयन (sockaddr->ss_family) अणु
-	हाल AF_INET:
-		sockaddr_v4 = (काष्ठा sockaddr_in *)sockaddr;
+	switch (sockaddr->ss_family) {
+	case AF_INET:
+		sockaddr_v4 = (struct sockaddr_in *)sockaddr;
 		pr_debug("%s IPV4 %pI4: %u(0x%04X)\n",
 			msg, &sockaddr_v4->sin_addr,
 			ntohs(sockaddr_v4->sin_port),
 			ntohs(sockaddr_v4->sin_port));
-		अवरोध;
-	हाल AF_INET6:
-		sockaddr_v6 = (काष्ठा sockaddr_in6 *)sockaddr;
+		break;
+	case AF_INET6:
+		sockaddr_v6 = (struct sockaddr_in6 *)sockaddr;
 		pr_debug("%s IPV6 %pI6: %u(0x%04X)\n",
 			msg, &sockaddr_v6->sin6_addr,
 			ntohs(sockaddr_v6->sin6_port),
 			ntohs(sockaddr_v6->sin6_port));
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 
-अटल u32 iwpm_ipv6_jhash(काष्ठा sockaddr_in6 *ipv6_sockaddr)
-अणु
-	u32 ipv6_hash = jhash(&ipv6_sockaddr->sin6_addr, माप(काष्ठा in6_addr), 0);
-	u32 hash = jhash_2words(ipv6_hash, (__क्रमce u32) ipv6_sockaddr->sin6_port, 0);
-	वापस hash;
-पूर्ण
+static u32 iwpm_ipv6_jhash(struct sockaddr_in6 *ipv6_sockaddr)
+{
+	u32 ipv6_hash = jhash(&ipv6_sockaddr->sin6_addr, sizeof(struct in6_addr), 0);
+	u32 hash = jhash_2words(ipv6_hash, (__force u32) ipv6_sockaddr->sin6_port, 0);
+	return hash;
+}
 
-अटल u32 iwpm_ipv4_jhash(काष्ठा sockaddr_in *ipv4_sockaddr)
-अणु
-	u32 ipv4_hash = jhash(&ipv4_sockaddr->sin_addr, माप(काष्ठा in_addr), 0);
-	u32 hash = jhash_2words(ipv4_hash, (__क्रमce u32) ipv4_sockaddr->sin_port, 0);
-	वापस hash;
-पूर्ण
+static u32 iwpm_ipv4_jhash(struct sockaddr_in *ipv4_sockaddr)
+{
+	u32 ipv4_hash = jhash(&ipv4_sockaddr->sin_addr, sizeof(struct in_addr), 0);
+	u32 hash = jhash_2words(ipv4_hash, (__force u32) ipv4_sockaddr->sin_port, 0);
+	return hash;
+}
 
-अटल पूर्णांक get_hash_bucket(काष्ठा sockaddr_storage *a_sockaddr,
-				काष्ठा sockaddr_storage *b_sockaddr, u32 *hash)
-अणु
+static int get_hash_bucket(struct sockaddr_storage *a_sockaddr,
+				struct sockaddr_storage *b_sockaddr, u32 *hash)
+{
 	u32 a_hash, b_hash;
 
-	अगर (a_sockaddr->ss_family == AF_INET) अणु
-		a_hash = iwpm_ipv4_jhash((काष्ठा sockaddr_in *) a_sockaddr);
-		b_hash = iwpm_ipv4_jhash((काष्ठा sockaddr_in *) b_sockaddr);
+	if (a_sockaddr->ss_family == AF_INET) {
+		a_hash = iwpm_ipv4_jhash((struct sockaddr_in *) a_sockaddr);
+		b_hash = iwpm_ipv4_jhash((struct sockaddr_in *) b_sockaddr);
 
-	पूर्ण अन्यथा अगर (a_sockaddr->ss_family == AF_INET6) अणु
-		a_hash = iwpm_ipv6_jhash((काष्ठा sockaddr_in6 *) a_sockaddr);
-		b_hash = iwpm_ipv6_jhash((काष्ठा sockaddr_in6 *) b_sockaddr);
-	पूर्ण अन्यथा अणु
+	} else if (a_sockaddr->ss_family == AF_INET6) {
+		a_hash = iwpm_ipv6_jhash((struct sockaddr_in6 *) a_sockaddr);
+		b_hash = iwpm_ipv6_jhash((struct sockaddr_in6 *) b_sockaddr);
+	} else {
 		pr_err("%s: Invalid sockaddr family\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (a_hash == b_hash) /* अगर port mapper isn't available */
+	if (a_hash == b_hash) /* if port mapper isn't available */
 		*hash = a_hash;
-	अन्यथा
+	else
 		*hash = jhash_2words(a_hash, b_hash, 0);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा hlist_head *get_mapinfo_hash_bucket(काष्ठा sockaddr_storage
-				*local_sockaddr, काष्ठा sockaddr_storage
+static struct hlist_head *get_mapinfo_hash_bucket(struct sockaddr_storage
+				*local_sockaddr, struct sockaddr_storage
 				*mapped_sockaddr)
-अणु
+{
 	u32 hash;
-	पूर्णांक ret;
+	int ret;
 
 	ret = get_hash_bucket(local_sockaddr, mapped_sockaddr, &hash);
-	अगर (ret)
-		वापस शून्य;
-	वापस &iwpm_hash_bucket[hash & IWPM_MAPINFO_HASH_MASK];
-पूर्ण
+	if (ret)
+		return NULL;
+	return &iwpm_hash_bucket[hash & IWPM_MAPINFO_HASH_MASK];
+}
 
-अटल काष्ठा hlist_head *get_reminfo_hash_bucket(काष्ठा sockaddr_storage
-				*mapped_loc_sockaddr, काष्ठा sockaddr_storage
+static struct hlist_head *get_reminfo_hash_bucket(struct sockaddr_storage
+				*mapped_loc_sockaddr, struct sockaddr_storage
 				*mapped_rem_sockaddr)
-अणु
+{
 	u32 hash;
-	पूर्णांक ret;
+	int ret;
 
 	ret = get_hash_bucket(mapped_loc_sockaddr, mapped_rem_sockaddr, &hash);
-	अगर (ret)
-		वापस शून्य;
-	वापस &iwpm_reminfo_bucket[hash & IWPM_REMINFO_HASH_MASK];
-पूर्ण
+	if (ret)
+		return NULL;
+	return &iwpm_reminfo_bucket[hash & IWPM_REMINFO_HASH_MASK];
+}
 
-अटल पूर्णांक send_mapinfo_num(u32 mapping_num, u8 nl_client, पूर्णांक iwpm_pid)
-अणु
-	काष्ठा sk_buff *skb = शून्य;
-	काष्ठा nlmsghdr *nlh;
+static int send_mapinfo_num(u32 mapping_num, u8 nl_client, int iwpm_pid)
+{
+	struct sk_buff *skb = NULL;
+	struct nlmsghdr *nlh;
 	u32 msg_seq;
-	स्थिर अक्षर *err_str = "";
-	पूर्णांक ret = -EINVAL;
+	const char *err_str = "";
+	int ret = -EINVAL;
 
 	skb = iwpm_create_nlmsg(RDMA_NL_IWPM_MAPINFO_NUM, &nlh, nl_client);
-	अगर (!skb) अणु
+	if (!skb) {
 		err_str = "Unable to create a nlmsg";
-		जाओ mapinfo_num_error;
-	पूर्ण
+		goto mapinfo_num_error;
+	}
 	nlh->nlmsg_seq = iwpm_get_nlmsg_seq();
 	msg_seq = 0;
 	err_str = "Unable to put attribute of mapinfo number nlmsg";
-	ret = ibnl_put_attr(skb, nlh, माप(u32), &msg_seq, IWPM_NLA_MAPINFO_SEQ);
-	अगर (ret)
-		जाओ mapinfo_num_error;
-	ret = ibnl_put_attr(skb, nlh, माप(u32),
+	ret = ibnl_put_attr(skb, nlh, sizeof(u32), &msg_seq, IWPM_NLA_MAPINFO_SEQ);
+	if (ret)
+		goto mapinfo_num_error;
+	ret = ibnl_put_attr(skb, nlh, sizeof(u32),
 				&mapping_num, IWPM_NLA_MAPINFO_SEND_NUM);
-	अगर (ret)
-		जाओ mapinfo_num_error;
+	if (ret)
+		goto mapinfo_num_error;
 
 	nlmsg_end(skb, nlh);
 
 	ret = rdma_nl_unicast(&init_net, skb, iwpm_pid);
-	अगर (ret) अणु
-		skb = शून्य;
+	if (ret) {
+		skb = NULL;
 		err_str = "Unable to send a nlmsg";
-		जाओ mapinfo_num_error;
-	पूर्ण
+		goto mapinfo_num_error;
+	}
 	pr_debug("%s: Sent mapping number = %d\n", __func__, mapping_num);
-	वापस 0;
+	return 0;
 mapinfo_num_error:
 	pr_info("%s: %s\n", __func__, err_str);
-	dev_kमुक्त_skb(skb);
-	वापस ret;
-पूर्ण
+	dev_kfree_skb(skb);
+	return ret;
+}
 
-अटल पूर्णांक send_nlmsg_करोne(काष्ठा sk_buff *skb, u8 nl_client, पूर्णांक iwpm_pid)
-अणु
-	काष्ठा nlmsghdr *nlh = शून्य;
-	पूर्णांक ret = 0;
+static int send_nlmsg_done(struct sk_buff *skb, u8 nl_client, int iwpm_pid)
+{
+	struct nlmsghdr *nlh = NULL;
+	int ret = 0;
 
-	अगर (!skb)
-		वापस ret;
-	अगर (!(ibnl_put_msg(skb, &nlh, 0, 0, nl_client,
-			   RDMA_NL_IWPM_MAPINFO, NLM_F_MULTI))) अणु
+	if (!skb)
+		return ret;
+	if (!(ibnl_put_msg(skb, &nlh, 0, 0, nl_client,
+			   RDMA_NL_IWPM_MAPINFO, NLM_F_MULTI))) {
 		pr_warn("%s Unable to put NLMSG_DONE\n", __func__);
-		dev_kमुक्त_skb(skb);
-		वापस -ENOMEM;
-	पूर्ण
+		dev_kfree_skb(skb);
+		return -ENOMEM;
+	}
 	nlh->nlmsg_type = NLMSG_DONE;
 	ret = rdma_nl_unicast(&init_net, skb, iwpm_pid);
-	अगर (ret)
+	if (ret)
 		pr_warn("%s Unable to send a nlmsg\n", __func__);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक iwpm_send_mapinfo(u8 nl_client, पूर्णांक iwpm_pid)
-अणु
-	काष्ठा iwpm_mapping_info *map_info;
-	काष्ठा sk_buff *skb = शून्य;
-	काष्ठा nlmsghdr *nlh;
-	पूर्णांक skb_num = 0, mapping_num = 0;
-	पूर्णांक i = 0, nlmsg_bytes = 0;
-	अचिन्हित दीर्घ flags;
-	स्थिर अक्षर *err_str = "";
-	पूर्णांक ret;
+int iwpm_send_mapinfo(u8 nl_client, int iwpm_pid)
+{
+	struct iwpm_mapping_info *map_info;
+	struct sk_buff *skb = NULL;
+	struct nlmsghdr *nlh;
+	int skb_num = 0, mapping_num = 0;
+	int i = 0, nlmsg_bytes = 0;
+	unsigned long flags;
+	const char *err_str = "";
+	int ret;
 
 	skb = dev_alloc_skb(NLMSG_GOODSIZE);
-	अगर (!skb) अणु
+	if (!skb) {
 		ret = -ENOMEM;
 		err_str = "Unable to allocate skb";
-		जाओ send_mapping_info_निकास;
-	पूर्ण
+		goto send_mapping_info_exit;
+	}
 	skb_num++;
 	spin_lock_irqsave(&iwpm_mapinfo_lock, flags);
 	ret = -EINVAL;
-	क्रम (i = 0; i < IWPM_MAPINFO_HASH_SIZE; i++) अणु
-		hlist_क्रम_each_entry(map_info, &iwpm_hash_bucket[i],
-				     hlist_node) अणु
-			अगर (map_info->nl_client != nl_client)
-				जारी;
-			nlh = शून्य;
-			अगर (!(ibnl_put_msg(skb, &nlh, 0, 0, nl_client,
-					RDMA_NL_IWPM_MAPINFO, NLM_F_MULTI))) अणु
+	for (i = 0; i < IWPM_MAPINFO_HASH_SIZE; i++) {
+		hlist_for_each_entry(map_info, &iwpm_hash_bucket[i],
+				     hlist_node) {
+			if (map_info->nl_client != nl_client)
+				continue;
+			nlh = NULL;
+			if (!(ibnl_put_msg(skb, &nlh, 0, 0, nl_client,
+					RDMA_NL_IWPM_MAPINFO, NLM_F_MULTI))) {
 				ret = -ENOMEM;
 				err_str = "Unable to put the nlmsg header";
-				जाओ send_mapping_info_unlock;
-			पूर्ण
+				goto send_mapping_info_unlock;
+			}
 			err_str = "Unable to put attribute of the nlmsg";
 			ret = ibnl_put_attr(skb, nlh,
-					माप(काष्ठा sockaddr_storage),
+					sizeof(struct sockaddr_storage),
 					&map_info->local_sockaddr,
 					IWPM_NLA_MAPINFO_LOCAL_ADDR);
-			अगर (ret)
-				जाओ send_mapping_info_unlock;
+			if (ret)
+				goto send_mapping_info_unlock;
 
 			ret = ibnl_put_attr(skb, nlh,
-					माप(काष्ठा sockaddr_storage),
+					sizeof(struct sockaddr_storage),
 					&map_info->mapped_sockaddr,
 					IWPM_NLA_MAPINFO_MAPPED_ADDR);
-			अगर (ret)
-				जाओ send_mapping_info_unlock;
+			if (ret)
+				goto send_mapping_info_unlock;
 
-			अगर (iwpm_ulib_version > IWPM_UABI_VERSION_MIN) अणु
-				ret = ibnl_put_attr(skb, nlh, माप(u32),
+			if (iwpm_ulib_version > IWPM_UABI_VERSION_MIN) {
+				ret = ibnl_put_attr(skb, nlh, sizeof(u32),
 						&map_info->map_flags,
 						IWPM_NLA_MAPINFO_FLAGS);
-				अगर (ret)
-					जाओ send_mapping_info_unlock;
-			पूर्ण
+				if (ret)
+					goto send_mapping_info_unlock;
+			}
 
 			nlmsg_end(skb, nlh);
 
-			iwpm_prपूर्णांक_sockaddr(&map_info->local_sockaddr,
+			iwpm_print_sockaddr(&map_info->local_sockaddr,
 				"send_mapping_info: Local sockaddr:");
-			iwpm_prपूर्णांक_sockaddr(&map_info->mapped_sockaddr,
+			iwpm_print_sockaddr(&map_info->mapped_sockaddr,
 				"send_mapping_info: Mapped local sockaddr:");
 			mapping_num++;
 			nlmsg_bytes += nlh->nlmsg_len;
 
-			/* check अगर all mappings can fit in one skb */
-			अगर (NLMSG_GOODSIZE - nlmsg_bytes < nlh->nlmsg_len * 2) अणु
-				/* and leave room क्रम NLMSG_DONE */
+			/* check if all mappings can fit in one skb */
+			if (NLMSG_GOODSIZE - nlmsg_bytes < nlh->nlmsg_len * 2) {
+				/* and leave room for NLMSG_DONE */
 				nlmsg_bytes = 0;
 				skb_num++;
 				spin_unlock_irqrestore(&iwpm_mapinfo_lock,
 						       flags);
 				/* send the skb */
-				ret = send_nlmsg_करोne(skb, nl_client, iwpm_pid);
-				skb = शून्य;
-				अगर (ret) अणु
+				ret = send_nlmsg_done(skb, nl_client, iwpm_pid);
+				skb = NULL;
+				if (ret) {
 					err_str = "Unable to send map info";
-					जाओ send_mapping_info_निकास;
-				पूर्ण
-				अगर (skb_num == IWPM_MAPINFO_SKB_COUNT) अणु
+					goto send_mapping_info_exit;
+				}
+				if (skb_num == IWPM_MAPINFO_SKB_COUNT) {
 					ret = -ENOMEM;
 					err_str = "Insufficient skbs for map info";
-					जाओ send_mapping_info_निकास;
-				पूर्ण
+					goto send_mapping_info_exit;
+				}
 				skb = dev_alloc_skb(NLMSG_GOODSIZE);
-				अगर (!skb) अणु
+				if (!skb) {
 					ret = -ENOMEM;
 					err_str = "Unable to allocate skb";
-					जाओ send_mapping_info_निकास;
-				पूर्ण
+					goto send_mapping_info_exit;
+				}
 				spin_lock_irqsave(&iwpm_mapinfo_lock, flags);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 send_mapping_info_unlock:
 	spin_unlock_irqrestore(&iwpm_mapinfo_lock, flags);
-send_mapping_info_निकास:
-	अगर (ret) अणु
+send_mapping_info_exit:
+	if (ret) {
 		pr_warn("%s: %s (ret = %d)\n", __func__, err_str, ret);
-		dev_kमुक्त_skb(skb);
-		वापस ret;
-	पूर्ण
-	send_nlmsg_करोne(skb, nl_client, iwpm_pid);
-	वापस send_mapinfo_num(mapping_num, nl_client, iwpm_pid);
-पूर्ण
+		dev_kfree_skb(skb);
+		return ret;
+	}
+	send_nlmsg_done(skb, nl_client, iwpm_pid);
+	return send_mapinfo_num(mapping_num, nl_client, iwpm_pid);
+}
 
-पूर्णांक iwpm_mapinfo_available(व्योम)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक full_bucket = 0, i = 0;
+int iwpm_mapinfo_available(void)
+{
+	unsigned long flags;
+	int full_bucket = 0, i = 0;
 
 	spin_lock_irqsave(&iwpm_mapinfo_lock, flags);
-	अगर (iwpm_hash_bucket) अणु
-		क्रम (i = 0; i < IWPM_MAPINFO_HASH_SIZE; i++) अणु
-			अगर (!hlist_empty(&iwpm_hash_bucket[i])) अणु
+	if (iwpm_hash_bucket) {
+		for (i = 0; i < IWPM_MAPINFO_HASH_SIZE; i++) {
+			if (!hlist_empty(&iwpm_hash_bucket[i])) {
 				full_bucket = 1;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				break;
+			}
+		}
+	}
 	spin_unlock_irqrestore(&iwpm_mapinfo_lock, flags);
-	वापस full_bucket;
-पूर्ण
+	return full_bucket;
+}
 
-पूर्णांक iwpm_send_hello(u8 nl_client, पूर्णांक iwpm_pid, u16 abi_version)
-अणु
-	काष्ठा sk_buff *skb = शून्य;
-	काष्ठा nlmsghdr *nlh;
-	स्थिर अक्षर *err_str = "";
-	पूर्णांक ret = -EINVAL;
+int iwpm_send_hello(u8 nl_client, int iwpm_pid, u16 abi_version)
+{
+	struct sk_buff *skb = NULL;
+	struct nlmsghdr *nlh;
+	const char *err_str = "";
+	int ret = -EINVAL;
 
 	skb = iwpm_create_nlmsg(RDMA_NL_IWPM_HELLO, &nlh, nl_client);
-	अगर (!skb) अणु
+	if (!skb) {
 		err_str = "Unable to create a nlmsg";
-		जाओ hello_num_error;
-	पूर्ण
+		goto hello_num_error;
+	}
 	nlh->nlmsg_seq = iwpm_get_nlmsg_seq();
 	err_str = "Unable to put attribute of abi_version into nlmsg";
-	ret = ibnl_put_attr(skb, nlh, माप(u16), &abi_version,
+	ret = ibnl_put_attr(skb, nlh, sizeof(u16), &abi_version,
 			    IWPM_NLA_HELLO_ABI_VERSION);
-	अगर (ret)
-		जाओ hello_num_error;
+	if (ret)
+		goto hello_num_error;
 	nlmsg_end(skb, nlh);
 
 	ret = rdma_nl_unicast(&init_net, skb, iwpm_pid);
-	अगर (ret) अणु
-		skb = शून्य;
+	if (ret) {
+		skb = NULL;
 		err_str = "Unable to send a nlmsg";
-		जाओ hello_num_error;
-	पूर्ण
+		goto hello_num_error;
+	}
 	pr_debug("%s: Sent hello abi_version = %u\n", __func__, abi_version);
-	वापस 0;
+	return 0;
 hello_num_error:
 	pr_info("%s: %s\n", __func__, err_str);
-	dev_kमुक्त_skb(skb);
-	वापस ret;
-पूर्ण
+	dev_kfree_skb(skb);
+	return ret;
+}

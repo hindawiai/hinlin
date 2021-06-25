@@ -1,63 +1,62 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
+/* SPDX-License-Identifier: MIT */
 /*
- * Copyright तऊ 2014-2019 Intel Corporation
+ * Copyright © 2014-2019 Intel Corporation
  */
 
-#अगर_अघोषित _INTEL_HUC_H_
-#घोषणा _INTEL_HUC_H_
+#ifndef _INTEL_HUC_H_
+#define _INTEL_HUC_H_
 
-#समावेश "i915_reg.h"
-#समावेश "intel_uc_fw.h"
-#समावेश "intel_huc_fw.h"
+#include "i915_reg.h"
+#include "intel_uc_fw.h"
+#include "intel_huc_fw.h"
 
-काष्ठा पूर्णांकel_huc अणु
+struct intel_huc {
 	/* Generic uC firmware management */
-	काष्ठा पूर्णांकel_uc_fw fw;
+	struct intel_uc_fw fw;
 
-	/* HuC-specअगरic additions */
-	काष्ठा i915_vma *rsa_data;
+	/* HuC-specific additions */
+	struct i915_vma *rsa_data;
 
-	काष्ठा अणु
+	struct {
 		i915_reg_t reg;
 		u32 mask;
 		u32 value;
-	पूर्ण status;
-पूर्ण;
+	} status;
+};
 
-व्योम पूर्णांकel_huc_init_early(काष्ठा पूर्णांकel_huc *huc);
-पूर्णांक पूर्णांकel_huc_init(काष्ठा पूर्णांकel_huc *huc);
-व्योम पूर्णांकel_huc_fini(काष्ठा पूर्णांकel_huc *huc);
-पूर्णांक पूर्णांकel_huc_auth(काष्ठा पूर्णांकel_huc *huc);
-पूर्णांक पूर्णांकel_huc_check_status(काष्ठा पूर्णांकel_huc *huc);
+void intel_huc_init_early(struct intel_huc *huc);
+int intel_huc_init(struct intel_huc *huc);
+void intel_huc_fini(struct intel_huc *huc);
+int intel_huc_auth(struct intel_huc *huc);
+int intel_huc_check_status(struct intel_huc *huc);
 
-अटल अंतरभूत पूर्णांक पूर्णांकel_huc_sanitize(काष्ठा पूर्णांकel_huc *huc)
-अणु
-	पूर्णांकel_uc_fw_sanitize(&huc->fw);
-	वापस 0;
-पूर्ण
+static inline int intel_huc_sanitize(struct intel_huc *huc)
+{
+	intel_uc_fw_sanitize(&huc->fw);
+	return 0;
+}
 
-अटल अंतरभूत bool पूर्णांकel_huc_is_supported(काष्ठा पूर्णांकel_huc *huc)
-अणु
-	वापस पूर्णांकel_uc_fw_is_supported(&huc->fw);
-पूर्ण
+static inline bool intel_huc_is_supported(struct intel_huc *huc)
+{
+	return intel_uc_fw_is_supported(&huc->fw);
+}
 
-अटल अंतरभूत bool पूर्णांकel_huc_is_wanted(काष्ठा पूर्णांकel_huc *huc)
-अणु
-	वापस पूर्णांकel_uc_fw_is_enabled(&huc->fw);
-पूर्ण
+static inline bool intel_huc_is_wanted(struct intel_huc *huc)
+{
+	return intel_uc_fw_is_enabled(&huc->fw);
+}
 
-अटल अंतरभूत bool पूर्णांकel_huc_is_used(काष्ठा पूर्णांकel_huc *huc)
-अणु
-	GEM_BUG_ON(__पूर्णांकel_uc_fw_status(&huc->fw) == INTEL_UC_FIRMWARE_SELECTED);
-	वापस पूर्णांकel_uc_fw_is_available(&huc->fw);
-पूर्ण
+static inline bool intel_huc_is_used(struct intel_huc *huc)
+{
+	GEM_BUG_ON(__intel_uc_fw_status(&huc->fw) == INTEL_UC_FIRMWARE_SELECTED);
+	return intel_uc_fw_is_available(&huc->fw);
+}
 
-अटल अंतरभूत bool पूर्णांकel_huc_is_authenticated(काष्ठा पूर्णांकel_huc *huc)
-अणु
-	वापस पूर्णांकel_uc_fw_is_running(&huc->fw);
-पूर्ण
+static inline bool intel_huc_is_authenticated(struct intel_huc *huc)
+{
+	return intel_uc_fw_is_running(&huc->fw);
+}
 
-व्योम पूर्णांकel_huc_load_status(काष्ठा पूर्णांकel_huc *huc, काष्ठा drm_prपूर्णांकer *p);
+void intel_huc_load_status(struct intel_huc *huc, struct drm_printer *p);
 
-#पूर्ण_अगर
+#endif

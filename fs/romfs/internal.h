@@ -1,44 +1,43 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
-/* RomFS पूर्णांकernal definitions
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+/* RomFS internal definitions
  *
- * Copyright तऊ 2007 Red Hat, Inc. All Rights Reserved.
+ * Copyright © 2007 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#समावेश <linux/romfs_fs.h>
+#include <linux/romfs_fs.h>
 
-काष्ठा romfs_inode_info अणु
-	काष्ठा inode	vfs_inode;
-	अचिन्हित दीर्घ	i_metasize;	/* size of non-data area */
-	अचिन्हित दीर्घ	i_dataoffset;	/* from the start of fs */
-पूर्ण;
+struct romfs_inode_info {
+	struct inode	vfs_inode;
+	unsigned long	i_metasize;	/* size of non-data area */
+	unsigned long	i_dataoffset;	/* from the start of fs */
+};
 
-अटल अंतरभूत माप_प्रकार romfs_maxsize(काष्ठा super_block *sb)
-अणु
-	वापस (माप_प्रकार) (अचिन्हित दीर्घ) sb->s_fs_info;
-पूर्ण
+static inline size_t romfs_maxsize(struct super_block *sb)
+{
+	return (size_t) (unsigned long) sb->s_fs_info;
+}
 
-अटल अंतरभूत काष्ठा romfs_inode_info *ROMFS_I(काष्ठा inode *inode)
-अणु
-	वापस container_of(inode, काष्ठा romfs_inode_info, vfs_inode);
-पूर्ण
+static inline struct romfs_inode_info *ROMFS_I(struct inode *inode)
+{
+	return container_of(inode, struct romfs_inode_info, vfs_inode);
+}
 
 /*
  * mmap-nommu.c
  */
-#अगर !defined(CONFIG_MMU) && defined(CONFIG_ROMFS_ON_MTD)
-बाह्य स्थिर काष्ठा file_operations romfs_ro_fops;
-#अन्यथा
-#घोषणा romfs_ro_fops	generic_ro_fops
-#पूर्ण_अगर
+#if !defined(CONFIG_MMU) && defined(CONFIG_ROMFS_ON_MTD)
+extern const struct file_operations romfs_ro_fops;
+#else
+#define romfs_ro_fops	generic_ro_fops
+#endif
 
 /*
  * storage.c
  */
-बाह्य पूर्णांक romfs_dev_पढ़ो(काष्ठा super_block *sb, अचिन्हित दीर्घ pos,
-			  व्योम *buf, माप_प्रकार buflen);
-बाह्य sमाप_प्रकार romfs_dev_strnlen(काष्ठा super_block *sb,
-				 अचिन्हित दीर्घ pos, माप_प्रकार maxlen);
-बाह्य पूर्णांक romfs_dev_म_भेद(काष्ठा super_block *sb, अचिन्हित दीर्घ pos,
-			    स्थिर अक्षर *str, माप_प्रकार size);
+extern int romfs_dev_read(struct super_block *sb, unsigned long pos,
+			  void *buf, size_t buflen);
+extern ssize_t romfs_dev_strnlen(struct super_block *sb,
+				 unsigned long pos, size_t maxlen);
+extern int romfs_dev_strcmp(struct super_block *sb, unsigned long pos,
+			    const char *str, size_t size);

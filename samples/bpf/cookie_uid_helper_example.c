@@ -1,14 +1,13 @@
-<शैली गुरु>
 /* This test is a demo of using get_socket_uid and get_socket_cookie
- * helper function to करो per socket based network traffic monitoring.
+ * helper function to do per socket based network traffic monitoring.
  * It requires iptables version higher then 1.6.1. to load pinned eBPF
- * program पूर्णांकo the xt_bpf match.
+ * program into the xt_bpf match.
  *
  * TEST:
  * ./run_cookie_uid_helper_example.sh -option
  * option:
- *	-t: करो traffic monitoring test, the program will continuously
- * prपूर्णांक out network traffic happens after program started A sample
+ *	-t: do traffic monitoring test, the program will continuously
+ * print out network traffic happens after program started A sample
  * output is shown below:
  *
  * cookie: 877, uid: 0x3e8, Pakcet Count: 20, Bytes Count: 11058
@@ -20,67 +19,67 @@
  * cookie: 0, uid: 0x0, Pakcet Count: 6, Bytes Count: 712
  * cookie: 880, uid: 0xfffe, Pakcet Count: 1, Bytes Count: 70
  *
- *	-s: करो माला_लोockopt SO_COOKIE test, the program will set up a pair of
- * UDP sockets and send packets between them. And पढ़ो out the traffic data
+ *	-s: do getsockopt SO_COOKIE test, the program will set up a pair of
+ * UDP sockets and send packets between them. And read out the traffic data
  * directly from the ebpf map based on the socket cookie.
  *
- * Clean up: अगर using shell script, the script file will delete the iptables
- * rule and unmount the bpf program when निकास. Else the iptables rule need
- * to be deleted by hand, see run_cookie_uid_helper_example.sh क्रम detail.
+ * Clean up: if using shell script, the script file will delete the iptables
+ * rule and unmount the bpf program when exit. Else the iptables rule need
+ * to be deleted by hand, see run_cookie_uid_helper_example.sh for detail.
  */
 
-#घोषणा _GNU_SOURCE
+#define _GNU_SOURCE
 
-#घोषणा दुरत्व(type, member)	__builtin_दुरत्व(type, member)
-#घोषणा ARRAY_SIZE(x) (माप(x) / माप(*(x)))
+#define offsetof(type, member)	__builtin_offsetof(type, member)
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof(*(x)))
 
-#समावेश <arpa/inet.h>
-#समावेश <त्रुटिसं.स>
-#समावेश <error.h>
-#समावेश <सीमा.स>
-#समावेश <linux/bpf.h>
-#समावेश <linux/अगर_ether.h>
-#समावेश <net/अगर.h>
-#समावेश <संकेत.स>
-#समावेश <stdbool.h>
-#समावेश <मानक_निवेशt.h>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <sys/socket.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <sys/types.h>
-#समावेश <unistd.h>
-#समावेश <bpf/bpf.h>
-#समावेश "bpf_insn.h"
+#include <arpa/inet.h>
+#include <errno.h>
+#include <error.h>
+#include <limits.h>
+#include <linux/bpf.h>
+#include <linux/if_ether.h>
+#include <net/if.h>
+#include <signal.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <bpf/bpf.h>
+#include "bpf_insn.h"
 
-#घोषणा PORT 8888
+#define PORT 8888
 
-काष्ठा stats अणु
-	uपूर्णांक32_t uid;
-	uपूर्णांक64_t packets;
-	uपूर्णांक64_t bytes;
-पूर्ण;
+struct stats {
+	uint32_t uid;
+	uint64_t packets;
+	uint64_t bytes;
+};
 
-अटल पूर्णांक map_fd, prog_fd;
+static int map_fd, prog_fd;
 
-अटल bool test_finish;
+static bool test_finish;
 
-अटल व्योम maps_create(व्योम)
-अणु
-	map_fd = bpf_create_map(BPF_MAP_TYPE_HASH, माप(uपूर्णांक32_t),
-				माप(काष्ठा stats), 100, 0);
-	अगर (map_fd < 0)
-		error(1, त्रुटि_सं, "map create failed!\n");
-पूर्ण
+static void maps_create(void)
+{
+	map_fd = bpf_create_map(BPF_MAP_TYPE_HASH, sizeof(uint32_t),
+				sizeof(struct stats), 100, 0);
+	if (map_fd < 0)
+		error(1, errno, "map create failed!\n");
+}
 
-अटल व्योम prog_load(व्योम)
-अणु
-	अटल अक्षर log_buf[1 << 16];
+static void prog_load(void)
+{
+	static char log_buf[1 << 16];
 
-	काष्ठा bpf_insn prog[] = अणु
+	struct bpf_insn prog[] = {
 		/*
-		 * Save sk_buff क्रम future usage. value stored in R6 to R10 will
+		 * Save sk_buff for future usage. value stored in R6 to R10 will
 		 * not be reset after a bpf helper function call.
 		 */
 		BPF_MOV64_REG(BPF_REG_6, BPF_REG_1),
@@ -90,12 +89,12 @@
 		 */
 		BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0,
 				BPF_FUNC_get_socket_cookie),
-		/* pc2-4: save &socketCookie to r7 क्रम future usage*/
+		/* pc2-4: save &socketCookie to r7 for future usage*/
 		BPF_STX_MEM(BPF_DW, BPF_REG_10, BPF_REG_0, -8),
 		BPF_MOV64_REG(BPF_REG_7, BPF_REG_10),
 		BPF_ALU64_IMM(BPF_ADD, BPF_REG_7, -8),
 		/*
-		 * pc5-8: set up the रेजिस्टरs क्रम BPF_FUNC_map_lookup_elem,
+		 * pc5-8: set up the registers for BPF_FUNC_map_lookup_elem,
 		 * it takes two parameters (R1: map_fd,  R2: &socket_cookie)
 		 */
 		BPF_LD_MAP_FD(BPF_REG_1, map_fd),
@@ -103,31 +102,31 @@
 		BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0,
 				BPF_FUNC_map_lookup_elem),
 		/*
-		 * pc9. अगर r0 != 0x0, go to pc+14, since we have the cookie
-		 * stored alपढ़ोy
-		 * Otherwise करो pc10-22 to setup a new data entry.
+		 * pc9. if r0 != 0x0, go to pc+14, since we have the cookie
+		 * stored already
+		 * Otherwise do pc10-22 to setup a new data entry.
 		 */
 		BPF_JMP_IMM(BPF_JNE, BPF_REG_0, 0, 14),
 		BPF_MOV64_REG(BPF_REG_1, BPF_REG_6),
 		BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0,
 				BPF_FUNC_get_socket_uid),
 		/*
-		 * Place a काष्ठा stats in the R10 stack and sequentially
-		 * place the member value पूर्णांकo the memory. Packets value
-		 * is set by directly place a IMM value 1 पूर्णांकo the stack.
+		 * Place a struct stats in the R10 stack and sequentially
+		 * place the member value into the memory. Packets value
+		 * is set by directly place a IMM value 1 into the stack.
 		 */
 		BPF_STX_MEM(BPF_DW, BPF_REG_10, BPF_REG_0,
-			    -32 + (__s16)दुरत्व(काष्ठा stats, uid)),
+			    -32 + (__s16)offsetof(struct stats, uid)),
 		BPF_ST_MEM(BPF_DW, BPF_REG_10,
-			   -32 + (__s16)दुरत्व(काष्ठा stats, packets), 1),
+			   -32 + (__s16)offsetof(struct stats, packets), 1),
 		/*
-		 * __sk_buff is a special काष्ठा used क्रम eBPF program to
+		 * __sk_buff is a special struct used for eBPF program to
 		 * directly access some sk_buff field.
 		 */
 		BPF_LDX_MEM(BPF_W, BPF_REG_1, BPF_REG_6,
-				दुरत्व(काष्ठा __sk_buff, len)),
+				offsetof(struct __sk_buff, len)),
 		BPF_STX_MEM(BPF_DW, BPF_REG_10, BPF_REG_1,
-			    -32 + (__s16)दुरत्व(काष्ठा stats, bytes)),
+			    -32 + (__s16)offsetof(struct stats, bytes)),
 		/*
 		 * add new map entry using BPF_FUNC_map_update_elem, it takes
 		 * 4 parameters (R1: map_fd, R2: &socket_cookie, R3: &stats,
@@ -143,182 +142,182 @@
 		BPF_JMP_IMM(BPF_JA, 0, 0, 5),
 		/*
 		 * pc24-30 update the packet info to a exist data entry, it can
-		 * be करोne by directly ग_लिखो to poपूर्णांकers instead of using
+		 * be done by directly write to pointers instead of using
 		 * BPF_FUNC_map_update_elem helper function
 		 */
 		BPF_MOV64_REG(BPF_REG_9, BPF_REG_0),
 		BPF_MOV64_IMM(BPF_REG_1, 1),
 		BPF_ATOMIC_OP(BPF_DW, BPF_ADD, BPF_REG_9, BPF_REG_1,
-			      दुरत्व(काष्ठा stats, packets)),
+			      offsetof(struct stats, packets)),
 		BPF_LDX_MEM(BPF_W, BPF_REG_1, BPF_REG_6,
-				दुरत्व(काष्ठा __sk_buff, len)),
+				offsetof(struct __sk_buff, len)),
 		BPF_ATOMIC_OP(BPF_DW, BPF_ADD, BPF_REG_9, BPF_REG_1,
-			      दुरत्व(काष्ठा stats, bytes)),
+			      offsetof(struct stats, bytes)),
 		BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_6,
-				दुरत्व(काष्ठा __sk_buff, len)),
+				offsetof(struct __sk_buff, len)),
 		BPF_EXIT_INSN(),
-	पूर्ण;
+	};
 	prog_fd = bpf_load_program(BPF_PROG_TYPE_SOCKET_FILTER, prog,
 					ARRAY_SIZE(prog), "GPL", 0,
-					log_buf, माप(log_buf));
-	अगर (prog_fd < 0)
-		error(1, त्रुटि_सं, "failed to load prog\n%s\n", log_buf);
-पूर्ण
+					log_buf, sizeof(log_buf));
+	if (prog_fd < 0)
+		error(1, errno, "failed to load prog\n%s\n", log_buf);
+}
 
-अटल व्योम prog_attach_iptables(अक्षर *file)
-अणु
-	पूर्णांक ret;
-	अक्षर rules[100];
+static void prog_attach_iptables(char *file)
+{
+	int ret;
+	char rules[100];
 
-	अगर (bpf_obj_pin(prog_fd, file))
-		error(1, त्रुटि_सं, "bpf_obj_pin");
-	अगर (म_माप(file) > 50) अणु
-		म_लिखो("file path too long: %s\n", file);
-		निकास(1);
-	पूर्ण
-	प्र_लिखो(rules, "iptables -A OUTPUT -m bpf --object-pinned %s -j ACCEPT",
+	if (bpf_obj_pin(prog_fd, file))
+		error(1, errno, "bpf_obj_pin");
+	if (strlen(file) > 50) {
+		printf("file path too long: %s\n", file);
+		exit(1);
+	}
+	sprintf(rules, "iptables -A OUTPUT -m bpf --object-pinned %s -j ACCEPT",
 		file);
-	ret = प्रणाली(rules);
-	अगर (ret < 0) अणु
-		म_लिखो("iptables rule update failed: %d/n", WEXITSTATUS(ret));
-		निकास(1);
-	पूर्ण
-पूर्ण
+	ret = system(rules);
+	if (ret < 0) {
+		printf("iptables rule update failed: %d/n", WEXITSTATUS(ret));
+		exit(1);
+	}
+}
 
-अटल व्योम prपूर्णांक_table(व्योम)
-अणु
-	काष्ठा stats curEntry;
-	uपूर्णांक32_t curN = UINT32_MAX;
-	uपूर्णांक32_t nextN;
-	पूर्णांक res;
+static void print_table(void)
+{
+	struct stats curEntry;
+	uint32_t curN = UINT32_MAX;
+	uint32_t nextN;
+	int res;
 
-	जबतक (bpf_map_get_next_key(map_fd, &curN, &nextN) > -1) अणु
+	while (bpf_map_get_next_key(map_fd, &curN, &nextN) > -1) {
 		curN = nextN;
 		res = bpf_map_lookup_elem(map_fd, &curN, &curEntry);
-		अगर (res < 0) अणु
-			error(1, त्रुटि_सं, "fail to get entry value of Key: %u\n",
+		if (res < 0) {
+			error(1, errno, "fail to get entry value of Key: %u\n",
 				curN);
-		पूर्ण अन्यथा अणु
-			म_लिखो("cookie: %u, uid: 0x%x, Packet Count: %lu,"
+		} else {
+			printf("cookie: %u, uid: 0x%x, Packet Count: %lu,"
 				" Bytes Count: %lu\n", curN, curEntry.uid,
 				curEntry.packets, curEntry.bytes);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम udp_client(व्योम)
-अणु
-	काष्ठा sockaddr_in si_other = अणु0पूर्ण;
-	काष्ठा sockaddr_in si_me = अणु0पूर्ण;
-	काष्ठा stats dataEntry;
-	पूर्णांक s_rcv, s_send, i, recv_len;
-	अक्षर message = 'a';
-	अक्षर buf;
-	uपूर्णांक64_t cookie;
-	पूर्णांक res;
-	socklen_t cookie_len = माप(cookie);
-	socklen_t slen = माप(si_other);
+static void udp_client(void)
+{
+	struct sockaddr_in si_other = {0};
+	struct sockaddr_in si_me = {0};
+	struct stats dataEntry;
+	int s_rcv, s_send, i, recv_len;
+	char message = 'a';
+	char buf;
+	uint64_t cookie;
+	int res;
+	socklen_t cookie_len = sizeof(cookie);
+	socklen_t slen = sizeof(si_other);
 
 	s_rcv = socket(PF_INET, SOCK_DGRAM, 0);
-	अगर (s_rcv < 0)
-		error(1, त्रुटि_सं, "rcv socket creat failed!\n");
+	if (s_rcv < 0)
+		error(1, errno, "rcv socket creat failed!\n");
 	si_other.sin_family = AF_INET;
 	si_other.sin_port = htons(PORT);
-	अगर (inet_aton("127.0.0.1", &si_other.sin_addr) == 0)
-		error(1, त्रुटि_सं, "inet_aton\n");
-	अगर (bind(s_rcv, (काष्ठा sockaddr *)&si_other, माप(si_other)) == -1)
-		error(1, त्रुटि_सं, "bind\n");
+	if (inet_aton("127.0.0.1", &si_other.sin_addr) == 0)
+		error(1, errno, "inet_aton\n");
+	if (bind(s_rcv, (struct sockaddr *)&si_other, sizeof(si_other)) == -1)
+		error(1, errno, "bind\n");
 	s_send = socket(PF_INET, SOCK_DGRAM, 0);
-	अगर (s_send < 0)
-		error(1, त्रुटि_सं, "send socket creat failed!\n");
-	res = माला_लोockopt(s_send, SOL_SOCKET, SO_COOKIE, &cookie, &cookie_len);
-	अगर (res < 0)
-		म_लिखो("get cookie failed: %s\n", म_त्रुटि(त्रुटि_सं));
+	if (s_send < 0)
+		error(1, errno, "send socket creat failed!\n");
+	res = getsockopt(s_send, SOL_SOCKET, SO_COOKIE, &cookie, &cookie_len);
+	if (res < 0)
+		printf("get cookie failed: %s\n", strerror(errno));
 	res = bpf_map_lookup_elem(map_fd, &cookie, &dataEntry);
-	अगर (res != -1)
-		error(1, त्रुटि_सं, "socket stat found while flow not active\n");
-	क्रम (i = 0; i < 10; i++) अणु
-		res = sendto(s_send, &message, माप(message), 0,
-			     (काष्ठा sockaddr *)&si_other, slen);
-		अगर (res == -1)
-			error(1, त्रुटि_सं, "send\n");
-		अगर (res != माप(message))
-			error(1, 0, "%uB != %luB\n", res, माप(message));
-		recv_len = recvfrom(s_rcv, &buf, माप(buf), 0,
-			     (काष्ठा sockaddr *)&si_me, &slen);
-		अगर (recv_len < 0)
-			error(1, त्रुटि_सं, "receive\n");
-		res = स_भेद(&(si_other.sin_addr), &(si_me.sin_addr),
-			   माप(si_me.sin_addr));
-		अगर (res != 0)
+	if (res != -1)
+		error(1, errno, "socket stat found while flow not active\n");
+	for (i = 0; i < 10; i++) {
+		res = sendto(s_send, &message, sizeof(message), 0,
+			     (struct sockaddr *)&si_other, slen);
+		if (res == -1)
+			error(1, errno, "send\n");
+		if (res != sizeof(message))
+			error(1, 0, "%uB != %luB\n", res, sizeof(message));
+		recv_len = recvfrom(s_rcv, &buf, sizeof(buf), 0,
+			     (struct sockaddr *)&si_me, &slen);
+		if (recv_len < 0)
+			error(1, errno, "receive\n");
+		res = memcmp(&(si_other.sin_addr), &(si_me.sin_addr),
+			   sizeof(si_me.sin_addr));
+		if (res != 0)
 			error(1, EFAULT, "sender addr error: %d\n", res);
-		म_लिखो("Message received: %c\n", buf);
+		printf("Message received: %c\n", buf);
 		res = bpf_map_lookup_elem(map_fd, &cookie, &dataEntry);
-		अगर (res < 0)
-			error(1, त्रुटि_सं, "lookup sk stat failed, cookie: %lu\n",
+		if (res < 0)
+			error(1, errno, "lookup sk stat failed, cookie: %lu\n",
 			      cookie);
-		म_लिखो("cookie: %lu, uid: 0x%x, Packet Count: %lu,"
+		printf("cookie: %lu, uid: 0x%x, Packet Count: %lu,"
 			" Bytes Count: %lu\n\n", cookie, dataEntry.uid,
 			dataEntry.packets, dataEntry.bytes);
-	पूर्ण
-	बंद(s_send);
-	बंद(s_rcv);
-पूर्ण
+	}
+	close(s_send);
+	close(s_rcv);
+}
 
-अटल पूर्णांक usage(व्योम)
-अणु
-	म_लिखो("Usage: ./run_cookie_uid_helper_example.sh"
+static int usage(void)
+{
+	printf("Usage: ./run_cookie_uid_helper_example.sh"
 		" bpfObjName -option\n"
 		"	-t	traffic monitor test\n"
 		"	-s	getsockopt cookie test\n");
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल व्योम finish(पूर्णांक ret)
-अणु
+static void finish(int ret)
+{
 	test_finish = true;
-पूर्ण
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
-अणु
-	पूर्णांक opt;
+int main(int argc, char *argv[])
+{
+	int opt;
 	bool cfg_test_traffic = false;
 	bool cfg_test_cookie = false;
 
-	अगर (argc != 3)
-		वापस usage();
-	जबतक ((opt = getopt(argc, argv, "ts")) != -1) अणु
-		चयन (opt) अणु
-		हाल 't':
+	if (argc != 3)
+		return usage();
+	while ((opt = getopt(argc, argv, "ts")) != -1) {
+		switch (opt) {
+		case 't':
 			cfg_test_traffic = true;
-			अवरोध;
-		हाल 's':
+			break;
+		case 's':
 			cfg_test_cookie = true;
-			अवरोध;
+			break;
 
-		शेष:
-			म_लिखो("unknown option %c\n", opt);
+		default:
+			printf("unknown option %c\n", opt);
 			usage();
-			वापस -1;
-		पूर्ण
-	पूर्ण
+			return -1;
+		}
+	}
 	maps_create();
 	prog_load();
 	prog_attach_iptables(argv[2]);
-	अगर (cfg_test_traffic) अणु
-		अगर (संकेत(संक_विघ्न, finish) == संक_त्रुटि)
-			error(1, त्रुटि_सं, "register SIGINT handler failed");
-		अगर (संकेत(संक_इति, finish) == संक_त्रुटि)
-			error(1, त्रुटि_सं, "register SIGTERM handler failed");
-		जबतक (!test_finish) अणु
-			prपूर्णांक_table();
-			म_लिखो("\n");
+	if (cfg_test_traffic) {
+		if (signal(SIGINT, finish) == SIG_ERR)
+			error(1, errno, "register SIGINT handler failed");
+		if (signal(SIGTERM, finish) == SIG_ERR)
+			error(1, errno, "register SIGTERM handler failed");
+		while (!test_finish) {
+			print_table();
+			printf("\n");
 			sleep(1);
-		पूर्ण
-	पूर्ण अन्यथा अगर (cfg_test_cookie) अणु
+		}
+	} else if (cfg_test_cookie) {
 		udp_client();
-	पूर्ण
-	बंद(prog_fd);
-	बंद(map_fd);
-	वापस 0;
-पूर्ण
+	}
+	close(prog_fd);
+	close(map_fd);
+	return 0;
+}

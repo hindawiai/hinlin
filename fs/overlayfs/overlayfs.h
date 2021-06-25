@@ -1,226 +1,225 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  *
  * Copyright (C) 2011 Novell Inc.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/uuid.h>
-#समावेश <linux/fs.h>
-#समावेश "ovl_entry.h"
+#include <linux/kernel.h>
+#include <linux/uuid.h>
+#include <linux/fs.h>
+#include "ovl_entry.h"
 
-#अघोषित pr_fmt
-#घोषणा pr_fmt(fmt) "overlayfs: " fmt
+#undef pr_fmt
+#define pr_fmt(fmt) "overlayfs: " fmt
 
-क्रमागत ovl_path_type अणु
+enum ovl_path_type {
 	__OVL_PATH_UPPER	= (1 << 0),
 	__OVL_PATH_MERGE	= (1 << 1),
 	__OVL_PATH_ORIGIN	= (1 << 2),
-पूर्ण;
+};
 
-#घोषणा OVL_TYPE_UPPER(type)	((type) & __OVL_PATH_UPPER)
-#घोषणा OVL_TYPE_MERGE(type)	((type) & __OVL_PATH_MERGE)
-#घोषणा OVL_TYPE_ORIGIN(type)	((type) & __OVL_PATH_ORIGIN)
+#define OVL_TYPE_UPPER(type)	((type) & __OVL_PATH_UPPER)
+#define OVL_TYPE_MERGE(type)	((type) & __OVL_PATH_MERGE)
+#define OVL_TYPE_ORIGIN(type)	((type) & __OVL_PATH_ORIGIN)
 
-#घोषणा OVL_XATTR_NAMESPACE "overlay."
-#घोषणा OVL_XATTR_TRUSTED_PREFIX XATTR_TRUSTED_PREFIX OVL_XATTR_NAMESPACE
-#घोषणा OVL_XATTR_USER_PREFIX XATTR_USER_PREFIX OVL_XATTR_NAMESPACE
+#define OVL_XATTR_NAMESPACE "overlay."
+#define OVL_XATTR_TRUSTED_PREFIX XATTR_TRUSTED_PREFIX OVL_XATTR_NAMESPACE
+#define OVL_XATTR_USER_PREFIX XATTR_USER_PREFIX OVL_XATTR_NAMESPACE
 
-क्रमागत ovl_xattr अणु
+enum ovl_xattr {
 	OVL_XATTR_OPAQUE,
-	OVL_XATTR_REसूचीECT,
+	OVL_XATTR_REDIRECT,
 	OVL_XATTR_ORIGIN,
 	OVL_XATTR_IMPURE,
 	OVL_XATTR_NLINK,
 	OVL_XATTR_UPPER,
 	OVL_XATTR_METACOPY,
-पूर्ण;
+};
 
-क्रमागत ovl_inode_flag अणु
+enum ovl_inode_flag {
 	/* Pure upper dir that may contain non pure upper entries */
 	OVL_IMPURE,
 	/* Non-merge dir that may contain whiteout entries */
 	OVL_WHITEOUTS,
 	OVL_INDEX,
 	OVL_UPPERDATA,
-	/* Inode number will reमुख्य स्थिरant over copy up. */
+	/* Inode number will remain constant over copy up. */
 	OVL_CONST_INO,
-पूर्ण;
+};
 
-क्रमागत ovl_entry_flag अणु
+enum ovl_entry_flag {
 	OVL_E_UPPER_ALIAS,
 	OVL_E_OPAQUE,
 	OVL_E_CONNECTED,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	OVL_XINO_OFF,
 	OVL_XINO_AUTO,
 	OVL_XINO_ON,
-पूर्ण;
+};
 
 /*
- * The tuple (fh,uuid) is a universal unique identअगरier क्रम a copy up origin,
+ * The tuple (fh,uuid) is a universal unique identifier for a copy up origin,
  * where:
  * origin.fh	- exported file handle of the lower file
- * origin.uuid	- uuid of the lower fileप्रणाली
+ * origin.uuid	- uuid of the lower filesystem
  */
-#घोषणा OVL_FH_VERSION	0
-#घोषणा OVL_FH_MAGIC	0xfb
+#define OVL_FH_VERSION	0
+#define OVL_FH_MAGIC	0xfb
 
-/* CPU byte order required क्रम fid decoding:  */
-#घोषणा OVL_FH_FLAG_BIG_ENDIAN	(1 << 0)
-#घोषणा OVL_FH_FLAG_ANY_ENDIAN	(1 << 1)
+/* CPU byte order required for fid decoding:  */
+#define OVL_FH_FLAG_BIG_ENDIAN	(1 << 0)
+#define OVL_FH_FLAG_ANY_ENDIAN	(1 << 1)
 /* Is the real inode encoded in fid an upper inode? */
-#घोषणा OVL_FH_FLAG_PATH_UPPER	(1 << 2)
+#define OVL_FH_FLAG_PATH_UPPER	(1 << 2)
 
-#घोषणा OVL_FH_FLAG_ALL (OVL_FH_FLAG_BIG_ENDIAN | OVL_FH_FLAG_ANY_ENDIAN | \
+#define OVL_FH_FLAG_ALL (OVL_FH_FLAG_BIG_ENDIAN | OVL_FH_FLAG_ANY_ENDIAN | \
 			 OVL_FH_FLAG_PATH_UPPER)
 
-#अगर defined(__LITTLE_ENDIAN)
-#घोषणा OVL_FH_FLAG_CPU_ENDIAN 0
-#या_अगर defined(__BIG_ENDIAN)
-#घोषणा OVL_FH_FLAG_CPU_ENDIAN OVL_FH_FLAG_BIG_ENDIAN
-#अन्यथा
-#त्रुटि Endianness not defined
-#पूर्ण_अगर
+#if defined(__LITTLE_ENDIAN)
+#define OVL_FH_FLAG_CPU_ENDIAN 0
+#elif defined(__BIG_ENDIAN)
+#define OVL_FH_FLAG_CPU_ENDIAN OVL_FH_FLAG_BIG_ENDIAN
+#else
+#error Endianness not defined
+#endif
 
-/* The type used to be वापसed by overlay exportfs क्रम misaligned fid */
-#घोषणा OVL_खाताID_V0	0xfb
-/* The type वापसed by overlay exportfs क्रम 32bit aligned fid */
-#घोषणा OVL_खाताID_V1	0xf8
+/* The type used to be returned by overlay exportfs for misaligned fid */
+#define OVL_FILEID_V0	0xfb
+/* The type returned by overlay exportfs for 32bit aligned fid */
+#define OVL_FILEID_V1	0xf8
 
-/* On-disk क्रमmat क्रम "origin" file handle */
-काष्ठा ovl_fb अणु
+/* On-disk format for "origin" file handle */
+struct ovl_fb {
 	u8 version;	/* 0 */
 	u8 magic;	/* 0xfb */
 	u8 len;		/* size of this header + size of fid */
 	u8 flags;	/* OVL_FH_FLAG_* */
 	u8 type;	/* fid_type of fid */
-	uuid_t uuid;	/* uuid of fileप्रणाली */
-	u32 fid[];	/* file identअगरier should be 32bit aligned in-memory */
-पूर्ण __packed;
+	uuid_t uuid;	/* uuid of filesystem */
+	u32 fid[];	/* file identifier should be 32bit aligned in-memory */
+} __packed;
 
-/* In-memory and on-wire क्रमmat क्रम overlay file handle */
-काष्ठा ovl_fh अणु
+/* In-memory and on-wire format for overlay file handle */
+struct ovl_fh {
 	u8 padding[3];	/* make sure fb.fid is 32bit aligned */
-	जोड़ अणु
-		काष्ठा ovl_fb fb;
+	union {
+		struct ovl_fb fb;
 		u8 buf[0];
-	पूर्ण;
-पूर्ण __packed;
+	};
+} __packed;
 
-#घोषणा OVL_FH_WIRE_OFFSET	दुरत्व(काष्ठा ovl_fh, fb)
-#घोषणा OVL_FH_LEN(fh)		(OVL_FH_WIRE_OFFSET + (fh)->fb.len)
-#घोषणा OVL_FH_FID_OFFSET	(OVL_FH_WIRE_OFFSET + \
-				 दुरत्व(काष्ठा ovl_fb, fid))
+#define OVL_FH_WIRE_OFFSET	offsetof(struct ovl_fh, fb)
+#define OVL_FH_LEN(fh)		(OVL_FH_WIRE_OFFSET + (fh)->fb.len)
+#define OVL_FH_FID_OFFSET	(OVL_FH_WIRE_OFFSET + \
+				 offsetof(struct ovl_fb, fid))
 
-बाह्य स्थिर अक्षर *स्थिर ovl_xattr_table[][2];
-अटल अंतरभूत स्थिर अक्षर *ovl_xattr(काष्ठा ovl_fs *ofs, क्रमागत ovl_xattr ox)
-अणु
-	वापस ovl_xattr_table[ox][ofs->config.userxattr];
-पूर्ण
+extern const char *const ovl_xattr_table[][2];
+static inline const char *ovl_xattr(struct ovl_fs *ofs, enum ovl_xattr ox)
+{
+	return ovl_xattr_table[ox][ofs->config.userxattr];
+}
 
-अटल अंतरभूत पूर्णांक ovl_करो_सूची_हटाओ(काष्ठा inode *dir, काष्ठा dentry *dentry)
-अणु
-	पूर्णांक err = vfs_सूची_हटाओ(&init_user_ns, dir, dentry);
+static inline int ovl_do_rmdir(struct inode *dir, struct dentry *dentry)
+{
+	int err = vfs_rmdir(&init_user_ns, dir, dentry);
 
 	pr_debug("rmdir(%pd2) = %i\n", dentry, err);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल अंतरभूत पूर्णांक ovl_करो_unlink(काष्ठा inode *dir, काष्ठा dentry *dentry)
-अणु
-	पूर्णांक err = vfs_unlink(&init_user_ns, dir, dentry, शून्य);
+static inline int ovl_do_unlink(struct inode *dir, struct dentry *dentry)
+{
+	int err = vfs_unlink(&init_user_ns, dir, dentry, NULL);
 
 	pr_debug("unlink(%pd2) = %i\n", dentry, err);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल अंतरभूत पूर्णांक ovl_करो_link(काष्ठा dentry *old_dentry, काष्ठा inode *dir,
-			      काष्ठा dentry *new_dentry)
-अणु
-	पूर्णांक err = vfs_link(old_dentry, &init_user_ns, dir, new_dentry, शून्य);
+static inline int ovl_do_link(struct dentry *old_dentry, struct inode *dir,
+			      struct dentry *new_dentry)
+{
+	int err = vfs_link(old_dentry, &init_user_ns, dir, new_dentry, NULL);
 
 	pr_debug("link(%pd2, %pd2) = %i\n", old_dentry, new_dentry, err);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल अंतरभूत पूर्णांक ovl_करो_create(काष्ठा inode *dir, काष्ठा dentry *dentry,
+static inline int ovl_do_create(struct inode *dir, struct dentry *dentry,
 				umode_t mode)
-अणु
-	पूर्णांक err = vfs_create(&init_user_ns, dir, dentry, mode, true);
+{
+	int err = vfs_create(&init_user_ns, dir, dentry, mode, true);
 
 	pr_debug("create(%pd2, 0%o) = %i\n", dentry, mode, err);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल अंतरभूत पूर्णांक ovl_करो_सूची_गढ़ो(काष्ठा inode *dir, काष्ठा dentry *dentry,
+static inline int ovl_do_mkdir(struct inode *dir, struct dentry *dentry,
 			       umode_t mode)
-अणु
-	पूर्णांक err = vfs_सूची_गढ़ो(&init_user_ns, dir, dentry, mode);
+{
+	int err = vfs_mkdir(&init_user_ns, dir, dentry, mode);
 	pr_debug("mkdir(%pd2, 0%o) = %i\n", dentry, mode, err);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल अंतरभूत पूर्णांक ovl_करो_mknod(काष्ठा inode *dir, काष्ठा dentry *dentry,
+static inline int ovl_do_mknod(struct inode *dir, struct dentry *dentry,
 			       umode_t mode, dev_t dev)
-अणु
-	पूर्णांक err = vfs_mknod(&init_user_ns, dir, dentry, mode, dev);
+{
+	int err = vfs_mknod(&init_user_ns, dir, dentry, mode, dev);
 
 	pr_debug("mknod(%pd2, 0%o, 0%o) = %i\n", dentry, mode, dev, err);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल अंतरभूत पूर्णांक ovl_करो_symlink(काष्ठा inode *dir, काष्ठा dentry *dentry,
-				 स्थिर अक्षर *oldname)
-अणु
-	पूर्णांक err = vfs_symlink(&init_user_ns, dir, dentry, oldname);
+static inline int ovl_do_symlink(struct inode *dir, struct dentry *dentry,
+				 const char *oldname)
+{
+	int err = vfs_symlink(&init_user_ns, dir, dentry, oldname);
 
 	pr_debug("symlink(\"%s\", %pd2) = %i\n", oldname, dentry, err);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल अंतरभूत sमाप_प्रकार ovl_करो_getxattr(काष्ठा ovl_fs *ofs, काष्ठा dentry *dentry,
-				      क्रमागत ovl_xattr ox, व्योम *value,
-				      माप_प्रकार size)
-अणु
-	स्थिर अक्षर *name = ovl_xattr(ofs, ox);
-	पूर्णांक err = vfs_getxattr(&init_user_ns, dentry, name, value, size);
-	पूर्णांक len = (value && err > 0) ? err : 0;
+static inline ssize_t ovl_do_getxattr(struct ovl_fs *ofs, struct dentry *dentry,
+				      enum ovl_xattr ox, void *value,
+				      size_t size)
+{
+	const char *name = ovl_xattr(ofs, ox);
+	int err = vfs_getxattr(&init_user_ns, dentry, name, value, size);
+	int len = (value && err > 0) ? err : 0;
 
 	pr_debug("getxattr(%pd2, \"%s\", \"%*pE\", %zu, 0) = %i\n",
 		 dentry, name, min(len, 48), value, size, err);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल अंतरभूत पूर्णांक ovl_करो_setxattr(काष्ठा ovl_fs *ofs, काष्ठा dentry *dentry,
-				  क्रमागत ovl_xattr ox, स्थिर व्योम *value,
-				  माप_प्रकार size)
-अणु
-	स्थिर अक्षर *name = ovl_xattr(ofs, ox);
-	पूर्णांक err = vfs_setxattr(&init_user_ns, dentry, name, value, size, 0);
+static inline int ovl_do_setxattr(struct ovl_fs *ofs, struct dentry *dentry,
+				  enum ovl_xattr ox, const void *value,
+				  size_t size)
+{
+	const char *name = ovl_xattr(ofs, ox);
+	int err = vfs_setxattr(&init_user_ns, dentry, name, value, size, 0);
 	pr_debug("setxattr(%pd2, \"%s\", \"%*pE\", %zu, 0) = %i\n",
-		 dentry, name, min((पूर्णांक)size, 48), value, size, err);
-	वापस err;
-पूर्ण
+		 dentry, name, min((int)size, 48), value, size, err);
+	return err;
+}
 
-अटल अंतरभूत पूर्णांक ovl_करो_हटाओxattr(काष्ठा ovl_fs *ofs, काष्ठा dentry *dentry,
-				     क्रमागत ovl_xattr ox)
-अणु
-	स्थिर अक्षर *name = ovl_xattr(ofs, ox);
-	पूर्णांक err = vfs_हटाओxattr(&init_user_ns, dentry, name);
+static inline int ovl_do_removexattr(struct ovl_fs *ofs, struct dentry *dentry,
+				     enum ovl_xattr ox)
+{
+	const char *name = ovl_xattr(ofs, ox);
+	int err = vfs_removexattr(&init_user_ns, dentry, name);
 	pr_debug("removexattr(%pd2, \"%s\") = %i\n", dentry, name, err);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल अंतरभूत पूर्णांक ovl_करो_नाम(काष्ठा inode *olddir, काष्ठा dentry *olddentry,
-				काष्ठा inode *newdir, काष्ठा dentry *newdentry,
-				अचिन्हित पूर्णांक flags)
-अणु
-	पूर्णांक err;
-	काष्ठा नामdata rd = अणु
+static inline int ovl_do_rename(struct inode *olddir, struct dentry *olddentry,
+				struct inode *newdir, struct dentry *newdentry,
+				unsigned int flags)
+{
+	int err;
+	struct renamedata rd = {
 		.old_mnt_userns	= &init_user_ns,
 		.old_dir 	= olddir,
 		.old_dentry 	= olddentry,
@@ -228,342 +227,342 @@
 		.new_dir 	= newdir,
 		.new_dentry 	= newdentry,
 		.flags 		= flags,
-	पूर्ण;
+	};
 
 	pr_debug("rename(%pd2, %pd2, 0x%x)\n", olddentry, newdentry, flags);
-	err = vfs_नाम(&rd);
-	अगर (err) अणु
+	err = vfs_rename(&rd);
+	if (err) {
 		pr_debug("...rename(%pd2, %pd2, ...) = %i\n",
 			 olddentry, newdentry, err);
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
-अटल अंतरभूत पूर्णांक ovl_करो_whiteout(काष्ठा inode *dir, काष्ठा dentry *dentry)
-अणु
-	पूर्णांक err = vfs_whiteout(&init_user_ns, dir, dentry);
+static inline int ovl_do_whiteout(struct inode *dir, struct dentry *dentry)
+{
+	int err = vfs_whiteout(&init_user_ns, dir, dentry);
 	pr_debug("whiteout(%pd2) = %i\n", dentry, err);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल अंतरभूत काष्ठा dentry *ovl_करो_क्षणिक_ख(काष्ठा dentry *dentry, umode_t mode)
-अणु
-	काष्ठा dentry *ret = vfs_क्षणिक_ख(&init_user_ns, dentry, mode, 0);
-	पूर्णांक err = PTR_ERR_OR_ZERO(ret);
+static inline struct dentry *ovl_do_tmpfile(struct dentry *dentry, umode_t mode)
+{
+	struct dentry *ret = vfs_tmpfile(&init_user_ns, dentry, mode, 0);
+	int err = PTR_ERR_OR_ZERO(ret);
 
 	pr_debug("tmpfile(%pd2, 0%o) = %i\n", dentry, mode, err);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत bool ovl_खोलो_flags_need_copy_up(पूर्णांक flags)
-अणु
-	अगर (!flags)
-		वापस false;
+static inline bool ovl_open_flags_need_copy_up(int flags)
+{
+	if (!flags)
+		return false;
 
-	वापस ((OPEN_FMODE(flags) & FMODE_WRITE) || (flags & O_TRUNC));
-पूर्ण
+	return ((OPEN_FMODE(flags) & FMODE_WRITE) || (flags & O_TRUNC));
+}
 
 /* util.c */
-पूर्णांक ovl_want_ग_लिखो(काष्ठा dentry *dentry);
-व्योम ovl_drop_ग_लिखो(काष्ठा dentry *dentry);
-काष्ठा dentry *ovl_workdir(काष्ठा dentry *dentry);
-स्थिर काष्ठा cred *ovl_override_creds(काष्ठा super_block *sb);
-पूर्णांक ovl_can_decode_fh(काष्ठा super_block *sb);
-काष्ठा dentry *ovl_indexdir(काष्ठा super_block *sb);
-bool ovl_index_all(काष्ठा super_block *sb);
-bool ovl_verअगरy_lower(काष्ठा super_block *sb);
-काष्ठा ovl_entry *ovl_alloc_entry(अचिन्हित पूर्णांक numlower);
-bool ovl_dentry_remote(काष्ठा dentry *dentry);
-व्योम ovl_dentry_update_reval(काष्ठा dentry *dentry, काष्ठा dentry *upperdentry,
-			     अचिन्हित पूर्णांक mask);
-bool ovl_dentry_weird(काष्ठा dentry *dentry);
-क्रमागत ovl_path_type ovl_path_type(काष्ठा dentry *dentry);
-व्योम ovl_path_upper(काष्ठा dentry *dentry, काष्ठा path *path);
-व्योम ovl_path_lower(काष्ठा dentry *dentry, काष्ठा path *path);
-व्योम ovl_path_lowerdata(काष्ठा dentry *dentry, काष्ठा path *path);
-क्रमागत ovl_path_type ovl_path_real(काष्ठा dentry *dentry, काष्ठा path *path);
-काष्ठा dentry *ovl_dentry_upper(काष्ठा dentry *dentry);
-काष्ठा dentry *ovl_dentry_lower(काष्ठा dentry *dentry);
-काष्ठा dentry *ovl_dentry_lowerdata(काष्ठा dentry *dentry);
-स्थिर काष्ठा ovl_layer *ovl_layer_lower(काष्ठा dentry *dentry);
-काष्ठा dentry *ovl_dentry_real(काष्ठा dentry *dentry);
-काष्ठा dentry *ovl_i_dentry_upper(काष्ठा inode *inode);
-काष्ठा inode *ovl_inode_upper(काष्ठा inode *inode);
-काष्ठा inode *ovl_inode_lower(काष्ठा inode *inode);
-काष्ठा inode *ovl_inode_lowerdata(काष्ठा inode *inode);
-काष्ठा inode *ovl_inode_real(काष्ठा inode *inode);
-काष्ठा inode *ovl_inode_realdata(काष्ठा inode *inode);
-काष्ठा ovl_dir_cache *ovl_dir_cache(काष्ठा inode *inode);
-व्योम ovl_set_dir_cache(काष्ठा inode *inode, काष्ठा ovl_dir_cache *cache);
-व्योम ovl_dentry_set_flag(अचिन्हित दीर्घ flag, काष्ठा dentry *dentry);
-व्योम ovl_dentry_clear_flag(अचिन्हित दीर्घ flag, काष्ठा dentry *dentry);
-bool ovl_dentry_test_flag(अचिन्हित दीर्घ flag, काष्ठा dentry *dentry);
-bool ovl_dentry_is_opaque(काष्ठा dentry *dentry);
-bool ovl_dentry_is_whiteout(काष्ठा dentry *dentry);
-व्योम ovl_dentry_set_opaque(काष्ठा dentry *dentry);
-bool ovl_dentry_has_upper_alias(काष्ठा dentry *dentry);
-व्योम ovl_dentry_set_upper_alias(काष्ठा dentry *dentry);
-bool ovl_dentry_needs_data_copy_up(काष्ठा dentry *dentry, पूर्णांक flags);
-bool ovl_dentry_needs_data_copy_up_locked(काष्ठा dentry *dentry, पूर्णांक flags);
-bool ovl_has_upperdata(काष्ठा inode *inode);
-व्योम ovl_set_upperdata(काष्ठा inode *inode);
-bool ovl_redirect_dir(काष्ठा super_block *sb);
-स्थिर अक्षर *ovl_dentry_get_redirect(काष्ठा dentry *dentry);
-व्योम ovl_dentry_set_redirect(काष्ठा dentry *dentry, स्थिर अक्षर *redirect);
-व्योम ovl_inode_update(काष्ठा inode *inode, काष्ठा dentry *upperdentry);
-व्योम ovl_dir_modअगरied(काष्ठा dentry *dentry, bool impurity);
-u64 ovl_dentry_version_get(काष्ठा dentry *dentry);
-bool ovl_is_whiteout(काष्ठा dentry *dentry);
-काष्ठा file *ovl_path_खोलो(काष्ठा path *path, पूर्णांक flags);
-पूर्णांक ovl_copy_up_start(काष्ठा dentry *dentry, पूर्णांक flags);
-व्योम ovl_copy_up_end(काष्ठा dentry *dentry);
-bool ovl_alपढ़ोy_copied_up(काष्ठा dentry *dentry, पूर्णांक flags);
-bool ovl_check_origin_xattr(काष्ठा ovl_fs *ofs, काष्ठा dentry *dentry);
-bool ovl_check_dir_xattr(काष्ठा super_block *sb, काष्ठा dentry *dentry,
-			 क्रमागत ovl_xattr ox);
-पूर्णांक ovl_check_setxattr(काष्ठा dentry *dentry, काष्ठा dentry *upperdentry,
-		       क्रमागत ovl_xattr ox, स्थिर व्योम *value, माप_प्रकार size,
-		       पूर्णांक xerr);
-पूर्णांक ovl_set_impure(काष्ठा dentry *dentry, काष्ठा dentry *upperdentry);
-bool ovl_inuse_trylock(काष्ठा dentry *dentry);
-व्योम ovl_inuse_unlock(काष्ठा dentry *dentry);
-bool ovl_is_inuse(काष्ठा dentry *dentry);
-bool ovl_need_index(काष्ठा dentry *dentry);
-पूर्णांक ovl_nlink_start(काष्ठा dentry *dentry);
-व्योम ovl_nlink_end(काष्ठा dentry *dentry);
-पूर्णांक ovl_lock_नाम_workdir(काष्ठा dentry *workdir, काष्ठा dentry *upperdir);
-पूर्णांक ovl_check_metacopy_xattr(काष्ठा ovl_fs *ofs, काष्ठा dentry *dentry);
-bool ovl_is_metacopy_dentry(काष्ठा dentry *dentry);
-अक्षर *ovl_get_redirect_xattr(काष्ठा ovl_fs *ofs, काष्ठा dentry *dentry,
-			     पूर्णांक padding);
-पूर्णांक ovl_sync_status(काष्ठा ovl_fs *ofs);
+int ovl_want_write(struct dentry *dentry);
+void ovl_drop_write(struct dentry *dentry);
+struct dentry *ovl_workdir(struct dentry *dentry);
+const struct cred *ovl_override_creds(struct super_block *sb);
+int ovl_can_decode_fh(struct super_block *sb);
+struct dentry *ovl_indexdir(struct super_block *sb);
+bool ovl_index_all(struct super_block *sb);
+bool ovl_verify_lower(struct super_block *sb);
+struct ovl_entry *ovl_alloc_entry(unsigned int numlower);
+bool ovl_dentry_remote(struct dentry *dentry);
+void ovl_dentry_update_reval(struct dentry *dentry, struct dentry *upperdentry,
+			     unsigned int mask);
+bool ovl_dentry_weird(struct dentry *dentry);
+enum ovl_path_type ovl_path_type(struct dentry *dentry);
+void ovl_path_upper(struct dentry *dentry, struct path *path);
+void ovl_path_lower(struct dentry *dentry, struct path *path);
+void ovl_path_lowerdata(struct dentry *dentry, struct path *path);
+enum ovl_path_type ovl_path_real(struct dentry *dentry, struct path *path);
+struct dentry *ovl_dentry_upper(struct dentry *dentry);
+struct dentry *ovl_dentry_lower(struct dentry *dentry);
+struct dentry *ovl_dentry_lowerdata(struct dentry *dentry);
+const struct ovl_layer *ovl_layer_lower(struct dentry *dentry);
+struct dentry *ovl_dentry_real(struct dentry *dentry);
+struct dentry *ovl_i_dentry_upper(struct inode *inode);
+struct inode *ovl_inode_upper(struct inode *inode);
+struct inode *ovl_inode_lower(struct inode *inode);
+struct inode *ovl_inode_lowerdata(struct inode *inode);
+struct inode *ovl_inode_real(struct inode *inode);
+struct inode *ovl_inode_realdata(struct inode *inode);
+struct ovl_dir_cache *ovl_dir_cache(struct inode *inode);
+void ovl_set_dir_cache(struct inode *inode, struct ovl_dir_cache *cache);
+void ovl_dentry_set_flag(unsigned long flag, struct dentry *dentry);
+void ovl_dentry_clear_flag(unsigned long flag, struct dentry *dentry);
+bool ovl_dentry_test_flag(unsigned long flag, struct dentry *dentry);
+bool ovl_dentry_is_opaque(struct dentry *dentry);
+bool ovl_dentry_is_whiteout(struct dentry *dentry);
+void ovl_dentry_set_opaque(struct dentry *dentry);
+bool ovl_dentry_has_upper_alias(struct dentry *dentry);
+void ovl_dentry_set_upper_alias(struct dentry *dentry);
+bool ovl_dentry_needs_data_copy_up(struct dentry *dentry, int flags);
+bool ovl_dentry_needs_data_copy_up_locked(struct dentry *dentry, int flags);
+bool ovl_has_upperdata(struct inode *inode);
+void ovl_set_upperdata(struct inode *inode);
+bool ovl_redirect_dir(struct super_block *sb);
+const char *ovl_dentry_get_redirect(struct dentry *dentry);
+void ovl_dentry_set_redirect(struct dentry *dentry, const char *redirect);
+void ovl_inode_update(struct inode *inode, struct dentry *upperdentry);
+void ovl_dir_modified(struct dentry *dentry, bool impurity);
+u64 ovl_dentry_version_get(struct dentry *dentry);
+bool ovl_is_whiteout(struct dentry *dentry);
+struct file *ovl_path_open(struct path *path, int flags);
+int ovl_copy_up_start(struct dentry *dentry, int flags);
+void ovl_copy_up_end(struct dentry *dentry);
+bool ovl_already_copied_up(struct dentry *dentry, int flags);
+bool ovl_check_origin_xattr(struct ovl_fs *ofs, struct dentry *dentry);
+bool ovl_check_dir_xattr(struct super_block *sb, struct dentry *dentry,
+			 enum ovl_xattr ox);
+int ovl_check_setxattr(struct dentry *dentry, struct dentry *upperdentry,
+		       enum ovl_xattr ox, const void *value, size_t size,
+		       int xerr);
+int ovl_set_impure(struct dentry *dentry, struct dentry *upperdentry);
+bool ovl_inuse_trylock(struct dentry *dentry);
+void ovl_inuse_unlock(struct dentry *dentry);
+bool ovl_is_inuse(struct dentry *dentry);
+bool ovl_need_index(struct dentry *dentry);
+int ovl_nlink_start(struct dentry *dentry);
+void ovl_nlink_end(struct dentry *dentry);
+int ovl_lock_rename_workdir(struct dentry *workdir, struct dentry *upperdir);
+int ovl_check_metacopy_xattr(struct ovl_fs *ofs, struct dentry *dentry);
+bool ovl_is_metacopy_dentry(struct dentry *dentry);
+char *ovl_get_redirect_xattr(struct ovl_fs *ofs, struct dentry *dentry,
+			     int padding);
+int ovl_sync_status(struct ovl_fs *ofs);
 
-अटल अंतरभूत व्योम ovl_set_flag(अचिन्हित दीर्घ flag, काष्ठा inode *inode)
-अणु
+static inline void ovl_set_flag(unsigned long flag, struct inode *inode)
+{
 	set_bit(flag, &OVL_I(inode)->flags);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम ovl_clear_flag(अचिन्हित दीर्घ flag, काष्ठा inode *inode)
-अणु
+static inline void ovl_clear_flag(unsigned long flag, struct inode *inode)
+{
 	clear_bit(flag, &OVL_I(inode)->flags);
-पूर्ण
+}
 
-अटल अंतरभूत bool ovl_test_flag(अचिन्हित दीर्घ flag, काष्ठा inode *inode)
-अणु
-	वापस test_bit(flag, &OVL_I(inode)->flags);
-पूर्ण
+static inline bool ovl_test_flag(unsigned long flag, struct inode *inode)
+{
+	return test_bit(flag, &OVL_I(inode)->flags);
+}
 
-अटल अंतरभूत bool ovl_is_impuredir(काष्ठा super_block *sb,
-				    काष्ठा dentry *dentry)
-अणु
-	वापस ovl_check_dir_xattr(sb, dentry, OVL_XATTR_IMPURE);
-पूर्ण
+static inline bool ovl_is_impuredir(struct super_block *sb,
+				    struct dentry *dentry)
+{
+	return ovl_check_dir_xattr(sb, dentry, OVL_XATTR_IMPURE);
+}
 
 /*
- * With xino=स्वतः, we करो best efक्रमt to keep all inodes on same st_dev and
+ * With xino=auto, we do best effort to keep all inodes on same st_dev and
  * d_ino consistent with st_ino.
- * With xino=on, we करो the same efक्रमt but we warn अगर we failed.
+ * With xino=on, we do the same effort but we warn if we failed.
  */
-अटल अंतरभूत bool ovl_xino_warn(काष्ठा super_block *sb)
-अणु
-	वापस OVL_FS(sb)->config.xino == OVL_XINO_ON;
-पूर्ण
+static inline bool ovl_xino_warn(struct super_block *sb)
+{
+	return OVL_FS(sb)->config.xino == OVL_XINO_ON;
+}
 
 /* All layers on same fs? */
-अटल अंतरभूत bool ovl_same_fs(काष्ठा super_block *sb)
-अणु
-	वापस OVL_FS(sb)->xino_mode == 0;
-पूर्ण
+static inline bool ovl_same_fs(struct super_block *sb)
+{
+	return OVL_FS(sb)->xino_mode == 0;
+}
 
 /* All overlay inodes have same st_dev? */
-अटल अंतरभूत bool ovl_same_dev(काष्ठा super_block *sb)
-अणु
-	वापस OVL_FS(sb)->xino_mode >= 0;
-पूर्ण
+static inline bool ovl_same_dev(struct super_block *sb)
+{
+	return OVL_FS(sb)->xino_mode >= 0;
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक ovl_xino_bits(काष्ठा super_block *sb)
-अणु
-	वापस ovl_same_dev(sb) ? OVL_FS(sb)->xino_mode : 0;
-पूर्ण
+static inline unsigned int ovl_xino_bits(struct super_block *sb)
+{
+	return ovl_same_dev(sb) ? OVL_FS(sb)->xino_mode : 0;
+}
 
-अटल अंतरभूत व्योम ovl_inode_lock(काष्ठा inode *inode)
-अणु
+static inline void ovl_inode_lock(struct inode *inode)
+{
 	mutex_lock(&OVL_I(inode)->lock);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक ovl_inode_lock_पूर्णांकerruptible(काष्ठा inode *inode)
-अणु
-	वापस mutex_lock_पूर्णांकerruptible(&OVL_I(inode)->lock);
-पूर्ण
+static inline int ovl_inode_lock_interruptible(struct inode *inode)
+{
+	return mutex_lock_interruptible(&OVL_I(inode)->lock);
+}
 
-अटल अंतरभूत व्योम ovl_inode_unlock(काष्ठा inode *inode)
-अणु
+static inline void ovl_inode_unlock(struct inode *inode)
+{
 	mutex_unlock(&OVL_I(inode)->lock);
-पूर्ण
+}
 
 
 /* namei.c */
-पूर्णांक ovl_check_fb_len(काष्ठा ovl_fb *fb, पूर्णांक fb_len);
+int ovl_check_fb_len(struct ovl_fb *fb, int fb_len);
 
-अटल अंतरभूत पूर्णांक ovl_check_fh_len(काष्ठा ovl_fh *fh, पूर्णांक fh_len)
-अणु
-	अगर (fh_len < माप(काष्ठा ovl_fh))
-		वापस -EINVAL;
+static inline int ovl_check_fh_len(struct ovl_fh *fh, int fh_len)
+{
+	if (fh_len < sizeof(struct ovl_fh))
+		return -EINVAL;
 
-	वापस ovl_check_fb_len(&fh->fb, fh_len - OVL_FH_WIRE_OFFSET);
-पूर्ण
+	return ovl_check_fb_len(&fh->fb, fh_len - OVL_FH_WIRE_OFFSET);
+}
 
-काष्ठा dentry *ovl_decode_real_fh(काष्ठा ovl_fs *ofs, काष्ठा ovl_fh *fh,
-				  काष्ठा vfsmount *mnt, bool connected);
-पूर्णांक ovl_check_origin_fh(काष्ठा ovl_fs *ofs, काष्ठा ovl_fh *fh, bool connected,
-			काष्ठा dentry *upperdentry, काष्ठा ovl_path **stackp);
-पूर्णांक ovl_verअगरy_set_fh(काष्ठा ovl_fs *ofs, काष्ठा dentry *dentry,
-		      क्रमागत ovl_xattr ox, काष्ठा dentry *real, bool is_upper,
+struct dentry *ovl_decode_real_fh(struct ovl_fs *ofs, struct ovl_fh *fh,
+				  struct vfsmount *mnt, bool connected);
+int ovl_check_origin_fh(struct ovl_fs *ofs, struct ovl_fh *fh, bool connected,
+			struct dentry *upperdentry, struct ovl_path **stackp);
+int ovl_verify_set_fh(struct ovl_fs *ofs, struct dentry *dentry,
+		      enum ovl_xattr ox, struct dentry *real, bool is_upper,
 		      bool set);
-काष्ठा dentry *ovl_index_upper(काष्ठा ovl_fs *ofs, काष्ठा dentry *index);
-पूर्णांक ovl_verअगरy_index(काष्ठा ovl_fs *ofs, काष्ठा dentry *index);
-पूर्णांक ovl_get_index_name(काष्ठा ovl_fs *ofs, काष्ठा dentry *origin,
-		       काष्ठा qstr *name);
-काष्ठा dentry *ovl_get_index_fh(काष्ठा ovl_fs *ofs, काष्ठा ovl_fh *fh);
-काष्ठा dentry *ovl_lookup_index(काष्ठा ovl_fs *ofs, काष्ठा dentry *upper,
-				काष्ठा dentry *origin, bool verअगरy);
-पूर्णांक ovl_path_next(पूर्णांक idx, काष्ठा dentry *dentry, काष्ठा path *path);
-काष्ठा dentry *ovl_lookup(काष्ठा inode *dir, काष्ठा dentry *dentry,
-			  अचिन्हित पूर्णांक flags);
-bool ovl_lower_positive(काष्ठा dentry *dentry);
+struct dentry *ovl_index_upper(struct ovl_fs *ofs, struct dentry *index);
+int ovl_verify_index(struct ovl_fs *ofs, struct dentry *index);
+int ovl_get_index_name(struct ovl_fs *ofs, struct dentry *origin,
+		       struct qstr *name);
+struct dentry *ovl_get_index_fh(struct ovl_fs *ofs, struct ovl_fh *fh);
+struct dentry *ovl_lookup_index(struct ovl_fs *ofs, struct dentry *upper,
+				struct dentry *origin, bool verify);
+int ovl_path_next(int idx, struct dentry *dentry, struct path *path);
+struct dentry *ovl_lookup(struct inode *dir, struct dentry *dentry,
+			  unsigned int flags);
+bool ovl_lower_positive(struct dentry *dentry);
 
-अटल अंतरभूत पूर्णांक ovl_verअगरy_origin(काष्ठा ovl_fs *ofs, काष्ठा dentry *upper,
-				    काष्ठा dentry *origin, bool set)
-अणु
-	वापस ovl_verअगरy_set_fh(ofs, upper, OVL_XATTR_ORIGIN, origin,
+static inline int ovl_verify_origin(struct ovl_fs *ofs, struct dentry *upper,
+				    struct dentry *origin, bool set)
+{
+	return ovl_verify_set_fh(ofs, upper, OVL_XATTR_ORIGIN, origin,
 				 false, set);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक ovl_verअगरy_upper(काष्ठा ovl_fs *ofs, काष्ठा dentry *index,
-				   काष्ठा dentry *upper, bool set)
-अणु
-	वापस ovl_verअगरy_set_fh(ofs, index, OVL_XATTR_UPPER, upper, true, set);
-पूर्ण
+static inline int ovl_verify_upper(struct ovl_fs *ofs, struct dentry *index,
+				   struct dentry *upper, bool set)
+{
+	return ovl_verify_set_fh(ofs, index, OVL_XATTR_UPPER, upper, true, set);
+}
 
-/* सूची_पढ़ो.c */
-बाह्य स्थिर काष्ठा file_operations ovl_dir_operations;
-काष्ठा file *ovl_dir_real_file(स्थिर काष्ठा file *file, bool want_upper);
-पूर्णांक ovl_check_empty_dir(काष्ठा dentry *dentry, काष्ठा list_head *list);
-व्योम ovl_cleanup_whiteouts(काष्ठा dentry *upper, काष्ठा list_head *list);
-व्योम ovl_cache_मुक्त(काष्ठा list_head *list);
-व्योम ovl_dir_cache_मुक्त(काष्ठा inode *inode);
-पूर्णांक ovl_check_d_type_supported(काष्ठा path *realpath);
-पूर्णांक ovl_workdir_cleanup(काष्ठा inode *dir, काष्ठा vfsmount *mnt,
-			काष्ठा dentry *dentry, पूर्णांक level);
-पूर्णांक ovl_indexdir_cleanup(काष्ठा ovl_fs *ofs);
+/* readdir.c */
+extern const struct file_operations ovl_dir_operations;
+struct file *ovl_dir_real_file(const struct file *file, bool want_upper);
+int ovl_check_empty_dir(struct dentry *dentry, struct list_head *list);
+void ovl_cleanup_whiteouts(struct dentry *upper, struct list_head *list);
+void ovl_cache_free(struct list_head *list);
+void ovl_dir_cache_free(struct inode *inode);
+int ovl_check_d_type_supported(struct path *realpath);
+int ovl_workdir_cleanup(struct inode *dir, struct vfsmount *mnt,
+			struct dentry *dentry, int level);
+int ovl_indexdir_cleanup(struct ovl_fs *ofs);
 
 /*
  * Can we iterate real dir directly?
  *
- * Non-merge dir may contain whiteouts from a समय it was a merge upper, beक्रमe
- * lower dir was हटाओd under it and possibly beक्रमe it was rotated from upper
+ * Non-merge dir may contain whiteouts from a time it was a merge upper, before
+ * lower dir was removed under it and possibly before it was rotated from upper
  * to lower layer.
  */
-अटल अंतरभूत bool ovl_dir_is_real(काष्ठा dentry *dir)
-अणु
-	वापस !ovl_test_flag(OVL_WHITEOUTS, d_inode(dir));
-पूर्ण
+static inline bool ovl_dir_is_real(struct dentry *dir)
+{
+	return !ovl_test_flag(OVL_WHITEOUTS, d_inode(dir));
+}
 
 /* inode.c */
-पूर्णांक ovl_set_nlink_upper(काष्ठा dentry *dentry);
-पूर्णांक ovl_set_nlink_lower(काष्ठा dentry *dentry);
-अचिन्हित पूर्णांक ovl_get_nlink(काष्ठा ovl_fs *ofs, काष्ठा dentry *lowerdentry,
-			   काष्ठा dentry *upperdentry,
-			   अचिन्हित पूर्णांक fallback);
-पूर्णांक ovl_setattr(काष्ठा user_namespace *mnt_userns, काष्ठा dentry *dentry,
-		काष्ठा iattr *attr);
-पूर्णांक ovl_getattr(काष्ठा user_namespace *mnt_userns, स्थिर काष्ठा path *path,
-		काष्ठा kstat *stat, u32 request_mask, अचिन्हित पूर्णांक flags);
-पूर्णांक ovl_permission(काष्ठा user_namespace *mnt_userns, काष्ठा inode *inode,
-		   पूर्णांक mask);
-पूर्णांक ovl_xattr_set(काष्ठा dentry *dentry, काष्ठा inode *inode, स्थिर अक्षर *name,
-		  स्थिर व्योम *value, माप_प्रकार size, पूर्णांक flags);
-पूर्णांक ovl_xattr_get(काष्ठा dentry *dentry, काष्ठा inode *inode, स्थिर अक्षर *name,
-		  व्योम *value, माप_प्रकार size);
-sमाप_प्रकार ovl_listxattr(काष्ठा dentry *dentry, अक्षर *list, माप_प्रकार size);
-काष्ठा posix_acl *ovl_get_acl(काष्ठा inode *inode, पूर्णांक type);
-पूर्णांक ovl_update_समय(काष्ठा inode *inode, काष्ठा बारpec64 *ts, पूर्णांक flags);
-bool ovl_is_निजी_xattr(काष्ठा super_block *sb, स्थिर अक्षर *name);
+int ovl_set_nlink_upper(struct dentry *dentry);
+int ovl_set_nlink_lower(struct dentry *dentry);
+unsigned int ovl_get_nlink(struct ovl_fs *ofs, struct dentry *lowerdentry,
+			   struct dentry *upperdentry,
+			   unsigned int fallback);
+int ovl_setattr(struct user_namespace *mnt_userns, struct dentry *dentry,
+		struct iattr *attr);
+int ovl_getattr(struct user_namespace *mnt_userns, const struct path *path,
+		struct kstat *stat, u32 request_mask, unsigned int flags);
+int ovl_permission(struct user_namespace *mnt_userns, struct inode *inode,
+		   int mask);
+int ovl_xattr_set(struct dentry *dentry, struct inode *inode, const char *name,
+		  const void *value, size_t size, int flags);
+int ovl_xattr_get(struct dentry *dentry, struct inode *inode, const char *name,
+		  void *value, size_t size);
+ssize_t ovl_listxattr(struct dentry *dentry, char *list, size_t size);
+struct posix_acl *ovl_get_acl(struct inode *inode, int type);
+int ovl_update_time(struct inode *inode, struct timespec64 *ts, int flags);
+bool ovl_is_private_xattr(struct super_block *sb, const char *name);
 
-काष्ठा ovl_inode_params अणु
-	काष्ठा inode *newinode;
-	काष्ठा dentry *upperdentry;
-	काष्ठा ovl_path *lowerpath;
+struct ovl_inode_params {
+	struct inode *newinode;
+	struct dentry *upperdentry;
+	struct ovl_path *lowerpath;
 	bool index;
-	अचिन्हित पूर्णांक numlower;
-	अक्षर *redirect;
-	काष्ठा dentry *lowerdata;
-पूर्ण;
-व्योम ovl_inode_init(काष्ठा inode *inode, काष्ठा ovl_inode_params *oip,
-		    अचिन्हित दीर्घ ino, पूर्णांक fsid);
-काष्ठा inode *ovl_new_inode(काष्ठा super_block *sb, umode_t mode, dev_t rdev);
-काष्ठा inode *ovl_lookup_inode(काष्ठा super_block *sb, काष्ठा dentry *real,
+	unsigned int numlower;
+	char *redirect;
+	struct dentry *lowerdata;
+};
+void ovl_inode_init(struct inode *inode, struct ovl_inode_params *oip,
+		    unsigned long ino, int fsid);
+struct inode *ovl_new_inode(struct super_block *sb, umode_t mode, dev_t rdev);
+struct inode *ovl_lookup_inode(struct super_block *sb, struct dentry *real,
 			       bool is_upper);
-bool ovl_lookup_trap_inode(काष्ठा super_block *sb, काष्ठा dentry *dir);
-काष्ठा inode *ovl_get_trap_inode(काष्ठा super_block *sb, काष्ठा dentry *dir);
-काष्ठा inode *ovl_get_inode(काष्ठा super_block *sb,
-			    काष्ठा ovl_inode_params *oip);
-अटल अंतरभूत व्योम ovl_copyattr(काष्ठा inode *from, काष्ठा inode *to)
-अणु
+bool ovl_lookup_trap_inode(struct super_block *sb, struct dentry *dir);
+struct inode *ovl_get_trap_inode(struct super_block *sb, struct dentry *dir);
+struct inode *ovl_get_inode(struct super_block *sb,
+			    struct ovl_inode_params *oip);
+static inline void ovl_copyattr(struct inode *from, struct inode *to)
+{
 	to->i_uid = from->i_uid;
 	to->i_gid = from->i_gid;
 	to->i_mode = from->i_mode;
-	to->i_aसमय = from->i_aसमय;
-	to->i_mसमय = from->i_mसमय;
-	to->i_स_समय = from->i_स_समय;
-	i_size_ग_लिखो(to, i_size_पढ़ो(from));
-पूर्ण
+	to->i_atime = from->i_atime;
+	to->i_mtime = from->i_mtime;
+	to->i_ctime = from->i_ctime;
+	i_size_write(to, i_size_read(from));
+}
 
-अटल अंतरभूत व्योम ovl_copyflags(काष्ठा inode *from, काष्ठा inode *to)
-अणु
-	अचिन्हित पूर्णांक mask = S_SYNC | S_IMMUTABLE | S_APPEND | S_NOATIME;
+static inline void ovl_copyflags(struct inode *from, struct inode *to)
+{
+	unsigned int mask = S_SYNC | S_IMMUTABLE | S_APPEND | S_NOATIME;
 
 	inode_set_flags(to, from->i_flags & mask, mask);
-पूर्ण
+}
 
 /* dir.c */
-बाह्य स्थिर काष्ठा inode_operations ovl_dir_inode_operations;
-पूर्णांक ovl_cleanup_and_whiteout(काष्ठा ovl_fs *ofs, काष्ठा inode *dir,
-			     काष्ठा dentry *dentry);
-काष्ठा ovl_cattr अणु
+extern const struct inode_operations ovl_dir_inode_operations;
+int ovl_cleanup_and_whiteout(struct ovl_fs *ofs, struct inode *dir,
+			     struct dentry *dentry);
+struct ovl_cattr {
 	dev_t rdev;
 	umode_t mode;
-	स्थिर अक्षर *link;
-	काष्ठा dentry *hardlink;
-पूर्ण;
+	const char *link;
+	struct dentry *hardlink;
+};
 
-#घोषणा OVL_CATTR(m) (&(काष्ठा ovl_cattr) अणु .mode = (m) पूर्ण)
+#define OVL_CATTR(m) (&(struct ovl_cattr) { .mode = (m) })
 
-काष्ठा dentry *ovl_create_real(काष्ठा inode *dir, काष्ठा dentry *newdentry,
-			       काष्ठा ovl_cattr *attr);
-पूर्णांक ovl_cleanup(काष्ठा inode *dir, काष्ठा dentry *dentry);
-काष्ठा dentry *ovl_lookup_temp(काष्ठा dentry *workdir);
-काष्ठा dentry *ovl_create_temp(काष्ठा dentry *workdir, काष्ठा ovl_cattr *attr);
+struct dentry *ovl_create_real(struct inode *dir, struct dentry *newdentry,
+			       struct ovl_cattr *attr);
+int ovl_cleanup(struct inode *dir, struct dentry *dentry);
+struct dentry *ovl_lookup_temp(struct dentry *workdir);
+struct dentry *ovl_create_temp(struct dentry *workdir, struct ovl_cattr *attr);
 
 /* file.c */
-बाह्य स्थिर काष्ठा file_operations ovl_file_operations;
-पूर्णांक __init ovl_aio_request_cache_init(व्योम);
-व्योम ovl_aio_request_cache_destroy(व्योम);
-पूर्णांक ovl_fileattr_get(काष्ठा dentry *dentry, काष्ठा fileattr *fa);
-पूर्णांक ovl_fileattr_set(काष्ठा user_namespace *mnt_userns,
-		     काष्ठा dentry *dentry, काष्ठा fileattr *fa);
+extern const struct file_operations ovl_file_operations;
+int __init ovl_aio_request_cache_init(void);
+void ovl_aio_request_cache_destroy(void);
+int ovl_fileattr_get(struct dentry *dentry, struct fileattr *fa);
+int ovl_fileattr_set(struct user_namespace *mnt_userns,
+		     struct dentry *dentry, struct fileattr *fa);
 
 /* copy_up.c */
-पूर्णांक ovl_copy_up(काष्ठा dentry *dentry);
-पूर्णांक ovl_copy_up_with_data(काष्ठा dentry *dentry);
-पूर्णांक ovl_maybe_copy_up(काष्ठा dentry *dentry, पूर्णांक flags);
-पूर्णांक ovl_copy_xattr(काष्ठा super_block *sb, काष्ठा dentry *old,
-		   काष्ठा dentry *new);
-पूर्णांक ovl_set_attr(काष्ठा dentry *upper, काष्ठा kstat *stat);
-काष्ठा ovl_fh *ovl_encode_real_fh(काष्ठा ovl_fs *ofs, काष्ठा dentry *real,
+int ovl_copy_up(struct dentry *dentry);
+int ovl_copy_up_with_data(struct dentry *dentry);
+int ovl_maybe_copy_up(struct dentry *dentry, int flags);
+int ovl_copy_xattr(struct super_block *sb, struct dentry *old,
+		   struct dentry *new);
+int ovl_set_attr(struct dentry *upper, struct kstat *stat);
+struct ovl_fh *ovl_encode_real_fh(struct ovl_fs *ofs, struct dentry *real,
 				  bool is_upper);
-पूर्णांक ovl_set_origin(काष्ठा ovl_fs *ofs, काष्ठा dentry *dentry,
-		   काष्ठा dentry *lower, काष्ठा dentry *upper);
+int ovl_set_origin(struct ovl_fs *ofs, struct dentry *dentry,
+		   struct dentry *lower, struct dentry *upper);
 
 /* export.c */
-बाह्य स्थिर काष्ठा export_operations ovl_export_operations;
+extern const struct export_operations ovl_export_operations;

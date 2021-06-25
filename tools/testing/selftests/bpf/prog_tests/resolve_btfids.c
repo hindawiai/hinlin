@@ -1,170 +1,169 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
-#समावेश <linux/err.h>
-#समावेश <माला.स>
-#समावेश <bpf/btf.h>
-#समावेश <bpf/libbpf.h>
-#समावेश <linux/btf.h>
-#समावेश <linux/kernel.h>
-#घोषणा CONFIG_DEBUG_INFO_BTF
-#समावेश <linux/btf_ids.h>
-#समावेश "test_progs.h"
+#include <linux/err.h>
+#include <string.h>
+#include <bpf/btf.h>
+#include <bpf/libbpf.h>
+#include <linux/btf.h>
+#include <linux/kernel.h>
+#define CONFIG_DEBUG_INFO_BTF
+#include <linux/btf_ids.h>
+#include "test_progs.h"
 
-अटल पूर्णांक duration;
+static int duration;
 
-काष्ठा symbol अणु
-	स्थिर अक्षर	*name;
-	पूर्णांक		 type;
-	पूर्णांक		 id;
-पूर्ण;
+struct symbol {
+	const char	*name;
+	int		 type;
+	int		 id;
+};
 
-काष्ठा symbol test_symbols[] = अणु
-	अणु "unused",  BTF_KIND_UNKN,     0 पूर्ण,
-	अणु "S",       BTF_KIND_TYPEDEF, -1 पूर्ण,
-	अणु "T",       BTF_KIND_TYPEDEF, -1 पूर्ण,
-	अणु "U",       BTF_KIND_TYPEDEF, -1 पूर्ण,
-	अणु "S",       BTF_KIND_STRUCT,  -1 पूर्ण,
-	अणु "U",       BTF_KIND_UNION,   -1 पूर्ण,
-	अणु "func",    BTF_KIND_FUNC,    -1 पूर्ण,
-पूर्ण;
+struct symbol test_symbols[] = {
+	{ "unused",  BTF_KIND_UNKN,     0 },
+	{ "S",       BTF_KIND_TYPEDEF, -1 },
+	{ "T",       BTF_KIND_TYPEDEF, -1 },
+	{ "U",       BTF_KIND_TYPEDEF, -1 },
+	{ "S",       BTF_KIND_STRUCT,  -1 },
+	{ "U",       BTF_KIND_UNION,   -1 },
+	{ "func",    BTF_KIND_FUNC,    -1 },
+};
 
 /* Align the .BTF_ids section to 4 bytes */
-यंत्र (
+asm (
 ".pushsection " BTF_IDS_SECTION " ,\"a\"; \n"
 ".balign 4, 0;                            \n"
 ".popsection;                             \n");
 
 BTF_ID_LIST(test_list_local)
 BTF_ID_UNUSED
-BTF_ID(प्रकार, S)
-BTF_ID(प्रकार, T)
-BTF_ID(प्रकार, U)
-BTF_ID(काष्ठा,  S)
-BTF_ID(जोड़,   U)
+BTF_ID(typedef, S)
+BTF_ID(typedef, T)
+BTF_ID(typedef, U)
+BTF_ID(struct,  S)
+BTF_ID(union,   U)
 BTF_ID(func,    func)
 
-बाह्य __u32 test_list_global[];
+extern __u32 test_list_global[];
 BTF_ID_LIST_GLOBAL(test_list_global)
 BTF_ID_UNUSED
-BTF_ID(प्रकार, S)
-BTF_ID(प्रकार, T)
-BTF_ID(प्रकार, U)
-BTF_ID(काष्ठा,  S)
-BTF_ID(जोड़,   U)
+BTF_ID(typedef, S)
+BTF_ID(typedef, T)
+BTF_ID(typedef, U)
+BTF_ID(struct,  S)
+BTF_ID(union,   U)
 BTF_ID(func,    func)
 
 BTF_SET_START(test_set)
-BTF_ID(प्रकार, S)
-BTF_ID(प्रकार, T)
-BTF_ID(प्रकार, U)
-BTF_ID(काष्ठा,  S)
-BTF_ID(जोड़,   U)
+BTF_ID(typedef, S)
+BTF_ID(typedef, T)
+BTF_ID(typedef, U)
+BTF_ID(struct,  S)
+BTF_ID(union,   U)
 BTF_ID(func,    func)
 BTF_SET_END(test_set)
 
-अटल पूर्णांक
-__resolve_symbol(काष्ठा btf *btf, पूर्णांक type_id)
-अणु
-	स्थिर काष्ठा btf_type *type;
-	स्थिर अक्षर *str;
-	अचिन्हित पूर्णांक i;
+static int
+__resolve_symbol(struct btf *btf, int type_id)
+{
+	const struct btf_type *type;
+	const char *str;
+	unsigned int i;
 
 	type = btf__type_by_id(btf, type_id);
-	अगर (!type) अणु
+	if (!type) {
 		PRINT_FAIL("Failed to get type for ID %d\n", type_id);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(test_symbols); i++) अणु
-		अगर (test_symbols[i].id != -1)
-			जारी;
+	for (i = 0; i < ARRAY_SIZE(test_symbols); i++) {
+		if (test_symbols[i].id != -1)
+			continue;
 
-		अगर (BTF_INFO_KIND(type->info) != test_symbols[i].type)
-			जारी;
+		if (BTF_INFO_KIND(type->info) != test_symbols[i].type)
+			continue;
 
 		str = btf__name_by_offset(btf, type->name_off);
-		अगर (!str) अणु
+		if (!str) {
 			PRINT_FAIL("Failed to get name for BTF ID %d\n", type_id);
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 
-		अगर (!म_भेद(str, test_symbols[i].name))
+		if (!strcmp(str, test_symbols[i].name))
 			test_symbols[i].id = type_id;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक resolve_symbols(व्योम)
-अणु
-	काष्ठा btf *btf;
-	पूर्णांक type_id;
+static int resolve_symbols(void)
+{
+	struct btf *btf;
+	int type_id;
 	__u32 nr;
 
-	btf = btf__parse_elf("btf_data.o", शून्य);
-	अगर (CHECK(libbpf_get_error(btf), "resolve",
+	btf = btf__parse_elf("btf_data.o", NULL);
+	if (CHECK(libbpf_get_error(btf), "resolve",
 		  "Failed to load BTF from btf_data.o\n"))
-		वापस -1;
+		return -1;
 
 	nr = btf__get_nr_types(btf);
 
-	क्रम (type_id = 1; type_id <= nr; type_id++) अणु
-		अगर (__resolve_symbol(btf, type_id))
-			अवरोध;
-	पूर्ण
+	for (type_id = 1; type_id <= nr; type_id++) {
+		if (__resolve_symbol(btf, type_id))
+			break;
+	}
 
-	btf__मुक्त(btf);
-	वापस 0;
-पूर्ण
+	btf__free(btf);
+	return 0;
+}
 
-पूर्णांक test_resolve_btfids(व्योम)
-अणु
-	__u32 *test_list, *test_lists[] = अणु test_list_local, test_list_global पूर्ण;
-	अचिन्हित पूर्णांक i, j;
-	पूर्णांक ret = 0;
+int test_resolve_btfids(void)
+{
+	__u32 *test_list, *test_lists[] = { test_list_local, test_list_global };
+	unsigned int i, j;
+	int ret = 0;
 
-	अगर (resolve_symbols())
-		वापस -1;
+	if (resolve_symbols())
+		return -1;
 
 	/* Check BTF_ID_LIST(test_list_local) and
 	 * BTF_ID_LIST_GLOBAL(test_list_global) IDs
 	 */
-	क्रम (j = 0; j < ARRAY_SIZE(test_lists); j++) अणु
+	for (j = 0; j < ARRAY_SIZE(test_lists); j++) {
 		test_list = test_lists[j];
-		क्रम (i = 0; i < ARRAY_SIZE(test_symbols); i++) अणु
+		for (i = 0; i < ARRAY_SIZE(test_symbols); i++) {
 			ret = CHECK(test_list[i] != test_symbols[i].id,
 				    "id_check",
 				    "wrong ID for %s (%d != %d)\n",
 				    test_symbols[i].name,
 				    test_list[i], test_symbols[i].id);
-			अगर (ret)
-				वापस ret;
-		पूर्ण
-	पूर्ण
+			if (ret)
+				return ret;
+		}
+	}
 
 	/* Check BTF_SET_START(test_set) IDs */
-	क्रम (i = 0; i < test_set.cnt; i++) अणु
+	for (i = 0; i < test_set.cnt; i++) {
 		bool found = false;
 
-		क्रम (j = 0; j < ARRAY_SIZE(test_symbols); j++) अणु
-			अगर (test_symbols[j].id != test_set.ids[i])
-				जारी;
+		for (j = 0; j < ARRAY_SIZE(test_symbols); j++) {
+			if (test_symbols[j].id != test_set.ids[i])
+				continue;
 			found = true;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		ret = CHECK(!found, "id_check",
 			    "ID %d not found in test_symbols\n",
 			    test_set.ids[i]);
-		अगर (ret)
-			अवरोध;
+		if (ret)
+			break;
 
-		अगर (i > 0) अणु
-			अगर (!ASSERT_LE(test_set.ids[i - 1], test_set.ids[i], "sort_check"))
-				वापस -1;
-		पूर्ण
-	पूर्ण
+		if (i > 0) {
+			if (!ASSERT_LE(test_set.ids[i - 1], test_set.ids[i], "sort_check"))
+				return -1;
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

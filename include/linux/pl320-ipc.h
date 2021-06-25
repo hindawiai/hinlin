@@ -1,8 +1,7 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  */
 
-पूर्णांक pl320_ipc_transmit(u32 *data);
-पूर्णांक pl320_ipc_रेजिस्टर_notअगरier(काष्ठा notअगरier_block *nb);
-पूर्णांक pl320_ipc_unरेजिस्टर_notअगरier(काष्ठा notअगरier_block *nb);
+int pl320_ipc_transmit(u32 *data);
+int pl320_ipc_register_notifier(struct notifier_block *nb);
+int pl320_ipc_unregister_notifier(struct notifier_block *nb);

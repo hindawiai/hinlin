@@ -1,418 +1,417 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * pca9532.c - 16-bit Led dimmer
  *
  * Copyright (C) 2011 Jan Weitzel
  * Copyright (C) 2008 Riku Voipio
  *
- * Datasheet: http://www.nxp.com/करोcuments/data_sheet/PCA9532.pdf
+ * Datasheet: http://www.nxp.com/documents/data_sheet/PCA9532.pdf
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/leds.h>
-#समावेश <linux/input.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/leds-pca9532.h>
-#समावेश <linux/gpio/driver.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
+#include <linux/module.h>
+#include <linux/i2c.h>
+#include <linux/slab.h>
+#include <linux/leds.h>
+#include <linux/input.h>
+#include <linux/mutex.h>
+#include <linux/workqueue.h>
+#include <linux/leds-pca9532.h>
+#include <linux/gpio/driver.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
 
 /* m =  num_leds*/
-#घोषणा PCA9532_REG_INPUT(i)	((i) >> 3)
-#घोषणा PCA9532_REG_OFFSET(m)	((m) >> 4)
-#घोषणा PCA9532_REG_PSC(m, i)	(PCA9532_REG_OFFSET(m) + 0x1 + (i) * 2)
-#घोषणा PCA9532_REG_PWM(m, i)	(PCA9532_REG_OFFSET(m) + 0x2 + (i) * 2)
-#घोषणा LED_REG(m, led)		(PCA9532_REG_OFFSET(m) + 0x5 + (led >> 2))
-#घोषणा LED_NUM(led)		(led & 0x3)
-#घोषणा LED_SHIFT(led)		(LED_NUM(led) * 2)
-#घोषणा LED_MASK(led)		(0x3 << LED_SHIFT(led))
+#define PCA9532_REG_INPUT(i)	((i) >> 3)
+#define PCA9532_REG_OFFSET(m)	((m) >> 4)
+#define PCA9532_REG_PSC(m, i)	(PCA9532_REG_OFFSET(m) + 0x1 + (i) * 2)
+#define PCA9532_REG_PWM(m, i)	(PCA9532_REG_OFFSET(m) + 0x2 + (i) * 2)
+#define LED_REG(m, led)		(PCA9532_REG_OFFSET(m) + 0x5 + (led >> 2))
+#define LED_NUM(led)		(led & 0x3)
+#define LED_SHIFT(led)		(LED_NUM(led) * 2)
+#define LED_MASK(led)		(0x3 << LED_SHIFT(led))
 
-#घोषणा ldev_to_led(c)       container_of(c, काष्ठा pca9532_led, ldev)
+#define ldev_to_led(c)       container_of(c, struct pca9532_led, ldev)
 
-काष्ठा pca9532_chip_info अणु
+struct pca9532_chip_info {
 	u8	num_leds;
-पूर्ण;
+};
 
-काष्ठा pca9532_data अणु
-	काष्ठा i2c_client *client;
-	काष्ठा pca9532_led leds[16];
-	काष्ठा mutex update_lock;
-	काष्ठा input_dev *idev;
-	काष्ठा work_काष्ठा work;
-#अगर_घोषित CONFIG_LEDS_PCA9532_GPIO
-	काष्ठा gpio_chip gpio;
-#पूर्ण_अगर
-	स्थिर काष्ठा pca9532_chip_info *chip_info;
+struct pca9532_data {
+	struct i2c_client *client;
+	struct pca9532_led leds[16];
+	struct mutex update_lock;
+	struct input_dev *idev;
+	struct work_struct work;
+#ifdef CONFIG_LEDS_PCA9532_GPIO
+	struct gpio_chip gpio;
+#endif
+	const struct pca9532_chip_info *chip_info;
 	u8 pwm[2];
 	u8 psc[2];
-पूर्ण;
+};
 
-अटल पूर्णांक pca9532_probe(काष्ठा i2c_client *client,
-	स्थिर काष्ठा i2c_device_id *id);
-अटल पूर्णांक pca9532_हटाओ(काष्ठा i2c_client *client);
+static int pca9532_probe(struct i2c_client *client,
+	const struct i2c_device_id *id);
+static int pca9532_remove(struct i2c_client *client);
 
-क्रमागत अणु
+enum {
 	pca9530,
 	pca9531,
 	pca9532,
 	pca9533,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा i2c_device_id pca9532_id[] = अणु
-	अणु "pca9530", pca9530 पूर्ण,
-	अणु "pca9531", pca9531 पूर्ण,
-	अणु "pca9532", pca9532 पूर्ण,
-	अणु "pca9533", pca9533 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id pca9532_id[] = {
+	{ "pca9530", pca9530 },
+	{ "pca9531", pca9531 },
+	{ "pca9532", pca9532 },
+	{ "pca9533", pca9533 },
+	{ }
+};
 
 MODULE_DEVICE_TABLE(i2c, pca9532_id);
 
-अटल स्थिर काष्ठा pca9532_chip_info pca9532_chip_info_tbl[] = अणु
-	[pca9530] = अणु
+static const struct pca9532_chip_info pca9532_chip_info_tbl[] = {
+	[pca9530] = {
 		.num_leds = 2,
-	पूर्ण,
-	[pca9531] = अणु
+	},
+	[pca9531] = {
 		.num_leds = 8,
-	पूर्ण,
-	[pca9532] = अणु
+	},
+	[pca9532] = {
 		.num_leds = 16,
-	पूर्ण,
-	[pca9533] = अणु
+	},
+	[pca9533] = {
 		.num_leds = 4,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा of_device_id of_pca9532_leds_match[] = अणु
-	अणु .compatible = "nxp,pca9530", .data = (व्योम *)pca9530 पूर्ण,
-	अणु .compatible = "nxp,pca9531", .data = (व्योम *)pca9531 पूर्ण,
-	अणु .compatible = "nxp,pca9532", .data = (व्योम *)pca9532 पूर्ण,
-	अणु .compatible = "nxp,pca9533", .data = (व्योम *)pca9533 पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+#ifdef CONFIG_OF
+static const struct of_device_id of_pca9532_leds_match[] = {
+	{ .compatible = "nxp,pca9530", .data = (void *)pca9530 },
+	{ .compatible = "nxp,pca9531", .data = (void *)pca9531 },
+	{ .compatible = "nxp,pca9532", .data = (void *)pca9532 },
+	{ .compatible = "nxp,pca9533", .data = (void *)pca9533 },
+	{},
+};
 
 MODULE_DEVICE_TABLE(of, of_pca9532_leds_match);
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा i2c_driver pca9532_driver = अणु
-	.driver = अणु
+static struct i2c_driver pca9532_driver = {
+	.driver = {
 		.name = "leds-pca953x",
 		.of_match_table = of_match_ptr(of_pca9532_leds_match),
-	पूर्ण,
+	},
 	.probe = pca9532_probe,
-	.हटाओ = pca9532_हटाओ,
+	.remove = pca9532_remove,
 	.id_table = pca9532_id,
-पूर्ण;
+};
 
 /* We have two pwm/blinkers, but 16 possible leds to drive. Additionally,
  * the clever Thecus people are using one pwm to drive the beeper. So,
  * as a compromise we average one pwm to the values requested by all
  * leds that are not ON/OFF.
  * */
-अटल पूर्णांक pca9532_calcpwm(काष्ठा i2c_client *client, पूर्णांक pwm, पूर्णांक blink,
-	क्रमागत led_brightness value)
-अणु
-	पूर्णांक a = 0, b = 0, i = 0;
-	काष्ठा pca9532_data *data = i2c_get_clientdata(client);
-	क्रम (i = 0; i < data->chip_info->num_leds; i++) अणु
-		अगर (data->leds[i].type == PCA9532_TYPE_LED &&
-			data->leds[i].state == PCA9532_PWM0+pwm) अणु
+static int pca9532_calcpwm(struct i2c_client *client, int pwm, int blink,
+	enum led_brightness value)
+{
+	int a = 0, b = 0, i = 0;
+	struct pca9532_data *data = i2c_get_clientdata(client);
+	for (i = 0; i < data->chip_info->num_leds; i++) {
+		if (data->leds[i].type == PCA9532_TYPE_LED &&
+			data->leds[i].state == PCA9532_PWM0+pwm) {
 				a++;
 				b += data->leds[i].ldev.brightness;
-		पूर्ण
-	पूर्ण
-	अगर (a == 0) अणु
+		}
+	}
+	if (a == 0) {
 		dev_err(&client->dev,
 		"fear of division by zero %d/%d, wanted %d\n",
 			b, a, value);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	b = b/a;
-	अगर (b > 0xFF)
-		वापस -EINVAL;
+	if (b > 0xFF)
+		return -EINVAL;
 	data->pwm[pwm] = b;
 	data->psc[pwm] = blink;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pca9532_setpwm(काष्ठा i2c_client *client, पूर्णांक pwm)
-अणु
-	काष्ठा pca9532_data *data = i2c_get_clientdata(client);
+static int pca9532_setpwm(struct i2c_client *client, int pwm)
+{
+	struct pca9532_data *data = i2c_get_clientdata(client);
 	u8 maxleds = data->chip_info->num_leds;
 
 	mutex_lock(&data->update_lock);
-	i2c_smbus_ग_लिखो_byte_data(client, PCA9532_REG_PWM(maxleds, pwm),
+	i2c_smbus_write_byte_data(client, PCA9532_REG_PWM(maxleds, pwm),
 		data->pwm[pwm]);
-	i2c_smbus_ग_लिखो_byte_data(client, PCA9532_REG_PSC(maxleds, pwm),
+	i2c_smbus_write_byte_data(client, PCA9532_REG_PSC(maxleds, pwm),
 		data->psc[pwm]);
 	mutex_unlock(&data->update_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Set LED routing */
-अटल व्योम pca9532_setled(काष्ठा pca9532_led *led)
-अणु
-	काष्ठा i2c_client *client = led->client;
-	काष्ठा pca9532_data *data = i2c_get_clientdata(client);
+static void pca9532_setled(struct pca9532_led *led)
+{
+	struct i2c_client *client = led->client;
+	struct pca9532_data *data = i2c_get_clientdata(client);
 	u8 maxleds = data->chip_info->num_leds;
-	अक्षर reg;
+	char reg;
 
 	mutex_lock(&data->update_lock);
-	reg = i2c_smbus_पढ़ो_byte_data(client, LED_REG(maxleds, led->id));
+	reg = i2c_smbus_read_byte_data(client, LED_REG(maxleds, led->id));
 	/* zero led bits */
 	reg = reg & ~LED_MASK(led->id);
 	/* set the new value */
 	reg = reg | (led->state << LED_SHIFT(led->id));
-	i2c_smbus_ग_लिखो_byte_data(client, LED_REG(maxleds, led->id), reg);
+	i2c_smbus_write_byte_data(client, LED_REG(maxleds, led->id), reg);
 	mutex_unlock(&data->update_lock);
-पूर्ण
+}
 
-अटल पूर्णांक pca9532_set_brightness(काष्ठा led_classdev *led_cdev,
-	क्रमागत led_brightness value)
-अणु
-	पूर्णांक err = 0;
-	काष्ठा pca9532_led *led = ldev_to_led(led_cdev);
+static int pca9532_set_brightness(struct led_classdev *led_cdev,
+	enum led_brightness value)
+{
+	int err = 0;
+	struct pca9532_led *led = ldev_to_led(led_cdev);
 
-	अगर (value == LED_OFF)
+	if (value == LED_OFF)
 		led->state = PCA9532_OFF;
-	अन्यथा अगर (value == LED_FULL)
+	else if (value == LED_FULL)
 		led->state = PCA9532_ON;
-	अन्यथा अणु
+	else {
 		led->state = PCA9532_PWM0; /* Thecus: hardcode one pwm */
 		err = pca9532_calcpwm(led->client, 0, 0, value);
-		अगर (err)
-			वापस err;
-	पूर्ण
-	अगर (led->state == PCA9532_PWM0)
+		if (err)
+			return err;
+	}
+	if (led->state == PCA9532_PWM0)
 		pca9532_setpwm(led->client, 0);
 	pca9532_setled(led);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक pca9532_set_blink(काष्ठा led_classdev *led_cdev,
-	अचिन्हित दीर्घ *delay_on, अचिन्हित दीर्घ *delay_off)
-अणु
-	काष्ठा pca9532_led *led = ldev_to_led(led_cdev);
-	काष्ठा i2c_client *client = led->client;
-	पूर्णांक psc;
-	पूर्णांक err = 0;
+static int pca9532_set_blink(struct led_classdev *led_cdev,
+	unsigned long *delay_on, unsigned long *delay_off)
+{
+	struct pca9532_led *led = ldev_to_led(led_cdev);
+	struct i2c_client *client = led->client;
+	int psc;
+	int err = 0;
 
-	अगर (*delay_on == 0 && *delay_off == 0) अणु
-		/* led subप्रणाली ask us क्रम a blink rate */
+	if (*delay_on == 0 && *delay_off == 0) {
+		/* led subsystem ask us for a blink rate */
 		*delay_on = 1000;
 		*delay_off = 1000;
-	पूर्ण
-	अगर (*delay_on != *delay_off || *delay_on > 1690 || *delay_on < 6)
-		वापस -EINVAL;
+	}
+	if (*delay_on != *delay_off || *delay_on > 1690 || *delay_on < 6)
+		return -EINVAL;
 
-	/* Thecus specअगरic: only use PSC/PWM 0 */
+	/* Thecus specific: only use PSC/PWM 0 */
 	psc = (*delay_on * 152-1)/1000;
 	err = pca9532_calcpwm(client, 0, psc, led_cdev->brightness);
-	अगर (err)
-		वापस err;
-	अगर (led->state == PCA9532_PWM0)
+	if (err)
+		return err;
+	if (led->state == PCA9532_PWM0)
 		pca9532_setpwm(led->client, 0);
 	pca9532_setled(led);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pca9532_event(काष्ठा input_dev *dev, अचिन्हित पूर्णांक type,
-	अचिन्हित पूर्णांक code, पूर्णांक value)
-अणु
-	काष्ठा pca9532_data *data = input_get_drvdata(dev);
+static int pca9532_event(struct input_dev *dev, unsigned int type,
+	unsigned int code, int value)
+{
+	struct pca9532_data *data = input_get_drvdata(dev);
 
-	अगर (!(type == EV_SND && (code == SND_BELL || code == SND_TONE)))
-		वापस -1;
+	if (!(type == EV_SND && (code == SND_BELL || code == SND_TONE)))
+		return -1;
 
-	/* XXX: allow dअगरferent kind of beeps with psc/pwm modअगरications */
-	अगर (value > 1 && value < 32767)
+	/* XXX: allow different kind of beeps with psc/pwm modifications */
+	if (value > 1 && value < 32767)
 		data->pwm[1] = 127;
-	अन्यथा
+	else
 		data->pwm[1] = 0;
 
 	schedule_work(&data->work);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम pca9532_input_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा pca9532_data *data =
-		container_of(work, काष्ठा pca9532_data, work);
+static void pca9532_input_work(struct work_struct *work)
+{
+	struct pca9532_data *data =
+		container_of(work, struct pca9532_data, work);
 	u8 maxleds = data->chip_info->num_leds;
 
 	mutex_lock(&data->update_lock);
-	i2c_smbus_ग_लिखो_byte_data(data->client, PCA9532_REG_PWM(maxleds, 1),
+	i2c_smbus_write_byte_data(data->client, PCA9532_REG_PWM(maxleds, 1),
 		data->pwm[1]);
 	mutex_unlock(&data->update_lock);
-पूर्ण
+}
 
-अटल क्रमागत pca9532_state pca9532_getled(काष्ठा pca9532_led *led)
-अणु
-	काष्ठा i2c_client *client = led->client;
-	काष्ठा pca9532_data *data = i2c_get_clientdata(client);
+static enum pca9532_state pca9532_getled(struct pca9532_led *led)
+{
+	struct i2c_client *client = led->client;
+	struct pca9532_data *data = i2c_get_clientdata(client);
 	u8 maxleds = data->chip_info->num_leds;
-	अक्षर reg;
-	क्रमागत pca9532_state ret;
+	char reg;
+	enum pca9532_state ret;
 
 	mutex_lock(&data->update_lock);
-	reg = i2c_smbus_पढ़ो_byte_data(client, LED_REG(maxleds, led->id));
+	reg = i2c_smbus_read_byte_data(client, LED_REG(maxleds, led->id));
 	ret = (reg & LED_MASK(led->id)) >> LED_SHIFT(led->id);
 	mutex_unlock(&data->update_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#अगर_घोषित CONFIG_LEDS_PCA9532_GPIO
-अटल पूर्णांक pca9532_gpio_request_pin(काष्ठा gpio_chip *gc, अचिन्हित offset)
-अणु
-	काष्ठा pca9532_data *data = gpiochip_get_data(gc);
-	काष्ठा pca9532_led *led = &data->leds[offset];
+#ifdef CONFIG_LEDS_PCA9532_GPIO
+static int pca9532_gpio_request_pin(struct gpio_chip *gc, unsigned offset)
+{
+	struct pca9532_data *data = gpiochip_get_data(gc);
+	struct pca9532_led *led = &data->leds[offset];
 
-	अगर (led->type == PCA9532_TYPE_GPIO)
-		वापस 0;
+	if (led->type == PCA9532_TYPE_GPIO)
+		return 0;
 
-	वापस -EBUSY;
-पूर्ण
+	return -EBUSY;
+}
 
-अटल व्योम pca9532_gpio_set_value(काष्ठा gpio_chip *gc, अचिन्हित offset, पूर्णांक val)
-अणु
-	काष्ठा pca9532_data *data = gpiochip_get_data(gc);
-	काष्ठा pca9532_led *led = &data->leds[offset];
+static void pca9532_gpio_set_value(struct gpio_chip *gc, unsigned offset, int val)
+{
+	struct pca9532_data *data = gpiochip_get_data(gc);
+	struct pca9532_led *led = &data->leds[offset];
 
-	अगर (val)
+	if (val)
 		led->state = PCA9532_ON;
-	अन्यथा
+	else
 		led->state = PCA9532_OFF;
 
 	pca9532_setled(led);
-पूर्ण
+}
 
-अटल पूर्णांक pca9532_gpio_get_value(काष्ठा gpio_chip *gc, अचिन्हित offset)
-अणु
-	काष्ठा pca9532_data *data = gpiochip_get_data(gc);
-	अचिन्हित अक्षर reg;
+static int pca9532_gpio_get_value(struct gpio_chip *gc, unsigned offset)
+{
+	struct pca9532_data *data = gpiochip_get_data(gc);
+	unsigned char reg;
 
-	reg = i2c_smbus_पढ़ो_byte_data(data->client, PCA9532_REG_INPUT(offset));
+	reg = i2c_smbus_read_byte_data(data->client, PCA9532_REG_INPUT(offset));
 
-	वापस !!(reg & (1 << (offset % 8)));
-पूर्ण
+	return !!(reg & (1 << (offset % 8)));
+}
 
-अटल पूर्णांक pca9532_gpio_direction_input(काष्ठा gpio_chip *gc, अचिन्हित offset)
-अणु
+static int pca9532_gpio_direction_input(struct gpio_chip *gc, unsigned offset)
+{
 	/* To use as input ensure pin is not driven */
 	pca9532_gpio_set_value(gc, offset, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pca9532_gpio_direction_output(काष्ठा gpio_chip *gc, अचिन्हित offset, पूर्णांक val)
-अणु
+static int pca9532_gpio_direction_output(struct gpio_chip *gc, unsigned offset, int val)
+{
 	pca9532_gpio_set_value(gc, offset, val);
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_LEDS_PCA9532_GPIO */
+	return 0;
+}
+#endif /* CONFIG_LEDS_PCA9532_GPIO */
 
-अटल पूर्णांक pca9532_destroy_devices(काष्ठा pca9532_data *data, पूर्णांक n_devs)
-अणु
-	पूर्णांक i = n_devs;
+static int pca9532_destroy_devices(struct pca9532_data *data, int n_devs)
+{
+	int i = n_devs;
 
-	अगर (!data)
-		वापस -EINVAL;
+	if (!data)
+		return -EINVAL;
 
-	जबतक (--i >= 0) अणु
-		चयन (data->leds[i].type) अणु
-		हाल PCA9532_TYPE_NONE:
-		हाल PCA9532_TYPE_GPIO:
-			अवरोध;
-		हाल PCA9532_TYPE_LED:
-			led_classdev_unरेजिस्टर(&data->leds[i].ldev);
-			अवरोध;
-		हाल PCA9532_TYPE_N2100_BEEP:
-			अगर (data->idev != शून्य) अणु
+	while (--i >= 0) {
+		switch (data->leds[i].type) {
+		case PCA9532_TYPE_NONE:
+		case PCA9532_TYPE_GPIO:
+			break;
+		case PCA9532_TYPE_LED:
+			led_classdev_unregister(&data->leds[i].ldev);
+			break;
+		case PCA9532_TYPE_N2100_BEEP:
+			if (data->idev != NULL) {
 				cancel_work_sync(&data->work);
-				data->idev = शून्य;
-			पूर्ण
-			अवरोध;
-		पूर्ण
-	पूर्ण
+				data->idev = NULL;
+			}
+			break;
+		}
+	}
 
-#अगर_घोषित CONFIG_LEDS_PCA9532_GPIO
-	अगर (data->gpio.parent)
-		gpiochip_हटाओ(&data->gpio);
-#पूर्ण_अगर
+#ifdef CONFIG_LEDS_PCA9532_GPIO
+	if (data->gpio.parent)
+		gpiochip_remove(&data->gpio);
+#endif
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pca9532_configure(काष्ठा i2c_client *client,
-	काष्ठा pca9532_data *data, काष्ठा pca9532_platक्रमm_data *pdata)
-अणु
-	पूर्णांक i, err = 0;
-	पूर्णांक gpios = 0;
+static int pca9532_configure(struct i2c_client *client,
+	struct pca9532_data *data, struct pca9532_platform_data *pdata)
+{
+	int i, err = 0;
+	int gpios = 0;
 	u8 maxleds = data->chip_info->num_leds;
 
-	क्रम (i = 0; i < 2; i++)	अणु
+	for (i = 0; i < 2; i++)	{
 		data->pwm[i] = pdata->pwm[i];
 		data->psc[i] = pdata->psc[i];
-		i2c_smbus_ग_लिखो_byte_data(client, PCA9532_REG_PWM(maxleds, i),
+		i2c_smbus_write_byte_data(client, PCA9532_REG_PWM(maxleds, i),
 			data->pwm[i]);
-		i2c_smbus_ग_लिखो_byte_data(client, PCA9532_REG_PSC(maxleds, i),
+		i2c_smbus_write_byte_data(client, PCA9532_REG_PSC(maxleds, i),
 			data->psc[i]);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < data->chip_info->num_leds; i++) अणु
-		काष्ठा pca9532_led *led = &data->leds[i];
-		काष्ठा pca9532_led *pled = &pdata->leds[i];
+	for (i = 0; i < data->chip_info->num_leds; i++) {
+		struct pca9532_led *led = &data->leds[i];
+		struct pca9532_led *pled = &pdata->leds[i];
 		led->client = client;
 		led->id = i;
 		led->type = pled->type;
-		चयन (led->type) अणु
-		हाल PCA9532_TYPE_NONE:
-			अवरोध;
-		हाल PCA9532_TYPE_GPIO:
+		switch (led->type) {
+		case PCA9532_TYPE_NONE:
+			break;
+		case PCA9532_TYPE_GPIO:
 			gpios++;
-			अवरोध;
-		हाल PCA9532_TYPE_LED:
-			अगर (pled->state == PCA9532_KEEP)
+			break;
+		case PCA9532_TYPE_LED:
+			if (pled->state == PCA9532_KEEP)
 				led->state = pca9532_getled(led);
-			अन्यथा
+			else
 				led->state = pled->state;
 			led->name = pled->name;
 			led->ldev.name = led->name;
-			led->ldev.शेष_trigger = pled->शेष_trigger;
+			led->ldev.default_trigger = pled->default_trigger;
 			led->ldev.brightness = LED_OFF;
 			led->ldev.brightness_set_blocking =
 						pca9532_set_brightness;
 			led->ldev.blink_set = pca9532_set_blink;
-			err = led_classdev_रेजिस्टर(&client->dev, &led->ldev);
-			अगर (err < 0) अणु
+			err = led_classdev_register(&client->dev, &led->ldev);
+			if (err < 0) {
 				dev_err(&client->dev,
 					"couldn't register LED %s\n",
 					led->name);
-				जाओ निकास;
-			पूर्ण
+				goto exit;
+			}
 			pca9532_setled(led);
-			अवरोध;
-		हाल PCA9532_TYPE_N2100_BEEP:
+			break;
+		case PCA9532_TYPE_N2100_BEEP:
 			BUG_ON(data->idev);
 			led->state = PCA9532_PWM1;
 			pca9532_setled(led);
 			data->idev = devm_input_allocate_device(&client->dev);
-			अगर (data->idev == शून्य) अणु
+			if (data->idev == NULL) {
 				err = -ENOMEM;
-				जाओ निकास;
-			पूर्ण
+				goto exit;
+			}
 			data->idev->name = pled->name;
 			data->idev->phys = "i2c/pca9532";
 			data->idev->id.bustype = BUS_HOST;
-			data->idev->id.venकरोr = 0x001f;
+			data->idev->id.vendor = 0x001f;
 			data->idev->id.product = 0x0001;
 			data->idev->id.version = 0x0100;
 			data->idev->evbit[0] = BIT_MASK(EV_SND);
@@ -421,18 +420,18 @@ MODULE_DEVICE_TABLE(of, of_pca9532_leds_match);
 			data->idev->event = pca9532_event;
 			input_set_drvdata(data->idev, data);
 			INIT_WORK(&data->work, pca9532_input_work);
-			err = input_रेजिस्टर_device(data->idev);
-			अगर (err) अणु
+			err = input_register_device(data->idev);
+			if (err) {
 				cancel_work_sync(&data->work);
-				data->idev = शून्य;
-				जाओ निकास;
-			पूर्ण
-			अवरोध;
-		पूर्ण
-	पूर्ण
+				data->idev = NULL;
+				goto exit;
+			}
+			break;
+		}
+	}
 
-#अगर_घोषित CONFIG_LEDS_PCA9532_GPIO
-	अगर (gpios) अणु
+#ifdef CONFIG_LEDS_PCA9532_GPIO
+	if (gpios) {
 		data->gpio.label = "gpio-pca9532";
 		data->gpio.direction_input = pca9532_gpio_direction_input;
 		data->gpio.direction_output = pca9532_gpio_direction_output;
@@ -446,101 +445,101 @@ MODULE_DEVICE_TABLE(of, of_pca9532_leds_match);
 		data->gpio.owner = THIS_MODULE;
 
 		err = gpiochip_add_data(&data->gpio, data);
-		अगर (err) अणु
-			/* Use data->gpio.dev as a flag क्रम मुक्तing gpiochip */
-			data->gpio.parent = शून्य;
+		if (err) {
+			/* Use data->gpio.dev as a flag for freeing gpiochip */
+			data->gpio.parent = NULL;
 			dev_warn(&client->dev, "could not add gpiochip\n");
-		पूर्ण अन्यथा अणु
+		} else {
 			dev_info(&client->dev, "gpios %i...%i\n",
 				data->gpio.base, data->gpio.base +
 				data->gpio.ngpio - 1);
-		पूर्ण
-	पूर्ण
-#पूर्ण_अगर
+		}
+	}
+#endif
 
-	वापस 0;
+	return 0;
 
-निकास:
+exit:
 	pca9532_destroy_devices(data, i);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल काष्ठा pca9532_platक्रमm_data *
-pca9532_of_populate_pdata(काष्ठा device *dev, काष्ठा device_node *np)
-अणु
-	काष्ठा pca9532_platक्रमm_data *pdata;
-	काष्ठा device_node *child;
-	पूर्णांक devid, maxleds;
-	पूर्णांक i = 0;
-	स्थिर अक्षर *state;
+static struct pca9532_platform_data *
+pca9532_of_populate_pdata(struct device *dev, struct device_node *np)
+{
+	struct pca9532_platform_data *pdata;
+	struct device_node *child;
+	int devid, maxleds;
+	int i = 0;
+	const char *state;
 
-	devid = (पूर्णांक)(uपूर्णांकptr_t)of_device_get_match_data(dev);
+	devid = (int)(uintptr_t)of_device_get_match_data(dev);
 	maxleds = pca9532_chip_info_tbl[devid].num_leds;
 
-	pdata = devm_kzalloc(dev, माप(*pdata), GFP_KERNEL);
-	अगर (!pdata)
-		वापस ERR_PTR(-ENOMEM);
+	pdata = devm_kzalloc(dev, sizeof(*pdata), GFP_KERNEL);
+	if (!pdata)
+		return ERR_PTR(-ENOMEM);
 
 	pdata->gpio_base = -1;
 
-	of_property_पढ़ो_u8_array(np, "nxp,pwm", &pdata->pwm[0],
+	of_property_read_u8_array(np, "nxp,pwm", &pdata->pwm[0],
 				  ARRAY_SIZE(pdata->pwm));
-	of_property_पढ़ो_u8_array(np, "nxp,psc", &pdata->psc[0],
+	of_property_read_u8_array(np, "nxp,psc", &pdata->psc[0],
 				  ARRAY_SIZE(pdata->psc));
 
-	क्रम_each_available_child_of_node(np, child) अणु
-		अगर (of_property_पढ़ो_string(child, "label",
+	for_each_available_child_of_node(np, child) {
+		if (of_property_read_string(child, "label",
 					    &pdata->leds[i].name))
 			pdata->leds[i].name = child->name;
-		of_property_पढ़ो_u32(child, "type", &pdata->leds[i].type);
-		of_property_पढ़ो_string(child, "linux,default-trigger",
-					&pdata->leds[i].शेष_trigger);
-		अगर (!of_property_पढ़ो_string(child, "default-state", &state)) अणु
-			अगर (!म_भेद(state, "on"))
+		of_property_read_u32(child, "type", &pdata->leds[i].type);
+		of_property_read_string(child, "linux,default-trigger",
+					&pdata->leds[i].default_trigger);
+		if (!of_property_read_string(child, "default-state", &state)) {
+			if (!strcmp(state, "on"))
 				pdata->leds[i].state = PCA9532_ON;
-			अन्यथा अगर (!म_भेद(state, "keep"))
+			else if (!strcmp(state, "keep"))
 				pdata->leds[i].state = PCA9532_KEEP;
-		पूर्ण
-		अगर (++i >= maxleds) अणु
+		}
+		if (++i >= maxleds) {
 			of_node_put(child);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	वापस pdata;
-पूर्ण
+	return pdata;
+}
 
-अटल पूर्णांक pca9532_probe(काष्ठा i2c_client *client,
-	स्थिर काष्ठा i2c_device_id *id)
-अणु
-	पूर्णांक devid;
-	काष्ठा pca9532_data *data = i2c_get_clientdata(client);
-	काष्ठा pca9532_platक्रमm_data *pca9532_pdata =
+static int pca9532_probe(struct i2c_client *client,
+	const struct i2c_device_id *id)
+{
+	int devid;
+	struct pca9532_data *data = i2c_get_clientdata(client);
+	struct pca9532_platform_data *pca9532_pdata =
 			dev_get_platdata(&client->dev);
-	काष्ठा device_node *np = dev_of_node(&client->dev);
+	struct device_node *np = dev_of_node(&client->dev);
 
-	अगर (!pca9532_pdata) अणु
-		अगर (np) अणु
+	if (!pca9532_pdata) {
+		if (np) {
 			pca9532_pdata =
 				pca9532_of_populate_pdata(&client->dev, np);
-			अगर (IS_ERR(pca9532_pdata))
-				वापस PTR_ERR(pca9532_pdata);
-		पूर्ण अन्यथा अणु
+			if (IS_ERR(pca9532_pdata))
+				return PTR_ERR(pca9532_pdata);
+		} else {
 			dev_err(&client->dev, "no platform data\n");
-			वापस -EINVAL;
-		पूर्ण
-		devid = (पूर्णांक)(uपूर्णांकptr_t)of_device_get_match_data(&client->dev);
-	पूर्ण अन्यथा अणु
+			return -EINVAL;
+		}
+		devid = (int)(uintptr_t)of_device_get_match_data(&client->dev);
+	} else {
 		devid = id->driver_data;
-	पूर्ण
+	}
 
-	अगर (!i2c_check_functionality(client->adapter,
+	if (!i2c_check_functionality(client->adapter,
 		I2C_FUNC_SMBUS_BYTE_DATA))
-		वापस -EIO;
+		return -EIO;
 
-	data = devm_kzalloc(&client->dev, माप(*data), GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = devm_kzalloc(&client->dev, sizeof(*data), GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
 
 	data->chip_info = &pca9532_chip_info_tbl[devid];
 
@@ -549,15 +548,15 @@ pca9532_of_populate_pdata(काष्ठा device *dev, काष्ठा dev
 	data->client = client;
 	mutex_init(&data->update_lock);
 
-	वापस pca9532_configure(client, data, pca9532_pdata);
-पूर्ण
+	return pca9532_configure(client, data, pca9532_pdata);
+}
 
-अटल पूर्णांक pca9532_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा pca9532_data *data = i2c_get_clientdata(client);
+static int pca9532_remove(struct i2c_client *client)
+{
+	struct pca9532_data *data = i2c_get_clientdata(client);
 
-	वापस pca9532_destroy_devices(data, data->chip_info->num_leds);
-पूर्ण
+	return pca9532_destroy_devices(data, data->chip_info->num_leds);
+}
 
 module_i2c_driver(pca9532_driver);
 

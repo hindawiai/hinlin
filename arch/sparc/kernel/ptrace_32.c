@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* ptrace.c: Sparc process tracing support.
  *
  * Copyright (C) 1996, 2008 David S. Miller (davem@davemloft.net)
@@ -11,206 +10,206 @@
  * to emulate SunOS).
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/user.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/security.h>
-#समावेश <linux/संकेत.स>
-#समावेश <linux/regset.h>
-#समावेश <linux/elf.h>
-#समावेश <linux/tracehook.h>
+#include <linux/kernel.h>
+#include <linux/sched.h>
+#include <linux/mm.h>
+#include <linux/errno.h>
+#include <linux/ptrace.h>
+#include <linux/user.h>
+#include <linux/smp.h>
+#include <linux/security.h>
+#include <linux/signal.h>
+#include <linux/regset.h>
+#include <linux/elf.h>
+#include <linux/tracehook.h>
 
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/cacheflush.h>
+#include <linux/uaccess.h>
+#include <asm/cacheflush.h>
 
-#समावेश "kernel.h"
+#include "kernel.h"
 
-/* #घोषणा ALLOW_INIT_TRACING */
+/* #define ALLOW_INIT_TRACING */
 
 /*
  * Called by kernel/ptrace.c when detaching..
  *
  * Make sure single step bits etc are not set.
  */
-व्योम ptrace_disable(काष्ठा task_काष्ठा *child)
-अणु
-	/* nothing to करो */
-पूर्ण
+void ptrace_disable(struct task_struct *child)
+{
+	/* nothing to do */
+}
 
-क्रमागत sparc_regset अणु
+enum sparc_regset {
 	REGSET_GENERAL,
 	REGSET_FP,
-पूर्ण;
+};
 
-अटल पूर्णांक regwinकरोw32_get(काष्ठा task_काष्ठा *target,
-			   स्थिर काष्ठा pt_regs *regs,
+static int regwindow32_get(struct task_struct *target,
+			   const struct pt_regs *regs,
 			   u32 *uregs)
-अणु
-	अचिन्हित दीर्घ reg_winकरोw = regs->u_regs[UREG_I6];
-	पूर्णांक size = 16 * माप(u32);
+{
+	unsigned long reg_window = regs->u_regs[UREG_I6];
+	int size = 16 * sizeof(u32);
 
-	अगर (target == current) अणु
-		अगर (copy_from_user(uregs, (व्योम __user *)reg_winकरोw, size))
-			वापस -EFAULT;
-	पूर्ण अन्यथा अणु
-		अगर (access_process_vm(target, reg_winकरोw, uregs, size,
+	if (target == current) {
+		if (copy_from_user(uregs, (void __user *)reg_window, size))
+			return -EFAULT;
+	} else {
+		if (access_process_vm(target, reg_window, uregs, size,
 				      FOLL_FORCE) != size)
-			वापस -EFAULT;
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return -EFAULT;
+	}
+	return 0;
+}
 
-अटल पूर्णांक regwinकरोw32_set(काष्ठा task_काष्ठा *target,
-			   स्थिर काष्ठा pt_regs *regs,
+static int regwindow32_set(struct task_struct *target,
+			   const struct pt_regs *regs,
 			   u32 *uregs)
-अणु
-	अचिन्हित दीर्घ reg_winकरोw = regs->u_regs[UREG_I6];
-	पूर्णांक size = 16 * माप(u32);
+{
+	unsigned long reg_window = regs->u_regs[UREG_I6];
+	int size = 16 * sizeof(u32);
 
-	अगर (target == current) अणु
-		अगर (copy_to_user((व्योम __user *)reg_winकरोw, uregs, size))
-			वापस -EFAULT;
-	पूर्ण अन्यथा अणु
-		अगर (access_process_vm(target, reg_winकरोw, uregs, size,
+	if (target == current) {
+		if (copy_to_user((void __user *)reg_window, uregs, size))
+			return -EFAULT;
+	} else {
+		if (access_process_vm(target, reg_window, uregs, size,
 				      FOLL_FORCE | FOLL_WRITE) != size)
-			वापस -EFAULT;
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return -EFAULT;
+	}
+	return 0;
+}
 
-अटल पूर्णांक genregs32_get(काष्ठा task_काष्ठा *target,
-			 स्थिर काष्ठा user_regset *regset,
-			 काष्ठा membuf to)
-अणु
-	स्थिर काष्ठा pt_regs *regs = target->thपढ़ो.kregs;
+static int genregs32_get(struct task_struct *target,
+			 const struct user_regset *regset,
+			 struct membuf to)
+{
+	const struct pt_regs *regs = target->thread.kregs;
 	u32 uregs[16];
 
-	अगर (target == current)
-		flush_user_winकरोws();
+	if (target == current)
+		flush_user_windows();
 
-	membuf_ग_लिखो(&to, regs->u_regs, 16 * माप(u32));
-	अगर (!to.left)
-		वापस 0;
-	अगर (regwinकरोw32_get(target, regs, uregs))
-		वापस -EFAULT;
-	membuf_ग_लिखो(&to, uregs, 16 * माप(u32));
+	membuf_write(&to, regs->u_regs, 16 * sizeof(u32));
+	if (!to.left)
+		return 0;
+	if (regwindow32_get(target, regs, uregs))
+		return -EFAULT;
+	membuf_write(&to, uregs, 16 * sizeof(u32));
 	membuf_store(&to, regs->psr);
 	membuf_store(&to, regs->pc);
 	membuf_store(&to, regs->npc);
 	membuf_store(&to, regs->y);
-	वापस membuf_zero(&to, 2 * माप(u32));
-पूर्ण
+	return membuf_zero(&to, 2 * sizeof(u32));
+}
 
-अटल पूर्णांक genregs32_set(काष्ठा task_काष्ठा *target,
-			 स्थिर काष्ठा user_regset *regset,
-			 अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count,
-			 स्थिर व्योम *kbuf, स्थिर व्योम __user *ubuf)
-अणु
-	काष्ठा pt_regs *regs = target->thपढ़ो.kregs;
+static int genregs32_set(struct task_struct *target,
+			 const struct user_regset *regset,
+			 unsigned int pos, unsigned int count,
+			 const void *kbuf, const void __user *ubuf)
+{
+	struct pt_regs *regs = target->thread.kregs;
 	u32 uregs[16];
 	u32 psr;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (target == current)
-		flush_user_winकरोws();
+	if (target == current)
+		flush_user_windows();
 
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
 				 regs->u_regs,
-				 0, 16 * माप(u32));
-	अगर (ret || !count)
-		वापस ret;
+				 0, 16 * sizeof(u32));
+	if (ret || !count)
+		return ret;
 
-	अगर (regwinकरोw32_get(target, regs, uregs))
-		वापस -EFAULT;
+	if (regwindow32_get(target, regs, uregs))
+		return -EFAULT;
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
 				 uregs,
-				 16 * माप(u32), 32 * माप(u32));
-	अगर (ret)
-		वापस ret;
-	अगर (regwinकरोw32_set(target, regs, uregs))
-		वापस -EFAULT;
-	अगर (!count)
-		वापस 0;
+				 16 * sizeof(u32), 32 * sizeof(u32));
+	if (ret)
+		return ret;
+	if (regwindow32_set(target, regs, uregs))
+		return -EFAULT;
+	if (!count)
+		return 0;
 
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
 				 &psr,
-				 32 * माप(u32), 33 * माप(u32));
-	अगर (ret)
-		वापस ret;
+				 32 * sizeof(u32), 33 * sizeof(u32));
+	if (ret)
+		return ret;
 	regs->psr = (regs->psr & ~(PSR_ICC | PSR_SYSCALL)) |
 		    (psr & (PSR_ICC | PSR_SYSCALL));
-	अगर (!count)
-		वापस 0;
+	if (!count)
+		return 0;
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
 				 &regs->pc,
-				 33 * माप(u32), 34 * माप(u32));
-	अगर (ret || !count)
-		वापस ret;
+				 33 * sizeof(u32), 34 * sizeof(u32));
+	if (ret || !count)
+		return ret;
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
 				 &regs->npc,
-				 34 * माप(u32), 35 * माप(u32));
-	अगर (ret || !count)
-		वापस ret;
+				 34 * sizeof(u32), 35 * sizeof(u32));
+	if (ret || !count)
+		return ret;
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
 				 &regs->y,
-				 35 * माप(u32), 36 * माप(u32));
-	अगर (ret || !count)
-		वापस ret;
-	वापस user_regset_copyin_ignore(&pos, &count, &kbuf, &ubuf,
-					 36 * माप(u32), 38 * माप(u32));
-पूर्ण
+				 35 * sizeof(u32), 36 * sizeof(u32));
+	if (ret || !count)
+		return ret;
+	return user_regset_copyin_ignore(&pos, &count, &kbuf, &ubuf,
+					 36 * sizeof(u32), 38 * sizeof(u32));
+}
 
-अटल पूर्णांक fpregs32_get(काष्ठा task_काष्ठा *target,
-			स्थिर काष्ठा user_regset *regset,
-			काष्ठा membuf to)
-अणु
-#अगर 0
-	अगर (target == current)
+static int fpregs32_get(struct task_struct *target,
+			const struct user_regset *regset,
+			struct membuf to)
+{
+#if 0
+	if (target == current)
 		save_and_clear_fpu();
-#पूर्ण_अगर
+#endif
 
-	membuf_ग_लिखो(&to, target->thपढ़ो.भग्न_regs, 32 * माप(u32));
-	membuf_zero(&to, माप(u32));
-	membuf_ग_लिखो(&to, &target->thपढ़ो.fsr, माप(u32));
+	membuf_write(&to, target->thread.float_regs, 32 * sizeof(u32));
+	membuf_zero(&to, sizeof(u32));
+	membuf_write(&to, &target->thread.fsr, sizeof(u32));
 	membuf_store(&to, (u32)((1 << 8) | (8 << 16)));
-	वापस membuf_zero(&to, 64 * माप(u32));
-पूर्ण
+	return membuf_zero(&to, 64 * sizeof(u32));
+}
 
-अटल पूर्णांक fpregs32_set(काष्ठा task_काष्ठा *target,
-			स्थिर काष्ठा user_regset *regset,
-			अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count,
-			स्थिर व्योम *kbuf, स्थिर व्योम __user *ubuf)
-अणु
-	अचिन्हित दीर्घ *fpregs = target->thपढ़ो.भग्न_regs;
-	पूर्णांक ret;
+static int fpregs32_set(struct task_struct *target,
+			const struct user_regset *regset,
+			unsigned int pos, unsigned int count,
+			const void *kbuf, const void __user *ubuf)
+{
+	unsigned long *fpregs = target->thread.float_regs;
+	int ret;
 
-#अगर 0
-	अगर (target == current)
+#if 0
+	if (target == current)
 		save_and_clear_fpu();
-#पूर्ण_अगर
+#endif
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
 				 fpregs,
-				 0, 32 * माप(u32));
-	अगर (!ret)
+				 0, 32 * sizeof(u32));
+	if (!ret)
 		user_regset_copyin_ignore(&pos, &count, &kbuf, &ubuf,
-					  32 * माप(u32),
-					  33 * माप(u32));
-	अगर (!ret)
+					  32 * sizeof(u32),
+					  33 * sizeof(u32));
+	if (!ret)
 		ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-					 &target->thपढ़ो.fsr,
-					 33 * माप(u32),
-					 34 * माप(u32));
-	अगर (!ret)
+					 &target->thread.fsr,
+					 33 * sizeof(u32),
+					 34 * sizeof(u32));
+	if (!ret)
 		ret = user_regset_copyin_ignore(&pos, &count, &kbuf, &ubuf,
-						34 * माप(u32), -1);
-	वापस ret;
-पूर्ण
+						34 * sizeof(u32), -1);
+	return ret;
+}
 
-अटल स्थिर काष्ठा user_regset sparc32_regsets[] = अणु
+static const struct user_regset sparc32_regsets[] = {
 	/* Format is:
 	 * 	G0 --> G7
 	 *	O0 --> O7
@@ -218,232 +217,232 @@
 	 *	I0 --> I7
 	 *	PSR, PC, nPC, Y, WIM, TBR
 	 */
-	[REGSET_GENERAL] = अणु
+	[REGSET_GENERAL] = {
 		.core_note_type = NT_PRSTATUS,
 		.n = 38,
-		.size = माप(u32), .align = माप(u32),
+		.size = sizeof(u32), .align = sizeof(u32),
 		.regset_get = genregs32_get, .set = genregs32_set
-	पूर्ण,
+	},
 	/* Format is:
 	 *	F0 --> F31
 	 *	empty 32-bit word
 	 *	FSR (32--bit word)
-	 *	FPU QUEUE COUNT (8-bit अक्षर)
-	 *	FPU QUEUE ENTRYSIZE (8-bit अक्षर)
-	 *	FPU ENABLED (8-bit अक्षर)
-	 *	empty 8-bit अक्षर
-	 *	FPU QUEUE (64 32-bit पूर्णांकs)
+	 *	FPU QUEUE COUNT (8-bit char)
+	 *	FPU QUEUE ENTRYSIZE (8-bit char)
+	 *	FPU ENABLED (8-bit char)
+	 *	empty 8-bit char
+	 *	FPU QUEUE (64 32-bit ints)
 	 */
-	[REGSET_FP] = अणु
+	[REGSET_FP] = {
 		.core_note_type = NT_PRFPREG,
 		.n = 99,
-		.size = माप(u32), .align = माप(u32),
+		.size = sizeof(u32), .align = sizeof(u32),
 		.regset_get = fpregs32_get, .set = fpregs32_set
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक getregs_get(काष्ठा task_काष्ठा *target,
-			 स्थिर काष्ठा user_regset *regset,
-			 काष्ठा membuf to)
-अणु
-	स्थिर काष्ठा pt_regs *regs = target->thपढ़ो.kregs;
+static int getregs_get(struct task_struct *target,
+			 const struct user_regset *regset,
+			 struct membuf to)
+{
+	const struct pt_regs *regs = target->thread.kregs;
 
-	अगर (target == current)
-		flush_user_winकरोws();
+	if (target == current)
+		flush_user_windows();
 
 	membuf_store(&to, regs->psr);
 	membuf_store(&to, regs->pc);
 	membuf_store(&to, regs->npc);
 	membuf_store(&to, regs->y);
-	वापस membuf_ग_लिखो(&to, regs->u_regs + 1, 15 * माप(u32));
-पूर्ण
+	return membuf_write(&to, regs->u_regs + 1, 15 * sizeof(u32));
+}
 
-अटल पूर्णांक setregs_set(काष्ठा task_काष्ठा *target,
-			 स्थिर काष्ठा user_regset *regset,
-			 अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count,
-			 स्थिर व्योम *kbuf, स्थिर व्योम __user *ubuf)
-अणु
-	काष्ठा pt_regs *regs = target->thपढ़ो.kregs;
+static int setregs_set(struct task_struct *target,
+			 const struct user_regset *regset,
+			 unsigned int pos, unsigned int count,
+			 const void *kbuf, const void __user *ubuf)
+{
+	struct pt_regs *regs = target->thread.kregs;
 	u32 v[4];
-	पूर्णांक ret;
+	int ret;
 
-	अगर (target == current)
-		flush_user_winकरोws();
+	if (target == current)
+		flush_user_windows();
 
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
 				 v,
-				 0, 4 * माप(u32));
-	अगर (ret)
-		वापस ret;
+				 0, 4 * sizeof(u32));
+	if (ret)
+		return ret;
 	regs->psr = (regs->psr & ~(PSR_ICC | PSR_SYSCALL)) |
 		    (v[0] & (PSR_ICC | PSR_SYSCALL));
 	regs->pc = v[1];
 	regs->npc = v[2];
 	regs->y = v[3];
-	वापस user_regset_copyin(&pos, &count, &kbuf, &ubuf,
+	return user_regset_copyin(&pos, &count, &kbuf, &ubuf,
 				 regs->u_regs + 1,
-				 4 * माप(u32) , 19 * माप(u32));
-पूर्ण
+				 4 * sizeof(u32) , 19 * sizeof(u32));
+}
 
-अटल पूर्णांक getfpregs_get(काष्ठा task_काष्ठा *target,
-			स्थिर काष्ठा user_regset *regset,
-			काष्ठा membuf to)
-अणु
-#अगर 0
-	अगर (target == current)
+static int getfpregs_get(struct task_struct *target,
+			const struct user_regset *regset,
+			struct membuf to)
+{
+#if 0
+	if (target == current)
 		save_and_clear_fpu();
-#पूर्ण_अगर
-	membuf_ग_लिखो(&to, &target->thपढ़ो.भग्न_regs, 32 * माप(u32));
-	membuf_ग_लिखो(&to, &target->thपढ़ो.fsr, माप(u32));
-	वापस membuf_zero(&to, 35 * माप(u32));
-पूर्ण
+#endif
+	membuf_write(&to, &target->thread.float_regs, 32 * sizeof(u32));
+	membuf_write(&to, &target->thread.fsr, sizeof(u32));
+	return membuf_zero(&to, 35 * sizeof(u32));
+}
 
-अटल पूर्णांक setfpregs_set(काष्ठा task_काष्ठा *target,
-			स्थिर काष्ठा user_regset *regset,
-			अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count,
-			स्थिर व्योम *kbuf, स्थिर व्योम __user *ubuf)
-अणु
-	अचिन्हित दीर्घ *fpregs = target->thपढ़ो.भग्न_regs;
-	पूर्णांक ret;
+static int setfpregs_set(struct task_struct *target,
+			const struct user_regset *regset,
+			unsigned int pos, unsigned int count,
+			const void *kbuf, const void __user *ubuf)
+{
+	unsigned long *fpregs = target->thread.float_regs;
+	int ret;
 
-#अगर 0
-	अगर (target == current)
+#if 0
+	if (target == current)
 		save_and_clear_fpu();
-#पूर्ण_अगर
+#endif
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
 				 fpregs,
-				 0, 32 * माप(u32));
-	अगर (ret)
-		वापस ret;
-	वापस user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-				 &target->thपढ़ो.fsr,
-				 32 * माप(u32),
-				 33 * माप(u32));
-पूर्ण
+				 0, 32 * sizeof(u32));
+	if (ret)
+		return ret;
+	return user_regset_copyin(&pos, &count, &kbuf, &ubuf,
+				 &target->thread.fsr,
+				 32 * sizeof(u32),
+				 33 * sizeof(u32));
+}
 
-अटल स्थिर काष्ठा user_regset ptrace32_regsets[] = अणु
-	[REGSET_GENERAL] = अणु
-		.n = 19, .size = माप(u32),
+static const struct user_regset ptrace32_regsets[] = {
+	[REGSET_GENERAL] = {
+		.n = 19, .size = sizeof(u32),
 		.regset_get = getregs_get, .set = setregs_set,
-	पूर्ण,
-	[REGSET_FP] = अणु
-		.n = 68, .size = माप(u32),
+	},
+	[REGSET_FP] = {
+		.n = 68, .size = sizeof(u32),
 		.regset_get = getfpregs_get, .set = setfpregs_set,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा user_regset_view ptrace32_view = अणु
+static const struct user_regset_view ptrace32_view = {
 	.regsets = ptrace32_regsets, .n = ARRAY_SIZE(ptrace32_regsets)
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा user_regset_view user_sparc32_view = अणु
+static const struct user_regset_view user_sparc32_view = {
 	.name = "sparc", .e_machine = EM_SPARC,
 	.regsets = sparc32_regsets, .n = ARRAY_SIZE(sparc32_regsets)
-पूर्ण;
+};
 
-स्थिर काष्ठा user_regset_view *task_user_regset_view(काष्ठा task_काष्ठा *task)
-अणु
-	वापस &user_sparc32_view;
-पूर्ण
+const struct user_regset_view *task_user_regset_view(struct task_struct *task)
+{
+	return &user_sparc32_view;
+}
 
-काष्ठा fps अणु
-	अचिन्हित दीर्घ regs[32];
-	अचिन्हित दीर्घ fsr;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित दीर्घ extra;
-	अचिन्हित दीर्घ fpqd;
-	काष्ठा fq अणु
-		अचिन्हित दीर्घ *insnaddr;
-		अचिन्हित दीर्घ insn;
-	पूर्ण fpq[16];
-पूर्ण;
+struct fps {
+	unsigned long regs[32];
+	unsigned long fsr;
+	unsigned long flags;
+	unsigned long extra;
+	unsigned long fpqd;
+	struct fq {
+		unsigned long *insnaddr;
+		unsigned long insn;
+	} fpq[16];
+};
 
-दीर्घ arch_ptrace(काष्ठा task_काष्ठा *child, दीर्घ request,
-		 अचिन्हित दीर्घ addr, अचिन्हित दीर्घ data)
-अणु
-	अचिन्हित दीर्घ addr2 = current->thपढ़ो.kregs->u_regs[UREG_I4];
-	व्योम __user *addr2p;
-	काष्ठा pt_regs __user *pregs;
-	काष्ठा fps __user *fps;
-	पूर्णांक ret;
+long arch_ptrace(struct task_struct *child, long request,
+		 unsigned long addr, unsigned long data)
+{
+	unsigned long addr2 = current->thread.kregs->u_regs[UREG_I4];
+	void __user *addr2p;
+	struct pt_regs __user *pregs;
+	struct fps __user *fps;
+	int ret;
 
-	addr2p = (व्योम __user *) addr2;
-	pregs = (काष्ठा pt_regs __user *) addr;
-	fps = (काष्ठा fps __user *) addr;
+	addr2p = (void __user *) addr2;
+	pregs = (struct pt_regs __user *) addr;
+	fps = (struct fps __user *) addr;
 
-	चयन(request) अणु
-	हाल PTRACE_GETREGS: अणु
+	switch(request) {
+	case PTRACE_GETREGS: {
 		ret = copy_regset_to_user(child, &ptrace32_view,
 					  REGSET_GENERAL, 0,
-					  19 * माप(u32),
+					  19 * sizeof(u32),
 					  pregs);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	हाल PTRACE_SETREGS: अणु
+	case PTRACE_SETREGS: {
 		ret = copy_regset_from_user(child, &ptrace32_view,
 					    REGSET_GENERAL, 0,
-					    19 * माप(u32),
+					    19 * sizeof(u32),
 					    pregs);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	हाल PTRACE_GETFPREGS: अणु
+	case PTRACE_GETFPREGS: {
 		ret = copy_regset_to_user(child, &ptrace32_view,
 					  REGSET_FP, 0,
-					  68 * माप(u32),
+					  68 * sizeof(u32),
 					  fps);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	हाल PTRACE_SETFPREGS: अणु
+	case PTRACE_SETFPREGS: {
 		ret = copy_regset_from_user(child, &ptrace32_view,
 					  REGSET_FP, 0,
-					  33 * माप(u32),
+					  33 * sizeof(u32),
 					  fps);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	हाल PTRACE_READTEXT:
-	हाल PTRACE_READDATA:
-		ret = ptrace_पढ़ोdata(child, addr, addr2p, data);
+	case PTRACE_READTEXT:
+	case PTRACE_READDATA:
+		ret = ptrace_readdata(child, addr, addr2p, data);
 
-		अगर (ret == data)
+		if (ret == data)
 			ret = 0;
-		अन्यथा अगर (ret >= 0)
+		else if (ret >= 0)
 			ret = -EIO;
-		अवरोध;
+		break;
 
-	हाल PTRACE_WRITETEXT:
-	हाल PTRACE_WRITEDATA:
-		ret = ptrace_ग_लिखोdata(child, addr2p, addr, data);
+	case PTRACE_WRITETEXT:
+	case PTRACE_WRITEDATA:
+		ret = ptrace_writedata(child, addr2p, addr, data);
 
-		अगर (ret == data)
+		if (ret == data)
 			ret = 0;
-		अन्यथा अगर (ret >= 0)
+		else if (ret >= 0)
 			ret = -EIO;
-		अवरोध;
+		break;
 
-	शेष:
-		अगर (request == PTRACE_SPARC_DETACH)
+	default:
+		if (request == PTRACE_SPARC_DETACH)
 			request = PTRACE_DETACH;
 		ret = ptrace_request(child, request, addr, data);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-यंत्रlinkage पूर्णांक syscall_trace(काष्ठा pt_regs *regs, पूर्णांक syscall_निकास_p)
-अणु
-	पूर्णांक ret = 0;
+asmlinkage int syscall_trace(struct pt_regs *regs, int syscall_exit_p)
+{
+	int ret = 0;
 
-	अगर (test_thपढ़ो_flag(TIF_SYSCALL_TRACE)) अणु
-		अगर (syscall_निकास_p)
-			tracehook_report_syscall_निकास(regs, 0);
-		अन्यथा
+	if (test_thread_flag(TIF_SYSCALL_TRACE)) {
+		if (syscall_exit_p)
+			tracehook_report_syscall_exit(regs, 0);
+		else
 			ret = tracehook_report_syscall_entry(regs);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

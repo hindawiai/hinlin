@@ -1,112 +1,111 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित _UAPI_LINUX_SHM_H_
-#घोषणा _UAPI_LINUX_SHM_H_
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef _UAPI_LINUX_SHM_H_
+#define _UAPI_LINUX_SHM_H_
 
-#समावेश <linux/ipc.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <यंत्र-generic/hugetlb_encode.h>
-#अगर_अघोषित __KERNEL__
-#समावेश <unistd.h>
-#पूर्ण_अगर
+#include <linux/ipc.h>
+#include <linux/errno.h>
+#include <asm-generic/hugetlb_encode.h>
+#ifndef __KERNEL__
+#include <unistd.h>
+#endif
 
 /*
- * SHMMNI, SHMMAX and SHMALL are शेष upper limits which can be
- * modअगरied by sysctl. The SHMMAX and SHMALL values have been chosen to
+ * SHMMNI, SHMMAX and SHMALL are default upper limits which can be
+ * modified by sysctl. The SHMMAX and SHMALL values have been chosen to
  * be as large possible without facilitating scenarios where userspace
- * causes overflows when adjusting the limits via operations of the क्रमm
- * "retrieve current limit; add X; update limit". It is thereक्रमe not
+ * causes overflows when adjusting the limits via operations of the form
+ * "retrieve current limit; add X; update limit". It is therefore not
  * advised to make SHMMAX and SHMALL any larger. These limits are
- * suitable क्रम both 32 and 64-bit प्रणालीs.
+ * suitable for both 32 and 64-bit systems.
  */
-#घोषणा SHMMIN 1			 /* min shared seg size (bytes) */
-#घोषणा SHMMNI 4096			 /* max num of segs प्रणाली wide */
-#घोषणा SHMMAX (अच_दीर्घ_उच्च - (1UL << 24)) /* max shared seg size (bytes) */
-#घोषणा SHMALL (अच_दीर्घ_उच्च - (1UL << 24)) /* max shm प्रणाली wide (pages) */
-#घोषणा SHMSEG SHMMNI			 /* max shared segs per process */
+#define SHMMIN 1			 /* min shared seg size (bytes) */
+#define SHMMNI 4096			 /* max num of segs system wide */
+#define SHMMAX (ULONG_MAX - (1UL << 24)) /* max shared seg size (bytes) */
+#define SHMALL (ULONG_MAX - (1UL << 24)) /* max shm system wide (pages) */
+#define SHMSEG SHMMNI			 /* max shared segs per process */
 
-/* Obsolete, used only क्रम backwards compatibility and libc5 compiles */
-काष्ठा shmid_ds अणु
-	काष्ठा ipc_perm		shm_perm;	/* operation perms */
-	पूर्णांक			shm_segsz;	/* size of segment (bytes) */
-	__kernel_old_समय_प्रकार	shm_aसमय;	/* last attach समय */
-	__kernel_old_समय_प्रकार	shm_dसमय;	/* last detach समय */
-	__kernel_old_समय_प्रकार	shm_स_समय;	/* last change समय */
+/* Obsolete, used only for backwards compatibility and libc5 compiles */
+struct shmid_ds {
+	struct ipc_perm		shm_perm;	/* operation perms */
+	int			shm_segsz;	/* size of segment (bytes) */
+	__kernel_old_time_t	shm_atime;	/* last attach time */
+	__kernel_old_time_t	shm_dtime;	/* last detach time */
+	__kernel_old_time_t	shm_ctime;	/* last change time */
 	__kernel_ipc_pid_t	shm_cpid;	/* pid of creator */
-	__kernel_ipc_pid_t	shm_lpid;	/* pid of last चालक */
-	अचिन्हित लघु		shm_nattch;	/* no. of current attaches */
-	अचिन्हित लघु 		shm_unused;	/* compatibility */
-	व्योम 			*shm_unused2;	/* ditto - used by DIPC */
-	व्योम			*shm_unused3;	/* unused */
-पूर्ण;
+	__kernel_ipc_pid_t	shm_lpid;	/* pid of last operator */
+	unsigned short		shm_nattch;	/* no. of current attaches */
+	unsigned short 		shm_unused;	/* compatibility */
+	void 			*shm_unused2;	/* ditto - used by DIPC */
+	void			*shm_unused3;	/* unused */
+};
 
 /* Include the definition of shmid64_ds and shminfo64 */
-#समावेश <यंत्र/shmbuf.h>
+#include <asm/shmbuf.h>
 
 /*
  * shmget() shmflg values.
  */
-/* The bottom nine bits are the same as खोलो(2) mode flags */
-#घोषणा SHM_R		0400	/* or S_IRUGO from <linux/स्थिति.स> */
-#घोषणा SHM_W		0200	/* or S_IWUGO from <linux/स्थिति.स> */
+/* The bottom nine bits are the same as open(2) mode flags */
+#define SHM_R		0400	/* or S_IRUGO from <linux/stat.h> */
+#define SHM_W		0200	/* or S_IWUGO from <linux/stat.h> */
 /* Bits 9 & 10 are IPC_CREAT and IPC_EXCL */
-#घोषणा SHM_HUGETLB	04000	/* segment will use huge TLB pages */
-#घोषणा SHM_NORESERVE	010000	/* करोn't check क्रम reservations */
+#define SHM_HUGETLB	04000	/* segment will use huge TLB pages */
+#define SHM_NORESERVE	010000	/* don't check for reservations */
 
 /*
- * Huge page size encoding when SHM_HUGETLB is specअगरied, and a huge page
- * size other than the शेष is desired.  See hugetlb_encode.h
+ * Huge page size encoding when SHM_HUGETLB is specified, and a huge page
+ * size other than the default is desired.  See hugetlb_encode.h
  */
-#घोषणा SHM_HUGE_SHIFT	HUGETLB_FLAG_ENCODE_SHIFT
-#घोषणा SHM_HUGE_MASK	HUGETLB_FLAG_ENCODE_MASK
+#define SHM_HUGE_SHIFT	HUGETLB_FLAG_ENCODE_SHIFT
+#define SHM_HUGE_MASK	HUGETLB_FLAG_ENCODE_MASK
 
-#घोषणा SHM_HUGE_64KB	HUGETLB_FLAG_ENCODE_64KB
-#घोषणा SHM_HUGE_512KB	HUGETLB_FLAG_ENCODE_512KB
-#घोषणा SHM_HUGE_1MB	HUGETLB_FLAG_ENCODE_1MB
-#घोषणा SHM_HUGE_2MB	HUGETLB_FLAG_ENCODE_2MB
-#घोषणा SHM_HUGE_8MB	HUGETLB_FLAG_ENCODE_8MB
-#घोषणा SHM_HUGE_16MB	HUGETLB_FLAG_ENCODE_16MB
-#घोषणा SHM_HUGE_32MB	HUGETLB_FLAG_ENCODE_32MB
-#घोषणा SHM_HUGE_256MB	HUGETLB_FLAG_ENCODE_256MB
-#घोषणा SHM_HUGE_512MB	HUGETLB_FLAG_ENCODE_512MB
-#घोषणा SHM_HUGE_1GB	HUGETLB_FLAG_ENCODE_1GB
-#घोषणा SHM_HUGE_2GB	HUGETLB_FLAG_ENCODE_2GB
-#घोषणा SHM_HUGE_16GB	HUGETLB_FLAG_ENCODE_16GB
+#define SHM_HUGE_64KB	HUGETLB_FLAG_ENCODE_64KB
+#define SHM_HUGE_512KB	HUGETLB_FLAG_ENCODE_512KB
+#define SHM_HUGE_1MB	HUGETLB_FLAG_ENCODE_1MB
+#define SHM_HUGE_2MB	HUGETLB_FLAG_ENCODE_2MB
+#define SHM_HUGE_8MB	HUGETLB_FLAG_ENCODE_8MB
+#define SHM_HUGE_16MB	HUGETLB_FLAG_ENCODE_16MB
+#define SHM_HUGE_32MB	HUGETLB_FLAG_ENCODE_32MB
+#define SHM_HUGE_256MB	HUGETLB_FLAG_ENCODE_256MB
+#define SHM_HUGE_512MB	HUGETLB_FLAG_ENCODE_512MB
+#define SHM_HUGE_1GB	HUGETLB_FLAG_ENCODE_1GB
+#define SHM_HUGE_2GB	HUGETLB_FLAG_ENCODE_2GB
+#define SHM_HUGE_16GB	HUGETLB_FLAG_ENCODE_16GB
 
 /*
  * shmat() shmflg values
  */
-#घोषणा	SHM_RDONLY	010000	/* पढ़ो-only access */
-#घोषणा	SHM_RND		020000	/* round attach address to SHMLBA boundary */
-#घोषणा	SHM_REMAP	040000	/* take-over region on attach */
-#घोषणा	SHM_EXEC	0100000	/* execution access */
+#define	SHM_RDONLY	010000	/* read-only access */
+#define	SHM_RND		020000	/* round attach address to SHMLBA boundary */
+#define	SHM_REMAP	040000	/* take-over region on attach */
+#define	SHM_EXEC	0100000	/* execution access */
 
 /* super user shmctl commands */
-#घोषणा SHM_LOCK 	11
-#घोषणा SHM_UNLOCK 	12
+#define SHM_LOCK 	11
+#define SHM_UNLOCK 	12
 
 /* ipcs ctl commands */
-#घोषणा SHM_STAT	13
-#घोषणा SHM_INFO	14
-#घोषणा SHM_STAT_ANY    15
+#define SHM_STAT	13
+#define SHM_INFO	14
+#define SHM_STAT_ANY    15
 
-/* Obsolete, used only क्रम backwards compatibility */
-काष्ठा	shminfo अणु
-	पूर्णांक shmmax;
-	पूर्णांक shmmin;
-	पूर्णांक shmmni;
-	पूर्णांक shmseg;
-	पूर्णांक shmall;
-पूर्ण;
+/* Obsolete, used only for backwards compatibility */
+struct	shminfo {
+	int shmmax;
+	int shmmin;
+	int shmmni;
+	int shmseg;
+	int shmall;
+};
 
-काष्ठा shm_info अणु
-	पूर्णांक used_ids;
-	__kernel_uदीर्घ_t shm_tot;	/* total allocated shm */
-	__kernel_uदीर्घ_t shm_rss;	/* total resident shm */
-	__kernel_uदीर्घ_t shm_swp;	/* total swapped shm */
-	__kernel_uदीर्घ_t swap_attempts;
-	__kernel_uदीर्घ_t swap_successes;
-पूर्ण;
+struct shm_info {
+	int used_ids;
+	__kernel_ulong_t shm_tot;	/* total allocated shm */
+	__kernel_ulong_t shm_rss;	/* total resident shm */
+	__kernel_ulong_t shm_swp;	/* total swapped shm */
+	__kernel_ulong_t swap_attempts;
+	__kernel_ulong_t swap_successes;
+};
 
 
-#पूर्ण_अगर /* _UAPI_LINUX_SHM_H_ */
+#endif /* _UAPI_LINUX_SHM_H_ */

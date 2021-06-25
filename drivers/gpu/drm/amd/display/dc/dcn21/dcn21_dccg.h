@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,15 +23,15 @@
  *
  */
 
-#अगर_अघोषित __DCN21_DCCG_H__
-#घोषणा __DCN21_DCCG_H__
+#ifndef __DCN21_DCCG_H__
+#define __DCN21_DCCG_H__
 
-काष्ठा dccg *dccg21_create(
-	काष्ठा dc_context *ctx,
-	स्थिर काष्ठा dccg_रेजिस्टरs *regs,
-	स्थिर काष्ठा dccg_shअगरt *dccg_shअगरt,
-	स्थिर काष्ठा dccg_mask *dccg_mask);
+struct dccg *dccg21_create(
+	struct dc_context *ctx,
+	const struct dccg_registers *regs,
+	const struct dccg_shift *dccg_shift,
+	const struct dccg_mask *dccg_mask);
 
-व्योम dccg21_update_dpp_dto(काष्ठा dccg *dccg, पूर्णांक dpp_inst, पूर्णांक req_dppclk);
+void dccg21_update_dpp_dto(struct dccg *dccg, int dpp_inst, int req_dppclk);
 
-#पूर्ण_अगर /* __DCN21_DCCG_H__ */
+#endif /* __DCN21_DCCG_H__ */

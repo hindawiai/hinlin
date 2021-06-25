@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: BSD-3-Clause */
+/* SPDX-License-Identifier: BSD-3-Clause */
 /*
  * Remote processor messaging
  *
@@ -8,48 +7,48 @@
  * All rights reserved.
  */
 
-#अगर_अघोषित _OMAP_RPMSG_H
-#घोषणा _OMAP_RPMSG_H
+#ifndef _OMAP_RPMSG_H
+#define _OMAP_RPMSG_H
 
 /*
- * क्रमागत - Predefined Mailbox Messages
+ * enum - Predefined Mailbox Messages
  *
- * @RP_MBOX_READY: inक्रमms the M3's that we're up and running. this is
+ * @RP_MBOX_READY: informs the M3's that we're up and running. this is
  * part of the init sequence sent that the M3 expects to see immediately
  * after it is booted.
  *
- * @RP_MBOX_PENDING_MSG: inक्रमms the receiver that there is an inbound
- * message रुकोing in its own receive-side vring. please note that currently
+ * @RP_MBOX_PENDING_MSG: informs the receiver that there is an inbound
+ * message waiting in its own receive-side vring. please note that currently
  * this message is optional: alternatively, one can explicitly send the index
  * of the triggered virtqueue itself. the preferred approach will be decided
- * as we progress and experiment with those two dअगरferent approaches.
+ * as we progress and experiment with those two different approaches.
  *
- * @RP_MBOX_CRASH: this message is sent अगर BIOS crashes
+ * @RP_MBOX_CRASH: this message is sent if BIOS crashes
  *
  * @RP_MBOX_ECHO_REQUEST: a mailbox-level "ping" message.
  *
  * @RP_MBOX_ECHO_REPLY: a mailbox-level reply to a "ping"
  *
- * @RP_MBOX_ABORT_REQUEST: a "please crash" request, used क्रम testing the
+ * @RP_MBOX_ABORT_REQUEST: a "please crash" request, used for testing the
  * recovery mechanism (to some extent).
  *
- * @RP_MBOX_SUSPEND_AUTO: स्वतः suspend request क्रम the remote processor
+ * @RP_MBOX_SUSPEND_AUTO: auto suspend request for the remote processor
  *
- * @RP_MBOX_SUSPEND_SYSTEM: प्रणाली suspend request क्रम the remote processor
+ * @RP_MBOX_SUSPEND_SYSTEM: system suspend request for the remote processor
  *
- * @RP_MBOX_SUSPEND_ACK: successful response from remote processor क्रम a
+ * @RP_MBOX_SUSPEND_ACK: successful response from remote processor for a
  * suspend request
  *
  * @RP_MBOX_SUSPEND_CANCEL: a cancel suspend response from a remote processor
  * on a suspend request
  *
- * Introduce new message definitions अगर any here.
+ * Introduce new message definitions if any here.
  *
  * @RP_MBOX_END_MSG: Indicates end of known/defined messages from remote core
  * This should be the last definition.
  *
  */
-क्रमागत omap_rp_mbox_messages अणु
+enum omap_rp_mbox_messages {
 	RP_MBOX_READY		= 0xFFFFFF00,
 	RP_MBOX_PENDING_MSG	= 0xFFFFFF01,
 	RP_MBOX_CRASH		= 0xFFFFFF02,
@@ -61,6 +60,6 @@
 	RP_MBOX_SUSPEND_ACK	= 0xFFFFFF12,
 	RP_MBOX_SUSPEND_CANCEL	= 0xFFFFFF13,
 	RP_MBOX_END_MSG		= 0xFFFFFF14,
-पूर्ण;
+};
 
-#पूर्ण_अगर /* _OMAP_RPMSG_H */
+#endif /* _OMAP_RPMSG_H */

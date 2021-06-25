@@ -1,31 +1,30 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2021 Facebook */
 
-#समावेश <test_progs.h>
-#समावेश <sys/syscall.h>
-#समावेश "linked_vars.skel.h"
+#include <test_progs.h>
+#include <sys/syscall.h>
+#include "linked_vars.skel.h"
 
-व्योम test_linked_vars(व्योम)
-अणु
-	पूर्णांक err;
-	काष्ठा linked_vars *skel;
+void test_linked_vars(void)
+{
+	int err;
+	struct linked_vars *skel;
 
-	skel = linked_vars__खोलो();
-	अगर (!ASSERT_OK_PTR(skel, "skel_open"))
-		वापस;
+	skel = linked_vars__open();
+	if (!ASSERT_OK_PTR(skel, "skel_open"))
+		return;
 
 	skel->bss->input_bss1 = 1000;
 	skel->bss->input_bss2 = 2000;
 	skel->bss->input_bss_weak = 3000;
 
 	err = linked_vars__load(skel);
-	अगर (!ASSERT_OK(err, "skel_load"))
-		जाओ cleanup;
+	if (!ASSERT_OK(err, "skel_load"))
+		goto cleanup;
 
 	err = linked_vars__attach(skel);
-	अगर (!ASSERT_OK(err, "skel_attach"))
-		जाओ cleanup;
+	if (!ASSERT_OK(err, "skel_attach"))
+		goto cleanup;
 
 	/* trigger */
 	syscall(SYS_getpgid);
@@ -41,4 +40,4 @@
 
 cleanup:
 	linked_vars__destroy(skel);
-पूर्ण
+}

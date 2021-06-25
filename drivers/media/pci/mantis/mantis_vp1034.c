@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
 	Mantis VP-1034 driver
 
@@ -7,94 +6,94 @@
 
 */
 
-#समावेश <linux/संकेत.स>
-#समावेश <linux/sched.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <यंत्र/पन.स>
+#include <linux/signal.h>
+#include <linux/sched.h>
+#include <linux/interrupt.h>
+#include <asm/io.h>
 
-#समावेश <media/dmxdev.h>
-#समावेश <media/dvbdev.h>
-#समावेश <media/dvb_demux.h>
-#समावेश <media/dvb_frontend.h>
-#समावेश <media/dvb_net.h>
+#include <media/dmxdev.h>
+#include <media/dvbdev.h>
+#include <media/dvb_demux.h>
+#include <media/dvb_frontend.h>
+#include <media/dvb_net.h>
 
-#समावेश "mb86a16.h"
-#समावेश "mantis_common.h"
-#समावेश "mantis_ioc.h"
-#समावेश "mantis_dvb.h"
-#समावेश "mantis_vp1034.h"
-#समावेश "mantis_reg.h"
+#include "mb86a16.h"
+#include "mantis_common.h"
+#include "mantis_ioc.h"
+#include "mantis_dvb.h"
+#include "mantis_vp1034.h"
+#include "mantis_reg.h"
 
-अटल स्थिर काष्ठा mb86a16_config vp1034_mb86a16_config = अणु
+static const struct mb86a16_config vp1034_mb86a16_config = {
 	.demod_address	= 0x08,
 	.set_voltage	= vp1034_set_voltage,
-पूर्ण;
+};
 
-#घोषणा MANTIS_MODEL_NAME	"VP-1034"
-#घोषणा MANTIS_DEV_TYPE		"DVB-S/DSS"
+#define MANTIS_MODEL_NAME	"VP-1034"
+#define MANTIS_DEV_TYPE		"DVB-S/DSS"
 
-पूर्णांक vp1034_set_voltage(काष्ठा dvb_frontend *fe, क्रमागत fe_sec_voltage voltage)
-अणु
-	काष्ठा mantis_pci *mantis = fe->dvb->priv;
+int vp1034_set_voltage(struct dvb_frontend *fe, enum fe_sec_voltage voltage)
+{
+	struct mantis_pci *mantis = fe->dvb->priv;
 
-	चयन (voltage) अणु
-	हाल SEC_VOLTAGE_13:
-		dprपूर्णांकk(MANTIS_ERROR, 1, "Polarization=[13V]");
+	switch (voltage) {
+	case SEC_VOLTAGE_13:
+		dprintk(MANTIS_ERROR, 1, "Polarization=[13V]");
 		mantis_gpio_set_bits(mantis, 13, 1);
 		mantis_gpio_set_bits(mantis, 14, 0);
-		अवरोध;
-	हाल SEC_VOLTAGE_18:
-		dprपूर्णांकk(MANTIS_ERROR, 1, "Polarization=[18V]");
+		break;
+	case SEC_VOLTAGE_18:
+		dprintk(MANTIS_ERROR, 1, "Polarization=[18V]");
 		mantis_gpio_set_bits(mantis, 13, 1);
 		mantis_gpio_set_bits(mantis, 14, 1);
-		अवरोध;
-	हाल SEC_VOLTAGE_OFF:
-		dprपूर्णांकk(MANTIS_ERROR, 1, "Frontend (dummy) POWERDOWN");
-		अवरोध;
-	शेष:
-		dprपूर्णांकk(MANTIS_ERROR, 1, "Invalid = (%d)", (u32) voltage);
-		वापस -EINVAL;
-	पूर्ण
-	mmग_लिखो(0x00, MANTIS_GPIF_DOUT);
+		break;
+	case SEC_VOLTAGE_OFF:
+		dprintk(MANTIS_ERROR, 1, "Frontend (dummy) POWERDOWN");
+		break;
+	default:
+		dprintk(MANTIS_ERROR, 1, "Invalid = (%d)", (u32) voltage);
+		return -EINVAL;
+	}
+	mmwrite(0x00, MANTIS_GPIF_DOUT);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vp1034_frontend_init(काष्ठा mantis_pci *mantis, काष्ठा dvb_frontend *fe)
-अणु
-	काष्ठा i2c_adapter *adapter	= &mantis->adapter;
+static int vp1034_frontend_init(struct mantis_pci *mantis, struct dvb_frontend *fe)
+{
+	struct i2c_adapter *adapter	= &mantis->adapter;
 
-	पूर्णांक err = 0;
+	int err = 0;
 
-	err = mantis_frontend_घातer(mantis, POWER_ON);
-	अगर (err == 0) अणु
+	err = mantis_frontend_power(mantis, POWER_ON);
+	if (err == 0) {
 		mantis_frontend_soft_reset(mantis);
 		msleep(250);
 
-		dprपूर्णांकk(MANTIS_ERROR, 1, "Probing for MB86A16 (DVB-S/DSS)");
+		dprintk(MANTIS_ERROR, 1, "Probing for MB86A16 (DVB-S/DSS)");
 		fe = dvb_attach(mb86a16_attach, &vp1034_mb86a16_config, adapter);
-		अगर (fe) अणु
-			dprपूर्णांकk(MANTIS_ERROR, 1,
+		if (fe) {
+			dprintk(MANTIS_ERROR, 1,
 			"found MB86A16 DVB-S/DSS frontend @0x%02x",
 			vp1034_mb86a16_config.demod_address);
 
-		पूर्ण अन्यथा अणु
-			वापस -1;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		dprपूर्णांकk(MANTIS_ERROR, 1, "Frontend on <%s> POWER ON failed! <%d>",
+		} else {
+			return -1;
+		}
+	} else {
+		dprintk(MANTIS_ERROR, 1, "Frontend on <%s> POWER ON failed! <%d>",
 			adapter->name,
 			err);
 
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 	mantis->fe = fe;
-	dprपूर्णांकk(MANTIS_ERROR, 1, "Done!");
+	dprintk(MANTIS_ERROR, 1, "Done!");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा mantis_hwconfig vp1034_config = अणु
+struct mantis_hwconfig vp1034_config = {
 	.model_name	= MANTIS_MODEL_NAME,
 	.dev_type	= MANTIS_DEV_TYPE,
 	.ts_size	= MANTIS_TS_204,
@@ -104,6 +103,6 @@
 	.bytes		= 0,
 
 	.frontend_init	= vp1034_frontend_init,
-	.घातer		= GPIF_A12,
+	.power		= GPIF_A12,
 	.reset		= GPIF_A13,
-पूर्ण;
+};

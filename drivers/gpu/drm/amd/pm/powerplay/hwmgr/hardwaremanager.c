@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,218 +20,218 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#समावेश "pp_debug.h"
-#समावेश <linux/त्रुटिसं.स>
-#समावेश "hwmgr.h"
-#समावेश "hardwaremanager.h"
-#समावेश "power_state.h"
+#include "pp_debug.h"
+#include <linux/errno.h>
+#include "hwmgr.h"
+#include "hardwaremanager.h"
+#include "power_state.h"
 
 
-#घोषणा TEMP_RANGE_MIN (0)
-#घोषणा TEMP_RANGE_MAX (80 * 1000)
+#define TEMP_RANGE_MIN (0)
+#define TEMP_RANGE_MAX (80 * 1000)
 
-#घोषणा PHM_FUNC_CHECK(hw) \
-	करो अणु							\
-		अगर ((hw) == शून्य || (hw)->hwmgr_func == शून्य)	\
-			वापस -EINVAL;				\
-	पूर्ण जबतक (0)
+#define PHM_FUNC_CHECK(hw) \
+	do {							\
+		if ((hw) == NULL || (hw)->hwmgr_func == NULL)	\
+			return -EINVAL;				\
+	} while (0)
 
-पूर्णांक phm_setup_asic(काष्ठा pp_hwmgr *hwmgr)
-अणु
+int phm_setup_asic(struct pp_hwmgr *hwmgr)
+{
 	PHM_FUNC_CHECK(hwmgr);
 
-	अगर (शून्य != hwmgr->hwmgr_func->asic_setup)
-		वापस hwmgr->hwmgr_func->asic_setup(hwmgr);
+	if (NULL != hwmgr->hwmgr_func->asic_setup)
+		return hwmgr->hwmgr_func->asic_setup(hwmgr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक phm_घातer_करोwn_asic(काष्ठा pp_hwmgr *hwmgr)
-अणु
+int phm_power_down_asic(struct pp_hwmgr *hwmgr)
+{
 	PHM_FUNC_CHECK(hwmgr);
 
-	अगर (शून्य != hwmgr->hwmgr_func->घातer_off_asic)
-		वापस hwmgr->hwmgr_func->घातer_off_asic(hwmgr);
+	if (NULL != hwmgr->hwmgr_func->power_off_asic)
+		return hwmgr->hwmgr_func->power_off_asic(hwmgr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक phm_set_घातer_state(काष्ठा pp_hwmgr *hwmgr,
-		    स्थिर काष्ठा pp_hw_घातer_state *pcurrent_state,
-		    स्थिर काष्ठा pp_hw_घातer_state *pnew_घातer_state)
-अणु
-	काष्ठा phm_set_घातer_state_input states;
+int phm_set_power_state(struct pp_hwmgr *hwmgr,
+		    const struct pp_hw_power_state *pcurrent_state,
+		    const struct pp_hw_power_state *pnew_power_state)
+{
+	struct phm_set_power_state_input states;
 
 	PHM_FUNC_CHECK(hwmgr);
 
 	states.pcurrent_state = pcurrent_state;
-	states.pnew_state = pnew_घातer_state;
+	states.pnew_state = pnew_power_state;
 
-	अगर (शून्य != hwmgr->hwmgr_func->घातer_state_set)
-		वापस hwmgr->hwmgr_func->घातer_state_set(hwmgr, &states);
+	if (NULL != hwmgr->hwmgr_func->power_state_set)
+		return hwmgr->hwmgr_func->power_state_set(hwmgr, &states);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक phm_enable_dynamic_state_management(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	काष्ठा amdgpu_device *adev = शून्य;
-	पूर्णांक ret = -EINVAL;
+int phm_enable_dynamic_state_management(struct pp_hwmgr *hwmgr)
+{
+	struct amdgpu_device *adev = NULL;
+	int ret = -EINVAL;
 	PHM_FUNC_CHECK(hwmgr);
 	adev = hwmgr->adev;
 
-	/* Skip क्रम suspend/resume हाल */
-	अगर (!hwmgr->pp_one_vf && smum_is_dpm_running(hwmgr)
-	    && !amdgpu_passthrough(adev) && adev->in_suspend) अणु
+	/* Skip for suspend/resume case */
+	if (!hwmgr->pp_one_vf && smum_is_dpm_running(hwmgr)
+	    && !amdgpu_passthrough(adev) && adev->in_suspend) {
 		pr_info("dpm has been enabled\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (शून्य != hwmgr->hwmgr_func->dynamic_state_management_enable)
+	if (NULL != hwmgr->hwmgr_func->dynamic_state_management_enable)
 		ret = hwmgr->hwmgr_func->dynamic_state_management_enable(hwmgr);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक phm_disable_dynamic_state_management(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	पूर्णांक ret = -EINVAL;
+int phm_disable_dynamic_state_management(struct pp_hwmgr *hwmgr)
+{
+	int ret = -EINVAL;
 
 	PHM_FUNC_CHECK(hwmgr);
 
-	अगर (!hwmgr->not_vf)
-		वापस 0;
+	if (!hwmgr->not_vf)
+		return 0;
 
-	अगर (!smum_is_dpm_running(hwmgr)) अणु
+	if (!smum_is_dpm_running(hwmgr)) {
 		pr_info("dpm has been disabled\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (hwmgr->hwmgr_func->dynamic_state_management_disable)
+	if (hwmgr->hwmgr_func->dynamic_state_management_disable)
 		ret = hwmgr->hwmgr_func->dynamic_state_management_disable(hwmgr);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक phm_क्रमce_dpm_levels(काष्ठा pp_hwmgr *hwmgr, क्रमागत amd_dpm_क्रमced_level level)
-अणु
-	पूर्णांक ret = 0;
+int phm_force_dpm_levels(struct pp_hwmgr *hwmgr, enum amd_dpm_forced_level level)
+{
+	int ret = 0;
 
 	PHM_FUNC_CHECK(hwmgr);
 
-	अगर (hwmgr->hwmgr_func->क्रमce_dpm_level != शून्य)
-		ret = hwmgr->hwmgr_func->क्रमce_dpm_level(hwmgr, level);
+	if (hwmgr->hwmgr_func->force_dpm_level != NULL)
+		ret = hwmgr->hwmgr_func->force_dpm_level(hwmgr, level);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक phm_apply_state_adjust_rules(काष्ठा pp_hwmgr *hwmgr,
-				   काष्ठा pp_घातer_state *adjusted_ps,
-			     स्थिर काष्ठा pp_घातer_state *current_ps)
-अणु
+int phm_apply_state_adjust_rules(struct pp_hwmgr *hwmgr,
+				   struct pp_power_state *adjusted_ps,
+			     const struct pp_power_state *current_ps)
+{
 	PHM_FUNC_CHECK(hwmgr);
 
-	अगर (hwmgr->hwmgr_func->apply_state_adjust_rules != शून्य)
-		वापस hwmgr->hwmgr_func->apply_state_adjust_rules(
+	if (hwmgr->hwmgr_func->apply_state_adjust_rules != NULL)
+		return hwmgr->hwmgr_func->apply_state_adjust_rules(
 									hwmgr,
 								 adjusted_ps,
 								 current_ps);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक phm_apply_घड़ी_adjust_rules(काष्ठा pp_hwmgr *hwmgr)
-अणु
+int phm_apply_clock_adjust_rules(struct pp_hwmgr *hwmgr)
+{
 	PHM_FUNC_CHECK(hwmgr);
 
-	अगर (hwmgr->hwmgr_func->apply_घड़ीs_adjust_rules != शून्य)
-		वापस hwmgr->hwmgr_func->apply_घड़ीs_adjust_rules(hwmgr);
-	वापस 0;
-पूर्ण
+	if (hwmgr->hwmgr_func->apply_clocks_adjust_rules != NULL)
+		return hwmgr->hwmgr_func->apply_clocks_adjust_rules(hwmgr);
+	return 0;
+}
 
-पूर्णांक phm_घातerकरोwn_uvd(काष्ठा pp_hwmgr *hwmgr)
-अणु
+int phm_powerdown_uvd(struct pp_hwmgr *hwmgr)
+{
 	PHM_FUNC_CHECK(hwmgr);
 
-	अगर (hwmgr->hwmgr_func->घातerकरोwn_uvd != शून्य)
-		वापस hwmgr->hwmgr_func->घातerकरोwn_uvd(hwmgr);
-	वापस 0;
-पूर्ण
+	if (hwmgr->hwmgr_func->powerdown_uvd != NULL)
+		return hwmgr->hwmgr_func->powerdown_uvd(hwmgr);
+	return 0;
+}
 
 
-पूर्णांक phm_disable_घड़ी_घातer_gatings(काष्ठा pp_hwmgr *hwmgr)
-अणु
+int phm_disable_clock_power_gatings(struct pp_hwmgr *hwmgr)
+{
 	PHM_FUNC_CHECK(hwmgr);
 
-	अगर (शून्य != hwmgr->hwmgr_func->disable_घड़ी_घातer_gating)
-		वापस hwmgr->hwmgr_func->disable_घड़ी_घातer_gating(hwmgr);
+	if (NULL != hwmgr->hwmgr_func->disable_clock_power_gating)
+		return hwmgr->hwmgr_func->disable_clock_power_gating(hwmgr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक phm_pre_display_configuration_changed(काष्ठा pp_hwmgr *hwmgr)
-अणु
+int phm_pre_display_configuration_changed(struct pp_hwmgr *hwmgr)
+{
 	PHM_FUNC_CHECK(hwmgr);
 
-	अगर (शून्य != hwmgr->hwmgr_func->pre_display_config_changed)
+	if (NULL != hwmgr->hwmgr_func->pre_display_config_changed)
 		hwmgr->hwmgr_func->pre_display_config_changed(hwmgr);
 
-	वापस 0;
+	return 0;
 
-पूर्ण
+}
 
-पूर्णांक phm_display_configuration_changed(काष्ठा pp_hwmgr *hwmgr)
-अणु
+int phm_display_configuration_changed(struct pp_hwmgr *hwmgr)
+{
 	PHM_FUNC_CHECK(hwmgr);
 
-	अगर (शून्य != hwmgr->hwmgr_func->display_config_changed)
+	if (NULL != hwmgr->hwmgr_func->display_config_changed)
 		hwmgr->hwmgr_func->display_config_changed(hwmgr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक phm_notअगरy_smc_display_config_after_ps_adjusपंचांगent(काष्ठा pp_hwmgr *hwmgr)
-अणु
+int phm_notify_smc_display_config_after_ps_adjustment(struct pp_hwmgr *hwmgr)
+{
 	PHM_FUNC_CHECK(hwmgr);
 
-	अगर (शून्य != hwmgr->hwmgr_func->notअगरy_smc_display_config_after_ps_adjusपंचांगent)
-			hwmgr->hwmgr_func->notअगरy_smc_display_config_after_ps_adjusपंचांगent(hwmgr);
+	if (NULL != hwmgr->hwmgr_func->notify_smc_display_config_after_ps_adjustment)
+			hwmgr->hwmgr_func->notify_smc_display_config_after_ps_adjustment(hwmgr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक phm_stop_thermal_controller(काष्ठा pp_hwmgr *hwmgr)
-अणु
+int phm_stop_thermal_controller(struct pp_hwmgr *hwmgr)
+{
 	PHM_FUNC_CHECK(hwmgr);
 
-	अगर (!hwmgr->not_vf)
-		वापस 0;
+	if (!hwmgr->not_vf)
+		return 0;
 
-	अगर (hwmgr->hwmgr_func->stop_thermal_controller == शून्य)
-		वापस -EINVAL;
+	if (hwmgr->hwmgr_func->stop_thermal_controller == NULL)
+		return -EINVAL;
 
-	वापस hwmgr->hwmgr_func->stop_thermal_controller(hwmgr);
-पूर्ण
+	return hwmgr->hwmgr_func->stop_thermal_controller(hwmgr);
+}
 
-पूर्णांक phm_रेजिस्टर_irq_handlers(काष्ठा pp_hwmgr *hwmgr)
-अणु
+int phm_register_irq_handlers(struct pp_hwmgr *hwmgr)
+{
 	PHM_FUNC_CHECK(hwmgr);
 
-	अगर (hwmgr->hwmgr_func->रेजिस्टर_irq_handlers != शून्य)
-		वापस hwmgr->hwmgr_func->रेजिस्टर_irq_handlers(hwmgr);
+	if (hwmgr->hwmgr_func->register_irq_handlers != NULL)
+		return hwmgr->hwmgr_func->register_irq_handlers(hwmgr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * phm_start_thermal_controller - Initializes the thermal controller subप्रणाली.
+ * phm_start_thermal_controller - Initializes the thermal controller subsystem.
  *
- * @hwmgr:   the address of the घातerplay hardware manager.
- * Exception PP_Result_Failed अगर any of the paramters is शून्य, otherwise the वापस value from the dispatcher.
+ * @hwmgr:   the address of the powerplay hardware manager.
+ * Exception PP_Result_Failed if any of the paramters is NULL, otherwise the return value from the dispatcher.
  */
-पूर्णांक phm_start_thermal_controller(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा PP_TemperatureRange range = अणु
+int phm_start_thermal_controller(struct pp_hwmgr *hwmgr)
+{
+	int ret = 0;
+	struct PP_TemperatureRange range = {
 		TEMP_RANGE_MIN,
 		TEMP_RANGE_MAX,
 		TEMP_RANGE_MAX,
@@ -241,19 +240,19 @@
 		TEMP_RANGE_MAX,
 		TEMP_RANGE_MIN,
 		TEMP_RANGE_MAX,
-		TEMP_RANGE_MAXपूर्ण;
-	काष्ठा amdgpu_device *adev = hwmgr->adev;
+		TEMP_RANGE_MAX};
+	struct amdgpu_device *adev = hwmgr->adev;
 
-	अगर (!hwmgr->not_vf)
-		वापस 0;
+	if (!hwmgr->not_vf)
+		return 0;
 
-	अगर (hwmgr->hwmgr_func->get_thermal_temperature_range)
+	if (hwmgr->hwmgr_func->get_thermal_temperature_range)
 		hwmgr->hwmgr_func->get_thermal_temperature_range(
 				hwmgr, &range);
 
-	अगर (phm_cap_enabled(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-			PHM_Platक्रमmCaps_ThermalController)
-			&& hwmgr->hwmgr_func->start_thermal_controller != शून्य)
+	if (phm_cap_enabled(hwmgr->platform_descriptor.platformCaps,
+			PHM_PlatformCaps_ThermalController)
+			&& hwmgr->hwmgr_func->start_thermal_controller != NULL)
 		ret = hwmgr->hwmgr_func->start_thermal_controller(hwmgr, &range);
 
 	adev->pm.dpm.thermal.min_temp = range.min;
@@ -266,253 +265,253 @@
 	adev->pm.dpm.thermal.max_mem_crit_temp = range.mem_crit_max;
 	adev->pm.dpm.thermal.max_mem_emergency_temp = range.mem_emergency_max;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
-bool phm_check_smc_update_required_क्रम_display_configuration(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	अगर (hwmgr == शून्य ||
-	    hwmgr->hwmgr_func == शून्य)
-		वापस false;
+bool phm_check_smc_update_required_for_display_configuration(struct pp_hwmgr *hwmgr)
+{
+	if (hwmgr == NULL ||
+	    hwmgr->hwmgr_func == NULL)
+		return false;
 
-	अगर (hwmgr->pp_one_vf)
-		वापस false;
+	if (hwmgr->pp_one_vf)
+		return false;
 
-	अगर (hwmgr->hwmgr_func->check_smc_update_required_क्रम_display_configuration == शून्य)
-		वापस false;
+	if (hwmgr->hwmgr_func->check_smc_update_required_for_display_configuration == NULL)
+		return false;
 
-	वापस hwmgr->hwmgr_func->check_smc_update_required_क्रम_display_configuration(hwmgr);
-पूर्ण
+	return hwmgr->hwmgr_func->check_smc_update_required_for_display_configuration(hwmgr);
+}
 
 
-पूर्णांक phm_check_states_equal(काष्ठा pp_hwmgr *hwmgr,
-				 स्थिर काष्ठा pp_hw_घातer_state *pstate1,
-				 स्थिर काष्ठा pp_hw_घातer_state *pstate2,
+int phm_check_states_equal(struct pp_hwmgr *hwmgr,
+				 const struct pp_hw_power_state *pstate1,
+				 const struct pp_hw_power_state *pstate2,
 				 bool *equal)
-अणु
+{
 	PHM_FUNC_CHECK(hwmgr);
 
-	अगर (hwmgr->hwmgr_func->check_states_equal == शून्य)
-		वापस -EINVAL;
+	if (hwmgr->hwmgr_func->check_states_equal == NULL)
+		return -EINVAL;
 
-	वापस hwmgr->hwmgr_func->check_states_equal(hwmgr, pstate1, pstate2, equal);
-पूर्ण
+	return hwmgr->hwmgr_func->check_states_equal(hwmgr, pstate1, pstate2, equal);
+}
 
-पूर्णांक phm_store_dal_configuration_data(काष्ठा pp_hwmgr *hwmgr,
-		    स्थिर काष्ठा amd_pp_display_configuration *display_config)
-अणु
-	पूर्णांक index = 0;
-	पूर्णांक number_of_active_display = 0;
+int phm_store_dal_configuration_data(struct pp_hwmgr *hwmgr,
+		    const struct amd_pp_display_configuration *display_config)
+{
+	int index = 0;
+	int number_of_active_display = 0;
 
 	PHM_FUNC_CHECK(hwmgr);
 
-	अगर (display_config == शून्य)
-		वापस -EINVAL;
+	if (display_config == NULL)
+		return -EINVAL;
 
-	अगर (शून्य != hwmgr->hwmgr_func->set_min_deep_sleep_dcefclk)
+	if (NULL != hwmgr->hwmgr_func->set_min_deep_sleep_dcefclk)
 		hwmgr->hwmgr_func->set_min_deep_sleep_dcefclk(hwmgr, display_config->min_dcef_deep_sleep_set_clk);
 
-	क्रम (index = 0; index < display_config->num_path_including_non_display; index++) अणु
-		अगर (display_config->displays[index].controller_id != 0)
+	for (index = 0; index < display_config->num_path_including_non_display; index++) {
+		if (display_config->displays[index].controller_id != 0)
 			number_of_active_display++;
-	पूर्ण
+	}
 
-	अगर (शून्य != hwmgr->hwmgr_func->set_active_display_count)
+	if (NULL != hwmgr->hwmgr_func->set_active_display_count)
 		hwmgr->hwmgr_func->set_active_display_count(hwmgr, number_of_active_display);
 
-	अगर (hwmgr->hwmgr_func->store_cc6_data == शून्य)
-		वापस -EINVAL;
+	if (hwmgr->hwmgr_func->store_cc6_data == NULL)
+		return -EINVAL;
 
 	/* TODO: pass other display configuration in the future */
 
-	अगर (hwmgr->hwmgr_func->store_cc6_data)
+	if (hwmgr->hwmgr_func->store_cc6_data)
 		hwmgr->hwmgr_func->store_cc6_data(hwmgr,
-				display_config->cpu_pstate_separation_समय,
+				display_config->cpu_pstate_separation_time,
 				display_config->cpu_cc6_disable,
 				display_config->cpu_pstate_disable,
-				display_config->nb_pstate_चयन_disable);
+				display_config->nb_pstate_switch_disable);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक phm_get_dal_घातer_level(काष्ठा pp_hwmgr *hwmgr,
-		काष्ठा amd_pp_simple_घड़ी_info *info)
-अणु
+int phm_get_dal_power_level(struct pp_hwmgr *hwmgr,
+		struct amd_pp_simple_clock_info *info)
+{
 	PHM_FUNC_CHECK(hwmgr);
 
-	अगर (info == शून्य || hwmgr->hwmgr_func->get_dal_घातer_level == शून्य)
-		वापस -EINVAL;
-	वापस hwmgr->hwmgr_func->get_dal_घातer_level(hwmgr, info);
-पूर्ण
+	if (info == NULL || hwmgr->hwmgr_func->get_dal_power_level == NULL)
+		return -EINVAL;
+	return hwmgr->hwmgr_func->get_dal_power_level(hwmgr, info);
+}
 
-पूर्णांक phm_set_cpu_घातer_state(काष्ठा pp_hwmgr *hwmgr)
-अणु
+int phm_set_cpu_power_state(struct pp_hwmgr *hwmgr)
+{
 	PHM_FUNC_CHECK(hwmgr);
 
-	अगर (hwmgr->hwmgr_func->set_cpu_घातer_state != शून्य)
-		वापस hwmgr->hwmgr_func->set_cpu_घातer_state(hwmgr);
+	if (hwmgr->hwmgr_func->set_cpu_power_state != NULL)
+		return hwmgr->hwmgr_func->set_cpu_power_state(hwmgr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-पूर्णांक phm_get_perक्रमmance_level(काष्ठा pp_hwmgr *hwmgr, स्थिर काष्ठा pp_hw_घातer_state *state,
-				PHM_Perक्रमmanceLevelDesignation designation, uपूर्णांक32_t index,
-				PHM_Perक्रमmanceLevel *level)
-अणु
+int phm_get_performance_level(struct pp_hwmgr *hwmgr, const struct pp_hw_power_state *state,
+				PHM_PerformanceLevelDesignation designation, uint32_t index,
+				PHM_PerformanceLevel *level)
+{
 	PHM_FUNC_CHECK(hwmgr);
-	अगर (hwmgr->hwmgr_func->get_perक्रमmance_level == शून्य)
-		वापस -EINVAL;
+	if (hwmgr->hwmgr_func->get_performance_level == NULL)
+		return -EINVAL;
 
-	वापस hwmgr->hwmgr_func->get_perक्रमmance_level(hwmgr, state, designation, index, level);
+	return hwmgr->hwmgr_func->get_performance_level(hwmgr, state, designation, index, level);
 
 
-पूर्ण
+}
 
 
 /**
- * phm_get_घड़ी_info
+ * phm_get_clock_info
  *
- * @hwmgr:  the address of the घातerplay hardware manager.
- * @state: the address of the Power State काष्ठाure.
- * @pघड़ी_info: the address of PP_ClockInfo काष्ठाure where the result will be वापसed.
- * @designation: PHM perक्रमmance level designation
- * Exception PP_Result_Failed अगर any of the paramters is शून्य, otherwise the वापस value from the back-end.
+ * @hwmgr:  the address of the powerplay hardware manager.
+ * @state: the address of the Power State structure.
+ * @pclock_info: the address of PP_ClockInfo structure where the result will be returned.
+ * @designation: PHM performance level designation
+ * Exception PP_Result_Failed if any of the paramters is NULL, otherwise the return value from the back-end.
  */
-पूर्णांक phm_get_घड़ी_info(काष्ठा pp_hwmgr *hwmgr, स्थिर काष्ठा pp_hw_घातer_state *state, काष्ठा pp_घड़ी_info *pघड़ी_info,
-			PHM_Perक्रमmanceLevelDesignation designation)
-अणु
-	पूर्णांक result;
-	PHM_Perक्रमmanceLevel perक्रमmance_level = अणु0पूर्ण;
+int phm_get_clock_info(struct pp_hwmgr *hwmgr, const struct pp_hw_power_state *state, struct pp_clock_info *pclock_info,
+			PHM_PerformanceLevelDesignation designation)
+{
+	int result;
+	PHM_PerformanceLevel performance_level = {0};
 
 	PHM_FUNC_CHECK(hwmgr);
 
-	PP_ASSERT_WITH_CODE((शून्य != state), "Invalid Input!", वापस -EINVAL);
-	PP_ASSERT_WITH_CODE((शून्य != pघड़ी_info), "Invalid Input!", वापस -EINVAL);
+	PP_ASSERT_WITH_CODE((NULL != state), "Invalid Input!", return -EINVAL);
+	PP_ASSERT_WITH_CODE((NULL != pclock_info), "Invalid Input!", return -EINVAL);
 
-	result = phm_get_perक्रमmance_level(hwmgr, state, PHM_Perक्रमmanceLevelDesignation_Activity, 0, &perक्रमmance_level);
+	result = phm_get_performance_level(hwmgr, state, PHM_PerformanceLevelDesignation_Activity, 0, &performance_level);
 
-	PP_ASSERT_WITH_CODE((0 == result), "Failed to retrieve minimum clocks.", वापस result);
-
-
-	pघड़ी_info->min_mem_clk = perक्रमmance_level.memory_घड़ी;
-	pघड़ी_info->min_eng_clk = perक्रमmance_level.coreClock;
-	pघड़ी_info->min_bus_bandwidth = perक्रमmance_level.nonLocalMemoryFreq * perक्रमmance_level.nonLocalMemoryWidth;
+	PP_ASSERT_WITH_CODE((0 == result), "Failed to retrieve minimum clocks.", return result);
 
 
-	result = phm_get_perक्रमmance_level(hwmgr, state, designation,
-					(hwmgr->platक्रमm_descriptor.hardwareActivityPerक्रमmanceLevels - 1), &perक्रमmance_level);
+	pclock_info->min_mem_clk = performance_level.memory_clock;
+	pclock_info->min_eng_clk = performance_level.coreClock;
+	pclock_info->min_bus_bandwidth = performance_level.nonLocalMemoryFreq * performance_level.nonLocalMemoryWidth;
 
-	PP_ASSERT_WITH_CODE((0 == result), "Failed to retrieve maximum clocks.", वापस result);
 
-	pघड़ी_info->max_mem_clk = perक्रमmance_level.memory_घड़ी;
-	pघड़ी_info->max_eng_clk = perक्रमmance_level.coreClock;
-	pघड़ी_info->max_bus_bandwidth = perक्रमmance_level.nonLocalMemoryFreq * perक्रमmance_level.nonLocalMemoryWidth;
+	result = phm_get_performance_level(hwmgr, state, designation,
+					(hwmgr->platform_descriptor.hardwareActivityPerformanceLevels - 1), &performance_level);
 
-	वापस 0;
-पूर्ण
+	PP_ASSERT_WITH_CODE((0 == result), "Failed to retrieve maximum clocks.", return result);
 
-पूर्णांक phm_get_current_shallow_sleep_घड़ीs(काष्ठा pp_hwmgr *hwmgr, स्थिर काष्ठा pp_hw_घातer_state *state, काष्ठा pp_घड़ी_info *घड़ी_info)
-अणु
+	pclock_info->max_mem_clk = performance_level.memory_clock;
+	pclock_info->max_eng_clk = performance_level.coreClock;
+	pclock_info->max_bus_bandwidth = performance_level.nonLocalMemoryFreq * performance_level.nonLocalMemoryWidth;
+
+	return 0;
+}
+
+int phm_get_current_shallow_sleep_clocks(struct pp_hwmgr *hwmgr, const struct pp_hw_power_state *state, struct pp_clock_info *clock_info)
+{
 	PHM_FUNC_CHECK(hwmgr);
 
-	अगर (hwmgr->hwmgr_func->get_current_shallow_sleep_घड़ीs == शून्य)
-		वापस -EINVAL;
+	if (hwmgr->hwmgr_func->get_current_shallow_sleep_clocks == NULL)
+		return -EINVAL;
 
-	वापस hwmgr->hwmgr_func->get_current_shallow_sleep_घड़ीs(hwmgr, state, घड़ी_info);
+	return hwmgr->hwmgr_func->get_current_shallow_sleep_clocks(hwmgr, state, clock_info);
 
-पूर्ण
+}
 
-पूर्णांक phm_get_घड़ी_by_type(काष्ठा pp_hwmgr *hwmgr, क्रमागत amd_pp_घड़ी_प्रकारype type, काष्ठा amd_pp_घड़ीs *घड़ीs)
-अणु
+int phm_get_clock_by_type(struct pp_hwmgr *hwmgr, enum amd_pp_clock_type type, struct amd_pp_clocks *clocks)
+{
 	PHM_FUNC_CHECK(hwmgr);
 
-	अगर (hwmgr->hwmgr_func->get_घड़ी_by_type == शून्य)
-		वापस -EINVAL;
+	if (hwmgr->hwmgr_func->get_clock_by_type == NULL)
+		return -EINVAL;
 
-	वापस hwmgr->hwmgr_func->get_घड़ी_by_type(hwmgr, type, घड़ीs);
+	return hwmgr->hwmgr_func->get_clock_by_type(hwmgr, type, clocks);
 
-पूर्ण
+}
 
-पूर्णांक phm_get_घड़ी_by_type_with_latency(काष्ठा pp_hwmgr *hwmgr,
-		क्रमागत amd_pp_घड़ी_प्रकारype type,
-		काष्ठा pp_घड़ी_levels_with_latency *घड़ीs)
-अणु
+int phm_get_clock_by_type_with_latency(struct pp_hwmgr *hwmgr,
+		enum amd_pp_clock_type type,
+		struct pp_clock_levels_with_latency *clocks)
+{
 	PHM_FUNC_CHECK(hwmgr);
 
-	अगर (hwmgr->hwmgr_func->get_घड़ी_by_type_with_latency == शून्य)
-		वापस -EINVAL;
+	if (hwmgr->hwmgr_func->get_clock_by_type_with_latency == NULL)
+		return -EINVAL;
 
-	वापस hwmgr->hwmgr_func->get_घड़ी_by_type_with_latency(hwmgr, type, घड़ीs);
+	return hwmgr->hwmgr_func->get_clock_by_type_with_latency(hwmgr, type, clocks);
 
-पूर्ण
+}
 
-पूर्णांक phm_get_घड़ी_by_type_with_voltage(काष्ठा pp_hwmgr *hwmgr,
-		क्रमागत amd_pp_घड़ी_प्रकारype type,
-		काष्ठा pp_घड़ी_levels_with_voltage *घड़ीs)
-अणु
+int phm_get_clock_by_type_with_voltage(struct pp_hwmgr *hwmgr,
+		enum amd_pp_clock_type type,
+		struct pp_clock_levels_with_voltage *clocks)
+{
 	PHM_FUNC_CHECK(hwmgr);
 
-	अगर (hwmgr->hwmgr_func->get_घड़ी_by_type_with_voltage == शून्य)
-		वापस -EINVAL;
+	if (hwmgr->hwmgr_func->get_clock_by_type_with_voltage == NULL)
+		return -EINVAL;
 
-	वापस hwmgr->hwmgr_func->get_घड़ी_by_type_with_voltage(hwmgr, type, घड़ीs);
+	return hwmgr->hwmgr_func->get_clock_by_type_with_voltage(hwmgr, type, clocks);
 
-पूर्ण
+}
 
-पूर्णांक phm_set_watermarks_क्रम_घड़ीs_ranges(काष्ठा pp_hwmgr *hwmgr,
-					व्योम *घड़ी_ranges)
-अणु
+int phm_set_watermarks_for_clocks_ranges(struct pp_hwmgr *hwmgr,
+					void *clock_ranges)
+{
 	PHM_FUNC_CHECK(hwmgr);
 
-	अगर (!hwmgr->hwmgr_func->set_watermarks_क्रम_घड़ीs_ranges)
-		वापस -EINVAL;
+	if (!hwmgr->hwmgr_func->set_watermarks_for_clocks_ranges)
+		return -EINVAL;
 
-	वापस hwmgr->hwmgr_func->set_watermarks_क्रम_घड़ीs_ranges(hwmgr,
-								घड़ी_ranges);
-पूर्ण
+	return hwmgr->hwmgr_func->set_watermarks_for_clocks_ranges(hwmgr,
+								clock_ranges);
+}
 
-पूर्णांक phm_display_घड़ी_voltage_request(काष्ठा pp_hwmgr *hwmgr,
-		काष्ठा pp_display_घड़ी_request *घड़ी)
-अणु
+int phm_display_clock_voltage_request(struct pp_hwmgr *hwmgr,
+		struct pp_display_clock_request *clock)
+{
 	PHM_FUNC_CHECK(hwmgr);
 
-	अगर (!hwmgr->hwmgr_func->display_घड़ी_voltage_request)
-		वापस -EINVAL;
+	if (!hwmgr->hwmgr_func->display_clock_voltage_request)
+		return -EINVAL;
 
-	वापस hwmgr->hwmgr_func->display_घड़ी_voltage_request(hwmgr, घड़ी);
-पूर्ण
+	return hwmgr->hwmgr_func->display_clock_voltage_request(hwmgr, clock);
+}
 
-पूर्णांक phm_get_max_high_घड़ीs(काष्ठा pp_hwmgr *hwmgr, काष्ठा amd_pp_simple_घड़ी_info *घड़ीs)
-अणु
+int phm_get_max_high_clocks(struct pp_hwmgr *hwmgr, struct amd_pp_simple_clock_info *clocks)
+{
 	PHM_FUNC_CHECK(hwmgr);
 
-	अगर (hwmgr->hwmgr_func->get_max_high_घड़ीs == शून्य)
-		वापस -EINVAL;
+	if (hwmgr->hwmgr_func->get_max_high_clocks == NULL)
+		return -EINVAL;
 
-	वापस hwmgr->hwmgr_func->get_max_high_घड़ीs(hwmgr, घड़ीs);
-पूर्ण
+	return hwmgr->hwmgr_func->get_max_high_clocks(hwmgr, clocks);
+}
 
-पूर्णांक phm_disable_smc_firmware_ctf(काष्ठा pp_hwmgr *hwmgr)
-अणु
+int phm_disable_smc_firmware_ctf(struct pp_hwmgr *hwmgr)
+{
 	PHM_FUNC_CHECK(hwmgr);
 
-	अगर (!hwmgr->not_vf)
-		वापस 0;
+	if (!hwmgr->not_vf)
+		return 0;
 
-	अगर (hwmgr->hwmgr_func->disable_smc_firmware_ctf == शून्य)
-		वापस -EINVAL;
+	if (hwmgr->hwmgr_func->disable_smc_firmware_ctf == NULL)
+		return -EINVAL;
 
-	वापस hwmgr->hwmgr_func->disable_smc_firmware_ctf(hwmgr);
-पूर्ण
+	return hwmgr->hwmgr_func->disable_smc_firmware_ctf(hwmgr);
+}
 
-पूर्णांक phm_set_active_display_count(काष्ठा pp_hwmgr *hwmgr, uपूर्णांक32_t count)
-अणु
+int phm_set_active_display_count(struct pp_hwmgr *hwmgr, uint32_t count)
+{
 	PHM_FUNC_CHECK(hwmgr);
 
-	अगर (!hwmgr->hwmgr_func->set_active_display_count)
-		वापस -EINVAL;
+	if (!hwmgr->hwmgr_func->set_active_display_count)
+		return -EINVAL;
 
-	वापस hwmgr->hwmgr_func->set_active_display_count(hwmgr, count);
-पूर्ण
+	return hwmgr->hwmgr_func->set_active_display_count(hwmgr, count);
+}

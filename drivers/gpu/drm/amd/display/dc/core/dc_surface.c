@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,97 +23,97 @@
  *
  */
 
-#समावेश <linux/mm.h>
+#include <linux/mm.h>
 
-/* DC पूर्णांकerface (खुला) */
-#समावेश "dm_services.h"
-#समावेश "dc.h"
+/* DC interface (public) */
+#include "dm_services.h"
+#include "dc.h"
 
-/* DC core (निजी) */
-#समावेश "core_types.h"
-#समावेश "transform.h"
-#समावेश "dpp.h"
+/* DC core (private) */
+#include "core_types.h"
+#include "transform.h"
+#include "dpp.h"
 
 /*******************************************************************************
  * Private functions
  ******************************************************************************/
-अटल व्योम dc_plane_स्थिरruct(काष्ठा dc_context *ctx, काष्ठा dc_plane_state *plane_state)
-अणु
+static void dc_plane_construct(struct dc_context *ctx, struct dc_plane_state *plane_state)
+{
 	plane_state->ctx = ctx;
 
 	plane_state->gamma_correction = dc_create_gamma();
-	अगर (plane_state->gamma_correction != शून्य)
+	if (plane_state->gamma_correction != NULL)
 		plane_state->gamma_correction->is_identity = true;
 
 	plane_state->in_transfer_func = dc_create_transfer_func();
-	अगर (plane_state->in_transfer_func != शून्य) अणु
+	if (plane_state->in_transfer_func != NULL) {
 		plane_state->in_transfer_func->type = TF_TYPE_BYPASS;
-	पूर्ण
+	}
 	plane_state->in_shaper_func = dc_create_transfer_func();
-	अगर (plane_state->in_shaper_func != शून्य) अणु
+	if (plane_state->in_shaper_func != NULL) {
 		plane_state->in_shaper_func->type = TF_TYPE_BYPASS;
-	पूर्ण
+	}
 
 	plane_state->lut3d_func = dc_create_3dlut_func();
 
 	plane_state->blend_tf = dc_create_transfer_func();
-	अगर (plane_state->blend_tf != शून्य) अणु
+	if (plane_state->blend_tf != NULL) {
 		plane_state->blend_tf->type = TF_TYPE_BYPASS;
-	पूर्ण
+	}
 
-पूर्ण
+}
 
-अटल व्योम dc_plane_deकाष्ठा(काष्ठा dc_plane_state *plane_state)
-अणु
-	अगर (plane_state->gamma_correction != शून्य) अणु
+static void dc_plane_destruct(struct dc_plane_state *plane_state)
+{
+	if (plane_state->gamma_correction != NULL) {
 		dc_gamma_release(&plane_state->gamma_correction);
-	पूर्ण
-	अगर (plane_state->in_transfer_func != शून्य) अणु
+	}
+	if (plane_state->in_transfer_func != NULL) {
 		dc_transfer_func_release(
 				plane_state->in_transfer_func);
-		plane_state->in_transfer_func = शून्य;
-	पूर्ण
-	अगर (plane_state->in_shaper_func != शून्य) अणु
+		plane_state->in_transfer_func = NULL;
+	}
+	if (plane_state->in_shaper_func != NULL) {
 		dc_transfer_func_release(
 				plane_state->in_shaper_func);
-		plane_state->in_shaper_func = शून्य;
-	पूर्ण
-	अगर (plane_state->lut3d_func != शून्य) अणु
+		plane_state->in_shaper_func = NULL;
+	}
+	if (plane_state->lut3d_func != NULL) {
 		dc_3dlut_func_release(
 				plane_state->lut3d_func);
-		plane_state->lut3d_func = शून्य;
-	पूर्ण
-	अगर (plane_state->blend_tf != शून्य) अणु
+		plane_state->lut3d_func = NULL;
+	}
+	if (plane_state->blend_tf != NULL) {
 		dc_transfer_func_release(
 				plane_state->blend_tf);
-		plane_state->blend_tf = शून्य;
-	पूर्ण
+		plane_state->blend_tf = NULL;
+	}
 
-पूर्ण
+}
 
 /*******************************************************************************
  * Public functions
  ******************************************************************************/
-व्योम enable_surface_flip_reporting(काष्ठा dc_plane_state *plane_state,
-		uपूर्णांक32_t controller_id)
-अणु
+void enable_surface_flip_reporting(struct dc_plane_state *plane_state,
+		uint32_t controller_id)
+{
 	plane_state->irq_source = controller_id + DC_IRQ_SOURCE_PFLIP1 - 1;
-	/*रेजिस्टर_flip_पूर्णांकerrupt(surface);*/
-पूर्ण
+	/*register_flip_interrupt(surface);*/
+}
 
-काष्ठा dc_plane_state *dc_create_plane_state(काष्ठा dc *dc)
-अणु
-	काष्ठा dc_plane_state *plane_state = kvzalloc(माप(*plane_state),
+struct dc_plane_state *dc_create_plane_state(struct dc *dc)
+{
+	struct dc_plane_state *plane_state = kvzalloc(sizeof(*plane_state),
 							GFP_KERNEL);
 
-	अगर (शून्य == plane_state)
-		वापस शून्य;
+	if (NULL == plane_state)
+		return NULL;
 
 	kref_init(&plane_state->refcount);
-	dc_plane_स्थिरruct(dc->ctx, plane_state);
+	dc_plane_construct(dc->ctx, plane_state);
 
-	वापस plane_state;
-पूर्ण
+	return plane_state;
+}
 
 /*
  *****************************************************************************
@@ -122,168 +121,168 @@
  *
  *  @brief
  *     Looks up the pipe context of plane_state and updates the pending status
- *     of the pipe context. Then वापसs plane_state->status
+ *     of the pipe context. Then returns plane_state->status
  *
- *  @param [in] plane_state: poपूर्णांकer to the plane_state to get the status of
+ *  @param [in] plane_state: pointer to the plane_state to get the status of
  *****************************************************************************
  */
-स्थिर काष्ठा dc_plane_status *dc_plane_get_status(
-		स्थिर काष्ठा dc_plane_state *plane_state)
-अणु
-	स्थिर काष्ठा dc_plane_status *plane_status;
-	काष्ठा dc  *dc;
-	पूर्णांक i;
+const struct dc_plane_status *dc_plane_get_status(
+		const struct dc_plane_state *plane_state)
+{
+	const struct dc_plane_status *plane_status;
+	struct dc  *dc;
+	int i;
 
-	अगर (!plane_state ||
+	if (!plane_state ||
 		!plane_state->ctx ||
-		!plane_state->ctx->dc) अणु
+		!plane_state->ctx->dc) {
 		ASSERT(0);
-		वापस शून्य; /* हटाओ this अगर above निश्चित never hit */
-	पूर्ण
+		return NULL; /* remove this if above assert never hit */
+	}
 
 	plane_status = &plane_state->status;
 	dc = plane_state->ctx->dc;
 
-	अगर (dc->current_state == शून्य)
-		वापस शून्य;
+	if (dc->current_state == NULL)
+		return NULL;
 
 	/* Find the current plane state and set its pending bit to false */
-	क्रम (i = 0; i < dc->res_pool->pipe_count; i++) अणु
-		काष्ठा pipe_ctx *pipe_ctx =
+	for (i = 0; i < dc->res_pool->pipe_count; i++) {
+		struct pipe_ctx *pipe_ctx =
 				&dc->current_state->res_ctx.pipe_ctx[i];
 
-		अगर (pipe_ctx->plane_state != plane_state)
-			जारी;
+		if (pipe_ctx->plane_state != plane_state)
+			continue;
 
 		pipe_ctx->plane_state->status.is_flip_pending = false;
 
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	क्रम (i = 0; i < dc->res_pool->pipe_count; i++) अणु
-		काष्ठा pipe_ctx *pipe_ctx =
+	for (i = 0; i < dc->res_pool->pipe_count; i++) {
+		struct pipe_ctx *pipe_ctx =
 				&dc->current_state->res_ctx.pipe_ctx[i];
 
-		अगर (pipe_ctx->plane_state != plane_state)
-			जारी;
+		if (pipe_ctx->plane_state != plane_state)
+			continue;
 
 		dc->hwss.update_pending_status(pipe_ctx);
-	पूर्ण
+	}
 
-	वापस plane_status;
-पूर्ण
+	return plane_status;
+}
 
-व्योम dc_plane_state_retain(काष्ठा dc_plane_state *plane_state)
-अणु
+void dc_plane_state_retain(struct dc_plane_state *plane_state)
+{
 	kref_get(&plane_state->refcount);
-पूर्ण
+}
 
-अटल व्योम dc_plane_state_मुक्त(काष्ठा kref *kref)
-अणु
-	काष्ठा dc_plane_state *plane_state = container_of(kref, काष्ठा dc_plane_state, refcount);
-	dc_plane_deकाष्ठा(plane_state);
-	kvमुक्त(plane_state);
-पूर्ण
+static void dc_plane_state_free(struct kref *kref)
+{
+	struct dc_plane_state *plane_state = container_of(kref, struct dc_plane_state, refcount);
+	dc_plane_destruct(plane_state);
+	kvfree(plane_state);
+}
 
-व्योम dc_plane_state_release(काष्ठा dc_plane_state *plane_state)
-अणु
-	kref_put(&plane_state->refcount, dc_plane_state_मुक्त);
-पूर्ण
+void dc_plane_state_release(struct dc_plane_state *plane_state)
+{
+	kref_put(&plane_state->refcount, dc_plane_state_free);
+}
 
-व्योम dc_gamma_retain(काष्ठा dc_gamma *gamma)
-अणु
+void dc_gamma_retain(struct dc_gamma *gamma)
+{
 	kref_get(&gamma->refcount);
-पूर्ण
+}
 
-अटल व्योम dc_gamma_मुक्त(काष्ठा kref *kref)
-अणु
-	काष्ठा dc_gamma *gamma = container_of(kref, काष्ठा dc_gamma, refcount);
-	kvमुक्त(gamma);
-पूर्ण
+static void dc_gamma_free(struct kref *kref)
+{
+	struct dc_gamma *gamma = container_of(kref, struct dc_gamma, refcount);
+	kvfree(gamma);
+}
 
-व्योम dc_gamma_release(काष्ठा dc_gamma **gamma)
-अणु
-	kref_put(&(*gamma)->refcount, dc_gamma_मुक्त);
-	*gamma = शून्य;
-पूर्ण
+void dc_gamma_release(struct dc_gamma **gamma)
+{
+	kref_put(&(*gamma)->refcount, dc_gamma_free);
+	*gamma = NULL;
+}
 
-काष्ठा dc_gamma *dc_create_gamma(व्योम)
-अणु
-	काष्ठा dc_gamma *gamma = kvzalloc(माप(*gamma), GFP_KERNEL);
+struct dc_gamma *dc_create_gamma(void)
+{
+	struct dc_gamma *gamma = kvzalloc(sizeof(*gamma), GFP_KERNEL);
 
-	अगर (gamma == शून्य)
-		जाओ alloc_fail;
+	if (gamma == NULL)
+		goto alloc_fail;
 
 	kref_init(&gamma->refcount);
-	वापस gamma;
+	return gamma;
 
 alloc_fail:
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-व्योम dc_transfer_func_retain(काष्ठा dc_transfer_func *tf)
-अणु
+void dc_transfer_func_retain(struct dc_transfer_func *tf)
+{
 	kref_get(&tf->refcount);
-पूर्ण
+}
 
-अटल व्योम dc_transfer_func_मुक्त(काष्ठा kref *kref)
-अणु
-	काष्ठा dc_transfer_func *tf = container_of(kref, काष्ठा dc_transfer_func, refcount);
-	kvमुक्त(tf);
-पूर्ण
+static void dc_transfer_func_free(struct kref *kref)
+{
+	struct dc_transfer_func *tf = container_of(kref, struct dc_transfer_func, refcount);
+	kvfree(tf);
+}
 
-व्योम dc_transfer_func_release(काष्ठा dc_transfer_func *tf)
-अणु
-	kref_put(&tf->refcount, dc_transfer_func_मुक्त);
-पूर्ण
+void dc_transfer_func_release(struct dc_transfer_func *tf)
+{
+	kref_put(&tf->refcount, dc_transfer_func_free);
+}
 
-काष्ठा dc_transfer_func *dc_create_transfer_func(व्योम)
-अणु
-	काष्ठा dc_transfer_func *tf = kvzalloc(माप(*tf), GFP_KERNEL);
+struct dc_transfer_func *dc_create_transfer_func(void)
+{
+	struct dc_transfer_func *tf = kvzalloc(sizeof(*tf), GFP_KERNEL);
 
-	अगर (tf == शून्य)
-		जाओ alloc_fail;
+	if (tf == NULL)
+		goto alloc_fail;
 
 	kref_init(&tf->refcount);
 
-	वापस tf;
+	return tf;
 
 alloc_fail:
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम dc_3dlut_func_मुक्त(काष्ठा kref *kref)
-अणु
-	काष्ठा dc_3dlut *lut = container_of(kref, काष्ठा dc_3dlut, refcount);
+static void dc_3dlut_func_free(struct kref *kref)
+{
+	struct dc_3dlut *lut = container_of(kref, struct dc_3dlut, refcount);
 
-	kvमुक्त(lut);
-पूर्ण
+	kvfree(lut);
+}
 
-काष्ठा dc_3dlut *dc_create_3dlut_func(व्योम)
-अणु
-	काष्ठा dc_3dlut *lut = kvzalloc(माप(*lut), GFP_KERNEL);
+struct dc_3dlut *dc_create_3dlut_func(void)
+{
+	struct dc_3dlut *lut = kvzalloc(sizeof(*lut), GFP_KERNEL);
 
-	अगर (lut == शून्य)
-		जाओ alloc_fail;
+	if (lut == NULL)
+		goto alloc_fail;
 
 	kref_init(&lut->refcount);
 	lut->state.raw = 0;
 
-	वापस lut;
+	return lut;
 
 alloc_fail:
-	वापस शून्य;
+	return NULL;
 
-पूर्ण
+}
 
-व्योम dc_3dlut_func_release(काष्ठा dc_3dlut *lut)
-अणु
-	kref_put(&lut->refcount, dc_3dlut_func_मुक्त);
-पूर्ण
+void dc_3dlut_func_release(struct dc_3dlut *lut)
+{
+	kref_put(&lut->refcount, dc_3dlut_func_free);
+}
 
-व्योम dc_3dlut_func_retain(काष्ठा dc_3dlut *lut)
-अणु
+void dc_3dlut_func_retain(struct dc_3dlut *lut)
+{
 	kref_get(&lut->refcount);
-पूर्ण
+}
 
 

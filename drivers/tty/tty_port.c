@@ -1,241 +1,240 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Tty port functions
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/tty.h>
-#समावेश <linux/tty_driver.h>
-#समावेश <linux/tty_flip.h>
-#समावेश <linux/serial.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/रुको.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/module.h>
-#समावेश <linux/serdev.h>
-#समावेश "tty.h"
+#include <linux/types.h>
+#include <linux/errno.h>
+#include <linux/tty.h>
+#include <linux/tty_driver.h>
+#include <linux/tty_flip.h>
+#include <linux/serial.h>
+#include <linux/timer.h>
+#include <linux/string.h>
+#include <linux/slab.h>
+#include <linux/sched/signal.h>
+#include <linux/wait.h>
+#include <linux/bitops.h>
+#include <linux/delay.h>
+#include <linux/module.h>
+#include <linux/serdev.h>
+#include "tty.h"
 
-अटल पूर्णांक tty_port_शेष_receive_buf(काष्ठा tty_port *port,
-					स्थिर अचिन्हित अक्षर *p,
-					स्थिर अचिन्हित अक्षर *f, माप_प्रकार count)
-अणु
-	पूर्णांक ret;
-	काष्ठा tty_काष्ठा *tty;
-	काष्ठा tty_ldisc *disc;
+static int tty_port_default_receive_buf(struct tty_port *port,
+					const unsigned char *p,
+					const unsigned char *f, size_t count)
+{
+	int ret;
+	struct tty_struct *tty;
+	struct tty_ldisc *disc;
 
 	tty = READ_ONCE(port->itty);
-	अगर (!tty)
-		वापस 0;
+	if (!tty)
+		return 0;
 
 	disc = tty_ldisc_ref(tty);
-	अगर (!disc)
-		वापस 0;
+	if (!disc)
+		return 0;
 
-	ret = tty_ldisc_receive_buf(disc, p, (अक्षर *)f, count);
+	ret = tty_ldisc_receive_buf(disc, p, (char *)f, count);
 
 	tty_ldisc_deref(disc);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम tty_port_शेष_wakeup(काष्ठा tty_port *port)
-अणु
-	काष्ठा tty_काष्ठा *tty = tty_port_tty_get(port);
+static void tty_port_default_wakeup(struct tty_port *port)
+{
+	struct tty_struct *tty = tty_port_tty_get(port);
 
-	अगर (tty) अणु
+	if (tty) {
 		tty_wakeup(tty);
 		tty_kref_put(tty);
-	पूर्ण
-पूर्ण
+	}
+}
 
-स्थिर काष्ठा tty_port_client_operations tty_port_शेष_client_ops = अणु
-	.receive_buf = tty_port_शेष_receive_buf,
-	.ग_लिखो_wakeup = tty_port_शेष_wakeup,
-पूर्ण;
-EXPORT_SYMBOL_GPL(tty_port_शेष_client_ops);
+const struct tty_port_client_operations tty_port_default_client_ops = {
+	.receive_buf = tty_port_default_receive_buf,
+	.write_wakeup = tty_port_default_wakeup,
+};
+EXPORT_SYMBOL_GPL(tty_port_default_client_ops);
 
-व्योम tty_port_init(काष्ठा tty_port *port)
-अणु
-	स_रखो(port, 0, माप(*port));
+void tty_port_init(struct tty_port *port)
+{
+	memset(port, 0, sizeof(*port));
 	tty_buffer_init(port);
-	init_रुकोqueue_head(&port->खोलो_रुको);
-	init_रुकोqueue_head(&port->delta_msr_रुको);
+	init_waitqueue_head(&port->open_wait);
+	init_waitqueue_head(&port->delta_msr_wait);
 	mutex_init(&port->mutex);
 	mutex_init(&port->buf_mutex);
 	spin_lock_init(&port->lock);
-	port->बंद_delay = (50 * HZ) / 100;
-	port->closing_रुको = (3000 * HZ) / 100;
-	port->client_ops = &tty_port_शेष_client_ops;
+	port->close_delay = (50 * HZ) / 100;
+	port->closing_wait = (3000 * HZ) / 100;
+	port->client_ops = &tty_port_default_client_ops;
 	kref_init(&port->kref);
-पूर्ण
+}
 EXPORT_SYMBOL(tty_port_init);
 
 /**
  * tty_port_link_device - link tty and tty_port
  * @port: tty_port of the device
- * @driver: tty_driver क्रम this device
+ * @driver: tty_driver for this device
  * @index: index of the tty
  *
- * Provide the tty layer with a link from a tty (specअगरied by @index) to a
- * tty_port (@port). Use this only अगर neither tty_port_रेजिस्टर_device nor
- * tty_port_install is used in the driver. If used, this has to be called beक्रमe
- * tty_रेजिस्टर_driver.
+ * Provide the tty layer with a link from a tty (specified by @index) to a
+ * tty_port (@port). Use this only if neither tty_port_register_device nor
+ * tty_port_install is used in the driver. If used, this has to be called before
+ * tty_register_driver.
  */
-व्योम tty_port_link_device(काष्ठा tty_port *port,
-		काष्ठा tty_driver *driver, अचिन्हित index)
-अणु
-	अगर (WARN_ON(index >= driver->num))
-		वापस;
+void tty_port_link_device(struct tty_port *port,
+		struct tty_driver *driver, unsigned index)
+{
+	if (WARN_ON(index >= driver->num))
+		return;
 	driver->ports[index] = port;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(tty_port_link_device);
 
 /**
- * tty_port_रेजिस्टर_device - रेजिस्टर tty device
+ * tty_port_register_device - register tty device
  * @port: tty_port of the device
- * @driver: tty_driver क्रम this device
+ * @driver: tty_driver for this device
  * @index: index of the tty
- * @device: parent अगर exists, otherwise शून्य
+ * @device: parent if exists, otherwise NULL
  *
- * It is the same as tty_रेजिस्टर_device except the provided @port is linked to
- * a concrete tty specअगरied by @index. Use this or tty_port_install (or both).
+ * It is the same as tty_register_device except the provided @port is linked to
+ * a concrete tty specified by @index. Use this or tty_port_install (or both).
  * Call tty_port_link_device as a last resort.
  */
-काष्ठा device *tty_port_रेजिस्टर_device(काष्ठा tty_port *port,
-		काष्ठा tty_driver *driver, अचिन्हित index,
-		काष्ठा device *device)
-अणु
-	वापस tty_port_रेजिस्टर_device_attr(port, driver, index, device, शून्य, शून्य);
-पूर्ण
-EXPORT_SYMBOL_GPL(tty_port_रेजिस्टर_device);
+struct device *tty_port_register_device(struct tty_port *port,
+		struct tty_driver *driver, unsigned index,
+		struct device *device)
+{
+	return tty_port_register_device_attr(port, driver, index, device, NULL, NULL);
+}
+EXPORT_SYMBOL_GPL(tty_port_register_device);
 
 /**
- * tty_port_रेजिस्टर_device_attr - रेजिस्टर tty device
+ * tty_port_register_device_attr - register tty device
  * @port: tty_port of the device
- * @driver: tty_driver क्रम this device
+ * @driver: tty_driver for this device
  * @index: index of the tty
- * @device: parent अगर exists, otherwise शून्य
+ * @device: parent if exists, otherwise NULL
  * @drvdata: Driver data to be set to device.
  * @attr_grp: Attribute group to be set on device.
  *
- * It is the same as tty_रेजिस्टर_device_attr except the provided @port is
- * linked to a concrete tty specअगरied by @index. Use this or tty_port_install
+ * It is the same as tty_register_device_attr except the provided @port is
+ * linked to a concrete tty specified by @index. Use this or tty_port_install
  * (or both). Call tty_port_link_device as a last resort.
  */
-काष्ठा device *tty_port_रेजिस्टर_device_attr(काष्ठा tty_port *port,
-		काष्ठा tty_driver *driver, अचिन्हित index,
-		काष्ठा device *device, व्योम *drvdata,
-		स्थिर काष्ठा attribute_group **attr_grp)
-अणु
+struct device *tty_port_register_device_attr(struct tty_port *port,
+		struct tty_driver *driver, unsigned index,
+		struct device *device, void *drvdata,
+		const struct attribute_group **attr_grp)
+{
 	tty_port_link_device(port, driver, index);
-	वापस tty_रेजिस्टर_device_attr(driver, index, device, drvdata,
+	return tty_register_device_attr(driver, index, device, drvdata,
 			attr_grp);
-पूर्ण
-EXPORT_SYMBOL_GPL(tty_port_रेजिस्टर_device_attr);
+}
+EXPORT_SYMBOL_GPL(tty_port_register_device_attr);
 
 /**
- * tty_port_रेजिस्टर_device_attr_serdev - रेजिस्टर tty or serdev device
+ * tty_port_register_device_attr_serdev - register tty or serdev device
  * @port: tty_port of the device
- * @driver: tty_driver क्रम this device
+ * @driver: tty_driver for this device
  * @index: index of the tty
- * @device: parent अगर exists, otherwise शून्य
- * @drvdata: driver data क्रम the device
- * @attr_grp: attribute group क्रम the device
+ * @device: parent if exists, otherwise NULL
+ * @drvdata: driver data for the device
+ * @attr_grp: attribute group for the device
  *
- * Register a serdev or tty device depending on अगर the parent device has any
+ * Register a serdev or tty device depending on if the parent device has any
  * defined serdev clients or not.
  */
-काष्ठा device *tty_port_रेजिस्टर_device_attr_serdev(काष्ठा tty_port *port,
-		काष्ठा tty_driver *driver, अचिन्हित index,
-		काष्ठा device *device, व्योम *drvdata,
-		स्थिर काष्ठा attribute_group **attr_grp)
-अणु
-	काष्ठा device *dev;
+struct device *tty_port_register_device_attr_serdev(struct tty_port *port,
+		struct tty_driver *driver, unsigned index,
+		struct device *device, void *drvdata,
+		const struct attribute_group **attr_grp)
+{
+	struct device *dev;
 
 	tty_port_link_device(port, driver, index);
 
-	dev = serdev_tty_port_रेजिस्टर(port, device, driver, index);
-	अगर (PTR_ERR(dev) != -ENODEV) अणु
-		/* Skip creating cdev अगर we रेजिस्टरed a serdev device */
-		वापस dev;
-	पूर्ण
+	dev = serdev_tty_port_register(port, device, driver, index);
+	if (PTR_ERR(dev) != -ENODEV) {
+		/* Skip creating cdev if we registered a serdev device */
+		return dev;
+	}
 
-	वापस tty_रेजिस्टर_device_attr(driver, index, device, drvdata,
+	return tty_register_device_attr(driver, index, device, drvdata,
 			attr_grp);
-पूर्ण
-EXPORT_SYMBOL_GPL(tty_port_रेजिस्टर_device_attr_serdev);
+}
+EXPORT_SYMBOL_GPL(tty_port_register_device_attr_serdev);
 
 /**
- * tty_port_रेजिस्टर_device_serdev - रेजिस्टर tty or serdev device
+ * tty_port_register_device_serdev - register tty or serdev device
  * @port: tty_port of the device
- * @driver: tty_driver क्रम this device
+ * @driver: tty_driver for this device
  * @index: index of the tty
- * @device: parent अगर exists, otherwise शून्य
+ * @device: parent if exists, otherwise NULL
  *
- * Register a serdev or tty device depending on अगर the parent device has any
+ * Register a serdev or tty device depending on if the parent device has any
  * defined serdev clients or not.
  */
-काष्ठा device *tty_port_रेजिस्टर_device_serdev(काष्ठा tty_port *port,
-		काष्ठा tty_driver *driver, अचिन्हित index,
-		काष्ठा device *device)
-अणु
-	वापस tty_port_रेजिस्टर_device_attr_serdev(port, driver, index,
-			device, शून्य, शून्य);
-पूर्ण
-EXPORT_SYMBOL_GPL(tty_port_रेजिस्टर_device_serdev);
+struct device *tty_port_register_device_serdev(struct tty_port *port,
+		struct tty_driver *driver, unsigned index,
+		struct device *device)
+{
+	return tty_port_register_device_attr_serdev(port, driver, index,
+			device, NULL, NULL);
+}
+EXPORT_SYMBOL_GPL(tty_port_register_device_serdev);
 
 /**
- * tty_port_unरेजिस्टर_device - deरेजिस्टर a tty or serdev device
+ * tty_port_unregister_device - deregister a tty or serdev device
  * @port: tty_port of the device
- * @driver: tty_driver क्रम this device
+ * @driver: tty_driver for this device
  * @index: index of the tty
  *
- * If a tty or serdev device is रेजिस्टरed with a call to
- * tty_port_रेजिस्टर_device_serdev() then this function must be called when
+ * If a tty or serdev device is registered with a call to
+ * tty_port_register_device_serdev() then this function must be called when
  * the device is gone.
  */
-व्योम tty_port_unरेजिस्टर_device(काष्ठा tty_port *port,
-		काष्ठा tty_driver *driver, अचिन्हित index)
-अणु
-	पूर्णांक ret;
+void tty_port_unregister_device(struct tty_port *port,
+		struct tty_driver *driver, unsigned index)
+{
+	int ret;
 
-	ret = serdev_tty_port_unरेजिस्टर(port);
-	अगर (ret == 0)
-		वापस;
+	ret = serdev_tty_port_unregister(port);
+	if (ret == 0)
+		return;
 
-	tty_unरेजिस्टर_device(driver, index);
-पूर्ण
-EXPORT_SYMBOL_GPL(tty_port_unरेजिस्टर_device);
+	tty_unregister_device(driver, index);
+}
+EXPORT_SYMBOL_GPL(tty_port_unregister_device);
 
-पूर्णांक tty_port_alloc_xmit_buf(काष्ठा tty_port *port)
-अणु
+int tty_port_alloc_xmit_buf(struct tty_port *port)
+{
 	/* We may sleep in get_zeroed_page() */
 	mutex_lock(&port->buf_mutex);
-	अगर (port->xmit_buf == शून्य)
-		port->xmit_buf = (अचिन्हित अक्षर *)get_zeroed_page(GFP_KERNEL);
+	if (port->xmit_buf == NULL)
+		port->xmit_buf = (unsigned char *)get_zeroed_page(GFP_KERNEL);
 	mutex_unlock(&port->buf_mutex);
-	अगर (port->xmit_buf == शून्य)
-		वापस -ENOMEM;
-	वापस 0;
-पूर्ण
+	if (port->xmit_buf == NULL)
+		return -ENOMEM;
+	return 0;
+}
 EXPORT_SYMBOL(tty_port_alloc_xmit_buf);
 
-व्योम tty_port_मुक्त_xmit_buf(काष्ठा tty_port *port)
-अणु
+void tty_port_free_xmit_buf(struct tty_port *port)
+{
 	mutex_lock(&port->buf_mutex);
-	अगर (port->xmit_buf != शून्य) अणु
-		मुक्त_page((अचिन्हित दीर्घ)port->xmit_buf);
-		port->xmit_buf = शून्य;
-	पूर्ण
+	if (port->xmit_buf != NULL) {
+		free_page((unsigned long)port->xmit_buf);
+		port->xmit_buf = NULL;
+	}
 	mutex_unlock(&port->buf_mutex);
-पूर्ण
-EXPORT_SYMBOL(tty_port_मुक्त_xmit_buf);
+}
+EXPORT_SYMBOL(tty_port_free_xmit_buf);
 
 /**
  * tty_port_destroy -- destroy inited port
@@ -243,55 +242,55 @@ EXPORT_SYMBOL(tty_port_मुक्त_xmit_buf);
  *
  * When a port was initialized using tty_port_init, one has to destroy the
  * port by this function. Either indirectly by using tty_port refcounting
- * (tty_port_put) or directly अगर refcounting is not used.
+ * (tty_port_put) or directly if refcounting is not used.
  */
-व्योम tty_port_destroy(काष्ठा tty_port *port)
-अणु
+void tty_port_destroy(struct tty_port *port)
+{
 	tty_buffer_cancel_work(port);
-	tty_buffer_मुक्त_all(port);
-पूर्ण
+	tty_buffer_free_all(port);
+}
 EXPORT_SYMBOL(tty_port_destroy);
 
-अटल व्योम tty_port_deकाष्ठाor(काष्ठा kref *kref)
-अणु
-	काष्ठा tty_port *port = container_of(kref, काष्ठा tty_port, kref);
+static void tty_port_destructor(struct kref *kref)
+{
+	struct tty_port *port = container_of(kref, struct tty_port, kref);
 
-	/* check अगर last port ref was dropped beक्रमe tty release */
-	अगर (WARN_ON(port->itty))
-		वापस;
-	अगर (port->xmit_buf)
-		मुक्त_page((अचिन्हित दीर्घ)port->xmit_buf);
+	/* check if last port ref was dropped before tty release */
+	if (WARN_ON(port->itty))
+		return;
+	if (port->xmit_buf)
+		free_page((unsigned long)port->xmit_buf);
 	tty_port_destroy(port);
-	अगर (port->ops && port->ops->deकाष्ठा)
-		port->ops->deकाष्ठा(port);
-	अन्यथा
-		kमुक्त(port);
-पूर्ण
+	if (port->ops && port->ops->destruct)
+		port->ops->destruct(port);
+	else
+		kfree(port);
+}
 
-व्योम tty_port_put(काष्ठा tty_port *port)
-अणु
-	अगर (port)
-		kref_put(&port->kref, tty_port_deकाष्ठाor);
-पूर्ण
+void tty_port_put(struct tty_port *port)
+{
+	if (port)
+		kref_put(&port->kref, tty_port_destructor);
+}
 EXPORT_SYMBOL(tty_port_put);
 
 /**
  *	tty_port_tty_get	-	get a tty reference
  *	@port: tty port
  *
- *	Return a refcount रक्षित tty instance or शून्य अगर the port is not
- *	associated with a tty (eg due to बंद or hangup)
+ *	Return a refcount protected tty instance or NULL if the port is not
+ *	associated with a tty (eg due to close or hangup)
  */
-काष्ठा tty_काष्ठा *tty_port_tty_get(काष्ठा tty_port *port)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा tty_काष्ठा *tty;
+struct tty_struct *tty_port_tty_get(struct tty_port *port)
+{
+	unsigned long flags;
+	struct tty_struct *tty;
 
 	spin_lock_irqsave(&port->lock, flags);
 	tty = tty_kref_get(port->tty);
 	spin_unlock_irqrestore(&port->lock, flags);
-	वापस tty;
-पूर्ण
+	return tty;
+}
 EXPORT_SYMBOL(tty_port_tty_get);
 
 /**
@@ -299,69 +298,69 @@ EXPORT_SYMBOL(tty_port_tty_get);
  *	@port: tty port
  *	@tty: the tty
  *
- *	Associate the port and tty pair. Manages any पूर्णांकernal refcounts.
- *	Pass शून्य to deassociate a port
+ *	Associate the port and tty pair. Manages any internal refcounts.
+ *	Pass NULL to deassociate a port
  */
-व्योम tty_port_tty_set(काष्ठा tty_port *port, काष्ठा tty_काष्ठा *tty)
-अणु
-	अचिन्हित दीर्घ flags;
+void tty_port_tty_set(struct tty_port *port, struct tty_struct *tty)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&port->lock, flags);
 	tty_kref_put(port->tty);
 	port->tty = tty_kref_get(tty);
 	spin_unlock_irqrestore(&port->lock, flags);
-पूर्ण
+}
 EXPORT_SYMBOL(tty_port_tty_set);
 
-अटल व्योम tty_port_shutकरोwn(काष्ठा tty_port *port, काष्ठा tty_काष्ठा *tty)
-अणु
+static void tty_port_shutdown(struct tty_port *port, struct tty_struct *tty)
+{
 	mutex_lock(&port->mutex);
-	अगर (port->console)
-		जाओ out;
+	if (port->console)
+		goto out;
 
-	अगर (tty_port_initialized(port)) अणु
+	if (tty_port_initialized(port)) {
 		tty_port_set_initialized(port, 0);
 		/*
-		 * Drop DTR/RTS अगर HUPCL is set. This causes any attached
+		 * Drop DTR/RTS if HUPCL is set. This causes any attached
 		 * modem to hang up the line.
 		 */
-		अगर (tty && C_HUPCL(tty))
+		if (tty && C_HUPCL(tty))
 			tty_port_lower_dtr_rts(port);
 
-		अगर (port->ops->shutकरोwn)
-			port->ops->shutकरोwn(port);
-	पूर्ण
+		if (port->ops->shutdown)
+			port->ops->shutdown(port);
+	}
 out:
 	mutex_unlock(&port->mutex);
-पूर्ण
+}
 
 /**
  *	tty_port_hangup		-	hangup helper
  *	@port: tty port
  *
- *	Perक्रमm port level tty hangup flag and count changes. Drop the tty
+ *	Perform port level tty hangup flag and count changes. Drop the tty
  *	reference.
  *
  *	Caller holds tty lock.
  */
-व्योम tty_port_hangup(काष्ठा tty_port *port)
-अणु
-	काष्ठा tty_काष्ठा *tty;
-	अचिन्हित दीर्घ flags;
+void tty_port_hangup(struct tty_port *port)
+{
+	struct tty_struct *tty;
+	unsigned long flags;
 
 	spin_lock_irqsave(&port->lock, flags);
 	port->count = 0;
 	tty = port->tty;
-	अगर (tty)
+	if (tty)
 		set_bit(TTY_IO_ERROR, &tty->flags);
-	port->tty = शून्य;
+	port->tty = NULL;
 	spin_unlock_irqrestore(&port->lock, flags);
 	tty_port_set_active(port, 0);
-	tty_port_shutकरोwn(port, tty);
+	tty_port_shutdown(port, tty);
 	tty_kref_put(tty);
-	wake_up_पूर्णांकerruptible(&port->खोलो_रुको);
-	wake_up_पूर्णांकerruptible(&port->delta_msr_रुको);
-पूर्ण
+	wake_up_interruptible(&port->open_wait);
+	wake_up_interruptible(&port->delta_msr_wait);
+}
 EXPORT_SYMBOL(tty_port_hangup);
 
 /**
@@ -370,14 +369,14 @@ EXPORT_SYMBOL(tty_port_hangup);
  * @port: tty port
  * @check_clocal: hang only ttys with CLOCAL unset?
  */
-व्योम tty_port_tty_hangup(काष्ठा tty_port *port, bool check_clocal)
-अणु
-	काष्ठा tty_काष्ठा *tty = tty_port_tty_get(port);
+void tty_port_tty_hangup(struct tty_port *port, bool check_clocal)
+{
+	struct tty_struct *tty = tty_port_tty_get(port);
 
-	अगर (tty && (!check_clocal || !C_CLOCAL(tty)))
+	if (tty && (!check_clocal || !C_CLOCAL(tty)))
 		tty_hangup(tty);
 	tty_kref_put(tty);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(tty_port_tty_hangup);
 
 /**
@@ -385,319 +384,319 @@ EXPORT_SYMBOL_GPL(tty_port_tty_hangup);
  *
  * @port: tty port
  */
-व्योम tty_port_tty_wakeup(काष्ठा tty_port *port)
-अणु
-	port->client_ops->ग_लिखो_wakeup(port);
-पूर्ण
+void tty_port_tty_wakeup(struct tty_port *port)
+{
+	port->client_ops->write_wakeup(port);
+}
 EXPORT_SYMBOL_GPL(tty_port_tty_wakeup);
 
 /**
- *	tty_port_carrier_उठाओd	-	carrier उठाओd check
+ *	tty_port_carrier_raised	-	carrier raised check
  *	@port: tty port
  *
- *	Wrapper क्रम the carrier detect logic. For the moment this is used
- *	to hide some पूर्णांकernal details. This will eventually become entirely
- *	पूर्णांकernal to the tty port.
+ *	Wrapper for the carrier detect logic. For the moment this is used
+ *	to hide some internal details. This will eventually become entirely
+ *	internal to the tty port.
  */
-पूर्णांक tty_port_carrier_उठाओd(काष्ठा tty_port *port)
-अणु
-	अगर (port->ops->carrier_उठाओd == शून्य)
-		वापस 1;
-	वापस port->ops->carrier_उठाओd(port);
-पूर्ण
-EXPORT_SYMBOL(tty_port_carrier_उठाओd);
+int tty_port_carrier_raised(struct tty_port *port)
+{
+	if (port->ops->carrier_raised == NULL)
+		return 1;
+	return port->ops->carrier_raised(port);
+}
+EXPORT_SYMBOL(tty_port_carrier_raised);
 
 /**
- *	tty_port_उठाओ_dtr_rts	-	Raise DTR/RTS
+ *	tty_port_raise_dtr_rts	-	Raise DTR/RTS
  *	@port: tty port
  *
- *	Wrapper क्रम the DTR/RTS उठाओ logic. For the moment this is used
- *	to hide some पूर्णांकernal details. This will eventually become entirely
- *	पूर्णांकernal to the tty port.
+ *	Wrapper for the DTR/RTS raise logic. For the moment this is used
+ *	to hide some internal details. This will eventually become entirely
+ *	internal to the tty port.
  */
-व्योम tty_port_उठाओ_dtr_rts(काष्ठा tty_port *port)
-अणु
-	अगर (port->ops->dtr_rts)
+void tty_port_raise_dtr_rts(struct tty_port *port)
+{
+	if (port->ops->dtr_rts)
 		port->ops->dtr_rts(port, 1);
-पूर्ण
-EXPORT_SYMBOL(tty_port_उठाओ_dtr_rts);
+}
+EXPORT_SYMBOL(tty_port_raise_dtr_rts);
 
 /**
  *	tty_port_lower_dtr_rts	-	Lower DTR/RTS
  *	@port: tty port
  *
- *	Wrapper क्रम the DTR/RTS उठाओ logic. For the moment this is used
- *	to hide some पूर्णांकernal details. This will eventually become entirely
- *	पूर्णांकernal to the tty port.
+ *	Wrapper for the DTR/RTS raise logic. For the moment this is used
+ *	to hide some internal details. This will eventually become entirely
+ *	internal to the tty port.
  */
-व्योम tty_port_lower_dtr_rts(काष्ठा tty_port *port)
-अणु
-	अगर (port->ops->dtr_rts)
+void tty_port_lower_dtr_rts(struct tty_port *port)
+{
+	if (port->ops->dtr_rts)
 		port->ops->dtr_rts(port, 0);
-पूर्ण
+}
 EXPORT_SYMBOL(tty_port_lower_dtr_rts);
 
 /**
- *	tty_port_block_til_पढ़ोy	-	Waiting logic क्रम tty खोलो
- *	@port: the tty port being खोलोed
+ *	tty_port_block_til_ready	-	Waiting logic for tty open
+ *	@port: the tty port being opened
  *	@tty: the tty device being bound
- *	@filp: the file poपूर्णांकer of the खोलोer or शून्य
+ *	@filp: the file pointer of the opener or NULL
  *
- *	Implement the core POSIX/SuS tty behaviour when खोलोing a tty device.
+ *	Implement the core POSIX/SuS tty behaviour when opening a tty device.
  *	Handles:
- *		- hangup (both beक्रमe and during)
- *		- non blocking खोलो
+ *		- hangup (both before and during)
+ *		- non blocking open
  *		- rts/dtr/dcd
- *		- संकेतs
+ *		- signals
  *		- port flags and counts
  *
- *	The passed tty_port must implement the carrier_उठाओd method अगर it can
- *	करो carrier detect and the dtr_rts method अगर it supports software
- *	management of these lines. Note that the dtr/rts उठाओ is करोne each
- *	iteration as a hangup may have previously dropped them जबतक we रुको.
+ *	The passed tty_port must implement the carrier_raised method if it can
+ *	do carrier detect and the dtr_rts method if it supports software
+ *	management of these lines. Note that the dtr/rts raise is done each
+ *	iteration as a hangup may have previously dropped them while we wait.
  *
  *	Caller holds tty lock.
  *
  *      NB: May drop and reacquire tty lock when blocking, so tty and tty_port
  *      may have changed state (eg., may have been hung up).
  */
-पूर्णांक tty_port_block_til_पढ़ोy(काष्ठा tty_port *port,
-				काष्ठा tty_काष्ठा *tty, काष्ठा file *filp)
-अणु
-	पूर्णांक करो_clocal = 0, retval;
-	अचिन्हित दीर्घ flags;
-	DEFINE_WAIT(रुको);
+int tty_port_block_til_ready(struct tty_port *port,
+				struct tty_struct *tty, struct file *filp)
+{
+	int do_clocal = 0, retval;
+	unsigned long flags;
+	DEFINE_WAIT(wait);
 
-	/* अगर non-blocking mode is set we can pass directly to खोलो unless
+	/* if non-blocking mode is set we can pass directly to open unless
 	   the port has just hung up or is in another error state */
-	अगर (tty_io_error(tty)) अणु
+	if (tty_io_error(tty)) {
 		tty_port_set_active(port, 1);
-		वापस 0;
-	पूर्ण
-	अगर (filp == शून्य || (filp->f_flags & O_NONBLOCK)) अणु
-		/* Indicate we are खोलो */
-		अगर (C_BAUD(tty))
-			tty_port_उठाओ_dtr_rts(port);
+		return 0;
+	}
+	if (filp == NULL || (filp->f_flags & O_NONBLOCK)) {
+		/* Indicate we are open */
+		if (C_BAUD(tty))
+			tty_port_raise_dtr_rts(port);
 		tty_port_set_active(port, 1);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (C_CLOCAL(tty))
-		करो_clocal = 1;
+	if (C_CLOCAL(tty))
+		do_clocal = 1;
 
-	/* Block रुकोing until we can proceed. We may need to रुको क्रम the
-	   carrier, but we must also रुको क्रम any बंद that is in progress
-	   beक्रमe the next खोलो may complete */
+	/* Block waiting until we can proceed. We may need to wait for the
+	   carrier, but we must also wait for any close that is in progress
+	   before the next open may complete */
 
 	retval = 0;
 
 	/* The port lock protects the port counts */
 	spin_lock_irqsave(&port->lock, flags);
 	port->count--;
-	port->blocked_खोलो++;
+	port->blocked_open++;
 	spin_unlock_irqrestore(&port->lock, flags);
 
-	जबतक (1) अणु
-		/* Indicate we are खोलो */
-		अगर (C_BAUD(tty) && tty_port_initialized(port))
-			tty_port_उठाओ_dtr_rts(port);
+	while (1) {
+		/* Indicate we are open */
+		if (C_BAUD(tty) && tty_port_initialized(port))
+			tty_port_raise_dtr_rts(port);
 
-		prepare_to_रुको(&port->खोलो_रुको, &रुको, TASK_INTERRUPTIBLE);
-		/* Check क्रम a hangup or uninitialised port.
+		prepare_to_wait(&port->open_wait, &wait, TASK_INTERRUPTIBLE);
+		/* Check for a hangup or uninitialised port.
 							Return accordingly */
-		अगर (tty_hung_up_p(filp) || !tty_port_initialized(port)) अणु
-			अगर (port->flags & ASYNC_HUP_NOTIFY)
+		if (tty_hung_up_p(filp) || !tty_port_initialized(port)) {
+			if (port->flags & ASYNC_HUP_NOTIFY)
 				retval = -EAGAIN;
-			अन्यथा
+			else
 				retval = -ERESTARTSYS;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		/*
 		 * Probe the carrier. For devices with no carrier detect
-		 * tty_port_carrier_उठाओd will always वापस true.
-		 * Never ask drivers अगर CLOCAL is set, this causes troubles
+		 * tty_port_carrier_raised will always return true.
+		 * Never ask drivers if CLOCAL is set, this causes troubles
 		 * on some hardware.
 		 */
-		अगर (करो_clocal || tty_port_carrier_उठाओd(port))
-			अवरोध;
-		अगर (संकेत_pending(current)) अणु
+		if (do_clocal || tty_port_carrier_raised(port))
+			break;
+		if (signal_pending(current)) {
 			retval = -ERESTARTSYS;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		tty_unlock(tty);
 		schedule();
 		tty_lock(tty);
-	पूर्ण
-	finish_रुको(&port->खोलो_रुको, &रुको);
+	}
+	finish_wait(&port->open_wait, &wait);
 
 	/* Update counts. A parallel hangup will have set count to zero and
 	   we must not mess that up further */
 	spin_lock_irqsave(&port->lock, flags);
-	अगर (!tty_hung_up_p(filp))
+	if (!tty_hung_up_p(filp))
 		port->count++;
-	port->blocked_खोलो--;
+	port->blocked_open--;
 	spin_unlock_irqrestore(&port->lock, flags);
-	अगर (retval == 0)
+	if (retval == 0)
 		tty_port_set_active(port, 1);
-	वापस retval;
-पूर्ण
-EXPORT_SYMBOL(tty_port_block_til_पढ़ोy);
+	return retval;
+}
+EXPORT_SYMBOL(tty_port_block_til_ready);
 
-अटल व्योम tty_port_drain_delay(काष्ठा tty_port *port, काष्ठा tty_काष्ठा *tty)
-अणु
-	अचिन्हित पूर्णांक bps = tty_get_baud_rate(tty);
-	दीर्घ समयout;
+static void tty_port_drain_delay(struct tty_port *port, struct tty_struct *tty)
+{
+	unsigned int bps = tty_get_baud_rate(tty);
+	long timeout;
 
-	अगर (bps > 1200) अणु
-		समयout = (HZ * 10 * port->drain_delay) / bps;
-		समयout = max_t(दीर्घ, समयout, HZ / 10);
-	पूर्ण अन्यथा अणु
-		समयout = 2 * HZ;
-	पूर्ण
-	schedule_समयout_पूर्णांकerruptible(समयout);
-पूर्ण
+	if (bps > 1200) {
+		timeout = (HZ * 10 * port->drain_delay) / bps;
+		timeout = max_t(long, timeout, HZ / 10);
+	} else {
+		timeout = 2 * HZ;
+	}
+	schedule_timeout_interruptible(timeout);
+}
 
 /* Caller holds tty lock. */
-पूर्णांक tty_port_बंद_start(काष्ठा tty_port *port,
-				काष्ठा tty_काष्ठा *tty, काष्ठा file *filp)
-अणु
-	अचिन्हित दीर्घ flags;
+int tty_port_close_start(struct tty_port *port,
+				struct tty_struct *tty, struct file *filp)
+{
+	unsigned long flags;
 
-	अगर (tty_hung_up_p(filp))
-		वापस 0;
+	if (tty_hung_up_p(filp))
+		return 0;
 
 	spin_lock_irqsave(&port->lock, flags);
-	अगर (tty->count == 1 && port->count != 1) अणु
+	if (tty->count == 1 && port->count != 1) {
 		tty_warn(tty, "%s: tty->count = 1 port count = %d\n", __func__,
 			 port->count);
 		port->count = 1;
-	पूर्ण
-	अगर (--port->count < 0) अणु
+	}
+	if (--port->count < 0) {
 		tty_warn(tty, "%s: bad port count (%d)\n", __func__,
 			 port->count);
 		port->count = 0;
-	पूर्ण
+	}
 
-	अगर (port->count) अणु
+	if (port->count) {
 		spin_unlock_irqrestore(&port->lock, flags);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	spin_unlock_irqrestore(&port->lock, flags);
 
 	tty->closing = 1;
 
-	अगर (tty_port_initialized(port)) अणु
+	if (tty_port_initialized(port)) {
 		/* Don't block on a stalled port, just pull the chain */
-		अगर (tty->flow_stopped)
+		if (tty->flow_stopped)
 			tty_driver_flush_buffer(tty);
-		अगर (port->closing_रुको != ASYNC_CLOSING_WAIT_NONE)
-			tty_रुको_until_sent(tty, port->closing_रुको);
-		अगर (port->drain_delay)
+		if (port->closing_wait != ASYNC_CLOSING_WAIT_NONE)
+			tty_wait_until_sent(tty, port->closing_wait);
+		if (port->drain_delay)
 			tty_port_drain_delay(port, tty);
-	पूर्ण
+	}
 	/* Flush the ldisc buffering */
 	tty_ldisc_flush(tty);
 
 	/* Report to caller this is the last port reference */
-	वापस 1;
-पूर्ण
-EXPORT_SYMBOL(tty_port_बंद_start);
+	return 1;
+}
+EXPORT_SYMBOL(tty_port_close_start);
 
 /* Caller holds tty lock */
-व्योम tty_port_बंद_end(काष्ठा tty_port *port, काष्ठा tty_काष्ठा *tty)
-अणु
-	अचिन्हित दीर्घ flags;
+void tty_port_close_end(struct tty_port *port, struct tty_struct *tty)
+{
+	unsigned long flags;
 
 	tty_ldisc_flush(tty);
 	tty->closing = 0;
 
 	spin_lock_irqsave(&port->lock, flags);
 
-	अगर (port->blocked_खोलो) अणु
+	if (port->blocked_open) {
 		spin_unlock_irqrestore(&port->lock, flags);
-		अगर (port->बंद_delay)
-			msleep_पूर्णांकerruptible(jअगरfies_to_msecs(port->बंद_delay));
+		if (port->close_delay)
+			msleep_interruptible(jiffies_to_msecs(port->close_delay));
 		spin_lock_irqsave(&port->lock, flags);
-		wake_up_पूर्णांकerruptible(&port->खोलो_रुको);
-	पूर्ण
+		wake_up_interruptible(&port->open_wait);
+	}
 	spin_unlock_irqrestore(&port->lock, flags);
 	tty_port_set_active(port, 0);
-पूर्ण
-EXPORT_SYMBOL(tty_port_बंद_end);
+}
+EXPORT_SYMBOL(tty_port_close_end);
 
 /*
- * tty_port_बंद
+ * tty_port_close
  *
  * Caller holds tty lock
  */
-व्योम tty_port_बंद(काष्ठा tty_port *port, काष्ठा tty_काष्ठा *tty,
-							काष्ठा file *filp)
-अणु
-	अगर (tty_port_बंद_start(port, tty, filp) == 0)
-		वापस;
-	tty_port_shutकरोwn(port, tty);
-	अगर (!port->console)
+void tty_port_close(struct tty_port *port, struct tty_struct *tty,
+							struct file *filp)
+{
+	if (tty_port_close_start(port, tty, filp) == 0)
+		return;
+	tty_port_shutdown(port, tty);
+	if (!port->console)
 		set_bit(TTY_IO_ERROR, &tty->flags);
-	tty_port_बंद_end(port, tty);
-	tty_port_tty_set(port, शून्य);
-पूर्ण
-EXPORT_SYMBOL(tty_port_बंद);
+	tty_port_close_end(port, tty);
+	tty_port_tty_set(port, NULL);
+}
+EXPORT_SYMBOL(tty_port_close);
 
 /**
  * tty_port_install - generic tty->ops->install handler
  * @port: tty_port of the device
- * @driver: tty_driver क्रम this device
+ * @driver: tty_driver for this device
  * @tty: tty to be installed
  *
  * It is the same as tty_standard_install except the provided @port is linked
- * to a concrete tty specअगरied by @tty. Use this or tty_port_रेजिस्टर_device
+ * to a concrete tty specified by @tty. Use this or tty_port_register_device
  * (or both). Call tty_port_link_device as a last resort.
  */
-पूर्णांक tty_port_install(काष्ठा tty_port *port, काष्ठा tty_driver *driver,
-		काष्ठा tty_काष्ठा *tty)
-अणु
+int tty_port_install(struct tty_port *port, struct tty_driver *driver,
+		struct tty_struct *tty)
+{
 	tty->port = port;
-	वापस tty_standard_install(driver, tty);
-पूर्ण
+	return tty_standard_install(driver, tty);
+}
 EXPORT_SYMBOL_GPL(tty_port_install);
 
 /*
- * tty_port_खोलो
+ * tty_port_open
  *
  * Caller holds tty lock.
  *
- * NB: may drop and reacquire tty lock (in tty_port_block_til_पढ़ोy()) so
+ * NB: may drop and reacquire tty lock (in tty_port_block_til_ready()) so
  * tty and tty_port may have changed state (eg., may be hung up now)
  */
-पूर्णांक tty_port_खोलो(काष्ठा tty_port *port, काष्ठा tty_काष्ठा *tty,
-							काष्ठा file *filp)
-अणु
+int tty_port_open(struct tty_port *port, struct tty_struct *tty,
+							struct file *filp)
+{
 	spin_lock_irq(&port->lock);
 	++port->count;
 	spin_unlock_irq(&port->lock);
 	tty_port_tty_set(port, tty);
 
 	/*
-	 * Do the device-specअगरic खोलो only अगर the hardware isn't
-	 * alपढ़ोy initialized. Serialize खोलो and shutकरोwn using the
+	 * Do the device-specific open only if the hardware isn't
+	 * already initialized. Serialize open and shutdown using the
 	 * port mutex.
 	 */
 
 	mutex_lock(&port->mutex);
 
-	अगर (!tty_port_initialized(port)) अणु
+	if (!tty_port_initialized(port)) {
 		clear_bit(TTY_IO_ERROR, &tty->flags);
-		अगर (port->ops->activate) अणु
-			पूर्णांक retval = port->ops->activate(port, tty);
-			अगर (retval) अणु
+		if (port->ops->activate) {
+			int retval = port->ops->activate(port, tty);
+			if (retval) {
 				mutex_unlock(&port->mutex);
-				वापस retval;
-			पूर्ण
-		पूर्ण
+				return retval;
+			}
+		}
 		tty_port_set_initialized(port, 1);
-	पूर्ण
+	}
 	mutex_unlock(&port->mutex);
-	वापस tty_port_block_til_पढ़ोy(port, tty, filp);
-पूर्ण
+	return tty_port_block_til_ready(port, tty, filp);
+}
 
-EXPORT_SYMBOL(tty_port_खोलो);
+EXPORT_SYMBOL(tty_port_open);

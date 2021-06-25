@@ -1,625 +1,624 @@
-<शैली गुरु>
 /*
  * VPIF header file
  *
  * Copyright (C) 2009 Texas Instruments Incorporated - https://www.ti.com/
  *
- * This program is मुक्त software; you can redistribute it and/or
- * modअगरy it under the terms of the GNU General Public License as
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
  * published by the Free Software Foundation version 2.
  *
  * This program is distributed .as is. WITHOUT ANY WARRANTY of any
  * kind, whether express or implied; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License क्रम more details.
+ * GNU General Public License for more details.
  */
 
-#अगर_अघोषित VPIF_H
-#घोषणा VPIF_H
+#ifndef VPIF_H
+#define VPIF_H
 
-#समावेश <linux/पन.स>
-#समावेश <linux/videodev2.h>
-#समावेश <media/davinci/vpअगर_types.h>
+#include <linux/io.h>
+#include <linux/videodev2.h>
+#include <media/davinci/vpif_types.h>
 
 /* Maximum channel allowed */
-#घोषणा VPIF_NUM_CHANNELS		(4)
-#घोषणा VPIF_CAPTURE_NUM_CHANNELS	(2)
-#घोषणा VPIF_DISPLAY_NUM_CHANNELS	(2)
+#define VPIF_NUM_CHANNELS		(4)
+#define VPIF_CAPTURE_NUM_CHANNELS	(2)
+#define VPIF_DISPLAY_NUM_CHANNELS	(2)
 
-/* Macros to पढ़ो/ग_लिखो रेजिस्टरs */
-बाह्य व्योम __iomem *vpअगर_base;
-बाह्य spinlock_t vpअगर_lock;
+/* Macros to read/write registers */
+extern void __iomem *vpif_base;
+extern spinlock_t vpif_lock;
 
-#घोषणा regr(reg)               पढ़ोl((reg) + vpअगर_base)
-#घोषणा regw(value, reg)        ग_लिखोl(value, (reg + vpअगर_base))
+#define regr(reg)               readl((reg) + vpif_base)
+#define regw(value, reg)        writel(value, (reg + vpif_base))
 
 /* Register Address Offsets */
-#घोषणा VPIF_PID			(0x0000)
-#घोषणा VPIF_CH0_CTRL			(0x0004)
-#घोषणा VPIF_CH1_CTRL			(0x0008)
-#घोषणा VPIF_CH2_CTRL			(0x000C)
-#घोषणा VPIF_CH3_CTRL			(0x0010)
+#define VPIF_PID			(0x0000)
+#define VPIF_CH0_CTRL			(0x0004)
+#define VPIF_CH1_CTRL			(0x0008)
+#define VPIF_CH2_CTRL			(0x000C)
+#define VPIF_CH3_CTRL			(0x0010)
 
-#घोषणा VPIF_INTEN			(0x0020)
-#घोषणा VPIF_INTEN_SET			(0x0024)
-#घोषणा VPIF_INTEN_CLR			(0x0028)
-#घोषणा VPIF_STATUS			(0x002C)
-#घोषणा VPIF_STATUS_CLR			(0x0030)
-#घोषणा VPIF_EMULATION_CTRL		(0x0034)
-#घोषणा VPIF_REQ_SIZE			(0x0038)
+#define VPIF_INTEN			(0x0020)
+#define VPIF_INTEN_SET			(0x0024)
+#define VPIF_INTEN_CLR			(0x0028)
+#define VPIF_STATUS			(0x002C)
+#define VPIF_STATUS_CLR			(0x0030)
+#define VPIF_EMULATION_CTRL		(0x0034)
+#define VPIF_REQ_SIZE			(0x0038)
 
-#घोषणा VPIF_CH0_TOP_STRT_ADD_LUMA	(0x0040)
-#घोषणा VPIF_CH0_BTM_STRT_ADD_LUMA	(0x0044)
-#घोषणा VPIF_CH0_TOP_STRT_ADD_CHROMA	(0x0048)
-#घोषणा VPIF_CH0_BTM_STRT_ADD_CHROMA	(0x004c)
-#घोषणा VPIF_CH0_TOP_STRT_ADD_HANC	(0x0050)
-#घोषणा VPIF_CH0_BTM_STRT_ADD_HANC	(0x0054)
-#घोषणा VPIF_CH0_TOP_STRT_ADD_VANC	(0x0058)
-#घोषणा VPIF_CH0_BTM_STRT_ADD_VANC	(0x005c)
-#घोषणा VPIF_CH0_SP_CFG			(0x0060)
-#घोषणा VPIF_CH0_IMG_ADD_OFST		(0x0064)
-#घोषणा VPIF_CH0_HANC_ADD_OFST		(0x0068)
-#घोषणा VPIF_CH0_H_CFG			(0x006c)
-#घोषणा VPIF_CH0_V_CFG_00		(0x0070)
-#घोषणा VPIF_CH0_V_CFG_01		(0x0074)
-#घोषणा VPIF_CH0_V_CFG_02		(0x0078)
-#घोषणा VPIF_CH0_V_CFG_03		(0x007c)
+#define VPIF_CH0_TOP_STRT_ADD_LUMA	(0x0040)
+#define VPIF_CH0_BTM_STRT_ADD_LUMA	(0x0044)
+#define VPIF_CH0_TOP_STRT_ADD_CHROMA	(0x0048)
+#define VPIF_CH0_BTM_STRT_ADD_CHROMA	(0x004c)
+#define VPIF_CH0_TOP_STRT_ADD_HANC	(0x0050)
+#define VPIF_CH0_BTM_STRT_ADD_HANC	(0x0054)
+#define VPIF_CH0_TOP_STRT_ADD_VANC	(0x0058)
+#define VPIF_CH0_BTM_STRT_ADD_VANC	(0x005c)
+#define VPIF_CH0_SP_CFG			(0x0060)
+#define VPIF_CH0_IMG_ADD_OFST		(0x0064)
+#define VPIF_CH0_HANC_ADD_OFST		(0x0068)
+#define VPIF_CH0_H_CFG			(0x006c)
+#define VPIF_CH0_V_CFG_00		(0x0070)
+#define VPIF_CH0_V_CFG_01		(0x0074)
+#define VPIF_CH0_V_CFG_02		(0x0078)
+#define VPIF_CH0_V_CFG_03		(0x007c)
 
-#घोषणा VPIF_CH1_TOP_STRT_ADD_LUMA	(0x0080)
-#घोषणा VPIF_CH1_BTM_STRT_ADD_LUMA	(0x0084)
-#घोषणा VPIF_CH1_TOP_STRT_ADD_CHROMA	(0x0088)
-#घोषणा VPIF_CH1_BTM_STRT_ADD_CHROMA	(0x008c)
-#घोषणा VPIF_CH1_TOP_STRT_ADD_HANC	(0x0090)
-#घोषणा VPIF_CH1_BTM_STRT_ADD_HANC	(0x0094)
-#घोषणा VPIF_CH1_TOP_STRT_ADD_VANC	(0x0098)
-#घोषणा VPIF_CH1_BTM_STRT_ADD_VANC	(0x009c)
-#घोषणा VPIF_CH1_SP_CFG			(0x00a0)
-#घोषणा VPIF_CH1_IMG_ADD_OFST		(0x00a4)
-#घोषणा VPIF_CH1_HANC_ADD_OFST		(0x00a8)
-#घोषणा VPIF_CH1_H_CFG			(0x00ac)
-#घोषणा VPIF_CH1_V_CFG_00		(0x00b0)
-#घोषणा VPIF_CH1_V_CFG_01		(0x00b4)
-#घोषणा VPIF_CH1_V_CFG_02		(0x00b8)
-#घोषणा VPIF_CH1_V_CFG_03		(0x00bc)
+#define VPIF_CH1_TOP_STRT_ADD_LUMA	(0x0080)
+#define VPIF_CH1_BTM_STRT_ADD_LUMA	(0x0084)
+#define VPIF_CH1_TOP_STRT_ADD_CHROMA	(0x0088)
+#define VPIF_CH1_BTM_STRT_ADD_CHROMA	(0x008c)
+#define VPIF_CH1_TOP_STRT_ADD_HANC	(0x0090)
+#define VPIF_CH1_BTM_STRT_ADD_HANC	(0x0094)
+#define VPIF_CH1_TOP_STRT_ADD_VANC	(0x0098)
+#define VPIF_CH1_BTM_STRT_ADD_VANC	(0x009c)
+#define VPIF_CH1_SP_CFG			(0x00a0)
+#define VPIF_CH1_IMG_ADD_OFST		(0x00a4)
+#define VPIF_CH1_HANC_ADD_OFST		(0x00a8)
+#define VPIF_CH1_H_CFG			(0x00ac)
+#define VPIF_CH1_V_CFG_00		(0x00b0)
+#define VPIF_CH1_V_CFG_01		(0x00b4)
+#define VPIF_CH1_V_CFG_02		(0x00b8)
+#define VPIF_CH1_V_CFG_03		(0x00bc)
 
-#घोषणा VPIF_CH2_TOP_STRT_ADD_LUMA	(0x00c0)
-#घोषणा VPIF_CH2_BTM_STRT_ADD_LUMA	(0x00c4)
-#घोषणा VPIF_CH2_TOP_STRT_ADD_CHROMA	(0x00c8)
-#घोषणा VPIF_CH2_BTM_STRT_ADD_CHROMA	(0x00cc)
-#घोषणा VPIF_CH2_TOP_STRT_ADD_HANC	(0x00d0)
-#घोषणा VPIF_CH2_BTM_STRT_ADD_HANC	(0x00d4)
-#घोषणा VPIF_CH2_TOP_STRT_ADD_VANC	(0x00d8)
-#घोषणा VPIF_CH2_BTM_STRT_ADD_VANC	(0x00dc)
-#घोषणा VPIF_CH2_SP_CFG			(0x00e0)
-#घोषणा VPIF_CH2_IMG_ADD_OFST		(0x00e4)
-#घोषणा VPIF_CH2_HANC_ADD_OFST		(0x00e8)
-#घोषणा VPIF_CH2_H_CFG			(0x00ec)
-#घोषणा VPIF_CH2_V_CFG_00		(0x00f0)
-#घोषणा VPIF_CH2_V_CFG_01		(0x00f4)
-#घोषणा VPIF_CH2_V_CFG_02		(0x00f8)
-#घोषणा VPIF_CH2_V_CFG_03		(0x00fc)
-#घोषणा VPIF_CH2_HANC0_STRT		(0x0100)
-#घोषणा VPIF_CH2_HANC0_SIZE		(0x0104)
-#घोषणा VPIF_CH2_HANC1_STRT		(0x0108)
-#घोषणा VPIF_CH2_HANC1_SIZE		(0x010c)
-#घोषणा VPIF_CH2_VANC0_STRT		(0x0110)
-#घोषणा VPIF_CH2_VANC0_SIZE		(0x0114)
-#घोषणा VPIF_CH2_VANC1_STRT		(0x0118)
-#घोषणा VPIF_CH2_VANC1_SIZE		(0x011c)
+#define VPIF_CH2_TOP_STRT_ADD_LUMA	(0x00c0)
+#define VPIF_CH2_BTM_STRT_ADD_LUMA	(0x00c4)
+#define VPIF_CH2_TOP_STRT_ADD_CHROMA	(0x00c8)
+#define VPIF_CH2_BTM_STRT_ADD_CHROMA	(0x00cc)
+#define VPIF_CH2_TOP_STRT_ADD_HANC	(0x00d0)
+#define VPIF_CH2_BTM_STRT_ADD_HANC	(0x00d4)
+#define VPIF_CH2_TOP_STRT_ADD_VANC	(0x00d8)
+#define VPIF_CH2_BTM_STRT_ADD_VANC	(0x00dc)
+#define VPIF_CH2_SP_CFG			(0x00e0)
+#define VPIF_CH2_IMG_ADD_OFST		(0x00e4)
+#define VPIF_CH2_HANC_ADD_OFST		(0x00e8)
+#define VPIF_CH2_H_CFG			(0x00ec)
+#define VPIF_CH2_V_CFG_00		(0x00f0)
+#define VPIF_CH2_V_CFG_01		(0x00f4)
+#define VPIF_CH2_V_CFG_02		(0x00f8)
+#define VPIF_CH2_V_CFG_03		(0x00fc)
+#define VPIF_CH2_HANC0_STRT		(0x0100)
+#define VPIF_CH2_HANC0_SIZE		(0x0104)
+#define VPIF_CH2_HANC1_STRT		(0x0108)
+#define VPIF_CH2_HANC1_SIZE		(0x010c)
+#define VPIF_CH2_VANC0_STRT		(0x0110)
+#define VPIF_CH2_VANC0_SIZE		(0x0114)
+#define VPIF_CH2_VANC1_STRT		(0x0118)
+#define VPIF_CH2_VANC1_SIZE		(0x011c)
 
-#घोषणा VPIF_CH3_TOP_STRT_ADD_LUMA	(0x0140)
-#घोषणा VPIF_CH3_BTM_STRT_ADD_LUMA	(0x0144)
-#घोषणा VPIF_CH3_TOP_STRT_ADD_CHROMA	(0x0148)
-#घोषणा VPIF_CH3_BTM_STRT_ADD_CHROMA	(0x014c)
-#घोषणा VPIF_CH3_TOP_STRT_ADD_HANC	(0x0150)
-#घोषणा VPIF_CH3_BTM_STRT_ADD_HANC	(0x0154)
-#घोषणा VPIF_CH3_TOP_STRT_ADD_VANC	(0x0158)
-#घोषणा VPIF_CH3_BTM_STRT_ADD_VANC	(0x015c)
-#घोषणा VPIF_CH3_SP_CFG			(0x0160)
-#घोषणा VPIF_CH3_IMG_ADD_OFST		(0x0164)
-#घोषणा VPIF_CH3_HANC_ADD_OFST		(0x0168)
-#घोषणा VPIF_CH3_H_CFG			(0x016c)
-#घोषणा VPIF_CH3_V_CFG_00		(0x0170)
-#घोषणा VPIF_CH3_V_CFG_01		(0x0174)
-#घोषणा VPIF_CH3_V_CFG_02		(0x0178)
-#घोषणा VPIF_CH3_V_CFG_03		(0x017c)
-#घोषणा VPIF_CH3_HANC0_STRT		(0x0180)
-#घोषणा VPIF_CH3_HANC0_SIZE		(0x0184)
-#घोषणा VPIF_CH3_HANC1_STRT		(0x0188)
-#घोषणा VPIF_CH3_HANC1_SIZE		(0x018c)
-#घोषणा VPIF_CH3_VANC0_STRT		(0x0190)
-#घोषणा VPIF_CH3_VANC0_SIZE		(0x0194)
-#घोषणा VPIF_CH3_VANC1_STRT		(0x0198)
-#घोषणा VPIF_CH3_VANC1_SIZE		(0x019c)
+#define VPIF_CH3_TOP_STRT_ADD_LUMA	(0x0140)
+#define VPIF_CH3_BTM_STRT_ADD_LUMA	(0x0144)
+#define VPIF_CH3_TOP_STRT_ADD_CHROMA	(0x0148)
+#define VPIF_CH3_BTM_STRT_ADD_CHROMA	(0x014c)
+#define VPIF_CH3_TOP_STRT_ADD_HANC	(0x0150)
+#define VPIF_CH3_BTM_STRT_ADD_HANC	(0x0154)
+#define VPIF_CH3_TOP_STRT_ADD_VANC	(0x0158)
+#define VPIF_CH3_BTM_STRT_ADD_VANC	(0x015c)
+#define VPIF_CH3_SP_CFG			(0x0160)
+#define VPIF_CH3_IMG_ADD_OFST		(0x0164)
+#define VPIF_CH3_HANC_ADD_OFST		(0x0168)
+#define VPIF_CH3_H_CFG			(0x016c)
+#define VPIF_CH3_V_CFG_00		(0x0170)
+#define VPIF_CH3_V_CFG_01		(0x0174)
+#define VPIF_CH3_V_CFG_02		(0x0178)
+#define VPIF_CH3_V_CFG_03		(0x017c)
+#define VPIF_CH3_HANC0_STRT		(0x0180)
+#define VPIF_CH3_HANC0_SIZE		(0x0184)
+#define VPIF_CH3_HANC1_STRT		(0x0188)
+#define VPIF_CH3_HANC1_SIZE		(0x018c)
+#define VPIF_CH3_VANC0_STRT		(0x0190)
+#define VPIF_CH3_VANC0_SIZE		(0x0194)
+#define VPIF_CH3_VANC1_STRT		(0x0198)
+#define VPIF_CH3_VANC1_SIZE		(0x019c)
 
-#घोषणा VPIF_IODFT_CTRL			(0x01c0)
+#define VPIF_IODFT_CTRL			(0x01c0)
 
-/* Functions क्रम bit Manipulation */
-अटल अंतरभूत व्योम vpअगर_set_bit(u32 reg, u32 bit)
-अणु
+/* Functions for bit Manipulation */
+static inline void vpif_set_bit(u32 reg, u32 bit)
+{
 	regw((regr(reg)) | (0x01 << bit), reg);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम vpअगर_clr_bit(u32 reg, u32 bit)
-अणु
+static inline void vpif_clr_bit(u32 reg, u32 bit)
+{
 	regw(((regr(reg)) & ~(0x01 << bit)), reg);
-पूर्ण
+}
 
-/* Macro क्रम Generating mask */
-#अगर_घोषित GENERATE_MASK
-#अघोषित GENERATE_MASK
-#पूर्ण_अगर
+/* Macro for Generating mask */
+#ifdef GENERATE_MASK
+#undef GENERATE_MASK
+#endif
 
-#घोषणा GENERATE_MASK(bits, pos) \
+#define GENERATE_MASK(bits, pos) \
 		((((0xFFFFFFFF) << (32 - bits)) >> (32 - bits)) << pos)
 
-/* Bit positions in the channel control रेजिस्टरs */
-#घोषणा VPIF_CH_DATA_MODE_BIT	(2)
-#घोषणा VPIF_CH_YC_MUX_BIT	(3)
-#घोषणा VPIF_CH_SDR_FMT_BIT	(4)
-#घोषणा VPIF_CH_HANC_EN_BIT	(8)
-#घोषणा VPIF_CH_VANC_EN_BIT	(9)
+/* Bit positions in the channel control registers */
+#define VPIF_CH_DATA_MODE_BIT	(2)
+#define VPIF_CH_YC_MUX_BIT	(3)
+#define VPIF_CH_SDR_FMT_BIT	(4)
+#define VPIF_CH_HANC_EN_BIT	(8)
+#define VPIF_CH_VANC_EN_BIT	(9)
 
-#घोषणा VPIF_CAPTURE_CH_NIP	(10)
-#घोषणा VPIF_DISPLAY_CH_NIP	(11)
+#define VPIF_CAPTURE_CH_NIP	(10)
+#define VPIF_DISPLAY_CH_NIP	(11)
 
-#घोषणा VPIF_DISPLAY_PIX_EN_BIT	(10)
+#define VPIF_DISPLAY_PIX_EN_BIT	(10)
 
-#घोषणा VPIF_CH_INPUT_FIELD_FRAME_BIT	(12)
+#define VPIF_CH_INPUT_FIELD_FRAME_BIT	(12)
 
-#घोषणा VPIF_CH_FID_POLARITY_BIT	(15)
-#घोषणा VPIF_CH_V_VALID_POLARITY_BIT	(14)
-#घोषणा VPIF_CH_H_VALID_POLARITY_BIT	(13)
-#घोषणा VPIF_CH_DATA_WIDTH_BIT		(28)
+#define VPIF_CH_FID_POLARITY_BIT	(15)
+#define VPIF_CH_V_VALID_POLARITY_BIT	(14)
+#define VPIF_CH_H_VALID_POLARITY_BIT	(13)
+#define VPIF_CH_DATA_WIDTH_BIT		(28)
 
-#घोषणा VPIF_CH_CLK_EDGE_CTRL_BIT	(31)
+#define VPIF_CH_CLK_EDGE_CTRL_BIT	(31)
 
 /* Mask various length */
-#घोषणा VPIF_CH_EAVSAV_MASK	GENERATE_MASK(13, 0)
-#घोषणा VPIF_CH_LEN_MASK	GENERATE_MASK(12, 0)
-#घोषणा VPIF_CH_WIDTH_MASK	GENERATE_MASK(13, 0)
-#घोषणा VPIF_CH_LEN_SHIFT	(16)
+#define VPIF_CH_EAVSAV_MASK	GENERATE_MASK(13, 0)
+#define VPIF_CH_LEN_MASK	GENERATE_MASK(12, 0)
+#define VPIF_CH_WIDTH_MASK	GENERATE_MASK(13, 0)
+#define VPIF_CH_LEN_SHIFT	(16)
 
-/* VPIF masks क्रम रेजिस्टरs */
-#घोषणा VPIF_REQ_SIZE_MASK	(0x1ff)
+/* VPIF masks for registers */
+#define VPIF_REQ_SIZE_MASK	(0x1ff)
 
-/* bit posotion of पूर्णांकerrupt vpअगर_ch_पूर्णांकr रेजिस्टर */
-#घोषणा VPIF_INTEN_FRAME_CH0	(0x00000001)
-#घोषणा VPIF_INTEN_FRAME_CH1	(0x00000002)
-#घोषणा VPIF_INTEN_FRAME_CH2	(0x00000004)
-#घोषणा VPIF_INTEN_FRAME_CH3	(0x00000008)
+/* bit posotion of interrupt vpif_ch_intr register */
+#define VPIF_INTEN_FRAME_CH0	(0x00000001)
+#define VPIF_INTEN_FRAME_CH1	(0x00000002)
+#define VPIF_INTEN_FRAME_CH2	(0x00000004)
+#define VPIF_INTEN_FRAME_CH3	(0x00000008)
 
-/* bit position of घड़ी and channel enable in vpअगर_chn_ctrl रेजिस्टर */
+/* bit position of clock and channel enable in vpif_chn_ctrl register */
 
-#घोषणा VPIF_CH0_CLK_EN		(0x00000002)
-#घोषणा VPIF_CH0_EN		(0x00000001)
-#घोषणा VPIF_CH1_CLK_EN		(0x00000002)
-#घोषणा VPIF_CH1_EN		(0x00000001)
-#घोषणा VPIF_CH2_CLK_EN		(0x00000002)
-#घोषणा VPIF_CH2_EN		(0x00000001)
-#घोषणा VPIF_CH3_CLK_EN		(0x00000002)
-#घोषणा VPIF_CH3_EN		(0x00000001)
-#घोषणा VPIF_CH_CLK_EN		(0x00000002)
-#घोषणा VPIF_CH_EN		(0x00000001)
+#define VPIF_CH0_CLK_EN		(0x00000002)
+#define VPIF_CH0_EN		(0x00000001)
+#define VPIF_CH1_CLK_EN		(0x00000002)
+#define VPIF_CH1_EN		(0x00000001)
+#define VPIF_CH2_CLK_EN		(0x00000002)
+#define VPIF_CH2_EN		(0x00000001)
+#define VPIF_CH3_CLK_EN		(0x00000002)
+#define VPIF_CH3_EN		(0x00000001)
+#define VPIF_CH_CLK_EN		(0x00000002)
+#define VPIF_CH_EN		(0x00000001)
 
-#घोषणा VPIF_INT_TOP	(0x00)
-#घोषणा VPIF_INT_BOTTOM	(0x01)
-#घोषणा VPIF_INT_BOTH	(0x02)
+#define VPIF_INT_TOP	(0x00)
+#define VPIF_INT_BOTTOM	(0x01)
+#define VPIF_INT_BOTH	(0x02)
 
-#घोषणा VPIF_CH0_INT_CTRL_SHIFT	(6)
-#घोषणा VPIF_CH1_INT_CTRL_SHIFT	(6)
-#घोषणा VPIF_CH2_INT_CTRL_SHIFT	(6)
-#घोषणा VPIF_CH3_INT_CTRL_SHIFT	(6)
-#घोषणा VPIF_CH_INT_CTRL_SHIFT	(6)
+#define VPIF_CH0_INT_CTRL_SHIFT	(6)
+#define VPIF_CH1_INT_CTRL_SHIFT	(6)
+#define VPIF_CH2_INT_CTRL_SHIFT	(6)
+#define VPIF_CH3_INT_CTRL_SHIFT	(6)
+#define VPIF_CH_INT_CTRL_SHIFT	(6)
 
-#घोषणा VPIF_CH2_CLIP_ANC_EN	14
-#घोषणा VPIF_CH2_CLIP_ACTIVE_EN	13
+#define VPIF_CH2_CLIP_ANC_EN	14
+#define VPIF_CH2_CLIP_ACTIVE_EN	13
 
-#घोषणा VPIF_CH3_CLIP_ANC_EN	14
-#घोषणा VPIF_CH3_CLIP_ACTIVE_EN	13
+#define VPIF_CH3_CLIP_ANC_EN	14
+#define VPIF_CH3_CLIP_ACTIVE_EN	13
 
-/* enabled पूर्णांकerrupt on both the fields on vpid_ch0_ctrl रेजिस्टर */
-#घोषणा channel0_पूर्णांकr_निश्चित()	(regw((regr(VPIF_CH0_CTRL)|\
+/* enabled interrupt on both the fields on vpid_ch0_ctrl register */
+#define channel0_intr_assert()	(regw((regr(VPIF_CH0_CTRL)|\
 	(VPIF_INT_BOTH << VPIF_CH0_INT_CTRL_SHIFT)), VPIF_CH0_CTRL))
 
-/* enabled पूर्णांकerrupt on both the fields on vpid_ch1_ctrl रेजिस्टर */
-#घोषणा channel1_पूर्णांकr_निश्चित()	(regw((regr(VPIF_CH1_CTRL)|\
+/* enabled interrupt on both the fields on vpid_ch1_ctrl register */
+#define channel1_intr_assert()	(regw((regr(VPIF_CH1_CTRL)|\
 	(VPIF_INT_BOTH << VPIF_CH1_INT_CTRL_SHIFT)), VPIF_CH1_CTRL))
 
-/* enabled पूर्णांकerrupt on both the fields on vpid_ch0_ctrl रेजिस्टर */
-#घोषणा channel2_पूर्णांकr_निश्चित()	(regw((regr(VPIF_CH2_CTRL)|\
+/* enabled interrupt on both the fields on vpid_ch0_ctrl register */
+#define channel2_intr_assert()	(regw((regr(VPIF_CH2_CTRL)|\
 	(VPIF_INT_BOTH << VPIF_CH2_INT_CTRL_SHIFT)), VPIF_CH2_CTRL))
 
-/* enabled पूर्णांकerrupt on both the fields on vpid_ch1_ctrl रेजिस्टर */
-#घोषणा channel3_पूर्णांकr_निश्चित()	(regw((regr(VPIF_CH3_CTRL)|\
+/* enabled interrupt on both the fields on vpid_ch1_ctrl register */
+#define channel3_intr_assert()	(regw((regr(VPIF_CH3_CTRL)|\
 	(VPIF_INT_BOTH << VPIF_CH3_INT_CTRL_SHIFT)), VPIF_CH3_CTRL))
 
-#घोषणा VPIF_CH_FID_MASK	(0x20)
-#घोषणा VPIF_CH_FID_SHIFT	(5)
+#define VPIF_CH_FID_MASK	(0x20)
+#define VPIF_CH_FID_SHIFT	(5)
 
-#घोषणा VPIF_NTSC_VBI_START_FIELD0	(1)
-#घोषणा VPIF_NTSC_VBI_START_FIELD1	(263)
-#घोषणा VPIF_PAL_VBI_START_FIELD0	(624)
-#घोषणा VPIF_PAL_VBI_START_FIELD1	(311)
+#define VPIF_NTSC_VBI_START_FIELD0	(1)
+#define VPIF_NTSC_VBI_START_FIELD1	(263)
+#define VPIF_PAL_VBI_START_FIELD0	(624)
+#define VPIF_PAL_VBI_START_FIELD1	(311)
 
-#घोषणा VPIF_NTSC_HBI_START_FIELD0	(1)
-#घोषणा VPIF_NTSC_HBI_START_FIELD1	(263)
-#घोषणा VPIF_PAL_HBI_START_FIELD0	(624)
-#घोषणा VPIF_PAL_HBI_START_FIELD1	(311)
+#define VPIF_NTSC_HBI_START_FIELD0	(1)
+#define VPIF_NTSC_HBI_START_FIELD1	(263)
+#define VPIF_PAL_HBI_START_FIELD0	(624)
+#define VPIF_PAL_HBI_START_FIELD1	(311)
 
-#घोषणा VPIF_NTSC_VBI_COUNT_FIELD0	(20)
-#घोषणा VPIF_NTSC_VBI_COUNT_FIELD1	(19)
-#घोषणा VPIF_PAL_VBI_COUNT_FIELD0	(24)
-#घोषणा VPIF_PAL_VBI_COUNT_FIELD1	(25)
+#define VPIF_NTSC_VBI_COUNT_FIELD0	(20)
+#define VPIF_NTSC_VBI_COUNT_FIELD1	(19)
+#define VPIF_PAL_VBI_COUNT_FIELD0	(24)
+#define VPIF_PAL_VBI_COUNT_FIELD1	(25)
 
-#घोषणा VPIF_NTSC_HBI_COUNT_FIELD0	(263)
-#घोषणा VPIF_NTSC_HBI_COUNT_FIELD1	(262)
-#घोषणा VPIF_PAL_HBI_COUNT_FIELD0	(312)
-#घोषणा VPIF_PAL_HBI_COUNT_FIELD1	(313)
+#define VPIF_NTSC_HBI_COUNT_FIELD0	(263)
+#define VPIF_NTSC_HBI_COUNT_FIELD1	(262)
+#define VPIF_PAL_HBI_COUNT_FIELD0	(312)
+#define VPIF_PAL_HBI_COUNT_FIELD1	(313)
 
-#घोषणा VPIF_NTSC_VBI_SAMPLES_PER_LINE	(720)
-#घोषणा VPIF_PAL_VBI_SAMPLES_PER_LINE	(720)
-#घोषणा VPIF_NTSC_HBI_SAMPLES_PER_LINE	(268)
-#घोषणा VPIF_PAL_HBI_SAMPLES_PER_LINE	(280)
+#define VPIF_NTSC_VBI_SAMPLES_PER_LINE	(720)
+#define VPIF_PAL_VBI_SAMPLES_PER_LINE	(720)
+#define VPIF_NTSC_HBI_SAMPLES_PER_LINE	(268)
+#define VPIF_PAL_HBI_SAMPLES_PER_LINE	(280)
 
-#घोषणा VPIF_CH_VANC_EN			(0x20)
-#घोषणा VPIF_DMA_REQ_SIZE		(0x080)
-#घोषणा VPIF_EMULATION_DISABLE		(0x01)
+#define VPIF_CH_VANC_EN			(0x20)
+#define VPIF_DMA_REQ_SIZE		(0x080)
+#define VPIF_EMULATION_DISABLE		(0x01)
 
-बाह्य u8 irq_vpअगर_capture_channel[VPIF_NUM_CHANNELS];
+extern u8 irq_vpif_capture_channel[VPIF_NUM_CHANNELS];
 
-/* अंतरभूत function to enable/disable channel0 */
-अटल अंतरभूत व्योम enable_channel0(पूर्णांक enable)
-अणु
-	अगर (enable)
+/* inline function to enable/disable channel0 */
+static inline void enable_channel0(int enable)
+{
+	if (enable)
 		regw((regr(VPIF_CH0_CTRL) | (VPIF_CH0_EN)), VPIF_CH0_CTRL);
-	अन्यथा
+	else
 		regw((regr(VPIF_CH0_CTRL) & (~VPIF_CH0_EN)), VPIF_CH0_CTRL);
-पूर्ण
+}
 
-/* अंतरभूत function to enable/disable channel1 */
-अटल अंतरभूत व्योम enable_channel1(पूर्णांक enable)
-अणु
-	अगर (enable)
+/* inline function to enable/disable channel1 */
+static inline void enable_channel1(int enable)
+{
+	if (enable)
 		regw((regr(VPIF_CH1_CTRL) | (VPIF_CH1_EN)), VPIF_CH1_CTRL);
-	अन्यथा
+	else
 		regw((regr(VPIF_CH1_CTRL) & (~VPIF_CH1_EN)), VPIF_CH1_CTRL);
-पूर्ण
+}
 
-/* अंतरभूत function to enable पूर्णांकerrupt क्रम channel0 */
-अटल अंतरभूत व्योम channel0_पूर्णांकr_enable(पूर्णांक enable)
-अणु
-	अचिन्हित दीर्घ flags;
+/* inline function to enable interrupt for channel0 */
+static inline void channel0_intr_enable(int enable)
+{
+	unsigned long flags;
 
-	spin_lock_irqsave(&vpअगर_lock, flags);
+	spin_lock_irqsave(&vpif_lock, flags);
 
-	अगर (enable) अणु
+	if (enable) {
 		regw((regr(VPIF_INTEN) | 0x10), VPIF_INTEN);
 		regw((regr(VPIF_INTEN_SET) | 0x10), VPIF_INTEN_SET);
 
 		regw((regr(VPIF_INTEN) | VPIF_INTEN_FRAME_CH0), VPIF_INTEN);
 		regw((regr(VPIF_INTEN_SET) | VPIF_INTEN_FRAME_CH0),
 							VPIF_INTEN_SET);
-	पूर्ण अन्यथा अणु
+	} else {
 		regw((regr(VPIF_INTEN) & (~VPIF_INTEN_FRAME_CH0)), VPIF_INTEN);
 		regw((regr(VPIF_INTEN_SET) | VPIF_INTEN_FRAME_CH0),
 							VPIF_INTEN_SET);
-	पूर्ण
-	spin_unlock_irqrestore(&vpअगर_lock, flags);
-पूर्ण
+	}
+	spin_unlock_irqrestore(&vpif_lock, flags);
+}
 
-/* अंतरभूत function to enable पूर्णांकerrupt क्रम channel1 */
-अटल अंतरभूत व्योम channel1_पूर्णांकr_enable(पूर्णांक enable)
-अणु
-	अचिन्हित दीर्घ flags;
+/* inline function to enable interrupt for channel1 */
+static inline void channel1_intr_enable(int enable)
+{
+	unsigned long flags;
 
-	spin_lock_irqsave(&vpअगर_lock, flags);
+	spin_lock_irqsave(&vpif_lock, flags);
 
-	अगर (enable) अणु
+	if (enable) {
 		regw((regr(VPIF_INTEN) | 0x10), VPIF_INTEN);
 		regw((regr(VPIF_INTEN_SET) | 0x10), VPIF_INTEN_SET);
 
 		regw((regr(VPIF_INTEN) | VPIF_INTEN_FRAME_CH1), VPIF_INTEN);
 		regw((regr(VPIF_INTEN_SET) | VPIF_INTEN_FRAME_CH1),
 							VPIF_INTEN_SET);
-	पूर्ण अन्यथा अणु
+	} else {
 		regw((regr(VPIF_INTEN) & (~VPIF_INTEN_FRAME_CH1)), VPIF_INTEN);
 		regw((regr(VPIF_INTEN_SET) | VPIF_INTEN_FRAME_CH1),
 							VPIF_INTEN_SET);
-	पूर्ण
-	spin_unlock_irqrestore(&vpअगर_lock, flags);
-पूर्ण
+	}
+	spin_unlock_irqrestore(&vpif_lock, flags);
+}
 
-/* अंतरभूत function to set buffer addresses in हाल of Y/C non mux mode */
-अटल अंतरभूत व्योम ch0_set_videobuf_addr_yc_nmux(अचिन्हित दीर्घ top_strt_luma,
-						 अचिन्हित दीर्घ bपंचांग_strt_luma,
-						 अचिन्हित दीर्घ top_strt_chroma,
-						 अचिन्हित दीर्घ bपंचांग_strt_chroma)
-अणु
+/* inline function to set buffer addresses in case of Y/C non mux mode */
+static inline void ch0_set_videobuf_addr_yc_nmux(unsigned long top_strt_luma,
+						 unsigned long btm_strt_luma,
+						 unsigned long top_strt_chroma,
+						 unsigned long btm_strt_chroma)
+{
 	regw(top_strt_luma, VPIF_CH0_TOP_STRT_ADD_LUMA);
-	regw(bपंचांग_strt_luma, VPIF_CH0_BTM_STRT_ADD_LUMA);
+	regw(btm_strt_luma, VPIF_CH0_BTM_STRT_ADD_LUMA);
 	regw(top_strt_chroma, VPIF_CH1_TOP_STRT_ADD_CHROMA);
-	regw(bपंचांग_strt_chroma, VPIF_CH1_BTM_STRT_ADD_CHROMA);
-पूर्ण
+	regw(btm_strt_chroma, VPIF_CH1_BTM_STRT_ADD_CHROMA);
+}
 
-/* अंतरभूत function to set buffer addresses in VPIF रेजिस्टरs क्रम video data */
-अटल अंतरभूत व्योम ch0_set_videobuf_addr(अचिन्हित दीर्घ top_strt_luma,
-					 अचिन्हित दीर्घ bपंचांग_strt_luma,
-					 अचिन्हित दीर्घ top_strt_chroma,
-					 अचिन्हित दीर्घ bपंचांग_strt_chroma)
-अणु
+/* inline function to set buffer addresses in VPIF registers for video data */
+static inline void ch0_set_videobuf_addr(unsigned long top_strt_luma,
+					 unsigned long btm_strt_luma,
+					 unsigned long top_strt_chroma,
+					 unsigned long btm_strt_chroma)
+{
 	regw(top_strt_luma, VPIF_CH0_TOP_STRT_ADD_LUMA);
-	regw(bपंचांग_strt_luma, VPIF_CH0_BTM_STRT_ADD_LUMA);
+	regw(btm_strt_luma, VPIF_CH0_BTM_STRT_ADD_LUMA);
 	regw(top_strt_chroma, VPIF_CH0_TOP_STRT_ADD_CHROMA);
-	regw(bपंचांग_strt_chroma, VPIF_CH0_BTM_STRT_ADD_CHROMA);
-पूर्ण
+	regw(btm_strt_chroma, VPIF_CH0_BTM_STRT_ADD_CHROMA);
+}
 
-अटल अंतरभूत व्योम ch1_set_videobuf_addr(अचिन्हित दीर्घ top_strt_luma,
-					 अचिन्हित दीर्घ bपंचांग_strt_luma,
-					 अचिन्हित दीर्घ top_strt_chroma,
-					 अचिन्हित दीर्घ bपंचांग_strt_chroma)
-अणु
+static inline void ch1_set_videobuf_addr(unsigned long top_strt_luma,
+					 unsigned long btm_strt_luma,
+					 unsigned long top_strt_chroma,
+					 unsigned long btm_strt_chroma)
+{
 
 	regw(top_strt_luma, VPIF_CH1_TOP_STRT_ADD_LUMA);
-	regw(bपंचांग_strt_luma, VPIF_CH1_BTM_STRT_ADD_LUMA);
+	regw(btm_strt_luma, VPIF_CH1_BTM_STRT_ADD_LUMA);
 	regw(top_strt_chroma, VPIF_CH1_TOP_STRT_ADD_CHROMA);
-	regw(bपंचांग_strt_chroma, VPIF_CH1_BTM_STRT_ADD_CHROMA);
-पूर्ण
+	regw(btm_strt_chroma, VPIF_CH1_BTM_STRT_ADD_CHROMA);
+}
 
-अटल अंतरभूत व्योम ch0_set_vbi_addr(अचिन्हित दीर्घ top_vbi,
-	अचिन्हित दीर्घ bपंचांग_vbi, अचिन्हित दीर्घ a, अचिन्हित दीर्घ b)
-अणु
+static inline void ch0_set_vbi_addr(unsigned long top_vbi,
+	unsigned long btm_vbi, unsigned long a, unsigned long b)
+{
 	regw(top_vbi, VPIF_CH0_TOP_STRT_ADD_VANC);
-	regw(bपंचांग_vbi, VPIF_CH0_BTM_STRT_ADD_VANC);
-पूर्ण
+	regw(btm_vbi, VPIF_CH0_BTM_STRT_ADD_VANC);
+}
 
-अटल अंतरभूत व्योम ch0_set_hbi_addr(अचिन्हित दीर्घ top_vbi,
-	अचिन्हित दीर्घ bपंचांग_vbi, अचिन्हित दीर्घ a, अचिन्हित दीर्घ b)
-अणु
+static inline void ch0_set_hbi_addr(unsigned long top_vbi,
+	unsigned long btm_vbi, unsigned long a, unsigned long b)
+{
 	regw(top_vbi, VPIF_CH0_TOP_STRT_ADD_HANC);
-	regw(bपंचांग_vbi, VPIF_CH0_BTM_STRT_ADD_HANC);
-पूर्ण
+	regw(btm_vbi, VPIF_CH0_BTM_STRT_ADD_HANC);
+}
 
-अटल अंतरभूत व्योम ch1_set_vbi_addr(अचिन्हित दीर्घ top_vbi,
-	अचिन्हित दीर्घ bपंचांग_vbi, अचिन्हित दीर्घ a, अचिन्हित दीर्घ b)
-अणु
+static inline void ch1_set_vbi_addr(unsigned long top_vbi,
+	unsigned long btm_vbi, unsigned long a, unsigned long b)
+{
 	regw(top_vbi, VPIF_CH1_TOP_STRT_ADD_VANC);
-	regw(bपंचांग_vbi, VPIF_CH1_BTM_STRT_ADD_VANC);
-पूर्ण
+	regw(btm_vbi, VPIF_CH1_BTM_STRT_ADD_VANC);
+}
 
-अटल अंतरभूत व्योम ch1_set_hbi_addr(अचिन्हित दीर्घ top_vbi,
-	अचिन्हित दीर्घ bपंचांग_vbi, अचिन्हित दीर्घ a, अचिन्हित दीर्घ b)
-अणु
+static inline void ch1_set_hbi_addr(unsigned long top_vbi,
+	unsigned long btm_vbi, unsigned long a, unsigned long b)
+{
 	regw(top_vbi, VPIF_CH1_TOP_STRT_ADD_HANC);
-	regw(bपंचांग_vbi, VPIF_CH1_BTM_STRT_ADD_HANC);
-पूर्ण
+	regw(btm_vbi, VPIF_CH1_BTM_STRT_ADD_HANC);
+}
 
 /* Inline function to enable raw vbi in the given channel */
-अटल अंतरभूत व्योम disable_raw_feature(u8 channel_id, u8 index)
-अणु
+static inline void disable_raw_feature(u8 channel_id, u8 index)
+{
 	u32 ctrl_reg;
-	अगर (0 == channel_id)
+	if (0 == channel_id)
 		ctrl_reg = VPIF_CH0_CTRL;
-	अन्यथा
+	else
 		ctrl_reg = VPIF_CH1_CTRL;
 
-	अगर (1 == index)
-		vpअगर_clr_bit(ctrl_reg, VPIF_CH_VANC_EN_BIT);
-	अन्यथा
-		vpअगर_clr_bit(ctrl_reg, VPIF_CH_HANC_EN_BIT);
-पूर्ण
+	if (1 == index)
+		vpif_clr_bit(ctrl_reg, VPIF_CH_VANC_EN_BIT);
+	else
+		vpif_clr_bit(ctrl_reg, VPIF_CH_HANC_EN_BIT);
+}
 
-अटल अंतरभूत व्योम enable_raw_feature(u8 channel_id, u8 index)
-अणु
+static inline void enable_raw_feature(u8 channel_id, u8 index)
+{
 	u32 ctrl_reg;
-	अगर (0 == channel_id)
+	if (0 == channel_id)
 		ctrl_reg = VPIF_CH0_CTRL;
-	अन्यथा
+	else
 		ctrl_reg = VPIF_CH1_CTRL;
 
-	अगर (1 == index)
-		vpअगर_set_bit(ctrl_reg, VPIF_CH_VANC_EN_BIT);
-	अन्यथा
-		vpअगर_set_bit(ctrl_reg, VPIF_CH_HANC_EN_BIT);
-पूर्ण
+	if (1 == index)
+		vpif_set_bit(ctrl_reg, VPIF_CH_VANC_EN_BIT);
+	else
+		vpif_set_bit(ctrl_reg, VPIF_CH_HANC_EN_BIT);
+}
 
-/* अंतरभूत function to enable/disable channel2 */
-अटल अंतरभूत व्योम enable_channel2(पूर्णांक enable)
-अणु
-	अगर (enable) अणु
+/* inline function to enable/disable channel2 */
+static inline void enable_channel2(int enable)
+{
+	if (enable) {
 		regw((regr(VPIF_CH2_CTRL) | (VPIF_CH2_CLK_EN)), VPIF_CH2_CTRL);
 		regw((regr(VPIF_CH2_CTRL) | (VPIF_CH2_EN)), VPIF_CH2_CTRL);
-	पूर्ण अन्यथा अणु
+	} else {
 		regw((regr(VPIF_CH2_CTRL) & (~VPIF_CH2_CLK_EN)), VPIF_CH2_CTRL);
 		regw((regr(VPIF_CH2_CTRL) & (~VPIF_CH2_EN)), VPIF_CH2_CTRL);
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* अंतरभूत function to enable/disable channel3 */
-अटल अंतरभूत व्योम enable_channel3(पूर्णांक enable)
-अणु
-	अगर (enable) अणु
+/* inline function to enable/disable channel3 */
+static inline void enable_channel3(int enable)
+{
+	if (enable) {
 		regw((regr(VPIF_CH3_CTRL) | (VPIF_CH3_CLK_EN)), VPIF_CH3_CTRL);
 		regw((regr(VPIF_CH3_CTRL) | (VPIF_CH3_EN)), VPIF_CH3_CTRL);
-	पूर्ण अन्यथा अणु
+	} else {
 		regw((regr(VPIF_CH3_CTRL) & (~VPIF_CH3_CLK_EN)), VPIF_CH3_CTRL);
 		regw((regr(VPIF_CH3_CTRL) & (~VPIF_CH3_EN)), VPIF_CH3_CTRL);
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* अंतरभूत function to enable पूर्णांकerrupt क्रम channel2 */
-अटल अंतरभूत व्योम channel2_पूर्णांकr_enable(पूर्णांक enable)
-अणु
-	अचिन्हित दीर्घ flags;
+/* inline function to enable interrupt for channel2 */
+static inline void channel2_intr_enable(int enable)
+{
+	unsigned long flags;
 
-	spin_lock_irqsave(&vpअगर_lock, flags);
+	spin_lock_irqsave(&vpif_lock, flags);
 
-	अगर (enable) अणु
+	if (enable) {
 		regw((regr(VPIF_INTEN) | 0x10), VPIF_INTEN);
 		regw((regr(VPIF_INTEN_SET) | 0x10), VPIF_INTEN_SET);
 		regw((regr(VPIF_INTEN) | VPIF_INTEN_FRAME_CH2), VPIF_INTEN);
 		regw((regr(VPIF_INTEN_SET) | VPIF_INTEN_FRAME_CH2),
 							VPIF_INTEN_SET);
-	पूर्ण अन्यथा अणु
+	} else {
 		regw((regr(VPIF_INTEN) & (~VPIF_INTEN_FRAME_CH2)), VPIF_INTEN);
 		regw((regr(VPIF_INTEN_SET) | VPIF_INTEN_FRAME_CH2),
 							VPIF_INTEN_SET);
-	पूर्ण
-	spin_unlock_irqrestore(&vpअगर_lock, flags);
-पूर्ण
+	}
+	spin_unlock_irqrestore(&vpif_lock, flags);
+}
 
-/* अंतरभूत function to enable पूर्णांकerrupt क्रम channel3 */
-अटल अंतरभूत व्योम channel3_पूर्णांकr_enable(पूर्णांक enable)
-अणु
-	अचिन्हित दीर्घ flags;
+/* inline function to enable interrupt for channel3 */
+static inline void channel3_intr_enable(int enable)
+{
+	unsigned long flags;
 
-	spin_lock_irqsave(&vpअगर_lock, flags);
+	spin_lock_irqsave(&vpif_lock, flags);
 
-	अगर (enable) अणु
+	if (enable) {
 		regw((regr(VPIF_INTEN) | 0x10), VPIF_INTEN);
 		regw((regr(VPIF_INTEN_SET) | 0x10), VPIF_INTEN_SET);
 
 		regw((regr(VPIF_INTEN) | VPIF_INTEN_FRAME_CH3), VPIF_INTEN);
 		regw((regr(VPIF_INTEN_SET) | VPIF_INTEN_FRAME_CH3),
 							VPIF_INTEN_SET);
-	पूर्ण अन्यथा अणु
+	} else {
 		regw((regr(VPIF_INTEN) & (~VPIF_INTEN_FRAME_CH3)), VPIF_INTEN);
 		regw((regr(VPIF_INTEN_SET) | VPIF_INTEN_FRAME_CH3),
 							VPIF_INTEN_SET);
-	पूर्ण
-	spin_unlock_irqrestore(&vpअगर_lock, flags);
-पूर्ण
+	}
+	spin_unlock_irqrestore(&vpif_lock, flags);
+}
 
-/* अंतरभूत function to enable raw vbi data क्रम channel2 */
-अटल अंतरभूत व्योम channel2_raw_enable(पूर्णांक enable, u8 index)
-अणु
+/* inline function to enable raw vbi data for channel2 */
+static inline void channel2_raw_enable(int enable, u8 index)
+{
 	u32 mask;
 
-	अगर (1 == index)
+	if (1 == index)
 		mask = VPIF_CH_VANC_EN_BIT;
-	अन्यथा
+	else
 		mask = VPIF_CH_HANC_EN_BIT;
 
-	अगर (enable)
-		vpअगर_set_bit(VPIF_CH2_CTRL, mask);
-	अन्यथा
-		vpअगर_clr_bit(VPIF_CH2_CTRL, mask);
-पूर्ण
+	if (enable)
+		vpif_set_bit(VPIF_CH2_CTRL, mask);
+	else
+		vpif_clr_bit(VPIF_CH2_CTRL, mask);
+}
 
-/* अंतरभूत function to enable raw vbi data क्रम channel3*/
-अटल अंतरभूत व्योम channel3_raw_enable(पूर्णांक enable, u8 index)
-अणु
+/* inline function to enable raw vbi data for channel3*/
+static inline void channel3_raw_enable(int enable, u8 index)
+{
 	u32 mask;
 
-	अगर (1 == index)
+	if (1 == index)
 		mask = VPIF_CH_VANC_EN_BIT;
-	अन्यथा
+	else
 		mask = VPIF_CH_HANC_EN_BIT;
 
-	अगर (enable)
-		vpअगर_set_bit(VPIF_CH3_CTRL, mask);
-	अन्यथा
-		vpअगर_clr_bit(VPIF_CH3_CTRL, mask);
-पूर्ण
+	if (enable)
+		vpif_set_bit(VPIF_CH3_CTRL, mask);
+	else
+		vpif_clr_bit(VPIF_CH3_CTRL, mask);
+}
 
-/* function to enable clipping (क्रम both active and blanking regions) on ch 2 */
-अटल अंतरभूत व्योम channel2_clipping_enable(पूर्णांक enable)
-अणु
-	अगर (enable) अणु
-		vpअगर_set_bit(VPIF_CH2_CTRL, VPIF_CH2_CLIP_ANC_EN);
-		vpअगर_set_bit(VPIF_CH2_CTRL, VPIF_CH2_CLIP_ACTIVE_EN);
-	पूर्ण अन्यथा अणु
-		vpअगर_clr_bit(VPIF_CH2_CTRL, VPIF_CH2_CLIP_ANC_EN);
-		vpअगर_clr_bit(VPIF_CH2_CTRL, VPIF_CH2_CLIP_ACTIVE_EN);
-	पूर्ण
-पूर्ण
+/* function to enable clipping (for both active and blanking regions) on ch 2 */
+static inline void channel2_clipping_enable(int enable)
+{
+	if (enable) {
+		vpif_set_bit(VPIF_CH2_CTRL, VPIF_CH2_CLIP_ANC_EN);
+		vpif_set_bit(VPIF_CH2_CTRL, VPIF_CH2_CLIP_ACTIVE_EN);
+	} else {
+		vpif_clr_bit(VPIF_CH2_CTRL, VPIF_CH2_CLIP_ANC_EN);
+		vpif_clr_bit(VPIF_CH2_CTRL, VPIF_CH2_CLIP_ACTIVE_EN);
+	}
+}
 
-/* function to enable clipping (क्रम both active and blanking regions) on ch 3 */
-अटल अंतरभूत व्योम channel3_clipping_enable(पूर्णांक enable)
-अणु
-	अगर (enable) अणु
-		vpअगर_set_bit(VPIF_CH3_CTRL, VPIF_CH3_CLIP_ANC_EN);
-		vpअगर_set_bit(VPIF_CH3_CTRL, VPIF_CH3_CLIP_ACTIVE_EN);
-	पूर्ण अन्यथा अणु
-		vpअगर_clr_bit(VPIF_CH3_CTRL, VPIF_CH3_CLIP_ANC_EN);
-		vpअगर_clr_bit(VPIF_CH3_CTRL, VPIF_CH3_CLIP_ACTIVE_EN);
-	पूर्ण
-पूर्ण
+/* function to enable clipping (for both active and blanking regions) on ch 3 */
+static inline void channel3_clipping_enable(int enable)
+{
+	if (enable) {
+		vpif_set_bit(VPIF_CH3_CTRL, VPIF_CH3_CLIP_ANC_EN);
+		vpif_set_bit(VPIF_CH3_CTRL, VPIF_CH3_CLIP_ACTIVE_EN);
+	} else {
+		vpif_clr_bit(VPIF_CH3_CTRL, VPIF_CH3_CLIP_ANC_EN);
+		vpif_clr_bit(VPIF_CH3_CTRL, VPIF_CH3_CLIP_ACTIVE_EN);
+	}
+}
 
-/* अंतरभूत function to set buffer addresses in हाल of Y/C non mux mode */
-अटल अंतरभूत व्योम ch2_set_videobuf_addr_yc_nmux(अचिन्हित दीर्घ top_strt_luma,
-						 अचिन्हित दीर्घ bपंचांग_strt_luma,
-						 अचिन्हित दीर्घ top_strt_chroma,
-						 अचिन्हित दीर्घ bपंचांग_strt_chroma)
-अणु
+/* inline function to set buffer addresses in case of Y/C non mux mode */
+static inline void ch2_set_videobuf_addr_yc_nmux(unsigned long top_strt_luma,
+						 unsigned long btm_strt_luma,
+						 unsigned long top_strt_chroma,
+						 unsigned long btm_strt_chroma)
+{
 	regw(top_strt_luma, VPIF_CH2_TOP_STRT_ADD_LUMA);
-	regw(bपंचांग_strt_luma, VPIF_CH2_BTM_STRT_ADD_LUMA);
+	regw(btm_strt_luma, VPIF_CH2_BTM_STRT_ADD_LUMA);
 	regw(top_strt_chroma, VPIF_CH3_TOP_STRT_ADD_CHROMA);
-	regw(bपंचांग_strt_chroma, VPIF_CH3_BTM_STRT_ADD_CHROMA);
-पूर्ण
+	regw(btm_strt_chroma, VPIF_CH3_BTM_STRT_ADD_CHROMA);
+}
 
-/* अंतरभूत function to set buffer addresses in VPIF रेजिस्टरs क्रम video data */
-अटल अंतरभूत व्योम ch2_set_videobuf_addr(अचिन्हित दीर्घ top_strt_luma,
-					 अचिन्हित दीर्घ bपंचांग_strt_luma,
-					 अचिन्हित दीर्घ top_strt_chroma,
-					 अचिन्हित दीर्घ bपंचांग_strt_chroma)
-अणु
+/* inline function to set buffer addresses in VPIF registers for video data */
+static inline void ch2_set_videobuf_addr(unsigned long top_strt_luma,
+					 unsigned long btm_strt_luma,
+					 unsigned long top_strt_chroma,
+					 unsigned long btm_strt_chroma)
+{
 	regw(top_strt_luma, VPIF_CH2_TOP_STRT_ADD_LUMA);
-	regw(bपंचांग_strt_luma, VPIF_CH2_BTM_STRT_ADD_LUMA);
+	regw(btm_strt_luma, VPIF_CH2_BTM_STRT_ADD_LUMA);
 	regw(top_strt_chroma, VPIF_CH2_TOP_STRT_ADD_CHROMA);
-	regw(bपंचांग_strt_chroma, VPIF_CH2_BTM_STRT_ADD_CHROMA);
-पूर्ण
+	regw(btm_strt_chroma, VPIF_CH2_BTM_STRT_ADD_CHROMA);
+}
 
-अटल अंतरभूत व्योम ch3_set_videobuf_addr(अचिन्हित दीर्घ top_strt_luma,
-					 अचिन्हित दीर्घ bपंचांग_strt_luma,
-					 अचिन्हित दीर्घ top_strt_chroma,
-					 अचिन्हित दीर्घ bपंचांग_strt_chroma)
-अणु
+static inline void ch3_set_videobuf_addr(unsigned long top_strt_luma,
+					 unsigned long btm_strt_luma,
+					 unsigned long top_strt_chroma,
+					 unsigned long btm_strt_chroma)
+{
 	regw(top_strt_luma, VPIF_CH3_TOP_STRT_ADD_LUMA);
-	regw(bपंचांग_strt_luma, VPIF_CH3_BTM_STRT_ADD_LUMA);
+	regw(btm_strt_luma, VPIF_CH3_BTM_STRT_ADD_LUMA);
 	regw(top_strt_chroma, VPIF_CH3_TOP_STRT_ADD_CHROMA);
-	regw(bपंचांग_strt_chroma, VPIF_CH3_BTM_STRT_ADD_CHROMA);
-पूर्ण
+	regw(btm_strt_chroma, VPIF_CH3_BTM_STRT_ADD_CHROMA);
+}
 
-/* अंतरभूत function to set buffer addresses in VPIF रेजिस्टरs क्रम vbi data */
-अटल अंतरभूत व्योम ch2_set_vbi_addr(अचिन्हित दीर्घ top_strt_luma,
-					 अचिन्हित दीर्घ bपंचांग_strt_luma,
-					 अचिन्हित दीर्घ top_strt_chroma,
-					 अचिन्हित दीर्घ bपंचांग_strt_chroma)
-अणु
+/* inline function to set buffer addresses in VPIF registers for vbi data */
+static inline void ch2_set_vbi_addr(unsigned long top_strt_luma,
+					 unsigned long btm_strt_luma,
+					 unsigned long top_strt_chroma,
+					 unsigned long btm_strt_chroma)
+{
 	regw(top_strt_luma, VPIF_CH2_TOP_STRT_ADD_VANC);
-	regw(bपंचांग_strt_luma, VPIF_CH2_BTM_STRT_ADD_VANC);
-पूर्ण
+	regw(btm_strt_luma, VPIF_CH2_BTM_STRT_ADD_VANC);
+}
 
-अटल अंतरभूत व्योम ch3_set_vbi_addr(अचिन्हित दीर्घ top_strt_luma,
-					 अचिन्हित दीर्घ bपंचांग_strt_luma,
-					 अचिन्हित दीर्घ top_strt_chroma,
-					 अचिन्हित दीर्घ bपंचांग_strt_chroma)
-अणु
+static inline void ch3_set_vbi_addr(unsigned long top_strt_luma,
+					 unsigned long btm_strt_luma,
+					 unsigned long top_strt_chroma,
+					 unsigned long btm_strt_chroma)
+{
 	regw(top_strt_luma, VPIF_CH3_TOP_STRT_ADD_VANC);
-	regw(bपंचांग_strt_luma, VPIF_CH3_BTM_STRT_ADD_VANC);
-पूर्ण
+	regw(btm_strt_luma, VPIF_CH3_BTM_STRT_ADD_VANC);
+}
 
-अटल अंतरभूत पूर्णांक vpअगर_पूर्णांकr_status(पूर्णांक channel)
-अणु
-	पूर्णांक status = 0;
-	पूर्णांक mask;
+static inline int vpif_intr_status(int channel)
+{
+	int status = 0;
+	int mask;
 
-	अगर (channel < 0 || channel > 3)
-		वापस 0;
+	if (channel < 0 || channel > 3)
+		return 0;
 
 	mask = 1 << channel;
 	status = regr(VPIF_STATUS) & mask;
 	regw(status, VPIF_STATUS_CLR);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-#घोषणा VPIF_MAX_NAME	(30)
+#define VPIF_MAX_NAME	(30)
 
-/* This काष्ठाure will store size parameters as per the mode selected by user */
-काष्ठा vpअगर_channel_config_params अणु
-	अक्षर name[VPIF_MAX_NAME];	/* Name of the mode */
+/* This structure will store size parameters as per the mode selected by user */
+struct vpif_channel_config_params {
+	char name[VPIF_MAX_NAME];	/* Name of the mode */
 	u16 width;			/* Indicates width of the image */
 	u16 height;			/* Indicates height of the image */
 	u8 frm_fmt;			/* Interlaced (0) or progressive (1) */
@@ -629,61 +628,61 @@
 	u16 sav2eav;			/* length of sav 2 eav */
 	u16 l1, l3, l5, l7, l9, l11;	/* Other parameter configurations */
 	u16 vsize;			/* Vertical size of the image */
-	u8 capture_क्रमmat;		/* Indicates whether capture क्रमmat
+	u8 capture_format;		/* Indicates whether capture format
 					 * is in BT or in CCD/CMOS */
 	u8  vbi_supported;		/* Indicates whether this mode
 					 * supports capturing vbi or not */
-	u8 hd_sd;			/* HDTV (1) or SDTV (0) क्रमmat */
-	v4l2_std_id stdid;		/* SDTV क्रमmat */
-	काष्ठा v4l2_dv_timings dv_timings;	/* HDTV क्रमmat */
-पूर्ण;
+	u8 hd_sd;			/* HDTV (1) or SDTV (0) format */
+	v4l2_std_id stdid;		/* SDTV format */
+	struct v4l2_dv_timings dv_timings;	/* HDTV format */
+};
 
-बाह्य स्थिर अचिन्हित पूर्णांक vpअगर_ch_params_count;
-बाह्य स्थिर काष्ठा vpअगर_channel_config_params vpअगर_ch_params[];
+extern const unsigned int vpif_ch_params_count;
+extern const struct vpif_channel_config_params vpif_ch_params[];
 
-काष्ठा vpअगर_video_params;
-काष्ठा vpअगर_params;
-काष्ठा vpअगर_vbi_params;
+struct vpif_video_params;
+struct vpif_params;
+struct vpif_vbi_params;
 
-पूर्णांक vpअगर_set_video_params(काष्ठा vpअगर_params *vpअगरparams, u8 channel_id);
-व्योम vpअगर_set_vbi_display_params(काष्ठा vpअगर_vbi_params *vbiparams,
+int vpif_set_video_params(struct vpif_params *vpifparams, u8 channel_id);
+void vpif_set_vbi_display_params(struct vpif_vbi_params *vbiparams,
 							u8 channel_id);
-पूर्णांक vpअगर_channel_getfid(u8 channel_id);
+int vpif_channel_getfid(u8 channel_id);
 
-क्रमागत data_size अणु
+enum data_size {
 	_8BITS = 0,
 	_10BITS,
 	_12BITS,
-पूर्ण;
+};
 
-/* Structure क्रम vpअगर parameters क्रम raw vbi data */
-काष्ठा vpअगर_vbi_params अणु
-	__u32 hstart0;  /* Horizontal start of raw vbi data क्रम first field */
-	__u32 vstart0;  /* Vertical start of raw vbi data क्रम first field */
-	__u32 hsize0;   /* Horizontal size of raw vbi data क्रम first field */
-	__u32 vsize0;   /* Vertical size of raw vbi data क्रम first field */
-	__u32 hstart1;  /* Horizontal start of raw vbi data क्रम second field */
-	__u32 vstart1;  /* Vertical start of raw vbi data क्रम second field */
-	__u32 hsize1;   /* Horizontal size of raw vbi data क्रम second field */
-	__u32 vsize1;   /* Vertical size of raw vbi data क्रम second field */
-पूर्ण;
+/* Structure for vpif parameters for raw vbi data */
+struct vpif_vbi_params {
+	__u32 hstart0;  /* Horizontal start of raw vbi data for first field */
+	__u32 vstart0;  /* Vertical start of raw vbi data for first field */
+	__u32 hsize0;   /* Horizontal size of raw vbi data for first field */
+	__u32 vsize0;   /* Vertical size of raw vbi data for first field */
+	__u32 hstart1;  /* Horizontal start of raw vbi data for second field */
+	__u32 vstart1;  /* Vertical start of raw vbi data for second field */
+	__u32 hsize1;   /* Horizontal size of raw vbi data for second field */
+	__u32 vsize1;   /* Vertical size of raw vbi data for second field */
+};
 
-/* काष्ठाure क्रम vpअगर parameters */
-काष्ठा vpअगर_video_params अणु
+/* structure for vpif parameters */
+struct vpif_video_params {
 	__u8 storage_mode;	/* Indicates field or frame mode */
-	अचिन्हित दीर्घ hpitch;
+	unsigned long hpitch;
 	v4l2_std_id stdid;
-पूर्ण;
+};
 
-काष्ठा vpअगर_params अणु
-	काष्ठा vpअगर_पूर्णांकerface अगरace;
-	काष्ठा vpअगर_video_params video_params;
-	काष्ठा vpअगर_channel_config_params std_info;
-	जोड़ param अणु
-		काष्ठा vpअगर_vbi_params	vbi_params;
-		क्रमागत data_size data_sz;
-	पूर्ण params;
-पूर्ण;
+struct vpif_params {
+	struct vpif_interface iface;
+	struct vpif_video_params video_params;
+	struct vpif_channel_config_params std_info;
+	union param {
+		struct vpif_vbi_params	vbi_params;
+		enum data_size data_sz;
+	} params;
+};
 
-#पूर्ण_अगर				/* End of #अगर_अघोषित VPIF_H */
+#endif				/* End of #ifndef VPIF_H */
 

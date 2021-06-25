@@ -1,295 +1,294 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * IXP4 समयr driver
+ * IXP4 timer driver
  * Copyright (C) 2019 Linus Walleij <linus.walleij@linaro.org>
  *
  * Based on arch/arm/mach-ixp4xx/common.c
  * Copyright 2002 (C) Intel Corporation
  * Copyright 2003-2004 (C) MontaVista, Software, Inc.
- * Copyright (C) Deepak Saxena <dsaxena@plनिकासy.net>
+ * Copyright (C) Deepak Saxena <dsaxena@plexity.net>
  */
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/घड़ीchips.h>
-#समावेश <linux/घड़ीsource.h>
-#समावेश <linux/sched_घड़ी.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_irq.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/clockchips.h>
+#include <linux/clocksource.h>
+#include <linux/sched_clock.h>
+#include <linux/slab.h>
+#include <linux/bitops.h>
+#include <linux/delay.h>
+#include <linux/of_address.h>
+#include <linux/of_irq.h>
 /* Goes away with OF conversion */
-#समावेश <linux/platक्रमm_data/समयr-ixp4xx.h>
+#include <linux/platform_data/timer-ixp4xx.h>
 
 /*
- * Constants to make it easy to access Timer Control/Status रेजिस्टरs
+ * Constants to make it easy to access Timer Control/Status registers
  */
-#घोषणा IXP4XX_OSTS_OFFSET	0x00  /* Continuous Timestamp */
-#घोषणा IXP4XX_OST1_OFFSET	0x04  /* Timer 1 Timestamp */
-#घोषणा IXP4XX_OSRT1_OFFSET	0x08  /* Timer 1 Reload */
-#घोषणा IXP4XX_OST2_OFFSET	0x0C  /* Timer 2 Timestamp */
-#घोषणा IXP4XX_OSRT2_OFFSET	0x10  /* Timer 2 Reload */
-#घोषणा IXP4XX_OSWT_OFFSET	0x14  /* Watchकरोg Timer */
-#घोषणा IXP4XX_OSWE_OFFSET	0x18  /* Watchकरोg Enable */
-#घोषणा IXP4XX_OSWK_OFFSET	0x1C  /* Watchकरोg Key */
-#घोषणा IXP4XX_OSST_OFFSET	0x20  /* Timer Status */
+#define IXP4XX_OSTS_OFFSET	0x00  /* Continuous Timestamp */
+#define IXP4XX_OST1_OFFSET	0x04  /* Timer 1 Timestamp */
+#define IXP4XX_OSRT1_OFFSET	0x08  /* Timer 1 Reload */
+#define IXP4XX_OST2_OFFSET	0x0C  /* Timer 2 Timestamp */
+#define IXP4XX_OSRT2_OFFSET	0x10  /* Timer 2 Reload */
+#define IXP4XX_OSWT_OFFSET	0x14  /* Watchdog Timer */
+#define IXP4XX_OSWE_OFFSET	0x18  /* Watchdog Enable */
+#define IXP4XX_OSWK_OFFSET	0x1C  /* Watchdog Key */
+#define IXP4XX_OSST_OFFSET	0x20  /* Timer Status */
 
 /*
- * Timer रेजिस्टर values and bit definitions
+ * Timer register values and bit definitions
  */
-#घोषणा IXP4XX_OST_ENABLE		0x00000001
-#घोषणा IXP4XX_OST_ONE_SHOT		0x00000002
+#define IXP4XX_OST_ENABLE		0x00000001
+#define IXP4XX_OST_ONE_SHOT		0x00000002
 /* Low order bits of reload value ignored */
-#घोषणा IXP4XX_OST_RELOAD_MASK		0x00000003
-#घोषणा IXP4XX_OST_DISABLED		0x00000000
-#घोषणा IXP4XX_OSST_TIMER_1_PEND	0x00000001
-#घोषणा IXP4XX_OSST_TIMER_2_PEND	0x00000002
-#घोषणा IXP4XX_OSST_TIMER_TS_PEND	0x00000004
-#घोषणा IXP4XX_OSST_TIMER_WDOG_PEND	0x00000008
-#घोषणा IXP4XX_OSST_TIMER_WARM_RESET	0x00000010
+#define IXP4XX_OST_RELOAD_MASK		0x00000003
+#define IXP4XX_OST_DISABLED		0x00000000
+#define IXP4XX_OSST_TIMER_1_PEND	0x00000001
+#define IXP4XX_OSST_TIMER_2_PEND	0x00000002
+#define IXP4XX_OSST_TIMER_TS_PEND	0x00000004
+#define IXP4XX_OSST_TIMER_WDOG_PEND	0x00000008
+#define IXP4XX_OSST_TIMER_WARM_RESET	0x00000010
 
-#घोषणा	IXP4XX_WDT_KEY			0x0000482E
-#घोषणा	IXP4XX_WDT_RESET_ENABLE		0x00000001
-#घोषणा	IXP4XX_WDT_IRQ_ENABLE		0x00000002
-#घोषणा	IXP4XX_WDT_COUNT_ENABLE		0x00000004
+#define	IXP4XX_WDT_KEY			0x0000482E
+#define	IXP4XX_WDT_RESET_ENABLE		0x00000001
+#define	IXP4XX_WDT_IRQ_ENABLE		0x00000002
+#define	IXP4XX_WDT_COUNT_ENABLE		0x00000004
 
-काष्ठा ixp4xx_समयr अणु
-	व्योम __iomem *base;
-	अचिन्हित पूर्णांक tick_rate;
+struct ixp4xx_timer {
+	void __iomem *base;
+	unsigned int tick_rate;
 	u32 latch;
-	काष्ठा घड़ी_event_device clkevt;
-#अगर_घोषित CONFIG_ARM
-	काष्ठा delay_समयr delay_समयr;
-#पूर्ण_अगर
-पूर्ण;
+	struct clock_event_device clkevt;
+#ifdef CONFIG_ARM
+	struct delay_timer delay_timer;
+#endif
+};
 
 /*
- * A local singleton used by sched_घड़ी and delay समयr पढ़ोs, which are
+ * A local singleton used by sched_clock and delay timer reads, which are
  * fast and stateless
  */
-अटल काष्ठा ixp4xx_समयr *local_ixp4xx_समयr;
+static struct ixp4xx_timer *local_ixp4xx_timer;
 
-अटल अंतरभूत काष्ठा ixp4xx_समयr *
-to_ixp4xx_समयr(काष्ठा घड़ी_event_device *evt)
-अणु
-	वापस container_of(evt, काष्ठा ixp4xx_समयr, clkevt);
-पूर्ण
+static inline struct ixp4xx_timer *
+to_ixp4xx_timer(struct clock_event_device *evt)
+{
+	return container_of(evt, struct ixp4xx_timer, clkevt);
+}
 
-अटल अचिन्हित दीर्घ ixp4xx_पढ़ो_समयr(व्योम)
-अणु
-	वापस __raw_पढ़ोl(local_ixp4xx_समयr->base + IXP4XX_OSTS_OFFSET);
-पूर्ण
+static unsigned long ixp4xx_read_timer(void)
+{
+	return __raw_readl(local_ixp4xx_timer->base + IXP4XX_OSTS_OFFSET);
+}
 
-अटल u64 notrace ixp4xx_पढ़ो_sched_घड़ी(व्योम)
-अणु
-	वापस ixp4xx_पढ़ो_समयr();
-पूर्ण
+static u64 notrace ixp4xx_read_sched_clock(void)
+{
+	return ixp4xx_read_timer();
+}
 
-अटल u64 ixp4xx_घड़ीsource_पढ़ो(काष्ठा घड़ीsource *c)
-अणु
-	वापस ixp4xx_पढ़ो_समयr();
-पूर्ण
+static u64 ixp4xx_clocksource_read(struct clocksource *c)
+{
+	return ixp4xx_read_timer();
+}
 
-अटल irqवापस_t ixp4xx_समयr_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा ixp4xx_समयr *पंचांगr = dev_id;
-	काष्ठा घड़ी_event_device *evt = &पंचांगr->clkevt;
+static irqreturn_t ixp4xx_timer_interrupt(int irq, void *dev_id)
+{
+	struct ixp4xx_timer *tmr = dev_id;
+	struct clock_event_device *evt = &tmr->clkevt;
 
 	/* Clear Pending Interrupt */
-	__raw_ग_लिखोl(IXP4XX_OSST_TIMER_1_PEND,
-		     पंचांगr->base + IXP4XX_OSST_OFFSET);
+	__raw_writel(IXP4XX_OSST_TIMER_1_PEND,
+		     tmr->base + IXP4XX_OSST_OFFSET);
 
 	evt->event_handler(evt);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक ixp4xx_set_next_event(अचिन्हित दीर्घ cycles,
-				 काष्ठा घड़ी_event_device *evt)
-अणु
-	काष्ठा ixp4xx_समयr *पंचांगr = to_ixp4xx_समयr(evt);
+static int ixp4xx_set_next_event(unsigned long cycles,
+				 struct clock_event_device *evt)
+{
+	struct ixp4xx_timer *tmr = to_ixp4xx_timer(evt);
 	u32 val;
 
-	val = __raw_पढ़ोl(पंचांगr->base + IXP4XX_OSRT1_OFFSET);
+	val = __raw_readl(tmr->base + IXP4XX_OSRT1_OFFSET);
 	/* Keep enable/oneshot bits */
 	val &= IXP4XX_OST_RELOAD_MASK;
-	__raw_ग_लिखोl((cycles & ~IXP4XX_OST_RELOAD_MASK) | val,
-		     पंचांगr->base + IXP4XX_OSRT1_OFFSET);
+	__raw_writel((cycles & ~IXP4XX_OST_RELOAD_MASK) | val,
+		     tmr->base + IXP4XX_OSRT1_OFFSET);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ixp4xx_shutकरोwn(काष्ठा घड़ी_event_device *evt)
-अणु
-	काष्ठा ixp4xx_समयr *पंचांगr = to_ixp4xx_समयr(evt);
+static int ixp4xx_shutdown(struct clock_event_device *evt)
+{
+	struct ixp4xx_timer *tmr = to_ixp4xx_timer(evt);
 	u32 val;
 
-	val = __raw_पढ़ोl(पंचांगr->base + IXP4XX_OSRT1_OFFSET);
+	val = __raw_readl(tmr->base + IXP4XX_OSRT1_OFFSET);
 	val &= ~IXP4XX_OST_ENABLE;
-	__raw_ग_लिखोl(val, पंचांगr->base + IXP4XX_OSRT1_OFFSET);
+	__raw_writel(val, tmr->base + IXP4XX_OSRT1_OFFSET);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ixp4xx_set_oneshot(काष्ठा घड़ी_event_device *evt)
-अणु
-	काष्ठा ixp4xx_समयr *पंचांगr = to_ixp4xx_समयr(evt);
+static int ixp4xx_set_oneshot(struct clock_event_device *evt)
+{
+	struct ixp4xx_timer *tmr = to_ixp4xx_timer(evt);
 
-	__raw_ग_लिखोl(IXP4XX_OST_ENABLE | IXP4XX_OST_ONE_SHOT,
-		     पंचांगr->base + IXP4XX_OSRT1_OFFSET);
+	__raw_writel(IXP4XX_OST_ENABLE | IXP4XX_OST_ONE_SHOT,
+		     tmr->base + IXP4XX_OSRT1_OFFSET);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ixp4xx_set_periodic(काष्ठा घड़ी_event_device *evt)
-अणु
-	काष्ठा ixp4xx_समयr *पंचांगr = to_ixp4xx_समयr(evt);
+static int ixp4xx_set_periodic(struct clock_event_device *evt)
+{
+	struct ixp4xx_timer *tmr = to_ixp4xx_timer(evt);
 	u32 val;
 
-	val = पंचांगr->latch & ~IXP4XX_OST_RELOAD_MASK;
+	val = tmr->latch & ~IXP4XX_OST_RELOAD_MASK;
 	val |= IXP4XX_OST_ENABLE;
-	__raw_ग_लिखोl(val, पंचांगr->base + IXP4XX_OSRT1_OFFSET);
+	__raw_writel(val, tmr->base + IXP4XX_OSRT1_OFFSET);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ixp4xx_resume(काष्ठा घड़ी_event_device *evt)
-अणु
-	काष्ठा ixp4xx_समयr *पंचांगr = to_ixp4xx_समयr(evt);
+static int ixp4xx_resume(struct clock_event_device *evt)
+{
+	struct ixp4xx_timer *tmr = to_ixp4xx_timer(evt);
 	u32 val;
 
-	val = __raw_पढ़ोl(पंचांगr->base + IXP4XX_OSRT1_OFFSET);
+	val = __raw_readl(tmr->base + IXP4XX_OSRT1_OFFSET);
 	val |= IXP4XX_OST_ENABLE;
-	__raw_ग_लिखोl(val, पंचांगr->base + IXP4XX_OSRT1_OFFSET);
+	__raw_writel(val, tmr->base + IXP4XX_OSRT1_OFFSET);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * IXP4xx समयr tick
- * We use OS समयr1 on the CPU क्रम the समयr tick and the बारtamp
- * counter as a source of real घड़ी ticks to account क्रम missed jअगरfies.
+ * IXP4xx timer tick
+ * We use OS timer1 on the CPU for the timer tick and the timestamp
+ * counter as a source of real clock ticks to account for missed jiffies.
  */
-अटल __init पूर्णांक ixp4xx_समयr_रेजिस्टर(व्योम __iomem *base,
-					पूर्णांक समयr_irq,
-					अचिन्हित पूर्णांक समयr_freq)
-अणु
-	काष्ठा ixp4xx_समयr *पंचांगr;
-	पूर्णांक ret;
+static __init int ixp4xx_timer_register(void __iomem *base,
+					int timer_irq,
+					unsigned int timer_freq)
+{
+	struct ixp4xx_timer *tmr;
+	int ret;
 
-	पंचांगr = kzalloc(माप(*पंचांगr), GFP_KERNEL);
-	अगर (!पंचांगr)
-		वापस -ENOMEM;
-	पंचांगr->base = base;
-	पंचांगr->tick_rate = समयr_freq;
+	tmr = kzalloc(sizeof(*tmr), GFP_KERNEL);
+	if (!tmr)
+		return -ENOMEM;
+	tmr->base = base;
+	tmr->tick_rate = timer_freq;
 
 	/*
-	 * The समयr रेजिस्टर करोesn't allow to specअगरy the two least
-	 * signअगरicant bits of the समयout value and assumes them being zero.
+	 * The timer register doesn't allow to specify the two least
+	 * significant bits of the timeout value and assumes them being zero.
 	 * So make sure the latch is the best value with the two least
-	 * signअगरicant bits unset.
+	 * significant bits unset.
 	 */
-	पंचांगr->latch = DIV_ROUND_CLOSEST(समयr_freq,
+	tmr->latch = DIV_ROUND_CLOSEST(timer_freq,
 				       (IXP4XX_OST_RELOAD_MASK + 1) * HZ)
 		* (IXP4XX_OST_RELOAD_MASK + 1);
 
-	local_ixp4xx_समयr = पंचांगr;
+	local_ixp4xx_timer = tmr;
 
 	/* Reset/disable counter */
-	__raw_ग_लिखोl(0, पंचांगr->base + IXP4XX_OSRT1_OFFSET);
+	__raw_writel(0, tmr->base + IXP4XX_OSRT1_OFFSET);
 
-	/* Clear any pending पूर्णांकerrupt on समयr 1 */
-	__raw_ग_लिखोl(IXP4XX_OSST_TIMER_1_PEND,
-		     पंचांगr->base + IXP4XX_OSST_OFFSET);
+	/* Clear any pending interrupt on timer 1 */
+	__raw_writel(IXP4XX_OSST_TIMER_1_PEND,
+		     tmr->base + IXP4XX_OSST_OFFSET);
 
-	/* Reset समय-stamp counter */
-	__raw_ग_लिखोl(0, पंचांगr->base + IXP4XX_OSTS_OFFSET);
+	/* Reset time-stamp counter */
+	__raw_writel(0, tmr->base + IXP4XX_OSTS_OFFSET);
 
-	घड़ीsource_mmio_init(शून्य, "OSTS", समयr_freq, 200, 32,
-			      ixp4xx_घड़ीsource_पढ़ो);
+	clocksource_mmio_init(NULL, "OSTS", timer_freq, 200, 32,
+			      ixp4xx_clocksource_read);
 
-	पंचांगr->clkevt.name = "ixp4xx timer1";
-	पंचांगr->clkevt.features = CLOCK_EVT_FEAT_PERIODIC | CLOCK_EVT_FEAT_ONESHOT;
-	पंचांगr->clkevt.rating = 200;
-	पंचांगr->clkevt.set_state_shutकरोwn = ixp4xx_shutकरोwn;
-	पंचांगr->clkevt.set_state_periodic = ixp4xx_set_periodic;
-	पंचांगr->clkevt.set_state_oneshot = ixp4xx_set_oneshot;
-	पंचांगr->clkevt.tick_resume = ixp4xx_resume;
-	पंचांगr->clkevt.set_next_event = ixp4xx_set_next_event;
-	पंचांगr->clkevt.cpumask = cpumask_of(0);
-	पंचांगr->clkevt.irq = समयr_irq;
-	ret = request_irq(समयr_irq, ixp4xx_समयr_पूर्णांकerrupt,
-			  IRQF_TIMER, "IXP4XX-TIMER1", पंचांगr);
-	अगर (ret) अणु
+	tmr->clkevt.name = "ixp4xx timer1";
+	tmr->clkevt.features = CLOCK_EVT_FEAT_PERIODIC | CLOCK_EVT_FEAT_ONESHOT;
+	tmr->clkevt.rating = 200;
+	tmr->clkevt.set_state_shutdown = ixp4xx_shutdown;
+	tmr->clkevt.set_state_periodic = ixp4xx_set_periodic;
+	tmr->clkevt.set_state_oneshot = ixp4xx_set_oneshot;
+	tmr->clkevt.tick_resume = ixp4xx_resume;
+	tmr->clkevt.set_next_event = ixp4xx_set_next_event;
+	tmr->clkevt.cpumask = cpumask_of(0);
+	tmr->clkevt.irq = timer_irq;
+	ret = request_irq(timer_irq, ixp4xx_timer_interrupt,
+			  IRQF_TIMER, "IXP4XX-TIMER1", tmr);
+	if (ret) {
 		pr_crit("no timer IRQ\n");
-		वापस -ENODEV;
-	पूर्ण
-	घड़ीevents_config_and_रेजिस्टर(&पंचांगr->clkevt, समयr_freq,
+		return -ENODEV;
+	}
+	clockevents_config_and_register(&tmr->clkevt, timer_freq,
 					0xf, 0xfffffffe);
 
-	sched_घड़ी_रेजिस्टर(ixp4xx_पढ़ो_sched_घड़ी, 32, समयr_freq);
+	sched_clock_register(ixp4xx_read_sched_clock, 32, timer_freq);
 
-#अगर_घोषित CONFIG_ARM
-	/* Also use this समयr क्रम delays */
-	पंचांगr->delay_समयr.पढ़ो_current_समयr = ixp4xx_पढ़ो_समयr;
-	पंचांगr->delay_समयr.freq = समयr_freq;
-	रेजिस्टर_current_समयr_delay(&पंचांगr->delay_समयr);
-#पूर्ण_अगर
+#ifdef CONFIG_ARM
+	/* Also use this timer for delays */
+	tmr->delay_timer.read_current_timer = ixp4xx_read_timer;
+	tmr->delay_timer.freq = timer_freq;
+	register_current_timer_delay(&tmr->delay_timer);
+#endif
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * ixp4xx_समयr_setup() - Timer setup function to be called from boardfiles
- * @समयrbase: physical base of समयr block
- * @समयr_irq: Linux IRQ number क्रम the समयr
- * @समयr_freq: Fixed frequency of the समयr
+ * ixp4xx_timer_setup() - Timer setup function to be called from boardfiles
+ * @timerbase: physical base of timer block
+ * @timer_irq: Linux IRQ number for the timer
+ * @timer_freq: Fixed frequency of the timer
  */
-व्योम __init ixp4xx_समयr_setup(resource_माप_प्रकार समयrbase,
-			       पूर्णांक समयr_irq,
-			       अचिन्हित पूर्णांक समयr_freq)
-अणु
-	व्योम __iomem *base;
+void __init ixp4xx_timer_setup(resource_size_t timerbase,
+			       int timer_irq,
+			       unsigned int timer_freq)
+{
+	void __iomem *base;
 
-	base = ioremap(समयrbase, 0x100);
-	अगर (!base) अणु
+	base = ioremap(timerbase, 0x100);
+	if (!base) {
 		pr_crit("IXP4xx: can't remap timer\n");
-		वापस;
-	पूर्ण
-	ixp4xx_समयr_रेजिस्टर(base, समयr_irq, समयr_freq);
-पूर्ण
-EXPORT_SYMBOL_GPL(ixp4xx_समयr_setup);
+		return;
+	}
+	ixp4xx_timer_register(base, timer_irq, timer_freq);
+}
+EXPORT_SYMBOL_GPL(ixp4xx_timer_setup);
 
-#अगर_घोषित CONFIG_OF
-अटल __init पूर्णांक ixp4xx_of_समयr_init(काष्ठा device_node *np)
-अणु
-	व्योम __iomem *base;
-	पूर्णांक irq;
-	पूर्णांक ret;
+#ifdef CONFIG_OF
+static __init int ixp4xx_of_timer_init(struct device_node *np)
+{
+	void __iomem *base;
+	int irq;
+	int ret;
 
 	base = of_iomap(np, 0);
-	अगर (!base) अणु
+	if (!base) {
 		pr_crit("IXP4xx: can't remap timer\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	irq = irq_of_parse_and_map(np, 0);
-	अगर (irq <= 0) अणु
+	if (irq <= 0) {
 		pr_err("Can't parse IRQ\n");
 		ret = -EINVAL;
-		जाओ out_unmap;
-	पूर्ण
+		goto out_unmap;
+	}
 
-	/* TODO: get some fixed घड़ीs पूर्णांकo the device tree */
-	ret = ixp4xx_समयr_रेजिस्टर(base, irq, 66666000);
-	अगर (ret)
-		जाओ out_unmap;
-	वापस 0;
+	/* TODO: get some fixed clocks into the device tree */
+	ret = ixp4xx_timer_register(base, irq, 66666000);
+	if (ret)
+		goto out_unmap;
+	return 0;
 
 out_unmap:
 	iounmap(base);
-	वापस ret;
-पूर्ण
-TIMER_OF_DECLARE(ixp4xx, "intel,ixp4xx-timer", ixp4xx_of_समयr_init);
-#पूर्ण_अगर
+	return ret;
+}
+TIMER_OF_DECLARE(ixp4xx, "intel,ixp4xx-timer", ixp4xx_of_timer_init);
+#endif

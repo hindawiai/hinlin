@@ -1,47 +1,46 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 //
 //  max17040_battery.c
-//  fuel-gauge प्रणालीs क्रम lithium-ion (Li+) batteries
+//  fuel-gauge systems for lithium-ion (Li+) batteries
 //
 //  Copyright (C) 2009 Samsung Electronics
 //  Minkyu Kang <mk7.kang@samsung.com>
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/err.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/घातer_supply.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/max17040_battery.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/slab.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/platform_device.h>
+#include <linux/mutex.h>
+#include <linux/err.h>
+#include <linux/i2c.h>
+#include <linux/delay.h>
+#include <linux/interrupt.h>
+#include <linux/power_supply.h>
+#include <linux/of_device.h>
+#include <linux/max17040_battery.h>
+#include <linux/regmap.h>
+#include <linux/slab.h>
 
-#घोषणा MAX17040_VCELL	0x02
-#घोषणा MAX17040_SOC	0x04
-#घोषणा MAX17040_MODE	0x06
-#घोषणा MAX17040_VER	0x08
-#घोषणा MAX17040_CONFIG	0x0C
-#घोषणा MAX17040_STATUS	0x1A
-#घोषणा MAX17040_CMD	0xFE
+#define MAX17040_VCELL	0x02
+#define MAX17040_SOC	0x04
+#define MAX17040_MODE	0x06
+#define MAX17040_VER	0x08
+#define MAX17040_CONFIG	0x0C
+#define MAX17040_STATUS	0x1A
+#define MAX17040_CMD	0xFE
 
 
-#घोषणा MAX17040_DELAY		1000
-#घोषणा MAX17040_BATTERY_FULL	95
-#घोषणा MAX17040_RCOMP_DEFAULT  0x9700
+#define MAX17040_DELAY		1000
+#define MAX17040_BATTERY_FULL	95
+#define MAX17040_RCOMP_DEFAULT  0x9700
 
-#घोषणा MAX17040_ATHD_MASK		0x3f
-#घोषणा MAX17040_ALSC_MASK		0x40
-#घोषणा MAX17040_ATHD_DEFAULT_POWER_UP	4
-#घोषणा MAX17040_STATUS_HD_MASK		0x1000
-#घोषणा MAX17040_STATUS_SC_MASK		0x2000
-#घोषणा MAX17040_CFG_RCOMP_MASK		0xff00
+#define MAX17040_ATHD_MASK		0x3f
+#define MAX17040_ALSC_MASK		0x40
+#define MAX17040_ATHD_DEFAULT_POWER_UP	4
+#define MAX17040_STATUS_HD_MASK		0x1000
+#define MAX17040_STATUS_SC_MASK		0x2000
+#define MAX17040_CFG_RCOMP_MASK		0xff00
 
-क्रमागत chip_id अणु
+enum chip_id {
 	ID_MAX17040,
 	ID_MAX17041,
 	ID_MAX17043,
@@ -50,262 +49,262 @@
 	ID_MAX17049,
 	ID_MAX17058,
 	ID_MAX17059,
-पूर्ण;
+};
 
-/* values that dअगरfer by chip_id */
-काष्ठा chip_data अणु
+/* values that differ by chip_id */
+struct chip_data {
 	u16 reset_val;
-	u16 vcell_shअगरt;
+	u16 vcell_shift;
 	u16 vcell_mul;
-	u16 vcell_भाग;
+	u16 vcell_div;
 	u8  has_low_soc_alert;
 	u8  rcomp_bytes;
 	u8  has_soc_alert;
-पूर्ण;
+};
 
-अटल काष्ठा chip_data max17040_family[] = अणु
-	[ID_MAX17040] = अणु
+static struct chip_data max17040_family[] = {
+	[ID_MAX17040] = {
 		.reset_val = 0x0054,
-		.vcell_shअगरt = 4,
+		.vcell_shift = 4,
 		.vcell_mul = 1250,
-		.vcell_भाग = 1,
+		.vcell_div = 1,
 		.has_low_soc_alert = 0,
 		.rcomp_bytes = 2,
 		.has_soc_alert = 0,
-	पूर्ण,
-	[ID_MAX17041] = अणु
+	},
+	[ID_MAX17041] = {
 		.reset_val = 0x0054,
-		.vcell_shअगरt = 4,
+		.vcell_shift = 4,
 		.vcell_mul = 2500,
-		.vcell_भाग = 1,
+		.vcell_div = 1,
 		.has_low_soc_alert = 0,
 		.rcomp_bytes = 2,
 		.has_soc_alert = 0,
-	पूर्ण,
-	[ID_MAX17043] = अणु
+	},
+	[ID_MAX17043] = {
 		.reset_val = 0x0054,
-		.vcell_shअगरt = 4,
+		.vcell_shift = 4,
 		.vcell_mul = 1250,
-		.vcell_भाग = 1,
+		.vcell_div = 1,
 		.has_low_soc_alert = 1,
 		.rcomp_bytes = 1,
 		.has_soc_alert = 0,
-	पूर्ण,
-	[ID_MAX17044] = अणु
+	},
+	[ID_MAX17044] = {
 		.reset_val = 0x0054,
-		.vcell_shअगरt = 4,
+		.vcell_shift = 4,
 		.vcell_mul = 2500,
-		.vcell_भाग = 1,
+		.vcell_div = 1,
 		.has_low_soc_alert = 1,
 		.rcomp_bytes = 1,
 		.has_soc_alert = 0,
-	पूर्ण,
-	[ID_MAX17048] = अणु
+	},
+	[ID_MAX17048] = {
 		.reset_val = 0x5400,
-		.vcell_shअगरt = 0,
+		.vcell_shift = 0,
 		.vcell_mul = 625,
-		.vcell_भाग = 8,
+		.vcell_div = 8,
 		.has_low_soc_alert = 1,
 		.rcomp_bytes = 1,
 		.has_soc_alert = 1,
-	पूर्ण,
-	[ID_MAX17049] = अणु
+	},
+	[ID_MAX17049] = {
 		.reset_val = 0x5400,
-		.vcell_shअगरt = 0,
+		.vcell_shift = 0,
 		.vcell_mul = 625,
-		.vcell_भाग = 4,
+		.vcell_div = 4,
 		.has_low_soc_alert = 1,
 		.rcomp_bytes = 1,
 		.has_soc_alert = 1,
-	पूर्ण,
-	[ID_MAX17058] = अणु
+	},
+	[ID_MAX17058] = {
 		.reset_val = 0x5400,
-		.vcell_shअगरt = 0,
+		.vcell_shift = 0,
 		.vcell_mul = 625,
-		.vcell_भाग = 8,
+		.vcell_div = 8,
 		.has_low_soc_alert = 1,
 		.rcomp_bytes = 1,
 		.has_soc_alert = 0,
-	पूर्ण,
-	[ID_MAX17059] = अणु
+	},
+	[ID_MAX17059] = {
 		.reset_val = 0x5400,
-		.vcell_shअगरt = 0,
+		.vcell_shift = 0,
 		.vcell_mul = 625,
-		.vcell_भाग = 4,
+		.vcell_div = 4,
 		.has_low_soc_alert = 1,
 		.rcomp_bytes = 1,
 		.has_soc_alert = 0,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-काष्ठा max17040_chip अणु
-	काष्ठा i2c_client		*client;
-	काष्ठा regmap			*regmap;
-	काष्ठा delayed_work		work;
-	काष्ठा घातer_supply		*battery;
-	काष्ठा max17040_platक्रमm_data	*pdata;
-	काष्ठा chip_data		data;
+struct max17040_chip {
+	struct i2c_client		*client;
+	struct regmap			*regmap;
+	struct delayed_work		work;
+	struct power_supply		*battery;
+	struct max17040_platform_data	*pdata;
+	struct chip_data		data;
 
 	/* battery capacity */
-	पूर्णांक soc;
+	int soc;
 	/* State Of Charge */
-	पूर्णांक status;
+	int status;
 	/* Low alert threshold from 32% to 1% of the State of Charge */
 	u32 low_soc_alert;
-	/* some devices वापस twice the capacity */
-	bool quirk_द्विगुन_soc;
-	/* higher 8 bits क्रम 17043+, 16 bits क्रम 17040,41 */
+	/* some devices return twice the capacity */
+	bool quirk_double_soc;
+	/* higher 8 bits for 17043+, 16 bits for 17040,41 */
 	u16 rcomp;
-पूर्ण;
+};
 
-अटल पूर्णांक max17040_reset(काष्ठा max17040_chip *chip)
-अणु
-	वापस regmap_ग_लिखो(chip->regmap, MAX17040_CMD, chip->data.reset_val);
-पूर्ण
+static int max17040_reset(struct max17040_chip *chip)
+{
+	return regmap_write(chip->regmap, MAX17040_CMD, chip->data.reset_val);
+}
 
-अटल पूर्णांक max17040_set_low_soc_alert(काष्ठा max17040_chip *chip, u32 level)
-अणु
-	level = 32 - level * (chip->quirk_द्विगुन_soc ? 2 : 1);
-	वापस regmap_update_bits(chip->regmap, MAX17040_CONFIG,
+static int max17040_set_low_soc_alert(struct max17040_chip *chip, u32 level)
+{
+	level = 32 - level * (chip->quirk_double_soc ? 2 : 1);
+	return regmap_update_bits(chip->regmap, MAX17040_CONFIG,
 			MAX17040_ATHD_MASK, level);
-पूर्ण
+}
 
-अटल पूर्णांक max17040_set_soc_alert(काष्ठा max17040_chip *chip, bool enable)
-अणु
-	वापस regmap_update_bits(chip->regmap, MAX17040_CONFIG,
+static int max17040_set_soc_alert(struct max17040_chip *chip, bool enable)
+{
+	return regmap_update_bits(chip->regmap, MAX17040_CONFIG,
 			MAX17040_ALSC_MASK, enable ? MAX17040_ALSC_MASK : 0);
-पूर्ण
+}
 
-अटल पूर्णांक max17040_set_rcomp(काष्ठा max17040_chip *chip, u16 rcomp)
-अणु
+static int max17040_set_rcomp(struct max17040_chip *chip, u16 rcomp)
+{
 	u16 mask = chip->data.rcomp_bytes == 2 ?
 		0xffff : MAX17040_CFG_RCOMP_MASK;
 
-	वापस regmap_update_bits(chip->regmap, MAX17040_CONFIG, mask, rcomp);
-पूर्ण
+	return regmap_update_bits(chip->regmap, MAX17040_CONFIG, mask, rcomp);
+}
 
-अटल पूर्णांक max17040_raw_vcell_to_uvolts(काष्ठा max17040_chip *chip, u16 vcell)
-अणु
-	काष्ठा chip_data *d = &chip->data;
+static int max17040_raw_vcell_to_uvolts(struct max17040_chip *chip, u16 vcell)
+{
+	struct chip_data *d = &chip->data;
 
-	वापस (vcell >> d->vcell_shअगरt) * d->vcell_mul / d->vcell_भाग;
-पूर्ण
+	return (vcell >> d->vcell_shift) * d->vcell_mul / d->vcell_div;
+}
 
 
-अटल पूर्णांक max17040_get_vcell(काष्ठा max17040_chip *chip)
-अणु
+static int max17040_get_vcell(struct max17040_chip *chip)
+{
 	u32 vcell;
 
-	regmap_पढ़ो(chip->regmap, MAX17040_VCELL, &vcell);
+	regmap_read(chip->regmap, MAX17040_VCELL, &vcell);
 
-	वापस max17040_raw_vcell_to_uvolts(chip, vcell);
-पूर्ण
+	return max17040_raw_vcell_to_uvolts(chip, vcell);
+}
 
-अटल पूर्णांक max17040_get_soc(काष्ठा max17040_chip *chip)
-अणु
+static int max17040_get_soc(struct max17040_chip *chip)
+{
 	u32 soc;
 
-	regmap_पढ़ो(chip->regmap, MAX17040_SOC, &soc);
+	regmap_read(chip->regmap, MAX17040_SOC, &soc);
 
-	वापस soc >> (chip->quirk_द्विगुन_soc ? 9 : 8);
-पूर्ण
+	return soc >> (chip->quirk_double_soc ? 9 : 8);
+}
 
-अटल पूर्णांक max17040_get_version(काष्ठा max17040_chip *chip)
-अणु
-	पूर्णांक ret;
+static int max17040_get_version(struct max17040_chip *chip)
+{
+	int ret;
 	u32 version;
 
-	ret = regmap_पढ़ो(chip->regmap, MAX17040_VER, &version);
+	ret = regmap_read(chip->regmap, MAX17040_VER, &version);
 
-	वापस ret ? ret : version;
-पूर्ण
+	return ret ? ret : version;
+}
 
-अटल पूर्णांक max17040_get_online(काष्ठा max17040_chip *chip)
-अणु
-	वापस chip->pdata && chip->pdata->battery_online ?
+static int max17040_get_online(struct max17040_chip *chip)
+{
+	return chip->pdata && chip->pdata->battery_online ?
 		chip->pdata->battery_online() : 1;
-पूर्ण
+}
 
-अटल पूर्णांक max17040_get_status(काष्ठा max17040_chip *chip)
-अणु
-	अगर (!chip->pdata || !chip->pdata->अक्षरger_online
-			|| !chip->pdata->अक्षरger_enable)
-		वापस POWER_SUPPLY_STATUS_UNKNOWN;
+static int max17040_get_status(struct max17040_chip *chip)
+{
+	if (!chip->pdata || !chip->pdata->charger_online
+			|| !chip->pdata->charger_enable)
+		return POWER_SUPPLY_STATUS_UNKNOWN;
 
-	अगर (max17040_get_soc(chip) > MAX17040_BATTERY_FULL)
-		वापस POWER_SUPPLY_STATUS_FULL;
+	if (max17040_get_soc(chip) > MAX17040_BATTERY_FULL)
+		return POWER_SUPPLY_STATUS_FULL;
 
-	अगर (chip->pdata->अक्षरger_online())
-		अगर (chip->pdata->अक्षरger_enable())
-			वापस POWER_SUPPLY_STATUS_CHARGING;
-		अन्यथा
-			वापस POWER_SUPPLY_STATUS_NOT_CHARGING;
-	अन्यथा
-		वापस POWER_SUPPLY_STATUS_DISCHARGING;
-पूर्ण
+	if (chip->pdata->charger_online())
+		if (chip->pdata->charger_enable())
+			return POWER_SUPPLY_STATUS_CHARGING;
+		else
+			return POWER_SUPPLY_STATUS_NOT_CHARGING;
+	else
+		return POWER_SUPPLY_STATUS_DISCHARGING;
+}
 
-अटल पूर्णांक max17040_get_of_data(काष्ठा max17040_chip *chip)
-अणु
-	काष्ठा device *dev = &chip->client->dev;
-	काष्ठा chip_data *data = &max17040_family[
-		(uपूर्णांकptr_t) of_device_get_match_data(dev)];
-	पूर्णांक rcomp_len;
+static int max17040_get_of_data(struct max17040_chip *chip)
+{
+	struct device *dev = &chip->client->dev;
+	struct chip_data *data = &max17040_family[
+		(uintptr_t) of_device_get_match_data(dev)];
+	int rcomp_len;
 	u8 rcomp[2];
 
-	chip->quirk_द्विगुन_soc = device_property_पढ़ो_bool(dev,
+	chip->quirk_double_soc = device_property_read_bool(dev,
 							   "maxim,double-soc");
 
 	chip->low_soc_alert = MAX17040_ATHD_DEFAULT_POWER_UP;
-	device_property_पढ़ो_u32(dev,
+	device_property_read_u32(dev,
 				 "maxim,alert-low-soc-level",
 				 &chip->low_soc_alert);
 
-	अगर (chip->low_soc_alert <= 0 ||
-	    chip->low_soc_alert > (chip->quirk_द्विगुन_soc ? 16 : 32)) अणु
+	if (chip->low_soc_alert <= 0 ||
+	    chip->low_soc_alert > (chip->quirk_double_soc ? 16 : 32)) {
 		dev_err(dev, "maxim,alert-low-soc-level out of bounds\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	rcomp_len = device_property_count_u8(dev, "maxim,rcomp");
 	chip->rcomp = MAX17040_RCOMP_DEFAULT;
-	अगर (rcomp_len == data->rcomp_bytes) अणु
-		अगर (!device_property_पढ़ो_u8_array(dev, "maxim,rcomp",
+	if (rcomp_len == data->rcomp_bytes) {
+		if (!device_property_read_u8_array(dev, "maxim,rcomp",
 						   rcomp, rcomp_len))
 			chip->rcomp = rcomp_len == 2 ? rcomp[0] << 8 | rcomp[1] :
 				      rcomp[0] << 8;
-	पूर्ण अन्यथा अगर (rcomp_len > 0) अणु
+	} else if (rcomp_len > 0) {
 		dev_err(dev, "maxim,rcomp has incorrect length\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम max17040_check_changes(काष्ठा max17040_chip *chip)
-अणु
+static void max17040_check_changes(struct max17040_chip *chip)
+{
 	chip->soc = max17040_get_soc(chip);
 	chip->status = max17040_get_status(chip);
-पूर्ण
+}
 
-अटल व्योम max17040_queue_work(काष्ठा max17040_chip *chip)
-अणु
-	queue_delayed_work(प्रणाली_घातer_efficient_wq, &chip->work,
+static void max17040_queue_work(struct max17040_chip *chip)
+{
+	queue_delayed_work(system_power_efficient_wq, &chip->work,
 			   MAX17040_DELAY);
-पूर्ण
+}
 
-अटल व्योम max17040_stop_work(व्योम *data)
-अणु
-	काष्ठा max17040_chip *chip = data;
+static void max17040_stop_work(void *data)
+{
+	struct max17040_chip *chip = data;
 
 	cancel_delayed_work_sync(&chip->work);
-पूर्ण
+}
 
-अटल व्योम max17040_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा max17040_chip *chip;
-	पूर्णांक last_soc, last_status;
+static void max17040_work(struct work_struct *work)
+{
+	struct max17040_chip *chip;
+	int last_soc, last_status;
 
-	chip = container_of(work, काष्ठा max17040_chip, work.work);
+	chip = container_of(work, struct max17040_chip, work.work);
 
 	/* store SOC and status to check changes */
 	last_soc = chip->soc;
@@ -313,326 +312,326 @@
 	max17040_check_changes(chip);
 
 	/* check changes and send uevent */
-	अगर (last_soc != chip->soc || last_status != chip->status)
-		घातer_supply_changed(chip->battery);
+	if (last_soc != chip->soc || last_status != chip->status)
+		power_supply_changed(chip->battery);
 
 	max17040_queue_work(chip);
-पूर्ण
+}
 
-/* Returns true अगर alert cause was SOC change, not low SOC */
-अटल bool max17040_handle_soc_alert(काष्ठा max17040_chip *chip)
-अणु
+/* Returns true if alert cause was SOC change, not low SOC */
+static bool max17040_handle_soc_alert(struct max17040_chip *chip)
+{
 	bool ret = true;
 	u32 data;
 
-	regmap_पढ़ो(chip->regmap, MAX17040_STATUS, &data);
+	regmap_read(chip->regmap, MAX17040_STATUS, &data);
 
-	अगर (data & MAX17040_STATUS_HD_MASK) अणु
+	if (data & MAX17040_STATUS_HD_MASK) {
 		// this alert was caused by low soc
 		ret = false;
-	पूर्ण
-	अगर (data & MAX17040_STATUS_SC_MASK) अणु
-		// soc change bit -- deनिश्चित to mark as handled
-		regmap_ग_लिखो(chip->regmap, MAX17040_STATUS,
+	}
+	if (data & MAX17040_STATUS_SC_MASK) {
+		// soc change bit -- deassert to mark as handled
+		regmap_write(chip->regmap, MAX17040_STATUS,
 				data & ~MAX17040_STATUS_SC_MASK);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल irqवापस_t max17040_thपढ़ो_handler(पूर्णांक id, व्योम *dev)
-अणु
-	काष्ठा max17040_chip *chip = dev;
+static irqreturn_t max17040_thread_handler(int id, void *dev)
+{
+	struct max17040_chip *chip = dev;
 
-	अगर (!(chip->data.has_soc_alert && max17040_handle_soc_alert(chip)))
+	if (!(chip->data.has_soc_alert && max17040_handle_soc_alert(chip)))
 		dev_warn(&chip->client->dev, "IRQ: Alert battery low level\n");
 
-	/* पढ़ो रेजिस्टरs */
+	/* read registers */
 	max17040_check_changes(chip);
 
 	/* send uevent */
-	घातer_supply_changed(chip->battery);
+	power_supply_changed(chip->battery);
 
 	/* reset alert bit */
 	max17040_set_low_soc_alert(chip, chip->low_soc_alert);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक max17040_enable_alert_irq(काष्ठा max17040_chip *chip)
-अणु
-	काष्ठा i2c_client *client = chip->client;
-	अचिन्हित पूर्णांक flags;
-	पूर्णांक ret;
+static int max17040_enable_alert_irq(struct max17040_chip *chip)
+{
+	struct i2c_client *client = chip->client;
+	unsigned int flags;
+	int ret;
 
 	flags = IRQF_TRIGGER_FALLING | IRQF_ONESHOT;
-	ret = devm_request_thपढ़ोed_irq(&client->dev, client->irq, शून्य,
-					max17040_thपढ़ो_handler, flags,
+	ret = devm_request_threaded_irq(&client->dev, client->irq, NULL,
+					max17040_thread_handler, flags,
 					chip->battery->desc->name, chip);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक max17040_prop_ग_लिखोable(काष्ठा घातer_supply *psy,
-				   क्रमागत घातer_supply_property psp)
-अणु
-	चयन (psp) अणु
-	हाल POWER_SUPPLY_PROP_CAPACITY_ALERT_MIN:
-		वापस 1;
-	शेष:
-		वापस 0;
-	पूर्ण
-पूर्ण
+static int max17040_prop_writeable(struct power_supply *psy,
+				   enum power_supply_property psp)
+{
+	switch (psp) {
+	case POWER_SUPPLY_PROP_CAPACITY_ALERT_MIN:
+		return 1;
+	default:
+		return 0;
+	}
+}
 
-अटल पूर्णांक max17040_set_property(काष्ठा घातer_supply *psy,
-			    क्रमागत घातer_supply_property psp,
-			    स्थिर जोड़ घातer_supply_propval *val)
-अणु
-	काष्ठा max17040_chip *chip = घातer_supply_get_drvdata(psy);
-	पूर्णांक ret;
+static int max17040_set_property(struct power_supply *psy,
+			    enum power_supply_property psp,
+			    const union power_supply_propval *val)
+{
+	struct max17040_chip *chip = power_supply_get_drvdata(psy);
+	int ret;
 
-	चयन (psp) अणु
-	हाल POWER_SUPPLY_PROP_CAPACITY_ALERT_MIN:
+	switch (psp) {
+	case POWER_SUPPLY_PROP_CAPACITY_ALERT_MIN:
 		/* alert threshold can be programmed from 1% up to 16/32% */
-		अगर ((val->पूर्णांकval < 1) ||
-		    (val->पूर्णांकval > (chip->quirk_द्विगुन_soc ? 16 : 32))) अणु
+		if ((val->intval < 1) ||
+		    (val->intval > (chip->quirk_double_soc ? 16 : 32))) {
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
-		ret = max17040_set_low_soc_alert(chip, val->पूर्णांकval);
-		chip->low_soc_alert = val->पूर्णांकval;
-		अवरोध;
-	शेष:
+			break;
+		}
+		ret = max17040_set_low_soc_alert(chip, val->intval);
+		chip->low_soc_alert = val->intval;
+		break;
+	default:
 		ret = -EINVAL;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक max17040_get_property(काष्ठा घातer_supply *psy,
-			    क्रमागत घातer_supply_property psp,
-			    जोड़ घातer_supply_propval *val)
-अणु
-	काष्ठा max17040_chip *chip = घातer_supply_get_drvdata(psy);
+static int max17040_get_property(struct power_supply *psy,
+			    enum power_supply_property psp,
+			    union power_supply_propval *val)
+{
+	struct max17040_chip *chip = power_supply_get_drvdata(psy);
 
-	चयन (psp) अणु
-	हाल POWER_SUPPLY_PROP_STATUS:
-		val->पूर्णांकval = max17040_get_status(chip);
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_ONLINE:
-		val->पूर्णांकval = max17040_get_online(chip);
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_VOLTAGE_NOW:
-		val->पूर्णांकval = max17040_get_vcell(chip);
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_CAPACITY:
-		val->पूर्णांकval = max17040_get_soc(chip);
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_CAPACITY_ALERT_MIN:
-		val->पूर्णांकval = chip->low_soc_alert;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	switch (psp) {
+	case POWER_SUPPLY_PROP_STATUS:
+		val->intval = max17040_get_status(chip);
+		break;
+	case POWER_SUPPLY_PROP_ONLINE:
+		val->intval = max17040_get_online(chip);
+		break;
+	case POWER_SUPPLY_PROP_VOLTAGE_NOW:
+		val->intval = max17040_get_vcell(chip);
+		break;
+	case POWER_SUPPLY_PROP_CAPACITY:
+		val->intval = max17040_get_soc(chip);
+		break;
+	case POWER_SUPPLY_PROP_CAPACITY_ALERT_MIN:
+		val->intval = chip->low_soc_alert;
+		break;
+	default:
+		return -EINVAL;
+	}
+	return 0;
+}
 
-अटल स्थिर काष्ठा regmap_config max17040_regmap = अणु
+static const struct regmap_config max17040_regmap = {
 	.reg_bits	= 8,
 	.reg_stride	= 2,
 	.val_bits	= 16,
-	.val_क्रमmat_endian = REGMAP_ENDIAN_BIG,
-पूर्ण;
+	.val_format_endian = REGMAP_ENDIAN_BIG,
+};
 
-अटल क्रमागत घातer_supply_property max17040_battery_props[] = अणु
+static enum power_supply_property max17040_battery_props[] = {
 	POWER_SUPPLY_PROP_STATUS,
 	POWER_SUPPLY_PROP_ONLINE,
 	POWER_SUPPLY_PROP_VOLTAGE_NOW,
 	POWER_SUPPLY_PROP_CAPACITY,
 	POWER_SUPPLY_PROP_CAPACITY_ALERT_MIN,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा घातer_supply_desc max17040_battery_desc = अणु
+static const struct power_supply_desc max17040_battery_desc = {
 	.name			= "battery",
 	.type			= POWER_SUPPLY_TYPE_BATTERY,
 	.get_property		= max17040_get_property,
 	.set_property		= max17040_set_property,
-	.property_is_ग_लिखोable  = max17040_prop_ग_लिखोable,
+	.property_is_writeable  = max17040_prop_writeable,
 	.properties		= max17040_battery_props,
 	.num_properties		= ARRAY_SIZE(max17040_battery_props),
-पूर्ण;
+};
 
-अटल पूर्णांक max17040_probe(काष्ठा i2c_client *client,
-			स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा i2c_adapter *adapter = client->adapter;
-	काष्ठा घातer_supply_config psy_cfg = अणुपूर्ण;
-	काष्ठा max17040_chip *chip;
-	क्रमागत chip_id chip_id;
+static int max17040_probe(struct i2c_client *client,
+			const struct i2c_device_id *id)
+{
+	struct i2c_adapter *adapter = client->adapter;
+	struct power_supply_config psy_cfg = {};
+	struct max17040_chip *chip;
+	enum chip_id chip_id;
 	bool enable_irq = false;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE))
-		वापस -EIO;
+	if (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE))
+		return -EIO;
 
-	chip = devm_kzalloc(&client->dev, माप(*chip), GFP_KERNEL);
-	अगर (!chip)
-		वापस -ENOMEM;
+	chip = devm_kzalloc(&client->dev, sizeof(*chip), GFP_KERNEL);
+	if (!chip)
+		return -ENOMEM;
 
 	chip->client = client;
 	chip->regmap = devm_regmap_init_i2c(client, &max17040_regmap);
-	chip->pdata = client->dev.platक्रमm_data;
-	chip_id = (क्रमागत chip_id) id->driver_data;
-	अगर (client->dev.of_node) अणु
+	chip->pdata = client->dev.platform_data;
+	chip_id = (enum chip_id) id->driver_data;
+	if (client->dev.of_node) {
 		ret = max17040_get_of_data(chip);
-		अगर (ret)
-			वापस ret;
-		chip_id = (uपूर्णांकptr_t)of_device_get_match_data(&client->dev);
-	पूर्ण
+		if (ret)
+			return ret;
+		chip_id = (uintptr_t)of_device_get_match_data(&client->dev);
+	}
 	chip->data = max17040_family[chip_id];
 
 	i2c_set_clientdata(client, chip);
 	psy_cfg.drv_data = chip;
 
-	chip->battery = devm_घातer_supply_रेजिस्टर(&client->dev,
+	chip->battery = devm_power_supply_register(&client->dev,
 				&max17040_battery_desc, &psy_cfg);
-	अगर (IS_ERR(chip->battery)) अणु
+	if (IS_ERR(chip->battery)) {
 		dev_err(&client->dev, "failed: power supply register\n");
-		वापस PTR_ERR(chip->battery);
-	पूर्ण
+		return PTR_ERR(chip->battery);
+	}
 
 	ret = max17040_get_version(chip);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 	dev_dbg(&chip->client->dev, "MAX17040 Fuel-Gauge Ver 0x%x\n", ret);
 
-	अगर (chip_id == ID_MAX17040 || chip_id == ID_MAX17041)
+	if (chip_id == ID_MAX17040 || chip_id == ID_MAX17041)
 		max17040_reset(chip);
 
 	max17040_set_rcomp(chip, chip->rcomp);
 
-	/* check पूर्णांकerrupt */
-	अगर (client->irq && chip->data.has_low_soc_alert) अणु
+	/* check interrupt */
+	if (client->irq && chip->data.has_low_soc_alert) {
 		ret = max17040_set_low_soc_alert(chip, chip->low_soc_alert);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(&client->dev,
 				"Failed to set low SOC alert: err %d\n", ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
 		enable_irq = true;
-	पूर्ण
+	}
 
-	अगर (client->irq && chip->data.has_soc_alert) अणु
+	if (client->irq && chip->data.has_soc_alert) {
 		ret = max17040_set_soc_alert(chip, 1);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(&client->dev,
 				"Failed to set SOC alert: err %d\n", ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		enable_irq = true;
-	पूर्ण अन्यथा अणु
-		/* soc alerts negate the need क्रम polling */
+	} else {
+		/* soc alerts negate the need for polling */
 		INIT_DEFERRABLE_WORK(&chip->work, max17040_work);
 		ret = devm_add_action(&client->dev, max17040_stop_work, chip);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 		max17040_queue_work(chip);
-	पूर्ण
+	}
 
-	अगर (enable_irq) अणु
+	if (enable_irq) {
 		ret = max17040_enable_alert_irq(chip);
-		अगर (ret) अणु
+		if (ret) {
 			client->irq = 0;
 			dev_warn(&client->dev,
 				 "Failed to get IRQ err %d\n", ret);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
+#ifdef CONFIG_PM_SLEEP
 
-अटल पूर्णांक max17040_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा i2c_client *client = to_i2c_client(dev);
-	काष्ठा max17040_chip *chip = i2c_get_clientdata(client);
+static int max17040_suspend(struct device *dev)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	struct max17040_chip *chip = i2c_get_clientdata(client);
 
-	अगर (client->irq && chip->data.has_soc_alert)
+	if (client->irq && chip->data.has_soc_alert)
 		// disable soc alert to prevent wakeup
 		max17040_set_soc_alert(chip, 0);
-	अन्यथा
+	else
 		cancel_delayed_work(&chip->work);
 
-	अगर (client->irq && device_may_wakeup(dev))
+	if (client->irq && device_may_wakeup(dev))
 		enable_irq_wake(client->irq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक max17040_resume(काष्ठा device *dev)
-अणु
-	काष्ठा i2c_client *client = to_i2c_client(dev);
-	काष्ठा max17040_chip *chip = i2c_get_clientdata(client);
+static int max17040_resume(struct device *dev)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	struct max17040_chip *chip = i2c_get_clientdata(client);
 
-	अगर (client->irq && device_may_wakeup(dev))
+	if (client->irq && device_may_wakeup(dev))
 		disable_irq_wake(client->irq);
 
-	अगर (client->irq && chip->data.has_soc_alert)
+	if (client->irq && chip->data.has_soc_alert)
 		max17040_set_soc_alert(chip, 1);
-	अन्यथा
+	else
 		max17040_queue_work(chip);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल SIMPLE_DEV_PM_OPS(max17040_pm_ops, max17040_suspend, max17040_resume);
-#घोषणा MAX17040_PM_OPS (&max17040_pm_ops)
+static SIMPLE_DEV_PM_OPS(max17040_pm_ops, max17040_suspend, max17040_resume);
+#define MAX17040_PM_OPS (&max17040_pm_ops)
 
-#अन्यथा
+#else
 
-#घोषणा MAX17040_PM_OPS शून्य
+#define MAX17040_PM_OPS NULL
 
-#पूर्ण_अगर /* CONFIG_PM_SLEEP */
+#endif /* CONFIG_PM_SLEEP */
 
-अटल स्थिर काष्ठा i2c_device_id max17040_id[] = अणु
-	अणु "max17040", ID_MAX17040 पूर्ण,
-	अणु "max17041", ID_MAX17041 पूर्ण,
-	अणु "max17043", ID_MAX17043 पूर्ण,
-	अणु "max77836-battery", ID_MAX17043 पूर्ण,
-	अणु "max17044", ID_MAX17044 पूर्ण,
-	अणु "max17048", ID_MAX17048 पूर्ण,
-	अणु "max17049", ID_MAX17049 पूर्ण,
-	अणु "max17058", ID_MAX17058 पूर्ण,
-	अणु "max17059", ID_MAX17059 पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+static const struct i2c_device_id max17040_id[] = {
+	{ "max17040", ID_MAX17040 },
+	{ "max17041", ID_MAX17041 },
+	{ "max17043", ID_MAX17043 },
+	{ "max77836-battery", ID_MAX17043 },
+	{ "max17044", ID_MAX17044 },
+	{ "max17048", ID_MAX17048 },
+	{ "max17049", ID_MAX17049 },
+	{ "max17058", ID_MAX17058 },
+	{ "max17059", ID_MAX17059 },
+	{ /* sentinel */ }
+};
 MODULE_DEVICE_TABLE(i2c, max17040_id);
 
-अटल स्थिर काष्ठा of_device_id max17040_of_match[] = अणु
-	अणु .compatible = "maxim,max17040", .data = (व्योम *) ID_MAX17040 पूर्ण,
-	अणु .compatible = "maxim,max17041", .data = (व्योम *) ID_MAX17041 पूर्ण,
-	अणु .compatible = "maxim,max17043", .data = (व्योम *) ID_MAX17043 पूर्ण,
-	अणु .compatible = "maxim,max77836-battery", .data = (व्योम *) ID_MAX17043 पूर्ण,
-	अणु .compatible = "maxim,max17044", .data = (व्योम *) ID_MAX17044 पूर्ण,
-	अणु .compatible = "maxim,max17048", .data = (व्योम *) ID_MAX17048 पूर्ण,
-	अणु .compatible = "maxim,max17049", .data = (व्योम *) ID_MAX17049 पूर्ण,
-	अणु .compatible = "maxim,max17058", .data = (व्योम *) ID_MAX17058 पूर्ण,
-	अणु .compatible = "maxim,max17059", .data = (व्योम *) ID_MAX17059 पूर्ण,
-	अणु /* sentinel */ पूर्ण,
-पूर्ण;
+static const struct of_device_id max17040_of_match[] = {
+	{ .compatible = "maxim,max17040", .data = (void *) ID_MAX17040 },
+	{ .compatible = "maxim,max17041", .data = (void *) ID_MAX17041 },
+	{ .compatible = "maxim,max17043", .data = (void *) ID_MAX17043 },
+	{ .compatible = "maxim,max77836-battery", .data = (void *) ID_MAX17043 },
+	{ .compatible = "maxim,max17044", .data = (void *) ID_MAX17044 },
+	{ .compatible = "maxim,max17048", .data = (void *) ID_MAX17048 },
+	{ .compatible = "maxim,max17049", .data = (void *) ID_MAX17049 },
+	{ .compatible = "maxim,max17058", .data = (void *) ID_MAX17058 },
+	{ .compatible = "maxim,max17059", .data = (void *) ID_MAX17059 },
+	{ /* sentinel */ },
+};
 MODULE_DEVICE_TABLE(of, max17040_of_match);
 
-अटल काष्ठा i2c_driver max17040_i2c_driver = अणु
-	.driver	= अणु
+static struct i2c_driver max17040_i2c_driver = {
+	.driver	= {
 		.name	= "max17040",
 		.of_match_table = max17040_of_match,
 		.pm	= MAX17040_PM_OPS,
-	पूर्ण,
+	},
 	.probe		= max17040_probe,
 	.id_table	= max17040_id,
-पूर्ण;
+};
 module_i2c_driver(max17040_i2c_driver);
 
 MODULE_AUTHOR("Minkyu Kang <mk7.kang@samsung.com>");

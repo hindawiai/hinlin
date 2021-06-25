@@ -1,324 +1,323 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * kernel/घातer/मुख्य.c - PM subप्रणाली core functionality.
+ * kernel/power/main.c - PM subsystem core functionality.
  *
  * Copyright (c) 2003 Patrick Mochel
  * Copyright (c) 2003 Open Source Development Lab
  */
 
-#समावेश <linux/export.h>
-#समावेश <linux/kobject.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/pm-trace.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/suspend.h>
-#समावेश <linux/syscalls.h>
-#समावेश <linux/pm_runसमय.स>
+#include <linux/export.h>
+#include <linux/kobject.h>
+#include <linux/string.h>
+#include <linux/pm-trace.h>
+#include <linux/workqueue.h>
+#include <linux/debugfs.h>
+#include <linux/seq_file.h>
+#include <linux/suspend.h>
+#include <linux/syscalls.h>
+#include <linux/pm_runtime.h>
 
-#समावेश "power.h"
+#include "power.h"
 
-#अगर_घोषित CONFIG_PM_SLEEP
+#ifdef CONFIG_PM_SLEEP
 
-व्योम lock_प्रणाली_sleep(व्योम)
-अणु
+void lock_system_sleep(void)
+{
 	current->flags |= PF_FREEZER_SKIP;
-	mutex_lock(&प्रणाली_transition_mutex);
-पूर्ण
-EXPORT_SYMBOL_GPL(lock_प्रणाली_sleep);
+	mutex_lock(&system_transition_mutex);
+}
+EXPORT_SYMBOL_GPL(lock_system_sleep);
 
-व्योम unlock_प्रणाली_sleep(व्योम)
-अणु
+void unlock_system_sleep(void)
+{
 	/*
 	 * Don't use freezer_count() because we don't want the call to
-	 * try_to_मुक्तze() here.
+	 * try_to_freeze() here.
 	 *
 	 * Reason:
-	 * Fundamentally, we just करोn't need it, because मुक्तzing condition
-	 * करोesn't come पूर्णांकo effect until we release the
-	 * प्रणाली_transition_mutex lock, since the मुक्तzer always works with
-	 * प्रणाली_transition_mutex held.
+	 * Fundamentally, we just don't need it, because freezing condition
+	 * doesn't come into effect until we release the
+	 * system_transition_mutex lock, since the freezer always works with
+	 * system_transition_mutex held.
 	 *
-	 * More importantly, in the हाल of hibernation,
-	 * unlock_प्रणाली_sleep() माला_लो called in snapshot_पढ़ो() and
-	 * snapshot_ग_लिखो() when the मुक्तzing condition is still in effect.
-	 * Which means, अगर we use try_to_मुक्तze() here, it would make them
+	 * More importantly, in the case of hibernation,
+	 * unlock_system_sleep() gets called in snapshot_read() and
+	 * snapshot_write() when the freezing condition is still in effect.
+	 * Which means, if we use try_to_freeze() here, it would make them
 	 * enter the refrigerator, thus causing hibernation to lockup.
 	 */
 	current->flags &= ~PF_FREEZER_SKIP;
-	mutex_unlock(&प्रणाली_transition_mutex);
-पूर्ण
-EXPORT_SYMBOL_GPL(unlock_प्रणाली_sleep);
+	mutex_unlock(&system_transition_mutex);
+}
+EXPORT_SYMBOL_GPL(unlock_system_sleep);
 
-व्योम ksys_sync_helper(व्योम)
-अणु
-	kसमय_प्रकार start;
-	दीर्घ elapsed_msecs;
+void ksys_sync_helper(void)
+{
+	ktime_t start;
+	long elapsed_msecs;
 
-	start = kसमय_get();
+	start = ktime_get();
 	ksys_sync();
-	elapsed_msecs = kसमय_प्रकारo_ms(kसमय_sub(kसमय_get(), start));
+	elapsed_msecs = ktime_to_ms(ktime_sub(ktime_get(), start));
 	pr_info("Filesystems sync: %ld.%03ld seconds\n",
 		elapsed_msecs / MSEC_PER_SEC, elapsed_msecs % MSEC_PER_SEC);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(ksys_sync_helper);
 
-/* Routines क्रम PM-transition notअगरications */
+/* Routines for PM-transition notifications */
 
-अटल BLOCKING_NOTIFIER_HEAD(pm_chain_head);
+static BLOCKING_NOTIFIER_HEAD(pm_chain_head);
 
-पूर्णांक रेजिस्टर_pm_notअगरier(काष्ठा notअगरier_block *nb)
-अणु
-	वापस blocking_notअगरier_chain_रेजिस्टर(&pm_chain_head, nb);
-पूर्ण
-EXPORT_SYMBOL_GPL(रेजिस्टर_pm_notअगरier);
+int register_pm_notifier(struct notifier_block *nb)
+{
+	return blocking_notifier_chain_register(&pm_chain_head, nb);
+}
+EXPORT_SYMBOL_GPL(register_pm_notifier);
 
-पूर्णांक unरेजिस्टर_pm_notअगरier(काष्ठा notअगरier_block *nb)
-अणु
-	वापस blocking_notअगरier_chain_unरेजिस्टर(&pm_chain_head, nb);
-पूर्ण
-EXPORT_SYMBOL_GPL(unरेजिस्टर_pm_notअगरier);
+int unregister_pm_notifier(struct notifier_block *nb)
+{
+	return blocking_notifier_chain_unregister(&pm_chain_head, nb);
+}
+EXPORT_SYMBOL_GPL(unregister_pm_notifier);
 
-पूर्णांक pm_notअगरier_call_chain_robust(अचिन्हित दीर्घ val_up, अचिन्हित दीर्घ val_करोwn)
-अणु
-	पूर्णांक ret;
+int pm_notifier_call_chain_robust(unsigned long val_up, unsigned long val_down)
+{
+	int ret;
 
-	ret = blocking_notअगरier_call_chain_robust(&pm_chain_head, val_up, val_करोwn, शून्य);
+	ret = blocking_notifier_call_chain_robust(&pm_chain_head, val_up, val_down, NULL);
 
-	वापस notअगरier_to_त्रुटि_सं(ret);
-पूर्ण
+	return notifier_to_errno(ret);
+}
 
-पूर्णांक pm_notअगरier_call_chain(अचिन्हित दीर्घ val)
-अणु
-	वापस blocking_notअगरier_call_chain(&pm_chain_head, val, शून्य);
-पूर्ण
+int pm_notifier_call_chain(unsigned long val)
+{
+	return blocking_notifier_call_chain(&pm_chain_head, val, NULL);
+}
 
 /* If set, devices may be suspended and resumed asynchronously. */
-पूर्णांक pm_async_enabled = 1;
+int pm_async_enabled = 1;
 
-अटल sमाप_प्रकार pm_async_show(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
-			     अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "%d\n", pm_async_enabled);
-पूर्ण
+static ssize_t pm_async_show(struct kobject *kobj, struct kobj_attribute *attr,
+			     char *buf)
+{
+	return sprintf(buf, "%d\n", pm_async_enabled);
+}
 
-अटल sमाप_प्रकार pm_async_store(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
-			      स्थिर अक्षर *buf, माप_प्रकार n)
-अणु
-	अचिन्हित दीर्घ val;
+static ssize_t pm_async_store(struct kobject *kobj, struct kobj_attribute *attr,
+			      const char *buf, size_t n)
+{
+	unsigned long val;
 
-	अगर (kम_से_अदीर्घ(buf, 10, &val))
-		वापस -EINVAL;
+	if (kstrtoul(buf, 10, &val))
+		return -EINVAL;
 
-	अगर (val > 1)
-		वापस -EINVAL;
+	if (val > 1)
+		return -EINVAL;
 
 	pm_async_enabled = val;
-	वापस n;
-पूर्ण
+	return n;
+}
 
-घातer_attr(pm_async);
+power_attr(pm_async);
 
-#अगर_घोषित CONFIG_SUSPEND
-अटल sमाप_प्रकार mem_sleep_show(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
-			      अक्षर *buf)
-अणु
-	अक्षर *s = buf;
+#ifdef CONFIG_SUSPEND
+static ssize_t mem_sleep_show(struct kobject *kobj, struct kobj_attribute *attr,
+			      char *buf)
+{
+	char *s = buf;
 	suspend_state_t i;
 
-	क्रम (i = PM_SUSPEND_MIN; i < PM_SUSPEND_MAX; i++)
-		अगर (mem_sleep_states[i]) अणु
-			स्थिर अक्षर *label = mem_sleep_states[i];
+	for (i = PM_SUSPEND_MIN; i < PM_SUSPEND_MAX; i++)
+		if (mem_sleep_states[i]) {
+			const char *label = mem_sleep_states[i];
 
-			अगर (mem_sleep_current == i)
-				s += प्र_लिखो(s, "[%s] ", label);
-			अन्यथा
-				s += प्र_लिखो(s, "%s ", label);
-		पूर्ण
+			if (mem_sleep_current == i)
+				s += sprintf(s, "[%s] ", label);
+			else
+				s += sprintf(s, "%s ", label);
+		}
 
-	/* Convert the last space to a newline अगर needed. */
-	अगर (s != buf)
+	/* Convert the last space to a newline if needed. */
+	if (s != buf)
 		*(s-1) = '\n';
 
-	वापस (s - buf);
-पूर्ण
+	return (s - buf);
+}
 
-अटल suspend_state_t decode_suspend_state(स्थिर अक्षर *buf, माप_प्रकार n)
-अणु
+static suspend_state_t decode_suspend_state(const char *buf, size_t n)
+{
 	suspend_state_t state;
-	अक्षर *p;
-	पूर्णांक len;
+	char *p;
+	int len;
 
-	p = स_प्रथम(buf, '\n', n);
+	p = memchr(buf, '\n', n);
 	len = p ? p - buf : n;
 
-	क्रम (state = PM_SUSPEND_MIN; state < PM_SUSPEND_MAX; state++) अणु
-		स्थिर अक्षर *label = mem_sleep_states[state];
+	for (state = PM_SUSPEND_MIN; state < PM_SUSPEND_MAX; state++) {
+		const char *label = mem_sleep_states[state];
 
-		अगर (label && len == म_माप(label) && !म_भेदन(buf, label, len))
-			वापस state;
-	पूर्ण
+		if (label && len == strlen(label) && !strncmp(buf, label, len))
+			return state;
+	}
 
-	वापस PM_SUSPEND_ON;
-पूर्ण
+	return PM_SUSPEND_ON;
+}
 
-अटल sमाप_प्रकार mem_sleep_store(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
-			       स्थिर अक्षर *buf, माप_प्रकार n)
-अणु
+static ssize_t mem_sleep_store(struct kobject *kobj, struct kobj_attribute *attr,
+			       const char *buf, size_t n)
+{
 	suspend_state_t state;
-	पूर्णांक error;
+	int error;
 
-	error = pm_स्वतःsleep_lock();
-	अगर (error)
-		वापस error;
+	error = pm_autosleep_lock();
+	if (error)
+		return error;
 
-	अगर (pm_स्वतःsleep_state() > PM_SUSPEND_ON) अणु
+	if (pm_autosleep_state() > PM_SUSPEND_ON) {
 		error = -EBUSY;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	state = decode_suspend_state(buf, n);
-	अगर (state < PM_SUSPEND_MAX && state > PM_SUSPEND_ON)
+	if (state < PM_SUSPEND_MAX && state > PM_SUSPEND_ON)
 		mem_sleep_current = state;
-	अन्यथा
+	else
 		error = -EINVAL;
 
  out:
-	pm_स्वतःsleep_unlock();
-	वापस error ? error : n;
-पूर्ण
+	pm_autosleep_unlock();
+	return error ? error : n;
+}
 
-घातer_attr(mem_sleep);
+power_attr(mem_sleep);
 
 /*
- * sync_on_suspend: invoke ksys_sync_helper() beक्रमe suspend.
+ * sync_on_suspend: invoke ksys_sync_helper() before suspend.
  *
- * show() वापसs whether ksys_sync_helper() is invoked beक्रमe suspend.
+ * show() returns whether ksys_sync_helper() is invoked before suspend.
  * store() accepts 0 or 1.  0 disables ksys_sync_helper() and 1 enables it.
  */
 bool sync_on_suspend_enabled = !IS_ENABLED(CONFIG_SUSPEND_SKIP_SYNC);
 
-अटल sमाप_प्रकार sync_on_suspend_show(काष्ठा kobject *kobj,
-				   काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "%d\n", sync_on_suspend_enabled);
-पूर्ण
+static ssize_t sync_on_suspend_show(struct kobject *kobj,
+				   struct kobj_attribute *attr, char *buf)
+{
+	return sprintf(buf, "%d\n", sync_on_suspend_enabled);
+}
 
-अटल sमाप_प्रकार sync_on_suspend_store(काष्ठा kobject *kobj,
-				    काष्ठा kobj_attribute *attr,
-				    स्थिर अक्षर *buf, माप_प्रकार n)
-अणु
-	अचिन्हित दीर्घ val;
+static ssize_t sync_on_suspend_store(struct kobject *kobj,
+				    struct kobj_attribute *attr,
+				    const char *buf, size_t n)
+{
+	unsigned long val;
 
-	अगर (kम_से_अदीर्घ(buf, 10, &val))
-		वापस -EINVAL;
+	if (kstrtoul(buf, 10, &val))
+		return -EINVAL;
 
-	अगर (val > 1)
-		वापस -EINVAL;
+	if (val > 1)
+		return -EINVAL;
 
 	sync_on_suspend_enabled = !!val;
-	वापस n;
-पूर्ण
+	return n;
+}
 
-घातer_attr(sync_on_suspend);
-#पूर्ण_अगर /* CONFIG_SUSPEND */
+power_attr(sync_on_suspend);
+#endif /* CONFIG_SUSPEND */
 
-#अगर_घोषित CONFIG_PM_SLEEP_DEBUG
-पूर्णांक pm_test_level = TEST_NONE;
+#ifdef CONFIG_PM_SLEEP_DEBUG
+int pm_test_level = TEST_NONE;
 
-अटल स्थिर अक्षर * स्थिर pm_tests[__TEST_AFTER_LAST] = अणु
+static const char * const pm_tests[__TEST_AFTER_LAST] = {
 	[TEST_NONE] = "none",
 	[TEST_CORE] = "core",
 	[TEST_CPUS] = "processors",
 	[TEST_PLATFORM] = "platform",
 	[TEST_DEVICES] = "devices",
 	[TEST_FREEZER] = "freezer",
-पूर्ण;
+};
 
-अटल sमाप_प्रकार pm_test_show(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
-				अक्षर *buf)
-अणु
-	अक्षर *s = buf;
-	पूर्णांक level;
+static ssize_t pm_test_show(struct kobject *kobj, struct kobj_attribute *attr,
+				char *buf)
+{
+	char *s = buf;
+	int level;
 
-	क्रम (level = TEST_FIRST; level <= TEST_MAX; level++)
-		अगर (pm_tests[level]) अणु
-			अगर (level == pm_test_level)
-				s += प्र_लिखो(s, "[%s] ", pm_tests[level]);
-			अन्यथा
-				s += प्र_लिखो(s, "%s ", pm_tests[level]);
-		पूर्ण
+	for (level = TEST_FIRST; level <= TEST_MAX; level++)
+		if (pm_tests[level]) {
+			if (level == pm_test_level)
+				s += sprintf(s, "[%s] ", pm_tests[level]);
+			else
+				s += sprintf(s, "%s ", pm_tests[level]);
+		}
 
-	अगर (s != buf)
+	if (s != buf)
 		/* convert the last space to a newline */
 		*(s-1) = '\n';
 
-	वापस (s - buf);
-पूर्ण
+	return (s - buf);
+}
 
-अटल sमाप_प्रकार pm_test_store(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
-				स्थिर अक्षर *buf, माप_प्रकार n)
-अणु
-	स्थिर अक्षर * स्थिर *s;
-	पूर्णांक level;
-	अक्षर *p;
-	पूर्णांक len;
-	पूर्णांक error = -EINVAL;
+static ssize_t pm_test_store(struct kobject *kobj, struct kobj_attribute *attr,
+				const char *buf, size_t n)
+{
+	const char * const *s;
+	int level;
+	char *p;
+	int len;
+	int error = -EINVAL;
 
-	p = स_प्रथम(buf, '\n', n);
+	p = memchr(buf, '\n', n);
 	len = p ? p - buf : n;
 
-	lock_प्रणाली_sleep();
+	lock_system_sleep();
 
 	level = TEST_FIRST;
-	क्रम (s = &pm_tests[level]; level <= TEST_MAX; s++, level++)
-		अगर (*s && len == म_माप(*s) && !म_भेदन(buf, *s, len)) अणु
+	for (s = &pm_tests[level]; level <= TEST_MAX; s++, level++)
+		if (*s && len == strlen(*s) && !strncmp(buf, *s, len)) {
 			pm_test_level = level;
 			error = 0;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-	unlock_प्रणाली_sleep();
+	unlock_system_sleep();
 
-	वापस error ? error : n;
-पूर्ण
+	return error ? error : n;
+}
 
-घातer_attr(pm_test);
-#पूर्ण_अगर /* CONFIG_PM_SLEEP_DEBUG */
+power_attr(pm_test);
+#endif /* CONFIG_PM_SLEEP_DEBUG */
 
-अटल अक्षर *suspend_step_name(क्रमागत suspend_stat_step step)
-अणु
-	चयन (step) अणु
-	हाल SUSPEND_FREEZE:
-		वापस "freeze";
-	हाल SUSPEND_PREPARE:
-		वापस "prepare";
-	हाल SUSPEND_SUSPEND:
-		वापस "suspend";
-	हाल SUSPEND_SUSPEND_NOIRQ:
-		वापस "suspend_noirq";
-	हाल SUSPEND_RESUME_NOIRQ:
-		वापस "resume_noirq";
-	हाल SUSPEND_RESUME:
-		वापस "resume";
-	शेष:
-		वापस "";
-	पूर्ण
-पूर्ण
+static char *suspend_step_name(enum suspend_stat_step step)
+{
+	switch (step) {
+	case SUSPEND_FREEZE:
+		return "freeze";
+	case SUSPEND_PREPARE:
+		return "prepare";
+	case SUSPEND_SUSPEND:
+		return "suspend";
+	case SUSPEND_SUSPEND_NOIRQ:
+		return "suspend_noirq";
+	case SUSPEND_RESUME_NOIRQ:
+		return "resume_noirq";
+	case SUSPEND_RESUME:
+		return "resume";
+	default:
+		return "";
+	}
+}
 
-#घोषणा suspend_attr(_name)					\
-अटल sमाप_प्रकार _name##_show(काष्ठा kobject *kobj,		\
-		काष्ठा kobj_attribute *attr, अक्षर *buf)		\
-अणु								\
-	वापस प्र_लिखो(buf, "%d\n", suspend_stats._name);	\
-पूर्ण								\
-अटल काष्ठा kobj_attribute _name = __ATTR_RO(_name)
+#define suspend_attr(_name)					\
+static ssize_t _name##_show(struct kobject *kobj,		\
+		struct kobj_attribute *attr, char *buf)		\
+{								\
+	return sprintf(buf, "%d\n", suspend_stats._name);	\
+}								\
+static struct kobj_attribute _name = __ATTR_RO(_name)
 
 suspend_attr(success);
 suspend_attr(fail);
-suspend_attr(failed_मुक्तze);
+suspend_attr(failed_freeze);
 suspend_attr(failed_prepare);
 suspend_attr(failed_suspend);
 suspend_attr(failed_suspend_late);
@@ -327,54 +326,54 @@ suspend_attr(failed_resume);
 suspend_attr(failed_resume_early);
 suspend_attr(failed_resume_noirq);
 
-अटल sमाप_प्रकार last_failed_dev_show(काष्ठा kobject *kobj,
-		काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	पूर्णांक index;
-	अक्षर *last_failed_dev = शून्य;
+static ssize_t last_failed_dev_show(struct kobject *kobj,
+		struct kobj_attribute *attr, char *buf)
+{
+	int index;
+	char *last_failed_dev = NULL;
 
 	index = suspend_stats.last_failed_dev + REC_FAILED_NUM - 1;
 	index %= REC_FAILED_NUM;
 	last_failed_dev = suspend_stats.failed_devs[index];
 
-	वापस प्र_लिखो(buf, "%s\n", last_failed_dev);
-पूर्ण
-अटल काष्ठा kobj_attribute last_failed_dev = __ATTR_RO(last_failed_dev);
+	return sprintf(buf, "%s\n", last_failed_dev);
+}
+static struct kobj_attribute last_failed_dev = __ATTR_RO(last_failed_dev);
 
-अटल sमाप_प्रकार last_failed_त्रुटि_सं_show(काष्ठा kobject *kobj,
-		काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	पूर्णांक index;
-	पूर्णांक last_failed_त्रुटि_सं;
+static ssize_t last_failed_errno_show(struct kobject *kobj,
+		struct kobj_attribute *attr, char *buf)
+{
+	int index;
+	int last_failed_errno;
 
-	index = suspend_stats.last_failed_त्रुटि_सं + REC_FAILED_NUM - 1;
+	index = suspend_stats.last_failed_errno + REC_FAILED_NUM - 1;
 	index %= REC_FAILED_NUM;
-	last_failed_त्रुटि_सं = suspend_stats.त्रुटि_सं[index];
+	last_failed_errno = suspend_stats.errno[index];
 
-	वापस प्र_लिखो(buf, "%d\n", last_failed_त्रुटि_सं);
-पूर्ण
-अटल काष्ठा kobj_attribute last_failed_त्रुटि_सं = __ATTR_RO(last_failed_त्रुटि_सं);
+	return sprintf(buf, "%d\n", last_failed_errno);
+}
+static struct kobj_attribute last_failed_errno = __ATTR_RO(last_failed_errno);
 
-अटल sमाप_प्रकार last_failed_step_show(काष्ठा kobject *kobj,
-		काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	पूर्णांक index;
-	क्रमागत suspend_stat_step step;
-	अक्षर *last_failed_step = शून्य;
+static ssize_t last_failed_step_show(struct kobject *kobj,
+		struct kobj_attribute *attr, char *buf)
+{
+	int index;
+	enum suspend_stat_step step;
+	char *last_failed_step = NULL;
 
 	index = suspend_stats.last_failed_step + REC_FAILED_NUM - 1;
 	index %= REC_FAILED_NUM;
 	step = suspend_stats.failed_steps[index];
 	last_failed_step = suspend_step_name(step);
 
-	वापस प्र_लिखो(buf, "%s\n", last_failed_step);
-पूर्ण
-अटल काष्ठा kobj_attribute last_failed_step = __ATTR_RO(last_failed_step);
+	return sprintf(buf, "%s\n", last_failed_step);
+}
+static struct kobj_attribute last_failed_step = __ATTR_RO(last_failed_step);
 
-अटल काष्ठा attribute *suspend_attrs[] = अणु
+static struct attribute *suspend_attrs[] = {
 	&success.attr,
 	&fail.attr,
-	&failed_मुक्तze.attr,
+	&failed_freeze.attr,
 	&failed_prepare.attr,
 	&failed_suspend.attr,
 	&failed_suspend_late.attr,
@@ -383,32 +382,32 @@ suspend_attr(failed_resume_noirq);
 	&failed_resume_early.attr,
 	&failed_resume_noirq.attr,
 	&last_failed_dev.attr,
-	&last_failed_त्रुटि_सं.attr,
+	&last_failed_errno.attr,
 	&last_failed_step.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group suspend_attr_group = अणु
+static const struct attribute_group suspend_attr_group = {
 	.name = "suspend_stats",
 	.attrs = suspend_attrs,
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_DEBUG_FS
-अटल पूर्णांक suspend_stats_show(काष्ठा seq_file *s, व्योम *unused)
-अणु
-	पूर्णांक i, index, last_dev, last_त्रुटि_सं, last_step;
+#ifdef CONFIG_DEBUG_FS
+static int suspend_stats_show(struct seq_file *s, void *unused)
+{
+	int i, index, last_dev, last_errno, last_step;
 
 	last_dev = suspend_stats.last_failed_dev + REC_FAILED_NUM - 1;
 	last_dev %= REC_FAILED_NUM;
-	last_त्रुटि_सं = suspend_stats.last_failed_त्रुटि_सं + REC_FAILED_NUM - 1;
-	last_त्रुटि_सं %= REC_FAILED_NUM;
+	last_errno = suspend_stats.last_failed_errno + REC_FAILED_NUM - 1;
+	last_errno %= REC_FAILED_NUM;
 	last_step = suspend_stats.last_failed_step + REC_FAILED_NUM - 1;
 	last_step %= REC_FAILED_NUM;
-	seq_म_लिखो(s, "%s: %d\n%s: %d\n%s: %d\n%s: %d\n%s: %d\n"
+	seq_printf(s, "%s: %d\n%s: %d\n%s: %d\n%s: %d\n%s: %d\n"
 			"%s: %d\n%s: %d\n%s: %d\n%s: %d\n%s: %d\n",
 			"success", suspend_stats.success,
 			"fail", suspend_stats.fail,
-			"failed_freeze", suspend_stats.failed_मुक्तze,
+			"failed_freeze", suspend_stats.failed_freeze,
 			"failed_prepare", suspend_stats.failed_prepare,
 			"failed_suspend", suspend_stats.failed_suspend,
 			"failed_suspend_late",
@@ -420,541 +419,541 @@ suspend_attr(failed_resume_noirq);
 				suspend_stats.failed_resume_early,
 			"failed_resume_noirq",
 				suspend_stats.failed_resume_noirq);
-	seq_म_लिखो(s,	"failures:\n  last_failed_dev:\t%-s\n",
+	seq_printf(s,	"failures:\n  last_failed_dev:\t%-s\n",
 			suspend_stats.failed_devs[last_dev]);
-	क्रम (i = 1; i < REC_FAILED_NUM; i++) अणु
+	for (i = 1; i < REC_FAILED_NUM; i++) {
 		index = last_dev + REC_FAILED_NUM - i;
 		index %= REC_FAILED_NUM;
-		seq_म_लिखो(s, "\t\t\t%-s\n",
+		seq_printf(s, "\t\t\t%-s\n",
 			suspend_stats.failed_devs[index]);
-	पूर्ण
-	seq_म_लिखो(s,	"  last_failed_errno:\t%-d\n",
-			suspend_stats.त्रुटि_सं[last_त्रुटि_सं]);
-	क्रम (i = 1; i < REC_FAILED_NUM; i++) अणु
-		index = last_त्रुटि_सं + REC_FAILED_NUM - i;
+	}
+	seq_printf(s,	"  last_failed_errno:\t%-d\n",
+			suspend_stats.errno[last_errno]);
+	for (i = 1; i < REC_FAILED_NUM; i++) {
+		index = last_errno + REC_FAILED_NUM - i;
 		index %= REC_FAILED_NUM;
-		seq_म_लिखो(s, "\t\t\t%-d\n",
-			suspend_stats.त्रुटि_सं[index]);
-	पूर्ण
-	seq_म_लिखो(s,	"  last_failed_step:\t%-s\n",
+		seq_printf(s, "\t\t\t%-d\n",
+			suspend_stats.errno[index]);
+	}
+	seq_printf(s,	"  last_failed_step:\t%-s\n",
 			suspend_step_name(
 				suspend_stats.failed_steps[last_step]));
-	क्रम (i = 1; i < REC_FAILED_NUM; i++) अणु
+	for (i = 1; i < REC_FAILED_NUM; i++) {
 		index = last_step + REC_FAILED_NUM - i;
 		index %= REC_FAILED_NUM;
-		seq_म_लिखो(s, "\t\t\t%-s\n",
+		seq_printf(s, "\t\t\t%-s\n",
 			suspend_step_name(
 				suspend_stats.failed_steps[index]));
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 DEFINE_SHOW_ATTRIBUTE(suspend_stats);
 
-अटल पूर्णांक __init pm_debugfs_init(व्योम)
-अणु
+static int __init pm_debugfs_init(void)
+{
 	debugfs_create_file("suspend_stats", S_IFREG | S_IRUGO,
-			शून्य, शून्य, &suspend_stats_fops);
-	वापस 0;
-पूर्ण
+			NULL, NULL, &suspend_stats_fops);
+	return 0;
+}
 
 late_initcall(pm_debugfs_init);
-#पूर्ण_अगर /* CONFIG_DEBUG_FS */
+#endif /* CONFIG_DEBUG_FS */
 
-#पूर्ण_अगर /* CONFIG_PM_SLEEP */
+#endif /* CONFIG_PM_SLEEP */
 
-#अगर_घोषित CONFIG_PM_SLEEP_DEBUG
+#ifdef CONFIG_PM_SLEEP_DEBUG
 /*
- * pm_prपूर्णांक_बार: prपूर्णांक समय taken by devices to suspend and resume.
+ * pm_print_times: print time taken by devices to suspend and resume.
  *
- * show() वापसs whether prपूर्णांकing of suspend and resume बार is enabled.
- * store() accepts 0 or 1.  0 disables prपूर्णांकing and 1 enables it.
+ * show() returns whether printing of suspend and resume times is enabled.
+ * store() accepts 0 or 1.  0 disables printing and 1 enables it.
  */
-bool pm_prपूर्णांक_बार_enabled;
+bool pm_print_times_enabled;
 
-अटल sमाप_प्रकार pm_prपूर्णांक_बार_show(काष्ठा kobject *kobj,
-				   काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "%d\n", pm_prपूर्णांक_बार_enabled);
-पूर्ण
+static ssize_t pm_print_times_show(struct kobject *kobj,
+				   struct kobj_attribute *attr, char *buf)
+{
+	return sprintf(buf, "%d\n", pm_print_times_enabled);
+}
 
-अटल sमाप_प्रकार pm_prपूर्णांक_बार_store(काष्ठा kobject *kobj,
-				    काष्ठा kobj_attribute *attr,
-				    स्थिर अक्षर *buf, माप_प्रकार n)
-अणु
-	अचिन्हित दीर्घ val;
+static ssize_t pm_print_times_store(struct kobject *kobj,
+				    struct kobj_attribute *attr,
+				    const char *buf, size_t n)
+{
+	unsigned long val;
 
-	अगर (kम_से_अदीर्घ(buf, 10, &val))
-		वापस -EINVAL;
+	if (kstrtoul(buf, 10, &val))
+		return -EINVAL;
 
-	अगर (val > 1)
-		वापस -EINVAL;
+	if (val > 1)
+		return -EINVAL;
 
-	pm_prपूर्णांक_बार_enabled = !!val;
-	वापस n;
-पूर्ण
+	pm_print_times_enabled = !!val;
+	return n;
+}
 
-घातer_attr(pm_prपूर्णांक_बार);
+power_attr(pm_print_times);
 
-अटल अंतरभूत व्योम pm_prपूर्णांक_बार_init(व्योम)
-अणु
-	pm_prपूर्णांक_बार_enabled = !!initcall_debug;
-पूर्ण
+static inline void pm_print_times_init(void)
+{
+	pm_print_times_enabled = !!initcall_debug;
+}
 
-अटल sमाप_प्रकार pm_wakeup_irq_show(काष्ठा kobject *kobj,
-					काष्ठा kobj_attribute *attr,
-					अक्षर *buf)
-अणु
-	वापस pm_wakeup_irq ? प्र_लिखो(buf, "%u\n", pm_wakeup_irq) : -ENODATA;
-पूर्ण
+static ssize_t pm_wakeup_irq_show(struct kobject *kobj,
+					struct kobj_attribute *attr,
+					char *buf)
+{
+	return pm_wakeup_irq ? sprintf(buf, "%u\n", pm_wakeup_irq) : -ENODATA;
+}
 
-घातer_attr_ro(pm_wakeup_irq);
+power_attr_ro(pm_wakeup_irq);
 
-bool pm_debug_messages_on __पढ़ो_mostly;
+bool pm_debug_messages_on __read_mostly;
 
-अटल sमाप_प्रकार pm_debug_messages_show(काष्ठा kobject *kobj,
-				      काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "%d\n", pm_debug_messages_on);
-पूर्ण
+static ssize_t pm_debug_messages_show(struct kobject *kobj,
+				      struct kobj_attribute *attr, char *buf)
+{
+	return sprintf(buf, "%d\n", pm_debug_messages_on);
+}
 
-अटल sमाप_प्रकार pm_debug_messages_store(काष्ठा kobject *kobj,
-				       काष्ठा kobj_attribute *attr,
-				       स्थिर अक्षर *buf, माप_प्रकार n)
-अणु
-	अचिन्हित दीर्घ val;
+static ssize_t pm_debug_messages_store(struct kobject *kobj,
+				       struct kobj_attribute *attr,
+				       const char *buf, size_t n)
+{
+	unsigned long val;
 
-	अगर (kम_से_अदीर्घ(buf, 10, &val))
-		वापस -EINVAL;
+	if (kstrtoul(buf, 10, &val))
+		return -EINVAL;
 
-	अगर (val > 1)
-		वापस -EINVAL;
+	if (val > 1)
+		return -EINVAL;
 
 	pm_debug_messages_on = !!val;
-	वापस n;
-पूर्ण
+	return n;
+}
 
-घातer_attr(pm_debug_messages);
+power_attr(pm_debug_messages);
 
-अटल पूर्णांक __init pm_debug_messages_setup(अक्षर *str)
-अणु
+static int __init pm_debug_messages_setup(char *str)
+{
 	pm_debug_messages_on = true;
-	वापस 1;
-पूर्ण
+	return 1;
+}
 __setup("pm_debug_messages", pm_debug_messages_setup);
 
 /**
- * __pm_pr_dbg - Prपूर्णांक a suspend debug message to the kernel log.
- * @defer: Whether or not to use prपूर्णांकk_deferred() to prपूर्णांक the message.
- * @fmt: Message क्रमmat.
+ * __pm_pr_dbg - Print a suspend debug message to the kernel log.
+ * @defer: Whether or not to use printk_deferred() to print the message.
+ * @fmt: Message format.
  *
- * The message will be emitted अगर enabled through the pm_debug_messages
+ * The message will be emitted if enabled through the pm_debug_messages
  * sysfs attribute.
  */
-व्योम __pm_pr_dbg(bool defer, स्थिर अक्षर *fmt, ...)
-अणु
-	काष्ठा va_क्रमmat vaf;
-	बहु_सूची args;
+void __pm_pr_dbg(bool defer, const char *fmt, ...)
+{
+	struct va_format vaf;
+	va_list args;
 
-	अगर (!pm_debug_messages_on)
-		वापस;
+	if (!pm_debug_messages_on)
+		return;
 
-	बहु_शुरू(args, fmt);
+	va_start(args, fmt);
 
 	vaf.fmt = fmt;
 	vaf.va = &args;
 
-	अगर (defer)
-		prपूर्णांकk_deferred(KERN_DEBUG "PM: %pV", &vaf);
-	अन्यथा
-		prपूर्णांकk(KERN_DEBUG "PM: %pV", &vaf);
+	if (defer)
+		printk_deferred(KERN_DEBUG "PM: %pV", &vaf);
+	else
+		printk(KERN_DEBUG "PM: %pV", &vaf);
 
-	बहु_पूर्ण(args);
-पूर्ण
+	va_end(args);
+}
 
-#अन्यथा /* !CONFIG_PM_SLEEP_DEBUG */
-अटल अंतरभूत व्योम pm_prपूर्णांक_बार_init(व्योम) अणुपूर्ण
-#पूर्ण_अगर /* CONFIG_PM_SLEEP_DEBUG */
+#else /* !CONFIG_PM_SLEEP_DEBUG */
+static inline void pm_print_times_init(void) {}
+#endif /* CONFIG_PM_SLEEP_DEBUG */
 
-काष्ठा kobject *घातer_kobj;
+struct kobject *power_kobj;
 
 /**
- * state - control प्रणाली sleep states.
+ * state - control system sleep states.
  *
- * show() वापसs available sleep state labels, which may be "mem", "standby",
+ * show() returns available sleep state labels, which may be "mem", "standby",
  * "freeze" and "disk" (hibernation).
- * See Documentation/admin-guide/pm/sleep-states.rst क्रम a description of
+ * See Documentation/admin-guide/pm/sleep-states.rst for a description of
  * what they mean.
  *
- * store() accepts one of those strings, translates it पूर्णांकo the proper
- * क्रमागतerated value, and initiates a suspend transition.
+ * store() accepts one of those strings, translates it into the proper
+ * enumerated value, and initiates a suspend transition.
  */
-अटल sमाप_प्रकार state_show(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
-			  अक्षर *buf)
-अणु
-	अक्षर *s = buf;
-#अगर_घोषित CONFIG_SUSPEND
+static ssize_t state_show(struct kobject *kobj, struct kobj_attribute *attr,
+			  char *buf)
+{
+	char *s = buf;
+#ifdef CONFIG_SUSPEND
 	suspend_state_t i;
 
-	क्रम (i = PM_SUSPEND_MIN; i < PM_SUSPEND_MAX; i++)
-		अगर (pm_states[i])
-			s += प्र_लिखो(s,"%s ", pm_states[i]);
+	for (i = PM_SUSPEND_MIN; i < PM_SUSPEND_MAX; i++)
+		if (pm_states[i])
+			s += sprintf(s,"%s ", pm_states[i]);
 
-#पूर्ण_अगर
-	अगर (hibernation_available())
-		s += प्र_लिखो(s, "disk ");
-	अगर (s != buf)
+#endif
+	if (hibernation_available())
+		s += sprintf(s, "disk ");
+	if (s != buf)
 		/* convert the last space to a newline */
 		*(s-1) = '\n';
-	वापस (s - buf);
-पूर्ण
+	return (s - buf);
+}
 
-अटल suspend_state_t decode_state(स्थिर अक्षर *buf, माप_प्रकार n)
-अणु
-#अगर_घोषित CONFIG_SUSPEND
+static suspend_state_t decode_state(const char *buf, size_t n)
+{
+#ifdef CONFIG_SUSPEND
 	suspend_state_t state;
-#पूर्ण_अगर
-	अक्षर *p;
-	पूर्णांक len;
+#endif
+	char *p;
+	int len;
 
-	p = स_प्रथम(buf, '\n', n);
+	p = memchr(buf, '\n', n);
 	len = p ? p - buf : n;
 
 	/* Check hibernation first. */
-	अगर (len == 4 && str_has_prefix(buf, "disk"))
-		वापस PM_SUSPEND_MAX;
+	if (len == 4 && str_has_prefix(buf, "disk"))
+		return PM_SUSPEND_MAX;
 
-#अगर_घोषित CONFIG_SUSPEND
-	क्रम (state = PM_SUSPEND_MIN; state < PM_SUSPEND_MAX; state++) अणु
-		स्थिर अक्षर *label = pm_states[state];
+#ifdef CONFIG_SUSPEND
+	for (state = PM_SUSPEND_MIN; state < PM_SUSPEND_MAX; state++) {
+		const char *label = pm_states[state];
 
-		अगर (label && len == म_माप(label) && !म_भेदन(buf, label, len))
-			वापस state;
-	पूर्ण
-#पूर्ण_अगर
+		if (label && len == strlen(label) && !strncmp(buf, label, len))
+			return state;
+	}
+#endif
 
-	वापस PM_SUSPEND_ON;
-पूर्ण
+	return PM_SUSPEND_ON;
+}
 
-अटल sमाप_प्रकार state_store(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
-			   स्थिर अक्षर *buf, माप_प्रकार n)
-अणु
+static ssize_t state_store(struct kobject *kobj, struct kobj_attribute *attr,
+			   const char *buf, size_t n)
+{
 	suspend_state_t state;
-	पूर्णांक error;
+	int error;
 
-	error = pm_स्वतःsleep_lock();
-	अगर (error)
-		वापस error;
+	error = pm_autosleep_lock();
+	if (error)
+		return error;
 
-	अगर (pm_स्वतःsleep_state() > PM_SUSPEND_ON) अणु
+	if (pm_autosleep_state() > PM_SUSPEND_ON) {
 		error = -EBUSY;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	state = decode_state(buf, n);
-	अगर (state < PM_SUSPEND_MAX) अणु
-		अगर (state == PM_SUSPEND_MEM)
+	if (state < PM_SUSPEND_MAX) {
+		if (state == PM_SUSPEND_MEM)
 			state = mem_sleep_current;
 
 		error = pm_suspend(state);
-	पूर्ण अन्यथा अगर (state == PM_SUSPEND_MAX) अणु
+	} else if (state == PM_SUSPEND_MAX) {
 		error = hibernate();
-	पूर्ण अन्यथा अणु
+	} else {
 		error = -EINVAL;
-	पूर्ण
+	}
 
  out:
-	pm_स्वतःsleep_unlock();
-	वापस error ? error : n;
-पूर्ण
+	pm_autosleep_unlock();
+	return error ? error : n;
+}
 
-घातer_attr(state);
+power_attr(state);
 
-#अगर_घोषित CONFIG_PM_SLEEP
+#ifdef CONFIG_PM_SLEEP
 /*
- * The 'wakeup_count' attribute, aदीर्घ with the functions defined in
- * drivers/base/घातer/wakeup.c, provides a means by which wakeup events can be
+ * The 'wakeup_count' attribute, along with the functions defined in
+ * drivers/base/power/wakeup.c, provides a means by which wakeup events can be
  * handled in a non-racy way.
  *
- * If a wakeup event occurs when the प्रणाली is in a sleep state, it simply is
- * woken up.  In turn, अगर an event that would wake the प्रणाली up from a sleep
+ * If a wakeup event occurs when the system is in a sleep state, it simply is
+ * woken up.  In turn, if an event that would wake the system up from a sleep
  * state occurs when it is undergoing a transition to that sleep state, the
- * transition should be पातed.  Moreover, अगर such an event occurs when the
- * प्रणाली is in the working state, an attempt to start a transition to the
+ * transition should be aborted.  Moreover, if such an event occurs when the
+ * system is in the working state, an attempt to start a transition to the
  * given sleep state should fail during certain period after the detection of
  * the event.  Using the 'state' attribute alone is not sufficient to satisfy
  * these requirements, because a wakeup event may occur exactly when 'state'
- * is being written to and may be delivered to user space right beक्रमe it is
- * frozen, so the event will reमुख्य only partially processed until the प्रणाली is
+ * is being written to and may be delivered to user space right before it is
+ * frozen, so the event will remain only partially processed until the system is
  * woken up by another event.  In particular, it won't cause the transition to
- * a sleep state to be पातed.
+ * a sleep state to be aborted.
  *
- * This dअगरficulty may be overcome अगर user space uses 'wakeup_count' beक्रमe
+ * This difficulty may be overcome if user space uses 'wakeup_count' before
  * writing to 'state'.  It first should read from 'wakeup_count' and store
- * the पढ़ो value.  Then, after carrying out its own preparations क्रम the प्रणाली
- * transition to a sleep state, it should ग_लिखो the stored value to
+ * the read value.  Then, after carrying out its own preparations for the system
+ * transition to a sleep state, it should write the stored value to
  * 'wakeup_count'.  If that fails, at least one wakeup event has occurred since
  * 'wakeup_count' was read and 'state' should not be written to.  Otherwise, it
- * is allowed to ग_लिखो to 'state', but the transition will be पातed अगर there
+ * is allowed to write to 'state', but the transition will be aborted if there
  * are any wakeup events detected after 'wakeup_count' was written to.
  */
 
-अटल sमाप_प्रकार wakeup_count_show(काष्ठा kobject *kobj,
-				काष्ठा kobj_attribute *attr,
-				अक्षर *buf)
-अणु
-	अचिन्हित पूर्णांक val;
+static ssize_t wakeup_count_show(struct kobject *kobj,
+				struct kobj_attribute *attr,
+				char *buf)
+{
+	unsigned int val;
 
-	वापस pm_get_wakeup_count(&val, true) ?
-		प्र_लिखो(buf, "%u\n", val) : -EINTR;
-पूर्ण
+	return pm_get_wakeup_count(&val, true) ?
+		sprintf(buf, "%u\n", val) : -EINTR;
+}
 
-अटल sमाप_प्रकार wakeup_count_store(काष्ठा kobject *kobj,
-				काष्ठा kobj_attribute *attr,
-				स्थिर अक्षर *buf, माप_प्रकार n)
-अणु
-	अचिन्हित पूर्णांक val;
-	पूर्णांक error;
+static ssize_t wakeup_count_store(struct kobject *kobj,
+				struct kobj_attribute *attr,
+				const char *buf, size_t n)
+{
+	unsigned int val;
+	int error;
 
-	error = pm_स्वतःsleep_lock();
-	अगर (error)
-		वापस error;
+	error = pm_autosleep_lock();
+	if (error)
+		return error;
 
-	अगर (pm_स्वतःsleep_state() > PM_SUSPEND_ON) अणु
+	if (pm_autosleep_state() > PM_SUSPEND_ON) {
 		error = -EBUSY;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	error = -EINVAL;
-	अगर (माला_पूछो(buf, "%u", &val) == 1) अणु
-		अगर (pm_save_wakeup_count(val))
+	if (sscanf(buf, "%u", &val) == 1) {
+		if (pm_save_wakeup_count(val))
 			error = n;
-		अन्यथा
-			pm_prपूर्णांक_active_wakeup_sources();
-	पूर्ण
+		else
+			pm_print_active_wakeup_sources();
+	}
 
  out:
-	pm_स्वतःsleep_unlock();
-	वापस error;
-पूर्ण
+	pm_autosleep_unlock();
+	return error;
+}
 
-घातer_attr(wakeup_count);
+power_attr(wakeup_count);
 
-#अगर_घोषित CONFIG_PM_AUTOSLEEP
-अटल sमाप_प्रकार स्वतःsleep_show(काष्ठा kobject *kobj,
-			      काष्ठा kobj_attribute *attr,
-			      अक्षर *buf)
-अणु
-	suspend_state_t state = pm_स्वतःsleep_state();
+#ifdef CONFIG_PM_AUTOSLEEP
+static ssize_t autosleep_show(struct kobject *kobj,
+			      struct kobj_attribute *attr,
+			      char *buf)
+{
+	suspend_state_t state = pm_autosleep_state();
 
-	अगर (state == PM_SUSPEND_ON)
-		वापस प्र_लिखो(buf, "off\n");
+	if (state == PM_SUSPEND_ON)
+		return sprintf(buf, "off\n");
 
-#अगर_घोषित CONFIG_SUSPEND
-	अगर (state < PM_SUSPEND_MAX)
-		वापस प्र_लिखो(buf, "%s\n", pm_states[state] ?
+#ifdef CONFIG_SUSPEND
+	if (state < PM_SUSPEND_MAX)
+		return sprintf(buf, "%s\n", pm_states[state] ?
 					pm_states[state] : "error");
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_HIBERNATION
-	वापस प्र_लिखो(buf, "disk\n");
-#अन्यथा
-	वापस प्र_लिखो(buf, "error");
-#पूर्ण_अगर
-पूर्ण
+#endif
+#ifdef CONFIG_HIBERNATION
+	return sprintf(buf, "disk\n");
+#else
+	return sprintf(buf, "error");
+#endif
+}
 
-अटल sमाप_प्रकार स्वतःsleep_store(काष्ठा kobject *kobj,
-			       काष्ठा kobj_attribute *attr,
-			       स्थिर अक्षर *buf, माप_प्रकार n)
-अणु
+static ssize_t autosleep_store(struct kobject *kobj,
+			       struct kobj_attribute *attr,
+			       const char *buf, size_t n)
+{
 	suspend_state_t state = decode_state(buf, n);
-	पूर्णांक error;
+	int error;
 
-	अगर (state == PM_SUSPEND_ON
-	    && म_भेद(buf, "off") && म_भेद(buf, "off\n"))
-		वापस -EINVAL;
+	if (state == PM_SUSPEND_ON
+	    && strcmp(buf, "off") && strcmp(buf, "off\n"))
+		return -EINVAL;
 
-	अगर (state == PM_SUSPEND_MEM)
+	if (state == PM_SUSPEND_MEM)
 		state = mem_sleep_current;
 
-	error = pm_स्वतःsleep_set_state(state);
-	वापस error ? error : n;
-पूर्ण
+	error = pm_autosleep_set_state(state);
+	return error ? error : n;
+}
 
-घातer_attr(स्वतःsleep);
-#पूर्ण_अगर /* CONFIG_PM_AUTOSLEEP */
+power_attr(autosleep);
+#endif /* CONFIG_PM_AUTOSLEEP */
 
-#अगर_घोषित CONFIG_PM_WAKELOCKS
-अटल sमाप_प्रकार wake_lock_show(काष्ठा kobject *kobj,
-			      काष्ठा kobj_attribute *attr,
-			      अक्षर *buf)
-अणु
-	वापस pm_show_wakelocks(buf, true);
-पूर्ण
+#ifdef CONFIG_PM_WAKELOCKS
+static ssize_t wake_lock_show(struct kobject *kobj,
+			      struct kobj_attribute *attr,
+			      char *buf)
+{
+	return pm_show_wakelocks(buf, true);
+}
 
-अटल sमाप_प्रकार wake_lock_store(काष्ठा kobject *kobj,
-			       काष्ठा kobj_attribute *attr,
-			       स्थिर अक्षर *buf, माप_प्रकार n)
-अणु
-	पूर्णांक error = pm_wake_lock(buf);
-	वापस error ? error : n;
-पूर्ण
+static ssize_t wake_lock_store(struct kobject *kobj,
+			       struct kobj_attribute *attr,
+			       const char *buf, size_t n)
+{
+	int error = pm_wake_lock(buf);
+	return error ? error : n;
+}
 
-घातer_attr(wake_lock);
+power_attr(wake_lock);
 
-अटल sमाप_प्रकार wake_unlock_show(काष्ठा kobject *kobj,
-				काष्ठा kobj_attribute *attr,
-				अक्षर *buf)
-अणु
-	वापस pm_show_wakelocks(buf, false);
-पूर्ण
+static ssize_t wake_unlock_show(struct kobject *kobj,
+				struct kobj_attribute *attr,
+				char *buf)
+{
+	return pm_show_wakelocks(buf, false);
+}
 
-अटल sमाप_प्रकार wake_unlock_store(काष्ठा kobject *kobj,
-				 काष्ठा kobj_attribute *attr,
-				 स्थिर अक्षर *buf, माप_प्रकार n)
-अणु
-	पूर्णांक error = pm_wake_unlock(buf);
-	वापस error ? error : n;
-पूर्ण
+static ssize_t wake_unlock_store(struct kobject *kobj,
+				 struct kobj_attribute *attr,
+				 const char *buf, size_t n)
+{
+	int error = pm_wake_unlock(buf);
+	return error ? error : n;
+}
 
-घातer_attr(wake_unlock);
+power_attr(wake_unlock);
 
-#पूर्ण_अगर /* CONFIG_PM_WAKELOCKS */
-#पूर्ण_अगर /* CONFIG_PM_SLEEP */
+#endif /* CONFIG_PM_WAKELOCKS */
+#endif /* CONFIG_PM_SLEEP */
 
-#अगर_घोषित CONFIG_PM_TRACE
-पूर्णांक pm_trace_enabled;
+#ifdef CONFIG_PM_TRACE
+int pm_trace_enabled;
 
-अटल sमाप_प्रकार pm_trace_show(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
-			     अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "%d\n", pm_trace_enabled);
-पूर्ण
+static ssize_t pm_trace_show(struct kobject *kobj, struct kobj_attribute *attr,
+			     char *buf)
+{
+	return sprintf(buf, "%d\n", pm_trace_enabled);
+}
 
-अटल sमाप_प्रकार
-pm_trace_store(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
-	       स्थिर अक्षर *buf, माप_प्रकार n)
-अणु
-	पूर्णांक val;
+static ssize_t
+pm_trace_store(struct kobject *kobj, struct kobj_attribute *attr,
+	       const char *buf, size_t n)
+{
+	int val;
 
-	अगर (माला_पूछो(buf, "%d", &val) == 1) अणु
+	if (sscanf(buf, "%d", &val) == 1) {
 		pm_trace_enabled = !!val;
-		अगर (pm_trace_enabled) अणु
+		if (pm_trace_enabled) {
 			pr_warn("PM: Enabling pm_trace changes system date and time during resume.\n"
 				"PM: Correct system time has to be restored manually after resume.\n");
-		पूर्ण
-		वापस n;
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+		}
+		return n;
+	}
+	return -EINVAL;
+}
 
-घातer_attr(pm_trace);
+power_attr(pm_trace);
 
-अटल sमाप_प्रकार pm_trace_dev_match_show(काष्ठा kobject *kobj,
-				       काष्ठा kobj_attribute *attr,
-				       अक्षर *buf)
-अणु
-	वापस show_trace_dev_match(buf, PAGE_SIZE);
-पूर्ण
+static ssize_t pm_trace_dev_match_show(struct kobject *kobj,
+				       struct kobj_attribute *attr,
+				       char *buf)
+{
+	return show_trace_dev_match(buf, PAGE_SIZE);
+}
 
-घातer_attr_ro(pm_trace_dev_match);
+power_attr_ro(pm_trace_dev_match);
 
-#पूर्ण_अगर /* CONFIG_PM_TRACE */
+#endif /* CONFIG_PM_TRACE */
 
-#अगर_घोषित CONFIG_FREEZER
-अटल sमाप_प्रकार pm_मुक्तze_समयout_show(काष्ठा kobject *kobj,
-				      काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "%u\n", मुक्तze_समयout_msecs);
-पूर्ण
+#ifdef CONFIG_FREEZER
+static ssize_t pm_freeze_timeout_show(struct kobject *kobj,
+				      struct kobj_attribute *attr, char *buf)
+{
+	return sprintf(buf, "%u\n", freeze_timeout_msecs);
+}
 
-अटल sमाप_प्रकार pm_मुक्तze_समयout_store(काष्ठा kobject *kobj,
-				       काष्ठा kobj_attribute *attr,
-				       स्थिर अक्षर *buf, माप_प्रकार n)
-अणु
-	अचिन्हित दीर्घ val;
+static ssize_t pm_freeze_timeout_store(struct kobject *kobj,
+				       struct kobj_attribute *attr,
+				       const char *buf, size_t n)
+{
+	unsigned long val;
 
-	अगर (kम_से_अदीर्घ(buf, 10, &val))
-		वापस -EINVAL;
+	if (kstrtoul(buf, 10, &val))
+		return -EINVAL;
 
-	मुक्तze_समयout_msecs = val;
-	वापस n;
-पूर्ण
+	freeze_timeout_msecs = val;
+	return n;
+}
 
-घातer_attr(pm_मुक्तze_समयout);
+power_attr(pm_freeze_timeout);
 
-#पूर्ण_अगर	/* CONFIG_FREEZER*/
+#endif	/* CONFIG_FREEZER*/
 
-अटल काष्ठा attribute * g[] = अणु
+static struct attribute * g[] = {
 	&state_attr.attr,
-#अगर_घोषित CONFIG_PM_TRACE
+#ifdef CONFIG_PM_TRACE
 	&pm_trace_attr.attr,
 	&pm_trace_dev_match_attr.attr,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PM_SLEEP
+#endif
+#ifdef CONFIG_PM_SLEEP
 	&pm_async_attr.attr,
 	&wakeup_count_attr.attr,
-#अगर_घोषित CONFIG_SUSPEND
+#ifdef CONFIG_SUSPEND
 	&mem_sleep_attr.attr,
 	&sync_on_suspend_attr.attr,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PM_AUTOSLEEP
-	&स्वतःsleep_attr.attr,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PM_WAKELOCKS
+#endif
+#ifdef CONFIG_PM_AUTOSLEEP
+	&autosleep_attr.attr,
+#endif
+#ifdef CONFIG_PM_WAKELOCKS
 	&wake_lock_attr.attr,
 	&wake_unlock_attr.attr,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PM_SLEEP_DEBUG
+#endif
+#ifdef CONFIG_PM_SLEEP_DEBUG
 	&pm_test_attr.attr,
-	&pm_prपूर्णांक_बार_attr.attr,
+	&pm_print_times_attr.attr,
 	&pm_wakeup_irq_attr.attr,
 	&pm_debug_messages_attr.attr,
-#पूर्ण_अगर
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_FREEZER
-	&pm_मुक्तze_समयout_attr.attr,
-#पूर्ण_अगर
-	शून्य,
-पूर्ण;
+#endif
+#endif
+#ifdef CONFIG_FREEZER
+	&pm_freeze_timeout_attr.attr,
+#endif
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group attr_group = अणु
+static const struct attribute_group attr_group = {
 	.attrs = g,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा attribute_group *attr_groups[] = अणु
+static const struct attribute_group *attr_groups[] = {
 	&attr_group,
-#अगर_घोषित CONFIG_PM_SLEEP
+#ifdef CONFIG_PM_SLEEP
 	&suspend_attr_group,
-#पूर्ण_अगर
-	शून्य,
-पूर्ण;
+#endif
+	NULL,
+};
 
-काष्ठा workqueue_काष्ठा *pm_wq;
+struct workqueue_struct *pm_wq;
 EXPORT_SYMBOL_GPL(pm_wq);
 
-अटल पूर्णांक __init pm_start_workqueue(व्योम)
-अणु
+static int __init pm_start_workqueue(void)
+{
 	pm_wq = alloc_workqueue("pm", WQ_FREEZABLE, 0);
 
-	वापस pm_wq ? 0 : -ENOMEM;
-पूर्ण
+	return pm_wq ? 0 : -ENOMEM;
+}
 
-अटल पूर्णांक __init pm_init(व्योम)
-अणु
-	पूर्णांक error = pm_start_workqueue();
-	अगर (error)
-		वापस error;
+static int __init pm_init(void)
+{
+	int error = pm_start_workqueue();
+	if (error)
+		return error;
 	hibernate_image_size_init();
 	hibernate_reserved_size_init();
 	pm_states_init();
-	घातer_kobj = kobject_create_and_add("power", शून्य);
-	अगर (!घातer_kobj)
-		वापस -ENOMEM;
-	error = sysfs_create_groups(घातer_kobj, attr_groups);
-	अगर (error)
-		वापस error;
-	pm_prपूर्णांक_बार_init();
-	वापस pm_स्वतःsleep_init();
-पूर्ण
+	power_kobj = kobject_create_and_add("power", NULL);
+	if (!power_kobj)
+		return -ENOMEM;
+	error = sysfs_create_groups(power_kobj, attr_groups);
+	if (error)
+		return error;
+	pm_print_times_init();
+	return pm_autosleep_init();
+}
 
 core_initcall(pm_init);

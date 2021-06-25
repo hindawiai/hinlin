@@ -1,22 +1,21 @@
-<शैली गुरु>
 /*
- * include/यंत्र-xtensa/tlb.h
+ * include/asm-xtensa/tlb.h
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 2001 - 2005 Tensilica Inc.
  */
 
-#अगर_अघोषित _XTENSA_TLB_H
-#घोषणा _XTENSA_TLB_H
+#ifndef _XTENSA_TLB_H
+#define _XTENSA_TLB_H
 
-#समावेश <यंत्र/cache.h>
-#समावेश <यंत्र/page.h>
+#include <asm/cache.h>
+#include <asm/page.h>
 
-#समावेश <यंत्र-generic/tlb.h>
+#include <asm-generic/tlb.h>
 
-#घोषणा __pte_मुक्त_tlb(tlb, pte, address)	pte_मुक्त((tlb)->mm, pte)
+#define __pte_free_tlb(tlb, pte, address)	pte_free((tlb)->mm, pte)
 
-#पूर्ण_अगर	/* _XTENSA_TLB_H */
+#endif	/* _XTENSA_TLB_H */

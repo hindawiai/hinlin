@@ -1,250 +1,249 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Watchकरोg driver क्रम the UniPhier watchकरोg समयr
+ * Watchdog driver for the UniPhier watchdog timer
  *
  * (c) Copyright 2014 Panasonic Corporation
  * (c) Copyright 2016 Socionext Inc.
  * All rights reserved.
  */
 
-#समावेश <linux/bitops.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/watchकरोg.h>
+#include <linux/bitops.h>
+#include <linux/mfd/syscon.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/regmap.h>
+#include <linux/watchdog.h>
 
-/* WDT समयr setting रेजिस्टर */
-#घोषणा WDTTIMSET			0x3004
-#घोषणा   WDTTIMSET_PERIOD_MASK		(0xf << 0)
-#घोषणा   WDTTIMSET_PERIOD_1_SEC	(0x3 << 0)
+/* WDT timer setting register */
+#define WDTTIMSET			0x3004
+#define   WDTTIMSET_PERIOD_MASK		(0xf << 0)
+#define   WDTTIMSET_PERIOD_1_SEC	(0x3 << 0)
 
-/* WDT reset selection रेजिस्टर */
-#घोषणा WDTRSTSEL			0x3008
-#घोषणा   WDTRSTSEL_RSTSEL_MASK		(0x3 << 0)
-#घोषणा   WDTRSTSEL_RSTSEL_BOTH		(0x0 << 0)
-#घोषणा   WDTRSTSEL_RSTSEL_IRQ_ONLY	(0x2 << 0)
+/* WDT reset selection register */
+#define WDTRSTSEL			0x3008
+#define   WDTRSTSEL_RSTSEL_MASK		(0x3 << 0)
+#define   WDTRSTSEL_RSTSEL_BOTH		(0x0 << 0)
+#define   WDTRSTSEL_RSTSEL_IRQ_ONLY	(0x2 << 0)
 
-/* WDT control रेजिस्टर */
-#घोषणा WDTCTRL				0x300c
-#घोषणा   WDTCTRL_STATUS		BIT(8)
-#घोषणा   WDTCTRL_CLEAR			BIT(1)
-#घोषणा   WDTCTRL_ENABLE		BIT(0)
+/* WDT control register */
+#define WDTCTRL				0x300c
+#define   WDTCTRL_STATUS		BIT(8)
+#define   WDTCTRL_CLEAR			BIT(1)
+#define   WDTCTRL_ENABLE		BIT(0)
 
-#घोषणा SEC_TO_WDTTIMSET_PRD(sec) \
+#define SEC_TO_WDTTIMSET_PRD(sec) \
 		(ilog2(sec) + WDTTIMSET_PERIOD_1_SEC)
 
-#घोषणा WDTST_TIMEOUT			1000 /* usec */
+#define WDTST_TIMEOUT			1000 /* usec */
 
-#घोषणा WDT_DEFAULT_TIMEOUT		64   /* Default is 64 seconds */
-#घोषणा WDT_PERIOD_MIN			1
-#घोषणा WDT_PERIOD_MAX			128
+#define WDT_DEFAULT_TIMEOUT		64   /* Default is 64 seconds */
+#define WDT_PERIOD_MIN			1
+#define WDT_PERIOD_MAX			128
 
-अटल अचिन्हित पूर्णांक समयout = 0;
-अटल bool nowayout = WATCHDOG_NOWAYOUT;
+static unsigned int timeout = 0;
+static bool nowayout = WATCHDOG_NOWAYOUT;
 
-काष्ठा uniphier_wdt_dev अणु
-	काष्ठा watchकरोg_device wdt_dev;
-	काष्ठा regmap	*regmap;
-पूर्ण;
+struct uniphier_wdt_dev {
+	struct watchdog_device wdt_dev;
+	struct regmap	*regmap;
+};
 
 /*
- * UniPhier Watchकरोg operations
+ * UniPhier Watchdog operations
  */
-अटल पूर्णांक uniphier_watchकरोg_ping(काष्ठा watchकरोg_device *w)
-अणु
-	काष्ठा uniphier_wdt_dev *wdev = watchकरोg_get_drvdata(w);
-	अचिन्हित पूर्णांक val;
-	पूर्णांक ret;
+static int uniphier_watchdog_ping(struct watchdog_device *w)
+{
+	struct uniphier_wdt_dev *wdev = watchdog_get_drvdata(w);
+	unsigned int val;
+	int ret;
 
 	/* Clear counter */
-	ret = regmap_ग_लिखो_bits(wdev->regmap, WDTCTRL,
+	ret = regmap_write_bits(wdev->regmap, WDTCTRL,
 				WDTCTRL_CLEAR, WDTCTRL_CLEAR);
-	अगर (!ret)
+	if (!ret)
 		/*
-		 * As SoC specअगरication, after clear counter,
-		 * it needs to रुको until counter status is 1.
+		 * As SoC specification, after clear counter,
+		 * it needs to wait until counter status is 1.
 		 */
-		ret = regmap_पढ़ो_poll_समयout(wdev->regmap, WDTCTRL, val,
+		ret = regmap_read_poll_timeout(wdev->regmap, WDTCTRL, val,
 					       (val & WDTCTRL_STATUS),
 					       0, WDTST_TIMEOUT);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक __uniphier_watchकरोg_start(काष्ठा regmap *regmap, अचिन्हित पूर्णांक sec)
-अणु
-	अचिन्हित पूर्णांक val;
-	पूर्णांक ret;
+static int __uniphier_watchdog_start(struct regmap *regmap, unsigned int sec)
+{
+	unsigned int val;
+	int ret;
 
-	ret = regmap_पढ़ो_poll_समयout(regmap, WDTCTRL, val,
+	ret = regmap_read_poll_timeout(regmap, WDTCTRL, val,
 				       !(val & WDTCTRL_STATUS),
 				       0, WDTST_TIMEOUT);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* Setup period */
-	ret = regmap_ग_लिखो(regmap, WDTTIMSET,
+	ret = regmap_write(regmap, WDTTIMSET,
 			   SEC_TO_WDTTIMSET_PRD(sec));
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* Enable and clear watchकरोg */
-	ret = regmap_ग_लिखो(regmap, WDTCTRL, WDTCTRL_ENABLE | WDTCTRL_CLEAR);
-	अगर (!ret)
+	/* Enable and clear watchdog */
+	ret = regmap_write(regmap, WDTCTRL, WDTCTRL_ENABLE | WDTCTRL_CLEAR);
+	if (!ret)
 		/*
-		 * As SoC specअगरication, after clear counter,
-		 * it needs to रुको until counter status is 1.
+		 * As SoC specification, after clear counter,
+		 * it needs to wait until counter status is 1.
 		 */
-		ret = regmap_पढ़ो_poll_समयout(regmap, WDTCTRL, val,
+		ret = regmap_read_poll_timeout(regmap, WDTCTRL, val,
 					       (val & WDTCTRL_STATUS),
 					       0, WDTST_TIMEOUT);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक __uniphier_watchकरोg_stop(काष्ठा regmap *regmap)
-अणु
-	/* Disable and stop watchकरोg */
-	वापस regmap_ग_लिखो_bits(regmap, WDTCTRL, WDTCTRL_ENABLE, 0);
-पूर्ण
+static int __uniphier_watchdog_stop(struct regmap *regmap)
+{
+	/* Disable and stop watchdog */
+	return regmap_write_bits(regmap, WDTCTRL, WDTCTRL_ENABLE, 0);
+}
 
-अटल पूर्णांक __uniphier_watchकरोg_restart(काष्ठा regmap *regmap, अचिन्हित पूर्णांक sec)
-अणु
-	पूर्णांक ret;
+static int __uniphier_watchdog_restart(struct regmap *regmap, unsigned int sec)
+{
+	int ret;
 
-	ret = __uniphier_watchकरोg_stop(regmap);
-	अगर (ret)
-		वापस ret;
+	ret = __uniphier_watchdog_stop(regmap);
+	if (ret)
+		return ret;
 
-	वापस __uniphier_watchकरोg_start(regmap, sec);
-पूर्ण
+	return __uniphier_watchdog_start(regmap, sec);
+}
 
-अटल पूर्णांक uniphier_watchकरोg_start(काष्ठा watchकरोg_device *w)
-अणु
-	काष्ठा uniphier_wdt_dev *wdev = watchकरोg_get_drvdata(w);
-	अचिन्हित पूर्णांक पंचांगp_समयout;
+static int uniphier_watchdog_start(struct watchdog_device *w)
+{
+	struct uniphier_wdt_dev *wdev = watchdog_get_drvdata(w);
+	unsigned int tmp_timeout;
 
-	पंचांगp_समयout = roundup_घात_of_two(w->समयout);
+	tmp_timeout = roundup_pow_of_two(w->timeout);
 
-	वापस __uniphier_watchकरोg_start(wdev->regmap, पंचांगp_समयout);
-पूर्ण
+	return __uniphier_watchdog_start(wdev->regmap, tmp_timeout);
+}
 
-अटल पूर्णांक uniphier_watchकरोg_stop(काष्ठा watchकरोg_device *w)
-अणु
-	काष्ठा uniphier_wdt_dev *wdev = watchकरोg_get_drvdata(w);
+static int uniphier_watchdog_stop(struct watchdog_device *w)
+{
+	struct uniphier_wdt_dev *wdev = watchdog_get_drvdata(w);
 
-	वापस __uniphier_watchकरोg_stop(wdev->regmap);
-पूर्ण
+	return __uniphier_watchdog_stop(wdev->regmap);
+}
 
-अटल पूर्णांक uniphier_watchकरोg_set_समयout(काष्ठा watchकरोg_device *w,
-					 अचिन्हित पूर्णांक t)
-अणु
-	काष्ठा uniphier_wdt_dev *wdev = watchकरोg_get_drvdata(w);
-	अचिन्हित पूर्णांक पंचांगp_समयout;
-	पूर्णांक ret;
+static int uniphier_watchdog_set_timeout(struct watchdog_device *w,
+					 unsigned int t)
+{
+	struct uniphier_wdt_dev *wdev = watchdog_get_drvdata(w);
+	unsigned int tmp_timeout;
+	int ret;
 
-	पंचांगp_समयout = roundup_घात_of_two(t);
-	अगर (पंचांगp_समयout == w->समयout)
-		वापस 0;
+	tmp_timeout = roundup_pow_of_two(t);
+	if (tmp_timeout == w->timeout)
+		return 0;
 
-	अगर (watchकरोg_active(w)) अणु
-		ret = __uniphier_watchकरोg_restart(wdev->regmap, पंचांगp_समयout);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+	if (watchdog_active(w)) {
+		ret = __uniphier_watchdog_restart(wdev->regmap, tmp_timeout);
+		if (ret)
+			return ret;
+	}
 
-	w->समयout = पंचांगp_समयout;
+	w->timeout = tmp_timeout;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Kernel Interfaces
  */
-अटल स्थिर काष्ठा watchकरोg_info uniphier_wdt_info = अणु
+static const struct watchdog_info uniphier_wdt_info = {
 	.identity	= "uniphier-wdt",
 	.options	= WDIOF_SETTIMEOUT |
 			  WDIOF_KEEPALIVEPING |
 			  WDIOF_MAGICCLOSE |
 			  WDIOF_OVERHEAT,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा watchकरोg_ops uniphier_wdt_ops = अणु
+static const struct watchdog_ops uniphier_wdt_ops = {
 	.owner		= THIS_MODULE,
-	.start		= uniphier_watchकरोg_start,
-	.stop		= uniphier_watchकरोg_stop,
-	.ping		= uniphier_watchकरोg_ping,
-	.set_समयout	= uniphier_watchकरोg_set_समयout,
-पूर्ण;
+	.start		= uniphier_watchdog_start,
+	.stop		= uniphier_watchdog_stop,
+	.ping		= uniphier_watchdog_ping,
+	.set_timeout	= uniphier_watchdog_set_timeout,
+};
 
-अटल पूर्णांक uniphier_wdt_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा uniphier_wdt_dev *wdev;
-	काष्ठा regmap *regmap;
-	काष्ठा device_node *parent;
-	पूर्णांक ret;
+static int uniphier_wdt_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct uniphier_wdt_dev *wdev;
+	struct regmap *regmap;
+	struct device_node *parent;
+	int ret;
 
-	wdev = devm_kzalloc(dev, माप(*wdev), GFP_KERNEL);
-	अगर (!wdev)
-		वापस -ENOMEM;
+	wdev = devm_kzalloc(dev, sizeof(*wdev), GFP_KERNEL);
+	if (!wdev)
+		return -ENOMEM;
 
 	parent = of_get_parent(dev->of_node); /* parent should be syscon node */
 	regmap = syscon_node_to_regmap(parent);
 	of_node_put(parent);
-	अगर (IS_ERR(regmap))
-		वापस PTR_ERR(regmap);
+	if (IS_ERR(regmap))
+		return PTR_ERR(regmap);
 
 	wdev->regmap = regmap;
 	wdev->wdt_dev.info = &uniphier_wdt_info;
 	wdev->wdt_dev.ops = &uniphier_wdt_ops;
-	wdev->wdt_dev.max_समयout = WDT_PERIOD_MAX;
-	wdev->wdt_dev.min_समयout = WDT_PERIOD_MIN;
-	wdev->wdt_dev.समयout = WDT_DEFAULT_TIMEOUT;
+	wdev->wdt_dev.max_timeout = WDT_PERIOD_MAX;
+	wdev->wdt_dev.min_timeout = WDT_PERIOD_MIN;
+	wdev->wdt_dev.timeout = WDT_DEFAULT_TIMEOUT;
 	wdev->wdt_dev.parent = dev;
 
-	watchकरोg_init_समयout(&wdev->wdt_dev, समयout, dev);
-	watchकरोg_set_nowayout(&wdev->wdt_dev, nowayout);
-	watchकरोg_stop_on_reboot(&wdev->wdt_dev);
+	watchdog_init_timeout(&wdev->wdt_dev, timeout, dev);
+	watchdog_set_nowayout(&wdev->wdt_dev, nowayout);
+	watchdog_stop_on_reboot(&wdev->wdt_dev);
 
-	watchकरोg_set_drvdata(&wdev->wdt_dev, wdev);
+	watchdog_set_drvdata(&wdev->wdt_dev, wdev);
 
-	uniphier_watchकरोg_stop(&wdev->wdt_dev);
-	ret = regmap_ग_लिखो(wdev->regmap, WDTRSTSEL, WDTRSTSEL_RSTSEL_BOTH);
-	अगर (ret)
-		वापस ret;
+	uniphier_watchdog_stop(&wdev->wdt_dev);
+	ret = regmap_write(wdev->regmap, WDTRSTSEL, WDTRSTSEL_RSTSEL_BOTH);
+	if (ret)
+		return ret;
 
-	ret = devm_watchकरोg_रेजिस्टर_device(dev, &wdev->wdt_dev);
-	अगर (ret)
-		वापस ret;
+	ret = devm_watchdog_register_device(dev, &wdev->wdt_dev);
+	if (ret)
+		return ret;
 
 	dev_info(dev, "watchdog driver (timeout=%d sec, nowayout=%d)\n",
-		 wdev->wdt_dev.समयout, nowayout);
+		 wdev->wdt_dev.timeout, nowayout);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id uniphier_wdt_dt_ids[] = अणु
-	अणु .compatible = "socionext,uniphier-wdt" पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+static const struct of_device_id uniphier_wdt_dt_ids[] = {
+	{ .compatible = "socionext,uniphier-wdt" },
+	{ /* sentinel */ }
+};
 MODULE_DEVICE_TABLE(of, uniphier_wdt_dt_ids);
 
-अटल काष्ठा platक्रमm_driver uniphier_wdt_driver = अणु
+static struct platform_driver uniphier_wdt_driver = {
 	.probe		= uniphier_wdt_probe,
-	.driver		= अणु
+	.driver		= {
 		.name		= "uniphier-wdt",
 		.of_match_table	= uniphier_wdt_dt_ids,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(uniphier_wdt_driver);
+module_platform_driver(uniphier_wdt_driver);
 
-module_param(समयout, uपूर्णांक, 0000);
-MODULE_PARM_DESC(समयout,
+module_param(timeout, uint, 0000);
+MODULE_PARM_DESC(timeout,
 	"Watchdog timeout seconds in power of 2. (0 < timeout < 128, default="
 				__MODULE_STRING(WDT_DEFAULT_TIMEOUT) ")");
 

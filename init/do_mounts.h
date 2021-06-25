@@ -1,44 +1,43 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#समावेश <linux/kernel.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/init.h>
-#समावेश <linux/syscalls.h>
-#समावेश <linux/unistd.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/mount.h>
-#समावेश <linux/major.h>
-#समावेश <linux/root_dev.h>
-#समावेश <linux/init_syscalls.h>
+/* SPDX-License-Identifier: GPL-2.0 */
+#include <linux/kernel.h>
+#include <linux/blkdev.h>
+#include <linux/init.h>
+#include <linux/syscalls.h>
+#include <linux/unistd.h>
+#include <linux/slab.h>
+#include <linux/mount.h>
+#include <linux/major.h>
+#include <linux/root_dev.h>
+#include <linux/init_syscalls.h>
 
-व्योम  mount_block_root(अक्षर *name, पूर्णांक flags);
-व्योम  mount_root(व्योम);
-बाह्य पूर्णांक root_mountflags;
+void  mount_block_root(char *name, int flags);
+void  mount_root(void);
+extern int root_mountflags;
 
-अटल अंतरभूत __init पूर्णांक create_dev(अक्षर *name, dev_t dev)
-अणु
+static inline __init int create_dev(char *name, dev_t dev)
+{
 	init_unlink(name);
-	वापस init_mknod(name, S_IFBLK | 0600, new_encode_dev(dev));
-पूर्ण
+	return init_mknod(name, S_IFBLK | 0600, new_encode_dev(dev));
+}
 
-#अगर_घोषित CONFIG_BLK_DEV_RAM
+#ifdef CONFIG_BLK_DEV_RAM
 
-पूर्णांक __init rd_load_disk(पूर्णांक n);
-पूर्णांक __init rd_load_image(अक्षर *from);
+int __init rd_load_disk(int n);
+int __init rd_load_image(char *from);
 
-#अन्यथा
+#else
 
-अटल अंतरभूत पूर्णांक rd_load_disk(पूर्णांक n) अणु वापस 0; पूर्ण
-अटल अंतरभूत पूर्णांक rd_load_image(अक्षर *from) अणु वापस 0; पूर्ण
+static inline int rd_load_disk(int n) { return 0; }
+static inline int rd_load_image(char *from) { return 0; }
 
-#पूर्ण_अगर
+#endif
 
-#अगर_घोषित CONFIG_BLK_DEV_INITRD
+#ifdef CONFIG_BLK_DEV_INITRD
 
-bool __init initrd_load(व्योम);
+bool __init initrd_load(void);
 
-#अन्यथा
+#else
 
-अटल अंतरभूत bool initrd_load(व्योम) अणु वापस false; पूर्ण
+static inline bool initrd_load(void) { return false; }
 
-#पूर्ण_अगर
+#endif

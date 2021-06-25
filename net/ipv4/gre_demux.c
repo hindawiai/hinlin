@@ -1,222 +1,221 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *	GRE over IPv4 demultiplexer driver
  *
  *	Authors: Dmitry Kozlov (xeb@mail.ru)
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/अगर.h>
-#समावेश <linux/icmp.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/kmod.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/in.h>
-#समावेश <linux/ip.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/अगर_tunnel.h>
-#समावेश <linux/spinlock.h>
-#समावेश <net/protocol.h>
-#समावेश <net/gre.h>
-#समावेश <net/erspan.h>
+#include <linux/module.h>
+#include <linux/if.h>
+#include <linux/icmp.h>
+#include <linux/kernel.h>
+#include <linux/kmod.h>
+#include <linux/skbuff.h>
+#include <linux/in.h>
+#include <linux/ip.h>
+#include <linux/netdevice.h>
+#include <linux/if_tunnel.h>
+#include <linux/spinlock.h>
+#include <net/protocol.h>
+#include <net/gre.h>
+#include <net/erspan.h>
 
-#समावेश <net/icmp.h>
-#समावेश <net/route.h>
-#समावेश <net/xfrm.h>
+#include <net/icmp.h>
+#include <net/route.h>
+#include <net/xfrm.h>
 
-अटल स्थिर काष्ठा gre_protocol __rcu *gre_proto[GREPROTO_MAX] __पढ़ो_mostly;
+static const struct gre_protocol __rcu *gre_proto[GREPROTO_MAX] __read_mostly;
 
-पूर्णांक gre_add_protocol(स्थिर काष्ठा gre_protocol *proto, u8 version)
-अणु
-	अगर (version >= GREPROTO_MAX)
-		वापस -EINVAL;
+int gre_add_protocol(const struct gre_protocol *proto, u8 version)
+{
+	if (version >= GREPROTO_MAX)
+		return -EINVAL;
 
-	वापस (cmpxchg((स्थिर काष्ठा gre_protocol **)&gre_proto[version], शून्य, proto) == शून्य) ?
+	return (cmpxchg((const struct gre_protocol **)&gre_proto[version], NULL, proto) == NULL) ?
 		0 : -EBUSY;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(gre_add_protocol);
 
-पूर्णांक gre_del_protocol(स्थिर काष्ठा gre_protocol *proto, u8 version)
-अणु
-	पूर्णांक ret;
+int gre_del_protocol(const struct gre_protocol *proto, u8 version)
+{
+	int ret;
 
-	अगर (version >= GREPROTO_MAX)
-		वापस -EINVAL;
+	if (version >= GREPROTO_MAX)
+		return -EINVAL;
 
-	ret = (cmpxchg((स्थिर काष्ठा gre_protocol **)&gre_proto[version], proto, शून्य) == proto) ?
+	ret = (cmpxchg((const struct gre_protocol **)&gre_proto[version], proto, NULL) == proto) ?
 		0 : -EBUSY;
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	synchronize_rcu();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(gre_del_protocol);
 
-/* Fills in tpi and वापसs header length to be pulled.
- * Note that caller must use pskb_may_pull() beक्रमe pulling GRE header.
+/* Fills in tpi and returns header length to be pulled.
+ * Note that caller must use pskb_may_pull() before pulling GRE header.
  */
-पूर्णांक gre_parse_header(काष्ठा sk_buff *skb, काष्ठा tnl_ptk_info *tpi,
-		     bool *csum_err, __be16 proto, पूर्णांक nhs)
-अणु
-	स्थिर काष्ठा gre_base_hdr *greh;
+int gre_parse_header(struct sk_buff *skb, struct tnl_ptk_info *tpi,
+		     bool *csum_err, __be16 proto, int nhs)
+{
+	const struct gre_base_hdr *greh;
 	__be32 *options;
-	पूर्णांक hdr_len;
+	int hdr_len;
 
-	अगर (unlikely(!pskb_may_pull(skb, nhs + माप(काष्ठा gre_base_hdr))))
-		वापस -EINVAL;
+	if (unlikely(!pskb_may_pull(skb, nhs + sizeof(struct gre_base_hdr))))
+		return -EINVAL;
 
-	greh = (काष्ठा gre_base_hdr *)(skb->data + nhs);
-	अगर (unlikely(greh->flags & (GRE_VERSION | GRE_ROUTING)))
-		वापस -EINVAL;
+	greh = (struct gre_base_hdr *)(skb->data + nhs);
+	if (unlikely(greh->flags & (GRE_VERSION | GRE_ROUTING)))
+		return -EINVAL;
 
 	tpi->flags = gre_flags_to_tnl_flags(greh->flags);
 	hdr_len = gre_calc_hlen(tpi->flags);
 
-	अगर (!pskb_may_pull(skb, nhs + hdr_len))
-		वापस -EINVAL;
+	if (!pskb_may_pull(skb, nhs + hdr_len))
+		return -EINVAL;
 
-	greh = (काष्ठा gre_base_hdr *)(skb->data + nhs);
+	greh = (struct gre_base_hdr *)(skb->data + nhs);
 	tpi->proto = greh->protocol;
 
 	options = (__be32 *)(greh + 1);
-	अगर (greh->flags & GRE_CSUM) अणु
-		अगर (!skb_checksum_simple_validate(skb)) अणु
+	if (greh->flags & GRE_CSUM) {
+		if (!skb_checksum_simple_validate(skb)) {
 			skb_checksum_try_convert(skb, IPPROTO_GRE,
-						 null_compute_pseuकरो);
-		पूर्ण अन्यथा अगर (csum_err) अणु
+						 null_compute_pseudo);
+		} else if (csum_err) {
 			*csum_err = true;
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		options++;
-	पूर्ण
+	}
 
-	अगर (greh->flags & GRE_KEY) अणु
+	if (greh->flags & GRE_KEY) {
 		tpi->key = *options;
 		options++;
-	पूर्ण अन्यथा अणु
+	} else {
 		tpi->key = 0;
-	पूर्ण
-	अगर (unlikely(greh->flags & GRE_SEQ)) अणु
+	}
+	if (unlikely(greh->flags & GRE_SEQ)) {
 		tpi->seq = *options;
 		options++;
-	पूर्ण अन्यथा अणु
+	} else {
 		tpi->seq = 0;
-	पूर्ण
+	}
 	/* WCCP version 1 and 2 protocol decoding.
 	 * - Change protocol to IPv4/IPv6
 	 * - When dealing with WCCPv2, Skip extra 4 bytes in GRE header
 	 */
-	अगर (greh->flags == 0 && tpi->proto == htons(ETH_P_WCCP)) अणु
+	if (greh->flags == 0 && tpi->proto == htons(ETH_P_WCCP)) {
 		u8 _val, *val;
 
-		val = skb_header_poपूर्णांकer(skb, nhs + hdr_len,
-					 माप(_val), &_val);
-		अगर (!val)
-			वापस -EINVAL;
+		val = skb_header_pointer(skb, nhs + hdr_len,
+					 sizeof(_val), &_val);
+		if (!val)
+			return -EINVAL;
 		tpi->proto = proto;
-		अगर ((*val & 0xF0) != 0x40)
+		if ((*val & 0xF0) != 0x40)
 			hdr_len += 4;
-	पूर्ण
+	}
 	tpi->hdr_len = hdr_len;
 
 	/* ERSPAN ver 1 and 2 protocol sets GRE key field
 	 * to 0 and sets the configured key in the
 	 * inner erspan header field
 	 */
-	अगर ((greh->protocol == htons(ETH_P_ERSPAN) && hdr_len != 4) ||
-	    greh->protocol == htons(ETH_P_ERSPAN2)) अणु
-		काष्ठा erspan_base_hdr *ershdr;
+	if ((greh->protocol == htons(ETH_P_ERSPAN) && hdr_len != 4) ||
+	    greh->protocol == htons(ETH_P_ERSPAN2)) {
+		struct erspan_base_hdr *ershdr;
 
-		अगर (!pskb_may_pull(skb, nhs + hdr_len + माप(*ershdr)))
-			वापस -EINVAL;
+		if (!pskb_may_pull(skb, nhs + hdr_len + sizeof(*ershdr)))
+			return -EINVAL;
 
-		ershdr = (काष्ठा erspan_base_hdr *)(skb->data + nhs + hdr_len);
+		ershdr = (struct erspan_base_hdr *)(skb->data + nhs + hdr_len);
 		tpi->key = cpu_to_be32(get_session_id(ershdr));
-	पूर्ण
+	}
 
-	वापस hdr_len;
-पूर्ण
+	return hdr_len;
+}
 EXPORT_SYMBOL(gre_parse_header);
 
-अटल पूर्णांक gre_rcv(काष्ठा sk_buff *skb)
-अणु
-	स्थिर काष्ठा gre_protocol *proto;
+static int gre_rcv(struct sk_buff *skb)
+{
+	const struct gre_protocol *proto;
 	u8 ver;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!pskb_may_pull(skb, 12))
-		जाओ drop;
+	if (!pskb_may_pull(skb, 12))
+		goto drop;
 
 	ver = skb->data[1]&0x7f;
-	अगर (ver >= GREPROTO_MAX)
-		जाओ drop;
+	if (ver >= GREPROTO_MAX)
+		goto drop;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	proto = rcu_dereference(gre_proto[ver]);
-	अगर (!proto || !proto->handler)
-		जाओ drop_unlock;
+	if (!proto || !proto->handler)
+		goto drop_unlock;
 	ret = proto->handler(skb);
-	rcu_पढ़ो_unlock();
-	वापस ret;
+	rcu_read_unlock();
+	return ret;
 
 drop_unlock:
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 drop:
-	kमुक्त_skb(skb);
-	वापस NET_RX_DROP;
-पूर्ण
+	kfree_skb(skb);
+	return NET_RX_DROP;
+}
 
-अटल पूर्णांक gre_err(काष्ठा sk_buff *skb, u32 info)
-अणु
-	स्थिर काष्ठा gre_protocol *proto;
-	स्थिर काष्ठा iphdr *iph = (स्थिर काष्ठा iphdr *)skb->data;
+static int gre_err(struct sk_buff *skb, u32 info)
+{
+	const struct gre_protocol *proto;
+	const struct iphdr *iph = (const struct iphdr *)skb->data;
 	u8 ver = skb->data[(iph->ihl<<2) + 1]&0x7f;
-	पूर्णांक err = 0;
+	int err = 0;
 
-	अगर (ver >= GREPROTO_MAX)
-		वापस -EINVAL;
+	if (ver >= GREPROTO_MAX)
+		return -EINVAL;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	proto = rcu_dereference(gre_proto[ver]);
-	अगर (proto && proto->err_handler)
+	if (proto && proto->err_handler)
 		proto->err_handler(skb, info);
-	अन्यथा
+	else
 		err = -EPROTONOSUPPORT;
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल स्थिर काष्ठा net_protocol net_gre_protocol = अणु
+static const struct net_protocol net_gre_protocol = {
 	.handler     = gre_rcv,
 	.err_handler = gre_err,
 	.netns_ok    = 1,
-पूर्ण;
+};
 
-अटल पूर्णांक __init gre_init(व्योम)
-अणु
+static int __init gre_init(void)
+{
 	pr_info("GRE over IPv4 demultiplexor driver\n");
 
-	अगर (inet_add_protocol(&net_gre_protocol, IPPROTO_GRE) < 0) अणु
+	if (inet_add_protocol(&net_gre_protocol, IPPROTO_GRE) < 0) {
 		pr_err("can't add protocol\n");
-		वापस -EAGAIN;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EAGAIN;
+	}
+	return 0;
+}
 
-अटल व्योम __निकास gre_निकास(व्योम)
-अणु
+static void __exit gre_exit(void)
+{
 	inet_del_protocol(&net_gre_protocol, IPPROTO_GRE);
-पूर्ण
+}
 
 module_init(gre_init);
-module_निकास(gre_निकास);
+module_exit(gre_exit);
 
 MODULE_DESCRIPTION("GRE over IPv4 demultiplexer driver");
 MODULE_AUTHOR("D. Kozlov (xeb@mail.ru)");

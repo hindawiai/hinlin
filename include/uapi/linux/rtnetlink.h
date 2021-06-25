@@ -1,20 +1,19 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित _UAPI__LINUX_RTNETLINK_H
-#घोषणा _UAPI__LINUX_RTNETLINK_H
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef _UAPI__LINUX_RTNETLINK_H
+#define _UAPI__LINUX_RTNETLINK_H
 
-#समावेश <linux/types.h>
-#समावेश <linux/netlink.h>
-#समावेश <linux/अगर_link.h>
-#समावेश <linux/अगर_addr.h>
-#समावेश <linux/neighbour.h>
+#include <linux/types.h>
+#include <linux/netlink.h>
+#include <linux/if_link.h>
+#include <linux/if_addr.h>
+#include <linux/neighbour.h>
 
-/* rtnetlink families. Values up to 127 are reserved क्रम real address
+/* rtnetlink families. Values up to 127 are reserved for real address
  * families, values above 128 may be used arbitrarily.
  */
-#घोषणा RTNL_FAMILY_IPMR		128
-#घोषणा RTNL_FAMILY_IP6MR		129
-#घोषणा RTNL_FAMILY_MAX			129
+#define RTNL_FAMILY_IPMR		128
+#define RTNL_FAMILY_IP6MR		129
+#define RTNL_FAMILY_MAX			129
 
 /****
  *		Routing/neighbour discovery messages.
@@ -22,202 +21,202 @@
 
 /* Types of messages */
 
-क्रमागत अणु
+enum {
 	RTM_BASE	= 16,
-#घोषणा RTM_BASE	RTM_BASE
+#define RTM_BASE	RTM_BASE
 
 	RTM_NEWLINK	= 16,
-#घोषणा RTM_NEWLINK	RTM_NEWLINK
+#define RTM_NEWLINK	RTM_NEWLINK
 	RTM_DELLINK,
-#घोषणा RTM_DELLINK	RTM_DELLINK
+#define RTM_DELLINK	RTM_DELLINK
 	RTM_GETLINK,
-#घोषणा RTM_GETLINK	RTM_GETLINK
+#define RTM_GETLINK	RTM_GETLINK
 	RTM_SETLINK,
-#घोषणा RTM_SETLINK	RTM_SETLINK
+#define RTM_SETLINK	RTM_SETLINK
 
 	RTM_NEWADDR	= 20,
-#घोषणा RTM_NEWADDR	RTM_NEWADDR
+#define RTM_NEWADDR	RTM_NEWADDR
 	RTM_DELADDR,
-#घोषणा RTM_DELADDR	RTM_DELADDR
+#define RTM_DELADDR	RTM_DELADDR
 	RTM_GETADDR,
-#घोषणा RTM_GETADDR	RTM_GETADDR
+#define RTM_GETADDR	RTM_GETADDR
 
 	RTM_NEWROUTE	= 24,
-#घोषणा RTM_NEWROUTE	RTM_NEWROUTE
+#define RTM_NEWROUTE	RTM_NEWROUTE
 	RTM_DELROUTE,
-#घोषणा RTM_DELROUTE	RTM_DELROUTE
+#define RTM_DELROUTE	RTM_DELROUTE
 	RTM_GETROUTE,
-#घोषणा RTM_GETROUTE	RTM_GETROUTE
+#define RTM_GETROUTE	RTM_GETROUTE
 
 	RTM_NEWNEIGH	= 28,
-#घोषणा RTM_NEWNEIGH	RTM_NEWNEIGH
+#define RTM_NEWNEIGH	RTM_NEWNEIGH
 	RTM_DELNEIGH,
-#घोषणा RTM_DELNEIGH	RTM_DELNEIGH
+#define RTM_DELNEIGH	RTM_DELNEIGH
 	RTM_GETNEIGH,
-#घोषणा RTM_GETNEIGH	RTM_GETNEIGH
+#define RTM_GETNEIGH	RTM_GETNEIGH
 
 	RTM_NEWRULE	= 32,
-#घोषणा RTM_NEWRULE	RTM_NEWRULE
+#define RTM_NEWRULE	RTM_NEWRULE
 	RTM_DELRULE,
-#घोषणा RTM_DELRULE	RTM_DELRULE
+#define RTM_DELRULE	RTM_DELRULE
 	RTM_GETRULE,
-#घोषणा RTM_GETRULE	RTM_GETRULE
+#define RTM_GETRULE	RTM_GETRULE
 
 	RTM_NEWQDISC	= 36,
-#घोषणा RTM_NEWQDISC	RTM_NEWQDISC
+#define RTM_NEWQDISC	RTM_NEWQDISC
 	RTM_DELQDISC,
-#घोषणा RTM_DELQDISC	RTM_DELQDISC
+#define RTM_DELQDISC	RTM_DELQDISC
 	RTM_GETQDISC,
-#घोषणा RTM_GETQDISC	RTM_GETQDISC
+#define RTM_GETQDISC	RTM_GETQDISC
 
 	RTM_NEWTCLASS	= 40,
-#घोषणा RTM_NEWTCLASS	RTM_NEWTCLASS
+#define RTM_NEWTCLASS	RTM_NEWTCLASS
 	RTM_DELTCLASS,
-#घोषणा RTM_DELTCLASS	RTM_DELTCLASS
+#define RTM_DELTCLASS	RTM_DELTCLASS
 	RTM_GETTCLASS,
-#घोषणा RTM_GETTCLASS	RTM_GETTCLASS
+#define RTM_GETTCLASS	RTM_GETTCLASS
 
 	RTM_NEWTFILTER	= 44,
-#घोषणा RTM_NEWTFILTER	RTM_NEWTFILTER
+#define RTM_NEWTFILTER	RTM_NEWTFILTER
 	RTM_DELTFILTER,
-#घोषणा RTM_DELTFILTER	RTM_DELTFILTER
+#define RTM_DELTFILTER	RTM_DELTFILTER
 	RTM_GETTFILTER,
-#घोषणा RTM_GETTFILTER	RTM_GETTFILTER
+#define RTM_GETTFILTER	RTM_GETTFILTER
 
 	RTM_NEWACTION	= 48,
-#घोषणा RTM_NEWACTION   RTM_NEWACTION
+#define RTM_NEWACTION   RTM_NEWACTION
 	RTM_DELACTION,
-#घोषणा RTM_DELACTION   RTM_DELACTION
+#define RTM_DELACTION   RTM_DELACTION
 	RTM_GETACTION,
-#घोषणा RTM_GETACTION   RTM_GETACTION
+#define RTM_GETACTION   RTM_GETACTION
 
 	RTM_NEWPREFIX	= 52,
-#घोषणा RTM_NEWPREFIX	RTM_NEWPREFIX
+#define RTM_NEWPREFIX	RTM_NEWPREFIX
 
 	RTM_GETMULTICAST = 58,
-#घोषणा RTM_GETMULTICAST RTM_GETMULTICAST
+#define RTM_GETMULTICAST RTM_GETMULTICAST
 
 	RTM_GETANYCAST	= 62,
-#घोषणा RTM_GETANYCAST	RTM_GETANYCAST
+#define RTM_GETANYCAST	RTM_GETANYCAST
 
 	RTM_NEWNEIGHTBL	= 64,
-#घोषणा RTM_NEWNEIGHTBL	RTM_NEWNEIGHTBL
+#define RTM_NEWNEIGHTBL	RTM_NEWNEIGHTBL
 	RTM_GETNEIGHTBL	= 66,
-#घोषणा RTM_GETNEIGHTBL	RTM_GETNEIGHTBL
+#define RTM_GETNEIGHTBL	RTM_GETNEIGHTBL
 	RTM_SETNEIGHTBL,
-#घोषणा RTM_SETNEIGHTBL	RTM_SETNEIGHTBL
+#define RTM_SETNEIGHTBL	RTM_SETNEIGHTBL
 
 	RTM_NEWNDUSEROPT = 68,
-#घोषणा RTM_NEWNDUSEROPT RTM_NEWNDUSEROPT
+#define RTM_NEWNDUSEROPT RTM_NEWNDUSEROPT
 
 	RTM_NEWADDRLABEL = 72,
-#घोषणा RTM_NEWADDRLABEL RTM_NEWADDRLABEL
+#define RTM_NEWADDRLABEL RTM_NEWADDRLABEL
 	RTM_DELADDRLABEL,
-#घोषणा RTM_DELADDRLABEL RTM_DELADDRLABEL
+#define RTM_DELADDRLABEL RTM_DELADDRLABEL
 	RTM_GETADDRLABEL,
-#घोषणा RTM_GETADDRLABEL RTM_GETADDRLABEL
+#define RTM_GETADDRLABEL RTM_GETADDRLABEL
 
 	RTM_GETDCB = 78,
-#घोषणा RTM_GETDCB RTM_GETDCB
+#define RTM_GETDCB RTM_GETDCB
 	RTM_SETDCB,
-#घोषणा RTM_SETDCB RTM_SETDCB
+#define RTM_SETDCB RTM_SETDCB
 
 	RTM_NEWNETCONF = 80,
-#घोषणा RTM_NEWNETCONF RTM_NEWNETCONF
+#define RTM_NEWNETCONF RTM_NEWNETCONF
 	RTM_DELNETCONF,
-#घोषणा RTM_DELNETCONF RTM_DELNETCONF
+#define RTM_DELNETCONF RTM_DELNETCONF
 	RTM_GETNETCONF = 82,
-#घोषणा RTM_GETNETCONF RTM_GETNETCONF
+#define RTM_GETNETCONF RTM_GETNETCONF
 
 	RTM_NEWMDB = 84,
-#घोषणा RTM_NEWMDB RTM_NEWMDB
+#define RTM_NEWMDB RTM_NEWMDB
 	RTM_DELMDB = 85,
-#घोषणा RTM_DELMDB RTM_DELMDB
+#define RTM_DELMDB RTM_DELMDB
 	RTM_GETMDB = 86,
-#घोषणा RTM_GETMDB RTM_GETMDB
+#define RTM_GETMDB RTM_GETMDB
 
 	RTM_NEWNSID = 88,
-#घोषणा RTM_NEWNSID RTM_NEWNSID
+#define RTM_NEWNSID RTM_NEWNSID
 	RTM_DELNSID = 89,
-#घोषणा RTM_DELNSID RTM_DELNSID
+#define RTM_DELNSID RTM_DELNSID
 	RTM_GETNSID = 90,
-#घोषणा RTM_GETNSID RTM_GETNSID
+#define RTM_GETNSID RTM_GETNSID
 
 	RTM_NEWSTATS = 92,
-#घोषणा RTM_NEWSTATS RTM_NEWSTATS
+#define RTM_NEWSTATS RTM_NEWSTATS
 	RTM_GETSTATS = 94,
-#घोषणा RTM_GETSTATS RTM_GETSTATS
+#define RTM_GETSTATS RTM_GETSTATS
 
 	RTM_NEWCACHEREPORT = 96,
-#घोषणा RTM_NEWCACHEREPORT RTM_NEWCACHEREPORT
+#define RTM_NEWCACHEREPORT RTM_NEWCACHEREPORT
 
 	RTM_NEWCHAIN = 100,
-#घोषणा RTM_NEWCHAIN RTM_NEWCHAIN
+#define RTM_NEWCHAIN RTM_NEWCHAIN
 	RTM_DELCHAIN,
-#घोषणा RTM_DELCHAIN RTM_DELCHAIN
+#define RTM_DELCHAIN RTM_DELCHAIN
 	RTM_GETCHAIN,
-#घोषणा RTM_GETCHAIN RTM_GETCHAIN
+#define RTM_GETCHAIN RTM_GETCHAIN
 
 	RTM_NEWNEXTHOP = 104,
-#घोषणा RTM_NEWNEXTHOP	RTM_NEWNEXTHOP
+#define RTM_NEWNEXTHOP	RTM_NEWNEXTHOP
 	RTM_DELNEXTHOP,
-#घोषणा RTM_DELNEXTHOP	RTM_DELNEXTHOP
+#define RTM_DELNEXTHOP	RTM_DELNEXTHOP
 	RTM_GETNEXTHOP,
-#घोषणा RTM_GETNEXTHOP	RTM_GETNEXTHOP
+#define RTM_GETNEXTHOP	RTM_GETNEXTHOP
 
 	RTM_NEWLINKPROP = 108,
-#घोषणा RTM_NEWLINKPROP	RTM_NEWLINKPROP
+#define RTM_NEWLINKPROP	RTM_NEWLINKPROP
 	RTM_DELLINKPROP,
-#घोषणा RTM_DELLINKPROP	RTM_DELLINKPROP
+#define RTM_DELLINKPROP	RTM_DELLINKPROP
 	RTM_GETLINKPROP,
-#घोषणा RTM_GETLINKPROP	RTM_GETLINKPROP
+#define RTM_GETLINKPROP	RTM_GETLINKPROP
 
 	RTM_NEWVLAN = 112,
-#घोषणा RTM_NEWNVLAN	RTM_NEWVLAN
+#define RTM_NEWNVLAN	RTM_NEWVLAN
 	RTM_DELVLAN,
-#घोषणा RTM_DELVLAN	RTM_DELVLAN
+#define RTM_DELVLAN	RTM_DELVLAN
 	RTM_GETVLAN,
-#घोषणा RTM_GETVLAN	RTM_GETVLAN
+#define RTM_GETVLAN	RTM_GETVLAN
 
 	RTM_NEWNEXTHOPBUCKET = 116,
-#घोषणा RTM_NEWNEXTHOPBUCKET	RTM_NEWNEXTHOPBUCKET
+#define RTM_NEWNEXTHOPBUCKET	RTM_NEWNEXTHOPBUCKET
 	RTM_DELNEXTHOPBUCKET,
-#घोषणा RTM_DELNEXTHOPBUCKET	RTM_DELNEXTHOPBUCKET
+#define RTM_DELNEXTHOPBUCKET	RTM_DELNEXTHOPBUCKET
 	RTM_GETNEXTHOPBUCKET,
-#घोषणा RTM_GETNEXTHOPBUCKET	RTM_GETNEXTHOPBUCKET
+#define RTM_GETNEXTHOPBUCKET	RTM_GETNEXTHOPBUCKET
 
 	__RTM_MAX,
-#घोषणा RTM_MAX		(((__RTM_MAX + 3) & ~3) - 1)
-पूर्ण;
+#define RTM_MAX		(((__RTM_MAX + 3) & ~3) - 1)
+};
 
-#घोषणा RTM_NR_MSGTYPES	(RTM_MAX + 1 - RTM_BASE)
-#घोषणा RTM_NR_FAMILIES	(RTM_NR_MSGTYPES >> 2)
-#घोषणा RTM_FAM(cmd)	(((cmd) - RTM_BASE) >> 2)
+#define RTM_NR_MSGTYPES	(RTM_MAX + 1 - RTM_BASE)
+#define RTM_NR_FAMILIES	(RTM_NR_MSGTYPES >> 2)
+#define RTM_FAM(cmd)	(((cmd) - RTM_BASE) >> 2)
 
 /* 
-   Generic काष्ठाure क्रम encapsulation of optional route inक्रमmation.
+   Generic structure for encapsulation of optional route information.
    It is reminiscent of sockaddr, but with sa_family replaced
    with attribute type.
  */
 
-काष्ठा rtattr अणु
-	अचिन्हित लघु	rta_len;
-	अचिन्हित लघु	rta_type;
-पूर्ण;
+struct rtattr {
+	unsigned short	rta_len;
+	unsigned short	rta_type;
+};
 
 /* Macros to handle rtattributes */
 
-#घोषणा RTA_ALIGNTO	4U
-#घोषणा RTA_ALIGN(len) ( ((len)+RTA_ALIGNTO-1) & ~(RTA_ALIGNTO-1) )
-#घोषणा RTA_OK(rta,len) ((len) >= (पूर्णांक)माप(काष्ठा rtattr) && \
-			 (rta)->rta_len >= माप(काष्ठा rtattr) && \
+#define RTA_ALIGNTO	4U
+#define RTA_ALIGN(len) ( ((len)+RTA_ALIGNTO-1) & ~(RTA_ALIGNTO-1) )
+#define RTA_OK(rta,len) ((len) >= (int)sizeof(struct rtattr) && \
+			 (rta)->rta_len >= sizeof(struct rtattr) && \
 			 (rta)->rta_len <= (len))
-#घोषणा RTA_NEXT(rta,attrlen)	((attrlen) -= RTA_ALIGN((rta)->rta_len), \
-				 (काष्ठा rtattr*)(((अक्षर*)(rta)) + RTA_ALIGN((rta)->rta_len)))
-#घोषणा RTA_LENGTH(len)	(RTA_ALIGN(माप(काष्ठा rtattr)) + (len))
-#घोषणा RTA_SPACE(len)	RTA_ALIGN(RTA_LENGTH(len))
-#घोषणा RTA_DATA(rta)   ((व्योम*)(((अक्षर*)(rta)) + RTA_LENGTH(0)))
-#घोषणा RTA_PAYLOAD(rta) ((पूर्णांक)((rta)->rta_len) - RTA_LENGTH(0))
+#define RTA_NEXT(rta,attrlen)	((attrlen) -= RTA_ALIGN((rta)->rta_len), \
+				 (struct rtattr*)(((char*)(rta)) + RTA_ALIGN((rta)->rta_len)))
+#define RTA_LENGTH(len)	(RTA_ALIGN(sizeof(struct rtattr)) + (len))
+#define RTA_SPACE(len)	RTA_ALIGN(RTA_LENGTH(len))
+#define RTA_DATA(rta)   ((void*)(((char*)(rta)) + RTA_LENGTH(0)))
+#define RTA_PAYLOAD(rta) ((int)((rta)->rta_len) - RTA_LENGTH(0))
 
 
 
@@ -226,23 +225,23 @@
  *		Definitions used in routing table administration.
  ****/
 
-काष्ठा rपंचांगsg अणु
-	अचिन्हित अक्षर		rपंचांग_family;
-	अचिन्हित अक्षर		rपंचांग_dst_len;
-	अचिन्हित अक्षर		rपंचांग_src_len;
-	अचिन्हित अक्षर		rपंचांग_tos;
+struct rtmsg {
+	unsigned char		rtm_family;
+	unsigned char		rtm_dst_len;
+	unsigned char		rtm_src_len;
+	unsigned char		rtm_tos;
 
-	अचिन्हित अक्षर		rपंचांग_table;	/* Routing table id */
-	अचिन्हित अक्षर		rपंचांग_protocol;	/* Routing protocol; see below	*/
-	अचिन्हित अक्षर		rपंचांग_scope;	/* See below */	
-	अचिन्हित अक्षर		rपंचांग_type;	/* See below	*/
+	unsigned char		rtm_table;	/* Routing table id */
+	unsigned char		rtm_protocol;	/* Routing protocol; see below	*/
+	unsigned char		rtm_scope;	/* See below */	
+	unsigned char		rtm_type;	/* See below	*/
 
-	अचिन्हित		rपंचांग_flags;
-पूर्ण;
+	unsigned		rtm_flags;
+};
 
-/* rपंचांग_type */
+/* rtm_type */
 
-क्रमागत अणु
+enum {
 	RTN_UNSPEC,
 	RTN_UNICAST,		/* Gateway or direct route	*/
 	RTN_LOCAL,		/* Accept locally		*/
@@ -256,87 +255,87 @@
 	RTN_PROHIBIT,		/* Administratively prohibited	*/
 	RTN_THROW,		/* Not in this table		*/
 	RTN_NAT,		/* Translate this address	*/
-	RTN_XRESOLVE,		/* Use बाह्यal resolver	*/
+	RTN_XRESOLVE,		/* Use external resolver	*/
 	__RTN_MAX
-पूर्ण;
+};
 
-#घोषणा RTN_MAX (__RTN_MAX - 1)
+#define RTN_MAX (__RTN_MAX - 1)
 
 
-/* rपंचांग_protocol */
+/* rtm_protocol */
 
-#घोषणा RTPROT_UNSPEC		0
-#घोषणा RTPROT_REसूचीECT		1	/* Route installed by ICMP redirects;
+#define RTPROT_UNSPEC		0
+#define RTPROT_REDIRECT		1	/* Route installed by ICMP redirects;
 					   not used by current IPv4 */
-#घोषणा RTPROT_KERNEL		2	/* Route installed by kernel		*/
-#घोषणा RTPROT_BOOT		3	/* Route installed during boot		*/
-#घोषणा RTPROT_STATIC		4	/* Route installed by administrator	*/
+#define RTPROT_KERNEL		2	/* Route installed by kernel		*/
+#define RTPROT_BOOT		3	/* Route installed during boot		*/
+#define RTPROT_STATIC		4	/* Route installed by administrator	*/
 
-/* Values of protocol >= RTPROT_STATIC are not पूर्णांकerpreted by kernel;
+/* Values of protocol >= RTPROT_STATIC are not interpreted by kernel;
    they are just passed from user and back as is.
    It will be used by hypothetical multiple routing daemons.
    Note that protocol values should be standardized in order to
-   aव्योम conflicts.
+   avoid conflicts.
  */
 
-#घोषणा RTPROT_GATED		8	/* Apparently, GateD */
-#घोषणा RTPROT_RA		9	/* RDISC/ND router advertisements */
-#घोषणा RTPROT_MRT		10	/* Merit MRT */
-#घोषणा RTPROT_ZEBRA		11	/* Zebra */
-#घोषणा RTPROT_BIRD		12	/* BIRD */
-#घोषणा RTPROT_DNROUTED		13	/* DECnet routing daemon */
-#घोषणा RTPROT_XORP		14	/* XORP */
-#घोषणा RTPROT_NTK		15	/* Netsukuku */
-#घोषणा RTPROT_DHCP		16	/* DHCP client */
-#घोषणा RTPROT_MROUTED		17	/* Multicast daemon */
-#घोषणा RTPROT_KEEPALIVED	18	/* Keepalived daemon */
-#घोषणा RTPROT_BABEL		42	/* Babel daemon */
-#घोषणा RTPROT_OPENR		99	/* Open Routing (Open/R) Routes */
-#घोषणा RTPROT_BGP		186	/* BGP Routes */
-#घोषणा RTPROT_ISIS		187	/* ISIS Routes */
-#घोषणा RTPROT_OSPF		188	/* OSPF Routes */
-#घोषणा RTPROT_RIP		189	/* RIP Routes */
-#घोषणा RTPROT_EIGRP		192	/* EIGRP Routes */
+#define RTPROT_GATED		8	/* Apparently, GateD */
+#define RTPROT_RA		9	/* RDISC/ND router advertisements */
+#define RTPROT_MRT		10	/* Merit MRT */
+#define RTPROT_ZEBRA		11	/* Zebra */
+#define RTPROT_BIRD		12	/* BIRD */
+#define RTPROT_DNROUTED		13	/* DECnet routing daemon */
+#define RTPROT_XORP		14	/* XORP */
+#define RTPROT_NTK		15	/* Netsukuku */
+#define RTPROT_DHCP		16	/* DHCP client */
+#define RTPROT_MROUTED		17	/* Multicast daemon */
+#define RTPROT_KEEPALIVED	18	/* Keepalived daemon */
+#define RTPROT_BABEL		42	/* Babel daemon */
+#define RTPROT_OPENR		99	/* Open Routing (Open/R) Routes */
+#define RTPROT_BGP		186	/* BGP Routes */
+#define RTPROT_ISIS		187	/* ISIS Routes */
+#define RTPROT_OSPF		188	/* OSPF Routes */
+#define RTPROT_RIP		189	/* RIP Routes */
+#define RTPROT_EIGRP		192	/* EIGRP Routes */
 
-/* rपंचांग_scope
+/* rtm_scope
 
    Really it is not scope, but sort of distance to the destination.
-   NOWHERE are reserved क्रम not existing destinations, HOST is our
+   NOWHERE are reserved for not existing destinations, HOST is our
    local addresses, LINK are destinations, located on directly attached
    link and UNIVERSE is everywhere in the Universe.
 
-   Intermediate values are also possible f.e. पूर्णांकerior routes
-   could be asचिन्हित a value between UNIVERSE and LINK.
+   Intermediate values are also possible f.e. interior routes
+   could be assigned a value between UNIVERSE and LINK.
 */
 
-क्रमागत rt_scope_t अणु
+enum rt_scope_t {
 	RT_SCOPE_UNIVERSE=0,
 /* User defined values  */
 	RT_SCOPE_SITE=200,
 	RT_SCOPE_LINK=253,
 	RT_SCOPE_HOST=254,
 	RT_SCOPE_NOWHERE=255
-पूर्ण;
+};
 
-/* rपंचांग_flags */
+/* rtm_flags */
 
-#घोषणा RTM_F_NOTIFY		0x100	/* Notअगरy user of route change	*/
-#घोषणा RTM_F_CLONED		0x200	/* This route is cloned		*/
-#घोषणा RTM_F_EQUALIZE		0x400	/* Multipath equalizer: NI	*/
-#घोषणा RTM_F_PREFIX		0x800	/* Prefix addresses		*/
-#घोषणा RTM_F_LOOKUP_TABLE	0x1000	/* set rपंचांग_table to FIB lookup result */
-#घोषणा RTM_F_FIB_MATCH	        0x2000	/* वापस full fib lookup match */
-#घोषणा RTM_F_OFFLOAD		0x4000	/* route is offloaded */
-#घोषणा RTM_F_TRAP		0x8000	/* route is trapping packets */
-#घोषणा RTM_F_OFFLOAD_FAILED	0x20000000 /* route offload failed, this value
-					    * is chosen to aव्योम conflicts with
+#define RTM_F_NOTIFY		0x100	/* Notify user of route change	*/
+#define RTM_F_CLONED		0x200	/* This route is cloned		*/
+#define RTM_F_EQUALIZE		0x400	/* Multipath equalizer: NI	*/
+#define RTM_F_PREFIX		0x800	/* Prefix addresses		*/
+#define RTM_F_LOOKUP_TABLE	0x1000	/* set rtm_table to FIB lookup result */
+#define RTM_F_FIB_MATCH	        0x2000	/* return full fib lookup match */
+#define RTM_F_OFFLOAD		0x4000	/* route is offloaded */
+#define RTM_F_TRAP		0x8000	/* route is trapping packets */
+#define RTM_F_OFFLOAD_FAILED	0x20000000 /* route offload failed, this value
+					    * is chosen to avoid conflicts with
 					    * other flags defined in
 					    * include/uapi/linux/ipv6_route.h
 					    */
 
-/* Reserved table identअगरiers */
+/* Reserved table identifiers */
 
-क्रमागत rt_class_t अणु
+enum rt_class_t {
 	RT_TABLE_UNSPEC=0,
 /* User defined values */
 	RT_TABLE_COMPAT=252,
@@ -344,12 +343,12 @@
 	RT_TABLE_MAIN=254,
 	RT_TABLE_LOCAL=255,
 	RT_TABLE_MAX=0xFFFFFFFF
-पूर्ण;
+};
 
 
 /* Routing message attributes */
 
-क्रमागत rtattr_type_t अणु
+enum rtattr_type_t {
 	RTA_UNSPEC,
 	RTA_DST,
 	RTA_SRC,
@@ -360,11 +359,11 @@
 	RTA_PREFSRC,
 	RTA_METRICS,
 	RTA_MULTIPATH,
-	RTA_PROTOINFO, /* no दीर्घer used */
+	RTA_PROTOINFO, /* no longer used */
 	RTA_FLOW,
 	RTA_CACHEINFO,
-	RTA_SESSION, /* no दीर्घer used */
-	RTA_MP_ALGO, /* no दीर्घer used */
+	RTA_SESSION, /* no longer used */
+	RTA_MP_ALGO, /* no longer used */
 	RTA_TABLE,
 	RTA_MARK,
 	RTA_MFC_STATS,
@@ -382,235 +381,235 @@
 	RTA_DPORT,
 	RTA_NH_ID,
 	__RTA_MAX
-पूर्ण;
+};
 
-#घोषणा RTA_MAX (__RTA_MAX - 1)
+#define RTA_MAX (__RTA_MAX - 1)
 
-#घोषणा RTM_RTA(r)  ((काष्ठा rtattr*)(((अक्षर*)(r)) + NLMSG_ALIGN(माप(काष्ठा rपंचांगsg))))
-#घोषणा RTM_PAYLOAD(n) NLMSG_PAYLOAD(n,माप(काष्ठा rपंचांगsg))
+#define RTM_RTA(r)  ((struct rtattr*)(((char*)(r)) + NLMSG_ALIGN(sizeof(struct rtmsg))))
+#define RTM_PAYLOAD(n) NLMSG_PAYLOAD(n,sizeof(struct rtmsg))
 
-/* RTM_MULTIPATH --- array of काष्ठा rtnexthop.
+/* RTM_MULTIPATH --- array of struct rtnexthop.
  *
- * "struct rtnexthop" describes all necessary nexthop inक्रमmation,
+ * "struct rtnexthop" describes all necessary nexthop information,
  * i.e. parameters of path to a destination via this nexthop.
  *
- * At the moment it is impossible to set dअगरferent prefsrc, mtu, winकरोw
- * and rtt क्रम dअगरferent paths from multipath.
+ * At the moment it is impossible to set different prefsrc, mtu, window
+ * and rtt for different paths from multipath.
  */
 
-काष्ठा rtnexthop अणु
-	अचिन्हित लघु		rtnh_len;
-	अचिन्हित अक्षर		rtnh_flags;
-	अचिन्हित अक्षर		rtnh_hops;
-	पूर्णांक			rtnh_अगरindex;
-पूर्ण;
+struct rtnexthop {
+	unsigned short		rtnh_len;
+	unsigned char		rtnh_flags;
+	unsigned char		rtnh_hops;
+	int			rtnh_ifindex;
+};
 
 /* rtnh_flags */
 
-#घोषणा RTNH_F_DEAD		1	/* Nexthop is dead (used by multipath)	*/
-#घोषणा RTNH_F_PERVASIVE	2	/* Do recursive gateway lookup	*/
-#घोषणा RTNH_F_ONLINK		4	/* Gateway is क्रमced on link	*/
-#घोषणा RTNH_F_OFFLOAD		8	/* Nexthop is offloaded */
-#घोषणा RTNH_F_LINKDOWN		16	/* carrier-करोwn on nexthop */
-#घोषणा RTNH_F_UNRESOLVED	32	/* The entry is unresolved (ipmr) */
-#घोषणा RTNH_F_TRAP		64	/* Nexthop is trapping packets */
+#define RTNH_F_DEAD		1	/* Nexthop is dead (used by multipath)	*/
+#define RTNH_F_PERVASIVE	2	/* Do recursive gateway lookup	*/
+#define RTNH_F_ONLINK		4	/* Gateway is forced on link	*/
+#define RTNH_F_OFFLOAD		8	/* Nexthop is offloaded */
+#define RTNH_F_LINKDOWN		16	/* carrier-down on nexthop */
+#define RTNH_F_UNRESOLVED	32	/* The entry is unresolved (ipmr) */
+#define RTNH_F_TRAP		64	/* Nexthop is trapping packets */
 
-#घोषणा RTNH_COMPARE_MASK	(RTNH_F_DEAD | RTNH_F_LINKDOWN | \
+#define RTNH_COMPARE_MASK	(RTNH_F_DEAD | RTNH_F_LINKDOWN | \
 				 RTNH_F_OFFLOAD | RTNH_F_TRAP)
 
 /* Macros to handle hexthops */
 
-#घोषणा RTNH_ALIGNTO	4
-#घोषणा RTNH_ALIGN(len) ( ((len)+RTNH_ALIGNTO-1) & ~(RTNH_ALIGNTO-1) )
-#घोषणा RTNH_OK(rtnh,len) ((rtnh)->rtnh_len >= माप(काष्ठा rtnexthop) && \
-			   ((पूर्णांक)(rtnh)->rtnh_len) <= (len))
-#घोषणा RTNH_NEXT(rtnh)	((काष्ठा rtnexthop*)(((अक्षर*)(rtnh)) + RTNH_ALIGN((rtnh)->rtnh_len)))
-#घोषणा RTNH_LENGTH(len) (RTNH_ALIGN(माप(काष्ठा rtnexthop)) + (len))
-#घोषणा RTNH_SPACE(len)	RTNH_ALIGN(RTNH_LENGTH(len))
-#घोषणा RTNH_DATA(rtnh)   ((काष्ठा rtattr*)(((अक्षर*)(rtnh)) + RTNH_LENGTH(0)))
+#define RTNH_ALIGNTO	4
+#define RTNH_ALIGN(len) ( ((len)+RTNH_ALIGNTO-1) & ~(RTNH_ALIGNTO-1) )
+#define RTNH_OK(rtnh,len) ((rtnh)->rtnh_len >= sizeof(struct rtnexthop) && \
+			   ((int)(rtnh)->rtnh_len) <= (len))
+#define RTNH_NEXT(rtnh)	((struct rtnexthop*)(((char*)(rtnh)) + RTNH_ALIGN((rtnh)->rtnh_len)))
+#define RTNH_LENGTH(len) (RTNH_ALIGN(sizeof(struct rtnexthop)) + (len))
+#define RTNH_SPACE(len)	RTNH_ALIGN(RTNH_LENGTH(len))
+#define RTNH_DATA(rtnh)   ((struct rtattr*)(((char*)(rtnh)) + RTNH_LENGTH(0)))
 
 /* RTA_VIA */
-काष्ठा rtvia अणु
+struct rtvia {
 	__kernel_sa_family_t	rtvia_family;
 	__u8			rtvia_addr[0];
-पूर्ण;
+};
 
 /* RTM_CACHEINFO */
 
-काष्ठा rta_cacheinfo अणु
+struct rta_cacheinfo {
 	__u32	rta_clntref;
 	__u32	rta_lastuse;
 	__s32	rta_expires;
 	__u32	rta_error;
 	__u32	rta_used;
 
-#घोषणा RTNETLINK_HAVE_PEERINFO 1
+#define RTNETLINK_HAVE_PEERINFO 1
 	__u32	rta_id;
 	__u32	rta_ts;
 	__u32	rta_tsage;
-पूर्ण;
+};
 
-/* RTM_METRICS --- array of काष्ठा rtattr with types of RTAX_* */
+/* RTM_METRICS --- array of struct rtattr with types of RTAX_* */
 
-क्रमागत अणु
+enum {
 	RTAX_UNSPEC,
-#घोषणा RTAX_UNSPEC RTAX_UNSPEC
+#define RTAX_UNSPEC RTAX_UNSPEC
 	RTAX_LOCK,
-#घोषणा RTAX_LOCK RTAX_LOCK
+#define RTAX_LOCK RTAX_LOCK
 	RTAX_MTU,
-#घोषणा RTAX_MTU RTAX_MTU
+#define RTAX_MTU RTAX_MTU
 	RTAX_WINDOW,
-#घोषणा RTAX_WINDOW RTAX_WINDOW
+#define RTAX_WINDOW RTAX_WINDOW
 	RTAX_RTT,
-#घोषणा RTAX_RTT RTAX_RTT
+#define RTAX_RTT RTAX_RTT
 	RTAX_RTTVAR,
-#घोषणा RTAX_RTTVAR RTAX_RTTVAR
+#define RTAX_RTTVAR RTAX_RTTVAR
 	RTAX_SSTHRESH,
-#घोषणा RTAX_SSTHRESH RTAX_SSTHRESH
+#define RTAX_SSTHRESH RTAX_SSTHRESH
 	RTAX_CWND,
-#घोषणा RTAX_CWND RTAX_CWND
+#define RTAX_CWND RTAX_CWND
 	RTAX_ADVMSS,
-#घोषणा RTAX_ADVMSS RTAX_ADVMSS
+#define RTAX_ADVMSS RTAX_ADVMSS
 	RTAX_REORDERING,
-#घोषणा RTAX_REORDERING RTAX_REORDERING
+#define RTAX_REORDERING RTAX_REORDERING
 	RTAX_HOPLIMIT,
-#घोषणा RTAX_HOPLIMIT RTAX_HOPLIMIT
+#define RTAX_HOPLIMIT RTAX_HOPLIMIT
 	RTAX_INITCWND,
-#घोषणा RTAX_INITCWND RTAX_INITCWND
+#define RTAX_INITCWND RTAX_INITCWND
 	RTAX_FEATURES,
-#घोषणा RTAX_FEATURES RTAX_FEATURES
+#define RTAX_FEATURES RTAX_FEATURES
 	RTAX_RTO_MIN,
-#घोषणा RTAX_RTO_MIN RTAX_RTO_MIN
+#define RTAX_RTO_MIN RTAX_RTO_MIN
 	RTAX_INITRWND,
-#घोषणा RTAX_INITRWND RTAX_INITRWND
+#define RTAX_INITRWND RTAX_INITRWND
 	RTAX_QUICKACK,
-#घोषणा RTAX_QUICKACK RTAX_QUICKACK
+#define RTAX_QUICKACK RTAX_QUICKACK
 	RTAX_CC_ALGO,
-#घोषणा RTAX_CC_ALGO RTAX_CC_ALGO
+#define RTAX_CC_ALGO RTAX_CC_ALGO
 	RTAX_FASTOPEN_NO_COOKIE,
-#घोषणा RTAX_FASTOPEN_NO_COOKIE RTAX_FASTOPEN_NO_COOKIE
+#define RTAX_FASTOPEN_NO_COOKIE RTAX_FASTOPEN_NO_COOKIE
 	__RTAX_MAX
-पूर्ण;
+};
 
-#घोषणा RTAX_MAX (__RTAX_MAX - 1)
+#define RTAX_MAX (__RTAX_MAX - 1)
 
-#घोषणा RTAX_FEATURE_ECN	(1 << 0)
-#घोषणा RTAX_FEATURE_SACK	(1 << 1)
-#घोषणा RTAX_FEATURE_TIMESTAMP	(1 << 2)
-#घोषणा RTAX_FEATURE_ALLFRAG	(1 << 3)
+#define RTAX_FEATURE_ECN	(1 << 0)
+#define RTAX_FEATURE_SACK	(1 << 1)
+#define RTAX_FEATURE_TIMESTAMP	(1 << 2)
+#define RTAX_FEATURE_ALLFRAG	(1 << 3)
 
-#घोषणा RTAX_FEATURE_MASK	(RTAX_FEATURE_ECN | RTAX_FEATURE_SACK | \
+#define RTAX_FEATURE_MASK	(RTAX_FEATURE_ECN | RTAX_FEATURE_SACK | \
 				 RTAX_FEATURE_TIMESTAMP | RTAX_FEATURE_ALLFRAG)
 
-काष्ठा rta_session अणु
+struct rta_session {
 	__u8	proto;
 	__u8	pad1;
 	__u16	pad2;
 
-	जोड़ अणु
-		काष्ठा अणु
+	union {
+		struct {
 			__u16	sport;
 			__u16	dport;
-		पूर्ण ports;
+		} ports;
 
-		काष्ठा अणु
+		struct {
 			__u8	type;
 			__u8	code;
 			__u16	ident;
-		पूर्ण icmpt;
+		} icmpt;
 
 		__u32		spi;
-	पूर्ण u;
-पूर्ण;
+	} u;
+};
 
-काष्ठा rta_mfc_stats अणु
+struct rta_mfc_stats {
 	__u64	mfcs_packets;
 	__u64	mfcs_bytes;
-	__u64	mfcs_wrong_अगर;
-पूर्ण;
+	__u64	mfcs_wrong_if;
+};
 
 /****
- *		General क्रमm of address family dependent message.
+ *		General form of address family dependent message.
  ****/
 
-काष्ठा rtgenmsg अणु
-	अचिन्हित अक्षर		rtgen_family;
-पूर्ण;
+struct rtgenmsg {
+	unsigned char		rtgen_family;
+};
 
 /*****************************************************************
- *		Link layer specअगरic messages.
+ *		Link layer specific messages.
  ****/
 
-/* काष्ठा अगरinfomsg
- * passes link level specअगरic inक्रमmation, not dependent
+/* struct ifinfomsg
+ * passes link level specific information, not dependent
  * on network protocol.
  */
 
-काष्ठा अगरinfomsg अणु
-	अचिन्हित अक्षर	अगरi_family;
-	अचिन्हित अक्षर	__अगरi_pad;
-	अचिन्हित लघु	अगरi_type;		/* ARPHRD_* */
-	पूर्णांक		अगरi_index;		/* Link index	*/
-	अचिन्हित	अगरi_flags;		/* IFF_* flags	*/
-	अचिन्हित	अगरi_change;		/* IFF_* change mask */
-पूर्ण;
+struct ifinfomsg {
+	unsigned char	ifi_family;
+	unsigned char	__ifi_pad;
+	unsigned short	ifi_type;		/* ARPHRD_* */
+	int		ifi_index;		/* Link index	*/
+	unsigned	ifi_flags;		/* IFF_* flags	*/
+	unsigned	ifi_change;		/* IFF_* change mask */
+};
 
 /********************************************************************
- *		prefix inक्रमmation 
+ *		prefix information 
  ****/
 
-काष्ठा prefixmsg अणु
-	अचिन्हित अक्षर	prefix_family;
-	अचिन्हित अक्षर	prefix_pad1;
-	अचिन्हित लघु	prefix_pad2;
-	पूर्णांक		prefix_अगरindex;
-	अचिन्हित अक्षर	prefix_type;
-	अचिन्हित अक्षर	prefix_len;
-	अचिन्हित अक्षर	prefix_flags;
-	अचिन्हित अक्षर	prefix_pad3;
-पूर्ण;
+struct prefixmsg {
+	unsigned char	prefix_family;
+	unsigned char	prefix_pad1;
+	unsigned short	prefix_pad2;
+	int		prefix_ifindex;
+	unsigned char	prefix_type;
+	unsigned char	prefix_len;
+	unsigned char	prefix_flags;
+	unsigned char	prefix_pad3;
+};
 
-क्रमागत 
-अणु
+enum 
+{
 	PREFIX_UNSPEC,
 	PREFIX_ADDRESS,
 	PREFIX_CACHEINFO,
 	__PREFIX_MAX
-पूर्ण;
+};
 
-#घोषणा PREFIX_MAX	(__PREFIX_MAX - 1)
+#define PREFIX_MAX	(__PREFIX_MAX - 1)
 
-काष्ठा prefix_cacheinfo अणु
-	__u32	preferred_समय;
-	__u32	valid_समय;
-पूर्ण;
+struct prefix_cacheinfo {
+	__u32	preferred_time;
+	__u32	valid_time;
+};
 
 
 /*****************************************************************
  *		Traffic control messages.
  ****/
 
-काष्ठा tcmsg अणु
-	अचिन्हित अक्षर	tcm_family;
-	अचिन्हित अक्षर	tcm__pad1;
-	अचिन्हित लघु	tcm__pad2;
-	पूर्णांक		tcm_अगरindex;
+struct tcmsg {
+	unsigned char	tcm_family;
+	unsigned char	tcm__pad1;
+	unsigned short	tcm__pad2;
+	int		tcm_ifindex;
 	__u32		tcm_handle;
 	__u32		tcm_parent;
 /* tcm_block_index is used instead of tcm_parent
- * in हाल tcm_अगरindex == TCM_IFINDEX_MAGIC_BLOCK
+ * in case tcm_ifindex == TCM_IFINDEX_MAGIC_BLOCK
  */
-#घोषणा tcm_block_index tcm_parent
+#define tcm_block_index tcm_parent
 	__u32		tcm_info;
-पूर्ण;
+};
 
-/* For manipulation of filters in shared block, tcm_अगरindex is set to
+/* For manipulation of filters in shared block, tcm_ifindex is set to
  * TCM_IFINDEX_MAGIC_BLOCK, and tcm_parent is aliased to tcm_block_index
  * which is the block index.
  */
-#घोषणा TCM_IFINDEX_MAGIC_BLOCK (0xFFFFFFFFU)
+#define TCM_IFINDEX_MAGIC_BLOCK (0xFFFFFFFFU)
 
-क्रमागत अणु
+enum {
 	TCA_UNSPEC,
 	TCA_KIND,
 	TCA_OPTIONS,
@@ -628,184 +627,184 @@
 	TCA_EGRESS_BLOCK,
 	TCA_DUMP_FLAGS,
 	__TCA_MAX
-पूर्ण;
+};
 
-#घोषणा TCA_MAX (__TCA_MAX - 1)
+#define TCA_MAX (__TCA_MAX - 1)
 
-#घोषणा TCA_DUMP_FLAGS_TERSE (1 << 0) /* Means that in dump user माला_लो only basic
-				       * data necessary to identअगरy the objects
+#define TCA_DUMP_FLAGS_TERSE (1 << 0) /* Means that in dump user gets only basic
+				       * data necessary to identify the objects
 				       * (handle, cookie, etc.) and stats.
 				       */
 
-#घोषणा TCA_RTA(r)  ((काष्ठा rtattr*)(((अक्षर*)(r)) + NLMSG_ALIGN(माप(काष्ठा tcmsg))))
-#घोषणा TCA_PAYLOAD(n) NLMSG_PAYLOAD(n,माप(काष्ठा tcmsg))
+#define TCA_RTA(r)  ((struct rtattr*)(((char*)(r)) + NLMSG_ALIGN(sizeof(struct tcmsg))))
+#define TCA_PAYLOAD(n) NLMSG_PAYLOAD(n,sizeof(struct tcmsg))
 
 /********************************************************************
  *		Neighbor Discovery userland options
  ****/
 
-काष्ठा nduseropपंचांगsg अणु
-	अचिन्हित अक्षर	nduseropt_family;
-	अचिन्हित अक्षर	nduseropt_pad1;
-	अचिन्हित लघु	nduseropt_opts_len;	/* Total length of options */
-	पूर्णांक		nduseropt_अगरindex;
+struct nduseroptmsg {
+	unsigned char	nduseropt_family;
+	unsigned char	nduseropt_pad1;
+	unsigned short	nduseropt_opts_len;	/* Total length of options */
+	int		nduseropt_ifindex;
 	__u8		nduseropt_icmp_type;
 	__u8		nduseropt_icmp_code;
-	अचिन्हित लघु	nduseropt_pad2;
-	अचिन्हित पूर्णांक	nduseropt_pad3;
+	unsigned short	nduseropt_pad2;
+	unsigned int	nduseropt_pad3;
 	/* Followed by one or more ND options */
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	NDUSEROPT_UNSPEC,
 	NDUSEROPT_SRCADDR,
 	__NDUSEROPT_MAX
-पूर्ण;
+};
 
-#घोषणा NDUSEROPT_MAX	(__NDUSEROPT_MAX - 1)
+#define NDUSEROPT_MAX	(__NDUSEROPT_MAX - 1)
 
-#अगर_अघोषित __KERNEL__
-/* RTnetlink multicast groups - backwards compatibility क्रम userspace */
-#घोषणा RTMGRP_LINK		1
-#घोषणा RTMGRP_NOTIFY		2
-#घोषणा RTMGRP_NEIGH		4
-#घोषणा RTMGRP_TC		8
+#ifndef __KERNEL__
+/* RTnetlink multicast groups - backwards compatibility for userspace */
+#define RTMGRP_LINK		1
+#define RTMGRP_NOTIFY		2
+#define RTMGRP_NEIGH		4
+#define RTMGRP_TC		8
 
-#घोषणा RTMGRP_IPV4_IFADDR	0x10
-#घोषणा RTMGRP_IPV4_MROUTE	0x20
-#घोषणा RTMGRP_IPV4_ROUTE	0x40
-#घोषणा RTMGRP_IPV4_RULE	0x80
+#define RTMGRP_IPV4_IFADDR	0x10
+#define RTMGRP_IPV4_MROUTE	0x20
+#define RTMGRP_IPV4_ROUTE	0x40
+#define RTMGRP_IPV4_RULE	0x80
 
-#घोषणा RTMGRP_IPV6_IFADDR	0x100
-#घोषणा RTMGRP_IPV6_MROUTE	0x200
-#घोषणा RTMGRP_IPV6_ROUTE	0x400
-#घोषणा RTMGRP_IPV6_IFINFO	0x800
+#define RTMGRP_IPV6_IFADDR	0x100
+#define RTMGRP_IPV6_MROUTE	0x200
+#define RTMGRP_IPV6_ROUTE	0x400
+#define RTMGRP_IPV6_IFINFO	0x800
 
-#घोषणा RTMGRP_DECnet_IFADDR    0x1000
-#घोषणा RTMGRP_DECnet_ROUTE     0x4000
+#define RTMGRP_DECnet_IFADDR    0x1000
+#define RTMGRP_DECnet_ROUTE     0x4000
 
-#घोषणा RTMGRP_IPV6_PREFIX	0x20000
-#पूर्ण_अगर
+#define RTMGRP_IPV6_PREFIX	0x20000
+#endif
 
 /* RTnetlink multicast groups */
-क्रमागत rtnetlink_groups अणु
+enum rtnetlink_groups {
 	RTNLGRP_NONE,
-#घोषणा RTNLGRP_NONE		RTNLGRP_NONE
+#define RTNLGRP_NONE		RTNLGRP_NONE
 	RTNLGRP_LINK,
-#घोषणा RTNLGRP_LINK		RTNLGRP_LINK
+#define RTNLGRP_LINK		RTNLGRP_LINK
 	RTNLGRP_NOTIFY,
-#घोषणा RTNLGRP_NOTIFY		RTNLGRP_NOTIFY
+#define RTNLGRP_NOTIFY		RTNLGRP_NOTIFY
 	RTNLGRP_NEIGH,
-#घोषणा RTNLGRP_NEIGH		RTNLGRP_NEIGH
+#define RTNLGRP_NEIGH		RTNLGRP_NEIGH
 	RTNLGRP_TC,
-#घोषणा RTNLGRP_TC		RTNLGRP_TC
+#define RTNLGRP_TC		RTNLGRP_TC
 	RTNLGRP_IPV4_IFADDR,
-#घोषणा RTNLGRP_IPV4_IFADDR	RTNLGRP_IPV4_IFADDR
+#define RTNLGRP_IPV4_IFADDR	RTNLGRP_IPV4_IFADDR
 	RTNLGRP_IPV4_MROUTE,
-#घोषणा	RTNLGRP_IPV4_MROUTE	RTNLGRP_IPV4_MROUTE
+#define	RTNLGRP_IPV4_MROUTE	RTNLGRP_IPV4_MROUTE
 	RTNLGRP_IPV4_ROUTE,
-#घोषणा RTNLGRP_IPV4_ROUTE	RTNLGRP_IPV4_ROUTE
+#define RTNLGRP_IPV4_ROUTE	RTNLGRP_IPV4_ROUTE
 	RTNLGRP_IPV4_RULE,
-#घोषणा RTNLGRP_IPV4_RULE	RTNLGRP_IPV4_RULE
+#define RTNLGRP_IPV4_RULE	RTNLGRP_IPV4_RULE
 	RTNLGRP_IPV6_IFADDR,
-#घोषणा RTNLGRP_IPV6_IFADDR	RTNLGRP_IPV6_IFADDR
+#define RTNLGRP_IPV6_IFADDR	RTNLGRP_IPV6_IFADDR
 	RTNLGRP_IPV6_MROUTE,
-#घोषणा RTNLGRP_IPV6_MROUTE	RTNLGRP_IPV6_MROUTE
+#define RTNLGRP_IPV6_MROUTE	RTNLGRP_IPV6_MROUTE
 	RTNLGRP_IPV6_ROUTE,
-#घोषणा RTNLGRP_IPV6_ROUTE	RTNLGRP_IPV6_ROUTE
+#define RTNLGRP_IPV6_ROUTE	RTNLGRP_IPV6_ROUTE
 	RTNLGRP_IPV6_IFINFO,
-#घोषणा RTNLGRP_IPV6_IFINFO	RTNLGRP_IPV6_IFINFO
+#define RTNLGRP_IPV6_IFINFO	RTNLGRP_IPV6_IFINFO
 	RTNLGRP_DECnet_IFADDR,
-#घोषणा RTNLGRP_DECnet_IFADDR	RTNLGRP_DECnet_IFADDR
+#define RTNLGRP_DECnet_IFADDR	RTNLGRP_DECnet_IFADDR
 	RTNLGRP_NOP2,
 	RTNLGRP_DECnet_ROUTE,
-#घोषणा RTNLGRP_DECnet_ROUTE	RTNLGRP_DECnet_ROUTE
+#define RTNLGRP_DECnet_ROUTE	RTNLGRP_DECnet_ROUTE
 	RTNLGRP_DECnet_RULE,
-#घोषणा RTNLGRP_DECnet_RULE	RTNLGRP_DECnet_RULE
+#define RTNLGRP_DECnet_RULE	RTNLGRP_DECnet_RULE
 	RTNLGRP_NOP4,
 	RTNLGRP_IPV6_PREFIX,
-#घोषणा RTNLGRP_IPV6_PREFIX	RTNLGRP_IPV6_PREFIX
+#define RTNLGRP_IPV6_PREFIX	RTNLGRP_IPV6_PREFIX
 	RTNLGRP_IPV6_RULE,
-#घोषणा RTNLGRP_IPV6_RULE	RTNLGRP_IPV6_RULE
+#define RTNLGRP_IPV6_RULE	RTNLGRP_IPV6_RULE
 	RTNLGRP_ND_USEROPT,
-#घोषणा RTNLGRP_ND_USEROPT	RTNLGRP_ND_USEROPT
+#define RTNLGRP_ND_USEROPT	RTNLGRP_ND_USEROPT
 	RTNLGRP_PHONET_IFADDR,
-#घोषणा RTNLGRP_PHONET_IFADDR	RTNLGRP_PHONET_IFADDR
+#define RTNLGRP_PHONET_IFADDR	RTNLGRP_PHONET_IFADDR
 	RTNLGRP_PHONET_ROUTE,
-#घोषणा RTNLGRP_PHONET_ROUTE	RTNLGRP_PHONET_ROUTE
+#define RTNLGRP_PHONET_ROUTE	RTNLGRP_PHONET_ROUTE
 	RTNLGRP_DCB,
-#घोषणा RTNLGRP_DCB		RTNLGRP_DCB
+#define RTNLGRP_DCB		RTNLGRP_DCB
 	RTNLGRP_IPV4_NETCONF,
-#घोषणा RTNLGRP_IPV4_NETCONF	RTNLGRP_IPV4_NETCONF
+#define RTNLGRP_IPV4_NETCONF	RTNLGRP_IPV4_NETCONF
 	RTNLGRP_IPV6_NETCONF,
-#घोषणा RTNLGRP_IPV6_NETCONF	RTNLGRP_IPV6_NETCONF
+#define RTNLGRP_IPV6_NETCONF	RTNLGRP_IPV6_NETCONF
 	RTNLGRP_MDB,
-#घोषणा RTNLGRP_MDB		RTNLGRP_MDB
+#define RTNLGRP_MDB		RTNLGRP_MDB
 	RTNLGRP_MPLS_ROUTE,
-#घोषणा RTNLGRP_MPLS_ROUTE	RTNLGRP_MPLS_ROUTE
+#define RTNLGRP_MPLS_ROUTE	RTNLGRP_MPLS_ROUTE
 	RTNLGRP_NSID,
-#घोषणा RTNLGRP_NSID		RTNLGRP_NSID
+#define RTNLGRP_NSID		RTNLGRP_NSID
 	RTNLGRP_MPLS_NETCONF,
-#घोषणा RTNLGRP_MPLS_NETCONF	RTNLGRP_MPLS_NETCONF
+#define RTNLGRP_MPLS_NETCONF	RTNLGRP_MPLS_NETCONF
 	RTNLGRP_IPV4_MROUTE_R,
-#घोषणा RTNLGRP_IPV4_MROUTE_R	RTNLGRP_IPV4_MROUTE_R
+#define RTNLGRP_IPV4_MROUTE_R	RTNLGRP_IPV4_MROUTE_R
 	RTNLGRP_IPV6_MROUTE_R,
-#घोषणा RTNLGRP_IPV6_MROUTE_R	RTNLGRP_IPV6_MROUTE_R
+#define RTNLGRP_IPV6_MROUTE_R	RTNLGRP_IPV6_MROUTE_R
 	RTNLGRP_NEXTHOP,
-#घोषणा RTNLGRP_NEXTHOP		RTNLGRP_NEXTHOP
+#define RTNLGRP_NEXTHOP		RTNLGRP_NEXTHOP
 	RTNLGRP_BRVLAN,
-#घोषणा RTNLGRP_BRVLAN		RTNLGRP_BRVLAN
+#define RTNLGRP_BRVLAN		RTNLGRP_BRVLAN
 	__RTNLGRP_MAX
-पूर्ण;
-#घोषणा RTNLGRP_MAX	(__RTNLGRP_MAX - 1)
+};
+#define RTNLGRP_MAX	(__RTNLGRP_MAX - 1)
 
 /* TC action piece */
-काष्ठा tcamsg अणु
-	अचिन्हित अक्षर	tca_family;
-	अचिन्हित अक्षर	tca__pad1;
-	अचिन्हित लघु	tca__pad2;
-पूर्ण;
+struct tcamsg {
+	unsigned char	tca_family;
+	unsigned char	tca__pad1;
+	unsigned short	tca__pad2;
+};
 
-क्रमागत अणु
+enum {
 	TCA_ROOT_UNSPEC,
 	TCA_ROOT_TAB,
-#घोषणा TCA_ACT_TAB TCA_ROOT_TAB
-#घोषणा TCAA_MAX TCA_ROOT_TAB
+#define TCA_ACT_TAB TCA_ROOT_TAB
+#define TCAA_MAX TCA_ROOT_TAB
 	TCA_ROOT_FLAGS,
 	TCA_ROOT_COUNT,
 	TCA_ROOT_TIME_DELTA, /* in msecs */
 	__TCA_ROOT_MAX,
-#घोषणा	TCA_ROOT_MAX (__TCA_ROOT_MAX - 1)
-पूर्ण;
+#define	TCA_ROOT_MAX (__TCA_ROOT_MAX - 1)
+};
 
-#घोषणा TA_RTA(r)  ((काष्ठा rtattr*)(((अक्षर*)(r)) + NLMSG_ALIGN(माप(काष्ठा tcamsg))))
-#घोषणा TA_PAYLOAD(n) NLMSG_PAYLOAD(n,माप(काष्ठा tcamsg))
+#define TA_RTA(r)  ((struct rtattr*)(((char*)(r)) + NLMSG_ALIGN(sizeof(struct tcamsg))))
+#define TA_PAYLOAD(n) NLMSG_PAYLOAD(n,sizeof(struct tcamsg))
 /* tcamsg flags stored in attribute TCA_ROOT_FLAGS
  *
- * TCA_ACT_FLAG_LARGE_DUMP_ON user->kernel to request क्रम larger than
+ * TCA_ACT_FLAG_LARGE_DUMP_ON user->kernel to request for larger than
  * TCA_ACT_MAX_PRIO actions in a dump. All dump responses will contain the
- * number of actions being dumped stored in क्रम user app's consumption in
+ * number of actions being dumped stored in for user app's consumption in
  * TCA_ROOT_COUNT
  *
  * TCA_ACT_FLAG_TERSE_DUMP user->kernel to request terse (brief) dump that only
  * includes essential action info (kind, index, etc.)
  *
  */
-#घोषणा TCA_FLAG_LARGE_DUMP_ON		(1 << 0)
-#घोषणा TCA_ACT_FLAG_LARGE_DUMP_ON	TCA_FLAG_LARGE_DUMP_ON
-#घोषणा TCA_ACT_FLAG_TERSE_DUMP		(1 << 1)
+#define TCA_FLAG_LARGE_DUMP_ON		(1 << 0)
+#define TCA_ACT_FLAG_LARGE_DUMP_ON	TCA_FLAG_LARGE_DUMP_ON
+#define TCA_ACT_FLAG_TERSE_DUMP		(1 << 1)
 
-/* New extended info filters क्रम IFLA_EXT_MASK */
-#घोषणा RTEXT_FILTER_VF		(1 << 0)
-#घोषणा RTEXT_FILTER_BRVLAN	(1 << 1)
-#घोषणा RTEXT_FILTER_BRVLAN_COMPRESSED	(1 << 2)
-#घोषणा	RTEXT_FILTER_SKIP_STATS	(1 << 3)
-#घोषणा RTEXT_FILTER_MRP	(1 << 4)
-#घोषणा RTEXT_FILTER_CFM_CONFIG	(1 << 5)
-#घोषणा RTEXT_FILTER_CFM_STATUS	(1 << 6)
+/* New extended info filters for IFLA_EXT_MASK */
+#define RTEXT_FILTER_VF		(1 << 0)
+#define RTEXT_FILTER_BRVLAN	(1 << 1)
+#define RTEXT_FILTER_BRVLAN_COMPRESSED	(1 << 2)
+#define	RTEXT_FILTER_SKIP_STATS	(1 << 3)
+#define RTEXT_FILTER_MRP	(1 << 4)
+#define RTEXT_FILTER_CFM_CONFIG	(1 << 5)
+#define RTEXT_FILTER_CFM_STATUS	(1 << 6)
 
-/* End of inक्रमmation exported to user level */
+/* End of information exported to user level */
 
 
 
-#पूर्ण_अगर /* _UAPI__LINUX_RTNETLINK_H */
+#endif /* _UAPI__LINUX_RTNETLINK_H */

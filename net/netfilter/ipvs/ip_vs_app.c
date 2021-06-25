@@ -1,11 +1,10 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * ip_vs_app.c: Application module support क्रम IPVS
+ * ip_vs_app.c: Application module support for IPVS
  *
- * Authors:     Wensong Zhang <wensong@linuxभवserver.org>
+ * Authors:     Wensong Zhang <wensong@linuxvirtualserver.org>
  *
- * Most code here is taken from ip_masq_app.c in kernel 2.2. The dअगरference
+ * Most code here is taken from ip_masq_app.c in kernel 2.2. The difference
  * is that ip_vs_app module handles the reverse direction (incoming requests
  * and outgoing responses).
  *
@@ -14,167 +13,167 @@
  * Author:	Juan Jose Ciarlante, <jjciarla@raiz.uncu.edu.ar>
  */
 
-#घोषणा KMSG_COMPONENT "IPVS"
-#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#define KMSG_COMPONENT "IPVS"
+#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/in.h>
-#समावेश <linux/ip.h>
-#समावेश <linux/netfilter.h>
-#समावेश <linux/slab.h>
-#समावेश <net/net_namespace.h>
-#समावेश <net/protocol.h>
-#समावेश <net/tcp.h>
-#समावेश <linux/स्थिति.स>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/mutex.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/skbuff.h>
+#include <linux/in.h>
+#include <linux/ip.h>
+#include <linux/netfilter.h>
+#include <linux/slab.h>
+#include <net/net_namespace.h>
+#include <net/protocol.h>
+#include <net/tcp.h>
+#include <linux/stat.h>
+#include <linux/proc_fs.h>
+#include <linux/seq_file.h>
+#include <linux/mutex.h>
 
-#समावेश <net/ip_vs.h>
+#include <net/ip_vs.h>
 
-EXPORT_SYMBOL(रेजिस्टर_ip_vs_app);
-EXPORT_SYMBOL(unरेजिस्टर_ip_vs_app);
-EXPORT_SYMBOL(रेजिस्टर_ip_vs_app_inc);
+EXPORT_SYMBOL(register_ip_vs_app);
+EXPORT_SYMBOL(unregister_ip_vs_app);
+EXPORT_SYMBOL(register_ip_vs_app_inc);
 
-अटल DEFINE_MUTEX(__ip_vs_app_mutex);
+static DEFINE_MUTEX(__ip_vs_app_mutex);
 
 /*
  *	Get an ip_vs_app object
  */
-अटल अंतरभूत पूर्णांक ip_vs_app_get(काष्ठा ip_vs_app *app)
-अणु
-	वापस try_module_get(app->module);
-पूर्ण
+static inline int ip_vs_app_get(struct ip_vs_app *app)
+{
+	return try_module_get(app->module);
+}
 
 
-अटल अंतरभूत व्योम ip_vs_app_put(काष्ठा ip_vs_app *app)
-अणु
+static inline void ip_vs_app_put(struct ip_vs_app *app)
+{
 	module_put(app->module);
-पूर्ण
+}
 
-अटल व्योम ip_vs_app_inc_destroy(काष्ठा ip_vs_app *inc)
-अणु
-	kमुक्त(inc->समयout_table);
-	kमुक्त(inc);
-पूर्ण
+static void ip_vs_app_inc_destroy(struct ip_vs_app *inc)
+{
+	kfree(inc->timeout_table);
+	kfree(inc);
+}
 
-अटल व्योम ip_vs_app_inc_rcu_मुक्त(काष्ठा rcu_head *head)
-अणु
-	काष्ठा ip_vs_app *inc = container_of(head, काष्ठा ip_vs_app, rcu_head);
+static void ip_vs_app_inc_rcu_free(struct rcu_head *head)
+{
+	struct ip_vs_app *inc = container_of(head, struct ip_vs_app, rcu_head);
 
 	ip_vs_app_inc_destroy(inc);
-पूर्ण
+}
 
 /*
- *	Allocate/initialize app incarnation and रेजिस्टर it in proto apps.
+ *	Allocate/initialize app incarnation and register it in proto apps.
  */
-अटल पूर्णांक
-ip_vs_app_inc_new(काष्ठा netns_ipvs *ipvs, काष्ठा ip_vs_app *app, __u16 proto,
+static int
+ip_vs_app_inc_new(struct netns_ipvs *ipvs, struct ip_vs_app *app, __u16 proto,
 		  __u16 port)
-अणु
-	काष्ठा ip_vs_protocol *pp;
-	काष्ठा ip_vs_app *inc;
-	पूर्णांक ret;
+{
+	struct ip_vs_protocol *pp;
+	struct ip_vs_app *inc;
+	int ret;
 
-	अगर (!(pp = ip_vs_proto_get(proto)))
-		वापस -EPROTONOSUPPORT;
+	if (!(pp = ip_vs_proto_get(proto)))
+		return -EPROTONOSUPPORT;
 
-	अगर (!pp->unरेजिस्टर_app)
-		वापस -EOPNOTSUPP;
+	if (!pp->unregister_app)
+		return -EOPNOTSUPP;
 
-	inc = kmemdup(app, माप(*inc), GFP_KERNEL);
-	अगर (!inc)
-		वापस -ENOMEM;
+	inc = kmemdup(app, sizeof(*inc), GFP_KERNEL);
+	if (!inc)
+		return -ENOMEM;
 	INIT_LIST_HEAD(&inc->p_list);
 	INIT_LIST_HEAD(&inc->incs_list);
 	inc->app = app;
 	inc->port = htons(port);
 	atomic_set(&inc->usecnt, 0);
 
-	अगर (app->समयouts) अणु
-		inc->समयout_table =
-			ip_vs_create_समयout_table(app->समयouts,
-						   app->समयouts_size);
-		अगर (!inc->समयout_table) अणु
+	if (app->timeouts) {
+		inc->timeout_table =
+			ip_vs_create_timeout_table(app->timeouts,
+						   app->timeouts_size);
+		if (!inc->timeout_table) {
 			ret = -ENOMEM;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
-	ret = pp->रेजिस्टर_app(ipvs, inc);
-	अगर (ret)
-		जाओ out;
+	ret = pp->register_app(ipvs, inc);
+	if (ret)
+		goto out;
 
 	list_add(&inc->a_list, &app->incs_list);
 	IP_VS_DBG(9, "%s App %s:%u registered\n",
 		  pp->name, inc->name, ntohs(inc->port));
 
-	वापस 0;
+	return 0;
 
   out:
 	ip_vs_app_inc_destroy(inc);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
 /*
  *	Release app incarnation
  */
-अटल व्योम
-ip_vs_app_inc_release(काष्ठा netns_ipvs *ipvs, काष्ठा ip_vs_app *inc)
-अणु
-	काष्ठा ip_vs_protocol *pp;
+static void
+ip_vs_app_inc_release(struct netns_ipvs *ipvs, struct ip_vs_app *inc)
+{
+	struct ip_vs_protocol *pp;
 
-	अगर (!(pp = ip_vs_proto_get(inc->protocol)))
-		वापस;
+	if (!(pp = ip_vs_proto_get(inc->protocol)))
+		return;
 
-	अगर (pp->unरेजिस्टर_app)
-		pp->unरेजिस्टर_app(ipvs, inc);
+	if (pp->unregister_app)
+		pp->unregister_app(ipvs, inc);
 
 	IP_VS_DBG(9, "%s App %s:%u unregistered\n",
 		  pp->name, inc->name, ntohs(inc->port));
 
 	list_del(&inc->a_list);
 
-	call_rcu(&inc->rcu_head, ip_vs_app_inc_rcu_मुक्त);
-पूर्ण
+	call_rcu(&inc->rcu_head, ip_vs_app_inc_rcu_free);
+}
 
 
 /*
  *	Get reference to app inc (only called from softirq)
  *
  */
-पूर्णांक ip_vs_app_inc_get(काष्ठा ip_vs_app *inc)
-अणु
-	पूर्णांक result;
+int ip_vs_app_inc_get(struct ip_vs_app *inc)
+{
+	int result;
 
 	result = ip_vs_app_get(inc->app);
-	अगर (result)
+	if (result)
 		atomic_inc(&inc->usecnt);
-	वापस result;
-पूर्ण
+	return result;
+}
 
 
 /*
- *	Put the app inc (only called from समयr or net softirq)
+ *	Put the app inc (only called from timer or net softirq)
  */
-व्योम ip_vs_app_inc_put(काष्ठा ip_vs_app *inc)
-अणु
+void ip_vs_app_inc_put(struct ip_vs_app *inc)
+{
 	atomic_dec(&inc->usecnt);
 	ip_vs_app_put(inc->app);
-पूर्ण
+}
 
 
 /*
  *	Register an application incarnation in protocol applications
  */
-पूर्णांक
-रेजिस्टर_ip_vs_app_inc(काष्ठा netns_ipvs *ipvs, काष्ठा ip_vs_app *app, __u16 proto,
+int
+register_ip_vs_app_inc(struct netns_ipvs *ipvs, struct ip_vs_app *app, __u16 proto,
 		       __u16 port)
-अणु
-	पूर्णांक result;
+{
+	int result;
 
 	mutex_lock(&__ip_vs_app_mutex);
 
@@ -182,47 +181,47 @@ ip_vs_app_inc_release(काष्ठा netns_ipvs *ipvs, काष्ठा ip
 
 	mutex_unlock(&__ip_vs_app_mutex);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
 
-/* Register application क्रम netns */
-काष्ठा ip_vs_app *रेजिस्टर_ip_vs_app(काष्ठा netns_ipvs *ipvs, काष्ठा ip_vs_app *app)
-अणु
-	काष्ठा ip_vs_app *a;
-	पूर्णांक err = 0;
+/* Register application for netns */
+struct ip_vs_app *register_ip_vs_app(struct netns_ipvs *ipvs, struct ip_vs_app *app)
+{
+	struct ip_vs_app *a;
+	int err = 0;
 
 	mutex_lock(&__ip_vs_app_mutex);
 
 	/* increase the module use count */
-	अगर (!ip_vs_use_count_inc()) अणु
+	if (!ip_vs_use_count_inc()) {
 		err = -ENOENT;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
-	list_क्रम_each_entry(a, &ipvs->app_list, a_list) अणु
-		अगर (!म_भेद(app->name, a->name)) अणु
+	list_for_each_entry(a, &ipvs->app_list, a_list) {
+		if (!strcmp(app->name, a->name)) {
 			err = -EEXIST;
 			/* decrease the module use count */
 			ip_vs_use_count_dec();
-			जाओ out_unlock;
-		पूर्ण
-	पूर्ण
-	a = kmemdup(app, माप(*app), GFP_KERNEL);
-	अगर (!a) अणु
+			goto out_unlock;
+		}
+	}
+	a = kmemdup(app, sizeof(*app), GFP_KERNEL);
+	if (!a) {
 		err = -ENOMEM;
 		/* decrease the module use count */
 		ip_vs_use_count_dec();
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 	INIT_LIST_HEAD(&a->incs_list);
 	list_add(&a->a_list, &ipvs->app_list);
 
 out_unlock:
 	mutex_unlock(&__ip_vs_app_mutex);
 
-	वापस err ? ERR_PTR(err) : a;
-पूर्ण
+	return err ? ERR_PTR(err) : a;
+}
 
 
 /*
@@ -230,383 +229,383 @@ out_unlock:
  *	We are sure there are no app incarnations attached to services
  *	Caller should use synchronize_rcu() or rcu_barrier()
  */
-व्योम unरेजिस्टर_ip_vs_app(काष्ठा netns_ipvs *ipvs, काष्ठा ip_vs_app *app)
-अणु
-	काष्ठा ip_vs_app *a, *anxt, *inc, *nxt;
+void unregister_ip_vs_app(struct netns_ipvs *ipvs, struct ip_vs_app *app)
+{
+	struct ip_vs_app *a, *anxt, *inc, *nxt;
 
 	mutex_lock(&__ip_vs_app_mutex);
 
-	list_क्रम_each_entry_safe(a, anxt, &ipvs->app_list, a_list) अणु
-		अगर (app && म_भेद(app->name, a->name))
-			जारी;
-		list_क्रम_each_entry_safe(inc, nxt, &a->incs_list, a_list) अणु
+	list_for_each_entry_safe(a, anxt, &ipvs->app_list, a_list) {
+		if (app && strcmp(app->name, a->name))
+			continue;
+		list_for_each_entry_safe(inc, nxt, &a->incs_list, a_list) {
 			ip_vs_app_inc_release(ipvs, inc);
-		पूर्ण
+		}
 
 		list_del(&a->a_list);
-		kमुक्त(a);
+		kfree(a);
 
 		/* decrease the module use count */
 		ip_vs_use_count_dec();
-	पूर्ण
+	}
 
 	mutex_unlock(&__ip_vs_app_mutex);
-पूर्ण
+}
 
 
 /*
- *	Bind ip_vs_conn to its ip_vs_app (called by cp स्थिरructor)
+ *	Bind ip_vs_conn to its ip_vs_app (called by cp constructor)
  */
-पूर्णांक ip_vs_bind_app(काष्ठा ip_vs_conn *cp,
-		   काष्ठा ip_vs_protocol *pp)
-अणु
-	वापस pp->app_conn_bind(cp);
-पूर्ण
+int ip_vs_bind_app(struct ip_vs_conn *cp,
+		   struct ip_vs_protocol *pp)
+{
+	return pp->app_conn_bind(cp);
+}
 
 
 /*
- *	Unbind cp from application incarnation (called by cp deकाष्ठाor)
+ *	Unbind cp from application incarnation (called by cp destructor)
  */
-व्योम ip_vs_unbind_app(काष्ठा ip_vs_conn *cp)
-अणु
-	काष्ठा ip_vs_app *inc = cp->app;
+void ip_vs_unbind_app(struct ip_vs_conn *cp)
+{
+	struct ip_vs_app *inc = cp->app;
 
-	अगर (!inc)
-		वापस;
+	if (!inc)
+		return;
 
-	अगर (inc->unbind_conn)
+	if (inc->unbind_conn)
 		inc->unbind_conn(inc, cp);
-	अगर (inc->करोne_conn)
-		inc->करोne_conn(inc, cp);
+	if (inc->done_conn)
+		inc->done_conn(inc, cp);
 	ip_vs_app_inc_put(inc);
-	cp->app = शून्य;
-पूर्ण
+	cp->app = NULL;
+}
 
 
 /*
  *	Fixes th->seq based on ip_vs_seq info.
  */
-अटल अंतरभूत व्योम vs_fix_seq(स्थिर काष्ठा ip_vs_seq *vseq, काष्ठा tcphdr *th)
-अणु
+static inline void vs_fix_seq(const struct ip_vs_seq *vseq, struct tcphdr *th)
+{
 	__u32 seq = ntohl(th->seq);
 
 	/*
-	 *	Adjust seq with delta-offset क्रम all packets after
+	 *	Adjust seq with delta-offset for all packets after
 	 *	the most recent resized pkt seq and with previous_delta offset
-	 *	क्रम all packets	beक्रमe most recent resized pkt seq.
+	 *	for all packets	before most recent resized pkt seq.
 	 */
-	अगर (vseq->delta || vseq->previous_delta) अणु
-		अगर(after(seq, vseq->init_seq)) अणु
+	if (vseq->delta || vseq->previous_delta) {
+		if(after(seq, vseq->init_seq)) {
 			th->seq = htonl(seq + vseq->delta);
 			IP_VS_DBG(9, "%s(): added delta (%d) to seq\n",
 				  __func__, vseq->delta);
-		पूर्ण अन्यथा अणु
+		} else {
 			th->seq = htonl(seq + vseq->previous_delta);
 			IP_VS_DBG(9, "%s(): added previous_delta (%d) to seq\n",
 				  __func__, vseq->previous_delta);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 
 /*
  *	Fixes th->ack_seq based on ip_vs_seq info.
  */
-अटल अंतरभूत व्योम
-vs_fix_ack_seq(स्थिर काष्ठा ip_vs_seq *vseq, काष्ठा tcphdr *th)
-अणु
+static inline void
+vs_fix_ack_seq(const struct ip_vs_seq *vseq, struct tcphdr *th)
+{
 	__u32 ack_seq = ntohl(th->ack_seq);
 
 	/*
-	 * Adjust ack_seq with delta-offset क्रम
-	 * the packets AFTER most recent resized pkt has caused a shअगरt
-	 * क्रम packets beक्रमe most recent resized pkt, use previous_delta
+	 * Adjust ack_seq with delta-offset for
+	 * the packets AFTER most recent resized pkt has caused a shift
+	 * for packets before most recent resized pkt, use previous_delta
 	 */
-	अगर (vseq->delta || vseq->previous_delta) अणु
+	if (vseq->delta || vseq->previous_delta) {
 		/* since ack_seq is the number of octet that is expected
 		   to receive next, so compare it with init_seq+delta */
-		अगर(after(ack_seq, vseq->init_seq+vseq->delta)) अणु
+		if(after(ack_seq, vseq->init_seq+vseq->delta)) {
 			th->ack_seq = htonl(ack_seq - vseq->delta);
 			IP_VS_DBG(9, "%s(): subtracted delta "
 				  "(%d) from ack_seq\n", __func__, vseq->delta);
 
-		पूर्ण अन्यथा अणु
+		} else {
 			th->ack_seq = htonl(ack_seq - vseq->previous_delta);
 			IP_VS_DBG(9, "%s(): subtracted "
 				  "previous_delta (%d) from ack_seq\n",
 				  __func__, vseq->previous_delta);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 
 /*
- *	Updates ip_vs_seq अगर pkt has been resized
- *	Assumes alपढ़ोy checked proto==IPPROTO_TCP and dअगरf!=0.
+ *	Updates ip_vs_seq if pkt has been resized
+ *	Assumes already checked proto==IPPROTO_TCP and diff!=0.
  */
-अटल अंतरभूत व्योम vs_seq_update(काष्ठा ip_vs_conn *cp, काष्ठा ip_vs_seq *vseq,
-				 अचिन्हित पूर्णांक flag, __u32 seq, पूर्णांक dअगरf)
-अणु
+static inline void vs_seq_update(struct ip_vs_conn *cp, struct ip_vs_seq *vseq,
+				 unsigned int flag, __u32 seq, int diff)
+{
 	/* spinlock is to keep updating cp->flags atomic */
 	spin_lock_bh(&cp->lock);
-	अगर (!(cp->flags & flag) || after(seq, vseq->init_seq)) अणु
+	if (!(cp->flags & flag) || after(seq, vseq->init_seq)) {
 		vseq->previous_delta = vseq->delta;
-		vseq->delta += dअगरf;
+		vseq->delta += diff;
 		vseq->init_seq = seq;
 		cp->flags |= flag;
-	पूर्ण
+	}
 	spin_unlock_bh(&cp->lock);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक app_tcp_pkt_out(काष्ठा ip_vs_conn *cp, काष्ठा sk_buff *skb,
-				  काष्ठा ip_vs_app *app,
-				  काष्ठा ip_vs_iphdr *ipvsh)
-अणु
-	पूर्णांक dअगरf;
-	स्थिर अचिन्हित पूर्णांक tcp_offset = ip_hdrlen(skb);
-	काष्ठा tcphdr *th;
+static inline int app_tcp_pkt_out(struct ip_vs_conn *cp, struct sk_buff *skb,
+				  struct ip_vs_app *app,
+				  struct ip_vs_iphdr *ipvsh)
+{
+	int diff;
+	const unsigned int tcp_offset = ip_hdrlen(skb);
+	struct tcphdr *th;
 	__u32 seq;
 
-	अगर (skb_ensure_writable(skb, tcp_offset + माप(*th)))
-		वापस 0;
+	if (skb_ensure_writable(skb, tcp_offset + sizeof(*th)))
+		return 0;
 
-	th = (काष्ठा tcphdr *)(skb_network_header(skb) + tcp_offset);
+	th = (struct tcphdr *)(skb_network_header(skb) + tcp_offset);
 
 	/*
-	 *	Remember seq number in हाल this pkt माला_लो resized
+	 *	Remember seq number in case this pkt gets resized
 	 */
 	seq = ntohl(th->seq);
 
 	/*
-	 *	Fix seq stuff अगर flagged as so.
+	 *	Fix seq stuff if flagged as so.
 	 */
-	अगर (cp->flags & IP_VS_CONN_F_OUT_SEQ)
+	if (cp->flags & IP_VS_CONN_F_OUT_SEQ)
 		vs_fix_seq(&cp->out_seq, th);
-	अगर (cp->flags & IP_VS_CONN_F_IN_SEQ)
+	if (cp->flags & IP_VS_CONN_F_IN_SEQ)
 		vs_fix_ack_seq(&cp->in_seq, th);
 
 	/*
-	 *	Call निजी output hook function
+	 *	Call private output hook function
 	 */
-	अगर (app->pkt_out == शून्य)
-		वापस 1;
+	if (app->pkt_out == NULL)
+		return 1;
 
-	अगर (!app->pkt_out(app, cp, skb, &dअगरf, ipvsh))
-		वापस 0;
+	if (!app->pkt_out(app, cp, skb, &diff, ipvsh))
+		return 0;
 
 	/*
-	 *	Update ip_vs seq stuff अगर len has changed.
+	 *	Update ip_vs seq stuff if len has changed.
 	 */
-	अगर (dअगरf != 0)
+	if (diff != 0)
 		vs_seq_update(cp, &cp->out_seq,
-			      IP_VS_CONN_F_OUT_SEQ, seq, dअगरf);
+			      IP_VS_CONN_F_OUT_SEQ, seq, diff);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /*
- *	Output pkt hook. Will call bound ip_vs_app specअगरic function
- *	called by ipvs packet handler, assumes previously checked cp!=शून्य
- *	वापसs false अगर it can't handle packet (oom)
+ *	Output pkt hook. Will call bound ip_vs_app specific function
+ *	called by ipvs packet handler, assumes previously checked cp!=NULL
+ *	returns false if it can't handle packet (oom)
  */
-पूर्णांक ip_vs_app_pkt_out(काष्ठा ip_vs_conn *cp, काष्ठा sk_buff *skb,
-		      काष्ठा ip_vs_iphdr *ipvsh)
-अणु
-	काष्ठा ip_vs_app *app;
+int ip_vs_app_pkt_out(struct ip_vs_conn *cp, struct sk_buff *skb,
+		      struct ip_vs_iphdr *ipvsh)
+{
+	struct ip_vs_app *app;
 
 	/*
-	 *	check अगर application module is bound to
+	 *	check if application module is bound to
 	 *	this ip_vs_conn.
 	 */
-	अगर ((app = cp->app) == शून्य)
-		वापस 1;
+	if ((app = cp->app) == NULL)
+		return 1;
 
 	/* TCP is complicated */
-	अगर (cp->protocol == IPPROTO_TCP)
-		वापस app_tcp_pkt_out(cp, skb, app, ipvsh);
+	if (cp->protocol == IPPROTO_TCP)
+		return app_tcp_pkt_out(cp, skb, app, ipvsh);
 
 	/*
-	 *	Call निजी output hook function
+	 *	Call private output hook function
 	 */
-	अगर (app->pkt_out == शून्य)
-		वापस 1;
+	if (app->pkt_out == NULL)
+		return 1;
 
-	वापस app->pkt_out(app, cp, skb, शून्य, ipvsh);
-पूर्ण
+	return app->pkt_out(app, cp, skb, NULL, ipvsh);
+}
 
 
-अटल अंतरभूत पूर्णांक app_tcp_pkt_in(काष्ठा ip_vs_conn *cp, काष्ठा sk_buff *skb,
-				 काष्ठा ip_vs_app *app,
-				 काष्ठा ip_vs_iphdr *ipvsh)
-अणु
-	पूर्णांक dअगरf;
-	स्थिर अचिन्हित पूर्णांक tcp_offset = ip_hdrlen(skb);
-	काष्ठा tcphdr *th;
+static inline int app_tcp_pkt_in(struct ip_vs_conn *cp, struct sk_buff *skb,
+				 struct ip_vs_app *app,
+				 struct ip_vs_iphdr *ipvsh)
+{
+	int diff;
+	const unsigned int tcp_offset = ip_hdrlen(skb);
+	struct tcphdr *th;
 	__u32 seq;
 
-	अगर (skb_ensure_writable(skb, tcp_offset + माप(*th)))
-		वापस 0;
+	if (skb_ensure_writable(skb, tcp_offset + sizeof(*th)))
+		return 0;
 
-	th = (काष्ठा tcphdr *)(skb_network_header(skb) + tcp_offset);
+	th = (struct tcphdr *)(skb_network_header(skb) + tcp_offset);
 
 	/*
-	 *	Remember seq number in हाल this pkt माला_लो resized
+	 *	Remember seq number in case this pkt gets resized
 	 */
 	seq = ntohl(th->seq);
 
 	/*
-	 *	Fix seq stuff अगर flagged as so.
+	 *	Fix seq stuff if flagged as so.
 	 */
-	अगर (cp->flags & IP_VS_CONN_F_IN_SEQ)
+	if (cp->flags & IP_VS_CONN_F_IN_SEQ)
 		vs_fix_seq(&cp->in_seq, th);
-	अगर (cp->flags & IP_VS_CONN_F_OUT_SEQ)
+	if (cp->flags & IP_VS_CONN_F_OUT_SEQ)
 		vs_fix_ack_seq(&cp->out_seq, th);
 
 	/*
-	 *	Call निजी input hook function
+	 *	Call private input hook function
 	 */
-	अगर (app->pkt_in == शून्य)
-		वापस 1;
+	if (app->pkt_in == NULL)
+		return 1;
 
-	अगर (!app->pkt_in(app, cp, skb, &dअगरf, ipvsh))
-		वापस 0;
+	if (!app->pkt_in(app, cp, skb, &diff, ipvsh))
+		return 0;
 
 	/*
-	 *	Update ip_vs seq stuff अगर len has changed.
+	 *	Update ip_vs seq stuff if len has changed.
 	 */
-	अगर (dअगरf != 0)
+	if (diff != 0)
 		vs_seq_update(cp, &cp->in_seq,
-			      IP_VS_CONN_F_IN_SEQ, seq, dअगरf);
+			      IP_VS_CONN_F_IN_SEQ, seq, diff);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /*
- *	Input pkt hook. Will call bound ip_vs_app specअगरic function
- *	called by ipvs packet handler, assumes previously checked cp!=शून्य.
- *	वापसs false अगर can't handle packet (oom).
+ *	Input pkt hook. Will call bound ip_vs_app specific function
+ *	called by ipvs packet handler, assumes previously checked cp!=NULL.
+ *	returns false if can't handle packet (oom).
  */
-पूर्णांक ip_vs_app_pkt_in(काष्ठा ip_vs_conn *cp, काष्ठा sk_buff *skb,
-		     काष्ठा ip_vs_iphdr *ipvsh)
-अणु
-	काष्ठा ip_vs_app *app;
+int ip_vs_app_pkt_in(struct ip_vs_conn *cp, struct sk_buff *skb,
+		     struct ip_vs_iphdr *ipvsh)
+{
+	struct ip_vs_app *app;
 
 	/*
-	 *	check अगर application module is bound to
+	 *	check if application module is bound to
 	 *	this ip_vs_conn.
 	 */
-	अगर ((app = cp->app) == शून्य)
-		वापस 1;
+	if ((app = cp->app) == NULL)
+		return 1;
 
 	/* TCP is complicated */
-	अगर (cp->protocol == IPPROTO_TCP)
-		वापस app_tcp_pkt_in(cp, skb, app, ipvsh);
+	if (cp->protocol == IPPROTO_TCP)
+		return app_tcp_pkt_in(cp, skb, app, ipvsh);
 
 	/*
-	 *	Call निजी input hook function
+	 *	Call private input hook function
 	 */
-	अगर (app->pkt_in == शून्य)
-		वापस 1;
+	if (app->pkt_in == NULL)
+		return 1;
 
-	वापस app->pkt_in(app, cp, skb, शून्य, ipvsh);
-पूर्ण
+	return app->pkt_in(app, cp, skb, NULL, ipvsh);
+}
 
 
-#अगर_घोषित CONFIG_PROC_FS
+#ifdef CONFIG_PROC_FS
 /*
  *	/proc/net/ip_vs_app entry function
  */
 
-अटल काष्ठा ip_vs_app *ip_vs_app_idx(काष्ठा netns_ipvs *ipvs, loff_t pos)
-अणु
-	काष्ठा ip_vs_app *app, *inc;
+static struct ip_vs_app *ip_vs_app_idx(struct netns_ipvs *ipvs, loff_t pos)
+{
+	struct ip_vs_app *app, *inc;
 
-	list_क्रम_each_entry(app, &ipvs->app_list, a_list) अणु
-		list_क्रम_each_entry(inc, &app->incs_list, a_list) अणु
-			अगर (pos-- == 0)
-				वापस inc;
-		पूर्ण
-	पूर्ण
-	वापस शून्य;
+	list_for_each_entry(app, &ipvs->app_list, a_list) {
+		list_for_each_entry(inc, &app->incs_list, a_list) {
+			if (pos-- == 0)
+				return inc;
+		}
+	}
+	return NULL;
 
-पूर्ण
+}
 
-अटल व्योम *ip_vs_app_seq_start(काष्ठा seq_file *seq, loff_t *pos)
-अणु
-	काष्ठा net *net = seq_file_net(seq);
-	काष्ठा netns_ipvs *ipvs = net_ipvs(net);
+static void *ip_vs_app_seq_start(struct seq_file *seq, loff_t *pos)
+{
+	struct net *net = seq_file_net(seq);
+	struct netns_ipvs *ipvs = net_ipvs(net);
 
 	mutex_lock(&__ip_vs_app_mutex);
 
-	वापस *pos ? ip_vs_app_idx(ipvs, *pos - 1) : SEQ_START_TOKEN;
-पूर्ण
+	return *pos ? ip_vs_app_idx(ipvs, *pos - 1) : SEQ_START_TOKEN;
+}
 
-अटल व्योम *ip_vs_app_seq_next(काष्ठा seq_file *seq, व्योम *v, loff_t *pos)
-अणु
-	काष्ठा ip_vs_app *inc, *app;
-	काष्ठा list_head *e;
-	काष्ठा net *net = seq_file_net(seq);
-	काष्ठा netns_ipvs *ipvs = net_ipvs(net);
+static void *ip_vs_app_seq_next(struct seq_file *seq, void *v, loff_t *pos)
+{
+	struct ip_vs_app *inc, *app;
+	struct list_head *e;
+	struct net *net = seq_file_net(seq);
+	struct netns_ipvs *ipvs = net_ipvs(net);
 
 	++*pos;
-	अगर (v == SEQ_START_TOKEN)
-		वापस ip_vs_app_idx(ipvs, 0);
+	if (v == SEQ_START_TOKEN)
+		return ip_vs_app_idx(ipvs, 0);
 
 	inc = v;
 	app = inc->app;
 
-	अगर ((e = inc->a_list.next) != &app->incs_list)
-		वापस list_entry(e, काष्ठा ip_vs_app, a_list);
+	if ((e = inc->a_list.next) != &app->incs_list)
+		return list_entry(e, struct ip_vs_app, a_list);
 
 	/* go on to next application */
-	क्रम (e = app->a_list.next; e != &ipvs->app_list; e = e->next) अणु
-		app = list_entry(e, काष्ठा ip_vs_app, a_list);
-		list_क्रम_each_entry(inc, &app->incs_list, a_list) अणु
-			वापस inc;
-		पूर्ण
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	for (e = app->a_list.next; e != &ipvs->app_list; e = e->next) {
+		app = list_entry(e, struct ip_vs_app, a_list);
+		list_for_each_entry(inc, &app->incs_list, a_list) {
+			return inc;
+		}
+	}
+	return NULL;
+}
 
-अटल व्योम ip_vs_app_seq_stop(काष्ठा seq_file *seq, व्योम *v)
-अणु
+static void ip_vs_app_seq_stop(struct seq_file *seq, void *v)
+{
 	mutex_unlock(&__ip_vs_app_mutex);
-पूर्ण
+}
 
-अटल पूर्णांक ip_vs_app_seq_show(काष्ठा seq_file *seq, व्योम *v)
-अणु
-	अगर (v == SEQ_START_TOKEN)
-		seq_माला_दो(seq, "prot port    usecnt name\n");
-	अन्यथा अणु
-		स्थिर काष्ठा ip_vs_app *inc = v;
+static int ip_vs_app_seq_show(struct seq_file *seq, void *v)
+{
+	if (v == SEQ_START_TOKEN)
+		seq_puts(seq, "prot port    usecnt name\n");
+	else {
+		const struct ip_vs_app *inc = v;
 
-		seq_म_लिखो(seq, "%-3s  %-7u %-6d %-17s\n",
+		seq_printf(seq, "%-3s  %-7u %-6d %-17s\n",
 			   ip_vs_proto_name(inc->protocol),
 			   ntohs(inc->port),
-			   atomic_पढ़ो(&inc->usecnt),
+			   atomic_read(&inc->usecnt),
 			   inc->name);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल स्थिर काष्ठा seq_operations ip_vs_app_seq_ops = अणु
+static const struct seq_operations ip_vs_app_seq_ops = {
 	.start = ip_vs_app_seq_start,
 	.next  = ip_vs_app_seq_next,
 	.stop  = ip_vs_app_seq_stop,
 	.show  = ip_vs_app_seq_show,
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif
 
-पूर्णांक __net_init ip_vs_app_net_init(काष्ठा netns_ipvs *ipvs)
-अणु
+int __net_init ip_vs_app_net_init(struct netns_ipvs *ipvs)
+{
 	INIT_LIST_HEAD(&ipvs->app_list);
 	proc_create_net("ip_vs_app", 0, ipvs->net->proc_net, &ip_vs_app_seq_ops,
-			माप(काष्ठा seq_net_निजी));
-	वापस 0;
-पूर्ण
+			sizeof(struct seq_net_private));
+	return 0;
+}
 
-व्योम __net_निकास ip_vs_app_net_cleanup(काष्ठा netns_ipvs *ipvs)
-अणु
-	unरेजिस्टर_ip_vs_app(ipvs, शून्य /* all */);
-	हटाओ_proc_entry("ip_vs_app", ipvs->net->proc_net);
-पूर्ण
+void __net_exit ip_vs_app_net_cleanup(struct netns_ipvs *ipvs)
+{
+	unregister_ip_vs_app(ipvs, NULL /* all */);
+	remove_proc_entry("ip_vs_app", ipvs->net->proc_net);
+}

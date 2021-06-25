@@ -1,27 +1,26 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2017 Facebook
 
-#समावेश <linux/bpf.h>
-#समावेश <bpf/bpf_helpers.h>
+#include <linux/bpf.h>
+#include <bpf/bpf_helpers.h>
 
-/* taken from /sys/kernel/debug/tracing/events/sched/sched_चयन/क्रमmat */
-काष्ठा sched_चयन_args अणु
-	अचिन्हित दीर्घ दीर्घ pad;
-	अक्षर prev_comm[16];
-	पूर्णांक prev_pid;
-	पूर्णांक prev_prio;
-	दीर्घ दीर्घ prev_state;
-	अक्षर next_comm[16];
-	पूर्णांक next_pid;
-	पूर्णांक next_prio;
-पूर्ण;
+/* taken from /sys/kernel/debug/tracing/events/sched/sched_switch/format */
+struct sched_switch_args {
+	unsigned long long pad;
+	char prev_comm[16];
+	int prev_pid;
+	int prev_prio;
+	long long prev_state;
+	char next_comm[16];
+	int next_pid;
+	int next_prio;
+};
 
 SEC("tracepoint/sched/sched_switch")
-पूर्णांक oncpu(काष्ठा sched_चयन_args *ctx)
-अणु
-	वापस 0;
-पूर्ण
+int oncpu(struct sched_switch_args *ctx)
+{
+	return 0;
+}
 
-अक्षर _license[] SEC("license") = "GPL";
-__u32 _version SEC("version") = 1; /* ignored by tracepoपूर्णांकs, required by libbpf.a */
+char _license[] SEC("license") = "GPL";
+__u32 _version SEC("version") = 1; /* ignored by tracepoints, required by libbpf.a */

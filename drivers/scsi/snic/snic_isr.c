@@ -1,8 +1,7 @@
-<शैली गुरु>
 /*
  * Copyright 2014 Cisco Systems, Inc.  All rights reserved.
  *
- * This program is मुक्त software; you may redistribute it and/or modअगरy
+ * This program is free software; you may redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; version 2 of the License.
  *
@@ -16,180 +15,180 @@
  * SOFTWARE.
  */
 
-#समावेश <linux/माला.स>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/pci.h>
-#समावेश <linux/पूर्णांकerrupt.h>
+#include <linux/string.h>
+#include <linux/errno.h>
+#include <linux/pci.h>
+#include <linux/interrupt.h>
 
-#समावेश "vnic_dev.h"
-#समावेश "vnic_intr.h"
-#समावेश "vnic_stats.h"
-#समावेश "snic_io.h"
-#समावेश "snic.h"
+#include "vnic_dev.h"
+#include "vnic_intr.h"
+#include "vnic_stats.h"
+#include "snic_io.h"
+#include "snic.h"
 
 
 /*
- * snic_isr_msix_wq : MSIx ISR क्रम work queue.
+ * snic_isr_msix_wq : MSIx ISR for work queue.
  */
 
-अटल irqवापस_t
-snic_isr_msix_wq(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा snic *snic = data;
-	अचिन्हित दीर्घ wq_work_करोne = 0;
+static irqreturn_t
+snic_isr_msix_wq(int irq, void *data)
+{
+	struct snic *snic = data;
+	unsigned long wq_work_done = 0;
 
-	snic->s_stats.misc.last_isr_समय = jअगरfies;
+	snic->s_stats.misc.last_isr_time = jiffies;
 	atomic64_inc(&snic->s_stats.misc.ack_isr_cnt);
 
-	wq_work_करोne = snic_wq_cmpl_handler(snic, -1);
-	svnic_पूर्णांकr_वापस_credits(&snic->पूर्णांकr[SNIC_MSIX_WQ],
-				  wq_work_करोne,
-				  1 /* unmask पूर्णांकr */,
-				  1 /* reset पूर्णांकr समयr */);
+	wq_work_done = snic_wq_cmpl_handler(snic, -1);
+	svnic_intr_return_credits(&snic->intr[SNIC_MSIX_WQ],
+				  wq_work_done,
+				  1 /* unmask intr */,
+				  1 /* reset intr timer */);
 
-	वापस IRQ_HANDLED;
-पूर्ण /* end of snic_isr_msix_wq */
+	return IRQ_HANDLED;
+} /* end of snic_isr_msix_wq */
 
-अटल irqवापस_t
-snic_isr_msix_io_cmpl(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा snic *snic = data;
-	अचिन्हित दीर्घ iocmpl_work_करोne = 0;
+static irqreturn_t
+snic_isr_msix_io_cmpl(int irq, void *data)
+{
+	struct snic *snic = data;
+	unsigned long iocmpl_work_done = 0;
 
-	snic->s_stats.misc.last_isr_समय = jअगरfies;
+	snic->s_stats.misc.last_isr_time = jiffies;
 	atomic64_inc(&snic->s_stats.misc.cmpl_isr_cnt);
 
-	iocmpl_work_करोne = snic_fwcq_cmpl_handler(snic, -1);
-	svnic_पूर्णांकr_वापस_credits(&snic->पूर्णांकr[SNIC_MSIX_IO_CMPL],
-				  iocmpl_work_करोne,
-				  1 /* unmask पूर्णांकr */,
-				  1 /* reset पूर्णांकr समयr */);
+	iocmpl_work_done = snic_fwcq_cmpl_handler(snic, -1);
+	svnic_intr_return_credits(&snic->intr[SNIC_MSIX_IO_CMPL],
+				  iocmpl_work_done,
+				  1 /* unmask intr */,
+				  1 /* reset intr timer */);
 
-	वापस IRQ_HANDLED;
-पूर्ण /* end of snic_isr_msix_io_cmpl */
+	return IRQ_HANDLED;
+} /* end of snic_isr_msix_io_cmpl */
 
-अटल irqवापस_t
-snic_isr_msix_err_notअगरy(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा snic *snic = data;
+static irqreturn_t
+snic_isr_msix_err_notify(int irq, void *data)
+{
+	struct snic *snic = data;
 
-	snic->s_stats.misc.last_isr_समय = jअगरfies;
-	atomic64_inc(&snic->s_stats.misc.त्रुटि_संtअगरy_isr_cnt);
+	snic->s_stats.misc.last_isr_time = jiffies;
+	atomic64_inc(&snic->s_stats.misc.errnotify_isr_cnt);
 
-	svnic_पूर्णांकr_वापस_all_credits(&snic->पूर्णांकr[SNIC_MSIX_ERR_NOTIFY]);
+	svnic_intr_return_all_credits(&snic->intr[SNIC_MSIX_ERR_NOTIFY]);
 	snic_log_q_error(snic);
 
 	/*Handling link events */
 	snic_handle_link_event(snic);
 
-	वापस IRQ_HANDLED;
-पूर्ण /* end of snic_isr_msix_err_notअगरy */
+	return IRQ_HANDLED;
+} /* end of snic_isr_msix_err_notify */
 
 
-व्योम
-snic_मुक्त_पूर्णांकr(काष्ठा snic *snic)
-अणु
-	पूर्णांक i;
+void
+snic_free_intr(struct snic *snic)
+{
+	int i;
 
-	/* ONLY पूर्णांकerrupt mode MSIX is supported */
-	क्रम (i = 0; i < ARRAY_SIZE(snic->msix); i++) अणु
-		अगर (snic->msix[i].requested) अणु
-			मुक्त_irq(pci_irq_vector(snic->pdev, i),
+	/* ONLY interrupt mode MSIX is supported */
+	for (i = 0; i < ARRAY_SIZE(snic->msix); i++) {
+		if (snic->msix[i].requested) {
+			free_irq(pci_irq_vector(snic->pdev, i),
 				 snic->msix[i].devid);
-		पूर्ण
-	पूर्ण
-पूर्ण /* end of snic_मुक्त_पूर्णांकr */
+		}
+	}
+} /* end of snic_free_intr */
 
-पूर्णांक
-snic_request_पूर्णांकr(काष्ठा snic *snic)
-अणु
-	पूर्णांक ret = 0, i;
-	क्रमागत vnic_dev_पूर्णांकr_mode पूर्णांकr_mode;
+int
+snic_request_intr(struct snic *snic)
+{
+	int ret = 0, i;
+	enum vnic_dev_intr_mode intr_mode;
 
-	पूर्णांकr_mode = svnic_dev_get_पूर्णांकr_mode(snic->vdev);
-	SNIC_BUG_ON(पूर्णांकr_mode != VNIC_DEV_INTR_MODE_MSIX);
+	intr_mode = svnic_dev_get_intr_mode(snic->vdev);
+	SNIC_BUG_ON(intr_mode != VNIC_DEV_INTR_MODE_MSIX);
 
 	/*
 	 * Currently HW supports single WQ and CQ. So passing devid as snic.
 	 * When hardware supports multiple WQs and CQs, one idea is
 	 * to pass devid as corresponding WQ or CQ ptr and retrieve snic
 	 * from queue ptr.
-	 * Except क्रम err_notअगरy, which is always one.
+	 * Except for err_notify, which is always one.
 	 */
-	प्र_लिखो(snic->msix[SNIC_MSIX_WQ].devname,
+	sprintf(snic->msix[SNIC_MSIX_WQ].devname,
 		"%.11s-scsi-wq",
 		snic->name);
 	snic->msix[SNIC_MSIX_WQ].isr = snic_isr_msix_wq;
 	snic->msix[SNIC_MSIX_WQ].devid = snic;
 
-	प्र_लिखो(snic->msix[SNIC_MSIX_IO_CMPL].devname,
+	sprintf(snic->msix[SNIC_MSIX_IO_CMPL].devname,
 		"%.11s-io-cmpl",
 		snic->name);
 	snic->msix[SNIC_MSIX_IO_CMPL].isr = snic_isr_msix_io_cmpl;
 	snic->msix[SNIC_MSIX_IO_CMPL].devid = snic;
 
-	प्र_लिखो(snic->msix[SNIC_MSIX_ERR_NOTIFY].devname,
+	sprintf(snic->msix[SNIC_MSIX_ERR_NOTIFY].devname,
 		"%.11s-err-notify",
 		snic->name);
-	snic->msix[SNIC_MSIX_ERR_NOTIFY].isr = snic_isr_msix_err_notअगरy;
+	snic->msix[SNIC_MSIX_ERR_NOTIFY].isr = snic_isr_msix_err_notify;
 	snic->msix[SNIC_MSIX_ERR_NOTIFY].devid = snic;
 
-	क्रम (i = 0; i < ARRAY_SIZE(snic->msix); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(snic->msix); i++) {
 		ret = request_irq(pci_irq_vector(snic->pdev, i),
 				  snic->msix[i].isr,
 				  0,
 				  snic->msix[i].devname,
 				  snic->msix[i].devid);
-		अगर (ret) अणु
+		if (ret) {
 			SNIC_HOST_ERR(snic->shost,
 				      "MSI-X: request_irq(%d) failed %d\n",
 				      i,
 				      ret);
-			snic_मुक्त_पूर्णांकr(snic);
-			अवरोध;
-		पूर्ण
+			snic_free_intr(snic);
+			break;
+		}
 		snic->msix[i].requested = 1;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण /* end of snic_request_पूर्णांकr */
+	return ret;
+} /* end of snic_request_intr */
 
-पूर्णांक
-snic_set_पूर्णांकr_mode(काष्ठा snic *snic)
-अणु
-	अचिन्हित पूर्णांक n = ARRAY_SIZE(snic->wq);
-	अचिन्हित पूर्णांक m = SNIC_CQ_IO_CMPL_MAX;
-	अचिन्हित पूर्णांक vecs = n + m + 1;
+int
+snic_set_intr_mode(struct snic *snic)
+{
+	unsigned int n = ARRAY_SIZE(snic->wq);
+	unsigned int m = SNIC_CQ_IO_CMPL_MAX;
+	unsigned int vecs = n + m + 1;
 
 	/*
 	 * We need n WQs, m CQs, and n+m+1 INTRs
-	 * (last INTR is used क्रम WQ/CQ errors and notअगरication area
+	 * (last INTR is used for WQ/CQ errors and notification area
 	 */
 	BUILD_BUG_ON((ARRAY_SIZE(snic->wq) + SNIC_CQ_IO_CMPL_MAX) >
-			ARRAY_SIZE(snic->पूर्णांकr));
+			ARRAY_SIZE(snic->intr));
 
-	अगर (snic->wq_count < n || snic->cq_count < n + m)
-		जाओ fail;
+	if (snic->wq_count < n || snic->cq_count < n + m)
+		goto fail;
 
-	अगर (pci_alloc_irq_vectors(snic->pdev, vecs, vecs, PCI_IRQ_MSIX) < 0)
-		जाओ fail;
+	if (pci_alloc_irq_vectors(snic->pdev, vecs, vecs, PCI_IRQ_MSIX) < 0)
+		goto fail;
 
 	snic->wq_count = n;
 	snic->cq_count = n + m;
-	snic->पूर्णांकr_count = vecs;
-	snic->err_पूर्णांकr_offset = SNIC_MSIX_ERR_NOTIFY;
+	snic->intr_count = vecs;
+	snic->err_intr_offset = SNIC_MSIX_ERR_NOTIFY;
 
 	SNIC_ISR_DBG(snic->shost, "Using MSI-X Interrupts\n");
-	svnic_dev_set_पूर्णांकr_mode(snic->vdev, VNIC_DEV_INTR_MODE_MSIX);
-	वापस 0;
+	svnic_dev_set_intr_mode(snic->vdev, VNIC_DEV_INTR_MODE_MSIX);
+	return 0;
 fail:
-	svnic_dev_set_पूर्णांकr_mode(snic->vdev, VNIC_DEV_INTR_MODE_UNKNOWN);
-	वापस -EINVAL;
-पूर्ण /* end of snic_set_पूर्णांकr_mode */
+	svnic_dev_set_intr_mode(snic->vdev, VNIC_DEV_INTR_MODE_UNKNOWN);
+	return -EINVAL;
+} /* end of snic_set_intr_mode */
 
-व्योम
-snic_clear_पूर्णांकr_mode(काष्ठा snic *snic)
-अणु
-	pci_मुक्त_irq_vectors(snic->pdev);
-	svnic_dev_set_पूर्णांकr_mode(snic->vdev, VNIC_DEV_INTR_MODE_INTX);
-पूर्ण
+void
+snic_clear_intr_mode(struct snic *snic)
+{
+	pci_free_irq_vectors(snic->pdev);
+	svnic_dev_set_intr_mode(snic->vdev, VNIC_DEV_INTR_MODE_INTX);
+}

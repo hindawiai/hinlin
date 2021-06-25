@@ -1,14 +1,13 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2014 MediaTek Inc.
  * Author: Flora Fu <flora.fu@mediatek.com>
  */
 
-#अगर_अघोषित __LINUX_REGULATOR_MT6397_H
-#घोषणा __LINUX_REGULATOR_MT6397_H
+#ifndef __LINUX_REGULATOR_MT6397_H
+#define __LINUX_REGULATOR_MT6397_H
 
-क्रमागत अणु
+enum {
 	MT6397_ID_VPCA15 = 0,
 	MT6397_ID_VPCA7,
 	MT6397_ID_VSRAMCA15,
@@ -33,10 +32,10 @@
 	MT6397_ID_VGP6,
 	MT6397_ID_VIBR,
 	MT6397_ID_RG_MAX,
-पूर्ण;
+};
 
-#घोषणा MT6397_MAX_REGULATOR	MT6397_ID_RG_MAX
-#घोषणा MT6397_REGULATOR_ID97	0x97
-#घोषणा MT6397_REGULATOR_ID91	0x91
+#define MT6397_MAX_REGULATOR	MT6397_ID_RG_MAX
+#define MT6397_REGULATOR_ID97	0x97
+#define MT6397_REGULATOR_ID91	0x91
 
-#पूर्ण_अगर /* __LINUX_REGULATOR_MT6397_H */
+#endif /* __LINUX_REGULATOR_MT6397_H */

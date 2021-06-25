@@ -1,336 +1,335 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2010 Realtek Corporation. All rights reserved.
  *
- * Modअगरications क्रम inclusion पूर्णांकo the Linux staging tree are
+ * Modifications for inclusion into the Linux staging tree are
  * Copyright(c) 2010 Larry Finger. All rights reserved.
  *
- * Contact inक्रमmation:
+ * Contact information:
  * WLAN FAE <wlanfae@realtek.com>
  * Larry Finger <Larry.Finger@lwfinger.net>
  *
  ******************************************************************************/
-#अगर_अघोषित _RTL871X_MP_IOCTL_H
-#घोषणा _RTL871X_MP_IOCTL_H
+#ifndef _RTL871X_MP_IOCTL_H
+#define _RTL871X_MP_IOCTL_H
 
-#समावेश "osdep_service.h"
-#समावेश "drv_types.h"
-#समावेश "mp_custom_oid.h"
-#समावेश "rtl871x_ioctl.h"
-#समावेश "rtl871x_ioctl_rtl.h"
-#समावेश "rtl8712_efuse.h"
+#include "osdep_service.h"
+#include "drv_types.h"
+#include "mp_custom_oid.h"
+#include "rtl871x_ioctl.h"
+#include "rtl871x_ioctl_rtl.h"
+#include "rtl8712_efuse.h"
 
-#घोषणा TESTFWCMDNUMBER			1000000
-#घोषणा TEST_H2CINT_WAIT_TIME		500
-#घोषणा TEST_C2HINT_WAIT_TIME		500
-#घोषणा HCI_TEST_SYSCFG_HWMASK		1
-#घोषणा _BUSCLK_40M			(4 << 2)
+#define TESTFWCMDNUMBER			1000000
+#define TEST_H2CINT_WAIT_TIME		500
+#define TEST_C2HINT_WAIT_TIME		500
+#define HCI_TEST_SYSCFG_HWMASK		1
+#define _BUSCLK_40M			(4 << 2)
 
-काष्ठा CFG_DBG_MSG_STRUCT अणु
+struct CFG_DBG_MSG_STRUCT {
 	u32 DebugLevel;
 	u32 DebugComponent_H32;
 	u32 DebugComponent_L32;
-पूर्ण;
+};
 
-काष्ठा mp_rw_reg अणु
-	uपूर्णांक offset;
-	uपूर्णांक width;
+struct mp_rw_reg {
+	uint offset;
+	uint width;
 	u32 value;
-पूर्ण;
+};
 
-/* क्रम OID_RT_PRO_READ16_EEPROM & OID_RT_PRO_WRITE16_EEPROM */
-काष्ठा eeprom_rw_param अणु
-	uपूर्णांक offset;
+/* for OID_RT_PRO_READ16_EEPROM & OID_RT_PRO_WRITE16_EEPROM */
+struct eeprom_rw_param {
+	uint offset;
 	u16 value;
-पूर्ण;
+};
 
-काष्ठा EFUSE_ACCESS_STRUCT अणु
+struct EFUSE_ACCESS_STRUCT {
 	u16	start_addr;
 	u16	cnts;
 	u8	data[];
-पूर्ण;
+};
 
-काष्ठा burst_rw_reg अणु
-	uपूर्णांक offset;
-	uपूर्णांक len;
+struct burst_rw_reg {
+	uint offset;
+	uint len;
 	u8 Data[256];
-पूर्ण;
+};
 
-काष्ठा usb_venकरोr_req अणु
+struct usb_vendor_req {
 	u8	bRequest;
 	u16	wValue;
 	u16	wIndex;
 	u16	wLength;
 	u8	u8Dir;/*0:OUT, 1:IN */
 	u8	u8InData;
-पूर्ण;
+};
 
-काष्ठा DR_VARIABLE_STRUCT अणु
+struct DR_VARIABLE_STRUCT {
 	u8 offset;
 	u32 variable;
-पूर्ण;
+};
 
 /* oid_rtl_seg_87_11_00 */
-uपूर्णांक oid_rt_pro_पढ़ो_रेजिस्टर_hdl(काष्ठा oid_par_priv *poid_par_priv);
-uपूर्णांक oid_rt_pro_ग_लिखो_रेजिस्टर_hdl(काष्ठा oid_par_priv *poid_par_priv);
+uint oid_rt_pro_read_register_hdl(struct oid_par_priv *poid_par_priv);
+uint oid_rt_pro_write_register_hdl(struct oid_par_priv *poid_par_priv);
 /* oid_rtl_seg_81_80_00 */
-uपूर्णांक oid_rt_pro_set_data_rate_hdl(
-				काष्ठा oid_par_priv *poid_par_priv);
-uपूर्णांक oid_rt_pro_start_test_hdl(काष्ठा oid_par_priv *poid_par_priv);
-uपूर्णांक oid_rt_pro_stop_test_hdl(काष्ठा oid_par_priv *poid_par_priv);
-uपूर्णांक oid_rt_pro_set_channel_direct_call_hdl(
-				काष्ठा oid_par_priv *poid_par_priv);
-uपूर्णांक oid_rt_pro_set_antenna_bb_hdl(
-				काष्ठा oid_par_priv *poid_par_priv);
-uपूर्णांक oid_rt_pro_set_tx_घातer_control_hdl(
-				काष्ठा oid_par_priv *poid_par_priv);
+uint oid_rt_pro_set_data_rate_hdl(
+				struct oid_par_priv *poid_par_priv);
+uint oid_rt_pro_start_test_hdl(struct oid_par_priv *poid_par_priv);
+uint oid_rt_pro_stop_test_hdl(struct oid_par_priv *poid_par_priv);
+uint oid_rt_pro_set_channel_direct_call_hdl(
+				struct oid_par_priv *poid_par_priv);
+uint oid_rt_pro_set_antenna_bb_hdl(
+				struct oid_par_priv *poid_par_priv);
+uint oid_rt_pro_set_tx_power_control_hdl(
+				struct oid_par_priv *poid_par_priv);
 /* oid_rtl_seg_81_80_20 */
-uपूर्णांक oid_rt_pro_query_tx_packet_sent_hdl(
-				काष्ठा oid_par_priv *poid_par_priv);
-uपूर्णांक oid_rt_pro_query_rx_packet_received_hdl(
-				काष्ठा oid_par_priv *poid_par_priv);
-uपूर्णांक oid_rt_pro_query_rx_packet_crc32_error_hdl(
-				काष्ठा oid_par_priv *poid_par_priv);
-uपूर्णांक oid_rt_pro_reset_tx_packet_sent_hdl(
-				काष्ठा oid_par_priv *poid_par_priv);
-uपूर्णांक oid_rt_pro_reset_rx_packet_received_hdl(
-				काष्ठा oid_par_priv *poid_par_priv);
-uपूर्णांक oid_rt_pro_set_modulation_hdl(काष्ठा oid_par_priv *poid_par_priv);
-uपूर्णांक oid_rt_pro_set_continuous_tx_hdl(
-				काष्ठा oid_par_priv *poid_par_priv);
-uपूर्णांक oid_rt_pro_set_single_carrier_tx_hdl(
-				काष्ठा oid_par_priv *poid_par_priv);
-uपूर्णांक oid_rt_pro_set_carrier_suppression_tx_hdl(
-				काष्ठा oid_par_priv *poid_par_priv);
-uपूर्णांक oid_rt_pro_set_single_tone_tx_hdl(
-				काष्ठा oid_par_priv *poid_par_priv);
+uint oid_rt_pro_query_tx_packet_sent_hdl(
+				struct oid_par_priv *poid_par_priv);
+uint oid_rt_pro_query_rx_packet_received_hdl(
+				struct oid_par_priv *poid_par_priv);
+uint oid_rt_pro_query_rx_packet_crc32_error_hdl(
+				struct oid_par_priv *poid_par_priv);
+uint oid_rt_pro_reset_tx_packet_sent_hdl(
+				struct oid_par_priv *poid_par_priv);
+uint oid_rt_pro_reset_rx_packet_received_hdl(
+				struct oid_par_priv *poid_par_priv);
+uint oid_rt_pro_set_modulation_hdl(struct oid_par_priv *poid_par_priv);
+uint oid_rt_pro_set_continuous_tx_hdl(
+				struct oid_par_priv *poid_par_priv);
+uint oid_rt_pro_set_single_carrier_tx_hdl(
+				struct oid_par_priv *poid_par_priv);
+uint oid_rt_pro_set_carrier_suppression_tx_hdl(
+				struct oid_par_priv *poid_par_priv);
+uint oid_rt_pro_set_single_tone_tx_hdl(
+				struct oid_par_priv *poid_par_priv);
 /* oid_rtl_seg_81_87 */
-uपूर्णांक oid_rt_pro_ग_लिखो_bb_reg_hdl(काष्ठा oid_par_priv *poid_par_priv);
-uपूर्णांक oid_rt_pro_पढ़ो_bb_reg_hdl(काष्ठा oid_par_priv *poid_par_priv);
-uपूर्णांक oid_rt_pro_ग_लिखो_rf_reg_hdl(काष्ठा oid_par_priv *poid_par_priv);
-uपूर्णांक oid_rt_pro_पढ़ो_rf_reg_hdl(काष्ठा oid_par_priv *poid_par_priv);
+uint oid_rt_pro_write_bb_reg_hdl(struct oid_par_priv *poid_par_priv);
+uint oid_rt_pro_read_bb_reg_hdl(struct oid_par_priv *poid_par_priv);
+uint oid_rt_pro_write_rf_reg_hdl(struct oid_par_priv *poid_par_priv);
+uint oid_rt_pro_read_rf_reg_hdl(struct oid_par_priv *poid_par_priv);
 /* oid_rtl_seg_81_85 */
-uपूर्णांक oid_rt_wireless_mode_hdl(काष्ठा oid_par_priv *poid_par_priv);
-uपूर्णांक oid_rt_pro_पढ़ो_efuse_hdl(काष्ठा oid_par_priv *poid_par_priv);
-uपूर्णांक oid_rt_pro_ग_लिखो_efuse_hdl(काष्ठा oid_par_priv *poid_par_priv);
-uपूर्णांक oid_rt_get_efuse_current_size_hdl(
-				काष्ठा oid_par_priv *poid_par_priv);
-uपूर्णांक oid_rt_pro_efuse_hdl(काष्ठा oid_par_priv *poid_par_priv);
-uपूर्णांक oid_rt_pro_efuse_map_hdl(काष्ठा oid_par_priv *poid_par_priv);
-uपूर्णांक oid_rt_set_bandwidth_hdl(काष्ठा oid_par_priv *poid_par_priv);
-uपूर्णांक oid_rt_set_rx_packet_type_hdl(काष्ठा oid_par_priv *poid_par_priv);
-uपूर्णांक oid_rt_get_efuse_max_size_hdl(काष्ठा oid_par_priv *poid_par_priv);
-uपूर्णांक oid_rt_get_thermal_meter_hdl(
-				काष्ठा oid_par_priv *poid_par_priv);
-uपूर्णांक oid_rt_reset_phy_rx_packet_count_hdl(
-				काष्ठा oid_par_priv *poid_par_priv);
-uपूर्णांक oid_rt_get_phy_rx_packet_received_hdl(
-				काष्ठा oid_par_priv *poid_par_priv);
-uपूर्णांक oid_rt_get_phy_rx_packet_crc32_error_hdl(
-				काष्ठा oid_par_priv *poid_par_priv);
-uपूर्णांक oid_rt_set_घातer_करोwn_hdl(
-				काष्ठा oid_par_priv *poid_par_priv);
-uपूर्णांक oid_rt_get_घातer_mode_hdl(
-				काष्ठा oid_par_priv *poid_par_priv);
-#अगर_घोषित _RTL871X_MP_IOCTL_C_ /* CAUTION!!! */
-/* This अगरdef _MUST_ be left in!! */
-अटल स्थिर काष्ठा oid_obj_priv oid_rtl_seg_81_80_00[] = अणु
+uint oid_rt_wireless_mode_hdl(struct oid_par_priv *poid_par_priv);
+uint oid_rt_pro_read_efuse_hdl(struct oid_par_priv *poid_par_priv);
+uint oid_rt_pro_write_efuse_hdl(struct oid_par_priv *poid_par_priv);
+uint oid_rt_get_efuse_current_size_hdl(
+				struct oid_par_priv *poid_par_priv);
+uint oid_rt_pro_efuse_hdl(struct oid_par_priv *poid_par_priv);
+uint oid_rt_pro_efuse_map_hdl(struct oid_par_priv *poid_par_priv);
+uint oid_rt_set_bandwidth_hdl(struct oid_par_priv *poid_par_priv);
+uint oid_rt_set_rx_packet_type_hdl(struct oid_par_priv *poid_par_priv);
+uint oid_rt_get_efuse_max_size_hdl(struct oid_par_priv *poid_par_priv);
+uint oid_rt_get_thermal_meter_hdl(
+				struct oid_par_priv *poid_par_priv);
+uint oid_rt_reset_phy_rx_packet_count_hdl(
+				struct oid_par_priv *poid_par_priv);
+uint oid_rt_get_phy_rx_packet_received_hdl(
+				struct oid_par_priv *poid_par_priv);
+uint oid_rt_get_phy_rx_packet_crc32_error_hdl(
+				struct oid_par_priv *poid_par_priv);
+uint oid_rt_set_power_down_hdl(
+				struct oid_par_priv *poid_par_priv);
+uint oid_rt_get_power_mode_hdl(
+				struct oid_par_priv *poid_par_priv);
+#ifdef _RTL871X_MP_IOCTL_C_ /* CAUTION!!! */
+/* This ifdef _MUST_ be left in!! */
+static const struct oid_obj_priv oid_rtl_seg_81_80_00[] = {
 	/* 0x00	OID_RT_PRO_RESET_DUT */
-	अणु1, oid_null_functionपूर्ण,
+	{1, oid_null_function},
 	/* 0x01 */
-	अणु1, oid_rt_pro_set_data_rate_hdlपूर्ण,
+	{1, oid_rt_pro_set_data_rate_hdl},
 	/* 0x02 */
-	अणु1, oid_rt_pro_start_test_hdlपूर्ण,
+	{1, oid_rt_pro_start_test_hdl},
 	/* 0x03 */
-	अणु1, oid_rt_pro_stop_test_hdlपूर्ण,
+	{1, oid_rt_pro_stop_test_hdl},
 	/* 0x04	OID_RT_PRO_SET_PREAMBLE */
-	अणु1, oid_null_functionपूर्ण,
+	{1, oid_null_function},
 	/* 0x05	OID_RT_PRO_SET_SCRAMBLER */
-	अणु1, oid_null_functionपूर्ण,
+	{1, oid_null_function},
 	/* 0x06	OID_RT_PRO_SET_FILTER_BB */
-	अणु1, oid_null_functionपूर्ण,
+	{1, oid_null_function},
 	/* 0x07  OID_RT_PRO_SET_MANUAL_DIVERS_BB */
-	अणु1, oid_null_functionपूर्ण,
+	{1, oid_null_function},
 	/* 0x08 */
-	अणु1, oid_rt_pro_set_channel_direct_call_hdlपूर्ण,
-	/* 0x09  OID_RT_PRO_SET_SLEEP_MODE_सूचीECT_CALL */
-	अणु1, oid_null_functionपूर्ण,
-	/* 0x0A  OID_RT_PRO_SET_WAKE_MODE_सूचीECT_CALL */
-	अणु1, oid_null_functionपूर्ण,
-	/* 0x0B OID_RT_PRO_SET_TX_CONTINUOUS_सूचीECT_CALL */
-	अणु1, oid_rt_pro_set_continuous_tx_hdlपूर्ण,
+	{1, oid_rt_pro_set_channel_direct_call_hdl},
+	/* 0x09  OID_RT_PRO_SET_SLEEP_MODE_DIRECT_CALL */
+	{1, oid_null_function},
+	/* 0x0A  OID_RT_PRO_SET_WAKE_MODE_DIRECT_CALL */
+	{1, oid_null_function},
+	/* 0x0B OID_RT_PRO_SET_TX_CONTINUOUS_DIRECT_CALL */
+	{1, oid_rt_pro_set_continuous_tx_hdl},
 	/* 0x0C OID_RT_PRO_SET_SINGLE_CARRIER_TX_CONTINUOUS */
-	अणु1, oid_rt_pro_set_single_carrier_tx_hdlपूर्ण,
+	{1, oid_rt_pro_set_single_carrier_tx_hdl},
 	/* 0x0D OID_RT_PRO_SET_TX_ANTENNA_BB */
-	अणु1, oid_null_functionपूर्ण,
+	{1, oid_null_function},
 	/* 0x0E */
-	अणु1, oid_rt_pro_set_antenna_bb_hdlपूर्ण,
+	{1, oid_rt_pro_set_antenna_bb_hdl},
 	/* 0x0F	OID_RT_PRO_SET_CR_SCRAMBLER */
-	अणु1, oid_null_functionपूर्ण,
+	{1, oid_null_function},
 	/* 0x10	OID_RT_PRO_SET_CR_NEW_FILTER */
-	अणु1, oid_null_functionपूर्ण,
+	{1, oid_null_function},
 	/* 0x11 OID_RT_PRO_SET_TX_POWER_CONTROL */
-	अणु1, oid_rt_pro_set_tx_घातer_control_hdlपूर्ण,
+	{1, oid_rt_pro_set_tx_power_control_hdl},
 	/* 0x12	OID_RT_PRO_SET_CR_TX_CONFIG */
-	अणु1, oid_null_functionपूर्ण,
+	{1, oid_null_function},
 	/* 0x13  OID_RT_PRO_GET_TX_POWER_CONTROL */
-	अणु1, oid_null_functionपूर्ण,
+	{1, oid_null_function},
 	/* 0x14  OID_RT_PRO_GET_CR_SIGNAL_QUALITY */
-	अणु1, oid_null_functionपूर्ण,
+	{1, oid_null_function},
 	/* 0x15	OID_RT_PRO_SET_CR_SETPOINT */
-	अणु1, oid_null_functionपूर्ण,
+	{1, oid_null_function},
 	/* 0x16	OID_RT_PRO_SET_INTEGRATOR */
-	अणु1, oid_null_functionपूर्ण,
+	{1, oid_null_function},
 	/* 0x17	OID_RT_PRO_SET_SIGNAL_QUALITY */
-	अणु1, oid_null_functionपूर्ण,
+	{1, oid_null_function},
 	/* 0x18	OID_RT_PRO_GET_INTEGRATOR */
-	अणु1, oid_null_functionपूर्ण,
+	{1, oid_null_function},
 	/* 0x19	OID_RT_PRO_GET_SIGNAL_QUALITY */
-	अणु1, oid_null_functionपूर्ण,
+	{1, oid_null_function},
 	/* 0x1A	OID_RT_PRO_QUERY_EEPROM_TYPE */
-	अणु1, oid_null_functionपूर्ण,
+	{1, oid_null_function},
 	/* 0x1B	OID_RT_PRO_WRITE_MAC_ADDRESS */
-	अणु1, oid_null_functionपूर्ण,
+	{1, oid_null_function},
 	/* 0x1C	OID_RT_PRO_READ_MAC_ADDRESS */
-	अणु1, oid_null_functionपूर्ण,
+	{1, oid_null_function},
 	/* 0x1D	OID_RT_PRO_WRITE_CIS_DATA */
-	अणु1, oid_null_functionपूर्ण,
+	{1, oid_null_function},
 	/* 0x1E	OID_RT_PRO_READ_CIS_DATA */
-	अणु1, oid_null_functionपूर्ण,
+	{1, oid_null_function},
 	/* 0x1F	OID_RT_PRO_WRITE_POWER_CONTROL */
-	अणु1, oid_null_functionपूर्ण
-पूर्ण;
+	{1, oid_null_function}
+};
 
-अटल स्थिर काष्ठा oid_obj_priv oid_rtl_seg_81_80_20[] = अणु
+static const struct oid_obj_priv oid_rtl_seg_81_80_20[] = {
 	/* 0x20	OID_RT_PRO_READ_POWER_CONTROL */
-	अणु1, oid_null_functionपूर्ण,
+	{1, oid_null_function},
 	/* 0x21	OID_RT_PRO_WRITE_EEPROM */
-	अणु1, oid_null_functionपूर्ण,
+	{1, oid_null_function},
 	/* 0x22	OID_RT_PRO_READ_EEPROM */
-	अणु1, oid_null_functionपूर्ण,
+	{1, oid_null_function},
 	/* 0x23 */
-	अणु1, oid_rt_pro_reset_tx_packet_sent_hdlपूर्ण,
+	{1, oid_rt_pro_reset_tx_packet_sent_hdl},
 	/* 0x24 */
-	अणु1, oid_rt_pro_query_tx_packet_sent_hdlपूर्ण,
+	{1, oid_rt_pro_query_tx_packet_sent_hdl},
 	/* 0x25 */
-	अणु1, oid_rt_pro_reset_rx_packet_received_hdlपूर्ण,
+	{1, oid_rt_pro_reset_rx_packet_received_hdl},
 	/* 0x26 */
-	अणु1, oid_rt_pro_query_rx_packet_received_hdlपूर्ण,
+	{1, oid_rt_pro_query_rx_packet_received_hdl},
 	/* 0x27 */
-	अणु1, oid_rt_pro_query_rx_packet_crc32_error_hdlपूर्ण,
+	{1, oid_rt_pro_query_rx_packet_crc32_error_hdl},
 	/* 0x28 OID_RT_PRO_QUERY_CURRENT_ADDRESS */
-	अणु1, oid_null_functionपूर्ण,
+	{1, oid_null_function},
 	/* 0x29 OID_RT_PRO_QUERY_PERMANENT_ADDRESS */
-	अणु1, oid_null_functionपूर्ण,
+	{1, oid_null_function},
 	/* 0x2A OID_RT_PRO_SET_PHILIPS_RF_PARAMETERS */
-	अणु1, oid_null_functionपूर्ण,
+	{1, oid_null_function},
 	/* 0x2B OID_RT_PRO_SET_CARRIER_SUPPRESSION_TX */
-	अणु1, oid_rt_pro_set_carrier_suppression_tx_hdlपूर्ण,
+	{1, oid_rt_pro_set_carrier_suppression_tx_hdl},
 	/* 0x2C	OID_RT_PRO_RECEIVE_PACKET */
-	अणु1, oid_null_functionपूर्ण,
+	{1, oid_null_function},
 	/* 0x2D	OID_RT_PRO_WRITE_EEPROM_BYTE */
-	अणु1, oid_null_functionपूर्ण,
+	{1, oid_null_function},
 	/* 0x2E	OID_RT_PRO_READ_EEPROM_BYTE */
-	अणु1, oid_null_functionपूर्ण,
+	{1, oid_null_function},
 	/* 0x2F */
-	अणु1, oid_rt_pro_set_modulation_hdlपूर्ण
-पूर्ण;
+	{1, oid_rt_pro_set_modulation_hdl}
+};
 
-अटल स्थिर काष्ठा oid_obj_priv oid_rtl_seg_81_80_40[] = अणु
-	अणु1, oid_null_functionपूर्ण,				/* 0x40 */
-	अणु1, oid_null_functionपूर्ण,				/* 0x41 */
-	अणु1, oid_null_functionपूर्ण,				/* 0x42 */
-	अणु1, oid_rt_pro_set_single_tone_tx_hdlपूर्ण,		/* 0x43 */
-	अणु1, oid_null_functionपूर्ण,				/* 0x44 */
-	अणु1, oid_null_functionपूर्ण				/* 0x45 */
-पूर्ण;
+static const struct oid_obj_priv oid_rtl_seg_81_80_40[] = {
+	{1, oid_null_function},				/* 0x40 */
+	{1, oid_null_function},				/* 0x41 */
+	{1, oid_null_function},				/* 0x42 */
+	{1, oid_rt_pro_set_single_tone_tx_hdl},		/* 0x43 */
+	{1, oid_null_function},				/* 0x44 */
+	{1, oid_null_function}				/* 0x45 */
+};
 
-अटल स्थिर काष्ठा oid_obj_priv oid_rtl_seg_81_80_80[] = अणु
-	अणु1, oid_null_functionपूर्ण,		/* 0x80	OID_RT_DRIVER_OPTION */
-	अणु1, oid_null_functionपूर्ण,		/* 0x81	OID_RT_RF_OFF */
-	अणु1, oid_null_functionपूर्ण		/* 0x82	OID_RT_AUTH_STATUS */
+static const struct oid_obj_priv oid_rtl_seg_81_80_80[] = {
+	{1, oid_null_function},		/* 0x80	OID_RT_DRIVER_OPTION */
+	{1, oid_null_function},		/* 0x81	OID_RT_RF_OFF */
+	{1, oid_null_function}		/* 0x82	OID_RT_AUTH_STATUS */
 
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा oid_obj_priv oid_rtl_seg_81_85[] = अणु
+static const struct oid_obj_priv oid_rtl_seg_81_85[] = {
 	/* 0x00	OID_RT_WIRELESS_MODE */
-	अणु1, oid_rt_wireless_mode_hdlपूर्ण
-पूर्ण;
+	{1, oid_rt_wireless_mode_hdl}
+};
 
-#अन्यथा /* _RTL871X_MP_IOCTL_C_ */
-बाह्य काष्ठा oid_obj_priv oid_rtl_seg_81_80_00[32];
-बाह्य काष्ठा oid_obj_priv oid_rtl_seg_81_80_20[16];
-बाह्य काष्ठा oid_obj_priv oid_rtl_seg_81_80_40[6];
-बाह्य काष्ठा oid_obj_priv oid_rtl_seg_81_80_80[3];
-बाह्य काष्ठा oid_obj_priv oid_rtl_seg_81_85[1];
-बाह्य काष्ठा oid_obj_priv oid_rtl_seg_81_87[5];
-बाह्य काष्ठा oid_obj_priv oid_rtl_seg_87_11_00[32];
-बाह्य काष्ठा oid_obj_priv oid_rtl_seg_87_11_20[5];
-बाह्य काष्ठा oid_obj_priv oid_rtl_seg_87_11_50[2];
-बाह्य काष्ठा oid_obj_priv oid_rtl_seg_87_11_80[1];
-बाह्य काष्ठा oid_obj_priv oid_rtl_seg_87_11_B0[1];
-बाह्य काष्ठा oid_obj_priv oid_rtl_seg_87_11_F0[16];
-बाह्य काष्ठा oid_obj_priv oid_rtl_seg_87_12_00[32];
+#else /* _RTL871X_MP_IOCTL_C_ */
+extern struct oid_obj_priv oid_rtl_seg_81_80_00[32];
+extern struct oid_obj_priv oid_rtl_seg_81_80_20[16];
+extern struct oid_obj_priv oid_rtl_seg_81_80_40[6];
+extern struct oid_obj_priv oid_rtl_seg_81_80_80[3];
+extern struct oid_obj_priv oid_rtl_seg_81_85[1];
+extern struct oid_obj_priv oid_rtl_seg_81_87[5];
+extern struct oid_obj_priv oid_rtl_seg_87_11_00[32];
+extern struct oid_obj_priv oid_rtl_seg_87_11_20[5];
+extern struct oid_obj_priv oid_rtl_seg_87_11_50[2];
+extern struct oid_obj_priv oid_rtl_seg_87_11_80[1];
+extern struct oid_obj_priv oid_rtl_seg_87_11_B0[1];
+extern struct oid_obj_priv oid_rtl_seg_87_11_F0[16];
+extern struct oid_obj_priv oid_rtl_seg_87_12_00[32];
 
-#पूर्ण_अगर /* _RTL871X_MP_IOCTL_C_ */
+#endif /* _RTL871X_MP_IOCTL_C_ */
 
 
-क्रमागत MP_MODE अणु
+enum MP_MODE {
 	MP_START_MODE,
 	MP_STOP_MODE,
 	MP_ERR_MODE
-पूर्ण;
+};
 
-काष्ठा rwreg_param अणु
-	अचिन्हित पूर्णांक offset;
-	अचिन्हित पूर्णांक width;
-	अचिन्हित पूर्णांक value;
-पूर्ण;
+struct rwreg_param {
+	unsigned int offset;
+	unsigned int width;
+	unsigned int value;
+};
 
-काष्ठा bbreg_param अणु
-	अचिन्हित पूर्णांक offset;
-	अचिन्हित पूर्णांक phymask;
-	अचिन्हित पूर्णांक value;
-पूर्ण;
+struct bbreg_param {
+	unsigned int offset;
+	unsigned int phymask;
+	unsigned int value;
+};
 
-काष्ठा txघातer_param अणु
-	अचिन्हित पूर्णांक pwr_index;
-पूर्ण;
+struct txpower_param {
+	unsigned int pwr_index;
+};
 
-काष्ठा datarate_param अणु
-	अचिन्हित पूर्णांक rate_index;
-पूर्ण;
+struct datarate_param {
+	unsigned int rate_index;
+};
 
-काष्ठा rfपूर्णांकfs_parm अणु
-	अचिन्हित पूर्णांक rfपूर्णांकfs;
-पूर्ण;
+struct rfintfs_parm {
+	unsigned int rfintfs;
+};
 
-काष्ठा mp_xmit_packet अणु
-	अचिन्हित पूर्णांक len;
-पूर्ण;
+struct mp_xmit_packet {
+	unsigned int len;
+};
 
-काष्ठा psmode_param अणु
-	अचिन्हित पूर्णांक ps_mode;
-	अचिन्हित पूर्णांक smart_ps;
-पूर्ण;
+struct psmode_param {
+	unsigned int ps_mode;
+	unsigned int smart_ps;
+};
 
-काष्ठा mp_ioctl_handler अणु
-	अचिन्हित पूर्णांक paramsize;
-	अचिन्हित पूर्णांक (*handler)(काष्ठा oid_par_priv *poid_par_priv);
-	अचिन्हित पूर्णांक oid;
-पूर्ण;
+struct mp_ioctl_handler {
+	unsigned int paramsize;
+	unsigned int (*handler)(struct oid_par_priv *poid_par_priv);
+	unsigned int oid;
+};
 
-काष्ठा mp_ioctl_param अणु
-	अचिन्हित पूर्णांक subcode;
-	अचिन्हित पूर्णांक len;
-	अचिन्हित अक्षर data[];
-पूर्ण;
+struct mp_ioctl_param {
+	unsigned int subcode;
+	unsigned int len;
+	unsigned char data[];
+};
 
-#घोषणा GEN_MP_IOCTL_SUBCODE(code) _MP_IOCTL_ ## code ## _CMD_
+#define GEN_MP_IOCTL_SUBCODE(code) _MP_IOCTL_ ## code ## _CMD_
 
-क्रमागत RTL871X_MP_IOCTL_SUBCODE अणु
+enum RTL871X_MP_IOCTL_SUBCODE {
 	GEN_MP_IOCTL_SUBCODE(MP_START),			/*0*/
 	GEN_MP_IOCTL_SUBCODE(MP_STOP),			/*1*/
 	GEN_MP_IOCTL_SUBCODE(READ_REG),			/*2*/
@@ -367,91 +366,91 @@ uपूर्णांक oid_rt_get_घातer_mode_hdl(
 	GEN_MP_IOCTL_SUBCODE(ST_TX),			/*33*/
 	GEN_MP_IOCTL_SUBCODE(SET_ANTENNA),		/*34*/
 	MAX_MP_IOCTL_SUBCODE,
-पूर्ण;
+};
 
-अचिन्हित पूर्णांक mp_ioctl_xmit_packet_hdl(काष्ठा oid_par_priv *poid_par_priv);
+unsigned int mp_ioctl_xmit_packet_hdl(struct oid_par_priv *poid_par_priv);
 
-#अगर_घोषित _RTL871X_MP_IOCTL_C_ /* CAUTION!!! */
-/* This अगरdef _MUST_ be left in!! */
+#ifdef _RTL871X_MP_IOCTL_C_ /* CAUTION!!! */
+/* This ifdef _MUST_ be left in!! */
 
-अटल काष्ठा mp_ioctl_handler mp_ioctl_hdl[] = अणु
-	अणुमाप(u32), oid_rt_pro_start_test_hdl,
-			     OID_RT_PRO_START_TESTपूर्ण,/*0*/
-	अणुमाप(u32), oid_rt_pro_stop_test_hdl,
-			     OID_RT_PRO_STOP_TESTपूर्ण,/*1*/
-	अणुमाप(काष्ठा rwreg_param),
-			     oid_rt_pro_पढ़ो_रेजिस्टर_hdl,
-			     OID_RT_PRO_READ_REGISTERपूर्ण,/*2*/
-	अणुमाप(काष्ठा rwreg_param),
-			     oid_rt_pro_ग_लिखो_रेजिस्टर_hdl,
-			     OID_RT_PRO_WRITE_REGISTERपूर्ण,
-	अणुमाप(u32),
+static struct mp_ioctl_handler mp_ioctl_hdl[] = {
+	{sizeof(u32), oid_rt_pro_start_test_hdl,
+			     OID_RT_PRO_START_TEST},/*0*/
+	{sizeof(u32), oid_rt_pro_stop_test_hdl,
+			     OID_RT_PRO_STOP_TEST},/*1*/
+	{sizeof(struct rwreg_param),
+			     oid_rt_pro_read_register_hdl,
+			     OID_RT_PRO_READ_REGISTER},/*2*/
+	{sizeof(struct rwreg_param),
+			     oid_rt_pro_write_register_hdl,
+			     OID_RT_PRO_WRITE_REGISTER},
+	{sizeof(u32),
 			     oid_rt_pro_set_channel_direct_call_hdl,
-			     OID_RT_PRO_SET_CHANNEL_सूचीECT_CALLपूर्ण,
-	अणुमाप(काष्ठा txघातer_param),
-			     oid_rt_pro_set_tx_घातer_control_hdl,
-			     OID_RT_PRO_SET_TX_POWER_CONTROLपूर्ण,
-	अणुमाप(u32),
+			     OID_RT_PRO_SET_CHANNEL_DIRECT_CALL},
+	{sizeof(struct txpower_param),
+			     oid_rt_pro_set_tx_power_control_hdl,
+			     OID_RT_PRO_SET_TX_POWER_CONTROL},
+	{sizeof(u32),
 			     oid_rt_pro_set_data_rate_hdl,
-			     OID_RT_PRO_SET_DATA_RATEपूर्ण,
-	अणुमाप(काष्ठा bb_reg_param),
-			     oid_rt_pro_पढ़ो_bb_reg_hdl,
-			     OID_RT_PRO_READ_BB_REGपूर्ण,/*7*/
-	अणुमाप(काष्ठा bb_reg_param),
-			     oid_rt_pro_ग_लिखो_bb_reg_hdl,
-			     OID_RT_PRO_WRITE_BB_REGपूर्ण,
-	अणुमाप(काष्ठा rwreg_param),
-			     oid_rt_pro_पढ़ो_rf_reg_hdl,
-			     OID_RT_PRO_RF_READ_REGISTRYपूर्ण,/*9*/
-	अणुमाप(काष्ठा rwreg_param),
-			     oid_rt_pro_ग_लिखो_rf_reg_hdl,
-			     OID_RT_PRO_RF_WRITE_REGISTRYपूर्ण,
-	अणुमाप(काष्ठा rfपूर्णांकfs_parm), शून्य, 0पूर्ण,
-	अणु0, mp_ioctl_xmit_packet_hdl, 0पूर्ण,/*12*/
-	अणुमाप(काष्ठा psmode_param), शून्य, 0पूर्ण,/*13*/
-	अणुमाप(काष्ठा eeprom_rw_param), शून्य, 0पूर्ण,/*14*/
-	अणुमाप(काष्ठा eeprom_rw_param), शून्य, 0पूर्ण,/*15*/
-	अणुमाप(अचिन्हित अक्षर), शून्य, 0पूर्ण,/*16*/
-	अणुमाप(u32), शून्य, 0पूर्ण,/*17*/
-	अणुमाप(u32), oid_rt_pro_set_continuous_tx_hdl,
-			     OID_RT_PRO_SET_CONTINUOUS_TXपूर्ण,/*18*/
-	अणुमाप(u32), oid_rt_set_bandwidth_hdl,
-			     OID_RT_SET_BANDWIDTHपूर्ण,/*19*/
-	अणुमाप(u32), oid_rt_set_rx_packet_type_hdl,
-			     OID_RT_SET_RX_PACKET_TYPEपूर्ण,/*20*/
-	अणु0, oid_rt_reset_phy_rx_packet_count_hdl,
-			     OID_RT_RESET_PHY_RX_PACKET_COUNTपूर्ण,/*21*/
-	अणुमाप(u32), oid_rt_get_phy_rx_packet_received_hdl,
-			     OID_RT_GET_PHY_RX_PACKET_RECEIVEDपूर्ण,/*22*/
-	अणुमाप(u32), oid_rt_get_phy_rx_packet_crc32_error_hdl,
-			     OID_RT_GET_PHY_RX_PACKET_CRC32_ERRORपूर्ण,/*23*/
-	अणुमाप(अचिन्हित अक्षर), oid_rt_set_घातer_करोwn_hdl,
-			     OID_RT_SET_POWER_DOWNपूर्ण,/*24*/
-	अणुमाप(u32), oid_rt_get_thermal_meter_hdl,
-			     OID_RT_PRO_GET_THERMAL_METERपूर्ण,/*25*/
-	अणुमाप(u32), oid_rt_get_घातer_mode_hdl,
-			     OID_RT_GET_POWER_MODEपूर्ण,/*26*/
-	अणुमाप(काष्ठा EFUSE_ACCESS_STRUCT),
-			     oid_rt_pro_efuse_hdl, OID_RT_PRO_EFUSEपूर्ण,/*27*/
-	अणुEFUSE_MAP_MAX_SIZE, oid_rt_pro_efuse_map_hdl,
-			     OID_RT_PRO_EFUSE_MAPपूर्ण,/*28*/
-	अणुमाप(u32), oid_rt_get_efuse_max_size_hdl,
-			     OID_RT_GET_EFUSE_MAX_SIZEपूर्ण,/*29*/
-	अणुमाप(u32), oid_rt_get_efuse_current_size_hdl,
-			     OID_RT_GET_EFUSE_CURRENT_SIZEपूर्ण,/*30*/
-	अणुमाप(u32), oid_rt_pro_set_single_carrier_tx_hdl,
-			     OID_RT_PRO_SET_SINGLE_CARRIER_TXपूर्ण,/*31*/
-	अणुमाप(u32), oid_rt_pro_set_carrier_suppression_tx_hdl,
-			     OID_RT_PRO_SET_CARRIER_SUPPRESSION_TXपूर्ण,/*32*/
-	अणुमाप(u32), oid_rt_pro_set_single_tone_tx_hdl,
-			     OID_RT_PRO_SET_SINGLE_TONE_TXपूर्ण,/*33*/
-	अणुमाप(u32), oid_rt_pro_set_antenna_bb_hdl,
-			     OID_RT_PRO_SET_ANTENNA_BBपूर्ण,/*34*/
-पूर्ण;
+			     OID_RT_PRO_SET_DATA_RATE},
+	{sizeof(struct bb_reg_param),
+			     oid_rt_pro_read_bb_reg_hdl,
+			     OID_RT_PRO_READ_BB_REG},/*7*/
+	{sizeof(struct bb_reg_param),
+			     oid_rt_pro_write_bb_reg_hdl,
+			     OID_RT_PRO_WRITE_BB_REG},
+	{sizeof(struct rwreg_param),
+			     oid_rt_pro_read_rf_reg_hdl,
+			     OID_RT_PRO_RF_READ_REGISTRY},/*9*/
+	{sizeof(struct rwreg_param),
+			     oid_rt_pro_write_rf_reg_hdl,
+			     OID_RT_PRO_RF_WRITE_REGISTRY},
+	{sizeof(struct rfintfs_parm), NULL, 0},
+	{0, mp_ioctl_xmit_packet_hdl, 0},/*12*/
+	{sizeof(struct psmode_param), NULL, 0},/*13*/
+	{sizeof(struct eeprom_rw_param), NULL, 0},/*14*/
+	{sizeof(struct eeprom_rw_param), NULL, 0},/*15*/
+	{sizeof(unsigned char), NULL, 0},/*16*/
+	{sizeof(u32), NULL, 0},/*17*/
+	{sizeof(u32), oid_rt_pro_set_continuous_tx_hdl,
+			     OID_RT_PRO_SET_CONTINUOUS_TX},/*18*/
+	{sizeof(u32), oid_rt_set_bandwidth_hdl,
+			     OID_RT_SET_BANDWIDTH},/*19*/
+	{sizeof(u32), oid_rt_set_rx_packet_type_hdl,
+			     OID_RT_SET_RX_PACKET_TYPE},/*20*/
+	{0, oid_rt_reset_phy_rx_packet_count_hdl,
+			     OID_RT_RESET_PHY_RX_PACKET_COUNT},/*21*/
+	{sizeof(u32), oid_rt_get_phy_rx_packet_received_hdl,
+			     OID_RT_GET_PHY_RX_PACKET_RECEIVED},/*22*/
+	{sizeof(u32), oid_rt_get_phy_rx_packet_crc32_error_hdl,
+			     OID_RT_GET_PHY_RX_PACKET_CRC32_ERROR},/*23*/
+	{sizeof(unsigned char), oid_rt_set_power_down_hdl,
+			     OID_RT_SET_POWER_DOWN},/*24*/
+	{sizeof(u32), oid_rt_get_thermal_meter_hdl,
+			     OID_RT_PRO_GET_THERMAL_METER},/*25*/
+	{sizeof(u32), oid_rt_get_power_mode_hdl,
+			     OID_RT_GET_POWER_MODE},/*26*/
+	{sizeof(struct EFUSE_ACCESS_STRUCT),
+			     oid_rt_pro_efuse_hdl, OID_RT_PRO_EFUSE},/*27*/
+	{EFUSE_MAP_MAX_SIZE, oid_rt_pro_efuse_map_hdl,
+			     OID_RT_PRO_EFUSE_MAP},/*28*/
+	{sizeof(u32), oid_rt_get_efuse_max_size_hdl,
+			     OID_RT_GET_EFUSE_MAX_SIZE},/*29*/
+	{sizeof(u32), oid_rt_get_efuse_current_size_hdl,
+			     OID_RT_GET_EFUSE_CURRENT_SIZE},/*30*/
+	{sizeof(u32), oid_rt_pro_set_single_carrier_tx_hdl,
+			     OID_RT_PRO_SET_SINGLE_CARRIER_TX},/*31*/
+	{sizeof(u32), oid_rt_pro_set_carrier_suppression_tx_hdl,
+			     OID_RT_PRO_SET_CARRIER_SUPPRESSION_TX},/*32*/
+	{sizeof(u32), oid_rt_pro_set_single_tone_tx_hdl,
+			     OID_RT_PRO_SET_SINGLE_TONE_TX},/*33*/
+	{sizeof(u32), oid_rt_pro_set_antenna_bb_hdl,
+			     OID_RT_PRO_SET_ANTENNA_BB},/*34*/
+};
 
-#अन्यथा /* _RTL871X_MP_IOCTL_C_ */
-बाह्य काष्ठा mp_ioctl_handler mp_ioctl_hdl[];
-#पूर्ण_अगर /* _RTL871X_MP_IOCTL_C_ */
+#else /* _RTL871X_MP_IOCTL_C_ */
+extern struct mp_ioctl_handler mp_ioctl_hdl[];
+#endif /* _RTL871X_MP_IOCTL_C_ */
 
-#पूर्ण_अगर
+#endif
 

@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * handling पूर्णांकerprocessor communication
+ * handling interprocessor communication
  *
  * Copyright IBM Corp. 2008, 2013
  *
@@ -10,65 +9,65 @@
  *               Christian Ehrhardt <ehrhardt@de.ibm.com>
  */
 
-#समावेश <linux/kvm.h>
-#समावेश <linux/kvm_host.h>
-#समावेश <linux/slab.h>
-#समावेश <यंत्र/sigp.h>
-#समावेश "gaccess.h"
-#समावेश "kvm-s390.h"
-#समावेश "trace.h"
+#include <linux/kvm.h>
+#include <linux/kvm_host.h>
+#include <linux/slab.h>
+#include <asm/sigp.h>
+#include "gaccess.h"
+#include "kvm-s390.h"
+#include "trace.h"
 
-अटल पूर्णांक __sigp_sense(काष्ठा kvm_vcpu *vcpu, काष्ठा kvm_vcpu *dst_vcpu,
+static int __sigp_sense(struct kvm_vcpu *vcpu, struct kvm_vcpu *dst_vcpu,
 			u64 *reg)
-अणु
-	स्थिर bool stopped = kvm_s390_test_cpuflags(dst_vcpu, CPUSTAT_STOPPED);
-	पूर्णांक rc;
-	पूर्णांक ext_call_pending;
+{
+	const bool stopped = kvm_s390_test_cpuflags(dst_vcpu, CPUSTAT_STOPPED);
+	int rc;
+	int ext_call_pending;
 
 	ext_call_pending = kvm_s390_ext_call_pending(dst_vcpu);
-	अगर (!stopped && !ext_call_pending)
+	if (!stopped && !ext_call_pending)
 		rc = SIGP_CC_ORDER_CODE_ACCEPTED;
-	अन्यथा अणु
+	else {
 		*reg &= 0xffffffff00000000UL;
-		अगर (ext_call_pending)
+		if (ext_call_pending)
 			*reg |= SIGP_STATUS_EXT_CALL_PENDING;
-		अगर (stopped)
+		if (stopped)
 			*reg |= SIGP_STATUS_STOPPED;
 		rc = SIGP_CC_STATUS_STORED;
-	पूर्ण
+	}
 
 	VCPU_EVENT(vcpu, 4, "sensed status of cpu %x rc %x", dst_vcpu->vcpu_id,
 		   rc);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक __inject_sigp_emergency(काष्ठा kvm_vcpu *vcpu,
-				    काष्ठा kvm_vcpu *dst_vcpu)
-अणु
-	काष्ठा kvm_s390_irq irq = अणु
+static int __inject_sigp_emergency(struct kvm_vcpu *vcpu,
+				    struct kvm_vcpu *dst_vcpu)
+{
+	struct kvm_s390_irq irq = {
 		.type = KVM_S390_INT_EMERGENCY,
 		.u.emerg.code = vcpu->vcpu_id,
-	पूर्ण;
-	पूर्णांक rc = 0;
+	};
+	int rc = 0;
 
 	rc = kvm_s390_inject_vcpu(dst_vcpu, &irq);
-	अगर (!rc)
+	if (!rc)
 		VCPU_EVENT(vcpu, 4, "sent sigp emerg to cpu %x",
 			   dst_vcpu->vcpu_id);
 
-	वापस rc ? rc : SIGP_CC_ORDER_CODE_ACCEPTED;
-पूर्ण
+	return rc ? rc : SIGP_CC_ORDER_CODE_ACCEPTED;
+}
 
-अटल पूर्णांक __sigp_emergency(काष्ठा kvm_vcpu *vcpu, काष्ठा kvm_vcpu *dst_vcpu)
-अणु
-	वापस __inject_sigp_emergency(vcpu, dst_vcpu);
-पूर्ण
+static int __sigp_emergency(struct kvm_vcpu *vcpu, struct kvm_vcpu *dst_vcpu)
+{
+	return __inject_sigp_emergency(vcpu, dst_vcpu);
+}
 
-अटल पूर्णांक __sigp_conditional_emergency(काष्ठा kvm_vcpu *vcpu,
-					काष्ठा kvm_vcpu *dst_vcpu,
+static int __sigp_conditional_emergency(struct kvm_vcpu *vcpu,
+					struct kvm_vcpu *dst_vcpu,
 					u16 asn, u64 *reg)
-अणु
-	स्थिर u64 psw_पूर्णांक_mask = PSW_MASK_IO | PSW_MASK_EXT;
+{
+	const u64 psw_int_mask = PSW_MASK_IO | PSW_MASK_EXT;
 	u16 p_asn, s_asn;
 	psw_t *psw;
 	bool idle;
@@ -78,403 +77,403 @@
 	p_asn = dst_vcpu->arch.sie_block->gcr[4] & 0xffff;  /* Primary ASN */
 	s_asn = dst_vcpu->arch.sie_block->gcr[3] & 0xffff;  /* Secondary ASN */
 
-	/* Inject the emergency संकेत? */
-	अगर (!is_vcpu_stopped(vcpu)
-	    || (psw->mask & psw_पूर्णांक_mask) != psw_पूर्णांक_mask
+	/* Inject the emergency signal? */
+	if (!is_vcpu_stopped(vcpu)
+	    || (psw->mask & psw_int_mask) != psw_int_mask
 	    || (idle && psw->addr != 0)
-	    || (!idle && (asn == p_asn || asn == s_asn))) अणु
-		वापस __inject_sigp_emergency(vcpu, dst_vcpu);
-	पूर्ण अन्यथा अणु
+	    || (!idle && (asn == p_asn || asn == s_asn))) {
+		return __inject_sigp_emergency(vcpu, dst_vcpu);
+	} else {
 		*reg &= 0xffffffff00000000UL;
 		*reg |= SIGP_STATUS_INCORRECT_STATE;
-		वापस SIGP_CC_STATUS_STORED;
-	पूर्ण
-पूर्ण
+		return SIGP_CC_STATUS_STORED;
+	}
+}
 
-अटल पूर्णांक __sigp_बाह्यal_call(काष्ठा kvm_vcpu *vcpu,
-				काष्ठा kvm_vcpu *dst_vcpu, u64 *reg)
-अणु
-	काष्ठा kvm_s390_irq irq = अणु
+static int __sigp_external_call(struct kvm_vcpu *vcpu,
+				struct kvm_vcpu *dst_vcpu, u64 *reg)
+{
+	struct kvm_s390_irq irq = {
 		.type = KVM_S390_INT_EXTERNAL_CALL,
 		.u.extcall.code = vcpu->vcpu_id,
-	पूर्ण;
-	पूर्णांक rc;
+	};
+	int rc;
 
 	rc = kvm_s390_inject_vcpu(dst_vcpu, &irq);
-	अगर (rc == -EBUSY) अणु
+	if (rc == -EBUSY) {
 		*reg &= 0xffffffff00000000UL;
 		*reg |= SIGP_STATUS_EXT_CALL_PENDING;
-		वापस SIGP_CC_STATUS_STORED;
-	पूर्ण अन्यथा अगर (rc == 0) अणु
+		return SIGP_CC_STATUS_STORED;
+	} else if (rc == 0) {
 		VCPU_EVENT(vcpu, 4, "sent sigp ext call to cpu %x",
 			   dst_vcpu->vcpu_id);
-	पूर्ण
+	}
 
-	वापस rc ? rc : SIGP_CC_ORDER_CODE_ACCEPTED;
-पूर्ण
+	return rc ? rc : SIGP_CC_ORDER_CODE_ACCEPTED;
+}
 
-अटल पूर्णांक __sigp_stop(काष्ठा kvm_vcpu *vcpu, काष्ठा kvm_vcpu *dst_vcpu)
-अणु
-	काष्ठा kvm_s390_irq irq = अणु
+static int __sigp_stop(struct kvm_vcpu *vcpu, struct kvm_vcpu *dst_vcpu)
+{
+	struct kvm_s390_irq irq = {
 		.type = KVM_S390_SIGP_STOP,
-	पूर्ण;
-	पूर्णांक rc;
+	};
+	int rc;
 
 	rc = kvm_s390_inject_vcpu(dst_vcpu, &irq);
-	अगर (rc == -EBUSY)
+	if (rc == -EBUSY)
 		rc = SIGP_CC_BUSY;
-	अन्यथा अगर (rc == 0)
+	else if (rc == 0)
 		VCPU_EVENT(vcpu, 4, "sent sigp stop to cpu %x",
 			   dst_vcpu->vcpu_id);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक __sigp_stop_and_store_status(काष्ठा kvm_vcpu *vcpu,
-					काष्ठा kvm_vcpu *dst_vcpu, u64 *reg)
-अणु
-	काष्ठा kvm_s390_irq irq = अणु
+static int __sigp_stop_and_store_status(struct kvm_vcpu *vcpu,
+					struct kvm_vcpu *dst_vcpu, u64 *reg)
+{
+	struct kvm_s390_irq irq = {
 		.type = KVM_S390_SIGP_STOP,
 		.u.stop.flags = KVM_S390_STOP_FLAG_STORE_STATUS,
-	पूर्ण;
-	पूर्णांक rc;
+	};
+	int rc;
 
 	rc = kvm_s390_inject_vcpu(dst_vcpu, &irq);
-	अगर (rc == -EBUSY)
+	if (rc == -EBUSY)
 		rc = SIGP_CC_BUSY;
-	अन्यथा अगर (rc == 0)
+	else if (rc == 0)
 		VCPU_EVENT(vcpu, 4, "sent sigp stop and store status to cpu %x",
 			   dst_vcpu->vcpu_id);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक __sigp_set_arch(काष्ठा kvm_vcpu *vcpu, u32 parameter,
+static int __sigp_set_arch(struct kvm_vcpu *vcpu, u32 parameter,
 			   u64 *status_reg)
-अणु
-	अचिन्हित पूर्णांक i;
-	काष्ठा kvm_vcpu *v;
+{
+	unsigned int i;
+	struct kvm_vcpu *v;
 	bool all_stopped = true;
 
-	kvm_क्रम_each_vcpu(i, v, vcpu->kvm) अणु
-		अगर (v == vcpu)
-			जारी;
-		अगर (!is_vcpu_stopped(v))
+	kvm_for_each_vcpu(i, v, vcpu->kvm) {
+		if (v == vcpu)
+			continue;
+		if (!is_vcpu_stopped(v))
 			all_stopped = false;
-	पूर्ण
+	}
 
 	*status_reg &= 0xffffffff00000000UL;
 
 	/* Reject set arch order, with czam we're always in z/Arch mode. */
 	*status_reg |= (all_stopped ? SIGP_STATUS_INVALID_PARAMETER :
 					SIGP_STATUS_INCORRECT_STATE);
-	वापस SIGP_CC_STATUS_STORED;
-पूर्ण
+	return SIGP_CC_STATUS_STORED;
+}
 
-अटल पूर्णांक __sigp_set_prefix(काष्ठा kvm_vcpu *vcpu, काष्ठा kvm_vcpu *dst_vcpu,
+static int __sigp_set_prefix(struct kvm_vcpu *vcpu, struct kvm_vcpu *dst_vcpu,
 			     u32 address, u64 *reg)
-अणु
-	काष्ठा kvm_s390_irq irq = अणु
+{
+	struct kvm_s390_irq irq = {
 		.type = KVM_S390_SIGP_SET_PREFIX,
 		.u.prefix.address = address & 0x7fffe000u,
-	पूर्ण;
-	पूर्णांक rc;
+	};
+	int rc;
 
 	/*
 	 * Make sure the new value is valid memory. We only need to check the
 	 * first page, since address is 8k aligned and memory pieces are always
 	 * at least 1MB aligned and have at least a size of 1MB.
 	 */
-	अगर (kvm_is_error_gpa(vcpu->kvm, irq.u.prefix.address)) अणु
+	if (kvm_is_error_gpa(vcpu->kvm, irq.u.prefix.address)) {
 		*reg &= 0xffffffff00000000UL;
 		*reg |= SIGP_STATUS_INVALID_PARAMETER;
-		वापस SIGP_CC_STATUS_STORED;
-	पूर्ण
+		return SIGP_CC_STATUS_STORED;
+	}
 
 	rc = kvm_s390_inject_vcpu(dst_vcpu, &irq);
-	अगर (rc == -EBUSY) अणु
+	if (rc == -EBUSY) {
 		*reg &= 0xffffffff00000000UL;
 		*reg |= SIGP_STATUS_INCORRECT_STATE;
-		वापस SIGP_CC_STATUS_STORED;
-	पूर्ण
+		return SIGP_CC_STATUS_STORED;
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक __sigp_store_status_at_addr(काष्ठा kvm_vcpu *vcpu,
-				       काष्ठा kvm_vcpu *dst_vcpu,
+static int __sigp_store_status_at_addr(struct kvm_vcpu *vcpu,
+				       struct kvm_vcpu *dst_vcpu,
 				       u32 addr, u64 *reg)
-अणु
-	पूर्णांक rc;
+{
+	int rc;
 
-	अगर (!kvm_s390_test_cpuflags(dst_vcpu, CPUSTAT_STOPPED)) अणु
+	if (!kvm_s390_test_cpuflags(dst_vcpu, CPUSTAT_STOPPED)) {
 		*reg &= 0xffffffff00000000UL;
 		*reg |= SIGP_STATUS_INCORRECT_STATE;
-		वापस SIGP_CC_STATUS_STORED;
-	पूर्ण
+		return SIGP_CC_STATUS_STORED;
+	}
 
 	addr &= 0x7ffffe00;
 	rc = kvm_s390_store_status_unloaded(dst_vcpu, addr);
-	अगर (rc == -EFAULT) अणु
+	if (rc == -EFAULT) {
 		*reg &= 0xffffffff00000000UL;
 		*reg |= SIGP_STATUS_INVALID_PARAMETER;
 		rc = SIGP_CC_STATUS_STORED;
-	पूर्ण
-	वापस rc;
-पूर्ण
+	}
+	return rc;
+}
 
-अटल पूर्णांक __sigp_sense_running(काष्ठा kvm_vcpu *vcpu,
-				काष्ठा kvm_vcpu *dst_vcpu, u64 *reg)
-अणु
-	पूर्णांक rc;
+static int __sigp_sense_running(struct kvm_vcpu *vcpu,
+				struct kvm_vcpu *dst_vcpu, u64 *reg)
+{
+	int rc;
 
-	अगर (!test_kvm_facility(vcpu->kvm, 9)) अणु
+	if (!test_kvm_facility(vcpu->kvm, 9)) {
 		*reg &= 0xffffffff00000000UL;
 		*reg |= SIGP_STATUS_INVALID_ORDER;
-		वापस SIGP_CC_STATUS_STORED;
-	पूर्ण
+		return SIGP_CC_STATUS_STORED;
+	}
 
-	अगर (kvm_s390_test_cpuflags(dst_vcpu, CPUSTAT_RUNNING)) अणु
+	if (kvm_s390_test_cpuflags(dst_vcpu, CPUSTAT_RUNNING)) {
 		/* running */
 		rc = SIGP_CC_ORDER_CODE_ACCEPTED;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* not running */
 		*reg &= 0xffffffff00000000UL;
 		*reg |= SIGP_STATUS_NOT_RUNNING;
 		rc = SIGP_CC_STATUS_STORED;
-	पूर्ण
+	}
 
 	VCPU_EVENT(vcpu, 4, "sensed running status of cpu %x rc %x",
 		   dst_vcpu->vcpu_id, rc);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक __prepare_sigp_re_start(काष्ठा kvm_vcpu *vcpu,
-				   काष्ठा kvm_vcpu *dst_vcpu, u8 order_code)
-अणु
-	काष्ठा kvm_s390_local_पूर्णांकerrupt *li = &dst_vcpu->arch.local_पूर्णांक;
+static int __prepare_sigp_re_start(struct kvm_vcpu *vcpu,
+				   struct kvm_vcpu *dst_vcpu, u8 order_code)
+{
+	struct kvm_s390_local_interrupt *li = &dst_vcpu->arch.local_int;
 	/* handle (RE)START in user space */
-	पूर्णांक rc = -EOPNOTSUPP;
+	int rc = -EOPNOTSUPP;
 
-	/* make sure we करोn't race with STOP irq injection */
+	/* make sure we don't race with STOP irq injection */
 	spin_lock(&li->lock);
-	अगर (kvm_s390_is_stop_irq_pending(dst_vcpu))
+	if (kvm_s390_is_stop_irq_pending(dst_vcpu))
 		rc = SIGP_CC_BUSY;
 	spin_unlock(&li->lock);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक __prepare_sigp_cpu_reset(काष्ठा kvm_vcpu *vcpu,
-				    काष्ठा kvm_vcpu *dst_vcpu, u8 order_code)
-अणु
+static int __prepare_sigp_cpu_reset(struct kvm_vcpu *vcpu,
+				    struct kvm_vcpu *dst_vcpu, u8 order_code)
+{
 	/* handle (INITIAL) CPU RESET in user space */
-	वापस -EOPNOTSUPP;
-पूर्ण
+	return -EOPNOTSUPP;
+}
 
-अटल पूर्णांक __prepare_sigp_unknown(काष्ठा kvm_vcpu *vcpu,
-				  काष्ठा kvm_vcpu *dst_vcpu)
-अणु
+static int __prepare_sigp_unknown(struct kvm_vcpu *vcpu,
+				  struct kvm_vcpu *dst_vcpu)
+{
 	/* handle unknown orders in user space */
-	वापस -EOPNOTSUPP;
-पूर्ण
+	return -EOPNOTSUPP;
+}
 
-अटल पूर्णांक handle_sigp_dst(काष्ठा kvm_vcpu *vcpu, u8 order_code,
+static int handle_sigp_dst(struct kvm_vcpu *vcpu, u8 order_code,
 			   u16 cpu_addr, u32 parameter, u64 *status_reg)
-अणु
-	पूर्णांक rc;
-	काष्ठा kvm_vcpu *dst_vcpu = kvm_get_vcpu_by_id(vcpu->kvm, cpu_addr);
+{
+	int rc;
+	struct kvm_vcpu *dst_vcpu = kvm_get_vcpu_by_id(vcpu->kvm, cpu_addr);
 
-	अगर (!dst_vcpu)
-		वापस SIGP_CC_NOT_OPERATIONAL;
+	if (!dst_vcpu)
+		return SIGP_CC_NOT_OPERATIONAL;
 
-	चयन (order_code) अणु
-	हाल SIGP_SENSE:
-		vcpu->stat.inकाष्ठाion_sigp_sense++;
+	switch (order_code) {
+	case SIGP_SENSE:
+		vcpu->stat.instruction_sigp_sense++;
 		rc = __sigp_sense(vcpu, dst_vcpu, status_reg);
-		अवरोध;
-	हाल SIGP_EXTERNAL_CALL:
-		vcpu->stat.inकाष्ठाion_sigp_बाह्यal_call++;
-		rc = __sigp_बाह्यal_call(vcpu, dst_vcpu, status_reg);
-		अवरोध;
-	हाल SIGP_EMERGENCY_SIGNAL:
-		vcpu->stat.inकाष्ठाion_sigp_emergency++;
+		break;
+	case SIGP_EXTERNAL_CALL:
+		vcpu->stat.instruction_sigp_external_call++;
+		rc = __sigp_external_call(vcpu, dst_vcpu, status_reg);
+		break;
+	case SIGP_EMERGENCY_SIGNAL:
+		vcpu->stat.instruction_sigp_emergency++;
 		rc = __sigp_emergency(vcpu, dst_vcpu);
-		अवरोध;
-	हाल SIGP_STOP:
-		vcpu->stat.inकाष्ठाion_sigp_stop++;
+		break;
+	case SIGP_STOP:
+		vcpu->stat.instruction_sigp_stop++;
 		rc = __sigp_stop(vcpu, dst_vcpu);
-		अवरोध;
-	हाल SIGP_STOP_AND_STORE_STATUS:
-		vcpu->stat.inकाष्ठाion_sigp_stop_store_status++;
+		break;
+	case SIGP_STOP_AND_STORE_STATUS:
+		vcpu->stat.instruction_sigp_stop_store_status++;
 		rc = __sigp_stop_and_store_status(vcpu, dst_vcpu, status_reg);
-		अवरोध;
-	हाल SIGP_STORE_STATUS_AT_ADDRESS:
-		vcpu->stat.inकाष्ठाion_sigp_store_status++;
+		break;
+	case SIGP_STORE_STATUS_AT_ADDRESS:
+		vcpu->stat.instruction_sigp_store_status++;
 		rc = __sigp_store_status_at_addr(vcpu, dst_vcpu, parameter,
 						 status_reg);
-		अवरोध;
-	हाल SIGP_SET_PREFIX:
-		vcpu->stat.inकाष्ठाion_sigp_prefix++;
+		break;
+	case SIGP_SET_PREFIX:
+		vcpu->stat.instruction_sigp_prefix++;
 		rc = __sigp_set_prefix(vcpu, dst_vcpu, parameter, status_reg);
-		अवरोध;
-	हाल SIGP_COND_EMERGENCY_SIGNAL:
-		vcpu->stat.inकाष्ठाion_sigp_cond_emergency++;
+		break;
+	case SIGP_COND_EMERGENCY_SIGNAL:
+		vcpu->stat.instruction_sigp_cond_emergency++;
 		rc = __sigp_conditional_emergency(vcpu, dst_vcpu, parameter,
 						  status_reg);
-		अवरोध;
-	हाल SIGP_SENSE_RUNNING:
-		vcpu->stat.inकाष्ठाion_sigp_sense_running++;
+		break;
+	case SIGP_SENSE_RUNNING:
+		vcpu->stat.instruction_sigp_sense_running++;
 		rc = __sigp_sense_running(vcpu, dst_vcpu, status_reg);
-		अवरोध;
-	हाल SIGP_START:
-		vcpu->stat.inकाष्ठाion_sigp_start++;
+		break;
+	case SIGP_START:
+		vcpu->stat.instruction_sigp_start++;
 		rc = __prepare_sigp_re_start(vcpu, dst_vcpu, order_code);
-		अवरोध;
-	हाल SIGP_RESTART:
-		vcpu->stat.inकाष्ठाion_sigp_restart++;
+		break;
+	case SIGP_RESTART:
+		vcpu->stat.instruction_sigp_restart++;
 		rc = __prepare_sigp_re_start(vcpu, dst_vcpu, order_code);
-		अवरोध;
-	हाल SIGP_INITIAL_CPU_RESET:
-		vcpu->stat.inकाष्ठाion_sigp_init_cpu_reset++;
+		break;
+	case SIGP_INITIAL_CPU_RESET:
+		vcpu->stat.instruction_sigp_init_cpu_reset++;
 		rc = __prepare_sigp_cpu_reset(vcpu, dst_vcpu, order_code);
-		अवरोध;
-	हाल SIGP_CPU_RESET:
-		vcpu->stat.inकाष्ठाion_sigp_cpu_reset++;
+		break;
+	case SIGP_CPU_RESET:
+		vcpu->stat.instruction_sigp_cpu_reset++;
 		rc = __prepare_sigp_cpu_reset(vcpu, dst_vcpu, order_code);
-		अवरोध;
-	शेष:
-		vcpu->stat.inकाष्ठाion_sigp_unknown++;
+		break;
+	default:
+		vcpu->stat.instruction_sigp_unknown++;
 		rc = __prepare_sigp_unknown(vcpu, dst_vcpu);
-	पूर्ण
+	}
 
-	अगर (rc == -EOPNOTSUPP)
+	if (rc == -EOPNOTSUPP)
 		VCPU_EVENT(vcpu, 4,
 			   "sigp order %u -> cpu %x: handled in user space",
 			   order_code, dst_vcpu->vcpu_id);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक handle_sigp_order_in_user_space(काष्ठा kvm_vcpu *vcpu, u8 order_code,
+static int handle_sigp_order_in_user_space(struct kvm_vcpu *vcpu, u8 order_code,
 					   u16 cpu_addr)
-अणु
-	अगर (!vcpu->kvm->arch.user_sigp)
-		वापस 0;
+{
+	if (!vcpu->kvm->arch.user_sigp)
+		return 0;
 
-	चयन (order_code) अणु
-	हाल SIGP_SENSE:
-	हाल SIGP_EXTERNAL_CALL:
-	हाल SIGP_EMERGENCY_SIGNAL:
-	हाल SIGP_COND_EMERGENCY_SIGNAL:
-	हाल SIGP_SENSE_RUNNING:
-		वापस 0;
+	switch (order_code) {
+	case SIGP_SENSE:
+	case SIGP_EXTERNAL_CALL:
+	case SIGP_EMERGENCY_SIGNAL:
+	case SIGP_COND_EMERGENCY_SIGNAL:
+	case SIGP_SENSE_RUNNING:
+		return 0;
 	/* update counters as we're directly dropping to user space */
-	हाल SIGP_STOP:
-		vcpu->stat.inकाष्ठाion_sigp_stop++;
-		अवरोध;
-	हाल SIGP_STOP_AND_STORE_STATUS:
-		vcpu->stat.inकाष्ठाion_sigp_stop_store_status++;
-		अवरोध;
-	हाल SIGP_STORE_STATUS_AT_ADDRESS:
-		vcpu->stat.inकाष्ठाion_sigp_store_status++;
-		अवरोध;
-	हाल SIGP_STORE_ADDITIONAL_STATUS:
-		vcpu->stat.inकाष्ठाion_sigp_store_adtl_status++;
-		अवरोध;
-	हाल SIGP_SET_PREFIX:
-		vcpu->stat.inकाष्ठाion_sigp_prefix++;
-		अवरोध;
-	हाल SIGP_START:
-		vcpu->stat.inकाष्ठाion_sigp_start++;
-		अवरोध;
-	हाल SIGP_RESTART:
-		vcpu->stat.inकाष्ठाion_sigp_restart++;
-		अवरोध;
-	हाल SIGP_INITIAL_CPU_RESET:
-		vcpu->stat.inकाष्ठाion_sigp_init_cpu_reset++;
-		अवरोध;
-	हाल SIGP_CPU_RESET:
-		vcpu->stat.inकाष्ठाion_sigp_cpu_reset++;
-		अवरोध;
-	शेष:
-		vcpu->stat.inकाष्ठाion_sigp_unknown++;
-	पूर्ण
+	case SIGP_STOP:
+		vcpu->stat.instruction_sigp_stop++;
+		break;
+	case SIGP_STOP_AND_STORE_STATUS:
+		vcpu->stat.instruction_sigp_stop_store_status++;
+		break;
+	case SIGP_STORE_STATUS_AT_ADDRESS:
+		vcpu->stat.instruction_sigp_store_status++;
+		break;
+	case SIGP_STORE_ADDITIONAL_STATUS:
+		vcpu->stat.instruction_sigp_store_adtl_status++;
+		break;
+	case SIGP_SET_PREFIX:
+		vcpu->stat.instruction_sigp_prefix++;
+		break;
+	case SIGP_START:
+		vcpu->stat.instruction_sigp_start++;
+		break;
+	case SIGP_RESTART:
+		vcpu->stat.instruction_sigp_restart++;
+		break;
+	case SIGP_INITIAL_CPU_RESET:
+		vcpu->stat.instruction_sigp_init_cpu_reset++;
+		break;
+	case SIGP_CPU_RESET:
+		vcpu->stat.instruction_sigp_cpu_reset++;
+		break;
+	default:
+		vcpu->stat.instruction_sigp_unknown++;
+	}
 	VCPU_EVENT(vcpu, 3, "SIGP: order %u for CPU %d handled in userspace",
 		   order_code, cpu_addr);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-पूर्णांक kvm_s390_handle_sigp(काष्ठा kvm_vcpu *vcpu)
-अणु
-	पूर्णांक r1 = (vcpu->arch.sie_block->ipa & 0x00f0) >> 4;
-	पूर्णांक r3 = vcpu->arch.sie_block->ipa & 0x000f;
+int kvm_s390_handle_sigp(struct kvm_vcpu *vcpu)
+{
+	int r1 = (vcpu->arch.sie_block->ipa & 0x00f0) >> 4;
+	int r3 = vcpu->arch.sie_block->ipa & 0x000f;
 	u32 parameter;
 	u16 cpu_addr = vcpu->run->s.regs.gprs[r3];
 	u8 order_code;
-	पूर्णांक rc;
+	int rc;
 
-	/* sigp in userspace can निकास */
-	अगर (vcpu->arch.sie_block->gpsw.mask & PSW_MASK_PSTATE)
-		वापस kvm_s390_inject_program_पूर्णांक(vcpu, PGM_PRIVILEGED_OP);
+	/* sigp in userspace can exit */
+	if (vcpu->arch.sie_block->gpsw.mask & PSW_MASK_PSTATE)
+		return kvm_s390_inject_program_int(vcpu, PGM_PRIVILEGED_OP);
 
-	order_code = kvm_s390_get_base_disp_rs(vcpu, शून्य);
-	अगर (handle_sigp_order_in_user_space(vcpu, order_code, cpu_addr))
-		वापस -EOPNOTSUPP;
+	order_code = kvm_s390_get_base_disp_rs(vcpu, NULL);
+	if (handle_sigp_order_in_user_space(vcpu, order_code, cpu_addr))
+		return -EOPNOTSUPP;
 
-	अगर (r1 % 2)
+	if (r1 % 2)
 		parameter = vcpu->run->s.regs.gprs[r1];
-	अन्यथा
+	else
 		parameter = vcpu->run->s.regs.gprs[r1 + 1];
 
 	trace_kvm_s390_handle_sigp(vcpu, order_code, cpu_addr, parameter);
-	चयन (order_code) अणु
-	हाल SIGP_SET_ARCHITECTURE:
-		vcpu->stat.inकाष्ठाion_sigp_arch++;
+	switch (order_code) {
+	case SIGP_SET_ARCHITECTURE:
+		vcpu->stat.instruction_sigp_arch++;
 		rc = __sigp_set_arch(vcpu, parameter,
 				     &vcpu->run->s.regs.gprs[r1]);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		rc = handle_sigp_dst(vcpu, order_code, cpu_addr,
 				     parameter,
 				     &vcpu->run->s.regs.gprs[r1]);
-	पूर्ण
+	}
 
-	अगर (rc < 0)
-		वापस rc;
+	if (rc < 0)
+		return rc;
 
 	kvm_s390_set_psw_cc(vcpu, rc);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Handle SIGP partial execution पूर्णांकerception.
+ * Handle SIGP partial execution interception.
  *
- * This पूर्णांकerception will occur at the source cpu when a source cpu sends an
- * बाह्यal call to a target cpu and the target cpu has the WAIT bit set in
- * its cpuflags. Interception will occurr after the पूर्णांकerrupt indicator bits at
- * the target cpu have been set. All error हालs will lead to inकाष्ठाion
- * पूर्णांकerception, thereक्रमe nothing is to be checked or prepared.
+ * This interception will occur at the source cpu when a source cpu sends an
+ * external call to a target cpu and the target cpu has the WAIT bit set in
+ * its cpuflags. Interception will occurr after the interrupt indicator bits at
+ * the target cpu have been set. All error cases will lead to instruction
+ * interception, therefore nothing is to be checked or prepared.
  */
-पूर्णांक kvm_s390_handle_sigp_pei(काष्ठा kvm_vcpu *vcpu)
-अणु
-	पूर्णांक r3 = vcpu->arch.sie_block->ipa & 0x000f;
+int kvm_s390_handle_sigp_pei(struct kvm_vcpu *vcpu)
+{
+	int r3 = vcpu->arch.sie_block->ipa & 0x000f;
 	u16 cpu_addr = vcpu->run->s.regs.gprs[r3];
-	काष्ठा kvm_vcpu *dest_vcpu;
-	u8 order_code = kvm_s390_get_base_disp_rs(vcpu, शून्य);
+	struct kvm_vcpu *dest_vcpu;
+	u8 order_code = kvm_s390_get_base_disp_rs(vcpu, NULL);
 
 	trace_kvm_s390_handle_sigp_pei(vcpu, order_code, cpu_addr);
 
-	अगर (order_code == SIGP_EXTERNAL_CALL) अणु
+	if (order_code == SIGP_EXTERNAL_CALL) {
 		dest_vcpu = kvm_get_vcpu_by_id(vcpu->kvm, cpu_addr);
-		BUG_ON(dest_vcpu == शून्य);
+		BUG_ON(dest_vcpu == NULL);
 
 		kvm_s390_vcpu_wakeup(dest_vcpu);
 		kvm_s390_set_psw_cc(vcpu, SIGP_CC_ORDER_CODE_ACCEPTED);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस -EOPNOTSUPP;
-पूर्ण
+	return -EOPNOTSUPP;
+}

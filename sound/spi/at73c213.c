@@ -1,44 +1,43 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Driver क्रम AT73C213 16-bit stereo DAC connected to Aपंचांगel SSC
+ * Driver for AT73C213 16-bit stereo DAC connected to Atmel SSC
  *
- * Copyright (C) 2006-2007 Aपंचांगel Norway
+ * Copyright (C) 2006-2007 Atmel Norway
  */
 
-/*#घोषणा DEBUG*/
+/*#define DEBUG*/
 
-#समावेश <linux/clk.h>
-#समावेश <linux/err.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/device.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/पन.स>
+#include <linux/clk.h>
+#include <linux/err.h>
+#include <linux/delay.h>
+#include <linux/device.h>
+#include <linux/dma-mapping.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <linux/platform_device.h>
+#include <linux/io.h>
 
-#समावेश <sound/initval.h>
-#समावेश <sound/control.h>
-#समावेश <sound/core.h>
-#समावेश <sound/pcm.h>
+#include <sound/initval.h>
+#include <sound/control.h>
+#include <sound/core.h>
+#include <sound/pcm.h>
 
-#समावेश <linux/aपंचांगel-ssc.h>
+#include <linux/atmel-ssc.h>
 
-#समावेश <linux/spi/spi.h>
-#समावेश <linux/spi/at73c213.h>
+#include <linux/spi/spi.h>
+#include <linux/spi/at73c213.h>
 
-#समावेश "at73c213.h"
+#include "at73c213.h"
 
-#घोषणा BITRATE_MIN	 8000 /* Hardware limit? */
-#घोषणा BITRATE_TARGET	CONFIG_SND_AT73C213_TARGET_BITRATE
-#घोषणा BITRATE_MAX	50000 /* Hardware limit. */
+#define BITRATE_MIN	 8000 /* Hardware limit? */
+#define BITRATE_TARGET	CONFIG_SND_AT73C213_TARGET_BITRATE
+#define BITRATE_MAX	50000 /* Hardware limit. */
 
-/* Initial (hardware reset) AT73C213 रेजिस्टर values. */
-अटल स्थिर u8 snd_at73c213_original_image[18] =
-अणु
+/* Initial (hardware reset) AT73C213 register values. */
+static const u8 snd_at73c213_original_image[18] =
+{
 	0x00,	/* 00 - CTRL    */
 	0x05,	/* 01 - LLIG    */
 	0x05,	/* 02 - RLIG    */
@@ -57,39 +56,39 @@
 	0x00,	/* 0F -         */
 	0x00,	/* 10 - RST     */
 	0x00,	/* 11 - PA_CTRL */
-पूर्ण;
+};
 
-काष्ठा snd_at73c213 अणु
-	काष्ठा snd_card			*card;
-	काष्ठा snd_pcm			*pcm;
-	काष्ठा snd_pcm_substream	*substream;
-	काष्ठा at73c213_board_info	*board;
-	पूर्णांक				irq;
-	पूर्णांक				period;
-	अचिन्हित दीर्घ			bitrate;
-	काष्ठा ssc_device		*ssc;
-	काष्ठा spi_device		*spi;
+struct snd_at73c213 {
+	struct snd_card			*card;
+	struct snd_pcm			*pcm;
+	struct snd_pcm_substream	*substream;
+	struct at73c213_board_info	*board;
+	int				irq;
+	int				period;
+	unsigned long			bitrate;
+	struct ssc_device		*ssc;
+	struct spi_device		*spi;
 	u8				spi_wbuffer[2];
 	u8				spi_rbuffer[2];
-	/* Image of the SPI रेजिस्टरs in AT73C213. */
+	/* Image of the SPI registers in AT73C213. */
 	u8				reg_image[18];
-	/* Protect SSC रेजिस्टरs against concurrent access. */
+	/* Protect SSC registers against concurrent access. */
 	spinlock_t			lock;
-	/* Protect mixer रेजिस्टरs against concurrent access. */
-	काष्ठा mutex			mixer_lock;
-पूर्ण;
+	/* Protect mixer registers against concurrent access. */
+	struct mutex			mixer_lock;
+};
 
-#घोषणा get_chip(card) ((काष्ठा snd_at73c213 *)card->निजी_data)
+#define get_chip(card) ((struct snd_at73c213 *)card->private_data)
 
-अटल पूर्णांक
-snd_at73c213_ग_लिखो_reg(काष्ठा snd_at73c213 *chip, u8 reg, u8 val)
-अणु
-	काष्ठा spi_message msg;
-	काष्ठा spi_transfer msg_xfer = अणु
+static int
+snd_at73c213_write_reg(struct snd_at73c213 *chip, u8 reg, u8 val)
+{
+	struct spi_message msg;
+	struct spi_transfer msg_xfer = {
 		.len		= 2,
 		.cs_change	= 0,
-	पूर्ण;
-	पूर्णांक retval;
+	};
+	int retval;
 
 	spi_message_init(&msg);
 
@@ -102,16 +101,16 @@ snd_at73c213_ग_लिखो_reg(काष्ठा snd_at73c213 *chip, u8 reg,
 
 	retval = spi_sync(chip->spi, &msg);
 
-	अगर (!retval)
+	if (!retval)
 		chip->reg_image[reg] = val;
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल काष्ठा snd_pcm_hardware snd_at73c213_playback_hw = अणु
+static struct snd_pcm_hardware snd_at73c213_playback_hw = {
 	.info		= SNDRV_PCM_INFO_INTERLEAVED |
 			  SNDRV_PCM_INFO_BLOCK_TRANSFER,
-	.क्रमmats	= SNDRV_PCM_FMTBIT_S16_BE,
+	.formats	= SNDRV_PCM_FMTBIT_S16_BE,
 	.rates		= SNDRV_PCM_RATE_CONTINUOUS,
 	.rate_min	= 8000,  /* Replaced by chip->bitrate later. */
 	.rate_max	= 50000, /* Replaced by chip->bitrate later. */
@@ -122,220 +121,220 @@ snd_at73c213_ग_लिखो_reg(काष्ठा snd_at73c213 *chip, u8 reg,
 	.period_bytes_max = 64 * 1024 - 1,
 	.periods_min	= 4,
 	.periods_max	= 1024,
-पूर्ण;
+};
 
 /*
- * Calculate and set bitrate and भागisions.
+ * Calculate and set bitrate and divisions.
  */
-अटल पूर्णांक snd_at73c213_set_bitrate(काष्ठा snd_at73c213 *chip)
-अणु
-	अचिन्हित दीर्घ ssc_rate = clk_get_rate(chip->ssc->clk);
-	अचिन्हित दीर्घ dac_rate_new, ssc_भाग;
-	पूर्णांक status;
-	अचिन्हित दीर्घ ssc_भाग_max, ssc_भाग_min;
-	पूर्णांक max_tries;
+static int snd_at73c213_set_bitrate(struct snd_at73c213 *chip)
+{
+	unsigned long ssc_rate = clk_get_rate(chip->ssc->clk);
+	unsigned long dac_rate_new, ssc_div;
+	int status;
+	unsigned long ssc_div_max, ssc_div_min;
+	int max_tries;
 
 	/*
-	 * We connect two घड़ीs here, picking भागisors so the I2S घड़ीs
-	 * out data at the same rate the DAC घड़ीs it in ... and as बंद
+	 * We connect two clocks here, picking divisors so the I2S clocks
+	 * out data at the same rate the DAC clocks it in ... and as close
 	 * as practical to the desired target rate.
 	 *
-	 * The DAC master घड़ी (MCLK) is programmable, and is either 256
-	 * or (not here) 384 बार the I2S output घड़ी (BCLK).
+	 * The DAC master clock (MCLK) is programmable, and is either 256
+	 * or (not here) 384 times the I2S output clock (BCLK).
 	 */
 
-	/* SSC घड़ी / (bitrate * stereo * 16-bit). */
-	ssc_भाग = ssc_rate / (BITRATE_TARGET * 2 * 16);
-	ssc_भाग_min = ssc_rate / (BITRATE_MAX * 2 * 16);
-	ssc_भाग_max = ssc_rate / (BITRATE_MIN * 2 * 16);
-	max_tries = (ssc_भाग_max - ssc_भाग_min) / 2;
+	/* SSC clock / (bitrate * stereo * 16-bit). */
+	ssc_div = ssc_rate / (BITRATE_TARGET * 2 * 16);
+	ssc_div_min = ssc_rate / (BITRATE_MAX * 2 * 16);
+	ssc_div_max = ssc_rate / (BITRATE_MIN * 2 * 16);
+	max_tries = (ssc_div_max - ssc_div_min) / 2;
 
-	अगर (max_tries < 1)
+	if (max_tries < 1)
 		max_tries = 1;
 
-	/* ssc_भाग must be even. */
-	ssc_भाग = (ssc_भाग + 1) & ~1UL;
+	/* ssc_div must be even. */
+	ssc_div = (ssc_div + 1) & ~1UL;
 
-	अगर ((ssc_rate / (ssc_भाग * 2 * 16)) < BITRATE_MIN) अणु
-		ssc_भाग -= 2;
-		अगर ((ssc_rate / (ssc_भाग * 2 * 16)) > BITRATE_MAX)
-			वापस -ENXIO;
-	पूर्ण
+	if ((ssc_rate / (ssc_div * 2 * 16)) < BITRATE_MIN) {
+		ssc_div -= 2;
+		if ((ssc_rate / (ssc_div * 2 * 16)) > BITRATE_MAX)
+			return -ENXIO;
+	}
 
-	/* Search क्रम a possible bitrate. */
-	करो अणु
-		/* SSC घड़ी / (ssc भागider * 16-bit * stereo). */
-		अगर ((ssc_rate / (ssc_भाग * 2 * 16)) < BITRATE_MIN)
-			वापस -ENXIO;
+	/* Search for a possible bitrate. */
+	do {
+		/* SSC clock / (ssc divider * 16-bit * stereo). */
+		if ((ssc_rate / (ssc_div * 2 * 16)) < BITRATE_MIN)
+			return -ENXIO;
 
 		/* 256 / (2 * 16) = 8 */
-		dac_rate_new = 8 * (ssc_rate / ssc_भाग);
+		dac_rate_new = 8 * (ssc_rate / ssc_div);
 
 		status = clk_round_rate(chip->board->dac_clk, dac_rate_new);
-		अगर (status <= 0)
-			वापस status;
+		if (status <= 0)
+			return status;
 
-		/* Ignore dअगरference smaller than 256 Hz. */
-		अगर ((status/256) == (dac_rate_new/256))
-			जाओ set_rate;
+		/* Ignore difference smaller than 256 Hz. */
+		if ((status/256) == (dac_rate_new/256))
+			goto set_rate;
 
-		ssc_भाग += 2;
-	पूर्ण जबतक (--max_tries);
+		ssc_div += 2;
+	} while (--max_tries);
 
 	/* Not able to find a valid bitrate. */
-	वापस -ENXIO;
+	return -ENXIO;
 
 set_rate:
 	status = clk_set_rate(chip->board->dac_clk, status);
-	अगर (status < 0)
-		वापस status;
+	if (status < 0)
+		return status;
 
-	/* Set भागider in SSC device. */
-	ssc_ग_लिखोl(chip->ssc->regs, CMR, ssc_भाग/2);
+	/* Set divider in SSC device. */
+	ssc_writel(chip->ssc->regs, CMR, ssc_div/2);
 
-	/* SSC घड़ी / (ssc भागider * 16-bit * stereo). */
-	chip->bitrate = ssc_rate / (ssc_भाग * 16 * 2);
+	/* SSC clock / (ssc divider * 16-bit * stereo). */
+	chip->bitrate = ssc_rate / (ssc_div * 16 * 2);
 
 	dev_info(&chip->spi->dev,
 			"at73c213: supported bitrate is %lu (%lu divider)\n",
-			chip->bitrate, ssc_भाग);
+			chip->bitrate, ssc_div);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_at73c213_pcm_खोलो(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_at73c213 *chip = snd_pcm_substream_chip(substream);
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	पूर्णांक err;
+static int snd_at73c213_pcm_open(struct snd_pcm_substream *substream)
+{
+	struct snd_at73c213 *chip = snd_pcm_substream_chip(substream);
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	int err;
 
 	/* ensure buffer_size is a multiple of period_size */
-	err = snd_pcm_hw_स्थिरraपूर्णांक_पूर्णांकeger(runसमय,
+	err = snd_pcm_hw_constraint_integer(runtime,
 					SNDRV_PCM_HW_PARAM_PERIODS);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 	snd_at73c213_playback_hw.rate_min = chip->bitrate;
 	snd_at73c213_playback_hw.rate_max = chip->bitrate;
-	runसमय->hw = snd_at73c213_playback_hw;
+	runtime->hw = snd_at73c213_playback_hw;
 	chip->substream = substream;
 
 	clk_enable(chip->ssc->clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_at73c213_pcm_बंद(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_at73c213 *chip = snd_pcm_substream_chip(substream);
-	chip->substream = शून्य;
+static int snd_at73c213_pcm_close(struct snd_pcm_substream *substream)
+{
+	struct snd_at73c213 *chip = snd_pcm_substream_chip(substream);
+	chip->substream = NULL;
 	clk_disable(chip->ssc->clk);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_at73c213_pcm_hw_params(काष्ठा snd_pcm_substream *substream,
-				 काष्ठा snd_pcm_hw_params *hw_params)
-अणु
-	काष्ठा snd_at73c213 *chip = snd_pcm_substream_chip(substream);
-	पूर्णांक channels = params_channels(hw_params);
-	पूर्णांक val;
+static int snd_at73c213_pcm_hw_params(struct snd_pcm_substream *substream,
+				 struct snd_pcm_hw_params *hw_params)
+{
+	struct snd_at73c213 *chip = snd_pcm_substream_chip(substream);
+	int channels = params_channels(hw_params);
+	int val;
 
-	val = ssc_पढ़ोl(chip->ssc->regs, TFMR);
+	val = ssc_readl(chip->ssc->regs, TFMR);
 	val = SSC_BFINS(TFMR_DATNB, channels - 1, val);
-	ssc_ग_लिखोl(chip->ssc->regs, TFMR, val);
+	ssc_writel(chip->ssc->regs, TFMR, val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_at73c213_pcm_prepare(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_at73c213 *chip = snd_pcm_substream_chip(substream);
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	पूर्णांक block_size;
+static int snd_at73c213_pcm_prepare(struct snd_pcm_substream *substream)
+{
+	struct snd_at73c213 *chip = snd_pcm_substream_chip(substream);
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	int block_size;
 
-	block_size = frames_to_bytes(runसमय, runसमय->period_size);
+	block_size = frames_to_bytes(runtime, runtime->period_size);
 
 	chip->period = 0;
 
-	ssc_ग_लिखोl(chip->ssc->regs, PDC_TPR,
-			(दीर्घ)runसमय->dma_addr);
-	ssc_ग_लिखोl(chip->ssc->regs, PDC_TCR,
-			runसमय->period_size * runसमय->channels);
-	ssc_ग_लिखोl(chip->ssc->regs, PDC_TNPR,
-			(दीर्घ)runसमय->dma_addr + block_size);
-	ssc_ग_लिखोl(chip->ssc->regs, PDC_TNCR,
-			runसमय->period_size * runसमय->channels);
+	ssc_writel(chip->ssc->regs, PDC_TPR,
+			(long)runtime->dma_addr);
+	ssc_writel(chip->ssc->regs, PDC_TCR,
+			runtime->period_size * runtime->channels);
+	ssc_writel(chip->ssc->regs, PDC_TNPR,
+			(long)runtime->dma_addr + block_size);
+	ssc_writel(chip->ssc->regs, PDC_TNCR,
+			runtime->period_size * runtime->channels);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_at73c213_pcm_trigger(काष्ठा snd_pcm_substream *substream,
-				   पूर्णांक cmd)
-अणु
-	काष्ठा snd_at73c213 *chip = snd_pcm_substream_chip(substream);
-	पूर्णांक retval = 0;
+static int snd_at73c213_pcm_trigger(struct snd_pcm_substream *substream,
+				   int cmd)
+{
+	struct snd_at73c213 *chip = snd_pcm_substream_chip(substream);
+	int retval = 0;
 
 	spin_lock(&chip->lock);
 
-	चयन (cmd) अणु
-	हाल SNDRV_PCM_TRIGGER_START:
-		ssc_ग_लिखोl(chip->ssc->regs, IER, SSC_BIT(IER_ENDTX));
-		ssc_ग_लिखोl(chip->ssc->regs, PDC_PTCR, SSC_BIT(PDC_PTCR_TXTEN));
-		अवरोध;
-	हाल SNDRV_PCM_TRIGGER_STOP:
-		ssc_ग_लिखोl(chip->ssc->regs, PDC_PTCR, SSC_BIT(PDC_PTCR_TXTDIS));
-		ssc_ग_लिखोl(chip->ssc->regs, IDR, SSC_BIT(IDR_ENDTX));
-		अवरोध;
-	शेष:
+	switch (cmd) {
+	case SNDRV_PCM_TRIGGER_START:
+		ssc_writel(chip->ssc->regs, IER, SSC_BIT(IER_ENDTX));
+		ssc_writel(chip->ssc->regs, PDC_PTCR, SSC_BIT(PDC_PTCR_TXTEN));
+		break;
+	case SNDRV_PCM_TRIGGER_STOP:
+		ssc_writel(chip->ssc->regs, PDC_PTCR, SSC_BIT(PDC_PTCR_TXTDIS));
+		ssc_writel(chip->ssc->regs, IDR, SSC_BIT(IDR_ENDTX));
+		break;
+	default:
 		dev_dbg(&chip->spi->dev, "spurious command %x\n", cmd);
 		retval = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	spin_unlock(&chip->lock);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल snd_pcm_uframes_t
-snd_at73c213_pcm_poपूर्णांकer(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_at73c213 *chip = snd_pcm_substream_chip(substream);
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+static snd_pcm_uframes_t
+snd_at73c213_pcm_pointer(struct snd_pcm_substream *substream)
+{
+	struct snd_at73c213 *chip = snd_pcm_substream_chip(substream);
+	struct snd_pcm_runtime *runtime = substream->runtime;
 	snd_pcm_uframes_t pos;
-	अचिन्हित दीर्घ bytes;
+	unsigned long bytes;
 
-	bytes = ssc_पढ़ोl(chip->ssc->regs, PDC_TPR)
-		- (अचिन्हित दीर्घ)runसमय->dma_addr;
+	bytes = ssc_readl(chip->ssc->regs, PDC_TPR)
+		- (unsigned long)runtime->dma_addr;
 
-	pos = bytes_to_frames(runसमय, bytes);
-	अगर (pos >= runसमय->buffer_size)
-		pos -= runसमय->buffer_size;
+	pos = bytes_to_frames(runtime, bytes);
+	if (pos >= runtime->buffer_size)
+		pos -= runtime->buffer_size;
 
-	वापस pos;
-पूर्ण
+	return pos;
+}
 
-अटल स्थिर काष्ठा snd_pcm_ops at73c213_playback_ops = अणु
-	.खोलो		= snd_at73c213_pcm_खोलो,
-	.बंद		= snd_at73c213_pcm_बंद,
+static const struct snd_pcm_ops at73c213_playback_ops = {
+	.open		= snd_at73c213_pcm_open,
+	.close		= snd_at73c213_pcm_close,
 	.hw_params	= snd_at73c213_pcm_hw_params,
 	.prepare	= snd_at73c213_pcm_prepare,
 	.trigger	= snd_at73c213_pcm_trigger,
-	.poपूर्णांकer	= snd_at73c213_pcm_poपूर्णांकer,
-पूर्ण;
+	.pointer	= snd_at73c213_pcm_pointer,
+};
 
-अटल पूर्णांक snd_at73c213_pcm_new(काष्ठा snd_at73c213 *chip, पूर्णांक device)
-अणु
-	काष्ठा snd_pcm *pcm;
-	पूर्णांक retval;
+static int snd_at73c213_pcm_new(struct snd_at73c213 *chip, int device)
+{
+	struct snd_pcm *pcm;
+	int retval;
 
-	retval = snd_pcm_new(chip->card, chip->card->लघुname,
+	retval = snd_pcm_new(chip->card, chip->card->shortname,
 			device, 1, 0, &pcm);
-	अगर (retval < 0)
-		जाओ out;
+	if (retval < 0)
+		goto out;
 
-	pcm->निजी_data = chip;
+	pcm->private_data = chip;
 	pcm->info_flags = SNDRV_PCM_INFO_BLOCK_TRANSFER;
-	म_नकल(pcm->name, "at73c213");
+	strcpy(pcm->name, "at73c213");
 	chip->pcm = pcm;
 
 	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_PLAYBACK, &at73c213_playback_ops);
@@ -344,408 +343,408 @@ snd_at73c213_pcm_poपूर्णांकer(काष्ठा snd_pcm_substre
 			SNDRV_DMA_TYPE_DEV, &chip->ssc->pdev->dev,
 			64 * 1024, 64 * 1024);
 out:
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल irqवापस_t snd_at73c213_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा snd_at73c213 *chip = dev_id;
-	काष्ठा snd_pcm_runसमय *runसमय = chip->substream->runसमय;
+static irqreturn_t snd_at73c213_interrupt(int irq, void *dev_id)
+{
+	struct snd_at73c213 *chip = dev_id;
+	struct snd_pcm_runtime *runtime = chip->substream->runtime;
 	u32 status;
-	पूर्णांक offset;
-	पूर्णांक block_size;
-	पूर्णांक next_period;
-	पूर्णांक retval = IRQ_NONE;
+	int offset;
+	int block_size;
+	int next_period;
+	int retval = IRQ_NONE;
 
 	spin_lock(&chip->lock);
 
-	block_size = frames_to_bytes(runसमय, runसमय->period_size);
-	status = ssc_पढ़ोl(chip->ssc->regs, IMR);
+	block_size = frames_to_bytes(runtime, runtime->period_size);
+	status = ssc_readl(chip->ssc->regs, IMR);
 
-	अगर (status & SSC_BIT(IMR_ENDTX)) अणु
+	if (status & SSC_BIT(IMR_ENDTX)) {
 		chip->period++;
-		अगर (chip->period == runसमय->periods)
+		if (chip->period == runtime->periods)
 			chip->period = 0;
 		next_period = chip->period + 1;
-		अगर (next_period == runसमय->periods)
+		if (next_period == runtime->periods)
 			next_period = 0;
 
 		offset = block_size * next_period;
 
-		ssc_ग_लिखोl(chip->ssc->regs, PDC_TNPR,
-				(दीर्घ)runसमय->dma_addr + offset);
-		ssc_ग_लिखोl(chip->ssc->regs, PDC_TNCR,
-				runसमय->period_size * runसमय->channels);
+		ssc_writel(chip->ssc->regs, PDC_TNPR,
+				(long)runtime->dma_addr + offset);
+		ssc_writel(chip->ssc->regs, PDC_TNCR,
+				runtime->period_size * runtime->channels);
 		retval = IRQ_HANDLED;
-	पूर्ण
+	}
 
-	ssc_पढ़ोl(chip->ssc->regs, IMR);
+	ssc_readl(chip->ssc->regs, IMR);
 	spin_unlock(&chip->lock);
 
-	अगर (status & SSC_BIT(IMR_ENDTX))
+	if (status & SSC_BIT(IMR_ENDTX))
 		snd_pcm_period_elapsed(chip->substream);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
 /*
  * Mixer functions.
  */
-अटल पूर्णांक snd_at73c213_mono_get(काष्ठा snd_kcontrol *kcontrol,
-				 काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_at73c213 *chip = snd_kcontrol_chip(kcontrol);
-	पूर्णांक reg = kcontrol->निजी_value & 0xff;
-	पूर्णांक shअगरt = (kcontrol->निजी_value >> 8) & 0xff;
-	पूर्णांक mask = (kcontrol->निजी_value >> 16) & 0xff;
-	पूर्णांक invert = (kcontrol->निजी_value >> 24) & 0xff;
+static int snd_at73c213_mono_get(struct snd_kcontrol *kcontrol,
+				 struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_at73c213 *chip = snd_kcontrol_chip(kcontrol);
+	int reg = kcontrol->private_value & 0xff;
+	int shift = (kcontrol->private_value >> 8) & 0xff;
+	int mask = (kcontrol->private_value >> 16) & 0xff;
+	int invert = (kcontrol->private_value >> 24) & 0xff;
 
 	mutex_lock(&chip->mixer_lock);
 
-	ucontrol->value.पूर्णांकeger.value[0] =
-		(chip->reg_image[reg] >> shअगरt) & mask;
+	ucontrol->value.integer.value[0] =
+		(chip->reg_image[reg] >> shift) & mask;
 
-	अगर (invert)
-		ucontrol->value.पूर्णांकeger.value[0] =
-			mask - ucontrol->value.पूर्णांकeger.value[0];
+	if (invert)
+		ucontrol->value.integer.value[0] =
+			mask - ucontrol->value.integer.value[0];
 
 	mutex_unlock(&chip->mixer_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_at73c213_mono_put(काष्ठा snd_kcontrol *kcontrol,
-				 काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_at73c213 *chip = snd_kcontrol_chip(kcontrol);
-	पूर्णांक reg = kcontrol->निजी_value & 0xff;
-	पूर्णांक shअगरt = (kcontrol->निजी_value >> 8) & 0xff;
-	पूर्णांक mask = (kcontrol->निजी_value >> 16) & 0xff;
-	पूर्णांक invert = (kcontrol->निजी_value >> 24) & 0xff;
-	पूर्णांक change, retval;
-	अचिन्हित लघु val;
+static int snd_at73c213_mono_put(struct snd_kcontrol *kcontrol,
+				 struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_at73c213 *chip = snd_kcontrol_chip(kcontrol);
+	int reg = kcontrol->private_value & 0xff;
+	int shift = (kcontrol->private_value >> 8) & 0xff;
+	int mask = (kcontrol->private_value >> 16) & 0xff;
+	int invert = (kcontrol->private_value >> 24) & 0xff;
+	int change, retval;
+	unsigned short val;
 
-	val = (ucontrol->value.पूर्णांकeger.value[0] & mask);
-	अगर (invert)
+	val = (ucontrol->value.integer.value[0] & mask);
+	if (invert)
 		val = mask - val;
-	val <<= shअगरt;
+	val <<= shift;
 
 	mutex_lock(&chip->mixer_lock);
 
-	val = (chip->reg_image[reg] & ~(mask << shअगरt)) | val;
+	val = (chip->reg_image[reg] & ~(mask << shift)) | val;
 	change = val != chip->reg_image[reg];
-	retval = snd_at73c213_ग_लिखो_reg(chip, reg, val);
+	retval = snd_at73c213_write_reg(chip, reg, val);
 
 	mutex_unlock(&chip->mixer_lock);
 
-	अगर (retval)
-		वापस retval;
+	if (retval)
+		return retval;
 
-	वापस change;
-पूर्ण
+	return change;
+}
 
-अटल पूर्णांक snd_at73c213_stereo_info(काष्ठा snd_kcontrol *kcontrol,
-				  काष्ठा snd_ctl_elem_info *uinfo)
-अणु
-	पूर्णांक mask = (kcontrol->निजी_value >> 24) & 0xff;
+static int snd_at73c213_stereo_info(struct snd_kcontrol *kcontrol,
+				  struct snd_ctl_elem_info *uinfo)
+{
+	int mask = (kcontrol->private_value >> 24) & 0xff;
 
-	अगर (mask == 1)
+	if (mask == 1)
 		uinfo->type = SNDRV_CTL_ELEM_TYPE_BOOLEAN;
-	अन्यथा
+	else
 		uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 
 	uinfo->count = 2;
-	uinfo->value.पूर्णांकeger.min = 0;
-	uinfo->value.पूर्णांकeger.max = mask;
+	uinfo->value.integer.min = 0;
+	uinfo->value.integer.max = mask;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_at73c213_stereo_get(काष्ठा snd_kcontrol *kcontrol,
-				 काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_at73c213 *chip = snd_kcontrol_chip(kcontrol);
-	पूर्णांक left_reg = kcontrol->निजी_value & 0xff;
-	पूर्णांक right_reg = (kcontrol->निजी_value >> 8) & 0xff;
-	पूर्णांक shअगरt_left = (kcontrol->निजी_value >> 16) & 0x07;
-	पूर्णांक shअगरt_right = (kcontrol->निजी_value >> 19) & 0x07;
-	पूर्णांक mask = (kcontrol->निजी_value >> 24) & 0xff;
-	पूर्णांक invert = (kcontrol->निजी_value >> 22) & 1;
+static int snd_at73c213_stereo_get(struct snd_kcontrol *kcontrol,
+				 struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_at73c213 *chip = snd_kcontrol_chip(kcontrol);
+	int left_reg = kcontrol->private_value & 0xff;
+	int right_reg = (kcontrol->private_value >> 8) & 0xff;
+	int shift_left = (kcontrol->private_value >> 16) & 0x07;
+	int shift_right = (kcontrol->private_value >> 19) & 0x07;
+	int mask = (kcontrol->private_value >> 24) & 0xff;
+	int invert = (kcontrol->private_value >> 22) & 1;
 
 	mutex_lock(&chip->mixer_lock);
 
-	ucontrol->value.पूर्णांकeger.value[0] =
-		(chip->reg_image[left_reg] >> shअगरt_left) & mask;
-	ucontrol->value.पूर्णांकeger.value[1] =
-		(chip->reg_image[right_reg] >> shअगरt_right) & mask;
+	ucontrol->value.integer.value[0] =
+		(chip->reg_image[left_reg] >> shift_left) & mask;
+	ucontrol->value.integer.value[1] =
+		(chip->reg_image[right_reg] >> shift_right) & mask;
 
-	अगर (invert) अणु
-		ucontrol->value.पूर्णांकeger.value[0] =
-			mask - ucontrol->value.पूर्णांकeger.value[0];
-		ucontrol->value.पूर्णांकeger.value[1] =
-			mask - ucontrol->value.पूर्णांकeger.value[1];
-	पूर्ण
+	if (invert) {
+		ucontrol->value.integer.value[0] =
+			mask - ucontrol->value.integer.value[0];
+		ucontrol->value.integer.value[1] =
+			mask - ucontrol->value.integer.value[1];
+	}
 
 	mutex_unlock(&chip->mixer_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_at73c213_stereo_put(काष्ठा snd_kcontrol *kcontrol,
-				 काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_at73c213 *chip = snd_kcontrol_chip(kcontrol);
-	पूर्णांक left_reg = kcontrol->निजी_value & 0xff;
-	पूर्णांक right_reg = (kcontrol->निजी_value >> 8) & 0xff;
-	पूर्णांक shअगरt_left = (kcontrol->निजी_value >> 16) & 0x07;
-	पूर्णांक shअगरt_right = (kcontrol->निजी_value >> 19) & 0x07;
-	पूर्णांक mask = (kcontrol->निजी_value >> 24) & 0xff;
-	पूर्णांक invert = (kcontrol->निजी_value >> 22) & 1;
-	पूर्णांक change, retval;
-	अचिन्हित लघु val1, val2;
+static int snd_at73c213_stereo_put(struct snd_kcontrol *kcontrol,
+				 struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_at73c213 *chip = snd_kcontrol_chip(kcontrol);
+	int left_reg = kcontrol->private_value & 0xff;
+	int right_reg = (kcontrol->private_value >> 8) & 0xff;
+	int shift_left = (kcontrol->private_value >> 16) & 0x07;
+	int shift_right = (kcontrol->private_value >> 19) & 0x07;
+	int mask = (kcontrol->private_value >> 24) & 0xff;
+	int invert = (kcontrol->private_value >> 22) & 1;
+	int change, retval;
+	unsigned short val1, val2;
 
-	val1 = ucontrol->value.पूर्णांकeger.value[0] & mask;
-	val2 = ucontrol->value.पूर्णांकeger.value[1] & mask;
-	अगर (invert) अणु
+	val1 = ucontrol->value.integer.value[0] & mask;
+	val2 = ucontrol->value.integer.value[1] & mask;
+	if (invert) {
 		val1 = mask - val1;
 		val2 = mask - val2;
-	पूर्ण
-	val1 <<= shअगरt_left;
-	val2 <<= shअगरt_right;
+	}
+	val1 <<= shift_left;
+	val2 <<= shift_right;
 
 	mutex_lock(&chip->mixer_lock);
 
-	val1 = (chip->reg_image[left_reg] & ~(mask << shअगरt_left)) | val1;
-	val2 = (chip->reg_image[right_reg] & ~(mask << shअगरt_right)) | val2;
+	val1 = (chip->reg_image[left_reg] & ~(mask << shift_left)) | val1;
+	val2 = (chip->reg_image[right_reg] & ~(mask << shift_right)) | val2;
 	change = val1 != chip->reg_image[left_reg]
 		|| val2 != chip->reg_image[right_reg];
-	retval = snd_at73c213_ग_लिखो_reg(chip, left_reg, val1);
-	अगर (retval) अणु
+	retval = snd_at73c213_write_reg(chip, left_reg, val1);
+	if (retval) {
 		mutex_unlock(&chip->mixer_lock);
-		जाओ out;
-	पूर्ण
-	retval = snd_at73c213_ग_लिखो_reg(chip, right_reg, val2);
-	अगर (retval) अणु
+		goto out;
+	}
+	retval = snd_at73c213_write_reg(chip, right_reg, val2);
+	if (retval) {
 		mutex_unlock(&chip->mixer_lock);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	mutex_unlock(&chip->mixer_lock);
 
-	वापस change;
+	return change;
 
 out:
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-#घोषणा snd_at73c213_mono_चयन_info	snd_ctl_boolean_mono_info
+#define snd_at73c213_mono_switch_info	snd_ctl_boolean_mono_info
 
-अटल पूर्णांक snd_at73c213_mono_चयन_get(काष्ठा snd_kcontrol *kcontrol,
-				 काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_at73c213 *chip = snd_kcontrol_chip(kcontrol);
-	पूर्णांक reg = kcontrol->निजी_value & 0xff;
-	पूर्णांक shअगरt = (kcontrol->निजी_value >> 8) & 0xff;
-	पूर्णांक invert = (kcontrol->निजी_value >> 24) & 0xff;
+static int snd_at73c213_mono_switch_get(struct snd_kcontrol *kcontrol,
+				 struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_at73c213 *chip = snd_kcontrol_chip(kcontrol);
+	int reg = kcontrol->private_value & 0xff;
+	int shift = (kcontrol->private_value >> 8) & 0xff;
+	int invert = (kcontrol->private_value >> 24) & 0xff;
 
 	mutex_lock(&chip->mixer_lock);
 
-	ucontrol->value.पूर्णांकeger.value[0] =
-		(chip->reg_image[reg] >> shअगरt) & 0x01;
+	ucontrol->value.integer.value[0] =
+		(chip->reg_image[reg] >> shift) & 0x01;
 
-	अगर (invert)
-		ucontrol->value.पूर्णांकeger.value[0] =
-			0x01 - ucontrol->value.पूर्णांकeger.value[0];
+	if (invert)
+		ucontrol->value.integer.value[0] =
+			0x01 - ucontrol->value.integer.value[0];
 
 	mutex_unlock(&chip->mixer_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_at73c213_mono_चयन_put(काष्ठा snd_kcontrol *kcontrol,
-				 काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_at73c213 *chip = snd_kcontrol_chip(kcontrol);
-	पूर्णांक reg = kcontrol->निजी_value & 0xff;
-	पूर्णांक shअगरt = (kcontrol->निजी_value >> 8) & 0xff;
-	पूर्णांक mask = (kcontrol->निजी_value >> 16) & 0xff;
-	पूर्णांक invert = (kcontrol->निजी_value >> 24) & 0xff;
-	पूर्णांक change, retval;
-	अचिन्हित लघु val;
+static int snd_at73c213_mono_switch_put(struct snd_kcontrol *kcontrol,
+				 struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_at73c213 *chip = snd_kcontrol_chip(kcontrol);
+	int reg = kcontrol->private_value & 0xff;
+	int shift = (kcontrol->private_value >> 8) & 0xff;
+	int mask = (kcontrol->private_value >> 16) & 0xff;
+	int invert = (kcontrol->private_value >> 24) & 0xff;
+	int change, retval;
+	unsigned short val;
 
-	अगर (ucontrol->value.पूर्णांकeger.value[0])
+	if (ucontrol->value.integer.value[0])
 		val = mask;
-	अन्यथा
+	else
 		val = 0;
 
-	अगर (invert)
+	if (invert)
 		val = mask - val;
-	val <<= shअगरt;
+	val <<= shift;
 
 	mutex_lock(&chip->mixer_lock);
 
-	val |= (chip->reg_image[reg] & ~(mask << shअगरt));
+	val |= (chip->reg_image[reg] & ~(mask << shift));
 	change = val != chip->reg_image[reg];
 
-	retval = snd_at73c213_ग_लिखो_reg(chip, reg, val);
+	retval = snd_at73c213_write_reg(chip, reg, val);
 
 	mutex_unlock(&chip->mixer_lock);
 
-	अगर (retval)
-		वापस retval;
+	if (retval)
+		return retval;
 
-	वापस change;
-पूर्ण
+	return change;
+}
 
-अटल पूर्णांक snd_at73c213_pa_volume_info(काष्ठा snd_kcontrol *kcontrol,
-				  काष्ठा snd_ctl_elem_info *uinfo)
-अणु
+static int snd_at73c213_pa_volume_info(struct snd_kcontrol *kcontrol,
+				  struct snd_ctl_elem_info *uinfo)
+{
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 1;
-	uinfo->value.पूर्णांकeger.min = 0;
-	uinfo->value.पूर्णांकeger.max = ((kcontrol->निजी_value >> 16) & 0xff) - 1;
+	uinfo->value.integer.min = 0;
+	uinfo->value.integer.max = ((kcontrol->private_value >> 16) & 0xff) - 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_at73c213_line_capture_volume_info(
-		काष्ठा snd_kcontrol *kcontrol,
-		काष्ठा snd_ctl_elem_info *uinfo)
-अणु
+static int snd_at73c213_line_capture_volume_info(
+		struct snd_kcontrol *kcontrol,
+		struct snd_ctl_elem_info *uinfo)
+{
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 2;
 	/* When inverted will give values 0x10001 => 0. */
-	uinfo->value.पूर्णांकeger.min = 14;
-	uinfo->value.पूर्णांकeger.max = 31;
+	uinfo->value.integer.min = 14;
+	uinfo->value.integer.max = 31;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_at73c213_aux_capture_volume_info(
-		काष्ठा snd_kcontrol *kcontrol,
-		काष्ठा snd_ctl_elem_info *uinfo)
-अणु
+static int snd_at73c213_aux_capture_volume_info(
+		struct snd_kcontrol *kcontrol,
+		struct snd_ctl_elem_info *uinfo)
+{
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 1;
 	/* When inverted will give values 0x10001 => 0. */
-	uinfo->value.पूर्णांकeger.min = 14;
-	uinfo->value.पूर्णांकeger.max = 31;
+	uinfo->value.integer.min = 14;
+	uinfo->value.integer.max = 31;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा AT73C213_MONO_SWITCH(xname, xindex, reg, shअगरt, mask, invert)	\
-अणु									\
-	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,				\
+#define AT73C213_MONO_SWITCH(xname, xindex, reg, shift, mask, invert)	\
+{									\
+	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,				\
 	.name = xname,							\
 	.index = xindex,						\
-	.info = snd_at73c213_mono_चयन_info,				\
-	.get = snd_at73c213_mono_चयन_get,				\
-	.put = snd_at73c213_mono_चयन_put,				\
-	.निजी_value = (reg | (shअगरt << 8) | (mask << 16) | (invert << 24)) \
-पूर्ण
+	.info = snd_at73c213_mono_switch_info,				\
+	.get = snd_at73c213_mono_switch_get,				\
+	.put = snd_at73c213_mono_switch_put,				\
+	.private_value = (reg | (shift << 8) | (mask << 16) | (invert << 24)) \
+}
 
-#घोषणा AT73C213_STEREO(xname, xindex, left_reg, right_reg, shअगरt_left, shअगरt_right, mask, invert) \
-अणु									\
-	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,				\
+#define AT73C213_STEREO(xname, xindex, left_reg, right_reg, shift_left, shift_right, mask, invert) \
+{									\
+	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,				\
 	.name = xname,							\
 	.index = xindex,						\
 	.info = snd_at73c213_stereo_info,				\
 	.get = snd_at73c213_stereo_get,					\
 	.put = snd_at73c213_stereo_put,					\
-	.निजी_value = (left_reg | (right_reg << 8)			\
-			| (shअगरt_left << 16) | (shअगरt_right << 19)	\
+	.private_value = (left_reg | (right_reg << 8)			\
+			| (shift_left << 16) | (shift_right << 19)	\
 			| (mask << 24) | (invert << 22))		\
-पूर्ण
+}
 
-अटल स्थिर काष्ठा snd_kcontrol_new snd_at73c213_controls[] = अणु
+static const struct snd_kcontrol_new snd_at73c213_controls[] = {
 AT73C213_STEREO("Master Playback Volume", 0, DAC_LMPG, DAC_RMPG, 0, 0, 0x1f, 1),
 AT73C213_STEREO("Master Playback Switch", 0, DAC_LMPG, DAC_RMPG, 5, 5, 1, 1),
 AT73C213_STEREO("PCM Playback Volume", 0, DAC_LLOG, DAC_RLOG, 0, 0, 0x1f, 1),
 AT73C213_STEREO("PCM Playback Switch", 0, DAC_LLOG, DAC_RLOG, 5, 5, 1, 1),
 AT73C213_MONO_SWITCH("Mono PA Playback Switch", 0, DAC_CTRL, DAC_CTRL_ONPADRV,
 		     0x01, 0),
-अणु
-	.अगरace	= SNDRV_CTL_ELEM_IFACE_MIXER,
+{
+	.iface	= SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name	= "PA Playback Volume",
 	.index	= 0,
 	.info	= snd_at73c213_pa_volume_info,
 	.get	= snd_at73c213_mono_get,
 	.put	= snd_at73c213_mono_put,
-	.निजी_value	= PA_CTRL | (PA_CTRL_APAGAIN << 8) | \
+	.private_value	= PA_CTRL | (PA_CTRL_APAGAIN << 8) | \
 		(0x0f << 16) | (1 << 24),
-पूर्ण,
+},
 AT73C213_MONO_SWITCH("PA High Gain Playback Switch", 0, PA_CTRL, PA_CTRL_APALP,
 		     0x01, 1),
 AT73C213_MONO_SWITCH("PA Playback Switch", 0, PA_CTRL, PA_CTRL_APAON, 0x01, 0),
-अणु
-	.अगरace	= SNDRV_CTL_ELEM_IFACE_MIXER,
+{
+	.iface	= SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name	= "Aux Capture Volume",
 	.index	= 0,
 	.info	= snd_at73c213_aux_capture_volume_info,
 	.get	= snd_at73c213_mono_get,
 	.put	= snd_at73c213_mono_put,
-	.निजी_value	= DAC_AUXG | (0 << 8) | (0x1f << 16) | (1 << 24),
-पूर्ण,
+	.private_value	= DAC_AUXG | (0 << 8) | (0x1f << 16) | (1 << 24),
+},
 AT73C213_MONO_SWITCH("Aux Capture Switch", 0, DAC_CTRL, DAC_CTRL_ONAUXIN,
 		     0x01, 0),
-अणु
-	.अगरace	= SNDRV_CTL_ELEM_IFACE_MIXER,
+{
+	.iface	= SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name	= "Line Capture Volume",
 	.index	= 0,
 	.info	= snd_at73c213_line_capture_volume_info,
 	.get	= snd_at73c213_stereo_get,
 	.put	= snd_at73c213_stereo_put,
-	.निजी_value	= DAC_LLIG | (DAC_RLIG << 8) | (0 << 16) | (0 << 19)
+	.private_value	= DAC_LLIG | (DAC_RLIG << 8) | (0 << 16) | (0 << 19)
 		| (0x1f << 24) | (1 << 22),
-पूर्ण,
+},
 AT73C213_MONO_SWITCH("Line Capture Switch", 0, DAC_CTRL, 0, 0x03, 0),
-पूर्ण;
+};
 
-अटल पूर्णांक snd_at73c213_mixer(काष्ठा snd_at73c213 *chip)
-अणु
-	काष्ठा snd_card *card;
-	पूर्णांक errval, idx;
+static int snd_at73c213_mixer(struct snd_at73c213 *chip)
+{
+	struct snd_card *card;
+	int errval, idx;
 
-	अगर (chip == शून्य || chip->pcm == शून्य)
-		वापस -EINVAL;
+	if (chip == NULL || chip->pcm == NULL)
+		return -EINVAL;
 
 	card = chip->card;
 
-	म_नकल(card->mixername, chip->pcm->name);
+	strcpy(card->mixername, chip->pcm->name);
 
-	क्रम (idx = 0; idx < ARRAY_SIZE(snd_at73c213_controls); idx++) अणु
+	for (idx = 0; idx < ARRAY_SIZE(snd_at73c213_controls); idx++) {
 		errval = snd_ctl_add(card,
 				snd_ctl_new1(&snd_at73c213_controls[idx],
 					chip));
-		अगर (errval < 0)
-			जाओ cleanup;
-	पूर्ण
+		if (errval < 0)
+			goto cleanup;
+	}
 
-	वापस 0;
+	return 0;
 
 cleanup:
-	क्रम (idx = 1; idx < ARRAY_SIZE(snd_at73c213_controls) + 1; idx++) अणु
-		काष्ठा snd_kcontrol *kctl;
+	for (idx = 1; idx < ARRAY_SIZE(snd_at73c213_controls) + 1; idx++) {
+		struct snd_kcontrol *kctl;
 		kctl = snd_ctl_find_numid(card, idx);
-		अगर (kctl)
-			snd_ctl_हटाओ(card, kctl);
-	पूर्ण
-	वापस errval;
-पूर्ण
+		if (kctl)
+			snd_ctl_remove(card, kctl);
+	}
+	return errval;
+}
 
 /*
  * Device functions
  */
-अटल पूर्णांक snd_at73c213_ssc_init(काष्ठा snd_at73c213 *chip)
-अणु
+static int snd_at73c213_ssc_init(struct snd_at73c213 *chip)
+{
 	/*
-	 * Continuous घड़ी output.
+	 * Continuous clock output.
 	 * Starts on falling TF.
 	 * Delay 1 cycle (1 bit).
 	 * Periode is 16 bit (16 - 1).
 	 */
-	ssc_ग_लिखोl(chip->ssc->regs, TCMR,
+	ssc_writel(chip->ssc->regs, TCMR,
 			SSC_BF(TCMR_CKO, 1)
 			| SSC_BF(TCMR_START, 4)
 			| SSC_BF(TCMR_STTDLY, 1)
@@ -757,63 +756,63 @@ cleanup:
 	 * Frame sync length is 16 bit (16 - 1).
 	 * Frame starts on negative pulse.
 	 */
-	ssc_ग_लिखोl(chip->ssc->regs, TFMR,
+	ssc_writel(chip->ssc->regs, TFMR,
 			SSC_BF(TFMR_DATLEN, 16 - 1)
 			| SSC_BIT(TFMR_MSBF)
 			| SSC_BF(TFMR_DATNB, 1)
 			| SSC_BF(TFMR_FSLEN, 16 - 1)
 			| SSC_BF(TFMR_FSOS, 1));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_at73c213_chip_init(काष्ठा snd_at73c213 *chip)
-अणु
-	पूर्णांक retval;
-	अचिन्हित अक्षर dac_ctrl = 0;
+static int snd_at73c213_chip_init(struct snd_at73c213 *chip)
+{
+	int retval;
+	unsigned char dac_ctrl = 0;
 
 	retval = snd_at73c213_set_bitrate(chip);
-	अगर (retval)
-		जाओ out;
+	if (retval)
+		goto out;
 
-	/* Enable DAC master घड़ी. */
+	/* Enable DAC master clock. */
 	clk_enable(chip->board->dac_clk);
 
 	/* Initialize at73c213 on SPI bus. */
-	retval = snd_at73c213_ग_लिखो_reg(chip, DAC_RST, 0x04);
-	अगर (retval)
-		जाओ out_clk;
+	retval = snd_at73c213_write_reg(chip, DAC_RST, 0x04);
+	if (retval)
+		goto out_clk;
 	msleep(1);
-	retval = snd_at73c213_ग_लिखो_reg(chip, DAC_RST, 0x03);
-	अगर (retval)
-		जाओ out_clk;
+	retval = snd_at73c213_write_reg(chip, DAC_RST, 0x03);
+	if (retval)
+		goto out_clk;
 
-	/* Preअक्षरge everything. */
-	retval = snd_at73c213_ग_लिखो_reg(chip, DAC_PRECH, 0xff);
-	अगर (retval)
-		जाओ out_clk;
-	retval = snd_at73c213_ग_लिखो_reg(chip, PA_CTRL, (1<<PA_CTRL_APAPRECH));
-	अगर (retval)
-		जाओ out_clk;
-	retval = snd_at73c213_ग_लिखो_reg(chip, DAC_CTRL,
+	/* Precharge everything. */
+	retval = snd_at73c213_write_reg(chip, DAC_PRECH, 0xff);
+	if (retval)
+		goto out_clk;
+	retval = snd_at73c213_write_reg(chip, PA_CTRL, (1<<PA_CTRL_APAPRECH));
+	if (retval)
+		goto out_clk;
+	retval = snd_at73c213_write_reg(chip, DAC_CTRL,
 			(1<<DAC_CTRL_ONLNOL) | (1<<DAC_CTRL_ONLNOR));
-	अगर (retval)
-		जाओ out_clk;
+	if (retval)
+		goto out_clk;
 
 	msleep(50);
 
-	/* Stop preअक्षरging PA. */
-	retval = snd_at73c213_ग_लिखो_reg(chip, PA_CTRL,
+	/* Stop precharging PA. */
+	retval = snd_at73c213_write_reg(chip, PA_CTRL,
 			(1<<PA_CTRL_APALP) | 0x0f);
-	अगर (retval)
-		जाओ out_clk;
+	if (retval)
+		goto out_clk;
 
 	msleep(450);
 
-	/* Stop preअक्षरging DAC, turn on master घातer. */
-	retval = snd_at73c213_ग_लिखो_reg(chip, DAC_PRECH, (1<<DAC_PRECH_ONMSTR));
-	अगर (retval)
-		जाओ out_clk;
+	/* Stop precharging DAC, turn on master power. */
+	retval = snd_at73c213_write_reg(chip, DAC_PRECH, (1<<DAC_PRECH_ONMSTR));
+	if (retval)
+		goto out_clk;
 
 	msleep(1);
 
@@ -821,69 +820,69 @@ cleanup:
 	dac_ctrl = (1<<DAC_CTRL_ONDACL) | (1<<DAC_CTRL_ONDACR)
 		| (1<<DAC_CTRL_ONLNOL) | (1<<DAC_CTRL_ONLNOR);
 
-	retval = snd_at73c213_ग_लिखो_reg(chip, DAC_CTRL, dac_ctrl);
-	अगर (retval)
-		जाओ out_clk;
+	retval = snd_at73c213_write_reg(chip, DAC_CTRL, dac_ctrl);
+	if (retval)
+		goto out_clk;
 
 	/* Mute sound. */
-	retval = snd_at73c213_ग_लिखो_reg(chip, DAC_LMPG, 0x3f);
-	अगर (retval)
-		जाओ out_clk;
-	retval = snd_at73c213_ग_लिखो_reg(chip, DAC_RMPG, 0x3f);
-	अगर (retval)
-		जाओ out_clk;
-	retval = snd_at73c213_ग_लिखो_reg(chip, DAC_LLOG, 0x3f);
-	अगर (retval)
-		जाओ out_clk;
-	retval = snd_at73c213_ग_लिखो_reg(chip, DAC_RLOG, 0x3f);
-	अगर (retval)
-		जाओ out_clk;
-	retval = snd_at73c213_ग_लिखो_reg(chip, DAC_LLIG, 0x11);
-	अगर (retval)
-		जाओ out_clk;
-	retval = snd_at73c213_ग_लिखो_reg(chip, DAC_RLIG, 0x11);
-	अगर (retval)
-		जाओ out_clk;
-	retval = snd_at73c213_ग_लिखो_reg(chip, DAC_AUXG, 0x11);
-	अगर (retval)
-		जाओ out_clk;
+	retval = snd_at73c213_write_reg(chip, DAC_LMPG, 0x3f);
+	if (retval)
+		goto out_clk;
+	retval = snd_at73c213_write_reg(chip, DAC_RMPG, 0x3f);
+	if (retval)
+		goto out_clk;
+	retval = snd_at73c213_write_reg(chip, DAC_LLOG, 0x3f);
+	if (retval)
+		goto out_clk;
+	retval = snd_at73c213_write_reg(chip, DAC_RLOG, 0x3f);
+	if (retval)
+		goto out_clk;
+	retval = snd_at73c213_write_reg(chip, DAC_LLIG, 0x11);
+	if (retval)
+		goto out_clk;
+	retval = snd_at73c213_write_reg(chip, DAC_RLIG, 0x11);
+	if (retval)
+		goto out_clk;
+	retval = snd_at73c213_write_reg(chip, DAC_AUXG, 0x11);
+	if (retval)
+		goto out_clk;
 
-	/* Enable I2S device, i.e. घड़ी output. */
-	ssc_ग_लिखोl(chip->ssc->regs, CR, SSC_BIT(CR_TXEN));
+	/* Enable I2S device, i.e. clock output. */
+	ssc_writel(chip->ssc->regs, CR, SSC_BIT(CR_TXEN));
 
-	जाओ out;
+	goto out;
 
 out_clk:
 	clk_disable(chip->board->dac_clk);
 out:
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल पूर्णांक snd_at73c213_dev_मुक्त(काष्ठा snd_device *device)
-अणु
-	काष्ठा snd_at73c213 *chip = device->device_data;
+static int snd_at73c213_dev_free(struct snd_device *device)
+{
+	struct snd_at73c213 *chip = device->device_data;
 
-	ssc_ग_लिखोl(chip->ssc->regs, CR, SSC_BIT(CR_TXDIS));
-	अगर (chip->irq >= 0) अणु
-		मुक्त_irq(chip->irq, chip);
+	ssc_writel(chip->ssc->regs, CR, SSC_BIT(CR_TXDIS));
+	if (chip->irq >= 0) {
+		free_irq(chip->irq, chip);
 		chip->irq = -1;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_at73c213_dev_init(काष्ठा snd_card *card,
-				 काष्ठा spi_device *spi)
-अणु
-	अटल स्थिर काष्ठा snd_device_ops ops = अणु
-		.dev_मुक्त	= snd_at73c213_dev_मुक्त,
-	पूर्ण;
-	काष्ठा snd_at73c213 *chip = get_chip(card);
-	पूर्णांक irq, retval;
+static int snd_at73c213_dev_init(struct snd_card *card,
+				 struct spi_device *spi)
+{
+	static const struct snd_device_ops ops = {
+		.dev_free	= snd_at73c213_dev_free,
+	};
+	struct snd_at73c213 *chip = get_chip(card);
+	int irq, retval;
 
 	irq = chip->ssc->irq;
-	अगर (irq < 0)
-		वापस irq;
+	if (irq < 0)
+		return irq;
 
 	spin_lock_init(&chip->lock);
 	mutex_init(&chip->mixer_lock);
@@ -892,227 +891,227 @@ out:
 
 	clk_enable(chip->ssc->clk);
 
-	retval = request_irq(irq, snd_at73c213_पूर्णांकerrupt, 0, "at73c213", chip);
-	अगर (retval) अणु
+	retval = request_irq(irq, snd_at73c213_interrupt, 0, "at73c213", chip);
+	if (retval) {
 		dev_dbg(&chip->spi->dev, "unable to request irq %d\n", irq);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	chip->irq = irq;
 
-	स_नकल(&chip->reg_image, &snd_at73c213_original_image,
-			माप(snd_at73c213_original_image));
+	memcpy(&chip->reg_image, &snd_at73c213_original_image,
+			sizeof(snd_at73c213_original_image));
 
 	retval = snd_at73c213_ssc_init(chip);
-	अगर (retval)
-		जाओ out_irq;
+	if (retval)
+		goto out_irq;
 
 	retval = snd_at73c213_chip_init(chip);
-	अगर (retval)
-		जाओ out_irq;
+	if (retval)
+		goto out_irq;
 
 	retval = snd_at73c213_pcm_new(chip, 0);
-	अगर (retval)
-		जाओ out_irq;
+	if (retval)
+		goto out_irq;
 
 	retval = snd_device_new(card, SNDRV_DEV_LOWLEVEL, chip, &ops);
-	अगर (retval)
-		जाओ out_irq;
+	if (retval)
+		goto out_irq;
 
 	retval = snd_at73c213_mixer(chip);
-	अगर (retval)
-		जाओ out_snd_dev;
+	if (retval)
+		goto out_snd_dev;
 
-	जाओ out;
+	goto out;
 
 out_snd_dev:
-	snd_device_मुक्त(card, chip);
+	snd_device_free(card, chip);
 out_irq:
-	मुक्त_irq(chip->irq, chip);
+	free_irq(chip->irq, chip);
 	chip->irq = -1;
 out:
 	clk_disable(chip->ssc->clk);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल पूर्णांक snd_at73c213_probe(काष्ठा spi_device *spi)
-अणु
-	काष्ठा snd_card			*card;
-	काष्ठा snd_at73c213		*chip;
-	काष्ठा at73c213_board_info	*board;
-	पूर्णांक				retval;
-	अक्षर				id[16];
+static int snd_at73c213_probe(struct spi_device *spi)
+{
+	struct snd_card			*card;
+	struct snd_at73c213		*chip;
+	struct at73c213_board_info	*board;
+	int				retval;
+	char				id[16];
 
-	board = spi->dev.platक्रमm_data;
-	अगर (!board) अणु
+	board = spi->dev.platform_data;
+	if (!board) {
 		dev_dbg(&spi->dev, "no platform_data\n");
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
-	अगर (!board->dac_clk) अणु
+	if (!board->dac_clk) {
 		dev_dbg(&spi->dev, "no DAC clk\n");
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
-	अगर (IS_ERR(board->dac_clk)) अणु
+	if (IS_ERR(board->dac_clk)) {
 		dev_dbg(&spi->dev, "no DAC clk\n");
-		वापस PTR_ERR(board->dac_clk);
-	पूर्ण
+		return PTR_ERR(board->dac_clk);
+	}
 
-	/* Allocate "card" using some unused identअगरiers. */
-	snम_लिखो(id, माप id, "at73c213_%d", board->ssc_id);
+	/* Allocate "card" using some unused identifiers. */
+	snprintf(id, sizeof id, "at73c213_%d", board->ssc_id);
 	retval = snd_card_new(&spi->dev, -1, id, THIS_MODULE,
-			      माप(काष्ठा snd_at73c213), &card);
-	अगर (retval < 0)
-		जाओ out;
+			      sizeof(struct snd_at73c213), &card);
+	if (retval < 0)
+		goto out;
 
-	chip = card->निजी_data;
+	chip = card->private_data;
 	chip->spi = spi;
 	chip->board = board;
 
 	chip->ssc = ssc_request(board->ssc_id);
-	अगर (IS_ERR(chip->ssc)) अणु
+	if (IS_ERR(chip->ssc)) {
 		dev_dbg(&spi->dev, "could not get ssc%d device\n",
 				board->ssc_id);
 		retval = PTR_ERR(chip->ssc);
-		जाओ out_card;
-	पूर्ण
+		goto out_card;
+	}
 
 	retval = snd_at73c213_dev_init(card, spi);
-	अगर (retval)
-		जाओ out_ssc;
+	if (retval)
+		goto out_ssc;
 
-	म_नकल(card->driver, "at73c213");
-	म_नकल(card->लघुname, board->लघुname);
-	प्र_लिखो(card->दीर्घname, "%s on irq %d", card->लघुname, chip->irq);
+	strcpy(card->driver, "at73c213");
+	strcpy(card->shortname, board->shortname);
+	sprintf(card->longname, "%s on irq %d", card->shortname, chip->irq);
 
-	retval = snd_card_रेजिस्टर(card);
-	अगर (retval)
-		जाओ out_ssc;
+	retval = snd_card_register(card);
+	if (retval)
+		goto out_ssc;
 
 	dev_set_drvdata(&spi->dev, card);
 
-	जाओ out;
+	goto out;
 
 out_ssc:
-	ssc_मुक्त(chip->ssc);
+	ssc_free(chip->ssc);
 out_card:
-	snd_card_मुक्त(card);
+	snd_card_free(card);
 out:
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल पूर्णांक snd_at73c213_हटाओ(काष्ठा spi_device *spi)
-अणु
-	काष्ठा snd_card *card = dev_get_drvdata(&spi->dev);
-	काष्ठा snd_at73c213 *chip = card->निजी_data;
-	पूर्णांक retval;
+static int snd_at73c213_remove(struct spi_device *spi)
+{
+	struct snd_card *card = dev_get_drvdata(&spi->dev);
+	struct snd_at73c213 *chip = card->private_data;
+	int retval;
 
 	/* Stop playback. */
 	clk_enable(chip->ssc->clk);
-	ssc_ग_लिखोl(chip->ssc->regs, CR, SSC_BIT(CR_TXDIS));
+	ssc_writel(chip->ssc->regs, CR, SSC_BIT(CR_TXDIS));
 	clk_disable(chip->ssc->clk);
 
 	/* Mute sound. */
-	retval = snd_at73c213_ग_लिखो_reg(chip, DAC_LMPG, 0x3f);
-	अगर (retval)
-		जाओ out;
-	retval = snd_at73c213_ग_लिखो_reg(chip, DAC_RMPG, 0x3f);
-	अगर (retval)
-		जाओ out;
-	retval = snd_at73c213_ग_लिखो_reg(chip, DAC_LLOG, 0x3f);
-	अगर (retval)
-		जाओ out;
-	retval = snd_at73c213_ग_लिखो_reg(chip, DAC_RLOG, 0x3f);
-	अगर (retval)
-		जाओ out;
-	retval = snd_at73c213_ग_लिखो_reg(chip, DAC_LLIG, 0x11);
-	अगर (retval)
-		जाओ out;
-	retval = snd_at73c213_ग_लिखो_reg(chip, DAC_RLIG, 0x11);
-	अगर (retval)
-		जाओ out;
-	retval = snd_at73c213_ग_लिखो_reg(chip, DAC_AUXG, 0x11);
-	अगर (retval)
-		जाओ out;
+	retval = snd_at73c213_write_reg(chip, DAC_LMPG, 0x3f);
+	if (retval)
+		goto out;
+	retval = snd_at73c213_write_reg(chip, DAC_RMPG, 0x3f);
+	if (retval)
+		goto out;
+	retval = snd_at73c213_write_reg(chip, DAC_LLOG, 0x3f);
+	if (retval)
+		goto out;
+	retval = snd_at73c213_write_reg(chip, DAC_RLOG, 0x3f);
+	if (retval)
+		goto out;
+	retval = snd_at73c213_write_reg(chip, DAC_LLIG, 0x11);
+	if (retval)
+		goto out;
+	retval = snd_at73c213_write_reg(chip, DAC_RLIG, 0x11);
+	if (retval)
+		goto out;
+	retval = snd_at73c213_write_reg(chip, DAC_AUXG, 0x11);
+	if (retval)
+		goto out;
 
 	/* Turn off PA. */
-	retval = snd_at73c213_ग_लिखो_reg(chip, PA_CTRL,
+	retval = snd_at73c213_write_reg(chip, PA_CTRL,
 					chip->reg_image[PA_CTRL] | 0x0f);
-	अगर (retval)
-		जाओ out;
+	if (retval)
+		goto out;
 	msleep(10);
-	retval = snd_at73c213_ग_लिखो_reg(chip, PA_CTRL,
+	retval = snd_at73c213_write_reg(chip, PA_CTRL,
 					(1 << PA_CTRL_APALP) | 0x0f);
-	अगर (retval)
-		जाओ out;
+	if (retval)
+		goto out;
 
-	/* Turn off बाह्यal DAC. */
-	retval = snd_at73c213_ग_लिखो_reg(chip, DAC_CTRL, 0x0c);
-	अगर (retval)
-		जाओ out;
+	/* Turn off external DAC. */
+	retval = snd_at73c213_write_reg(chip, DAC_CTRL, 0x0c);
+	if (retval)
+		goto out;
 	msleep(2);
-	retval = snd_at73c213_ग_लिखो_reg(chip, DAC_CTRL, 0x00);
-	अगर (retval)
-		जाओ out;
+	retval = snd_at73c213_write_reg(chip, DAC_CTRL, 0x00);
+	if (retval)
+		goto out;
 
-	/* Turn off master घातer. */
-	retval = snd_at73c213_ग_लिखो_reg(chip, DAC_PRECH, 0x00);
-	अगर (retval)
-		जाओ out;
+	/* Turn off master power. */
+	retval = snd_at73c213_write_reg(chip, DAC_PRECH, 0x00);
+	if (retval)
+		goto out;
 
 out:
-	/* Stop DAC master घड़ी. */
+	/* Stop DAC master clock. */
 	clk_disable(chip->board->dac_clk);
 
-	ssc_मुक्त(chip->ssc);
-	snd_card_मुक्त(card);
+	ssc_free(chip->ssc);
+	snd_card_free(card);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
+#ifdef CONFIG_PM_SLEEP
 
-अटल पूर्णांक snd_at73c213_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा snd_card *card = dev_get_drvdata(dev);
-	काष्ठा snd_at73c213 *chip = card->निजी_data;
+static int snd_at73c213_suspend(struct device *dev)
+{
+	struct snd_card *card = dev_get_drvdata(dev);
+	struct snd_at73c213 *chip = card->private_data;
 
-	ssc_ग_लिखोl(chip->ssc->regs, CR, SSC_BIT(CR_TXDIS));
+	ssc_writel(chip->ssc->regs, CR, SSC_BIT(CR_TXDIS));
 	clk_disable(chip->ssc->clk);
 	clk_disable(chip->board->dac_clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_at73c213_resume(काष्ठा device *dev)
-अणु
-	काष्ठा snd_card *card = dev_get_drvdata(dev);
-	काष्ठा snd_at73c213 *chip = card->निजी_data;
+static int snd_at73c213_resume(struct device *dev)
+{
+	struct snd_card *card = dev_get_drvdata(dev);
+	struct snd_at73c213 *chip = card->private_data;
 
 	clk_enable(chip->board->dac_clk);
 	clk_enable(chip->ssc->clk);
-	ssc_ग_लिखोl(chip->ssc->regs, CR, SSC_BIT(CR_TXEN));
+	ssc_writel(chip->ssc->regs, CR, SSC_BIT(CR_TXEN));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल SIMPLE_DEV_PM_OPS(at73c213_pm_ops, snd_at73c213_suspend,
+static SIMPLE_DEV_PM_OPS(at73c213_pm_ops, snd_at73c213_suspend,
 		snd_at73c213_resume);
-#घोषणा AT73C213_PM_OPS (&at73c213_pm_ops)
+#define AT73C213_PM_OPS (&at73c213_pm_ops)
 
-#अन्यथा
-#घोषणा AT73C213_PM_OPS शून्य
-#पूर्ण_अगर
+#else
+#define AT73C213_PM_OPS NULL
+#endif
 
-अटल काष्ठा spi_driver at73c213_driver = अणु
-	.driver		= अणु
+static struct spi_driver at73c213_driver = {
+	.driver		= {
 		.name	= "at73c213",
 		.pm	= AT73C213_PM_OPS,
-	पूर्ण,
+	},
 	.probe		= snd_at73c213_probe,
-	.हटाओ		= snd_at73c213_हटाओ,
-पूर्ण;
+	.remove		= snd_at73c213_remove,
+};
 
 module_spi_driver(at73c213_driver);
 

@@ -1,155 +1,154 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Adaptrum Anarion DWMAC glue layer
  *
  * Copyright (C) 2017, Adaptrum, Inc.
- * (Written by Alexandru Gagniuc <alex.g at adaptrum.com> क्रम Adaptrum, Inc.)
+ * (Written by Alexandru Gagniuc <alex.g at adaptrum.com> for Adaptrum, Inc.)
  */
 
-#समावेश <linux/पन.स>
-#समावेश <linux/of.h>
-#समावेश <linux/of_net.h>
-#समावेश <linux/sपंचांगmac.h>
+#include <linux/io.h>
+#include <linux/of.h>
+#include <linux/of_net.h>
+#include <linux/stmmac.h>
 
-#समावेश "stmmac.h"
-#समावेश "stmmac_platform.h"
+#include "stmmac.h"
+#include "stmmac_platform.h"
 
-#घोषणा GMAC_RESET_CONTROL_REG		0
-#घोषणा GMAC_SW_CONFIG_REG		4
-#घोषणा  GMAC_CONFIG_INTF_SEL_MASK	(0x7 << 0)
-#घोषणा  GMAC_CONFIG_INTF_RGMII		(0x1 << 0)
+#define GMAC_RESET_CONTROL_REG		0
+#define GMAC_SW_CONFIG_REG		4
+#define  GMAC_CONFIG_INTF_SEL_MASK	(0x7 << 0)
+#define  GMAC_CONFIG_INTF_RGMII		(0x1 << 0)
 
-काष्ठा anarion_gmac अणु
-	uपूर्णांकptr_t ctl_block;
-	uपूर्णांक32_t phy_पूर्णांकf_sel;
-पूर्ण;
+struct anarion_gmac {
+	uintptr_t ctl_block;
+	uint32_t phy_intf_sel;
+};
 
-अटल uपूर्णांक32_t gmac_पढ़ो_reg(काष्ठा anarion_gmac *gmac, uपूर्णांक8_t reg)
-अणु
-	वापस पढ़ोl((व्योम *)(gmac->ctl_block + reg));
-पूर्ण;
+static uint32_t gmac_read_reg(struct anarion_gmac *gmac, uint8_t reg)
+{
+	return readl((void *)(gmac->ctl_block + reg));
+};
 
-अटल व्योम gmac_ग_लिखो_reg(काष्ठा anarion_gmac *gmac, uपूर्णांक8_t reg, uपूर्णांक32_t val)
-अणु
-	ग_लिखोl(val, (व्योम *)(gmac->ctl_block + reg));
-पूर्ण
+static void gmac_write_reg(struct anarion_gmac *gmac, uint8_t reg, uint32_t val)
+{
+	writel(val, (void *)(gmac->ctl_block + reg));
+}
 
-अटल पूर्णांक anarion_gmac_init(काष्ठा platक्रमm_device *pdev, व्योम *priv)
-अणु
-	uपूर्णांक32_t sw_config;
-	काष्ठा anarion_gmac *gmac = priv;
+static int anarion_gmac_init(struct platform_device *pdev, void *priv)
+{
+	uint32_t sw_config;
+	struct anarion_gmac *gmac = priv;
 
-	/* Reset logic, configure पूर्णांकerface mode, then release reset. SIMPLE! */
-	gmac_ग_लिखो_reg(gmac, GMAC_RESET_CONTROL_REG, 1);
+	/* Reset logic, configure interface mode, then release reset. SIMPLE! */
+	gmac_write_reg(gmac, GMAC_RESET_CONTROL_REG, 1);
 
-	sw_config = gmac_पढ़ो_reg(gmac, GMAC_SW_CONFIG_REG);
+	sw_config = gmac_read_reg(gmac, GMAC_SW_CONFIG_REG);
 	sw_config &= ~GMAC_CONFIG_INTF_SEL_MASK;
-	sw_config |= (gmac->phy_पूर्णांकf_sel & GMAC_CONFIG_INTF_SEL_MASK);
-	gmac_ग_लिखो_reg(gmac, GMAC_SW_CONFIG_REG, sw_config);
+	sw_config |= (gmac->phy_intf_sel & GMAC_CONFIG_INTF_SEL_MASK);
+	gmac_write_reg(gmac, GMAC_SW_CONFIG_REG, sw_config);
 
-	gmac_ग_लिखो_reg(gmac, GMAC_RESET_CONTROL_REG, 0);
+	gmac_write_reg(gmac, GMAC_RESET_CONTROL_REG, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम anarion_gmac_निकास(काष्ठा platक्रमm_device *pdev, व्योम *priv)
-अणु
-	काष्ठा anarion_gmac *gmac = priv;
+static void anarion_gmac_exit(struct platform_device *pdev, void *priv)
+{
+	struct anarion_gmac *gmac = priv;
 
-	gmac_ग_लिखो_reg(gmac, GMAC_RESET_CONTROL_REG, 1);
-पूर्ण
+	gmac_write_reg(gmac, GMAC_RESET_CONTROL_REG, 1);
+}
 
-अटल काष्ठा anarion_gmac *anarion_config_dt(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा anarion_gmac *gmac;
-	phy_पूर्णांकerface_t phy_mode;
-	व्योम __iomem *ctl_block;
-	पूर्णांक err;
+static struct anarion_gmac *anarion_config_dt(struct platform_device *pdev)
+{
+	struct anarion_gmac *gmac;
+	phy_interface_t phy_mode;
+	void __iomem *ctl_block;
+	int err;
 
-	ctl_block = devm_platक्रमm_ioremap_resource(pdev, 1);
-	अगर (IS_ERR(ctl_block)) अणु
+	ctl_block = devm_platform_ioremap_resource(pdev, 1);
+	if (IS_ERR(ctl_block)) {
 		dev_err(&pdev->dev, "Cannot get reset region (%ld)!\n",
 			PTR_ERR(ctl_block));
-		वापस ctl_block;
-	पूर्ण
+		return ctl_block;
+	}
 
-	gmac = devm_kzalloc(&pdev->dev, माप(*gmac), GFP_KERNEL);
-	अगर (!gmac)
-		वापस ERR_PTR(-ENOMEM);
+	gmac = devm_kzalloc(&pdev->dev, sizeof(*gmac), GFP_KERNEL);
+	if (!gmac)
+		return ERR_PTR(-ENOMEM);
 
-	gmac->ctl_block = (uपूर्णांकptr_t)ctl_block;
+	gmac->ctl_block = (uintptr_t)ctl_block;
 
 	err = of_get_phy_mode(pdev->dev.of_node, &phy_mode);
-	अगर (err)
-		वापस ERR_PTR(err);
+	if (err)
+		return ERR_PTR(err);
 
-	चयन (phy_mode) अणु
-	हाल PHY_INTERFACE_MODE_RGMII:
+	switch (phy_mode) {
+	case PHY_INTERFACE_MODE_RGMII:
 		fallthrough;
-	हाल PHY_INTERFACE_MODE_RGMII_ID:
-	हाल PHY_INTERFACE_MODE_RGMII_RXID:
-	हाल PHY_INTERFACE_MODE_RGMII_TXID:
-		gmac->phy_पूर्णांकf_sel = GMAC_CONFIG_INTF_RGMII;
-		अवरोध;
-	शेष:
+	case PHY_INTERFACE_MODE_RGMII_ID:
+	case PHY_INTERFACE_MODE_RGMII_RXID:
+	case PHY_INTERFACE_MODE_RGMII_TXID:
+		gmac->phy_intf_sel = GMAC_CONFIG_INTF_RGMII;
+		break;
+	default:
 		dev_err(&pdev->dev, "Unsupported phy-mode (%d)\n",
 			phy_mode);
-		वापस ERR_PTR(-ENOTSUPP);
-	पूर्ण
+		return ERR_PTR(-ENOTSUPP);
+	}
 
-	वापस gmac;
-पूर्ण
+	return gmac;
+}
 
-अटल पूर्णांक anarion_dwmac_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक ret;
-	काष्ठा anarion_gmac *gmac;
-	काष्ठा plat_sपंचांगmacenet_data *plat_dat;
-	काष्ठा sपंचांगmac_resources sपंचांगmac_res;
+static int anarion_dwmac_probe(struct platform_device *pdev)
+{
+	int ret;
+	struct anarion_gmac *gmac;
+	struct plat_stmmacenet_data *plat_dat;
+	struct stmmac_resources stmmac_res;
 
-	ret = sपंचांगmac_get_platक्रमm_resources(pdev, &sपंचांगmac_res);
-	अगर (ret)
-		वापस ret;
+	ret = stmmac_get_platform_resources(pdev, &stmmac_res);
+	if (ret)
+		return ret;
 
 	gmac = anarion_config_dt(pdev);
-	अगर (IS_ERR(gmac))
-		वापस PTR_ERR(gmac);
+	if (IS_ERR(gmac))
+		return PTR_ERR(gmac);
 
-	plat_dat = sपंचांगmac_probe_config_dt(pdev, sपंचांगmac_res.mac);
-	अगर (IS_ERR(plat_dat))
-		वापस PTR_ERR(plat_dat);
+	plat_dat = stmmac_probe_config_dt(pdev, stmmac_res.mac);
+	if (IS_ERR(plat_dat))
+		return PTR_ERR(plat_dat);
 
 	plat_dat->init = anarion_gmac_init;
-	plat_dat->निकास = anarion_gmac_निकास;
+	plat_dat->exit = anarion_gmac_exit;
 	anarion_gmac_init(pdev, gmac);
 	plat_dat->bsp_priv = gmac;
 
-	ret = sपंचांगmac_dvr_probe(&pdev->dev, plat_dat, &sपंचांगmac_res);
-	अगर (ret) अणु
-		sपंचांगmac_हटाओ_config_dt(pdev, plat_dat);
-		वापस ret;
-	पूर्ण
+	ret = stmmac_dvr_probe(&pdev->dev, plat_dat, &stmmac_res);
+	if (ret) {
+		stmmac_remove_config_dt(pdev, plat_dat);
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id anarion_dwmac_match[] = अणु
-	अणु .compatible = "adaptrum,anarion-gmac" पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id anarion_dwmac_match[] = {
+	{ .compatible = "adaptrum,anarion-gmac" },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, anarion_dwmac_match);
 
-अटल काष्ठा platक्रमm_driver anarion_dwmac_driver = अणु
+static struct platform_driver anarion_dwmac_driver = {
 	.probe  = anarion_dwmac_probe,
-	.हटाओ = sपंचांगmac_pltfr_हटाओ,
-	.driver = अणु
+	.remove = stmmac_pltfr_remove,
+	.driver = {
 		.name           = "anarion-dwmac",
-		.pm		= &sपंचांगmac_pltfr_pm_ops,
+		.pm		= &stmmac_pltfr_pm_ops,
 		.of_match_table = anarion_dwmac_match,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(anarion_dwmac_driver);
+	},
+};
+module_platform_driver(anarion_dwmac_driver);
 
 MODULE_DESCRIPTION("Adaptrum Anarion DWMAC specific glue layer");
 MODULE_AUTHOR("Alexandru Gagniuc <mr.nuke.me@gmail.com>");

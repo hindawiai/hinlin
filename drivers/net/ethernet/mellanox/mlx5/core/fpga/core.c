@@ -1,24 +1,23 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2017, Mellanox Technologies. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -31,17 +30,17 @@
  * SOFTWARE.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/mlx5/driver.h>
+#include <linux/module.h>
+#include <linux/etherdevice.h>
+#include <linux/mlx5/driver.h>
 
-#समावेश "mlx5_core.h"
-#समावेश "lib/mlx5.h"
-#समावेश "lib/eq.h"
-#समावेश "fpga/core.h"
-#समावेश "fpga/conn.h"
+#include "mlx5_core.h"
+#include "lib/mlx5.h"
+#include "lib/eq.h"
+#include "fpga/core.h"
+#include "fpga/conn.h"
 
-अटल स्थिर अक्षर *स्थिर mlx5_fpga_error_strings[] = अणु
+static const char *const mlx5_fpga_error_strings[] = {
 	"Null Syndrome",
 	"Corrupted DDR",
 	"Flash Timeout",
@@ -50,72 +49,72 @@
 	"I2C Failure",
 	"Image Changed",
 	"Temperature Critical",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर mlx5_fpga_qp_error_strings[] = अणु
+static const char * const mlx5_fpga_qp_error_strings[] = {
 	"Null Syndrome",
 	"Retry Counter Expired",
 	"RNR Expired",
-पूर्ण;
-अटल काष्ठा mlx5_fpga_device *mlx5_fpga_device_alloc(व्योम)
-अणु
-	काष्ठा mlx5_fpga_device *fdev = शून्य;
+};
+static struct mlx5_fpga_device *mlx5_fpga_device_alloc(void)
+{
+	struct mlx5_fpga_device *fdev = NULL;
 
-	fdev = kzalloc(माप(*fdev), GFP_KERNEL);
-	अगर (!fdev)
-		वापस शून्य;
+	fdev = kzalloc(sizeof(*fdev), GFP_KERNEL);
+	if (!fdev)
+		return NULL;
 
 	spin_lock_init(&fdev->state_lock);
 	fdev->state = MLX5_FPGA_STATUS_NONE;
-	वापस fdev;
-पूर्ण
+	return fdev;
+}
 
-अटल स्थिर अक्षर *mlx5_fpga_image_name(क्रमागत mlx5_fpga_image image)
-अणु
-	चयन (image) अणु
-	हाल MLX5_FPGA_IMAGE_USER:
-		वापस "user";
-	हाल MLX5_FPGA_IMAGE_FACTORY:
-		वापस "factory";
-	शेष:
-		वापस "unknown";
-	पूर्ण
-पूर्ण
+static const char *mlx5_fpga_image_name(enum mlx5_fpga_image image)
+{
+	switch (image) {
+	case MLX5_FPGA_IMAGE_USER:
+		return "user";
+	case MLX5_FPGA_IMAGE_FACTORY:
+		return "factory";
+	default:
+		return "unknown";
+	}
+}
 
-अटल स्थिर अक्षर *mlx5_fpga_name(u32 fpga_id)
-अणु
-	अटल अक्षर ret[32];
+static const char *mlx5_fpga_name(u32 fpga_id)
+{
+	static char ret[32];
 
-	चयन (fpga_id) अणु
-	हाल MLX5_FPGA_NEWTON:
-		वापस "Newton";
-	हाल MLX5_FPGA_EDISON:
-		वापस "Edison";
-	हाल MLX5_FPGA_MORSE:
-		वापस "Morse";
-	हाल MLX5_FPGA_MORSEQ:
-		वापस "MorseQ";
-	पूर्ण
+	switch (fpga_id) {
+	case MLX5_FPGA_NEWTON:
+		return "Newton";
+	case MLX5_FPGA_EDISON:
+		return "Edison";
+	case MLX5_FPGA_MORSE:
+		return "Morse";
+	case MLX5_FPGA_MORSEQ:
+		return "MorseQ";
+	}
 
-	snम_लिखो(ret, माप(ret), "Unknown %d", fpga_id);
-	वापस ret;
-पूर्ण
+	snprintf(ret, sizeof(ret), "Unknown %d", fpga_id);
+	return ret;
+}
 
-अटल पूर्णांक mlx5_is_fpga_lookaside(u32 fpga_id)
-अणु
-	वापस fpga_id != MLX5_FPGA_NEWTON && fpga_id != MLX5_FPGA_EDISON;
-पूर्ण
+static int mlx5_is_fpga_lookaside(u32 fpga_id)
+{
+	return fpga_id != MLX5_FPGA_NEWTON && fpga_id != MLX5_FPGA_EDISON;
+}
 
-अटल पूर्णांक mlx5_fpga_device_load_check(काष्ठा mlx5_fpga_device *fdev)
-अणु
-	काष्ठा mlx5_fpga_query query;
-	पूर्णांक err;
+static int mlx5_fpga_device_load_check(struct mlx5_fpga_device *fdev)
+{
+	struct mlx5_fpga_query query;
+	int err;
 
 	err = mlx5_fpga_query(fdev->mdev, &query);
-	अगर (err) अणु
+	if (err) {
 		mlx5_fpga_err(fdev, "Failed to query status: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	fdev->last_admin_image = query.admin_image;
 	fdev->last_oper_image = query.oper_image;
@@ -123,255 +122,255 @@
 	mlx5_fpga_info(fdev, "Status %u; Admin image %u; Oper image %u\n",
 		       query.status, query.admin_image, query.oper_image);
 
-	/* क्रम FPGA lookaside projects FPGA load status is not important */
-	अगर (mlx5_is_fpga_lookaside(MLX5_CAP_FPGA(fdev->mdev, fpga_id)))
-		वापस 0;
+	/* for FPGA lookaside projects FPGA load status is not important */
+	if (mlx5_is_fpga_lookaside(MLX5_CAP_FPGA(fdev->mdev, fpga_id)))
+		return 0;
 
-	अगर (query.status != MLX5_FPGA_STATUS_SUCCESS) अणु
+	if (query.status != MLX5_FPGA_STATUS_SUCCESS) {
 		mlx5_fpga_err(fdev, "%s image failed to load; status %u\n",
 			      mlx5_fpga_image_name(fdev->last_oper_image),
 			      query.status);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mlx5_fpga_device_brb(काष्ठा mlx5_fpga_device *fdev)
-अणु
-	पूर्णांक err;
-	काष्ठा mlx5_core_dev *mdev = fdev->mdev;
+static int mlx5_fpga_device_brb(struct mlx5_fpga_device *fdev)
+{
+	int err;
+	struct mlx5_core_dev *mdev = fdev->mdev;
 
 	err = mlx5_fpga_ctrl_op(mdev, MLX5_FPGA_CTRL_OPERATION_SANDBOX_BYPASS_ON);
-	अगर (err) अणु
+	if (err) {
 		mlx5_fpga_err(fdev, "Failed to set bypass on: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 	err = mlx5_fpga_ctrl_op(mdev, MLX5_FPGA_CTRL_OPERATION_RESET_SANDBOX);
-	अगर (err) अणु
+	if (err) {
 		mlx5_fpga_err(fdev, "Failed to reset SBU: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 	err = mlx5_fpga_ctrl_op(mdev, MLX5_FPGA_CTRL_OPERATION_SANDBOX_BYPASS_OFF);
-	अगर (err) अणु
+	if (err) {
 		mlx5_fpga_err(fdev, "Failed to set bypass off: %d\n", err);
-		वापस err;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return err;
+	}
+	return 0;
+}
 
-अटल पूर्णांक mlx5_fpga_event(काष्ठा mlx5_fpga_device *, अचिन्हित दीर्घ, व्योम *);
+static int mlx5_fpga_event(struct mlx5_fpga_device *, unsigned long, void *);
 
-अटल पूर्णांक fpga_err_event(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ event, व्योम *eqe)
-अणु
-	काष्ठा mlx5_fpga_device *fdev = mlx5_nb_cof(nb, काष्ठा mlx5_fpga_device, fpga_err_nb);
+static int fpga_err_event(struct notifier_block *nb, unsigned long event, void *eqe)
+{
+	struct mlx5_fpga_device *fdev = mlx5_nb_cof(nb, struct mlx5_fpga_device, fpga_err_nb);
 
-	वापस mlx5_fpga_event(fdev, event, eqe);
-पूर्ण
+	return mlx5_fpga_event(fdev, event, eqe);
+}
 
-अटल पूर्णांक fpga_qp_err_event(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ event, व्योम *eqe)
-अणु
-	काष्ठा mlx5_fpga_device *fdev = mlx5_nb_cof(nb, काष्ठा mlx5_fpga_device, fpga_qp_err_nb);
+static int fpga_qp_err_event(struct notifier_block *nb, unsigned long event, void *eqe)
+{
+	struct mlx5_fpga_device *fdev = mlx5_nb_cof(nb, struct mlx5_fpga_device, fpga_qp_err_nb);
 
-	वापस mlx5_fpga_event(fdev, event, eqe);
-पूर्ण
+	return mlx5_fpga_event(fdev, event, eqe);
+}
 
-पूर्णांक mlx5_fpga_device_start(काष्ठा mlx5_core_dev *mdev)
-अणु
-	काष्ठा mlx5_fpga_device *fdev = mdev->fpga;
-	अचिन्हित पूर्णांक max_num_qps;
-	अचिन्हित दीर्घ flags;
+int mlx5_fpga_device_start(struct mlx5_core_dev *mdev)
+{
+	struct mlx5_fpga_device *fdev = mdev->fpga;
+	unsigned int max_num_qps;
+	unsigned long flags;
 	u32 fpga_id;
-	पूर्णांक err;
+	int err;
 
-	अगर (!fdev)
-		वापस 0;
+	if (!fdev)
+		return 0;
 
 	err = mlx5_fpga_caps(fdev->mdev);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 	err = mlx5_fpga_device_load_check(fdev);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 	fpga_id = MLX5_CAP_FPGA(fdev->mdev, fpga_id);
 	mlx5_fpga_info(fdev, "FPGA card %s:%u\n", mlx5_fpga_name(fpga_id), fpga_id);
 
-	/* No QPs अगर FPGA करोes not participate in net processing */
-	अगर (mlx5_is_fpga_lookaside(fpga_id))
-		जाओ out;
+	/* No QPs if FPGA does not participate in net processing */
+	if (mlx5_is_fpga_lookaside(fpga_id))
+		goto out;
 
 	mlx5_fpga_info(fdev, "%s(%d): image, version %u; SBU %06x:%04x version %d\n",
 		       mlx5_fpga_image_name(fdev->last_oper_image),
 		       fdev->last_oper_image,
 		       MLX5_CAP_FPGA(fdev->mdev, image_version),
-		       MLX5_CAP_FPGA(fdev->mdev, ieee_venकरोr_id),
+		       MLX5_CAP_FPGA(fdev->mdev, ieee_vendor_id),
 		       MLX5_CAP_FPGA(fdev->mdev, sandbox_product_id),
 		       MLX5_CAP_FPGA(fdev->mdev, sandbox_product_version));
 
 	max_num_qps = MLX5_CAP_FPGA(mdev, shell_caps.max_num_qps);
-	अगर (!max_num_qps) अणु
+	if (!max_num_qps) {
 		mlx5_fpga_err(fdev, "FPGA reports 0 QPs in SHELL_CAPS\n");
 		err = -ENOTSUPP;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	err = mlx5_core_reserve_gids(mdev, max_num_qps);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 	MLX5_NB_INIT(&fdev->fpga_err_nb, fpga_err_event, FPGA_ERROR);
 	MLX5_NB_INIT(&fdev->fpga_qp_err_nb, fpga_qp_err_event, FPGA_QP_ERROR);
-	mlx5_eq_notअगरier_रेजिस्टर(fdev->mdev, &fdev->fpga_err_nb);
-	mlx5_eq_notअगरier_रेजिस्टर(fdev->mdev, &fdev->fpga_qp_err_nb);
+	mlx5_eq_notifier_register(fdev->mdev, &fdev->fpga_err_nb);
+	mlx5_eq_notifier_register(fdev->mdev, &fdev->fpga_qp_err_nb);
 
 	err = mlx5_fpga_conn_device_init(fdev);
-	अगर (err)
-		जाओ err_rsvd_gid;
+	if (err)
+		goto err_rsvd_gid;
 
-	अगर (fdev->last_oper_image == MLX5_FPGA_IMAGE_USER) अणु
+	if (fdev->last_oper_image == MLX5_FPGA_IMAGE_USER) {
 		err = mlx5_fpga_device_brb(fdev);
-		अगर (err)
-			जाओ err_conn_init;
-	पूर्ण
+		if (err)
+			goto err_conn_init;
+	}
 
-	जाओ out;
+	goto out;
 
 err_conn_init:
 	mlx5_fpga_conn_device_cleanup(fdev);
 
 err_rsvd_gid:
-	mlx5_eq_notअगरier_unरेजिस्टर(fdev->mdev, &fdev->fpga_err_nb);
-	mlx5_eq_notअगरier_unरेजिस्टर(fdev->mdev, &fdev->fpga_qp_err_nb);
+	mlx5_eq_notifier_unregister(fdev->mdev, &fdev->fpga_err_nb);
+	mlx5_eq_notifier_unregister(fdev->mdev, &fdev->fpga_qp_err_nb);
 	mlx5_core_unreserve_gids(mdev, max_num_qps);
 out:
 	spin_lock_irqsave(&fdev->state_lock, flags);
 	fdev->state = err ? MLX5_FPGA_STATUS_FAILURE : MLX5_FPGA_STATUS_SUCCESS;
 	spin_unlock_irqrestore(&fdev->state_lock, flags);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक mlx5_fpga_init(काष्ठा mlx5_core_dev *mdev)
-अणु
-	काष्ठा mlx5_fpga_device *fdev = शून्य;
+int mlx5_fpga_init(struct mlx5_core_dev *mdev)
+{
+	struct mlx5_fpga_device *fdev = NULL;
 
-	अगर (!MLX5_CAP_GEN(mdev, fpga)) अणु
+	if (!MLX5_CAP_GEN(mdev, fpga)) {
 		mlx5_core_dbg(mdev, "FPGA capability not present\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	mlx5_core_dbg(mdev, "Initializing FPGA\n");
 
 	fdev = mlx5_fpga_device_alloc();
-	अगर (!fdev)
-		वापस -ENOMEM;
+	if (!fdev)
+		return -ENOMEM;
 
 	fdev->mdev = mdev;
 	mdev->fpga = fdev;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम mlx5_fpga_device_stop(काष्ठा mlx5_core_dev *mdev)
-अणु
-	काष्ठा mlx5_fpga_device *fdev = mdev->fpga;
-	अचिन्हित पूर्णांक max_num_qps;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक err;
+void mlx5_fpga_device_stop(struct mlx5_core_dev *mdev)
+{
+	struct mlx5_fpga_device *fdev = mdev->fpga;
+	unsigned int max_num_qps;
+	unsigned long flags;
+	int err;
 
-	अगर (!fdev)
-		वापस;
+	if (!fdev)
+		return;
 
-	अगर (mlx5_is_fpga_lookaside(MLX5_CAP_FPGA(fdev->mdev, fpga_id)))
-		वापस;
+	if (mlx5_is_fpga_lookaside(MLX5_CAP_FPGA(fdev->mdev, fpga_id)))
+		return;
 
 	spin_lock_irqsave(&fdev->state_lock, flags);
-	अगर (fdev->state != MLX5_FPGA_STATUS_SUCCESS) अणु
+	if (fdev->state != MLX5_FPGA_STATUS_SUCCESS) {
 		spin_unlock_irqrestore(&fdev->state_lock, flags);
-		वापस;
-	पूर्ण
+		return;
+	}
 	fdev->state = MLX5_FPGA_STATUS_NONE;
 	spin_unlock_irqrestore(&fdev->state_lock, flags);
 
-	अगर (fdev->last_oper_image == MLX5_FPGA_IMAGE_USER) अणु
+	if (fdev->last_oper_image == MLX5_FPGA_IMAGE_USER) {
 		err = mlx5_fpga_ctrl_op(mdev, MLX5_FPGA_CTRL_OPERATION_SANDBOX_BYPASS_ON);
-		अगर (err)
+		if (err)
 			mlx5_fpga_err(fdev, "Failed to re-set SBU bypass on: %d\n",
 				      err);
-	पूर्ण
+	}
 
 	mlx5_fpga_conn_device_cleanup(fdev);
-	mlx5_eq_notअगरier_unरेजिस्टर(fdev->mdev, &fdev->fpga_err_nb);
-	mlx5_eq_notअगरier_unरेजिस्टर(fdev->mdev, &fdev->fpga_qp_err_nb);
+	mlx5_eq_notifier_unregister(fdev->mdev, &fdev->fpga_err_nb);
+	mlx5_eq_notifier_unregister(fdev->mdev, &fdev->fpga_qp_err_nb);
 
 	max_num_qps = MLX5_CAP_FPGA(mdev, shell_caps.max_num_qps);
 	mlx5_core_unreserve_gids(mdev, max_num_qps);
-पूर्ण
+}
 
-व्योम mlx5_fpga_cleanup(काष्ठा mlx5_core_dev *mdev)
-अणु
-	काष्ठा mlx5_fpga_device *fdev = mdev->fpga;
+void mlx5_fpga_cleanup(struct mlx5_core_dev *mdev)
+{
+	struct mlx5_fpga_device *fdev = mdev->fpga;
 
 	mlx5_fpga_device_stop(mdev);
-	kमुक्त(fdev);
-	mdev->fpga = शून्य;
-पूर्ण
+	kfree(fdev);
+	mdev->fpga = NULL;
+}
 
-अटल स्थिर अक्षर *mlx5_fpga_syndrome_to_string(u8 syndrome)
-अणु
-	अगर (syndrome < ARRAY_SIZE(mlx5_fpga_error_strings))
-		वापस mlx5_fpga_error_strings[syndrome];
-	वापस "Unknown";
-पूर्ण
+static const char *mlx5_fpga_syndrome_to_string(u8 syndrome)
+{
+	if (syndrome < ARRAY_SIZE(mlx5_fpga_error_strings))
+		return mlx5_fpga_error_strings[syndrome];
+	return "Unknown";
+}
 
-अटल स्थिर अक्षर *mlx5_fpga_qp_syndrome_to_string(u8 syndrome)
-अणु
-	अगर (syndrome < ARRAY_SIZE(mlx5_fpga_qp_error_strings))
-		वापस mlx5_fpga_qp_error_strings[syndrome];
-	वापस "Unknown";
-पूर्ण
+static const char *mlx5_fpga_qp_syndrome_to_string(u8 syndrome)
+{
+	if (syndrome < ARRAY_SIZE(mlx5_fpga_qp_error_strings))
+		return mlx5_fpga_qp_error_strings[syndrome];
+	return "Unknown";
+}
 
-अटल पूर्णांक mlx5_fpga_event(काष्ठा mlx5_fpga_device *fdev,
-			   अचिन्हित दीर्घ event, व्योम *eqe)
-अणु
-	व्योम *data = ((काष्ठा mlx5_eqe *)eqe)->data.raw;
-	स्थिर अक्षर *event_name;
-	bool tearकरोwn = false;
-	अचिन्हित दीर्घ flags;
+static int mlx5_fpga_event(struct mlx5_fpga_device *fdev,
+			   unsigned long event, void *eqe)
+{
+	void *data = ((struct mlx5_eqe *)eqe)->data.raw;
+	const char *event_name;
+	bool teardown = false;
+	unsigned long flags;
 	u8 syndrome;
 
-	चयन (event) अणु
-	हाल MLX5_EVENT_TYPE_FPGA_ERROR:
+	switch (event) {
+	case MLX5_EVENT_TYPE_FPGA_ERROR:
 		syndrome = MLX5_GET(fpga_error_event, data, syndrome);
 		event_name = mlx5_fpga_syndrome_to_string(syndrome);
-		अवरोध;
-	हाल MLX5_EVENT_TYPE_FPGA_QP_ERROR:
+		break;
+	case MLX5_EVENT_TYPE_FPGA_QP_ERROR:
 		syndrome = MLX5_GET(fpga_qp_error_event, data, syndrome);
 		event_name = mlx5_fpga_qp_syndrome_to_string(syndrome);
-		अवरोध;
-	शेष:
-		वापस NOTIFY_DONE;
-	पूर्ण
+		break;
+	default:
+		return NOTIFY_DONE;
+	}
 
 	spin_lock_irqsave(&fdev->state_lock, flags);
-	चयन (fdev->state) अणु
-	हाल MLX5_FPGA_STATUS_SUCCESS:
+	switch (fdev->state) {
+	case MLX5_FPGA_STATUS_SUCCESS:
 		mlx5_fpga_warn(fdev, "Error %u: %s\n", syndrome, event_name);
-		tearकरोwn = true;
-		अवरोध;
-	शेष:
+		teardown = true;
+		break;
+	default:
 		mlx5_fpga_warn_ratelimited(fdev, "Unexpected error event %u: %s\n",
 					   syndrome, event_name);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&fdev->state_lock, flags);
-	/* We tear-करोwn the card's पूर्णांकerfaces and functionality because
+	/* We tear-down the card's interfaces and functionality because
 	 * the FPGA bump-on-the-wire is misbehaving and we lose ability
 	 * to communicate with the network. User may still be able to
 	 * recover by re-programming or debugging the FPGA
 	 */
-	अगर (tearकरोwn)
+	if (teardown)
 		mlx5_trigger_health_work(fdev->mdev);
 
-	वापस NOTIFY_OK;
-पूर्ण
+	return NOTIFY_OK;
+}

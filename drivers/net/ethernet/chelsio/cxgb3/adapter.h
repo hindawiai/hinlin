@@ -1,24 +1,23 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2003-2008 Chelsio, Inc. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -33,159 +32,159 @@
 
 /* This file should not be included directly.  Include common.h instead. */
 
-#अगर_अघोषित __T3_ADAPTER_H__
-#घोषणा __T3_ADAPTER_H__
+#ifndef __T3_ADAPTER_H__
+#define __T3_ADAPTER_H__
 
-#समावेश <linux/pci.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/cache.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/bitops.h>
-#समावेश "t3cdev.h"
-#समावेश <यंत्र/पन.स>
+#include <linux/pci.h>
+#include <linux/spinlock.h>
+#include <linux/interrupt.h>
+#include <linux/timer.h>
+#include <linux/cache.h>
+#include <linux/mutex.h>
+#include <linux/bitops.h>
+#include "t3cdev.h"
+#include <asm/io.h>
 
-काष्ठा adapter;
-काष्ठा sge_qset;
-काष्ठा port_info;
+struct adapter;
+struct sge_qset;
+struct port_info;
 
-क्रमागत mac_idx_types अणु
+enum mac_idx_types {
 	LAN_MAC_IDX	= 0,
 	SAN_MAC_IDX,
 
 	MAX_MAC_IDX
-पूर्ण;
+};
 
-काष्ठा iscsi_config अणु
+struct iscsi_config {
 	__u8	mac_addr[ETH_ALEN];
 	__u32	flags;
-	पूर्णांक (*send)(काष्ठा port_info *pi, काष्ठा sk_buff **skb);
-	पूर्णांक (*recv)(काष्ठा port_info *pi, काष्ठा sk_buff *skb);
-पूर्ण;
+	int (*send)(struct port_info *pi, struct sk_buff **skb);
+	int (*recv)(struct port_info *pi, struct sk_buff *skb);
+};
 
-काष्ठा port_info अणु
-	काष्ठा adapter *adapter;
-	काष्ठा sge_qset *qs;
+struct port_info {
+	struct adapter *adapter;
+	struct sge_qset *qs;
 	u8 port_id;
 	u8 nqsets;
 	u8 first_qset;
-	काष्ठा cphy phy;
-	काष्ठा cmac mac;
-	काष्ठा link_config link_config;
-	पूर्णांक activity;
+	struct cphy phy;
+	struct cmac mac;
+	struct link_config link_config;
+	int activity;
 	__be32 iscsi_ipv4addr;
-	काष्ठा iscsi_config iscsic;
+	struct iscsi_config iscsic;
 
-	पूर्णांक link_fault; /* link fault was detected */
-पूर्ण;
+	int link_fault; /* link fault was detected */
+};
 
-क्रमागत अणु				/* adapter flags */
+enum {				/* adapter flags */
 	FULL_INIT_DONE = (1 << 0),
 	USING_MSI = (1 << 1),
 	USING_MSIX = (1 << 2),
 	QUEUES_BOUND = (1 << 3),
 	TP_PARITY_INIT = (1 << 4),
 	NAPI_INIT = (1 << 5),
-पूर्ण;
+};
 
-काष्ठा fl_pg_chunk अणु
-	काष्ठा page *page;
-	व्योम *va;
-	अचिन्हित पूर्णांक offset;
-	अचिन्हित दीर्घ *p_cnt;
+struct fl_pg_chunk {
+	struct page *page;
+	void *va;
+	unsigned int offset;
+	unsigned long *p_cnt;
 	dma_addr_t mapping;
-पूर्ण;
+};
 
-काष्ठा rx_desc;
-काष्ठा rx_sw_desc;
+struct rx_desc;
+struct rx_sw_desc;
 
-काष्ठा sge_fl अणु                     /* SGE per मुक्त-buffer list state */
-	अचिन्हित पूर्णांक buf_size;      /* size of each Rx buffer */
-	अचिन्हित पूर्णांक credits;       /* # of available Rx buffers */
-	अचिन्हित पूर्णांक pend_cred;     /* new buffers since last FL DB ring */
-	अचिन्हित पूर्णांक size;          /* capacity of मुक्त list */
-	अचिन्हित पूर्णांक cidx;          /* consumer index */
-	अचिन्हित पूर्णांक pidx;          /* producer index */
-	अचिन्हित पूर्णांक gen;           /* मुक्त list generation */
-	काष्ठा fl_pg_chunk pg_chunk;/* page chunk cache */
-	अचिन्हित पूर्णांक use_pages;     /* whether FL uses pages or sk_buffs */
-	अचिन्हित पूर्णांक order;	    /* order of page allocations */
-	अचिन्हित पूर्णांक alloc_size;    /* size of allocated buffer */
-	काष्ठा rx_desc *desc;       /* address of HW Rx descriptor ring */
-	काष्ठा rx_sw_desc *sdesc;   /* address of SW Rx descriptor ring */
+struct sge_fl {                     /* SGE per free-buffer list state */
+	unsigned int buf_size;      /* size of each Rx buffer */
+	unsigned int credits;       /* # of available Rx buffers */
+	unsigned int pend_cred;     /* new buffers since last FL DB ring */
+	unsigned int size;          /* capacity of free list */
+	unsigned int cidx;          /* consumer index */
+	unsigned int pidx;          /* producer index */
+	unsigned int gen;           /* free list generation */
+	struct fl_pg_chunk pg_chunk;/* page chunk cache */
+	unsigned int use_pages;     /* whether FL uses pages or sk_buffs */
+	unsigned int order;	    /* order of page allocations */
+	unsigned int alloc_size;    /* size of allocated buffer */
+	struct rx_desc *desc;       /* address of HW Rx descriptor ring */
+	struct rx_sw_desc *sdesc;   /* address of SW Rx descriptor ring */
 	dma_addr_t   phys_addr;     /* physical address of HW ring start */
-	अचिन्हित पूर्णांक cntxt_id;      /* SGE context id क्रम the मुक्त list */
-	अचिन्हित दीर्घ empty;        /* # of बार queue ran out of buffers */
-	अचिन्हित दीर्घ alloc_failed; /* # of बार buffer allocation failed */
-पूर्ण;
+	unsigned int cntxt_id;      /* SGE context id for the free list */
+	unsigned long empty;        /* # of times queue ran out of buffers */
+	unsigned long alloc_failed; /* # of times buffer allocation failed */
+};
 
 /*
- * Bundle size क्रम grouping offload RX packets क्रम delivery to the stack.
- * Don't make this too big as we करो prefetch on each packet in a bundle.
+ * Bundle size for grouping offload RX packets for delivery to the stack.
+ * Don't make this too big as we do prefetch on each packet in a bundle.
  */
 # define RX_BUNDLE_SIZE 8
 
-काष्ठा rsp_desc;
+struct rsp_desc;
 
-काष्ठा sge_rspq अणु		/* state क्रम an SGE response queue */
-	अचिन्हित पूर्णांक credits;	/* # of pending response credits */
-	अचिन्हित पूर्णांक size;	/* capacity of response queue */
-	अचिन्हित पूर्णांक cidx;	/* consumer index */
-	अचिन्हित पूर्णांक gen;	/* current generation bit */
-	अचिन्हित पूर्णांक polling;	/* is the queue serviced through NAPI? */
-	अचिन्हित पूर्णांक holकरोff_पंचांगr;	/* पूर्णांकerrupt holकरोff समयr in 100ns */
-	अचिन्हित पूर्णांक next_holकरोff;	/* holकरोff समय क्रम next पूर्णांकerrupt */
-	अचिन्हित पूर्णांक rx_recycle_buf; /* whether recycling occurred
+struct sge_rspq {		/* state for an SGE response queue */
+	unsigned int credits;	/* # of pending response credits */
+	unsigned int size;	/* capacity of response queue */
+	unsigned int cidx;	/* consumer index */
+	unsigned int gen;	/* current generation bit */
+	unsigned int polling;	/* is the queue serviced through NAPI? */
+	unsigned int holdoff_tmr;	/* interrupt holdoff timer in 100ns */
+	unsigned int next_holdoff;	/* holdoff time for next interrupt */
+	unsigned int rx_recycle_buf; /* whether recycling occurred
 					within current sop-eop */
-	काष्ठा rsp_desc *desc;	/* address of HW response ring */
+	struct rsp_desc *desc;	/* address of HW response ring */
 	dma_addr_t phys_addr;	/* physical address of the ring */
-	अचिन्हित पूर्णांक cntxt_id;	/* SGE context id क्रम the response q */
+	unsigned int cntxt_id;	/* SGE context id for the response q */
 	spinlock_t lock;	/* guards response processing */
-	काष्ठा sk_buff_head rx_queue; /* offload packet receive queue */
-	काष्ठा sk_buff *pg_skb; /* used to build frag list in napi handler */
+	struct sk_buff_head rx_queue; /* offload packet receive queue */
+	struct sk_buff *pg_skb; /* used to build frag list in napi handler */
 
-	अचिन्हित दीर्घ offload_pkts;
-	अचिन्हित दीर्घ offload_bundles;
-	अचिन्हित दीर्घ eth_pkts;	/* # of ethernet packets */
-	अचिन्हित दीर्घ pure_rsps;	/* # of pure (non-data) responses */
-	अचिन्हित दीर्घ imm_data;	/* responses with immediate data */
-	अचिन्हित दीर्घ rx_drops;	/* # of packets dropped due to no mem */
-	अचिन्हित दीर्घ async_notअगर; /* # of asynchronous notअगरication events */
-	अचिन्हित दीर्घ empty;	/* # of बार queue ran out of credits */
-	अचिन्हित दीर्घ nomem;	/* # of responses deferred due to no mem */
-	अचिन्हित दीर्घ unhandled_irqs;	/* # of spurious पूर्णांकrs */
-	अचिन्हित दीर्घ starved;
-	अचिन्हित दीर्घ restarted;
-पूर्ण;
+	unsigned long offload_pkts;
+	unsigned long offload_bundles;
+	unsigned long eth_pkts;	/* # of ethernet packets */
+	unsigned long pure_rsps;	/* # of pure (non-data) responses */
+	unsigned long imm_data;	/* responses with immediate data */
+	unsigned long rx_drops;	/* # of packets dropped due to no mem */
+	unsigned long async_notif; /* # of asynchronous notification events */
+	unsigned long empty;	/* # of times queue ran out of credits */
+	unsigned long nomem;	/* # of responses deferred due to no mem */
+	unsigned long unhandled_irqs;	/* # of spurious intrs */
+	unsigned long starved;
+	unsigned long restarted;
+};
 
-काष्ठा tx_desc;
-काष्ठा tx_sw_desc;
+struct tx_desc;
+struct tx_sw_desc;
 
-काष्ठा sge_txq अणु		/* state क्रम an SGE Tx queue */
-	अचिन्हित दीर्घ flags;	/* HW DMA fetch status */
-	अचिन्हित पूर्णांक in_use;	/* # of in-use Tx descriptors */
-	अचिन्हित पूर्णांक size;	/* # of descriptors */
-	अचिन्हित पूर्णांक processed;	/* total # of descs HW has processed */
-	अचिन्हित पूर्णांक cleaned;	/* total # of descs SW has reclaimed */
-	अचिन्हित पूर्णांक stop_thres;	/* SW TX queue suspend threshold */
-	अचिन्हित पूर्णांक cidx;	/* consumer index */
-	अचिन्हित पूर्णांक pidx;	/* producer index */
-	अचिन्हित पूर्णांक gen;	/* current value of generation bit */
-	अचिन्हित पूर्णांक unacked;	/* Tx descriptors used since last COMPL */
-	काष्ठा tx_desc *desc;	/* address of HW Tx descriptor ring */
-	काष्ठा tx_sw_desc *sdesc;	/* address of SW Tx descriptor ring */
+struct sge_txq {		/* state for an SGE Tx queue */
+	unsigned long flags;	/* HW DMA fetch status */
+	unsigned int in_use;	/* # of in-use Tx descriptors */
+	unsigned int size;	/* # of descriptors */
+	unsigned int processed;	/* total # of descs HW has processed */
+	unsigned int cleaned;	/* total # of descs SW has reclaimed */
+	unsigned int stop_thres;	/* SW TX queue suspend threshold */
+	unsigned int cidx;	/* consumer index */
+	unsigned int pidx;	/* producer index */
+	unsigned int gen;	/* current value of generation bit */
+	unsigned int unacked;	/* Tx descriptors used since last COMPL */
+	struct tx_desc *desc;	/* address of HW Tx descriptor ring */
+	struct tx_sw_desc *sdesc;	/* address of SW Tx descriptor ring */
 	spinlock_t lock;	/* guards enqueueing of new packets */
-	अचिन्हित पूर्णांक token;	/* WR token */
+	unsigned int token;	/* WR token */
 	dma_addr_t phys_addr;	/* physical address of the ring */
-	काष्ठा sk_buff_head sendq;	/* List of backpressured offload packets */
-	काष्ठा tasklet_काष्ठा qresume_tsk;	/* restarts the queue */
-	अचिन्हित पूर्णांक cntxt_id;	/* SGE context id क्रम the Tx q */
-	अचिन्हित दीर्घ stops;	/* # of बार q has been stopped */
-	अचिन्हित दीर्घ restarts;	/* # of queue restarts */
-पूर्ण;
+	struct sk_buff_head sendq;	/* List of backpressured offload packets */
+	struct tasklet_struct qresume_tsk;	/* restarts the queue */
+	unsigned int cntxt_id;	/* SGE context id for the Tx q */
+	unsigned long stops;	/* # of times q has been stopped */
+	unsigned long restarts;	/* # of queue restarts */
+};
 
-क्रमागत अणु				/* per port SGE statistics */
+enum {				/* per port SGE statistics */
 	SGE_PSTAT_TSO,		/* # of TSO requests */
 	SGE_PSTAT_RX_CSUM_GOOD,	/* # of successful RX csum offloads */
 	SGE_PSTAT_TX_CSUM,	/* # of TX checksum offloads */
@@ -193,143 +192,143 @@
 	SGE_PSTAT_VLANINS,	/* # of VLAN tag insertions */
 
 	SGE_PSTAT_MAX		/* must be last */
-पूर्ण;
+};
 
-काष्ठा napi_gro_fraginfo;
+struct napi_gro_fraginfo;
 
-काष्ठा sge_qset अणु		/* an SGE queue set */
-	काष्ठा adapter *adap;
-	काष्ठा napi_काष्ठा napi;
-	काष्ठा sge_rspq rspq;
-	काष्ठा sge_fl fl[SGE_RXQ_PER_SET];
-	काष्ठा sge_txq txq[SGE_TXQ_PER_SET];
-	पूर्णांक nomem;
-	व्योम *lro_va;
-	काष्ठा net_device *netdev;
-	काष्ठा netdev_queue *tx_q;	/* associated netdev TX queue */
-	अचिन्हित दीर्घ txq_stopped;	/* which Tx queues are stopped */
-	काष्ठा समयr_list tx_reclaim_समयr;	/* reclaims TX buffers */
-	काष्ठा समयr_list rx_reclaim_समयr;	/* reclaims RX buffers */
-	अचिन्हित दीर्घ port_stats[SGE_PSTAT_MAX];
-पूर्ण ____cacheline_aligned;
+struct sge_qset {		/* an SGE queue set */
+	struct adapter *adap;
+	struct napi_struct napi;
+	struct sge_rspq rspq;
+	struct sge_fl fl[SGE_RXQ_PER_SET];
+	struct sge_txq txq[SGE_TXQ_PER_SET];
+	int nomem;
+	void *lro_va;
+	struct net_device *netdev;
+	struct netdev_queue *tx_q;	/* associated netdev TX queue */
+	unsigned long txq_stopped;	/* which Tx queues are stopped */
+	struct timer_list tx_reclaim_timer;	/* reclaims TX buffers */
+	struct timer_list rx_reclaim_timer;	/* reclaims RX buffers */
+	unsigned long port_stats[SGE_PSTAT_MAX];
+} ____cacheline_aligned;
 
-काष्ठा sge अणु
-	काष्ठा sge_qset qs[SGE_QSETS];
-	spinlock_t reg_lock;	/* guards non-atomic SGE रेजिस्टरs (eg context) */
-पूर्ण;
+struct sge {
+	struct sge_qset qs[SGE_QSETS];
+	spinlock_t reg_lock;	/* guards non-atomic SGE registers (eg context) */
+};
 
-काष्ठा adapter अणु
-	काष्ठा t3cdev tdev;
-	काष्ठा list_head adapter_list;
-	व्योम __iomem *regs;
-	काष्ठा pci_dev *pdev;
-	अचिन्हित दीर्घ रेजिस्टरed_device_map;
-	अचिन्हित दीर्घ खोलो_device_map;
-	अचिन्हित दीर्घ flags;
+struct adapter {
+	struct t3cdev tdev;
+	struct list_head adapter_list;
+	void __iomem *regs;
+	struct pci_dev *pdev;
+	unsigned long registered_device_map;
+	unsigned long open_device_map;
+	unsigned long flags;
 
-	स्थिर अक्षर *name;
-	पूर्णांक msg_enable;
-	अचिन्हित पूर्णांक mmio_len;
+	const char *name;
+	int msg_enable;
+	unsigned int mmio_len;
 
-	काष्ठा adapter_params params;
-	अचिन्हित पूर्णांक slow_पूर्णांकr_mask;
-	अचिन्हित दीर्घ irq_stats[IRQ_NUM_STATS];
+	struct adapter_params params;
+	unsigned int slow_intr_mask;
+	unsigned long irq_stats[IRQ_NUM_STATS];
 
-	पूर्णांक msix_nvectors;
-	काष्ठा अणु
-		अचिन्हित लघु vec;
-		अक्षर desc[22];
-	पूर्ण msix_info[SGE_QSETS + 1];
+	int msix_nvectors;
+	struct {
+		unsigned short vec;
+		char desc[22];
+	} msix_info[SGE_QSETS + 1];
 
 	/* T3 modules */
-	काष्ठा sge sge;
-	काष्ठा mc7 pmrx;
-	काष्ठा mc7 pmtx;
-	काष्ठा mc7 cm;
-	काष्ठा mc5 mc5;
+	struct sge sge;
+	struct mc7 pmrx;
+	struct mc7 pmtx;
+	struct mc7 cm;
+	struct mc5 mc5;
 
-	काष्ठा net_device *port[MAX_NPORTS];
-	अचिन्हित पूर्णांक check_task_cnt;
-	काष्ठा delayed_work adap_check_task;
-	काष्ठा work_काष्ठा ext_पूर्णांकr_handler_task;
-	काष्ठा work_काष्ठा fatal_error_handler_task;
-	काष्ठा work_काष्ठा link_fault_handler_task;
+	struct net_device *port[MAX_NPORTS];
+	unsigned int check_task_cnt;
+	struct delayed_work adap_check_task;
+	struct work_struct ext_intr_handler_task;
+	struct work_struct fatal_error_handler_task;
+	struct work_struct link_fault_handler_task;
 
-	काष्ठा work_काष्ठा db_full_task;
-	काष्ठा work_काष्ठा db_empty_task;
-	काष्ठा work_काष्ठा db_drop_task;
+	struct work_struct db_full_task;
+	struct work_struct db_empty_task;
+	struct work_struct db_drop_task;
 
-	काष्ठा dentry *debugfs_root;
+	struct dentry *debugfs_root;
 
-	काष्ठा mutex mdio_lock;
+	struct mutex mdio_lock;
 	spinlock_t stats_lock;
 	spinlock_t work_lock;
 
-	काष्ठा sk_buff *nofail_skb;
-पूर्ण;
+	struct sk_buff *nofail_skb;
+};
 
-अटल अंतरभूत u32 t3_पढ़ो_reg(काष्ठा adapter *adapter, u32 reg_addr)
-अणु
-	u32 val = पढ़ोl(adapter->regs + reg_addr);
+static inline u32 t3_read_reg(struct adapter *adapter, u32 reg_addr)
+{
+	u32 val = readl(adapter->regs + reg_addr);
 
 	CH_DBG(adapter, MMIO, "read register 0x%x value 0x%x\n", reg_addr, val);
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल अंतरभूत व्योम t3_ग_लिखो_reg(काष्ठा adapter *adapter, u32 reg_addr, u32 val)
-अणु
+static inline void t3_write_reg(struct adapter *adapter, u32 reg_addr, u32 val)
+{
 	CH_DBG(adapter, MMIO, "setting register 0x%x to 0x%x\n", reg_addr, val);
-	ग_लिखोl(val, adapter->regs + reg_addr);
-पूर्ण
+	writel(val, adapter->regs + reg_addr);
+}
 
-अटल अंतरभूत काष्ठा port_info *adap2pinfo(काष्ठा adapter *adap, पूर्णांक idx)
-अणु
-	वापस netdev_priv(adap->port[idx]);
-पूर्ण
+static inline struct port_info *adap2pinfo(struct adapter *adap, int idx)
+{
+	return netdev_priv(adap->port[idx]);
+}
 
-अटल अंतरभूत पूर्णांक phy2portid(काष्ठा cphy *phy)
-अणु
-	काष्ठा adapter *adap = phy->adapter;
-	काष्ठा port_info *port0 = adap2pinfo(adap, 0);
+static inline int phy2portid(struct cphy *phy)
+{
+	struct adapter *adap = phy->adapter;
+	struct port_info *port0 = adap2pinfo(adap, 0);
 
-	वापस &port0->phy == phy ? 0 : 1;
-पूर्ण
+	return &port0->phy == phy ? 0 : 1;
+}
 
-#घोषणा OFFLOAD_DEVMAP_BIT 15
+#define OFFLOAD_DEVMAP_BIT 15
 
-#घोषणा tdev2adap(d) container_of(d, काष्ठा adapter, tdev)
+#define tdev2adap(d) container_of(d, struct adapter, tdev)
 
-अटल अंतरभूत पूर्णांक offload_running(काष्ठा adapter *adapter)
-अणु
-	वापस test_bit(OFFLOAD_DEVMAP_BIT, &adapter->खोलो_device_map);
-पूर्ण
+static inline int offload_running(struct adapter *adapter)
+{
+	return test_bit(OFFLOAD_DEVMAP_BIT, &adapter->open_device_map);
+}
 
-पूर्णांक t3_offload_tx(काष्ठा t3cdev *tdev, काष्ठा sk_buff *skb);
+int t3_offload_tx(struct t3cdev *tdev, struct sk_buff *skb);
 
-व्योम t3_os_ext_पूर्णांकr_handler(काष्ठा adapter *adapter);
-व्योम t3_os_link_changed(काष्ठा adapter *adapter, पूर्णांक port_id, पूर्णांक link_status,
-			पूर्णांक speed, पूर्णांक duplex, पूर्णांक fc);
-व्योम t3_os_phymod_changed(काष्ठा adapter *adap, पूर्णांक port_id);
-व्योम t3_os_link_fault(काष्ठा adapter *adapter, पूर्णांक port_id, पूर्णांक state);
-व्योम t3_os_link_fault_handler(काष्ठा adapter *adapter, पूर्णांक port_id);
+void t3_os_ext_intr_handler(struct adapter *adapter);
+void t3_os_link_changed(struct adapter *adapter, int port_id, int link_status,
+			int speed, int duplex, int fc);
+void t3_os_phymod_changed(struct adapter *adap, int port_id);
+void t3_os_link_fault(struct adapter *adapter, int port_id, int state);
+void t3_os_link_fault_handler(struct adapter *adapter, int port_id);
 
-व्योम t3_sge_start(काष्ठा adapter *adap);
-व्योम t3_sge_stop_dma(काष्ठा adapter *adap);
-व्योम t3_sge_stop(काष्ठा adapter *adap);
-व्योम t3_start_sge_समयrs(काष्ठा adapter *adap);
-व्योम t3_stop_sge_समयrs(काष्ठा adapter *adap);
-व्योम t3_मुक्त_sge_resources(काष्ठा adapter *adap);
-व्योम t3_sge_err_पूर्णांकr_handler(काष्ठा adapter *adapter);
-irq_handler_t t3_पूर्णांकr_handler(काष्ठा adapter *adap, पूर्णांक polling);
-netdev_tx_t t3_eth_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev);
-पूर्णांक t3_mgmt_tx(काष्ठा adapter *adap, काष्ठा sk_buff *skb);
-व्योम t3_update_qset_coalesce(काष्ठा sge_qset *qs, स्थिर काष्ठा qset_params *p);
-पूर्णांक t3_sge_alloc_qset(काष्ठा adapter *adapter, अचिन्हित पूर्णांक id, पूर्णांक nports,
-		      पूर्णांक irq_vec_idx, स्थिर काष्ठा qset_params *p,
-		      पूर्णांक ntxq, काष्ठा net_device *dev,
-		      काष्ठा netdev_queue *netdevq);
-बाह्य काष्ठा workqueue_काष्ठा *cxgb3_wq;
+void t3_sge_start(struct adapter *adap);
+void t3_sge_stop_dma(struct adapter *adap);
+void t3_sge_stop(struct adapter *adap);
+void t3_start_sge_timers(struct adapter *adap);
+void t3_stop_sge_timers(struct adapter *adap);
+void t3_free_sge_resources(struct adapter *adap);
+void t3_sge_err_intr_handler(struct adapter *adapter);
+irq_handler_t t3_intr_handler(struct adapter *adap, int polling);
+netdev_tx_t t3_eth_xmit(struct sk_buff *skb, struct net_device *dev);
+int t3_mgmt_tx(struct adapter *adap, struct sk_buff *skb);
+void t3_update_qset_coalesce(struct sge_qset *qs, const struct qset_params *p);
+int t3_sge_alloc_qset(struct adapter *adapter, unsigned int id, int nports,
+		      int irq_vec_idx, const struct qset_params *p,
+		      int ntxq, struct net_device *dev,
+		      struct netdev_queue *netdevq);
+extern struct workqueue_struct *cxgb3_wq;
 
-पूर्णांक t3_get_edc_fw(काष्ठा cphy *phy, पूर्णांक edc_idx, पूर्णांक size);
+int t3_get_edc_fw(struct cphy *phy, int edc_idx, int size);
 
-#पूर्ण_अगर				/* __T3_ADAPTER_H__ */
+#endif				/* __T3_ADAPTER_H__ */

@@ -1,24 +1,23 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2006 Oracle.  All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -31,81 +30,81 @@
  * SOFTWARE.
  *
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/sysctl.h>
-#समावेश <linux/proc_fs.h>
+#include <linux/kernel.h>
+#include <linux/sysctl.h>
+#include <linux/proc_fs.h>
 
-#समावेश "rds.h"
+#include "rds.h"
 
-अटल काष्ठा ctl_table_header *rds_sysctl_reg_table;
+static struct ctl_table_header *rds_sysctl_reg_table;
 
-अटल अचिन्हित दीर्घ rds_sysctl_reconnect_min = 1;
-अटल अचिन्हित दीर्घ rds_sysctl_reconnect_max = ~0UL;
+static unsigned long rds_sysctl_reconnect_min = 1;
+static unsigned long rds_sysctl_reconnect_max = ~0UL;
 
-अचिन्हित दीर्घ rds_sysctl_reconnect_min_jअगरfies;
-अचिन्हित दीर्घ rds_sysctl_reconnect_max_jअगरfies = HZ;
+unsigned long rds_sysctl_reconnect_min_jiffies;
+unsigned long rds_sysctl_reconnect_max_jiffies = HZ;
 
-अचिन्हित पूर्णांक  rds_sysctl_max_unacked_packets = 8;
-अचिन्हित पूर्णांक  rds_sysctl_max_unacked_bytes = (16 << 20);
+unsigned int  rds_sysctl_max_unacked_packets = 8;
+unsigned int  rds_sysctl_max_unacked_bytes = (16 << 20);
 
-अचिन्हित पूर्णांक rds_sysctl_ping_enable = 1;
+unsigned int rds_sysctl_ping_enable = 1;
 
-अटल काष्ठा ctl_table rds_sysctl_rds_table[] = अणु
-	अणु
+static struct ctl_table rds_sysctl_rds_table[] = {
+	{
 		.procname       = "reconnect_min_delay_ms",
-		.data		= &rds_sysctl_reconnect_min_jअगरfies,
-		.maxlen         = माप(अचिन्हित दीर्घ),
+		.data		= &rds_sysctl_reconnect_min_jiffies,
+		.maxlen         = sizeof(unsigned long),
 		.mode           = 0644,
-		.proc_handler   = proc_करोuदीर्घvec_ms_jअगरfies_minmax,
+		.proc_handler   = proc_doulongvec_ms_jiffies_minmax,
 		.extra1		= &rds_sysctl_reconnect_min,
-		.extra2		= &rds_sysctl_reconnect_max_jअगरfies,
-	पूर्ण,
-	अणु
+		.extra2		= &rds_sysctl_reconnect_max_jiffies,
+	},
+	{
 		.procname       = "reconnect_max_delay_ms",
-		.data		= &rds_sysctl_reconnect_max_jअगरfies,
-		.maxlen         = माप(अचिन्हित दीर्घ),
+		.data		= &rds_sysctl_reconnect_max_jiffies,
+		.maxlen         = sizeof(unsigned long),
 		.mode           = 0644,
-		.proc_handler   = proc_करोuदीर्घvec_ms_jअगरfies_minmax,
-		.extra1		= &rds_sysctl_reconnect_min_jअगरfies,
+		.proc_handler   = proc_doulongvec_ms_jiffies_minmax,
+		.extra1		= &rds_sysctl_reconnect_min_jiffies,
 		.extra2		= &rds_sysctl_reconnect_max,
-	पूर्ण,
-	अणु
+	},
+	{
 		.procname	= "max_unacked_packets",
 		.data		= &rds_sysctl_max_unacked_packets,
-		.maxlen         = माप(पूर्णांक),
+		.maxlen         = sizeof(int),
 		.mode           = 0644,
-		.proc_handler   = proc_करोपूर्णांकvec,
-	पूर्ण,
-	अणु
+		.proc_handler   = proc_dointvec,
+	},
+	{
 		.procname	= "max_unacked_bytes",
 		.data		= &rds_sysctl_max_unacked_bytes,
-		.maxlen         = माप(पूर्णांक),
+		.maxlen         = sizeof(int),
 		.mode           = 0644,
-		.proc_handler   = proc_करोपूर्णांकvec,
-	पूर्ण,
-	अणु
+		.proc_handler   = proc_dointvec,
+	},
+	{
 		.procname	= "ping_enable",
 		.data		= &rds_sysctl_ping_enable,
-		.maxlen         = माप(पूर्णांक),
+		.maxlen         = sizeof(int),
 		.mode           = 0644,
-		.proc_handler   = proc_करोपूर्णांकvec,
-	पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+		.proc_handler   = proc_dointvec,
+	},
+	{ }
+};
 
-व्योम rds_sysctl_निकास(व्योम)
-अणु
-	unरेजिस्टर_net_sysctl_table(rds_sysctl_reg_table);
-पूर्ण
+void rds_sysctl_exit(void)
+{
+	unregister_net_sysctl_table(rds_sysctl_reg_table);
+}
 
-पूर्णांक rds_sysctl_init(व्योम)
-अणु
-	rds_sysctl_reconnect_min = msecs_to_jअगरfies(1);
-	rds_sysctl_reconnect_min_jअगरfies = rds_sysctl_reconnect_min;
+int rds_sysctl_init(void)
+{
+	rds_sysctl_reconnect_min = msecs_to_jiffies(1);
+	rds_sysctl_reconnect_min_jiffies = rds_sysctl_reconnect_min;
 
 	rds_sysctl_reg_table =
-		रेजिस्टर_net_sysctl(&init_net, "net/rds", rds_sysctl_rds_table);
-	अगर (!rds_sysctl_reg_table)
-		वापस -ENOMEM;
-	वापस 0;
-पूर्ण
+		register_net_sysctl(&init_net, "net/rds", rds_sysctl_rds_table);
+	if (!rds_sysctl_reg_table)
+		return -ENOMEM;
+	return 0;
+}

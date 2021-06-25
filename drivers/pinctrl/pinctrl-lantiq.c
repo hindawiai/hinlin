@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  linux/drivers/pinctrl/pinctrl-lantiq.c
  *  based on linux/drivers/pinctrl/pinctrl-pxa3xx.c
@@ -7,339 +6,339 @@
  *  Copyright (C) 2012 John Crispin <john@phrozen.org>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/device.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/of.h>
+#include <linux/module.h>
+#include <linux/device.h>
+#include <linux/io.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
+#include <linux/of.h>
 
-#समावेश "pinctrl-lantiq.h"
+#include "pinctrl-lantiq.h"
 
-अटल पूर्णांक ltq_get_group_count(काष्ठा pinctrl_dev *pctrldev)
-अणु
-	काष्ठा ltq_pinmux_info *info = pinctrl_dev_get_drvdata(pctrldev);
-	वापस info->num_grps;
-पूर्ण
+static int ltq_get_group_count(struct pinctrl_dev *pctrldev)
+{
+	struct ltq_pinmux_info *info = pinctrl_dev_get_drvdata(pctrldev);
+	return info->num_grps;
+}
 
-अटल स्थिर अक्षर *ltq_get_group_name(काष्ठा pinctrl_dev *pctrldev,
-					 अचिन्हित selector)
-अणु
-	काष्ठा ltq_pinmux_info *info = pinctrl_dev_get_drvdata(pctrldev);
-	अगर (selector >= info->num_grps)
-		वापस शून्य;
-	वापस info->grps[selector].name;
-पूर्ण
+static const char *ltq_get_group_name(struct pinctrl_dev *pctrldev,
+					 unsigned selector)
+{
+	struct ltq_pinmux_info *info = pinctrl_dev_get_drvdata(pctrldev);
+	if (selector >= info->num_grps)
+		return NULL;
+	return info->grps[selector].name;
+}
 
-अटल पूर्णांक ltq_get_group_pins(काष्ठा pinctrl_dev *pctrldev,
-				 अचिन्हित selector,
-				 स्थिर अचिन्हित **pins,
-				 अचिन्हित *num_pins)
-अणु
-	काष्ठा ltq_pinmux_info *info = pinctrl_dev_get_drvdata(pctrldev);
-	अगर (selector >= info->num_grps)
-		वापस -EINVAL;
+static int ltq_get_group_pins(struct pinctrl_dev *pctrldev,
+				 unsigned selector,
+				 const unsigned **pins,
+				 unsigned *num_pins)
+{
+	struct ltq_pinmux_info *info = pinctrl_dev_get_drvdata(pctrldev);
+	if (selector >= info->num_grps)
+		return -EINVAL;
 	*pins = info->grps[selector].pins;
 	*num_pins = info->grps[selector].npins;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ltq_pinctrl_dt_मुक्त_map(काष्ठा pinctrl_dev *pctldev,
-				    काष्ठा pinctrl_map *map, अचिन्हित num_maps)
-अणु
-	पूर्णांक i;
+static void ltq_pinctrl_dt_free_map(struct pinctrl_dev *pctldev,
+				    struct pinctrl_map *map, unsigned num_maps)
+{
+	int i;
 
-	क्रम (i = 0; i < num_maps; i++)
-		अगर (map[i].type == PIN_MAP_TYPE_CONFIGS_PIN ||
+	for (i = 0; i < num_maps; i++)
+		if (map[i].type == PIN_MAP_TYPE_CONFIGS_PIN ||
 		    map[i].type == PIN_MAP_TYPE_CONFIGS_GROUP)
-			kमुक्त(map[i].data.configs.configs);
-	kमुक्त(map);
-पूर्ण
+			kfree(map[i].data.configs.configs);
+	kfree(map);
+}
 
-अटल व्योम ltq_pinctrl_pin_dbg_show(काष्ठा pinctrl_dev *pctldev,
-					काष्ठा seq_file *s,
-					अचिन्हित offset)
-अणु
-	seq_म_लिखो(s, " %s", dev_name(pctldev->dev));
-पूर्ण
+static void ltq_pinctrl_pin_dbg_show(struct pinctrl_dev *pctldev,
+					struct seq_file *s,
+					unsigned offset)
+{
+	seq_printf(s, " %s", dev_name(pctldev->dev));
+}
 
-अटल व्योम ltq_pinctrl_dt_subnode_to_map(काष्ठा pinctrl_dev *pctldev,
-				काष्ठा device_node *np,
-				काष्ठा pinctrl_map **map)
-अणु
-	काष्ठा ltq_pinmux_info *info = pinctrl_dev_get_drvdata(pctldev);
-	काष्ठा property *pins = of_find_property(np, "lantiq,pins", शून्य);
-	काष्ठा property *groups = of_find_property(np, "lantiq,groups", शून्य);
-	अचिन्हित दीर्घ configs[3];
-	अचिन्हित num_configs = 0;
-	काष्ठा property *prop;
-	स्थिर अक्षर *group, *pin;
-	स्थिर अक्षर *function;
-	पूर्णांक ret, i;
+static void ltq_pinctrl_dt_subnode_to_map(struct pinctrl_dev *pctldev,
+				struct device_node *np,
+				struct pinctrl_map **map)
+{
+	struct ltq_pinmux_info *info = pinctrl_dev_get_drvdata(pctldev);
+	struct property *pins = of_find_property(np, "lantiq,pins", NULL);
+	struct property *groups = of_find_property(np, "lantiq,groups", NULL);
+	unsigned long configs[3];
+	unsigned num_configs = 0;
+	struct property *prop;
+	const char *group, *pin;
+	const char *function;
+	int ret, i;
 
-	अगर (!pins && !groups) अणु
+	if (!pins && !groups) {
 		dev_err(pctldev->dev, "%pOFn defines neither pins nor groups\n",
 			np);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (pins && groups) अणु
+	if (pins && groups) {
 		dev_err(pctldev->dev, "%pOFn defines both pins and groups\n",
 			np);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	ret = of_property_पढ़ो_string(np, "lantiq,function", &function);
-	अगर (groups && !ret) अणु
-		of_property_क्रम_each_string(np, "lantiq,groups", prop, group) अणु
+	ret = of_property_read_string(np, "lantiq,function", &function);
+	if (groups && !ret) {
+		of_property_for_each_string(np, "lantiq,groups", prop, group) {
 			(*map)->type = PIN_MAP_TYPE_MUX_GROUP;
 			(*map)->name = function;
 			(*map)->data.mux.group = group;
 			(*map)->data.mux.function = function;
 			(*map)++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	क्रम (i = 0; i < info->num_params; i++) अणु
+	for (i = 0; i < info->num_params; i++) {
 		u32 val;
-		पूर्णांक ret = of_property_पढ़ो_u32(np,
+		int ret = of_property_read_u32(np,
 				info->params[i].property, &val);
-		अगर (!ret)
+		if (!ret)
 			configs[num_configs++] =
 				LTQ_PINCONF_PACK(info->params[i].param,
 				val);
-	पूर्ण
+	}
 
-	अगर (!num_configs)
-		वापस;
+	if (!num_configs)
+		return;
 
-	of_property_क्रम_each_string(np, "lantiq,pins", prop, pin) अणु
+	of_property_for_each_string(np, "lantiq,pins", prop, pin) {
 		(*map)->data.configs.configs = kmemdup(configs,
-					num_configs * माप(अचिन्हित दीर्घ),
+					num_configs * sizeof(unsigned long),
 					GFP_KERNEL);
 		(*map)->type = PIN_MAP_TYPE_CONFIGS_PIN;
 		(*map)->name = pin;
 		(*map)->data.configs.group_or_pin = pin;
 		(*map)->data.configs.num_configs = num_configs;
 		(*map)++;
-	पूर्ण
-	of_property_क्रम_each_string(np, "lantiq,groups", prop, group) अणु
+	}
+	of_property_for_each_string(np, "lantiq,groups", prop, group) {
 		(*map)->data.configs.configs = kmemdup(configs,
-					num_configs * माप(अचिन्हित दीर्घ),
+					num_configs * sizeof(unsigned long),
 					GFP_KERNEL);
 		(*map)->type = PIN_MAP_TYPE_CONFIGS_GROUP;
 		(*map)->name = group;
 		(*map)->data.configs.group_or_pin = group;
 		(*map)->data.configs.num_configs = num_configs;
 		(*map)++;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक ltq_pinctrl_dt_subnode_size(काष्ठा device_node *np)
-अणु
-	पूर्णांक ret;
+static int ltq_pinctrl_dt_subnode_size(struct device_node *np)
+{
+	int ret;
 
 	ret = of_property_count_strings(np, "lantiq,groups");
-	अगर (ret < 0)
+	if (ret < 0)
 		ret = of_property_count_strings(np, "lantiq,pins");
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ltq_pinctrl_dt_node_to_map(काष्ठा pinctrl_dev *pctldev,
-				      काष्ठा device_node *np_config,
-				      काष्ठा pinctrl_map **map,
-				      अचिन्हित *num_maps)
-अणु
-	काष्ठा pinctrl_map *पंचांगp;
-	काष्ठा device_node *np;
-	पूर्णांक max_maps = 0;
+static int ltq_pinctrl_dt_node_to_map(struct pinctrl_dev *pctldev,
+				      struct device_node *np_config,
+				      struct pinctrl_map **map,
+				      unsigned *num_maps)
+{
+	struct pinctrl_map *tmp;
+	struct device_node *np;
+	int max_maps = 0;
 
-	क्रम_each_child_of_node(np_config, np)
+	for_each_child_of_node(np_config, np)
 		max_maps += ltq_pinctrl_dt_subnode_size(np);
-	*map = kzalloc(array3_size(max_maps, माप(काष्ठा pinctrl_map), 2),
+	*map = kzalloc(array3_size(max_maps, sizeof(struct pinctrl_map), 2),
 		       GFP_KERNEL);
-	अगर (!*map)
-		वापस -ENOMEM;
-	पंचांगp = *map;
+	if (!*map)
+		return -ENOMEM;
+	tmp = *map;
 
-	क्रम_each_child_of_node(np_config, np)
-		ltq_pinctrl_dt_subnode_to_map(pctldev, np, &पंचांगp);
-	*num_maps = ((पूर्णांक)(पंचांगp - *map));
+	for_each_child_of_node(np_config, np)
+		ltq_pinctrl_dt_subnode_to_map(pctldev, np, &tmp);
+	*num_maps = ((int)(tmp - *map));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा pinctrl_ops ltq_pctrl_ops = अणु
+static const struct pinctrl_ops ltq_pctrl_ops = {
 	.get_groups_count	= ltq_get_group_count,
 	.get_group_name		= ltq_get_group_name,
 	.get_group_pins		= ltq_get_group_pins,
 	.pin_dbg_show		= ltq_pinctrl_pin_dbg_show,
 	.dt_node_to_map		= ltq_pinctrl_dt_node_to_map,
-	.dt_मुक्त_map		= ltq_pinctrl_dt_मुक्त_map,
-पूर्ण;
+	.dt_free_map		= ltq_pinctrl_dt_free_map,
+};
 
-अटल पूर्णांक ltq_pmx_func_count(काष्ठा pinctrl_dev *pctrldev)
-अणु
-	काष्ठा ltq_pinmux_info *info = pinctrl_dev_get_drvdata(pctrldev);
+static int ltq_pmx_func_count(struct pinctrl_dev *pctrldev)
+{
+	struct ltq_pinmux_info *info = pinctrl_dev_get_drvdata(pctrldev);
 
-	वापस info->num_funcs;
-पूर्ण
+	return info->num_funcs;
+}
 
-अटल स्थिर अक्षर *ltq_pmx_func_name(काष्ठा pinctrl_dev *pctrldev,
-					 अचिन्हित selector)
-अणु
-	काष्ठा ltq_pinmux_info *info = pinctrl_dev_get_drvdata(pctrldev);
+static const char *ltq_pmx_func_name(struct pinctrl_dev *pctrldev,
+					 unsigned selector)
+{
+	struct ltq_pinmux_info *info = pinctrl_dev_get_drvdata(pctrldev);
 
-	अगर (selector >= info->num_funcs)
-		वापस शून्य;
+	if (selector >= info->num_funcs)
+		return NULL;
 
-	वापस info->funcs[selector].name;
-पूर्ण
+	return info->funcs[selector].name;
+}
 
-अटल पूर्णांक ltq_pmx_get_groups(काष्ठा pinctrl_dev *pctrldev,
-				अचिन्हित func,
-				स्थिर अक्षर * स्थिर **groups,
-				अचिन्हित * स्थिर num_groups)
-अणु
-	काष्ठा ltq_pinmux_info *info = pinctrl_dev_get_drvdata(pctrldev);
+static int ltq_pmx_get_groups(struct pinctrl_dev *pctrldev,
+				unsigned func,
+				const char * const **groups,
+				unsigned * const num_groups)
+{
+	struct ltq_pinmux_info *info = pinctrl_dev_get_drvdata(pctrldev);
 
 	*groups = info->funcs[func].groups;
 	*num_groups = info->funcs[func].num_groups;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Return function number. If failure, वापस negative value. */
-अटल पूर्णांक match_mux(स्थिर काष्ठा ltq_mfp_pin *mfp, अचिन्हित mux)
-अणु
-	पूर्णांक i;
-	क्रम (i = 0; i < LTQ_MAX_MUX; i++) अणु
-		अगर (mfp->func[i] == mux)
-			अवरोध;
-	पूर्ण
-	अगर (i >= LTQ_MAX_MUX)
-		वापस -EINVAL;
-	वापस i;
-पूर्ण
+/* Return function number. If failure, return negative value. */
+static int match_mux(const struct ltq_mfp_pin *mfp, unsigned mux)
+{
+	int i;
+	for (i = 0; i < LTQ_MAX_MUX; i++) {
+		if (mfp->func[i] == mux)
+			break;
+	}
+	if (i >= LTQ_MAX_MUX)
+		return -EINVAL;
+	return i;
+}
 
-/* करोn't assume .mfp is linearly mapped. find the mfp with the correct .pin */
-अटल पूर्णांक match_mfp(स्थिर काष्ठा ltq_pinmux_info *info, पूर्णांक pin)
-अणु
-	पूर्णांक i;
-	क्रम (i = 0; i < info->num_mfp; i++) अणु
-		अगर (info->mfp[i].pin == pin)
-			वापस i;
-	पूर्ण
-	वापस -1;
-पूर्ण
+/* don't assume .mfp is linearly mapped. find the mfp with the correct .pin */
+static int match_mfp(const struct ltq_pinmux_info *info, int pin)
+{
+	int i;
+	for (i = 0; i < info->num_mfp; i++) {
+		if (info->mfp[i].pin == pin)
+			return i;
+	}
+	return -1;
+}
 
-/* check whether current pin configuration is valid. Negative क्रम failure */
-अटल पूर्णांक match_group_mux(स्थिर काष्ठा ltq_pin_group *grp,
-			   स्थिर काष्ठा ltq_pinmux_info *info,
-			   अचिन्हित mux)
-अणु
-	पूर्णांक i, pin, ret = 0;
-	क्रम (i = 0; i < grp->npins; i++) अणु
+/* check whether current pin configuration is valid. Negative for failure */
+static int match_group_mux(const struct ltq_pin_group *grp,
+			   const struct ltq_pinmux_info *info,
+			   unsigned mux)
+{
+	int i, pin, ret = 0;
+	for (i = 0; i < grp->npins; i++) {
 		pin = match_mfp(info, grp->pins[i]);
-		अगर (pin < 0) अणु
+		if (pin < 0) {
 			dev_err(info->dev, "could not find mfp for pin %d\n",
 				grp->pins[i]);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		ret = match_mux(&info->mfp[pin], mux);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(info->dev, "Can't find mux %d on pin%d\n",
 				mux, pin);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	वापस ret;
-पूर्ण
+			break;
+		}
+	}
+	return ret;
+}
 
-अटल पूर्णांक ltq_pmx_set(काष्ठा pinctrl_dev *pctrldev,
-		       अचिन्हित func,
-		       अचिन्हित group)
-अणु
-	काष्ठा ltq_pinmux_info *info = pinctrl_dev_get_drvdata(pctrldev);
-	स्थिर काष्ठा ltq_pin_group *pin_grp = &info->grps[group];
-	पूर्णांक i, pin, pin_func, ret;
+static int ltq_pmx_set(struct pinctrl_dev *pctrldev,
+		       unsigned func,
+		       unsigned group)
+{
+	struct ltq_pinmux_info *info = pinctrl_dev_get_drvdata(pctrldev);
+	const struct ltq_pin_group *pin_grp = &info->grps[group];
+	int i, pin, pin_func, ret;
 
-	अगर (!pin_grp->npins ||
-		(match_group_mux(pin_grp, info, pin_grp->mux) < 0)) अणु
+	if (!pin_grp->npins ||
+		(match_group_mux(pin_grp, info, pin_grp->mux) < 0)) {
 		dev_err(info->dev, "Failed to set the pin group: %s\n",
 			info->grps[group].name);
-		वापस -EINVAL;
-	पूर्ण
-	क्रम (i = 0; i < pin_grp->npins; i++) अणु
+		return -EINVAL;
+	}
+	for (i = 0; i < pin_grp->npins; i++) {
 		pin = match_mfp(info, pin_grp->pins[i]);
-		अगर (pin < 0) अणु
+		if (pin < 0) {
 			dev_err(info->dev, "could not find mfp for pin %d\n",
 				pin_grp->pins[i]);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		pin_func = match_mux(&info->mfp[pin], pin_grp->mux);
 		ret = info->apply_mux(pctrldev, pin, pin_func);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(info->dev,
 				"failed to apply mux %d for pin %d\n",
 				pin_func, pin);
-			वापस ret;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return ret;
+		}
+	}
+	return 0;
+}
 
-अटल पूर्णांक ltq_pmx_gpio_request_enable(काष्ठा pinctrl_dev *pctrldev,
-				काष्ठा pinctrl_gpio_range *range,
-				अचिन्हित pin)
-अणु
-	काष्ठा ltq_pinmux_info *info = pinctrl_dev_get_drvdata(pctrldev);
-	पूर्णांक mfp = match_mfp(info, pin);
-	पूर्णांक pin_func;
+static int ltq_pmx_gpio_request_enable(struct pinctrl_dev *pctrldev,
+				struct pinctrl_gpio_range *range,
+				unsigned pin)
+{
+	struct ltq_pinmux_info *info = pinctrl_dev_get_drvdata(pctrldev);
+	int mfp = match_mfp(info, pin);
+	int pin_func;
 
-	अगर (mfp < 0) अणु
+	if (mfp < 0) {
 		dev_err(info->dev, "could not find mfp for pin %d\n", pin);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	pin_func = match_mux(&info->mfp[mfp], 0);
-	अगर (pin_func < 0) अणु
+	if (pin_func < 0) {
 		dev_err(info->dev, "No GPIO function on pin%d\n", mfp);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस info->apply_mux(pctrldev, mfp, pin_func);
-पूर्ण
+	return info->apply_mux(pctrldev, mfp, pin_func);
+}
 
-अटल स्थिर काष्ठा pinmux_ops ltq_pmx_ops = अणु
+static const struct pinmux_ops ltq_pmx_ops = {
 	.get_functions_count	= ltq_pmx_func_count,
 	.get_function_name	= ltq_pmx_func_name,
 	.get_function_groups	= ltq_pmx_get_groups,
 	.set_mux		= ltq_pmx_set,
 	.gpio_request_enable	= ltq_pmx_gpio_request_enable,
-पूर्ण;
+};
 
 /*
- * allow dअगरferent socs to रेजिस्टर with the generic part of the lanti
+ * allow different socs to register with the generic part of the lanti
  * pinctrl code
  */
-पूर्णांक ltq_pinctrl_रेजिस्टर(काष्ठा platक्रमm_device *pdev,
-				काष्ठा ltq_pinmux_info *info)
-अणु
-	काष्ठा pinctrl_desc *desc;
+int ltq_pinctrl_register(struct platform_device *pdev,
+				struct ltq_pinmux_info *info)
+{
+	struct pinctrl_desc *desc;
 
-	अगर (!info)
-		वापस -EINVAL;
+	if (!info)
+		return -EINVAL;
 	desc = info->desc;
 	desc->pctlops = &ltq_pctrl_ops;
 	desc->pmxops = &ltq_pmx_ops;
 	info->dev = &pdev->dev;
 
-	info->pctrl = devm_pinctrl_रेजिस्टर(&pdev->dev, desc, info);
-	अगर (IS_ERR(info->pctrl)) अणु
+	info->pctrl = devm_pinctrl_register(&pdev->dev, desc, info);
+	if (IS_ERR(info->pctrl)) {
 		dev_err(&pdev->dev, "failed to register LTQ pinmux driver\n");
-		वापस PTR_ERR(info->pctrl);
-	पूर्ण
-	platक्रमm_set_drvdata(pdev, info);
-	वापस 0;
-पूर्ण
+		return PTR_ERR(info->pctrl);
+	}
+	platform_set_drvdata(pdev, info);
+	return 0;
+}

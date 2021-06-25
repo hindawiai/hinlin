@@ -1,42 +1,41 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/cpumask.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/dmapool.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/gfp.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pci_regs.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/pci.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/cpumask.h>
+#include <linux/dma-mapping.h>
+#include <linux/dmapool.h>
+#include <linux/delay.h>
+#include <linux/gfp.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/pci_regs.h>
+#include <linux/vmalloc.h>
+#include <linux/pci.h>
 
-#समावेश "nitrox_dev.h"
-#समावेश "nitrox_common.h"
-#समावेश "nitrox_req.h"
-#समावेश "nitrox_csr.h"
+#include "nitrox_dev.h"
+#include "nitrox_common.h"
+#include "nitrox_req.h"
+#include "nitrox_csr.h"
 
-#घोषणा CRYPTO_CTX_SIZE	256
+#define CRYPTO_CTX_SIZE	256
 
 /* packet inuput ring alignments */
-#घोषणा PKTIN_Q_ALIGN_BYTES 16
+#define PKTIN_Q_ALIGN_BYTES 16
 /* AQM Queue input alignments */
-#घोषणा AQM_Q_ALIGN_BYTES 32
+#define AQM_Q_ALIGN_BYTES 32
 
-अटल पूर्णांक nitrox_cmdq_init(काष्ठा nitrox_cmdq *cmdq, पूर्णांक align_bytes)
-अणु
-	काष्ठा nitrox_device *ndev = cmdq->ndev;
+static int nitrox_cmdq_init(struct nitrox_cmdq *cmdq, int align_bytes)
+{
+	struct nitrox_device *ndev = cmdq->ndev;
 
 	cmdq->qsize = (ndev->qlen * cmdq->instr_size) + align_bytes;
 	cmdq->unalign_base = dma_alloc_coherent(DEV(ndev), cmdq->qsize,
 						&cmdq->unalign_dma,
 						GFP_KERNEL);
-	अगर (!cmdq->unalign_base)
-		वापस -ENOMEM;
+	if (!cmdq->unalign_base)
+		return -ENOMEM;
 
 	cmdq->dma = PTR_ALIGN(cmdq->unalign_dma, align_bytes);
 	cmdq->base = cmdq->unalign_base + (cmdq->dma - cmdq->unalign_dma);
-	cmdq->ग_लिखो_idx = 0;
+	cmdq->write_idx = 0;
 
 	spin_lock_init(&cmdq->cmd_qlock);
 	spin_lock_init(&cmdq->resp_qlock);
@@ -48,71 +47,71 @@
 
 	atomic_set(&cmdq->pending_count, 0);
 	atomic_set(&cmdq->backlog_count, 0);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम nitrox_cmdq_reset(काष्ठा nitrox_cmdq *cmdq)
-अणु
-	cmdq->ग_लिखो_idx = 0;
+static void nitrox_cmdq_reset(struct nitrox_cmdq *cmdq)
+{
+	cmdq->write_idx = 0;
 	atomic_set(&cmdq->pending_count, 0);
 	atomic_set(&cmdq->backlog_count, 0);
-पूर्ण
+}
 
-अटल व्योम nitrox_cmdq_cleanup(काष्ठा nitrox_cmdq *cmdq)
-अणु
-	काष्ठा nitrox_device *ndev;
+static void nitrox_cmdq_cleanup(struct nitrox_cmdq *cmdq)
+{
+	struct nitrox_device *ndev;
 
-	अगर (!cmdq)
-		वापस;
+	if (!cmdq)
+		return;
 
-	अगर (!cmdq->unalign_base)
-		वापस;
+	if (!cmdq->unalign_base)
+		return;
 
 	ndev = cmdq->ndev;
 	cancel_work_sync(&cmdq->backlog_qflush);
 
-	dma_मुक्त_coherent(DEV(ndev), cmdq->qsize,
+	dma_free_coherent(DEV(ndev), cmdq->qsize,
 			  cmdq->unalign_base, cmdq->unalign_dma);
 	nitrox_cmdq_reset(cmdq);
 
-	cmdq->dbell_csr_addr = शून्य;
-	cmdq->compl_cnt_csr_addr = शून्य;
-	cmdq->unalign_base = शून्य;
-	cmdq->base = शून्य;
+	cmdq->dbell_csr_addr = NULL;
+	cmdq->compl_cnt_csr_addr = NULL;
+	cmdq->unalign_base = NULL;
+	cmdq->base = NULL;
 	cmdq->unalign_dma = 0;
 	cmdq->dma = 0;
 	cmdq->qsize = 0;
 	cmdq->instr_size = 0;
-पूर्ण
+}
 
-अटल व्योम nitrox_मुक्त_aqm_queues(काष्ठा nitrox_device *ndev)
-अणु
-	पूर्णांक i;
+static void nitrox_free_aqm_queues(struct nitrox_device *ndev)
+{
+	int i;
 
-	क्रम (i = 0; i < ndev->nr_queues; i++) अणु
+	for (i = 0; i < ndev->nr_queues; i++) {
 		nitrox_cmdq_cleanup(ndev->aqmq[i]);
-		kमुक्त_sensitive(ndev->aqmq[i]);
-		ndev->aqmq[i] = शून्य;
-	पूर्ण
-पूर्ण
+		kfree_sensitive(ndev->aqmq[i]);
+		ndev->aqmq[i] = NULL;
+	}
+}
 
-अटल पूर्णांक nitrox_alloc_aqm_queues(काष्ठा nitrox_device *ndev)
-अणु
-	पूर्णांक i, err;
+static int nitrox_alloc_aqm_queues(struct nitrox_device *ndev)
+{
+	int i, err;
 
-	क्रम (i = 0; i < ndev->nr_queues; i++) अणु
-		काष्ठा nitrox_cmdq *cmdq;
+	for (i = 0; i < ndev->nr_queues; i++) {
+		struct nitrox_cmdq *cmdq;
 		u64 offset;
 
-		cmdq = kzalloc_node(माप(*cmdq), GFP_KERNEL, ndev->node);
-		अगर (!cmdq) अणु
+		cmdq = kzalloc_node(sizeof(*cmdq), GFP_KERNEL, ndev->node);
+		if (!cmdq) {
 			err = -ENOMEM;
-			जाओ aqmq_fail;
-		पूर्ण
+			goto aqmq_fail;
+		}
 
 		cmdq->ndev = ndev;
 		cmdq->qno = i;
-		cmdq->instr_size = माप(काष्ठा aqmq_command_s);
+		cmdq->instr_size = sizeof(struct aqmq_command_s);
 
 		/* AQM Queue Doorbell Counter Register Address */
 		offset = AQMQ_DRBLX(i);
@@ -122,53 +121,53 @@
 		cmdq->compl_cnt_csr_addr = NITROX_CSR_ADDR(ndev, offset);
 
 		err = nitrox_cmdq_init(cmdq, AQM_Q_ALIGN_BYTES);
-		अगर (err) अणु
-			kमुक्त_sensitive(cmdq);
-			जाओ aqmq_fail;
-		पूर्ण
+		if (err) {
+			kfree_sensitive(cmdq);
+			goto aqmq_fail;
+		}
 		ndev->aqmq[i] = cmdq;
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 aqmq_fail:
-	nitrox_मुक्त_aqm_queues(ndev);
-	वापस err;
-पूर्ण
+	nitrox_free_aqm_queues(ndev);
+	return err;
+}
 
-अटल व्योम nitrox_मुक्त_pktin_queues(काष्ठा nitrox_device *ndev)
-अणु
-	पूर्णांक i;
+static void nitrox_free_pktin_queues(struct nitrox_device *ndev)
+{
+	int i;
 
-	क्रम (i = 0; i < ndev->nr_queues; i++) अणु
-		काष्ठा nitrox_cmdq *cmdq = &ndev->pkt_inq[i];
+	for (i = 0; i < ndev->nr_queues; i++) {
+		struct nitrox_cmdq *cmdq = &ndev->pkt_inq[i];
 
 		nitrox_cmdq_cleanup(cmdq);
-	पूर्ण
-	kमुक्त(ndev->pkt_inq);
-	ndev->pkt_inq = शून्य;
-पूर्ण
+	}
+	kfree(ndev->pkt_inq);
+	ndev->pkt_inq = NULL;
+}
 
-अटल पूर्णांक nitrox_alloc_pktin_queues(काष्ठा nitrox_device *ndev)
-अणु
-	पूर्णांक i, err;
+static int nitrox_alloc_pktin_queues(struct nitrox_device *ndev)
+{
+	int i, err;
 
-	ndev->pkt_inq = kसुस्मृति_node(ndev->nr_queues,
-				     माप(काष्ठा nitrox_cmdq),
+	ndev->pkt_inq = kcalloc_node(ndev->nr_queues,
+				     sizeof(struct nitrox_cmdq),
 				     GFP_KERNEL, ndev->node);
-	अगर (!ndev->pkt_inq)
-		वापस -ENOMEM;
+	if (!ndev->pkt_inq)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < ndev->nr_queues; i++) अणु
-		काष्ठा nitrox_cmdq *cmdq;
+	for (i = 0; i < ndev->nr_queues; i++) {
+		struct nitrox_cmdq *cmdq;
 		u64 offset;
 
 		cmdq = &ndev->pkt_inq[i];
 		cmdq->ndev = ndev;
 		cmdq->qno = i;
-		cmdq->instr_size = माप(काष्ठा nps_pkt_instr);
+		cmdq->instr_size = sizeof(struct nps_pkt_instr);
 
-		/* packet input ring करोorbell address */
+		/* packet input ring doorbell address */
 		offset = NPS_PKT_IN_INSTR_BAOFF_DBELLX(i);
 		cmdq->dbell_csr_addr = NITROX_CSR_ADDR(ndev, offset);
 		/* packet solicit port completion count address */
@@ -176,88 +175,88 @@ aqmq_fail:
 		cmdq->compl_cnt_csr_addr = NITROX_CSR_ADDR(ndev, offset);
 
 		err = nitrox_cmdq_init(cmdq, PKTIN_Q_ALIGN_BYTES);
-		अगर (err)
-			जाओ pktq_fail;
-	पूर्ण
-	वापस 0;
+		if (err)
+			goto pktq_fail;
+	}
+	return 0;
 
 pktq_fail:
-	nitrox_मुक्त_pktin_queues(ndev);
-	वापस err;
-पूर्ण
+	nitrox_free_pktin_queues(ndev);
+	return err;
+}
 
-अटल पूर्णांक create_crypto_dma_pool(काष्ठा nitrox_device *ndev)
-अणु
-	माप_प्रकार size;
+static int create_crypto_dma_pool(struct nitrox_device *ndev)
+{
+	size_t size;
 
 	/* Crypto context pool, 16 byte aligned */
-	size = CRYPTO_CTX_SIZE + माप(काष्ठा ctx_hdr);
+	size = CRYPTO_CTX_SIZE + sizeof(struct ctx_hdr);
 	ndev->ctx_pool = dma_pool_create("nitrox-context",
 					 DEV(ndev), size, 16, 0);
-	अगर (!ndev->ctx_pool)
-		वापस -ENOMEM;
+	if (!ndev->ctx_pool)
+		return -ENOMEM;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम destroy_crypto_dma_pool(काष्ठा nitrox_device *ndev)
-अणु
-	अगर (!ndev->ctx_pool)
-		वापस;
+static void destroy_crypto_dma_pool(struct nitrox_device *ndev)
+{
+	if (!ndev->ctx_pool)
+		return;
 
 	dma_pool_destroy(ndev->ctx_pool);
-	ndev->ctx_pool = शून्य;
-पूर्ण
+	ndev->ctx_pool = NULL;
+}
 
 /*
  * crypto_alloc_context - Allocate crypto context from pool
  * @ndev: NITROX Device
  */
-व्योम *crypto_alloc_context(काष्ठा nitrox_device *ndev)
-अणु
-	काष्ठा ctx_hdr *ctx;
-	काष्ठा crypto_ctx_hdr *chdr;
-	व्योम *vaddr;
+void *crypto_alloc_context(struct nitrox_device *ndev)
+{
+	struct ctx_hdr *ctx;
+	struct crypto_ctx_hdr *chdr;
+	void *vaddr;
 	dma_addr_t dma;
 
-	chdr = kदो_स्मृति(माप(*chdr), GFP_KERNEL);
-	अगर (!chdr)
-		वापस शून्य;
+	chdr = kmalloc(sizeof(*chdr), GFP_KERNEL);
+	if (!chdr)
+		return NULL;
 
 	vaddr = dma_pool_zalloc(ndev->ctx_pool, GFP_KERNEL, &dma);
-	अगर (!vaddr) अणु
-		kमुक्त(chdr);
-		वापस शून्य;
-	पूर्ण
+	if (!vaddr) {
+		kfree(chdr);
+		return NULL;
+	}
 
 	/* fill meta data */
 	ctx = vaddr;
 	ctx->pool = ndev->ctx_pool;
 	ctx->dma = dma;
-	ctx->ctx_dma = dma + माप(काष्ठा ctx_hdr);
+	ctx->ctx_dma = dma + sizeof(struct ctx_hdr);
 
 	chdr->pool = ndev->ctx_pool;
 	chdr->dma = dma;
 	chdr->vaddr = vaddr;
 
-	वापस chdr;
-पूर्ण
+	return chdr;
+}
 
 /**
- * crypto_मुक्त_context - Free crypto context to pool
- * @ctx: context to मुक्त
+ * crypto_free_context - Free crypto context to pool
+ * @ctx: context to free
  */
-व्योम crypto_मुक्त_context(व्योम *ctx)
-अणु
-	काष्ठा crypto_ctx_hdr *ctxp;
+void crypto_free_context(void *ctx)
+{
+	struct crypto_ctx_hdr *ctxp;
 
-	अगर (!ctx)
-		वापस;
+	if (!ctx)
+		return;
 
 	ctxp = ctx;
-	dma_pool_मुक्त(ctxp->pool, ctxp->vaddr, ctxp->dma);
-	kमुक्त(ctxp);
-पूर्ण
+	dma_pool_free(ctxp->pool, ctxp->vaddr, ctxp->dma);
+	kfree(ctxp);
+}
 
 /**
  * nitrox_common_sw_init - allocate software resources.
@@ -267,35 +266,35 @@ pktq_fail:
  *
  * Return: 0 on success, or a negative error code on error.
  */
-पूर्णांक nitrox_common_sw_init(काष्ठा nitrox_device *ndev)
-अणु
-	पूर्णांक err = 0;
+int nitrox_common_sw_init(struct nitrox_device *ndev)
+{
+	int err = 0;
 
 	/* per device crypto context pool */
 	err = create_crypto_dma_pool(ndev);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = nitrox_alloc_pktin_queues(ndev);
-	अगर (err)
+	if (err)
 		destroy_crypto_dma_pool(ndev);
 
 	err = nitrox_alloc_aqm_queues(ndev);
-	अगर (err) अणु
-		nitrox_मुक्त_pktin_queues(ndev);
+	if (err) {
+		nitrox_free_pktin_queues(ndev);
 		destroy_crypto_dma_pool(ndev);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /**
- * nitrox_common_sw_cleanup - मुक्त software resources.
+ * nitrox_common_sw_cleanup - free software resources.
  * @ndev: NITROX device
  */
-व्योम nitrox_common_sw_cleanup(काष्ठा nitrox_device *ndev)
-अणु
-	nitrox_मुक्त_aqm_queues(ndev);
-	nitrox_मुक्त_pktin_queues(ndev);
+void nitrox_common_sw_cleanup(struct nitrox_device *ndev)
+{
+	nitrox_free_aqm_queues(ndev);
+	nitrox_free_pktin_queues(ndev);
 	destroy_crypto_dma_pool(ndev);
-पूर्ण
+}

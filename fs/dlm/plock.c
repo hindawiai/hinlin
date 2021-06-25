@@ -1,52 +1,51 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2005-2008 Red Hat, Inc.  All rights reserved.
  */
 
-#समावेश <linux/fs.h>
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/poll.h>
-#समावेश <linux/dlm.h>
-#समावेश <linux/dlm_plock.h>
-#समावेश <linux/slab.h>
+#include <linux/fs.h>
+#include <linux/miscdevice.h>
+#include <linux/poll.h>
+#include <linux/dlm.h>
+#include <linux/dlm_plock.h>
+#include <linux/slab.h>
 
-#समावेश "dlm_internal.h"
-#समावेश "lockspace.h"
+#include "dlm_internal.h"
+#include "lockspace.h"
 
-अटल spinlock_t ops_lock;
-अटल काष्ठा list_head send_list;
-अटल काष्ठा list_head recv_list;
-अटल रुको_queue_head_t send_wq;
-अटल रुको_queue_head_t recv_wq;
+static spinlock_t ops_lock;
+static struct list_head send_list;
+static struct list_head recv_list;
+static wait_queue_head_t send_wq;
+static wait_queue_head_t recv_wq;
 
-काष्ठा plock_op अणु
-	काष्ठा list_head list;
-	पूर्णांक करोne;
-	काष्ठा dlm_plock_info info;
-पूर्ण;
+struct plock_op {
+	struct list_head list;
+	int done;
+	struct dlm_plock_info info;
+};
 
-काष्ठा plock_xop अणु
-	काष्ठा plock_op xop;
-	पूर्णांक (*callback)(काष्ठा file_lock *fl, पूर्णांक result);
-	व्योम *fl;
-	व्योम *file;
-	काष्ठा file_lock flc;
-पूर्ण;
+struct plock_xop {
+	struct plock_op xop;
+	int (*callback)(struct file_lock *fl, int result);
+	void *fl;
+	void *file;
+	struct file_lock flc;
+};
 
 
-अटल अंतरभूत व्योम set_version(काष्ठा dlm_plock_info *info)
-अणु
+static inline void set_version(struct dlm_plock_info *info)
+{
 	info->version[0] = DLM_PLOCK_VERSION_MAJOR;
 	info->version[1] = DLM_PLOCK_VERSION_MINOR;
 	info->version[2] = DLM_PLOCK_VERSION_PATCH;
-पूर्ण
+}
 
-अटल पूर्णांक check_version(काष्ठा dlm_plock_info *info)
-अणु
-	अगर ((DLM_PLOCK_VERSION_MAJOR != info->version[0]) ||
-	    (DLM_PLOCK_VERSION_MINOR < info->version[1])) अणु
-		log_prपूर्णांक("plock device version mismatch: "
+static int check_version(struct dlm_plock_info *info)
+{
+	if ((DLM_PLOCK_VERSION_MAJOR != info->version[0]) ||
+	    (DLM_PLOCK_VERSION_MINOR < info->version[1])) {
+		log_print("plock device version mismatch: "
 			  "kernel (%u.%u.%u), user (%u.%u.%u)",
 			  DLM_PLOCK_VERSION_MAJOR,
 			  DLM_PLOCK_VERSION_MINOR,
@@ -54,35 +53,35 @@
 			  info->version[0],
 			  info->version[1],
 			  info->version[2]);
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EINVAL;
+	}
+	return 0;
+}
 
-अटल व्योम send_op(काष्ठा plock_op *op)
-अणु
+static void send_op(struct plock_op *op)
+{
 	set_version(&op->info);
 	INIT_LIST_HEAD(&op->list);
 	spin_lock(&ops_lock);
 	list_add_tail(&op->list, &send_list);
 	spin_unlock(&ops_lock);
 	wake_up(&send_wq);
-पूर्ण
+}
 
-/* If a process was समाप्तed जबतक रुकोing क्रम the only plock on a file,
-   locks_हटाओ_posix will not see any lock on the file so it won't
-   send an unlock-बंद to us to pass on to userspace to clean up the
-   abanकरोned रुकोer.  So, we have to insert the unlock-बंद when the
-   lock call is पूर्णांकerrupted. */
+/* If a process was killed while waiting for the only plock on a file,
+   locks_remove_posix will not see any lock on the file so it won't
+   send an unlock-close to us to pass on to userspace to clean up the
+   abandoned waiter.  So, we have to insert the unlock-close when the
+   lock call is interrupted. */
 
-अटल व्योम करो_unlock_बंद(काष्ठा dlm_ls *ls, u64 number,
-			    काष्ठा file *file, काष्ठा file_lock *fl)
-अणु
-	काष्ठा plock_op *op;
+static void do_unlock_close(struct dlm_ls *ls, u64 number,
+			    struct file *file, struct file_lock *fl)
+{
+	struct plock_op *op;
 
-	op = kzalloc(माप(*op), GFP_NOFS);
-	अगर (!op)
-		वापस;
+	op = kzalloc(sizeof(*op), GFP_NOFS);
+	if (!op)
+		return;
 
 	op->info.optype		= DLM_PLOCK_OP_UNLOCK;
 	op->info.pid		= fl->fl_pid;
@@ -90,44 +89,44 @@
 	op->info.number		= number;
 	op->info.start		= 0;
 	op->info.end		= OFFSET_MAX;
-	अगर (fl->fl_lmops && fl->fl_lmops->lm_grant)
+	if (fl->fl_lmops && fl->fl_lmops->lm_grant)
 		op->info.owner	= (__u64) fl->fl_pid;
-	अन्यथा
-		op->info.owner	= (__u64)(दीर्घ) fl->fl_owner;
+	else
+		op->info.owner	= (__u64)(long) fl->fl_owner;
 
 	op->info.flags |= DLM_PLOCK_FL_CLOSE;
 	send_op(op);
-पूर्ण
+}
 
-पूर्णांक dlm_posix_lock(dlm_lockspace_t *lockspace, u64 number, काष्ठा file *file,
-		   पूर्णांक cmd, काष्ठा file_lock *fl)
-अणु
-	काष्ठा dlm_ls *ls;
-	काष्ठा plock_op *op;
-	काष्ठा plock_xop *xop;
-	पूर्णांक rv;
+int dlm_posix_lock(dlm_lockspace_t *lockspace, u64 number, struct file *file,
+		   int cmd, struct file_lock *fl)
+{
+	struct dlm_ls *ls;
+	struct plock_op *op;
+	struct plock_xop *xop;
+	int rv;
 
 	ls = dlm_find_lockspace_local(lockspace);
-	अगर (!ls)
-		वापस -EINVAL;
+	if (!ls)
+		return -EINVAL;
 
-	xop = kzalloc(माप(*xop), GFP_NOFS);
-	अगर (!xop) अणु
+	xop = kzalloc(sizeof(*xop), GFP_NOFS);
+	if (!xop) {
 		rv = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	op = &xop->xop;
 	op->info.optype		= DLM_PLOCK_OP_LOCK;
 	op->info.pid		= fl->fl_pid;
 	op->info.ex		= (fl->fl_type == F_WRLCK);
-	op->info.रुको		= IS_SETLKW(cmd);
+	op->info.wait		= IS_SETLKW(cmd);
 	op->info.fsid		= ls->ls_global_id;
 	op->info.number		= number;
 	op->info.start		= fl->fl_start;
 	op->info.end		= fl->fl_end;
-	अगर (fl->fl_lmops && fl->fl_lmops->lm_grant) अणु
-		/* fl_owner is lockd which करोesn't distinguish
+	if (fl->fl_lmops && fl->fl_lmops->lm_grant) {
+		/* fl_owner is lockd which doesn't distinguish
 		   processes on the nfs client */
 		op->info.owner	= (__u64) fl->fl_pid;
 		xop->callback	= fl->fl_lmops->lm_grant;
@@ -135,140 +134,140 @@
 		locks_copy_lock(&xop->flc, fl);
 		xop->fl		= fl;
 		xop->file	= file;
-	पूर्ण अन्यथा अणु
-		op->info.owner	= (__u64)(दीर्घ) fl->fl_owner;
-		xop->callback	= शून्य;
-	पूर्ण
+	} else {
+		op->info.owner	= (__u64)(long) fl->fl_owner;
+		xop->callback	= NULL;
+	}
 
 	send_op(op);
 
-	अगर (xop->callback == शून्य) अणु
-		rv = रुको_event_पूर्णांकerruptible(recv_wq, (op->करोne != 0));
-		अगर (rv == -ERESTARTSYS) अणु
+	if (xop->callback == NULL) {
+		rv = wait_event_interruptible(recv_wq, (op->done != 0));
+		if (rv == -ERESTARTSYS) {
 			log_debug(ls, "dlm_posix_lock: wait killed %llx",
-				  (अचिन्हित दीर्घ दीर्घ)number);
+				  (unsigned long long)number);
 			spin_lock(&ops_lock);
 			list_del(&op->list);
 			spin_unlock(&ops_lock);
-			kमुक्त(xop);
-			करो_unlock_बंद(ls, number, file, fl);
-			जाओ out;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		rv = खाता_LOCK_DEFERRED;
-		जाओ out;
-	पूर्ण
+			kfree(xop);
+			do_unlock_close(ls, number, file, fl);
+			goto out;
+		}
+	} else {
+		rv = FILE_LOCK_DEFERRED;
+		goto out;
+	}
 
 	spin_lock(&ops_lock);
-	अगर (!list_empty(&op->list)) अणु
+	if (!list_empty(&op->list)) {
 		log_error(ls, "dlm_posix_lock: op on list %llx",
-			  (अचिन्हित दीर्घ दीर्घ)number);
+			  (unsigned long long)number);
 		list_del(&op->list);
-	पूर्ण
+	}
 	spin_unlock(&ops_lock);
 
 	rv = op->info.rv;
 
-	अगर (!rv) अणु
-		अगर (locks_lock_file_रुको(file, fl) < 0)
+	if (!rv) {
+		if (locks_lock_file_wait(file, fl) < 0)
 			log_error(ls, "dlm_posix_lock: vfs lock error %llx",
-				  (अचिन्हित दीर्घ दीर्घ)number);
-	पूर्ण
+				  (unsigned long long)number);
+	}
 
-	kमुक्त(xop);
+	kfree(xop);
 out:
 	dlm_put_lockspace(ls);
-	वापस rv;
-पूर्ण
+	return rv;
+}
 EXPORT_SYMBOL_GPL(dlm_posix_lock);
 
-/* Returns failure अगरf a successful lock operation should be canceled */
-अटल पूर्णांक dlm_plock_callback(काष्ठा plock_op *op)
-अणु
-	काष्ठा file *file;
-	काष्ठा file_lock *fl;
-	काष्ठा file_lock *flc;
-	पूर्णांक (*notअगरy)(काष्ठा file_lock *fl, पूर्णांक result) = शून्य;
-	काष्ठा plock_xop *xop = (काष्ठा plock_xop *)op;
-	पूर्णांक rv = 0;
+/* Returns failure iff a successful lock operation should be canceled */
+static int dlm_plock_callback(struct plock_op *op)
+{
+	struct file *file;
+	struct file_lock *fl;
+	struct file_lock *flc;
+	int (*notify)(struct file_lock *fl, int result) = NULL;
+	struct plock_xop *xop = (struct plock_xop *)op;
+	int rv = 0;
 
 	spin_lock(&ops_lock);
-	अगर (!list_empty(&op->list)) अणु
-		log_prपूर्णांक("dlm_plock_callback: op on list %llx",
-			  (अचिन्हित दीर्घ दीर्घ)op->info.number);
+	if (!list_empty(&op->list)) {
+		log_print("dlm_plock_callback: op on list %llx",
+			  (unsigned long long)op->info.number);
 		list_del(&op->list);
-	पूर्ण
+	}
 	spin_unlock(&ops_lock);
 
-	/* check अगर the following 2 are still valid or make a copy */
+	/* check if the following 2 are still valid or make a copy */
 	file = xop->file;
 	flc = &xop->flc;
 	fl = xop->fl;
-	notअगरy = xop->callback;
+	notify = xop->callback;
 
-	अगर (op->info.rv) अणु
-		notअगरy(fl, op->info.rv);
-		जाओ out;
-	पूर्ण
+	if (op->info.rv) {
+		notify(fl, op->info.rv);
+		goto out;
+	}
 
 	/* got fs lock; bookkeep locally as well: */
 	flc->fl_flags &= ~FL_SLEEP;
-	अगर (posix_lock_file(file, flc, शून्य)) अणु
+	if (posix_lock_file(file, flc, NULL)) {
 		/*
-		 * This can only happen in the हाल of kदो_स्मृति() failure.
-		 * The fileप्रणाली's own lock is the authoritative lock,
+		 * This can only happen in the case of kmalloc() failure.
+		 * The filesystem's own lock is the authoritative lock,
 		 * so a failure to get the lock locally is not a disaster.
-		 * As दीर्घ as the fs cannot reliably cancel locks (especially
+		 * As long as the fs cannot reliably cancel locks (especially
 		 * in a low-memory situation), we're better off ignoring
 		 * this failure than trying to recover.
 		 */
-		log_prपूर्णांक("dlm_plock_callback: vfs lock error %llx file %p fl %p",
-			  (अचिन्हित दीर्घ दीर्घ)op->info.number, file, fl);
-	पूर्ण
+		log_print("dlm_plock_callback: vfs lock error %llx file %p fl %p",
+			  (unsigned long long)op->info.number, file, fl);
+	}
 
-	rv = notअगरy(fl, 0);
-	अगर (rv) अणु
+	rv = notify(fl, 0);
+	if (rv) {
 		/* XXX: We need to cancel the fs lock here: */
-		log_prपूर्णांक("dlm_plock_callback: lock granted after lock request "
+		log_print("dlm_plock_callback: lock granted after lock request "
 			  "failed; dangling lock!\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 out:
-	kमुक्त(xop);
-	वापस rv;
-पूर्ण
+	kfree(xop);
+	return rv;
+}
 
-पूर्णांक dlm_posix_unlock(dlm_lockspace_t *lockspace, u64 number, काष्ठा file *file,
-		     काष्ठा file_lock *fl)
-अणु
-	काष्ठा dlm_ls *ls;
-	काष्ठा plock_op *op;
-	पूर्णांक rv;
-	अचिन्हित अक्षर fl_flags = fl->fl_flags;
+int dlm_posix_unlock(dlm_lockspace_t *lockspace, u64 number, struct file *file,
+		     struct file_lock *fl)
+{
+	struct dlm_ls *ls;
+	struct plock_op *op;
+	int rv;
+	unsigned char fl_flags = fl->fl_flags;
 
 	ls = dlm_find_lockspace_local(lockspace);
-	अगर (!ls)
-		वापस -EINVAL;
+	if (!ls)
+		return -EINVAL;
 
-	op = kzalloc(माप(*op), GFP_NOFS);
-	अगर (!op) अणु
+	op = kzalloc(sizeof(*op), GFP_NOFS);
+	if (!op) {
 		rv = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* cause the vfs unlock to वापस ENOENT अगर lock is not found */
+	/* cause the vfs unlock to return ENOENT if lock is not found */
 	fl->fl_flags |= FL_EXISTS;
 
-	rv = locks_lock_file_रुको(file, fl);
-	अगर (rv == -ENOENT) अणु
+	rv = locks_lock_file_wait(file, fl);
+	if (rv == -ENOENT) {
 		rv = 0;
-		जाओ out_मुक्त;
-	पूर्ण
-	अगर (rv < 0) अणु
+		goto out_free;
+	}
+	if (rv < 0) {
 		log_error(ls, "dlm_posix_unlock: vfs unlock error %d %llx",
-			  rv, (अचिन्हित दीर्घ दीर्घ)number);
-	पूर्ण
+			  rv, (unsigned long long)number);
+	}
 
 	op->info.optype		= DLM_PLOCK_OP_UNLOCK;
 	op->info.pid		= fl->fl_pid;
@@ -276,59 +275,59 @@ out:
 	op->info.number		= number;
 	op->info.start		= fl->fl_start;
 	op->info.end		= fl->fl_end;
-	अगर (fl->fl_lmops && fl->fl_lmops->lm_grant)
+	if (fl->fl_lmops && fl->fl_lmops->lm_grant)
 		op->info.owner	= (__u64) fl->fl_pid;
-	अन्यथा
-		op->info.owner	= (__u64)(दीर्घ) fl->fl_owner;
+	else
+		op->info.owner	= (__u64)(long) fl->fl_owner;
 
-	अगर (fl->fl_flags & FL_CLOSE) अणु
+	if (fl->fl_flags & FL_CLOSE) {
 		op->info.flags |= DLM_PLOCK_FL_CLOSE;
 		send_op(op);
 		rv = 0;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	send_op(op);
-	रुको_event(recv_wq, (op->करोne != 0));
+	wait_event(recv_wq, (op->done != 0));
 
 	spin_lock(&ops_lock);
-	अगर (!list_empty(&op->list)) अणु
+	if (!list_empty(&op->list)) {
 		log_error(ls, "dlm_posix_unlock: op on list %llx",
-			  (अचिन्हित दीर्घ दीर्घ)number);
+			  (unsigned long long)number);
 		list_del(&op->list);
-	पूर्ण
+	}
 	spin_unlock(&ops_lock);
 
 	rv = op->info.rv;
 
-	अगर (rv == -ENOENT)
+	if (rv == -ENOENT)
 		rv = 0;
 
-out_मुक्त:
-	kमुक्त(op);
+out_free:
+	kfree(op);
 out:
 	dlm_put_lockspace(ls);
 	fl->fl_flags = fl_flags;
-	वापस rv;
-पूर्ण
+	return rv;
+}
 EXPORT_SYMBOL_GPL(dlm_posix_unlock);
 
-पूर्णांक dlm_posix_get(dlm_lockspace_t *lockspace, u64 number, काष्ठा file *file,
-		  काष्ठा file_lock *fl)
-अणु
-	काष्ठा dlm_ls *ls;
-	काष्ठा plock_op *op;
-	पूर्णांक rv;
+int dlm_posix_get(dlm_lockspace_t *lockspace, u64 number, struct file *file,
+		  struct file_lock *fl)
+{
+	struct dlm_ls *ls;
+	struct plock_op *op;
+	int rv;
 
 	ls = dlm_find_lockspace_local(lockspace);
-	अगर (!ls)
-		वापस -EINVAL;
+	if (!ls)
+		return -EINVAL;
 
-	op = kzalloc(माप(*op), GFP_NOFS);
-	अगर (!op) अणु
+	op = kzalloc(sizeof(*op), GFP_NOFS);
+	if (!op) {
 		rv = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	op->info.optype		= DLM_PLOCK_OP_GET;
 	op->info.pid		= fl->fl_pid;
@@ -337,31 +336,31 @@ EXPORT_SYMBOL_GPL(dlm_posix_unlock);
 	op->info.number		= number;
 	op->info.start		= fl->fl_start;
 	op->info.end		= fl->fl_end;
-	अगर (fl->fl_lmops && fl->fl_lmops->lm_grant)
+	if (fl->fl_lmops && fl->fl_lmops->lm_grant)
 		op->info.owner	= (__u64) fl->fl_pid;
-	अन्यथा
-		op->info.owner	= (__u64)(दीर्घ) fl->fl_owner;
+	else
+		op->info.owner	= (__u64)(long) fl->fl_owner;
 
 	send_op(op);
-	रुको_event(recv_wq, (op->करोne != 0));
+	wait_event(recv_wq, (op->done != 0));
 
 	spin_lock(&ops_lock);
-	अगर (!list_empty(&op->list)) अणु
+	if (!list_empty(&op->list)) {
 		log_error(ls, "dlm_posix_get: op on list %llx",
-			  (अचिन्हित दीर्घ दीर्घ)number);
+			  (unsigned long long)number);
 		list_del(&op->list);
-	पूर्ण
+	}
 	spin_unlock(&ops_lock);
 
-	/* info.rv from userspace is 1 क्रम conflict, 0 क्रम no-conflict,
-	   -ENOENT अगर there are no locks on the file */
+	/* info.rv from userspace is 1 for conflict, 0 for no-conflict,
+	   -ENOENT if there are no locks on the file */
 
 	rv = op->info.rv;
 
 	fl->fl_type = F_UNLCK;
-	अगर (rv == -ENOENT)
+	if (rv == -ENOENT)
 		rv = 0;
-	अन्यथा अगर (rv > 0) अणु
+	else if (rv > 0) {
 		locks_init_lock(fl);
 		fl->fl_type = (op->info.ex) ? F_WRLCK : F_RDLCK;
 		fl->fl_flags = FL_POSIX;
@@ -369,144 +368,144 @@ EXPORT_SYMBOL_GPL(dlm_posix_unlock);
 		fl->fl_start = op->info.start;
 		fl->fl_end = op->info.end;
 		rv = 0;
-	पूर्ण
+	}
 
-	kमुक्त(op);
+	kfree(op);
 out:
 	dlm_put_lockspace(ls);
-	वापस rv;
-पूर्ण
+	return rv;
+}
 EXPORT_SYMBOL_GPL(dlm_posix_get);
 
-/* a पढ़ो copies out one plock request from the send list */
-अटल sमाप_प्रकार dev_पढ़ो(काष्ठा file *file, अक्षर __user *u, माप_प्रकार count,
+/* a read copies out one plock request from the send list */
+static ssize_t dev_read(struct file *file, char __user *u, size_t count,
 			loff_t *ppos)
-अणु
-	काष्ठा dlm_plock_info info;
-	काष्ठा plock_op *op = शून्य;
+{
+	struct dlm_plock_info info;
+	struct plock_op *op = NULL;
 
-	अगर (count < माप(info))
-		वापस -EINVAL;
+	if (count < sizeof(info))
+		return -EINVAL;
 
 	spin_lock(&ops_lock);
-	अगर (!list_empty(&send_list)) अणु
-		op = list_entry(send_list.next, काष्ठा plock_op, list);
-		अगर (op->info.flags & DLM_PLOCK_FL_CLOSE)
+	if (!list_empty(&send_list)) {
+		op = list_entry(send_list.next, struct plock_op, list);
+		if (op->info.flags & DLM_PLOCK_FL_CLOSE)
 			list_del(&op->list);
-		अन्यथा
+		else
 			list_move(&op->list, &recv_list);
-		स_नकल(&info, &op->info, माप(info));
-	पूर्ण
+		memcpy(&info, &op->info, sizeof(info));
+	}
 	spin_unlock(&ops_lock);
 
-	अगर (!op)
-		वापस -EAGAIN;
+	if (!op)
+		return -EAGAIN;
 
-	/* there is no need to get a reply from userspace क्रम unlocks
-	   that were generated by the vfs cleaning up क्रम a बंद
+	/* there is no need to get a reply from userspace for unlocks
+	   that were generated by the vfs cleaning up for a close
 	   (the process did not make an unlock call). */
 
-	अगर (op->info.flags & DLM_PLOCK_FL_CLOSE)
-		kमुक्त(op);
+	if (op->info.flags & DLM_PLOCK_FL_CLOSE)
+		kfree(op);
 
-	अगर (copy_to_user(u, &info, माप(info)))
-		वापस -EFAULT;
-	वापस माप(info);
-पूर्ण
+	if (copy_to_user(u, &info, sizeof(info)))
+		return -EFAULT;
+	return sizeof(info);
+}
 
-/* a ग_लिखो copies in one plock result that should match a plock_op
+/* a write copies in one plock result that should match a plock_op
    on the recv list */
-अटल sमाप_प्रकार dev_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *u, माप_प्रकार count,
+static ssize_t dev_write(struct file *file, const char __user *u, size_t count,
 			 loff_t *ppos)
-अणु
-	काष्ठा dlm_plock_info info;
-	काष्ठा plock_op *op;
-	पूर्णांक found = 0, करो_callback = 0;
+{
+	struct dlm_plock_info info;
+	struct plock_op *op;
+	int found = 0, do_callback = 0;
 
-	अगर (count != माप(info))
-		वापस -EINVAL;
+	if (count != sizeof(info))
+		return -EINVAL;
 
-	अगर (copy_from_user(&info, u, माप(info)))
-		वापस -EFAULT;
+	if (copy_from_user(&info, u, sizeof(info)))
+		return -EFAULT;
 
-	अगर (check_version(&info))
-		वापस -EINVAL;
+	if (check_version(&info))
+		return -EINVAL;
 
 	spin_lock(&ops_lock);
-	list_क्रम_each_entry(op, &recv_list, list) अणु
-		अगर (op->info.fsid == info.fsid &&
+	list_for_each_entry(op, &recv_list, list) {
+		if (op->info.fsid == info.fsid &&
 		    op->info.number == info.number &&
-		    op->info.owner == info.owner) अणु
-			काष्ठा plock_xop *xop = (काष्ठा plock_xop *)op;
+		    op->info.owner == info.owner) {
+			struct plock_xop *xop = (struct plock_xop *)op;
 			list_del_init(&op->list);
-			स_नकल(&op->info, &info, माप(info));
-			अगर (xop->callback)
-				करो_callback = 1;
-			अन्यथा
-				op->करोne = 1;
+			memcpy(&op->info, &info, sizeof(info));
+			if (xop->callback)
+				do_callback = 1;
+			else
+				op->done = 1;
 			found = 1;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	spin_unlock(&ops_lock);
 
-	अगर (found) अणु
-		अगर (करो_callback)
+	if (found) {
+		if (do_callback)
 			dlm_plock_callback(op);
-		अन्यथा
+		else
 			wake_up(&recv_wq);
-	पूर्ण अन्यथा
-		log_prपूर्णांक("dev_write no op %x %llx", info.fsid,
-			  (अचिन्हित दीर्घ दीर्घ)info.number);
-	वापस count;
-पूर्ण
+	} else
+		log_print("dev_write no op %x %llx", info.fsid,
+			  (unsigned long long)info.number);
+	return count;
+}
 
-अटल __poll_t dev_poll(काष्ठा file *file, poll_table *रुको)
-अणु
+static __poll_t dev_poll(struct file *file, poll_table *wait)
+{
 	__poll_t mask = 0;
 
-	poll_रुको(file, &send_wq, रुको);
+	poll_wait(file, &send_wq, wait);
 
 	spin_lock(&ops_lock);
-	अगर (!list_empty(&send_list))
+	if (!list_empty(&send_list))
 		mask = EPOLLIN | EPOLLRDNORM;
 	spin_unlock(&ops_lock);
 
-	वापस mask;
-पूर्ण
+	return mask;
+}
 
-अटल स्थिर काष्ठा file_operations dev_fops = अणु
-	.पढ़ो    = dev_पढ़ो,
-	.ग_लिखो   = dev_ग_लिखो,
+static const struct file_operations dev_fops = {
+	.read    = dev_read,
+	.write   = dev_write,
 	.poll    = dev_poll,
 	.owner   = THIS_MODULE,
 	.llseek  = noop_llseek,
-पूर्ण;
+};
 
-अटल काष्ठा miscdevice plock_dev_misc = अणु
+static struct miscdevice plock_dev_misc = {
 	.minor = MISC_DYNAMIC_MINOR,
 	.name = DLM_PLOCK_MISC_NAME,
 	.fops = &dev_fops
-पूर्ण;
+};
 
-पूर्णांक dlm_plock_init(व्योम)
-अणु
-	पूर्णांक rv;
+int dlm_plock_init(void)
+{
+	int rv;
 
 	spin_lock_init(&ops_lock);
 	INIT_LIST_HEAD(&send_list);
 	INIT_LIST_HEAD(&recv_list);
-	init_रुकोqueue_head(&send_wq);
-	init_रुकोqueue_head(&recv_wq);
+	init_waitqueue_head(&send_wq);
+	init_waitqueue_head(&recv_wq);
 
-	rv = misc_रेजिस्टर(&plock_dev_misc);
-	अगर (rv)
-		log_prपूर्णांक("dlm_plock_init: misc_register failed %d", rv);
-	वापस rv;
-पूर्ण
+	rv = misc_register(&plock_dev_misc);
+	if (rv)
+		log_print("dlm_plock_init: misc_register failed %d", rv);
+	return rv;
+}
 
-व्योम dlm_plock_निकास(व्योम)
-अणु
-	misc_deरेजिस्टर(&plock_dev_misc);
-पूर्ण
+void dlm_plock_exit(void)
+{
+	misc_deregister(&plock_dev_misc);
+}
 

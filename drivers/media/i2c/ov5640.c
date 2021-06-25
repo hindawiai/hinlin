@@ -1,104 +1,103 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2011-2013 Freescale Semiconductor, Inc. All Rights Reserved.
  * Copyright (C) 2014-2017 Mentor Graphics Inc.
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/clkdev.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/delay.h>
-#समावेश <linux/device.h>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/regulator/consumer.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/types.h>
-#समावेश <media/v4l2-async.h>
-#समावेश <media/v4l2-ctrls.h>
-#समावेश <media/v4l2-device.h>
-#समावेश <media/v4l2-event.h>
-#समावेश <media/v4l2-fwnode.h>
-#समावेश <media/v4l2-subdev.h>
+#include <linux/clk.h>
+#include <linux/clk-provider.h>
+#include <linux/clkdev.h>
+#include <linux/ctype.h>
+#include <linux/delay.h>
+#include <linux/device.h>
+#include <linux/gpio/consumer.h>
+#include <linux/i2c.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/of_device.h>
+#include <linux/regulator/consumer.h>
+#include <linux/slab.h>
+#include <linux/types.h>
+#include <media/v4l2-async.h>
+#include <media/v4l2-ctrls.h>
+#include <media/v4l2-device.h>
+#include <media/v4l2-event.h>
+#include <media/v4l2-fwnode.h>
+#include <media/v4l2-subdev.h>
 
-/* min/typical/max प्रणाली घड़ी (xclk) frequencies */
-#घोषणा OV5640_XCLK_MIN  6000000
-#घोषणा OV5640_XCLK_MAX 54000000
+/* min/typical/max system clock (xclk) frequencies */
+#define OV5640_XCLK_MIN  6000000
+#define OV5640_XCLK_MAX 54000000
 
-#घोषणा OV5640_DEFAULT_SLAVE_ID 0x3c
+#define OV5640_DEFAULT_SLAVE_ID 0x3c
 
-#घोषणा OV5640_REG_SYS_RESET02		0x3002
-#घोषणा OV5640_REG_SYS_CLOCK_ENABLE02	0x3006
-#घोषणा OV5640_REG_SYS_CTRL0		0x3008
-#घोषणा OV5640_REG_SYS_CTRL0_SW_PWDN	0x42
-#घोषणा OV5640_REG_SYS_CTRL0_SW_PWUP	0x02
-#घोषणा OV5640_REG_CHIP_ID		0x300a
-#घोषणा OV5640_REG_IO_MIPI_CTRL00	0x300e
-#घोषणा OV5640_REG_PAD_OUTPUT_ENABLE01	0x3017
-#घोषणा OV5640_REG_PAD_OUTPUT_ENABLE02	0x3018
-#घोषणा OV5640_REG_PAD_OUTPUT00		0x3019
-#घोषणा OV5640_REG_SYSTEM_CONTROL1	0x302e
-#घोषणा OV5640_REG_SC_PLL_CTRL0		0x3034
-#घोषणा OV5640_REG_SC_PLL_CTRL1		0x3035
-#घोषणा OV5640_REG_SC_PLL_CTRL2		0x3036
-#घोषणा OV5640_REG_SC_PLL_CTRL3		0x3037
-#घोषणा OV5640_REG_SLAVE_ID		0x3100
-#घोषणा OV5640_REG_SCCB_SYS_CTRL1	0x3103
-#घोषणा OV5640_REG_SYS_ROOT_DIVIDER	0x3108
-#घोषणा OV5640_REG_AWB_R_GAIN		0x3400
-#घोषणा OV5640_REG_AWB_G_GAIN		0x3402
-#घोषणा OV5640_REG_AWB_B_GAIN		0x3404
-#घोषणा OV5640_REG_AWB_MANUAL_CTRL	0x3406
-#घोषणा OV5640_REG_AEC_PK_EXPOSURE_HI	0x3500
-#घोषणा OV5640_REG_AEC_PK_EXPOSURE_MED	0x3501
-#घोषणा OV5640_REG_AEC_PK_EXPOSURE_LO	0x3502
-#घोषणा OV5640_REG_AEC_PK_MANUAL	0x3503
-#घोषणा OV5640_REG_AEC_PK_REAL_GAIN	0x350a
-#घोषणा OV5640_REG_AEC_PK_VTS		0x350c
-#घोषणा OV5640_REG_TIMING_DVPHO		0x3808
-#घोषणा OV5640_REG_TIMING_DVPVO		0x380a
-#घोषणा OV5640_REG_TIMING_HTS		0x380c
-#घोषणा OV5640_REG_TIMING_VTS		0x380e
-#घोषणा OV5640_REG_TIMING_TC_REG20	0x3820
-#घोषणा OV5640_REG_TIMING_TC_REG21	0x3821
-#घोषणा OV5640_REG_AEC_CTRL00		0x3a00
-#घोषणा OV5640_REG_AEC_B50_STEP		0x3a08
-#घोषणा OV5640_REG_AEC_B60_STEP		0x3a0a
-#घोषणा OV5640_REG_AEC_CTRL0D		0x3a0d
-#घोषणा OV5640_REG_AEC_CTRL0E		0x3a0e
-#घोषणा OV5640_REG_AEC_CTRL0F		0x3a0f
-#घोषणा OV5640_REG_AEC_CTRL10		0x3a10
-#घोषणा OV5640_REG_AEC_CTRL11		0x3a11
-#घोषणा OV5640_REG_AEC_CTRL1B		0x3a1b
-#घोषणा OV5640_REG_AEC_CTRL1E		0x3a1e
-#घोषणा OV5640_REG_AEC_CTRL1F		0x3a1f
-#घोषणा OV5640_REG_HZ5060_CTRL00	0x3c00
-#घोषणा OV5640_REG_HZ5060_CTRL01	0x3c01
-#घोषणा OV5640_REG_SIGMADELTA_CTRL0C	0x3c0c
-#घोषणा OV5640_REG_FRAME_CTRL01		0x4202
-#घोषणा OV5640_REG_FORMAT_CONTROL00	0x4300
-#घोषणा OV5640_REG_VFIFO_HSIZE		0x4602
-#घोषणा OV5640_REG_VFIFO_VSIZE		0x4604
-#घोषणा OV5640_REG_JPG_MODE_SELECT	0x4713
-#घोषणा OV5640_REG_CCIR656_CTRL00	0x4730
-#घोषणा OV5640_REG_POLARITY_CTRL00	0x4740
-#घोषणा OV5640_REG_MIPI_CTRL00		0x4800
-#घोषणा OV5640_REG_DEBUG_MODE		0x4814
-#घोषणा OV5640_REG_ISP_FORMAT_MUX_CTRL	0x501f
-#घोषणा OV5640_REG_PRE_ISP_TEST_SET1	0x503d
-#घोषणा OV5640_REG_SDE_CTRL0		0x5580
-#घोषणा OV5640_REG_SDE_CTRL1		0x5581
-#घोषणा OV5640_REG_SDE_CTRL3		0x5583
-#घोषणा OV5640_REG_SDE_CTRL4		0x5584
-#घोषणा OV5640_REG_SDE_CTRL5		0x5585
-#घोषणा OV5640_REG_AVG_READOUT		0x56a1
+#define OV5640_REG_SYS_RESET02		0x3002
+#define OV5640_REG_SYS_CLOCK_ENABLE02	0x3006
+#define OV5640_REG_SYS_CTRL0		0x3008
+#define OV5640_REG_SYS_CTRL0_SW_PWDN	0x42
+#define OV5640_REG_SYS_CTRL0_SW_PWUP	0x02
+#define OV5640_REG_CHIP_ID		0x300a
+#define OV5640_REG_IO_MIPI_CTRL00	0x300e
+#define OV5640_REG_PAD_OUTPUT_ENABLE01	0x3017
+#define OV5640_REG_PAD_OUTPUT_ENABLE02	0x3018
+#define OV5640_REG_PAD_OUTPUT00		0x3019
+#define OV5640_REG_SYSTEM_CONTROL1	0x302e
+#define OV5640_REG_SC_PLL_CTRL0		0x3034
+#define OV5640_REG_SC_PLL_CTRL1		0x3035
+#define OV5640_REG_SC_PLL_CTRL2		0x3036
+#define OV5640_REG_SC_PLL_CTRL3		0x3037
+#define OV5640_REG_SLAVE_ID		0x3100
+#define OV5640_REG_SCCB_SYS_CTRL1	0x3103
+#define OV5640_REG_SYS_ROOT_DIVIDER	0x3108
+#define OV5640_REG_AWB_R_GAIN		0x3400
+#define OV5640_REG_AWB_G_GAIN		0x3402
+#define OV5640_REG_AWB_B_GAIN		0x3404
+#define OV5640_REG_AWB_MANUAL_CTRL	0x3406
+#define OV5640_REG_AEC_PK_EXPOSURE_HI	0x3500
+#define OV5640_REG_AEC_PK_EXPOSURE_MED	0x3501
+#define OV5640_REG_AEC_PK_EXPOSURE_LO	0x3502
+#define OV5640_REG_AEC_PK_MANUAL	0x3503
+#define OV5640_REG_AEC_PK_REAL_GAIN	0x350a
+#define OV5640_REG_AEC_PK_VTS		0x350c
+#define OV5640_REG_TIMING_DVPHO		0x3808
+#define OV5640_REG_TIMING_DVPVO		0x380a
+#define OV5640_REG_TIMING_HTS		0x380c
+#define OV5640_REG_TIMING_VTS		0x380e
+#define OV5640_REG_TIMING_TC_REG20	0x3820
+#define OV5640_REG_TIMING_TC_REG21	0x3821
+#define OV5640_REG_AEC_CTRL00		0x3a00
+#define OV5640_REG_AEC_B50_STEP		0x3a08
+#define OV5640_REG_AEC_B60_STEP		0x3a0a
+#define OV5640_REG_AEC_CTRL0D		0x3a0d
+#define OV5640_REG_AEC_CTRL0E		0x3a0e
+#define OV5640_REG_AEC_CTRL0F		0x3a0f
+#define OV5640_REG_AEC_CTRL10		0x3a10
+#define OV5640_REG_AEC_CTRL11		0x3a11
+#define OV5640_REG_AEC_CTRL1B		0x3a1b
+#define OV5640_REG_AEC_CTRL1E		0x3a1e
+#define OV5640_REG_AEC_CTRL1F		0x3a1f
+#define OV5640_REG_HZ5060_CTRL00	0x3c00
+#define OV5640_REG_HZ5060_CTRL01	0x3c01
+#define OV5640_REG_SIGMADELTA_CTRL0C	0x3c0c
+#define OV5640_REG_FRAME_CTRL01		0x4202
+#define OV5640_REG_FORMAT_CONTROL00	0x4300
+#define OV5640_REG_VFIFO_HSIZE		0x4602
+#define OV5640_REG_VFIFO_VSIZE		0x4604
+#define OV5640_REG_JPG_MODE_SELECT	0x4713
+#define OV5640_REG_CCIR656_CTRL00	0x4730
+#define OV5640_REG_POLARITY_CTRL00	0x4740
+#define OV5640_REG_MIPI_CTRL00		0x4800
+#define OV5640_REG_DEBUG_MODE		0x4814
+#define OV5640_REG_ISP_FORMAT_MUX_CTRL	0x501f
+#define OV5640_REG_PRE_ISP_TEST_SET1	0x503d
+#define OV5640_REG_SDE_CTRL0		0x5580
+#define OV5640_REG_SDE_CTRL1		0x5581
+#define OV5640_REG_SDE_CTRL3		0x5583
+#define OV5640_REG_SDE_CTRL4		0x5584
+#define OV5640_REG_SDE_CTRL5		0x5585
+#define OV5640_REG_AVG_READOUT		0x56a1
 
-क्रमागत ov5640_mode_id अणु
+enum ov5640_mode_id {
 	OV5640_MODE_QQVGA_160_120 = 0,
 	OV5640_MODE_QCIF_176_144,
 	OV5640_MODE_QVGA_320_240,
@@ -110,529 +109,529 @@
 	OV5640_MODE_1080P_1920_1080,
 	OV5640_MODE_QSXGA_2592_1944,
 	OV5640_NUM_MODES,
-पूर्ण;
+};
 
-क्रमागत ov5640_frame_rate अणु
+enum ov5640_frame_rate {
 	OV5640_15_FPS = 0,
 	OV5640_30_FPS,
 	OV5640_60_FPS,
 	OV5640_NUM_FRAMERATES,
-पूर्ण;
+};
 
-क्रमागत ov5640_क्रमmat_mux अणु
+enum ov5640_format_mux {
 	OV5640_FMT_MUX_YUV422 = 0,
 	OV5640_FMT_MUX_RGB,
 	OV5640_FMT_MUX_DITHER,
 	OV5640_FMT_MUX_RAW_DPC,
 	OV5640_FMT_MUX_SNR_RAW,
 	OV5640_FMT_MUX_RAW_CIP,
-पूर्ण;
+};
 
-काष्ठा ov5640_pixfmt अणु
+struct ov5640_pixfmt {
 	u32 code;
 	u32 colorspace;
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा ov5640_pixfmt ov5640_क्रमmats[] = अणु
-	अणु MEDIA_BUS_FMT_JPEG_1X8, V4L2_COLORSPACE_JPEG, पूर्ण,
-	अणु MEDIA_BUS_FMT_UYVY8_2X8, V4L2_COLORSPACE_SRGB, पूर्ण,
-	अणु MEDIA_BUS_FMT_YUYV8_2X8, V4L2_COLORSPACE_SRGB, पूर्ण,
-	अणु MEDIA_BUS_FMT_RGB565_2X8_LE, V4L2_COLORSPACE_SRGB, पूर्ण,
-	अणु MEDIA_BUS_FMT_RGB565_2X8_BE, V4L2_COLORSPACE_SRGB, पूर्ण,
-	अणु MEDIA_BUS_FMT_SBGGR8_1X8, V4L2_COLORSPACE_SRGB, पूर्ण,
-	अणु MEDIA_BUS_FMT_SGBRG8_1X8, V4L2_COLORSPACE_SRGB, पूर्ण,
-	अणु MEDIA_BUS_FMT_SGRBG8_1X8, V4L2_COLORSPACE_SRGB, पूर्ण,
-	अणु MEDIA_BUS_FMT_SRGGB8_1X8, V4L2_COLORSPACE_SRGB, पूर्ण,
-पूर्ण;
+static const struct ov5640_pixfmt ov5640_formats[] = {
+	{ MEDIA_BUS_FMT_JPEG_1X8, V4L2_COLORSPACE_JPEG, },
+	{ MEDIA_BUS_FMT_UYVY8_2X8, V4L2_COLORSPACE_SRGB, },
+	{ MEDIA_BUS_FMT_YUYV8_2X8, V4L2_COLORSPACE_SRGB, },
+	{ MEDIA_BUS_FMT_RGB565_2X8_LE, V4L2_COLORSPACE_SRGB, },
+	{ MEDIA_BUS_FMT_RGB565_2X8_BE, V4L2_COLORSPACE_SRGB, },
+	{ MEDIA_BUS_FMT_SBGGR8_1X8, V4L2_COLORSPACE_SRGB, },
+	{ MEDIA_BUS_FMT_SGBRG8_1X8, V4L2_COLORSPACE_SRGB, },
+	{ MEDIA_BUS_FMT_SGRBG8_1X8, V4L2_COLORSPACE_SRGB, },
+	{ MEDIA_BUS_FMT_SRGGB8_1X8, V4L2_COLORSPACE_SRGB, },
+};
 
 /*
- * FIXME: हटाओ this when a subdev API becomes available
- * to set the MIPI CSI-2 भव channel.
+ * FIXME: remove this when a subdev API becomes available
+ * to set the MIPI CSI-2 virtual channel.
  */
-अटल अचिन्हित पूर्णांक भव_channel;
-module_param(भव_channel, uपूर्णांक, 0444);
-MODULE_PARM_DESC(भव_channel,
+static unsigned int virtual_channel;
+module_param(virtual_channel, uint, 0444);
+MODULE_PARM_DESC(virtual_channel,
 		 "MIPI CSI-2 virtual channel (0..3), default 0");
 
-अटल स्थिर पूर्णांक ov5640_framerates[] = अणु
+static const int ov5640_framerates[] = {
 	[OV5640_15_FPS] = 15,
 	[OV5640_30_FPS] = 30,
 	[OV5640_60_FPS] = 60,
-पूर्ण;
+};
 
 /* regulator supplies */
-अटल स्थिर अक्षर * स्थिर ov5640_supply_name[] = अणु
+static const char * const ov5640_supply_name[] = {
 	"DOVDD", /* Digital I/O (1.8V) supply */
 	"AVDD",  /* Analog (2.8V) supply */
 	"DVDD",  /* Digital Core (1.5V) supply */
-पूर्ण;
+};
 
-#घोषणा OV5640_NUM_SUPPLIES ARRAY_SIZE(ov5640_supply_name)
+#define OV5640_NUM_SUPPLIES ARRAY_SIZE(ov5640_supply_name)
 
 /*
  * Image size under 1280 * 960 are SUBSAMPLING
  * Image size upper 1280 * 960 are SCALING
  */
-क्रमागत ov5640_करोwnsize_mode अणु
+enum ov5640_downsize_mode {
 	SUBSAMPLING,
 	SCALING,
-पूर्ण;
+};
 
-काष्ठा reg_value अणु
+struct reg_value {
 	u16 reg_addr;
 	u8 val;
 	u8 mask;
 	u32 delay_ms;
-पूर्ण;
+};
 
-काष्ठा ov5640_mode_info अणु
-	क्रमागत ov5640_mode_id id;
-	क्रमागत ov5640_करोwnsize_mode dn_mode;
+struct ov5640_mode_info {
+	enum ov5640_mode_id id;
+	enum ov5640_downsize_mode dn_mode;
 	u32 hact;
 	u32 htot;
 	u32 vact;
 	u32 vtot;
-	स्थिर काष्ठा reg_value *reg_data;
+	const struct reg_value *reg_data;
 	u32 reg_data_size;
 	u32 max_fps;
-पूर्ण;
+};
 
-काष्ठा ov5640_ctrls अणु
-	काष्ठा v4l2_ctrl_handler handler;
-	काष्ठा v4l2_ctrl *pixel_rate;
-	काष्ठा अणु
-		काष्ठा v4l2_ctrl *स्वतः_exp;
-		काष्ठा v4l2_ctrl *exposure;
-	पूर्ण;
-	काष्ठा अणु
-		काष्ठा v4l2_ctrl *स्वतः_wb;
-		काष्ठा v4l2_ctrl *blue_balance;
-		काष्ठा v4l2_ctrl *red_balance;
-	पूर्ण;
-	काष्ठा अणु
-		काष्ठा v4l2_ctrl *स्वतः_gain;
-		काष्ठा v4l2_ctrl *gain;
-	पूर्ण;
-	काष्ठा v4l2_ctrl *brightness;
-	काष्ठा v4l2_ctrl *light_freq;
-	काष्ठा v4l2_ctrl *saturation;
-	काष्ठा v4l2_ctrl *contrast;
-	काष्ठा v4l2_ctrl *hue;
-	काष्ठा v4l2_ctrl *test_pattern;
-	काष्ठा v4l2_ctrl *hflip;
-	काष्ठा v4l2_ctrl *vflip;
-पूर्ण;
+struct ov5640_ctrls {
+	struct v4l2_ctrl_handler handler;
+	struct v4l2_ctrl *pixel_rate;
+	struct {
+		struct v4l2_ctrl *auto_exp;
+		struct v4l2_ctrl *exposure;
+	};
+	struct {
+		struct v4l2_ctrl *auto_wb;
+		struct v4l2_ctrl *blue_balance;
+		struct v4l2_ctrl *red_balance;
+	};
+	struct {
+		struct v4l2_ctrl *auto_gain;
+		struct v4l2_ctrl *gain;
+	};
+	struct v4l2_ctrl *brightness;
+	struct v4l2_ctrl *light_freq;
+	struct v4l2_ctrl *saturation;
+	struct v4l2_ctrl *contrast;
+	struct v4l2_ctrl *hue;
+	struct v4l2_ctrl *test_pattern;
+	struct v4l2_ctrl *hflip;
+	struct v4l2_ctrl *vflip;
+};
 
-काष्ठा ov5640_dev अणु
-	काष्ठा i2c_client *i2c_client;
-	काष्ठा v4l2_subdev sd;
-	काष्ठा media_pad pad;
-	काष्ठा v4l2_fwnode_endpoपूर्णांक ep; /* the parsed DT endpoपूर्णांक info */
-	काष्ठा clk *xclk; /* प्रणाली घड़ी to OV5640 */
+struct ov5640_dev {
+	struct i2c_client *i2c_client;
+	struct v4l2_subdev sd;
+	struct media_pad pad;
+	struct v4l2_fwnode_endpoint ep; /* the parsed DT endpoint info */
+	struct clk *xclk; /* system clock to OV5640 */
 	u32 xclk_freq;
 
-	काष्ठा regulator_bulk_data supplies[OV5640_NUM_SUPPLIES];
-	काष्ठा gpio_desc *reset_gpio;
-	काष्ठा gpio_desc *pwdn_gpio;
-	bool   upside_करोwn;
+	struct regulator_bulk_data supplies[OV5640_NUM_SUPPLIES];
+	struct gpio_desc *reset_gpio;
+	struct gpio_desc *pwdn_gpio;
+	bool   upside_down;
 
 	/* lock to protect all members below */
-	काष्ठा mutex lock;
+	struct mutex lock;
 
-	पूर्णांक घातer_count;
+	int power_count;
 
-	काष्ठा v4l2_mbus_framefmt fmt;
+	struct v4l2_mbus_framefmt fmt;
 	bool pending_fmt_change;
 
-	स्थिर काष्ठा ov5640_mode_info *current_mode;
-	स्थिर काष्ठा ov5640_mode_info *last_mode;
-	क्रमागत ov5640_frame_rate current_fr;
-	काष्ठा v4l2_fract frame_पूर्णांकerval;
+	const struct ov5640_mode_info *current_mode;
+	const struct ov5640_mode_info *last_mode;
+	enum ov5640_frame_rate current_fr;
+	struct v4l2_fract frame_interval;
 
-	काष्ठा ov5640_ctrls ctrls;
+	struct ov5640_ctrls ctrls;
 
 	u32 prev_sysclk, prev_hts;
 	u32 ae_low, ae_high, ae_target;
 
 	bool pending_mode_change;
 	bool streaming;
-पूर्ण;
+};
 
-अटल अंतरभूत काष्ठा ov5640_dev *to_ov5640_dev(काष्ठा v4l2_subdev *sd)
-अणु
-	वापस container_of(sd, काष्ठा ov5640_dev, sd);
-पूर्ण
+static inline struct ov5640_dev *to_ov5640_dev(struct v4l2_subdev *sd)
+{
+	return container_of(sd, struct ov5640_dev, sd);
+}
 
-अटल अंतरभूत काष्ठा v4l2_subdev *ctrl_to_sd(काष्ठा v4l2_ctrl *ctrl)
-अणु
-	वापस &container_of(ctrl->handler, काष्ठा ov5640_dev,
+static inline struct v4l2_subdev *ctrl_to_sd(struct v4l2_ctrl *ctrl)
+{
+	return &container_of(ctrl->handler, struct ov5640_dev,
 			     ctrls.handler)->sd;
-पूर्ण
+}
 
 /*
- * FIXME: all of these रेजिस्टर tables are likely filled with
- * entries that set the रेजिस्टर to their घातer-on शेष values,
+ * FIXME: all of these register tables are likely filled with
+ * entries that set the register to their power-on default values,
  * and which are otherwise not touched by this driver. Those entries
- * should be identअगरied and हटाओd to speed रेजिस्टर load समय
+ * should be identified and removed to speed register load time
  * over i2c.
  */
 /* YUV422 UYVY VGA@30fps */
-अटल स्थिर काष्ठा reg_value ov5640_init_setting_30fps_VGA[] = अणु
-	अणु0x3103, 0x11, 0, 0पूर्ण, अणु0x3008, 0x82, 0, 5पूर्ण, अणु0x3008, 0x42, 0, 0पूर्ण,
-	अणु0x3103, 0x03, 0, 0पूर्ण, अणु0x3630, 0x36, 0, 0पूर्ण,
-	अणु0x3631, 0x0e, 0, 0पूर्ण, अणु0x3632, 0xe2, 0, 0पूर्ण, अणु0x3633, 0x12, 0, 0पूर्ण,
-	अणु0x3621, 0xe0, 0, 0पूर्ण, अणु0x3704, 0xa0, 0, 0पूर्ण, अणु0x3703, 0x5a, 0, 0पूर्ण,
-	अणु0x3715, 0x78, 0, 0पूर्ण, अणु0x3717, 0x01, 0, 0पूर्ण, अणु0x370b, 0x60, 0, 0पूर्ण,
-	अणु0x3705, 0x1a, 0, 0पूर्ण, अणु0x3905, 0x02, 0, 0पूर्ण, अणु0x3906, 0x10, 0, 0पूर्ण,
-	अणु0x3901, 0x0a, 0, 0पूर्ण, अणु0x3731, 0x12, 0, 0पूर्ण, अणु0x3600, 0x08, 0, 0पूर्ण,
-	अणु0x3601, 0x33, 0, 0पूर्ण, अणु0x302d, 0x60, 0, 0पूर्ण, अणु0x3620, 0x52, 0, 0पूर्ण,
-	अणु0x371b, 0x20, 0, 0पूर्ण, अणु0x471c, 0x50, 0, 0पूर्ण, अणु0x3a13, 0x43, 0, 0पूर्ण,
-	अणु0x3a18, 0x00, 0, 0पूर्ण, अणु0x3a19, 0xf8, 0, 0पूर्ण, अणु0x3635, 0x13, 0, 0पूर्ण,
-	अणु0x3636, 0x03, 0, 0पूर्ण, अणु0x3634, 0x40, 0, 0पूर्ण, अणु0x3622, 0x01, 0, 0पूर्ण,
-	अणु0x3c01, 0xa4, 0, 0पूर्ण, अणु0x3c04, 0x28, 0, 0पूर्ण, अणु0x3c05, 0x98, 0, 0पूर्ण,
-	अणु0x3c06, 0x00, 0, 0पूर्ण, अणु0x3c07, 0x08, 0, 0पूर्ण, अणु0x3c08, 0x00, 0, 0पूर्ण,
-	अणु0x3c09, 0x1c, 0, 0पूर्ण, अणु0x3c0a, 0x9c, 0, 0पूर्ण, अणु0x3c0b, 0x40, 0, 0पूर्ण,
-	अणु0x3820, 0x41, 0, 0पूर्ण, अणु0x3821, 0x07, 0, 0पूर्ण, अणु0x3814, 0x31, 0, 0पूर्ण,
-	अणु0x3815, 0x31, 0, 0पूर्ण, अणु0x3800, 0x00, 0, 0पूर्ण, अणु0x3801, 0x00, 0, 0पूर्ण,
-	अणु0x3802, 0x00, 0, 0पूर्ण, अणु0x3803, 0x04, 0, 0पूर्ण, अणु0x3804, 0x0a, 0, 0पूर्ण,
-	अणु0x3805, 0x3f, 0, 0पूर्ण, अणु0x3806, 0x07, 0, 0पूर्ण, अणु0x3807, 0x9b, 0, 0पूर्ण,
-	अणु0x3810, 0x00, 0, 0पूर्ण,
-	अणु0x3811, 0x10, 0, 0पूर्ण, अणु0x3812, 0x00, 0, 0पूर्ण, अणु0x3813, 0x06, 0, 0पूर्ण,
-	अणु0x3618, 0x00, 0, 0पूर्ण, अणु0x3612, 0x29, 0, 0पूर्ण, अणु0x3708, 0x64, 0, 0पूर्ण,
-	अणु0x3709, 0x52, 0, 0पूर्ण, अणु0x370c, 0x03, 0, 0पूर्ण, अणु0x3a02, 0x03, 0, 0पूर्ण,
-	अणु0x3a03, 0xd8, 0, 0पूर्ण, अणु0x3a08, 0x01, 0, 0पूर्ण, अणु0x3a09, 0x27, 0, 0पूर्ण,
-	अणु0x3a0a, 0x00, 0, 0पूर्ण, अणु0x3a0b, 0xf6, 0, 0पूर्ण, अणु0x3a0e, 0x03, 0, 0पूर्ण,
-	अणु0x3a0d, 0x04, 0, 0पूर्ण, अणु0x3a14, 0x03, 0, 0पूर्ण, अणु0x3a15, 0xd8, 0, 0पूर्ण,
-	अणु0x4001, 0x02, 0, 0पूर्ण, अणु0x4004, 0x02, 0, 0पूर्ण, अणु0x3000, 0x00, 0, 0पूर्ण,
-	अणु0x3002, 0x1c, 0, 0पूर्ण, अणु0x3004, 0xff, 0, 0पूर्ण, अणु0x3006, 0xc3, 0, 0पूर्ण,
-	अणु0x302e, 0x08, 0, 0पूर्ण, अणु0x4300, 0x3f, 0, 0पूर्ण,
-	अणु0x501f, 0x00, 0, 0पूर्ण, अणु0x4407, 0x04, 0, 0पूर्ण,
-	अणु0x440e, 0x00, 0, 0पूर्ण, अणु0x460b, 0x35, 0, 0पूर्ण, अणु0x460c, 0x22, 0, 0पूर्ण,
-	अणु0x4837, 0x0a, 0, 0पूर्ण, अणु0x3824, 0x02, 0, 0पूर्ण,
-	अणु0x5000, 0xa7, 0, 0पूर्ण, अणु0x5001, 0xa3, 0, 0पूर्ण, अणु0x5180, 0xff, 0, 0पूर्ण,
-	अणु0x5181, 0xf2, 0, 0पूर्ण, अणु0x5182, 0x00, 0, 0पूर्ण, अणु0x5183, 0x14, 0, 0पूर्ण,
-	अणु0x5184, 0x25, 0, 0पूर्ण, अणु0x5185, 0x24, 0, 0पूर्ण, अणु0x5186, 0x09, 0, 0पूर्ण,
-	अणु0x5187, 0x09, 0, 0पूर्ण, अणु0x5188, 0x09, 0, 0पूर्ण, अणु0x5189, 0x88, 0, 0पूर्ण,
-	अणु0x518a, 0x54, 0, 0पूर्ण, अणु0x518b, 0xee, 0, 0पूर्ण, अणु0x518c, 0xb2, 0, 0पूर्ण,
-	अणु0x518d, 0x50, 0, 0पूर्ण, अणु0x518e, 0x34, 0, 0पूर्ण, अणु0x518f, 0x6b, 0, 0पूर्ण,
-	अणु0x5190, 0x46, 0, 0पूर्ण, अणु0x5191, 0xf8, 0, 0पूर्ण, अणु0x5192, 0x04, 0, 0पूर्ण,
-	अणु0x5193, 0x70, 0, 0पूर्ण, अणु0x5194, 0xf0, 0, 0पूर्ण, अणु0x5195, 0xf0, 0, 0पूर्ण,
-	अणु0x5196, 0x03, 0, 0पूर्ण, अणु0x5197, 0x01, 0, 0पूर्ण, अणु0x5198, 0x04, 0, 0पूर्ण,
-	अणु0x5199, 0x6c, 0, 0पूर्ण, अणु0x519a, 0x04, 0, 0पूर्ण, अणु0x519b, 0x00, 0, 0पूर्ण,
-	अणु0x519c, 0x09, 0, 0पूर्ण, अणु0x519d, 0x2b, 0, 0पूर्ण, अणु0x519e, 0x38, 0, 0पूर्ण,
-	अणु0x5381, 0x1e, 0, 0पूर्ण, अणु0x5382, 0x5b, 0, 0पूर्ण, अणु0x5383, 0x08, 0, 0पूर्ण,
-	अणु0x5384, 0x0a, 0, 0पूर्ण, अणु0x5385, 0x7e, 0, 0पूर्ण, अणु0x5386, 0x88, 0, 0पूर्ण,
-	अणु0x5387, 0x7c, 0, 0पूर्ण, अणु0x5388, 0x6c, 0, 0पूर्ण, अणु0x5389, 0x10, 0, 0पूर्ण,
-	अणु0x538a, 0x01, 0, 0पूर्ण, अणु0x538b, 0x98, 0, 0पूर्ण, अणु0x5300, 0x08, 0, 0पूर्ण,
-	अणु0x5301, 0x30, 0, 0पूर्ण, अणु0x5302, 0x10, 0, 0पूर्ण, अणु0x5303, 0x00, 0, 0पूर्ण,
-	अणु0x5304, 0x08, 0, 0पूर्ण, अणु0x5305, 0x30, 0, 0पूर्ण, अणु0x5306, 0x08, 0, 0पूर्ण,
-	अणु0x5307, 0x16, 0, 0पूर्ण, अणु0x5309, 0x08, 0, 0पूर्ण, अणु0x530a, 0x30, 0, 0पूर्ण,
-	अणु0x530b, 0x04, 0, 0पूर्ण, अणु0x530c, 0x06, 0, 0पूर्ण, अणु0x5480, 0x01, 0, 0पूर्ण,
-	अणु0x5481, 0x08, 0, 0पूर्ण, अणु0x5482, 0x14, 0, 0पूर्ण, अणु0x5483, 0x28, 0, 0पूर्ण,
-	अणु0x5484, 0x51, 0, 0पूर्ण, अणु0x5485, 0x65, 0, 0पूर्ण, अणु0x5486, 0x71, 0, 0पूर्ण,
-	अणु0x5487, 0x7d, 0, 0पूर्ण, अणु0x5488, 0x87, 0, 0पूर्ण, अणु0x5489, 0x91, 0, 0पूर्ण,
-	अणु0x548a, 0x9a, 0, 0पूर्ण, अणु0x548b, 0xaa, 0, 0पूर्ण, अणु0x548c, 0xb8, 0, 0पूर्ण,
-	अणु0x548d, 0xcd, 0, 0पूर्ण, अणु0x548e, 0xdd, 0, 0पूर्ण, अणु0x548f, 0xea, 0, 0पूर्ण,
-	अणु0x5490, 0x1d, 0, 0पूर्ण, अणु0x5580, 0x02, 0, 0पूर्ण, अणु0x5583, 0x40, 0, 0पूर्ण,
-	अणु0x5584, 0x10, 0, 0पूर्ण, अणु0x5589, 0x10, 0, 0पूर्ण, अणु0x558a, 0x00, 0, 0पूर्ण,
-	अणु0x558b, 0xf8, 0, 0पूर्ण, अणु0x5800, 0x23, 0, 0पूर्ण, अणु0x5801, 0x14, 0, 0पूर्ण,
-	अणु0x5802, 0x0f, 0, 0पूर्ण, अणु0x5803, 0x0f, 0, 0पूर्ण, अणु0x5804, 0x12, 0, 0पूर्ण,
-	अणु0x5805, 0x26, 0, 0पूर्ण, अणु0x5806, 0x0c, 0, 0पूर्ण, अणु0x5807, 0x08, 0, 0पूर्ण,
-	अणु0x5808, 0x05, 0, 0पूर्ण, अणु0x5809, 0x05, 0, 0पूर्ण, अणु0x580a, 0x08, 0, 0पूर्ण,
-	अणु0x580b, 0x0d, 0, 0पूर्ण, अणु0x580c, 0x08, 0, 0पूर्ण, अणु0x580d, 0x03, 0, 0पूर्ण,
-	अणु0x580e, 0x00, 0, 0पूर्ण, अणु0x580f, 0x00, 0, 0पूर्ण, अणु0x5810, 0x03, 0, 0पूर्ण,
-	अणु0x5811, 0x09, 0, 0पूर्ण, अणु0x5812, 0x07, 0, 0पूर्ण, अणु0x5813, 0x03, 0, 0पूर्ण,
-	अणु0x5814, 0x00, 0, 0पूर्ण, अणु0x5815, 0x01, 0, 0पूर्ण, अणु0x5816, 0x03, 0, 0पूर्ण,
-	अणु0x5817, 0x08, 0, 0पूर्ण, अणु0x5818, 0x0d, 0, 0पूर्ण, अणु0x5819, 0x08, 0, 0पूर्ण,
-	अणु0x581a, 0x05, 0, 0पूर्ण, अणु0x581b, 0x06, 0, 0पूर्ण, अणु0x581c, 0x08, 0, 0पूर्ण,
-	अणु0x581d, 0x0e, 0, 0पूर्ण, अणु0x581e, 0x29, 0, 0पूर्ण, अणु0x581f, 0x17, 0, 0पूर्ण,
-	अणु0x5820, 0x11, 0, 0पूर्ण, अणु0x5821, 0x11, 0, 0पूर्ण, अणु0x5822, 0x15, 0, 0पूर्ण,
-	अणु0x5823, 0x28, 0, 0पूर्ण, अणु0x5824, 0x46, 0, 0पूर्ण, अणु0x5825, 0x26, 0, 0पूर्ण,
-	अणु0x5826, 0x08, 0, 0पूर्ण, अणु0x5827, 0x26, 0, 0पूर्ण, अणु0x5828, 0x64, 0, 0पूर्ण,
-	अणु0x5829, 0x26, 0, 0पूर्ण, अणु0x582a, 0x24, 0, 0पूर्ण, अणु0x582b, 0x22, 0, 0पूर्ण,
-	अणु0x582c, 0x24, 0, 0पूर्ण, अणु0x582d, 0x24, 0, 0पूर्ण, अणु0x582e, 0x06, 0, 0पूर्ण,
-	अणु0x582f, 0x22, 0, 0पूर्ण, अणु0x5830, 0x40, 0, 0पूर्ण, अणु0x5831, 0x42, 0, 0पूर्ण,
-	अणु0x5832, 0x24, 0, 0पूर्ण, अणु0x5833, 0x26, 0, 0पूर्ण, अणु0x5834, 0x24, 0, 0पूर्ण,
-	अणु0x5835, 0x22, 0, 0पूर्ण, अणु0x5836, 0x22, 0, 0पूर्ण, अणु0x5837, 0x26, 0, 0पूर्ण,
-	अणु0x5838, 0x44, 0, 0पूर्ण, अणु0x5839, 0x24, 0, 0पूर्ण, अणु0x583a, 0x26, 0, 0पूर्ण,
-	अणु0x583b, 0x28, 0, 0पूर्ण, अणु0x583c, 0x42, 0, 0पूर्ण, अणु0x583d, 0xce, 0, 0पूर्ण,
-	अणु0x5025, 0x00, 0, 0पूर्ण, अणु0x3a0f, 0x30, 0, 0पूर्ण, अणु0x3a10, 0x28, 0, 0पूर्ण,
-	अणु0x3a1b, 0x30, 0, 0पूर्ण, अणु0x3a1e, 0x26, 0, 0पूर्ण, अणु0x3a11, 0x60, 0, 0पूर्ण,
-	अणु0x3a1f, 0x14, 0, 0पूर्ण, अणु0x3008, 0x02, 0, 0पूर्ण, अणु0x3c00, 0x04, 0, 300पूर्ण,
-पूर्ण;
+static const struct reg_value ov5640_init_setting_30fps_VGA[] = {
+	{0x3103, 0x11, 0, 0}, {0x3008, 0x82, 0, 5}, {0x3008, 0x42, 0, 0},
+	{0x3103, 0x03, 0, 0}, {0x3630, 0x36, 0, 0},
+	{0x3631, 0x0e, 0, 0}, {0x3632, 0xe2, 0, 0}, {0x3633, 0x12, 0, 0},
+	{0x3621, 0xe0, 0, 0}, {0x3704, 0xa0, 0, 0}, {0x3703, 0x5a, 0, 0},
+	{0x3715, 0x78, 0, 0}, {0x3717, 0x01, 0, 0}, {0x370b, 0x60, 0, 0},
+	{0x3705, 0x1a, 0, 0}, {0x3905, 0x02, 0, 0}, {0x3906, 0x10, 0, 0},
+	{0x3901, 0x0a, 0, 0}, {0x3731, 0x12, 0, 0}, {0x3600, 0x08, 0, 0},
+	{0x3601, 0x33, 0, 0}, {0x302d, 0x60, 0, 0}, {0x3620, 0x52, 0, 0},
+	{0x371b, 0x20, 0, 0}, {0x471c, 0x50, 0, 0}, {0x3a13, 0x43, 0, 0},
+	{0x3a18, 0x00, 0, 0}, {0x3a19, 0xf8, 0, 0}, {0x3635, 0x13, 0, 0},
+	{0x3636, 0x03, 0, 0}, {0x3634, 0x40, 0, 0}, {0x3622, 0x01, 0, 0},
+	{0x3c01, 0xa4, 0, 0}, {0x3c04, 0x28, 0, 0}, {0x3c05, 0x98, 0, 0},
+	{0x3c06, 0x00, 0, 0}, {0x3c07, 0x08, 0, 0}, {0x3c08, 0x00, 0, 0},
+	{0x3c09, 0x1c, 0, 0}, {0x3c0a, 0x9c, 0, 0}, {0x3c0b, 0x40, 0, 0},
+	{0x3820, 0x41, 0, 0}, {0x3821, 0x07, 0, 0}, {0x3814, 0x31, 0, 0},
+	{0x3815, 0x31, 0, 0}, {0x3800, 0x00, 0, 0}, {0x3801, 0x00, 0, 0},
+	{0x3802, 0x00, 0, 0}, {0x3803, 0x04, 0, 0}, {0x3804, 0x0a, 0, 0},
+	{0x3805, 0x3f, 0, 0}, {0x3806, 0x07, 0, 0}, {0x3807, 0x9b, 0, 0},
+	{0x3810, 0x00, 0, 0},
+	{0x3811, 0x10, 0, 0}, {0x3812, 0x00, 0, 0}, {0x3813, 0x06, 0, 0},
+	{0x3618, 0x00, 0, 0}, {0x3612, 0x29, 0, 0}, {0x3708, 0x64, 0, 0},
+	{0x3709, 0x52, 0, 0}, {0x370c, 0x03, 0, 0}, {0x3a02, 0x03, 0, 0},
+	{0x3a03, 0xd8, 0, 0}, {0x3a08, 0x01, 0, 0}, {0x3a09, 0x27, 0, 0},
+	{0x3a0a, 0x00, 0, 0}, {0x3a0b, 0xf6, 0, 0}, {0x3a0e, 0x03, 0, 0},
+	{0x3a0d, 0x04, 0, 0}, {0x3a14, 0x03, 0, 0}, {0x3a15, 0xd8, 0, 0},
+	{0x4001, 0x02, 0, 0}, {0x4004, 0x02, 0, 0}, {0x3000, 0x00, 0, 0},
+	{0x3002, 0x1c, 0, 0}, {0x3004, 0xff, 0, 0}, {0x3006, 0xc3, 0, 0},
+	{0x302e, 0x08, 0, 0}, {0x4300, 0x3f, 0, 0},
+	{0x501f, 0x00, 0, 0}, {0x4407, 0x04, 0, 0},
+	{0x440e, 0x00, 0, 0}, {0x460b, 0x35, 0, 0}, {0x460c, 0x22, 0, 0},
+	{0x4837, 0x0a, 0, 0}, {0x3824, 0x02, 0, 0},
+	{0x5000, 0xa7, 0, 0}, {0x5001, 0xa3, 0, 0}, {0x5180, 0xff, 0, 0},
+	{0x5181, 0xf2, 0, 0}, {0x5182, 0x00, 0, 0}, {0x5183, 0x14, 0, 0},
+	{0x5184, 0x25, 0, 0}, {0x5185, 0x24, 0, 0}, {0x5186, 0x09, 0, 0},
+	{0x5187, 0x09, 0, 0}, {0x5188, 0x09, 0, 0}, {0x5189, 0x88, 0, 0},
+	{0x518a, 0x54, 0, 0}, {0x518b, 0xee, 0, 0}, {0x518c, 0xb2, 0, 0},
+	{0x518d, 0x50, 0, 0}, {0x518e, 0x34, 0, 0}, {0x518f, 0x6b, 0, 0},
+	{0x5190, 0x46, 0, 0}, {0x5191, 0xf8, 0, 0}, {0x5192, 0x04, 0, 0},
+	{0x5193, 0x70, 0, 0}, {0x5194, 0xf0, 0, 0}, {0x5195, 0xf0, 0, 0},
+	{0x5196, 0x03, 0, 0}, {0x5197, 0x01, 0, 0}, {0x5198, 0x04, 0, 0},
+	{0x5199, 0x6c, 0, 0}, {0x519a, 0x04, 0, 0}, {0x519b, 0x00, 0, 0},
+	{0x519c, 0x09, 0, 0}, {0x519d, 0x2b, 0, 0}, {0x519e, 0x38, 0, 0},
+	{0x5381, 0x1e, 0, 0}, {0x5382, 0x5b, 0, 0}, {0x5383, 0x08, 0, 0},
+	{0x5384, 0x0a, 0, 0}, {0x5385, 0x7e, 0, 0}, {0x5386, 0x88, 0, 0},
+	{0x5387, 0x7c, 0, 0}, {0x5388, 0x6c, 0, 0}, {0x5389, 0x10, 0, 0},
+	{0x538a, 0x01, 0, 0}, {0x538b, 0x98, 0, 0}, {0x5300, 0x08, 0, 0},
+	{0x5301, 0x30, 0, 0}, {0x5302, 0x10, 0, 0}, {0x5303, 0x00, 0, 0},
+	{0x5304, 0x08, 0, 0}, {0x5305, 0x30, 0, 0}, {0x5306, 0x08, 0, 0},
+	{0x5307, 0x16, 0, 0}, {0x5309, 0x08, 0, 0}, {0x530a, 0x30, 0, 0},
+	{0x530b, 0x04, 0, 0}, {0x530c, 0x06, 0, 0}, {0x5480, 0x01, 0, 0},
+	{0x5481, 0x08, 0, 0}, {0x5482, 0x14, 0, 0}, {0x5483, 0x28, 0, 0},
+	{0x5484, 0x51, 0, 0}, {0x5485, 0x65, 0, 0}, {0x5486, 0x71, 0, 0},
+	{0x5487, 0x7d, 0, 0}, {0x5488, 0x87, 0, 0}, {0x5489, 0x91, 0, 0},
+	{0x548a, 0x9a, 0, 0}, {0x548b, 0xaa, 0, 0}, {0x548c, 0xb8, 0, 0},
+	{0x548d, 0xcd, 0, 0}, {0x548e, 0xdd, 0, 0}, {0x548f, 0xea, 0, 0},
+	{0x5490, 0x1d, 0, 0}, {0x5580, 0x02, 0, 0}, {0x5583, 0x40, 0, 0},
+	{0x5584, 0x10, 0, 0}, {0x5589, 0x10, 0, 0}, {0x558a, 0x00, 0, 0},
+	{0x558b, 0xf8, 0, 0}, {0x5800, 0x23, 0, 0}, {0x5801, 0x14, 0, 0},
+	{0x5802, 0x0f, 0, 0}, {0x5803, 0x0f, 0, 0}, {0x5804, 0x12, 0, 0},
+	{0x5805, 0x26, 0, 0}, {0x5806, 0x0c, 0, 0}, {0x5807, 0x08, 0, 0},
+	{0x5808, 0x05, 0, 0}, {0x5809, 0x05, 0, 0}, {0x580a, 0x08, 0, 0},
+	{0x580b, 0x0d, 0, 0}, {0x580c, 0x08, 0, 0}, {0x580d, 0x03, 0, 0},
+	{0x580e, 0x00, 0, 0}, {0x580f, 0x00, 0, 0}, {0x5810, 0x03, 0, 0},
+	{0x5811, 0x09, 0, 0}, {0x5812, 0x07, 0, 0}, {0x5813, 0x03, 0, 0},
+	{0x5814, 0x00, 0, 0}, {0x5815, 0x01, 0, 0}, {0x5816, 0x03, 0, 0},
+	{0x5817, 0x08, 0, 0}, {0x5818, 0x0d, 0, 0}, {0x5819, 0x08, 0, 0},
+	{0x581a, 0x05, 0, 0}, {0x581b, 0x06, 0, 0}, {0x581c, 0x08, 0, 0},
+	{0x581d, 0x0e, 0, 0}, {0x581e, 0x29, 0, 0}, {0x581f, 0x17, 0, 0},
+	{0x5820, 0x11, 0, 0}, {0x5821, 0x11, 0, 0}, {0x5822, 0x15, 0, 0},
+	{0x5823, 0x28, 0, 0}, {0x5824, 0x46, 0, 0}, {0x5825, 0x26, 0, 0},
+	{0x5826, 0x08, 0, 0}, {0x5827, 0x26, 0, 0}, {0x5828, 0x64, 0, 0},
+	{0x5829, 0x26, 0, 0}, {0x582a, 0x24, 0, 0}, {0x582b, 0x22, 0, 0},
+	{0x582c, 0x24, 0, 0}, {0x582d, 0x24, 0, 0}, {0x582e, 0x06, 0, 0},
+	{0x582f, 0x22, 0, 0}, {0x5830, 0x40, 0, 0}, {0x5831, 0x42, 0, 0},
+	{0x5832, 0x24, 0, 0}, {0x5833, 0x26, 0, 0}, {0x5834, 0x24, 0, 0},
+	{0x5835, 0x22, 0, 0}, {0x5836, 0x22, 0, 0}, {0x5837, 0x26, 0, 0},
+	{0x5838, 0x44, 0, 0}, {0x5839, 0x24, 0, 0}, {0x583a, 0x26, 0, 0},
+	{0x583b, 0x28, 0, 0}, {0x583c, 0x42, 0, 0}, {0x583d, 0xce, 0, 0},
+	{0x5025, 0x00, 0, 0}, {0x3a0f, 0x30, 0, 0}, {0x3a10, 0x28, 0, 0},
+	{0x3a1b, 0x30, 0, 0}, {0x3a1e, 0x26, 0, 0}, {0x3a11, 0x60, 0, 0},
+	{0x3a1f, 0x14, 0, 0}, {0x3008, 0x02, 0, 0}, {0x3c00, 0x04, 0, 300},
+};
 
-अटल स्थिर काष्ठा reg_value ov5640_setting_VGA_640_480[] = अणु
-	अणु0x3c07, 0x08, 0, 0पूर्ण,
-	अणु0x3c09, 0x1c, 0, 0पूर्ण, अणु0x3c0a, 0x9c, 0, 0पूर्ण, अणु0x3c0b, 0x40, 0, 0पूर्ण,
-	अणु0x3814, 0x31, 0, 0पूर्ण,
-	अणु0x3815, 0x31, 0, 0पूर्ण, अणु0x3800, 0x00, 0, 0पूर्ण, अणु0x3801, 0x00, 0, 0पूर्ण,
-	अणु0x3802, 0x00, 0, 0पूर्ण, अणु0x3803, 0x04, 0, 0पूर्ण, अणु0x3804, 0x0a, 0, 0पूर्ण,
-	अणु0x3805, 0x3f, 0, 0पूर्ण, अणु0x3806, 0x07, 0, 0पूर्ण, अणु0x3807, 0x9b, 0, 0पूर्ण,
-	अणु0x3810, 0x00, 0, 0पूर्ण,
-	अणु0x3811, 0x10, 0, 0पूर्ण, अणु0x3812, 0x00, 0, 0पूर्ण, अणु0x3813, 0x06, 0, 0पूर्ण,
-	अणु0x3618, 0x00, 0, 0पूर्ण, अणु0x3612, 0x29, 0, 0पूर्ण, अणु0x3708, 0x64, 0, 0पूर्ण,
-	अणु0x3709, 0x52, 0, 0पूर्ण, अणु0x370c, 0x03, 0, 0पूर्ण, अणु0x3a02, 0x03, 0, 0पूर्ण,
-	अणु0x3a03, 0xd8, 0, 0पूर्ण, अणु0x3a08, 0x01, 0, 0पूर्ण, अणु0x3a09, 0x27, 0, 0पूर्ण,
-	अणु0x3a0a, 0x00, 0, 0पूर्ण, अणु0x3a0b, 0xf6, 0, 0पूर्ण, अणु0x3a0e, 0x03, 0, 0पूर्ण,
-	अणु0x3a0d, 0x04, 0, 0पूर्ण, अणु0x3a14, 0x03, 0, 0पूर्ण, अणु0x3a15, 0xd8, 0, 0पूर्ण,
-	अणु0x4001, 0x02, 0, 0पूर्ण, अणु0x4004, 0x02, 0, 0पूर्ण,
-	अणु0x4407, 0x04, 0, 0पूर्ण, अणु0x460b, 0x35, 0, 0पूर्ण, अणु0x460c, 0x22, 0, 0पूर्ण,
-	अणु0x3824, 0x02, 0, 0पूर्ण, अणु0x5001, 0xa3, 0, 0पूर्ण,
-पूर्ण;
+static const struct reg_value ov5640_setting_VGA_640_480[] = {
+	{0x3c07, 0x08, 0, 0},
+	{0x3c09, 0x1c, 0, 0}, {0x3c0a, 0x9c, 0, 0}, {0x3c0b, 0x40, 0, 0},
+	{0x3814, 0x31, 0, 0},
+	{0x3815, 0x31, 0, 0}, {0x3800, 0x00, 0, 0}, {0x3801, 0x00, 0, 0},
+	{0x3802, 0x00, 0, 0}, {0x3803, 0x04, 0, 0}, {0x3804, 0x0a, 0, 0},
+	{0x3805, 0x3f, 0, 0}, {0x3806, 0x07, 0, 0}, {0x3807, 0x9b, 0, 0},
+	{0x3810, 0x00, 0, 0},
+	{0x3811, 0x10, 0, 0}, {0x3812, 0x00, 0, 0}, {0x3813, 0x06, 0, 0},
+	{0x3618, 0x00, 0, 0}, {0x3612, 0x29, 0, 0}, {0x3708, 0x64, 0, 0},
+	{0x3709, 0x52, 0, 0}, {0x370c, 0x03, 0, 0}, {0x3a02, 0x03, 0, 0},
+	{0x3a03, 0xd8, 0, 0}, {0x3a08, 0x01, 0, 0}, {0x3a09, 0x27, 0, 0},
+	{0x3a0a, 0x00, 0, 0}, {0x3a0b, 0xf6, 0, 0}, {0x3a0e, 0x03, 0, 0},
+	{0x3a0d, 0x04, 0, 0}, {0x3a14, 0x03, 0, 0}, {0x3a15, 0xd8, 0, 0},
+	{0x4001, 0x02, 0, 0}, {0x4004, 0x02, 0, 0},
+	{0x4407, 0x04, 0, 0}, {0x460b, 0x35, 0, 0}, {0x460c, 0x22, 0, 0},
+	{0x3824, 0x02, 0, 0}, {0x5001, 0xa3, 0, 0},
+};
 
-अटल स्थिर काष्ठा reg_value ov5640_setting_XGA_1024_768[] = अणु
-	अणु0x3c07, 0x08, 0, 0पूर्ण,
-	अणु0x3c09, 0x1c, 0, 0पूर्ण, अणु0x3c0a, 0x9c, 0, 0पूर्ण, अणु0x3c0b, 0x40, 0, 0पूर्ण,
-	अणु0x3814, 0x31, 0, 0पूर्ण,
-	अणु0x3815, 0x31, 0, 0पूर्ण, अणु0x3800, 0x00, 0, 0पूर्ण, अणु0x3801, 0x00, 0, 0पूर्ण,
-	अणु0x3802, 0x00, 0, 0पूर्ण, अणु0x3803, 0x04, 0, 0पूर्ण, अणु0x3804, 0x0a, 0, 0पूर्ण,
-	अणु0x3805, 0x3f, 0, 0पूर्ण, अणु0x3806, 0x07, 0, 0पूर्ण, अणु0x3807, 0x9b, 0, 0पूर्ण,
-	अणु0x3810, 0x00, 0, 0पूर्ण,
-	अणु0x3811, 0x10, 0, 0पूर्ण, अणु0x3812, 0x00, 0, 0पूर्ण, अणु0x3813, 0x06, 0, 0पूर्ण,
-	अणु0x3618, 0x00, 0, 0पूर्ण, अणु0x3612, 0x29, 0, 0पूर्ण, अणु0x3708, 0x64, 0, 0पूर्ण,
-	अणु0x3709, 0x52, 0, 0पूर्ण, अणु0x370c, 0x03, 0, 0पूर्ण, अणु0x3a02, 0x03, 0, 0पूर्ण,
-	अणु0x3a03, 0xd8, 0, 0पूर्ण, अणु0x3a08, 0x01, 0, 0पूर्ण, अणु0x3a09, 0x27, 0, 0पूर्ण,
-	अणु0x3a0a, 0x00, 0, 0पूर्ण, अणु0x3a0b, 0xf6, 0, 0पूर्ण, अणु0x3a0e, 0x03, 0, 0पूर्ण,
-	अणु0x3a0d, 0x04, 0, 0पूर्ण, अणु0x3a14, 0x03, 0, 0पूर्ण, अणु0x3a15, 0xd8, 0, 0पूर्ण,
-	अणु0x4001, 0x02, 0, 0पूर्ण, अणु0x4004, 0x02, 0, 0पूर्ण,
-	अणु0x4407, 0x04, 0, 0पूर्ण, अणु0x460b, 0x35, 0, 0पूर्ण, अणु0x460c, 0x22, 0, 0पूर्ण,
-	अणु0x3824, 0x02, 0, 0पूर्ण, अणु0x5001, 0xa3, 0, 0पूर्ण,
-पूर्ण;
+static const struct reg_value ov5640_setting_XGA_1024_768[] = {
+	{0x3c07, 0x08, 0, 0},
+	{0x3c09, 0x1c, 0, 0}, {0x3c0a, 0x9c, 0, 0}, {0x3c0b, 0x40, 0, 0},
+	{0x3814, 0x31, 0, 0},
+	{0x3815, 0x31, 0, 0}, {0x3800, 0x00, 0, 0}, {0x3801, 0x00, 0, 0},
+	{0x3802, 0x00, 0, 0}, {0x3803, 0x04, 0, 0}, {0x3804, 0x0a, 0, 0},
+	{0x3805, 0x3f, 0, 0}, {0x3806, 0x07, 0, 0}, {0x3807, 0x9b, 0, 0},
+	{0x3810, 0x00, 0, 0},
+	{0x3811, 0x10, 0, 0}, {0x3812, 0x00, 0, 0}, {0x3813, 0x06, 0, 0},
+	{0x3618, 0x00, 0, 0}, {0x3612, 0x29, 0, 0}, {0x3708, 0x64, 0, 0},
+	{0x3709, 0x52, 0, 0}, {0x370c, 0x03, 0, 0}, {0x3a02, 0x03, 0, 0},
+	{0x3a03, 0xd8, 0, 0}, {0x3a08, 0x01, 0, 0}, {0x3a09, 0x27, 0, 0},
+	{0x3a0a, 0x00, 0, 0}, {0x3a0b, 0xf6, 0, 0}, {0x3a0e, 0x03, 0, 0},
+	{0x3a0d, 0x04, 0, 0}, {0x3a14, 0x03, 0, 0}, {0x3a15, 0xd8, 0, 0},
+	{0x4001, 0x02, 0, 0}, {0x4004, 0x02, 0, 0},
+	{0x4407, 0x04, 0, 0}, {0x460b, 0x35, 0, 0}, {0x460c, 0x22, 0, 0},
+	{0x3824, 0x02, 0, 0}, {0x5001, 0xa3, 0, 0},
+};
 
-अटल स्थिर काष्ठा reg_value ov5640_setting_QVGA_320_240[] = अणु
-	अणु0x3c07, 0x08, 0, 0पूर्ण,
-	अणु0x3c09, 0x1c, 0, 0पूर्ण, अणु0x3c0a, 0x9c, 0, 0पूर्ण, अणु0x3c0b, 0x40, 0, 0पूर्ण,
-	अणु0x3814, 0x31, 0, 0पूर्ण,
-	अणु0x3815, 0x31, 0, 0पूर्ण, अणु0x3800, 0x00, 0, 0पूर्ण, अणु0x3801, 0x00, 0, 0पूर्ण,
-	अणु0x3802, 0x00, 0, 0पूर्ण, अणु0x3803, 0x04, 0, 0पूर्ण, अणु0x3804, 0x0a, 0, 0पूर्ण,
-	अणु0x3805, 0x3f, 0, 0पूर्ण, अणु0x3806, 0x07, 0, 0पूर्ण, अणु0x3807, 0x9b, 0, 0पूर्ण,
-	अणु0x3810, 0x00, 0, 0पूर्ण,
-	अणु0x3811, 0x10, 0, 0पूर्ण, अणु0x3812, 0x00, 0, 0पूर्ण, अणु0x3813, 0x06, 0, 0पूर्ण,
-	अणु0x3618, 0x00, 0, 0पूर्ण, अणु0x3612, 0x29, 0, 0पूर्ण, अणु0x3708, 0x64, 0, 0पूर्ण,
-	अणु0x3709, 0x52, 0, 0पूर्ण, अणु0x370c, 0x03, 0, 0पूर्ण, अणु0x3a02, 0x03, 0, 0पूर्ण,
-	अणु0x3a03, 0xd8, 0, 0पूर्ण, अणु0x3a08, 0x01, 0, 0पूर्ण, अणु0x3a09, 0x27, 0, 0पूर्ण,
-	अणु0x3a0a, 0x00, 0, 0पूर्ण, अणु0x3a0b, 0xf6, 0, 0पूर्ण, अणु0x3a0e, 0x03, 0, 0पूर्ण,
-	अणु0x3a0d, 0x04, 0, 0पूर्ण, अणु0x3a14, 0x03, 0, 0पूर्ण, अणु0x3a15, 0xd8, 0, 0पूर्ण,
-	अणु0x4001, 0x02, 0, 0पूर्ण, अणु0x4004, 0x02, 0, 0पूर्ण,
-	अणु0x4407, 0x04, 0, 0पूर्ण, अणु0x460b, 0x35, 0, 0पूर्ण, अणु0x460c, 0x22, 0, 0पूर्ण,
-	अणु0x3824, 0x02, 0, 0पूर्ण, अणु0x5001, 0xa3, 0, 0पूर्ण,
-पूर्ण;
+static const struct reg_value ov5640_setting_QVGA_320_240[] = {
+	{0x3c07, 0x08, 0, 0},
+	{0x3c09, 0x1c, 0, 0}, {0x3c0a, 0x9c, 0, 0}, {0x3c0b, 0x40, 0, 0},
+	{0x3814, 0x31, 0, 0},
+	{0x3815, 0x31, 0, 0}, {0x3800, 0x00, 0, 0}, {0x3801, 0x00, 0, 0},
+	{0x3802, 0x00, 0, 0}, {0x3803, 0x04, 0, 0}, {0x3804, 0x0a, 0, 0},
+	{0x3805, 0x3f, 0, 0}, {0x3806, 0x07, 0, 0}, {0x3807, 0x9b, 0, 0},
+	{0x3810, 0x00, 0, 0},
+	{0x3811, 0x10, 0, 0}, {0x3812, 0x00, 0, 0}, {0x3813, 0x06, 0, 0},
+	{0x3618, 0x00, 0, 0}, {0x3612, 0x29, 0, 0}, {0x3708, 0x64, 0, 0},
+	{0x3709, 0x52, 0, 0}, {0x370c, 0x03, 0, 0}, {0x3a02, 0x03, 0, 0},
+	{0x3a03, 0xd8, 0, 0}, {0x3a08, 0x01, 0, 0}, {0x3a09, 0x27, 0, 0},
+	{0x3a0a, 0x00, 0, 0}, {0x3a0b, 0xf6, 0, 0}, {0x3a0e, 0x03, 0, 0},
+	{0x3a0d, 0x04, 0, 0}, {0x3a14, 0x03, 0, 0}, {0x3a15, 0xd8, 0, 0},
+	{0x4001, 0x02, 0, 0}, {0x4004, 0x02, 0, 0},
+	{0x4407, 0x04, 0, 0}, {0x460b, 0x35, 0, 0}, {0x460c, 0x22, 0, 0},
+	{0x3824, 0x02, 0, 0}, {0x5001, 0xa3, 0, 0},
+};
 
-अटल स्थिर काष्ठा reg_value ov5640_setting_QQVGA_160_120[] = अणु
-	अणु0x3c07, 0x08, 0, 0पूर्ण,
-	अणु0x3c09, 0x1c, 0, 0पूर्ण, अणु0x3c0a, 0x9c, 0, 0पूर्ण, अणु0x3c0b, 0x40, 0, 0पूर्ण,
-	अणु0x3814, 0x31, 0, 0पूर्ण,
-	अणु0x3815, 0x31, 0, 0पूर्ण, अणु0x3800, 0x00, 0, 0पूर्ण, अणु0x3801, 0x00, 0, 0पूर्ण,
-	अणु0x3802, 0x00, 0, 0पूर्ण, अणु0x3803, 0x04, 0, 0पूर्ण, अणु0x3804, 0x0a, 0, 0पूर्ण,
-	अणु0x3805, 0x3f, 0, 0पूर्ण, अणु0x3806, 0x07, 0, 0पूर्ण, अणु0x3807, 0x9b, 0, 0पूर्ण,
-	अणु0x3810, 0x00, 0, 0पूर्ण,
-	अणु0x3811, 0x10, 0, 0पूर्ण, अणु0x3812, 0x00, 0, 0पूर्ण, अणु0x3813, 0x06, 0, 0पूर्ण,
-	अणु0x3618, 0x00, 0, 0पूर्ण, अणु0x3612, 0x29, 0, 0पूर्ण, अणु0x3708, 0x64, 0, 0पूर्ण,
-	अणु0x3709, 0x52, 0, 0पूर्ण, अणु0x370c, 0x03, 0, 0पूर्ण, अणु0x3a02, 0x03, 0, 0पूर्ण,
-	अणु0x3a03, 0xd8, 0, 0पूर्ण, अणु0x3a08, 0x01, 0, 0पूर्ण, अणु0x3a09, 0x27, 0, 0पूर्ण,
-	अणु0x3a0a, 0x00, 0, 0पूर्ण, अणु0x3a0b, 0xf6, 0, 0पूर्ण, अणु0x3a0e, 0x03, 0, 0पूर्ण,
-	अणु0x3a0d, 0x04, 0, 0पूर्ण, अणु0x3a14, 0x03, 0, 0पूर्ण, अणु0x3a15, 0xd8, 0, 0पूर्ण,
-	अणु0x4001, 0x02, 0, 0पूर्ण, अणु0x4004, 0x02, 0, 0पूर्ण,
-	अणु0x4407, 0x04, 0, 0पूर्ण, अणु0x5001, 0xa3, 0, 0पूर्ण,
-पूर्ण;
+static const struct reg_value ov5640_setting_QQVGA_160_120[] = {
+	{0x3c07, 0x08, 0, 0},
+	{0x3c09, 0x1c, 0, 0}, {0x3c0a, 0x9c, 0, 0}, {0x3c0b, 0x40, 0, 0},
+	{0x3814, 0x31, 0, 0},
+	{0x3815, 0x31, 0, 0}, {0x3800, 0x00, 0, 0}, {0x3801, 0x00, 0, 0},
+	{0x3802, 0x00, 0, 0}, {0x3803, 0x04, 0, 0}, {0x3804, 0x0a, 0, 0},
+	{0x3805, 0x3f, 0, 0}, {0x3806, 0x07, 0, 0}, {0x3807, 0x9b, 0, 0},
+	{0x3810, 0x00, 0, 0},
+	{0x3811, 0x10, 0, 0}, {0x3812, 0x00, 0, 0}, {0x3813, 0x06, 0, 0},
+	{0x3618, 0x00, 0, 0}, {0x3612, 0x29, 0, 0}, {0x3708, 0x64, 0, 0},
+	{0x3709, 0x52, 0, 0}, {0x370c, 0x03, 0, 0}, {0x3a02, 0x03, 0, 0},
+	{0x3a03, 0xd8, 0, 0}, {0x3a08, 0x01, 0, 0}, {0x3a09, 0x27, 0, 0},
+	{0x3a0a, 0x00, 0, 0}, {0x3a0b, 0xf6, 0, 0}, {0x3a0e, 0x03, 0, 0},
+	{0x3a0d, 0x04, 0, 0}, {0x3a14, 0x03, 0, 0}, {0x3a15, 0xd8, 0, 0},
+	{0x4001, 0x02, 0, 0}, {0x4004, 0x02, 0, 0},
+	{0x4407, 0x04, 0, 0}, {0x5001, 0xa3, 0, 0},
+};
 
-अटल स्थिर काष्ठा reg_value ov5640_setting_QCIF_176_144[] = अणु
-	अणु0x3c07, 0x08, 0, 0पूर्ण,
-	अणु0x3c09, 0x1c, 0, 0पूर्ण, अणु0x3c0a, 0x9c, 0, 0पूर्ण, अणु0x3c0b, 0x40, 0, 0पूर्ण,
-	अणु0x3814, 0x31, 0, 0पूर्ण,
-	अणु0x3815, 0x31, 0, 0पूर्ण, अणु0x3800, 0x00, 0, 0पूर्ण, अणु0x3801, 0x00, 0, 0पूर्ण,
-	अणु0x3802, 0x00, 0, 0पूर्ण, अणु0x3803, 0x04, 0, 0पूर्ण, अणु0x3804, 0x0a, 0, 0पूर्ण,
-	अणु0x3805, 0x3f, 0, 0पूर्ण, अणु0x3806, 0x07, 0, 0पूर्ण, अणु0x3807, 0x9b, 0, 0पूर्ण,
-	अणु0x3810, 0x00, 0, 0पूर्ण,
-	अणु0x3811, 0x10, 0, 0पूर्ण, अणु0x3812, 0x00, 0, 0पूर्ण, अणु0x3813, 0x06, 0, 0पूर्ण,
-	अणु0x3618, 0x00, 0, 0पूर्ण, अणु0x3612, 0x29, 0, 0पूर्ण, अणु0x3708, 0x64, 0, 0पूर्ण,
-	अणु0x3709, 0x52, 0, 0पूर्ण, अणु0x370c, 0x03, 0, 0पूर्ण, अणु0x3a02, 0x03, 0, 0पूर्ण,
-	अणु0x3a03, 0xd8, 0, 0पूर्ण, अणु0x3a08, 0x01, 0, 0पूर्ण, अणु0x3a09, 0x27, 0, 0पूर्ण,
-	अणु0x3a0a, 0x00, 0, 0पूर्ण, अणु0x3a0b, 0xf6, 0, 0पूर्ण, अणु0x3a0e, 0x03, 0, 0पूर्ण,
-	अणु0x3a0d, 0x04, 0, 0पूर्ण, अणु0x3a14, 0x03, 0, 0पूर्ण, अणु0x3a15, 0xd8, 0, 0पूर्ण,
-	अणु0x4001, 0x02, 0, 0पूर्ण, अणु0x4004, 0x02, 0, 0पूर्ण,
-	अणु0x4407, 0x04, 0, 0पूर्ण, अणु0x460b, 0x35, 0, 0पूर्ण, अणु0x460c, 0x22, 0, 0पूर्ण,
-	अणु0x3824, 0x02, 0, 0पूर्ण, अणु0x5001, 0xa3, 0, 0पूर्ण,
-पूर्ण;
+static const struct reg_value ov5640_setting_QCIF_176_144[] = {
+	{0x3c07, 0x08, 0, 0},
+	{0x3c09, 0x1c, 0, 0}, {0x3c0a, 0x9c, 0, 0}, {0x3c0b, 0x40, 0, 0},
+	{0x3814, 0x31, 0, 0},
+	{0x3815, 0x31, 0, 0}, {0x3800, 0x00, 0, 0}, {0x3801, 0x00, 0, 0},
+	{0x3802, 0x00, 0, 0}, {0x3803, 0x04, 0, 0}, {0x3804, 0x0a, 0, 0},
+	{0x3805, 0x3f, 0, 0}, {0x3806, 0x07, 0, 0}, {0x3807, 0x9b, 0, 0},
+	{0x3810, 0x00, 0, 0},
+	{0x3811, 0x10, 0, 0}, {0x3812, 0x00, 0, 0}, {0x3813, 0x06, 0, 0},
+	{0x3618, 0x00, 0, 0}, {0x3612, 0x29, 0, 0}, {0x3708, 0x64, 0, 0},
+	{0x3709, 0x52, 0, 0}, {0x370c, 0x03, 0, 0}, {0x3a02, 0x03, 0, 0},
+	{0x3a03, 0xd8, 0, 0}, {0x3a08, 0x01, 0, 0}, {0x3a09, 0x27, 0, 0},
+	{0x3a0a, 0x00, 0, 0}, {0x3a0b, 0xf6, 0, 0}, {0x3a0e, 0x03, 0, 0},
+	{0x3a0d, 0x04, 0, 0}, {0x3a14, 0x03, 0, 0}, {0x3a15, 0xd8, 0, 0},
+	{0x4001, 0x02, 0, 0}, {0x4004, 0x02, 0, 0},
+	{0x4407, 0x04, 0, 0}, {0x460b, 0x35, 0, 0}, {0x460c, 0x22, 0, 0},
+	{0x3824, 0x02, 0, 0}, {0x5001, 0xa3, 0, 0},
+};
 
-अटल स्थिर काष्ठा reg_value ov5640_setting_NTSC_720_480[] = अणु
-	अणु0x3c07, 0x08, 0, 0पूर्ण,
-	अणु0x3c09, 0x1c, 0, 0पूर्ण, अणु0x3c0a, 0x9c, 0, 0पूर्ण, अणु0x3c0b, 0x40, 0, 0पूर्ण,
-	अणु0x3814, 0x31, 0, 0पूर्ण,
-	अणु0x3815, 0x31, 0, 0पूर्ण, अणु0x3800, 0x00, 0, 0पूर्ण, अणु0x3801, 0x00, 0, 0पूर्ण,
-	अणु0x3802, 0x00, 0, 0पूर्ण, अणु0x3803, 0x04, 0, 0पूर्ण, अणु0x3804, 0x0a, 0, 0पूर्ण,
-	अणु0x3805, 0x3f, 0, 0पूर्ण, अणु0x3806, 0x07, 0, 0पूर्ण, अणु0x3807, 0x9b, 0, 0पूर्ण,
-	अणु0x3810, 0x00, 0, 0पूर्ण,
-	अणु0x3811, 0x10, 0, 0पूर्ण, अणु0x3812, 0x00, 0, 0पूर्ण, अणु0x3813, 0x3c, 0, 0पूर्ण,
-	अणु0x3618, 0x00, 0, 0पूर्ण, अणु0x3612, 0x29, 0, 0पूर्ण, अणु0x3708, 0x64, 0, 0पूर्ण,
-	अणु0x3709, 0x52, 0, 0पूर्ण, अणु0x370c, 0x03, 0, 0पूर्ण, अणु0x3a02, 0x03, 0, 0पूर्ण,
-	अणु0x3a03, 0xd8, 0, 0पूर्ण, अणु0x3a08, 0x01, 0, 0पूर्ण, अणु0x3a09, 0x27, 0, 0पूर्ण,
-	अणु0x3a0a, 0x00, 0, 0पूर्ण, अणु0x3a0b, 0xf6, 0, 0पूर्ण, अणु0x3a0e, 0x03, 0, 0पूर्ण,
-	अणु0x3a0d, 0x04, 0, 0पूर्ण, अणु0x3a14, 0x03, 0, 0पूर्ण, अणु0x3a15, 0xd8, 0, 0पूर्ण,
-	अणु0x4001, 0x02, 0, 0पूर्ण, अणु0x4004, 0x02, 0, 0पूर्ण,
-	अणु0x4407, 0x04, 0, 0पूर्ण, अणु0x460b, 0x35, 0, 0पूर्ण, अणु0x460c, 0x22, 0, 0पूर्ण,
-	अणु0x3824, 0x02, 0, 0पूर्ण, अणु0x5001, 0xa3, 0, 0पूर्ण,
-पूर्ण;
+static const struct reg_value ov5640_setting_NTSC_720_480[] = {
+	{0x3c07, 0x08, 0, 0},
+	{0x3c09, 0x1c, 0, 0}, {0x3c0a, 0x9c, 0, 0}, {0x3c0b, 0x40, 0, 0},
+	{0x3814, 0x31, 0, 0},
+	{0x3815, 0x31, 0, 0}, {0x3800, 0x00, 0, 0}, {0x3801, 0x00, 0, 0},
+	{0x3802, 0x00, 0, 0}, {0x3803, 0x04, 0, 0}, {0x3804, 0x0a, 0, 0},
+	{0x3805, 0x3f, 0, 0}, {0x3806, 0x07, 0, 0}, {0x3807, 0x9b, 0, 0},
+	{0x3810, 0x00, 0, 0},
+	{0x3811, 0x10, 0, 0}, {0x3812, 0x00, 0, 0}, {0x3813, 0x3c, 0, 0},
+	{0x3618, 0x00, 0, 0}, {0x3612, 0x29, 0, 0}, {0x3708, 0x64, 0, 0},
+	{0x3709, 0x52, 0, 0}, {0x370c, 0x03, 0, 0}, {0x3a02, 0x03, 0, 0},
+	{0x3a03, 0xd8, 0, 0}, {0x3a08, 0x01, 0, 0}, {0x3a09, 0x27, 0, 0},
+	{0x3a0a, 0x00, 0, 0}, {0x3a0b, 0xf6, 0, 0}, {0x3a0e, 0x03, 0, 0},
+	{0x3a0d, 0x04, 0, 0}, {0x3a14, 0x03, 0, 0}, {0x3a15, 0xd8, 0, 0},
+	{0x4001, 0x02, 0, 0}, {0x4004, 0x02, 0, 0},
+	{0x4407, 0x04, 0, 0}, {0x460b, 0x35, 0, 0}, {0x460c, 0x22, 0, 0},
+	{0x3824, 0x02, 0, 0}, {0x5001, 0xa3, 0, 0},
+};
 
-अटल स्थिर काष्ठा reg_value ov5640_setting_PAL_720_576[] = अणु
-	अणु0x3c07, 0x08, 0, 0पूर्ण,
-	अणु0x3c09, 0x1c, 0, 0पूर्ण, अणु0x3c0a, 0x9c, 0, 0पूर्ण, अणु0x3c0b, 0x40, 0, 0पूर्ण,
-	अणु0x3814, 0x31, 0, 0पूर्ण,
-	अणु0x3815, 0x31, 0, 0पूर्ण, अणु0x3800, 0x00, 0, 0पूर्ण, अणु0x3801, 0x00, 0, 0पूर्ण,
-	अणु0x3802, 0x00, 0, 0पूर्ण, अणु0x3803, 0x04, 0, 0पूर्ण, अणु0x3804, 0x0a, 0, 0पूर्ण,
-	अणु0x3805, 0x3f, 0, 0पूर्ण, अणु0x3806, 0x07, 0, 0पूर्ण, अणु0x3807, 0x9b, 0, 0पूर्ण,
-	अणु0x3810, 0x00, 0, 0पूर्ण,
-	अणु0x3811, 0x38, 0, 0पूर्ण, अणु0x3812, 0x00, 0, 0पूर्ण, अणु0x3813, 0x06, 0, 0पूर्ण,
-	अणु0x3618, 0x00, 0, 0पूर्ण, अणु0x3612, 0x29, 0, 0पूर्ण, अणु0x3708, 0x64, 0, 0पूर्ण,
-	अणु0x3709, 0x52, 0, 0पूर्ण, अणु0x370c, 0x03, 0, 0पूर्ण, अणु0x3a02, 0x03, 0, 0पूर्ण,
-	अणु0x3a03, 0xd8, 0, 0पूर्ण, अणु0x3a08, 0x01, 0, 0पूर्ण, अणु0x3a09, 0x27, 0, 0पूर्ण,
-	अणु0x3a0a, 0x00, 0, 0पूर्ण, अणु0x3a0b, 0xf6, 0, 0पूर्ण, अणु0x3a0e, 0x03, 0, 0पूर्ण,
-	अणु0x3a0d, 0x04, 0, 0पूर्ण, अणु0x3a14, 0x03, 0, 0पूर्ण, अणु0x3a15, 0xd8, 0, 0पूर्ण,
-	अणु0x4001, 0x02, 0, 0पूर्ण, अणु0x4004, 0x02, 0, 0पूर्ण,
-	अणु0x4407, 0x04, 0, 0पूर्ण, अणु0x460b, 0x35, 0, 0पूर्ण, अणु0x460c, 0x22, 0, 0पूर्ण,
-	अणु0x3824, 0x02, 0, 0पूर्ण, अणु0x5001, 0xa3, 0, 0पूर्ण,
-पूर्ण;
+static const struct reg_value ov5640_setting_PAL_720_576[] = {
+	{0x3c07, 0x08, 0, 0},
+	{0x3c09, 0x1c, 0, 0}, {0x3c0a, 0x9c, 0, 0}, {0x3c0b, 0x40, 0, 0},
+	{0x3814, 0x31, 0, 0},
+	{0x3815, 0x31, 0, 0}, {0x3800, 0x00, 0, 0}, {0x3801, 0x00, 0, 0},
+	{0x3802, 0x00, 0, 0}, {0x3803, 0x04, 0, 0}, {0x3804, 0x0a, 0, 0},
+	{0x3805, 0x3f, 0, 0}, {0x3806, 0x07, 0, 0}, {0x3807, 0x9b, 0, 0},
+	{0x3810, 0x00, 0, 0},
+	{0x3811, 0x38, 0, 0}, {0x3812, 0x00, 0, 0}, {0x3813, 0x06, 0, 0},
+	{0x3618, 0x00, 0, 0}, {0x3612, 0x29, 0, 0}, {0x3708, 0x64, 0, 0},
+	{0x3709, 0x52, 0, 0}, {0x370c, 0x03, 0, 0}, {0x3a02, 0x03, 0, 0},
+	{0x3a03, 0xd8, 0, 0}, {0x3a08, 0x01, 0, 0}, {0x3a09, 0x27, 0, 0},
+	{0x3a0a, 0x00, 0, 0}, {0x3a0b, 0xf6, 0, 0}, {0x3a0e, 0x03, 0, 0},
+	{0x3a0d, 0x04, 0, 0}, {0x3a14, 0x03, 0, 0}, {0x3a15, 0xd8, 0, 0},
+	{0x4001, 0x02, 0, 0}, {0x4004, 0x02, 0, 0},
+	{0x4407, 0x04, 0, 0}, {0x460b, 0x35, 0, 0}, {0x460c, 0x22, 0, 0},
+	{0x3824, 0x02, 0, 0}, {0x5001, 0xa3, 0, 0},
+};
 
-अटल स्थिर काष्ठा reg_value ov5640_setting_720P_1280_720[] = अणु
-	अणु0x3c07, 0x07, 0, 0पूर्ण,
-	अणु0x3c09, 0x1c, 0, 0पूर्ण, अणु0x3c0a, 0x9c, 0, 0पूर्ण, अणु0x3c0b, 0x40, 0, 0पूर्ण,
-	अणु0x3814, 0x31, 0, 0पूर्ण,
-	अणु0x3815, 0x31, 0, 0पूर्ण, अणु0x3800, 0x00, 0, 0पूर्ण, अणु0x3801, 0x00, 0, 0पूर्ण,
-	अणु0x3802, 0x00, 0, 0पूर्ण, अणु0x3803, 0xfa, 0, 0पूर्ण, अणु0x3804, 0x0a, 0, 0पूर्ण,
-	अणु0x3805, 0x3f, 0, 0पूर्ण, अणु0x3806, 0x06, 0, 0पूर्ण, अणु0x3807, 0xa9, 0, 0पूर्ण,
-	अणु0x3810, 0x00, 0, 0पूर्ण,
-	अणु0x3811, 0x10, 0, 0पूर्ण, अणु0x3812, 0x00, 0, 0पूर्ण, अणु0x3813, 0x04, 0, 0पूर्ण,
-	अणु0x3618, 0x00, 0, 0पूर्ण, अणु0x3612, 0x29, 0, 0पूर्ण, अणु0x3708, 0x64, 0, 0पूर्ण,
-	अणु0x3709, 0x52, 0, 0पूर्ण, अणु0x370c, 0x03, 0, 0पूर्ण, अणु0x3a02, 0x02, 0, 0पूर्ण,
-	अणु0x3a03, 0xe4, 0, 0पूर्ण, अणु0x3a08, 0x01, 0, 0पूर्ण, अणु0x3a09, 0xbc, 0, 0पूर्ण,
-	अणु0x3a0a, 0x01, 0, 0पूर्ण, अणु0x3a0b, 0x72, 0, 0पूर्ण, अणु0x3a0e, 0x01, 0, 0पूर्ण,
-	अणु0x3a0d, 0x02, 0, 0पूर्ण, अणु0x3a14, 0x02, 0, 0पूर्ण, अणु0x3a15, 0xe4, 0, 0पूर्ण,
-	अणु0x4001, 0x02, 0, 0पूर्ण, अणु0x4004, 0x02, 0, 0पूर्ण,
-	अणु0x4407, 0x04, 0, 0पूर्ण, अणु0x460b, 0x37, 0, 0पूर्ण, अणु0x460c, 0x20, 0, 0पूर्ण,
-	अणु0x3824, 0x04, 0, 0पूर्ण, अणु0x5001, 0x83, 0, 0पूर्ण,
-पूर्ण;
+static const struct reg_value ov5640_setting_720P_1280_720[] = {
+	{0x3c07, 0x07, 0, 0},
+	{0x3c09, 0x1c, 0, 0}, {0x3c0a, 0x9c, 0, 0}, {0x3c0b, 0x40, 0, 0},
+	{0x3814, 0x31, 0, 0},
+	{0x3815, 0x31, 0, 0}, {0x3800, 0x00, 0, 0}, {0x3801, 0x00, 0, 0},
+	{0x3802, 0x00, 0, 0}, {0x3803, 0xfa, 0, 0}, {0x3804, 0x0a, 0, 0},
+	{0x3805, 0x3f, 0, 0}, {0x3806, 0x06, 0, 0}, {0x3807, 0xa9, 0, 0},
+	{0x3810, 0x00, 0, 0},
+	{0x3811, 0x10, 0, 0}, {0x3812, 0x00, 0, 0}, {0x3813, 0x04, 0, 0},
+	{0x3618, 0x00, 0, 0}, {0x3612, 0x29, 0, 0}, {0x3708, 0x64, 0, 0},
+	{0x3709, 0x52, 0, 0}, {0x370c, 0x03, 0, 0}, {0x3a02, 0x02, 0, 0},
+	{0x3a03, 0xe4, 0, 0}, {0x3a08, 0x01, 0, 0}, {0x3a09, 0xbc, 0, 0},
+	{0x3a0a, 0x01, 0, 0}, {0x3a0b, 0x72, 0, 0}, {0x3a0e, 0x01, 0, 0},
+	{0x3a0d, 0x02, 0, 0}, {0x3a14, 0x02, 0, 0}, {0x3a15, 0xe4, 0, 0},
+	{0x4001, 0x02, 0, 0}, {0x4004, 0x02, 0, 0},
+	{0x4407, 0x04, 0, 0}, {0x460b, 0x37, 0, 0}, {0x460c, 0x20, 0, 0},
+	{0x3824, 0x04, 0, 0}, {0x5001, 0x83, 0, 0},
+};
 
-अटल स्थिर काष्ठा reg_value ov5640_setting_1080P_1920_1080[] = अणु
-	अणु0x3c07, 0x08, 0, 0पूर्ण,
-	अणु0x3c09, 0x1c, 0, 0पूर्ण, अणु0x3c0a, 0x9c, 0, 0पूर्ण, अणु0x3c0b, 0x40, 0, 0पूर्ण,
-	अणु0x3814, 0x11, 0, 0पूर्ण,
-	अणु0x3815, 0x11, 0, 0पूर्ण, अणु0x3800, 0x00, 0, 0पूर्ण, अणु0x3801, 0x00, 0, 0पूर्ण,
-	अणु0x3802, 0x00, 0, 0पूर्ण, अणु0x3803, 0x00, 0, 0पूर्ण, अणु0x3804, 0x0a, 0, 0पूर्ण,
-	अणु0x3805, 0x3f, 0, 0पूर्ण, अणु0x3806, 0x07, 0, 0पूर्ण, अणु0x3807, 0x9f, 0, 0पूर्ण,
-	अणु0x3810, 0x00, 0, 0पूर्ण,
-	अणु0x3811, 0x10, 0, 0पूर्ण, अणु0x3812, 0x00, 0, 0पूर्ण, अणु0x3813, 0x04, 0, 0पूर्ण,
-	अणु0x3618, 0x04, 0, 0पूर्ण, अणु0x3612, 0x29, 0, 0पूर्ण, अणु0x3708, 0x21, 0, 0पूर्ण,
-	अणु0x3709, 0x12, 0, 0पूर्ण, अणु0x370c, 0x00, 0, 0पूर्ण, अणु0x3a02, 0x03, 0, 0पूर्ण,
-	अणु0x3a03, 0xd8, 0, 0पूर्ण, अणु0x3a08, 0x01, 0, 0पूर्ण, अणु0x3a09, 0x27, 0, 0पूर्ण,
-	अणु0x3a0a, 0x00, 0, 0पूर्ण, अणु0x3a0b, 0xf6, 0, 0पूर्ण, अणु0x3a0e, 0x03, 0, 0पूर्ण,
-	अणु0x3a0d, 0x04, 0, 0पूर्ण, अणु0x3a14, 0x03, 0, 0पूर्ण, अणु0x3a15, 0xd8, 0, 0पूर्ण,
-	अणु0x4001, 0x02, 0, 0पूर्ण, अणु0x4004, 0x06, 0, 0पूर्ण,
-	अणु0x4407, 0x04, 0, 0पूर्ण, अणु0x460b, 0x35, 0, 0पूर्ण, अणु0x460c, 0x22, 0, 0पूर्ण,
-	अणु0x3824, 0x02, 0, 0पूर्ण, अणु0x5001, 0x83, 0, 0पूर्ण,
-	अणु0x3c07, 0x07, 0, 0पूर्ण, अणु0x3c08, 0x00, 0, 0पूर्ण,
-	अणु0x3c09, 0x1c, 0, 0पूर्ण, अणु0x3c0a, 0x9c, 0, 0पूर्ण, अणु0x3c0b, 0x40, 0, 0पूर्ण,
-	अणु0x3800, 0x01, 0, 0पूर्ण, अणु0x3801, 0x50, 0, 0पूर्ण, अणु0x3802, 0x01, 0, 0पूर्ण,
-	अणु0x3803, 0xb2, 0, 0पूर्ण, अणु0x3804, 0x08, 0, 0पूर्ण, अणु0x3805, 0xef, 0, 0पूर्ण,
-	अणु0x3806, 0x05, 0, 0पूर्ण, अणु0x3807, 0xf1, 0, 0पूर्ण,
-	अणु0x3612, 0x2b, 0, 0पूर्ण, अणु0x3708, 0x64, 0, 0पूर्ण,
-	अणु0x3a02, 0x04, 0, 0पूर्ण, अणु0x3a03, 0x60, 0, 0पूर्ण, अणु0x3a08, 0x01, 0, 0पूर्ण,
-	अणु0x3a09, 0x50, 0, 0पूर्ण, अणु0x3a0a, 0x01, 0, 0पूर्ण, अणु0x3a0b, 0x18, 0, 0पूर्ण,
-	अणु0x3a0e, 0x03, 0, 0पूर्ण, अणु0x3a0d, 0x04, 0, 0पूर्ण, अणु0x3a14, 0x04, 0, 0पूर्ण,
-	अणु0x3a15, 0x60, 0, 0पूर्ण, अणु0x4407, 0x04, 0, 0पूर्ण,
-	अणु0x460b, 0x37, 0, 0पूर्ण, अणु0x460c, 0x20, 0, 0पूर्ण, अणु0x3824, 0x04, 0, 0पूर्ण,
-	अणु0x4005, 0x1a, 0, 0पूर्ण,
-पूर्ण;
+static const struct reg_value ov5640_setting_1080P_1920_1080[] = {
+	{0x3c07, 0x08, 0, 0},
+	{0x3c09, 0x1c, 0, 0}, {0x3c0a, 0x9c, 0, 0}, {0x3c0b, 0x40, 0, 0},
+	{0x3814, 0x11, 0, 0},
+	{0x3815, 0x11, 0, 0}, {0x3800, 0x00, 0, 0}, {0x3801, 0x00, 0, 0},
+	{0x3802, 0x00, 0, 0}, {0x3803, 0x00, 0, 0}, {0x3804, 0x0a, 0, 0},
+	{0x3805, 0x3f, 0, 0}, {0x3806, 0x07, 0, 0}, {0x3807, 0x9f, 0, 0},
+	{0x3810, 0x00, 0, 0},
+	{0x3811, 0x10, 0, 0}, {0x3812, 0x00, 0, 0}, {0x3813, 0x04, 0, 0},
+	{0x3618, 0x04, 0, 0}, {0x3612, 0x29, 0, 0}, {0x3708, 0x21, 0, 0},
+	{0x3709, 0x12, 0, 0}, {0x370c, 0x00, 0, 0}, {0x3a02, 0x03, 0, 0},
+	{0x3a03, 0xd8, 0, 0}, {0x3a08, 0x01, 0, 0}, {0x3a09, 0x27, 0, 0},
+	{0x3a0a, 0x00, 0, 0}, {0x3a0b, 0xf6, 0, 0}, {0x3a0e, 0x03, 0, 0},
+	{0x3a0d, 0x04, 0, 0}, {0x3a14, 0x03, 0, 0}, {0x3a15, 0xd8, 0, 0},
+	{0x4001, 0x02, 0, 0}, {0x4004, 0x06, 0, 0},
+	{0x4407, 0x04, 0, 0}, {0x460b, 0x35, 0, 0}, {0x460c, 0x22, 0, 0},
+	{0x3824, 0x02, 0, 0}, {0x5001, 0x83, 0, 0},
+	{0x3c07, 0x07, 0, 0}, {0x3c08, 0x00, 0, 0},
+	{0x3c09, 0x1c, 0, 0}, {0x3c0a, 0x9c, 0, 0}, {0x3c0b, 0x40, 0, 0},
+	{0x3800, 0x01, 0, 0}, {0x3801, 0x50, 0, 0}, {0x3802, 0x01, 0, 0},
+	{0x3803, 0xb2, 0, 0}, {0x3804, 0x08, 0, 0}, {0x3805, 0xef, 0, 0},
+	{0x3806, 0x05, 0, 0}, {0x3807, 0xf1, 0, 0},
+	{0x3612, 0x2b, 0, 0}, {0x3708, 0x64, 0, 0},
+	{0x3a02, 0x04, 0, 0}, {0x3a03, 0x60, 0, 0}, {0x3a08, 0x01, 0, 0},
+	{0x3a09, 0x50, 0, 0}, {0x3a0a, 0x01, 0, 0}, {0x3a0b, 0x18, 0, 0},
+	{0x3a0e, 0x03, 0, 0}, {0x3a0d, 0x04, 0, 0}, {0x3a14, 0x04, 0, 0},
+	{0x3a15, 0x60, 0, 0}, {0x4407, 0x04, 0, 0},
+	{0x460b, 0x37, 0, 0}, {0x460c, 0x20, 0, 0}, {0x3824, 0x04, 0, 0},
+	{0x4005, 0x1a, 0, 0},
+};
 
-अटल स्थिर काष्ठा reg_value ov5640_setting_QSXGA_2592_1944[] = अणु
-	अणु0x3c07, 0x08, 0, 0पूर्ण,
-	अणु0x3c09, 0x1c, 0, 0पूर्ण, अणु0x3c0a, 0x9c, 0, 0पूर्ण, अणु0x3c0b, 0x40, 0, 0पूर्ण,
-	अणु0x3814, 0x11, 0, 0पूर्ण,
-	अणु0x3815, 0x11, 0, 0पूर्ण, अणु0x3800, 0x00, 0, 0पूर्ण, अणु0x3801, 0x00, 0, 0पूर्ण,
-	अणु0x3802, 0x00, 0, 0पूर्ण, अणु0x3803, 0x00, 0, 0पूर्ण, अणु0x3804, 0x0a, 0, 0पूर्ण,
-	अणु0x3805, 0x3f, 0, 0पूर्ण, अणु0x3806, 0x07, 0, 0पूर्ण, अणु0x3807, 0x9f, 0, 0पूर्ण,
-	अणु0x3810, 0x00, 0, 0पूर्ण,
-	अणु0x3811, 0x10, 0, 0पूर्ण, अणु0x3812, 0x00, 0, 0पूर्ण, अणु0x3813, 0x04, 0, 0पूर्ण,
-	अणु0x3618, 0x04, 0, 0पूर्ण, अणु0x3612, 0x29, 0, 0पूर्ण, अणु0x3708, 0x21, 0, 0पूर्ण,
-	अणु0x3709, 0x12, 0, 0पूर्ण, अणु0x370c, 0x00, 0, 0पूर्ण, अणु0x3a02, 0x03, 0, 0पूर्ण,
-	अणु0x3a03, 0xd8, 0, 0पूर्ण, अणु0x3a08, 0x01, 0, 0पूर्ण, अणु0x3a09, 0x27, 0, 0पूर्ण,
-	अणु0x3a0a, 0x00, 0, 0पूर्ण, अणु0x3a0b, 0xf6, 0, 0पूर्ण, अणु0x3a0e, 0x03, 0, 0पूर्ण,
-	अणु0x3a0d, 0x04, 0, 0पूर्ण, अणु0x3a14, 0x03, 0, 0पूर्ण, अणु0x3a15, 0xd8, 0, 0पूर्ण,
-	अणु0x4001, 0x02, 0, 0पूर्ण, अणु0x4004, 0x06, 0, 0पूर्ण,
-	अणु0x4407, 0x04, 0, 0पूर्ण, अणु0x460b, 0x35, 0, 0पूर्ण, अणु0x460c, 0x22, 0, 0पूर्ण,
-	अणु0x3824, 0x02, 0, 0पूर्ण, अणु0x5001, 0x83, 0, 70पूर्ण,
-पूर्ण;
+static const struct reg_value ov5640_setting_QSXGA_2592_1944[] = {
+	{0x3c07, 0x08, 0, 0},
+	{0x3c09, 0x1c, 0, 0}, {0x3c0a, 0x9c, 0, 0}, {0x3c0b, 0x40, 0, 0},
+	{0x3814, 0x11, 0, 0},
+	{0x3815, 0x11, 0, 0}, {0x3800, 0x00, 0, 0}, {0x3801, 0x00, 0, 0},
+	{0x3802, 0x00, 0, 0}, {0x3803, 0x00, 0, 0}, {0x3804, 0x0a, 0, 0},
+	{0x3805, 0x3f, 0, 0}, {0x3806, 0x07, 0, 0}, {0x3807, 0x9f, 0, 0},
+	{0x3810, 0x00, 0, 0},
+	{0x3811, 0x10, 0, 0}, {0x3812, 0x00, 0, 0}, {0x3813, 0x04, 0, 0},
+	{0x3618, 0x04, 0, 0}, {0x3612, 0x29, 0, 0}, {0x3708, 0x21, 0, 0},
+	{0x3709, 0x12, 0, 0}, {0x370c, 0x00, 0, 0}, {0x3a02, 0x03, 0, 0},
+	{0x3a03, 0xd8, 0, 0}, {0x3a08, 0x01, 0, 0}, {0x3a09, 0x27, 0, 0},
+	{0x3a0a, 0x00, 0, 0}, {0x3a0b, 0xf6, 0, 0}, {0x3a0e, 0x03, 0, 0},
+	{0x3a0d, 0x04, 0, 0}, {0x3a14, 0x03, 0, 0}, {0x3a15, 0xd8, 0, 0},
+	{0x4001, 0x02, 0, 0}, {0x4004, 0x06, 0, 0},
+	{0x4407, 0x04, 0, 0}, {0x460b, 0x35, 0, 0}, {0x460c, 0x22, 0, 0},
+	{0x3824, 0x02, 0, 0}, {0x5001, 0x83, 0, 70},
+};
 
-/* घातer-on sensor init reg table */
-अटल स्थिर काष्ठा ov5640_mode_info ov5640_mode_init_data = अणु
+/* power-on sensor init reg table */
+static const struct ov5640_mode_info ov5640_mode_init_data = {
 	0, SUBSAMPLING, 640, 1896, 480, 984,
 	ov5640_init_setting_30fps_VGA,
 	ARRAY_SIZE(ov5640_init_setting_30fps_VGA),
 	OV5640_30_FPS,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा ov5640_mode_info
-ov5640_mode_data[OV5640_NUM_MODES] = अणु
-	अणुOV5640_MODE_QQVGA_160_120, SUBSAMPLING,
+static const struct ov5640_mode_info
+ov5640_mode_data[OV5640_NUM_MODES] = {
+	{OV5640_MODE_QQVGA_160_120, SUBSAMPLING,
 	 160, 1896, 120, 984,
 	 ov5640_setting_QQVGA_160_120,
 	 ARRAY_SIZE(ov5640_setting_QQVGA_160_120),
-	 OV5640_30_FPSपूर्ण,
-	अणुOV5640_MODE_QCIF_176_144, SUBSAMPLING,
+	 OV5640_30_FPS},
+	{OV5640_MODE_QCIF_176_144, SUBSAMPLING,
 	 176, 1896, 144, 984,
 	 ov5640_setting_QCIF_176_144,
 	 ARRAY_SIZE(ov5640_setting_QCIF_176_144),
-	 OV5640_30_FPSपूर्ण,
-	अणुOV5640_MODE_QVGA_320_240, SUBSAMPLING,
+	 OV5640_30_FPS},
+	{OV5640_MODE_QVGA_320_240, SUBSAMPLING,
 	 320, 1896, 240, 984,
 	 ov5640_setting_QVGA_320_240,
 	 ARRAY_SIZE(ov5640_setting_QVGA_320_240),
-	 OV5640_30_FPSपूर्ण,
-	अणुOV5640_MODE_VGA_640_480, SUBSAMPLING,
+	 OV5640_30_FPS},
+	{OV5640_MODE_VGA_640_480, SUBSAMPLING,
 	 640, 1896, 480, 1080,
 	 ov5640_setting_VGA_640_480,
 	 ARRAY_SIZE(ov5640_setting_VGA_640_480),
-	 OV5640_60_FPSपूर्ण,
-	अणुOV5640_MODE_NTSC_720_480, SUBSAMPLING,
+	 OV5640_60_FPS},
+	{OV5640_MODE_NTSC_720_480, SUBSAMPLING,
 	 720, 1896, 480, 984,
 	 ov5640_setting_NTSC_720_480,
 	 ARRAY_SIZE(ov5640_setting_NTSC_720_480),
-	OV5640_30_FPSपूर्ण,
-	अणुOV5640_MODE_PAL_720_576, SUBSAMPLING,
+	OV5640_30_FPS},
+	{OV5640_MODE_PAL_720_576, SUBSAMPLING,
 	 720, 1896, 576, 984,
 	 ov5640_setting_PAL_720_576,
 	 ARRAY_SIZE(ov5640_setting_PAL_720_576),
-	 OV5640_30_FPSपूर्ण,
-	अणुOV5640_MODE_XGA_1024_768, SUBSAMPLING,
+	 OV5640_30_FPS},
+	{OV5640_MODE_XGA_1024_768, SUBSAMPLING,
 	 1024, 1896, 768, 1080,
 	 ov5640_setting_XGA_1024_768,
 	 ARRAY_SIZE(ov5640_setting_XGA_1024_768),
-	 OV5640_30_FPSपूर्ण,
-	अणुOV5640_MODE_720P_1280_720, SUBSAMPLING,
+	 OV5640_30_FPS},
+	{OV5640_MODE_720P_1280_720, SUBSAMPLING,
 	 1280, 1892, 720, 740,
 	 ov5640_setting_720P_1280_720,
 	 ARRAY_SIZE(ov5640_setting_720P_1280_720),
-	 OV5640_30_FPSपूर्ण,
-	अणुOV5640_MODE_1080P_1920_1080, SCALING,
+	 OV5640_30_FPS},
+	{OV5640_MODE_1080P_1920_1080, SCALING,
 	 1920, 2500, 1080, 1120,
 	 ov5640_setting_1080P_1920_1080,
 	 ARRAY_SIZE(ov5640_setting_1080P_1920_1080),
-	 OV5640_30_FPSपूर्ण,
-	अणुOV5640_MODE_QSXGA_2592_1944, SCALING,
+	 OV5640_30_FPS},
+	{OV5640_MODE_QSXGA_2592_1944, SCALING,
 	 2592, 2844, 1944, 1968,
 	 ov5640_setting_QSXGA_2592_1944,
 	 ARRAY_SIZE(ov5640_setting_QSXGA_2592_1944),
-	 OV5640_15_FPSपूर्ण,
-पूर्ण;
+	 OV5640_15_FPS},
+};
 
-अटल पूर्णांक ov5640_init_slave_id(काष्ठा ov5640_dev *sensor)
-अणु
-	काष्ठा i2c_client *client = sensor->i2c_client;
-	काष्ठा i2c_msg msg;
+static int ov5640_init_slave_id(struct ov5640_dev *sensor)
+{
+	struct i2c_client *client = sensor->i2c_client;
+	struct i2c_msg msg;
 	u8 buf[3];
-	पूर्णांक ret;
+	int ret;
 
-	अगर (client->addr == OV5640_DEFAULT_SLAVE_ID)
-		वापस 0;
+	if (client->addr == OV5640_DEFAULT_SLAVE_ID)
+		return 0;
 
 	buf[0] = OV5640_REG_SLAVE_ID >> 8;
 	buf[1] = OV5640_REG_SLAVE_ID & 0xff;
@@ -641,23 +640,23 @@ ov5640_mode_data[OV5640_NUM_MODES] = अणु
 	msg.addr = OV5640_DEFAULT_SLAVE_ID;
 	msg.flags = 0;
 	msg.buf = buf;
-	msg.len = माप(buf);
+	msg.len = sizeof(buf);
 
 	ret = i2c_transfer(client->adapter, &msg, 1);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&client->dev, "%s: failed with %d\n", __func__, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ov5640_ग_लिखो_reg(काष्ठा ov5640_dev *sensor, u16 reg, u8 val)
-अणु
-	काष्ठा i2c_client *client = sensor->i2c_client;
-	काष्ठा i2c_msg msg;
+static int ov5640_write_reg(struct ov5640_dev *sensor, u16 reg, u8 val)
+{
+	struct i2c_client *client = sensor->i2c_client;
+	struct i2c_msg msg;
 	u8 buf[3];
-	पूर्णांक ret;
+	int ret;
 
 	buf[0] = reg >> 8;
 	buf[1] = reg & 0xff;
@@ -666,24 +665,24 @@ ov5640_mode_data[OV5640_NUM_MODES] = अणु
 	msg.addr = client->addr;
 	msg.flags = client->flags;
 	msg.buf = buf;
-	msg.len = माप(buf);
+	msg.len = sizeof(buf);
 
 	ret = i2c_transfer(client->adapter, &msg, 1);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&client->dev, "%s: error: reg=%x, val=%x\n",
 			__func__, reg, val);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ov5640_पढ़ो_reg(काष्ठा ov5640_dev *sensor, u16 reg, u8 *val)
-अणु
-	काष्ठा i2c_client *client = sensor->i2c_client;
-	काष्ठा i2c_msg msg[2];
+static int ov5640_read_reg(struct ov5640_dev *sensor, u16 reg, u8 *val)
+{
+	struct i2c_client *client = sensor->i2c_client;
+	struct i2c_msg msg[2];
 	u8 buf[2];
-	पूर्णांक ret;
+	int ret;
 
 	buf[0] = reg >> 8;
 	buf[1] = reg & 0xff;
@@ -691,7 +690,7 @@ ov5640_mode_data[OV5640_NUM_MODES] = अणु
 	msg[0].addr = client->addr;
 	msg[0].flags = client->flags;
 	msg[0].buf = buf;
-	msg[0].len = माप(buf);
+	msg[0].len = sizeof(buf);
 
 	msg[1].addr = client->addr;
 	msg[1].flags = client->flags | I2C_M_RD;
@@ -699,71 +698,71 @@ ov5640_mode_data[OV5640_NUM_MODES] = अणु
 	msg[1].len = 1;
 
 	ret = i2c_transfer(client->adapter, msg, 2);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&client->dev, "%s: error: reg=%x\n",
 			__func__, reg);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	*val = buf[0];
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ov5640_पढ़ो_reg16(काष्ठा ov5640_dev *sensor, u16 reg, u16 *val)
-अणु
+static int ov5640_read_reg16(struct ov5640_dev *sensor, u16 reg, u16 *val)
+{
 	u8 hi, lo;
-	पूर्णांक ret;
+	int ret;
 
-	ret = ov5640_पढ़ो_reg(sensor, reg, &hi);
-	अगर (ret)
-		वापस ret;
-	ret = ov5640_पढ़ो_reg(sensor, reg + 1, &lo);
-	अगर (ret)
-		वापस ret;
+	ret = ov5640_read_reg(sensor, reg, &hi);
+	if (ret)
+		return ret;
+	ret = ov5640_read_reg(sensor, reg + 1, &lo);
+	if (ret)
+		return ret;
 
 	*val = ((u16)hi << 8) | (u16)lo;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ov5640_ग_लिखो_reg16(काष्ठा ov5640_dev *sensor, u16 reg, u16 val)
-अणु
-	पूर्णांक ret;
+static int ov5640_write_reg16(struct ov5640_dev *sensor, u16 reg, u16 val)
+{
+	int ret;
 
-	ret = ov5640_ग_लिखो_reg(sensor, reg, val >> 8);
-	अगर (ret)
-		वापस ret;
+	ret = ov5640_write_reg(sensor, reg, val >> 8);
+	if (ret)
+		return ret;
 
-	वापस ov5640_ग_लिखो_reg(sensor, reg + 1, val & 0xff);
-पूर्ण
+	return ov5640_write_reg(sensor, reg + 1, val & 0xff);
+}
 
-अटल पूर्णांक ov5640_mod_reg(काष्ठा ov5640_dev *sensor, u16 reg,
+static int ov5640_mod_reg(struct ov5640_dev *sensor, u16 reg,
 			  u8 mask, u8 val)
-अणु
-	u8 पढ़ोval;
-	पूर्णांक ret;
+{
+	u8 readval;
+	int ret;
 
-	ret = ov5640_पढ़ो_reg(sensor, reg, &पढ़ोval);
-	अगर (ret)
-		वापस ret;
+	ret = ov5640_read_reg(sensor, reg, &readval);
+	if (ret)
+		return ret;
 
-	पढ़ोval &= ~mask;
+	readval &= ~mask;
 	val &= mask;
-	val |= पढ़ोval;
+	val |= readval;
 
-	वापस ov5640_ग_लिखो_reg(sensor, reg, val);
-पूर्ण
+	return ov5640_write_reg(sensor, reg, val);
+}
 
 /*
- * After trying the various combinations, पढ़ोing various
- * करोcumentations spपढ़ो around the net, and from the various
- * feedback, the घड़ी tree is probably as follows:
+ * After trying the various combinations, reading various
+ * documentations spread around the net, and from the various
+ * feedback, the clock tree is probably as follows:
  *
  *   +--------------+
  *   |  Ext. Clock  |
  *   +-+------------+
  *     |  +----------+
- *     +->|   PLL1   | - reg 0x3036, क्रम the multiplier
- *        +-+--------+ - reg 0x3037, bits 0-3 क्रम the pre-भागider
+ *     +->|   PLL1   | - reg 0x3036, for the multiplier
+ *        +-+--------+ - reg 0x3037, bits 0-3 for the pre-divider
  *          |  +--------------+
  *          +->| System Clock |  - reg 0x3035, bits 4-7
  *             +-+------------+
@@ -796,154 +795,154 @@ ov5640_mode_data[OV5640_NUM_MODES] = अणु
  *                                +-----+-----+
  *                                       +------------> PCLK
  *
- * This is deviating from the datasheet at least क्रम the रेजिस्टर
- * 0x3108, since it's said here that the PCLK would be घड़ीed from
+ * This is deviating from the datasheet at least for the register
+ * 0x3108, since it's said here that the PCLK would be clocked from
  * the PLL.
  *
- * There seems to be also (unverअगरied) स्थिरraपूर्णांकs:
- *  - the PLL pre-भागider output rate should be in the 4-27MHz range
+ * There seems to be also (unverified) constraints:
+ *  - the PLL pre-divider output rate should be in the 4-27MHz range
  *  - the PLL multiplier output rate should be in the 500-1000MHz range
  *  - PCLK >= SCLK * 2 in YUV, >= SCLK in Raw or JPEG
  *
- * In the two latter हालs, these स्थिरraपूर्णांकs are met since our
+ * In the two latter cases, these constraints are met since our
  * factors are hardcoded. If we were to change that, we would need to
- * take this पूर्णांकo account. The only varying parts are the PLL
- * multiplier and the प्रणाली घड़ी भागider, which are shared between
- * all these घड़ीs so won't cause any issue.
+ * take this into account. The only varying parts are the PLL
+ * multiplier and the system clock divider, which are shared between
+ * all these clocks so won't cause any issue.
  */
 
 /*
  * This is supposed to be ranging from 1 to 8, but the value is always
- * set to 3 in the venकरोr kernels.
+ * set to 3 in the vendor kernels.
  */
-#घोषणा OV5640_PLL_PREDIV	3
+#define OV5640_PLL_PREDIV	3
 
-#घोषणा OV5640_PLL_MULT_MIN	4
-#घोषणा OV5640_PLL_MULT_MAX	252
+#define OV5640_PLL_MULT_MIN	4
+#define OV5640_PLL_MULT_MAX	252
 
 /*
  * This is supposed to be ranging from 1 to 16, but the value is
- * always set to either 1 or 2 in the venकरोr kernels.
+ * always set to either 1 or 2 in the vendor kernels.
  */
-#घोषणा OV5640_SYSDIV_MIN	1
-#घोषणा OV5640_SYSDIV_MAX	16
+#define OV5640_SYSDIV_MIN	1
+#define OV5640_SYSDIV_MAX	16
 
 /*
- * Hardcode these values क्रम scaler and non-scaler modes.
- * FIXME: to be re-calcualted क्रम 1 data lanes setups
+ * Hardcode these values for scaler and non-scaler modes.
+ * FIXME: to be re-calcualted for 1 data lanes setups
  */
-#घोषणा OV5640_MIPI_DIV_PCLK	2
-#घोषणा OV5640_MIPI_DIV_SCLK	1
+#define OV5640_MIPI_DIV_PCLK	2
+#define OV5640_MIPI_DIV_SCLK	1
 
 /*
  * This is supposed to be ranging from 1 to 2, but the value is always
- * set to 2 in the venकरोr kernels.
+ * set to 2 in the vendor kernels.
  */
-#घोषणा OV5640_PLL_ROOT_DIV			2
-#घोषणा OV5640_PLL_CTRL3_PLL_ROOT_DIV_2		BIT(4)
+#define OV5640_PLL_ROOT_DIV			2
+#define OV5640_PLL_CTRL3_PLL_ROOT_DIV_2		BIT(4)
 
 /*
- * We only supports 8-bit क्रमmats at the moment
+ * We only supports 8-bit formats at the moment
  */
-#घोषणा OV5640_BIT_DIV				2
-#घोषणा OV5640_PLL_CTRL0_MIPI_MODE_8BIT		0x08
+#define OV5640_BIT_DIV				2
+#define OV5640_PLL_CTRL0_MIPI_MODE_8BIT		0x08
 
 /*
  * This is supposed to be ranging from 1 to 8, but the value is always
- * set to 2 in the venकरोr kernels.
+ * set to 2 in the vendor kernels.
  */
-#घोषणा OV5640_SCLK_ROOT_DIV	2
+#define OV5640_SCLK_ROOT_DIV	2
 
 /*
- * This is hardcoded so that the consistency is मुख्यtained between SCLK and
+ * This is hardcoded so that the consistency is maintained between SCLK and
  * SCLK 2x.
  */
-#घोषणा OV5640_SCLK2X_ROOT_DIV (OV5640_SCLK_ROOT_DIV / 2)
+#define OV5640_SCLK2X_ROOT_DIV (OV5640_SCLK_ROOT_DIV / 2)
 
 /*
  * This is supposed to be ranging from 1 to 8, but the value is always
- * set to 1 in the venकरोr kernels.
+ * set to 1 in the vendor kernels.
  */
-#घोषणा OV5640_PCLK_ROOT_DIV			1
-#घोषणा OV5640_PLL_SYS_ROOT_DIVIDER_BYPASS	0x00
+#define OV5640_PCLK_ROOT_DIV			1
+#define OV5640_PLL_SYS_ROOT_DIVIDER_BYPASS	0x00
 
-अटल अचिन्हित दीर्घ ov5640_compute_sys_clk(काष्ठा ov5640_dev *sensor,
-					    u8 pll_preभाग, u8 pll_mult,
-					    u8 sysभाग)
-अणु
-	अचिन्हित दीर्घ sysclk = sensor->xclk_freq / pll_preभाग * pll_mult;
+static unsigned long ov5640_compute_sys_clk(struct ov5640_dev *sensor,
+					    u8 pll_prediv, u8 pll_mult,
+					    u8 sysdiv)
+{
+	unsigned long sysclk = sensor->xclk_freq / pll_prediv * pll_mult;
 
 	/* PLL1 output cannot exceed 1GHz. */
-	अगर (sysclk / 1000000 > 1000)
-		वापस 0;
+	if (sysclk / 1000000 > 1000)
+		return 0;
 
-	वापस sysclk / sysभाग;
-पूर्ण
+	return sysclk / sysdiv;
+}
 
-अटल अचिन्हित दीर्घ ov5640_calc_sys_clk(काष्ठा ov5640_dev *sensor,
-					 अचिन्हित दीर्घ rate,
-					 u8 *pll_preभाग, u8 *pll_mult,
-					 u8 *sysभाग)
-अणु
-	अचिन्हित दीर्घ best = ~0;
-	u8 best_sysभाग = 1, best_mult = 1;
-	u8 _sysभाग, _pll_mult;
+static unsigned long ov5640_calc_sys_clk(struct ov5640_dev *sensor,
+					 unsigned long rate,
+					 u8 *pll_prediv, u8 *pll_mult,
+					 u8 *sysdiv)
+{
+	unsigned long best = ~0;
+	u8 best_sysdiv = 1, best_mult = 1;
+	u8 _sysdiv, _pll_mult;
 
-	क्रम (_sysभाग = OV5640_SYSDIV_MIN;
-	     _sysभाग <= OV5640_SYSDIV_MAX;
-	     _sysभाग++) अणु
-		क्रम (_pll_mult = OV5640_PLL_MULT_MIN;
+	for (_sysdiv = OV5640_SYSDIV_MIN;
+	     _sysdiv <= OV5640_SYSDIV_MAX;
+	     _sysdiv++) {
+		for (_pll_mult = OV5640_PLL_MULT_MIN;
 		     _pll_mult <= OV5640_PLL_MULT_MAX;
-		     _pll_mult++) अणु
-			अचिन्हित दीर्घ _rate;
+		     _pll_mult++) {
+			unsigned long _rate;
 
 			/*
-			 * The PLL multiplier cannot be odd अगर above
+			 * The PLL multiplier cannot be odd if above
 			 * 127.
 			 */
-			अगर (_pll_mult > 127 && (_pll_mult % 2))
-				जारी;
+			if (_pll_mult > 127 && (_pll_mult % 2))
+				continue;
 
 			_rate = ov5640_compute_sys_clk(sensor,
 						       OV5640_PLL_PREDIV,
-						       _pll_mult, _sysभाग);
+						       _pll_mult, _sysdiv);
 
 			/*
 			 * We have reached the maximum allowed PLL1 output,
-			 * increase sysभाग.
+			 * increase sysdiv.
 			 */
-			अगर (!_rate)
-				अवरोध;
+			if (!_rate)
+				break;
 
 			/*
-			 * Prefer rates above the expected घड़ी rate than
-			 * below, even अगर that means being less precise.
+			 * Prefer rates above the expected clock rate than
+			 * below, even if that means being less precise.
 			 */
-			अगर (_rate < rate)
-				जारी;
+			if (_rate < rate)
+				continue;
 
-			अगर (असल(rate - _rate) < असल(rate - best)) अणु
+			if (abs(rate - _rate) < abs(rate - best)) {
 				best = _rate;
-				best_sysभाग = _sysभाग;
+				best_sysdiv = _sysdiv;
 				best_mult = _pll_mult;
-			पूर्ण
+			}
 
-			अगर (_rate == rate)
-				जाओ out;
-		पूर्ण
-	पूर्ण
+			if (_rate == rate)
+				goto out;
+		}
+	}
 
 out:
-	*sysभाग = best_sysभाग;
-	*pll_preभाग = OV5640_PLL_PREDIV;
+	*sysdiv = best_sysdiv;
+	*pll_prediv = OV5640_PLL_PREDIV;
 	*pll_mult = best_mult;
 
-	वापस best;
-पूर्ण
+	return best;
+}
 
 /*
- * ov5640_set_mipi_pclk() - Calculate the घड़ी tree configuration values
- *			    क्रम the MIPI CSI-2 output.
+ * ov5640_set_mipi_pclk() - Calculate the clock tree configuration values
+ *			    for the MIPI CSI-2 output.
  *
  * @rate: The requested bandwidth per lane in bytes per second.
  *	  'Bandwidth Per Lane' is calculated as:
@@ -953,22 +952,22 @@ out:
  * - sample_rate = bpl / (bpp / num_lanes);
  *	         = bpl / (PLL_RDIV * BIT_DIV * PCLK_DIV * MIPI_DIV / num_lanes);
  *
- * - mipi_sclk   = bpl / MIPI_DIV / 2; ( / 2 is क्रम CSI-2 DDR)
+ * - mipi_sclk   = bpl / MIPI_DIV / 2; ( / 2 is for CSI-2 DDR)
  *
  * with these fixed parameters:
  *	PLL_RDIV	= 2;
  *	BIT_DIVIDER	= 2; (MIPI_BIT_MODE == 8 ? 2 : 2,5);
  *	PCLK_DIV	= 1;
  *
- * The MIPI घड़ी generation dअगरfers क्रम modes that use the scaler and modes
- * that करो not. In हाल the scaler is in use, the MIPI_SCLK generates the MIPI
+ * The MIPI clock generation differs for modes that use the scaler and modes
+ * that do not. In case the scaler is in use, the MIPI_SCLK generates the MIPI
  * BIT CLk, and thus:
  *
  * - mipi_sclk = bpl / MIPI_DIV / 2;
  *   MIPI_DIV = 1;
  *
- * For modes that करो not go through the scaler, the MIPI BIT CLOCK is generated
- * from the pixel घड़ी, and thus:
+ * For modes that do not go through the scaler, the MIPI BIT CLOCK is generated
+ * from the pixel clock, and thus:
  *
  * - sample_rate = bpl / (bpp / num_lanes);
  *	         = bpl / (2 * 2 * 1 * MIPI_DIV / num_lanes);
@@ -977,538 +976,538 @@ out:
  *
  * FIXME: this have been tested with 16bpp and 2 lanes setup only.
  * MIPI_DIV is fixed to value 2, but it -might- be changed according to the
- * above क्रमmula क्रम setups with 1 lane or image क्रमmats with dअगरferent bpp.
+ * above formula for setups with 1 lane or image formats with different bpp.
  *
- * FIXME: this deviates from the sensor manual करोcumentation which is quite
- * thin on the MIPI घड़ी tree generation part.
+ * FIXME: this deviates from the sensor manual documentation which is quite
+ * thin on the MIPI clock tree generation part.
  */
-अटल पूर्णांक ov5640_set_mipi_pclk(काष्ठा ov5640_dev *sensor,
-				अचिन्हित दीर्घ rate)
-अणु
-	स्थिर काष्ठा ov5640_mode_info *mode = sensor->current_mode;
-	u8 preभाग, mult, sysभाग;
-	u8 mipi_भाग;
-	पूर्णांक ret;
+static int ov5640_set_mipi_pclk(struct ov5640_dev *sensor,
+				unsigned long rate)
+{
+	const struct ov5640_mode_info *mode = sensor->current_mode;
+	u8 prediv, mult, sysdiv;
+	u8 mipi_div;
+	int ret;
 
 	/*
 	 * 1280x720 is reported to use 'SUBSAMPLING' only,
 	 * but according to the sensor manual it goes through the
-	 * scaler beक्रमe subsampling.
+	 * scaler before subsampling.
 	 */
-	अगर (mode->dn_mode == SCALING ||
+	if (mode->dn_mode == SCALING ||
 	   (mode->id == OV5640_MODE_720P_1280_720))
-		mipi_भाग = OV5640_MIPI_DIV_SCLK;
-	अन्यथा
-		mipi_भाग = OV5640_MIPI_DIV_PCLK;
+		mipi_div = OV5640_MIPI_DIV_SCLK;
+	else
+		mipi_div = OV5640_MIPI_DIV_PCLK;
 
-	ov5640_calc_sys_clk(sensor, rate, &preभाग, &mult, &sysभाग);
+	ov5640_calc_sys_clk(sensor, rate, &prediv, &mult, &sysdiv);
 
 	ret = ov5640_mod_reg(sensor, OV5640_REG_SC_PLL_CTRL0,
 			     0x0f, OV5640_PLL_CTRL0_MIPI_MODE_8BIT);
 
 	ret = ov5640_mod_reg(sensor, OV5640_REG_SC_PLL_CTRL1,
-			     0xff, sysभाग << 4 | mipi_भाग);
-	अगर (ret)
-		वापस ret;
+			     0xff, sysdiv << 4 | mipi_div);
+	if (ret)
+		return ret;
 
 	ret = ov5640_mod_reg(sensor, OV5640_REG_SC_PLL_CTRL2, 0xff, mult);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = ov5640_mod_reg(sensor, OV5640_REG_SC_PLL_CTRL3,
-			     0x1f, OV5640_PLL_CTRL3_PLL_ROOT_DIV_2 | preभाग);
-	अगर (ret)
-		वापस ret;
+			     0x1f, OV5640_PLL_CTRL3_PLL_ROOT_DIV_2 | prediv);
+	if (ret)
+		return ret;
 
-	वापस ov5640_mod_reg(sensor, OV5640_REG_SYS_ROOT_DIVIDER,
+	return ov5640_mod_reg(sensor, OV5640_REG_SYS_ROOT_DIVIDER,
 			      0x30, OV5640_PLL_SYS_ROOT_DIVIDER_BYPASS);
-पूर्ण
+}
 
-अटल अचिन्हित दीर्घ ov5640_calc_pclk(काष्ठा ov5640_dev *sensor,
-				      अचिन्हित दीर्घ rate,
-				      u8 *pll_preभाग, u8 *pll_mult, u8 *sysभाग,
-				      u8 *pll_rभाग, u8 *bit_भाग, u8 *pclk_भाग)
-अणु
-	अचिन्हित दीर्घ _rate = rate * OV5640_PLL_ROOT_DIV * OV5640_BIT_DIV *
+static unsigned long ov5640_calc_pclk(struct ov5640_dev *sensor,
+				      unsigned long rate,
+				      u8 *pll_prediv, u8 *pll_mult, u8 *sysdiv,
+				      u8 *pll_rdiv, u8 *bit_div, u8 *pclk_div)
+{
+	unsigned long _rate = rate * OV5640_PLL_ROOT_DIV * OV5640_BIT_DIV *
 				OV5640_PCLK_ROOT_DIV;
 
-	_rate = ov5640_calc_sys_clk(sensor, _rate, pll_preभाग, pll_mult,
-				    sysभाग);
-	*pll_rभाग = OV5640_PLL_ROOT_DIV;
-	*bit_भाग = OV5640_BIT_DIV;
-	*pclk_भाग = OV5640_PCLK_ROOT_DIV;
+	_rate = ov5640_calc_sys_clk(sensor, _rate, pll_prediv, pll_mult,
+				    sysdiv);
+	*pll_rdiv = OV5640_PLL_ROOT_DIV;
+	*bit_div = OV5640_BIT_DIV;
+	*pclk_div = OV5640_PCLK_ROOT_DIV;
 
-	वापस _rate / *pll_rभाग / *bit_भाग / *pclk_भाग;
-पूर्ण
+	return _rate / *pll_rdiv / *bit_div / *pclk_div;
+}
 
-अटल पूर्णांक ov5640_set_dvp_pclk(काष्ठा ov5640_dev *sensor, अचिन्हित दीर्घ rate)
-अणु
-	u8 preभाग, mult, sysभाग, pll_rभाग, bit_भाग, pclk_भाग;
-	पूर्णांक ret;
+static int ov5640_set_dvp_pclk(struct ov5640_dev *sensor, unsigned long rate)
+{
+	u8 prediv, mult, sysdiv, pll_rdiv, bit_div, pclk_div;
+	int ret;
 
-	ov5640_calc_pclk(sensor, rate, &preभाग, &mult, &sysभाग, &pll_rभाग,
-			 &bit_भाग, &pclk_भाग);
+	ov5640_calc_pclk(sensor, rate, &prediv, &mult, &sysdiv, &pll_rdiv,
+			 &bit_div, &pclk_div);
 
-	अगर (bit_भाग == 2)
-		bit_भाग = 8;
+	if (bit_div == 2)
+		bit_div = 8;
 
 	ret = ov5640_mod_reg(sensor, OV5640_REG_SC_PLL_CTRL0,
-			     0x0f, bit_भाग);
-	अगर (ret)
-		वापस ret;
+			     0x0f, bit_div);
+	if (ret)
+		return ret;
 
 	/*
-	 * We need to set sysभाग according to the घड़ी, and to clear
-	 * the MIPI भागider.
+	 * We need to set sysdiv according to the clock, and to clear
+	 * the MIPI divider.
 	 */
 	ret = ov5640_mod_reg(sensor, OV5640_REG_SC_PLL_CTRL1,
-			     0xff, sysभाग << 4);
-	अगर (ret)
-		वापस ret;
+			     0xff, sysdiv << 4);
+	if (ret)
+		return ret;
 
 	ret = ov5640_mod_reg(sensor, OV5640_REG_SC_PLL_CTRL2,
 			     0xff, mult);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = ov5640_mod_reg(sensor, OV5640_REG_SC_PLL_CTRL3,
-			     0x1f, preभाग | ((pll_rभाग - 1) << 4));
-	अगर (ret)
-		वापस ret;
+			     0x1f, prediv | ((pll_rdiv - 1) << 4));
+	if (ret)
+		return ret;
 
-	वापस ov5640_mod_reg(sensor, OV5640_REG_SYS_ROOT_DIVIDER, 0x30,
-			      (ilog2(pclk_भाग) << 4));
-पूर्ण
+	return ov5640_mod_reg(sensor, OV5640_REG_SYS_ROOT_DIVIDER, 0x30,
+			      (ilog2(pclk_div) << 4));
+}
 
 /* set JPEG framing sizes */
-अटल पूर्णांक ov5640_set_jpeg_timings(काष्ठा ov5640_dev *sensor,
-				   स्थिर काष्ठा ov5640_mode_info *mode)
-अणु
-	पूर्णांक ret;
+static int ov5640_set_jpeg_timings(struct ov5640_dev *sensor,
+				   const struct ov5640_mode_info *mode)
+{
+	int ret;
 
 	/*
 	 * compression mode 3 timing
 	 *
 	 * Data is transmitted with programmable width (VFIFO_HSIZE).
-	 * No padding करोne. Last line may have less data. Varying
+	 * No padding done. Last line may have less data. Varying
 	 * number of lines per frame, depending on amount of data.
 	 */
 	ret = ov5640_mod_reg(sensor, OV5640_REG_JPG_MODE_SELECT, 0x7, 0x3);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	ret = ov5640_ग_लिखो_reg16(sensor, OV5640_REG_VFIFO_HSIZE, mode->hact);
-	अगर (ret < 0)
-		वापस ret;
+	ret = ov5640_write_reg16(sensor, OV5640_REG_VFIFO_HSIZE, mode->hact);
+	if (ret < 0)
+		return ret;
 
-	वापस ov5640_ग_लिखो_reg16(sensor, OV5640_REG_VFIFO_VSIZE, mode->vact);
-पूर्ण
+	return ov5640_write_reg16(sensor, OV5640_REG_VFIFO_VSIZE, mode->vact);
+}
 
-/* करोwnload ov5640 settings to sensor through i2c */
-अटल पूर्णांक ov5640_set_timings(काष्ठा ov5640_dev *sensor,
-			      स्थिर काष्ठा ov5640_mode_info *mode)
-अणु
-	पूर्णांक ret;
+/* download ov5640 settings to sensor through i2c */
+static int ov5640_set_timings(struct ov5640_dev *sensor,
+			      const struct ov5640_mode_info *mode)
+{
+	int ret;
 
-	अगर (sensor->fmt.code == MEDIA_BUS_FMT_JPEG_1X8) अणु
+	if (sensor->fmt.code == MEDIA_BUS_FMT_JPEG_1X8) {
 		ret = ov5640_set_jpeg_timings(sensor, mode);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
+		if (ret < 0)
+			return ret;
+	}
 
-	ret = ov5640_ग_लिखो_reg16(sensor, OV5640_REG_TIMING_DVPHO, mode->hact);
-	अगर (ret < 0)
-		वापस ret;
+	ret = ov5640_write_reg16(sensor, OV5640_REG_TIMING_DVPHO, mode->hact);
+	if (ret < 0)
+		return ret;
 
-	ret = ov5640_ग_लिखो_reg16(sensor, OV5640_REG_TIMING_DVPVO, mode->vact);
-	अगर (ret < 0)
-		वापस ret;
+	ret = ov5640_write_reg16(sensor, OV5640_REG_TIMING_DVPVO, mode->vact);
+	if (ret < 0)
+		return ret;
 
-	ret = ov5640_ग_लिखो_reg16(sensor, OV5640_REG_TIMING_HTS, mode->htot);
-	अगर (ret < 0)
-		वापस ret;
+	ret = ov5640_write_reg16(sensor, OV5640_REG_TIMING_HTS, mode->htot);
+	if (ret < 0)
+		return ret;
 
-	वापस ov5640_ग_लिखो_reg16(sensor, OV5640_REG_TIMING_VTS, mode->vtot);
-पूर्ण
+	return ov5640_write_reg16(sensor, OV5640_REG_TIMING_VTS, mode->vtot);
+}
 
-अटल पूर्णांक ov5640_load_regs(काष्ठा ov5640_dev *sensor,
-			    स्थिर काष्ठा ov5640_mode_info *mode)
-अणु
-	स्थिर काष्ठा reg_value *regs = mode->reg_data;
-	अचिन्हित पूर्णांक i;
+static int ov5640_load_regs(struct ov5640_dev *sensor,
+			    const struct ov5640_mode_info *mode)
+{
+	const struct reg_value *regs = mode->reg_data;
+	unsigned int i;
 	u32 delay_ms;
 	u16 reg_addr;
 	u8 mask, val;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	क्रम (i = 0; i < mode->reg_data_size; ++i, ++regs) अणु
+	for (i = 0; i < mode->reg_data_size; ++i, ++regs) {
 		delay_ms = regs->delay_ms;
 		reg_addr = regs->reg_addr;
 		val = regs->val;
 		mask = regs->mask;
 
-		/* reमुख्य in घातer करोwn mode क्रम DVP */
-		अगर (regs->reg_addr == OV5640_REG_SYS_CTRL0 &&
+		/* remain in power down mode for DVP */
+		if (regs->reg_addr == OV5640_REG_SYS_CTRL0 &&
 		    val == OV5640_REG_SYS_CTRL0_SW_PWUP &&
 		    sensor->ep.bus_type != V4L2_MBUS_CSI2_DPHY)
-			जारी;
+			continue;
 
-		अगर (mask)
+		if (mask)
 			ret = ov5640_mod_reg(sensor, reg_addr, mask, val);
-		अन्यथा
-			ret = ov5640_ग_लिखो_reg(sensor, reg_addr, val);
-		अगर (ret)
-			अवरोध;
+		else
+			ret = ov5640_write_reg(sensor, reg_addr, val);
+		if (ret)
+			break;
 
-		अगर (delay_ms)
+		if (delay_ms)
 			usleep_range(1000 * delay_ms, 1000 * delay_ms + 100);
-	पूर्ण
+	}
 
-	वापस ov5640_set_timings(sensor, mode);
-पूर्ण
+	return ov5640_set_timings(sensor, mode);
+}
 
-अटल पूर्णांक ov5640_set_स्वतःexposure(काष्ठा ov5640_dev *sensor, bool on)
-अणु
-	वापस ov5640_mod_reg(sensor, OV5640_REG_AEC_PK_MANUAL,
+static int ov5640_set_autoexposure(struct ov5640_dev *sensor, bool on)
+{
+	return ov5640_mod_reg(sensor, OV5640_REG_AEC_PK_MANUAL,
 			      BIT(0), on ? 0 : BIT(0));
-पूर्ण
+}
 
-/* पढ़ो exposure, in number of line periods */
-अटल पूर्णांक ov5640_get_exposure(काष्ठा ov5640_dev *sensor)
-अणु
-	पूर्णांक exp, ret;
+/* read exposure, in number of line periods */
+static int ov5640_get_exposure(struct ov5640_dev *sensor)
+{
+	int exp, ret;
 	u8 temp;
 
-	ret = ov5640_पढ़ो_reg(sensor, OV5640_REG_AEC_PK_EXPOSURE_HI, &temp);
-	अगर (ret)
-		वापस ret;
-	exp = ((पूर्णांक)temp & 0x0f) << 16;
-	ret = ov5640_पढ़ो_reg(sensor, OV5640_REG_AEC_PK_EXPOSURE_MED, &temp);
-	अगर (ret)
-		वापस ret;
-	exp |= ((पूर्णांक)temp << 8);
-	ret = ov5640_पढ़ो_reg(sensor, OV5640_REG_AEC_PK_EXPOSURE_LO, &temp);
-	अगर (ret)
-		वापस ret;
-	exp |= (पूर्णांक)temp;
+	ret = ov5640_read_reg(sensor, OV5640_REG_AEC_PK_EXPOSURE_HI, &temp);
+	if (ret)
+		return ret;
+	exp = ((int)temp & 0x0f) << 16;
+	ret = ov5640_read_reg(sensor, OV5640_REG_AEC_PK_EXPOSURE_MED, &temp);
+	if (ret)
+		return ret;
+	exp |= ((int)temp << 8);
+	ret = ov5640_read_reg(sensor, OV5640_REG_AEC_PK_EXPOSURE_LO, &temp);
+	if (ret)
+		return ret;
+	exp |= (int)temp;
 
-	वापस exp >> 4;
-पूर्ण
+	return exp >> 4;
+}
 
-/* ग_लिखो exposure, given number of line periods */
-अटल पूर्णांक ov5640_set_exposure(काष्ठा ov5640_dev *sensor, u32 exposure)
-अणु
-	पूर्णांक ret;
+/* write exposure, given number of line periods */
+static int ov5640_set_exposure(struct ov5640_dev *sensor, u32 exposure)
+{
+	int ret;
 
 	exposure <<= 4;
 
-	ret = ov5640_ग_लिखो_reg(sensor,
+	ret = ov5640_write_reg(sensor,
 			       OV5640_REG_AEC_PK_EXPOSURE_LO,
 			       exposure & 0xff);
-	अगर (ret)
-		वापस ret;
-	ret = ov5640_ग_लिखो_reg(sensor,
+	if (ret)
+		return ret;
+	ret = ov5640_write_reg(sensor,
 			       OV5640_REG_AEC_PK_EXPOSURE_MED,
 			       (exposure >> 8) & 0xff);
-	अगर (ret)
-		वापस ret;
-	वापस ov5640_ग_लिखो_reg(sensor,
+	if (ret)
+		return ret;
+	return ov5640_write_reg(sensor,
 				OV5640_REG_AEC_PK_EXPOSURE_HI,
 				(exposure >> 16) & 0x0f);
-पूर्ण
+}
 
-अटल पूर्णांक ov5640_get_gain(काष्ठा ov5640_dev *sensor)
-अणु
+static int ov5640_get_gain(struct ov5640_dev *sensor)
+{
 	u16 gain;
-	पूर्णांक ret;
+	int ret;
 
-	ret = ov5640_पढ़ो_reg16(sensor, OV5640_REG_AEC_PK_REAL_GAIN, &gain);
-	अगर (ret)
-		वापस ret;
+	ret = ov5640_read_reg16(sensor, OV5640_REG_AEC_PK_REAL_GAIN, &gain);
+	if (ret)
+		return ret;
 
-	वापस gain & 0x3ff;
-पूर्ण
+	return gain & 0x3ff;
+}
 
-अटल पूर्णांक ov5640_set_gain(काष्ठा ov5640_dev *sensor, पूर्णांक gain)
-अणु
-	वापस ov5640_ग_लिखो_reg16(sensor, OV5640_REG_AEC_PK_REAL_GAIN,
+static int ov5640_set_gain(struct ov5640_dev *sensor, int gain)
+{
+	return ov5640_write_reg16(sensor, OV5640_REG_AEC_PK_REAL_GAIN,
 				  (u16)gain & 0x3ff);
-पूर्ण
+}
 
-अटल पूर्णांक ov5640_set_स्वतःgain(काष्ठा ov5640_dev *sensor, bool on)
-अणु
-	वापस ov5640_mod_reg(sensor, OV5640_REG_AEC_PK_MANUAL,
+static int ov5640_set_autogain(struct ov5640_dev *sensor, bool on)
+{
+	return ov5640_mod_reg(sensor, OV5640_REG_AEC_PK_MANUAL,
 			      BIT(1), on ? 0 : BIT(1));
-पूर्ण
+}
 
-अटल पूर्णांक ov5640_set_stream_dvp(काष्ठा ov5640_dev *sensor, bool on)
-अणु
-	वापस ov5640_ग_लिखो_reg(sensor, OV5640_REG_SYS_CTRL0, on ?
+static int ov5640_set_stream_dvp(struct ov5640_dev *sensor, bool on)
+{
+	return ov5640_write_reg(sensor, OV5640_REG_SYS_CTRL0, on ?
 				OV5640_REG_SYS_CTRL0_SW_PWUP :
 				OV5640_REG_SYS_CTRL0_SW_PWDN);
-पूर्ण
+}
 
-अटल पूर्णांक ov5640_set_stream_mipi(काष्ठा ov5640_dev *sensor, bool on)
-अणु
-	पूर्णांक ret;
+static int ov5640_set_stream_mipi(struct ov5640_dev *sensor, bool on)
+{
+	int ret;
 
 	/*
-	 * Enable/disable the MIPI पूर्णांकerface
+	 * Enable/disable the MIPI interface
 	 *
 	 * 0x300e = on ? 0x45 : 0x40
 	 *
 	 * FIXME: the sensor manual (version 2.03) reports
 	 * [7:5] = 000  : 1 data lane mode
 	 * [7:5] = 001  : 2 data lanes mode
-	 * But this settings करो not work, जबतक the following ones
-	 * have been validated क्रम 2 data lanes mode.
+	 * But this settings do not work, while the following ones
+	 * have been validated for 2 data lanes mode.
 	 *
 	 * [7:5] = 010	: 2 data lanes mode
 	 * [4] = 0	: Power up MIPI HS Tx
 	 * [3] = 0	: Power up MIPI LS Rx
-	 * [2] = 1/0	: MIPI पूर्णांकerface enable/disable
+	 * [2] = 1/0	: MIPI interface enable/disable
 	 * [1:0] = 01/00: FIXME: 'debug'
 	 */
-	ret = ov5640_ग_लिखो_reg(sensor, OV5640_REG_IO_MIPI_CTRL00,
+	ret = ov5640_write_reg(sensor, OV5640_REG_IO_MIPI_CTRL00,
 			       on ? 0x45 : 0x40);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस ov5640_ग_लिखो_reg(sensor, OV5640_REG_FRAME_CTRL01,
+	return ov5640_write_reg(sensor, OV5640_REG_FRAME_CTRL01,
 				on ? 0x00 : 0x0f);
-पूर्ण
+}
 
-अटल पूर्णांक ov5640_get_sysclk(काष्ठा ov5640_dev *sensor)
-अणु
+static int ov5640_get_sysclk(struct ov5640_dev *sensor)
+{
 	 /* calculate sysclk */
 	u32 xvclk = sensor->xclk_freq / 10000;
-	u32 multiplier, preभाग, VCO, sysभाग, pll_rभाग;
-	u32 sclk_rभाग_map[] = अणु1, 2, 4, 8पूर्ण;
-	u32 bit_भाग2x = 1, sclk_rभाग, sysclk;
+	u32 multiplier, prediv, VCO, sysdiv, pll_rdiv;
+	u32 sclk_rdiv_map[] = {1, 2, 4, 8};
+	u32 bit_div2x = 1, sclk_rdiv, sysclk;
 	u8 temp1, temp2;
-	पूर्णांक ret;
+	int ret;
 
-	ret = ov5640_पढ़ो_reg(sensor, OV5640_REG_SC_PLL_CTRL0, &temp1);
-	अगर (ret)
-		वापस ret;
+	ret = ov5640_read_reg(sensor, OV5640_REG_SC_PLL_CTRL0, &temp1);
+	if (ret)
+		return ret;
 	temp2 = temp1 & 0x0f;
-	अगर (temp2 == 8 || temp2 == 10)
-		bit_भाग2x = temp2 / 2;
+	if (temp2 == 8 || temp2 == 10)
+		bit_div2x = temp2 / 2;
 
-	ret = ov5640_पढ़ो_reg(sensor, OV5640_REG_SC_PLL_CTRL1, &temp1);
-	अगर (ret)
-		वापस ret;
-	sysभाग = temp1 >> 4;
-	अगर (sysभाग == 0)
-		sysभाग = 16;
+	ret = ov5640_read_reg(sensor, OV5640_REG_SC_PLL_CTRL1, &temp1);
+	if (ret)
+		return ret;
+	sysdiv = temp1 >> 4;
+	if (sysdiv == 0)
+		sysdiv = 16;
 
-	ret = ov5640_पढ़ो_reg(sensor, OV5640_REG_SC_PLL_CTRL2, &temp1);
-	अगर (ret)
-		वापस ret;
+	ret = ov5640_read_reg(sensor, OV5640_REG_SC_PLL_CTRL2, &temp1);
+	if (ret)
+		return ret;
 	multiplier = temp1;
 
-	ret = ov5640_पढ़ो_reg(sensor, OV5640_REG_SC_PLL_CTRL3, &temp1);
-	अगर (ret)
-		वापस ret;
-	preभाग = temp1 & 0x0f;
-	pll_rभाग = ((temp1 >> 4) & 0x01) + 1;
+	ret = ov5640_read_reg(sensor, OV5640_REG_SC_PLL_CTRL3, &temp1);
+	if (ret)
+		return ret;
+	prediv = temp1 & 0x0f;
+	pll_rdiv = ((temp1 >> 4) & 0x01) + 1;
 
-	ret = ov5640_पढ़ो_reg(sensor, OV5640_REG_SYS_ROOT_DIVIDER, &temp1);
-	अगर (ret)
-		वापस ret;
+	ret = ov5640_read_reg(sensor, OV5640_REG_SYS_ROOT_DIVIDER, &temp1);
+	if (ret)
+		return ret;
 	temp2 = temp1 & 0x03;
-	sclk_rभाग = sclk_rभाग_map[temp2];
+	sclk_rdiv = sclk_rdiv_map[temp2];
 
-	अगर (!preभाग || !sysभाग || !pll_rभाग || !bit_भाग2x)
-		वापस -EINVAL;
+	if (!prediv || !sysdiv || !pll_rdiv || !bit_div2x)
+		return -EINVAL;
 
-	VCO = xvclk * multiplier / preभाग;
+	VCO = xvclk * multiplier / prediv;
 
-	sysclk = VCO / sysभाग / pll_rभाग * 2 / bit_भाग2x / sclk_rभाग;
+	sysclk = VCO / sysdiv / pll_rdiv * 2 / bit_div2x / sclk_rdiv;
 
-	वापस sysclk;
-पूर्ण
+	return sysclk;
+}
 
-अटल पूर्णांक ov5640_set_night_mode(काष्ठा ov5640_dev *sensor)
-अणु
-	 /* पढ़ो HTS from रेजिस्टर settings */
+static int ov5640_set_night_mode(struct ov5640_dev *sensor)
+{
+	 /* read HTS from register settings */
 	u8 mode;
-	पूर्णांक ret;
+	int ret;
 
-	ret = ov5640_पढ़ो_reg(sensor, OV5640_REG_AEC_CTRL00, &mode);
-	अगर (ret)
-		वापस ret;
+	ret = ov5640_read_reg(sensor, OV5640_REG_AEC_CTRL00, &mode);
+	if (ret)
+		return ret;
 	mode &= 0xfb;
-	वापस ov5640_ग_लिखो_reg(sensor, OV5640_REG_AEC_CTRL00, mode);
-पूर्ण
+	return ov5640_write_reg(sensor, OV5640_REG_AEC_CTRL00, mode);
+}
 
-अटल पूर्णांक ov5640_get_hts(काष्ठा ov5640_dev *sensor)
-अणु
-	/* पढ़ो HTS from रेजिस्टर settings */
+static int ov5640_get_hts(struct ov5640_dev *sensor)
+{
+	/* read HTS from register settings */
 	u16 hts;
-	पूर्णांक ret;
+	int ret;
 
-	ret = ov5640_पढ़ो_reg16(sensor, OV5640_REG_TIMING_HTS, &hts);
-	अगर (ret)
-		वापस ret;
-	वापस hts;
-पूर्ण
+	ret = ov5640_read_reg16(sensor, OV5640_REG_TIMING_HTS, &hts);
+	if (ret)
+		return ret;
+	return hts;
+}
 
-अटल पूर्णांक ov5640_get_vts(काष्ठा ov5640_dev *sensor)
-अणु
+static int ov5640_get_vts(struct ov5640_dev *sensor)
+{
 	u16 vts;
-	पूर्णांक ret;
+	int ret;
 
-	ret = ov5640_पढ़ो_reg16(sensor, OV5640_REG_TIMING_VTS, &vts);
-	अगर (ret)
-		वापस ret;
-	वापस vts;
-पूर्ण
+	ret = ov5640_read_reg16(sensor, OV5640_REG_TIMING_VTS, &vts);
+	if (ret)
+		return ret;
+	return vts;
+}
 
-अटल पूर्णांक ov5640_set_vts(काष्ठा ov5640_dev *sensor, पूर्णांक vts)
-अणु
-	वापस ov5640_ग_लिखो_reg16(sensor, OV5640_REG_TIMING_VTS, vts);
-पूर्ण
+static int ov5640_set_vts(struct ov5640_dev *sensor, int vts)
+{
+	return ov5640_write_reg16(sensor, OV5640_REG_TIMING_VTS, vts);
+}
 
-अटल पूर्णांक ov5640_get_light_freq(काष्ठा ov5640_dev *sensor)
-अणु
+static int ov5640_get_light_freq(struct ov5640_dev *sensor)
+{
 	/* get banding filter value */
-	पूर्णांक ret, light_freq = 0;
+	int ret, light_freq = 0;
 	u8 temp, temp1;
 
-	ret = ov5640_पढ़ो_reg(sensor, OV5640_REG_HZ5060_CTRL01, &temp);
-	अगर (ret)
-		वापस ret;
+	ret = ov5640_read_reg(sensor, OV5640_REG_HZ5060_CTRL01, &temp);
+	if (ret)
+		return ret;
 
-	अगर (temp & 0x80) अणु
+	if (temp & 0x80) {
 		/* manual */
-		ret = ov5640_पढ़ो_reg(sensor, OV5640_REG_HZ5060_CTRL00,
+		ret = ov5640_read_reg(sensor, OV5640_REG_HZ5060_CTRL00,
 				      &temp1);
-		अगर (ret)
-			वापस ret;
-		अगर (temp1 & 0x04) अणु
+		if (ret)
+			return ret;
+		if (temp1 & 0x04) {
 			/* 50Hz */
 			light_freq = 50;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* 60Hz */
 			light_freq = 60;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		/* स्वतः */
-		ret = ov5640_पढ़ो_reg(sensor, OV5640_REG_SIGMADELTA_CTRL0C,
+		}
+	} else {
+		/* auto */
+		ret = ov5640_read_reg(sensor, OV5640_REG_SIGMADELTA_CTRL0C,
 				      &temp1);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-		अगर (temp1 & 0x01) अणु
+		if (temp1 & 0x01) {
 			/* 50Hz */
 			light_freq = 50;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* 60Hz */
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस light_freq;
-पूर्ण
+	return light_freq;
+}
 
-अटल पूर्णांक ov5640_set_bandingfilter(काष्ठा ov5640_dev *sensor)
-अणु
+static int ov5640_set_bandingfilter(struct ov5640_dev *sensor)
+{
 	u32 band_step60, max_band60, band_step50, max_band50, prev_vts;
-	पूर्णांक ret;
+	int ret;
 
-	/* पढ़ो preview PCLK */
+	/* read preview PCLK */
 	ret = ov5640_get_sysclk(sensor);
-	अगर (ret < 0)
-		वापस ret;
-	अगर (ret == 0)
-		वापस -EINVAL;
+	if (ret < 0)
+		return ret;
+	if (ret == 0)
+		return -EINVAL;
 	sensor->prev_sysclk = ret;
-	/* पढ़ो preview HTS */
+	/* read preview HTS */
 	ret = ov5640_get_hts(sensor);
-	अगर (ret < 0)
-		वापस ret;
-	अगर (ret == 0)
-		वापस -EINVAL;
+	if (ret < 0)
+		return ret;
+	if (ret == 0)
+		return -EINVAL;
 	sensor->prev_hts = ret;
 
-	/* पढ़ो preview VTS */
+	/* read preview VTS */
 	ret = ov5640_get_vts(sensor);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 	prev_vts = ret;
 
 	/* calculate banding filter */
 	/* 60Hz */
 	band_step60 = sensor->prev_sysclk * 100 / sensor->prev_hts * 100 / 120;
-	ret = ov5640_ग_लिखो_reg16(sensor, OV5640_REG_AEC_B60_STEP, band_step60);
-	अगर (ret)
-		वापस ret;
-	अगर (!band_step60)
-		वापस -EINVAL;
-	max_band60 = (पूर्णांक)((prev_vts - 4) / band_step60);
-	ret = ov5640_ग_लिखो_reg(sensor, OV5640_REG_AEC_CTRL0D, max_band60);
-	अगर (ret)
-		वापस ret;
+	ret = ov5640_write_reg16(sensor, OV5640_REG_AEC_B60_STEP, band_step60);
+	if (ret)
+		return ret;
+	if (!band_step60)
+		return -EINVAL;
+	max_band60 = (int)((prev_vts - 4) / band_step60);
+	ret = ov5640_write_reg(sensor, OV5640_REG_AEC_CTRL0D, max_band60);
+	if (ret)
+		return ret;
 
 	/* 50Hz */
 	band_step50 = sensor->prev_sysclk * 100 / sensor->prev_hts;
-	ret = ov5640_ग_लिखो_reg16(sensor, OV5640_REG_AEC_B50_STEP, band_step50);
-	अगर (ret)
-		वापस ret;
-	अगर (!band_step50)
-		वापस -EINVAL;
-	max_band50 = (पूर्णांक)((prev_vts - 4) / band_step50);
-	वापस ov5640_ग_लिखो_reg(sensor, OV5640_REG_AEC_CTRL0E, max_band50);
-पूर्ण
+	ret = ov5640_write_reg16(sensor, OV5640_REG_AEC_B50_STEP, band_step50);
+	if (ret)
+		return ret;
+	if (!band_step50)
+		return -EINVAL;
+	max_band50 = (int)((prev_vts - 4) / band_step50);
+	return ov5640_write_reg(sensor, OV5640_REG_AEC_CTRL0E, max_band50);
+}
 
-अटल पूर्णांक ov5640_set_ae_target(काष्ठा ov5640_dev *sensor, पूर्णांक target)
-अणु
+static int ov5640_set_ae_target(struct ov5640_dev *sensor, int target)
+{
 	/* stable in high */
 	u32 fast_high, fast_low;
-	पूर्णांक ret;
+	int ret;
 
 	sensor->ae_low = target * 23 / 25;	/* 0.92 */
 	sensor->ae_high = target * 27 / 25;	/* 1.08 */
 
 	fast_high = sensor->ae_high << 1;
-	अगर (fast_high > 255)
+	if (fast_high > 255)
 		fast_high = 255;
 
 	fast_low = sensor->ae_low >> 1;
 
-	ret = ov5640_ग_लिखो_reg(sensor, OV5640_REG_AEC_CTRL0F, sensor->ae_high);
-	अगर (ret)
-		वापस ret;
-	ret = ov5640_ग_लिखो_reg(sensor, OV5640_REG_AEC_CTRL10, sensor->ae_low);
-	अगर (ret)
-		वापस ret;
-	ret = ov5640_ग_लिखो_reg(sensor, OV5640_REG_AEC_CTRL1B, sensor->ae_high);
-	अगर (ret)
-		वापस ret;
-	ret = ov5640_ग_लिखो_reg(sensor, OV5640_REG_AEC_CTRL1E, sensor->ae_low);
-	अगर (ret)
-		वापस ret;
-	ret = ov5640_ग_लिखो_reg(sensor, OV5640_REG_AEC_CTRL11, fast_high);
-	अगर (ret)
-		वापस ret;
-	वापस ov5640_ग_लिखो_reg(sensor, OV5640_REG_AEC_CTRL1F, fast_low);
-पूर्ण
+	ret = ov5640_write_reg(sensor, OV5640_REG_AEC_CTRL0F, sensor->ae_high);
+	if (ret)
+		return ret;
+	ret = ov5640_write_reg(sensor, OV5640_REG_AEC_CTRL10, sensor->ae_low);
+	if (ret)
+		return ret;
+	ret = ov5640_write_reg(sensor, OV5640_REG_AEC_CTRL1B, sensor->ae_high);
+	if (ret)
+		return ret;
+	ret = ov5640_write_reg(sensor, OV5640_REG_AEC_CTRL1E, sensor->ae_low);
+	if (ret)
+		return ret;
+	ret = ov5640_write_reg(sensor, OV5640_REG_AEC_CTRL11, fast_high);
+	if (ret)
+		return ret;
+	return ov5640_write_reg(sensor, OV5640_REG_AEC_CTRL1F, fast_low);
+}
 
-अटल पूर्णांक ov5640_get_binning(काष्ठा ov5640_dev *sensor)
-अणु
+static int ov5640_get_binning(struct ov5640_dev *sensor)
+{
 	u8 temp;
-	पूर्णांक ret;
+	int ret;
 
-	ret = ov5640_पढ़ो_reg(sensor, OV5640_REG_TIMING_TC_REG21, &temp);
-	अगर (ret)
-		वापस ret;
+	ret = ov5640_read_reg(sensor, OV5640_REG_TIMING_TC_REG21, &temp);
+	if (ret)
+		return ret;
 
-	वापस temp & BIT(0);
-पूर्ण
+	return temp & BIT(0);
+}
 
-अटल पूर्णांक ov5640_set_binning(काष्ठा ov5640_dev *sensor, bool enable)
-अणु
-	पूर्णांक ret;
+static int ov5640_set_binning(struct ov5640_dev *sensor, bool enable)
+{
+	int ret;
 
 	/*
 	 * TIMING TC REG21:
@@ -1516,384 +1515,384 @@ out:
 	 */
 	ret = ov5640_mod_reg(sensor, OV5640_REG_TIMING_TC_REG21,
 			     BIT(0), enable ? BIT(0) : 0);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	/*
 	 * TIMING TC REG20:
-	 * - [0]:	Unकरोcumented, but hardcoded init sequences
+	 * - [0]:	Undocumented, but hardcoded init sequences
 	 *		are always setting REG21/REG20 bit 0 to same value...
 	 */
-	वापस ov5640_mod_reg(sensor, OV5640_REG_TIMING_TC_REG20,
+	return ov5640_mod_reg(sensor, OV5640_REG_TIMING_TC_REG20,
 			      BIT(0), enable ? BIT(0) : 0);
-पूर्ण
+}
 
-अटल पूर्णांक ov5640_set_भव_channel(काष्ठा ov5640_dev *sensor)
-अणु
-	काष्ठा i2c_client *client = sensor->i2c_client;
-	u8 temp, channel = भव_channel;
-	पूर्णांक ret;
+static int ov5640_set_virtual_channel(struct ov5640_dev *sensor)
+{
+	struct i2c_client *client = sensor->i2c_client;
+	u8 temp, channel = virtual_channel;
+	int ret;
 
-	अगर (channel > 3) अणु
+	if (channel > 3) {
 		dev_err(&client->dev,
 			"%s: wrong virtual_channel parameter, expected (0..3), got %d\n",
 			__func__, channel);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ret = ov5640_पढ़ो_reg(sensor, OV5640_REG_DEBUG_MODE, &temp);
-	अगर (ret)
-		वापस ret;
+	ret = ov5640_read_reg(sensor, OV5640_REG_DEBUG_MODE, &temp);
+	if (ret)
+		return ret;
 	temp &= ~(3 << 6);
 	temp |= (channel << 6);
-	वापस ov5640_ग_लिखो_reg(sensor, OV5640_REG_DEBUG_MODE, temp);
-पूर्ण
+	return ov5640_write_reg(sensor, OV5640_REG_DEBUG_MODE, temp);
+}
 
-अटल स्थिर काष्ठा ov5640_mode_info *
-ov5640_find_mode(काष्ठा ov5640_dev *sensor, क्रमागत ov5640_frame_rate fr,
-		 पूर्णांक width, पूर्णांक height, bool nearest)
-अणु
-	स्थिर काष्ठा ov5640_mode_info *mode;
+static const struct ov5640_mode_info *
+ov5640_find_mode(struct ov5640_dev *sensor, enum ov5640_frame_rate fr,
+		 int width, int height, bool nearest)
+{
+	const struct ov5640_mode_info *mode;
 
 	mode = v4l2_find_nearest_size(ov5640_mode_data,
 				      ARRAY_SIZE(ov5640_mode_data),
 				      hact, vact,
 				      width, height);
 
-	अगर (!mode ||
+	if (!mode ||
 	    (!nearest && (mode->hact != width || mode->vact != height)))
-		वापस शून्य;
+		return NULL;
 
-	/* Check to see अगर the current mode exceeds the max frame rate */
-	अगर (ov5640_framerates[fr] > ov5640_framerates[mode->max_fps])
-		वापस शून्य;
+	/* Check to see if the current mode exceeds the max frame rate */
+	if (ov5640_framerates[fr] > ov5640_framerates[mode->max_fps])
+		return NULL;
 
-	वापस mode;
-पूर्ण
+	return mode;
+}
 
-अटल u64 ov5640_calc_pixel_rate(काष्ठा ov5640_dev *sensor)
-अणु
+static u64 ov5640_calc_pixel_rate(struct ov5640_dev *sensor)
+{
 	u64 rate;
 
 	rate = sensor->current_mode->vtot * sensor->current_mode->htot;
 	rate *= ov5640_framerates[sensor->current_fr];
 
-	वापस rate;
-पूर्ण
+	return rate;
+}
 
 /*
  * sensor changes between scaling and subsampling, go through
  * exposure calculation
  */
-अटल पूर्णांक ov5640_set_mode_exposure_calc(काष्ठा ov5640_dev *sensor,
-					 स्थिर काष्ठा ov5640_mode_info *mode)
-अणु
+static int ov5640_set_mode_exposure_calc(struct ov5640_dev *sensor,
+					 const struct ov5640_mode_info *mode)
+{
 	u32 prev_shutter, prev_gain16;
 	u32 cap_shutter, cap_gain16;
 	u32 cap_sysclk, cap_hts, cap_vts;
 	u32 light_freq, cap_bandfilt, cap_maxband;
 	u32 cap_gain16_shutter;
 	u8 average;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!mode->reg_data)
-		वापस -EINVAL;
+	if (!mode->reg_data)
+		return -EINVAL;
 
-	/* पढ़ो preview shutter */
+	/* read preview shutter */
 	ret = ov5640_get_exposure(sensor);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 	prev_shutter = ret;
 	ret = ov5640_get_binning(sensor);
-	अगर (ret < 0)
-		वापस ret;
-	अगर (ret && mode->id != OV5640_MODE_720P_1280_720 &&
+	if (ret < 0)
+		return ret;
+	if (ret && mode->id != OV5640_MODE_720P_1280_720 &&
 	    mode->id != OV5640_MODE_1080P_1920_1080)
 		prev_shutter *= 2;
 
-	/* पढ़ो preview gain */
+	/* read preview gain */
 	ret = ov5640_get_gain(sensor);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 	prev_gain16 = ret;
 
 	/* get average */
-	ret = ov5640_पढ़ो_reg(sensor, OV5640_REG_AVG_READOUT, &average);
-	अगर (ret)
-		वापस ret;
+	ret = ov5640_read_reg(sensor, OV5640_REG_AVG_READOUT, &average);
+	if (ret)
+		return ret;
 
-	/* turn off night mode क्रम capture */
+	/* turn off night mode for capture */
 	ret = ov5640_set_night_mode(sensor);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	/* Write capture setting */
 	ret = ov5640_load_regs(sensor, mode);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	/* पढ़ो capture VTS */
+	/* read capture VTS */
 	ret = ov5640_get_vts(sensor);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 	cap_vts = ret;
 	ret = ov5640_get_hts(sensor);
-	अगर (ret < 0)
-		वापस ret;
-	अगर (ret == 0)
-		वापस -EINVAL;
+	if (ret < 0)
+		return ret;
+	if (ret == 0)
+		return -EINVAL;
 	cap_hts = ret;
 
 	ret = ov5640_get_sysclk(sensor);
-	अगर (ret < 0)
-		वापस ret;
-	अगर (ret == 0)
-		वापस -EINVAL;
+	if (ret < 0)
+		return ret;
+	if (ret == 0)
+		return -EINVAL;
 	cap_sysclk = ret;
 
 	/* calculate capture banding filter */
 	ret = ov5640_get_light_freq(sensor);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 	light_freq = ret;
 
-	अगर (light_freq == 60) अणु
+	if (light_freq == 60) {
 		/* 60Hz */
 		cap_bandfilt = cap_sysclk * 100 / cap_hts * 100 / 120;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* 50Hz */
 		cap_bandfilt = cap_sysclk * 100 / cap_hts;
-	पूर्ण
+	}
 
-	अगर (!sensor->prev_sysclk) अणु
+	if (!sensor->prev_sysclk) {
 		ret = ov5640_get_sysclk(sensor);
-		अगर (ret < 0)
-			वापस ret;
-		अगर (ret == 0)
-			वापस -EINVAL;
+		if (ret < 0)
+			return ret;
+		if (ret == 0)
+			return -EINVAL;
 		sensor->prev_sysclk = ret;
-	पूर्ण
+	}
 
-	अगर (!cap_bandfilt)
-		वापस -EINVAL;
+	if (!cap_bandfilt)
+		return -EINVAL;
 
-	cap_maxband = (पूर्णांक)((cap_vts - 4) / cap_bandfilt);
+	cap_maxband = (int)((cap_vts - 4) / cap_bandfilt);
 
 	/* calculate capture shutter/gain16 */
-	अगर (average > sensor->ae_low && average < sensor->ae_high) अणु
+	if (average > sensor->ae_low && average < sensor->ae_high) {
 		/* in stable range */
 		cap_gain16_shutter =
 			prev_gain16 * prev_shutter *
 			cap_sysclk / sensor->prev_sysclk *
 			sensor->prev_hts / cap_hts *
 			sensor->ae_target / average;
-	पूर्ण अन्यथा अणु
+	} else {
 		cap_gain16_shutter =
 			prev_gain16 * prev_shutter *
 			cap_sysclk / sensor->prev_sysclk *
 			sensor->prev_hts / cap_hts;
-	पूर्ण
+	}
 
 	/* gain to shutter */
-	अगर (cap_gain16_shutter < (cap_bandfilt * 16)) अणु
+	if (cap_gain16_shutter < (cap_bandfilt * 16)) {
 		/* shutter < 1/100 */
 		cap_shutter = cap_gain16_shutter / 16;
-		अगर (cap_shutter < 1)
+		if (cap_shutter < 1)
 			cap_shutter = 1;
 
 		cap_gain16 = cap_gain16_shutter / cap_shutter;
-		अगर (cap_gain16 < 16)
+		if (cap_gain16 < 16)
 			cap_gain16 = 16;
-	पूर्ण अन्यथा अणु
-		अगर (cap_gain16_shutter > (cap_bandfilt * cap_maxband * 16)) अणु
+	} else {
+		if (cap_gain16_shutter > (cap_bandfilt * cap_maxband * 16)) {
 			/* exposure reach max */
 			cap_shutter = cap_bandfilt * cap_maxband;
-			अगर (!cap_shutter)
-				वापस -EINVAL;
+			if (!cap_shutter)
+				return -EINVAL;
 
 			cap_gain16 = cap_gain16_shutter / cap_shutter;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* 1/100 < (cap_shutter = n/100) =< max */
 			cap_shutter =
-				((पूर्णांक)(cap_gain16_shutter / 16 / cap_bandfilt))
+				((int)(cap_gain16_shutter / 16 / cap_bandfilt))
 				* cap_bandfilt;
-			अगर (!cap_shutter)
-				वापस -EINVAL;
+			if (!cap_shutter)
+				return -EINVAL;
 
 			cap_gain16 = cap_gain16_shutter / cap_shutter;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* set capture gain */
 	ret = ov5640_set_gain(sensor, cap_gain16);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* ग_लिखो capture shutter */
-	अगर (cap_shutter > (cap_vts - 4)) अणु
+	/* write capture shutter */
+	if (cap_shutter > (cap_vts - 4)) {
 		cap_vts = cap_shutter + 4;
 		ret = ov5640_set_vts(sensor, cap_vts);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
+		if (ret < 0)
+			return ret;
+	}
 
 	/* set exposure */
-	वापस ov5640_set_exposure(sensor, cap_shutter);
-पूर्ण
+	return ov5640_set_exposure(sensor, cap_shutter);
+}
 
 /*
- * अगर sensor changes inside scaling or subsampling
+ * if sensor changes inside scaling or subsampling
  * change mode directly
  */
-अटल पूर्णांक ov5640_set_mode_direct(काष्ठा ov5640_dev *sensor,
-				  स्थिर काष्ठा ov5640_mode_info *mode)
-अणु
-	अगर (!mode->reg_data)
-		वापस -EINVAL;
+static int ov5640_set_mode_direct(struct ov5640_dev *sensor,
+				  const struct ov5640_mode_info *mode)
+{
+	if (!mode->reg_data)
+		return -EINVAL;
 
 	/* Write capture setting */
-	वापस ov5640_load_regs(sensor, mode);
-पूर्ण
+	return ov5640_load_regs(sensor, mode);
+}
 
-अटल पूर्णांक ov5640_set_mode(काष्ठा ov5640_dev *sensor)
-अणु
-	स्थिर काष्ठा ov5640_mode_info *mode = sensor->current_mode;
-	स्थिर काष्ठा ov5640_mode_info *orig_mode = sensor->last_mode;
-	क्रमागत ov5640_करोwnsize_mode dn_mode, orig_dn_mode;
-	bool स्वतः_gain = sensor->ctrls.स्वतः_gain->val == 1;
-	bool स्वतः_exp =  sensor->ctrls.स्वतः_exp->val == V4L2_EXPOSURE_AUTO;
-	अचिन्हित दीर्घ rate;
-	पूर्णांक ret;
+static int ov5640_set_mode(struct ov5640_dev *sensor)
+{
+	const struct ov5640_mode_info *mode = sensor->current_mode;
+	const struct ov5640_mode_info *orig_mode = sensor->last_mode;
+	enum ov5640_downsize_mode dn_mode, orig_dn_mode;
+	bool auto_gain = sensor->ctrls.auto_gain->val == 1;
+	bool auto_exp =  sensor->ctrls.auto_exp->val == V4L2_EXPOSURE_AUTO;
+	unsigned long rate;
+	int ret;
 
 	dn_mode = mode->dn_mode;
 	orig_dn_mode = orig_mode->dn_mode;
 
-	/* स्वतः gain and exposure must be turned off when changing modes */
-	अगर (स्वतः_gain) अणु
-		ret = ov5640_set_स्वतःgain(sensor, false);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+	/* auto gain and exposure must be turned off when changing modes */
+	if (auto_gain) {
+		ret = ov5640_set_autogain(sensor, false);
+		if (ret)
+			return ret;
+	}
 
-	अगर (स्वतः_exp) अणु
-		ret = ov5640_set_स्वतःexposure(sensor, false);
-		अगर (ret)
-			जाओ restore_स्वतः_gain;
-	पूर्ण
+	if (auto_exp) {
+		ret = ov5640_set_autoexposure(sensor, false);
+		if (ret)
+			goto restore_auto_gain;
+	}
 
 	/*
-	 * All the क्रमmats we support have 16 bits per pixel, seems to require
-	 * the same rate than YUV, so we can just use 16 bpp all the समय.
+	 * All the formats we support have 16 bits per pixel, seems to require
+	 * the same rate than YUV, so we can just use 16 bpp all the time.
 	 */
 	rate = ov5640_calc_pixel_rate(sensor) * 16;
-	अगर (sensor->ep.bus_type == V4L2_MBUS_CSI2_DPHY) अणु
+	if (sensor->ep.bus_type == V4L2_MBUS_CSI2_DPHY) {
 		rate = rate / sensor->ep.bus.mipi_csi2.num_data_lanes;
 		ret = ov5640_set_mipi_pclk(sensor, rate);
-	पूर्ण अन्यथा अणु
+	} else {
 		rate = rate / sensor->ep.bus.parallel.bus_width;
 		ret = ov5640_set_dvp_pclk(sensor, rate);
-	पूर्ण
+	}
 
-	अगर (ret < 0)
-		वापस 0;
+	if (ret < 0)
+		return 0;
 
-	अगर ((dn_mode == SUBSAMPLING && orig_dn_mode == SCALING) ||
-	    (dn_mode == SCALING && orig_dn_mode == SUBSAMPLING)) अणु
+	if ((dn_mode == SUBSAMPLING && orig_dn_mode == SCALING) ||
+	    (dn_mode == SCALING && orig_dn_mode == SUBSAMPLING)) {
 		/*
 		 * change between subsampling and scaling
 		 * go through exposure calculation
 		 */
 		ret = ov5640_set_mode_exposure_calc(sensor, mode);
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
 		 * change inside subsampling or scaling
-		 * करोwnload firmware directly
+		 * download firmware directly
 		 */
 		ret = ov5640_set_mode_direct(sensor, mode);
-	पूर्ण
-	अगर (ret < 0)
-		जाओ restore_स्वतः_exp_gain;
+	}
+	if (ret < 0)
+		goto restore_auto_exp_gain;
 
-	/* restore स्वतः gain and exposure */
-	अगर (स्वतः_gain)
-		ov5640_set_स्वतःgain(sensor, true);
-	अगर (स्वतः_exp)
-		ov5640_set_स्वतःexposure(sensor, true);
+	/* restore auto gain and exposure */
+	if (auto_gain)
+		ov5640_set_autogain(sensor, true);
+	if (auto_exp)
+		ov5640_set_autoexposure(sensor, true);
 
 	ret = ov5640_set_binning(sensor, dn_mode != SCALING);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 	ret = ov5640_set_ae_target(sensor, sensor->ae_target);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 	ret = ov5640_get_light_freq(sensor);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 	ret = ov5640_set_bandingfilter(sensor);
-	अगर (ret < 0)
-		वापस ret;
-	ret = ov5640_set_भव_channel(sensor);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
+	ret = ov5640_set_virtual_channel(sensor);
+	if (ret < 0)
+		return ret;
 
 	sensor->pending_mode_change = false;
 	sensor->last_mode = mode;
 
-	वापस 0;
+	return 0;
 
-restore_स्वतः_exp_gain:
-	अगर (स्वतः_exp)
-		ov5640_set_स्वतःexposure(sensor, true);
-restore_स्वतः_gain:
-	अगर (स्वतः_gain)
-		ov5640_set_स्वतःgain(sensor, true);
+restore_auto_exp_gain:
+	if (auto_exp)
+		ov5640_set_autoexposure(sensor, true);
+restore_auto_gain:
+	if (auto_gain)
+		ov5640_set_autogain(sensor, true);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ov5640_set_framefmt(काष्ठा ov5640_dev *sensor,
-			       काष्ठा v4l2_mbus_framefmt *क्रमmat);
+static int ov5640_set_framefmt(struct ov5640_dev *sensor,
+			       struct v4l2_mbus_framefmt *format);
 
-/* restore the last set video mode after chip घातer-on */
-अटल पूर्णांक ov5640_restore_mode(काष्ठा ov5640_dev *sensor)
-अणु
-	पूर्णांक ret;
+/* restore the last set video mode after chip power-on */
+static int ov5640_restore_mode(struct ov5640_dev *sensor)
+{
+	int ret;
 
-	/* first load the initial रेजिस्टर values */
+	/* first load the initial register values */
 	ret = ov5640_load_regs(sensor, &ov5640_mode_init_data);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 	sensor->last_mode = &ov5640_mode_init_data;
 
 	ret = ov5640_mod_reg(sensor, OV5640_REG_SYS_ROOT_DIVIDER, 0x3f,
 			     (ilog2(OV5640_SCLK2X_ROOT_DIV) << 2) |
 			     ilog2(OV5640_SCLK_ROOT_DIV));
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* now restore the last capture mode */
 	ret = ov5640_set_mode(sensor);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस ov5640_set_framefmt(sensor, &sensor->fmt);
-पूर्ण
+	return ov5640_set_framefmt(sensor, &sensor->fmt);
+}
 
-अटल व्योम ov5640_घातer(काष्ठा ov5640_dev *sensor, bool enable)
-अणु
+static void ov5640_power(struct ov5640_dev *sensor, bool enable)
+{
 	gpiod_set_value_cansleep(sensor->pwdn_gpio, enable ? 0 : 1);
-पूर्ण
+}
 
-अटल व्योम ov5640_reset(काष्ठा ov5640_dev *sensor)
-अणु
-	अगर (!sensor->reset_gpio)
-		वापस;
+static void ov5640_reset(struct ov5640_dev *sensor)
+{
+	if (!sensor->reset_gpio)
+		return;
 
 	gpiod_set_value_cansleep(sensor->reset_gpio, 0);
 
-	/* camera घातer cycle */
-	ov5640_घातer(sensor, false);
+	/* camera power cycle */
+	ov5640_power(sensor, false);
 	usleep_range(5000, 10000);
-	ov5640_घातer(sensor, true);
+	ov5640_power(sensor, true);
 	usleep_range(5000, 10000);
 
 	gpiod_set_value_cansleep(sensor->reset_gpio, 1);
@@ -1901,63 +1900,63 @@ restore_स्वतः_gain:
 
 	gpiod_set_value_cansleep(sensor->reset_gpio, 0);
 	usleep_range(20000, 25000);
-पूर्ण
+}
 
-अटल पूर्णांक ov5640_set_घातer_on(काष्ठा ov5640_dev *sensor)
-अणु
-	काष्ठा i2c_client *client = sensor->i2c_client;
-	पूर्णांक ret;
+static int ov5640_set_power_on(struct ov5640_dev *sensor)
+{
+	struct i2c_client *client = sensor->i2c_client;
+	int ret;
 
 	ret = clk_prepare_enable(sensor->xclk);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&client->dev, "%s: failed to enable clock\n",
 			__func__);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = regulator_bulk_enable(OV5640_NUM_SUPPLIES,
 				    sensor->supplies);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&client->dev, "%s: failed to enable regulators\n",
 			__func__);
-		जाओ xclk_off;
-	पूर्ण
+		goto xclk_off;
+	}
 
 	ov5640_reset(sensor);
-	ov5640_घातer(sensor, true);
+	ov5640_power(sensor, true);
 
 	ret = ov5640_init_slave_id(sensor);
-	अगर (ret)
-		जाओ घातer_off;
+	if (ret)
+		goto power_off;
 
-	वापस 0;
+	return 0;
 
-घातer_off:
-	ov5640_घातer(sensor, false);
+power_off:
+	ov5640_power(sensor, false);
 	regulator_bulk_disable(OV5640_NUM_SUPPLIES, sensor->supplies);
 xclk_off:
 	clk_disable_unprepare(sensor->xclk);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम ov5640_set_घातer_off(काष्ठा ov5640_dev *sensor)
-अणु
-	ov5640_घातer(sensor, false);
+static void ov5640_set_power_off(struct ov5640_dev *sensor)
+{
+	ov5640_power(sensor, false);
 	regulator_bulk_disable(OV5640_NUM_SUPPLIES, sensor->supplies);
 	clk_disable_unprepare(sensor->xclk);
-पूर्ण
+}
 
-अटल पूर्णांक ov5640_set_घातer_mipi(काष्ठा ov5640_dev *sensor, bool on)
-अणु
-	पूर्णांक ret;
+static int ov5640_set_power_mipi(struct ov5640_dev *sensor, bool on)
+{
+	int ret;
 
-	अगर (!on) अणु
-		/* Reset MIPI bus settings to their शेष values. */
-		ov5640_ग_लिखो_reg(sensor, OV5640_REG_IO_MIPI_CTRL00, 0x58);
-		ov5640_ग_लिखो_reg(sensor, OV5640_REG_MIPI_CTRL00, 0x04);
-		ov5640_ग_लिखो_reg(sensor, OV5640_REG_PAD_OUTPUT00, 0x00);
-		वापस 0;
-	पूर्ण
+	if (!on) {
+		/* Reset MIPI bus settings to their default values. */
+		ov5640_write_reg(sensor, OV5640_REG_IO_MIPI_CTRL00, 0x58);
+		ov5640_write_reg(sensor, OV5640_REG_MIPI_CTRL00, 0x04);
+		ov5640_write_reg(sensor, OV5640_REG_PAD_OUTPUT00, 0x00);
+		return 0;
+	}
 
 	/*
 	 * Power up MIPI HS Tx and LS Rx; 2 data lanes mode
@@ -1967,57 +1966,57 @@ xclk_off:
 	 *		  "ov5640_set_stream_mipi()")
 	 * [4] = 0	: Power up MIPI HS Tx
 	 * [3] = 0	: Power up MIPI LS Rx
-	 * [2] = 0	: MIPI पूर्णांकerface disabled
+	 * [2] = 0	: MIPI interface disabled
 	 */
-	ret = ov5640_ग_लिखो_reg(sensor, OV5640_REG_IO_MIPI_CTRL00, 0x40);
-	अगर (ret)
-		वापस ret;
+	ret = ov5640_write_reg(sensor, OV5640_REG_IO_MIPI_CTRL00, 0x40);
+	if (ret)
+		return ret;
 
 	/*
-	 * Gate घड़ी and set LP11 in 'no packets mode' (idle)
+	 * Gate clock and set LP11 in 'no packets mode' (idle)
 	 *
 	 * 0x4800 = 0x24
-	 * [5] = 1	: Gate घड़ी when 'no packets'
+	 * [5] = 1	: Gate clock when 'no packets'
 	 * [2] = 1	: MIPI bus in LP11 when 'no packets'
 	 */
-	ret = ov5640_ग_लिखो_reg(sensor, OV5640_REG_MIPI_CTRL00, 0x24);
-	अगर (ret)
-		वापस ret;
+	ret = ov5640_write_reg(sensor, OV5640_REG_MIPI_CTRL00, 0x24);
+	if (ret)
+		return ret;
 
 	/*
-	 * Set data lanes and घड़ी in LP11 when 'sleeping'
+	 * Set data lanes and clock in LP11 when 'sleeping'
 	 *
 	 * 0x3019 = 0x70
 	 * [6] = 1	: MIPI data lane 2 in LP11 when 'sleeping'
 	 * [5] = 1	: MIPI data lane 1 in LP11 when 'sleeping'
-	 * [4] = 1	: MIPI घड़ी lane in LP11 when 'sleeping'
+	 * [4] = 1	: MIPI clock lane in LP11 when 'sleeping'
 	 */
-	ret = ov5640_ग_लिखो_reg(sensor, OV5640_REG_PAD_OUTPUT00, 0x70);
-	अगर (ret)
-		वापस ret;
+	ret = ov5640_write_reg(sensor, OV5640_REG_PAD_OUTPUT00, 0x70);
+	if (ret)
+		return ret;
 
-	/* Give lanes some समय to coax पूर्णांकo LP11 state. */
+	/* Give lanes some time to coax into LP11 state. */
 	usleep_range(500, 1000);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ov5640_set_घातer_dvp(काष्ठा ov5640_dev *sensor, bool on)
-अणु
-	अचिन्हित पूर्णांक flags = sensor->ep.bus.parallel.flags;
+static int ov5640_set_power_dvp(struct ov5640_dev *sensor, bool on)
+{
+	unsigned int flags = sensor->ep.bus.parallel.flags;
 	bool bt656 = sensor->ep.bus_type == V4L2_MBUS_BT656;
 	u8 polarities = 0;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!on) अणु
-		/* Reset settings to their शेष values. */
-		ov5640_ग_लिखो_reg(sensor, OV5640_REG_CCIR656_CTRL00, 0x00);
-		ov5640_ग_लिखो_reg(sensor, OV5640_REG_IO_MIPI_CTRL00, 0x58);
-		ov5640_ग_लिखो_reg(sensor, OV5640_REG_POLARITY_CTRL00, 0x20);
-		ov5640_ग_लिखो_reg(sensor, OV5640_REG_PAD_OUTPUT_ENABLE01, 0x00);
-		ov5640_ग_लिखो_reg(sensor, OV5640_REG_PAD_OUTPUT_ENABLE02, 0x00);
-		वापस 0;
-	पूर्ण
+	if (!on) {
+		/* Reset settings to their default values. */
+		ov5640_write_reg(sensor, OV5640_REG_CCIR656_CTRL00, 0x00);
+		ov5640_write_reg(sensor, OV5640_REG_IO_MIPI_CTRL00, 0x58);
+		ov5640_write_reg(sensor, OV5640_REG_POLARITY_CTRL00, 0x20);
+		ov5640_write_reg(sensor, OV5640_REG_PAD_OUTPUT_ENABLE01, 0x00);
+		ov5640_write_reg(sensor, OV5640_REG_PAD_OUTPUT_ENABLE02, 0x00);
+		return 0;
+	}
 
 	/*
 	 * Note about parallel port configuration.
@@ -2025,25 +2024,25 @@ xclk_off:
 	 * When configured in parallel mode, the OV5640 will
 	 * output 10 bits data on DVP data lines [9:0].
 	 * If only 8 bits data are wanted, the 8 bits data lines
-	 * of the camera पूर्णांकerface must be physically connected
+	 * of the camera interface must be physically connected
 	 * on the DVP data lines [9:2].
 	 *
 	 * Control lines polarity can be configured through
-	 * devicetree endpoपूर्णांक control lines properties.
-	 * If no endpoपूर्णांक control lines properties are set,
+	 * devicetree endpoint control lines properties.
+	 * If no endpoint control lines properties are set,
 	 * polarity will be as below:
 	 * - VSYNC:	active high
 	 * - HREF:	active low
 	 * - PCLK:	active low
 	 *
-	 * VSYNC & HREF are not configured अगर BT656 bus mode is selected
+	 * VSYNC & HREF are not configured if BT656 bus mode is selected
 	 */
 
 	/*
 	 * BT656 embedded synchronization configuration
 	 *
 	 * CCIR656 CTRL00
-	 * - [7]:	SYNC code selection (0: स्वतः generate sync code,
+	 * - [7]:	SYNC code selection (0: auto generate sync code,
 	 *		1: sync code from regs 0x4732-0x4735)
 	 * - [6]:	f value in CCIR656 SYNC code when fixed f value
 	 * - [5]:	Fixed f value
@@ -2052,17 +2051,17 @@ xclk_off:
 	 * - [1]:	Clip data disable
 	 * - [0]:	CCIR656 mode enable
 	 *
-	 * Default CCIR656 SAV/EAV mode with शेष codes
+	 * Default CCIR656 SAV/EAV mode with default codes
 	 * SAV=0xff000080 & EAV=0xff00009d is enabled here with settings:
 	 * - CCIR656 mode enable
-	 * - स्वतः generation of sync codes
+	 * - auto generation of sync codes
 	 * - blank toggle data 1'h040/1'h200
 	 * - clip reserved data (0x00 & 0xff changed to 0x01 & 0xfe)
 	 */
-	ret = ov5640_ग_लिखो_reg(sensor, OV5640_REG_CCIR656_CTRL00,
+	ret = ov5640_write_reg(sensor, OV5640_REG_CCIR656_CTRL00,
 			       bt656 ? 0x01 : 0x00);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/*
 	 * configure parallel port control lines polarity
@@ -2074,30 +2073,30 @@ xclk_off:
 	 *		datasheet and hardware, 0 is active high
 	 *		and 1 is active low...)
 	 */
-	अगर (!bt656) अणु
-		अगर (flags & V4L2_MBUS_HSYNC_ACTIVE_HIGH)
+	if (!bt656) {
+		if (flags & V4L2_MBUS_HSYNC_ACTIVE_HIGH)
 			polarities |= BIT(1);
-		अगर (flags & V4L2_MBUS_VSYNC_ACTIVE_LOW)
+		if (flags & V4L2_MBUS_VSYNC_ACTIVE_LOW)
 			polarities |= BIT(0);
-	पूर्ण
-	अगर (flags & V4L2_MBUS_PCLK_SAMPLE_RISING)
+	}
+	if (flags & V4L2_MBUS_PCLK_SAMPLE_RISING)
 		polarities |= BIT(5);
 
-	ret = ov5640_ग_लिखो_reg(sensor, OV5640_REG_POLARITY_CTRL00, polarities);
-	अगर (ret)
-		वापस ret;
+	ret = ov5640_write_reg(sensor, OV5640_REG_POLARITY_CTRL00, polarities);
+	if (ret)
+		return ret;
 
 	/*
-	 * घातerकरोwn MIPI TX/RX PHY & enable DVP
+	 * powerdown MIPI TX/RX PHY & enable DVP
 	 *
 	 * MIPI CONTROL 00
-	 * [4] = 1	: Power करोwn MIPI HS Tx
-	 * [3] = 1	: Power करोwn MIPI LS Rx
+	 * [4] = 1	: Power down MIPI HS Tx
+	 * [3] = 1	: Power down MIPI LS Rx
 	 * [2] = 0	: DVP enable (MIPI disable)
 	 */
-	ret = ov5640_ग_लिखो_reg(sensor, OV5640_REG_IO_MIPI_CTRL00, 0x18);
-	अगर (ret)
-		वापस ret;
+	ret = ov5640_write_reg(sensor, OV5640_REG_IO_MIPI_CTRL00, 0x18);
+	if (ret)
+		return ret;
 
 	/*
 	 * enable VSYNC/HREF/PCLK DVP control lines
@@ -2109,10 +2108,10 @@ xclk_off:
 	 * - 4:		PCLK output enable
 	 * - [3:0]:	D[9:6] output enable
 	 */
-	ret = ov5640_ग_लिखो_reg(sensor, OV5640_REG_PAD_OUTPUT_ENABLE01,
+	ret = ov5640_write_reg(sensor, OV5640_REG_PAD_OUTPUT_ENABLE01,
 			       bt656 ? 0x1f : 0x7f);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/*
 	 * enable D[5:0] DVP data lines
@@ -2120,284 +2119,284 @@ xclk_off:
 	 * PAD OUTPUT ENABLE 02
 	 * - [7:2]:	D[5:0] output enable
 	 */
-	वापस ov5640_ग_लिखो_reg(sensor, OV5640_REG_PAD_OUTPUT_ENABLE02, 0xfc);
-पूर्ण
+	return ov5640_write_reg(sensor, OV5640_REG_PAD_OUTPUT_ENABLE02, 0xfc);
+}
 
-अटल पूर्णांक ov5640_set_घातer(काष्ठा ov5640_dev *sensor, bool on)
-अणु
-	पूर्णांक ret = 0;
+static int ov5640_set_power(struct ov5640_dev *sensor, bool on)
+{
+	int ret = 0;
 
-	अगर (on) अणु
-		ret = ov5640_set_घातer_on(sensor);
-		अगर (ret)
-			वापस ret;
+	if (on) {
+		ret = ov5640_set_power_on(sensor);
+		if (ret)
+			return ret;
 
 		ret = ov5640_restore_mode(sensor);
-		अगर (ret)
-			जाओ घातer_off;
-	पूर्ण
+		if (ret)
+			goto power_off;
+	}
 
-	अगर (sensor->ep.bus_type == V4L2_MBUS_CSI2_DPHY)
-		ret = ov5640_set_घातer_mipi(sensor, on);
-	अन्यथा
-		ret = ov5640_set_घातer_dvp(sensor, on);
-	अगर (ret)
-		जाओ घातer_off;
+	if (sensor->ep.bus_type == V4L2_MBUS_CSI2_DPHY)
+		ret = ov5640_set_power_mipi(sensor, on);
+	else
+		ret = ov5640_set_power_dvp(sensor, on);
+	if (ret)
+		goto power_off;
 
-	अगर (!on)
-		ov5640_set_घातer_off(sensor);
+	if (!on)
+		ov5640_set_power_off(sensor);
 
-	वापस 0;
+	return 0;
 
-घातer_off:
-	ov5640_set_घातer_off(sensor);
-	वापस ret;
-पूर्ण
+power_off:
+	ov5640_set_power_off(sensor);
+	return ret;
+}
 
 /* --------------- Subdev Operations --------------- */
 
-अटल पूर्णांक ov5640_s_घातer(काष्ठा v4l2_subdev *sd, पूर्णांक on)
-अणु
-	काष्ठा ov5640_dev *sensor = to_ov5640_dev(sd);
-	पूर्णांक ret = 0;
+static int ov5640_s_power(struct v4l2_subdev *sd, int on)
+{
+	struct ov5640_dev *sensor = to_ov5640_dev(sd);
+	int ret = 0;
 
 	mutex_lock(&sensor->lock);
 
 	/*
-	 * If the घातer count is modअगरied from 0 to != 0 or from != 0 to 0,
-	 * update the घातer state.
+	 * If the power count is modified from 0 to != 0 or from != 0 to 0,
+	 * update the power state.
 	 */
-	अगर (sensor->घातer_count == !on) अणु
-		ret = ov5640_set_घातer(sensor, !!on);
-		अगर (ret)
-			जाओ out;
-	पूर्ण
+	if (sensor->power_count == !on) {
+		ret = ov5640_set_power(sensor, !!on);
+		if (ret)
+			goto out;
+	}
 
-	/* Update the घातer count. */
-	sensor->घातer_count += on ? 1 : -1;
-	WARN_ON(sensor->घातer_count < 0);
+	/* Update the power count. */
+	sensor->power_count += on ? 1 : -1;
+	WARN_ON(sensor->power_count < 0);
 out:
 	mutex_unlock(&sensor->lock);
 
-	अगर (on && !ret && sensor->घातer_count == 1) अणु
+	if (on && !ret && sensor->power_count == 1) {
 		/* restore controls */
 		ret = v4l2_ctrl_handler_setup(&sensor->ctrls.handler);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ov5640_try_frame_पूर्णांकerval(काष्ठा ov5640_dev *sensor,
-				     काष्ठा v4l2_fract *fi,
+static int ov5640_try_frame_interval(struct ov5640_dev *sensor,
+				     struct v4l2_fract *fi,
 				     u32 width, u32 height)
-अणु
-	स्थिर काष्ठा ov5640_mode_info *mode;
-	क्रमागत ov5640_frame_rate rate = OV5640_15_FPS;
-	पूर्णांक minfps, maxfps, best_fps, fps;
-	पूर्णांक i;
+{
+	const struct ov5640_mode_info *mode;
+	enum ov5640_frame_rate rate = OV5640_15_FPS;
+	int minfps, maxfps, best_fps, fps;
+	int i;
 
 	minfps = ov5640_framerates[OV5640_15_FPS];
 	maxfps = ov5640_framerates[OV5640_60_FPS];
 
-	अगर (fi->numerator == 0) अणु
+	if (fi->numerator == 0) {
 		fi->denominator = maxfps;
 		fi->numerator = 1;
 		rate = OV5640_60_FPS;
-		जाओ find_mode;
-	पूर्ण
+		goto find_mode;
+	}
 
 	fps = clamp_val(DIV_ROUND_CLOSEST(fi->denominator, fi->numerator),
 			minfps, maxfps);
 
 	best_fps = minfps;
-	क्रम (i = 0; i < ARRAY_SIZE(ov5640_framerates); i++) अणु
-		पूर्णांक curr_fps = ov5640_framerates[i];
+	for (i = 0; i < ARRAY_SIZE(ov5640_framerates); i++) {
+		int curr_fps = ov5640_framerates[i];
 
-		अगर (असल(curr_fps - fps) < असल(best_fps - fps)) अणु
+		if (abs(curr_fps - fps) < abs(best_fps - fps)) {
 			best_fps = curr_fps;
 			rate = i;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	fi->numerator = 1;
 	fi->denominator = best_fps;
 
 find_mode:
 	mode = ov5640_find_mode(sensor, rate, width, height, false);
-	वापस mode ? rate : -EINVAL;
-पूर्ण
+	return mode ? rate : -EINVAL;
+}
 
-अटल पूर्णांक ov5640_get_fmt(काष्ठा v4l2_subdev *sd,
-			  काष्ठा v4l2_subdev_pad_config *cfg,
-			  काष्ठा v4l2_subdev_क्रमmat *क्रमmat)
-अणु
-	काष्ठा ov5640_dev *sensor = to_ov5640_dev(sd);
-	काष्ठा v4l2_mbus_framefmt *fmt;
+static int ov5640_get_fmt(struct v4l2_subdev *sd,
+			  struct v4l2_subdev_pad_config *cfg,
+			  struct v4l2_subdev_format *format)
+{
+	struct ov5640_dev *sensor = to_ov5640_dev(sd);
+	struct v4l2_mbus_framefmt *fmt;
 
-	अगर (क्रमmat->pad != 0)
-		वापस -EINVAL;
+	if (format->pad != 0)
+		return -EINVAL;
 
 	mutex_lock(&sensor->lock);
 
-	अगर (क्रमmat->which == V4L2_SUBDEV_FORMAT_TRY)
-		fmt = v4l2_subdev_get_try_क्रमmat(&sensor->sd, cfg,
-						 क्रमmat->pad);
-	अन्यथा
+	if (format->which == V4L2_SUBDEV_FORMAT_TRY)
+		fmt = v4l2_subdev_get_try_format(&sensor->sd, cfg,
+						 format->pad);
+	else
 		fmt = &sensor->fmt;
 
-	क्रमmat->क्रमmat = *fmt;
+	format->format = *fmt;
 
 	mutex_unlock(&sensor->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ov5640_try_fmt_पूर्णांकernal(काष्ठा v4l2_subdev *sd,
-				   काष्ठा v4l2_mbus_framefmt *fmt,
-				   क्रमागत ov5640_frame_rate fr,
-				   स्थिर काष्ठा ov5640_mode_info **new_mode)
-अणु
-	काष्ठा ov5640_dev *sensor = to_ov5640_dev(sd);
-	स्थिर काष्ठा ov5640_mode_info *mode;
-	पूर्णांक i;
+static int ov5640_try_fmt_internal(struct v4l2_subdev *sd,
+				   struct v4l2_mbus_framefmt *fmt,
+				   enum ov5640_frame_rate fr,
+				   const struct ov5640_mode_info **new_mode)
+{
+	struct ov5640_dev *sensor = to_ov5640_dev(sd);
+	const struct ov5640_mode_info *mode;
+	int i;
 
 	mode = ov5640_find_mode(sensor, fr, fmt->width, fmt->height, true);
-	अगर (!mode)
-		वापस -EINVAL;
+	if (!mode)
+		return -EINVAL;
 	fmt->width = mode->hact;
 	fmt->height = mode->vact;
 
-	अगर (new_mode)
+	if (new_mode)
 		*new_mode = mode;
 
-	क्रम (i = 0; i < ARRAY_SIZE(ov5640_क्रमmats); i++)
-		अगर (ov5640_क्रमmats[i].code == fmt->code)
-			अवरोध;
-	अगर (i >= ARRAY_SIZE(ov5640_क्रमmats))
+	for (i = 0; i < ARRAY_SIZE(ov5640_formats); i++)
+		if (ov5640_formats[i].code == fmt->code)
+			break;
+	if (i >= ARRAY_SIZE(ov5640_formats))
 		i = 0;
 
-	fmt->code = ov5640_क्रमmats[i].code;
-	fmt->colorspace = ov5640_क्रमmats[i].colorspace;
+	fmt->code = ov5640_formats[i].code;
+	fmt->colorspace = ov5640_formats[i].colorspace;
 	fmt->ycbcr_enc = V4L2_MAP_YCBCR_ENC_DEFAULT(fmt->colorspace);
 	fmt->quantization = V4L2_QUANTIZATION_FULL_RANGE;
 	fmt->xfer_func = V4L2_MAP_XFER_FUNC_DEFAULT(fmt->colorspace);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ov5640_set_fmt(काष्ठा v4l2_subdev *sd,
-			  काष्ठा v4l2_subdev_pad_config *cfg,
-			  काष्ठा v4l2_subdev_क्रमmat *क्रमmat)
-अणु
-	काष्ठा ov5640_dev *sensor = to_ov5640_dev(sd);
-	स्थिर काष्ठा ov5640_mode_info *new_mode;
-	काष्ठा v4l2_mbus_framefmt *mbus_fmt = &क्रमmat->क्रमmat;
-	काष्ठा v4l2_mbus_framefmt *fmt;
-	पूर्णांक ret;
+static int ov5640_set_fmt(struct v4l2_subdev *sd,
+			  struct v4l2_subdev_pad_config *cfg,
+			  struct v4l2_subdev_format *format)
+{
+	struct ov5640_dev *sensor = to_ov5640_dev(sd);
+	const struct ov5640_mode_info *new_mode;
+	struct v4l2_mbus_framefmt *mbus_fmt = &format->format;
+	struct v4l2_mbus_framefmt *fmt;
+	int ret;
 
-	अगर (क्रमmat->pad != 0)
-		वापस -EINVAL;
+	if (format->pad != 0)
+		return -EINVAL;
 
 	mutex_lock(&sensor->lock);
 
-	अगर (sensor->streaming) अणु
+	if (sensor->streaming) {
 		ret = -EBUSY;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	ret = ov5640_try_fmt_पूर्णांकernal(sd, mbus_fmt,
+	ret = ov5640_try_fmt_internal(sd, mbus_fmt,
 				      sensor->current_fr, &new_mode);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	अगर (क्रमmat->which == V4L2_SUBDEV_FORMAT_TRY)
-		fmt = v4l2_subdev_get_try_क्रमmat(sd, cfg, 0);
-	अन्यथा
+	if (format->which == V4L2_SUBDEV_FORMAT_TRY)
+		fmt = v4l2_subdev_get_try_format(sd, cfg, 0);
+	else
 		fmt = &sensor->fmt;
 
 	*fmt = *mbus_fmt;
 
-	अगर (new_mode != sensor->current_mode) अणु
+	if (new_mode != sensor->current_mode) {
 		sensor->current_mode = new_mode;
 		sensor->pending_mode_change = true;
-	पूर्ण
-	अगर (mbus_fmt->code != sensor->fmt.code)
+	}
+	if (mbus_fmt->code != sensor->fmt.code)
 		sensor->pending_fmt_change = true;
 
-	__v4l2_ctrl_s_ctrl_पूर्णांक64(sensor->ctrls.pixel_rate,
+	__v4l2_ctrl_s_ctrl_int64(sensor->ctrls.pixel_rate,
 				 ov5640_calc_pixel_rate(sensor));
 out:
 	mutex_unlock(&sensor->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ov5640_set_framefmt(काष्ठा ov5640_dev *sensor,
-			       काष्ठा v4l2_mbus_framefmt *क्रमmat)
-अणु
-	पूर्णांक ret = 0;
+static int ov5640_set_framefmt(struct ov5640_dev *sensor,
+			       struct v4l2_mbus_framefmt *format)
+{
+	int ret = 0;
 	bool is_jpeg = false;
 	u8 fmt, mux;
 
-	चयन (क्रमmat->code) अणु
-	हाल MEDIA_BUS_FMT_UYVY8_2X8:
+	switch (format->code) {
+	case MEDIA_BUS_FMT_UYVY8_2X8:
 		/* YUV422, UYVY */
 		fmt = 0x3f;
 		mux = OV5640_FMT_MUX_YUV422;
-		अवरोध;
-	हाल MEDIA_BUS_FMT_YUYV8_2X8:
+		break;
+	case MEDIA_BUS_FMT_YUYV8_2X8:
 		/* YUV422, YUYV */
 		fmt = 0x30;
 		mux = OV5640_FMT_MUX_YUV422;
-		अवरोध;
-	हाल MEDIA_BUS_FMT_RGB565_2X8_LE:
-		/* RGB565 अणुg[2:0],b[4:0]पूर्ण,अणुr[4:0],g[5:3]पूर्ण */
+		break;
+	case MEDIA_BUS_FMT_RGB565_2X8_LE:
+		/* RGB565 {g[2:0],b[4:0]},{r[4:0],g[5:3]} */
 		fmt = 0x6F;
 		mux = OV5640_FMT_MUX_RGB;
-		अवरोध;
-	हाल MEDIA_BUS_FMT_RGB565_2X8_BE:
-		/* RGB565 अणुr[4:0],g[5:3]पूर्ण,अणुg[2:0],b[4:0]पूर्ण */
+		break;
+	case MEDIA_BUS_FMT_RGB565_2X8_BE:
+		/* RGB565 {r[4:0],g[5:3]},{g[2:0],b[4:0]} */
 		fmt = 0x61;
 		mux = OV5640_FMT_MUX_RGB;
-		अवरोध;
-	हाल MEDIA_BUS_FMT_JPEG_1X8:
+		break;
+	case MEDIA_BUS_FMT_JPEG_1X8:
 		/* YUV422, YUYV */
 		fmt = 0x30;
 		mux = OV5640_FMT_MUX_YUV422;
 		is_jpeg = true;
-		अवरोध;
-	हाल MEDIA_BUS_FMT_SBGGR8_1X8:
+		break;
+	case MEDIA_BUS_FMT_SBGGR8_1X8:
 		/* Raw, BGBG... / GRGR... */
 		fmt = 0x00;
 		mux = OV5640_FMT_MUX_RAW_DPC;
-		अवरोध;
-	हाल MEDIA_BUS_FMT_SGBRG8_1X8:
+		break;
+	case MEDIA_BUS_FMT_SGBRG8_1X8:
 		/* Raw bayer, GBGB... / RGRG... */
 		fmt = 0x01;
 		mux = OV5640_FMT_MUX_RAW_DPC;
-		अवरोध;
-	हाल MEDIA_BUS_FMT_SGRBG8_1X8:
+		break;
+	case MEDIA_BUS_FMT_SGRBG8_1X8:
 		/* Raw bayer, GRGR... / BGBG... */
 		fmt = 0x02;
 		mux = OV5640_FMT_MUX_RAW_DPC;
-		अवरोध;
-	हाल MEDIA_BUS_FMT_SRGGB8_1X8:
+		break;
+	case MEDIA_BUS_FMT_SRGGB8_1X8:
 		/* Raw bayer, RGRG... / GBGB... */
 		fmt = 0x03;
 		mux = OV5640_FMT_MUX_RAW_DPC;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	/* FORMAT CONTROL00: YUV and RGB क्रमmatting */
-	ret = ov5640_ग_लिखो_reg(sensor, OV5640_REG_FORMAT_CONTROL00, fmt);
-	अगर (ret)
-		वापस ret;
+	/* FORMAT CONTROL00: YUV and RGB formatting */
+	ret = ov5640_write_reg(sensor, OV5640_REG_FORMAT_CONTROL00, fmt);
+	if (ret)
+		return ret;
 
 	/* FORMAT MUX CONTROL: ISP YUV or RGB */
-	ret = ov5640_ग_लिखो_reg(sensor, OV5640_REG_ISP_FORMAT_MUX_CTRL, mux);
-	अगर (ret)
-		वापस ret;
+	ret = ov5640_write_reg(sensor, OV5640_REG_ISP_FORMAT_MUX_CTRL, mux);
+	if (ret)
+		return ret;
 
 	/*
 	 * TIMING TC REG21:
@@ -2405,8 +2404,8 @@ out:
 	 */
 	ret = ov5640_mod_reg(sensor, OV5640_REG_TIMING_TC_REG21,
 			     BIT(5), is_jpeg ? BIT(5) : 0);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/*
 	 * SYSTEM RESET02:
@@ -2417,174 +2416,174 @@ out:
 	ret = ov5640_mod_reg(sensor, OV5640_REG_SYS_RESET02,
 			     BIT(4) | BIT(3) | BIT(2),
 			     is_jpeg ? 0 : (BIT(4) | BIT(3) | BIT(2)));
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/*
 	 * CLOCK ENABLE02:
-	 * - [5]:	Enable JPEG 2x घड़ी
-	 * - [3]:	Enable JPEG घड़ी
+	 * - [5]:	Enable JPEG 2x clock
+	 * - [3]:	Enable JPEG clock
 	 */
-	वापस ov5640_mod_reg(sensor, OV5640_REG_SYS_CLOCK_ENABLE02,
+	return ov5640_mod_reg(sensor, OV5640_REG_SYS_CLOCK_ENABLE02,
 			      BIT(5) | BIT(3),
 			      is_jpeg ? (BIT(5) | BIT(3)) : 0);
-पूर्ण
+}
 
 /*
  * Sensor Controls.
  */
 
-अटल पूर्णांक ov5640_set_ctrl_hue(काष्ठा ov5640_dev *sensor, पूर्णांक value)
-अणु
-	पूर्णांक ret;
+static int ov5640_set_ctrl_hue(struct ov5640_dev *sensor, int value)
+{
+	int ret;
 
-	अगर (value) अणु
+	if (value) {
 		ret = ov5640_mod_reg(sensor, OV5640_REG_SDE_CTRL0,
 				     BIT(0), BIT(0));
-		अगर (ret)
-			वापस ret;
-		ret = ov5640_ग_लिखो_reg16(sensor, OV5640_REG_SDE_CTRL1, value);
-	पूर्ण अन्यथा अणु
+		if (ret)
+			return ret;
+		ret = ov5640_write_reg16(sensor, OV5640_REG_SDE_CTRL1, value);
+	} else {
 		ret = ov5640_mod_reg(sensor, OV5640_REG_SDE_CTRL0, BIT(0), 0);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ov5640_set_ctrl_contrast(काष्ठा ov5640_dev *sensor, पूर्णांक value)
-अणु
-	पूर्णांक ret;
+static int ov5640_set_ctrl_contrast(struct ov5640_dev *sensor, int value)
+{
+	int ret;
 
-	अगर (value) अणु
+	if (value) {
 		ret = ov5640_mod_reg(sensor, OV5640_REG_SDE_CTRL0,
 				     BIT(2), BIT(2));
-		अगर (ret)
-			वापस ret;
-		ret = ov5640_ग_लिखो_reg(sensor, OV5640_REG_SDE_CTRL5,
+		if (ret)
+			return ret;
+		ret = ov5640_write_reg(sensor, OV5640_REG_SDE_CTRL5,
 				       value & 0xff);
-	पूर्ण अन्यथा अणु
+	} else {
 		ret = ov5640_mod_reg(sensor, OV5640_REG_SDE_CTRL0, BIT(2), 0);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ov5640_set_ctrl_saturation(काष्ठा ov5640_dev *sensor, पूर्णांक value)
-अणु
-	पूर्णांक ret;
+static int ov5640_set_ctrl_saturation(struct ov5640_dev *sensor, int value)
+{
+	int ret;
 
-	अगर (value) अणु
+	if (value) {
 		ret = ov5640_mod_reg(sensor, OV5640_REG_SDE_CTRL0,
 				     BIT(1), BIT(1));
-		अगर (ret)
-			वापस ret;
-		ret = ov5640_ग_लिखो_reg(sensor, OV5640_REG_SDE_CTRL3,
+		if (ret)
+			return ret;
+		ret = ov5640_write_reg(sensor, OV5640_REG_SDE_CTRL3,
 				       value & 0xff);
-		अगर (ret)
-			वापस ret;
-		ret = ov5640_ग_लिखो_reg(sensor, OV5640_REG_SDE_CTRL4,
+		if (ret)
+			return ret;
+		ret = ov5640_write_reg(sensor, OV5640_REG_SDE_CTRL4,
 				       value & 0xff);
-	पूर्ण अन्यथा अणु
+	} else {
 		ret = ov5640_mod_reg(sensor, OV5640_REG_SDE_CTRL0, BIT(1), 0);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ov5640_set_ctrl_white_balance(काष्ठा ov5640_dev *sensor, पूर्णांक awb)
-अणु
-	पूर्णांक ret;
+static int ov5640_set_ctrl_white_balance(struct ov5640_dev *sensor, int awb)
+{
+	int ret;
 
 	ret = ov5640_mod_reg(sensor, OV5640_REG_AWB_MANUAL_CTRL,
 			     BIT(0), awb ? 0 : 1);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (!awb) अणु
+	if (!awb) {
 		u16 red = (u16)sensor->ctrls.red_balance->val;
 		u16 blue = (u16)sensor->ctrls.blue_balance->val;
 
-		ret = ov5640_ग_लिखो_reg16(sensor, OV5640_REG_AWB_R_GAIN, red);
-		अगर (ret)
-			वापस ret;
-		ret = ov5640_ग_लिखो_reg16(sensor, OV5640_REG_AWB_B_GAIN, blue);
-	पूर्ण
+		ret = ov5640_write_reg16(sensor, OV5640_REG_AWB_R_GAIN, red);
+		if (ret)
+			return ret;
+		ret = ov5640_write_reg16(sensor, OV5640_REG_AWB_B_GAIN, blue);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ov5640_set_ctrl_exposure(काष्ठा ov5640_dev *sensor,
-				    क्रमागत v4l2_exposure_स्वतः_type स्वतः_exposure)
-अणु
-	काष्ठा ov5640_ctrls *ctrls = &sensor->ctrls;
-	bool स्वतः_exp = (स्वतः_exposure == V4L2_EXPOSURE_AUTO);
-	पूर्णांक ret = 0;
+static int ov5640_set_ctrl_exposure(struct ov5640_dev *sensor,
+				    enum v4l2_exposure_auto_type auto_exposure)
+{
+	struct ov5640_ctrls *ctrls = &sensor->ctrls;
+	bool auto_exp = (auto_exposure == V4L2_EXPOSURE_AUTO);
+	int ret = 0;
 
-	अगर (ctrls->स्वतः_exp->is_new) अणु
-		ret = ov5640_set_स्वतःexposure(sensor, स्वतः_exp);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+	if (ctrls->auto_exp->is_new) {
+		ret = ov5640_set_autoexposure(sensor, auto_exp);
+		if (ret)
+			return ret;
+	}
 
-	अगर (!स्वतः_exp && ctrls->exposure->is_new) अणु
+	if (!auto_exp && ctrls->exposure->is_new) {
 		u16 max_exp;
 
-		ret = ov5640_पढ़ो_reg16(sensor, OV5640_REG_AEC_PK_VTS,
+		ret = ov5640_read_reg16(sensor, OV5640_REG_AEC_PK_VTS,
 					&max_exp);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 		ret = ov5640_get_vts(sensor);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 		max_exp += ret;
 		ret = 0;
 
-		अगर (ctrls->exposure->val < max_exp)
+		if (ctrls->exposure->val < max_exp)
 			ret = ov5640_set_exposure(sensor, ctrls->exposure->val);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ov5640_set_ctrl_gain(काष्ठा ov5640_dev *sensor, bool स्वतः_gain)
-अणु
-	काष्ठा ov5640_ctrls *ctrls = &sensor->ctrls;
-	पूर्णांक ret = 0;
+static int ov5640_set_ctrl_gain(struct ov5640_dev *sensor, bool auto_gain)
+{
+	struct ov5640_ctrls *ctrls = &sensor->ctrls;
+	int ret = 0;
 
-	अगर (ctrls->स्वतः_gain->is_new) अणु
-		ret = ov5640_set_स्वतःgain(sensor, स्वतः_gain);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+	if (ctrls->auto_gain->is_new) {
+		ret = ov5640_set_autogain(sensor, auto_gain);
+		if (ret)
+			return ret;
+	}
 
-	अगर (!स्वतः_gain && ctrls->gain->is_new)
+	if (!auto_gain && ctrls->gain->is_new)
 		ret = ov5640_set_gain(sensor, ctrls->gain->val);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर अक्षर * स्थिर test_pattern_menu[] = अणु
+static const char * const test_pattern_menu[] = {
 	"Disabled",
 	"Color bars",
 	"Color bars w/ rolling bar",
 	"Color squares",
 	"Color squares w/ rolling bar",
-पूर्ण;
+};
 
-#घोषणा OV5640_TEST_ENABLE		BIT(7)
-#घोषणा OV5640_TEST_ROLLING		BIT(6)	/* rolling horizontal bar */
-#घोषणा OV5640_TEST_TRANSPARENT		BIT(5)
-#घोषणा OV5640_TEST_SQUARE_BW		BIT(4)	/* black & white squares */
-#घोषणा OV5640_TEST_BAR_STANDARD	(0 << 2)
-#घोषणा OV5640_TEST_BAR_VERT_CHANGE_1	(1 << 2)
-#घोषणा OV5640_TEST_BAR_HOR_CHANGE	(2 << 2)
-#घोषणा OV5640_TEST_BAR_VERT_CHANGE_2	(3 << 2)
-#घोषणा OV5640_TEST_BAR			(0 << 0)
-#घोषणा OV5640_TEST_RANDOM		(1 << 0)
-#घोषणा OV5640_TEST_SQUARE		(2 << 0)
-#घोषणा OV5640_TEST_BLACK		(3 << 0)
+#define OV5640_TEST_ENABLE		BIT(7)
+#define OV5640_TEST_ROLLING		BIT(6)	/* rolling horizontal bar */
+#define OV5640_TEST_TRANSPARENT		BIT(5)
+#define OV5640_TEST_SQUARE_BW		BIT(4)	/* black & white squares */
+#define OV5640_TEST_BAR_STANDARD	(0 << 2)
+#define OV5640_TEST_BAR_VERT_CHANGE_1	(1 << 2)
+#define OV5640_TEST_BAR_HOR_CHANGE	(2 << 2)
+#define OV5640_TEST_BAR_VERT_CHANGE_2	(3 << 2)
+#define OV5640_TEST_BAR			(0 << 0)
+#define OV5640_TEST_RANDOM		(1 << 0)
+#define OV5640_TEST_SQUARE		(2 << 0)
+#define OV5640_TEST_BLACK		(3 << 0)
 
-अटल स्थिर u8 test_pattern_val[] = अणु
+static const u8 test_pattern_val[] = {
 	0,
 	OV5640_TEST_ENABLE | OV5640_TEST_BAR_VERT_CHANGE_1 |
 		OV5640_TEST_BAR,
@@ -2592,33 +2591,33 @@ out:
 		OV5640_TEST_BAR_VERT_CHANGE_1 | OV5640_TEST_BAR,
 	OV5640_TEST_ENABLE | OV5640_TEST_SQUARE,
 	OV5640_TEST_ENABLE | OV5640_TEST_ROLLING | OV5640_TEST_SQUARE,
-पूर्ण;
+};
 
-अटल पूर्णांक ov5640_set_ctrl_test_pattern(काष्ठा ov5640_dev *sensor, पूर्णांक value)
-अणु
-	वापस ov5640_ग_लिखो_reg(sensor, OV5640_REG_PRE_ISP_TEST_SET1,
+static int ov5640_set_ctrl_test_pattern(struct ov5640_dev *sensor, int value)
+{
+	return ov5640_write_reg(sensor, OV5640_REG_PRE_ISP_TEST_SET1,
 				test_pattern_val[value]);
-पूर्ण
+}
 
-अटल पूर्णांक ov5640_set_ctrl_light_freq(काष्ठा ov5640_dev *sensor, पूर्णांक value)
-अणु
-	पूर्णांक ret;
+static int ov5640_set_ctrl_light_freq(struct ov5640_dev *sensor, int value)
+{
+	int ret;
 
 	ret = ov5640_mod_reg(sensor, OV5640_REG_HZ5060_CTRL01, BIT(7),
 			     (value == V4L2_CID_POWER_LINE_FREQUENCY_AUTO) ?
 			     0 : BIT(7));
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस ov5640_mod_reg(sensor, OV5640_REG_HZ5060_CTRL00, BIT(2),
+	return ov5640_mod_reg(sensor, OV5640_REG_HZ5060_CTRL00, BIT(2),
 			      (value == V4L2_CID_POWER_LINE_FREQUENCY_50HZ) ?
 			      BIT(2) : 0);
-पूर्ण
+}
 
-अटल पूर्णांक ov5640_set_ctrl_hflip(काष्ठा ov5640_dev *sensor, पूर्णांक value)
-अणु
+static int ov5640_set_ctrl_hflip(struct ov5640_dev *sensor, int value)
+{
 	/*
-	 * If sensor is mounted upside करोwn, mirror logic is inversed.
+	 * If sensor is mounted upside down, mirror logic is inversed.
 	 *
 	 * Sensor is a BSI (Back Side Illuminated) one,
 	 * so image captured is physically mirrored.
@@ -2631,132 +2630,132 @@ out:
 	 * - [2]:	ISP mirror
 	 * - [1]:	Sensor mirror
 	 */
-	वापस ov5640_mod_reg(sensor, OV5640_REG_TIMING_TC_REG21,
+	return ov5640_mod_reg(sensor, OV5640_REG_TIMING_TC_REG21,
 			      BIT(2) | BIT(1),
-			      (!(value ^ sensor->upside_करोwn)) ?
+			      (!(value ^ sensor->upside_down)) ?
 			      (BIT(2) | BIT(1)) : 0);
-पूर्ण
+}
 
-अटल पूर्णांक ov5640_set_ctrl_vflip(काष्ठा ov5640_dev *sensor, पूर्णांक value)
-अणु
-	/* If sensor is mounted upside करोwn, flip logic is inversed */
+static int ov5640_set_ctrl_vflip(struct ov5640_dev *sensor, int value)
+{
+	/* If sensor is mounted upside down, flip logic is inversed */
 
 	/*
 	 * TIMING TC REG20:
 	 * - [2]:	ISP vflip
 	 * - [1]:	Sensor vflip
 	 */
-	वापस ov5640_mod_reg(sensor, OV5640_REG_TIMING_TC_REG20,
+	return ov5640_mod_reg(sensor, OV5640_REG_TIMING_TC_REG20,
 			      BIT(2) | BIT(1),
-			      (value ^ sensor->upside_करोwn) ?
+			      (value ^ sensor->upside_down) ?
 			      (BIT(2) | BIT(1)) : 0);
-पूर्ण
+}
 
-अटल पूर्णांक ov5640_g_अस्थिर_ctrl(काष्ठा v4l2_ctrl *ctrl)
-अणु
-	काष्ठा v4l2_subdev *sd = ctrl_to_sd(ctrl);
-	काष्ठा ov5640_dev *sensor = to_ov5640_dev(sd);
-	पूर्णांक val;
+static int ov5640_g_volatile_ctrl(struct v4l2_ctrl *ctrl)
+{
+	struct v4l2_subdev *sd = ctrl_to_sd(ctrl);
+	struct ov5640_dev *sensor = to_ov5640_dev(sd);
+	int val;
 
 	/* v4l2_ctrl_lock() locks our own mutex */
 
-	चयन (ctrl->id) अणु
-	हाल V4L2_CID_AUTOGAIN:
+	switch (ctrl->id) {
+	case V4L2_CID_AUTOGAIN:
 		val = ov5640_get_gain(sensor);
-		अगर (val < 0)
-			वापस val;
+		if (val < 0)
+			return val;
 		sensor->ctrls.gain->val = val;
-		अवरोध;
-	हाल V4L2_CID_EXPOSURE_AUTO:
+		break;
+	case V4L2_CID_EXPOSURE_AUTO:
 		val = ov5640_get_exposure(sensor);
-		अगर (val < 0)
-			वापस val;
+		if (val < 0)
+			return val;
 		sensor->ctrls.exposure->val = val;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ov5640_s_ctrl(काष्ठा v4l2_ctrl *ctrl)
-अणु
-	काष्ठा v4l2_subdev *sd = ctrl_to_sd(ctrl);
-	काष्ठा ov5640_dev *sensor = to_ov5640_dev(sd);
-	पूर्णांक ret;
+static int ov5640_s_ctrl(struct v4l2_ctrl *ctrl)
+{
+	struct v4l2_subdev *sd = ctrl_to_sd(ctrl);
+	struct ov5640_dev *sensor = to_ov5640_dev(sd);
+	int ret;
 
 	/* v4l2_ctrl_lock() locks our own mutex */
 
 	/*
-	 * If the device is not घातered up by the host driver करो
-	 * not apply any controls to H/W at this समय. Instead
-	 * the controls will be restored right after घातer-up.
+	 * If the device is not powered up by the host driver do
+	 * not apply any controls to H/W at this time. Instead
+	 * the controls will be restored right after power-up.
 	 */
-	अगर (sensor->घातer_count == 0)
-		वापस 0;
+	if (sensor->power_count == 0)
+		return 0;
 
-	चयन (ctrl->id) अणु
-	हाल V4L2_CID_AUTOGAIN:
+	switch (ctrl->id) {
+	case V4L2_CID_AUTOGAIN:
 		ret = ov5640_set_ctrl_gain(sensor, ctrl->val);
-		अवरोध;
-	हाल V4L2_CID_EXPOSURE_AUTO:
+		break;
+	case V4L2_CID_EXPOSURE_AUTO:
 		ret = ov5640_set_ctrl_exposure(sensor, ctrl->val);
-		अवरोध;
-	हाल V4L2_CID_AUTO_WHITE_BALANCE:
+		break;
+	case V4L2_CID_AUTO_WHITE_BALANCE:
 		ret = ov5640_set_ctrl_white_balance(sensor, ctrl->val);
-		अवरोध;
-	हाल V4L2_CID_HUE:
+		break;
+	case V4L2_CID_HUE:
 		ret = ov5640_set_ctrl_hue(sensor, ctrl->val);
-		अवरोध;
-	हाल V4L2_CID_CONTRAST:
+		break;
+	case V4L2_CID_CONTRAST:
 		ret = ov5640_set_ctrl_contrast(sensor, ctrl->val);
-		अवरोध;
-	हाल V4L2_CID_SATURATION:
+		break;
+	case V4L2_CID_SATURATION:
 		ret = ov5640_set_ctrl_saturation(sensor, ctrl->val);
-		अवरोध;
-	हाल V4L2_CID_TEST_PATTERN:
+		break;
+	case V4L2_CID_TEST_PATTERN:
 		ret = ov5640_set_ctrl_test_pattern(sensor, ctrl->val);
-		अवरोध;
-	हाल V4L2_CID_POWER_LINE_FREQUENCY:
+		break;
+	case V4L2_CID_POWER_LINE_FREQUENCY:
 		ret = ov5640_set_ctrl_light_freq(sensor, ctrl->val);
-		अवरोध;
-	हाल V4L2_CID_HFLIP:
+		break;
+	case V4L2_CID_HFLIP:
 		ret = ov5640_set_ctrl_hflip(sensor, ctrl->val);
-		अवरोध;
-	हाल V4L2_CID_VFLIP:
+		break;
+	case V4L2_CID_VFLIP:
 		ret = ov5640_set_ctrl_vflip(sensor, ctrl->val);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा v4l2_ctrl_ops ov5640_ctrl_ops = अणु
-	.g_अस्थिर_ctrl = ov5640_g_अस्थिर_ctrl,
+static const struct v4l2_ctrl_ops ov5640_ctrl_ops = {
+	.g_volatile_ctrl = ov5640_g_volatile_ctrl,
 	.s_ctrl = ov5640_s_ctrl,
-पूर्ण;
+};
 
-अटल पूर्णांक ov5640_init_controls(काष्ठा ov5640_dev *sensor)
-अणु
-	स्थिर काष्ठा v4l2_ctrl_ops *ops = &ov5640_ctrl_ops;
-	काष्ठा ov5640_ctrls *ctrls = &sensor->ctrls;
-	काष्ठा v4l2_ctrl_handler *hdl = &ctrls->handler;
-	पूर्णांक ret;
+static int ov5640_init_controls(struct ov5640_dev *sensor)
+{
+	const struct v4l2_ctrl_ops *ops = &ov5640_ctrl_ops;
+	struct ov5640_ctrls *ctrls = &sensor->ctrls;
+	struct v4l2_ctrl_handler *hdl = &ctrls->handler;
+	int ret;
 
 	v4l2_ctrl_handler_init(hdl, 32);
 
-	/* we can use our own mutex क्रम the ctrl lock */
+	/* we can use our own mutex for the ctrl lock */
 	hdl->lock = &sensor->lock;
 
 	/* Clock related controls */
 	ctrls->pixel_rate = v4l2_ctrl_new_std(hdl, ops, V4L2_CID_PIXEL_RATE,
-					      0, पूर्णांक_उच्च, 1,
+					      0, INT_MAX, 1,
 					      ov5640_calc_pixel_rate(sensor));
 
 	/* Auto/manual white balance */
-	ctrls->स्वतः_wb = v4l2_ctrl_new_std(hdl, ops,
+	ctrls->auto_wb = v4l2_ctrl_new_std(hdl, ops,
 					   V4L2_CID_AUTO_WHITE_BALANCE,
 					   0, 1, 1, 1);
 	ctrls->blue_balance = v4l2_ctrl_new_std(hdl, ops, V4L2_CID_BLUE_BALANCE,
@@ -2764,14 +2763,14 @@ out:
 	ctrls->red_balance = v4l2_ctrl_new_std(hdl, ops, V4L2_CID_RED_BALANCE,
 					       0, 4095, 1, 0);
 	/* Auto/manual exposure */
-	ctrls->स्वतः_exp = v4l2_ctrl_new_std_menu(hdl, ops,
+	ctrls->auto_exp = v4l2_ctrl_new_std_menu(hdl, ops,
 						 V4L2_CID_EXPOSURE_AUTO,
 						 V4L2_EXPOSURE_MANUAL, 0,
 						 V4L2_EXPOSURE_AUTO);
 	ctrls->exposure = v4l2_ctrl_new_std(hdl, ops, V4L2_CID_EXPOSURE,
 					    0, 65535, 1, 0);
 	/* Auto/manual gain */
-	ctrls->स्वतः_gain = v4l2_ctrl_new_std(hdl, ops, V4L2_CID_AUTOGAIN,
+	ctrls->auto_gain = v4l2_ctrl_new_std(hdl, ops, V4L2_CID_AUTOGAIN,
 					     0, 1, 1, 1);
 	ctrls->gain = v4l2_ctrl_new_std(hdl, ops, V4L2_CID_GAIN,
 					0, 1023, 1, 0);
@@ -2797,35 +2796,35 @@ out:
 				       V4L2_CID_POWER_LINE_FREQUENCY_AUTO, 0,
 				       V4L2_CID_POWER_LINE_FREQUENCY_50HZ);
 
-	अगर (hdl->error) अणु
+	if (hdl->error) {
 		ret = hdl->error;
-		जाओ मुक्त_ctrls;
-	पूर्ण
+		goto free_ctrls;
+	}
 
 	ctrls->pixel_rate->flags |= V4L2_CTRL_FLAG_READ_ONLY;
 	ctrls->gain->flags |= V4L2_CTRL_FLAG_VOLATILE;
 	ctrls->exposure->flags |= V4L2_CTRL_FLAG_VOLATILE;
 
-	v4l2_ctrl_स्वतः_cluster(3, &ctrls->स्वतः_wb, 0, false);
-	v4l2_ctrl_स्वतः_cluster(2, &ctrls->स्वतः_gain, 0, true);
-	v4l2_ctrl_स्वतः_cluster(2, &ctrls->स्वतः_exp, 1, true);
+	v4l2_ctrl_auto_cluster(3, &ctrls->auto_wb, 0, false);
+	v4l2_ctrl_auto_cluster(2, &ctrls->auto_gain, 0, true);
+	v4l2_ctrl_auto_cluster(2, &ctrls->auto_exp, 1, true);
 
 	sensor->sd.ctrl_handler = hdl;
-	वापस 0;
+	return 0;
 
-मुक्त_ctrls:
-	v4l2_ctrl_handler_मुक्त(hdl);
-	वापस ret;
-पूर्ण
+free_ctrls:
+	v4l2_ctrl_handler_free(hdl);
+	return ret;
+}
 
-अटल पूर्णांक ov5640_क्रमागत_frame_size(काष्ठा v4l2_subdev *sd,
-				  काष्ठा v4l2_subdev_pad_config *cfg,
-				  काष्ठा v4l2_subdev_frame_size_क्रमागत *fse)
-अणु
-	अगर (fse->pad != 0)
-		वापस -EINVAL;
-	अगर (fse->index >= OV5640_NUM_MODES)
-		वापस -EINVAL;
+static int ov5640_enum_frame_size(struct v4l2_subdev *sd,
+				  struct v4l2_subdev_pad_config *cfg,
+				  struct v4l2_subdev_frame_size_enum *fse)
+{
+	if (fse->pad != 0)
+		return -EINVAL;
+	if (fse->index >= OV5640_NUM_MODES)
+		return -EINVAL;
 
 	fse->min_width =
 		ov5640_mode_data[fse->index].hact;
@@ -2834,227 +2833,227 @@ out:
 		ov5640_mode_data[fse->index].vact;
 	fse->max_height = fse->min_height;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ov5640_क्रमागत_frame_पूर्णांकerval(
-	काष्ठा v4l2_subdev *sd,
-	काष्ठा v4l2_subdev_pad_config *cfg,
-	काष्ठा v4l2_subdev_frame_पूर्णांकerval_क्रमागत *fie)
-अणु
-	काष्ठा ov5640_dev *sensor = to_ov5640_dev(sd);
-	काष्ठा v4l2_fract tpf;
-	पूर्णांक ret;
+static int ov5640_enum_frame_interval(
+	struct v4l2_subdev *sd,
+	struct v4l2_subdev_pad_config *cfg,
+	struct v4l2_subdev_frame_interval_enum *fie)
+{
+	struct ov5640_dev *sensor = to_ov5640_dev(sd);
+	struct v4l2_fract tpf;
+	int ret;
 
-	अगर (fie->pad != 0)
-		वापस -EINVAL;
-	अगर (fie->index >= OV5640_NUM_FRAMERATES)
-		वापस -EINVAL;
+	if (fie->pad != 0)
+		return -EINVAL;
+	if (fie->index >= OV5640_NUM_FRAMERATES)
+		return -EINVAL;
 
 	tpf.numerator = 1;
 	tpf.denominator = ov5640_framerates[fie->index];
 
-	ret = ov5640_try_frame_पूर्णांकerval(sensor, &tpf,
+	ret = ov5640_try_frame_interval(sensor, &tpf,
 					fie->width, fie->height);
-	अगर (ret < 0)
-		वापस -EINVAL;
+	if (ret < 0)
+		return -EINVAL;
 
-	fie->पूर्णांकerval = tpf;
-	वापस 0;
-पूर्ण
+	fie->interval = tpf;
+	return 0;
+}
 
-अटल पूर्णांक ov5640_g_frame_पूर्णांकerval(काष्ठा v4l2_subdev *sd,
-				   काष्ठा v4l2_subdev_frame_पूर्णांकerval *fi)
-अणु
-	काष्ठा ov5640_dev *sensor = to_ov5640_dev(sd);
+static int ov5640_g_frame_interval(struct v4l2_subdev *sd,
+				   struct v4l2_subdev_frame_interval *fi)
+{
+	struct ov5640_dev *sensor = to_ov5640_dev(sd);
 
 	mutex_lock(&sensor->lock);
-	fi->पूर्णांकerval = sensor->frame_पूर्णांकerval;
+	fi->interval = sensor->frame_interval;
 	mutex_unlock(&sensor->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ov5640_s_frame_पूर्णांकerval(काष्ठा v4l2_subdev *sd,
-				   काष्ठा v4l2_subdev_frame_पूर्णांकerval *fi)
-अणु
-	काष्ठा ov5640_dev *sensor = to_ov5640_dev(sd);
-	स्थिर काष्ठा ov5640_mode_info *mode;
-	पूर्णांक frame_rate, ret = 0;
+static int ov5640_s_frame_interval(struct v4l2_subdev *sd,
+				   struct v4l2_subdev_frame_interval *fi)
+{
+	struct ov5640_dev *sensor = to_ov5640_dev(sd);
+	const struct ov5640_mode_info *mode;
+	int frame_rate, ret = 0;
 
-	अगर (fi->pad != 0)
-		वापस -EINVAL;
+	if (fi->pad != 0)
+		return -EINVAL;
 
 	mutex_lock(&sensor->lock);
 
-	अगर (sensor->streaming) अणु
+	if (sensor->streaming) {
 		ret = -EBUSY;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	mode = sensor->current_mode;
 
-	frame_rate = ov5640_try_frame_पूर्णांकerval(sensor, &fi->पूर्णांकerval,
+	frame_rate = ov5640_try_frame_interval(sensor, &fi->interval,
 					       mode->hact, mode->vact);
-	अगर (frame_rate < 0) अणु
-		/* Always वापस a valid frame पूर्णांकerval value */
-		fi->पूर्णांकerval = sensor->frame_पूर्णांकerval;
-		जाओ out;
-	पूर्ण
+	if (frame_rate < 0) {
+		/* Always return a valid frame interval value */
+		fi->interval = sensor->frame_interval;
+		goto out;
+	}
 
 	mode = ov5640_find_mode(sensor, frame_rate, mode->hact,
 				mode->vact, true);
-	अगर (!mode) अणु
+	if (!mode) {
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (mode != sensor->current_mode ||
-	    frame_rate != sensor->current_fr) अणु
+	if (mode != sensor->current_mode ||
+	    frame_rate != sensor->current_fr) {
 		sensor->current_fr = frame_rate;
-		sensor->frame_पूर्णांकerval = fi->पूर्णांकerval;
+		sensor->frame_interval = fi->interval;
 		sensor->current_mode = mode;
 		sensor->pending_mode_change = true;
 
-		__v4l2_ctrl_s_ctrl_पूर्णांक64(sensor->ctrls.pixel_rate,
+		__v4l2_ctrl_s_ctrl_int64(sensor->ctrls.pixel_rate,
 					 ov5640_calc_pixel_rate(sensor));
-	पूर्ण
+	}
 out:
 	mutex_unlock(&sensor->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ov5640_क्रमागत_mbus_code(काष्ठा v4l2_subdev *sd,
-				 काष्ठा v4l2_subdev_pad_config *cfg,
-				 काष्ठा v4l2_subdev_mbus_code_क्रमागत *code)
-अणु
-	अगर (code->pad != 0)
-		वापस -EINVAL;
-	अगर (code->index >= ARRAY_SIZE(ov5640_क्रमmats))
-		वापस -EINVAL;
+static int ov5640_enum_mbus_code(struct v4l2_subdev *sd,
+				 struct v4l2_subdev_pad_config *cfg,
+				 struct v4l2_subdev_mbus_code_enum *code)
+{
+	if (code->pad != 0)
+		return -EINVAL;
+	if (code->index >= ARRAY_SIZE(ov5640_formats))
+		return -EINVAL;
 
-	code->code = ov5640_क्रमmats[code->index].code;
-	वापस 0;
-पूर्ण
+	code->code = ov5640_formats[code->index].code;
+	return 0;
+}
 
-अटल पूर्णांक ov5640_s_stream(काष्ठा v4l2_subdev *sd, पूर्णांक enable)
-अणु
-	काष्ठा ov5640_dev *sensor = to_ov5640_dev(sd);
-	पूर्णांक ret = 0;
+static int ov5640_s_stream(struct v4l2_subdev *sd, int enable)
+{
+	struct ov5640_dev *sensor = to_ov5640_dev(sd);
+	int ret = 0;
 
 	mutex_lock(&sensor->lock);
 
-	अगर (sensor->streaming == !enable) अणु
-		अगर (enable && sensor->pending_mode_change) अणु
+	if (sensor->streaming == !enable) {
+		if (enable && sensor->pending_mode_change) {
 			ret = ov5640_set_mode(sensor);
-			अगर (ret)
-				जाओ out;
-		पूर्ण
+			if (ret)
+				goto out;
+		}
 
-		अगर (enable && sensor->pending_fmt_change) अणु
+		if (enable && sensor->pending_fmt_change) {
 			ret = ov5640_set_framefmt(sensor, &sensor->fmt);
-			अगर (ret)
-				जाओ out;
+			if (ret)
+				goto out;
 			sensor->pending_fmt_change = false;
-		पूर्ण
+		}
 
-		अगर (sensor->ep.bus_type == V4L2_MBUS_CSI2_DPHY)
+		if (sensor->ep.bus_type == V4L2_MBUS_CSI2_DPHY)
 			ret = ov5640_set_stream_mipi(sensor, enable);
-		अन्यथा
+		else
 			ret = ov5640_set_stream_dvp(sensor, enable);
 
-		अगर (!ret)
+		if (!ret)
 			sensor->streaming = enable;
-	पूर्ण
+	}
 out:
 	mutex_unlock(&sensor->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा v4l2_subdev_core_ops ov5640_core_ops = अणु
-	.s_घातer = ov5640_s_घातer,
+static const struct v4l2_subdev_core_ops ov5640_core_ops = {
+	.s_power = ov5640_s_power,
 	.log_status = v4l2_ctrl_subdev_log_status,
 	.subscribe_event = v4l2_ctrl_subdev_subscribe_event,
 	.unsubscribe_event = v4l2_event_subdev_unsubscribe,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_video_ops ov5640_video_ops = अणु
-	.g_frame_पूर्णांकerval = ov5640_g_frame_पूर्णांकerval,
-	.s_frame_पूर्णांकerval = ov5640_s_frame_पूर्णांकerval,
+static const struct v4l2_subdev_video_ops ov5640_video_ops = {
+	.g_frame_interval = ov5640_g_frame_interval,
+	.s_frame_interval = ov5640_s_frame_interval,
 	.s_stream = ov5640_s_stream,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_pad_ops ov5640_pad_ops = अणु
-	.क्रमागत_mbus_code = ov5640_क्रमागत_mbus_code,
+static const struct v4l2_subdev_pad_ops ov5640_pad_ops = {
+	.enum_mbus_code = ov5640_enum_mbus_code,
 	.get_fmt = ov5640_get_fmt,
 	.set_fmt = ov5640_set_fmt,
-	.क्रमागत_frame_size = ov5640_क्रमागत_frame_size,
-	.क्रमागत_frame_पूर्णांकerval = ov5640_क्रमागत_frame_पूर्णांकerval,
-पूर्ण;
+	.enum_frame_size = ov5640_enum_frame_size,
+	.enum_frame_interval = ov5640_enum_frame_interval,
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_ops ov5640_subdev_ops = अणु
+static const struct v4l2_subdev_ops ov5640_subdev_ops = {
 	.core = &ov5640_core_ops,
 	.video = &ov5640_video_ops,
 	.pad = &ov5640_pad_ops,
-पूर्ण;
+};
 
-अटल पूर्णांक ov5640_get_regulators(काष्ठा ov5640_dev *sensor)
-अणु
-	पूर्णांक i;
+static int ov5640_get_regulators(struct ov5640_dev *sensor)
+{
+	int i;
 
-	क्रम (i = 0; i < OV5640_NUM_SUPPLIES; i++)
+	for (i = 0; i < OV5640_NUM_SUPPLIES; i++)
 		sensor->supplies[i].supply = ov5640_supply_name[i];
 
-	वापस devm_regulator_bulk_get(&sensor->i2c_client->dev,
+	return devm_regulator_bulk_get(&sensor->i2c_client->dev,
 				       OV5640_NUM_SUPPLIES,
 				       sensor->supplies);
-पूर्ण
+}
 
-अटल पूर्णांक ov5640_check_chip_id(काष्ठा ov5640_dev *sensor)
-अणु
-	काष्ठा i2c_client *client = sensor->i2c_client;
-	पूर्णांक ret = 0;
+static int ov5640_check_chip_id(struct ov5640_dev *sensor)
+{
+	struct i2c_client *client = sensor->i2c_client;
+	int ret = 0;
 	u16 chip_id;
 
-	ret = ov5640_set_घातer_on(sensor);
-	अगर (ret)
-		वापस ret;
+	ret = ov5640_set_power_on(sensor);
+	if (ret)
+		return ret;
 
-	ret = ov5640_पढ़ो_reg16(sensor, OV5640_REG_CHIP_ID, &chip_id);
-	अगर (ret) अणु
+	ret = ov5640_read_reg16(sensor, OV5640_REG_CHIP_ID, &chip_id);
+	if (ret) {
 		dev_err(&client->dev, "%s: failed to read chip identifier\n",
 			__func__);
-		जाओ घातer_off;
-	पूर्ण
+		goto power_off;
+	}
 
-	अगर (chip_id != 0x5640) अणु
+	if (chip_id != 0x5640) {
 		dev_err(&client->dev, "%s: wrong chip identifier, expected 0x5640, got 0x%x\n",
 			__func__, chip_id);
 		ret = -ENXIO;
-	पूर्ण
+	}
 
-घातer_off:
-	ov5640_set_घातer_off(sensor);
-	वापस ret;
-पूर्ण
+power_off:
+	ov5640_set_power_off(sensor);
+	return ret;
+}
 
-अटल पूर्णांक ov5640_probe(काष्ठा i2c_client *client)
-अणु
-	काष्ठा device *dev = &client->dev;
-	काष्ठा fwnode_handle *endpoपूर्णांक;
-	काष्ठा ov5640_dev *sensor;
-	काष्ठा v4l2_mbus_framefmt *fmt;
+static int ov5640_probe(struct i2c_client *client)
+{
+	struct device *dev = &client->dev;
+	struct fwnode_handle *endpoint;
+	struct ov5640_dev *sensor;
+	struct v4l2_mbus_framefmt *fmt;
 	u32 rotation;
-	पूर्णांक ret;
+	int ret;
 
-	sensor = devm_kzalloc(dev, माप(*sensor), GFP_KERNEL);
-	अगर (!sensor)
-		वापस -ENOMEM;
+	sensor = devm_kzalloc(dev, sizeof(*sensor), GFP_KERNEL);
+	if (!sensor)
+		return -ENOMEM;
 
 	sensor->i2c_client = client;
 
 	/*
-	 * शेष init sequence initialize sensor to
+	 * default init sequence initialize sensor to
 	 * YUV422 UYVY VGA@30fps
 	 */
 	fmt = &sensor->fmt;
@@ -3066,8 +3065,8 @@ out:
 	fmt->width = 640;
 	fmt->height = 480;
 	fmt->field = V4L2_FIELD_NONE;
-	sensor->frame_पूर्णांकerval.numerator = 1;
-	sensor->frame_पूर्णांकerval.denominator = ov5640_framerates[OV5640_30_FPS];
+	sensor->frame_interval.numerator = 1;
+	sensor->frame_interval.denominator = ov5640_framerates[OV5640_30_FPS];
 	sensor->current_fr = OV5640_30_FPS;
 	sensor->current_mode =
 		&ov5640_mode_data[OV5640_MODE_VGA_640_480];
@@ -3076,68 +3075,68 @@ out:
 	sensor->ae_target = 52;
 
 	/* optional indication of physical rotation of sensor */
-	ret = fwnode_property_पढ़ो_u32(dev_fwnode(&client->dev), "rotation",
+	ret = fwnode_property_read_u32(dev_fwnode(&client->dev), "rotation",
 				       &rotation);
-	अगर (!ret) अणु
-		चयन (rotation) अणु
-		हाल 180:
-			sensor->upside_करोwn = true;
+	if (!ret) {
+		switch (rotation) {
+		case 180:
+			sensor->upside_down = true;
 			fallthrough;
-		हाल 0:
-			अवरोध;
-		शेष:
+		case 0:
+			break;
+		default:
 			dev_warn(dev, "%u degrees rotation is not supported, ignoring...\n",
 				 rotation);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	endpoपूर्णांक = fwnode_graph_get_next_endpoपूर्णांक(dev_fwnode(&client->dev),
-						  शून्य);
-	अगर (!endpoपूर्णांक) अणु
+	endpoint = fwnode_graph_get_next_endpoint(dev_fwnode(&client->dev),
+						  NULL);
+	if (!endpoint) {
 		dev_err(dev, "endpoint node not found\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ret = v4l2_fwnode_endpoपूर्णांक_parse(endpoपूर्णांक, &sensor->ep);
-	fwnode_handle_put(endpoपूर्णांक);
-	अगर (ret) अणु
+	ret = v4l2_fwnode_endpoint_parse(endpoint, &sensor->ep);
+	fwnode_handle_put(endpoint);
+	if (ret) {
 		dev_err(dev, "Could not parse endpoint\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (sensor->ep.bus_type != V4L2_MBUS_PARALLEL &&
+	if (sensor->ep.bus_type != V4L2_MBUS_PARALLEL &&
 	    sensor->ep.bus_type != V4L2_MBUS_CSI2_DPHY &&
-	    sensor->ep.bus_type != V4L2_MBUS_BT656) अणु
+	    sensor->ep.bus_type != V4L2_MBUS_BT656) {
 		dev_err(dev, "Unsupported bus type %d\n", sensor->ep.bus_type);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* get प्रणाली घड़ी (xclk) */
+	/* get system clock (xclk) */
 	sensor->xclk = devm_clk_get(dev, "xclk");
-	अगर (IS_ERR(sensor->xclk)) अणु
+	if (IS_ERR(sensor->xclk)) {
 		dev_err(dev, "failed to get xclk\n");
-		वापस PTR_ERR(sensor->xclk);
-	पूर्ण
+		return PTR_ERR(sensor->xclk);
+	}
 
 	sensor->xclk_freq = clk_get_rate(sensor->xclk);
-	अगर (sensor->xclk_freq < OV5640_XCLK_MIN ||
-	    sensor->xclk_freq > OV5640_XCLK_MAX) अणु
+	if (sensor->xclk_freq < OV5640_XCLK_MIN ||
+	    sensor->xclk_freq > OV5640_XCLK_MAX) {
 		dev_err(dev, "xclk frequency out of range: %d Hz\n",
 			sensor->xclk_freq);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* request optional घातer करोwn pin */
+	/* request optional power down pin */
 	sensor->pwdn_gpio = devm_gpiod_get_optional(dev, "powerdown",
 						    GPIOD_OUT_HIGH);
-	अगर (IS_ERR(sensor->pwdn_gpio))
-		वापस PTR_ERR(sensor->pwdn_gpio);
+	if (IS_ERR(sensor->pwdn_gpio))
+		return PTR_ERR(sensor->pwdn_gpio);
 
 	/* request optional reset pin */
 	sensor->reset_gpio = devm_gpiod_get_optional(dev, "reset",
 						     GPIOD_OUT_HIGH);
-	अगर (IS_ERR(sensor->reset_gpio))
-		वापस PTR_ERR(sensor->reset_gpio);
+	if (IS_ERR(sensor->reset_gpio))
+		return PTR_ERR(sensor->reset_gpio);
 
 	v4l2_i2c_subdev_init(&sensor->sd, client, &ov5640_subdev_ops);
 
@@ -3146,71 +3145,71 @@ out:
 	sensor->pad.flags = MEDIA_PAD_FL_SOURCE;
 	sensor->sd.entity.function = MEDIA_ENT_F_CAM_SENSOR;
 	ret = media_entity_pads_init(&sensor->sd.entity, 1, &sensor->pad);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = ov5640_get_regulators(sensor);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	mutex_init(&sensor->lock);
 
 	ret = ov5640_check_chip_id(sensor);
-	अगर (ret)
-		जाओ entity_cleanup;
+	if (ret)
+		goto entity_cleanup;
 
 	ret = ov5640_init_controls(sensor);
-	अगर (ret)
-		जाओ entity_cleanup;
+	if (ret)
+		goto entity_cleanup;
 
-	ret = v4l2_async_रेजिस्टर_subdev_sensor(&sensor->sd);
-	अगर (ret)
-		जाओ मुक्त_ctrls;
+	ret = v4l2_async_register_subdev_sensor(&sensor->sd);
+	if (ret)
+		goto free_ctrls;
 
-	वापस 0;
+	return 0;
 
-मुक्त_ctrls:
-	v4l2_ctrl_handler_मुक्त(&sensor->ctrls.handler);
+free_ctrls:
+	v4l2_ctrl_handler_free(&sensor->ctrls.handler);
 entity_cleanup:
 	media_entity_cleanup(&sensor->sd.entity);
 	mutex_destroy(&sensor->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ov5640_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा v4l2_subdev *sd = i2c_get_clientdata(client);
-	काष्ठा ov5640_dev *sensor = to_ov5640_dev(sd);
+static int ov5640_remove(struct i2c_client *client)
+{
+	struct v4l2_subdev *sd = i2c_get_clientdata(client);
+	struct ov5640_dev *sensor = to_ov5640_dev(sd);
 
-	v4l2_async_unरेजिस्टर_subdev(&sensor->sd);
+	v4l2_async_unregister_subdev(&sensor->sd);
 	media_entity_cleanup(&sensor->sd.entity);
-	v4l2_ctrl_handler_मुक्त(&sensor->ctrls.handler);
+	v4l2_ctrl_handler_free(&sensor->ctrls.handler);
 	mutex_destroy(&sensor->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा i2c_device_id ov5640_id[] = अणु
-	अणु"ov5640", 0पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct i2c_device_id ov5640_id[] = {
+	{"ov5640", 0},
+	{},
+};
 MODULE_DEVICE_TABLE(i2c, ov5640_id);
 
-अटल स्थिर काष्ठा of_device_id ov5640_dt_ids[] = अणु
-	अणु .compatible = "ovti,ov5640" पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+static const struct of_device_id ov5640_dt_ids[] = {
+	{ .compatible = "ovti,ov5640" },
+	{ /* sentinel */ }
+};
 MODULE_DEVICE_TABLE(of, ov5640_dt_ids);
 
-अटल काष्ठा i2c_driver ov5640_i2c_driver = अणु
-	.driver = अणु
+static struct i2c_driver ov5640_i2c_driver = {
+	.driver = {
 		.name  = "ov5640",
 		.of_match_table	= ov5640_dt_ids,
-	पूर्ण,
+	},
 	.id_table = ov5640_id,
 	.probe_new = ov5640_probe,
-	.हटाओ   = ov5640_हटाओ,
-पूर्ण;
+	.remove   = ov5640_remove,
+};
 
 module_i2c_driver(ov5640_i2c_driver);
 

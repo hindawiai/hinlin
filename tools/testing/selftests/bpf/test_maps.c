@@ -1,319 +1,318 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Testsuite क्रम eBPF maps
+ * Testsuite for eBPF maps
  *
  * Copyright (c) 2014 PLUMgrid, http://plumgrid.com
  * Copyright (c) 2016 Facebook
  */
 
-#समावेश <मानकपन.स>
-#समावेश <unistd.h>
-#समावेश <त्रुटिसं.स>
-#समावेश <माला.स>
-#समावेश <निश्चित.स>
-#समावेश <मानककोष.स>
-#समावेश <समय.स>
+#include <stdio.h>
+#include <unistd.h>
+#include <errno.h>
+#include <string.h>
+#include <assert.h>
+#include <stdlib.h>
+#include <time.h>
 
-#समावेश <sys/रुको.h>
-#समावेश <sys/socket.h>
-#समावेश <netinet/in.h>
-#समावेश <linux/bpf.h>
+#include <sys/wait.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <linux/bpf.h>
 
-#समावेश <bpf/bpf.h>
-#समावेश <bpf/libbpf.h>
+#include <bpf/bpf.h>
+#include <bpf/libbpf.h>
 
-#समावेश "bpf_util.h"
-#समावेश "bpf_rlimit.h"
-#समावेश "test_maps.h"
+#include "bpf_util.h"
+#include "bpf_rlimit.h"
+#include "test_maps.h"
 
-#अगर_अघोषित ENOTSUPP
-#घोषणा ENOTSUPP 524
-#पूर्ण_अगर
+#ifndef ENOTSUPP
+#define ENOTSUPP 524
+#endif
 
-अटल पूर्णांक skips;
+static int skips;
 
-अटल पूर्णांक map_flags;
+static int map_flags;
 
-अटल व्योम test_hashmap(अचिन्हित पूर्णांक task, व्योम *data)
-अणु
-	दीर्घ दीर्घ key, next_key, first_key, value;
-	पूर्णांक fd;
+static void test_hashmap(unsigned int task, void *data)
+{
+	long long key, next_key, first_key, value;
+	int fd;
 
-	fd = bpf_create_map(BPF_MAP_TYPE_HASH, माप(key), माप(value),
+	fd = bpf_create_map(BPF_MAP_TYPE_HASH, sizeof(key), sizeof(value),
 			    2, map_flags);
-	अगर (fd < 0) अणु
-		म_लिखो("Failed to create hashmap '%s'!\n", म_त्रुटि(त्रुटि_सं));
-		निकास(1);
-	पूर्ण
+	if (fd < 0) {
+		printf("Failed to create hashmap '%s'!\n", strerror(errno));
+		exit(1);
+	}
 
 	key = 1;
 	value = 1234;
 	/* Insert key=1 element. */
-	निश्चित(bpf_map_update_elem(fd, &key, &value, BPF_ANY) == 0);
+	assert(bpf_map_update_elem(fd, &key, &value, BPF_ANY) == 0);
 
 	value = 0;
-	/* BPF_NOEXIST means add new element अगर it करोesn't exist. */
-	निश्चित(bpf_map_update_elem(fd, &key, &value, BPF_NOEXIST) == -1 &&
-	       /* key=1 alपढ़ोy exists. */
-	       त्रुटि_सं == EEXIST);
+	/* BPF_NOEXIST means add new element if it doesn't exist. */
+	assert(bpf_map_update_elem(fd, &key, &value, BPF_NOEXIST) == -1 &&
+	       /* key=1 already exists. */
+	       errno == EEXIST);
 
 	/* -1 is an invalid flag. */
-	निश्चित(bpf_map_update_elem(fd, &key, &value, -1) == -1 &&
-	       त्रुटि_सं == EINVAL);
+	assert(bpf_map_update_elem(fd, &key, &value, -1) == -1 &&
+	       errno == EINVAL);
 
 	/* Check that key=1 can be found. */
-	निश्चित(bpf_map_lookup_elem(fd, &key, &value) == 0 && value == 1234);
+	assert(bpf_map_lookup_elem(fd, &key, &value) == 0 && value == 1234);
 
 	key = 2;
 	/* Check that key=2 is not found. */
-	निश्चित(bpf_map_lookup_elem(fd, &key, &value) == -1 && त्रुटि_सं == ENOENT);
+	assert(bpf_map_lookup_elem(fd, &key, &value) == -1 && errno == ENOENT);
 
 	/* BPF_EXIST means update existing element. */
-	निश्चित(bpf_map_update_elem(fd, &key, &value, BPF_EXIST) == -1 &&
+	assert(bpf_map_update_elem(fd, &key, &value, BPF_EXIST) == -1 &&
 	       /* key=2 is not there. */
-	       त्रुटि_सं == ENOENT);
+	       errno == ENOENT);
 
 	/* Insert key=2 element. */
-	निश्चित(bpf_map_update_elem(fd, &key, &value, BPF_NOEXIST) == 0);
+	assert(bpf_map_update_elem(fd, &key, &value, BPF_NOEXIST) == 0);
 
 	/* key=1 and key=2 were inserted, check that key=0 cannot be
 	 * inserted due to max_entries limit.
 	 */
 	key = 0;
-	निश्चित(bpf_map_update_elem(fd, &key, &value, BPF_NOEXIST) == -1 &&
-	       त्रुटि_सं == E2BIG);
+	assert(bpf_map_update_elem(fd, &key, &value, BPF_NOEXIST) == -1 &&
+	       errno == E2BIG);
 
 	/* Update existing element, though the map is full. */
 	key = 1;
-	निश्चित(bpf_map_update_elem(fd, &key, &value, BPF_EXIST) == 0);
+	assert(bpf_map_update_elem(fd, &key, &value, BPF_EXIST) == 0);
 	key = 2;
-	निश्चित(bpf_map_update_elem(fd, &key, &value, BPF_ANY) == 0);
+	assert(bpf_map_update_elem(fd, &key, &value, BPF_ANY) == 0);
 	key = 3;
-	निश्चित(bpf_map_update_elem(fd, &key, &value, BPF_NOEXIST) == -1 &&
-	       त्रुटि_सं == E2BIG);
+	assert(bpf_map_update_elem(fd, &key, &value, BPF_NOEXIST) == -1 &&
+	       errno == E2BIG);
 
-	/* Check that key = 0 करोesn't exist. */
+	/* Check that key = 0 doesn't exist. */
 	key = 0;
-	निश्चित(bpf_map_delete_elem(fd, &key) == -1 && त्रुटि_सं == ENOENT);
+	assert(bpf_map_delete_elem(fd, &key) == -1 && errno == ENOENT);
 
 	/* Iterate over two elements. */
-	निश्चित(bpf_map_get_next_key(fd, शून्य, &first_key) == 0 &&
+	assert(bpf_map_get_next_key(fd, NULL, &first_key) == 0 &&
 	       (first_key == 1 || first_key == 2));
-	निश्चित(bpf_map_get_next_key(fd, &key, &next_key) == 0 &&
+	assert(bpf_map_get_next_key(fd, &key, &next_key) == 0 &&
 	       (next_key == first_key));
-	निश्चित(bpf_map_get_next_key(fd, &next_key, &next_key) == 0 &&
+	assert(bpf_map_get_next_key(fd, &next_key, &next_key) == 0 &&
 	       (next_key == 1 || next_key == 2) &&
 	       (next_key != first_key));
-	निश्चित(bpf_map_get_next_key(fd, &next_key, &next_key) == -1 &&
-	       त्रुटि_सं == ENOENT);
+	assert(bpf_map_get_next_key(fd, &next_key, &next_key) == -1 &&
+	       errno == ENOENT);
 
 	/* Delete both elements. */
 	key = 1;
-	निश्चित(bpf_map_delete_elem(fd, &key) == 0);
+	assert(bpf_map_delete_elem(fd, &key) == 0);
 	key = 2;
-	निश्चित(bpf_map_delete_elem(fd, &key) == 0);
-	निश्चित(bpf_map_delete_elem(fd, &key) == -1 && त्रुटि_सं == ENOENT);
+	assert(bpf_map_delete_elem(fd, &key) == 0);
+	assert(bpf_map_delete_elem(fd, &key) == -1 && errno == ENOENT);
 
 	key = 0;
 	/* Check that map is empty. */
-	निश्चित(bpf_map_get_next_key(fd, शून्य, &next_key) == -1 &&
-	       त्रुटि_सं == ENOENT);
-	निश्चित(bpf_map_get_next_key(fd, &key, &next_key) == -1 &&
-	       त्रुटि_सं == ENOENT);
+	assert(bpf_map_get_next_key(fd, NULL, &next_key) == -1 &&
+	       errno == ENOENT);
+	assert(bpf_map_get_next_key(fd, &key, &next_key) == -1 &&
+	       errno == ENOENT);
 
-	बंद(fd);
-पूर्ण
+	close(fd);
+}
 
-अटल व्योम test_hashmap_sizes(अचिन्हित पूर्णांक task, व्योम *data)
-अणु
-	पूर्णांक fd, i, j;
+static void test_hashmap_sizes(unsigned int task, void *data)
+{
+	int fd, i, j;
 
-	क्रम (i = 1; i <= 512; i <<= 1)
-		क्रम (j = 1; j <= 1 << 18; j <<= 1) अणु
+	for (i = 1; i <= 512; i <<= 1)
+		for (j = 1; j <= 1 << 18; j <<= 1) {
 			fd = bpf_create_map(BPF_MAP_TYPE_HASH, i, j,
 					    2, map_flags);
-			अगर (fd < 0) अणु
-				अगर (त्रुटि_सं == ENOMEM)
-					वापस;
-				म_लिखो("Failed to create hashmap key=%d value=%d '%s'\n",
-				       i, j, म_त्रुटि(त्रुटि_सं));
-				निकास(1);
-			पूर्ण
-			बंद(fd);
-			usleep(10); /* give kernel समय to destroy */
-		पूर्ण
-पूर्ण
+			if (fd < 0) {
+				if (errno == ENOMEM)
+					return;
+				printf("Failed to create hashmap key=%d value=%d '%s'\n",
+				       i, j, strerror(errno));
+				exit(1);
+			}
+			close(fd);
+			usleep(10); /* give kernel time to destroy */
+		}
+}
 
-अटल व्योम test_hashmap_percpu(अचिन्हित पूर्णांक task, व्योम *data)
-अणु
-	अचिन्हित पूर्णांक nr_cpus = bpf_num_possible_cpus();
-	BPF_DECLARE_PERCPU(दीर्घ, value);
-	दीर्घ दीर्घ key, next_key, first_key;
-	पूर्णांक expected_key_mask = 0;
-	पूर्णांक fd, i;
+static void test_hashmap_percpu(unsigned int task, void *data)
+{
+	unsigned int nr_cpus = bpf_num_possible_cpus();
+	BPF_DECLARE_PERCPU(long, value);
+	long long key, next_key, first_key;
+	int expected_key_mask = 0;
+	int fd, i;
 
-	fd = bpf_create_map(BPF_MAP_TYPE_PERCPU_HASH, माप(key),
-			    माप(bpf_percpu(value, 0)), 2, map_flags);
-	अगर (fd < 0) अणु
-		म_लिखो("Failed to create hashmap '%s'!\n", म_त्रुटि(त्रुटि_सं));
-		निकास(1);
-	पूर्ण
+	fd = bpf_create_map(BPF_MAP_TYPE_PERCPU_HASH, sizeof(key),
+			    sizeof(bpf_percpu(value, 0)), 2, map_flags);
+	if (fd < 0) {
+		printf("Failed to create hashmap '%s'!\n", strerror(errno));
+		exit(1);
+	}
 
-	क्रम (i = 0; i < nr_cpus; i++)
+	for (i = 0; i < nr_cpus; i++)
 		bpf_percpu(value, i) = i + 100;
 
 	key = 1;
 	/* Insert key=1 element. */
-	निश्चित(!(expected_key_mask & key));
-	निश्चित(bpf_map_update_elem(fd, &key, value, BPF_ANY) == 0);
+	assert(!(expected_key_mask & key));
+	assert(bpf_map_update_elem(fd, &key, value, BPF_ANY) == 0);
 	expected_key_mask |= key;
 
-	/* BPF_NOEXIST means add new element अगर it करोesn't exist. */
-	निश्चित(bpf_map_update_elem(fd, &key, value, BPF_NOEXIST) == -1 &&
-	       /* key=1 alपढ़ोy exists. */
-	       त्रुटि_सं == EEXIST);
+	/* BPF_NOEXIST means add new element if it doesn't exist. */
+	assert(bpf_map_update_elem(fd, &key, value, BPF_NOEXIST) == -1 &&
+	       /* key=1 already exists. */
+	       errno == EEXIST);
 
 	/* -1 is an invalid flag. */
-	निश्चित(bpf_map_update_elem(fd, &key, value, -1) == -1 &&
-	       त्रुटि_सं == EINVAL);
+	assert(bpf_map_update_elem(fd, &key, value, -1) == -1 &&
+	       errno == EINVAL);
 
-	/* Check that key=1 can be found. Value could be 0 अगर the lookup
-	 * was run from a dअगरferent CPU.
+	/* Check that key=1 can be found. Value could be 0 if the lookup
+	 * was run from a different CPU.
 	 */
 	bpf_percpu(value, 0) = 1;
-	निश्चित(bpf_map_lookup_elem(fd, &key, value) == 0 &&
+	assert(bpf_map_lookup_elem(fd, &key, value) == 0 &&
 	       bpf_percpu(value, 0) == 100);
 
 	key = 2;
 	/* Check that key=2 is not found. */
-	निश्चित(bpf_map_lookup_elem(fd, &key, value) == -1 && त्रुटि_सं == ENOENT);
+	assert(bpf_map_lookup_elem(fd, &key, value) == -1 && errno == ENOENT);
 
 	/* BPF_EXIST means update existing element. */
-	निश्चित(bpf_map_update_elem(fd, &key, value, BPF_EXIST) == -1 &&
+	assert(bpf_map_update_elem(fd, &key, value, BPF_EXIST) == -1 &&
 	       /* key=2 is not there. */
-	       त्रुटि_सं == ENOENT);
+	       errno == ENOENT);
 
 	/* Insert key=2 element. */
-	निश्चित(!(expected_key_mask & key));
-	निश्चित(bpf_map_update_elem(fd, &key, value, BPF_NOEXIST) == 0);
+	assert(!(expected_key_mask & key));
+	assert(bpf_map_update_elem(fd, &key, value, BPF_NOEXIST) == 0);
 	expected_key_mask |= key;
 
 	/* key=1 and key=2 were inserted, check that key=0 cannot be
 	 * inserted due to max_entries limit.
 	 */
 	key = 0;
-	निश्चित(bpf_map_update_elem(fd, &key, value, BPF_NOEXIST) == -1 &&
-	       त्रुटि_सं == E2BIG);
+	assert(bpf_map_update_elem(fd, &key, value, BPF_NOEXIST) == -1 &&
+	       errno == E2BIG);
 
-	/* Check that key = 0 करोesn't exist. */
-	निश्चित(bpf_map_delete_elem(fd, &key) == -1 && त्रुटि_सं == ENOENT);
+	/* Check that key = 0 doesn't exist. */
+	assert(bpf_map_delete_elem(fd, &key) == -1 && errno == ENOENT);
 
 	/* Iterate over two elements. */
-	निश्चित(bpf_map_get_next_key(fd, शून्य, &first_key) == 0 &&
+	assert(bpf_map_get_next_key(fd, NULL, &first_key) == 0 &&
 	       ((expected_key_mask & first_key) == first_key));
-	जबतक (!bpf_map_get_next_key(fd, &key, &next_key)) अणु
-		अगर (first_key) अणु
-			निश्चित(next_key == first_key);
+	while (!bpf_map_get_next_key(fd, &key, &next_key)) {
+		if (first_key) {
+			assert(next_key == first_key);
 			first_key = 0;
-		पूर्ण
-		निश्चित((expected_key_mask & next_key) == next_key);
+		}
+		assert((expected_key_mask & next_key) == next_key);
 		expected_key_mask &= ~next_key;
 
-		निश्चित(bpf_map_lookup_elem(fd, &next_key, value) == 0);
+		assert(bpf_map_lookup_elem(fd, &next_key, value) == 0);
 
-		क्रम (i = 0; i < nr_cpus; i++)
-			निश्चित(bpf_percpu(value, i) == i + 100);
+		for (i = 0; i < nr_cpus; i++)
+			assert(bpf_percpu(value, i) == i + 100);
 
 		key = next_key;
-	पूर्ण
-	निश्चित(त्रुटि_सं == ENOENT);
+	}
+	assert(errno == ENOENT);
 
 	/* Update with BPF_EXIST. */
 	key = 1;
-	निश्चित(bpf_map_update_elem(fd, &key, value, BPF_EXIST) == 0);
+	assert(bpf_map_update_elem(fd, &key, value, BPF_EXIST) == 0);
 
 	/* Delete both elements. */
 	key = 1;
-	निश्चित(bpf_map_delete_elem(fd, &key) == 0);
+	assert(bpf_map_delete_elem(fd, &key) == 0);
 	key = 2;
-	निश्चित(bpf_map_delete_elem(fd, &key) == 0);
-	निश्चित(bpf_map_delete_elem(fd, &key) == -1 && त्रुटि_सं == ENOENT);
+	assert(bpf_map_delete_elem(fd, &key) == 0);
+	assert(bpf_map_delete_elem(fd, &key) == -1 && errno == ENOENT);
 
 	key = 0;
 	/* Check that map is empty. */
-	निश्चित(bpf_map_get_next_key(fd, शून्य, &next_key) == -1 &&
-	       त्रुटि_सं == ENOENT);
-	निश्चित(bpf_map_get_next_key(fd, &key, &next_key) == -1 &&
-	       त्रुटि_सं == ENOENT);
+	assert(bpf_map_get_next_key(fd, NULL, &next_key) == -1 &&
+	       errno == ENOENT);
+	assert(bpf_map_get_next_key(fd, &key, &next_key) == -1 &&
+	       errno == ENOENT);
 
-	बंद(fd);
-पूर्ण
+	close(fd);
+}
 
-अटल पूर्णांक helper_fill_hashmap(पूर्णांक max_entries)
-अणु
-	पूर्णांक i, fd, ret;
-	दीर्घ दीर्घ key, value;
+static int helper_fill_hashmap(int max_entries)
+{
+	int i, fd, ret;
+	long long key, value;
 
-	fd = bpf_create_map(BPF_MAP_TYPE_HASH, माप(key), माप(value),
+	fd = bpf_create_map(BPF_MAP_TYPE_HASH, sizeof(key), sizeof(value),
 			    max_entries, map_flags);
 	CHECK(fd < 0,
 	      "failed to create hashmap",
-	      "err: %s, flags: 0x%x\n", म_त्रुटि(त्रुटि_सं), map_flags);
+	      "err: %s, flags: 0x%x\n", strerror(errno), map_flags);
 
-	क्रम (i = 0; i < max_entries; i++) अणु
+	for (i = 0; i < max_entries; i++) {
 		key = i; value = key;
 		ret = bpf_map_update_elem(fd, &key, &value, BPF_NOEXIST);
 		CHECK(ret != 0,
 		      "can't update hashmap",
-		      "err: %s\n", म_त्रुटि(ret));
-	पूर्ण
+		      "err: %s\n", strerror(ret));
+	}
 
-	वापस fd;
-पूर्ण
+	return fd;
+}
 
-अटल व्योम test_hashmap_walk(अचिन्हित पूर्णांक task, व्योम *data)
-अणु
-	पूर्णांक fd, i, max_entries = 1000;
-	दीर्घ दीर्घ key, value, next_key;
+static void test_hashmap_walk(unsigned int task, void *data)
+{
+	int fd, i, max_entries = 1000;
+	long long key, value, next_key;
 	bool next_key_valid = true;
 
 	fd = helper_fill_hashmap(max_entries);
 
-	क्रम (i = 0; bpf_map_get_next_key(fd, !i ? शून्य : &key,
-					 &next_key) == 0; i++) अणु
+	for (i = 0; bpf_map_get_next_key(fd, !i ? NULL : &key,
+					 &next_key) == 0; i++) {
 		key = next_key;
-		निश्चित(bpf_map_lookup_elem(fd, &key, &value) == 0);
-	पूर्ण
+		assert(bpf_map_lookup_elem(fd, &key, &value) == 0);
+	}
 
-	निश्चित(i == max_entries);
+	assert(i == max_entries);
 
-	निश्चित(bpf_map_get_next_key(fd, शून्य, &key) == 0);
-	क्रम (i = 0; next_key_valid; i++) अणु
+	assert(bpf_map_get_next_key(fd, NULL, &key) == 0);
+	for (i = 0; next_key_valid; i++) {
 		next_key_valid = bpf_map_get_next_key(fd, &key, &next_key) == 0;
-		निश्चित(bpf_map_lookup_elem(fd, &key, &value) == 0);
+		assert(bpf_map_lookup_elem(fd, &key, &value) == 0);
 		value++;
-		निश्चित(bpf_map_update_elem(fd, &key, &value, BPF_EXIST) == 0);
+		assert(bpf_map_update_elem(fd, &key, &value, BPF_EXIST) == 0);
 		key = next_key;
-	पूर्ण
+	}
 
-	निश्चित(i == max_entries);
+	assert(i == max_entries);
 
-	क्रम (i = 0; bpf_map_get_next_key(fd, !i ? शून्य : &key,
-					 &next_key) == 0; i++) अणु
+	for (i = 0; bpf_map_get_next_key(fd, !i ? NULL : &key,
+					 &next_key) == 0; i++) {
 		key = next_key;
-		निश्चित(bpf_map_lookup_elem(fd, &key, &value) == 0);
-		निश्चित(value - 1 == key);
-	पूर्ण
+		assert(bpf_map_lookup_elem(fd, &key, &value) == 0);
+		assert(value - 1 == key);
+	}
 
-	निश्चित(i == max_entries);
-	बंद(fd);
-पूर्ण
+	assert(i == max_entries);
+	close(fd);
+}
 
-अटल व्योम test_hashmap_zero_seed(व्योम)
-अणु
-	पूर्णांक i, first, second, old_flags;
-	दीर्घ दीर्घ key, next_first, next_second;
+static void test_hashmap_zero_seed(void)
+{
+	int i, first, second, old_flags;
+	long long key, next_first, next_second;
 
 	old_flags = map_flags;
 	map_flags |= BPF_F_ZERO_SEED;
@@ -321,11 +320,11 @@
 	first = helper_fill_hashmap(3);
 	second = helper_fill_hashmap(3);
 
-	क्रम (i = 0; ; i++) अणु
-		व्योम *key_ptr = !i ? शून्य : &key;
+	for (i = 0; ; i++) {
+		void *key_ptr = !i ? NULL : &key;
 
-		अगर (bpf_map_get_next_key(first, key_ptr, &next_first) != 0)
-			अवरोध;
+		if (bpf_map_get_next_key(first, key_ptr, &next_first) != 0)
+			break;
 
 		CHECK(bpf_map_get_next_key(second, key_ptr, &next_second) != 0,
 		      "next_key for second map must succeed",
@@ -336,1051 +335,1051 @@
 		      next_first, next_second);
 
 		key = next_first;
-	पूर्ण
+	}
 
 	map_flags = old_flags;
-	बंद(first);
-	बंद(second);
-पूर्ण
+	close(first);
+	close(second);
+}
 
-अटल व्योम test_arraymap(अचिन्हित पूर्णांक task, व्योम *data)
-अणु
-	पूर्णांक key, next_key, fd;
-	दीर्घ दीर्घ value;
+static void test_arraymap(unsigned int task, void *data)
+{
+	int key, next_key, fd;
+	long long value;
 
-	fd = bpf_create_map(BPF_MAP_TYPE_ARRAY, माप(key), माप(value),
+	fd = bpf_create_map(BPF_MAP_TYPE_ARRAY, sizeof(key), sizeof(value),
 			    2, 0);
-	अगर (fd < 0) अणु
-		म_लिखो("Failed to create arraymap '%s'!\n", म_त्रुटि(त्रुटि_सं));
-		निकास(1);
-	पूर्ण
+	if (fd < 0) {
+		printf("Failed to create arraymap '%s'!\n", strerror(errno));
+		exit(1);
+	}
 
 	key = 1;
 	value = 1234;
 	/* Insert key=1 element. */
-	निश्चित(bpf_map_update_elem(fd, &key, &value, BPF_ANY) == 0);
+	assert(bpf_map_update_elem(fd, &key, &value, BPF_ANY) == 0);
 
 	value = 0;
-	निश्चित(bpf_map_update_elem(fd, &key, &value, BPF_NOEXIST) == -1 &&
-	       त्रुटि_सं == EEXIST);
+	assert(bpf_map_update_elem(fd, &key, &value, BPF_NOEXIST) == -1 &&
+	       errno == EEXIST);
 
 	/* Check that key=1 can be found. */
-	निश्चित(bpf_map_lookup_elem(fd, &key, &value) == 0 && value == 1234);
+	assert(bpf_map_lookup_elem(fd, &key, &value) == 0 && value == 1234);
 
 	key = 0;
 	/* Check that key=0 is also found and zero initialized. */
-	निश्चित(bpf_map_lookup_elem(fd, &key, &value) == 0 && value == 0);
+	assert(bpf_map_lookup_elem(fd, &key, &value) == 0 && value == 0);
 
 	/* key=0 and key=1 were inserted, check that key=2 cannot be inserted
 	 * due to max_entries limit.
 	 */
 	key = 2;
-	निश्चित(bpf_map_update_elem(fd, &key, &value, BPF_EXIST) == -1 &&
-	       त्रुटि_सं == E2BIG);
+	assert(bpf_map_update_elem(fd, &key, &value, BPF_EXIST) == -1 &&
+	       errno == E2BIG);
 
-	/* Check that key = 2 करोesn't exist. */
-	निश्चित(bpf_map_lookup_elem(fd, &key, &value) == -1 && त्रुटि_सं == ENOENT);
+	/* Check that key = 2 doesn't exist. */
+	assert(bpf_map_lookup_elem(fd, &key, &value) == -1 && errno == ENOENT);
 
 	/* Iterate over two elements. */
-	निश्चित(bpf_map_get_next_key(fd, शून्य, &next_key) == 0 &&
+	assert(bpf_map_get_next_key(fd, NULL, &next_key) == 0 &&
 	       next_key == 0);
-	निश्चित(bpf_map_get_next_key(fd, &key, &next_key) == 0 &&
+	assert(bpf_map_get_next_key(fd, &key, &next_key) == 0 &&
 	       next_key == 0);
-	निश्चित(bpf_map_get_next_key(fd, &next_key, &next_key) == 0 &&
+	assert(bpf_map_get_next_key(fd, &next_key, &next_key) == 0 &&
 	       next_key == 1);
-	निश्चित(bpf_map_get_next_key(fd, &next_key, &next_key) == -1 &&
-	       त्रुटि_सं == ENOENT);
+	assert(bpf_map_get_next_key(fd, &next_key, &next_key) == -1 &&
+	       errno == ENOENT);
 
 	/* Delete shouldn't succeed. */
 	key = 1;
-	निश्चित(bpf_map_delete_elem(fd, &key) == -1 && त्रुटि_सं == EINVAL);
+	assert(bpf_map_delete_elem(fd, &key) == -1 && errno == EINVAL);
 
-	बंद(fd);
-पूर्ण
+	close(fd);
+}
 
-अटल व्योम test_arraymap_percpu(अचिन्हित पूर्णांक task, व्योम *data)
-अणु
-	अचिन्हित पूर्णांक nr_cpus = bpf_num_possible_cpus();
-	BPF_DECLARE_PERCPU(दीर्घ, values);
-	पूर्णांक key, next_key, fd, i;
+static void test_arraymap_percpu(unsigned int task, void *data)
+{
+	unsigned int nr_cpus = bpf_num_possible_cpus();
+	BPF_DECLARE_PERCPU(long, values);
+	int key, next_key, fd, i;
 
-	fd = bpf_create_map(BPF_MAP_TYPE_PERCPU_ARRAY, माप(key),
-			    माप(bpf_percpu(values, 0)), 2, 0);
-	अगर (fd < 0) अणु
-		म_लिखो("Failed to create arraymap '%s'!\n", म_त्रुटि(त्रुटि_सं));
-		निकास(1);
-	पूर्ण
+	fd = bpf_create_map(BPF_MAP_TYPE_PERCPU_ARRAY, sizeof(key),
+			    sizeof(bpf_percpu(values, 0)), 2, 0);
+	if (fd < 0) {
+		printf("Failed to create arraymap '%s'!\n", strerror(errno));
+		exit(1);
+	}
 
-	क्रम (i = 0; i < nr_cpus; i++)
+	for (i = 0; i < nr_cpus; i++)
 		bpf_percpu(values, i) = i + 100;
 
 	key = 1;
 	/* Insert key=1 element. */
-	निश्चित(bpf_map_update_elem(fd, &key, values, BPF_ANY) == 0);
+	assert(bpf_map_update_elem(fd, &key, values, BPF_ANY) == 0);
 
 	bpf_percpu(values, 0) = 0;
-	निश्चित(bpf_map_update_elem(fd, &key, values, BPF_NOEXIST) == -1 &&
-	       त्रुटि_सं == EEXIST);
+	assert(bpf_map_update_elem(fd, &key, values, BPF_NOEXIST) == -1 &&
+	       errno == EEXIST);
 
 	/* Check that key=1 can be found. */
-	निश्चित(bpf_map_lookup_elem(fd, &key, values) == 0 &&
+	assert(bpf_map_lookup_elem(fd, &key, values) == 0 &&
 	       bpf_percpu(values, 0) == 100);
 
 	key = 0;
 	/* Check that key=0 is also found and zero initialized. */
-	निश्चित(bpf_map_lookup_elem(fd, &key, values) == 0 &&
+	assert(bpf_map_lookup_elem(fd, &key, values) == 0 &&
 	       bpf_percpu(values, 0) == 0 &&
 	       bpf_percpu(values, nr_cpus - 1) == 0);
 
 	/* Check that key=2 cannot be inserted due to max_entries limit. */
 	key = 2;
-	निश्चित(bpf_map_update_elem(fd, &key, values, BPF_EXIST) == -1 &&
-	       त्रुटि_सं == E2BIG);
+	assert(bpf_map_update_elem(fd, &key, values, BPF_EXIST) == -1 &&
+	       errno == E2BIG);
 
-	/* Check that key = 2 करोesn't exist. */
-	निश्चित(bpf_map_lookup_elem(fd, &key, values) == -1 && त्रुटि_सं == ENOENT);
+	/* Check that key = 2 doesn't exist. */
+	assert(bpf_map_lookup_elem(fd, &key, values) == -1 && errno == ENOENT);
 
 	/* Iterate over two elements. */
-	निश्चित(bpf_map_get_next_key(fd, शून्य, &next_key) == 0 &&
+	assert(bpf_map_get_next_key(fd, NULL, &next_key) == 0 &&
 	       next_key == 0);
-	निश्चित(bpf_map_get_next_key(fd, &key, &next_key) == 0 &&
+	assert(bpf_map_get_next_key(fd, &key, &next_key) == 0 &&
 	       next_key == 0);
-	निश्चित(bpf_map_get_next_key(fd, &next_key, &next_key) == 0 &&
+	assert(bpf_map_get_next_key(fd, &next_key, &next_key) == 0 &&
 	       next_key == 1);
-	निश्चित(bpf_map_get_next_key(fd, &next_key, &next_key) == -1 &&
-	       त्रुटि_सं == ENOENT);
+	assert(bpf_map_get_next_key(fd, &next_key, &next_key) == -1 &&
+	       errno == ENOENT);
 
 	/* Delete shouldn't succeed. */
 	key = 1;
-	निश्चित(bpf_map_delete_elem(fd, &key) == -1 && त्रुटि_सं == EINVAL);
+	assert(bpf_map_delete_elem(fd, &key) == -1 && errno == EINVAL);
 
-	बंद(fd);
-पूर्ण
+	close(fd);
+}
 
-अटल व्योम test_arraymap_percpu_many_keys(व्योम)
-अणु
-	अचिन्हित पूर्णांक nr_cpus = bpf_num_possible_cpus();
-	BPF_DECLARE_PERCPU(दीर्घ, values);
+static void test_arraymap_percpu_many_keys(void)
+{
+	unsigned int nr_cpus = bpf_num_possible_cpus();
+	BPF_DECLARE_PERCPU(long, values);
 	/* nr_keys is not too large otherwise the test stresses percpu
-	 * allocator more than anything अन्यथा
+	 * allocator more than anything else
 	 */
-	अचिन्हित पूर्णांक nr_keys = 2000;
-	पूर्णांक key, fd, i;
+	unsigned int nr_keys = 2000;
+	int key, fd, i;
 
-	fd = bpf_create_map(BPF_MAP_TYPE_PERCPU_ARRAY, माप(key),
-			    माप(bpf_percpu(values, 0)), nr_keys, 0);
-	अगर (fd < 0) अणु
-		म_लिखो("Failed to create per-cpu arraymap '%s'!\n",
-		       म_त्रुटि(त्रुटि_सं));
-		निकास(1);
-	पूर्ण
+	fd = bpf_create_map(BPF_MAP_TYPE_PERCPU_ARRAY, sizeof(key),
+			    sizeof(bpf_percpu(values, 0)), nr_keys, 0);
+	if (fd < 0) {
+		printf("Failed to create per-cpu arraymap '%s'!\n",
+		       strerror(errno));
+		exit(1);
+	}
 
-	क्रम (i = 0; i < nr_cpus; i++)
+	for (i = 0; i < nr_cpus; i++)
 		bpf_percpu(values, i) = i + 10;
 
-	क्रम (key = 0; key < nr_keys; key++)
-		निश्चित(bpf_map_update_elem(fd, &key, values, BPF_ANY) == 0);
+	for (key = 0; key < nr_keys; key++)
+		assert(bpf_map_update_elem(fd, &key, values, BPF_ANY) == 0);
 
-	क्रम (key = 0; key < nr_keys; key++) अणु
-		क्रम (i = 0; i < nr_cpus; i++)
+	for (key = 0; key < nr_keys; key++) {
+		for (i = 0; i < nr_cpus; i++)
 			bpf_percpu(values, i) = 0;
 
-		निश्चित(bpf_map_lookup_elem(fd, &key, values) == 0);
+		assert(bpf_map_lookup_elem(fd, &key, values) == 0);
 
-		क्रम (i = 0; i < nr_cpus; i++)
-			निश्चित(bpf_percpu(values, i) == i + 10);
-	पूर्ण
+		for (i = 0; i < nr_cpus; i++)
+			assert(bpf_percpu(values, i) == i + 10);
+	}
 
-	बंद(fd);
-पूर्ण
+	close(fd);
+}
 
-अटल व्योम test_devmap(अचिन्हित पूर्णांक task, व्योम *data)
-अणु
-	पूर्णांक fd;
+static void test_devmap(unsigned int task, void *data)
+{
+	int fd;
 	__u32 key, value;
 
-	fd = bpf_create_map(BPF_MAP_TYPE_DEVMAP, माप(key), माप(value),
+	fd = bpf_create_map(BPF_MAP_TYPE_DEVMAP, sizeof(key), sizeof(value),
 			    2, 0);
-	अगर (fd < 0) अणु
-		म_लिखो("Failed to create devmap '%s'!\n", म_त्रुटि(त्रुटि_सं));
-		निकास(1);
-	पूर्ण
+	if (fd < 0) {
+		printf("Failed to create devmap '%s'!\n", strerror(errno));
+		exit(1);
+	}
 
-	बंद(fd);
-पूर्ण
+	close(fd);
+}
 
-अटल व्योम test_devmap_hash(अचिन्हित पूर्णांक task, व्योम *data)
-अणु
-	पूर्णांक fd;
+static void test_devmap_hash(unsigned int task, void *data)
+{
+	int fd;
 	__u32 key, value;
 
-	fd = bpf_create_map(BPF_MAP_TYPE_DEVMAP_HASH, माप(key), माप(value),
+	fd = bpf_create_map(BPF_MAP_TYPE_DEVMAP_HASH, sizeof(key), sizeof(value),
 			    2, 0);
-	अगर (fd < 0) अणु
-		म_लिखो("Failed to create devmap_hash '%s'!\n", म_त्रुटि(त्रुटि_सं));
-		निकास(1);
-	पूर्ण
+	if (fd < 0) {
+		printf("Failed to create devmap_hash '%s'!\n", strerror(errno));
+		exit(1);
+	}
 
-	बंद(fd);
-पूर्ण
+	close(fd);
+}
 
-अटल व्योम test_queuemap(अचिन्हित पूर्णांक task, व्योम *data)
-अणु
-	स्थिर पूर्णांक MAP_SIZE = 32;
+static void test_queuemap(unsigned int task, void *data)
+{
+	const int MAP_SIZE = 32;
 	__u32 vals[MAP_SIZE + MAP_SIZE/2], val;
-	पूर्णांक fd, i;
+	int fd, i;
 
 	/* Fill test values to be used */
-	क्रम (i = 0; i < MAP_SIZE + MAP_SIZE/2; i++)
-		vals[i] = अक्रम();
+	for (i = 0; i < MAP_SIZE + MAP_SIZE/2; i++)
+		vals[i] = rand();
 
 	/* Invalid key size */
-	fd = bpf_create_map(BPF_MAP_TYPE_QUEUE, 4, माप(val), MAP_SIZE,
+	fd = bpf_create_map(BPF_MAP_TYPE_QUEUE, 4, sizeof(val), MAP_SIZE,
 			    map_flags);
-	निश्चित(fd < 0 && त्रुटि_सं == EINVAL);
+	assert(fd < 0 && errno == EINVAL);
 
-	fd = bpf_create_map(BPF_MAP_TYPE_QUEUE, 0, माप(val), MAP_SIZE,
+	fd = bpf_create_map(BPF_MAP_TYPE_QUEUE, 0, sizeof(val), MAP_SIZE,
 			    map_flags);
-	/* Queue map करोes not support BPF_F_NO_PREALLOC */
-	अगर (map_flags & BPF_F_NO_PREALLOC) अणु
-		निश्चित(fd < 0 && त्रुटि_सं == EINVAL);
-		वापस;
-	पूर्ण
-	अगर (fd < 0) अणु
-		म_लिखो("Failed to create queuemap '%s'!\n", म_त्रुटि(त्रुटि_सं));
-		निकास(1);
-	पूर्ण
+	/* Queue map does not support BPF_F_NO_PREALLOC */
+	if (map_flags & BPF_F_NO_PREALLOC) {
+		assert(fd < 0 && errno == EINVAL);
+		return;
+	}
+	if (fd < 0) {
+		printf("Failed to create queuemap '%s'!\n", strerror(errno));
+		exit(1);
+	}
 
 	/* Push MAP_SIZE elements */
-	क्रम (i = 0; i < MAP_SIZE; i++)
-		निश्चित(bpf_map_update_elem(fd, शून्य, &vals[i], 0) == 0);
+	for (i = 0; i < MAP_SIZE; i++)
+		assert(bpf_map_update_elem(fd, NULL, &vals[i], 0) == 0);
 
 	/* Check that element cannot be pushed due to max_entries limit */
-	निश्चित(bpf_map_update_elem(fd, शून्य, &val, 0) == -1 &&
-	       त्रुटि_सं == E2BIG);
+	assert(bpf_map_update_elem(fd, NULL, &val, 0) == -1 &&
+	       errno == E2BIG);
 
 	/* Peek element */
-	निश्चित(bpf_map_lookup_elem(fd, शून्य, &val) == 0 && val == vals[0]);
+	assert(bpf_map_lookup_elem(fd, NULL, &val) == 0 && val == vals[0]);
 
 	/* Replace half elements */
-	क्रम (i = MAP_SIZE; i < MAP_SIZE + MAP_SIZE/2; i++)
-		निश्चित(bpf_map_update_elem(fd, शून्य, &vals[i], BPF_EXIST) == 0);
+	for (i = MAP_SIZE; i < MAP_SIZE + MAP_SIZE/2; i++)
+		assert(bpf_map_update_elem(fd, NULL, &vals[i], BPF_EXIST) == 0);
 
 	/* Pop all elements */
-	क्रम (i = MAP_SIZE/2; i < MAP_SIZE + MAP_SIZE/2; i++)
-		निश्चित(bpf_map_lookup_and_delete_elem(fd, शून्य, &val) == 0 &&
+	for (i = MAP_SIZE/2; i < MAP_SIZE + MAP_SIZE/2; i++)
+		assert(bpf_map_lookup_and_delete_elem(fd, NULL, &val) == 0 &&
 		       val == vals[i]);
 
 	/* Check that there are not elements left */
-	निश्चित(bpf_map_lookup_and_delete_elem(fd, शून्य, &val) == -1 &&
-	       त्रुटि_सं == ENOENT);
+	assert(bpf_map_lookup_and_delete_elem(fd, NULL, &val) == -1 &&
+	       errno == ENOENT);
 
-	/* Check that non supported functions set त्रुटि_सं to EINVAL */
-	निश्चित(bpf_map_delete_elem(fd, शून्य) == -1 && त्रुटि_सं == EINVAL);
-	निश्चित(bpf_map_get_next_key(fd, शून्य, शून्य) == -1 && त्रुटि_सं == EINVAL);
+	/* Check that non supported functions set errno to EINVAL */
+	assert(bpf_map_delete_elem(fd, NULL) == -1 && errno == EINVAL);
+	assert(bpf_map_get_next_key(fd, NULL, NULL) == -1 && errno == EINVAL);
 
-	बंद(fd);
-पूर्ण
+	close(fd);
+}
 
-अटल व्योम test_stackmap(अचिन्हित पूर्णांक task, व्योम *data)
-अणु
-	स्थिर पूर्णांक MAP_SIZE = 32;
+static void test_stackmap(unsigned int task, void *data)
+{
+	const int MAP_SIZE = 32;
 	__u32 vals[MAP_SIZE + MAP_SIZE/2], val;
-	पूर्णांक fd, i;
+	int fd, i;
 
 	/* Fill test values to be used */
-	क्रम (i = 0; i < MAP_SIZE + MAP_SIZE/2; i++)
-		vals[i] = अक्रम();
+	for (i = 0; i < MAP_SIZE + MAP_SIZE/2; i++)
+		vals[i] = rand();
 
 	/* Invalid key size */
-	fd = bpf_create_map(BPF_MAP_TYPE_STACK, 4, माप(val), MAP_SIZE,
+	fd = bpf_create_map(BPF_MAP_TYPE_STACK, 4, sizeof(val), MAP_SIZE,
 			    map_flags);
-	निश्चित(fd < 0 && त्रुटि_सं == EINVAL);
+	assert(fd < 0 && errno == EINVAL);
 
-	fd = bpf_create_map(BPF_MAP_TYPE_STACK, 0, माप(val), MAP_SIZE,
+	fd = bpf_create_map(BPF_MAP_TYPE_STACK, 0, sizeof(val), MAP_SIZE,
 			    map_flags);
-	/* Stack map करोes not support BPF_F_NO_PREALLOC */
-	अगर (map_flags & BPF_F_NO_PREALLOC) अणु
-		निश्चित(fd < 0 && त्रुटि_सं == EINVAL);
-		वापस;
-	पूर्ण
-	अगर (fd < 0) अणु
-		म_लिखो("Failed to create stackmap '%s'!\n", म_त्रुटि(त्रुटि_सं));
-		निकास(1);
-	पूर्ण
+	/* Stack map does not support BPF_F_NO_PREALLOC */
+	if (map_flags & BPF_F_NO_PREALLOC) {
+		assert(fd < 0 && errno == EINVAL);
+		return;
+	}
+	if (fd < 0) {
+		printf("Failed to create stackmap '%s'!\n", strerror(errno));
+		exit(1);
+	}
 
 	/* Push MAP_SIZE elements */
-	क्रम (i = 0; i < MAP_SIZE; i++)
-		निश्चित(bpf_map_update_elem(fd, शून्य, &vals[i], 0) == 0);
+	for (i = 0; i < MAP_SIZE; i++)
+		assert(bpf_map_update_elem(fd, NULL, &vals[i], 0) == 0);
 
 	/* Check that element cannot be pushed due to max_entries limit */
-	निश्चित(bpf_map_update_elem(fd, शून्य, &val, 0) == -1 &&
-	       त्रुटि_सं == E2BIG);
+	assert(bpf_map_update_elem(fd, NULL, &val, 0) == -1 &&
+	       errno == E2BIG);
 
 	/* Peek element */
-	निश्चित(bpf_map_lookup_elem(fd, शून्य, &val) == 0 && val == vals[i - 1]);
+	assert(bpf_map_lookup_elem(fd, NULL, &val) == 0 && val == vals[i - 1]);
 
 	/* Replace half elements */
-	क्रम (i = MAP_SIZE; i < MAP_SIZE + MAP_SIZE/2; i++)
-		निश्चित(bpf_map_update_elem(fd, शून्य, &vals[i], BPF_EXIST) == 0);
+	for (i = MAP_SIZE; i < MAP_SIZE + MAP_SIZE/2; i++)
+		assert(bpf_map_update_elem(fd, NULL, &vals[i], BPF_EXIST) == 0);
 
 	/* Pop all elements */
-	क्रम (i = MAP_SIZE + MAP_SIZE/2 - 1; i >= MAP_SIZE/2; i--)
-		निश्चित(bpf_map_lookup_and_delete_elem(fd, शून्य, &val) == 0 &&
+	for (i = MAP_SIZE + MAP_SIZE/2 - 1; i >= MAP_SIZE/2; i--)
+		assert(bpf_map_lookup_and_delete_elem(fd, NULL, &val) == 0 &&
 		       val == vals[i]);
 
 	/* Check that there are not elements left */
-	निश्चित(bpf_map_lookup_and_delete_elem(fd, शून्य, &val) == -1 &&
-	       त्रुटि_सं == ENOENT);
+	assert(bpf_map_lookup_and_delete_elem(fd, NULL, &val) == -1 &&
+	       errno == ENOENT);
 
-	/* Check that non supported functions set त्रुटि_सं to EINVAL */
-	निश्चित(bpf_map_delete_elem(fd, शून्य) == -1 && त्रुटि_सं == EINVAL);
-	निश्चित(bpf_map_get_next_key(fd, शून्य, शून्य) == -1 && त्रुटि_सं == EINVAL);
+	/* Check that non supported functions set errno to EINVAL */
+	assert(bpf_map_delete_elem(fd, NULL) == -1 && errno == EINVAL);
+	assert(bpf_map_get_next_key(fd, NULL, NULL) == -1 && errno == EINVAL);
 
-	बंद(fd);
-पूर्ण
+	close(fd);
+}
 
-#समावेश <sys/ioctl.h>
-#समावेश <arpa/inet.h>
-#समावेश <sys/select.h>
-#समावेश <linux/err.h>
-#घोषणा SOCKMAP_PARSE_PROG "./sockmap_parse_prog.o"
-#घोषणा SOCKMAP_VERDICT_PROG "./sockmap_verdict_prog.o"
-#घोषणा SOCKMAP_TCP_MSG_PROG "./sockmap_tcp_msg_prog.o"
-अटल व्योम test_sockmap(अचिन्हित पूर्णांक tasks, व्योम *data)
-अणु
-	काष्ठा bpf_map *bpf_map_rx, *bpf_map_tx, *bpf_map_msg, *bpf_map_अवरोध;
-	पूर्णांक map_fd_msg = 0, map_fd_rx = 0, map_fd_tx = 0, map_fd_अवरोध;
-	पूर्णांक ports[] = अणु50200, 50201, 50202, 50204पूर्ण;
-	पूर्णांक err, i, fd, udp, sfd[6] = अणु0xdeadbeefपूर्ण;
-	u8 buf[20] = अणु0x0, 0x5, 0x3, 0x2, 0x1, 0x0पूर्ण;
-	पूर्णांक parse_prog, verdict_prog, msg_prog;
-	काष्ठा sockaddr_in addr;
-	पूर्णांक one = 1, s, sc, rc;
-	काष्ठा bpf_object *obj;
-	काष्ठा समयval to;
+#include <sys/ioctl.h>
+#include <arpa/inet.h>
+#include <sys/select.h>
+#include <linux/err.h>
+#define SOCKMAP_PARSE_PROG "./sockmap_parse_prog.o"
+#define SOCKMAP_VERDICT_PROG "./sockmap_verdict_prog.o"
+#define SOCKMAP_TCP_MSG_PROG "./sockmap_tcp_msg_prog.o"
+static void test_sockmap(unsigned int tasks, void *data)
+{
+	struct bpf_map *bpf_map_rx, *bpf_map_tx, *bpf_map_msg, *bpf_map_break;
+	int map_fd_msg = 0, map_fd_rx = 0, map_fd_tx = 0, map_fd_break;
+	int ports[] = {50200, 50201, 50202, 50204};
+	int err, i, fd, udp, sfd[6] = {0xdeadbeef};
+	u8 buf[20] = {0x0, 0x5, 0x3, 0x2, 0x1, 0x0};
+	int parse_prog, verdict_prog, msg_prog;
+	struct sockaddr_in addr;
+	int one = 1, s, sc, rc;
+	struct bpf_object *obj;
+	struct timeval to;
 	__u32 key, value;
 	pid_t pid[tasks];
 	fd_set w;
 
 	/* Create some sockets to use with sockmap */
-	क्रम (i = 0; i < 2; i++) अणु
+	for (i = 0; i < 2; i++) {
 		sfd[i] = socket(AF_INET, SOCK_STREAM, 0);
-		अगर (sfd[i] < 0)
-			जाओ out;
+		if (sfd[i] < 0)
+			goto out;
 		err = setsockopt(sfd[i], SOL_SOCKET, SO_REUSEADDR,
-				 (अक्षर *)&one, माप(one));
-		अगर (err) अणु
-			म_लिखो("failed to setsockopt\n");
-			जाओ out;
-		पूर्ण
-		err = ioctl(sfd[i], FIONBIO, (अक्षर *)&one);
-		अगर (err < 0) अणु
-			म_लिखो("failed to ioctl\n");
-			जाओ out;
-		पूर्ण
-		स_रखो(&addr, 0, माप(काष्ठा sockaddr_in));
+				 (char *)&one, sizeof(one));
+		if (err) {
+			printf("failed to setsockopt\n");
+			goto out;
+		}
+		err = ioctl(sfd[i], FIONBIO, (char *)&one);
+		if (err < 0) {
+			printf("failed to ioctl\n");
+			goto out;
+		}
+		memset(&addr, 0, sizeof(struct sockaddr_in));
 		addr.sin_family = AF_INET;
 		addr.sin_addr.s_addr = inet_addr("127.0.0.1");
 		addr.sin_port = htons(ports[i]);
-		err = bind(sfd[i], (काष्ठा sockaddr *)&addr, माप(addr));
-		अगर (err < 0) अणु
-			म_लिखो("failed to bind: err %i: %i:%i\n",
+		err = bind(sfd[i], (struct sockaddr *)&addr, sizeof(addr));
+		if (err < 0) {
+			printf("failed to bind: err %i: %i:%i\n",
 			       err, i, sfd[i]);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		err = listen(sfd[i], 32);
-		अगर (err < 0) अणु
-			म_लिखो("failed to listen\n");
-			जाओ out;
-		पूर्ण
-	पूर्ण
+		if (err < 0) {
+			printf("failed to listen\n");
+			goto out;
+		}
+	}
 
-	क्रम (i = 2; i < 4; i++) अणु
+	for (i = 2; i < 4; i++) {
 		sfd[i] = socket(AF_INET, SOCK_STREAM, 0);
-		अगर (sfd[i] < 0)
-			जाओ out;
+		if (sfd[i] < 0)
+			goto out;
 		err = setsockopt(sfd[i], SOL_SOCKET, SO_REUSEADDR,
-				 (अक्षर *)&one, माप(one));
-		अगर (err) अणु
-			म_लिखो("set sock opt\n");
-			जाओ out;
-		पूर्ण
-		स_रखो(&addr, 0, माप(काष्ठा sockaddr_in));
+				 (char *)&one, sizeof(one));
+		if (err) {
+			printf("set sock opt\n");
+			goto out;
+		}
+		memset(&addr, 0, sizeof(struct sockaddr_in));
 		addr.sin_family = AF_INET;
 		addr.sin_addr.s_addr = inet_addr("127.0.0.1");
 		addr.sin_port = htons(ports[i - 2]);
-		err = connect(sfd[i], (काष्ठा sockaddr *)&addr, माप(addr));
-		अगर (err) अणु
-			म_लिखो("failed to connect\n");
-			जाओ out;
-		पूर्ण
-	पूर्ण
+		err = connect(sfd[i], (struct sockaddr *)&addr, sizeof(addr));
+		if (err) {
+			printf("failed to connect\n");
+			goto out;
+		}
+	}
 
 
-	क्रम (i = 4; i < 6; i++) अणु
-		sfd[i] = accept(sfd[i - 4], शून्य, शून्य);
-		अगर (sfd[i] < 0) अणु
-			म_लिखो("accept failed\n");
-			जाओ out;
-		पूर्ण
-	पूर्ण
+	for (i = 4; i < 6; i++) {
+		sfd[i] = accept(sfd[i - 4], NULL, NULL);
+		if (sfd[i] < 0) {
+			printf("accept failed\n");
+			goto out;
+		}
+	}
 
 	/* Test sockmap with connected sockets */
 	fd = bpf_create_map(BPF_MAP_TYPE_SOCKMAP,
-			    माप(key), माप(value),
+			    sizeof(key), sizeof(value),
 			    6, 0);
-	अगर (fd < 0) अणु
-		अगर (!bpf_probe_map_type(BPF_MAP_TYPE_SOCKMAP, 0)) अणु
-			म_लिखो("%s SKIP (unsupported map type BPF_MAP_TYPE_SOCKMAP)\n",
+	if (fd < 0) {
+		if (!bpf_probe_map_type(BPF_MAP_TYPE_SOCKMAP, 0)) {
+			printf("%s SKIP (unsupported map type BPF_MAP_TYPE_SOCKMAP)\n",
 			       __func__);
 			skips++;
-			क्रम (i = 0; i < 6; i++)
-				बंद(sfd[i]);
-			वापस;
-		पूर्ण
+			for (i = 0; i < 6; i++)
+				close(sfd[i]);
+			return;
+		}
 
-		म_लिखो("Failed to create sockmap %i\n", fd);
-		जाओ out_sockmap;
-	पूर्ण
+		printf("Failed to create sockmap %i\n", fd);
+		goto out_sockmap;
+	}
 
 	/* Test update with unsupported UDP socket */
 	udp = socket(AF_INET, SOCK_DGRAM, 0);
 	i = 0;
 	err = bpf_map_update_elem(fd, &i, &udp, BPF_ANY);
-	अगर (!err) अणु
-		म_लिखो("Failed socket SOCK_DGRAM allowed '%i:%i'\n",
+	if (!err) {
+		printf("Failed socket SOCK_DGRAM allowed '%i:%i'\n",
 		       i, udp);
-		जाओ out_sockmap;
-	पूर्ण
+		goto out_sockmap;
+	}
 
 	/* Test update without programs */
-	क्रम (i = 0; i < 6; i++) अणु
+	for (i = 0; i < 6; i++) {
 		err = bpf_map_update_elem(fd, &i, &sfd[i], BPF_ANY);
-		अगर (err) अणु
-			म_लिखो("Failed noprog update sockmap '%i:%i'\n",
+		if (err) {
+			printf("Failed noprog update sockmap '%i:%i'\n",
 			       i, sfd[i]);
-			जाओ out_sockmap;
-		पूर्ण
-	पूर्ण
+			goto out_sockmap;
+		}
+	}
 
 	/* Test attaching/detaching bad fds */
 	err = bpf_prog_attach(-1, fd, BPF_SK_SKB_STREAM_PARSER, 0);
-	अगर (!err) अणु
-		म_लिखो("Failed invalid parser prog attach\n");
-		जाओ out_sockmap;
-	पूर्ण
+	if (!err) {
+		printf("Failed invalid parser prog attach\n");
+		goto out_sockmap;
+	}
 
 	err = bpf_prog_attach(-1, fd, BPF_SK_SKB_STREAM_VERDICT, 0);
-	अगर (!err) अणु
-		म_लिखो("Failed invalid verdict prog attach\n");
-		जाओ out_sockmap;
-	पूर्ण
+	if (!err) {
+		printf("Failed invalid verdict prog attach\n");
+		goto out_sockmap;
+	}
 
 	err = bpf_prog_attach(-1, fd, BPF_SK_MSG_VERDICT, 0);
-	अगर (!err) अणु
-		म_लिखो("Failed invalid msg verdict prog attach\n");
-		जाओ out_sockmap;
-	पूर्ण
+	if (!err) {
+		printf("Failed invalid msg verdict prog attach\n");
+		goto out_sockmap;
+	}
 
 	err = bpf_prog_attach(-1, fd, __MAX_BPF_ATTACH_TYPE, 0);
-	अगर (!err) अणु
-		म_लिखो("Failed unknown prog attach\n");
-		जाओ out_sockmap;
-	पूर्ण
+	if (!err) {
+		printf("Failed unknown prog attach\n");
+		goto out_sockmap;
+	}
 
 	err = bpf_prog_detach(fd, BPF_SK_SKB_STREAM_PARSER);
-	अगर (!err) अणु
-		म_लिखो("Failed empty parser prog detach\n");
-		जाओ out_sockmap;
-	पूर्ण
+	if (!err) {
+		printf("Failed empty parser prog detach\n");
+		goto out_sockmap;
+	}
 
 	err = bpf_prog_detach(fd, BPF_SK_SKB_STREAM_VERDICT);
-	अगर (!err) अणु
-		म_लिखो("Failed empty verdict prog detach\n");
-		जाओ out_sockmap;
-	पूर्ण
+	if (!err) {
+		printf("Failed empty verdict prog detach\n");
+		goto out_sockmap;
+	}
 
 	err = bpf_prog_detach(fd, BPF_SK_MSG_VERDICT);
-	अगर (!err) अणु
-		म_लिखो("Failed empty msg verdict prog detach\n");
-		जाओ out_sockmap;
-	पूर्ण
+	if (!err) {
+		printf("Failed empty msg verdict prog detach\n");
+		goto out_sockmap;
+	}
 
 	err = bpf_prog_detach(fd, __MAX_BPF_ATTACH_TYPE);
-	अगर (!err) अणु
-		म_लिखो("Detach invalid prog successful\n");
-		जाओ out_sockmap;
-	पूर्ण
+	if (!err) {
+		printf("Detach invalid prog successful\n");
+		goto out_sockmap;
+	}
 
 	/* Load SK_SKB program and Attach */
 	err = bpf_prog_load(SOCKMAP_PARSE_PROG,
 			    BPF_PROG_TYPE_SK_SKB, &obj, &parse_prog);
-	अगर (err) अणु
-		म_लिखो("Failed to load SK_SKB parse prog\n");
-		जाओ out_sockmap;
-	पूर्ण
+	if (err) {
+		printf("Failed to load SK_SKB parse prog\n");
+		goto out_sockmap;
+	}
 
 	err = bpf_prog_load(SOCKMAP_TCP_MSG_PROG,
 			    BPF_PROG_TYPE_SK_MSG, &obj, &msg_prog);
-	अगर (err) अणु
-		म_लिखो("Failed to load SK_SKB msg prog\n");
-		जाओ out_sockmap;
-	पूर्ण
+	if (err) {
+		printf("Failed to load SK_SKB msg prog\n");
+		goto out_sockmap;
+	}
 
 	err = bpf_prog_load(SOCKMAP_VERDICT_PROG,
 			    BPF_PROG_TYPE_SK_SKB, &obj, &verdict_prog);
-	अगर (err) अणु
-		म_लिखो("Failed to load SK_SKB verdict prog\n");
-		जाओ out_sockmap;
-	पूर्ण
+	if (err) {
+		printf("Failed to load SK_SKB verdict prog\n");
+		goto out_sockmap;
+	}
 
 	bpf_map_rx = bpf_object__find_map_by_name(obj, "sock_map_rx");
-	अगर (IS_ERR(bpf_map_rx)) अणु
-		म_लिखो("Failed to load map rx from verdict prog\n");
-		जाओ out_sockmap;
-	पूर्ण
+	if (IS_ERR(bpf_map_rx)) {
+		printf("Failed to load map rx from verdict prog\n");
+		goto out_sockmap;
+	}
 
 	map_fd_rx = bpf_map__fd(bpf_map_rx);
-	अगर (map_fd_rx < 0) अणु
-		म_लिखो("Failed to get map rx fd\n");
-		जाओ out_sockmap;
-	पूर्ण
+	if (map_fd_rx < 0) {
+		printf("Failed to get map rx fd\n");
+		goto out_sockmap;
+	}
 
 	bpf_map_tx = bpf_object__find_map_by_name(obj, "sock_map_tx");
-	अगर (IS_ERR(bpf_map_tx)) अणु
-		म_लिखो("Failed to load map tx from verdict prog\n");
-		जाओ out_sockmap;
-	पूर्ण
+	if (IS_ERR(bpf_map_tx)) {
+		printf("Failed to load map tx from verdict prog\n");
+		goto out_sockmap;
+	}
 
 	map_fd_tx = bpf_map__fd(bpf_map_tx);
-	अगर (map_fd_tx < 0) अणु
-		म_लिखो("Failed to get map tx fd\n");
-		जाओ out_sockmap;
-	पूर्ण
+	if (map_fd_tx < 0) {
+		printf("Failed to get map tx fd\n");
+		goto out_sockmap;
+	}
 
 	bpf_map_msg = bpf_object__find_map_by_name(obj, "sock_map_msg");
-	अगर (IS_ERR(bpf_map_msg)) अणु
-		म_लिखो("Failed to load map msg from msg_verdict prog\n");
-		जाओ out_sockmap;
-	पूर्ण
+	if (IS_ERR(bpf_map_msg)) {
+		printf("Failed to load map msg from msg_verdict prog\n");
+		goto out_sockmap;
+	}
 
 	map_fd_msg = bpf_map__fd(bpf_map_msg);
-	अगर (map_fd_msg < 0) अणु
-		म_लिखो("Failed to get map msg fd\n");
-		जाओ out_sockmap;
-	पूर्ण
+	if (map_fd_msg < 0) {
+		printf("Failed to get map msg fd\n");
+		goto out_sockmap;
+	}
 
-	bpf_map_अवरोध = bpf_object__find_map_by_name(obj, "sock_map_break");
-	अगर (IS_ERR(bpf_map_अवरोध)) अणु
-		म_लिखो("Failed to load map tx from verdict prog\n");
-		जाओ out_sockmap;
-	पूर्ण
+	bpf_map_break = bpf_object__find_map_by_name(obj, "sock_map_break");
+	if (IS_ERR(bpf_map_break)) {
+		printf("Failed to load map tx from verdict prog\n");
+		goto out_sockmap;
+	}
 
-	map_fd_अवरोध = bpf_map__fd(bpf_map_अवरोध);
-	अगर (map_fd_अवरोध < 0) अणु
-		म_लिखो("Failed to get map tx fd\n");
-		जाओ out_sockmap;
-	पूर्ण
+	map_fd_break = bpf_map__fd(bpf_map_break);
+	if (map_fd_break < 0) {
+		printf("Failed to get map tx fd\n");
+		goto out_sockmap;
+	}
 
-	err = bpf_prog_attach(parse_prog, map_fd_अवरोध,
+	err = bpf_prog_attach(parse_prog, map_fd_break,
 			      BPF_SK_SKB_STREAM_PARSER, 0);
-	अगर (!err) अणु
-		म_लिखो("Allowed attaching SK_SKB program to invalid map\n");
-		जाओ out_sockmap;
-	पूर्ण
+	if (!err) {
+		printf("Allowed attaching SK_SKB program to invalid map\n");
+		goto out_sockmap;
+	}
 
 	err = bpf_prog_attach(parse_prog, map_fd_rx,
 		      BPF_SK_SKB_STREAM_PARSER, 0);
-	अगर (err) अणु
-		म_लिखो("Failed stream parser bpf prog attach\n");
-		जाओ out_sockmap;
-	पूर्ण
+	if (err) {
+		printf("Failed stream parser bpf prog attach\n");
+		goto out_sockmap;
+	}
 
 	err = bpf_prog_attach(verdict_prog, map_fd_rx,
 			      BPF_SK_SKB_STREAM_VERDICT, 0);
-	अगर (err) अणु
-		म_लिखो("Failed stream verdict bpf prog attach\n");
-		जाओ out_sockmap;
-	पूर्ण
+	if (err) {
+		printf("Failed stream verdict bpf prog attach\n");
+		goto out_sockmap;
+	}
 
 	err = bpf_prog_attach(msg_prog, map_fd_msg, BPF_SK_MSG_VERDICT, 0);
-	अगर (err) अणु
-		म_लिखो("Failed msg verdict bpf prog attach\n");
-		जाओ out_sockmap;
-	पूर्ण
+	if (err) {
+		printf("Failed msg verdict bpf prog attach\n");
+		goto out_sockmap;
+	}
 
 	err = bpf_prog_attach(verdict_prog, map_fd_rx,
 			      __MAX_BPF_ATTACH_TYPE, 0);
-	अगर (!err) अणु
-		म_लिखो("Attached unknown bpf prog\n");
-		जाओ out_sockmap;
-	पूर्ण
+	if (!err) {
+		printf("Attached unknown bpf prog\n");
+		goto out_sockmap;
+	}
 
 	/* Test map update elem afterwards fd lives in fd and map_fd */
-	क्रम (i = 2; i < 6; i++) अणु
+	for (i = 2; i < 6; i++) {
 		err = bpf_map_update_elem(map_fd_rx, &i, &sfd[i], BPF_ANY);
-		अगर (err) अणु
-			म_लिखो("Failed map_fd_rx update sockmap %i '%i:%i'\n",
+		if (err) {
+			printf("Failed map_fd_rx update sockmap %i '%i:%i'\n",
 			       err, i, sfd[i]);
-			जाओ out_sockmap;
-		पूर्ण
+			goto out_sockmap;
+		}
 		err = bpf_map_update_elem(map_fd_tx, &i, &sfd[i], BPF_ANY);
-		अगर (err) अणु
-			म_लिखो("Failed map_fd_tx update sockmap %i '%i:%i'\n",
+		if (err) {
+			printf("Failed map_fd_tx update sockmap %i '%i:%i'\n",
 			       err, i, sfd[i]);
-			जाओ out_sockmap;
-		पूर्ण
-	पूर्ण
+			goto out_sockmap;
+		}
+	}
 
-	/* Test map delete elem and हटाओ send/recv sockets */
-	क्रम (i = 2; i < 4; i++) अणु
+	/* Test map delete elem and remove send/recv sockets */
+	for (i = 2; i < 4; i++) {
 		err = bpf_map_delete_elem(map_fd_rx, &i);
-		अगर (err) अणु
-			म_लिखो("Failed delete sockmap rx %i '%i:%i'\n",
+		if (err) {
+			printf("Failed delete sockmap rx %i '%i:%i'\n",
 			       err, i, sfd[i]);
-			जाओ out_sockmap;
-		पूर्ण
+			goto out_sockmap;
+		}
 		err = bpf_map_delete_elem(map_fd_tx, &i);
-		अगर (err) अणु
-			म_लिखो("Failed delete sockmap tx %i '%i:%i'\n",
+		if (err) {
+			printf("Failed delete sockmap tx %i '%i:%i'\n",
 			       err, i, sfd[i]);
-			जाओ out_sockmap;
-		पूर्ण
-	पूर्ण
+			goto out_sockmap;
+		}
+	}
 
-	/* Put sfd[2] (sending fd below) पूर्णांकo msg map to test sendmsg bpf */
+	/* Put sfd[2] (sending fd below) into msg map to test sendmsg bpf */
 	i = 0;
 	err = bpf_map_update_elem(map_fd_msg, &i, &sfd[2], BPF_ANY);
-	अगर (err) अणु
-		म_लिखो("Failed map_fd_msg update sockmap %i\n", err);
-		जाओ out_sockmap;
-	पूर्ण
+	if (err) {
+		printf("Failed map_fd_msg update sockmap %i\n", err);
+		goto out_sockmap;
+	}
 
 	/* Test map send/recv */
-	क्रम (i = 0; i < 2; i++) अणु
+	for (i = 0; i < 2; i++) {
 		buf[0] = i;
 		buf[1] = 0x5;
 		sc = send(sfd[2], buf, 20, 0);
-		अगर (sc < 0) अणु
-			म_लिखो("Failed sockmap send\n");
-			जाओ out_sockmap;
-		पूर्ण
+		if (sc < 0) {
+			printf("Failed sockmap send\n");
+			goto out_sockmap;
+		}
 
 		FD_ZERO(&w);
 		FD_SET(sfd[3], &w);
 		to.tv_sec = 1;
 		to.tv_usec = 0;
-		s = select(sfd[3] + 1, &w, शून्य, शून्य, &to);
-		अगर (s == -1) अणु
-			लिखो_त्रुटि("Failed sockmap select()");
-			जाओ out_sockmap;
-		पूर्ण अन्यथा अगर (!s) अणु
-			म_लिखो("Failed sockmap unexpected timeout\n");
-			जाओ out_sockmap;
-		पूर्ण
+		s = select(sfd[3] + 1, &w, NULL, NULL, &to);
+		if (s == -1) {
+			perror("Failed sockmap select()");
+			goto out_sockmap;
+		} else if (!s) {
+			printf("Failed sockmap unexpected timeout\n");
+			goto out_sockmap;
+		}
 
-		अगर (!FD_ISSET(sfd[3], &w)) अणु
-			म_लिखो("Failed sockmap select/recv\n");
-			जाओ out_sockmap;
-		पूर्ण
+		if (!FD_ISSET(sfd[3], &w)) {
+			printf("Failed sockmap select/recv\n");
+			goto out_sockmap;
+		}
 
-		rc = recv(sfd[3], buf, माप(buf), 0);
-		अगर (rc < 0) अणु
-			म_लिखो("Failed sockmap recv\n");
-			जाओ out_sockmap;
-		पूर्ण
-	पूर्ण
+		rc = recv(sfd[3], buf, sizeof(buf), 0);
+		if (rc < 0) {
+			printf("Failed sockmap recv\n");
+			goto out_sockmap;
+		}
+	}
 
 	/* Negative null entry lookup from datapath should be dropped */
 	buf[0] = 1;
 	buf[1] = 12;
 	sc = send(sfd[2], buf, 20, 0);
-	अगर (sc < 0) अणु
-		म_लिखो("Failed sockmap send\n");
-		जाओ out_sockmap;
-	पूर्ण
+	if (sc < 0) {
+		printf("Failed sockmap send\n");
+		goto out_sockmap;
+	}
 
-	/* Push fd पूर्णांकo same slot */
+	/* Push fd into same slot */
 	i = 2;
 	err = bpf_map_update_elem(fd, &i, &sfd[i], BPF_NOEXIST);
-	अगर (!err) अणु
-		म_लिखो("Failed allowed sockmap dup slot BPF_NOEXIST\n");
-		जाओ out_sockmap;
-	पूर्ण
+	if (!err) {
+		printf("Failed allowed sockmap dup slot BPF_NOEXIST\n");
+		goto out_sockmap;
+	}
 
 	err = bpf_map_update_elem(fd, &i, &sfd[i], BPF_ANY);
-	अगर (err) अणु
-		म_लिखो("Failed sockmap update new slot BPF_ANY\n");
-		जाओ out_sockmap;
-	पूर्ण
+	if (err) {
+		printf("Failed sockmap update new slot BPF_ANY\n");
+		goto out_sockmap;
+	}
 
 	err = bpf_map_update_elem(fd, &i, &sfd[i], BPF_EXIST);
-	अगर (err) अणु
-		म_लिखो("Failed sockmap update new slot BPF_EXIST\n");
-		जाओ out_sockmap;
-	पूर्ण
+	if (err) {
+		printf("Failed sockmap update new slot BPF_EXIST\n");
+		goto out_sockmap;
+	}
 
 	/* Delete the elems without programs */
-	क्रम (i = 2; i < 6; i++) अणु
+	for (i = 2; i < 6; i++) {
 		err = bpf_map_delete_elem(fd, &i);
-		अगर (err) अणु
-			म_लिखो("Failed delete sockmap %i '%i:%i'\n",
+		if (err) {
+			printf("Failed delete sockmap %i '%i:%i'\n",
 			       err, i, sfd[i]);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* Test having multiple maps खोलो and set with programs on same fds */
+	/* Test having multiple maps open and set with programs on same fds */
 	err = bpf_prog_attach(parse_prog, fd,
 			      BPF_SK_SKB_STREAM_PARSER, 0);
-	अगर (err) अणु
-		म_लिखो("Failed fd bpf parse prog attach\n");
-		जाओ out_sockmap;
-	पूर्ण
+	if (err) {
+		printf("Failed fd bpf parse prog attach\n");
+		goto out_sockmap;
+	}
 	err = bpf_prog_attach(verdict_prog, fd,
 			      BPF_SK_SKB_STREAM_VERDICT, 0);
-	अगर (err) अणु
-		म_लिखो("Failed fd bpf verdict prog attach\n");
-		जाओ out_sockmap;
-	पूर्ण
+	if (err) {
+		printf("Failed fd bpf verdict prog attach\n");
+		goto out_sockmap;
+	}
 
-	क्रम (i = 4; i < 6; i++) अणु
+	for (i = 4; i < 6; i++) {
 		err = bpf_map_update_elem(fd, &i, &sfd[i], BPF_ANY);
-		अगर (!err) अणु
-			म_लिखो("Failed allowed duplicate programs in update ANY sockmap %i '%i:%i'\n",
+		if (!err) {
+			printf("Failed allowed duplicate programs in update ANY sockmap %i '%i:%i'\n",
 			       err, i, sfd[i]);
-			जाओ out_sockmap;
-		पूर्ण
+			goto out_sockmap;
+		}
 		err = bpf_map_update_elem(fd, &i, &sfd[i], BPF_NOEXIST);
-		अगर (!err) अणु
-			म_लिखो("Failed allowed duplicate program in update NOEXIST sockmap  %i '%i:%i'\n",
+		if (!err) {
+			printf("Failed allowed duplicate program in update NOEXIST sockmap  %i '%i:%i'\n",
 			       err, i, sfd[i]);
-			जाओ out_sockmap;
-		पूर्ण
+			goto out_sockmap;
+		}
 		err = bpf_map_update_elem(fd, &i, &sfd[i], BPF_EXIST);
-		अगर (!err) अणु
-			म_लिखो("Failed allowed duplicate program in update EXIST sockmap  %i '%i:%i'\n",
+		if (!err) {
+			printf("Failed allowed duplicate program in update EXIST sockmap  %i '%i:%i'\n",
 			       err, i, sfd[i]);
-			जाओ out_sockmap;
-		पूर्ण
-	पूर्ण
+			goto out_sockmap;
+		}
+	}
 
-	/* Test tasks number of विभाजनed operations */
-	क्रम (i = 0; i < tasks; i++) अणु
-		pid[i] = विभाजन();
-		अगर (pid[i] == 0) अणु
-			क्रम (i = 0; i < 6; i++) अणु
+	/* Test tasks number of forked operations */
+	for (i = 0; i < tasks; i++) {
+		pid[i] = fork();
+		if (pid[i] == 0) {
+			for (i = 0; i < 6; i++) {
 				bpf_map_delete_elem(map_fd_tx, &i);
 				bpf_map_delete_elem(map_fd_rx, &i);
 				bpf_map_update_elem(map_fd_tx, &i,
 						    &sfd[i], BPF_ANY);
 				bpf_map_update_elem(map_fd_rx, &i,
 						    &sfd[i], BPF_ANY);
-			पूर्ण
-			निकास(0);
-		पूर्ण अन्यथा अगर (pid[i] == -1) अणु
-			म_लिखो("Couldn't spawn #%d process!\n", i);
-			निकास(1);
-		पूर्ण
-	पूर्ण
+			}
+			exit(0);
+		} else if (pid[i] == -1) {
+			printf("Couldn't spawn #%d process!\n", i);
+			exit(1);
+		}
+	}
 
-	क्रम (i = 0; i < tasks; i++) अणु
-		पूर्णांक status;
+	for (i = 0; i < tasks; i++) {
+		int status;
 
-		निश्चित(रुकोpid(pid[i], &status, 0) == pid[i]);
-		निश्चित(status == 0);
-	पूर्ण
+		assert(waitpid(pid[i], &status, 0) == pid[i]);
+		assert(status == 0);
+	}
 
 	err = bpf_prog_detach2(parse_prog, map_fd_rx, __MAX_BPF_ATTACH_TYPE);
-	अगर (!err) अणु
-		म_लिखो("Detached an invalid prog type.\n");
-		जाओ out_sockmap;
-	पूर्ण
+	if (!err) {
+		printf("Detached an invalid prog type.\n");
+		goto out_sockmap;
+	}
 
 	err = bpf_prog_detach2(parse_prog, map_fd_rx, BPF_SK_SKB_STREAM_PARSER);
-	अगर (err) अणु
-		म_लिखो("Failed parser prog detach\n");
-		जाओ out_sockmap;
-	पूर्ण
+	if (err) {
+		printf("Failed parser prog detach\n");
+		goto out_sockmap;
+	}
 
 	err = bpf_prog_detach2(verdict_prog, map_fd_rx, BPF_SK_SKB_STREAM_VERDICT);
-	अगर (err) अणु
-		म_लिखो("Failed parser prog detach\n");
-		जाओ out_sockmap;
-	पूर्ण
+	if (err) {
+		printf("Failed parser prog detach\n");
+		goto out_sockmap;
+	}
 
-	/* Test map बंद sockets and empty maps */
-	क्रम (i = 0; i < 6; i++) अणु
+	/* Test map close sockets and empty maps */
+	for (i = 0; i < 6; i++) {
 		bpf_map_delete_elem(map_fd_tx, &i);
 		bpf_map_delete_elem(map_fd_rx, &i);
-		बंद(sfd[i]);
-	पूर्ण
-	बंद(fd);
-	बंद(map_fd_rx);
-	bpf_object__बंद(obj);
-	वापस;
+		close(sfd[i]);
+	}
+	close(fd);
+	close(map_fd_rx);
+	bpf_object__close(obj);
+	return;
 out:
-	क्रम (i = 0; i < 6; i++)
-		बंद(sfd[i]);
-	म_लिखो("Failed to create sockmap '%i:%s'!\n", i, म_त्रुटि(त्रुटि_सं));
-	निकास(1);
+	for (i = 0; i < 6; i++)
+		close(sfd[i]);
+	printf("Failed to create sockmap '%i:%s'!\n", i, strerror(errno));
+	exit(1);
 out_sockmap:
-	क्रम (i = 0; i < 6; i++) अणु
-		अगर (map_fd_tx)
+	for (i = 0; i < 6; i++) {
+		if (map_fd_tx)
 			bpf_map_delete_elem(map_fd_tx, &i);
-		अगर (map_fd_rx)
+		if (map_fd_rx)
 			bpf_map_delete_elem(map_fd_rx, &i);
-		बंद(sfd[i]);
-	पूर्ण
-	बंद(fd);
-	निकास(1);
-पूर्ण
+		close(sfd[i]);
+	}
+	close(fd);
+	exit(1);
+}
 
-#घोषणा MAPINMAP_PROG "./test_map_in_map.o"
-अटल व्योम test_map_in_map(व्योम)
-अणु
-	काष्ठा bpf_object *obj;
-	काष्ठा bpf_map *map;
-	पूर्णांक mim_fd, fd, err;
-	पूर्णांक pos = 0;
+#define MAPINMAP_PROG "./test_map_in_map.o"
+static void test_map_in_map(void)
+{
+	struct bpf_object *obj;
+	struct bpf_map *map;
+	int mim_fd, fd, err;
+	int pos = 0;
 
-	obj = bpf_object__खोलो(MAPINMAP_PROG);
+	obj = bpf_object__open(MAPINMAP_PROG);
 
-	fd = bpf_create_map(BPF_MAP_TYPE_HASH, माप(पूर्णांक), माप(पूर्णांक),
+	fd = bpf_create_map(BPF_MAP_TYPE_HASH, sizeof(int), sizeof(int),
 			    2, 0);
-	अगर (fd < 0) अणु
-		म_लिखो("Failed to create hashmap '%s'!\n", म_त्रुटि(त्रुटि_सं));
-		निकास(1);
-	पूर्ण
+	if (fd < 0) {
+		printf("Failed to create hashmap '%s'!\n", strerror(errno));
+		exit(1);
+	}
 
 	map = bpf_object__find_map_by_name(obj, "mim_array");
-	अगर (IS_ERR(map)) अणु
-		म_लिखो("Failed to load array of maps from test prog\n");
-		जाओ out_map_in_map;
-	पूर्ण
+	if (IS_ERR(map)) {
+		printf("Failed to load array of maps from test prog\n");
+		goto out_map_in_map;
+	}
 	err = bpf_map__set_inner_map_fd(map, fd);
-	अगर (err) अणु
-		म_लिखो("Failed to set inner_map_fd for array of maps\n");
-		जाओ out_map_in_map;
-	पूर्ण
+	if (err) {
+		printf("Failed to set inner_map_fd for array of maps\n");
+		goto out_map_in_map;
+	}
 
 	map = bpf_object__find_map_by_name(obj, "mim_hash");
-	अगर (IS_ERR(map)) अणु
-		म_लिखो("Failed to load hash of maps from test prog\n");
-		जाओ out_map_in_map;
-	पूर्ण
+	if (IS_ERR(map)) {
+		printf("Failed to load hash of maps from test prog\n");
+		goto out_map_in_map;
+	}
 	err = bpf_map__set_inner_map_fd(map, fd);
-	अगर (err) अणु
-		म_लिखो("Failed to set inner_map_fd for hash of maps\n");
-		जाओ out_map_in_map;
-	पूर्ण
+	if (err) {
+		printf("Failed to set inner_map_fd for hash of maps\n");
+		goto out_map_in_map;
+	}
 
 	bpf_object__load(obj);
 
 	map = bpf_object__find_map_by_name(obj, "mim_array");
-	अगर (IS_ERR(map)) अणु
-		म_लिखो("Failed to load array of maps from test prog\n");
-		जाओ out_map_in_map;
-	पूर्ण
+	if (IS_ERR(map)) {
+		printf("Failed to load array of maps from test prog\n");
+		goto out_map_in_map;
+	}
 	mim_fd = bpf_map__fd(map);
-	अगर (mim_fd < 0) अणु
-		म_लिखो("Failed to get descriptor for array of maps\n");
-		जाओ out_map_in_map;
-	पूर्ण
+	if (mim_fd < 0) {
+		printf("Failed to get descriptor for array of maps\n");
+		goto out_map_in_map;
+	}
 
 	err = bpf_map_update_elem(mim_fd, &pos, &fd, 0);
-	अगर (err) अणु
-		म_लिखो("Failed to update array of maps\n");
-		जाओ out_map_in_map;
-	पूर्ण
+	if (err) {
+		printf("Failed to update array of maps\n");
+		goto out_map_in_map;
+	}
 
 	map = bpf_object__find_map_by_name(obj, "mim_hash");
-	अगर (IS_ERR(map)) अणु
-		म_लिखो("Failed to load hash of maps from test prog\n");
-		जाओ out_map_in_map;
-	पूर्ण
+	if (IS_ERR(map)) {
+		printf("Failed to load hash of maps from test prog\n");
+		goto out_map_in_map;
+	}
 	mim_fd = bpf_map__fd(map);
-	अगर (mim_fd < 0) अणु
-		म_लिखो("Failed to get descriptor for hash of maps\n");
-		जाओ out_map_in_map;
-	पूर्ण
+	if (mim_fd < 0) {
+		printf("Failed to get descriptor for hash of maps\n");
+		goto out_map_in_map;
+	}
 
 	err = bpf_map_update_elem(mim_fd, &pos, &fd, 0);
-	अगर (err) अणु
-		म_लिखो("Failed to update hash of maps\n");
-		जाओ out_map_in_map;
-	पूर्ण
+	if (err) {
+		printf("Failed to update hash of maps\n");
+		goto out_map_in_map;
+	}
 
-	बंद(fd);
-	bpf_object__बंद(obj);
-	वापस;
+	close(fd);
+	bpf_object__close(obj);
+	return;
 
 out_map_in_map:
-	बंद(fd);
-	निकास(1);
-पूर्ण
+	close(fd);
+	exit(1);
+}
 
-#घोषणा MAP_SIZE (32 * 1024)
+#define MAP_SIZE (32 * 1024)
 
-अटल व्योम test_map_large(व्योम)
-अणु
+static void test_map_large(void)
+{
 
-	काष्ठा bigkey अणु
-		पूर्णांक a;
-		अक्षर b[4096];
-		दीर्घ दीर्घ c;
-	पूर्ण key;
-	पूर्णांक fd, i, value;
+	struct bigkey {
+		int a;
+		char b[4096];
+		long long c;
+	} key;
+	int fd, i, value;
 
-	fd = bpf_create_map(BPF_MAP_TYPE_HASH, माप(key), माप(value),
+	fd = bpf_create_map(BPF_MAP_TYPE_HASH, sizeof(key), sizeof(value),
 			    MAP_SIZE, map_flags);
-	अगर (fd < 0) अणु
-		म_लिखो("Failed to create large map '%s'!\n", म_त्रुटि(त्रुटि_सं));
-		निकास(1);
-	पूर्ण
+	if (fd < 0) {
+		printf("Failed to create large map '%s'!\n", strerror(errno));
+		exit(1);
+	}
 
-	क्रम (i = 0; i < MAP_SIZE; i++) अणु
-		key = (काष्ठा bigkey) अणु .c = i पूर्ण;
+	for (i = 0; i < MAP_SIZE; i++) {
+		key = (struct bigkey) { .c = i };
 		value = i;
 
-		निश्चित(bpf_map_update_elem(fd, &key, &value, BPF_NOEXIST) == 0);
-	पूर्ण
+		assert(bpf_map_update_elem(fd, &key, &value, BPF_NOEXIST) == 0);
+	}
 
 	key.c = -1;
-	निश्चित(bpf_map_update_elem(fd, &key, &value, BPF_NOEXIST) == -1 &&
-	       त्रुटि_सं == E2BIG);
+	assert(bpf_map_update_elem(fd, &key, &value, BPF_NOEXIST) == -1 &&
+	       errno == E2BIG);
 
 	/* Iterate through all elements. */
-	निश्चित(bpf_map_get_next_key(fd, शून्य, &key) == 0);
+	assert(bpf_map_get_next_key(fd, NULL, &key) == 0);
 	key.c = -1;
-	क्रम (i = 0; i < MAP_SIZE; i++)
-		निश्चित(bpf_map_get_next_key(fd, &key, &key) == 0);
-	निश्चित(bpf_map_get_next_key(fd, &key, &key) == -1 && त्रुटि_सं == ENOENT);
+	for (i = 0; i < MAP_SIZE; i++)
+		assert(bpf_map_get_next_key(fd, &key, &key) == 0);
+	assert(bpf_map_get_next_key(fd, &key, &key) == -1 && errno == ENOENT);
 
 	key.c = 0;
-	निश्चित(bpf_map_lookup_elem(fd, &key, &value) == 0 && value == 0);
+	assert(bpf_map_lookup_elem(fd, &key, &value) == 0 && value == 0);
 	key.a = 1;
-	निश्चित(bpf_map_lookup_elem(fd, &key, &value) == -1 && त्रुटि_सं == ENOENT);
+	assert(bpf_map_lookup_elem(fd, &key, &value) == -1 && errno == ENOENT);
 
-	बंद(fd);
-पूर्ण
+	close(fd);
+}
 
-#घोषणा run_parallel(N, FN, DATA) \
-	म_लिखो("Fork %u tasks to '" #FN "'\n", N); \
+#define run_parallel(N, FN, DATA) \
+	printf("Fork %u tasks to '" #FN "'\n", N); \
 	__run_parallel(N, FN, DATA)
 
-अटल व्योम __run_parallel(अचिन्हित पूर्णांक tasks,
-			   व्योम (*fn)(अचिन्हित पूर्णांक task, व्योम *data),
-			   व्योम *data)
-अणु
+static void __run_parallel(unsigned int tasks,
+			   void (*fn)(unsigned int task, void *data),
+			   void *data)
+{
 	pid_t pid[tasks];
-	पूर्णांक i;
+	int i;
 
-	ख_साफ(मानक_निकास);
+	fflush(stdout);
 
-	क्रम (i = 0; i < tasks; i++) अणु
-		pid[i] = विभाजन();
-		अगर (pid[i] == 0) अणु
+	for (i = 0; i < tasks; i++) {
+		pid[i] = fork();
+		if (pid[i] == 0) {
 			fn(i, data);
-			निकास(0);
-		पूर्ण अन्यथा अगर (pid[i] == -1) अणु
-			म_लिखो("Couldn't spawn #%d process!\n", i);
-			निकास(1);
-		पूर्ण
-	पूर्ण
+			exit(0);
+		} else if (pid[i] == -1) {
+			printf("Couldn't spawn #%d process!\n", i);
+			exit(1);
+		}
+	}
 
-	क्रम (i = 0; i < tasks; i++) अणु
-		पूर्णांक status;
+	for (i = 0; i < tasks; i++) {
+		int status;
 
-		निश्चित(रुकोpid(pid[i], &status, 0) == pid[i]);
-		निश्चित(status == 0);
-	पूर्ण
-पूर्ण
+		assert(waitpid(pid[i], &status, 0) == pid[i]);
+		assert(status == 0);
+	}
+}
 
-अटल व्योम test_map_stress(व्योम)
-अणु
-	run_parallel(100, test_hashmap, शून्य);
-	run_parallel(100, test_hashmap_percpu, शून्य);
-	run_parallel(100, test_hashmap_sizes, शून्य);
-	run_parallel(100, test_hashmap_walk, शून्य);
+static void test_map_stress(void)
+{
+	run_parallel(100, test_hashmap, NULL);
+	run_parallel(100, test_hashmap_percpu, NULL);
+	run_parallel(100, test_hashmap_sizes, NULL);
+	run_parallel(100, test_hashmap_walk, NULL);
 
-	run_parallel(100, test_arraymap, शून्य);
-	run_parallel(100, test_arraymap_percpu, शून्य);
-पूर्ण
+	run_parallel(100, test_arraymap, NULL);
+	run_parallel(100, test_arraymap_percpu, NULL);
+}
 
-#घोषणा TASKS 1024
+#define TASKS 1024
 
-#घोषणा DO_UPDATE 1
-#घोषणा DO_DELETE 0
+#define DO_UPDATE 1
+#define DO_DELETE 0
 
-#घोषणा MAP_RETRIES 20
+#define MAP_RETRIES 20
 
-अटल पूर्णांक map_update_retriable(पूर्णांक map_fd, स्थिर व्योम *key, स्थिर व्योम *value,
-				पूर्णांक flags, पूर्णांक attempts)
-अणु
-	जबतक (bpf_map_update_elem(map_fd, key, value, flags)) अणु
-		अगर (!attempts || (त्रुटि_सं != EAGAIN && त्रुटि_सं != EBUSY))
-			वापस -त्रुटि_सं;
-
-		usleep(1);
-		attempts--;
-	पूर्ण
-
-	वापस 0;
-पूर्ण
-
-अटल पूर्णांक map_delete_retriable(पूर्णांक map_fd, स्थिर व्योम *key, पूर्णांक attempts)
-अणु
-	जबतक (bpf_map_delete_elem(map_fd, key)) अणु
-		अगर (!attempts || (त्रुटि_सं != EAGAIN && त्रुटि_सं != EBUSY))
-			वापस -त्रुटि_सं;
+static int map_update_retriable(int map_fd, const void *key, const void *value,
+				int flags, int attempts)
+{
+	while (bpf_map_update_elem(map_fd, key, value, flags)) {
+		if (!attempts || (errno != EAGAIN && errno != EBUSY))
+			return -errno;
 
 		usleep(1);
 		attempts--;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम test_update_delete(अचिन्हित पूर्णांक fn, व्योम *data)
-अणु
-	पूर्णांक करो_update = ((पूर्णांक *)data)[1];
-	पूर्णांक fd = ((पूर्णांक *)data)[0];
-	पूर्णांक i, key, value, err;
+static int map_delete_retriable(int map_fd, const void *key, int attempts)
+{
+	while (bpf_map_delete_elem(map_fd, key)) {
+		if (!attempts || (errno != EAGAIN && errno != EBUSY))
+			return -errno;
 
-	क्रम (i = fn; i < MAP_SIZE; i += TASKS) अणु
+		usleep(1);
+		attempts--;
+	}
+
+	return 0;
+}
+
+static void test_update_delete(unsigned int fn, void *data)
+{
+	int do_update = ((int *)data)[1];
+	int fd = ((int *)data)[0];
+	int i, key, value, err;
+
+	for (i = fn; i < MAP_SIZE; i += TASKS) {
 		key = value = i;
 
-		अगर (करो_update) अणु
+		if (do_update) {
 			err = map_update_retriable(fd, &key, &value, BPF_NOEXIST, MAP_RETRIES);
-			अगर (err)
-				म_लिखो("error %d %d\n", err, त्रुटि_सं);
-			निश्चित(err == 0);
+			if (err)
+				printf("error %d %d\n", err, errno);
+			assert(err == 0);
 			err = map_update_retriable(fd, &key, &value, BPF_EXIST, MAP_RETRIES);
-			अगर (err)
-				म_लिखो("error %d %d\n", err, त्रुटि_सं);
-			निश्चित(err == 0);
-		पूर्ण अन्यथा अणु
+			if (err)
+				printf("error %d %d\n", err, errno);
+			assert(err == 0);
+		} else {
 			err = map_delete_retriable(fd, &key, MAP_RETRIES);
-			अगर (err)
-				म_लिखो("error %d %d\n", err, त्रुटि_सं);
-			निश्चित(err == 0);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			if (err)
+				printf("error %d %d\n", err, errno);
+			assert(err == 0);
+		}
+	}
+}
 
-अटल व्योम test_map_parallel(व्योम)
-अणु
-	पूर्णांक i, fd, key = 0, value = 0;
-	पूर्णांक data[2];
+static void test_map_parallel(void)
+{
+	int i, fd, key = 0, value = 0;
+	int data[2];
 
-	fd = bpf_create_map(BPF_MAP_TYPE_HASH, माप(key), माप(value),
+	fd = bpf_create_map(BPF_MAP_TYPE_HASH, sizeof(key), sizeof(value),
 			    MAP_SIZE, map_flags);
-	अगर (fd < 0) अणु
-		म_लिखो("Failed to create map for parallel test '%s'!\n",
-		       म_त्रुटि(त्रुटि_सं));
-		निकास(1);
-	पूर्ण
+	if (fd < 0) {
+		printf("Failed to create map for parallel test '%s'!\n",
+		       strerror(errno));
+		exit(1);
+	}
 
 	/* Use the same fd in children to add elements to this map:
 	 * child_0 adds key=0, key=1024, key=2048, ...
@@ -1391,24 +1390,24 @@ out_map_in_map:
 	data[1] = DO_UPDATE;
 	run_parallel(TASKS, test_update_delete, data);
 
-	/* Check that key=0 is alपढ़ोy there. */
-	निश्चित(bpf_map_update_elem(fd, &key, &value, BPF_NOEXIST) == -1 &&
-	       त्रुटि_सं == EEXIST);
+	/* Check that key=0 is already there. */
+	assert(bpf_map_update_elem(fd, &key, &value, BPF_NOEXIST) == -1 &&
+	       errno == EEXIST);
 
 	/* Check that all elements were inserted. */
-	निश्चित(bpf_map_get_next_key(fd, शून्य, &key) == 0);
+	assert(bpf_map_get_next_key(fd, NULL, &key) == 0);
 	key = -1;
-	क्रम (i = 0; i < MAP_SIZE; i++)
-		निश्चित(bpf_map_get_next_key(fd, &key, &key) == 0);
-	निश्चित(bpf_map_get_next_key(fd, &key, &key) == -1 && त्रुटि_सं == ENOENT);
+	for (i = 0; i < MAP_SIZE; i++)
+		assert(bpf_map_get_next_key(fd, &key, &key) == 0);
+	assert(bpf_map_get_next_key(fd, &key, &key) == -1 && errno == ENOENT);
 
-	/* Another check क्रम all elements */
-	क्रम (i = 0; i < MAP_SIZE; i++) अणु
+	/* Another check for all elements */
+	for (i = 0; i < MAP_SIZE; i++) {
 		key = MAP_SIZE - i - 1;
 
-		निश्चित(bpf_map_lookup_elem(fd, &key, &value) == 0 &&
+		assert(bpf_map_lookup_elem(fd, &key, &value) == 0 &&
 		       value == key);
-	पूर्ण
+	}
 
 	/* Now let's delete all elemenets in parallel. */
 	data[1] = DO_DELETE;
@@ -1416,388 +1415,388 @@ out_map_in_map:
 
 	/* Nothing should be left. */
 	key = -1;
-	निश्चित(bpf_map_get_next_key(fd, शून्य, &key) == -1 && त्रुटि_सं == ENOENT);
-	निश्चित(bpf_map_get_next_key(fd, &key, &key) == -1 && त्रुटि_सं == ENOENT);
-पूर्ण
+	assert(bpf_map_get_next_key(fd, NULL, &key) == -1 && errno == ENOENT);
+	assert(bpf_map_get_next_key(fd, &key, &key) == -1 && errno == ENOENT);
+}
 
-अटल व्योम test_map_rकरोnly(व्योम)
-अणु
-	पूर्णांक fd, key = 0, value = 0;
+static void test_map_rdonly(void)
+{
+	int fd, key = 0, value = 0;
 
-	fd = bpf_create_map(BPF_MAP_TYPE_HASH, माप(key), माप(value),
+	fd = bpf_create_map(BPF_MAP_TYPE_HASH, sizeof(key), sizeof(value),
 			    MAP_SIZE, map_flags | BPF_F_RDONLY);
-	अगर (fd < 0) अणु
-		म_लिखो("Failed to create map for read only test '%s'!\n",
-		       म_त्रुटि(त्रुटि_सं));
-		निकास(1);
-	पूर्ण
+	if (fd < 0) {
+		printf("Failed to create map for read only test '%s'!\n",
+		       strerror(errno));
+		exit(1);
+	}
 
 	key = 1;
 	value = 1234;
 	/* Try to insert key=1 element. */
-	निश्चित(bpf_map_update_elem(fd, &key, &value, BPF_ANY) == -1 &&
-	       त्रुटि_सं == EPERM);
+	assert(bpf_map_update_elem(fd, &key, &value, BPF_ANY) == -1 &&
+	       errno == EPERM);
 
 	/* Check that key=1 is not found. */
-	निश्चित(bpf_map_lookup_elem(fd, &key, &value) == -1 && त्रुटि_सं == ENOENT);
-	निश्चित(bpf_map_get_next_key(fd, &key, &value) == -1 && त्रुटि_सं == ENOENT);
+	assert(bpf_map_lookup_elem(fd, &key, &value) == -1 && errno == ENOENT);
+	assert(bpf_map_get_next_key(fd, &key, &value) == -1 && errno == ENOENT);
 
-	बंद(fd);
-पूर्ण
+	close(fd);
+}
 
-अटल व्योम test_map_wronly_hash(व्योम)
-अणु
-	पूर्णांक fd, key = 0, value = 0;
+static void test_map_wronly_hash(void)
+{
+	int fd, key = 0, value = 0;
 
-	fd = bpf_create_map(BPF_MAP_TYPE_HASH, माप(key), माप(value),
+	fd = bpf_create_map(BPF_MAP_TYPE_HASH, sizeof(key), sizeof(value),
 			    MAP_SIZE, map_flags | BPF_F_WRONLY);
-	अगर (fd < 0) अणु
-		म_लिखो("Failed to create map for write only test '%s'!\n",
-		       म_त्रुटि(त्रुटि_सं));
-		निकास(1);
-	पूर्ण
+	if (fd < 0) {
+		printf("Failed to create map for write only test '%s'!\n",
+		       strerror(errno));
+		exit(1);
+	}
 
 	key = 1;
 	value = 1234;
 	/* Insert key=1 element. */
-	निश्चित(bpf_map_update_elem(fd, &key, &value, BPF_ANY) == 0);
+	assert(bpf_map_update_elem(fd, &key, &value, BPF_ANY) == 0);
 
-	/* Check that पढ़ोing elements and keys from the map is not allowed. */
-	निश्चित(bpf_map_lookup_elem(fd, &key, &value) == -1 && त्रुटि_सं == EPERM);
-	निश्चित(bpf_map_get_next_key(fd, &key, &value) == -1 && त्रुटि_सं == EPERM);
+	/* Check that reading elements and keys from the map is not allowed. */
+	assert(bpf_map_lookup_elem(fd, &key, &value) == -1 && errno == EPERM);
+	assert(bpf_map_get_next_key(fd, &key, &value) == -1 && errno == EPERM);
 
-	बंद(fd);
-पूर्ण
+	close(fd);
+}
 
-अटल व्योम test_map_wronly_stack_or_queue(क्रमागत bpf_map_type map_type)
-अणु
-	पूर्णांक fd, value = 0;
+static void test_map_wronly_stack_or_queue(enum bpf_map_type map_type)
+{
+	int fd, value = 0;
 
-	निश्चित(map_type == BPF_MAP_TYPE_QUEUE ||
+	assert(map_type == BPF_MAP_TYPE_QUEUE ||
 	       map_type == BPF_MAP_TYPE_STACK);
-	fd = bpf_create_map(map_type, 0, माप(value), MAP_SIZE,
+	fd = bpf_create_map(map_type, 0, sizeof(value), MAP_SIZE,
 			    map_flags | BPF_F_WRONLY);
-	/* Stack/Queue maps करो not support BPF_F_NO_PREALLOC */
-	अगर (map_flags & BPF_F_NO_PREALLOC) अणु
-		निश्चित(fd < 0 && त्रुटि_सं == EINVAL);
-		वापस;
-	पूर्ण
-	अगर (fd < 0) अणु
-		म_लिखो("Failed to create map '%s'!\n", म_त्रुटि(त्रुटि_सं));
-		निकास(1);
-	पूर्ण
+	/* Stack/Queue maps do not support BPF_F_NO_PREALLOC */
+	if (map_flags & BPF_F_NO_PREALLOC) {
+		assert(fd < 0 && errno == EINVAL);
+		return;
+	}
+	if (fd < 0) {
+		printf("Failed to create map '%s'!\n", strerror(errno));
+		exit(1);
+	}
 
 	value = 1234;
-	निश्चित(bpf_map_update_elem(fd, शून्य, &value, BPF_ANY) == 0);
+	assert(bpf_map_update_elem(fd, NULL, &value, BPF_ANY) == 0);
 
 	/* Peek element should fail */
-	निश्चित(bpf_map_lookup_elem(fd, शून्य, &value) == -1 && त्रुटि_सं == EPERM);
+	assert(bpf_map_lookup_elem(fd, NULL, &value) == -1 && errno == EPERM);
 
 	/* Pop element should fail */
-	निश्चित(bpf_map_lookup_and_delete_elem(fd, शून्य, &value) == -1 &&
-	       त्रुटि_सं == EPERM);
+	assert(bpf_map_lookup_and_delete_elem(fd, NULL, &value) == -1 &&
+	       errno == EPERM);
 
-	बंद(fd);
-पूर्ण
+	close(fd);
+}
 
-अटल व्योम test_map_wronly(व्योम)
-अणु
+static void test_map_wronly(void)
+{
 	test_map_wronly_hash();
 	test_map_wronly_stack_or_queue(BPF_MAP_TYPE_STACK);
 	test_map_wronly_stack_or_queue(BPF_MAP_TYPE_QUEUE);
-पूर्ण
+}
 
-अटल व्योम prepare_reuseport_grp(पूर्णांक type, पूर्णांक map_fd, माप_प्रकार map_elem_size,
+static void prepare_reuseport_grp(int type, int map_fd, size_t map_elem_size,
 				  __s64 *fds64, __u64 *sk_cookies,
-				  अचिन्हित पूर्णांक n)
-अणु
+				  unsigned int n)
+{
 	socklen_t optlen, addrlen;
-	काष्ठा sockaddr_in6 s6;
-	स्थिर __u32 index0 = 0;
-	स्थिर पूर्णांक optval = 1;
-	अचिन्हित पूर्णांक i;
+	struct sockaddr_in6 s6;
+	const __u32 index0 = 0;
+	const int optval = 1;
+	unsigned int i;
 	u64 sk_cookie;
-	व्योम *value;
+	void *value;
 	__s32 fd32;
 	__s64 fd64;
-	पूर्णांक err;
+	int err;
 
 	s6.sin6_family = AF_INET6;
 	s6.sin6_addr = in6addr_any;
 	s6.sin6_port = 0;
-	addrlen = माप(s6);
-	optlen = माप(sk_cookie);
+	addrlen = sizeof(s6);
+	optlen = sizeof(sk_cookie);
 
-	क्रम (i = 0; i < n; i++) अणु
+	for (i = 0; i < n; i++) {
 		fd64 = socket(AF_INET6, type, 0);
 		CHECK(fd64 == -1, "socket()",
 		      "sock_type:%d fd64:%lld errno:%d\n",
-		      type, fd64, त्रुटि_सं);
+		      type, fd64, errno);
 
 		err = setsockopt(fd64, SOL_SOCKET, SO_REUSEPORT,
-				 &optval, माप(optval));
+				 &optval, sizeof(optval));
 		CHECK(err == -1, "setsockopt(SO_REUSEPORT)",
-		      "err:%d errno:%d\n", err, त्रुटि_सं);
+		      "err:%d errno:%d\n", err, errno);
 
-		/* reuseport_array करोes not allow unbound sk */
-		अगर (map_elem_size == माप(__u64))
+		/* reuseport_array does not allow unbound sk */
+		if (map_elem_size == sizeof(__u64))
 			value = &fd64;
-		अन्यथा अणु
-			निश्चित(map_elem_size == माप(__u32));
+		else {
+			assert(map_elem_size == sizeof(__u32));
 			fd32 = (__s32)fd64;
 			value = &fd32;
-		पूर्ण
+		}
 		err = bpf_map_update_elem(map_fd, &index0, value, BPF_ANY);
-		CHECK(err != -1 || त्रुटि_सं != EINVAL,
+		CHECK(err != -1 || errno != EINVAL,
 		      "reuseport array update unbound sk",
 		      "sock_type:%d err:%d errno:%d\n",
-		      type, err, त्रुटि_सं);
+		      type, err, errno);
 
-		err = bind(fd64, (काष्ठा sockaddr *)&s6, माप(s6));
+		err = bind(fd64, (struct sockaddr *)&s6, sizeof(s6));
 		CHECK(err == -1, "bind()",
-		      "sock_type:%d err:%d errno:%d\n", type, err, त्रुटि_सं);
+		      "sock_type:%d err:%d errno:%d\n", type, err, errno);
 
-		अगर (i == 0) अणु
-			err = माला_लोockname(fd64, (काष्ठा sockaddr *)&s6,
+		if (i == 0) {
+			err = getsockname(fd64, (struct sockaddr *)&s6,
 					  &addrlen);
 			CHECK(err == -1, "getsockname()",
 			      "sock_type:%d err:%d errno:%d\n",
-			      type, err, त्रुटि_सं);
-		पूर्ण
+			      type, err, errno);
+		}
 
-		err = माला_लोockopt(fd64, SOL_SOCKET, SO_COOKIE, &sk_cookie,
+		err = getsockopt(fd64, SOL_SOCKET, SO_COOKIE, &sk_cookie,
 				 &optlen);
 		CHECK(err == -1, "getsockopt(SO_COOKIE)",
-		      "sock_type:%d err:%d errno:%d\n", type, err, त्रुटि_सं);
+		      "sock_type:%d err:%d errno:%d\n", type, err, errno);
 
-		अगर (type == SOCK_STREAM) अणु
+		if (type == SOCK_STREAM) {
 			/*
-			 * reuseport_array करोes not allow
+			 * reuseport_array does not allow
 			 * non-listening tcp sk.
 			 */
 			err = bpf_map_update_elem(map_fd, &index0, value,
 						  BPF_ANY);
-			CHECK(err != -1 || त्रुटि_सं != EINVAL,
+			CHECK(err != -1 || errno != EINVAL,
 			      "reuseport array update non-listening sk",
 			      "sock_type:%d err:%d errno:%d\n",
-			      type, err, त्रुटि_सं);
+			      type, err, errno);
 			err = listen(fd64, 0);
 			CHECK(err == -1, "listen()",
 			      "sock_type:%d, err:%d errno:%d\n",
-			      type, err, त्रुटि_सं);
-		पूर्ण
+			      type, err, errno);
+		}
 
 		fds64[i] = fd64;
 		sk_cookies[i] = sk_cookie;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम test_reuseport_array(व्योम)
-अणु
-#घोषणा REUSEPORT_FD_IDX(err, last) (अणु (err) ? last : !last; पूर्ण)
+static void test_reuseport_array(void)
+{
+#define REUSEPORT_FD_IDX(err, last) ({ (err) ? last : !last; })
 
-	स्थिर __u32 array_size = 4, index0 = 0, index3 = 3;
-	पूर्णांक types[2] = अणु SOCK_STREAM, SOCK_DGRAM पूर्ण, type;
+	const __u32 array_size = 4, index0 = 0, index3 = 3;
+	int types[2] = { SOCK_STREAM, SOCK_DGRAM }, type;
 	__u64 grpa_cookies[2], sk_cookie, map_cookie;
-	__s64 grpa_fds64[2] = अणु -1, -1 पूर्ण, fd64 = -1;
-	स्थिर __u32 bad_index = array_size;
-	पूर्णांक map_fd, err, t, f;
+	__s64 grpa_fds64[2] = { -1, -1 }, fd64 = -1;
+	const __u32 bad_index = array_size;
+	int map_fd, err, t, f;
 	__u32 fds_idx = 0;
-	पूर्णांक fd;
+	int fd;
 
 	map_fd = bpf_create_map(BPF_MAP_TYPE_REUSEPORT_SOCKARRAY,
-				माप(__u32), माप(__u64), array_size, 0);
+				sizeof(__u32), sizeof(__u64), array_size, 0);
 	CHECK(map_fd == -1, "reuseport array create",
-	      "map_fd:%d, errno:%d\n", map_fd, त्रुटि_सं);
+	      "map_fd:%d, errno:%d\n", map_fd, errno);
 
 	/* Test lookup/update/delete with invalid index */
 	err = bpf_map_delete_elem(map_fd, &bad_index);
-	CHECK(err != -1 || त्रुटि_सं != E2BIG, "reuseport array del >=max_entries",
-	      "err:%d errno:%d\n", err, त्रुटि_सं);
+	CHECK(err != -1 || errno != E2BIG, "reuseport array del >=max_entries",
+	      "err:%d errno:%d\n", err, errno);
 
 	err = bpf_map_update_elem(map_fd, &bad_index, &fd64, BPF_ANY);
-	CHECK(err != -1 || त्रुटि_सं != E2BIG,
+	CHECK(err != -1 || errno != E2BIG,
 	      "reuseport array update >=max_entries",
-	      "err:%d errno:%d\n", err, त्रुटि_सं);
+	      "err:%d errno:%d\n", err, errno);
 
 	err = bpf_map_lookup_elem(map_fd, &bad_index, &map_cookie);
-	CHECK(err != -1 || त्रुटि_सं != ENOENT,
+	CHECK(err != -1 || errno != ENOENT,
 	      "reuseport array update >=max_entries",
-	      "err:%d errno:%d\n", err, त्रुटि_सं);
+	      "err:%d errno:%d\n", err, errno);
 
 	/* Test lookup/delete non existence elem */
 	err = bpf_map_lookup_elem(map_fd, &index3, &map_cookie);
-	CHECK(err != -1 || त्रुटि_सं != ENOENT,
+	CHECK(err != -1 || errno != ENOENT,
 	      "reuseport array lookup not-exist elem",
-	      "err:%d errno:%d\n", err, त्रुटि_सं);
+	      "err:%d errno:%d\n", err, errno);
 	err = bpf_map_delete_elem(map_fd, &index3);
-	CHECK(err != -1 || त्रुटि_सं != ENOENT,
+	CHECK(err != -1 || errno != ENOENT,
 	      "reuseport array del not-exist elem",
-	      "err:%d errno:%d\n", err, त्रुटि_सं);
+	      "err:%d errno:%d\n", err, errno);
 
-	क्रम (t = 0; t < ARRAY_SIZE(types); t++) अणु
+	for (t = 0; t < ARRAY_SIZE(types); t++) {
 		type = types[t];
 
-		prepare_reuseport_grp(type, map_fd, माप(__u64), grpa_fds64,
+		prepare_reuseport_grp(type, map_fd, sizeof(__u64), grpa_fds64,
 				      grpa_cookies, ARRAY_SIZE(grpa_fds64));
 
 		/* Test BPF_* update flags */
-		/* BPF_EXIST failure हाल */
+		/* BPF_EXIST failure case */
 		err = bpf_map_update_elem(map_fd, &index3, &grpa_fds64[fds_idx],
 					  BPF_EXIST);
-		CHECK(err != -1 || त्रुटि_सं != ENOENT,
+		CHECK(err != -1 || errno != ENOENT,
 		      "reuseport array update empty elem BPF_EXIST",
 		      "sock_type:%d err:%d errno:%d\n",
-		      type, err, त्रुटि_सं);
+		      type, err, errno);
 		fds_idx = REUSEPORT_FD_IDX(err, fds_idx);
 
-		/* BPF_NOEXIST success हाल */
+		/* BPF_NOEXIST success case */
 		err = bpf_map_update_elem(map_fd, &index3, &grpa_fds64[fds_idx],
 					  BPF_NOEXIST);
 		CHECK(err == -1,
 		      "reuseport array update empty elem BPF_NOEXIST",
 		      "sock_type:%d err:%d errno:%d\n",
-		      type, err, त्रुटि_सं);
+		      type, err, errno);
 		fds_idx = REUSEPORT_FD_IDX(err, fds_idx);
 
-		/* BPF_EXIST success हाल. */
+		/* BPF_EXIST success case. */
 		err = bpf_map_update_elem(map_fd, &index3, &grpa_fds64[fds_idx],
 					  BPF_EXIST);
 		CHECK(err == -1,
 		      "reuseport array update same elem BPF_EXIST",
-		      "sock_type:%d err:%d errno:%d\n", type, err, त्रुटि_सं);
+		      "sock_type:%d err:%d errno:%d\n", type, err, errno);
 		fds_idx = REUSEPORT_FD_IDX(err, fds_idx);
 
-		/* BPF_NOEXIST failure हाल */
+		/* BPF_NOEXIST failure case */
 		err = bpf_map_update_elem(map_fd, &index3, &grpa_fds64[fds_idx],
 					  BPF_NOEXIST);
-		CHECK(err != -1 || त्रुटि_सं != EEXIST,
+		CHECK(err != -1 || errno != EEXIST,
 		      "reuseport array update non-empty elem BPF_NOEXIST",
 		      "sock_type:%d err:%d errno:%d\n",
-		      type, err, त्रुटि_सं);
+		      type, err, errno);
 		fds_idx = REUSEPORT_FD_IDX(err, fds_idx);
 
-		/* BPF_ANY हाल (always succeed) */
+		/* BPF_ANY case (always succeed) */
 		err = bpf_map_update_elem(map_fd, &index3, &grpa_fds64[fds_idx],
 					  BPF_ANY);
 		CHECK(err == -1,
 		      "reuseport array update same sk with BPF_ANY",
-		      "sock_type:%d err:%d errno:%d\n", type, err, त्रुटि_सं);
+		      "sock_type:%d err:%d errno:%d\n", type, err, errno);
 
 		fd64 = grpa_fds64[fds_idx];
 		sk_cookie = grpa_cookies[fds_idx];
 
 		/* The same sk cannot be added to reuseport_array twice */
 		err = bpf_map_update_elem(map_fd, &index3, &fd64, BPF_ANY);
-		CHECK(err != -1 || त्रुटि_सं != EBUSY,
+		CHECK(err != -1 || errno != EBUSY,
 		      "reuseport array update same sk with same index",
 		      "sock_type:%d err:%d errno:%d\n",
-		      type, err, त्रुटि_सं);
+		      type, err, errno);
 
 		err = bpf_map_update_elem(map_fd, &index0, &fd64, BPF_ANY);
-		CHECK(err != -1 || त्रुटि_सं != EBUSY,
+		CHECK(err != -1 || errno != EBUSY,
 		      "reuseport array update same sk with different index",
 		      "sock_type:%d err:%d errno:%d\n",
-		      type, err, त्रुटि_सं);
+		      type, err, errno);
 
 		/* Test delete elem */
 		err = bpf_map_delete_elem(map_fd, &index3);
 		CHECK(err == -1, "reuseport array delete sk",
 		      "sock_type:%d err:%d errno:%d\n",
-		      type, err, त्रुटि_सं);
+		      type, err, errno);
 
 		/* Add it back with BPF_NOEXIST */
 		err = bpf_map_update_elem(map_fd, &index3, &fd64, BPF_NOEXIST);
 		CHECK(err == -1,
 		      "reuseport array re-add with BPF_NOEXIST after del",
-		      "sock_type:%d err:%d errno:%d\n", type, err, त्रुटि_सं);
+		      "sock_type:%d err:%d errno:%d\n", type, err, errno);
 
 		/* Test cookie */
 		err = bpf_map_lookup_elem(map_fd, &index3, &map_cookie);
 		CHECK(err == -1 || sk_cookie != map_cookie,
 		      "reuseport array lookup re-added sk",
 		      "sock_type:%d err:%d errno:%d sk_cookie:0x%llx map_cookie:0x%llxn",
-		      type, err, त्रुटि_सं, sk_cookie, map_cookie);
+		      type, err, errno, sk_cookie, map_cookie);
 
-		/* Test elem हटाओd by बंद() */
-		क्रम (f = 0; f < ARRAY_SIZE(grpa_fds64); f++)
-			बंद(grpa_fds64[f]);
+		/* Test elem removed by close() */
+		for (f = 0; f < ARRAY_SIZE(grpa_fds64); f++)
+			close(grpa_fds64[f]);
 		err = bpf_map_lookup_elem(map_fd, &index3, &map_cookie);
-		CHECK(err != -1 || त्रुटि_सं != ENOENT,
+		CHECK(err != -1 || errno != ENOENT,
 		      "reuseport array lookup after close()",
 		      "sock_type:%d err:%d errno:%d\n",
-		      type, err, त्रुटि_सं);
-	पूर्ण
+		      type, err, errno);
+	}
 
 	/* Test SOCK_RAW */
 	fd64 = socket(AF_INET6, SOCK_RAW, IPPROTO_UDP);
 	CHECK(fd64 == -1, "socket(SOCK_RAW)", "err:%d errno:%d\n",
-	      err, त्रुटि_सं);
+	      err, errno);
 	err = bpf_map_update_elem(map_fd, &index3, &fd64, BPF_NOEXIST);
-	CHECK(err != -1 || त्रुटि_सं != ENOTSUPP, "reuseport array update SOCK_RAW",
-	      "err:%d errno:%d\n", err, त्रुटि_सं);
-	बंद(fd64);
+	CHECK(err != -1 || errno != ENOTSUPP, "reuseport array update SOCK_RAW",
+	      "err:%d errno:%d\n", err, errno);
+	close(fd64);
 
 	/* Close the 64 bit value map */
-	बंद(map_fd);
+	close(map_fd);
 
 	/* Test 32 bit fd */
 	map_fd = bpf_create_map(BPF_MAP_TYPE_REUSEPORT_SOCKARRAY,
-				माप(__u32), माप(__u32), array_size, 0);
+				sizeof(__u32), sizeof(__u32), array_size, 0);
 	CHECK(map_fd == -1, "reuseport array create",
-	      "map_fd:%d, errno:%d\n", map_fd, त्रुटि_सं);
-	prepare_reuseport_grp(SOCK_STREAM, map_fd, माप(__u32), &fd64,
+	      "map_fd:%d, errno:%d\n", map_fd, errno);
+	prepare_reuseport_grp(SOCK_STREAM, map_fd, sizeof(__u32), &fd64,
 			      &sk_cookie, 1);
 	fd = fd64;
 	err = bpf_map_update_elem(map_fd, &index3, &fd, BPF_NOEXIST);
 	CHECK(err == -1, "reuseport array update 32 bit fd",
-	      "err:%d errno:%d\n", err, त्रुटि_सं);
+	      "err:%d errno:%d\n", err, errno);
 	err = bpf_map_lookup_elem(map_fd, &index3, &map_cookie);
-	CHECK(err != -1 || त्रुटि_सं != ENOSPC,
+	CHECK(err != -1 || errno != ENOSPC,
 	      "reuseport array lookup 32 bit fd",
-	      "err:%d errno:%d\n", err, त्रुटि_सं);
-	बंद(fd);
-	बंद(map_fd);
-पूर्ण
+	      "err:%d errno:%d\n", err, errno);
+	close(fd);
+	close(map_fd);
+}
 
-अटल व्योम run_all_tests(व्योम)
-अणु
-	test_hashmap(0, शून्य);
-	test_hashmap_percpu(0, शून्य);
-	test_hashmap_walk(0, शून्य);
+static void run_all_tests(void)
+{
+	test_hashmap(0, NULL);
+	test_hashmap_percpu(0, NULL);
+	test_hashmap_walk(0, NULL);
 	test_hashmap_zero_seed();
 
-	test_arraymap(0, शून्य);
-	test_arraymap_percpu(0, शून्य);
+	test_arraymap(0, NULL);
+	test_arraymap_percpu(0, NULL);
 
 	test_arraymap_percpu_many_keys();
 
-	test_devmap(0, शून्य);
-	test_devmap_hash(0, शून्य);
-	test_sockmap(0, शून्य);
+	test_devmap(0, NULL);
+	test_devmap_hash(0, NULL);
+	test_sockmap(0, NULL);
 
 	test_map_large();
 	test_map_parallel();
 	test_map_stress();
 
-	test_map_rकरोnly();
+	test_map_rdonly();
 	test_map_wronly();
 
 	test_reuseport_array();
 
-	test_queuemap(0, शून्य);
-	test_stackmap(0, शून्य);
+	test_queuemap(0, NULL);
+	test_stackmap(0, NULL);
 
 	test_map_in_map();
-पूर्ण
+}
 
-#घोषणा DEFINE_TEST(name) बाह्य व्योम test_##name(व्योम);
-#समावेश <map_tests/tests.h>
-#अघोषित DEFINE_TEST
+#define DEFINE_TEST(name) extern void test_##name(void);
+#include <map_tests/tests.h>
+#undef DEFINE_TEST
 
-पूर्णांक मुख्य(व्योम)
-अणु
-	बेक्रम(समय(शून्य));
+int main(void)
+{
+	srand(time(NULL));
 
 	map_flags = 0;
 	run_all_tests();
@@ -1805,10 +1804,10 @@ out_map_in_map:
 	map_flags = BPF_F_NO_PREALLOC;
 	run_all_tests();
 
-#घोषणा DEFINE_TEST(name) test_##name();
-#समावेश <map_tests/tests.h>
-#अघोषित DEFINE_TEST
+#define DEFINE_TEST(name) test_##name();
+#include <map_tests/tests.h>
+#undef DEFINE_TEST
 
-	म_लिखो("test_maps: OK, %d SKIPPED\n", skips);
-	वापस 0;
-पूर्ण
+	printf("test_maps: OK, %d SKIPPED\n", skips);
+	return 0;
+}

@@ -1,14 +1,13 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ASM_SH_CMPXCHG_LLSC_H
-#घोषणा __ASM_SH_CMPXCHG_LLSC_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ASM_SH_CMPXCHG_LLSC_H
+#define __ASM_SH_CMPXCHG_LLSC_H
 
-अटल अंतरभूत अचिन्हित दीर्घ xchg_u32(अस्थिर u32 *m, अचिन्हित दीर्घ val)
-अणु
-	अचिन्हित दीर्घ retval;
-	अचिन्हित दीर्घ पंचांगp;
+static inline unsigned long xchg_u32(volatile u32 *m, unsigned long val)
+{
+	unsigned long retval;
+	unsigned long tmp;
 
-	__यंत्र__ __अस्थिर__ (
+	__asm__ __volatile__ (
 		"1:					\n\t"
 		"movli.l	@%2, %0	! xchg_u32	\n\t"
 		"mov		%0, %1			\n\t"
@@ -16,21 +15,21 @@
 		"movco.l	%0, @%2			\n\t"
 		"bf		1b			\n\t"
 		"synco					\n\t"
-		: "=&z"(पंचांगp), "=&r" (retval)
+		: "=&z"(tmp), "=&r" (retval)
 		: "r" (m), "r" (val)
 		: "t", "memory"
 	);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ
-__cmpxchg_u32(अस्थिर u32 *m, अचिन्हित दीर्घ old, अचिन्हित दीर्घ new)
-अणु
-	अचिन्हित दीर्घ retval;
-	अचिन्हित दीर्घ पंचांगp;
+static inline unsigned long
+__cmpxchg_u32(volatile u32 *m, unsigned long old, unsigned long new)
+{
+	unsigned long retval;
+	unsigned long tmp;
 
-	__यंत्र__ __अस्थिर__ (
+	__asm__ __volatile__ (
 		"1:						\n\t"
 		"movli.l	@%2, %0	! __cmpxchg_u32		\n\t"
 		"mov		%0, %1				\n\t"
@@ -41,14 +40,14 @@ __cmpxchg_u32(अस्थिर u32 *m, अचिन्हित दीर्�
 		"movco.l	%0, @%2				\n\t"
 		"bf		1b				\n\t"
 		"synco						\n\t"
-		: "=&z" (पंचांगp), "=&r" (retval)
+		: "=&z" (tmp), "=&r" (retval)
 		: "r" (m), "r" (old), "r" (new)
 		: "t", "memory"
 	);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-#समावेश <यंत्र/cmpxchg-xchg.h>
+#include <asm/cmpxchg-xchg.h>
 
-#पूर्ण_अगर /* __ASM_SH_CMPXCHG_LLSC_H */
+#endif /* __ASM_SH_CMPXCHG_LLSC_H */

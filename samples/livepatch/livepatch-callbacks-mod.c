@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2017 Joe Lawrence <joe.lawrence@redhat.com>
  */
@@ -17,26 +16,26 @@
  * Usage
  * -----
  *
- * This module is not पूर्णांकended to be standalone.  See the "Usage"
+ * This module is not intended to be standalone.  See the "Usage"
  * section of livepatch-callbacks-demo.c.
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
 
-अटल पूर्णांक livepatch_callbacks_mod_init(व्योम)
-अणु
+static int livepatch_callbacks_mod_init(void)
+{
 	pr_info("%s\n", __func__);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम livepatch_callbacks_mod_निकास(व्योम)
-अणु
+static void livepatch_callbacks_mod_exit(void)
+{
 	pr_info("%s\n", __func__);
-पूर्ण
+}
 
 module_init(livepatch_callbacks_mod_init);
-module_निकास(livepatch_callbacks_mod_निकास);
+module_exit(livepatch_callbacks_mod_exit);
 MODULE_LICENSE("GPL");

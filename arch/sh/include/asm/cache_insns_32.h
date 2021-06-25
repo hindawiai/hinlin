@@ -1,23 +1,22 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ASM_SH_CACHE_INSNS_32_H
-#घोषणा __ASM_SH_CACHE_INSNS_32_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ASM_SH_CACHE_INSNS_32_H
+#define __ASM_SH_CACHE_INSNS_32_H
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-#अगर defined(CONFIG_CPU_SH4A)
-#घोषणा __icbi(addr)	__यंत्र__ __अस्थिर__ ( "icbi @%0\n\t" : : "r" (addr))
-#अन्यथा
-#घोषणा __icbi(addr)	mb()
-#पूर्ण_अगर
+#if defined(CONFIG_CPU_SH4A)
+#define __icbi(addr)	__asm__ __volatile__ ( "icbi @%0\n\t" : : "r" (addr))
+#else
+#define __icbi(addr)	mb()
+#endif
 
-#घोषणा __ocbp(addr)	__यंत्र__ __अस्थिर__ ( "ocbp @%0\n\t" : : "r" (addr))
-#घोषणा __ocbi(addr)	__यंत्र__ __अस्थिर__ ( "ocbi @%0\n\t" : : "r" (addr))
-#घोषणा __ocbwb(addr)	__यंत्र__ __अस्थिर__ ( "ocbwb @%0\n\t" : : "r" (addr))
+#define __ocbp(addr)	__asm__ __volatile__ ( "ocbp @%0\n\t" : : "r" (addr))
+#define __ocbi(addr)	__asm__ __volatile__ ( "ocbi @%0\n\t" : : "r" (addr))
+#define __ocbwb(addr)	__asm__ __volatile__ ( "ocbwb @%0\n\t" : : "r" (addr))
 
-अटल अंतरभूत reg_माप_प्रकार रेजिस्टर_align(व्योम *val)
-अणु
-	वापस (अचिन्हित दीर्घ)(चिन्हित दीर्घ)val;
-पूर्ण
+static inline reg_size_t register_align(void *val)
+{
+	return (unsigned long)(signed long)val;
+}
 
-#पूर्ण_अगर /* __ASM_SH_CACHE_INSNS_32_H */
+#endif /* __ASM_SH_CACHE_INSNS_32_H */

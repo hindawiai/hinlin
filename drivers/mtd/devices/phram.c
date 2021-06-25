@@ -1,347 +1,346 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) ????		Jochen Schथअuble <psionic@psionic.de>
+ * Copyright (c) ????		Jochen Schäuble <psionic@psionic.de>
  * Copyright (c) 2003-2004	Joern Engel <joern@wh.fh-wedel.de>
  *
  * Usage:
  *
- * one commend line parameter per device, each in the क्रमm:
+ * one commend line parameter per device, each in the form:
  *   phram=<name>,<start>,<len>[,<erasesize>]
- * <name> may be up to 63 अक्षरacters.
+ * <name> may be up to 63 characters.
  * <start>, <len>, and <erasesize> can be octal, decimal or hexadecimal.  If followed
- * by "ki", "Mi" or "Gi", the numbers will be पूर्णांकerpreted as kilo, mega or
- * gigabytes. <erasesize> is optional and शेषs to PAGE_SIZE.
+ * by "ki", "Mi" or "Gi", the numbers will be interpreted as kilo, mega or
+ * gigabytes. <erasesize> is optional and defaults to PAGE_SIZE.
  *
  * Example:
  *	phram=swap,64Mi,128Mi phram=test,900Mi,1Mi,64Ki
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/पन.स>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/list.h>
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/mtd/mtd.h>
-#समावेश <यंत्र/भाग64.h>
+#include <linux/io.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/list.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/slab.h>
+#include <linux/mtd/mtd.h>
+#include <asm/div64.h>
 
-काष्ठा phram_mtd_list अणु
-	काष्ठा mtd_info mtd;
-	काष्ठा list_head list;
-पूर्ण;
+struct phram_mtd_list {
+	struct mtd_info mtd;
+	struct list_head list;
+};
 
-अटल LIST_HEAD(phram_list);
+static LIST_HEAD(phram_list);
 
-अटल पूर्णांक phram_erase(काष्ठा mtd_info *mtd, काष्ठा erase_info *instr)
-अणु
-	u_अक्षर *start = mtd->priv;
+static int phram_erase(struct mtd_info *mtd, struct erase_info *instr)
+{
+	u_char *start = mtd->priv;
 
-	स_रखो(start + instr->addr, 0xff, instr->len);
+	memset(start + instr->addr, 0xff, instr->len);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक phram_poपूर्णांक(काष्ठा mtd_info *mtd, loff_t from, माप_प्रकार len,
-		माप_प्रकार *retlen, व्योम **virt, resource_माप_प्रकार *phys)
-अणु
+static int phram_point(struct mtd_info *mtd, loff_t from, size_t len,
+		size_t *retlen, void **virt, resource_size_t *phys)
+{
 	*virt = mtd->priv + from;
 	*retlen = len;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक phram_unpoपूर्णांक(काष्ठा mtd_info *mtd, loff_t from, माप_प्रकार len)
-अणु
-	वापस 0;
-पूर्ण
+static int phram_unpoint(struct mtd_info *mtd, loff_t from, size_t len)
+{
+	return 0;
+}
 
-अटल पूर्णांक phram_पढ़ो(काष्ठा mtd_info *mtd, loff_t from, माप_प्रकार len,
-		माप_प्रकार *retlen, u_अक्षर *buf)
-अणु
-	u_अक्षर *start = mtd->priv;
+static int phram_read(struct mtd_info *mtd, loff_t from, size_t len,
+		size_t *retlen, u_char *buf)
+{
+	u_char *start = mtd->priv;
 
-	स_नकल(buf, start + from, len);
+	memcpy(buf, start + from, len);
 	*retlen = len;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक phram_ग_लिखो(काष्ठा mtd_info *mtd, loff_t to, माप_प्रकार len,
-		माप_प्रकार *retlen, स्थिर u_अक्षर *buf)
-अणु
-	u_अक्षर *start = mtd->priv;
+static int phram_write(struct mtd_info *mtd, loff_t to, size_t len,
+		size_t *retlen, const u_char *buf)
+{
+	u_char *start = mtd->priv;
 
-	स_नकल(start + to, buf, len);
+	memcpy(start + to, buf, len);
 	*retlen = len;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम unरेजिस्टर_devices(व्योम)
-अणु
-	काष्ठा phram_mtd_list *this, *safe;
+static void unregister_devices(void)
+{
+	struct phram_mtd_list *this, *safe;
 
-	list_क्रम_each_entry_safe(this, safe, &phram_list, list) अणु
-		mtd_device_unरेजिस्टर(&this->mtd);
+	list_for_each_entry_safe(this, safe, &phram_list, list) {
+		mtd_device_unregister(&this->mtd);
 		iounmap(this->mtd.priv);
-		kमुक्त(this->mtd.name);
-		kमुक्त(this);
-	पूर्ण
-पूर्ण
+		kfree(this->mtd.name);
+		kfree(this);
+	}
+}
 
-अटल पूर्णांक रेजिस्टर_device(अक्षर *name, phys_addr_t start, माप_प्रकार len, uपूर्णांक32_t erasesize)
-अणु
-	काष्ठा phram_mtd_list *new;
-	पूर्णांक ret = -ENOMEM;
+static int register_device(char *name, phys_addr_t start, size_t len, uint32_t erasesize)
+{
+	struct phram_mtd_list *new;
+	int ret = -ENOMEM;
 
-	new = kzalloc(माप(*new), GFP_KERNEL);
-	अगर (!new)
-		जाओ out0;
+	new = kzalloc(sizeof(*new), GFP_KERNEL);
+	if (!new)
+		goto out0;
 
 	ret = -EIO;
 	new->mtd.priv = ioremap(start, len);
-	अगर (!new->mtd.priv) अणु
+	if (!new->mtd.priv) {
 		pr_err("ioremap failed\n");
-		जाओ out1;
-	पूर्ण
+		goto out1;
+	}
 
 
 	new->mtd.name = name;
 	new->mtd.size = len;
 	new->mtd.flags = MTD_CAP_RAM;
 	new->mtd._erase = phram_erase;
-	new->mtd._poपूर्णांक = phram_poपूर्णांक;
-	new->mtd._unpoपूर्णांक = phram_unpoपूर्णांक;
-	new->mtd._पढ़ो = phram_पढ़ो;
-	new->mtd._ग_लिखो = phram_ग_लिखो;
+	new->mtd._point = phram_point;
+	new->mtd._unpoint = phram_unpoint;
+	new->mtd._read = phram_read;
+	new->mtd._write = phram_write;
 	new->mtd.owner = THIS_MODULE;
 	new->mtd.type = MTD_RAM;
 	new->mtd.erasesize = erasesize;
-	new->mtd.ग_लिखोsize = 1;
+	new->mtd.writesize = 1;
 
 	ret = -EAGAIN;
-	अगर (mtd_device_रेजिस्टर(&new->mtd, शून्य, 0)) अणु
+	if (mtd_device_register(&new->mtd, NULL, 0)) {
 		pr_err("Failed to register new device\n");
-		जाओ out2;
-	पूर्ण
+		goto out2;
+	}
 
 	list_add_tail(&new->list, &phram_list);
-	वापस 0;
+	return 0;
 
 out2:
 	iounmap(new->mtd.priv);
 out1:
-	kमुक्त(new);
+	kfree(new);
 out0:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक parse_num64(uपूर्णांक64_t *num64, अक्षर *token)
-अणु
-	माप_प्रकार len;
-	पूर्णांक shअगरt = 0;
-	पूर्णांक ret;
+static int parse_num64(uint64_t *num64, char *token)
+{
+	size_t len;
+	int shift = 0;
+	int ret;
 
-	len = म_माप(token);
+	len = strlen(token);
 	/* By dwmw2 editorial decree, "ki", "Mi" or "Gi" are to be used. */
-	अगर (len > 2) अणु
-		अगर (token[len - 1] == 'i') अणु
-			चयन (token[len - 2]) अणु
-			हाल 'G':
-				shअगरt += 10;
+	if (len > 2) {
+		if (token[len - 1] == 'i') {
+			switch (token[len - 2]) {
+			case 'G':
+				shift += 10;
 				fallthrough;
-			हाल 'M':
-				shअगरt += 10;
+			case 'M':
+				shift += 10;
 				fallthrough;
-			हाल 'k':
-				shअगरt += 10;
+			case 'k':
+				shift += 10;
 				token[len - 2] = 0;
-				अवरोध;
-			शेष:
-				वापस -EINVAL;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				break;
+			default:
+				return -EINVAL;
+			}
+		}
+	}
 
 	ret = kstrtou64(token, 0, num64);
-	*num64 <<= shअगरt;
+	*num64 <<= shift;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक parse_name(अक्षर **pname, स्थिर अक्षर *token)
-अणु
-	माप_प्रकार len;
-	अक्षर *name;
+static int parse_name(char **pname, const char *token)
+{
+	size_t len;
+	char *name;
 
-	len = म_माप(token) + 1;
-	अगर (len > 64)
-		वापस -ENOSPC;
+	len = strlen(token) + 1;
+	if (len > 64)
+		return -ENOSPC;
 
 	name = kstrdup(token, GFP_KERNEL);
-	अगर (!name)
-		वापस -ENOMEM;
+	if (!name)
+		return -ENOMEM;
 
 	*pname = name;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल अंतरभूत व्योम समाप्त_final_newline(अक्षर *str)
-अणु
-	अक्षर *newline = म_खोजप(str, '\n');
+static inline void kill_final_newline(char *str)
+{
+	char *newline = strrchr(str, '\n');
 
-	अगर (newline && !newline[1])
+	if (newline && !newline[1])
 		*newline = 0;
-पूर्ण
+}
 
 
-#घोषणा parse_err(fmt, args...) करो अणु	\
+#define parse_err(fmt, args...) do {	\
 	pr_err(fmt , ## args);	\
-	वापस 1;		\
-पूर्ण जबतक (0)
+	return 1;		\
+} while (0)
 
-#अगर_अघोषित MODULE
-अटल पूर्णांक phram_init_called;
+#ifndef MODULE
+static int phram_init_called;
 /*
- * This shall contain the module parameter अगर any. It is of the क्रमm:
- * - phram=<device>,<address>,<size>[,<erasesize>] क्रम module हाल
- * - phram.phram=<device>,<address>,<size>[,<erasesize>] क्रम built-in हाल
- * We leave 64 bytes क्रम the device name, 20 क्रम the address , 20 क्रम the
- * size and 20 क्रम the erasesize.
+ * This shall contain the module parameter if any. It is of the form:
+ * - phram=<device>,<address>,<size>[,<erasesize>] for module case
+ * - phram.phram=<device>,<address>,<size>[,<erasesize>] for built-in case
+ * We leave 64 bytes for the device name, 20 for the address , 20 for the
+ * size and 20 for the erasesize.
  * Example: phram.phram=rootfs,0xa0000000,512Mi,65536
  */
-अटल अक्षर phram_paramline[64 + 20 + 20 + 20];
-#पूर्ण_अगर
+static char phram_paramline[64 + 20 + 20 + 20];
+#endif
 
-अटल पूर्णांक phram_setup(स्थिर अक्षर *val)
-अणु
-	अक्षर buf[64 + 20 + 20 + 20], *str = buf;
-	अक्षर *token[4];
-	अक्षर *name;
-	uपूर्णांक64_t start;
-	uपूर्णांक64_t len;
-	uपूर्णांक64_t erasesize = PAGE_SIZE;
-	uपूर्णांक32_t rem;
-	पूर्णांक i, ret;
+static int phram_setup(const char *val)
+{
+	char buf[64 + 20 + 20 + 20], *str = buf;
+	char *token[4];
+	char *name;
+	uint64_t start;
+	uint64_t len;
+	uint64_t erasesize = PAGE_SIZE;
+	uint32_t rem;
+	int i, ret;
 
-	अगर (strnlen(val, माप(buf)) >= माप(buf))
+	if (strnlen(val, sizeof(buf)) >= sizeof(buf))
 		parse_err("parameter too long\n");
 
-	म_नकल(str, val);
-	समाप्त_final_newline(str);
+	strcpy(str, val);
+	kill_final_newline(str);
 
-	क्रम (i = 0; i < 4; i++)
+	for (i = 0; i < 4; i++)
 		token[i] = strsep(&str, ",");
 
-	अगर (str)
+	if (str)
 		parse_err("too many arguments\n");
 
-	अगर (!token[2])
+	if (!token[2])
 		parse_err("not enough arguments\n");
 
 	ret = parse_name(&name, token[0]);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = parse_num64(&start, token[1]);
-	अगर (ret) अणु
+	if (ret) {
 		parse_err("illegal start address\n");
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	ret = parse_num64(&len, token[2]);
-	अगर (ret) अणु
+	if (ret) {
 		parse_err("illegal device length\n");
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	अगर (token[3]) अणु
+	if (token[3]) {
 		ret = parse_num64(&erasesize, token[3]);
-		अगर (ret) अणु
+		if (ret) {
 			parse_err("illegal erasesize\n");
-			जाओ error;
-		पूर्ण
-	पूर्ण
+			goto error;
+		}
+	}
 
-	अगर (erasesize)
-		भाग_u64_rem(len, (uपूर्णांक32_t)erasesize, &rem);
+	if (erasesize)
+		div_u64_rem(len, (uint32_t)erasesize, &rem);
 
-	अगर (len == 0 || erasesize == 0 || erasesize > len
-	    || erasesize > अच_पूर्णांक_उच्च || rem) अणु
+	if (len == 0 || erasesize == 0 || erasesize > len
+	    || erasesize > UINT_MAX || rem) {
 		parse_err("illegal erasesize or len\n");
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	ret = रेजिस्टर_device(name, start, len, (uपूर्णांक32_t)erasesize);
-	अगर (ret)
-		जाओ error;
+	ret = register_device(name, start, len, (uint32_t)erasesize);
+	if (ret)
+		goto error;
 
 	pr_info("%s device: %#llx at %#llx for erasesize %#llx\n", name, len, start, erasesize);
-	वापस 0;
+	return 0;
 
 error:
-	kमुक्त(name);
-	वापस ret;
-पूर्ण
+	kfree(name);
+	return ret;
+}
 
-अटल पूर्णांक phram_param_call(स्थिर अक्षर *val, स्थिर काष्ठा kernel_param *kp)
-अणु
-#अगर_घोषित MODULE
-	वापस phram_setup(val);
-#अन्यथा
+static int phram_param_call(const char *val, const struct kernel_param *kp)
+{
+#ifdef MODULE
+	return phram_setup(val);
+#else
 	/*
 	 * If more parameters are later passed in via
 	 * /sys/module/phram/parameters/phram
-	 * and init_phram() has alपढ़ोy been called,
+	 * and init_phram() has already been called,
 	 * we can parse the argument now.
 	 */
 
-	अगर (phram_init_called)
-		वापस phram_setup(val);
+	if (phram_init_called)
+		return phram_setup(val);
 
 	/*
 	 * During early boot stage, we only save the parameters
-	 * here. We must parse them later: अगर the param passed
+	 * here. We must parse them later: if the param passed
 	 * from kernel boot command line, phram_param_call() is
 	 * called so early that it is not possible to resolve
-	 * the device (even kदो_स्मृति() fails). Defer that work to
+	 * the device (even kmalloc() fails). Defer that work to
 	 * phram_setup().
 	 */
 
-	अगर (म_माप(val) >= माप(phram_paramline))
-		वापस -ENOSPC;
-	म_नकल(phram_paramline, val);
+	if (strlen(val) >= sizeof(phram_paramline))
+		return -ENOSPC;
+	strcpy(phram_paramline, val);
 
-	वापस 0;
-#पूर्ण_अगर
-पूर्ण
+	return 0;
+#endif
+}
 
-module_param_call(phram, phram_param_call, शून्य, शून्य, 0200);
+module_param_call(phram, phram_param_call, NULL, NULL, 0200);
 MODULE_PARM_DESC(phram, "Memory region to map. \"phram=<name>,<start>,<length>[,<erasesize>]\"");
 
 
-अटल पूर्णांक __init init_phram(व्योम)
-अणु
-	पूर्णांक ret = 0;
+static int __init init_phram(void)
+{
+	int ret = 0;
 
-#अगर_अघोषित MODULE
-	अगर (phram_paramline[0])
+#ifndef MODULE
+	if (phram_paramline[0])
 		ret = phram_setup(phram_paramline);
 	phram_init_called = 1;
-#पूर्ण_अगर
+#endif
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम __निकास cleanup_phram(व्योम)
-अणु
-	unरेजिस्टर_devices();
-पूर्ण
+static void __exit cleanup_phram(void)
+{
+	unregister_devices();
+}
 
 module_init(init_phram);
-module_निकास(cleanup_phram);
+module_exit(cleanup_phram);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Joern Engel <joern@wh.fh-wedel.de>");

@@ -1,190 +1,189 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * OMAP2xxx/3xxx-common Power/Reset Management (PRM) रेजिस्टर definitions
+ * OMAP2xxx/3xxx-common Power/Reset Management (PRM) register definitions
  *
  * Copyright (C) 2007-2009, 2011-2012 Texas Instruments, Inc.
  * Copyright (C) 2008-2010 Nokia Corporation
  * Paul Walmsley
  *
  * The PRM hardware modules on the OMAP2/3 are quite similar to each
- * other.  The PRM on OMAP4 has a new रेजिस्टर layout, and is handled
+ * other.  The PRM on OMAP4 has a new register layout, and is handled
  * in a separate file.
  */
-#अगर_अघोषित __ARCH_ARM_MACH_OMAP2_PRM2XXX_3XXX_H
-#घोषणा __ARCH_ARM_MACH_OMAP2_PRM2XXX_3XXX_H
+#ifndef __ARCH_ARM_MACH_OMAP2_PRM2XXX_3XXX_H
+#define __ARCH_ARM_MACH_OMAP2_PRM2XXX_3XXX_H
 
-#समावेश "prcm-common.h"
-#समावेश "prm.h"
+#include "prcm-common.h"
+#include "prm.h"
 
 /*
- * Module specअगरic PRM रेजिस्टर offsets from PRM_BASE + करोमुख्य offset
+ * Module specific PRM register offsets from PRM_BASE + domain offset
  *
- * Use prm_अणुपढ़ो,ग_लिखोपूर्ण_mod_reg() with these रेजिस्टरs.
+ * Use prm_{read,write}_mod_reg() with these registers.
  *
- * With a few exceptions, these are the रेजिस्टर names beginning with
- * अणुPM,RMपूर्ण_* on both OMAP2/3 SoC families..  (The exceptions are the
+ * With a few exceptions, these are the register names beginning with
+ * {PM,RM}_* on both OMAP2/3 SoC families..  (The exceptions are the
  * IRQSTATUS and IRQENABLE bits.)
  */
 
 /* Register offsets appearing on both OMAP2 and OMAP3 */
 
-#घोषणा OMAP2_RM_RSTCTRL				0x0050
-#घोषणा OMAP2_RM_RSTTIME				0x0054
-#घोषणा OMAP2_RM_RSTST					0x0058
-#घोषणा OMAP2_PM_PWSTCTRL				0x00e0
-#घोषणा OMAP2_PM_PWSTST					0x00e4
+#define OMAP2_RM_RSTCTRL				0x0050
+#define OMAP2_RM_RSTTIME				0x0054
+#define OMAP2_RM_RSTST					0x0058
+#define OMAP2_PM_PWSTCTRL				0x00e0
+#define OMAP2_PM_PWSTST					0x00e4
 
-#घोषणा PM_WKEN						0x00a0
-#घोषणा PM_WKEN1					PM_WKEN
-#घोषणा PM_WKST						0x00b0
-#घोषणा PM_WKST1					PM_WKST
-#घोषणा PM_WKDEP					0x00c8
-#घोषणा PM_EVGENCTRL					0x00d4
-#घोषणा PM_EVGENONTIM					0x00d8
-#घोषणा PM_EVGENOFFTIM					0x00dc
+#define PM_WKEN						0x00a0
+#define PM_WKEN1					PM_WKEN
+#define PM_WKST						0x00b0
+#define PM_WKST1					PM_WKST
+#define PM_WKDEP					0x00c8
+#define PM_EVGENCTRL					0x00d4
+#define PM_EVGENONTIM					0x00d8
+#define PM_EVGENOFFTIM					0x00dc
 
 
-#अगर_अघोषित __ASSEMBLER__
+#ifndef __ASSEMBLER__
 
-#समावेश <linux/पन.स>
-#समावेश "powerdomain.h"
+#include <linux/io.h>
+#include "powerdomain.h"
 
-/* Power/reset management करोमुख्य रेजिस्टर get/set */
-अटल अंतरभूत u32 omap2_prm_पढ़ो_mod_reg(s16 module, u16 idx)
-अणु
-	वापस पढ़ोl_relaxed(prm_base.va + module + idx);
-पूर्ण
+/* Power/reset management domain register get/set */
+static inline u32 omap2_prm_read_mod_reg(s16 module, u16 idx)
+{
+	return readl_relaxed(prm_base.va + module + idx);
+}
 
-अटल अंतरभूत व्योम omap2_prm_ग_लिखो_mod_reg(u32 val, s16 module, u16 idx)
-अणु
-	ग_लिखोl_relaxed(val, prm_base.va + module + idx);
-पूर्ण
+static inline void omap2_prm_write_mod_reg(u32 val, s16 module, u16 idx)
+{
+	writel_relaxed(val, prm_base.va + module + idx);
+}
 
-/* Read-modअगरy-ग_लिखो a रेजिस्टर in a PRM module. Caller must lock */
-अटल अंतरभूत u32 omap2_prm_rmw_mod_reg_bits(u32 mask, u32 bits, s16 module,
+/* Read-modify-write a register in a PRM module. Caller must lock */
+static inline u32 omap2_prm_rmw_mod_reg_bits(u32 mask, u32 bits, s16 module,
 					     s16 idx)
-अणु
+{
 	u32 v;
 
-	v = omap2_prm_पढ़ो_mod_reg(module, idx);
+	v = omap2_prm_read_mod_reg(module, idx);
 	v &= ~mask;
 	v |= bits;
-	omap2_prm_ग_लिखो_mod_reg(v, module, idx);
+	omap2_prm_write_mod_reg(v, module, idx);
 
-	वापस v;
-पूर्ण
+	return v;
+}
 
-/* Read a PRM रेजिस्टर, AND it, and shअगरt the result करोwn to bit 0 */
-अटल अंतरभूत u32 omap2_prm_पढ़ो_mod_bits_shअगरt(s16 करोमुख्य, s16 idx, u32 mask)
-अणु
+/* Read a PRM register, AND it, and shift the result down to bit 0 */
+static inline u32 omap2_prm_read_mod_bits_shift(s16 domain, s16 idx, u32 mask)
+{
 	u32 v;
 
-	v = omap2_prm_पढ़ो_mod_reg(करोमुख्य, idx);
+	v = omap2_prm_read_mod_reg(domain, idx);
 	v &= mask;
 	v >>= __ffs(mask);
 
-	वापस v;
-पूर्ण
+	return v;
+}
 
-अटल अंतरभूत u32 omap2_prm_set_mod_reg_bits(u32 bits, s16 module, s16 idx)
-अणु
-	वापस omap2_prm_rmw_mod_reg_bits(bits, bits, module, idx);
-पूर्ण
+static inline u32 omap2_prm_set_mod_reg_bits(u32 bits, s16 module, s16 idx)
+{
+	return omap2_prm_rmw_mod_reg_bits(bits, bits, module, idx);
+}
 
-अटल अंतरभूत u32 omap2_prm_clear_mod_reg_bits(u32 bits, s16 module, s16 idx)
-अणु
-	वापस omap2_prm_rmw_mod_reg_bits(bits, 0x0, module, idx);
-पूर्ण
+static inline u32 omap2_prm_clear_mod_reg_bits(u32 bits, s16 module, s16 idx)
+{
+	return omap2_prm_rmw_mod_reg_bits(bits, 0x0, module, idx);
+}
 
 /* These omap2_ PRM functions apply to both OMAP2 and 3 */
-पूर्णांक omap2_prm_is_hardreset_निश्चितed(u8 shअगरt, u8 part, s16 prm_mod, u16 offset);
-पूर्णांक omap2_prm_निश्चित_hardreset(u8 shअगरt, u8 part, s16 prm_mod,
+int omap2_prm_is_hardreset_asserted(u8 shift, u8 part, s16 prm_mod, u16 offset);
+int omap2_prm_assert_hardreset(u8 shift, u8 part, s16 prm_mod,
 			       u16 offset);
-पूर्णांक omap2_prm_deनिश्चित_hardreset(u8 rst_shअगरt, u8 st_shअगरt, u8 part,
+int omap2_prm_deassert_hardreset(u8 rst_shift, u8 st_shift, u8 part,
 				 s16 prm_mod, u16 reset_offset,
 				 u16 st_offset);
 
-बाह्य पूर्णांक omap2_pwrdm_set_next_pwrst(काष्ठा घातerकरोमुख्य *pwrdm, u8 pwrst);
-बाह्य पूर्णांक omap2_pwrdm_पढ़ो_next_pwrst(काष्ठा घातerकरोमुख्य *pwrdm);
-बाह्य पूर्णांक omap2_pwrdm_पढ़ो_pwrst(काष्ठा घातerकरोमुख्य *pwrdm);
-बाह्य पूर्णांक omap2_pwrdm_set_mem_onst(काष्ठा घातerकरोमुख्य *pwrdm, u8 bank,
+extern int omap2_pwrdm_set_next_pwrst(struct powerdomain *pwrdm, u8 pwrst);
+extern int omap2_pwrdm_read_next_pwrst(struct powerdomain *pwrdm);
+extern int omap2_pwrdm_read_pwrst(struct powerdomain *pwrdm);
+extern int omap2_pwrdm_set_mem_onst(struct powerdomain *pwrdm, u8 bank,
 				    u8 pwrst);
-बाह्य पूर्णांक omap2_pwrdm_set_mem_retst(काष्ठा घातerकरोमुख्य *pwrdm, u8 bank,
+extern int omap2_pwrdm_set_mem_retst(struct powerdomain *pwrdm, u8 bank,
 				     u8 pwrst);
-बाह्य पूर्णांक omap2_pwrdm_पढ़ो_mem_pwrst(काष्ठा घातerकरोमुख्य *pwrdm, u8 bank);
-बाह्य पूर्णांक omap2_pwrdm_पढ़ो_mem_retst(काष्ठा घातerकरोमुख्य *pwrdm, u8 bank);
-बाह्य पूर्णांक omap2_pwrdm_set_logic_retst(काष्ठा घातerकरोमुख्य *pwrdm, u8 pwrst);
-बाह्य पूर्णांक omap2_pwrdm_रुको_transition(काष्ठा घातerकरोमुख्य *pwrdm);
+extern int omap2_pwrdm_read_mem_pwrst(struct powerdomain *pwrdm, u8 bank);
+extern int omap2_pwrdm_read_mem_retst(struct powerdomain *pwrdm, u8 bank);
+extern int omap2_pwrdm_set_logic_retst(struct powerdomain *pwrdm, u8 pwrst);
+extern int omap2_pwrdm_wait_transition(struct powerdomain *pwrdm);
 
-बाह्य पूर्णांक omap2_clkdm_add_wkdep(काष्ठा घड़ीकरोमुख्य *clkdm1,
-				 काष्ठा घड़ीकरोमुख्य *clkdm2);
-बाह्य पूर्णांक omap2_clkdm_del_wkdep(काष्ठा घड़ीकरोमुख्य *clkdm1,
-				 काष्ठा घड़ीकरोमुख्य *clkdm2);
-बाह्य पूर्णांक omap2_clkdm_पढ़ो_wkdep(काष्ठा घड़ीकरोमुख्य *clkdm1,
-				  काष्ठा घड़ीकरोमुख्य *clkdm2);
-बाह्य पूर्णांक omap2_clkdm_clear_all_wkdeps(काष्ठा घड़ीकरोमुख्य *clkdm);
+extern int omap2_clkdm_add_wkdep(struct clockdomain *clkdm1,
+				 struct clockdomain *clkdm2);
+extern int omap2_clkdm_del_wkdep(struct clockdomain *clkdm1,
+				 struct clockdomain *clkdm2);
+extern int omap2_clkdm_read_wkdep(struct clockdomain *clkdm1,
+				  struct clockdomain *clkdm2);
+extern int omap2_clkdm_clear_all_wkdeps(struct clockdomain *clkdm);
 
-#पूर्ण_अगर /* __ASSEMBLER */
+#endif /* __ASSEMBLER */
 
 /*
- * Bits common to specअगरic रेजिस्टरs
+ * Bits common to specific registers
  *
- * The 3430 रेजिस्टर and bit names are generally used,
+ * The 3430 register and bit names are generally used,
  * since they tend to make more sense
  */
 
 /* PM_EVGENONTIM_MPU */
 /* Named PM_EVEGENONTIM_MPU on the 24XX */
-#घोषणा OMAP_ONTIMEVAL_SHIFT				0
-#घोषणा OMAP_ONTIMEVAL_MASK				(0xffffffff << 0)
+#define OMAP_ONTIMEVAL_SHIFT				0
+#define OMAP_ONTIMEVAL_MASK				(0xffffffff << 0)
 
 /* PM_EVGENOFFTIM_MPU */
 /* Named PM_EVEGENOFFTIM_MPU on the 24XX */
-#घोषणा OMAP_OFFTIMEVAL_SHIFT				0
-#घोषणा OMAP_OFFTIMEVAL_MASK				(0xffffffff << 0)
+#define OMAP_OFFTIMEVAL_SHIFT				0
+#define OMAP_OFFTIMEVAL_MASK				(0xffffffff << 0)
 
 /* PRM_CLKSETUP and PRCM_VOLTSETUP */
 /* Named PRCM_CLKSSETUP on the 24XX */
-#घोषणा OMAP_SETUP_TIME_SHIFT				0
-#घोषणा OMAP_SETUP_TIME_MASK				(0xffff << 0)
+#define OMAP_SETUP_TIME_SHIFT				0
+#define OMAP_SETUP_TIME_MASK				(0xffff << 0)
 
 /* PRM_CLKSRC_CTRL */
 /* Named PRCM_CLKSRC_CTRL on the 24XX */
-#घोषणा OMAP_SYSCLKDIV_SHIFT				6
-#घोषणा OMAP_SYSCLKDIV_MASK				(0x3 << 6)
-#घोषणा OMAP_SYSCLKDIV_WIDTH				2
-#घोषणा OMAP_AUTOEXTCLKMODE_SHIFT			3
-#घोषणा OMAP_AUTOEXTCLKMODE_MASK			(0x3 << 3)
-#घोषणा OMAP_SYSCLKSEL_SHIFT				0
-#घोषणा OMAP_SYSCLKSEL_MASK				(0x3 << 0)
+#define OMAP_SYSCLKDIV_SHIFT				6
+#define OMAP_SYSCLKDIV_MASK				(0x3 << 6)
+#define OMAP_SYSCLKDIV_WIDTH				2
+#define OMAP_AUTOEXTCLKMODE_SHIFT			3
+#define OMAP_AUTOEXTCLKMODE_MASK			(0x3 << 3)
+#define OMAP_SYSCLKSEL_SHIFT				0
+#define OMAP_SYSCLKSEL_MASK				(0x3 << 0)
 
 /* PM_EVGENCTRL_MPU */
-#घोषणा OMAP_OFFLOADMODE_SHIFT				3
-#घोषणा OMAP_OFFLOADMODE_MASK				(0x3 << 3)
-#घोषणा OMAP_ONLOADMODE_SHIFT				1
-#घोषणा OMAP_ONLOADMODE_MASK				(0x3 << 1)
-#घोषणा OMAP_ENABLE_MASK				(1 << 0)
+#define OMAP_OFFLOADMODE_SHIFT				3
+#define OMAP_OFFLOADMODE_MASK				(0x3 << 3)
+#define OMAP_ONLOADMODE_SHIFT				1
+#define OMAP_ONLOADMODE_MASK				(0x3 << 1)
+#define OMAP_ENABLE_MASK				(1 << 0)
 
 /* PRM_RSTTIME */
 /* Named RM_RSTTIME_WKUP on the 24xx */
-#घोषणा OMAP_RSTTIME2_SHIFT				8
-#घोषणा OMAP_RSTTIME2_MASK				(0x1f << 8)
-#घोषणा OMAP_RSTTIME1_SHIFT				0
-#घोषणा OMAP_RSTTIME1_MASK				(0xff << 0)
+#define OMAP_RSTTIME2_SHIFT				8
+#define OMAP_RSTTIME2_MASK				(0x1f << 8)
+#define OMAP_RSTTIME1_SHIFT				0
+#define OMAP_RSTTIME1_MASK				(0xff << 0)
 
 /* PRM_RSTCTRL */
 /* Named RM_RSTCTRL_WKUP on the 24xx */
 /* 2420 calls RST_DPLL3 'RST_DPLL' */
-#घोषणा OMAP_RST_DPLL3_MASK				(1 << 2)
-#घोषणा OMAP_RST_GS_MASK				(1 << 1)
+#define OMAP_RST_DPLL3_MASK				(1 << 2)
+#define OMAP_RST_GS_MASK				(1 << 1)
 
 
 /*
- * Bits common to module-shared रेजिस्टरs
+ * Bits common to module-shared registers
  *
- * Not all रेजिस्टरs of a particular type support all of these bits -
- * check TRM अगर you are unsure
+ * Not all registers of a particular type support all of these bits -
+ * check TRM if you are unsure
  */
 
 /*
@@ -194,7 +193,7 @@
  * 3430: RM_RSTST_IVA2, RM_RSTST_MPU, RM_RSTST_GFX, RM_RSTST_DSS,
  *	 RM_RSTST_CAM, RM_RSTST_PER, RM_RSTST_NEON
  */
-#घोषणा OMAP_CORगलत_तर्कAINWKUP_RST_MASK			(1 << 3)
+#define OMAP_COREDOMAINWKUP_RST_MASK			(1 << 3)
 
 /*
  * 24XX: RM_RSTST_MPU, RM_RSTST_GFX, RM_RSTST_DSP
@@ -203,7 +202,7 @@
  *
  * 3430: RM_RSTST_CORE, RM_RSTST_EMU
  */
-#घोषणा OMAP_DOMAINWKUP_RST_MASK			(1 << 2)
+#define OMAP_DOMAINWKUP_RST_MASK			(1 << 2)
 
 /*
  * 24XX: RM_RSTST_MPU, RM_RSTST_WKUP, RM_RSTST_DSP
@@ -213,22 +212,22 @@
  *
  * 3430: RM_RSTST_CORE, RM_RSTST_EMU
  */
-#घोषणा OMAP_GLOBALWARM_RST_SHIFT			1
-#घोषणा OMAP_GLOBALWARM_RST_MASK			(1 << 1)
-#घोषणा OMAP_GLOBALCOLD_RST_SHIFT			0
-#घोषणा OMAP_GLOBALCOLD_RST_MASK			(1 << 0)
+#define OMAP_GLOBALWARM_RST_SHIFT			1
+#define OMAP_GLOBALWARM_RST_MASK			(1 << 1)
+#define OMAP_GLOBALCOLD_RST_SHIFT			0
+#define OMAP_GLOBALCOLD_RST_MASK			(1 << 0)
 
 /*
  * 24XX: PM_WKDEP_GFX, PM_WKDEP_MPU, PM_WKDEP_CORE, PM_WKDEP_DSP
- *	 2420 TRM someबार uses "EN_WAKEUP" instead of "EN_WKUP"
+ *	 2420 TRM sometimes uses "EN_WAKEUP" instead of "EN_WKUP"
  *
  * 2430: PM_WKDEP_MDM
  *
  * 3430: PM_WKDEP_IVA2, PM_WKDEP_GFX, PM_WKDEP_DSS, PM_WKDEP_CAM,
  *	 PM_WKDEP_PER
  */
-#घोषणा OMAP_EN_WKUP_SHIFT				4
-#घोषणा OMAP_EN_WKUP_MASK				(1 << 4)
+#define OMAP_EN_WKUP_SHIFT				4
+#define OMAP_EN_WKUP_MASK				(1 << 4)
 
 /*
  * 24XX: PM_PWSTCTRL_MPU, PM_PWSTCTRL_CORE, PM_PWSTCTRL_GFX,
@@ -240,7 +239,7 @@
  *	 PM_PWSTCTRL_DSS, PM_PWSTCTRL_CAM, PM_PWSTCTRL_PER,
  *	 PM_PWSTCTRL_NEON
  */
-#घोषणा OMAP_LOGICRETSTATE_MASK				(1 << 2)
+#define OMAP_LOGICRETSTATE_MASK				(1 << 2)
 
 
-#पूर्ण_अगर
+#endif

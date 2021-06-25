@@ -1,129 +1,128 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) 2021 MediaTek Inc.
  * Author: Argus Lin <argus.lin@mediatek.com>
  */
 
-#अगर_अघोषित _ACCDET_H_
-#घोषणा _ACCDET_H_
+#ifndef _ACCDET_H_
+#define _ACCDET_H_
 
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/माला.स>
+#include <linux/ctype.h>
+#include <linux/string.h>
 
-#घोषणा ACCDET_DEVNAME "accdet"
+#define ACCDET_DEVNAME "accdet"
 
-#घोषणा HEADSET_MODE_1		(1)
-#घोषणा HEADSET_MODE_2		(2)
-#घोषणा HEADSET_MODE_6		(6)
+#define HEADSET_MODE_1		(1)
+#define HEADSET_MODE_2		(2)
+#define HEADSET_MODE_6		(6)
 
-#घोषणा MT6359_ACCDET_NUM_BUTTONS 4
-#घोषणा MT6359_ACCDET_JACK_MASK (SND_JACK_HEADPHONE | \
+#define MT6359_ACCDET_NUM_BUTTONS 4
+#define MT6359_ACCDET_JACK_MASK (SND_JACK_HEADPHONE | \
 				SND_JACK_HEADSET | \
 				SND_JACK_BTN_0 | \
 				SND_JACK_BTN_1 | \
 				SND_JACK_BTN_2 | \
 				SND_JACK_BTN_3)
-#घोषणा MT6359_ACCDET_BTN_MASK (SND_JACK_BTN_0 | \
+#define MT6359_ACCDET_BTN_MASK (SND_JACK_BTN_0 | \
 				SND_JACK_BTN_1 | \
 				SND_JACK_BTN_2 | \
 				SND_JACK_BTN_3)
 
-क्रमागत eपूर्णांक_moisture_status अणु
+enum eint_moisture_status {
 	M_PLUG_IN =		0,
 	M_WATER_IN =		1,
 	M_HP_PLUG_IN =		2,
 	M_PLUG_OUT =		3,
 	M_NO_ACT =		4,
 	M_UNKNOWN =		5,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	accdet_state000 = 0,
 	accdet_state001,
 	accdet_state010,
 	accdet_state011,
 	accdet_auxadc,
-	eपूर्णांक_state000,
-	eपूर्णांक_state001,
-	eपूर्णांक_state010,
-	eपूर्णांक_state011,
-	eपूर्णांक_inverter_state000,
-पूर्ण;
+	eint_state000,
+	eint_state001,
+	eint_state010,
+	eint_state011,
+	eint_inverter_state000,
+};
 
-काष्ठा three_key_threshold अणु
-	अचिन्हित पूर्णांक mid;
-	अचिन्हित पूर्णांक up;
-	अचिन्हित पूर्णांक करोwn;
-पूर्ण;
+struct three_key_threshold {
+	unsigned int mid;
+	unsigned int up;
+	unsigned int down;
+};
 
-काष्ठा four_key_threshold अणु
-	अचिन्हित पूर्णांक mid;
-	अचिन्हित पूर्णांक voice;
-	अचिन्हित पूर्णांक up;
-	अचिन्हित पूर्णांक करोwn;
-पूर्ण;
+struct four_key_threshold {
+	unsigned int mid;
+	unsigned int voice;
+	unsigned int up;
+	unsigned int down;
+};
 
-काष्ठा pwm_deb_settings अणु
-	अचिन्हित पूर्णांक pwm_width;
-	अचिन्हित पूर्णांक pwm_thresh;
-	अचिन्हित पूर्णांक fall_delay;
-	अचिन्हित पूर्णांक rise_delay;
-	अचिन्हित पूर्णांक debounce0;
-	अचिन्हित पूर्णांक debounce1;
-	अचिन्हित पूर्णांक debounce3;
-	अचिन्हित पूर्णांक debounce4;
-	अचिन्हित पूर्णांक eपूर्णांक_pwm_width;
-	अचिन्हित पूर्णांक eपूर्णांक_pwm_thresh;
-	अचिन्हित पूर्णांक eपूर्णांक_debounce0;
-	अचिन्हित पूर्णांक eपूर्णांक_debounce1;
-	अचिन्हित पूर्णांक eपूर्णांक_debounce2;
-	अचिन्हित पूर्णांक eपूर्णांक_debounce3;
-	अचिन्हित पूर्णांक eपूर्णांक_inverter_debounce;
+struct pwm_deb_settings {
+	unsigned int pwm_width;
+	unsigned int pwm_thresh;
+	unsigned int fall_delay;
+	unsigned int rise_delay;
+	unsigned int debounce0;
+	unsigned int debounce1;
+	unsigned int debounce3;
+	unsigned int debounce4;
+	unsigned int eint_pwm_width;
+	unsigned int eint_pwm_thresh;
+	unsigned int eint_debounce0;
+	unsigned int eint_debounce1;
+	unsigned int eint_debounce2;
+	unsigned int eint_debounce3;
+	unsigned int eint_inverter_debounce;
 
-पूर्ण;
+};
 
-काष्ठा dts_data अणु
-	अचिन्हित पूर्णांक mic_vol;
-	अचिन्हित पूर्णांक mic_mode;
-	अचिन्हित पूर्णांक plugout_deb;
-	अचिन्हित पूर्णांक eपूर्णांक_pol;
-	काष्ठा pwm_deb_settings *pwm_deb;
-	काष्ठा three_key_threshold three_key;
-	काष्ठा four_key_threshold four_key;
-	अचिन्हित पूर्णांक moisture_detect_enable;
-	अचिन्हित पूर्णांक eपूर्णांक_detect_mode;
-	अचिन्हित पूर्णांक eपूर्णांक_use_ext_res;
-	अचिन्हित पूर्णांक eपूर्णांक_comp_vth;
-	अचिन्हित पूर्णांक moisture_detect_mode;
-	अचिन्हित पूर्णांक moisture_comp_vth;
-	अचिन्हित पूर्णांक moisture_comp_vref2;
-	अचिन्हित पूर्णांक moisture_use_ext_res;
-पूर्ण;
+struct dts_data {
+	unsigned int mic_vol;
+	unsigned int mic_mode;
+	unsigned int plugout_deb;
+	unsigned int eint_pol;
+	struct pwm_deb_settings *pwm_deb;
+	struct three_key_threshold three_key;
+	struct four_key_threshold four_key;
+	unsigned int moisture_detect_enable;
+	unsigned int eint_detect_mode;
+	unsigned int eint_use_ext_res;
+	unsigned int eint_comp_vth;
+	unsigned int moisture_detect_mode;
+	unsigned int moisture_comp_vth;
+	unsigned int moisture_comp_vref2;
+	unsigned int moisture_use_ext_res;
+};
 
-काष्ठा mt6359_accdet अणु
-	काष्ठा snd_soc_jack *jack;
-	काष्ठा device *dev;
-	काष्ठा regmap *regmap;
-	काष्ठा dts_data *data;
-	अचिन्हित पूर्णांक caps;
-	पूर्णांक accdet_irq;
-	पूर्णांक accdet_eपूर्णांक0;
-	पूर्णांक accdet_eपूर्णांक1;
-	काष्ठा mutex res_lock; /* lock protection */
+struct mt6359_accdet {
+	struct snd_soc_jack *jack;
+	struct device *dev;
+	struct regmap *regmap;
+	struct dts_data *data;
+	unsigned int caps;
+	int accdet_irq;
+	int accdet_eint0;
+	int accdet_eint1;
+	struct mutex res_lock; /* lock protection */
 	bool jack_plugged;
-	अचिन्हित पूर्णांक jack_type;
-	अचिन्हित पूर्णांक btn_type;
-	अचिन्हित पूर्णांक accdet_status;
-	अचिन्हित पूर्णांक pre_accdet_status;
-	अचिन्हित पूर्णांक cali_voltage;
-	अचिन्हित पूर्णांक jd_sts;
-	काष्ठा work_काष्ठा accdet_work;
-	काष्ठा workqueue_काष्ठा *accdet_workqueue;
-	काष्ठा work_काष्ठा jd_work;
-	काष्ठा workqueue_काष्ठा *jd_workqueue;
-पूर्ण;
+	unsigned int jack_type;
+	unsigned int btn_type;
+	unsigned int accdet_status;
+	unsigned int pre_accdet_status;
+	unsigned int cali_voltage;
+	unsigned int jd_sts;
+	struct work_struct accdet_work;
+	struct workqueue_struct *accdet_workqueue;
+	struct work_struct jd_work;
+	struct workqueue_struct *jd_workqueue;
+};
 
-पूर्णांक mt6359_accdet_enable_jack_detect(काष्ठा snd_soc_component *component,
-				     काष्ठा snd_soc_jack *jack);
-#पूर्ण_अगर
+int mt6359_accdet_enable_jack_detect(struct snd_soc_component *component,
+				     struct snd_soc_jack *jack);
+#endif

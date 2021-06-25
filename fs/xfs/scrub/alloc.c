@@ -1,99 +1,98 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2017 Oracle.  All Rights Reserved.
  * Author: Darrick J. Wong <darrick.wong@oracle.com>
  */
-#समावेश "xfs.h"
-#समावेश "xfs_fs.h"
-#समावेश "xfs_shared.h"
-#समावेश "xfs_format.h"
-#समावेश "xfs_trans_resv.h"
-#समावेश "xfs_mount.h"
-#समावेश "xfs_btree.h"
-#समावेश "xfs_alloc.h"
-#समावेश "xfs_rmap.h"
-#समावेश "scrub/scrub.h"
-#समावेश "scrub/common.h"
-#समावेश "scrub/btree.h"
+#include "xfs.h"
+#include "xfs_fs.h"
+#include "xfs_shared.h"
+#include "xfs_format.h"
+#include "xfs_trans_resv.h"
+#include "xfs_mount.h"
+#include "xfs_btree.h"
+#include "xfs_alloc.h"
+#include "xfs_rmap.h"
+#include "scrub/scrub.h"
+#include "scrub/common.h"
+#include "scrub/btree.h"
 
 /*
- * Set us up to scrub मुक्त space btrees.
+ * Set us up to scrub free space btrees.
  */
-पूर्णांक
+int
 xchk_setup_ag_allocbt(
-	काष्ठा xfs_scrub	*sc)
-अणु
-	वापस xchk_setup_ag_btree(sc, false);
-पूर्ण
+	struct xfs_scrub	*sc)
+{
+	return xchk_setup_ag_btree(sc, false);
+}
 
 /* Free space btree scrubber. */
 /*
  * Ensure there's a corresponding cntbt/bnobt record matching this
  * bnobt/cntbt record, respectively.
  */
-STATIC व्योम
+STATIC void
 xchk_allocbt_xref_other(
-	काष्ठा xfs_scrub	*sc,
+	struct xfs_scrub	*sc,
 	xfs_agblock_t		agbno,
 	xfs_extlen_t		len)
-अणु
-	काष्ठा xfs_btree_cur	**pcur;
+{
+	struct xfs_btree_cur	**pcur;
 	xfs_agblock_t		fbno;
 	xfs_extlen_t		flen;
-	पूर्णांक			has_otherrec;
-	पूर्णांक			error;
+	int			has_otherrec;
+	int			error;
 
-	अगर (sc->sm->sm_type == XFS_SCRUB_TYPE_BNOBT)
+	if (sc->sm->sm_type == XFS_SCRUB_TYPE_BNOBT)
 		pcur = &sc->sa.cnt_cur;
-	अन्यथा
+	else
 		pcur = &sc->sa.bno_cur;
-	अगर (!*pcur || xchk_skip_xref(sc->sm))
-		वापस;
+	if (!*pcur || xchk_skip_xref(sc->sm))
+		return;
 
 	error = xfs_alloc_lookup_le(*pcur, agbno, len, &has_otherrec);
-	अगर (!xchk_should_check_xref(sc, &error, pcur))
-		वापस;
-	अगर (!has_otherrec) अणु
+	if (!xchk_should_check_xref(sc, &error, pcur))
+		return;
+	if (!has_otherrec) {
 		xchk_btree_xref_set_corrupt(sc, *pcur, 0);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	error = xfs_alloc_get_rec(*pcur, &fbno, &flen, &has_otherrec);
-	अगर (!xchk_should_check_xref(sc, &error, pcur))
-		वापस;
-	अगर (!has_otherrec) अणु
+	if (!xchk_should_check_xref(sc, &error, pcur))
+		return;
+	if (!has_otherrec) {
 		xchk_btree_xref_set_corrupt(sc, *pcur, 0);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (fbno != agbno || flen != len)
+	if (fbno != agbno || flen != len)
 		xchk_btree_xref_set_corrupt(sc, *pcur, 0);
-पूर्ण
+}
 
 /* Cross-reference with the other btrees. */
-STATIC व्योम
+STATIC void
 xchk_allocbt_xref(
-	काष्ठा xfs_scrub	*sc,
+	struct xfs_scrub	*sc,
 	xfs_agblock_t		agbno,
 	xfs_extlen_t		len)
-अणु
-	अगर (sc->sm->sm_flags & XFS_SCRUB_OFLAG_CORRUPT)
-		वापस;
+{
+	if (sc->sm->sm_flags & XFS_SCRUB_OFLAG_CORRUPT)
+		return;
 
 	xchk_allocbt_xref_other(sc, agbno, len);
 	xchk_xref_is_not_inode_chunk(sc, agbno, len);
 	xchk_xref_has_no_owner(sc, agbno, len);
 	xchk_xref_is_not_shared(sc, agbno, len);
-पूर्ण
+}
 
 /* Scrub a bnobt/cntbt record. */
-STATIC पूर्णांक
+STATIC int
 xchk_allocbt_rec(
-	काष्ठा xchk_btree	*bs,
-	जोड़ xfs_btree_rec	*rec)
-अणु
-	काष्ठा xfs_mount	*mp = bs->cur->bc_mp;
+	struct xchk_btree	*bs,
+	union xfs_btree_rec	*rec)
+{
+	struct xfs_mount	*mp = bs->cur->bc_mp;
 	xfs_agnumber_t		agno = bs->cur->bc_ag.agno;
 	xfs_agblock_t		bno;
 	xfs_extlen_t		len;
@@ -101,58 +100,58 @@ xchk_allocbt_rec(
 	bno = be32_to_cpu(rec->alloc.ar_startblock);
 	len = be32_to_cpu(rec->alloc.ar_blockcount);
 
-	अगर (bno + len <= bno ||
-	    !xfs_verअगरy_agbno(mp, agno, bno) ||
-	    !xfs_verअगरy_agbno(mp, agno, bno + len - 1))
+	if (bno + len <= bno ||
+	    !xfs_verify_agbno(mp, agno, bno) ||
+	    !xfs_verify_agbno(mp, agno, bno + len - 1))
 		xchk_btree_set_corrupt(bs->sc, bs->cur, 0);
 
 	xchk_allocbt_xref(bs->sc, bno, len);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Scrub the मुक्तspace btrees क्रम some AG. */
-STATIC पूर्णांक
+/* Scrub the freespace btrees for some AG. */
+STATIC int
 xchk_allocbt(
-	काष्ठा xfs_scrub	*sc,
+	struct xfs_scrub	*sc,
 	xfs_btnum_t		which)
-अणु
-	काष्ठा xfs_btree_cur	*cur;
+{
+	struct xfs_btree_cur	*cur;
 
 	cur = which == XFS_BTNUM_BNO ? sc->sa.bno_cur : sc->sa.cnt_cur;
-	वापस xchk_btree(sc, cur, xchk_allocbt_rec, &XFS_RMAP_OINFO_AG, शून्य);
-पूर्ण
+	return xchk_btree(sc, cur, xchk_allocbt_rec, &XFS_RMAP_OINFO_AG, NULL);
+}
 
-पूर्णांक
+int
 xchk_bnobt(
-	काष्ठा xfs_scrub	*sc)
-अणु
-	वापस xchk_allocbt(sc, XFS_BTNUM_BNO);
-पूर्ण
+	struct xfs_scrub	*sc)
+{
+	return xchk_allocbt(sc, XFS_BTNUM_BNO);
+}
 
-पूर्णांक
+int
 xchk_cntbt(
-	काष्ठा xfs_scrub	*sc)
-अणु
-	वापस xchk_allocbt(sc, XFS_BTNUM_CNT);
-पूर्ण
+	struct xfs_scrub	*sc)
+{
+	return xchk_allocbt(sc, XFS_BTNUM_CNT);
+}
 
-/* xref check that the extent is not मुक्त */
-व्योम
+/* xref check that the extent is not free */
+void
 xchk_xref_is_used_space(
-	काष्ठा xfs_scrub	*sc,
+	struct xfs_scrub	*sc,
 	xfs_agblock_t		agbno,
 	xfs_extlen_t		len)
-अणु
-	bool			is_मुक्तsp;
-	पूर्णांक			error;
+{
+	bool			is_freesp;
+	int			error;
 
-	अगर (!sc->sa.bno_cur || xchk_skip_xref(sc->sm))
-		वापस;
+	if (!sc->sa.bno_cur || xchk_skip_xref(sc->sm))
+		return;
 
-	error = xfs_alloc_has_record(sc->sa.bno_cur, agbno, len, &is_मुक्तsp);
-	अगर (!xchk_should_check_xref(sc, &error, &sc->sa.bno_cur))
-		वापस;
-	अगर (is_मुक्तsp)
+	error = xfs_alloc_has_record(sc->sa.bno_cur, agbno, len, &is_freesp);
+	if (!xchk_should_check_xref(sc, &error, &sc->sa.bno_cur))
+		return;
+	if (is_freesp)
 		xchk_btree_xref_set_corrupt(sc, sc->sa.bno_cur, 0);
-पूर्ण
+}

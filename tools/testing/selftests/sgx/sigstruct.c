@@ -1,382 +1,381 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*  Copyright(c) 2016-20 Intel Corporation. */
 
-#घोषणा _GNU_SOURCE
-#समावेश <निश्चित.स>
-#समावेश <getopt.h>
-#समावेश <stdbool.h>
-#समावेश <मानक_निवेशt.h>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <sys/स्थिति.स>
-#समावेश <sys/types.h>
-#समावेश <unistd.h>
-#समावेश <खोलोssl/err.h>
-#समावेश <खोलोssl/pem.h>
-#समावेश "defines.h"
-#समावेश "main.h"
+#define _GNU_SOURCE
+#include <assert.h>
+#include <getopt.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <openssl/err.h>
+#include <openssl/pem.h>
+#include "defines.h"
+#include "main.h"
 
-काष्ठा q1q2_ctx अणु
+struct q1q2_ctx {
 	BN_CTX *bn_ctx;
 	BIGNUM *m;
 	BIGNUM *s;
 	BIGNUM *q1;
 	BIGNUM *qr;
 	BIGNUM *q2;
-पूर्ण;
+};
 
-अटल व्योम मुक्त_q1q2_ctx(काष्ठा q1q2_ctx *ctx)
-अणु
-	BN_CTX_मुक्त(ctx->bn_ctx);
-	BN_मुक्त(ctx->m);
-	BN_मुक्त(ctx->s);
-	BN_मुक्त(ctx->q1);
-	BN_मुक्त(ctx->qr);
-	BN_मुक्त(ctx->q2);
-पूर्ण
+static void free_q1q2_ctx(struct q1q2_ctx *ctx)
+{
+	BN_CTX_free(ctx->bn_ctx);
+	BN_free(ctx->m);
+	BN_free(ctx->s);
+	BN_free(ctx->q1);
+	BN_free(ctx->qr);
+	BN_free(ctx->q2);
+}
 
-अटल bool alloc_q1q2_ctx(स्थिर uपूर्णांक8_t *s, स्थिर uपूर्णांक8_t *m,
-			   काष्ठा q1q2_ctx *ctx)
-अणु
+static bool alloc_q1q2_ctx(const uint8_t *s, const uint8_t *m,
+			   struct q1q2_ctx *ctx)
+{
 	ctx->bn_ctx = BN_CTX_new();
-	ctx->s = BN_bin2bn(s, SGX_MODULUS_SIZE, शून्य);
-	ctx->m = BN_bin2bn(m, SGX_MODULUS_SIZE, शून्य);
+	ctx->s = BN_bin2bn(s, SGX_MODULUS_SIZE, NULL);
+	ctx->m = BN_bin2bn(m, SGX_MODULUS_SIZE, NULL);
 	ctx->q1 = BN_new();
 	ctx->qr = BN_new();
 	ctx->q2 = BN_new();
 
-	अगर (!ctx->bn_ctx || !ctx->s || !ctx->m || !ctx->q1 || !ctx->qr ||
-	    !ctx->q2) अणु
-		मुक्त_q1q2_ctx(ctx);
-		वापस false;
-	पूर्ण
+	if (!ctx->bn_ctx || !ctx->s || !ctx->m || !ctx->q1 || !ctx->qr ||
+	    !ctx->q2) {
+		free_q1q2_ctx(ctx);
+		return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool calc_q1q2(स्थिर uपूर्णांक8_t *s, स्थिर uपूर्णांक8_t *m, uपूर्णांक8_t *q1,
-		      uपूर्णांक8_t *q2)
-अणु
-	काष्ठा q1q2_ctx ctx;
+static bool calc_q1q2(const uint8_t *s, const uint8_t *m, uint8_t *q1,
+		      uint8_t *q2)
+{
+	struct q1q2_ctx ctx;
 
-	अगर (!alloc_q1q2_ctx(s, m, &ctx)) अणु
-		ख_लिखो(मानक_त्रुटि, "Not enough memory for Q1Q2 calculation\n");
-		वापस false;
-	पूर्ण
+	if (!alloc_q1q2_ctx(s, m, &ctx)) {
+		fprintf(stderr, "Not enough memory for Q1Q2 calculation\n");
+		return false;
+	}
 
-	अगर (!BN_mul(ctx.q1, ctx.s, ctx.s, ctx.bn_ctx))
-		जाओ out;
+	if (!BN_mul(ctx.q1, ctx.s, ctx.s, ctx.bn_ctx))
+		goto out;
 
-	अगर (!BN_भाग(ctx.q1, ctx.qr, ctx.q1, ctx.m, ctx.bn_ctx))
-		जाओ out;
+	if (!BN_div(ctx.q1, ctx.qr, ctx.q1, ctx.m, ctx.bn_ctx))
+		goto out;
 
-	अगर (BN_num_bytes(ctx.q1) > SGX_MODULUS_SIZE) अणु
-		ख_लिखो(मानक_त्रुटि, "Too large Q1 %d bytes\n",
+	if (BN_num_bytes(ctx.q1) > SGX_MODULUS_SIZE) {
+		fprintf(stderr, "Too large Q1 %d bytes\n",
 			BN_num_bytes(ctx.q1));
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (!BN_mul(ctx.q2, ctx.s, ctx.qr, ctx.bn_ctx))
-		जाओ out;
+	if (!BN_mul(ctx.q2, ctx.s, ctx.qr, ctx.bn_ctx))
+		goto out;
 
-	अगर (!BN_भाग(ctx.q2, शून्य, ctx.q2, ctx.m, ctx.bn_ctx))
-		जाओ out;
+	if (!BN_div(ctx.q2, NULL, ctx.q2, ctx.m, ctx.bn_ctx))
+		goto out;
 
-	अगर (BN_num_bytes(ctx.q2) > SGX_MODULUS_SIZE) अणु
-		ख_लिखो(मानक_त्रुटि, "Too large Q2 %d bytes\n",
+	if (BN_num_bytes(ctx.q2) > SGX_MODULUS_SIZE) {
+		fprintf(stderr, "Too large Q2 %d bytes\n",
 			BN_num_bytes(ctx.q2));
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	BN_bn2bin(ctx.q1, q1);
 	BN_bn2bin(ctx.q2, q2);
 
-	मुक्त_q1q2_ctx(&ctx);
-	वापस true;
+	free_q1q2_ctx(&ctx);
+	return true;
 out:
-	मुक्त_q1q2_ctx(&ctx);
-	वापस false;
-पूर्ण
+	free_q1q2_ctx(&ctx);
+	return false;
+}
 
-काष्ठा sgx_sigकाष्ठा_payload अणु
-	काष्ठा sgx_sigकाष्ठा_header header;
-	काष्ठा sgx_sigकाष्ठा_body body;
-पूर्ण;
+struct sgx_sigstruct_payload {
+	struct sgx_sigstruct_header header;
+	struct sgx_sigstruct_body body;
+};
 
-अटल bool check_crypto_errors(व्योम)
-अणु
-	पूर्णांक err;
+static bool check_crypto_errors(void)
+{
+	int err;
 	bool had_errors = false;
-	स्थिर अक्षर *filename;
-	पूर्णांक line;
-	अक्षर str[256];
+	const char *filename;
+	int line;
+	char str[256];
 
-	क्रम ( ; ; ) अणु
-		अगर (ERR_peek_error() == 0)
-			अवरोध;
+	for ( ; ; ) {
+		if (ERR_peek_error() == 0)
+			break;
 
 		had_errors = true;
 		err = ERR_get_error_line(&filename, &line);
-		ERR_error_string_n(err, str, माप(str));
-		ख_लिखो(मानक_त्रुटि, "crypto: %s: %s:%d\n", str, filename, line);
-	पूर्ण
+		ERR_error_string_n(err, str, sizeof(str));
+		fprintf(stderr, "crypto: %s: %s:%d\n", str, filename, line);
+	}
 
-	वापस had_errors;
-पूर्ण
+	return had_errors;
+}
 
-अटल अंतरभूत स्थिर BIGNUM *get_modulus(RSA *key)
-अणु
-	स्थिर BIGNUM *n;
+static inline const BIGNUM *get_modulus(RSA *key)
+{
+	const BIGNUM *n;
 
-	RSA_get0_key(key, &n, शून्य, शून्य);
-	वापस n;
-पूर्ण
+	RSA_get0_key(key, &n, NULL, NULL);
+	return n;
+}
 
-अटल RSA *gen_sign_key(व्योम)
-अणु
-	अचिन्हित दीर्घ sign_key_length;
+static RSA *gen_sign_key(void)
+{
+	unsigned long sign_key_length;
 	BIO *bio;
 	RSA *key;
 
-	sign_key_length = (अचिन्हित दीर्घ)&sign_key_end -
-			  (अचिन्हित दीर्घ)&sign_key;
+	sign_key_length = (unsigned long)&sign_key_end -
+			  (unsigned long)&sign_key;
 
 	bio = BIO_new_mem_buf(&sign_key, sign_key_length);
-	अगर (!bio)
-		वापस शून्य;
+	if (!bio)
+		return NULL;
 
-	key = PEM_पढ़ो_bio_RSAPrivateKey(bio, शून्य, शून्य, शून्य);
-	BIO_मुक्त(bio);
+	key = PEM_read_bio_RSAPrivateKey(bio, NULL, NULL, NULL);
+	BIO_free(bio);
 
-	वापस key;
-पूर्ण
+	return key;
+}
 
-अटल व्योम reverse_bytes(व्योम *data, पूर्णांक length)
-अणु
-	पूर्णांक i = 0;
-	पूर्णांक j = length - 1;
-	uपूर्णांक8_t temp;
-	uपूर्णांक8_t *ptr = data;
+static void reverse_bytes(void *data, int length)
+{
+	int i = 0;
+	int j = length - 1;
+	uint8_t temp;
+	uint8_t *ptr = data;
 
-	जबतक (i < j) अणु
+	while (i < j) {
 		temp = ptr[i];
 		ptr[i] = ptr[j];
 		ptr[j] = temp;
 		i++;
 		j--;
-	पूर्ण
-पूर्ण
+	}
+}
 
-क्रमागत mrtags अणु
+enum mrtags {
 	MRECREATE = 0x0045544145524345,
 	MREADD = 0x0000000044444145,
 	MREEXTEND = 0x00444E4554584545,
-पूर्ण;
+};
 
-अटल bool mrenclave_update(EVP_MD_CTX *ctx, स्थिर व्योम *data)
-अणु
-	अगर (!EVP_DigestUpdate(ctx, data, 64)) अणु
-		ख_लिखो(मानक_त्रुटि, "digest update failed\n");
-		वापस false;
-	पूर्ण
+static bool mrenclave_update(EVP_MD_CTX *ctx, const void *data)
+{
+	if (!EVP_DigestUpdate(ctx, data, 64)) {
+		fprintf(stderr, "digest update failed\n");
+		return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool mrenclave_commit(EVP_MD_CTX *ctx, uपूर्णांक8_t *mrenclave)
-अणु
-	अचिन्हित पूर्णांक size;
+static bool mrenclave_commit(EVP_MD_CTX *ctx, uint8_t *mrenclave)
+{
+	unsigned int size;
 
-	अगर (!EVP_DigestFinal_ex(ctx, (अचिन्हित अक्षर *)mrenclave, &size)) अणु
-		ख_लिखो(मानक_त्रुटि, "digest commit failed\n");
-		वापस false;
-	पूर्ण
+	if (!EVP_DigestFinal_ex(ctx, (unsigned char *)mrenclave, &size)) {
+		fprintf(stderr, "digest commit failed\n");
+		return false;
+	}
 
-	अगर (size != 32) अणु
-		ख_लिखो(मानक_त्रुटि, "invalid digest size = %u\n", size);
-		वापस false;
-	पूर्ण
+	if (size != 32) {
+		fprintf(stderr, "invalid digest size = %u\n", size);
+		return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-काष्ठा mrecreate अणु
-	uपूर्णांक64_t tag;
-	uपूर्णांक32_t ssaframesize;
-	uपूर्णांक64_t size;
-	uपूर्णांक8_t reserved[44];
-पूर्ण __attribute__((__packed__));
+struct mrecreate {
+	uint64_t tag;
+	uint32_t ssaframesize;
+	uint64_t size;
+	uint8_t reserved[44];
+} __attribute__((__packed__));
 
 
-अटल bool mrenclave_ecreate(EVP_MD_CTX *ctx, uपूर्णांक64_t blob_size)
-अणु
-	काष्ठा mrecreate mrecreate;
-	uपूर्णांक64_t encl_size;
+static bool mrenclave_ecreate(EVP_MD_CTX *ctx, uint64_t blob_size)
+{
+	struct mrecreate mrecreate;
+	uint64_t encl_size;
 
-	क्रम (encl_size = 0x1000; encl_size < blob_size; )
+	for (encl_size = 0x1000; encl_size < blob_size; )
 		encl_size <<= 1;
 
-	स_रखो(&mrecreate, 0, माप(mrecreate));
+	memset(&mrecreate, 0, sizeof(mrecreate));
 	mrecreate.tag = MRECREATE;
 	mrecreate.ssaframesize = 1;
 	mrecreate.size = encl_size;
 
-	अगर (!EVP_DigestInit_ex(ctx, EVP_sha256(), शून्य))
-		वापस false;
+	if (!EVP_DigestInit_ex(ctx, EVP_sha256(), NULL))
+		return false;
 
-	वापस mrenclave_update(ctx, &mrecreate);
-पूर्ण
+	return mrenclave_update(ctx, &mrecreate);
+}
 
-काष्ठा mपढ़ोd अणु
-	uपूर्णांक64_t tag;
-	uपूर्णांक64_t offset;
-	uपूर्णांक64_t flags; /* SECINFO flags */
-	uपूर्णांक8_t reserved[40];
-पूर्ण __attribute__((__packed__));
+struct mreadd {
+	uint64_t tag;
+	uint64_t offset;
+	uint64_t flags; /* SECINFO flags */
+	uint8_t reserved[40];
+} __attribute__((__packed__));
 
-अटल bool mrenclave_eadd(EVP_MD_CTX *ctx, uपूर्णांक64_t offset, uपूर्णांक64_t flags)
-अणु
-	काष्ठा mपढ़ोd mपढ़ोd;
+static bool mrenclave_eadd(EVP_MD_CTX *ctx, uint64_t offset, uint64_t flags)
+{
+	struct mreadd mreadd;
 
-	स_रखो(&mपढ़ोd, 0, माप(mपढ़ोd));
-	mपढ़ोd.tag = MREADD;
-	mपढ़ोd.offset = offset;
-	mपढ़ोd.flags = flags;
+	memset(&mreadd, 0, sizeof(mreadd));
+	mreadd.tag = MREADD;
+	mreadd.offset = offset;
+	mreadd.flags = flags;
 
-	वापस mrenclave_update(ctx, &mपढ़ोd);
-पूर्ण
+	return mrenclave_update(ctx, &mreadd);
+}
 
-काष्ठा mreextend अणु
-	uपूर्णांक64_t tag;
-	uपूर्णांक64_t offset;
-	uपूर्णांक8_t reserved[48];
-पूर्ण __attribute__((__packed__));
+struct mreextend {
+	uint64_t tag;
+	uint64_t offset;
+	uint8_t reserved[48];
+} __attribute__((__packed__));
 
-अटल bool mrenclave_eextend(EVP_MD_CTX *ctx, uपूर्णांक64_t offset,
-			      स्थिर uपूर्णांक8_t *data)
-अणु
-	काष्ठा mreextend mreextend;
-	पूर्णांक i;
+static bool mrenclave_eextend(EVP_MD_CTX *ctx, uint64_t offset,
+			      const uint8_t *data)
+{
+	struct mreextend mreextend;
+	int i;
 
-	क्रम (i = 0; i < 0x1000; i += 0x100) अणु
-		स_रखो(&mreextend, 0, माप(mreextend));
+	for (i = 0; i < 0x1000; i += 0x100) {
+		memset(&mreextend, 0, sizeof(mreextend));
 		mreextend.tag = MREEXTEND;
 		mreextend.offset = offset + i;
 
-		अगर (!mrenclave_update(ctx, &mreextend))
-			वापस false;
+		if (!mrenclave_update(ctx, &mreextend))
+			return false;
 
-		अगर (!mrenclave_update(ctx, &data[i + 0x00]))
-			वापस false;
+		if (!mrenclave_update(ctx, &data[i + 0x00]))
+			return false;
 
-		अगर (!mrenclave_update(ctx, &data[i + 0x40]))
-			वापस false;
+		if (!mrenclave_update(ctx, &data[i + 0x40]))
+			return false;
 
-		अगर (!mrenclave_update(ctx, &data[i + 0x80]))
-			वापस false;
+		if (!mrenclave_update(ctx, &data[i + 0x80]))
+			return false;
 
-		अगर (!mrenclave_update(ctx, &data[i + 0xC0]))
-			वापस false;
-	पूर्ण
+		if (!mrenclave_update(ctx, &data[i + 0xC0]))
+			return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool mrenclave_segment(EVP_MD_CTX *ctx, काष्ठा encl *encl,
-			      काष्ठा encl_segment *seg)
-अणु
-	uपूर्णांक64_t end = seg->offset + seg->size;
-	uपूर्णांक64_t offset;
+static bool mrenclave_segment(EVP_MD_CTX *ctx, struct encl *encl,
+			      struct encl_segment *seg)
+{
+	uint64_t end = seg->offset + seg->size;
+	uint64_t offset;
 
-	क्रम (offset = seg->offset; offset < end; offset += PAGE_SIZE) अणु
-		अगर (!mrenclave_eadd(ctx, offset, seg->flags))
-			वापस false;
+	for (offset = seg->offset; offset < end; offset += PAGE_SIZE) {
+		if (!mrenclave_eadd(ctx, offset, seg->flags))
+			return false;
 
-		अगर (!mrenclave_eextend(ctx, offset, encl->src + offset))
-			वापस false;
-	पूर्ण
+		if (!mrenclave_eextend(ctx, offset, encl->src + offset))
+			return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-bool encl_measure(काष्ठा encl *encl)
-अणु
-	uपूर्णांक64_t header1[2] = अणु0x000000E100000006, 0x0000000000010000पूर्ण;
-	uपूर्णांक64_t header2[2] = अणु0x0000006000000101, 0x0000000100000060पूर्ण;
-	काष्ठा sgx_sigकाष्ठा *sigकाष्ठा = &encl->sigकाष्ठा;
-	काष्ठा sgx_sigकाष्ठा_payload payload;
-	uपूर्णांक8_t digest[SHA256_DIGEST_LENGTH];
-	अचिन्हित पूर्णांक siglen;
-	RSA *key = शून्य;
+bool encl_measure(struct encl *encl)
+{
+	uint64_t header1[2] = {0x000000E100000006, 0x0000000000010000};
+	uint64_t header2[2] = {0x0000006000000101, 0x0000000100000060};
+	struct sgx_sigstruct *sigstruct = &encl->sigstruct;
+	struct sgx_sigstruct_payload payload;
+	uint8_t digest[SHA256_DIGEST_LENGTH];
+	unsigned int siglen;
+	RSA *key = NULL;
 	EVP_MD_CTX *ctx;
-	पूर्णांक i;
+	int i;
 
-	स_रखो(sigकाष्ठा, 0, माप(*sigकाष्ठा));
+	memset(sigstruct, 0, sizeof(*sigstruct));
 
-	sigकाष्ठा->header.header1[0] = header1[0];
-	sigकाष्ठा->header.header1[1] = header1[1];
-	sigकाष्ठा->header.header2[0] = header2[0];
-	sigकाष्ठा->header.header2[1] = header2[1];
-	sigकाष्ठा->exponent = 3;
-	sigकाष्ठा->body.attributes = SGX_ATTR_MODE64BIT;
-	sigकाष्ठा->body.xfrm = 3;
+	sigstruct->header.header1[0] = header1[0];
+	sigstruct->header.header1[1] = header1[1];
+	sigstruct->header.header2[0] = header2[0];
+	sigstruct->header.header2[1] = header2[1];
+	sigstruct->exponent = 3;
+	sigstruct->body.attributes = SGX_ATTR_MODE64BIT;
+	sigstruct->body.xfrm = 3;
 
 	/* sanity check */
-	अगर (check_crypto_errors())
-		जाओ err;
+	if (check_crypto_errors())
+		goto err;
 
 	key = gen_sign_key();
-	अगर (!key) अणु
-		ERR_prपूर्णांक_errors_fp(मानक_निकास);
-		जाओ err;
-	पूर्ण
+	if (!key) {
+		ERR_print_errors_fp(stdout);
+		goto err;
+	}
 
-	BN_bn2bin(get_modulus(key), sigकाष्ठा->modulus);
+	BN_bn2bin(get_modulus(key), sigstruct->modulus);
 
 	ctx = EVP_MD_CTX_create();
-	अगर (!ctx)
-		जाओ err;
+	if (!ctx)
+		goto err;
 
-	अगर (!mrenclave_ecreate(ctx, encl->src_size))
-		जाओ err;
+	if (!mrenclave_ecreate(ctx, encl->src_size))
+		goto err;
 
-	क्रम (i = 0; i < encl->nr_segments; i++) अणु
-		काष्ठा encl_segment *seg = &encl->segment_tbl[i];
+	for (i = 0; i < encl->nr_segments; i++) {
+		struct encl_segment *seg = &encl->segment_tbl[i];
 
-		अगर (!mrenclave_segment(ctx, encl, seg))
-			जाओ err;
-	पूर्ण
+		if (!mrenclave_segment(ctx, encl, seg))
+			goto err;
+	}
 
-	अगर (!mrenclave_commit(ctx, sigकाष्ठा->body.mrenclave))
-		जाओ err;
+	if (!mrenclave_commit(ctx, sigstruct->body.mrenclave))
+		goto err;
 
-	स_नकल(&payload.header, &sigकाष्ठा->header, माप(sigकाष्ठा->header));
-	स_नकल(&payload.body, &sigकाष्ठा->body, माप(sigकाष्ठा->body));
+	memcpy(&payload.header, &sigstruct->header, sizeof(sigstruct->header));
+	memcpy(&payload.body, &sigstruct->body, sizeof(sigstruct->body));
 
-	SHA256((अचिन्हित अक्षर *)&payload, माप(payload), digest);
+	SHA256((unsigned char *)&payload, sizeof(payload), digest);
 
-	अगर (!RSA_sign(NID_sha256, digest, SHA256_DIGEST_LENGTH,
-		      sigकाष्ठा->signature, &siglen, key))
-		जाओ err;
+	if (!RSA_sign(NID_sha256, digest, SHA256_DIGEST_LENGTH,
+		      sigstruct->signature, &siglen, key))
+		goto err;
 
-	अगर (!calc_q1q2(sigकाष्ठा->signature, sigकाष्ठा->modulus, sigकाष्ठा->q1,
-		       sigकाष्ठा->q2))
-		जाओ err;
+	if (!calc_q1q2(sigstruct->signature, sigstruct->modulus, sigstruct->q1,
+		       sigstruct->q2))
+		goto err;
 
 	/* BE -> LE */
-	reverse_bytes(sigकाष्ठा->signature, SGX_MODULUS_SIZE);
-	reverse_bytes(sigकाष्ठा->modulus, SGX_MODULUS_SIZE);
-	reverse_bytes(sigकाष्ठा->q1, SGX_MODULUS_SIZE);
-	reverse_bytes(sigकाष्ठा->q2, SGX_MODULUS_SIZE);
+	reverse_bytes(sigstruct->signature, SGX_MODULUS_SIZE);
+	reverse_bytes(sigstruct->modulus, SGX_MODULUS_SIZE);
+	reverse_bytes(sigstruct->q1, SGX_MODULUS_SIZE);
+	reverse_bytes(sigstruct->q2, SGX_MODULUS_SIZE);
 
 	EVP_MD_CTX_destroy(ctx);
-	RSA_मुक्त(key);
-	वापस true;
+	RSA_free(key);
+	return true;
 
 err:
 	EVP_MD_CTX_destroy(ctx);
-	RSA_मुक्त(key);
-	वापस false;
-पूर्ण
+	RSA_free(key);
+	return false;
+}

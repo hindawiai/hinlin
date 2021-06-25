@@ -1,41 +1,40 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __USBAUDIO_HELPER_H
-#घोषणा __USBAUDIO_HELPER_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __USBAUDIO_HELPER_H
+#define __USBAUDIO_HELPER_H
 
-अचिन्हित पूर्णांक snd_usb_combine_bytes(अचिन्हित अक्षर *bytes, पूर्णांक size);
+unsigned int snd_usb_combine_bytes(unsigned char *bytes, int size);
 
-व्योम *snd_usb_find_desc(व्योम *descstart, पूर्णांक desclen, व्योम *after, u8 dtype);
-व्योम *snd_usb_find_csपूर्णांक_desc(व्योम *descstart, पूर्णांक desclen, व्योम *after, u8 dsubtype);
+void *snd_usb_find_desc(void *descstart, int desclen, void *after, u8 dtype);
+void *snd_usb_find_csint_desc(void *descstart, int desclen, void *after, u8 dsubtype);
 
-पूर्णांक snd_usb_ctl_msg(काष्ठा usb_device *dev, अचिन्हित पूर्णांक pipe,
+int snd_usb_ctl_msg(struct usb_device *dev, unsigned int pipe,
 		    __u8 request, __u8 requesttype, __u16 value, __u16 index,
-		    व्योम *data, __u16 size);
+		    void *data, __u16 size);
 
-अचिन्हित अक्षर snd_usb_parse_dataपूर्णांकerval(काष्ठा snd_usb_audio *chip,
-					 काष्ठा usb_host_पूर्णांकerface *alts);
+unsigned char snd_usb_parse_datainterval(struct snd_usb_audio *chip,
+					 struct usb_host_interface *alts);
 
-काष्ठा usb_host_पूर्णांकerface *
-snd_usb_get_host_पूर्णांकerface(काष्ठा snd_usb_audio *chip, पूर्णांक अगरnum, पूर्णांक altsetting);
+struct usb_host_interface *
+snd_usb_get_host_interface(struct snd_usb_audio *chip, int ifnum, int altsetting);
 
 /*
- * retrieve usb_पूर्णांकerface descriptor from the host पूर्णांकerface
- * (conditional क्रम compatibility with the older API)
+ * retrieve usb_interface descriptor from the host interface
+ * (conditional for compatibility with the older API)
  */
-#घोषणा get_अगरace_desc(अगरace)	(&(अगरace)->desc)
-#घोषणा get_endpoपूर्णांक(alt,ep)	(&(alt)->endpoपूर्णांक[ep].desc)
-#घोषणा get_ep_desc(ep)		(&(ep)->desc)
-#घोषणा get_cfg_desc(cfg)	(&(cfg)->desc)
+#define get_iface_desc(iface)	(&(iface)->desc)
+#define get_endpoint(alt,ep)	(&(alt)->endpoint[ep].desc)
+#define get_ep_desc(ep)		(&(ep)->desc)
+#define get_cfg_desc(cfg)	(&(cfg)->desc)
 
-#घोषणा snd_usb_get_speed(dev) ((dev)->speed)
+#define snd_usb_get_speed(dev) ((dev)->speed)
 
-अटल अंतरभूत पूर्णांक snd_usb_ctrl_पूर्णांकf(काष्ठा snd_usb_audio *chip)
-अणु
-	वापस get_अगरace_desc(chip->ctrl_पूर्णांकf)->bInterfaceNumber;
-पूर्ण
+static inline int snd_usb_ctrl_intf(struct snd_usb_audio *chip)
+{
+	return get_iface_desc(chip->ctrl_intf)->bInterfaceNumber;
+}
 
 /* in validate.c */
-bool snd_usb_validate_audio_desc(व्योम *p, पूर्णांक protocol);
-bool snd_usb_validate_midi_desc(व्योम *p);
+bool snd_usb_validate_audio_desc(void *p, int protocol);
+bool snd_usb_validate_midi_desc(void *p);
 
-#पूर्ण_अगर /* __USBAUDIO_HELPER_H */
+#endif /* __USBAUDIO_HELPER_H */

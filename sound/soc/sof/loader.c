@@ -1,369 +1,368 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-3-Clause)
+// SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause)
 //
 // This file is provided under a dual BSD/GPLv2 license.  When using or
-// redistributing this file, you may करो so under either license.
+// redistributing this file, you may do so under either license.
 //
 // Copyright(c) 2018 Intel Corporation. All rights reserved.
 //
-// Author: Liam Girdwood <liam.r.girdwood@linux.पूर्णांकel.com>
+// Author: Liam Girdwood <liam.r.girdwood@linux.intel.com>
 //
 // Generic firmware loader.
 //
 
-#समावेश <linux/firmware.h>
-#समावेश <sound/sof.h>
-#समावेश <sound/sof/ext_manअगरest.h>
-#समावेश "ops.h"
+#include <linux/firmware.h>
+#include <sound/sof.h>
+#include <sound/sof/ext_manifest.h>
+#include "ops.h"
 
-अटल पूर्णांक get_ext_winकरोws(काष्ठा snd_sof_dev *sdev,
-			   स्थिर काष्ठा sof_ipc_ext_data_hdr *ext_hdr)
-अणु
-	स्थिर काष्ठा sof_ipc_winकरोw *w =
-		container_of(ext_hdr, काष्ठा sof_ipc_winकरोw, ext_hdr);
+static int get_ext_windows(struct snd_sof_dev *sdev,
+			   const struct sof_ipc_ext_data_hdr *ext_hdr)
+{
+	const struct sof_ipc_window *w =
+		container_of(ext_hdr, struct sof_ipc_window, ext_hdr);
 
-	अगर (w->num_winकरोws == 0 || w->num_winकरोws > SOF_IPC_MAX_ELEMS)
-		वापस -EINVAL;
+	if (w->num_windows == 0 || w->num_windows > SOF_IPC_MAX_ELEMS)
+		return -EINVAL;
 
-	अगर (sdev->info_winकरोw) अणु
-		अगर (स_भेद(sdev->info_winकरोw, w, ext_hdr->hdr.size)) अणु
+	if (sdev->info_window) {
+		if (memcmp(sdev->info_window, w, ext_hdr->hdr.size)) {
 			dev_err(sdev->dev, "error: mismatch between window descriptor from extended manifest and mailbox");
-			वापस -EINVAL;
-		पूर्ण
-		वापस 0;
-	पूर्ण
+			return -EINVAL;
+		}
+		return 0;
+	}
 
 	/* keep a local copy of the data */
-	sdev->info_winकरोw = devm_kmemdup(sdev->dev, w, ext_hdr->hdr.size,
+	sdev->info_window = devm_kmemdup(sdev->dev, w, ext_hdr->hdr.size,
 					 GFP_KERNEL);
-	अगर (!sdev->info_winकरोw)
-		वापस -ENOMEM;
+	if (!sdev->info_window)
+		return -ENOMEM;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक get_cc_info(काष्ठा snd_sof_dev *sdev,
-		       स्थिर काष्ठा sof_ipc_ext_data_hdr *ext_hdr)
-अणु
-	पूर्णांक ret;
+static int get_cc_info(struct snd_sof_dev *sdev,
+		       const struct sof_ipc_ext_data_hdr *ext_hdr)
+{
+	int ret;
 
-	स्थिर काष्ठा sof_ipc_cc_version *cc =
-		container_of(ext_hdr, काष्ठा sof_ipc_cc_version, ext_hdr);
+	const struct sof_ipc_cc_version *cc =
+		container_of(ext_hdr, struct sof_ipc_cc_version, ext_hdr);
 
-	अगर (sdev->cc_version) अणु
-		अगर (स_भेद(sdev->cc_version, cc, cc->ext_hdr.hdr.size)) अणु
+	if (sdev->cc_version) {
+		if (memcmp(sdev->cc_version, cc, cc->ext_hdr.hdr.size)) {
 			dev_err(sdev->dev, "error: receive diverged cc_version descriptions");
-			वापस -EINVAL;
-		पूर्ण
-		वापस 0;
-	पूर्ण
+			return -EINVAL;
+		}
+		return 0;
+	}
 
 	dev_dbg(sdev->dev, "Firmware info: used compiler %s %d:%d:%d%s used optimization flags %s\n",
 		cc->name, cc->major, cc->minor, cc->micro, cc->desc,
 		cc->optim);
 
-	/* create पढ़ो-only cc_version debugfs to store compiler version info */
+	/* create read-only cc_version debugfs to store compiler version info */
 	/* use local copy of the cc_version to prevent data corruption */
-	अगर (sdev->first_boot) अणु
-		sdev->cc_version = devm_kदो_स्मृति(sdev->dev, cc->ext_hdr.hdr.size,
+	if (sdev->first_boot) {
+		sdev->cc_version = devm_kmalloc(sdev->dev, cc->ext_hdr.hdr.size,
 						GFP_KERNEL);
 
-		अगर (!sdev->cc_version)
-			वापस -ENOMEM;
+		if (!sdev->cc_version)
+			return -ENOMEM;
 
-		स_नकल(sdev->cc_version, cc, cc->ext_hdr.hdr.size);
+		memcpy(sdev->cc_version, cc, cc->ext_hdr.hdr.size);
 		ret = snd_sof_debugfs_buf_item(sdev, sdev->cc_version,
 					       cc->ext_hdr.hdr.size,
 					       "cc_version", 0444);
 
 		/* errors are only due to memory allocation, not debugfs */
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(sdev->dev, "error: snd_sof_debugfs_buf_item failed\n");
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* parse the extended FW boot data काष्ठाures from FW boot message */
-पूर्णांक snd_sof_fw_parse_ext_data(काष्ठा snd_sof_dev *sdev, u32 bar, u32 offset)
-अणु
-	काष्ठा sof_ipc_ext_data_hdr *ext_hdr;
-	व्योम *ext_data;
-	पूर्णांक ret = 0;
+/* parse the extended FW boot data structures from FW boot message */
+int snd_sof_fw_parse_ext_data(struct snd_sof_dev *sdev, u32 bar, u32 offset)
+{
+	struct sof_ipc_ext_data_hdr *ext_hdr;
+	void *ext_data;
+	int ret = 0;
 
 	ext_data = kzalloc(PAGE_SIZE, GFP_KERNEL);
-	अगर (!ext_data)
-		वापस -ENOMEM;
+	if (!ext_data)
+		return -ENOMEM;
 
 	/* get first header */
-	snd_sof_dsp_block_पढ़ो(sdev, bar, offset, ext_data,
-			       माप(*ext_hdr));
+	snd_sof_dsp_block_read(sdev, bar, offset, ext_data,
+			       sizeof(*ext_hdr));
 	ext_hdr = ext_data;
 
-	जबतक (ext_hdr->hdr.cmd == SOF_IPC_FW_READY) अणु
-		/* पढ़ो in ext काष्ठाure */
-		snd_sof_dsp_block_पढ़ो(sdev, bar, offset + माप(*ext_hdr),
-				   (व्योम *)((u8 *)ext_data + माप(*ext_hdr)),
-				   ext_hdr->hdr.size - माप(*ext_hdr));
+	while (ext_hdr->hdr.cmd == SOF_IPC_FW_READY) {
+		/* read in ext structure */
+		snd_sof_dsp_block_read(sdev, bar, offset + sizeof(*ext_hdr),
+				   (void *)((u8 *)ext_data + sizeof(*ext_hdr)),
+				   ext_hdr->hdr.size - sizeof(*ext_hdr));
 
 		dev_dbg(sdev->dev, "found ext header type %d size 0x%x\n",
 			ext_hdr->type, ext_hdr->hdr.size);
 
-		/* process काष्ठाure data */
-		चयन (ext_hdr->type) अणु
-		हाल SOF_IPC_EXT_WINDOW:
-			ret = get_ext_winकरोws(sdev, ext_hdr);
-			अवरोध;
-		हाल SOF_IPC_EXT_CC_INFO:
+		/* process structure data */
+		switch (ext_hdr->type) {
+		case SOF_IPC_EXT_WINDOW:
+			ret = get_ext_windows(sdev, ext_hdr);
+			break;
+		case SOF_IPC_EXT_CC_INFO:
 			ret = get_cc_info(sdev, ext_hdr);
-			अवरोध;
-		हाल SOF_IPC_EXT_UNUSED:
-		हाल SOF_IPC_EXT_PROBE_INFO:
-		हाल SOF_IPC_EXT_USER_ABI_INFO:
-			/* They are supported but we करोn't करो anything here */
-			अवरोध;
-		शेष:
+			break;
+		case SOF_IPC_EXT_UNUSED:
+		case SOF_IPC_EXT_PROBE_INFO:
+		case SOF_IPC_EXT_USER_ABI_INFO:
+			/* They are supported but we don't do anything here */
+			break;
+		default:
 			dev_info(sdev->dev, "unknown ext header type %d size 0x%x\n",
 				 ext_hdr->type, ext_hdr->hdr.size);
 			ret = 0;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(sdev->dev, "error: failed to parse ext data type %d\n",
 				ext_hdr->type);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		/* move to next header */
 		offset += ext_hdr->hdr.size;
-		snd_sof_dsp_block_पढ़ो(sdev, bar, offset, ext_data,
-				       माप(*ext_hdr));
+		snd_sof_dsp_block_read(sdev, bar, offset, ext_data,
+				       sizeof(*ext_hdr));
 		ext_hdr = ext_data;
-	पूर्ण
+	}
 
-	kमुक्त(ext_data);
-	वापस ret;
-पूर्ण
+	kfree(ext_data);
+	return ret;
+}
 EXPORT_SYMBOL(snd_sof_fw_parse_ext_data);
 
-अटल पूर्णांक ext_man_get_fw_version(काष्ठा snd_sof_dev *sdev,
-				  स्थिर काष्ठा sof_ext_man_elem_header *hdr)
-अणु
-	स्थिर काष्ठा sof_ext_man_fw_version *v =
-		container_of(hdr, काष्ठा sof_ext_man_fw_version, hdr);
+static int ext_man_get_fw_version(struct snd_sof_dev *sdev,
+				  const struct sof_ext_man_elem_header *hdr)
+{
+	const struct sof_ext_man_fw_version *v =
+		container_of(hdr, struct sof_ext_man_fw_version, hdr);
 
-	स_नकल(&sdev->fw_पढ़ोy.version, &v->version, माप(v->version));
-	sdev->fw_पढ़ोy.flags = v->flags;
+	memcpy(&sdev->fw_ready.version, &v->version, sizeof(v->version));
+	sdev->fw_ready.flags = v->flags;
 
 	/* log ABI versions and check FW compatibility */
-	वापस snd_sof_ipc_valid(sdev);
-पूर्ण
+	return snd_sof_ipc_valid(sdev);
+}
 
-अटल पूर्णांक ext_man_get_winकरोws(काष्ठा snd_sof_dev *sdev,
-			       स्थिर काष्ठा sof_ext_man_elem_header *hdr)
-अणु
-	स्थिर काष्ठा sof_ext_man_winकरोw *w;
+static int ext_man_get_windows(struct snd_sof_dev *sdev,
+			       const struct sof_ext_man_elem_header *hdr)
+{
+	const struct sof_ext_man_window *w;
 
-	w = container_of(hdr, काष्ठा sof_ext_man_winकरोw, hdr);
+	w = container_of(hdr, struct sof_ext_man_window, hdr);
 
-	वापस get_ext_winकरोws(sdev, &w->ipc_winकरोw.ext_hdr);
-पूर्ण
+	return get_ext_windows(sdev, &w->ipc_window.ext_hdr);
+}
 
-अटल पूर्णांक ext_man_get_cc_info(काष्ठा snd_sof_dev *sdev,
-			       स्थिर काष्ठा sof_ext_man_elem_header *hdr)
-अणु
-	स्थिर काष्ठा sof_ext_man_cc_version *cc;
+static int ext_man_get_cc_info(struct snd_sof_dev *sdev,
+			       const struct sof_ext_man_elem_header *hdr)
+{
+	const struct sof_ext_man_cc_version *cc;
 
-	cc = container_of(hdr, काष्ठा sof_ext_man_cc_version, hdr);
+	cc = container_of(hdr, struct sof_ext_man_cc_version, hdr);
 
-	वापस get_cc_info(sdev, &cc->cc_version.ext_hdr);
-पूर्ण
+	return get_cc_info(sdev, &cc->cc_version.ext_hdr);
+}
 
-अटल पूर्णांक ext_man_get_dbg_abi_info(काष्ठा snd_sof_dev *sdev,
-				    स्थिर काष्ठा sof_ext_man_elem_header *hdr)
-अणु
-	स्थिर काष्ठा ext_man_dbg_abi *dbg_abi =
-		container_of(hdr, काष्ठा ext_man_dbg_abi, hdr);
+static int ext_man_get_dbg_abi_info(struct snd_sof_dev *sdev,
+				    const struct sof_ext_man_elem_header *hdr)
+{
+	const struct ext_man_dbg_abi *dbg_abi =
+		container_of(hdr, struct ext_man_dbg_abi, hdr);
 
-	अगर (sdev->first_boot)
+	if (sdev->first_boot)
 		dev_dbg(sdev->dev,
 			"Firmware: DBG_ABI %d:%d:%d\n",
 			SOF_ABI_VERSION_MAJOR(dbg_abi->dbg_abi.abi_dbg_version),
 			SOF_ABI_VERSION_MINOR(dbg_abi->dbg_abi.abi_dbg_version),
 			SOF_ABI_VERSION_PATCH(dbg_abi->dbg_abi.abi_dbg_version));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ext_man_get_config_data(काष्ठा snd_sof_dev *sdev,
-				   स्थिर काष्ठा sof_ext_man_elem_header *hdr)
-अणु
-	स्थिर काष्ठा sof_ext_man_config_data *config =
-		container_of(hdr, काष्ठा sof_ext_man_config_data, hdr);
-	स्थिर काष्ठा sof_config_elem *elem;
-	पूर्णांक elems_counter;
-	पूर्णांक elems_size;
-	पूर्णांक ret = 0;
-	पूर्णांक i;
+static int ext_man_get_config_data(struct snd_sof_dev *sdev,
+				   const struct sof_ext_man_elem_header *hdr)
+{
+	const struct sof_ext_man_config_data *config =
+		container_of(hdr, struct sof_ext_man_config_data, hdr);
+	const struct sof_config_elem *elem;
+	int elems_counter;
+	int elems_size;
+	int ret = 0;
+	int i;
 
 	/* calculate elements counter */
-	elems_size = config->hdr.size - माप(काष्ठा sof_ext_man_elem_header);
-	elems_counter = elems_size / माप(काष्ठा sof_config_elem);
+	elems_size = config->hdr.size - sizeof(struct sof_ext_man_elem_header);
+	elems_counter = elems_size / sizeof(struct sof_config_elem);
 
 	dev_dbg(sdev->dev, "%s can hold up to %d config elements\n",
 		__func__, elems_counter);
 
-	क्रम (i = 0; i < elems_counter; ++i) अणु
+	for (i = 0; i < elems_counter; ++i) {
 		elem = &config->elems[i];
 		dev_dbg(sdev->dev, "%s get index %d token %d val %d\n",
 			__func__, i, elem->token, elem->value);
-		चयन (elem->token) अणु
-		हाल SOF_EXT_MAN_CONFIG_EMPTY:
+		switch (elem->token) {
+		case SOF_EXT_MAN_CONFIG_EMPTY:
 			/* unused memory space is zero filled - mapped to EMPTY elements */
-			अवरोध;
-		हाल SOF_EXT_MAN_CONFIG_IPC_MSG_SIZE:
+			break;
+		case SOF_EXT_MAN_CONFIG_IPC_MSG_SIZE:
 			/* TODO: use ipc msg size from config data */
-			अवरोध;
-		हाल SOF_EXT_MAN_CONFIG_MEMORY_USAGE_SCAN:
-			अगर (sdev->first_boot && elem->value)
+			break;
+		case SOF_EXT_MAN_CONFIG_MEMORY_USAGE_SCAN:
+			if (sdev->first_boot && elem->value)
 				ret = snd_sof_dbg_memory_info_init(sdev);
-			अवरोध;
-		शेष:
+			break;
+		default:
 			dev_info(sdev->dev, "Unknown firmware configuration token %d value %d",
 				 elem->token, elem->value);
-			अवरोध;
-		पूर्ण
-		अगर (ret < 0) अणु
+			break;
+		}
+		if (ret < 0) {
 			dev_err(sdev->dev, "error: processing sof_ext_man_config_data failed for token %d value 0x%x, %d\n",
 				elem->token, elem->value, ret);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार snd_sof_ext_man_size(स्थिर काष्ठा firmware *fw)
-अणु
-	स्थिर काष्ठा sof_ext_man_header *head;
+static ssize_t snd_sof_ext_man_size(const struct firmware *fw)
+{
+	const struct sof_ext_man_header *head;
 
-	head = (काष्ठा sof_ext_man_header *)fw->data;
+	head = (struct sof_ext_man_header *)fw->data;
 
 	/*
-	 * निश्चित fw size is big enough to contain extended manअगरest header,
-	 * it prevents from पढ़ोing unallocated memory from `head` in following
+	 * assert fw size is big enough to contain extended manifest header,
+	 * it prevents from reading unallocated memory from `head` in following
 	 * step.
 	 */
-	अगर (fw->size < माप(*head))
-		वापस -EINVAL;
+	if (fw->size < sizeof(*head))
+		return -EINVAL;
 
 	/*
-	 * When fw poपूर्णांकs to extended manअगरest,
+	 * When fw points to extended manifest,
 	 * then first u32 must be equal SOF_EXT_MAN_MAGIC_NUMBER.
 	 */
-	अगर (head->magic == SOF_EXT_MAN_MAGIC_NUMBER)
-		वापस head->full_size;
+	if (head->magic == SOF_EXT_MAN_MAGIC_NUMBER)
+		return head->full_size;
 
-	/* otherwise given fw करोn't have an extended manअगरest */
-	वापस 0;
-पूर्ण
+	/* otherwise given fw don't have an extended manifest */
+	return 0;
+}
 
-/* parse extended FW manअगरest data काष्ठाures */
-अटल पूर्णांक snd_sof_fw_ext_man_parse(काष्ठा snd_sof_dev *sdev,
-				    स्थिर काष्ठा firmware *fw)
-अणु
-	स्थिर काष्ठा sof_ext_man_elem_header *elem_hdr;
-	स्थिर काष्ठा sof_ext_man_header *head;
-	sमाप_प्रकार ext_man_size;
-	sमाप_प्रकार reमुख्यing;
-	uपूर्णांकptr_t iptr;
-	पूर्णांक ret = 0;
+/* parse extended FW manifest data structures */
+static int snd_sof_fw_ext_man_parse(struct snd_sof_dev *sdev,
+				    const struct firmware *fw)
+{
+	const struct sof_ext_man_elem_header *elem_hdr;
+	const struct sof_ext_man_header *head;
+	ssize_t ext_man_size;
+	ssize_t remaining;
+	uintptr_t iptr;
+	int ret = 0;
 
-	head = (काष्ठा sof_ext_man_header *)fw->data;
-	reमुख्यing = head->full_size - head->header_size;
+	head = (struct sof_ext_man_header *)fw->data;
+	remaining = head->full_size - head->header_size;
 	ext_man_size = snd_sof_ext_man_size(fw);
 
-	/* Assert firmware starts with extended manअगरest */
-	अगर (ext_man_size <= 0)
-		वापस ext_man_size;
+	/* Assert firmware starts with extended manifest */
+	if (ext_man_size <= 0)
+		return ext_man_size;
 
 	/* incompatible version */
-	अगर (SOF_EXT_MAN_VERSION_INCOMPATIBLE(SOF_EXT_MAN_VERSION,
-					     head->header_version)) अणु
+	if (SOF_EXT_MAN_VERSION_INCOMPATIBLE(SOF_EXT_MAN_VERSION,
+					     head->header_version)) {
 		dev_err(sdev->dev, "error: extended manifest version 0x%X differ from used 0x%X\n",
 			head->header_version, SOF_EXT_MAN_VERSION);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* get first extended manअगरest element header */
-	iptr = (uपूर्णांकptr_t)fw->data + head->header_size;
+	/* get first extended manifest element header */
+	iptr = (uintptr_t)fw->data + head->header_size;
 
-	जबतक (reमुख्यing > माप(*elem_hdr)) अणु
-		elem_hdr = (काष्ठा sof_ext_man_elem_header *)iptr;
+	while (remaining > sizeof(*elem_hdr)) {
+		elem_hdr = (struct sof_ext_man_elem_header *)iptr;
 
 		dev_dbg(sdev->dev, "found sof_ext_man header type %d size 0x%X\n",
 			elem_hdr->type, elem_hdr->size);
 
-		अगर (elem_hdr->size < माप(*elem_hdr) ||
-		    elem_hdr->size > reमुख्यing) अणु
+		if (elem_hdr->size < sizeof(*elem_hdr) ||
+		    elem_hdr->size > remaining) {
 			dev_err(sdev->dev, "error: invalid sof_ext_man header size, type %d size 0x%X\n",
 				elem_hdr->type, elem_hdr->size);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		/* process काष्ठाure data */
-		चयन (elem_hdr->type) अणु
-		हाल SOF_EXT_MAN_ELEM_FW_VERSION:
+		/* process structure data */
+		switch (elem_hdr->type) {
+		case SOF_EXT_MAN_ELEM_FW_VERSION:
 			ret = ext_man_get_fw_version(sdev, elem_hdr);
-			अवरोध;
-		हाल SOF_EXT_MAN_ELEM_WINDOW:
-			ret = ext_man_get_winकरोws(sdev, elem_hdr);
-			अवरोध;
-		हाल SOF_EXT_MAN_ELEM_CC_VERSION:
+			break;
+		case SOF_EXT_MAN_ELEM_WINDOW:
+			ret = ext_man_get_windows(sdev, elem_hdr);
+			break;
+		case SOF_EXT_MAN_ELEM_CC_VERSION:
 			ret = ext_man_get_cc_info(sdev, elem_hdr);
-			अवरोध;
-		हाल SOF_EXT_MAN_ELEM_DBG_ABI:
+			break;
+		case SOF_EXT_MAN_ELEM_DBG_ABI:
 			ret = ext_man_get_dbg_abi_info(sdev, elem_hdr);
-			अवरोध;
-		हाल SOF_EXT_MAN_ELEM_CONFIG_DATA:
+			break;
+		case SOF_EXT_MAN_ELEM_CONFIG_DATA:
 			ret = ext_man_get_config_data(sdev, elem_hdr);
-			अवरोध;
-		हाल SOF_EXT_MAN_ELEM_PLATFORM_CONFIG_DATA:
-			ret = snd_sof_dsp_parse_platक्रमm_ext_manअगरest(sdev, elem_hdr);
-			अवरोध;
-		शेष:
+			break;
+		case SOF_EXT_MAN_ELEM_PLATFORM_CONFIG_DATA:
+			ret = snd_sof_dsp_parse_platform_ext_manifest(sdev, elem_hdr);
+			break;
+		default:
 			dev_info(sdev->dev, "unknown sof_ext_man header type %d size 0x%X\n",
 				 elem_hdr->type, elem_hdr->size);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(sdev->dev, "error: failed to parse sof_ext_man header type %d size 0x%X\n",
 				elem_hdr->type, elem_hdr->size);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
-		reमुख्यing -= elem_hdr->size;
+		remaining -= elem_hdr->size;
 		iptr += elem_hdr->size;
-	पूर्ण
+	}
 
-	अगर (reमुख्यing) अणु
+	if (remaining) {
 		dev_err(sdev->dev, "error: sof_ext_man header is inconsistent\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस ext_man_size;
-पूर्ण
+	return ext_man_size;
+}
 
 /*
- * IPC Firmware पढ़ोy.
+ * IPC Firmware ready.
  */
-अटल व्योम sof_get_winकरोws(काष्ठा snd_sof_dev *sdev)
-अणु
-	काष्ठा sof_ipc_winकरोw_elem *elem;
+static void sof_get_windows(struct snd_sof_dev *sdev)
+{
+	struct sof_ipc_window_elem *elem;
 	u32 outbox_offset = 0;
 	u32 stream_offset = 0;
 	u32 inbox_offset = 0;
@@ -372,104 +371,104 @@ EXPORT_SYMBOL(snd_sof_fw_parse_ext_data);
 	u32 inbox_size = 0;
 	u32 debug_size = 0;
 	u32 debug_offset = 0;
-	पूर्णांक winकरोw_offset;
-	पूर्णांक bar;
-	पूर्णांक i;
+	int window_offset;
+	int bar;
+	int i;
 
-	अगर (!sdev->info_winकरोw) अणु
+	if (!sdev->info_window) {
 		dev_err(sdev->dev, "error: have no window info\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	bar = snd_sof_dsp_get_bar_index(sdev, SOF_FW_BLK_TYPE_SRAM);
-	अगर (bar < 0) अणु
+	if (bar < 0) {
 		dev_err(sdev->dev, "error: have no bar mapping\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	क्रम (i = 0; i < sdev->info_winकरोw->num_winकरोws; i++) अणु
-		elem = &sdev->info_winकरोw->winकरोw[i];
+	for (i = 0; i < sdev->info_window->num_windows; i++) {
+		elem = &sdev->info_window->window[i];
 
-		winकरोw_offset = snd_sof_dsp_get_winकरोw_offset(sdev, elem->id);
-		अगर (winकरोw_offset < 0) अणु
+		window_offset = snd_sof_dsp_get_window_offset(sdev, elem->id);
+		if (window_offset < 0) {
 			dev_warn(sdev->dev, "warn: no offset for window %d\n",
 				 elem->id);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		चयन (elem->type) अणु
-		हाल SOF_IPC_REGION_UPBOX:
-			inbox_offset = winकरोw_offset + elem->offset;
+		switch (elem->type) {
+		case SOF_IPC_REGION_UPBOX:
+			inbox_offset = window_offset + elem->offset;
 			inbox_size = elem->size;
 			snd_sof_debugfs_io_item(sdev,
 						sdev->bar[bar] +
 						inbox_offset,
 						elem->size, "inbox",
 						SOF_DEBUGFS_ACCESS_D0_ONLY);
-			अवरोध;
-		हाल SOF_IPC_REGION_DOWNBOX:
-			outbox_offset = winकरोw_offset + elem->offset;
+			break;
+		case SOF_IPC_REGION_DOWNBOX:
+			outbox_offset = window_offset + elem->offset;
 			outbox_size = elem->size;
 			snd_sof_debugfs_io_item(sdev,
 						sdev->bar[bar] +
 						outbox_offset,
 						elem->size, "outbox",
 						SOF_DEBUGFS_ACCESS_D0_ONLY);
-			अवरोध;
-		हाल SOF_IPC_REGION_TRACE:
+			break;
+		case SOF_IPC_REGION_TRACE:
 			snd_sof_debugfs_io_item(sdev,
 						sdev->bar[bar] +
-						winकरोw_offset +
+						window_offset +
 						elem->offset,
 						elem->size, "etrace",
 						SOF_DEBUGFS_ACCESS_D0_ONLY);
-			अवरोध;
-		हाल SOF_IPC_REGION_DEBUG:
-			debug_offset = winकरोw_offset + elem->offset;
+			break;
+		case SOF_IPC_REGION_DEBUG:
+			debug_offset = window_offset + elem->offset;
 			debug_size = elem->size;
 			snd_sof_debugfs_io_item(sdev,
 						sdev->bar[bar] +
-						winकरोw_offset +
+						window_offset +
 						elem->offset,
 						elem->size, "debug",
 						SOF_DEBUGFS_ACCESS_D0_ONLY);
-			अवरोध;
-		हाल SOF_IPC_REGION_STREAM:
-			stream_offset = winकरोw_offset + elem->offset;
+			break;
+		case SOF_IPC_REGION_STREAM:
+			stream_offset = window_offset + elem->offset;
 			stream_size = elem->size;
 			snd_sof_debugfs_io_item(sdev,
 						sdev->bar[bar] +
 						stream_offset,
 						elem->size, "stream",
 						SOF_DEBUGFS_ACCESS_D0_ONLY);
-			अवरोध;
-		हाल SOF_IPC_REGION_REGS:
+			break;
+		case SOF_IPC_REGION_REGS:
 			snd_sof_debugfs_io_item(sdev,
 						sdev->bar[bar] +
-						winकरोw_offset +
+						window_offset +
 						elem->offset,
 						elem->size, "regs",
 						SOF_DEBUGFS_ACCESS_D0_ONLY);
-			अवरोध;
-		हाल SOF_IPC_REGION_EXCEPTION:
-			sdev->dsp_oops_offset = winकरोw_offset + elem->offset;
+			break;
+		case SOF_IPC_REGION_EXCEPTION:
+			sdev->dsp_oops_offset = window_offset + elem->offset;
 			snd_sof_debugfs_io_item(sdev,
 						sdev->bar[bar] +
-						winकरोw_offset +
+						window_offset +
 						elem->offset,
 						elem->size, "exception",
 						SOF_DEBUGFS_ACCESS_D0_ONLY);
-			अवरोध;
-		शेष:
+			break;
+		default:
 			dev_err(sdev->dev, "error: get illegal window info\n");
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 
-	अगर (outbox_size == 0 || inbox_size == 0) अणु
+	if (outbox_size == 0 || inbox_size == 0) {
 		dev_err(sdev->dev, "error: get illegal mailbox window\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	snd_sof_dsp_mailbox_init(sdev, inbox_offset, inbox_size,
 				 outbox_offset, outbox_size);
@@ -487,399 +486,399 @@ EXPORT_SYMBOL(snd_sof_fw_parse_ext_data);
 		stream_offset, stream_size);
 	dev_dbg(sdev->dev, " debug region 0x%x - size 0x%x\n",
 		debug_offset, debug_size);
-पूर्ण
+}
 
-/* check क्रम ABI compatibility and create memory winकरोws on first boot */
-पूर्णांक sof_fw_पढ़ोy(काष्ठा snd_sof_dev *sdev, u32 msg_id)
-अणु
-	काष्ठा sof_ipc_fw_पढ़ोy *fw_पढ़ोy = &sdev->fw_पढ़ोy;
-	पूर्णांक offset;
-	पूर्णांक bar;
-	पूर्णांक ret;
+/* check for ABI compatibility and create memory windows on first boot */
+int sof_fw_ready(struct snd_sof_dev *sdev, u32 msg_id)
+{
+	struct sof_ipc_fw_ready *fw_ready = &sdev->fw_ready;
+	int offset;
+	int bar;
+	int ret;
 
 	/* mailbox must be on 4k boundary */
 	offset = snd_sof_dsp_get_mailbox_offset(sdev);
-	अगर (offset < 0) अणु
+	if (offset < 0) {
 		dev_err(sdev->dev, "error: have no mailbox offset\n");
-		वापस offset;
-	पूर्ण
+		return offset;
+	}
 
 	bar = snd_sof_dsp_get_bar_index(sdev, SOF_FW_BLK_TYPE_SRAM);
-	अगर (bar < 0) अणु
+	if (bar < 0) {
 		dev_err(sdev->dev, "error: have no bar mapping\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	dev_dbg(sdev->dev, "ipc: DSP is ready 0x%8.8x offset 0x%x\n",
 		msg_id, offset);
 
-	/* no need to re-check version/ABI क्रम subsequent boots */
-	अगर (!sdev->first_boot)
-		वापस 0;
+	/* no need to re-check version/ABI for subsequent boots */
+	if (!sdev->first_boot)
+		return 0;
 
-	/* copy data from the DSP FW पढ़ोy offset */
-	sof_block_पढ़ो(sdev, bar, offset, fw_पढ़ोy, माप(*fw_पढ़ोy));
+	/* copy data from the DSP FW ready offset */
+	sof_block_read(sdev, bar, offset, fw_ready, sizeof(*fw_ready));
 
 	/* make sure ABI version is compatible */
 	ret = snd_sof_ipc_valid(sdev);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	/* now check क्रम extended data */
+	/* now check for extended data */
 	snd_sof_fw_parse_ext_data(sdev, bar, offset +
-				  माप(काष्ठा sof_ipc_fw_पढ़ोy));
+				  sizeof(struct sof_ipc_fw_ready));
 
-	sof_get_winकरोws(sdev);
+	sof_get_windows(sdev);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(sof_fw_पढ़ोy);
+	return 0;
+}
+EXPORT_SYMBOL(sof_fw_ready);
 
-/* generic module parser क्रम mmaped DSPs */
-पूर्णांक snd_sof_parse_module_स_नकल(काष्ठा snd_sof_dev *sdev,
-				काष्ठा snd_sof_mod_hdr *module)
-अणु
-	काष्ठा snd_sof_blk_hdr *block;
-	पूर्णांक count, bar;
+/* generic module parser for mmaped DSPs */
+int snd_sof_parse_module_memcpy(struct snd_sof_dev *sdev,
+				struct snd_sof_mod_hdr *module)
+{
+	struct snd_sof_blk_hdr *block;
+	int count, bar;
 	u32 offset;
-	माप_प्रकार reमुख्यing;
+	size_t remaining;
 
 	dev_dbg(sdev->dev, "new module size 0x%x blocks 0x%x type 0x%x\n",
 		module->size, module->num_blocks, module->type);
 
-	block = (काष्ठा snd_sof_blk_hdr *)((u8 *)module + माप(*module));
+	block = (struct snd_sof_blk_hdr *)((u8 *)module + sizeof(*module));
 
-	/* module->size करोesn't include header size */
-	reमुख्यing = module->size;
-	क्रम (count = 0; count < module->num_blocks; count++) अणु
-		/* check क्रम wrap */
-		अगर (reमुख्यing < माप(*block)) अणु
+	/* module->size doesn't include header size */
+	remaining = module->size;
+	for (count = 0; count < module->num_blocks; count++) {
+		/* check for wrap */
+		if (remaining < sizeof(*block)) {
 			dev_err(sdev->dev, "error: not enough data remaining\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		/* minus header size of block */
-		reमुख्यing -= माप(*block);
+		remaining -= sizeof(*block);
 
-		अगर (block->size == 0) अणु
+		if (block->size == 0) {
 			dev_warn(sdev->dev,
 				 "warning: block %d size zero\n", count);
 			dev_warn(sdev->dev, " type 0x%x offset 0x%x\n",
 				 block->type, block->offset);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		चयन (block->type) अणु
-		हाल SOF_FW_BLK_TYPE_RSRVD0:
-		हाल SOF_FW_BLK_TYPE_ROM...SOF_FW_BLK_TYPE_RSRVD14:
-			जारी;	/* not handled aपंचांग */
-		हाल SOF_FW_BLK_TYPE_IRAM:
-		हाल SOF_FW_BLK_TYPE_DRAM:
-		हाल SOF_FW_BLK_TYPE_SRAM:
+		switch (block->type) {
+		case SOF_FW_BLK_TYPE_RSRVD0:
+		case SOF_FW_BLK_TYPE_ROM...SOF_FW_BLK_TYPE_RSRVD14:
+			continue;	/* not handled atm */
+		case SOF_FW_BLK_TYPE_IRAM:
+		case SOF_FW_BLK_TYPE_DRAM:
+		case SOF_FW_BLK_TYPE_SRAM:
 			offset = block->offset;
 			bar = snd_sof_dsp_get_bar_index(sdev, block->type);
-			अगर (bar < 0) अणु
+			if (bar < 0) {
 				dev_err(sdev->dev,
 					"error: no BAR mapping for block type 0x%x\n",
 					block->type);
-				वापस bar;
-			पूर्ण
-			अवरोध;
-		शेष:
+				return bar;
+			}
+			break;
+		default:
 			dev_err(sdev->dev, "error: bad type 0x%x for block 0x%x\n",
 				block->type, count);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		dev_dbg(sdev->dev,
 			"block %d type 0x%x size 0x%x ==>  offset 0x%x\n",
 			count, block->type, block->size, offset);
 
-		/* checking block->size to aव्योम unaligned access */
-		अगर (block->size % माप(u32)) अणु
+		/* checking block->size to avoid unaligned access */
+		if (block->size % sizeof(u32)) {
 			dev_err(sdev->dev, "error: invalid block size 0x%x\n",
 				block->size);
-			वापस -EINVAL;
-		पूर्ण
-		snd_sof_dsp_block_ग_लिखो(sdev, bar, offset,
+			return -EINVAL;
+		}
+		snd_sof_dsp_block_write(sdev, bar, offset,
 					block + 1, block->size);
 
-		अगर (reमुख्यing < block->size) अणु
+		if (remaining < block->size) {
 			dev_err(sdev->dev, "error: not enough data remaining\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		/* minus body size of block */
-		reमुख्यing -= block->size;
+		remaining -= block->size;
 		/* next block */
-		block = (काष्ठा snd_sof_blk_hdr *)((u8 *)block + माप(*block)
+		block = (struct snd_sof_blk_hdr *)((u8 *)block + sizeof(*block)
 			+ block->size);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(snd_sof_parse_module_स_नकल);
+	return 0;
+}
+EXPORT_SYMBOL(snd_sof_parse_module_memcpy);
 
-अटल पूर्णांक check_header(काष्ठा snd_sof_dev *sdev, स्थिर काष्ठा firmware *fw,
-			माप_प्रकार fw_offset)
-अणु
-	काष्ठा snd_sof_fw_header *header;
-	माप_प्रकार fw_size = fw->size - fw_offset;
+static int check_header(struct snd_sof_dev *sdev, const struct firmware *fw,
+			size_t fw_offset)
+{
+	struct snd_sof_fw_header *header;
+	size_t fw_size = fw->size - fw_offset;
 
-	अगर (fw->size <= fw_offset) अणु
+	if (fw->size <= fw_offset) {
 		dev_err(sdev->dev, "error: firmware size must be greater than firmware offset\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* Read the header inक्रमmation from the data poपूर्णांकer */
-	header = (काष्ठा snd_sof_fw_header *)(fw->data + fw_offset);
+	/* Read the header information from the data pointer */
+	header = (struct snd_sof_fw_header *)(fw->data + fw_offset);
 
-	/* verअगरy FW sig */
-	अगर (म_भेदन(header->sig, SND_SOF_FW_SIG, SND_SOF_FW_SIG_SIZE) != 0) अणु
+	/* verify FW sig */
+	if (strncmp(header->sig, SND_SOF_FW_SIG, SND_SOF_FW_SIG_SIZE) != 0) {
 		dev_err(sdev->dev, "error: invalid firmware signature\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* check size is valid */
-	अगर (fw_size != header->file_size + माप(*header)) अणु
+	if (fw_size != header->file_size + sizeof(*header)) {
 		dev_err(sdev->dev, "error: invalid filesize mismatch got 0x%zx expected 0x%zx\n",
-			fw_size, header->file_size + माप(*header));
-		वापस -EINVAL;
-	पूर्ण
+			fw_size, header->file_size + sizeof(*header));
+		return -EINVAL;
+	}
 
 	dev_dbg(sdev->dev, "header size=0x%x modules=0x%x abi=0x%x size=%zu\n",
 		header->file_size, header->num_modules,
-		header->abi, माप(*header));
+		header->abi, sizeof(*header));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक load_modules(काष्ठा snd_sof_dev *sdev, स्थिर काष्ठा firmware *fw,
-			माप_प्रकार fw_offset)
-अणु
-	काष्ठा snd_sof_fw_header *header;
-	काष्ठा snd_sof_mod_hdr *module;
-	पूर्णांक (*load_module)(काष्ठा snd_sof_dev *sof_dev,
-			   काष्ठा snd_sof_mod_hdr *hdr);
-	पूर्णांक ret, count;
-	माप_प्रकार reमुख्यing;
+static int load_modules(struct snd_sof_dev *sdev, const struct firmware *fw,
+			size_t fw_offset)
+{
+	struct snd_sof_fw_header *header;
+	struct snd_sof_mod_hdr *module;
+	int (*load_module)(struct snd_sof_dev *sof_dev,
+			   struct snd_sof_mod_hdr *hdr);
+	int ret, count;
+	size_t remaining;
 
-	header = (काष्ठा snd_sof_fw_header *)(fw->data + fw_offset);
+	header = (struct snd_sof_fw_header *)(fw->data + fw_offset);
 	load_module = sof_ops(sdev)->load_module;
-	अगर (!load_module)
-		वापस -EINVAL;
+	if (!load_module)
+		return -EINVAL;
 
 	/* parse each module */
-	module = (काष्ठा snd_sof_mod_hdr *)(fw->data + fw_offset +
-					    माप(*header));
-	reमुख्यing = fw->size - माप(*header) - fw_offset;
-	/* check क्रम wrap */
-	अगर (reमुख्यing > fw->size) अणु
+	module = (struct snd_sof_mod_hdr *)(fw->data + fw_offset +
+					    sizeof(*header));
+	remaining = fw->size - sizeof(*header) - fw_offset;
+	/* check for wrap */
+	if (remaining > fw->size) {
 		dev_err(sdev->dev, "error: fw size smaller than header size\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	क्रम (count = 0; count < header->num_modules; count++) अणु
-		/* check क्रम wrap */
-		अगर (reमुख्यing < माप(*module)) अणु
+	for (count = 0; count < header->num_modules; count++) {
+		/* check for wrap */
+		if (remaining < sizeof(*module)) {
 			dev_err(sdev->dev, "error: not enough data remaining\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		/* minus header size of module */
-		reमुख्यing -= माप(*module);
+		remaining -= sizeof(*module);
 
 		/* module */
 		ret = load_module(sdev, module);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(sdev->dev, "error: invalid module %d\n", count);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
-		अगर (reमुख्यing < module->size) अणु
+		if (remaining < module->size) {
 			dev_err(sdev->dev, "error: not enough data remaining\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		/* minus body size of module */
-		reमुख्यing -=  module->size;
-		module = (काष्ठा snd_sof_mod_hdr *)((u8 *)module
-			+ माप(*module) + module->size);
-	पूर्ण
+		remaining -=  module->size;
+		module = (struct snd_sof_mod_hdr *)((u8 *)module
+			+ sizeof(*module) + module->size);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक snd_sof_load_firmware_raw(काष्ठा snd_sof_dev *sdev)
-अणु
-	काष्ठा snd_sof_pdata *plat_data = sdev->pdata;
-	स्थिर अक्षर *fw_filename;
-	sमाप_प्रकार ext_man_size;
-	पूर्णांक ret;
+int snd_sof_load_firmware_raw(struct snd_sof_dev *sdev)
+{
+	struct snd_sof_pdata *plat_data = sdev->pdata;
+	const char *fw_filename;
+	ssize_t ext_man_size;
+	int ret;
 
-	/* Don't request firmware again अगर firmware is alपढ़ोy requested */
-	अगर (plat_data->fw)
-		वापस 0;
+	/* Don't request firmware again if firmware is already requested */
+	if (plat_data->fw)
+		return 0;
 
-	fw_filename = kaप्र_लिखो(GFP_KERNEL, "%s/%s",
+	fw_filename = kasprintf(GFP_KERNEL, "%s/%s",
 				plat_data->fw_filename_prefix,
 				plat_data->fw_filename);
-	अगर (!fw_filename)
-		वापस -ENOMEM;
+	if (!fw_filename)
+		return -ENOMEM;
 
 	ret = request_firmware(&plat_data->fw, fw_filename, sdev->dev);
 
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(sdev->dev, "error: request firmware %s failed err: %d\n",
 			fw_filename, ret);
 		dev_err(sdev->dev,
 			"you may need to download the firmware from https://github.com/thesofproject/sof-bin/\n");
-		जाओ err;
-	पूर्ण अन्यथा अणु
+		goto err;
+	} else {
 		dev_dbg(sdev->dev, "request_firmware %s successful\n",
 			fw_filename);
-	पूर्ण
+	}
 
-	/* check क्रम extended manअगरest */
+	/* check for extended manifest */
 	ext_man_size = snd_sof_fw_ext_man_parse(sdev, plat_data->fw);
-	अगर (ext_man_size > 0) अणु
-		/* when no error occurred, drop extended manअगरest */
+	if (ext_man_size > 0) {
+		/* when no error occurred, drop extended manifest */
 		plat_data->fw_offset = ext_man_size;
-	पूर्ण अन्यथा अगर (!ext_man_size) अणु
-		/* No extended manअगरest, so nothing to skip during FW load */
+	} else if (!ext_man_size) {
+		/* No extended manifest, so nothing to skip during FW load */
 		dev_dbg(sdev->dev, "firmware doesn't contain extended manifest\n");
-	पूर्ण अन्यथा अणु
+	} else {
 		ret = ext_man_size;
 		dev_err(sdev->dev, "error: firmware %s contains unsupported or invalid extended manifest: %d\n",
 			fw_filename, ret);
-	पूर्ण
+	}
 
 err:
-	kमुक्त(fw_filename);
+	kfree(fw_filename);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(snd_sof_load_firmware_raw);
 
-पूर्णांक snd_sof_load_firmware_स_नकल(काष्ठा snd_sof_dev *sdev)
-अणु
-	काष्ठा snd_sof_pdata *plat_data = sdev->pdata;
-	पूर्णांक ret;
+int snd_sof_load_firmware_memcpy(struct snd_sof_dev *sdev)
+{
+	struct snd_sof_pdata *plat_data = sdev->pdata;
+	int ret;
 
 	ret = snd_sof_load_firmware_raw(sdev);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	/* make sure the FW header and file is valid */
 	ret = check_header(sdev, plat_data->fw, plat_data->fw_offset);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(sdev->dev, "error: invalid FW header\n");
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	/* prepare the DSP क्रम FW loading */
+	/* prepare the DSP for FW loading */
 	ret = snd_sof_dsp_reset(sdev);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(sdev->dev, "error: failed to reset DSP\n");
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	/* parse and load firmware modules to DSP */
 	ret = load_modules(sdev, plat_data->fw, plat_data->fw_offset);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(sdev->dev, "error: invalid FW modules\n");
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	वापस 0;
+	return 0;
 
 error:
 	release_firmware(plat_data->fw);
-	plat_data->fw = शून्य;
-	वापस ret;
+	plat_data->fw = NULL;
+	return ret;
 
-पूर्ण
-EXPORT_SYMBOL(snd_sof_load_firmware_स_नकल);
+}
+EXPORT_SYMBOL(snd_sof_load_firmware_memcpy);
 
-पूर्णांक snd_sof_load_firmware(काष्ठा snd_sof_dev *sdev)
-अणु
+int snd_sof_load_firmware(struct snd_sof_dev *sdev)
+{
 	dev_dbg(sdev->dev, "loading firmware\n");
 
-	अगर (sof_ops(sdev)->load_firmware)
-		वापस sof_ops(sdev)->load_firmware(sdev);
-	वापस 0;
-पूर्ण
+	if (sof_ops(sdev)->load_firmware)
+		return sof_ops(sdev)->load_firmware(sdev);
+	return 0;
+}
 EXPORT_SYMBOL(snd_sof_load_firmware);
 
-पूर्णांक snd_sof_run_firmware(काष्ठा snd_sof_dev *sdev)
-अणु
-	पूर्णांक ret;
+int snd_sof_run_firmware(struct snd_sof_dev *sdev)
+{
+	int ret;
 
-	init_रुकोqueue_head(&sdev->boot_रुको);
+	init_waitqueue_head(&sdev->boot_wait);
 
-	/* create पढ़ो-only fw_version debugfs to store boot version info */
-	अगर (sdev->first_boot) अणु
+	/* create read-only fw_version debugfs to store boot version info */
+	if (sdev->first_boot) {
 		ret = snd_sof_debugfs_buf_item(sdev, &sdev->fw_version,
-					       माप(sdev->fw_version),
+					       sizeof(sdev->fw_version),
 					       "fw_version", 0444);
 		/* errors are only due to memory allocation, not debugfs */
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(sdev->dev, "error: snd_sof_debugfs_buf_item failed\n");
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	/* perक्रमm pre fw run operations */
+	/* perform pre fw run operations */
 	ret = snd_sof_dsp_pre_fw_run(sdev);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(sdev->dev, "error: failed pre fw run op\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	dev_dbg(sdev->dev, "booting DSP firmware\n");
 
 	/* boot the firmware on the DSP */
 	ret = snd_sof_dsp_run(sdev);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(sdev->dev, "error: failed to reset DSP\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/*
-	 * now रुको क्रम the DSP to boot. There are 3 possible outcomes:
-	 * 1. Boot रुको बार out indicating FW boot failure.
-	 * 2. FW boots successfully and fw_पढ़ोy op succeeds.
-	 * 3. FW boots but fw_पढ़ोy op fails.
+	 * now wait for the DSP to boot. There are 3 possible outcomes:
+	 * 1. Boot wait times out indicating FW boot failure.
+	 * 2. FW boots successfully and fw_ready op succeeds.
+	 * 3. FW boots but fw_ready op fails.
 	 */
-	ret = रुको_event_समयout(sdev->boot_रुको,
+	ret = wait_event_timeout(sdev->boot_wait,
 				 sdev->fw_state > SOF_FW_BOOT_IN_PROGRESS,
-				 msecs_to_jअगरfies(sdev->boot_समयout));
-	अगर (ret == 0) अणु
+				 msecs_to_jiffies(sdev->boot_timeout));
+	if (ret == 0) {
 		dev_err(sdev->dev, "error: firmware boot failure\n");
 		snd_sof_dsp_dbg_dump(sdev, SOF_DBG_DUMP_REGS | SOF_DBG_DUMP_MBOX |
 			SOF_DBG_DUMP_TEXT | SOF_DBG_DUMP_PCI | SOF_DBG_DUMP_FORCE_ERR_LEVEL);
 		sdev->fw_state = SOF_FW_BOOT_FAILED;
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	अगर (sdev->fw_state == SOF_FW_BOOT_COMPLETE)
+	if (sdev->fw_state == SOF_FW_BOOT_COMPLETE)
 		dev_dbg(sdev->dev, "firmware boot complete\n");
-	अन्यथा
-		वापस -EIO; /* FW boots but fw_पढ़ोy op failed */
+	else
+		return -EIO; /* FW boots but fw_ready op failed */
 
-	/* perक्रमm post fw run operations */
+	/* perform post fw run operations */
 	ret = snd_sof_dsp_post_fw_run(sdev);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(sdev->dev, "error: failed post fw run op\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(snd_sof_run_firmware);
 
-व्योम snd_sof_fw_unload(काष्ठा snd_sof_dev *sdev)
-अणु
-	/* TODO: support module unloading at runसमय */
-पूर्ण
+void snd_sof_fw_unload(struct snd_sof_dev *sdev)
+{
+	/* TODO: support module unloading at runtime */
+}
 EXPORT_SYMBOL(snd_sof_fw_unload);

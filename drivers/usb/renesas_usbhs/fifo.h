@@ -1,103 +1,102 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-1.0+ */
+/* SPDX-License-Identifier: GPL-1.0+ */
 /*
  * Renesas USB driver
  *
  * Copyright (C) 2011 Renesas Solutions Corp.
  * Kuninori Morimoto <kuninori.morimoto.gx@renesas.com>
  */
-#अगर_अघोषित RENESAS_USB_FIFO_H
-#घोषणा RENESAS_USB_FIFO_H
+#ifndef RENESAS_USB_FIFO_H
+#define RENESAS_USB_FIFO_H
 
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/sh_dma.h>
-#समावेश <linux/workqueue.h>
-#समावेश <यंत्र/dma.h>
-#समावेश "pipe.h"
+#include <linux/interrupt.h>
+#include <linux/sh_dma.h>
+#include <linux/workqueue.h>
+#include <asm/dma.h>
+#include "pipe.h"
 
-काष्ठा usbhs_fअगरo अणु
-	अक्षर *name;
+struct usbhs_fifo {
+	char *name;
 	u32 port;	/* xFIFO */
 	u32 sel;	/* xFIFOSEL */
 	u32 ctr;	/* xFIFOCTR */
 
-	काष्ठा usbhs_pipe	*pipe;
+	struct usbhs_pipe	*pipe;
 
-	काष्ठा dma_chan		*tx_chan;
-	काष्ठा dma_chan		*rx_chan;
+	struct dma_chan		*tx_chan;
+	struct dma_chan		*rx_chan;
 
-	काष्ठा sh_dmae_slave	tx_slave;
-	काष्ठा sh_dmae_slave	rx_slave;
-पूर्ण;
+	struct sh_dmae_slave	tx_slave;
+	struct sh_dmae_slave	rx_slave;
+};
 
-#घोषणा USBHS_MAX_NUM_DFIFO	4
-काष्ठा usbhs_fअगरo_info अणु
-	काष्ठा usbhs_fअगरo cfअगरo;
-	काष्ठा usbhs_fअगरo dfअगरo[USBHS_MAX_NUM_DFIFO];
-पूर्ण;
-#घोषणा usbhsf_get_dnfअगरo(p, n)	(&((p)->fअगरo_info.dfअगरo[n]))
-#घोषणा usbhs_क्रम_each_dfअगरo(priv, dfअगरo, i)			\
-	क्रम ((i) = 0;						\
+#define USBHS_MAX_NUM_DFIFO	4
+struct usbhs_fifo_info {
+	struct usbhs_fifo cfifo;
+	struct usbhs_fifo dfifo[USBHS_MAX_NUM_DFIFO];
+};
+#define usbhsf_get_dnfifo(p, n)	(&((p)->fifo_info.dfifo[n]))
+#define usbhs_for_each_dfifo(priv, dfifo, i)			\
+	for ((i) = 0;						\
 	     ((i) < USBHS_MAX_NUM_DFIFO) &&			\
-		     ((dfअगरo) = usbhsf_get_dnfअगरo(priv, (i)));	\
+		     ((dfifo) = usbhsf_get_dnfifo(priv, (i)));	\
 	     (i)++)
 
-काष्ठा usbhs_pkt_handle;
-काष्ठा usbhs_pkt अणु
-	काष्ठा list_head node;
-	काष्ठा usbhs_pipe *pipe;
-	स्थिर काष्ठा usbhs_pkt_handle *handler;
-	व्योम (*करोne)(काष्ठा usbhs_priv *priv,
-		     काष्ठा usbhs_pkt *pkt);
-	काष्ठा work_काष्ठा work;
+struct usbhs_pkt_handle;
+struct usbhs_pkt {
+	struct list_head node;
+	struct usbhs_pipe *pipe;
+	const struct usbhs_pkt_handle *handler;
+	void (*done)(struct usbhs_priv *priv,
+		     struct usbhs_pkt *pkt);
+	struct work_struct work;
 	dma_addr_t dma;
-	स्थिर काष्ठा dmaengine_result *dma_result;
-	व्योम *buf;
-	पूर्णांक length;
-	पूर्णांक trans;
-	पूर्णांक actual;
-	पूर्णांक zero;
-	पूर्णांक sequence;
-पूर्ण;
+	const struct dmaengine_result *dma_result;
+	void *buf;
+	int length;
+	int trans;
+	int actual;
+	int zero;
+	int sequence;
+};
 
-काष्ठा usbhs_pkt_handle अणु
-	पूर्णांक (*prepare)(काष्ठा usbhs_pkt *pkt, पूर्णांक *is_करोne);
-	पूर्णांक (*try_run)(काष्ठा usbhs_pkt *pkt, पूर्णांक *is_करोne);
-	पूर्णांक (*dma_करोne)(काष्ठा usbhs_pkt *pkt, पूर्णांक *is_करोne);
-पूर्ण;
+struct usbhs_pkt_handle {
+	int (*prepare)(struct usbhs_pkt *pkt, int *is_done);
+	int (*try_run)(struct usbhs_pkt *pkt, int *is_done);
+	int (*dma_done)(struct usbhs_pkt *pkt, int *is_done);
+};
 
 /*
- * fअगरo
+ * fifo
  */
-पूर्णांक usbhs_fअगरo_probe(काष्ठा usbhs_priv *priv);
-व्योम usbhs_fअगरo_हटाओ(काष्ठा usbhs_priv *priv);
-व्योम usbhs_fअगरo_init(काष्ठा usbhs_priv *priv);
-व्योम usbhs_fअगरo_quit(काष्ठा usbhs_priv *priv);
-व्योम usbhs_fअगरo_clear_dcp(काष्ठा usbhs_pipe *pipe);
+int usbhs_fifo_probe(struct usbhs_priv *priv);
+void usbhs_fifo_remove(struct usbhs_priv *priv);
+void usbhs_fifo_init(struct usbhs_priv *priv);
+void usbhs_fifo_quit(struct usbhs_priv *priv);
+void usbhs_fifo_clear_dcp(struct usbhs_pipe *pipe);
 
 /*
  * packet info
  */
-बाह्य स्थिर काष्ठा usbhs_pkt_handle usbhs_fअगरo_pio_push_handler;
-बाह्य स्थिर काष्ठा usbhs_pkt_handle usbhs_fअगरo_pio_pop_handler;
-बाह्य स्थिर काष्ठा usbhs_pkt_handle usbhs_ctrl_stage_end_handler;
+extern const struct usbhs_pkt_handle usbhs_fifo_pio_push_handler;
+extern const struct usbhs_pkt_handle usbhs_fifo_pio_pop_handler;
+extern const struct usbhs_pkt_handle usbhs_ctrl_stage_end_handler;
 
-बाह्य स्थिर काष्ठा usbhs_pkt_handle usbhs_fअगरo_dma_push_handler;
-बाह्य स्थिर काष्ठा usbhs_pkt_handle usbhs_fअगरo_dma_pop_handler;
+extern const struct usbhs_pkt_handle usbhs_fifo_dma_push_handler;
+extern const struct usbhs_pkt_handle usbhs_fifo_dma_pop_handler;
 
-बाह्य स्थिर काष्ठा usbhs_pkt_handle usbhs_dcp_status_stage_in_handler;
-बाह्य स्थिर काष्ठा usbhs_pkt_handle usbhs_dcp_status_stage_out_handler;
+extern const struct usbhs_pkt_handle usbhs_dcp_status_stage_in_handler;
+extern const struct usbhs_pkt_handle usbhs_dcp_status_stage_out_handler;
 
-बाह्य स्थिर काष्ठा usbhs_pkt_handle usbhs_dcp_data_stage_in_handler;
-बाह्य स्थिर काष्ठा usbhs_pkt_handle usbhs_dcp_data_stage_out_handler;
+extern const struct usbhs_pkt_handle usbhs_dcp_data_stage_in_handler;
+extern const struct usbhs_pkt_handle usbhs_dcp_data_stage_out_handler;
 
-व्योम usbhs_pkt_init(काष्ठा usbhs_pkt *pkt);
-व्योम usbhs_pkt_push(काष्ठा usbhs_pipe *pipe, काष्ठा usbhs_pkt *pkt,
-		    व्योम (*करोne)(काष्ठा usbhs_priv *priv,
-				 काष्ठा usbhs_pkt *pkt),
-		    व्योम *buf, पूर्णांक len, पूर्णांक zero, पूर्णांक sequence);
-काष्ठा usbhs_pkt *usbhs_pkt_pop(काष्ठा usbhs_pipe *pipe, काष्ठा usbhs_pkt *pkt);
-व्योम usbhs_pkt_start(काष्ठा usbhs_pipe *pipe);
-काष्ठा usbhs_pkt *__usbhsf_pkt_get(काष्ठा usbhs_pipe *pipe);
+void usbhs_pkt_init(struct usbhs_pkt *pkt);
+void usbhs_pkt_push(struct usbhs_pipe *pipe, struct usbhs_pkt *pkt,
+		    void (*done)(struct usbhs_priv *priv,
+				 struct usbhs_pkt *pkt),
+		    void *buf, int len, int zero, int sequence);
+struct usbhs_pkt *usbhs_pkt_pop(struct usbhs_pipe *pipe, struct usbhs_pkt *pkt);
+void usbhs_pkt_start(struct usbhs_pipe *pipe);
+struct usbhs_pkt *__usbhsf_pkt_get(struct usbhs_pipe *pipe);
 
-#पूर्ण_अगर /* RENESAS_USB_FIFO_H */
+#endif /* RENESAS_USB_FIFO_H */

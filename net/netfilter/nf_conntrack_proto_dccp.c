@@ -1,27 +1,26 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * DCCP connection tracking protocol helper
  *
  * Copyright (c) 2005, 2006, 2008 Patrick McHardy <kaber@trash.net>
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/sysctl.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/dccp.h>
-#समावेश <linux/slab.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/sysctl.h>
+#include <linux/spinlock.h>
+#include <linux/skbuff.h>
+#include <linux/dccp.h>
+#include <linux/slab.h>
 
-#समावेश <net/net_namespace.h>
-#समावेश <net/netns/generic.h>
+#include <net/net_namespace.h>
+#include <net/netns/generic.h>
 
-#समावेश <linux/netfilter/nfnetlink_conntrack.h>
-#समावेश <net/netfilter/nf_conntrack.h>
-#समावेश <net/netfilter/nf_conntrack_l4proto.h>
-#समावेश <net/netfilter/nf_conntrack_ecache.h>
-#समावेश <net/netfilter/nf_conntrack_समयout.h>
-#समावेश <net/netfilter/nf_log.h>
+#include <linux/netfilter/nfnetlink_conntrack.h>
+#include <net/netfilter/nf_conntrack.h>
+#include <net/netfilter/nf_conntrack_l4proto.h>
+#include <net/netfilter/nf_conntrack_ecache.h>
+#include <net/netfilter/nf_conntrack_timeout.h>
+#include <net/netfilter/nf_log.h>
 
 /* Timeouts are based on values from RFC4340:
  *
@@ -29,48 +28,48 @@
  *
  *   8.1.2. Client Request
  *
- *   A client MAY give up on its DCCP-Requests after some समय
- *   (3 minutes, क्रम example).
+ *   A client MAY give up on its DCCP-Requests after some time
+ *   (3 minutes, for example).
  *
  * - RESPOND:
  *
  *   8.1.3. Server Response
  *
- *   It MAY also leave the RESPOND state क्रम CLOSED after a समयout of
+ *   It MAY also leave the RESPOND state for CLOSED after a timeout of
  *   not less than 4MSL (8 minutes);
  *
  * - PARTOPEN:
  *
  *   8.1.5. Handshake Completion
  *
- *   If the client reमुख्यs in PARTOPEN क्रम more than 4MSL (8 minutes),
+ *   If the client remains in PARTOPEN for more than 4MSL (8 minutes),
  *   it SHOULD reset the connection with Reset Code 2, "Aborted".
  *
  * - OPEN:
  *
- *   The DCCP बारtamp overflows after 11.9 hours. If the connection
- *   stays idle this दीर्घ the sequence number won't be recognized
+ *   The DCCP timestamp overflows after 11.9 hours. If the connection
+ *   stays idle this long the sequence number won't be recognized
  *   as valid anymore.
  *
  * - CLOSEREQ/CLOSING:
  *
  *   8.3. Termination
  *
- *   The retransmission समयr should initially be set to go off in two
- *   round-trip बार and should back off to not less than once every
+ *   The retransmission timer should initially be set to go off in two
+ *   round-trip times and should back off to not less than once every
  *   64 seconds ...
  *
  * - TIMEWAIT:
  *
  *   4.3. States
  *
- *   A server or client socket reमुख्यs in this state क्रम 2MSL (4 minutes)
- *   after the connection has been town करोwn, ...
+ *   A server or client socket remains in this state for 2MSL (4 minutes)
+ *   after the connection has been town down, ...
  */
 
-#घोषणा DCCP_MSL (2 * 60 * HZ)
+#define DCCP_MSL (2 * 60 * HZ)
 
-अटल स्थिर अक्षर * स्थिर dccp_state_names[] = अणु
+static const char * const dccp_state_names[] = {
 	[CT_DCCP_NONE]		= "NONE",
 	[CT_DCCP_REQUEST]	= "REQUEST",
 	[CT_DCCP_RESPOND]	= "RESPOND",
@@ -81,23 +80,23 @@
 	[CT_DCCP_TIMEWAIT]	= "TIMEWAIT",
 	[CT_DCCP_IGNORE]	= "IGNORE",
 	[CT_DCCP_INVALID]	= "INVALID",
-पूर्ण;
+};
 
-#घोषणा sNO	CT_DCCP_NONE
-#घोषणा sRQ	CT_DCCP_REQUEST
-#घोषणा sRS	CT_DCCP_RESPOND
-#घोषणा sPO	CT_DCCP_PARTOPEN
-#घोषणा sOP	CT_DCCP_OPEN
-#घोषणा sCR	CT_DCCP_CLOSEREQ
-#घोषणा sCG	CT_DCCP_CLOSING
-#घोषणा sTW	CT_DCCP_TIMEWAIT
-#घोषणा sIG	CT_DCCP_IGNORE
-#घोषणा sIV	CT_DCCP_INVALID
+#define sNO	CT_DCCP_NONE
+#define sRQ	CT_DCCP_REQUEST
+#define sRS	CT_DCCP_RESPOND
+#define sPO	CT_DCCP_PARTOPEN
+#define sOP	CT_DCCP_OPEN
+#define sCR	CT_DCCP_CLOSEREQ
+#define sCG	CT_DCCP_CLOSING
+#define sTW	CT_DCCP_TIMEWAIT
+#define sIG	CT_DCCP_IGNORE
+#define sIV	CT_DCCP_INVALID
 
 /*
  * DCCP state transition table
  *
- * The assumption is the same as क्रम TCP tracking:
+ * The assumption is the same as for TCP tracking:
  *
  * We are the man in the middle. All the packets go through us but might
  * get lost in transit to the destination. It is assumed that the destination
@@ -106,9 +105,9 @@
  * The following states exist:
  *
  * NONE:	Initial state, expecting Request
- * REQUEST:	Request seen, रुकोing क्रम Response from server
- * RESPOND:	Response from server seen, रुकोing क्रम Ack from client
- * PARTOPEN:	Ack after Response seen, रुकोing क्रम packet other than Response,
+ * REQUEST:	Request seen, waiting for Response from server
+ * RESPOND:	Response from server seen, waiting for Ack from client
+ * PARTOPEN:	Ack after Response seen, waiting for packet other than Response,
  * 		Reset or Sync from server
  * OPEN:	Packet other than Response, Reset or Sync seen
  * CLOSEREQ:	CloseReq from server seen, expecting Close from client
@@ -118,18 +117,18 @@
  *
  * Some states exist only on one side of the connection: REQUEST, RESPOND,
  * PARTOPEN, CLOSEREQ. For the other side these states are equivalent to
- * the one it was in beक्रमe.
+ * the one it was in before.
  *
- * Packets are marked as ignored (sIG) अगर we करोn't know if they're valid
- * (क्रम example a reincarnation of a connection we didn't notice is dead
- * alपढ़ोy) and the server may send back a connection closing Reset or a
+ * Packets are marked as ignored (sIG) if we don't know if they're valid
+ * (for example a reincarnation of a connection we didn't notice is dead
+ * already) and the server may send back a connection closing Reset or a
  * Response. They're also used for Sync/SyncAck packets, which we don't
  * care about.
  */
-अटल स्थिर u_पूर्णांक8_t
-dccp_state_table[CT_DCCP_ROLE_MAX + 1][DCCP_PKT_SYNCACK + 1][CT_DCCP_MAX + 1] = अणु
-	[CT_DCCP_ROLE_CLIENT] = अणु
-		[DCCP_PKT_REQUEST] = अणु
+static const u_int8_t
+dccp_state_table[CT_DCCP_ROLE_MAX + 1][DCCP_PKT_SYNCACK + 1][CT_DCCP_MAX + 1] = {
+	[CT_DCCP_ROLE_CLIENT] = {
+		[DCCP_PKT_REQUEST] = {
 		/*
 		 * sNO -> sRQ		Regular Request
 		 * sRQ -> sRQ		Retransmitted Request or reincarnation
@@ -143,8 +142,8 @@ dccp_state_table[CT_DCCP_ROLE_MAX + 1][DCCP_PKT_SYNCACK + 1][CT_DCCP_MAX + 1] = 
 		 *
 		 *	sNO, sRQ, sRS, sPO. sOP, sCR, sCG, sTW, */
 			sRQ, sRQ, sRS, sIG, sIG, sIG, sIG, sRQ,
-		पूर्ण,
-		[DCCP_PKT_RESPONSE] = अणु
+		},
+		[DCCP_PKT_RESPONSE] = {
 		/*
 		 * sNO -> sIV		Invalid
 		 * sRQ -> sIG		Ignore, might be response to ignored Request
@@ -158,22 +157,22 @@ dccp_state_table[CT_DCCP_ROLE_MAX + 1][DCCP_PKT_SYNCACK + 1][CT_DCCP_MAX + 1] = 
 		 *
 		 *	sNO, sRQ, sRS, sPO, sOP, sCR, sCG, sTW */
 			sIV, sIG, sIG, sIG, sIG, sIG, sIG, sIV,
-		पूर्ण,
-		[DCCP_PKT_ACK] = अणु
+		},
+		[DCCP_PKT_ACK] = {
 		/*
 		 * sNO -> sIV		No connection
 		 * sRQ -> sIV		No connection
-		 * sRS -> sPO		Ack क्रम Response, move to PARTOPEN (8.1.5.)
-		 * sPO -> sPO		Retransmitted Ack क्रम Response, reमुख्य in PARTOPEN
-		 * sOP -> sOP		Regular ACK, reमुख्य in OPEN
+		 * sRS -> sPO		Ack for Response, move to PARTOPEN (8.1.5.)
+		 * sPO -> sPO		Retransmitted Ack for Response, remain in PARTOPEN
+		 * sOP -> sOP		Regular ACK, remain in OPEN
 		 * sCR -> sCR		Ack in CLOSEREQ MAY be processed (8.3.)
 		 * sCG -> sCG		Ack in CLOSING MAY be processed (8.3.)
 		 * sTW -> sIV
 		 *
 		 *	sNO, sRQ, sRS, sPO, sOP, sCR, sCG, sTW */
 			sIV, sIV, sPO, sPO, sOP, sCR, sCG, sIV
-		पूर्ण,
-		[DCCP_PKT_DATA] = अणु
+		},
+		[DCCP_PKT_DATA] = {
 		/*
 		 * sNO -> sIV		No connection
 		 * sRQ -> sIV		No connection
@@ -186,13 +185,13 @@ dccp_state_table[CT_DCCP_ROLE_MAX + 1][DCCP_PKT_SYNCACK + 1][CT_DCCP_MAX + 1] = 
 		 *
 		 *	sNO, sRQ, sRS, sPO, sOP, sCR, sCG, sTW */
 			sIV, sIV, sIV, sIV, sOP, sCR, sCG, sIV,
-		पूर्ण,
-		[DCCP_PKT_DATAACK] = अणु
+		},
+		[DCCP_PKT_DATAACK] = {
 		/*
 		 * sNO -> sIV		No connection
 		 * sRQ -> sIV		No connection
-		 * sRS -> sPO		Ack क्रम Response, move to PARTOPEN (8.1.5.)
-		 * sPO -> sPO		Reमुख्य in PARTOPEN state
+		 * sRS -> sPO		Ack for Response, move to PARTOPEN (8.1.5.)
+		 * sPO -> sPO		Remain in PARTOPEN state
 		 * sOP -> sOP		Regular DataAck packet in OPEN state
 		 * sCR -> sCR		DataAck in CLOSEREQ MAY be processed (8.3.)
 		 * sCG -> sCG		DataAck in CLOSING MAY be processed (8.3.)
@@ -200,59 +199,59 @@ dccp_state_table[CT_DCCP_ROLE_MAX + 1][DCCP_PKT_SYNCACK + 1][CT_DCCP_MAX + 1] = 
 		 *
 		 *	sNO, sRQ, sRS, sPO, sOP, sCR, sCG, sTW */
 			sIV, sIV, sPO, sPO, sOP, sCR, sCG, sIV
-		पूर्ण,
-		[DCCP_PKT_CLOSEREQ] = अणु
+		},
+		[DCCP_PKT_CLOSEREQ] = {
 		/*
 		 * CLOSEREQ may only be sent by the server.
 		 *
 		 *	sNO, sRQ, sRS, sPO, sOP, sCR, sCG, sTW */
 			sIV, sIV, sIV, sIV, sIV, sIV, sIV, sIV
-		पूर्ण,
-		[DCCP_PKT_CLOSE] = अणु
+		},
+		[DCCP_PKT_CLOSE] = {
 		/*
 		 * sNO -> sIV		No connection
 		 * sRQ -> sIV		No connection
 		 * sRS -> sIV		No connection
-		 * sPO -> sCG		Client-initiated बंद
-		 * sOP -> sCG		Client-initiated बंद
+		 * sPO -> sCG		Client-initiated close
+		 * sOP -> sCG		Client-initiated close
 		 * sCR -> sCG		Close in response to CloseReq (8.3.)
 		 * sCG -> sCG		Retransmit
-		 * sTW -> sIV		Late retransmit, alपढ़ोy in TIME_WAIT
+		 * sTW -> sIV		Late retransmit, already in TIME_WAIT
 		 *
 		 *	sNO, sRQ, sRS, sPO, sOP, sCR, sCG, sTW */
 			sIV, sIV, sIV, sCG, sCG, sCG, sIV, sIV
-		पूर्ण,
-		[DCCP_PKT_RESET] = अणु
+		},
+		[DCCP_PKT_RESET] = {
 		/*
 		 * sNO -> sIV		No connection
-		 * sRQ -> sTW		Sync received or समयout, SHOULD send Reset (8.1.1.)
+		 * sRQ -> sTW		Sync received or timeout, SHOULD send Reset (8.1.1.)
 		 * sRS -> sTW		Response received without Request
 		 * sPO -> sTW		Timeout, SHOULD send Reset (8.1.5.)
 		 * sOP -> sTW		Connection reset
 		 * sCR -> sTW		Connection reset
 		 * sCG -> sTW		Connection reset
-		 * sTW -> sIG		Ignore (करोn't refresh समयr)
+		 * sTW -> sIG		Ignore (don't refresh timer)
 		 *
 		 *	sNO, sRQ, sRS, sPO, sOP, sCR, sCG, sTW */
 			sIV, sTW, sTW, sTW, sTW, sTW, sTW, sIG
-		पूर्ण,
-		[DCCP_PKT_SYNC] = अणु
+		},
+		[DCCP_PKT_SYNC] = {
 		/*
 		 * We currently ignore Sync packets
 		 *
 		 *	sNO, sRQ, sRS, sPO, sOP, sCR, sCG, sTW */
 			sIV, sIG, sIG, sIG, sIG, sIG, sIG, sIG,
-		पूर्ण,
-		[DCCP_PKT_SYNCACK] = अणु
+		},
+		[DCCP_PKT_SYNCACK] = {
 		/*
 		 * We currently ignore SyncAck packets
 		 *
 		 *	sNO, sRQ, sRS, sPO, sOP, sCR, sCG, sTW */
 			sIV, sIG, sIG, sIG, sIG, sIG, sIG, sIG,
-		पूर्ण,
-	पूर्ण,
-	[CT_DCCP_ROLE_SERVER] = अणु
-		[DCCP_PKT_REQUEST] = अणु
+		},
+	},
+	[CT_DCCP_ROLE_SERVER] = {
+		[DCCP_PKT_REQUEST] = {
 		/*
 		 * sNO -> sIV		Invalid
 		 * sRQ -> sIG		Ignore, conntrack might be out of sync
@@ -265,8 +264,8 @@ dccp_state_table[CT_DCCP_ROLE_MAX + 1][DCCP_PKT_SYNCACK + 1][CT_DCCP_MAX + 1] = 
 		 *
 		 *	sNO, sRQ, sRS, sPO, sOP, sCR, sCG, sTW */
 			sIV, sIG, sIG, sIG, sIG, sIG, sIG, sRQ
-		पूर्ण,
-		[DCCP_PKT_RESPONSE] = अणु
+		},
+		[DCCP_PKT_RESPONSE] = {
 		/*
 		 * sNO -> sIV		Response without Request
 		 * sRQ -> sRS		Response to clients Request
@@ -279,50 +278,50 @@ dccp_state_table[CT_DCCP_ROLE_MAX + 1][DCCP_PKT_SYNCACK + 1][CT_DCCP_MAX + 1] = 
 		 *
 		 *	sNO, sRQ, sRS, sPO, sOP, sCR, sCG, sTW */
 			sIV, sRS, sRS, sIG, sIG, sIG, sIG, sIV
-		पूर्ण,
-		[DCCP_PKT_ACK] = अणु
+		},
+		[DCCP_PKT_ACK] = {
 		/*
 		 * sNO -> sIV		No connection
 		 * sRQ -> sIV		No connection
 		 * sRS -> sIV		No connection
 		 * sPO -> sOP		Enter OPEN state (8.1.5.)
 		 * sOP -> sOP		Regular Ack in OPEN state
-		 * sCR -> sIV		Waiting क्रम Close from client
+		 * sCR -> sIV		Waiting for Close from client
 		 * sCG -> sCG		Ack in CLOSING MAY be processed (8.3.)
 		 * sTW -> sIV
 		 *
 		 *	sNO, sRQ, sRS, sPO, sOP, sCR, sCG, sTW */
 			sIV, sIV, sIV, sOP, sOP, sIV, sCG, sIV
-		पूर्ण,
-		[DCCP_PKT_DATA] = अणु
+		},
+		[DCCP_PKT_DATA] = {
 		/*
 		 * sNO -> sIV		No connection
 		 * sRQ -> sIV		No connection
 		 * sRS -> sIV		No connection
 		 * sPO -> sOP		Enter OPEN state (8.1.5.)
 		 * sOP -> sOP		Regular Data packet in OPEN state
-		 * sCR -> sIV		Waiting क्रम Close from client
+		 * sCR -> sIV		Waiting for Close from client
 		 * sCG -> sCG		Data in CLOSING MAY be processed (8.3.)
 		 * sTW -> sIV
 		 *
 		 *	sNO, sRQ, sRS, sPO, sOP, sCR, sCG, sTW */
 			sIV, sIV, sIV, sOP, sOP, sIV, sCG, sIV
-		पूर्ण,
-		[DCCP_PKT_DATAACK] = अणु
+		},
+		[DCCP_PKT_DATAACK] = {
 		/*
 		 * sNO -> sIV		No connection
 		 * sRQ -> sIV		No connection
 		 * sRS -> sIV		No connection
 		 * sPO -> sOP		Enter OPEN state (8.1.5.)
 		 * sOP -> sOP		Regular DataAck in OPEN state
-		 * sCR -> sIV		Waiting क्रम Close from client
+		 * sCR -> sIV		Waiting for Close from client
 		 * sCG -> sCG		Data in CLOSING MAY be processed (8.3.)
 		 * sTW -> sIV
 		 *
 		 *	sNO, sRQ, sRS, sPO, sOP, sCR, sCG, sTW */
 			sIV, sIV, sIV, sOP, sOP, sIV, sCG, sIV
-		पूर्ण,
-		[DCCP_PKT_CLOSEREQ] = अणु
+		},
+		[DCCP_PKT_CLOSEREQ] = {
 		/*
 		 * sNO -> sIV		No connection
 		 * sRQ -> sIV		No connection
@@ -330,13 +329,13 @@ dccp_state_table[CT_DCCP_ROLE_MAX + 1][DCCP_PKT_SYNCACK + 1][CT_DCCP_MAX + 1] = 
 		 * sPO -> sOP -> sCR	Move directly to CLOSEREQ (8.1.5.)
 		 * sOP -> sCR		CloseReq in OPEN state
 		 * sCR -> sCR		Retransmit
-		 * sCG -> sCR		Simultaneous बंद, client sends another Close
-		 * sTW -> sIV		Alपढ़ोy बंदd
+		 * sCG -> sCR		Simultaneous close, client sends another Close
+		 * sTW -> sIV		Already closed
 		 *
 		 *	sNO, sRQ, sRS, sPO, sOP, sCR, sCG, sTW */
 			sIV, sIV, sIV, sCR, sCR, sCR, sCR, sIV
-		पूर्ण,
-		[DCCP_PKT_CLOSE] = अणु
+		},
+		[DCCP_PKT_CLOSE] = {
 		/*
 		 * sNO -> sIV		No connection
 		 * sRQ -> sIV		No connection
@@ -345,12 +344,12 @@ dccp_state_table[CT_DCCP_ROLE_MAX + 1][DCCP_PKT_SYNCACK + 1][CT_DCCP_MAX + 1] = 
 		 * sOP -> sCG		Move to CLOSING
 		 * sCR -> sIV		Close after CloseReq is invalid
 		 * sCG -> sCG		Retransmit
-		 * sTW -> sIV		Alपढ़ोy बंदd
+		 * sTW -> sIV		Already closed
 		 *
 		 *	sNO, sRQ, sRS, sPO, sOP, sCR, sCG, sTW */
 			sIV, sIV, sIV, sCG, sCG, sIV, sCG, sIV
-		पूर्ण,
-		[DCCP_PKT_RESET] = अणु
+		},
+		[DCCP_PKT_RESET] = {
 		/*
 		 * sNO -> sIV		No connection
 		 * sRQ -> sTW		Reset in response to Request
@@ -359,145 +358,145 @@ dccp_state_table[CT_DCCP_ROLE_MAX + 1][DCCP_PKT_SYNCACK + 1][CT_DCCP_MAX + 1] = 
 		 * sOP -> sTW
 		 * sCR -> sTW
 		 * sCG -> sTW
-		 * sTW -> sIG		Ignore (करोn't refresh समयr)
+		 * sTW -> sIG		Ignore (don't refresh timer)
 		 *
 		 *	sNO, sRQ, sRS, sPO, sOP, sCR, sCG, sTW, sTW */
 			sIV, sTW, sTW, sTW, sTW, sTW, sTW, sTW, sIG
-		पूर्ण,
-		[DCCP_PKT_SYNC] = अणु
+		},
+		[DCCP_PKT_SYNC] = {
 		/*
 		 * We currently ignore Sync packets
 		 *
 		 *	sNO, sRQ, sRS, sPO, sOP, sCR, sCG, sTW */
 			sIV, sIG, sIG, sIG, sIG, sIG, sIG, sIG,
-		पूर्ण,
-		[DCCP_PKT_SYNCACK] = अणु
+		},
+		[DCCP_PKT_SYNCACK] = {
 		/*
 		 * We currently ignore SyncAck packets
 		 *
 		 *	sNO, sRQ, sRS, sPO, sOP, sCR, sCG, sTW */
 			sIV, sIG, sIG, sIG, sIG, sIG, sIG, sIG,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल noअंतरभूत bool
-dccp_new(काष्ठा nf_conn *ct, स्थिर काष्ठा sk_buff *skb,
-	 स्थिर काष्ठा dccp_hdr *dh)
-अणु
-	काष्ठा net *net = nf_ct_net(ct);
-	काष्ठा nf_dccp_net *dn;
-	स्थिर अक्षर *msg;
-	u_पूर्णांक8_t state;
+static noinline bool
+dccp_new(struct nf_conn *ct, const struct sk_buff *skb,
+	 const struct dccp_hdr *dh)
+{
+	struct net *net = nf_ct_net(ct);
+	struct nf_dccp_net *dn;
+	const char *msg;
+	u_int8_t state;
 
 	state = dccp_state_table[CT_DCCP_ROLE_CLIENT][dh->dccph_type][CT_DCCP_NONE];
-	चयन (state) अणु
-	शेष:
+	switch (state) {
+	default:
 		dn = nf_dccp_pernet(net);
-		अगर (dn->dccp_loose == 0) अणु
+		if (dn->dccp_loose == 0) {
 			msg = "not picking up existing connection ";
-			जाओ out_invalid;
-		पूर्ण
-		अवरोध;
-	हाल CT_DCCP_REQUEST:
-		अवरोध;
-	हाल CT_DCCP_INVALID:
+			goto out_invalid;
+		}
+		break;
+	case CT_DCCP_REQUEST:
+		break;
+	case CT_DCCP_INVALID:
 		msg = "invalid state transition ";
-		जाओ out_invalid;
-	पूर्ण
+		goto out_invalid;
+	}
 
-	ct->proto.dccp.role[IP_CT_सूची_ORIGINAL] = CT_DCCP_ROLE_CLIENT;
-	ct->proto.dccp.role[IP_CT_सूची_REPLY] = CT_DCCP_ROLE_SERVER;
+	ct->proto.dccp.role[IP_CT_DIR_ORIGINAL] = CT_DCCP_ROLE_CLIENT;
+	ct->proto.dccp.role[IP_CT_DIR_REPLY] = CT_DCCP_ROLE_SERVER;
 	ct->proto.dccp.state = CT_DCCP_NONE;
 	ct->proto.dccp.last_pkt = DCCP_PKT_REQUEST;
-	ct->proto.dccp.last_dir = IP_CT_सूची_ORIGINAL;
+	ct->proto.dccp.last_dir = IP_CT_DIR_ORIGINAL;
 	ct->proto.dccp.handshake_seq = 0;
-	वापस true;
+	return true;
 
 out_invalid:
 	nf_ct_l4proto_log_invalid(skb, ct, "%s", msg);
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल u64 dccp_ack_seq(स्थिर काष्ठा dccp_hdr *dh)
-अणु
-	स्थिर काष्ठा dccp_hdr_ack_bits *dhack;
+static u64 dccp_ack_seq(const struct dccp_hdr *dh)
+{
+	const struct dccp_hdr_ack_bits *dhack;
 
-	dhack = (व्योम *)dh + __dccp_basic_hdr_len(dh);
-	वापस ((u64)ntohs(dhack->dccph_ack_nr_high) << 32) +
+	dhack = (void *)dh + __dccp_basic_hdr_len(dh);
+	return ((u64)ntohs(dhack->dccph_ack_nr_high) << 32) +
 		     ntohl(dhack->dccph_ack_nr_low);
-पूर्ण
+}
 
-अटल bool dccp_error(स्थिर काष्ठा dccp_hdr *dh,
-		       काष्ठा sk_buff *skb, अचिन्हित पूर्णांक dataoff,
-		       स्थिर काष्ठा nf_hook_state *state)
-अणु
-	अचिन्हित पूर्णांक dccp_len = skb->len - dataoff;
-	अचिन्हित पूर्णांक cscov;
-	स्थिर अक्षर *msg;
+static bool dccp_error(const struct dccp_hdr *dh,
+		       struct sk_buff *skb, unsigned int dataoff,
+		       const struct nf_hook_state *state)
+{
+	unsigned int dccp_len = skb->len - dataoff;
+	unsigned int cscov;
+	const char *msg;
 
-	अगर (dh->dccph_करोff * 4 < माप(काष्ठा dccp_hdr) ||
-	    dh->dccph_करोff * 4 > dccp_len) अणु
+	if (dh->dccph_doff * 4 < sizeof(struct dccp_hdr) ||
+	    dh->dccph_doff * 4 > dccp_len) {
 		msg = "nf_ct_dccp: truncated/malformed packet ";
-		जाओ out_invalid;
-	पूर्ण
+		goto out_invalid;
+	}
 
 	cscov = dccp_len;
-	अगर (dh->dccph_cscov) अणु
+	if (dh->dccph_cscov) {
 		cscov = (dh->dccph_cscov - 1) * 4;
-		अगर (cscov > dccp_len) अणु
+		if (cscov > dccp_len) {
 			msg = "nf_ct_dccp: bad checksum coverage ";
-			जाओ out_invalid;
-		पूर्ण
-	पूर्ण
+			goto out_invalid;
+		}
+	}
 
-	अगर (state->hook == NF_INET_PRE_ROUTING &&
+	if (state->hook == NF_INET_PRE_ROUTING &&
 	    state->net->ct.sysctl_checksum &&
 	    nf_checksum_partial(skb, state->hook, dataoff, cscov,
-				IPPROTO_DCCP, state->pf)) अणु
+				IPPROTO_DCCP, state->pf)) {
 		msg = "nf_ct_dccp: bad checksum ";
-		जाओ out_invalid;
-	पूर्ण
+		goto out_invalid;
+	}
 
-	अगर (dh->dccph_type >= DCCP_PKT_INVALID) अणु
+	if (dh->dccph_type >= DCCP_PKT_INVALID) {
 		msg = "nf_ct_dccp: reserved packet type ";
-		जाओ out_invalid;
-	पूर्ण
-	वापस false;
+		goto out_invalid;
+	}
+	return false;
 out_invalid:
 	nf_l4proto_log_invalid(skb, state->net, state->pf,
 			       IPPROTO_DCCP, "%s", msg);
-	वापस true;
-पूर्ण
+	return true;
+}
 
-पूर्णांक nf_conntrack_dccp_packet(काष्ठा nf_conn *ct, काष्ठा sk_buff *skb,
-			     अचिन्हित पूर्णांक dataoff,
-			     क्रमागत ip_conntrack_info ctinfo,
-			     स्थिर काष्ठा nf_hook_state *state)
-अणु
-	क्रमागत ip_conntrack_dir dir = CTINFO2सूची(ctinfo);
-	काष्ठा dccp_hdr _dh, *dh;
-	u_पूर्णांक8_t type, old_state, new_state;
-	क्रमागत ct_dccp_roles role;
-	अचिन्हित पूर्णांक *समयouts;
+int nf_conntrack_dccp_packet(struct nf_conn *ct, struct sk_buff *skb,
+			     unsigned int dataoff,
+			     enum ip_conntrack_info ctinfo,
+			     const struct nf_hook_state *state)
+{
+	enum ip_conntrack_dir dir = CTINFO2DIR(ctinfo);
+	struct dccp_hdr _dh, *dh;
+	u_int8_t type, old_state, new_state;
+	enum ct_dccp_roles role;
+	unsigned int *timeouts;
 
-	dh = skb_header_poपूर्णांकer(skb, dataoff, माप(_dh), &_dh);
-	अगर (!dh)
-		वापस NF_DROP;
+	dh = skb_header_pointer(skb, dataoff, sizeof(_dh), &_dh);
+	if (!dh)
+		return NF_DROP;
 
-	अगर (dccp_error(dh, skb, dataoff, state))
-		वापस -NF_ACCEPT;
+	if (dccp_error(dh, skb, dataoff, state))
+		return -NF_ACCEPT;
 
 	type = dh->dccph_type;
-	अगर (!nf_ct_is_confirmed(ct) && !dccp_new(ct, skb, dh))
-		वापस -NF_ACCEPT;
+	if (!nf_ct_is_confirmed(ct) && !dccp_new(ct, skb, dh))
+		return -NF_ACCEPT;
 
-	अगर (type == DCCP_PKT_RESET &&
-	    !test_bit(IPS_SEEN_REPLY_BIT, &ct->status)) अणु
-		/* Tear करोwn connection immediately अगर only reply is a RESET */
-		nf_ct_समाप्त_acct(ct, ctinfo, skb);
-		वापस NF_ACCEPT;
-	पूर्ण
+	if (type == DCCP_PKT_RESET &&
+	    !test_bit(IPS_SEEN_REPLY_BIT, &ct->status)) {
+		/* Tear down connection immediately if only reply is a RESET */
+		nf_ct_kill_acct(ct, ctinfo, skb);
+		return NF_ACCEPT;
+	}
 
 	spin_lock_bh(&ct->lock);
 
@@ -505,260 +504,260 @@ out_invalid:
 	old_state = ct->proto.dccp.state;
 	new_state = dccp_state_table[role][type][old_state];
 
-	चयन (new_state) अणु
-	हाल CT_DCCP_REQUEST:
-		अगर (old_state == CT_DCCP_TIMEWAIT &&
-		    role == CT_DCCP_ROLE_SERVER) अणु
-			/* Reincarnation in the reverse direction: reखोलो and
+	switch (new_state) {
+	case CT_DCCP_REQUEST:
+		if (old_state == CT_DCCP_TIMEWAIT &&
+		    role == CT_DCCP_ROLE_SERVER) {
+			/* Reincarnation in the reverse direction: reopen and
 			 * reverse client/server roles. */
 			ct->proto.dccp.role[dir] = CT_DCCP_ROLE_CLIENT;
 			ct->proto.dccp.role[!dir] = CT_DCCP_ROLE_SERVER;
-		पूर्ण
-		अवरोध;
-	हाल CT_DCCP_RESPOND:
-		अगर (old_state == CT_DCCP_REQUEST)
+		}
+		break;
+	case CT_DCCP_RESPOND:
+		if (old_state == CT_DCCP_REQUEST)
 			ct->proto.dccp.handshake_seq = dccp_hdr_seq(dh);
-		अवरोध;
-	हाल CT_DCCP_PARTOPEN:
-		अगर (old_state == CT_DCCP_RESPOND &&
+		break;
+	case CT_DCCP_PARTOPEN:
+		if (old_state == CT_DCCP_RESPOND &&
 		    type == DCCP_PKT_ACK &&
 		    dccp_ack_seq(dh) == ct->proto.dccp.handshake_seq)
 			set_bit(IPS_ASSURED_BIT, &ct->status);
-		अवरोध;
-	हाल CT_DCCP_IGNORE:
+		break;
+	case CT_DCCP_IGNORE:
 		/*
 		 * Connection tracking might be out of sync, so we ignore
 		 * packets that might establish a new connection and resync
-		 * अगर the server responds with a valid Response.
+		 * if the server responds with a valid Response.
 		 */
-		अगर (ct->proto.dccp.last_dir == !dir &&
+		if (ct->proto.dccp.last_dir == !dir &&
 		    ct->proto.dccp.last_pkt == DCCP_PKT_REQUEST &&
-		    type == DCCP_PKT_RESPONSE) अणु
+		    type == DCCP_PKT_RESPONSE) {
 			ct->proto.dccp.role[!dir] = CT_DCCP_ROLE_CLIENT;
 			ct->proto.dccp.role[dir] = CT_DCCP_ROLE_SERVER;
 			ct->proto.dccp.handshake_seq = dccp_hdr_seq(dh);
 			new_state = CT_DCCP_RESPOND;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		ct->proto.dccp.last_dir = dir;
 		ct->proto.dccp.last_pkt = type;
 
 		spin_unlock_bh(&ct->lock);
 		nf_ct_l4proto_log_invalid(skb, ct, "%s", "invalid packet");
-		वापस NF_ACCEPT;
-	हाल CT_DCCP_INVALID:
+		return NF_ACCEPT;
+	case CT_DCCP_INVALID:
 		spin_unlock_bh(&ct->lock);
 		nf_ct_l4proto_log_invalid(skb, ct, "%s", "invalid state transition");
-		वापस -NF_ACCEPT;
-	पूर्ण
+		return -NF_ACCEPT;
+	}
 
 	ct->proto.dccp.last_dir = dir;
 	ct->proto.dccp.last_pkt = type;
 	ct->proto.dccp.state = new_state;
 	spin_unlock_bh(&ct->lock);
 
-	अगर (new_state != old_state)
+	if (new_state != old_state)
 		nf_conntrack_event_cache(IPCT_PROTOINFO, ct);
 
-	समयouts = nf_ct_समयout_lookup(ct);
-	अगर (!समयouts)
-		समयouts = nf_dccp_pernet(nf_ct_net(ct))->dccp_समयout;
-	nf_ct_refresh_acct(ct, ctinfo, skb, समयouts[new_state]);
+	timeouts = nf_ct_timeout_lookup(ct);
+	if (!timeouts)
+		timeouts = nf_dccp_pernet(nf_ct_net(ct))->dccp_timeout;
+	nf_ct_refresh_acct(ct, ctinfo, skb, timeouts[new_state]);
 
-	वापस NF_ACCEPT;
-पूर्ण
+	return NF_ACCEPT;
+}
 
-अटल bool dccp_can_early_drop(स्थिर काष्ठा nf_conn *ct)
-अणु
-	चयन (ct->proto.dccp.state) अणु
-	हाल CT_DCCP_CLOSEREQ:
-	हाल CT_DCCP_CLOSING:
-	हाल CT_DCCP_TIMEWAIT:
-		वापस true;
-	शेष:
-		अवरोध;
-	पूर्ण
+static bool dccp_can_early_drop(const struct nf_conn *ct)
+{
+	switch (ct->proto.dccp.state) {
+	case CT_DCCP_CLOSEREQ:
+	case CT_DCCP_CLOSING:
+	case CT_DCCP_TIMEWAIT:
+		return true;
+	default:
+		break;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-#अगर_घोषित CONFIG_NF_CONNTRACK_PROCFS
-अटल व्योम dccp_prपूर्णांक_conntrack(काष्ठा seq_file *s, काष्ठा nf_conn *ct)
-अणु
-	seq_म_लिखो(s, "%s ", dccp_state_names[ct->proto.dccp.state]);
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_NF_CONNTRACK_PROCFS
+static void dccp_print_conntrack(struct seq_file *s, struct nf_conn *ct)
+{
+	seq_printf(s, "%s ", dccp_state_names[ct->proto.dccp.state]);
+}
+#endif
 
-#अगर IS_ENABLED(CONFIG_NF_CT_NETLINK)
-अटल पूर्णांक dccp_to_nlattr(काष्ठा sk_buff *skb, काष्ठा nlattr *nla,
-			  काष्ठा nf_conn *ct, bool destroy)
-अणु
-	काष्ठा nlattr *nest_parms;
+#if IS_ENABLED(CONFIG_NF_CT_NETLINK)
+static int dccp_to_nlattr(struct sk_buff *skb, struct nlattr *nla,
+			  struct nf_conn *ct, bool destroy)
+{
+	struct nlattr *nest_parms;
 
 	spin_lock_bh(&ct->lock);
 	nest_parms = nla_nest_start(skb, CTA_PROTOINFO_DCCP);
-	अगर (!nest_parms)
-		जाओ nla_put_failure;
-	अगर (nla_put_u8(skb, CTA_PROTOINFO_DCCP_STATE, ct->proto.dccp.state))
-		जाओ nla_put_failure;
+	if (!nest_parms)
+		goto nla_put_failure;
+	if (nla_put_u8(skb, CTA_PROTOINFO_DCCP_STATE, ct->proto.dccp.state))
+		goto nla_put_failure;
 
-	अगर (destroy)
-		जाओ skip_state;
+	if (destroy)
+		goto skip_state;
 
-	अगर (nla_put_u8(skb, CTA_PROTOINFO_DCCP_ROLE,
-		       ct->proto.dccp.role[IP_CT_सूची_ORIGINAL]) ||
+	if (nla_put_u8(skb, CTA_PROTOINFO_DCCP_ROLE,
+		       ct->proto.dccp.role[IP_CT_DIR_ORIGINAL]) ||
 	    nla_put_be64(skb, CTA_PROTOINFO_DCCP_HANDSHAKE_SEQ,
 			 cpu_to_be64(ct->proto.dccp.handshake_seq),
 			 CTA_PROTOINFO_DCCP_PAD))
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 skip_state:
 	nla_nest_end(skb, nest_parms);
 	spin_unlock_bh(&ct->lock);
 
-	वापस 0;
+	return 0;
 
 nla_put_failure:
 	spin_unlock_bh(&ct->lock);
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल स्थिर काष्ठा nla_policy dccp_nla_policy[CTA_PROTOINFO_DCCP_MAX + 1] = अणु
-	[CTA_PROTOINFO_DCCP_STATE]	= अणु .type = NLA_U8 पूर्ण,
-	[CTA_PROTOINFO_DCCP_ROLE]	= अणु .type = NLA_U8 पूर्ण,
-	[CTA_PROTOINFO_DCCP_HANDSHAKE_SEQ] = अणु .type = NLA_U64 पूर्ण,
-	[CTA_PROTOINFO_DCCP_PAD]	= अणु .type = NLA_UNSPEC पूर्ण,
-पूर्ण;
+static const struct nla_policy dccp_nla_policy[CTA_PROTOINFO_DCCP_MAX + 1] = {
+	[CTA_PROTOINFO_DCCP_STATE]	= { .type = NLA_U8 },
+	[CTA_PROTOINFO_DCCP_ROLE]	= { .type = NLA_U8 },
+	[CTA_PROTOINFO_DCCP_HANDSHAKE_SEQ] = { .type = NLA_U64 },
+	[CTA_PROTOINFO_DCCP_PAD]	= { .type = NLA_UNSPEC },
+};
 
-#घोषणा DCCP_NLATTR_SIZE ( \
+#define DCCP_NLATTR_SIZE ( \
 	NLA_ALIGN(NLA_HDRLEN + 1) + \
 	NLA_ALIGN(NLA_HDRLEN + 1) + \
-	NLA_ALIGN(NLA_HDRLEN + माप(u64)) + \
+	NLA_ALIGN(NLA_HDRLEN + sizeof(u64)) + \
 	NLA_ALIGN(NLA_HDRLEN + 0))
 
-अटल पूर्णांक nlattr_to_dccp(काष्ठा nlattr *cda[], काष्ठा nf_conn *ct)
-अणु
-	काष्ठा nlattr *attr = cda[CTA_PROTOINFO_DCCP];
-	काष्ठा nlattr *tb[CTA_PROTOINFO_DCCP_MAX + 1];
-	पूर्णांक err;
+static int nlattr_to_dccp(struct nlattr *cda[], struct nf_conn *ct)
+{
+	struct nlattr *attr = cda[CTA_PROTOINFO_DCCP];
+	struct nlattr *tb[CTA_PROTOINFO_DCCP_MAX + 1];
+	int err;
 
-	अगर (!attr)
-		वापस 0;
+	if (!attr)
+		return 0;
 
 	err = nla_parse_nested_deprecated(tb, CTA_PROTOINFO_DCCP_MAX, attr,
-					  dccp_nla_policy, शून्य);
-	अगर (err < 0)
-		वापस err;
+					  dccp_nla_policy, NULL);
+	if (err < 0)
+		return err;
 
-	अगर (!tb[CTA_PROTOINFO_DCCP_STATE] ||
+	if (!tb[CTA_PROTOINFO_DCCP_STATE] ||
 	    !tb[CTA_PROTOINFO_DCCP_ROLE] ||
 	    nla_get_u8(tb[CTA_PROTOINFO_DCCP_ROLE]) > CT_DCCP_ROLE_MAX ||
-	    nla_get_u8(tb[CTA_PROTOINFO_DCCP_STATE]) >= CT_DCCP_IGNORE) अणु
-		वापस -EINVAL;
-	पूर्ण
+	    nla_get_u8(tb[CTA_PROTOINFO_DCCP_STATE]) >= CT_DCCP_IGNORE) {
+		return -EINVAL;
+	}
 
 	spin_lock_bh(&ct->lock);
 	ct->proto.dccp.state = nla_get_u8(tb[CTA_PROTOINFO_DCCP_STATE]);
-	अगर (nla_get_u8(tb[CTA_PROTOINFO_DCCP_ROLE]) == CT_DCCP_ROLE_CLIENT) अणु
-		ct->proto.dccp.role[IP_CT_सूची_ORIGINAL] = CT_DCCP_ROLE_CLIENT;
-		ct->proto.dccp.role[IP_CT_सूची_REPLY] = CT_DCCP_ROLE_SERVER;
-	पूर्ण अन्यथा अणु
-		ct->proto.dccp.role[IP_CT_सूची_ORIGINAL] = CT_DCCP_ROLE_SERVER;
-		ct->proto.dccp.role[IP_CT_सूची_REPLY] = CT_DCCP_ROLE_CLIENT;
-	पूर्ण
-	अगर (tb[CTA_PROTOINFO_DCCP_HANDSHAKE_SEQ]) अणु
+	if (nla_get_u8(tb[CTA_PROTOINFO_DCCP_ROLE]) == CT_DCCP_ROLE_CLIENT) {
+		ct->proto.dccp.role[IP_CT_DIR_ORIGINAL] = CT_DCCP_ROLE_CLIENT;
+		ct->proto.dccp.role[IP_CT_DIR_REPLY] = CT_DCCP_ROLE_SERVER;
+	} else {
+		ct->proto.dccp.role[IP_CT_DIR_ORIGINAL] = CT_DCCP_ROLE_SERVER;
+		ct->proto.dccp.role[IP_CT_DIR_REPLY] = CT_DCCP_ROLE_CLIENT;
+	}
+	if (tb[CTA_PROTOINFO_DCCP_HANDSHAKE_SEQ]) {
 		ct->proto.dccp.handshake_seq =
 		be64_to_cpu(nla_get_be64(tb[CTA_PROTOINFO_DCCP_HANDSHAKE_SEQ]));
-	पूर्ण
+	}
 	spin_unlock_bh(&ct->lock);
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-#अगर_घोषित CONFIG_NF_CONNTRACK_TIMEOUT
+#ifdef CONFIG_NF_CONNTRACK_TIMEOUT
 
-#समावेश <linux/netfilter/nfnetlink.h>
-#समावेश <linux/netfilter/nfnetlink_ctसमयout.h>
+#include <linux/netfilter/nfnetlink.h>
+#include <linux/netfilter/nfnetlink_cttimeout.h>
 
-अटल पूर्णांक dccp_समयout_nlattr_to_obj(काष्ठा nlattr *tb[],
-				      काष्ठा net *net, व्योम *data)
-अणु
-	काष्ठा nf_dccp_net *dn = nf_dccp_pernet(net);
-	अचिन्हित पूर्णांक *समयouts = data;
-	पूर्णांक i;
+static int dccp_timeout_nlattr_to_obj(struct nlattr *tb[],
+				      struct net *net, void *data)
+{
+	struct nf_dccp_net *dn = nf_dccp_pernet(net);
+	unsigned int *timeouts = data;
+	int i;
 
-	अगर (!समयouts)
-		 समयouts = dn->dccp_समयout;
+	if (!timeouts)
+		 timeouts = dn->dccp_timeout;
 
-	/* set शेष DCCP समयouts. */
-	क्रम (i=0; i<CT_DCCP_MAX; i++)
-		समयouts[i] = dn->dccp_समयout[i];
+	/* set default DCCP timeouts. */
+	for (i=0; i<CT_DCCP_MAX; i++)
+		timeouts[i] = dn->dccp_timeout[i];
 
 	/* there's a 1:1 mapping between attributes and protocol states. */
-	क्रम (i=CTA_TIMEOUT_DCCP_UNSPEC+1; i<CTA_TIMEOUT_DCCP_MAX+1; i++) अणु
-		अगर (tb[i]) अणु
-			समयouts[i] = ntohl(nla_get_be32(tb[i])) * HZ;
-		पूर्ण
-	पूर्ण
+	for (i=CTA_TIMEOUT_DCCP_UNSPEC+1; i<CTA_TIMEOUT_DCCP_MAX+1; i++) {
+		if (tb[i]) {
+			timeouts[i] = ntohl(nla_get_be32(tb[i])) * HZ;
+		}
+	}
 
-	समयouts[CTA_TIMEOUT_DCCP_UNSPEC] = समयouts[CTA_TIMEOUT_DCCP_REQUEST];
-	वापस 0;
-पूर्ण
+	timeouts[CTA_TIMEOUT_DCCP_UNSPEC] = timeouts[CTA_TIMEOUT_DCCP_REQUEST];
+	return 0;
+}
 
-अटल पूर्णांक
-dccp_समयout_obj_to_nlattr(काष्ठा sk_buff *skb, स्थिर व्योम *data)
-अणु
-        स्थिर अचिन्हित पूर्णांक *समयouts = data;
-	पूर्णांक i;
+static int
+dccp_timeout_obj_to_nlattr(struct sk_buff *skb, const void *data)
+{
+        const unsigned int *timeouts = data;
+	int i;
 
-	क्रम (i=CTA_TIMEOUT_DCCP_UNSPEC+1; i<CTA_TIMEOUT_DCCP_MAX+1; i++) अणु
-		अगर (nla_put_be32(skb, i, htonl(समयouts[i] / HZ)))
-			जाओ nla_put_failure;
-	पूर्ण
-	वापस 0;
+	for (i=CTA_TIMEOUT_DCCP_UNSPEC+1; i<CTA_TIMEOUT_DCCP_MAX+1; i++) {
+		if (nla_put_be32(skb, i, htonl(timeouts[i] / HZ)))
+			goto nla_put_failure;
+	}
+	return 0;
 
 nla_put_failure:
-	वापस -ENOSPC;
-पूर्ण
+	return -ENOSPC;
+}
 
-अटल स्थिर काष्ठा nla_policy
-dccp_समयout_nla_policy[CTA_TIMEOUT_DCCP_MAX+1] = अणु
-	[CTA_TIMEOUT_DCCP_REQUEST]	= अणु .type = NLA_U32 पूर्ण,
-	[CTA_TIMEOUT_DCCP_RESPOND]	= अणु .type = NLA_U32 पूर्ण,
-	[CTA_TIMEOUT_DCCP_PARTOPEN]	= अणु .type = NLA_U32 पूर्ण,
-	[CTA_TIMEOUT_DCCP_OPEN]		= अणु .type = NLA_U32 पूर्ण,
-	[CTA_TIMEOUT_DCCP_CLOSEREQ]	= अणु .type = NLA_U32 पूर्ण,
-	[CTA_TIMEOUT_DCCP_CLOSING]	= अणु .type = NLA_U32 पूर्ण,
-	[CTA_TIMEOUT_DCCP_TIMEWAIT]	= अणु .type = NLA_U32 पूर्ण,
-पूर्ण;
-#पूर्ण_अगर /* CONFIG_NF_CONNTRACK_TIMEOUT */
+static const struct nla_policy
+dccp_timeout_nla_policy[CTA_TIMEOUT_DCCP_MAX+1] = {
+	[CTA_TIMEOUT_DCCP_REQUEST]	= { .type = NLA_U32 },
+	[CTA_TIMEOUT_DCCP_RESPOND]	= { .type = NLA_U32 },
+	[CTA_TIMEOUT_DCCP_PARTOPEN]	= { .type = NLA_U32 },
+	[CTA_TIMEOUT_DCCP_OPEN]		= { .type = NLA_U32 },
+	[CTA_TIMEOUT_DCCP_CLOSEREQ]	= { .type = NLA_U32 },
+	[CTA_TIMEOUT_DCCP_CLOSING]	= { .type = NLA_U32 },
+	[CTA_TIMEOUT_DCCP_TIMEWAIT]	= { .type = NLA_U32 },
+};
+#endif /* CONFIG_NF_CONNTRACK_TIMEOUT */
 
-व्योम nf_conntrack_dccp_init_net(काष्ठा net *net)
-अणु
-	काष्ठा nf_dccp_net *dn = nf_dccp_pernet(net);
+void nf_conntrack_dccp_init_net(struct net *net)
+{
+	struct nf_dccp_net *dn = nf_dccp_pernet(net);
 
-	/* शेष values */
+	/* default values */
 	dn->dccp_loose = 1;
-	dn->dccp_समयout[CT_DCCP_REQUEST]	= 2 * DCCP_MSL;
-	dn->dccp_समयout[CT_DCCP_RESPOND]	= 4 * DCCP_MSL;
-	dn->dccp_समयout[CT_DCCP_PARTOPEN]	= 4 * DCCP_MSL;
-	dn->dccp_समयout[CT_DCCP_OPEN]		= 12 * 3600 * HZ;
-	dn->dccp_समयout[CT_DCCP_CLOSEREQ]	= 64 * HZ;
-	dn->dccp_समयout[CT_DCCP_CLOSING]	= 64 * HZ;
-	dn->dccp_समयout[CT_DCCP_TIMEWAIT]	= 2 * DCCP_MSL;
+	dn->dccp_timeout[CT_DCCP_REQUEST]	= 2 * DCCP_MSL;
+	dn->dccp_timeout[CT_DCCP_RESPOND]	= 4 * DCCP_MSL;
+	dn->dccp_timeout[CT_DCCP_PARTOPEN]	= 4 * DCCP_MSL;
+	dn->dccp_timeout[CT_DCCP_OPEN]		= 12 * 3600 * HZ;
+	dn->dccp_timeout[CT_DCCP_CLOSEREQ]	= 64 * HZ;
+	dn->dccp_timeout[CT_DCCP_CLOSING]	= 64 * HZ;
+	dn->dccp_timeout[CT_DCCP_TIMEWAIT]	= 2 * DCCP_MSL;
 
-	/* समयouts[0] is unused, make it same as SYN_SENT so
-	 * ->समयouts[0] contains 'new' समयout, like udp or icmp.
+	/* timeouts[0] is unused, make it same as SYN_SENT so
+	 * ->timeouts[0] contains 'new' timeout, like udp or icmp.
 	 */
-	dn->dccp_समयout[CT_DCCP_NONE] = dn->dccp_समयout[CT_DCCP_REQUEST];
-पूर्ण
+	dn->dccp_timeout[CT_DCCP_NONE] = dn->dccp_timeout[CT_DCCP_REQUEST];
+}
 
-स्थिर काष्ठा nf_conntrack_l4proto nf_conntrack_l4proto_dccp = अणु
+const struct nf_conntrack_l4proto nf_conntrack_l4proto_dccp = {
 	.l4proto		= IPPROTO_DCCP,
 	.can_early_drop		= dccp_can_early_drop,
-#अगर_घोषित CONFIG_NF_CONNTRACK_PROCFS
-	.prपूर्णांक_conntrack	= dccp_prपूर्णांक_conntrack,
-#पूर्ण_अगर
-#अगर IS_ENABLED(CONFIG_NF_CT_NETLINK)
+#ifdef CONFIG_NF_CONNTRACK_PROCFS
+	.print_conntrack	= dccp_print_conntrack,
+#endif
+#if IS_ENABLED(CONFIG_NF_CT_NETLINK)
 	.nlattr_size		= DCCP_NLATTR_SIZE,
 	.to_nlattr		= dccp_to_nlattr,
 	.from_nlattr		= nlattr_to_dccp,
@@ -766,14 +765,14 @@ dccp_समयout_nla_policy[CTA_TIMEOUT_DCCP_MAX+1] = अणु
 	.nlattr_tuple_size	= nf_ct_port_nlattr_tuple_size,
 	.nlattr_to_tuple	= nf_ct_port_nlattr_to_tuple,
 	.nla_policy		= nf_ct_port_nla_policy,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_NF_CONNTRACK_TIMEOUT
-	.ctnl_समयout		= अणु
-		.nlattr_to_obj	= dccp_समयout_nlattr_to_obj,
-		.obj_to_nlattr	= dccp_समयout_obj_to_nlattr,
+#endif
+#ifdef CONFIG_NF_CONNTRACK_TIMEOUT
+	.ctnl_timeout		= {
+		.nlattr_to_obj	= dccp_timeout_nlattr_to_obj,
+		.obj_to_nlattr	= dccp_timeout_obj_to_nlattr,
 		.nlattr_max	= CTA_TIMEOUT_DCCP_MAX,
-		.obj_size	= माप(अचिन्हित पूर्णांक) * CT_DCCP_MAX,
-		.nla_policy	= dccp_समयout_nla_policy,
-	पूर्ण,
-#पूर्ण_अगर /* CONFIG_NF_CONNTRACK_TIMEOUT */
-पूर्ण;
+		.obj_size	= sizeof(unsigned int) * CT_DCCP_MAX,
+		.nla_policy	= dccp_timeout_nla_policy,
+	},
+#endif /* CONFIG_NF_CONNTRACK_TIMEOUT */
+};

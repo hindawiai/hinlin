@@ -1,34 +1,33 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
-   Driver क्रम the Spase sp887x demodulator
+   Driver for the Spase sp887x demodulator
 */
 
-#अगर_अघोषित SP887X_H
-#घोषणा SP887X_H
+#ifndef SP887X_H
+#define SP887X_H
 
-#समावेश <linux/dvb/frontend.h>
-#समावेश <linux/firmware.h>
+#include <linux/dvb/frontend.h>
+#include <linux/firmware.h>
 
-काष्ठा sp887x_config
-अणु
+struct sp887x_config
+{
 	/* the demodulator's i2c address */
 	u8 demod_address;
 
-	/* request firmware क्रम device */
-	पूर्णांक (*request_firmware)(काष्ठा dvb_frontend* fe, स्थिर काष्ठा firmware **fw, अक्षर* name);
-पूर्ण;
+	/* request firmware for device */
+	int (*request_firmware)(struct dvb_frontend* fe, const struct firmware **fw, char* name);
+};
 
-#अगर IS_REACHABLE(CONFIG_DVB_SP887X)
-बाह्य काष्ठा dvb_frontend* sp887x_attach(स्थिर काष्ठा sp887x_config* config,
-					  काष्ठा i2c_adapter* i2c);
-#अन्यथा
-अटल अंतरभूत काष्ठा dvb_frontend* sp887x_attach(स्थिर काष्ठा sp887x_config* config,
-					  काष्ठा i2c_adapter* i2c)
-अणु
-	prपूर्णांकk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
-	वापस शून्य;
-पूर्ण
-#पूर्ण_अगर // CONFIG_DVB_SP887X
+#if IS_REACHABLE(CONFIG_DVB_SP887X)
+extern struct dvb_frontend* sp887x_attach(const struct sp887x_config* config,
+					  struct i2c_adapter* i2c);
+#else
+static inline struct dvb_frontend* sp887x_attach(const struct sp887x_config* config,
+					  struct i2c_adapter* i2c)
+{
+	printk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
+	return NULL;
+}
+#endif // CONFIG_DVB_SP887X
 
-#पूर्ण_अगर // SP887X_H
+#endif // SP887X_H

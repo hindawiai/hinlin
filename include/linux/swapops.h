@@ -1,13 +1,12 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_SWAPOPS_H
-#घोषणा _LINUX_SWAPOPS_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_SWAPOPS_H
+#define _LINUX_SWAPOPS_H
 
-#समावेश <linux/radix-tree.h>
-#समावेश <linux/bug.h>
-#समावेश <linux/mm_types.h>
+#include <linux/radix-tree.h>
+#include <linux/bug.h>
+#include <linux/mm_types.h>
 
-#अगर_घोषित CONFIG_MMU
+#ifdef CONFIG_MMU
 
 /*
  * swapcache pages are stored in the swapper_space radix tree.  We want to
@@ -16,360 +15,360 @@
  *
  * We arrange the `type' and `offset' fields so that `type' is at the seven
  * high-order bits of the swp_entry_t and `offset' is right-aligned in the
- * reमुख्यing bits.  Although `type' itself needs only five bits, we allow क्रम
- * shmem/पंचांगpfs to shअगरt it all up a further two bits: see swp_to_radix_entry().
+ * remaining bits.  Although `type' itself needs only five bits, we allow for
+ * shmem/tmpfs to shift it all up a further two bits: see swp_to_radix_entry().
  *
- * swp_entry_t's are *never* stored anywhere in their arch-dependent क्रमmat.
+ * swp_entry_t's are *never* stored anywhere in their arch-dependent format.
  */
-#घोषणा SWP_TYPE_SHIFT	(BITS_PER_XA_VALUE - MAX_SWAPखाताS_SHIFT)
-#घोषणा SWP_OFFSET_MASK	((1UL << SWP_TYPE_SHIFT) - 1)
+#define SWP_TYPE_SHIFT	(BITS_PER_XA_VALUE - MAX_SWAPFILES_SHIFT)
+#define SWP_OFFSET_MASK	((1UL << SWP_TYPE_SHIFT) - 1)
 
-/* Clear all flags but only keep swp_entry_t related inक्रमmation */
-अटल अंतरभूत pte_t pte_swp_clear_flags(pte_t pte)
-अणु
-	अगर (pte_swp_soft_dirty(pte))
+/* Clear all flags but only keep swp_entry_t related information */
+static inline pte_t pte_swp_clear_flags(pte_t pte)
+{
+	if (pte_swp_soft_dirty(pte))
 		pte = pte_swp_clear_soft_dirty(pte);
-	अगर (pte_swp_uffd_wp(pte))
+	if (pte_swp_uffd_wp(pte))
 		pte = pte_swp_clear_uffd_wp(pte);
-	वापस pte;
-पूर्ण
+	return pte;
+}
 
 /*
- * Store a type+offset पूर्णांकo a swp_entry_t in an arch-independent क्रमmat
+ * Store a type+offset into a swp_entry_t in an arch-independent format
  */
-अटल अंतरभूत swp_entry_t swp_entry(अचिन्हित दीर्घ type, pgoff_t offset)
-अणु
+static inline swp_entry_t swp_entry(unsigned long type, pgoff_t offset)
+{
 	swp_entry_t ret;
 
 	ret.val = (type << SWP_TYPE_SHIFT) | (offset & SWP_OFFSET_MASK);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Extract the `type' field from a swp_entry_t.  The swp_entry_t is in
- * arch-independent क्रमmat
+ * arch-independent format
  */
-अटल अंतरभूत अचिन्हित swp_type(swp_entry_t entry)
-अणु
-	वापस (entry.val >> SWP_TYPE_SHIFT);
-पूर्ण
+static inline unsigned swp_type(swp_entry_t entry)
+{
+	return (entry.val >> SWP_TYPE_SHIFT);
+}
 
 /*
  * Extract the `offset' field from a swp_entry_t.  The swp_entry_t is in
- * arch-independent क्रमmat
+ * arch-independent format
  */
-अटल अंतरभूत pgoff_t swp_offset(swp_entry_t entry)
-अणु
-	वापस entry.val & SWP_OFFSET_MASK;
-पूर्ण
+static inline pgoff_t swp_offset(swp_entry_t entry)
+{
+	return entry.val & SWP_OFFSET_MASK;
+}
 
-/* check whether a pte poपूर्णांकs to a swap entry */
-अटल अंतरभूत पूर्णांक is_swap_pte(pte_t pte)
-अणु
-	वापस !pte_none(pte) && !pte_present(pte);
-पूर्ण
+/* check whether a pte points to a swap entry */
+static inline int is_swap_pte(pte_t pte)
+{
+	return !pte_none(pte) && !pte_present(pte);
+}
 
 /*
- * Convert the arch-dependent pte representation of a swp_entry_t पूर्णांकo an
+ * Convert the arch-dependent pte representation of a swp_entry_t into an
  * arch-independent swp_entry_t.
  */
-अटल अंतरभूत swp_entry_t pte_to_swp_entry(pte_t pte)
-अणु
+static inline swp_entry_t pte_to_swp_entry(pte_t pte)
+{
 	swp_entry_t arch_entry;
 
 	pte = pte_swp_clear_flags(pte);
 	arch_entry = __pte_to_swp_entry(pte);
-	वापस swp_entry(__swp_type(arch_entry), __swp_offset(arch_entry));
-पूर्ण
+	return swp_entry(__swp_type(arch_entry), __swp_offset(arch_entry));
+}
 
 /*
- * Convert the arch-independent representation of a swp_entry_t पूर्णांकo the
+ * Convert the arch-independent representation of a swp_entry_t into the
  * arch-dependent pte representation.
  */
-अटल अंतरभूत pte_t swp_entry_to_pte(swp_entry_t entry)
-अणु
+static inline pte_t swp_entry_to_pte(swp_entry_t entry)
+{
 	swp_entry_t arch_entry;
 
 	arch_entry = __swp_entry(swp_type(entry), swp_offset(entry));
-	वापस __swp_entry_to_pte(arch_entry);
-पूर्ण
+	return __swp_entry_to_pte(arch_entry);
+}
 
-अटल अंतरभूत swp_entry_t radix_to_swp_entry(व्योम *arg)
-अणु
+static inline swp_entry_t radix_to_swp_entry(void *arg)
+{
 	swp_entry_t entry;
 
 	entry.val = xa_to_value(arg);
-	वापस entry;
-पूर्ण
+	return entry;
+}
 
-अटल अंतरभूत व्योम *swp_to_radix_entry(swp_entry_t entry)
-अणु
-	वापस xa_mk_value(entry.val);
-पूर्ण
+static inline void *swp_to_radix_entry(swp_entry_t entry)
+{
+	return xa_mk_value(entry.val);
+}
 
-#अगर IS_ENABLED(CONFIG_DEVICE_PRIVATE)
-अटल अंतरभूत swp_entry_t make_device_निजी_entry(काष्ठा page *page, bool ग_लिखो)
-अणु
-	वापस swp_entry(ग_लिखो ? SWP_DEVICE_WRITE : SWP_DEVICE_READ,
+#if IS_ENABLED(CONFIG_DEVICE_PRIVATE)
+static inline swp_entry_t make_device_private_entry(struct page *page, bool write)
+{
+	return swp_entry(write ? SWP_DEVICE_WRITE : SWP_DEVICE_READ,
 			 page_to_pfn(page));
-पूर्ण
+}
 
-अटल अंतरभूत bool is_device_निजी_entry(swp_entry_t entry)
-अणु
-	पूर्णांक type = swp_type(entry);
-	वापस type == SWP_DEVICE_READ || type == SWP_DEVICE_WRITE;
-पूर्ण
+static inline bool is_device_private_entry(swp_entry_t entry)
+{
+	int type = swp_type(entry);
+	return type == SWP_DEVICE_READ || type == SWP_DEVICE_WRITE;
+}
 
-अटल अंतरभूत व्योम make_device_निजी_entry_पढ़ो(swp_entry_t *entry)
-अणु
+static inline void make_device_private_entry_read(swp_entry_t *entry)
+{
 	*entry = swp_entry(SWP_DEVICE_READ, swp_offset(*entry));
-पूर्ण
+}
 
-अटल अंतरभूत bool is_ग_लिखो_device_निजी_entry(swp_entry_t entry)
-अणु
-	वापस unlikely(swp_type(entry) == SWP_DEVICE_WRITE);
-पूर्ण
+static inline bool is_write_device_private_entry(swp_entry_t entry)
+{
+	return unlikely(swp_type(entry) == SWP_DEVICE_WRITE);
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ device_निजी_entry_to_pfn(swp_entry_t entry)
-अणु
-	वापस swp_offset(entry);
-पूर्ण
+static inline unsigned long device_private_entry_to_pfn(swp_entry_t entry)
+{
+	return swp_offset(entry);
+}
 
-अटल अंतरभूत काष्ठा page *device_निजी_entry_to_page(swp_entry_t entry)
-अणु
-	वापस pfn_to_page(swp_offset(entry));
-पूर्ण
-#अन्यथा /* CONFIG_DEVICE_PRIVATE */
-अटल अंतरभूत swp_entry_t make_device_निजी_entry(काष्ठा page *page, bool ग_लिखो)
-अणु
-	वापस swp_entry(0, 0);
-पूर्ण
+static inline struct page *device_private_entry_to_page(swp_entry_t entry)
+{
+	return pfn_to_page(swp_offset(entry));
+}
+#else /* CONFIG_DEVICE_PRIVATE */
+static inline swp_entry_t make_device_private_entry(struct page *page, bool write)
+{
+	return swp_entry(0, 0);
+}
 
-अटल अंतरभूत व्योम make_device_निजी_entry_पढ़ो(swp_entry_t *entry)
-अणु
-पूर्ण
+static inline void make_device_private_entry_read(swp_entry_t *entry)
+{
+}
 
-अटल अंतरभूत bool is_device_निजी_entry(swp_entry_t entry)
-अणु
-	वापस false;
-पूर्ण
+static inline bool is_device_private_entry(swp_entry_t entry)
+{
+	return false;
+}
 
-अटल अंतरभूत bool is_ग_लिखो_device_निजी_entry(swp_entry_t entry)
-अणु
-	वापस false;
-पूर्ण
+static inline bool is_write_device_private_entry(swp_entry_t entry)
+{
+	return false;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ device_निजी_entry_to_pfn(swp_entry_t entry)
-अणु
-	वापस 0;
-पूर्ण
+static inline unsigned long device_private_entry_to_pfn(swp_entry_t entry)
+{
+	return 0;
+}
 
-अटल अंतरभूत काष्ठा page *device_निजी_entry_to_page(swp_entry_t entry)
-अणु
-	वापस शून्य;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_DEVICE_PRIVATE */
+static inline struct page *device_private_entry_to_page(swp_entry_t entry)
+{
+	return NULL;
+}
+#endif /* CONFIG_DEVICE_PRIVATE */
 
-#अगर_घोषित CONFIG_MIGRATION
-अटल अंतरभूत swp_entry_t make_migration_entry(काष्ठा page *page, पूर्णांक ग_लिखो)
-अणु
+#ifdef CONFIG_MIGRATION
+static inline swp_entry_t make_migration_entry(struct page *page, int write)
+{
 	BUG_ON(!PageLocked(compound_head(page)));
 
-	वापस swp_entry(ग_लिखो ? SWP_MIGRATION_WRITE : SWP_MIGRATION_READ,
+	return swp_entry(write ? SWP_MIGRATION_WRITE : SWP_MIGRATION_READ,
 			page_to_pfn(page));
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक is_migration_entry(swp_entry_t entry)
-अणु
-	वापस unlikely(swp_type(entry) == SWP_MIGRATION_READ ||
+static inline int is_migration_entry(swp_entry_t entry)
+{
+	return unlikely(swp_type(entry) == SWP_MIGRATION_READ ||
 			swp_type(entry) == SWP_MIGRATION_WRITE);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक is_ग_लिखो_migration_entry(swp_entry_t entry)
-अणु
-	वापस unlikely(swp_type(entry) == SWP_MIGRATION_WRITE);
-पूर्ण
+static inline int is_write_migration_entry(swp_entry_t entry)
+{
+	return unlikely(swp_type(entry) == SWP_MIGRATION_WRITE);
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ migration_entry_to_pfn(swp_entry_t entry)
-अणु
-	वापस swp_offset(entry);
-पूर्ण
+static inline unsigned long migration_entry_to_pfn(swp_entry_t entry)
+{
+	return swp_offset(entry);
+}
 
-अटल अंतरभूत काष्ठा page *migration_entry_to_page(swp_entry_t entry)
-अणु
-	काष्ठा page *p = pfn_to_page(swp_offset(entry));
+static inline struct page *migration_entry_to_page(swp_entry_t entry)
+{
+	struct page *p = pfn_to_page(swp_offset(entry));
 	/*
-	 * Any use of migration entries may only occur जबतक the
+	 * Any use of migration entries may only occur while the
 	 * corresponding page is locked
 	 */
 	BUG_ON(!PageLocked(compound_head(p)));
-	वापस p;
-पूर्ण
+	return p;
+}
 
-अटल अंतरभूत व्योम make_migration_entry_पढ़ो(swp_entry_t *entry)
-अणु
+static inline void make_migration_entry_read(swp_entry_t *entry)
+{
 	*entry = swp_entry(SWP_MIGRATION_READ, swp_offset(*entry));
-पूर्ण
+}
 
-बाह्य व्योम __migration_entry_रुको(काष्ठा mm_काष्ठा *mm, pte_t *ptep,
+extern void __migration_entry_wait(struct mm_struct *mm, pte_t *ptep,
 					spinlock_t *ptl);
-बाह्य व्योम migration_entry_रुको(काष्ठा mm_काष्ठा *mm, pmd_t *pmd,
-					अचिन्हित दीर्घ address);
-बाह्य व्योम migration_entry_रुको_huge(काष्ठा vm_area_काष्ठा *vma,
-		काष्ठा mm_काष्ठा *mm, pte_t *pte);
-#अन्यथा
+extern void migration_entry_wait(struct mm_struct *mm, pmd_t *pmd,
+					unsigned long address);
+extern void migration_entry_wait_huge(struct vm_area_struct *vma,
+		struct mm_struct *mm, pte_t *pte);
+#else
 
-#घोषणा make_migration_entry(page, ग_लिखो) swp_entry(0, 0)
-अटल अंतरभूत पूर्णांक is_migration_entry(swp_entry_t swp)
-अणु
-	वापस 0;
-पूर्ण
+#define make_migration_entry(page, write) swp_entry(0, 0)
+static inline int is_migration_entry(swp_entry_t swp)
+{
+	return 0;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ migration_entry_to_pfn(swp_entry_t entry)
-अणु
-	वापस 0;
-पूर्ण
+static inline unsigned long migration_entry_to_pfn(swp_entry_t entry)
+{
+	return 0;
+}
 
-अटल अंतरभूत काष्ठा page *migration_entry_to_page(swp_entry_t entry)
-अणु
-	वापस शून्य;
-पूर्ण
+static inline struct page *migration_entry_to_page(swp_entry_t entry)
+{
+	return NULL;
+}
 
-अटल अंतरभूत व्योम make_migration_entry_पढ़ो(swp_entry_t *entryp) अणु पूर्ण
-अटल अंतरभूत व्योम __migration_entry_रुको(काष्ठा mm_काष्ठा *mm, pte_t *ptep,
-					spinlock_t *ptl) अणु पूर्ण
-अटल अंतरभूत व्योम migration_entry_रुको(काष्ठा mm_काष्ठा *mm, pmd_t *pmd,
-					 अचिन्हित दीर्घ address) अणु पूर्ण
-अटल अंतरभूत व्योम migration_entry_रुको_huge(काष्ठा vm_area_काष्ठा *vma,
-		काष्ठा mm_काष्ठा *mm, pte_t *pte) अणु पूर्ण
-अटल अंतरभूत पूर्णांक is_ग_लिखो_migration_entry(swp_entry_t entry)
-अणु
-	वापस 0;
-पूर्ण
+static inline void make_migration_entry_read(swp_entry_t *entryp) { }
+static inline void __migration_entry_wait(struct mm_struct *mm, pte_t *ptep,
+					spinlock_t *ptl) { }
+static inline void migration_entry_wait(struct mm_struct *mm, pmd_t *pmd,
+					 unsigned long address) { }
+static inline void migration_entry_wait_huge(struct vm_area_struct *vma,
+		struct mm_struct *mm, pte_t *pte) { }
+static inline int is_write_migration_entry(swp_entry_t entry)
+{
+	return 0;
+}
 
-#पूर्ण_अगर
+#endif
 
-काष्ठा page_vma_mapped_walk;
+struct page_vma_mapped_walk;
 
-#अगर_घोषित CONFIG_ARCH_ENABLE_THP_MIGRATION
-बाह्य व्योम set_pmd_migration_entry(काष्ठा page_vma_mapped_walk *pvmw,
-		काष्ठा page *page);
+#ifdef CONFIG_ARCH_ENABLE_THP_MIGRATION
+extern void set_pmd_migration_entry(struct page_vma_mapped_walk *pvmw,
+		struct page *page);
 
-बाह्य व्योम हटाओ_migration_pmd(काष्ठा page_vma_mapped_walk *pvmw,
-		काष्ठा page *new);
+extern void remove_migration_pmd(struct page_vma_mapped_walk *pvmw,
+		struct page *new);
 
-बाह्य व्योम pmd_migration_entry_रुको(काष्ठा mm_काष्ठा *mm, pmd_t *pmd);
+extern void pmd_migration_entry_wait(struct mm_struct *mm, pmd_t *pmd);
 
-अटल अंतरभूत swp_entry_t pmd_to_swp_entry(pmd_t pmd)
-अणु
+static inline swp_entry_t pmd_to_swp_entry(pmd_t pmd)
+{
 	swp_entry_t arch_entry;
 
-	अगर (pmd_swp_soft_dirty(pmd))
+	if (pmd_swp_soft_dirty(pmd))
 		pmd = pmd_swp_clear_soft_dirty(pmd);
 	arch_entry = __pmd_to_swp_entry(pmd);
-	वापस swp_entry(__swp_type(arch_entry), __swp_offset(arch_entry));
-पूर्ण
+	return swp_entry(__swp_type(arch_entry), __swp_offset(arch_entry));
+}
 
-अटल अंतरभूत pmd_t swp_entry_to_pmd(swp_entry_t entry)
-अणु
+static inline pmd_t swp_entry_to_pmd(swp_entry_t entry)
+{
 	swp_entry_t arch_entry;
 
 	arch_entry = __swp_entry(swp_type(entry), swp_offset(entry));
-	वापस __swp_entry_to_pmd(arch_entry);
-पूर्ण
+	return __swp_entry_to_pmd(arch_entry);
+}
 
-अटल अंतरभूत पूर्णांक is_pmd_migration_entry(pmd_t pmd)
-अणु
-	वापस !pmd_present(pmd) && is_migration_entry(pmd_to_swp_entry(pmd));
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम set_pmd_migration_entry(काष्ठा page_vma_mapped_walk *pvmw,
-		काष्ठा page *page)
-अणु
+static inline int is_pmd_migration_entry(pmd_t pmd)
+{
+	return !pmd_present(pmd) && is_migration_entry(pmd_to_swp_entry(pmd));
+}
+#else
+static inline void set_pmd_migration_entry(struct page_vma_mapped_walk *pvmw,
+		struct page *page)
+{
 	BUILD_BUG();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम हटाओ_migration_pmd(काष्ठा page_vma_mapped_walk *pvmw,
-		काष्ठा page *new)
-अणु
+static inline void remove_migration_pmd(struct page_vma_mapped_walk *pvmw,
+		struct page *new)
+{
 	BUILD_BUG();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम pmd_migration_entry_रुको(काष्ठा mm_काष्ठा *m, pmd_t *p) अणु पूर्ण
+static inline void pmd_migration_entry_wait(struct mm_struct *m, pmd_t *p) { }
 
-अटल अंतरभूत swp_entry_t pmd_to_swp_entry(pmd_t pmd)
-अणु
-	वापस swp_entry(0, 0);
-पूर्ण
+static inline swp_entry_t pmd_to_swp_entry(pmd_t pmd)
+{
+	return swp_entry(0, 0);
+}
 
-अटल अंतरभूत pmd_t swp_entry_to_pmd(swp_entry_t entry)
-अणु
-	वापस __pmd(0);
-पूर्ण
+static inline pmd_t swp_entry_to_pmd(swp_entry_t entry)
+{
+	return __pmd(0);
+}
 
-अटल अंतरभूत पूर्णांक is_pmd_migration_entry(pmd_t pmd)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+static inline int is_pmd_migration_entry(pmd_t pmd)
+{
+	return 0;
+}
+#endif
 
-#अगर_घोषित CONFIG_MEMORY_FAILURE
+#ifdef CONFIG_MEMORY_FAILURE
 
-बाह्य atomic_दीर्घ_t num_poisoned_pages __पढ़ो_mostly;
+extern atomic_long_t num_poisoned_pages __read_mostly;
 
 /*
- * Support क्रम hardware poisoned pages
+ * Support for hardware poisoned pages
  */
-अटल अंतरभूत swp_entry_t make_hwpoison_entry(काष्ठा page *page)
-अणु
+static inline swp_entry_t make_hwpoison_entry(struct page *page)
+{
 	BUG_ON(!PageLocked(page));
-	वापस swp_entry(SWP_HWPOISON, page_to_pfn(page));
-पूर्ण
+	return swp_entry(SWP_HWPOISON, page_to_pfn(page));
+}
 
-अटल अंतरभूत पूर्णांक is_hwpoison_entry(swp_entry_t entry)
-अणु
-	वापस swp_type(entry) == SWP_HWPOISON;
-पूर्ण
+static inline int is_hwpoison_entry(swp_entry_t entry)
+{
+	return swp_type(entry) == SWP_HWPOISON;
+}
 
-अटल अंतरभूत व्योम num_poisoned_pages_inc(व्योम)
-अणु
-	atomic_दीर्घ_inc(&num_poisoned_pages);
-पूर्ण
+static inline void num_poisoned_pages_inc(void)
+{
+	atomic_long_inc(&num_poisoned_pages);
+}
 
-अटल अंतरभूत व्योम num_poisoned_pages_dec(व्योम)
-अणु
-	atomic_दीर्घ_dec(&num_poisoned_pages);
-पूर्ण
+static inline void num_poisoned_pages_dec(void)
+{
+	atomic_long_dec(&num_poisoned_pages);
+}
 
-#अन्यथा
+#else
 
-अटल अंतरभूत swp_entry_t make_hwpoison_entry(काष्ठा page *page)
-अणु
-	वापस swp_entry(0, 0);
-पूर्ण
+static inline swp_entry_t make_hwpoison_entry(struct page *page)
+{
+	return swp_entry(0, 0);
+}
 
-अटल अंतरभूत पूर्णांक is_hwpoison_entry(swp_entry_t swp)
-अणु
-	वापस 0;
-पूर्ण
+static inline int is_hwpoison_entry(swp_entry_t swp)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम num_poisoned_pages_inc(व्योम)
-अणु
-पूर्ण
-#पूर्ण_अगर
+static inline void num_poisoned_pages_inc(void)
+{
+}
+#endif
 
-#अगर defined(CONFIG_MEMORY_FAILURE) || defined(CONFIG_MIGRATION) || \
+#if defined(CONFIG_MEMORY_FAILURE) || defined(CONFIG_MIGRATION) || \
     defined(CONFIG_DEVICE_PRIVATE)
-अटल अंतरभूत पूर्णांक non_swap_entry(swp_entry_t entry)
-अणु
-	वापस swp_type(entry) >= MAX_SWAPखाताS;
-पूर्ण
-#अन्यथा
-अटल अंतरभूत पूर्णांक non_swap_entry(swp_entry_t entry)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+static inline int non_swap_entry(swp_entry_t entry)
+{
+	return swp_type(entry) >= MAX_SWAPFILES;
+}
+#else
+static inline int non_swap_entry(swp_entry_t entry)
+{
+	return 0;
+}
+#endif
 
-#पूर्ण_अगर /* CONFIG_MMU */
-#पूर्ण_अगर /* _LINUX_SWAPOPS_H */
+#endif /* CONFIG_MMU */
+#endif /* _LINUX_SWAPOPS_H */

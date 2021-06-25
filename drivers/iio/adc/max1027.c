@@ -1,130 +1,129 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
  /*
   * iio/adc/max1027.c
   * Copyright (C) 2014 Philippe Reynes
   *
   * based on linux/drivers/iio/ad7923.c
   * Copyright 2011 Analog Devices Inc (from AD7923 Driver)
-  * Copyright 2012 CS Systemes d'Inक्रमmation
+  * Copyright 2012 CS Systemes d'Information
   *
   * max1027.c
   *
-  * Partial support क्रम max1027 and similar chips.
+  * Partial support for max1027 and similar chips.
   */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mod_devicetable.h>
-#समावेश <linux/spi/spi.h>
-#समावेश <linux/delay.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/mod_devicetable.h>
+#include <linux/spi/spi.h>
+#include <linux/delay.h>
 
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/iio/buffer.h>
-#समावेश <linux/iio/trigger.h>
-#समावेश <linux/iio/trigger_consumer.h>
-#समावेश <linux/iio/triggered_buffer.h>
+#include <linux/iio/iio.h>
+#include <linux/iio/buffer.h>
+#include <linux/iio/trigger.h>
+#include <linux/iio/trigger_consumer.h>
+#include <linux/iio/triggered_buffer.h>
 
-#घोषणा MAX1027_CONV_REG  BIT(7)
-#घोषणा MAX1027_SETUP_REG BIT(6)
-#घोषणा MAX1027_AVG_REG   BIT(5)
-#घोषणा MAX1027_RST_REG   BIT(4)
+#define MAX1027_CONV_REG  BIT(7)
+#define MAX1027_SETUP_REG BIT(6)
+#define MAX1027_AVG_REG   BIT(5)
+#define MAX1027_RST_REG   BIT(4)
 
-/* conversion रेजिस्टर */
-#घोषणा MAX1027_TEMP      BIT(0)
-#घोषणा MAX1027_SCAN_0_N  (0x00 << 1)
-#घोषणा MAX1027_SCAN_N_M  (0x01 << 1)
-#घोषणा MAX1027_SCAN_N    (0x02 << 1)
-#घोषणा MAX1027_NOSCAN    (0x03 << 1)
-#घोषणा MAX1027_CHAN(n)   ((n) << 3)
+/* conversion register */
+#define MAX1027_TEMP      BIT(0)
+#define MAX1027_SCAN_0_N  (0x00 << 1)
+#define MAX1027_SCAN_N_M  (0x01 << 1)
+#define MAX1027_SCAN_N    (0x02 << 1)
+#define MAX1027_NOSCAN    (0x03 << 1)
+#define MAX1027_CHAN(n)   ((n) << 3)
 
-/* setup रेजिस्टर */
-#घोषणा MAX1027_UNIPOLAR  0x02
-#घोषणा MAX1027_BIPOLAR   0x03
-#घोषणा MAX1027_REF_MODE0 (0x00 << 2)
-#घोषणा MAX1027_REF_MODE1 (0x01 << 2)
-#घोषणा MAX1027_REF_MODE2 (0x02 << 2)
-#घोषणा MAX1027_REF_MODE3 (0x03 << 2)
-#घोषणा MAX1027_CKS_MODE0 (0x00 << 4)
-#घोषणा MAX1027_CKS_MODE1 (0x01 << 4)
-#घोषणा MAX1027_CKS_MODE2 (0x02 << 4)
-#घोषणा MAX1027_CKS_MODE3 (0x03 << 4)
+/* setup register */
+#define MAX1027_UNIPOLAR  0x02
+#define MAX1027_BIPOLAR   0x03
+#define MAX1027_REF_MODE0 (0x00 << 2)
+#define MAX1027_REF_MODE1 (0x01 << 2)
+#define MAX1027_REF_MODE2 (0x02 << 2)
+#define MAX1027_REF_MODE3 (0x03 << 2)
+#define MAX1027_CKS_MODE0 (0x00 << 4)
+#define MAX1027_CKS_MODE1 (0x01 << 4)
+#define MAX1027_CKS_MODE2 (0x02 << 4)
+#define MAX1027_CKS_MODE3 (0x03 << 4)
 
-/* averaging रेजिस्टर */
-#घोषणा MAX1027_NSCAN_4   0x00
-#घोषणा MAX1027_NSCAN_8   0x01
-#घोषणा MAX1027_NSCAN_12  0x02
-#घोषणा MAX1027_NSCAN_16  0x03
-#घोषणा MAX1027_NAVG_4    (0x00 << 2)
-#घोषणा MAX1027_NAVG_8    (0x01 << 2)
-#घोषणा MAX1027_NAVG_16   (0x02 << 2)
-#घोषणा MAX1027_NAVG_32   (0x03 << 2)
-#घोषणा MAX1027_AVG_EN    BIT(4)
+/* averaging register */
+#define MAX1027_NSCAN_4   0x00
+#define MAX1027_NSCAN_8   0x01
+#define MAX1027_NSCAN_12  0x02
+#define MAX1027_NSCAN_16  0x03
+#define MAX1027_NAVG_4    (0x00 << 2)
+#define MAX1027_NAVG_8    (0x01 << 2)
+#define MAX1027_NAVG_16   (0x02 << 2)
+#define MAX1027_NAVG_32   (0x03 << 2)
+#define MAX1027_AVG_EN    BIT(4)
 
-क्रमागत max1027_id अणु
+enum max1027_id {
 	max1027,
 	max1029,
 	max1031,
 	max1227,
 	max1229,
 	max1231,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा spi_device_id max1027_id[] = अणु
-	अणु"max1027", max1027पूर्ण,
-	अणु"max1029", max1029पूर्ण,
-	अणु"max1031", max1031पूर्ण,
-	अणु"max1227", max1227पूर्ण,
-	अणु"max1229", max1229पूर्ण,
-	अणु"max1231", max1231पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct spi_device_id max1027_id[] = {
+	{"max1027", max1027},
+	{"max1029", max1029},
+	{"max1031", max1031},
+	{"max1227", max1227},
+	{"max1229", max1229},
+	{"max1231", max1231},
+	{}
+};
 MODULE_DEVICE_TABLE(spi, max1027_id);
 
-अटल स्थिर काष्ठा of_device_id max1027_adc_dt_ids[] = अणु
-	अणु .compatible = "maxim,max1027" पूर्ण,
-	अणु .compatible = "maxim,max1029" पूर्ण,
-	अणु .compatible = "maxim,max1031" पूर्ण,
-	अणु .compatible = "maxim,max1227" पूर्ण,
-	अणु .compatible = "maxim,max1229" पूर्ण,
-	अणु .compatible = "maxim,max1231" पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id max1027_adc_dt_ids[] = {
+	{ .compatible = "maxim,max1027" },
+	{ .compatible = "maxim,max1029" },
+	{ .compatible = "maxim,max1031" },
+	{ .compatible = "maxim,max1227" },
+	{ .compatible = "maxim,max1229" },
+	{ .compatible = "maxim,max1231" },
+	{},
+};
 MODULE_DEVICE_TABLE(of, max1027_adc_dt_ids);
 
-#घोषणा MAX1027_V_CHAN(index, depth)					\
-	अणु								\
+#define MAX1027_V_CHAN(index, depth)					\
+	{								\
 		.type = IIO_VOLTAGE,					\
 		.indexed = 1,						\
 		.channel = index,					\
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),		\
 		.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_SCALE),	\
 		.scan_index = index + 1,				\
-		.scan_type = अणु						\
+		.scan_type = {						\
 			.sign = 'u',					\
 			.realbits = depth,				\
 			.storagebits = 16,				\
-			.shअगरt = 2,					\
+			.shift = 2,					\
 			.endianness = IIO_BE,				\
-		पूर्ण,							\
-	पूर्ण
+		},							\
+	}
 
-#घोषणा MAX1027_T_CHAN							\
-	अणु								\
+#define MAX1027_T_CHAN							\
+	{								\
 		.type = IIO_TEMP,					\
 		.channel = 0,						\
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),		\
 		.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_SCALE),	\
 		.scan_index = 0,					\
-		.scan_type = अणु						\
+		.scan_type = {						\
 			.sign = 'u',					\
 			.realbits = 12,					\
 			.storagebits = 16,				\
 			.endianness = IIO_BE,				\
-		पूर्ण,							\
-	पूर्ण
+		},							\
+	}
 
-#घोषणा MAX1X27_CHANNELS(depth)			\
+#define MAX1X27_CHANNELS(depth)			\
 	MAX1027_T_CHAN,				\
 	MAX1027_V_CHAN(0, depth),		\
 	MAX1027_V_CHAN(1, depth),		\
@@ -135,14 +134,14 @@ MODULE_DEVICE_TABLE(of, max1027_adc_dt_ids);
 	MAX1027_V_CHAN(6, depth),		\
 	MAX1027_V_CHAN(7, depth)
 
-#घोषणा MAX1X29_CHANNELS(depth)			\
+#define MAX1X29_CHANNELS(depth)			\
 	MAX1X27_CHANNELS(depth),		\
 	MAX1027_V_CHAN(8, depth),		\
 	MAX1027_V_CHAN(9, depth),		\
 	MAX1027_V_CHAN(10, depth),		\
 	MAX1027_V_CHAN(11, depth)
 
-#घोषणा MAX1X31_CHANNELS(depth)			\
+#define MAX1X31_CHANNELS(depth)			\
 	MAX1X27_CHANNELS(depth),		\
 	MAX1X29_CHANNELS(depth),		\
 	MAX1027_V_CHAN(12, depth),		\
@@ -150,286 +149,286 @@ MODULE_DEVICE_TABLE(of, max1027_adc_dt_ids);
 	MAX1027_V_CHAN(14, depth),		\
 	MAX1027_V_CHAN(15, depth)
 
-अटल स्थिर काष्ठा iio_chan_spec max1027_channels[] = अणु
+static const struct iio_chan_spec max1027_channels[] = {
 	MAX1X27_CHANNELS(10),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा iio_chan_spec max1029_channels[] = अणु
+static const struct iio_chan_spec max1029_channels[] = {
 	MAX1X29_CHANNELS(10),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा iio_chan_spec max1031_channels[] = अणु
+static const struct iio_chan_spec max1031_channels[] = {
 	MAX1X31_CHANNELS(10),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा iio_chan_spec max1227_channels[] = अणु
+static const struct iio_chan_spec max1227_channels[] = {
 	MAX1X27_CHANNELS(12),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा iio_chan_spec max1229_channels[] = अणु
+static const struct iio_chan_spec max1229_channels[] = {
 	MAX1X29_CHANNELS(12),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा iio_chan_spec max1231_channels[] = अणु
+static const struct iio_chan_spec max1231_channels[] = {
 	MAX1X31_CHANNELS(12),
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित दीर्घ max1027_available_scan_masks[] = अणु
+static const unsigned long max1027_available_scan_masks[] = {
 	0x000001ff,
 	0x00000000,
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित दीर्घ max1029_available_scan_masks[] = अणु
+static const unsigned long max1029_available_scan_masks[] = {
 	0x00001fff,
 	0x00000000,
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित दीर्घ max1031_available_scan_masks[] = अणु
+static const unsigned long max1031_available_scan_masks[] = {
 	0x0001ffff,
 	0x00000000,
-पूर्ण;
+};
 
-काष्ठा max1027_chip_info अणु
-	स्थिर काष्ठा iio_chan_spec *channels;
-	अचिन्हित पूर्णांक num_channels;
-	स्थिर अचिन्हित दीर्घ *available_scan_masks;
-पूर्ण;
+struct max1027_chip_info {
+	const struct iio_chan_spec *channels;
+	unsigned int num_channels;
+	const unsigned long *available_scan_masks;
+};
 
-अटल स्थिर काष्ठा max1027_chip_info max1027_chip_info_tbl[] = अणु
-	[max1027] = अणु
+static const struct max1027_chip_info max1027_chip_info_tbl[] = {
+	[max1027] = {
 		.channels = max1027_channels,
 		.num_channels = ARRAY_SIZE(max1027_channels),
 		.available_scan_masks = max1027_available_scan_masks,
-	पूर्ण,
-	[max1029] = अणु
+	},
+	[max1029] = {
 		.channels = max1029_channels,
 		.num_channels = ARRAY_SIZE(max1029_channels),
 		.available_scan_masks = max1029_available_scan_masks,
-	पूर्ण,
-	[max1031] = अणु
+	},
+	[max1031] = {
 		.channels = max1031_channels,
 		.num_channels = ARRAY_SIZE(max1031_channels),
 		.available_scan_masks = max1031_available_scan_masks,
-	पूर्ण,
-	[max1227] = अणु
+	},
+	[max1227] = {
 		.channels = max1227_channels,
 		.num_channels = ARRAY_SIZE(max1227_channels),
 		.available_scan_masks = max1027_available_scan_masks,
-	पूर्ण,
-	[max1229] = अणु
+	},
+	[max1229] = {
 		.channels = max1229_channels,
 		.num_channels = ARRAY_SIZE(max1229_channels),
 		.available_scan_masks = max1029_available_scan_masks,
-	पूर्ण,
-	[max1231] = अणु
+	},
+	[max1231] = {
 		.channels = max1231_channels,
 		.num_channels = ARRAY_SIZE(max1231_channels),
 		.available_scan_masks = max1031_available_scan_masks,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-काष्ठा max1027_state अणु
-	स्थिर काष्ठा max1027_chip_info	*info;
-	काष्ठा spi_device		*spi;
-	काष्ठा iio_trigger		*trig;
+struct max1027_state {
+	const struct max1027_chip_info	*info;
+	struct spi_device		*spi;
+	struct iio_trigger		*trig;
 	__be16				*buffer;
-	काष्ठा mutex			lock;
+	struct mutex			lock;
 
 	u8				reg ____cacheline_aligned;
-पूर्ण;
+};
 
-अटल पूर्णांक max1027_पढ़ो_single_value(काष्ठा iio_dev *indio_dev,
-				     काष्ठा iio_chan_spec स्थिर *chan,
-				     पूर्णांक *val)
-अणु
-	पूर्णांक ret;
-	काष्ठा max1027_state *st = iio_priv(indio_dev);
+static int max1027_read_single_value(struct iio_dev *indio_dev,
+				     struct iio_chan_spec const *chan,
+				     int *val)
+{
+	int ret;
+	struct max1027_state *st = iio_priv(indio_dev);
 
-	अगर (iio_buffer_enabled(indio_dev)) अणु
+	if (iio_buffer_enabled(indio_dev)) {
 		dev_warn(&indio_dev->dev, "trigger mode already enabled");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	/* Start acquisition on conversion रेजिस्टर ग_लिखो */
+	/* Start acquisition on conversion register write */
 	st->reg = MAX1027_SETUP_REG | MAX1027_REF_MODE2 | MAX1027_CKS_MODE2;
-	ret = spi_ग_लिखो(st->spi, &st->reg, 1);
-	अगर (ret < 0) अणु
+	ret = spi_write(st->spi, &st->reg, 1);
+	if (ret < 0) {
 		dev_err(&indio_dev->dev,
 			"Failed to configure setup register\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* Configure conversion रेजिस्टर with the requested chan */
+	/* Configure conversion register with the requested chan */
 	st->reg = MAX1027_CONV_REG | MAX1027_CHAN(chan->channel) |
 		  MAX1027_NOSCAN;
-	अगर (chan->type == IIO_TEMP)
+	if (chan->type == IIO_TEMP)
 		st->reg |= MAX1027_TEMP;
-	ret = spi_ग_लिखो(st->spi, &st->reg, 1);
-	अगर (ret < 0) अणु
+	ret = spi_write(st->spi, &st->reg, 1);
+	if (ret < 0) {
 		dev_err(&indio_dev->dev,
 			"Failed to configure conversion register\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/*
-	 * For an unknown reason, when we use the mode "10" (ग_लिखो
-	 * conversion रेजिस्टर), the पूर्णांकerrupt करोesn't occur every समय.
-	 * So we just रुको 1 ms.
+	 * For an unknown reason, when we use the mode "10" (write
+	 * conversion register), the interrupt doesn't occur every time.
+	 * So we just wait 1 ms.
 	 */
 	mdelay(1);
 
 	/* Read result */
-	ret = spi_पढ़ो(st->spi, st->buffer, (chan->type == IIO_TEMP) ? 4 : 2);
-	अगर (ret < 0)
-		वापस ret;
+	ret = spi_read(st->spi, st->buffer, (chan->type == IIO_TEMP) ? 4 : 2);
+	if (ret < 0)
+		return ret;
 
 	*val = be16_to_cpu(st->buffer[0]);
 
-	वापस IIO_VAL_INT;
-पूर्ण
+	return IIO_VAL_INT;
+}
 
-अटल पूर्णांक max1027_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
-			    काष्ठा iio_chan_spec स्थिर *chan,
-			    पूर्णांक *val, पूर्णांक *val2, दीर्घ mask)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा max1027_state *st = iio_priv(indio_dev);
+static int max1027_read_raw(struct iio_dev *indio_dev,
+			    struct iio_chan_spec const *chan,
+			    int *val, int *val2, long mask)
+{
+	int ret = 0;
+	struct max1027_state *st = iio_priv(indio_dev);
 
 	mutex_lock(&st->lock);
 
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_RAW:
-		ret = max1027_पढ़ो_single_value(indio_dev, chan, val);
-		अवरोध;
-	हाल IIO_CHAN_INFO_SCALE:
-		चयन (chan->type) अणु
-		हाल IIO_TEMP:
+	switch (mask) {
+	case IIO_CHAN_INFO_RAW:
+		ret = max1027_read_single_value(indio_dev, chan, val);
+		break;
+	case IIO_CHAN_INFO_SCALE:
+		switch (chan->type) {
+		case IIO_TEMP:
 			*val = 1;
 			*val2 = 8;
 			ret = IIO_VAL_FRACTIONAL;
-			अवरोध;
-		हाल IIO_VOLTAGE:
+			break;
+		case IIO_VOLTAGE:
 			*val = 2500;
 			*val2 = chan->scan_type.realbits;
 			ret = IIO_VAL_FRACTIONAL_LOG2;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	शेष:
+			break;
+		}
+		break;
+	default:
 		ret = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	mutex_unlock(&st->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक max1027_debugfs_reg_access(काष्ठा iio_dev *indio_dev,
-				      अचिन्हित reg, अचिन्हित ग_लिखोval,
-				      अचिन्हित *पढ़ोval)
-अणु
-	काष्ठा max1027_state *st = iio_priv(indio_dev);
+static int max1027_debugfs_reg_access(struct iio_dev *indio_dev,
+				      unsigned reg, unsigned writeval,
+				      unsigned *readval)
+{
+	struct max1027_state *st = iio_priv(indio_dev);
 	u8 *val = (u8 *)st->buffer;
 
-	अगर (पढ़ोval) अणु
-		पूर्णांक ret = spi_पढ़ो(st->spi, val, 2);
-		*पढ़ोval = be16_to_cpu(st->buffer[0]);
-		वापस ret;
-	पूर्ण
+	if (readval) {
+		int ret = spi_read(st->spi, val, 2);
+		*readval = be16_to_cpu(st->buffer[0]);
+		return ret;
+	}
 
-	*val = (u8)ग_लिखोval;
-	वापस spi_ग_लिखो(st->spi, val, 1);
-पूर्ण
+	*val = (u8)writeval;
+	return spi_write(st->spi, val, 1);
+}
 
-अटल पूर्णांक max1027_validate_trigger(काष्ठा iio_dev *indio_dev,
-				    काष्ठा iio_trigger *trig)
-अणु
-	काष्ठा max1027_state *st = iio_priv(indio_dev);
+static int max1027_validate_trigger(struct iio_dev *indio_dev,
+				    struct iio_trigger *trig)
+{
+	struct max1027_state *st = iio_priv(indio_dev);
 
-	अगर (st->trig != trig)
-		वापस -EINVAL;
+	if (st->trig != trig)
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक max1027_set_trigger_state(काष्ठा iio_trigger *trig, bool state)
-अणु
-	काष्ठा iio_dev *indio_dev = iio_trigger_get_drvdata(trig);
-	काष्ठा max1027_state *st = iio_priv(indio_dev);
-	पूर्णांक ret;
+static int max1027_set_trigger_state(struct iio_trigger *trig, bool state)
+{
+	struct iio_dev *indio_dev = iio_trigger_get_drvdata(trig);
+	struct max1027_state *st = iio_priv(indio_dev);
+	int ret;
 
-	अगर (state) अणु
+	if (state) {
 		/* Start acquisition on cnvst */
 		st->reg = MAX1027_SETUP_REG | MAX1027_CKS_MODE0 |
 			  MAX1027_REF_MODE2;
-		ret = spi_ग_लिखो(st->spi, &st->reg, 1);
-		अगर (ret < 0)
-			वापस ret;
+		ret = spi_write(st->spi, &st->reg, 1);
+		if (ret < 0)
+			return ret;
 
 		/* Scan from 0 to max */
 		st->reg = MAX1027_CONV_REG | MAX1027_CHAN(0) |
 			  MAX1027_SCAN_N_M | MAX1027_TEMP;
-		ret = spi_ग_लिखो(st->spi, &st->reg, 1);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण अन्यथा अणु
-		/* Start acquisition on conversion रेजिस्टर ग_लिखो */
+		ret = spi_write(st->spi, &st->reg, 1);
+		if (ret < 0)
+			return ret;
+	} else {
+		/* Start acquisition on conversion register write */
 		st->reg = MAX1027_SETUP_REG | MAX1027_CKS_MODE2	|
 			  MAX1027_REF_MODE2;
-		ret = spi_ग_लिखो(st->spi, &st->reg, 1);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
+		ret = spi_write(st->spi, &st->reg, 1);
+		if (ret < 0)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल irqवापस_t max1027_trigger_handler(पूर्णांक irq, व्योम *निजी)
-अणु
-	काष्ठा iio_poll_func *pf = निजी;
-	काष्ठा iio_dev *indio_dev = pf->indio_dev;
-	काष्ठा max1027_state *st = iio_priv(indio_dev);
+static irqreturn_t max1027_trigger_handler(int irq, void *private)
+{
+	struct iio_poll_func *pf = private;
+	struct iio_dev *indio_dev = pf->indio_dev;
+	struct max1027_state *st = iio_priv(indio_dev);
 
-	pr_debug("%s(irq=%d, private=0x%p)\n", __func__, irq, निजी);
+	pr_debug("%s(irq=%d, private=0x%p)\n", __func__, irq, private);
 
 	/* fill buffer with all channel */
-	spi_पढ़ो(st->spi, st->buffer, indio_dev->masklength * 2);
+	spi_read(st->spi, st->buffer, indio_dev->masklength * 2);
 
 	iio_push_to_buffers(indio_dev, st->buffer);
 
-	iio_trigger_notअगरy_करोne(indio_dev->trig);
+	iio_trigger_notify_done(indio_dev->trig);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल स्थिर काष्ठा iio_trigger_ops max1027_trigger_ops = अणु
+static const struct iio_trigger_ops max1027_trigger_ops = {
 	.validate_device = &iio_trigger_validate_own_device,
 	.set_trigger_state = &max1027_set_trigger_state,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा iio_info max1027_info = अणु
-	.पढ़ो_raw = &max1027_पढ़ो_raw,
+static const struct iio_info max1027_info = {
+	.read_raw = &max1027_read_raw,
 	.validate_trigger = &max1027_validate_trigger,
 	.debugfs_reg_access = &max1027_debugfs_reg_access,
-पूर्ण;
+};
 
-अटल पूर्णांक max1027_probe(काष्ठा spi_device *spi)
-अणु
-	पूर्णांक ret;
-	काष्ठा iio_dev *indio_dev;
-	काष्ठा max1027_state *st;
+static int max1027_probe(struct spi_device *spi)
+{
+	int ret;
+	struct iio_dev *indio_dev;
+	struct max1027_state *st;
 
 	pr_debug("%s: probe(spi = 0x%p)\n", __func__, spi);
 
-	indio_dev = devm_iio_device_alloc(&spi->dev, माप(*st));
-	अगर (indio_dev == शून्य) अणु
+	indio_dev = devm_iio_device_alloc(&spi->dev, sizeof(*st));
+	if (indio_dev == NULL) {
 		pr_err("Can't allocate iio device\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	spi_set_drvdata(spi, indio_dev);
 
@@ -441,87 +440,87 @@ MODULE_DEVICE_TABLE(of, max1027_adc_dt_ids);
 
 	indio_dev->name = spi_get_device_id(spi)->name;
 	indio_dev->info = &max1027_info;
-	indio_dev->modes = INDIO_सूचीECT_MODE;
+	indio_dev->modes = INDIO_DIRECT_MODE;
 	indio_dev->channels = st->info->channels;
 	indio_dev->num_channels = st->info->num_channels;
 	indio_dev->available_scan_masks = st->info->available_scan_masks;
 
-	st->buffer = devm_kदो_स्मृति_array(&indio_dev->dev,
+	st->buffer = devm_kmalloc_array(&indio_dev->dev,
 				  indio_dev->num_channels, 2,
 				  GFP_KERNEL);
-	अगर (st->buffer == शून्य) अणु
+	if (st->buffer == NULL) {
 		dev_err(&indio_dev->dev, "Can't allocate buffer\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	अगर (spi->irq) अणु
+	if (spi->irq) {
 		ret = devm_iio_triggered_buffer_setup(&spi->dev, indio_dev,
-						      &iio_pollfunc_store_समय,
+						      &iio_pollfunc_store_time,
 						      &max1027_trigger_handler,
-						      शून्य);
-		अगर (ret < 0) अणु
+						      NULL);
+		if (ret < 0) {
 			dev_err(&indio_dev->dev, "Failed to setup buffer\n");
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
 		st->trig = devm_iio_trigger_alloc(&spi->dev, "%s-trigger",
 						  indio_dev->name);
-		अगर (st->trig == शून्य) अणु
+		if (st->trig == NULL) {
 			ret = -ENOMEM;
 			dev_err(&indio_dev->dev,
 				"Failed to allocate iio trigger\n");
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
 		st->trig->ops = &max1027_trigger_ops;
 		iio_trigger_set_drvdata(st->trig, indio_dev);
-		ret = devm_iio_trigger_रेजिस्टर(&indio_dev->dev,
+		ret = devm_iio_trigger_register(&indio_dev->dev,
 						st->trig);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(&indio_dev->dev,
 				"Failed to register iio trigger\n");
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
-		ret = devm_request_thपढ़ोed_irq(&spi->dev, spi->irq,
+		ret = devm_request_threaded_irq(&spi->dev, spi->irq,
 						iio_trigger_generic_data_rdy_poll,
-						शून्य,
+						NULL,
 						IRQF_TRIGGER_FALLING,
 						spi->dev.driver->name,
 						st->trig);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(&indio_dev->dev, "Failed to allocate IRQ.\n");
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
 	/* Internal reset */
 	st->reg = MAX1027_RST_REG;
-	ret = spi_ग_लिखो(st->spi, &st->reg, 1);
-	अगर (ret < 0) अणु
+	ret = spi_write(st->spi, &st->reg, 1);
+	if (ret < 0) {
 		dev_err(&indio_dev->dev, "Failed to reset the ADC\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* Disable averaging */
 	st->reg = MAX1027_AVG_REG;
-	ret = spi_ग_लिखो(st->spi, &st->reg, 1);
-	अगर (ret < 0) अणु
+	ret = spi_write(st->spi, &st->reg, 1);
+	if (ret < 0) {
 		dev_err(&indio_dev->dev, "Failed to configure averaging register\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस devm_iio_device_रेजिस्टर(&spi->dev, indio_dev);
-पूर्ण
+	return devm_iio_device_register(&spi->dev, indio_dev);
+}
 
-अटल काष्ठा spi_driver max1027_driver = अणु
-	.driver = अणु
+static struct spi_driver max1027_driver = {
+	.driver = {
 		.name	= "max1027",
 		.of_match_table = max1027_adc_dt_ids,
-	पूर्ण,
+	},
 	.probe		= max1027_probe,
 	.id_table	= max1027_id,
-पूर्ण;
+};
 module_spi_driver(max1027_driver);
 
 MODULE_AUTHOR("Philippe Reynes <tremyfr@yahoo.fr>");

@@ -1,139 +1,138 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/export.h>
-#समावेश <linux/percpu.h>
-#समावेश <linux/preempt.h>
-#समावेश <यंत्र/msr.h>
-#घोषणा CREATE_TRACE_POINTS
-#समावेश <यंत्र/msr-trace.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/export.h>
+#include <linux/percpu.h>
+#include <linux/preempt.h>
+#include <asm/msr.h>
+#define CREATE_TRACE_POINTS
+#include <asm/msr-trace.h>
 
-काष्ठा msr *msrs_alloc(व्योम)
-अणु
-	काष्ठा msr *msrs = शून्य;
+struct msr *msrs_alloc(void)
+{
+	struct msr *msrs = NULL;
 
-	msrs = alloc_percpu(काष्ठा msr);
-	अगर (!msrs) अणु
+	msrs = alloc_percpu(struct msr);
+	if (!msrs) {
 		pr_warn("%s: error allocating msrs\n", __func__);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	वापस msrs;
-पूर्ण
+	return msrs;
+}
 EXPORT_SYMBOL(msrs_alloc);
 
-व्योम msrs_मुक्त(काष्ठा msr *msrs)
-अणु
-	मुक्त_percpu(msrs);
-पूर्ण
-EXPORT_SYMBOL(msrs_मुक्त);
+void msrs_free(struct msr *msrs)
+{
+	free_percpu(msrs);
+}
+EXPORT_SYMBOL(msrs_free);
 
 /**
  * Read an MSR with error handling
  *
- * @msr: MSR to पढ़ो
- * @m: value to पढ़ो पूर्णांकo
+ * @msr: MSR to read
+ * @m: value to read into
  *
- * It वापसs पढ़ो data only on success, otherwise it करोesn't change the output
+ * It returns read data only on success, otherwise it doesn't change the output
  * argument @m.
  *
  */
-अटल पूर्णांक msr_पढ़ो(u32 msr, काष्ठा msr *m)
-अणु
-	पूर्णांक err;
+static int msr_read(u32 msr, struct msr *m)
+{
+	int err;
 	u64 val;
 
 	err = rdmsrl_safe(msr, &val);
-	अगर (!err)
+	if (!err)
 		m->q = val;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /**
  * Write an MSR with error handling
  *
- * @msr: MSR to ग_लिखो
- * @m: value to ग_लिखो
+ * @msr: MSR to write
+ * @m: value to write
  */
-अटल पूर्णांक msr_ग_लिखो(u32 msr, काष्ठा msr *m)
-अणु
-	वापस wrmsrl_safe(msr, m->q);
-पूर्ण
+static int msr_write(u32 msr, struct msr *m)
+{
+	return wrmsrl_safe(msr, m->q);
+}
 
-अटल अंतरभूत पूर्णांक __flip_bit(u32 msr, u8 bit, bool set)
-अणु
-	काष्ठा msr m, m1;
-	पूर्णांक err = -EINVAL;
+static inline int __flip_bit(u32 msr, u8 bit, bool set)
+{
+	struct msr m, m1;
+	int err = -EINVAL;
 
-	अगर (bit > 63)
-		वापस err;
+	if (bit > 63)
+		return err;
 
-	err = msr_पढ़ो(msr, &m);
-	अगर (err)
-		वापस err;
+	err = msr_read(msr, &m);
+	if (err)
+		return err;
 
 	m1 = m;
-	अगर (set)
+	if (set)
 		m1.q |=  BIT_64(bit);
-	अन्यथा
+	else
 		m1.q &= ~BIT_64(bit);
 
-	अगर (m1.q == m.q)
-		वापस 0;
+	if (m1.q == m.q)
+		return 0;
 
-	err = msr_ग_लिखो(msr, &m1);
-	अगर (err)
-		वापस err;
+	err = msr_write(msr, &m1);
+	if (err)
+		return err;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /**
  * Set @bit in a MSR @msr.
  *
  * Retval:
  * < 0: An error was encountered.
- * = 0: Bit was alपढ़ोy set.
- * > 0: Hardware accepted the MSR ग_लिखो.
+ * = 0: Bit was already set.
+ * > 0: Hardware accepted the MSR write.
  */
-पूर्णांक msr_set_bit(u32 msr, u8 bit)
-अणु
-	वापस __flip_bit(msr, bit, true);
-पूर्ण
+int msr_set_bit(u32 msr, u8 bit)
+{
+	return __flip_bit(msr, bit, true);
+}
 
 /**
  * Clear @bit in a MSR @msr.
  *
  * Retval:
  * < 0: An error was encountered.
- * = 0: Bit was alपढ़ोy cleared.
- * > 0: Hardware accepted the MSR ग_लिखो.
+ * = 0: Bit was already cleared.
+ * > 0: Hardware accepted the MSR write.
  */
-पूर्णांक msr_clear_bit(u32 msr, u8 bit)
-अणु
-	वापस __flip_bit(msr, bit, false);
-पूर्ण
+int msr_clear_bit(u32 msr, u8 bit)
+{
+	return __flip_bit(msr, bit, false);
+}
 
-#अगर_घोषित CONFIG_TRACEPOINTS
-व्योम करो_trace_ग_लिखो_msr(अचिन्हित पूर्णांक msr, u64 val, पूर्णांक failed)
-अणु
-	trace_ग_लिखो_msr(msr, val, failed);
-पूर्ण
-EXPORT_SYMBOL(करो_trace_ग_लिखो_msr);
-EXPORT_TRACEPOINT_SYMBOL(ग_लिखो_msr);
+#ifdef CONFIG_TRACEPOINTS
+void do_trace_write_msr(unsigned int msr, u64 val, int failed)
+{
+	trace_write_msr(msr, val, failed);
+}
+EXPORT_SYMBOL(do_trace_write_msr);
+EXPORT_TRACEPOINT_SYMBOL(write_msr);
 
-व्योम करो_trace_पढ़ो_msr(अचिन्हित पूर्णांक msr, u64 val, पूर्णांक failed)
-अणु
-	trace_पढ़ो_msr(msr, val, failed);
-पूर्ण
-EXPORT_SYMBOL(करो_trace_पढ़ो_msr);
-EXPORT_TRACEPOINT_SYMBOL(पढ़ो_msr);
+void do_trace_read_msr(unsigned int msr, u64 val, int failed)
+{
+	trace_read_msr(msr, val, failed);
+}
+EXPORT_SYMBOL(do_trace_read_msr);
+EXPORT_TRACEPOINT_SYMBOL(read_msr);
 
-व्योम करो_trace_rdpmc(अचिन्हित counter, u64 val, पूर्णांक failed)
-अणु
+void do_trace_rdpmc(unsigned counter, u64 val, int failed)
+{
 	trace_rdpmc(counter, val, failed);
-पूर्ण
-EXPORT_SYMBOL(करो_trace_rdpmc);
+}
+EXPORT_SYMBOL(do_trace_rdpmc);
 EXPORT_TRACEPOINT_SYMBOL(rdpmc);
 
-#पूर्ण_अगर
+#endif

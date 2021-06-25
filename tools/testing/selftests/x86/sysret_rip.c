@@ -1,30 +1,29 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * sigवापस.c - tests that x86 aव्योमs Intel SYSRET pitfalls
+ * sigreturn.c - tests that x86 avoids Intel SYSRET pitfalls
  * Copyright (c) 2014-2016 Andrew Lutomirski
  */
 
-#घोषणा _GNU_SOURCE
+#define _GNU_SOURCE
 
-#समावेश <मानककोष.स>
-#समावेश <unistd.h>
-#समावेश <मानकपन.स>
-#समावेश <माला.स>
-#समावेश <पूर्णांकtypes.h>
-#समावेश <sys/संकेत.स>
-#समावेश <sys/ucontext.h>
-#समावेश <sys/syscall.h>
-#समावेश <err.h>
-#समावेश <मानकघोष.स>
-#समावेश <stdbool.h>
-#समावेश <समलाँघ.स>
-#समावेश <sys/user.h>
-#समावेश <sys/mman.h>
-#समावेश <निश्चित.स>
+#include <stdlib.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <string.h>
+#include <inttypes.h>
+#include <sys/signal.h>
+#include <sys/ucontext.h>
+#include <sys/syscall.h>
+#include <err.h>
+#include <stddef.h>
+#include <stdbool.h>
+#include <setjmp.h>
+#include <sys/user.h>
+#include <sys/mman.h>
+#include <assert.h>
 
 
-यंत्र (
+asm (
 	".pushsection \".text\", \"ax\"\n\t"
 	".balign 4096\n\t"
 	"test_page: .globl test_page\n\t"
@@ -37,152 +36,152 @@
 	".popsection"
     );
 
-बाह्य स्थिर अक्षर test_page[];
-अटल व्योम स्थिर *current_test_page_addr = test_page;
+extern const char test_page[];
+static void const *current_test_page_addr = test_page;
 
-अटल व्योम sethandler(पूर्णांक sig, व्योम (*handler)(पूर्णांक, siginfo_t *, व्योम *),
-		       पूर्णांक flags)
-अणु
-	काष्ठा sigaction sa;
-	स_रखो(&sa, 0, माप(sa));
+static void sethandler(int sig, void (*handler)(int, siginfo_t *, void *),
+		       int flags)
+{
+	struct sigaction sa;
+	memset(&sa, 0, sizeof(sa));
 	sa.sa_sigaction = handler;
 	sa.sa_flags = SA_SIGINFO | flags;
 	sigemptyset(&sa.sa_mask);
-	अगर (sigaction(sig, &sa, 0))
+	if (sigaction(sig, &sa, 0))
 		err(1, "sigaction");
-पूर्ण
+}
 
-अटल व्योम clearhandler(पूर्णांक sig)
-अणु
-	काष्ठा sigaction sa;
-	स_रखो(&sa, 0, माप(sa));
-	sa.sa_handler = संक_पूर्व;
+static void clearhandler(int sig)
+{
+	struct sigaction sa;
+	memset(&sa, 0, sizeof(sa));
+	sa.sa_handler = SIG_DFL;
 	sigemptyset(&sa.sa_mask);
-	अगर (sigaction(sig, &sa, 0))
+	if (sigaction(sig, &sa, 0))
 		err(1, "sigaction");
-पूर्ण
+}
 
-/* State used by our संकेत handlers. */
-अटल gregset_t initial_regs;
+/* State used by our signal handlers. */
+static gregset_t initial_regs;
 
-अटल अस्थिर अचिन्हित दीर्घ rip;
+static volatile unsigned long rip;
 
-अटल व्योम sigsegv_क्रम_sigवापस_test(पूर्णांक sig, siginfo_t *info, व्योम *ctx_व्योम)
-अणु
-	ucontext_t *ctx = (ucontext_t*)ctx_व्योम;
+static void sigsegv_for_sigreturn_test(int sig, siginfo_t *info, void *ctx_void)
+{
+	ucontext_t *ctx = (ucontext_t*)ctx_void;
 
-	अगर (rip != ctx->uc_mcontext.gregs[REG_RIP]) अणु
-		म_लिखो("[FAIL]\tRequested RIP=0x%lx but got RIP=0x%lx\n",
-		       rip, (अचिन्हित दीर्घ)ctx->uc_mcontext.gregs[REG_RIP]);
-		ख_साफ(मानक_निकास);
-		_निकास(1);
-	पूर्ण
+	if (rip != ctx->uc_mcontext.gregs[REG_RIP]) {
+		printf("[FAIL]\tRequested RIP=0x%lx but got RIP=0x%lx\n",
+		       rip, (unsigned long)ctx->uc_mcontext.gregs[REG_RIP]);
+		fflush(stdout);
+		_exit(1);
+	}
 
-	स_नकल(&ctx->uc_mcontext.gregs, &initial_regs, माप(gregset_t));
+	memcpy(&ctx->uc_mcontext.gregs, &initial_regs, sizeof(gregset_t));
 
-	म_लिखो("[OK]\tGot SIGSEGV at RIP=0x%lx\n", rip);
-पूर्ण
+	printf("[OK]\tGot SIGSEGV at RIP=0x%lx\n", rip);
+}
 
-अटल व्योम sigusr1(पूर्णांक sig, siginfo_t *info, व्योम *ctx_व्योम)
-अणु
-	ucontext_t *ctx = (ucontext_t*)ctx_व्योम;
+static void sigusr1(int sig, siginfo_t *info, void *ctx_void)
+{
+	ucontext_t *ctx = (ucontext_t*)ctx_void;
 
-	स_नकल(&initial_regs, &ctx->uc_mcontext.gregs, माप(gregset_t));
+	memcpy(&initial_regs, &ctx->uc_mcontext.gregs, sizeof(gregset_t));
 
 	/* Set IP and CX to match so that SYSRET can happen. */
 	ctx->uc_mcontext.gregs[REG_RIP] = rip;
 	ctx->uc_mcontext.gregs[REG_RCX] = rip;
 
-	/* R11 and EFLAGS should alपढ़ोy match. */
-	निश्चित(ctx->uc_mcontext.gregs[REG_EFL] ==
+	/* R11 and EFLAGS should already match. */
+	assert(ctx->uc_mcontext.gregs[REG_EFL] ==
 	       ctx->uc_mcontext.gregs[REG_R11]);
 
-	sethandler(संक_अंश, sigsegv_क्रम_sigवापस_test, SA_RESETHAND);
+	sethandler(SIGSEGV, sigsegv_for_sigreturn_test, SA_RESETHAND);
 
-	वापस;
-पूर्ण
+	return;
+}
 
-अटल व्योम test_sigवापस_to(अचिन्हित दीर्घ ip)
-अणु
+static void test_sigreturn_to(unsigned long ip)
+{
 	rip = ip;
-	म_लिखो("[RUN]\tsigreturn to 0x%lx\n", ip);
-	उठाओ(SIGUSR1);
-पूर्ण
+	printf("[RUN]\tsigreturn to 0x%lx\n", ip);
+	raise(SIGUSR1);
+}
 
-अटल लाँघ_बफ jmpbuf;
+static jmp_buf jmpbuf;
 
-अटल व्योम sigsegv_क्रम_fallthrough(पूर्णांक sig, siginfo_t *info, व्योम *ctx_व्योम)
-अणु
-	ucontext_t *ctx = (ucontext_t*)ctx_व्योम;
+static void sigsegv_for_fallthrough(int sig, siginfo_t *info, void *ctx_void)
+{
+	ucontext_t *ctx = (ucontext_t*)ctx_void;
 
-	अगर (rip != ctx->uc_mcontext.gregs[REG_RIP]) अणु
-		म_लिखो("[FAIL]\tExpected SIGSEGV at 0x%lx but got RIP=0x%lx\n",
-		       rip, (अचिन्हित दीर्घ)ctx->uc_mcontext.gregs[REG_RIP]);
-		ख_साफ(मानक_निकास);
-		_निकास(1);
-	पूर्ण
+	if (rip != ctx->uc_mcontext.gregs[REG_RIP]) {
+		printf("[FAIL]\tExpected SIGSEGV at 0x%lx but got RIP=0x%lx\n",
+		       rip, (unsigned long)ctx->uc_mcontext.gregs[REG_RIP]);
+		fflush(stdout);
+		_exit(1);
+	}
 
-	sigदीर्घ_लाँघ(jmpbuf, 1);
-पूर्ण
+	siglongjmp(jmpbuf, 1);
+}
 
-अटल व्योम test_syscall_fallthrough_to(अचिन्हित दीर्घ ip)
-अणु
-	व्योम *new_address = (व्योम *)(ip - 4096);
-	व्योम *ret;
+static void test_syscall_fallthrough_to(unsigned long ip)
+{
+	void *new_address = (void *)(ip - 4096);
+	void *ret;
 
-	म_लिखो("[RUN]\tTrying a SYSCALL that falls through to 0x%lx\n", ip);
+	printf("[RUN]\tTrying a SYSCALL that falls through to 0x%lx\n", ip);
 
-	ret = mremap((व्योम *)current_test_page_addr, 4096, 4096,
+	ret = mremap((void *)current_test_page_addr, 4096, 4096,
 		     MREMAP_MAYMOVE | MREMAP_FIXED, new_address);
-	अगर (ret == MAP_FAILED) अणु
-		अगर (ip <= (1UL << 47) - PAGE_SIZE) अणु
+	if (ret == MAP_FAILED) {
+		if (ip <= (1UL << 47) - PAGE_SIZE) {
 			err(1, "mremap to %p", new_address);
-		पूर्ण अन्यथा अणु
-			म_लिखो("[OK]\tmremap to %p failed\n", new_address);
-			वापस;
-		पूर्ण
-	पूर्ण
+		} else {
+			printf("[OK]\tmremap to %p failed\n", new_address);
+			return;
+		}
+	}
 
-	अगर (ret != new_address)
+	if (ret != new_address)
 		errx(1, "mremap malfunctioned: asked for %p but got %p\n",
 		     new_address, ret);
 
 	current_test_page_addr = new_address;
 	rip = ip;
 
-	अगर (sigबनाओ_लाँघ(jmpbuf, 1) == 0) अणु
-		यंत्र अस्थिर ("call *%[syscall_insn]" :: "a" (SYS_getpid),
+	if (sigsetjmp(jmpbuf, 1) == 0) {
+		asm volatile ("call *%[syscall_insn]" :: "a" (SYS_getpid),
 			      [syscall_insn] "rm" (ip - 2));
 		errx(1, "[FAIL]\tSyscall trampoline returned");
-	पूर्ण
+	}
 
-	म_लिखो("[OK]\tWe survived\n");
-पूर्ण
+	printf("[OK]\tWe survived\n");
+}
 
-पूर्णांक मुख्य()
-अणु
+int main()
+{
 	/*
-	 * When the kernel वापसs from a slow-path syscall, it will
+	 * When the kernel returns from a slow-path syscall, it will
 	 * detect whether SYSRET is appropriate.  If it incorrectly
 	 * thinks that SYSRET is appropriate when RIP is noncanonical,
 	 * it'll crash on Intel CPUs.
 	 */
 	sethandler(SIGUSR1, sigusr1, 0);
-	क्रम (पूर्णांक i = 47; i < 64; i++)
-		test_sigवापस_to(1UL<<i);
+	for (int i = 47; i < 64; i++)
+		test_sigreturn_to(1UL<<i);
 
 	clearhandler(SIGUSR1);
 
-	sethandler(संक_अंश, sigsegv_क्रम_fallthrough, 0);
+	sethandler(SIGSEGV, sigsegv_for_fallthrough, 0);
 
 	/* One extra test to check that we didn't screw up the mremap logic. */
 	test_syscall_fallthrough_to((1UL << 47) - 2*PAGE_SIZE);
 
-	/* These are the पूर्णांकeresting हालs. */
-	क्रम (पूर्णांक i = 47; i < 64; i++) अणु
+	/* These are the interesting cases. */
+	for (int i = 47; i < 64; i++) {
 		test_syscall_fallthrough_to((1UL<<i) - PAGE_SIZE);
 		test_syscall_fallthrough_to(1UL<<i);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

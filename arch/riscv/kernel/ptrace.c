@@ -1,129 +1,128 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright 2010 Tilera Corporation. All Rights Reserved.
- * Copyright 2015 Regents of the University of Calअगरornia
+ * Copyright 2015 Regents of the University of California
  * Copyright 2017 SiFive
  *
  * Copied from arch/tile/kernel/ptrace.c
  */
 
-#समावेश <यंत्र/ptrace.h>
-#समावेश <यंत्र/syscall.h>
-#समावेश <यंत्र/thपढ़ो_info.h>
-#समावेश <linux/audit.h>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/elf.h>
-#समावेश <linux/regset.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/sched/task_stack.h>
-#समावेश <linux/tracehook.h>
+#include <asm/ptrace.h>
+#include <asm/syscall.h>
+#include <asm/thread_info.h>
+#include <linux/audit.h>
+#include <linux/ptrace.h>
+#include <linux/elf.h>
+#include <linux/regset.h>
+#include <linux/sched.h>
+#include <linux/sched/task_stack.h>
+#include <linux/tracehook.h>
 
-#घोषणा CREATE_TRACE_POINTS
-#समावेश <trace/events/syscalls.h>
+#define CREATE_TRACE_POINTS
+#include <trace/events/syscalls.h>
 
-क्रमागत riscv_regset अणु
+enum riscv_regset {
 	REGSET_X,
-#अगर_घोषित CONFIG_FPU
+#ifdef CONFIG_FPU
 	REGSET_F,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-अटल पूर्णांक riscv_gpr_get(काष्ठा task_काष्ठा *target,
-			 स्थिर काष्ठा user_regset *regset,
-			 काष्ठा membuf to)
-अणु
-	वापस membuf_ग_लिखो(&to, task_pt_regs(target),
-			    माप(काष्ठा user_regs_काष्ठा));
-पूर्ण
+static int riscv_gpr_get(struct task_struct *target,
+			 const struct user_regset *regset,
+			 struct membuf to)
+{
+	return membuf_write(&to, task_pt_regs(target),
+			    sizeof(struct user_regs_struct));
+}
 
-अटल पूर्णांक riscv_gpr_set(काष्ठा task_काष्ठा *target,
-			 स्थिर काष्ठा user_regset *regset,
-			 अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count,
-			 स्थिर व्योम *kbuf, स्थिर व्योम __user *ubuf)
-अणु
-	पूर्णांक ret;
-	काष्ठा pt_regs *regs;
+static int riscv_gpr_set(struct task_struct *target,
+			 const struct user_regset *regset,
+			 unsigned int pos, unsigned int count,
+			 const void *kbuf, const void __user *ubuf)
+{
+	int ret;
+	struct pt_regs *regs;
 
 	regs = task_pt_regs(target);
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf, regs, 0, -1);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#अगर_घोषित CONFIG_FPU
-अटल पूर्णांक riscv_fpr_get(काष्ठा task_काष्ठा *target,
-			 स्थिर काष्ठा user_regset *regset,
-			 काष्ठा membuf to)
-अणु
-	काष्ठा __riscv_d_ext_state *ख_स्थितिe = &target->thपढ़ो.ख_स्थितिe;
+#ifdef CONFIG_FPU
+static int riscv_fpr_get(struct task_struct *target,
+			 const struct user_regset *regset,
+			 struct membuf to)
+{
+	struct __riscv_d_ext_state *fstate = &target->thread.fstate;
 
-	membuf_ग_लिखो(&to, ख_स्थितिe, दुरत्व(काष्ठा __riscv_d_ext_state, fcsr));
-	membuf_store(&to, ख_स्थितिe->fcsr);
-	वापस membuf_zero(&to, 4);	// explicitly pad
-पूर्ण
+	membuf_write(&to, fstate, offsetof(struct __riscv_d_ext_state, fcsr));
+	membuf_store(&to, fstate->fcsr);
+	return membuf_zero(&to, 4);	// explicitly pad
+}
 
-अटल पूर्णांक riscv_fpr_set(काष्ठा task_काष्ठा *target,
-			 स्थिर काष्ठा user_regset *regset,
-			 अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count,
-			 स्थिर व्योम *kbuf, स्थिर व्योम __user *ubuf)
-अणु
-	पूर्णांक ret;
-	काष्ठा __riscv_d_ext_state *ख_स्थितिe = &target->thपढ़ो.ख_स्थितिe;
+static int riscv_fpr_set(struct task_struct *target,
+			 const struct user_regset *regset,
+			 unsigned int pos, unsigned int count,
+			 const void *kbuf, const void __user *ubuf)
+{
+	int ret;
+	struct __riscv_d_ext_state *fstate = &target->thread.fstate;
 
-	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf, ख_स्थितिe, 0,
-				 दुरत्व(काष्ठा __riscv_d_ext_state, fcsr));
-	अगर (!ret) अणु
-		ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf, ख_स्थितिe, 0,
-					 दुरत्व(काष्ठा __riscv_d_ext_state, fcsr) +
-					 माप(ख_स्थितिe->fcsr));
-	पूर्ण
+	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf, fstate, 0,
+				 offsetof(struct __riscv_d_ext_state, fcsr));
+	if (!ret) {
+		ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf, fstate, 0,
+					 offsetof(struct __riscv_d_ext_state, fcsr) +
+					 sizeof(fstate->fcsr));
+	}
 
-	वापस ret;
-पूर्ण
-#पूर्ण_अगर
+	return ret;
+}
+#endif
 
-अटल स्थिर काष्ठा user_regset riscv_user_regset[] = अणु
-	[REGSET_X] = अणु
+static const struct user_regset riscv_user_regset[] = {
+	[REGSET_X] = {
 		.core_note_type = NT_PRSTATUS,
 		.n = ELF_NGREG,
-		.size = माप(elf_greg_t),
-		.align = माप(elf_greg_t),
+		.size = sizeof(elf_greg_t),
+		.align = sizeof(elf_greg_t),
 		.regset_get = riscv_gpr_get,
 		.set = riscv_gpr_set,
-	पूर्ण,
-#अगर_घोषित CONFIG_FPU
-	[REGSET_F] = अणु
+	},
+#ifdef CONFIG_FPU
+	[REGSET_F] = {
 		.core_note_type = NT_PRFPREG,
 		.n = ELF_NFPREG,
-		.size = माप(elf_fpreg_t),
-		.align = माप(elf_fpreg_t),
+		.size = sizeof(elf_fpreg_t),
+		.align = sizeof(elf_fpreg_t),
 		.regset_get = riscv_fpr_get,
 		.set = riscv_fpr_set,
-	पूर्ण,
-#पूर्ण_अगर
-पूर्ण;
+	},
+#endif
+};
 
-अटल स्थिर काष्ठा user_regset_view riscv_user_native_view = अणु
+static const struct user_regset_view riscv_user_native_view = {
 	.name = "riscv",
 	.e_machine = EM_RISCV,
 	.regsets = riscv_user_regset,
 	.n = ARRAY_SIZE(riscv_user_regset),
-पूर्ण;
+};
 
-स्थिर काष्ठा user_regset_view *task_user_regset_view(काष्ठा task_काष्ठा *task)
-अणु
-	वापस &riscv_user_native_view;
-पूर्ण
+const struct user_regset_view *task_user_regset_view(struct task_struct *task)
+{
+	return &riscv_user_native_view;
+}
 
-काष्ठा pt_regs_offset अणु
-	स्थिर अक्षर *name;
-	पूर्णांक offset;
-पूर्ण;
+struct pt_regs_offset {
+	const char *name;
+	int offset;
+};
 
-#घोषणा REG_OFFSET_NAME(r) अणु.name = #r, .offset = दुरत्व(काष्ठा pt_regs, r)पूर्ण
-#घोषणा REG_OFFSET_END अणु.name = शून्य, .offset = 0पूर्ण
+#define REG_OFFSET_NAME(r) {.name = #r, .offset = offsetof(struct pt_regs, r)}
+#define REG_OFFSET_END {.name = NULL, .offset = 0}
 
-अटल स्थिर काष्ठा pt_regs_offset regoffset_table[] = अणु
+static const struct pt_regs_offset regoffset_table[] = {
 	REG_OFFSET_NAME(epc),
 	REG_OFFSET_NAME(ra),
 	REG_OFFSET_NAME(sp),
@@ -161,114 +160,114 @@
 	REG_OFFSET_NAME(cause),
 	REG_OFFSET_NAME(orig_a0),
 	REG_OFFSET_END,
-पूर्ण;
+};
 
 /**
- * regs_query_रेजिस्टर_offset() - query रेजिस्टर offset from its name
- * @name:	the name of a रेजिस्टर
+ * regs_query_register_offset() - query register offset from its name
+ * @name:	the name of a register
  *
- * regs_query_रेजिस्टर_offset() वापसs the offset of a रेजिस्टर in काष्ठा
- * pt_regs from its name. If the name is invalid, this वापसs -EINVAL;
+ * regs_query_register_offset() returns the offset of a register in struct
+ * pt_regs from its name. If the name is invalid, this returns -EINVAL;
  */
-पूर्णांक regs_query_रेजिस्टर_offset(स्थिर अक्षर *name)
-अणु
-	स्थिर काष्ठा pt_regs_offset *roff;
+int regs_query_register_offset(const char *name)
+{
+	const struct pt_regs_offset *roff;
 
-	क्रम (roff = regoffset_table; roff->name != शून्य; roff++)
-		अगर (!म_भेद(roff->name, name))
-			वापस roff->offset;
-	वापस -EINVAL;
-पूर्ण
+	for (roff = regoffset_table; roff->name != NULL; roff++)
+		if (!strcmp(roff->name, name))
+			return roff->offset;
+	return -EINVAL;
+}
 
 /**
  * regs_within_kernel_stack() - check the address in the stack
- * @regs:      pt_regs which contains kernel stack poपूर्णांकer.
+ * @regs:      pt_regs which contains kernel stack pointer.
  * @addr:      address which is checked.
  *
  * regs_within_kernel_stack() checks @addr is within the kernel stack page(s).
- * If @addr is within the kernel stack, it वापसs true. If not, वापसs false.
+ * If @addr is within the kernel stack, it returns true. If not, returns false.
  */
-अटल bool regs_within_kernel_stack(काष्ठा pt_regs *regs, अचिन्हित दीर्घ addr)
-अणु
-	वापस (addr & ~(THREAD_SIZE - 1))  ==
-		(kernel_stack_poपूर्णांकer(regs) & ~(THREAD_SIZE - 1));
-पूर्ण
+static bool regs_within_kernel_stack(struct pt_regs *regs, unsigned long addr)
+{
+	return (addr & ~(THREAD_SIZE - 1))  ==
+		(kernel_stack_pointer(regs) & ~(THREAD_SIZE - 1));
+}
 
 /**
  * regs_get_kernel_stack_nth() - get Nth entry of the stack
- * @regs:	pt_regs which contains kernel stack poपूर्णांकer.
+ * @regs:	pt_regs which contains kernel stack pointer.
  * @n:		stack entry number.
  *
- * regs_get_kernel_stack_nth() वापसs @n th entry of the kernel stack which
- * is specअगरied by @regs. If the @n th entry is NOT in the kernel stack,
- * this वापसs 0.
+ * regs_get_kernel_stack_nth() returns @n th entry of the kernel stack which
+ * is specified by @regs. If the @n th entry is NOT in the kernel stack,
+ * this returns 0.
  */
-अचिन्हित दीर्घ regs_get_kernel_stack_nth(काष्ठा pt_regs *regs, अचिन्हित पूर्णांक n)
-अणु
-	अचिन्हित दीर्घ *addr = (अचिन्हित दीर्घ *)kernel_stack_poपूर्णांकer(regs);
+unsigned long regs_get_kernel_stack_nth(struct pt_regs *regs, unsigned int n)
+{
+	unsigned long *addr = (unsigned long *)kernel_stack_pointer(regs);
 
 	addr += n;
-	अगर (regs_within_kernel_stack(regs, (अचिन्हित दीर्घ)addr))
-		वापस *addr;
-	अन्यथा
-		वापस 0;
-पूर्ण
+	if (regs_within_kernel_stack(regs, (unsigned long)addr))
+		return *addr;
+	else
+		return 0;
+}
 
-व्योम ptrace_disable(काष्ठा task_काष्ठा *child)
-अणु
-	clear_tsk_thपढ़ो_flag(child, TIF_SYSCALL_TRACE);
-पूर्ण
+void ptrace_disable(struct task_struct *child)
+{
+	clear_tsk_thread_flag(child, TIF_SYSCALL_TRACE);
+}
 
-दीर्घ arch_ptrace(काष्ठा task_काष्ठा *child, दीर्घ request,
-		 अचिन्हित दीर्घ addr, अचिन्हित दीर्घ data)
-अणु
-	दीर्घ ret = -EIO;
+long arch_ptrace(struct task_struct *child, long request,
+		 unsigned long addr, unsigned long data)
+{
+	long ret = -EIO;
 
-	चयन (request) अणु
-	शेष:
+	switch (request) {
+	default:
 		ret = ptrace_request(child, request, addr, data);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Allows PTRACE_SYSCALL to work.  These are called from entry.S in
- * अणुhandle,ret_fromपूर्ण_syscall.
+ * {handle,ret_from}_syscall.
  */
-__visible पूर्णांक करो_syscall_trace_enter(काष्ठा pt_regs *regs)
-अणु
-	अगर (test_thपढ़ो_flag(TIF_SYSCALL_TRACE))
-		अगर (tracehook_report_syscall_entry(regs))
-			वापस -1;
+__visible int do_syscall_trace_enter(struct pt_regs *regs)
+{
+	if (test_thread_flag(TIF_SYSCALL_TRACE))
+		if (tracehook_report_syscall_entry(regs))
+			return -1;
 
 	/*
 	 * Do the secure computing after ptrace; failures should be fast.
-	 * If this fails we might have वापस value in a0 from seccomp
+	 * If this fails we might have return value in a0 from seccomp
 	 * (via SECCOMP_RET_ERRNO/TRACE).
 	 */
-	अगर (secure_computing() == -1)
-		वापस -1;
+	if (secure_computing() == -1)
+		return -1;
 
-#अगर_घोषित CONFIG_HAVE_SYSCALL_TRACEPOINTS
-	अगर (test_thपढ़ो_flag(TIF_SYSCALL_TRACEPOINT))
+#ifdef CONFIG_HAVE_SYSCALL_TRACEPOINTS
+	if (test_thread_flag(TIF_SYSCALL_TRACEPOINT))
 		trace_sys_enter(regs, syscall_get_nr(current, regs));
-#पूर्ण_अगर
+#endif
 
 	audit_syscall_entry(regs->a7, regs->a0, regs->a1, regs->a2, regs->a3);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-__visible व्योम करो_syscall_trace_निकास(काष्ठा pt_regs *regs)
-अणु
-	audit_syscall_निकास(regs);
+__visible void do_syscall_trace_exit(struct pt_regs *regs)
+{
+	audit_syscall_exit(regs);
 
-	अगर (test_thपढ़ो_flag(TIF_SYSCALL_TRACE))
-		tracehook_report_syscall_निकास(regs, 0);
+	if (test_thread_flag(TIF_SYSCALL_TRACE))
+		tracehook_report_syscall_exit(regs, 0);
 
-#अगर_घोषित CONFIG_HAVE_SYSCALL_TRACEPOINTS
-	अगर (test_thपढ़ो_flag(TIF_SYSCALL_TRACEPOINT))
-		trace_sys_निकास(regs, regs_वापस_value(regs));
-#पूर्ण_अगर
-पूर्ण
+#ifdef CONFIG_HAVE_SYSCALL_TRACEPOINTS
+	if (test_thread_flag(TIF_SYSCALL_TRACEPOINT))
+		trace_sys_exit(regs, regs_return_value(regs));
+#endif
+}

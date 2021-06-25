@@ -1,8 +1,7 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Idle daemon क्रम PowerPC.  Idle daemon will handle any action
- * that needs to be taken when the प्रणाली becomes idle.
+ * Idle daemon for PowerPC.  Idle daemon will handle any action
+ * that needs to be taken when the system becomes idle.
  *
  * Originally written by Cort Dougan (cort@cs.nmt.edu).
  * Subsequent 32-bit hacking by Tom Rini, Armin Kuster,
@@ -16,114 +15,114 @@
  * 32-bit and 64-bit versions merged by Paul Mackerras <paulus@samba.org>
  */
 
-#समावेश <linux/sched.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/cpu.h>
-#समावेश <linux/sysctl.h>
-#समावेश <linux/tick.h>
+#include <linux/sched.h>
+#include <linux/kernel.h>
+#include <linux/smp.h>
+#include <linux/cpu.h>
+#include <linux/sysctl.h>
+#include <linux/tick.h>
 
-#समावेश <यंत्र/processor.h>
-#समावेश <यंत्र/cputable.h>
-#समावेश <यंत्र/समय.स>
-#समावेश <यंत्र/machdep.h>
-#समावेश <यंत्र/runlatch.h>
-#समावेश <यंत्र/smp.h>
+#include <asm/processor.h>
+#include <asm/cputable.h>
+#include <asm/time.h>
+#include <asm/machdep.h>
+#include <asm/runlatch.h>
+#include <asm/smp.h>
 
 
-अचिन्हित दीर्घ cpuidle_disable = IDLE_NO_OVERRIDE;
+unsigned long cpuidle_disable = IDLE_NO_OVERRIDE;
 EXPORT_SYMBOL(cpuidle_disable);
 
-अटल पूर्णांक __init घातersave_off(अक्षर *arg)
-अणु
-	ppc_md.घातer_save = शून्य;
+static int __init powersave_off(char *arg)
+{
+	ppc_md.power_save = NULL;
 	cpuidle_disable = IDLE_POWERSAVE_OFF;
-	वापस 0;
-पूर्ण
-__setup("powersave=off", घातersave_off);
+	return 0;
+}
+__setup("powersave=off", powersave_off);
 
-व्योम arch_cpu_idle(व्योम)
-अणु
+void arch_cpu_idle(void)
+{
 	ppc64_runlatch_off();
 
-	अगर (ppc_md.घातer_save) अणु
-		ppc_md.घातer_save();
+	if (ppc_md.power_save) {
+		ppc_md.power_save();
 		/*
-		 * Some घातer_save functions वापस with
-		 * पूर्णांकerrupts enabled, some करोn't.
+		 * Some power_save functions return with
+		 * interrupts enabled, some don't.
 		 */
-		अगर (irqs_disabled())
+		if (irqs_disabled())
 			raw_local_irq_enable();
-	पूर्ण अन्यथा अणु
+	} else {
 		raw_local_irq_enable();
 		/*
-		 * Go पूर्णांकo low thपढ़ो priority and possibly
-		 * low घातer mode.
+		 * Go into low thread priority and possibly
+		 * low power mode.
 		 */
 		HMT_low();
 		HMT_very_low();
-	पूर्ण
+	}
 
 	HMT_medium();
 	ppc64_runlatch_on();
-पूर्ण
+}
 
-पूर्णांक घातersave_nap;
+int powersave_nap;
 
-#अगर_घोषित CONFIG_PPC_970_NAP
-व्योम घातer4_idle(व्योम)
-अणु
-	अगर (!cpu_has_feature(CPU_FTR_CAN_NAP))
-		वापस;
+#ifdef CONFIG_PPC_970_NAP
+void power4_idle(void)
+{
+	if (!cpu_has_feature(CPU_FTR_CAN_NAP))
+		return;
 
-	अगर (!घातersave_nap)
-		वापस;
+	if (!powersave_nap)
+		return;
 
-	अगर (!prep_irq_क्रम_idle())
-		वापस;
+	if (!prep_irq_for_idle())
+		return;
 
-	अगर (cpu_has_feature(CPU_FTR_ALTIVEC))
-		यंत्र अस्थिर("DSSALL ; sync" ::: "memory");
+	if (cpu_has_feature(CPU_FTR_ALTIVEC))
+		asm volatile("DSSALL ; sync" ::: "memory");
 
-	घातer4_idle_nap();
+	power4_idle_nap();
 
 	/*
-	 * घातer4_idle_nap वापसs with पूर्णांकerrupts enabled (soft and hard).
-	 * to our caller with पूर्णांकerrupts enabled (soft and hard). Our caller
-	 * can cope with either पूर्णांकerrupts disabled or enabled upon वापस.
+	 * power4_idle_nap returns with interrupts enabled (soft and hard).
+	 * to our caller with interrupts enabled (soft and hard). Our caller
+	 * can cope with either interrupts disabled or enabled upon return.
 	 */
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-#अगर_घोषित CONFIG_SYSCTL
+#ifdef CONFIG_SYSCTL
 /*
- * Register the sysctl to set/clear घातersave_nap.
+ * Register the sysctl to set/clear powersave_nap.
  */
-अटल काष्ठा ctl_table घातersave_nap_ctl_table[] = अणु
-	अणु
+static struct ctl_table powersave_nap_ctl_table[] = {
+	{
 		.procname	= "powersave-nap",
-		.data		= &घातersave_nap,
-		.maxlen		= माप(पूर्णांक),
+		.data		= &powersave_nap,
+		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler	= proc_करोपूर्णांकvec,
-	पूर्ण,
-	अणुपूर्ण
-पूर्ण;
-अटल काष्ठा ctl_table घातersave_nap_sysctl_root[] = अणु
-	अणु
+		.proc_handler	= proc_dointvec,
+	},
+	{}
+};
+static struct ctl_table powersave_nap_sysctl_root[] = {
+	{
 		.procname	= "kernel",
 		.mode		= 0555,
-		.child		= घातersave_nap_ctl_table,
-	पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+		.child		= powersave_nap_ctl_table,
+	},
+	{}
+};
 
-अटल पूर्णांक __init
-रेजिस्टर_घातersave_nap_sysctl(व्योम)
-अणु
-	रेजिस्टर_sysctl_table(घातersave_nap_sysctl_root);
+static int __init
+register_powersave_nap_sysctl(void)
+{
+	register_sysctl_table(powersave_nap_sysctl_root);
 
-	वापस 0;
-पूर्ण
-__initcall(रेजिस्टर_घातersave_nap_sysctl);
-#पूर्ण_अगर
+	return 0;
+}
+__initcall(register_powersave_nap_sysctl);
+#endif

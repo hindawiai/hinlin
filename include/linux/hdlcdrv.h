@@ -1,277 +1,276 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * hdlcdrv.h  -- HDLC packet radio network driver.
- * The Linux soundcard driver क्रम 1200 baud and 9600 baud packet radio
+ * The Linux soundcard driver for 1200 baud and 9600 baud packet radio
  * (C) 1996-1998 by Thomas Sailer, HB9JNX/AE4WA
  */
-#अगर_अघोषित _HDLCDRV_H
-#घोषणा _HDLCDRV_H
+#ifndef _HDLCDRV_H
+#define _HDLCDRV_H
 
 
-#समावेश <linux/netdevice.h>
-#समावेश <linux/अगर.h>
-#समावेश <linux/spinlock.h>
-#समावेश <uapi/linux/hdlcdrv.h>
+#include <linux/netdevice.h>
+#include <linux/if.h>
+#include <linux/spinlock.h>
+#include <uapi/linux/hdlcdrv.h>
 
-#घोषणा HDLCDRV_MAGIC      0x5ac6e778
-#घोषणा HDLCDRV_HDLCBUFFER  32 /* should be a घातer of 2 क्रम speed reasons */
-#घोषणा HDLCDRV_BITBUFFER  256 /* should be a घातer of 2 क्रम speed reasons */
-#अघोषित HDLCDRV_LOOPBACK  /* define क्रम HDLC debugging purposes */
-#घोषणा HDLCDRV_DEBUG
+#define HDLCDRV_MAGIC      0x5ac6e778
+#define HDLCDRV_HDLCBUFFER  32 /* should be a power of 2 for speed reasons */
+#define HDLCDRV_BITBUFFER  256 /* should be a power of 2 for speed reasons */
+#undef HDLCDRV_LOOPBACK  /* define for HDLC debugging purposes */
+#define HDLCDRV_DEBUG
 
 /* maximum packet length, excluding CRC */
-#घोषणा HDLCDRV_MAXFLEN             400	
+#define HDLCDRV_MAXFLEN             400	
 
 
-काष्ठा hdlcdrv_hdlcbuffer अणु
+struct hdlcdrv_hdlcbuffer {
 	spinlock_t lock;
-	अचिन्हित rd, wr;
-	अचिन्हित लघु buf[HDLCDRV_HDLCBUFFER];
-पूर्ण;
+	unsigned rd, wr;
+	unsigned short buf[HDLCDRV_HDLCBUFFER];
+};
 
-#अगर_घोषित HDLCDRV_DEBUG
-काष्ठा hdlcdrv_bitbuffer अणु
-	अचिन्हित पूर्णांक rd;
-	अचिन्हित पूर्णांक wr;
-	अचिन्हित पूर्णांक shreg;
-	अचिन्हित अक्षर buffer[HDLCDRV_BITBUFFER];
-पूर्ण;
+#ifdef HDLCDRV_DEBUG
+struct hdlcdrv_bitbuffer {
+	unsigned int rd;
+	unsigned int wr;
+	unsigned int shreg;
+	unsigned char buffer[HDLCDRV_BITBUFFER];
+};
 
-अटल अंतरभूत व्योम hdlcdrv_add_bitbuffer(काष्ठा hdlcdrv_bitbuffer *buf, 
-					 अचिन्हित पूर्णांक bit)
-अणु
-	अचिन्हित अक्षर new;
+static inline void hdlcdrv_add_bitbuffer(struct hdlcdrv_bitbuffer *buf, 
+					 unsigned int bit)
+{
+	unsigned char new;
 
 	new = buf->shreg & 1;
 	buf->shreg >>= 1;
 	buf->shreg |= (!!bit) << 7;
-	अगर (new) अणु
+	if (new) {
 		buf->buffer[buf->wr] = buf->shreg;
-		buf->wr = (buf->wr+1) % माप(buf->buffer);
+		buf->wr = (buf->wr+1) % sizeof(buf->buffer);
 		buf->shreg = 0x80;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम hdlcdrv_add_bitbuffer_word(काष्ठा hdlcdrv_bitbuffer *buf, 
-					      अचिन्हित पूर्णांक bits)
-अणु
+static inline void hdlcdrv_add_bitbuffer_word(struct hdlcdrv_bitbuffer *buf, 
+					      unsigned int bits)
+{
 	buf->buffer[buf->wr] = bits & 0xff;
-	buf->wr = (buf->wr+1) % माप(buf->buffer);
+	buf->wr = (buf->wr+1) % sizeof(buf->buffer);
 	buf->buffer[buf->wr] = (bits >> 8) & 0xff;
-	buf->wr = (buf->wr+1) % माप(buf->buffer);
+	buf->wr = (buf->wr+1) % sizeof(buf->buffer);
 
-पूर्ण
-#पूर्ण_अगर /* HDLCDRV_DEBUG */
+}
+#endif /* HDLCDRV_DEBUG */
 
 /* -------------------------------------------------------------------- */
 /*
- * Inक्रमmation that need to be kept क्रम each driver. 
+ * Information that need to be kept for each driver. 
  */
 
-काष्ठा hdlcdrv_ops अणु
+struct hdlcdrv_ops {
 	/*
-	 * first some inक्रमmations needed by the hdlcdrv routines
+	 * first some informations needed by the hdlcdrv routines
 	 */
-	स्थिर अक्षर *drvname;
-	स्थिर अक्षर *drvinfo;
+	const char *drvname;
+	const char *drvinfo;
 	/*
 	 * the routines called by the hdlcdrv routines
 	 */
-	पूर्णांक (*खोलो)(काष्ठा net_device *);
-	पूर्णांक (*बंद)(काष्ठा net_device *);
-	पूर्णांक (*ioctl)(काष्ठा net_device *, काष्ठा अगरreq *, 
-		     काष्ठा hdlcdrv_ioctl *, पूर्णांक);
-पूर्ण;
+	int (*open)(struct net_device *);
+	int (*close)(struct net_device *);
+	int (*ioctl)(struct net_device *, struct ifreq *, 
+		     struct hdlcdrv_ioctl *, int);
+};
 
-काष्ठा hdlcdrv_state अणु
-	पूर्णांक magic;
-	पूर्णांक खोलोed;
+struct hdlcdrv_state {
+	int magic;
+	int opened;
 
-	स्थिर काष्ठा hdlcdrv_ops *ops;
+	const struct hdlcdrv_ops *ops;
 
-	काष्ठा अणु
-		पूर्णांक bitrate;
-	पूर्ण par;
+	struct {
+		int bitrate;
+	} par;
 
-	काष्ठा hdlcdrv_pttoutput अणु
-		पूर्णांक dma2;
-		पूर्णांक seriobase;
-		पूर्णांक pariobase;
-		पूर्णांक midiiobase;
-		अचिन्हित पूर्णांक flags;
-	पूर्ण ptt_out;
+	struct hdlcdrv_pttoutput {
+		int dma2;
+		int seriobase;
+		int pariobase;
+		int midiiobase;
+		unsigned int flags;
+	} ptt_out;
 
-	काष्ठा hdlcdrv_channel_params ch_params;
+	struct hdlcdrv_channel_params ch_params;
 
-	काष्ठा hdlcdrv_hdlcrx अणु
-		काष्ठा hdlcdrv_hdlcbuffer hbuf;
-		अचिन्हित दीर्घ in_hdlc_rx;
+	struct hdlcdrv_hdlcrx {
+		struct hdlcdrv_hdlcbuffer hbuf;
+		unsigned long in_hdlc_rx;
 		/* 0 = sync hunt, != 0 receiving */
-		पूर्णांक rx_state;	
-		अचिन्हित पूर्णांक bitstream;
-		अचिन्हित पूर्णांक bitbuf;
-		पूर्णांक numbits;
-		अचिन्हित अक्षर dcd;
+		int rx_state;	
+		unsigned int bitstream;
+		unsigned int bitbuf;
+		int numbits;
+		unsigned char dcd;
 		
-		पूर्णांक len;
-		अचिन्हित अक्षर *bp;
-		अचिन्हित अक्षर buffer[HDLCDRV_MAXFLEN+2];
-	पूर्ण hdlcrx;
+		int len;
+		unsigned char *bp;
+		unsigned char buffer[HDLCDRV_MAXFLEN+2];
+	} hdlcrx;
 
-	काष्ठा hdlcdrv_hdlctx अणु
-		काष्ठा hdlcdrv_hdlcbuffer hbuf;
-		अचिन्हित दीर्घ in_hdlc_tx;
+	struct hdlcdrv_hdlctx {
+		struct hdlcdrv_hdlcbuffer hbuf;
+		unsigned long in_hdlc_tx;
 		/*
 		 * 0 = send flags
 		 * 1 = send txtail (flags)
 		 * 2 = send packet
 		 */
-		पूर्णांक tx_state;	
-		पूर्णांक numflags;
-		अचिन्हित पूर्णांक bitstream;
-		अचिन्हित अक्षर ptt;
-		पूर्णांक calibrate;
-		पूर्णांक slotcnt;
+		int tx_state;	
+		int numflags;
+		unsigned int bitstream;
+		unsigned char ptt;
+		int calibrate;
+		int slotcnt;
 
-		अचिन्हित पूर्णांक bitbuf;
-		पूर्णांक numbits;
+		unsigned int bitbuf;
+		int numbits;
 		
-		पूर्णांक len;
-		अचिन्हित अक्षर *bp;
-		अचिन्हित अक्षर buffer[HDLCDRV_MAXFLEN+2];
-	पूर्ण hdlctx;
+		int len;
+		unsigned char *bp;
+		unsigned char buffer[HDLCDRV_MAXFLEN+2];
+	} hdlctx;
 
-#अगर_घोषित HDLCDRV_DEBUG
-	काष्ठा hdlcdrv_bitbuffer bitbuf_channel;
-	काष्ठा hdlcdrv_bitbuffer bitbuf_hdlc;
-#पूर्ण_अगर /* HDLCDRV_DEBUG */
+#ifdef HDLCDRV_DEBUG
+	struct hdlcdrv_bitbuffer bitbuf_channel;
+	struct hdlcdrv_bitbuffer bitbuf_hdlc;
+#endif /* HDLCDRV_DEBUG */
 
-	पूर्णांक ptt_keyed;
+	int ptt_keyed;
 
-	/* queued skb क्रम transmission */
-	काष्ठा sk_buff *skb;
-पूर्ण;
+	/* queued skb for transmission */
+	struct sk_buff *skb;
+};
 
 
 /* -------------------------------------------------------------------- */
 
-अटल अंतरभूत पूर्णांक hdlcdrv_hbuf_full(काष्ठा hdlcdrv_hdlcbuffer *hb) 
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+static inline int hdlcdrv_hbuf_full(struct hdlcdrv_hdlcbuffer *hb) 
+{
+	unsigned long flags;
+	int ret;
 	
 	spin_lock_irqsave(&hb->lock, flags);
 	ret = !((HDLCDRV_HDLCBUFFER - 1 + hb->rd - hb->wr) % HDLCDRV_HDLCBUFFER);
 	spin_unlock_irqrestore(&hb->lock, flags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* -------------------------------------------------------------------- */
 
-अटल अंतरभूत पूर्णांक hdlcdrv_hbuf_empty(काष्ठा hdlcdrv_hdlcbuffer *hb)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+static inline int hdlcdrv_hbuf_empty(struct hdlcdrv_hdlcbuffer *hb)
+{
+	unsigned long flags;
+	int ret;
 	
 	spin_lock_irqsave(&hb->lock, flags);
 	ret = (hb->rd == hb->wr);
 	spin_unlock_irqrestore(&hb->lock, flags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* -------------------------------------------------------------------- */
 
-अटल अंतरभूत अचिन्हित लघु hdlcdrv_hbuf_get(काष्ठा hdlcdrv_hdlcbuffer *hb)
-अणु
-	अचिन्हित दीर्घ flags;
-	अचिन्हित लघु val;
-	अचिन्हित newr;
+static inline unsigned short hdlcdrv_hbuf_get(struct hdlcdrv_hdlcbuffer *hb)
+{
+	unsigned long flags;
+	unsigned short val;
+	unsigned newr;
 
 	spin_lock_irqsave(&hb->lock, flags);
-	अगर (hb->rd == hb->wr)
+	if (hb->rd == hb->wr)
 		val = 0;
-	अन्यथा अणु
+	else {
 		newr = (hb->rd+1) % HDLCDRV_HDLCBUFFER;
 		val = hb->buf[hb->rd];
 		hb->rd = newr;
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&hb->lock, flags);
-	वापस val;
-पूर्ण
+	return val;
+}
 
 /* -------------------------------------------------------------------- */
 
-अटल अंतरभूत व्योम hdlcdrv_hbuf_put(काष्ठा hdlcdrv_hdlcbuffer *hb, 
-				    अचिन्हित लघु val)
-अणु
-	अचिन्हित newp;
-	अचिन्हित दीर्घ flags;
+static inline void hdlcdrv_hbuf_put(struct hdlcdrv_hdlcbuffer *hb, 
+				    unsigned short val)
+{
+	unsigned newp;
+	unsigned long flags;
 	
 	spin_lock_irqsave(&hb->lock, flags);
 	newp = (hb->wr+1) % HDLCDRV_HDLCBUFFER;
-	अगर (newp != hb->rd) अणु 
+	if (newp != hb->rd) { 
 		hb->buf[hb->wr] = val & 0xffff;
 		hb->wr = newp;
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&hb->lock, flags);
-पूर्ण
+}
 
 /* -------------------------------------------------------------------- */
 
-अटल अंतरभूत व्योम hdlcdrv_putbits(काष्ठा hdlcdrv_state *s, अचिन्हित पूर्णांक bits)
-अणु
+static inline void hdlcdrv_putbits(struct hdlcdrv_state *s, unsigned int bits)
+{
 	hdlcdrv_hbuf_put(&s->hdlcrx.hbuf, bits);
-पूर्ण
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक hdlcdrv_getbits(काष्ठा hdlcdrv_state *s)
-अणु
-	अचिन्हित पूर्णांक ret;
+static inline unsigned int hdlcdrv_getbits(struct hdlcdrv_state *s)
+{
+	unsigned int ret;
 
-	अगर (hdlcdrv_hbuf_empty(&s->hdlctx.hbuf)) अणु
-		अगर (s->hdlctx.calibrate > 0)
+	if (hdlcdrv_hbuf_empty(&s->hdlctx.hbuf)) {
+		if (s->hdlctx.calibrate > 0)
 			s->hdlctx.calibrate--;
-		अन्यथा
+		else
 			s->hdlctx.ptt = 0;
 		ret = 0;
-	पूर्ण अन्यथा 
+	} else 
 		ret = hdlcdrv_hbuf_get(&s->hdlctx.hbuf);
-#अगर_घोषित HDLCDRV_LOOPBACK
+#ifdef HDLCDRV_LOOPBACK
 	hdlcdrv_hbuf_put(&s->hdlcrx.hbuf, ret);
-#पूर्ण_अगर /* HDLCDRV_LOOPBACK */
-	वापस ret;
-पूर्ण
+#endif /* HDLCDRV_LOOPBACK */
+	return ret;
+}
 
-अटल अंतरभूत व्योम hdlcdrv_channelbit(काष्ठा hdlcdrv_state *s, अचिन्हित पूर्णांक bit)
-अणु
-#अगर_घोषित HDLCDRV_DEBUG
+static inline void hdlcdrv_channelbit(struct hdlcdrv_state *s, unsigned int bit)
+{
+#ifdef HDLCDRV_DEBUG
 	hdlcdrv_add_bitbuffer(&s->bitbuf_channel, bit);
-#पूर्ण_अगर /* HDLCDRV_DEBUG */
-पूर्ण
+#endif /* HDLCDRV_DEBUG */
+}
 
-अटल अंतरभूत व्योम hdlcdrv_setdcd(काष्ठा hdlcdrv_state *s, पूर्णांक dcd)
-अणु
+static inline void hdlcdrv_setdcd(struct hdlcdrv_state *s, int dcd)
+{
 	s->hdlcrx.dcd = !!dcd;
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक hdlcdrv_ptt(काष्ठा hdlcdrv_state *s)
-अणु
-	वापस s->hdlctx.ptt || (s->hdlctx.calibrate > 0);
-पूर्ण
-
-/* -------------------------------------------------------------------- */
-
-व्योम hdlcdrv_receiver(काष्ठा net_device *, काष्ठा hdlcdrv_state *);
-व्योम hdlcdrv_transmitter(काष्ठा net_device *, काष्ठा hdlcdrv_state *);
-व्योम hdlcdrv_arbitrate(काष्ठा net_device *, काष्ठा hdlcdrv_state *);
-काष्ठा net_device *hdlcdrv_रेजिस्टर(स्थिर काष्ठा hdlcdrv_ops *ops,
-				    अचिन्हित पूर्णांक privsize, स्थिर अक्षर *अगरname,
-				    अचिन्हित पूर्णांक baseaddr, अचिन्हित पूर्णांक irq, 
-				    अचिन्हित पूर्णांक dma);
-व्योम hdlcdrv_unरेजिस्टर(काष्ठा net_device *dev);
+static inline int hdlcdrv_ptt(struct hdlcdrv_state *s)
+{
+	return s->hdlctx.ptt || (s->hdlctx.calibrate > 0);
+}
 
 /* -------------------------------------------------------------------- */
 
+void hdlcdrv_receiver(struct net_device *, struct hdlcdrv_state *);
+void hdlcdrv_transmitter(struct net_device *, struct hdlcdrv_state *);
+void hdlcdrv_arbitrate(struct net_device *, struct hdlcdrv_state *);
+struct net_device *hdlcdrv_register(const struct hdlcdrv_ops *ops,
+				    unsigned int privsize, const char *ifname,
+				    unsigned int baseaddr, unsigned int irq, 
+				    unsigned int dma);
+void hdlcdrv_unregister(struct net_device *dev);
+
+/* -------------------------------------------------------------------- */
 
 
-#पूर्ण_अगर /* _HDLCDRV_H */
+
+#endif /* _HDLCDRV_H */

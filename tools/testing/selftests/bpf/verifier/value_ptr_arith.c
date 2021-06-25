@@ -1,9 +1,8 @@
-<शैली गुरु>
-अणु
+{
 	"map access: known scalar += value_ptr from different maps",
-	.insns = अणु
+	.insns = {
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    दुरत्व(काष्ठा __sk_buff, len)),
+		    offsetof(struct __sk_buff, len)),
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -18,17 +17,17 @@
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_16b = अणु 5 पूर्ण,
-	.fixup_map_array_48b = अणु 8 पूर्ण,
+	},
+	.fixup_map_hash_16b = { 5 },
+	.fixup_map_array_48b = { 8 },
 	.result = ACCEPT,
 	.retval = 1,
-पूर्ण,
-अणु
+},
+{
 	"map access: value_ptr -= known scalar from different maps",
-	.insns = अणु
+	.insns = {
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    दुरत्व(काष्ठा __sk_buff, len)),
+		    offsetof(struct __sk_buff, len)),
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -44,19 +43,19 @@
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_0, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_16b = अणु 5 पूर्ण,
-	.fixup_map_array_48b = अणु 8 पूर्ण,
+	},
+	.fixup_map_hash_16b = { 5 },
+	.fixup_map_array_48b = { 8 },
 	.result = ACCEPT,
 	.result_unpriv = REJECT,
 	.errstr_unpriv = "R0 min value is outside of the allowed memory range",
 	.retval = 1,
-पूर्ण,
-अणु
+},
+{
 	"map access: known scalar += value_ptr from different maps, but same value properties",
-	.insns = अणु
+	.insns = {
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    दुरत्व(काष्ठा __sk_buff, len)),
+		    offsetof(struct __sk_buff, len)),
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -71,16 +70,16 @@
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_48b = अणु 5 पूर्ण,
-	.fixup_map_array_48b = अणु 8 पूर्ण,
+	},
+	.fixup_map_hash_48b = { 5 },
+	.fixup_map_array_48b = { 8 },
 	.result = ACCEPT,
 	.retval = 1,
-पूर्ण,
-अणु
+},
+{
 	"map access: mixing value pointer and scalar, 1",
-	.insns = अणु
-	// load map value poपूर्णांकer पूर्णांकo r0 and r2
+	.insns = {
+	// load map value pointer into r0 and r2
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_LD_MAP_FD(BPF_REG_ARG1, 0),
 	BPF_MOV64_REG(BPF_REG_ARG2, BPF_REG_FP),
@@ -89,7 +88,7 @@
 	BPF_EMIT_CALL(BPF_FUNC_map_lookup_elem),
 	BPF_JMP_IMM(BPF_JNE, BPF_REG_0, 0, 1),
 	BPF_EXIT_INSN(),
-	// load some number from the map पूर्णांकo r1
+	// load some number from the map into r1
 	BPF_LDX_MEM(BPF_B, BPF_REG_1, BPF_REG_0, 0),
 	// depending on r1, branch:
 	BPF_JMP_IMM(BPF_JNE, BPF_REG_1, 0, 3),
@@ -100,7 +99,7 @@
 	// branch B
 	BPF_MOV64_IMM(BPF_REG_2, 0),
 	BPF_MOV64_IMM(BPF_REG_3, 0x100000),
-	// common inकाष्ठाion
+	// common instruction
 	BPF_ALU64_REG(BPF_ADD, BPF_REG_2, BPF_REG_3),
 	// depending on r1, branch:
 	BPF_JMP_IMM(BPF_JNE, BPF_REG_1, 0, 1),
@@ -108,7 +107,7 @@
 	BPF_JMP_A(4),
 	// branch B
 	BPF_MOV64_IMM(BPF_REG_0, 0x13371337),
-	// verअगरier follows fall-through
+	// verifier follows fall-through
 	BPF_JMP_IMM(BPF_JNE, BPF_REG_2, 0x100000, 2),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
@@ -117,17 +116,17 @@
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_0, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_array_48b = अणु 1 पूर्ण,
+	},
+	.fixup_map_array_48b = { 1 },
 	.result = ACCEPT,
 	.result_unpriv = REJECT,
 	.errstr_unpriv = "R2 pointer comparison prohibited",
 	.retval = 0,
-पूर्ण,
-अणु
+},
+{
 	"map access: mixing value pointer and scalar, 2",
-	.insns = अणु
-	// load map value poपूर्णांकer पूर्णांकo r0 and r2
+	.insns = {
+	// load map value pointer into r0 and r2
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_LD_MAP_FD(BPF_REG_ARG1, 0),
 	BPF_MOV64_REG(BPF_REG_ARG2, BPF_REG_FP),
@@ -136,7 +135,7 @@
 	BPF_EMIT_CALL(BPF_FUNC_map_lookup_elem),
 	BPF_JMP_IMM(BPF_JNE, BPF_REG_0, 0, 1),
 	BPF_EXIT_INSN(),
-	// load some number from the map पूर्णांकo r1
+	// load some number from the map into r1
 	BPF_LDX_MEM(BPF_B, BPF_REG_1, BPF_REG_0, 0),
 	// depending on r1, branch:
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_1, 0, 3),
@@ -147,7 +146,7 @@
 	// branch B
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_0),
 	BPF_MOV64_IMM(BPF_REG_3, 0),
-	// common inकाष्ठाion
+	// common instruction
 	BPF_ALU64_REG(BPF_ADD, BPF_REG_2, BPF_REG_3),
 	// depending on r1, branch:
 	BPF_JMP_IMM(BPF_JNE, BPF_REG_1, 0, 1),
@@ -155,7 +154,7 @@
 	BPF_JMP_A(4),
 	// branch B
 	BPF_MOV64_IMM(BPF_REG_0, 0x13371337),
-	// verअगरier follows fall-through
+	// verifier follows fall-through
 	BPF_JMP_IMM(BPF_JNE, BPF_REG_2, 0x100000, 2),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
@@ -165,16 +164,16 @@
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_0, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_array_48b = अणु 1 पूर्ण,
+	},
+	.fixup_map_array_48b = { 1 },
 	.result = ACCEPT,
 	.result_unpriv = REJECT,
 	.errstr_unpriv = "R0 invalid mem access 'inv'",
 	.retval = 0,
-पूर्ण,
-अणु
+},
+{
 	"sanitation: alu with different scalars 1",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_LD_MAP_FD(BPF_REG_ARG1, 0),
 	BPF_MOV64_REG(BPF_REG_ARG2, BPF_REG_FP),
@@ -193,14 +192,14 @@
 	BPF_ALU64_REG(BPF_ADD, BPF_REG_2, BPF_REG_3),
 	BPF_MOV64_REG(BPF_REG_0, BPF_REG_2),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_array_48b = अणु 1 पूर्ण,
+	},
+	.fixup_map_array_48b = { 1 },
 	.result = ACCEPT,
 	.retval = 0x100000,
-पूर्ण,
-अणु
+},
+{
 	"sanitation: alu with different scalars 2",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_LD_MAP_FD(BPF_REG_1, 0),
 	BPF_MOV64_REG(BPF_REG_6, BPF_REG_1),
@@ -218,14 +217,14 @@
 	BPF_ALU64_REG(BPF_ADD, BPF_REG_8, BPF_REG_7),
 	BPF_MOV64_REG(BPF_REG_0, BPF_REG_8),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_array_48b = अणु 1 पूर्ण,
+	},
+	.fixup_map_array_48b = { 1 },
 	.result = ACCEPT,
 	.retval = -EINVAL * 2,
-पूर्ण,
-अणु
+},
+{
 	"sanitation: alu with different scalars 3",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_0, EINVAL),
 	BPF_ALU64_IMM(BPF_MUL, BPF_REG_0, -1),
 	BPF_MOV64_REG(BPF_REG_7, BPF_REG_0),
@@ -236,13 +235,13 @@
 	BPF_ALU64_REG(BPF_ADD, BPF_REG_8, BPF_REG_7),
 	BPF_MOV64_REG(BPF_REG_0, BPF_REG_8),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = ACCEPT,
 	.retval = -EINVAL * 2,
-पूर्ण,
-अणु
+},
+{
 	"map access: value_ptr += known scalar, upper oob arith, test 1",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -255,16 +254,16 @@
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_0, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_array_48b = अणु 3 पूर्ण,
+	},
+	.fixup_map_array_48b = { 3 },
 	.result = ACCEPT,
 	.result_unpriv = REJECT,
 	.errstr_unpriv = "R0 pointer arithmetic of map value goes out of range",
 	.retval = 1,
-पूर्ण,
-अणु
+},
+{
 	"map access: value_ptr += known scalar, upper oob arith, test 2",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -277,16 +276,16 @@
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_0, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_array_48b = अणु 3 पूर्ण,
+	},
+	.fixup_map_array_48b = { 3 },
 	.result = ACCEPT,
 	.result_unpriv = REJECT,
 	.errstr_unpriv = "R0 pointer arithmetic of map value goes out of range",
 	.retval = 1,
-पूर्ण,
-अणु
+},
+{
 	"map access: value_ptr += known scalar, upper oob arith, test 3",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -299,14 +298,14 @@
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_0, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_array_48b = अणु 3 पूर्ण,
+	},
+	.fixup_map_array_48b = { 3 },
 	.result = ACCEPT,
 	.retval = 1,
-पूर्ण,
-अणु
+},
+{
 	"map access: value_ptr -= known scalar, lower oob arith, test 1",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -320,16 +319,16 @@
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_0, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_array_48b = अणु 3 पूर्ण,
+	},
+	.fixup_map_array_48b = { 3 },
 	.result = REJECT,
 	.errstr = "R0 min value is outside of the allowed memory range",
 	.result_unpriv = REJECT,
 	.errstr_unpriv = "R0 pointer arithmetic of map value goes out of range",
-पूर्ण,
-अणु
+},
+{
 	"map access: value_ptr -= known scalar, lower oob arith, test 2",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -345,16 +344,16 @@
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_0, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_array_48b = अणु 3 पूर्ण,
+	},
+	.fixup_map_array_48b = { 3 },
 	.result = ACCEPT,
 	.result_unpriv = REJECT,
 	.errstr_unpriv = "R0 pointer arithmetic of map value goes out of range",
 	.retval = 1,
-पूर्ण,
-अणु
+},
+{
 	"map access: value_ptr -= known scalar, lower oob arith, test 3",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -368,14 +367,14 @@
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_0, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_array_48b = अणु 3 पूर्ण,
+	},
+	.fixup_map_array_48b = { 3 },
 	.result = ACCEPT,
 	.retval = 1,
-पूर्ण,
-अणु
+},
+{
 	"map access: known scalar += value_ptr",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -387,14 +386,14 @@
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_array_48b = अणु 3 पूर्ण,
+	},
+	.fixup_map_array_48b = { 3 },
 	.result = ACCEPT,
 	.retval = 1,
-पूर्ण,
-अणु
+},
+{
 	"map access: value_ptr += known scalar, 1",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -406,14 +405,14 @@
 	BPF_LDX_MEM(BPF_B, BPF_REG_1, BPF_REG_0, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_array_48b = अणु 3 पूर्ण,
+	},
+	.fixup_map_array_48b = { 3 },
 	.result = ACCEPT,
 	.retval = 1,
-पूर्ण,
-अणु
+},
+{
 	"map access: value_ptr += known scalar, 2",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -425,14 +424,14 @@
 	BPF_LDX_MEM(BPF_B, BPF_REG_1, BPF_REG_0, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_array_48b = अणु 3 पूर्ण,
+	},
+	.fixup_map_array_48b = { 3 },
 	.result = REJECT,
 	.errstr = "invalid access to map value",
-पूर्ण,
-अणु
+},
+{
 	"map access: value_ptr += known scalar, 3",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -444,14 +443,14 @@
 	BPF_LDX_MEM(BPF_B, BPF_REG_1, BPF_REG_0, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_array_48b = अणु 3 पूर्ण,
+	},
+	.fixup_map_array_48b = { 3 },
 	.result = REJECT,
 	.errstr = "invalid access to map value",
-पूर्ण,
-अणु
+},
+{
 	"map access: value_ptr += known scalar, 4",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -467,52 +466,52 @@
 	BPF_LDX_MEM(BPF_B, BPF_REG_1, BPF_REG_0, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_array_48b = अणु 3 पूर्ण,
+	},
+	.fixup_map_array_48b = { 3 },
 	.result = ACCEPT,
 	.retval = 1,
-पूर्ण,
-अणु
+},
+{
 	"map access: value_ptr += known scalar, 5",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_LD_MAP_FD(BPF_REG_1, 0),
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_map_lookup_elem),
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, 0, 3),
-	BPF_MOV64_IMM(BPF_REG_1, (6 + 1) * माप(पूर्णांक)),
+	BPF_MOV64_IMM(BPF_REG_1, (6 + 1) * sizeof(int)),
 	BPF_ALU64_REG(BPF_ADD, BPF_REG_1, BPF_REG_0),
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_array_48b = अणु 3 पूर्ण,
+	},
+	.fixup_map_array_48b = { 3 },
 	.result = ACCEPT,
 	.retval = 0xabcdef12,
-पूर्ण,
-अणु
+},
+{
 	"map access: value_ptr += known scalar, 6",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_LD_MAP_FD(BPF_REG_1, 0),
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_map_lookup_elem),
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, 0, 5),
-	BPF_MOV64_IMM(BPF_REG_1, (3 + 1) * माप(पूर्णांक)),
+	BPF_MOV64_IMM(BPF_REG_1, (3 + 1) * sizeof(int)),
 	BPF_ALU64_REG(BPF_ADD, BPF_REG_0, BPF_REG_1),
-	BPF_MOV64_IMM(BPF_REG_1, 3 * माप(पूर्णांक)),
+	BPF_MOV64_IMM(BPF_REG_1, 3 * sizeof(int)),
 	BPF_ALU64_REG(BPF_ADD, BPF_REG_0, BPF_REG_1),
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_array_48b = अणु 3 पूर्ण,
+	},
+	.fixup_map_array_48b = { 3 },
 	.result = ACCEPT,
 	.retval = 0xabcdef12,
-पूर्ण,
-अणु
+},
+{
 	"map access: value_ptr += N, value_ptr -= N known scalar",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -526,14 +525,14 @@
 	BPF_ALU64_REG(BPF_SUB, BPF_REG_0, BPF_REG_1),
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_array_48b = अणु 3 पूर्ण,
+	},
+	.fixup_map_array_48b = { 3 },
 	.result = ACCEPT,
 	.retval = 0x12345678,
-पूर्ण,
-अणु
+},
+{
 	"map access: unknown scalar += value_ptr, 1",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -546,14 +545,14 @@
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_array_48b = अणु 3 पूर्ण,
+	},
+	.fixup_map_array_48b = { 3 },
 	.result = ACCEPT,
 	.retval = 1,
-पूर्ण,
-अणु
+},
+{
 	"map access: unknown scalar += value_ptr, 2",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -565,15 +564,15 @@
 	BPF_ALU64_REG(BPF_ADD, BPF_REG_1, BPF_REG_0),
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_array_48b = अणु 3 पूर्ण,
+	},
+	.fixup_map_array_48b = { 3 },
 	.result = ACCEPT,
 	.retval = 0xabcdef12,
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-पूर्ण,
-अणु
+},
+{
 	"map access: unknown scalar += value_ptr, 3",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -589,17 +588,17 @@
 	BPF_ALU64_REG(BPF_ADD, BPF_REG_1, BPF_REG_0),
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_array_48b = अणु 3 पूर्ण,
+	},
+	.fixup_map_array_48b = { 3 },
 	.result = ACCEPT,
 	.result_unpriv = REJECT,
 	.errstr_unpriv = "R0 pointer arithmetic of map value goes out of range",
 	.retval = 0xabcdef12,
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-पूर्ण,
-अणु
+},
+{
 	"map access: unknown scalar += value_ptr, 4",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -613,16 +612,16 @@
 	BPF_ALU64_REG(BPF_ADD, BPF_REG_1, BPF_REG_0),
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_array_48b = अणु 3 पूर्ण,
+	},
+	.fixup_map_array_48b = { 3 },
 	.result = REJECT,
 	.errstr = "R1 max value is outside of the allowed memory range",
 	.errstr_unpriv = "R1 pointer arithmetic of map value goes out of range",
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-पूर्ण,
-अणु
+},
+{
 	"map access: value_ptr += unknown scalar, 1",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -635,14 +634,14 @@
 	BPF_LDX_MEM(BPF_B, BPF_REG_1, BPF_REG_0, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_array_48b = अणु 3 पूर्ण,
+	},
+	.fixup_map_array_48b = { 3 },
 	.result = ACCEPT,
 	.retval = 1,
-पूर्ण,
-अणु
+},
+{
 	"map access: value_ptr += unknown scalar, 2",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -654,15 +653,15 @@
 	BPF_ALU64_REG(BPF_ADD, BPF_REG_0, BPF_REG_1),
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_array_48b = अणु 3 पूर्ण,
+	},
+	.fixup_map_array_48b = { 3 },
 	.result = ACCEPT,
 	.retval = 0xabcdef12,
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-पूर्ण,
-अणु
+},
+{
 	"map access: value_ptr += unknown scalar, 3",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -682,14 +681,14 @@
 	BPF_EXIT_INSN(),
 	BPF_MOV64_IMM(BPF_REG_0, 2),
 	BPF_JMP_IMM(BPF_JA, 0, 0, -3),
-	पूर्ण,
-	.fixup_map_array_48b = अणु 3 पूर्ण,
+	},
+	.fixup_map_array_48b = { 3 },
 	.result = ACCEPT,
 	.retval = 1,
-पूर्ण,
-अणु
+},
+{
 	"map access: value_ptr += value_ptr",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -700,14 +699,14 @@
 	BPF_LDX_MEM(BPF_B, BPF_REG_1, BPF_REG_0, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_array_48b = अणु 3 पूर्ण,
+	},
+	.fixup_map_array_48b = { 3 },
 	.result = REJECT,
 	.errstr = "R0 pointer += pointer prohibited",
-पूर्ण,
-अणु
+},
+{
 	"map access: known scalar -= value_ptr",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -719,14 +718,14 @@
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_array_48b = अणु 3 पूर्ण,
+	},
+	.fixup_map_array_48b = { 3 },
 	.result = REJECT,
 	.errstr = "R1 tried to subtract pointer from scalar",
-पूर्ण,
-अणु
+},
+{
 	"map access: value_ptr -= known scalar",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -738,14 +737,14 @@
 	BPF_LDX_MEM(BPF_B, BPF_REG_1, BPF_REG_0, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_array_48b = अणु 3 पूर्ण,
+	},
+	.fixup_map_array_48b = { 3 },
 	.result = REJECT,
 	.errstr = "R0 min value is outside of the allowed memory range",
-पूर्ण,
-अणु
+},
+{
 	"map access: value_ptr -= known scalar, 2",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -759,14 +758,14 @@
 	BPF_LDX_MEM(BPF_B, BPF_REG_1, BPF_REG_0, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_array_48b = अणु 3 पूर्ण,
+	},
+	.fixup_map_array_48b = { 3 },
 	.result = ACCEPT,
 	.retval = 1,
-पूर्ण,
-अणु
+},
+{
 	"map access: unknown scalar -= value_ptr",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -779,14 +778,14 @@
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_array_48b = अणु 3 पूर्ण,
+	},
+	.fixup_map_array_48b = { 3 },
 	.result = REJECT,
 	.errstr = "R1 tried to subtract pointer from scalar",
-पूर्ण,
-अणु
+},
+{
 	"map access: value_ptr -= unknown scalar",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -799,14 +798,14 @@
 	BPF_LDX_MEM(BPF_B, BPF_REG_1, BPF_REG_0, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_array_48b = अणु 3 पूर्ण,
+	},
+	.fixup_map_array_48b = { 3 },
 	.result = REJECT,
 	.errstr = "R0 min value is negative",
-पूर्ण,
-अणु
+},
+{
 	"map access: value_ptr -= unknown scalar, 2",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -823,16 +822,16 @@
 	BPF_LDX_MEM(BPF_B, BPF_REG_1, BPF_REG_0, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_array_48b = अणु 3 पूर्ण,
+	},
+	.fixup_map_array_48b = { 3 },
 	.result = ACCEPT,
 	.result_unpriv = REJECT,
 	.errstr_unpriv = "R0 pointer arithmetic of map value goes out of range",
 	.retval = 1,
-पूर्ण,
-अणु
+},
+{
 	"map access: value_ptr -= value_ptr",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -843,19 +842,19 @@
 	BPF_LDX_MEM(BPF_B, BPF_REG_1, BPF_REG_0, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_array_48b = अणु 3 पूर्ण,
+	},
+	.fixup_map_array_48b = { 3 },
 	.result = REJECT,
 	.errstr = "R0 invalid mem access 'inv'",
 	.errstr_unpriv = "R0 pointer -= pointer prohibited",
-पूर्ण,
-अणु
+},
+{
 	"32bit pkt_ptr -= scalar",
-	.insns = अणु
+	.insns = {
 	BPF_LDX_MEM(BPF_W, BPF_REG_8, BPF_REG_1,
-		    दुरत्व(काष्ठा __sk_buff, data_end)),
+		    offsetof(struct __sk_buff, data_end)),
 	BPF_LDX_MEM(BPF_W, BPF_REG_7, BPF_REG_1,
-		    दुरत्व(काष्ठा __sk_buff, data)),
+		    offsetof(struct __sk_buff, data)),
 	BPF_MOV64_REG(BPF_REG_6, BPF_REG_7),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_6, 40),
 	BPF_JMP_REG(BPF_JGT, BPF_REG_6, BPF_REG_8, 2),
@@ -863,18 +862,18 @@
 	BPF_ALU32_REG(BPF_SUB, BPF_REG_6, BPF_REG_4),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.result = ACCEPT,
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-पूर्ण,
-अणु
+},
+{
 	"32bit scalar -= pkt_ptr",
-	.insns = अणु
+	.insns = {
 	BPF_LDX_MEM(BPF_W, BPF_REG_8, BPF_REG_1,
-		    दुरत्व(काष्ठा __sk_buff, data_end)),
+		    offsetof(struct __sk_buff, data_end)),
 	BPF_LDX_MEM(BPF_W, BPF_REG_7, BPF_REG_1,
-		    दुरत्व(काष्ठा __sk_buff, data)),
+		    offsetof(struct __sk_buff, data)),
 	BPF_MOV64_REG(BPF_REG_6, BPF_REG_7),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_6, 40),
 	BPF_JMP_REG(BPF_JGT, BPF_REG_6, BPF_REG_8, 2),
@@ -882,8 +881,8 @@
 	BPF_ALU32_REG(BPF_SUB, BPF_REG_4, BPF_REG_7),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.result = ACCEPT,
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-पूर्ण,
+},

@@ -1,23 +1,22 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright 2006 Andi Kleen, SUSE Lअसल.
+ * Copyright 2006 Andi Kleen, SUSE Labs.
  *
- * Fast user context implementation of अ_लोpu()
+ * Fast user context implementation of getcpu()
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/अ_लोpu.h>
-#समावेश <linux/समय.स>
-#समावेश <यंत्र/vgtod.h>
+#include <linux/kernel.h>
+#include <linux/getcpu.h>
+#include <linux/time.h>
+#include <asm/vgtod.h>
 
-notrace दीर्घ
-__vdso_अ_लोpu(अचिन्हित *cpu, अचिन्हित *node, काष्ठा अ_लोpu_cache *unused)
-अणु
-	vdso_पढ़ो_cpunode(cpu, node);
+notrace long
+__vdso_getcpu(unsigned *cpu, unsigned *node, struct getcpu_cache *unused)
+{
+	vdso_read_cpunode(cpu, node);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-दीर्घ अ_लोpu(अचिन्हित *cpu, अचिन्हित *node, काष्ठा अ_लोpu_cache *tcache)
+long getcpu(unsigned *cpu, unsigned *node, struct getcpu_cache *tcache)
 	__attribute__((weak, alias("__vdso_getcpu")));

@@ -1,329 +1,328 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * VIDEO MOTION CODECs पूर्णांकernal API क्रम video devices
+ * VIDEO MOTION CODECs internal API for video devices
  *
- * Interface क्रम MJPEG (and maybe later MPEG/WAVELETS) codec's
+ * Interface for MJPEG (and maybe later MPEG/WAVELETS) codec's
  * bound to a master device.
  *
  * (c) 2002 Wolfgang Scherr <scherr@net4you.at>
  */
 
-#घोषणा VIDEOCODEC_VERSION "v0.2"
+#define VIDEOCODEC_VERSION "v0.2"
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/types.h>
-#समावेश <linux/slab.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/types.h>
+#include <linux/slab.h>
 
 // kernel config is here (procfs flag)
 
-#अगर_घोषित CONFIG_PROC_FS
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/uaccess.h>
-#पूर्ण_अगर
+#ifdef CONFIG_PROC_FS
+#include <linux/proc_fs.h>
+#include <linux/seq_file.h>
+#include <linux/uaccess.h>
+#endif
 
-#समावेश "videocodec.h"
+#include "videocodec.h"
 
-अटल पूर्णांक debug;
-module_param(debug, पूर्णांक, 0);
+static int debug;
+module_param(debug, int, 0);
 MODULE_PARM_DESC(debug, "Debug level (0-4)");
 
-#घोषणा dprपूर्णांकk(num, क्रमmat, args...) \
-	करो अणु \
-		अगर (debug >= num) \
-			prपूर्णांकk(क्रमmat, ##args); \
-	पूर्ण जबतक (0)
+#define dprintk(num, format, args...) \
+	do { \
+		if (debug >= num) \
+			printk(format, ##args); \
+	} while (0)
 
-काष्ठा attached_list अणु
-	काष्ठा videocodec *codec;
-	काष्ठा attached_list *next;
-पूर्ण;
+struct attached_list {
+	struct videocodec *codec;
+	struct attached_list *next;
+};
 
-काष्ठा codec_list अणु
-	स्थिर काष्ठा videocodec *codec;
-	पूर्णांक attached;
-	काष्ठा attached_list *list;
-	काष्ठा codec_list *next;
-पूर्ण;
+struct codec_list {
+	const struct videocodec *codec;
+	int attached;
+	struct attached_list *list;
+	struct codec_list *next;
+};
 
-अटल काष्ठा codec_list *codeclist_top;
+static struct codec_list *codeclist_top;
 
 /* ================================================= */
-/* function prototypes of the master/slave पूर्णांकerface */
+/* function prototypes of the master/slave interface */
 /* ================================================= */
 
-काष्ठा videocodec *videocodec_attach(काष्ठा videocodec_master *master)
-अणु
-	काष्ठा codec_list *h = codeclist_top;
-	काष्ठा attached_list *a, *ptr;
-	काष्ठा videocodec *codec;
-	पूर्णांक res;
+struct videocodec *videocodec_attach(struct videocodec_master *master)
+{
+	struct codec_list *h = codeclist_top;
+	struct attached_list *a, *ptr;
+	struct videocodec *codec;
+	int res;
 
-	अगर (!master) अणु
+	if (!master) {
 		pr_err("%s: no data\n", __func__);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	dprपूर्णांकk(2, "%s: '%s', flags %lx, magic %lx\n", __func__,
+	dprintk(2, "%s: '%s', flags %lx, magic %lx\n", __func__,
 		master->name, master->flags, master->magic);
 
-	अगर (!h) अणु
+	if (!h) {
 		pr_err("%s: no device available\n", __func__);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	जबतक (h) अणु
-		// attach only अगर the slave has at least the flags
+	while (h) {
+		// attach only if the slave has at least the flags
 		// expected by the master
-		अगर ((master->flags & h->codec->flags) == master->flags) अणु
-			dprपूर्णांकk(4, "%s: try '%s'\n", __func__, h->codec->name);
+		if ((master->flags & h->codec->flags) == master->flags) {
+			dprintk(4, "%s: try '%s'\n", __func__, h->codec->name);
 
-			अगर (!try_module_get(h->codec->owner))
-				वापस शून्य;
+			if (!try_module_get(h->codec->owner))
+				return NULL;
 
-			codec = kmemdup(h->codec, माप(काष्ठा videocodec), GFP_KERNEL);
-			अगर (!codec)
-				जाओ out_module_put;
+			codec = kmemdup(h->codec, sizeof(struct videocodec), GFP_KERNEL);
+			if (!codec)
+				goto out_module_put;
 
-			res = म_माप(codec->name);
-			snम_लिखो(codec->name + res, माप(codec->name) - res, "[%d]", h->attached);
+			res = strlen(codec->name);
+			snprintf(codec->name + res, sizeof(codec->name) - res, "[%d]", h->attached);
 			codec->master_data = master;
 			res = codec->setup(codec);
-			अगर (res == 0) अणु
-				dprपूर्णांकk(3, "%s: '%s'\n", __func__, codec->name);
-				ptr = kzalloc(माप(*ptr), GFP_KERNEL);
-				अगर (!ptr)
-					जाओ out_kमुक्त;
+			if (res == 0) {
+				dprintk(3, "%s: '%s'\n", __func__, codec->name);
+				ptr = kzalloc(sizeof(*ptr), GFP_KERNEL);
+				if (!ptr)
+					goto out_kfree;
 				ptr->codec = codec;
 
 				a = h->list;
-				अगर (!a) अणु
+				if (!a) {
 					h->list = ptr;
-					dprपूर्णांकk(4, "videocodec: first element\n");
-				पूर्ण अन्यथा अणु
-					जबतक (a->next)
+					dprintk(4, "videocodec: first element\n");
+				} else {
+					while (a->next)
 						a = a->next;	// find end
 					a->next = ptr;
-					dprपूर्णांकk(4, "videocodec: in after '%s'\n", h->codec->name);
-				पूर्ण
+					dprintk(4, "videocodec: in after '%s'\n", h->codec->name);
+				}
 
 				h->attached += 1;
-				वापस codec;
-			पूर्ण अन्यथा अणु
-				kमुक्त(codec);
-			पूर्ण
-		पूर्ण
+				return codec;
+			} else {
+				kfree(codec);
+			}
+		}
 		h = h->next;
-	पूर्ण
+	}
 
 	pr_err("%s: no codec found!\n", __func__);
-	वापस शून्य;
+	return NULL;
 
  out_module_put:
 	module_put(h->codec->owner);
- out_kमुक्त:
-	kमुक्त(codec);
-	वापस शून्य;
-पूर्ण
+ out_kfree:
+	kfree(codec);
+	return NULL;
+}
 EXPORT_SYMBOL(videocodec_attach);
 
-पूर्णांक videocodec_detach(काष्ठा videocodec *codec)
-अणु
-	काष्ठा codec_list *h = codeclist_top;
-	काष्ठा attached_list *a, *prev;
-	पूर्णांक res;
+int videocodec_detach(struct videocodec *codec)
+{
+	struct codec_list *h = codeclist_top;
+	struct attached_list *a, *prev;
+	int res;
 
-	अगर (!codec) अणु
+	if (!codec) {
 		pr_err("%s: no data\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	dprपूर्णांकk(2, "%s: '%s', type: %x, flags %lx, magic %lx\n", __func__,
+	dprintk(2, "%s: '%s', type: %x, flags %lx, magic %lx\n", __func__,
 		codec->name, codec->type, codec->flags, codec->magic);
 
-	अगर (!h) अणु
+	if (!h) {
 		pr_err("%s: no device left...\n", __func__);
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
-	जबतक (h) अणु
+	while (h) {
 		a = h->list;
-		prev = शून्य;
-		जबतक (a) अणु
-			अगर (codec == a->codec) अणु
+		prev = NULL;
+		while (a) {
+			if (codec == a->codec) {
 				res = a->codec->unset(a->codec);
-				अगर (res >= 0) अणु
-					dprपूर्णांकk(3, "%s: '%s'\n", __func__, a->codec->name);
-					a->codec->master_data = शून्य;
-				पूर्ण अन्यथा अणु
+				if (res >= 0) {
+					dprintk(3, "%s: '%s'\n", __func__, a->codec->name);
+					a->codec->master_data = NULL;
+				} else {
 					pr_err("%s: '%s'\n", __func__, a->codec->name);
-					a->codec->master_data = शून्य;
-				पूर्ण
-				अगर (!prev) अणु
+					a->codec->master_data = NULL;
+				}
+				if (!prev) {
 					h->list = a->next;
-					dprपूर्णांकk(4, "videocodec: delete first\n");
-				पूर्ण अन्यथा अणु
+					dprintk(4, "videocodec: delete first\n");
+				} else {
 					prev->next = a->next;
-					dprपूर्णांकk(4, "videocodec: delete middle\n");
-				पूर्ण
+					dprintk(4, "videocodec: delete middle\n");
+				}
 				module_put(a->codec->owner);
-				kमुक्त(a->codec);
-				kमुक्त(a);
+				kfree(a->codec);
+				kfree(a);
 				h->attached -= 1;
-				वापस 0;
-			पूर्ण
+				return 0;
+			}
 			prev = a;
 			a = a->next;
-		पूर्ण
+		}
 		h = h->next;
-	पूर्ण
+	}
 
 	pr_err("%s: given codec not found!\n", __func__);
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 EXPORT_SYMBOL(videocodec_detach);
 
-पूर्णांक videocodec_रेजिस्टर(स्थिर काष्ठा videocodec *codec)
-अणु
-	काष्ठा codec_list *ptr, *h = codeclist_top;
+int videocodec_register(const struct videocodec *codec)
+{
+	struct codec_list *ptr, *h = codeclist_top;
 
-	अगर (!codec) अणु
+	if (!codec) {
 		pr_err("%s: no data!\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	dprपूर्णांकk(2,
+	dprintk(2,
 		"videocodec: register '%s', type: %x, flags %lx, magic %lx\n",
 		codec->name, codec->type, codec->flags, codec->magic);
 
-	ptr = kzalloc(माप(*ptr), GFP_KERNEL);
-	अगर (!ptr)
-		वापस -ENOMEM;
+	ptr = kzalloc(sizeof(*ptr), GFP_KERNEL);
+	if (!ptr)
+		return -ENOMEM;
 	ptr->codec = codec;
 
-	अगर (!h) अणु
+	if (!h) {
 		codeclist_top = ptr;
-		dprपूर्णांकk(4, "videocodec: hooked in as first element\n");
-	पूर्ण अन्यथा अणु
-		जबतक (h->next)
+		dprintk(4, "videocodec: hooked in as first element\n");
+	} else {
+		while (h->next)
 			h = h->next;	// find the end
 		h->next = ptr;
-		dprपूर्णांकk(4, "videocodec: hooked in after '%s'\n",
+		dprintk(4, "videocodec: hooked in after '%s'\n",
 			h->codec->name);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(videocodec_रेजिस्टर);
+	return 0;
+}
+EXPORT_SYMBOL(videocodec_register);
 
-पूर्णांक videocodec_unरेजिस्टर(स्थिर काष्ठा videocodec *codec)
-अणु
-	काष्ठा codec_list *prev = शून्य, *h = codeclist_top;
+int videocodec_unregister(const struct videocodec *codec)
+{
+	struct codec_list *prev = NULL, *h = codeclist_top;
 
-	अगर (!codec) अणु
+	if (!codec) {
 		pr_err("%s: no data!\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	dprपूर्णांकk(2,
+	dprintk(2,
 		"videocodec: unregister '%s', type: %x, flags %lx, magic %lx\n",
 		codec->name, codec->type, codec->flags, codec->magic);
 
-	अगर (!h) अणु
+	if (!h) {
 		pr_err("%s: no device left...\n", __func__);
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
-	जबतक (h) अणु
-		अगर (codec == h->codec) अणु
-			अगर (h->attached) अणु
+	while (h) {
+		if (codec == h->codec) {
+			if (h->attached) {
 				pr_err("videocodec: '%s' is used\n", h->codec->name);
-				वापस -EBUSY;
-			पूर्ण
-			dprपूर्णांकk(3, "videocodec: unregister '%s' is ok.\n",
+				return -EBUSY;
+			}
+			dprintk(3, "videocodec: unregister '%s' is ok.\n",
 				h->codec->name);
-			अगर (!prev) अणु
+			if (!prev) {
 				codeclist_top = h->next;
-				dprपूर्णांकk(4,
+				dprintk(4,
 					"videocodec: delete first element\n");
-			पूर्ण अन्यथा अणु
+			} else {
 				prev->next = h->next;
-				dprपूर्णांकk(4,
+				dprintk(4,
 					"videocodec: delete middle element\n");
-			पूर्ण
-			kमुक्त(h);
-			वापस 0;
-		पूर्ण
+			}
+			kfree(h);
+			return 0;
+		}
 		prev = h;
 		h = h->next;
-	पूर्ण
+	}
 
 	pr_err("%s: given codec not found!\n", __func__);
-	वापस -EINVAL;
-पूर्ण
-EXPORT_SYMBOL(videocodec_unरेजिस्टर);
+	return -EINVAL;
+}
+EXPORT_SYMBOL(videocodec_unregister);
 
-#अगर_घोषित CONFIG_PROC_FS
-अटल पूर्णांक proc_videocodecs_show(काष्ठा seq_file *m, व्योम *v)
-अणु
-	काष्ठा codec_list *h = codeclist_top;
-	काष्ठा attached_list *a;
+#ifdef CONFIG_PROC_FS
+static int proc_videocodecs_show(struct seq_file *m, void *v)
+{
+	struct codec_list *h = codeclist_top;
+	struct attached_list *a;
 
-	seq_म_लिखो(m, "<S>lave or attached <M>aster name  type flags    magic    ");
-	seq_म_लिखो(m, "(connected as)\n");
+	seq_printf(m, "<S>lave or attached <M>aster name  type flags    magic    ");
+	seq_printf(m, "(connected as)\n");
 
-	जबतक (h) अणु
-		seq_म_लिखो(m, "S %32s %04x %08lx %08lx (TEMPLATE)\n",
+	while (h) {
+		seq_printf(m, "S %32s %04x %08lx %08lx (TEMPLATE)\n",
 			   h->codec->name, h->codec->type,
 			      h->codec->flags, h->codec->magic);
 		a = h->list;
-		जबतक (a) अणु
-			seq_म_लिखो(m, "M %32s %04x %08lx %08lx (%s)\n",
+		while (a) {
+			seq_printf(m, "M %32s %04x %08lx %08lx (%s)\n",
 				   a->codec->master_data->name,
 				      a->codec->master_data->type,
 				      a->codec->master_data->flags,
 				      a->codec->master_data->magic,
 				      a->codec->name);
 			a = a->next;
-		पूर्ण
+		}
 		h = h->next;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
 /* ===================== */
 /* hook in driver module */
 /* ===================== */
-अटल पूर्णांक __init videocodec_init(व्योम)
-अणु
-#अगर_घोषित CONFIG_PROC_FS
-	अटल काष्ठा proc_dir_entry *videocodec_proc_entry;
-#पूर्ण_अगर
+static int __init videocodec_init(void)
+{
+#ifdef CONFIG_PROC_FS
+	static struct proc_dir_entry *videocodec_proc_entry;
+#endif
 
 	pr_info("Linux video codec intermediate layer: %s\n", VIDEOCODEC_VERSION);
 
-#अगर_घोषित CONFIG_PROC_FS
-	videocodec_proc_entry = proc_create_single("videocodecs", 0, शून्य, proc_videocodecs_show);
-	अगर (!videocodec_proc_entry)
+#ifdef CONFIG_PROC_FS
+	videocodec_proc_entry = proc_create_single("videocodecs", 0, NULL, proc_videocodecs_show);
+	if (!videocodec_proc_entry)
 		pr_err("videocodec: can't init procfs.\n");
-#पूर्ण_अगर
-	वापस 0;
-पूर्ण
+#endif
+	return 0;
+}
 
-अटल व्योम __निकास videocodec_निकास(व्योम)
-अणु
-#अगर_घोषित CONFIG_PROC_FS
-	हटाओ_proc_entry("videocodecs", शून्य);
-#पूर्ण_अगर
-पूर्ण
+static void __exit videocodec_exit(void)
+{
+#ifdef CONFIG_PROC_FS
+	remove_proc_entry("videocodecs", NULL);
+#endif
+}
 
 module_init(videocodec_init);
-module_निकास(videocodec_निकास);
+module_exit(videocodec_exit);
 
 MODULE_AUTHOR("Wolfgang Scherr <scherr@net4you.at>");
 MODULE_DESCRIPTION("Intermediate API module for video codecs "

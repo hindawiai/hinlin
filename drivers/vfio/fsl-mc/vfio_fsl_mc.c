@@ -1,112 +1,111 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (GPL-2.0+ OR BSD-3-Clause)
+// SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
 /*
  * Copyright 2013-2016 Freescale Semiconductor Inc.
  * Copyright 2016-2017,2019-2020 NXP
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/iommu.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/types.h>
-#समावेश <linux/vfपन.स>
-#समावेश <linux/fsl/mc.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/io-64-nonatomic-hi-lo.h>
+#include <linux/device.h>
+#include <linux/iommu.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <linux/slab.h>
+#include <linux/types.h>
+#include <linux/vfio.h>
+#include <linux/fsl/mc.h>
+#include <linux/delay.h>
+#include <linux/io-64-nonatomic-hi-lo.h>
 
-#समावेश "vfio_fsl_mc_private.h"
+#include "vfio_fsl_mc_private.h"
 
-अटल काष्ठा fsl_mc_driver vfio_fsl_mc_driver;
+static struct fsl_mc_driver vfio_fsl_mc_driver;
 
-अटल DEFINE_MUTEX(reflck_lock);
+static DEFINE_MUTEX(reflck_lock);
 
-अटल व्योम vfio_fsl_mc_reflck_get(काष्ठा vfio_fsl_mc_reflck *reflck)
-अणु
+static void vfio_fsl_mc_reflck_get(struct vfio_fsl_mc_reflck *reflck)
+{
 	kref_get(&reflck->kref);
-पूर्ण
+}
 
-अटल व्योम vfio_fsl_mc_reflck_release(काष्ठा kref *kref)
-अणु
-	काष्ठा vfio_fsl_mc_reflck *reflck = container_of(kref,
-						      काष्ठा vfio_fsl_mc_reflck,
+static void vfio_fsl_mc_reflck_release(struct kref *kref)
+{
+	struct vfio_fsl_mc_reflck *reflck = container_of(kref,
+						      struct vfio_fsl_mc_reflck,
 						      kref);
 
 	mutex_destroy(&reflck->lock);
-	kमुक्त(reflck);
+	kfree(reflck);
 	mutex_unlock(&reflck_lock);
-पूर्ण
+}
 
-अटल व्योम vfio_fsl_mc_reflck_put(काष्ठा vfio_fsl_mc_reflck *reflck)
-अणु
+static void vfio_fsl_mc_reflck_put(struct vfio_fsl_mc_reflck *reflck)
+{
 	kref_put_mutex(&reflck->kref, vfio_fsl_mc_reflck_release, &reflck_lock);
-पूर्ण
+}
 
-अटल काष्ठा vfio_fsl_mc_reflck *vfio_fsl_mc_reflck_alloc(व्योम)
-अणु
-	काष्ठा vfio_fsl_mc_reflck *reflck;
+static struct vfio_fsl_mc_reflck *vfio_fsl_mc_reflck_alloc(void)
+{
+	struct vfio_fsl_mc_reflck *reflck;
 
-	reflck = kzalloc(माप(*reflck), GFP_KERNEL);
-	अगर (!reflck)
-		वापस ERR_PTR(-ENOMEM);
+	reflck = kzalloc(sizeof(*reflck), GFP_KERNEL);
+	if (!reflck)
+		return ERR_PTR(-ENOMEM);
 
 	kref_init(&reflck->kref);
 	mutex_init(&reflck->lock);
 
-	वापस reflck;
-पूर्ण
+	return reflck;
+}
 
-अटल पूर्णांक vfio_fsl_mc_reflck_attach(काष्ठा vfio_fsl_mc_device *vdev)
-अणु
-	पूर्णांक ret = 0;
+static int vfio_fsl_mc_reflck_attach(struct vfio_fsl_mc_device *vdev)
+{
+	int ret = 0;
 
 	mutex_lock(&reflck_lock);
-	अगर (is_fsl_mc_bus_dprc(vdev->mc_dev)) अणु
+	if (is_fsl_mc_bus_dprc(vdev->mc_dev)) {
 		vdev->reflck = vfio_fsl_mc_reflck_alloc();
 		ret = PTR_ERR_OR_ZERO(vdev->reflck);
-	पूर्ण अन्यथा अणु
-		काष्ठा device *mc_cont_dev = vdev->mc_dev->dev.parent;
-		काष्ठा vfio_device *device;
-		काष्ठा vfio_fsl_mc_device *cont_vdev;
+	} else {
+		struct device *mc_cont_dev = vdev->mc_dev->dev.parent;
+		struct vfio_device *device;
+		struct vfio_fsl_mc_device *cont_vdev;
 
 		device = vfio_device_get_from_dev(mc_cont_dev);
-		अगर (!device) अणु
+		if (!device) {
 			ret = -ENODEV;
-			जाओ unlock;
-		पूर्ण
+			goto unlock;
+		}
 
 		cont_vdev =
-			container_of(device, काष्ठा vfio_fsl_mc_device, vdev);
-		अगर (!cont_vdev || !cont_vdev->reflck) अणु
+			container_of(device, struct vfio_fsl_mc_device, vdev);
+		if (!cont_vdev || !cont_vdev->reflck) {
 			vfio_device_put(device);
 			ret = -ENODEV;
-			जाओ unlock;
-		पूर्ण
+			goto unlock;
+		}
 		vfio_fsl_mc_reflck_get(cont_vdev->reflck);
 		vdev->reflck = cont_vdev->reflck;
 		vfio_device_put(device);
-	पूर्ण
+	}
 
 unlock:
 	mutex_unlock(&reflck_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक vfio_fsl_mc_regions_init(काष्ठा vfio_fsl_mc_device *vdev)
-अणु
-	काष्ठा fsl_mc_device *mc_dev = vdev->mc_dev;
-	पूर्णांक count = mc_dev->obj_desc.region_count;
-	पूर्णांक i;
+static int vfio_fsl_mc_regions_init(struct vfio_fsl_mc_device *vdev)
+{
+	struct fsl_mc_device *mc_dev = vdev->mc_dev;
+	int count = mc_dev->obj_desc.region_count;
+	int i;
 
-	vdev->regions = kसुस्मृति(count, माप(काष्ठा vfio_fsl_mc_region),
+	vdev->regions = kcalloc(count, sizeof(struct vfio_fsl_mc_region),
 				GFP_KERNEL);
-	अगर (!vdev->regions)
-		वापस -ENOMEM;
+	if (!vdev->regions)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < count; i++) अणु
-		काष्ठा resource *res = &mc_dev->regions[i];
-		पूर्णांक no_mmap = is_fsl_mc_bus_dprc(mc_dev);
+	for (i = 0; i < count; i++) {
+		struct resource *res = &mc_dev->regions[i];
+		int no_mmap = is_fsl_mc_bus_dprc(mc_dev);
 
 		vdev->regions[i].addr = res->start;
 		vdev->regions[i].size = resource_size(res);
@@ -115,345 +114,345 @@ unlock:
 		 * Only regions addressed with PAGE granularity may be
 		 * MMAPed securely.
 		 */
-		अगर (!no_mmap && !(vdev->regions[i].addr & ~PAGE_MASK) &&
+		if (!no_mmap && !(vdev->regions[i].addr & ~PAGE_MASK) &&
 				!(vdev->regions[i].size & ~PAGE_MASK))
 			vdev->regions[i].flags |=
 					VFIO_REGION_INFO_FLAG_MMAP;
 		vdev->regions[i].flags |= VFIO_REGION_INFO_FLAG_READ;
-		अगर (!(mc_dev->regions[i].flags & IORESOURCE_READONLY))
+		if (!(mc_dev->regions[i].flags & IORESOURCE_READONLY))
 			vdev->regions[i].flags |= VFIO_REGION_INFO_FLAG_WRITE;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम vfio_fsl_mc_regions_cleanup(काष्ठा vfio_fsl_mc_device *vdev)
-अणु
-	काष्ठा fsl_mc_device *mc_dev = vdev->mc_dev;
-	पूर्णांक i;
+static void vfio_fsl_mc_regions_cleanup(struct vfio_fsl_mc_device *vdev)
+{
+	struct fsl_mc_device *mc_dev = vdev->mc_dev;
+	int i;
 
-	क्रम (i = 0; i < mc_dev->obj_desc.region_count; i++)
+	for (i = 0; i < mc_dev->obj_desc.region_count; i++)
 		iounmap(vdev->regions[i].ioaddr);
-	kमुक्त(vdev->regions);
-पूर्ण
+	kfree(vdev->regions);
+}
 
-अटल पूर्णांक vfio_fsl_mc_खोलो(काष्ठा vfio_device *core_vdev)
-अणु
-	काष्ठा vfio_fsl_mc_device *vdev =
-		container_of(core_vdev, काष्ठा vfio_fsl_mc_device, vdev);
-	पूर्णांक ret;
+static int vfio_fsl_mc_open(struct vfio_device *core_vdev)
+{
+	struct vfio_fsl_mc_device *vdev =
+		container_of(core_vdev, struct vfio_fsl_mc_device, vdev);
+	int ret;
 
-	अगर (!try_module_get(THIS_MODULE))
-		वापस -ENODEV;
+	if (!try_module_get(THIS_MODULE))
+		return -ENODEV;
 
 	mutex_lock(&vdev->reflck->lock);
-	अगर (!vdev->refcnt) अणु
+	if (!vdev->refcnt) {
 		ret = vfio_fsl_mc_regions_init(vdev);
-		अगर (ret)
-			जाओ err_reg_init;
-	पूर्ण
+		if (ret)
+			goto err_reg_init;
+	}
 	vdev->refcnt++;
 
 	mutex_unlock(&vdev->reflck->lock);
 
-	वापस 0;
+	return 0;
 
 err_reg_init:
 	mutex_unlock(&vdev->reflck->lock);
 	module_put(THIS_MODULE);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम vfio_fsl_mc_release(काष्ठा vfio_device *core_vdev)
-अणु
-	काष्ठा vfio_fsl_mc_device *vdev =
-		container_of(core_vdev, काष्ठा vfio_fsl_mc_device, vdev);
-	पूर्णांक ret;
+static void vfio_fsl_mc_release(struct vfio_device *core_vdev)
+{
+	struct vfio_fsl_mc_device *vdev =
+		container_of(core_vdev, struct vfio_fsl_mc_device, vdev);
+	int ret;
 
 	mutex_lock(&vdev->reflck->lock);
 
-	अगर (!(--vdev->refcnt)) अणु
-		काष्ठा fsl_mc_device *mc_dev = vdev->mc_dev;
-		काष्ठा device *cont_dev = fsl_mc_cont_dev(&mc_dev->dev);
-		काष्ठा fsl_mc_device *mc_cont = to_fsl_mc_device(cont_dev);
+	if (!(--vdev->refcnt)) {
+		struct fsl_mc_device *mc_dev = vdev->mc_dev;
+		struct device *cont_dev = fsl_mc_cont_dev(&mc_dev->dev);
+		struct fsl_mc_device *mc_cont = to_fsl_mc_device(cont_dev);
 
 		vfio_fsl_mc_regions_cleanup(vdev);
 
-		/* reset the device beक्रमe cleaning up the पूर्णांकerrupts */
+		/* reset the device before cleaning up the interrupts */
 		ret = dprc_reset_container(mc_cont->mc_io, 0,
 		      mc_cont->mc_handle,
 			  mc_cont->obj_desc.id,
 			  DPRC_RESET_OPTION_NON_RECURSIVE);
 
-		अगर (ret) अणु
+		if (ret) {
 			dev_warn(&mc_cont->dev, "VFIO_FLS_MC: reset device has failed (%d)\n",
 				 ret);
 			WARN_ON(1);
-		पूर्ण
+		}
 
 		vfio_fsl_mc_irqs_cleanup(vdev);
 
 		fsl_mc_cleanup_irq_pool(mc_cont);
-	पूर्ण
+	}
 
 	mutex_unlock(&vdev->reflck->lock);
 
 	module_put(THIS_MODULE);
-पूर्ण
+}
 
-अटल दीर्घ vfio_fsl_mc_ioctl(काष्ठा vfio_device *core_vdev,
-			      अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	अचिन्हित दीर्घ minsz;
-	काष्ठा vfio_fsl_mc_device *vdev =
-		container_of(core_vdev, काष्ठा vfio_fsl_mc_device, vdev);
-	काष्ठा fsl_mc_device *mc_dev = vdev->mc_dev;
+static long vfio_fsl_mc_ioctl(struct vfio_device *core_vdev,
+			      unsigned int cmd, unsigned long arg)
+{
+	unsigned long minsz;
+	struct vfio_fsl_mc_device *vdev =
+		container_of(core_vdev, struct vfio_fsl_mc_device, vdev);
+	struct fsl_mc_device *mc_dev = vdev->mc_dev;
 
-	चयन (cmd) अणु
-	हाल VFIO_DEVICE_GET_INFO:
-	अणु
-		काष्ठा vfio_device_info info;
+	switch (cmd) {
+	case VFIO_DEVICE_GET_INFO:
+	{
+		struct vfio_device_info info;
 
-		minsz = दुरत्वend(काष्ठा vfio_device_info, num_irqs);
+		minsz = offsetofend(struct vfio_device_info, num_irqs);
 
-		अगर (copy_from_user(&info, (व्योम __user *)arg, minsz))
-			वापस -EFAULT;
+		if (copy_from_user(&info, (void __user *)arg, minsz))
+			return -EFAULT;
 
-		अगर (info.argsz < minsz)
-			वापस -EINVAL;
+		if (info.argsz < minsz)
+			return -EINVAL;
 
 		info.flags = VFIO_DEVICE_FLAGS_FSL_MC;
 
-		अगर (is_fsl_mc_bus_dprc(mc_dev))
+		if (is_fsl_mc_bus_dprc(mc_dev))
 			info.flags |= VFIO_DEVICE_FLAGS_RESET;
 
 		info.num_regions = mc_dev->obj_desc.region_count;
 		info.num_irqs = mc_dev->obj_desc.irq_count;
 
-		वापस copy_to_user((व्योम __user *)arg, &info, minsz) ?
+		return copy_to_user((void __user *)arg, &info, minsz) ?
 			-EFAULT : 0;
-	पूर्ण
-	हाल VFIO_DEVICE_GET_REGION_INFO:
-	अणु
-		काष्ठा vfio_region_info info;
+	}
+	case VFIO_DEVICE_GET_REGION_INFO:
+	{
+		struct vfio_region_info info;
 
-		minsz = दुरत्वend(काष्ठा vfio_region_info, offset);
+		minsz = offsetofend(struct vfio_region_info, offset);
 
-		अगर (copy_from_user(&info, (व्योम __user *)arg, minsz))
-			वापस -EFAULT;
+		if (copy_from_user(&info, (void __user *)arg, minsz))
+			return -EFAULT;
 
-		अगर (info.argsz < minsz)
-			वापस -EINVAL;
+		if (info.argsz < minsz)
+			return -EINVAL;
 
-		अगर (info.index >= mc_dev->obj_desc.region_count)
-			वापस -EINVAL;
+		if (info.index >= mc_dev->obj_desc.region_count)
+			return -EINVAL;
 
 		/* map offset to the physical address  */
 		info.offset = VFIO_FSL_MC_INDEX_TO_OFFSET(info.index);
 		info.size = vdev->regions[info.index].size;
 		info.flags = vdev->regions[info.index].flags;
 
-		अगर (copy_to_user((व्योम __user *)arg, &info, minsz))
-			वापस -EFAULT;
-		वापस 0;
-	पूर्ण
-	हाल VFIO_DEVICE_GET_IRQ_INFO:
-	अणु
-		काष्ठा vfio_irq_info info;
+		if (copy_to_user((void __user *)arg, &info, minsz))
+			return -EFAULT;
+		return 0;
+	}
+	case VFIO_DEVICE_GET_IRQ_INFO:
+	{
+		struct vfio_irq_info info;
 
-		minsz = दुरत्वend(काष्ठा vfio_irq_info, count);
-		अगर (copy_from_user(&info, (व्योम __user *)arg, minsz))
-			वापस -EFAULT;
+		minsz = offsetofend(struct vfio_irq_info, count);
+		if (copy_from_user(&info, (void __user *)arg, minsz))
+			return -EFAULT;
 
-		अगर (info.argsz < minsz)
-			वापस -EINVAL;
+		if (info.argsz < minsz)
+			return -EINVAL;
 
-		अगर (info.index >= mc_dev->obj_desc.irq_count)
-			वापस -EINVAL;
+		if (info.index >= mc_dev->obj_desc.irq_count)
+			return -EINVAL;
 
 		info.flags = VFIO_IRQ_INFO_EVENTFD;
 		info.count = 1;
 
-		अगर (copy_to_user((व्योम __user *)arg, &info, minsz))
-			वापस -EFAULT;
-		वापस 0;
-	पूर्ण
-	हाल VFIO_DEVICE_SET_IRQS:
-	अणु
-		काष्ठा vfio_irq_set hdr;
-		u8 *data = शून्य;
-		पूर्णांक ret = 0;
-		माप_प्रकार data_size = 0;
+		if (copy_to_user((void __user *)arg, &info, minsz))
+			return -EFAULT;
+		return 0;
+	}
+	case VFIO_DEVICE_SET_IRQS:
+	{
+		struct vfio_irq_set hdr;
+		u8 *data = NULL;
+		int ret = 0;
+		size_t data_size = 0;
 
-		minsz = दुरत्वend(काष्ठा vfio_irq_set, count);
+		minsz = offsetofend(struct vfio_irq_set, count);
 
-		अगर (copy_from_user(&hdr, (व्योम __user *)arg, minsz))
-			वापस -EFAULT;
+		if (copy_from_user(&hdr, (void __user *)arg, minsz))
+			return -EFAULT;
 
 		ret = vfio_set_irqs_validate_and_prepare(&hdr, mc_dev->obj_desc.irq_count,
 					mc_dev->obj_desc.irq_count, &data_size);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-		अगर (data_size) अणु
-			data = memdup_user((व्योम __user *)(arg + minsz),
+		if (data_size) {
+			data = memdup_user((void __user *)(arg + minsz),
 				   data_size);
-			अगर (IS_ERR(data))
-				वापस PTR_ERR(data);
-		पूर्ण
+			if (IS_ERR(data))
+				return PTR_ERR(data);
+		}
 
 		mutex_lock(&vdev->igate);
 		ret = vfio_fsl_mc_set_irqs_ioctl(vdev, hdr.flags,
 						 hdr.index, hdr.start,
 						 hdr.count, data);
 		mutex_unlock(&vdev->igate);
-		kमुक्त(data);
+		kfree(data);
 
-		वापस ret;
-	पूर्ण
-	हाल VFIO_DEVICE_RESET:
-	अणु
-		पूर्णांक ret;
-		काष्ठा fsl_mc_device *mc_dev = vdev->mc_dev;
+		return ret;
+	}
+	case VFIO_DEVICE_RESET:
+	{
+		int ret;
+		struct fsl_mc_device *mc_dev = vdev->mc_dev;
 
-		/* reset is supported only क्रम the DPRC */
-		अगर (!is_fsl_mc_bus_dprc(mc_dev))
-			वापस -ENOTTY;
+		/* reset is supported only for the DPRC */
+		if (!is_fsl_mc_bus_dprc(mc_dev))
+			return -ENOTTY;
 
 		ret = dprc_reset_container(mc_dev->mc_io, 0,
 					   mc_dev->mc_handle,
 					   mc_dev->obj_desc.id,
 					   DPRC_RESET_OPTION_NON_RECURSIVE);
-		वापस ret;
+		return ret;
 
-	पूर्ण
-	शेष:
-		वापस -ENOTTY;
-	पूर्ण
-पूर्ण
+	}
+	default:
+		return -ENOTTY;
+	}
+}
 
-अटल sमाप_प्रकार vfio_fsl_mc_पढ़ो(काष्ठा vfio_device *core_vdev, अक्षर __user *buf,
-				माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा vfio_fsl_mc_device *vdev =
-		container_of(core_vdev, काष्ठा vfio_fsl_mc_device, vdev);
-	अचिन्हित पूर्णांक index = VFIO_FSL_MC_OFFSET_TO_INDEX(*ppos);
+static ssize_t vfio_fsl_mc_read(struct vfio_device *core_vdev, char __user *buf,
+				size_t count, loff_t *ppos)
+{
+	struct vfio_fsl_mc_device *vdev =
+		container_of(core_vdev, struct vfio_fsl_mc_device, vdev);
+	unsigned int index = VFIO_FSL_MC_OFFSET_TO_INDEX(*ppos);
 	loff_t off = *ppos & VFIO_FSL_MC_OFFSET_MASK;
-	काष्ठा fsl_mc_device *mc_dev = vdev->mc_dev;
-	काष्ठा vfio_fsl_mc_region *region;
+	struct fsl_mc_device *mc_dev = vdev->mc_dev;
+	struct vfio_fsl_mc_region *region;
 	u64 data[8];
-	पूर्णांक i;
+	int i;
 
-	अगर (index >= mc_dev->obj_desc.region_count)
-		वापस -EINVAL;
+	if (index >= mc_dev->obj_desc.region_count)
+		return -EINVAL;
 
 	region = &vdev->regions[index];
 
-	अगर (!(region->flags & VFIO_REGION_INFO_FLAG_READ))
-		वापस -EINVAL;
+	if (!(region->flags & VFIO_REGION_INFO_FLAG_READ))
+		return -EINVAL;
 
-	अगर (!region->ioaddr) अणु
+	if (!region->ioaddr) {
 		region->ioaddr = ioremap(region->addr, region->size);
-		अगर (!region->ioaddr)
-			वापस -ENOMEM;
-	पूर्ण
+		if (!region->ioaddr)
+			return -ENOMEM;
+	}
 
-	अगर (count != 64 || off != 0)
-		वापस -EINVAL;
+	if (count != 64 || off != 0)
+		return -EINVAL;
 
-	क्रम (i = 7; i >= 0; i--)
-		data[i] = पढ़ोq(region->ioaddr + i * माप(uपूर्णांक64_t));
+	for (i = 7; i >= 0; i--)
+		data[i] = readq(region->ioaddr + i * sizeof(uint64_t));
 
-	अगर (copy_to_user(buf, data, 64))
-		वापस -EFAULT;
+	if (copy_to_user(buf, data, 64))
+		return -EFAULT;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-#घोषणा MC_CMD_COMPLETION_TIMEOUT_MS    5000
-#घोषणा MC_CMD_COMPLETION_POLLING_MAX_SLEEP_USECS    500
+#define MC_CMD_COMPLETION_TIMEOUT_MS    5000
+#define MC_CMD_COMPLETION_POLLING_MAX_SLEEP_USECS    500
 
-अटल पूर्णांक vfio_fsl_mc_send_command(व्योम __iomem *ioaddr, uपूर्णांक64_t *cmd_data)
-अणु
-	पूर्णांक i;
-	क्रमागत mc_cmd_status status;
-	अचिन्हित दीर्घ समयout_usecs = MC_CMD_COMPLETION_TIMEOUT_MS * 1000;
+static int vfio_fsl_mc_send_command(void __iomem *ioaddr, uint64_t *cmd_data)
+{
+	int i;
+	enum mc_cmd_status status;
+	unsigned long timeout_usecs = MC_CMD_COMPLETION_TIMEOUT_MS * 1000;
 
-	/* Write at command parameter पूर्णांकo portal */
-	क्रम (i = 7; i >= 1; i--)
-		ग_लिखोq_relaxed(cmd_data[i], ioaddr + i * माप(uपूर्णांक64_t));
+	/* Write at command parameter into portal */
+	for (i = 7; i >= 1; i--)
+		writeq_relaxed(cmd_data[i], ioaddr + i * sizeof(uint64_t));
 
 	/* Write command header in the end */
-	ग_लिखोq(cmd_data[0], ioaddr);
+	writeq(cmd_data[0], ioaddr);
 
-	/* Wait क्रम response beक्रमe वापसing to user-space
+	/* Wait for response before returning to user-space
 	 * This can be optimized in future to even prepare response
-	 * beक्रमe वापसing to user-space and aव्योम पढ़ो ioctl.
+	 * before returning to user-space and avoid read ioctl.
 	 */
-	क्रम (;;) अणु
+	for (;;) {
 		u64 header;
-		काष्ठा mc_cmd_header *resp_hdr;
+		struct mc_cmd_header *resp_hdr;
 
-		header = cpu_to_le64(पढ़ोq_relaxed(ioaddr));
+		header = cpu_to_le64(readq_relaxed(ioaddr));
 
-		resp_hdr = (काष्ठा mc_cmd_header *)&header;
-		status = (क्रमागत mc_cmd_status)resp_hdr->status;
-		अगर (status != MC_CMD_STATUS_READY)
-			अवरोध;
+		resp_hdr = (struct mc_cmd_header *)&header;
+		status = (enum mc_cmd_status)resp_hdr->status;
+		if (status != MC_CMD_STATUS_READY)
+			break;
 
 		udelay(MC_CMD_COMPLETION_POLLING_MAX_SLEEP_USECS);
-		समयout_usecs -= MC_CMD_COMPLETION_POLLING_MAX_SLEEP_USECS;
-		अगर (समयout_usecs == 0)
-			वापस -ETIMEDOUT;
-	पूर्ण
+		timeout_usecs -= MC_CMD_COMPLETION_POLLING_MAX_SLEEP_USECS;
+		if (timeout_usecs == 0)
+			return -ETIMEDOUT;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार vfio_fsl_mc_ग_लिखो(काष्ठा vfio_device *core_vdev,
-				 स्थिर अक्षर __user *buf, माप_प्रकार count,
+static ssize_t vfio_fsl_mc_write(struct vfio_device *core_vdev,
+				 const char __user *buf, size_t count,
 				 loff_t *ppos)
-अणु
-	काष्ठा vfio_fsl_mc_device *vdev =
-		container_of(core_vdev, काष्ठा vfio_fsl_mc_device, vdev);
-	अचिन्हित पूर्णांक index = VFIO_FSL_MC_OFFSET_TO_INDEX(*ppos);
+{
+	struct vfio_fsl_mc_device *vdev =
+		container_of(core_vdev, struct vfio_fsl_mc_device, vdev);
+	unsigned int index = VFIO_FSL_MC_OFFSET_TO_INDEX(*ppos);
 	loff_t off = *ppos & VFIO_FSL_MC_OFFSET_MASK;
-	काष्ठा fsl_mc_device *mc_dev = vdev->mc_dev;
-	काष्ठा vfio_fsl_mc_region *region;
+	struct fsl_mc_device *mc_dev = vdev->mc_dev;
+	struct vfio_fsl_mc_region *region;
 	u64 data[8];
-	पूर्णांक ret;
+	int ret;
 
-	अगर (index >= mc_dev->obj_desc.region_count)
-		वापस -EINVAL;
+	if (index >= mc_dev->obj_desc.region_count)
+		return -EINVAL;
 
 	region = &vdev->regions[index];
 
-	अगर (!(region->flags & VFIO_REGION_INFO_FLAG_WRITE))
-		वापस -EINVAL;
+	if (!(region->flags & VFIO_REGION_INFO_FLAG_WRITE))
+		return -EINVAL;
 
-	अगर (!region->ioaddr) अणु
+	if (!region->ioaddr) {
 		region->ioaddr = ioremap(region->addr, region->size);
-		अगर (!region->ioaddr)
-			वापस -ENOMEM;
-	पूर्ण
+		if (!region->ioaddr)
+			return -ENOMEM;
+	}
 
-	अगर (count != 64 || off != 0)
-		वापस -EINVAL;
+	if (count != 64 || off != 0)
+		return -EINVAL;
 
-	अगर (copy_from_user(&data, buf, 64))
-		वापस -EFAULT;
+	if (copy_from_user(&data, buf, 64))
+		return -EFAULT;
 
 	ret = vfio_fsl_mc_send_command(region->ioaddr, data);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस count;
+	return count;
 
-पूर्ण
+}
 
-अटल पूर्णांक vfio_fsl_mc_mmap_mmio(काष्ठा vfio_fsl_mc_region region,
-				 काष्ठा vm_area_काष्ठा *vma)
-अणु
+static int vfio_fsl_mc_mmap_mmio(struct vfio_fsl_mc_region region,
+				 struct vm_area_struct *vma)
+{
 	u64 size = vma->vm_end - vma->vm_start;
 	u64 pgoff, base;
 	u8 region_cacheable;
@@ -462,258 +461,258 @@ err_reg_init:
 		((1U << (VFIO_FSL_MC_OFFSET_SHIFT - PAGE_SHIFT)) - 1);
 	base = pgoff << PAGE_SHIFT;
 
-	अगर (region.size < PAGE_SIZE || base + size > region.size)
-		वापस -EINVAL;
+	if (region.size < PAGE_SIZE || base + size > region.size)
+		return -EINVAL;
 
 	region_cacheable = (region.type & FSL_MC_REGION_CACHEABLE) &&
 			   (region.type & FSL_MC_REGION_SHAREABLE);
-	अगर (!region_cacheable)
+	if (!region_cacheable)
 		vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
 
 	vma->vm_pgoff = (region.addr >> PAGE_SHIFT) + pgoff;
 
-	वापस remap_pfn_range(vma, vma->vm_start, vma->vm_pgoff,
+	return remap_pfn_range(vma, vma->vm_start, vma->vm_pgoff,
 			       size, vma->vm_page_prot);
-पूर्ण
+}
 
-अटल पूर्णांक vfio_fsl_mc_mmap(काष्ठा vfio_device *core_vdev,
-			    काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा vfio_fsl_mc_device *vdev =
-		container_of(core_vdev, काष्ठा vfio_fsl_mc_device, vdev);
-	काष्ठा fsl_mc_device *mc_dev = vdev->mc_dev;
-	अचिन्हित पूर्णांक index;
+static int vfio_fsl_mc_mmap(struct vfio_device *core_vdev,
+			    struct vm_area_struct *vma)
+{
+	struct vfio_fsl_mc_device *vdev =
+		container_of(core_vdev, struct vfio_fsl_mc_device, vdev);
+	struct fsl_mc_device *mc_dev = vdev->mc_dev;
+	unsigned int index;
 
 	index = vma->vm_pgoff >> (VFIO_FSL_MC_OFFSET_SHIFT - PAGE_SHIFT);
 
-	अगर (vma->vm_end < vma->vm_start)
-		वापस -EINVAL;
-	अगर (vma->vm_start & ~PAGE_MASK)
-		वापस -EINVAL;
-	अगर (vma->vm_end & ~PAGE_MASK)
-		वापस -EINVAL;
-	अगर (!(vma->vm_flags & VM_SHARED))
-		वापस -EINVAL;
-	अगर (index >= mc_dev->obj_desc.region_count)
-		वापस -EINVAL;
+	if (vma->vm_end < vma->vm_start)
+		return -EINVAL;
+	if (vma->vm_start & ~PAGE_MASK)
+		return -EINVAL;
+	if (vma->vm_end & ~PAGE_MASK)
+		return -EINVAL;
+	if (!(vma->vm_flags & VM_SHARED))
+		return -EINVAL;
+	if (index >= mc_dev->obj_desc.region_count)
+		return -EINVAL;
 
-	अगर (!(vdev->regions[index].flags & VFIO_REGION_INFO_FLAG_MMAP))
-		वापस -EINVAL;
+	if (!(vdev->regions[index].flags & VFIO_REGION_INFO_FLAG_MMAP))
+		return -EINVAL;
 
-	अगर (!(vdev->regions[index].flags & VFIO_REGION_INFO_FLAG_READ)
+	if (!(vdev->regions[index].flags & VFIO_REGION_INFO_FLAG_READ)
 			&& (vma->vm_flags & VM_READ))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर (!(vdev->regions[index].flags & VFIO_REGION_INFO_FLAG_WRITE)
+	if (!(vdev->regions[index].flags & VFIO_REGION_INFO_FLAG_WRITE)
 			&& (vma->vm_flags & VM_WRITE))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	vma->vm_निजी_data = mc_dev;
+	vma->vm_private_data = mc_dev;
 
-	वापस vfio_fsl_mc_mmap_mmio(vdev->regions[index], vma);
-पूर्ण
+	return vfio_fsl_mc_mmap_mmio(vdev->regions[index], vma);
+}
 
-अटल स्थिर काष्ठा vfio_device_ops vfio_fsl_mc_ops = अणु
+static const struct vfio_device_ops vfio_fsl_mc_ops = {
 	.name		= "vfio-fsl-mc",
-	.खोलो		= vfio_fsl_mc_खोलो,
+	.open		= vfio_fsl_mc_open,
 	.release	= vfio_fsl_mc_release,
 	.ioctl		= vfio_fsl_mc_ioctl,
-	.पढ़ो		= vfio_fsl_mc_पढ़ो,
-	.ग_लिखो		= vfio_fsl_mc_ग_लिखो,
+	.read		= vfio_fsl_mc_read,
+	.write		= vfio_fsl_mc_write,
 	.mmap		= vfio_fsl_mc_mmap,
-पूर्ण;
+};
 
-अटल पूर्णांक vfio_fsl_mc_bus_notअगरier(काष्ठा notअगरier_block *nb,
-				    अचिन्हित दीर्घ action, व्योम *data)
-अणु
-	काष्ठा vfio_fsl_mc_device *vdev = container_of(nb,
-					काष्ठा vfio_fsl_mc_device, nb);
-	काष्ठा device *dev = data;
-	काष्ठा fsl_mc_device *mc_dev = to_fsl_mc_device(dev);
-	काष्ठा fsl_mc_device *mc_cont = to_fsl_mc_device(mc_dev->dev.parent);
+static int vfio_fsl_mc_bus_notifier(struct notifier_block *nb,
+				    unsigned long action, void *data)
+{
+	struct vfio_fsl_mc_device *vdev = container_of(nb,
+					struct vfio_fsl_mc_device, nb);
+	struct device *dev = data;
+	struct fsl_mc_device *mc_dev = to_fsl_mc_device(dev);
+	struct fsl_mc_device *mc_cont = to_fsl_mc_device(mc_dev->dev.parent);
 
-	अगर (action == BUS_NOTIFY_ADD_DEVICE &&
-	    vdev->mc_dev == mc_cont) अणु
-		mc_dev->driver_override = kaप्र_लिखो(GFP_KERNEL, "%s",
+	if (action == BUS_NOTIFY_ADD_DEVICE &&
+	    vdev->mc_dev == mc_cont) {
+		mc_dev->driver_override = kasprintf(GFP_KERNEL, "%s",
 						    vfio_fsl_mc_ops.name);
-		अगर (!mc_dev->driver_override)
+		if (!mc_dev->driver_override)
 			dev_warn(dev, "VFIO_FSL_MC: Setting driver override for device in dprc %s failed\n",
 				 dev_name(&mc_cont->dev));
-		अन्यथा
+		else
 			dev_info(dev, "VFIO_FSL_MC: Setting driver override for device in dprc %s\n",
 				 dev_name(&mc_cont->dev));
-	पूर्ण अन्यथा अगर (action == BUS_NOTIFY_BOUND_DRIVER &&
-		vdev->mc_dev == mc_cont) अणु
-		काष्ठा fsl_mc_driver *mc_drv = to_fsl_mc_driver(dev->driver);
+	} else if (action == BUS_NOTIFY_BOUND_DRIVER &&
+		vdev->mc_dev == mc_cont) {
+		struct fsl_mc_driver *mc_drv = to_fsl_mc_driver(dev->driver);
 
-		अगर (mc_drv && mc_drv != &vfio_fsl_mc_driver)
+		if (mc_drv && mc_drv != &vfio_fsl_mc_driver)
 			dev_warn(dev, "VFIO_FSL_MC: Object %s bound to driver %s while DPRC bound to vfio-fsl-mc\n",
 				 dev_name(dev), mc_drv->driver.name);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vfio_fsl_mc_init_device(काष्ठा vfio_fsl_mc_device *vdev)
-अणु
-	काष्ठा fsl_mc_device *mc_dev = vdev->mc_dev;
-	पूर्णांक ret;
+static int vfio_fsl_mc_init_device(struct vfio_fsl_mc_device *vdev)
+{
+	struct fsl_mc_device *mc_dev = vdev->mc_dev;
+	int ret;
 
 	/* Non-dprc devices share mc_io from parent */
-	अगर (!is_fsl_mc_bus_dprc(mc_dev)) अणु
-		काष्ठा fsl_mc_device *mc_cont = to_fsl_mc_device(mc_dev->dev.parent);
+	if (!is_fsl_mc_bus_dprc(mc_dev)) {
+		struct fsl_mc_device *mc_cont = to_fsl_mc_device(mc_dev->dev.parent);
 
 		mc_dev->mc_io = mc_cont->mc_io;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	vdev->nb.notअगरier_call = vfio_fsl_mc_bus_notअगरier;
-	ret = bus_रेजिस्टर_notअगरier(&fsl_mc_bus_type, &vdev->nb);
-	अगर (ret)
-		वापस ret;
+	vdev->nb.notifier_call = vfio_fsl_mc_bus_notifier;
+	ret = bus_register_notifier(&fsl_mc_bus_type, &vdev->nb);
+	if (ret)
+		return ret;
 
-	/* खोलो DPRC, allocate a MC portal */
+	/* open DPRC, allocate a MC portal */
 	ret = dprc_setup(mc_dev);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&mc_dev->dev, "VFIO_FSL_MC: Failed to setup DPRC (%d)\n", ret);
-		जाओ out_nc_unreg;
-	पूर्ण
-	वापस 0;
+		goto out_nc_unreg;
+	}
+	return 0;
 
 out_nc_unreg:
-	bus_unरेजिस्टर_notअगरier(&fsl_mc_bus_type, &vdev->nb);
-	वापस ret;
-पूर्ण
+	bus_unregister_notifier(&fsl_mc_bus_type, &vdev->nb);
+	return ret;
+}
 
-अटल पूर्णांक vfio_fsl_mc_scan_container(काष्ठा fsl_mc_device *mc_dev)
-अणु
-	पूर्णांक ret;
+static int vfio_fsl_mc_scan_container(struct fsl_mc_device *mc_dev)
+{
+	int ret;
 
-	/* non dprc devices करो not scan क्रम other devices */
-	अगर (!is_fsl_mc_bus_dprc(mc_dev))
-		वापस 0;
+	/* non dprc devices do not scan for other devices */
+	if (!is_fsl_mc_bus_dprc(mc_dev))
+		return 0;
 	ret = dprc_scan_container(mc_dev, false);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&mc_dev->dev,
 			"VFIO_FSL_MC: Container scanning failed (%d)\n", ret);
-		dprc_हटाओ_devices(mc_dev, शून्य, 0);
-		वापस ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		dprc_remove_devices(mc_dev, NULL, 0);
+		return ret;
+	}
+	return 0;
+}
 
-अटल व्योम vfio_fsl_uninit_device(काष्ठा vfio_fsl_mc_device *vdev)
-अणु
-	काष्ठा fsl_mc_device *mc_dev = vdev->mc_dev;
+static void vfio_fsl_uninit_device(struct vfio_fsl_mc_device *vdev)
+{
+	struct fsl_mc_device *mc_dev = vdev->mc_dev;
 
-	अगर (!is_fsl_mc_bus_dprc(mc_dev))
-		वापस;
+	if (!is_fsl_mc_bus_dprc(mc_dev))
+		return;
 
 	dprc_cleanup(mc_dev);
-	bus_unरेजिस्टर_notअगरier(&fsl_mc_bus_type, &vdev->nb);
-पूर्ण
+	bus_unregister_notifier(&fsl_mc_bus_type, &vdev->nb);
+}
 
-अटल पूर्णांक vfio_fsl_mc_probe(काष्ठा fsl_mc_device *mc_dev)
-अणु
-	काष्ठा iommu_group *group;
-	काष्ठा vfio_fsl_mc_device *vdev;
-	काष्ठा device *dev = &mc_dev->dev;
-	पूर्णांक ret;
+static int vfio_fsl_mc_probe(struct fsl_mc_device *mc_dev)
+{
+	struct iommu_group *group;
+	struct vfio_fsl_mc_device *vdev;
+	struct device *dev = &mc_dev->dev;
+	int ret;
 
 	group = vfio_iommu_group_get(dev);
-	अगर (!group) अणु
+	if (!group) {
 		dev_err(dev, "VFIO_FSL_MC: No IOMMU group\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	vdev = kzalloc(माप(*vdev), GFP_KERNEL);
-	अगर (!vdev) अणु
+	vdev = kzalloc(sizeof(*vdev), GFP_KERNEL);
+	if (!vdev) {
 		ret = -ENOMEM;
-		जाओ out_group_put;
-	पूर्ण
+		goto out_group_put;
+	}
 
 	vfio_init_group_dev(&vdev->vdev, dev, &vfio_fsl_mc_ops);
 	vdev->mc_dev = mc_dev;
 	mutex_init(&vdev->igate);
 
 	ret = vfio_fsl_mc_reflck_attach(vdev);
-	अगर (ret)
-		जाओ out_kमुक्त;
+	if (ret)
+		goto out_kfree;
 
 	ret = vfio_fsl_mc_init_device(vdev);
-	अगर (ret)
-		जाओ out_reflck;
+	if (ret)
+		goto out_reflck;
 
-	ret = vfio_रेजिस्टर_group_dev(&vdev->vdev);
-	अगर (ret) अणु
+	ret = vfio_register_group_dev(&vdev->vdev);
+	if (ret) {
 		dev_err(dev, "VFIO_FSL_MC: Failed to add to vfio group\n");
-		जाओ out_device;
-	पूर्ण
+		goto out_device;
+	}
 
 	/*
-	 * This triggers recursion पूर्णांकo vfio_fsl_mc_probe() on another device
+	 * This triggers recursion into vfio_fsl_mc_probe() on another device
 	 * and the vfio_fsl_mc_reflck_attach() must succeed, which relies on the
 	 * vfio_add_group_dev() above. It has no impact on this vdev, so it is
 	 * safe to be after the vfio device is made live.
 	 */
 	ret = vfio_fsl_mc_scan_container(mc_dev);
-	अगर (ret)
-		जाओ out_group_dev;
+	if (ret)
+		goto out_group_dev;
 	dev_set_drvdata(dev, vdev);
-	वापस 0;
+	return 0;
 
 out_group_dev:
-	vfio_unरेजिस्टर_group_dev(&vdev->vdev);
+	vfio_unregister_group_dev(&vdev->vdev);
 out_device:
 	vfio_fsl_uninit_device(vdev);
 out_reflck:
 	vfio_fsl_mc_reflck_put(vdev->reflck);
-out_kमुक्त:
-	kमुक्त(vdev);
+out_kfree:
+	kfree(vdev);
 out_group_put:
 	vfio_iommu_group_put(group, dev);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक vfio_fsl_mc_हटाओ(काष्ठा fsl_mc_device *mc_dev)
-अणु
-	काष्ठा device *dev = &mc_dev->dev;
-	काष्ठा vfio_fsl_mc_device *vdev = dev_get_drvdata(dev);
+static int vfio_fsl_mc_remove(struct fsl_mc_device *mc_dev)
+{
+	struct device *dev = &mc_dev->dev;
+	struct vfio_fsl_mc_device *vdev = dev_get_drvdata(dev);
 
-	vfio_unरेजिस्टर_group_dev(&vdev->vdev);
+	vfio_unregister_group_dev(&vdev->vdev);
 	mutex_destroy(&vdev->igate);
 
-	dprc_हटाओ_devices(mc_dev, शून्य, 0);
+	dprc_remove_devices(mc_dev, NULL, 0);
 	vfio_fsl_uninit_device(vdev);
 	vfio_fsl_mc_reflck_put(vdev->reflck);
 
-	kमुक्त(vdev);
+	kfree(vdev);
 	vfio_iommu_group_put(mc_dev->dev.iommu_group, dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा fsl_mc_driver vfio_fsl_mc_driver = अणु
+static struct fsl_mc_driver vfio_fsl_mc_driver = {
 	.probe		= vfio_fsl_mc_probe,
-	.हटाओ		= vfio_fsl_mc_हटाओ,
-	.driver	= अणु
+	.remove		= vfio_fsl_mc_remove,
+	.driver	= {
 		.name	= "vfio-fsl-mc",
 		.owner	= THIS_MODULE,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init vfio_fsl_mc_driver_init(व्योम)
-अणु
-	वापस fsl_mc_driver_रेजिस्टर(&vfio_fsl_mc_driver);
-पूर्ण
+static int __init vfio_fsl_mc_driver_init(void)
+{
+	return fsl_mc_driver_register(&vfio_fsl_mc_driver);
+}
 
-अटल व्योम __निकास vfio_fsl_mc_driver_निकास(व्योम)
-अणु
-	fsl_mc_driver_unरेजिस्टर(&vfio_fsl_mc_driver);
-पूर्ण
+static void __exit vfio_fsl_mc_driver_exit(void)
+{
+	fsl_mc_driver_unregister(&vfio_fsl_mc_driver);
+}
 
 module_init(vfio_fsl_mc_driver_init);
-module_निकास(vfio_fsl_mc_driver_निकास);
+module_exit(vfio_fsl_mc_driver_exit);
 
 MODULE_LICENSE("Dual BSD/GPL");
 MODULE_DESCRIPTION("VFIO for FSL-MC devices - User Level meta-driver");

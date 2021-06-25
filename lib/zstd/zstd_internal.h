@@ -1,4 +1,3 @@
-<शैली गुरु>
 /**
  * Copyright (c) 2016-present, Yann Collet, Facebook, Inc.
  * All rights reserved.
@@ -8,185 +7,185 @@
  * An additional grant of patent rights can be found in the PATENTS file in the
  * same directory.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it under
+ * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License version 2 as published by the
  * Free Software Foundation. This program is dual-licensed; you may select
  * either version 2 of the GNU General Public License ("GPL") or BSD license
  * ("BSD").
  */
 
-#अगर_अघोषित ZSTD_CCOMMON_H_MODULE
-#घोषणा ZSTD_CCOMMON_H_MODULE
+#ifndef ZSTD_CCOMMON_H_MODULE
+#define ZSTD_CCOMMON_H_MODULE
 
 /*-*******************************************************
-*  Compiler specअगरics
+*  Compiler specifics
 *********************************************************/
-#घोषणा FORCE_INLINE अटल __always_अंतरभूत
-#घोषणा FORCE_NOINLINE अटल noअंतरभूत
+#define FORCE_INLINE static __always_inline
+#define FORCE_NOINLINE static noinline
 
 /*-*************************************
 *  Dependencies
 ***************************************/
-#समावेश "error_private.h"
-#समावेश "mem.h"
-#समावेश <linux/compiler.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/xxhash.h>
-#समावेश <linux/zstd.h>
+#include "error_private.h"
+#include "mem.h"
+#include <linux/compiler.h>
+#include <linux/kernel.h>
+#include <linux/xxhash.h>
+#include <linux/zstd.h>
 
 /*-*************************************
 *  shared macros
 ***************************************/
-#घोषणा MIN(a, b) ((a) < (b) ? (a) : (b))
-#घोषणा MAX(a, b) ((a) > (b) ? (a) : (b))
-#घोषणा CHECK_F(f)                       \
-	अणु                                \
-		माप_प्रकार स्थिर errcod = f; \
-		अगर (ERR_isError(errcod)) \
-			वापस errcod;   \
-	पूर्ण /* check and Forward error code */
-#घोषणा CHECK_E(f, e)                    \
-	अणु                                \
-		माप_प्रकार स्थिर errcod = f; \
-		अगर (ERR_isError(errcod)) \
-			वापस ERROR(e); \
-	पूर्ण /* check and send Error code */
-#घोषणा ZSTD_STATIC_ASSERT(c)                                   \
-	अणु                                                       \
-		क्रमागत अणु ZSTD_अटल_निश्चित = 1 / (पूर्णांक)(!!(c)) पूर्ण; \
-	पूर्ण
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+#define CHECK_F(f)                       \
+	{                                \
+		size_t const errcod = f; \
+		if (ERR_isError(errcod)) \
+			return errcod;   \
+	} /* check and Forward error code */
+#define CHECK_E(f, e)                    \
+	{                                \
+		size_t const errcod = f; \
+		if (ERR_isError(errcod)) \
+			return ERROR(e); \
+	} /* check and send Error code */
+#define ZSTD_STATIC_ASSERT(c)                                   \
+	{                                                       \
+		enum { ZSTD_static_assert = 1 / (int)(!!(c)) }; \
+	}
 
 /*-*************************************
-*  Common स्थिरants
+*  Common constants
 ***************************************/
-#घोषणा ZSTD_OPT_NUM (1 << 12)
-#घोषणा ZSTD_DICT_MAGIC 0xEC30A437 /* v0.7+ */
+#define ZSTD_OPT_NUM (1 << 12)
+#define ZSTD_DICT_MAGIC 0xEC30A437 /* v0.7+ */
 
-#घोषणा ZSTD_REP_NUM 3		      /* number of repcodes */
-#घोषणा ZSTD_REP_CHECK (ZSTD_REP_NUM) /* number of repcodes to check by the optimal parser */
-#घोषणा ZSTD_REP_MOVE (ZSTD_REP_NUM - 1)
-#घोषणा ZSTD_REP_MOVE_OPT (ZSTD_REP_NUM)
-अटल स्थिर U32 repStartValue[ZSTD_REP_NUM] = अणु1, 4, 8पूर्ण;
+#define ZSTD_REP_NUM 3		      /* number of repcodes */
+#define ZSTD_REP_CHECK (ZSTD_REP_NUM) /* number of repcodes to check by the optimal parser */
+#define ZSTD_REP_MOVE (ZSTD_REP_NUM - 1)
+#define ZSTD_REP_MOVE_OPT (ZSTD_REP_NUM)
+static const U32 repStartValue[ZSTD_REP_NUM] = {1, 4, 8};
 
-#घोषणा KB *(1 << 10)
-#घोषणा MB *(1 << 20)
-#घोषणा GB *(1U << 30)
+#define KB *(1 << 10)
+#define MB *(1 << 20)
+#define GB *(1U << 30)
 
-#घोषणा BIT7 128
-#घोषणा BIT6 64
-#घोषणा BIT5 32
-#घोषणा BIT4 16
-#घोषणा BIT1 2
-#घोषणा BIT0 1
+#define BIT7 128
+#define BIT6 64
+#define BIT5 32
+#define BIT4 16
+#define BIT1 2
+#define BIT0 1
 
-#घोषणा ZSTD_WINDOWLOG_ABSOLUTEMIN 10
-अटल स्थिर माप_प्रकार ZSTD_fcs_fieldSize[4] = अणु0, 2, 4, 8पूर्ण;
-अटल स्थिर माप_प्रकार ZSTD_did_fieldSize[4] = अणु0, 1, 2, 4पूर्ण;
+#define ZSTD_WINDOWLOG_ABSOLUTEMIN 10
+static const size_t ZSTD_fcs_fieldSize[4] = {0, 2, 4, 8};
+static const size_t ZSTD_did_fieldSize[4] = {0, 1, 2, 4};
 
-#घोषणा ZSTD_BLOCKHEADERSIZE 3 /* C standard करोesn't allow `अटल स्थिर` variable to be init using another `अटल स्थिर` variable */
-अटल स्थिर माप_प्रकार ZSTD_blockHeaderSize = ZSTD_BLOCKHEADERSIZE;
-प्रकार क्रमागत अणु bt_raw, bt_rle, bt_compressed, bt_reserved पूर्ण blockType_e;
+#define ZSTD_BLOCKHEADERSIZE 3 /* C standard doesn't allow `static const` variable to be init using another `static const` variable */
+static const size_t ZSTD_blockHeaderSize = ZSTD_BLOCKHEADERSIZE;
+typedef enum { bt_raw, bt_rle, bt_compressed, bt_reserved } blockType_e;
 
-#घोषणा MIN_SEQUENCES_SIZE 1									  /* nbSeq==0 */
-#घोषणा MIN_CBLOCK_SIZE (1 /*litCSize*/ + 1 /* RLE or RAW */ + MIN_SEQUENCES_SIZE /* nbSeq==0 */) /* क्रम a non-null block */
+#define MIN_SEQUENCES_SIZE 1									  /* nbSeq==0 */
+#define MIN_CBLOCK_SIZE (1 /*litCSize*/ + 1 /* RLE or RAW */ + MIN_SEQUENCES_SIZE /* nbSeq==0 */) /* for a non-null block */
 
-#घोषणा HufLog 12
-प्रकार क्रमागत अणु set_basic, set_rle, set_compressed, set_repeat पूर्ण symbolEncodingType_e;
+#define HufLog 12
+typedef enum { set_basic, set_rle, set_compressed, set_repeat } symbolEncodingType_e;
 
-#घोषणा LONGNBSEQ 0x7F00
+#define LONGNBSEQ 0x7F00
 
-#घोषणा MINMATCH 3
-#घोषणा EQUAL_READ32 4
+#define MINMATCH 3
+#define EQUAL_READ32 4
 
-#घोषणा Litbits 8
-#घोषणा MaxLit ((1 << Litbits) - 1)
-#घोषणा MaxML 52
-#घोषणा MaxLL 35
-#घोषणा MaxOff 28
-#घोषणा MaxSeq MAX(MaxLL, MaxML) /* Assumption : MaxOff < MaxLL,MaxML */
-#घोषणा MLFSELog 9
-#घोषणा LLFSELog 9
-#घोषणा OffFSELog 8
+#define Litbits 8
+#define MaxLit ((1 << Litbits) - 1)
+#define MaxML 52
+#define MaxLL 35
+#define MaxOff 28
+#define MaxSeq MAX(MaxLL, MaxML) /* Assumption : MaxOff < MaxLL,MaxML */
+#define MLFSELog 9
+#define LLFSELog 9
+#define OffFSELog 8
 
-अटल स्थिर U32 LL_bits[MaxLL + 1] = अणु0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 3, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16पूर्ण;
-अटल स्थिर S16 LL_शेषNorm[MaxLL + 1] = अणु4, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 2, 1, 1, 1, 1, 1, -1, -1, -1, -1पूर्ण;
-#घोषणा LL_DEFAULTNORMLOG 6 /* क्रम अटल allocation */
-अटल स्थिर U32 LL_शेषNormLog = LL_DEFAULTNORMLOG;
+static const U32 LL_bits[MaxLL + 1] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 3, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+static const S16 LL_defaultNorm[MaxLL + 1] = {4, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 2, 1, 1, 1, 1, 1, -1, -1, -1, -1};
+#define LL_DEFAULTNORMLOG 6 /* for static allocation */
+static const U32 LL_defaultNormLog = LL_DEFAULTNORMLOG;
 
-अटल स्थिर U32 ML_bits[MaxML + 1] = अणु0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0,  0,  0,  0,  0,  0, 0,
-				       0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 3, 3, 4, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16पूर्ण;
-अटल स्थिर S16 ML_शेषNorm[MaxML + 1] = अणु1, 4, 3, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,  1,  1,  1,  1,  1,  1, 1,
-					      1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, -1पूर्ण;
-#घोषणा ML_DEFAULTNORMLOG 6 /* क्रम अटल allocation */
-अटल स्थिर U32 ML_शेषNormLog = ML_DEFAULTNORMLOG;
+static const U32 ML_bits[MaxML + 1] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0,  0,  0,  0,  0,  0, 0,
+				       0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 3, 3, 4, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+static const S16 ML_defaultNorm[MaxML + 1] = {1, 4, 3, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,  1,  1,  1,  1,  1,  1, 1,
+					      1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, -1};
+#define ML_DEFAULTNORMLOG 6 /* for static allocation */
+static const U32 ML_defaultNormLog = ML_DEFAULTNORMLOG;
 
-अटल स्थिर S16 OF_शेषNorm[MaxOff + 1] = अणु1, 1, 1, 1, 1, 1, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1पूर्ण;
-#घोषणा OF_DEFAULTNORMLOG 5 /* क्रम अटल allocation */
-अटल स्थिर U32 OF_शेषNormLog = OF_DEFAULTNORMLOG;
+static const S16 OF_defaultNorm[MaxOff + 1] = {1, 1, 1, 1, 1, 1, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1};
+#define OF_DEFAULTNORMLOG 5 /* for static allocation */
+static const U32 OF_defaultNormLog = OF_DEFAULTNORMLOG;
 
 /*-*******************************************
-*  Shared functions to include क्रम inlining
+*  Shared functions to include for inlining
 *********************************************/
-ZSTD_STATIC व्योम ZSTD_copy8(व्योम *dst, स्थिर व्योम *src) अणु
+ZSTD_STATIC void ZSTD_copy8(void *dst, const void *src) {
 	/*
-	 * zstd relies heavily on gcc being able to analyze and अंतरभूत this
-	 * स_नकल() call, since it is called in a tight loop. Preboot mode
-	 * is compiled in मुक्तstanding mode, which stops gcc from analyzing
-	 * स_नकल(). Use __builtin_स_नकल() to tell gcc to analyze this as a
-	 * regular स_नकल().
+	 * zstd relies heavily on gcc being able to analyze and inline this
+	 * memcpy() call, since it is called in a tight loop. Preboot mode
+	 * is compiled in freestanding mode, which stops gcc from analyzing
+	 * memcpy(). Use __builtin_memcpy() to tell gcc to analyze this as a
+	 * regular memcpy().
 	 */
-	__builtin_स_नकल(dst, src, 8);
-पूर्ण
+	__builtin_memcpy(dst, src, 8);
+}
 /*! ZSTD_wildcopy() :
-*   custom version of स_नकल(), can copy up to 7 bytes too many (8 bytes अगर length==0) */
-#घोषणा WILDCOPY_OVERLENGTH 8
-ZSTD_STATIC व्योम ZSTD_wildcopy(व्योम *dst, स्थिर व्योम *src, सूचक_भेद_प्रकार length)
-अणु
-	स्थिर BYTE* ip = (स्थिर BYTE*)src;
+*   custom version of memcpy(), can copy up to 7 bytes too many (8 bytes if length==0) */
+#define WILDCOPY_OVERLENGTH 8
+ZSTD_STATIC void ZSTD_wildcopy(void *dst, const void *src, ptrdiff_t length)
+{
+	const BYTE* ip = (const BYTE*)src;
 	BYTE* op = (BYTE*)dst;
-	BYTE* स्थिर oend = op + length;
-#अगर defined(GCC_VERSION) && GCC_VERSION >= 70000 && GCC_VERSION < 70200
+	BYTE* const oend = op + length;
+#if defined(GCC_VERSION) && GCC_VERSION >= 70000 && GCC_VERSION < 70200
 	/*
 	 * Work around https://gcc.gnu.org/bugzilla/show_bug.cgi?id=81388.
-	 * Aव्योम the bad हाल where the loop only runs once by handling the
-	 * special हाल separately. This करोesn't trigger the bug because it
-	 * करोesn't involve poपूर्णांकer/पूर्णांकeger overflow.
+	 * Avoid the bad case where the loop only runs once by handling the
+	 * special case separately. This doesn't trigger the bug because it
+	 * doesn't involve pointer/integer overflow.
 	 */
-	अगर (length <= 8)
-		वापस ZSTD_copy8(dst, src);
-#पूर्ण_अगर
-	करो अणु
+	if (length <= 8)
+		return ZSTD_copy8(dst, src);
+#endif
+	do {
 		ZSTD_copy8(op, ip);
 		op += 8;
 		ip += 8;
-	पूर्ण जबतक (op < oend);
-पूर्ण
+	} while (op < oend);
+}
 
 /*-*******************************************
-*  Private पूर्णांकerfaces
+*  Private interfaces
 *********************************************/
-प्रकार काष्ठा ZSTD_stats_s ZSTD_stats_t;
+typedef struct ZSTD_stats_s ZSTD_stats_t;
 
-प्रकार काष्ठा अणु
+typedef struct {
 	U32 off;
 	U32 len;
-पूर्ण ZSTD_match_t;
+} ZSTD_match_t;
 
-प्रकार काष्ठा अणु
+typedef struct {
 	U32 price;
 	U32 off;
 	U32 mlen;
 	U32 litlen;
 	U32 rep[ZSTD_REP_NUM];
-पूर्ण ZSTD_optimal_t;
+} ZSTD_optimal_t;
 
-प्रकार काष्ठा seqDef_s अणु
+typedef struct seqDef_s {
 	U32 offset;
 	U16 litLength;
 	U16 matchLength;
-पूर्ण seqDef;
+} seqDef;
 
-प्रकार काष्ठा अणु
+typedef struct {
 	seqDef *sequencesStart;
 	seqDef *sequences;
 	BYTE *litStart;
@@ -194,8 +193,8 @@ ZSTD_STATIC व्योम ZSTD_wildcopy(व्योम *dst, स्थिर 
 	BYTE *llCode;
 	BYTE *mlCode;
 	BYTE *ofCode;
-	U32 दीर्घLengthID; /* 0 == no दीर्घLength; 1 == Lit.दीर्घLength; 2 == Match.दीर्घLength; */
-	U32 दीर्घLengthPos;
+	U32 longLengthID; /* 0 == no longLength; 1 == Lit.longLength; 2 == Match.longLength; */
+	U32 longLengthPos;
 	/* opt */
 	ZSTD_optimal_t *priceTable;
 	ZSTD_match_t *matchTable;
@@ -214,61 +213,61 @@ ZSTD_STATIC व्योम ZSTD_wildcopy(व्योम *dst, स्थिर 
 	U32 log2litSum;
 	U32 log2offCodeSum;
 	U32 factor;
-	U32 अटलPrices;
+	U32 staticPrices;
 	U32 cachedPrice;
 	U32 cachedLitLength;
-	स्थिर BYTE *cachedLiterals;
-पूर्ण seqStore_t;
+	const BYTE *cachedLiterals;
+} seqStore_t;
 
-स्थिर seqStore_t *ZSTD_getSeqStore(स्थिर ZSTD_CCtx *ctx);
-व्योम ZSTD_seqToCodes(स्थिर seqStore_t *seqStorePtr);
-पूर्णांक ZSTD_isSkipFrame(ZSTD_DCtx *dctx);
+const seqStore_t *ZSTD_getSeqStore(const ZSTD_CCtx *ctx);
+void ZSTD_seqToCodes(const seqStore_t *seqStorePtr);
+int ZSTD_isSkipFrame(ZSTD_DCtx *dctx);
 
 /*= Custom memory allocation functions */
-प्रकार व्योम *(*ZSTD_allocFunction)(व्योम *opaque, माप_प्रकार size);
-प्रकार व्योम (*ZSTD_मुक्तFunction)(व्योम *opaque, व्योम *address);
-प्रकार काष्ठा अणु
+typedef void *(*ZSTD_allocFunction)(void *opaque, size_t size);
+typedef void (*ZSTD_freeFunction)(void *opaque, void *address);
+typedef struct {
 	ZSTD_allocFunction customAlloc;
-	ZSTD_मुक्तFunction customFree;
-	व्योम *opaque;
-पूर्ण ZSTD_customMem;
+	ZSTD_freeFunction customFree;
+	void *opaque;
+} ZSTD_customMem;
 
-व्योम *ZSTD_दो_स्मृति(माप_प्रकार size, ZSTD_customMem customMem);
-व्योम ZSTD_मुक्त(व्योम *ptr, ZSTD_customMem customMem);
+void *ZSTD_malloc(size_t size, ZSTD_customMem customMem);
+void ZSTD_free(void *ptr, ZSTD_customMem customMem);
 
 /*====== stack allocation  ======*/
 
-प्रकार काष्ठा अणु
-	व्योम *ptr;
-	स्थिर व्योम *end;
-पूर्ण ZSTD_stack;
+typedef struct {
+	void *ptr;
+	const void *end;
+} ZSTD_stack;
 
-#घोषणा ZSTD_ALIGN(x) ALIGN(x, माप(माप_प्रकार))
-#घोषणा ZSTD_PTR_ALIGN(p) PTR_ALIGN(p, माप(माप_प्रकार))
+#define ZSTD_ALIGN(x) ALIGN(x, sizeof(size_t))
+#define ZSTD_PTR_ALIGN(p) PTR_ALIGN(p, sizeof(size_t))
 
-ZSTD_customMem ZSTD_initStack(व्योम *workspace, माप_प्रकार workspaceSize);
+ZSTD_customMem ZSTD_initStack(void *workspace, size_t workspaceSize);
 
-व्योम *ZSTD_stackAllocAll(व्योम *opaque, माप_प्रकार *size);
-व्योम *ZSTD_stackAlloc(व्योम *opaque, माप_प्रकार size);
-व्योम ZSTD_stackFree(व्योम *opaque, व्योम *address);
+void *ZSTD_stackAllocAll(void *opaque, size_t *size);
+void *ZSTD_stackAlloc(void *opaque, size_t size);
+void ZSTD_stackFree(void *opaque, void *address);
 
 /*======  common function  ======*/
 
-ZSTD_STATIC U32 ZSTD_highbit32(U32 val) अणु वापस 31 - __builtin_clz(val); पूर्ण
+ZSTD_STATIC U32 ZSTD_highbit32(U32 val) { return 31 - __builtin_clz(val); }
 
 /* hidden functions */
 
 /* ZSTD_invalidateRepCodes() :
  * ensures next compression will not use repcodes from previous block.
  * Note : only works with regular variant;
- *        करो not use with extDict variant ! */
-व्योम ZSTD_invalidateRepCodes(ZSTD_CCtx *cctx);
+ *        do not use with extDict variant ! */
+void ZSTD_invalidateRepCodes(ZSTD_CCtx *cctx);
 
-माप_प्रकार ZSTD_मुक्तCCtx(ZSTD_CCtx *cctx);
-माप_प्रकार ZSTD_मुक्तDCtx(ZSTD_DCtx *dctx);
-माप_प्रकार ZSTD_मुक्तCDict(ZSTD_CDict *cdict);
-माप_प्रकार ZSTD_मुक्तDDict(ZSTD_DDict *cdict);
-माप_प्रकार ZSTD_मुक्तCStream(ZSTD_CStream *zcs);
-माप_प्रकार ZSTD_मुक्तDStream(ZSTD_DStream *zds);
+size_t ZSTD_freeCCtx(ZSTD_CCtx *cctx);
+size_t ZSTD_freeDCtx(ZSTD_DCtx *dctx);
+size_t ZSTD_freeCDict(ZSTD_CDict *cdict);
+size_t ZSTD_freeDDict(ZSTD_DDict *cdict);
+size_t ZSTD_freeCStream(ZSTD_CStream *zcs);
+size_t ZSTD_freeDStream(ZSTD_DStream *zds);
 
-#पूर्ण_अगर /* ZSTD_CCOMMON_H_MODULE */
+#endif /* ZSTD_CCOMMON_H_MODULE */

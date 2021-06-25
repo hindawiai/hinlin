@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Copyright (C) 2010 Tobias Klauser <tklauser@distanz.ch>
  * Copyright (C) 2009 Wind River Systems Inc
@@ -6,184 +5,184 @@
  * Copyright (C) 2004 Microtronix Datacom Ltd.
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License. See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License. See the file "COPYING" in the main directory of this archive
+ * for more details.
  */
 
-#समावेश <linux/export.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/पन.स>
+#include <linux/export.h>
+#include <linux/sched.h>
+#include <linux/mm.h>
+#include <linux/slab.h>
+#include <linux/vmalloc.h>
+#include <linux/io.h>
 
-#समावेश <यंत्र/cacheflush.h>
-#समावेश <यंत्र/tlbflush.h>
+#include <asm/cacheflush.h>
+#include <asm/tlbflush.h>
 
-अटल अंतरभूत व्योम remap_area_pte(pte_t *pte, अचिन्हित दीर्घ address,
-				अचिन्हित दीर्घ size, अचिन्हित दीर्घ phys_addr,
-				अचिन्हित दीर्घ flags)
-अणु
-	अचिन्हित दीर्घ end;
-	अचिन्हित दीर्घ pfn;
+static inline void remap_area_pte(pte_t *pte, unsigned long address,
+				unsigned long size, unsigned long phys_addr,
+				unsigned long flags)
+{
+	unsigned long end;
+	unsigned long pfn;
 	pgprot_t pgprot = __pgprot(_PAGE_GLOBAL | _PAGE_PRESENT | _PAGE_READ
 				| _PAGE_WRITE | flags);
 
 	address &= ~PMD_MASK;
 	end = address + size;
-	अगर (end > PMD_SIZE)
+	if (end > PMD_SIZE)
 		end = PMD_SIZE;
-	अगर (address >= end)
+	if (address >= end)
 		BUG();
 	pfn = PFN_DOWN(phys_addr);
-	करो अणु
-		अगर (!pte_none(*pte)) अणु
+	do {
+		if (!pte_none(*pte)) {
 			pr_err("remap_area_pte: page already exists\n");
 			BUG();
-		पूर्ण
+		}
 		set_pte(pte, pfn_pte(pfn, pgprot));
 		address += PAGE_SIZE;
 		pfn++;
 		pte++;
-	पूर्ण जबतक (address && (address < end));
-पूर्ण
+	} while (address && (address < end));
+}
 
-अटल अंतरभूत पूर्णांक remap_area_pmd(pmd_t *pmd, अचिन्हित दीर्घ address,
-				अचिन्हित दीर्घ size, अचिन्हित दीर्घ phys_addr,
-				अचिन्हित दीर्घ flags)
-अणु
-	अचिन्हित दीर्घ end;
+static inline int remap_area_pmd(pmd_t *pmd, unsigned long address,
+				unsigned long size, unsigned long phys_addr,
+				unsigned long flags)
+{
+	unsigned long end;
 
-	address &= ~PGसूची_MASK;
+	address &= ~PGDIR_MASK;
 	end = address + size;
-	अगर (end > PGसूची_SIZE)
-		end = PGसूची_SIZE;
+	if (end > PGDIR_SIZE)
+		end = PGDIR_SIZE;
 	phys_addr -= address;
-	अगर (address >= end)
+	if (address >= end)
 		BUG();
-	करो अणु
+	do {
 		pte_t *pte = pte_alloc_kernel(pmd, address);
 
-		अगर (!pte)
-			वापस -ENOMEM;
+		if (!pte)
+			return -ENOMEM;
 		remap_area_pte(pte, address, end - address, address + phys_addr,
 			flags);
 		address = (address + PMD_SIZE) & PMD_MASK;
 		pmd++;
-	पूर्ण जबतक (address && (address < end));
-	वापस 0;
-पूर्ण
+	} while (address && (address < end));
+	return 0;
+}
 
-अटल पूर्णांक remap_area_pages(अचिन्हित दीर्घ address, अचिन्हित दीर्घ phys_addr,
-				अचिन्हित दीर्घ size, अचिन्हित दीर्घ flags)
-अणु
-	पूर्णांक error;
+static int remap_area_pages(unsigned long address, unsigned long phys_addr,
+				unsigned long size, unsigned long flags)
+{
+	int error;
 	pgd_t *dir;
-	अचिन्हित दीर्घ end = address + size;
+	unsigned long end = address + size;
 
 	phys_addr -= address;
 	dir = pgd_offset(&init_mm, address);
 	flush_cache_all();
-	अगर (address >= end)
+	if (address >= end)
 		BUG();
-	करो अणु
+	do {
 		p4d_t *p4d;
 		pud_t *pud;
 		pmd_t *pmd;
 
 		error = -ENOMEM;
 		p4d = p4d_alloc(&init_mm, dir, address);
-		अगर (!p4d)
-			अवरोध;
+		if (!p4d)
+			break;
 		pud = pud_alloc(&init_mm, p4d, address);
-		अगर (!pud)
-			अवरोध;
+		if (!pud)
+			break;
 		pmd = pmd_alloc(&init_mm, pud, address);
-		अगर (!pmd)
-			अवरोध;
-		अगर (remap_area_pmd(pmd, address, end - address,
+		if (!pmd)
+			break;
+		if (remap_area_pmd(pmd, address, end - address,
 			phys_addr + address, flags))
-			अवरोध;
+			break;
 		error = 0;
-		address = (address + PGसूची_SIZE) & PGसूची_MASK;
+		address = (address + PGDIR_SIZE) & PGDIR_MASK;
 		dir++;
-	पूर्ण जबतक (address && (address < end));
+	} while (address && (address < end));
 	flush_tlb_all();
-	वापस error;
-पूर्ण
+	return error;
+}
 
-#घोषणा IS_MAPPABLE_UNCACHEABLE(addr) (addr < 0x20000000UL)
+#define IS_MAPPABLE_UNCACHEABLE(addr) (addr < 0x20000000UL)
 
 /*
- * Map some physical address range पूर्णांकo the kernel address space.
+ * Map some physical address range into the kernel address space.
  */
-व्योम __iomem *ioremap(अचिन्हित दीर्घ phys_addr, अचिन्हित दीर्घ size)
-अणु
-	काष्ठा vm_काष्ठा *area;
-	अचिन्हित दीर्घ offset;
-	अचिन्हित दीर्घ last_addr;
-	व्योम *addr;
+void __iomem *ioremap(unsigned long phys_addr, unsigned long size)
+{
+	struct vm_struct *area;
+	unsigned long offset;
+	unsigned long last_addr;
+	void *addr;
 
 	/* Don't allow wraparound or zero size */
 	last_addr = phys_addr + size - 1;
 
-	अगर (!size || last_addr < phys_addr)
-		वापस शून्य;
+	if (!size || last_addr < phys_addr)
+		return NULL;
 
 	/* Don't allow anybody to remap normal RAM that we're using */
-	अगर (phys_addr > PHYS_OFFSET && phys_addr < virt_to_phys(high_memory)) अणु
-		अक्षर *t_addr, *t_end;
-		काष्ठा page *page;
+	if (phys_addr > PHYS_OFFSET && phys_addr < virt_to_phys(high_memory)) {
+		char *t_addr, *t_end;
+		struct page *page;
 
 		t_addr = __va(phys_addr);
 		t_end = t_addr + (size - 1);
-		क्रम (page = virt_to_page(t_addr);
+		for (page = virt_to_page(t_addr);
 			page <= virt_to_page(t_end); page++)
-			अगर (!PageReserved(page))
-				वापस शून्य;
-	पूर्ण
+			if (!PageReserved(page))
+				return NULL;
+	}
 
 	/*
 	 * Map uncached objects in the low part of address space to
 	 * CONFIG_NIOS2_IO_REGION_BASE
 	 */
-	अगर (IS_MAPPABLE_UNCACHEABLE(phys_addr) &&
+	if (IS_MAPPABLE_UNCACHEABLE(phys_addr) &&
 	    IS_MAPPABLE_UNCACHEABLE(last_addr))
-		वापस (व्योम __iomem *)(CONFIG_NIOS2_IO_REGION_BASE + phys_addr);
+		return (void __iomem *)(CONFIG_NIOS2_IO_REGION_BASE + phys_addr);
 
 	/* Mappings have to be page-aligned */
 	offset = phys_addr & ~PAGE_MASK;
 	phys_addr &= PAGE_MASK;
 	size = PAGE_ALIGN(last_addr + 1) - phys_addr;
 
-	/* Ok, go क्रम it */
+	/* Ok, go for it */
 	area = get_vm_area(size, VM_IOREMAP);
-	अगर (!area)
-		वापस शून्य;
+	if (!area)
+		return NULL;
 	addr = area->addr;
-	अगर (remap_area_pages((अचिन्हित दीर्घ) addr, phys_addr, size, 0)) अणु
+	if (remap_area_pages((unsigned long) addr, phys_addr, size, 0)) {
 		vunmap(addr);
-		वापस शून्य;
-	पूर्ण
-	वापस (व्योम __iomem *) (offset + (अक्षर *)addr);
-पूर्ण
+		return NULL;
+	}
+	return (void __iomem *) (offset + (char *)addr);
+}
 EXPORT_SYMBOL(ioremap);
 
 /*
  * iounmap unmaps nearly everything, so be careful
- * it करोesn't मुक्त currently poपूर्णांकer/page tables anymore but it
+ * it doesn't free currently pointer/page tables anymore but it
  * wasn't used anyway and might be added later.
  */
-व्योम iounmap(व्योम __iomem *addr)
-अणु
-	काष्ठा vm_काष्ठा *p;
+void iounmap(void __iomem *addr)
+{
+	struct vm_struct *p;
 
-	अगर ((अचिन्हित दीर्घ) addr > CONFIG_NIOS2_IO_REGION_BASE)
-		वापस;
+	if ((unsigned long) addr > CONFIG_NIOS2_IO_REGION_BASE)
+		return;
 
-	p = हटाओ_vm_area((व्योम *) (PAGE_MASK & (अचिन्हित दीर्घ __क्रमce) addr));
-	अगर (!p)
+	p = remove_vm_area((void *) (PAGE_MASK & (unsigned long __force) addr));
+	if (!p)
 		pr_err("iounmap: bad address %p\n", addr);
-	kमुक्त(p);
-पूर्ण
+	kfree(p);
+}
 EXPORT_SYMBOL(iounmap);

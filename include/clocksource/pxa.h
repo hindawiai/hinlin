@@ -1,14 +1,13 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * PXA घड़ीsource, घड़ीevents, and OST पूर्णांकerrupt handlers.
+ * PXA clocksource, clockevents, and OST interrupt handlers.
  *
  * Copyright (C) 2014 Robert Jarzmik
  */
 
-#अगर_अघोषित _CLOCKSOURCE_PXA_H
-#घोषणा _CLOCKSOURCE_PXA_H
+#ifndef _CLOCKSOURCE_PXA_H
+#define _CLOCKSOURCE_PXA_H
 
-बाह्य व्योम pxa_समयr_nodt_init(पूर्णांक irq, व्योम __iomem *base);
+extern void pxa_timer_nodt_init(int irq, void __iomem *base);
 
-#पूर्ण_अगर
+#endif

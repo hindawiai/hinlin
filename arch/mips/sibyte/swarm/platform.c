@@ -1,75 +1,74 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/err.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/ata_platक्रमm.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/err.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/io.h>
+#include <linux/platform_device.h>
+#include <linux/ata_platform.h>
 
-#समावेश <यंत्र/sibyte/board.h>
-#समावेश <यंत्र/sibyte/sb1250_genbus.h>
-#समावेश <यंत्र/sibyte/sb1250_regs.h>
+#include <asm/sibyte/board.h>
+#include <asm/sibyte/sb1250_genbus.h>
+#include <asm/sibyte/sb1250_regs.h>
 
-#अगर defined(CONFIG_SIBYTE_SWARM) || defined(CONFIG_SIBYTE_LITTLESUR)
+#if defined(CONFIG_SIBYTE_SWARM) || defined(CONFIG_SIBYTE_LITTLESUR)
 
-#घोषणा DRV_NAME	"pata-swarm"
+#define DRV_NAME	"pata-swarm"
 
-#घोषणा SWARM_IDE_SHIFT 5
-#घोषणा SWARM_IDE_BASE	0x1f0
-#घोषणा SWARM_IDE_CTRL	0x3f6
+#define SWARM_IDE_SHIFT 5
+#define SWARM_IDE_BASE	0x1f0
+#define SWARM_IDE_CTRL	0x3f6
 
-अटल काष्ठा resource swarm_pata_resource[] = अणु
-	अणु
+static struct resource swarm_pata_resource[] = {
+	{
 		.name	= "Swarm GenBus IDE",
 		.flags	= IORESOURCE_MEM,
-	पूर्ण, अणु
+	}, {
 		.name	= "Swarm GenBus IDE",
 		.flags	= IORESOURCE_MEM,
-	पूर्ण, अणु
+	}, {
 		.name	= "Swarm GenBus IDE",
 		.flags	= IORESOURCE_IRQ,
 		.start	= K_INT_GB_IDE,
 		.end	= K_INT_GB_IDE,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा pata_platक्रमm_info pata_platक्रमm_data = अणु
-	.ioport_shअगरt	= SWARM_IDE_SHIFT,
-पूर्ण;
+static struct pata_platform_info pata_platform_data = {
+	.ioport_shift	= SWARM_IDE_SHIFT,
+};
 
-अटल काष्ठा platक्रमm_device swarm_pata_device = अणु
+static struct platform_device swarm_pata_device = {
 	.name		= "pata_platform",
 	.id		= -1,
 	.resource	= swarm_pata_resource,
 	.num_resources	= ARRAY_SIZE(swarm_pata_resource),
-	.dev  = अणु
-		.platक्रमm_data		= &pata_platक्रमm_data,
+	.dev  = {
+		.platform_data		= &pata_platform_data,
 		.coherent_dma_mask	= ~0,	/* grumble */
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init swarm_pata_init(व्योम)
-अणु
+static int __init swarm_pata_init(void)
+{
 	u8 __iomem *base;
 	phys_addr_t offset, size;
-	काष्ठा resource *r;
+	struct resource *r;
 
-	अगर (!SIBYTE_HAVE_IDE)
-		वापस -ENODEV;
+	if (!SIBYTE_HAVE_IDE)
+		return -ENODEV;
 
 	base = ioremap(A_IO_EXT_BASE, 0x800);
-	offset = __raw_पढ़ोq(base + R_IO_EXT_REG(R_IO_EXT_START_ADDR, IDE_CS));
-	size = __raw_पढ़ोq(base + R_IO_EXT_REG(R_IO_EXT_MULT_SIZE, IDE_CS));
+	offset = __raw_readq(base + R_IO_EXT_REG(R_IO_EXT_START_ADDR, IDE_CS));
+	size = __raw_readq(base + R_IO_EXT_REG(R_IO_EXT_MULT_SIZE, IDE_CS));
 	iounmap(base);
 
 	offset = G_IO_START_ADDR(offset) << S_IO_ADDRBASE;
 	size = (G_IO_MULT_SIZE(size) + 1) << S_IO_REGSIZE;
-	अगर (offset < A_PHYS_GENBUS || offset >= A_PHYS_GENBUS_END) अणु
+	if (offset < A_PHYS_GENBUS || offset >= A_PHYS_GENBUS_END) {
 		pr_info(DRV_NAME ": PATA interface at GenBus disabled\n");
 
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	pr_info(DRV_NAME ": PATA interface at GenBus slot %i\n", IDE_CS);
 
@@ -79,63 +78,63 @@
 	r[1].start = offset + (SWARM_IDE_CTRL << SWARM_IDE_SHIFT);
 	r[1].end   = offset + ((SWARM_IDE_CTRL + 1) << SWARM_IDE_SHIFT) - 1;
 
-	वापस platक्रमm_device_रेजिस्टर(&swarm_pata_device);
-पूर्ण
+	return platform_device_register(&swarm_pata_device);
+}
 
 device_initcall(swarm_pata_init);
 
-#पूर्ण_अगर /* defined(CONFIG_SIBYTE_SWARM) || defined(CONFIG_SIBYTE_LITTLESUR) */
+#endif /* defined(CONFIG_SIBYTE_SWARM) || defined(CONFIG_SIBYTE_LITTLESUR) */
 
-#घोषणा sb1250_dev_काष्ठा(num) \
-	अटल काष्ठा resource sb1250_res##num = अणु		\
-		.name = "SB1250 MAC " __stringअगरy(num),		\
+#define sb1250_dev_struct(num) \
+	static struct resource sb1250_res##num = {		\
+		.name = "SB1250 MAC " __stringify(num),		\
 		.flags = IORESOURCE_MEM,		\
 		.start = A_MAC_CHANNEL_BASE(num),	\
 		.end = A_MAC_CHANNEL_BASE(num + 1) -1,	\
-	पूर्ण;\
-	अटल काष्ठा platक्रमm_device sb1250_dev##num = अणु	\
+	};\
+	static struct platform_device sb1250_dev##num = {	\
 		.name = "sb1250-mac",			\
 	.id = num,					\
 	.resource = &sb1250_res##num,			\
 	.num_resources = 1,				\
-	पूर्ण
+	}
 
-sb1250_dev_काष्ठा(0);
-sb1250_dev_काष्ठा(1);
-sb1250_dev_काष्ठा(2);
-sb1250_dev_काष्ठा(3);
+sb1250_dev_struct(0);
+sb1250_dev_struct(1);
+sb1250_dev_struct(2);
+sb1250_dev_struct(3);
 
-अटल काष्ठा platक्रमm_device *sb1250_devs[] __initdata = अणु
+static struct platform_device *sb1250_devs[] __initdata = {
 	&sb1250_dev0,
 	&sb1250_dev1,
 	&sb1250_dev2,
 	&sb1250_dev3,
-पूर्ण;
+};
 
-अटल पूर्णांक __init sb1250_device_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init sb1250_device_init(void)
+{
+	int ret;
 
 	/* Set the number of available units based on the SOC type.  */
-	चयन (soc_type) अणु
-	हाल K_SYS_SOC_TYPE_BCM1250:
-	हाल K_SYS_SOC_TYPE_BCM1250_ALT:
-		ret = platक्रमm_add_devices(sb1250_devs, 3);
-		अवरोध;
-	हाल K_SYS_SOC_TYPE_BCM1120:
-	हाल K_SYS_SOC_TYPE_BCM1125:
-	हाल K_SYS_SOC_TYPE_BCM1125H:
-	हाल K_SYS_SOC_TYPE_BCM1250_ALT2:	/* Hybrid */
-		ret = platक्रमm_add_devices(sb1250_devs, 2);
-		अवरोध;
-	हाल K_SYS_SOC_TYPE_BCM1x55:
-	हाल K_SYS_SOC_TYPE_BCM1x80:
-		ret = platक्रमm_add_devices(sb1250_devs, 4);
-		अवरोध;
-	शेष:
+	switch (soc_type) {
+	case K_SYS_SOC_TYPE_BCM1250:
+	case K_SYS_SOC_TYPE_BCM1250_ALT:
+		ret = platform_add_devices(sb1250_devs, 3);
+		break;
+	case K_SYS_SOC_TYPE_BCM1120:
+	case K_SYS_SOC_TYPE_BCM1125:
+	case K_SYS_SOC_TYPE_BCM1125H:
+	case K_SYS_SOC_TYPE_BCM1250_ALT2:	/* Hybrid */
+		ret = platform_add_devices(sb1250_devs, 2);
+		break;
+	case K_SYS_SOC_TYPE_BCM1x55:
+	case K_SYS_SOC_TYPE_BCM1x80:
+		ret = platform_add_devices(sb1250_devs, 4);
+		break;
+	default:
 		ret = -ENODEV;
-		अवरोध;
-	पूर्ण
-	वापस ret;
-पूर्ण
+		break;
+	}
+	return ret;
+}
 device_initcall(sb1250_device_init);

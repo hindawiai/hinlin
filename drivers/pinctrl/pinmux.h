@@ -1,169 +1,168 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Internal पूर्णांकerface between the core pin control प्रणाली and the
+ * Internal interface between the core pin control system and the
  * pinmux portions
  *
  * Copyright (C) 2011 ST-Ericsson SA
- * Written on behalf of Linaro क्रम ST-Ericsson
+ * Written on behalf of Linaro for ST-Ericsson
  * Based on bits of regulator core, gpio core and clk core
  *
  * Author: Linus Walleij <linus.walleij@linaro.org>
  */
-#अगर_घोषित CONFIG_PINMUX
+#ifdef CONFIG_PINMUX
 
-पूर्णांक pinmux_check_ops(काष्ठा pinctrl_dev *pctldev);
+int pinmux_check_ops(struct pinctrl_dev *pctldev);
 
-पूर्णांक pinmux_validate_map(स्थिर काष्ठा pinctrl_map *map, पूर्णांक i);
+int pinmux_validate_map(const struct pinctrl_map *map, int i);
 
-bool pinmux_can_be_used_क्रम_gpio(काष्ठा pinctrl_dev *pctldev, अचिन्हित pin);
+bool pinmux_can_be_used_for_gpio(struct pinctrl_dev *pctldev, unsigned pin);
 
-पूर्णांक pinmux_request_gpio(काष्ठा pinctrl_dev *pctldev,
-			काष्ठा pinctrl_gpio_range *range,
-			अचिन्हित pin, अचिन्हित gpio);
-व्योम pinmux_मुक्त_gpio(काष्ठा pinctrl_dev *pctldev, अचिन्हित pin,
-		      काष्ठा pinctrl_gpio_range *range);
-पूर्णांक pinmux_gpio_direction(काष्ठा pinctrl_dev *pctldev,
-			  काष्ठा pinctrl_gpio_range *range,
-			  अचिन्हित pin, bool input);
+int pinmux_request_gpio(struct pinctrl_dev *pctldev,
+			struct pinctrl_gpio_range *range,
+			unsigned pin, unsigned gpio);
+void pinmux_free_gpio(struct pinctrl_dev *pctldev, unsigned pin,
+		      struct pinctrl_gpio_range *range);
+int pinmux_gpio_direction(struct pinctrl_dev *pctldev,
+			  struct pinctrl_gpio_range *range,
+			  unsigned pin, bool input);
 
-पूर्णांक pinmux_map_to_setting(स्थिर काष्ठा pinctrl_map *map,
-			  काष्ठा pinctrl_setting *setting);
-व्योम pinmux_मुक्त_setting(स्थिर काष्ठा pinctrl_setting *setting);
-पूर्णांक pinmux_enable_setting(स्थिर काष्ठा pinctrl_setting *setting);
-व्योम pinmux_disable_setting(स्थिर काष्ठा pinctrl_setting *setting);
+int pinmux_map_to_setting(const struct pinctrl_map *map,
+			  struct pinctrl_setting *setting);
+void pinmux_free_setting(const struct pinctrl_setting *setting);
+int pinmux_enable_setting(const struct pinctrl_setting *setting);
+void pinmux_disable_setting(const struct pinctrl_setting *setting);
 
-#अन्यथा
+#else
 
-अटल अंतरभूत पूर्णांक pinmux_check_ops(काष्ठा pinctrl_dev *pctldev)
-अणु
-	वापस 0;
-पूर्ण
+static inline int pinmux_check_ops(struct pinctrl_dev *pctldev)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक pinmux_validate_map(स्थिर काष्ठा pinctrl_map *map, पूर्णांक i)
-अणु
-	वापस 0;
-पूर्ण
+static inline int pinmux_validate_map(const struct pinctrl_map *map, int i)
+{
+	return 0;
+}
 
-अटल अंतरभूत bool pinmux_can_be_used_क्रम_gpio(काष्ठा pinctrl_dev *pctldev,
-					       अचिन्हित pin)
-अणु
-	वापस true;
-पूर्ण
+static inline bool pinmux_can_be_used_for_gpio(struct pinctrl_dev *pctldev,
+					       unsigned pin)
+{
+	return true;
+}
 
-अटल अंतरभूत पूर्णांक pinmux_request_gpio(काष्ठा pinctrl_dev *pctldev,
-			काष्ठा pinctrl_gpio_range *range,
-			अचिन्हित pin, अचिन्हित gpio)
-अणु
-	वापस 0;
-पूर्ण
+static inline int pinmux_request_gpio(struct pinctrl_dev *pctldev,
+			struct pinctrl_gpio_range *range,
+			unsigned pin, unsigned gpio)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम pinmux_मुक्त_gpio(काष्ठा pinctrl_dev *pctldev,
-				    अचिन्हित pin,
-				    काष्ठा pinctrl_gpio_range *range)
-अणु
-पूर्ण
+static inline void pinmux_free_gpio(struct pinctrl_dev *pctldev,
+				    unsigned pin,
+				    struct pinctrl_gpio_range *range)
+{
+}
 
-अटल अंतरभूत पूर्णांक pinmux_gpio_direction(काष्ठा pinctrl_dev *pctldev,
-					काष्ठा pinctrl_gpio_range *range,
-					अचिन्हित pin, bool input)
-अणु
-	वापस 0;
-पूर्ण
+static inline int pinmux_gpio_direction(struct pinctrl_dev *pctldev,
+					struct pinctrl_gpio_range *range,
+					unsigned pin, bool input)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक pinmux_map_to_setting(स्थिर काष्ठा pinctrl_map *map,
-			  काष्ठा pinctrl_setting *setting)
-अणु
-	वापस 0;
-पूर्ण
+static inline int pinmux_map_to_setting(const struct pinctrl_map *map,
+			  struct pinctrl_setting *setting)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम pinmux_मुक्त_setting(स्थिर काष्ठा pinctrl_setting *setting)
-अणु
-पूर्ण
+static inline void pinmux_free_setting(const struct pinctrl_setting *setting)
+{
+}
 
-अटल अंतरभूत पूर्णांक pinmux_enable_setting(स्थिर काष्ठा pinctrl_setting *setting)
-अणु
-	वापस 0;
-पूर्ण
+static inline int pinmux_enable_setting(const struct pinctrl_setting *setting)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम pinmux_disable_setting(स्थिर काष्ठा pinctrl_setting *setting)
-अणु
-पूर्ण
+static inline void pinmux_disable_setting(const struct pinctrl_setting *setting)
+{
+}
 
-#पूर्ण_अगर
+#endif
 
-#अगर defined(CONFIG_PINMUX) && defined(CONFIG_DEBUG_FS)
+#if defined(CONFIG_PINMUX) && defined(CONFIG_DEBUG_FS)
 
-व्योम pinmux_show_map(काष्ठा seq_file *s, स्थिर काष्ठा pinctrl_map *map);
-व्योम pinmux_show_setting(काष्ठा seq_file *s,
-			 स्थिर काष्ठा pinctrl_setting *setting);
-व्योम pinmux_init_device_debugfs(काष्ठा dentry *devroot,
-				काष्ठा pinctrl_dev *pctldev);
+void pinmux_show_map(struct seq_file *s, const struct pinctrl_map *map);
+void pinmux_show_setting(struct seq_file *s,
+			 const struct pinctrl_setting *setting);
+void pinmux_init_device_debugfs(struct dentry *devroot,
+				struct pinctrl_dev *pctldev);
 
-#अन्यथा
+#else
 
-अटल अंतरभूत व्योम pinmux_show_map(काष्ठा seq_file *s,
-				   स्थिर काष्ठा pinctrl_map *map)
-अणु
-पूर्ण
+static inline void pinmux_show_map(struct seq_file *s,
+				   const struct pinctrl_map *map)
+{
+}
 
-अटल अंतरभूत व्योम pinmux_show_setting(काष्ठा seq_file *s,
-				       स्थिर काष्ठा pinctrl_setting *setting)
-अणु
-पूर्ण
+static inline void pinmux_show_setting(struct seq_file *s,
+				       const struct pinctrl_setting *setting)
+{
+}
 
-अटल अंतरभूत व्योम pinmux_init_device_debugfs(काष्ठा dentry *devroot,
-					      काष्ठा pinctrl_dev *pctldev)
-अणु
-पूर्ण
+static inline void pinmux_init_device_debugfs(struct dentry *devroot,
+					      struct pinctrl_dev *pctldev)
+{
+}
 
-#पूर्ण_अगर
+#endif
 
-#अगर_घोषित CONFIG_GENERIC_PINMUX_FUNCTIONS
+#ifdef CONFIG_GENERIC_PINMUX_FUNCTIONS
 
 /**
- * काष्ठा function_desc - generic function descriptor
+ * struct function_desc - generic function descriptor
  * @name: name of the function
  * @group_names: array of pin group names
  * @num_group_names: number of pin group names
- * @data: pin controller driver specअगरic data
+ * @data: pin controller driver specific data
  */
-काष्ठा function_desc अणु
-	स्थिर अक्षर *name;
-	स्थिर अक्षर **group_names;
-	पूर्णांक num_group_names;
-	व्योम *data;
-पूर्ण;
+struct function_desc {
+	const char *name;
+	const char **group_names;
+	int num_group_names;
+	void *data;
+};
 
-पूर्णांक pinmux_generic_get_function_count(काष्ठा pinctrl_dev *pctldev);
+int pinmux_generic_get_function_count(struct pinctrl_dev *pctldev);
 
-स्थिर अक्षर *
-pinmux_generic_get_function_name(काष्ठा pinctrl_dev *pctldev,
-				 अचिन्हित पूर्णांक selector);
+const char *
+pinmux_generic_get_function_name(struct pinctrl_dev *pctldev,
+				 unsigned int selector);
 
-पूर्णांक pinmux_generic_get_function_groups(काष्ठा pinctrl_dev *pctldev,
-				       अचिन्हित पूर्णांक selector,
-				       स्थिर अक्षर * स्थिर **groups,
-				       अचिन्हित * स्थिर num_groups);
+int pinmux_generic_get_function_groups(struct pinctrl_dev *pctldev,
+				       unsigned int selector,
+				       const char * const **groups,
+				       unsigned * const num_groups);
 
-काष्ठा function_desc *pinmux_generic_get_function(काष्ठा pinctrl_dev *pctldev,
-						  अचिन्हित पूर्णांक selector);
+struct function_desc *pinmux_generic_get_function(struct pinctrl_dev *pctldev,
+						  unsigned int selector);
 
-पूर्णांक pinmux_generic_add_function(काष्ठा pinctrl_dev *pctldev,
-				स्थिर अक्षर *name,
-				स्थिर अक्षर **groups,
-				अचिन्हित स्थिर num_groups,
-				व्योम *data);
+int pinmux_generic_add_function(struct pinctrl_dev *pctldev,
+				const char *name,
+				const char **groups,
+				unsigned const num_groups,
+				void *data);
 
-पूर्णांक pinmux_generic_हटाओ_function(काष्ठा pinctrl_dev *pctldev,
-				   अचिन्हित पूर्णांक selector);
+int pinmux_generic_remove_function(struct pinctrl_dev *pctldev,
+				   unsigned int selector);
 
-व्योम pinmux_generic_मुक्त_functions(काष्ठा pinctrl_dev *pctldev);
+void pinmux_generic_free_functions(struct pinctrl_dev *pctldev);
 
-#अन्यथा
+#else
 
-अटल अंतरभूत व्योम pinmux_generic_मुक्त_functions(काष्ठा pinctrl_dev *pctldev)
-अणु
-पूर्ण
+static inline void pinmux_generic_free_functions(struct pinctrl_dev *pctldev)
+{
+}
 
-#पूर्ण_अगर /* CONFIG_GENERIC_PINMUX_FUNCTIONS */
+#endif /* CONFIG_GENERIC_PINMUX_FUNCTIONS */

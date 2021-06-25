@@ -1,19 +1,18 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _TOOLS_LINUX_ASM_GENERIC_BITOPS_ATOMIC_H_
-#घोषणा _TOOLS_LINUX_ASM_GENERIC_BITOPS_ATOMIC_H_
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _TOOLS_LINUX_ASM_GENERIC_BITOPS_ATOMIC_H_
+#define _TOOLS_LINUX_ASM_GENERIC_BITOPS_ATOMIC_H_
 
-#समावेश <यंत्र/types.h>
-#समावेश <यंत्र/bitsperदीर्घ.h>
+#include <asm/types.h>
+#include <asm/bitsperlong.h>
 
-अटल अंतरभूत व्योम set_bit(पूर्णांक nr, अचिन्हित दीर्घ *addr)
-अणु
+static inline void set_bit(int nr, unsigned long *addr)
+{
 	addr[nr / __BITS_PER_LONG] |= 1UL << (nr % __BITS_PER_LONG);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम clear_bit(पूर्णांक nr, अचिन्हित दीर्घ *addr)
-अणु
+static inline void clear_bit(int nr, unsigned long *addr)
+{
 	addr[nr / __BITS_PER_LONG] &= ~(1UL << (nr % __BITS_PER_LONG));
-पूर्ण
+}
 
-#पूर्ण_अगर /* _TOOLS_LINUX_ASM_GENERIC_BITOPS_ATOMIC_H_ */
+#endif /* _TOOLS_LINUX_ASM_GENERIC_BITOPS_ATOMIC_H_ */

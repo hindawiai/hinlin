@@ -1,52 +1,51 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright (C) 2016 Freescale Semiconductor, Inc.
  * Copyright 2017~2018 NXP
  *
- * Header file containing the खुला System Controller Interface (SCI)
+ * Header file containing the public System Controller Interface (SCI)
  * definitions.
  */
 
-#अगर_अघोषित _SC_SCI_H
-#घोषणा _SC_SCI_H
+#ifndef _SC_SCI_H
+#define _SC_SCI_H
 
-#समावेश <linux/firmware/imx/ipc.h>
+#include <linux/firmware/imx/ipc.h>
 
-#समावेश <linux/firmware/imx/svc/misc.h>
-#समावेश <linux/firmware/imx/svc/pm.h>
-#समावेश <linux/firmware/imx/svc/rm.h>
+#include <linux/firmware/imx/svc/misc.h>
+#include <linux/firmware/imx/svc/pm.h>
+#include <linux/firmware/imx/svc/rm.h>
 
-#अगर IS_ENABLED(CONFIG_IMX_SCU)
-पूर्णांक imx_scu_enable_general_irq_channel(काष्ठा device *dev);
-पूर्णांक imx_scu_irq_रेजिस्टर_notअगरier(काष्ठा notअगरier_block *nb);
-पूर्णांक imx_scu_irq_unरेजिस्टर_notअगरier(काष्ठा notअगरier_block *nb);
-पूर्णांक imx_scu_irq_group_enable(u8 group, u32 mask, u8 enable);
-पूर्णांक imx_scu_soc_init(काष्ठा device *dev);
-#अन्यथा
-अटल अंतरभूत पूर्णांक imx_scu_soc_init(काष्ठा device *dev)
-अणु
-	वापस -ENOTSUPP;
-पूर्ण
+#if IS_ENABLED(CONFIG_IMX_SCU)
+int imx_scu_enable_general_irq_channel(struct device *dev);
+int imx_scu_irq_register_notifier(struct notifier_block *nb);
+int imx_scu_irq_unregister_notifier(struct notifier_block *nb);
+int imx_scu_irq_group_enable(u8 group, u32 mask, u8 enable);
+int imx_scu_soc_init(struct device *dev);
+#else
+static inline int imx_scu_soc_init(struct device *dev)
+{
+	return -ENOTSUPP;
+}
 
-अटल अंतरभूत पूर्णांक imx_scu_enable_general_irq_channel(काष्ठा device *dev)
-अणु
-	वापस -ENOTSUPP;
-पूर्ण
+static inline int imx_scu_enable_general_irq_channel(struct device *dev)
+{
+	return -ENOTSUPP;
+}
 
-अटल अंतरभूत पूर्णांक imx_scu_irq_रेजिस्टर_notअगरier(काष्ठा notअगरier_block *nb)
-अणु
-	वापस -ENOTSUPP;
-पूर्ण
+static inline int imx_scu_irq_register_notifier(struct notifier_block *nb)
+{
+	return -ENOTSUPP;
+}
 
-अटल अंतरभूत पूर्णांक imx_scu_irq_unरेजिस्टर_notअगरier(काष्ठा notअगरier_block *nb)
-अणु
-	वापस -ENOTSUPP;
-पूर्ण
+static inline int imx_scu_irq_unregister_notifier(struct notifier_block *nb)
+{
+	return -ENOTSUPP;
+}
 
-अटल अंतरभूत पूर्णांक imx_scu_irq_group_enable(u8 group, u32 mask, u8 enable)
-अणु
-	वापस -ENOTSUPP;
-पूर्ण
-#पूर्ण_अगर
-#पूर्ण_अगर /* _SC_SCI_H */
+static inline int imx_scu_irq_group_enable(u8 group, u32 mask, u8 enable)
+{
+	return -ENOTSUPP;
+}
+#endif
+#endif /* _SC_SCI_H */

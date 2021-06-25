@@ -1,23 +1,22 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __LBS_CFG80211_H__
-#घोषणा __LBS_CFG80211_H__
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __LBS_CFG80211_H__
+#define __LBS_CFG80211_H__
 
-काष्ठा device;
-काष्ठा lbs_निजी;
-काष्ठा regulatory_request;
-काष्ठा wiphy;
+struct device;
+struct lbs_private;
+struct regulatory_request;
+struct wiphy;
 
-काष्ठा wireless_dev *lbs_cfg_alloc(काष्ठा device *dev);
-पूर्णांक lbs_cfg_रेजिस्टर(काष्ठा lbs_निजी *priv);
-व्योम lbs_cfg_मुक्त(काष्ठा lbs_निजी *priv);
+struct wireless_dev *lbs_cfg_alloc(struct device *dev);
+int lbs_cfg_register(struct lbs_private *priv);
+void lbs_cfg_free(struct lbs_private *priv);
 
-व्योम lbs_send_disconnect_notअगरication(काष्ठा lbs_निजी *priv,
+void lbs_send_disconnect_notification(struct lbs_private *priv,
 				      bool locally_generated);
-व्योम lbs_send_mic_failureevent(काष्ठा lbs_निजी *priv, u32 event);
+void lbs_send_mic_failureevent(struct lbs_private *priv, u32 event);
 
-व्योम lbs_scan_करोne(काष्ठा lbs_निजी *priv);
-व्योम lbs_scan_deinit(काष्ठा lbs_निजी *priv);
-पूर्णांक lbs_disconnect(काष्ठा lbs_निजी *priv, u16 reason);
+void lbs_scan_done(struct lbs_private *priv);
+void lbs_scan_deinit(struct lbs_private *priv);
+int lbs_disconnect(struct lbs_private *priv, u16 reason);
 
-#पूर्ण_अगर
+#endif

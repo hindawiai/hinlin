@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * LED MTD trigger
  *
@@ -9,34 +8,34 @@
  *
  * Copyright 2006 Openedhand Ltd.
  *
- * Author: Riअक्षरd Purdie <rpurdie@खोलोedhand.com>
+ * Author: Richard Purdie <rpurdie@openedhand.com>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/leds.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/leds.h>
 
-#घोषणा BLINK_DELAY 30
+#define BLINK_DELAY 30
 
 DEFINE_LED_TRIGGER(ledtrig_mtd);
 DEFINE_LED_TRIGGER(ledtrig_nand);
 
-व्योम ledtrig_mtd_activity(व्योम)
-अणु
-	अचिन्हित दीर्घ blink_delay = BLINK_DELAY;
+void ledtrig_mtd_activity(void)
+{
+	unsigned long blink_delay = BLINK_DELAY;
 
 	led_trigger_blink_oneshot(ledtrig_mtd,
 				  &blink_delay, &blink_delay, 0);
 	led_trigger_blink_oneshot(ledtrig_nand,
 				  &blink_delay, &blink_delay, 0);
-पूर्ण
+}
 EXPORT_SYMBOL(ledtrig_mtd_activity);
 
-अटल पूर्णांक __init ledtrig_mtd_init(व्योम)
-अणु
-	led_trigger_रेजिस्टर_simple("mtd", &ledtrig_mtd);
-	led_trigger_रेजिस्टर_simple("nand-disk", &ledtrig_nand);
+static int __init ledtrig_mtd_init(void)
+{
+	led_trigger_register_simple("mtd", &ledtrig_mtd);
+	led_trigger_register_simple("nand-disk", &ledtrig_nand);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 device_initcall(ledtrig_mtd_init);

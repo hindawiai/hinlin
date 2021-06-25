@@ -1,393 +1,392 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * arch/sparc64/mm/fault.c: Page fault handlers क्रम the 64-bit Sparc.
+ * arch/sparc64/mm/fault.c: Page fault handlers for the 64-bit Sparc.
  *
  * Copyright (C) 1996, 2008 David S. Miller (davem@davemloft.net)
  * Copyright (C) 1997, 1999 Jakub Jelinek (jj@ultra.linux.cz)
  */
 
-#समावेश <यंत्र/head.h>
+#include <asm/head.h>
 
-#समावेश <linux/माला.स>
-#समावेश <linux/types.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/sched/debug.h>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/mman.h>
-#समावेश <linux/संकेत.स>
-#समावेश <linux/mm.h>
-#समावेश <linux/extable.h>
-#समावेश <linux/init.h>
-#समावेश <linux/perf_event.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/kprobes.h>
-#समावेश <linux/kdebug.h>
-#समावेश <linux/percpu.h>
-#समावेश <linux/context_tracking.h>
-#समावेश <linux/uaccess.h>
+#include <linux/string.h>
+#include <linux/types.h>
+#include <linux/sched.h>
+#include <linux/sched/debug.h>
+#include <linux/ptrace.h>
+#include <linux/mman.h>
+#include <linux/signal.h>
+#include <linux/mm.h>
+#include <linux/extable.h>
+#include <linux/init.h>
+#include <linux/perf_event.h>
+#include <linux/interrupt.h>
+#include <linux/kprobes.h>
+#include <linux/kdebug.h>
+#include <linux/percpu.h>
+#include <linux/context_tracking.h>
+#include <linux/uaccess.h>
 
-#समावेश <यंत्र/page.h>
-#समावेश <यंत्र/खोलोprom.h>
-#समावेश <यंत्र/oplib.h>
-#समावेश <यंत्र/asi.h>
-#समावेश <यंत्र/lsu.h>
-#समावेश <यंत्र/sections.h>
-#समावेश <यंत्र/mmu_context.h>
-#समावेश <यंत्र/setup.h>
+#include <asm/page.h>
+#include <asm/openprom.h>
+#include <asm/oplib.h>
+#include <asm/asi.h>
+#include <asm/lsu.h>
+#include <asm/sections.h>
+#include <asm/mmu_context.h>
+#include <asm/setup.h>
 
-पूर्णांक show_unhandled_संकेतs = 1;
+int show_unhandled_signals = 1;
 
-अटल व्योम __kprobes unhandled_fault(अचिन्हित दीर्घ address,
-				      काष्ठा task_काष्ठा *tsk,
-				      काष्ठा pt_regs *regs)
-अणु
-	अगर ((अचिन्हित दीर्घ) address < PAGE_SIZE) अणु
-		prपूर्णांकk(KERN_ALERT "Unable to handle kernel NULL "
+static void __kprobes unhandled_fault(unsigned long address,
+				      struct task_struct *tsk,
+				      struct pt_regs *regs)
+{
+	if ((unsigned long) address < PAGE_SIZE) {
+		printk(KERN_ALERT "Unable to handle kernel NULL "
 		       "pointer dereference\n");
-	पूर्ण अन्यथा अणु
-		prपूर्णांकk(KERN_ALERT "Unable to handle kernel paging request "
-		       "at virtual address %016lx\n", (अचिन्हित दीर्घ)address);
-	पूर्ण
-	prपूर्णांकk(KERN_ALERT "tsk->{mm,active_mm}->context = %016lx\n",
+	} else {
+		printk(KERN_ALERT "Unable to handle kernel paging request "
+		       "at virtual address %016lx\n", (unsigned long)address);
+	}
+	printk(KERN_ALERT "tsk->{mm,active_mm}->context = %016lx\n",
 	       (tsk->mm ?
 		CTX_HWBITS(tsk->mm->context) :
 		CTX_HWBITS(tsk->active_mm->context)));
-	prपूर्णांकk(KERN_ALERT "tsk->{mm,active_mm}->pgd = %016lx\n",
-	       (tsk->mm ? (अचिन्हित दीर्घ) tsk->mm->pgd :
-		          (अचिन्हित दीर्घ) tsk->active_mm->pgd));
-	die_अगर_kernel("Oops", regs);
-पूर्ण
+	printk(KERN_ALERT "tsk->{mm,active_mm}->pgd = %016lx\n",
+	       (tsk->mm ? (unsigned long) tsk->mm->pgd :
+		          (unsigned long) tsk->active_mm->pgd));
+	die_if_kernel("Oops", regs);
+}
 
-अटल व्योम __kprobes bad_kernel_pc(काष्ठा pt_regs *regs, अचिन्हित दीर्घ vaddr)
-अणु
-	prपूर्णांकk(KERN_CRIT "OOPS: Bogus kernel PC [%016lx] in fault handler\n",
+static void __kprobes bad_kernel_pc(struct pt_regs *regs, unsigned long vaddr)
+{
+	printk(KERN_CRIT "OOPS: Bogus kernel PC [%016lx] in fault handler\n",
 	       regs->tpc);
-	prपूर्णांकk(KERN_CRIT "OOPS: RPC [%016lx]\n", regs->u_regs[15]);
-	prपूर्णांकk("OOPS: RPC <%pS>\n", (व्योम *) regs->u_regs[15]);
-	prपूर्णांकk(KERN_CRIT "OOPS: Fault was to vaddr[%lx]\n", vaddr);
+	printk(KERN_CRIT "OOPS: RPC [%016lx]\n", regs->u_regs[15]);
+	printk("OOPS: RPC <%pS>\n", (void *) regs->u_regs[15]);
+	printk(KERN_CRIT "OOPS: Fault was to vaddr[%lx]\n", vaddr);
 	dump_stack();
 	unhandled_fault(regs->tpc, current, regs);
-पूर्ण
+}
 
 /*
  * We now make sure that mmap_lock is held in all paths that call
  * this. Additionally, to prevent kswapd from ripping ptes from
- * under us, उठाओ पूर्णांकerrupts around the समय that we look at the
- * pte, kswapd will have to रुको to get his smp ipi response from
+ * under us, raise interrupts around the time that we look at the
+ * pte, kswapd will have to wait to get his smp ipi response from
  * us. vmtruncate likewise. This saves us having to get pte lock.
  */
-अटल अचिन्हित पूर्णांक get_user_insn(अचिन्हित दीर्घ tpc)
-अणु
+static unsigned int get_user_insn(unsigned long tpc)
+{
 	pgd_t *pgdp = pgd_offset(current->mm, tpc);
 	p4d_t *p4dp;
 	pud_t *pudp;
 	pmd_t *pmdp;
 	pte_t *ptep, pte;
-	अचिन्हित दीर्घ pa;
+	unsigned long pa;
 	u32 insn = 0;
 
-	अगर (pgd_none(*pgdp) || unlikely(pgd_bad(*pgdp)))
-		जाओ out;
+	if (pgd_none(*pgdp) || unlikely(pgd_bad(*pgdp)))
+		goto out;
 	p4dp = p4d_offset(pgdp, tpc);
-	अगर (p4d_none(*p4dp) || unlikely(p4d_bad(*p4dp)))
-		जाओ out;
+	if (p4d_none(*p4dp) || unlikely(p4d_bad(*p4dp)))
+		goto out;
 	pudp = pud_offset(p4dp, tpc);
-	अगर (pud_none(*pudp) || unlikely(pud_bad(*pudp)))
-		जाओ out;
+	if (pud_none(*pudp) || unlikely(pud_bad(*pudp)))
+		goto out;
 
-	/* This disables preemption क्रम us as well. */
+	/* This disables preemption for us as well. */
 	local_irq_disable();
 
 	pmdp = pmd_offset(pudp, tpc);
-	अगर (pmd_none(*pmdp) || unlikely(pmd_bad(*pmdp)))
-		जाओ out_irq_enable;
+	if (pmd_none(*pmdp) || unlikely(pmd_bad(*pmdp)))
+		goto out_irq_enable;
 
-#अगर defined(CONFIG_HUGETLB_PAGE) || defined(CONFIG_TRANSPARENT_HUGEPAGE)
-	अगर (is_hugetlb_pmd(*pmdp)) अणु
+#if defined(CONFIG_HUGETLB_PAGE) || defined(CONFIG_TRANSPARENT_HUGEPAGE)
+	if (is_hugetlb_pmd(*pmdp)) {
 		pa  = pmd_pfn(*pmdp) << PAGE_SHIFT;
 		pa += tpc & ~HPAGE_MASK;
 
-		/* Use phys bypass so we करोn't pollute dtlb/dcache. */
-		__यंत्र__ __अस्थिर__("lduwa [%1] %2, %0"
+		/* Use phys bypass so we don't pollute dtlb/dcache. */
+		__asm__ __volatile__("lduwa [%1] %2, %0"
 				     : "=r" (insn)
 				     : "r" (pa), "i" (ASI_PHYS_USE_EC));
-	पूर्ण अन्यथा
-#पूर्ण_अगर
-	अणु
+	} else
+#endif
+	{
 		ptep = pte_offset_map(pmdp, tpc);
 		pte = *ptep;
-		अगर (pte_present(pte)) अणु
+		if (pte_present(pte)) {
 			pa  = (pte_pfn(pte) << PAGE_SHIFT);
 			pa += (tpc & ~PAGE_MASK);
 
-			/* Use phys bypass so we करोn't pollute dtlb/dcache. */
-			__यंत्र__ __अस्थिर__("lduwa [%1] %2, %0"
+			/* Use phys bypass so we don't pollute dtlb/dcache. */
+			__asm__ __volatile__("lduwa [%1] %2, %0"
 					     : "=r" (insn)
 					     : "r" (pa), "i" (ASI_PHYS_USE_EC));
-		पूर्ण
+		}
 		pte_unmap(ptep);
-	पूर्ण
+	}
 out_irq_enable:
 	local_irq_enable();
 out:
-	वापस insn;
-पूर्ण
+	return insn;
+}
 
-अटल अंतरभूत व्योम
-show_संकेत_msg(काष्ठा pt_regs *regs, पूर्णांक sig, पूर्णांक code,
-		अचिन्हित दीर्घ address, काष्ठा task_काष्ठा *tsk)
-अणु
-	अगर (!unhandled_संकेत(tsk, sig))
-		वापस;
+static inline void
+show_signal_msg(struct pt_regs *regs, int sig, int code,
+		unsigned long address, struct task_struct *tsk)
+{
+	if (!unhandled_signal(tsk, sig))
+		return;
 
-	अगर (!prपूर्णांकk_ratelimit())
-		वापस;
+	if (!printk_ratelimit())
+		return;
 
-	prपूर्णांकk("%s%s[%d]: segfault at %lx ip %px (rpc %px) sp %px error %x",
+	printk("%s%s[%d]: segfault at %lx ip %px (rpc %px) sp %px error %x",
 	       task_pid_nr(tsk) > 1 ? KERN_INFO : KERN_EMERG,
 	       tsk->comm, task_pid_nr(tsk), address,
-	       (व्योम *)regs->tpc, (व्योम *)regs->u_regs[UREG_I7],
-	       (व्योम *)regs->u_regs[UREG_FP], code);
+	       (void *)regs->tpc, (void *)regs->u_regs[UREG_I7],
+	       (void *)regs->u_regs[UREG_FP], code);
 
-	prपूर्णांक_vma_addr(KERN_CONT " in ", regs->tpc);
+	print_vma_addr(KERN_CONT " in ", regs->tpc);
 
-	prपूर्णांकk(KERN_CONT "\n");
-पूर्ण
+	printk(KERN_CONT "\n");
+}
 
-अटल व्योम करो_fault_siginfo(पूर्णांक code, पूर्णांक sig, काष्ठा pt_regs *regs,
-			     अचिन्हित दीर्घ fault_addr, अचिन्हित पूर्णांक insn,
-			     पूर्णांक fault_code)
-अणु
-	अचिन्हित दीर्घ addr;
+static void do_fault_siginfo(int code, int sig, struct pt_regs *regs,
+			     unsigned long fault_addr, unsigned int insn,
+			     int fault_code)
+{
+	unsigned long addr;
 
-	अगर (fault_code & FAULT_CODE_ITLB) अणु
+	if (fault_code & FAULT_CODE_ITLB) {
 		addr = regs->tpc;
-	पूर्ण अन्यथा अणु
-		/* If we were able to probe the faulting inकाष्ठाion, use it
+	} else {
+		/* If we were able to probe the faulting instruction, use it
 		 * to compute a precise fault address.  Otherwise use the fault
-		 * समय provided address which may only have page granularity.
+		 * time provided address which may only have page granularity.
 		 */
-		अगर (insn)
+		if (insn)
 			addr = compute_effective_address(regs, insn, 0);
-		अन्यथा
+		else
 			addr = fault_addr;
-	पूर्ण
+	}
 
-	अगर (unlikely(show_unhandled_संकेतs))
-		show_संकेत_msg(regs, sig, code, addr, current);
+	if (unlikely(show_unhandled_signals))
+		show_signal_msg(regs, sig, code, addr, current);
 
-	क्रमce_sig_fault(sig, code, (व्योम __user *) addr, 0);
-पूर्ण
+	force_sig_fault(sig, code, (void __user *) addr, 0);
+}
 
-अटल अचिन्हित पूर्णांक get_fault_insn(काष्ठा pt_regs *regs, अचिन्हित पूर्णांक insn)
-अणु
-	अगर (!insn) अणु
-		अगर (!regs->tpc || (regs->tpc & 0x3))
-			वापस 0;
-		अगर (regs->tstate & TSTATE_PRIV) अणु
-			insn = *(अचिन्हित पूर्णांक *) regs->tpc;
-		पूर्ण अन्यथा अणु
+static unsigned int get_fault_insn(struct pt_regs *regs, unsigned int insn)
+{
+	if (!insn) {
+		if (!regs->tpc || (regs->tpc & 0x3))
+			return 0;
+		if (regs->tstate & TSTATE_PRIV) {
+			insn = *(unsigned int *) regs->tpc;
+		} else {
 			insn = get_user_insn(regs->tpc);
-		पूर्ण
-	पूर्ण
-	वापस insn;
-पूर्ण
+		}
+	}
+	return insn;
+}
 
-अटल व्योम __kprobes करो_kernel_fault(काष्ठा pt_regs *regs, पूर्णांक si_code,
-				      पूर्णांक fault_code, अचिन्हित पूर्णांक insn,
-				      अचिन्हित दीर्घ address)
-अणु
-	अचिन्हित अक्षर asi = ASI_P;
+static void __kprobes do_kernel_fault(struct pt_regs *regs, int si_code,
+				      int fault_code, unsigned int insn,
+				      unsigned long address)
+{
+	unsigned char asi = ASI_P;
  
-	अगर ((!insn) && (regs->tstate & TSTATE_PRIV))
-		जाओ cannot_handle;
+	if ((!insn) && (regs->tstate & TSTATE_PRIV))
+		goto cannot_handle;
 
-	/* If user insn could be पढ़ो (thus insn is zero), that
-	 * is fine.  We will just gun करोwn the process with a संकेत
-	 * in that हाल.
+	/* If user insn could be read (thus insn is zero), that
+	 * is fine.  We will just gun down the process with a signal
+	 * in that case.
 	 */
 
-	अगर (!(fault_code & (FAULT_CODE_WRITE|FAULT_CODE_ITLB)) &&
-	    (insn & 0xc0800000) == 0xc0800000) अणु
-		अगर (insn & 0x2000)
+	if (!(fault_code & (FAULT_CODE_WRITE|FAULT_CODE_ITLB)) &&
+	    (insn & 0xc0800000) == 0xc0800000) {
+		if (insn & 0x2000)
 			asi = (regs->tstate >> 24);
-		अन्यथा
+		else
 			asi = (insn >> 5);
-		अगर ((asi & 0xf2) == 0x82) अणु
-			अगर (insn & 0x1000000) अणु
+		if ((asi & 0xf2) == 0x82) {
+			if (insn & 0x1000000) {
 				handle_ldf_stq(insn, regs);
-			पूर्ण अन्यथा अणु
+			} else {
 				/* This was a non-faulting load. Just clear the
-				 * destination रेजिस्टर(s) and जारी with the next
-				 * inकाष्ठाion. -jj
+				 * destination register(s) and continue with the next
+				 * instruction. -jj
 				 */
 				handle_ld_nf(insn, regs);
-			पूर्ण
-			वापस;
-		पूर्ण
-	पूर्ण
+			}
+			return;
+		}
+	}
 		
 	/* Is this in ex_table? */
-	अगर (regs->tstate & TSTATE_PRIV) अणु
-		स्थिर काष्ठा exception_table_entry *entry;
+	if (regs->tstate & TSTATE_PRIV) {
+		const struct exception_table_entry *entry;
 
 		entry = search_exception_tables(regs->tpc);
-		अगर (entry) अणु
+		if (entry) {
 			regs->tpc = entry->fixup;
 			regs->tnpc = regs->tpc + 4;
-			वापस;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			return;
+		}
+	} else {
 		/* The si_code was set to make clear whether
 		 * this was a SEGV_MAPERR or SEGV_ACCERR fault.
 		 */
-		करो_fault_siginfo(si_code, संक_अंश, regs, address, insn, fault_code);
-		वापस;
-	पूर्ण
+		do_fault_siginfo(si_code, SIGSEGV, regs, address, insn, fault_code);
+		return;
+	}
 
 cannot_handle:
 	unhandled_fault (address, current, regs);
-पूर्ण
+}
 
-अटल व्योम noअंतरभूत __kprobes bogus_32bit_fault_tpc(काष्ठा pt_regs *regs)
-अणु
-	अटल पूर्णांक बार;
+static void noinline __kprobes bogus_32bit_fault_tpc(struct pt_regs *regs)
+{
+	static int times;
 
-	अगर (बार++ < 10)
-		prपूर्णांकk(KERN_ERR "FAULT[%s:%d]: 32-bit process reports "
+	if (times++ < 10)
+		printk(KERN_ERR "FAULT[%s:%d]: 32-bit process reports "
 		       "64-bit TPC [%lx]\n",
 		       current->comm, current->pid,
 		       regs->tpc);
 	show_regs(regs);
-पूर्ण
+}
 
-यंत्रlinkage व्योम __kprobes करो_sparc64_fault(काष्ठा pt_regs *regs)
-अणु
-	क्रमागत ctx_state prev_state = exception_enter();
-	काष्ठा mm_काष्ठा *mm = current->mm;
-	काष्ठा vm_area_काष्ठा *vma;
-	अचिन्हित पूर्णांक insn = 0;
-	पूर्णांक si_code, fault_code;
+asmlinkage void __kprobes do_sparc64_fault(struct pt_regs *regs)
+{
+	enum ctx_state prev_state = exception_enter();
+	struct mm_struct *mm = current->mm;
+	struct vm_area_struct *vma;
+	unsigned int insn = 0;
+	int si_code, fault_code;
 	vm_fault_t fault;
-	अचिन्हित दीर्घ address, mm_rss;
-	अचिन्हित पूर्णांक flags = FAULT_FLAG_DEFAULT;
+	unsigned long address, mm_rss;
+	unsigned int flags = FAULT_FLAG_DEFAULT;
 
-	fault_code = get_thपढ़ो_fault_code();
+	fault_code = get_thread_fault_code();
 
-	अगर (kprobe_page_fault(regs, 0))
-		जाओ निकास_exception;
+	if (kprobe_page_fault(regs, 0))
+		goto exit_exception;
 
 	si_code = SEGV_MAPERR;
-	address = current_thपढ़ो_info()->fault_address;
+	address = current_thread_info()->fault_address;
 
-	अगर ((fault_code & FAULT_CODE_ITLB) &&
+	if ((fault_code & FAULT_CODE_ITLB) &&
 	    (fault_code & FAULT_CODE_DTLB))
 		BUG();
 
-	अगर (test_thपढ़ो_flag(TIF_32BIT)) अणु
-		अगर (!(regs->tstate & TSTATE_PRIV)) अणु
-			अगर (unlikely((regs->tpc >> 32) != 0)) अणु
+	if (test_thread_flag(TIF_32BIT)) {
+		if (!(regs->tstate & TSTATE_PRIV)) {
+			if (unlikely((regs->tpc >> 32) != 0)) {
 				bogus_32bit_fault_tpc(regs);
-				जाओ पूर्णांकr_or_no_mm;
-			पूर्ण
-		पूर्ण
-		अगर (unlikely((address >> 32) != 0))
-			जाओ पूर्णांकr_or_no_mm;
-	पूर्ण
+				goto intr_or_no_mm;
+			}
+		}
+		if (unlikely((address >> 32) != 0))
+			goto intr_or_no_mm;
+	}
 
-	अगर (regs->tstate & TSTATE_PRIV) अणु
-		अचिन्हित दीर्घ tpc = regs->tpc;
+	if (regs->tstate & TSTATE_PRIV) {
+		unsigned long tpc = regs->tpc;
 
 		/* Sanity check the PC. */
-		अगर ((tpc >= KERNBASE && tpc < (अचिन्हित दीर्घ) __init_end) ||
-		    (tpc >= MODULES_VADDR && tpc < MODULES_END)) अणु
+		if ((tpc >= KERNBASE && tpc < (unsigned long) __init_end) ||
+		    (tpc >= MODULES_VADDR && tpc < MODULES_END)) {
 			/* Valid, no problems... */
-		पूर्ण अन्यथा अणु
+		} else {
 			bad_kernel_pc(regs, address);
-			जाओ निकास_exception;
-		पूर्ण
-	पूर्ण अन्यथा
+			goto exit_exception;
+		}
+	} else
 		flags |= FAULT_FLAG_USER;
 
 	/*
-	 * If we're in an पूर्णांकerrupt or have no user
+	 * If we're in an interrupt or have no user
 	 * context, we must not take the fault..
 	 */
-	अगर (faulthandler_disabled() || !mm)
-		जाओ पूर्णांकr_or_no_mm;
+	if (faulthandler_disabled() || !mm)
+		goto intr_or_no_mm;
 
 	perf_sw_event(PERF_COUNT_SW_PAGE_FAULTS, 1, regs, address);
 
-	अगर (!mmap_पढ़ो_trylock(mm)) अणु
-		अगर ((regs->tstate & TSTATE_PRIV) &&
-		    !search_exception_tables(regs->tpc)) अणु
+	if (!mmap_read_trylock(mm)) {
+		if ((regs->tstate & TSTATE_PRIV) &&
+		    !search_exception_tables(regs->tpc)) {
 			insn = get_fault_insn(regs, insn);
-			जाओ handle_kernel_fault;
-		पूर्ण
+			goto handle_kernel_fault;
+		}
 
 retry:
-		mmap_पढ़ो_lock(mm);
-	पूर्ण
+		mmap_read_lock(mm);
+	}
 
-	अगर (fault_code & FAULT_CODE_BAD_RA)
-		जाओ करो_sigbus;
+	if (fault_code & FAULT_CODE_BAD_RA)
+		goto do_sigbus;
 
 	vma = find_vma(mm, address);
-	अगर (!vma)
-		जाओ bad_area;
+	if (!vma)
+		goto bad_area;
 
-	/* Pure DTLB misses करो not tell us whether the fault causing
-	 * load/store/atomic was a ग_लिखो or not, it only says that there
-	 * was no match.  So in such a हाल we (carefully) पढ़ो the
-	 * inकाष्ठाion to try and figure this out.  It's an optimization
-	 * so it's ok if we can't करो this.
+	/* Pure DTLB misses do not tell us whether the fault causing
+	 * load/store/atomic was a write or not, it only says that there
+	 * was no match.  So in such a case we (carefully) read the
+	 * instruction to try and figure this out.  It's an optimization
+	 * so it's ok if we can't do this.
 	 *
-	 * Special hack, winकरोw spill/fill knows the exact fault type.
+	 * Special hack, window spill/fill knows the exact fault type.
 	 */
-	अगर (((fault_code &
+	if (((fault_code &
 	      (FAULT_CODE_DTLB | FAULT_CODE_WRITE | FAULT_CODE_WINFIXUP)) == FAULT_CODE_DTLB) &&
-	    (vma->vm_flags & VM_WRITE) != 0) अणु
+	    (vma->vm_flags & VM_WRITE) != 0) {
 		insn = get_fault_insn(regs, 0);
-		अगर (!insn)
-			जाओ जारी_fault;
+		if (!insn)
+			goto continue_fault;
 		/* All loads, stores and atomics have bits 30 and 31 both set
-		 * in the inकाष्ठाion.  Bit 21 is set in all stores, but we
-		 * have to aव्योम prefetches which also have bit 21 set.
+		 * in the instruction.  Bit 21 is set in all stores, but we
+		 * have to avoid prefetches which also have bit 21 set.
 		 */
-		अगर ((insn & 0xc0200000) == 0xc0200000 &&
-		    (insn & 0x01780000) != 0x01680000) अणु
-			/* Don't bother updating thपढ़ो काष्ठा value,
+		if ((insn & 0xc0200000) == 0xc0200000 &&
+		    (insn & 0x01780000) != 0x01680000) {
+			/* Don't bother updating thread struct value,
 			 * because update_mmu_cache only cares which tlb
 			 * the access came from.
 			 */
 			fault_code |= FAULT_CODE_WRITE;
-		पूर्ण
-	पूर्ण
-जारी_fault:
+		}
+	}
+continue_fault:
 
-	अगर (vma->vm_start <= address)
-		जाओ good_area;
-	अगर (!(vma->vm_flags & VM_GROWSDOWN))
-		जाओ bad_area;
-	अगर (!(fault_code & FAULT_CODE_WRITE)) अणु
+	if (vma->vm_start <= address)
+		goto good_area;
+	if (!(vma->vm_flags & VM_GROWSDOWN))
+		goto bad_area;
+	if (!(fault_code & FAULT_CODE_WRITE)) {
 		/* Non-faulting loads shouldn't expand stack. */
 		insn = get_fault_insn(regs, insn);
-		अगर ((insn & 0xc0800000) == 0xc0800000) अणु
-			अचिन्हित अक्षर asi;
+		if ((insn & 0xc0800000) == 0xc0800000) {
+			unsigned char asi;
 
-			अगर (insn & 0x2000)
+			if (insn & 0x2000)
 				asi = (regs->tstate >> 24);
-			अन्यथा
+			else
 				asi = (insn >> 5);
-			अगर ((asi & 0xf2) == 0x82)
-				जाओ bad_area;
-		पूर्ण
-	पूर्ण
-	अगर (expand_stack(vma, address))
-		जाओ bad_area;
+			if ((asi & 0xf2) == 0x82)
+				goto bad_area;
+		}
+	}
+	if (expand_stack(vma, address))
+		goto bad_area;
 	/*
-	 * Ok, we have a good vm_area क्रम this memory access, so
+	 * Ok, we have a good vm_area for this memory access, so
 	 * we can handle it..
 	 */
 good_area:
@@ -396,96 +395,96 @@ good_area:
 	/* If we took a ITLB miss on a non-executable page, catch
 	 * that here.
 	 */
-	अगर ((fault_code & FAULT_CODE_ITLB) && !(vma->vm_flags & VM_EXEC)) अणु
+	if ((fault_code & FAULT_CODE_ITLB) && !(vma->vm_flags & VM_EXEC)) {
 		WARN(address != regs->tpc,
 		     "address (%lx) != regs->tpc (%lx)\n", address, regs->tpc);
 		WARN_ON(regs->tstate & TSTATE_PRIV);
-		जाओ bad_area;
-	पूर्ण
+		goto bad_area;
+	}
 
-	अगर (fault_code & FAULT_CODE_WRITE) अणु
-		अगर (!(vma->vm_flags & VM_WRITE))
-			जाओ bad_area;
+	if (fault_code & FAULT_CODE_WRITE) {
+		if (!(vma->vm_flags & VM_WRITE))
+			goto bad_area;
 
-		/* Spitfire has an icache which करोes not snoop
-		 * processor stores.  Later processors करो...
+		/* Spitfire has an icache which does not snoop
+		 * processor stores.  Later processors do...
 		 */
-		अगर (tlb_type == spitfire &&
+		if (tlb_type == spitfire &&
 		    (vma->vm_flags & VM_EXEC) != 0 &&
-		    vma->vm_file != शून्य)
-			set_thपढ़ो_fault_code(fault_code |
+		    vma->vm_file != NULL)
+			set_thread_fault_code(fault_code |
 					      FAULT_CODE_BLKCOMMIT);
 
 		flags |= FAULT_FLAG_WRITE;
-	पूर्ण अन्यथा अणु
-		/* Allow पढ़ोs even क्रम ग_लिखो-only mappings */
-		अगर (!(vma->vm_flags & (VM_READ | VM_EXEC)))
-			जाओ bad_area;
-	पूर्ण
+	} else {
+		/* Allow reads even for write-only mappings */
+		if (!(vma->vm_flags & (VM_READ | VM_EXEC)))
+			goto bad_area;
+	}
 
 	fault = handle_mm_fault(vma, address, flags, regs);
 
-	अगर (fault_संकेत_pending(fault, regs))
-		जाओ निकास_exception;
+	if (fault_signal_pending(fault, regs))
+		goto exit_exception;
 
-	अगर (unlikely(fault & VM_FAULT_ERROR)) अणु
-		अगर (fault & VM_FAULT_OOM)
-			जाओ out_of_memory;
-		अन्यथा अगर (fault & VM_FAULT_संक_अंश)
-			जाओ bad_area;
-		अन्यथा अगर (fault & VM_FAULT_SIGBUS)
-			जाओ करो_sigbus;
+	if (unlikely(fault & VM_FAULT_ERROR)) {
+		if (fault & VM_FAULT_OOM)
+			goto out_of_memory;
+		else if (fault & VM_FAULT_SIGSEGV)
+			goto bad_area;
+		else if (fault & VM_FAULT_SIGBUS)
+			goto do_sigbus;
 		BUG();
-	पूर्ण
+	}
 
-	अगर (flags & FAULT_FLAG_ALLOW_RETRY) अणु
-		अगर (fault & VM_FAULT_RETRY) अणु
+	if (flags & FAULT_FLAG_ALLOW_RETRY) {
+		if (fault & VM_FAULT_RETRY) {
 			flags |= FAULT_FLAG_TRIED;
 
-			/* No need to mmap_पढ़ो_unlock(mm) as we would
-			 * have alपढ़ोy released it in __lock_page_or_retry
+			/* No need to mmap_read_unlock(mm) as we would
+			 * have already released it in __lock_page_or_retry
 			 * in mm/filemap.c.
 			 */
 
-			जाओ retry;
-		पूर्ण
-	पूर्ण
-	mmap_पढ़ो_unlock(mm);
+			goto retry;
+		}
+	}
+	mmap_read_unlock(mm);
 
 	mm_rss = get_mm_rss(mm);
-#अगर defined(CONFIG_TRANSPARENT_HUGEPAGE)
+#if defined(CONFIG_TRANSPARENT_HUGEPAGE)
 	mm_rss -= (mm->context.thp_pte_count * (HPAGE_SIZE / PAGE_SIZE));
-#पूर्ण_अगर
-	अगर (unlikely(mm_rss >
+#endif
+	if (unlikely(mm_rss >
 		     mm->context.tsb_block[MM_TSB_BASE].tsb_rss_limit))
 		tsb_grow(mm, MM_TSB_BASE, mm_rss);
-#अगर defined(CONFIG_HUGETLB_PAGE) || defined(CONFIG_TRANSPARENT_HUGEPAGE)
+#if defined(CONFIG_HUGETLB_PAGE) || defined(CONFIG_TRANSPARENT_HUGEPAGE)
 	mm_rss = mm->context.hugetlb_pte_count + mm->context.thp_pte_count;
 	mm_rss *= REAL_HPAGE_PER_HPAGE;
-	अगर (unlikely(mm_rss >
-		     mm->context.tsb_block[MM_TSB_HUGE].tsb_rss_limit)) अणु
-		अगर (mm->context.tsb_block[MM_TSB_HUGE].tsb)
+	if (unlikely(mm_rss >
+		     mm->context.tsb_block[MM_TSB_HUGE].tsb_rss_limit)) {
+		if (mm->context.tsb_block[MM_TSB_HUGE].tsb)
 			tsb_grow(mm, MM_TSB_HUGE, mm_rss);
-		अन्यथा
+		else
 			hugetlb_setup(regs);
 
-	पूर्ण
-#पूर्ण_अगर
-निकास_exception:
-	exception_निकास(prev_state);
-	वापस;
+	}
+#endif
+exit_exception:
+	exception_exit(prev_state);
+	return;
 
 	/*
 	 * Something tried to access memory that isn't in our memory map..
-	 * Fix it, but check अगर it's kernel or user first..
+	 * Fix it, but check if it's kernel or user first..
 	 */
 bad_area:
 	insn = get_fault_insn(regs, insn);
-	mmap_पढ़ो_unlock(mm);
+	mmap_read_unlock(mm);
 
 handle_kernel_fault:
-	करो_kernel_fault(regs, si_code, fault_code, insn, address);
-	जाओ निकास_exception;
+	do_kernel_fault(regs, si_code, fault_code, insn, address);
+	goto exit_exception;
 
 /*
  * We ran out of memory, or some other thing happened to us that made
@@ -493,28 +492,28 @@ handle_kernel_fault:
  */
 out_of_memory:
 	insn = get_fault_insn(regs, insn);
-	mmap_पढ़ो_unlock(mm);
-	अगर (!(regs->tstate & TSTATE_PRIV)) अणु
+	mmap_read_unlock(mm);
+	if (!(regs->tstate & TSTATE_PRIV)) {
 		pagefault_out_of_memory();
-		जाओ निकास_exception;
-	पूर्ण
-	जाओ handle_kernel_fault;
+		goto exit_exception;
+	}
+	goto handle_kernel_fault;
 
-पूर्णांकr_or_no_mm:
+intr_or_no_mm:
 	insn = get_fault_insn(regs, 0);
-	जाओ handle_kernel_fault;
+	goto handle_kernel_fault;
 
-करो_sigbus:
+do_sigbus:
 	insn = get_fault_insn(regs, insn);
-	mmap_पढ़ो_unlock(mm);
+	mmap_read_unlock(mm);
 
 	/*
 	 * Send a sigbus, regardless of whether we were in kernel
 	 * or user mode.
 	 */
-	करो_fault_siginfo(BUS_ADRERR, SIGBUS, regs, address, insn, fault_code);
+	do_fault_siginfo(BUS_ADRERR, SIGBUS, regs, address, insn, fault_code);
 
 	/* Kernel mode? Handle exceptions or die */
-	अगर (regs->tstate & TSTATE_PRIV)
-		जाओ handle_kernel_fault;
-पूर्ण
+	if (regs->tstate & TSTATE_PRIV)
+		goto handle_kernel_fault;
+}

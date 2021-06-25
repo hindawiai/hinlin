@@ -1,192 +1,191 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Code क्रम replacing ftrace calls with jumps.
+ * Code for replacing ftrace calls with jumps.
  *
  * Copyright (C) 2007-2008 Steven Rostedt <srostedt@redhat.com>
  *
- * Thanks goes out to P.A. Semi, Inc क्रम supplying me with a PPC64 box.
+ * Thanks goes out to P.A. Semi, Inc for supplying me with a PPC64 box.
  *
  * Added function graph tracer code, taken from x86 that was written
  * by Frederic Weisbecker, and ported to PPC by Steven Rostedt.
  *
  */
 
-#घोषणा pr_fmt(fmt) "ftrace-powerpc: " fmt
+#define pr_fmt(fmt) "ftrace-powerpc: " fmt
 
-#समावेश <linux/spinlock.h>
-#समावेश <linux/hardirq.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/module.h>
-#समावेश <linux/ftrace.h>
-#समावेश <linux/percpu.h>
-#समावेश <linux/init.h>
-#समावेश <linux/list.h>
+#include <linux/spinlock.h>
+#include <linux/hardirq.h>
+#include <linux/uaccess.h>
+#include <linux/module.h>
+#include <linux/ftrace.h>
+#include <linux/percpu.h>
+#include <linux/init.h>
+#include <linux/list.h>
 
-#समावेश <यंत्र/यंत्र-prototypes.h>
-#समावेश <यंत्र/cacheflush.h>
-#समावेश <यंत्र/code-patching.h>
-#समावेश <यंत्र/ftrace.h>
-#समावेश <यंत्र/syscall.h>
-#समावेश <यंत्र/inst.h>
+#include <asm/asm-prototypes.h>
+#include <asm/cacheflush.h>
+#include <asm/code-patching.h>
+#include <asm/ftrace.h>
+#include <asm/syscall.h>
+#include <asm/inst.h>
 
 
-#अगर_घोषित CONFIG_DYNAMIC_FTRACE
+#ifdef CONFIG_DYNAMIC_FTRACE
 
 /*
- * We generally only have a single दीर्घ_branch tramp and at most 2 or 3 plt
- * tramps generated. But, we करोn't use the plt tramps currently. We also allot
+ * We generally only have a single long_branch tramp and at most 2 or 3 plt
+ * tramps generated. But, we don't use the plt tramps currently. We also allot
  * 2 tramps after .text and .init.text. So, we only end up with around 3 usable
  * tramps in total. Set aside 8 just to be sure.
  */
-#घोषणा	NUM_FTRACE_TRAMPS	8
-अटल अचिन्हित दीर्घ ftrace_tramps[NUM_FTRACE_TRAMPS];
+#define	NUM_FTRACE_TRAMPS	8
+static unsigned long ftrace_tramps[NUM_FTRACE_TRAMPS];
 
-अटल काष्ठा ppc_inst
-ftrace_call_replace(अचिन्हित दीर्घ ip, अचिन्हित दीर्घ addr, पूर्णांक link)
-अणु
-	काष्ठा ppc_inst op;
+static struct ppc_inst
+ftrace_call_replace(unsigned long ip, unsigned long addr, int link)
+{
+	struct ppc_inst op;
 
-	addr = ppc_function_entry((व्योम *)addr);
+	addr = ppc_function_entry((void *)addr);
 
-	/* अगर (link) set op to 'bl' else 'b' */
-	create_branch(&op, (काष्ठा ppc_inst *)ip, addr, link ? 1 : 0);
+	/* if (link) set op to 'bl' else 'b' */
+	create_branch(&op, (struct ppc_inst *)ip, addr, link ? 1 : 0);
 
-	वापस op;
-पूर्ण
+	return op;
+}
 
-अटल पूर्णांक
-ftrace_modअगरy_code(अचिन्हित दीर्घ ip, काष्ठा ppc_inst old, काष्ठा ppc_inst new)
-अणु
-	काष्ठा ppc_inst replaced;
+static int
+ftrace_modify_code(unsigned long ip, struct ppc_inst old, struct ppc_inst new)
+{
+	struct ppc_inst replaced;
 
 	/*
 	 * Note:
-	 * We are paranoid about modअगरying text, as अगर a bug was to happen, it
-	 * could cause us to पढ़ो or ग_लिखो to someplace that could cause harm.
-	 * Carefully पढ़ो and modअगरy the code with probe_kernel_*(), and make
-	 * sure what we पढ़ो is what we expected it to be beक्रमe modअगरying it.
+	 * We are paranoid about modifying text, as if a bug was to happen, it
+	 * could cause us to read or write to someplace that could cause harm.
+	 * Carefully read and modify the code with probe_kernel_*(), and make
+	 * sure what we read is what we expected it to be before modifying it.
 	 */
 
-	/* पढ़ो the text we want to modअगरy */
-	अगर (copy_inst_from_kernel_nofault(&replaced, (व्योम *)ip))
-		वापस -EFAULT;
+	/* read the text we want to modify */
+	if (copy_inst_from_kernel_nofault(&replaced, (void *)ip))
+		return -EFAULT;
 
 	/* Make sure it is what we expect it to be */
-	अगर (!ppc_inst_equal(replaced, old)) अणु
+	if (!ppc_inst_equal(replaced, old)) {
 		pr_err("%p: replaced (%s) != old (%s)",
-		(व्योम *)ip, ppc_inst_as_str(replaced), ppc_inst_as_str(old));
-		वापस -EINVAL;
-	पूर्ण
+		(void *)ip, ppc_inst_as_str(replaced), ppc_inst_as_str(old));
+		return -EINVAL;
+	}
 
 	/* replace the text with the new text */
-	अगर (patch_inकाष्ठाion((काष्ठा ppc_inst *)ip, new))
-		वापस -EPERM;
+	if (patch_instruction((struct ppc_inst *)ip, new))
+		return -EPERM;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Helper functions that are the same क्रम both PPC64 and PPC32.
+ * Helper functions that are the same for both PPC64 and PPC32.
  */
-अटल पूर्णांक test_24bit_addr(अचिन्हित दीर्घ ip, अचिन्हित दीर्घ addr)
-अणु
-	काष्ठा ppc_inst op;
-	addr = ppc_function_entry((व्योम *)addr);
+static int test_24bit_addr(unsigned long ip, unsigned long addr)
+{
+	struct ppc_inst op;
+	addr = ppc_function_entry((void *)addr);
 
-	/* use the create_branch to verअगरy that this offset can be branched */
-	वापस create_branch(&op, (काष्ठा ppc_inst *)ip, addr, 0) == 0;
-पूर्ण
+	/* use the create_branch to verify that this offset can be branched */
+	return create_branch(&op, (struct ppc_inst *)ip, addr, 0) == 0;
+}
 
-अटल पूर्णांक is_bl_op(काष्ठा ppc_inst op)
-अणु
-	वापस (ppc_inst_val(op) & 0xfc000003) == 0x48000001;
-पूर्ण
+static int is_bl_op(struct ppc_inst op)
+{
+	return (ppc_inst_val(op) & 0xfc000003) == 0x48000001;
+}
 
-अटल पूर्णांक is_b_op(काष्ठा ppc_inst op)
-अणु
-	वापस (ppc_inst_val(op) & 0xfc000003) == 0x48000000;
-पूर्ण
+static int is_b_op(struct ppc_inst op)
+{
+	return (ppc_inst_val(op) & 0xfc000003) == 0x48000000;
+}
 
-अटल अचिन्हित दीर्घ find_bl_target(अचिन्हित दीर्घ ip, काष्ठा ppc_inst op)
-अणु
-	पूर्णांक offset;
+static unsigned long find_bl_target(unsigned long ip, struct ppc_inst op)
+{
+	int offset;
 
 	offset = (ppc_inst_val(op) & 0x03fffffc);
-	/* make it चिन्हित */
-	अगर (offset & 0x02000000)
+	/* make it signed */
+	if (offset & 0x02000000)
 		offset |= 0xfe000000;
 
-	वापस ip + (दीर्घ)offset;
-पूर्ण
+	return ip + (long)offset;
+}
 
-#अगर_घोषित CONFIG_MODULES
-#अगर_घोषित CONFIG_PPC64
-अटल पूर्णांक
-__ftrace_make_nop(काष्ठा module *mod,
-		  काष्ठा dyn_ftrace *rec, अचिन्हित दीर्घ addr)
-अणु
-	अचिन्हित दीर्घ entry, ptr, tramp;
-	अचिन्हित दीर्घ ip = rec->ip;
-	काष्ठा ppc_inst op, pop;
+#ifdef CONFIG_MODULES
+#ifdef CONFIG_PPC64
+static int
+__ftrace_make_nop(struct module *mod,
+		  struct dyn_ftrace *rec, unsigned long addr)
+{
+	unsigned long entry, ptr, tramp;
+	unsigned long ip = rec->ip;
+	struct ppc_inst op, pop;
 
-	/* पढ़ो where this goes */
-	अगर (copy_inst_from_kernel_nofault(&op, (व्योम *)ip)) अणु
+	/* read where this goes */
+	if (copy_inst_from_kernel_nofault(&op, (void *)ip)) {
 		pr_err("Fetching opcode failed.\n");
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
 	/* Make sure that that this is still a 24bit jump */
-	अगर (!is_bl_op(op)) अणु
+	if (!is_bl_op(op)) {
 		pr_err("Not expected bl: opcode is %s\n", ppc_inst_as_str(op));
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* lets find where the poपूर्णांकer goes */
+	/* lets find where the pointer goes */
 	tramp = find_bl_target(ip, op);
 
 	pr_devel("ip:%lx jumps to %lx", ip, tramp);
 
-	अगर (module_trampoline_target(mod, tramp, &ptr)) अणु
+	if (module_trampoline_target(mod, tramp, &ptr)) {
 		pr_err("Failed to get trampoline target\n");
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
 	pr_devel("trampoline target %lx", ptr);
 
-	entry = ppc_global_function_entry((व्योम *)addr);
+	entry = ppc_global_function_entry((void *)addr);
 	/* This should match what was called */
-	अगर (ptr != entry) अणु
+	if (ptr != entry) {
 		pr_err("addr %lx does not match expected %lx\n", ptr, entry);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-#अगर_घोषित CONFIG_MPROखाता_KERNEL
+#ifdef CONFIG_MPROFILE_KERNEL
 	/* When using -mkernel_profile there is no load to jump over */
 	pop = ppc_inst(PPC_INST_NOP);
 
-	अगर (copy_inst_from_kernel_nofault(&op, (व्योम *)(ip - 4))) अणु
+	if (copy_inst_from_kernel_nofault(&op, (void *)(ip - 4))) {
 		pr_err("Fetching instruction at %lx failed.\n", ip - 4);
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
 	/* We expect either a mflr r0, or a std r0, LRSAVE(r1) */
-	अगर (!ppc_inst_equal(op, ppc_inst(PPC_INST_MFLR)) &&
-	    !ppc_inst_equal(op, ppc_inst(PPC_INST_STD_LR))) अणु
+	if (!ppc_inst_equal(op, ppc_inst(PPC_INST_MFLR)) &&
+	    !ppc_inst_equal(op, ppc_inst(PPC_INST_STD_LR))) {
 		pr_err("Unexpected instruction %s around bl _mcount\n",
 		       ppc_inst_as_str(op));
-		वापस -EINVAL;
-	पूर्ण
-#अन्यथा
+		return -EINVAL;
+	}
+#else
 	/*
 	 * Our original call site looks like:
 	 *
 	 * bl <tramp>
 	 * ld r2,XX(r1)
 	 *
-	 * Milton Miller poपूर्णांकed out that we can not simply nop the branch.
+	 * Milton Miller pointed out that we can not simply nop the branch.
 	 * If a task was preempted when calling a trace function, the nops
-	 * will हटाओ the way to restore the TOC in r2 and the r2 TOC will
+	 * will remove the way to restore the TOC in r2 and the r2 TOC will
 	 * get corrupted.
 	 *
 	 * Use a b +8 to jump over the load.
@@ -195,48 +194,48 @@ __ftrace_make_nop(काष्ठा module *mod,
 	pop = ppc_inst(PPC_INST_BRANCH | 8);	/* b +8 */
 
 	/*
-	 * Check what is in the next inकाष्ठाion. We can see ld r2,40(r1), but
+	 * Check what is in the next instruction. We can see ld r2,40(r1), but
 	 * on first pass after boot we will see mflr r0.
 	 */
-	अगर (copy_inst_from_kernel_nofault(&op, (व्योम *)(ip + 4))) अणु
+	if (copy_inst_from_kernel_nofault(&op, (void *)(ip + 4))) {
 		pr_err("Fetching op failed.\n");
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
-	अगर (!ppc_inst_equal(op,  ppc_inst(PPC_INST_LD_TOC))) अणु
+	if (!ppc_inst_equal(op,  ppc_inst(PPC_INST_LD_TOC))) {
 		pr_err("Expected %08x found %s\n", PPC_INST_LD_TOC, ppc_inst_as_str(op));
-		वापस -EINVAL;
-	पूर्ण
-#पूर्ण_अगर /* CONFIG_MPROखाता_KERNEL */
+		return -EINVAL;
+	}
+#endif /* CONFIG_MPROFILE_KERNEL */
 
-	अगर (patch_inकाष्ठाion((काष्ठा ppc_inst *)ip, pop)) अणु
+	if (patch_instruction((struct ppc_inst *)ip, pop)) {
 		pr_err("Patching NOP failed.\n");
-		वापस -EPERM;
-	पूर्ण
+		return -EPERM;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अन्यथा /* !PPC64 */
-अटल पूर्णांक
-__ftrace_make_nop(काष्ठा module *mod,
-		  काष्ठा dyn_ftrace *rec, अचिन्हित दीर्घ addr)
-अणु
-	काष्ठा ppc_inst op;
-	अचिन्हित पूर्णांक jmp[4];
-	अचिन्हित दीर्घ ip = rec->ip;
-	अचिन्हित दीर्घ tramp;
+#else /* !PPC64 */
+static int
+__ftrace_make_nop(struct module *mod,
+		  struct dyn_ftrace *rec, unsigned long addr)
+{
+	struct ppc_inst op;
+	unsigned int jmp[4];
+	unsigned long ip = rec->ip;
+	unsigned long tramp;
 
-	अगर (copy_from_kernel_nofault(&op, (व्योम *)ip, MCOUNT_INSN_SIZE))
-		वापस -EFAULT;
+	if (copy_from_kernel_nofault(&op, (void *)ip, MCOUNT_INSN_SIZE))
+		return -EFAULT;
 
 	/* Make sure that that this is still a 24bit jump */
-	अगर (!is_bl_op(op)) अणु
+	if (!is_bl_op(op)) {
 		pr_err("Not expected bl: opcode is %s\n", ppc_inst_as_str(op));
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* lets find where the poपूर्णांकer goes */
+	/* lets find where the pointer goes */
 	tramp = find_bl_target(ip, op);
 
 	/*
@@ -250,741 +249,741 @@ __ftrace_make_nop(काष्ठा module *mod,
 	pr_devel("ip:%lx jumps to %lx", ip, tramp);
 
 	/* Find where the trampoline jumps to */
-	अगर (copy_from_kernel_nofault(jmp, (व्योम *)tramp, माप(jmp))) अणु
+	if (copy_from_kernel_nofault(jmp, (void *)tramp, sizeof(jmp))) {
 		pr_err("Failed to read %lx\n", tramp);
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
 	pr_devel(" %08x %08x ", jmp[0], jmp[1]);
 
-	/* verअगरy that this is what we expect it to be */
-	अगर (((jmp[0] & 0xffff0000) != 0x3d800000) ||
+	/* verify that this is what we expect it to be */
+	if (((jmp[0] & 0xffff0000) != 0x3d800000) ||
 	    ((jmp[1] & 0xffff0000) != 0x398c0000) ||
 	    (jmp[2] != 0x7d8903a6) ||
-	    (jmp[3] != 0x4e800420)) अणु
+	    (jmp[3] != 0x4e800420)) {
 		pr_err("Not a trampoline\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	tramp = (jmp[1] & 0xffff) |
 		((jmp[0] & 0xffff) << 16);
-	अगर (tramp & 0x8000)
+	if (tramp & 0x8000)
 		tramp -= 0x10000;
 
 	pr_devel(" %lx ", tramp);
 
-	अगर (tramp != addr) अणु
+	if (tramp != addr) {
 		pr_err("Trampoline location %08lx does not match addr\n",
 		       tramp);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	op = ppc_inst(PPC_INST_NOP);
 
-	अगर (patch_inकाष्ठाion((काष्ठा ppc_inst *)ip, op))
-		वापस -EPERM;
+	if (patch_instruction((struct ppc_inst *)ip, op))
+		return -EPERM;
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* PPC64 */
-#पूर्ण_अगर /* CONFIG_MODULES */
+	return 0;
+}
+#endif /* PPC64 */
+#endif /* CONFIG_MODULES */
 
-अटल अचिन्हित दीर्घ find_ftrace_tramp(अचिन्हित दीर्घ ip)
-अणु
-	पूर्णांक i;
-	काष्ठा ppc_inst instr;
+static unsigned long find_ftrace_tramp(unsigned long ip)
+{
+	int i;
+	struct ppc_inst instr;
 
 	/*
-	 * We have the compiler generated दीर्घ_branch tramps at the end
+	 * We have the compiler generated long_branch tramps at the end
 	 * and we prefer those
 	 */
-	क्रम (i = NUM_FTRACE_TRAMPS - 1; i >= 0; i--)
-		अगर (!ftrace_tramps[i])
-			जारी;
-		अन्यथा अगर (create_branch(&instr, (व्योम *)ip,
+	for (i = NUM_FTRACE_TRAMPS - 1; i >= 0; i--)
+		if (!ftrace_tramps[i])
+			continue;
+		else if (create_branch(&instr, (void *)ip,
 				       ftrace_tramps[i], 0) == 0)
-			वापस ftrace_tramps[i];
+			return ftrace_tramps[i];
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक add_ftrace_tramp(अचिन्हित दीर्घ tramp)
-अणु
-	पूर्णांक i;
+static int add_ftrace_tramp(unsigned long tramp)
+{
+	int i;
 
-	क्रम (i = 0; i < NUM_FTRACE_TRAMPS; i++)
-		अगर (!ftrace_tramps[i]) अणु
+	for (i = 0; i < NUM_FTRACE_TRAMPS; i++)
+		if (!ftrace_tramps[i]) {
 			ftrace_tramps[i] = tramp;
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
 /*
- * If this is a compiler generated दीर्घ_branch trampoline (essentially, a
- * trampoline that has a branch to _mcount()), we re-ग_लिखो the branch to
- * instead go to ftrace_[regs_]caller() and note करोwn the location of this
+ * If this is a compiler generated long_branch trampoline (essentially, a
+ * trampoline that has a branch to _mcount()), we re-write the branch to
+ * instead go to ftrace_[regs_]caller() and note down the location of this
  * trampoline.
  */
-अटल पूर्णांक setup_mcount_compiler_tramp(अचिन्हित दीर्घ tramp)
-अणु
-	पूर्णांक i;
-	काष्ठा ppc_inst op;
-	अचिन्हित दीर्घ ptr;
-	काष्ठा ppc_inst instr;
-	अटल अचिन्हित दीर्घ ftrace_plt_tramps[NUM_FTRACE_TRAMPS];
+static int setup_mcount_compiler_tramp(unsigned long tramp)
+{
+	int i;
+	struct ppc_inst op;
+	unsigned long ptr;
+	struct ppc_inst instr;
+	static unsigned long ftrace_plt_tramps[NUM_FTRACE_TRAMPS];
 
-	/* Is this a known दीर्घ jump tramp? */
-	क्रम (i = 0; i < NUM_FTRACE_TRAMPS; i++)
-		अगर (!ftrace_tramps[i])
-			अवरोध;
-		अन्यथा अगर (ftrace_tramps[i] == tramp)
-			वापस 0;
+	/* Is this a known long jump tramp? */
+	for (i = 0; i < NUM_FTRACE_TRAMPS; i++)
+		if (!ftrace_tramps[i])
+			break;
+		else if (ftrace_tramps[i] == tramp)
+			return 0;
 
 	/* Is this a known plt tramp? */
-	क्रम (i = 0; i < NUM_FTRACE_TRAMPS; i++)
-		अगर (!ftrace_plt_tramps[i])
-			अवरोध;
-		अन्यथा अगर (ftrace_plt_tramps[i] == tramp)
-			वापस -1;
+	for (i = 0; i < NUM_FTRACE_TRAMPS; i++)
+		if (!ftrace_plt_tramps[i])
+			break;
+		else if (ftrace_plt_tramps[i] == tramp)
+			return -1;
 
-	/* New trampoline -- पढ़ो where this goes */
-	अगर (copy_inst_from_kernel_nofault(&op, (व्योम *)tramp)) अणु
+	/* New trampoline -- read where this goes */
+	if (copy_inst_from_kernel_nofault(&op, (void *)tramp)) {
 		pr_debug("Fetching opcode failed.\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	/* Is this a 24 bit branch? */
-	अगर (!is_b_op(op)) अणु
+	if (!is_b_op(op)) {
 		pr_debug("Trampoline is not a long branch tramp.\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	/* lets find where the poपूर्णांकer goes */
+	/* lets find where the pointer goes */
 	ptr = find_bl_target(tramp, op);
 
-	अगर (ptr != ppc_global_function_entry((व्योम *)_mcount)) अणु
-		pr_debug("Trampoline target %p is not _mcount\n", (व्योम *)ptr);
-		वापस -1;
-	पूर्ण
+	if (ptr != ppc_global_function_entry((void *)_mcount)) {
+		pr_debug("Trampoline target %p is not _mcount\n", (void *)ptr);
+		return -1;
+	}
 
-	/* Let's re-ग_लिखो the tramp to go to ftrace_[regs_]caller */
-#अगर_घोषित CONFIG_DYNAMIC_FTRACE_WITH_REGS
-	ptr = ppc_global_function_entry((व्योम *)ftrace_regs_caller);
-#अन्यथा
-	ptr = ppc_global_function_entry((व्योम *)ftrace_caller);
-#पूर्ण_अगर
-	अगर (create_branch(&instr, (व्योम *)tramp, ptr, 0)) अणु
+	/* Let's re-write the tramp to go to ftrace_[regs_]caller */
+#ifdef CONFIG_DYNAMIC_FTRACE_WITH_REGS
+	ptr = ppc_global_function_entry((void *)ftrace_regs_caller);
+#else
+	ptr = ppc_global_function_entry((void *)ftrace_caller);
+#endif
+	if (create_branch(&instr, (void *)tramp, ptr, 0)) {
 		pr_debug("%ps is not reachable from existing mcount tramp\n",
-				(व्योम *)ptr);
-		वापस -1;
-	पूर्ण
+				(void *)ptr);
+		return -1;
+	}
 
-	अगर (patch_branch((काष्ठा ppc_inst *)tramp, ptr, 0)) अणु
+	if (patch_branch((struct ppc_inst *)tramp, ptr, 0)) {
 		pr_debug("REL24 out of range!\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	अगर (add_ftrace_tramp(tramp)) अणु
+	if (add_ftrace_tramp(tramp)) {
 		pr_debug("No tramp locations left\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __ftrace_make_nop_kernel(काष्ठा dyn_ftrace *rec, अचिन्हित दीर्घ addr)
-अणु
-	अचिन्हित दीर्घ tramp, ip = rec->ip;
-	काष्ठा ppc_inst op;
+static int __ftrace_make_nop_kernel(struct dyn_ftrace *rec, unsigned long addr)
+{
+	unsigned long tramp, ip = rec->ip;
+	struct ppc_inst op;
 
 	/* Read where this goes */
-	अगर (copy_inst_from_kernel_nofault(&op, (व्योम *)ip)) अणु
+	if (copy_inst_from_kernel_nofault(&op, (void *)ip)) {
 		pr_err("Fetching opcode failed.\n");
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
 	/* Make sure that that this is still a 24bit jump */
-	अगर (!is_bl_op(op)) अणु
+	if (!is_bl_op(op)) {
 		pr_err("Not expected bl: opcode is %s\n", ppc_inst_as_str(op));
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* Let's find where the poपूर्णांकer goes */
+	/* Let's find where the pointer goes */
 	tramp = find_bl_target(ip, op);
 
 	pr_devel("ip:%lx jumps to %lx", ip, tramp);
 
-	अगर (setup_mcount_compiler_tramp(tramp)) अणु
+	if (setup_mcount_compiler_tramp(tramp)) {
 		/* Are other trampolines reachable? */
-		अगर (!find_ftrace_tramp(ip)) अणु
+		if (!find_ftrace_tramp(ip)) {
 			pr_err("No ftrace trampolines reachable from %ps\n",
-					(व्योम *)ip);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+					(void *)ip);
+			return -EINVAL;
+		}
+	}
 
-	अगर (patch_inकाष्ठाion((काष्ठा ppc_inst *)ip, ppc_inst(PPC_INST_NOP))) अणु
+	if (patch_instruction((struct ppc_inst *)ip, ppc_inst(PPC_INST_NOP))) {
 		pr_err("Patching NOP failed.\n");
-		वापस -EPERM;
-	पूर्ण
+		return -EPERM;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक ftrace_make_nop(काष्ठा module *mod,
-		    काष्ठा dyn_ftrace *rec, अचिन्हित दीर्घ addr)
-अणु
-	अचिन्हित दीर्घ ip = rec->ip;
-	काष्ठा ppc_inst old, new;
+int ftrace_make_nop(struct module *mod,
+		    struct dyn_ftrace *rec, unsigned long addr)
+{
+	unsigned long ip = rec->ip;
+	struct ppc_inst old, new;
 
 	/*
 	 * If the calling address is more that 24 bits away,
 	 * then we had to use a trampoline to make the call.
 	 * Otherwise just update the call site.
 	 */
-	अगर (test_24bit_addr(ip, addr)) अणु
+	if (test_24bit_addr(ip, addr)) {
 		/* within range */
 		old = ftrace_call_replace(ip, addr, 1);
 		new = ppc_inst(PPC_INST_NOP);
-		वापस ftrace_modअगरy_code(ip, old, new);
-	पूर्ण अन्यथा अगर (core_kernel_text(ip))
-		वापस __ftrace_make_nop_kernel(rec, addr);
+		return ftrace_modify_code(ip, old, new);
+	} else if (core_kernel_text(ip))
+		return __ftrace_make_nop_kernel(rec, addr);
 
-#अगर_घोषित CONFIG_MODULES
+#ifdef CONFIG_MODULES
 	/*
 	 * Out of range jumps are called from modules.
-	 * We should either alपढ़ोy have a poपूर्णांकer to the module
+	 * We should either already have a pointer to the module
 	 * or it has been passed in.
 	 */
-	अगर (!rec->arch.mod) अणु
-		अगर (!mod) अणु
+	if (!rec->arch.mod) {
+		if (!mod) {
 			pr_err("No module loaded addr=%lx\n", addr);
-			वापस -EFAULT;
-		पूर्ण
+			return -EFAULT;
+		}
 		rec->arch.mod = mod;
-	पूर्ण अन्यथा अगर (mod) अणु
-		अगर (mod != rec->arch.mod) अणु
+	} else if (mod) {
+		if (mod != rec->arch.mod) {
 			pr_err("Record mod %p not equal to passed in mod %p\n",
 			       rec->arch.mod, mod);
-			वापस -EINVAL;
-		पूर्ण
-		/* nothing to करो अगर mod == rec->arch.mod */
-	पूर्ण अन्यथा
+			return -EINVAL;
+		}
+		/* nothing to do if mod == rec->arch.mod */
+	} else
 		mod = rec->arch.mod;
 
-	वापस __ftrace_make_nop(mod, rec, addr);
-#अन्यथा
+	return __ftrace_make_nop(mod, rec, addr);
+#else
 	/* We should not get here without modules */
-	वापस -EINVAL;
-#पूर्ण_अगर /* CONFIG_MODULES */
-पूर्ण
+	return -EINVAL;
+#endif /* CONFIG_MODULES */
+}
 
-#अगर_घोषित CONFIG_MODULES
-#अगर_घोषित CONFIG_PPC64
+#ifdef CONFIG_MODULES
+#ifdef CONFIG_PPC64
 /*
- * Examine the existing inकाष्ठाions क्रम __ftrace_make_call.
- * They should effectively be a NOP, and follow क्रमmal स्थिरraपूर्णांकs,
- * depending on the ABI. Return false अगर they करोn't.
+ * Examine the existing instructions for __ftrace_make_call.
+ * They should effectively be a NOP, and follow formal constraints,
+ * depending on the ABI. Return false if they don't.
  */
-#अगर_अघोषित CONFIG_MPROखाता_KERNEL
-अटल पूर्णांक
-expected_nop_sequence(व्योम *ip, काष्ठा ppc_inst op0, काष्ठा ppc_inst op1)
-अणु
+#ifndef CONFIG_MPROFILE_KERNEL
+static int
+expected_nop_sequence(void *ip, struct ppc_inst op0, struct ppc_inst op1)
+{
 	/*
 	 * We expect to see:
 	 *
 	 * b +8
 	 * ld r2,XX(r1)
 	 *
-	 * The load offset is dअगरferent depending on the ABI. For simplicity
-	 * just mask it out when करोing the compare.
+	 * The load offset is different depending on the ABI. For simplicity
+	 * just mask it out when doing the compare.
 	 */
-	अगर (!ppc_inst_equal(op0, ppc_inst(0x48000008)) ||
+	if (!ppc_inst_equal(op0, ppc_inst(0x48000008)) ||
 	    (ppc_inst_val(op1) & 0xffff0000) != 0xe8410000)
-		वापस 0;
-	वापस 1;
-पूर्ण
-#अन्यथा
-अटल पूर्णांक
-expected_nop_sequence(व्योम *ip, काष्ठा ppc_inst op0, काष्ठा ppc_inst op1)
-अणु
-	/* look क्रम patched "NOP" on ppc64 with -mprofile-kernel */
-	अगर (!ppc_inst_equal(op0, ppc_inst(PPC_INST_NOP)))
-		वापस 0;
-	वापस 1;
-पूर्ण
-#पूर्ण_अगर
+		return 0;
+	return 1;
+}
+#else
+static int
+expected_nop_sequence(void *ip, struct ppc_inst op0, struct ppc_inst op1)
+{
+	/* look for patched "NOP" on ppc64 with -mprofile-kernel */
+	if (!ppc_inst_equal(op0, ppc_inst(PPC_INST_NOP)))
+		return 0;
+	return 1;
+}
+#endif
 
-अटल पूर्णांक
-__ftrace_make_call(काष्ठा dyn_ftrace *rec, अचिन्हित दीर्घ addr)
-अणु
-	काष्ठा ppc_inst op[2];
-	काष्ठा ppc_inst instr;
-	व्योम *ip = (व्योम *)rec->ip;
-	अचिन्हित दीर्घ entry, ptr, tramp;
-	काष्ठा module *mod = rec->arch.mod;
+static int
+__ftrace_make_call(struct dyn_ftrace *rec, unsigned long addr)
+{
+	struct ppc_inst op[2];
+	struct ppc_inst instr;
+	void *ip = (void *)rec->ip;
+	unsigned long entry, ptr, tramp;
+	struct module *mod = rec->arch.mod;
 
-	/* पढ़ो where this goes */
-	अगर (copy_inst_from_kernel_nofault(op, ip))
-		वापस -EFAULT;
+	/* read where this goes */
+	if (copy_inst_from_kernel_nofault(op, ip))
+		return -EFAULT;
 
-	अगर (copy_inst_from_kernel_nofault(op + 1, ip + 4))
-		वापस -EFAULT;
+	if (copy_inst_from_kernel_nofault(op + 1, ip + 4))
+		return -EFAULT;
 
-	अगर (!expected_nop_sequence(ip, op[0], op[1])) अणु
+	if (!expected_nop_sequence(ip, op[0], op[1])) {
 		pr_err("Unexpected call sequence at %p: %s %s\n",
 		ip, ppc_inst_as_str(op[0]), ppc_inst_as_str(op[1]));
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* If we never set up ftrace trampoline(s), then bail */
-#अगर_घोषित CONFIG_DYNAMIC_FTRACE_WITH_REGS
-	अगर (!mod->arch.tramp || !mod->arch.tramp_regs) अणु
-#अन्यथा
-	अगर (!mod->arch.tramp) अणु
-#पूर्ण_अगर
+#ifdef CONFIG_DYNAMIC_FTRACE_WITH_REGS
+	if (!mod->arch.tramp || !mod->arch.tramp_regs) {
+#else
+	if (!mod->arch.tramp) {
+#endif
 		pr_err("No ftrace trampoline\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-#अगर_घोषित CONFIG_DYNAMIC_FTRACE_WITH_REGS
-	अगर (rec->flags & FTRACE_FL_REGS)
+#ifdef CONFIG_DYNAMIC_FTRACE_WITH_REGS
+	if (rec->flags & FTRACE_FL_REGS)
 		tramp = mod->arch.tramp_regs;
-	अन्यथा
-#पूर्ण_अगर
+	else
+#endif
 		tramp = mod->arch.tramp;
 
-	अगर (module_trampoline_target(mod, tramp, &ptr)) अणु
+	if (module_trampoline_target(mod, tramp, &ptr)) {
 		pr_err("Failed to get trampoline target\n");
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
 	pr_devel("trampoline target %lx", ptr);
 
-	entry = ppc_global_function_entry((व्योम *)addr);
+	entry = ppc_global_function_entry((void *)addr);
 	/* This should match what was called */
-	अगर (ptr != entry) अणु
+	if (ptr != entry) {
 		pr_err("addr %lx does not match expected %lx\n", ptr, entry);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* Ensure branch is within 24 bits */
-	अगर (create_branch(&instr, ip, tramp, BRANCH_SET_LINK)) अणु
+	if (create_branch(&instr, ip, tramp, BRANCH_SET_LINK)) {
 		pr_err("Branch out of range\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (patch_branch(ip, tramp, BRANCH_SET_LINK)) अणु
+	if (patch_branch(ip, tramp, BRANCH_SET_LINK)) {
 		pr_err("REL24 out of range!\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अन्यथा  /* !CONFIG_PPC64: */
-अटल पूर्णांक
-__ftrace_make_call(काष्ठा dyn_ftrace *rec, अचिन्हित दीर्घ addr)
-अणु
-	पूर्णांक err;
-	काष्ठा ppc_inst op;
-	अचिन्हित दीर्घ ip = rec->ip;
+#else  /* !CONFIG_PPC64: */
+static int
+__ftrace_make_call(struct dyn_ftrace *rec, unsigned long addr)
+{
+	int err;
+	struct ppc_inst op;
+	unsigned long ip = rec->ip;
 
-	/* पढ़ो where this goes */
-	अगर (copy_inst_from_kernel_nofault(&op, (व्योम *)ip))
-		वापस -EFAULT;
+	/* read where this goes */
+	if (copy_inst_from_kernel_nofault(&op, (void *)ip))
+		return -EFAULT;
 
-	/* It should be poपूर्णांकing to a nop */
-	अगर (!ppc_inst_equal(op,  ppc_inst(PPC_INST_NOP))) अणु
+	/* It should be pointing to a nop */
+	if (!ppc_inst_equal(op,  ppc_inst(PPC_INST_NOP))) {
 		pr_err("Expected NOP but have %s\n", ppc_inst_as_str(op));
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* If we never set up a trampoline to ftrace_caller, then bail */
-	अगर (!rec->arch.mod->arch.tramp) अणु
+	if (!rec->arch.mod->arch.tramp) {
 		pr_err("No ftrace trampoline\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* create the branch to the trampoline */
-	err = create_branch(&op, (काष्ठा ppc_inst *)ip,
+	err = create_branch(&op, (struct ppc_inst *)ip,
 			    rec->arch.mod->arch.tramp, BRANCH_SET_LINK);
-	अगर (err) अणु
+	if (err) {
 		pr_err("REL24 out of range!\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	pr_devel("write to %lx\n", rec->ip);
 
-	अगर (patch_inकाष्ठाion((काष्ठा ppc_inst *)ip, op))
-		वापस -EPERM;
+	if (patch_instruction((struct ppc_inst *)ip, op))
+		return -EPERM;
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_PPC64 */
-#पूर्ण_अगर /* CONFIG_MODULES */
+	return 0;
+}
+#endif /* CONFIG_PPC64 */
+#endif /* CONFIG_MODULES */
 
-अटल पूर्णांक __ftrace_make_call_kernel(काष्ठा dyn_ftrace *rec, अचिन्हित दीर्घ addr)
-अणु
-	काष्ठा ppc_inst op;
-	व्योम *ip = (व्योम *)rec->ip;
-	अचिन्हित दीर्घ tramp, entry, ptr;
+static int __ftrace_make_call_kernel(struct dyn_ftrace *rec, unsigned long addr)
+{
+	struct ppc_inst op;
+	void *ip = (void *)rec->ip;
+	unsigned long tramp, entry, ptr;
 
 	/* Make sure we're being asked to patch branch to a known ftrace addr */
-	entry = ppc_global_function_entry((व्योम *)ftrace_caller);
-	ptr = ppc_global_function_entry((व्योम *)addr);
+	entry = ppc_global_function_entry((void *)ftrace_caller);
+	ptr = ppc_global_function_entry((void *)addr);
 
-	अगर (ptr != entry) अणु
-#अगर_घोषित CONFIG_DYNAMIC_FTRACE_WITH_REGS
-		entry = ppc_global_function_entry((व्योम *)ftrace_regs_caller);
-		अगर (ptr != entry) अणु
-#पूर्ण_अगर
-			pr_err("Unknown ftrace addr to patch: %ps\n", (व्योम *)ptr);
-			वापस -EINVAL;
-#अगर_घोषित CONFIG_DYNAMIC_FTRACE_WITH_REGS
-		पूर्ण
-#पूर्ण_अगर
-	पूर्ण
+	if (ptr != entry) {
+#ifdef CONFIG_DYNAMIC_FTRACE_WITH_REGS
+		entry = ppc_global_function_entry((void *)ftrace_regs_caller);
+		if (ptr != entry) {
+#endif
+			pr_err("Unknown ftrace addr to patch: %ps\n", (void *)ptr);
+			return -EINVAL;
+#ifdef CONFIG_DYNAMIC_FTRACE_WITH_REGS
+		}
+#endif
+	}
 
 	/* Make sure we have a nop */
-	अगर (copy_inst_from_kernel_nofault(&op, ip)) अणु
+	if (copy_inst_from_kernel_nofault(&op, ip)) {
 		pr_err("Unable to read ftrace location %p\n", ip);
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
-	अगर (!ppc_inst_equal(op, ppc_inst(PPC_INST_NOP))) अणु
+	if (!ppc_inst_equal(op, ppc_inst(PPC_INST_NOP))) {
 		pr_err("Unexpected call sequence at %p: %s\n", ip, ppc_inst_as_str(op));
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	tramp = find_ftrace_tramp((अचिन्हित दीर्घ)ip);
-	अगर (!tramp) अणु
+	tramp = find_ftrace_tramp((unsigned long)ip);
+	if (!tramp) {
 		pr_err("No ftrace trampolines reachable from %ps\n", ip);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (patch_branch(ip, tramp, BRANCH_SET_LINK)) अणु
+	if (patch_branch(ip, tramp, BRANCH_SET_LINK)) {
 		pr_err("Error patching branch to ftrace tramp!\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक ftrace_make_call(काष्ठा dyn_ftrace *rec, अचिन्हित दीर्घ addr)
-अणु
-	अचिन्हित दीर्घ ip = rec->ip;
-	काष्ठा ppc_inst old, new;
+int ftrace_make_call(struct dyn_ftrace *rec, unsigned long addr)
+{
+	unsigned long ip = rec->ip;
+	struct ppc_inst old, new;
 
 	/*
 	 * If the calling address is more that 24 bits away,
 	 * then we had to use a trampoline to make the call.
 	 * Otherwise just update the call site.
 	 */
-	अगर (test_24bit_addr(ip, addr)) अणु
+	if (test_24bit_addr(ip, addr)) {
 		/* within range */
 		old = ppc_inst(PPC_INST_NOP);
 		new = ftrace_call_replace(ip, addr, 1);
-		वापस ftrace_modअगरy_code(ip, old, new);
-	पूर्ण अन्यथा अगर (core_kernel_text(ip))
-		वापस __ftrace_make_call_kernel(rec, addr);
+		return ftrace_modify_code(ip, old, new);
+	} else if (core_kernel_text(ip))
+		return __ftrace_make_call_kernel(rec, addr);
 
-#अगर_घोषित CONFIG_MODULES
+#ifdef CONFIG_MODULES
 	/*
 	 * Out of range jumps are called from modules.
 	 * Being that we are converting from nop, it had better
-	 * alपढ़ोy have a module defined.
+	 * already have a module defined.
 	 */
-	अगर (!rec->arch.mod) अणु
+	if (!rec->arch.mod) {
 		pr_err("No module loaded\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस __ftrace_make_call(rec, addr);
-#अन्यथा
+	return __ftrace_make_call(rec, addr);
+#else
 	/* We should not get here without modules */
-	वापस -EINVAL;
-#पूर्ण_अगर /* CONFIG_MODULES */
-पूर्ण
+	return -EINVAL;
+#endif /* CONFIG_MODULES */
+}
 
-#अगर_घोषित CONFIG_DYNAMIC_FTRACE_WITH_REGS
-#अगर_घोषित CONFIG_MODULES
-अटल पूर्णांक
-__ftrace_modअगरy_call(काष्ठा dyn_ftrace *rec, अचिन्हित दीर्घ old_addr,
-					अचिन्हित दीर्घ addr)
-अणु
-	काष्ठा ppc_inst op;
-	अचिन्हित दीर्घ ip = rec->ip;
-	अचिन्हित दीर्घ entry, ptr, tramp;
-	काष्ठा module *mod = rec->arch.mod;
+#ifdef CONFIG_DYNAMIC_FTRACE_WITH_REGS
+#ifdef CONFIG_MODULES
+static int
+__ftrace_modify_call(struct dyn_ftrace *rec, unsigned long old_addr,
+					unsigned long addr)
+{
+	struct ppc_inst op;
+	unsigned long ip = rec->ip;
+	unsigned long entry, ptr, tramp;
+	struct module *mod = rec->arch.mod;
 
 	/* If we never set up ftrace trampolines, then bail */
-	अगर (!mod->arch.tramp || !mod->arch.tramp_regs) अणु
+	if (!mod->arch.tramp || !mod->arch.tramp_regs) {
 		pr_err("No ftrace trampoline\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* पढ़ो where this goes */
-	अगर (copy_inst_from_kernel_nofault(&op, (व्योम *)ip)) अणु
+	/* read where this goes */
+	if (copy_inst_from_kernel_nofault(&op, (void *)ip)) {
 		pr_err("Fetching opcode failed.\n");
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
 	/* Make sure that that this is still a 24bit jump */
-	अगर (!is_bl_op(op)) अणु
+	if (!is_bl_op(op)) {
 		pr_err("Not expected bl: opcode is %s\n", ppc_inst_as_str(op));
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* lets find where the poपूर्णांकer goes */
+	/* lets find where the pointer goes */
 	tramp = find_bl_target(ip, op);
-	entry = ppc_global_function_entry((व्योम *)old_addr);
+	entry = ppc_global_function_entry((void *)old_addr);
 
 	pr_devel("ip:%lx jumps to %lx", ip, tramp);
 
-	अगर (tramp != entry) अणु
+	if (tramp != entry) {
 		/* old_addr is not within range, so we must have used a trampoline */
-		अगर (module_trampoline_target(mod, tramp, &ptr)) अणु
+		if (module_trampoline_target(mod, tramp, &ptr)) {
 			pr_err("Failed to get trampoline target\n");
-			वापस -EFAULT;
-		पूर्ण
+			return -EFAULT;
+		}
 
 		pr_devel("trampoline target %lx", ptr);
 
 		/* This should match what was called */
-		अगर (ptr != entry) अणु
+		if (ptr != entry) {
 			pr_err("addr %lx does not match expected %lx\n", ptr, entry);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
 	/* The new target may be within range */
-	अगर (test_24bit_addr(ip, addr)) अणु
+	if (test_24bit_addr(ip, addr)) {
 		/* within range */
-		अगर (patch_branch((काष्ठा ppc_inst *)ip, addr, BRANCH_SET_LINK)) अणु
+		if (patch_branch((struct ppc_inst *)ip, addr, BRANCH_SET_LINK)) {
 			pr_err("REL24 out of range!\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (rec->flags & FTRACE_FL_REGS)
+	if (rec->flags & FTRACE_FL_REGS)
 		tramp = mod->arch.tramp_regs;
-	अन्यथा
+	else
 		tramp = mod->arch.tramp;
 
-	अगर (module_trampoline_target(mod, tramp, &ptr)) अणु
+	if (module_trampoline_target(mod, tramp, &ptr)) {
 		pr_err("Failed to get trampoline target\n");
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
 	pr_devel("trampoline target %lx", ptr);
 
-	entry = ppc_global_function_entry((व्योम *)addr);
+	entry = ppc_global_function_entry((void *)addr);
 	/* This should match what was called */
-	अगर (ptr != entry) अणु
+	if (ptr != entry) {
 		pr_err("addr %lx does not match expected %lx\n", ptr, entry);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* Ensure branch is within 24 bits */
-	अगर (create_branch(&op, (काष्ठा ppc_inst *)ip, tramp, BRANCH_SET_LINK)) अणु
+	if (create_branch(&op, (struct ppc_inst *)ip, tramp, BRANCH_SET_LINK)) {
 		pr_err("Branch out of range\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (patch_branch((काष्ठा ppc_inst *)ip, tramp, BRANCH_SET_LINK)) अणु
+	if (patch_branch((struct ppc_inst *)ip, tramp, BRANCH_SET_LINK)) {
 		pr_err("REL24 out of range!\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-पूर्णांक ftrace_modअगरy_call(काष्ठा dyn_ftrace *rec, अचिन्हित दीर्घ old_addr,
-			अचिन्हित दीर्घ addr)
-अणु
-	अचिन्हित दीर्घ ip = rec->ip;
-	काष्ठा ppc_inst old, new;
+int ftrace_modify_call(struct dyn_ftrace *rec, unsigned long old_addr,
+			unsigned long addr)
+{
+	unsigned long ip = rec->ip;
+	struct ppc_inst old, new;
 
 	/*
 	 * If the calling address is more that 24 bits away,
 	 * then we had to use a trampoline to make the call.
 	 * Otherwise just update the call site.
 	 */
-	अगर (test_24bit_addr(ip, addr) && test_24bit_addr(ip, old_addr)) अणु
+	if (test_24bit_addr(ip, addr) && test_24bit_addr(ip, old_addr)) {
 		/* within range */
 		old = ftrace_call_replace(ip, old_addr, 1);
 		new = ftrace_call_replace(ip, addr, 1);
-		वापस ftrace_modअगरy_code(ip, old, new);
-	पूर्ण अन्यथा अगर (core_kernel_text(ip)) अणु
+		return ftrace_modify_code(ip, old, new);
+	} else if (core_kernel_text(ip)) {
 		/*
 		 * We always patch out of range locations to go to the regs
-		 * variant, so there is nothing to करो here
+		 * variant, so there is nothing to do here
 		 */
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-#अगर_घोषित CONFIG_MODULES
+#ifdef CONFIG_MODULES
 	/*
 	 * Out of range jumps are called from modules.
 	 */
-	अगर (!rec->arch.mod) अणु
+	if (!rec->arch.mod) {
 		pr_err("No module loaded\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस __ftrace_modअगरy_call(rec, old_addr, addr);
-#अन्यथा
+	return __ftrace_modify_call(rec, old_addr, addr);
+#else
 	/* We should not get here without modules */
-	वापस -EINVAL;
-#पूर्ण_अगर /* CONFIG_MODULES */
-पूर्ण
-#पूर्ण_अगर
+	return -EINVAL;
+#endif /* CONFIG_MODULES */
+}
+#endif
 
-पूर्णांक ftrace_update_ftrace_func(ftrace_func_t func)
-अणु
-	अचिन्हित दीर्घ ip = (अचिन्हित दीर्घ)(&ftrace_call);
-	काष्ठा ppc_inst old, new;
-	पूर्णांक ret;
+int ftrace_update_ftrace_func(ftrace_func_t func)
+{
+	unsigned long ip = (unsigned long)(&ftrace_call);
+	struct ppc_inst old, new;
+	int ret;
 
-	old = ppc_inst_पढ़ो((काष्ठा ppc_inst *)&ftrace_call);
-	new = ftrace_call_replace(ip, (अचिन्हित दीर्घ)func, 1);
-	ret = ftrace_modअगरy_code(ip, old, new);
+	old = ppc_inst_read((struct ppc_inst *)&ftrace_call);
+	new = ftrace_call_replace(ip, (unsigned long)func, 1);
+	ret = ftrace_modify_code(ip, old, new);
 
-#अगर_घोषित CONFIG_DYNAMIC_FTRACE_WITH_REGS
+#ifdef CONFIG_DYNAMIC_FTRACE_WITH_REGS
 	/* Also update the regs callback function */
-	अगर (!ret) अणु
-		ip = (अचिन्हित दीर्घ)(&ftrace_regs_call);
-		old = ppc_inst_पढ़ो((काष्ठा ppc_inst *)&ftrace_regs_call);
-		new = ftrace_call_replace(ip, (अचिन्हित दीर्घ)func, 1);
-		ret = ftrace_modअगरy_code(ip, old, new);
-	पूर्ण
-#पूर्ण_अगर
+	if (!ret) {
+		ip = (unsigned long)(&ftrace_regs_call);
+		old = ppc_inst_read((struct ppc_inst *)&ftrace_regs_call);
+		new = ftrace_call_replace(ip, (unsigned long)func, 1);
+		ret = ftrace_modify_code(ip, old, new);
+	}
+#endif
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Use the शेष ftrace_modअगरy_all_code, but without
+ * Use the default ftrace_modify_all_code, but without
  * stop_machine().
  */
-व्योम arch_ftrace_update_code(पूर्णांक command)
-अणु
-	ftrace_modअगरy_all_code(command);
-पूर्ण
+void arch_ftrace_update_code(int command)
+{
+	ftrace_modify_all_code(command);
+}
 
-#अगर_घोषित CONFIG_PPC64
-#घोषणा PACATOC दुरत्व(काष्ठा paca_काष्ठा, kernel_toc)
+#ifdef CONFIG_PPC64
+#define PACATOC offsetof(struct paca_struct, kernel_toc)
 
-बाह्य अचिन्हित पूर्णांक ftrace_tramp_text[], ftrace_tramp_init[];
+extern unsigned int ftrace_tramp_text[], ftrace_tramp_init[];
 
-पूर्णांक __init ftrace_dyn_arch_init(व्योम)
-अणु
-	पूर्णांक i;
-	अचिन्हित पूर्णांक *tramp[] = अणु ftrace_tramp_text, ftrace_tramp_init पूर्ण;
-	u32 stub_insns[] = अणु
+int __init ftrace_dyn_arch_init(void)
+{
+	int i;
+	unsigned int *tramp[] = { ftrace_tramp_text, ftrace_tramp_init };
+	u32 stub_insns[] = {
 		0xe98d0000 | PACATOC,	/* ld      r12,PACATOC(r13)	*/
 		0x3d8c0000,		/* addis   r12,r12,<high>	*/
 		0x398c0000,		/* addi    r12,r12,<low>	*/
 		0x7d8903a6,		/* mtctr   r12			*/
 		0x4e800420,		/* bctr				*/
-	पूर्ण;
-#अगर_घोषित CONFIG_DYNAMIC_FTRACE_WITH_REGS
-	अचिन्हित दीर्घ addr = ppc_global_function_entry((व्योम *)ftrace_regs_caller);
-#अन्यथा
-	अचिन्हित दीर्घ addr = ppc_global_function_entry((व्योम *)ftrace_caller);
-#पूर्ण_अगर
-	दीर्घ reladdr = addr - kernel_toc_addr();
+	};
+#ifdef CONFIG_DYNAMIC_FTRACE_WITH_REGS
+	unsigned long addr = ppc_global_function_entry((void *)ftrace_regs_caller);
+#else
+	unsigned long addr = ppc_global_function_entry((void *)ftrace_caller);
+#endif
+	long reladdr = addr - kernel_toc_addr();
 
-	अगर (reladdr > 0x7FFFFFFF || reladdr < -(0x80000000L)) अणु
+	if (reladdr > 0x7FFFFFFF || reladdr < -(0x80000000L)) {
 		pr_err("Address of %ps out of range of kernel_toc.\n",
-				(व्योम *)addr);
-		वापस -1;
-	पूर्ण
+				(void *)addr);
+		return -1;
+	}
 
-	क्रम (i = 0; i < 2; i++) अणु
-		स_नकल(tramp[i], stub_insns, माप(stub_insns));
+	for (i = 0; i < 2; i++) {
+		memcpy(tramp[i], stub_insns, sizeof(stub_insns));
 		tramp[i][1] |= PPC_HA(reladdr);
 		tramp[i][2] |= PPC_LO(reladdr);
-		add_ftrace_tramp((अचिन्हित दीर्घ)tramp[i]);
-	पूर्ण
+		add_ftrace_tramp((unsigned long)tramp[i]);
+	}
 
-	वापस 0;
-पूर्ण
-#अन्यथा
-पूर्णांक __init ftrace_dyn_arch_init(व्योम)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
-#पूर्ण_अगर /* CONFIG_DYNAMIC_FTRACE */
+	return 0;
+}
+#else
+int __init ftrace_dyn_arch_init(void)
+{
+	return 0;
+}
+#endif
+#endif /* CONFIG_DYNAMIC_FTRACE */
 
-#अगर_घोषित CONFIG_FUNCTION_GRAPH_TRACER
+#ifdef CONFIG_FUNCTION_GRAPH_TRACER
 
-बाह्य व्योम ftrace_graph_call(व्योम);
-बाह्य व्योम ftrace_graph_stub(व्योम);
+extern void ftrace_graph_call(void);
+extern void ftrace_graph_stub(void);
 
-पूर्णांक ftrace_enable_ftrace_graph_caller(व्योम)
-अणु
-	अचिन्हित दीर्घ ip = (अचिन्हित दीर्घ)(&ftrace_graph_call);
-	अचिन्हित दीर्घ addr = (अचिन्हित दीर्घ)(&ftrace_graph_caller);
-	अचिन्हित दीर्घ stub = (अचिन्हित दीर्घ)(&ftrace_graph_stub);
-	काष्ठा ppc_inst old, new;
+int ftrace_enable_ftrace_graph_caller(void)
+{
+	unsigned long ip = (unsigned long)(&ftrace_graph_call);
+	unsigned long addr = (unsigned long)(&ftrace_graph_caller);
+	unsigned long stub = (unsigned long)(&ftrace_graph_stub);
+	struct ppc_inst old, new;
 
 	old = ftrace_call_replace(ip, stub, 0);
 	new = ftrace_call_replace(ip, addr, 0);
 
-	वापस ftrace_modअगरy_code(ip, old, new);
-पूर्ण
+	return ftrace_modify_code(ip, old, new);
+}
 
-पूर्णांक ftrace_disable_ftrace_graph_caller(व्योम)
-अणु
-	अचिन्हित दीर्घ ip = (अचिन्हित दीर्घ)(&ftrace_graph_call);
-	अचिन्हित दीर्घ addr = (अचिन्हित दीर्घ)(&ftrace_graph_caller);
-	अचिन्हित दीर्घ stub = (अचिन्हित दीर्घ)(&ftrace_graph_stub);
-	काष्ठा ppc_inst old, new;
+int ftrace_disable_ftrace_graph_caller(void)
+{
+	unsigned long ip = (unsigned long)(&ftrace_graph_call);
+	unsigned long addr = (unsigned long)(&ftrace_graph_caller);
+	unsigned long stub = (unsigned long)(&ftrace_graph_stub);
+	struct ppc_inst old, new;
 
 	old = ftrace_call_replace(ip, addr, 0);
 	new = ftrace_call_replace(ip, stub, 0);
 
-	वापस ftrace_modअगरy_code(ip, old, new);
-पूर्ण
+	return ftrace_modify_code(ip, old, new);
+}
 
 /*
- * Hook the वापस address and push it in the stack of वापस addrs
- * in current thपढ़ो info. Return the address we want to भागert to.
+ * Hook the return address and push it in the stack of return addrs
+ * in current thread info. Return the address we want to divert to.
  */
-अचिन्हित दीर्घ prepare_ftrace_वापस(अचिन्हित दीर्घ parent, अचिन्हित दीर्घ ip,
-						अचिन्हित दीर्घ sp)
-अणु
-	अचिन्हित दीर्घ वापस_hooker;
+unsigned long prepare_ftrace_return(unsigned long parent, unsigned long ip,
+						unsigned long sp)
+{
+	unsigned long return_hooker;
 
-	अगर (unlikely(ftrace_graph_is_dead()))
-		जाओ out;
+	if (unlikely(ftrace_graph_is_dead()))
+		goto out;
 
-	अगर (unlikely(atomic_पढ़ो(&current->tracing_graph_छोड़ो)))
-		जाओ out;
+	if (unlikely(atomic_read(&current->tracing_graph_pause)))
+		goto out;
 
-	वापस_hooker = ppc_function_entry(वापस_to_handler);
+	return_hooker = ppc_function_entry(return_to_handler);
 
-	अगर (!function_graph_enter(parent, ip, 0, (अचिन्हित दीर्घ *)sp))
-		parent = वापस_hooker;
+	if (!function_graph_enter(parent, ip, 0, (unsigned long *)sp))
+		parent = return_hooker;
 out:
-	वापस parent;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_FUNCTION_GRAPH_TRACER */
+	return parent;
+}
+#endif /* CONFIG_FUNCTION_GRAPH_TRACER */
 
-#अगर_घोषित PPC64_ELF_ABI_v1
-अक्षर *arch_ftrace_match_adjust(अक्षर *str, स्थिर अक्षर *search)
-अणु
-	अगर (str[0] == '.' && search[0] != '.')
-		वापस str + 1;
-	अन्यथा
-		वापस str;
-पूर्ण
-#पूर्ण_अगर /* PPC64_ELF_ABI_v1 */
+#ifdef PPC64_ELF_ABI_v1
+char *arch_ftrace_match_adjust(char *str, const char *search)
+{
+	if (str[0] == '.' && search[0] != '.')
+		return str + 1;
+	else
+		return str;
+}
+#endif /* PPC64_ELF_ABI_v1 */

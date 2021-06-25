@@ -1,20 +1,19 @@
-<शैली गुरु>
 /*
  * OPL4 MIDI synthesizer functions
  *
  * Copyright (c) 2003 by Clemens Ladisch <clemens@ladisch.de>
  * All rights reserved.
  *
- * Redistribution and use in source and binary क्रमms, with or without
- * modअगरication, are permitted provided that the following conditions
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions, and the following disclaimer,
- *    without modअगरication.
- * 2. The name of the author may not be used to enकरोrse or promote products
- *    derived from this software without specअगरic prior written permission.
+ *    without modification.
+ * 2. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
  *
- * Alternatively, this software may be distributed and/or modअगरied under the
+ * Alternatively, this software may be distributed and/or modified under the
  * terms of the GNU General Public License as published by the Free Software
  * Foundation; either version 2 of the License, or (at your option) any later
  * version.
@@ -23,7 +22,7 @@
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE FOR
- * ANY सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
@@ -32,25 +31,25 @@
  * SUCH DAMAGE.
  */
 
-#समावेश "opl4_local.h"
-#समावेश <linux/delay.h>
-#समावेश <linux/पन.स>
-#समावेश <sound/asoundef.h>
+#include "opl4_local.h"
+#include <linux/delay.h>
+#include <linux/io.h>
+#include <sound/asoundef.h>
 
 /* GM2 controllers */
-#अगर_अघोषित MIDI_CTL_RELEASE_TIME
-#घोषणा MIDI_CTL_RELEASE_TIME	0x48
-#घोषणा MIDI_CTL_ATTACK_TIME	0x49
-#घोषणा MIDI_CTL_DECAY_TIME	0x4b
-#घोषणा MIDI_CTL_VIBRATO_RATE	0x4c
-#घोषणा MIDI_CTL_VIBRATO_DEPTH	0x4d
-#घोषणा MIDI_CTL_VIBRATO_DELAY	0x4e
-#पूर्ण_अगर
+#ifndef MIDI_CTL_RELEASE_TIME
+#define MIDI_CTL_RELEASE_TIME	0x48
+#define MIDI_CTL_ATTACK_TIME	0x49
+#define MIDI_CTL_DECAY_TIME	0x4b
+#define MIDI_CTL_VIBRATO_RATE	0x4c
+#define MIDI_CTL_VIBRATO_DEPTH	0x4d
+#define MIDI_CTL_VIBRATO_DELAY	0x4e
+#endif
 
 /*
  * This table maps 100/128 cents to F_NUMBER.
  */
-अटल स्थिर s16 snd_opl4_pitch_map[0x600] = अणु
+static const s16 snd_opl4_pitch_map[0x600] = {
 	0x000,0x000,0x001,0x001,0x002,0x002,0x003,0x003,
 	0x004,0x004,0x005,0x005,0x006,0x006,0x006,0x007,
 	0x007,0x008,0x008,0x009,0x009,0x00a,0x00a,0x00b,
@@ -243,13 +242,13 @@
 	0x3ea,0x3eb,0x3ec,0x3ed,0x3ee,0x3ef,0x3ef,0x3f0,
 	0x3f1,0x3f2,0x3f3,0x3f4,0x3f5,0x3f6,0x3f7,0x3f8,
 	0x3f9,0x3fa,0x3fa,0x3fb,0x3fc,0x3fd,0x3fe,0x3ff
-पूर्ण;
+};
 
 /*
  * Attenuation according to GM recommendations, in -0.375 dB units.
  * table[v] = 40 * log(v / 127) / -0.375
  */
-अटल स्थिर अचिन्हित अक्षर snd_opl4_volume_table[128] = अणु
+static const unsigned char snd_opl4_volume_table[128] = {
 	255,224,192,173,160,150,141,134,
 	128,122,117,113,109,105,102, 99,
 	 96, 93, 90, 88, 85, 83, 81, 79,
@@ -266,110 +265,110 @@
 	  9,  9,  8,  8,  7,  7,  6,  6,
 	  6,  5,  5,  4,  4,  4,  3,  3,
 	  2,  2,  2,  1,  1,  0,  0,  0
-पूर्ण;
+};
 
 /*
  * Initializes all voices.
  */
-व्योम snd_opl4_synth_reset(काष्ठा snd_opl4 *opl4)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक i;
+void snd_opl4_synth_reset(struct snd_opl4 *opl4)
+{
+	unsigned long flags;
+	int i;
 
 	spin_lock_irqsave(&opl4->reg_lock, flags);
-	क्रम (i = 0; i < OPL4_MAX_VOICES; i++)
-		snd_opl4_ग_लिखो(opl4, OPL4_REG_MISC + i, OPL4_DAMP_BIT);
+	for (i = 0; i < OPL4_MAX_VOICES; i++)
+		snd_opl4_write(opl4, OPL4_REG_MISC + i, OPL4_DAMP_BIT);
 	spin_unlock_irqrestore(&opl4->reg_lock, flags);
 
 	INIT_LIST_HEAD(&opl4->off_voices);
 	INIT_LIST_HEAD(&opl4->on_voices);
-	स_रखो(opl4->voices, 0, माप(opl4->voices));
-	क्रम (i = 0; i < OPL4_MAX_VOICES; i++) अणु
+	memset(opl4->voices, 0, sizeof(opl4->voices));
+	for (i = 0; i < OPL4_MAX_VOICES; i++) {
 		opl4->voices[i].number = i;
 		list_add_tail(&opl4->voices[i].list, &opl4->off_voices);
-	पूर्ण
+	}
 
 	snd_midi_channel_set_clear(opl4->chset);
-पूर्ण
+}
 
 /*
- * Shuts करोwn all voices.
+ * Shuts down all voices.
  */
-व्योम snd_opl4_synth_shutकरोwn(काष्ठा snd_opl4 *opl4)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक i;
+void snd_opl4_synth_shutdown(struct snd_opl4 *opl4)
+{
+	unsigned long flags;
+	int i;
 
 	spin_lock_irqsave(&opl4->reg_lock, flags);
-	क्रम (i = 0; i < OPL4_MAX_VOICES; i++)
-		snd_opl4_ग_लिखो(opl4, OPL4_REG_MISC + i,
+	for (i = 0; i < OPL4_MAX_VOICES; i++)
+		snd_opl4_write(opl4, OPL4_REG_MISC + i,
 			       opl4->voices[i].reg_misc & ~OPL4_KEY_ON_BIT);
 	spin_unlock_irqrestore(&opl4->reg_lock, flags);
-पूर्ण
+}
 
 /*
- * Executes the callback क्रम all voices playing the specअगरied note.
+ * Executes the callback for all voices playing the specified note.
  */
-अटल व्योम snd_opl4_करो_क्रम_note(काष्ठा snd_opl4 *opl4, पूर्णांक note, काष्ठा snd_midi_channel *chan,
-				 व्योम (*func)(काष्ठा snd_opl4 *opl4, काष्ठा opl4_voice *voice))
-अणु
-	पूर्णांक i;
-	अचिन्हित दीर्घ flags;
-	काष्ठा opl4_voice *voice;
+static void snd_opl4_do_for_note(struct snd_opl4 *opl4, int note, struct snd_midi_channel *chan,
+				 void (*func)(struct snd_opl4 *opl4, struct opl4_voice *voice))
+{
+	int i;
+	unsigned long flags;
+	struct opl4_voice *voice;
 
 	spin_lock_irqsave(&opl4->reg_lock, flags);
-	क्रम (i = 0; i < OPL4_MAX_VOICES; i++) अणु
+	for (i = 0; i < OPL4_MAX_VOICES; i++) {
 		voice = &opl4->voices[i];
-		अगर (voice->chan == chan && voice->note == note) अणु
+		if (voice->chan == chan && voice->note == note) {
 			func(opl4, voice);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	spin_unlock_irqrestore(&opl4->reg_lock, flags);
-पूर्ण
+}
 
 /*
- * Executes the callback क्रम all voices of to the specअगरied channel.
+ * Executes the callback for all voices of to the specified channel.
  */
-अटल व्योम snd_opl4_करो_क्रम_channel(काष्ठा snd_opl4 *opl4,
-				    काष्ठा snd_midi_channel *chan,
-				    व्योम (*func)(काष्ठा snd_opl4 *opl4, काष्ठा opl4_voice *voice))
-अणु
-	पूर्णांक i;
-	अचिन्हित दीर्घ flags;
-	काष्ठा opl4_voice *voice;
+static void snd_opl4_do_for_channel(struct snd_opl4 *opl4,
+				    struct snd_midi_channel *chan,
+				    void (*func)(struct snd_opl4 *opl4, struct opl4_voice *voice))
+{
+	int i;
+	unsigned long flags;
+	struct opl4_voice *voice;
 
 	spin_lock_irqsave(&opl4->reg_lock, flags);
-	क्रम (i = 0; i < OPL4_MAX_VOICES; i++) अणु
+	for (i = 0; i < OPL4_MAX_VOICES; i++) {
 		voice = &opl4->voices[i];
-		अगर (voice->chan == chan) अणु
+		if (voice->chan == chan) {
 			func(opl4, voice);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	spin_unlock_irqrestore(&opl4->reg_lock, flags);
-पूर्ण
+}
 
 /*
- * Executes the callback क्रम all active voices.
+ * Executes the callback for all active voices.
  */
-अटल व्योम snd_opl4_करो_क्रम_all(काष्ठा snd_opl4 *opl4,
-				व्योम (*func)(काष्ठा snd_opl4 *opl4, काष्ठा opl4_voice *voice))
-अणु
-	पूर्णांक i;
-	अचिन्हित दीर्घ flags;
-	काष्ठा opl4_voice *voice;
+static void snd_opl4_do_for_all(struct snd_opl4 *opl4,
+				void (*func)(struct snd_opl4 *opl4, struct opl4_voice *voice))
+{
+	int i;
+	unsigned long flags;
+	struct opl4_voice *voice;
 
 	spin_lock_irqsave(&opl4->reg_lock, flags);
-	क्रम (i = 0; i < OPL4_MAX_VOICES; i++) अणु
+	for (i = 0; i < OPL4_MAX_VOICES; i++) {
 		voice = &opl4->voices[i];
-		अगर (voice->chan)
+		if (voice->chan)
 			func(opl4, voice);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&opl4->reg_lock, flags);
-पूर्ण
+}
 
-अटल व्योम snd_opl4_update_volume(काष्ठा snd_opl4 *opl4, काष्ठा opl4_voice *voice)
-अणु
-	पूर्णांक att;
+static void snd_opl4_update_volume(struct snd_opl4 *opl4, struct opl4_voice *voice)
+{
+	int att;
 
 	att = voice->sound->tone_attenuate;
 	att += snd_opl4_volume_table[opl4->chset->gs_master_volume & 0x7f];
@@ -377,51 +376,51 @@
 	att += snd_opl4_volume_table[voice->chan->gm_expression & 0x7f];
 	att += snd_opl4_volume_table[voice->velocity];
 	att = 0x7f - (0x7f - att) * (voice->sound->volume_factor) / 0xfe - volume_boost;
-	अगर (att < 0)
+	if (att < 0)
 		att = 0;
-	अन्यथा अगर (att > 0x7e)
+	else if (att > 0x7e)
 		att = 0x7e;
-	snd_opl4_ग_लिखो(opl4, OPL4_REG_LEVEL + voice->number,
+	snd_opl4_write(opl4, OPL4_REG_LEVEL + voice->number,
 		       (att << 1) | voice->level_direct);
 	voice->level_direct = 0;
-पूर्ण
+}
 
-अटल व्योम snd_opl4_update_pan(काष्ठा snd_opl4 *opl4, काष्ठा opl4_voice *voice)
-अणु
-	पूर्णांक pan = voice->sound->panpot;
+static void snd_opl4_update_pan(struct snd_opl4 *opl4, struct opl4_voice *voice)
+{
+	int pan = voice->sound->panpot;
 
-	अगर (!voice->chan->drum_channel)
+	if (!voice->chan->drum_channel)
 		pan += (voice->chan->control[MIDI_CTL_MSB_PAN] - 0x40) >> 3;
-	अगर (pan < -7)
+	if (pan < -7)
 		pan = -7;
-	अन्यथा अगर (pan > 7)
+	else if (pan > 7)
 		pan = 7;
 	voice->reg_misc = (voice->reg_misc & ~OPL4_PAN_POT_MASK)
 		| (pan & OPL4_PAN_POT_MASK);
-	snd_opl4_ग_लिखो(opl4, OPL4_REG_MISC + voice->number, voice->reg_misc);
-पूर्ण
+	snd_opl4_write(opl4, OPL4_REG_MISC + voice->number, voice->reg_misc);
+}
 
-अटल व्योम snd_opl4_update_vibrato_depth(काष्ठा snd_opl4 *opl4,
-					  काष्ठा opl4_voice *voice)
-अणु
-	पूर्णांक depth;
+static void snd_opl4_update_vibrato_depth(struct snd_opl4 *opl4,
+					  struct opl4_voice *voice)
+{
+	int depth;
 
-	अगर (voice->chan->drum_channel)
-		वापस;
+	if (voice->chan->drum_channel)
+		return;
 	depth = (7 - voice->sound->vibrato)
 		* (voice->chan->control[MIDI_CTL_VIBRATO_DEPTH] & 0x7f);
 	depth = (depth >> 7) + voice->sound->vibrato;
 	voice->reg_lfo_vibrato &= ~OPL4_VIBRATO_DEPTH_MASK;
 	voice->reg_lfo_vibrato |= depth & OPL4_VIBRATO_DEPTH_MASK;
-	snd_opl4_ग_लिखो(opl4, OPL4_REG_LFO_VIBRATO + voice->number,
+	snd_opl4_write(opl4, OPL4_REG_LFO_VIBRATO + voice->number,
 		       voice->reg_lfo_vibrato);
-पूर्ण
+}
 
-अटल व्योम snd_opl4_update_pitch(काष्ठा snd_opl4 *opl4,
-				  काष्ठा opl4_voice *voice)
-अणु
-	काष्ठा snd_midi_channel *chan = voice->chan;
-	पूर्णांक note, pitch, octave;
+static void snd_opl4_update_pitch(struct snd_opl4 *opl4,
+				  struct opl4_voice *voice)
+{
+	struct snd_midi_channel *chan = voice->chan;
+	int note, pitch, octave;
 
 	note = chan->drum_channel ? 60 : voice->note;
 	/*
@@ -430,203 +429,203 @@
 	 */
 	pitch = ((note - 60) << 7) * voice->sound->key_scaling / 100 + (60 << 7);
 	pitch += voice->sound->pitch_offset;
-	अगर (!chan->drum_channel)
+	if (!chan->drum_channel)
 		pitch += chan->gm_rpn_coarse_tuning;
 	pitch += chan->gm_rpn_fine_tuning >> 7;
 	pitch += chan->midi_pitchbend * chan->gm_rpn_pitch_bend_range / 0x2000;
-	अगर (pitch < 0)
+	if (pitch < 0)
 		pitch = 0;
-	अन्यथा अगर (pitch >= 0x6000)
+	else if (pitch >= 0x6000)
 		pitch = 0x5fff;
 	octave = pitch / 0x600 - 8;
 	pitch = snd_opl4_pitch_map[pitch % 0x600];
 
-	snd_opl4_ग_लिखो(opl4, OPL4_REG_OCTAVE + voice->number,
+	snd_opl4_write(opl4, OPL4_REG_OCTAVE + voice->number,
 		       (octave << 4) | ((pitch >> 7) & OPL4_F_NUMBER_HIGH_MASK));
 	voice->reg_f_number = (voice->reg_f_number & OPL4_TONE_NUMBER_BIT8)
 		| ((pitch << 1) & OPL4_F_NUMBER_LOW_MASK);
-	snd_opl4_ग_लिखो(opl4, OPL4_REG_F_NUMBER + voice->number, voice->reg_f_number);
-पूर्ण
+	snd_opl4_write(opl4, OPL4_REG_F_NUMBER + voice->number, voice->reg_f_number);
+}
 
-अटल व्योम snd_opl4_update_tone_parameters(काष्ठा snd_opl4 *opl4,
-					    काष्ठा opl4_voice *voice)
-अणु
-	snd_opl4_ग_लिखो(opl4, OPL4_REG_ATTACK_DECAY1 + voice->number,
+static void snd_opl4_update_tone_parameters(struct snd_opl4 *opl4,
+					    struct opl4_voice *voice)
+{
+	snd_opl4_write(opl4, OPL4_REG_ATTACK_DECAY1 + voice->number,
 		       voice->sound->reg_attack_decay1);
-	snd_opl4_ग_लिखो(opl4, OPL4_REG_LEVEL_DECAY2 + voice->number,
+	snd_opl4_write(opl4, OPL4_REG_LEVEL_DECAY2 + voice->number,
 		       voice->sound->reg_level_decay2);
-	snd_opl4_ग_लिखो(opl4, OPL4_REG_RELEASE_CORRECTION + voice->number,
+	snd_opl4_write(opl4, OPL4_REG_RELEASE_CORRECTION + voice->number,
 		       voice->sound->reg_release_correction);
-	snd_opl4_ग_लिखो(opl4, OPL4_REG_TREMOLO + voice->number,
+	snd_opl4_write(opl4, OPL4_REG_TREMOLO + voice->number,
 		       voice->sound->reg_tremolo);
-पूर्ण
+}
 
 /* allocate one voice */
-अटल काष्ठा opl4_voice *snd_opl4_get_voice(काष्ठा snd_opl4 *opl4)
-अणु
+static struct opl4_voice *snd_opl4_get_voice(struct snd_opl4 *opl4)
+{
 	/* first, try to get the oldest key-off voice */
-	अगर (!list_empty(&opl4->off_voices))
-		वापस list_entry(opl4->off_voices.next, काष्ठा opl4_voice, list);
+	if (!list_empty(&opl4->off_voices))
+		return list_entry(opl4->off_voices.next, struct opl4_voice, list);
 	/* then get the oldest key-on voice */
 	snd_BUG_ON(list_empty(&opl4->on_voices));
-	वापस list_entry(opl4->on_voices.next, काष्ठा opl4_voice, list);
-पूर्ण
+	return list_entry(opl4->on_voices.next, struct opl4_voice, list);
+}
 
-अटल व्योम snd_opl4_रुको_क्रम_wave_headers(काष्ठा snd_opl4 *opl4)
-अणु
-	पूर्णांक समयout = 200;
+static void snd_opl4_wait_for_wave_headers(struct snd_opl4 *opl4)
+{
+	int timeout = 200;
 
-	जबतक ((inb(opl4->fm_port) & OPL4_STATUS_LOAD) && --समयout > 0)
+	while ((inb(opl4->fm_port) & OPL4_STATUS_LOAD) && --timeout > 0)
 		udelay(10);
-पूर्ण
+}
 
-व्योम snd_opl4_note_on(व्योम *निजी_data, पूर्णांक note, पूर्णांक vel, काष्ठा snd_midi_channel *chan)
-अणु
-	काष्ठा snd_opl4 *opl4 = निजी_data;
-	स्थिर काष्ठा opl4_region_ptr *regions;
-	काष्ठा opl4_voice *voice[2];
-	स्थिर काष्ठा opl4_sound *sound[2];
-	पूर्णांक voices = 0, i;
-	अचिन्हित दीर्घ flags;
+void snd_opl4_note_on(void *private_data, int note, int vel, struct snd_midi_channel *chan)
+{
+	struct snd_opl4 *opl4 = private_data;
+	const struct opl4_region_ptr *regions;
+	struct opl4_voice *voice[2];
+	const struct opl4_sound *sound[2];
+	int voices = 0, i;
+	unsigned long flags;
 
 	/* determine the number of voices and voice parameters */
 	i = chan->drum_channel ? 0x80 : (chan->midi_program & 0x7f);
 	regions = &snd_yrw801_regions[i];
-	क्रम (i = 0; i < regions->count; i++) अणु
-		अगर (note >= regions->regions[i].key_min &&
-		    note <= regions->regions[i].key_max) अणु
+	for (i = 0; i < regions->count; i++) {
+		if (note >= regions->regions[i].key_min &&
+		    note <= regions->regions[i].key_max) {
 			sound[voices] = &regions->regions[i].sound;
-			अगर (++voices >= 2)
-				अवरोध;
-		पूर्ण
-	पूर्ण
+			if (++voices >= 2)
+				break;
+		}
+	}
 
 	/* allocate and initialize the needed voices */
 	spin_lock_irqsave(&opl4->reg_lock, flags);
-	क्रम (i = 0; i < voices; i++) अणु
+	for (i = 0; i < voices; i++) {
 		voice[i] = snd_opl4_get_voice(opl4);
 		list_move_tail(&voice[i]->list, &opl4->on_voices);
 		voice[i]->chan = chan;
 		voice[i]->note = note;
 		voice[i]->velocity = vel & 0x7f;
 		voice[i]->sound = sound[i];
-	पूर्ण
+	}
 
 	/* set tone number (triggers header loading) */
-	क्रम (i = 0; i < voices; i++) अणु
+	for (i = 0; i < voices; i++) {
 		voice[i]->reg_f_number =
 			(sound[i]->tone >> 8) & OPL4_TONE_NUMBER_BIT8;
-		snd_opl4_ग_लिखो(opl4, OPL4_REG_F_NUMBER + voice[i]->number,
+		snd_opl4_write(opl4, OPL4_REG_F_NUMBER + voice[i]->number,
 			       voice[i]->reg_f_number);
-		snd_opl4_ग_लिखो(opl4, OPL4_REG_TONE_NUMBER + voice[i]->number,
+		snd_opl4_write(opl4, OPL4_REG_TONE_NUMBER + voice[i]->number,
 			       sound[i]->tone & 0xff);
-	पूर्ण
+	}
 
-	/* set parameters which can be set जबतक loading */
-	क्रम (i = 0; i < voices; i++) अणु
+	/* set parameters which can be set while loading */
+	for (i = 0; i < voices; i++) {
 		voice[i]->reg_misc = OPL4_LFO_RESET_BIT;
 		snd_opl4_update_pan(opl4, voice[i]);
 		snd_opl4_update_pitch(opl4, voice[i]);
-		voice[i]->level_direct = OPL4_LEVEL_सूचीECT_BIT;
+		voice[i]->level_direct = OPL4_LEVEL_DIRECT_BIT;
 		snd_opl4_update_volume(opl4, voice[i]);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&opl4->reg_lock, flags);
 
-	/* रुको क्रम completion of loading */
-	snd_opl4_रुको_क्रम_wave_headers(opl4);
+	/* wait for completion of loading */
+	snd_opl4_wait_for_wave_headers(opl4);
 
-	/* set reमुख्यing parameters */
+	/* set remaining parameters */
 	spin_lock_irqsave(&opl4->reg_lock, flags);
-	क्रम (i = 0; i < voices; i++) अणु
+	for (i = 0; i < voices; i++) {
 		snd_opl4_update_tone_parameters(opl4, voice[i]);
 		voice[i]->reg_lfo_vibrato = voice[i]->sound->reg_lfo_vibrato;
 		snd_opl4_update_vibrato_depth(opl4, voice[i]);
-	पूर्ण
+	}
 
-	/* finally, चयन on all voices */
-	क्रम (i = 0; i < voices; i++) अणु
+	/* finally, switch on all voices */
+	for (i = 0; i < voices; i++) {
 		voice[i]->reg_misc =
 			(voice[i]->reg_misc & 0x1f) | OPL4_KEY_ON_BIT;
-		snd_opl4_ग_लिखो(opl4, OPL4_REG_MISC + voice[i]->number,
+		snd_opl4_write(opl4, OPL4_REG_MISC + voice[i]->number,
 			       voice[i]->reg_misc);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&opl4->reg_lock, flags);
-पूर्ण
+}
 
-अटल व्योम snd_opl4_voice_off(काष्ठा snd_opl4 *opl4, काष्ठा opl4_voice *voice)
-अणु
+static void snd_opl4_voice_off(struct snd_opl4 *opl4, struct opl4_voice *voice)
+{
 	list_move_tail(&voice->list, &opl4->off_voices);
 
 	voice->reg_misc &= ~OPL4_KEY_ON_BIT;
-	snd_opl4_ग_लिखो(opl4, OPL4_REG_MISC + voice->number, voice->reg_misc);
-पूर्ण
+	snd_opl4_write(opl4, OPL4_REG_MISC + voice->number, voice->reg_misc);
+}
 
-व्योम snd_opl4_note_off(व्योम *निजी_data, पूर्णांक note, पूर्णांक vel, काष्ठा snd_midi_channel *chan)
-अणु
-	काष्ठा snd_opl4 *opl4 = निजी_data;
+void snd_opl4_note_off(void *private_data, int note, int vel, struct snd_midi_channel *chan)
+{
+	struct snd_opl4 *opl4 = private_data;
 
-	snd_opl4_करो_क्रम_note(opl4, note, chan, snd_opl4_voice_off);
-पूर्ण
+	snd_opl4_do_for_note(opl4, note, chan, snd_opl4_voice_off);
+}
 
-अटल व्योम snd_opl4_terminate_voice(काष्ठा snd_opl4 *opl4, काष्ठा opl4_voice *voice)
-अणु
+static void snd_opl4_terminate_voice(struct snd_opl4 *opl4, struct opl4_voice *voice)
+{
 	list_move_tail(&voice->list, &opl4->off_voices);
 
 	voice->reg_misc = (voice->reg_misc & ~OPL4_KEY_ON_BIT) | OPL4_DAMP_BIT;
-	snd_opl4_ग_लिखो(opl4, OPL4_REG_MISC + voice->number, voice->reg_misc);
-पूर्ण
+	snd_opl4_write(opl4, OPL4_REG_MISC + voice->number, voice->reg_misc);
+}
 
-व्योम snd_opl4_terminate_note(व्योम *निजी_data, पूर्णांक note, काष्ठा snd_midi_channel *chan)
-अणु
-	काष्ठा snd_opl4 *opl4 = निजी_data;
+void snd_opl4_terminate_note(void *private_data, int note, struct snd_midi_channel *chan)
+{
+	struct snd_opl4 *opl4 = private_data;
 
-	snd_opl4_करो_क्रम_note(opl4, note, chan, snd_opl4_terminate_voice);
-पूर्ण
+	snd_opl4_do_for_note(opl4, note, chan, snd_opl4_terminate_voice);
+}
 
-व्योम snd_opl4_control(व्योम *निजी_data, पूर्णांक type, काष्ठा snd_midi_channel *chan)
-अणु
-	काष्ठा snd_opl4 *opl4 = निजी_data;
+void snd_opl4_control(void *private_data, int type, struct snd_midi_channel *chan)
+{
+	struct snd_opl4 *opl4 = private_data;
 
-	चयन (type) अणु
-	हाल MIDI_CTL_MSB_MODWHEEL:
+	switch (type) {
+	case MIDI_CTL_MSB_MODWHEEL:
 		chan->control[MIDI_CTL_VIBRATO_DEPTH] = chan->control[MIDI_CTL_MSB_MODWHEEL];
-		snd_opl4_करो_क्रम_channel(opl4, chan, snd_opl4_update_vibrato_depth);
-		अवरोध;
-	हाल MIDI_CTL_MSB_MAIN_VOLUME:
-		snd_opl4_करो_क्रम_channel(opl4, chan, snd_opl4_update_volume);
-		अवरोध;
-	हाल MIDI_CTL_MSB_PAN:
-		snd_opl4_करो_क्रम_channel(opl4, chan, snd_opl4_update_pan);
-		अवरोध;
-	हाल MIDI_CTL_MSB_EXPRESSION:
-		snd_opl4_करो_क्रम_channel(opl4, chan, snd_opl4_update_volume);
-		अवरोध;
-	हाल MIDI_CTL_VIBRATO_RATE:
+		snd_opl4_do_for_channel(opl4, chan, snd_opl4_update_vibrato_depth);
+		break;
+	case MIDI_CTL_MSB_MAIN_VOLUME:
+		snd_opl4_do_for_channel(opl4, chan, snd_opl4_update_volume);
+		break;
+	case MIDI_CTL_MSB_PAN:
+		snd_opl4_do_for_channel(opl4, chan, snd_opl4_update_pan);
+		break;
+	case MIDI_CTL_MSB_EXPRESSION:
+		snd_opl4_do_for_channel(opl4, chan, snd_opl4_update_volume);
+		break;
+	case MIDI_CTL_VIBRATO_RATE:
 		/* not yet supported */
-		अवरोध;
-	हाल MIDI_CTL_VIBRATO_DEPTH:
-		snd_opl4_करो_क्रम_channel(opl4, chan, snd_opl4_update_vibrato_depth);
-		अवरोध;
-	हाल MIDI_CTL_VIBRATO_DELAY:
+		break;
+	case MIDI_CTL_VIBRATO_DEPTH:
+		snd_opl4_do_for_channel(opl4, chan, snd_opl4_update_vibrato_depth);
+		break;
+	case MIDI_CTL_VIBRATO_DELAY:
 		/* not yet supported */
-		अवरोध;
-	हाल MIDI_CTL_E1_REVERB_DEPTH:
+		break;
+	case MIDI_CTL_E1_REVERB_DEPTH:
 		/*
 		 * Each OPL4 voice has a bit called "Pseudo-Reverb", but
 		 * IMHO _not_ using it enhances the listening experience.
 		 */
-		अवरोध;
-	हाल MIDI_CTL_PITCHBEND:
-		snd_opl4_करो_क्रम_channel(opl4, chan, snd_opl4_update_pitch);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	case MIDI_CTL_PITCHBEND:
+		snd_opl4_do_for_channel(opl4, chan, snd_opl4_update_pitch);
+		break;
+	}
+}
 
-व्योम snd_opl4_sysex(व्योम *निजी_data, अचिन्हित अक्षर *buf, पूर्णांक len,
-		    पूर्णांक parsed, काष्ठा snd_midi_channel_set *chset)
-अणु
-	काष्ठा snd_opl4 *opl4 = निजी_data;
+void snd_opl4_sysex(void *private_data, unsigned char *buf, int len,
+		    int parsed, struct snd_midi_channel_set *chset)
+{
+	struct snd_opl4 *opl4 = private_data;
 
-	अगर (parsed == SNDRV_MIDI_SYSEX_GS_MASTER_VOLUME)
-		snd_opl4_करो_क्रम_all(opl4, snd_opl4_update_volume);
-पूर्ण
+	if (parsed == SNDRV_MIDI_SYSEX_GS_MASTER_VOLUME)
+		snd_opl4_do_for_all(opl4, snd_opl4_update_volume);
+}

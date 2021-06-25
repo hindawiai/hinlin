@@ -1,103 +1,102 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- *	Real Time Clock पूर्णांकerface क्रम Linux on the MVME16x
+ *	Real Time Clock interface for Linux on the MVME16x
  *
- * Based on the PC driver by Paul Gorपंचांगaker.
+ * Based on the PC driver by Paul Gortmaker.
  */
 
-#घोषणा RTC_VERSION		"1.00"
+#define RTC_VERSION		"1.00"
 
-#समावेश <linux/types.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/capability.h>
-#समावेश <linux/fcntl.h>
-#समावेश <linux/init.h>
-#समावेश <linux/poll.h>
-#समावेश <linux/rtc.h>	/* For काष्ठा rtc_समय and ioctls, etc */
-#समावेश <linux/bcd.h>
-#समावेश <यंत्र/mvme16xhw.h>
+#include <linux/types.h>
+#include <linux/errno.h>
+#include <linux/miscdevice.h>
+#include <linux/ioport.h>
+#include <linux/capability.h>
+#include <linux/fcntl.h>
+#include <linux/init.h>
+#include <linux/poll.h>
+#include <linux/rtc.h>	/* For struct rtc_time and ioctls, etc */
+#include <linux/bcd.h>
+#include <asm/mvme16xhw.h>
 
-#समावेश <यंत्र/पन.स>
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/setup.h>
+#include <asm/io.h>
+#include <linux/uaccess.h>
+#include <asm/setup.h>
 
 /*
  *	We sponge a minor off of the misc major. No need slurping
- *	up another valuable major dev number क्रम this. If you add
- *	an ioctl, make sure you करोn't conflict with SPARC's RTC
+ *	up another valuable major dev number for this. If you add
+ *	an ioctl, make sure you don't conflict with SPARC's RTC
  *	ioctls.
  */
 
-अटल स्थिर अचिन्हित अक्षर days_in_mo[] =
-अणु0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31पूर्ण;
+static const unsigned char days_in_mo[] =
+{0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
-अटल atomic_t rtc_पढ़ोy = ATOMIC_INIT(1);
+static atomic_t rtc_ready = ATOMIC_INIT(1);
 
-अटल दीर्घ rtc_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	अस्थिर MK48T08ptr_t rtc = (MK48T08ptr_t)MVME_RTC_BASE;
-	अचिन्हित दीर्घ flags;
-	काष्ठा rtc_समय wसमय;
-	व्योम __user *argp = (व्योम __user *)arg;
+static long rtc_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+{
+	volatile MK48T08ptr_t rtc = (MK48T08ptr_t)MVME_RTC_BASE;
+	unsigned long flags;
+	struct rtc_time wtime;
+	void __user *argp = (void __user *)arg;
 
-	चयन (cmd) अणु
-	हाल RTC_RD_TIME:	/* Read the समय/date from RTC	*/
-	अणु
+	switch (cmd) {
+	case RTC_RD_TIME:	/* Read the time/date from RTC	*/
+	{
 		local_irq_save(flags);
-		/* Ensure घड़ी and real-समय-mode-रेजिस्टर are accessible */
+		/* Ensure clock and real-time-mode-register are accessible */
 		rtc->ctrl = RTC_READ;
-		स_रखो(&wसमय, 0, माप(काष्ठा rtc_समय));
-		wसमय.पंचांग_sec =  bcd2bin(rtc->bcd_sec);
-		wसमय.पंचांग_min =  bcd2bin(rtc->bcd_min);
-		wसमय.पंचांग_hour = bcd2bin(rtc->bcd_hr);
-		wसमय.पंचांग_mday =  bcd2bin(rtc->bcd_करोm);
-		wसमय.पंचांग_mon =  bcd2bin(rtc->bcd_mth)-1;
-		wसमय.पंचांग_year = bcd2bin(rtc->bcd_year);
-		अगर (wसमय.पंचांग_year < 70)
-			wसमय.पंचांग_year += 100;
-		wसमय.पंचांग_wday = bcd2bin(rtc->bcd_करोw)-1;
+		memset(&wtime, 0, sizeof(struct rtc_time));
+		wtime.tm_sec =  bcd2bin(rtc->bcd_sec);
+		wtime.tm_min =  bcd2bin(rtc->bcd_min);
+		wtime.tm_hour = bcd2bin(rtc->bcd_hr);
+		wtime.tm_mday =  bcd2bin(rtc->bcd_dom);
+		wtime.tm_mon =  bcd2bin(rtc->bcd_mth)-1;
+		wtime.tm_year = bcd2bin(rtc->bcd_year);
+		if (wtime.tm_year < 70)
+			wtime.tm_year += 100;
+		wtime.tm_wday = bcd2bin(rtc->bcd_dow)-1;
 		rtc->ctrl = 0;
 		local_irq_restore(flags);
-		वापस copy_to_user(argp, &wसमय, माप wसमय) ?
+		return copy_to_user(argp, &wtime, sizeof wtime) ?
 								-EFAULT : 0;
-	पूर्ण
-	हाल RTC_SET_TIME:	/* Set the RTC */
-	अणु
-		काष्ठा rtc_समय rtc_पंचांग;
-		अचिन्हित अक्षर mon, day, hrs, min, sec, leap_yr;
-		अचिन्हित पूर्णांक yrs;
+	}
+	case RTC_SET_TIME:	/* Set the RTC */
+	{
+		struct rtc_time rtc_tm;
+		unsigned char mon, day, hrs, min, sec, leap_yr;
+		unsigned int yrs;
 
-		अगर (!capable(CAP_SYS_ADMIN))
-			वापस -EACCES;
+		if (!capable(CAP_SYS_ADMIN))
+			return -EACCES;
 
-		अगर (copy_from_user(&rtc_पंचांग, argp, माप(काष्ठा rtc_समय)))
-			वापस -EFAULT;
+		if (copy_from_user(&rtc_tm, argp, sizeof(struct rtc_time)))
+			return -EFAULT;
 
-		yrs = rtc_पंचांग.पंचांग_year;
-		अगर (yrs < 1900)
+		yrs = rtc_tm.tm_year;
+		if (yrs < 1900)
 			yrs += 1900;
-		mon = rtc_पंचांग.पंचांग_mon + 1;   /* पंचांग_mon starts at zero */
-		day = rtc_पंचांग.पंचांग_mday;
-		hrs = rtc_पंचांग.पंचांग_hour;
-		min = rtc_पंचांग.पंचांग_min;
-		sec = rtc_पंचांग.पंचांग_sec;
+		mon = rtc_tm.tm_mon + 1;   /* tm_mon starts at zero */
+		day = rtc_tm.tm_mday;
+		hrs = rtc_tm.tm_hour;
+		min = rtc_tm.tm_min;
+		sec = rtc_tm.tm_sec;
 
 		leap_yr = ((!(yrs % 4) && (yrs % 100)) || !(yrs % 400));
 
-		अगर ((mon > 12) || (day == 0))
-			वापस -EINVAL;
+		if ((mon > 12) || (day == 0))
+			return -EINVAL;
 
-		अगर (day > (days_in_mo[mon] + ((mon == 2) && leap_yr)))
-			वापस -EINVAL;
+		if (day > (days_in_mo[mon] + ((mon == 2) && leap_yr)))
+			return -EINVAL;
 
-		अगर ((hrs >= 24) || (min >= 60) || (sec >= 60))
-			वापस -EINVAL;
+		if ((hrs >= 24) || (min >= 60) || (sec >= 60))
+			return -EINVAL;
 
-		अगर (yrs >= 2070)
-			वापस -EINVAL;
+		if (yrs >= 2070)
+			return -EINVAL;
 
 		local_irq_save(flags);
 		rtc->ctrl     = RTC_WRITE;
@@ -105,62 +104,62 @@
 		rtc->bcd_sec  = bin2bcd(sec);
 		rtc->bcd_min  = bin2bcd(min);
 		rtc->bcd_hr   = bin2bcd(hrs);
-		rtc->bcd_करोm  = bin2bcd(day);
+		rtc->bcd_dom  = bin2bcd(day);
 		rtc->bcd_mth  = bin2bcd(mon);
 		rtc->bcd_year = bin2bcd(yrs%100);
 
 		rtc->ctrl     = 0;
 		local_irq_restore(flags);
-		वापस 0;
-	पूर्ण
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+		return 0;
+	}
+	default:
+		return -EINVAL;
+	}
+}
 
 /*
- * We enक्रमce only one user at a समय here with the खोलो/बंद.
+ * We enforce only one user at a time here with the open/close.
  */
-अटल पूर्णांक rtc_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	अगर( !atomic_dec_and_test(&rtc_पढ़ोy) )
-	अणु
-		atomic_inc( &rtc_पढ़ोy );
-		वापस -EBUSY;
-	पूर्ण
-	वापस 0;
-पूर्ण
+static int rtc_open(struct inode *inode, struct file *file)
+{
+	if( !atomic_dec_and_test(&rtc_ready) )
+	{
+		atomic_inc( &rtc_ready );
+		return -EBUSY;
+	}
+	return 0;
+}
 
-अटल पूर्णांक rtc_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	atomic_inc( &rtc_पढ़ोy );
-	वापस 0;
-पूर्ण
+static int rtc_release(struct inode *inode, struct file *file)
+{
+	atomic_inc( &rtc_ready );
+	return 0;
+}
 
 /*
  *	The various file operations we support.
  */
 
-अटल स्थिर काष्ठा file_operations rtc_fops = अणु
+static const struct file_operations rtc_fops = {
 	.unlocked_ioctl	= rtc_ioctl,
-	.खोलो		= rtc_खोलो,
+	.open		= rtc_open,
 	.release	= rtc_release,
 	.llseek		= noop_llseek,
-पूर्ण;
+};
 
-अटल काष्ठा miscdevice rtc_dev=
-अणु
+static struct miscdevice rtc_dev=
+{
 	.minor =	RTC_MINOR,
 	.name =		"rtc",
 	.fops =		&rtc_fops
-पूर्ण;
+};
 
-अटल पूर्णांक __init rtc_MK48T08_init(व्योम)
-अणु
-	अगर (!MACH_IS_MVME16x)
-		वापस -ENODEV;
+static int __init rtc_MK48T08_init(void)
+{
+	if (!MACH_IS_MVME16x)
+		return -ENODEV;
 
 	pr_info("MK48T08 Real Time Clock Driver v%s\n", RTC_VERSION);
-	वापस misc_रेजिस्टर(&rtc_dev);
-पूर्ण
+	return misc_register(&rtc_dev);
+}
 device_initcall(rtc_MK48T08_init);

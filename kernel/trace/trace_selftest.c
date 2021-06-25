@@ -1,70 +1,69 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Include in trace.c */
 
-#समावेश <uapi/linux/sched/types.h>
-#समावेश <linux/stringअगरy.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/slab.h>
+#include <uapi/linux/sched/types.h>
+#include <linux/stringify.h>
+#include <linux/kthread.h>
+#include <linux/delay.h>
+#include <linux/slab.h>
 
-अटल अंतरभूत पूर्णांक trace_valid_entry(काष्ठा trace_entry *entry)
-अणु
-	चयन (entry->type) अणु
-	हाल TRACE_FN:
-	हाल TRACE_CTX:
-	हाल TRACE_WAKE:
-	हाल TRACE_STACK:
-	हाल TRACE_PRINT:
-	हाल TRACE_BRANCH:
-	हाल TRACE_GRAPH_ENT:
-	हाल TRACE_GRAPH_RET:
-		वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+static inline int trace_valid_entry(struct trace_entry *entry)
+{
+	switch (entry->type) {
+	case TRACE_FN:
+	case TRACE_CTX:
+	case TRACE_WAKE:
+	case TRACE_STACK:
+	case TRACE_PRINT:
+	case TRACE_BRANCH:
+	case TRACE_GRAPH_ENT:
+	case TRACE_GRAPH_RET:
+		return 1;
+	}
+	return 0;
+}
 
-अटल पूर्णांक trace_test_buffer_cpu(काष्ठा array_buffer *buf, पूर्णांक cpu)
-अणु
-	काष्ठा ring_buffer_event *event;
-	काष्ठा trace_entry *entry;
-	अचिन्हित पूर्णांक loops = 0;
+static int trace_test_buffer_cpu(struct array_buffer *buf, int cpu)
+{
+	struct ring_buffer_event *event;
+	struct trace_entry *entry;
+	unsigned int loops = 0;
 
-	जबतक ((event = ring_buffer_consume(buf->buffer, cpu, शून्य, शून्य))) अणु
+	while ((event = ring_buffer_consume(buf->buffer, cpu, NULL, NULL))) {
 		entry = ring_buffer_event_data(event);
 
 		/*
-		 * The ring buffer is a size of trace_buf_size, अगर
+		 * The ring buffer is a size of trace_buf_size, if
 		 * we loop more than the size, there's something wrong
 		 * with the ring buffer.
 		 */
-		अगर (loops++ > trace_buf_size) अणु
-			prपूर्णांकk(KERN_CONT ".. bad ring buffer ");
-			जाओ failed;
-		पूर्ण
-		अगर (!trace_valid_entry(entry)) अणु
-			prपूर्णांकk(KERN_CONT ".. invalid entry %d ",
+		if (loops++ > trace_buf_size) {
+			printk(KERN_CONT ".. bad ring buffer ");
+			goto failed;
+		}
+		if (!trace_valid_entry(entry)) {
+			printk(KERN_CONT ".. invalid entry %d ",
 				entry->type);
-			जाओ failed;
-		पूर्ण
-	पूर्ण
-	वापस 0;
+			goto failed;
+		}
+	}
+	return 0;
 
  failed:
 	/* disable tracing */
 	tracing_disabled = 1;
-	prपूर्णांकk(KERN_CONT ".. corrupted trace buffer .. ");
-	वापस -1;
-पूर्ण
+	printk(KERN_CONT ".. corrupted trace buffer .. ");
+	return -1;
+}
 
 /*
- * Test the trace buffer to see अगर all the elements
+ * Test the trace buffer to see if all the elements
  * are still sane.
  */
-अटल पूर्णांक __maybe_unused trace_test_buffer(काष्ठा array_buffer *buf, अचिन्हित दीर्घ *count)
-अणु
-	अचिन्हित दीर्घ flags, cnt = 0;
-	पूर्णांक cpu, ret = 0;
+static int __maybe_unused trace_test_buffer(struct array_buffer *buf, unsigned long *count)
+{
+	unsigned long flags, cnt = 0;
+	int cpu, ret = 0;
 
 	/* Don't allow flipping of max traces now */
 	local_irq_save(flags);
@@ -73,134 +72,134 @@
 	cnt = ring_buffer_entries(buf->buffer);
 
 	/*
-	 * The trace_test_buffer_cpu runs a जबतक loop to consume all data.
-	 * If the calling tracer is broken, and is स्थिरantly filling
-	 * the buffer, this will run क्रमever, and hard lock the box.
-	 * We disable the ring buffer जबतक we करो this test to prevent
+	 * The trace_test_buffer_cpu runs a while loop to consume all data.
+	 * If the calling tracer is broken, and is constantly filling
+	 * the buffer, this will run forever, and hard lock the box.
+	 * We disable the ring buffer while we do this test to prevent
 	 * a hard lock up.
 	 */
 	tracing_off();
-	क्रम_each_possible_cpu(cpu) अणु
+	for_each_possible_cpu(cpu) {
 		ret = trace_test_buffer_cpu(buf, cpu);
-		अगर (ret)
-			अवरोध;
-	पूर्ण
+		if (ret)
+			break;
+	}
 	tracing_on();
 	arch_spin_unlock(&buf->tr->max_lock);
 	local_irq_restore(flags);
 
-	अगर (count)
+	if (count)
 		*count = cnt;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत व्योम warn_failed_init_tracer(काष्ठा tracer *trace, पूर्णांक init_ret)
-अणु
-	prपूर्णांकk(KERN_WARNING "Failed to init %s tracer, init returned %d\n",
+static inline void warn_failed_init_tracer(struct tracer *trace, int init_ret)
+{
+	printk(KERN_WARNING "Failed to init %s tracer, init returned %d\n",
 		trace->name, init_ret);
-पूर्ण
-#अगर_घोषित CONFIG_FUNCTION_TRACER
+}
+#ifdef CONFIG_FUNCTION_TRACER
 
-#अगर_घोषित CONFIG_DYNAMIC_FTRACE
+#ifdef CONFIG_DYNAMIC_FTRACE
 
-अटल पूर्णांक trace_selftest_test_probe1_cnt;
-अटल व्योम trace_selftest_test_probe1_func(अचिन्हित दीर्घ ip,
-					    अचिन्हित दीर्घ pip,
-					    काष्ठा ftrace_ops *op,
-					    काष्ठा ftrace_regs *fregs)
-अणु
+static int trace_selftest_test_probe1_cnt;
+static void trace_selftest_test_probe1_func(unsigned long ip,
+					    unsigned long pip,
+					    struct ftrace_ops *op,
+					    struct ftrace_regs *fregs)
+{
 	trace_selftest_test_probe1_cnt++;
-पूर्ण
+}
 
-अटल पूर्णांक trace_selftest_test_probe2_cnt;
-अटल व्योम trace_selftest_test_probe2_func(अचिन्हित दीर्घ ip,
-					    अचिन्हित दीर्घ pip,
-					    काष्ठा ftrace_ops *op,
-					    काष्ठा ftrace_regs *fregs)
-अणु
+static int trace_selftest_test_probe2_cnt;
+static void trace_selftest_test_probe2_func(unsigned long ip,
+					    unsigned long pip,
+					    struct ftrace_ops *op,
+					    struct ftrace_regs *fregs)
+{
 	trace_selftest_test_probe2_cnt++;
-पूर्ण
+}
 
-अटल पूर्णांक trace_selftest_test_probe3_cnt;
-अटल व्योम trace_selftest_test_probe3_func(अचिन्हित दीर्घ ip,
-					    अचिन्हित दीर्घ pip,
-					    काष्ठा ftrace_ops *op,
-					    काष्ठा ftrace_regs *fregs)
-अणु
+static int trace_selftest_test_probe3_cnt;
+static void trace_selftest_test_probe3_func(unsigned long ip,
+					    unsigned long pip,
+					    struct ftrace_ops *op,
+					    struct ftrace_regs *fregs)
+{
 	trace_selftest_test_probe3_cnt++;
-पूर्ण
+}
 
-अटल पूर्णांक trace_selftest_test_global_cnt;
-अटल व्योम trace_selftest_test_global_func(अचिन्हित दीर्घ ip,
-					    अचिन्हित दीर्घ pip,
-					    काष्ठा ftrace_ops *op,
-					    काष्ठा ftrace_regs *fregs)
-अणु
+static int trace_selftest_test_global_cnt;
+static void trace_selftest_test_global_func(unsigned long ip,
+					    unsigned long pip,
+					    struct ftrace_ops *op,
+					    struct ftrace_regs *fregs)
+{
 	trace_selftest_test_global_cnt++;
-पूर्ण
+}
 
-अटल पूर्णांक trace_selftest_test_dyn_cnt;
-अटल व्योम trace_selftest_test_dyn_func(अचिन्हित दीर्घ ip,
-					 अचिन्हित दीर्घ pip,
-					 काष्ठा ftrace_ops *op,
-					 काष्ठा ftrace_regs *fregs)
-अणु
+static int trace_selftest_test_dyn_cnt;
+static void trace_selftest_test_dyn_func(unsigned long ip,
+					 unsigned long pip,
+					 struct ftrace_ops *op,
+					 struct ftrace_regs *fregs)
+{
 	trace_selftest_test_dyn_cnt++;
-पूर्ण
+}
 
-अटल काष्ठा ftrace_ops test_probe1 = अणु
+static struct ftrace_ops test_probe1 = {
 	.func			= trace_selftest_test_probe1_func,
-पूर्ण;
+};
 
-अटल काष्ठा ftrace_ops test_probe2 = अणु
+static struct ftrace_ops test_probe2 = {
 	.func			= trace_selftest_test_probe2_func,
-पूर्ण;
+};
 
-अटल काष्ठा ftrace_ops test_probe3 = अणु
+static struct ftrace_ops test_probe3 = {
 	.func			= trace_selftest_test_probe3_func,
-पूर्ण;
+};
 
-अटल व्योम prपूर्णांक_counts(व्योम)
-अणु
-	prपूर्णांकk("(%d %d %d %d %d) ",
+static void print_counts(void)
+{
+	printk("(%d %d %d %d %d) ",
 	       trace_selftest_test_probe1_cnt,
 	       trace_selftest_test_probe2_cnt,
 	       trace_selftest_test_probe3_cnt,
 	       trace_selftest_test_global_cnt,
 	       trace_selftest_test_dyn_cnt);
-पूर्ण
+}
 
-अटल व्योम reset_counts(व्योम)
-अणु
+static void reset_counts(void)
+{
 	trace_selftest_test_probe1_cnt = 0;
 	trace_selftest_test_probe2_cnt = 0;
 	trace_selftest_test_probe3_cnt = 0;
 	trace_selftest_test_global_cnt = 0;
 	trace_selftest_test_dyn_cnt = 0;
-पूर्ण
+}
 
-अटल पूर्णांक trace_selftest_ops(काष्ठा trace_array *tr, पूर्णांक cnt)
-अणु
-	पूर्णांक save_ftrace_enabled = ftrace_enabled;
-	काष्ठा ftrace_ops *dyn_ops;
-	अक्षर *func1_name;
-	अक्षर *func2_name;
-	पूर्णांक len1;
-	पूर्णांक len2;
-	पूर्णांक ret = -1;
+static int trace_selftest_ops(struct trace_array *tr, int cnt)
+{
+	int save_ftrace_enabled = ftrace_enabled;
+	struct ftrace_ops *dyn_ops;
+	char *func1_name;
+	char *func2_name;
+	int len1;
+	int len2;
+	int ret = -1;
 
-	prपूर्णांकk(KERN_CONT "PASSED\n");
+	printk(KERN_CONT "PASSED\n");
 	pr_info("Testing dynamic ftrace ops #%d: ", cnt);
 
 	ftrace_enabled = 1;
 	reset_counts();
 
 	/* Handle PPC64 '.' name */
-	func1_name = "*" __stringअगरy(DYN_FTRACE_TEST_NAME);
-	func2_name = "*" __stringअगरy(DYN_FTRACE_TEST_NAME2);
-	len1 = म_माप(func1_name);
-	len2 = म_माप(func2_name);
+	func1_name = "*" __stringify(DYN_FTRACE_TEST_NAME);
+	func2_name = "*" __stringify(DYN_FTRACE_TEST_NAME2);
+	len1 = strlen(func1_name);
+	len2 = strlen(func2_name);
 
 	/*
 	 * Probe 1 will trace function 1.
@@ -212,94 +211,94 @@
 	ftrace_set_filter(&test_probe3, func1_name, len1, 1);
 	ftrace_set_filter(&test_probe3, func2_name, len2, 0);
 
-	रेजिस्टर_ftrace_function(&test_probe1);
-	रेजिस्टर_ftrace_function(&test_probe2);
-	रेजिस्टर_ftrace_function(&test_probe3);
-	/* First समय we are running with मुख्य function */
-	अगर (cnt > 1) अणु
+	register_ftrace_function(&test_probe1);
+	register_ftrace_function(&test_probe2);
+	register_ftrace_function(&test_probe3);
+	/* First time we are running with main function */
+	if (cnt > 1) {
 		ftrace_init_array_ops(tr, trace_selftest_test_global_func);
-		रेजिस्टर_ftrace_function(tr->ops);
-	पूर्ण
+		register_ftrace_function(tr->ops);
+	}
 
 	DYN_FTRACE_TEST_NAME();
 
-	prपूर्णांक_counts();
+	print_counts();
 
-	अगर (trace_selftest_test_probe1_cnt != 1)
-		जाओ out;
-	अगर (trace_selftest_test_probe2_cnt != 0)
-		जाओ out;
-	अगर (trace_selftest_test_probe3_cnt != 1)
-		जाओ out;
-	अगर (cnt > 1) अणु
-		अगर (trace_selftest_test_global_cnt == 0)
-			जाओ out;
-	पूर्ण
+	if (trace_selftest_test_probe1_cnt != 1)
+		goto out;
+	if (trace_selftest_test_probe2_cnt != 0)
+		goto out;
+	if (trace_selftest_test_probe3_cnt != 1)
+		goto out;
+	if (cnt > 1) {
+		if (trace_selftest_test_global_cnt == 0)
+			goto out;
+	}
 
 	DYN_FTRACE_TEST_NAME2();
 
-	prपूर्णांक_counts();
+	print_counts();
 
-	अगर (trace_selftest_test_probe1_cnt != 1)
-		जाओ out;
-	अगर (trace_selftest_test_probe2_cnt != 1)
-		जाओ out;
-	अगर (trace_selftest_test_probe3_cnt != 2)
-		जाओ out;
+	if (trace_selftest_test_probe1_cnt != 1)
+		goto out;
+	if (trace_selftest_test_probe2_cnt != 1)
+		goto out;
+	if (trace_selftest_test_probe3_cnt != 2)
+		goto out;
 
 	/* Add a dynamic probe */
-	dyn_ops = kzalloc(माप(*dyn_ops), GFP_KERNEL);
-	अगर (!dyn_ops) अणु
-		prपूर्णांकk("MEMORY ERROR ");
-		जाओ out;
-	पूर्ण
+	dyn_ops = kzalloc(sizeof(*dyn_ops), GFP_KERNEL);
+	if (!dyn_ops) {
+		printk("MEMORY ERROR ");
+		goto out;
+	}
 
 	dyn_ops->func = trace_selftest_test_dyn_func;
 
-	रेजिस्टर_ftrace_function(dyn_ops);
+	register_ftrace_function(dyn_ops);
 
 	trace_selftest_test_global_cnt = 0;
 
 	DYN_FTRACE_TEST_NAME();
 
-	prपूर्णांक_counts();
+	print_counts();
 
-	अगर (trace_selftest_test_probe1_cnt != 2)
-		जाओ out_मुक्त;
-	अगर (trace_selftest_test_probe2_cnt != 1)
-		जाओ out_मुक्त;
-	अगर (trace_selftest_test_probe3_cnt != 3)
-		जाओ out_मुक्त;
-	अगर (cnt > 1) अणु
-		अगर (trace_selftest_test_global_cnt == 0)
-			जाओ out_मुक्त;
-	पूर्ण
-	अगर (trace_selftest_test_dyn_cnt == 0)
-		जाओ out_मुक्त;
+	if (trace_selftest_test_probe1_cnt != 2)
+		goto out_free;
+	if (trace_selftest_test_probe2_cnt != 1)
+		goto out_free;
+	if (trace_selftest_test_probe3_cnt != 3)
+		goto out_free;
+	if (cnt > 1) {
+		if (trace_selftest_test_global_cnt == 0)
+			goto out_free;
+	}
+	if (trace_selftest_test_dyn_cnt == 0)
+		goto out_free;
 
 	DYN_FTRACE_TEST_NAME2();
 
-	prपूर्णांक_counts();
+	print_counts();
 
-	अगर (trace_selftest_test_probe1_cnt != 2)
-		जाओ out_मुक्त;
-	अगर (trace_selftest_test_probe2_cnt != 2)
-		जाओ out_मुक्त;
-	अगर (trace_selftest_test_probe3_cnt != 4)
-		जाओ out_मुक्त;
+	if (trace_selftest_test_probe1_cnt != 2)
+		goto out_free;
+	if (trace_selftest_test_probe2_cnt != 2)
+		goto out_free;
+	if (trace_selftest_test_probe3_cnt != 4)
+		goto out_free;
 
 	ret = 0;
- out_मुक्त:
-	unरेजिस्टर_ftrace_function(dyn_ops);
-	kमुक्त(dyn_ops);
+ out_free:
+	unregister_ftrace_function(dyn_ops);
+	kfree(dyn_ops);
 
  out:
-	/* Purposely unरेजिस्टर in the same order */
-	unरेजिस्टर_ftrace_function(&test_probe1);
-	unरेजिस्टर_ftrace_function(&test_probe2);
-	unरेजिस्टर_ftrace_function(&test_probe3);
-	अगर (cnt > 1)
-		unरेजिस्टर_ftrace_function(tr->ops);
+	/* Purposely unregister in the same order */
+	unregister_ftrace_function(&test_probe1);
+	unregister_ftrace_function(&test_probe2);
+	unregister_ftrace_function(&test_probe3);
+	if (cnt > 1)
+		unregister_ftrace_function(tr->ops);
 	ftrace_reset_array_ops(tr);
 
 	/* Make sure everything is off */
@@ -307,7 +306,7 @@
 	DYN_FTRACE_TEST_NAME();
 	DYN_FTRACE_TEST_NAME();
 
-	अगर (trace_selftest_test_probe1_cnt ||
+	if (trace_selftest_test_probe1_cnt ||
 	    trace_selftest_test_probe2_cnt ||
 	    trace_selftest_test_probe3_cnt ||
 	    trace_selftest_test_global_cnt ||
@@ -316,21 +315,21 @@
 
 	ftrace_enabled = save_ftrace_enabled;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* Test dynamic code modअगरication and ftrace filters */
-अटल पूर्णांक trace_selftest_startup_dynamic_tracing(काष्ठा tracer *trace,
-						  काष्ठा trace_array *tr,
-						  पूर्णांक (*func)(व्योम))
-अणु
-	पूर्णांक save_ftrace_enabled = ftrace_enabled;
-	अचिन्हित दीर्घ count;
-	अक्षर *func_name;
-	पूर्णांक ret;
+/* Test dynamic code modification and ftrace filters */
+static int trace_selftest_startup_dynamic_tracing(struct tracer *trace,
+						  struct trace_array *tr,
+						  int (*func)(void))
+{
+	int save_ftrace_enabled = ftrace_enabled;
+	unsigned long count;
+	char *func_name;
+	int ret;
 
 	/* The ftrace test PASSED */
-	prपूर्णांकk(KERN_CONT "PASSED\n");
+	printk(KERN_CONT "PASSED\n");
 	pr_info("Testing dynamic ftrace: ");
 
 	/* enable tracing, and record the filter function */
@@ -340,35 +339,35 @@
 	func();
 
 	/*
-	 * Some archs *cough*PowerPC*cough* add अक्षरacters to the
+	 * Some archs *cough*PowerPC*cough* add characters to the
 	 * start of the function names. We simply put a '*' to
 	 * accommodate them.
 	 */
-	func_name = "*" __stringअगरy(DYN_FTRACE_TEST_NAME);
+	func_name = "*" __stringify(DYN_FTRACE_TEST_NAME);
 
 	/* filter only on our function */
-	ftrace_set_global_filter(func_name, म_माप(func_name), 1);
+	ftrace_set_global_filter(func_name, strlen(func_name), 1);
 
 	/* enable tracing */
 	ret = tracer_init(trace, tr);
-	अगर (ret) अणु
+	if (ret) {
 		warn_failed_init_tracer(trace, ret);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Sleep क्रम a 1/10 of a second */
+	/* Sleep for a 1/10 of a second */
 	msleep(100);
 
 	/* we should have nothing in the buffer */
 	ret = trace_test_buffer(&tr->array_buffer, &count);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	अगर (count) अणु
+	if (count) {
 		ret = -1;
-		prपूर्णांकk(KERN_CONT ".. filter did not filter .. ");
-		जाओ out;
-	पूर्ण
+		printk(KERN_CONT ".. filter did not filter .. ");
+		goto out;
+	}
 
 	/* call our function again */
 	func();
@@ -387,12 +386,12 @@
 	tracing_start();
 
 	/* we should only have one item */
-	अगर (!ret && count != 1) अणु
+	if (!ret && count != 1) {
 		trace->reset(tr);
-		prपूर्णांकk(KERN_CONT ".. filter failed count=%ld ..", count);
+		printk(KERN_CONT ".. filter failed count=%ld ..", count);
 		ret = -1;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* Test the ops with global tracing running */
 	ret = trace_selftest_ops(tr, 1);
@@ -402,64 +401,64 @@
 	ftrace_enabled = save_ftrace_enabled;
 
 	/* Enable tracing on all functions again */
-	ftrace_set_global_filter(शून्य, 0, 1);
+	ftrace_set_global_filter(NULL, 0, 1);
 
 	/* Test the ops with global tracing off */
-	अगर (!ret)
+	if (!ret)
 		ret = trace_selftest_ops(tr, 2);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक trace_selftest_recursion_cnt;
-अटल व्योम trace_selftest_test_recursion_func(अचिन्हित दीर्घ ip,
-					       अचिन्हित दीर्घ pip,
-					       काष्ठा ftrace_ops *op,
-					       काष्ठा ftrace_regs *fregs)
-अणु
+static int trace_selftest_recursion_cnt;
+static void trace_selftest_test_recursion_func(unsigned long ip,
+					       unsigned long pip,
+					       struct ftrace_ops *op,
+					       struct ftrace_regs *fregs)
+{
 	/*
-	 * This function is रेजिस्टरed without the recursion safe flag.
-	 * The ftrace infraकाष्ठाure should provide the recursion
+	 * This function is registered without the recursion safe flag.
+	 * The ftrace infrastructure should provide the recursion
 	 * protection. If not, this will crash the kernel!
 	 */
-	अगर (trace_selftest_recursion_cnt++ > 10)
-		वापस;
+	if (trace_selftest_recursion_cnt++ > 10)
+		return;
 	DYN_FTRACE_TEST_NAME();
-पूर्ण
+}
 
-अटल व्योम trace_selftest_test_recursion_safe_func(अचिन्हित दीर्घ ip,
-						    अचिन्हित दीर्घ pip,
-						    काष्ठा ftrace_ops *op,
-						    काष्ठा ftrace_regs *fregs)
-अणु
+static void trace_selftest_test_recursion_safe_func(unsigned long ip,
+						    unsigned long pip,
+						    struct ftrace_ops *op,
+						    struct ftrace_regs *fregs)
+{
 	/*
 	 * We said we would provide our own recursion. By calling
-	 * this function again, we should recurse back पूर्णांकo this function
-	 * and count again. But this only happens अगर the arch supports
-	 * all of ftrace features and nothing अन्यथा is using the function
+	 * this function again, we should recurse back into this function
+	 * and count again. But this only happens if the arch supports
+	 * all of ftrace features and nothing else is using the function
 	 * tracing utility.
 	 */
-	अगर (trace_selftest_recursion_cnt++)
-		वापस;
+	if (trace_selftest_recursion_cnt++)
+		return;
 	DYN_FTRACE_TEST_NAME();
-पूर्ण
+}
 
-अटल काष्ठा ftrace_ops test_rec_probe = अणु
+static struct ftrace_ops test_rec_probe = {
 	.func			= trace_selftest_test_recursion_func,
 	.flags			= FTRACE_OPS_FL_RECURSION,
-पूर्ण;
+};
 
-अटल काष्ठा ftrace_ops test_recsafe_probe = अणु
+static struct ftrace_ops test_recsafe_probe = {
 	.func			= trace_selftest_test_recursion_safe_func,
-पूर्ण;
+};
 
-अटल पूर्णांक
-trace_selftest_function_recursion(व्योम)
-अणु
-	पूर्णांक save_ftrace_enabled = ftrace_enabled;
-	अक्षर *func_name;
-	पूर्णांक len;
-	पूर्णांक ret;
+static int
+trace_selftest_function_recursion(void)
+{
+	int save_ftrace_enabled = ftrace_enabled;
+	char *func_name;
+	int len;
+	int ret;
 
 	/* The previous test PASSED */
 	pr_cont("PASSED\n");
@@ -470,36 +469,36 @@ trace_selftest_function_recursion(व्योम)
 	ftrace_enabled = 1;
 
 	/* Handle PPC64 '.' name */
-	func_name = "*" __stringअगरy(DYN_FTRACE_TEST_NAME);
-	len = म_माप(func_name);
+	func_name = "*" __stringify(DYN_FTRACE_TEST_NAME);
+	len = strlen(func_name);
 
 	ret = ftrace_set_filter(&test_rec_probe, func_name, len, 1);
-	अगर (ret) अणु
+	if (ret) {
 		pr_cont("*Could not set filter* ");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	ret = रेजिस्टर_ftrace_function(&test_rec_probe);
-	अगर (ret) अणु
+	ret = register_ftrace_function(&test_rec_probe);
+	if (ret) {
 		pr_cont("*could not register callback* ");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	DYN_FTRACE_TEST_NAME();
 
-	unरेजिस्टर_ftrace_function(&test_rec_probe);
+	unregister_ftrace_function(&test_rec_probe);
 
 	ret = -1;
 	/*
-	 * Recursion allows क्रम transitions between context,
+	 * Recursion allows for transitions between context,
 	 * and may call the callback twice.
 	 */
-	अगर (trace_selftest_recursion_cnt != 1 &&
-	    trace_selftest_recursion_cnt != 2) अणु
+	if (trace_selftest_recursion_cnt != 1 &&
+	    trace_selftest_recursion_cnt != 2) {
 		pr_cont("*callback not called once (or twice) (%d)* ",
 			trace_selftest_recursion_cnt);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	trace_selftest_recursion_cnt = 1;
 
@@ -507,75 +506,75 @@ trace_selftest_function_recursion(व्योम)
 	pr_info("Testing ftrace recursion safe: ");
 
 	ret = ftrace_set_filter(&test_recsafe_probe, func_name, len, 1);
-	अगर (ret) अणु
+	if (ret) {
 		pr_cont("*Could not set filter* ");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	ret = रेजिस्टर_ftrace_function(&test_recsafe_probe);
-	अगर (ret) अणु
+	ret = register_ftrace_function(&test_recsafe_probe);
+	if (ret) {
 		pr_cont("*could not register callback* ");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	DYN_FTRACE_TEST_NAME();
 
-	unरेजिस्टर_ftrace_function(&test_recsafe_probe);
+	unregister_ftrace_function(&test_recsafe_probe);
 
 	ret = -1;
-	अगर (trace_selftest_recursion_cnt != 2) अणु
+	if (trace_selftest_recursion_cnt != 2) {
 		pr_cont("*callback not called expected 2 times (%d)* ",
 			trace_selftest_recursion_cnt);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = 0;
 out:
 	ftrace_enabled = save_ftrace_enabled;
 
-	वापस ret;
-पूर्ण
-#अन्यथा
-# define trace_selftest_startup_dynamic_tracing(trace, tr, func) (अणु 0; पूर्ण)
-# define trace_selftest_function_recursion() (अणु 0; पूर्ण)
-#पूर्ण_अगर /* CONFIG_DYNAMIC_FTRACE */
+	return ret;
+}
+#else
+# define trace_selftest_startup_dynamic_tracing(trace, tr, func) ({ 0; })
+# define trace_selftest_function_recursion() ({ 0; })
+#endif /* CONFIG_DYNAMIC_FTRACE */
 
-अटल क्रमागत अणु
+static enum {
 	TRACE_SELFTEST_REGS_START,
 	TRACE_SELFTEST_REGS_FOUND,
 	TRACE_SELFTEST_REGS_NOT_FOUND,
-पूर्ण trace_selftest_regs_stat;
+} trace_selftest_regs_stat;
 
-अटल व्योम trace_selftest_test_regs_func(अचिन्हित दीर्घ ip,
-					  अचिन्हित दीर्घ pip,
-					  काष्ठा ftrace_ops *op,
-					  काष्ठा ftrace_regs *fregs)
-अणु
-	काष्ठा pt_regs *regs = ftrace_get_regs(fregs);
+static void trace_selftest_test_regs_func(unsigned long ip,
+					  unsigned long pip,
+					  struct ftrace_ops *op,
+					  struct ftrace_regs *fregs)
+{
+	struct pt_regs *regs = ftrace_get_regs(fregs);
 
-	अगर (regs)
+	if (regs)
 		trace_selftest_regs_stat = TRACE_SELFTEST_REGS_FOUND;
-	अन्यथा
+	else
 		trace_selftest_regs_stat = TRACE_SELFTEST_REGS_NOT_FOUND;
-पूर्ण
+}
 
-अटल काष्ठा ftrace_ops test_regs_probe = अणु
+static struct ftrace_ops test_regs_probe = {
 	.func		= trace_selftest_test_regs_func,
 	.flags		= FTRACE_OPS_FL_SAVE_REGS,
-पूर्ण;
+};
 
-अटल पूर्णांक
-trace_selftest_function_regs(व्योम)
-अणु
-	पूर्णांक save_ftrace_enabled = ftrace_enabled;
-	अक्षर *func_name;
-	पूर्णांक len;
-	पूर्णांक ret;
-	पूर्णांक supported = 0;
+static int
+trace_selftest_function_regs(void)
+{
+	int save_ftrace_enabled = ftrace_enabled;
+	char *func_name;
+	int len;
+	int ret;
+	int supported = 0;
 
-#अगर_घोषित CONFIG_DYNAMIC_FTRACE_WITH_REGS
+#ifdef CONFIG_DYNAMIC_FTRACE_WITH_REGS
 	supported = 1;
-#पूर्ण_अगर
+#endif
 
 	/* The previous test PASSED */
 	pr_cont("PASSED\n");
@@ -586,87 +585,87 @@ trace_selftest_function_regs(व्योम)
 	ftrace_enabled = 1;
 
 	/* Handle PPC64 '.' name */
-	func_name = "*" __stringअगरy(DYN_FTRACE_TEST_NAME);
-	len = म_माप(func_name);
+	func_name = "*" __stringify(DYN_FTRACE_TEST_NAME);
+	len = strlen(func_name);
 
 	ret = ftrace_set_filter(&test_regs_probe, func_name, len, 1);
 	/*
 	 * If DYNAMIC_FTRACE is not set, then we just trace all functions.
-	 * This test really करोesn't care.
+	 * This test really doesn't care.
 	 */
-	अगर (ret && ret != -ENODEV) अणु
+	if (ret && ret != -ENODEV) {
 		pr_cont("*Could not set filter* ");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	ret = रेजिस्टर_ftrace_function(&test_regs_probe);
+	ret = register_ftrace_function(&test_regs_probe);
 	/*
-	 * Now अगर the arch करोes not support passing regs, then this should
+	 * Now if the arch does not support passing regs, then this should
 	 * have failed.
 	 */
-	अगर (!supported) अणु
-		अगर (!ret) अणु
+	if (!supported) {
+		if (!ret) {
 			pr_cont("*registered save-regs without arch support* ");
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		test_regs_probe.flags |= FTRACE_OPS_FL_SAVE_REGS_IF_SUPPORTED;
-		ret = रेजिस्टर_ftrace_function(&test_regs_probe);
-	पूर्ण
-	अगर (ret) अणु
+		ret = register_ftrace_function(&test_regs_probe);
+	}
+	if (ret) {
 		pr_cont("*could not register callback* ");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 
 	DYN_FTRACE_TEST_NAME();
 
-	unरेजिस्टर_ftrace_function(&test_regs_probe);
+	unregister_ftrace_function(&test_regs_probe);
 
 	ret = -1;
 
-	चयन (trace_selftest_regs_stat) अणु
-	हाल TRACE_SELFTEST_REGS_START:
+	switch (trace_selftest_regs_stat) {
+	case TRACE_SELFTEST_REGS_START:
 		pr_cont("*callback never called* ");
-		जाओ out;
+		goto out;
 
-	हाल TRACE_SELFTEST_REGS_FOUND:
-		अगर (supported)
-			अवरोध;
+	case TRACE_SELFTEST_REGS_FOUND:
+		if (supported)
+			break;
 		pr_cont("*callback received regs without arch support* ");
-		जाओ out;
+		goto out;
 
-	हाल TRACE_SELFTEST_REGS_NOT_FOUND:
-		अगर (!supported)
-			अवरोध;
+	case TRACE_SELFTEST_REGS_NOT_FOUND:
+		if (!supported)
+			break;
 		pr_cont("*callback received NULL regs* ");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = 0;
 out:
 	ftrace_enabled = save_ftrace_enabled;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Simple verअगरication test of ftrace function tracer.
- * Enable ftrace, sleep 1/10 second, and then पढ़ो the trace
- * buffer to see अगर all is in order.
+ * Simple verification test of ftrace function tracer.
+ * Enable ftrace, sleep 1/10 second, and then read the trace
+ * buffer to see if all is in order.
  */
-__init पूर्णांक
-trace_selftest_startup_function(काष्ठा tracer *trace, काष्ठा trace_array *tr)
-अणु
-	पूर्णांक save_ftrace_enabled = ftrace_enabled;
-	अचिन्हित दीर्घ count;
-	पूर्णांक ret;
+__init int
+trace_selftest_startup_function(struct tracer *trace, struct trace_array *tr)
+{
+	int save_ftrace_enabled = ftrace_enabled;
+	unsigned long count;
+	int ret;
 
-#अगर_घोषित CONFIG_DYNAMIC_FTRACE
-	अगर (ftrace_filter_param) अणु
-		prपूर्णांकk(KERN_CONT " ... kernel command line filter set: force PASS ... ");
-		वापस 0;
-	पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_DYNAMIC_FTRACE
+	if (ftrace_filter_param) {
+		printk(KERN_CONT " ... kernel command line filter set: force PASS ... ");
+		return 0;
+	}
+#endif
 
 	/* make sure msleep has been recorded */
 	msleep(1);
@@ -675,12 +674,12 @@ trace_selftest_startup_function(काष्ठा tracer *trace, काष्�
 	ftrace_enabled = 1;
 
 	ret = tracer_init(trace, tr);
-	अगर (ret) अणु
+	if (ret) {
 		warn_failed_init_tracer(trace, ret);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Sleep क्रम a 1/10 of a second */
+	/* Sleep for a 1/10 of a second */
 	msleep(100);
 	/* stop the tracing. */
 	tracing_stop();
@@ -693,277 +692,277 @@ trace_selftest_startup_function(काष्ठा tracer *trace, काष्�
 	trace->reset(tr);
 	tracing_start();
 
-	अगर (!ret && !count) अणु
-		prपूर्णांकk(KERN_CONT ".. no entries found ..");
+	if (!ret && !count) {
+		printk(KERN_CONT ".. no entries found ..");
 		ret = -1;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = trace_selftest_startup_dynamic_tracing(trace, tr,
 						     DYN_FTRACE_TEST_NAME);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	ret = trace_selftest_function_recursion();
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	ret = trace_selftest_function_regs();
  out:
 	ftrace_enabled = save_ftrace_enabled;
 
-	/* समाप्त ftrace totally अगर we failed */
-	अगर (ret)
-		ftrace_समाप्त();
+	/* kill ftrace totally if we failed */
+	if (ret)
+		ftrace_kill();
 
-	वापस ret;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_FUNCTION_TRACER */
+	return ret;
+}
+#endif /* CONFIG_FUNCTION_TRACER */
 
 
-#अगर_घोषित CONFIG_FUNCTION_GRAPH_TRACER
+#ifdef CONFIG_FUNCTION_GRAPH_TRACER
 
-/* Maximum number of functions to trace beक्रमe diagnosing a hang */
-#घोषणा GRAPH_MAX_FUNC_TEST	100000000
+/* Maximum number of functions to trace before diagnosing a hang */
+#define GRAPH_MAX_FUNC_TEST	100000000
 
-अटल अचिन्हित पूर्णांक graph_hang_thresh;
+static unsigned int graph_hang_thresh;
 
-/* Wrap the real function entry probe to aव्योम possible hanging */
-अटल पूर्णांक trace_graph_entry_watchकरोg(काष्ठा ftrace_graph_ent *trace)
-अणु
+/* Wrap the real function entry probe to avoid possible hanging */
+static int trace_graph_entry_watchdog(struct ftrace_graph_ent *trace)
+{
 	/* This is harmlessly racy, we want to approximately detect a hang */
-	अगर (unlikely(++graph_hang_thresh > GRAPH_MAX_FUNC_TEST)) अणु
+	if (unlikely(++graph_hang_thresh > GRAPH_MAX_FUNC_TEST)) {
 		ftrace_graph_stop();
-		prपूर्णांकk(KERN_WARNING "BUG: Function graph tracer hang!\n");
-		अगर (ftrace_dump_on_oops) अणु
+		printk(KERN_WARNING "BUG: Function graph tracer hang!\n");
+		if (ftrace_dump_on_oops) {
 			ftrace_dump(DUMP_ALL);
 			/* ftrace_dump() disables tracing */
 			tracing_on();
-		पूर्ण
-		वापस 0;
-	पूर्ण
+		}
+		return 0;
+	}
 
-	वापस trace_graph_entry(trace);
-पूर्ण
+	return trace_graph_entry(trace);
+}
 
-अटल काष्ठा fgraph_ops fgraph_ops __initdata  = अणु
-	.entryfunc		= &trace_graph_entry_watchकरोg,
-	.retfunc		= &trace_graph_वापस,
-पूर्ण;
+static struct fgraph_ops fgraph_ops __initdata  = {
+	.entryfunc		= &trace_graph_entry_watchdog,
+	.retfunc		= &trace_graph_return,
+};
 
 /*
- * Pretty much the same than क्रम the function tracer from which the selftest
+ * Pretty much the same than for the function tracer from which the selftest
  * has been borrowed.
  */
-__init पूर्णांक
-trace_selftest_startup_function_graph(काष्ठा tracer *trace,
-					काष्ठा trace_array *tr)
-अणु
-	पूर्णांक ret;
-	अचिन्हित दीर्घ count;
+__init int
+trace_selftest_startup_function_graph(struct tracer *trace,
+					struct trace_array *tr)
+{
+	int ret;
+	unsigned long count;
 
-#अगर_घोषित CONFIG_DYNAMIC_FTRACE
-	अगर (ftrace_filter_param) अणु
-		prपूर्णांकk(KERN_CONT " ... kernel command line filter set: force PASS ... ");
-		वापस 0;
-	पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_DYNAMIC_FTRACE
+	if (ftrace_filter_param) {
+		printk(KERN_CONT " ... kernel command line filter set: force PASS ... ");
+		return 0;
+	}
+#endif
 
 	/*
-	 * Simulate the init() callback but we attach a watchकरोg callback
+	 * Simulate the init() callback but we attach a watchdog callback
 	 * to detect and recover from possible hangs
 	 */
 	tracing_reset_online_cpus(&tr->array_buffer);
 	set_graph_array(tr);
-	ret = रेजिस्टर_ftrace_graph(&fgraph_ops);
-	अगर (ret) अणु
+	ret = register_ftrace_graph(&fgraph_ops);
+	if (ret) {
 		warn_failed_init_tracer(trace, ret);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	tracing_start_cmdline_record();
 
-	/* Sleep क्रम a 1/10 of a second */
+	/* Sleep for a 1/10 of a second */
 	msleep(100);
 
 	/* Have we just recovered from a hang? */
-	अगर (graph_hang_thresh > GRAPH_MAX_FUNC_TEST) अणु
+	if (graph_hang_thresh > GRAPH_MAX_FUNC_TEST) {
 		disable_tracing_selftest("recovering from a hang");
 		ret = -1;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	tracing_stop();
 
 	/* check the trace buffer */
 	ret = trace_test_buffer(&tr->array_buffer, &count);
 
-	/* Need to also simulate the tr->reset to हटाओ this fgraph_ops */
+	/* Need to also simulate the tr->reset to remove this fgraph_ops */
 	tracing_stop_cmdline_record();
-	unरेजिस्टर_ftrace_graph(&fgraph_ops);
+	unregister_ftrace_graph(&fgraph_ops);
 
 	tracing_start();
 
-	अगर (!ret && !count) अणु
-		prपूर्णांकk(KERN_CONT ".. no entries found ..");
+	if (!ret && !count) {
+		printk(KERN_CONT ".. no entries found ..");
 		ret = -1;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Don't test dynamic tracing, the function tracer alपढ़ोy did */
+	/* Don't test dynamic tracing, the function tracer already did */
 
 out:
-	/* Stop it अगर we failed */
-	अगर (ret)
+	/* Stop it if we failed */
+	if (ret)
 		ftrace_graph_stop();
 
-	वापस ret;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_FUNCTION_GRAPH_TRACER */
+	return ret;
+}
+#endif /* CONFIG_FUNCTION_GRAPH_TRACER */
 
 
-#अगर_घोषित CONFIG_IRQSOFF_TRACER
-पूर्णांक
-trace_selftest_startup_irqsoff(काष्ठा tracer *trace, काष्ठा trace_array *tr)
-अणु
-	अचिन्हित दीर्घ save_max = tr->max_latency;
-	अचिन्हित दीर्घ count;
-	पूर्णांक ret;
+#ifdef CONFIG_IRQSOFF_TRACER
+int
+trace_selftest_startup_irqsoff(struct tracer *trace, struct trace_array *tr)
+{
+	unsigned long save_max = tr->max_latency;
+	unsigned long count;
+	int ret;
 
 	/* start the tracing */
 	ret = tracer_init(trace, tr);
-	अगर (ret) अणु
+	if (ret) {
 		warn_failed_init_tracer(trace, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* reset the max latency */
 	tr->max_latency = 0;
-	/* disable पूर्णांकerrupts क्रम a bit */
+	/* disable interrupts for a bit */
 	local_irq_disable();
 	udelay(100);
 	local_irq_enable();
 
 	/*
-	 * Stop the tracer to aव्योम a warning subsequent
+	 * Stop the tracer to avoid a warning subsequent
 	 * to buffer flipping failure because tracing_stop()
 	 * disables the tr and max buffers, making flipping impossible
-	 * in हाल of parallels max irqs off latencies.
+	 * in case of parallels max irqs off latencies.
 	 */
 	trace->stop(tr);
 	/* stop the tracing. */
 	tracing_stop();
 	/* check both trace buffers */
-	ret = trace_test_buffer(&tr->array_buffer, शून्य);
-	अगर (!ret)
+	ret = trace_test_buffer(&tr->array_buffer, NULL);
+	if (!ret)
 		ret = trace_test_buffer(&tr->max_buffer, &count);
 	trace->reset(tr);
 	tracing_start();
 
-	अगर (!ret && !count) अणु
-		prपूर्णांकk(KERN_CONT ".. no entries found ..");
+	if (!ret && !count) {
+		printk(KERN_CONT ".. no entries found ..");
 		ret = -1;
-	पूर्ण
+	}
 
 	tr->max_latency = save_max;
 
-	वापस ret;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_IRQSOFF_TRACER */
+	return ret;
+}
+#endif /* CONFIG_IRQSOFF_TRACER */
 
-#अगर_घोषित CONFIG_PREEMPT_TRACER
-पूर्णांक
-trace_selftest_startup_preemptoff(काष्ठा tracer *trace, काष्ठा trace_array *tr)
-अणु
-	अचिन्हित दीर्घ save_max = tr->max_latency;
-	अचिन्हित दीर्घ count;
-	पूर्णांक ret;
+#ifdef CONFIG_PREEMPT_TRACER
+int
+trace_selftest_startup_preemptoff(struct tracer *trace, struct trace_array *tr)
+{
+	unsigned long save_max = tr->max_latency;
+	unsigned long count;
+	int ret;
 
 	/*
-	 * Now that the big kernel lock is no दीर्घer preemptible,
+	 * Now that the big kernel lock is no longer preemptible,
 	 * and this is called with the BKL held, it will always
-	 * fail. If preemption is alपढ़ोy disabled, simply
-	 * pass the test. When the BKL is हटाओd, or becomes
+	 * fail. If preemption is already disabled, simply
+	 * pass the test. When the BKL is removed, or becomes
 	 * preemptible again, we will once again test this,
 	 * so keep it in.
 	 */
-	अगर (preempt_count()) अणु
-		prपूर्णांकk(KERN_CONT "can not test ... force ");
-		वापस 0;
-	पूर्ण
+	if (preempt_count()) {
+		printk(KERN_CONT "can not test ... force ");
+		return 0;
+	}
 
 	/* start the tracing */
 	ret = tracer_init(trace, tr);
-	अगर (ret) अणु
+	if (ret) {
 		warn_failed_init_tracer(trace, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* reset the max latency */
 	tr->max_latency = 0;
-	/* disable preemption क्रम a bit */
+	/* disable preemption for a bit */
 	preempt_disable();
 	udelay(100);
 	preempt_enable();
 
 	/*
-	 * Stop the tracer to aव्योम a warning subsequent
+	 * Stop the tracer to avoid a warning subsequent
 	 * to buffer flipping failure because tracing_stop()
 	 * disables the tr and max buffers, making flipping impossible
-	 * in हाल of parallels max preempt off latencies.
+	 * in case of parallels max preempt off latencies.
 	 */
 	trace->stop(tr);
 	/* stop the tracing. */
 	tracing_stop();
 	/* check both trace buffers */
-	ret = trace_test_buffer(&tr->array_buffer, शून्य);
-	अगर (!ret)
+	ret = trace_test_buffer(&tr->array_buffer, NULL);
+	if (!ret)
 		ret = trace_test_buffer(&tr->max_buffer, &count);
 	trace->reset(tr);
 	tracing_start();
 
-	अगर (!ret && !count) अणु
-		prपूर्णांकk(KERN_CONT ".. no entries found ..");
+	if (!ret && !count) {
+		printk(KERN_CONT ".. no entries found ..");
 		ret = -1;
-	पूर्ण
+	}
 
 	tr->max_latency = save_max;
 
-	वापस ret;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_PREEMPT_TRACER */
+	return ret;
+}
+#endif /* CONFIG_PREEMPT_TRACER */
 
-#अगर defined(CONFIG_IRQSOFF_TRACER) && defined(CONFIG_PREEMPT_TRACER)
-पूर्णांक
-trace_selftest_startup_preemptirqsoff(काष्ठा tracer *trace, काष्ठा trace_array *tr)
-अणु
-	अचिन्हित दीर्घ save_max = tr->max_latency;
-	अचिन्हित दीर्घ count;
-	पूर्णांक ret;
+#if defined(CONFIG_IRQSOFF_TRACER) && defined(CONFIG_PREEMPT_TRACER)
+int
+trace_selftest_startup_preemptirqsoff(struct tracer *trace, struct trace_array *tr)
+{
+	unsigned long save_max = tr->max_latency;
+	unsigned long count;
+	int ret;
 
 	/*
-	 * Now that the big kernel lock is no दीर्घer preemptible,
+	 * Now that the big kernel lock is no longer preemptible,
 	 * and this is called with the BKL held, it will always
-	 * fail. If preemption is alपढ़ोy disabled, simply
-	 * pass the test. When the BKL is हटाओd, or becomes
+	 * fail. If preemption is already disabled, simply
+	 * pass the test. When the BKL is removed, or becomes
 	 * preemptible again, we will once again test this,
 	 * so keep it in.
 	 */
-	अगर (preempt_count()) अणु
-		prपूर्णांकk(KERN_CONT "can not test ... force ");
-		वापस 0;
-	पूर्ण
+	if (preempt_count()) {
+		printk(KERN_CONT "can not test ... force ");
+		return 0;
+	}
 
 	/* start the tracing */
 	ret = tracer_init(trace, tr);
-	अगर (ret) अणु
+	if (ret) {
 		warn_failed_init_tracer(trace, ret);
-		जाओ out_no_start;
-	पूर्ण
+		goto out_no_start;
+	}
 
 	/* reset the max latency */
 	tr->max_latency = 0;
 
-	/* disable preemption and पूर्णांकerrupts क्रम a bit */
+	/* disable preemption and interrupts for a bit */
 	preempt_disable();
 	local_irq_disable();
 	udelay(100);
@@ -972,30 +971,30 @@ trace_selftest_startup_preemptirqsoff(काष्ठा tracer *trace, का�
 	local_irq_enable();
 
 	/*
-	 * Stop the tracer to aव्योम a warning subsequent
+	 * Stop the tracer to avoid a warning subsequent
 	 * to buffer flipping failure because tracing_stop()
 	 * disables the tr and max buffers, making flipping impossible
-	 * in हाल of parallels max irqs/preempt off latencies.
+	 * in case of parallels max irqs/preempt off latencies.
 	 */
 	trace->stop(tr);
 	/* stop the tracing. */
 	tracing_stop();
 	/* check both trace buffers */
-	ret = trace_test_buffer(&tr->array_buffer, शून्य);
-	अगर (ret)
-		जाओ out;
+	ret = trace_test_buffer(&tr->array_buffer, NULL);
+	if (ret)
+		goto out;
 
 	ret = trace_test_buffer(&tr->max_buffer, &count);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	अगर (!ret && !count) अणु
-		prपूर्णांकk(KERN_CONT ".. no entries found ..");
+	if (!ret && !count) {
+		printk(KERN_CONT ".. no entries found ..");
 		ret = -1;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* करो the test by disabling पूर्णांकerrupts first this समय */
+	/* do the test by disabling interrupts first this time */
 	tr->max_latency = 0;
 	tracing_start();
 	trace->start(tr);
@@ -1011,17 +1010,17 @@ trace_selftest_startup_preemptirqsoff(काष्ठा tracer *trace, का�
 	/* stop the tracing. */
 	tracing_stop();
 	/* check both trace buffers */
-	ret = trace_test_buffer(&tr->array_buffer, शून्य);
-	अगर (ret)
-		जाओ out;
+	ret = trace_test_buffer(&tr->array_buffer, NULL);
+	if (ret)
+		goto out;
 
 	ret = trace_test_buffer(&tr->max_buffer, &count);
 
-	अगर (!ret && !count) अणु
-		prपूर्णांकk(KERN_CONT ".. no entries found ..");
+	if (!ret && !count) {
+		printk(KERN_CONT ".. no entries found ..");
 		ret = -1;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 out:
 	tracing_start();
@@ -1029,120 +1028,120 @@ out_no_start:
 	trace->reset(tr);
 	tr->max_latency = save_max;
 
-	वापस ret;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_IRQSOFF_TRACER && CONFIG_PREEMPT_TRACER */
+	return ret;
+}
+#endif /* CONFIG_IRQSOFF_TRACER && CONFIG_PREEMPT_TRACER */
 
-#अगर_घोषित CONFIG_NOP_TRACER
-पूर्णांक
-trace_selftest_startup_nop(काष्ठा tracer *trace, काष्ठा trace_array *tr)
-अणु
+#ifdef CONFIG_NOP_TRACER
+int
+trace_selftest_startup_nop(struct tracer *trace, struct trace_array *tr)
+{
 	/* What could possibly go wrong? */
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-#अगर_घोषित CONFIG_SCHED_TRACER
+#ifdef CONFIG_SCHED_TRACER
 
-काष्ठा wakeup_test_data अणु
-	काष्ठा completion	is_पढ़ोy;
-	पूर्णांक			go;
-पूर्ण;
+struct wakeup_test_data {
+	struct completion	is_ready;
+	int			go;
+};
 
-अटल पूर्णांक trace_wakeup_test_thपढ़ो(व्योम *data)
-अणु
-	/* Make this a -deadline thपढ़ो */
-	अटल स्थिर काष्ठा sched_attr attr = अणु
+static int trace_wakeup_test_thread(void *data)
+{
+	/* Make this a -deadline thread */
+	static const struct sched_attr attr = {
 		.sched_policy = SCHED_DEADLINE,
-		.sched_runसमय = 100000ULL,
+		.sched_runtime = 100000ULL,
 		.sched_deadline = 10000000ULL,
 		.sched_period = 10000000ULL
-	पूर्ण;
-	काष्ठा wakeup_test_data *x = data;
+	};
+	struct wakeup_test_data *x = data;
 
 	sched_setattr(current, &attr);
 
 	/* Make it know we have a new prio */
-	complete(&x->is_पढ़ोy);
+	complete(&x->is_ready);
 
 	/* now go to sleep and let the test wake us up */
 	set_current_state(TASK_INTERRUPTIBLE);
-	जबतक (!x->go) अणु
+	while (!x->go) {
 		schedule();
 		set_current_state(TASK_INTERRUPTIBLE);
-	पूर्ण
+	}
 
-	complete(&x->is_पढ़ोy);
+	complete(&x->is_ready);
 
 	set_current_state(TASK_INTERRUPTIBLE);
 
-	/* we are awake, now रुको to disappear */
-	जबतक (!kthपढ़ो_should_stop()) अणु
+	/* we are awake, now wait to disappear */
+	while (!kthread_should_stop()) {
 		schedule();
 		set_current_state(TASK_INTERRUPTIBLE);
-	पूर्ण
+	}
 
 	__set_current_state(TASK_RUNNING);
 
-	वापस 0;
-पूर्ण
-पूर्णांक
-trace_selftest_startup_wakeup(काष्ठा tracer *trace, काष्ठा trace_array *tr)
-अणु
-	अचिन्हित दीर्घ save_max = tr->max_latency;
-	काष्ठा task_काष्ठा *p;
-	काष्ठा wakeup_test_data data;
-	अचिन्हित दीर्घ count;
-	पूर्णांक ret;
+	return 0;
+}
+int
+trace_selftest_startup_wakeup(struct tracer *trace, struct trace_array *tr)
+{
+	unsigned long save_max = tr->max_latency;
+	struct task_struct *p;
+	struct wakeup_test_data data;
+	unsigned long count;
+	int ret;
 
-	स_रखो(&data, 0, माप(data));
+	memset(&data, 0, sizeof(data));
 
-	init_completion(&data.is_पढ़ोy);
+	init_completion(&data.is_ready);
 
-	/* create a -deadline thपढ़ो */
-	p = kthपढ़ो_run(trace_wakeup_test_thपढ़ो, &data, "ftrace-test");
-	अगर (IS_ERR(p)) अणु
-		prपूर्णांकk(KERN_CONT "Failed to create ftrace wakeup test thread ");
-		वापस -1;
-	पूर्ण
+	/* create a -deadline thread */
+	p = kthread_run(trace_wakeup_test_thread, &data, "ftrace-test");
+	if (IS_ERR(p)) {
+		printk(KERN_CONT "Failed to create ftrace wakeup test thread ");
+		return -1;
+	}
 
-	/* make sure the thपढ़ो is running at -deadline policy */
-	रुको_क्रम_completion(&data.is_पढ़ोy);
+	/* make sure the thread is running at -deadline policy */
+	wait_for_completion(&data.is_ready);
 
 	/* start the tracing */
 	ret = tracer_init(trace, tr);
-	अगर (ret) अणु
+	if (ret) {
 		warn_failed_init_tracer(trace, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* reset the max latency */
 	tr->max_latency = 0;
 
-	जबतक (p->on_rq) अणु
+	while (p->on_rq) {
 		/*
-		 * Sleep to make sure the -deadline thपढ़ो is asleep too.
-		 * On भव machines we can't rely on timings,
+		 * Sleep to make sure the -deadline thread is asleep too.
+		 * On virtual machines we can't rely on timings,
 		 * but we want to make sure this test still works.
 		 */
 		msleep(100);
-	पूर्ण
+	}
 
-	init_completion(&data.is_पढ़ोy);
+	init_completion(&data.is_ready);
 
 	data.go = 1;
 	/* memory barrier is in the wake_up_process() */
 
 	wake_up_process(p);
 
-	/* Wait क्रम the task to wake up */
-	रुको_क्रम_completion(&data.is_पढ़ोy);
+	/* Wait for the task to wake up */
+	wait_for_completion(&data.is_ready);
 
 	/* stop the tracing. */
 	tracing_stop();
 	/* check both trace buffers */
-	ret = trace_test_buffer(&tr->array_buffer, शून्य);
-	अगर (!ret)
+	ret = trace_test_buffer(&tr->array_buffer, NULL);
+	if (!ret)
 		ret = trace_test_buffer(&tr->max_buffer, &count);
 
 
@@ -1151,33 +1150,33 @@ trace_selftest_startup_wakeup(काष्ठा tracer *trace, काष्ठ�
 
 	tr->max_latency = save_max;
 
-	/* समाप्त the thपढ़ो */
-	kthपढ़ो_stop(p);
+	/* kill the thread */
+	kthread_stop(p);
 
-	अगर (!ret && !count) अणु
-		prपूर्णांकk(KERN_CONT ".. no entries found ..");
+	if (!ret && !count) {
+		printk(KERN_CONT ".. no entries found ..");
 		ret = -1;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_SCHED_TRACER */
+	return ret;
+}
+#endif /* CONFIG_SCHED_TRACER */
 
-#अगर_घोषित CONFIG_BRANCH_TRACER
-पूर्णांक
-trace_selftest_startup_branch(काष्ठा tracer *trace, काष्ठा trace_array *tr)
-अणु
-	अचिन्हित दीर्घ count;
-	पूर्णांक ret;
+#ifdef CONFIG_BRANCH_TRACER
+int
+trace_selftest_startup_branch(struct tracer *trace, struct trace_array *tr)
+{
+	unsigned long count;
+	int ret;
 
 	/* start the tracing */
 	ret = tracer_init(trace, tr);
-	अगर (ret) अणु
+	if (ret) {
 		warn_failed_init_tracer(trace, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* Sleep क्रम a 1/10 of a second */
+	/* Sleep for a 1/10 of a second */
 	msleep(100);
 	/* stop the tracing. */
 	tracing_stop();
@@ -1186,12 +1185,12 @@ trace_selftest_startup_branch(काष्ठा tracer *trace, काष्ठ�
 	trace->reset(tr);
 	tracing_start();
 
-	अगर (!ret && !count) अणु
-		prपूर्णांकk(KERN_CONT ".. no entries found ..");
+	if (!ret && !count) {
+		printk(KERN_CONT ".. no entries found ..");
 		ret = -1;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_BRANCH_TRACER */
+	return ret;
+}
+#endif /* CONFIG_BRANCH_TRACER */
 

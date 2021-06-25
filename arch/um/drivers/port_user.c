@@ -1,202 +1,201 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2001 - 2007 Jeff Dike (jdike@अणुlinux.पूर्णांकel,addtoitपूर्ण.com)
+ * Copyright (C) 2001 - 2007 Jeff Dike (jdike@{linux.intel,addtoit}.com)
  */
 
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <त्रुटिसं.स>
-#समावेश <termios.h>
-#समावेश <unistd.h>
-#समावेश <netinet/in.h>
-#समावेश "chan_user.h"
-#समावेश <os.h>
-#समावेश "port.h"
-#समावेश <um_दो_स्मृति.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <termios.h>
+#include <unistd.h>
+#include <netinet/in.h>
+#include "chan_user.h"
+#include <os.h>
+#include "port.h"
+#include <um_malloc.h>
 
-काष्ठा port_chan अणु
-	पूर्णांक raw;
-	काष्ठा termios tt;
-	व्योम *kernel_data;
-	अक्षर dev[माप("32768\0")];
-पूर्ण;
+struct port_chan {
+	int raw;
+	struct termios tt;
+	void *kernel_data;
+	char dev[sizeof("32768\0")];
+};
 
-अटल व्योम *port_init(अक्षर *str, पूर्णांक device, स्थिर काष्ठा chan_opts *opts)
-अणु
-	काष्ठा port_chan *data;
-	व्योम *kern_data;
-	अक्षर *end;
-	पूर्णांक port;
+static void *port_init(char *str, int device, const struct chan_opts *opts)
+{
+	struct port_chan *data;
+	void *kern_data;
+	char *end;
+	int port;
 
-	अगर (*str != ':') अणु
-		prपूर्णांकk(UM_KERN_ERR "port_init : channel type 'port' must "
+	if (*str != ':') {
+		printk(UM_KERN_ERR "port_init : channel type 'port' must "
 		       "specify a port number\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 	str++;
-	port = म_से_अदीर्घ(str, &end, 0);
-	अगर ((*end != '\0') || (end == str)) अणु
-		prपूर्णांकk(UM_KERN_ERR "port_init : couldn't parse port '%s'\n",
+	port = strtoul(str, &end, 0);
+	if ((*end != '\0') || (end == str)) {
+		printk(UM_KERN_ERR "port_init : couldn't parse port '%s'\n",
 		       str);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	kern_data = port_data(port);
-	अगर (kern_data == शून्य)
-		वापस शून्य;
+	if (kern_data == NULL)
+		return NULL;
 
-	data = uml_kदो_स्मृति(माप(*data), UM_GFP_KERNEL);
-	अगर (data == शून्य)
-		जाओ err;
+	data = uml_kmalloc(sizeof(*data), UM_GFP_KERNEL);
+	if (data == NULL)
+		goto err;
 
-	*data = ((काष्ठा port_chan) अणु .raw  		= opts->raw,
-				      .kernel_data 	= kern_data पूर्ण);
-	प्र_लिखो(data->dev, "%d", port);
+	*data = ((struct port_chan) { .raw  		= opts->raw,
+				      .kernel_data 	= kern_data });
+	sprintf(data->dev, "%d", port);
 
-	वापस data;
+	return data;
  err:
-	port_kern_मुक्त(kern_data);
-	वापस शून्य;
-पूर्ण
+	port_kern_free(kern_data);
+	return NULL;
+}
 
-अटल व्योम port_मुक्त(व्योम *d)
-अणु
-	काष्ठा port_chan *data = d;
+static void port_free(void *d)
+{
+	struct port_chan *data = d;
 
-	port_kern_मुक्त(data->kernel_data);
-	kमुक्त(data);
-पूर्ण
+	port_kern_free(data->kernel_data);
+	kfree(data);
+}
 
-अटल पूर्णांक port_खोलो(पूर्णांक input, पूर्णांक output, पूर्णांक primary, व्योम *d,
-		     अक्षर **dev_out)
-अणु
-	काष्ठा port_chan *data = d;
-	पूर्णांक fd, err;
+static int port_open(int input, int output, int primary, void *d,
+		     char **dev_out)
+{
+	struct port_chan *data = d;
+	int fd, err;
 
-	fd = port_रुको(data->kernel_data);
-	अगर ((fd >= 0) && data->raw) अणु
+	fd = port_wait(data->kernel_data);
+	if ((fd >= 0) && data->raw) {
 		CATCH_EINTR(err = tcgetattr(fd, &data->tt));
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
 		err = raw(fd);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 	*dev_out = data->dev;
-	वापस fd;
-पूर्ण
+	return fd;
+}
 
-अटल व्योम port_बंद(पूर्णांक fd, व्योम *d)
-अणु
-	काष्ठा port_chan *data = d;
+static void port_close(int fd, void *d)
+{
+	struct port_chan *data = d;
 
-	port_हटाओ_dev(data->kernel_data);
-	os_बंद_file(fd);
-पूर्ण
+	port_remove_dev(data->kernel_data);
+	os_close_file(fd);
+}
 
-स्थिर काष्ठा chan_ops port_ops = अणु
+const struct chan_ops port_ops = {
 	.type		= "port",
 	.init		= port_init,
-	.खोलो		= port_खोलो,
-	.बंद		= port_बंद,
-	.पढ़ो	        = generic_पढ़ो,
-	.ग_लिखो		= generic_ग_लिखो,
-	.console_ग_लिखो	= generic_console_ग_लिखो,
-	.winकरोw_size	= generic_winकरोw_size,
-	.मुक्त		= port_मुक्त,
+	.open		= port_open,
+	.close		= port_close,
+	.read	        = generic_read,
+	.write		= generic_write,
+	.console_write	= generic_console_write,
+	.window_size	= generic_window_size,
+	.free		= port_free,
 	.winch		= 1,
-पूर्ण;
+};
 
-पूर्णांक port_listen_fd(पूर्णांक port)
-अणु
-	काष्ठा sockaddr_in addr;
-	पूर्णांक fd, err, arg;
+int port_listen_fd(int port)
+{
+	struct sockaddr_in addr;
+	int fd, err, arg;
 
 	fd = socket(PF_INET, SOCK_STREAM, 0);
-	अगर (fd == -1)
-		वापस -त्रुटि_सं;
+	if (fd == -1)
+		return -errno;
 
 	arg = 1;
-	अगर (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &arg, माप(arg)) < 0) अणु
-		err = -त्रुटि_सं;
-		जाओ out;
-	पूर्ण
+	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &arg, sizeof(arg)) < 0) {
+		err = -errno;
+		goto out;
+	}
 
 	addr.sin_family = AF_INET;
 	addr.sin_port = htons(port);
 	addr.sin_addr.s_addr = htonl(INADDR_ANY);
-	अगर (bind(fd, (काष्ठा sockaddr *) &addr, माप(addr)) < 0) अणु
-		err = -त्रुटि_सं;
-		जाओ out;
-	पूर्ण
+	if (bind(fd, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
+		err = -errno;
+		goto out;
+	}
 
-	अगर (listen(fd, 1) < 0) अणु
-		err = -त्रुटि_सं;
-		जाओ out;
-	पूर्ण
+	if (listen(fd, 1) < 0) {
+		err = -errno;
+		goto out;
+	}
 
 	err = os_set_fd_block(fd, 0);
-	अगर (err < 0)
-		जाओ out;
+	if (err < 0)
+		goto out;
 
-	वापस fd;
+	return fd;
  out:
-	बंद(fd);
-	वापस err;
-पूर्ण
+	close(fd);
+	return err;
+}
 
-काष्ठा port_pre_exec_data अणु
-	पूर्णांक sock_fd;
-	पूर्णांक pipe_fd;
-पूर्ण;
+struct port_pre_exec_data {
+	int sock_fd;
+	int pipe_fd;
+};
 
-अटल व्योम port_pre_exec(व्योम *arg)
-अणु
-	काष्ठा port_pre_exec_data *data = arg;
+static void port_pre_exec(void *arg)
+{
+	struct port_pre_exec_data *data = arg;
 
 	dup2(data->sock_fd, 0);
 	dup2(data->sock_fd, 1);
 	dup2(data->sock_fd, 2);
-	बंद(data->sock_fd);
+	close(data->sock_fd);
 	dup2(data->pipe_fd, 3);
-	shutकरोwn(3, SHUT_RD);
-	बंद(data->pipe_fd);
-पूर्ण
+	shutdown(3, SHUT_RD);
+	close(data->pipe_fd);
+}
 
-पूर्णांक port_connection(पूर्णांक fd, पूर्णांक *socket, पूर्णांक *pid_out)
-अणु
-	पूर्णांक new, err;
-	अक्षर *argv[] = अणु "/usr/sbin/in.telnetd", "-L",
-			 OS_LIB_PATH "/uml/port-helper", शून्य पूर्ण;
-	काष्ठा port_pre_exec_data data;
+int port_connection(int fd, int *socket, int *pid_out)
+{
+	int new, err;
+	char *argv[] = { "/usr/sbin/in.telnetd", "-L",
+			 OS_LIB_PATH "/uml/port-helper", NULL };
+	struct port_pre_exec_data data;
 
-	new = accept(fd, शून्य, 0);
-	अगर (new < 0)
-		वापस -त्रुटि_सं;
+	new = accept(fd, NULL, 0);
+	if (new < 0)
+		return -errno;
 
 	err = os_pipe(socket, 0, 0);
-	अगर (err < 0)
-		जाओ out_बंद;
+	if (err < 0)
+		goto out_close;
 
-	data = ((काष्ठा port_pre_exec_data)
-		अणु .sock_fd  		= new,
-		  .pipe_fd 		= socket[1] पूर्ण);
+	data = ((struct port_pre_exec_data)
+		{ .sock_fd  		= new,
+		  .pipe_fd 		= socket[1] });
 
 	err = run_helper(port_pre_exec, &data, argv);
-	अगर (err < 0)
-		जाओ out_shutकरोwn;
+	if (err < 0)
+		goto out_shutdown;
 
 	*pid_out = err;
-	वापस new;
+	return new;
 
- out_shutकरोwn:
-	shutकरोwn(socket[0], SHUT_RDWR);
-	बंद(socket[0]);
-	shutकरोwn(socket[1], SHUT_RDWR);
-	बंद(socket[1]);
- out_बंद:
-	बंद(new);
-	वापस err;
-पूर्ण
+ out_shutdown:
+	shutdown(socket[0], SHUT_RDWR);
+	close(socket[0]);
+	shutdown(socket[1], SHUT_RDWR);
+	close(socket[1]);
+ out_close:
+	close(new);
+	return err;
+}

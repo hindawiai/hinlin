@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * IOMMU sysfs class support
  *
@@ -7,62 +6,62 @@
  *     Author: Alex Williamson <alex.williamson@redhat.com>
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/iommu.h>
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
+#include <linux/device.h>
+#include <linux/iommu.h>
+#include <linux/init.h>
+#include <linux/slab.h>
 
 /*
  * We provide a common class "devices" group which initially has no attributes.
  * As devices are added to the IOMMU, we'll add links to the group.
  */
-अटल काष्ठा attribute *devices_attr[] = अणु
-	शून्य,
-पूर्ण;
+static struct attribute *devices_attr[] = {
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group devices_attr_group = अणु
+static const struct attribute_group devices_attr_group = {
 	.name = "devices",
 	.attrs = devices_attr,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा attribute_group *dev_groups[] = अणु
+static const struct attribute_group *dev_groups[] = {
 	&devices_attr_group,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल व्योम release_device(काष्ठा device *dev)
-अणु
-	kमुक्त(dev);
-पूर्ण
+static void release_device(struct device *dev)
+{
+	kfree(dev);
+}
 
-अटल काष्ठा class iommu_class = अणु
+static struct class iommu_class = {
 	.name = "iommu",
 	.dev_release = release_device,
 	.dev_groups = dev_groups,
-पूर्ण;
+};
 
-अटल पूर्णांक __init iommu_dev_init(व्योम)
-अणु
-	वापस class_रेजिस्टर(&iommu_class);
-पूर्ण
+static int __init iommu_dev_init(void)
+{
+	return class_register(&iommu_class);
+}
 postcore_initcall(iommu_dev_init);
 
 /*
- * Init the काष्ठा device क्रम the IOMMU. IOMMU specअगरic attributes can
+ * Init the struct device for the IOMMU. IOMMU specific attributes can
  * be provided as an attribute group, allowing a unique namespace per
  * IOMMU type.
  */
-पूर्णांक iommu_device_sysfs_add(काष्ठा iommu_device *iommu,
-			   काष्ठा device *parent,
-			   स्थिर काष्ठा attribute_group **groups,
-			   स्थिर अक्षर *fmt, ...)
-अणु
-	बहु_सूची vargs;
-	पूर्णांक ret;
+int iommu_device_sysfs_add(struct iommu_device *iommu,
+			   struct device *parent,
+			   const struct attribute_group **groups,
+			   const char *fmt, ...)
+{
+	va_list vargs;
+	int ret;
 
-	iommu->dev = kzalloc(माप(*iommu->dev), GFP_KERNEL);
-	अगर (!iommu->dev)
-		वापस -ENOMEM;
+	iommu->dev = kzalloc(sizeof(*iommu->dev), GFP_KERNEL);
+	if (!iommu->dev)
+		return -ENOMEM;
 
 	device_initialize(iommu->dev);
 
@@ -70,67 +69,67 @@ postcore_initcall(iommu_dev_init);
 	iommu->dev->parent = parent;
 	iommu->dev->groups = groups;
 
-	बहु_शुरू(vargs, fmt);
+	va_start(vargs, fmt);
 	ret = kobject_set_name_vargs(&iommu->dev->kobj, fmt, vargs);
-	बहु_पूर्ण(vargs);
-	अगर (ret)
-		जाओ error;
+	va_end(vargs);
+	if (ret)
+		goto error;
 
 	ret = device_add(iommu->dev);
-	अगर (ret)
-		जाओ error;
+	if (ret)
+		goto error;
 
 	dev_set_drvdata(iommu->dev, iommu);
 
-	वापस 0;
+	return 0;
 
 error:
 	put_device(iommu->dev);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(iommu_device_sysfs_add);
 
-व्योम iommu_device_sysfs_हटाओ(काष्ठा iommu_device *iommu)
-अणु
-	dev_set_drvdata(iommu->dev, शून्य);
-	device_unरेजिस्टर(iommu->dev);
-	iommu->dev = शून्य;
-पूर्ण
-EXPORT_SYMBOL_GPL(iommu_device_sysfs_हटाओ);
+void iommu_device_sysfs_remove(struct iommu_device *iommu)
+{
+	dev_set_drvdata(iommu->dev, NULL);
+	device_unregister(iommu->dev);
+	iommu->dev = NULL;
+}
+EXPORT_SYMBOL_GPL(iommu_device_sysfs_remove);
 
 /*
  * IOMMU drivers can indicate a device is managed by a given IOMMU using
- * this पूर्णांकerface.  A link to the device will be created in the "devices"
+ * this interface.  A link to the device will be created in the "devices"
  * directory of the IOMMU device in sysfs and an "iommu" link will be
- * created under the linked device, poपूर्णांकing back at the IOMMU device.
+ * created under the linked device, pointing back at the IOMMU device.
  */
-पूर्णांक iommu_device_link(काष्ठा iommu_device *iommu, काष्ठा device *link)
-अणु
-	पूर्णांक ret;
+int iommu_device_link(struct iommu_device *iommu, struct device *link)
+{
+	int ret;
 
-	अगर (!iommu || IS_ERR(iommu))
-		वापस -ENODEV;
+	if (!iommu || IS_ERR(iommu))
+		return -ENODEV;
 
 	ret = sysfs_add_link_to_group(&iommu->dev->kobj, "devices",
 				      &link->kobj, dev_name(link));
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = sysfs_create_link_nowarn(&link->kobj, &iommu->dev->kobj, "iommu");
-	अगर (ret)
-		sysfs_हटाओ_link_from_group(&iommu->dev->kobj, "devices",
+	if (ret)
+		sysfs_remove_link_from_group(&iommu->dev->kobj, "devices",
 					     dev_name(link));
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(iommu_device_link);
 
-व्योम iommu_device_unlink(काष्ठा iommu_device *iommu, काष्ठा device *link)
-अणु
-	अगर (!iommu || IS_ERR(iommu))
-		वापस;
+void iommu_device_unlink(struct iommu_device *iommu, struct device *link)
+{
+	if (!iommu || IS_ERR(iommu))
+		return;
 
-	sysfs_हटाओ_link(&link->kobj, "iommu");
-	sysfs_हटाओ_link_from_group(&iommu->dev->kobj, "devices", dev_name(link));
-पूर्ण
+	sysfs_remove_link(&link->kobj, "iommu");
+	sysfs_remove_link_from_group(&iommu->dev->kobj, "devices", dev_name(link));
+}
 EXPORT_SYMBOL_GPL(iommu_device_unlink);

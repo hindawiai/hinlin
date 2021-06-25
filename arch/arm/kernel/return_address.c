@@ -1,55 +1,54 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * arch/arm/kernel/वापस_address.c
+ * arch/arm/kernel/return_address.c
  *
  * Copyright (C) 2009 Uwe Kleine-Koenig <u.kleine-koenig@pengutronix.de>
- * क्रम Pengutronix
+ * for Pengutronix
  */
-#समावेश <linux/export.h>
-#समावेश <linux/ftrace.h>
-#समावेश <linux/sched.h>
+#include <linux/export.h>
+#include <linux/ftrace.h>
+#include <linux/sched.h>
 
-#समावेश <यंत्र/stacktrace.h>
+#include <asm/stacktrace.h>
 
-काष्ठा वापस_address_data अणु
-	अचिन्हित पूर्णांक level;
-	व्योम *addr;
-पूर्ण;
+struct return_address_data {
+	unsigned int level;
+	void *addr;
+};
 
-अटल पूर्णांक save_वापस_addr(काष्ठा stackframe *frame, व्योम *d)
-अणु
-	काष्ठा वापस_address_data *data = d;
+static int save_return_addr(struct stackframe *frame, void *d)
+{
+	struct return_address_data *data = d;
 
-	अगर (!data->level) अणु
-		data->addr = (व्योम *)frame->pc;
+	if (!data->level) {
+		data->addr = (void *)frame->pc;
 
-		वापस 1;
-	पूर्ण अन्यथा अणु
+		return 1;
+	} else {
 		--data->level;
-		वापस 0;
-	पूर्ण
-पूर्ण
+		return 0;
+	}
+}
 
-व्योम *वापस_address(अचिन्हित पूर्णांक level)
-अणु
-	काष्ठा वापस_address_data data;
-	काष्ठा stackframe frame;
+void *return_address(unsigned int level)
+{
+	struct return_address_data data;
+	struct stackframe frame;
 
 	data.level = level + 2;
-	data.addr = शून्य;
+	data.addr = NULL;
 
-	frame.fp = (अचिन्हित दीर्घ)__builtin_frame_address(0);
-	frame.sp = current_stack_poपूर्णांकer;
-	frame.lr = (अचिन्हित दीर्घ)__builtin_वापस_address(0);
-	frame.pc = (अचिन्हित दीर्घ)वापस_address;
+	frame.fp = (unsigned long)__builtin_frame_address(0);
+	frame.sp = current_stack_pointer;
+	frame.lr = (unsigned long)__builtin_return_address(0);
+	frame.pc = (unsigned long)return_address;
 
-	walk_stackframe(&frame, save_वापस_addr, &data);
+	walk_stackframe(&frame, save_return_addr, &data);
 
-	अगर (!data.level)
-		वापस data.addr;
-	अन्यथा
-		वापस शून्य;
-पूर्ण
+	if (!data.level)
+		return data.addr;
+	else
+		return NULL;
+}
 
-EXPORT_SYMBOL_GPL(वापस_address);
+EXPORT_SYMBOL_GPL(return_address);

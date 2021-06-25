@@ -1,438 +1,437 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-#समावेश <linux/delay.h>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/input.h>
-#समावेश <linux/input/mt.h>
-#समावेश <linux/input/touchscreen.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/sizes.h>
-#समावेश <linux/slab.h>
-#समावेश <यंत्र/unaligned.h>
+// SPDX-License-Identifier: GPL-2.0-only
+#include <linux/delay.h>
+#include <linux/gpio/consumer.h>
+#include <linux/i2c.h>
+#include <linux/input.h>
+#include <linux/input/mt.h>
+#include <linux/input/touchscreen.h>
+#include <linux/interrupt.h>
+#include <linux/module.h>
+#include <linux/of_device.h>
+#include <linux/sizes.h>
+#include <linux/slab.h>
+#include <asm/unaligned.h>
 
-#घोषणा ILI2XXX_POLL_PERIOD	20
+#define ILI2XXX_POLL_PERIOD	20
 
-#घोषणा ILI210X_DATA_SIZE	64
-#घोषणा ILI211X_DATA_SIZE	43
-#घोषणा ILI251X_DATA_SIZE1	31
-#घोषणा ILI251X_DATA_SIZE2	20
+#define ILI210X_DATA_SIZE	64
+#define ILI211X_DATA_SIZE	43
+#define ILI251X_DATA_SIZE1	31
+#define ILI251X_DATA_SIZE2	20
 
 /* Touchscreen commands */
-#घोषणा REG_TOUCHDATA		0x10
-#घोषणा REG_PANEL_INFO		0x20
-#घोषणा REG_CALIBRATE		0xcc
+#define REG_TOUCHDATA		0x10
+#define REG_PANEL_INFO		0x20
+#define REG_CALIBRATE		0xcc
 
-काष्ठा ili2xxx_chip अणु
-	पूर्णांक (*पढ़ो_reg)(काष्ठा i2c_client *client, u8 reg,
-			व्योम *buf, माप_प्रकार len);
-	पूर्णांक (*get_touch_data)(काष्ठा i2c_client *client, u8 *data);
-	bool (*parse_touch_data)(स्थिर u8 *data, अचिन्हित पूर्णांक finger,
-				 अचिन्हित पूर्णांक *x, अचिन्हित पूर्णांक *y,
-				 अचिन्हित पूर्णांक *z);
-	bool (*जारी_polling)(स्थिर u8 *data, bool touch);
-	अचिन्हित पूर्णांक max_touches;
-	अचिन्हित पूर्णांक resolution;
+struct ili2xxx_chip {
+	int (*read_reg)(struct i2c_client *client, u8 reg,
+			void *buf, size_t len);
+	int (*get_touch_data)(struct i2c_client *client, u8 *data);
+	bool (*parse_touch_data)(const u8 *data, unsigned int finger,
+				 unsigned int *x, unsigned int *y,
+				 unsigned int *z);
+	bool (*continue_polling)(const u8 *data, bool touch);
+	unsigned int max_touches;
+	unsigned int resolution;
 	bool has_calibrate_reg;
 	bool has_pressure_reg;
-पूर्ण;
+};
 
-काष्ठा ili210x अणु
-	काष्ठा i2c_client *client;
-	काष्ठा input_dev *input;
-	काष्ठा gpio_desc *reset_gpio;
-	काष्ठा touchscreen_properties prop;
-	स्थिर काष्ठा ili2xxx_chip *chip;
+struct ili210x {
+	struct i2c_client *client;
+	struct input_dev *input;
+	struct gpio_desc *reset_gpio;
+	struct touchscreen_properties prop;
+	const struct ili2xxx_chip *chip;
 	bool stop;
-पूर्ण;
+};
 
-अटल पूर्णांक ili210x_पढ़ो_reg(काष्ठा i2c_client *client,
-			    u8 reg, व्योम *buf, माप_प्रकार len)
-अणु
-	काष्ठा i2c_msg msg[] = अणु
-		अणु
+static int ili210x_read_reg(struct i2c_client *client,
+			    u8 reg, void *buf, size_t len)
+{
+	struct i2c_msg msg[] = {
+		{
 			.addr	= client->addr,
 			.flags	= 0,
 			.len	= 1,
 			.buf	= &reg,
-		पूर्ण,
-		अणु
+		},
+		{
 			.addr	= client->addr,
 			.flags	= I2C_M_RD,
 			.len	= len,
 			.buf	= buf,
-		पूर्ण
-	पूर्ण;
-	पूर्णांक error, ret;
+		}
+	};
+	int error, ret;
 
 	ret = i2c_transfer(client->adapter, msg, ARRAY_SIZE(msg));
-	अगर (ret != ARRAY_SIZE(msg)) अणु
+	if (ret != ARRAY_SIZE(msg)) {
 		error = ret < 0 ? ret : -EIO;
 		dev_err(&client->dev, "%s failed: %d\n", __func__, error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ili210x_पढ़ो_touch_data(काष्ठा i2c_client *client, u8 *data)
-अणु
-	वापस ili210x_पढ़ो_reg(client, REG_TOUCHDATA,
+static int ili210x_read_touch_data(struct i2c_client *client, u8 *data)
+{
+	return ili210x_read_reg(client, REG_TOUCHDATA,
 				data, ILI210X_DATA_SIZE);
-पूर्ण
+}
 
-अटल bool ili210x_touchdata_to_coords(स्थिर u8 *touchdata,
-					अचिन्हित पूर्णांक finger,
-					अचिन्हित पूर्णांक *x, अचिन्हित पूर्णांक *y,
-					अचिन्हित पूर्णांक *z)
-अणु
-	अगर (!(touchdata[0] & BIT(finger)))
-		वापस false;
+static bool ili210x_touchdata_to_coords(const u8 *touchdata,
+					unsigned int finger,
+					unsigned int *x, unsigned int *y,
+					unsigned int *z)
+{
+	if (!(touchdata[0] & BIT(finger)))
+		return false;
 
 	*x = get_unaligned_be16(touchdata + 1 + (finger * 4) + 0);
 	*y = get_unaligned_be16(touchdata + 1 + (finger * 4) + 2);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool ili210x_check_जारी_polling(स्थिर u8 *data, bool touch)
-अणु
-	वापस data[0] & 0xf3;
-पूर्ण
+static bool ili210x_check_continue_polling(const u8 *data, bool touch)
+{
+	return data[0] & 0xf3;
+}
 
-अटल स्थिर काष्ठा ili2xxx_chip ili210x_chip = अणु
-	.पढ़ो_reg		= ili210x_पढ़ो_reg,
-	.get_touch_data		= ili210x_पढ़ो_touch_data,
+static const struct ili2xxx_chip ili210x_chip = {
+	.read_reg		= ili210x_read_reg,
+	.get_touch_data		= ili210x_read_touch_data,
 	.parse_touch_data	= ili210x_touchdata_to_coords,
-	.जारी_polling	= ili210x_check_जारी_polling,
+	.continue_polling	= ili210x_check_continue_polling,
 	.max_touches		= 2,
 	.has_calibrate_reg	= true,
-पूर्ण;
+};
 
-अटल पूर्णांक ili211x_पढ़ो_touch_data(काष्ठा i2c_client *client, u8 *data)
-अणु
+static int ili211x_read_touch_data(struct i2c_client *client, u8 *data)
+{
 	s16 sum = 0;
-	पूर्णांक error;
-	पूर्णांक ret;
-	पूर्णांक i;
+	int error;
+	int ret;
+	int i;
 
 	ret = i2c_master_recv(client, data, ILI211X_DATA_SIZE);
-	अगर (ret != ILI211X_DATA_SIZE) अणु
+	if (ret != ILI211X_DATA_SIZE) {
 		error = ret < 0 ? ret : -EIO;
 		dev_err(&client->dev, "%s failed: %d\n", __func__, error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
 	/* This chip uses custom checksum at the end of data */
-	क्रम (i = 0; i < ILI211X_DATA_SIZE - 1; i++)
+	for (i = 0; i < ILI211X_DATA_SIZE - 1; i++)
 		sum = (sum + data[i]) & 0xff;
 
-	अगर ((-sum & 0xff) != data[ILI211X_DATA_SIZE - 1]) अणु
+	if ((-sum & 0xff) != data[ILI211X_DATA_SIZE - 1]) {
 		dev_err(&client->dev,
 			"CRC error (crc=0x%02x expected=0x%02x)\n",
 			sum, data[ILI211X_DATA_SIZE - 1]);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool ili211x_touchdata_to_coords(स्थिर u8 *touchdata,
-					अचिन्हित पूर्णांक finger,
-					अचिन्हित पूर्णांक *x, अचिन्हित पूर्णांक *y,
-					अचिन्हित पूर्णांक *z)
-अणु
+static bool ili211x_touchdata_to_coords(const u8 *touchdata,
+					unsigned int finger,
+					unsigned int *x, unsigned int *y,
+					unsigned int *z)
+{
 	u32 data;
 
 	data = get_unaligned_be32(touchdata + 1 + (finger * 4) + 0);
-	अगर (data == 0xffffffff)	/* Finger up */
-		वापस false;
+	if (data == 0xffffffff)	/* Finger up */
+		return false;
 
 	*x = ((touchdata[1 + (finger * 4) + 0] & 0xf0) << 4) |
 	     touchdata[1 + (finger * 4) + 1];
 	*y = ((touchdata[1 + (finger * 4) + 0] & 0x0f) << 8) |
 	     touchdata[1 + (finger * 4) + 2];
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool ili211x_decline_polling(स्थिर u8 *data, bool touch)
-अणु
-	वापस false;
-पूर्ण
+static bool ili211x_decline_polling(const u8 *data, bool touch)
+{
+	return false;
+}
 
-अटल स्थिर काष्ठा ili2xxx_chip ili211x_chip = अणु
-	.पढ़ो_reg		= ili210x_पढ़ो_reg,
-	.get_touch_data		= ili211x_पढ़ो_touch_data,
+static const struct ili2xxx_chip ili211x_chip = {
+	.read_reg		= ili210x_read_reg,
+	.get_touch_data		= ili211x_read_touch_data,
 	.parse_touch_data	= ili211x_touchdata_to_coords,
-	.जारी_polling	= ili211x_decline_polling,
+	.continue_polling	= ili211x_decline_polling,
 	.max_touches		= 10,
 	.resolution		= 2048,
-पूर्ण;
+};
 
-अटल bool ili212x_touchdata_to_coords(स्थिर u8 *touchdata,
-					अचिन्हित पूर्णांक finger,
-					अचिन्हित पूर्णांक *x, अचिन्हित पूर्णांक *y,
-					अचिन्हित पूर्णांक *z)
-अणु
+static bool ili212x_touchdata_to_coords(const u8 *touchdata,
+					unsigned int finger,
+					unsigned int *x, unsigned int *y,
+					unsigned int *z)
+{
 	u16 val;
 
 	val = get_unaligned_be16(touchdata + 3 + (finger * 5) + 0);
-	अगर (!(val & BIT(15)))	/* Touch indication */
-		वापस false;
+	if (!(val & BIT(15)))	/* Touch indication */
+		return false;
 
 	*x = val & 0x3fff;
 	*y = get_unaligned_be16(touchdata + 3 + (finger * 5) + 2);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool ili212x_check_जारी_polling(स्थिर u8 *data, bool touch)
-अणु
-	वापस touch;
-पूर्ण
+static bool ili212x_check_continue_polling(const u8 *data, bool touch)
+{
+	return touch;
+}
 
-अटल स्थिर काष्ठा ili2xxx_chip ili212x_chip = अणु
-	.पढ़ो_reg		= ili210x_पढ़ो_reg,
-	.get_touch_data		= ili210x_पढ़ो_touch_data,
+static const struct ili2xxx_chip ili212x_chip = {
+	.read_reg		= ili210x_read_reg,
+	.get_touch_data		= ili210x_read_touch_data,
 	.parse_touch_data	= ili212x_touchdata_to_coords,
-	.जारी_polling	= ili212x_check_जारी_polling,
+	.continue_polling	= ili212x_check_continue_polling,
 	.max_touches		= 10,
 	.has_calibrate_reg	= true,
-पूर्ण;
+};
 
-अटल पूर्णांक ili251x_पढ़ो_reg(काष्ठा i2c_client *client,
-			    u8 reg, व्योम *buf, माप_प्रकार len)
-अणु
-	पूर्णांक error;
-	पूर्णांक ret;
+static int ili251x_read_reg(struct i2c_client *client,
+			    u8 reg, void *buf, size_t len)
+{
+	int error;
+	int ret;
 
 	ret = i2c_master_send(client, &reg, 1);
-	अगर (ret == 1) अणु
+	if (ret == 1) {
 		usleep_range(5000, 5500);
 
 		ret = i2c_master_recv(client, buf, len);
-		अगर (ret == len)
-			वापस 0;
-	पूर्ण
+		if (ret == len)
+			return 0;
+	}
 
 	error = ret < 0 ? ret : -EIO;
 	dev_err(&client->dev, "%s failed: %d\n", __func__, error);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ili251x_पढ़ो_touch_data(काष्ठा i2c_client *client, u8 *data)
-अणु
-	पूर्णांक error;
+static int ili251x_read_touch_data(struct i2c_client *client, u8 *data)
+{
+	int error;
 
-	error = ili251x_पढ़ो_reg(client, REG_TOUCHDATA,
+	error = ili251x_read_reg(client, REG_TOUCHDATA,
 				 data, ILI251X_DATA_SIZE1);
-	अगर (!error && data[0] == 2) अणु
+	if (!error && data[0] == 2) {
 		error = i2c_master_recv(client, data + ILI251X_DATA_SIZE1,
 					ILI251X_DATA_SIZE2);
-		अगर (error >= 0 && error != ILI251X_DATA_SIZE2)
+		if (error >= 0 && error != ILI251X_DATA_SIZE2)
 			error = -EIO;
-	पूर्ण
+	}
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल bool ili251x_touchdata_to_coords(स्थिर u8 *touchdata,
-					अचिन्हित पूर्णांक finger,
-					अचिन्हित पूर्णांक *x, अचिन्हित पूर्णांक *y,
-					अचिन्हित पूर्णांक *z)
-अणु
+static bool ili251x_touchdata_to_coords(const u8 *touchdata,
+					unsigned int finger,
+					unsigned int *x, unsigned int *y,
+					unsigned int *z)
+{
 	u16 val;
 
 	val = get_unaligned_be16(touchdata + 1 + (finger * 5) + 0);
-	अगर (!(val & BIT(15)))	/* Touch indication */
-		वापस false;
+	if (!(val & BIT(15)))	/* Touch indication */
+		return false;
 
 	*x = val & 0x3fff;
 	*y = get_unaligned_be16(touchdata + 1 + (finger * 5) + 2);
 	*z = touchdata[1 + (finger * 5) + 4];
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool ili251x_check_जारी_polling(स्थिर u8 *data, bool touch)
-अणु
-	वापस touch;
-पूर्ण
+static bool ili251x_check_continue_polling(const u8 *data, bool touch)
+{
+	return touch;
+}
 
-अटल स्थिर काष्ठा ili2xxx_chip ili251x_chip = अणु
-	.पढ़ो_reg		= ili251x_पढ़ो_reg,
-	.get_touch_data		= ili251x_पढ़ो_touch_data,
+static const struct ili2xxx_chip ili251x_chip = {
+	.read_reg		= ili251x_read_reg,
+	.get_touch_data		= ili251x_read_touch_data,
 	.parse_touch_data	= ili251x_touchdata_to_coords,
-	.जारी_polling	= ili251x_check_जारी_polling,
+	.continue_polling	= ili251x_check_continue_polling,
 	.max_touches		= 10,
 	.has_calibrate_reg	= true,
 	.has_pressure_reg	= true,
-पूर्ण;
+};
 
-अटल bool ili210x_report_events(काष्ठा ili210x *priv, u8 *touchdata)
-अणु
-	काष्ठा input_dev *input = priv->input;
-	पूर्णांक i;
+static bool ili210x_report_events(struct ili210x *priv, u8 *touchdata)
+{
+	struct input_dev *input = priv->input;
+	int i;
 	bool contact = false, touch;
-	अचिन्हित पूर्णांक x = 0, y = 0, z = 0;
+	unsigned int x = 0, y = 0, z = 0;
 
-	क्रम (i = 0; i < priv->chip->max_touches; i++) अणु
+	for (i = 0; i < priv->chip->max_touches; i++) {
 		touch = priv->chip->parse_touch_data(touchdata, i, &x, &y, &z);
 
 		input_mt_slot(input, i);
-		अगर (input_mt_report_slot_state(input, MT_TOOL_FINGER, touch)) अणु
+		if (input_mt_report_slot_state(input, MT_TOOL_FINGER, touch)) {
 			touchscreen_report_pos(input, &priv->prop, x, y, true);
-			अगर (priv->chip->has_pressure_reg)
-				input_report_असल(input, ABS_MT_PRESSURE, z);
+			if (priv->chip->has_pressure_reg)
+				input_report_abs(input, ABS_MT_PRESSURE, z);
 			contact = true;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	input_mt_report_poपूर्णांकer_emulation(input, false);
+	input_mt_report_pointer_emulation(input, false);
 	input_sync(input);
 
-	वापस contact;
-पूर्ण
+	return contact;
+}
 
-अटल irqवापस_t ili210x_irq(पूर्णांक irq, व्योम *irq_data)
-अणु
-	काष्ठा ili210x *priv = irq_data;
-	काष्ठा i2c_client *client = priv->client;
-	स्थिर काष्ठा ili2xxx_chip *chip = priv->chip;
-	u8 touchdata[ILI210X_DATA_SIZE] = अणु 0 पूर्ण;
+static irqreturn_t ili210x_irq(int irq, void *irq_data)
+{
+	struct ili210x *priv = irq_data;
+	struct i2c_client *client = priv->client;
+	const struct ili2xxx_chip *chip = priv->chip;
+	u8 touchdata[ILI210X_DATA_SIZE] = { 0 };
 	bool keep_polling;
 	bool touch;
-	पूर्णांक error;
+	int error;
 
-	करो अणु
+	do {
 		error = chip->get_touch_data(client, touchdata);
-		अगर (error) अणु
+		if (error) {
 			dev_err(&client->dev,
 				"Unable to get touch data: %d\n", error);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		touch = ili210x_report_events(priv, touchdata);
-		keep_polling = chip->जारी_polling(touchdata, touch);
-		अगर (keep_polling)
+		keep_polling = chip->continue_polling(touchdata, touch);
+		if (keep_polling)
 			msleep(ILI2XXX_POLL_PERIOD);
-	पूर्ण जबतक (!priv->stop && keep_polling);
+	} while (!priv->stop && keep_polling);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल sमाप_प्रकार ili210x_calibrate(काष्ठा device *dev,
-				 काष्ठा device_attribute *attr,
-				 स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा i2c_client *client = to_i2c_client(dev);
-	काष्ठा ili210x *priv = i2c_get_clientdata(client);
-	अचिन्हित दीर्घ calibrate;
-	पूर्णांक rc;
+static ssize_t ili210x_calibrate(struct device *dev,
+				 struct device_attribute *attr,
+				 const char *buf, size_t count)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	struct ili210x *priv = i2c_get_clientdata(client);
+	unsigned long calibrate;
+	int rc;
 	u8 cmd = REG_CALIBRATE;
 
-	अगर (kम_से_अदीर्घ(buf, 10, &calibrate))
-		वापस -EINVAL;
+	if (kstrtoul(buf, 10, &calibrate))
+		return -EINVAL;
 
-	अगर (calibrate > 1)
-		वापस -EINVAL;
+	if (calibrate > 1)
+		return -EINVAL;
 
-	अगर (calibrate) अणु
-		rc = i2c_master_send(priv->client, &cmd, माप(cmd));
-		अगर (rc != माप(cmd))
-			वापस -EIO;
-	पूर्ण
+	if (calibrate) {
+		rc = i2c_master_send(priv->client, &cmd, sizeof(cmd));
+		if (rc != sizeof(cmd))
+			return -EIO;
+	}
 
-	वापस count;
-पूर्ण
-अटल DEVICE_ATTR(calibrate, S_IWUSR, शून्य, ili210x_calibrate);
+	return count;
+}
+static DEVICE_ATTR(calibrate, S_IWUSR, NULL, ili210x_calibrate);
 
-अटल काष्ठा attribute *ili210x_attributes[] = अणु
+static struct attribute *ili210x_attributes[] = {
 	&dev_attr_calibrate.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल umode_t ili210x_calibrate_visible(काष्ठा kobject *kobj,
-					  काष्ठा attribute *attr, पूर्णांक index)
-अणु
-	काष्ठा device *dev = kobj_to_dev(kobj);
-	काष्ठा i2c_client *client = to_i2c_client(dev);
-	काष्ठा ili210x *priv = i2c_get_clientdata(client);
+static umode_t ili210x_calibrate_visible(struct kobject *kobj,
+					  struct attribute *attr, int index)
+{
+	struct device *dev = kobj_to_dev(kobj);
+	struct i2c_client *client = to_i2c_client(dev);
+	struct ili210x *priv = i2c_get_clientdata(client);
 
-	वापस priv->chip->has_calibrate_reg ? attr->mode : 0;
-पूर्ण
+	return priv->chip->has_calibrate_reg ? attr->mode : 0;
+}
 
-अटल स्थिर काष्ठा attribute_group ili210x_attr_group = अणु
+static const struct attribute_group ili210x_attr_group = {
 	.attrs = ili210x_attributes,
 	.is_visible = ili210x_calibrate_visible,
-पूर्ण;
+};
 
-अटल व्योम ili210x_घातer_करोwn(व्योम *data)
-अणु
-	काष्ठा gpio_desc *reset_gpio = data;
+static void ili210x_power_down(void *data)
+{
+	struct gpio_desc *reset_gpio = data;
 
 	gpiod_set_value_cansleep(reset_gpio, 1);
-पूर्ण
+}
 
-अटल व्योम ili210x_stop(व्योम *data)
-अणु
-	काष्ठा ili210x *priv = data;
+static void ili210x_stop(void *data)
+{
+	struct ili210x *priv = data;
 
-	/* Tell ISR to quit even अगर there is a contact. */
+	/* Tell ISR to quit even if there is a contact. */
 	priv->stop = true;
-पूर्ण
+}
 
-अटल पूर्णांक ili210x_i2c_probe(काष्ठा i2c_client *client,
-			     स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा device *dev = &client->dev;
-	स्थिर काष्ठा ili2xxx_chip *chip;
-	काष्ठा ili210x *priv;
-	काष्ठा gpio_desc *reset_gpio;
-	काष्ठा input_dev *input;
-	पूर्णांक error;
-	अचिन्हित पूर्णांक max_xy;
+static int ili210x_i2c_probe(struct i2c_client *client,
+			     const struct i2c_device_id *id)
+{
+	struct device *dev = &client->dev;
+	const struct ili2xxx_chip *chip;
+	struct ili210x *priv;
+	struct gpio_desc *reset_gpio;
+	struct input_dev *input;
+	int error;
+	unsigned int max_xy;
 
 	dev_dbg(dev, "Probing for ILI210X I2C Touschreen driver");
 
 	chip = device_get_match_data(dev);
-	अगर (!chip && id)
-		chip = (स्थिर काष्ठा ili2xxx_chip *)id->driver_data;
-	अगर (!chip) अणु
+	if (!chip && id)
+		chip = (const struct ili2xxx_chip *)id->driver_data;
+	if (!chip) {
 		dev_err(&client->dev, "unknown device model\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (client->irq <= 0) अणु
+	if (client->irq <= 0) {
 		dev_err(dev, "No IRQ!\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	reset_gpio = devm_gpiod_get_optional(dev, "reset", GPIOD_OUT_HIGH);
-	अगर (IS_ERR(reset_gpio))
-		वापस PTR_ERR(reset_gpio);
+	if (IS_ERR(reset_gpio))
+		return PTR_ERR(reset_gpio);
 
-	अगर (reset_gpio) अणु
-		error = devm_add_action_or_reset(dev, ili210x_घातer_करोwn,
+	if (reset_gpio) {
+		error = devm_add_action_or_reset(dev, ili210x_power_down,
 						 reset_gpio);
-		अगर (error)
-			वापस error;
+		if (error)
+			return error;
 
 		usleep_range(50, 100);
 		gpiod_set_value_cansleep(reset_gpio, 0);
 		msleep(100);
-	पूर्ण
+	}
 
-	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
 	input = devm_input_allocate_device(dev);
-	अगर (!input)
-		वापस -ENOMEM;
+	if (!input)
+		return -ENOMEM;
 
 	priv->client = client;
 	priv->input = input;
@@ -446,73 +445,73 @@
 
 	/* Multi touch */
 	max_xy = (chip->resolution ?: SZ_64K) - 1;
-	input_set_असल_params(input, ABS_MT_POSITION_X, 0, max_xy, 0, 0);
-	input_set_असल_params(input, ABS_MT_POSITION_Y, 0, max_xy, 0, 0);
-	अगर (priv->chip->has_pressure_reg)
-		input_set_असल_params(input, ABS_MT_PRESSURE, 0, 0xa, 0, 0);
+	input_set_abs_params(input, ABS_MT_POSITION_X, 0, max_xy, 0, 0);
+	input_set_abs_params(input, ABS_MT_POSITION_Y, 0, max_xy, 0, 0);
+	if (priv->chip->has_pressure_reg)
+		input_set_abs_params(input, ABS_MT_PRESSURE, 0, 0xa, 0, 0);
 	touchscreen_parse_properties(input, true, &priv->prop);
 
 	error = input_mt_init_slots(input, priv->chip->max_touches,
-				    INPUT_MT_सूचीECT);
-	अगर (error) अणु
+				    INPUT_MT_DIRECT);
+	if (error) {
 		dev_err(dev, "Unable to set up slots, err: %d\n", error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	error = devm_request_thपढ़ोed_irq(dev, client->irq, शून्य, ili210x_irq,
+	error = devm_request_threaded_irq(dev, client->irq, NULL, ili210x_irq,
 					  IRQF_ONESHOT, client->name, priv);
-	अगर (error) अणु
+	if (error) {
 		dev_err(dev, "Unable to request touchscreen IRQ, err: %d\n",
 			error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
 	error = devm_add_action_or_reset(dev, ili210x_stop, priv);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	error = devm_device_add_group(dev, &ili210x_attr_group);
-	अगर (error) अणु
+	if (error) {
 		dev_err(dev, "Unable to create sysfs attributes, err: %d\n",
 			error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	error = input_रेजिस्टर_device(priv->input);
-	अगर (error) अणु
+	error = input_register_device(priv->input);
+	if (error) {
 		dev_err(dev, "Cannot register input device, err: %d\n", error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा i2c_device_id ili210x_i2c_id[] = अणु
-	अणु "ili210x", (दीर्घ)&ili210x_chip पूर्ण,
-	अणु "ili2117", (दीर्घ)&ili211x_chip पूर्ण,
-	अणु "ili2120", (दीर्घ)&ili212x_chip पूर्ण,
-	अणु "ili251x", (दीर्घ)&ili251x_chip पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id ili210x_i2c_id[] = {
+	{ "ili210x", (long)&ili210x_chip },
+	{ "ili2117", (long)&ili211x_chip },
+	{ "ili2120", (long)&ili212x_chip },
+	{ "ili251x", (long)&ili251x_chip },
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, ili210x_i2c_id);
 
-अटल स्थिर काष्ठा of_device_id ili210x_dt_ids[] = अणु
-	अणु .compatible = "ilitek,ili210x", .data = &ili210x_chip पूर्ण,
-	अणु .compatible = "ilitek,ili2117", .data = &ili211x_chip पूर्ण,
-	अणु .compatible = "ilitek,ili2120", .data = &ili212x_chip पूर्ण,
-	अणु .compatible = "ilitek,ili251x", .data = &ili251x_chip पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id ili210x_dt_ids[] = {
+	{ .compatible = "ilitek,ili210x", .data = &ili210x_chip },
+	{ .compatible = "ilitek,ili2117", .data = &ili211x_chip },
+	{ .compatible = "ilitek,ili2120", .data = &ili212x_chip },
+	{ .compatible = "ilitek,ili251x", .data = &ili251x_chip },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, ili210x_dt_ids);
 
-अटल काष्ठा i2c_driver ili210x_ts_driver = अणु
-	.driver = अणु
+static struct i2c_driver ili210x_ts_driver = {
+	.driver = {
 		.name = "ili210x_i2c",
 		.of_match_table = ili210x_dt_ids,
-	पूर्ण,
+	},
 	.id_table = ili210x_i2c_id,
 	.probe = ili210x_i2c_probe,
-पूर्ण;
+};
 
 module_i2c_driver(ili210x_ts_driver);
 

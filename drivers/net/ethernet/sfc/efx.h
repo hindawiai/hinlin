@@ -1,92 +1,91 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /****************************************************************************
- * Driver क्रम Solarflare network controllers and boards
+ * Driver for Solarflare network controllers and boards
  * Copyright 2005-2006 Fen Systems Ltd.
  * Copyright 2006-2013 Solarflare Communications Inc.
  */
 
-#अगर_अघोषित EFX_EFX_H
-#घोषणा EFX_EFX_H
+#ifndef EFX_EFX_H
+#define EFX_EFX_H
 
-#समावेश <linux/indirect_call_wrapper.h>
-#समावेश "net_driver.h"
-#समावेश "ef100_rx.h"
-#समावेश "ef100_tx.h"
-#समावेश "filter.h"
+#include <linux/indirect_call_wrapper.h>
+#include "net_driver.h"
+#include "ef100_rx.h"
+#include "ef100_tx.h"
+#include "filter.h"
 
-पूर्णांक efx_net_खोलो(काष्ठा net_device *net_dev);
-पूर्णांक efx_net_stop(काष्ठा net_device *net_dev);
+int efx_net_open(struct net_device *net_dev);
+int efx_net_stop(struct net_device *net_dev);
 
 /* TX */
-व्योम efx_init_tx_queue_core_txq(काष्ठा efx_tx_queue *tx_queue);
-netdev_tx_t efx_hard_start_xmit(काष्ठा sk_buff *skb,
-				काष्ठा net_device *net_dev);
-netdev_tx_t __efx_enqueue_skb(काष्ठा efx_tx_queue *tx_queue, काष्ठा sk_buff *skb);
-अटल अंतरभूत netdev_tx_t efx_enqueue_skb(काष्ठा efx_tx_queue *tx_queue, काष्ठा sk_buff *skb)
-अणु
-	वापस INसूचीECT_CALL_2(tx_queue->efx->type->tx_enqueue,
+void efx_init_tx_queue_core_txq(struct efx_tx_queue *tx_queue);
+netdev_tx_t efx_hard_start_xmit(struct sk_buff *skb,
+				struct net_device *net_dev);
+netdev_tx_t __efx_enqueue_skb(struct efx_tx_queue *tx_queue, struct sk_buff *skb);
+static inline netdev_tx_t efx_enqueue_skb(struct efx_tx_queue *tx_queue, struct sk_buff *skb)
+{
+	return INDIRECT_CALL_2(tx_queue->efx->type->tx_enqueue,
 			       ef100_enqueue_skb, __efx_enqueue_skb,
 			       tx_queue, skb);
-पूर्ण
-व्योम efx_xmit_करोne(काष्ठा efx_tx_queue *tx_queue, अचिन्हित पूर्णांक index);
-व्योम efx_xmit_करोne_single(काष्ठा efx_tx_queue *tx_queue);
-पूर्णांक efx_setup_tc(काष्ठा net_device *net_dev, क्रमागत tc_setup_type type,
-		 व्योम *type_data);
-बाह्य अचिन्हित पूर्णांक efx_piobuf_size;
+}
+void efx_xmit_done(struct efx_tx_queue *tx_queue, unsigned int index);
+void efx_xmit_done_single(struct efx_tx_queue *tx_queue);
+int efx_setup_tc(struct net_device *net_dev, enum tc_setup_type type,
+		 void *type_data);
+extern unsigned int efx_piobuf_size;
 
 /* RX */
-व्योम __efx_rx_packet(काष्ठा efx_channel *channel);
-व्योम efx_rx_packet(काष्ठा efx_rx_queue *rx_queue, अचिन्हित पूर्णांक index,
-		   अचिन्हित पूर्णांक n_frags, अचिन्हित पूर्णांक len, u16 flags);
-अटल अंतरभूत व्योम efx_rx_flush_packet(काष्ठा efx_channel *channel)
-अणु
-	अगर (channel->rx_pkt_n_frags)
-		INसूचीECT_CALL_2(channel->efx->type->rx_packet,
+void __efx_rx_packet(struct efx_channel *channel);
+void efx_rx_packet(struct efx_rx_queue *rx_queue, unsigned int index,
+		   unsigned int n_frags, unsigned int len, u16 flags);
+static inline void efx_rx_flush_packet(struct efx_channel *channel)
+{
+	if (channel->rx_pkt_n_frags)
+		INDIRECT_CALL_2(channel->efx->type->rx_packet,
 				__ef100_rx_packet, __efx_rx_packet,
 				channel);
-पूर्ण
-अटल अंतरभूत bool efx_rx_buf_hash_valid(काष्ठा efx_nic *efx, स्थिर u8 *prefix)
-अणु
-	अगर (efx->type->rx_buf_hash_valid)
-		वापस INसूचीECT_CALL_1(efx->type->rx_buf_hash_valid,
+}
+static inline bool efx_rx_buf_hash_valid(struct efx_nic *efx, const u8 *prefix)
+{
+	if (efx->type->rx_buf_hash_valid)
+		return INDIRECT_CALL_1(efx->type->rx_buf_hash_valid,
 				       ef100_rx_buf_hash_valid,
 				       prefix);
-	वापस true;
-पूर्ण
+	return true;
+}
 
-/* Maximum number of TCP segments we support क्रम soft-TSO */
-#घोषणा EFX_TSO_MAX_SEGS	100
+/* Maximum number of TCP segments we support for soft-TSO */
+#define EFX_TSO_MAX_SEGS	100
 
 /* The smallest [rt]xq_entries that the driver supports.  RX minimum
- * is a bit arbitrary.  For TX, we must have space क्रम at least 2
+ * is a bit arbitrary.  For TX, we must have space for at least 2
  * TSO skbs.
  */
-#घोषणा EFX_RXQ_MIN_ENT		128U
-#घोषणा EFX_TXQ_MIN_ENT(efx)	(2 * efx_tx_max_skb_descs(efx))
+#define EFX_RXQ_MIN_ENT		128U
+#define EFX_TXQ_MIN_ENT(efx)	(2 * efx_tx_max_skb_descs(efx))
 
-/* All EF10 architecture NICs steal one bit of the DMAQ size क्रम various
+/* All EF10 architecture NICs steal one bit of the DMAQ size for various
  * other purposes when counting TxQ entries, so we halve the queue size.
  */
-#घोषणा EFX_TXQ_MAX_ENT(efx)	(EFX_WORKAROUND_EF10(efx) ? \
+#define EFX_TXQ_MAX_ENT(efx)	(EFX_WORKAROUND_EF10(efx) ? \
 				 EFX_MAX_DMAQ_SIZE / 2 : EFX_MAX_DMAQ_SIZE)
 
-अटल अंतरभूत bool efx_rss_enabled(काष्ठा efx_nic *efx)
-अणु
-	वापस efx->rss_spपढ़ो > 1;
-पूर्ण
+static inline bool efx_rss_enabled(struct efx_nic *efx)
+{
+	return efx->rss_spread > 1;
+}
 
 /* Filters */
 
 /**
  * efx_filter_insert_filter - add or replace a filter
  * @efx: NIC in which to insert the filter
- * @spec: Specअगरication क्रम the filter
- * @replace_equal: Flag क्रम whether the specअगरied filter may replace an
+ * @spec: Specification for the filter
+ * @replace_equal: Flag for whether the specified filter may replace an
  *	existing filter with equal priority
  *
- * On success, वापस the filter ID.
- * On failure, वापस a negative error code.
+ * On success, return the filter ID.
+ * On failure, return a negative error code.
  *
  * If existing filters have equal match values to the new filter spec,
  * then the new filter might replace them or the function might fail,
@@ -95,144 +94,144 @@ netdev_tx_t __efx_enqueue_skb(काष्ठा efx_tx_queue *tx_queue, का�
  * 1. If the existing filters have lower priority, or @replace_equal
  *    is set and they have equal priority, replace them.
  *
- * 2. If the existing filters have higher priority, वापस -%EPERM.
+ * 2. If the existing filters have higher priority, return -%EPERM.
  *
- * 3. If !efx_filter_is_mc_recipient(@spec), or the NIC करोes not
- *    support delivery to multiple recipients, वापस -%EEXIST.
+ * 3. If !efx_filter_is_mc_recipient(@spec), or the NIC does not
+ *    support delivery to multiple recipients, return -%EEXIST.
  *
- * This implies that filters क्रम multiple multicast recipients must
+ * This implies that filters for multiple multicast recipients must
  * all be inserted with the same priority and @replace_equal = %false.
  */
-अटल अंतरभूत s32 efx_filter_insert_filter(काष्ठा efx_nic *efx,
-					   काष्ठा efx_filter_spec *spec,
+static inline s32 efx_filter_insert_filter(struct efx_nic *efx,
+					   struct efx_filter_spec *spec,
 					   bool replace_equal)
-अणु
-	वापस efx->type->filter_insert(efx, spec, replace_equal);
-पूर्ण
+{
+	return efx->type->filter_insert(efx, spec, replace_equal);
+}
 
 /**
- * efx_filter_हटाओ_id_safe - हटाओ a filter by ID, carefully
- * @efx: NIC from which to हटाओ the filter
+ * efx_filter_remove_id_safe - remove a filter by ID, carefully
+ * @efx: NIC from which to remove the filter
  * @priority: Priority of filter, as passed to @efx_filter_insert_filter
- * @filter_id: ID of filter, as वापसed by @efx_filter_insert_filter
+ * @filter_id: ID of filter, as returned by @efx_filter_insert_filter
  *
  * This function will range-check @filter_id, so it is safe to call
  * with a value passed from userland.
  */
-अटल अंतरभूत पूर्णांक efx_filter_हटाओ_id_safe(काष्ठा efx_nic *efx,
-					    क्रमागत efx_filter_priority priority,
+static inline int efx_filter_remove_id_safe(struct efx_nic *efx,
+					    enum efx_filter_priority priority,
 					    u32 filter_id)
-अणु
-	वापस efx->type->filter_हटाओ_safe(efx, priority, filter_id);
-पूर्ण
+{
+	return efx->type->filter_remove_safe(efx, priority, filter_id);
+}
 
 /**
  * efx_filter_get_filter_safe - retrieve a filter by ID, carefully
- * @efx: NIC from which to हटाओ the filter
+ * @efx: NIC from which to remove the filter
  * @priority: Priority of filter, as passed to @efx_filter_insert_filter
- * @filter_id: ID of filter, as वापसed by @efx_filter_insert_filter
- * @spec: Buffer in which to store filter specअगरication
+ * @filter_id: ID of filter, as returned by @efx_filter_insert_filter
+ * @spec: Buffer in which to store filter specification
  *
  * This function will range-check @filter_id, so it is safe to call
  * with a value passed from userland.
  */
-अटल अंतरभूत पूर्णांक
-efx_filter_get_filter_safe(काष्ठा efx_nic *efx,
-			   क्रमागत efx_filter_priority priority,
-			   u32 filter_id, काष्ठा efx_filter_spec *spec)
-अणु
-	वापस efx->type->filter_get_safe(efx, priority, filter_id, spec);
-पूर्ण
+static inline int
+efx_filter_get_filter_safe(struct efx_nic *efx,
+			   enum efx_filter_priority priority,
+			   u32 filter_id, struct efx_filter_spec *spec)
+{
+	return efx->type->filter_get_safe(efx, priority, filter_id, spec);
+}
 
-अटल अंतरभूत u32 efx_filter_count_rx_used(काष्ठा efx_nic *efx,
-					   क्रमागत efx_filter_priority priority)
-अणु
-	वापस efx->type->filter_count_rx_used(efx, priority);
-पूर्ण
-अटल अंतरभूत u32 efx_filter_get_rx_id_limit(काष्ठा efx_nic *efx)
-अणु
-	वापस efx->type->filter_get_rx_id_limit(efx);
-पूर्ण
-अटल अंतरभूत s32 efx_filter_get_rx_ids(काष्ठा efx_nic *efx,
-					क्रमागत efx_filter_priority priority,
+static inline u32 efx_filter_count_rx_used(struct efx_nic *efx,
+					   enum efx_filter_priority priority)
+{
+	return efx->type->filter_count_rx_used(efx, priority);
+}
+static inline u32 efx_filter_get_rx_id_limit(struct efx_nic *efx)
+{
+	return efx->type->filter_get_rx_id_limit(efx);
+}
+static inline s32 efx_filter_get_rx_ids(struct efx_nic *efx,
+					enum efx_filter_priority priority,
 					u32 *buf, u32 size)
-अणु
-	वापस efx->type->filter_get_rx_ids(efx, priority, buf, size);
-पूर्ण
+{
+	return efx->type->filter_get_rx_ids(efx, priority, buf, size);
+}
 
 /* RSS contexts */
-अटल अंतरभूत bool efx_rss_active(काष्ठा efx_rss_context *ctx)
-अणु
-	वापस ctx->context_id != EFX_MCDI_RSS_CONTEXT_INVALID;
-पूर्ण
+static inline bool efx_rss_active(struct efx_rss_context *ctx)
+{
+	return ctx->context_id != EFX_MCDI_RSS_CONTEXT_INVALID;
+}
 
 /* Ethtool support */
-बाह्य स्थिर काष्ठा ethtool_ops efx_ethtool_ops;
+extern const struct ethtool_ops efx_ethtool_ops;
 
 /* Global */
-अचिन्हित पूर्णांक efx_usecs_to_ticks(काष्ठा efx_nic *efx, अचिन्हित पूर्णांक usecs);
-अचिन्हित पूर्णांक efx_ticks_to_usecs(काष्ठा efx_nic *efx, अचिन्हित पूर्णांक ticks);
-पूर्णांक efx_init_irq_moderation(काष्ठा efx_nic *efx, अचिन्हित पूर्णांक tx_usecs,
-			    अचिन्हित पूर्णांक rx_usecs, bool rx_adaptive,
+unsigned int efx_usecs_to_ticks(struct efx_nic *efx, unsigned int usecs);
+unsigned int efx_ticks_to_usecs(struct efx_nic *efx, unsigned int ticks);
+int efx_init_irq_moderation(struct efx_nic *efx, unsigned int tx_usecs,
+			    unsigned int rx_usecs, bool rx_adaptive,
 			    bool rx_may_override_tx);
-व्योम efx_get_irq_moderation(काष्ठा efx_nic *efx, अचिन्हित पूर्णांक *tx_usecs,
-			    अचिन्हित पूर्णांक *rx_usecs, bool *rx_adaptive);
+void efx_get_irq_moderation(struct efx_nic *efx, unsigned int *tx_usecs,
+			    unsigned int *rx_usecs, bool *rx_adaptive);
 
 /* Update the generic software stats in the passed stats array */
-व्योम efx_update_sw_stats(काष्ठा efx_nic *efx, u64 *stats);
+void efx_update_sw_stats(struct efx_nic *efx, u64 *stats);
 
 /* MTD */
-#अगर_घोषित CONFIG_SFC_MTD
-पूर्णांक efx_mtd_add(काष्ठा efx_nic *efx, काष्ठा efx_mtd_partition *parts,
-		माप_प्रकार n_parts, माप_प्रकार माप_part);
-अटल अंतरभूत पूर्णांक efx_mtd_probe(काष्ठा efx_nic *efx)
-अणु
-	वापस efx->type->mtd_probe(efx);
-पूर्ण
-व्योम efx_mtd_नाम(काष्ठा efx_nic *efx);
-व्योम efx_mtd_हटाओ(काष्ठा efx_nic *efx);
-#अन्यथा
-अटल अंतरभूत पूर्णांक efx_mtd_probe(काष्ठा efx_nic *efx) अणु वापस 0; पूर्ण
-अटल अंतरभूत व्योम efx_mtd_नाम(काष्ठा efx_nic *efx) अणुपूर्ण
-अटल अंतरभूत व्योम efx_mtd_हटाओ(काष्ठा efx_nic *efx) अणुपूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_SFC_MTD
+int efx_mtd_add(struct efx_nic *efx, struct efx_mtd_partition *parts,
+		size_t n_parts, size_t sizeof_part);
+static inline int efx_mtd_probe(struct efx_nic *efx)
+{
+	return efx->type->mtd_probe(efx);
+}
+void efx_mtd_rename(struct efx_nic *efx);
+void efx_mtd_remove(struct efx_nic *efx);
+#else
+static inline int efx_mtd_probe(struct efx_nic *efx) { return 0; }
+static inline void efx_mtd_rename(struct efx_nic *efx) {}
+static inline void efx_mtd_remove(struct efx_nic *efx) {}
+#endif
 
-#अगर_घोषित CONFIG_SFC_SRIOV
-अटल अंतरभूत अचिन्हित पूर्णांक efx_vf_size(काष्ठा efx_nic *efx)
-अणु
-	वापस 1 << efx->vi_scale;
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_SFC_SRIOV
+static inline unsigned int efx_vf_size(struct efx_nic *efx)
+{
+	return 1 << efx->vi_scale;
+}
+#endif
 
-अटल अंतरभूत व्योम efx_device_detach_sync(काष्ठा efx_nic *efx)
-अणु
-	काष्ठा net_device *dev = efx->net_dev;
+static inline void efx_device_detach_sync(struct efx_nic *efx)
+{
+	struct net_device *dev = efx->net_dev;
 
-	/* Lock/मुक्तze all TX queues so that we can be sure the
-	 * TX scheduler is stopped when we're करोne and beक्रमe
-	 * netअगर_device_present() becomes false.
+	/* Lock/freeze all TX queues so that we can be sure the
+	 * TX scheduler is stopped when we're done and before
+	 * netif_device_present() becomes false.
 	 */
-	netअगर_tx_lock_bh(dev);
-	netअगर_device_detach(dev);
-	netअगर_tx_unlock_bh(dev);
-पूर्ण
+	netif_tx_lock_bh(dev);
+	netif_device_detach(dev);
+	netif_tx_unlock_bh(dev);
+}
 
-अटल अंतरभूत व्योम efx_device_attach_अगर_not_resetting(काष्ठा efx_nic *efx)
-अणु
-	अगर ((efx->state != STATE_DISABLED) && !efx->reset_pending)
-		netअगर_device_attach(efx->net_dev);
-पूर्ण
+static inline void efx_device_attach_if_not_resetting(struct efx_nic *efx)
+{
+	if ((efx->state != STATE_DISABLED) && !efx->reset_pending)
+		netif_device_attach(efx->net_dev);
+}
 
-अटल अंतरभूत bool efx_rwsem_निश्चित_ग_लिखो_locked(काष्ठा rw_semaphore *sem)
-अणु
-	अगर (WARN_ON(करोwn_पढ़ो_trylock(sem))) अणु
-		up_पढ़ो(sem);
-		वापस false;
-	पूर्ण
-	वापस true;
-पूर्ण
+static inline bool efx_rwsem_assert_write_locked(struct rw_semaphore *sem)
+{
+	if (WARN_ON(down_read_trylock(sem))) {
+		up_read(sem);
+		return false;
+	}
+	return true;
+}
 
-पूर्णांक efx_xdp_tx_buffers(काष्ठा efx_nic *efx, पूर्णांक n, काष्ठा xdp_frame **xdpfs,
+int efx_xdp_tx_buffers(struct efx_nic *efx, int n, struct xdp_frame **xdpfs,
 		       bool flush);
 
-#पूर्ण_अगर /* EFX_EFX_H */
+#endif /* EFX_EFX_H */

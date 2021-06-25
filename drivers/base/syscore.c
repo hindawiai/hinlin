@@ -1,129 +1,128 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- *  syscore.c - Execution of प्रणाली core operations.
+ *  syscore.c - Execution of system core operations.
  *
  *  Copyright (C) 2011 Rafael J. Wysocki <rjw@sisk.pl>, Novell Inc.
  */
 
-#समावेश <linux/syscore_ops.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/module.h>
-#समावेश <linux/suspend.h>
-#समावेश <trace/events/घातer.h>
+#include <linux/syscore_ops.h>
+#include <linux/mutex.h>
+#include <linux/module.h>
+#include <linux/suspend.h>
+#include <trace/events/power.h>
 
-अटल LIST_HEAD(syscore_ops_list);
-अटल DEFINE_MUTEX(syscore_ops_lock);
+static LIST_HEAD(syscore_ops_list);
+static DEFINE_MUTEX(syscore_ops_lock);
 
 /**
- * रेजिस्टर_syscore_ops - Register a set of प्रणाली core operations.
- * @ops: System core operations to रेजिस्टर.
+ * register_syscore_ops - Register a set of system core operations.
+ * @ops: System core operations to register.
  */
-व्योम रेजिस्टर_syscore_ops(काष्ठा syscore_ops *ops)
-अणु
+void register_syscore_ops(struct syscore_ops *ops)
+{
 	mutex_lock(&syscore_ops_lock);
 	list_add_tail(&ops->node, &syscore_ops_list);
 	mutex_unlock(&syscore_ops_lock);
-पूर्ण
-EXPORT_SYMBOL_GPL(रेजिस्टर_syscore_ops);
+}
+EXPORT_SYMBOL_GPL(register_syscore_ops);
 
 /**
- * unरेजिस्टर_syscore_ops - Unरेजिस्टर a set of प्रणाली core operations.
- * @ops: System core operations to unरेजिस्टर.
+ * unregister_syscore_ops - Unregister a set of system core operations.
+ * @ops: System core operations to unregister.
  */
-व्योम unरेजिस्टर_syscore_ops(काष्ठा syscore_ops *ops)
-अणु
+void unregister_syscore_ops(struct syscore_ops *ops)
+{
 	mutex_lock(&syscore_ops_lock);
 	list_del(&ops->node);
 	mutex_unlock(&syscore_ops_lock);
-पूर्ण
-EXPORT_SYMBOL_GPL(unरेजिस्टर_syscore_ops);
+}
+EXPORT_SYMBOL_GPL(unregister_syscore_ops);
 
-#अगर_घोषित CONFIG_PM_SLEEP
+#ifdef CONFIG_PM_SLEEP
 /**
- * syscore_suspend - Execute all the रेजिस्टरed प्रणाली core suspend callbacks.
+ * syscore_suspend - Execute all the registered system core suspend callbacks.
  *
- * This function is executed with one CPU on-line and disabled पूर्णांकerrupts.
+ * This function is executed with one CPU on-line and disabled interrupts.
  */
-पूर्णांक syscore_suspend(व्योम)
-अणु
-	काष्ठा syscore_ops *ops;
-	पूर्णांक ret = 0;
+int syscore_suspend(void)
+{
+	struct syscore_ops *ops;
+	int ret = 0;
 
 	trace_suspend_resume(TPS("syscore_suspend"), 0, true);
 	pm_pr_dbg("Checking wakeup interrupts\n");
 
-	/* Return error code अगर there are any wakeup पूर्णांकerrupts pending. */
-	अगर (pm_wakeup_pending())
-		वापस -EBUSY;
+	/* Return error code if there are any wakeup interrupts pending. */
+	if (pm_wakeup_pending())
+		return -EBUSY;
 
 	WARN_ONCE(!irqs_disabled(),
 		"Interrupts enabled before system core suspend.\n");
 
-	list_क्रम_each_entry_reverse(ops, &syscore_ops_list, node)
-		अगर (ops->suspend) अणु
+	list_for_each_entry_reverse(ops, &syscore_ops_list, node)
+		if (ops->suspend) {
 			pm_pr_dbg("Calling %pS\n", ops->suspend);
 			ret = ops->suspend();
-			अगर (ret)
-				जाओ err_out;
+			if (ret)
+				goto err_out;
 			WARN_ONCE(!irqs_disabled(),
 				"Interrupts enabled after %pS\n", ops->suspend);
-		पूर्ण
+		}
 
 	trace_suspend_resume(TPS("syscore_suspend"), 0, false);
-	वापस 0;
+	return 0;
 
  err_out:
 	pr_err("PM: System core suspend callback %pS failed.\n", ops->suspend);
 
-	list_क्रम_each_entry_जारी(ops, &syscore_ops_list, node)
-		अगर (ops->resume)
+	list_for_each_entry_continue(ops, &syscore_ops_list, node)
+		if (ops->resume)
 			ops->resume();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(syscore_suspend);
 
 /**
- * syscore_resume - Execute all the रेजिस्टरed प्रणाली core resume callbacks.
+ * syscore_resume - Execute all the registered system core resume callbacks.
  *
- * This function is executed with one CPU on-line and disabled पूर्णांकerrupts.
+ * This function is executed with one CPU on-line and disabled interrupts.
  */
-व्योम syscore_resume(व्योम)
-अणु
-	काष्ठा syscore_ops *ops;
+void syscore_resume(void)
+{
+	struct syscore_ops *ops;
 
 	trace_suspend_resume(TPS("syscore_resume"), 0, true);
 	WARN_ONCE(!irqs_disabled(),
 		"Interrupts enabled before system core resume.\n");
 
-	list_क्रम_each_entry(ops, &syscore_ops_list, node)
-		अगर (ops->resume) अणु
+	list_for_each_entry(ops, &syscore_ops_list, node)
+		if (ops->resume) {
 			pm_pr_dbg("Calling %pS\n", ops->resume);
 			ops->resume();
 			WARN_ONCE(!irqs_disabled(),
 				"Interrupts enabled after %pS\n", ops->resume);
-		पूर्ण
+		}
 	trace_suspend_resume(TPS("syscore_resume"), 0, false);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(syscore_resume);
-#पूर्ण_अगर /* CONFIG_PM_SLEEP */
+#endif /* CONFIG_PM_SLEEP */
 
 /**
- * syscore_shutकरोwn - Execute all the रेजिस्टरed प्रणाली core shutकरोwn callbacks.
+ * syscore_shutdown - Execute all the registered system core shutdown callbacks.
  */
-व्योम syscore_shutकरोwn(व्योम)
-अणु
-	काष्ठा syscore_ops *ops;
+void syscore_shutdown(void)
+{
+	struct syscore_ops *ops;
 
 	mutex_lock(&syscore_ops_lock);
 
-	list_क्रम_each_entry_reverse(ops, &syscore_ops_list, node)
-		अगर (ops->shutकरोwn) अणु
-			अगर (initcall_debug)
-				pr_info("PM: Calling %pS\n", ops->shutकरोwn);
-			ops->shutकरोwn();
-		पूर्ण
+	list_for_each_entry_reverse(ops, &syscore_ops_list, node)
+		if (ops->shutdown) {
+			if (initcall_debug)
+				pr_info("PM: Calling %pS\n", ops->shutdown);
+			ops->shutdown();
+		}
 
 	mutex_unlock(&syscore_ops_lock);
-पूर्ण
+}

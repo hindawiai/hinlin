@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * (HiSilicon's SoC based) flattened device tree enabled machine
  *
@@ -9,43 +8,43 @@
  * Author: Haojian Zhuang <haojian.zhuang@linaro.org>
 */
 
-#समावेश <linux/घड़ीsource.h>
-#समावेश <linux/irqchip.h>
+#include <linux/clocksource.h>
+#include <linux/irqchip.h>
 
-#समावेश <यंत्र/mach/arch.h>
-#समावेश <यंत्र/mach/map.h>
+#include <asm/mach/arch.h>
+#include <asm/mach/map.h>
 
-#घोषणा HI3620_SYSCTRL_PHYS_BASE		0xfc802000
-#घोषणा HI3620_SYSCTRL_VIRT_BASE		0xfe802000
+#define HI3620_SYSCTRL_PHYS_BASE		0xfc802000
+#define HI3620_SYSCTRL_VIRT_BASE		0xfe802000
 
 /*
- * This table is only क्रम optimization. Since ioremap() could always share
- * the same mapping अगर it's defined as अटल IO mapping.
+ * This table is only for optimization. Since ioremap() could always share
+ * the same mapping if it's defined as static IO mapping.
  *
- * Without this table, प्रणाली could also work. The cost is some भव address
- * spaces wasted since ioremap() may be called multi बार क्रम the same
+ * Without this table, system could also work. The cost is some virtual address
+ * spaces wasted since ioremap() may be called multi times for the same
  * IO space.
  */
-अटल काष्ठा map_desc hi3620_io_desc[] __initdata = अणु
-	अणु
+static struct map_desc hi3620_io_desc[] __initdata = {
+	{
 		/* sysctrl */
 		.pfn		= __phys_to_pfn(HI3620_SYSCTRL_PHYS_BASE),
-		.भव	= HI3620_SYSCTRL_VIRT_BASE,
+		.virtual	= HI3620_SYSCTRL_VIRT_BASE,
 		.length		= 0x1000,
 		.type		= MT_DEVICE,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल व्योम __init hi3620_map_io(व्योम)
-अणु
+static void __init hi3620_map_io(void)
+{
 	debug_ll_io_init();
 	iotable_init(hi3620_io_desc, ARRAY_SIZE(hi3620_io_desc));
-पूर्ण
+}
 
-अटल स्थिर अक्षर *स्थिर hi3xxx_compat[] __initस्थिर = अणु
+static const char *const hi3xxx_compat[] __initconst = {
 	"hisilicon,hi3620-hi4511",
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
 DT_MACHINE_START(HI3620, "Hisilicon Hi3620 (Flattened Device Tree)")
 	.map_io		= hi3620_map_io,

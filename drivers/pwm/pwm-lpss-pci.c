@@ -1,127 +1,126 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Intel Low Power Subप्रणाली PWM controller PCI driver
+ * Intel Low Power Subsystem PWM controller PCI driver
  *
  * Copyright (C) 2014, Intel Corporation
  *
  * Derived from the original pwm-lpss.c
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/pm_runसमय.स>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/pci.h>
+#include <linux/pm_runtime.h>
 
-#समावेश "pwm-lpss.h"
+#include "pwm-lpss.h"
 
 /* BayTrail */
-अटल स्थिर काष्ठा pwm_lpss_boardinfo pwm_lpss_byt_info = अणु
+static const struct pwm_lpss_boardinfo pwm_lpss_byt_info = {
 	.clk_rate = 25000000,
 	.npwm = 1,
 	.base_unit_bits = 16,
-पूर्ण;
+};
 
 /* Braswell */
-अटल स्थिर काष्ठा pwm_lpss_boardinfo pwm_lpss_bsw_info = अणु
+static const struct pwm_lpss_boardinfo pwm_lpss_bsw_info = {
 	.clk_rate = 19200000,
 	.npwm = 1,
 	.base_unit_bits = 16,
-पूर्ण;
+};
 
 /* Broxton */
-अटल स्थिर काष्ठा pwm_lpss_boardinfo pwm_lpss_bxt_info = अणु
+static const struct pwm_lpss_boardinfo pwm_lpss_bxt_info = {
 	.clk_rate = 19200000,
 	.npwm = 4,
 	.base_unit_bits = 22,
 	.bypass = true,
-पूर्ण;
+};
 
 /* Tangier */
-अटल स्थिर काष्ठा pwm_lpss_boardinfo pwm_lpss_tng_info = अणु
+static const struct pwm_lpss_boardinfo pwm_lpss_tng_info = {
 	.clk_rate = 19200000,
 	.npwm = 4,
 	.base_unit_bits = 22,
-पूर्ण;
+};
 
-अटल पूर्णांक pwm_lpss_probe_pci(काष्ठा pci_dev *pdev,
-			      स्थिर काष्ठा pci_device_id *id)
-अणु
-	स्थिर काष्ठा pwm_lpss_boardinfo *info;
-	काष्ठा pwm_lpss_chip *lpwm;
-	पूर्णांक err;
+static int pwm_lpss_probe_pci(struct pci_dev *pdev,
+			      const struct pci_device_id *id)
+{
+	const struct pwm_lpss_boardinfo *info;
+	struct pwm_lpss_chip *lpwm;
+	int err;
 
 	err = pcim_enable_device(pdev);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	info = (काष्ठा pwm_lpss_boardinfo *)id->driver_data;
+	info = (struct pwm_lpss_boardinfo *)id->driver_data;
 	lpwm = pwm_lpss_probe(&pdev->dev, &pdev->resource[0], info);
-	अगर (IS_ERR(lpwm))
-		वापस PTR_ERR(lpwm);
+	if (IS_ERR(lpwm))
+		return PTR_ERR(lpwm);
 
 	pci_set_drvdata(pdev, lpwm);
 
-	pm_runसमय_put(&pdev->dev);
-	pm_runसमय_allow(&pdev->dev);
+	pm_runtime_put(&pdev->dev);
+	pm_runtime_allow(&pdev->dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम pwm_lpss_हटाओ_pci(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा pwm_lpss_chip *lpwm = pci_get_drvdata(pdev);
+static void pwm_lpss_remove_pci(struct pci_dev *pdev)
+{
+	struct pwm_lpss_chip *lpwm = pci_get_drvdata(pdev);
 
-	pm_runसमय_क्रमbid(&pdev->dev);
-	pm_runसमय_get_sync(&pdev->dev);
+	pm_runtime_forbid(&pdev->dev);
+	pm_runtime_get_sync(&pdev->dev);
 
-	pwm_lpss_हटाओ(lpwm);
-पूर्ण
+	pwm_lpss_remove(lpwm);
+}
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक pwm_lpss_runसमय_suspend_pci(काष्ठा device *dev)
-अणु
+#ifdef CONFIG_PM
+static int pwm_lpss_runtime_suspend_pci(struct device *dev)
+{
 	/*
-	 * The PCI core will handle transition to D3 स्वतःmatically. We only
-	 * need to provide runसमय PM hooks क्रम that to happen.
+	 * The PCI core will handle transition to D3 automatically. We only
+	 * need to provide runtime PM hooks for that to happen.
 	 */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pwm_lpss_runसमय_resume_pci(काष्ठा device *dev)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+static int pwm_lpss_runtime_resume_pci(struct device *dev)
+{
+	return 0;
+}
+#endif
 
-अटल स्थिर काष्ठा dev_pm_ops pwm_lpss_pci_pm = अणु
-	SET_RUNTIME_PM_OPS(pwm_lpss_runसमय_suspend_pci,
-			   pwm_lpss_runसमय_resume_pci, शून्य)
-पूर्ण;
+static const struct dev_pm_ops pwm_lpss_pci_pm = {
+	SET_RUNTIME_PM_OPS(pwm_lpss_runtime_suspend_pci,
+			   pwm_lpss_runtime_resume_pci, NULL)
+};
 
-अटल स्थिर काष्ठा pci_device_id pwm_lpss_pci_ids[] = अणु
-	अणु PCI_VDEVICE(INTEL, 0x0ac8), (अचिन्हित दीर्घ)&pwm_lpss_bxt_infoपूर्ण,
-	अणु PCI_VDEVICE(INTEL, 0x0f08), (अचिन्हित दीर्घ)&pwm_lpss_byt_infoपूर्ण,
-	अणु PCI_VDEVICE(INTEL, 0x0f09), (अचिन्हित दीर्घ)&pwm_lpss_byt_infoपूर्ण,
-	अणु PCI_VDEVICE(INTEL, 0x11a5), (अचिन्हित दीर्घ)&pwm_lpss_tng_infoपूर्ण,
-	अणु PCI_VDEVICE(INTEL, 0x1ac8), (अचिन्हित दीर्घ)&pwm_lpss_bxt_infoपूर्ण,
-	अणु PCI_VDEVICE(INTEL, 0x2288), (अचिन्हित दीर्घ)&pwm_lpss_bsw_infoपूर्ण,
-	अणु PCI_VDEVICE(INTEL, 0x2289), (अचिन्हित दीर्घ)&pwm_lpss_bsw_infoपूर्ण,
-	अणु PCI_VDEVICE(INTEL, 0x31c8), (अचिन्हित दीर्घ)&pwm_lpss_bxt_infoपूर्ण,
-	अणु PCI_VDEVICE(INTEL, 0x5ac8), (अचिन्हित दीर्घ)&pwm_lpss_bxt_infoपूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct pci_device_id pwm_lpss_pci_ids[] = {
+	{ PCI_VDEVICE(INTEL, 0x0ac8), (unsigned long)&pwm_lpss_bxt_info},
+	{ PCI_VDEVICE(INTEL, 0x0f08), (unsigned long)&pwm_lpss_byt_info},
+	{ PCI_VDEVICE(INTEL, 0x0f09), (unsigned long)&pwm_lpss_byt_info},
+	{ PCI_VDEVICE(INTEL, 0x11a5), (unsigned long)&pwm_lpss_tng_info},
+	{ PCI_VDEVICE(INTEL, 0x1ac8), (unsigned long)&pwm_lpss_bxt_info},
+	{ PCI_VDEVICE(INTEL, 0x2288), (unsigned long)&pwm_lpss_bsw_info},
+	{ PCI_VDEVICE(INTEL, 0x2289), (unsigned long)&pwm_lpss_bsw_info},
+	{ PCI_VDEVICE(INTEL, 0x31c8), (unsigned long)&pwm_lpss_bxt_info},
+	{ PCI_VDEVICE(INTEL, 0x5ac8), (unsigned long)&pwm_lpss_bxt_info},
+	{ },
+};
 MODULE_DEVICE_TABLE(pci, pwm_lpss_pci_ids);
 
-अटल काष्ठा pci_driver pwm_lpss_driver_pci = अणु
+static struct pci_driver pwm_lpss_driver_pci = {
 	.name = "pwm-lpss",
 	.id_table = pwm_lpss_pci_ids,
 	.probe = pwm_lpss_probe_pci,
-	.हटाओ = pwm_lpss_हटाओ_pci,
-	.driver = अणु
+	.remove = pwm_lpss_remove_pci,
+	.driver = {
 		.pm = &pwm_lpss_pci_pm,
-	पूर्ण,
-पूर्ण;
+	},
+};
 module_pci_driver(pwm_lpss_driver_pci);
 
 MODULE_DESCRIPTION("PWM PCI driver for Intel LPSS");

@@ -1,569 +1,568 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/netfilter.h>
-#समावेश <linux/seq_file.h>
-#समावेश <net/protocol.h>
-#समावेश <net/netfilter/nf_log.h>
+// SPDX-License-Identifier: GPL-2.0-only
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/proc_fs.h>
+#include <linux/skbuff.h>
+#include <linux/netfilter.h>
+#include <linux/seq_file.h>
+#include <net/protocol.h>
+#include <net/netfilter/nf_log.h>
 
-#समावेश "nf_internals.h"
+#include "nf_internals.h"
 
-/* Internal logging पूर्णांकerface, which relies on the real
+/* Internal logging interface, which relies on the real
    LOG target modules */
 
-#घोषणा NFLOGGER_NAME_LEN		64
+#define NFLOGGER_NAME_LEN		64
 
-पूर्णांक sysctl_nf_log_all_netns __पढ़ो_mostly;
+int sysctl_nf_log_all_netns __read_mostly;
 EXPORT_SYMBOL(sysctl_nf_log_all_netns);
 
-अटल काष्ठा nf_logger __rcu *loggers[NFPROTO_NUMPROTO][NF_LOG_TYPE_MAX] __पढ़ो_mostly;
-अटल DEFINE_MUTEX(nf_log_mutex);
+static struct nf_logger __rcu *loggers[NFPROTO_NUMPROTO][NF_LOG_TYPE_MAX] __read_mostly;
+static DEFINE_MUTEX(nf_log_mutex);
 
-#घोषणा nft_log_dereference(logger) \
-	rcu_dereference_रक्षित(logger, lockdep_is_held(&nf_log_mutex))
+#define nft_log_dereference(logger) \
+	rcu_dereference_protected(logger, lockdep_is_held(&nf_log_mutex))
 
-अटल काष्ठा nf_logger *__find_logger(पूर्णांक pf, स्थिर अक्षर *str_logger)
-अणु
-	काष्ठा nf_logger *log;
-	पूर्णांक i;
+static struct nf_logger *__find_logger(int pf, const char *str_logger)
+{
+	struct nf_logger *log;
+	int i;
 
-	क्रम (i = 0; i < NF_LOG_TYPE_MAX; i++) अणु
-		अगर (loggers[pf][i] == शून्य)
-			जारी;
+	for (i = 0; i < NF_LOG_TYPE_MAX; i++) {
+		if (loggers[pf][i] == NULL)
+			continue;
 
 		log = nft_log_dereference(loggers[pf][i]);
-		अगर (!strnहालcmp(str_logger, log->name, म_माप(log->name)))
-			वापस log;
-	पूर्ण
+		if (!strncasecmp(str_logger, log->name, strlen(log->name)))
+			return log;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-पूर्णांक nf_log_set(काष्ठा net *net, u_पूर्णांक8_t pf, स्थिर काष्ठा nf_logger *logger)
-अणु
-	स्थिर काष्ठा nf_logger *log;
+int nf_log_set(struct net *net, u_int8_t pf, const struct nf_logger *logger)
+{
+	const struct nf_logger *log;
 
-	अगर (pf == NFPROTO_UNSPEC || pf >= ARRAY_SIZE(net->nf.nf_loggers))
-		वापस -EOPNOTSUPP;
+	if (pf == NFPROTO_UNSPEC || pf >= ARRAY_SIZE(net->nf.nf_loggers))
+		return -EOPNOTSUPP;
 
 	mutex_lock(&nf_log_mutex);
 	log = nft_log_dereference(net->nf.nf_loggers[pf]);
-	अगर (log == शून्य)
-		rcu_assign_poपूर्णांकer(net->nf.nf_loggers[pf], logger);
+	if (log == NULL)
+		rcu_assign_pointer(net->nf.nf_loggers[pf], logger);
 
 	mutex_unlock(&nf_log_mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(nf_log_set);
 
-व्योम nf_log_unset(काष्ठा net *net, स्थिर काष्ठा nf_logger *logger)
-अणु
-	पूर्णांक i;
-	स्थिर काष्ठा nf_logger *log;
+void nf_log_unset(struct net *net, const struct nf_logger *logger)
+{
+	int i;
+	const struct nf_logger *log;
 
 	mutex_lock(&nf_log_mutex);
-	क्रम (i = 0; i < NFPROTO_NUMPROTO; i++) अणु
+	for (i = 0; i < NFPROTO_NUMPROTO; i++) {
 		log = nft_log_dereference(net->nf.nf_loggers[i]);
-		अगर (log == logger)
-			RCU_INIT_POINTER(net->nf.nf_loggers[i], शून्य);
-	पूर्ण
+		if (log == logger)
+			RCU_INIT_POINTER(net->nf.nf_loggers[i], NULL);
+	}
 	mutex_unlock(&nf_log_mutex);
-पूर्ण
+}
 EXPORT_SYMBOL(nf_log_unset);
 
-/* वापस EEXIST अगर the same logger is रेजिस्टरed, 0 on success. */
-पूर्णांक nf_log_रेजिस्टर(u_पूर्णांक8_t pf, काष्ठा nf_logger *logger)
-अणु
-	पूर्णांक i;
-	पूर्णांक ret = 0;
+/* return EEXIST if the same logger is registered, 0 on success. */
+int nf_log_register(u_int8_t pf, struct nf_logger *logger)
+{
+	int i;
+	int ret = 0;
 
-	अगर (pf >= ARRAY_SIZE(init_net.nf.nf_loggers))
-		वापस -EINVAL;
+	if (pf >= ARRAY_SIZE(init_net.nf.nf_loggers))
+		return -EINVAL;
 
 	mutex_lock(&nf_log_mutex);
 
-	अगर (pf == NFPROTO_UNSPEC) अणु
-		क्रम (i = NFPROTO_UNSPEC; i < NFPROTO_NUMPROTO; i++) अणु
-			अगर (rcu_access_poपूर्णांकer(loggers[i][logger->type])) अणु
+	if (pf == NFPROTO_UNSPEC) {
+		for (i = NFPROTO_UNSPEC; i < NFPROTO_NUMPROTO; i++) {
+			if (rcu_access_pointer(loggers[i][logger->type])) {
 				ret = -EEXIST;
-				जाओ unlock;
-			पूर्ण
-		पूर्ण
-		क्रम (i = NFPROTO_UNSPEC; i < NFPROTO_NUMPROTO; i++)
-			rcu_assign_poपूर्णांकer(loggers[i][logger->type], logger);
-	पूर्ण अन्यथा अणु
-		अगर (rcu_access_poपूर्णांकer(loggers[pf][logger->type])) अणु
+				goto unlock;
+			}
+		}
+		for (i = NFPROTO_UNSPEC; i < NFPROTO_NUMPROTO; i++)
+			rcu_assign_pointer(loggers[i][logger->type], logger);
+	} else {
+		if (rcu_access_pointer(loggers[pf][logger->type])) {
 			ret = -EEXIST;
-			जाओ unlock;
-		पूर्ण
-		rcu_assign_poपूर्णांकer(loggers[pf][logger->type], logger);
-	पूर्ण
+			goto unlock;
+		}
+		rcu_assign_pointer(loggers[pf][logger->type], logger);
+	}
 
 unlock:
 	mutex_unlock(&nf_log_mutex);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(nf_log_रेजिस्टर);
+	return ret;
+}
+EXPORT_SYMBOL(nf_log_register);
 
-व्योम nf_log_unरेजिस्टर(काष्ठा nf_logger *logger)
-अणु
-	स्थिर काष्ठा nf_logger *log;
-	पूर्णांक i;
+void nf_log_unregister(struct nf_logger *logger)
+{
+	const struct nf_logger *log;
+	int i;
 
 	mutex_lock(&nf_log_mutex);
-	क्रम (i = 0; i < NFPROTO_NUMPROTO; i++) अणु
+	for (i = 0; i < NFPROTO_NUMPROTO; i++) {
 		log = nft_log_dereference(loggers[i][logger->type]);
-		अगर (log == logger)
-			RCU_INIT_POINTER(loggers[i][logger->type], शून्य);
-	पूर्ण
+		if (log == logger)
+			RCU_INIT_POINTER(loggers[i][logger->type], NULL);
+	}
 	mutex_unlock(&nf_log_mutex);
 	synchronize_rcu();
-पूर्ण
-EXPORT_SYMBOL(nf_log_unरेजिस्टर);
+}
+EXPORT_SYMBOL(nf_log_unregister);
 
-पूर्णांक nf_log_bind_pf(काष्ठा net *net, u_पूर्णांक8_t pf,
-		   स्थिर काष्ठा nf_logger *logger)
-अणु
-	अगर (pf >= ARRAY_SIZE(net->nf.nf_loggers))
-		वापस -EINVAL;
+int nf_log_bind_pf(struct net *net, u_int8_t pf,
+		   const struct nf_logger *logger)
+{
+	if (pf >= ARRAY_SIZE(net->nf.nf_loggers))
+		return -EINVAL;
 	mutex_lock(&nf_log_mutex);
-	अगर (__find_logger(pf, logger->name) == शून्य) अणु
+	if (__find_logger(pf, logger->name) == NULL) {
 		mutex_unlock(&nf_log_mutex);
-		वापस -ENOENT;
-	पूर्ण
-	rcu_assign_poपूर्णांकer(net->nf.nf_loggers[pf], logger);
+		return -ENOENT;
+	}
+	rcu_assign_pointer(net->nf.nf_loggers[pf], logger);
 	mutex_unlock(&nf_log_mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(nf_log_bind_pf);
 
-व्योम nf_log_unbind_pf(काष्ठा net *net, u_पूर्णांक8_t pf)
-अणु
-	अगर (pf >= ARRAY_SIZE(net->nf.nf_loggers))
-		वापस;
+void nf_log_unbind_pf(struct net *net, u_int8_t pf)
+{
+	if (pf >= ARRAY_SIZE(net->nf.nf_loggers))
+		return;
 	mutex_lock(&nf_log_mutex);
-	RCU_INIT_POINTER(net->nf.nf_loggers[pf], शून्य);
+	RCU_INIT_POINTER(net->nf.nf_loggers[pf], NULL);
 	mutex_unlock(&nf_log_mutex);
-पूर्ण
+}
 EXPORT_SYMBOL(nf_log_unbind_pf);
 
-पूर्णांक nf_logger_find_get(पूर्णांक pf, क्रमागत nf_log_type type)
-अणु
-	काष्ठा nf_logger *logger;
-	पूर्णांक ret = -ENOENT;
+int nf_logger_find_get(int pf, enum nf_log_type type)
+{
+	struct nf_logger *logger;
+	int ret = -ENOENT;
 
-	अगर (pf == NFPROTO_INET) अणु
+	if (pf == NFPROTO_INET) {
 		ret = nf_logger_find_get(NFPROTO_IPV4, type);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 
 		ret = nf_logger_find_get(NFPROTO_IPV6, type);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			nf_logger_put(NFPROTO_IPV4, type);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	logger = rcu_dereference(loggers[pf][type]);
-	अगर (logger == शून्य)
-		जाओ out;
+	if (logger == NULL)
+		goto out;
 
-	अगर (try_module_get(logger->me))
+	if (try_module_get(logger->me))
 		ret = 0;
 out:
-	rcu_पढ़ो_unlock();
-	वापस ret;
-पूर्ण
+	rcu_read_unlock();
+	return ret;
+}
 EXPORT_SYMBOL_GPL(nf_logger_find_get);
 
-व्योम nf_logger_put(पूर्णांक pf, क्रमागत nf_log_type type)
-अणु
-	काष्ठा nf_logger *logger;
+void nf_logger_put(int pf, enum nf_log_type type)
+{
+	struct nf_logger *logger;
 
-	अगर (pf == NFPROTO_INET) अणु
+	if (pf == NFPROTO_INET) {
 		nf_logger_put(NFPROTO_IPV4, type);
 		nf_logger_put(NFPROTO_IPV6, type);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	BUG_ON(loggers[pf][type] == शून्य);
+	BUG_ON(loggers[pf][type] == NULL);
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	logger = rcu_dereference(loggers[pf][type]);
 	module_put(logger->me);
-	rcu_पढ़ो_unlock();
-पूर्ण
+	rcu_read_unlock();
+}
 EXPORT_SYMBOL_GPL(nf_logger_put);
 
-व्योम nf_log_packet(काष्ठा net *net,
-		   u_पूर्णांक8_t pf,
-		   अचिन्हित पूर्णांक hooknum,
-		   स्थिर काष्ठा sk_buff *skb,
-		   स्थिर काष्ठा net_device *in,
-		   स्थिर काष्ठा net_device *out,
-		   स्थिर काष्ठा nf_loginfo *loginfo,
-		   स्थिर अक्षर *fmt, ...)
-अणु
-	बहु_सूची args;
-	अक्षर prefix[NF_LOG_PREFIXLEN];
-	स्थिर काष्ठा nf_logger *logger;
+void nf_log_packet(struct net *net,
+		   u_int8_t pf,
+		   unsigned int hooknum,
+		   const struct sk_buff *skb,
+		   const struct net_device *in,
+		   const struct net_device *out,
+		   const struct nf_loginfo *loginfo,
+		   const char *fmt, ...)
+{
+	va_list args;
+	char prefix[NF_LOG_PREFIXLEN];
+	const struct nf_logger *logger;
 
-	rcu_पढ़ो_lock();
-	अगर (loginfo != शून्य)
+	rcu_read_lock();
+	if (loginfo != NULL)
 		logger = rcu_dereference(loggers[pf][loginfo->type]);
-	अन्यथा
+	else
 		logger = rcu_dereference(net->nf.nf_loggers[pf]);
 
-	अगर (logger) अणु
-		बहु_शुरू(args, fmt);
-		vsnम_लिखो(prefix, माप(prefix), fmt, args);
-		बहु_पूर्ण(args);
+	if (logger) {
+		va_start(args, fmt);
+		vsnprintf(prefix, sizeof(prefix), fmt, args);
+		va_end(args);
 		logger->logfn(net, pf, hooknum, skb, in, out, loginfo, prefix);
-	पूर्ण
-	rcu_पढ़ो_unlock();
-पूर्ण
+	}
+	rcu_read_unlock();
+}
 EXPORT_SYMBOL(nf_log_packet);
 
-व्योम nf_log_trace(काष्ठा net *net,
-		  u_पूर्णांक8_t pf,
-		  अचिन्हित पूर्णांक hooknum,
-		  स्थिर काष्ठा sk_buff *skb,
-		  स्थिर काष्ठा net_device *in,
-		  स्थिर काष्ठा net_device *out,
-		  स्थिर काष्ठा nf_loginfo *loginfo, स्थिर अक्षर *fmt, ...)
-अणु
-	बहु_सूची args;
-	अक्षर prefix[NF_LOG_PREFIXLEN];
-	स्थिर काष्ठा nf_logger *logger;
+void nf_log_trace(struct net *net,
+		  u_int8_t pf,
+		  unsigned int hooknum,
+		  const struct sk_buff *skb,
+		  const struct net_device *in,
+		  const struct net_device *out,
+		  const struct nf_loginfo *loginfo, const char *fmt, ...)
+{
+	va_list args;
+	char prefix[NF_LOG_PREFIXLEN];
+	const struct nf_logger *logger;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	logger = rcu_dereference(net->nf.nf_loggers[pf]);
-	अगर (logger) अणु
-		बहु_शुरू(args, fmt);
-		vsnम_लिखो(prefix, माप(prefix), fmt, args);
-		बहु_पूर्ण(args);
+	if (logger) {
+		va_start(args, fmt);
+		vsnprintf(prefix, sizeof(prefix), fmt, args);
+		va_end(args);
 		logger->logfn(net, pf, hooknum, skb, in, out, loginfo, prefix);
-	पूर्ण
-	rcu_पढ़ो_unlock();
-पूर्ण
+	}
+	rcu_read_unlock();
+}
 EXPORT_SYMBOL(nf_log_trace);
 
-#घोषणा S_SIZE (1024 - (माप(अचिन्हित पूर्णांक) + 1))
+#define S_SIZE (1024 - (sizeof(unsigned int) + 1))
 
-काष्ठा nf_log_buf अणु
-	अचिन्हित पूर्णांक	count;
-	अक्षर		buf[S_SIZE + 1];
-पूर्ण;
-अटल काष्ठा nf_log_buf emergency, *emergency_ptr = &emergency;
+struct nf_log_buf {
+	unsigned int	count;
+	char		buf[S_SIZE + 1];
+};
+static struct nf_log_buf emergency, *emergency_ptr = &emergency;
 
-__म_लिखो(2, 3) पूर्णांक nf_log_buf_add(काष्ठा nf_log_buf *m, स्थिर अक्षर *f, ...)
-अणु
-	बहु_सूची args;
-	पूर्णांक len;
+__printf(2, 3) int nf_log_buf_add(struct nf_log_buf *m, const char *f, ...)
+{
+	va_list args;
+	int len;
 
-	अगर (likely(m->count < S_SIZE)) अणु
-		बहु_शुरू(args, f);
-		len = vsnम_लिखो(m->buf + m->count, S_SIZE - m->count, f, args);
-		बहु_पूर्ण(args);
-		अगर (likely(m->count + len < S_SIZE)) अणु
+	if (likely(m->count < S_SIZE)) {
+		va_start(args, f);
+		len = vsnprintf(m->buf + m->count, S_SIZE - m->count, f, args);
+		va_end(args);
+		if (likely(m->count + len < S_SIZE)) {
 			m->count += len;
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 	m->count = S_SIZE;
-	prपूर्णांकk_once(KERN_ERR KBUILD_MODNAME " please increase S_SIZE\n");
-	वापस -1;
-पूर्ण
+	printk_once(KERN_ERR KBUILD_MODNAME " please increase S_SIZE\n");
+	return -1;
+}
 EXPORT_SYMBOL_GPL(nf_log_buf_add);
 
-काष्ठा nf_log_buf *nf_log_buf_खोलो(व्योम)
-अणु
-	काष्ठा nf_log_buf *m = kदो_स्मृति(माप(*m), GFP_ATOMIC);
+struct nf_log_buf *nf_log_buf_open(void)
+{
+	struct nf_log_buf *m = kmalloc(sizeof(*m), GFP_ATOMIC);
 
-	अगर (unlikely(!m)) अणु
+	if (unlikely(!m)) {
 		local_bh_disable();
-		करो अणु
-			m = xchg(&emergency_ptr, शून्य);
-		पूर्ण जबतक (!m);
-	पूर्ण
+		do {
+			m = xchg(&emergency_ptr, NULL);
+		} while (!m);
+	}
 	m->count = 0;
-	वापस m;
-पूर्ण
-EXPORT_SYMBOL_GPL(nf_log_buf_खोलो);
+	return m;
+}
+EXPORT_SYMBOL_GPL(nf_log_buf_open);
 
-व्योम nf_log_buf_बंद(काष्ठा nf_log_buf *m)
-अणु
+void nf_log_buf_close(struct nf_log_buf *m)
+{
 	m->buf[m->count] = 0;
-	prपूर्णांकk("%s\n", m->buf);
+	printk("%s\n", m->buf);
 
-	अगर (likely(m != &emergency))
-		kमुक्त(m);
-	अन्यथा अणु
+	if (likely(m != &emergency))
+		kfree(m);
+	else {
 		emergency_ptr = m;
 		local_bh_enable();
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL_GPL(nf_log_buf_बंद);
+	}
+}
+EXPORT_SYMBOL_GPL(nf_log_buf_close);
 
-#अगर_घोषित CONFIG_PROC_FS
-अटल व्योम *seq_start(काष्ठा seq_file *seq, loff_t *pos)
-अणु
-	काष्ठा net *net = seq_file_net(seq);
+#ifdef CONFIG_PROC_FS
+static void *seq_start(struct seq_file *seq, loff_t *pos)
+{
+	struct net *net = seq_file_net(seq);
 
 	mutex_lock(&nf_log_mutex);
 
-	अगर (*pos >= ARRAY_SIZE(net->nf.nf_loggers))
-		वापस शून्य;
+	if (*pos >= ARRAY_SIZE(net->nf.nf_loggers))
+		return NULL;
 
-	वापस pos;
-पूर्ण
+	return pos;
+}
 
-अटल व्योम *seq_next(काष्ठा seq_file *s, व्योम *v, loff_t *pos)
-अणु
-	काष्ठा net *net = seq_file_net(s);
+static void *seq_next(struct seq_file *s, void *v, loff_t *pos)
+{
+	struct net *net = seq_file_net(s);
 
 	(*pos)++;
 
-	अगर (*pos >= ARRAY_SIZE(net->nf.nf_loggers))
-		वापस शून्य;
+	if (*pos >= ARRAY_SIZE(net->nf.nf_loggers))
+		return NULL;
 
-	वापस pos;
-पूर्ण
+	return pos;
+}
 
-अटल व्योम seq_stop(काष्ठा seq_file *s, व्योम *v)
-अणु
+static void seq_stop(struct seq_file *s, void *v)
+{
 	mutex_unlock(&nf_log_mutex);
-पूर्ण
+}
 
-अटल पूर्णांक seq_show(काष्ठा seq_file *s, व्योम *v)
-अणु
+static int seq_show(struct seq_file *s, void *v)
+{
 	loff_t *pos = v;
-	स्थिर काष्ठा nf_logger *logger;
-	पूर्णांक i;
-	काष्ठा net *net = seq_file_net(s);
+	const struct nf_logger *logger;
+	int i;
+	struct net *net = seq_file_net(s);
 
 	logger = nft_log_dereference(net->nf.nf_loggers[*pos]);
 
-	अगर (!logger)
-		seq_म_लिखो(s, "%2lld NONE (", *pos);
-	अन्यथा
-		seq_म_लिखो(s, "%2lld %s (", *pos, logger->name);
+	if (!logger)
+		seq_printf(s, "%2lld NONE (", *pos);
+	else
+		seq_printf(s, "%2lld %s (", *pos, logger->name);
 
-	अगर (seq_has_overflowed(s))
-		वापस -ENOSPC;
+	if (seq_has_overflowed(s))
+		return -ENOSPC;
 
-	क्रम (i = 0; i < NF_LOG_TYPE_MAX; i++) अणु
-		अगर (loggers[*pos][i] == शून्य)
-			जारी;
+	for (i = 0; i < NF_LOG_TYPE_MAX; i++) {
+		if (loggers[*pos][i] == NULL)
+			continue;
 
 		logger = nft_log_dereference(loggers[*pos][i]);
-		seq_माला_दो(s, logger->name);
-		अगर (i == 0 && loggers[*pos][i + 1] != शून्य)
-			seq_माला_दो(s, ",");
+		seq_puts(s, logger->name);
+		if (i == 0 && loggers[*pos][i + 1] != NULL)
+			seq_puts(s, ",");
 
-		अगर (seq_has_overflowed(s))
-			वापस -ENOSPC;
-	पूर्ण
+		if (seq_has_overflowed(s))
+			return -ENOSPC;
+	}
 
-	seq_माला_दो(s, ")\n");
+	seq_puts(s, ")\n");
 
-	अगर (seq_has_overflowed(s))
-		वापस -ENOSPC;
-	वापस 0;
-पूर्ण
+	if (seq_has_overflowed(s))
+		return -ENOSPC;
+	return 0;
+}
 
-अटल स्थिर काष्ठा seq_operations nflog_seq_ops = अणु
+static const struct seq_operations nflog_seq_ops = {
 	.start	= seq_start,
 	.next	= seq_next,
 	.stop	= seq_stop,
 	.show	= seq_show,
-पूर्ण;
-#पूर्ण_अगर /* PROC_FS */
+};
+#endif /* PROC_FS */
 
-#अगर_घोषित CONFIG_SYSCTL
-अटल अक्षर nf_log_sysctl_fnames[NFPROTO_NUMPROTO-NFPROTO_UNSPEC][3];
-अटल काष्ठा ctl_table nf_log_sysctl_table[NFPROTO_NUMPROTO+1];
-अटल काष्ठा ctl_table_header *nf_log_sysctl_fhdr;
+#ifdef CONFIG_SYSCTL
+static char nf_log_sysctl_fnames[NFPROTO_NUMPROTO-NFPROTO_UNSPEC][3];
+static struct ctl_table nf_log_sysctl_table[NFPROTO_NUMPROTO+1];
+static struct ctl_table_header *nf_log_sysctl_fhdr;
 
-अटल काष्ठा ctl_table nf_log_sysctl_ftable[] = अणु
-	अणु
+static struct ctl_table nf_log_sysctl_ftable[] = {
+	{
 		.procname	= "nf_log_all_netns",
 		.data		= &sysctl_nf_log_all_netns,
-		.maxlen		= माप(sysctl_nf_log_all_netns),
+		.maxlen		= sizeof(sysctl_nf_log_all_netns),
 		.mode		= 0644,
-		.proc_handler	= proc_करोपूर्णांकvec,
-	पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+		.proc_handler	= proc_dointvec,
+	},
+	{ }
+};
 
-अटल पूर्णांक nf_log_proc_करोstring(काष्ठा ctl_table *table, पूर्णांक ग_लिखो,
-			 व्योम *buffer, माप_प्रकार *lenp, loff_t *ppos)
-अणु
-	स्थिर काष्ठा nf_logger *logger;
-	अक्षर buf[NFLOGGER_NAME_LEN];
-	पूर्णांक r = 0;
-	पूर्णांक tindex = (अचिन्हित दीर्घ)table->extra1;
-	काष्ठा net *net = table->extra2;
+static int nf_log_proc_dostring(struct ctl_table *table, int write,
+			 void *buffer, size_t *lenp, loff_t *ppos)
+{
+	const struct nf_logger *logger;
+	char buf[NFLOGGER_NAME_LEN];
+	int r = 0;
+	int tindex = (unsigned long)table->extra1;
+	struct net *net = table->extra2;
 
-	अगर (ग_लिखो) अणु
-		काष्ठा ctl_table पंचांगp = *table;
+	if (write) {
+		struct ctl_table tmp = *table;
 
-		/* proc_करोstring() can append to existing strings, so we need to
+		/* proc_dostring() can append to existing strings, so we need to
 		 * initialize it as an empty string.
 		 */
 		buf[0] = '\0';
-		पंचांगp.data = buf;
-		r = proc_करोstring(&पंचांगp, ग_लिखो, buffer, lenp, ppos);
-		अगर (r)
-			वापस r;
+		tmp.data = buf;
+		r = proc_dostring(&tmp, write, buffer, lenp, ppos);
+		if (r)
+			return r;
 
-		अगर (!म_भेद(buf, "NONE")) अणु
+		if (!strcmp(buf, "NONE")) {
 			nf_log_unbind_pf(net, tindex);
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 		mutex_lock(&nf_log_mutex);
 		logger = __find_logger(tindex, buf);
-		अगर (logger == शून्य) अणु
+		if (logger == NULL) {
 			mutex_unlock(&nf_log_mutex);
-			वापस -ENOENT;
-		पूर्ण
-		rcu_assign_poपूर्णांकer(net->nf.nf_loggers[tindex], logger);
+			return -ENOENT;
+		}
+		rcu_assign_pointer(net->nf.nf_loggers[tindex], logger);
 		mutex_unlock(&nf_log_mutex);
-	पूर्ण अन्यथा अणु
-		काष्ठा ctl_table पंचांगp = *table;
+	} else {
+		struct ctl_table tmp = *table;
 
-		पंचांगp.data = buf;
+		tmp.data = buf;
 		mutex_lock(&nf_log_mutex);
 		logger = nft_log_dereference(net->nf.nf_loggers[tindex]);
-		अगर (!logger)
-			strlcpy(buf, "NONE", माप(buf));
-		अन्यथा
-			strlcpy(buf, logger->name, माप(buf));
+		if (!logger)
+			strlcpy(buf, "NONE", sizeof(buf));
+		else
+			strlcpy(buf, logger->name, sizeof(buf));
 		mutex_unlock(&nf_log_mutex);
-		r = proc_करोstring(&पंचांगp, ग_लिखो, buffer, lenp, ppos);
-	पूर्ण
+		r = proc_dostring(&tmp, write, buffer, lenp, ppos);
+	}
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक netfilter_log_sysctl_init(काष्ठा net *net)
-अणु
-	पूर्णांक i;
-	काष्ठा ctl_table *table;
+static int netfilter_log_sysctl_init(struct net *net)
+{
+	int i;
+	struct ctl_table *table;
 
 	table = nf_log_sysctl_table;
-	अगर (!net_eq(net, &init_net)) अणु
+	if (!net_eq(net, &init_net)) {
 		table = kmemdup(nf_log_sysctl_table,
-				 माप(nf_log_sysctl_table),
+				 sizeof(nf_log_sysctl_table),
 				 GFP_KERNEL);
-		अगर (!table)
-			जाओ err_alloc;
-	पूर्ण अन्यथा अणु
-		क्रम (i = NFPROTO_UNSPEC; i < NFPROTO_NUMPROTO; i++) अणु
-			snम_लिखो(nf_log_sysctl_fnames[i],
+		if (!table)
+			goto err_alloc;
+	} else {
+		for (i = NFPROTO_UNSPEC; i < NFPROTO_NUMPROTO; i++) {
+			snprintf(nf_log_sysctl_fnames[i],
 				 3, "%d", i);
 			nf_log_sysctl_table[i].procname	=
 				nf_log_sysctl_fnames[i];
 			nf_log_sysctl_table[i].maxlen = NFLOGGER_NAME_LEN;
 			nf_log_sysctl_table[i].mode = 0644;
 			nf_log_sysctl_table[i].proc_handler =
-				nf_log_proc_करोstring;
+				nf_log_proc_dostring;
 			nf_log_sysctl_table[i].extra1 =
-				(व्योम *)(अचिन्हित दीर्घ) i;
-		पूर्ण
-		nf_log_sysctl_fhdr = रेजिस्टर_net_sysctl(net, "net/netfilter",
+				(void *)(unsigned long) i;
+		}
+		nf_log_sysctl_fhdr = register_net_sysctl(net, "net/netfilter",
 							 nf_log_sysctl_ftable);
-		अगर (!nf_log_sysctl_fhdr)
-			जाओ err_freg;
-	पूर्ण
+		if (!nf_log_sysctl_fhdr)
+			goto err_freg;
+	}
 
-	क्रम (i = NFPROTO_UNSPEC; i < NFPROTO_NUMPROTO; i++)
+	for (i = NFPROTO_UNSPEC; i < NFPROTO_NUMPROTO; i++)
 		table[i].extra2 = net;
 
-	net->nf.nf_log_dir_header = रेजिस्टर_net_sysctl(net,
+	net->nf.nf_log_dir_header = register_net_sysctl(net,
 						"net/netfilter/nf_log",
 						table);
-	अगर (!net->nf.nf_log_dir_header)
-		जाओ err_reg;
+	if (!net->nf.nf_log_dir_header)
+		goto err_reg;
 
-	वापस 0;
+	return 0;
 
 err_reg:
-	अगर (!net_eq(net, &init_net))
-		kमुक्त(table);
-	अन्यथा
-		unरेजिस्टर_net_sysctl_table(nf_log_sysctl_fhdr);
+	if (!net_eq(net, &init_net))
+		kfree(table);
+	else
+		unregister_net_sysctl_table(nf_log_sysctl_fhdr);
 err_freg:
 err_alloc:
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-अटल व्योम netfilter_log_sysctl_निकास(काष्ठा net *net)
-अणु
-	काष्ठा ctl_table *table;
+static void netfilter_log_sysctl_exit(struct net *net)
+{
+	struct ctl_table *table;
 
 	table = net->nf.nf_log_dir_header->ctl_table_arg;
-	unरेजिस्टर_net_sysctl_table(net->nf.nf_log_dir_header);
-	अगर (!net_eq(net, &init_net))
-		kमुक्त(table);
-	अन्यथा
-		unरेजिस्टर_net_sysctl_table(nf_log_sysctl_fhdr);
-पूर्ण
-#अन्यथा
-अटल पूर्णांक netfilter_log_sysctl_init(काष्ठा net *net)
-अणु
-	वापस 0;
-पूर्ण
+	unregister_net_sysctl_table(net->nf.nf_log_dir_header);
+	if (!net_eq(net, &init_net))
+		kfree(table);
+	else
+		unregister_net_sysctl_table(nf_log_sysctl_fhdr);
+}
+#else
+static int netfilter_log_sysctl_init(struct net *net)
+{
+	return 0;
+}
 
-अटल व्योम netfilter_log_sysctl_निकास(काष्ठा net *net)
-अणु
-पूर्ण
-#पूर्ण_अगर /* CONFIG_SYSCTL */
+static void netfilter_log_sysctl_exit(struct net *net)
+{
+}
+#endif /* CONFIG_SYSCTL */
 
-अटल पूर्णांक __net_init nf_log_net_init(काष्ठा net *net)
-अणु
-	पूर्णांक ret = -ENOMEM;
+static int __net_init nf_log_net_init(struct net *net)
+{
+	int ret = -ENOMEM;
 
-#अगर_घोषित CONFIG_PROC_FS
-	अगर (!proc_create_net("nf_log", 0444, net->nf.proc_netfilter,
-			&nflog_seq_ops, माप(काष्ठा seq_net_निजी)))
-		वापस ret;
-#पूर्ण_अगर
+#ifdef CONFIG_PROC_FS
+	if (!proc_create_net("nf_log", 0444, net->nf.proc_netfilter,
+			&nflog_seq_ops, sizeof(struct seq_net_private)))
+		return ret;
+#endif
 	ret = netfilter_log_sysctl_init(net);
-	अगर (ret < 0)
-		जाओ out_sysctl;
+	if (ret < 0)
+		goto out_sysctl;
 
-	वापस 0;
+	return 0;
 
 out_sysctl:
-#अगर_घोषित CONFIG_PROC_FS
-	हटाओ_proc_entry("nf_log", net->nf.proc_netfilter);
-#पूर्ण_अगर
-	वापस ret;
-पूर्ण
+#ifdef CONFIG_PROC_FS
+	remove_proc_entry("nf_log", net->nf.proc_netfilter);
+#endif
+	return ret;
+}
 
-अटल व्योम __net_निकास nf_log_net_निकास(काष्ठा net *net)
-अणु
-	netfilter_log_sysctl_निकास(net);
-#अगर_घोषित CONFIG_PROC_FS
-	हटाओ_proc_entry("nf_log", net->nf.proc_netfilter);
-#पूर्ण_अगर
-पूर्ण
+static void __net_exit nf_log_net_exit(struct net *net)
+{
+	netfilter_log_sysctl_exit(net);
+#ifdef CONFIG_PROC_FS
+	remove_proc_entry("nf_log", net->nf.proc_netfilter);
+#endif
+}
 
-अटल काष्ठा pernet_operations nf_log_net_ops = अणु
+static struct pernet_operations nf_log_net_ops = {
 	.init = nf_log_net_init,
-	.निकास = nf_log_net_निकास,
-पूर्ण;
+	.exit = nf_log_net_exit,
+};
 
-पूर्णांक __init netfilter_log_init(व्योम)
-अणु
-	वापस रेजिस्टर_pernet_subsys(&nf_log_net_ops);
-पूर्ण
+int __init netfilter_log_init(void)
+{
+	return register_pernet_subsys(&nf_log_net_ops);
+}

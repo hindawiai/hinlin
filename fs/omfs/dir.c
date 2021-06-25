@@ -1,462 +1,461 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * OMFS (as used by RIO Karma) directory operations.
  * Copyright (C) 2005 Bob Copeland <me@bobcopeland.com>
  */
 
-#समावेश <linux/fs.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/buffer_head.h>
-#समावेश "omfs.h"
+#include <linux/fs.h>
+#include <linux/ctype.h>
+#include <linux/buffer_head.h>
+#include "omfs.h"
 
-अटल पूर्णांक omfs_hash(स्थिर अक्षर *name, पूर्णांक namelen, पूर्णांक mod)
-अणु
-	पूर्णांक i, hash = 0;
-	क्रम (i = 0; i < namelen; i++)
-		hash ^= छोटे(name[i]) << (i % 24);
-	वापस hash % mod;
-पूर्ण
+static int omfs_hash(const char *name, int namelen, int mod)
+{
+	int i, hash = 0;
+	for (i = 0; i < namelen; i++)
+		hash ^= tolower(name[i]) << (i % 24);
+	return hash % mod;
+}
 
 /*
- * Finds the bucket क्रम a given name and पढ़ोs the containing block;
+ * Finds the bucket for a given name and reads the containing block;
  * *ofs is set to the offset of the first list entry.
  */
-अटल काष्ठा buffer_head *omfs_get_bucket(काष्ठा inode *dir,
-		स्थिर अक्षर *name, पूर्णांक namelen, पूर्णांक *ofs)
-अणु
-	पूर्णांक nbuckets = (dir->i_size - OMFS_सूची_START)/8;
-	पूर्णांक bucket = omfs_hash(name, namelen, nbuckets);
+static struct buffer_head *omfs_get_bucket(struct inode *dir,
+		const char *name, int namelen, int *ofs)
+{
+	int nbuckets = (dir->i_size - OMFS_DIR_START)/8;
+	int bucket = omfs_hash(name, namelen, nbuckets);
 
-	*ofs = OMFS_सूची_START + bucket * 8;
-	वापस omfs_bपढ़ो(dir->i_sb, dir->i_ino);
-पूर्ण
+	*ofs = OMFS_DIR_START + bucket * 8;
+	return omfs_bread(dir->i_sb, dir->i_ino);
+}
 
-अटल काष्ठा buffer_head *omfs_scan_list(काष्ठा inode *dir, u64 block,
-				स्थिर अक्षर *name, पूर्णांक namelen,
+static struct buffer_head *omfs_scan_list(struct inode *dir, u64 block,
+				const char *name, int namelen,
 				u64 *prev_block)
-अणु
-	काष्ठा buffer_head *bh;
-	काष्ठा omfs_inode *oi;
-	पूर्णांक err = -ENOENT;
+{
+	struct buffer_head *bh;
+	struct omfs_inode *oi;
+	int err = -ENOENT;
 	*prev_block = ~0;
 
-	जबतक (block != ~0) अणु
-		bh = omfs_bपढ़ो(dir->i_sb, block);
-		अगर (!bh) अणु
+	while (block != ~0) {
+		bh = omfs_bread(dir->i_sb, block);
+		if (!bh) {
 			err = -EIO;
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
-		oi = (काष्ठा omfs_inode *) bh->b_data;
-		अगर (omfs_is_bad(OMFS_SB(dir->i_sb), &oi->i_head, block)) अणु
-			brअन्यथा(bh);
-			जाओ err;
-		पूर्ण
+		oi = (struct omfs_inode *) bh->b_data;
+		if (omfs_is_bad(OMFS_SB(dir->i_sb), &oi->i_head, block)) {
+			brelse(bh);
+			goto err;
+		}
 
-		अगर (म_भेदन(oi->i_name, name, namelen) == 0)
-			वापस bh;
+		if (strncmp(oi->i_name, name, namelen) == 0)
+			return bh;
 
 		*prev_block = block;
 		block = be64_to_cpu(oi->i_sibling);
-		brअन्यथा(bh);
-	पूर्ण
+		brelse(bh);
+	}
 err:
-	वापस ERR_PTR(err);
-पूर्ण
+	return ERR_PTR(err);
+}
 
-अटल काष्ठा buffer_head *omfs_find_entry(काष्ठा inode *dir,
-					   स्थिर अक्षर *name, पूर्णांक namelen)
-अणु
-	काष्ठा buffer_head *bh;
-	पूर्णांक ofs;
+static struct buffer_head *omfs_find_entry(struct inode *dir,
+					   const char *name, int namelen)
+{
+	struct buffer_head *bh;
+	int ofs;
 	u64 block, dummy;
 
 	bh = omfs_get_bucket(dir, name, namelen, &ofs);
-	अगर (!bh)
-		वापस ERR_PTR(-EIO);
+	if (!bh)
+		return ERR_PTR(-EIO);
 
 	block = be64_to_cpu(*((__be64 *) &bh->b_data[ofs]));
-	brअन्यथा(bh);
+	brelse(bh);
 
-	वापस omfs_scan_list(dir, block, name, namelen, &dummy);
-पूर्ण
+	return omfs_scan_list(dir, block, name, namelen, &dummy);
+}
 
-पूर्णांक omfs_make_empty(काष्ठा inode *inode, काष्ठा super_block *sb)
-अणु
-	काष्ठा omfs_sb_info *sbi = OMFS_SB(sb);
-	काष्ठा buffer_head *bh;
-	काष्ठा omfs_inode *oi;
+int omfs_make_empty(struct inode *inode, struct super_block *sb)
+{
+	struct omfs_sb_info *sbi = OMFS_SB(sb);
+	struct buffer_head *bh;
+	struct omfs_inode *oi;
 
-	bh = omfs_bपढ़ो(sb, inode->i_ino);
-	अगर (!bh)
-		वापस -ENOMEM;
+	bh = omfs_bread(sb, inode->i_ino);
+	if (!bh)
+		return -ENOMEM;
 
-	स_रखो(bh->b_data, 0, माप(काष्ठा omfs_inode));
+	memset(bh->b_data, 0, sizeof(struct omfs_inode));
 
-	अगर (S_ISसूची(inode->i_mode)) अणु
-		स_रखो(&bh->b_data[OMFS_सूची_START], 0xff,
-			sbi->s_sys_blocksize - OMFS_सूची_START);
-	पूर्ण अन्यथा
+	if (S_ISDIR(inode->i_mode)) {
+		memset(&bh->b_data[OMFS_DIR_START], 0xff,
+			sbi->s_sys_blocksize - OMFS_DIR_START);
+	} else
 		omfs_make_empty_table(bh, OMFS_EXTENT_START);
 
-	oi = (काष्ठा omfs_inode *) bh->b_data;
+	oi = (struct omfs_inode *) bh->b_data;
 	oi->i_head.h_self = cpu_to_be64(inode->i_ino);
 	oi->i_sibling = ~cpu_to_be64(0ULL);
 
 	mark_buffer_dirty(bh);
-	brअन्यथा(bh);
-	वापस 0;
-पूर्ण
+	brelse(bh);
+	return 0;
+}
 
-अटल पूर्णांक omfs_add_link(काष्ठा dentry *dentry, काष्ठा inode *inode)
-अणु
-	काष्ठा inode *dir = d_inode(dentry->d_parent);
-	स्थिर अक्षर *name = dentry->d_name.name;
-	पूर्णांक namelen = dentry->d_name.len;
-	काष्ठा omfs_inode *oi;
-	काष्ठा buffer_head *bh;
+static int omfs_add_link(struct dentry *dentry, struct inode *inode)
+{
+	struct inode *dir = d_inode(dentry->d_parent);
+	const char *name = dentry->d_name.name;
+	int namelen = dentry->d_name.len;
+	struct omfs_inode *oi;
+	struct buffer_head *bh;
 	u64 block;
 	__be64 *entry;
-	पूर्णांक ofs;
+	int ofs;
 
 	/* just prepend to head of queue in proper bucket */
 	bh = omfs_get_bucket(dir, name, namelen, &ofs);
-	अगर (!bh)
-		जाओ out;
+	if (!bh)
+		goto out;
 
 	entry = (__be64 *) &bh->b_data[ofs];
 	block = be64_to_cpu(*entry);
 	*entry = cpu_to_be64(inode->i_ino);
 	mark_buffer_dirty(bh);
-	brअन्यथा(bh);
+	brelse(bh);
 
-	/* now set the sibling and parent poपूर्णांकers on the new inode */
-	bh = omfs_bपढ़ो(dir->i_sb, inode->i_ino);
-	अगर (!bh)
-		जाओ out;
+	/* now set the sibling and parent pointers on the new inode */
+	bh = omfs_bread(dir->i_sb, inode->i_ino);
+	if (!bh)
+		goto out;
 
-	oi = (काष्ठा omfs_inode *) bh->b_data;
-	स_नकल(oi->i_name, name, namelen);
-	स_रखो(oi->i_name + namelen, 0, OMFS_NAMELEN - namelen);
+	oi = (struct omfs_inode *) bh->b_data;
+	memcpy(oi->i_name, name, namelen);
+	memset(oi->i_name + namelen, 0, OMFS_NAMELEN - namelen);
 	oi->i_sibling = cpu_to_be64(block);
 	oi->i_parent = cpu_to_be64(dir->i_ino);
 	mark_buffer_dirty(bh);
-	brअन्यथा(bh);
+	brelse(bh);
 
-	dir->i_स_समय = current_समय(dir);
+	dir->i_ctime = current_time(dir);
 
 	/* mark affected inodes dirty to rebuild checksums */
 	mark_inode_dirty(dir);
 	mark_inode_dirty(inode);
-	वापस 0;
+	return 0;
 out:
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-अटल पूर्णांक omfs_delete_entry(काष्ठा dentry *dentry)
-अणु
-	काष्ठा inode *dir = d_inode(dentry->d_parent);
-	काष्ठा inode *dirty;
-	स्थिर अक्षर *name = dentry->d_name.name;
-	पूर्णांक namelen = dentry->d_name.len;
-	काष्ठा omfs_inode *oi;
-	काष्ठा buffer_head *bh, *bh2;
+static int omfs_delete_entry(struct dentry *dentry)
+{
+	struct inode *dir = d_inode(dentry->d_parent);
+	struct inode *dirty;
+	const char *name = dentry->d_name.name;
+	int namelen = dentry->d_name.len;
+	struct omfs_inode *oi;
+	struct buffer_head *bh, *bh2;
 	__be64 *entry, next;
 	u64 block, prev;
-	पूर्णांक ofs;
-	पूर्णांक err = -ENOMEM;
+	int ofs;
+	int err = -ENOMEM;
 
 	/* delete the proper node in the bucket's linked list */
 	bh = omfs_get_bucket(dir, name, namelen, &ofs);
-	अगर (!bh)
-		जाओ out;
+	if (!bh)
+		goto out;
 
 	entry = (__be64 *) &bh->b_data[ofs];
 	block = be64_to_cpu(*entry);
 
 	bh2 = omfs_scan_list(dir, block, name, namelen, &prev);
-	अगर (IS_ERR(bh2)) अणु
+	if (IS_ERR(bh2)) {
 		err = PTR_ERR(bh2);
-		जाओ out_मुक्त_bh;
-	पूर्ण
+		goto out_free_bh;
+	}
 
-	oi = (काष्ठा omfs_inode *) bh2->b_data;
+	oi = (struct omfs_inode *) bh2->b_data;
 	next = oi->i_sibling;
-	brअन्यथा(bh2);
+	brelse(bh2);
 
-	अगर (prev != ~0) अणु
+	if (prev != ~0) {
 		/* found in middle of list, get list ptr */
-		brअन्यथा(bh);
-		bh = omfs_bपढ़ो(dir->i_sb, prev);
-		अगर (!bh)
-			जाओ out;
+		brelse(bh);
+		bh = omfs_bread(dir->i_sb, prev);
+		if (!bh)
+			goto out;
 
-		oi = (काष्ठा omfs_inode *) bh->b_data;
+		oi = (struct omfs_inode *) bh->b_data;
 		entry = &oi->i_sibling;
-	पूर्ण
+	}
 
 	*entry = next;
 	mark_buffer_dirty(bh);
 
-	अगर (prev != ~0) अणु
+	if (prev != ~0) {
 		dirty = omfs_iget(dir->i_sb, prev);
-		अगर (!IS_ERR(dirty)) अणु
+		if (!IS_ERR(dirty)) {
 			mark_inode_dirty(dirty);
 			iput(dirty);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	err = 0;
-out_मुक्त_bh:
-	brअन्यथा(bh);
+out_free_bh:
+	brelse(bh);
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक omfs_dir_is_empty(काष्ठा inode *inode)
-अणु
-	पूर्णांक nbuckets = (inode->i_size - OMFS_सूची_START) / 8;
-	काष्ठा buffer_head *bh;
+static int omfs_dir_is_empty(struct inode *inode)
+{
+	int nbuckets = (inode->i_size - OMFS_DIR_START) / 8;
+	struct buffer_head *bh;
 	u64 *ptr;
-	पूर्णांक i;
+	int i;
 
-	bh = omfs_bपढ़ो(inode->i_sb, inode->i_ino);
+	bh = omfs_bread(inode->i_sb, inode->i_ino);
 
-	अगर (!bh)
-		वापस 0;
+	if (!bh)
+		return 0;
 
-	ptr = (u64 *) &bh->b_data[OMFS_सूची_START];
+	ptr = (u64 *) &bh->b_data[OMFS_DIR_START];
 
-	क्रम (i = 0; i < nbuckets; i++, ptr++)
-		अगर (*ptr != ~0)
-			अवरोध;
+	for (i = 0; i < nbuckets; i++, ptr++)
+		if (*ptr != ~0)
+			break;
 
-	brअन्यथा(bh);
-	वापस *ptr != ~0;
-पूर्ण
+	brelse(bh);
+	return *ptr != ~0;
+}
 
-अटल पूर्णांक omfs_हटाओ(काष्ठा inode *dir, काष्ठा dentry *dentry)
-अणु
-	काष्ठा inode *inode = d_inode(dentry);
-	पूर्णांक ret;
+static int omfs_remove(struct inode *dir, struct dentry *dentry)
+{
+	struct inode *inode = d_inode(dentry);
+	int ret;
 
 
-	अगर (S_ISसूची(inode->i_mode) &&
+	if (S_ISDIR(inode->i_mode) &&
 	    !omfs_dir_is_empty(inode))
-		वापस -ENOTEMPTY;
+		return -ENOTEMPTY;
 
 	ret = omfs_delete_entry(dentry);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	
 	clear_nlink(inode);
 	mark_inode_dirty(inode);
 	mark_inode_dirty(dir);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक omfs_add_node(काष्ठा inode *dir, काष्ठा dentry *dentry, umode_t mode)
-अणु
-	पूर्णांक err;
-	काष्ठा inode *inode = omfs_new_inode(dir, mode);
+static int omfs_add_node(struct inode *dir, struct dentry *dentry, umode_t mode)
+{
+	int err;
+	struct inode *inode = omfs_new_inode(dir, mode);
 
-	अगर (IS_ERR(inode))
-		वापस PTR_ERR(inode);
+	if (IS_ERR(inode))
+		return PTR_ERR(inode);
 
 	err = omfs_make_empty(inode, dir->i_sb);
-	अगर (err)
-		जाओ out_मुक्त_inode;
+	if (err)
+		goto out_free_inode;
 
 	err = omfs_add_link(dentry, inode);
-	अगर (err)
-		जाओ out_मुक्त_inode;
+	if (err)
+		goto out_free_inode;
 
 	d_instantiate(dentry, inode);
-	वापस 0;
+	return 0;
 
-out_मुक्त_inode:
+out_free_inode:
 	iput(inode);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक omfs_सूची_गढ़ो(काष्ठा user_namespace *mnt_userns, काष्ठा inode *dir,
-		      काष्ठा dentry *dentry, umode_t mode)
-अणु
-	वापस omfs_add_node(dir, dentry, mode | S_IFसूची);
-पूर्ण
+static int omfs_mkdir(struct user_namespace *mnt_userns, struct inode *dir,
+		      struct dentry *dentry, umode_t mode)
+{
+	return omfs_add_node(dir, dentry, mode | S_IFDIR);
+}
 
-अटल पूर्णांक omfs_create(काष्ठा user_namespace *mnt_userns, काष्ठा inode *dir,
-		       काष्ठा dentry *dentry, umode_t mode, bool excl)
-अणु
-	वापस omfs_add_node(dir, dentry, mode | S_IFREG);
-पूर्ण
+static int omfs_create(struct user_namespace *mnt_userns, struct inode *dir,
+		       struct dentry *dentry, umode_t mode, bool excl)
+{
+	return omfs_add_node(dir, dentry, mode | S_IFREG);
+}
 
-अटल काष्ठा dentry *omfs_lookup(काष्ठा inode *dir, काष्ठा dentry *dentry,
-				  अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा buffer_head *bh;
-	काष्ठा inode *inode = शून्य;
+static struct dentry *omfs_lookup(struct inode *dir, struct dentry *dentry,
+				  unsigned int flags)
+{
+	struct buffer_head *bh;
+	struct inode *inode = NULL;
 
-	अगर (dentry->d_name.len > OMFS_NAMELEN)
-		वापस ERR_PTR(-ENAMETOOLONG);
+	if (dentry->d_name.len > OMFS_NAMELEN)
+		return ERR_PTR(-ENAMETOOLONG);
 
 	bh = omfs_find_entry(dir, dentry->d_name.name, dentry->d_name.len);
-	अगर (!IS_ERR(bh)) अणु
-		काष्ठा omfs_inode *oi = (काष्ठा omfs_inode *)bh->b_data;
+	if (!IS_ERR(bh)) {
+		struct omfs_inode *oi = (struct omfs_inode *)bh->b_data;
 		ino_t ino = be64_to_cpu(oi->i_head.h_self);
-		brअन्यथा(bh);
+		brelse(bh);
 		inode = omfs_iget(dir->i_sb, ino);
-	पूर्ण अन्यथा अगर (bh != ERR_PTR(-ENOENT)) अणु
+	} else if (bh != ERR_PTR(-ENOENT)) {
 		inode = ERR_CAST(bh);
-	पूर्ण
-	वापस d_splice_alias(inode, dentry);
-पूर्ण
+	}
+	return d_splice_alias(inode, dentry);
+}
 
-/* sanity check block's self poपूर्णांकer */
-पूर्णांक omfs_is_bad(काष्ठा omfs_sb_info *sbi, काष्ठा omfs_header *header,
+/* sanity check block's self pointer */
+int omfs_is_bad(struct omfs_sb_info *sbi, struct omfs_header *header,
 	u64 fsblock)
-अणु
-	पूर्णांक is_bad;
+{
+	int is_bad;
 	u64 ino = be64_to_cpu(header->h_self);
 	is_bad = ((ino != fsblock) || (ino < sbi->s_root_ino) ||
 		(ino > sbi->s_num_blocks));
 
-	अगर (is_bad)
-		prपूर्णांकk(KERN_WARNING "omfs: bad hash chain detected\n");
+	if (is_bad)
+		printk(KERN_WARNING "omfs: bad hash chain detected\n");
 
-	वापस is_bad;
-पूर्ण
+	return is_bad;
+}
 
-अटल bool omfs_fill_chain(काष्ठा inode *dir, काष्ठा dir_context *ctx,
-		u64 fsblock, पूर्णांक hindex)
-अणु
+static bool omfs_fill_chain(struct inode *dir, struct dir_context *ctx,
+		u64 fsblock, int hindex)
+{
 	/* follow chain in this bucket */
-	जबतक (fsblock != ~0) अणु
-		काष्ठा buffer_head *bh = omfs_bपढ़ो(dir->i_sb, fsblock);
-		काष्ठा omfs_inode *oi;
+	while (fsblock != ~0) {
+		struct buffer_head *bh = omfs_bread(dir->i_sb, fsblock);
+		struct omfs_inode *oi;
 		u64 self;
-		अचिन्हित अक्षर d_type;
+		unsigned char d_type;
 
-		अगर (!bh)
-			वापस true;
+		if (!bh)
+			return true;
 
-		oi = (काष्ठा omfs_inode *) bh->b_data;
-		अगर (omfs_is_bad(OMFS_SB(dir->i_sb), &oi->i_head, fsblock)) अणु
-			brअन्यथा(bh);
-			वापस true;
-		पूर्ण
+		oi = (struct omfs_inode *) bh->b_data;
+		if (omfs_is_bad(OMFS_SB(dir->i_sb), &oi->i_head, fsblock)) {
+			brelse(bh);
+			return true;
+		}
 
 		self = fsblock;
 		fsblock = be64_to_cpu(oi->i_sibling);
 
 		/* skip visited nodes */
-		अगर (hindex) अणु
+		if (hindex) {
 			hindex--;
-			brअन्यथा(bh);
-			जारी;
-		पूर्ण
+			brelse(bh);
+			continue;
+		}
 
-		d_type = (oi->i_type == OMFS_सूची) ? DT_सूची : DT_REG;
+		d_type = (oi->i_type == OMFS_DIR) ? DT_DIR : DT_REG;
 
-		अगर (!dir_emit(ctx, oi->i_name,
+		if (!dir_emit(ctx, oi->i_name,
 			      strnlen(oi->i_name, OMFS_NAMELEN),
-			      self, d_type)) अणु
-			brअन्यथा(bh);
-			वापस false;
-		पूर्ण
-		brअन्यथा(bh);
+			      self, d_type)) {
+			brelse(bh);
+			return false;
+		}
+		brelse(bh);
 		ctx->pos++;
-	पूर्ण
-	वापस true;
-पूर्ण
+	}
+	return true;
+}
 
-अटल पूर्णांक omfs_नाम(काष्ठा user_namespace *mnt_userns, काष्ठा inode *old_dir,
-		       काष्ठा dentry *old_dentry, काष्ठा inode *new_dir,
-		       काष्ठा dentry *new_dentry, अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा inode *new_inode = d_inode(new_dentry);
-	काष्ठा inode *old_inode = d_inode(old_dentry);
-	पूर्णांक err;
+static int omfs_rename(struct user_namespace *mnt_userns, struct inode *old_dir,
+		       struct dentry *old_dentry, struct inode *new_dir,
+		       struct dentry *new_dentry, unsigned int flags)
+{
+	struct inode *new_inode = d_inode(new_dentry);
+	struct inode *old_inode = d_inode(old_dentry);
+	int err;
 
-	अगर (flags & ~RENAME_NOREPLACE)
-		वापस -EINVAL;
+	if (flags & ~RENAME_NOREPLACE)
+		return -EINVAL;
 
-	अगर (new_inode) अणु
+	if (new_inode) {
 		/* overwriting existing file/dir */
-		err = omfs_हटाओ(new_dir, new_dentry);
-		अगर (err)
-			जाओ out;
-	पूर्ण
+		err = omfs_remove(new_dir, new_dentry);
+		if (err)
+			goto out;
+	}
 
-	/* since omfs locates files by name, we need to unlink _beक्रमe_
+	/* since omfs locates files by name, we need to unlink _before_
 	 * adding the new link or we won't find the old one */
 	err = omfs_delete_entry(old_dentry);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 	mark_inode_dirty(old_dir);
 	err = omfs_add_link(new_dentry, old_inode);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
-	old_inode->i_स_समय = current_समय(old_inode);
+	old_inode->i_ctime = current_time(old_inode);
 	mark_inode_dirty(old_inode);
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक omfs_सूची_पढ़ो(काष्ठा file *file, काष्ठा dir_context *ctx)
-अणु
-	काष्ठा inode *dir = file_inode(file);
-	काष्ठा buffer_head *bh;
+static int omfs_readdir(struct file *file, struct dir_context *ctx)
+{
+	struct inode *dir = file_inode(file);
+	struct buffer_head *bh;
 	__be64 *p;
-	अचिन्हित पूर्णांक hchain, hindex;
-	पूर्णांक nbuckets;
+	unsigned int hchain, hindex;
+	int nbuckets;
 
-	अगर (ctx->pos >> 32)
-		वापस -EINVAL;
+	if (ctx->pos >> 32)
+		return -EINVAL;
 
-	अगर (ctx->pos < 1 << 20) अणु
-		अगर (!dir_emit_करोts(file, ctx))
-			वापस 0;
+	if (ctx->pos < 1 << 20) {
+		if (!dir_emit_dots(file, ctx))
+			return 0;
 		ctx->pos = 1 << 20;
-	पूर्ण
+	}
 
-	nbuckets = (dir->i_size - OMFS_सूची_START) / 8;
+	nbuckets = (dir->i_size - OMFS_DIR_START) / 8;
 
 	/* high 12 bits store bucket + 1 and low 20 bits store hash index */
 	hchain = (ctx->pos >> 20) - 1;
 	hindex = ctx->pos & 0xfffff;
 
-	bh = omfs_bपढ़ो(dir->i_sb, dir->i_ino);
-	अगर (!bh)
-		वापस -EINVAL;
+	bh = omfs_bread(dir->i_sb, dir->i_ino);
+	if (!bh)
+		return -EINVAL;
 
-	p = (__be64 *)(bh->b_data + OMFS_सूची_START) + hchain;
+	p = (__be64 *)(bh->b_data + OMFS_DIR_START) + hchain;
 
-	क्रम (; hchain < nbuckets; hchain++) अणु
+	for (; hchain < nbuckets; hchain++) {
 		__u64 fsblock = be64_to_cpu(*p++);
-		अगर (!omfs_fill_chain(dir, ctx, fsblock, hindex))
-			अवरोध;
+		if (!omfs_fill_chain(dir, ctx, fsblock, hindex))
+			break;
 		hindex = 0;
 		ctx->pos = (hchain+2) << 20;
-	पूर्ण
-	brअन्यथा(bh);
-	वापस 0;
-पूर्ण
+	}
+	brelse(bh);
+	return 0;
+}
 
-स्थिर काष्ठा inode_operations omfs_dir_inops = अणु
+const struct inode_operations omfs_dir_inops = {
 	.lookup = omfs_lookup,
-	.सूची_गढ़ो = omfs_सूची_गढ़ो,
-	.नाम = omfs_नाम,
+	.mkdir = omfs_mkdir,
+	.rename = omfs_rename,
 	.create = omfs_create,
-	.unlink = omfs_हटाओ,
-	.सूची_हटाओ = omfs_हटाओ,
-पूर्ण;
+	.unlink = omfs_remove,
+	.rmdir = omfs_remove,
+};
 
-स्थिर काष्ठा file_operations omfs_dir_operations = अणु
-	.पढ़ो = generic_पढ़ो_dir,
-	.iterate_shared = omfs_सूची_पढ़ो,
+const struct file_operations omfs_dir_operations = {
+	.read = generic_read_dir,
+	.iterate_shared = omfs_readdir,
 	.llseek = generic_file_llseek,
-पूर्ण;
+};

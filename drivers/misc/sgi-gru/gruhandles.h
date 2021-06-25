@@ -1,246 +1,245 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * SN Platक्रमm GRU Driver
+ * SN Platform GRU Driver
  *
  *              GRU HANDLE DEFINITION
  *
  *  Copyright (c) 2008 Silicon Graphics, Inc.  All Rights Reserved.
  */
 
-#अगर_अघोषित __GRUHANDLES_H__
-#घोषणा __GRUHANDLES_H__
-#समावेश "gru_instructions.h"
+#ifndef __GRUHANDLES_H__
+#define __GRUHANDLES_H__
+#include "gru_instructions.h"
 
 /*
- * Manअगरest स्थिरants क्रम GRU Memory Map
+ * Manifest constants for GRU Memory Map
  */
-#घोषणा GRU_GSEG0_BASE		0
-#घोषणा GRU_MCS_BASE		(64 * 1024 * 1024)
-#घोषणा GRU_SIZE		(128UL * 1024 * 1024)
+#define GRU_GSEG0_BASE		0
+#define GRU_MCS_BASE		(64 * 1024 * 1024)
+#define GRU_SIZE		(128UL * 1024 * 1024)
 
 /* Handle & resource counts */
-#घोषणा GRU_NUM_CB		128
-#घोषणा GRU_NUM_DSR_BYTES	(32 * 1024)
-#घोषणा GRU_NUM_TFM		16
-#घोषणा GRU_NUM_TGH		24
-#घोषणा GRU_NUM_CBE		128
-#घोषणा GRU_NUM_TFH		128
-#घोषणा GRU_NUM_CCH		16
+#define GRU_NUM_CB		128
+#define GRU_NUM_DSR_BYTES	(32 * 1024)
+#define GRU_NUM_TFM		16
+#define GRU_NUM_TGH		24
+#define GRU_NUM_CBE		128
+#define GRU_NUM_TFH		128
+#define GRU_NUM_CCH		16
 
 /* Maximum resource counts that can be reserved by user programs */
-#घोषणा GRU_NUM_USER_CBR	GRU_NUM_CBE
-#घोषणा GRU_NUM_USER_DSR_BYTES	GRU_NUM_DSR_BYTES
+#define GRU_NUM_USER_CBR	GRU_NUM_CBE
+#define GRU_NUM_USER_DSR_BYTES	GRU_NUM_DSR_BYTES
 
 /* Bytes per handle & handle stride. Code assumes all cb, tfh, cbe handles
  * are the same */
-#घोषणा GRU_HANDLE_BYTES	64
-#घोषणा GRU_HANDLE_STRIDE	256
+#define GRU_HANDLE_BYTES	64
+#define GRU_HANDLE_STRIDE	256
 
 /* Base addresses of handles */
-#घोषणा GRU_TFM_BASE		(GRU_MCS_BASE + 0x00000)
-#घोषणा GRU_TGH_BASE		(GRU_MCS_BASE + 0x08000)
-#घोषणा GRU_CBE_BASE		(GRU_MCS_BASE + 0x10000)
-#घोषणा GRU_TFH_BASE		(GRU_MCS_BASE + 0x18000)
-#घोषणा GRU_CCH_BASE		(GRU_MCS_BASE + 0x20000)
+#define GRU_TFM_BASE		(GRU_MCS_BASE + 0x00000)
+#define GRU_TGH_BASE		(GRU_MCS_BASE + 0x08000)
+#define GRU_CBE_BASE		(GRU_MCS_BASE + 0x10000)
+#define GRU_TFH_BASE		(GRU_MCS_BASE + 0x18000)
+#define GRU_CCH_BASE		(GRU_MCS_BASE + 0x20000)
 
-/* User gseg स्थिरants */
-#घोषणा GRU_GSEG_STRIDE		(4 * 1024 * 1024)
-#घोषणा GSEG_BASE(a)		((a) & ~(GRU_GSEG_PAGESIZE - 1))
+/* User gseg constants */
+#define GRU_GSEG_STRIDE		(4 * 1024 * 1024)
+#define GSEG_BASE(a)		((a) & ~(GRU_GSEG_PAGESIZE - 1))
 
-/* Data segment स्थिरants */
-#घोषणा GRU_DSR_AU_BYTES	1024
-#घोषणा GRU_DSR_CL		(GRU_NUM_DSR_BYTES / GRU_CACHE_LINE_BYTES)
-#घोषणा GRU_DSR_AU_CL		(GRU_DSR_AU_BYTES / GRU_CACHE_LINE_BYTES)
-#घोषणा GRU_DSR_AU		(GRU_NUM_DSR_BYTES / GRU_DSR_AU_BYTES)
+/* Data segment constants */
+#define GRU_DSR_AU_BYTES	1024
+#define GRU_DSR_CL		(GRU_NUM_DSR_BYTES / GRU_CACHE_LINE_BYTES)
+#define GRU_DSR_AU_CL		(GRU_DSR_AU_BYTES / GRU_CACHE_LINE_BYTES)
+#define GRU_DSR_AU		(GRU_NUM_DSR_BYTES / GRU_DSR_AU_BYTES)
 
-/* Control block स्थिरants */
-#घोषणा GRU_CBR_AU_SIZE		2
-#घोषणा GRU_CBR_AU		(GRU_NUM_CBE / GRU_CBR_AU_SIZE)
+/* Control block constants */
+#define GRU_CBR_AU_SIZE		2
+#define GRU_CBR_AU		(GRU_NUM_CBE / GRU_CBR_AU_SIZE)
 
 /* Convert resource counts to the number of AU */
-#घोषणा GRU_DS_BYTES_TO_AU(n)	DIV_ROUND_UP(n, GRU_DSR_AU_BYTES)
-#घोषणा GRU_CB_COUNT_TO_AU(n)	DIV_ROUND_UP(n, GRU_CBR_AU_SIZE)
+#define GRU_DS_BYTES_TO_AU(n)	DIV_ROUND_UP(n, GRU_DSR_AU_BYTES)
+#define GRU_CB_COUNT_TO_AU(n)	DIV_ROUND_UP(n, GRU_CBR_AU_SIZE)
 
 /* UV limits */
-#घोषणा GRU_CHIPLETS_PER_HUB	2
-#घोषणा GRU_HUBS_PER_BLADE	1
-#घोषणा GRU_CHIPLETS_PER_BLADE	(GRU_HUBS_PER_BLADE * GRU_CHIPLETS_PER_HUB)
+#define GRU_CHIPLETS_PER_HUB	2
+#define GRU_HUBS_PER_BLADE	1
+#define GRU_CHIPLETS_PER_BLADE	(GRU_HUBS_PER_BLADE * GRU_CHIPLETS_PER_HUB)
 
 /* User GRU Gseg offsets */
-#घोषणा GRU_CB_BASE		0
-#घोषणा GRU_CB_LIMIT		(GRU_CB_BASE + GRU_HANDLE_STRIDE * GRU_NUM_CBE)
-#घोषणा GRU_DS_BASE		0x20000
-#घोषणा GRU_DS_LIMIT		(GRU_DS_BASE + GRU_NUM_DSR_BYTES)
+#define GRU_CB_BASE		0
+#define GRU_CB_LIMIT		(GRU_CB_BASE + GRU_HANDLE_STRIDE * GRU_NUM_CBE)
+#define GRU_DS_BASE		0x20000
+#define GRU_DS_LIMIT		(GRU_DS_BASE + GRU_NUM_DSR_BYTES)
 
 /* Convert a GRU physical address to the chiplet offset */
-#घोषणा GSEGPOFF(h) 		((h) & (GRU_SIZE - 1))
+#define GSEGPOFF(h) 		((h) & (GRU_SIZE - 1))
 
 /* Convert an arbitrary handle address to the beginning of the GRU segment */
-#घोषणा GRUBASE(h)		((व्योम *)((अचिन्हित दीर्घ)(h) & ~(GRU_SIZE - 1)))
+#define GRUBASE(h)		((void *)((unsigned long)(h) & ~(GRU_SIZE - 1)))
 
 /* Test a valid handle address to determine the type */
-#घोषणा TYPE_IS(hn, h)		((h) >= GRU_##hn##_BASE && (h) <	\
+#define TYPE_IS(hn, h)		((h) >= GRU_##hn##_BASE && (h) <	\
 		GRU_##hn##_BASE + GRU_NUM_##hn * GRU_HANDLE_STRIDE &&   \
 		(((h) & (GRU_HANDLE_STRIDE - 1)) == 0))
 
 
 /* General addressing macros. */
-अटल अंतरभूत व्योम *get_gseg_base_address(व्योम *base, पूर्णांक ctxnum)
-अणु
-	वापस (व्योम *)(base + GRU_GSEG0_BASE + GRU_GSEG_STRIDE * ctxnum);
-पूर्ण
+static inline void *get_gseg_base_address(void *base, int ctxnum)
+{
+	return (void *)(base + GRU_GSEG0_BASE + GRU_GSEG_STRIDE * ctxnum);
+}
 
-अटल अंतरभूत व्योम *get_gseg_base_address_cb(व्योम *base, पूर्णांक ctxnum, पूर्णांक line)
-अणु
-	वापस (व्योम *)(get_gseg_base_address(base, ctxnum) +
+static inline void *get_gseg_base_address_cb(void *base, int ctxnum, int line)
+{
+	return (void *)(get_gseg_base_address(base, ctxnum) +
 			GRU_CB_BASE + GRU_HANDLE_STRIDE * line);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम *get_gseg_base_address_ds(व्योम *base, पूर्णांक ctxnum, पूर्णांक line)
-अणु
-	वापस (व्योम *)(get_gseg_base_address(base, ctxnum) + GRU_DS_BASE +
+static inline void *get_gseg_base_address_ds(void *base, int ctxnum, int line)
+{
+	return (void *)(get_gseg_base_address(base, ctxnum) + GRU_DS_BASE +
 			GRU_CACHE_LINE_BYTES * line);
-पूर्ण
+}
 
-अटल अंतरभूत काष्ठा gru_tlb_fault_map *get_tfm(व्योम *base, पूर्णांक ctxnum)
-अणु
-	वापस (काष्ठा gru_tlb_fault_map *)(base + GRU_TFM_BASE +
+static inline struct gru_tlb_fault_map *get_tfm(void *base, int ctxnum)
+{
+	return (struct gru_tlb_fault_map *)(base + GRU_TFM_BASE +
 					ctxnum * GRU_HANDLE_STRIDE);
-पूर्ण
+}
 
-अटल अंतरभूत काष्ठा gru_tlb_global_handle *get_tgh(व्योम *base, पूर्णांक ctxnum)
-अणु
-	वापस (काष्ठा gru_tlb_global_handle *)(base + GRU_TGH_BASE +
+static inline struct gru_tlb_global_handle *get_tgh(void *base, int ctxnum)
+{
+	return (struct gru_tlb_global_handle *)(base + GRU_TGH_BASE +
 					ctxnum * GRU_HANDLE_STRIDE);
-पूर्ण
+}
 
-अटल अंतरभूत काष्ठा gru_control_block_extended *get_cbe(व्योम *base, पूर्णांक ctxnum)
-अणु
-	वापस (काष्ठा gru_control_block_extended *)(base + GRU_CBE_BASE +
+static inline struct gru_control_block_extended *get_cbe(void *base, int ctxnum)
+{
+	return (struct gru_control_block_extended *)(base + GRU_CBE_BASE +
 					ctxnum * GRU_HANDLE_STRIDE);
-पूर्ण
+}
 
-अटल अंतरभूत काष्ठा gru_tlb_fault_handle *get_tfh(व्योम *base, पूर्णांक ctxnum)
-अणु
-	वापस (काष्ठा gru_tlb_fault_handle *)(base + GRU_TFH_BASE +
+static inline struct gru_tlb_fault_handle *get_tfh(void *base, int ctxnum)
+{
+	return (struct gru_tlb_fault_handle *)(base + GRU_TFH_BASE +
 					ctxnum * GRU_HANDLE_STRIDE);
-पूर्ण
+}
 
-अटल अंतरभूत काष्ठा gru_context_configuration_handle *get_cch(व्योम *base,
-					पूर्णांक ctxnum)
-अणु
-	वापस (काष्ठा gru_context_configuration_handle *)(base +
+static inline struct gru_context_configuration_handle *get_cch(void *base,
+					int ctxnum)
+{
+	return (struct gru_context_configuration_handle *)(base +
 				GRU_CCH_BASE + ctxnum * GRU_HANDLE_STRIDE);
-पूर्ण
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ get_cb_number(व्योम *cb)
-अणु
-	वापस (((अचिन्हित दीर्घ)cb - GRU_CB_BASE) % GRU_GSEG_PAGESIZE) /
+static inline unsigned long get_cb_number(void *cb)
+{
+	return (((unsigned long)cb - GRU_CB_BASE) % GRU_GSEG_PAGESIZE) /
 					GRU_HANDLE_STRIDE;
-पूर्ण
+}
 
-/* byte offset to a specअगरic GRU chiplet. (p=pnode, c=chiplet (0 or 1)*/
-अटल अंतरभूत अचिन्हित दीर्घ gru_chiplet_paddr(अचिन्हित दीर्घ paddr, पूर्णांक pnode,
-							पूर्णांक chiplet)
-अणु
-	वापस paddr + GRU_SIZE * (2 * pnode  + chiplet);
-पूर्ण
+/* byte offset to a specific GRU chiplet. (p=pnode, c=chiplet (0 or 1)*/
+static inline unsigned long gru_chiplet_paddr(unsigned long paddr, int pnode,
+							int chiplet)
+{
+	return paddr + GRU_SIZE * (2 * pnode  + chiplet);
+}
 
-अटल अंतरभूत व्योम *gru_chiplet_vaddr(व्योम *vaddr, पूर्णांक pnode, पूर्णांक chiplet)
-अणु
-	वापस vaddr + GRU_SIZE * (2 * pnode  + chiplet);
-पूर्ण
+static inline void *gru_chiplet_vaddr(void *vaddr, int pnode, int chiplet)
+{
+	return vaddr + GRU_SIZE * (2 * pnode  + chiplet);
+}
 
-अटल अंतरभूत काष्ठा gru_control_block_extended *gru_tfh_to_cbe(
-					काष्ठा gru_tlb_fault_handle *tfh)
-अणु
-	अचिन्हित दीर्घ cbe;
+static inline struct gru_control_block_extended *gru_tfh_to_cbe(
+					struct gru_tlb_fault_handle *tfh)
+{
+	unsigned long cbe;
 
-	cbe = (अचिन्हित दीर्घ)tfh - GRU_TFH_BASE + GRU_CBE_BASE;
-	वापस (काष्ठा gru_control_block_extended*)cbe;
-पूर्ण
+	cbe = (unsigned long)tfh - GRU_TFH_BASE + GRU_CBE_BASE;
+	return (struct gru_control_block_extended*)cbe;
+}
 
 
 
 
 /*
  * Global TLB Fault Map
- * 	Biपंचांगap of outstanding TLB misses needing पूर्णांकerrupt/polling service.
+ * 	Bitmap of outstanding TLB misses needing interrupt/polling service.
  *
  */
-काष्ठा gru_tlb_fault_map अणु
-	अचिन्हित दीर्घ fault_bits[BITS_TO_LONGS(GRU_NUM_CBE)];
-	अचिन्हित दीर्घ fill0[2];
-	अचिन्हित दीर्घ करोne_bits[BITS_TO_LONGS(GRU_NUM_CBE)];
-	अचिन्हित दीर्घ fill1[2];
-पूर्ण;
+struct gru_tlb_fault_map {
+	unsigned long fault_bits[BITS_TO_LONGS(GRU_NUM_CBE)];
+	unsigned long fill0[2];
+	unsigned long done_bits[BITS_TO_LONGS(GRU_NUM_CBE)];
+	unsigned long fill1[2];
+};
 
 /*
  * TGH - TLB Global Handle
- * 	Used क्रम TLB flushing.
+ * 	Used for TLB flushing.
  *
  */
-काष्ठा gru_tlb_global_handle अणु
-	अचिन्हित पूर्णांक cmd:1;		/* DW 0 */
-	अचिन्हित पूर्णांक delresp:1;
-	अचिन्हित पूर्णांक opc:1;
-	अचिन्हित पूर्णांक fill1:5;
+struct gru_tlb_global_handle {
+	unsigned int cmd:1;		/* DW 0 */
+	unsigned int delresp:1;
+	unsigned int opc:1;
+	unsigned int fill1:5;
 
-	अचिन्हित पूर्णांक fill2:8;
+	unsigned int fill2:8;
 
-	अचिन्हित पूर्णांक status:2;
-	अचिन्हित दीर्घ fill3:2;
-	अचिन्हित पूर्णांक state:3;
-	अचिन्हित दीर्घ fill4:1;
+	unsigned int status:2;
+	unsigned long fill3:2;
+	unsigned int state:3;
+	unsigned long fill4:1;
 
-	अचिन्हित पूर्णांक cause:3;
-	अचिन्हित दीर्घ fill5:37;
+	unsigned int cause:3;
+	unsigned long fill5:37;
 
-	अचिन्हित दीर्घ vaddr:64;		/* DW 1 */
+	unsigned long vaddr:64;		/* DW 1 */
 
-	अचिन्हित पूर्णांक asid:24;		/* DW 2 */
-	अचिन्हित पूर्णांक fill6:8;
+	unsigned int asid:24;		/* DW 2 */
+	unsigned int fill6:8;
 
-	अचिन्हित पूर्णांक pagesize:5;
-	अचिन्हित पूर्णांक fill7:11;
+	unsigned int pagesize:5;
+	unsigned int fill7:11;
 
-	अचिन्हित पूर्णांक global:1;
-	अचिन्हित पूर्णांक fill8:15;
+	unsigned int global:1;
+	unsigned int fill8:15;
 
-	अचिन्हित दीर्घ vaddrmask:39;	/* DW 3 */
-	अचिन्हित पूर्णांक fill9:9;
-	अचिन्हित पूर्णांक n:10;
-	अचिन्हित पूर्णांक fill10:6;
+	unsigned long vaddrmask:39;	/* DW 3 */
+	unsigned int fill9:9;
+	unsigned int n:10;
+	unsigned int fill10:6;
 
-	अचिन्हित पूर्णांक ctxbiपंचांगap:16;	/* DW4 */
-	अचिन्हित दीर्घ fill11[3];
-पूर्ण;
+	unsigned int ctxbitmap:16;	/* DW4 */
+	unsigned long fill11[3];
+};
 
-क्रमागत gru_tgh_cmd अणु
+enum gru_tgh_cmd {
 	TGHCMD_START
-पूर्ण;
+};
 
-क्रमागत gru_tgh_opc अणु
+enum gru_tgh_opc {
 	TGHOP_TLBNOP,
 	TGHOP_TLBINV
-पूर्ण;
+};
 
-क्रमागत gru_tgh_status अणु
+enum gru_tgh_status {
 	TGHSTATUS_IDLE,
 	TGHSTATUS_EXCEPTION,
 	TGHSTATUS_ACTIVE
-पूर्ण;
+};
 
-क्रमागत gru_tgh_state अणु
+enum gru_tgh_state {
 	TGHSTATE_IDLE,
 	TGHSTATE_PE_INVAL,
 	TGHSTATE_INTERRUPT_INVAL,
 	TGHSTATE_WAITDONE,
 	TGHSTATE_RESTART_CTX,
-पूर्ण;
+};
 
-क्रमागत gru_tgh_cause अणु
+enum gru_tgh_cause {
 	TGHCAUSE_RR_ECC,
 	TGHCAUSE_TLB_ECC,
 	TGHCAUSE_LRU_ECC,
@@ -248,71 +247,71 @@
 	TGHCAUSE_MUL_ERR,
 	TGHCAUSE_DATA_ERR,
 	TGHCAUSE_SW_FORCE
-पूर्ण;
+};
 
 
 /*
  * TFH - TLB Global Handle
- * 	Used क्रम TLB dropins पूर्णांकo the GRU TLB.
+ * 	Used for TLB dropins into the GRU TLB.
  *
  */
-काष्ठा gru_tlb_fault_handle अणु
-	अचिन्हित पूर्णांक cmd:1;		/* DW 0 - low 32*/
-	अचिन्हित पूर्णांक delresp:1;
-	अचिन्हित पूर्णांक fill0:2;
-	अचिन्हित पूर्णांक opc:3;
-	अचिन्हित पूर्णांक fill1:9;
+struct gru_tlb_fault_handle {
+	unsigned int cmd:1;		/* DW 0 - low 32*/
+	unsigned int delresp:1;
+	unsigned int fill0:2;
+	unsigned int opc:3;
+	unsigned int fill1:9;
 
-	अचिन्हित पूर्णांक status:2;
-	अचिन्हित पूर्णांक fill2:2;
-	अचिन्हित पूर्णांक state:3;
-	अचिन्हित पूर्णांक fill3:1;
+	unsigned int status:2;
+	unsigned int fill2:2;
+	unsigned int state:3;
+	unsigned int fill3:1;
 
-	अचिन्हित पूर्णांक cause:6;
-	अचिन्हित पूर्णांक cb_पूर्णांक:1;
-	अचिन्हित पूर्णांक fill4:1;
+	unsigned int cause:6;
+	unsigned int cb_int:1;
+	unsigned int fill4:1;
 
-	अचिन्हित पूर्णांक indexway:12;	/* DW 0 - high 32 */
-	अचिन्हित पूर्णांक fill5:4;
+	unsigned int indexway:12;	/* DW 0 - high 32 */
+	unsigned int fill5:4;
 
-	अचिन्हित पूर्णांक ctxnum:4;
-	अचिन्हित पूर्णांक fill6:12;
+	unsigned int ctxnum:4;
+	unsigned int fill6:12;
 
-	अचिन्हित दीर्घ missvaddr:64;	/* DW 1 */
+	unsigned long missvaddr:64;	/* DW 1 */
 
-	अचिन्हित पूर्णांक missasid:24;	/* DW 2 */
-	अचिन्हित पूर्णांक fill7:8;
-	अचिन्हित पूर्णांक fillasid:24;
-	अचिन्हित पूर्णांक dirty:1;
-	अचिन्हित पूर्णांक gaa:2;
-	अचिन्हित दीर्घ fill8:5;
+	unsigned int missasid:24;	/* DW 2 */
+	unsigned int fill7:8;
+	unsigned int fillasid:24;
+	unsigned int dirty:1;
+	unsigned int gaa:2;
+	unsigned long fill8:5;
 
-	अचिन्हित दीर्घ pfn:41;		/* DW 3 */
-	अचिन्हित पूर्णांक fill9:7;
-	अचिन्हित पूर्णांक pagesize:5;
-	अचिन्हित पूर्णांक fill10:11;
+	unsigned long pfn:41;		/* DW 3 */
+	unsigned int fill9:7;
+	unsigned int pagesize:5;
+	unsigned int fill10:11;
 
-	अचिन्हित दीर्घ fillvaddr:64;	/* DW 4 */
+	unsigned long fillvaddr:64;	/* DW 4 */
 
-	अचिन्हित दीर्घ fill11[3];
-पूर्ण;
+	unsigned long fill11[3];
+};
 
-क्रमागत gru_tfh_opc अणु
+enum gru_tfh_opc {
 	TFHOP_NOOP,
 	TFHOP_RESTART,
 	TFHOP_WRITE_ONLY,
 	TFHOP_WRITE_RESTART,
 	TFHOP_EXCEPTION,
 	TFHOP_USER_POLLING_MODE = 7,
-पूर्ण;
+};
 
-क्रमागत tfh_status अणु
+enum tfh_status {
 	TFHSTATUS_IDLE,
 	TFHSTATUS_EXCEPTION,
 	TFHSTATUS_ACTIVE,
-पूर्ण;
+};
 
-क्रमागत tfh_state अणु
+enum tfh_state {
 	TFHSTATE_INACTIVE,
 	TFHSTATE_IDLE,
 	TFHSTATE_MISS_UPM,
@@ -320,10 +319,10 @@
 	TFHSTATE_HW_ERR,
 	TFHSTATE_WRITE_TLB,
 	TFHSTATE_RESTART_CBR,
-पूर्ण;
+};
 
 /* TFH cause bits */
-क्रमागत tfh_cause अणु
+enum tfh_cause {
 	TFHCAUSE_NONE,
 	TFHCAUSE_TLB_MISS,
 	TFHCAUSE_TLB_MOD,
@@ -333,73 +332,73 @@
 	TFHCAUSE_HW_ERROR_PAGESIZE,
 	TFHCAUSE_INSTRUCTION_EXCEPTION,
 	TFHCAUSE_UNCORRECTIBLE_ERROR,
-पूर्ण;
+};
 
 /* GAA values */
-#घोषणा GAA_RAM				0x0
-#घोषणा GAA_NCRAM			0x2
-#घोषणा GAA_MMIO			0x1
-#घोषणा GAA_REGISTER			0x3
+#define GAA_RAM				0x0
+#define GAA_NCRAM			0x2
+#define GAA_MMIO			0x1
+#define GAA_REGISTER			0x3
 
-/* GRU paddr shअगरt क्रम pfn. (NOTE: shअगरt is NOT by actual pagesize) */
-#घोषणा GRU_PADDR_SHIFT			12
+/* GRU paddr shift for pfn. (NOTE: shift is NOT by actual pagesize) */
+#define GRU_PADDR_SHIFT			12
 
 /*
  * Context Configuration handle
  * 	Used to allocate resources to a GSEG context.
  *
  */
-काष्ठा gru_context_configuration_handle अणु
-	अचिन्हित पूर्णांक cmd:1;			/* DW0 */
-	अचिन्हित पूर्णांक delresp:1;
-	अचिन्हित पूर्णांक opc:3;
-	अचिन्हित पूर्णांक unmap_enable:1;
-	अचिन्हित पूर्णांक req_slice_set_enable:1;
-	अचिन्हित पूर्णांक req_slice:2;
-	अचिन्हित पूर्णांक cb_पूर्णांक_enable:1;
-	अचिन्हित पूर्णांक tlb_पूर्णांक_enable:1;
-	अचिन्हित पूर्णांक tfm_fault_bit_enable:1;
-	अचिन्हित पूर्णांक tlb_पूर्णांक_select:4;
+struct gru_context_configuration_handle {
+	unsigned int cmd:1;			/* DW0 */
+	unsigned int delresp:1;
+	unsigned int opc:3;
+	unsigned int unmap_enable:1;
+	unsigned int req_slice_set_enable:1;
+	unsigned int req_slice:2;
+	unsigned int cb_int_enable:1;
+	unsigned int tlb_int_enable:1;
+	unsigned int tfm_fault_bit_enable:1;
+	unsigned int tlb_int_select:4;
 
-	अचिन्हित पूर्णांक status:2;
-	अचिन्हित पूर्णांक state:2;
-	अचिन्हित पूर्णांक reserved2:4;
+	unsigned int status:2;
+	unsigned int state:2;
+	unsigned int reserved2:4;
 
-	अचिन्हित पूर्णांक cause:4;
-	अचिन्हित पूर्णांक tfm_करोne_bit_enable:1;
-	अचिन्हित पूर्णांक unused:3;
+	unsigned int cause:4;
+	unsigned int tfm_done_bit_enable:1;
+	unsigned int unused:3;
 
-	अचिन्हित पूर्णांक dsr_allocation_map;
+	unsigned int dsr_allocation_map;
 
-	अचिन्हित दीर्घ cbr_allocation_map;	/* DW1 */
+	unsigned long cbr_allocation_map;	/* DW1 */
 
-	अचिन्हित पूर्णांक asid[8];			/* DW 2 - 5 */
-	अचिन्हित लघु sizeavail[8];		/* DW 6 - 7 */
-पूर्ण __attribute__ ((packed));
+	unsigned int asid[8];			/* DW 2 - 5 */
+	unsigned short sizeavail[8];		/* DW 6 - 7 */
+} __attribute__ ((packed));
 
-क्रमागत gru_cch_opc अणु
+enum gru_cch_opc {
 	CCHOP_START = 1,
 	CCHOP_ALLOCATE,
 	CCHOP_INTERRUPT,
 	CCHOP_DEALLOCATE,
 	CCHOP_INTERRUPT_SYNC,
-पूर्ण;
+};
 
-क्रमागत gru_cch_status अणु
+enum gru_cch_status {
 	CCHSTATUS_IDLE,
 	CCHSTATUS_EXCEPTION,
 	CCHSTATUS_ACTIVE,
-पूर्ण;
+};
 
-क्रमागत gru_cch_state अणु
+enum gru_cch_state {
 	CCHSTATE_INACTIVE,
 	CCHSTATE_MAPPED,
 	CCHSTATE_ACTIVE,
 	CCHSTATE_INTERRUPTED,
-पूर्ण;
+};
 
 /* CCH Exception cause */
-क्रमागत gru_cch_cause अणु
+enum gru_cch_cause {
 	CCHCAUSE_REGION_REGISTER_WRITE_ERROR = 1,
 	CCHCAUSE_ILLEGAL_OPCODE = 2,
 	CCHCAUSE_INVALID_START_REQUEST = 3,
@@ -412,56 +411,56 @@
 	CCHCAUSE_CBR_RESOURCES_OVERSUBSCRIPED = 10,
 	CCHCAUSE_DSR_RESOURCES_OVERSUBSCRIPED = 11,
 	CCHCAUSE_CBR_DEALLOCATION_ERROR = 12,
-पूर्ण;
+};
 /*
  * CBE - Control Block Extended
- * 	Maपूर्णांकains पूर्णांकernal GRU state क्रम active CBs.
+ * 	Maintains internal GRU state for active CBs.
  *
  */
-काष्ठा gru_control_block_extended अणु
-	अचिन्हित पूर्णांक reserved0:1;	/* DW 0  - low */
-	अचिन्हित पूर्णांक imacpy:3;
-	अचिन्हित पूर्णांक reserved1:4;
-	अचिन्हित पूर्णांक xtypecpy:3;
-	अचिन्हित पूर्णांक iaa0cpy:2;
-	अचिन्हित पूर्णांक iaa1cpy:2;
-	अचिन्हित पूर्णांक reserved2:1;
-	अचिन्हित पूर्णांक opccpy:8;
-	अचिन्हित पूर्णांक exopccpy:8;
+struct gru_control_block_extended {
+	unsigned int reserved0:1;	/* DW 0  - low */
+	unsigned int imacpy:3;
+	unsigned int reserved1:4;
+	unsigned int xtypecpy:3;
+	unsigned int iaa0cpy:2;
+	unsigned int iaa1cpy:2;
+	unsigned int reserved2:1;
+	unsigned int opccpy:8;
+	unsigned int exopccpy:8;
 
-	अचिन्हित पूर्णांक idef2cpy:22;	/* DW 0  - high */
-	अचिन्हित पूर्णांक reserved3:10;
+	unsigned int idef2cpy:22;	/* DW 0  - high */
+	unsigned int reserved3:10;
 
-	अचिन्हित पूर्णांक idef4cpy:22;	/* DW 1 */
-	अचिन्हित पूर्णांक reserved4:10;
-	अचिन्हित पूर्णांक idef4upd:22;
-	अचिन्हित पूर्णांक reserved5:10;
+	unsigned int idef4cpy:22;	/* DW 1 */
+	unsigned int reserved4:10;
+	unsigned int idef4upd:22;
+	unsigned int reserved5:10;
 
-	अचिन्हित दीर्घ idef1upd:64;	/* DW 2 */
+	unsigned long idef1upd:64;	/* DW 2 */
 
-	अचिन्हित दीर्घ idef5cpy:64;	/* DW 3 */
+	unsigned long idef5cpy:64;	/* DW 3 */
 
-	अचिन्हित दीर्घ idef6cpy:64;	/* DW 4 */
+	unsigned long idef6cpy:64;	/* DW 4 */
 
-	अचिन्हित दीर्घ idef3upd:64;	/* DW 5 */
+	unsigned long idef3upd:64;	/* DW 5 */
 
-	अचिन्हित दीर्घ idef5upd:64;	/* DW 6 */
+	unsigned long idef5upd:64;	/* DW 6 */
 
-	अचिन्हित पूर्णांक idef2upd:22;	/* DW 7 */
-	अचिन्हित पूर्णांक reserved6:10;
+	unsigned int idef2upd:22;	/* DW 7 */
+	unsigned int reserved6:10;
 
-	अचिन्हित पूर्णांक ecause:20;
-	अचिन्हित पूर्णांक cbrstate:4;
-	अचिन्हित पूर्णांक cbrexecstatus:8;
-पूर्ण;
+	unsigned int ecause:20;
+	unsigned int cbrstate:4;
+	unsigned int cbrexecstatus:8;
+};
 
-/* CBE fields क्रम active BCOPY inकाष्ठाions */
-#घोषणा cbe_baddr0	idef1upd
-#घोषणा cbe_baddr1	idef3upd
-#घोषणा cbe_src_cl	idef6cpy
-#घोषणा cbe_nelemcur	idef5upd
+/* CBE fields for active BCOPY instructions */
+#define cbe_baddr0	idef1upd
+#define cbe_baddr1	idef3upd
+#define cbe_src_cl	idef6cpy
+#define cbe_nelemcur	idef5upd
 
-क्रमागत gru_cbr_state अणु
+enum gru_cbr_state {
 	CBRSTATE_INACTIVE,
 	CBRSTATE_IDLE,
 	CBRSTATE_PE_CHECK,
@@ -474,13 +473,13 @@
 	CBRSTATE_BUSY_INTERRUPTED_MISS_UPM,
 	CBRSTATE_REQUEST_ISSUE,
 	CBRSTATE_BUSY_INTERRUPT,
-पूर्ण;
+};
 
-/* CBE cbrexecstatus bits  - defined in gru_inकाष्ठाions.h*/
-/* CBE ecause bits  - defined in gru_inकाष्ठाions.h */
+/* CBE cbrexecstatus bits  - defined in gru_instructions.h*/
+/* CBE ecause bits  - defined in gru_instructions.h */
 
 /*
- * Convert a processor pagesize पूर्णांकo the strange encoded pagesize used by the
+ * Convert a processor pagesize into the strange encoded pagesize used by the
  * GRU. Processor pagesize is encoded as log of bytes per page. (or PAGE_SHIFT)
  * 	pagesize	log pagesize	grupagesize
  * 	  4k			12	0
@@ -494,25 +493,25 @@
  * 	 64m			26	8
  * 	...
  */
-#घोषणा GRU_PAGESIZE(sh)	((((sh) > 20 ? (sh) + 2 : (sh)) >> 1) - 6)
-#घोषणा GRU_SIZEAVAIL(sh)	(1UL << GRU_PAGESIZE(sh))
+#define GRU_PAGESIZE(sh)	((((sh) > 20 ? (sh) + 2 : (sh)) >> 1) - 6)
+#define GRU_SIZEAVAIL(sh)	(1UL << GRU_PAGESIZE(sh))
 
 /* minimum TLB purge count to ensure a full purge */
-#घोषणा GRUMAXINVAL		1024UL
+#define GRUMAXINVAL		1024UL
 
-पूर्णांक cch_allocate(काष्ठा gru_context_configuration_handle *cch);
-पूर्णांक cch_start(काष्ठा gru_context_configuration_handle *cch);
-पूर्णांक cch_पूर्णांकerrupt(काष्ठा gru_context_configuration_handle *cch);
-पूर्णांक cch_deallocate(काष्ठा gru_context_configuration_handle *cch);
-पूर्णांक cch_पूर्णांकerrupt_sync(काष्ठा gru_context_configuration_handle *cch);
-पूर्णांक tgh_invalidate(काष्ठा gru_tlb_global_handle *tgh, अचिन्हित दीर्घ vaddr,
-	अचिन्हित दीर्घ vaddrmask, पूर्णांक asid, पूर्णांक pagesize, पूर्णांक global, पूर्णांक n,
-	अचिन्हित लघु ctxbiपंचांगap);
-पूर्णांक tfh_ग_लिखो_only(काष्ठा gru_tlb_fault_handle *tfh, अचिन्हित दीर्घ paddr,
-	पूर्णांक gaa, अचिन्हित दीर्घ vaddr, पूर्णांक asid, पूर्णांक dirty, पूर्णांक pagesize);
-व्योम tfh_ग_लिखो_restart(काष्ठा gru_tlb_fault_handle *tfh, अचिन्हित दीर्घ paddr,
-	पूर्णांक gaa, अचिन्हित दीर्घ vaddr, पूर्णांक asid, पूर्णांक dirty, पूर्णांक pagesize);
-व्योम tfh_user_polling_mode(काष्ठा gru_tlb_fault_handle *tfh);
-व्योम tfh_exception(काष्ठा gru_tlb_fault_handle *tfh);
+int cch_allocate(struct gru_context_configuration_handle *cch);
+int cch_start(struct gru_context_configuration_handle *cch);
+int cch_interrupt(struct gru_context_configuration_handle *cch);
+int cch_deallocate(struct gru_context_configuration_handle *cch);
+int cch_interrupt_sync(struct gru_context_configuration_handle *cch);
+int tgh_invalidate(struct gru_tlb_global_handle *tgh, unsigned long vaddr,
+	unsigned long vaddrmask, int asid, int pagesize, int global, int n,
+	unsigned short ctxbitmap);
+int tfh_write_only(struct gru_tlb_fault_handle *tfh, unsigned long paddr,
+	int gaa, unsigned long vaddr, int asid, int dirty, int pagesize);
+void tfh_write_restart(struct gru_tlb_fault_handle *tfh, unsigned long paddr,
+	int gaa, unsigned long vaddr, int asid, int dirty, int pagesize);
+void tfh_user_polling_mode(struct gru_tlb_fault_handle *tfh);
+void tfh_exception(struct gru_tlb_fault_handle *tfh);
 
-#पूर्ण_अगर /* __GRUHANDLES_H__ */
+#endif /* __GRUHANDLES_H__ */

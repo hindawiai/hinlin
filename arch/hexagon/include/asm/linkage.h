@@ -1,13 +1,12 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2010-2011, The Linux Foundation. All rights reserved.
  */
 
-#अगर_अघोषित __ASM_LINKAGE_H
-#घोषणा __ASM_LINKAGE_H
+#ifndef __ASM_LINKAGE_H
+#define __ASM_LINKAGE_H
 
-#घोषणा __ALIGN		.align 4
-#घोषणा __ALIGN_STR	".align 4"
+#define __ALIGN		.align 4
+#define __ALIGN_STR	".align 4"
 
-#पूर्ण_अगर
+#endif

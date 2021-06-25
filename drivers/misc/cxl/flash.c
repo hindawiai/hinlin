@@ -1,269 +1,268 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/kernel.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/semaphore.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/rtas.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/kernel.h>
+#include <linux/fs.h>
+#include <linux/semaphore.h>
+#include <linux/slab.h>
+#include <linux/uaccess.h>
+#include <asm/rtas.h>
 
-#समावेश "cxl.h"
-#समावेश "hcalls.h"
+#include "cxl.h"
+#include "hcalls.h"
 
-#घोषणा DOWNLOAD_IMAGE 1
-#घोषणा VALIDATE_IMAGE 2
+#define DOWNLOAD_IMAGE 1
+#define VALIDATE_IMAGE 2
 
-काष्ठा ai_header अणु
+struct ai_header {
 	u16 version;
 	u8  reserved0[6];
-	u16 venकरोr;
+	u16 vendor;
 	u16 device;
-	u16 subप्रणाली_venकरोr;
-	u16 subप्रणाली;
+	u16 subsystem_vendor;
+	u16 subsystem;
 	u64 image_offset;
 	u64 image_length;
 	u8  reserved1[96];
-पूर्ण;
+};
 
-अटल काष्ठा semaphore sem;
-अटल अचिन्हित दीर्घ *buffer[CXL_AI_MAX_ENTRIES];
-अटल काष्ठा sg_list *le;
-अटल u64 जारी_token;
-अटल अचिन्हित पूर्णांक transfer;
+static struct semaphore sem;
+static unsigned long *buffer[CXL_AI_MAX_ENTRIES];
+static struct sg_list *le;
+static u64 continue_token;
+static unsigned int transfer;
 
-काष्ठा update_props_workarea अणु
+struct update_props_workarea {
 	__be32 phandle;
 	__be32 state;
 	__be64 reserved;
 	__be32 nprops;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा update_nodes_workarea अणु
+struct update_nodes_workarea {
 	__be32 state;
 	__be64 unit_address;
 	__be32 reserved;
-पूर्ण __packed;
+} __packed;
 
-#घोषणा DEVICE_SCOPE 3
-#घोषणा NODE_ACTION_MASK	0xff000000
-#घोषणा NODE_COUNT_MASK		0x00ffffff
-#घोषणा OPCODE_DELETE	0x01000000
-#घोषणा OPCODE_UPDATE	0x02000000
-#घोषणा OPCODE_ADD	0x03000000
+#define DEVICE_SCOPE 3
+#define NODE_ACTION_MASK	0xff000000
+#define NODE_COUNT_MASK		0x00ffffff
+#define OPCODE_DELETE	0x01000000
+#define OPCODE_UPDATE	0x02000000
+#define OPCODE_ADD	0x03000000
 
-अटल पूर्णांक rcall(पूर्णांक token, अक्षर *buf, s32 scope)
-अणु
-	पूर्णांक rc;
+static int rcall(int token, char *buf, s32 scope)
+{
+	int rc;
 
 	spin_lock(&rtas_data_buf_lock);
 
-	स_नकल(rtas_data_buf, buf, RTAS_DATA_BUF_SIZE);
-	rc = rtas_call(token, 2, 1, शून्य, rtas_data_buf, scope);
-	स_नकल(buf, rtas_data_buf, RTAS_DATA_BUF_SIZE);
+	memcpy(rtas_data_buf, buf, RTAS_DATA_BUF_SIZE);
+	rc = rtas_call(token, 2, 1, NULL, rtas_data_buf, scope);
+	memcpy(buf, rtas_data_buf, RTAS_DATA_BUF_SIZE);
 
 	spin_unlock(&rtas_data_buf_lock);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक update_property(काष्ठा device_node *dn, स्थिर अक्षर *name,
-			   u32 vd, अक्षर *value)
-अणु
-	काष्ठा property *new_prop;
+static int update_property(struct device_node *dn, const char *name,
+			   u32 vd, char *value)
+{
+	struct property *new_prop;
 	u32 *val;
-	पूर्णांक rc;
+	int rc;
 
-	new_prop = kzalloc(माप(*new_prop), GFP_KERNEL);
-	अगर (!new_prop)
-		वापस -ENOMEM;
+	new_prop = kzalloc(sizeof(*new_prop), GFP_KERNEL);
+	if (!new_prop)
+		return -ENOMEM;
 
 	new_prop->name = kstrdup(name, GFP_KERNEL);
-	अगर (!new_prop->name) अणु
-		kमुक्त(new_prop);
-		वापस -ENOMEM;
-	पूर्ण
+	if (!new_prop->name) {
+		kfree(new_prop);
+		return -ENOMEM;
+	}
 
 	new_prop->length = vd;
 	new_prop->value = kzalloc(new_prop->length, GFP_KERNEL);
-	अगर (!new_prop->value) अणु
-		kमुक्त(new_prop->name);
-		kमुक्त(new_prop);
-		वापस -ENOMEM;
-	पूर्ण
-	स_नकल(new_prop->value, value, vd);
+	if (!new_prop->value) {
+		kfree(new_prop->name);
+		kfree(new_prop);
+		return -ENOMEM;
+	}
+	memcpy(new_prop->value, value, vd);
 
 	val = (u32 *)new_prop->value;
 	rc = cxl_update_properties(dn, new_prop);
 	pr_devel("%pOFn: update property (%s, length: %i, value: %#x)\n",
 		  dn, name, vd, be32_to_cpu(*val));
 
-	अगर (rc) अणु
-		kमुक्त(new_prop->name);
-		kमुक्त(new_prop->value);
-		kमुक्त(new_prop);
-	पूर्ण
-	वापस rc;
-पूर्ण
+	if (rc) {
+		kfree(new_prop->name);
+		kfree(new_prop->value);
+		kfree(new_prop);
+	}
+	return rc;
+}
 
-अटल पूर्णांक update_node(__be32 phandle, s32 scope)
-अणु
-	काष्ठा update_props_workarea *upwa;
-	काष्ठा device_node *dn;
-	पूर्णांक i, rc, ret;
-	अक्षर *prop_data;
-	अक्षर *buf;
-	पूर्णांक token;
+static int update_node(__be32 phandle, s32 scope)
+{
+	struct update_props_workarea *upwa;
+	struct device_node *dn;
+	int i, rc, ret;
+	char *prop_data;
+	char *buf;
+	int token;
 	u32 nprops;
 	u32 vd;
 
 	token = rtas_token("ibm,update-properties");
-	अगर (token == RTAS_UNKNOWN_SERVICE)
-		वापस -EINVAL;
+	if (token == RTAS_UNKNOWN_SERVICE)
+		return -EINVAL;
 
 	buf = kzalloc(RTAS_DATA_BUF_SIZE, GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	if (!buf)
+		return -ENOMEM;
 
 	dn = of_find_node_by_phandle(be32_to_cpu(phandle));
-	अगर (!dn) अणु
-		kमुक्त(buf);
-		वापस -ENOENT;
-	पूर्ण
+	if (!dn) {
+		kfree(buf);
+		return -ENOENT;
+	}
 
-	upwa = (काष्ठा update_props_workarea *)&buf[0];
+	upwa = (struct update_props_workarea *)&buf[0];
 	upwa->phandle = phandle;
-	करो अणु
+	do {
 		rc = rcall(token, buf, scope);
-		अगर (rc < 0)
-			अवरोध;
+		if (rc < 0)
+			break;
 
-		prop_data = buf + माप(*upwa);
+		prop_data = buf + sizeof(*upwa);
 		nprops = be32_to_cpu(upwa->nprops);
 
-		अगर (*prop_data == 0) अणु
+		if (*prop_data == 0) {
 			prop_data++;
 			vd = be32_to_cpu(*(__be32 *)prop_data);
-			prop_data += vd + माप(vd);
+			prop_data += vd + sizeof(vd);
 			nprops--;
-		पूर्ण
+		}
 
-		क्रम (i = 0; i < nprops; i++) अणु
-			अक्षर *prop_name;
+		for (i = 0; i < nprops; i++) {
+			char *prop_name;
 
 			prop_name = prop_data;
-			prop_data += म_माप(prop_name) + 1;
+			prop_data += strlen(prop_name) + 1;
 			vd = be32_to_cpu(*(__be32 *)prop_data);
-			prop_data += माप(vd);
+			prop_data += sizeof(vd);
 
-			अगर ((vd != 0x00000000) && (vd != 0x80000000)) अणु
+			if ((vd != 0x00000000) && (vd != 0x80000000)) {
 				ret = update_property(dn, prop_name, vd,
 						prop_data);
-				अगर (ret)
+				if (ret)
 					pr_err("cxl: Could not update property %s - %i\n",
 					       prop_name, ret);
 
 				prop_data += vd;
-			पूर्ण
-		पूर्ण
-	पूर्ण जबतक (rc == 1);
+			}
+		}
+	} while (rc == 1);
 
 	of_node_put(dn);
-	kमुक्त(buf);
-	वापस rc;
-पूर्ण
+	kfree(buf);
+	return rc;
+}
 
-अटल पूर्णांक update_devicetree(काष्ठा cxl *adapter, s32 scope)
-अणु
-	काष्ठा update_nodes_workarea *unwa;
+static int update_devicetree(struct cxl *adapter, s32 scope)
+{
+	struct update_nodes_workarea *unwa;
 	u32 action, node_count;
-	पूर्णांक token, rc, i;
+	int token, rc, i;
 	__be32 *data, phandle;
-	अक्षर *buf;
+	char *buf;
 
 	token = rtas_token("ibm,update-nodes");
-	अगर (token == RTAS_UNKNOWN_SERVICE)
-		वापस -EINVAL;
+	if (token == RTAS_UNKNOWN_SERVICE)
+		return -EINVAL;
 
 	buf = kzalloc(RTAS_DATA_BUF_SIZE, GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	if (!buf)
+		return -ENOMEM;
 
-	unwa = (काष्ठा update_nodes_workarea *)&buf[0];
+	unwa = (struct update_nodes_workarea *)&buf[0];
 	unwa->unit_address = cpu_to_be64(adapter->guest->handle);
-	करो अणु
+	do {
 		rc = rcall(token, buf, scope);
-		अगर (rc && rc != 1)
-			अवरोध;
+		if (rc && rc != 1)
+			break;
 
 		data = (__be32 *)buf + 4;
-		जबतक (be32_to_cpu(*data) & NODE_ACTION_MASK) अणु
+		while (be32_to_cpu(*data) & NODE_ACTION_MASK) {
 			action = be32_to_cpu(*data) & NODE_ACTION_MASK;
 			node_count = be32_to_cpu(*data) & NODE_COUNT_MASK;
 			pr_devel("device reconfiguration - action: %#x, nodes: %#x\n",
 				 action, node_count);
 			data++;
 
-			क्रम (i = 0; i < node_count; i++) अणु
+			for (i = 0; i < node_count; i++) {
 				phandle = *data++;
 
-				चयन (action) अणु
-				हाल OPCODE_DELETE:
-					/* nothing to करो */
-					अवरोध;
-				हाल OPCODE_UPDATE:
+				switch (action) {
+				case OPCODE_DELETE:
+					/* nothing to do */
+					break;
+				case OPCODE_UPDATE:
 					update_node(phandle, scope);
-					अवरोध;
-				हाल OPCODE_ADD:
-					/* nothing to करो, just move poपूर्णांकer */
+					break;
+				case OPCODE_ADD:
+					/* nothing to do, just move pointer */
 					data++;
-					अवरोध;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण जबतक (rc == 1);
+					break;
+				}
+			}
+		}
+	} while (rc == 1);
 
-	kमुक्त(buf);
-	वापस 0;
-पूर्ण
+	kfree(buf);
+	return 0;
+}
 
-अटल पूर्णांक handle_image(काष्ठा cxl *adapter, पूर्णांक operation,
-			दीर्घ (*fct)(u64, u64, u64, u64 *),
-			काष्ठा cxl_adapter_image *ai)
-अणु
-	माप_प्रकार mod, s_copy, len_chunk = 0;
-	काष्ठा ai_header *header = शून्य;
-	अचिन्हित पूर्णांक entries = 0, i;
-	व्योम *dest, *from;
-	पूर्णांक rc = 0, need_header;
+static int handle_image(struct cxl *adapter, int operation,
+			long (*fct)(u64, u64, u64, u64 *),
+			struct cxl_adapter_image *ai)
+{
+	size_t mod, s_copy, len_chunk = 0;
+	struct ai_header *header = NULL;
+	unsigned int entries = 0, i;
+	void *dest, *from;
+	int rc = 0, need_header;
 
 	/* base adapter image header */
 	need_header = (ai->flags & CXL_AI_NEED_HEADER);
-	अगर (need_header) अणु
-		header = kzalloc(माप(काष्ठा ai_header), GFP_KERNEL);
-		अगर (!header)
-			वापस -ENOMEM;
+	if (need_header) {
+		header = kzalloc(sizeof(struct ai_header), GFP_KERNEL);
+		if (!header)
+			return -ENOMEM;
 		header->version = cpu_to_be16(1);
-		header->venकरोr = cpu_to_be16(adapter->guest->venकरोr);
+		header->vendor = cpu_to_be16(adapter->guest->vendor);
 		header->device = cpu_to_be16(adapter->guest->device);
-		header->subप्रणाली_venकरोr = cpu_to_be16(adapter->guest->subप्रणाली_venकरोr);
-		header->subप्रणाली = cpu_to_be16(adapter->guest->subप्रणाली);
+		header->subsystem_vendor = cpu_to_be16(adapter->guest->subsystem_vendor);
+		header->subsystem = cpu_to_be16(adapter->guest->subsystem);
 		header->image_offset = cpu_to_be64(CXL_AI_HEADER_SIZE);
 		header->image_length = cpu_to_be64(ai->len_image);
-	पूर्ण
+	}
 
 	/* number of entries in the list */
 	len_chunk = ai->len_data;
-	अगर (need_header)
+	if (need_header)
 		len_chunk += CXL_AI_HEADER_SIZE;
 
 	entries = len_chunk / CXL_AI_BUFFER_SIZE;
 	mod = len_chunk % CXL_AI_BUFFER_SIZE;
-	अगर (mod)
+	if (mod)
 		entries++;
 
-	अगर (entries > CXL_AI_MAX_ENTRIES) अणु
+	if (entries > CXL_AI_MAX_ENTRIES) {
 		rc = -EINVAL;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	/*          < -- MAX_CHUNK_SIZE = 4096 * 256 = 1048576 bytes -->
 	 * chunk 0  ----------------------------------------------------
@@ -277,84 +276,84 @@
 	 *          | data                                             |
 	 *          ----------------------------------------------------
 	 */
-	from = (व्योम *) ai->data;
-	क्रम (i = 0; i < entries; i++) अणु
+	from = (void *) ai->data;
+	for (i = 0; i < entries; i++) {
 		dest = buffer[i];
 		s_copy = CXL_AI_BUFFER_SIZE;
 
-		अगर ((need_header) && (i == 0)) अणु
+		if ((need_header) && (i == 0)) {
 			/* add adapter image header */
-			स_नकल(buffer[i], header, माप(काष्ठा ai_header));
+			memcpy(buffer[i], header, sizeof(struct ai_header));
 			s_copy = CXL_AI_BUFFER_SIZE - CXL_AI_HEADER_SIZE;
 			dest += CXL_AI_HEADER_SIZE; /* image offset */
-		पूर्ण
-		अगर ((i == (entries - 1)) && mod)
+		}
+		if ((i == (entries - 1)) && mod)
 			s_copy = mod;
 
 		/* copy data */
-		अगर (copy_from_user(dest, from, s_copy))
-			जाओ err;
+		if (copy_from_user(dest, from, s_copy))
+			goto err;
 
 		/* fill in the list */
 		le[i].phys_addr = cpu_to_be64(virt_to_phys(buffer[i]));
 		le[i].len = cpu_to_be64(CXL_AI_BUFFER_SIZE);
-		अगर ((i == (entries - 1)) && mod)
+		if ((i == (entries - 1)) && mod)
 			le[i].len = cpu_to_be64(mod);
 		from += s_copy;
-	पूर्ण
+	}
 	pr_devel("%s (op: %i, need header: %i, entries: %i, token: %#llx)\n",
-		 __func__, operation, need_header, entries, जारी_token);
+		 __func__, operation, need_header, entries, continue_token);
 
 	/*
-	 * करोwnload/validate the adapter image to the coherent
-	 * platक्रमm facility
+	 * download/validate the adapter image to the coherent
+	 * platform facility
 	 */
 	rc = fct(adapter->guest->handle, virt_to_phys(le), entries,
-		&जारी_token);
-	अगर (rc == 0) /* success of करोwnload/validation operation */
-		जारी_token = 0;
+		&continue_token);
+	if (rc == 0) /* success of download/validation operation */
+		continue_token = 0;
 
 err:
-	kमुक्त(header);
+	kfree(header);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक transfer_image(काष्ठा cxl *adapter, पूर्णांक operation,
-			काष्ठा cxl_adapter_image *ai)
-अणु
-	पूर्णांक rc = 0;
-	पूर्णांक afu;
+static int transfer_image(struct cxl *adapter, int operation,
+			struct cxl_adapter_image *ai)
+{
+	int rc = 0;
+	int afu;
 
-	चयन (operation) अणु
-	हाल DOWNLOAD_IMAGE:
+	switch (operation) {
+	case DOWNLOAD_IMAGE:
 		rc = handle_image(adapter, operation,
-				&cxl_h_करोwnload_adapter_image, ai);
-		अगर (rc < 0) अणु
+				&cxl_h_download_adapter_image, ai);
+		if (rc < 0) {
 			pr_devel("resetting adapter\n");
 			cxl_h_reset_adapter(adapter->guest->handle);
-		पूर्ण
-		वापस rc;
+		}
+		return rc;
 
-	हाल VALIDATE_IMAGE:
+	case VALIDATE_IMAGE:
 		rc = handle_image(adapter, operation,
 				&cxl_h_validate_adapter_image, ai);
-		अगर (rc < 0) अणु
+		if (rc < 0) {
 			pr_devel("resetting adapter\n");
 			cxl_h_reset_adapter(adapter->guest->handle);
-			वापस rc;
-		पूर्ण
-		अगर (rc == 0) अणु
+			return rc;
+		}
+		if (rc == 0) {
 			pr_devel("remove current afu\n");
-			क्रम (afu = 0; afu < adapter->slices; afu++)
-				cxl_guest_हटाओ_afu(adapter->afu[afu]);
+			for (afu = 0; afu < adapter->slices; afu++)
+				cxl_guest_remove_afu(adapter->afu[afu]);
 
 			pr_devel("resetting adapter\n");
 			cxl_h_reset_adapter(adapter->guest->handle);
 
 			/* The entire image has now been
-			 * करोwnloaded and the validation has
-			 * been successfully perक्रमmed.
+			 * downloaded and the validation has
+			 * been successfully performed.
 			 * After that, the partition should call
 			 * ibm,update-nodes and
 			 * ibm,update-properties to receive the
@@ -362,58 +361,58 @@ err:
 			 */
 			rc = update_devicetree(adapter, DEVICE_SCOPE);
 			transfer = 1;
-		पूर्ण
-		वापस rc;
-	पूर्ण
+		}
+		return rc;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल दीर्घ ioctl_transfer_image(काष्ठा cxl *adapter, पूर्णांक operation,
-				काष्ठा cxl_adapter_image __user *uai)
-अणु
-	काष्ठा cxl_adapter_image ai;
+static long ioctl_transfer_image(struct cxl *adapter, int operation,
+				struct cxl_adapter_image __user *uai)
+{
+	struct cxl_adapter_image ai;
 
 	pr_devel("%s\n", __func__);
 
-	अगर (copy_from_user(&ai, uai, माप(काष्ठा cxl_adapter_image)))
-		वापस -EFAULT;
+	if (copy_from_user(&ai, uai, sizeof(struct cxl_adapter_image)))
+		return -EFAULT;
 
 	/*
 	 * Make sure reserved fields and bits are set to 0
 	 */
-	अगर (ai.reserved1 || ai.reserved2 || ai.reserved3 || ai.reserved4 ||
+	if (ai.reserved1 || ai.reserved2 || ai.reserved3 || ai.reserved4 ||
 		(ai.flags & ~CXL_AI_ALL))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	वापस transfer_image(adapter, operation, &ai);
-पूर्ण
+	return transfer_image(adapter, operation, &ai);
+}
 
-अटल पूर्णांक device_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	पूर्णांक adapter_num = CXL_DEVT_ADAPTER(inode->i_rdev);
-	काष्ठा cxl *adapter;
-	पूर्णांक rc = 0, i;
+static int device_open(struct inode *inode, struct file *file)
+{
+	int adapter_num = CXL_DEVT_ADAPTER(inode->i_rdev);
+	struct cxl *adapter;
+	int rc = 0, i;
 
 	pr_devel("in %s\n", __func__);
 
-	BUG_ON(माप(काष्ठा ai_header) != CXL_AI_HEADER_SIZE);
+	BUG_ON(sizeof(struct ai_header) != CXL_AI_HEADER_SIZE);
 
-	/* Allows one process to खोलो the device by using a semaphore */
-	अगर (करोwn_पूर्णांकerruptible(&sem) != 0)
-		वापस -EPERM;
+	/* Allows one process to open the device by using a semaphore */
+	if (down_interruptible(&sem) != 0)
+		return -EPERM;
 
-	अगर (!(adapter = get_cxl_adapter(adapter_num))) अणु
+	if (!(adapter = get_cxl_adapter(adapter_num))) {
 		rc = -ENODEV;
-		जाओ err_unlock;
-	पूर्ण
+		goto err_unlock;
+	}
 
-	file->निजी_data = adapter;
-	जारी_token = 0;
+	file->private_data = adapter;
+	continue_token = 0;
 	transfer = 0;
 
-	क्रम (i = 0; i < CXL_AI_MAX_ENTRIES; i++)
-		buffer[i] = शून्य;
+	for (i = 0; i < CXL_AI_MAX_ENTRIES; i++)
+		buffer[i] = NULL;
 
 	/* aligned buffer containing list entries which describes up to
 	 * 1 megabyte of data (256 entries of 4096 bytes each)
@@ -424,115 +423,115 @@ err:
 	 *  ....
 	 *  Logical real address of buffer N  -  Buffer N length in bytes
 	 */
-	le = (काष्ठा sg_list *)get_zeroed_page(GFP_KERNEL);
-	अगर (!le) अणु
+	le = (struct sg_list *)get_zeroed_page(GFP_KERNEL);
+	if (!le) {
 		rc = -ENOMEM;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	क्रम (i = 0; i < CXL_AI_MAX_ENTRIES; i++) अणु
-		buffer[i] = (अचिन्हित दीर्घ *)get_zeroed_page(GFP_KERNEL);
-		अगर (!buffer[i]) अणु
+	for (i = 0; i < CXL_AI_MAX_ENTRIES; i++) {
+		buffer[i] = (unsigned long *)get_zeroed_page(GFP_KERNEL);
+		if (!buffer[i]) {
 			rc = -ENOMEM;
-			जाओ err1;
-		पूर्ण
-	पूर्ण
+			goto err1;
+		}
+	}
 
-	वापस 0;
+	return 0;
 
 err1:
-	क्रम (i = 0; i < CXL_AI_MAX_ENTRIES; i++) अणु
-		अगर (buffer[i])
-			मुक्त_page((अचिन्हित दीर्घ) buffer[i]);
-	पूर्ण
+	for (i = 0; i < CXL_AI_MAX_ENTRIES; i++) {
+		if (buffer[i])
+			free_page((unsigned long) buffer[i]);
+	}
 
-	अगर (le)
-		मुक्त_page((अचिन्हित दीर्घ) le);
+	if (le)
+		free_page((unsigned long) le);
 err:
 	put_device(&adapter->dev);
 err_unlock:
 	up(&sem);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल दीर्घ device_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा cxl *adapter = file->निजी_data;
+static long device_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+{
+	struct cxl *adapter = file->private_data;
 
 	pr_devel("in %s\n", __func__);
 
-	अगर (cmd == CXL_IOCTL_DOWNLOAD_IMAGE)
-		वापस ioctl_transfer_image(adapter,
+	if (cmd == CXL_IOCTL_DOWNLOAD_IMAGE)
+		return ioctl_transfer_image(adapter,
 					DOWNLOAD_IMAGE,
-					(काष्ठा cxl_adapter_image __user *)arg);
-	अन्यथा अगर (cmd == CXL_IOCTL_VALIDATE_IMAGE)
-		वापस ioctl_transfer_image(adapter,
+					(struct cxl_adapter_image __user *)arg);
+	else if (cmd == CXL_IOCTL_VALIDATE_IMAGE)
+		return ioctl_transfer_image(adapter,
 					VALIDATE_IMAGE,
-					(काष्ठा cxl_adapter_image __user *)arg);
-	अन्यथा
-		वापस -EINVAL;
-पूर्ण
+					(struct cxl_adapter_image __user *)arg);
+	else
+		return -EINVAL;
+}
 
-अटल पूर्णांक device_बंद(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा cxl *adapter = file->निजी_data;
-	पूर्णांक i;
+static int device_close(struct inode *inode, struct file *file)
+{
+	struct cxl *adapter = file->private_data;
+	int i;
 
 	pr_devel("in %s\n", __func__);
 
-	क्रम (i = 0; i < CXL_AI_MAX_ENTRIES; i++) अणु
-		अगर (buffer[i])
-			मुक्त_page((अचिन्हित दीर्घ) buffer[i]);
-	पूर्ण
+	for (i = 0; i < CXL_AI_MAX_ENTRIES; i++) {
+		if (buffer[i])
+			free_page((unsigned long) buffer[i]);
+	}
 
-	अगर (le)
-		मुक्त_page((अचिन्हित दीर्घ) le);
+	if (le)
+		free_page((unsigned long) le);
 
 	up(&sem);
 	put_device(&adapter->dev);
-	जारी_token = 0;
+	continue_token = 0;
 
 	/* reload the module */
-	अगर (transfer)
+	if (transfer)
 		cxl_guest_reload_module(adapter);
-	अन्यथा अणु
+	else {
 		pr_devel("resetting adapter\n");
 		cxl_h_reset_adapter(adapter->guest->handle);
-	पूर्ण
+	}
 
 	transfer = 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा file_operations fops = अणु
+static const struct file_operations fops = {
 	.owner		= THIS_MODULE,
-	.खोलो		= device_खोलो,
+	.open		= device_open,
 	.unlocked_ioctl	= device_ioctl,
 	.compat_ioctl	= compat_ptr_ioctl,
-	.release	= device_बंद,
-पूर्ण;
+	.release	= device_close,
+};
 
-व्योम cxl_guest_हटाओ_अक्षरdev(काष्ठा cxl *adapter)
-अणु
+void cxl_guest_remove_chardev(struct cxl *adapter)
+{
 	cdev_del(&adapter->guest->cdev);
-पूर्ण
+}
 
-पूर्णांक cxl_guest_add_अक्षरdev(काष्ठा cxl *adapter)
-अणु
+int cxl_guest_add_chardev(struct cxl *adapter)
+{
 	dev_t devt;
-	पूर्णांक rc;
+	int rc;
 
 	devt = MKDEV(MAJOR(cxl_get_dev()), CXL_CARD_MINOR(adapter));
 	cdev_init(&adapter->guest->cdev, &fops);
-	अगर ((rc = cdev_add(&adapter->guest->cdev, devt, 1))) अणु
+	if ((rc = cdev_add(&adapter->guest->cdev, devt, 1))) {
 		dev_err(&adapter->dev,
 			"Unable to add chardev on adapter (card%i): %i\n",
 			adapter->adapter_num, rc);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 	adapter->dev.devt = devt;
 	sema_init(&sem, 1);
 err:
-	वापस rc;
-पूर्ण
+	return rc;
+}

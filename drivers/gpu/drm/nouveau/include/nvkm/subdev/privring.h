@@ -1,13 +1,12 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
-#अगर_अघोषित __NVKM_PRIVRING_H__
-#घोषणा __NVKM_PRIVRING_H__
-#समावेश <core/subdev.h>
+/* SPDX-License-Identifier: MIT */
+#ifndef __NVKM_PRIVRING_H__
+#define __NVKM_PRIVRING_H__
+#include <core/subdev.h>
 
-पूर्णांक gf100_privring_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_subdev **);
-पूर्णांक gf117_privring_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_subdev **);
-पूर्णांक gk104_privring_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_subdev **);
-पूर्णांक gk20a_privring_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_subdev **);
-पूर्णांक gm200_privring_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_subdev **);
-पूर्णांक gp10b_privring_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_subdev **);
-#पूर्ण_अगर
+int gf100_privring_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_subdev **);
+int gf117_privring_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_subdev **);
+int gk104_privring_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_subdev **);
+int gk20a_privring_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_subdev **);
+int gm200_privring_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_subdev **);
+int gp10b_privring_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_subdev **);
+#endif

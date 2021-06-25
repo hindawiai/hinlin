@@ -1,73 +1,72 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0 */
+/* SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0 */
 /* Copyright (c) 2015-2018 Mellanox Technologies. All rights reserved */
 
-#अगर_अघोषित _MLXSW_CORE_H
-#घोषणा _MLXSW_CORE_H
+#ifndef _MLXSW_CORE_H
+#define _MLXSW_CORE_H
 
-#समावेश <linux/module.h>
-#समावेश <linux/device.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/gfp.h>
-#समावेश <linux/types.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/net_namespace.h>
-#समावेश <net/devlink.h>
+#include <linux/module.h>
+#include <linux/device.h>
+#include <linux/slab.h>
+#include <linux/gfp.h>
+#include <linux/types.h>
+#include <linux/skbuff.h>
+#include <linux/workqueue.h>
+#include <linux/net_namespace.h>
+#include <net/devlink.h>
 
-#समावेश "trap.h"
-#समावेश "reg.h"
-#समावेश "cmd.h"
-#समावेश "resources.h"
+#include "trap.h"
+#include "reg.h"
+#include "cmd.h"
+#include "resources.h"
 
-क्रमागत mlxsw_core_resource_id अणु
+enum mlxsw_core_resource_id {
 	MLXSW_CORE_RESOURCE_PORTS = 1,
 	MLXSW_CORE_RESOURCE_MAX,
-पूर्ण;
+};
 
-काष्ठा mlxsw_core;
-काष्ठा mlxsw_core_port;
-काष्ठा mlxsw_driver;
-काष्ठा mlxsw_bus;
-काष्ठा mlxsw_bus_info;
-काष्ठा mlxsw_fw_rev;
+struct mlxsw_core;
+struct mlxsw_core_port;
+struct mlxsw_driver;
+struct mlxsw_bus;
+struct mlxsw_bus_info;
+struct mlxsw_fw_rev;
 
-अचिन्हित पूर्णांक mlxsw_core_max_ports(स्थिर काष्ठा mlxsw_core *mlxsw_core);
+unsigned int mlxsw_core_max_ports(const struct mlxsw_core *mlxsw_core);
 
-व्योम *mlxsw_core_driver_priv(काष्ठा mlxsw_core *mlxsw_core);
+void *mlxsw_core_driver_priv(struct mlxsw_core *mlxsw_core);
 
-bool mlxsw_core_res_query_enabled(स्थिर काष्ठा mlxsw_core *mlxsw_core);
+bool mlxsw_core_res_query_enabled(const struct mlxsw_core *mlxsw_core);
 
-bool mlxsw_core_temp_warn_enabled(स्थिर काष्ठा mlxsw_core *mlxsw_core);
+bool mlxsw_core_temp_warn_enabled(const struct mlxsw_core *mlxsw_core);
 
 bool
-mlxsw_core_fw_rev_minor_subminor_validate(स्थिर काष्ठा mlxsw_fw_rev *rev,
-					  स्थिर काष्ठा mlxsw_fw_rev *req_rev);
+mlxsw_core_fw_rev_minor_subminor_validate(const struct mlxsw_fw_rev *rev,
+					  const struct mlxsw_fw_rev *req_rev);
 
-पूर्णांक mlxsw_core_driver_रेजिस्टर(काष्ठा mlxsw_driver *mlxsw_driver);
-व्योम mlxsw_core_driver_unरेजिस्टर(काष्ठा mlxsw_driver *mlxsw_driver);
+int mlxsw_core_driver_register(struct mlxsw_driver *mlxsw_driver);
+void mlxsw_core_driver_unregister(struct mlxsw_driver *mlxsw_driver);
 
-पूर्णांक mlxsw_core_bus_device_रेजिस्टर(स्थिर काष्ठा mlxsw_bus_info *mlxsw_bus_info,
-				   स्थिर काष्ठा mlxsw_bus *mlxsw_bus,
-				   व्योम *bus_priv, bool reload,
-				   काष्ठा devlink *devlink,
-				   काष्ठा netlink_ext_ack *extack);
-व्योम mlxsw_core_bus_device_unरेजिस्टर(काष्ठा mlxsw_core *mlxsw_core, bool reload);
+int mlxsw_core_bus_device_register(const struct mlxsw_bus_info *mlxsw_bus_info,
+				   const struct mlxsw_bus *mlxsw_bus,
+				   void *bus_priv, bool reload,
+				   struct devlink *devlink,
+				   struct netlink_ext_ack *extack);
+void mlxsw_core_bus_device_unregister(struct mlxsw_core *mlxsw_core, bool reload);
 
-काष्ठा mlxsw_tx_info अणु
+struct mlxsw_tx_info {
 	u8 local_port;
 	bool is_emad;
-पूर्ण;
+};
 
-काष्ठा mlxsw_rx_md_info अणु
+struct mlxsw_rx_md_info {
 	u32 cookie_index;
 	u32 latency;
 	u32 tx_congestion;
-	जोड़ अणु
+	union {
 		/* Valid when 'tx_port_valid' is set. */
 		u16 tx_sys_port;
 		u16 tx_lag_id;
-	पूर्ण;
+	};
 	u8 tx_lag_port_index; /* Valid when 'tx_port_is_lag' is set. */
 	u8 tx_tc;
 	u8 latency_valid:1,
@@ -76,203 +75,203 @@ mlxsw_core_fw_rev_minor_subminor_validate(स्थिर काष्ठा mlx
 	   tx_port_valid:1,
 	   tx_port_is_lag:1,
 	   unused:3;
-पूर्ण;
+};
 
-bool mlxsw_core_skb_transmit_busy(काष्ठा mlxsw_core *mlxsw_core,
-				  स्थिर काष्ठा mlxsw_tx_info *tx_info);
-पूर्णांक mlxsw_core_skb_transmit(काष्ठा mlxsw_core *mlxsw_core, काष्ठा sk_buff *skb,
-			    स्थिर काष्ठा mlxsw_tx_info *tx_info);
-व्योम mlxsw_core_ptp_transmitted(काष्ठा mlxsw_core *mlxsw_core,
-				काष्ठा sk_buff *skb, u8 local_port);
+bool mlxsw_core_skb_transmit_busy(struct mlxsw_core *mlxsw_core,
+				  const struct mlxsw_tx_info *tx_info);
+int mlxsw_core_skb_transmit(struct mlxsw_core *mlxsw_core, struct sk_buff *skb,
+			    const struct mlxsw_tx_info *tx_info);
+void mlxsw_core_ptp_transmitted(struct mlxsw_core *mlxsw_core,
+				struct sk_buff *skb, u8 local_port);
 
-काष्ठा mlxsw_rx_listener अणु
-	व्योम (*func)(काष्ठा sk_buff *skb, u8 local_port, व्योम *priv);
+struct mlxsw_rx_listener {
+	void (*func)(struct sk_buff *skb, u8 local_port, void *priv);
 	u8 local_port;
 	u8 mirror_reason;
 	u16 trap_id;
-पूर्ण;
+};
 
-काष्ठा mlxsw_event_listener अणु
-	व्योम (*func)(स्थिर काष्ठा mlxsw_reg_info *reg,
-		     अक्षर *payload, व्योम *priv);
-	क्रमागत mlxsw_event_trap_id trap_id;
-पूर्ण;
+struct mlxsw_event_listener {
+	void (*func)(const struct mlxsw_reg_info *reg,
+		     char *payload, void *priv);
+	enum mlxsw_event_trap_id trap_id;
+};
 
-काष्ठा mlxsw_listener अणु
+struct mlxsw_listener {
 	u16 trap_id;
-	जोड़ अणु
-		काष्ठा mlxsw_rx_listener rx_listener;
-		काष्ठा mlxsw_event_listener event_listener;
-	पूर्ण;
-	क्रमागत mlxsw_reg_hpkt_action en_action; /* Action when enabled */
-	क्रमागत mlxsw_reg_hpkt_action dis_action; /* Action when disabled */
+	union {
+		struct mlxsw_rx_listener rx_listener;
+		struct mlxsw_event_listener event_listener;
+	};
+	enum mlxsw_reg_hpkt_action en_action; /* Action when enabled */
+	enum mlxsw_reg_hpkt_action dis_action; /* Action when disabled */
 	u8 en_trap_group; /* Trap group when enabled */
 	u8 dis_trap_group; /* Trap group when disabled */
 	u8 is_ctrl:1, /* should go via control buffer or not */
 	   is_event:1,
-	   enabled_on_रेजिस्टर:1; /* Trap should be enabled when listener
-				   * is रेजिस्टरed.
+	   enabled_on_register:1; /* Trap should be enabled when listener
+				   * is registered.
 				   */
-पूर्ण;
+};
 
-#घोषणा __MLXSW_RXL(_func, _trap_id, _en_action, _is_ctrl, _en_trap_group,	\
-		    _dis_action, _enabled_on_रेजिस्टर, _dis_trap_group,		\
+#define __MLXSW_RXL(_func, _trap_id, _en_action, _is_ctrl, _en_trap_group,	\
+		    _dis_action, _enabled_on_register, _dis_trap_group,		\
 		    _mirror_reason)						\
-	अणु									\
+	{									\
 		.trap_id = MLXSW_TRAP_ID_##_trap_id,				\
 		.rx_listener =							\
-		अणु								\
+		{								\
 			.func = _func,						\
 			.local_port = MLXSW_PORT_DONT_CARE,			\
 			.mirror_reason = _mirror_reason,			\
 			.trap_id = MLXSW_TRAP_ID_##_trap_id,			\
-		पूर्ण,								\
+		},								\
 		.en_action = MLXSW_REG_HPKT_ACTION_##_en_action,		\
 		.dis_action = MLXSW_REG_HPKT_ACTION_##_dis_action,		\
 		.en_trap_group = MLXSW_REG_HTGT_TRAP_GROUP_##_en_trap_group,	\
 		.dis_trap_group = MLXSW_REG_HTGT_TRAP_GROUP_##_dis_trap_group,	\
 		.is_ctrl = _is_ctrl,						\
-		.enabled_on_रेजिस्टर = _enabled_on_रेजिस्टर,			\
-	पूर्ण
+		.enabled_on_register = _enabled_on_register,			\
+	}
 
-#घोषणा MLXSW_RXL(_func, _trap_id, _en_action, _is_ctrl, _trap_group,		\
+#define MLXSW_RXL(_func, _trap_id, _en_action, _is_ctrl, _trap_group,		\
 		  _dis_action)							\
 	__MLXSW_RXL(_func, _trap_id, _en_action, _is_ctrl, _trap_group,		\
 		    _dis_action, true, _trap_group, 0)
 
-#घोषणा MLXSW_RXL_DIS(_func, _trap_id, _en_action, _is_ctrl, _en_trap_group,	\
+#define MLXSW_RXL_DIS(_func, _trap_id, _en_action, _is_ctrl, _en_trap_group,	\
 		      _dis_action, _dis_trap_group)				\
 	__MLXSW_RXL(_func, _trap_id, _en_action, _is_ctrl, _en_trap_group,	\
 		    _dis_action, false, _dis_trap_group, 0)
 
-#घोषणा MLXSW_RXL_MIRROR(_func, _session_id, _trap_group, _mirror_reason)	\
+#define MLXSW_RXL_MIRROR(_func, _session_id, _trap_group, _mirror_reason)	\
 	__MLXSW_RXL(_func, MIRROR_SESSION##_session_id,	TRAP_TO_CPU, false,	\
 		    _trap_group, TRAP_TO_CPU, true, _trap_group,		\
 		    _mirror_reason)
 
-#घोषणा MLXSW_EVENTL(_func, _trap_id, _trap_group)				\
-	अणु									\
+#define MLXSW_EVENTL(_func, _trap_id, _trap_group)				\
+	{									\
 		.trap_id = MLXSW_TRAP_ID_##_trap_id,				\
 		.event_listener =						\
-		अणु								\
+		{								\
 			.func = _func,						\
 			.trap_id = MLXSW_TRAP_ID_##_trap_id,			\
-		पूर्ण,								\
+		},								\
 		.en_action = MLXSW_REG_HPKT_ACTION_TRAP_TO_CPU,			\
 		.en_trap_group = MLXSW_REG_HTGT_TRAP_GROUP_##_trap_group,	\
 		.is_event = true,						\
-		.enabled_on_रेजिस्टर = true,					\
-	पूर्ण
+		.enabled_on_register = true,					\
+	}
 
-पूर्णांक mlxsw_core_rx_listener_रेजिस्टर(काष्ठा mlxsw_core *mlxsw_core,
-				    स्थिर काष्ठा mlxsw_rx_listener *rxl,
-				    व्योम *priv, bool enabled);
-व्योम mlxsw_core_rx_listener_unरेजिस्टर(काष्ठा mlxsw_core *mlxsw_core,
-				       स्थिर काष्ठा mlxsw_rx_listener *rxl);
+int mlxsw_core_rx_listener_register(struct mlxsw_core *mlxsw_core,
+				    const struct mlxsw_rx_listener *rxl,
+				    void *priv, bool enabled);
+void mlxsw_core_rx_listener_unregister(struct mlxsw_core *mlxsw_core,
+				       const struct mlxsw_rx_listener *rxl);
 
-पूर्णांक mlxsw_core_event_listener_रेजिस्टर(काष्ठा mlxsw_core *mlxsw_core,
-				       स्थिर काष्ठा mlxsw_event_listener *el,
-				       व्योम *priv);
-व्योम mlxsw_core_event_listener_unरेजिस्टर(काष्ठा mlxsw_core *mlxsw_core,
-					  स्थिर काष्ठा mlxsw_event_listener *el);
+int mlxsw_core_event_listener_register(struct mlxsw_core *mlxsw_core,
+				       const struct mlxsw_event_listener *el,
+				       void *priv);
+void mlxsw_core_event_listener_unregister(struct mlxsw_core *mlxsw_core,
+					  const struct mlxsw_event_listener *el);
 
-पूर्णांक mlxsw_core_trap_रेजिस्टर(काष्ठा mlxsw_core *mlxsw_core,
-			     स्थिर काष्ठा mlxsw_listener *listener,
-			     व्योम *priv);
-व्योम mlxsw_core_trap_unरेजिस्टर(काष्ठा mlxsw_core *mlxsw_core,
-				स्थिर काष्ठा mlxsw_listener *listener,
-				व्योम *priv);
-पूर्णांक mlxsw_core_trap_state_set(काष्ठा mlxsw_core *mlxsw_core,
-			      स्थिर काष्ठा mlxsw_listener *listener,
+int mlxsw_core_trap_register(struct mlxsw_core *mlxsw_core,
+			     const struct mlxsw_listener *listener,
+			     void *priv);
+void mlxsw_core_trap_unregister(struct mlxsw_core *mlxsw_core,
+				const struct mlxsw_listener *listener,
+				void *priv);
+int mlxsw_core_trap_state_set(struct mlxsw_core *mlxsw_core,
+			      const struct mlxsw_listener *listener,
 			      bool enabled);
 
-प्रकार व्योम mlxsw_reg_trans_cb_t(काष्ठा mlxsw_core *mlxsw_core, अक्षर *payload,
-				  माप_प्रकार payload_len, अचिन्हित दीर्घ cb_priv);
+typedef void mlxsw_reg_trans_cb_t(struct mlxsw_core *mlxsw_core, char *payload,
+				  size_t payload_len, unsigned long cb_priv);
 
-पूर्णांक mlxsw_reg_trans_query(काष्ठा mlxsw_core *mlxsw_core,
-			  स्थिर काष्ठा mlxsw_reg_info *reg, अक्षर *payload,
-			  काष्ठा list_head *bulk_list,
-			  mlxsw_reg_trans_cb_t *cb, अचिन्हित दीर्घ cb_priv);
-पूर्णांक mlxsw_reg_trans_ग_लिखो(काष्ठा mlxsw_core *mlxsw_core,
-			  स्थिर काष्ठा mlxsw_reg_info *reg, अक्षर *payload,
-			  काष्ठा list_head *bulk_list,
-			  mlxsw_reg_trans_cb_t *cb, अचिन्हित दीर्घ cb_priv);
-पूर्णांक mlxsw_reg_trans_bulk_रुको(काष्ठा list_head *bulk_list);
+int mlxsw_reg_trans_query(struct mlxsw_core *mlxsw_core,
+			  const struct mlxsw_reg_info *reg, char *payload,
+			  struct list_head *bulk_list,
+			  mlxsw_reg_trans_cb_t *cb, unsigned long cb_priv);
+int mlxsw_reg_trans_write(struct mlxsw_core *mlxsw_core,
+			  const struct mlxsw_reg_info *reg, char *payload,
+			  struct list_head *bulk_list,
+			  mlxsw_reg_trans_cb_t *cb, unsigned long cb_priv);
+int mlxsw_reg_trans_bulk_wait(struct list_head *bulk_list);
 
-पूर्णांक mlxsw_reg_query(काष्ठा mlxsw_core *mlxsw_core,
-		    स्थिर काष्ठा mlxsw_reg_info *reg, अक्षर *payload);
-पूर्णांक mlxsw_reg_ग_लिखो(काष्ठा mlxsw_core *mlxsw_core,
-		    स्थिर काष्ठा mlxsw_reg_info *reg, अक्षर *payload);
+int mlxsw_reg_query(struct mlxsw_core *mlxsw_core,
+		    const struct mlxsw_reg_info *reg, char *payload);
+int mlxsw_reg_write(struct mlxsw_core *mlxsw_core,
+		    const struct mlxsw_reg_info *reg, char *payload);
 
-काष्ठा mlxsw_rx_info अणु
+struct mlxsw_rx_info {
 	bool is_lag;
-	जोड़ अणु
+	union {
 		u16 sys_port;
 		u16 lag_id;
-	पूर्ण u;
+	} u;
 	u8 lag_port_index;
 	u8 mirror_reason;
-	पूर्णांक trap_id;
-पूर्ण;
+	int trap_id;
+};
 
-व्योम mlxsw_core_skb_receive(काष्ठा mlxsw_core *mlxsw_core, काष्ठा sk_buff *skb,
-			    काष्ठा mlxsw_rx_info *rx_info);
+void mlxsw_core_skb_receive(struct mlxsw_core *mlxsw_core, struct sk_buff *skb,
+			    struct mlxsw_rx_info *rx_info);
 
-व्योम mlxsw_core_lag_mapping_set(काष्ठा mlxsw_core *mlxsw_core,
+void mlxsw_core_lag_mapping_set(struct mlxsw_core *mlxsw_core,
 				u16 lag_id, u8 port_index, u8 local_port);
-u8 mlxsw_core_lag_mapping_get(काष्ठा mlxsw_core *mlxsw_core,
+u8 mlxsw_core_lag_mapping_get(struct mlxsw_core *mlxsw_core,
 			      u16 lag_id, u8 port_index);
-व्योम mlxsw_core_lag_mapping_clear(काष्ठा mlxsw_core *mlxsw_core,
+void mlxsw_core_lag_mapping_clear(struct mlxsw_core *mlxsw_core,
 				  u16 lag_id, u8 local_port);
 
-व्योम *mlxsw_core_port_driver_priv(काष्ठा mlxsw_core_port *mlxsw_core_port);
-पूर्णांक mlxsw_core_port_init(काष्ठा mlxsw_core *mlxsw_core, u8 local_port,
+void *mlxsw_core_port_driver_priv(struct mlxsw_core_port *mlxsw_core_port);
+int mlxsw_core_port_init(struct mlxsw_core *mlxsw_core, u8 local_port,
 			 u32 port_number, bool split, u32 split_port_subnumber,
 			 bool splittable, u32 lanes,
-			 स्थिर अचिन्हित अक्षर *चयन_id,
-			 अचिन्हित अक्षर चयन_id_len);
-व्योम mlxsw_core_port_fini(काष्ठा mlxsw_core *mlxsw_core, u8 local_port);
-पूर्णांक mlxsw_core_cpu_port_init(काष्ठा mlxsw_core *mlxsw_core,
-			     व्योम *port_driver_priv,
-			     स्थिर अचिन्हित अक्षर *चयन_id,
-			     अचिन्हित अक्षर चयन_id_len);
-व्योम mlxsw_core_cpu_port_fini(काष्ठा mlxsw_core *mlxsw_core);
-व्योम mlxsw_core_port_eth_set(काष्ठा mlxsw_core *mlxsw_core, u8 local_port,
-			     व्योम *port_driver_priv, काष्ठा net_device *dev);
-व्योम mlxsw_core_port_ib_set(काष्ठा mlxsw_core *mlxsw_core, u8 local_port,
-			    व्योम *port_driver_priv);
-व्योम mlxsw_core_port_clear(काष्ठा mlxsw_core *mlxsw_core, u8 local_port,
-			   व्योम *port_driver_priv);
-क्रमागत devlink_port_type mlxsw_core_port_type_get(काष्ठा mlxsw_core *mlxsw_core,
+			 const unsigned char *switch_id,
+			 unsigned char switch_id_len);
+void mlxsw_core_port_fini(struct mlxsw_core *mlxsw_core, u8 local_port);
+int mlxsw_core_cpu_port_init(struct mlxsw_core *mlxsw_core,
+			     void *port_driver_priv,
+			     const unsigned char *switch_id,
+			     unsigned char switch_id_len);
+void mlxsw_core_cpu_port_fini(struct mlxsw_core *mlxsw_core);
+void mlxsw_core_port_eth_set(struct mlxsw_core *mlxsw_core, u8 local_port,
+			     void *port_driver_priv, struct net_device *dev);
+void mlxsw_core_port_ib_set(struct mlxsw_core *mlxsw_core, u8 local_port,
+			    void *port_driver_priv);
+void mlxsw_core_port_clear(struct mlxsw_core *mlxsw_core, u8 local_port,
+			   void *port_driver_priv);
+enum devlink_port_type mlxsw_core_port_type_get(struct mlxsw_core *mlxsw_core,
 						u8 local_port);
-काष्ठा devlink_port *
-mlxsw_core_port_devlink_port_get(काष्ठा mlxsw_core *mlxsw_core,
+struct devlink_port *
+mlxsw_core_port_devlink_port_get(struct mlxsw_core *mlxsw_core,
 				 u8 local_port);
-bool mlxsw_core_port_is_xm(स्थिर काष्ठा mlxsw_core *mlxsw_core, u8 local_port);
-काष्ठा mlxsw_env *mlxsw_core_env(स्थिर काष्ठा mlxsw_core *mlxsw_core);
-bool mlxsw_core_is_initialized(स्थिर काष्ठा mlxsw_core *mlxsw_core);
-पूर्णांक mlxsw_core_module_max_width(काष्ठा mlxsw_core *mlxsw_core, u8 module);
+bool mlxsw_core_port_is_xm(const struct mlxsw_core *mlxsw_core, u8 local_port);
+struct mlxsw_env *mlxsw_core_env(const struct mlxsw_core *mlxsw_core);
+bool mlxsw_core_is_initialized(const struct mlxsw_core *mlxsw_core);
+int mlxsw_core_module_max_width(struct mlxsw_core *mlxsw_core, u8 module);
 
-पूर्णांक mlxsw_core_schedule_dw(काष्ठा delayed_work *dwork, अचिन्हित दीर्घ delay);
-bool mlxsw_core_schedule_work(काष्ठा work_काष्ठा *work);
-व्योम mlxsw_core_flush_owq(व्योम);
-पूर्णांक mlxsw_core_resources_query(काष्ठा mlxsw_core *mlxsw_core, अक्षर *mbox,
-			       काष्ठा mlxsw_res *res);
+int mlxsw_core_schedule_dw(struct delayed_work *dwork, unsigned long delay);
+bool mlxsw_core_schedule_work(struct work_struct *work);
+void mlxsw_core_flush_owq(void);
+int mlxsw_core_resources_query(struct mlxsw_core *mlxsw_core, char *mbox,
+			       struct mlxsw_res *res);
 
-#घोषणा MLXSW_CONFIG_PROखाता_SWID_COUNT 8
+#define MLXSW_CONFIG_PROFILE_SWID_COUNT 8
 
-काष्ठा mlxsw_swid_config अणु
+struct mlxsw_swid_config {
 	u8	used_type:1,
 		used_properties:1;
 	u8	type;
 	u8	properties;
-पूर्ण;
+};
 
-काष्ठा mlxsw_config_profile अणु
+struct mlxsw_config_profile {
 	u16	used_max_vepa_channels:1,
 		used_max_mid:1,
 		used_max_pgt:1,
-		used_max_प्रणाली_port:1,
+		used_max_system_port:1,
 		used_max_vlan_groups:1,
 		used_max_regions:1,
 		used_flood_tables:1,
@@ -286,7 +285,7 @@ bool mlxsw_core_schedule_work(काष्ठा work_काष्ठा *work);
 	u8	max_vepa_channels;
 	u16	max_mid;
 	u16	max_pgt;
-	u16	max_प्रणाली_port;
+	u16	max_system_port;
 	u16	max_vlan_groups;
 	u16	max_regions;
 	u8	max_flood_tables;
@@ -303,246 +302,246 @@ bool mlxsw_core_schedule_work(काष्ठा work_काष्ठा *work);
 	u8	arn;
 	u32	kvd_linear_size;
 	u8	kvd_hash_single_parts;
-	u8	kvd_hash_द्विगुन_parts;
+	u8	kvd_hash_double_parts;
 	u8	kvh_xlt_cache_mode;
-	काष्ठा mlxsw_swid_config swid_config[MLXSW_CONFIG_PROखाता_SWID_COUNT];
-पूर्ण;
+	struct mlxsw_swid_config swid_config[MLXSW_CONFIG_PROFILE_SWID_COUNT];
+};
 
-काष्ठा mlxsw_driver अणु
-	काष्ठा list_head list;
-	स्थिर अक्षर *kind;
-	माप_प्रकार priv_size;
-	स्थिर काष्ठा mlxsw_fw_rev *fw_req_rev;
-	स्थिर अक्षर *fw_filename;
-	पूर्णांक (*init)(काष्ठा mlxsw_core *mlxsw_core,
-		    स्थिर काष्ठा mlxsw_bus_info *mlxsw_bus_info,
-		    काष्ठा netlink_ext_ack *extack);
-	व्योम (*fini)(काष्ठा mlxsw_core *mlxsw_core);
-	पूर्णांक (*basic_trap_groups_set)(काष्ठा mlxsw_core *mlxsw_core);
-	पूर्णांक (*port_type_set)(काष्ठा mlxsw_core *mlxsw_core, u8 local_port,
-			     क्रमागत devlink_port_type new_type);
-	पूर्णांक (*port_split)(काष्ठा mlxsw_core *mlxsw_core, u8 local_port,
-			  अचिन्हित पूर्णांक count, काष्ठा netlink_ext_ack *extack);
-	पूर्णांक (*port_unsplit)(काष्ठा mlxsw_core *mlxsw_core, u8 local_port,
-			    काष्ठा netlink_ext_ack *extack);
-	पूर्णांक (*sb_pool_get)(काष्ठा mlxsw_core *mlxsw_core,
-			   अचिन्हित पूर्णांक sb_index, u16 pool_index,
-			   काष्ठा devlink_sb_pool_info *pool_info);
-	पूर्णांक (*sb_pool_set)(काष्ठा mlxsw_core *mlxsw_core,
-			   अचिन्हित पूर्णांक sb_index, u16 pool_index, u32 size,
-			   क्रमागत devlink_sb_threshold_type threshold_type,
-			   काष्ठा netlink_ext_ack *extack);
-	पूर्णांक (*sb_port_pool_get)(काष्ठा mlxsw_core_port *mlxsw_core_port,
-				अचिन्हित पूर्णांक sb_index, u16 pool_index,
+struct mlxsw_driver {
+	struct list_head list;
+	const char *kind;
+	size_t priv_size;
+	const struct mlxsw_fw_rev *fw_req_rev;
+	const char *fw_filename;
+	int (*init)(struct mlxsw_core *mlxsw_core,
+		    const struct mlxsw_bus_info *mlxsw_bus_info,
+		    struct netlink_ext_ack *extack);
+	void (*fini)(struct mlxsw_core *mlxsw_core);
+	int (*basic_trap_groups_set)(struct mlxsw_core *mlxsw_core);
+	int (*port_type_set)(struct mlxsw_core *mlxsw_core, u8 local_port,
+			     enum devlink_port_type new_type);
+	int (*port_split)(struct mlxsw_core *mlxsw_core, u8 local_port,
+			  unsigned int count, struct netlink_ext_ack *extack);
+	int (*port_unsplit)(struct mlxsw_core *mlxsw_core, u8 local_port,
+			    struct netlink_ext_ack *extack);
+	int (*sb_pool_get)(struct mlxsw_core *mlxsw_core,
+			   unsigned int sb_index, u16 pool_index,
+			   struct devlink_sb_pool_info *pool_info);
+	int (*sb_pool_set)(struct mlxsw_core *mlxsw_core,
+			   unsigned int sb_index, u16 pool_index, u32 size,
+			   enum devlink_sb_threshold_type threshold_type,
+			   struct netlink_ext_ack *extack);
+	int (*sb_port_pool_get)(struct mlxsw_core_port *mlxsw_core_port,
+				unsigned int sb_index, u16 pool_index,
 				u32 *p_threshold);
-	पूर्णांक (*sb_port_pool_set)(काष्ठा mlxsw_core_port *mlxsw_core_port,
-				अचिन्हित पूर्णांक sb_index, u16 pool_index,
-				u32 threshold, काष्ठा netlink_ext_ack *extack);
-	पूर्णांक (*sb_tc_pool_bind_get)(काष्ठा mlxsw_core_port *mlxsw_core_port,
-				   अचिन्हित पूर्णांक sb_index, u16 tc_index,
-				   क्रमागत devlink_sb_pool_type pool_type,
+	int (*sb_port_pool_set)(struct mlxsw_core_port *mlxsw_core_port,
+				unsigned int sb_index, u16 pool_index,
+				u32 threshold, struct netlink_ext_ack *extack);
+	int (*sb_tc_pool_bind_get)(struct mlxsw_core_port *mlxsw_core_port,
+				   unsigned int sb_index, u16 tc_index,
+				   enum devlink_sb_pool_type pool_type,
 				   u16 *p_pool_index, u32 *p_threshold);
-	पूर्णांक (*sb_tc_pool_bind_set)(काष्ठा mlxsw_core_port *mlxsw_core_port,
-				   अचिन्हित पूर्णांक sb_index, u16 tc_index,
-				   क्रमागत devlink_sb_pool_type pool_type,
+	int (*sb_tc_pool_bind_set)(struct mlxsw_core_port *mlxsw_core_port,
+				   unsigned int sb_index, u16 tc_index,
+				   enum devlink_sb_pool_type pool_type,
 				   u16 pool_index, u32 threshold,
-				   काष्ठा netlink_ext_ack *extack);
-	पूर्णांक (*sb_occ_snapshot)(काष्ठा mlxsw_core *mlxsw_core,
-			       अचिन्हित पूर्णांक sb_index);
-	पूर्णांक (*sb_occ_max_clear)(काष्ठा mlxsw_core *mlxsw_core,
-				अचिन्हित पूर्णांक sb_index);
-	पूर्णांक (*sb_occ_port_pool_get)(काष्ठा mlxsw_core_port *mlxsw_core_port,
-				    अचिन्हित पूर्णांक sb_index, u16 pool_index,
+				   struct netlink_ext_ack *extack);
+	int (*sb_occ_snapshot)(struct mlxsw_core *mlxsw_core,
+			       unsigned int sb_index);
+	int (*sb_occ_max_clear)(struct mlxsw_core *mlxsw_core,
+				unsigned int sb_index);
+	int (*sb_occ_port_pool_get)(struct mlxsw_core_port *mlxsw_core_port,
+				    unsigned int sb_index, u16 pool_index,
 				    u32 *p_cur, u32 *p_max);
-	पूर्णांक (*sb_occ_tc_port_bind_get)(काष्ठा mlxsw_core_port *mlxsw_core_port,
-				       अचिन्हित पूर्णांक sb_index, u16 tc_index,
-				       क्रमागत devlink_sb_pool_type pool_type,
+	int (*sb_occ_tc_port_bind_get)(struct mlxsw_core_port *mlxsw_core_port,
+				       unsigned int sb_index, u16 tc_index,
+				       enum devlink_sb_pool_type pool_type,
 				       u32 *p_cur, u32 *p_max);
-	पूर्णांक (*trap_init)(काष्ठा mlxsw_core *mlxsw_core,
-			 स्थिर काष्ठा devlink_trap *trap, व्योम *trap_ctx);
-	व्योम (*trap_fini)(काष्ठा mlxsw_core *mlxsw_core,
-			  स्थिर काष्ठा devlink_trap *trap, व्योम *trap_ctx);
-	पूर्णांक (*trap_action_set)(काष्ठा mlxsw_core *mlxsw_core,
-			       स्थिर काष्ठा devlink_trap *trap,
-			       क्रमागत devlink_trap_action action,
-			       काष्ठा netlink_ext_ack *extack);
-	पूर्णांक (*trap_group_init)(काष्ठा mlxsw_core *mlxsw_core,
-			       स्थिर काष्ठा devlink_trap_group *group);
-	पूर्णांक (*trap_group_set)(काष्ठा mlxsw_core *mlxsw_core,
-			      स्थिर काष्ठा devlink_trap_group *group,
-			      स्थिर काष्ठा devlink_trap_policer *policer,
-			      काष्ठा netlink_ext_ack *extack);
-	पूर्णांक (*trap_policer_init)(काष्ठा mlxsw_core *mlxsw_core,
-				 स्थिर काष्ठा devlink_trap_policer *policer);
-	व्योम (*trap_policer_fini)(काष्ठा mlxsw_core *mlxsw_core,
-				  स्थिर काष्ठा devlink_trap_policer *policer);
-	पूर्णांक (*trap_policer_set)(काष्ठा mlxsw_core *mlxsw_core,
-				स्थिर काष्ठा devlink_trap_policer *policer,
+	int (*trap_init)(struct mlxsw_core *mlxsw_core,
+			 const struct devlink_trap *trap, void *trap_ctx);
+	void (*trap_fini)(struct mlxsw_core *mlxsw_core,
+			  const struct devlink_trap *trap, void *trap_ctx);
+	int (*trap_action_set)(struct mlxsw_core *mlxsw_core,
+			       const struct devlink_trap *trap,
+			       enum devlink_trap_action action,
+			       struct netlink_ext_ack *extack);
+	int (*trap_group_init)(struct mlxsw_core *mlxsw_core,
+			       const struct devlink_trap_group *group);
+	int (*trap_group_set)(struct mlxsw_core *mlxsw_core,
+			      const struct devlink_trap_group *group,
+			      const struct devlink_trap_policer *policer,
+			      struct netlink_ext_ack *extack);
+	int (*trap_policer_init)(struct mlxsw_core *mlxsw_core,
+				 const struct devlink_trap_policer *policer);
+	void (*trap_policer_fini)(struct mlxsw_core *mlxsw_core,
+				  const struct devlink_trap_policer *policer);
+	int (*trap_policer_set)(struct mlxsw_core *mlxsw_core,
+				const struct devlink_trap_policer *policer,
 				u64 rate, u64 burst,
-				काष्ठा netlink_ext_ack *extack);
-	पूर्णांक (*trap_policer_counter_get)(काष्ठा mlxsw_core *mlxsw_core,
-					स्थिर काष्ठा devlink_trap_policer *policer,
+				struct netlink_ext_ack *extack);
+	int (*trap_policer_counter_get)(struct mlxsw_core *mlxsw_core,
+					const struct devlink_trap_policer *policer,
 					u64 *p_drops);
-	व्योम (*txhdr_स्थिरruct)(काष्ठा sk_buff *skb,
-				स्थिर काष्ठा mlxsw_tx_info *tx_info);
-	पूर्णांक (*resources_रेजिस्टर)(काष्ठा mlxsw_core *mlxsw_core);
-	पूर्णांक (*kvd_sizes_get)(काष्ठा mlxsw_core *mlxsw_core,
-			     स्थिर काष्ठा mlxsw_config_profile *profile,
-			     u64 *p_single_size, u64 *p_द्विगुन_size,
+	void (*txhdr_construct)(struct sk_buff *skb,
+				const struct mlxsw_tx_info *tx_info);
+	int (*resources_register)(struct mlxsw_core *mlxsw_core);
+	int (*kvd_sizes_get)(struct mlxsw_core *mlxsw_core,
+			     const struct mlxsw_config_profile *profile,
+			     u64 *p_single_size, u64 *p_double_size,
 			     u64 *p_linear_size);
-	पूर्णांक (*params_रेजिस्टर)(काष्ठा mlxsw_core *mlxsw_core);
-	व्योम (*params_unरेजिस्टर)(काष्ठा mlxsw_core *mlxsw_core);
+	int (*params_register)(struct mlxsw_core *mlxsw_core);
+	void (*params_unregister)(struct mlxsw_core *mlxsw_core);
 
-	/* Notअगरy a driver that a बारtamped packet was transmitted. Driver
-	 * is responsible क्रम मुक्तing the passed-in SKB.
+	/* Notify a driver that a timestamped packet was transmitted. Driver
+	 * is responsible for freeing the passed-in SKB.
 	 */
-	व्योम (*ptp_transmitted)(काष्ठा mlxsw_core *mlxsw_core,
-				काष्ठा sk_buff *skb, u8 local_port);
+	void (*ptp_transmitted)(struct mlxsw_core *mlxsw_core,
+				struct sk_buff *skb, u8 local_port);
 
 	u8 txhdr_len;
-	स्थिर काष्ठा mlxsw_config_profile *profile;
+	const struct mlxsw_config_profile *profile;
 	bool res_query_enabled;
 	bool fw_fatal_enabled;
 	bool temp_warn_enabled;
-पूर्ण;
+};
 
-पूर्णांक mlxsw_core_kvd_sizes_get(काष्ठा mlxsw_core *mlxsw_core,
-			     स्थिर काष्ठा mlxsw_config_profile *profile,
-			     u64 *p_single_size, u64 *p_द्विगुन_size,
+int mlxsw_core_kvd_sizes_get(struct mlxsw_core *mlxsw_core,
+			     const struct mlxsw_config_profile *profile,
+			     u64 *p_single_size, u64 *p_double_size,
 			     u64 *p_linear_size);
 
-u32 mlxsw_core_पढ़ो_frc_h(काष्ठा mlxsw_core *mlxsw_core);
-u32 mlxsw_core_पढ़ो_frc_l(काष्ठा mlxsw_core *mlxsw_core);
+u32 mlxsw_core_read_frc_h(struct mlxsw_core *mlxsw_core);
+u32 mlxsw_core_read_frc_l(struct mlxsw_core *mlxsw_core);
 
-व्योम mlxsw_core_emad_string_tlv_enable(काष्ठा mlxsw_core *mlxsw_core);
+void mlxsw_core_emad_string_tlv_enable(struct mlxsw_core *mlxsw_core);
 
-bool mlxsw_core_res_valid(काष्ठा mlxsw_core *mlxsw_core,
-			  क्रमागत mlxsw_res_id res_id);
+bool mlxsw_core_res_valid(struct mlxsw_core *mlxsw_core,
+			  enum mlxsw_res_id res_id);
 
-#घोषणा MLXSW_CORE_RES_VALID(mlxsw_core, लघु_res_id)			\
-	mlxsw_core_res_valid(mlxsw_core, MLXSW_RES_ID_##लघु_res_id)
+#define MLXSW_CORE_RES_VALID(mlxsw_core, short_res_id)			\
+	mlxsw_core_res_valid(mlxsw_core, MLXSW_RES_ID_##short_res_id)
 
-u64 mlxsw_core_res_get(काष्ठा mlxsw_core *mlxsw_core,
-		       क्रमागत mlxsw_res_id res_id);
+u64 mlxsw_core_res_get(struct mlxsw_core *mlxsw_core,
+		       enum mlxsw_res_id res_id);
 
-#घोषणा MLXSW_CORE_RES_GET(mlxsw_core, लघु_res_id)			\
-	mlxsw_core_res_get(mlxsw_core, MLXSW_RES_ID_##लघु_res_id)
+#define MLXSW_CORE_RES_GET(mlxsw_core, short_res_id)			\
+	mlxsw_core_res_get(mlxsw_core, MLXSW_RES_ID_##short_res_id)
 
-अटल अंतरभूत काष्ठा net *mlxsw_core_net(काष्ठा mlxsw_core *mlxsw_core)
-अणु
-	वापस devlink_net(priv_to_devlink(mlxsw_core));
-पूर्ण
+static inline struct net *mlxsw_core_net(struct mlxsw_core *mlxsw_core)
+{
+	return devlink_net(priv_to_devlink(mlxsw_core));
+}
 
-#घोषणा MLXSW_BUS_F_TXRX	BIT(0)
-#घोषणा MLXSW_BUS_F_RESET	BIT(1)
+#define MLXSW_BUS_F_TXRX	BIT(0)
+#define MLXSW_BUS_F_RESET	BIT(1)
 
-काष्ठा mlxsw_bus अणु
-	स्थिर अक्षर *kind;
-	पूर्णांक (*init)(व्योम *bus_priv, काष्ठा mlxsw_core *mlxsw_core,
-		    स्थिर काष्ठा mlxsw_config_profile *profile,
-		    काष्ठा mlxsw_res *res);
-	व्योम (*fini)(व्योम *bus_priv);
-	bool (*skb_transmit_busy)(व्योम *bus_priv,
-				  स्थिर काष्ठा mlxsw_tx_info *tx_info);
-	पूर्णांक (*skb_transmit)(व्योम *bus_priv, काष्ठा sk_buff *skb,
-			    स्थिर काष्ठा mlxsw_tx_info *tx_info);
-	पूर्णांक (*cmd_exec)(व्योम *bus_priv, u16 opcode, u8 opcode_mod,
+struct mlxsw_bus {
+	const char *kind;
+	int (*init)(void *bus_priv, struct mlxsw_core *mlxsw_core,
+		    const struct mlxsw_config_profile *profile,
+		    struct mlxsw_res *res);
+	void (*fini)(void *bus_priv);
+	bool (*skb_transmit_busy)(void *bus_priv,
+				  const struct mlxsw_tx_info *tx_info);
+	int (*skb_transmit)(void *bus_priv, struct sk_buff *skb,
+			    const struct mlxsw_tx_info *tx_info);
+	int (*cmd_exec)(void *bus_priv, u16 opcode, u8 opcode_mod,
 			u32 in_mod, bool out_mbox_direct,
-			अक्षर *in_mbox, माप_प्रकार in_mbox_size,
-			अक्षर *out_mbox, माप_प्रकार out_mbox_size,
+			char *in_mbox, size_t in_mbox_size,
+			char *out_mbox, size_t out_mbox_size,
 			u8 *p_status);
-	u32 (*पढ़ो_frc_h)(व्योम *bus_priv);
-	u32 (*पढ़ो_frc_l)(व्योम *bus_priv);
+	u32 (*read_frc_h)(void *bus_priv);
+	u32 (*read_frc_l)(void *bus_priv);
 	u8 features;
-पूर्ण;
+};
 
-काष्ठा mlxsw_fw_rev अणु
+struct mlxsw_fw_rev {
 	u16 major;
 	u16 minor;
 	u16 subminor;
 	u16 can_reset_minor;
-पूर्ण;
+};
 
-#घोषणा MLXSW_BUS_INFO_XM_LOCAL_PORTS_MAX 4
+#define MLXSW_BUS_INFO_XM_LOCAL_PORTS_MAX 4
 
-काष्ठा mlxsw_bus_info अणु
-	स्थिर अक्षर *device_kind;
-	स्थिर अक्षर *device_name;
-	काष्ठा device *dev;
-	काष्ठा mlxsw_fw_rev fw_rev;
+struct mlxsw_bus_info {
+	const char *device_kind;
+	const char *device_name;
+	struct device *dev;
+	struct mlxsw_fw_rev fw_rev;
 	u8 vsd[MLXSW_CMD_BOARDINFO_VSD_LEN];
 	u8 psid[MLXSW_CMD_BOARDINFO_PSID_LEN];
 	u8 low_frequency:1,
-	   पढ़ो_frc_capable:1,
+	   read_frc_capable:1,
 	   xm_exists:1;
 	u8 xm_local_ports_count;
 	u8 xm_local_ports[MLXSW_BUS_INFO_XM_LOCAL_PORTS_MAX];
-पूर्ण;
+};
 
-काष्ठा mlxsw_hwmon;
+struct mlxsw_hwmon;
 
-#अगर_घोषित CONFIG_MLXSW_CORE_HWMON
+#ifdef CONFIG_MLXSW_CORE_HWMON
 
-पूर्णांक mlxsw_hwmon_init(काष्ठा mlxsw_core *mlxsw_core,
-		     स्थिर काष्ठा mlxsw_bus_info *mlxsw_bus_info,
-		     काष्ठा mlxsw_hwmon **p_hwmon);
-व्योम mlxsw_hwmon_fini(काष्ठा mlxsw_hwmon *mlxsw_hwmon);
+int mlxsw_hwmon_init(struct mlxsw_core *mlxsw_core,
+		     const struct mlxsw_bus_info *mlxsw_bus_info,
+		     struct mlxsw_hwmon **p_hwmon);
+void mlxsw_hwmon_fini(struct mlxsw_hwmon *mlxsw_hwmon);
 
-#अन्यथा
+#else
 
-अटल अंतरभूत पूर्णांक mlxsw_hwmon_init(काष्ठा mlxsw_core *mlxsw_core,
-				   स्थिर काष्ठा mlxsw_bus_info *mlxsw_bus_info,
-				   काष्ठा mlxsw_hwmon **p_hwmon)
-अणु
-	वापस 0;
-पूर्ण
+static inline int mlxsw_hwmon_init(struct mlxsw_core *mlxsw_core,
+				   const struct mlxsw_bus_info *mlxsw_bus_info,
+				   struct mlxsw_hwmon **p_hwmon)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम mlxsw_hwmon_fini(काष्ठा mlxsw_hwmon *mlxsw_hwmon)
-अणु
-पूर्ण
+static inline void mlxsw_hwmon_fini(struct mlxsw_hwmon *mlxsw_hwmon)
+{
+}
 
-#पूर्ण_अगर
+#endif
 
-काष्ठा mlxsw_thermal;
+struct mlxsw_thermal;
 
-#अगर_घोषित CONFIG_MLXSW_CORE_THERMAL
+#ifdef CONFIG_MLXSW_CORE_THERMAL
 
-पूर्णांक mlxsw_thermal_init(काष्ठा mlxsw_core *mlxsw_core,
-		       स्थिर काष्ठा mlxsw_bus_info *mlxsw_bus_info,
-		       काष्ठा mlxsw_thermal **p_thermal);
-व्योम mlxsw_thermal_fini(काष्ठा mlxsw_thermal *thermal);
+int mlxsw_thermal_init(struct mlxsw_core *mlxsw_core,
+		       const struct mlxsw_bus_info *mlxsw_bus_info,
+		       struct mlxsw_thermal **p_thermal);
+void mlxsw_thermal_fini(struct mlxsw_thermal *thermal);
 
-#अन्यथा
+#else
 
-अटल अंतरभूत पूर्णांक mlxsw_thermal_init(काष्ठा mlxsw_core *mlxsw_core,
-				     स्थिर काष्ठा mlxsw_bus_info *mlxsw_bus_info,
-				     काष्ठा mlxsw_thermal **p_thermal)
-अणु
-	वापस 0;
-पूर्ण
+static inline int mlxsw_thermal_init(struct mlxsw_core *mlxsw_core,
+				     const struct mlxsw_bus_info *mlxsw_bus_info,
+				     struct mlxsw_thermal **p_thermal)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम mlxsw_thermal_fini(काष्ठा mlxsw_thermal *thermal)
-अणु
-पूर्ण
+static inline void mlxsw_thermal_fini(struct mlxsw_thermal *thermal)
+{
+}
 
-#पूर्ण_अगर
+#endif
 
-क्रमागत mlxsw_devlink_param_id अणु
+enum mlxsw_devlink_param_id {
 	MLXSW_DEVLINK_PARAM_ID_BASE = DEVLINK_PARAM_GENERIC_ID_MAX,
 	MLXSW_DEVLINK_PARAM_ID_ACL_REGION_REHASH_INTERVAL,
-पूर्ण;
+};
 
-काष्ठा mlxsw_skb_cb अणु
-	जोड़ अणु
-		काष्ठा mlxsw_tx_info tx_info;
-		काष्ठा mlxsw_rx_md_info rx_md_info;
-	पूर्ण;
-पूर्ण;
+struct mlxsw_skb_cb {
+	union {
+		struct mlxsw_tx_info tx_info;
+		struct mlxsw_rx_md_info rx_md_info;
+	};
+};
 
-अटल अंतरभूत काष्ठा mlxsw_skb_cb *mlxsw_skb_cb(काष्ठा sk_buff *skb)
-अणु
-	BUILD_BUG_ON(माप(mlxsw_skb_cb) > माप(skb->cb));
-	वापस (काष्ठा mlxsw_skb_cb *) skb->cb;
-पूर्ण
+static inline struct mlxsw_skb_cb *mlxsw_skb_cb(struct sk_buff *skb)
+{
+	BUILD_BUG_ON(sizeof(mlxsw_skb_cb) > sizeof(skb->cb));
+	return (struct mlxsw_skb_cb *) skb->cb;
+}
 
-#पूर्ण_अगर
+#endif

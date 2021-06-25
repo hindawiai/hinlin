@@ -1,189 +1,188 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  linux/drivers/mfd/mcp-sa11x0.c
  *
  *  Copyright (C) 2001-2005 Russell King
  *
- *  SA11x0 MCP (Mulसमयdia Communications Port) driver.
+ *  SA11x0 MCP (Multimedia Communications Port) driver.
  *
- *  MCP पढ़ो/ग_लिखो समयouts from Jordi Colomer, rehacked by rmk.
+ *  MCP read/write timeouts from Jordi Colomer, rehacked by rmk.
  */
-#समावेश <linux/module.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/mfd/mcp.h>
+#include <linux/module.h>
+#include <linux/io.h>
+#include <linux/errno.h>
+#include <linux/kernel.h>
+#include <linux/delay.h>
+#include <linux/spinlock.h>
+#include <linux/platform_device.h>
+#include <linux/pm.h>
+#include <linux/mfd/mcp.h>
 
-#समावेश <mach/hardware.h>
-#समावेश <यंत्र/mach-types.h>
-#समावेश <linux/platक्रमm_data/mfd-mcp-sa11x0.h>
+#include <mach/hardware.h>
+#include <asm/mach-types.h>
+#include <linux/platform_data/mfd-mcp-sa11x0.h>
 
-#घोषणा DRIVER_NAME "sa11x0-mcp"
+#define DRIVER_NAME "sa11x0-mcp"
 
-काष्ठा mcp_sa11x0 अणु
-	व्योम __iomem	*base0;
-	व्योम __iomem	*base1;
+struct mcp_sa11x0 {
+	void __iomem	*base0;
+	void __iomem	*base1;
 	u32		mccr0;
 	u32		mccr1;
-पूर्ण;
+};
 
 /* Register offsets */
-#घोषणा MCCR0(m)	((m)->base0 + 0x00)
-#घोषणा MCDR0(m)	((m)->base0 + 0x08)
-#घोषणा MCDR1(m)	((m)->base0 + 0x0c)
-#घोषणा MCDR2(m)	((m)->base0 + 0x10)
-#घोषणा MCSR(m)		((m)->base0 + 0x18)
-#घोषणा MCCR1(m)	((m)->base1 + 0x00)
+#define MCCR0(m)	((m)->base0 + 0x00)
+#define MCDR0(m)	((m)->base0 + 0x08)
+#define MCDR1(m)	((m)->base0 + 0x0c)
+#define MCDR2(m)	((m)->base0 + 0x10)
+#define MCSR(m)		((m)->base0 + 0x18)
+#define MCCR1(m)	((m)->base1 + 0x00)
 
-#घोषणा priv(mcp)	((काष्ठा mcp_sa11x0 *)mcp_priv(mcp))
+#define priv(mcp)	((struct mcp_sa11x0 *)mcp_priv(mcp))
 
-अटल व्योम
-mcp_sa11x0_set_telecom_भागisor(काष्ठा mcp *mcp, अचिन्हित पूर्णांक भागisor)
-अणु
-	काष्ठा mcp_sa11x0 *m = priv(mcp);
+static void
+mcp_sa11x0_set_telecom_divisor(struct mcp *mcp, unsigned int divisor)
+{
+	struct mcp_sa11x0 *m = priv(mcp);
 
-	भागisor /= 32;
+	divisor /= 32;
 
 	m->mccr0 &= ~0x00007f00;
-	m->mccr0 |= भागisor << 8;
-	ग_लिखोl_relaxed(m->mccr0, MCCR0(m));
-पूर्ण
+	m->mccr0 |= divisor << 8;
+	writel_relaxed(m->mccr0, MCCR0(m));
+}
 
-अटल व्योम
-mcp_sa11x0_set_audio_भागisor(काष्ठा mcp *mcp, अचिन्हित पूर्णांक भागisor)
-अणु
-	काष्ठा mcp_sa11x0 *m = priv(mcp);
+static void
+mcp_sa11x0_set_audio_divisor(struct mcp *mcp, unsigned int divisor)
+{
+	struct mcp_sa11x0 *m = priv(mcp);
 
-	भागisor /= 32;
+	divisor /= 32;
 
 	m->mccr0 &= ~0x0000007f;
-	m->mccr0 |= भागisor;
-	ग_लिखोl_relaxed(m->mccr0, MCCR0(m));
-पूर्ण
+	m->mccr0 |= divisor;
+	writel_relaxed(m->mccr0, MCCR0(m));
+}
 
 /*
  * Write data to the device.  The bit should be set after 3 subframe
- * बार (each frame is 64 घड़ीs).  We रुको a maximum of 6 subframes.
- * We really should try करोing something more productive जबतक we
- * रुको.
+ * times (each frame is 64 clocks).  We wait a maximum of 6 subframes.
+ * We really should try doing something more productive while we
+ * wait.
  */
-अटल व्योम
-mcp_sa11x0_ग_लिखो(काष्ठा mcp *mcp, अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक val)
-अणु
-	काष्ठा mcp_sa11x0 *m = priv(mcp);
-	पूर्णांक ret = -ETIME;
-	पूर्णांक i;
+static void
+mcp_sa11x0_write(struct mcp *mcp, unsigned int reg, unsigned int val)
+{
+	struct mcp_sa11x0 *m = priv(mcp);
+	int ret = -ETIME;
+	int i;
 
-	ग_लिखोl_relaxed(reg << 17 | MCDR2_Wr | (val & 0xffff), MCDR2(m));
+	writel_relaxed(reg << 17 | MCDR2_Wr | (val & 0xffff), MCDR2(m));
 
-	क्रम (i = 0; i < 2; i++) अणु
-		udelay(mcp->rw_समयout);
-		अगर (पढ़ोl_relaxed(MCSR(m)) & MCSR_CWC) अणु
+	for (i = 0; i < 2; i++) {
+		udelay(mcp->rw_timeout);
+		if (readl_relaxed(MCSR(m)) & MCSR_CWC) {
 			ret = 0;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (ret < 0)
-		prपूर्णांकk(KERN_WARNING "mcp: write timed out\n");
-पूर्ण
+	if (ret < 0)
+		printk(KERN_WARNING "mcp: write timed out\n");
+}
 
 /*
  * Read data from the device.  The bit should be set after 3 subframe
- * बार (each frame is 64 घड़ीs).  We रुको a maximum of 6 subframes.
- * We really should try करोing something more productive जबतक we
- * रुको.
+ * times (each frame is 64 clocks).  We wait a maximum of 6 subframes.
+ * We really should try doing something more productive while we
+ * wait.
  */
-अटल अचिन्हित पूर्णांक
-mcp_sa11x0_पढ़ो(काष्ठा mcp *mcp, अचिन्हित पूर्णांक reg)
-अणु
-	काष्ठा mcp_sa11x0 *m = priv(mcp);
-	पूर्णांक ret = -ETIME;
-	पूर्णांक i;
+static unsigned int
+mcp_sa11x0_read(struct mcp *mcp, unsigned int reg)
+{
+	struct mcp_sa11x0 *m = priv(mcp);
+	int ret = -ETIME;
+	int i;
 
-	ग_लिखोl_relaxed(reg << 17 | MCDR2_Rd, MCDR2(m));
+	writel_relaxed(reg << 17 | MCDR2_Rd, MCDR2(m));
 
-	क्रम (i = 0; i < 2; i++) अणु
-		udelay(mcp->rw_समयout);
-		अगर (पढ़ोl_relaxed(MCSR(m)) & MCSR_CRC) अणु
-			ret = पढ़ोl_relaxed(MCDR2(m)) & 0xffff;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+	for (i = 0; i < 2; i++) {
+		udelay(mcp->rw_timeout);
+		if (readl_relaxed(MCSR(m)) & MCSR_CRC) {
+			ret = readl_relaxed(MCDR2(m)) & 0xffff;
+			break;
+		}
+	}
 
-	अगर (ret < 0)
-		prपूर्णांकk(KERN_WARNING "mcp: read timed out\n");
+	if (ret < 0)
+		printk(KERN_WARNING "mcp: read timed out\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम mcp_sa11x0_enable(काष्ठा mcp *mcp)
-अणु
-	काष्ठा mcp_sa11x0 *m = priv(mcp);
+static void mcp_sa11x0_enable(struct mcp *mcp)
+{
+	struct mcp_sa11x0 *m = priv(mcp);
 
-	ग_लिखोl(-1, MCSR(m));
+	writel(-1, MCSR(m));
 	m->mccr0 |= MCCR0_MCE;
-	ग_लिखोl_relaxed(m->mccr0, MCCR0(m));
-पूर्ण
+	writel_relaxed(m->mccr0, MCCR0(m));
+}
 
-अटल व्योम mcp_sa11x0_disable(काष्ठा mcp *mcp)
-अणु
-	काष्ठा mcp_sa11x0 *m = priv(mcp);
+static void mcp_sa11x0_disable(struct mcp *mcp)
+{
+	struct mcp_sa11x0 *m = priv(mcp);
 
 	m->mccr0 &= ~MCCR0_MCE;
-	ग_लिखोl_relaxed(m->mccr0, MCCR0(m));
-पूर्ण
+	writel_relaxed(m->mccr0, MCCR0(m));
+}
 
 /*
  * Our methods.
  */
-अटल काष्ठा mcp_ops mcp_sa11x0 = अणु
-	.set_telecom_भागisor	= mcp_sa11x0_set_telecom_भागisor,
-	.set_audio_भागisor	= mcp_sa11x0_set_audio_भागisor,
-	.reg_ग_लिखो		= mcp_sa11x0_ग_लिखो,
-	.reg_पढ़ो		= mcp_sa11x0_पढ़ो,
+static struct mcp_ops mcp_sa11x0 = {
+	.set_telecom_divisor	= mcp_sa11x0_set_telecom_divisor,
+	.set_audio_divisor	= mcp_sa11x0_set_audio_divisor,
+	.reg_write		= mcp_sa11x0_write,
+	.reg_read		= mcp_sa11x0_read,
 	.enable			= mcp_sa11x0_enable,
 	.disable		= mcp_sa11x0_disable,
-पूर्ण;
+};
 
-अटल पूर्णांक mcp_sa11x0_probe(काष्ठा platक्रमm_device *dev)
-अणु
-	काष्ठा mcp_plat_data *data = dev_get_platdata(&dev->dev);
-	काष्ठा resource *mem0, *mem1;
-	काष्ठा mcp_sa11x0 *m;
-	काष्ठा mcp *mcp;
-	पूर्णांक ret;
+static int mcp_sa11x0_probe(struct platform_device *dev)
+{
+	struct mcp_plat_data *data = dev_get_platdata(&dev->dev);
+	struct resource *mem0, *mem1;
+	struct mcp_sa11x0 *m;
+	struct mcp *mcp;
+	int ret;
 
-	अगर (!data)
-		वापस -ENODEV;
+	if (!data)
+		return -ENODEV;
 
-	mem0 = platक्रमm_get_resource(dev, IORESOURCE_MEM, 0);
-	mem1 = platक्रमm_get_resource(dev, IORESOURCE_MEM, 1);
-	अगर (!mem0 || !mem1)
-		वापस -ENXIO;
+	mem0 = platform_get_resource(dev, IORESOURCE_MEM, 0);
+	mem1 = platform_get_resource(dev, IORESOURCE_MEM, 1);
+	if (!mem0 || !mem1)
+		return -ENXIO;
 
-	अगर (!request_mem_region(mem0->start, resource_size(mem0),
-				DRIVER_NAME)) अणु
+	if (!request_mem_region(mem0->start, resource_size(mem0),
+				DRIVER_NAME)) {
 		ret = -EBUSY;
-		जाओ err_mem0;
-	पूर्ण
+		goto err_mem0;
+	}
 
-	अगर (!request_mem_region(mem1->start, resource_size(mem1),
-				DRIVER_NAME)) अणु
+	if (!request_mem_region(mem1->start, resource_size(mem1),
+				DRIVER_NAME)) {
 		ret = -EBUSY;
-		जाओ err_mem1;
-	पूर्ण
+		goto err_mem1;
+	}
 
-	mcp = mcp_host_alloc(&dev->dev, माप(काष्ठा mcp_sa11x0));
-	अगर (!mcp) अणु
+	mcp = mcp_host_alloc(&dev->dev, sizeof(struct mcp_sa11x0));
+	if (!mcp) {
 		ret = -ENOMEM;
-		जाओ err_alloc;
-	पूर्ण
+		goto err_alloc;
+	}
 
 	mcp->owner		= THIS_MODULE;
 	mcp->ops		= &mcp_sa11x0;
@@ -195,115 +194,115 @@ mcp_sa11x0_पढ़ो(काष्ठा mcp *mcp, अचिन्हित �
 
 	m->base0 = ioremap(mem0->start, resource_size(mem0));
 	m->base1 = ioremap(mem1->start, resource_size(mem1));
-	अगर (!m->base0 || !m->base1) अणु
+	if (!m->base0 || !m->base1) {
 		ret = -ENOMEM;
-		जाओ err_ioremap;
-	पूर्ण
+		goto err_ioremap;
+	}
 
-	platक्रमm_set_drvdata(dev, mcp);
+	platform_set_drvdata(dev, mcp);
 
 	/*
 	 * Initialise device.  Note that we initially
 	 * set the sampling rate to minimum.
 	 */
-	ग_लिखोl_relaxed(-1, MCSR(m));
-	ग_लिखोl_relaxed(m->mccr1, MCCR1(m));
-	ग_लिखोl_relaxed(m->mccr0, MCCR0(m));
+	writel_relaxed(-1, MCSR(m));
+	writel_relaxed(m->mccr1, MCCR1(m));
+	writel_relaxed(m->mccr0, MCCR0(m));
 
 	/*
-	 * Calculate the पढ़ो/ग_लिखो समयout (us) from the bit घड़ी
-	 * rate.  This is the period क्रम 3 64-bit frames.  Always
-	 * round this समय up.
+	 * Calculate the read/write timeout (us) from the bit clock
+	 * rate.  This is the period for 3 64-bit frames.  Always
+	 * round this time up.
 	 */
-	mcp->rw_समयout = DIV_ROUND_UP(64 * 3 * 1000000, mcp->sclk_rate);
+	mcp->rw_timeout = DIV_ROUND_UP(64 * 3 * 1000000, mcp->sclk_rate);
 
 	ret = mcp_host_add(mcp, data->codec_pdata);
-	अगर (ret == 0)
-		वापस 0;
+	if (ret == 0)
+		return 0;
 
  err_ioremap:
 	iounmap(m->base1);
 	iounmap(m->base0);
-	mcp_host_मुक्त(mcp);
+	mcp_host_free(mcp);
  err_alloc:
 	release_mem_region(mem1->start, resource_size(mem1));
  err_mem1:
 	release_mem_region(mem0->start, resource_size(mem0));
  err_mem0:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक mcp_sa11x0_हटाओ(काष्ठा platक्रमm_device *dev)
-अणु
-	काष्ठा mcp *mcp = platक्रमm_get_drvdata(dev);
-	काष्ठा mcp_sa11x0 *m = priv(mcp);
-	काष्ठा resource *mem0, *mem1;
+static int mcp_sa11x0_remove(struct platform_device *dev)
+{
+	struct mcp *mcp = platform_get_drvdata(dev);
+	struct mcp_sa11x0 *m = priv(mcp);
+	struct resource *mem0, *mem1;
 
-	अगर (m->mccr0 & MCCR0_MCE)
+	if (m->mccr0 & MCCR0_MCE)
 		dev_warn(&dev->dev,
 			 "device left active (missing disable call?)\n");
 
-	mem0 = platक्रमm_get_resource(dev, IORESOURCE_MEM, 0);
-	mem1 = platक्रमm_get_resource(dev, IORESOURCE_MEM, 1);
+	mem0 = platform_get_resource(dev, IORESOURCE_MEM, 0);
+	mem1 = platform_get_resource(dev, IORESOURCE_MEM, 1);
 
 	mcp_host_del(mcp);
 	iounmap(m->base1);
 	iounmap(m->base0);
-	mcp_host_मुक्त(mcp);
+	mcp_host_free(mcp);
 	release_mem_region(mem1->start, resource_size(mem1));
 	release_mem_region(mem0->start, resource_size(mem0));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक mcp_sa11x0_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा mcp_sa11x0 *m = priv(dev_get_drvdata(dev));
+#ifdef CONFIG_PM_SLEEP
+static int mcp_sa11x0_suspend(struct device *dev)
+{
+	struct mcp_sa11x0 *m = priv(dev_get_drvdata(dev));
 
-	अगर (m->mccr0 & MCCR0_MCE)
+	if (m->mccr0 & MCCR0_MCE)
 		dev_warn(dev, "device left active (missing disable call?)\n");
 
-	ग_लिखोl(m->mccr0 & ~MCCR0_MCE, MCCR0(m));
+	writel(m->mccr0 & ~MCCR0_MCE, MCCR0(m));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mcp_sa11x0_resume(काष्ठा device *dev)
-अणु
-	काष्ठा mcp_sa11x0 *m = priv(dev_get_drvdata(dev));
+static int mcp_sa11x0_resume(struct device *dev)
+{
+	struct mcp_sa11x0 *m = priv(dev_get_drvdata(dev));
 
-	ग_लिखोl_relaxed(m->mccr1, MCCR1(m));
-	ग_लिखोl_relaxed(m->mccr0, MCCR0(m));
+	writel_relaxed(m->mccr1, MCCR1(m));
+	writel_relaxed(m->mccr0, MCCR0(m));
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल स्थिर काष्ठा dev_pm_ops mcp_sa11x0_pm_ops = अणु
-#अगर_घोषित CONFIG_PM_SLEEP
+static const struct dev_pm_ops mcp_sa11x0_pm_ops = {
+#ifdef CONFIG_PM_SLEEP
 	.suspend = mcp_sa11x0_suspend,
-	.मुक्तze = mcp_sa11x0_suspend,
-	.घातeroff = mcp_sa11x0_suspend,
+	.freeze = mcp_sa11x0_suspend,
+	.poweroff = mcp_sa11x0_suspend,
 	.resume_noirq = mcp_sa11x0_resume,
 	.thaw_noirq = mcp_sa11x0_resume,
 	.restore_noirq = mcp_sa11x0_resume,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-अटल काष्ठा platक्रमm_driver mcp_sa11x0_driver = अणु
+static struct platform_driver mcp_sa11x0_driver = {
 	.probe		= mcp_sa11x0_probe,
-	.हटाओ		= mcp_sa11x0_हटाओ,
-	.driver		= अणु
+	.remove		= mcp_sa11x0_remove,
+	.driver		= {
 		.name	= DRIVER_NAME,
 		.pm	= &mcp_sa11x0_pm_ops,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /*
  * This needs re-working
  */
-module_platक्रमm_driver(mcp_sa11x0_driver);
+module_platform_driver(mcp_sa11x0_driver);
 
 MODULE_ALIAS("platform:" DRIVER_NAME);
 MODULE_AUTHOR("Russell King <rmk@arm.linux.org.uk>");

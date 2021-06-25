@@ -1,431 +1,430 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Ldisc rw semaphore
  *
- * The ldisc semaphore is semantically a rw_semaphore but which enक्रमces
+ * The ldisc semaphore is semantically a rw_semaphore but which enforces
  * an alternate policy, namely:
- *   1) Supports lock रुको समयouts
- *   2) Write रुकोer has priority
+ *   1) Supports lock wait timeouts
+ *   2) Write waiter has priority
  *   3) Downgrading is not supported
  *
  * Implementation notes:
- *   1) Upper half of semaphore count is a रुको count (dअगरfers from rwsem
- *	in that rwsem normalizes the upper half to the रुको bias)
+ *   1) Upper half of semaphore count is a wait count (differs from rwsem
+ *	in that rwsem normalizes the upper half to the wait bias)
  *   2) Lacks overflow checking
  *
- * The generic counting was copied and modअगरied from include/यंत्र-generic/rwsem.h
+ * The generic counting was copied and modified from include/asm-generic/rwsem.h
  * by Paul Mackerras <paulus@samba.org>.
  *
- * The scheduling policy was copied and modअगरied from lib/rwsem.c
+ * The scheduling policy was copied and modified from lib/rwsem.c
  * Written by David Howells (dhowells@redhat.com).
  *
- * This implementation incorporates the ग_लिखो lock stealing work of
+ * This implementation incorporates the write lock stealing work of
  * Michel Lespinasse <walken@google.com>.
  *
  * Copyright (C) 2013 Peter Hurley <peter@hurleysoftware.com>
  */
 
-#समावेश <linux/list.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/atomic.h>
-#समावेश <linux/tty.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/sched/debug.h>
-#समावेश <linux/sched/task.h>
+#include <linux/list.h>
+#include <linux/spinlock.h>
+#include <linux/atomic.h>
+#include <linux/tty.h>
+#include <linux/sched.h>
+#include <linux/sched/debug.h>
+#include <linux/sched/task.h>
 
 
-#अगर BITS_PER_LONG == 64
+#if BITS_PER_LONG == 64
 # define LDSEM_ACTIVE_MASK	0xffffffffL
-#अन्यथा
+#else
 # define LDSEM_ACTIVE_MASK	0x0000ffffL
-#पूर्ण_अगर
+#endif
 
-#घोषणा LDSEM_UNLOCKED		0L
-#घोषणा LDSEM_ACTIVE_BIAS	1L
-#घोषणा LDSEM_WAIT_BIAS		(-LDSEM_ACTIVE_MASK-1)
-#घोषणा LDSEM_READ_BIAS		LDSEM_ACTIVE_BIAS
-#घोषणा LDSEM_WRITE_BIAS	(LDSEM_WAIT_BIAS + LDSEM_ACTIVE_BIAS)
+#define LDSEM_UNLOCKED		0L
+#define LDSEM_ACTIVE_BIAS	1L
+#define LDSEM_WAIT_BIAS		(-LDSEM_ACTIVE_MASK-1)
+#define LDSEM_READ_BIAS		LDSEM_ACTIVE_BIAS
+#define LDSEM_WRITE_BIAS	(LDSEM_WAIT_BIAS + LDSEM_ACTIVE_BIAS)
 
-काष्ठा ldsem_रुकोer अणु
-	काष्ठा list_head list;
-	काष्ठा task_काष्ठा *task;
-पूर्ण;
+struct ldsem_waiter {
+	struct list_head list;
+	struct task_struct *task;
+};
 
 /*
  * Initialize an ldsem:
  */
-व्योम __init_ldsem(काष्ठा ld_semaphore *sem, स्थिर अक्षर *name,
-		  काष्ठा lock_class_key *key)
-अणु
-#अगर_घोषित CONFIG_DEBUG_LOCK_ALLOC
+void __init_ldsem(struct ld_semaphore *sem, const char *name,
+		  struct lock_class_key *key)
+{
+#ifdef CONFIG_DEBUG_LOCK_ALLOC
 	/*
 	 * Make sure we are not reinitializing a held semaphore:
 	 */
-	debug_check_no_locks_मुक्तd((व्योम *)sem, माप(*sem));
+	debug_check_no_locks_freed((void *)sem, sizeof(*sem));
 	lockdep_init_map(&sem->dep_map, name, key, 0);
-#पूर्ण_अगर
-	atomic_दीर्घ_set(&sem->count, LDSEM_UNLOCKED);
-	sem->रुको_पढ़ोers = 0;
-	raw_spin_lock_init(&sem->रुको_lock);
-	INIT_LIST_HEAD(&sem->पढ़ो_रुको);
-	INIT_LIST_HEAD(&sem->ग_लिखो_रुको);
-पूर्ण
+#endif
+	atomic_long_set(&sem->count, LDSEM_UNLOCKED);
+	sem->wait_readers = 0;
+	raw_spin_lock_init(&sem->wait_lock);
+	INIT_LIST_HEAD(&sem->read_wait);
+	INIT_LIST_HEAD(&sem->write_wait);
+}
 
-अटल व्योम __ldsem_wake_पढ़ोers(काष्ठा ld_semaphore *sem)
-अणु
-	काष्ठा ldsem_रुकोer *रुकोer, *next;
-	काष्ठा task_काष्ठा *tsk;
-	दीर्घ adjust, count;
+static void __ldsem_wake_readers(struct ld_semaphore *sem)
+{
+	struct ldsem_waiter *waiter, *next;
+	struct task_struct *tsk;
+	long adjust, count;
 
 	/*
-	 * Try to grant पढ़ो locks to all पढ़ोers on the पढ़ो रुको list.
+	 * Try to grant read locks to all readers on the read wait list.
 	 * Note the 'active part' of the count is incremented by
-	 * the number of पढ़ोers beक्रमe waking any processes up.
+	 * the number of readers before waking any processes up.
 	 */
-	adjust = sem->रुको_पढ़ोers * (LDSEM_ACTIVE_BIAS - LDSEM_WAIT_BIAS);
-	count = atomic_दीर्घ_add_वापस(adjust, &sem->count);
-	करो अणु
-		अगर (count > 0)
-			अवरोध;
-		अगर (atomic_दीर्घ_try_cmpxchg(&sem->count, &count, count - adjust))
-			वापस;
-	पूर्ण जबतक (1);
+	adjust = sem->wait_readers * (LDSEM_ACTIVE_BIAS - LDSEM_WAIT_BIAS);
+	count = atomic_long_add_return(adjust, &sem->count);
+	do {
+		if (count > 0)
+			break;
+		if (atomic_long_try_cmpxchg(&sem->count, &count, count - adjust))
+			return;
+	} while (1);
 
-	list_क्रम_each_entry_safe(रुकोer, next, &sem->पढ़ो_रुको, list) अणु
-		tsk = रुकोer->task;
-		smp_store_release(&रुकोer->task, शून्य);
+	list_for_each_entry_safe(waiter, next, &sem->read_wait, list) {
+		tsk = waiter->task;
+		smp_store_release(&waiter->task, NULL);
 		wake_up_process(tsk);
-		put_task_काष्ठा(tsk);
-	पूर्ण
-	INIT_LIST_HEAD(&sem->पढ़ो_रुको);
-	sem->रुको_पढ़ोers = 0;
-पूर्ण
+		put_task_struct(tsk);
+	}
+	INIT_LIST_HEAD(&sem->read_wait);
+	sem->wait_readers = 0;
+}
 
-अटल अंतरभूत पूर्णांक ग_लिखोr_trylock(काष्ठा ld_semaphore *sem)
-अणु
+static inline int writer_trylock(struct ld_semaphore *sem)
+{
 	/*
-	 * Only wake this ग_लिखोr अगर the active part of the count can be
+	 * Only wake this writer if the active part of the count can be
 	 * transitioned from 0 -> 1
 	 */
-	दीर्घ count = atomic_दीर्घ_add_वापस(LDSEM_ACTIVE_BIAS, &sem->count);
-	करो अणु
-		अगर ((count & LDSEM_ACTIVE_MASK) == LDSEM_ACTIVE_BIAS)
-			वापस 1;
-		अगर (atomic_दीर्घ_try_cmpxchg(&sem->count, &count, count - LDSEM_ACTIVE_BIAS))
-			वापस 0;
-	पूर्ण जबतक (1);
-पूर्ण
+	long count = atomic_long_add_return(LDSEM_ACTIVE_BIAS, &sem->count);
+	do {
+		if ((count & LDSEM_ACTIVE_MASK) == LDSEM_ACTIVE_BIAS)
+			return 1;
+		if (atomic_long_try_cmpxchg(&sem->count, &count, count - LDSEM_ACTIVE_BIAS))
+			return 0;
+	} while (1);
+}
 
-अटल व्योम __ldsem_wake_ग_लिखोr(काष्ठा ld_semaphore *sem)
-अणु
-	काष्ठा ldsem_रुकोer *रुकोer;
+static void __ldsem_wake_writer(struct ld_semaphore *sem)
+{
+	struct ldsem_waiter *waiter;
 
-	रुकोer = list_entry(sem->ग_लिखो_रुको.next, काष्ठा ldsem_रुकोer, list);
-	wake_up_process(रुकोer->task);
-पूर्ण
+	waiter = list_entry(sem->write_wait.next, struct ldsem_waiter, list);
+	wake_up_process(waiter->task);
+}
 
 /*
  * handle the lock release when processes blocked on it that can now run
- * - अगर we come here from up_xxxx(), then:
+ * - if we come here from up_xxxx(), then:
  *   - the 'active part' of count (&0x0000ffff) reached 0 (but may have changed)
  *   - the 'waiting part' of count (&0xffff0000) is -ve (and will still be so)
  * - the spinlock must be held by the caller
  * - woken process blocks are discarded from the list after having task zeroed
  */
-अटल व्योम __ldsem_wake(काष्ठा ld_semaphore *sem)
-अणु
-	अगर (!list_empty(&sem->ग_लिखो_रुको))
-		__ldsem_wake_ग_लिखोr(sem);
-	अन्यथा अगर (!list_empty(&sem->पढ़ो_रुको))
-		__ldsem_wake_पढ़ोers(sem);
-पूर्ण
+static void __ldsem_wake(struct ld_semaphore *sem)
+{
+	if (!list_empty(&sem->write_wait))
+		__ldsem_wake_writer(sem);
+	else if (!list_empty(&sem->read_wait))
+		__ldsem_wake_readers(sem);
+}
 
-अटल व्योम ldsem_wake(काष्ठा ld_semaphore *sem)
-अणु
-	अचिन्हित दीर्घ flags;
+static void ldsem_wake(struct ld_semaphore *sem)
+{
+	unsigned long flags;
 
-	raw_spin_lock_irqsave(&sem->रुको_lock, flags);
+	raw_spin_lock_irqsave(&sem->wait_lock, flags);
 	__ldsem_wake(sem);
-	raw_spin_unlock_irqrestore(&sem->रुको_lock, flags);
-पूर्ण
+	raw_spin_unlock_irqrestore(&sem->wait_lock, flags);
+}
 
 /*
- * रुको क्रम the पढ़ो lock to be granted
+ * wait for the read lock to be granted
  */
-अटल काष्ठा ld_semaphore __sched *
-करोwn_पढ़ो_failed(काष्ठा ld_semaphore *sem, दीर्घ count, दीर्घ समयout)
-अणु
-	काष्ठा ldsem_रुकोer रुकोer;
-	दीर्घ adjust = -LDSEM_ACTIVE_BIAS + LDSEM_WAIT_BIAS;
+static struct ld_semaphore __sched *
+down_read_failed(struct ld_semaphore *sem, long count, long timeout)
+{
+	struct ldsem_waiter waiter;
+	long adjust = -LDSEM_ACTIVE_BIAS + LDSEM_WAIT_BIAS;
 
-	/* set up my own style of रुकोqueue */
-	raw_spin_lock_irq(&sem->रुको_lock);
+	/* set up my own style of waitqueue */
+	raw_spin_lock_irq(&sem->wait_lock);
 
 	/*
-	 * Try to reverse the lock attempt but अगर the count has changed
-	 * so that reversing fails, check अगर there are are no रुकोers,
-	 * and early-out अगर not
+	 * Try to reverse the lock attempt but if the count has changed
+	 * so that reversing fails, check if there are are no waiters,
+	 * and early-out if not
 	 */
-	करो अणु
-		अगर (atomic_दीर्घ_try_cmpxchg(&sem->count, &count, count + adjust)) अणु
+	do {
+		if (atomic_long_try_cmpxchg(&sem->count, &count, count + adjust)) {
 			count += adjust;
-			अवरोध;
-		पूर्ण
-		अगर (count > 0) अणु
-			raw_spin_unlock_irq(&sem->रुको_lock);
-			वापस sem;
-		पूर्ण
-	पूर्ण जबतक (1);
+			break;
+		}
+		if (count > 0) {
+			raw_spin_unlock_irq(&sem->wait_lock);
+			return sem;
+		}
+	} while (1);
 
-	list_add_tail(&रुकोer.list, &sem->पढ़ो_रुको);
-	sem->रुको_पढ़ोers++;
+	list_add_tail(&waiter.list, &sem->read_wait);
+	sem->wait_readers++;
 
-	रुकोer.task = current;
-	get_task_काष्ठा(current);
+	waiter.task = current;
+	get_task_struct(current);
 
-	/* अगर there are no active locks, wake the new lock owner(s) */
-	अगर ((count & LDSEM_ACTIVE_MASK) == 0)
+	/* if there are no active locks, wake the new lock owner(s) */
+	if ((count & LDSEM_ACTIVE_MASK) == 0)
 		__ldsem_wake(sem);
 
-	raw_spin_unlock_irq(&sem->रुको_lock);
+	raw_spin_unlock_irq(&sem->wait_lock);
 
-	/* रुको to be given the lock */
-	क्रम (;;) अणु
+	/* wait to be given the lock */
+	for (;;) {
 		set_current_state(TASK_UNINTERRUPTIBLE);
 
-		अगर (!smp_load_acquire(&रुकोer.task))
-			अवरोध;
-		अगर (!समयout)
-			अवरोध;
-		समयout = schedule_समयout(समयout);
-	पूर्ण
+		if (!smp_load_acquire(&waiter.task))
+			break;
+		if (!timeout)
+			break;
+		timeout = schedule_timeout(timeout);
+	}
 
 	__set_current_state(TASK_RUNNING);
 
-	अगर (!समयout) अणु
+	if (!timeout) {
 		/*
-		 * Lock समयd out but check अगर this task was just
-		 * granted lock ownership - अगर so, pretend there
-		 * was no समयout; otherwise, cleanup lock रुको.
+		 * Lock timed out but check if this task was just
+		 * granted lock ownership - if so, pretend there
+		 * was no timeout; otherwise, cleanup lock wait.
 		 */
-		raw_spin_lock_irq(&sem->रुको_lock);
-		अगर (रुकोer.task) अणु
-			atomic_दीर्घ_add_वापस(-LDSEM_WAIT_BIAS, &sem->count);
-			sem->रुको_पढ़ोers--;
-			list_del(&रुकोer.list);
-			raw_spin_unlock_irq(&sem->रुको_lock);
-			put_task_काष्ठा(रुकोer.task);
-			वापस शून्य;
-		पूर्ण
-		raw_spin_unlock_irq(&sem->रुको_lock);
-	पूर्ण
+		raw_spin_lock_irq(&sem->wait_lock);
+		if (waiter.task) {
+			atomic_long_add_return(-LDSEM_WAIT_BIAS, &sem->count);
+			sem->wait_readers--;
+			list_del(&waiter.list);
+			raw_spin_unlock_irq(&sem->wait_lock);
+			put_task_struct(waiter.task);
+			return NULL;
+		}
+		raw_spin_unlock_irq(&sem->wait_lock);
+	}
 
-	वापस sem;
-पूर्ण
+	return sem;
+}
 
 /*
- * रुको क्रम the ग_लिखो lock to be granted
+ * wait for the write lock to be granted
  */
-अटल काष्ठा ld_semaphore __sched *
-करोwn_ग_लिखो_failed(काष्ठा ld_semaphore *sem, दीर्घ count, दीर्घ समयout)
-अणु
-	काष्ठा ldsem_रुकोer रुकोer;
-	दीर्घ adjust = -LDSEM_ACTIVE_BIAS;
-	पूर्णांक locked = 0;
+static struct ld_semaphore __sched *
+down_write_failed(struct ld_semaphore *sem, long count, long timeout)
+{
+	struct ldsem_waiter waiter;
+	long adjust = -LDSEM_ACTIVE_BIAS;
+	int locked = 0;
 
-	/* set up my own style of रुकोqueue */
-	raw_spin_lock_irq(&sem->रुको_lock);
+	/* set up my own style of waitqueue */
+	raw_spin_lock_irq(&sem->wait_lock);
 
 	/*
-	 * Try to reverse the lock attempt but अगर the count has changed
-	 * so that reversing fails, check अगर the lock is now owned,
-	 * and early-out अगर so.
+	 * Try to reverse the lock attempt but if the count has changed
+	 * so that reversing fails, check if the lock is now owned,
+	 * and early-out if so.
 	 */
-	करो अणु
-		अगर (atomic_दीर्घ_try_cmpxchg(&sem->count, &count, count + adjust))
-			अवरोध;
-		अगर ((count & LDSEM_ACTIVE_MASK) == LDSEM_ACTIVE_BIAS) अणु
-			raw_spin_unlock_irq(&sem->रुको_lock);
-			वापस sem;
-		पूर्ण
-	पूर्ण जबतक (1);
+	do {
+		if (atomic_long_try_cmpxchg(&sem->count, &count, count + adjust))
+			break;
+		if ((count & LDSEM_ACTIVE_MASK) == LDSEM_ACTIVE_BIAS) {
+			raw_spin_unlock_irq(&sem->wait_lock);
+			return sem;
+		}
+	} while (1);
 
-	list_add_tail(&रुकोer.list, &sem->ग_लिखो_रुको);
+	list_add_tail(&waiter.list, &sem->write_wait);
 
-	रुकोer.task = current;
+	waiter.task = current;
 
 	set_current_state(TASK_UNINTERRUPTIBLE);
-	क्रम (;;) अणु
-		अगर (!समयout)
-			अवरोध;
-		raw_spin_unlock_irq(&sem->रुको_lock);
-		समयout = schedule_समयout(समयout);
-		raw_spin_lock_irq(&sem->रुको_lock);
+	for (;;) {
+		if (!timeout)
+			break;
+		raw_spin_unlock_irq(&sem->wait_lock);
+		timeout = schedule_timeout(timeout);
+		raw_spin_lock_irq(&sem->wait_lock);
 		set_current_state(TASK_UNINTERRUPTIBLE);
-		locked = ग_लिखोr_trylock(sem);
-		अगर (locked)
-			अवरोध;
-	पूर्ण
+		locked = writer_trylock(sem);
+		if (locked)
+			break;
+	}
 
-	अगर (!locked)
-		atomic_दीर्घ_add_वापस(-LDSEM_WAIT_BIAS, &sem->count);
-	list_del(&रुकोer.list);
+	if (!locked)
+		atomic_long_add_return(-LDSEM_WAIT_BIAS, &sem->count);
+	list_del(&waiter.list);
 
 	/*
-	 * In हाल of समयout, wake up every पढ़ोer who gave the right of way
-	 * to ग_लिखोr. Prevent separation पढ़ोers पूर्णांकo two groups:
+	 * In case of timeout, wake up every reader who gave the right of way
+	 * to writer. Prevent separation readers into two groups:
 	 * one that helds semaphore and another that sleeps.
-	 * (in हाल of no contention with a ग_लिखोr)
+	 * (in case of no contention with a writer)
 	 */
-	अगर (!locked && list_empty(&sem->ग_लिखो_रुको))
-		__ldsem_wake_पढ़ोers(sem);
+	if (!locked && list_empty(&sem->write_wait))
+		__ldsem_wake_readers(sem);
 
-	raw_spin_unlock_irq(&sem->रुको_lock);
+	raw_spin_unlock_irq(&sem->wait_lock);
 
 	__set_current_state(TASK_RUNNING);
 
-	/* lock रुको may have समयd out */
-	अगर (!locked)
-		वापस शून्य;
-	वापस sem;
-पूर्ण
+	/* lock wait may have timed out */
+	if (!locked)
+		return NULL;
+	return sem;
+}
 
 
 
-अटल पूर्णांक __ldsem_करोwn_पढ़ो_nested(काष्ठा ld_semaphore *sem,
-					   पूर्णांक subclass, दीर्घ समयout)
-अणु
-	दीर्घ count;
+static int __ldsem_down_read_nested(struct ld_semaphore *sem,
+					   int subclass, long timeout)
+{
+	long count;
 
-	rwsem_acquire_पढ़ो(&sem->dep_map, subclass, 0, _RET_IP_);
+	rwsem_acquire_read(&sem->dep_map, subclass, 0, _RET_IP_);
 
-	count = atomic_दीर्घ_add_वापस(LDSEM_READ_BIAS, &sem->count);
-	अगर (count <= 0) अणु
+	count = atomic_long_add_return(LDSEM_READ_BIAS, &sem->count);
+	if (count <= 0) {
 		lock_contended(&sem->dep_map, _RET_IP_);
-		अगर (!करोwn_पढ़ो_failed(sem, count, समयout)) अणु
+		if (!down_read_failed(sem, count, timeout)) {
 			rwsem_release(&sem->dep_map, _RET_IP_);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 	lock_acquired(&sem->dep_map, _RET_IP_);
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक __ldsem_करोwn_ग_लिखो_nested(काष्ठा ld_semaphore *sem,
-					    पूर्णांक subclass, दीर्घ समयout)
-अणु
-	दीर्घ count;
+static int __ldsem_down_write_nested(struct ld_semaphore *sem,
+					    int subclass, long timeout)
+{
+	long count;
 
 	rwsem_acquire(&sem->dep_map, subclass, 0, _RET_IP_);
 
-	count = atomic_दीर्घ_add_वापस(LDSEM_WRITE_BIAS, &sem->count);
-	अगर ((count & LDSEM_ACTIVE_MASK) != LDSEM_ACTIVE_BIAS) अणु
+	count = atomic_long_add_return(LDSEM_WRITE_BIAS, &sem->count);
+	if ((count & LDSEM_ACTIVE_MASK) != LDSEM_ACTIVE_BIAS) {
 		lock_contended(&sem->dep_map, _RET_IP_);
-		अगर (!करोwn_ग_लिखो_failed(sem, count, समयout)) अणु
+		if (!down_write_failed(sem, count, timeout)) {
 			rwsem_release(&sem->dep_map, _RET_IP_);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 	lock_acquired(&sem->dep_map, _RET_IP_);
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 
 /*
- * lock क्रम पढ़ोing -- वापसs 1 अगर successful, 0 अगर समयd out
+ * lock for reading -- returns 1 if successful, 0 if timed out
  */
-पूर्णांक __sched ldsem_करोwn_पढ़ो(काष्ठा ld_semaphore *sem, दीर्घ समयout)
-अणु
+int __sched ldsem_down_read(struct ld_semaphore *sem, long timeout)
+{
 	might_sleep();
-	वापस __ldsem_करोwn_पढ़ो_nested(sem, 0, समयout);
-पूर्ण
+	return __ldsem_down_read_nested(sem, 0, timeout);
+}
 
 /*
- * trylock क्रम पढ़ोing -- वापसs 1 अगर successful, 0 अगर contention
+ * trylock for reading -- returns 1 if successful, 0 if contention
  */
-पूर्णांक ldsem_करोwn_पढ़ो_trylock(काष्ठा ld_semaphore *sem)
-अणु
-	दीर्घ count = atomic_दीर्घ_पढ़ो(&sem->count);
+int ldsem_down_read_trylock(struct ld_semaphore *sem)
+{
+	long count = atomic_long_read(&sem->count);
 
-	जबतक (count >= 0) अणु
-		अगर (atomic_दीर्घ_try_cmpxchg(&sem->count, &count, count + LDSEM_READ_BIAS)) अणु
-			rwsem_acquire_पढ़ो(&sem->dep_map, 0, 1, _RET_IP_);
+	while (count >= 0) {
+		if (atomic_long_try_cmpxchg(&sem->count, &count, count + LDSEM_READ_BIAS)) {
+			rwsem_acquire_read(&sem->dep_map, 0, 1, _RET_IP_);
 			lock_acquired(&sem->dep_map, _RET_IP_);
-			वापस 1;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return 1;
+		}
+	}
+	return 0;
+}
 
 /*
- * lock क्रम writing -- वापसs 1 अगर successful, 0 अगर समयd out
+ * lock for writing -- returns 1 if successful, 0 if timed out
  */
-पूर्णांक __sched ldsem_करोwn_ग_लिखो(काष्ठा ld_semaphore *sem, दीर्घ समयout)
-अणु
+int __sched ldsem_down_write(struct ld_semaphore *sem, long timeout)
+{
 	might_sleep();
-	वापस __ldsem_करोwn_ग_लिखो_nested(sem, 0, समयout);
-पूर्ण
+	return __ldsem_down_write_nested(sem, 0, timeout);
+}
 
 /*
- * trylock क्रम writing -- वापसs 1 अगर successful, 0 अगर contention
+ * trylock for writing -- returns 1 if successful, 0 if contention
  */
-पूर्णांक ldsem_करोwn_ग_लिखो_trylock(काष्ठा ld_semaphore *sem)
-अणु
-	दीर्घ count = atomic_दीर्घ_पढ़ो(&sem->count);
+int ldsem_down_write_trylock(struct ld_semaphore *sem)
+{
+	long count = atomic_long_read(&sem->count);
 
-	जबतक ((count & LDSEM_ACTIVE_MASK) == 0) अणु
-		अगर (atomic_दीर्घ_try_cmpxchg(&sem->count, &count, count + LDSEM_WRITE_BIAS)) अणु
+	while ((count & LDSEM_ACTIVE_MASK) == 0) {
+		if (atomic_long_try_cmpxchg(&sem->count, &count, count + LDSEM_WRITE_BIAS)) {
 			rwsem_acquire(&sem->dep_map, 0, 1, _RET_IP_);
 			lock_acquired(&sem->dep_map, _RET_IP_);
-			वापस 1;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return 1;
+		}
+	}
+	return 0;
+}
 
 /*
- * release a पढ़ो lock
+ * release a read lock
  */
-व्योम ldsem_up_पढ़ो(काष्ठा ld_semaphore *sem)
-अणु
-	दीर्घ count;
+void ldsem_up_read(struct ld_semaphore *sem)
+{
+	long count;
 
 	rwsem_release(&sem->dep_map, _RET_IP_);
 
-	count = atomic_दीर्घ_add_वापस(-LDSEM_READ_BIAS, &sem->count);
-	अगर (count < 0 && (count & LDSEM_ACTIVE_MASK) == 0)
+	count = atomic_long_add_return(-LDSEM_READ_BIAS, &sem->count);
+	if (count < 0 && (count & LDSEM_ACTIVE_MASK) == 0)
 		ldsem_wake(sem);
-पूर्ण
+}
 
 /*
- * release a ग_लिखो lock
+ * release a write lock
  */
-व्योम ldsem_up_ग_लिखो(काष्ठा ld_semaphore *sem)
-अणु
-	दीर्घ count;
+void ldsem_up_write(struct ld_semaphore *sem)
+{
+	long count;
 
 	rwsem_release(&sem->dep_map, _RET_IP_);
 
-	count = atomic_दीर्घ_add_वापस(-LDSEM_WRITE_BIAS, &sem->count);
-	अगर (count < 0)
+	count = atomic_long_add_return(-LDSEM_WRITE_BIAS, &sem->count);
+	if (count < 0)
 		ldsem_wake(sem);
-पूर्ण
+}
 
 
-#अगर_घोषित CONFIG_DEBUG_LOCK_ALLOC
+#ifdef CONFIG_DEBUG_LOCK_ALLOC
 
-पूर्णांक ldsem_करोwn_पढ़ो_nested(काष्ठा ld_semaphore *sem, पूर्णांक subclass, दीर्घ समयout)
-अणु
+int ldsem_down_read_nested(struct ld_semaphore *sem, int subclass, long timeout)
+{
 	might_sleep();
-	वापस __ldsem_करोwn_पढ़ो_nested(sem, subclass, समयout);
-पूर्ण
+	return __ldsem_down_read_nested(sem, subclass, timeout);
+}
 
-पूर्णांक ldsem_करोwn_ग_लिखो_nested(काष्ठा ld_semaphore *sem, पूर्णांक subclass,
-			    दीर्घ समयout)
-अणु
+int ldsem_down_write_nested(struct ld_semaphore *sem, int subclass,
+			    long timeout)
+{
 	might_sleep();
-	वापस __ldsem_करोwn_ग_लिखो_nested(sem, subclass, समयout);
-पूर्ण
+	return __ldsem_down_write_nested(sem, subclass, timeout);
+}
 
-#पूर्ण_अगर
+#endif

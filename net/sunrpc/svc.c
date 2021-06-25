@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * linux/net/sunrpc/svc.c
  *
@@ -7,99 +6,99 @@
  *
  * Copyright (C) 1995, 1996 Olaf Kirch <okir@monad.swb.de>
  *
- * Multiple thपढ़ोs pools and NUMAisation
+ * Multiple threads pools and NUMAisation
  * Copyright (c) 2006 Silicon Graphics, Inc.
  * by Greg Banks <gnb@melbourne.sgi.com>
  */
 
-#समावेश <linux/linkage.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/net.h>
-#समावेश <linux/in.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/module.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/slab.h>
+#include <linux/linkage.h>
+#include <linux/sched/signal.h>
+#include <linux/errno.h>
+#include <linux/net.h>
+#include <linux/in.h>
+#include <linux/mm.h>
+#include <linux/interrupt.h>
+#include <linux/module.h>
+#include <linux/kthread.h>
+#include <linux/slab.h>
 
-#समावेश <linux/sunrpc/types.h>
-#समावेश <linux/sunrpc/xdr.h>
-#समावेश <linux/sunrpc/stats.h>
-#समावेश <linux/sunrpc/svcsock.h>
-#समावेश <linux/sunrpc/clnt.h>
-#समावेश <linux/sunrpc/bc_xprt.h>
+#include <linux/sunrpc/types.h>
+#include <linux/sunrpc/xdr.h>
+#include <linux/sunrpc/stats.h>
+#include <linux/sunrpc/svcsock.h>
+#include <linux/sunrpc/clnt.h>
+#include <linux/sunrpc/bc_xprt.h>
 
-#समावेश <trace/events/sunrpc.h>
+#include <trace/events/sunrpc.h>
 
-#घोषणा RPCDBG_FACILITY	RPCDBG_SVCDSP
+#define RPCDBG_FACILITY	RPCDBG_SVCDSP
 
-अटल व्योम svc_unरेजिस्टर(स्थिर काष्ठा svc_serv *serv, काष्ठा net *net);
+static void svc_unregister(const struct svc_serv *serv, struct net *net);
 
-#घोषणा svc_serv_is_pooled(serv)    ((serv)->sv_ops->svo_function)
+#define svc_serv_is_pooled(serv)    ((serv)->sv_ops->svo_function)
 
-#घोषणा SVC_POOL_DEFAULT	SVC_POOL_GLOBAL
+#define SVC_POOL_DEFAULT	SVC_POOL_GLOBAL
 
 /*
- * Structure क्रम mapping cpus to pools and vice versa.
+ * Structure for mapping cpus to pools and vice versa.
  * Setup once during sunrpc initialisation.
  */
-काष्ठा svc_pool_map svc_pool_map = अणु
+struct svc_pool_map svc_pool_map = {
 	.mode = SVC_POOL_DEFAULT
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(svc_pool_map);
 
-अटल DEFINE_MUTEX(svc_pool_map_mutex);/* protects svc_pool_map.count only */
+static DEFINE_MUTEX(svc_pool_map_mutex);/* protects svc_pool_map.count only */
 
-अटल पूर्णांक
-param_set_pool_mode(स्थिर अक्षर *val, स्थिर काष्ठा kernel_param *kp)
-अणु
-	पूर्णांक *ip = (पूर्णांक *)kp->arg;
-	काष्ठा svc_pool_map *m = &svc_pool_map;
-	पूर्णांक err;
+static int
+param_set_pool_mode(const char *val, const struct kernel_param *kp)
+{
+	int *ip = (int *)kp->arg;
+	struct svc_pool_map *m = &svc_pool_map;
+	int err;
 
 	mutex_lock(&svc_pool_map_mutex);
 
 	err = -EBUSY;
-	अगर (m->count)
-		जाओ out;
+	if (m->count)
+		goto out;
 
 	err = 0;
-	अगर (!म_भेदन(val, "auto", 4))
+	if (!strncmp(val, "auto", 4))
 		*ip = SVC_POOL_AUTO;
-	अन्यथा अगर (!म_भेदन(val, "global", 6))
+	else if (!strncmp(val, "global", 6))
 		*ip = SVC_POOL_GLOBAL;
-	अन्यथा अगर (!म_भेदन(val, "percpu", 6))
+	else if (!strncmp(val, "percpu", 6))
 		*ip = SVC_POOL_PERCPU;
-	अन्यथा अगर (!म_भेदन(val, "pernode", 7))
+	else if (!strncmp(val, "pernode", 7))
 		*ip = SVC_POOL_PERNODE;
-	अन्यथा
+	else
 		err = -EINVAL;
 
 out:
 	mutex_unlock(&svc_pool_map_mutex);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक
-param_get_pool_mode(अक्षर *buf, स्थिर काष्ठा kernel_param *kp)
-अणु
-	पूर्णांक *ip = (पूर्णांक *)kp->arg;
+static int
+param_get_pool_mode(char *buf, const struct kernel_param *kp)
+{
+	int *ip = (int *)kp->arg;
 
-	चयन (*ip)
-	अणु
-	हाल SVC_POOL_AUTO:
-		वापस strlcpy(buf, "auto\n", 20);
-	हाल SVC_POOL_GLOBAL:
-		वापस strlcpy(buf, "global\n", 20);
-	हाल SVC_POOL_PERCPU:
-		वापस strlcpy(buf, "percpu\n", 20);
-	हाल SVC_POOL_PERNODE:
-		वापस strlcpy(buf, "pernode\n", 20);
-	शेष:
-		वापस प्र_लिखो(buf, "%d\n", *ip);
-	पूर्ण
-पूर्ण
+	switch (*ip)
+	{
+	case SVC_POOL_AUTO:
+		return strlcpy(buf, "auto\n", 20);
+	case SVC_POOL_GLOBAL:
+		return strlcpy(buf, "global\n", 20);
+	case SVC_POOL_PERCPU:
+		return strlcpy(buf, "percpu\n", 20);
+	case SVC_POOL_PERNODE:
+		return strlcpy(buf, "pernode\n", 20);
+	default:
+		return sprintf(buf, "%d\n", *ip);
+	}
+}
 
 module_param_call(pool_mode, param_set_pool_mode, param_get_pool_mode,
 		 &svc_pool_map.mode, 0644);
@@ -108,507 +107,507 @@ module_param_call(pool_mode, param_set_pool_mode, param_get_pool_mode,
  * Detect best pool mapping mode heuristically,
  * according to the machine's topology.
  */
-अटल पूर्णांक
-svc_pool_map_choose_mode(व्योम)
-अणु
-	अचिन्हित पूर्णांक node;
+static int
+svc_pool_map_choose_mode(void)
+{
+	unsigned int node;
 
-	अगर (nr_online_nodes > 1) अणु
+	if (nr_online_nodes > 1) {
 		/*
 		 * Actually have multiple NUMA nodes,
 		 * so split pools on NUMA node boundaries
 		 */
-		वापस SVC_POOL_PERNODE;
-	पूर्ण
+		return SVC_POOL_PERNODE;
+	}
 
 	node = first_online_node;
-	अगर (nr_cpus_node(node) > 2) अणु
+	if (nr_cpus_node(node) > 2) {
 		/*
 		 * Non-trivial SMP, or CONFIG_NUMA on
 		 * non-NUMA hardware, e.g. with a generic
-		 * x86_64 kernel on Xeons.  In this हाल we
-		 * want to भागide the pools on cpu boundaries.
+		 * x86_64 kernel on Xeons.  In this case we
+		 * want to divide the pools on cpu boundaries.
 		 */
-		वापस SVC_POOL_PERCPU;
-	पूर्ण
+		return SVC_POOL_PERCPU;
+	}
 
-	/* शेष: one global pool */
-	वापस SVC_POOL_GLOBAL;
-पूर्ण
+	/* default: one global pool */
+	return SVC_POOL_GLOBAL;
+}
 
 /*
  * Allocate the to_pool[] and pool_to[] arrays.
- * Returns 0 on success or an त्रुटि_सं.
+ * Returns 0 on success or an errno.
  */
-अटल पूर्णांक
-svc_pool_map_alloc_arrays(काष्ठा svc_pool_map *m, अचिन्हित पूर्णांक maxpools)
-अणु
-	m->to_pool = kसुस्मृति(maxpools, माप(अचिन्हित पूर्णांक), GFP_KERNEL);
-	अगर (!m->to_pool)
-		जाओ fail;
-	m->pool_to = kसुस्मृति(maxpools, माप(अचिन्हित पूर्णांक), GFP_KERNEL);
-	अगर (!m->pool_to)
-		जाओ fail_मुक्त;
+static int
+svc_pool_map_alloc_arrays(struct svc_pool_map *m, unsigned int maxpools)
+{
+	m->to_pool = kcalloc(maxpools, sizeof(unsigned int), GFP_KERNEL);
+	if (!m->to_pool)
+		goto fail;
+	m->pool_to = kcalloc(maxpools, sizeof(unsigned int), GFP_KERNEL);
+	if (!m->pool_to)
+		goto fail_free;
 
-	वापस 0;
+	return 0;
 
-fail_मुक्त:
-	kमुक्त(m->to_pool);
-	m->to_pool = शून्य;
+fail_free:
+	kfree(m->to_pool);
+	m->to_pool = NULL;
 fail:
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
 /*
- * Initialise the pool map क्रम SVC_POOL_PERCPU mode.
+ * Initialise the pool map for SVC_POOL_PERCPU mode.
  * Returns number of pools or <0 on error.
  */
-अटल पूर्णांक
-svc_pool_map_init_percpu(काष्ठा svc_pool_map *m)
-अणु
-	अचिन्हित पूर्णांक maxpools = nr_cpu_ids;
-	अचिन्हित पूर्णांक pidx = 0;
-	अचिन्हित पूर्णांक cpu;
-	पूर्णांक err;
+static int
+svc_pool_map_init_percpu(struct svc_pool_map *m)
+{
+	unsigned int maxpools = nr_cpu_ids;
+	unsigned int pidx = 0;
+	unsigned int cpu;
+	int err;
 
 	err = svc_pool_map_alloc_arrays(m, maxpools);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	क्रम_each_online_cpu(cpu) अणु
+	for_each_online_cpu(cpu) {
 		BUG_ON(pidx >= maxpools);
 		m->to_pool[cpu] = pidx;
 		m->pool_to[pidx] = cpu;
 		pidx++;
-	पूर्ण
+	}
 	/* cpus brought online later all get mapped to pool0, sorry */
 
-	वापस pidx;
-पूर्ण;
+	return pidx;
+};
 
 
 /*
- * Initialise the pool map क्रम SVC_POOL_PERNODE mode.
+ * Initialise the pool map for SVC_POOL_PERNODE mode.
  * Returns number of pools or <0 on error.
  */
-अटल पूर्णांक
-svc_pool_map_init_pernode(काष्ठा svc_pool_map *m)
-अणु
-	अचिन्हित पूर्णांक maxpools = nr_node_ids;
-	अचिन्हित पूर्णांक pidx = 0;
-	अचिन्हित पूर्णांक node;
-	पूर्णांक err;
+static int
+svc_pool_map_init_pernode(struct svc_pool_map *m)
+{
+	unsigned int maxpools = nr_node_ids;
+	unsigned int pidx = 0;
+	unsigned int node;
+	int err;
 
 	err = svc_pool_map_alloc_arrays(m, maxpools);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	क्रम_each_node_with_cpus(node) अणु
+	for_each_node_with_cpus(node) {
 		/* some architectures (e.g. SN2) have cpuless nodes */
 		BUG_ON(pidx > maxpools);
 		m->to_pool[node] = pidx;
 		m->pool_to[pidx] = node;
 		pidx++;
-	पूर्ण
+	}
 	/* nodes brought online later all get mapped to pool0, sorry */
 
-	वापस pidx;
-पूर्ण
+	return pidx;
+}
 
 
 /*
  * Add a reference to the global map of cpus to pools (and
- * vice versa).  Initialise the map अगर we're the first user.
+ * vice versa).  Initialise the map if we're the first user.
  * Returns the number of pools.
  */
-अचिन्हित पूर्णांक
-svc_pool_map_get(व्योम)
-अणु
-	काष्ठा svc_pool_map *m = &svc_pool_map;
-	पूर्णांक npools = -1;
+unsigned int
+svc_pool_map_get(void)
+{
+	struct svc_pool_map *m = &svc_pool_map;
+	int npools = -1;
 
 	mutex_lock(&svc_pool_map_mutex);
 
-	अगर (m->count++) अणु
+	if (m->count++) {
 		mutex_unlock(&svc_pool_map_mutex);
-		वापस m->npools;
-	पूर्ण
+		return m->npools;
+	}
 
-	अगर (m->mode == SVC_POOL_AUTO)
+	if (m->mode == SVC_POOL_AUTO)
 		m->mode = svc_pool_map_choose_mode();
 
-	चयन (m->mode) अणु
-	हाल SVC_POOL_PERCPU:
+	switch (m->mode) {
+	case SVC_POOL_PERCPU:
 		npools = svc_pool_map_init_percpu(m);
-		अवरोध;
-	हाल SVC_POOL_PERNODE:
+		break;
+	case SVC_POOL_PERNODE:
 		npools = svc_pool_map_init_pernode(m);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (npools < 0) अणु
-		/* शेष, or memory allocation failure */
+	if (npools < 0) {
+		/* default, or memory allocation failure */
 		npools = 1;
 		m->mode = SVC_POOL_GLOBAL;
-	पूर्ण
+	}
 	m->npools = npools;
 
 	mutex_unlock(&svc_pool_map_mutex);
-	वापस m->npools;
-पूर्ण
+	return m->npools;
+}
 EXPORT_SYMBOL_GPL(svc_pool_map_get);
 
 /*
  * Drop a reference to the global map of cpus to pools.
  * When the last reference is dropped, the map data is
- * मुक्तd; this allows the sysadmin to change the pool
+ * freed; this allows the sysadmin to change the pool
  * mode using the pool_mode module option without
  * rebooting or re-loading sunrpc.ko.
  */
-व्योम
-svc_pool_map_put(व्योम)
-अणु
-	काष्ठा svc_pool_map *m = &svc_pool_map;
+void
+svc_pool_map_put(void)
+{
+	struct svc_pool_map *m = &svc_pool_map;
 
 	mutex_lock(&svc_pool_map_mutex);
 
-	अगर (!--m->count) अणु
-		kमुक्त(m->to_pool);
-		m->to_pool = शून्य;
-		kमुक्त(m->pool_to);
-		m->pool_to = शून्य;
+	if (!--m->count) {
+		kfree(m->to_pool);
+		m->to_pool = NULL;
+		kfree(m->pool_to);
+		m->pool_to = NULL;
 		m->npools = 0;
-	पूर्ण
+	}
 
 	mutex_unlock(&svc_pool_map_mutex);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(svc_pool_map_put);
 
-अटल पूर्णांक svc_pool_map_get_node(अचिन्हित पूर्णांक pidx)
-अणु
-	स्थिर काष्ठा svc_pool_map *m = &svc_pool_map;
+static int svc_pool_map_get_node(unsigned int pidx)
+{
+	const struct svc_pool_map *m = &svc_pool_map;
 
-	अगर (m->count) अणु
-		अगर (m->mode == SVC_POOL_PERCPU)
-			वापस cpu_to_node(m->pool_to[pidx]);
-		अगर (m->mode == SVC_POOL_PERNODE)
-			वापस m->pool_to[pidx];
-	पूर्ण
-	वापस NUMA_NO_NODE;
-पूर्ण
+	if (m->count) {
+		if (m->mode == SVC_POOL_PERCPU)
+			return cpu_to_node(m->pool_to[pidx]);
+		if (m->mode == SVC_POOL_PERNODE)
+			return m->pool_to[pidx];
+	}
+	return NUMA_NO_NODE;
+}
 /*
- * Set the given thपढ़ो's cpus_allowed mask so that it
+ * Set the given thread's cpus_allowed mask so that it
  * will only run on cpus in the given pool.
  */
-अटल अंतरभूत व्योम
-svc_pool_map_set_cpumask(काष्ठा task_काष्ठा *task, अचिन्हित पूर्णांक pidx)
-अणु
-	काष्ठा svc_pool_map *m = &svc_pool_map;
-	अचिन्हित पूर्णांक node = m->pool_to[pidx];
+static inline void
+svc_pool_map_set_cpumask(struct task_struct *task, unsigned int pidx)
+{
+	struct svc_pool_map *m = &svc_pool_map;
+	unsigned int node = m->pool_to[pidx];
 
 	/*
-	 * The caller checks क्रम sv_nrpools > 1, which
+	 * The caller checks for sv_nrpools > 1, which
 	 * implies that we've been initialized.
 	 */
 	WARN_ON_ONCE(m->count == 0);
-	अगर (m->count == 0)
-		वापस;
+	if (m->count == 0)
+		return;
 
-	चयन (m->mode) अणु
-	हाल SVC_POOL_PERCPU:
-	अणु
+	switch (m->mode) {
+	case SVC_POOL_PERCPU:
+	{
 		set_cpus_allowed_ptr(task, cpumask_of(node));
-		अवरोध;
-	पूर्ण
-	हाल SVC_POOL_PERNODE:
-	अणु
+		break;
+	}
+	case SVC_POOL_PERNODE:
+	{
 		set_cpus_allowed_ptr(task, cpumask_of_node(node));
-		अवरोध;
-	पूर्ण
-	पूर्ण
-पूर्ण
+		break;
+	}
+	}
+}
 
 /*
- * Use the mapping mode to choose a pool क्रम a given CPU.
- * Used when enqueueing an incoming RPC.  Always वापसs
- * a non-शून्य pool poपूर्णांकer.
+ * Use the mapping mode to choose a pool for a given CPU.
+ * Used when enqueueing an incoming RPC.  Always returns
+ * a non-NULL pool pointer.
  */
-काष्ठा svc_pool *
-svc_pool_क्रम_cpu(काष्ठा svc_serv *serv, पूर्णांक cpu)
-अणु
-	काष्ठा svc_pool_map *m = &svc_pool_map;
-	अचिन्हित पूर्णांक pidx = 0;
+struct svc_pool *
+svc_pool_for_cpu(struct svc_serv *serv, int cpu)
+{
+	struct svc_pool_map *m = &svc_pool_map;
+	unsigned int pidx = 0;
 
 	/*
 	 * An uninitialised map happens in a pure client when
 	 * lockd is brought up, so silently treat it the
 	 * same as SVC_POOL_GLOBAL.
 	 */
-	अगर (svc_serv_is_pooled(serv)) अणु
-		चयन (m->mode) अणु
-		हाल SVC_POOL_PERCPU:
+	if (svc_serv_is_pooled(serv)) {
+		switch (m->mode) {
+		case SVC_POOL_PERCPU:
 			pidx = m->to_pool[cpu];
-			अवरोध;
-		हाल SVC_POOL_PERNODE:
+			break;
+		case SVC_POOL_PERNODE:
 			pidx = m->to_pool[cpu_to_node(cpu)];
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	वापस &serv->sv_pools[pidx % serv->sv_nrpools];
-पूर्ण
+			break;
+		}
+	}
+	return &serv->sv_pools[pidx % serv->sv_nrpools];
+}
 
-पूर्णांक svc_rpcb_setup(काष्ठा svc_serv *serv, काष्ठा net *net)
-अणु
-	पूर्णांक err;
+int svc_rpcb_setup(struct svc_serv *serv, struct net *net)
+{
+	int err;
 
 	err = rpcb_create_local(net);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	/* Remove any stale porपंचांगap registrations */
-	svc_unरेजिस्टर(serv, net);
-	वापस 0;
-पूर्ण
+	/* Remove any stale portmap registrations */
+	svc_unregister(serv, net);
+	return 0;
+}
 EXPORT_SYMBOL_GPL(svc_rpcb_setup);
 
-व्योम svc_rpcb_cleanup(काष्ठा svc_serv *serv, काष्ठा net *net)
-अणु
-	svc_unरेजिस्टर(serv, net);
+void svc_rpcb_cleanup(struct svc_serv *serv, struct net *net)
+{
+	svc_unregister(serv, net);
 	rpcb_put_local(net);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(svc_rpcb_cleanup);
 
-अटल पूर्णांक svc_uses_rpcbind(काष्ठा svc_serv *serv)
-अणु
-	काष्ठा svc_program	*progp;
-	अचिन्हित पूर्णांक		i;
+static int svc_uses_rpcbind(struct svc_serv *serv)
+{
+	struct svc_program	*progp;
+	unsigned int		i;
 
-	क्रम (progp = serv->sv_program; progp; progp = progp->pg_next) अणु
-		क्रम (i = 0; i < progp->pg_nvers; i++) अणु
-			अगर (progp->pg_vers[i] == शून्य)
-				जारी;
-			अगर (!progp->pg_vers[i]->vs_hidden)
-				वापस 1;
-		पूर्ण
-	पूर्ण
+	for (progp = serv->sv_program; progp; progp = progp->pg_next) {
+		for (i = 0; i < progp->pg_nvers; i++) {
+			if (progp->pg_vers[i] == NULL)
+				continue;
+			if (!progp->pg_vers[i]->vs_hidden)
+				return 1;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक svc_bind(काष्ठा svc_serv *serv, काष्ठा net *net)
-अणु
-	अगर (!svc_uses_rpcbind(serv))
-		वापस 0;
-	वापस svc_rpcb_setup(serv, net);
-पूर्ण
+int svc_bind(struct svc_serv *serv, struct net *net)
+{
+	if (!svc_uses_rpcbind(serv))
+		return 0;
+	return svc_rpcb_setup(serv, net);
+}
 EXPORT_SYMBOL_GPL(svc_bind);
 
-#अगर defined(CONFIG_SUNRPC_BACKCHANNEL)
-अटल व्योम
-__svc_init_bc(काष्ठा svc_serv *serv)
-अणु
+#if defined(CONFIG_SUNRPC_BACKCHANNEL)
+static void
+__svc_init_bc(struct svc_serv *serv)
+{
 	INIT_LIST_HEAD(&serv->sv_cb_list);
 	spin_lock_init(&serv->sv_cb_lock);
-	init_रुकोqueue_head(&serv->sv_cb_रुकोq);
-पूर्ण
-#अन्यथा
-अटल व्योम
-__svc_init_bc(काष्ठा svc_serv *serv)
-अणु
-पूर्ण
-#पूर्ण_अगर
+	init_waitqueue_head(&serv->sv_cb_waitq);
+}
+#else
+static void
+__svc_init_bc(struct svc_serv *serv)
+{
+}
+#endif
 
 /*
  * Create an RPC service
  */
-अटल काष्ठा svc_serv *
-__svc_create(काष्ठा svc_program *prog, अचिन्हित पूर्णांक bufsize, पूर्णांक npools,
-	     स्थिर काष्ठा svc_serv_ops *ops)
-अणु
-	काष्ठा svc_serv	*serv;
-	अचिन्हित पूर्णांक vers;
-	अचिन्हित पूर्णांक xdrsize;
-	अचिन्हित पूर्णांक i;
+static struct svc_serv *
+__svc_create(struct svc_program *prog, unsigned int bufsize, int npools,
+	     const struct svc_serv_ops *ops)
+{
+	struct svc_serv	*serv;
+	unsigned int vers;
+	unsigned int xdrsize;
+	unsigned int i;
 
-	अगर (!(serv = kzalloc(माप(*serv), GFP_KERNEL)))
-		वापस शून्य;
+	if (!(serv = kzalloc(sizeof(*serv), GFP_KERNEL)))
+		return NULL;
 	serv->sv_name      = prog->pg_name;
 	serv->sv_program   = prog;
-	serv->sv_nrthपढ़ोs = 1;
+	serv->sv_nrthreads = 1;
 	serv->sv_stats     = prog->pg_stats;
-	अगर (bufsize > RPCSVC_MAXPAYLOAD)
+	if (bufsize > RPCSVC_MAXPAYLOAD)
 		bufsize = RPCSVC_MAXPAYLOAD;
 	serv->sv_max_payload = bufsize? bufsize : 4096;
 	serv->sv_max_mesg  = roundup(serv->sv_max_payload + PAGE_SIZE, PAGE_SIZE);
 	serv->sv_ops = ops;
 	xdrsize = 0;
-	जबतक (prog) अणु
+	while (prog) {
 		prog->pg_lovers = prog->pg_nvers-1;
-		क्रम (vers=0; vers<prog->pg_nvers ; vers++)
-			अगर (prog->pg_vers[vers]) अणु
+		for (vers=0; vers<prog->pg_nvers ; vers++)
+			if (prog->pg_vers[vers]) {
 				prog->pg_hivers = vers;
-				अगर (prog->pg_lovers > vers)
+				if (prog->pg_lovers > vers)
 					prog->pg_lovers = vers;
-				अगर (prog->pg_vers[vers]->vs_xdrsize > xdrsize)
+				if (prog->pg_vers[vers]->vs_xdrsize > xdrsize)
 					xdrsize = prog->pg_vers[vers]->vs_xdrsize;
-			पूर्ण
+			}
 		prog = prog->pg_next;
-	पूर्ण
+	}
 	serv->sv_xdrsize   = xdrsize;
 	INIT_LIST_HEAD(&serv->sv_tempsocks);
 	INIT_LIST_HEAD(&serv->sv_permsocks);
-	समयr_setup(&serv->sv_tempसमयr, शून्य, 0);
+	timer_setup(&serv->sv_temptimer, NULL, 0);
 	spin_lock_init(&serv->sv_lock);
 
 	__svc_init_bc(serv);
 
 	serv->sv_nrpools = npools;
 	serv->sv_pools =
-		kसुस्मृति(serv->sv_nrpools, माप(काष्ठा svc_pool),
+		kcalloc(serv->sv_nrpools, sizeof(struct svc_pool),
 			GFP_KERNEL);
-	अगर (!serv->sv_pools) अणु
-		kमुक्त(serv);
-		वापस शून्य;
-	पूर्ण
+	if (!serv->sv_pools) {
+		kfree(serv);
+		return NULL;
+	}
 
-	क्रम (i = 0; i < serv->sv_nrpools; i++) अणु
-		काष्ठा svc_pool *pool = &serv->sv_pools[i];
+	for (i = 0; i < serv->sv_nrpools; i++) {
+		struct svc_pool *pool = &serv->sv_pools[i];
 
-		dprपूर्णांकk("svc: initialising pool %u for %s\n",
+		dprintk("svc: initialising pool %u for %s\n",
 				i, serv->sv_name);
 
 		pool->sp_id = i;
 		INIT_LIST_HEAD(&pool->sp_sockets);
-		INIT_LIST_HEAD(&pool->sp_all_thपढ़ोs);
+		INIT_LIST_HEAD(&pool->sp_all_threads);
 		spin_lock_init(&pool->sp_lock);
-	पूर्ण
+	}
 
-	वापस serv;
-पूर्ण
+	return serv;
+}
 
-काष्ठा svc_serv *
-svc_create(काष्ठा svc_program *prog, अचिन्हित पूर्णांक bufsize,
-	   स्थिर काष्ठा svc_serv_ops *ops)
-अणु
-	वापस __svc_create(prog, bufsize, /*npools*/1, ops);
-पूर्ण
+struct svc_serv *
+svc_create(struct svc_program *prog, unsigned int bufsize,
+	   const struct svc_serv_ops *ops)
+{
+	return __svc_create(prog, bufsize, /*npools*/1, ops);
+}
 EXPORT_SYMBOL_GPL(svc_create);
 
-काष्ठा svc_serv *
-svc_create_pooled(काष्ठा svc_program *prog, अचिन्हित पूर्णांक bufsize,
-		  स्थिर काष्ठा svc_serv_ops *ops)
-अणु
-	काष्ठा svc_serv *serv;
-	अचिन्हित पूर्णांक npools = svc_pool_map_get();
+struct svc_serv *
+svc_create_pooled(struct svc_program *prog, unsigned int bufsize,
+		  const struct svc_serv_ops *ops)
+{
+	struct svc_serv *serv;
+	unsigned int npools = svc_pool_map_get();
 
 	serv = __svc_create(prog, bufsize, npools, ops);
-	अगर (!serv)
-		जाओ out_err;
-	वापस serv;
+	if (!serv)
+		goto out_err;
+	return serv;
 out_err:
 	svc_pool_map_put();
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 EXPORT_SYMBOL_GPL(svc_create_pooled);
 
-व्योम svc_shutकरोwn_net(काष्ठा svc_serv *serv, काष्ठा net *net)
-अणु
-	svc_बंद_net(serv, net);
+void svc_shutdown_net(struct svc_serv *serv, struct net *net)
+{
+	svc_close_net(serv, net);
 
-	अगर (serv->sv_ops->svo_shutकरोwn)
-		serv->sv_ops->svo_shutकरोwn(serv, net);
-पूर्ण
-EXPORT_SYMBOL_GPL(svc_shutकरोwn_net);
+	if (serv->sv_ops->svo_shutdown)
+		serv->sv_ops->svo_shutdown(serv, net);
+}
+EXPORT_SYMBOL_GPL(svc_shutdown_net);
 
 /*
  * Destroy an RPC service. Should be called with appropriate locking to
- * protect the sv_nrthपढ़ोs, sv_permsocks and sv_tempsocks.
+ * protect the sv_nrthreads, sv_permsocks and sv_tempsocks.
  */
-व्योम
-svc_destroy(काष्ठा svc_serv *serv)
-अणु
-	dprपूर्णांकk("svc: svc_destroy(%s, %d)\n",
+void
+svc_destroy(struct svc_serv *serv)
+{
+	dprintk("svc: svc_destroy(%s, %d)\n",
 				serv->sv_program->pg_name,
-				serv->sv_nrthपढ़ोs);
+				serv->sv_nrthreads);
 
-	अगर (serv->sv_nrthपढ़ोs) अणु
-		अगर (--(serv->sv_nrthपढ़ोs) != 0) अणु
+	if (serv->sv_nrthreads) {
+		if (--(serv->sv_nrthreads) != 0) {
 			svc_sock_update_bufs(serv);
-			वापस;
-		पूर्ण
-	पूर्ण अन्यथा
-		prपूर्णांकk("svc_destroy: no threads for serv=%p!\n", serv);
+			return;
+		}
+	} else
+		printk("svc_destroy: no threads for serv=%p!\n", serv);
 
-	del_समयr_sync(&serv->sv_tempसमयr);
+	del_timer_sync(&serv->sv_temptimer);
 
 	/*
 	 * The last user is gone and thus all sockets have to be destroyed to
-	 * the poपूर्णांक. Check this.
+	 * the point. Check this.
 	 */
 	BUG_ON(!list_empty(&serv->sv_permsocks));
 	BUG_ON(!list_empty(&serv->sv_tempsocks));
 
 	cache_clean_deferred(serv);
 
-	अगर (svc_serv_is_pooled(serv))
+	if (svc_serv_is_pooled(serv))
 		svc_pool_map_put();
 
-	kमुक्त(serv->sv_pools);
-	kमुक्त(serv);
-पूर्ण
+	kfree(serv->sv_pools);
+	kfree(serv);
+}
 EXPORT_SYMBOL_GPL(svc_destroy);
 
 /*
  * Allocate an RPC server's buffer space.
  * We allocate pages and place them in rq_pages.
  */
-अटल पूर्णांक
-svc_init_buffer(काष्ठा svc_rqst *rqstp, अचिन्हित पूर्णांक size, पूर्णांक node)
-अणु
-	अचिन्हित पूर्णांक pages, arghi;
+static int
+svc_init_buffer(struct svc_rqst *rqstp, unsigned int size, int node)
+{
+	unsigned int pages, arghi;
 
-	/* bc_xprt uses क्रमe channel allocated buffers */
-	अगर (svc_is_backchannel(rqstp))
-		वापस 1;
+	/* bc_xprt uses fore channel allocated buffers */
+	if (svc_is_backchannel(rqstp))
+		return 1;
 
 	pages = size / PAGE_SIZE + 1; /* extra page as we hold both request and reply.
 				       * We assume one is at most one page
 				       */
 	arghi = 0;
 	WARN_ON_ONCE(pages > RPCSVC_MAXPAGES);
-	अगर (pages > RPCSVC_MAXPAGES)
+	if (pages > RPCSVC_MAXPAGES)
 		pages = RPCSVC_MAXPAGES;
-	जबतक (pages) अणु
-		काष्ठा page *p = alloc_pages_node(node, GFP_KERNEL, 0);
-		अगर (!p)
-			अवरोध;
+	while (pages) {
+		struct page *p = alloc_pages_node(node, GFP_KERNEL, 0);
+		if (!p)
+			break;
 		rqstp->rq_pages[arghi++] = p;
 		pages--;
-	पूर्ण
-	वापस pages == 0;
-पूर्ण
+	}
+	return pages == 0;
+}
 
 /*
  * Release an RPC server buffer
  */
-अटल व्योम
-svc_release_buffer(काष्ठा svc_rqst *rqstp)
-अणु
-	अचिन्हित पूर्णांक i;
+static void
+svc_release_buffer(struct svc_rqst *rqstp)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(rqstp->rq_pages); i++)
-		अगर (rqstp->rq_pages[i])
+	for (i = 0; i < ARRAY_SIZE(rqstp->rq_pages); i++)
+		if (rqstp->rq_pages[i])
 			put_page(rqstp->rq_pages[i]);
-पूर्ण
+}
 
-काष्ठा svc_rqst *
-svc_rqst_alloc(काष्ठा svc_serv *serv, काष्ठा svc_pool *pool, पूर्णांक node)
-अणु
-	काष्ठा svc_rqst	*rqstp;
+struct svc_rqst *
+svc_rqst_alloc(struct svc_serv *serv, struct svc_pool *pool, int node)
+{
+	struct svc_rqst	*rqstp;
 
-	rqstp = kzalloc_node(माप(*rqstp), GFP_KERNEL, node);
-	अगर (!rqstp)
-		वापस rqstp;
+	rqstp = kzalloc_node(sizeof(*rqstp), GFP_KERNEL, node);
+	if (!rqstp)
+		return rqstp;
 
 	__set_bit(RQ_BUSY, &rqstp->rq_flags);
 	spin_lock_init(&rqstp->rq_lock);
@@ -616,684 +615,684 @@ svc_rqst_alloc(काष्ठा svc_serv *serv, काष्ठा svc_pool *p
 	rqstp->rq_pool = pool;
 
 	rqstp->rq_scratch_page = alloc_pages_node(node, GFP_KERNEL, 0);
-	अगर (!rqstp->rq_scratch_page)
-		जाओ out_enomem;
+	if (!rqstp->rq_scratch_page)
+		goto out_enomem;
 
-	rqstp->rq_argp = kदो_स्मृति_node(serv->sv_xdrsize, GFP_KERNEL, node);
-	अगर (!rqstp->rq_argp)
-		जाओ out_enomem;
+	rqstp->rq_argp = kmalloc_node(serv->sv_xdrsize, GFP_KERNEL, node);
+	if (!rqstp->rq_argp)
+		goto out_enomem;
 
-	rqstp->rq_resp = kदो_स्मृति_node(serv->sv_xdrsize, GFP_KERNEL, node);
-	अगर (!rqstp->rq_resp)
-		जाओ out_enomem;
+	rqstp->rq_resp = kmalloc_node(serv->sv_xdrsize, GFP_KERNEL, node);
+	if (!rqstp->rq_resp)
+		goto out_enomem;
 
-	अगर (!svc_init_buffer(rqstp, serv->sv_max_mesg, node))
-		जाओ out_enomem;
+	if (!svc_init_buffer(rqstp, serv->sv_max_mesg, node))
+		goto out_enomem;
 
-	वापस rqstp;
+	return rqstp;
 out_enomem:
-	svc_rqst_मुक्त(rqstp);
-	वापस शून्य;
-पूर्ण
+	svc_rqst_free(rqstp);
+	return NULL;
+}
 EXPORT_SYMBOL_GPL(svc_rqst_alloc);
 
-काष्ठा svc_rqst *
-svc_prepare_thपढ़ो(काष्ठा svc_serv *serv, काष्ठा svc_pool *pool, पूर्णांक node)
-अणु
-	काष्ठा svc_rqst	*rqstp;
+struct svc_rqst *
+svc_prepare_thread(struct svc_serv *serv, struct svc_pool *pool, int node)
+{
+	struct svc_rqst	*rqstp;
 
 	rqstp = svc_rqst_alloc(serv, pool, node);
-	अगर (!rqstp)
-		वापस ERR_PTR(-ENOMEM);
+	if (!rqstp)
+		return ERR_PTR(-ENOMEM);
 
-	serv->sv_nrthपढ़ोs++;
+	serv->sv_nrthreads++;
 	spin_lock_bh(&pool->sp_lock);
-	pool->sp_nrthपढ़ोs++;
-	list_add_rcu(&rqstp->rq_all, &pool->sp_all_thपढ़ोs);
+	pool->sp_nrthreads++;
+	list_add_rcu(&rqstp->rq_all, &pool->sp_all_threads);
 	spin_unlock_bh(&pool->sp_lock);
-	वापस rqstp;
-पूर्ण
-EXPORT_SYMBOL_GPL(svc_prepare_thपढ़ो);
+	return rqstp;
+}
+EXPORT_SYMBOL_GPL(svc_prepare_thread);
 
 /*
- * Choose a pool in which to create a new thपढ़ो, क्रम svc_set_num_thपढ़ोs
+ * Choose a pool in which to create a new thread, for svc_set_num_threads
  */
-अटल अंतरभूत काष्ठा svc_pool *
-choose_pool(काष्ठा svc_serv *serv, काष्ठा svc_pool *pool, अचिन्हित पूर्णांक *state)
-अणु
-	अगर (pool != शून्य)
-		वापस pool;
+static inline struct svc_pool *
+choose_pool(struct svc_serv *serv, struct svc_pool *pool, unsigned int *state)
+{
+	if (pool != NULL)
+		return pool;
 
-	वापस &serv->sv_pools[(*state)++ % serv->sv_nrpools];
-पूर्ण
+	return &serv->sv_pools[(*state)++ % serv->sv_nrpools];
+}
 
 /*
- * Choose a thपढ़ो to समाप्त, क्रम svc_set_num_thपढ़ोs
+ * Choose a thread to kill, for svc_set_num_threads
  */
-अटल अंतरभूत काष्ठा task_काष्ठा *
-choose_victim(काष्ठा svc_serv *serv, काष्ठा svc_pool *pool, अचिन्हित पूर्णांक *state)
-अणु
-	अचिन्हित पूर्णांक i;
-	काष्ठा task_काष्ठा *task = शून्य;
+static inline struct task_struct *
+choose_victim(struct svc_serv *serv, struct svc_pool *pool, unsigned int *state)
+{
+	unsigned int i;
+	struct task_struct *task = NULL;
 
-	अगर (pool != शून्य) अणु
+	if (pool != NULL) {
 		spin_lock_bh(&pool->sp_lock);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* choose a pool in round-robin fashion */
-		क्रम (i = 0; i < serv->sv_nrpools; i++) अणु
+		for (i = 0; i < serv->sv_nrpools; i++) {
 			pool = &serv->sv_pools[--(*state) % serv->sv_nrpools];
 			spin_lock_bh(&pool->sp_lock);
-			अगर (!list_empty(&pool->sp_all_thपढ़ोs))
-				जाओ found_pool;
+			if (!list_empty(&pool->sp_all_threads))
+				goto found_pool;
 			spin_unlock_bh(&pool->sp_lock);
-		पूर्ण
-		वापस शून्य;
-	पूर्ण
+		}
+		return NULL;
+	}
 
 found_pool:
-	अगर (!list_empty(&pool->sp_all_thपढ़ोs)) अणु
-		काष्ठा svc_rqst *rqstp;
+	if (!list_empty(&pool->sp_all_threads)) {
+		struct svc_rqst *rqstp;
 
 		/*
-		 * Remove from the pool->sp_all_thपढ़ोs list
-		 * so we करोn't try to समाप्त it again.
+		 * Remove from the pool->sp_all_threads list
+		 * so we don't try to kill it again.
 		 */
-		rqstp = list_entry(pool->sp_all_thपढ़ोs.next, काष्ठा svc_rqst, rq_all);
+		rqstp = list_entry(pool->sp_all_threads.next, struct svc_rqst, rq_all);
 		set_bit(RQ_VICTIM, &rqstp->rq_flags);
 		list_del_rcu(&rqstp->rq_all);
 		task = rqstp->rq_task;
-	पूर्ण
+	}
 	spin_unlock_bh(&pool->sp_lock);
 
-	वापस task;
-पूर्ण
+	return task;
+}
 
-/* create new thपढ़ोs */
-अटल पूर्णांक
-svc_start_kthपढ़ोs(काष्ठा svc_serv *serv, काष्ठा svc_pool *pool, पूर्णांक nrservs)
-अणु
-	काष्ठा svc_rqst	*rqstp;
-	काष्ठा task_काष्ठा *task;
-	काष्ठा svc_pool *chosen_pool;
-	अचिन्हित पूर्णांक state = serv->sv_nrthपढ़ोs-1;
-	पूर्णांक node;
+/* create new threads */
+static int
+svc_start_kthreads(struct svc_serv *serv, struct svc_pool *pool, int nrservs)
+{
+	struct svc_rqst	*rqstp;
+	struct task_struct *task;
+	struct svc_pool *chosen_pool;
+	unsigned int state = serv->sv_nrthreads-1;
+	int node;
 
-	करो अणु
+	do {
 		nrservs--;
 		chosen_pool = choose_pool(serv, pool, &state);
 
 		node = svc_pool_map_get_node(chosen_pool->sp_id);
-		rqstp = svc_prepare_thपढ़ो(serv, chosen_pool, node);
-		अगर (IS_ERR(rqstp))
-			वापस PTR_ERR(rqstp);
+		rqstp = svc_prepare_thread(serv, chosen_pool, node);
+		if (IS_ERR(rqstp))
+			return PTR_ERR(rqstp);
 
 		__module_get(serv->sv_ops->svo_module);
-		task = kthपढ़ो_create_on_node(serv->sv_ops->svo_function, rqstp,
+		task = kthread_create_on_node(serv->sv_ops->svo_function, rqstp,
 					      node, "%s", serv->sv_name);
-		अगर (IS_ERR(task)) अणु
+		if (IS_ERR(task)) {
 			module_put(serv->sv_ops->svo_module);
-			svc_निकास_thपढ़ो(rqstp);
-			वापस PTR_ERR(task);
-		पूर्ण
+			svc_exit_thread(rqstp);
+			return PTR_ERR(task);
+		}
 
 		rqstp->rq_task = task;
-		अगर (serv->sv_nrpools > 1)
+		if (serv->sv_nrpools > 1)
 			svc_pool_map_set_cpumask(task, chosen_pool->sp_id);
 
 		svc_sock_update_bufs(serv);
 		wake_up_process(task);
-	पूर्ण जबतक (nrservs > 0);
+	} while (nrservs > 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-/* destroy old thपढ़ोs */
-अटल पूर्णांक
-svc_संकेत_kthपढ़ोs(काष्ठा svc_serv *serv, काष्ठा svc_pool *pool, पूर्णांक nrservs)
-अणु
-	काष्ठा task_काष्ठा *task;
-	अचिन्हित पूर्णांक state = serv->sv_nrthपढ़ोs-1;
+/* destroy old threads */
+static int
+svc_signal_kthreads(struct svc_serv *serv, struct svc_pool *pool, int nrservs)
+{
+	struct task_struct *task;
+	unsigned int state = serv->sv_nrthreads-1;
 
-	/* destroy old thपढ़ोs */
-	करो अणु
+	/* destroy old threads */
+	do {
 		task = choose_victim(serv, pool, &state);
-		अगर (task == शून्य)
-			अवरोध;
-		send_sig(संक_विघ्न, task, 1);
+		if (task == NULL)
+			break;
+		send_sig(SIGINT, task, 1);
 		nrservs++;
-	पूर्ण जबतक (nrservs < 0);
+	} while (nrservs < 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Create or destroy enough new thपढ़ोs to make the number
- * of thपढ़ोs the given number.  If `pool' is non-शून्य, applies
- * only to thपढ़ोs in that pool, otherwise round-robins between
+ * Create or destroy enough new threads to make the number
+ * of threads the given number.  If `pool' is non-NULL, applies
+ * only to threads in that pool, otherwise round-robins between
  * all pools.  Caller must ensure that mutual exclusion between this and
- * server startup or shutकरोwn.
+ * server startup or shutdown.
  *
- * Destroying thपढ़ोs relies on the service thपढ़ोs filling in
- * rqstp->rq_task, which only the nfs ones करो.  Assumes the serv
+ * Destroying threads relies on the service threads filling in
+ * rqstp->rq_task, which only the nfs ones do.  Assumes the serv
  * has been created using svc_create_pooled().
  *
  * Based on code that used to be in nfsd_svc() but tweaked
  * to be pool-aware.
  */
-पूर्णांक
-svc_set_num_thपढ़ोs(काष्ठा svc_serv *serv, काष्ठा svc_pool *pool, पूर्णांक nrservs)
-अणु
-	अगर (pool == शून्य) अणु
-		/* The -1 assumes caller has करोne a svc_get() */
-		nrservs -= (serv->sv_nrthपढ़ोs-1);
-	पूर्ण अन्यथा अणु
+int
+svc_set_num_threads(struct svc_serv *serv, struct svc_pool *pool, int nrservs)
+{
+	if (pool == NULL) {
+		/* The -1 assumes caller has done a svc_get() */
+		nrservs -= (serv->sv_nrthreads-1);
+	} else {
 		spin_lock_bh(&pool->sp_lock);
-		nrservs -= pool->sp_nrthपढ़ोs;
+		nrservs -= pool->sp_nrthreads;
 		spin_unlock_bh(&pool->sp_lock);
-	पूर्ण
+	}
 
-	अगर (nrservs > 0)
-		वापस svc_start_kthपढ़ोs(serv, pool, nrservs);
-	अगर (nrservs < 0)
-		वापस svc_संकेत_kthपढ़ोs(serv, pool, nrservs);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(svc_set_num_thपढ़ोs);
+	if (nrservs > 0)
+		return svc_start_kthreads(serv, pool, nrservs);
+	if (nrservs < 0)
+		return svc_signal_kthreads(serv, pool, nrservs);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(svc_set_num_threads);
 
-/* destroy old thपढ़ोs */
-अटल पूर्णांक
-svc_stop_kthपढ़ोs(काष्ठा svc_serv *serv, काष्ठा svc_pool *pool, पूर्णांक nrservs)
-अणु
-	काष्ठा task_काष्ठा *task;
-	अचिन्हित पूर्णांक state = serv->sv_nrthपढ़ोs-1;
+/* destroy old threads */
+static int
+svc_stop_kthreads(struct svc_serv *serv, struct svc_pool *pool, int nrservs)
+{
+	struct task_struct *task;
+	unsigned int state = serv->sv_nrthreads-1;
 
-	/* destroy old thपढ़ोs */
-	करो अणु
+	/* destroy old threads */
+	do {
 		task = choose_victim(serv, pool, &state);
-		अगर (task == शून्य)
-			अवरोध;
-		kthपढ़ो_stop(task);
+		if (task == NULL)
+			break;
+		kthread_stop(task);
 		nrservs++;
-	पूर्ण जबतक (nrservs < 0);
-	वापस 0;
-पूर्ण
+	} while (nrservs < 0);
+	return 0;
+}
 
-पूर्णांक
-svc_set_num_thपढ़ोs_sync(काष्ठा svc_serv *serv, काष्ठा svc_pool *pool, पूर्णांक nrservs)
-अणु
-	अगर (pool == शून्य) अणु
-		/* The -1 assumes caller has करोne a svc_get() */
-		nrservs -= (serv->sv_nrthपढ़ोs-1);
-	पूर्ण अन्यथा अणु
+int
+svc_set_num_threads_sync(struct svc_serv *serv, struct svc_pool *pool, int nrservs)
+{
+	if (pool == NULL) {
+		/* The -1 assumes caller has done a svc_get() */
+		nrservs -= (serv->sv_nrthreads-1);
+	} else {
 		spin_lock_bh(&pool->sp_lock);
-		nrservs -= pool->sp_nrthपढ़ोs;
+		nrservs -= pool->sp_nrthreads;
 		spin_unlock_bh(&pool->sp_lock);
-	पूर्ण
+	}
 
-	अगर (nrservs > 0)
-		वापस svc_start_kthपढ़ोs(serv, pool, nrservs);
-	अगर (nrservs < 0)
-		वापस svc_stop_kthपढ़ोs(serv, pool, nrservs);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(svc_set_num_thपढ़ोs_sync);
+	if (nrservs > 0)
+		return svc_start_kthreads(serv, pool, nrservs);
+	if (nrservs < 0)
+		return svc_stop_kthreads(serv, pool, nrservs);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(svc_set_num_threads_sync);
 
 /*
- * Called from a server thपढ़ो as it's निकासing. Caller must hold the "service
- * mutex" क्रम the service.
+ * Called from a server thread as it's exiting. Caller must hold the "service
+ * mutex" for the service.
  */
-व्योम
-svc_rqst_मुक्त(काष्ठा svc_rqst *rqstp)
-अणु
+void
+svc_rqst_free(struct svc_rqst *rqstp)
+{
 	svc_release_buffer(rqstp);
-	अगर (rqstp->rq_scratch_page)
+	if (rqstp->rq_scratch_page)
 		put_page(rqstp->rq_scratch_page);
-	kमुक्त(rqstp->rq_resp);
-	kमुक्त(rqstp->rq_argp);
-	kमुक्त(rqstp->rq_auth_data);
-	kमुक्त_rcu(rqstp, rq_rcu_head);
-पूर्ण
-EXPORT_SYMBOL_GPL(svc_rqst_मुक्त);
+	kfree(rqstp->rq_resp);
+	kfree(rqstp->rq_argp);
+	kfree(rqstp->rq_auth_data);
+	kfree_rcu(rqstp, rq_rcu_head);
+}
+EXPORT_SYMBOL_GPL(svc_rqst_free);
 
-व्योम
-svc_निकास_thपढ़ो(काष्ठा svc_rqst *rqstp)
-अणु
-	काष्ठा svc_serv	*serv = rqstp->rq_server;
-	काष्ठा svc_pool	*pool = rqstp->rq_pool;
+void
+svc_exit_thread(struct svc_rqst *rqstp)
+{
+	struct svc_serv	*serv = rqstp->rq_server;
+	struct svc_pool	*pool = rqstp->rq_pool;
 
 	spin_lock_bh(&pool->sp_lock);
-	pool->sp_nrthपढ़ोs--;
-	अगर (!test_and_set_bit(RQ_VICTIM, &rqstp->rq_flags))
+	pool->sp_nrthreads--;
+	if (!test_and_set_bit(RQ_VICTIM, &rqstp->rq_flags))
 		list_del_rcu(&rqstp->rq_all);
 	spin_unlock_bh(&pool->sp_lock);
 
-	svc_rqst_मुक्त(rqstp);
+	svc_rqst_free(rqstp);
 
 	/* Release the server */
-	अगर (serv)
+	if (serv)
 		svc_destroy(serv);
-पूर्ण
-EXPORT_SYMBOL_GPL(svc_निकास_thपढ़ो);
+}
+EXPORT_SYMBOL_GPL(svc_exit_thread);
 
 /*
  * Register an "inet" protocol family netid with the local
  * rpcbind daemon via an rpcbind v4 SET request.
  *
- * No netconfig infraकाष्ठाure is available in the kernel, so
+ * No netconfig infrastructure is available in the kernel, so
  * we map IP_ protocol numbers to netids by hand.
  *
- * Returns zero on success; a negative त्रुटि_सं value is वापसed
- * अगर any error occurs.
+ * Returns zero on success; a negative errno value is returned
+ * if any error occurs.
  */
-अटल पूर्णांक __svc_rpcb_रेजिस्टर4(काष्ठा net *net, स्थिर u32 program,
-				स्थिर u32 version,
-				स्थिर अचिन्हित लघु protocol,
-				स्थिर अचिन्हित लघु port)
-अणु
-	स्थिर काष्ठा sockaddr_in sin = अणु
+static int __svc_rpcb_register4(struct net *net, const u32 program,
+				const u32 version,
+				const unsigned short protocol,
+				const unsigned short port)
+{
+	const struct sockaddr_in sin = {
 		.sin_family		= AF_INET,
 		.sin_addr.s_addr	= htonl(INADDR_ANY),
 		.sin_port		= htons(port),
-	पूर्ण;
-	स्थिर अक्षर *netid;
-	पूर्णांक error;
+	};
+	const char *netid;
+	int error;
 
-	चयन (protocol) अणु
-	हाल IPPROTO_UDP:
+	switch (protocol) {
+	case IPPROTO_UDP:
 		netid = RPCBIND_NETID_UDP;
-		अवरोध;
-	हाल IPPROTO_TCP:
+		break;
+	case IPPROTO_TCP:
 		netid = RPCBIND_NETID_TCP;
-		अवरोध;
-	शेष:
-		वापस -ENOPROTOOPT;
-	पूर्ण
+		break;
+	default:
+		return -ENOPROTOOPT;
+	}
 
-	error = rpcb_v4_रेजिस्टर(net, program, version,
-					(स्थिर काष्ठा sockaddr *)&sin, netid);
+	error = rpcb_v4_register(net, program, version,
+					(const struct sockaddr *)&sin, netid);
 
 	/*
 	 * User space didn't support rpcbind v4, so retry this
 	 * registration request with the legacy rpcbind v2 protocol.
 	 */
-	अगर (error == -EPROTONOSUPPORT)
-		error = rpcb_रेजिस्टर(net, program, version, protocol, port);
+	if (error == -EPROTONOSUPPORT)
+		error = rpcb_register(net, program, version, protocol, port);
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-#अगर IS_ENABLED(CONFIG_IPV6)
+#if IS_ENABLED(CONFIG_IPV6)
 /*
  * Register an "inet6" protocol family netid with the local
  * rpcbind daemon via an rpcbind v4 SET request.
  *
- * No netconfig infraकाष्ठाure is available in the kernel, so
+ * No netconfig infrastructure is available in the kernel, so
  * we map IP_ protocol numbers to netids by hand.
  *
- * Returns zero on success; a negative त्रुटि_सं value is वापसed
- * अगर any error occurs.
+ * Returns zero on success; a negative errno value is returned
+ * if any error occurs.
  */
-अटल पूर्णांक __svc_rpcb_रेजिस्टर6(काष्ठा net *net, स्थिर u32 program,
-				स्थिर u32 version,
-				स्थिर अचिन्हित लघु protocol,
-				स्थिर अचिन्हित लघु port)
-अणु
-	स्थिर काष्ठा sockaddr_in6 sin6 = अणु
+static int __svc_rpcb_register6(struct net *net, const u32 program,
+				const u32 version,
+				const unsigned short protocol,
+				const unsigned short port)
+{
+	const struct sockaddr_in6 sin6 = {
 		.sin6_family		= AF_INET6,
 		.sin6_addr		= IN6ADDR_ANY_INIT,
 		.sin6_port		= htons(port),
-	पूर्ण;
-	स्थिर अक्षर *netid;
-	पूर्णांक error;
+	};
+	const char *netid;
+	int error;
 
-	चयन (protocol) अणु
-	हाल IPPROTO_UDP:
+	switch (protocol) {
+	case IPPROTO_UDP:
 		netid = RPCBIND_NETID_UDP6;
-		अवरोध;
-	हाल IPPROTO_TCP:
+		break;
+	case IPPROTO_TCP:
 		netid = RPCBIND_NETID_TCP6;
-		अवरोध;
-	शेष:
-		वापस -ENOPROTOOPT;
-	पूर्ण
+		break;
+	default:
+		return -ENOPROTOOPT;
+	}
 
-	error = rpcb_v4_रेजिस्टर(net, program, version,
-					(स्थिर काष्ठा sockaddr *)&sin6, netid);
+	error = rpcb_v4_register(net, program, version,
+					(const struct sockaddr *)&sin6, netid);
 
 	/*
 	 * User space didn't support rpcbind version 4, so we won't
 	 * use a PF_INET6 listener.
 	 */
-	अगर (error == -EPROTONOSUPPORT)
+	if (error == -EPROTONOSUPPORT)
 		error = -EAFNOSUPPORT;
 
-	वापस error;
-पूर्ण
-#पूर्ण_अगर	/* IS_ENABLED(CONFIG_IPV6) */
+	return error;
+}
+#endif	/* IS_ENABLED(CONFIG_IPV6) */
 
 /*
  * Register a kernel RPC service via rpcbind version 4.
  *
- * Returns zero on success; a negative त्रुटि_सं value is वापसed
- * अगर any error occurs.
+ * Returns zero on success; a negative errno value is returned
+ * if any error occurs.
  */
-अटल पूर्णांक __svc_रेजिस्टर(काष्ठा net *net, स्थिर अक्षर *progname,
-			  स्थिर u32 program, स्थिर u32 version,
-			  स्थिर पूर्णांक family,
-			  स्थिर अचिन्हित लघु protocol,
-			  स्थिर अचिन्हित लघु port)
-अणु
-	पूर्णांक error = -EAFNOSUPPORT;
+static int __svc_register(struct net *net, const char *progname,
+			  const u32 program, const u32 version,
+			  const int family,
+			  const unsigned short protocol,
+			  const unsigned short port)
+{
+	int error = -EAFNOSUPPORT;
 
-	चयन (family) अणु
-	हाल PF_INET:
-		error = __svc_rpcb_रेजिस्टर4(net, program, version,
+	switch (family) {
+	case PF_INET:
+		error = __svc_rpcb_register4(net, program, version,
 						protocol, port);
-		अवरोध;
-#अगर IS_ENABLED(CONFIG_IPV6)
-	हाल PF_INET6:
-		error = __svc_rpcb_रेजिस्टर6(net, program, version,
+		break;
+#if IS_ENABLED(CONFIG_IPV6)
+	case PF_INET6:
+		error = __svc_rpcb_register6(net, program, version,
 						protocol, port);
-#पूर्ण_अगर
-	पूर्ण
+#endif
+	}
 
-	trace_svc_रेजिस्टर(progname, version, protocol, port, family, error);
-	वापस error;
-पूर्ण
+	trace_svc_register(progname, version, protocol, port, family, error);
+	return error;
+}
 
-पूर्णांक svc_rpcbind_set_version(काष्ठा net *net,
-			    स्थिर काष्ठा svc_program *progp,
-			    u32 version, पूर्णांक family,
-			    अचिन्हित लघु proto,
-			    अचिन्हित लघु port)
-अणु
-	वापस __svc_रेजिस्टर(net, progp->pg_name, progp->pg_prog,
+int svc_rpcbind_set_version(struct net *net,
+			    const struct svc_program *progp,
+			    u32 version, int family,
+			    unsigned short proto,
+			    unsigned short port)
+{
+	return __svc_register(net, progp->pg_name, progp->pg_prog,
 				version, family, proto, port);
 
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(svc_rpcbind_set_version);
 
-पूर्णांक svc_generic_rpcbind_set(काष्ठा net *net,
-			    स्थिर काष्ठा svc_program *progp,
-			    u32 version, पूर्णांक family,
-			    अचिन्हित लघु proto,
-			    अचिन्हित लघु port)
-अणु
-	स्थिर काष्ठा svc_version *vers = progp->pg_vers[version];
-	पूर्णांक error;
+int svc_generic_rpcbind_set(struct net *net,
+			    const struct svc_program *progp,
+			    u32 version, int family,
+			    unsigned short proto,
+			    unsigned short port)
+{
+	const struct svc_version *vers = progp->pg_vers[version];
+	int error;
 
-	अगर (vers == शून्य)
-		वापस 0;
+	if (vers == NULL)
+		return 0;
 
-	अगर (vers->vs_hidden) अणु
-		trace_svc_noरेजिस्टर(progp->pg_name, version, proto,
+	if (vers->vs_hidden) {
+		trace_svc_noregister(progp->pg_name, version, proto,
 				     port, family, 0);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/*
-	 * Don't रेजिस्टर a UDP port अगर we need congestion
+	 * Don't register a UDP port if we need congestion
 	 * control.
 	 */
-	अगर (vers->vs_need_cong_ctrl && proto == IPPROTO_UDP)
-		वापस 0;
+	if (vers->vs_need_cong_ctrl && proto == IPPROTO_UDP)
+		return 0;
 
 	error = svc_rpcbind_set_version(net, progp, version,
 					family, proto, port);
 
-	वापस (vers->vs_rpcb_optnl) ? 0 : error;
-पूर्ण
+	return (vers->vs_rpcb_optnl) ? 0 : error;
+}
 EXPORT_SYMBOL_GPL(svc_generic_rpcbind_set);
 
 /**
- * svc_रेजिस्टर - रेजिस्टर an RPC service with the local porपंचांगapper
- * @serv: svc_serv काष्ठा क्रम the service to रेजिस्टर
- * @net: net namespace क्रम the service to रेजिस्टर
+ * svc_register - register an RPC service with the local portmapper
+ * @serv: svc_serv struct for the service to register
+ * @net: net namespace for the service to register
  * @family: protocol family of service's listener socket
  * @proto: transport protocol number to advertise
  * @port: port to advertise
  *
- * Service is रेजिस्टरed क्रम any address in the passed-in protocol family
+ * Service is registered for any address in the passed-in protocol family
  */
-पूर्णांक svc_रेजिस्टर(स्थिर काष्ठा svc_serv *serv, काष्ठा net *net,
-		 स्थिर पूर्णांक family, स्थिर अचिन्हित लघु proto,
-		 स्थिर अचिन्हित लघु port)
-अणु
-	काष्ठा svc_program	*progp;
-	अचिन्हित पूर्णांक		i;
-	पूर्णांक			error = 0;
+int svc_register(const struct svc_serv *serv, struct net *net,
+		 const int family, const unsigned short proto,
+		 const unsigned short port)
+{
+	struct svc_program	*progp;
+	unsigned int		i;
+	int			error = 0;
 
 	WARN_ON_ONCE(proto == 0 && port == 0);
-	अगर (proto == 0 && port == 0)
-		वापस -EINVAL;
+	if (proto == 0 && port == 0)
+		return -EINVAL;
 
-	क्रम (progp = serv->sv_program; progp; progp = progp->pg_next) अणु
-		क्रम (i = 0; i < progp->pg_nvers; i++) अणु
+	for (progp = serv->sv_program; progp; progp = progp->pg_next) {
+		for (i = 0; i < progp->pg_nvers; i++) {
 
 			error = progp->pg_rpcbind_set(net, progp, i,
 					family, proto, port);
-			अगर (error < 0) अणु
-				prपूर्णांकk(KERN_WARNING "svc: failed to register "
+			if (error < 0) {
+				printk(KERN_WARNING "svc: failed to register "
 					"%sv%u RPC service (errno %d).\n",
 					progp->pg_name, i, -error);
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				break;
+			}
+		}
+	}
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /*
  * If user space is running rpcbind, it should take the v4 UNSET
- * and clear everything क्रम this [program, version].  If user space
- * is running porपंचांगap, it will reject the v4 UNSET, but won't have
+ * and clear everything for this [program, version].  If user space
+ * is running portmap, it will reject the v4 UNSET, but won't have
  * any "inet6" entries anyway.  So a PMAP_UNSET should be sufficient
- * in this हाल to clear all existing entries क्रम [program, version].
+ * in this case to clear all existing entries for [program, version].
  */
-अटल व्योम __svc_unरेजिस्टर(काष्ठा net *net, स्थिर u32 program, स्थिर u32 version,
-			     स्थिर अक्षर *progname)
-अणु
-	पूर्णांक error;
+static void __svc_unregister(struct net *net, const u32 program, const u32 version,
+			     const char *progname)
+{
+	int error;
 
-	error = rpcb_v4_रेजिस्टर(net, program, version, शून्य, "");
+	error = rpcb_v4_register(net, program, version, NULL, "");
 
 	/*
 	 * User space didn't support rpcbind v4, so retry this
 	 * request with the legacy rpcbind v2 protocol.
 	 */
-	अगर (error == -EPROTONOSUPPORT)
-		error = rpcb_रेजिस्टर(net, program, version, 0, 0);
+	if (error == -EPROTONOSUPPORT)
+		error = rpcb_register(net, program, version, 0, 0);
 
-	trace_svc_unरेजिस्टर(progname, version, error);
-पूर्ण
+	trace_svc_unregister(progname, version, error);
+}
 
 /*
- * All netids, bind addresses and ports रेजिस्टरed क्रम [program, version]
- * are हटाओd from the local rpcbind database (अगर the service is not
- * hidden) to make way क्रम a new instance of the service.
+ * All netids, bind addresses and ports registered for [program, version]
+ * are removed from the local rpcbind database (if the service is not
+ * hidden) to make way for a new instance of the service.
  *
- * The result of unregistration is reported via dprपूर्णांकk क्रम those who want
- * verअगरication of the result, but is otherwise not important.
+ * The result of unregistration is reported via dprintk for those who want
+ * verification of the result, but is otherwise not important.
  */
-अटल व्योम svc_unरेजिस्टर(स्थिर काष्ठा svc_serv *serv, काष्ठा net *net)
-अणु
-	काष्ठा svc_program *progp;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक i;
+static void svc_unregister(const struct svc_serv *serv, struct net *net)
+{
+	struct svc_program *progp;
+	unsigned long flags;
+	unsigned int i;
 
-	clear_thपढ़ो_flag(TIF_SIGPENDING);
+	clear_thread_flag(TIF_SIGPENDING);
 
-	क्रम (progp = serv->sv_program; progp; progp = progp->pg_next) अणु
-		क्रम (i = 0; i < progp->pg_nvers; i++) अणु
-			अगर (progp->pg_vers[i] == शून्य)
-				जारी;
-			अगर (progp->pg_vers[i]->vs_hidden)
-				जारी;
-			__svc_unरेजिस्टर(net, progp->pg_prog, i, progp->pg_name);
-		पूर्ण
-	पूर्ण
+	for (progp = serv->sv_program; progp; progp = progp->pg_next) {
+		for (i = 0; i < progp->pg_nvers; i++) {
+			if (progp->pg_vers[i] == NULL)
+				continue;
+			if (progp->pg_vers[i]->vs_hidden)
+				continue;
+			__svc_unregister(net, progp->pg_prog, i, progp->pg_name);
+		}
+	}
 
 	spin_lock_irqsave(&current->sighand->siglock, flags);
-	recalc_संक_बाकी();
+	recalc_sigpending();
 	spin_unlock_irqrestore(&current->sighand->siglock, flags);
-पूर्ण
+}
 
 /*
- * dprपूर्णांकk the given error with the address of the client that caused it.
+ * dprintk the given error with the address of the client that caused it.
  */
-#अगर IS_ENABLED(CONFIG_SUNRPC_DEBUG)
-अटल __म_लिखो(2, 3)
-व्योम svc_prपूर्णांकk(काष्ठा svc_rqst *rqstp, स्थिर अक्षर *fmt, ...)
-अणु
-	काष्ठा va_क्रमmat vaf;
-	बहु_सूची args;
-	अक्षर 	buf[RPC_MAX_ADDRBUFLEN];
+#if IS_ENABLED(CONFIG_SUNRPC_DEBUG)
+static __printf(2, 3)
+void svc_printk(struct svc_rqst *rqstp, const char *fmt, ...)
+{
+	struct va_format vaf;
+	va_list args;
+	char 	buf[RPC_MAX_ADDRBUFLEN];
 
-	बहु_शुरू(args, fmt);
+	va_start(args, fmt);
 
 	vaf.fmt = fmt;
 	vaf.va = &args;
 
-	dprपूर्णांकk("svc: %s: %pV", svc_prपूर्णांक_addr(rqstp, buf, माप(buf)), &vaf);
+	dprintk("svc: %s: %pV", svc_print_addr(rqstp, buf, sizeof(buf)), &vaf);
 
-	बहु_पूर्ण(args);
-पूर्ण
-#अन्यथा
-अटल __म_लिखो(2,3) व्योम svc_prपूर्णांकk(काष्ठा svc_rqst *rqstp, स्थिर अक्षर *fmt, ...) अणुपूर्ण
-#पूर्ण_अगर
+	va_end(args);
+}
+#else
+static __printf(2,3) void svc_printk(struct svc_rqst *rqstp, const char *fmt, ...) {}
+#endif
 
 __be32
-svc_वापस_autherr(काष्ठा svc_rqst *rqstp, __be32 auth_err)
-अणु
+svc_return_autherr(struct svc_rqst *rqstp, __be32 auth_err)
+{
 	set_bit(RQ_AUTHERR, &rqstp->rq_flags);
-	वापस auth_err;
-पूर्ण
-EXPORT_SYMBOL_GPL(svc_वापस_autherr);
+	return auth_err;
+}
+EXPORT_SYMBOL_GPL(svc_return_autherr);
 
-अटल __be32
-svc_get_autherr(काष्ठा svc_rqst *rqstp, __be32 *statp)
-अणु
-	अगर (test_and_clear_bit(RQ_AUTHERR, &rqstp->rq_flags))
-		वापस *statp;
-	वापस rpc_auth_ok;
-पूर्ण
+static __be32
+svc_get_autherr(struct svc_rqst *rqstp, __be32 *statp)
+{
+	if (test_and_clear_bit(RQ_AUTHERR, &rqstp->rq_flags))
+		return *statp;
+	return rpc_auth_ok;
+}
 
-अटल पूर्णांक
-svc_generic_dispatch(काष्ठा svc_rqst *rqstp, __be32 *statp)
-अणु
-	काष्ठा kvec *argv = &rqstp->rq_arg.head[0];
-	काष्ठा kvec *resv = &rqstp->rq_res.head[0];
-	स्थिर काष्ठा svc_procedure *procp = rqstp->rq_procinfo;
+static int
+svc_generic_dispatch(struct svc_rqst *rqstp, __be32 *statp)
+{
+	struct kvec *argv = &rqstp->rq_arg.head[0];
+	struct kvec *resv = &rqstp->rq_res.head[0];
+	const struct svc_procedure *procp = rqstp->rq_procinfo;
 
 	/*
 	 * Decode arguments
-	 * XXX: why करो we ignore the वापस value?
+	 * XXX: why do we ignore the return value?
 	 */
-	अगर (procp->pc_decode &&
-	    !procp->pc_decode(rqstp, argv->iov_base)) अणु
+	if (procp->pc_decode &&
+	    !procp->pc_decode(rqstp, argv->iov_base)) {
 		*statp = rpc_garbage_args;
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
 	*statp = procp->pc_func(rqstp);
 
-	अगर (*statp == rpc_drop_reply ||
+	if (*statp == rpc_drop_reply ||
 	    test_bit(RQ_DROPME, &rqstp->rq_flags))
-		वापस 0;
+		return 0;
 
-	अगर (test_bit(RQ_AUTHERR, &rqstp->rq_flags))
-		वापस 1;
+	if (test_bit(RQ_AUTHERR, &rqstp->rq_flags))
+		return 1;
 
-	अगर (*statp != rpc_success)
-		वापस 1;
+	if (*statp != rpc_success)
+		return 1;
 
 	/* Encode reply */
-	अगर (procp->pc_encode &&
-	    !procp->pc_encode(rqstp, resv->iov_base + resv->iov_len)) अणु
-		dprपूर्णांकk("svc: failed to encode reply\n");
-		/* serv->sv_stats->rpcप्रणालीerr++; */
-		*statp = rpc_प्रणाली_err;
-	पूर्ण
-	वापस 1;
-पूर्ण
+	if (procp->pc_encode &&
+	    !procp->pc_encode(rqstp, resv->iov_base + resv->iov_len)) {
+		dprintk("svc: failed to encode reply\n");
+		/* serv->sv_stats->rpcsystemerr++; */
+		*statp = rpc_system_err;
+	}
+	return 1;
+}
 
 __be32
-svc_generic_init_request(काष्ठा svc_rqst *rqstp,
-		स्थिर काष्ठा svc_program *progp,
-		काष्ठा svc_process_info *ret)
-अणु
-	स्थिर काष्ठा svc_version *versp = शून्य;	/* compiler food */
-	स्थिर काष्ठा svc_procedure *procp = शून्य;
+svc_generic_init_request(struct svc_rqst *rqstp,
+		const struct svc_program *progp,
+		struct svc_process_info *ret)
+{
+	const struct svc_version *versp = NULL;	/* compiler food */
+	const struct svc_procedure *procp = NULL;
 
-	अगर (rqstp->rq_vers >= progp->pg_nvers )
-		जाओ err_bad_vers;
+	if (rqstp->rq_vers >= progp->pg_nvers )
+		goto err_bad_vers;
 	versp = progp->pg_vers[rqstp->rq_vers];
-	अगर (!versp)
-		जाओ err_bad_vers;
+	if (!versp)
+		goto err_bad_vers;
 
 	/*
-	 * Some protocol versions (namely NFSv4) require some क्रमm of
+	 * Some protocol versions (namely NFSv4) require some form of
 	 * congestion control.  (See RFC 7530 section 3.1 paragraph 2)
 	 * In other words, UDP is not allowed. We mark those when setting
-	 * up the svc_xprt, and verअगरy that here.
+	 * up the svc_xprt, and verify that here.
 	 *
-	 * The spec is not very clear about what error should be वापसed
+	 * The spec is not very clear about what error should be returned
 	 * when someone tries to access a server that is listening on UDP
-	 * क्रम lower versions. RPC_PROG_MISMATCH seems to be the बंदst
+	 * for lower versions. RPC_PROG_MISMATCH seems to be the closest
 	 * fit.
 	 */
-	अगर (versp->vs_need_cong_ctrl && rqstp->rq_xprt &&
+	if (versp->vs_need_cong_ctrl && rqstp->rq_xprt &&
 	    !test_bit(XPT_CONG_CTRL, &rqstp->rq_xprt->xpt_flags))
-		जाओ err_bad_vers;
+		goto err_bad_vers;
 
-	अगर (rqstp->rq_proc >= versp->vs_nproc)
-		जाओ err_bad_proc;
+	if (rqstp->rq_proc >= versp->vs_nproc)
+		goto err_bad_proc;
 	rqstp->rq_procinfo = procp = &versp->vs_proc[rqstp->rq_proc];
-	अगर (!procp)
-		जाओ err_bad_proc;
+	if (!procp)
+		goto err_bad_proc;
 
-	/* Initialize storage क्रम argp and resp */
-	स_रखो(rqstp->rq_argp, 0, procp->pc_argsize);
-	स_रखो(rqstp->rq_resp, 0, procp->pc_ressize);
+	/* Initialize storage for argp and resp */
+	memset(rqstp->rq_argp, 0, procp->pc_argsize);
+	memset(rqstp->rq_resp, 0, procp->pc_ressize);
 
 	/* Bump per-procedure stats counter */
 	versp->vs_count[rqstp->rq_proc]++;
 
 	ret->dispatch = versp->vs_dispatch;
-	वापस rpc_success;
+	return rpc_success;
 err_bad_vers:
 	ret->mismatch.lovers = progp->pg_lovers;
 	ret->mismatch.hivers = progp->pg_hivers;
-	वापस rpc_prog_mismatch;
+	return rpc_prog_mismatch;
 err_bad_proc:
-	वापस rpc_proc_unavail;
-पूर्ण
+	return rpc_proc_unavail;
+}
 EXPORT_SYMBOL_GPL(svc_generic_init_request);
 
 /*
- * Common routine क्रम processing the RPC request.
+ * Common routine for processing the RPC request.
  */
-अटल पूर्णांक
-svc_process_common(काष्ठा svc_rqst *rqstp, काष्ठा kvec *argv, काष्ठा kvec *resv)
-अणु
-	काष्ठा svc_program	*progp;
-	स्थिर काष्ठा svc_procedure *procp = शून्य;
-	काष्ठा svc_serv		*serv = rqstp->rq_server;
-	काष्ठा svc_process_info process;
+static int
+svc_process_common(struct svc_rqst *rqstp, struct kvec *argv, struct kvec *resv)
+{
+	struct svc_program	*progp;
+	const struct svc_procedure *procp = NULL;
+	struct svc_serv		*serv = rqstp->rq_server;
+	struct svc_process_info process;
 	__be32			*statp;
 	u32			prog, vers;
 	__be32			auth_stat, rpc_stat;
-	पूर्णांक			auth_res;
+	int			auth_res;
 	__be32			*reply_statp;
 
 	rpc_stat = rpc_success;
 
-	अगर (argv->iov_len < 6*4)
-		जाओ err_लघु_len;
+	if (argv->iov_len < 6*4)
+		goto err_short_len;
 
-	/* Will be turned off by GSS पूर्णांकegrity and privacy services */
+	/* Will be turned off by GSS integrity and privacy services */
 	set_bit(RQ_SPLICE_OK, &rqstp->rq_flags);
 	/* Will be turned off only when NFSv4 Sessions are used */
 	set_bit(RQ_USEDEFERRAL, &rqstp->rq_flags);
@@ -1306,10 +1305,10 @@ svc_process_common(काष्ठा svc_rqst *rqstp, काष्ठा kvec *
 	/* First words of reply: */
 	svc_putnl(resv, 1);		/* REPLY */
 
-	अगर (vers != 2)		/* RPC version number */
-		जाओ err_bad_rpc;
+	if (vers != 2)		/* RPC version number */
+		goto err_bad_rpc;
 
-	/* Save position in हाल we later decide to reject: */
+	/* Save position in case we later decide to reject: */
 	reply_statp = resv->iov_base + resv->iov_len;
 
 	svc_putnl(resv, 0);		/* ACCEPT */
@@ -1318,60 +1317,60 @@ svc_process_common(काष्ठा svc_rqst *rqstp, काष्ठा kvec *
 	rqstp->rq_vers = svc_getnl(argv);	/* version number */
 	rqstp->rq_proc = svc_getnl(argv);	/* procedure number */
 
-	क्रम (progp = serv->sv_program; progp; progp = progp->pg_next)
-		अगर (prog == progp->pg_prog)
-			अवरोध;
+	for (progp = serv->sv_program; progp; progp = progp->pg_next)
+		if (prog == progp->pg_prog)
+			break;
 
 	/*
-	 * Decode auth data, and add verअगरier to reply buffer.
-	 * We करो this beक्रमe anything अन्यथा in order to get a decent
-	 * auth verअगरier.
+	 * Decode auth data, and add verifier to reply buffer.
+	 * We do this before anything else in order to get a decent
+	 * auth verifier.
 	 */
 	auth_res = svc_authenticate(rqstp, &auth_stat);
 	/* Also give the program a chance to reject this call: */
-	अगर (auth_res == SVC_OK && progp) अणु
+	if (auth_res == SVC_OK && progp) {
 		auth_stat = rpc_autherr_badcred;
 		auth_res = progp->pg_authenticate(rqstp);
-	पूर्ण
-	अगर (auth_res != SVC_OK)
+	}
+	if (auth_res != SVC_OK)
 		trace_svc_authenticate(rqstp, auth_res, auth_stat);
-	चयन (auth_res) अणु
-	हाल SVC_OK:
-		अवरोध;
-	हाल SVC_GARBAGE:
-		जाओ err_garbage;
-	हाल SVC_SYSERR:
-		rpc_stat = rpc_प्रणाली_err;
-		जाओ err_bad;
-	हाल SVC_DENIED:
-		जाओ err_bad_auth;
-	हाल SVC_CLOSE:
-		जाओ बंद;
-	हाल SVC_DROP:
-		जाओ dropit;
-	हाल SVC_COMPLETE:
-		जाओ sendit;
-	पूर्ण
+	switch (auth_res) {
+	case SVC_OK:
+		break;
+	case SVC_GARBAGE:
+		goto err_garbage;
+	case SVC_SYSERR:
+		rpc_stat = rpc_system_err;
+		goto err_bad;
+	case SVC_DENIED:
+		goto err_bad_auth;
+	case SVC_CLOSE:
+		goto close;
+	case SVC_DROP:
+		goto dropit;
+	case SVC_COMPLETE:
+		goto sendit;
+	}
 
-	अगर (progp == शून्य)
-		जाओ err_bad_prog;
+	if (progp == NULL)
+		goto err_bad_prog;
 
 	rpc_stat = progp->pg_init_request(rqstp, progp, &process);
-	चयन (rpc_stat) अणु
-	हाल rpc_success:
-		अवरोध;
-	हाल rpc_prog_unavail:
-		जाओ err_bad_prog;
-	हाल rpc_prog_mismatch:
-		जाओ err_bad_vers;
-	हाल rpc_proc_unavail:
-		जाओ err_bad_proc;
-	पूर्ण
+	switch (rpc_stat) {
+	case rpc_success:
+		break;
+	case rpc_prog_unavail:
+		goto err_bad_prog;
+	case rpc_prog_mismatch:
+		goto err_bad_vers;
+	case rpc_proc_unavail:
+		goto err_bad_proc;
+	}
 
 	procp = rqstp->rq_procinfo;
-	/* Should this check go पूर्णांकo the dispatcher? */
-	अगर (!procp || !procp->pc_func)
-		जाओ err_bad_proc;
+	/* Should this check go into the dispatcher? */
+	if (!procp || !procp->pc_func)
+		goto err_bad_proc;
 
 	/* Syntactic check complete */
 	serv->sv_stats->rpccnt++;
@@ -1384,60 +1383,60 @@ svc_process_common(काष्ठा svc_rqst *rqstp, काष्ठा kvec *
 	/* un-reserve some of the out-queue now that we have a
 	 * better idea of reply size
 	 */
-	अगर (procp->pc_xdrressize)
+	if (procp->pc_xdrressize)
 		svc_reserve_auth(rqstp, procp->pc_xdrressize<<2);
 
 	/* Call the function that processes the request. */
-	अगर (!process.dispatch) अणु
-		अगर (!svc_generic_dispatch(rqstp, statp))
-			जाओ release_dropit;
-		अगर (*statp == rpc_garbage_args)
-			जाओ err_garbage;
+	if (!process.dispatch) {
+		if (!svc_generic_dispatch(rqstp, statp))
+			goto release_dropit;
+		if (*statp == rpc_garbage_args)
+			goto err_garbage;
 		auth_stat = svc_get_autherr(rqstp, statp);
-		अगर (auth_stat != rpc_auth_ok)
-			जाओ err_release_bad_auth;
-	पूर्ण अन्यथा अणु
-		dprपूर्णांकk("svc: calling dispatcher\n");
-		अगर (!process.dispatch(rqstp, statp))
-			जाओ release_dropit; /* Release reply info */
-	पूर्ण
+		if (auth_stat != rpc_auth_ok)
+			goto err_release_bad_auth;
+	} else {
+		dprintk("svc: calling dispatcher\n");
+		if (!process.dispatch(rqstp, statp))
+			goto release_dropit; /* Release reply info */
+	}
 
 	/* Check RPC status result */
-	अगर (*statp != rpc_success)
-		resv->iov_len = ((व्योम*)statp)  - resv->iov_base + 4;
+	if (*statp != rpc_success)
+		resv->iov_len = ((void*)statp)  - resv->iov_base + 4;
 
 	/* Release reply info */
-	अगर (procp->pc_release)
+	if (procp->pc_release)
 		procp->pc_release(rqstp);
 
-	अगर (procp->pc_encode == शून्य)
-		जाओ dropit;
+	if (procp->pc_encode == NULL)
+		goto dropit;
 
  sendit:
-	अगर (svc_authorise(rqstp))
-		जाओ बंद_xprt;
-	वापस 1;		/* Caller can now send it */
+	if (svc_authorise(rqstp))
+		goto close_xprt;
+	return 1;		/* Caller can now send it */
 
 release_dropit:
-	अगर (procp->pc_release)
+	if (procp->pc_release)
 		procp->pc_release(rqstp);
  dropit:
-	svc_authorise(rqstp);	/* करोesn't hurt to call this twice */
-	dprपूर्णांकk("svc: svc_process dropit\n");
-	वापस 0;
+	svc_authorise(rqstp);	/* doesn't hurt to call this twice */
+	dprintk("svc: svc_process dropit\n");
+	return 0;
 
- बंद:
+ close:
 	svc_authorise(rqstp);
-बंद_xprt:
-	अगर (rqstp->rq_xprt && test_bit(XPT_TEMP, &rqstp->rq_xprt->xpt_flags))
-		svc_बंद_xprt(rqstp->rq_xprt);
-	dprपूर्णांकk("svc: svc_process close\n");
-	वापस 0;
+close_xprt:
+	if (rqstp->rq_xprt && test_bit(XPT_TEMP, &rqstp->rq_xprt->xpt_flags))
+		svc_close_xprt(rqstp->rq_xprt);
+	dprintk("svc: svc_process close\n");
+	return 0;
 
-err_लघु_len:
-	svc_prपूर्णांकk(rqstp, "short len %zd, dropping request\n",
+err_short_len:
+	svc_printk(rqstp, "short len %zd, dropping request\n",
 			argv->iov_len);
-	जाओ बंद_xprt;
+	goto close_xprt;
 
 err_bad_rpc:
 	serv->sv_stats->rpcbadfmt++;
@@ -1445,63 +1444,63 @@ err_bad_rpc:
 	svc_putnl(resv, 0);	/* RPC_MISMATCH */
 	svc_putnl(resv, 2);	/* Only RPCv2 supported */
 	svc_putnl(resv, 2);
-	जाओ sendit;
+	goto sendit;
 
 err_release_bad_auth:
-	अगर (procp->pc_release)
+	if (procp->pc_release)
 		procp->pc_release(rqstp);
 err_bad_auth:
-	dprपूर्णांकk("svc: authentication failed (%d)\n", ntohl(auth_stat));
+	dprintk("svc: authentication failed (%d)\n", ntohl(auth_stat));
 	serv->sv_stats->rpcbadauth++;
-	/* Restore ग_लिखो poपूर्णांकer to location of accept status: */
+	/* Restore write pointer to location of accept status: */
 	xdr_ressize_check(rqstp, reply_statp);
 	svc_putnl(resv, 1);	/* REJECT */
 	svc_putnl(resv, 1);	/* AUTH_ERROR */
 	svc_putnl(resv, ntohl(auth_stat));	/* status */
-	जाओ sendit;
+	goto sendit;
 
 err_bad_prog:
-	dprपूर्णांकk("svc: unknown program %d\n", prog);
+	dprintk("svc: unknown program %d\n", prog);
 	serv->sv_stats->rpcbadfmt++;
 	svc_putnl(resv, RPC_PROG_UNAVAIL);
-	जाओ sendit;
+	goto sendit;
 
 err_bad_vers:
-	svc_prपूर्णांकk(rqstp, "unknown version (%d for prog %d, %s)\n",
+	svc_printk(rqstp, "unknown version (%d for prog %d, %s)\n",
 		       rqstp->rq_vers, rqstp->rq_prog, progp->pg_name);
 
 	serv->sv_stats->rpcbadfmt++;
 	svc_putnl(resv, RPC_PROG_MISMATCH);
 	svc_putnl(resv, process.mismatch.lovers);
 	svc_putnl(resv, process.mismatch.hivers);
-	जाओ sendit;
+	goto sendit;
 
 err_bad_proc:
-	svc_prपूर्णांकk(rqstp, "unknown procedure (%d)\n", rqstp->rq_proc);
+	svc_printk(rqstp, "unknown procedure (%d)\n", rqstp->rq_proc);
 
 	serv->sv_stats->rpcbadfmt++;
 	svc_putnl(resv, RPC_PROC_UNAVAIL);
-	जाओ sendit;
+	goto sendit;
 
 err_garbage:
-	svc_prपूर्णांकk(rqstp, "failed to decode args\n");
+	svc_printk(rqstp, "failed to decode args\n");
 
 	rpc_stat = rpc_garbage_args;
 err_bad:
 	serv->sv_stats->rpcbadfmt++;
 	svc_putnl(resv, ntohl(rpc_stat));
-	जाओ sendit;
-पूर्ण
+	goto sendit;
+}
 
 /*
  * Process the RPC request.
  */
-पूर्णांक
-svc_process(काष्ठा svc_rqst *rqstp)
-अणु
-	काष्ठा kvec		*argv = &rqstp->rq_arg.head[0];
-	काष्ठा kvec		*resv = &rqstp->rq_res.head[0];
-	काष्ठा svc_serv		*serv = rqstp->rq_server;
+int
+svc_process(struct svc_rqst *rqstp)
+{
+	struct kvec		*argv = &rqstp->rq_arg.head[0];
+	struct kvec		*resv = &rqstp->rq_res.head[0];
+	struct svc_serv		*serv = rqstp->rq_server;
 	u32			dir;
 
 	/*
@@ -1516,43 +1515,43 @@ svc_process(काष्ठा svc_rqst *rqstp)
 	rqstp->rq_res.page_base = 0;
 	rqstp->rq_res.page_len = 0;
 	rqstp->rq_res.buflen = PAGE_SIZE;
-	rqstp->rq_res.tail[0].iov_base = शून्य;
+	rqstp->rq_res.tail[0].iov_base = NULL;
 	rqstp->rq_res.tail[0].iov_len = 0;
 
 	dir  = svc_getnl(argv);
-	अगर (dir != 0) अणु
+	if (dir != 0) {
 		/* direction != CALL */
-		svc_prपूर्णांकk(rqstp, "bad direction %d, dropping request\n", dir);
+		svc_printk(rqstp, "bad direction %d, dropping request\n", dir);
 		serv->sv_stats->rpcbadfmt++;
-		जाओ out_drop;
-	पूर्ण
+		goto out_drop;
+	}
 
-	/* Returns 1 क्रम send, 0 क्रम drop */
-	अगर (likely(svc_process_common(rqstp, argv, resv)))
-		वापस svc_send(rqstp);
+	/* Returns 1 for send, 0 for drop */
+	if (likely(svc_process_common(rqstp, argv, resv)))
+		return svc_send(rqstp);
 
 out_drop:
 	svc_drop(rqstp);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(svc_process);
 
-#अगर defined(CONFIG_SUNRPC_BACKCHANNEL)
+#if defined(CONFIG_SUNRPC_BACKCHANNEL)
 /*
  * Process a backchannel RPC request that arrived over an existing
  * outbound connection
  */
-पूर्णांक
-bc_svc_process(काष्ठा svc_serv *serv, काष्ठा rpc_rqst *req,
-	       काष्ठा svc_rqst *rqstp)
-अणु
-	काष्ठा kvec	*argv = &rqstp->rq_arg.head[0];
-	काष्ठा kvec	*resv = &rqstp->rq_res.head[0];
-	काष्ठा rpc_task *task;
-	पूर्णांक proc_error;
-	पूर्णांक error;
+int
+bc_svc_process(struct svc_serv *serv, struct rpc_rqst *req,
+	       struct svc_rqst *rqstp)
+{
+	struct kvec	*argv = &rqstp->rq_arg.head[0];
+	struct kvec	*resv = &rqstp->rq_res.head[0];
+	struct rpc_task *task;
+	int proc_error;
+	int error;
 
-	dprपूर्णांकk("svc: %s(%p)\n", __func__, req);
+	dprintk("svc: %s(%p)\n", __func__, req);
 
 	/* Build the svc_rqst used by the common processing routine */
 	rqstp->rq_xid = req->rq_xid;
@@ -1560,21 +1559,21 @@ bc_svc_process(काष्ठा svc_serv *serv, काष्ठा rpc_rqst *r
 	rqstp->rq_server = serv;
 	rqstp->rq_bc_net = req->rq_xprt->xprt_net;
 
-	rqstp->rq_addrlen = माप(req->rq_xprt->addr);
-	स_नकल(&rqstp->rq_addr, &req->rq_xprt->addr, rqstp->rq_addrlen);
-	स_नकल(&rqstp->rq_arg, &req->rq_rcv_buf, माप(rqstp->rq_arg));
-	स_नकल(&rqstp->rq_res, &req->rq_snd_buf, माप(rqstp->rq_res));
+	rqstp->rq_addrlen = sizeof(req->rq_xprt->addr);
+	memcpy(&rqstp->rq_addr, &req->rq_xprt->addr, rqstp->rq_addrlen);
+	memcpy(&rqstp->rq_arg, &req->rq_rcv_buf, sizeof(rqstp->rq_arg));
+	memcpy(&rqstp->rq_res, &req->rq_snd_buf, sizeof(rqstp->rq_res));
 
 	/* Adjust the argument buffer length */
-	rqstp->rq_arg.len = req->rq_निजी_buf.len;
-	अगर (rqstp->rq_arg.len <= rqstp->rq_arg.head[0].iov_len) अणु
+	rqstp->rq_arg.len = req->rq_private_buf.len;
+	if (rqstp->rq_arg.len <= rqstp->rq_arg.head[0].iov_len) {
 		rqstp->rq_arg.head[0].iov_len = rqstp->rq_arg.len;
 		rqstp->rq_arg.page_len = 0;
-	पूर्ण अन्यथा अगर (rqstp->rq_arg.len <= rqstp->rq_arg.head[0].iov_len +
+	} else if (rqstp->rq_arg.len <= rqstp->rq_arg.head[0].iov_len +
 			rqstp->rq_arg.page_len)
 		rqstp->rq_arg.page_len = rqstp->rq_arg.len -
 			rqstp->rq_arg.head[0].iov_len;
-	अन्यथा
+	else
 		rqstp->rq_arg.len = rqstp->rq_arg.head[0].iov_len +
 			rqstp->rq_arg.page_len;
 
@@ -1582,52 +1581,52 @@ bc_svc_process(काष्ठा svc_serv *serv, काष्ठा rpc_rqst *r
 	resv->iov_len = 0;
 
 	/*
-	 * Skip the next two words because they've alपढ़ोy been
+	 * Skip the next two words because they've already been
 	 * processed in the transport
 	 */
 	svc_getu32(argv);	/* XID */
-	svc_getnl(argv);	/* CALLसूची */
+	svc_getnl(argv);	/* CALLDIR */
 
 	/* Parse and execute the bc call */
 	proc_error = svc_process_common(rqstp, argv, resv);
 
 	atomic_dec(&req->rq_xprt->bc_slot_count);
-	अगर (!proc_error) अणु
+	if (!proc_error) {
 		/* Processing error: drop the request */
-		xprt_मुक्त_bc_request(req);
+		xprt_free_bc_request(req);
 		error = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	/* Finally, send the reply synchronously */
-	स_नकल(&req->rq_snd_buf, &rqstp->rq_res, माप(req->rq_snd_buf));
+	memcpy(&req->rq_snd_buf, &rqstp->rq_res, sizeof(req->rq_snd_buf));
 	task = rpc_run_bc_task(req);
-	अगर (IS_ERR(task)) अणु
+	if (IS_ERR(task)) {
 		error = PTR_ERR(task);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	WARN_ON_ONCE(atomic_पढ़ो(&task->tk_count) != 1);
+	WARN_ON_ONCE(atomic_read(&task->tk_count) != 1);
 	error = task->tk_status;
 	rpc_put_task(task);
 
 out:
-	dprपूर्णांकk("svc: %s(), error=%d\n", __func__, error);
-	वापस error;
-पूर्ण
+	dprintk("svc: %s(), error=%d\n", __func__, error);
+	return error;
+}
 EXPORT_SYMBOL_GPL(bc_svc_process);
-#पूर्ण_अगर /* CONFIG_SUNRPC_BACKCHANNEL */
+#endif /* CONFIG_SUNRPC_BACKCHANNEL */
 
 /*
- * Return (transport-specअगरic) limit on the rpc payload.
+ * Return (transport-specific) limit on the rpc payload.
  */
-u32 svc_max_payload(स्थिर काष्ठा svc_rqst *rqstp)
-अणु
+u32 svc_max_payload(const struct svc_rqst *rqstp)
+{
 	u32 max = rqstp->rq_xprt->xpt_class->xcl_max_payload;
 
-	अगर (rqstp->rq_server->sv_max_payload < max)
+	if (rqstp->rq_server->sv_max_payload < max)
 		max = rqstp->rq_server->sv_max_payload;
-	वापस max;
-पूर्ण
+	return max;
+}
 EXPORT_SYMBOL_GPL(svc_max_payload);
 
 /**
@@ -1636,102 +1635,102 @@ EXPORT_SYMBOL_GPL(svc_max_payload);
  * @offset: payload's byte offset in rqstp->rq_res
  * @length: size of payload, in bytes
  *
- * Returns zero on success, or a negative त्रुटि_सं अगर a permanent
+ * Returns zero on success, or a negative errno if a permanent
  * error occurred.
  */
-पूर्णांक svc_encode_result_payload(काष्ठा svc_rqst *rqstp, अचिन्हित पूर्णांक offset,
-			      अचिन्हित पूर्णांक length)
-अणु
-	वापस rqstp->rq_xprt->xpt_ops->xpo_result_payload(rqstp, offset,
+int svc_encode_result_payload(struct svc_rqst *rqstp, unsigned int offset,
+			      unsigned int length)
+{
+	return rqstp->rq_xprt->xpt_ops->xpo_result_payload(rqstp, offset,
 							   length);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(svc_encode_result_payload);
 
 /**
- * svc_fill_ग_लिखो_vector - Conकाष्ठा data argument क्रम VFS ग_लिखो call
+ * svc_fill_write_vector - Construct data argument for VFS write call
  * @rqstp: svc_rqst to operate on
  * @pages: list of pages containing data payload
- * @first: buffer containing first section of ग_लिखो payload
- * @total: total number of bytes of ग_लिखो payload
+ * @first: buffer containing first section of write payload
+ * @total: total number of bytes of write payload
  *
- * Fills in rqstp::rq_vec, and वापसs the number of elements.
+ * Fills in rqstp::rq_vec, and returns the number of elements.
  */
-अचिन्हित पूर्णांक svc_fill_ग_लिखो_vector(काष्ठा svc_rqst *rqstp, काष्ठा page **pages,
-				   काष्ठा kvec *first, माप_प्रकार total)
-अणु
-	काष्ठा kvec *vec = rqstp->rq_vec;
-	अचिन्हित पूर्णांक i;
+unsigned int svc_fill_write_vector(struct svc_rqst *rqstp, struct page **pages,
+				   struct kvec *first, size_t total)
+{
+	struct kvec *vec = rqstp->rq_vec;
+	unsigned int i;
 
-	/* Some types of transport can present the ग_लिखो payload
-	 * entirely in rq_arg.pages. In this हाल, @first is empty.
+	/* Some types of transport can present the write payload
+	 * entirely in rq_arg.pages. In this case, @first is empty.
 	 */
 	i = 0;
-	अगर (first->iov_len) अणु
+	if (first->iov_len) {
 		vec[i].iov_base = first->iov_base;
-		vec[i].iov_len = min_t(माप_प्रकार, total, first->iov_len);
+		vec[i].iov_len = min_t(size_t, total, first->iov_len);
 		total -= vec[i].iov_len;
 		++i;
-	पूर्ण
+	}
 
-	जबतक (total) अणु
+	while (total) {
 		vec[i].iov_base = page_address(*pages);
-		vec[i].iov_len = min_t(माप_प्रकार, total, PAGE_SIZE);
+		vec[i].iov_len = min_t(size_t, total, PAGE_SIZE);
 		total -= vec[i].iov_len;
 		++i;
 		++pages;
-	पूर्ण
+	}
 
 	WARN_ON_ONCE(i > ARRAY_SIZE(rqstp->rq_vec));
-	वापस i;
-पूर्ण
-EXPORT_SYMBOL_GPL(svc_fill_ग_लिखो_vector);
+	return i;
+}
+EXPORT_SYMBOL_GPL(svc_fill_write_vector);
 
 /**
- * svc_fill_symlink_pathname - Conकाष्ठा pathname argument क्रम VFS symlink call
+ * svc_fill_symlink_pathname - Construct pathname argument for VFS symlink call
  * @rqstp: svc_rqst to operate on
  * @first: buffer containing first section of pathname
- * @p: buffer containing reमुख्यing section of pathname
+ * @p: buffer containing remaining section of pathname
  * @total: total length of the pathname argument
  *
  * The VFS symlink API demands a NUL-terminated pathname in mapped memory.
- * Returns poपूर्णांकer to a NUL-terminated string, or an ERR_PTR. Caller must मुक्त
- * the वापसed string.
+ * Returns pointer to a NUL-terminated string, or an ERR_PTR. Caller must free
+ * the returned string.
  */
-अक्षर *svc_fill_symlink_pathname(काष्ठा svc_rqst *rqstp, काष्ठा kvec *first,
-				व्योम *p, माप_प्रकार total)
-अणु
-	माप_प्रकार len, reमुख्यing;
-	अक्षर *result, *dst;
+char *svc_fill_symlink_pathname(struct svc_rqst *rqstp, struct kvec *first,
+				void *p, size_t total)
+{
+	size_t len, remaining;
+	char *result, *dst;
 
-	result = kदो_स्मृति(total + 1, GFP_KERNEL);
-	अगर (!result)
-		वापस ERR_PTR(-ESERVERFAULT);
+	result = kmalloc(total + 1, GFP_KERNEL);
+	if (!result)
+		return ERR_PTR(-ESERVERFAULT);
 
 	dst = result;
-	reमुख्यing = total;
+	remaining = total;
 
-	len = min_t(माप_प्रकार, total, first->iov_len);
-	अगर (len) अणु
-		स_नकल(dst, first->iov_base, len);
+	len = min_t(size_t, total, first->iov_len);
+	if (len) {
+		memcpy(dst, first->iov_base, len);
 		dst += len;
-		reमुख्यing -= len;
-	पूर्ण
+		remaining -= len;
+	}
 
-	अगर (reमुख्यing) अणु
-		len = min_t(माप_प्रकार, reमुख्यing, PAGE_SIZE);
-		स_नकल(dst, p, len);
+	if (remaining) {
+		len = min_t(size_t, remaining, PAGE_SIZE);
+		memcpy(dst, p, len);
 		dst += len;
-	पूर्ण
+	}
 
 	*dst = '\0';
 
-	/* Sanity check: Linux करोesn't allow the pathname argument to
+	/* Sanity check: Linux doesn't allow the pathname argument to
 	 * contain a NUL byte.
 	 */
-	अगर (म_माप(result) != total) अणु
-		kमुक्त(result);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
-	वापस result;
-पूर्ण
+	if (strlen(result) != total) {
+		kfree(result);
+		return ERR_PTR(-EINVAL);
+	}
+	return result;
+}
 EXPORT_SYMBOL_GPL(svc_fill_symlink_pathname);

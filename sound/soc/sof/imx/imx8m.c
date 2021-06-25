@@ -1,296 +1,295 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-3-Clause)
+// SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause)
 //
 // Copyright 2020 NXP
 //
 // Author: Daniel Baluta <daniel.baluta@nxp.com>
 //
-// Hardware पूर्णांकerface क्रम audio DSP on i.MX8M
+// Hardware interface for audio DSP on i.MX8M
 
-#समावेश <linux/firmware.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_irq.h>
+#include <linux/firmware.h>
+#include <linux/of_platform.h>
+#include <linux/of_address.h>
+#include <linux/of_irq.h>
 
-#समावेश <linux/module.h>
-#समावेश <sound/sof.h>
-#समावेश <sound/sof/xtensa.h>
-#समावेश <linux/firmware/imx/dsp.h>
+#include <linux/module.h>
+#include <sound/sof.h>
+#include <sound/sof/xtensa.h>
+#include <linux/firmware/imx/dsp.h>
 
-#समावेश "../ops.h"
-#समावेश "imx-common.h"
+#include "../ops.h"
+#include "imx-common.h"
 
-#घोषणा MBOX_OFFSET	0x800000
-#घोषणा MBOX_SIZE	0x1000
+#define MBOX_OFFSET	0x800000
+#define MBOX_SIZE	0x1000
 
-काष्ठा imx8m_priv अणु
-	काष्ठा device *dev;
-	काष्ठा snd_sof_dev *sdev;
+struct imx8m_priv {
+	struct device *dev;
+	struct snd_sof_dev *sdev;
 
 	/* DSP IPC handler */
-	काष्ठा imx_dsp_ipc *dsp_ipc;
-	काष्ठा platक्रमm_device *ipc_dev;
-पूर्ण;
+	struct imx_dsp_ipc *dsp_ipc;
+	struct platform_device *ipc_dev;
+};
 
-अटल व्योम imx8m_get_reply(काष्ठा snd_sof_dev *sdev)
-अणु
-	काष्ठा snd_sof_ipc_msg *msg = sdev->msg;
-	काष्ठा sof_ipc_reply reply;
-	पूर्णांक ret = 0;
+static void imx8m_get_reply(struct snd_sof_dev *sdev)
+{
+	struct snd_sof_ipc_msg *msg = sdev->msg;
+	struct sof_ipc_reply reply;
+	int ret = 0;
 
-	अगर (!msg) अणु
+	if (!msg) {
 		dev_warn(sdev->dev, "unexpected ipc interrupt\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* get reply */
-	sof_mailbox_पढ़ो(sdev, sdev->host_box.offset, &reply, माप(reply));
+	sof_mailbox_read(sdev, sdev->host_box.offset, &reply, sizeof(reply));
 
-	अगर (reply.error < 0) अणु
-		स_नकल(msg->reply_data, &reply, माप(reply));
+	if (reply.error < 0) {
+		memcpy(msg->reply_data, &reply, sizeof(reply));
 		ret = reply.error;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* reply has correct size? */
-		अगर (reply.hdr.size != msg->reply_size) अणु
+		if (reply.hdr.size != msg->reply_size) {
 			dev_err(sdev->dev, "error: reply expected %zu got %u bytes\n",
 				msg->reply_size, reply.hdr.size);
 			ret = -EINVAL;
-		पूर्ण
+		}
 
-		/* पढ़ो the message */
-		अगर (msg->reply_size > 0)
-			sof_mailbox_पढ़ो(sdev, sdev->host_box.offset,
+		/* read the message */
+		if (msg->reply_size > 0)
+			sof_mailbox_read(sdev, sdev->host_box.offset,
 					 msg->reply_data, msg->reply_size);
-	पूर्ण
+	}
 
 	msg->reply_error = ret;
-पूर्ण
+}
 
-अटल पूर्णांक imx8m_get_mailbox_offset(काष्ठा snd_sof_dev *sdev)
-अणु
-	वापस MBOX_OFFSET;
-पूर्ण
+static int imx8m_get_mailbox_offset(struct snd_sof_dev *sdev)
+{
+	return MBOX_OFFSET;
+}
 
-अटल पूर्णांक imx8m_get_winकरोw_offset(काष्ठा snd_sof_dev *sdev, u32 id)
-अणु
-	वापस MBOX_OFFSET;
-पूर्ण
+static int imx8m_get_window_offset(struct snd_sof_dev *sdev, u32 id)
+{
+	return MBOX_OFFSET;
+}
 
-अटल व्योम imx8m_dsp_handle_reply(काष्ठा imx_dsp_ipc *ipc)
-अणु
-	काष्ठा imx8m_priv *priv = imx_dsp_get_data(ipc);
-	अचिन्हित दीर्घ flags;
+static void imx8m_dsp_handle_reply(struct imx_dsp_ipc *ipc)
+{
+	struct imx8m_priv *priv = imx_dsp_get_data(ipc);
+	unsigned long flags;
 
 	spin_lock_irqsave(&priv->sdev->ipc_lock, flags);
 	imx8m_get_reply(priv->sdev);
 	snd_sof_ipc_reply(priv->sdev, 0);
 	spin_unlock_irqrestore(&priv->sdev->ipc_lock, flags);
-पूर्ण
+}
 
-अटल व्योम imx8m_dsp_handle_request(काष्ठा imx_dsp_ipc *ipc)
-अणु
-	काष्ठा imx8m_priv *priv = imx_dsp_get_data(ipc);
+static void imx8m_dsp_handle_request(struct imx_dsp_ipc *ipc)
+{
+	struct imx8m_priv *priv = imx_dsp_get_data(ipc);
 	u32 p; /* Panic code */
 
 	/* Read the message from the debug box. */
-	sof_mailbox_पढ़ो(priv->sdev, priv->sdev->debug_box.offset + 4, &p, माप(p));
+	sof_mailbox_read(priv->sdev, priv->sdev->debug_box.offset + 4, &p, sizeof(p));
 
-	/* Check to see अगर the message is a panic code (0x0dead***) */
-	अगर ((p & SOF_IPC_PANIC_MAGIC_MASK) == SOF_IPC_PANIC_MAGIC)
+	/* Check to see if the message is a panic code (0x0dead***) */
+	if ((p & SOF_IPC_PANIC_MAGIC_MASK) == SOF_IPC_PANIC_MAGIC)
 		snd_sof_dsp_panic(priv->sdev, p);
-	अन्यथा
+	else
 		snd_sof_ipc_msgs_rx(priv->sdev);
-पूर्ण
+}
 
-अटल काष्ठा imx_dsp_ops imx8m_dsp_ops = अणु
+static struct imx_dsp_ops imx8m_dsp_ops = {
 	.handle_reply		= imx8m_dsp_handle_reply,
 	.handle_request		= imx8m_dsp_handle_request,
-पूर्ण;
+};
 
-अटल पूर्णांक imx8m_send_msg(काष्ठा snd_sof_dev *sdev, काष्ठा snd_sof_ipc_msg *msg)
-अणु
-	काष्ठा imx8m_priv *priv = sdev->pdata->hw_pdata;
+static int imx8m_send_msg(struct snd_sof_dev *sdev, struct snd_sof_ipc_msg *msg)
+{
+	struct imx8m_priv *priv = sdev->pdata->hw_pdata;
 
-	sof_mailbox_ग_लिखो(sdev, sdev->host_box.offset, msg->msg_data,
+	sof_mailbox_write(sdev, sdev->host_box.offset, msg->msg_data,
 			  msg->msg_size);
-	imx_dsp_ring_करोorbell(priv->dsp_ipc, 0);
+	imx_dsp_ring_doorbell(priv->dsp_ipc, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * DSP control.
  */
-अटल पूर्णांक imx8m_run(काष्ठा snd_sof_dev *sdev)
-अणु
+static int imx8m_run(struct snd_sof_dev *sdev)
+{
 	/* TODO: start DSP using Audio MIX bits */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक imx8m_probe(काष्ठा snd_sof_dev *sdev)
-अणु
-	काष्ठा platक्रमm_device *pdev =
-		container_of(sdev->dev, काष्ठा platक्रमm_device, dev);
-	काष्ठा device_node *np = pdev->dev.of_node;
-	काष्ठा device_node *res_node;
-	काष्ठा resource *mmio;
-	काष्ठा imx8m_priv *priv;
-	काष्ठा resource res;
+static int imx8m_probe(struct snd_sof_dev *sdev)
+{
+	struct platform_device *pdev =
+		container_of(sdev->dev, struct platform_device, dev);
+	struct device_node *np = pdev->dev.of_node;
+	struct device_node *res_node;
+	struct resource *mmio;
+	struct imx8m_priv *priv;
+	struct resource res;
 	u32 base, size;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	priv = devm_kzalloc(&pdev->dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(&pdev->dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
 	sdev->pdata->hw_pdata = priv;
 	priv->dev = sdev->dev;
 	priv->sdev = sdev;
 
-	priv->ipc_dev = platक्रमm_device_रेजिस्टर_data(sdev->dev, "imx-dsp",
+	priv->ipc_dev = platform_device_register_data(sdev->dev, "imx-dsp",
 						      PLATFORM_DEVID_NONE,
-						      pdev, माप(*pdev));
-	अगर (IS_ERR(priv->ipc_dev))
-		वापस PTR_ERR(priv->ipc_dev);
+						      pdev, sizeof(*pdev));
+	if (IS_ERR(priv->ipc_dev))
+		return PTR_ERR(priv->ipc_dev);
 
 	priv->dsp_ipc = dev_get_drvdata(&priv->ipc_dev->dev);
-	अगर (!priv->dsp_ipc) अणु
+	if (!priv->dsp_ipc) {
 		/* DSP IPC driver not probed yet, try later */
 		ret = -EPROBE_DEFER;
 		dev_err(sdev->dev, "Failed to get drvdata\n");
-		जाओ निकास_pdev_unरेजिस्टर;
-	पूर्ण
+		goto exit_pdev_unregister;
+	}
 
 	imx_dsp_set_data(priv->dsp_ipc, priv);
 	priv->dsp_ipc->ops = &imx8m_dsp_ops;
 
 	/* DSP base */
-	mmio = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (mmio) अणु
+	mmio = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (mmio) {
 		base = mmio->start;
 		size = resource_size(mmio);
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_err(sdev->dev, "error: failed to get DSP base at idx 0\n");
 		ret = -EINVAL;
-		जाओ निकास_pdev_unरेजिस्टर;
-	पूर्ण
+		goto exit_pdev_unregister;
+	}
 
 	sdev->bar[SOF_FW_BLK_TYPE_IRAM] = devm_ioremap(sdev->dev, base, size);
-	अगर (!sdev->bar[SOF_FW_BLK_TYPE_IRAM]) अणु
+	if (!sdev->bar[SOF_FW_BLK_TYPE_IRAM]) {
 		dev_err(sdev->dev, "failed to ioremap base 0x%x size 0x%x\n",
 			base, size);
 		ret = -ENODEV;
-		जाओ निकास_pdev_unरेजिस्टर;
-	पूर्ण
+		goto exit_pdev_unregister;
+	}
 	sdev->mmio_bar = SOF_FW_BLK_TYPE_IRAM;
 
 	res_node = of_parse_phandle(np, "memory-region", 0);
-	अगर (!res_node) अणु
+	if (!res_node) {
 		dev_err(&pdev->dev, "failed to get memory region node\n");
 		ret = -ENODEV;
-		जाओ निकास_pdev_unरेजिस्टर;
-	पूर्ण
+		goto exit_pdev_unregister;
+	}
 
 	ret = of_address_to_resource(res_node, 0, &res);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "failed to get reserved region address\n");
-		जाओ निकास_pdev_unरेजिस्टर;
-	पूर्ण
+		goto exit_pdev_unregister;
+	}
 
 	sdev->bar[SOF_FW_BLK_TYPE_SRAM] = devm_ioremap_wc(sdev->dev, res.start,
 							  resource_size(&res));
-	अगर (!sdev->bar[SOF_FW_BLK_TYPE_SRAM]) अणु
+	if (!sdev->bar[SOF_FW_BLK_TYPE_SRAM]) {
 		dev_err(sdev->dev, "failed to ioremap mem 0x%x size 0x%x\n",
 			base, size);
 		ret = -ENOMEM;
-		जाओ निकास_pdev_unरेजिस्टर;
-	पूर्ण
+		goto exit_pdev_unregister;
+	}
 	sdev->mailbox_bar = SOF_FW_BLK_TYPE_SRAM;
 
-	/* set शेष mailbox offset क्रम FW पढ़ोy message */
+	/* set default mailbox offset for FW ready message */
 	sdev->dsp_box.offset = MBOX_OFFSET;
 
-	वापस 0;
+	return 0;
 
-निकास_pdev_unरेजिस्टर:
-	platक्रमm_device_unरेजिस्टर(priv->ipc_dev);
-	वापस ret;
-पूर्ण
+exit_pdev_unregister:
+	platform_device_unregister(priv->ipc_dev);
+	return ret;
+}
 
-अटल पूर्णांक imx8m_हटाओ(काष्ठा snd_sof_dev *sdev)
-अणु
-	काष्ठा imx8m_priv *priv = sdev->pdata->hw_pdata;
+static int imx8m_remove(struct snd_sof_dev *sdev)
+{
+	struct imx8m_priv *priv = sdev->pdata->hw_pdata;
 
-	platक्रमm_device_unरेजिस्टर(priv->ipc_dev);
+	platform_device_unregister(priv->ipc_dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* on i.MX8 there is 1 to 1 match between type and BAR idx */
-अटल पूर्णांक imx8m_get_bar_index(काष्ठा snd_sof_dev *sdev, u32 type)
-अणु
-	वापस type;
-पूर्ण
+static int imx8m_get_bar_index(struct snd_sof_dev *sdev, u32 type)
+{
+	return type;
+}
 
-अटल व्योम imx8m_ipc_msg_data(काष्ठा snd_sof_dev *sdev,
-			       काष्ठा snd_pcm_substream *substream,
-			       व्योम *p, माप_प्रकार sz)
-अणु
-	sof_mailbox_पढ़ो(sdev, sdev->dsp_box.offset, p, sz);
-पूर्ण
+static void imx8m_ipc_msg_data(struct snd_sof_dev *sdev,
+			       struct snd_pcm_substream *substream,
+			       void *p, size_t sz)
+{
+	sof_mailbox_read(sdev, sdev->dsp_box.offset, p, sz);
+}
 
-अटल पूर्णांक imx8m_ipc_pcm_params(काष्ठा snd_sof_dev *sdev,
-				काष्ठा snd_pcm_substream *substream,
-				स्थिर काष्ठा sof_ipc_pcm_params_reply *reply)
-अणु
-	वापस 0;
-पूर्ण
+static int imx8m_ipc_pcm_params(struct snd_sof_dev *sdev,
+				struct snd_pcm_substream *substream,
+				const struct sof_ipc_pcm_params_reply *reply)
+{
+	return 0;
+}
 
-अटल काष्ठा snd_soc_dai_driver imx8m_dai[] = अणु
-अणु
+static struct snd_soc_dai_driver imx8m_dai[] = {
+{
 	.name = "sai3",
-	.playback = अणु
+	.playback = {
 		.channels_min = 1,
 		.channels_max = 32,
-	पूर्ण,
-	.capture = अणु
+	},
+	.capture = {
 		.channels_min = 1,
 		.channels_max = 32,
-	पूर्ण,
-पूर्ण,
-पूर्ण;
+	},
+},
+};
 
 /* i.MX8 ops */
-काष्ठा snd_sof_dsp_ops sof_imx8m_ops = अणु
-	/* probe and हटाओ */
+struct snd_sof_dsp_ops sof_imx8m_ops = {
+	/* probe and remove */
 	.probe		= imx8m_probe,
-	.हटाओ		= imx8m_हटाओ,
+	.remove		= imx8m_remove,
 	/* DSP core boot */
 	.run		= imx8m_run,
 
 	/* Block IO */
-	.block_पढ़ो	= sof_block_पढ़ो,
-	.block_ग_लिखो	= sof_block_ग_लिखो,
+	.block_read	= sof_block_read,
+	.block_write	= sof_block_write,
 
 	/* Module IO */
-	.पढ़ो64	= sof_io_पढ़ो64,
+	.read64	= sof_io_read64,
 
 	/* ipc */
 	.send_msg	= imx8m_send_msg,
-	.fw_पढ़ोy	= sof_fw_पढ़ोy,
+	.fw_ready	= sof_fw_ready,
 	.get_mailbox_offset	= imx8m_get_mailbox_offset,
-	.get_winकरोw_offset	= imx8m_get_winकरोw_offset,
+	.get_window_offset	= imx8m_get_window_offset,
 
 	.ipc_msg_data	= imx8m_ipc_msg_data,
 	.ipc_pcm_params	= imx8m_ipc_pcm_params,
 
 	/* module loading */
-	.load_module	= snd_sof_parse_module_स_नकल,
+	.load_module	= snd_sof_parse_module_memcpy,
 	.get_bar_index	= imx8m_get_bar_index,
 	/* firmware loading */
-	.load_firmware	= snd_sof_load_firmware_स_नकल,
+	.load_firmware	= snd_sof_load_firmware_memcpy,
 
-	/* Debug inक्रमmation */
+	/* Debug information */
 	.dbg_dump = imx8_dump,
 
 	/* Firmware ops */
@@ -305,7 +304,7 @@
 		SNDRV_PCM_INFO_INTERLEAVED |
 		SNDRV_PCM_INFO_PAUSE |
 		SNDRV_PCM_INFO_NO_PERIOD_WAKEUP,
-पूर्ण;
+};
 EXPORT_SYMBOL(sof_imx8m_ops);
 
 MODULE_IMPORT_NS(SND_SOC_SOF_XTENSA);

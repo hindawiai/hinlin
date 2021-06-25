@@ -1,243 +1,242 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2001 - 2007 Jeff Dike (jdike@अणुaddtoit,linux.पूर्णांकelपूर्ण.com)
+ * Copyright (C) 2001 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
  */
 
-#समावेश <linux/irqवापस.h>
-#समावेश <linux/kd.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/slab.h>
+#include <linux/irqreturn.h>
+#include <linux/kd.h>
+#include <linux/sched/signal.h>
+#include <linux/slab.h>
 
-#समावेश "chan.h"
-#समावेश <irq_kern.h>
-#समावेश <irq_user.h>
-#समावेश <kern_util.h>
-#समावेश <os.h>
+#include "chan.h"
+#include <irq_kern.h>
+#include <irq_user.h>
+#include <kern_util.h>
+#include <os.h>
 
-#घोषणा LINE_बफ_मानE 4096
+#define LINE_BUFSIZE 4096
 
-अटल irqवापस_t line_पूर्णांकerrupt(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा chan *chan = data;
-	काष्ठा line *line = chan->line;
+static irqreturn_t line_interrupt(int irq, void *data)
+{
+	struct chan *chan = data;
+	struct line *line = chan->line;
 
-	अगर (line)
-		chan_पूर्णांकerrupt(line, irq);
+	if (line)
+		chan_interrupt(line, irq);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /*
- * Returns the मुक्त space inside the ring buffer of this line.
+ * Returns the free space inside the ring buffer of this line.
  *
- * Should be called जबतक holding line->lock (this करोes not modअगरy data).
+ * Should be called while holding line->lock (this does not modify data).
  */
-अटल पूर्णांक ग_लिखो_room(काष्ठा line *line)
-अणु
-	पूर्णांक n;
+static int write_room(struct line *line)
+{
+	int n;
 
-	अगर (line->buffer == शून्य)
-		वापस LINE_बफ_मानE - 1;
+	if (line->buffer == NULL)
+		return LINE_BUFSIZE - 1;
 
-	/* This is क्रम the हाल where the buffer is wrapped! */
+	/* This is for the case where the buffer is wrapped! */
 	n = line->head - line->tail;
 
-	अगर (n <= 0)
-		n += LINE_बफ_मानE; /* The other हाल */
-	वापस n - 1;
-पूर्ण
+	if (n <= 0)
+		n += LINE_BUFSIZE; /* The other case */
+	return n - 1;
+}
 
-पूर्णांक line_ग_लिखो_room(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा line *line = tty->driver_data;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक room;
-
-	spin_lock_irqsave(&line->lock, flags);
-	room = ग_लिखो_room(line);
-	spin_unlock_irqrestore(&line->lock, flags);
-
-	वापस room;
-पूर्ण
-
-पूर्णांक line_अक्षरs_in_buffer(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा line *line = tty->driver_data;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+int line_write_room(struct tty_struct *tty)
+{
+	struct line *line = tty->driver_data;
+	unsigned long flags;
+	int room;
 
 	spin_lock_irqsave(&line->lock, flags);
-	/* ग_लिखो_room subtracts 1 क्रम the needed शून्य, so we पढ़ोd it.*/
-	ret = LINE_बफ_मानE - (ग_लिखो_room(line) + 1);
+	room = write_room(line);
 	spin_unlock_irqrestore(&line->lock, flags);
 
-	वापस ret;
-पूर्ण
+	return room;
+}
+
+int line_chars_in_buffer(struct tty_struct *tty)
+{
+	struct line *line = tty->driver_data;
+	unsigned long flags;
+	int ret;
+
+	spin_lock_irqsave(&line->lock, flags);
+	/* write_room subtracts 1 for the needed NULL, so we readd it.*/
+	ret = LINE_BUFSIZE - (write_room(line) + 1);
+	spin_unlock_irqrestore(&line->lock, flags);
+
+	return ret;
+}
 
 /*
- * This copies the content of buf पूर्णांकo the circular buffer associated with
+ * This copies the content of buf into the circular buffer associated with
  * this line.
- * The वापस value is the number of अक्षरacters actually copied, i.e. the ones
- * क्रम which there was space: this function is not supposed to ever flush out
+ * The return value is the number of characters actually copied, i.e. the ones
+ * for which there was space: this function is not supposed to ever flush out
  * the circular buffer.
  *
- * Must be called जबतक holding line->lock!
+ * Must be called while holding line->lock!
  */
-अटल पूर्णांक buffer_data(काष्ठा line *line, स्थिर अक्षर *buf, पूर्णांक len)
-अणु
-	पूर्णांक end, room;
+static int buffer_data(struct line *line, const char *buf, int len)
+{
+	int end, room;
 
-	अगर (line->buffer == शून्य) अणु
-		line->buffer = kदो_स्मृति(LINE_बफ_मानE, GFP_ATOMIC);
-		अगर (line->buffer == शून्य) अणु
-			prपूर्णांकk(KERN_ERR "buffer_data - atomic allocation "
+	if (line->buffer == NULL) {
+		line->buffer = kmalloc(LINE_BUFSIZE, GFP_ATOMIC);
+		if (line->buffer == NULL) {
+			printk(KERN_ERR "buffer_data - atomic allocation "
 			       "failed\n");
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 		line->head = line->buffer;
 		line->tail = line->buffer;
-	पूर्ण
+	}
 
-	room = ग_लिखो_room(line);
+	room = write_room(line);
 	len = (len > room) ? room : len;
 
-	end = line->buffer + LINE_बफ_मानE - line->tail;
+	end = line->buffer + LINE_BUFSIZE - line->tail;
 
-	अगर (len < end) अणु
-		स_नकल(line->tail, buf, len);
+	if (len < end) {
+		memcpy(line->tail, buf, len);
 		line->tail += len;
-	पूर्ण
-	अन्यथा अणु
+	}
+	else {
 		/* The circular buffer is wrapping */
-		स_नकल(line->tail, buf, end);
+		memcpy(line->tail, buf, end);
 		buf += end;
-		स_नकल(line->buffer, buf, len - end);
+		memcpy(line->buffer, buf, len - end);
 		line->tail = line->buffer + len - end;
-	पूर्ण
+	}
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
 /*
- * Flushes the ring buffer to the output channels. That is, ग_लिखो_chan is
+ * Flushes the ring buffer to the output channels. That is, write_chan is
  * called, passing it line->head as buffer, and an appropriate count.
  *
- * On निकास, वापसs 1 when the buffer is empty,
- * 0 when the buffer is not empty on निकास,
- * and -त्रुटि_सं when an error occurred.
+ * On exit, returns 1 when the buffer is empty,
+ * 0 when the buffer is not empty on exit,
+ * and -errno when an error occurred.
  *
- * Must be called जबतक holding line->lock!*/
-अटल पूर्णांक flush_buffer(काष्ठा line *line)
-अणु
-	पूर्णांक n, count;
+ * Must be called while holding line->lock!*/
+static int flush_buffer(struct line *line)
+{
+	int n, count;
 
-	अगर ((line->buffer == शून्य) || (line->head == line->tail))
-		वापस 1;
+	if ((line->buffer == NULL) || (line->head == line->tail))
+		return 1;
 
-	अगर (line->tail < line->head) अणु
-		/* line->buffer + LINE_बफ_मानE is the end of the buffer! */
-		count = line->buffer + LINE_बफ_मानE - line->head;
+	if (line->tail < line->head) {
+		/* line->buffer + LINE_BUFSIZE is the end of the buffer! */
+		count = line->buffer + LINE_BUFSIZE - line->head;
 
-		n = ग_लिखो_chan(line->chan_out, line->head, count,
-			       line->driver->ग_लिखो_irq);
-		अगर (n < 0)
-			वापस n;
-		अगर (n == count) अणु
+		n = write_chan(line->chan_out, line->head, count,
+			       line->driver->write_irq);
+		if (n < 0)
+			return n;
+		if (n == count) {
 			/*
 			 * We have flushed from ->head to buffer end, now we
 			 * must flush only from the beginning to ->tail.
 			 */
 			line->head = line->buffer;
-		पूर्ण अन्यथा अणु
+		} else {
 			line->head += n;
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
 	count = line->tail - line->head;
-	n = ग_लिखो_chan(line->chan_out, line->head, count,
-		       line->driver->ग_लिखो_irq);
+	n = write_chan(line->chan_out, line->head, count,
+		       line->driver->write_irq);
 
-	अगर (n < 0)
-		वापस n;
+	if (n < 0)
+		return n;
 
 	line->head += n;
-	वापस line->head == line->tail;
-पूर्ण
+	return line->head == line->tail;
+}
 
-व्योम line_flush_buffer(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा line *line = tty->driver_data;
-	अचिन्हित दीर्घ flags;
+void line_flush_buffer(struct tty_struct *tty)
+{
+	struct line *line = tty->driver_data;
+	unsigned long flags;
 
 	spin_lock_irqsave(&line->lock, flags);
 	flush_buffer(line);
 	spin_unlock_irqrestore(&line->lock, flags);
-पूर्ण
+}
 
 /*
- * We map both ->flush_अक्षरs and ->put_अक्षर (which go in pair) onto
- * ->flush_buffer and ->ग_लिखो. Hope it's not that bad.
+ * We map both ->flush_chars and ->put_char (which go in pair) onto
+ * ->flush_buffer and ->write. Hope it's not that bad.
  */
-व्योम line_flush_अक्षरs(काष्ठा tty_काष्ठा *tty)
-अणु
+void line_flush_chars(struct tty_struct *tty)
+{
 	line_flush_buffer(tty);
-पूर्ण
+}
 
-पूर्णांक line_ग_लिखो(काष्ठा tty_काष्ठा *tty, स्थिर अचिन्हित अक्षर *buf, पूर्णांक len)
-अणु
-	काष्ठा line *line = tty->driver_data;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक n, ret = 0;
+int line_write(struct tty_struct *tty, const unsigned char *buf, int len)
+{
+	struct line *line = tty->driver_data;
+	unsigned long flags;
+	int n, ret = 0;
 
 	spin_lock_irqsave(&line->lock, flags);
-	अगर (line->head != line->tail)
+	if (line->head != line->tail)
 		ret = buffer_data(line, buf, len);
-	अन्यथा अणु
-		n = ग_लिखो_chan(line->chan_out, buf, len,
-			       line->driver->ग_लिखो_irq);
-		अगर (n < 0) अणु
+	else {
+		n = write_chan(line->chan_out, buf, len,
+			       line->driver->write_irq);
+		if (n < 0) {
 			ret = n;
-			जाओ out_up;
-		पूर्ण
+			goto out_up;
+		}
 
 		len -= n;
 		ret += n;
-		अगर (len > 0)
+		if (len > 0)
 			ret += buffer_data(line, buf + n, len);
-	पूर्ण
+	}
 out_up:
 	spin_unlock_irqrestore(&line->lock, flags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम line_set_termios(काष्ठा tty_काष्ठा *tty, काष्ठा ktermios * old)
-अणु
+void line_set_termios(struct tty_struct *tty, struct ktermios * old)
+{
 	/* nothing */
-पूर्ण
+}
 
-व्योम line_throttle(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा line *line = tty->driver_data;
+void line_throttle(struct tty_struct *tty)
+{
+	struct line *line = tty->driver_data;
 
-	deactivate_chan(line->chan_in, line->driver->पढ़ो_irq);
+	deactivate_chan(line->chan_in, line->driver->read_irq);
 	line->throttled = 1;
-पूर्ण
+}
 
-व्योम line_unthrottle(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा line *line = tty->driver_data;
+void line_unthrottle(struct tty_struct *tty)
+{
+	struct line *line = tty->driver_data;
 
 	line->throttled = 0;
-	chan_पूर्णांकerrupt(line, line->driver->पढ़ो_irq);
-पूर्ण
+	chan_interrupt(line, line->driver->read_irq);
+}
 
-अटल irqवापस_t line_ग_लिखो_पूर्णांकerrupt(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा chan *chan = data;
-	काष्ठा line *line = chan->line;
-	पूर्णांक err;
+static irqreturn_t line_write_interrupt(int irq, void *data)
+{
+	struct chan *chan = data;
+	struct line *line = chan->line;
+	int err;
 
 	/*
 	 * Interrupts are disabled here because genirq keep irqs disabled when
@@ -246,310 +245,310 @@ out_up:
 
 	spin_lock(&line->lock);
 	err = flush_buffer(line);
-	अगर (err == 0) अणु
+	if (err == 0) {
 		spin_unlock(&line->lock);
-		वापस IRQ_NONE;
-	पूर्ण अन्यथा अगर ((err < 0) && (err != -EAGAIN)) अणु
+		return IRQ_NONE;
+	} else if ((err < 0) && (err != -EAGAIN)) {
 		line->head = line->buffer;
 		line->tail = line->buffer;
-	पूर्ण
+	}
 	spin_unlock(&line->lock);
 
 	tty_port_tty_wakeup(&line->port);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-पूर्णांक line_setup_irq(पूर्णांक fd, पूर्णांक input, पूर्णांक output, काष्ठा line *line, व्योम *data)
-अणु
-	स्थिर काष्ठा line_driver *driver = line->driver;
-	पूर्णांक err;
+int line_setup_irq(int fd, int input, int output, struct line *line, void *data)
+{
+	const struct line_driver *driver = line->driver;
+	int err;
 
-	अगर (input) अणु
-		err = um_request_irq(driver->पढ़ो_irq, fd, IRQ_READ,
-				     line_पूर्णांकerrupt, IRQF_SHARED,
-				     driver->पढ़ो_irq_name, data);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+	if (input) {
+		err = um_request_irq(driver->read_irq, fd, IRQ_READ,
+				     line_interrupt, IRQF_SHARED,
+				     driver->read_irq_name, data);
+		if (err < 0)
+			return err;
+	}
 
-	अगर (output) अणु
-		err = um_request_irq(driver->ग_लिखो_irq, fd, IRQ_WRITE,
-				     line_ग_लिखो_पूर्णांकerrupt, IRQF_SHARED,
-				     driver->ग_लिखो_irq_name, data);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+	if (output) {
+		err = um_request_irq(driver->write_irq, fd, IRQ_WRITE,
+				     line_write_interrupt, IRQF_SHARED,
+				     driver->write_irq_name, data);
+		if (err < 0)
+			return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक line_activate(काष्ठा tty_port *port, काष्ठा tty_काष्ठा *tty)
-अणु
-	पूर्णांक ret;
-	काष्ठा line *line = tty->driver_data;
+static int line_activate(struct tty_port *port, struct tty_struct *tty)
+{
+	int ret;
+	struct line *line = tty->driver_data;
 
 	ret = enable_chan(line);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (!line->sigio) अणु
+	if (!line->sigio) {
 		chan_enable_winch(line->chan_out, port);
 		line->sigio = 1;
-	पूर्ण
+	}
 
-	chan_winकरोw_size(line, &tty->winsize.ws_row,
+	chan_window_size(line, &tty->winsize.ws_row,
 		&tty->winsize.ws_col);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम unरेजिस्टर_winch(काष्ठा tty_काष्ठा *tty);
+static void unregister_winch(struct tty_struct *tty);
 
-अटल व्योम line_deकाष्ठा(काष्ठा tty_port *port)
-अणु
-	काष्ठा tty_काष्ठा *tty = tty_port_tty_get(port);
-	काष्ठा line *line = tty->driver_data;
+static void line_destruct(struct tty_port *port)
+{
+	struct tty_struct *tty = tty_port_tty_get(port);
+	struct line *line = tty->driver_data;
 
-	अगर (line->sigio) अणु
-		unरेजिस्टर_winch(tty);
+	if (line->sigio) {
+		unregister_winch(tty);
 		line->sigio = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल स्थिर काष्ठा tty_port_operations line_port_ops = अणु
+static const struct tty_port_operations line_port_ops = {
 	.activate = line_activate,
-	.deकाष्ठा = line_deकाष्ठा,
-पूर्ण;
+	.destruct = line_destruct,
+};
 
-पूर्णांक line_खोलो(काष्ठा tty_काष्ठा *tty, काष्ठा file *filp)
-अणु
-	काष्ठा line *line = tty->driver_data;
+int line_open(struct tty_struct *tty, struct file *filp)
+{
+	struct line *line = tty->driver_data;
 
-	वापस tty_port_खोलो(&line->port, tty, filp);
-पूर्ण
+	return tty_port_open(&line->port, tty, filp);
+}
 
-पूर्णांक line_install(काष्ठा tty_driver *driver, काष्ठा tty_काष्ठा *tty,
-		 काष्ठा line *line)
-अणु
-	पूर्णांक ret;
+int line_install(struct tty_driver *driver, struct tty_struct *tty,
+		 struct line *line)
+{
+	int ret;
 
 	ret = tty_standard_install(driver, tty);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	tty->driver_data = line;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम line_बंद(काष्ठा tty_काष्ठा *tty, काष्ठा file * filp)
-अणु
-	काष्ठा line *line = tty->driver_data;
+void line_close(struct tty_struct *tty, struct file * filp)
+{
+	struct line *line = tty->driver_data;
 
-	tty_port_बंद(&line->port, tty, filp);
-पूर्ण
+	tty_port_close(&line->port, tty, filp);
+}
 
-व्योम line_hangup(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा line *line = tty->driver_data;
+void line_hangup(struct tty_struct *tty)
+{
+	struct line *line = tty->driver_data;
 
 	tty_port_hangup(&line->port);
-पूर्ण
+}
 
-व्योम बंद_lines(काष्ठा line *lines, पूर्णांक nlines)
-अणु
-	पूर्णांक i;
+void close_lines(struct line *lines, int nlines)
+{
+	int i;
 
-	क्रम(i = 0; i < nlines; i++)
-		बंद_chan(&lines[i]);
-पूर्ण
+	for(i = 0; i < nlines; i++)
+		close_chan(&lines[i]);
+}
 
-पूर्णांक setup_one_line(काष्ठा line *lines, पूर्णांक n, अक्षर *init,
-		   स्थिर काष्ठा chan_opts *opts, अक्षर **error_out)
-अणु
-	काष्ठा line *line = &lines[n];
-	काष्ठा tty_driver *driver = line->driver->driver;
-	पूर्णांक err = -EINVAL;
+int setup_one_line(struct line *lines, int n, char *init,
+		   const struct chan_opts *opts, char **error_out)
+{
+	struct line *line = &lines[n];
+	struct tty_driver *driver = line->driver->driver;
+	int err = -EINVAL;
 
-	अगर (line->port.count) अणु
+	if (line->port.count) {
 		*error_out = "Device is already open";
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (!म_भेद(init, "none")) अणु
-		अगर (line->valid) अणु
+	if (!strcmp(init, "none")) {
+		if (line->valid) {
 			line->valid = 0;
-			kमुक्त(line->init_str);
-			tty_unरेजिस्टर_device(driver, n);
-			parse_chan_pair(शून्य, line, n, opts, error_out);
+			kfree(line->init_str);
+			tty_unregister_device(driver, n);
+			parse_chan_pair(NULL, line, n, opts, error_out);
 			err = 0;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अक्षर *new = kstrdup(init, GFP_KERNEL);
-		अगर (!new) अणु
+		}
+	} else {
+		char *new = kstrdup(init, GFP_KERNEL);
+		if (!new) {
 			*error_out = "Failed to allocate memory";
-			वापस -ENOMEM;
-		पूर्ण
-		अगर (line->valid) अणु
-			tty_unरेजिस्टर_device(driver, n);
-			kमुक्त(line->init_str);
-		पूर्ण
+			return -ENOMEM;
+		}
+		if (line->valid) {
+			tty_unregister_device(driver, n);
+			kfree(line->init_str);
+		}
 		line->init_str = new;
 		line->valid = 1;
 		err = parse_chan_pair(new, line, n, opts, error_out);
-		अगर (!err) अणु
-			काष्ठा device *d = tty_port_रेजिस्टर_device(&line->port,
-					driver, n, शून्य);
-			अगर (IS_ERR(d)) अणु
+		if (!err) {
+			struct device *d = tty_port_register_device(&line->port,
+					driver, n, NULL);
+			if (IS_ERR(d)) {
 				*error_out = "Failed to register device";
 				err = PTR_ERR(d);
-				parse_chan_pair(शून्य, line, n, opts, error_out);
-			पूर्ण
-		पूर्ण
-		अगर (err) अणु
-			line->init_str = शून्य;
+				parse_chan_pair(NULL, line, n, opts, error_out);
+			}
+		}
+		if (err) {
+			line->init_str = NULL;
 			line->valid = 0;
-			kमुक्त(new);
-		पूर्ण
-	पूर्ण
+			kfree(new);
+		}
+	}
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
- * Common setup code क्रम both startup command line and mconsole initialization.
- * @lines contains the array (of size @num) to modअगरy;
+ * Common setup code for both startup command line and mconsole initialization.
+ * @lines contains the array (of size @num) to modify;
  * @init is the setup string;
- * @error_out is an error string in the हाल of failure;
+ * @error_out is an error string in the case of failure;
  */
 
-पूर्णांक line_setup(अक्षर **conf, अचिन्हित पूर्णांक num, अक्षर **def,
-	       अक्षर *init, अक्षर *name)
-अणु
-	अक्षर *error;
+int line_setup(char **conf, unsigned int num, char **def,
+	       char *init, char *name)
+{
+	char *error;
 
-	अगर (*init == '=') अणु
+	if (*init == '=') {
 		/*
 		 * We said con=/ssl= instead of con#=, so we are configuring all
 		 * consoles at once.
 		 */
 		*def = init + 1;
-	पूर्ण अन्यथा अणु
-		अक्षर *end;
-		अचिन्हित n = simple_म_से_अदीर्घ(init, &end, 0);
+	} else {
+		char *end;
+		unsigned n = simple_strtoul(init, &end, 0);
 
-		अगर (*end != '=') अणु
+		if (*end != '=') {
 			error = "Couldn't parse device number";
-			जाओ out;
-		पूर्ण
-		अगर (n >= num) अणु
+			goto out;
+		}
+		if (n >= num) {
 			error = "Device number out of range";
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		conf[n] = end + 1;
-	पूर्ण
-	वापस 0;
+	}
+	return 0;
 
 out:
-	prपूर्णांकk(KERN_ERR "Failed to set up %s with "
+	printk(KERN_ERR "Failed to set up %s with "
 	       "configuration string \"%s\" : %s\n", name, init, error);
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-पूर्णांक line_config(काष्ठा line *lines, अचिन्हित पूर्णांक num, अक्षर *str,
-		स्थिर काष्ठा chan_opts *opts, अक्षर **error_out)
-अणु
-	अक्षर *end;
-	पूर्णांक n;
+int line_config(struct line *lines, unsigned int num, char *str,
+		const struct chan_opts *opts, char **error_out)
+{
+	char *end;
+	int n;
 
-	अगर (*str == '=') अणु
+	if (*str == '=') {
 		*error_out = "Can't configure all devices from mconsole";
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	n = simple_म_से_अदीर्घ(str, &end, 0);
-	अगर (*end++ != '=') अणु
+	n = simple_strtoul(str, &end, 0);
+	if (*end++ != '=') {
 		*error_out = "Couldn't parse device number";
-		वापस -EINVAL;
-	पूर्ण
-	अगर (n >= num) अणु
+		return -EINVAL;
+	}
+	if (n >= num) {
 		*error_out = "Device number out of range";
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस setup_one_line(lines, n, end, opts, error_out);
-पूर्ण
+	return setup_one_line(lines, n, end, opts, error_out);
+}
 
-पूर्णांक line_get_config(अक्षर *name, काष्ठा line *lines, अचिन्हित पूर्णांक num, अक्षर *str,
-		    पूर्णांक size, अक्षर **error_out)
-अणु
-	काष्ठा line *line;
-	अक्षर *end;
-	पूर्णांक dev, n = 0;
+int line_get_config(char *name, struct line *lines, unsigned int num, char *str,
+		    int size, char **error_out)
+{
+	struct line *line;
+	char *end;
+	int dev, n = 0;
 
-	dev = simple_म_से_अदीर्घ(name, &end, 0);
-	अगर ((*end != '\0') || (end == name)) अणु
+	dev = simple_strtoul(name, &end, 0);
+	if ((*end != '\0') || (end == name)) {
 		*error_out = "line_get_config failed to parse device number";
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर ((dev < 0) || (dev >= num)) अणु
+	if ((dev < 0) || (dev >= num)) {
 		*error_out = "device number out of range";
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	line = &lines[dev];
 
-	अगर (!line->valid)
+	if (!line->valid)
 		CONFIG_CHUNK(str, size, n, "none", 1);
-	अन्यथा अणु
-		काष्ठा tty_काष्ठा *tty = tty_port_tty_get(&line->port);
-		अगर (tty == शून्य) अणु
+	else {
+		struct tty_struct *tty = tty_port_tty_get(&line->port);
+		if (tty == NULL) {
 			CONFIG_CHUNK(str, size, n, line->init_str, 1);
-		पूर्ण अन्यथा अणु
+		} else {
 			n = chan_config_string(line, str, size, error_out);
 			tty_kref_put(tty);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस n;
-पूर्ण
+	return n;
+}
 
-पूर्णांक line_id(अक्षर **str, पूर्णांक *start_out, पूर्णांक *end_out)
-अणु
-	अक्षर *end;
-	पूर्णांक n;
+int line_id(char **str, int *start_out, int *end_out)
+{
+	char *end;
+	int n;
 
-	n = simple_म_से_अदीर्घ(*str, &end, 0);
-	अगर ((*end != '\0') || (end == *str))
-		वापस -1;
+	n = simple_strtoul(*str, &end, 0);
+	if ((*end != '\0') || (end == *str))
+		return -1;
 
 	*str = end;
 	*start_out = n;
 	*end_out = n;
-	वापस n;
-पूर्ण
+	return n;
+}
 
-पूर्णांक line_हटाओ(काष्ठा line *lines, अचिन्हित पूर्णांक num, पूर्णांक n, अक्षर **error_out)
-अणु
-	अगर (n >= num) अणु
+int line_remove(struct line *lines, unsigned int num, int n, char **error_out)
+{
+	if (n >= num) {
 		*error_out = "Device number out of range";
-		वापस -EINVAL;
-	पूर्ण
-	वापस setup_one_line(lines, n, "none", शून्य, error_out);
-पूर्ण
+		return -EINVAL;
+	}
+	return setup_one_line(lines, n, "none", NULL, error_out);
+}
 
-पूर्णांक रेजिस्टर_lines(काष्ठा line_driver *line_driver,
-		   स्थिर काष्ठा tty_operations *ops,
-		   काष्ठा line *lines, पूर्णांक nlines)
-अणु
-	काष्ठा tty_driver *driver = alloc_tty_driver(nlines);
-	पूर्णांक err;
-	पूर्णांक i;
+int register_lines(struct line_driver *line_driver,
+		   const struct tty_operations *ops,
+		   struct line *lines, int nlines)
+{
+	struct tty_driver *driver = alloc_tty_driver(nlines);
+	int err;
+	int i;
 
-	अगर (!driver)
-		वापस -ENOMEM;
+	if (!driver)
+		return -ENOMEM;
 
 	driver->driver_name = line_driver->name;
 	driver->name = line_driver->device_name;
@@ -560,206 +559,206 @@ out:
 	driver->flags = TTY_DRIVER_REAL_RAW | TTY_DRIVER_DYNAMIC_DEV;
 	driver->init_termios = tty_std_termios;
 	
-	क्रम (i = 0; i < nlines; i++) अणु
+	for (i = 0; i < nlines; i++) {
 		tty_port_init(&lines[i].port);
 		lines[i].port.ops = &line_port_ops;
 		spin_lock_init(&lines[i].lock);
 		lines[i].driver = line_driver;
 		INIT_LIST_HEAD(&lines[i].chan_list);
-	पूर्ण
+	}
 	tty_set_operations(driver, ops);
 
-	err = tty_रेजिस्टर_driver(driver);
-	अगर (err) अणु
-		prपूर्णांकk(KERN_ERR "register_lines : can't register %s driver\n",
+	err = tty_register_driver(driver);
+	if (err) {
+		printk(KERN_ERR "register_lines : can't register %s driver\n",
 		       line_driver->name);
 		put_tty_driver(driver);
-		क्रम (i = 0; i < nlines; i++)
+		for (i = 0; i < nlines; i++)
 			tty_port_destroy(&lines[i].port);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	line_driver->driver = driver;
-	mconsole_रेजिस्टर_dev(&line_driver->mc);
-	वापस 0;
-पूर्ण
+	mconsole_register_dev(&line_driver->mc);
+	return 0;
+}
 
-अटल DEFINE_SPINLOCK(winch_handler_lock);
-अटल LIST_HEAD(winch_handlers);
+static DEFINE_SPINLOCK(winch_handler_lock);
+static LIST_HEAD(winch_handlers);
 
-काष्ठा winch अणु
-	काष्ठा list_head list;
-	पूर्णांक fd;
-	पूर्णांक tty_fd;
-	पूर्णांक pid;
-	काष्ठा tty_port *port;
-	अचिन्हित दीर्घ stack;
-	काष्ठा work_काष्ठा work;
-पूर्ण;
+struct winch {
+	struct list_head list;
+	int fd;
+	int tty_fd;
+	int pid;
+	struct tty_port *port;
+	unsigned long stack;
+	struct work_struct work;
+};
 
-अटल व्योम __मुक्त_winch(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा winch *winch = container_of(work, काष्ठा winch, work);
-	um_मुक्त_irq(WINCH_IRQ, winch);
+static void __free_winch(struct work_struct *work)
+{
+	struct winch *winch = container_of(work, struct winch, work);
+	um_free_irq(WINCH_IRQ, winch);
 
-	अगर (winch->pid != -1)
-		os_समाप्त_process(winch->pid, 1);
-	अगर (winch->stack != 0)
-		मुक्त_stack(winch->stack, 0);
-	kमुक्त(winch);
-पूर्ण
+	if (winch->pid != -1)
+		os_kill_process(winch->pid, 1);
+	if (winch->stack != 0)
+		free_stack(winch->stack, 0);
+	kfree(winch);
+}
 
-अटल व्योम मुक्त_winch(काष्ठा winch *winch)
-अणु
-	पूर्णांक fd = winch->fd;
+static void free_winch(struct winch *winch)
+{
+	int fd = winch->fd;
 	winch->fd = -1;
-	अगर (fd != -1)
-		os_बंद_file(fd);
-	__मुक्त_winch(&winch->work);
-पूर्ण
+	if (fd != -1)
+		os_close_file(fd);
+	__free_winch(&winch->work);
+}
 
-अटल irqवापस_t winch_पूर्णांकerrupt(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा winch *winch = data;
-	काष्ठा tty_काष्ठा *tty;
-	काष्ठा line *line;
-	पूर्णांक fd = winch->fd;
-	पूर्णांक err;
-	अक्षर c;
-	काष्ठा pid *pgrp;
+static irqreturn_t winch_interrupt(int irq, void *data)
+{
+	struct winch *winch = data;
+	struct tty_struct *tty;
+	struct line *line;
+	int fd = winch->fd;
+	int err;
+	char c;
+	struct pid *pgrp;
 
-	अगर (fd != -1) अणु
-		err = generic_पढ़ो(fd, &c, शून्य);
-		अगर (err < 0) अणु
-			अगर (err != -EAGAIN) अणु
+	if (fd != -1) {
+		err = generic_read(fd, &c, NULL);
+		if (err < 0) {
+			if (err != -EAGAIN) {
 				winch->fd = -1;
 				list_del(&winch->list);
-				os_बंद_file(fd);
-				prपूर्णांकk(KERN_ERR "winch_interrupt : "
+				os_close_file(fd);
+				printk(KERN_ERR "winch_interrupt : "
 				       "read failed, errno = %d\n", -err);
-				prपूर्णांकk(KERN_ERR "fd %d is losing SIGWINCH "
+				printk(KERN_ERR "fd %d is losing SIGWINCH "
 				       "support\n", winch->tty_fd);
-				INIT_WORK(&winch->work, __मुक्त_winch);
+				INIT_WORK(&winch->work, __free_winch);
 				schedule_work(&winch->work);
-				वापस IRQ_HANDLED;
-			पूर्ण
-			जाओ out;
-		पूर्ण
-	पूर्ण
+				return IRQ_HANDLED;
+			}
+			goto out;
+		}
+	}
 	tty = tty_port_tty_get(winch->port);
-	अगर (tty != शून्य) अणु
+	if (tty != NULL) {
 		line = tty->driver_data;
-		अगर (line != शून्य) अणु
-			chan_winकरोw_size(line, &tty->winsize.ws_row,
+		if (line != NULL) {
+			chan_window_size(line, &tty->winsize.ws_row,
 					 &tty->winsize.ws_col);
 			pgrp = tty_get_pgrp(tty);
-			अगर (pgrp)
-				समाप्त_pgrp(pgrp, SIGWINCH, 1);
+			if (pgrp)
+				kill_pgrp(pgrp, SIGWINCH, 1);
 			put_pid(pgrp);
-		पूर्ण
+		}
 		tty_kref_put(tty);
-	पूर्ण
+	}
  out:
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-व्योम रेजिस्टर_winch_irq(पूर्णांक fd, पूर्णांक tty_fd, पूर्णांक pid, काष्ठा tty_port *port,
-			अचिन्हित दीर्घ stack)
-अणु
-	काष्ठा winch *winch;
+void register_winch_irq(int fd, int tty_fd, int pid, struct tty_port *port,
+			unsigned long stack)
+{
+	struct winch *winch;
 
-	winch = kदो_स्मृति(माप(*winch), GFP_KERNEL);
-	अगर (winch == शून्य) अणु
-		prपूर्णांकk(KERN_ERR "register_winch_irq - kmalloc failed\n");
-		जाओ cleanup;
-	पूर्ण
+	winch = kmalloc(sizeof(*winch), GFP_KERNEL);
+	if (winch == NULL) {
+		printk(KERN_ERR "register_winch_irq - kmalloc failed\n");
+		goto cleanup;
+	}
 
-	*winch = ((काष्ठा winch) अणु .list  	= LIST_HEAD_INIT(winch->list),
+	*winch = ((struct winch) { .list  	= LIST_HEAD_INIT(winch->list),
 				   .fd  	= fd,
 				   .tty_fd 	= tty_fd,
 				   .pid  	= pid,
 				   .port 	= port,
-				   .stack	= stack पूर्ण);
+				   .stack	= stack });
 
-	अगर (um_request_irq(WINCH_IRQ, fd, IRQ_READ, winch_पूर्णांकerrupt,
-			   IRQF_SHARED, "winch", winch) < 0) अणु
-		prपूर्णांकk(KERN_ERR "register_winch_irq - failed to register "
+	if (um_request_irq(WINCH_IRQ, fd, IRQ_READ, winch_interrupt,
+			   IRQF_SHARED, "winch", winch) < 0) {
+		printk(KERN_ERR "register_winch_irq - failed to register "
 		       "IRQ\n");
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
 	spin_lock(&winch_handler_lock);
 	list_add(&winch->list, &winch_handlers);
 	spin_unlock(&winch_handler_lock);
 
-	वापस;
+	return;
 
- out_मुक्त:
-	kमुक्त(winch);
+ out_free:
+	kfree(winch);
  cleanup:
-	os_समाप्त_process(pid, 1);
-	os_बंद_file(fd);
-	अगर (stack != 0)
-		मुक्त_stack(stack, 0);
-पूर्ण
+	os_kill_process(pid, 1);
+	os_close_file(fd);
+	if (stack != 0)
+		free_stack(stack, 0);
+}
 
-अटल व्योम unरेजिस्टर_winch(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा list_head *ele, *next;
-	काष्ठा winch *winch;
-	काष्ठा tty_काष्ठा *wtty;
+static void unregister_winch(struct tty_struct *tty)
+{
+	struct list_head *ele, *next;
+	struct winch *winch;
+	struct tty_struct *wtty;
 
 	spin_lock(&winch_handler_lock);
 
-	list_क्रम_each_safe(ele, next, &winch_handlers) अणु
-		winch = list_entry(ele, काष्ठा winch, list);
+	list_for_each_safe(ele, next, &winch_handlers) {
+		winch = list_entry(ele, struct winch, list);
 		wtty = tty_port_tty_get(winch->port);
-		अगर (wtty == tty) अणु
+		if (wtty == tty) {
 			list_del(&winch->list);
 			spin_unlock(&winch_handler_lock);
-			मुक्त_winch(winch);
-			अवरोध;
-		पूर्ण
+			free_winch(winch);
+			break;
+		}
 		tty_kref_put(wtty);
-	पूर्ण
+	}
 	spin_unlock(&winch_handler_lock);
-पूर्ण
+}
 
-अटल व्योम winch_cleanup(व्योम)
-अणु
-	काष्ठा winch *winch;
+static void winch_cleanup(void)
+{
+	struct winch *winch;
 
 	spin_lock(&winch_handler_lock);
-	जबतक ((winch = list_first_entry_or_null(&winch_handlers,
-						 काष्ठा winch, list))) अणु
+	while ((winch = list_first_entry_or_null(&winch_handlers,
+						 struct winch, list))) {
 		list_del(&winch->list);
 		spin_unlock(&winch_handler_lock);
 
-		मुक्त_winch(winch);
+		free_winch(winch);
 
 		spin_lock(&winch_handler_lock);
-	पूर्ण
+	}
 
 	spin_unlock(&winch_handler_lock);
-पूर्ण
-__uml_निकासcall(winch_cleanup);
+}
+__uml_exitcall(winch_cleanup);
 
-अक्षर *add_xterm_umid(अक्षर *base)
-अणु
-	अक्षर *umid, *title;
-	पूर्णांक len;
+char *add_xterm_umid(char *base)
+{
+	char *umid, *title;
+	int len;
 
 	umid = get_umid();
-	अगर (*umid == '\0')
-		वापस base;
+	if (*umid == '\0')
+		return base;
 
-	len = म_माप(base) + म_माप(" ()") + म_माप(umid) + 1;
-	title = kदो_स्मृति(len, GFP_KERNEL);
-	अगर (title == शून्य) अणु
-		prपूर्णांकk(KERN_ERR "Failed to allocate buffer for xterm title\n");
-		वापस base;
-	पूर्ण
+	len = strlen(base) + strlen(" ()") + strlen(umid) + 1;
+	title = kmalloc(len, GFP_KERNEL);
+	if (title == NULL) {
+		printk(KERN_ERR "Failed to allocate buffer for xterm title\n");
+		return base;
+	}
 
-	snम_लिखो(title, len, "%s (%s)", base, umid);
-	वापस title;
-पूर्ण
+	snprintf(title, len, "%s (%s)", base, umid);
+	return title;
+}

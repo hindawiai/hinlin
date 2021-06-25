@@ -1,121 +1,120 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /*******************************************************************************
  *
  * Module Name: dsutils - Dispatcher utilities
  *
  ******************************************************************************/
 
-#समावेश <acpi/acpi.h>
-#समावेश "accommon.h"
-#समावेश "acparser.h"
-#समावेश "amlcode.h"
-#समावेश "acdispat.h"
-#समावेश "acinterp.h"
-#समावेश "acnamesp.h"
-#समावेश "acdebug.h"
+#include <acpi/acpi.h>
+#include "accommon.h"
+#include "acparser.h"
+#include "amlcode.h"
+#include "acdispat.h"
+#include "acinterp.h"
+#include "acnamesp.h"
+#include "acdebug.h"
 
-#घोषणा _COMPONENT          ACPI_DISPATCHER
+#define _COMPONENT          ACPI_DISPATCHER
 ACPI_MODULE_NAME("dsutils")
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ds_clear_implicit_वापस
+ * FUNCTION:    acpi_ds_clear_implicit_return
  *
  * PARAMETERS:  walk_state          - Current State
  *
  * RETURN:      None.
  *
- * DESCRIPTION: Clear and हटाओ a reference on an implicit वापस value. Used
- *              to delete "stale" वापस values (अगर enabled, the वापस value
- *              from every चालक is saved at least momentarily, in हाल the
- *              parent method निकासs.)
+ * DESCRIPTION: Clear and remove a reference on an implicit return value. Used
+ *              to delete "stale" return values (if enabled, the return value
+ *              from every operator is saved at least momentarily, in case the
+ *              parent method exits.)
  *
  ******************************************************************************/
-व्योम acpi_ds_clear_implicit_वापस(काष्ठा acpi_walk_state *walk_state)
-अणु
-	ACPI_FUNCTION_NAME(ds_clear_implicit_वापस);
+void acpi_ds_clear_implicit_return(struct acpi_walk_state *walk_state)
+{
+	ACPI_FUNCTION_NAME(ds_clear_implicit_return);
 
 	/*
-	 * Slack must be enabled क्रम this feature
+	 * Slack must be enabled for this feature
 	 */
-	अगर (!acpi_gbl_enable_पूर्णांकerpreter_slack) अणु
-		वापस;
-	पूर्ण
+	if (!acpi_gbl_enable_interpreter_slack) {
+		return;
+	}
 
-	अगर (walk_state->implicit_वापस_obj) अणु
+	if (walk_state->implicit_return_obj) {
 		/*
-		 * Delete any "stale" implicit वापस. However, in
-		 * complex statements, the implicit वापस value can be
+		 * Delete any "stale" implicit return. However, in
+		 * complex statements, the implicit return value can be
 		 * bubbled up several levels.
 		 */
 		ACPI_DEBUG_PRINT((ACPI_DB_DISPATCH,
 				  "Removing reference on stale implicit return obj %p\n",
-				  walk_state->implicit_वापस_obj));
+				  walk_state->implicit_return_obj));
 
-		acpi_ut_हटाओ_reference(walk_state->implicit_वापस_obj);
-		walk_state->implicit_वापस_obj = शून्य;
-	पूर्ण
-पूर्ण
+		acpi_ut_remove_reference(walk_state->implicit_return_obj);
+		walk_state->implicit_return_obj = NULL;
+	}
+}
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ds_करो_implicit_वापस
+ * FUNCTION:    acpi_ds_do_implicit_return
  *
- * PARAMETERS:  वापस_desc         - The वापस value
+ * PARAMETERS:  return_desc         - The return value
  *              walk_state          - Current State
- *              add_reference       - True अगर a reference should be added to the
- *                                    वापस object
+ *              add_reference       - True if a reference should be added to the
+ *                                    return object
  *
- * RETURN:      TRUE अगर implicit वापस enabled, FALSE otherwise
+ * RETURN:      TRUE if implicit return enabled, FALSE otherwise
  *
  * DESCRIPTION: Implements the optional "implicit return".  We save the result
- *              of every ASL चालक and control method invocation in हाल the
- *              parent method निकास. Beक्रमe storing a new वापस value, we
- *              delete the previous वापस value.
+ *              of every ASL operator and control method invocation in case the
+ *              parent method exit. Before storing a new return value, we
+ *              delete the previous return value.
  *
  ******************************************************************************/
 
 u8
-acpi_ds_करो_implicit_वापस(जोड़ acpi_opeअक्रम_object *वापस_desc,
-			   काष्ठा acpi_walk_state *walk_state, u8 add_reference)
-अणु
-	ACPI_FUNCTION_NAME(ds_करो_implicit_वापस);
+acpi_ds_do_implicit_return(union acpi_operand_object *return_desc,
+			   struct acpi_walk_state *walk_state, u8 add_reference)
+{
+	ACPI_FUNCTION_NAME(ds_do_implicit_return);
 
 	/*
-	 * Slack must be enabled क्रम this feature, and we must
-	 * have a valid वापस object
+	 * Slack must be enabled for this feature, and we must
+	 * have a valid return object
 	 */
-	अगर ((!acpi_gbl_enable_पूर्णांकerpreter_slack) || (!वापस_desc)) अणु
-		वापस (FALSE);
-	पूर्ण
+	if ((!acpi_gbl_enable_interpreter_slack) || (!return_desc)) {
+		return (FALSE);
+	}
 
 	ACPI_DEBUG_PRINT((ACPI_DB_DISPATCH,
 			  "Result %p will be implicitly returned; Prev=%p\n",
-			  वापस_desc, walk_state->implicit_वापस_obj));
+			  return_desc, walk_state->implicit_return_obj));
 
 	/*
-	 * Delete any "stale" implicit वापस value first. However, in
-	 * complex statements, the implicit वापस value can be
-	 * bubbled up several levels, so we करोn't clear the value अगर it
-	 * is the same as the वापस_desc.
+	 * Delete any "stale" implicit return value first. However, in
+	 * complex statements, the implicit return value can be
+	 * bubbled up several levels, so we don't clear the value if it
+	 * is the same as the return_desc.
 	 */
-	अगर (walk_state->implicit_वापस_obj) अणु
-		अगर (walk_state->implicit_वापस_obj == वापस_desc) अणु
-			वापस (TRUE);
-		पूर्ण
-		acpi_ds_clear_implicit_वापस(walk_state);
-	पूर्ण
+	if (walk_state->implicit_return_obj) {
+		if (walk_state->implicit_return_obj == return_desc) {
+			return (TRUE);
+		}
+		acpi_ds_clear_implicit_return(walk_state);
+	}
 
-	/* Save the implicit वापस value, add a reference अगर requested */
+	/* Save the implicit return value, add a reference if requested */
 
-	walk_state->implicit_वापस_obj = वापस_desc;
-	अगर (add_reference) अणु
-		acpi_ut_add_reference(वापस_desc);
-	पूर्ण
+	walk_state->implicit_return_obj = return_desc;
+	if (add_reference) {
+		acpi_ut_add_reference(return_desc);
+	}
 
-	वापस (TRUE);
-पूर्ण
+	return (TRUE);
+}
 
 /*******************************************************************************
  *
@@ -124,119 +123,119 @@ acpi_ds_करो_implicit_वापस(जोड़ acpi_opeअक्रम_obj
  * PARAMETERS:  op                  - Current Op
  *              walk_state          - Current State
  *
- * RETURN:      TRUE अगर result is used, FALSE otherwise
+ * RETURN:      TRUE if result is used, FALSE otherwise
  *
- * DESCRIPTION: Check अगर a result object will be used by the parent
+ * DESCRIPTION: Check if a result object will be used by the parent
  *
  ******************************************************************************/
 
 u8
-acpi_ds_is_result_used(जोड़ acpi_parse_object * op,
-		       काष्ठा acpi_walk_state * walk_state)
-अणु
-	स्थिर काष्ठा acpi_opcode_info *parent_info;
+acpi_ds_is_result_used(union acpi_parse_object * op,
+		       struct acpi_walk_state * walk_state)
+{
+	const struct acpi_opcode_info *parent_info;
 
 	ACPI_FUNCTION_TRACE_PTR(ds_is_result_used, op);
 
 	/* Must have both an Op and a Result Object */
 
-	अगर (!op) अणु
+	if (!op) {
 		ACPI_ERROR((AE_INFO, "Null Op"));
-		वापस_UINT8(TRUE);
-	पूर्ण
+		return_UINT8(TRUE);
+	}
 
 	/*
-	 * We know that this चालक is not a
-	 * Return() चालक (would not come here.) The following code is the
-	 * optional support क्रम a so-called "implicit return". Some AML code
-	 * assumes that the last value of the method is "implicitly" वापसed
-	 * to the caller. Just save the last result as the वापस value.
-	 * NOTE: this is optional because the ASL language करोes not actually
+	 * We know that this operator is not a
+	 * Return() operator (would not come here.) The following code is the
+	 * optional support for a so-called "implicit return". Some AML code
+	 * assumes that the last value of the method is "implicitly" returned
+	 * to the caller. Just save the last result as the return value.
+	 * NOTE: this is optional because the ASL language does not actually
 	 * support this behavior.
 	 */
-	(व्योम)acpi_ds_करो_implicit_वापस(walk_state->result_obj, walk_state,
+	(void)acpi_ds_do_implicit_return(walk_state->result_obj, walk_state,
 					 TRUE);
 
 	/*
-	 * Now determine अगर the parent will use the result
+	 * Now determine if the parent will use the result
 	 *
 	 * If there is no parent, or the parent is a scope_op, we are executing
 	 * at the method level. An executing method typically has no parent,
-	 * since each method is parsed separately. A method invoked बाह्यally
+	 * since each method is parsed separately. A method invoked externally
 	 * via execute_control_method has a scope_op as the parent.
 	 */
-	अगर ((!op->common.parent) ||
-	    (op->common.parent->common.aml_opcode == AML_SCOPE_OP)) अणु
+	if ((!op->common.parent) ||
+	    (op->common.parent->common.aml_opcode == AML_SCOPE_OP)) {
 
-		/* No parent, the वापस value cannot possibly be used */
+		/* No parent, the return value cannot possibly be used */
 
 		ACPI_DEBUG_PRINT((ACPI_DB_DISPATCH,
 				  "At Method level, result of [%s] not used\n",
 				  acpi_ps_get_opcode_name(op->common.
 							  aml_opcode)));
-		वापस_UINT8(FALSE);
-	पूर्ण
+		return_UINT8(FALSE);
+	}
 
 	/* Get info on the parent. The root_op is AML_SCOPE */
 
 	parent_info =
 	    acpi_ps_get_opcode_info(op->common.parent->common.aml_opcode);
-	अगर (parent_info->class == AML_CLASS_UNKNOWN) अणु
+	if (parent_info->class == AML_CLASS_UNKNOWN) {
 		ACPI_ERROR((AE_INFO, "Unknown parent opcode Op=%p", op));
-		वापस_UINT8(FALSE);
-	पूर्ण
+		return_UINT8(FALSE);
+	}
 
 	/*
-	 * Decide what to करो with the result based on the parent. If
+	 * Decide what to do with the result based on the parent. If
 	 * the parent opcode will not use the result, delete the object.
 	 * Otherwise leave it as is, it will be deleted when it is used
-	 * as an opeअक्रम later.
+	 * as an operand later.
 	 */
-	चयन (parent_info->class) अणु
-	हाल AML_CLASS_CONTROL:
+	switch (parent_info->class) {
+	case AML_CLASS_CONTROL:
 
-		चयन (op->common.parent->common.aml_opcode) अणु
-		हाल AML_RETURN_OP:
+		switch (op->common.parent->common.aml_opcode) {
+		case AML_RETURN_OP:
 
-			/* Never delete the वापस value associated with a वापस opcode */
+			/* Never delete the return value associated with a return opcode */
 
-			जाओ result_used;
+			goto result_used;
 
-		हाल AML_IF_OP:
-		हाल AML_WHILE_OP:
+		case AML_IF_OP:
+		case AML_WHILE_OP:
 			/*
 			 * If we are executing the predicate AND this is the predicate op,
-			 * we will use the वापस value
+			 * we will use the return value
 			 */
-			अगर ((walk_state->control_state->common.state ==
+			if ((walk_state->control_state->common.state ==
 			     ACPI_CONTROL_PREDICATE_EXECUTING) &&
 			    (walk_state->control_state->control.predicate_op ==
-			     op)) अणु
-				जाओ result_used;
-			पूर्ण
-			अवरोध;
+			     op)) {
+				goto result_used;
+			}
+			break;
 
-		शेष:
+		default:
 
 			/* Ignore other control opcodes */
 
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		/* The general control opcode वापसs no result */
+		/* The general control opcode returns no result */
 
-		जाओ result_not_used;
+		goto result_not_used;
 
-	हाल AML_CLASS_CREATE:
+	case AML_CLASS_CREATE:
 		/*
-		 * These opcodes allow term_arg(s) as opeअक्रमs and thereक्रमe
-		 * the opeअक्रमs can be method calls. The result is used.
+		 * These opcodes allow term_arg(s) as operands and therefore
+		 * the operands can be method calls. The result is used.
 		 */
-		जाओ result_used;
+		goto result_used;
 
-	हाल AML_CLASS_NAMED_OBJECT:
+	case AML_CLASS_NAMED_OBJECT:
 
-		अगर ((op->common.parent->common.aml_opcode == AML_REGION_OP) ||
+		if ((op->common.parent->common.aml_opcode == AML_REGION_OP) ||
 		    (op->common.parent->common.aml_opcode == AML_DATA_REGION_OP)
 		    || (op->common.parent->common.aml_opcode == AML_PACKAGE_OP)
 		    || (op->common.parent->common.aml_opcode == AML_BUFFER_OP)
@@ -245,23 +244,23 @@ acpi_ds_is_result_used(जोड़ acpi_parse_object * op,
 		    || (op->common.parent->common.aml_opcode ==
 			AML_INT_EVAL_SUBTREE_OP)
 		    || (op->common.parent->common.aml_opcode ==
-			AML_BANK_FIELD_OP)) अणु
+			AML_BANK_FIELD_OP)) {
 			/*
-			 * These opcodes allow term_arg(s) as opeअक्रमs and thereक्रमe
-			 * the opeअक्रमs can be method calls. The result is used.
+			 * These opcodes allow term_arg(s) as operands and therefore
+			 * the operands can be method calls. The result is used.
 			 */
-			जाओ result_used;
-		पूर्ण
+			goto result_used;
+		}
 
-		जाओ result_not_used;
+		goto result_not_used;
 
-	शेष:
+	default:
 		/*
-		 * In all other हालs. the parent will actually use the वापस
+		 * In all other cases. the parent will actually use the return
 		 * object, so keep it.
 		 */
-		जाओ result_used;
-	पूर्ण
+		goto result_used;
+	}
 
 result_used:
 	ACPI_DEBUG_PRINT((ACPI_DB_DISPATCH,
@@ -270,7 +269,7 @@ result_used:
 			  acpi_ps_get_opcode_name(op->common.parent->common.
 						  aml_opcode), op));
 
-	वापस_UINT8(TRUE);
+	return_UINT8(TRUE);
 
 result_not_used:
 	ACPI_DEBUG_PRINT((ACPI_DB_DISPATCH,
@@ -279,12 +278,12 @@ result_not_used:
 			  acpi_ps_get_opcode_name(op->common.parent->common.
 						  aml_opcode), op));
 
-	वापस_UINT8(FALSE);
-पूर्ण
+	return_UINT8(FALSE);
+}
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ds_delete_result_अगर_not_used
+ * FUNCTION:    acpi_ds_delete_result_if_not_used
  *
  * PARAMETERS:  op              - Current parse Op
  *              result_obj      - Result of the operation
@@ -292,153 +291,153 @@ result_not_used:
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Used after पूर्णांकerpretation of an opcode. If there is an पूर्णांकernal
- *              result descriptor, check अगर the parent opcode will actually use
+ * DESCRIPTION: Used after interpretation of an opcode. If there is an internal
+ *              result descriptor, check if the parent opcode will actually use
  *              this result. If not, delete the result now so that it will
  *              not become orphaned.
  *
  ******************************************************************************/
 
-व्योम
-acpi_ds_delete_result_अगर_not_used(जोड़ acpi_parse_object *op,
-				  जोड़ acpi_opeअक्रम_object *result_obj,
-				  काष्ठा acpi_walk_state *walk_state)
-अणु
-	जोड़ acpi_opeअक्रम_object *obj_desc;
+void
+acpi_ds_delete_result_if_not_used(union acpi_parse_object *op,
+				  union acpi_operand_object *result_obj,
+				  struct acpi_walk_state *walk_state)
+{
+	union acpi_operand_object *obj_desc;
 	acpi_status status;
 
-	ACPI_FUNCTION_TRACE_PTR(ds_delete_result_अगर_not_used, result_obj);
+	ACPI_FUNCTION_TRACE_PTR(ds_delete_result_if_not_used, result_obj);
 
-	अगर (!op) अणु
+	if (!op) {
 		ACPI_ERROR((AE_INFO, "Null Op"));
-		वापस_VOID;
-	पूर्ण
+		return_VOID;
+	}
 
-	अगर (!result_obj) अणु
-		वापस_VOID;
-	पूर्ण
+	if (!result_obj) {
+		return_VOID;
+	}
 
-	अगर (!acpi_ds_is_result_used(op, walk_state)) अणु
+	if (!acpi_ds_is_result_used(op, walk_state)) {
 
 		/* Must pop the result stack (obj_desc should be equal to result_obj) */
 
 		status = acpi_ds_result_pop(&obj_desc, walk_state);
-		अगर (ACPI_SUCCESS(status)) अणु
-			acpi_ut_हटाओ_reference(result_obj);
-		पूर्ण
-	पूर्ण
+		if (ACPI_SUCCESS(status)) {
+			acpi_ut_remove_reference(result_obj);
+		}
+	}
 
-	वापस_VOID;
-पूर्ण
+	return_VOID;
+}
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ds_resolve_opeअक्रमs
+ * FUNCTION:    acpi_ds_resolve_operands
  *
- * PARAMETERS:  walk_state          - Current walk state with opeअक्रमs on stack
+ * PARAMETERS:  walk_state          - Current walk state with operands on stack
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Resolve all opeअक्रमs to their values. Used to prepare
+ * DESCRIPTION: Resolve all operands to their values. Used to prepare
  *              arguments to a control method invocation (a call from one
  *              method to another.)
  *
  ******************************************************************************/
 
-acpi_status acpi_ds_resolve_opeअक्रमs(काष्ठा acpi_walk_state *walk_state)
-अणु
+acpi_status acpi_ds_resolve_operands(struct acpi_walk_state *walk_state)
+{
 	u32 i;
 	acpi_status status = AE_OK;
 
-	ACPI_FUNCTION_TRACE_PTR(ds_resolve_opeअक्रमs, walk_state);
+	ACPI_FUNCTION_TRACE_PTR(ds_resolve_operands, walk_state);
 
 	/*
-	 * Attempt to resolve each of the valid opeअक्रमs
+	 * Attempt to resolve each of the valid operands
 	 * Method arguments are passed by reference, not by value. This means
 	 * that the actual objects are passed, not copies of the objects.
 	 */
-	क्रम (i = 0; i < walk_state->num_opeअक्रमs; i++) अणु
+	for (i = 0; i < walk_state->num_operands; i++) {
 		status =
-		    acpi_ex_resolve_to_value(&walk_state->opeअक्रमs[i],
+		    acpi_ex_resolve_to_value(&walk_state->operands[i],
 					     walk_state);
-		अगर (ACPI_FAILURE(status)) अणु
-			अवरोध;
-		पूर्ण
-	पूर्ण
+		if (ACPI_FAILURE(status)) {
+			break;
+		}
+	}
 
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	return_ACPI_STATUS(status);
+}
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ds_clear_opeअक्रमs
+ * FUNCTION:    acpi_ds_clear_operands
  *
- * PARAMETERS:  walk_state          - Current walk state with opeअक्रमs on stack
+ * PARAMETERS:  walk_state          - Current walk state with operands on stack
  *
  * RETURN:      None
  *
- * DESCRIPTION: Clear all opeअक्रमs on the current walk state opeअक्रम stack.
+ * DESCRIPTION: Clear all operands on the current walk state operand stack.
  *
  ******************************************************************************/
 
-व्योम acpi_ds_clear_opeअक्रमs(काष्ठा acpi_walk_state *walk_state)
-अणु
+void acpi_ds_clear_operands(struct acpi_walk_state *walk_state)
+{
 	u32 i;
 
-	ACPI_FUNCTION_TRACE_PTR(ds_clear_opeअक्रमs, walk_state);
+	ACPI_FUNCTION_TRACE_PTR(ds_clear_operands, walk_state);
 
-	/* Remove a reference on each opeअक्रम on the stack */
+	/* Remove a reference on each operand on the stack */
 
-	क्रम (i = 0; i < walk_state->num_opeअक्रमs; i++) अणु
+	for (i = 0; i < walk_state->num_operands; i++) {
 		/*
-		 * Remove a reference to all opeअक्रमs, including both
+		 * Remove a reference to all operands, including both
 		 * "Arguments" and "Targets".
 		 */
-		acpi_ut_हटाओ_reference(walk_state->opeअक्रमs[i]);
-		walk_state->opeअक्रमs[i] = शून्य;
-	पूर्ण
+		acpi_ut_remove_reference(walk_state->operands[i]);
+		walk_state->operands[i] = NULL;
+	}
 
-	walk_state->num_opeअक्रमs = 0;
-	वापस_VOID;
-पूर्ण
+	walk_state->num_operands = 0;
+	return_VOID;
+}
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ds_create_opeअक्रम
+ * FUNCTION:    acpi_ds_create_operand
  *
  * PARAMETERS:  walk_state      - Current walk state
- *              arg             - Parse object क्रम the argument
+ *              arg             - Parse object for the argument
  *              arg_index       - Which argument (zero based)
  *
  * RETURN:      Status
  *
  * DESCRIPTION: Translate a parse tree object that is an argument to an AML
- *              opcode to the equivalent पूर्णांकerpreter object. This may include
- *              looking up a name or entering a new name पूर्णांकo the पूर्णांकernal
+ *              opcode to the equivalent interpreter object. This may include
+ *              looking up a name or entering a new name into the internal
  *              namespace.
  *
  ******************************************************************************/
 
 acpi_status
-acpi_ds_create_opeअक्रम(काष्ठा acpi_walk_state *walk_state,
-		       जोड़ acpi_parse_object *arg, u32 arg_index)
-अणु
+acpi_ds_create_operand(struct acpi_walk_state *walk_state,
+		       union acpi_parse_object *arg, u32 arg_index)
+{
 	acpi_status status = AE_OK;
-	अक्षर *name_string;
+	char *name_string;
 	u32 name_length;
-	जोड़ acpi_opeअक्रम_object *obj_desc;
-	जोड़ acpi_parse_object *parent_op;
+	union acpi_operand_object *obj_desc;
+	union acpi_parse_object *parent_op;
 	u16 opcode;
-	acpi_पूर्णांकerpreter_mode पूर्णांकerpreter_mode;
-	स्थिर काष्ठा acpi_opcode_info *op_info;
+	acpi_interpreter_mode interpreter_mode;
+	const struct acpi_opcode_info *op_info;
 
-	ACPI_FUNCTION_TRACE_PTR(ds_create_opeअक्रम, arg);
+	ACPI_FUNCTION_TRACE_PTR(ds_create_operand, arg);
 
 	/* A valid name must be looked up in the namespace */
 
-	अगर ((arg->common.aml_opcode == AML_INT_NAMEPATH_OP) &&
+	if ((arg->common.aml_opcode == AML_INT_NAMEPATH_OP) &&
 	    (arg->common.value.string) &&
-	    !(arg->common.flags & ACPI_PARSEOP_IN_STACK)) अणु
+	    !(arg->common.flags & ACPI_PARSEOP_IN_STACK)) {
 		ACPI_DEBUG_PRINT((ACPI_DB_DISPATCH, "Getting a name: Arg=%p\n",
 				  arg));
 
@@ -448,33 +447,33 @@ acpi_ds_create_opeअक्रम(काष्ठा acpi_walk_state *walk_state
 						 arg->common.value.buffer,
 						 &name_string, &name_length);
 
-		अगर (ACPI_FAILURE(status)) अणु
-			वापस_ACPI_STATUS(status);
-		पूर्ण
+		if (ACPI_FAILURE(status)) {
+			return_ACPI_STATUS(status);
+		}
 
 		/* All prefixes have been handled, and the name is in name_string */
 
 		/*
-		 * Special handling क्रम buffer_field declarations. This is a deferred
-		 * opcode that unक्रमtunately defines the field name as the last
-		 * parameter instead of the first. We get here when we are perक्रमming
-		 * the deferred execution, so the actual name of the field is alपढ़ोy
-		 * in the namespace. We करोn't want to attempt to look it up again
-		 * because we may be executing in a dअगरferent scope than where the
+		 * Special handling for buffer_field declarations. This is a deferred
+		 * opcode that unfortunately defines the field name as the last
+		 * parameter instead of the first. We get here when we are performing
+		 * the deferred execution, so the actual name of the field is already
+		 * in the namespace. We don't want to attempt to look it up again
+		 * because we may be executing in a different scope than where the
 		 * actual opcode exists.
 		 */
-		अगर ((walk_state->deferred_node) &&
+		if ((walk_state->deferred_node) &&
 		    (walk_state->deferred_node->type == ACPI_TYPE_BUFFER_FIELD)
 		    && (arg_index == (u32)
-			((walk_state->opcode == AML_CREATE_FIELD_OP) ? 3 : 2))) अणु
+			((walk_state->opcode == AML_CREATE_FIELD_OP) ? 3 : 2))) {
 			obj_desc =
-			    ACPI_CAST_PTR(जोड़ acpi_opeअक्रम_object,
+			    ACPI_CAST_PTR(union acpi_operand_object,
 					  walk_state->deferred_node);
 			status = AE_OK;
-		पूर्ण अन्यथा अणु	/* All other opcodes */
+		} else {	/* All other opcodes */
 
 			/*
-			 * Dअगरferentiate between a namespace "create" operation
+			 * Differentiate between a namespace "create" operation
 			 * versus a "lookup" operation (IMODE_LOAD_PASS2 vs.
 			 * IMODE_EXECUTE) in order to support the creation of
 			 * namespace objects during the execution of control methods.
@@ -484,72 +483,72 @@ acpi_ds_create_opeअक्रम(काष्ठा acpi_walk_state *walk_state
 			    acpi_ps_get_opcode_info(parent_op->common.
 						    aml_opcode);
 
-			अगर ((op_info->flags & AML_NSNODE) &&
+			if ((op_info->flags & AML_NSNODE) &&
 			    (parent_op->common.aml_opcode !=
 			     AML_INT_METHODCALL_OP)
 			    && (parent_op->common.aml_opcode != AML_REGION_OP)
 			    && (parent_op->common.aml_opcode !=
-				AML_INT_NAMEPATH_OP)) अणु
+				AML_INT_NAMEPATH_OP)) {
 
-				/* Enter name पूर्णांकo namespace अगर not found */
+				/* Enter name into namespace if not found */
 
-				पूर्णांकerpreter_mode = ACPI_IMODE_LOAD_PASS2;
-			पूर्ण अन्यथा अणु
-				/* Return a failure अगर name not found */
+				interpreter_mode = ACPI_IMODE_LOAD_PASS2;
+			} else {
+				/* Return a failure if name not found */
 
-				पूर्णांकerpreter_mode = ACPI_IMODE_EXECUTE;
-			पूर्ण
+				interpreter_mode = ACPI_IMODE_EXECUTE;
+			}
 
 			status =
 			    acpi_ns_lookup(walk_state->scope_info, name_string,
-					   ACPI_TYPE_ANY, पूर्णांकerpreter_mode,
+					   ACPI_TYPE_ANY, interpreter_mode,
 					   ACPI_NS_SEARCH_PARENT |
 					   ACPI_NS_DONT_OPEN_SCOPE, walk_state,
-					   ACPI_CAST_INसूचीECT_PTR(काष्ठा
+					   ACPI_CAST_INDIRECT_PTR(struct
 								  acpi_namespace_node,
 								  &obj_desc));
 			/*
-			 * The only हाल where we pass through (ignore) a NOT_FOUND
-			 * error is क्रम the cond_ref_of opcode.
+			 * The only case where we pass through (ignore) a NOT_FOUND
+			 * error is for the cond_ref_of opcode.
 			 */
-			अगर (status == AE_NOT_FOUND) अणु
-				अगर (parent_op->common.aml_opcode ==
-				    AML_CONDITIONAL_REF_OF_OP) अणु
+			if (status == AE_NOT_FOUND) {
+				if (parent_op->common.aml_opcode ==
+				    AML_CONDITIONAL_REF_OF_OP) {
 					/*
-					 * For the Conditional Reference op, it's OK अगर
+					 * For the Conditional Reference op, it's OK if
 					 * the name is not found;  We just need a way to
-					 * indicate this to the पूर्णांकerpreter, set the
+					 * indicate this to the interpreter, set the
 					 * object to the root
 					 */
 					obj_desc =
-					    ACPI_CAST_PTR(जोड़
-								 acpi_opeअक्रम_object,
+					    ACPI_CAST_PTR(union
+								 acpi_operand_object,
 								 acpi_gbl_root_node);
 					status = AE_OK;
-				पूर्ण अन्यथा अगर (parent_op->common.aml_opcode ==
-					   AML_EXTERNAL_OP) अणु
+				} else if (parent_op->common.aml_opcode ==
+					   AML_EXTERNAL_OP) {
 					/*
 					 * This opcode should never appear here. It is used only
 					 * by AML disassemblers and is surrounded by an If(0)
 					 * by the ASL compiler.
 					 *
-					 * Thereक्रमe, अगर we see it here, it is a serious error.
+					 * Therefore, if we see it here, it is a serious error.
 					 */
 					status = AE_AML_BAD_OPCODE;
-				पूर्ण अन्यथा अणु
+				} else {
 					/*
 					 * We just plain didn't find it -- which is a
-					 * very serious error at this poपूर्णांक
+					 * very serious error at this point
 					 */
 					status = AE_AML_NAME_NOT_FOUND;
-				पूर्ण
-			पूर्ण
+				}
+			}
 
-			अगर (ACPI_FAILURE(status)) अणु
+			if (ACPI_FAILURE(status)) {
 				ACPI_ERROR_NAMESPACE(walk_state->scope_info,
 						     name_string, status);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		/* Free the namestring created above */
 
@@ -557,175 +556,175 @@ acpi_ds_create_opeअक्रम(काष्ठा acpi_walk_state *walk_state
 
 		/* Check status from the lookup */
 
-		अगर (ACPI_FAILURE(status)) अणु
-			वापस_ACPI_STATUS(status);
-		पूर्ण
+		if (ACPI_FAILURE(status)) {
+			return_ACPI_STATUS(status);
+		}
 
 		/* Put the resulting object onto the current object stack */
 
 		status = acpi_ds_obj_stack_push(obj_desc, walk_state);
-		अगर (ACPI_FAILURE(status)) अणु
-			वापस_ACPI_STATUS(status);
-		पूर्ण
+		if (ACPI_FAILURE(status)) {
+			return_ACPI_STATUS(status);
+		}
 
 		acpi_db_display_argument_object(obj_desc, walk_state);
-	पूर्ण अन्यथा अणु
-		/* Check क्रम null name हाल */
+	} else {
+		/* Check for null name case */
 
-		अगर ((arg->common.aml_opcode == AML_INT_NAMEPATH_OP) &&
-		    !(arg->common.flags & ACPI_PARSEOP_IN_STACK)) अणु
+		if ((arg->common.aml_opcode == AML_INT_NAMEPATH_OP) &&
+		    !(arg->common.flags & ACPI_PARSEOP_IN_STACK)) {
 			/*
 			 * If the name is null, this means that this is an
-			 * optional result parameter that was not specअगरied
-			 * in the original ASL. Create a Zero Constant क्रम a
-			 * placeholder. (Store to a स्थिरant is a Noop.)
+			 * optional result parameter that was not specified
+			 * in the original ASL. Create a Zero Constant for a
+			 * placeholder. (Store to a constant is a Noop.)
 			 */
 			opcode = AML_ZERO_OP;	/* Has no arguments! */
 
 			ACPI_DEBUG_PRINT((ACPI_DB_DISPATCH,
 					  "Null namepath: Arg=%p\n", arg));
-		पूर्ण अन्यथा अणु
+		} else {
 			opcode = arg->common.aml_opcode;
-		पूर्ण
+		}
 
 		/* Get the object type of the argument */
 
 		op_info = acpi_ps_get_opcode_info(opcode);
-		अगर (op_info->object_type == ACPI_TYPE_INVALID) अणु
-			वापस_ACPI_STATUS(AE_NOT_IMPLEMENTED);
-		पूर्ण
+		if (op_info->object_type == ACPI_TYPE_INVALID) {
+			return_ACPI_STATUS(AE_NOT_IMPLEMENTED);
+		}
 
-		अगर ((op_info->flags & AML_HAS_RETVAL) ||
-		    (arg->common.flags & ACPI_PARSEOP_IN_STACK)) अणु
+		if ((op_info->flags & AML_HAS_RETVAL) ||
+		    (arg->common.flags & ACPI_PARSEOP_IN_STACK)) {
 			/*
-			 * Use value that was alपढ़ोy previously वापसed
+			 * Use value that was already previously returned
 			 * by the evaluation of this argument
 			 */
 			status = acpi_ds_result_pop(&obj_desc, walk_state);
-			अगर (ACPI_FAILURE(status)) अणु
+			if (ACPI_FAILURE(status)) {
 				/*
 				 * Only error is underflow, and this indicates
-				 * a missing or null opeअक्रम!
+				 * a missing or null operand!
 				 */
 				ACPI_EXCEPTION((AE_INFO, status,
 						"Missing or null operand"));
-				वापस_ACPI_STATUS(status);
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			/* Create an ACPI_INTERNAL_OBJECT क्रम the argument */
+				return_ACPI_STATUS(status);
+			}
+		} else {
+			/* Create an ACPI_INTERNAL_OBJECT for the argument */
 
 			obj_desc =
-			    acpi_ut_create_पूर्णांकernal_object(op_info->
+			    acpi_ut_create_internal_object(op_info->
 							   object_type);
-			अगर (!obj_desc) अणु
-				वापस_ACPI_STATUS(AE_NO_MEMORY);
-			पूर्ण
+			if (!obj_desc) {
+				return_ACPI_STATUS(AE_NO_MEMORY);
+			}
 
 			/* Initialize the new object */
 
 			status =
 			    acpi_ds_init_object_from_op(walk_state, arg, opcode,
 							&obj_desc);
-			अगर (ACPI_FAILURE(status)) अणु
+			if (ACPI_FAILURE(status)) {
 				acpi_ut_delete_object_desc(obj_desc);
-				वापस_ACPI_STATUS(status);
-			पूर्ण
-		पूर्ण
+				return_ACPI_STATUS(status);
+			}
+		}
 
-		/* Put the opeअक्रम object on the object stack */
+		/* Put the operand object on the object stack */
 
 		status = acpi_ds_obj_stack_push(obj_desc, walk_state);
-		अगर (ACPI_FAILURE(status)) अणु
-			वापस_ACPI_STATUS(status);
-		पूर्ण
+		if (ACPI_FAILURE(status)) {
+			return_ACPI_STATUS(status);
+		}
 
 		acpi_db_display_argument_object(obj_desc, walk_state);
-	पूर्ण
+	}
 
-	वापस_ACPI_STATUS(AE_OK);
-पूर्ण
+	return_ACPI_STATUS(AE_OK);
+}
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ds_create_opeअक्रमs
+ * FUNCTION:    acpi_ds_create_operands
  *
  * PARAMETERS:  walk_state          - Current state
  *              first_arg           - First argument of a parser argument tree
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Convert an चालक's arguments from a parse tree क्रमmat to
+ * DESCRIPTION: Convert an operator's arguments from a parse tree format to
  *              namespace objects and place those argument object on the object
- *              stack in preparation क्रम evaluation by the पूर्णांकerpreter.
+ *              stack in preparation for evaluation by the interpreter.
  *
  ******************************************************************************/
 
 acpi_status
-acpi_ds_create_opeअक्रमs(काष्ठा acpi_walk_state *walk_state,
-			जोड़ acpi_parse_object *first_arg)
-अणु
+acpi_ds_create_operands(struct acpi_walk_state *walk_state,
+			union acpi_parse_object *first_arg)
+{
 	acpi_status status = AE_OK;
-	जोड़ acpi_parse_object *arg;
-	जोड़ acpi_parse_object *arguments[ACPI_OBJ_NUM_OPERANDS];
+	union acpi_parse_object *arg;
+	union acpi_parse_object *arguments[ACPI_OBJ_NUM_OPERANDS];
 	u32 arg_count = 0;
-	u32 index = walk_state->num_opeअक्रमs;
+	u32 index = walk_state->num_operands;
 	u32 i;
 
-	ACPI_FUNCTION_TRACE_PTR(ds_create_opeअक्रमs, first_arg);
+	ACPI_FUNCTION_TRACE_PTR(ds_create_operands, first_arg);
 
 	/* Get all arguments in the list */
 
 	arg = first_arg;
-	जबतक (arg) अणु
-		अगर (index >= ACPI_OBJ_NUM_OPERANDS) अणु
-			वापस_ACPI_STATUS(AE_BAD_DATA);
-		पूर्ण
+	while (arg) {
+		if (index >= ACPI_OBJ_NUM_OPERANDS) {
+			return_ACPI_STATUS(AE_BAD_DATA);
+		}
 
 		arguments[index] = arg;
-		walk_state->opeअक्रमs[index] = शून्य;
+		walk_state->operands[index] = NULL;
 
-		/* Move on to next argument, अगर any */
+		/* Move on to next argument, if any */
 
 		arg = arg->common.next;
 		arg_count++;
 		index++;
-	पूर्ण
+	}
 
 	ACPI_DEBUG_PRINT((ACPI_DB_DISPATCH,
 			  "NumOperands %d, ArgCount %d, Index %d\n",
-			  walk_state->num_opeअक्रमs, arg_count, index));
+			  walk_state->num_operands, arg_count, index));
 
-	/* Create the पूर्णांकerpreter arguments, in reverse order */
+	/* Create the interpreter arguments, in reverse order */
 
 	index--;
-	क्रम (i = 0; i < arg_count; i++) अणु
+	for (i = 0; i < arg_count; i++) {
 		arg = arguments[index];
-		walk_state->opeअक्रम_index = (u8)index;
+		walk_state->operand_index = (u8)index;
 
-		status = acpi_ds_create_opeअक्रम(walk_state, arg, index);
-		अगर (ACPI_FAILURE(status)) अणु
-			जाओ cleanup;
-		पूर्ण
+		status = acpi_ds_create_operand(walk_state, arg, index);
+		if (ACPI_FAILURE(status)) {
+			goto cleanup;
+		}
 
 		ACPI_DEBUG_PRINT((ACPI_DB_DISPATCH,
 				  "Created Arg #%u (%p) %u args total\n",
 				  index, arg, arg_count));
 		index--;
-	पूर्ण
+	}
 
-	वापस_ACPI_STATUS(status);
+	return_ACPI_STATUS(status);
 
 cleanup:
 	/*
-	 * We must unकरो everything करोne above; meaning that we must
-	 * pop everything off of the opeअक्रम stack and delete those
+	 * We must undo everything done above; meaning that we must
+	 * pop everything off of the operand stack and delete those
 	 * objects
 	 */
 	acpi_ds_obj_stack_pop_and_delete(arg_count, walk_state);
 
 	ACPI_EXCEPTION((AE_INFO, status, "While creating Arg %u", index));
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	return_ACPI_STATUS(status);
+}
 
 /*****************************************************************************
  *
@@ -738,95 +737,95 @@ cleanup:
  * RETURN:      Status
  *
  * DESCRIPTION: Translate the -name_path- parse tree object to the equivalent
- *              पूर्णांकerpreter object, convert it to value, अगर needed, duplicate
- *              it, अगर needed, and push it onto the current result stack.
+ *              interpreter object, convert it to value, if needed, duplicate
+ *              it, if needed, and push it onto the current result stack.
  *
  ****************************************************************************/
 
-acpi_status acpi_ds_evaluate_name_path(काष्ठा acpi_walk_state *walk_state)
-अणु
+acpi_status acpi_ds_evaluate_name_path(struct acpi_walk_state *walk_state)
+{
 	acpi_status status = AE_OK;
-	जोड़ acpi_parse_object *op = walk_state->op;
-	जोड़ acpi_opeअक्रम_object **opeअक्रम = &walk_state->opeअक्रमs[0];
-	जोड़ acpi_opeअक्रम_object *new_obj_desc;
+	union acpi_parse_object *op = walk_state->op;
+	union acpi_operand_object **operand = &walk_state->operands[0];
+	union acpi_operand_object *new_obj_desc;
 	u8 type;
 
 	ACPI_FUNCTION_TRACE_PTR(ds_evaluate_name_path, walk_state);
 
-	अगर (!op->common.parent) अणु
+	if (!op->common.parent) {
 
 		/* This happens after certain exception processing */
 
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	अगर ((op->common.parent->common.aml_opcode == AML_PACKAGE_OP) ||
+	if ((op->common.parent->common.aml_opcode == AML_PACKAGE_OP) ||
 	    (op->common.parent->common.aml_opcode == AML_VARIABLE_PACKAGE_OP) ||
-	    (op->common.parent->common.aml_opcode == AML_REF_OF_OP)) अणु
+	    (op->common.parent->common.aml_opcode == AML_REF_OF_OP)) {
 
-		/* TBD: Should we specअगरy this feature as a bit of op_info->Flags of these opcodes? */
+		/* TBD: Should we specify this feature as a bit of op_info->Flags of these opcodes? */
 
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	status = acpi_ds_create_opeअक्रम(walk_state, op, 0);
-	अगर (ACPI_FAILURE(status)) अणु
-		जाओ निकास;
-	पूर्ण
+	status = acpi_ds_create_operand(walk_state, op, 0);
+	if (ACPI_FAILURE(status)) {
+		goto exit;
+	}
 
-	अगर (op->common.flags & ACPI_PARSEOP_TARGET) अणु
-		new_obj_desc = *opeअक्रम;
-		जाओ push_result;
-	पूर्ण
+	if (op->common.flags & ACPI_PARSEOP_TARGET) {
+		new_obj_desc = *operand;
+		goto push_result;
+	}
 
-	type = (*opeअक्रम)->common.type;
+	type = (*operand)->common.type;
 
-	status = acpi_ex_resolve_to_value(opeअक्रम, walk_state);
-	अगर (ACPI_FAILURE(status)) अणु
-		जाओ निकास;
-	पूर्ण
+	status = acpi_ex_resolve_to_value(operand, walk_state);
+	if (ACPI_FAILURE(status)) {
+		goto exit;
+	}
 
-	अगर (type == ACPI_TYPE_INTEGER) अणु
+	if (type == ACPI_TYPE_INTEGER) {
 
 		/* It was incremented by acpi_ex_resolve_to_value */
 
-		acpi_ut_हटाओ_reference(*opeअक्रम);
+		acpi_ut_remove_reference(*operand);
 
 		status =
-		    acpi_ut_copy_iobject_to_iobject(*opeअक्रम, &new_obj_desc,
+		    acpi_ut_copy_iobject_to_iobject(*operand, &new_obj_desc,
 						    walk_state);
-		अगर (ACPI_FAILURE(status)) अणु
-			जाओ निकास;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		if (ACPI_FAILURE(status)) {
+			goto exit;
+		}
+	} else {
 		/*
 		 * The object either was anew created or is
-		 * a Namespace node - करोn't decrement it.
+		 * a Namespace node - don't decrement it.
 		 */
-		new_obj_desc = *opeअक्रम;
-	पूर्ण
+		new_obj_desc = *operand;
+	}
 
-	/* Cleanup क्रम name-path opeअक्रम */
+	/* Cleanup for name-path operand */
 
 	status = acpi_ds_obj_stack_pop(1, walk_state);
-	अगर (ACPI_FAILURE(status)) अणु
+	if (ACPI_FAILURE(status)) {
 		walk_state->result_obj = new_obj_desc;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 push_result:
 
 	walk_state->result_obj = new_obj_desc;
 
 	status = acpi_ds_result_push(walk_state->result_obj, walk_state);
-	अगर (ACPI_SUCCESS(status)) अणु
+	if (ACPI_SUCCESS(status)) {
 
 		/* Force to take it from stack */
 
 		op->common.flags |= ACPI_PARSEOP_IN_STACK;
-	पूर्ण
+	}
 
-निकास:
+exit:
 
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	return_ACPI_STATUS(status);
+}

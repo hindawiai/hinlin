@@ -1,85 +1,84 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2015 MediaTek Inc.
  * Author: James Liao <jamesjj.liao@mediatek.com>
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/slab.h>
+#include <linux/delay.h>
+#include <linux/of_address.h>
+#include <linux/slab.h>
 
-#समावेश "clk-mtk.h"
+#include "clk-mtk.h"
 
-#घोषणा REF2USB_TX_EN		BIT(0)
-#घोषणा REF2USB_TX_LPF_EN	BIT(1)
-#घोषणा REF2USB_TX_OUT_EN	BIT(2)
-#घोषणा REF2USB_EN_MASK		(REF2USB_TX_EN | REF2USB_TX_LPF_EN | \
+#define REF2USB_TX_EN		BIT(0)
+#define REF2USB_TX_LPF_EN	BIT(1)
+#define REF2USB_TX_OUT_EN	BIT(2)
+#define REF2USB_EN_MASK		(REF2USB_TX_EN | REF2USB_TX_LPF_EN | \
 				 REF2USB_TX_OUT_EN)
 
-काष्ठा mtk_ref2usb_tx अणु
-	काष्ठा clk_hw	hw;
-	व्योम __iomem	*base_addr;
-पूर्ण;
+struct mtk_ref2usb_tx {
+	struct clk_hw	hw;
+	void __iomem	*base_addr;
+};
 
-अटल अंतरभूत काष्ठा mtk_ref2usb_tx *to_mtk_ref2usb_tx(काष्ठा clk_hw *hw)
-अणु
-	वापस container_of(hw, काष्ठा mtk_ref2usb_tx, hw);
-पूर्ण
+static inline struct mtk_ref2usb_tx *to_mtk_ref2usb_tx(struct clk_hw *hw)
+{
+	return container_of(hw, struct mtk_ref2usb_tx, hw);
+}
 
-अटल पूर्णांक mtk_ref2usb_tx_is_prepared(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा mtk_ref2usb_tx *tx = to_mtk_ref2usb_tx(hw);
+static int mtk_ref2usb_tx_is_prepared(struct clk_hw *hw)
+{
+	struct mtk_ref2usb_tx *tx = to_mtk_ref2usb_tx(hw);
 
-	वापस (पढ़ोl(tx->base_addr) & REF2USB_EN_MASK) == REF2USB_EN_MASK;
-पूर्ण
+	return (readl(tx->base_addr) & REF2USB_EN_MASK) == REF2USB_EN_MASK;
+}
 
-अटल पूर्णांक mtk_ref2usb_tx_prepare(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा mtk_ref2usb_tx *tx = to_mtk_ref2usb_tx(hw);
+static int mtk_ref2usb_tx_prepare(struct clk_hw *hw)
+{
+	struct mtk_ref2usb_tx *tx = to_mtk_ref2usb_tx(hw);
 	u32 val;
 
-	val = पढ़ोl(tx->base_addr);
+	val = readl(tx->base_addr);
 
 	val |= REF2USB_TX_EN;
-	ग_लिखोl(val, tx->base_addr);
+	writel(val, tx->base_addr);
 	udelay(100);
 
 	val |= REF2USB_TX_LPF_EN;
-	ग_लिखोl(val, tx->base_addr);
+	writel(val, tx->base_addr);
 
 	val |= REF2USB_TX_OUT_EN;
-	ग_लिखोl(val, tx->base_addr);
+	writel(val, tx->base_addr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mtk_ref2usb_tx_unprepare(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा mtk_ref2usb_tx *tx = to_mtk_ref2usb_tx(hw);
+static void mtk_ref2usb_tx_unprepare(struct clk_hw *hw)
+{
+	struct mtk_ref2usb_tx *tx = to_mtk_ref2usb_tx(hw);
 	u32 val;
 
-	val = पढ़ोl(tx->base_addr);
+	val = readl(tx->base_addr);
 	val &= ~REF2USB_EN_MASK;
-	ग_लिखोl(val, tx->base_addr);
-पूर्ण
+	writel(val, tx->base_addr);
+}
 
-अटल स्थिर काष्ठा clk_ops mtk_ref2usb_tx_ops = अणु
+static const struct clk_ops mtk_ref2usb_tx_ops = {
 	.is_prepared	= mtk_ref2usb_tx_is_prepared,
 	.prepare	= mtk_ref2usb_tx_prepare,
 	.unprepare	= mtk_ref2usb_tx_unprepare,
-पूर्ण;
+};
 
-काष्ठा clk * __init mtk_clk_रेजिस्टर_ref2usb_tx(स्थिर अक्षर *name,
-			स्थिर अक्षर *parent_name, व्योम __iomem *reg)
-अणु
-	काष्ठा mtk_ref2usb_tx *tx;
-	काष्ठा clk_init_data init = अणुपूर्ण;
-	काष्ठा clk *clk;
+struct clk * __init mtk_clk_register_ref2usb_tx(const char *name,
+			const char *parent_name, void __iomem *reg)
+{
+	struct mtk_ref2usb_tx *tx;
+	struct clk_init_data init = {};
+	struct clk *clk;
 
-	tx = kzalloc(माप(*tx), GFP_KERNEL);
-	अगर (!tx)
-		वापस ERR_PTR(-ENOMEM);
+	tx = kzalloc(sizeof(*tx), GFP_KERNEL);
+	if (!tx)
+		return ERR_PTR(-ENOMEM);
 
 	tx->base_addr = reg;
 	tx->hw.init = &init;
@@ -89,12 +88,12 @@
 	init.parent_names = &parent_name;
 	init.num_parents = 1;
 
-	clk = clk_रेजिस्टर(शून्य, &tx->hw);
+	clk = clk_register(NULL, &tx->hw);
 
-	अगर (IS_ERR(clk)) अणु
+	if (IS_ERR(clk)) {
 		pr_err("Failed to register clk %s: %ld\n", name, PTR_ERR(clk));
-		kमुक्त(tx);
-	पूर्ण
+		kfree(tx);
+	}
 
-	वापस clk;
-पूर्ण
+	return clk;
+}

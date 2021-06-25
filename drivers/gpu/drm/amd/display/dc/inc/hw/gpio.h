@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012-16 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,74 +23,74 @@
  *
  */
 
-#अगर_अघोषित __DAL_GPIO_H__
-#घोषणा __DAL_GPIO_H__
+#ifndef __DAL_GPIO_H__
+#define __DAL_GPIO_H__
 
-#समावेश "gpio_types.h"
+#include "gpio_types.h"
 
 
-जोड़ gpio_hw_container अणु
-	काष्ठा hw_ddc *ddc;
-	काष्ठा hw_generic *generic;
-	काष्ठा hw_hpd *hpd;
-पूर्ण;
+union gpio_hw_container {
+	struct hw_ddc *ddc;
+	struct hw_generic *generic;
+	struct hw_hpd *hpd;
+};
 
-काष्ठा gpio अणु
-	काष्ठा gpio_service *service;
-	काष्ठा hw_gpio_pin *pin;
-	क्रमागत gpio_id id;
-	uपूर्णांक32_t en;
+struct gpio {
+	struct gpio_service *service;
+	struct hw_gpio_pin *pin;
+	enum gpio_id id;
+	uint32_t en;
 
-	जोड़ gpio_hw_container hw_container;
-	क्रमागत gpio_mode mode;
+	union gpio_hw_container hw_container;
+	enum gpio_mode mode;
 
 	/* when GPIO comes from VBIOS, it has defined output state */
-	क्रमागत gpio_pin_output_state output_state;
-पूर्ण;
+	enum gpio_pin_output_state output_state;
+};
 
-#अगर 0
-काष्ठा gpio_funcs अणु
+#if 0
+struct gpio_funcs {
 
-	काष्ठा hw_gpio_pin *(*create_ddc_data)(
-		काष्ठा dc_context *ctx,
-		क्रमागत gpio_id id,
-		uपूर्णांक32_t en);
-	काष्ठा hw_gpio_pin *(*create_ddc_घड़ी)(
-		काष्ठा dc_context *ctx,
-		क्रमागत gpio_id id,
-		uपूर्णांक32_t en);
-	काष्ठा hw_gpio_pin *(*create_generic)(
-		काष्ठा dc_context *ctx,
-		क्रमागत gpio_id id,
-		uपूर्णांक32_t en);
-	काष्ठा hw_gpio_pin *(*create_hpd)(
-		काष्ठा dc_context *ctx,
-		क्रमागत gpio_id id,
-		uपूर्णांक32_t en);
-	काष्ठा hw_gpio_pin *(*create_gpio_pad)(
-		काष्ठा dc_context *ctx,
-		क्रमागत gpio_id id,
-		uपूर्णांक32_t en);
-	काष्ठा hw_gpio_pin *(*create_sync)(
-		काष्ठा dc_context *ctx,
-		क्रमागत gpio_id id,
-		uपूर्णांक32_t en);
-	काष्ठा hw_gpio_pin *(*create_gsl)(
-		काष्ठा dc_context *ctx,
-		क्रमागत gpio_id id,
-		uपूर्णांक32_t en);
+	struct hw_gpio_pin *(*create_ddc_data)(
+		struct dc_context *ctx,
+		enum gpio_id id,
+		uint32_t en);
+	struct hw_gpio_pin *(*create_ddc_clock)(
+		struct dc_context *ctx,
+		enum gpio_id id,
+		uint32_t en);
+	struct hw_gpio_pin *(*create_generic)(
+		struct dc_context *ctx,
+		enum gpio_id id,
+		uint32_t en);
+	struct hw_gpio_pin *(*create_hpd)(
+		struct dc_context *ctx,
+		enum gpio_id id,
+		uint32_t en);
+	struct hw_gpio_pin *(*create_gpio_pad)(
+		struct dc_context *ctx,
+		enum gpio_id id,
+		uint32_t en);
+	struct hw_gpio_pin *(*create_sync)(
+		struct dc_context *ctx,
+		enum gpio_id id,
+		uint32_t en);
+	struct hw_gpio_pin *(*create_gsl)(
+		struct dc_context *ctx,
+		enum gpio_id id,
+		uint32_t en);
 
 	/* HW translation */
 	bool (*offset_to_id)(
-		uपूर्णांक32_t offset,
-		uपूर्णांक32_t mask,
-		क्रमागत gpio_id *id,
-		uपूर्णांक32_t *en);
+		uint32_t offset,
+		uint32_t mask,
+		enum gpio_id *id,
+		uint32_t *en);
 	bool (*id_to_offset)(
-		क्रमागत gpio_id id,
-		uपूर्णांक32_t en,
-		काष्ठा gpio_pin_info *info);
-पूर्ण;
-#पूर्ण_अगर
+		enum gpio_id id,
+		uint32_t en,
+		struct gpio_pin_info *info);
+};
+#endif
 
-#पूर्ण_अगर  /* __DAL_GPIO__ */
+#endif  /* __DAL_GPIO__ */

@@ -1,67 +1,66 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ARCH_H8300_CMPXCHG__
-#घोषणा __ARCH_H8300_CMPXCHG__
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ARCH_H8300_CMPXCHG__
+#define __ARCH_H8300_CMPXCHG__
 
-#समावेश <linux/irqflags.h>
+#include <linux/irqflags.h>
 
-#घोषणा xchg(ptr, x) \
-	((__typeof__(*(ptr)))__xchg((अचिन्हित दीर्घ)(x), (ptr), \
-				    माप(*(ptr))))
+#define xchg(ptr, x) \
+	((__typeof__(*(ptr)))__xchg((unsigned long)(x), (ptr), \
+				    sizeof(*(ptr))))
 
-काष्ठा __xchg_dummy अणु अचिन्हित दीर्घ a[100]; पूर्ण;
-#घोषणा __xg(x) ((अस्थिर काष्ठा __xchg_dummy *)(x))
+struct __xchg_dummy { unsigned long a[100]; };
+#define __xg(x) ((volatile struct __xchg_dummy *)(x))
 
-अटल अंतरभूत अचिन्हित दीर्घ __xchg(अचिन्हित दीर्घ x,
-				   अस्थिर व्योम *ptr, पूर्णांक size)
-अणु
-	अचिन्हित दीर्घ पंचांगp, flags;
+static inline unsigned long __xchg(unsigned long x,
+				   volatile void *ptr, int size)
+{
+	unsigned long tmp, flags;
 
 	local_irq_save(flags);
 
-	चयन (size) अणु
-	हाल 1:
-		__यंत्र__ __अस्थिर__
+	switch (size) {
+	case 1:
+		__asm__ __volatile__
 			("mov.b %2,%0\n\t"
 			 "mov.b %1,%2"
-			 : "=&r" (पंचांगp) : "r" (x), "m" (*__xg(ptr)));
-		अवरोध;
-	हाल 2:
-		__यंत्र__ __अस्थिर__
+			 : "=&r" (tmp) : "r" (x), "m" (*__xg(ptr)));
+		break;
+	case 2:
+		__asm__ __volatile__
 			("mov.w %2,%0\n\t"
 			 "mov.w %1,%2"
-			 : "=&r" (पंचांगp) : "r" (x), "m" (*__xg(ptr)));
-		अवरोध;
-	हाल 4:
-		__यंत्र__ __अस्थिर__
+			 : "=&r" (tmp) : "r" (x), "m" (*__xg(ptr)));
+		break;
+	case 4:
+		__asm__ __volatile__
 			("mov.l %2,%0\n\t"
 			 "mov.l %1,%2"
-			 : "=&r" (पंचांगp) : "r" (x), "m" (*__xg(ptr)));
-		अवरोध;
-	शेष:
-		पंचांगp = 0;
-	पूर्ण
+			 : "=&r" (tmp) : "r" (x), "m" (*__xg(ptr)));
+		break;
+	default:
+		tmp = 0;
+	}
 	local_irq_restore(flags);
-	वापस पंचांगp;
-पूर्ण
+	return tmp;
+}
 
-#समावेश <यंत्र-generic/cmpxchg-local.h>
+#include <asm-generic/cmpxchg-local.h>
 
 /*
  * cmpxchg_local and cmpxchg64_local are atomic wrt current CPU. Always make
  * them available.
  */
-#घोषणा cmpxchg_local(ptr, o, n)					 \
+#define cmpxchg_local(ptr, o, n)					 \
 	((__typeof__(*(ptr)))__cmpxchg_local_generic((ptr),		 \
-						     (अचिन्हित दीर्घ)(o), \
-						     (अचिन्हित दीर्घ)(n), \
-						     माप(*(ptr))))
-#घोषणा cmpxchg64_local(ptr, o, n) __cmpxchg64_local_generic((ptr), (o), (n))
+						     (unsigned long)(o), \
+						     (unsigned long)(n), \
+						     sizeof(*(ptr))))
+#define cmpxchg64_local(ptr, o, n) __cmpxchg64_local_generic((ptr), (o), (n))
 
-#अगर_अघोषित CONFIG_SMP
-#समावेश <यंत्र-generic/cmpxchg.h>
-#पूर्ण_अगर
+#ifndef CONFIG_SMP
+#include <asm-generic/cmpxchg.h>
+#endif
 
-#घोषणा atomic_xchg(v, new) (xchg(&((v)->counter), new))
+#define atomic_xchg(v, new) (xchg(&((v)->counter), new))
 
-#पूर्ण_अगर /* __ARCH_H8300_CMPXCHG__ */
+#endif /* __ARCH_H8300_CMPXCHG__ */

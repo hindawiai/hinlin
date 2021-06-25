@@ -1,48 +1,47 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2007 Lemote Inc. & Institute of Computing Technology
  * Author: Fuxin Zhang, zhangfx@lemote.com
  */
-#समावेश <linux/पूर्णांकerrupt.h>
+#include <linux/interrupt.h>
 
-#समावेश <यंत्र/irq_cpu.h>
-#समावेश <यंत्र/i8259.h>
+#include <asm/irq_cpu.h>
+#include <asm/i8259.h>
 
-#समावेश <loongson.h>
+#include <loongson.h>
 
-अटल व्योम i8259_irqdispatch(व्योम)
-अणु
-	पूर्णांक irq;
+static void i8259_irqdispatch(void)
+{
+	int irq;
 
 	irq = i8259_irq();
-	अगर (irq >= 0)
-		करो_IRQ(irq);
-	अन्यथा
-		spurious_पूर्णांकerrupt();
-पूर्ण
+	if (irq >= 0)
+		do_IRQ(irq);
+	else
+		spurious_interrupt();
+}
 
-यंत्रlinkage व्योम mach_irq_dispatch(अचिन्हित पूर्णांक pending)
-अणु
-	अगर (pending & CAUSEF_IP7)
-		करो_IRQ(MIPS_CPU_IRQ_BASE + 7);
-	अन्यथा अगर (pending & CAUSEF_IP6) /* perf counter loverflow */
-		वापस;
-	अन्यथा अगर (pending & CAUSEF_IP5)
+asmlinkage void mach_irq_dispatch(unsigned int pending)
+{
+	if (pending & CAUSEF_IP7)
+		do_IRQ(MIPS_CPU_IRQ_BASE + 7);
+	else if (pending & CAUSEF_IP6) /* perf counter loverflow */
+		return;
+	else if (pending & CAUSEF_IP5)
 		i8259_irqdispatch();
-	अन्यथा अगर (pending & CAUSEF_IP2)
+	else if (pending & CAUSEF_IP2)
 		bonito_irqdispatch();
-	अन्यथा
-		spurious_पूर्णांकerrupt();
-पूर्ण
+	else
+		spurious_interrupt();
+}
 
-व्योम __init mach_init_irq(व्योम)
-अणु
-	पूर्णांक irq;
+void __init mach_init_irq(void)
+{
+	int irq;
 
 	/* init all controller
-	 *   0-15	  ------> i8259 पूर्णांकerrupt
-	 *   16-23	  ------> mips cpu पूर्णांकerrupt
+	 *   0-15	  ------> i8259 interrupt
+	 *   16-23	  ------> mips cpu interrupt
 	 *   32-63	  ------> bonito irq
 	 */
 
@@ -50,17 +49,17 @@
 	LOONGSON_INTEDGE = LOONGSON_ICU_SYSTEMERR | LOONGSON_ICU_MASTERERR |
 	    LOONGSON_ICU_RETRYERR | LOONGSON_ICU_MBOXES;
 
-	/* Sets the first-level पूर्णांकerrupt dispatcher. */
+	/* Sets the first-level interrupt dispatcher. */
 	mips_cpu_irq_init();
 	init_i8259_irqs();
 	bonito_irq_init();
 
 	/* bonito irq at IP2 */
 	irq = MIPS_CPU_IRQ_BASE + 2;
-	अगर (request_irq(irq, no_action, IRQF_NO_THREAD, "cascade", शून्य))
+	if (request_irq(irq, no_action, IRQF_NO_THREAD, "cascade", NULL))
 		pr_err("Failed to request irq %d (cascade)\n", irq);
 	/* 8259 irq at IP5 */
 	irq = MIPS_CPU_IRQ_BASE + 5;
-	अगर (request_irq(irq, no_action, IRQF_NO_THREAD, "cascade", शून्य))
+	if (request_irq(irq, no_action, IRQF_NO_THREAD, "cascade", NULL))
 		pr_err("Failed to request irq %d (cascade)\n", irq);
-पूर्ण
+}

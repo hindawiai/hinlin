@@ -1,14 +1,13 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * USB Peripheral Controller driver क्रम Aeroflex Gaisler GRUSBDC.
+ * USB Peripheral Controller driver for Aeroflex Gaisler GRUSBDC.
  *
  * 2013 (c) Aeroflex Gaisler AB
  *
  * This driver supports GRUSBDC USB Device Controller cores available in the
  * GRLIB VHDL IP core library.
  *
- * Full करोcumentation of the GRUSBDC core can be found here:
+ * Full documentation of the GRUSBDC core can be found here:
  * https://www.gaisler.com/products/grlib/grip.pdf
  *
  * Contributors:
@@ -17,60 +16,60 @@
  */
 
 /*
- * A GRUSBDC core can have up to 16 IN endpoपूर्णांकs and 16 OUT endpoपूर्णांकs each
- * inभागidually configurable to any of the four USB transfer types. This driver
+ * A GRUSBDC core can have up to 16 IN endpoints and 16 OUT endpoints each
+ * individually configurable to any of the four USB transfer types. This driver
  * only supports cores in DMA mode.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/list.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/device.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/usb/ch9.h>
-#समावेश <linux/usb/gadget.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/dmapool.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/of_address.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
+#include <linux/errno.h>
+#include <linux/list.h>
+#include <linux/interrupt.h>
+#include <linux/device.h>
+#include <linux/usb.h>
+#include <linux/usb/ch9.h>
+#include <linux/usb/gadget.h>
+#include <linux/dma-mapping.h>
+#include <linux/dmapool.h>
+#include <linux/debugfs.h>
+#include <linux/seq_file.h>
+#include <linux/of_platform.h>
+#include <linux/of_irq.h>
+#include <linux/of_address.h>
 
-#समावेश <यंत्र/byteorder.h>
+#include <asm/byteorder.h>
 
-#समावेश "gr_udc.h"
+#include "gr_udc.h"
 
-#घोषणा	DRIVER_NAME	"gr_udc"
-#घोषणा	DRIVER_DESC	"Aeroflex Gaisler GRUSBDC USB Peripheral Controller"
+#define	DRIVER_NAME	"gr_udc"
+#define	DRIVER_DESC	"Aeroflex Gaisler GRUSBDC USB Peripheral Controller"
 
-अटल स्थिर अक्षर driver_name[] = DRIVER_NAME;
+static const char driver_name[] = DRIVER_NAME;
 
-#घोषणा gr_पढ़ो32(x) (ioपढ़ो32be((x)))
-#घोषणा gr_ग_लिखो32(x, v) (ioग_लिखो32be((v), (x)))
+#define gr_read32(x) (ioread32be((x)))
+#define gr_write32(x, v) (iowrite32be((v), (x)))
 
-/* USB speed and corresponding string calculated from status रेजिस्टर value */
-#घोषणा GR_SPEED(status) \
+/* USB speed and corresponding string calculated from status register value */
+#define GR_SPEED(status) \
 	((status & GR_STATUS_SP) ? USB_SPEED_FULL : USB_SPEED_HIGH)
-#घोषणा GR_SPEED_STR(status) usb_speed_string(GR_SPEED(status))
+#define GR_SPEED_STR(status) usb_speed_string(GR_SPEED(status))
 
-/* Size of hardware buffer calculated from epctrl रेजिस्टर value */
-#घोषणा GR_BUFFER_SIZE(epctrl)					      \
+/* Size of hardware buffer calculated from epctrl register value */
+#define GR_BUFFER_SIZE(epctrl)					      \
 	((((epctrl) & GR_EPCTRL_BUFSZ_MASK) >> GR_EPCTRL_BUFSZ_POS) * \
 	 GR_EPCTRL_BUFSZ_SCALER)
 
 /* ---------------------------------------------------------------------- */
-/* Debug prपूर्णांकout functionality */
+/* Debug printout functionality */
 
-अटल स्थिर अक्षर * स्थिर gr_modestring[] = अणु"control", "iso", "bulk", "int"पूर्ण;
+static const char * const gr_modestring[] = {"control", "iso", "bulk", "int"};
 
-अटल स्थिर अक्षर *gr_ep0state_string(क्रमागत gr_ep0state state)
-अणु
-	अटल स्थिर अक्षर *स्थिर names[] = अणु
+static const char *gr_ep0state_string(enum gr_ep0state state)
+{
+	static const char *const names[] = {
 		[GR_EP0_DISCONNECT] = "disconnect",
 		[GR_EP0_SETUP] = "setup",
 		[GR_EP0_IDATA] = "idata",
@@ -79,567 +78,567 @@
 		[GR_EP0_OSTATUS] = "ostatus",
 		[GR_EP0_STALL] = "stall",
 		[GR_EP0_SUSPEND] = "suspend",
-	पूर्ण;
+	};
 
-	अगर (state < 0 || state >= ARRAY_SIZE(names))
-		वापस "UNKNOWN";
+	if (state < 0 || state >= ARRAY_SIZE(names))
+		return "UNKNOWN";
 
-	वापस names[state];
-पूर्ण
+	return names[state];
+}
 
-#अगर_घोषित VERBOSE_DEBUG
+#ifdef VERBOSE_DEBUG
 
-अटल व्योम gr_dbgprपूर्णांक_request(स्थिर अक्षर *str, काष्ठा gr_ep *ep,
-				काष्ठा gr_request *req)
-अणु
-	पूर्णांक buflen = ep->is_in ? req->req.length : req->req.actual;
-	पूर्णांक rowlen = 32;
-	पूर्णांक plen = min(rowlen, buflen);
+static void gr_dbgprint_request(const char *str, struct gr_ep *ep,
+				struct gr_request *req)
+{
+	int buflen = ep->is_in ? req->req.length : req->req.actual;
+	int rowlen = 32;
+	int plen = min(rowlen, buflen);
 
 	dev_dbg(ep->dev->dev, "%s: 0x%p, %d bytes data%s:\n", str, req, buflen,
 		(buflen > plen ? " (truncated)" : ""));
-	prपूर्णांक_hex_dump_debug("   ", DUMP_PREFIX_NONE,
+	print_hex_dump_debug("   ", DUMP_PREFIX_NONE,
 			     rowlen, 4, req->req.buf, plen, false);
-पूर्ण
+}
 
-अटल व्योम gr_dbgprपूर्णांक_devreq(काष्ठा gr_udc *dev, u8 type, u8 request,
+static void gr_dbgprint_devreq(struct gr_udc *dev, u8 type, u8 request,
 			       u16 value, u16 index, u16 length)
-अणु
+{
 	dev_vdbg(dev->dev, "REQ: %02x.%02x v%04x i%04x l%04x\n",
 		 type, request, value, index, length);
-पूर्ण
-#अन्यथा /* !VERBOSE_DEBUG */
+}
+#else /* !VERBOSE_DEBUG */
 
-अटल व्योम gr_dbgprपूर्णांक_request(स्थिर अक्षर *str, काष्ठा gr_ep *ep,
-				काष्ठा gr_request *req) अणुपूर्ण
+static void gr_dbgprint_request(const char *str, struct gr_ep *ep,
+				struct gr_request *req) {}
 
-अटल व्योम gr_dbgprपूर्णांक_devreq(काष्ठा gr_udc *dev, u8 type, u8 request,
-			       u16 value, u16 index, u16 length) अणुपूर्ण
+static void gr_dbgprint_devreq(struct gr_udc *dev, u8 type, u8 request,
+			       u16 value, u16 index, u16 length) {}
 
-#पूर्ण_अगर /* VERBOSE_DEBUG */
+#endif /* VERBOSE_DEBUG */
 
 /* ---------------------------------------------------------------------- */
 /* Debugfs functionality */
 
-#अगर_घोषित CONFIG_USB_GADGET_DEBUG_FS
+#ifdef CONFIG_USB_GADGET_DEBUG_FS
 
-अटल व्योम gr_seq_ep_show(काष्ठा seq_file *seq, काष्ठा gr_ep *ep)
-अणु
-	u32 epctrl = gr_पढ़ो32(&ep->regs->epctrl);
-	u32 epstat = gr_पढ़ो32(&ep->regs->epstat);
-	पूर्णांक mode = (epctrl & GR_EPCTRL_TT_MASK) >> GR_EPCTRL_TT_POS;
-	काष्ठा gr_request *req;
+static void gr_seq_ep_show(struct seq_file *seq, struct gr_ep *ep)
+{
+	u32 epctrl = gr_read32(&ep->regs->epctrl);
+	u32 epstat = gr_read32(&ep->regs->epstat);
+	int mode = (epctrl & GR_EPCTRL_TT_MASK) >> GR_EPCTRL_TT_POS;
+	struct gr_request *req;
 
-	seq_म_लिखो(seq, "%s:\n", ep->ep.name);
-	seq_म_लिखो(seq, "  mode = %s\n", gr_modestring[mode]);
-	seq_म_लिखो(seq, "  halted: %d\n", !!(epctrl & GR_EPCTRL_EH));
-	seq_म_लिखो(seq, "  disabled: %d\n", !!(epctrl & GR_EPCTRL_ED));
-	seq_म_लिखो(seq, "  valid: %d\n", !!(epctrl & GR_EPCTRL_EV));
-	seq_म_लिखो(seq, "  dma_start = %d\n", ep->dma_start);
-	seq_म_लिखो(seq, "  stopped = %d\n", ep->stopped);
-	seq_म_लिखो(seq, "  wedged = %d\n", ep->wedged);
-	seq_म_लिखो(seq, "  callback = %d\n", ep->callback);
-	seq_म_लिखो(seq, "  maxpacket = %d\n", ep->ep.maxpacket);
-	seq_म_लिखो(seq, "  maxpacket_limit = %d\n", ep->ep.maxpacket_limit);
-	seq_म_लिखो(seq, "  bytes_per_buffer = %d\n", ep->bytes_per_buffer);
-	अगर (mode == 1 || mode == 3)
-		seq_म_लिखो(seq, "  nt = %d\n",
+	seq_printf(seq, "%s:\n", ep->ep.name);
+	seq_printf(seq, "  mode = %s\n", gr_modestring[mode]);
+	seq_printf(seq, "  halted: %d\n", !!(epctrl & GR_EPCTRL_EH));
+	seq_printf(seq, "  disabled: %d\n", !!(epctrl & GR_EPCTRL_ED));
+	seq_printf(seq, "  valid: %d\n", !!(epctrl & GR_EPCTRL_EV));
+	seq_printf(seq, "  dma_start = %d\n", ep->dma_start);
+	seq_printf(seq, "  stopped = %d\n", ep->stopped);
+	seq_printf(seq, "  wedged = %d\n", ep->wedged);
+	seq_printf(seq, "  callback = %d\n", ep->callback);
+	seq_printf(seq, "  maxpacket = %d\n", ep->ep.maxpacket);
+	seq_printf(seq, "  maxpacket_limit = %d\n", ep->ep.maxpacket_limit);
+	seq_printf(seq, "  bytes_per_buffer = %d\n", ep->bytes_per_buffer);
+	if (mode == 1 || mode == 3)
+		seq_printf(seq, "  nt = %d\n",
 			   (epctrl & GR_EPCTRL_NT_MASK) >> GR_EPCTRL_NT_POS);
 
-	seq_म_लिखो(seq, "  Buffer 0: %s %s%d\n",
+	seq_printf(seq, "  Buffer 0: %s %s%d\n",
 		   epstat & GR_EPSTAT_B0 ? "valid" : "invalid",
 		   epstat & GR_EPSTAT_BS ? " " : "selected ",
 		   (epstat & GR_EPSTAT_B0CNT_MASK) >> GR_EPSTAT_B0CNT_POS);
-	seq_म_लिखो(seq, "  Buffer 1: %s %s%d\n",
+	seq_printf(seq, "  Buffer 1: %s %s%d\n",
 		   epstat & GR_EPSTAT_B1 ? "valid" : "invalid",
 		   epstat & GR_EPSTAT_BS ? "selected " : " ",
 		   (epstat & GR_EPSTAT_B1CNT_MASK) >> GR_EPSTAT_B1CNT_POS);
 
-	अगर (list_empty(&ep->queue)) अणु
-		seq_माला_दो(seq, "  Queue: empty\n\n");
-		वापस;
-	पूर्ण
+	if (list_empty(&ep->queue)) {
+		seq_puts(seq, "  Queue: empty\n\n");
+		return;
+	}
 
-	seq_माला_दो(seq, "  Queue:\n");
-	list_क्रम_each_entry(req, &ep->queue, queue) अणु
-		काष्ठा gr_dma_desc *desc;
-		काष्ठा gr_dma_desc *next;
+	seq_puts(seq, "  Queue:\n");
+	list_for_each_entry(req, &ep->queue, queue) {
+		struct gr_dma_desc *desc;
+		struct gr_dma_desc *next;
 
-		seq_म_लिखो(seq, "    0x%p: 0x%p %d %d\n", req,
+		seq_printf(seq, "    0x%p: 0x%p %d %d\n", req,
 			   &req->req.buf, req->req.actual, req->req.length);
 
 		next = req->first_desc;
-		करो अणु
+		do {
 			desc = next;
 			next = desc->next_desc;
-			seq_म_लिखो(seq, "    %c 0x%p (0x%08x): 0x%05x 0x%08x\n",
+			seq_printf(seq, "    %c 0x%p (0x%08x): 0x%05x 0x%08x\n",
 				   desc == req->curr_desc ? 'c' : ' ',
 				   desc, desc->paddr, desc->ctrl, desc->data);
-		पूर्ण जबतक (desc != req->last_desc);
-	पूर्ण
-	seq_माला_दो(seq, "\n");
-पूर्ण
+		} while (desc != req->last_desc);
+	}
+	seq_puts(seq, "\n");
+}
 
-अटल पूर्णांक gr_dfs_show(काष्ठा seq_file *seq, व्योम *v)
-अणु
-	काष्ठा gr_udc *dev = seq->निजी;
-	u32 control = gr_पढ़ो32(&dev->regs->control);
-	u32 status = gr_पढ़ो32(&dev->regs->status);
-	काष्ठा gr_ep *ep;
+static int gr_dfs_show(struct seq_file *seq, void *v)
+{
+	struct gr_udc *dev = seq->private;
+	u32 control = gr_read32(&dev->regs->control);
+	u32 status = gr_read32(&dev->regs->status);
+	struct gr_ep *ep;
 
-	seq_म_लिखो(seq, "usb state = %s\n",
+	seq_printf(seq, "usb state = %s\n",
 		   usb_state_string(dev->gadget.state));
-	seq_म_लिखो(seq, "address = %d\n",
+	seq_printf(seq, "address = %d\n",
 		   (control & GR_CONTROL_UA_MASK) >> GR_CONTROL_UA_POS);
-	seq_म_लिखो(seq, "speed = %s\n", GR_SPEED_STR(status));
-	seq_म_लिखो(seq, "ep0state = %s\n", gr_ep0state_string(dev->ep0state));
-	seq_म_लिखो(seq, "irq_enabled = %d\n", dev->irq_enabled);
-	seq_म_लिखो(seq, "remote_wakeup = %d\n", dev->remote_wakeup);
-	seq_म_लिखो(seq, "test_mode = %d\n", dev->test_mode);
-	seq_माला_दो(seq, "\n");
+	seq_printf(seq, "speed = %s\n", GR_SPEED_STR(status));
+	seq_printf(seq, "ep0state = %s\n", gr_ep0state_string(dev->ep0state));
+	seq_printf(seq, "irq_enabled = %d\n", dev->irq_enabled);
+	seq_printf(seq, "remote_wakeup = %d\n", dev->remote_wakeup);
+	seq_printf(seq, "test_mode = %d\n", dev->test_mode);
+	seq_puts(seq, "\n");
 
-	list_क्रम_each_entry(ep, &dev->ep_list, ep_list)
+	list_for_each_entry(ep, &dev->ep_list, ep_list)
 		gr_seq_ep_show(seq, ep);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 DEFINE_SHOW_ATTRIBUTE(gr_dfs);
 
-अटल व्योम gr_dfs_create(काष्ठा gr_udc *dev)
-अणु
-	स्थिर अक्षर *name = "gr_udc_state";
+static void gr_dfs_create(struct gr_udc *dev)
+{
+	const char *name = "gr_udc_state";
 
 	dev->dfs_root = debugfs_create_dir(dev_name(dev->dev), usb_debug_root);
 	debugfs_create_file(name, 0444, dev->dfs_root, dev, &gr_dfs_fops);
-पूर्ण
+}
 
-अटल व्योम gr_dfs_delete(काष्ठा gr_udc *dev)
-अणु
-	debugfs_हटाओ_recursive(dev->dfs_root);
-पूर्ण
+static void gr_dfs_delete(struct gr_udc *dev)
+{
+	debugfs_remove_recursive(dev->dfs_root);
+}
 
-#अन्यथा /* !CONFIG_USB_GADGET_DEBUG_FS */
+#else /* !CONFIG_USB_GADGET_DEBUG_FS */
 
-अटल व्योम gr_dfs_create(काष्ठा gr_udc *dev) अणुपूर्ण
-अटल व्योम gr_dfs_delete(काष्ठा gr_udc *dev) अणुपूर्ण
+static void gr_dfs_create(struct gr_udc *dev) {}
+static void gr_dfs_delete(struct gr_udc *dev) {}
 
-#पूर्ण_अगर /* CONFIG_USB_GADGET_DEBUG_FS */
+#endif /* CONFIG_USB_GADGET_DEBUG_FS */
 
 /* ---------------------------------------------------------------------- */
 /* DMA and request handling */
 
-/* Allocates a new काष्ठा gr_dma_desc, sets paddr and zeroes the rest */
-अटल काष्ठा gr_dma_desc *gr_alloc_dma_desc(काष्ठा gr_ep *ep, gfp_t gfp_flags)
-अणु
+/* Allocates a new struct gr_dma_desc, sets paddr and zeroes the rest */
+static struct gr_dma_desc *gr_alloc_dma_desc(struct gr_ep *ep, gfp_t gfp_flags)
+{
 	dma_addr_t paddr;
-	काष्ठा gr_dma_desc *dma_desc;
+	struct gr_dma_desc *dma_desc;
 
 	dma_desc = dma_pool_zalloc(ep->dev->desc_pool, gfp_flags, &paddr);
-	अगर (!dma_desc) अणु
+	if (!dma_desc) {
 		dev_err(ep->dev->dev, "Could not allocate from DMA pool\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	dma_desc->paddr = paddr;
 
-	वापस dma_desc;
-पूर्ण
+	return dma_desc;
+}
 
-अटल अंतरभूत व्योम gr_मुक्त_dma_desc(काष्ठा gr_udc *dev,
-				    काष्ठा gr_dma_desc *desc)
-अणु
-	dma_pool_मुक्त(dev->desc_pool, desc, (dma_addr_t)desc->paddr);
-पूर्ण
+static inline void gr_free_dma_desc(struct gr_udc *dev,
+				    struct gr_dma_desc *desc)
+{
+	dma_pool_free(dev->desc_pool, desc, (dma_addr_t)desc->paddr);
+}
 
-/* Frees the chain of काष्ठा gr_dma_desc क्रम the given request */
-अटल व्योम gr_मुक्त_dma_desc_chain(काष्ठा gr_udc *dev, काष्ठा gr_request *req)
-अणु
-	काष्ठा gr_dma_desc *desc;
-	काष्ठा gr_dma_desc *next;
+/* Frees the chain of struct gr_dma_desc for the given request */
+static void gr_free_dma_desc_chain(struct gr_udc *dev, struct gr_request *req)
+{
+	struct gr_dma_desc *desc;
+	struct gr_dma_desc *next;
 
 	next = req->first_desc;
-	अगर (!next)
-		वापस;
+	if (!next)
+		return;
 
-	करो अणु
+	do {
 		desc = next;
 		next = desc->next_desc;
-		gr_मुक्त_dma_desc(dev, desc);
-	पूर्ण जबतक (desc != req->last_desc);
+		gr_free_dma_desc(dev, desc);
+	} while (desc != req->last_desc);
 
-	req->first_desc = शून्य;
-	req->curr_desc = शून्य;
-	req->last_desc = शून्य;
-पूर्ण
+	req->first_desc = NULL;
+	req->curr_desc = NULL;
+	req->last_desc = NULL;
+}
 
-अटल व्योम gr_ep0_setup(काष्ठा gr_udc *dev, काष्ठा gr_request *req);
+static void gr_ep0_setup(struct gr_udc *dev, struct gr_request *req);
 
 /*
  * Frees allocated resources and calls the appropriate completion function/setup
- * package handler क्रम a finished request.
+ * package handler for a finished request.
  *
  * Must be called with dev->lock held and irqs disabled.
  */
-अटल व्योम gr_finish_request(काष्ठा gr_ep *ep, काष्ठा gr_request *req,
-			      पूर्णांक status)
+static void gr_finish_request(struct gr_ep *ep, struct gr_request *req,
+			      int status)
 	__releases(&dev->lock)
 	__acquires(&dev->lock)
-अणु
-	काष्ठा gr_udc *dev;
+{
+	struct gr_udc *dev;
 
 	list_del_init(&req->queue);
 
-	अगर (likely(req->req.status == -EINPROGRESS))
+	if (likely(req->req.status == -EINPROGRESS))
 		req->req.status = status;
-	अन्यथा
+	else
 		status = req->req.status;
 
 	dev = ep->dev;
 	usb_gadget_unmap_request(&dev->gadget, &req->req, ep->is_in);
-	gr_मुक्त_dma_desc_chain(dev, req);
+	gr_free_dma_desc_chain(dev, req);
 
-	अगर (ep->is_in) अणु /* For OUT, req->req.actual माला_लो updated bit by bit */
+	if (ep->is_in) { /* For OUT, req->req.actual gets updated bit by bit */
 		req->req.actual = req->req.length;
-	पूर्ण अन्यथा अगर (req->oddlen && req->req.actual > req->evenlen) अणु
+	} else if (req->oddlen && req->req.actual > req->evenlen) {
 		/*
-		 * Copy to user buffer in this हाल where length was not evenly
-		 * भागisible by ep->ep.maxpacket and the last descriptor was
+		 * Copy to user buffer in this case where length was not evenly
+		 * divisible by ep->ep.maxpacket and the last descriptor was
 		 * actually used.
 		 */
-		अक्षर *buftail = ((अक्षर *)req->req.buf + req->evenlen);
+		char *buftail = ((char *)req->req.buf + req->evenlen);
 
-		स_नकल(buftail, ep->tailbuf, req->oddlen);
+		memcpy(buftail, ep->tailbuf, req->oddlen);
 
-		अगर (req->req.actual > req->req.length) अणु
+		if (req->req.actual > req->req.length) {
 			/* We got more data than was requested */
 			dev_dbg(ep->dev->dev, "Overflow for ep %s\n",
 				ep->ep.name);
-			gr_dbgprपूर्णांक_request("OVFL", ep, req);
+			gr_dbgprint_request("OVFL", ep, req);
 			req->req.status = -EOVERFLOW;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!status) अणु
-		अगर (ep->is_in)
-			gr_dbgprपूर्णांक_request("SENT", ep, req);
-		अन्यथा
-			gr_dbgprपूर्णांक_request("RECV", ep, req);
-	पूर्ण
+	if (!status) {
+		if (ep->is_in)
+			gr_dbgprint_request("SENT", ep, req);
+		else
+			gr_dbgprint_request("RECV", ep, req);
+	}
 
 	/* Prevent changes to ep->queue during callback */
 	ep->callback = 1;
-	अगर (req == dev->ep0reqo && !status) अणु
-		अगर (req->setup)
+	if (req == dev->ep0reqo && !status) {
+		if (req->setup)
 			gr_ep0_setup(dev, req);
-		अन्यथा
+		else
 			dev_err(dev->dev,
 				"Unexpected non setup packet on ep0in\n");
-	पूर्ण अन्यथा अगर (req->req.complete) अणु
+	} else if (req->req.complete) {
 		spin_unlock(&dev->lock);
 
 		usb_gadget_giveback_request(&ep->ep, &req->req);
 
 		spin_lock(&dev->lock);
-	पूर्ण
+	}
 	ep->callback = 0;
-पूर्ण
+}
 
-अटल काष्ठा usb_request *gr_alloc_request(काष्ठा usb_ep *_ep, gfp_t gfp_flags)
-अणु
-	काष्ठा gr_request *req;
+static struct usb_request *gr_alloc_request(struct usb_ep *_ep, gfp_t gfp_flags)
+{
+	struct gr_request *req;
 
-	req = kzalloc(माप(*req), gfp_flags);
-	अगर (!req)
-		वापस शून्य;
+	req = kzalloc(sizeof(*req), gfp_flags);
+	if (!req)
+		return NULL;
 
 	INIT_LIST_HEAD(&req->queue);
 
-	वापस &req->req;
-पूर्ण
+	return &req->req;
+}
 
 /*
- * Starts DMA क्रम endpoपूर्णांक ep अगर there are requests in the queue.
+ * Starts DMA for endpoint ep if there are requests in the queue.
  *
  * Must be called with dev->lock held and with !ep->stopped.
  */
-अटल व्योम gr_start_dma(काष्ठा gr_ep *ep)
-अणु
-	काष्ठा gr_request *req;
+static void gr_start_dma(struct gr_ep *ep)
+{
+	struct gr_request *req;
 	u32 dmactrl;
 
-	अगर (list_empty(&ep->queue)) अणु
+	if (list_empty(&ep->queue)) {
 		ep->dma_start = 0;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	req = list_first_entry(&ep->queue, काष्ठा gr_request, queue);
+	req = list_first_entry(&ep->queue, struct gr_request, queue);
 
-	/* A descriptor should alपढ़ोy have been allocated */
+	/* A descriptor should already have been allocated */
 	BUG_ON(!req->curr_desc);
 
 	/*
 	 * The DMA controller can not handle smaller OUT buffers than
-	 * ep->ep.maxpacket. It could lead to buffer overruns अगर an unexpectedly
-	 * दीर्घ packet are received. Thereक्रमe an पूर्णांकernal bounce buffer माला_लो
-	 * used when such a request माला_लो enabled.
+	 * ep->ep.maxpacket. It could lead to buffer overruns if an unexpectedly
+	 * long packet are received. Therefore an internal bounce buffer gets
+	 * used when such a request gets enabled.
 	 */
-	अगर (!ep->is_in && req->oddlen)
+	if (!ep->is_in && req->oddlen)
 		req->last_desc->data = ep->tailbuf_paddr;
 
-	wmb(); /* Make sure all is settled beक्रमe handing it over to DMA */
+	wmb(); /* Make sure all is settled before handing it over to DMA */
 
-	/* Set the descriptor poपूर्णांकer in the hardware */
-	gr_ग_लिखो32(&ep->regs->dmaaddr, req->curr_desc->paddr);
+	/* Set the descriptor pointer in the hardware */
+	gr_write32(&ep->regs->dmaaddr, req->curr_desc->paddr);
 
 	/* Announce available descriptors */
-	dmactrl = gr_पढ़ो32(&ep->regs->dmactrl);
-	gr_ग_लिखो32(&ep->regs->dmactrl, dmactrl | GR_DMACTRL_DA);
+	dmactrl = gr_read32(&ep->regs->dmactrl);
+	gr_write32(&ep->regs->dmactrl, dmactrl | GR_DMACTRL_DA);
 
 	ep->dma_start = 1;
-पूर्ण
+}
 
 /*
- * Finishes the first request in the ep's queue and, अगर available, starts the
+ * Finishes the first request in the ep's queue and, if available, starts the
  * next request in queue.
  *
  * Must be called with dev->lock held, irqs disabled and with !ep->stopped.
  */
-अटल व्योम gr_dma_advance(काष्ठा gr_ep *ep, पूर्णांक status)
-अणु
-	काष्ठा gr_request *req;
+static void gr_dma_advance(struct gr_ep *ep, int status)
+{
+	struct gr_request *req;
 
-	req = list_first_entry(&ep->queue, काष्ठा gr_request, queue);
+	req = list_first_entry(&ep->queue, struct gr_request, queue);
 	gr_finish_request(ep, req, status);
 	gr_start_dma(ep); /* Regardless of ep->dma_start */
-पूर्ण
+}
 
 /*
- * Abort DMA क्रम an endpoपूर्णांक. Sets the पात DMA bit which causes an ongoing DMA
+ * Abort DMA for an endpoint. Sets the abort DMA bit which causes an ongoing DMA
  * transfer to be canceled and clears GR_DMACTRL_DA.
  *
  * Must be called with dev->lock held.
  */
-अटल व्योम gr_पात_dma(काष्ठा gr_ep *ep)
-अणु
+static void gr_abort_dma(struct gr_ep *ep)
+{
 	u32 dmactrl;
 
-	dmactrl = gr_पढ़ो32(&ep->regs->dmactrl);
-	gr_ग_लिखो32(&ep->regs->dmactrl, dmactrl | GR_DMACTRL_AD);
-पूर्ण
+	dmactrl = gr_read32(&ep->regs->dmactrl);
+	gr_write32(&ep->regs->dmactrl, dmactrl | GR_DMACTRL_AD);
+}
 
 /*
- * Allocates and sets up a काष्ठा gr_dma_desc and putting it on the descriptor
+ * Allocates and sets up a struct gr_dma_desc and putting it on the descriptor
  * chain.
  *
- * Size is not used क्रम OUT endpoपूर्णांकs. Hardware can not be inकाष्ठाed to handle
+ * Size is not used for OUT endpoints. Hardware can not be instructed to handle
  * smaller buffer than MAXPL in the OUT direction.
  */
-अटल पूर्णांक gr_add_dma_desc(काष्ठा gr_ep *ep, काष्ठा gr_request *req,
-			   dma_addr_t data, अचिन्हित size, gfp_t gfp_flags)
-अणु
-	काष्ठा gr_dma_desc *desc;
+static int gr_add_dma_desc(struct gr_ep *ep, struct gr_request *req,
+			   dma_addr_t data, unsigned size, gfp_t gfp_flags)
+{
+	struct gr_dma_desc *desc;
 
 	desc = gr_alloc_dma_desc(ep, gfp_flags);
-	अगर (!desc)
-		वापस -ENOMEM;
+	if (!desc)
+		return -ENOMEM;
 
 	desc->data = data;
-	अगर (ep->is_in)
+	if (ep->is_in)
 		desc->ctrl =
 			(GR_DESC_IN_CTRL_LEN_MASK & size) | GR_DESC_IN_CTRL_EN;
-	अन्यथा
+	else
 		desc->ctrl = GR_DESC_OUT_CTRL_IE;
 
-	अगर (!req->first_desc) अणु
+	if (!req->first_desc) {
 		req->first_desc = desc;
 		req->curr_desc = desc;
-	पूर्ण अन्यथा अणु
+	} else {
 		req->last_desc->next_desc = desc;
 		req->last_desc->next = desc->paddr;
 		req->last_desc->ctrl |= GR_DESC_OUT_CTRL_NX;
-	पूर्ण
+	}
 	req->last_desc = desc;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Sets up a chain of काष्ठा gr_dma_descriptors poपूर्णांकing to buffers that
+ * Sets up a chain of struct gr_dma_descriptors pointing to buffers that
  * together covers req->req.length bytes of the buffer at DMA address
- * req->req.dma क्रम the OUT direction.
+ * req->req.dma for the OUT direction.
  *
  * The first descriptor in the chain is enabled, the rest disabled. The
- * पूर्णांकerrupt handler will later enable them one by one when needed so we can
- * find out when the transfer is finished. For OUT endpoपूर्णांकs, all descriptors
- * thereक्रमe generate पूर्णांकerrutps.
+ * interrupt handler will later enable them one by one when needed so we can
+ * find out when the transfer is finished. For OUT endpoints, all descriptors
+ * therefore generate interrutps.
  */
-अटल पूर्णांक gr_setup_out_desc_list(काष्ठा gr_ep *ep, काष्ठा gr_request *req,
+static int gr_setup_out_desc_list(struct gr_ep *ep, struct gr_request *req,
 				  gfp_t gfp_flags)
-अणु
-	u16 bytes_left; /* Bytes left to provide descriptors क्रम */
-	u16 bytes_used; /* Bytes accommodated क्रम */
-	पूर्णांक ret = 0;
+{
+	u16 bytes_left; /* Bytes left to provide descriptors for */
+	u16 bytes_used; /* Bytes accommodated for */
+	int ret = 0;
 
-	req->first_desc = शून्य; /* Signals that no allocation is करोne yet */
+	req->first_desc = NULL; /* Signals that no allocation is done yet */
 	bytes_left = req->req.length;
 	bytes_used = 0;
-	जबतक (bytes_left > 0) अणु
+	while (bytes_left > 0) {
 		dma_addr_t start = req->req.dma + bytes_used;
 		u16 size = min(bytes_left, ep->bytes_per_buffer);
 
-		अगर (size < ep->bytes_per_buffer) अणु
+		if (size < ep->bytes_per_buffer) {
 			/* Prepare using bounce buffer */
 			req->evenlen = req->req.length - bytes_left;
 			req->oddlen = size;
-		पूर्ण
+		}
 
 		ret = gr_add_dma_desc(ep, req, start, size, gfp_flags);
-		अगर (ret)
-			जाओ alloc_err;
+		if (ret)
+			goto alloc_err;
 
 		bytes_left -= size;
 		bytes_used += size;
-	पूर्ण
+	}
 
 	req->first_desc->ctrl |= GR_DESC_OUT_CTRL_EN;
 
-	वापस 0;
+	return 0;
 
 alloc_err:
-	gr_मुक्त_dma_desc_chain(ep->dev, req);
+	gr_free_dma_desc_chain(ep->dev, req);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Sets up a chain of काष्ठा gr_dma_descriptors poपूर्णांकing to buffers that
+ * Sets up a chain of struct gr_dma_descriptors pointing to buffers that
  * together covers req->req.length bytes of the buffer at DMA address
- * req->req.dma क्रम the IN direction.
+ * req->req.dma for the IN direction.
  *
  * When more data is provided than the maximum payload size, the hardware splits
- * this up पूर्णांकo several payloads स्वतःmatically. Moreover, ep->bytes_per_buffer
+ * this up into several payloads automatically. Moreover, ep->bytes_per_buffer
  * is always set to a multiple of the maximum payload (restricted to the valid
- * number of maximum payloads during high bandwidth isochronous or पूर्णांकerrupt
+ * number of maximum payloads during high bandwidth isochronous or interrupt
  * transfers)
  *
  * All descriptors are enabled from the beginning and we only generate an
- * पूर्णांकerrupt क्रम the last one indicating that the entire request has been pushed
+ * interrupt for the last one indicating that the entire request has been pushed
  * to hardware.
  */
-अटल पूर्णांक gr_setup_in_desc_list(काष्ठा gr_ep *ep, काष्ठा gr_request *req,
+static int gr_setup_in_desc_list(struct gr_ep *ep, struct gr_request *req,
 				 gfp_t gfp_flags)
-अणु
-	u16 bytes_left; /* Bytes left in req to provide descriptors क्रम */
-	u16 bytes_used; /* Bytes in req accommodated क्रम */
-	पूर्णांक ret = 0;
+{
+	u16 bytes_left; /* Bytes left in req to provide descriptors for */
+	u16 bytes_used; /* Bytes in req accommodated for */
+	int ret = 0;
 
-	req->first_desc = शून्य; /* Signals that no allocation is करोne yet */
+	req->first_desc = NULL; /* Signals that no allocation is done yet */
 	bytes_left = req->req.length;
 	bytes_used = 0;
-	करो अणु /* Allow क्रम zero length packets */
+	do { /* Allow for zero length packets */
 		dma_addr_t start = req->req.dma + bytes_used;
 		u16 size = min(bytes_left, ep->bytes_per_buffer);
 
 		ret = gr_add_dma_desc(ep, req, start, size, gfp_flags);
-		अगर (ret)
-			जाओ alloc_err;
+		if (ret)
+			goto alloc_err;
 
 		bytes_left -= size;
 		bytes_used += size;
-	पूर्ण जबतक (bytes_left > 0);
+	} while (bytes_left > 0);
 
 	/*
 	 * Send an extra zero length packet to indicate that no more data is
 	 * available when req->req.zero is set and the data length is even
 	 * multiples of ep->ep.maxpacket.
 	 */
-	अगर (req->req.zero && (req->req.length % ep->ep.maxpacket == 0)) अणु
+	if (req->req.zero && (req->req.length % ep->ep.maxpacket == 0)) {
 		ret = gr_add_dma_desc(ep, req, 0, 0, gfp_flags);
-		अगर (ret)
-			जाओ alloc_err;
-	पूर्ण
+		if (ret)
+			goto alloc_err;
+	}
 
 	/*
 	 * For IN packets we only want to know when the last packet has been
-	 * transmitted (not just put पूर्णांकo पूर्णांकernal buffers).
+	 * transmitted (not just put into internal buffers).
 	 */
 	req->last_desc->ctrl |= GR_DESC_IN_CTRL_PI;
 
-	वापस 0;
+	return 0;
 
 alloc_err:
-	gr_मुक्त_dma_desc_chain(ep->dev, req);
+	gr_free_dma_desc_chain(ep->dev, req);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* Must be called with dev->lock held */
-अटल पूर्णांक gr_queue(काष्ठा gr_ep *ep, काष्ठा gr_request *req, gfp_t gfp_flags)
-अणु
-	काष्ठा gr_udc *dev = ep->dev;
-	पूर्णांक ret;
+static int gr_queue(struct gr_ep *ep, struct gr_request *req, gfp_t gfp_flags)
+{
+	struct gr_udc *dev = ep->dev;
+	int ret;
 
-	अगर (unlikely(!ep->ep.desc && ep->num != 0)) अणु
+	if (unlikely(!ep->ep.desc && ep->num != 0)) {
 		dev_err(dev->dev, "No ep descriptor for %s\n", ep->ep.name);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (unlikely(!req->req.buf || !list_empty(&req->queue))) अणु
+	if (unlikely(!req->req.buf || !list_empty(&req->queue))) {
 		dev_err(dev->dev,
 			"Invalid request for %s: buf=%p list_empty=%d\n",
 			ep->ep.name, req->req.buf, list_empty(&req->queue));
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (unlikely(!dev->driver || dev->gadget.speed == USB_SPEED_UNKNOWN)) अणु
+	if (unlikely(!dev->driver || dev->gadget.speed == USB_SPEED_UNKNOWN)) {
 		dev_err(dev->dev, "-ESHUTDOWN");
-		वापस -ESHUTDOWN;
-	पूर्ण
+		return -ESHUTDOWN;
+	}
 
-	/* Can't touch रेजिस्टरs when suspended */
-	अगर (dev->ep0state == GR_EP0_SUSPEND) अणु
+	/* Can't touch registers when suspended */
+	if (dev->ep0state == GR_EP0_SUSPEND) {
 		dev_err(dev->dev, "-EBUSY");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	/* Set up DMA mapping in हाल the caller didn't */
+	/* Set up DMA mapping in case the caller didn't */
 	ret = usb_gadget_map_request(&dev->gadget, &req->req, ep->is_in);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev->dev, "usb_gadget_map_request");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (ep->is_in)
+	if (ep->is_in)
 		ret = gr_setup_in_desc_list(ep, req, gfp_flags);
-	अन्यथा
+	else
 		ret = gr_setup_out_desc_list(ep, req, gfp_flags);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	req->req.status = -EINPROGRESS;
 	req->req.actual = 0;
 	list_add_tail(&req->queue, &ep->queue);
 
-	/* Start DMA अगर not started, otherwise पूर्णांकerrupt handler handles it */
-	अगर (!ep->dma_start && likely(!ep->stopped))
+	/* Start DMA if not started, otherwise interrupt handler handles it */
+	if (!ep->dma_start && likely(!ep->stopped))
 		gr_start_dma(ep);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Queue a request from within the driver.
  *
  * Must be called with dev->lock held.
  */
-अटल अंतरभूत पूर्णांक gr_queue_पूर्णांक(काष्ठा gr_ep *ep, काष्ठा gr_request *req,
+static inline int gr_queue_int(struct gr_ep *ep, struct gr_request *req,
 			       gfp_t gfp_flags)
-अणु
-	अगर (ep->is_in)
-		gr_dbgprपूर्णांक_request("RESP", ep, req);
+{
+	if (ep->is_in)
+		gr_dbgprint_request("RESP", ep, req);
 
-	वापस gr_queue(ep, req, gfp_flags);
-पूर्ण
+	return gr_queue(ep, req, gfp_flags);
+}
 
 /* ---------------------------------------------------------------------- */
 /* General helper functions */
@@ -649,443 +648,443 @@ alloc_err:
  *
  * Must be called with dev->lock held and irqs disabled.
  */
-अटल व्योम gr_ep_nuke(काष्ठा gr_ep *ep)
-अणु
-	काष्ठा gr_request *req;
+static void gr_ep_nuke(struct gr_ep *ep)
+{
+	struct gr_request *req;
 
 	ep->stopped = 1;
 	ep->dma_start = 0;
-	gr_पात_dma(ep);
+	gr_abort_dma(ep);
 
-	जबतक (!list_empty(&ep->queue)) अणु
-		req = list_first_entry(&ep->queue, काष्ठा gr_request, queue);
+	while (!list_empty(&ep->queue)) {
+		req = list_first_entry(&ep->queue, struct gr_request, queue);
 		gr_finish_request(ep, req, -ESHUTDOWN);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Reset the hardware state of this endpoपूर्णांक.
+ * Reset the hardware state of this endpoint.
  *
  * Must be called with dev->lock held.
  */
-अटल व्योम gr_ep_reset(काष्ठा gr_ep *ep)
-अणु
-	gr_ग_लिखो32(&ep->regs->epctrl, 0);
-	gr_ग_लिखो32(&ep->regs->dmactrl, 0);
+static void gr_ep_reset(struct gr_ep *ep)
+{
+	gr_write32(&ep->regs->epctrl, 0);
+	gr_write32(&ep->regs->dmactrl, 0);
 
 	ep->ep.maxpacket = MAX_CTRL_PL_SIZE;
-	ep->ep.desc = शून्य;
+	ep->ep.desc = NULL;
 	ep->stopped = 1;
 	ep->dma_start = 0;
-पूर्ण
+}
 
 /*
  * Generate STALL on ep0in/out.
  *
  * Must be called with dev->lock held.
  */
-अटल व्योम gr_control_stall(काष्ठा gr_udc *dev)
-अणु
+static void gr_control_stall(struct gr_udc *dev)
+{
 	u32 epctrl;
 
-	epctrl = gr_पढ़ो32(&dev->epo[0].regs->epctrl);
-	gr_ग_लिखो32(&dev->epo[0].regs->epctrl, epctrl | GR_EPCTRL_CS);
-	epctrl = gr_पढ़ो32(&dev->epi[0].regs->epctrl);
-	gr_ग_लिखो32(&dev->epi[0].regs->epctrl, epctrl | GR_EPCTRL_CS);
+	epctrl = gr_read32(&dev->epo[0].regs->epctrl);
+	gr_write32(&dev->epo[0].regs->epctrl, epctrl | GR_EPCTRL_CS);
+	epctrl = gr_read32(&dev->epi[0].regs->epctrl);
+	gr_write32(&dev->epi[0].regs->epctrl, epctrl | GR_EPCTRL_CS);
 
 	dev->ep0state = GR_EP0_STALL;
-पूर्ण
+}
 
 /*
- * Halts, halts and wedges, or clears halt क्रम an endpoपूर्णांक.
+ * Halts, halts and wedges, or clears halt for an endpoint.
  *
  * Must be called with dev->lock held.
  */
-अटल पूर्णांक gr_ep_halt_wedge(काष्ठा gr_ep *ep, पूर्णांक halt, पूर्णांक wedge, पूर्णांक fromhost)
-अणु
+static int gr_ep_halt_wedge(struct gr_ep *ep, int halt, int wedge, int fromhost)
+{
 	u32 epctrl;
-	पूर्णांक retval = 0;
+	int retval = 0;
 
-	अगर (ep->num && !ep->ep.desc)
-		वापस -EINVAL;
+	if (ep->num && !ep->ep.desc)
+		return -EINVAL;
 
-	अगर (ep->num && ep->ep.desc->bmAttributes == USB_ENDPOINT_XFER_ISOC)
-		वापस -EOPNOTSUPP;
+	if (ep->num && ep->ep.desc->bmAttributes == USB_ENDPOINT_XFER_ISOC)
+		return -EOPNOTSUPP;
 
-	/* Never actually halt ep0, and thereक्रमe never clear halt क्रम ep0 */
-	अगर (!ep->num) अणु
-		अगर (halt && !fromhost) अणु
+	/* Never actually halt ep0, and therefore never clear halt for ep0 */
+	if (!ep->num) {
+		if (halt && !fromhost) {
 			/* ep0 halt from gadget - generate protocol stall */
 			gr_control_stall(ep->dev);
 			dev_dbg(ep->dev->dev, "EP: stall ep0\n");
-			वापस 0;
-		पूर्ण
-		वापस -EINVAL;
-	पूर्ण
+			return 0;
+		}
+		return -EINVAL;
+	}
 
 	dev_dbg(ep->dev->dev, "EP: %s halt %s\n",
 		(halt ? (wedge ? "wedge" : "set") : "clear"), ep->ep.name);
 
-	epctrl = gr_पढ़ो32(&ep->regs->epctrl);
-	अगर (halt) अणु
+	epctrl = gr_read32(&ep->regs->epctrl);
+	if (halt) {
 		/* Set HALT */
-		gr_ग_लिखो32(&ep->regs->epctrl, epctrl | GR_EPCTRL_EH);
+		gr_write32(&ep->regs->epctrl, epctrl | GR_EPCTRL_EH);
 		ep->stopped = 1;
-		अगर (wedge)
+		if (wedge)
 			ep->wedged = 1;
-	पूर्ण अन्यथा अणु
-		gr_ग_लिखो32(&ep->regs->epctrl, epctrl & ~GR_EPCTRL_EH);
+	} else {
+		gr_write32(&ep->regs->epctrl, epctrl & ~GR_EPCTRL_EH);
 		ep->stopped = 0;
 		ep->wedged = 0;
 
-		/* Things might have been queued up in the meanसमय */
-		अगर (!ep->dma_start)
+		/* Things might have been queued up in the meantime */
+		if (!ep->dma_start)
 			gr_start_dma(ep);
-	पूर्ण
+	}
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
 /* Must be called with dev->lock held */
-अटल अंतरभूत व्योम gr_set_ep0state(काष्ठा gr_udc *dev, क्रमागत gr_ep0state value)
-अणु
-	अगर (dev->ep0state != value)
+static inline void gr_set_ep0state(struct gr_udc *dev, enum gr_ep0state value)
+{
+	if (dev->ep0state != value)
 		dev_vdbg(dev->dev, "STATE:  ep0state=%s\n",
 			 gr_ep0state_string(value));
 	dev->ep0state = value;
-पूर्ण
+}
 
 /*
- * Should only be called when endpoपूर्णांकs can not generate पूर्णांकerrupts.
+ * Should only be called when endpoints can not generate interrupts.
  *
  * Must be called with dev->lock held.
  */
-अटल व्योम gr_disable_पूर्णांकerrupts_and_pullup(काष्ठा gr_udc *dev)
-अणु
-	gr_ग_लिखो32(&dev->regs->control, 0);
-	wmb(); /* Make sure that we करो not deny one of our पूर्णांकerrupts */
+static void gr_disable_interrupts_and_pullup(struct gr_udc *dev)
+{
+	gr_write32(&dev->regs->control, 0);
+	wmb(); /* Make sure that we do not deny one of our interrupts */
 	dev->irq_enabled = 0;
-पूर्ण
+}
 
 /*
  * Stop all device activity and disable data line pullup.
  *
  * Must be called with dev->lock held and irqs disabled.
  */
-अटल व्योम gr_stop_activity(काष्ठा gr_udc *dev)
-अणु
-	काष्ठा gr_ep *ep;
+static void gr_stop_activity(struct gr_udc *dev)
+{
+	struct gr_ep *ep;
 
-	list_क्रम_each_entry(ep, &dev->ep_list, ep_list)
+	list_for_each_entry(ep, &dev->ep_list, ep_list)
 		gr_ep_nuke(ep);
 
-	gr_disable_पूर्णांकerrupts_and_pullup(dev);
+	gr_disable_interrupts_and_pullup(dev);
 
 	gr_set_ep0state(dev, GR_EP0_DISCONNECT);
 	usb_gadget_set_state(&dev->gadget, USB_STATE_NOTATTACHED);
-पूर्ण
+}
 
 /* ---------------------------------------------------------------------- */
 /* ep0 setup packet handling */
 
-अटल व्योम gr_ep0_tesपंचांगode_complete(काष्ठा usb_ep *_ep,
-				     काष्ठा usb_request *_req)
-अणु
-	काष्ठा gr_ep *ep;
-	काष्ठा gr_udc *dev;
+static void gr_ep0_testmode_complete(struct usb_ep *_ep,
+				     struct usb_request *_req)
+{
+	struct gr_ep *ep;
+	struct gr_udc *dev;
 	u32 control;
 
-	ep = container_of(_ep, काष्ठा gr_ep, ep);
+	ep = container_of(_ep, struct gr_ep, ep);
 	dev = ep->dev;
 
 	spin_lock(&dev->lock);
 
-	control = gr_पढ़ो32(&dev->regs->control);
+	control = gr_read32(&dev->regs->control);
 	control |= GR_CONTROL_TM | (dev->test_mode << GR_CONTROL_TS_POS);
-	gr_ग_लिखो32(&dev->regs->control, control);
+	gr_write32(&dev->regs->control, control);
 
 	spin_unlock(&dev->lock);
-पूर्ण
+}
 
-अटल व्योम gr_ep0_dummy_complete(काष्ठा usb_ep *_ep, काष्ठा usb_request *_req)
-अणु
-	/* Nothing needs to be करोne here */
-पूर्ण
+static void gr_ep0_dummy_complete(struct usb_ep *_ep, struct usb_request *_req)
+{
+	/* Nothing needs to be done here */
+}
 
 /*
  * Queue a response on ep0in.
  *
  * Must be called with dev->lock held.
  */
-अटल पूर्णांक gr_ep0_respond(काष्ठा gr_udc *dev, u8 *buf, पूर्णांक length,
-			  व्योम (*complete)(काष्ठा usb_ep *ep,
-					   काष्ठा usb_request *req))
-अणु
+static int gr_ep0_respond(struct gr_udc *dev, u8 *buf, int length,
+			  void (*complete)(struct usb_ep *ep,
+					   struct usb_request *req))
+{
 	u8 *reqbuf = dev->ep0reqi->req.buf;
-	पूर्णांक status;
-	पूर्णांक i;
+	int status;
+	int i;
 
-	क्रम (i = 0; i < length; i++)
+	for (i = 0; i < length; i++)
 		reqbuf[i] = buf[i];
 	dev->ep0reqi->req.length = length;
 	dev->ep0reqi->req.complete = complete;
 
-	status = gr_queue_पूर्णांक(&dev->epi[0], dev->ep0reqi, GFP_ATOMIC);
-	अगर (status < 0)
+	status = gr_queue_int(&dev->epi[0], dev->ep0reqi, GFP_ATOMIC);
+	if (status < 0)
 		dev_err(dev->dev,
 			"Could not queue ep0in setup response: %d\n", status);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Queue a 2 byte response on ep0in.
  *
  * Must be called with dev->lock held.
  */
-अटल अंतरभूत पूर्णांक gr_ep0_respond_u16(काष्ठा gr_udc *dev, u16 response)
-अणु
+static inline int gr_ep0_respond_u16(struct gr_udc *dev, u16 response)
+{
 	__le16 le_response = cpu_to_le16(response);
 
-	वापस gr_ep0_respond(dev, (u8 *)&le_response, 2,
+	return gr_ep0_respond(dev, (u8 *)&le_response, 2,
 			      gr_ep0_dummy_complete);
-पूर्ण
+}
 
 /*
  * Queue a ZLP response on ep0in.
  *
  * Must be called with dev->lock held.
  */
-अटल अंतरभूत पूर्णांक gr_ep0_respond_empty(काष्ठा gr_udc *dev)
-अणु
-	वापस gr_ep0_respond(dev, शून्य, 0, gr_ep0_dummy_complete);
-पूर्ण
+static inline int gr_ep0_respond_empty(struct gr_udc *dev)
+{
+	return gr_ep0_respond(dev, NULL, 0, gr_ep0_dummy_complete);
+}
 
 /*
- * This is run when a SET_ADDRESS request is received. First ग_लिखोs
- * the new address to the control रेजिस्टर which is updated पूर्णांकernally
+ * This is run when a SET_ADDRESS request is received. First writes
+ * the new address to the control register which is updated internally
  * when the next IN packet is ACKED.
  *
  * Must be called with dev->lock held.
  */
-अटल व्योम gr_set_address(काष्ठा gr_udc *dev, u8 address)
-अणु
+static void gr_set_address(struct gr_udc *dev, u8 address)
+{
 	u32 control;
 
-	control = gr_पढ़ो32(&dev->regs->control) & ~GR_CONTROL_UA_MASK;
+	control = gr_read32(&dev->regs->control) & ~GR_CONTROL_UA_MASK;
 	control |= (address << GR_CONTROL_UA_POS) & GR_CONTROL_UA_MASK;
 	control |= GR_CONTROL_SU;
-	gr_ग_लिखो32(&dev->regs->control, control);
-पूर्ण
+	gr_write32(&dev->regs->control, control);
+}
 
 /*
- * Returns negative क्रम STALL, 0 क्रम successful handling and positive क्रम
+ * Returns negative for STALL, 0 for successful handling and positive for
  * delegation.
  *
  * Must be called with dev->lock held.
  */
-अटल पूर्णांक gr_device_request(काष्ठा gr_udc *dev, u8 type, u8 request,
+static int gr_device_request(struct gr_udc *dev, u8 type, u8 request,
 			     u16 value, u16 index)
-अणु
+{
 	u16 response;
 	u8 test;
 
-	चयन (request) अणु
-	हाल USB_REQ_SET_ADDRESS:
+	switch (request) {
+	case USB_REQ_SET_ADDRESS:
 		dev_dbg(dev->dev, "STATUS: address %d\n", value & 0xff);
 		gr_set_address(dev, value & 0xff);
-		अगर (value)
+		if (value)
 			usb_gadget_set_state(&dev->gadget, USB_STATE_ADDRESS);
-		अन्यथा
+		else
 			usb_gadget_set_state(&dev->gadget, USB_STATE_DEFAULT);
-		वापस gr_ep0_respond_empty(dev);
+		return gr_ep0_respond_empty(dev);
 
-	हाल USB_REQ_GET_STATUS:
-		/* Self घातered | remote wakeup */
+	case USB_REQ_GET_STATUS:
+		/* Self powered | remote wakeup */
 		response = 0x0001 | (dev->remote_wakeup ? 0x0002 : 0);
-		वापस gr_ep0_respond_u16(dev, response);
+		return gr_ep0_respond_u16(dev, response);
 
-	हाल USB_REQ_SET_FEATURE:
-		चयन (value) अणु
-		हाल USB_DEVICE_REMOTE_WAKEUP:
+	case USB_REQ_SET_FEATURE:
+		switch (value) {
+		case USB_DEVICE_REMOTE_WAKEUP:
 			/* Allow remote wakeup */
 			dev->remote_wakeup = 1;
-			वापस gr_ep0_respond_empty(dev);
+			return gr_ep0_respond_empty(dev);
 
-		हाल USB_DEVICE_TEST_MODE:
-			/* The hardware करोes not support USB_TEST_FORCE_ENABLE */
+		case USB_DEVICE_TEST_MODE:
+			/* The hardware does not support USB_TEST_FORCE_ENABLE */
 			test = index >> 8;
-			अगर (test >= USB_TEST_J && test <= USB_TEST_PACKET) अणु
+			if (test >= USB_TEST_J && test <= USB_TEST_PACKET) {
 				dev->test_mode = test;
-				वापस gr_ep0_respond(dev, शून्य, 0,
-						      gr_ep0_tesपंचांगode_complete);
-			पूर्ण
-		पूर्ण
-		अवरोध;
+				return gr_ep0_respond(dev, NULL, 0,
+						      gr_ep0_testmode_complete);
+			}
+		}
+		break;
 
-	हाल USB_REQ_CLEAR_FEATURE:
-		चयन (value) अणु
-		हाल USB_DEVICE_REMOTE_WAKEUP:
+	case USB_REQ_CLEAR_FEATURE:
+		switch (value) {
+		case USB_DEVICE_REMOTE_WAKEUP:
 			/* Disallow remote wakeup */
 			dev->remote_wakeup = 0;
-			वापस gr_ep0_respond_empty(dev);
-		पूर्ण
-		अवरोध;
-	पूर्ण
+			return gr_ep0_respond_empty(dev);
+		}
+		break;
+	}
 
-	वापस 1; /* Delegate the rest */
-पूर्ण
+	return 1; /* Delegate the rest */
+}
 
 /*
- * Returns negative क्रम STALL, 0 क्रम successful handling and positive क्रम
+ * Returns negative for STALL, 0 for successful handling and positive for
  * delegation.
  *
  * Must be called with dev->lock held.
  */
-अटल पूर्णांक gr_पूर्णांकerface_request(काष्ठा gr_udc *dev, u8 type, u8 request,
+static int gr_interface_request(struct gr_udc *dev, u8 type, u8 request,
 				u16 value, u16 index)
-अणु
-	अगर (dev->gadget.state != USB_STATE_CONFIGURED)
-		वापस -1;
+{
+	if (dev->gadget.state != USB_STATE_CONFIGURED)
+		return -1;
 
 	/*
-	 * Should वापस STALL क्रम invalid पूर्णांकerfaces, but udc driver करोes not
-	 * know anything about that. However, many gadget drivers करो not handle
+	 * Should return STALL for invalid interfaces, but udc driver does not
+	 * know anything about that. However, many gadget drivers do not handle
 	 * GET_STATUS so we need to take care of that.
 	 */
 
-	चयन (request) अणु
-	हाल USB_REQ_GET_STATUS:
-		वापस gr_ep0_respond_u16(dev, 0x0000);
+	switch (request) {
+	case USB_REQ_GET_STATUS:
+		return gr_ep0_respond_u16(dev, 0x0000);
 
-	हाल USB_REQ_SET_FEATURE:
-	हाल USB_REQ_CLEAR_FEATURE:
+	case USB_REQ_SET_FEATURE:
+	case USB_REQ_CLEAR_FEATURE:
 		/*
 		 * No possible valid standard requests. Still let gadget drivers
 		 * have a go at it.
 		 */
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस 1; /* Delegate the rest */
-पूर्ण
+	return 1; /* Delegate the rest */
+}
 
 /*
- * Returns negative क्रम STALL, 0 क्रम successful handling and positive क्रम
+ * Returns negative for STALL, 0 for successful handling and positive for
  * delegation.
  *
  * Must be called with dev->lock held.
  */
-अटल पूर्णांक gr_endpoपूर्णांक_request(काष्ठा gr_udc *dev, u8 type, u8 request,
+static int gr_endpoint_request(struct gr_udc *dev, u8 type, u8 request,
 			       u16 value, u16 index)
-अणु
-	काष्ठा gr_ep *ep;
-	पूर्णांक status;
-	पूर्णांक halted;
+{
+	struct gr_ep *ep;
+	int status;
+	int halted;
 	u8 epnum = index & USB_ENDPOINT_NUMBER_MASK;
-	u8 is_in = index & USB_ENDPOINT_सूची_MASK;
+	u8 is_in = index & USB_ENDPOINT_DIR_MASK;
 
-	अगर ((is_in && epnum >= dev->nepi) || (!is_in && epnum >= dev->nepo))
-		वापस -1;
+	if ((is_in && epnum >= dev->nepi) || (!is_in && epnum >= dev->nepo))
+		return -1;
 
-	अगर (dev->gadget.state != USB_STATE_CONFIGURED && epnum != 0)
-		वापस -1;
+	if (dev->gadget.state != USB_STATE_CONFIGURED && epnum != 0)
+		return -1;
 
 	ep = (is_in ? &dev->epi[epnum] : &dev->epo[epnum]);
 
-	चयन (request) अणु
-	हाल USB_REQ_GET_STATUS:
-		halted = gr_पढ़ो32(&ep->regs->epctrl) & GR_EPCTRL_EH;
-		वापस gr_ep0_respond_u16(dev, halted ? 0x0001 : 0);
+	switch (request) {
+	case USB_REQ_GET_STATUS:
+		halted = gr_read32(&ep->regs->epctrl) & GR_EPCTRL_EH;
+		return gr_ep0_respond_u16(dev, halted ? 0x0001 : 0);
 
-	हाल USB_REQ_SET_FEATURE:
-		चयन (value) अणु
-		हाल USB_ENDPOINT_HALT:
+	case USB_REQ_SET_FEATURE:
+		switch (value) {
+		case USB_ENDPOINT_HALT:
 			status = gr_ep_halt_wedge(ep, 1, 0, 1);
-			अगर (status >= 0)
+			if (status >= 0)
 				status = gr_ep0_respond_empty(dev);
-			वापस status;
-		पूर्ण
-		अवरोध;
+			return status;
+		}
+		break;
 
-	हाल USB_REQ_CLEAR_FEATURE:
-		चयन (value) अणु
-		हाल USB_ENDPOINT_HALT:
-			अगर (ep->wedged)
-				वापस -1;
+	case USB_REQ_CLEAR_FEATURE:
+		switch (value) {
+		case USB_ENDPOINT_HALT:
+			if (ep->wedged)
+				return -1;
 			status = gr_ep_halt_wedge(ep, 0, 0, 1);
-			अगर (status >= 0)
+			if (status >= 0)
 				status = gr_ep0_respond_empty(dev);
-			वापस status;
-		पूर्ण
-		अवरोध;
-	पूर्ण
+			return status;
+		}
+		break;
+	}
 
-	वापस 1; /* Delegate the rest */
-पूर्ण
+	return 1; /* Delegate the rest */
+}
 
 /* Must be called with dev->lock held */
-अटल व्योम gr_ep0out_requeue(काष्ठा gr_udc *dev)
-अणु
-	पूर्णांक ret = gr_queue_पूर्णांक(&dev->epo[0], dev->ep0reqo, GFP_ATOMIC);
+static void gr_ep0out_requeue(struct gr_udc *dev)
+{
+	int ret = gr_queue_int(&dev->epo[0], dev->ep0reqo, GFP_ATOMIC);
 
-	अगर (ret)
+	if (ret)
 		dev_err(dev->dev, "Could not queue ep0out setup request: %d\n",
 			ret);
-पूर्ण
+}
 
 /*
- * The मुख्य function dealing with setup requests on ep0.
+ * The main function dealing with setup requests on ep0.
  *
  * Must be called with dev->lock held and irqs disabled
  */
-अटल व्योम gr_ep0_setup(काष्ठा gr_udc *dev, काष्ठा gr_request *req)
+static void gr_ep0_setup(struct gr_udc *dev, struct gr_request *req)
 	__releases(&dev->lock)
 	__acquires(&dev->lock)
-अणु
-	जोड़ अणु
-		काष्ठा usb_ctrlrequest ctrl;
+{
+	union {
+		struct usb_ctrlrequest ctrl;
 		u8 raw[8];
 		u32 word[2];
-	पूर्ण u;
+	} u;
 	u8 type;
 	u8 request;
 	u16 value;
 	u16 index;
 	u16 length;
-	पूर्णांक i;
-	पूर्णांक status;
+	int i;
+	int status;
 
 	/* Restore from ep0 halt */
-	अगर (dev->ep0state == GR_EP0_STALL) अणु
+	if (dev->ep0state == GR_EP0_STALL) {
 		gr_set_ep0state(dev, GR_EP0_SETUP);
-		अगर (!req->req.actual)
-			जाओ out;
-	पूर्ण
+		if (!req->req.actual)
+			goto out;
+	}
 
-	अगर (dev->ep0state == GR_EP0_ISTATUS) अणु
+	if (dev->ep0state == GR_EP0_ISTATUS) {
 		gr_set_ep0state(dev, GR_EP0_SETUP);
-		अगर (req->req.actual > 0)
+		if (req->req.actual > 0)
 			dev_dbg(dev->dev,
 				"Unexpected setup packet at state %s\n",
 				gr_ep0state_string(GR_EP0_ISTATUS));
-		अन्यथा
-			जाओ out; /* Got expected ZLP */
-	पूर्ण अन्यथा अगर (dev->ep0state != GR_EP0_SETUP) अणु
+		else
+			goto out; /* Got expected ZLP */
+	} else if (dev->ep0state != GR_EP0_SETUP) {
 		dev_info(dev->dev,
 			 "Unexpected ep0out request at state %s - stalling\n",
 			 gr_ep0state_string(dev->ep0state));
 		gr_control_stall(dev);
 		gr_set_ep0state(dev, GR_EP0_SETUP);
-		जाओ out;
-	पूर्ण अन्यथा अगर (!req->req.actual) अणु
+		goto out;
+	} else if (!req->req.actual) {
 		dev_dbg(dev->dev, "Unexpected ZLP at state %s\n",
 			gr_ep0state_string(dev->ep0state));
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* Handle SETUP packet */
-	क्रम (i = 0; i < req->req.actual; i++)
+	for (i = 0; i < req->req.actual; i++)
 		u.raw[i] = ((u8 *)req->req.buf)[i];
 
 	type = u.ctrl.bRequestType;
@@ -1094,126 +1093,126 @@ alloc_err:
 	index = le16_to_cpu(u.ctrl.wIndex);
 	length = le16_to_cpu(u.ctrl.wLength);
 
-	gr_dbgprपूर्णांक_devreq(dev, type, request, value, index, length);
+	gr_dbgprint_devreq(dev, type, request, value, index, length);
 
-	/* Check क्रम data stage */
-	अगर (length) अणु
-		अगर (type & USB_सूची_IN)
+	/* Check for data stage */
+	if (length) {
+		if (type & USB_DIR_IN)
 			gr_set_ep0state(dev, GR_EP0_IDATA);
-		अन्यथा
+		else
 			gr_set_ep0state(dev, GR_EP0_ODATA);
-	पूर्ण
+	}
 
 	status = 1; /* Positive status flags delegation */
-	अगर ((type & USB_TYPE_MASK) == USB_TYPE_STANDARD) अणु
-		चयन (type & USB_RECIP_MASK) अणु
-		हाल USB_RECIP_DEVICE:
+	if ((type & USB_TYPE_MASK) == USB_TYPE_STANDARD) {
+		switch (type & USB_RECIP_MASK) {
+		case USB_RECIP_DEVICE:
 			status = gr_device_request(dev, type, request,
 						   value, index);
-			अवरोध;
-		हाल USB_RECIP_ENDPOINT:
-			status =  gr_endpoपूर्णांक_request(dev, type, request,
+			break;
+		case USB_RECIP_ENDPOINT:
+			status =  gr_endpoint_request(dev, type, request,
 						      value, index);
-			अवरोध;
-		हाल USB_RECIP_INTERFACE:
-			status = gr_पूर्णांकerface_request(dev, type, request,
+			break;
+		case USB_RECIP_INTERFACE:
+			status = gr_interface_request(dev, type, request,
 						      value, index);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (status > 0) अणु
+	if (status > 0) {
 		spin_unlock(&dev->lock);
 
 		dev_vdbg(dev->dev, "DELEGATE\n");
 		status = dev->driver->setup(&dev->gadget, &u.ctrl);
 
 		spin_lock(&dev->lock);
-	पूर्ण
+	}
 
-	/* Generate STALL on both ep0out and ep0in अगर requested */
-	अगर (unlikely(status < 0)) अणु
+	/* Generate STALL on both ep0out and ep0in if requested */
+	if (unlikely(status < 0)) {
 		dev_vdbg(dev->dev, "STALL\n");
 		gr_control_stall(dev);
-	पूर्ण
+	}
 
-	अगर ((type & USB_TYPE_MASK) == USB_TYPE_STANDARD &&
-	    request == USB_REQ_SET_CONFIGURATION) अणु
-		अगर (!value) अणु
+	if ((type & USB_TYPE_MASK) == USB_TYPE_STANDARD &&
+	    request == USB_REQ_SET_CONFIGURATION) {
+		if (!value) {
 			dev_dbg(dev->dev, "STATUS: deconfigured\n");
 			usb_gadget_set_state(&dev->gadget, USB_STATE_ADDRESS);
-		पूर्ण अन्यथा अगर (status >= 0) अणु
+		} else if (status >= 0) {
 			/* Not configured unless gadget OK:s it */
 			dev_dbg(dev->dev, "STATUS: configured: %d\n", value);
 			usb_gadget_set_state(&dev->gadget,
 					     USB_STATE_CONFIGURED);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* Get पढ़ोy क्रम next stage */
-	अगर (dev->ep0state == GR_EP0_ODATA)
+	/* Get ready for next stage */
+	if (dev->ep0state == GR_EP0_ODATA)
 		gr_set_ep0state(dev, GR_EP0_OSTATUS);
-	अन्यथा अगर (dev->ep0state == GR_EP0_IDATA)
+	else if (dev->ep0state == GR_EP0_IDATA)
 		gr_set_ep0state(dev, GR_EP0_ISTATUS);
-	अन्यथा
+	else
 		gr_set_ep0state(dev, GR_EP0_SETUP);
 
 out:
 	gr_ep0out_requeue(dev);
-पूर्ण
+}
 
 /* ---------------------------------------------------------------------- */
 /* VBUS and USB reset handling */
 
 /* Must be called with dev->lock held and irqs disabled  */
-अटल व्योम gr_vbus_connected(काष्ठा gr_udc *dev, u32 status)
-अणु
+static void gr_vbus_connected(struct gr_udc *dev, u32 status)
+{
 	u32 control;
 
 	dev->gadget.speed = GR_SPEED(status);
 	usb_gadget_set_state(&dev->gadget, USB_STATE_POWERED);
 
-	/* Turn on full पूर्णांकerrupts and pullup */
+	/* Turn on full interrupts and pullup */
 	control = (GR_CONTROL_SI | GR_CONTROL_UI | GR_CONTROL_VI |
 		   GR_CONTROL_SP | GR_CONTROL_EP);
-	gr_ग_लिखो32(&dev->regs->control, control);
-पूर्ण
+	gr_write32(&dev->regs->control, control);
+}
 
 /* Must be called with dev->lock held */
-अटल व्योम gr_enable_vbus_detect(काष्ठा gr_udc *dev)
-अणु
+static void gr_enable_vbus_detect(struct gr_udc *dev)
+{
 	u32 status;
 
 	dev->irq_enabled = 1;
-	wmb(); /* Make sure we करो not ignore an पूर्णांकerrupt */
-	gr_ग_लिखो32(&dev->regs->control, GR_CONTROL_VI);
+	wmb(); /* Make sure we do not ignore an interrupt */
+	gr_write32(&dev->regs->control, GR_CONTROL_VI);
 
-	/* Take care of the हाल we are alपढ़ोy plugged in at this poपूर्णांक */
-	status = gr_पढ़ो32(&dev->regs->status);
-	अगर (status & GR_STATUS_VB)
+	/* Take care of the case we are already plugged in at this point */
+	status = gr_read32(&dev->regs->status);
+	if (status & GR_STATUS_VB)
 		gr_vbus_connected(dev, status);
-पूर्ण
+}
 
 /* Must be called with dev->lock held and irqs disabled */
-अटल व्योम gr_vbus_disconnected(काष्ठा gr_udc *dev)
-अणु
+static void gr_vbus_disconnected(struct gr_udc *dev)
+{
 	gr_stop_activity(dev);
 
 	/* Report disconnect */
-	अगर (dev->driver && dev->driver->disconnect) अणु
+	if (dev->driver && dev->driver->disconnect) {
 		spin_unlock(&dev->lock);
 
 		dev->driver->disconnect(&dev->gadget);
 
 		spin_lock(&dev->lock);
-	पूर्ण
+	}
 
 	gr_enable_vbus_detect(dev);
-पूर्ण
+}
 
 /* Must be called with dev->lock held and irqs disabled */
-अटल व्योम gr_udc_usbreset(काष्ठा gr_udc *dev, u32 status)
-अणु
+static void gr_udc_usbreset(struct gr_udc *dev, u32 status)
+{
 	gr_set_address(dev, 0);
 	gr_set_ep0state(dev, GR_EP0_SETUP);
 	usb_gadget_set_state(&dev->gadget, USB_STATE_DEFAULT);
@@ -1224,332 +1223,332 @@ out:
 	dev->epo[0].stopped = 0;
 	dev->epi[0].stopped = 0;
 	gr_ep0out_requeue(dev);
-पूर्ण
+}
 
 /* ---------------------------------------------------------------------- */
 /* Irq handling */
 
 /*
- * Handles पूर्णांकerrupts from in endpoपूर्णांकs. Returns whether something was handled.
+ * Handles interrupts from in endpoints. Returns whether something was handled.
  *
  * Must be called with dev->lock held, irqs disabled and with !ep->stopped.
  */
-अटल पूर्णांक gr_handle_in_ep(काष्ठा gr_ep *ep)
-अणु
-	काष्ठा gr_request *req;
+static int gr_handle_in_ep(struct gr_ep *ep)
+{
+	struct gr_request *req;
 
-	req = list_first_entry(&ep->queue, काष्ठा gr_request, queue);
-	अगर (!req->last_desc)
-		वापस 0;
+	req = list_first_entry(&ep->queue, struct gr_request, queue);
+	if (!req->last_desc)
+		return 0;
 
-	अगर (READ_ONCE(req->last_desc->ctrl) & GR_DESC_IN_CTRL_EN)
-		वापस 0; /* Not put in hardware buffers yet */
+	if (READ_ONCE(req->last_desc->ctrl) & GR_DESC_IN_CTRL_EN)
+		return 0; /* Not put in hardware buffers yet */
 
-	अगर (gr_पढ़ो32(&ep->regs->epstat) & (GR_EPSTAT_B1 | GR_EPSTAT_B0))
-		वापस 0; /* Not transmitted yet, still in hardware buffers */
+	if (gr_read32(&ep->regs->epstat) & (GR_EPSTAT_B1 | GR_EPSTAT_B0))
+		return 0; /* Not transmitted yet, still in hardware buffers */
 
 	/* Write complete */
 	gr_dma_advance(ep, 0);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /*
- * Handles पूर्णांकerrupts from out endpoपूर्णांकs. Returns whether something was handled.
+ * Handles interrupts from out endpoints. Returns whether something was handled.
  *
  * Must be called with dev->lock held, irqs disabled and with !ep->stopped.
  */
-अटल पूर्णांक gr_handle_out_ep(काष्ठा gr_ep *ep)
-अणु
+static int gr_handle_out_ep(struct gr_ep *ep)
+{
 	u32 ep_dmactrl;
 	u32 ctrl;
 	u16 len;
-	काष्ठा gr_request *req;
-	काष्ठा gr_udc *dev = ep->dev;
+	struct gr_request *req;
+	struct gr_udc *dev = ep->dev;
 
-	req = list_first_entry(&ep->queue, काष्ठा gr_request, queue);
-	अगर (!req->curr_desc)
-		वापस 0;
+	req = list_first_entry(&ep->queue, struct gr_request, queue);
+	if (!req->curr_desc)
+		return 0;
 
 	ctrl = READ_ONCE(req->curr_desc->ctrl);
-	अगर (ctrl & GR_DESC_OUT_CTRL_EN)
-		वापस 0; /* Not received yet */
+	if (ctrl & GR_DESC_OUT_CTRL_EN)
+		return 0; /* Not received yet */
 
 	/* Read complete */
 	len = ctrl & GR_DESC_OUT_CTRL_LEN_MASK;
 	req->req.actual += len;
-	अगर (ctrl & GR_DESC_OUT_CTRL_SE)
+	if (ctrl & GR_DESC_OUT_CTRL_SE)
 		req->setup = 1;
 
-	अगर (len < ep->ep.maxpacket || req->req.actual >= req->req.length) अणु
-		/* Short packet or >= expected size - we are करोne */
+	if (len < ep->ep.maxpacket || req->req.actual >= req->req.length) {
+		/* Short packet or >= expected size - we are done */
 
-		अगर ((ep == &dev->epo[0]) && (dev->ep0state == GR_EP0_OSTATUS)) अणु
+		if ((ep == &dev->epo[0]) && (dev->ep0state == GR_EP0_OSTATUS)) {
 			/*
 			 * Send a status stage ZLP to ack the DATA stage in the
-			 * OUT direction. This needs to be करोne beक्रमe
+			 * OUT direction. This needs to be done before
 			 * gr_dma_advance as that can lead to a call to
 			 * ep0_setup that can change dev->ep0state.
 			 */
 			gr_ep0_respond_empty(dev);
 			gr_set_ep0state(dev, GR_EP0_SETUP);
-		पूर्ण
+		}
 
 		gr_dma_advance(ep, 0);
-	पूर्ण अन्यथा अणु
-		/* Not करोne yet. Enable the next descriptor to receive more. */
+	} else {
+		/* Not done yet. Enable the next descriptor to receive more. */
 		req->curr_desc = req->curr_desc->next_desc;
 		req->curr_desc->ctrl |= GR_DESC_OUT_CTRL_EN;
 
-		ep_dmactrl = gr_पढ़ो32(&ep->regs->dmactrl);
-		gr_ग_लिखो32(&ep->regs->dmactrl, ep_dmactrl | GR_DMACTRL_DA);
-	पूर्ण
+		ep_dmactrl = gr_read32(&ep->regs->dmactrl);
+		gr_write32(&ep->regs->dmactrl, ep_dmactrl | GR_DMACTRL_DA);
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /*
  * Handle state changes. Returns whether something was handled.
  *
  * Must be called with dev->lock held and irqs disabled.
  */
-अटल पूर्णांक gr_handle_state_changes(काष्ठा gr_udc *dev)
-अणु
-	u32 status = gr_पढ़ो32(&dev->regs->status);
-	पूर्णांक handled = 0;
-	पूर्णांक घातstate = !(dev->gadget.state == USB_STATE_NOTATTACHED ||
+static int gr_handle_state_changes(struct gr_udc *dev)
+{
+	u32 status = gr_read32(&dev->regs->status);
+	int handled = 0;
+	int powstate = !(dev->gadget.state == USB_STATE_NOTATTACHED ||
 			 dev->gadget.state == USB_STATE_ATTACHED);
 
 	/* VBUS valid detected */
-	अगर (!घातstate && (status & GR_STATUS_VB)) अणु
+	if (!powstate && (status & GR_STATUS_VB)) {
 		dev_dbg(dev->dev, "STATUS: vbus valid detected\n");
 		gr_vbus_connected(dev, status);
 		handled = 1;
-	पूर्ण
+	}
 
 	/* Disconnect */
-	अगर (घातstate && !(status & GR_STATUS_VB)) अणु
+	if (powstate && !(status & GR_STATUS_VB)) {
 		dev_dbg(dev->dev, "STATUS: vbus invalid detected\n");
 		gr_vbus_disconnected(dev);
 		handled = 1;
-	पूर्ण
+	}
 
 	/* USB reset detected */
-	अगर (status & GR_STATUS_UR) अणु
+	if (status & GR_STATUS_UR) {
 		dev_dbg(dev->dev, "STATUS: USB reset - speed is %s\n",
 			GR_SPEED_STR(status));
-		gr_ग_लिखो32(&dev->regs->status, GR_STATUS_UR);
+		gr_write32(&dev->regs->status, GR_STATUS_UR);
 		gr_udc_usbreset(dev, status);
 		handled = 1;
-	पूर्ण
+	}
 
 	/* Speed change */
-	अगर (dev->gadget.speed != GR_SPEED(status)) अणु
+	if (dev->gadget.speed != GR_SPEED(status)) {
 		dev_dbg(dev->dev, "STATUS: USB Speed change to %s\n",
 			GR_SPEED_STR(status));
 		dev->gadget.speed = GR_SPEED(status);
 		handled = 1;
-	पूर्ण
+	}
 
-	/* Going पूर्णांकo suspend */
-	अगर ((dev->ep0state != GR_EP0_SUSPEND) && !(status & GR_STATUS_SU)) अणु
+	/* Going into suspend */
+	if ((dev->ep0state != GR_EP0_SUSPEND) && !(status & GR_STATUS_SU)) {
 		dev_dbg(dev->dev, "STATUS: USB suspend\n");
 		gr_set_ep0state(dev, GR_EP0_SUSPEND);
 		dev->suspended_from = dev->gadget.state;
 		usb_gadget_set_state(&dev->gadget, USB_STATE_SUSPENDED);
 
-		अगर ((dev->gadget.speed != USB_SPEED_UNKNOWN) &&
-		    dev->driver && dev->driver->suspend) अणु
+		if ((dev->gadget.speed != USB_SPEED_UNKNOWN) &&
+		    dev->driver && dev->driver->suspend) {
 			spin_unlock(&dev->lock);
 
 			dev->driver->suspend(&dev->gadget);
 
 			spin_lock(&dev->lock);
-		पूर्ण
+		}
 		handled = 1;
-	पूर्ण
+	}
 
 	/* Coming out of suspend */
-	अगर ((dev->ep0state == GR_EP0_SUSPEND) && (status & GR_STATUS_SU)) अणु
+	if ((dev->ep0state == GR_EP0_SUSPEND) && (status & GR_STATUS_SU)) {
 		dev_dbg(dev->dev, "STATUS: USB resume\n");
-		अगर (dev->suspended_from == USB_STATE_POWERED)
+		if (dev->suspended_from == USB_STATE_POWERED)
 			gr_set_ep0state(dev, GR_EP0_DISCONNECT);
-		अन्यथा
+		else
 			gr_set_ep0state(dev, GR_EP0_SETUP);
 		usb_gadget_set_state(&dev->gadget, dev->suspended_from);
 
-		अगर ((dev->gadget.speed != USB_SPEED_UNKNOWN) &&
-		    dev->driver && dev->driver->resume) अणु
+		if ((dev->gadget.speed != USB_SPEED_UNKNOWN) &&
+		    dev->driver && dev->driver->resume) {
 			spin_unlock(&dev->lock);
 
 			dev->driver->resume(&dev->gadget);
 
 			spin_lock(&dev->lock);
-		पूर्ण
+		}
 		handled = 1;
-	पूर्ण
+	}
 
-	वापस handled;
-पूर्ण
+	return handled;
+}
 
-/* Non-पूर्णांकerrupt context irq handler */
-अटल irqवापस_t gr_irq_handler(पूर्णांक irq, व्योम *_dev)
-अणु
-	काष्ठा gr_udc *dev = _dev;
-	काष्ठा gr_ep *ep;
-	पूर्णांक handled = 0;
-	पूर्णांक i;
-	अचिन्हित दीर्घ flags;
+/* Non-interrupt context irq handler */
+static irqreturn_t gr_irq_handler(int irq, void *_dev)
+{
+	struct gr_udc *dev = _dev;
+	struct gr_ep *ep;
+	int handled = 0;
+	int i;
+	unsigned long flags;
 
 	spin_lock_irqsave(&dev->lock, flags);
 
-	अगर (!dev->irq_enabled)
-		जाओ out;
+	if (!dev->irq_enabled)
+		goto out;
 
 	/*
-	 * Check IN ep पूर्णांकerrupts. We check these beक्रमe the OUT eps because
-	 * some gadमाला_लो reuse the request that might alपढ़ोy be currently
-	 * outstanding and needs to be completed (मुख्यly setup requests).
+	 * Check IN ep interrupts. We check these before the OUT eps because
+	 * some gadgets reuse the request that might already be currently
+	 * outstanding and needs to be completed (mainly setup requests).
 	 */
-	क्रम (i = 0; i < dev->nepi; i++) अणु
+	for (i = 0; i < dev->nepi; i++) {
 		ep = &dev->epi[i];
-		अगर (!ep->stopped && !ep->callback && !list_empty(&ep->queue))
+		if (!ep->stopped && !ep->callback && !list_empty(&ep->queue))
 			handled = gr_handle_in_ep(ep) || handled;
-	पूर्ण
+	}
 
-	/* Check OUT ep पूर्णांकerrupts */
-	क्रम (i = 0; i < dev->nepo; i++) अणु
+	/* Check OUT ep interrupts */
+	for (i = 0; i < dev->nepo; i++) {
 		ep = &dev->epo[i];
-		अगर (!ep->stopped && !ep->callback && !list_empty(&ep->queue))
+		if (!ep->stopped && !ep->callback && !list_empty(&ep->queue))
 			handled = gr_handle_out_ep(ep) || handled;
-	पूर्ण
+	}
 
-	/* Check status पूर्णांकerrupts */
+	/* Check status interrupts */
 	handled = gr_handle_state_changes(dev) || handled;
 
 	/*
-	 * Check AMBA DMA errors. Only check अगर we didn't find anything अन्यथा to
-	 * handle because this shouldn't happen अगर we did everything right.
+	 * Check AMBA DMA errors. Only check if we didn't find anything else to
+	 * handle because this shouldn't happen if we did everything right.
 	 */
-	अगर (!handled) अणु
-		list_क्रम_each_entry(ep, &dev->ep_list, ep_list) अणु
-			अगर (gr_पढ़ो32(&ep->regs->dmactrl) & GR_DMACTRL_AE) अणु
+	if (!handled) {
+		list_for_each_entry(ep, &dev->ep_list, ep_list) {
+			if (gr_read32(&ep->regs->dmactrl) & GR_DMACTRL_AE) {
 				dev_err(dev->dev,
 					"AMBA Error occurred for %s\n",
 					ep->ep.name);
 				handled = 1;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 out:
 	spin_unlock_irqrestore(&dev->lock, flags);
 
-	वापस handled ? IRQ_HANDLED : IRQ_NONE;
-पूर्ण
+	return handled ? IRQ_HANDLED : IRQ_NONE;
+}
 
 /* Interrupt context irq handler */
-अटल irqवापस_t gr_irq(पूर्णांक irq, व्योम *_dev)
-अणु
-	काष्ठा gr_udc *dev = _dev;
+static irqreturn_t gr_irq(int irq, void *_dev)
+{
+	struct gr_udc *dev = _dev;
 
-	अगर (!dev->irq_enabled)
-		वापस IRQ_NONE;
+	if (!dev->irq_enabled)
+		return IRQ_NONE;
 
-	वापस IRQ_WAKE_THREAD;
-पूर्ण
+	return IRQ_WAKE_THREAD;
+}
 
 /* ---------------------------------------------------------------------- */
 /* USB ep ops */
 
-/* Enable endpoपूर्णांक. Not क्रम ep0in and ep0out that are handled separately. */
-अटल पूर्णांक gr_ep_enable(काष्ठा usb_ep *_ep,
-			स्थिर काष्ठा usb_endpoपूर्णांक_descriptor *desc)
-अणु
-	काष्ठा gr_udc *dev;
-	काष्ठा gr_ep *ep;
+/* Enable endpoint. Not for ep0in and ep0out that are handled separately. */
+static int gr_ep_enable(struct usb_ep *_ep,
+			const struct usb_endpoint_descriptor *desc)
+{
+	struct gr_udc *dev;
+	struct gr_ep *ep;
 	u8 mode;
 	u8 nt;
 	u16 max;
 	u16 buffer_size = 0;
 	u32 epctrl;
 
-	ep = container_of(_ep, काष्ठा gr_ep, ep);
-	अगर (!_ep || !desc || desc->bDescriptorType != USB_DT_ENDPOINT)
-		वापस -EINVAL;
+	ep = container_of(_ep, struct gr_ep, ep);
+	if (!_ep || !desc || desc->bDescriptorType != USB_DT_ENDPOINT)
+		return -EINVAL;
 
 	dev = ep->dev;
 
 	/* 'ep0' IN and OUT are reserved */
-	अगर (ep == &dev->epo[0] || ep == &dev->epi[0])
-		वापस -EINVAL;
+	if (ep == &dev->epo[0] || ep == &dev->epi[0])
+		return -EINVAL;
 
-	अगर (!dev->driver || dev->gadget.speed == USB_SPEED_UNKNOWN)
-		वापस -ESHUTDOWN;
+	if (!dev->driver || dev->gadget.speed == USB_SPEED_UNKNOWN)
+		return -ESHUTDOWN;
 
-	/* Make sure we are clear क्रम enabling */
-	epctrl = gr_पढ़ो32(&ep->regs->epctrl);
-	अगर (epctrl & GR_EPCTRL_EV)
-		वापस -EBUSY;
+	/* Make sure we are clear for enabling */
+	epctrl = gr_read32(&ep->regs->epctrl);
+	if (epctrl & GR_EPCTRL_EV)
+		return -EBUSY;
 
 	/* Check that directions match */
-	अगर (!ep->is_in != !usb_endpoपूर्णांक_dir_in(desc))
-		वापस -EINVAL;
+	if (!ep->is_in != !usb_endpoint_dir_in(desc))
+		return -EINVAL;
 
 	/* Check ep num */
-	अगर ((!ep->is_in && ep->num >= dev->nepo) ||
+	if ((!ep->is_in && ep->num >= dev->nepo) ||
 	    (ep->is_in && ep->num >= dev->nepi))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर (usb_endpoपूर्णांक_xfer_control(desc)) अणु
+	if (usb_endpoint_xfer_control(desc)) {
 		mode = 0;
-	पूर्ण अन्यथा अगर (usb_endpoपूर्णांक_xfer_isoc(desc)) अणु
+	} else if (usb_endpoint_xfer_isoc(desc)) {
 		mode = 1;
-	पूर्ण अन्यथा अगर (usb_endpoपूर्णांक_xfer_bulk(desc)) अणु
+	} else if (usb_endpoint_xfer_bulk(desc)) {
 		mode = 2;
-	पूर्ण अन्यथा अगर (usb_endpoपूर्णांक_xfer_पूर्णांक(desc)) अणु
+	} else if (usb_endpoint_xfer_int(desc)) {
 		mode = 3;
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_err(dev->dev, "Unknown transfer type for %s\n",
 			ep->ep.name);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/*
 	 * Bits 10-0 set the max payload. 12-11 set the number of
 	 * additional transactions.
 	 */
-	max = usb_endpoपूर्णांक_maxp(desc);
-	nt = usb_endpoपूर्णांक_maxp_mult(desc) - 1;
+	max = usb_endpoint_maxp(desc);
+	nt = usb_endpoint_maxp_mult(desc) - 1;
 	buffer_size = GR_BUFFER_SIZE(epctrl);
-	अगर (nt && (mode == 0 || mode == 2)) अणु
+	if (nt && (mode == 0 || mode == 2)) {
 		dev_err(dev->dev,
 			"%s mode: multiple trans./microframe not valid\n",
 			(mode == 2 ? "Bulk" : "Control"));
-		वापस -EINVAL;
-	पूर्ण अन्यथा अगर (nt == 0x3) अणु
+		return -EINVAL;
+	} else if (nt == 0x3) {
 		dev_err(dev->dev,
 			"Invalid value 0x3 for additional trans./microframe\n");
-		वापस -EINVAL;
-	पूर्ण अन्यथा अगर ((nt + 1) * max > buffer_size) अणु
+		return -EINVAL;
+	} else if ((nt + 1) * max > buffer_size) {
 		dev_err(dev->dev, "Hw buffer size %d < max payload %d * %d\n",
 			buffer_size, (nt + 1), max);
-		वापस -EINVAL;
-	पूर्ण अन्यथा अगर (max == 0) अणु
+		return -EINVAL;
+	} else if (max == 0) {
 		dev_err(dev->dev, "Max payload cannot be set to 0\n");
-		वापस -EINVAL;
-	पूर्ण अन्यथा अगर (max > ep->ep.maxpacket_limit) अणु
+		return -EINVAL;
+	} else if (max > ep->ep.maxpacket_limit) {
 		dev_err(dev->dev, "Requested max payload %d > limit %d\n",
 			max, ep->ep.maxpacket_limit);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	spin_lock(&ep->dev->lock);
 
-	अगर (!ep->stopped) अणु
+	if (!ep->stopped) {
 		spin_unlock(&ep->dev->lock);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	ep->stopped = 0;
 	ep->wedged = 0;
@@ -1558,63 +1557,63 @@ out:
 	ep->dma_start = 0;
 
 
-	अगर (nt) अणु
+	if (nt) {
 		/*
 		 * Maximum possible size of all payloads in one microframe
 		 * regardless of direction when using high-bandwidth mode.
 		 */
 		ep->bytes_per_buffer = (nt + 1) * max;
-	पूर्ण अन्यथा अगर (ep->is_in) अणु
+	} else if (ep->is_in) {
 		/*
-		 * The biggest multiple of maximum packet size that fits पूर्णांकo
-		 * the buffer. The hardware will split up पूर्णांकo many packets in
+		 * The biggest multiple of maximum packet size that fits into
+		 * the buffer. The hardware will split up into many packets in
 		 * the IN direction.
 		 */
 		ep->bytes_per_buffer = (buffer_size / max) * max;
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
 		 * Only single packets will be placed the buffers in the OUT
 		 * direction.
 		 */
 		ep->bytes_per_buffer = max;
-	पूर्ण
+	}
 
 	epctrl = (max << GR_EPCTRL_MAXPL_POS)
 		| (nt << GR_EPCTRL_NT_POS)
 		| (mode << GR_EPCTRL_TT_POS)
 		| GR_EPCTRL_EV;
-	अगर (ep->is_in)
+	if (ep->is_in)
 		epctrl |= GR_EPCTRL_PI;
-	gr_ग_लिखो32(&ep->regs->epctrl, epctrl);
+	gr_write32(&ep->regs->epctrl, epctrl);
 
-	gr_ग_लिखो32(&ep->regs->dmactrl, GR_DMACTRL_IE | GR_DMACTRL_AI);
+	gr_write32(&ep->regs->dmactrl, GR_DMACTRL_IE | GR_DMACTRL_AI);
 
 	spin_unlock(&ep->dev->lock);
 
 	dev_dbg(ep->dev->dev, "EP: %s enabled - %s with %d bytes/buffer\n",
 		ep->ep.name, gr_modestring[mode], ep->bytes_per_buffer);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Disable endpoपूर्णांक. Not क्रम ep0in and ep0out that are handled separately. */
-अटल पूर्णांक gr_ep_disable(काष्ठा usb_ep *_ep)
-अणु
-	काष्ठा gr_ep *ep;
-	काष्ठा gr_udc *dev;
-	अचिन्हित दीर्घ flags;
+/* Disable endpoint. Not for ep0in and ep0out that are handled separately. */
+static int gr_ep_disable(struct usb_ep *_ep)
+{
+	struct gr_ep *ep;
+	struct gr_udc *dev;
+	unsigned long flags;
 
-	ep = container_of(_ep, काष्ठा gr_ep, ep);
-	अगर (!_ep || !ep->ep.desc)
-		वापस -ENODEV;
+	ep = container_of(_ep, struct gr_ep, ep);
+	if (!_ep || !ep->ep.desc)
+		return -ENODEV;
 
 	dev = ep->dev;
 
 	/* 'ep0' IN and OUT are reserved */
-	अगर (ep == &dev->epo[0] || ep == &dev->epi[0])
-		वापस -EINVAL;
+	if (ep == &dev->epo[0] || ep == &dev->epi[0])
+		return -EINVAL;
 
-	अगर (dev->ep0state == GR_EP0_SUSPEND)
-		वापस -EBUSY;
+	if (dev->ep0state == GR_EP0_SUSPEND)
+		return -EBUSY;
 
 	dev_dbg(ep->dev->dev, "EP: disable %s\n", ep->ep.name);
 
@@ -1622,355 +1621,355 @@ out:
 
 	gr_ep_nuke(ep);
 	gr_ep_reset(ep);
-	ep->ep.desc = शून्य;
+	ep->ep.desc = NULL;
 
 	spin_unlock_irqrestore(&dev->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Frees a request, but not any DMA buffers associated with it
- * (gr_finish_request should alपढ़ोy have taken care of that).
+ * (gr_finish_request should already have taken care of that).
  */
-अटल व्योम gr_मुक्त_request(काष्ठा usb_ep *_ep, काष्ठा usb_request *_req)
-अणु
-	काष्ठा gr_request *req;
+static void gr_free_request(struct usb_ep *_ep, struct usb_request *_req)
+{
+	struct gr_request *req;
 
-	अगर (!_ep || !_req)
-		वापस;
-	req = container_of(_req, काष्ठा gr_request, req);
+	if (!_ep || !_req)
+		return;
+	req = container_of(_req, struct gr_request, req);
 
 	/* Leads to memory leak */
 	WARN(!list_empty(&req->queue),
 	     "request not dequeued properly before freeing\n");
 
-	kमुक्त(req);
-पूर्ण
+	kfree(req);
+}
 
 /* Queue a request from the gadget */
-अटल पूर्णांक gr_queue_ext(काष्ठा usb_ep *_ep, काष्ठा usb_request *_req,
+static int gr_queue_ext(struct usb_ep *_ep, struct usb_request *_req,
 			gfp_t gfp_flags)
-अणु
-	काष्ठा gr_ep *ep;
-	काष्ठा gr_request *req;
-	काष्ठा gr_udc *dev;
-	पूर्णांक ret;
+{
+	struct gr_ep *ep;
+	struct gr_request *req;
+	struct gr_udc *dev;
+	int ret;
 
-	अगर (unlikely(!_ep || !_req))
-		वापस -EINVAL;
+	if (unlikely(!_ep || !_req))
+		return -EINVAL;
 
-	ep = container_of(_ep, काष्ठा gr_ep, ep);
-	req = container_of(_req, काष्ठा gr_request, req);
+	ep = container_of(_ep, struct gr_ep, ep);
+	req = container_of(_req, struct gr_request, req);
 	dev = ep->dev;
 
 	spin_lock(&ep->dev->lock);
 
 	/*
-	 * The ep0 poपूर्णांकer in the gadget काष्ठा is used both क्रम ep0in and
+	 * The ep0 pointer in the gadget struct is used both for ep0in and
 	 * ep0out. In a data stage in the out direction ep0out needs to be used
-	 * instead of the शेष ep0in. Completion functions might use
+	 * instead of the default ep0in. Completion functions might use
 	 * driver_data, so that needs to be copied as well.
 	 */
-	अगर ((ep == &dev->epi[0]) && (dev->ep0state == GR_EP0_ODATA)) अणु
+	if ((ep == &dev->epi[0]) && (dev->ep0state == GR_EP0_ODATA)) {
 		ep = &dev->epo[0];
 		ep->ep.driver_data = dev->epi[0].ep.driver_data;
-	पूर्ण
+	}
 
-	अगर (ep->is_in)
-		gr_dbgprपूर्णांक_request("EXTERN", ep, req);
+	if (ep->is_in)
+		gr_dbgprint_request("EXTERN", ep, req);
 
 	ret = gr_queue(ep, req, GFP_ATOMIC);
 
 	spin_unlock(&ep->dev->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* Dequeue JUST ONE request */
-अटल पूर्णांक gr_dequeue(काष्ठा usb_ep *_ep, काष्ठा usb_request *_req)
-अणु
-	काष्ठा gr_request *req;
-	काष्ठा gr_ep *ep;
-	काष्ठा gr_udc *dev;
-	पूर्णांक ret = 0;
-	अचिन्हित दीर्घ flags;
+static int gr_dequeue(struct usb_ep *_ep, struct usb_request *_req)
+{
+	struct gr_request *req;
+	struct gr_ep *ep;
+	struct gr_udc *dev;
+	int ret = 0;
+	unsigned long flags;
 
-	ep = container_of(_ep, काष्ठा gr_ep, ep);
-	अगर (!_ep || !_req || (!ep->ep.desc && ep->num != 0))
-		वापस -EINVAL;
+	ep = container_of(_ep, struct gr_ep, ep);
+	if (!_ep || !_req || (!ep->ep.desc && ep->num != 0))
+		return -EINVAL;
 	dev = ep->dev;
-	अगर (!dev->driver)
-		वापस -ESHUTDOWN;
+	if (!dev->driver)
+		return -ESHUTDOWN;
 
-	/* We can't touch (DMA) रेजिस्टरs when suspended */
-	अगर (dev->ep0state == GR_EP0_SUSPEND)
-		वापस -EBUSY;
+	/* We can't touch (DMA) registers when suspended */
+	if (dev->ep0state == GR_EP0_SUSPEND)
+		return -EBUSY;
 
 	spin_lock_irqsave(&dev->lock, flags);
 
-	/* Make sure it's actually queued on this endpoपूर्णांक */
-	list_क्रम_each_entry(req, &ep->queue, queue) अणु
-		अगर (&req->req == _req)
-			अवरोध;
-	पूर्ण
-	अगर (&req->req != _req) अणु
+	/* Make sure it's actually queued on this endpoint */
+	list_for_each_entry(req, &ep->queue, queue) {
+		if (&req->req == _req)
+			break;
+	}
+	if (&req->req != _req) {
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (list_first_entry(&ep->queue, काष्ठा gr_request, queue) == req) अणु
+	if (list_first_entry(&ep->queue, struct gr_request, queue) == req) {
 		/* This request is currently being processed */
-		gr_पात_dma(ep);
-		अगर (ep->stopped)
+		gr_abort_dma(ep);
+		if (ep->stopped)
 			gr_finish_request(ep, req, -ECONNRESET);
-		अन्यथा
+		else
 			gr_dma_advance(ep, -ECONNRESET);
-	पूर्ण अन्यथा अगर (!list_empty(&req->queue)) अणु
+	} else if (!list_empty(&req->queue)) {
 		/* Not being processed - gr_finish_request dequeues it */
 		gr_finish_request(ep, req, -ECONNRESET);
-	पूर्ण अन्यथा अणु
+	} else {
 		ret = -EOPNOTSUPP;
-	पूर्ण
+	}
 
 out:
 	spin_unlock_irqrestore(&dev->lock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* Helper क्रम gr_set_halt and gr_set_wedge */
-अटल पूर्णांक gr_set_halt_wedge(काष्ठा usb_ep *_ep, पूर्णांक halt, पूर्णांक wedge)
-अणु
-	पूर्णांक ret;
-	काष्ठा gr_ep *ep;
+/* Helper for gr_set_halt and gr_set_wedge */
+static int gr_set_halt_wedge(struct usb_ep *_ep, int halt, int wedge)
+{
+	int ret;
+	struct gr_ep *ep;
 
-	अगर (!_ep)
-		वापस -ENODEV;
-	ep = container_of(_ep, काष्ठा gr_ep, ep);
+	if (!_ep)
+		return -ENODEV;
+	ep = container_of(_ep, struct gr_ep, ep);
 
 	spin_lock(&ep->dev->lock);
 
-	/* Halting an IN endpoपूर्णांक should fail अगर queue is not empty */
-	अगर (halt && ep->is_in && !list_empty(&ep->queue)) अणु
+	/* Halting an IN endpoint should fail if queue is not empty */
+	if (halt && ep->is_in && !list_empty(&ep->queue)) {
 		ret = -EAGAIN;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = gr_ep_halt_wedge(ep, halt, wedge, 0);
 
 out:
 	spin_unlock(&ep->dev->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* Halt endpoपूर्णांक */
-अटल पूर्णांक gr_set_halt(काष्ठा usb_ep *_ep, पूर्णांक halt)
-अणु
-	वापस gr_set_halt_wedge(_ep, halt, 0);
-पूर्ण
+/* Halt endpoint */
+static int gr_set_halt(struct usb_ep *_ep, int halt)
+{
+	return gr_set_halt_wedge(_ep, halt, 0);
+}
 
-/* Halt and wedge endpoपूर्णांक */
-अटल पूर्णांक gr_set_wedge(काष्ठा usb_ep *_ep)
-अणु
-	वापस gr_set_halt_wedge(_ep, 1, 1);
-पूर्ण
+/* Halt and wedge endpoint */
+static int gr_set_wedge(struct usb_ep *_ep)
+{
+	return gr_set_halt_wedge(_ep, 1, 1);
+}
 
 /*
- * Return the total number of bytes currently stored in the पूर्णांकernal buffers of
- * the endpoपूर्णांक.
+ * Return the total number of bytes currently stored in the internal buffers of
+ * the endpoint.
  */
-अटल पूर्णांक gr_fअगरo_status(काष्ठा usb_ep *_ep)
-अणु
-	काष्ठा gr_ep *ep;
+static int gr_fifo_status(struct usb_ep *_ep)
+{
+	struct gr_ep *ep;
 	u32 epstat;
 	u32 bytes = 0;
 
-	अगर (!_ep)
-		वापस -ENODEV;
-	ep = container_of(_ep, काष्ठा gr_ep, ep);
+	if (!_ep)
+		return -ENODEV;
+	ep = container_of(_ep, struct gr_ep, ep);
 
-	epstat = gr_पढ़ो32(&ep->regs->epstat);
+	epstat = gr_read32(&ep->regs->epstat);
 
-	अगर (epstat & GR_EPSTAT_B0)
+	if (epstat & GR_EPSTAT_B0)
 		bytes += (epstat & GR_EPSTAT_B0CNT_MASK) >> GR_EPSTAT_B0CNT_POS;
-	अगर (epstat & GR_EPSTAT_B1)
+	if (epstat & GR_EPSTAT_B1)
 		bytes += (epstat & GR_EPSTAT_B1CNT_MASK) >> GR_EPSTAT_B1CNT_POS;
 
-	वापस bytes;
-पूर्ण
+	return bytes;
+}
 
 
-/* Empty data from पूर्णांकernal buffers of an endpoपूर्णांक. */
-अटल व्योम gr_fअगरo_flush(काष्ठा usb_ep *_ep)
-अणु
-	काष्ठा gr_ep *ep;
+/* Empty data from internal buffers of an endpoint. */
+static void gr_fifo_flush(struct usb_ep *_ep)
+{
+	struct gr_ep *ep;
 	u32 epctrl;
 
-	अगर (!_ep)
-		वापस;
-	ep = container_of(_ep, काष्ठा gr_ep, ep);
+	if (!_ep)
+		return;
+	ep = container_of(_ep, struct gr_ep, ep);
 	dev_vdbg(ep->dev->dev, "EP: flush fifo %s\n", ep->ep.name);
 
 	spin_lock(&ep->dev->lock);
 
-	epctrl = gr_पढ़ो32(&ep->regs->epctrl);
+	epctrl = gr_read32(&ep->regs->epctrl);
 	epctrl |= GR_EPCTRL_CB;
-	gr_ग_लिखो32(&ep->regs->epctrl, epctrl);
+	gr_write32(&ep->regs->epctrl, epctrl);
 
 	spin_unlock(&ep->dev->lock);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा usb_ep_ops gr_ep_ops = अणु
+static const struct usb_ep_ops gr_ep_ops = {
 	.enable		= gr_ep_enable,
 	.disable	= gr_ep_disable,
 
 	.alloc_request	= gr_alloc_request,
-	.मुक्त_request	= gr_मुक्त_request,
+	.free_request	= gr_free_request,
 
 	.queue		= gr_queue_ext,
 	.dequeue	= gr_dequeue,
 
 	.set_halt	= gr_set_halt,
 	.set_wedge	= gr_set_wedge,
-	.fअगरo_status	= gr_fअगरo_status,
-	.fअगरo_flush	= gr_fअगरo_flush,
-पूर्ण;
+	.fifo_status	= gr_fifo_status,
+	.fifo_flush	= gr_fifo_flush,
+};
 
 /* ---------------------------------------------------------------------- */
 /* USB Gadget ops */
 
-अटल पूर्णांक gr_get_frame(काष्ठा usb_gadget *_gadget)
-अणु
-	काष्ठा gr_udc *dev;
+static int gr_get_frame(struct usb_gadget *_gadget)
+{
+	struct gr_udc *dev;
 
-	अगर (!_gadget)
-		वापस -ENODEV;
-	dev = container_of(_gadget, काष्ठा gr_udc, gadget);
-	वापस gr_पढ़ो32(&dev->regs->status) & GR_STATUS_FN_MASK;
-पूर्ण
+	if (!_gadget)
+		return -ENODEV;
+	dev = container_of(_gadget, struct gr_udc, gadget);
+	return gr_read32(&dev->regs->status) & GR_STATUS_FN_MASK;
+}
 
-अटल पूर्णांक gr_wakeup(काष्ठा usb_gadget *_gadget)
-अणु
-	काष्ठा gr_udc *dev;
+static int gr_wakeup(struct usb_gadget *_gadget)
+{
+	struct gr_udc *dev;
 
-	अगर (!_gadget)
-		वापस -ENODEV;
-	dev = container_of(_gadget, काष्ठा gr_udc, gadget);
+	if (!_gadget)
+		return -ENODEV;
+	dev = container_of(_gadget, struct gr_udc, gadget);
 
 	/* Remote wakeup feature not enabled by host*/
-	अगर (!dev->remote_wakeup)
-		वापस -EINVAL;
+	if (!dev->remote_wakeup)
+		return -EINVAL;
 
 	spin_lock(&dev->lock);
 
-	gr_ग_लिखो32(&dev->regs->control,
-		   gr_पढ़ो32(&dev->regs->control) | GR_CONTROL_RW);
+	gr_write32(&dev->regs->control,
+		   gr_read32(&dev->regs->control) | GR_CONTROL_RW);
 
 	spin_unlock(&dev->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक gr_pullup(काष्ठा usb_gadget *_gadget, पूर्णांक is_on)
-अणु
-	काष्ठा gr_udc *dev;
+static int gr_pullup(struct usb_gadget *_gadget, int is_on)
+{
+	struct gr_udc *dev;
 	u32 control;
 
-	अगर (!_gadget)
-		वापस -ENODEV;
-	dev = container_of(_gadget, काष्ठा gr_udc, gadget);
+	if (!_gadget)
+		return -ENODEV;
+	dev = container_of(_gadget, struct gr_udc, gadget);
 
 	spin_lock(&dev->lock);
 
-	control = gr_पढ़ो32(&dev->regs->control);
-	अगर (is_on)
+	control = gr_read32(&dev->regs->control);
+	if (is_on)
 		control |= GR_CONTROL_EP;
-	अन्यथा
+	else
 		control &= ~GR_CONTROL_EP;
-	gr_ग_लिखो32(&dev->regs->control, control);
+	gr_write32(&dev->regs->control, control);
 
 	spin_unlock(&dev->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक gr_udc_start(काष्ठा usb_gadget *gadget,
-			काष्ठा usb_gadget_driver *driver)
-अणु
-	काष्ठा gr_udc *dev = to_gr_udc(gadget);
+static int gr_udc_start(struct usb_gadget *gadget,
+			struct usb_gadget_driver *driver)
+{
+	struct gr_udc *dev = to_gr_udc(gadget);
 
 	spin_lock(&dev->lock);
 
 	/* Hook up the driver */
-	driver->driver.bus = शून्य;
+	driver->driver.bus = NULL;
 	dev->driver = driver;
 
-	/* Get पढ़ोy क्रम host detection */
+	/* Get ready for host detection */
 	gr_enable_vbus_detect(dev);
 
 	spin_unlock(&dev->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक gr_udc_stop(काष्ठा usb_gadget *gadget)
-अणु
-	काष्ठा gr_udc *dev = to_gr_udc(gadget);
-	अचिन्हित दीर्घ flags;
+static int gr_udc_stop(struct usb_gadget *gadget)
+{
+	struct gr_udc *dev = to_gr_udc(gadget);
+	unsigned long flags;
 
 	spin_lock_irqsave(&dev->lock, flags);
 
-	dev->driver = शून्य;
+	dev->driver = NULL;
 	gr_stop_activity(dev);
 
 	spin_unlock_irqrestore(&dev->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा usb_gadget_ops gr_ops = अणु
+static const struct usb_gadget_ops gr_ops = {
 	.get_frame	= gr_get_frame,
 	.wakeup         = gr_wakeup,
 	.pullup         = gr_pullup,
 	.udc_start	= gr_udc_start,
 	.udc_stop	= gr_udc_stop,
 	/* Other operations not supported */
-पूर्ण;
+};
 
 /* ---------------------------------------------------------------------- */
 /* Module probe, removal and of-matching */
 
-अटल स्थिर अक्षर * स्थिर onames[] = अणु
+static const char * const onames[] = {
 	"ep0out", "ep1out", "ep2out", "ep3out", "ep4out", "ep5out",
 	"ep6out", "ep7out", "ep8out", "ep9out", "ep10out", "ep11out",
 	"ep12out", "ep13out", "ep14out", "ep15out"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर inames[] = अणु
+static const char * const inames[] = {
 	"ep0in", "ep1in", "ep2in", "ep3in", "ep4in", "ep5in",
 	"ep6in", "ep7in", "ep8in", "ep9in", "ep10in", "ep11in",
 	"ep12in", "ep13in", "ep14in", "ep15in"
-पूर्ण;
+};
 
 /* Must be called with dev->lock held */
-अटल पूर्णांक gr_ep_init(काष्ठा gr_udc *dev, पूर्णांक num, पूर्णांक is_in, u32 maxplimit)
-अणु
-	काष्ठा gr_ep *ep;
-	काष्ठा gr_request *req;
-	काष्ठा usb_request *_req;
-	व्योम *buf;
+static int gr_ep_init(struct gr_udc *dev, int num, int is_in, u32 maxplimit)
+{
+	struct gr_ep *ep;
+	struct gr_request *req;
+	struct usb_request *_req;
+	void *buf;
 
-	अगर (is_in) अणु
+	if (is_in) {
 		ep = &dev->epi[num];
 		ep->ep.name = inames[num];
 		ep->regs = &dev->regs->epi[num];
-	पूर्ण अन्यथा अणु
+	} else {
 		ep = &dev->epo[num];
 		ep->ep.name = onames[num];
 		ep->regs = &dev->regs->epo[num];
-	पूर्ण
+	}
 
 	gr_ep_reset(ep);
 	ep->num = num;
@@ -1979,61 +1978,61 @@ out:
 	ep->ep.ops = &gr_ep_ops;
 	INIT_LIST_HEAD(&ep->queue);
 
-	अगर (num == 0) अणु
+	if (num == 0) {
 		_req = gr_alloc_request(&ep->ep, GFP_ATOMIC);
-		अगर (!_req)
-			वापस -ENOMEM;
+		if (!_req)
+			return -ENOMEM;
 
 		buf = devm_kzalloc(dev->dev, PAGE_SIZE, GFP_DMA | GFP_ATOMIC);
-		अगर (!buf) अणु
-			gr_मुक्त_request(&ep->ep, _req);
-			वापस -ENOMEM;
-		पूर्ण
+		if (!buf) {
+			gr_free_request(&ep->ep, _req);
+			return -ENOMEM;
+		}
 
-		req = container_of(_req, काष्ठा gr_request, req);
+		req = container_of(_req, struct gr_request, req);
 		req->req.buf = buf;
 		req->req.length = MAX_CTRL_PL_SIZE;
 
-		अगर (is_in)
-			dev->ep0reqi = req; /* Complete माला_लो set as used */
-		अन्यथा
+		if (is_in)
+			dev->ep0reqi = req; /* Complete gets set as used */
+		else
 			dev->ep0reqo = req; /* Completion treated separately */
 
 		usb_ep_set_maxpacket_limit(&ep->ep, MAX_CTRL_PL_SIZE);
 		ep->bytes_per_buffer = MAX_CTRL_PL_SIZE;
 
 		ep->ep.caps.type_control = true;
-	पूर्ण अन्यथा अणु
+	} else {
 		usb_ep_set_maxpacket_limit(&ep->ep, (u16)maxplimit);
 		list_add_tail(&ep->ep.ep_list, &dev->gadget.ep_list);
 
 		ep->ep.caps.type_iso = true;
 		ep->ep.caps.type_bulk = true;
-		ep->ep.caps.type_पूर्णांक = true;
-	पूर्ण
+		ep->ep.caps.type_int = true;
+	}
 	list_add_tail(&ep->ep_list, &dev->ep_list);
 
-	अगर (is_in)
+	if (is_in)
 		ep->ep.caps.dir_in = true;
-	अन्यथा
+	else
 		ep->ep.caps.dir_out = true;
 
 	ep->tailbuf = dma_alloc_coherent(dev->dev, ep->ep.maxpacket_limit,
 					 &ep->tailbuf_paddr, GFP_ATOMIC);
-	अगर (!ep->tailbuf)
-		वापस -ENOMEM;
+	if (!ep->tailbuf)
+		return -ENOMEM;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Must be called with dev->lock held */
-अटल पूर्णांक gr_udc_init(काष्ठा gr_udc *dev)
-अणु
-	काष्ठा device_node *np = dev->dev->of_node;
+static int gr_udc_init(struct gr_udc *dev)
+{
+	struct device_node *np = dev->dev->of_node;
 	u32 epctrl_val;
 	u32 dmactrl_val;
-	पूर्णांक i;
-	पूर्णांक ret = 0;
+	int i;
+	int ret = 0;
 	u32 bufsize;
 
 	gr_set_address(dev, 0);
@@ -2045,109 +2044,109 @@ out:
 	INIT_LIST_HEAD(&dev->ep_list);
 	gr_set_ep0state(dev, GR_EP0_DISCONNECT);
 
-	क्रम (i = 0; i < dev->nepo; i++) अणु
-		अगर (of_property_पढ़ो_u32_index(np, "epobufsizes", i, &bufsize))
+	for (i = 0; i < dev->nepo; i++) {
+		if (of_property_read_u32_index(np, "epobufsizes", i, &bufsize))
 			bufsize = 1024;
 		ret = gr_ep_init(dev, i, 0, bufsize);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	क्रम (i = 0; i < dev->nepi; i++) अणु
-		अगर (of_property_पढ़ो_u32_index(np, "epibufsizes", i, &bufsize))
+	for (i = 0; i < dev->nepi; i++) {
+		if (of_property_read_u32_index(np, "epibufsizes", i, &bufsize))
 			bufsize = 1024;
 		ret = gr_ep_init(dev, i, 1, bufsize);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	/* Must be disabled by शेष */
+	/* Must be disabled by default */
 	dev->remote_wakeup = 0;
 
 	/* Enable ep0out and ep0in */
 	epctrl_val = (MAX_CTRL_PL_SIZE << GR_EPCTRL_MAXPL_POS) | GR_EPCTRL_EV;
 	dmactrl_val = GR_DMACTRL_IE | GR_DMACTRL_AI;
-	gr_ग_लिखो32(&dev->epo[0].regs->epctrl, epctrl_val);
-	gr_ग_लिखो32(&dev->epi[0].regs->epctrl, epctrl_val | GR_EPCTRL_PI);
-	gr_ग_लिखो32(&dev->epo[0].regs->dmactrl, dmactrl_val);
-	gr_ग_लिखो32(&dev->epi[0].regs->dmactrl, dmactrl_val);
+	gr_write32(&dev->epo[0].regs->epctrl, epctrl_val);
+	gr_write32(&dev->epi[0].regs->epctrl, epctrl_val | GR_EPCTRL_PI);
+	gr_write32(&dev->epo[0].regs->dmactrl, dmactrl_val);
+	gr_write32(&dev->epi[0].regs->dmactrl, dmactrl_val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम gr_ep_हटाओ(काष्ठा gr_udc *dev, पूर्णांक num, पूर्णांक is_in)
-अणु
-	काष्ठा gr_ep *ep;
+static void gr_ep_remove(struct gr_udc *dev, int num, int is_in)
+{
+	struct gr_ep *ep;
 
-	अगर (is_in)
+	if (is_in)
 		ep = &dev->epi[num];
-	अन्यथा
+	else
 		ep = &dev->epo[num];
 
-	अगर (ep->tailbuf)
-		dma_मुक्त_coherent(dev->dev, ep->ep.maxpacket_limit,
+	if (ep->tailbuf)
+		dma_free_coherent(dev->dev, ep->ep.maxpacket_limit,
 				  ep->tailbuf, ep->tailbuf_paddr);
-पूर्ण
+}
 
-अटल पूर्णांक gr_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा gr_udc *dev = platक्रमm_get_drvdata(pdev);
-	पूर्णांक i;
+static int gr_remove(struct platform_device *pdev)
+{
+	struct gr_udc *dev = platform_get_drvdata(pdev);
+	int i;
 
-	अगर (dev->added)
-		usb_del_gadget_udc(&dev->gadget); /* Shuts everything करोwn */
-	अगर (dev->driver)
-		वापस -EBUSY;
+	if (dev->added)
+		usb_del_gadget_udc(&dev->gadget); /* Shuts everything down */
+	if (dev->driver)
+		return -EBUSY;
 
 	gr_dfs_delete(dev);
 	dma_pool_destroy(dev->desc_pool);
-	platक्रमm_set_drvdata(pdev, शून्य);
+	platform_set_drvdata(pdev, NULL);
 
-	gr_मुक्त_request(&dev->epi[0].ep, &dev->ep0reqi->req);
-	gr_मुक्त_request(&dev->epo[0].ep, &dev->ep0reqo->req);
+	gr_free_request(&dev->epi[0].ep, &dev->ep0reqi->req);
+	gr_free_request(&dev->epo[0].ep, &dev->ep0reqo->req);
 
-	क्रम (i = 0; i < dev->nepo; i++)
-		gr_ep_हटाओ(dev, i, 0);
-	क्रम (i = 0; i < dev->nepi; i++)
-		gr_ep_हटाओ(dev, i, 1);
+	for (i = 0; i < dev->nepo; i++)
+		gr_ep_remove(dev, i, 0);
+	for (i = 0; i < dev->nepi; i++)
+		gr_ep_remove(dev, i, 1);
 
-	वापस 0;
-पूर्ण
-अटल पूर्णांक gr_request_irq(काष्ठा gr_udc *dev, पूर्णांक irq)
-अणु
-	वापस devm_request_thपढ़ोed_irq(dev->dev, irq, gr_irq, gr_irq_handler,
+	return 0;
+}
+static int gr_request_irq(struct gr_udc *dev, int irq)
+{
+	return devm_request_threaded_irq(dev->dev, irq, gr_irq, gr_irq_handler,
 					 IRQF_SHARED, driver_name, dev);
-पूर्ण
+}
 
-अटल पूर्णांक gr_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा gr_udc *dev;
-	काष्ठा gr_regs __iomem *regs;
-	पूर्णांक retval;
+static int gr_probe(struct platform_device *pdev)
+{
+	struct gr_udc *dev;
+	struct gr_regs __iomem *regs;
+	int retval;
 	u32 status;
 
-	dev = devm_kzalloc(&pdev->dev, माप(*dev), GFP_KERNEL);
-	अगर (!dev)
-		वापस -ENOMEM;
+	dev = devm_kzalloc(&pdev->dev, sizeof(*dev), GFP_KERNEL);
+	if (!dev)
+		return -ENOMEM;
 	dev->dev = &pdev->dev;
 
-	regs = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(regs))
-		वापस PTR_ERR(regs);
+	regs = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(regs))
+		return PTR_ERR(regs);
 
-	dev->irq = platक्रमm_get_irq(pdev, 0);
-	अगर (dev->irq <= 0)
-		वापस -ENODEV;
+	dev->irq = platform_get_irq(pdev, 0);
+	if (dev->irq <= 0)
+		return -ENODEV;
 
-	/* Some core configurations has separate irqs क्रम IN and OUT events */
-	dev->irqi = platक्रमm_get_irq(pdev, 1);
-	अगर (dev->irqi > 0) अणु
-		dev->irqo = platक्रमm_get_irq(pdev, 2);
-		अगर (dev->irqo <= 0)
-			वापस -ENODEV;
-	पूर्ण अन्यथा अणु
+	/* Some core configurations has separate irqs for IN and OUT events */
+	dev->irqi = platform_get_irq(pdev, 1);
+	if (dev->irqi > 0) {
+		dev->irqo = platform_get_irq(pdev, 2);
+		if (dev->irqo <= 0)
+			return -ENODEV;
+	} else {
 		dev->irqi = 0;
-	पूर्ण
+	}
 
 	dev->gadget.name = driver_name;
 	dev->gadget.max_speed = USB_SPEED_HIGH;
@@ -2156,101 +2155,101 @@ out:
 	spin_lock_init(&dev->lock);
 	dev->regs = regs;
 
-	platक्रमm_set_drvdata(pdev, dev);
+	platform_set_drvdata(pdev, dev);
 
-	/* Determine number of endpoपूर्णांकs and data पूर्णांकerface mode */
-	status = gr_पढ़ो32(&dev->regs->status);
+	/* Determine number of endpoints and data interface mode */
+	status = gr_read32(&dev->regs->status);
 	dev->nepi = ((status & GR_STATUS_NEPI_MASK) >> GR_STATUS_NEPI_POS) + 1;
 	dev->nepo = ((status & GR_STATUS_NEPO_MASK) >> GR_STATUS_NEPO_POS) + 1;
 
-	अगर (!(status & GR_STATUS_DM)) अणु
+	if (!(status & GR_STATUS_DM)) {
 		dev_err(dev->dev, "Slave mode cores are not supported\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	/* --- Effects of the following calls might need explicit cleanup --- */
 
-	/* Create DMA pool क्रम descriptors */
+	/* Create DMA pool for descriptors */
 	dev->desc_pool = dma_pool_create("desc_pool", dev->dev,
-					 माप(काष्ठा gr_dma_desc), 4, 0);
-	अगर (!dev->desc_pool) अणु
+					 sizeof(struct gr_dma_desc), 4, 0);
+	if (!dev->desc_pool) {
 		dev_err(dev->dev, "Could not allocate DMA pool");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	/* Inside lock so that no gadget can use this udc until probe is करोne */
+	/* Inside lock so that no gadget can use this udc until probe is done */
 	retval = usb_add_gadget_udc(dev->dev, &dev->gadget);
-	अगर (retval) अणु
+	if (retval) {
 		dev_err(dev->dev, "Could not add gadget udc");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	dev->added = 1;
 
 	spin_lock(&dev->lock);
 
 	retval = gr_udc_init(dev);
-	अगर (retval) अणु
+	if (retval) {
 		spin_unlock(&dev->lock);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Clear all पूर्णांकerrupt enables that might be left on since last boot */
-	gr_disable_पूर्णांकerrupts_and_pullup(dev);
+	/* Clear all interrupt enables that might be left on since last boot */
+	gr_disable_interrupts_and_pullup(dev);
 
 	spin_unlock(&dev->lock);
 
 	gr_dfs_create(dev);
 
 	retval = gr_request_irq(dev, dev->irq);
-	अगर (retval) अणु
+	if (retval) {
 		dev_err(dev->dev, "Failed to request irq %d\n", dev->irq);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (dev->irqi) अणु
+	if (dev->irqi) {
 		retval = gr_request_irq(dev, dev->irqi);
-		अगर (retval) अणु
+		if (retval) {
 			dev_err(dev->dev, "Failed to request irqi %d\n",
 				dev->irqi);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		retval = gr_request_irq(dev, dev->irqo);
-		अगर (retval) अणु
+		if (retval) {
 			dev_err(dev->dev, "Failed to request irqo %d\n",
 				dev->irqo);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
-	अगर (dev->irqi)
+	if (dev->irqi)
 		dev_info(dev->dev, "regs: %p, irqs %d, %d, %d\n", dev->regs,
 			 dev->irq, dev->irqi, dev->irqo);
-	अन्यथा
+	else
 		dev_info(dev->dev, "regs: %p, irq %d\n", dev->regs, dev->irq);
 
 out:
-	अगर (retval)
-		gr_हटाओ(pdev);
+	if (retval)
+		gr_remove(pdev);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल स्थिर काष्ठा of_device_id gr_match[] = अणु
-	अणु.name = "GAISLER_USBDC"पूर्ण,
-	अणु.name = "01_021"पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id gr_match[] = {
+	{.name = "GAISLER_USBDC"},
+	{.name = "01_021"},
+	{},
+};
 MODULE_DEVICE_TABLE(of, gr_match);
 
-अटल काष्ठा platक्रमm_driver gr_driver = अणु
-	.driver = अणु
+static struct platform_driver gr_driver = {
+	.driver = {
 		.name = DRIVER_NAME,
 		.of_match_table = gr_match,
-	पूर्ण,
+	},
 	.probe = gr_probe,
-	.हटाओ = gr_हटाओ,
-पूर्ण;
-module_platक्रमm_driver(gr_driver);
+	.remove = gr_remove,
+};
+module_platform_driver(gr_driver);
 
 MODULE_AUTHOR("Aeroflex Gaisler AB.");
 MODULE_DESCRIPTION(DRIVER_DESC);

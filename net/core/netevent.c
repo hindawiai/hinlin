@@ -1,64 +1,63 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *	Network event notअगरiers
+ *	Network event notifiers
  *
  *	Authors:
- *      Tom Tucker             <tom@खोलोgridcomputing.com>
- *      Steve Wise             <swise@खोलोgridcomputing.com>
+ *      Tom Tucker             <tom@opengridcomputing.com>
+ *      Steve Wise             <swise@opengridcomputing.com>
  *
  *	Fixes:
  */
 
-#समावेश <linux/rtnetlink.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/export.h>
-#समावेश <net/netevent.h>
+#include <linux/rtnetlink.h>
+#include <linux/notifier.h>
+#include <linux/export.h>
+#include <net/netevent.h>
 
-अटल ATOMIC_NOTIFIER_HEAD(netevent_notअगर_chain);
-
-/**
- *	रेजिस्टर_netevent_notअगरier - रेजिस्टर a netevent notअगरier block
- *	@nb: notअगरier
- *
- *	Register a notअगरier to be called when a netevent occurs.
- *	The notअगरier passed is linked पूर्णांकo the kernel काष्ठाures and must
- *	not be reused until it has been unरेजिस्टरed. A negative त्रुटि_सं code
- *	is वापसed on a failure.
- */
-पूर्णांक रेजिस्टर_netevent_notअगरier(काष्ठा notअगरier_block *nb)
-अणु
-	वापस atomic_notअगरier_chain_रेजिस्टर(&netevent_notअगर_chain, nb);
-पूर्ण
-EXPORT_SYMBOL_GPL(रेजिस्टर_netevent_notअगरier);
+static ATOMIC_NOTIFIER_HEAD(netevent_notif_chain);
 
 /**
- *	unरेजिस्टर_netevent_notअगरier - unरेजिस्टर a netevent notअगरier block
- *	@nb: notअगरier
+ *	register_netevent_notifier - register a netevent notifier block
+ *	@nb: notifier
  *
- *	Unरेजिस्टर a notअगरier previously रेजिस्टरed by
- *	रेजिस्टर_neigh_notअगरier(). The notअगरier is unlinked पूर्णांकo the
- *	kernel काष्ठाures and may then be reused. A negative त्रुटि_सं code
- *	is वापसed on a failure.
+ *	Register a notifier to be called when a netevent occurs.
+ *	The notifier passed is linked into the kernel structures and must
+ *	not be reused until it has been unregistered. A negative errno code
+ *	is returned on a failure.
  */
-
-पूर्णांक unरेजिस्टर_netevent_notअगरier(काष्ठा notअगरier_block *nb)
-अणु
-	वापस atomic_notअगरier_chain_unरेजिस्टर(&netevent_notअगर_chain, nb);
-पूर्ण
-EXPORT_SYMBOL_GPL(unरेजिस्टर_netevent_notअगरier);
+int register_netevent_notifier(struct notifier_block *nb)
+{
+	return atomic_notifier_chain_register(&netevent_notif_chain, nb);
+}
+EXPORT_SYMBOL_GPL(register_netevent_notifier);
 
 /**
- *	call_netevent_notअगरiers - call all netevent notअगरier blocks
- *      @val: value passed unmodअगरied to notअगरier function
- *      @v:   poपूर्णांकer passed unmodअगरied to notअगरier function
+ *	unregister_netevent_notifier - unregister a netevent notifier block
+ *	@nb: notifier
  *
- *	Call all neighbour notअगरier blocks.  Parameters and वापस value
- *	are as क्रम notअगरier_call_chain().
+ *	Unregister a notifier previously registered by
+ *	register_neigh_notifier(). The notifier is unlinked into the
+ *	kernel structures and may then be reused. A negative errno code
+ *	is returned on a failure.
  */
 
-पूर्णांक call_netevent_notअगरiers(अचिन्हित दीर्घ val, व्योम *v)
-अणु
-	वापस atomic_notअगरier_call_chain(&netevent_notअगर_chain, val, v);
-पूर्ण
-EXPORT_SYMBOL_GPL(call_netevent_notअगरiers);
+int unregister_netevent_notifier(struct notifier_block *nb)
+{
+	return atomic_notifier_chain_unregister(&netevent_notif_chain, nb);
+}
+EXPORT_SYMBOL_GPL(unregister_netevent_notifier);
+
+/**
+ *	call_netevent_notifiers - call all netevent notifier blocks
+ *      @val: value passed unmodified to notifier function
+ *      @v:   pointer passed unmodified to notifier function
+ *
+ *	Call all neighbour notifier blocks.  Parameters and return value
+ *	are as for notifier_call_chain().
+ */
+
+int call_netevent_notifiers(unsigned long val, void *v)
+{
+	return atomic_notifier_call_chain(&netevent_notif_chain, val, v);
+}
+EXPORT_SYMBOL_GPL(call_netevent_notifiers);

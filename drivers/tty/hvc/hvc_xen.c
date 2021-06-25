@@ -1,290 +1,289 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * xen console driver पूर्णांकerface to hvc_console.c
+ * xen console driver interface to hvc_console.c
  *
  * (c) 2007 Gerd Hoffmann <kraxel@suse.de>
  */
 
-#समावेश <linux/console.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/err.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/init.h>
-#समावेश <linux/types.h>
-#समावेश <linux/list.h>
-#समावेश <linux/serial_core.h>
+#include <linux/console.h>
+#include <linux/delay.h>
+#include <linux/err.h>
+#include <linux/irq.h>
+#include <linux/init.h>
+#include <linux/types.h>
+#include <linux/list.h>
+#include <linux/serial_core.h>
 
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/xen/hypervisor.h>
+#include <asm/io.h>
+#include <asm/xen/hypervisor.h>
 
-#समावेश <xen/xen.h>
-#समावेश <xen/पूर्णांकerface/xen.h>
-#समावेश <xen/hvm.h>
-#समावेश <xen/grant_table.h>
-#समावेश <xen/page.h>
-#समावेश <xen/events.h>
-#समावेश <xen/पूर्णांकerface/io/console.h>
-#समावेश <xen/पूर्णांकerface/sched.h>
-#समावेश <xen/hvc-console.h>
-#समावेश <xen/xenbus.h>
+#include <xen/xen.h>
+#include <xen/interface/xen.h>
+#include <xen/hvm.h>
+#include <xen/grant_table.h>
+#include <xen/page.h>
+#include <xen/events.h>
+#include <xen/interface/io/console.h>
+#include <xen/interface/sched.h>
+#include <xen/hvc-console.h>
+#include <xen/xenbus.h>
 
-#समावेश "hvc_console.h"
+#include "hvc_console.h"
 
-#घोषणा HVC_COOKIE   0x58656e /* "Xen" in hex */
+#define HVC_COOKIE   0x58656e /* "Xen" in hex */
 
-काष्ठा xencons_info अणु
-	काष्ठा list_head list;
-	काष्ठा xenbus_device *xbdev;
-	काष्ठा xencons_पूर्णांकerface *पूर्णांकf;
-	अचिन्हित पूर्णांक evtchn;
-	काष्ठा hvc_काष्ठा *hvc;
-	पूर्णांक irq;
-	पूर्णांक vtermno;
+struct xencons_info {
+	struct list_head list;
+	struct xenbus_device *xbdev;
+	struct xencons_interface *intf;
+	unsigned int evtchn;
+	struct hvc_struct *hvc;
+	int irq;
+	int vtermno;
 	grant_ref_t gntref;
-पूर्ण;
+};
 
-अटल LIST_HEAD(xenconsoles);
-अटल DEFINE_SPINLOCK(xencons_lock);
+static LIST_HEAD(xenconsoles);
+static DEFINE_SPINLOCK(xencons_lock);
 
 /* ------------------------------------------------------------------ */
 
-अटल काष्ठा xencons_info *vtermno_to_xencons(पूर्णांक vtermno)
-अणु
-	काष्ठा xencons_info *entry, *n, *ret = शून्य;
+static struct xencons_info *vtermno_to_xencons(int vtermno)
+{
+	struct xencons_info *entry, *n, *ret = NULL;
 
-	अगर (list_empty(&xenconsoles))
-			वापस शून्य;
+	if (list_empty(&xenconsoles))
+			return NULL;
 
-	list_क्रम_each_entry_safe(entry, n, &xenconsoles, list) अणु
-		अगर (entry->vtermno == vtermno) अणु
+	list_for_each_entry_safe(entry, n, &xenconsoles, list) {
+		if (entry->vtermno == vtermno) {
 			ret  = entry;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत पूर्णांक xenbus_devid_to_vtermno(पूर्णांक devid)
-अणु
-	वापस devid + HVC_COOKIE;
-पूर्ण
+static inline int xenbus_devid_to_vtermno(int devid)
+{
+	return devid + HVC_COOKIE;
+}
 
-अटल अंतरभूत व्योम notअगरy_daemon(काष्ठा xencons_info *cons)
-अणु
-	/* Use evtchn: this is called early, beक्रमe irq is set up. */
-	notअगरy_remote_via_evtchn(cons->evtchn);
-पूर्ण
+static inline void notify_daemon(struct xencons_info *cons)
+{
+	/* Use evtchn: this is called early, before irq is set up. */
+	notify_remote_via_evtchn(cons->evtchn);
+}
 
-अटल पूर्णांक __ग_लिखो_console(काष्ठा xencons_info *xencons,
-		स्थिर अक्षर *data, पूर्णांक len)
-अणु
+static int __write_console(struct xencons_info *xencons,
+		const char *data, int len)
+{
 	XENCONS_RING_IDX cons, prod;
-	काष्ठा xencons_पूर्णांकerface *पूर्णांकf = xencons->पूर्णांकf;
-	पूर्णांक sent = 0;
+	struct xencons_interface *intf = xencons->intf;
+	int sent = 0;
 
-	cons = पूर्णांकf->out_cons;
-	prod = पूर्णांकf->out_prod;
-	mb();			/* update queue values beक्रमe going on */
-	BUG_ON((prod - cons) > माप(पूर्णांकf->out));
+	cons = intf->out_cons;
+	prod = intf->out_prod;
+	mb();			/* update queue values before going on */
+	BUG_ON((prod - cons) > sizeof(intf->out));
 
-	जबतक ((sent < len) && ((prod - cons) < माप(पूर्णांकf->out)))
-		पूर्णांकf->out[MASK_XENCONS_IDX(prod++, पूर्णांकf->out)] = data[sent++];
+	while ((sent < len) && ((prod - cons) < sizeof(intf->out)))
+		intf->out[MASK_XENCONS_IDX(prod++, intf->out)] = data[sent++];
 
-	wmb();			/* ग_लिखो ring beक्रमe updating poपूर्णांकer */
-	पूर्णांकf->out_prod = prod;
+	wmb();			/* write ring before updating pointer */
+	intf->out_prod = prod;
 
-	अगर (sent)
-		notअगरy_daemon(xencons);
-	वापस sent;
-पूर्ण
+	if (sent)
+		notify_daemon(xencons);
+	return sent;
+}
 
-अटल पूर्णांक करोmU_ग_लिखो_console(uपूर्णांक32_t vtermno, स्थिर अक्षर *data, पूर्णांक len)
-अणु
-	पूर्णांक ret = len;
-	काष्ठा xencons_info *cons = vtermno_to_xencons(vtermno);
-	अगर (cons == शून्य)
-		वापस -EINVAL;
+static int domU_write_console(uint32_t vtermno, const char *data, int len)
+{
+	int ret = len;
+	struct xencons_info *cons = vtermno_to_xencons(vtermno);
+	if (cons == NULL)
+		return -EINVAL;
 
 	/*
-	 * Make sure the whole buffer is emitted, polling अगर
-	 * necessary.  We करोn't ever want to rely on the hvc daemon
-	 * because the most पूर्णांकeresting console output is when the
+	 * Make sure the whole buffer is emitted, polling if
+	 * necessary.  We don't ever want to rely on the hvc daemon
+	 * because the most interesting console output is when the
 	 * kernel is crippled.
 	 */
-	जबतक (len) अणु
-		पूर्णांक sent = __ग_लिखो_console(cons, data, len);
+	while (len) {
+		int sent = __write_console(cons, data, len);
 		
 		data += sent;
 		len -= sent;
 
-		अगर (unlikely(len))
-			HYPERVISOR_sched_op(SCHEDOP_yield, शून्य);
-	पूर्ण
+		if (unlikely(len))
+			HYPERVISOR_sched_op(SCHEDOP_yield, NULL);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक करोmU_पढ़ो_console(uपूर्णांक32_t vtermno, अक्षर *buf, पूर्णांक len)
-अणु
-	काष्ठा xencons_पूर्णांकerface *पूर्णांकf;
+static int domU_read_console(uint32_t vtermno, char *buf, int len)
+{
+	struct xencons_interface *intf;
 	XENCONS_RING_IDX cons, prod;
-	पूर्णांक recv = 0;
-	काष्ठा xencons_info *xencons = vtermno_to_xencons(vtermno);
-	अगर (xencons == शून्य)
-		वापस -EINVAL;
-	पूर्णांकf = xencons->पूर्णांकf;
+	int recv = 0;
+	struct xencons_info *xencons = vtermno_to_xencons(vtermno);
+	if (xencons == NULL)
+		return -EINVAL;
+	intf = xencons->intf;
 
-	cons = पूर्णांकf->in_cons;
-	prod = पूर्णांकf->in_prod;
-	mb();			/* get poपूर्णांकers beक्रमe पढ़ोing ring */
-	BUG_ON((prod - cons) > माप(पूर्णांकf->in));
+	cons = intf->in_cons;
+	prod = intf->in_prod;
+	mb();			/* get pointers before reading ring */
+	BUG_ON((prod - cons) > sizeof(intf->in));
 
-	जबतक (cons != prod && recv < len)
-		buf[recv++] = पूर्णांकf->in[MASK_XENCONS_IDX(cons++, पूर्णांकf->in)];
+	while (cons != prod && recv < len)
+		buf[recv++] = intf->in[MASK_XENCONS_IDX(cons++, intf->in)];
 
-	mb();			/* पढ़ो ring beक्रमe consuming */
-	पूर्णांकf->in_cons = cons;
+	mb();			/* read ring before consuming */
+	intf->in_cons = cons;
 
-	notअगरy_daemon(xencons);
-	वापस recv;
-पूर्ण
+	notify_daemon(xencons);
+	return recv;
+}
 
-अटल स्थिर काष्ठा hv_ops करोmU_hvc_ops = अणु
-	.get_अक्षरs = करोmU_पढ़ो_console,
-	.put_अक्षरs = करोmU_ग_लिखो_console,
-	.notअगरier_add = notअगरier_add_irq,
-	.notअगरier_del = notअगरier_del_irq,
-	.notअगरier_hangup = notअगरier_hangup_irq,
-पूर्ण;
+static const struct hv_ops domU_hvc_ops = {
+	.get_chars = domU_read_console,
+	.put_chars = domU_write_console,
+	.notifier_add = notifier_add_irq,
+	.notifier_del = notifier_del_irq,
+	.notifier_hangup = notifier_hangup_irq,
+};
 
-अटल पूर्णांक करोm0_पढ़ो_console(uपूर्णांक32_t vtermno, अक्षर *buf, पूर्णांक len)
-अणु
-	वापस HYPERVISOR_console_io(CONSOLEIO_पढ़ो, len, buf);
-पूर्ण
+static int dom0_read_console(uint32_t vtermno, char *buf, int len)
+{
+	return HYPERVISOR_console_io(CONSOLEIO_read, len, buf);
+}
 
 /*
- * Either क्रम a करोm0 to ग_लिखो to the प्रणाली console, or a करोmU with a
+ * Either for a dom0 to write to the system console, or a domU with a
  * debug version of Xen
  */
-अटल पूर्णांक करोm0_ग_लिखो_console(uपूर्णांक32_t vtermno, स्थिर अक्षर *str, पूर्णांक len)
-अणु
-	पूर्णांक rc = HYPERVISOR_console_io(CONSOLEIO_ग_लिखो, len, (अक्षर *)str);
-	अगर (rc < 0)
-		वापस rc;
+static int dom0_write_console(uint32_t vtermno, const char *str, int len)
+{
+	int rc = HYPERVISOR_console_io(CONSOLEIO_write, len, (char *)str);
+	if (rc < 0)
+		return rc;
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल स्थिर काष्ठा hv_ops करोm0_hvc_ops = अणु
-	.get_अक्षरs = करोm0_पढ़ो_console,
-	.put_अक्षरs = करोm0_ग_लिखो_console,
-	.notअगरier_add = notअगरier_add_irq,
-	.notअगरier_del = notअगरier_del_irq,
-	.notअगरier_hangup = notअगरier_hangup_irq,
-पूर्ण;
+static const struct hv_ops dom0_hvc_ops = {
+	.get_chars = dom0_read_console,
+	.put_chars = dom0_write_console,
+	.notifier_add = notifier_add_irq,
+	.notifier_del = notifier_del_irq,
+	.notifier_hangup = notifier_hangup_irq,
+};
 
-अटल पूर्णांक xen_hvm_console_init(व्योम)
-अणु
-	पूर्णांक r;
-	uपूर्णांक64_t v = 0;
-	अचिन्हित दीर्घ gfn;
-	काष्ठा xencons_info *info;
+static int xen_hvm_console_init(void)
+{
+	int r;
+	uint64_t v = 0;
+	unsigned long gfn;
+	struct xencons_info *info;
 
-	अगर (!xen_hvm_करोमुख्य())
-		वापस -ENODEV;
+	if (!xen_hvm_domain())
+		return -ENODEV;
 
 	info = vtermno_to_xencons(HVC_COOKIE);
-	अगर (!info) अणु
-		info = kzalloc(माप(काष्ठा xencons_info), GFP_KERNEL);
-		अगर (!info)
-			वापस -ENOMEM;
-	पूर्ण अन्यथा अगर (info->पूर्णांकf != शून्य) अणु
-		/* alपढ़ोy configured */
-		वापस 0;
-	पूर्ण
+	if (!info) {
+		info = kzalloc(sizeof(struct xencons_info), GFP_KERNEL);
+		if (!info)
+			return -ENOMEM;
+	} else if (info->intf != NULL) {
+		/* already configured */
+		return 0;
+	}
 	/*
 	 * If the toolstack (or the hypervisor) hasn't set these values, the
-	 * शेष value is 0. Even though gfn = 0 and evtchn = 0 are
+	 * default value is 0. Even though gfn = 0 and evtchn = 0 are
 	 * theoretically correct values, in practice they never are and they
 	 * mean that a legacy toolstack hasn't initialized the pv console correctly.
 	 */
 	r = hvm_get_parameter(HVM_PARAM_CONSOLE_EVTCHN, &v);
-	अगर (r < 0 || v == 0)
-		जाओ err;
+	if (r < 0 || v == 0)
+		goto err;
 	info->evtchn = v;
 	v = 0;
 	r = hvm_get_parameter(HVM_PARAM_CONSOLE_PFN, &v);
-	अगर (r < 0 || v == 0)
-		जाओ err;
+	if (r < 0 || v == 0)
+		goto err;
 	gfn = v;
-	info->पूर्णांकf = xen_remap(gfn << XEN_PAGE_SHIFT, XEN_PAGE_SIZE);
-	अगर (info->पूर्णांकf == शून्य)
-		जाओ err;
+	info->intf = xen_remap(gfn << XEN_PAGE_SHIFT, XEN_PAGE_SIZE);
+	if (info->intf == NULL)
+		goto err;
 	info->vtermno = HVC_COOKIE;
 
 	spin_lock(&xencons_lock);
 	list_add_tail(&info->list, &xenconsoles);
 	spin_unlock(&xencons_lock);
 
-	वापस 0;
+	return 0;
 err:
-	kमुक्त(info);
-	वापस -ENODEV;
-पूर्ण
+	kfree(info);
+	return -ENODEV;
+}
 
-अटल पूर्णांक xencons_info_pv_init(काष्ठा xencons_info *info, पूर्णांक vtermno)
-अणु
-	info->evtchn = xen_start_info->console.करोmU.evtchn;
-	/* GFN == MFN क्रम PV guest */
-	info->पूर्णांकf = gfn_to_virt(xen_start_info->console.करोmU.mfn);
+static int xencons_info_pv_init(struct xencons_info *info, int vtermno)
+{
+	info->evtchn = xen_start_info->console.domU.evtchn;
+	/* GFN == MFN for PV guest */
+	info->intf = gfn_to_virt(xen_start_info->console.domU.mfn);
 	info->vtermno = vtermno;
 
 	list_add_tail(&info->list, &xenconsoles);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक xen_pv_console_init(व्योम)
-अणु
-	काष्ठा xencons_info *info;
+static int xen_pv_console_init(void)
+{
+	struct xencons_info *info;
 
-	अगर (!xen_pv_करोमुख्य())
-		वापस -ENODEV;
+	if (!xen_pv_domain())
+		return -ENODEV;
 
-	अगर (!xen_start_info->console.करोmU.evtchn)
-		वापस -ENODEV;
+	if (!xen_start_info->console.domU.evtchn)
+		return -ENODEV;
 
 	info = vtermno_to_xencons(HVC_COOKIE);
-	अगर (!info) अणु
-		info = kzalloc(माप(काष्ठा xencons_info), GFP_KERNEL);
-		अगर (!info)
-			वापस -ENOMEM;
-	पूर्ण अन्यथा अगर (info->पूर्णांकf != शून्य) अणु
-		/* alपढ़ोy configured */
-		वापस 0;
-	पूर्ण
+	if (!info) {
+		info = kzalloc(sizeof(struct xencons_info), GFP_KERNEL);
+		if (!info)
+			return -ENOMEM;
+	} else if (info->intf != NULL) {
+		/* already configured */
+		return 0;
+	}
 	spin_lock(&xencons_lock);
 	xencons_info_pv_init(info, HVC_COOKIE);
 	spin_unlock(&xencons_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक xen_initial_करोमुख्य_console_init(व्योम)
-अणु
-	काष्ठा xencons_info *info;
+static int xen_initial_domain_console_init(void)
+{
+	struct xencons_info *info;
 
-	अगर (!xen_initial_करोमुख्य())
-		वापस -ENODEV;
+	if (!xen_initial_domain())
+		return -ENODEV;
 
 	info = vtermno_to_xencons(HVC_COOKIE);
-	अगर (!info) अणु
-		info = kzalloc(माप(काष्ठा xencons_info), GFP_KERNEL);
-		अगर (!info)
-			वापस -ENOMEM;
-	पूर्ण
+	if (!info) {
+		info = kzalloc(sizeof(struct xencons_info), GFP_KERNEL);
+		if (!info)
+			return -ENOMEM;
+	}
 
 	info->irq = bind_virq_to_irq(VIRQ_CONSOLE, 0, false);
 	info->vtermno = HVC_COOKIE;
@@ -293,403 +292,403 @@ err:
 	list_add_tail(&info->list, &xenconsoles);
 	spin_unlock(&xencons_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम xen_console_update_evtchn(काष्ठा xencons_info *info)
-अणु
-	अगर (xen_hvm_करोमुख्य()) अणु
-		uपूर्णांक64_t v = 0;
-		पूर्णांक err;
+static void xen_console_update_evtchn(struct xencons_info *info)
+{
+	if (xen_hvm_domain()) {
+		uint64_t v = 0;
+		int err;
 
 		err = hvm_get_parameter(HVM_PARAM_CONSOLE_EVTCHN, &v);
-		अगर (!err && v)
+		if (!err && v)
 			info->evtchn = v;
-	पूर्ण अन्यथा
-		info->evtchn = xen_start_info->console.करोmU.evtchn;
-पूर्ण
+	} else
+		info->evtchn = xen_start_info->console.domU.evtchn;
+}
 
-व्योम xen_console_resume(व्योम)
-अणु
-	काष्ठा xencons_info *info = vtermno_to_xencons(HVC_COOKIE);
-	अगर (info != शून्य && info->irq) अणु
-		अगर (!xen_initial_करोमुख्य())
+void xen_console_resume(void)
+{
+	struct xencons_info *info = vtermno_to_xencons(HVC_COOKIE);
+	if (info != NULL && info->irq) {
+		if (!xen_initial_domain())
 			xen_console_update_evtchn(info);
 		rebind_evtchn_irq(info->evtchn, info->irq);
-	पूर्ण
-पूर्ण
+	}
+}
 
-#अगर_घोषित CONFIG_HVC_XEN_FRONTEND
-अटल व्योम xencons_disconnect_backend(काष्ठा xencons_info *info)
-अणु
-	अगर (info->irq > 0)
-		unbind_from_irqhandler(info->irq, शून्य);
+#ifdef CONFIG_HVC_XEN_FRONTEND
+static void xencons_disconnect_backend(struct xencons_info *info)
+{
+	if (info->irq > 0)
+		unbind_from_irqhandler(info->irq, NULL);
 	info->irq = 0;
-	अगर (info->evtchn > 0)
-		xenbus_मुक्त_evtchn(info->xbdev, info->evtchn);
+	if (info->evtchn > 0)
+		xenbus_free_evtchn(info->xbdev, info->evtchn);
 	info->evtchn = 0;
-	अगर (info->gntref > 0)
-		gnttab_मुक्त_grant_references(info->gntref);
+	if (info->gntref > 0)
+		gnttab_free_grant_references(info->gntref);
 	info->gntref = 0;
-	अगर (info->hvc != शून्य)
-		hvc_हटाओ(info->hvc);
-	info->hvc = शून्य;
-पूर्ण
+	if (info->hvc != NULL)
+		hvc_remove(info->hvc);
+	info->hvc = NULL;
+}
 
-अटल व्योम xencons_मुक्त(काष्ठा xencons_info *info)
-अणु
-	मुक्त_page((अचिन्हित दीर्घ)info->पूर्णांकf);
-	info->पूर्णांकf = शून्य;
+static void xencons_free(struct xencons_info *info)
+{
+	free_page((unsigned long)info->intf);
+	info->intf = NULL;
 	info->vtermno = 0;
-	kमुक्त(info);
-पूर्ण
+	kfree(info);
+}
 
-अटल पूर्णांक xen_console_हटाओ(काष्ठा xencons_info *info)
-अणु
+static int xen_console_remove(struct xencons_info *info)
+{
 	xencons_disconnect_backend(info);
 	spin_lock(&xencons_lock);
 	list_del(&info->list);
 	spin_unlock(&xencons_lock);
-	अगर (info->xbdev != शून्य)
-		xencons_मुक्त(info);
-	अन्यथा अणु
-		अगर (xen_hvm_करोमुख्य())
-			iounmap(info->पूर्णांकf);
-		kमुक्त(info);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	if (info->xbdev != NULL)
+		xencons_free(info);
+	else {
+		if (xen_hvm_domain())
+			iounmap(info->intf);
+		kfree(info);
+	}
+	return 0;
+}
 
-अटल पूर्णांक xencons_हटाओ(काष्ठा xenbus_device *dev)
-अणु
-	वापस xen_console_हटाओ(dev_get_drvdata(&dev->dev));
-पूर्ण
+static int xencons_remove(struct xenbus_device *dev)
+{
+	return xen_console_remove(dev_get_drvdata(&dev->dev));
+}
 
-अटल पूर्णांक xencons_connect_backend(काष्ठा xenbus_device *dev,
-				  काष्ठा xencons_info *info)
-अणु
-	पूर्णांक ret, evtchn, devid, ref, irq;
-	काष्ठा xenbus_transaction xbt;
+static int xencons_connect_backend(struct xenbus_device *dev,
+				  struct xencons_info *info)
+{
+	int ret, evtchn, devid, ref, irq;
+	struct xenbus_transaction xbt;
 	grant_ref_t gref_head;
 
 	ret = xenbus_alloc_evtchn(dev, &evtchn);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	info->evtchn = evtchn;
 	irq = bind_evtchn_to_irq(evtchn);
-	अगर (irq < 0)
-		वापस irq;
+	if (irq < 0)
+		return irq;
 	info->irq = irq;
-	devid = dev->nodename[म_माप(dev->nodename) - 1] - '0';
+	devid = dev->nodename[strlen(dev->nodename) - 1] - '0';
 	info->hvc = hvc_alloc(xenbus_devid_to_vtermno(devid),
-			irq, &करोmU_hvc_ops, 256);
-	अगर (IS_ERR(info->hvc))
-		वापस PTR_ERR(info->hvc);
+			irq, &domU_hvc_ops, 256);
+	if (IS_ERR(info->hvc))
+		return PTR_ERR(info->hvc);
 	ret = gnttab_alloc_grant_references(1, &gref_head);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 	info->gntref = gref_head;
 	ref = gnttab_claim_grant_reference(&gref_head);
-	अगर (ref < 0)
-		वापस ref;
-	gnttab_grant_क्रमeign_access_ref(ref, info->xbdev->otherend_id,
-					virt_to_gfn(info->पूर्णांकf), 0);
+	if (ref < 0)
+		return ref;
+	gnttab_grant_foreign_access_ref(ref, info->xbdev->otherend_id,
+					virt_to_gfn(info->intf), 0);
 
  again:
 	ret = xenbus_transaction_start(&xbt);
-	अगर (ret) अणु
+	if (ret) {
 		xenbus_dev_fatal(dev, ret, "starting transaction");
-		वापस ret;
-	पूर्ण
-	ret = xenbus_म_लिखो(xbt, dev->nodename, "ring-ref", "%d", ref);
-	अगर (ret)
-		जाओ error_xenbus;
-	ret = xenbus_म_लिखो(xbt, dev->nodename, "port", "%u",
+		return ret;
+	}
+	ret = xenbus_printf(xbt, dev->nodename, "ring-ref", "%d", ref);
+	if (ret)
+		goto error_xenbus;
+	ret = xenbus_printf(xbt, dev->nodename, "port", "%u",
 			    evtchn);
-	अगर (ret)
-		जाओ error_xenbus;
+	if (ret)
+		goto error_xenbus;
 	ret = xenbus_transaction_end(xbt, 0);
-	अगर (ret) अणु
-		अगर (ret == -EAGAIN)
-			जाओ again;
+	if (ret) {
+		if (ret == -EAGAIN)
+			goto again;
 		xenbus_dev_fatal(dev, ret, "completing transaction");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	xenbus_चयन_state(dev, XenbusStateInitialised);
-	वापस 0;
+	xenbus_switch_state(dev, XenbusStateInitialised);
+	return 0;
 
  error_xenbus:
 	xenbus_transaction_end(xbt, 1);
 	xenbus_dev_fatal(dev, ret, "writing xenstore");
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक xencons_probe(काष्ठा xenbus_device *dev,
-				  स्थिर काष्ठा xenbus_device_id *id)
-अणु
-	पूर्णांक ret, devid;
-	काष्ठा xencons_info *info;
+static int xencons_probe(struct xenbus_device *dev,
+				  const struct xenbus_device_id *id)
+{
+	int ret, devid;
+	struct xencons_info *info;
 
-	devid = dev->nodename[म_माप(dev->nodename) - 1] - '0';
-	अगर (devid == 0)
-		वापस -ENODEV;
+	devid = dev->nodename[strlen(dev->nodename) - 1] - '0';
+	if (devid == 0)
+		return -ENODEV;
 
-	info = kzalloc(माप(काष्ठा xencons_info), GFP_KERNEL);
-	अगर (!info)
-		वापस -ENOMEM;
+	info = kzalloc(sizeof(struct xencons_info), GFP_KERNEL);
+	if (!info)
+		return -ENOMEM;
 	dev_set_drvdata(&dev->dev, info);
 	info->xbdev = dev;
 	info->vtermno = xenbus_devid_to_vtermno(devid);
-	info->पूर्णांकf = (व्योम *)__get_मुक्त_page(GFP_KERNEL | __GFP_ZERO);
-	अगर (!info->पूर्णांकf)
-		जाओ error_nomem;
+	info->intf = (void *)__get_free_page(GFP_KERNEL | __GFP_ZERO);
+	if (!info->intf)
+		goto error_nomem;
 
 	ret = xencons_connect_backend(dev, info);
-	अगर (ret < 0)
-		जाओ error;
+	if (ret < 0)
+		goto error;
 	spin_lock(&xencons_lock);
 	list_add_tail(&info->list, &xenconsoles);
 	spin_unlock(&xencons_lock);
 
-	वापस 0;
+	return 0;
 
  error_nomem:
 	ret = -ENOMEM;
 	xenbus_dev_fatal(dev, ret, "allocating device memory");
  error:
 	xencons_disconnect_backend(info);
-	xencons_मुक्त(info);
-	वापस ret;
-पूर्ण
+	xencons_free(info);
+	return ret;
+}
 
-अटल पूर्णांक xencons_resume(काष्ठा xenbus_device *dev)
-अणु
-	काष्ठा xencons_info *info = dev_get_drvdata(&dev->dev);
+static int xencons_resume(struct xenbus_device *dev)
+{
+	struct xencons_info *info = dev_get_drvdata(&dev->dev);
 
 	xencons_disconnect_backend(info);
-	स_रखो(info->पूर्णांकf, 0, XEN_PAGE_SIZE);
-	वापस xencons_connect_backend(dev, info);
-पूर्ण
+	memset(info->intf, 0, XEN_PAGE_SIZE);
+	return xencons_connect_backend(dev, info);
+}
 
-अटल व्योम xencons_backend_changed(काष्ठा xenbus_device *dev,
-				   क्रमागत xenbus_state backend_state)
-अणु
-	चयन (backend_state) अणु
-	हाल XenbusStateReconfiguring:
-	हाल XenbusStateReconfigured:
-	हाल XenbusStateInitialising:
-	हाल XenbusStateInitialised:
-	हाल XenbusStateUnknown:
-		अवरोध;
+static void xencons_backend_changed(struct xenbus_device *dev,
+				   enum xenbus_state backend_state)
+{
+	switch (backend_state) {
+	case XenbusStateReconfiguring:
+	case XenbusStateReconfigured:
+	case XenbusStateInitialising:
+	case XenbusStateInitialised:
+	case XenbusStateUnknown:
+		break;
 
-	हाल XenbusStateInitWait:
-		अवरोध;
+	case XenbusStateInitWait:
+		break;
 
-	हाल XenbusStateConnected:
-		xenbus_चयन_state(dev, XenbusStateConnected);
-		अवरोध;
+	case XenbusStateConnected:
+		xenbus_switch_state(dev, XenbusStateConnected);
+		break;
 
-	हाल XenbusStateClosed:
-		अगर (dev->state == XenbusStateClosed)
-			अवरोध;
+	case XenbusStateClosed:
+		if (dev->state == XenbusStateClosed)
+			break;
 		fallthrough;	/* Missed the backend's CLOSING state */
-	हाल XenbusStateClosing:
-		xenbus_frontend_बंदd(dev);
-		अवरोध;
-	पूर्ण
-पूर्ण
+	case XenbusStateClosing:
+		xenbus_frontend_closed(dev);
+		break;
+	}
+}
 
-अटल स्थिर काष्ठा xenbus_device_id xencons_ids[] = अणु
-	अणु "console" पूर्ण,
-	अणु "" पूर्ण
-पूर्ण;
+static const struct xenbus_device_id xencons_ids[] = {
+	{ "console" },
+	{ "" }
+};
 
-अटल काष्ठा xenbus_driver xencons_driver = अणु
+static struct xenbus_driver xencons_driver = {
 	.name = "xenconsole",
 	.ids = xencons_ids,
 	.probe = xencons_probe,
-	.हटाओ = xencons_हटाओ,
+	.remove = xencons_remove,
 	.resume = xencons_resume,
 	.otherend_changed = xencons_backend_changed,
-पूर्ण;
-#पूर्ण_अगर /* CONFIG_HVC_XEN_FRONTEND */
+};
+#endif /* CONFIG_HVC_XEN_FRONTEND */
 
-अटल पूर्णांक __init xen_hvc_init(व्योम)
-अणु
-	पूर्णांक r;
-	काष्ठा xencons_info *info;
-	स्थिर काष्ठा hv_ops *ops;
+static int __init xen_hvc_init(void)
+{
+	int r;
+	struct xencons_info *info;
+	const struct hv_ops *ops;
 
-	अगर (!xen_करोमुख्य())
-		वापस -ENODEV;
+	if (!xen_domain())
+		return -ENODEV;
 
-	अगर (xen_initial_करोमुख्य()) अणु
-		ops = &करोm0_hvc_ops;
-		r = xen_initial_करोमुख्य_console_init();
-		अगर (r < 0)
-			वापस r;
+	if (xen_initial_domain()) {
+		ops = &dom0_hvc_ops;
+		r = xen_initial_domain_console_init();
+		if (r < 0)
+			return r;
 		info = vtermno_to_xencons(HVC_COOKIE);
-	पूर्ण अन्यथा अणु
-		ops = &करोmU_hvc_ops;
-		अगर (xen_hvm_करोमुख्य())
+	} else {
+		ops = &domU_hvc_ops;
+		if (xen_hvm_domain())
 			r = xen_hvm_console_init();
-		अन्यथा
+		else
 			r = xen_pv_console_init();
-		अगर (r < 0)
-			वापस r;
+		if (r < 0)
+			return r;
 
 		info = vtermno_to_xencons(HVC_COOKIE);
 		info->irq = bind_evtchn_to_irq(info->evtchn);
-	पूर्ण
-	अगर (info->irq < 0)
+	}
+	if (info->irq < 0)
 		info->irq = 0; /* NO_IRQ */
-	अन्यथा
+	else
 		irq_set_noprobe(info->irq);
 
 	info->hvc = hvc_alloc(HVC_COOKIE, info->irq, ops, 256);
-	अगर (IS_ERR(info->hvc)) अणु
+	if (IS_ERR(info->hvc)) {
 		r = PTR_ERR(info->hvc);
 		spin_lock(&xencons_lock);
 		list_del(&info->list);
 		spin_unlock(&xencons_lock);
-		अगर (info->irq)
-			unbind_from_irqhandler(info->irq, शून्य);
-		kमुक्त(info);
-		वापस r;
-	पूर्ण
+		if (info->irq)
+			unbind_from_irqhandler(info->irq, NULL);
+		kfree(info);
+		return r;
+	}
 
 	r = 0;
-#अगर_घोषित CONFIG_HVC_XEN_FRONTEND
-	r = xenbus_रेजिस्टर_frontend(&xencons_driver);
-#पूर्ण_अगर
-	वापस r;
-पूर्ण
+#ifdef CONFIG_HVC_XEN_FRONTEND
+	r = xenbus_register_frontend(&xencons_driver);
+#endif
+	return r;
+}
 device_initcall(xen_hvc_init);
 
-अटल पूर्णांक xen_cons_init(व्योम)
-अणु
-	स्थिर काष्ठा hv_ops *ops;
+static int xen_cons_init(void)
+{
+	const struct hv_ops *ops;
 
-	अगर (!xen_करोमुख्य())
-		वापस 0;
+	if (!xen_domain())
+		return 0;
 
-	अगर (xen_initial_करोमुख्य())
-		ops = &करोm0_hvc_ops;
-	अन्यथा अणु
-		पूर्णांक r;
-		ops = &करोmU_hvc_ops;
+	if (xen_initial_domain())
+		ops = &dom0_hvc_ops;
+	else {
+		int r;
+		ops = &domU_hvc_ops;
 
-		अगर (xen_hvm_करोमुख्य())
+		if (xen_hvm_domain())
 			r = xen_hvm_console_init();
-		अन्यथा
+		else
 			r = xen_pv_console_init();
-		अगर (r < 0)
-			वापस r;
-	पूर्ण
+		if (r < 0)
+			return r;
+	}
 
 	hvc_instantiate(HVC_COOKIE, 0, ops);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 console_initcall(xen_cons_init);
 
-#अगर_घोषित CONFIG_X86
-अटल व्योम xen_hvm_early_ग_लिखो(uपूर्णांक32_t vtermno, स्थिर अक्षर *str, पूर्णांक len)
-अणु
-	अगर (xen_cpuid_base())
+#ifdef CONFIG_X86
+static void xen_hvm_early_write(uint32_t vtermno, const char *str, int len)
+{
+	if (xen_cpuid_base())
 		outsb(0xe9, str, len);
-पूर्ण
-#अन्यथा
-अटल व्योम xen_hvm_early_ग_लिखो(uपूर्णांक32_t vtermno, स्थिर अक्षर *str, पूर्णांक len) अणु पूर्ण
-#पूर्ण_अगर
+}
+#else
+static void xen_hvm_early_write(uint32_t vtermno, const char *str, int len) { }
+#endif
 
-#अगर_घोषित CONFIG_EARLY_PRINTK
-अटल पूर्णांक __init xenboot_console_setup(काष्ठा console *console, अक्षर *string)
-अणु
-	अटल काष्ठा xencons_info xenboot;
+#ifdef CONFIG_EARLY_PRINTK
+static int __init xenboot_console_setup(struct console *console, char *string)
+{
+	static struct xencons_info xenboot;
 
-	अगर (xen_initial_करोमुख्य())
-		वापस 0;
-	अगर (!xen_pv_करोमुख्य())
-		वापस -ENODEV;
+	if (xen_initial_domain())
+		return 0;
+	if (!xen_pv_domain())
+		return -ENODEV;
 
-	वापस xencons_info_pv_init(&xenboot, 0);
-पूर्ण
+	return xencons_info_pv_init(&xenboot, 0);
+}
 
-अटल व्योम xenboot_ग_लिखो_console(काष्ठा console *console, स्थिर अक्षर *string,
-				  अचिन्हित len)
-अणु
-	अचिन्हित पूर्णांक linelen, off = 0;
-	स्थिर अक्षर *pos;
+static void xenboot_write_console(struct console *console, const char *string,
+				  unsigned len)
+{
+	unsigned int linelen, off = 0;
+	const char *pos;
 
-	अगर (!xen_pv_करोमुख्य()) अणु
-		xen_hvm_early_ग_लिखो(0, string, len);
-		वापस;
-	पूर्ण
+	if (!xen_pv_domain()) {
+		xen_hvm_early_write(0, string, len);
+		return;
+	}
 
-	करोm0_ग_लिखो_console(0, string, len);
+	dom0_write_console(0, string, len);
 
-	अगर (xen_initial_करोमुख्य())
-		वापस;
+	if (xen_initial_domain())
+		return;
 
-	करोmU_ग_लिखो_console(0, "(early) ", 8);
-	जबतक (off < len && शून्य != (pos = म_अक्षर(string+off, '\n'))) अणु
+	domU_write_console(0, "(early) ", 8);
+	while (off < len && NULL != (pos = strchr(string+off, '\n'))) {
 		linelen = pos-string+off;
-		अगर (off + linelen > len)
-			अवरोध;
-		करोmU_ग_लिखो_console(0, string+off, linelen);
-		करोmU_ग_लिखो_console(0, "\r\n", 2);
+		if (off + linelen > len)
+			break;
+		domU_write_console(0, string+off, linelen);
+		domU_write_console(0, "\r\n", 2);
 		off += linelen + 1;
-	पूर्ण
-	अगर (off < len)
-		करोmU_ग_लिखो_console(0, string+off, len-off);
-पूर्ण
+	}
+	if (off < len)
+		domU_write_console(0, string+off, len-off);
+}
 
-काष्ठा console xenboot_console = अणु
+struct console xenboot_console = {
 	.name		= "xenboot",
-	.ग_लिखो		= xenboot_ग_लिखो_console,
+	.write		= xenboot_write_console,
 	.setup		= xenboot_console_setup,
 	.flags		= CON_PRINTBUFFER | CON_BOOT | CON_ANYTIME,
 	.index		= -1,
-पूर्ण;
-#पूर्ण_अगर	/* CONFIG_EARLY_PRINTK */
+};
+#endif	/* CONFIG_EARLY_PRINTK */
 
-व्योम xen_raw_console_ग_लिखो(स्थिर अक्षर *str)
-अणु
-	sमाप_प्रकार len = म_माप(str);
-	पूर्णांक rc = 0;
+void xen_raw_console_write(const char *str)
+{
+	ssize_t len = strlen(str);
+	int rc = 0;
 
-	अगर (xen_करोमुख्य()) अणु
-		rc = करोm0_ग_लिखो_console(0, str, len);
-		अगर (rc != -ENOSYS || !xen_hvm_करोमुख्य())
-			वापस;
-	पूर्ण
-	xen_hvm_early_ग_लिखो(0, str, len);
-पूर्ण
+	if (xen_domain()) {
+		rc = dom0_write_console(0, str, len);
+		if (rc != -ENOSYS || !xen_hvm_domain())
+			return;
+	}
+	xen_hvm_early_write(0, str, len);
+}
 
-व्योम xen_raw_prपूर्णांकk(स्थिर अक्षर *fmt, ...)
-अणु
-	अटल अक्षर buf[512];
-	बहु_सूची ap;
+void xen_raw_printk(const char *fmt, ...)
+{
+	static char buf[512];
+	va_list ap;
 
-	बहु_शुरू(ap, fmt);
-	vsnम_लिखो(buf, माप(buf), fmt, ap);
-	बहु_पूर्ण(ap);
+	va_start(ap, fmt);
+	vsnprintf(buf, sizeof(buf), fmt, ap);
+	va_end(ap);
 
-	xen_raw_console_ग_लिखो(buf);
-पूर्ण
+	xen_raw_console_write(buf);
+}
 
-अटल व्योम xenboot_earlycon_ग_लिखो(काष्ठा console *console,
-				  स्थिर अक्षर *string,
-				  अचिन्हित len)
-अणु
-	करोm0_ग_लिखो_console(0, string, len);
-पूर्ण
+static void xenboot_earlycon_write(struct console *console,
+				  const char *string,
+				  unsigned len)
+{
+	dom0_write_console(0, string, len);
+}
 
-अटल पूर्णांक __init xenboot_earlycon_setup(काष्ठा earlycon_device *device,
-					    स्थिर अक्षर *opt)
-अणु
-	device->con->ग_लिखो = xenboot_earlycon_ग_लिखो;
-	वापस 0;
-पूर्ण
+static int __init xenboot_earlycon_setup(struct earlycon_device *device,
+					    const char *opt)
+{
+	device->con->write = xenboot_earlycon_write;
+	return 0;
+}
 EARLYCON_DECLARE(xenboot, xenboot_earlycon_setup);

@@ -1,256 +1,255 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *
- * arch/xtensa/platक्रमms/iss/network.c
+ * arch/xtensa/platforms/iss/network.c
  *
- * Platक्रमm specअगरic initialization.
+ * Platform specific initialization.
  *
  * Authors: Chris Zankel <chris@zankel.net>
- * Based on work क्रमm the UML team.
+ * Based on work form the UML team.
  *
  * Copyright 2005 Tensilica Inc.
  */
 
-#घोषणा pr_fmt(fmt) "%s: " fmt, __func__
+#define pr_fmt(fmt) "%s: " fmt, __func__
 
-#समावेश <linux/list.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/अगर_ether.h>
-#समावेश <linux/inetdevice.h>
-#समावेश <linux/init.h>
-#समावेश <linux/अगर_tun.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/ioctl.h>
-#समावेश <linux/memblock.h>
-#समावेश <linux/ethtool.h>
-#समावेश <linux/rtnetlink.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/list.h>
+#include <linux/irq.h>
+#include <linux/spinlock.h>
+#include <linux/slab.h>
+#include <linux/timer.h>
+#include <linux/if_ether.h>
+#include <linux/inetdevice.h>
+#include <linux/init.h>
+#include <linux/if_tun.h>
+#include <linux/etherdevice.h>
+#include <linux/interrupt.h>
+#include <linux/ioctl.h>
+#include <linux/memblock.h>
+#include <linux/ethtool.h>
+#include <linux/rtnetlink.h>
+#include <linux/platform_device.h>
 
-#समावेश <platक्रमm/simcall.h>
+#include <platform/simcall.h>
 
-#घोषणा DRIVER_NAME "iss-netdev"
-#घोषणा ETH_MAX_PACKET 1500
-#घोषणा ETH_HEADER_OTHER 14
-#घोषणा ISS_NET_TIMER_VALUE (HZ / 10)
+#define DRIVER_NAME "iss-netdev"
+#define ETH_MAX_PACKET 1500
+#define ETH_HEADER_OTHER 14
+#define ISS_NET_TIMER_VALUE (HZ / 10)
 
 
-अटल DEFINE_SPINLOCK(खोलोed_lock);
-अटल LIST_HEAD(खोलोed);
+static DEFINE_SPINLOCK(opened_lock);
+static LIST_HEAD(opened);
 
-अटल DEFINE_SPINLOCK(devices_lock);
-अटल LIST_HEAD(devices);
+static DEFINE_SPINLOCK(devices_lock);
+static LIST_HEAD(devices);
 
 /* ------------------------------------------------------------------------- */
 
 /* We currently only support the TUNTAP transport protocol. */
 
-#घोषणा TRANSPORT_TUNTAP_NAME "tuntap"
-#घोषणा TRANSPORT_TUNTAP_MTU ETH_MAX_PACKET
+#define TRANSPORT_TUNTAP_NAME "tuntap"
+#define TRANSPORT_TUNTAP_MTU ETH_MAX_PACKET
 
-काष्ठा tuntap_info अणु
-	अक्षर dev_name[IFNAMSIZ];
-	पूर्णांक fd;
-पूर्ण;
+struct tuntap_info {
+	char dev_name[IFNAMSIZ];
+	int fd;
+};
 
 /* ------------------------------------------------------------------------- */
 
 
-/* This काष्ठाure contains out निजी inक्रमmation क्रम the driver. */
+/* This structure contains out private information for the driver. */
 
-काष्ठा iss_net_निजी अणु
-	काष्ठा list_head device_list;
-	काष्ठा list_head खोलोed_list;
+struct iss_net_private {
+	struct list_head device_list;
+	struct list_head opened_list;
 
 	spinlock_t lock;
-	काष्ठा net_device *dev;
-	काष्ठा platक्रमm_device pdev;
-	काष्ठा समयr_list tl;
-	काष्ठा net_device_stats stats;
+	struct net_device *dev;
+	struct platform_device pdev;
+	struct timer_list tl;
+	struct net_device_stats stats;
 
-	काष्ठा समयr_list समयr;
-	अचिन्हित पूर्णांक समयr_val;
+	struct timer_list timer;
+	unsigned int timer_val;
 
-	पूर्णांक index;
-	पूर्णांक mtu;
+	int index;
+	int mtu;
 
-	काष्ठा अणु
-		जोड़ अणु
-			काष्ठा tuntap_info tuntap;
-		पूर्ण info;
+	struct {
+		union {
+			struct tuntap_info tuntap;
+		} info;
 
-		पूर्णांक (*खोलो)(काष्ठा iss_net_निजी *lp);
-		व्योम (*बंद)(काष्ठा iss_net_निजी *lp);
-		पूर्णांक (*पढ़ो)(काष्ठा iss_net_निजी *lp, काष्ठा sk_buff **skb);
-		पूर्णांक (*ग_लिखो)(काष्ठा iss_net_निजी *lp, काष्ठा sk_buff **skb);
-		अचिन्हित लघु (*protocol)(काष्ठा sk_buff *skb);
-		पूर्णांक (*poll)(काष्ठा iss_net_निजी *lp);
-	पूर्ण tp;
+		int (*open)(struct iss_net_private *lp);
+		void (*close)(struct iss_net_private *lp);
+		int (*read)(struct iss_net_private *lp, struct sk_buff **skb);
+		int (*write)(struct iss_net_private *lp, struct sk_buff **skb);
+		unsigned short (*protocol)(struct sk_buff *skb);
+		int (*poll)(struct iss_net_private *lp);
+	} tp;
 
-पूर्ण;
+};
 
 /* ================================ HELPERS ================================ */
 
 
-अटल अक्षर *split_अगर_spec(अक्षर *str, ...)
-अणु
-	अक्षर **arg, *end;
-	बहु_सूची ap;
+static char *split_if_spec(char *str, ...)
+{
+	char **arg, *end;
+	va_list ap;
 
-	बहु_शुरू(ap, str);
-	जबतक ((arg = बहु_तर्क(ap, अक्षर**)) != शून्य) अणु
-		अगर (*str == '\0') अणु
-			बहु_पूर्ण(ap);
-			वापस शून्य;
-		पूर्ण
-		end = म_अक्षर(str, ',');
-		अगर (end != str)
+	va_start(ap, str);
+	while ((arg = va_arg(ap, char**)) != NULL) {
+		if (*str == '\0') {
+			va_end(ap);
+			return NULL;
+		}
+		end = strchr(str, ',');
+		if (end != str)
 			*arg = str;
-		अगर (end == शून्य) अणु
-			बहु_पूर्ण(ap);
-			वापस शून्य;
-		पूर्ण
+		if (end == NULL) {
+			va_end(ap);
+			return NULL;
+		}
 		*end++ = '\0';
 		str = end;
-	पूर्ण
-	बहु_पूर्ण(ap);
-	वापस str;
-पूर्ण
+	}
+	va_end(ap);
+	return str;
+}
 
-/* Set Ethernet address of the specअगरied device. */
+/* Set Ethernet address of the specified device. */
 
-अटल व्योम setup_etheraddr(काष्ठा net_device *dev, अक्षर *str)
-अणु
-	अचिन्हित अक्षर *addr = dev->dev_addr;
+static void setup_etheraddr(struct net_device *dev, char *str)
+{
+	unsigned char *addr = dev->dev_addr;
 
-	अगर (str == शून्य)
-		जाओ अक्रमom;
+	if (str == NULL)
+		goto random;
 
-	अगर (!mac_pton(str, addr)) अणु
+	if (!mac_pton(str, addr)) {
 		pr_err("%s: failed to parse '%s' as an ethernet address\n",
 		       dev->name, str);
-		जाओ अक्रमom;
-	पूर्ण
-	अगर (is_multicast_ether_addr(addr)) अणु
+		goto random;
+	}
+	if (is_multicast_ether_addr(addr)) {
 		pr_err("%s: attempt to assign a multicast ethernet address\n",
 		       dev->name);
-		जाओ अक्रमom;
-	पूर्ण
-	अगर (!is_valid_ether_addr(addr)) अणु
+		goto random;
+	}
+	if (!is_valid_ether_addr(addr)) {
 		pr_err("%s: attempt to assign an invalid ethernet address\n",
 		       dev->name);
-		जाओ अक्रमom;
-	पूर्ण
-	अगर (!is_local_ether_addr(addr))
+		goto random;
+	}
+	if (!is_local_ether_addr(addr))
 		pr_warn("%s: assigning a globally valid ethernet address\n",
 			dev->name);
-	वापस;
+	return;
 
-अक्रमom:
+random:
 	pr_info("%s: choosing a random ethernet address\n",
 		dev->name);
-	eth_hw_addr_अक्रमom(dev);
-पूर्ण
+	eth_hw_addr_random(dev);
+}
 
 /* ======================= TUNTAP TRANSPORT INTERFACE ====================== */
 
-अटल पूर्णांक tuntap_खोलो(काष्ठा iss_net_निजी *lp)
-अणु
-	काष्ठा अगरreq अगरr;
-	अक्षर *dev_name = lp->tp.info.tuntap.dev_name;
-	पूर्णांक err = -EINVAL;
-	पूर्णांक fd;
+static int tuntap_open(struct iss_net_private *lp)
+{
+	struct ifreq ifr;
+	char *dev_name = lp->tp.info.tuntap.dev_name;
+	int err = -EINVAL;
+	int fd;
 
-	fd = simc_खोलो("/dev/net/tun", 02, 0); /* O_RDWR */
-	अगर (fd < 0) अणु
+	fd = simc_open("/dev/net/tun", 02, 0); /* O_RDWR */
+	if (fd < 0) {
 		pr_err("%s: failed to open /dev/net/tun, returned %d (errno = %d)\n",
-		       lp->dev->name, fd, त्रुटि_सं);
-		वापस fd;
-	पूर्ण
+		       lp->dev->name, fd, errno);
+		return fd;
+	}
 
-	स_रखो(&अगरr, 0, माप(अगरr));
-	अगरr.अगरr_flags = IFF_TAP | IFF_NO_PI;
-	strlcpy(अगरr.अगरr_name, dev_name, माप(अगरr.अगरr_name));
+	memset(&ifr, 0, sizeof(ifr));
+	ifr.ifr_flags = IFF_TAP | IFF_NO_PI;
+	strlcpy(ifr.ifr_name, dev_name, sizeof(ifr.ifr_name));
 
-	err = simc_ioctl(fd, TUNSETIFF, &अगरr);
-	अगर (err < 0) अणु
+	err = simc_ioctl(fd, TUNSETIFF, &ifr);
+	if (err < 0) {
 		pr_err("%s: failed to set interface %s, returned %d (errno = %d)\n",
-		       lp->dev->name, dev_name, err, त्रुटि_सं);
-		simc_बंद(fd);
-		वापस err;
-	पूर्ण
+		       lp->dev->name, dev_name, err, errno);
+		simc_close(fd);
+		return err;
+	}
 
 	lp->tp.info.tuntap.fd = fd;
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम tuntap_बंद(काष्ठा iss_net_निजी *lp)
-अणु
-	simc_बंद(lp->tp.info.tuntap.fd);
+static void tuntap_close(struct iss_net_private *lp)
+{
+	simc_close(lp->tp.info.tuntap.fd);
 	lp->tp.info.tuntap.fd = -1;
-पूर्ण
+}
 
-अटल पूर्णांक tuntap_पढ़ो(काष्ठा iss_net_निजी *lp, काष्ठा sk_buff **skb)
-अणु
-	वापस simc_पढ़ो(lp->tp.info.tuntap.fd,
+static int tuntap_read(struct iss_net_private *lp, struct sk_buff **skb)
+{
+	return simc_read(lp->tp.info.tuntap.fd,
 			(*skb)->data, (*skb)->dev->mtu + ETH_HEADER_OTHER);
-पूर्ण
+}
 
-अटल पूर्णांक tuntap_ग_लिखो(काष्ठा iss_net_निजी *lp, काष्ठा sk_buff **skb)
-अणु
-	वापस simc_ग_लिखो(lp->tp.info.tuntap.fd, (*skb)->data, (*skb)->len);
-पूर्ण
+static int tuntap_write(struct iss_net_private *lp, struct sk_buff **skb)
+{
+	return simc_write(lp->tp.info.tuntap.fd, (*skb)->data, (*skb)->len);
+}
 
-अचिन्हित लघु tuntap_protocol(काष्ठा sk_buff *skb)
-अणु
-	वापस eth_type_trans(skb, skb->dev);
-पूर्ण
+unsigned short tuntap_protocol(struct sk_buff *skb)
+{
+	return eth_type_trans(skb, skb->dev);
+}
 
-अटल पूर्णांक tuntap_poll(काष्ठा iss_net_निजी *lp)
-अणु
-	वापस simc_poll(lp->tp.info.tuntap.fd);
-पूर्ण
+static int tuntap_poll(struct iss_net_private *lp)
+{
+	return simc_poll(lp->tp.info.tuntap.fd);
+}
 
 /*
  * ethX=tuntap,[mac address],device name
  */
 
-अटल पूर्णांक tuntap_probe(काष्ठा iss_net_निजी *lp, पूर्णांक index, अक्षर *init)
-अणु
-	काष्ठा net_device *dev = lp->dev;
-	अक्षर *dev_name = शून्य, *mac_str = शून्य, *rem = शून्य;
+static int tuntap_probe(struct iss_net_private *lp, int index, char *init)
+{
+	struct net_device *dev = lp->dev;
+	char *dev_name = NULL, *mac_str = NULL, *rem = NULL;
 
 	/* Transport should be 'tuntap': ethX=tuntap,mac,dev_name */
 
-	अगर (म_भेदन(init, TRANSPORT_TUNTAP_NAME,
-		    माप(TRANSPORT_TUNTAP_NAME) - 1))
-		वापस 0;
+	if (strncmp(init, TRANSPORT_TUNTAP_NAME,
+		    sizeof(TRANSPORT_TUNTAP_NAME) - 1))
+		return 0;
 
-	init += माप(TRANSPORT_TUNTAP_NAME) - 1;
-	अगर (*init == ',') अणु
-		rem = split_अगर_spec(init + 1, &mac_str, &dev_name);
-		अगर (rem != शून्य) अणु
+	init += sizeof(TRANSPORT_TUNTAP_NAME) - 1;
+	if (*init == ',') {
+		rem = split_if_spec(init + 1, &mac_str, &dev_name);
+		if (rem != NULL) {
 			pr_err("%s: extra garbage on specification : '%s'\n",
 			       dev->name, rem);
-			वापस 0;
-		पूर्ण
-	पूर्ण अन्यथा अगर (*init != '\0') अणु
+			return 0;
+		}
+	} else if (*init != '\0') {
 		pr_err("%s: invalid argument: %s. Skipping device!\n",
 		       dev->name, init);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (!dev_name) अणु
+	if (!dev_name) {
 		pr_err("%s: missing tuntap device name\n", dev->name);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	strlcpy(lp->tp.info.tuntap.dev_name, dev_name,
-		माप(lp->tp.info.tuntap.dev_name));
+		sizeof(lp->tp.info.tuntap.dev_name));
 
 	setup_etheraddr(dev, mac_str);
 
@@ -258,36 +257,36 @@
 
 	lp->tp.info.tuntap.fd = -1;
 
-	lp->tp.खोलो = tuntap_खोलो;
-	lp->tp.बंद = tuntap_बंद;
-	lp->tp.पढ़ो = tuntap_पढ़ो;
-	lp->tp.ग_लिखो = tuntap_ग_लिखो;
+	lp->tp.open = tuntap_open;
+	lp->tp.close = tuntap_close;
+	lp->tp.read = tuntap_read;
+	lp->tp.write = tuntap_write;
 	lp->tp.protocol = tuntap_protocol;
 	lp->tp.poll = tuntap_poll;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /* ================================ ISS NET ================================ */
 
-अटल पूर्णांक iss_net_rx(काष्ठा net_device *dev)
-अणु
-	काष्ठा iss_net_निजी *lp = netdev_priv(dev);
-	पूर्णांक pkt_len;
-	काष्ठा sk_buff *skb;
+static int iss_net_rx(struct net_device *dev)
+{
+	struct iss_net_private *lp = netdev_priv(dev);
+	int pkt_len;
+	struct sk_buff *skb;
 
-	/* Check अगर there is any new data. */
+	/* Check if there is any new data. */
 
-	अगर (lp->tp.poll(lp) == 0)
-		वापस 0;
+	if (lp->tp.poll(lp) == 0)
+		return 0;
 
-	/* Try to allocate memory, अगर it fails, try again next round. */
+	/* Try to allocate memory, if it fails, try again next round. */
 
 	skb = dev_alloc_skb(dev->mtu + 2 + ETH_HEADER_OTHER);
-	अगर (skb == शून्य) अणु
+	if (skb == NULL) {
 		lp->stats.rx_dropped++;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	skb_reserve(skb, 2);
 
@@ -295,263 +294,263 @@
 
 	skb->dev = dev;
 	skb_reset_mac_header(skb);
-	pkt_len = lp->tp.पढ़ो(lp, &skb);
+	pkt_len = lp->tp.read(lp, &skb);
 	skb_put(skb, pkt_len);
 
-	अगर (pkt_len > 0) अणु
+	if (pkt_len > 0) {
 		skb_trim(skb, pkt_len);
 		skb->protocol = lp->tp.protocol(skb);
 
 		lp->stats.rx_bytes += skb->len;
 		lp->stats.rx_packets++;
-		netअगर_rx_ni(skb);
-		वापस pkt_len;
-	पूर्ण
-	kमुक्त_skb(skb);
-	वापस pkt_len;
-पूर्ण
+		netif_rx_ni(skb);
+		return pkt_len;
+	}
+	kfree_skb(skb);
+	return pkt_len;
+}
 
-अटल पूर्णांक iss_net_poll(व्योम)
-अणु
-	काष्ठा list_head *ele;
-	पूर्णांक err, ret = 0;
+static int iss_net_poll(void)
+{
+	struct list_head *ele;
+	int err, ret = 0;
 
-	spin_lock(&खोलोed_lock);
+	spin_lock(&opened_lock);
 
-	list_क्रम_each(ele, &खोलोed) अणु
-		काष्ठा iss_net_निजी *lp;
+	list_for_each(ele, &opened) {
+		struct iss_net_private *lp;
 
-		lp = list_entry(ele, काष्ठा iss_net_निजी, खोलोed_list);
+		lp = list_entry(ele, struct iss_net_private, opened_list);
 
-		अगर (!netअगर_running(lp->dev))
-			अवरोध;
+		if (!netif_running(lp->dev))
+			break;
 
 		spin_lock(&lp->lock);
 
-		जबतक ((err = iss_net_rx(lp->dev)) > 0)
+		while ((err = iss_net_rx(lp->dev)) > 0)
 			ret++;
 
 		spin_unlock(&lp->lock);
 
-		अगर (err < 0) अणु
+		if (err < 0) {
 			pr_err("Device '%s' read returned %d, shutting it down\n",
 			       lp->dev->name, err);
-			dev_बंद(lp->dev);
-		पूर्ण अन्यथा अणु
+			dev_close(lp->dev);
+		} else {
 			/* FIXME reactivate_fd(lp->fd, ISS_ETH_IRQ); */
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	spin_unlock(&खोलोed_lock);
-	वापस ret;
-पूर्ण
+	spin_unlock(&opened_lock);
+	return ret;
+}
 
 
-अटल व्योम iss_net_समयr(काष्ठा समयr_list *t)
-अणु
-	काष्ठा iss_net_निजी *lp = from_समयr(lp, t, समयr);
+static void iss_net_timer(struct timer_list *t)
+{
+	struct iss_net_private *lp = from_timer(lp, t, timer);
 
 	iss_net_poll();
 	spin_lock(&lp->lock);
-	mod_समयr(&lp->समयr, jअगरfies + lp->समयr_val);
+	mod_timer(&lp->timer, jiffies + lp->timer_val);
 	spin_unlock(&lp->lock);
-पूर्ण
+}
 
 
-अटल पूर्णांक iss_net_खोलो(काष्ठा net_device *dev)
-अणु
-	काष्ठा iss_net_निजी *lp = netdev_priv(dev);
-	पूर्णांक err;
+static int iss_net_open(struct net_device *dev)
+{
+	struct iss_net_private *lp = netdev_priv(dev);
+	int err;
 
 	spin_lock_bh(&lp->lock);
 
-	err = lp->tp.खोलो(lp);
-	अगर (err < 0)
-		जाओ out;
+	err = lp->tp.open(lp);
+	if (err < 0)
+		goto out;
 
-	netअगर_start_queue(dev);
+	netif_start_queue(dev);
 
-	/* clear buffer - it can happen that the host side of the पूर्णांकerface
-	 * is full when we get here. In this हाल, new data is never queued,
+	/* clear buffer - it can happen that the host side of the interface
+	 * is full when we get here. In this case, new data is never queued,
 	 * SIGIOs never arrive, and the net never works.
 	 */
-	जबतक ((err = iss_net_rx(dev)) > 0)
+	while ((err = iss_net_rx(dev)) > 0)
 		;
 
 	spin_unlock_bh(&lp->lock);
-	spin_lock_bh(&खोलोed_lock);
-	list_add(&lp->खोलोed_list, &खोलोed);
-	spin_unlock_bh(&खोलोed_lock);
+	spin_lock_bh(&opened_lock);
+	list_add(&lp->opened_list, &opened);
+	spin_unlock_bh(&opened_lock);
 	spin_lock_bh(&lp->lock);
 
-	समयr_setup(&lp->समयr, iss_net_समयr, 0);
-	lp->समयr_val = ISS_NET_TIMER_VALUE;
-	mod_समयr(&lp->समयr, jअगरfies + lp->समयr_val);
+	timer_setup(&lp->timer, iss_net_timer, 0);
+	lp->timer_val = ISS_NET_TIMER_VALUE;
+	mod_timer(&lp->timer, jiffies + lp->timer_val);
 
 out:
 	spin_unlock_bh(&lp->lock);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक iss_net_बंद(काष्ठा net_device *dev)
-अणु
-	काष्ठा iss_net_निजी *lp = netdev_priv(dev);
-	netअगर_stop_queue(dev);
+static int iss_net_close(struct net_device *dev)
+{
+	struct iss_net_private *lp = netdev_priv(dev);
+	netif_stop_queue(dev);
 	spin_lock_bh(&lp->lock);
 
-	spin_lock(&खोलोed_lock);
-	list_del(&खोलोed);
-	spin_unlock(&खोलोed_lock);
+	spin_lock(&opened_lock);
+	list_del(&opened);
+	spin_unlock(&opened_lock);
 
-	del_समयr_sync(&lp->समयr);
+	del_timer_sync(&lp->timer);
 
-	lp->tp.बंद(lp);
+	lp->tp.close(lp);
 
 	spin_unlock_bh(&lp->lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक iss_net_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
-अणु
-	काष्ठा iss_net_निजी *lp = netdev_priv(dev);
-	पूर्णांक len;
+static int iss_net_start_xmit(struct sk_buff *skb, struct net_device *dev)
+{
+	struct iss_net_private *lp = netdev_priv(dev);
+	int len;
 
-	netअगर_stop_queue(dev);
+	netif_stop_queue(dev);
 	spin_lock_bh(&lp->lock);
 
-	len = lp->tp.ग_लिखो(lp, &skb);
+	len = lp->tp.write(lp, &skb);
 
-	अगर (len == skb->len) अणु
+	if (len == skb->len) {
 		lp->stats.tx_packets++;
 		lp->stats.tx_bytes += skb->len;
-		netअगर_trans_update(dev);
-		netअगर_start_queue(dev);
+		netif_trans_update(dev);
+		netif_start_queue(dev);
 
-		/* this is normally करोne in the पूर्णांकerrupt when tx finishes */
-		netअगर_wake_queue(dev);
+		/* this is normally done in the interrupt when tx finishes */
+		netif_wake_queue(dev);
 
-	पूर्ण अन्यथा अगर (len == 0) अणु
-		netअगर_start_queue(dev);
+	} else if (len == 0) {
+		netif_start_queue(dev);
 		lp->stats.tx_dropped++;
 
-	पूर्ण अन्यथा अणु
-		netअगर_start_queue(dev);
+	} else {
+		netif_start_queue(dev);
 		pr_err("%s: %s failed(%d)\n", dev->name, __func__, len);
-	पूर्ण
+	}
 
 	spin_unlock_bh(&lp->lock);
 
-	dev_kमुक्त_skb(skb);
-	वापस NETDEV_TX_OK;
-पूर्ण
+	dev_kfree_skb(skb);
+	return NETDEV_TX_OK;
+}
 
 
-अटल काष्ठा net_device_stats *iss_net_get_stats(काष्ठा net_device *dev)
-अणु
-	काष्ठा iss_net_निजी *lp = netdev_priv(dev);
-	वापस &lp->stats;
-पूर्ण
+static struct net_device_stats *iss_net_get_stats(struct net_device *dev)
+{
+	struct iss_net_private *lp = netdev_priv(dev);
+	return &lp->stats;
+}
 
-अटल व्योम iss_net_set_multicast_list(काष्ठा net_device *dev)
-अणु
-पूर्ण
+static void iss_net_set_multicast_list(struct net_device *dev)
+{
+}
 
-अटल व्योम iss_net_tx_समयout(काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue)
-अणु
-पूर्ण
+static void iss_net_tx_timeout(struct net_device *dev, unsigned int txqueue)
+{
+}
 
-अटल पूर्णांक iss_net_set_mac(काष्ठा net_device *dev, व्योम *addr)
-अणु
-	काष्ठा iss_net_निजी *lp = netdev_priv(dev);
-	काष्ठा sockaddr *hwaddr = addr;
+static int iss_net_set_mac(struct net_device *dev, void *addr)
+{
+	struct iss_net_private *lp = netdev_priv(dev);
+	struct sockaddr *hwaddr = addr;
 
-	अगर (!is_valid_ether_addr(hwaddr->sa_data))
-		वापस -EADDRNOTAVAIL;
+	if (!is_valid_ether_addr(hwaddr->sa_data))
+		return -EADDRNOTAVAIL;
 	spin_lock_bh(&lp->lock);
-	स_नकल(dev->dev_addr, hwaddr->sa_data, ETH_ALEN);
+	memcpy(dev->dev_addr, hwaddr->sa_data, ETH_ALEN);
 	spin_unlock_bh(&lp->lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक iss_net_change_mtu(काष्ठा net_device *dev, पूर्णांक new_mtu)
-अणु
-	वापस -EINVAL;
-पूर्ण
+static int iss_net_change_mtu(struct net_device *dev, int new_mtu)
+{
+	return -EINVAL;
+}
 
-व्योम iss_net_user_समयr_expire(काष्ठा समयr_list *unused)
-अणु
-पूर्ण
+void iss_net_user_timer_expire(struct timer_list *unused)
+{
+}
 
 
-अटल काष्ठा platक्रमm_driver iss_net_driver = अणु
-	.driver = अणु
+static struct platform_driver iss_net_driver = {
+	.driver = {
 		.name  = DRIVER_NAME,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक driver_रेजिस्टरed;
+static int driver_registered;
 
-अटल स्थिर काष्ठा net_device_ops iss_netdev_ops = अणु
-	.nकरो_खोलो		= iss_net_खोलो,
-	.nकरो_stop		= iss_net_बंद,
-	.nकरो_get_stats		= iss_net_get_stats,
-	.nकरो_start_xmit		= iss_net_start_xmit,
-	.nकरो_validate_addr	= eth_validate_addr,
-	.nकरो_change_mtu		= iss_net_change_mtu,
-	.nकरो_set_mac_address	= iss_net_set_mac,
-	.nकरो_tx_समयout		= iss_net_tx_समयout,
-	.nकरो_set_rx_mode	= iss_net_set_multicast_list,
-पूर्ण;
+static const struct net_device_ops iss_netdev_ops = {
+	.ndo_open		= iss_net_open,
+	.ndo_stop		= iss_net_close,
+	.ndo_get_stats		= iss_net_get_stats,
+	.ndo_start_xmit		= iss_net_start_xmit,
+	.ndo_validate_addr	= eth_validate_addr,
+	.ndo_change_mtu		= iss_net_change_mtu,
+	.ndo_set_mac_address	= iss_net_set_mac,
+	.ndo_tx_timeout		= iss_net_tx_timeout,
+	.ndo_set_rx_mode	= iss_net_set_multicast_list,
+};
 
-अटल पूर्णांक iss_net_configure(पूर्णांक index, अक्षर *init)
-अणु
-	काष्ठा net_device *dev;
-	काष्ठा iss_net_निजी *lp;
-	पूर्णांक err;
+static int iss_net_configure(int index, char *init)
+{
+	struct net_device *dev;
+	struct iss_net_private *lp;
+	int err;
 
-	dev = alloc_etherdev(माप(*lp));
-	अगर (dev == शून्य) अणु
+	dev = alloc_etherdev(sizeof(*lp));
+	if (dev == NULL) {
 		pr_err("eth_configure: failed to allocate device\n");
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	/* Initialize निजी element. */
+	/* Initialize private element. */
 
 	lp = netdev_priv(dev);
-	*lp = (काष्ठा iss_net_निजी) अणु
+	*lp = (struct iss_net_private) {
 		.device_list		= LIST_HEAD_INIT(lp->device_list),
-		.खोलोed_list		= LIST_HEAD_INIT(lp->खोलोed_list),
+		.opened_list		= LIST_HEAD_INIT(lp->opened_list),
 		.dev			= dev,
 		.index			= index,
-	पूर्ण;
+	};
 
 	spin_lock_init(&lp->lock);
 	/*
-	 * If this name ends up conflicting with an existing रेजिस्टरed
-	 * netdevice, that is OK, रेजिस्टर_netdevअणु,iceपूर्ण() will notice this
+	 * If this name ends up conflicting with an existing registered
+	 * netdevice, that is OK, register_netdev{,ice}() will notice this
 	 * and fail.
 	 */
-	snम_लिखो(dev->name, माप(dev->name), "eth%d", index);
+	snprintf(dev->name, sizeof(dev->name), "eth%d", index);
 
 	/*
 	 * Try all transport protocols.
 	 * Note: more protocols can be added by adding '&& !X_init(lp, eth)'.
 	 */
 
-	अगर (!tuntap_probe(lp, index, init)) अणु
+	if (!tuntap_probe(lp, index, init)) {
 		pr_err("%s: invalid arguments. Skipping device!\n",
 		       dev->name);
-		जाओ errout;
-	पूर्ण
+		goto errout;
+	}
 
 	pr_info("Netdevice %d (%pM)\n", index, dev->dev_addr);
 
-	/* sysfs रेजिस्टर */
+	/* sysfs register */
 
-	अगर (!driver_रेजिस्टरed) अणु
-		platक्रमm_driver_रेजिस्टर(&iss_net_driver);
-		driver_रेजिस्टरed = 1;
-	पूर्ण
+	if (!driver_registered) {
+		platform_driver_register(&iss_net_driver);
+		driver_registered = 1;
+	}
 
 	spin_lock(&devices_lock);
 	list_add(&lp->device_list, &devices);
@@ -559,121 +558,121 @@ out:
 
 	lp->pdev.id = index;
 	lp->pdev.name = DRIVER_NAME;
-	platक्रमm_device_रेजिस्टर(&lp->pdev);
+	platform_device_register(&lp->pdev);
 	SET_NETDEV_DEV(dev, &lp->pdev.dev);
 
 	dev->netdev_ops = &iss_netdev_ops;
 	dev->mtu = lp->mtu;
-	dev->watchकरोg_समयo = (HZ >> 1);
+	dev->watchdog_timeo = (HZ >> 1);
 	dev->irq = -1;
 
 	rtnl_lock();
-	err = रेजिस्टर_netdevice(dev);
+	err = register_netdevice(dev);
 	rtnl_unlock();
 
-	अगर (err) अणु
+	if (err) {
 		pr_err("%s: error registering net device!\n", dev->name);
-		/* XXX: should we call ->हटाओ() here? */
-		मुक्त_netdev(dev);
-		वापस 1;
-	पूर्ण
+		/* XXX: should we call ->remove() here? */
+		free_netdev(dev);
+		return 1;
+	}
 
-	समयr_setup(&lp->tl, iss_net_user_समयr_expire, 0);
+	timer_setup(&lp->tl, iss_net_user_timer_expire, 0);
 
-	वापस 0;
+	return 0;
 
 errout:
-	/* FIXME: unरेजिस्टर; मुक्त, etc.. */
-	वापस -EIO;
-पूर्ण
+	/* FIXME: unregister; free, etc.. */
+	return -EIO;
+}
 
 /* ------------------------------------------------------------------------- */
 
 /* Filled in during early boot */
 
-काष्ठा list_head eth_cmd_line = LIST_HEAD_INIT(eth_cmd_line);
+struct list_head eth_cmd_line = LIST_HEAD_INIT(eth_cmd_line);
 
-काष्ठा iss_net_init अणु
-	काष्ठा list_head list;
-	अक्षर *init;		/* init string */
-	पूर्णांक index;
-पूर्ण;
+struct iss_net_init {
+	struct list_head list;
+	char *init;		/* init string */
+	int index;
+};
 
 /*
- * Parse the command line and look क्रम 'ethX=...' fields, and रेजिस्टर all
+ * Parse the command line and look for 'ethX=...' fields, and register all
  * those fields. They will be later initialized in iss_net_init.
  */
 
-अटल पूर्णांक __init iss_net_setup(अक्षर *str)
-अणु
-	काष्ठा iss_net_निजी *device = शून्य;
-	काष्ठा iss_net_init *new;
-	काष्ठा list_head *ele;
-	अक्षर *end;
-	पूर्णांक rc;
-	अचिन्हित n;
+static int __init iss_net_setup(char *str)
+{
+	struct iss_net_private *device = NULL;
+	struct iss_net_init *new;
+	struct list_head *ele;
+	char *end;
+	int rc;
+	unsigned n;
 
-	end = म_अक्षर(str, '=');
-	अगर (!end) अणु
+	end = strchr(str, '=');
+	if (!end) {
 		pr_err("Expected '=' after device number\n");
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 	*end = 0;
-	rc = kstrtouपूर्णांक(str, 0, &n);
+	rc = kstrtouint(str, 0, &n);
 	*end = '=';
-	अगर (rc < 0) अणु
+	if (rc < 0) {
 		pr_err("Failed to parse '%s'\n", str);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 	str = end;
 
 	spin_lock(&devices_lock);
 
-	list_क्रम_each(ele, &devices) अणु
-		device = list_entry(ele, काष्ठा iss_net_निजी, device_list);
-		अगर (device->index == n)
-			अवरोध;
-	पूर्ण
+	list_for_each(ele, &devices) {
+		device = list_entry(ele, struct iss_net_private, device_list);
+		if (device->index == n)
+			break;
+	}
 
 	spin_unlock(&devices_lock);
 
-	अगर (device && device->index == n) अणु
+	if (device && device->index == n) {
 		pr_err("Device %u already configured\n", n);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	new = memblock_alloc(माप(*new), SMP_CACHE_BYTES);
-	अगर (new == शून्य) अणु
+	new = memblock_alloc(sizeof(*new), SMP_CACHE_BYTES);
+	if (new == NULL) {
 		pr_err("Alloc_bootmem failed\n");
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
 	INIT_LIST_HEAD(&new->list);
 	new->index = n;
 	new->init = str + 1;
 
 	list_add_tail(&new->list, &eth_cmd_line);
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 __setup("eth", iss_net_setup);
 
 /*
- * Initialize all ISS Ethernet devices previously रेजिस्टरed in iss_net_setup.
+ * Initialize all ISS Ethernet devices previously registered in iss_net_setup.
  */
 
-अटल पूर्णांक iss_net_init(व्योम)
-अणु
-	काष्ठा list_head *ele, *next;
+static int iss_net_init(void)
+{
+	struct list_head *ele, *next;
 
-	/* Walk through all Ethernet devices specअगरied in the command line. */
+	/* Walk through all Ethernet devices specified in the command line. */
 
-	list_क्रम_each_safe(ele, next, &eth_cmd_line) अणु
-		काष्ठा iss_net_init *eth;
-		eth = list_entry(ele, काष्ठा iss_net_init, list);
+	list_for_each_safe(ele, next, &eth_cmd_line) {
+		struct iss_net_init *eth;
+		eth = list_entry(ele, struct iss_net_init, list);
 		iss_net_configure(eth->index, eth->init);
-	पूर्ण
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 device_initcall(iss_net_init);

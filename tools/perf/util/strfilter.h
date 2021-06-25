@@ -1,69 +1,68 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __PERF_STRFILTER_H
-#घोषणा __PERF_STRFILTER_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __PERF_STRFILTER_H
+#define __PERF_STRFILTER_H
 /* General purpose glob matching filter */
 
-#समावेश <linux/list.h>
-#समावेश <stdbool.h>
+#include <linux/list.h>
+#include <stdbool.h>
 
 /* A node of string filter */
-काष्ठा strfilter_node अणु
-	काष्ठा strfilter_node *l;	/* Tree left branch (क्रम &,|) */
-	काष्ठा strfilter_node *r;	/* Tree right branch (क्रम !,&,|) */
-	स्थिर अक्षर *p;		/* Operator or rule */
-पूर्ण;
+struct strfilter_node {
+	struct strfilter_node *l;	/* Tree left branch (for &,|) */
+	struct strfilter_node *r;	/* Tree right branch (for !,&,|) */
+	const char *p;		/* Operator or rule */
+};
 
 /* String filter */
-काष्ठा strfilter अणु
-	काष्ठा strfilter_node *root;
-पूर्ण;
+struct strfilter {
+	struct strfilter_node *root;
+};
 
 /**
  * strfilter__new - Create a new string filter
  * @rules: Filter rule, which is a combination of glob expressions.
- * @err: Poपूर्णांकer which poपूर्णांकs an error detected on @rules
+ * @err: Pointer which points an error detected on @rules
  *
- * Parse @rules and वापस new strfilter. Return शून्य अगर an error detected.
- * In that हाल, *@err will indicate where it is detected, and *@err is शून्य
- * अगर a memory allocation is failed.
+ * Parse @rules and return new strfilter. Return NULL if an error detected.
+ * In that case, *@err will indicate where it is detected, and *@err is NULL
+ * if a memory allocation is failed.
  */
-काष्ठा strfilter *strfilter__new(स्थिर अक्षर *rules, स्थिर अक्षर **err);
+struct strfilter *strfilter__new(const char *rules, const char **err);
 
 /**
  * strfilter__or - Append an additional rule by logical-or
  * @filter: Original string filter
  * @rules: Filter rule to be appended at left of the root of
  *         @filter by using logical-or.
- * @err: Poपूर्णांकer which poपूर्णांकs an error detected on @rules
+ * @err: Pointer which points an error detected on @rules
  *
  * Parse @rules and join it to the @filter by using logical-or.
- * Return 0 अगर success, or वापस the error code.
+ * Return 0 if success, or return the error code.
  */
-पूर्णांक strfilter__or(काष्ठा strfilter *filter,
-		  स्थिर अक्षर *rules, स्थिर अक्षर **err);
+int strfilter__or(struct strfilter *filter,
+		  const char *rules, const char **err);
 
 /**
  * strfilter__add - Append an additional rule by logical-and
  * @filter: Original string filter
  * @rules: Filter rule to be appended at left of the root of
  *         @filter by using logical-and.
- * @err: Poपूर्णांकer which poपूर्णांकs an error detected on @rules
+ * @err: Pointer which points an error detected on @rules
  *
  * Parse @rules and join it to the @filter by using logical-and.
- * Return 0 अगर success, or वापस the error code.
+ * Return 0 if success, or return the error code.
  */
-पूर्णांक strfilter__and(काष्ठा strfilter *filter,
-		   स्थिर अक्षर *rules, स्थिर अक्षर **err);
+int strfilter__and(struct strfilter *filter,
+		   const char *rules, const char **err);
 
 /**
  * strfilter__compare - compare given string and a string filter
  * @filter: String filter
  * @str: target string
  *
- * Compare @str and @filter. Return true अगर the str match the rule
+ * Compare @str and @filter. Return true if the str match the rule
  */
-bool strfilter__compare(काष्ठा strfilter *filter, स्थिर अक्षर *str);
+bool strfilter__compare(struct strfilter *filter, const char *str);
 
 /**
  * strfilter__delete - delete a string filter
@@ -71,15 +70,15 @@ bool strfilter__compare(काष्ठा strfilter *filter, स्थिर �
  *
  * Delete @filter.
  */
-व्योम strfilter__delete(काष्ठा strfilter *filter);
+void strfilter__delete(struct strfilter *filter);
 
 /**
- * strfilter__string - Reस्थिरruct a rule string from filter
- * @filter: String filter to reस्थिरruct
+ * strfilter__string - Reconstruct a rule string from filter
+ * @filter: String filter to reconstruct
  *
- * Reस्थिरruct a rule string from @filter. This will be good क्रम
- * debug messages. Note that वापसing string must be मुक्तd afterward.
+ * Reconstruct a rule string from @filter. This will be good for
+ * debug messages. Note that returning string must be freed afterward.
  */
-अक्षर *strfilter__string(काष्ठा strfilter *filter);
+char *strfilter__string(struct strfilter *filter);
 
-#पूर्ण_अगर
+#endif

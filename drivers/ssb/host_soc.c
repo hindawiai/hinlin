@@ -1,211 +1,210 @@
-<शैली गुरु>
 /*
  * Sonics Silicon Backplane SoC host related functions.
- * Subप्रणाली core
+ * Subsystem core
  *
  * Copyright 2005, Broadcom Corporation
  * Copyright 2006, 2007, Michael Buesch <m@bues.ch>
  *
- * Licensed under the GNU/GPL. See COPYING क्रम details.
+ * Licensed under the GNU/GPL. See COPYING for details.
  */
 
-#समावेश "ssb_private.h"
+#include "ssb_private.h"
 
-#समावेश <linux/bcm47xx_nvram.h>
-#समावेश <linux/ssb/ssb.h>
+#include <linux/bcm47xx_nvram.h>
+#include <linux/ssb/ssb.h>
 
-अटल u8 ssb_host_soc_पढ़ो8(काष्ठा ssb_device *dev, u16 offset)
-अणु
-	काष्ठा ssb_bus *bus = dev->bus;
-
-	offset += dev->core_index * SSB_CORE_SIZE;
-	वापस पढ़ोb(bus->mmio + offset);
-पूर्ण
-
-अटल u16 ssb_host_soc_पढ़ो16(काष्ठा ssb_device *dev, u16 offset)
-अणु
-	काष्ठा ssb_bus *bus = dev->bus;
+static u8 ssb_host_soc_read8(struct ssb_device *dev, u16 offset)
+{
+	struct ssb_bus *bus = dev->bus;
 
 	offset += dev->core_index * SSB_CORE_SIZE;
-	वापस पढ़ोw(bus->mmio + offset);
-पूर्ण
+	return readb(bus->mmio + offset);
+}
 
-अटल u32 ssb_host_soc_पढ़ो32(काष्ठा ssb_device *dev, u16 offset)
-अणु
-	काष्ठा ssb_bus *bus = dev->bus;
+static u16 ssb_host_soc_read16(struct ssb_device *dev, u16 offset)
+{
+	struct ssb_bus *bus = dev->bus;
 
 	offset += dev->core_index * SSB_CORE_SIZE;
-	वापस पढ़ोl(bus->mmio + offset);
-पूर्ण
+	return readw(bus->mmio + offset);
+}
 
-#अगर_घोषित CONFIG_SSB_BLOCKIO
-अटल व्योम ssb_host_soc_block_पढ़ो(काष्ठा ssb_device *dev, व्योम *buffer,
-				    माप_प्रकार count, u16 offset, u8 reg_width)
-अणु
-	काष्ठा ssb_bus *bus = dev->bus;
-	व्योम __iomem *addr;
+static u32 ssb_host_soc_read32(struct ssb_device *dev, u16 offset)
+{
+	struct ssb_bus *bus = dev->bus;
+
+	offset += dev->core_index * SSB_CORE_SIZE;
+	return readl(bus->mmio + offset);
+}
+
+#ifdef CONFIG_SSB_BLOCKIO
+static void ssb_host_soc_block_read(struct ssb_device *dev, void *buffer,
+				    size_t count, u16 offset, u8 reg_width)
+{
+	struct ssb_bus *bus = dev->bus;
+	void __iomem *addr;
 
 	offset += dev->core_index * SSB_CORE_SIZE;
 	addr = bus->mmio + offset;
 
-	चयन (reg_width) अणु
-	हाल माप(u8): अणु
+	switch (reg_width) {
+	case sizeof(u8): {
 		u8 *buf = buffer;
 
-		जबतक (count) अणु
-			*buf = __raw_पढ़ोb(addr);
+		while (count) {
+			*buf = __raw_readb(addr);
 			buf++;
 			count--;
-		पूर्ण
-		अवरोध;
-	पूर्ण
-	हाल माप(u16): अणु
+		}
+		break;
+	}
+	case sizeof(u16): {
 		__le16 *buf = buffer;
 
 		WARN_ON(count & 1);
-		जबतक (count) अणु
-			*buf = (__क्रमce __le16)__raw_पढ़ोw(addr);
+		while (count) {
+			*buf = (__force __le16)__raw_readw(addr);
 			buf++;
 			count -= 2;
-		पूर्ण
-		अवरोध;
-	पूर्ण
-	हाल माप(u32): अणु
+		}
+		break;
+	}
+	case sizeof(u32): {
 		__le32 *buf = buffer;
 
 		WARN_ON(count & 3);
-		जबतक (count) अणु
-			*buf = (__क्रमce __le32)__raw_पढ़ोl(addr);
+		while (count) {
+			*buf = (__force __le32)__raw_readl(addr);
 			buf++;
 			count -= 4;
-		पूर्ण
-		अवरोध;
-	पूर्ण
-	शेष:
+		}
+		break;
+	}
+	default:
 		WARN_ON(1);
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर /* CONFIG_SSB_BLOCKIO */
+	}
+}
+#endif /* CONFIG_SSB_BLOCKIO */
 
-अटल व्योम ssb_host_soc_ग_लिखो8(काष्ठा ssb_device *dev, u16 offset, u8 value)
-अणु
-	काष्ठा ssb_bus *bus = dev->bus;
-
-	offset += dev->core_index * SSB_CORE_SIZE;
-	ग_लिखोb(value, bus->mmio + offset);
-पूर्ण
-
-अटल व्योम ssb_host_soc_ग_लिखो16(काष्ठा ssb_device *dev, u16 offset, u16 value)
-अणु
-	काष्ठा ssb_bus *bus = dev->bus;
+static void ssb_host_soc_write8(struct ssb_device *dev, u16 offset, u8 value)
+{
+	struct ssb_bus *bus = dev->bus;
 
 	offset += dev->core_index * SSB_CORE_SIZE;
-	ग_लिखोw(value, bus->mmio + offset);
-पूर्ण
+	writeb(value, bus->mmio + offset);
+}
 
-अटल व्योम ssb_host_soc_ग_लिखो32(काष्ठा ssb_device *dev, u16 offset, u32 value)
-अणु
-	काष्ठा ssb_bus *bus = dev->bus;
+static void ssb_host_soc_write16(struct ssb_device *dev, u16 offset, u16 value)
+{
+	struct ssb_bus *bus = dev->bus;
 
 	offset += dev->core_index * SSB_CORE_SIZE;
-	ग_लिखोl(value, bus->mmio + offset);
-पूर्ण
+	writew(value, bus->mmio + offset);
+}
 
-#अगर_घोषित CONFIG_SSB_BLOCKIO
-अटल व्योम ssb_host_soc_block_ग_लिखो(काष्ठा ssb_device *dev, स्थिर व्योम *buffer,
-				     माप_प्रकार count, u16 offset, u8 reg_width)
-अणु
-	काष्ठा ssb_bus *bus = dev->bus;
-	व्योम __iomem *addr;
+static void ssb_host_soc_write32(struct ssb_device *dev, u16 offset, u32 value)
+{
+	struct ssb_bus *bus = dev->bus;
+
+	offset += dev->core_index * SSB_CORE_SIZE;
+	writel(value, bus->mmio + offset);
+}
+
+#ifdef CONFIG_SSB_BLOCKIO
+static void ssb_host_soc_block_write(struct ssb_device *dev, const void *buffer,
+				     size_t count, u16 offset, u8 reg_width)
+{
+	struct ssb_bus *bus = dev->bus;
+	void __iomem *addr;
 
 	offset += dev->core_index * SSB_CORE_SIZE;
 	addr = bus->mmio + offset;
 
-	चयन (reg_width) अणु
-	हाल माप(u8): अणु
-		स्थिर u8 *buf = buffer;
+	switch (reg_width) {
+	case sizeof(u8): {
+		const u8 *buf = buffer;
 
-		जबतक (count) अणु
-			__raw_ग_लिखोb(*buf, addr);
+		while (count) {
+			__raw_writeb(*buf, addr);
 			buf++;
 			count--;
-		पूर्ण
-		अवरोध;
-	पूर्ण
-	हाल माप(u16): अणु
-		स्थिर __le16 *buf = buffer;
+		}
+		break;
+	}
+	case sizeof(u16): {
+		const __le16 *buf = buffer;
 
 		WARN_ON(count & 1);
-		जबतक (count) अणु
-			__raw_ग_लिखोw((__क्रमce u16)(*buf), addr);
+		while (count) {
+			__raw_writew((__force u16)(*buf), addr);
 			buf++;
 			count -= 2;
-		पूर्ण
-		अवरोध;
-	पूर्ण
-	हाल माप(u32): अणु
-		स्थिर __le32 *buf = buffer;
+		}
+		break;
+	}
+	case sizeof(u32): {
+		const __le32 *buf = buffer;
 
 		WARN_ON(count & 3);
-		जबतक (count) अणु
-			__raw_ग_लिखोl((__क्रमce u32)(*buf), addr);
+		while (count) {
+			__raw_writel((__force u32)(*buf), addr);
 			buf++;
 			count -= 4;
-		पूर्ण
-		अवरोध;
-	पूर्ण
-	शेष:
+		}
+		break;
+	}
+	default:
 		WARN_ON(1);
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर /* CONFIG_SSB_BLOCKIO */
+	}
+}
+#endif /* CONFIG_SSB_BLOCKIO */
 
-/* Ops क्रम the plain SSB bus without a host-device (no PCI or PCMCIA). */
-स्थिर काष्ठा ssb_bus_ops ssb_host_soc_ops = अणु
-	.पढ़ो8		= ssb_host_soc_पढ़ो8,
-	.पढ़ो16		= ssb_host_soc_पढ़ो16,
-	.पढ़ो32		= ssb_host_soc_पढ़ो32,
-	.ग_लिखो8		= ssb_host_soc_ग_लिखो8,
-	.ग_लिखो16	= ssb_host_soc_ग_लिखो16,
-	.ग_लिखो32	= ssb_host_soc_ग_लिखो32,
-#अगर_घोषित CONFIG_SSB_BLOCKIO
-	.block_पढ़ो	= ssb_host_soc_block_पढ़ो,
-	.block_ग_लिखो	= ssb_host_soc_block_ग_लिखो,
-#पूर्ण_अगर
-पूर्ण;
+/* Ops for the plain SSB bus without a host-device (no PCI or PCMCIA). */
+const struct ssb_bus_ops ssb_host_soc_ops = {
+	.read8		= ssb_host_soc_read8,
+	.read16		= ssb_host_soc_read16,
+	.read32		= ssb_host_soc_read32,
+	.write8		= ssb_host_soc_write8,
+	.write16	= ssb_host_soc_write16,
+	.write32	= ssb_host_soc_write32,
+#ifdef CONFIG_SSB_BLOCKIO
+	.block_read	= ssb_host_soc_block_read,
+	.block_write	= ssb_host_soc_block_write,
+#endif
+};
 
-पूर्णांक ssb_host_soc_get_invariants(काष्ठा ssb_bus *bus,
-				काष्ठा ssb_init_invariants *iv)
-अणु
-	अक्षर buf[20];
-	पूर्णांक len, err;
+int ssb_host_soc_get_invariants(struct ssb_bus *bus,
+				struct ssb_init_invariants *iv)
+{
+	char buf[20];
+	int len, err;
 
-	/* Fill boardinfo काष्ठाure */
-	स_रखो(&iv->boardinfo, 0, माप(काष्ठा ssb_boardinfo));
+	/* Fill boardinfo structure */
+	memset(&iv->boardinfo, 0, sizeof(struct ssb_boardinfo));
 
-	len = bcm47xx_nvram_दो_पर्या("boardvendor", buf, माप(buf));
-	अगर (len > 0) अणु
-		err = kstrtou16(strim(buf), 0, &iv->boardinfo.venकरोr);
-		अगर (err)
+	len = bcm47xx_nvram_getenv("boardvendor", buf, sizeof(buf));
+	if (len > 0) {
+		err = kstrtou16(strim(buf), 0, &iv->boardinfo.vendor);
+		if (err)
 			pr_warn("Couldn't parse nvram board vendor entry with value \"%s\"\n",
 				buf);
-	पूर्ण
-	अगर (!iv->boardinfo.venकरोr)
-		iv->boardinfo.venकरोr = SSB_BOARDVENDOR_BCM;
+	}
+	if (!iv->boardinfo.vendor)
+		iv->boardinfo.vendor = SSB_BOARDVENDOR_BCM;
 
-	len = bcm47xx_nvram_दो_पर्या("boardtype", buf, माप(buf));
-	अगर (len > 0) अणु
+	len = bcm47xx_nvram_getenv("boardtype", buf, sizeof(buf));
+	if (len > 0) {
 		err = kstrtou16(strim(buf), 0, &iv->boardinfo.type);
-		अगर (err)
+		if (err)
 			pr_warn("Couldn't parse nvram board type entry with value \"%s\"\n",
 				buf);
-	पूर्ण
+	}
 
-	स_रखो(&iv->sprom, 0, माप(काष्ठा ssb_sprom));
+	memset(&iv->sprom, 0, sizeof(struct ssb_sprom));
 	ssb_fill_sprom_with_fallback(bus, &iv->sprom);
 
-	अगर (bcm47xx_nvram_दो_पर्या("cardbus", buf, माप(buf)) >= 0)
-		iv->has_cardbus_slot = !!simple_म_से_अदीर्घ(buf, शून्य, 10);
+	if (bcm47xx_nvram_getenv("cardbus", buf, sizeof(buf)) >= 0)
+		iv->has_cardbus_slot = !!simple_strtoul(buf, NULL, 10);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

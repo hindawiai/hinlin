@@ -1,69 +1,68 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * max1619.c - Part of lm_sensors, Linux kernel modules क्रम hardware
+ * max1619.c - Part of lm_sensors, Linux kernel modules for hardware
  *             monitoring
  * Copyright (C) 2003-2004 Oleksij Rempel <bug-track@fisher-privat.net>
  *                         Jean Delvare <jdelvare@suse.de>
  *
  * Based on the lm90 driver. The MAX1619 is a sensor chip made by Maxim.
  * It reports up to two temperatures (its own plus up to
- * one बाह्यal one). Complete datasheet can be
+ * one external one). Complete datasheet can be
  * obtained from Maxim's website at:
  *   http://pdfserv.maxim-ic.com/en/ds/MAX1619.pdf
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/hwmon.h>
-#समावेश <linux/hwmon-sysfs.h>
-#समावेश <linux/err.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/sysfs.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/jiffies.h>
+#include <linux/i2c.h>
+#include <linux/hwmon.h>
+#include <linux/hwmon-sysfs.h>
+#include <linux/err.h>
+#include <linux/mutex.h>
+#include <linux/sysfs.h>
 
-अटल स्थिर अचिन्हित लघु normal_i2c[] = अणु
-	0x18, 0x19, 0x1a, 0x29, 0x2a, 0x2b, 0x4c, 0x4d, 0x4e, I2C_CLIENT_END पूर्ण;
+static const unsigned short normal_i2c[] = {
+	0x18, 0x19, 0x1a, 0x29, 0x2a, 0x2b, 0x4c, 0x4d, 0x4e, I2C_CLIENT_END };
 
 /*
- * The MAX1619 रेजिस्टरs
+ * The MAX1619 registers
  */
 
-#घोषणा MAX1619_REG_R_MAN_ID		0xFE
-#घोषणा MAX1619_REG_R_CHIP_ID		0xFF
-#घोषणा MAX1619_REG_R_CONFIG		0x03
-#घोषणा MAX1619_REG_W_CONFIG		0x09
-#घोषणा MAX1619_REG_R_CONVRATE		0x04
-#घोषणा MAX1619_REG_W_CONVRATE		0x0A
-#घोषणा MAX1619_REG_R_STATUS		0x02
-#घोषणा MAX1619_REG_R_LOCAL_TEMP	0x00
-#घोषणा MAX1619_REG_R_REMOTE_TEMP	0x01
-#घोषणा MAX1619_REG_R_REMOTE_HIGH	0x07
-#घोषणा MAX1619_REG_W_REMOTE_HIGH	0x0D
-#घोषणा MAX1619_REG_R_REMOTE_LOW	0x08
-#घोषणा MAX1619_REG_W_REMOTE_LOW	0x0E
-#घोषणा MAX1619_REG_R_REMOTE_CRIT	0x10
-#घोषणा MAX1619_REG_W_REMOTE_CRIT	0x12
-#घोषणा MAX1619_REG_R_TCRIT_HYST	0x11
-#घोषणा MAX1619_REG_W_TCRIT_HYST	0x13
+#define MAX1619_REG_R_MAN_ID		0xFE
+#define MAX1619_REG_R_CHIP_ID		0xFF
+#define MAX1619_REG_R_CONFIG		0x03
+#define MAX1619_REG_W_CONFIG		0x09
+#define MAX1619_REG_R_CONVRATE		0x04
+#define MAX1619_REG_W_CONVRATE		0x0A
+#define MAX1619_REG_R_STATUS		0x02
+#define MAX1619_REG_R_LOCAL_TEMP	0x00
+#define MAX1619_REG_R_REMOTE_TEMP	0x01
+#define MAX1619_REG_R_REMOTE_HIGH	0x07
+#define MAX1619_REG_W_REMOTE_HIGH	0x0D
+#define MAX1619_REG_R_REMOTE_LOW	0x08
+#define MAX1619_REG_W_REMOTE_LOW	0x0E
+#define MAX1619_REG_R_REMOTE_CRIT	0x10
+#define MAX1619_REG_W_REMOTE_CRIT	0x12
+#define MAX1619_REG_R_TCRIT_HYST	0x11
+#define MAX1619_REG_W_TCRIT_HYST	0x13
 
 /*
  * Conversions
  */
 
-अटल पूर्णांक temp_from_reg(पूर्णांक val)
-अणु
-	वापस (val & 0x80 ? val-0x100 : val) * 1000;
-पूर्ण
+static int temp_from_reg(int val)
+{
+	return (val & 0x80 ? val-0x100 : val) * 1000;
+}
 
-अटल पूर्णांक temp_to_reg(पूर्णांक val)
-अणु
-	वापस (val < 0 ? val+0x100*1000 : val) / 1000;
-पूर्ण
+static int temp_to_reg(int val)
+{
+	return (val < 0 ? val+0x100*1000 : val) / 1000;
+}
 
-क्रमागत temp_index अणु
+enum temp_index {
 	t_input1 = 0,
 	t_input2,
 	t_low2,
@@ -71,130 +70,130 @@
 	t_crit2,
 	t_hyst2,
 	t_num_regs
-पूर्ण;
+};
 
 /*
- * Client data (each client माला_लो its own)
+ * Client data (each client gets its own)
  */
 
-काष्ठा max1619_data अणु
-	काष्ठा i2c_client *client;
-	काष्ठा mutex update_lock;
-	अक्षर valid; /* zero until following fields are valid */
-	अचिन्हित दीर्घ last_updated; /* in jअगरfies */
+struct max1619_data {
+	struct i2c_client *client;
+	struct mutex update_lock;
+	char valid; /* zero until following fields are valid */
+	unsigned long last_updated; /* in jiffies */
 
-	/* रेजिस्टरs values */
-	u8 temp[t_num_regs];	/* index with क्रमागत temp_index */
+	/* registers values */
+	u8 temp[t_num_regs];	/* index with enum temp_index */
 	u8 alarms;
-पूर्ण;
+};
 
-अटल स्थिर u8 regs_पढ़ो[t_num_regs] = अणु
+static const u8 regs_read[t_num_regs] = {
 	[t_input1] = MAX1619_REG_R_LOCAL_TEMP,
 	[t_input2] = MAX1619_REG_R_REMOTE_TEMP,
 	[t_low2] = MAX1619_REG_R_REMOTE_LOW,
 	[t_high2] = MAX1619_REG_R_REMOTE_HIGH,
 	[t_crit2] = MAX1619_REG_R_REMOTE_CRIT,
 	[t_hyst2] = MAX1619_REG_R_TCRIT_HYST,
-पूर्ण;
+};
 
-अटल स्थिर u8 regs_ग_लिखो[t_num_regs] = अणु
+static const u8 regs_write[t_num_regs] = {
 	[t_low2] = MAX1619_REG_W_REMOTE_LOW,
 	[t_high2] = MAX1619_REG_W_REMOTE_HIGH,
 	[t_crit2] = MAX1619_REG_W_REMOTE_CRIT,
 	[t_hyst2] = MAX1619_REG_W_TCRIT_HYST,
-पूर्ण;
+};
 
-अटल काष्ठा max1619_data *max1619_update_device(काष्ठा device *dev)
-अणु
-	काष्ठा max1619_data *data = dev_get_drvdata(dev);
-	काष्ठा i2c_client *client = data->client;
-	पूर्णांक config, i;
+static struct max1619_data *max1619_update_device(struct device *dev)
+{
+	struct max1619_data *data = dev_get_drvdata(dev);
+	struct i2c_client *client = data->client;
+	int config, i;
 
 	mutex_lock(&data->update_lock);
 
-	अगर (समय_after(jअगरfies, data->last_updated + HZ * 2) || !data->valid) अणु
+	if (time_after(jiffies, data->last_updated + HZ * 2) || !data->valid) {
 		dev_dbg(&client->dev, "Updating max1619 data.\n");
-		क्रम (i = 0; i < t_num_regs; i++)
-			data->temp[i] = i2c_smbus_पढ़ो_byte_data(client,
-					regs_पढ़ो[i]);
-		data->alarms = i2c_smbus_पढ़ो_byte_data(client,
+		for (i = 0; i < t_num_regs; i++)
+			data->temp[i] = i2c_smbus_read_byte_data(client,
+					regs_read[i]);
+		data->alarms = i2c_smbus_read_byte_data(client,
 					MAX1619_REG_R_STATUS);
 		/* If OVERT polarity is low, reverse alarm bit */
-		config = i2c_smbus_पढ़ो_byte_data(client, MAX1619_REG_R_CONFIG);
-		अगर (!(config & 0x20))
+		config = i2c_smbus_read_byte_data(client, MAX1619_REG_R_CONFIG);
+		if (!(config & 0x20))
 			data->alarms ^= 0x02;
 
-		data->last_updated = jअगरfies;
+		data->last_updated = jiffies;
 		data->valid = 1;
-	पूर्ण
+	}
 
 	mutex_unlock(&data->update_lock);
 
-	वापस data;
-पूर्ण
+	return data;
+}
 
 /*
  * Sysfs stuff
  */
 
-अटल sमाप_प्रकार temp_show(काष्ठा device *dev, काष्ठा device_attribute *devattr,
-			 अक्षर *buf)
-अणु
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
-	काष्ठा max1619_data *data = max1619_update_device(dev);
+static ssize_t temp_show(struct device *dev, struct device_attribute *devattr,
+			 char *buf)
+{
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	struct max1619_data *data = max1619_update_device(dev);
 
-	वापस प्र_लिखो(buf, "%d\n", temp_from_reg(data->temp[attr->index]));
-पूर्ण
+	return sprintf(buf, "%d\n", temp_from_reg(data->temp[attr->index]));
+}
 
-अटल sमाप_प्रकार temp_store(काष्ठा device *dev,
-			  काष्ठा device_attribute *devattr, स्थिर अक्षर *buf,
-			  माप_प्रकार count)
-अणु
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
-	काष्ठा max1619_data *data = dev_get_drvdata(dev);
-	काष्ठा i2c_client *client = data->client;
-	दीर्घ val;
-	पूर्णांक err = kम_से_दीर्घ(buf, 10, &val);
-	अगर (err)
-		वापस err;
+static ssize_t temp_store(struct device *dev,
+			  struct device_attribute *devattr, const char *buf,
+			  size_t count)
+{
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	struct max1619_data *data = dev_get_drvdata(dev);
+	struct i2c_client *client = data->client;
+	long val;
+	int err = kstrtol(buf, 10, &val);
+	if (err)
+		return err;
 
 	mutex_lock(&data->update_lock);
 	data->temp[attr->index] = temp_to_reg(val);
-	i2c_smbus_ग_लिखो_byte_data(client, regs_ग_लिखो[attr->index],
+	i2c_smbus_write_byte_data(client, regs_write[attr->index],
 				  data->temp[attr->index]);
 	mutex_unlock(&data->update_lock);
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार alarms_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			   अक्षर *buf)
-अणु
-	काष्ठा max1619_data *data = max1619_update_device(dev);
-	वापस प्र_लिखो(buf, "%d\n", data->alarms);
-पूर्ण
+static ssize_t alarms_show(struct device *dev, struct device_attribute *attr,
+			   char *buf)
+{
+	struct max1619_data *data = max1619_update_device(dev);
+	return sprintf(buf, "%d\n", data->alarms);
+}
 
-अटल sमाप_प्रकार alarm_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			  अक्षर *buf)
-अणु
-	पूर्णांक bitnr = to_sensor_dev_attr(attr)->index;
-	काष्ठा max1619_data *data = max1619_update_device(dev);
-	वापस प्र_लिखो(buf, "%d\n", (data->alarms >> bitnr) & 1);
-पूर्ण
+static ssize_t alarm_show(struct device *dev, struct device_attribute *attr,
+			  char *buf)
+{
+	int bitnr = to_sensor_dev_attr(attr)->index;
+	struct max1619_data *data = max1619_update_device(dev);
+	return sprintf(buf, "%d\n", (data->alarms >> bitnr) & 1);
+}
 
-अटल SENSOR_DEVICE_ATTR_RO(temp1_input, temp, t_input1);
-अटल SENSOR_DEVICE_ATTR_RO(temp2_input, temp, t_input2);
-अटल SENSOR_DEVICE_ATTR_RW(temp2_min, temp, t_low2);
-अटल SENSOR_DEVICE_ATTR_RW(temp2_max, temp, t_high2);
-अटल SENSOR_DEVICE_ATTR_RW(temp2_crit, temp, t_crit2);
-अटल SENSOR_DEVICE_ATTR_RW(temp2_crit_hyst, temp, t_hyst2);
+static SENSOR_DEVICE_ATTR_RO(temp1_input, temp, t_input1);
+static SENSOR_DEVICE_ATTR_RO(temp2_input, temp, t_input2);
+static SENSOR_DEVICE_ATTR_RW(temp2_min, temp, t_low2);
+static SENSOR_DEVICE_ATTR_RW(temp2_max, temp, t_high2);
+static SENSOR_DEVICE_ATTR_RW(temp2_crit, temp, t_crit2);
+static SENSOR_DEVICE_ATTR_RW(temp2_crit_hyst, temp, t_hyst2);
 
-अटल DEVICE_ATTR_RO(alarms);
-अटल SENSOR_DEVICE_ATTR_RO(temp2_crit_alarm, alarm, 1);
-अटल SENSOR_DEVICE_ATTR_RO(temp2_fault, alarm, 2);
-अटल SENSOR_DEVICE_ATTR_RO(temp2_min_alarm, alarm, 3);
-अटल SENSOR_DEVICE_ATTR_RO(temp2_max_alarm, alarm, 4);
+static DEVICE_ATTR_RO(alarms);
+static SENSOR_DEVICE_ATTR_RO(temp2_crit_alarm, alarm, 1);
+static SENSOR_DEVICE_ATTR_RO(temp2_fault, alarm, 2);
+static SENSOR_DEVICE_ATTR_RO(temp2_min_alarm, alarm, 3);
+static SENSOR_DEVICE_ATTR_RO(temp2_max_alarm, alarm, 4);
 
-अटल काष्ठा attribute *max1619_attrs[] = अणु
+static struct attribute *max1619_attrs[] = {
 	&sensor_dev_attr_temp1_input.dev_attr.attr,
 	&sensor_dev_attr_temp2_input.dev_attr.attr,
 	&sensor_dev_attr_temp2_min.dev_attr.attr,
@@ -207,70 +206,70 @@
 	&sensor_dev_attr_temp2_fault.dev_attr.attr,
 	&sensor_dev_attr_temp2_min_alarm.dev_attr.attr,
 	&sensor_dev_attr_temp2_max_alarm.dev_attr.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 ATTRIBUTE_GROUPS(max1619);
 
-/* Return 0 अगर detection is successful, -ENODEV otherwise */
-अटल पूर्णांक max1619_detect(काष्ठा i2c_client *client,
-			  काष्ठा i2c_board_info *info)
-अणु
-	काष्ठा i2c_adapter *adapter = client->adapter;
+/* Return 0 if detection is successful, -ENODEV otherwise */
+static int max1619_detect(struct i2c_client *client,
+			  struct i2c_board_info *info)
+{
+	struct i2c_adapter *adapter = client->adapter;
 	u8 reg_config, reg_convrate, reg_status, man_id, chip_id;
 
-	अगर (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE_DATA))
-		वापस -ENODEV;
+	if (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE_DATA))
+		return -ENODEV;
 
 	/* detection */
-	reg_config = i2c_smbus_पढ़ो_byte_data(client, MAX1619_REG_R_CONFIG);
-	reg_convrate = i2c_smbus_पढ़ो_byte_data(client, MAX1619_REG_R_CONVRATE);
-	reg_status = i2c_smbus_पढ़ो_byte_data(client, MAX1619_REG_R_STATUS);
-	अगर ((reg_config & 0x03) != 0x00
-	 || reg_convrate > 0x07 || (reg_status & 0x61) != 0x00) अणु
+	reg_config = i2c_smbus_read_byte_data(client, MAX1619_REG_R_CONFIG);
+	reg_convrate = i2c_smbus_read_byte_data(client, MAX1619_REG_R_CONVRATE);
+	reg_status = i2c_smbus_read_byte_data(client, MAX1619_REG_R_STATUS);
+	if ((reg_config & 0x03) != 0x00
+	 || reg_convrate > 0x07 || (reg_status & 0x61) != 0x00) {
 		dev_dbg(&adapter->dev, "MAX1619 detection failed at 0x%02x\n",
 			client->addr);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	/* identअगरication */
-	man_id = i2c_smbus_पढ़ो_byte_data(client, MAX1619_REG_R_MAN_ID);
-	chip_id = i2c_smbus_पढ़ो_byte_data(client, MAX1619_REG_R_CHIP_ID);
-	अगर (man_id != 0x4D || chip_id != 0x04) अणु
+	/* identification */
+	man_id = i2c_smbus_read_byte_data(client, MAX1619_REG_R_MAN_ID);
+	chip_id = i2c_smbus_read_byte_data(client, MAX1619_REG_R_CHIP_ID);
+	if (man_id != 0x4D || chip_id != 0x04) {
 		dev_info(&adapter->dev,
 			 "Unsupported chip (man_id=0x%02X, chip_id=0x%02X).\n",
 			 man_id, chip_id);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	strlcpy(info->type, "max1619", I2C_NAME_SIZE);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम max1619_init_client(काष्ठा i2c_client *client)
-अणु
+static void max1619_init_client(struct i2c_client *client)
+{
 	u8 config;
 
 	/*
 	 * Start the conversions.
 	 */
-	i2c_smbus_ग_लिखो_byte_data(client, MAX1619_REG_W_CONVRATE,
+	i2c_smbus_write_byte_data(client, MAX1619_REG_W_CONVRATE,
 				  5); /* 2 Hz */
-	config = i2c_smbus_पढ़ो_byte_data(client, MAX1619_REG_R_CONFIG);
-	अगर (config & 0x40)
-		i2c_smbus_ग_लिखो_byte_data(client, MAX1619_REG_W_CONFIG,
+	config = i2c_smbus_read_byte_data(client, MAX1619_REG_R_CONFIG);
+	if (config & 0x40)
+		i2c_smbus_write_byte_data(client, MAX1619_REG_W_CONFIG,
 					  config & 0xBF); /* run */
-पूर्ण
+}
 
-अटल पूर्णांक max1619_probe(काष्ठा i2c_client *new_client)
-अणु
-	काष्ठा max1619_data *data;
-	काष्ठा device *hwmon_dev;
+static int max1619_probe(struct i2c_client *new_client)
+{
+	struct max1619_data *data;
+	struct device *hwmon_dev;
 
-	data = devm_kzalloc(&new_client->dev, माप(काष्ठा max1619_data),
+	data = devm_kzalloc(&new_client->dev, sizeof(struct max1619_data),
 			    GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	if (!data)
+		return -ENOMEM;
 
 	data->client = new_client;
 	mutex_init(&data->update_lock);
@@ -278,39 +277,39 @@ ATTRIBUTE_GROUPS(max1619);
 	/* Initialize the MAX1619 chip */
 	max1619_init_client(new_client);
 
-	hwmon_dev = devm_hwmon_device_रेजिस्टर_with_groups(&new_client->dev,
+	hwmon_dev = devm_hwmon_device_register_with_groups(&new_client->dev,
 							   new_client->name,
 							   data,
 							   max1619_groups);
-	वापस PTR_ERR_OR_ZERO(hwmon_dev);
-पूर्ण
+	return PTR_ERR_OR_ZERO(hwmon_dev);
+}
 
-अटल स्थिर काष्ठा i2c_device_id max1619_id[] = अणु
-	अणु "max1619", 0 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id max1619_id[] = {
+	{ "max1619", 0 },
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, max1619_id);
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा of_device_id max1619_of_match[] = अणु
-	अणु .compatible = "maxim,max1619", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+#ifdef CONFIG_OF
+static const struct of_device_id max1619_of_match[] = {
+	{ .compatible = "maxim,max1619", },
+	{},
+};
 
 MODULE_DEVICE_TABLE(of, max1619_of_match);
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा i2c_driver max1619_driver = अणु
+static struct i2c_driver max1619_driver = {
 	.class		= I2C_CLASS_HWMON,
-	.driver = अणु
+	.driver = {
 		.name	= "max1619",
 		.of_match_table = of_match_ptr(max1619_of_match),
-	पूर्ण,
+	},
 	.probe_new	= max1619_probe,
 	.id_table	= max1619_id,
 	.detect		= max1619_detect,
 	.address_list	= normal_i2c,
-पूर्ण;
+};
 
 module_i2c_driver(max1619_driver);
 

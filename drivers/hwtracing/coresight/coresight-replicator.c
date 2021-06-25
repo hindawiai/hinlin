@@ -1,451 +1,450 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2011-2015, The Linux Foundation. All rights reserved.
  *
  * Description: CoreSight Replicator driver
  */
 
-#समावेश <linux/acpi.h>
-#समावेश <linux/amba/bus.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/err.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/property.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/of.h>
-#समावेश <linux/coresight.h>
+#include <linux/acpi.h>
+#include <linux/amba/bus.h>
+#include <linux/kernel.h>
+#include <linux/device.h>
+#include <linux/platform_device.h>
+#include <linux/io.h>
+#include <linux/err.h>
+#include <linux/slab.h>
+#include <linux/pm_runtime.h>
+#include <linux/property.h>
+#include <linux/clk.h>
+#include <linux/of.h>
+#include <linux/coresight.h>
 
-#समावेश "coresight-priv.h"
+#include "coresight-priv.h"
 
-#घोषणा REPLICATOR_IDFILTER0		0x000
-#घोषणा REPLICATOR_IDFILTER1		0x004
+#define REPLICATOR_IDFILTER0		0x000
+#define REPLICATOR_IDFILTER1		0x004
 
 DEFINE_CORESIGHT_DEVLIST(replicator_devs, "replicator");
 
 /**
- * काष्ठा replicator_drvdata - specअगरics associated to a replicator component
- * @base:	memory mapped base address क्रम this component. Also indicates
+ * struct replicator_drvdata - specifics associated to a replicator component
+ * @base:	memory mapped base address for this component. Also indicates
  *		whether this one is programmable or not.
- * @atclk:	optional घड़ी क्रम the core parts of the replicator.
+ * @atclk:	optional clock for the core parts of the replicator.
  * @csdev:	component vitals needed by the framework
  * @spinlock:	serialize enable/disable operations.
- * @check_idfilter_val: check अगर the context is lost upon घड़ी removal.
+ * @check_idfilter_val: check if the context is lost upon clock removal.
  */
-काष्ठा replicator_drvdata अणु
-	व्योम __iomem		*base;
-	काष्ठा clk		*atclk;
-	काष्ठा coresight_device	*csdev;
+struct replicator_drvdata {
+	void __iomem		*base;
+	struct clk		*atclk;
+	struct coresight_device	*csdev;
 	spinlock_t		spinlock;
 	bool			check_idfilter_val;
-पूर्ण;
+};
 
-अटल व्योम dynamic_replicator_reset(काष्ठा replicator_drvdata *drvdata)
-अणु
-	काष्ठा coresight_device *csdev = drvdata->csdev;
+static void dynamic_replicator_reset(struct replicator_drvdata *drvdata)
+{
+	struct coresight_device *csdev = drvdata->csdev;
 
 	CS_UNLOCK(drvdata->base);
 
-	अगर (!coresight_claim_device_unlocked(csdev)) अणु
-		ग_लिखोl_relaxed(0xff, drvdata->base + REPLICATOR_IDFILTER0);
-		ग_लिखोl_relaxed(0xff, drvdata->base + REPLICATOR_IDFILTER1);
+	if (!coresight_claim_device_unlocked(csdev)) {
+		writel_relaxed(0xff, drvdata->base + REPLICATOR_IDFILTER0);
+		writel_relaxed(0xff, drvdata->base + REPLICATOR_IDFILTER1);
 		coresight_disclaim_device_unlocked(csdev);
-	पूर्ण
+	}
 
 	CS_LOCK(drvdata->base);
-पूर्ण
+}
 
 /*
  * replicator_reset : Reset the replicator configuration to sane values.
  */
-अटल अंतरभूत व्योम replicator_reset(काष्ठा replicator_drvdata *drvdata)
-अणु
-	अगर (drvdata->base)
+static inline void replicator_reset(struct replicator_drvdata *drvdata)
+{
+	if (drvdata->base)
 		dynamic_replicator_reset(drvdata);
-पूर्ण
+}
 
-अटल पूर्णांक dynamic_replicator_enable(काष्ठा replicator_drvdata *drvdata,
-				     पूर्णांक inport, पूर्णांक outport)
-अणु
-	पूर्णांक rc = 0;
+static int dynamic_replicator_enable(struct replicator_drvdata *drvdata,
+				     int inport, int outport)
+{
+	int rc = 0;
 	u32 id0val, id1val;
-	काष्ठा coresight_device *csdev = drvdata->csdev;
+	struct coresight_device *csdev = drvdata->csdev;
 
 	CS_UNLOCK(drvdata->base);
 
-	id0val = पढ़ोl_relaxed(drvdata->base + REPLICATOR_IDFILTER0);
-	id1val = पढ़ोl_relaxed(drvdata->base + REPLICATOR_IDFILTER1);
+	id0val = readl_relaxed(drvdata->base + REPLICATOR_IDFILTER0);
+	id1val = readl_relaxed(drvdata->base + REPLICATOR_IDFILTER1);
 
 	/*
-	 * Some replicator designs lose context when AMBA घड़ीs are हटाओd,
-	 * so have a check क्रम this.
+	 * Some replicator designs lose context when AMBA clocks are removed,
+	 * so have a check for this.
 	 */
-	अगर (drvdata->check_idfilter_val && id0val == 0x0 && id1val == 0x0)
+	if (drvdata->check_idfilter_val && id0val == 0x0 && id1val == 0x0)
 		id0val = id1val = 0xff;
 
-	अगर (id0val == 0xff && id1val == 0xff)
+	if (id0val == 0xff && id1val == 0xff)
 		rc = coresight_claim_device_unlocked(csdev);
 
-	अगर (!rc) अणु
-		चयन (outport) अणु
-		हाल 0:
+	if (!rc) {
+		switch (outport) {
+		case 0:
 			id0val = 0x0;
-			अवरोध;
-		हाल 1:
+			break;
+		case 1:
 			id1val = 0x0;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			WARN_ON(1);
 			rc = -EINVAL;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Ensure that the outport is enabled. */
-	अगर (!rc) अणु
-		ग_लिखोl_relaxed(id0val, drvdata->base + REPLICATOR_IDFILTER0);
-		ग_लिखोl_relaxed(id1val, drvdata->base + REPLICATOR_IDFILTER1);
-	पूर्ण
+	if (!rc) {
+		writel_relaxed(id0val, drvdata->base + REPLICATOR_IDFILTER0);
+		writel_relaxed(id1val, drvdata->base + REPLICATOR_IDFILTER1);
+	}
 
 	CS_LOCK(drvdata->base);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक replicator_enable(काष्ठा coresight_device *csdev, पूर्णांक inport,
-			     पूर्णांक outport)
-अणु
-	पूर्णांक rc = 0;
-	काष्ठा replicator_drvdata *drvdata = dev_get_drvdata(csdev->dev.parent);
-	अचिन्हित दीर्घ flags;
+static int replicator_enable(struct coresight_device *csdev, int inport,
+			     int outport)
+{
+	int rc = 0;
+	struct replicator_drvdata *drvdata = dev_get_drvdata(csdev->dev.parent);
+	unsigned long flags;
 	bool first_enable = false;
 
 	spin_lock_irqsave(&drvdata->spinlock, flags);
-	अगर (atomic_पढ़ो(&csdev->refcnt[outport]) == 0) अणु
-		अगर (drvdata->base)
+	if (atomic_read(&csdev->refcnt[outport]) == 0) {
+		if (drvdata->base)
 			rc = dynamic_replicator_enable(drvdata, inport,
 						       outport);
-		अगर (!rc)
+		if (!rc)
 			first_enable = true;
-	पूर्ण
-	अगर (!rc)
+	}
+	if (!rc)
 		atomic_inc(&csdev->refcnt[outport]);
 	spin_unlock_irqrestore(&drvdata->spinlock, flags);
 
-	अगर (first_enable)
+	if (first_enable)
 		dev_dbg(&csdev->dev, "REPLICATOR enabled\n");
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम dynamic_replicator_disable(काष्ठा replicator_drvdata *drvdata,
-				       पूर्णांक inport, पूर्णांक outport)
-अणु
+static void dynamic_replicator_disable(struct replicator_drvdata *drvdata,
+				       int inport, int outport)
+{
 	u32 reg;
-	काष्ठा coresight_device *csdev = drvdata->csdev;
+	struct coresight_device *csdev = drvdata->csdev;
 
-	चयन (outport) अणु
-	हाल 0:
+	switch (outport) {
+	case 0:
 		reg = REPLICATOR_IDFILTER0;
-		अवरोध;
-	हाल 1:
+		break;
+	case 1:
 		reg = REPLICATOR_IDFILTER1;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		WARN_ON(1);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	CS_UNLOCK(drvdata->base);
 
 	/* disable the flow of ATB data through port */
-	ग_लिखोl_relaxed(0xff, drvdata->base + reg);
+	writel_relaxed(0xff, drvdata->base + reg);
 
-	अगर ((पढ़ोl_relaxed(drvdata->base + REPLICATOR_IDFILTER0) == 0xff) &&
-	    (पढ़ोl_relaxed(drvdata->base + REPLICATOR_IDFILTER1) == 0xff))
+	if ((readl_relaxed(drvdata->base + REPLICATOR_IDFILTER0) == 0xff) &&
+	    (readl_relaxed(drvdata->base + REPLICATOR_IDFILTER1) == 0xff))
 		coresight_disclaim_device_unlocked(csdev);
 	CS_LOCK(drvdata->base);
-पूर्ण
+}
 
-अटल व्योम replicator_disable(काष्ठा coresight_device *csdev, पूर्णांक inport,
-			       पूर्णांक outport)
-अणु
-	काष्ठा replicator_drvdata *drvdata = dev_get_drvdata(csdev->dev.parent);
-	अचिन्हित दीर्घ flags;
+static void replicator_disable(struct coresight_device *csdev, int inport,
+			       int outport)
+{
+	struct replicator_drvdata *drvdata = dev_get_drvdata(csdev->dev.parent);
+	unsigned long flags;
 	bool last_disable = false;
 
 	spin_lock_irqsave(&drvdata->spinlock, flags);
-	अगर (atomic_dec_वापस(&csdev->refcnt[outport]) == 0) अणु
-		अगर (drvdata->base)
+	if (atomic_dec_return(&csdev->refcnt[outport]) == 0) {
+		if (drvdata->base)
 			dynamic_replicator_disable(drvdata, inport, outport);
 		last_disable = true;
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&drvdata->spinlock, flags);
 
-	अगर (last_disable)
+	if (last_disable)
 		dev_dbg(&csdev->dev, "REPLICATOR disabled\n");
-पूर्ण
+}
 
-अटल स्थिर काष्ठा coresight_ops_link replicator_link_ops = अणु
+static const struct coresight_ops_link replicator_link_ops = {
 	.enable		= replicator_enable,
 	.disable	= replicator_disable,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा coresight_ops replicator_cs_ops = अणु
+static const struct coresight_ops replicator_cs_ops = {
 	.link_ops	= &replicator_link_ops,
-पूर्ण;
+};
 
-#घोषणा coresight_replicator_reg(name, offset) \
-	coresight_simple_reg32(काष्ठा replicator_drvdata, name, offset)
+#define coresight_replicator_reg(name, offset) \
+	coresight_simple_reg32(struct replicator_drvdata, name, offset)
 
 coresight_replicator_reg(idfilter0, REPLICATOR_IDFILTER0);
 coresight_replicator_reg(idfilter1, REPLICATOR_IDFILTER1);
 
-अटल काष्ठा attribute *replicator_mgmt_attrs[] = अणु
+static struct attribute *replicator_mgmt_attrs[] = {
 	&dev_attr_idfilter0.attr,
 	&dev_attr_idfilter1.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group replicator_mgmt_group = अणु
+static const struct attribute_group replicator_mgmt_group = {
 	.attrs = replicator_mgmt_attrs,
 	.name = "mgmt",
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा attribute_group *replicator_groups[] = अणु
+static const struct attribute_group *replicator_groups[] = {
 	&replicator_mgmt_group,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल पूर्णांक replicator_probe(काष्ठा device *dev, काष्ठा resource *res)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा coresight_platक्रमm_data *pdata = शून्य;
-	काष्ठा replicator_drvdata *drvdata;
-	काष्ठा coresight_desc desc = अणु 0 पूर्ण;
-	व्योम __iomem *base;
+static int replicator_probe(struct device *dev, struct resource *res)
+{
+	int ret = 0;
+	struct coresight_platform_data *pdata = NULL;
+	struct replicator_drvdata *drvdata;
+	struct coresight_desc desc = { 0 };
+	void __iomem *base;
 
-	अगर (is_of_node(dev_fwnode(dev)) &&
+	if (is_of_node(dev_fwnode(dev)) &&
 	    of_device_is_compatible(dev->of_node, "arm,coresight-replicator"))
 		dev_warn_once(dev,
 			      "Uses OBSOLETE CoreSight replicator binding\n");
 
 	desc.name = coresight_alloc_device_name(&replicator_devs, dev);
-	अगर (!desc.name)
-		वापस -ENOMEM;
+	if (!desc.name)
+		return -ENOMEM;
 
-	drvdata = devm_kzalloc(dev, माप(*drvdata), GFP_KERNEL);
-	अगर (!drvdata)
-		वापस -ENOMEM;
+	drvdata = devm_kzalloc(dev, sizeof(*drvdata), GFP_KERNEL);
+	if (!drvdata)
+		return -ENOMEM;
 
 	drvdata->atclk = devm_clk_get(dev, "atclk"); /* optional */
-	अगर (!IS_ERR(drvdata->atclk)) अणु
+	if (!IS_ERR(drvdata->atclk)) {
 		ret = clk_prepare_enable(drvdata->atclk);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	/*
-	 * Map the device base क्रम dynamic-replicator, which has been
+	 * Map the device base for dynamic-replicator, which has been
 	 * validated by AMBA core
 	 */
-	अगर (res) अणु
+	if (res) {
 		base = devm_ioremap_resource(dev, res);
-		अगर (IS_ERR(base)) अणु
+		if (IS_ERR(base)) {
 			ret = PTR_ERR(base);
-			जाओ out_disable_clk;
-		पूर्ण
+			goto out_disable_clk;
+		}
 		drvdata->base = base;
 		desc.groups = replicator_groups;
 		desc.access = CSDEV_ACCESS_IOMEM(base);
-	पूर्ण
+	}
 
-	अगर (fwnode_property_present(dev_fwnode(dev),
+	if (fwnode_property_present(dev_fwnode(dev),
 				    "qcom,replicator-loses-context"))
 		drvdata->check_idfilter_val = true;
 
 	dev_set_drvdata(dev, drvdata);
 
-	pdata = coresight_get_platक्रमm_data(dev);
-	अगर (IS_ERR(pdata)) अणु
+	pdata = coresight_get_platform_data(dev);
+	if (IS_ERR(pdata)) {
 		ret = PTR_ERR(pdata);
-		जाओ out_disable_clk;
-	पूर्ण
-	dev->platक्रमm_data = pdata;
+		goto out_disable_clk;
+	}
+	dev->platform_data = pdata;
 
 	spin_lock_init(&drvdata->spinlock);
 	desc.type = CORESIGHT_DEV_TYPE_LINK;
 	desc.subtype.link_subtype = CORESIGHT_DEV_SUBTYPE_LINK_SPLIT;
 	desc.ops = &replicator_cs_ops;
-	desc.pdata = dev->platक्रमm_data;
+	desc.pdata = dev->platform_data;
 	desc.dev = dev;
 
-	drvdata->csdev = coresight_रेजिस्टर(&desc);
-	अगर (IS_ERR(drvdata->csdev)) अणु
+	drvdata->csdev = coresight_register(&desc);
+	if (IS_ERR(drvdata->csdev)) {
 		ret = PTR_ERR(drvdata->csdev);
-		जाओ out_disable_clk;
-	पूर्ण
+		goto out_disable_clk;
+	}
 
 	replicator_reset(drvdata);
-	pm_runसमय_put(dev);
+	pm_runtime_put(dev);
 
 out_disable_clk:
-	अगर (ret && !IS_ERR_OR_शून्य(drvdata->atclk))
+	if (ret && !IS_ERR_OR_NULL(drvdata->atclk))
 		clk_disable_unprepare(drvdata->atclk);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक replicator_हटाओ(काष्ठा device *dev)
-अणु
-	काष्ठा replicator_drvdata *drvdata = dev_get_drvdata(dev);
+static int replicator_remove(struct device *dev)
+{
+	struct replicator_drvdata *drvdata = dev_get_drvdata(dev);
 
-	coresight_unरेजिस्टर(drvdata->csdev);
-	वापस 0;
-पूर्ण
+	coresight_unregister(drvdata->csdev);
+	return 0;
+}
 
-अटल पूर्णांक अटल_replicator_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक ret;
+static int static_replicator_probe(struct platform_device *pdev)
+{
+	int ret;
 
-	pm_runसमय_get_noresume(&pdev->dev);
-	pm_runसमय_set_active(&pdev->dev);
-	pm_runसमय_enable(&pdev->dev);
+	pm_runtime_get_noresume(&pdev->dev);
+	pm_runtime_set_active(&pdev->dev);
+	pm_runtime_enable(&pdev->dev);
 
-	/* Static replicators करो not have programming base */
-	ret = replicator_probe(&pdev->dev, शून्य);
+	/* Static replicators do not have programming base */
+	ret = replicator_probe(&pdev->dev, NULL);
 
-	अगर (ret) अणु
-		pm_runसमय_put_noidle(&pdev->dev);
-		pm_runसमय_disable(&pdev->dev);
-	पूर्ण
+	if (ret) {
+		pm_runtime_put_noidle(&pdev->dev);
+		pm_runtime_disable(&pdev->dev);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक अटल_replicator_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	replicator_हटाओ(&pdev->dev);
-	pm_runसमय_disable(&pdev->dev);
-	वापस 0;
-पूर्ण
+static int static_replicator_remove(struct platform_device *pdev)
+{
+	replicator_remove(&pdev->dev);
+	pm_runtime_disable(&pdev->dev);
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक replicator_runसमय_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा replicator_drvdata *drvdata = dev_get_drvdata(dev);
+#ifdef CONFIG_PM
+static int replicator_runtime_suspend(struct device *dev)
+{
+	struct replicator_drvdata *drvdata = dev_get_drvdata(dev);
 
-	अगर (drvdata && !IS_ERR(drvdata->atclk))
+	if (drvdata && !IS_ERR(drvdata->atclk))
 		clk_disable_unprepare(drvdata->atclk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक replicator_runसमय_resume(काष्ठा device *dev)
-अणु
-	काष्ठा replicator_drvdata *drvdata = dev_get_drvdata(dev);
+static int replicator_runtime_resume(struct device *dev)
+{
+	struct replicator_drvdata *drvdata = dev_get_drvdata(dev);
 
-	अगर (drvdata && !IS_ERR(drvdata->atclk))
+	if (drvdata && !IS_ERR(drvdata->atclk))
 		clk_prepare_enable(drvdata->atclk);
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल स्थिर काष्ठा dev_pm_ops replicator_dev_pm_ops = अणु
-	SET_RUNTIME_PM_OPS(replicator_runसमय_suspend,
-			   replicator_runसमय_resume, शून्य)
-पूर्ण;
+static const struct dev_pm_ops replicator_dev_pm_ops = {
+	SET_RUNTIME_PM_OPS(replicator_runtime_suspend,
+			   replicator_runtime_resume, NULL)
+};
 
-अटल स्थिर काष्ठा of_device_id अटल_replicator_match[] = अणु
-	अणु.compatible = "arm,coresight-replicator"पूर्ण,
-	अणु.compatible = "arm,coresight-static-replicator"पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id static_replicator_match[] = {
+	{.compatible = "arm,coresight-replicator"},
+	{.compatible = "arm,coresight-static-replicator"},
+	{}
+};
 
-MODULE_DEVICE_TABLE(of, अटल_replicator_match);
+MODULE_DEVICE_TABLE(of, static_replicator_match);
 
-#अगर_घोषित CONFIG_ACPI
-अटल स्थिर काष्ठा acpi_device_id अटल_replicator_acpi_ids[] = अणु
-	अणु"ARMHC985", 0पूर्ण, /* ARM CoreSight Static Replicator */
-	अणुपूर्ण
-पूर्ण;
+#ifdef CONFIG_ACPI
+static const struct acpi_device_id static_replicator_acpi_ids[] = {
+	{"ARMHC985", 0}, /* ARM CoreSight Static Replicator */
+	{}
+};
 
-MODULE_DEVICE_TABLE(acpi, अटल_replicator_acpi_ids);
-#पूर्ण_अगर
+MODULE_DEVICE_TABLE(acpi, static_replicator_acpi_ids);
+#endif
 
-अटल काष्ठा platक्रमm_driver अटल_replicator_driver = अणु
-	.probe          = अटल_replicator_probe,
-	.हटाओ         = अटल_replicator_हटाओ,
-	.driver         = अणु
+static struct platform_driver static_replicator_driver = {
+	.probe          = static_replicator_probe,
+	.remove         = static_replicator_remove,
+	.driver         = {
 		.name   = "coresight-static-replicator",
-		/* THIS_MODULE is taken care of by platक्रमm_driver_रेजिस्टर() */
-		.of_match_table = of_match_ptr(अटल_replicator_match),
-		.acpi_match_table = ACPI_PTR(अटल_replicator_acpi_ids),
+		/* THIS_MODULE is taken care of by platform_driver_register() */
+		.of_match_table = of_match_ptr(static_replicator_match),
+		.acpi_match_table = ACPI_PTR(static_replicator_acpi_ids),
 		.pm	= &replicator_dev_pm_ops,
 		.suppress_bind_attrs = true,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक dynamic_replicator_probe(काष्ठा amba_device *adev,
-				    स्थिर काष्ठा amba_id *id)
-अणु
-	वापस replicator_probe(&adev->dev, &adev->res);
-पूर्ण
+static int dynamic_replicator_probe(struct amba_device *adev,
+				    const struct amba_id *id)
+{
+	return replicator_probe(&adev->dev, &adev->res);
+}
 
-अटल व्योम dynamic_replicator_हटाओ(काष्ठा amba_device *adev)
-अणु
-	replicator_हटाओ(&adev->dev);
-पूर्ण
+static void dynamic_replicator_remove(struct amba_device *adev)
+{
+	replicator_remove(&adev->dev);
+}
 
-अटल स्थिर काष्ठा amba_id dynamic_replicator_ids[] = अणु
+static const struct amba_id dynamic_replicator_ids[] = {
 	CS_AMBA_ID(0x000bb909),
 	CS_AMBA_ID(0x000bb9ec),		/* Coresight SoC-600 */
-	अणुपूर्ण,
-पूर्ण;
+	{},
+};
 
 MODULE_DEVICE_TABLE(amba, dynamic_replicator_ids);
 
-अटल काष्ठा amba_driver dynamic_replicator_driver = अणु
-	.drv = अणु
+static struct amba_driver dynamic_replicator_driver = {
+	.drv = {
 		.name	= "coresight-dynamic-replicator",
 		.pm	= &replicator_dev_pm_ops,
 		.owner	= THIS_MODULE,
 		.suppress_bind_attrs = true,
-	पूर्ण,
+	},
 	.probe		= dynamic_replicator_probe,
-	.हटाओ         = dynamic_replicator_हटाओ,
+	.remove         = dynamic_replicator_remove,
 	.id_table	= dynamic_replicator_ids,
-पूर्ण;
+};
 
-अटल पूर्णांक __init replicator_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init replicator_init(void)
+{
+	int ret;
 
-	ret = platक्रमm_driver_रेजिस्टर(&अटल_replicator_driver);
-	अगर (ret) अणु
+	ret = platform_driver_register(&static_replicator_driver);
+	if (ret) {
 		pr_info("Error registering platform driver\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = amba_driver_रेजिस्टर(&dynamic_replicator_driver);
-	अगर (ret) अणु
+	ret = amba_driver_register(&dynamic_replicator_driver);
+	if (ret) {
 		pr_info("Error registering amba driver\n");
-		platक्रमm_driver_unरेजिस्टर(&अटल_replicator_driver);
-	पूर्ण
+		platform_driver_unregister(&static_replicator_driver);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम __निकास replicator_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&अटल_replicator_driver);
-	amba_driver_unरेजिस्टर(&dynamic_replicator_driver);
-पूर्ण
+static void __exit replicator_exit(void)
+{
+	platform_driver_unregister(&static_replicator_driver);
+	amba_driver_unregister(&dynamic_replicator_driver);
+}
 
 module_init(replicator_init);
-module_निकास(replicator_निकास);
+module_exit(replicator_exit);
 
 MODULE_AUTHOR("Pratik Patel <pratikp@codeaurora.org>");
 MODULE_AUTHOR("Mathieu Poirier <mathieu.poirier@linaro.org>");

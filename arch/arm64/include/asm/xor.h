@@ -1,71 +1,70 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * arch/arm64/include/यंत्र/xor.h
+ * arch/arm64/include/asm/xor.h
  *
  * Authors: Jackie Liu <liuyun01@kylinos.cn>
- * Copyright (C) 2018,Tianjin KYLIN Inक्रमmation Technology Co., Ltd.
+ * Copyright (C) 2018,Tianjin KYLIN Information Technology Co., Ltd.
  */
 
-#समावेश <linux/hardirq.h>
-#समावेश <यंत्र-generic/xor.h>
-#समावेश <यंत्र/hwcap.h>
-#समावेश <यंत्र/neon.h>
+#include <linux/hardirq.h>
+#include <asm-generic/xor.h>
+#include <asm/hwcap.h>
+#include <asm/neon.h>
 
-#अगर_घोषित CONFIG_KERNEL_MODE_NEON
+#ifdef CONFIG_KERNEL_MODE_NEON
 
-बाह्य काष्ठा xor_block_ढाँचा स्थिर xor_block_inner_neon;
+extern struct xor_block_template const xor_block_inner_neon;
 
-अटल व्योम
-xor_neon_2(अचिन्हित दीर्घ bytes, अचिन्हित दीर्घ *p1, अचिन्हित दीर्घ *p2)
-अणु
+static void
+xor_neon_2(unsigned long bytes, unsigned long *p1, unsigned long *p2)
+{
 	kernel_neon_begin();
-	xor_block_inner_neon.करो_2(bytes, p1, p2);
+	xor_block_inner_neon.do_2(bytes, p1, p2);
 	kernel_neon_end();
-पूर्ण
+}
 
-अटल व्योम
-xor_neon_3(अचिन्हित दीर्घ bytes, अचिन्हित दीर्घ *p1, अचिन्हित दीर्घ *p2,
-		अचिन्हित दीर्घ *p3)
-अणु
+static void
+xor_neon_3(unsigned long bytes, unsigned long *p1, unsigned long *p2,
+		unsigned long *p3)
+{
 	kernel_neon_begin();
-	xor_block_inner_neon.करो_3(bytes, p1, p2, p3);
+	xor_block_inner_neon.do_3(bytes, p1, p2, p3);
 	kernel_neon_end();
-पूर्ण
+}
 
-अटल व्योम
-xor_neon_4(अचिन्हित दीर्घ bytes, अचिन्हित दीर्घ *p1, अचिन्हित दीर्घ *p2,
-		अचिन्हित दीर्घ *p3, अचिन्हित दीर्घ *p4)
-अणु
+static void
+xor_neon_4(unsigned long bytes, unsigned long *p1, unsigned long *p2,
+		unsigned long *p3, unsigned long *p4)
+{
 	kernel_neon_begin();
-	xor_block_inner_neon.करो_4(bytes, p1, p2, p3, p4);
+	xor_block_inner_neon.do_4(bytes, p1, p2, p3, p4);
 	kernel_neon_end();
-पूर्ण
+}
 
-अटल व्योम
-xor_neon_5(अचिन्हित दीर्घ bytes, अचिन्हित दीर्घ *p1, अचिन्हित दीर्घ *p2,
-		अचिन्हित दीर्घ *p3, अचिन्हित दीर्घ *p4, अचिन्हित दीर्घ *p5)
-अणु
+static void
+xor_neon_5(unsigned long bytes, unsigned long *p1, unsigned long *p2,
+		unsigned long *p3, unsigned long *p4, unsigned long *p5)
+{
 	kernel_neon_begin();
-	xor_block_inner_neon.करो_5(bytes, p1, p2, p3, p4, p5);
+	xor_block_inner_neon.do_5(bytes, p1, p2, p3, p4, p5);
 	kernel_neon_end();
-पूर्ण
+}
 
-अटल काष्ठा xor_block_ढाँचा xor_block_arm64 = अणु
+static struct xor_block_template xor_block_arm64 = {
 	.name   = "arm64_neon",
-	.करो_2   = xor_neon_2,
-	.करो_3   = xor_neon_3,
-	.करो_4   = xor_neon_4,
-	.करो_5	= xor_neon_5
-पूर्ण;
-#अघोषित XOR_TRY_TEMPLATES
-#घोषणा XOR_TRY_TEMPLATES           \
-	करो अणु        \
+	.do_2   = xor_neon_2,
+	.do_3   = xor_neon_3,
+	.do_4   = xor_neon_4,
+	.do_5	= xor_neon_5
+};
+#undef XOR_TRY_TEMPLATES
+#define XOR_TRY_TEMPLATES           \
+	do {        \
 		xor_speed(&xor_block_8regs);    \
 		xor_speed(&xor_block_32regs);    \
-		अगर (cpu_has_neon()) अणु \
+		if (cpu_has_neon()) { \
 			xor_speed(&xor_block_arm64);\
-		पूर्ण \
-	पूर्ण जबतक (0)
+		} \
+	} while (0)
 
-#पूर्ण_अगर /* ! CONFIG_KERNEL_MODE_NEON */
+#endif /* ! CONFIG_KERNEL_MODE_NEON */

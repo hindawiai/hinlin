@@ -1,309 +1,308 @@
-<शैली गुरु>
 /*
  * dmxdev.c - DVB demultiplexer device
  *
  * Copyright (C) 2000 Ralph Metzler & Marcus Metzler
- *		      क्रम convergence पूर्णांकegrated media GmbH
+ *		      for convergence integrated media GmbH
  *
- * This program is मुक्त software; you can redistribute it and/or
- * modअगरy it under the terms of the GNU Lesser General Public License
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
  * as published by the Free Software Foundation; either version 2.1
  * of the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License क्रम more details.
+ * GNU General Public License for more details.
  *
  */
 
-#घोषणा pr_fmt(fmt) "dmxdev: " fmt
+#define pr_fmt(fmt) "dmxdev: " fmt
 
-#समावेश <linux/sched.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/module.h>
-#समावेश <linux/poll.h>
-#समावेश <linux/ioctl.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/uaccess.h>
-#समावेश <media/dmxdev.h>
-#समावेश <media/dvb_vb2.h>
+#include <linux/sched.h>
+#include <linux/spinlock.h>
+#include <linux/slab.h>
+#include <linux/vmalloc.h>
+#include <linux/module.h>
+#include <linux/poll.h>
+#include <linux/ioctl.h>
+#include <linux/wait.h>
+#include <linux/uaccess.h>
+#include <media/dmxdev.h>
+#include <media/dvb_vb2.h>
 
-अटल पूर्णांक debug;
+static int debug;
 
-module_param(debug, पूर्णांक, 0644);
+module_param(debug, int, 0644);
 MODULE_PARM_DESC(debug, "Turn on/off debugging (default:off).");
 
-#घोषणा dprपूर्णांकk(fmt, arg...) करो अणु					\
-	अगर (debug)							\
-		prपूर्णांकk(KERN_DEBUG pr_fmt("%s: " fmt),			\
+#define dprintk(fmt, arg...) do {					\
+	if (debug)							\
+		printk(KERN_DEBUG pr_fmt("%s: " fmt),			\
 			__func__, ##arg);				\
-पूर्ण जबतक (0)
+} while (0)
 
-अटल पूर्णांक dvb_dmxdev_buffer_ग_लिखो(काष्ठा dvb_ringbuffer *buf,
-				   स्थिर u8 *src, माप_प्रकार len)
-अणु
-	sमाप_प्रकार मुक्त;
+static int dvb_dmxdev_buffer_write(struct dvb_ringbuffer *buf,
+				   const u8 *src, size_t len)
+{
+	ssize_t free;
 
-	अगर (!len)
-		वापस 0;
-	अगर (!buf->data)
-		वापस 0;
+	if (!len)
+		return 0;
+	if (!buf->data)
+		return 0;
 
-	मुक्त = dvb_ringbuffer_मुक्त(buf);
-	अगर (len > मुक्त) अणु
-		dprपूर्णांकk("buffer overflow\n");
-		वापस -EOVERFLOW;
-	पूर्ण
+	free = dvb_ringbuffer_free(buf);
+	if (len > free) {
+		dprintk("buffer overflow\n");
+		return -EOVERFLOW;
+	}
 
-	वापस dvb_ringbuffer_ग_लिखो(buf, src, len);
-पूर्ण
+	return dvb_ringbuffer_write(buf, src, len);
+}
 
-अटल sमाप_प्रकार dvb_dmxdev_buffer_पढ़ो(काष्ठा dvb_ringbuffer *src,
-				      पूर्णांक non_blocking, अक्षर __user *buf,
-				      माप_प्रकार count, loff_t *ppos)
-अणु
-	माप_प्रकार toकरो;
-	sमाप_प्रकार avail;
-	sमाप_प्रकार ret = 0;
+static ssize_t dvb_dmxdev_buffer_read(struct dvb_ringbuffer *src,
+				      int non_blocking, char __user *buf,
+				      size_t count, loff_t *ppos)
+{
+	size_t todo;
+	ssize_t avail;
+	ssize_t ret = 0;
 
-	अगर (!src->data)
-		वापस 0;
+	if (!src->data)
+		return 0;
 
-	अगर (src->error) अणु
+	if (src->error) {
 		ret = src->error;
 		dvb_ringbuffer_flush(src);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	क्रम (toकरो = count; toकरो > 0; toकरो -= ret) अणु
-		अगर (non_blocking && dvb_ringbuffer_empty(src)) अणु
+	for (todo = count; todo > 0; todo -= ret) {
+		if (non_blocking && dvb_ringbuffer_empty(src)) {
 			ret = -EWOULDBLOCK;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		ret = रुको_event_पूर्णांकerruptible(src->queue,
+		ret = wait_event_interruptible(src->queue,
 					       !dvb_ringbuffer_empty(src) ||
 					       (src->error != 0));
-		अगर (ret < 0)
-			अवरोध;
+		if (ret < 0)
+			break;
 
-		अगर (src->error) अणु
+		if (src->error) {
 			ret = src->error;
 			dvb_ringbuffer_flush(src);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		avail = dvb_ringbuffer_avail(src);
-		अगर (avail > toकरो)
-			avail = toकरो;
+		if (avail > todo)
+			avail = todo;
 
-		ret = dvb_ringbuffer_पढ़ो_user(src, buf, avail);
-		अगर (ret < 0)
-			अवरोध;
+		ret = dvb_ringbuffer_read_user(src, buf, avail);
+		if (ret < 0)
+			break;
 
 		buf += ret;
-	पूर्ण
+	}
 
-	वापस (count - toकरो) ? (count - toकरो) : ret;
-पूर्ण
+	return (count - todo) ? (count - todo) : ret;
+}
 
-अटल काष्ठा dmx_frontend *get_fe(काष्ठा dmx_demux *demux, पूर्णांक type)
-अणु
-	काष्ठा list_head *head, *pos;
+static struct dmx_frontend *get_fe(struct dmx_demux *demux, int type)
+{
+	struct list_head *head, *pos;
 
 	head = demux->get_frontends(demux);
-	अगर (!head)
-		वापस शून्य;
-	list_क्रम_each(pos, head)
-		अगर (DMX_FE_ENTRY(pos)->source == type)
-			वापस DMX_FE_ENTRY(pos);
+	if (!head)
+		return NULL;
+	list_for_each(pos, head)
+		if (DMX_FE_ENTRY(pos)->source == type)
+			return DMX_FE_ENTRY(pos);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक dvb_dvr_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा dvb_device *dvbdev = file->निजी_data;
-	काष्ठा dmxdev *dmxdev = dvbdev->priv;
-	काष्ठा dmx_frontend *front;
+static int dvb_dvr_open(struct inode *inode, struct file *file)
+{
+	struct dvb_device *dvbdev = file->private_data;
+	struct dmxdev *dmxdev = dvbdev->priv;
+	struct dmx_frontend *front;
 	bool need_ringbuffer = false;
 
-	dprपूर्णांकk("%s\n", __func__);
+	dprintk("%s\n", __func__);
 
-	अगर (mutex_lock_पूर्णांकerruptible(&dmxdev->mutex))
-		वापस -ERESTARTSYS;
+	if (mutex_lock_interruptible(&dmxdev->mutex))
+		return -ERESTARTSYS;
 
-	अगर (dmxdev->निकास) अणु
+	if (dmxdev->exit) {
 		mutex_unlock(&dmxdev->mutex);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	dmxdev->may_करो_mmap = 0;
+	dmxdev->may_do_mmap = 0;
 
 	/*
-	 * The logic here is a little tricky due to the अगरdef.
+	 * The logic here is a little tricky due to the ifdef.
 	 *
-	 * The ringbuffer is used क्रम both पढ़ो and mmap.
+	 * The ringbuffer is used for both read and mmap.
 	 *
 	 * It is not needed, however, on two situations:
 	 *	- Write devices (access with O_WRONLY);
-	 *	- For duplex device nodes, खोलोed with O_RDWR.
+	 *	- For duplex device nodes, opened with O_RDWR.
 	 */
 
-	अगर ((file->f_flags & O_ACCMODE) == O_RDONLY)
+	if ((file->f_flags & O_ACCMODE) == O_RDONLY)
 		need_ringbuffer = true;
-	अन्यथा अगर ((file->f_flags & O_ACCMODE) == O_RDWR) अणु
-		अगर (!(dmxdev->capabilities & DMXDEV_CAP_DUPLEX)) अणु
-#अगर_घोषित CONFIG_DVB_MMAP
-			dmxdev->may_करो_mmap = 1;
+	else if ((file->f_flags & O_ACCMODE) == O_RDWR) {
+		if (!(dmxdev->capabilities & DMXDEV_CAP_DUPLEX)) {
+#ifdef CONFIG_DVB_MMAP
+			dmxdev->may_do_mmap = 1;
 			need_ringbuffer = true;
-#अन्यथा
+#else
 			mutex_unlock(&dmxdev->mutex);
-			वापस -EOPNOTSUPP;
-#पूर्ण_अगर
-		पूर्ण
-	पूर्ण
+			return -EOPNOTSUPP;
+#endif
+		}
+	}
 
-	अगर (need_ringbuffer) अणु
-		व्योम *mem;
+	if (need_ringbuffer) {
+		void *mem;
 
-		अगर (!dvbdev->पढ़ोers) अणु
+		if (!dvbdev->readers) {
 			mutex_unlock(&dmxdev->mutex);
-			वापस -EBUSY;
-		पूर्ण
-		mem = vदो_स्मृति(DVR_BUFFER_SIZE);
-		अगर (!mem) अणु
+			return -EBUSY;
+		}
+		mem = vmalloc(DVR_BUFFER_SIZE);
+		if (!mem) {
 			mutex_unlock(&dmxdev->mutex);
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 		dvb_ringbuffer_init(&dmxdev->dvr_buffer, mem, DVR_BUFFER_SIZE);
-		अगर (dmxdev->may_करो_mmap)
+		if (dmxdev->may_do_mmap)
 			dvb_vb2_init(&dmxdev->dvr_vb2_ctx, "dvr",
 				     file->f_flags & O_NONBLOCK);
-		dvbdev->पढ़ोers--;
-	पूर्ण
+		dvbdev->readers--;
+	}
 
-	अगर ((file->f_flags & O_ACCMODE) == O_WRONLY) अणु
+	if ((file->f_flags & O_ACCMODE) == O_WRONLY) {
 		dmxdev->dvr_orig_fe = dmxdev->demux->frontend;
 
-		अगर (!dmxdev->demux->ग_लिखो) अणु
+		if (!dmxdev->demux->write) {
 			mutex_unlock(&dmxdev->mutex);
-			वापस -EOPNOTSUPP;
-		पूर्ण
+			return -EOPNOTSUPP;
+		}
 
 		front = get_fe(dmxdev->demux, DMX_MEMORY_FE);
 
-		अगर (!front) अणु
+		if (!front) {
 			mutex_unlock(&dmxdev->mutex);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		dmxdev->demux->disconnect_frontend(dmxdev->demux);
 		dmxdev->demux->connect_frontend(dmxdev->demux, front);
-	पूर्ण
+	}
 	dvbdev->users++;
 	mutex_unlock(&dmxdev->mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dvb_dvr_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा dvb_device *dvbdev = file->निजी_data;
-	काष्ठा dmxdev *dmxdev = dvbdev->priv;
+static int dvb_dvr_release(struct inode *inode, struct file *file)
+{
+	struct dvb_device *dvbdev = file->private_data;
+	struct dmxdev *dmxdev = dvbdev->priv;
 
 	mutex_lock(&dmxdev->mutex);
 
-	अगर ((file->f_flags & O_ACCMODE) == O_WRONLY) अणु
+	if ((file->f_flags & O_ACCMODE) == O_WRONLY) {
 		dmxdev->demux->disconnect_frontend(dmxdev->demux);
 		dmxdev->demux->connect_frontend(dmxdev->demux,
 						dmxdev->dvr_orig_fe);
-	पूर्ण
+	}
 
-	अगर (((file->f_flags & O_ACCMODE) == O_RDONLY) ||
-	    dmxdev->may_करो_mmap) अणु
-		अगर (dmxdev->may_करो_mmap) अणु
-			अगर (dvb_vb2_is_streaming(&dmxdev->dvr_vb2_ctx))
+	if (((file->f_flags & O_ACCMODE) == O_RDONLY) ||
+	    dmxdev->may_do_mmap) {
+		if (dmxdev->may_do_mmap) {
+			if (dvb_vb2_is_streaming(&dmxdev->dvr_vb2_ctx))
 				dvb_vb2_stream_off(&dmxdev->dvr_vb2_ctx);
 			dvb_vb2_release(&dmxdev->dvr_vb2_ctx);
-		पूर्ण
-		dvbdev->पढ़ोers++;
-		अगर (dmxdev->dvr_buffer.data) अणु
-			व्योम *mem = dmxdev->dvr_buffer.data;
+		}
+		dvbdev->readers++;
+		if (dmxdev->dvr_buffer.data) {
+			void *mem = dmxdev->dvr_buffer.data;
 			/*memory barrier*/
 			mb();
 			spin_lock_irq(&dmxdev->lock);
-			dmxdev->dvr_buffer.data = शून्य;
+			dmxdev->dvr_buffer.data = NULL;
 			spin_unlock_irq(&dmxdev->lock);
-			vमुक्त(mem);
-		पूर्ण
-	पूर्ण
+			vfree(mem);
+		}
+	}
 	/* TODO */
 	dvbdev->users--;
-	अगर (dvbdev->users == 1 && dmxdev->निकास == 1) अणु
+	if (dvbdev->users == 1 && dmxdev->exit == 1) {
 		mutex_unlock(&dmxdev->mutex);
-		wake_up(&dvbdev->रुको_queue);
-	पूर्ण अन्यथा
+		wake_up(&dvbdev->wait_queue);
+	} else
 		mutex_unlock(&dmxdev->mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार dvb_dvr_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
-			     माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा dvb_device *dvbdev = file->निजी_data;
-	काष्ठा dmxdev *dmxdev = dvbdev->priv;
-	पूर्णांक ret;
+static ssize_t dvb_dvr_write(struct file *file, const char __user *buf,
+			     size_t count, loff_t *ppos)
+{
+	struct dvb_device *dvbdev = file->private_data;
+	struct dmxdev *dmxdev = dvbdev->priv;
+	int ret;
 
-	अगर (!dmxdev->demux->ग_लिखो)
-		वापस -EOPNOTSUPP;
-	अगर ((file->f_flags & O_ACCMODE) != O_WRONLY)
-		वापस -EINVAL;
-	अगर (mutex_lock_पूर्णांकerruptible(&dmxdev->mutex))
-		वापस -ERESTARTSYS;
+	if (!dmxdev->demux->write)
+		return -EOPNOTSUPP;
+	if ((file->f_flags & O_ACCMODE) != O_WRONLY)
+		return -EINVAL;
+	if (mutex_lock_interruptible(&dmxdev->mutex))
+		return -ERESTARTSYS;
 
-	अगर (dmxdev->निकास) अणु
+	if (dmxdev->exit) {
 		mutex_unlock(&dmxdev->mutex);
-		वापस -ENODEV;
-	पूर्ण
-	ret = dmxdev->demux->ग_लिखो(dmxdev->demux, buf, count);
+		return -ENODEV;
+	}
+	ret = dmxdev->demux->write(dmxdev->demux, buf, count);
 	mutex_unlock(&dmxdev->mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार dvb_dvr_पढ़ो(काष्ठा file *file, अक्षर __user *buf, माप_प्रकार count,
+static ssize_t dvb_dvr_read(struct file *file, char __user *buf, size_t count,
 			    loff_t *ppos)
-अणु
-	काष्ठा dvb_device *dvbdev = file->निजी_data;
-	काष्ठा dmxdev *dmxdev = dvbdev->priv;
+{
+	struct dvb_device *dvbdev = file->private_data;
+	struct dmxdev *dmxdev = dvbdev->priv;
 
-	अगर (dmxdev->निकास)
-		वापस -ENODEV;
+	if (dmxdev->exit)
+		return -ENODEV;
 
-	वापस dvb_dmxdev_buffer_पढ़ो(&dmxdev->dvr_buffer,
+	return dvb_dmxdev_buffer_read(&dmxdev->dvr_buffer,
 				      file->f_flags & O_NONBLOCK,
 				      buf, count, ppos);
-पूर्ण
+}
 
-अटल पूर्णांक dvb_dvr_set_buffer_size(काष्ठा dmxdev *dmxdev,
-				      अचिन्हित दीर्घ size)
-अणु
-	काष्ठा dvb_ringbuffer *buf = &dmxdev->dvr_buffer;
-	व्योम *newmem;
-	व्योम *oldmem;
+static int dvb_dvr_set_buffer_size(struct dmxdev *dmxdev,
+				      unsigned long size)
+{
+	struct dvb_ringbuffer *buf = &dmxdev->dvr_buffer;
+	void *newmem;
+	void *oldmem;
 
-	dprपूर्णांकk("%s\n", __func__);
+	dprintk("%s\n", __func__);
 
-	अगर (buf->size == size)
-		वापस 0;
-	अगर (!size)
-		वापस -EINVAL;
+	if (buf->size == size)
+		return 0;
+	if (!size)
+		return -EINVAL;
 
-	newmem = vदो_स्मृति(size);
-	अगर (!newmem)
-		वापस -ENOMEM;
+	newmem = vmalloc(size);
+	if (!newmem)
+		return -ENOMEM;
 
 	oldmem = buf->data;
 
@@ -311,40 +310,40 @@ MODULE_PARM_DESC(debug, "Turn on/off debugging (default:off).");
 	buf->data = newmem;
 	buf->size = size;
 
-	/* reset and not flush in हाल the buffer shrinks */
+	/* reset and not flush in case the buffer shrinks */
 	dvb_ringbuffer_reset(buf);
 	spin_unlock_irq(&dmxdev->lock);
 
-	vमुक्त(oldmem);
+	vfree(oldmem);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत व्योम dvb_dmxdev_filter_state_set(काष्ठा dmxdev_filter
-					       *dmxdevfilter, पूर्णांक state)
-अणु
+static inline void dvb_dmxdev_filter_state_set(struct dmxdev_filter
+					       *dmxdevfilter, int state)
+{
 	spin_lock_irq(&dmxdevfilter->dev->lock);
 	dmxdevfilter->state = state;
 	spin_unlock_irq(&dmxdevfilter->dev->lock);
-पूर्ण
+}
 
-अटल पूर्णांक dvb_dmxdev_set_buffer_size(काष्ठा dmxdev_filter *dmxdevfilter,
-				      अचिन्हित दीर्घ size)
-अणु
-	काष्ठा dvb_ringbuffer *buf = &dmxdevfilter->buffer;
-	व्योम *newmem;
-	व्योम *oldmem;
+static int dvb_dmxdev_set_buffer_size(struct dmxdev_filter *dmxdevfilter,
+				      unsigned long size)
+{
+	struct dvb_ringbuffer *buf = &dmxdevfilter->buffer;
+	void *newmem;
+	void *oldmem;
 
-	अगर (buf->size == size)
-		वापस 0;
-	अगर (!size)
-		वापस -EINVAL;
-	अगर (dmxdevfilter->state >= DMXDEV_STATE_GO)
-		वापस -EBUSY;
+	if (buf->size == size)
+		return 0;
+	if (!size)
+		return -EINVAL;
+	if (dmxdevfilter->state >= DMXDEV_STATE_GO)
+		return -EBUSY;
 
-	newmem = vदो_स्मृति(size);
-	अगर (!newmem)
-		वापस -ENOMEM;
+	newmem = vmalloc(size);
+	if (!newmem)
+		return -ENOMEM;
 
 	oldmem = buf->data;
 
@@ -352,408 +351,408 @@ MODULE_PARM_DESC(debug, "Turn on/off debugging (default:off).");
 	buf->data = newmem;
 	buf->size = size;
 
-	/* reset and not flush in हाल the buffer shrinks */
+	/* reset and not flush in case the buffer shrinks */
 	dvb_ringbuffer_reset(buf);
 	spin_unlock_irq(&dmxdevfilter->dev->lock);
 
-	vमुक्त(oldmem);
+	vfree(oldmem);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम dvb_dmxdev_filter_समयout(काष्ठा समयr_list *t)
-अणु
-	काष्ठा dmxdev_filter *dmxdevfilter = from_समयr(dmxdevfilter, t, समयr);
+static void dvb_dmxdev_filter_timeout(struct timer_list *t)
+{
+	struct dmxdev_filter *dmxdevfilter = from_timer(dmxdevfilter, t, timer);
 
 	dmxdevfilter->buffer.error = -ETIMEDOUT;
 	spin_lock_irq(&dmxdevfilter->dev->lock);
 	dmxdevfilter->state = DMXDEV_STATE_TIMEDOUT;
 	spin_unlock_irq(&dmxdevfilter->dev->lock);
 	wake_up(&dmxdevfilter->buffer.queue);
-पूर्ण
+}
 
-अटल व्योम dvb_dmxdev_filter_समयr(काष्ठा dmxdev_filter *dmxdevfilter)
-अणु
-	काष्ठा dmx_sct_filter_params *para = &dmxdevfilter->params.sec;
+static void dvb_dmxdev_filter_timer(struct dmxdev_filter *dmxdevfilter)
+{
+	struct dmx_sct_filter_params *para = &dmxdevfilter->params.sec;
 
-	del_समयr(&dmxdevfilter->समयr);
-	अगर (para->समयout) अणु
-		dmxdevfilter->समयr.expires =
-		    jअगरfies + 1 + (HZ / 2 + HZ * para->समयout) / 1000;
-		add_समयr(&dmxdevfilter->समयr);
-	पूर्ण
-पूर्ण
+	del_timer(&dmxdevfilter->timer);
+	if (para->timeout) {
+		dmxdevfilter->timer.expires =
+		    jiffies + 1 + (HZ / 2 + HZ * para->timeout) / 1000;
+		add_timer(&dmxdevfilter->timer);
+	}
+}
 
-अटल पूर्णांक dvb_dmxdev_section_callback(स्थिर u8 *buffer1, माप_प्रकार buffer1_len,
-				       स्थिर u8 *buffer2, माप_प्रकार buffer2_len,
-				       काष्ठा dmx_section_filter *filter,
+static int dvb_dmxdev_section_callback(const u8 *buffer1, size_t buffer1_len,
+				       const u8 *buffer2, size_t buffer2_len,
+				       struct dmx_section_filter *filter,
 				       u32 *buffer_flags)
-अणु
-	काष्ठा dmxdev_filter *dmxdevfilter = filter->priv;
-	पूर्णांक ret;
+{
+	struct dmxdev_filter *dmxdevfilter = filter->priv;
+	int ret;
 
-	अगर (!dvb_vb2_is_streaming(&dmxdevfilter->vb2_ctx) &&
-	    dmxdevfilter->buffer.error) अणु
+	if (!dvb_vb2_is_streaming(&dmxdevfilter->vb2_ctx) &&
+	    dmxdevfilter->buffer.error) {
 		wake_up(&dmxdevfilter->buffer.queue);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	spin_lock(&dmxdevfilter->dev->lock);
-	अगर (dmxdevfilter->state != DMXDEV_STATE_GO) अणु
+	if (dmxdevfilter->state != DMXDEV_STATE_GO) {
 		spin_unlock(&dmxdevfilter->dev->lock);
-		वापस 0;
-	पूर्ण
-	del_समयr(&dmxdevfilter->समयr);
-	dprपूर्णांकk("section callback %*ph\n", 6, buffer1);
-	अगर (dvb_vb2_is_streaming(&dmxdevfilter->vb2_ctx)) अणु
+		return 0;
+	}
+	del_timer(&dmxdevfilter->timer);
+	dprintk("section callback %*ph\n", 6, buffer1);
+	if (dvb_vb2_is_streaming(&dmxdevfilter->vb2_ctx)) {
 		ret = dvb_vb2_fill_buffer(&dmxdevfilter->vb2_ctx,
 					  buffer1, buffer1_len,
 					  buffer_flags);
-		अगर (ret == buffer1_len)
+		if (ret == buffer1_len)
 			ret = dvb_vb2_fill_buffer(&dmxdevfilter->vb2_ctx,
 						  buffer2, buffer2_len,
 						  buffer_flags);
-	पूर्ण अन्यथा अणु
-		ret = dvb_dmxdev_buffer_ग_लिखो(&dmxdevfilter->buffer,
+	} else {
+		ret = dvb_dmxdev_buffer_write(&dmxdevfilter->buffer,
 					      buffer1, buffer1_len);
-		अगर (ret == buffer1_len) अणु
-			ret = dvb_dmxdev_buffer_ग_लिखो(&dmxdevfilter->buffer,
+		if (ret == buffer1_len) {
+			ret = dvb_dmxdev_buffer_write(&dmxdevfilter->buffer,
 						      buffer2, buffer2_len);
-		पूर्ण
-	पूर्ण
-	अगर (ret < 0)
+		}
+	}
+	if (ret < 0)
 		dmxdevfilter->buffer.error = ret;
-	अगर (dmxdevfilter->params.sec.flags & DMX_ONESHOT)
+	if (dmxdevfilter->params.sec.flags & DMX_ONESHOT)
 		dmxdevfilter->state = DMXDEV_STATE_DONE;
 	spin_unlock(&dmxdevfilter->dev->lock);
 	wake_up(&dmxdevfilter->buffer.queue);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dvb_dmxdev_ts_callback(स्थिर u8 *buffer1, माप_प्रकार buffer1_len,
-				  स्थिर u8 *buffer2, माप_प्रकार buffer2_len,
-				  काष्ठा dmx_ts_feed *feed,
+static int dvb_dmxdev_ts_callback(const u8 *buffer1, size_t buffer1_len,
+				  const u8 *buffer2, size_t buffer2_len,
+				  struct dmx_ts_feed *feed,
 				  u32 *buffer_flags)
-अणु
-	काष्ठा dmxdev_filter *dmxdevfilter = feed->priv;
-	काष्ठा dvb_ringbuffer *buffer;
-#अगर_घोषित CONFIG_DVB_MMAP
-	काष्ठा dvb_vb2_ctx *ctx;
-#पूर्ण_अगर
-	पूर्णांक ret;
+{
+	struct dmxdev_filter *dmxdevfilter = feed->priv;
+	struct dvb_ringbuffer *buffer;
+#ifdef CONFIG_DVB_MMAP
+	struct dvb_vb2_ctx *ctx;
+#endif
+	int ret;
 
 	spin_lock(&dmxdevfilter->dev->lock);
-	अगर (dmxdevfilter->params.pes.output == DMX_OUT_DECODER) अणु
+	if (dmxdevfilter->params.pes.output == DMX_OUT_DECODER) {
 		spin_unlock(&dmxdevfilter->dev->lock);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (dmxdevfilter->params.pes.output == DMX_OUT_TAP ||
-	    dmxdevfilter->params.pes.output == DMX_OUT_TSDEMUX_TAP) अणु
+	if (dmxdevfilter->params.pes.output == DMX_OUT_TAP ||
+	    dmxdevfilter->params.pes.output == DMX_OUT_TSDEMUX_TAP) {
 		buffer = &dmxdevfilter->buffer;
-#अगर_घोषित CONFIG_DVB_MMAP
+#ifdef CONFIG_DVB_MMAP
 		ctx = &dmxdevfilter->vb2_ctx;
-#पूर्ण_अगर
-	पूर्ण अन्यथा अणु
+#endif
+	} else {
 		buffer = &dmxdevfilter->dev->dvr_buffer;
-#अगर_घोषित CONFIG_DVB_MMAP
+#ifdef CONFIG_DVB_MMAP
 		ctx = &dmxdevfilter->dev->dvr_vb2_ctx;
-#पूर्ण_अगर
-	पूर्ण
+#endif
+	}
 
-	अगर (dvb_vb2_is_streaming(ctx)) अणु
+	if (dvb_vb2_is_streaming(ctx)) {
 		ret = dvb_vb2_fill_buffer(ctx, buffer1, buffer1_len,
 					  buffer_flags);
-		अगर (ret == buffer1_len)
+		if (ret == buffer1_len)
 			ret = dvb_vb2_fill_buffer(ctx, buffer2, buffer2_len,
 						  buffer_flags);
-	पूर्ण अन्यथा अणु
-		अगर (buffer->error) अणु
+	} else {
+		if (buffer->error) {
 			spin_unlock(&dmxdevfilter->dev->lock);
 			wake_up(&buffer->queue);
-			वापस 0;
-		पूर्ण
-		ret = dvb_dmxdev_buffer_ग_लिखो(buffer, buffer1, buffer1_len);
-		अगर (ret == buffer1_len)
-			ret = dvb_dmxdev_buffer_ग_लिखो(buffer,
+			return 0;
+		}
+		ret = dvb_dmxdev_buffer_write(buffer, buffer1, buffer1_len);
+		if (ret == buffer1_len)
+			ret = dvb_dmxdev_buffer_write(buffer,
 						      buffer2, buffer2_len);
-	पूर्ण
-	अगर (ret < 0)
+	}
+	if (ret < 0)
 		buffer->error = ret;
 	spin_unlock(&dmxdevfilter->dev->lock);
 	wake_up(&buffer->queue);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* stop feed but only mark the specअगरied filter as stopped (state set) */
-अटल पूर्णांक dvb_dmxdev_feed_stop(काष्ठा dmxdev_filter *dmxdevfilter)
-अणु
-	काष्ठा dmxdev_feed *feed;
+/* stop feed but only mark the specified filter as stopped (state set) */
+static int dvb_dmxdev_feed_stop(struct dmxdev_filter *dmxdevfilter)
+{
+	struct dmxdev_feed *feed;
 
 	dvb_dmxdev_filter_state_set(dmxdevfilter, DMXDEV_STATE_SET);
 
-	चयन (dmxdevfilter->type) अणु
-	हाल DMXDEV_TYPE_SEC:
-		del_समयr(&dmxdevfilter->समयr);
+	switch (dmxdevfilter->type) {
+	case DMXDEV_TYPE_SEC:
+		del_timer(&dmxdevfilter->timer);
 		dmxdevfilter->feed.sec->stop_filtering(dmxdevfilter->feed.sec);
-		अवरोध;
-	हाल DMXDEV_TYPE_PES:
-		list_क्रम_each_entry(feed, &dmxdevfilter->feed.ts, next)
+		break;
+	case DMXDEV_TYPE_PES:
+		list_for_each_entry(feed, &dmxdevfilter->feed.ts, next)
 			feed->ts->stop_filtering(feed->ts);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
+	return 0;
+}
 
-/* start feed associated with the specअगरied filter */
-अटल पूर्णांक dvb_dmxdev_feed_start(काष्ठा dmxdev_filter *filter)
-अणु
-	काष्ठा dmxdev_feed *feed;
-	पूर्णांक ret;
+/* start feed associated with the specified filter */
+static int dvb_dmxdev_feed_start(struct dmxdev_filter *filter)
+{
+	struct dmxdev_feed *feed;
+	int ret;
 
 	dvb_dmxdev_filter_state_set(filter, DMXDEV_STATE_GO);
 
-	चयन (filter->type) अणु
-	हाल DMXDEV_TYPE_SEC:
-		वापस filter->feed.sec->start_filtering(filter->feed.sec);
-	हाल DMXDEV_TYPE_PES:
-		list_क्रम_each_entry(feed, &filter->feed.ts, next) अणु
+	switch (filter->type) {
+	case DMXDEV_TYPE_SEC:
+		return filter->feed.sec->start_filtering(filter->feed.sec);
+	case DMXDEV_TYPE_PES:
+		list_for_each_entry(feed, &filter->feed.ts, next) {
 			ret = feed->ts->start_filtering(feed->ts);
-			अगर (ret < 0) अणु
+			if (ret < 0) {
 				dvb_dmxdev_feed_stop(filter);
-				वापस ret;
-			पूर्ण
-		पूर्ण
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+				return ret;
+			}
+		}
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* restart section feed अगर it has filters left associated with it,
+/* restart section feed if it has filters left associated with it,
    otherwise release the feed */
-अटल पूर्णांक dvb_dmxdev_feed_restart(काष्ठा dmxdev_filter *filter)
-अणु
-	पूर्णांक i;
-	काष्ठा dmxdev *dmxdev = filter->dev;
+static int dvb_dmxdev_feed_restart(struct dmxdev_filter *filter)
+{
+	int i;
+	struct dmxdev *dmxdev = filter->dev;
 	u16 pid = filter->params.sec.pid;
 
-	क्रम (i = 0; i < dmxdev->filternum; i++)
-		अगर (dmxdev->filter[i].state >= DMXDEV_STATE_GO &&
+	for (i = 0; i < dmxdev->filternum; i++)
+		if (dmxdev->filter[i].state >= DMXDEV_STATE_GO &&
 		    dmxdev->filter[i].type == DMXDEV_TYPE_SEC &&
-		    dmxdev->filter[i].params.sec.pid == pid) अणु
+		    dmxdev->filter[i].params.sec.pid == pid) {
 			dvb_dmxdev_feed_start(&dmxdev->filter[i]);
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
 	filter->dev->demux->release_section_feed(dmxdev->demux,
 						 filter->feed.sec);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dvb_dmxdev_filter_stop(काष्ठा dmxdev_filter *dmxdevfilter)
-अणु
-	काष्ठा dmxdev_feed *feed;
-	काष्ठा dmx_demux *demux;
+static int dvb_dmxdev_filter_stop(struct dmxdev_filter *dmxdevfilter)
+{
+	struct dmxdev_feed *feed;
+	struct dmx_demux *demux;
 
-	अगर (dmxdevfilter->state < DMXDEV_STATE_GO)
-		वापस 0;
+	if (dmxdevfilter->state < DMXDEV_STATE_GO)
+		return 0;
 
-	चयन (dmxdevfilter->type) अणु
-	हाल DMXDEV_TYPE_SEC:
-		अगर (!dmxdevfilter->feed.sec)
-			अवरोध;
+	switch (dmxdevfilter->type) {
+	case DMXDEV_TYPE_SEC:
+		if (!dmxdevfilter->feed.sec)
+			break;
 		dvb_dmxdev_feed_stop(dmxdevfilter);
-		अगर (dmxdevfilter->filter.sec)
+		if (dmxdevfilter->filter.sec)
 			dmxdevfilter->feed.sec->
 			    release_filter(dmxdevfilter->feed.sec,
 					   dmxdevfilter->filter.sec);
 		dvb_dmxdev_feed_restart(dmxdevfilter);
-		dmxdevfilter->feed.sec = शून्य;
-		अवरोध;
-	हाल DMXDEV_TYPE_PES:
+		dmxdevfilter->feed.sec = NULL;
+		break;
+	case DMXDEV_TYPE_PES:
 		dvb_dmxdev_feed_stop(dmxdevfilter);
 		demux = dmxdevfilter->dev->demux;
-		list_क्रम_each_entry(feed, &dmxdevfilter->feed.ts, next) अणु
+		list_for_each_entry(feed, &dmxdevfilter->feed.ts, next) {
 			demux->release_ts_feed(demux, feed->ts);
-			feed->ts = शून्य;
-		पूर्ण
-		अवरोध;
-	शेष:
-		अगर (dmxdevfilter->state == DMXDEV_STATE_ALLOCATED)
-			वापस 0;
-		वापस -EINVAL;
-	पूर्ण
+			feed->ts = NULL;
+		}
+		break;
+	default:
+		if (dmxdevfilter->state == DMXDEV_STATE_ALLOCATED)
+			return 0;
+		return -EINVAL;
+	}
 
 	dvb_ringbuffer_flush(&dmxdevfilter->buffer);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम dvb_dmxdev_delete_pids(काष्ठा dmxdev_filter *dmxdevfilter)
-अणु
-	काष्ठा dmxdev_feed *feed, *पंचांगp;
+static void dvb_dmxdev_delete_pids(struct dmxdev_filter *dmxdevfilter)
+{
+	struct dmxdev_feed *feed, *tmp;
 
 	/* delete all PIDs */
-	list_क्रम_each_entry_safe(feed, पंचांगp, &dmxdevfilter->feed.ts, next) अणु
+	list_for_each_entry_safe(feed, tmp, &dmxdevfilter->feed.ts, next) {
 		list_del(&feed->next);
-		kमुक्त(feed);
-	पूर्ण
+		kfree(feed);
+	}
 
 	BUG_ON(!list_empty(&dmxdevfilter->feed.ts));
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक dvb_dmxdev_filter_reset(काष्ठा dmxdev_filter *dmxdevfilter)
-अणु
-	अगर (dmxdevfilter->state < DMXDEV_STATE_SET)
-		वापस 0;
+static inline int dvb_dmxdev_filter_reset(struct dmxdev_filter *dmxdevfilter)
+{
+	if (dmxdevfilter->state < DMXDEV_STATE_SET)
+		return 0;
 
-	अगर (dmxdevfilter->type == DMXDEV_TYPE_PES)
+	if (dmxdevfilter->type == DMXDEV_TYPE_PES)
 		dvb_dmxdev_delete_pids(dmxdevfilter);
 
 	dmxdevfilter->type = DMXDEV_TYPE_NONE;
 	dvb_dmxdev_filter_state_set(dmxdevfilter, DMXDEV_STATE_ALLOCATED);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dvb_dmxdev_start_feed(काष्ठा dmxdev *dmxdev,
-				 काष्ठा dmxdev_filter *filter,
-				 काष्ठा dmxdev_feed *feed)
-अणु
-	kसमय_प्रकार समयout = kसमय_set(0, 0);
-	काष्ठा dmx_pes_filter_params *para = &filter->params.pes;
-	क्रमागत dmx_output otype;
-	पूर्णांक ret;
-	पूर्णांक ts_type;
-	क्रमागत dmx_ts_pes ts_pes;
-	काष्ठा dmx_ts_feed *tsfeed;
+static int dvb_dmxdev_start_feed(struct dmxdev *dmxdev,
+				 struct dmxdev_filter *filter,
+				 struct dmxdev_feed *feed)
+{
+	ktime_t timeout = ktime_set(0, 0);
+	struct dmx_pes_filter_params *para = &filter->params.pes;
+	enum dmx_output otype;
+	int ret;
+	int ts_type;
+	enum dmx_ts_pes ts_pes;
+	struct dmx_ts_feed *tsfeed;
 
-	feed->ts = शून्य;
+	feed->ts = NULL;
 	otype = para->output;
 
 	ts_pes = para->pes_type;
 
-	अगर (ts_pes < DMX_PES_OTHER)
+	if (ts_pes < DMX_PES_OTHER)
 		ts_type = TS_DECODER;
-	अन्यथा
+	else
 		ts_type = 0;
 
-	अगर (otype == DMX_OUT_TS_TAP)
+	if (otype == DMX_OUT_TS_TAP)
 		ts_type |= TS_PACKET;
-	अन्यथा अगर (otype == DMX_OUT_TSDEMUX_TAP)
+	else if (otype == DMX_OUT_TSDEMUX_TAP)
 		ts_type |= TS_PACKET | TS_DEMUX;
-	अन्यथा अगर (otype == DMX_OUT_TAP)
+	else if (otype == DMX_OUT_TAP)
 		ts_type |= TS_PACKET | TS_DEMUX | TS_PAYLOAD_ONLY;
 
 	ret = dmxdev->demux->allocate_ts_feed(dmxdev->demux, &feed->ts,
 					      dvb_dmxdev_ts_callback);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	tsfeed = feed->ts;
 	tsfeed->priv = filter;
 
-	ret = tsfeed->set(tsfeed, feed->pid, ts_type, ts_pes, समयout);
-	अगर (ret < 0) अणु
+	ret = tsfeed->set(tsfeed, feed->pid, ts_type, ts_pes, timeout);
+	if (ret < 0) {
 		dmxdev->demux->release_ts_feed(dmxdev->demux, tsfeed);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = tsfeed->start_filtering(tsfeed);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dmxdev->demux->release_ts_feed(dmxdev->demux, tsfeed);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dvb_dmxdev_filter_start(काष्ठा dmxdev_filter *filter)
-अणु
-	काष्ठा dmxdev *dmxdev = filter->dev;
-	काष्ठा dmxdev_feed *feed;
-	व्योम *mem;
-	पूर्णांक ret, i;
+static int dvb_dmxdev_filter_start(struct dmxdev_filter *filter)
+{
+	struct dmxdev *dmxdev = filter->dev;
+	struct dmxdev_feed *feed;
+	void *mem;
+	int ret, i;
 
-	अगर (filter->state < DMXDEV_STATE_SET)
-		वापस -EINVAL;
+	if (filter->state < DMXDEV_STATE_SET)
+		return -EINVAL;
 
-	अगर (filter->state >= DMXDEV_STATE_GO)
+	if (filter->state >= DMXDEV_STATE_GO)
 		dvb_dmxdev_filter_stop(filter);
 
-	अगर (!filter->buffer.data) अणु
-		mem = vदो_स्मृति(filter->buffer.size);
-		अगर (!mem)
-			वापस -ENOMEM;
+	if (!filter->buffer.data) {
+		mem = vmalloc(filter->buffer.size);
+		if (!mem)
+			return -ENOMEM;
 		spin_lock_irq(&filter->dev->lock);
 		filter->buffer.data = mem;
 		spin_unlock_irq(&filter->dev->lock);
-	पूर्ण
+	}
 
 	dvb_ringbuffer_flush(&filter->buffer);
 
-	चयन (filter->type) अणु
-	हाल DMXDEV_TYPE_SEC:
-	अणु
-		काष्ठा dmx_sct_filter_params *para = &filter->params.sec;
-		काष्ठा dmx_section_filter **secfilter = &filter->filter.sec;
-		काष्ठा dmx_section_feed **secfeed = &filter->feed.sec;
+	switch (filter->type) {
+	case DMXDEV_TYPE_SEC:
+	{
+		struct dmx_sct_filter_params *para = &filter->params.sec;
+		struct dmx_section_filter **secfilter = &filter->filter.sec;
+		struct dmx_section_feed **secfeed = &filter->feed.sec;
 
-		*secfilter = शून्य;
-		*secfeed = शून्य;
+		*secfilter = NULL;
+		*secfeed = NULL;
 
 
 		/* find active filter/feed with same PID */
-		क्रम (i = 0; i < dmxdev->filternum; i++) अणु
-			अगर (dmxdev->filter[i].state >= DMXDEV_STATE_GO &&
+		for (i = 0; i < dmxdev->filternum; i++) {
+			if (dmxdev->filter[i].state >= DMXDEV_STATE_GO &&
 			    dmxdev->filter[i].type == DMXDEV_TYPE_SEC &&
-			    dmxdev->filter[i].params.sec.pid == para->pid) अणु
+			    dmxdev->filter[i].params.sec.pid == para->pid) {
 				*secfeed = dmxdev->filter[i].feed.sec;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 
-		/* अगर no feed found, try to allocate new one */
-		अगर (!*secfeed) अणु
+		/* if no feed found, try to allocate new one */
+		if (!*secfeed) {
 			ret = dmxdev->demux->allocate_section_feed(dmxdev->demux,
 								   secfeed,
 								   dvb_dmxdev_section_callback);
-			अगर (ret < 0) अणु
+			if (ret < 0) {
 				pr_err("DVB (%s): could not alloc feed\n",
 				       __func__);
-				वापस ret;
-			पूर्ण
+				return ret;
+			}
 
 			ret = (*secfeed)->set(*secfeed, para->pid,
 					      (para->flags & DMX_CHECK_CRC) ? 1 : 0);
-			अगर (ret < 0) अणु
+			if (ret < 0) {
 				pr_err("DVB (%s): could not set feed\n",
 				       __func__);
 				dvb_dmxdev_feed_restart(filter);
-				वापस ret;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				return ret;
+			}
+		} else {
 			dvb_dmxdev_feed_stop(filter);
-		पूर्ण
+		}
 
 		ret = (*secfeed)->allocate_filter(*secfeed, secfilter);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dvb_dmxdev_feed_restart(filter);
 			filter->feed.sec->start_filtering(*secfeed);
-			dprपूर्णांकk("could not get filter\n");
-			वापस ret;
-		पूर्ण
+			dprintk("could not get filter\n");
+			return ret;
+		}
 
 		(*secfilter)->priv = filter;
 
-		स_नकल(&((*secfilter)->filter_value[3]),
+		memcpy(&((*secfilter)->filter_value[3]),
 		       &(para->filter.filter[1]), DMX_FILTER_SIZE - 1);
-		स_नकल(&(*secfilter)->filter_mask[3],
+		memcpy(&(*secfilter)->filter_mask[3],
 		       &para->filter.mask[1], DMX_FILTER_SIZE - 1);
-		स_नकल(&(*secfilter)->filter_mode[3],
+		memcpy(&(*secfilter)->filter_mode[3],
 		       &para->filter.mode[1], DMX_FILTER_SIZE - 1);
 
 		(*secfilter)->filter_value[0] = para->filter.filter[0];
@@ -762,83 +761,83 @@ MODULE_PARM_DESC(debug, "Turn on/off debugging (default:off).");
 		(*secfilter)->filter_mask[1] = 0;
 		(*secfilter)->filter_mask[2] = 0;
 
-		filter->toकरो = 0;
+		filter->todo = 0;
 
 		ret = filter->feed.sec->start_filtering(filter->feed.sec);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 
-		dvb_dmxdev_filter_समयr(filter);
-		अवरोध;
-	पूर्ण
-	हाल DMXDEV_TYPE_PES:
-		list_क्रम_each_entry(feed, &filter->feed.ts, next) अणु
+		dvb_dmxdev_filter_timer(filter);
+		break;
+	}
+	case DMXDEV_TYPE_PES:
+		list_for_each_entry(feed, &filter->feed.ts, next) {
 			ret = dvb_dmxdev_start_feed(dmxdev, filter, feed);
-			अगर (ret < 0) अणु
+			if (ret < 0) {
 				dvb_dmxdev_filter_stop(filter);
-				वापस ret;
-			पूर्ण
-		पूर्ण
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+				return ret;
+			}
+		}
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	dvb_dmxdev_filter_state_set(filter, DMXDEV_STATE_GO);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dvb_demux_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा dvb_device *dvbdev = file->निजी_data;
-	काष्ठा dmxdev *dmxdev = dvbdev->priv;
-	पूर्णांक i;
-	काष्ठा dmxdev_filter *dmxdevfilter;
+static int dvb_demux_open(struct inode *inode, struct file *file)
+{
+	struct dvb_device *dvbdev = file->private_data;
+	struct dmxdev *dmxdev = dvbdev->priv;
+	int i;
+	struct dmxdev_filter *dmxdevfilter;
 
-	अगर (!dmxdev->filter)
-		वापस -EINVAL;
+	if (!dmxdev->filter)
+		return -EINVAL;
 
-	अगर (mutex_lock_पूर्णांकerruptible(&dmxdev->mutex))
-		वापस -ERESTARTSYS;
+	if (mutex_lock_interruptible(&dmxdev->mutex))
+		return -ERESTARTSYS;
 
-	क्रम (i = 0; i < dmxdev->filternum; i++)
-		अगर (dmxdev->filter[i].state == DMXDEV_STATE_FREE)
-			अवरोध;
+	for (i = 0; i < dmxdev->filternum; i++)
+		if (dmxdev->filter[i].state == DMXDEV_STATE_FREE)
+			break;
 
-	अगर (i == dmxdev->filternum) अणु
+	if (i == dmxdev->filternum) {
 		mutex_unlock(&dmxdev->mutex);
-		वापस -EMखाता;
-	पूर्ण
+		return -EMFILE;
+	}
 
 	dmxdevfilter = &dmxdev->filter[i];
 	mutex_init(&dmxdevfilter->mutex);
-	file->निजी_data = dmxdevfilter;
+	file->private_data = dmxdevfilter;
 
-#अगर_घोषित CONFIG_DVB_MMAP
-	dmxdev->may_करो_mmap = 1;
-#अन्यथा
-	dmxdev->may_करो_mmap = 0;
-#पूर्ण_अगर
+#ifdef CONFIG_DVB_MMAP
+	dmxdev->may_do_mmap = 1;
+#else
+	dmxdev->may_do_mmap = 0;
+#endif
 
-	dvb_ringbuffer_init(&dmxdevfilter->buffer, शून्य, 8192);
+	dvb_ringbuffer_init(&dmxdevfilter->buffer, NULL, 8192);
 	dvb_vb2_init(&dmxdevfilter->vb2_ctx, "demux_filter",
 		     file->f_flags & O_NONBLOCK);
 	dmxdevfilter->type = DMXDEV_TYPE_NONE;
 	dvb_dmxdev_filter_state_set(dmxdevfilter, DMXDEV_STATE_ALLOCATED);
-	समयr_setup(&dmxdevfilter->समयr, dvb_dmxdev_filter_समयout, 0);
+	timer_setup(&dmxdevfilter->timer, dvb_dmxdev_filter_timeout, 0);
 
 	dvbdev->users++;
 
 	mutex_unlock(&dmxdev->mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dvb_dmxdev_filter_मुक्त(काष्ठा dmxdev *dmxdev,
-				  काष्ठा dmxdev_filter *dmxdevfilter)
-अणु
+static int dvb_dmxdev_filter_free(struct dmxdev *dmxdev,
+				  struct dmxdev_filter *dmxdevfilter)
+{
 	mutex_lock(&dmxdev->mutex);
 	mutex_lock(&dmxdevfilter->mutex);
-	अगर (dvb_vb2_is_streaming(&dmxdevfilter->vb2_ctx))
+	if (dvb_vb2_is_streaming(&dmxdevfilter->vb2_ctx))
 		dvb_vb2_stream_off(&dmxdevfilter->vb2_ctx);
 	dvb_vb2_release(&dmxdevfilter->vb2_ctx);
 
@@ -846,623 +845,623 @@ MODULE_PARM_DESC(debug, "Turn on/off debugging (default:off).");
 	dvb_dmxdev_filter_stop(dmxdevfilter);
 	dvb_dmxdev_filter_reset(dmxdevfilter);
 
-	अगर (dmxdevfilter->buffer.data) अणु
-		व्योम *mem = dmxdevfilter->buffer.data;
+	if (dmxdevfilter->buffer.data) {
+		void *mem = dmxdevfilter->buffer.data;
 
 		spin_lock_irq(&dmxdev->lock);
-		dmxdevfilter->buffer.data = शून्य;
+		dmxdevfilter->buffer.data = NULL;
 		spin_unlock_irq(&dmxdev->lock);
-		vमुक्त(mem);
-	पूर्ण
+		vfree(mem);
+	}
 
 	dvb_dmxdev_filter_state_set(dmxdevfilter, DMXDEV_STATE_FREE);
 	wake_up(&dmxdevfilter->buffer.queue);
 	mutex_unlock(&dmxdevfilter->mutex);
 	mutex_unlock(&dmxdev->mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत व्योम invert_mode(काष्ठा dmx_filter *filter)
-अणु
-	पूर्णांक i;
+static inline void invert_mode(struct dmx_filter *filter)
+{
+	int i;
 
-	क्रम (i = 0; i < DMX_FILTER_SIZE; i++)
+	for (i = 0; i < DMX_FILTER_SIZE; i++)
 		filter->mode[i] ^= 0xff;
-पूर्ण
+}
 
-अटल पूर्णांक dvb_dmxdev_add_pid(काष्ठा dmxdev *dmxdev,
-			      काष्ठा dmxdev_filter *filter, u16 pid)
-अणु
-	काष्ठा dmxdev_feed *feed;
+static int dvb_dmxdev_add_pid(struct dmxdev *dmxdev,
+			      struct dmxdev_filter *filter, u16 pid)
+{
+	struct dmxdev_feed *feed;
 
-	अगर ((filter->type != DMXDEV_TYPE_PES) ||
+	if ((filter->type != DMXDEV_TYPE_PES) ||
 	    (filter->state < DMXDEV_STATE_SET))
-		वापस -EINVAL;
+		return -EINVAL;
 
 	/* only TS packet filters may have multiple PIDs */
-	अगर ((filter->params.pes.output != DMX_OUT_TSDEMUX_TAP) &&
+	if ((filter->params.pes.output != DMX_OUT_TSDEMUX_TAP) &&
 	    (!list_empty(&filter->feed.ts)))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	feed = kzalloc(माप(काष्ठा dmxdev_feed), GFP_KERNEL);
-	अगर (feed == शून्य)
-		वापस -ENOMEM;
+	feed = kzalloc(sizeof(struct dmxdev_feed), GFP_KERNEL);
+	if (feed == NULL)
+		return -ENOMEM;
 
 	feed->pid = pid;
 	list_add(&feed->next, &filter->feed.ts);
 
-	अगर (filter->state >= DMXDEV_STATE_GO)
-		वापस dvb_dmxdev_start_feed(dmxdev, filter, feed);
+	if (filter->state >= DMXDEV_STATE_GO)
+		return dvb_dmxdev_start_feed(dmxdev, filter, feed);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dvb_dmxdev_हटाओ_pid(काष्ठा dmxdev *dmxdev,
-				  काष्ठा dmxdev_filter *filter, u16 pid)
-अणु
-	काष्ठा dmxdev_feed *feed, *पंचांगp;
+static int dvb_dmxdev_remove_pid(struct dmxdev *dmxdev,
+				  struct dmxdev_filter *filter, u16 pid)
+{
+	struct dmxdev_feed *feed, *tmp;
 
-	अगर ((filter->type != DMXDEV_TYPE_PES) ||
+	if ((filter->type != DMXDEV_TYPE_PES) ||
 	    (filter->state < DMXDEV_STATE_SET))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	list_क्रम_each_entry_safe(feed, पंचांगp, &filter->feed.ts, next) अणु
-		अगर ((feed->pid == pid) && (feed->ts != शून्य)) अणु
+	list_for_each_entry_safe(feed, tmp, &filter->feed.ts, next) {
+		if ((feed->pid == pid) && (feed->ts != NULL)) {
 			feed->ts->stop_filtering(feed->ts);
 			filter->dev->demux->release_ts_feed(filter->dev->demux,
 							    feed->ts);
 			list_del(&feed->next);
-			kमुक्त(feed);
-		पूर्ण
-	पूर्ण
+			kfree(feed);
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dvb_dmxdev_filter_set(काष्ठा dmxdev *dmxdev,
-				 काष्ठा dmxdev_filter *dmxdevfilter,
-				 काष्ठा dmx_sct_filter_params *params)
-अणु
-	dprपूर्णांकk("%s: PID=0x%04x, flags=%02x, timeout=%d\n",
-		__func__, params->pid, params->flags, params->समयout);
+static int dvb_dmxdev_filter_set(struct dmxdev *dmxdev,
+				 struct dmxdev_filter *dmxdevfilter,
+				 struct dmx_sct_filter_params *params)
+{
+	dprintk("%s: PID=0x%04x, flags=%02x, timeout=%d\n",
+		__func__, params->pid, params->flags, params->timeout);
 
 	dvb_dmxdev_filter_stop(dmxdevfilter);
 
 	dmxdevfilter->type = DMXDEV_TYPE_SEC;
-	स_नकल(&dmxdevfilter->params.sec,
-	       params, माप(काष्ठा dmx_sct_filter_params));
+	memcpy(&dmxdevfilter->params.sec,
+	       params, sizeof(struct dmx_sct_filter_params));
 	invert_mode(&dmxdevfilter->params.sec.filter);
 	dvb_dmxdev_filter_state_set(dmxdevfilter, DMXDEV_STATE_SET);
 
-	अगर (params->flags & DMX_IMMEDIATE_START)
-		वापस dvb_dmxdev_filter_start(dmxdevfilter);
+	if (params->flags & DMX_IMMEDIATE_START)
+		return dvb_dmxdev_filter_start(dmxdevfilter);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dvb_dmxdev_pes_filter_set(काष्ठा dmxdev *dmxdev,
-				     काष्ठा dmxdev_filter *dmxdevfilter,
-				     काष्ठा dmx_pes_filter_params *params)
-अणु
-	पूर्णांक ret;
+static int dvb_dmxdev_pes_filter_set(struct dmxdev *dmxdev,
+				     struct dmxdev_filter *dmxdevfilter,
+				     struct dmx_pes_filter_params *params)
+{
+	int ret;
 
 	dvb_dmxdev_filter_stop(dmxdevfilter);
 	dvb_dmxdev_filter_reset(dmxdevfilter);
 
-	अगर ((अचिन्हित पूर्णांक)params->pes_type > DMX_PES_OTHER)
-		वापस -EINVAL;
+	if ((unsigned int)params->pes_type > DMX_PES_OTHER)
+		return -EINVAL;
 
 	dmxdevfilter->type = DMXDEV_TYPE_PES;
-	स_नकल(&dmxdevfilter->params, params,
-	       माप(काष्ठा dmx_pes_filter_params));
+	memcpy(&dmxdevfilter->params, params,
+	       sizeof(struct dmx_pes_filter_params));
 	INIT_LIST_HEAD(&dmxdevfilter->feed.ts);
 
 	dvb_dmxdev_filter_state_set(dmxdevfilter, DMXDEV_STATE_SET);
 
 	ret = dvb_dmxdev_add_pid(dmxdev, dmxdevfilter,
 				 dmxdevfilter->params.pes.pid);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	अगर (params->flags & DMX_IMMEDIATE_START)
-		वापस dvb_dmxdev_filter_start(dmxdevfilter);
+	if (params->flags & DMX_IMMEDIATE_START)
+		return dvb_dmxdev_filter_start(dmxdevfilter);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार dvb_dmxdev_पढ़ो_sec(काष्ठा dmxdev_filter *dfil,
-				   काष्ठा file *file, अक्षर __user *buf,
-				   माप_प्रकार count, loff_t *ppos)
-अणु
-	पूर्णांक result, hcount;
-	पूर्णांक करोne = 0;
+static ssize_t dvb_dmxdev_read_sec(struct dmxdev_filter *dfil,
+				   struct file *file, char __user *buf,
+				   size_t count, loff_t *ppos)
+{
+	int result, hcount;
+	int done = 0;
 
-	अगर (dfil->toकरो <= 0) अणु
-		hcount = 3 + dfil->toकरो;
-		अगर (hcount > count)
+	if (dfil->todo <= 0) {
+		hcount = 3 + dfil->todo;
+		if (hcount > count)
 			hcount = count;
-		result = dvb_dmxdev_buffer_पढ़ो(&dfil->buffer,
+		result = dvb_dmxdev_buffer_read(&dfil->buffer,
 						file->f_flags & O_NONBLOCK,
 						buf, hcount, ppos);
-		अगर (result < 0) अणु
-			dfil->toकरो = 0;
-			वापस result;
-		पूर्ण
-		अगर (copy_from_user(dfil->secheader - dfil->toकरो, buf, result))
-			वापस -EFAULT;
+		if (result < 0) {
+			dfil->todo = 0;
+			return result;
+		}
+		if (copy_from_user(dfil->secheader - dfil->todo, buf, result))
+			return -EFAULT;
 		buf += result;
-		करोne = result;
+		done = result;
 		count -= result;
-		dfil->toकरो -= result;
-		अगर (dfil->toकरो > -3)
-			वापस करोne;
-		dfil->toकरो = ((dfil->secheader[1] << 8) | dfil->secheader[2]) & 0xfff;
-		अगर (!count)
-			वापस करोne;
-	पूर्ण
-	अगर (count > dfil->toकरो)
-		count = dfil->toकरो;
-	result = dvb_dmxdev_buffer_पढ़ो(&dfil->buffer,
+		dfil->todo -= result;
+		if (dfil->todo > -3)
+			return done;
+		dfil->todo = ((dfil->secheader[1] << 8) | dfil->secheader[2]) & 0xfff;
+		if (!count)
+			return done;
+	}
+	if (count > dfil->todo)
+		count = dfil->todo;
+	result = dvb_dmxdev_buffer_read(&dfil->buffer,
 					file->f_flags & O_NONBLOCK,
 					buf, count, ppos);
-	अगर (result < 0)
-		वापस result;
-	dfil->toकरो -= result;
-	वापस (result + करोne);
-पूर्ण
+	if (result < 0)
+		return result;
+	dfil->todo -= result;
+	return (result + done);
+}
 
-अटल sमाप_प्रकार
-dvb_demux_पढ़ो(काष्ठा file *file, अक्षर __user *buf, माप_प्रकार count,
+static ssize_t
+dvb_demux_read(struct file *file, char __user *buf, size_t count,
 	       loff_t *ppos)
-अणु
-	काष्ठा dmxdev_filter *dmxdevfilter = file->निजी_data;
-	पूर्णांक ret;
+{
+	struct dmxdev_filter *dmxdevfilter = file->private_data;
+	int ret;
 
-	अगर (mutex_lock_पूर्णांकerruptible(&dmxdevfilter->mutex))
-		वापस -ERESTARTSYS;
+	if (mutex_lock_interruptible(&dmxdevfilter->mutex))
+		return -ERESTARTSYS;
 
-	अगर (dmxdevfilter->type == DMXDEV_TYPE_SEC)
-		ret = dvb_dmxdev_पढ़ो_sec(dmxdevfilter, file, buf, count, ppos);
-	अन्यथा
-		ret = dvb_dmxdev_buffer_पढ़ो(&dmxdevfilter->buffer,
+	if (dmxdevfilter->type == DMXDEV_TYPE_SEC)
+		ret = dvb_dmxdev_read_sec(dmxdevfilter, file, buf, count, ppos);
+	else
+		ret = dvb_dmxdev_buffer_read(&dmxdevfilter->buffer,
 					     file->f_flags & O_NONBLOCK,
 					     buf, count, ppos);
 
 	mutex_unlock(&dmxdevfilter->mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक dvb_demux_करो_ioctl(काष्ठा file *file,
-			      अचिन्हित पूर्णांक cmd, व्योम *parg)
-अणु
-	काष्ठा dmxdev_filter *dmxdevfilter = file->निजी_data;
-	काष्ठा dmxdev *dmxdev = dmxdevfilter->dev;
-	अचिन्हित दीर्घ arg = (अचिन्हित दीर्घ)parg;
-	पूर्णांक ret = 0;
+static int dvb_demux_do_ioctl(struct file *file,
+			      unsigned int cmd, void *parg)
+{
+	struct dmxdev_filter *dmxdevfilter = file->private_data;
+	struct dmxdev *dmxdev = dmxdevfilter->dev;
+	unsigned long arg = (unsigned long)parg;
+	int ret = 0;
 
-	अगर (mutex_lock_पूर्णांकerruptible(&dmxdev->mutex))
-		वापस -ERESTARTSYS;
+	if (mutex_lock_interruptible(&dmxdev->mutex))
+		return -ERESTARTSYS;
 
-	चयन (cmd) अणु
-	हाल DMX_START:
-		अगर (mutex_lock_पूर्णांकerruptible(&dmxdevfilter->mutex)) अणु
+	switch (cmd) {
+	case DMX_START:
+		if (mutex_lock_interruptible(&dmxdevfilter->mutex)) {
 			mutex_unlock(&dmxdev->mutex);
-			वापस -ERESTARTSYS;
-		पूर्ण
-		अगर (dmxdevfilter->state < DMXDEV_STATE_SET)
+			return -ERESTARTSYS;
+		}
+		if (dmxdevfilter->state < DMXDEV_STATE_SET)
 			ret = -EINVAL;
-		अन्यथा
+		else
 			ret = dvb_dmxdev_filter_start(dmxdevfilter);
 		mutex_unlock(&dmxdevfilter->mutex);
-		अवरोध;
+		break;
 
-	हाल DMX_STOP:
-		अगर (mutex_lock_पूर्णांकerruptible(&dmxdevfilter->mutex)) अणु
+	case DMX_STOP:
+		if (mutex_lock_interruptible(&dmxdevfilter->mutex)) {
 			mutex_unlock(&dmxdev->mutex);
-			वापस -ERESTARTSYS;
-		पूर्ण
+			return -ERESTARTSYS;
+		}
 		ret = dvb_dmxdev_filter_stop(dmxdevfilter);
 		mutex_unlock(&dmxdevfilter->mutex);
-		अवरोध;
+		break;
 
-	हाल DMX_SET_FILTER:
-		अगर (mutex_lock_पूर्णांकerruptible(&dmxdevfilter->mutex)) अणु
+	case DMX_SET_FILTER:
+		if (mutex_lock_interruptible(&dmxdevfilter->mutex)) {
 			mutex_unlock(&dmxdev->mutex);
-			वापस -ERESTARTSYS;
-		पूर्ण
+			return -ERESTARTSYS;
+		}
 		ret = dvb_dmxdev_filter_set(dmxdev, dmxdevfilter, parg);
 		mutex_unlock(&dmxdevfilter->mutex);
-		अवरोध;
+		break;
 
-	हाल DMX_SET_PES_FILTER:
-		अगर (mutex_lock_पूर्णांकerruptible(&dmxdevfilter->mutex)) अणु
+	case DMX_SET_PES_FILTER:
+		if (mutex_lock_interruptible(&dmxdevfilter->mutex)) {
 			mutex_unlock(&dmxdev->mutex);
-			वापस -ERESTARTSYS;
-		पूर्ण
+			return -ERESTARTSYS;
+		}
 		ret = dvb_dmxdev_pes_filter_set(dmxdev, dmxdevfilter, parg);
 		mutex_unlock(&dmxdevfilter->mutex);
-		अवरोध;
+		break;
 
-	हाल DMX_SET_BUFFER_SIZE:
-		अगर (mutex_lock_पूर्णांकerruptible(&dmxdevfilter->mutex)) अणु
+	case DMX_SET_BUFFER_SIZE:
+		if (mutex_lock_interruptible(&dmxdevfilter->mutex)) {
 			mutex_unlock(&dmxdev->mutex);
-			वापस -ERESTARTSYS;
-		पूर्ण
+			return -ERESTARTSYS;
+		}
 		ret = dvb_dmxdev_set_buffer_size(dmxdevfilter, arg);
 		mutex_unlock(&dmxdevfilter->mutex);
-		अवरोध;
+		break;
 
-	हाल DMX_GET_PES_PIDS:
-		अगर (!dmxdev->demux->get_pes_pids) अणु
+	case DMX_GET_PES_PIDS:
+		if (!dmxdev->demux->get_pes_pids) {
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		dmxdev->demux->get_pes_pids(dmxdev->demux, parg);
-		अवरोध;
+		break;
 
-	हाल DMX_GET_STC:
-		अगर (!dmxdev->demux->get_stc) अणु
+	case DMX_GET_STC:
+		if (!dmxdev->demux->get_stc) {
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		ret = dmxdev->demux->get_stc(dmxdev->demux,
-					     ((काष्ठा dmx_stc *)parg)->num,
-					     &((काष्ठा dmx_stc *)parg)->stc,
-					     &((काष्ठा dmx_stc *)parg)->base);
-		अवरोध;
+					     ((struct dmx_stc *)parg)->num,
+					     &((struct dmx_stc *)parg)->stc,
+					     &((struct dmx_stc *)parg)->base);
+		break;
 
-	हाल DMX_ADD_PID:
-		अगर (mutex_lock_पूर्णांकerruptible(&dmxdevfilter->mutex)) अणु
+	case DMX_ADD_PID:
+		if (mutex_lock_interruptible(&dmxdevfilter->mutex)) {
 			ret = -ERESTARTSYS;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		ret = dvb_dmxdev_add_pid(dmxdev, dmxdevfilter, *(u16 *)parg);
 		mutex_unlock(&dmxdevfilter->mutex);
-		अवरोध;
+		break;
 
-	हाल DMX_REMOVE_PID:
-		अगर (mutex_lock_पूर्णांकerruptible(&dmxdevfilter->mutex)) अणु
+	case DMX_REMOVE_PID:
+		if (mutex_lock_interruptible(&dmxdevfilter->mutex)) {
 			ret = -ERESTARTSYS;
-			अवरोध;
-		पूर्ण
-		ret = dvb_dmxdev_हटाओ_pid(dmxdev, dmxdevfilter, *(u16 *)parg);
+			break;
+		}
+		ret = dvb_dmxdev_remove_pid(dmxdev, dmxdevfilter, *(u16 *)parg);
 		mutex_unlock(&dmxdevfilter->mutex);
-		अवरोध;
+		break;
 
-#अगर_घोषित CONFIG_DVB_MMAP
-	हाल DMX_REQBUFS:
-		अगर (mutex_lock_पूर्णांकerruptible(&dmxdevfilter->mutex)) अणु
+#ifdef CONFIG_DVB_MMAP
+	case DMX_REQBUFS:
+		if (mutex_lock_interruptible(&dmxdevfilter->mutex)) {
 			mutex_unlock(&dmxdev->mutex);
-			वापस -ERESTARTSYS;
-		पूर्ण
+			return -ERESTARTSYS;
+		}
 		ret = dvb_vb2_reqbufs(&dmxdevfilter->vb2_ctx, parg);
 		mutex_unlock(&dmxdevfilter->mutex);
-		अवरोध;
+		break;
 
-	हाल DMX_QUERYBUF:
-		अगर (mutex_lock_पूर्णांकerruptible(&dmxdevfilter->mutex)) अणु
+	case DMX_QUERYBUF:
+		if (mutex_lock_interruptible(&dmxdevfilter->mutex)) {
 			mutex_unlock(&dmxdev->mutex);
-			वापस -ERESTARTSYS;
-		पूर्ण
+			return -ERESTARTSYS;
+		}
 		ret = dvb_vb2_querybuf(&dmxdevfilter->vb2_ctx, parg);
 		mutex_unlock(&dmxdevfilter->mutex);
-		अवरोध;
+		break;
 
-	हाल DMX_EXPBUF:
-		अगर (mutex_lock_पूर्णांकerruptible(&dmxdevfilter->mutex)) अणु
+	case DMX_EXPBUF:
+		if (mutex_lock_interruptible(&dmxdevfilter->mutex)) {
 			mutex_unlock(&dmxdev->mutex);
-			वापस -ERESTARTSYS;
-		पूर्ण
+			return -ERESTARTSYS;
+		}
 		ret = dvb_vb2_expbuf(&dmxdevfilter->vb2_ctx, parg);
 		mutex_unlock(&dmxdevfilter->mutex);
-		अवरोध;
+		break;
 
-	हाल DMX_QBUF:
-		अगर (mutex_lock_पूर्णांकerruptible(&dmxdevfilter->mutex)) अणु
+	case DMX_QBUF:
+		if (mutex_lock_interruptible(&dmxdevfilter->mutex)) {
 			mutex_unlock(&dmxdev->mutex);
-			वापस -ERESTARTSYS;
-		पूर्ण
+			return -ERESTARTSYS;
+		}
 		ret = dvb_vb2_qbuf(&dmxdevfilter->vb2_ctx, parg);
-		अगर (ret == 0 && !dvb_vb2_is_streaming(&dmxdevfilter->vb2_ctx))
+		if (ret == 0 && !dvb_vb2_is_streaming(&dmxdevfilter->vb2_ctx))
 			ret = dvb_vb2_stream_on(&dmxdevfilter->vb2_ctx);
 		mutex_unlock(&dmxdevfilter->mutex);
-		अवरोध;
+		break;
 
-	हाल DMX_DQBUF:
-		अगर (mutex_lock_पूर्णांकerruptible(&dmxdevfilter->mutex)) अणु
+	case DMX_DQBUF:
+		if (mutex_lock_interruptible(&dmxdevfilter->mutex)) {
 			mutex_unlock(&dmxdev->mutex);
-			वापस -ERESTARTSYS;
-		पूर्ण
+			return -ERESTARTSYS;
+		}
 		ret = dvb_vb2_dqbuf(&dmxdevfilter->vb2_ctx, parg);
 		mutex_unlock(&dmxdevfilter->mutex);
-		अवरोध;
-#पूर्ण_अगर
-	शेष:
+		break;
+#endif
+	default:
 		ret = -ENOTTY;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	mutex_unlock(&dmxdev->mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल दीर्घ dvb_demux_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
-			    अचिन्हित दीर्घ arg)
-अणु
-	वापस dvb_usercopy(file, cmd, arg, dvb_demux_करो_ioctl);
-पूर्ण
+static long dvb_demux_ioctl(struct file *file, unsigned int cmd,
+			    unsigned long arg)
+{
+	return dvb_usercopy(file, cmd, arg, dvb_demux_do_ioctl);
+}
 
-अटल __poll_t dvb_demux_poll(काष्ठा file *file, poll_table *रुको)
-अणु
-	काष्ठा dmxdev_filter *dmxdevfilter = file->निजी_data;
+static __poll_t dvb_demux_poll(struct file *file, poll_table *wait)
+{
+	struct dmxdev_filter *dmxdevfilter = file->private_data;
 	__poll_t mask = 0;
 
-	poll_रुको(file, &dmxdevfilter->buffer.queue, रुको);
+	poll_wait(file, &dmxdevfilter->buffer.queue, wait);
 
-	अगर ((!dmxdevfilter) || dmxdevfilter->dev->निकास)
-		वापस EPOLLERR;
-	अगर (dvb_vb2_is_streaming(&dmxdevfilter->vb2_ctx))
-		वापस dvb_vb2_poll(&dmxdevfilter->vb2_ctx, file, रुको);
+	if ((!dmxdevfilter) || dmxdevfilter->dev->exit)
+		return EPOLLERR;
+	if (dvb_vb2_is_streaming(&dmxdevfilter->vb2_ctx))
+		return dvb_vb2_poll(&dmxdevfilter->vb2_ctx, file, wait);
 
-	अगर (dmxdevfilter->state != DMXDEV_STATE_GO &&
+	if (dmxdevfilter->state != DMXDEV_STATE_GO &&
 	    dmxdevfilter->state != DMXDEV_STATE_DONE &&
 	    dmxdevfilter->state != DMXDEV_STATE_TIMEDOUT)
-		वापस 0;
+		return 0;
 
-	अगर (dmxdevfilter->buffer.error)
+	if (dmxdevfilter->buffer.error)
 		mask |= (EPOLLIN | EPOLLRDNORM | EPOLLPRI | EPOLLERR);
 
-	अगर (!dvb_ringbuffer_empty(&dmxdevfilter->buffer))
+	if (!dvb_ringbuffer_empty(&dmxdevfilter->buffer))
 		mask |= (EPOLLIN | EPOLLRDNORM | EPOLLPRI);
 
-	वापस mask;
-पूर्ण
+	return mask;
+}
 
-#अगर_घोषित CONFIG_DVB_MMAP
-अटल पूर्णांक dvb_demux_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा dmxdev_filter *dmxdevfilter = file->निजी_data;
-	काष्ठा dmxdev *dmxdev = dmxdevfilter->dev;
-	पूर्णांक ret;
+#ifdef CONFIG_DVB_MMAP
+static int dvb_demux_mmap(struct file *file, struct vm_area_struct *vma)
+{
+	struct dmxdev_filter *dmxdevfilter = file->private_data;
+	struct dmxdev *dmxdev = dmxdevfilter->dev;
+	int ret;
 
-	अगर (!dmxdev->may_करो_mmap)
-		वापस -ENOTTY;
+	if (!dmxdev->may_do_mmap)
+		return -ENOTTY;
 
-	अगर (mutex_lock_पूर्णांकerruptible(&dmxdev->mutex))
-		वापस -ERESTARTSYS;
+	if (mutex_lock_interruptible(&dmxdev->mutex))
+		return -ERESTARTSYS;
 
-	अगर (mutex_lock_पूर्णांकerruptible(&dmxdevfilter->mutex)) अणु
+	if (mutex_lock_interruptible(&dmxdevfilter->mutex)) {
 		mutex_unlock(&dmxdev->mutex);
-		वापस -ERESTARTSYS;
-	पूर्ण
+		return -ERESTARTSYS;
+	}
 	ret = dvb_vb2_mmap(&dmxdevfilter->vb2_ctx, vma);
 
 	mutex_unlock(&dmxdevfilter->mutex);
 	mutex_unlock(&dmxdev->mutex);
 
-	वापस ret;
-पूर्ण
-#पूर्ण_अगर
+	return ret;
+}
+#endif
 
-अटल पूर्णांक dvb_demux_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा dmxdev_filter *dmxdevfilter = file->निजी_data;
-	काष्ठा dmxdev *dmxdev = dmxdevfilter->dev;
-	पूर्णांक ret;
+static int dvb_demux_release(struct inode *inode, struct file *file)
+{
+	struct dmxdev_filter *dmxdevfilter = file->private_data;
+	struct dmxdev *dmxdev = dmxdevfilter->dev;
+	int ret;
 
-	ret = dvb_dmxdev_filter_मुक्त(dmxdev, dmxdevfilter);
+	ret = dvb_dmxdev_filter_free(dmxdev, dmxdevfilter);
 
 	mutex_lock(&dmxdev->mutex);
 	dmxdev->dvbdev->users--;
-	अगर (dmxdev->dvbdev->users == 1 && dmxdev->निकास == 1) अणु
+	if (dmxdev->dvbdev->users == 1 && dmxdev->exit == 1) {
 		mutex_unlock(&dmxdev->mutex);
-		wake_up(&dmxdev->dvbdev->रुको_queue);
-	पूर्ण अन्यथा
+		wake_up(&dmxdev->dvbdev->wait_queue);
+	} else
 		mutex_unlock(&dmxdev->mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा file_operations dvb_demux_fops = अणु
+static const struct file_operations dvb_demux_fops = {
 	.owner = THIS_MODULE,
-	.पढ़ो = dvb_demux_पढ़ो,
+	.read = dvb_demux_read,
 	.unlocked_ioctl = dvb_demux_ioctl,
 	.compat_ioctl = dvb_demux_ioctl,
-	.खोलो = dvb_demux_खोलो,
+	.open = dvb_demux_open,
 	.release = dvb_demux_release,
 	.poll = dvb_demux_poll,
-	.llseek = शेष_llseek,
-#अगर_घोषित CONFIG_DVB_MMAP
+	.llseek = default_llseek,
+#ifdef CONFIG_DVB_MMAP
 	.mmap = dvb_demux_mmap,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-अटल स्थिर काष्ठा dvb_device dvbdev_demux = अणु
-	.priv = शून्य,
+static const struct dvb_device dvbdev_demux = {
+	.priv = NULL,
 	.users = 1,
-	.ग_लिखोrs = 1,
-#अगर defined(CONFIG_MEDIA_CONTROLLER_DVB)
+	.writers = 1,
+#if defined(CONFIG_MEDIA_CONTROLLER_DVB)
 	.name = "dvb-demux",
-#पूर्ण_अगर
+#endif
 	.fops = &dvb_demux_fops
-पूर्ण;
+};
 
-अटल पूर्णांक dvb_dvr_करो_ioctl(काष्ठा file *file,
-			    अचिन्हित पूर्णांक cmd, व्योम *parg)
-अणु
-	काष्ठा dvb_device *dvbdev = file->निजी_data;
-	काष्ठा dmxdev *dmxdev = dvbdev->priv;
-	अचिन्हित दीर्घ arg = (अचिन्हित दीर्घ)parg;
-	पूर्णांक ret;
+static int dvb_dvr_do_ioctl(struct file *file,
+			    unsigned int cmd, void *parg)
+{
+	struct dvb_device *dvbdev = file->private_data;
+	struct dmxdev *dmxdev = dvbdev->priv;
+	unsigned long arg = (unsigned long)parg;
+	int ret;
 
-	अगर (mutex_lock_पूर्णांकerruptible(&dmxdev->mutex))
-		वापस -ERESTARTSYS;
+	if (mutex_lock_interruptible(&dmxdev->mutex))
+		return -ERESTARTSYS;
 
-	चयन (cmd) अणु
-	हाल DMX_SET_BUFFER_SIZE:
+	switch (cmd) {
+	case DMX_SET_BUFFER_SIZE:
 		ret = dvb_dvr_set_buffer_size(dmxdev, arg);
-		अवरोध;
+		break;
 
-#अगर_घोषित CONFIG_DVB_MMAP
-	हाल DMX_REQBUFS:
+#ifdef CONFIG_DVB_MMAP
+	case DMX_REQBUFS:
 		ret = dvb_vb2_reqbufs(&dmxdev->dvr_vb2_ctx, parg);
-		अवरोध;
+		break;
 
-	हाल DMX_QUERYBUF:
+	case DMX_QUERYBUF:
 		ret = dvb_vb2_querybuf(&dmxdev->dvr_vb2_ctx, parg);
-		अवरोध;
+		break;
 
-	हाल DMX_EXPBUF:
+	case DMX_EXPBUF:
 		ret = dvb_vb2_expbuf(&dmxdev->dvr_vb2_ctx, parg);
-		अवरोध;
+		break;
 
-	हाल DMX_QBUF:
+	case DMX_QBUF:
 		ret = dvb_vb2_qbuf(&dmxdev->dvr_vb2_ctx, parg);
-		अगर (ret == 0 && !dvb_vb2_is_streaming(&dmxdev->dvr_vb2_ctx))
+		if (ret == 0 && !dvb_vb2_is_streaming(&dmxdev->dvr_vb2_ctx))
 			ret = dvb_vb2_stream_on(&dmxdev->dvr_vb2_ctx);
-		अवरोध;
+		break;
 
-	हाल DMX_DQBUF:
+	case DMX_DQBUF:
 		ret = dvb_vb2_dqbuf(&dmxdev->dvr_vb2_ctx, parg);
-		अवरोध;
-#पूर्ण_अगर
-	शेष:
+		break;
+#endif
+	default:
 		ret = -ENOTTY;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	mutex_unlock(&dmxdev->mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल दीर्घ dvb_dvr_ioctl(काष्ठा file *file,
-			 अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	वापस dvb_usercopy(file, cmd, arg, dvb_dvr_करो_ioctl);
-पूर्ण
+static long dvb_dvr_ioctl(struct file *file,
+			 unsigned int cmd, unsigned long arg)
+{
+	return dvb_usercopy(file, cmd, arg, dvb_dvr_do_ioctl);
+}
 
-अटल __poll_t dvb_dvr_poll(काष्ठा file *file, poll_table *रुको)
-अणु
-	काष्ठा dvb_device *dvbdev = file->निजी_data;
-	काष्ठा dmxdev *dmxdev = dvbdev->priv;
+static __poll_t dvb_dvr_poll(struct file *file, poll_table *wait)
+{
+	struct dvb_device *dvbdev = file->private_data;
+	struct dmxdev *dmxdev = dvbdev->priv;
 	__poll_t mask = 0;
 
-	dprपूर्णांकk("%s\n", __func__);
+	dprintk("%s\n", __func__);
 
-	poll_रुको(file, &dmxdev->dvr_buffer.queue, रुको);
+	poll_wait(file, &dmxdev->dvr_buffer.queue, wait);
 
-	अगर (dmxdev->निकास)
-		वापस EPOLLERR;
-	अगर (dvb_vb2_is_streaming(&dmxdev->dvr_vb2_ctx))
-		वापस dvb_vb2_poll(&dmxdev->dvr_vb2_ctx, file, रुको);
+	if (dmxdev->exit)
+		return EPOLLERR;
+	if (dvb_vb2_is_streaming(&dmxdev->dvr_vb2_ctx))
+		return dvb_vb2_poll(&dmxdev->dvr_vb2_ctx, file, wait);
 
-	अगर (((file->f_flags & O_ACCMODE) == O_RDONLY) ||
-	    dmxdev->may_करो_mmap) अणु
-		अगर (dmxdev->dvr_buffer.error)
+	if (((file->f_flags & O_ACCMODE) == O_RDONLY) ||
+	    dmxdev->may_do_mmap) {
+		if (dmxdev->dvr_buffer.error)
 			mask |= (EPOLLIN | EPOLLRDNORM | EPOLLPRI | EPOLLERR);
 
-		अगर (!dvb_ringbuffer_empty(&dmxdev->dvr_buffer))
+		if (!dvb_ringbuffer_empty(&dmxdev->dvr_buffer))
 			mask |= (EPOLLIN | EPOLLRDNORM | EPOLLPRI);
-	पूर्ण अन्यथा
+	} else
 		mask |= (EPOLLOUT | EPOLLWRNORM | EPOLLPRI);
 
-	वापस mask;
-पूर्ण
+	return mask;
+}
 
-#अगर_घोषित CONFIG_DVB_MMAP
-अटल पूर्णांक dvb_dvr_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा dvb_device *dvbdev = file->निजी_data;
-	काष्ठा dmxdev *dmxdev = dvbdev->priv;
-	पूर्णांक ret;
+#ifdef CONFIG_DVB_MMAP
+static int dvb_dvr_mmap(struct file *file, struct vm_area_struct *vma)
+{
+	struct dvb_device *dvbdev = file->private_data;
+	struct dmxdev *dmxdev = dvbdev->priv;
+	int ret;
 
-	अगर (!dmxdev->may_करो_mmap)
-		वापस -ENOTTY;
+	if (!dmxdev->may_do_mmap)
+		return -ENOTTY;
 
-	अगर (dmxdev->निकास)
-		वापस -ENODEV;
+	if (dmxdev->exit)
+		return -ENODEV;
 
-	अगर (mutex_lock_पूर्णांकerruptible(&dmxdev->mutex))
-		वापस -ERESTARTSYS;
+	if (mutex_lock_interruptible(&dmxdev->mutex))
+		return -ERESTARTSYS;
 
 	ret = dvb_vb2_mmap(&dmxdev->dvr_vb2_ctx, vma);
 	mutex_unlock(&dmxdev->mutex);
-	वापस ret;
-पूर्ण
-#पूर्ण_अगर
+	return ret;
+}
+#endif
 
-अटल स्थिर काष्ठा file_operations dvb_dvr_fops = अणु
+static const struct file_operations dvb_dvr_fops = {
 	.owner = THIS_MODULE,
-	.पढ़ो = dvb_dvr_पढ़ो,
-	.ग_लिखो = dvb_dvr_ग_लिखो,
+	.read = dvb_dvr_read,
+	.write = dvb_dvr_write,
 	.unlocked_ioctl = dvb_dvr_ioctl,
-	.खोलो = dvb_dvr_खोलो,
+	.open = dvb_dvr_open,
 	.release = dvb_dvr_release,
 	.poll = dvb_dvr_poll,
-	.llseek = शेष_llseek,
-#अगर_घोषित CONFIG_DVB_MMAP
+	.llseek = default_llseek,
+#ifdef CONFIG_DVB_MMAP
 	.mmap = dvb_dvr_mmap,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-अटल स्थिर काष्ठा dvb_device dvbdev_dvr = अणु
-	.priv = शून्य,
-	.पढ़ोers = 1,
+static const struct dvb_device dvbdev_dvr = {
+	.priv = NULL,
+	.readers = 1,
 	.users = 1,
-#अगर defined(CONFIG_MEDIA_CONTROLLER_DVB)
+#if defined(CONFIG_MEDIA_CONTROLLER_DVB)
 	.name = "dvb-dvr",
-#पूर्ण_अगर
+#endif
 	.fops = &dvb_dvr_fops
-पूर्ण;
-पूर्णांक dvb_dmxdev_init(काष्ठा dmxdev *dmxdev, काष्ठा dvb_adapter *dvb_adapter)
-अणु
-	पूर्णांक i;
+};
+int dvb_dmxdev_init(struct dmxdev *dmxdev, struct dvb_adapter *dvb_adapter)
+{
+	int i;
 
-	अगर (dmxdev->demux->खोलो(dmxdev->demux) < 0)
-		वापस -EUSERS;
+	if (dmxdev->demux->open(dmxdev->demux) < 0)
+		return -EUSERS;
 
-	dmxdev->filter = vदो_स्मृति(array_size(माप(काष्ठा dmxdev_filter),
+	dmxdev->filter = vmalloc(array_size(sizeof(struct dmxdev_filter),
 					    dmxdev->filternum));
-	अगर (!dmxdev->filter)
-		वापस -ENOMEM;
+	if (!dmxdev->filter)
+		return -ENOMEM;
 
 	mutex_init(&dmxdev->mutex);
 	spin_lock_init(&dmxdev->lock);
-	क्रम (i = 0; i < dmxdev->filternum; i++) अणु
+	for (i = 0; i < dmxdev->filternum; i++) {
 		dmxdev->filter[i].dev = dmxdev;
-		dmxdev->filter[i].buffer.data = शून्य;
+		dmxdev->filter[i].buffer.data = NULL;
 		dvb_dmxdev_filter_state_set(&dmxdev->filter[i],
 					    DMXDEV_STATE_FREE);
-	पूर्ण
+	}
 
-	dvb_रेजिस्टर_device(dvb_adapter, &dmxdev->dvbdev, &dvbdev_demux, dmxdev,
+	dvb_register_device(dvb_adapter, &dmxdev->dvbdev, &dvbdev_demux, dmxdev,
 			    DVB_DEVICE_DEMUX, dmxdev->filternum);
-	dvb_रेजिस्टर_device(dvb_adapter, &dmxdev->dvr_dvbdev, &dvbdev_dvr,
+	dvb_register_device(dvb_adapter, &dmxdev->dvr_dvbdev, &dvbdev_dvr,
 			    dmxdev, DVB_DEVICE_DVR, dmxdev->filternum);
 
-	dvb_ringbuffer_init(&dmxdev->dvr_buffer, शून्य, 8192);
+	dvb_ringbuffer_init(&dmxdev->dvr_buffer, NULL, 8192);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 EXPORT_SYMBOL(dvb_dmxdev_init);
 
-व्योम dvb_dmxdev_release(काष्ठा dmxdev *dmxdev)
-अणु
-	dmxdev->निकास = 1;
-	अगर (dmxdev->dvbdev->users > 1) अणु
-		रुको_event(dmxdev->dvbdev->रुको_queue,
+void dvb_dmxdev_release(struct dmxdev *dmxdev)
+{
+	dmxdev->exit = 1;
+	if (dmxdev->dvbdev->users > 1) {
+		wait_event(dmxdev->dvbdev->wait_queue,
 				dmxdev->dvbdev->users == 1);
-	पूर्ण
-	अगर (dmxdev->dvr_dvbdev->users > 1) अणु
-		रुको_event(dmxdev->dvr_dvbdev->रुको_queue,
+	}
+	if (dmxdev->dvr_dvbdev->users > 1) {
+		wait_event(dmxdev->dvr_dvbdev->wait_queue,
 				dmxdev->dvr_dvbdev->users == 1);
-	पूर्ण
+	}
 
-	dvb_unरेजिस्टर_device(dmxdev->dvbdev);
-	dvb_unरेजिस्टर_device(dmxdev->dvr_dvbdev);
+	dvb_unregister_device(dmxdev->dvbdev);
+	dvb_unregister_device(dmxdev->dvr_dvbdev);
 
-	vमुक्त(dmxdev->filter);
-	dmxdev->filter = शून्य;
-	dmxdev->demux->बंद(dmxdev->demux);
-पूर्ण
+	vfree(dmxdev->filter);
+	dmxdev->filter = NULL;
+	dmxdev->demux->close(dmxdev->demux);
+}
 
 EXPORT_SYMBOL(dvb_dmxdev_release);

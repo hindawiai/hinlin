@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * linux/drivers/pcmcia/pxa/pxa_cm_x2xx.c
  *
@@ -7,38 +6,38 @@
  * Mike Rapoport <mike@compulab.co.il>
  */
 
-#समावेश <linux/module.h>
+#include <linux/module.h>
 
-#समावेश <यंत्र/mach-types.h>
-#समावेश <mach/hardware.h>
+#include <asm/mach-types.h>
+#include <mach/hardware.h>
 
-पूर्णांक cmx255_pcmcia_init(व्योम);
-पूर्णांक cmx270_pcmcia_init(व्योम);
-व्योम cmx255_pcmcia_निकास(व्योम);
-व्योम cmx270_pcmcia_निकास(व्योम);
+int cmx255_pcmcia_init(void);
+int cmx270_pcmcia_init(void);
+void cmx255_pcmcia_exit(void);
+void cmx270_pcmcia_exit(void);
 
-अटल पूर्णांक __init cmx2xx_pcmcia_init(व्योम)
-अणु
-	पूर्णांक ret = -ENODEV;
+static int __init cmx2xx_pcmcia_init(void)
+{
+	int ret = -ENODEV;
 
-	अगर (machine_is_armcore() && cpu_is_pxa25x())
+	if (machine_is_armcore() && cpu_is_pxa25x())
 		ret = cmx255_pcmcia_init();
-	अन्यथा अगर (machine_is_armcore() && cpu_is_pxa27x())
+	else if (machine_is_armcore() && cpu_is_pxa27x())
 		ret = cmx270_pcmcia_init();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम __निकास cmx2xx_pcmcia_निकास(व्योम)
-अणु
-	अगर (machine_is_armcore() && cpu_is_pxa25x())
-		cmx255_pcmcia_निकास();
-	अन्यथा अगर (machine_is_armcore() && cpu_is_pxa27x())
-		cmx270_pcmcia_निकास();
-पूर्ण
+static void __exit cmx2xx_pcmcia_exit(void)
+{
+	if (machine_is_armcore() && cpu_is_pxa25x())
+		cmx255_pcmcia_exit();
+	else if (machine_is_armcore() && cpu_is_pxa27x())
+		cmx270_pcmcia_exit();
+}
 
 module_init(cmx2xx_pcmcia_init);
-module_निकास(cmx2xx_pcmcia_निकास);
+module_exit(cmx2xx_pcmcia_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Mike Rapoport <mike@compulab.co.il>");

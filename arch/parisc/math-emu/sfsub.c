@@ -1,9 +1,8 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Linux/PA-RISC Project (http://www.parisc-linux.org/)
  *
- * Floating-poपूर्णांक emulation code
+ * Floating-point emulation code
  *  Copyright (C) 2001 Hewlett-Packard (Paul Bame) <bame@debian.org>
  */
 /*
@@ -27,483 +26,483 @@
 */
 
 
-#समावेश "float.h"
-#समावेश "sgl_float.h"
+#include "float.h"
+#include "sgl_float.h"
 
 /*
  * Single_subtract: subtract two single precision values.
  */
-पूर्णांक
+int
 sgl_fsub(
-	    sgl_भग्नing_poपूर्णांक *leftptr,
-	    sgl_भग्नing_poपूर्णांक *rightptr,
-	    sgl_भग्नing_poपूर्णांक *dstptr,
-	    अचिन्हित पूर्णांक *status)
-    अणु
-    रेजिस्टर अचिन्हित पूर्णांक left, right, result, extent;
-    रेजिस्टर अचिन्हित पूर्णांक signless_upper_left, signless_upper_right, save;
+	    sgl_floating_point *leftptr,
+	    sgl_floating_point *rightptr,
+	    sgl_floating_point *dstptr,
+	    unsigned int *status)
+    {
+    register unsigned int left, right, result, extent;
+    register unsigned int signless_upper_left, signless_upper_right, save;
     
-    रेजिस्टर पूर्णांक result_exponent, right_exponent, dअगरf_exponent;
-    रेजिस्टर पूर्णांक sign_save, jumpsize;
-    रेजिस्टर boolean inexact = FALSE, underflowtrap;
+    register int result_exponent, right_exponent, diff_exponent;
+    register int sign_save, jumpsize;
+    register boolean inexact = FALSE, underflowtrap;
         
     /* Create local copies of the numbers */
     left = *leftptr;
     right = *rightptr;
 
-    /* A zero "save" helps discover equal opeअक्रमs (क्रम later),  *
-     * and is used in swapping opeअक्रमs (अगर needed).             */
-    Sgl_xortoपूर्णांकp1(left,right,/*to*/save);
+    /* A zero "save" helps discover equal operands (for later),  *
+     * and is used in swapping operands (if needed).             */
+    Sgl_xortointp1(left,right,/*to*/save);
 
     /*
-     * check first opeअक्रम क्रम NaN's or infinity
+     * check first operand for NaN's or infinity
      */
-    अगर ((result_exponent = Sgl_exponent(left)) == SGL_अनन्त_EXPONENT)
-	अणु
-	अगर (Sgl_iszero_mantissa(left)) 
-	    अणु
-	    अगर (Sgl_isnotnan(right)) 
-		अणु
-		अगर (Sgl_isinfinity(right) && save==0) 
-		    अणु
+    if ((result_exponent = Sgl_exponent(left)) == SGL_INFINITY_EXPONENT)
+	{
+	if (Sgl_iszero_mantissa(left)) 
+	    {
+	    if (Sgl_isnotnan(right)) 
+		{
+		if (Sgl_isinfinity(right) && save==0) 
+		    {
 		    /* 
-		     * invalid since opeअक्रमs are same चिन्हित infinity's
+		     * invalid since operands are same signed infinity's
 		     */
-		    अगर (Is_invalidtrap_enabled()) वापस(INVALIDEXCEPTION);
+		    if (Is_invalidtrap_enabled()) return(INVALIDEXCEPTION);
                     Set_invalidflag();
                     Sgl_makequietnan(result);
 		    *dstptr = result;
-		    वापस(NOEXCEPTION);
-		    पूर्ण
+		    return(NOEXCEPTION);
+		    }
 		/*
-	 	 * वापस infinity
+	 	 * return infinity
 	 	 */
 		*dstptr = left;
-		वापस(NOEXCEPTION);
-		पूर्ण
-	    पूर्ण
-	अन्यथा 
-	    अणु
+		return(NOEXCEPTION);
+		}
+	    }
+	else 
+	    {
             /*
-             * is NaN; संकेतing or quiet?
+             * is NaN; signaling or quiet?
              */
-            अगर (Sgl_isone_संकेतing(left)) 
-		अणु
-               	/* trap अगर INVALIDTRAP enabled */
-		अगर (Is_invalidtrap_enabled()) वापस(INVALIDEXCEPTION);
+            if (Sgl_isone_signaling(left)) 
+		{
+               	/* trap if INVALIDTRAP enabled */
+		if (Is_invalidtrap_enabled()) return(INVALIDEXCEPTION);
         	/* make NaN quiet */
         	Set_invalidflag();
         	Sgl_set_quiet(left);
-        	पूर्ण
+        	}
 	    /* 
-	     * is second opeअक्रम a संकेतing NaN? 
+	     * is second operand a signaling NaN? 
 	     */
-	    अन्यथा अगर (Sgl_is_संकेतingnan(right)) 
-		अणु
-        	/* trap अगर INVALIDTRAP enabled */
-               	अगर (Is_invalidtrap_enabled()) वापस(INVALIDEXCEPTION);
+	    else if (Sgl_is_signalingnan(right)) 
+		{
+        	/* trap if INVALIDTRAP enabled */
+               	if (Is_invalidtrap_enabled()) return(INVALIDEXCEPTION);
 		/* make NaN quiet */
 		Set_invalidflag();
 		Sgl_set_quiet(right);
 		*dstptr = right;
-		वापस(NOEXCEPTION);
-		पूर्ण
+		return(NOEXCEPTION);
+		}
 	    /*
- 	     * वापस quiet NaN
+ 	     * return quiet NaN
  	     */
  	    *dstptr = left;
- 	    वापस(NOEXCEPTION);
-	    पूर्ण
-	पूर्ण /* End left NaN or Infinity processing */
+ 	    return(NOEXCEPTION);
+	    }
+	} /* End left NaN or Infinity processing */
     /*
-     * check second opeअक्रम क्रम NaN's or infinity
+     * check second operand for NaN's or infinity
      */
-    अगर (Sgl_isinfinity_exponent(right)) 
-	अणु
-	अगर (Sgl_iszero_mantissa(right)) 
-	    अणु
-	    /* वापस infinity */
+    if (Sgl_isinfinity_exponent(right)) 
+	{
+	if (Sgl_iszero_mantissa(right)) 
+	    {
+	    /* return infinity */
 	    Sgl_invert_sign(right);
 	    *dstptr = right;
-	    वापस(NOEXCEPTION);
-	    पूर्ण
+	    return(NOEXCEPTION);
+	    }
         /*
-         * is NaN; संकेतing or quiet?
+         * is NaN; signaling or quiet?
          */
-        अगर (Sgl_isone_संकेतing(right)) 
-	    अणु
-            /* trap अगर INVALIDTRAP enabled */
-	    अगर (Is_invalidtrap_enabled()) वापस(INVALIDEXCEPTION);
+        if (Sgl_isone_signaling(right)) 
+	    {
+            /* trap if INVALIDTRAP enabled */
+	    if (Is_invalidtrap_enabled()) return(INVALIDEXCEPTION);
 	    /* make NaN quiet */
 	    Set_invalidflag();
 	    Sgl_set_quiet(right);
-	    पूर्ण
+	    }
 	/*
-	 * वापस quiet NaN
+	 * return quiet NaN
  	 */
 	*dstptr = right;
-	वापस(NOEXCEPTION);
-    	पूर्ण /* End right NaN or Infinity processing */
+	return(NOEXCEPTION);
+    	} /* End right NaN or Infinity processing */
 
     /* Invariant: Must be dealing with finite numbers */
 
-    /* Compare opeअक्रमs by removing the sign */
-    Sgl_copytoपूर्णांक_exponenपंचांगantissa(left,signless_upper_left);
-    Sgl_copytoपूर्णांक_exponenपंचांगantissa(right,signless_upper_right);
+    /* Compare operands by removing the sign */
+    Sgl_copytoint_exponentmantissa(left,signless_upper_left);
+    Sgl_copytoint_exponentmantissa(right,signless_upper_right);
 
-    /* sign dअगरference selects sub or add operation. */
-    अगर(Sgl_ismagnitudeless(signless_upper_left,signless_upper_right))
-	अणु
-	/* Set the left opeअक्रम to the larger one by XOR swap *
+    /* sign difference selects sub or add operation. */
+    if(Sgl_ismagnitudeless(signless_upper_left,signless_upper_right))
+	{
+	/* Set the left operand to the larger one by XOR swap *
 	 *  First finish the first word using "save"          */
-	Sgl_xorfromपूर्णांकp1(save,right,/*to*/right);
-	Sgl_xorfromपूर्णांकp1(save,left,/*to*/left);
+	Sgl_xorfromintp1(save,right,/*to*/right);
+	Sgl_xorfromintp1(save,left,/*to*/left);
 	result_exponent = Sgl_exponent(left);
 	Sgl_invert_sign(left);
-	पूर्ण
+	}
     /* Invariant:  left is not smaller than right. */ 
 
-    अगर((right_exponent = Sgl_exponent(right)) == 0)
-        अणु
-	/* Denormalized opeअक्रमs.  First look क्रम zeroes */
-	अगर(Sgl_iszero_mantissa(right)) 
-	    अणु
+    if((right_exponent = Sgl_exponent(right)) == 0)
+        {
+	/* Denormalized operands.  First look for zeroes */
+	if(Sgl_iszero_mantissa(right)) 
+	    {
 	    /* right is zero */
-	    अगर(Sgl_iszero_exponenपंचांगantissa(left))
-		अणु
-		/* Both opeअक्रमs are zeros */
+	    if(Sgl_iszero_exponentmantissa(left))
+		{
+		/* Both operands are zeros */
 		Sgl_invert_sign(right);
-		अगर(Is_rounding_mode(ROUNDMINUS))
-		    अणु
+		if(Is_rounding_mode(ROUNDMINUS))
+		    {
 		    Sgl_or_signs(left,/*with*/right);
-		    पूर्ण
-		अन्यथा
-		    अणु
+		    }
+		else
+		    {
 		    Sgl_and_signs(left,/*with*/right);
-		    पूर्ण
-		पूर्ण
-	    अन्यथा 
-		अणु
+		    }
+		}
+	    else 
+		{
 		/* Left is not a zero and must be the result.  Trapped
-		 * underflows are संकेतed अगर left is denormalized.  Result
+		 * underflows are signaled if left is denormalized.  Result
 		 * is always exact. */
-		अगर( (result_exponent == 0) && Is_underflowtrap_enabled() )
-		    अणु
+		if( (result_exponent == 0) && Is_underflowtrap_enabled() )
+		    {
 		    /* need to normalize results mantissa */
 	    	    sign_save = Sgl_signextendedsign(left);
-		    Sgl_leftshअगरtby1(left);
+		    Sgl_leftshiftby1(left);
 		    Sgl_normalize(left,result_exponent);
 		    Sgl_set_sign(left,/*using*/sign_save);
                     Sgl_setwrapped_exponent(left,result_exponent,unfl);
 		    *dstptr = left;
 		    /* inexact = FALSE */
-		    वापस(UNDERFLOWEXCEPTION);
-		    पूर्ण
-		पूर्ण
+		    return(UNDERFLOWEXCEPTION);
+		    }
+		}
 	    *dstptr = left;
-	    वापस(NOEXCEPTION);
-	    पूर्ण
+	    return(NOEXCEPTION);
+	    }
 
 	/* Neither are zeroes */
-	Sgl_clear_sign(right);	/* Exponent is alपढ़ोy cleared */
-	अगर(result_exponent == 0 )
-	    अणु
-	    /* Both opeअक्रमs are denormalized.  The result must be exact
+	Sgl_clear_sign(right);	/* Exponent is already cleared */
+	if(result_exponent == 0 )
+	    {
+	    /* Both operands are denormalized.  The result must be exact
 	     * and is simply calculated.  A sum could become normalized and a
-	     * dअगरference could cancel to a true zero. */
-	    अगर( (/*चिन्हित*/पूर्णांक) save >= 0 )
-		अणु
-		Sgl_subtract(left,/*minus*/right,/*पूर्णांकo*/result);
-		अगर(Sgl_iszero_mantissa(result))
-		    अणु
-		    अगर(Is_rounding_mode(ROUNDMINUS))
-			अणु
+	     * difference could cancel to a true zero. */
+	    if( (/*signed*/int) save >= 0 )
+		{
+		Sgl_subtract(left,/*minus*/right,/*into*/result);
+		if(Sgl_iszero_mantissa(result))
+		    {
+		    if(Is_rounding_mode(ROUNDMINUS))
+			{
 			Sgl_setone_sign(result);
-			पूर्ण
-		    अन्यथा
-			अणु
+			}
+		    else
+			{
 			Sgl_setzero_sign(result);
-			पूर्ण
+			}
 		    *dstptr = result;
-		    वापस(NOEXCEPTION);
-		    पूर्ण
-		पूर्ण
-	    अन्यथा
-		अणु
-		Sgl_addition(left,right,/*पूर्णांकo*/result);
-		अगर(Sgl_isone_hidden(result))
-		    अणु
+		    return(NOEXCEPTION);
+		    }
+		}
+	    else
+		{
+		Sgl_addition(left,right,/*into*/result);
+		if(Sgl_isone_hidden(result))
+		    {
 		    *dstptr = result;
-		    वापस(NOEXCEPTION);
-		    पूर्ण
-		पूर्ण
-	    अगर(Is_underflowtrap_enabled())
-		अणु
+		    return(NOEXCEPTION);
+		    }
+		}
+	    if(Is_underflowtrap_enabled())
+		{
 		/* need to normalize result */
 	    	sign_save = Sgl_signextendedsign(result);
-		Sgl_leftshअगरtby1(result);
+		Sgl_leftshiftby1(result);
 		Sgl_normalize(result,result_exponent);
 		Sgl_set_sign(result,/*using*/sign_save);
                 Sgl_setwrapped_exponent(result,result_exponent,unfl);
 		*dstptr = result;
 		/* inexact = FALSE */
-		वापस(UNDERFLOWEXCEPTION);
-		पूर्ण
+		return(UNDERFLOWEXCEPTION);
+		}
 	    *dstptr = result;
-	    वापस(NOEXCEPTION);
-	    पूर्ण
-	right_exponent = 1;	/* Set exponent to reflect dअगरferent bias
+	    return(NOEXCEPTION);
+	    }
+	right_exponent = 1;	/* Set exponent to reflect different bias
 				 * with denomalized numbers. */
-	पूर्ण
-    अन्यथा
-	अणु
+	}
+    else
+	{
 	Sgl_clear_signexponent_set_hidden(right);
-	पूर्ण
+	}
     Sgl_clear_exponent_set_hidden(left);
-    dअगरf_exponent = result_exponent - right_exponent;
+    diff_exponent = result_exponent - right_exponent;
 
     /* 
-     * Special हाल alignment of opeअक्रमs that would क्रमce alignment 
+     * Special case alignment of operands that would force alignment 
      * beyond the extent of the extension.  A further optimization
-     * could special हाल this but only reduces the path length क्रम this
-     * infrequent हाल.
+     * could special case this but only reduces the path length for this
+     * infrequent case.
      */
-    अगर(dअगरf_exponent > SGL_THRESHOLD)
-	अणु
-	dअगरf_exponent = SGL_THRESHOLD;
-	पूर्ण
+    if(diff_exponent > SGL_THRESHOLD)
+	{
+	diff_exponent = SGL_THRESHOLD;
+	}
     
-    /* Align right opeअक्रम by shअगरting to right */
-    Sgl_right_align(/*opeअक्रम*/right,/*shअगरted by*/dअगरf_exponent,
+    /* Align right operand by shifting to right */
+    Sgl_right_align(/*operand*/right,/*shifted by*/diff_exponent,
       /*and lower to*/extent);
 
-    /* Treat sum and dअगरference of the opeअक्रमs separately. */
-    अगर( (/*चिन्हित*/पूर्णांक) save >= 0 )
-	अणु
+    /* Treat sum and difference of the operands separately. */
+    if( (/*signed*/int) save >= 0 )
+	{
 	/*
-	 * Dअगरference of the two opeअक्रमs.  Their can be no overflow.  A
-	 * borrow can occur out of the hidden bit and क्रमce a post
+	 * Difference of the two operands.  Their can be no overflow.  A
+	 * borrow can occur out of the hidden bit and force a post
 	 * normalization phase.
 	 */
-	Sgl_subtract_withextension(left,/*minus*/right,/*with*/extent,/*पूर्णांकo*/result);
-	अगर(Sgl_iszero_hidden(result))
-	    अणु
+	Sgl_subtract_withextension(left,/*minus*/right,/*with*/extent,/*into*/result);
+	if(Sgl_iszero_hidden(result))
+	    {
 	    /* Handle normalization */
-	    /* A straightक्रमward algorithm would now shअगरt the result
+	    /* A straightforward algorithm would now shift the result
 	     * and extension left until the hidden bit becomes one.  Not
-	     * all of the extension bits need participate in the shअगरt.
-	     * Only the two most signअगरicant bits (round and guard) are
-	     * needed.  If only a single shअगरt is needed then the guard
-	     * bit becomes a signअगरicant low order bit and the extension
+	     * all of the extension bits need participate in the shift.
+	     * Only the two most significant bits (round and guard) are
+	     * needed.  If only a single shift is needed then the guard
+	     * bit becomes a significant low order bit and the extension
 	     * must participate in the rounding.  If more than a single 
-	     * shअगरt is needed, then all bits to the right of the guard 
+	     * shift is needed, then all bits to the right of the guard 
 	     * bit are zeros, and the guard bit may or may not be zero. */
 	    sign_save = Sgl_signextendedsign(result);
-            Sgl_leftshअगरtby1_withextent(result,extent,result);
+            Sgl_leftshiftby1_withextent(result,extent,result);
 
-            /* Need to check क्रम a zero result.  The sign and exponent
-	     * fields have alपढ़ोy been zeroed.  The more efficient test
+            /* Need to check for a zero result.  The sign and exponent
+	     * fields have already been zeroed.  The more efficient test
 	     * of the full object can be used.
 	     */
-    	    अगर(Sgl_iszero(result))
+    	    if(Sgl_iszero(result))
 		/* Must have been "x-x" or "x+(-x)". */
-		अणु
-		अगर(Is_rounding_mode(ROUNDMINUS)) Sgl_setone_sign(result);
+		{
+		if(Is_rounding_mode(ROUNDMINUS)) Sgl_setone_sign(result);
 		*dstptr = result;
-		वापस(NOEXCEPTION);
-		पूर्ण
+		return(NOEXCEPTION);
+		}
 	    result_exponent--;
-	    /* Look to see अगर normalization is finished. */
-	    अगर(Sgl_isone_hidden(result))
-		अणु
-		अगर(result_exponent==0)
-		    अणु
-		    /* Denormalized, exponent should be zero.  Left opeअक्रम *
+	    /* Look to see if normalization is finished. */
+	    if(Sgl_isone_hidden(result))
+		{
+		if(result_exponent==0)
+		    {
+		    /* Denormalized, exponent should be zero.  Left operand *
  		     * was normalized, so extent (guard, round) was zero    */
-		    जाओ underflow;
-		    पूर्ण
-		अन्यथा
-		    अणु
+		    goto underflow;
+		    }
+		else
+		    {
 		    /* No further normalization is needed. */
 		    Sgl_set_sign(result,/*using*/sign_save);
-	    	    Ext_leftshअगरtby1(extent);
-		    जाओ round;
-		    पूर्ण
-		पूर्ण
+	    	    Ext_leftshiftby1(extent);
+		    goto round;
+		    }
+		}
 
-	    /* Check क्रम denormalized, exponent should be zero.  Left    *
-	     * opeअक्रम was normalized, so extent (guard, round) was zero */
-	    अगर(!(underflowtrap = Is_underflowtrap_enabled()) &&
-	       result_exponent==0) जाओ underflow;
+	    /* Check for denormalized, exponent should be zero.  Left    *
+	     * operand was normalized, so extent (guard, round) was zero */
+	    if(!(underflowtrap = Is_underflowtrap_enabled()) &&
+	       result_exponent==0) goto underflow;
 
-	    /* Shअगरt extension to complete one bit of normalization and
+	    /* Shift extension to complete one bit of normalization and
 	     * update exponent. */
-	    Ext_leftshअगरtby1(extent);
+	    Ext_leftshiftby1(extent);
 
-	    /* Discover first one bit to determine shअगरt amount.  Use a
-	     * modअगरied binary search.  We have alपढ़ोy shअगरted the result
-	     * one position right and still not found a one so the reमुख्यder
-	     * of the extension must be zero and simplअगरies rounding. */
+	    /* Discover first one bit to determine shift amount.  Use a
+	     * modified binary search.  We have already shifted the result
+	     * one position right and still not found a one so the remainder
+	     * of the extension must be zero and simplifies rounding. */
 	    /* Scan bytes */
-	    जबतक(Sgl_iszero_hiddenhigh7mantissa(result))
-		अणु
-		Sgl_leftshअगरtby8(result);
-		अगर((result_exponent -= 8) <= 0  && !underflowtrap)
-		    जाओ underflow;
-		पूर्ण
-	    /* Now narrow it करोwn to the nibble */
-	    अगर(Sgl_iszero_hiddenhigh3mantissa(result))
-		अणु
+	    while(Sgl_iszero_hiddenhigh7mantissa(result))
+		{
+		Sgl_leftshiftby8(result);
+		if((result_exponent -= 8) <= 0  && !underflowtrap)
+		    goto underflow;
+		}
+	    /* Now narrow it down to the nibble */
+	    if(Sgl_iszero_hiddenhigh3mantissa(result))
+		{
 		/* The lower nibble contains the normalizing one */
-		Sgl_leftshअगरtby4(result);
-		अगर((result_exponent -= 4) <= 0 && !underflowtrap)
-		    जाओ underflow;
-		पूर्ण
-	    /* Select हाल were first bit is set (alपढ़ोy normalized)
-	     * otherwise select the proper shअगरt. */
-	    अगर((jumpsize = Sgl_hiddenhigh3mantissa(result)) > 7)
-		अणु
-		/* Alपढ़ोy normalized */
-		अगर(result_exponent <= 0) जाओ underflow;
+		Sgl_leftshiftby4(result);
+		if((result_exponent -= 4) <= 0 && !underflowtrap)
+		    goto underflow;
+		}
+	    /* Select case were first bit is set (already normalized)
+	     * otherwise select the proper shift. */
+	    if((jumpsize = Sgl_hiddenhigh3mantissa(result)) > 7)
+		{
+		/* Already normalized */
+		if(result_exponent <= 0) goto underflow;
 		Sgl_set_sign(result,/*using*/sign_save);
 		Sgl_set_exponent(result,/*using*/result_exponent);
 		*dstptr = result;
-		वापस(NOEXCEPTION);
-		पूर्ण
+		return(NOEXCEPTION);
+		}
 	    Sgl_sethigh4bits(result,/*using*/sign_save);
-	    चयन(jumpsize) 
-		अणु
-		हाल 1:
-		    अणु
-		    Sgl_leftshअगरtby3(result);
+	    switch(jumpsize) 
+		{
+		case 1:
+		    {
+		    Sgl_leftshiftby3(result);
 		    result_exponent -= 3;
-		    अवरोध;
-		    पूर्ण
-		हाल 2:
-		हाल 3:
-		    अणु
-		    Sgl_leftshअगरtby2(result);
+		    break;
+		    }
+		case 2:
+		case 3:
+		    {
+		    Sgl_leftshiftby2(result);
 		    result_exponent -= 2;
-		    अवरोध;
-		    पूर्ण
-		हाल 4:
-		हाल 5:
-		हाल 6:
-		हाल 7:
-		    अणु
-		    Sgl_leftshअगरtby1(result);
+		    break;
+		    }
+		case 4:
+		case 5:
+		case 6:
+		case 7:
+		    {
+		    Sgl_leftshiftby1(result);
 		    result_exponent -= 1;
-		    अवरोध;
-		    पूर्ण
-		पूर्ण
-	    अगर(result_exponent > 0) 
-		अणु
+		    break;
+		    }
+		}
+	    if(result_exponent > 0) 
+		{
 		Sgl_set_exponent(result,/*using*/result_exponent);
-		*dstptr = result;	/* Sign bit is alपढ़ोy set */
-		वापस(NOEXCEPTION);
-		पूर्ण
+		*dstptr = result;	/* Sign bit is already set */
+		return(NOEXCEPTION);
+		}
 	    /* Fixup potential underflows */
 	  underflow:
-	    अगर(Is_underflowtrap_enabled())
-		अणु
+	    if(Is_underflowtrap_enabled())
+		{
 		Sgl_set_sign(result,sign_save);
                 Sgl_setwrapped_exponent(result,result_exponent,unfl);
 		*dstptr = result;
 		/* inexact = FALSE */
-		वापस(UNDERFLOWEXCEPTION);
-		पूर्ण
+		return(UNDERFLOWEXCEPTION);
+		}
 	    /*
 	     * Since we cannot get an inexact denormalized result,
-	     * we can now वापस.
+	     * we can now return.
 	     */
 	    Sgl_right_align(result,/*by*/(1-result_exponent),extent);
 	    Sgl_clear_signexponent(result);
 	    Sgl_set_sign(result,sign_save);
 	    *dstptr = result;
-	    वापस(NOEXCEPTION);
-	    पूर्ण /* end अगर(hidden...)... */
+	    return(NOEXCEPTION);
+	    } /* end if(hidden...)... */
 	/* Fall through and round */
-	पूर्ण /* end अगर(save >= 0)... */
-    अन्यथा 
-	अणु
+	} /* end if(save >= 0)... */
+    else 
+	{
 	/* Add magnitudes */
 	Sgl_addition(left,right,/*to*/result);
-	अगर(Sgl_isone_hiddenoverflow(result))
-	    अणु
+	if(Sgl_isone_hiddenoverflow(result))
+	    {
 	    /* Prenormalization required. */
-	    Sgl_rightshअगरtby1_withextent(result,extent,extent);
-	    Sgl_arithrightshअगरtby1(result);
+	    Sgl_rightshiftby1_withextent(result,extent,extent);
+	    Sgl_arithrightshiftby1(result);
 	    result_exponent++;
-	    पूर्ण /* end अगर hiddenoverflow... */
-	पूर्ण /* end अन्यथा ...sub magnitudes... */
+	    } /* end if hiddenoverflow... */
+	} /* end else ...sub magnitudes... */
     
     /* Round the result.  If the extension is all zeros,then the result is
      * exact.  Otherwise round in the correct direction.  No underflow is
      * possible. If a postnormalization is necessary, then the mantissa is
-     * all zeros so no shअगरt is needed. */
+     * all zeros so no shift is needed. */
   round:
-    अगर(Ext_isnotzero(extent))
-	अणु
+    if(Ext_isnotzero(extent))
+	{
 	inexact = TRUE;
-	चयन(Rounding_mode())
-	    अणु
-	    हाल ROUNDNEAREST: /* The शेष. */
-	    अगर(Ext_isone_sign(extent))
-		अणु
+	switch(Rounding_mode())
+	    {
+	    case ROUNDNEAREST: /* The default. */
+	    if(Ext_isone_sign(extent))
+		{
 		/* at least 1/2 ulp */
-		अगर(Ext_isnotzero_lower(extent)  ||
+		if(Ext_isnotzero_lower(extent)  ||
 		  Sgl_isone_lowmantissa(result))
-		    अणु
+		    {
 		    /* either exactly half way and odd or more than 1/2ulp */
 		    Sgl_increment(result);
-		    पूर्ण
-		पूर्ण
-	    अवरोध;
+		    }
+		}
+	    break;
 
-	    हाल ROUNDPLUS:
-	    अगर(Sgl_iszero_sign(result))
-		अणु
+	    case ROUNDPLUS:
+	    if(Sgl_iszero_sign(result))
+		{
 		/* Round up positive results */
 		Sgl_increment(result);
-		पूर्ण
-	    अवरोध;
+		}
+	    break;
 	    
-	    हाल ROUNDMINUS:
-	    अगर(Sgl_isone_sign(result))
-		अणु
-		/* Round करोwn negative results */
+	    case ROUNDMINUS:
+	    if(Sgl_isone_sign(result))
+		{
+		/* Round down negative results */
 		Sgl_increment(result);
-		पूर्ण
+		}
 	    
-	    हाल ROUNDZERO:;
+	    case ROUNDZERO:;
 	    /* truncate is simple */
-	    पूर्ण /* end चयन... */
-	अगर(Sgl_isone_hiddenoverflow(result)) result_exponent++;
-	पूर्ण
-    अगर(result_exponent == SGL_अनन्त_EXPONENT)
-        अणु
+	    } /* end switch... */
+	if(Sgl_isone_hiddenoverflow(result)) result_exponent++;
+	}
+    if(result_exponent == SGL_INFINITY_EXPONENT)
+        {
         /* Overflow */
-        अगर(Is_overflowtrap_enabled())
-	    अणु
+        if(Is_overflowtrap_enabled())
+	    {
 	    Sgl_setwrapped_exponent(result,result_exponent,ovfl);
 	    *dstptr = result;
-	    अगर (inexact)
-		अगर (Is_inexacttrap_enabled())
-		    वापस(OVERFLOWEXCEPTION | INEXACTEXCEPTION);
-		अन्यथा Set_inexactflag();
-	    वापस(OVERFLOWEXCEPTION);
-	    पूर्ण
-        अन्यथा
-	    अणु
+	    if (inexact)
+		if (Is_inexacttrap_enabled())
+		    return(OVERFLOWEXCEPTION | INEXACTEXCEPTION);
+		else Set_inexactflag();
+	    return(OVERFLOWEXCEPTION);
+	    }
+        else
+	    {
 	    Set_overflowflag();
 	    inexact = TRUE;
 	    Sgl_setoverflow(result);
-	    पूर्ण
-	पूर्ण
-    अन्यथा Sgl_set_exponent(result,result_exponent);
+	    }
+	}
+    else Sgl_set_exponent(result,result_exponent);
     *dstptr = result;
-    अगर(inexact) 
-	अगर(Is_inexacttrap_enabled()) वापस(INEXACTEXCEPTION);
-	अन्यथा Set_inexactflag();
-    वापस(NOEXCEPTION);
-    पूर्ण
+    if(inexact) 
+	if(Is_inexacttrap_enabled()) return(INEXACTEXCEPTION);
+	else Set_inexactflag();
+    return(NOEXCEPTION);
+    }

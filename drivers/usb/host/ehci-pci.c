@@ -1,433 +1,432 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * EHCI HCD (Host Controller Driver) PCI Bus Glue.
  *
  * Copyright (c) 2000-2004 by David Brownell
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/usb/hcd.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/pci.h>
+#include <linux/usb.h>
+#include <linux/usb/hcd.h>
 
-#समावेश "ehci.h"
-#समावेश "pci-quirks.h"
+#include "ehci.h"
+#include "pci-quirks.h"
 
-#घोषणा DRIVER_DESC "EHCI PCI platform driver"
+#define DRIVER_DESC "EHCI PCI platform driver"
 
-अटल स्थिर अक्षर hcd_name[] = "ehci-pci";
+static const char hcd_name[] = "ehci-pci";
 
-/* defined here to aव्योम adding to pci_ids.h क्रम single instance use */
-#घोषणा PCI_DEVICE_ID_INTEL_CE4100_USB	0x2e70
+/* defined here to avoid adding to pci_ids.h for single instance use */
+#define PCI_DEVICE_ID_INTEL_CE4100_USB	0x2e70
 
 /*-------------------------------------------------------------------------*/
-#घोषणा PCI_DEVICE_ID_INTEL_QUARK_X1000_SOC		0x0939
-अटल अंतरभूत bool is_पूर्णांकel_quark_x1000(काष्ठा pci_dev *pdev)
-अणु
-	वापस pdev->venकरोr == PCI_VENDOR_ID_INTEL &&
+#define PCI_DEVICE_ID_INTEL_QUARK_X1000_SOC		0x0939
+static inline bool is_intel_quark_x1000(struct pci_dev *pdev)
+{
+	return pdev->vendor == PCI_VENDOR_ID_INTEL &&
 		pdev->device == PCI_DEVICE_ID_INTEL_QUARK_X1000_SOC;
-पूर्ण
+}
 
 /*
- * This is the list of PCI IDs क्रम the devices that have EHCI USB class and
- * specअगरic drivers क्रम that. One of the example is a ChipIdea device installed
- * on some Intel MID platक्रमms.
+ * This is the list of PCI IDs for the devices that have EHCI USB class and
+ * specific drivers for that. One of the example is a ChipIdea device installed
+ * on some Intel MID platforms.
  */
-अटल स्थिर काष्ठा pci_device_id bypass_pci_id_table[] = अणु
-	/* ChipIdea on Intel MID platक्रमm */
-	अणु PCI_DEVICE(PCI_VENDOR_ID_INTEL, 0x0811), पूर्ण,
-	अणु PCI_DEVICE(PCI_VENDOR_ID_INTEL, 0x0829), पूर्ण,
-	अणु PCI_DEVICE(PCI_VENDOR_ID_INTEL, 0xe006), पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct pci_device_id bypass_pci_id_table[] = {
+	/* ChipIdea on Intel MID platform */
+	{ PCI_DEVICE(PCI_VENDOR_ID_INTEL, 0x0811), },
+	{ PCI_DEVICE(PCI_VENDOR_ID_INTEL, 0x0829), },
+	{ PCI_DEVICE(PCI_VENDOR_ID_INTEL, 0xe006), },
+	{}
+};
 
-अटल अंतरभूत bool is_bypassed_id(काष्ठा pci_dev *pdev)
-अणु
-	वापस !!pci_match_id(bypass_pci_id_table, pdev);
-पूर्ण
+static inline bool is_bypassed_id(struct pci_dev *pdev)
+{
+	return !!pci_match_id(bypass_pci_id_table, pdev);
+}
 
 /*
- * 0x84 is the offset of in/out threshold रेजिस्टर,
- * and it is the same offset as the रेजिस्टर of 'hostpc'.
+ * 0x84 is the offset of in/out threshold register,
+ * and it is the same offset as the register of 'hostpc'.
  */
-#घोषणा	पूर्णांकel_quark_x1000_insnreg01	hostpc
+#define	intel_quark_x1000_insnreg01	hostpc
 
-/* Maximum usable threshold value is 0x7f dwords क्रम both IN and OUT */
-#घोषणा INTEL_QUARK_X1000_EHCI_MAX_THRESHOLD	0x007f007f
+/* Maximum usable threshold value is 0x7f dwords for both IN and OUT */
+#define INTEL_QUARK_X1000_EHCI_MAX_THRESHOLD	0x007f007f
 
-/* called after घातerup, by probe or प्रणाली-pm "wakeup" */
-अटल पूर्णांक ehci_pci_reinit(काष्ठा ehci_hcd *ehci, काष्ठा pci_dev *pdev)
-अणु
-	पूर्णांक			retval;
+/* called after powerup, by probe or system-pm "wakeup" */
+static int ehci_pci_reinit(struct ehci_hcd *ehci, struct pci_dev *pdev)
+{
+	int			retval;
 
-	/* we expect अटल quirk code to handle the "extended capabilities"
-	 * (currently just BIOS hanकरोff) allowed starting with EHCI 0.96
+	/* we expect static quirk code to handle the "extended capabilities"
+	 * (currently just BIOS handoff) allowed starting with EHCI 0.96
 	 */
 
 	/* PCI Memory-Write-Invalidate cycle support is optional (uncommon) */
 	retval = pci_set_mwi(pdev);
-	अगर (!retval)
+	if (!retval)
 		ehci_dbg(ehci, "MWI active\n");
 
 	/* Reset the threshold limit */
-	अगर (is_पूर्णांकel_quark_x1000(pdev)) अणु
+	if (is_intel_quark_x1000(pdev)) {
 		/*
-		 * For the Intel QUARK X1000, उठाओ the I/O threshold to the
-		 * maximum usable value in order to improve perक्रमmance.
+		 * For the Intel QUARK X1000, raise the I/O threshold to the
+		 * maximum usable value in order to improve performance.
 		 */
-		ehci_ग_लिखोl(ehci, INTEL_QUARK_X1000_EHCI_MAX_THRESHOLD,
-			ehci->regs->पूर्णांकel_quark_x1000_insnreg01);
-	पूर्ण
+		ehci_writel(ehci, INTEL_QUARK_X1000_EHCI_MAX_THRESHOLD,
+			ehci->regs->intel_quark_x1000_insnreg01);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* called during probe() after chip reset completes */
-अटल पूर्णांक ehci_pci_setup(काष्ठा usb_hcd *hcd)
-अणु
-	काष्ठा ehci_hcd		*ehci = hcd_to_ehci(hcd);
-	काष्ठा pci_dev		*pdev = to_pci_dev(hcd->self.controller);
+static int ehci_pci_setup(struct usb_hcd *hcd)
+{
+	struct ehci_hcd		*ehci = hcd_to_ehci(hcd);
+	struct pci_dev		*pdev = to_pci_dev(hcd->self.controller);
 	u32			temp;
-	पूर्णांक			retval;
+	int			retval;
 
 	ehci->caps = hcd->regs;
 
 	/*
-	 * ehci_init() causes memory क्रम DMA transfers to be
-	 * allocated.  Thus, any venकरोr-specअगरic workarounds based on
-	 * limiting the type of memory used क्रम DMA transfers must
-	 * happen beक्रमe ehci_setup() is called.
+	 * ehci_init() causes memory for DMA transfers to be
+	 * allocated.  Thus, any vendor-specific workarounds based on
+	 * limiting the type of memory used for DMA transfers must
+	 * happen before ehci_setup() is called.
 	 *
-	 * Most other workarounds can be करोne either beक्रमe or after
+	 * Most other workarounds can be done either before or after
 	 * init and reset; they are located here too.
 	 */
-	चयन (pdev->venकरोr) अणु
-	हाल PCI_VENDOR_ID_TOSHIBA_2:
+	switch (pdev->vendor) {
+	case PCI_VENDOR_ID_TOSHIBA_2:
 		/* celleb's companion chip */
-		अगर (pdev->device == 0x01b5) अणु
-#अगर_घोषित CONFIG_USB_EHCI_BIG_ENDIAN_MMIO
+		if (pdev->device == 0x01b5) {
+#ifdef CONFIG_USB_EHCI_BIG_ENDIAN_MMIO
 			ehci->big_endian_mmio = 1;
-#अन्यथा
+#else
 			ehci_warn(ehci,
 				  "unsupported big endian Toshiba quirk\n");
-#पूर्ण_अगर
-		पूर्ण
-		अवरोध;
-	हाल PCI_VENDOR_ID_NVIDIA:
-		/* NVidia reports that certain chips करोn't handle
+#endif
+		}
+		break;
+	case PCI_VENDOR_ID_NVIDIA:
+		/* NVidia reports that certain chips don't handle
 		 * QH, ITD, or SITD addresses above 2GB.  (But TD,
 		 * data buffer, and periodic schedule are normal.)
 		 */
-		चयन (pdev->device) अणु
-		हाल 0x003c:	/* MCP04 */
-		हाल 0x005b:	/* CK804 */
-		हाल 0x00d8:	/* CK8 */
-		हाल 0x00e8:	/* CK8S */
-			अगर (dma_set_coherent_mask(&pdev->dev, DMA_BIT_MASK(31)) < 0)
+		switch (pdev->device) {
+		case 0x003c:	/* MCP04 */
+		case 0x005b:	/* CK804 */
+		case 0x00d8:	/* CK8 */
+		case 0x00e8:	/* CK8S */
+			if (dma_set_coherent_mask(&pdev->dev, DMA_BIT_MASK(31)) < 0)
 				ehci_warn(ehci, "can't enable NVidia "
 					"workaround for >2GB RAM\n");
-			अवरोध;
+			break;
 
 		/* Some NForce2 chips have problems with selective suspend;
 		 * fixed in newer silicon.
 		 */
-		हाल 0x0068:
-			अगर (pdev->revision < 0xa4)
+		case 0x0068:
+			if (pdev->revision < 0xa4)
 				ehci->no_selective_suspend = 1;
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल PCI_VENDOR_ID_INTEL:
-		अगर (pdev->device == PCI_DEVICE_ID_INTEL_CE4100_USB)
+			break;
+		}
+		break;
+	case PCI_VENDOR_ID_INTEL:
+		if (pdev->device == PCI_DEVICE_ID_INTEL_CE4100_USB)
 			hcd->has_tt = 1;
-		अवरोध;
-	हाल PCI_VENDOR_ID_TDI:
-		अगर (pdev->device == PCI_DEVICE_ID_TDI_EHCI)
+		break;
+	case PCI_VENDOR_ID_TDI:
+		if (pdev->device == PCI_DEVICE_ID_TDI_EHCI)
 			hcd->has_tt = 1;
-		अवरोध;
-	हाल PCI_VENDOR_ID_AMD:
+		break;
+	case PCI_VENDOR_ID_AMD:
 		/* AMD PLL quirk */
-		अगर (usb_amd_quirk_pll_check())
+		if (usb_amd_quirk_pll_check())
 			ehci->amd_pll_fix = 1;
-		/* AMD8111 EHCI करोesn't work, according to AMD errata */
-		अगर (pdev->device == 0x7463) अणु
+		/* AMD8111 EHCI doesn't work, according to AMD errata */
+		if (pdev->device == 0x7463) {
 			ehci_info(ehci, "ignoring AMD8111 (errata)\n");
 			retval = -EIO;
-			जाओ करोne;
-		पूर्ण
+			goto done;
+		}
 
 		/*
-		 * EHCI controller on AMD SB700/SB800/Hudson-2/3 platक्रमms may
-		 * पढ़ो/ग_लिखो memory space which करोes not beदीर्घ to it when
-		 * there is शून्य poपूर्णांकer with T-bit set to 1 in the frame list
-		 * table. To aव्योम the issue, the frame list link poपूर्णांकer
-		 * should always contain a valid poपूर्णांकer to a inactive qh.
+		 * EHCI controller on AMD SB700/SB800/Hudson-2/3 platforms may
+		 * read/write memory space which does not belong to it when
+		 * there is NULL pointer with T-bit set to 1 in the frame list
+		 * table. To avoid the issue, the frame list link pointer
+		 * should always contain a valid pointer to a inactive qh.
 		 */
-		अगर (pdev->device == 0x7808) अणु
+		if (pdev->device == 0x7808) {
 			ehci->use_dummy_qh = 1;
 			ehci_info(ehci, "applying AMD SB700/SB800/Hudson-2/3 EHCI dummy qh workaround\n");
-		पूर्ण
-		अवरोध;
-	हाल PCI_VENDOR_ID_VIA:
-		अगर (pdev->device == 0x3104 && (pdev->revision & 0xf0) == 0x60) अणु
-			u8 पंचांगp;
+		}
+		break;
+	case PCI_VENDOR_ID_VIA:
+		if (pdev->device == 0x3104 && (pdev->revision & 0xf0) == 0x60) {
+			u8 tmp;
 
-			/* The VT6212 शेषs to a 1 usec EHCI sleep समय which
+			/* The VT6212 defaults to a 1 usec EHCI sleep time which
 			 * hogs the PCI bus *badly*. Setting bit 5 of 0x4B makes
-			 * that sleep समय use the conventional 10 usec.
+			 * that sleep time use the conventional 10 usec.
 			 */
-			pci_पढ़ो_config_byte(pdev, 0x4b, &पंचांगp);
-			अगर (पंचांगp & 0x20)
-				अवरोध;
-			pci_ग_लिखो_config_byte(pdev, 0x4b, पंचांगp | 0x20);
-		पूर्ण
-		अवरोध;
-	हाल PCI_VENDOR_ID_ATI:
+			pci_read_config_byte(pdev, 0x4b, &tmp);
+			if (tmp & 0x20)
+				break;
+			pci_write_config_byte(pdev, 0x4b, tmp | 0x20);
+		}
+		break;
+	case PCI_VENDOR_ID_ATI:
 		/* AMD PLL quirk */
-		अगर (usb_amd_quirk_pll_check())
+		if (usb_amd_quirk_pll_check())
 			ehci->amd_pll_fix = 1;
 
 		/*
-		 * EHCI controller on AMD SB700/SB800/Hudson-2/3 platक्रमms may
-		 * पढ़ो/ग_लिखो memory space which करोes not beदीर्घ to it when
-		 * there is शून्य poपूर्णांकer with T-bit set to 1 in the frame list
-		 * table. To aव्योम the issue, the frame list link poपूर्णांकer
-		 * should always contain a valid poपूर्णांकer to a inactive qh.
+		 * EHCI controller on AMD SB700/SB800/Hudson-2/3 platforms may
+		 * read/write memory space which does not belong to it when
+		 * there is NULL pointer with T-bit set to 1 in the frame list
+		 * table. To avoid the issue, the frame list link pointer
+		 * should always contain a valid pointer to a inactive qh.
 		 */
-		अगर (pdev->device == 0x4396) अणु
+		if (pdev->device == 0x4396) {
 			ehci->use_dummy_qh = 1;
 			ehci_info(ehci, "applying AMD SB700/SB800/Hudson-2/3 EHCI dummy qh workaround\n");
-		पूर्ण
+		}
 		/* SB600 and old version of SB700 have a bug in EHCI controller,
-		 * which causes usb devices lose response in some हालs.
+		 * which causes usb devices lose response in some cases.
 		 */
-		अगर ((pdev->device == 0x4386 || pdev->device == 0x4396) &&
-				usb_amd_hang_symptom_quirk()) अणु
-			u8 पंचांगp;
+		if ((pdev->device == 0x4386 || pdev->device == 0x4396) &&
+				usb_amd_hang_symptom_quirk()) {
+			u8 tmp;
 			ehci_info(ehci, "applying AMD SB600/SB700 USB freeze workaround\n");
-			pci_पढ़ो_config_byte(pdev, 0x53, &पंचांगp);
-			pci_ग_लिखो_config_byte(pdev, 0x53, पंचांगp | (1<<3));
-		पूर्ण
-		अवरोध;
-	हाल PCI_VENDOR_ID_NETMOS:
-		/* MosChip frame-index-रेजिस्टर bug */
+			pci_read_config_byte(pdev, 0x53, &tmp);
+			pci_write_config_byte(pdev, 0x53, tmp | (1<<3));
+		}
+		break;
+	case PCI_VENDOR_ID_NETMOS:
+		/* MosChip frame-index-register bug */
 		ehci_info(ehci, "applying MosChip frame-index workaround\n");
 		ehci->frame_index_bug = 1;
-		अवरोध;
-	हाल PCI_VENDOR_ID_HUAWEI:
+		break;
+	case PCI_VENDOR_ID_HUAWEI:
 		/* Synopsys HC bug */
-		अगर (pdev->device == 0xa239) अणु
+		if (pdev->device == 0xa239) {
 			ehci_info(ehci, "applying Synopsys HC workaround\n");
 			ehci->has_synopsys_hc_bug = 1;
-		पूर्ण
-		अवरोध;
-	पूर्ण
+		}
+		break;
+	}
 
 	/* optional debug port, normally in the first BAR */
 	temp = pci_find_capability(pdev, PCI_CAP_ID_DBG);
-	अगर (temp) अणु
-		pci_पढ़ो_config_dword(pdev, temp, &temp);
+	if (temp) {
+		pci_read_config_dword(pdev, temp, &temp);
 		temp >>= 16;
-		अगर (((temp >> 13) & 7) == 1) अणु
-			u32 hcs_params = ehci_पढ़ोl(ehci,
+		if (((temp >> 13) & 7) == 1) {
+			u32 hcs_params = ehci_readl(ehci,
 						    &ehci->caps->hcs_params);
 
 			temp &= 0x1fff;
 			ehci->debug = hcd->regs + temp;
-			temp = ehci_पढ़ोl(ehci, &ehci->debug->control);
+			temp = ehci_readl(ehci, &ehci->debug->control);
 			ehci_info(ehci, "debug port %d%s\n",
 				  HCS_DEBUG_PORT(hcs_params),
 				  (temp & DBGP_ENABLED) ? " IN USE" : "");
-			अगर (!(temp & DBGP_ENABLED))
-				ehci->debug = शून्य;
-		पूर्ण
-	पूर्ण
+			if (!(temp & DBGP_ENABLED))
+				ehci->debug = NULL;
+		}
+	}
 
 	retval = ehci_setup(hcd);
-	अगर (retval)
-		वापस retval;
+	if (retval)
+		return retval;
 
 	/* These workarounds need to be applied after ehci_setup() */
-	चयन (pdev->venकरोr) अणु
-	हाल PCI_VENDOR_ID_NEC:
-	हाल PCI_VENDOR_ID_INTEL:
-	हाल PCI_VENDOR_ID_AMD:
-		ehci->need_io_watchकरोg = 0;
-		अवरोध;
-	हाल PCI_VENDOR_ID_NVIDIA:
-		चयन (pdev->device) अणु
+	switch (pdev->vendor) {
+	case PCI_VENDOR_ID_NEC:
+	case PCI_VENDOR_ID_INTEL:
+	case PCI_VENDOR_ID_AMD:
+		ehci->need_io_watchdog = 0;
+		break;
+	case PCI_VENDOR_ID_NVIDIA:
+		switch (pdev->device) {
 		/* MCP89 chips on the MacBookAir3,1 give EPROTO when
 		 * fetching device descriptors unless LPM is disabled.
-		 * There are also पूर्णांकermittent problems क्रमागतerating
+		 * There are also intermittent problems enumerating
 		 * devices with PPCD enabled.
 		 */
-		हाल 0x0d9d:
+		case 0x0d9d:
 			ehci_info(ehci, "disable ppcd for nvidia mcp89\n");
 			ehci->has_ppcd = 0;
 			ehci->command &= ~CMD_PPCEE;
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	पूर्ण
+			break;
+		}
+		break;
+	}
 
 	/* at least the Genesys GL880S needs fixup here */
 	temp = HCS_N_CC(ehci->hcs_params) * HCS_N_PCC(ehci->hcs_params);
 	temp &= 0x0f;
-	अगर (temp && HCS_N_PORTS(ehci->hcs_params) > temp) अणु
+	if (temp && HCS_N_PORTS(ehci->hcs_params) > temp) {
 		ehci_dbg(ehci, "bogus port configuration: "
 			"cc=%d x pcc=%d < ports=%d\n",
 			HCS_N_CC(ehci->hcs_params),
 			HCS_N_PCC(ehci->hcs_params),
 			HCS_N_PORTS(ehci->hcs_params));
 
-		चयन (pdev->venकरोr) अणु
-		हाल 0x17a0:		/* GENESYS */
+		switch (pdev->vendor) {
+		case 0x17a0:		/* GENESYS */
 			/* GL880S: should be PORTS=2 */
 			temp |= (ehci->hcs_params & ~0xf);
 			ehci->hcs_params = temp;
-			अवरोध;
-		हाल PCI_VENDOR_ID_NVIDIA:
+			break;
+		case PCI_VENDOR_ID_NVIDIA:
 			/* NF4: should be PCC=10 */
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	/* Serial Bus Release Number is at PCI 0x60 offset */
-	अगर (pdev->venकरोr == PCI_VENDOR_ID_STMICRO
+	if (pdev->vendor == PCI_VENDOR_ID_STMICRO
 	    && pdev->device == PCI_DEVICE_ID_STMICRO_USB_HOST)
-		;	/* ConneXT has no sbrn रेजिस्टर */
-	अन्यथा अगर (pdev->venकरोr == PCI_VENDOR_ID_HUAWEI
+		;	/* ConneXT has no sbrn register */
+	else if (pdev->vendor == PCI_VENDOR_ID_HUAWEI
 			 && pdev->device == 0xa239)
-		;	/* HUAWEI Kunpeng920 USB EHCI has no sbrn रेजिस्टर */
-	अन्यथा
-		pci_पढ़ो_config_byte(pdev, 0x60, &ehci->sbrn);
+		;	/* HUAWEI Kunpeng920 USB EHCI has no sbrn register */
+	else
+		pci_read_config_byte(pdev, 0x60, &ehci->sbrn);
 
-	/* Keep this around क्रम a जबतक just in हाल some EHCI
+	/* Keep this around for a while just in case some EHCI
 	 * implementation uses legacy PCI PM support.  This test
-	 * can be हटाओd on 17 Dec 2009 अगर the dev_warn() hasn't
+	 * can be removed on 17 Dec 2009 if the dev_warn() hasn't
 	 * been triggered by then.
 	 */
-	अगर (!device_can_wakeup(&pdev->dev)) अणु
+	if (!device_can_wakeup(&pdev->dev)) {
 		u16	port_wake;
 
-		pci_पढ़ो_config_word(pdev, 0x62, &port_wake);
-		अगर (port_wake & 0x0001) अणु
+		pci_read_config_word(pdev, 0x62, &port_wake);
+		if (port_wake & 0x0001) {
 			dev_warn(&pdev->dev, "Enabling legacy PCI PM\n");
 			device_set_wakeup_capable(&pdev->dev, 1);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-#अगर_घोषित	CONFIG_PM
-	अगर (ehci->no_selective_suspend && device_can_wakeup(&pdev->dev))
+#ifdef	CONFIG_PM
+	if (ehci->no_selective_suspend && device_can_wakeup(&pdev->dev))
 		ehci_warn(ehci, "selective suspend/wakeup unavailable\n");
-#पूर्ण_अगर
+#endif
 
 	retval = ehci_pci_reinit(ehci, pdev);
-करोne:
-	वापस retval;
-पूर्ण
+done:
+	return retval;
+}
 
 /*-------------------------------------------------------------------------*/
 
-#अगर_घोषित	CONFIG_PM
+#ifdef	CONFIG_PM
 
 /* suspend/resume, section 4.3 */
 
 /* These routines rely on the PCI bus glue
- * to handle घातerकरोwn and wakeup, and currently also on
- * transceivers that करोn't need any software attention to set up
+ * to handle powerdown and wakeup, and currently also on
+ * transceivers that don't need any software attention to set up
  * the right sort of wakeup.
  * Also they depend on separate root hub suspend/resume.
  */
 
-अटल पूर्णांक ehci_pci_resume(काष्ठा usb_hcd *hcd, bool hibernated)
-अणु
-	काष्ठा ehci_hcd		*ehci = hcd_to_ehci(hcd);
-	काष्ठा pci_dev		*pdev = to_pci_dev(hcd->self.controller);
+static int ehci_pci_resume(struct usb_hcd *hcd, bool hibernated)
+{
+	struct ehci_hcd		*ehci = hcd_to_ehci(hcd);
+	struct pci_dev		*pdev = to_pci_dev(hcd->self.controller);
 
-	अगर (ehci_resume(hcd, hibernated) != 0)
-		(व्योम) ehci_pci_reinit(ehci, pdev);
-	वापस 0;
-पूर्ण
+	if (ehci_resume(hcd, hibernated) != 0)
+		(void) ehci_pci_reinit(ehci, pdev);
+	return 0;
+}
 
-#अन्यथा
+#else
 
-#घोषणा ehci_suspend		शून्य
-#घोषणा ehci_pci_resume		शून्य
-#पूर्ण_अगर	/* CONFIG_PM */
+#define ehci_suspend		NULL
+#define ehci_pci_resume		NULL
+#endif	/* CONFIG_PM */
 
-अटल काष्ठा hc_driver __पढ़ो_mostly ehci_pci_hc_driver;
+static struct hc_driver __read_mostly ehci_pci_hc_driver;
 
-अटल स्थिर काष्ठा ehci_driver_overrides pci_overrides __initस्थिर = अणु
+static const struct ehci_driver_overrides pci_overrides __initconst = {
 	.reset =		ehci_pci_setup,
-पूर्ण;
+};
 
 /*-------------------------------------------------------------------------*/
 
-अटल पूर्णांक ehci_pci_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *id)
-अणु
-	अगर (is_bypassed_id(pdev))
-		वापस -ENODEV;
-	वापस usb_hcd_pci_probe(pdev, id, &ehci_pci_hc_driver);
-पूर्ण
+static int ehci_pci_probe(struct pci_dev *pdev, const struct pci_device_id *id)
+{
+	if (is_bypassed_id(pdev))
+		return -ENODEV;
+	return usb_hcd_pci_probe(pdev, id, &ehci_pci_hc_driver);
+}
 
-अटल व्योम ehci_pci_हटाओ(काष्ठा pci_dev *pdev)
-अणु
+static void ehci_pci_remove(struct pci_dev *pdev)
+{
 	pci_clear_mwi(pdev);
-	usb_hcd_pci_हटाओ(pdev);
-पूर्ण
+	usb_hcd_pci_remove(pdev);
+}
 
 /* PCI driver selection metadata; PCI hotplugging uses this */
-अटल स्थिर काष्ठा pci_device_id pci_ids [] = अणु अणु
+static const struct pci_device_id pci_ids [] = { {
 	/* handle any USB 2.0 EHCI controller */
 	PCI_DEVICE_CLASS(PCI_CLASS_SERIAL_USB_EHCI, ~0),
-	पूर्ण, अणु
+	}, {
 	PCI_VDEVICE(STMICRO, PCI_DEVICE_ID_STMICRO_USB_HOST),
-	पूर्ण,
-	अणु /* end: all zeroes */ पूर्ण
-पूर्ण;
+	},
+	{ /* end: all zeroes */ }
+};
 MODULE_DEVICE_TABLE(pci, pci_ids);
 
 /* pci driver glue; this is a "new style" PCI driver module */
-अटल काष्ठा pci_driver ehci_pci_driver = अणु
+static struct pci_driver ehci_pci_driver = {
 	.name =		hcd_name,
 	.id_table =	pci_ids,
 
 	.probe =	ehci_pci_probe,
-	.हटाओ =	ehci_pci_हटाओ,
-	.shutकरोwn = 	usb_hcd_pci_shutकरोwn,
+	.remove =	ehci_pci_remove,
+	.shutdown = 	usb_hcd_pci_shutdown,
 
-#अगर_घोषित CONFIG_PM
-	.driver =	अणु
+#ifdef CONFIG_PM
+	.driver =	{
 		.pm =	&usb_hcd_pci_pm_ops
-	पूर्ण,
-#पूर्ण_अगर
-पूर्ण;
+	},
+#endif
+};
 
-अटल पूर्णांक __init ehci_pci_init(व्योम)
-अणु
-	अगर (usb_disabled())
-		वापस -ENODEV;
+static int __init ehci_pci_init(void)
+{
+	if (usb_disabled())
+		return -ENODEV;
 
 	pr_info("%s: " DRIVER_DESC "\n", hcd_name);
 
 	ehci_init_driver(&ehci_pci_hc_driver, &pci_overrides);
 
-	/* Entries क्रम the PCI suspend/resume callbacks are special */
+	/* Entries for the PCI suspend/resume callbacks are special */
 	ehci_pci_hc_driver.pci_suspend = ehci_suspend;
 	ehci_pci_hc_driver.pci_resume = ehci_pci_resume;
 
-	वापस pci_रेजिस्टर_driver(&ehci_pci_driver);
-पूर्ण
+	return pci_register_driver(&ehci_pci_driver);
+}
 module_init(ehci_pci_init);
 
-अटल व्योम __निकास ehci_pci_cleanup(व्योम)
-अणु
-	pci_unरेजिस्टर_driver(&ehci_pci_driver);
-पूर्ण
-module_निकास(ehci_pci_cleanup);
+static void __exit ehci_pci_cleanup(void)
+{
+	pci_unregister_driver(&ehci_pci_driver);
+}
+module_exit(ehci_pci_cleanup);
 
 MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_AUTHOR("David Brownell");

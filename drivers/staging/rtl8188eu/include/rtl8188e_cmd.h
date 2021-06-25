@@ -1,14 +1,13 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
-#अगर_अघोषित __RTL8188E_CMD_H__
-#घोषणा __RTL8188E_CMD_H__
+#ifndef __RTL8188E_CMD_H__
+#define __RTL8188E_CMD_H__
 
-क्रमागत RTL8188E_H2C_CMD_ID अणु
+enum RTL8188E_H2C_CMD_ID {
 	/* Class Common */
 	H2C_COM_RSVD_PAGE		= 0x00,
 	H2C_COM_MEDIA_STATUS_RPT	= 0x01,
@@ -40,32 +39,32 @@
 
 	/* Class */
 	 H2C_RESET_TSF			= 0xc0,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	PWRS
-पूर्ण;
+};
 
-काष्ठा setpwrmode_parm अणु
+struct setpwrmode_parm {
 	u8 Mode;/* 0:Active,1:LPS,2:WMMPS */
 	u8 SmartPS_RLBM;/* LPS= 0:PS_Poll,1:PS_Poll,2:NullData,WMM= 0:PS_Poll,1:NullData */
-	u8 AwakeInterval;	/*  unit: beacon पूर्णांकerval */
+	u8 AwakeInterval;	/*  unit: beacon interval */
 	u8 bAllQueueUAPSD;
 	u8 PwrState;/* AllON(0x0c),RFON(0x04),RFOFF(0x00) */
-पूर्ण;
+};
 
-काष्ठा rsvdpage_loc अणु
+struct rsvdpage_loc {
 	u8 LocProbeRsp;
 	u8 LocPsPoll;
 	u8 LocNullData;
 	u8 LocQosNull;
 	u8 LocBTQosNull;
-पूर्ण;
+};
 
 /*  host message to firmware cmd */
-व्योम rtl8188e_set_FwPwrMode_cmd(काष्ठा adapter *padapter, u8 Mode);
-व्योम rtl8188e_set_FwJoinBssReport_cmd(काष्ठा adapter *padapter, u8 mstatus);
+void rtl8188e_set_FwPwrMode_cmd(struct adapter *padapter, u8 Mode);
+void rtl8188e_set_FwJoinBssReport_cmd(struct adapter *padapter, u8 mstatus);
 
-व्योम rtl8188e_set_FwMediaStatus_cmd(काष्ठा adapter *adapt, __le16 mstatus_rpt);
+void rtl8188e_set_FwMediaStatus_cmd(struct adapter *adapt, __le16 mstatus_rpt);
 
-#पूर्ण_अगर/* __RTL8188E_CMD_H__ */
+#endif/* __RTL8188E_CMD_H__ */

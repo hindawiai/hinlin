@@ -1,7 +1,6 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
- * Read-Copy Update mechanism क्रम mutual exclusion (tree-based version)
+ * Read-Copy Update mechanism for mutual exclusion (tree-based version)
  *
  * Copyright IBM Corporation, 2008
  *
@@ -9,75 +8,75 @@
  *	   Paul E. McKenney <paulmck@linux.ibm.com> Hierarchical algorithm
  *
  * Based on the original work by Paul McKenney <paulmck@linux.ibm.com>
- * and inमाला_दो from Rusty Russell, Andrea Arcangeli and Andi Kleen.
+ * and inputs from Rusty Russell, Andrea Arcangeli and Andi Kleen.
  *
  * For detailed explanation of Read-Copy Update mechanism see -
  *	Documentation/RCU
  */
 
-#अगर_अघोषित __LINUX_RCUTREE_H
-#घोषणा __LINUX_RCUTREE_H
+#ifndef __LINUX_RCUTREE_H
+#define __LINUX_RCUTREE_H
 
-व्योम rcu_softirq_qs(व्योम);
-व्योम rcu_note_context_चयन(bool preempt);
-पूर्णांक rcu_needs_cpu(u64 basem, u64 *nextevt);
-व्योम rcu_cpu_stall_reset(व्योम);
+void rcu_softirq_qs(void);
+void rcu_note_context_switch(bool preempt);
+int rcu_needs_cpu(u64 basem, u64 *nextevt);
+void rcu_cpu_stall_reset(void);
 
 /*
- * Note a भवization-based context चयन.  This is simply a
- * wrapper around rcu_note_context_चयन(), which allows TINY_RCU
- * to save a few bytes. The caller must have disabled पूर्णांकerrupts.
+ * Note a virtualization-based context switch.  This is simply a
+ * wrapper around rcu_note_context_switch(), which allows TINY_RCU
+ * to save a few bytes. The caller must have disabled interrupts.
  */
-अटल अंतरभूत व्योम rcu_virt_note_context_चयन(पूर्णांक cpu)
-अणु
-	rcu_note_context_चयन(false);
-पूर्ण
+static inline void rcu_virt_note_context_switch(int cpu)
+{
+	rcu_note_context_switch(false);
+}
 
-व्योम synchronize_rcu_expedited(व्योम);
-व्योम kvमुक्त_call_rcu(काष्ठा rcu_head *head, rcu_callback_t func);
+void synchronize_rcu_expedited(void);
+void kvfree_call_rcu(struct rcu_head *head, rcu_callback_t func);
 
-व्योम rcu_barrier(व्योम);
-bool rcu_eqs_special_set(पूर्णांक cpu);
-व्योम rcu_momentary_dyntick_idle(व्योम);
-व्योम kमुक्त_rcu_scheduler_running(व्योम);
-bool rcu_gp_might_be_stalled(व्योम);
-अचिन्हित दीर्घ get_state_synchronize_rcu(व्योम);
-अचिन्हित दीर्घ start_poll_synchronize_rcu(व्योम);
-bool poll_state_synchronize_rcu(अचिन्हित दीर्घ oldstate);
-व्योम cond_synchronize_rcu(अचिन्हित दीर्घ oldstate);
+void rcu_barrier(void);
+bool rcu_eqs_special_set(int cpu);
+void rcu_momentary_dyntick_idle(void);
+void kfree_rcu_scheduler_running(void);
+bool rcu_gp_might_be_stalled(void);
+unsigned long get_state_synchronize_rcu(void);
+unsigned long start_poll_synchronize_rcu(void);
+bool poll_state_synchronize_rcu(unsigned long oldstate);
+void cond_synchronize_rcu(unsigned long oldstate);
 
-व्योम rcu_idle_enter(व्योम);
-व्योम rcu_idle_निकास(व्योम);
-व्योम rcu_irq_enter(व्योम);
-व्योम rcu_irq_निकास(व्योम);
-व्योम rcu_irq_निकास_preempt(व्योम);
-व्योम rcu_irq_enter_irqson(व्योम);
-व्योम rcu_irq_निकास_irqson(व्योम);
-bool rcu_is_idle_cpu(पूर्णांक cpu);
+void rcu_idle_enter(void);
+void rcu_idle_exit(void);
+void rcu_irq_enter(void);
+void rcu_irq_exit(void);
+void rcu_irq_exit_preempt(void);
+void rcu_irq_enter_irqson(void);
+void rcu_irq_exit_irqson(void);
+bool rcu_is_idle_cpu(int cpu);
 
-#अगर_घोषित CONFIG_PROVE_RCU
-व्योम rcu_irq_निकास_check_preempt(व्योम);
-#अन्यथा
-अटल अंतरभूत व्योम rcu_irq_निकास_check_preempt(व्योम) अणु पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_PROVE_RCU
+void rcu_irq_exit_check_preempt(void);
+#else
+static inline void rcu_irq_exit_check_preempt(void) { }
+#endif
 
-व्योम निकास_rcu(व्योम);
+void exit_rcu(void);
 
-व्योम rcu_scheduler_starting(व्योम);
-बाह्य पूर्णांक rcu_scheduler_active __पढ़ो_mostly;
-व्योम rcu_end_inkernel_boot(व्योम);
-bool rcu_inkernel_boot_has_ended(व्योम);
-bool rcu_is_watching(व्योम);
-#अगर_अघोषित CONFIG_PREEMPTION
-व्योम rcu_all_qs(व्योम);
-#पूर्ण_अगर
+void rcu_scheduler_starting(void);
+extern int rcu_scheduler_active __read_mostly;
+void rcu_end_inkernel_boot(void);
+bool rcu_inkernel_boot_has_ended(void);
+bool rcu_is_watching(void);
+#ifndef CONFIG_PREEMPTION
+void rcu_all_qs(void);
+#endif
 
 /* RCUtree hotplug events */
-पूर्णांक rcutree_prepare_cpu(अचिन्हित पूर्णांक cpu);
-पूर्णांक rcutree_online_cpu(अचिन्हित पूर्णांक cpu);
-पूर्णांक rcutree_offline_cpu(अचिन्हित पूर्णांक cpu);
-पूर्णांक rcutree_dead_cpu(अचिन्हित पूर्णांक cpu);
-पूर्णांक rcutree_dying_cpu(अचिन्हित पूर्णांक cpu);
-व्योम rcu_cpu_starting(अचिन्हित पूर्णांक cpu);
+int rcutree_prepare_cpu(unsigned int cpu);
+int rcutree_online_cpu(unsigned int cpu);
+int rcutree_offline_cpu(unsigned int cpu);
+int rcutree_dead_cpu(unsigned int cpu);
+int rcutree_dying_cpu(unsigned int cpu);
+void rcu_cpu_starting(unsigned int cpu);
 
-#पूर्ण_अगर /* __LINUX_RCUTREE_H */
+#endif /* __LINUX_RCUTREE_H */

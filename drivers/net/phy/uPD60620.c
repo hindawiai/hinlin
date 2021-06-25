@@ -1,99 +1,98 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * Driver क्रम the Renesas PHY uPD60620.
+ * Driver for the Renesas PHY uPD60620.
  *
  * Copyright (C) 2015 Softing Industrial Automation GmbH
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/phy.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/phy.h>
 
-#घोषणा UPD60620_PHY_ID    0xb8242824
+#define UPD60620_PHY_ID    0xb8242824
 
 /* Extended Registers and values */
 /* PHY Special Control/Status    */
-#घोषणा PHY_PHYSCR         0x1F      /* PHY.31 */
-#घोषणा PHY_PHYSCR_10MB    0x0004    /* PHY speed = 10mb */
-#घोषणा PHY_PHYSCR_100MB   0x0008    /* PHY speed = 100mb */
-#घोषणा PHY_PHYSCR_DUPLEX  0x0010    /* PHY Duplex */
+#define PHY_PHYSCR         0x1F      /* PHY.31 */
+#define PHY_PHYSCR_10MB    0x0004    /* PHY speed = 10mb */
+#define PHY_PHYSCR_100MB   0x0008    /* PHY speed = 100mb */
+#define PHY_PHYSCR_DUPLEX  0x0010    /* PHY Duplex */
 
 /* PHY Special Modes */
-#घोषणा PHY_SPM            0x12      /* PHY.18 */
+#define PHY_SPM            0x12      /* PHY.18 */
 
 /* Init PHY */
 
-अटल पूर्णांक upd60620_config_init(काष्ठा phy_device *phydev)
-अणु
-	/* Enable support क्रम passive HUBs (could be a strap option) */
+static int upd60620_config_init(struct phy_device *phydev)
+{
+	/* Enable support for passive HUBs (could be a strap option) */
 	/* PHYMODE: All speeds, HD in parallel detect */
-	वापस phy_ग_लिखो(phydev, PHY_SPM, 0x0180 | phydev->mdio.addr);
-पूर्ण
+	return phy_write(phydev, PHY_SPM, 0x0180 | phydev->mdio.addr);
+}
 
-/* Get PHY status from common रेजिस्टरs */
+/* Get PHY status from common registers */
 
-अटल पूर्णांक upd60620_पढ़ो_status(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक phy_state;
+static int upd60620_read_status(struct phy_device *phydev)
+{
+	int phy_state;
 
 	/* Read negotiated state */
-	phy_state = phy_पढ़ो(phydev, MII_BMSR);
-	अगर (phy_state < 0)
-		वापस phy_state;
+	phy_state = phy_read(phydev, MII_BMSR);
+	if (phy_state < 0)
+		return phy_state;
 
 	phydev->link = 0;
 	linkmode_zero(phydev->lp_advertising);
-	phydev->छोड़ो = 0;
-	phydev->asym_छोड़ो = 0;
+	phydev->pause = 0;
+	phydev->asym_pause = 0;
 
-	अगर (phy_state & (BMSR_ANEGCOMPLETE | BMSR_LSTATUS)) अणु
-		phy_state = phy_पढ़ो(phydev, PHY_PHYSCR);
-		अगर (phy_state < 0)
-			वापस phy_state;
+	if (phy_state & (BMSR_ANEGCOMPLETE | BMSR_LSTATUS)) {
+		phy_state = phy_read(phydev, PHY_PHYSCR);
+		if (phy_state < 0)
+			return phy_state;
 
-		अगर (phy_state & (PHY_PHYSCR_10MB | PHY_PHYSCR_100MB)) अणु
+		if (phy_state & (PHY_PHYSCR_10MB | PHY_PHYSCR_100MB)) {
 			phydev->link = 1;
 			phydev->speed = SPEED_10;
 			phydev->duplex = DUPLEX_HALF;
 
-			अगर (phy_state & PHY_PHYSCR_100MB)
+			if (phy_state & PHY_PHYSCR_100MB)
 				phydev->speed = SPEED_100;
-			अगर (phy_state & PHY_PHYSCR_DUPLEX)
+			if (phy_state & PHY_PHYSCR_DUPLEX)
 				phydev->duplex = DUPLEX_FULL;
 
-			phy_state = phy_पढ़ो(phydev, MII_LPA);
-			अगर (phy_state < 0)
-				वापस phy_state;
+			phy_state = phy_read(phydev, MII_LPA);
+			if (phy_state < 0)
+				return phy_state;
 
 			mii_lpa_to_linkmode_lpa_t(phydev->lp_advertising,
 						  phy_state);
 
-			phy_resolve_aneg_छोड़ो(phydev);
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			phy_resolve_aneg_pause(phydev);
+		}
+	}
+	return 0;
+}
 
 MODULE_DESCRIPTION("Renesas uPD60620 PHY driver");
 MODULE_AUTHOR("Bernd Edlinger <bernd.edlinger@hotmail.de>");
 MODULE_LICENSE("GPL");
 
-अटल काष्ठा phy_driver upd60620_driver[1] = अणु अणु
+static struct phy_driver upd60620_driver[1] = { {
 	.phy_id         = UPD60620_PHY_ID,
 	.phy_id_mask    = 0xfffffffe,
 	.name           = "Renesas uPD60620",
 	/* PHY_BASIC_FEATURES */
 	.flags          = 0,
 	.config_init    = upd60620_config_init,
-	.पढ़ो_status    = upd60620_पढ़ो_status,
-पूर्ण पूर्ण;
+	.read_status    = upd60620_read_status,
+} };
 
 module_phy_driver(upd60620_driver);
 
-अटल काष्ठा mdio_device_id __maybe_unused upd60620_tbl[] = अणु
-	अणु UPD60620_PHY_ID, 0xfffffffe पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static struct mdio_device_id __maybe_unused upd60620_tbl[] = {
+	{ UPD60620_PHY_ID, 0xfffffffe },
+	{ }
+};
 
 MODULE_DEVICE_TABLE(mdio, upd60620_tbl);

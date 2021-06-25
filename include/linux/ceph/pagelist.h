@@ -1,73 +1,72 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __FS_CEPH_PAGELIST_H
-#घोषणा __FS_CEPH_PAGELIST_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __FS_CEPH_PAGELIST_H
+#define __FS_CEPH_PAGELIST_H
 
-#समावेश <यंत्र/byteorder.h>
-#समावेश <linux/refcount.h>
-#समावेश <linux/list.h>
-#समावेश <linux/types.h>
+#include <asm/byteorder.h>
+#include <linux/refcount.h>
+#include <linux/list.h>
+#include <linux/types.h>
 
-काष्ठा ceph_pagelist अणु
-	काष्ठा list_head head;
-	व्योम *mapped_tail;
-	माप_प्रकार length;
-	माप_प्रकार room;
-	काष्ठा list_head मुक्त_list;
-	माप_प्रकार num_pages_मुक्त;
+struct ceph_pagelist {
+	struct list_head head;
+	void *mapped_tail;
+	size_t length;
+	size_t room;
+	struct list_head free_list;
+	size_t num_pages_free;
 	refcount_t refcnt;
-पूर्ण;
+};
 
-काष्ठा ceph_pagelist_cursor अणु
-	काष्ठा ceph_pagelist *pl;   /* pagelist, क्रम error checking */
-	काष्ठा list_head *page_lru; /* page in list */
-	माप_प्रकार room;		    /* room reमुख्यing to reset to */
-पूर्ण;
+struct ceph_pagelist_cursor {
+	struct ceph_pagelist *pl;   /* pagelist, for error checking */
+	struct list_head *page_lru; /* page in list */
+	size_t room;		    /* room remaining to reset to */
+};
 
-काष्ठा ceph_pagelist *ceph_pagelist_alloc(gfp_t gfp_flags);
+struct ceph_pagelist *ceph_pagelist_alloc(gfp_t gfp_flags);
 
-बाह्य व्योम ceph_pagelist_release(काष्ठा ceph_pagelist *pl);
+extern void ceph_pagelist_release(struct ceph_pagelist *pl);
 
-बाह्य पूर्णांक ceph_pagelist_append(काष्ठा ceph_pagelist *pl, स्थिर व्योम *d, माप_प्रकार l);
+extern int ceph_pagelist_append(struct ceph_pagelist *pl, const void *d, size_t l);
 
-बाह्य पूर्णांक ceph_pagelist_reserve(काष्ठा ceph_pagelist *pl, माप_प्रकार space);
+extern int ceph_pagelist_reserve(struct ceph_pagelist *pl, size_t space);
 
-बाह्य पूर्णांक ceph_pagelist_मुक्त_reserve(काष्ठा ceph_pagelist *pl);
+extern int ceph_pagelist_free_reserve(struct ceph_pagelist *pl);
 
-बाह्य व्योम ceph_pagelist_set_cursor(काष्ठा ceph_pagelist *pl,
-				     काष्ठा ceph_pagelist_cursor *c);
+extern void ceph_pagelist_set_cursor(struct ceph_pagelist *pl,
+				     struct ceph_pagelist_cursor *c);
 
-बाह्य पूर्णांक ceph_pagelist_truncate(काष्ठा ceph_pagelist *pl,
-				  काष्ठा ceph_pagelist_cursor *c);
+extern int ceph_pagelist_truncate(struct ceph_pagelist *pl,
+				  struct ceph_pagelist_cursor *c);
 
-अटल अंतरभूत पूर्णांक ceph_pagelist_encode_64(काष्ठा ceph_pagelist *pl, u64 v)
-अणु
+static inline int ceph_pagelist_encode_64(struct ceph_pagelist *pl, u64 v)
+{
 	__le64 ev = cpu_to_le64(v);
-	वापस ceph_pagelist_append(pl, &ev, माप(ev));
-पूर्ण
-अटल अंतरभूत पूर्णांक ceph_pagelist_encode_32(काष्ठा ceph_pagelist *pl, u32 v)
-अणु
+	return ceph_pagelist_append(pl, &ev, sizeof(ev));
+}
+static inline int ceph_pagelist_encode_32(struct ceph_pagelist *pl, u32 v)
+{
 	__le32 ev = cpu_to_le32(v);
-	वापस ceph_pagelist_append(pl, &ev, माप(ev));
-पूर्ण
-अटल अंतरभूत पूर्णांक ceph_pagelist_encode_16(काष्ठा ceph_pagelist *pl, u16 v)
-अणु
+	return ceph_pagelist_append(pl, &ev, sizeof(ev));
+}
+static inline int ceph_pagelist_encode_16(struct ceph_pagelist *pl, u16 v)
+{
 	__le16 ev = cpu_to_le16(v);
-	वापस ceph_pagelist_append(pl, &ev, माप(ev));
-पूर्ण
-अटल अंतरभूत पूर्णांक ceph_pagelist_encode_8(काष्ठा ceph_pagelist *pl, u8 v)
-अणु
-	वापस ceph_pagelist_append(pl, &v, 1);
-पूर्ण
-अटल अंतरभूत पूर्णांक ceph_pagelist_encode_string(काष्ठा ceph_pagelist *pl,
-					      अक्षर *s, u32 len)
-अणु
-	पूर्णांक ret = ceph_pagelist_encode_32(pl, len);
-	अगर (ret)
-		वापस ret;
-	अगर (len)
-		वापस ceph_pagelist_append(pl, s, len);
-	वापस 0;
-पूर्ण
+	return ceph_pagelist_append(pl, &ev, sizeof(ev));
+}
+static inline int ceph_pagelist_encode_8(struct ceph_pagelist *pl, u8 v)
+{
+	return ceph_pagelist_append(pl, &v, 1);
+}
+static inline int ceph_pagelist_encode_string(struct ceph_pagelist *pl,
+					      char *s, u32 len)
+{
+	int ret = ceph_pagelist_encode_32(pl, len);
+	if (ret)
+		return ret;
+	if (len)
+		return ceph_pagelist_append(pl, s, len);
+	return 0;
+}
 
-#पूर्ण_अगर
+#endif

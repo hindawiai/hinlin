@@ -1,65 +1,64 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#घोषणा _GNU_SOURCE
-#समावेश <sys/uपन.स>
-#समावेश <त्रुटिसं.स>
-#समावेश <मानकपन.स>
-#समावेश <sys/socket.h>
-#समावेश <fcntl.h>
-#समावेश <unistd.h>
-#समावेश "../../include/uapi/linux/bpf.h"
-#समावेश <यंत्र/unistd.h>
-#समावेश "msgfmt.h"
+// SPDX-License-Identifier: GPL-2.0
+#define _GNU_SOURCE
+#include <sys/uio.h>
+#include <errno.h>
+#include <stdio.h>
+#include <sys/socket.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include "../../include/uapi/linux/bpf.h"
+#include <asm/unistd.h>
+#include "msgfmt.h"
 
-खाता *debug_f;
+FILE *debug_f;
 
-अटल पूर्णांक handle_get_cmd(काष्ठा mbox_request *cmd)
-अणु
-	चयन (cmd->cmd) अणु
-	हाल 0:
-		वापस 0;
-	शेष:
-		अवरोध;
-	पूर्ण
-	वापस -ENOPROTOOPT;
-पूर्ण
+static int handle_get_cmd(struct mbox_request *cmd)
+{
+	switch (cmd->cmd) {
+	case 0:
+		return 0;
+	default:
+		break;
+	}
+	return -ENOPROTOOPT;
+}
 
-अटल पूर्णांक handle_set_cmd(काष्ठा mbox_request *cmd)
-अणु
-	वापस -ENOPROTOOPT;
-पूर्ण
+static int handle_set_cmd(struct mbox_request *cmd)
+{
+	return -ENOPROTOOPT;
+}
 
-अटल व्योम loop(व्योम)
-अणु
-	जबतक (1) अणु
-		काष्ठा mbox_request req;
-		काष्ठा mbox_reply reply;
-		पूर्णांक n;
+static void loop(void)
+{
+	while (1) {
+		struct mbox_request req;
+		struct mbox_reply reply;
+		int n;
 
-		n = पढ़ो(0, &req, माप(req));
-		अगर (n != माप(req)) अणु
-			ख_लिखो(debug_f, "invalid request %d\n", n);
-			वापस;
-		पूर्ण
+		n = read(0, &req, sizeof(req));
+		if (n != sizeof(req)) {
+			fprintf(debug_f, "invalid request %d\n", n);
+			return;
+		}
 
 		reply.status = req.is_set ?
 			handle_set_cmd(&req) :
 			handle_get_cmd(&req);
 
-		n = ग_लिखो(1, &reply, माप(reply));
-		अगर (n != माप(reply)) अणु
-			ख_लिखो(debug_f, "reply failed %d\n", n);
-			वापस;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		n = write(1, &reply, sizeof(reply));
+		if (n != sizeof(reply)) {
+			fprintf(debug_f, "reply failed %d\n", n);
+			return;
+		}
+	}
+}
 
-पूर्णांक मुख्य(व्योम)
-अणु
-	debug_f = ख_खोलो("/dev/kmsg", "w");
-	रखो_भबफ(debug_f, 0, _IOLBF, 0);
-	ख_लिखो(debug_f, "Started bpfilter\n");
+int main(void)
+{
+	debug_f = fopen("/dev/kmsg", "w");
+	setvbuf(debug_f, 0, _IOLBF, 0);
+	fprintf(debug_f, "Started bpfilter\n");
 	loop();
-	ख_बंद(debug_f);
-	वापस 0;
-पूर्ण
+	fclose(debug_f);
+	return 0;
+}

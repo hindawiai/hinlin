@@ -1,41 +1,40 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <गणित.स>
-#समावेश <unistd.h>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <sys/types.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <fcntl.h>
-#समावेश <sys/ब_समय.स>
-#समावेश <sched.h>
-#समावेश <त्रुटिसं.स>
+// SPDX-License-Identifier: GPL-2.0
+#include <math.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <sys/timeb.h>
+#include <sched.h>
+#include <errno.h>
 
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv) अणु
-	पूर्णांक cpu, fd;
-	दीर्घ दीर्घ msr;
-	अक्षर msr_file_name[64];
+int main(int argc, char **argv) {
+	int cpu, fd;
+	long long msr;
+	char msr_file_name[64];
 
-	अगर (argc != 2)
-		वापस 1;
+	if (argc != 2)
+		return 1;
 
-	त्रुटि_सं = 0;
-	cpu = म_से_दीर्घ(argv[1], (अक्षर **) शून्य, 10);
+	errno = 0;
+	cpu = strtol(argv[1], (char **) NULL, 10);
 
-	अगर (त्रुटि_सं)
-		वापस 1;
+	if (errno)
+		return 1;
 
-	प्र_लिखो(msr_file_name, "/dev/cpu/%d/msr", cpu);
-	fd = खोलो(msr_file_name, O_RDONLY);
+	sprintf(msr_file_name, "/dev/cpu/%d/msr", cpu);
+	fd = open(msr_file_name, O_RDONLY);
 
-	अगर (fd == -1) अणु
-		लिखो_त्रुटि("Failed to open");
-		वापस 1;
-	पूर्ण
+	if (fd == -1) {
+		perror("Failed to open");
+		return 1;
+	}
 
-	pपढ़ो(fd, &msr,  माप(msr), 0x199);
+	pread(fd, &msr,  sizeof(msr), 0x199);
 
-	म_लिखो("msr 0x199: 0x%llx\n", msr);
-	वापस 0;
-पूर्ण
+	printf("msr 0x199: 0x%llx\n", msr);
+	return 0;
+}

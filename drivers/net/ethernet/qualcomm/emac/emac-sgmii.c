@@ -1,429 +1,428 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2015-2016, The Linux Foundation. All rights reserved.
  */
 
 /* Qualcomm Technologies, Inc. EMAC SGMII Controller driver.
  */
 
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/iopoll.h>
-#समावेश <linux/acpi.h>
-#समावेश <linux/of_device.h>
-#समावेश "emac.h"
-#समावेश "emac-mac.h"
-#समावेश "emac-sgmii.h"
+#include <linux/interrupt.h>
+#include <linux/iopoll.h>
+#include <linux/acpi.h>
+#include <linux/of_device.h>
+#include "emac.h"
+#include "emac-mac.h"
+#include "emac-sgmii.h"
 
-/* EMAC_SGMII रेजिस्टर offsets */
-#घोषणा EMAC_SGMII_PHY_AUTONEG_CFG2		0x0048
-#घोषणा EMAC_SGMII_PHY_SPEED_CFG1		0x0074
-#घोषणा EMAC_SGMII_PHY_IRQ_CMD			0x00ac
-#घोषणा EMAC_SGMII_PHY_INTERRUPT_CLEAR		0x00b0
-#घोषणा EMAC_SGMII_PHY_INTERRUPT_MASK		0x00b4
-#घोषणा EMAC_SGMII_PHY_INTERRUPT_STATUS		0x00b8
-#घोषणा EMAC_SGMII_PHY_RX_CHK_STATUS		0x00d4
+/* EMAC_SGMII register offsets */
+#define EMAC_SGMII_PHY_AUTONEG_CFG2		0x0048
+#define EMAC_SGMII_PHY_SPEED_CFG1		0x0074
+#define EMAC_SGMII_PHY_IRQ_CMD			0x00ac
+#define EMAC_SGMII_PHY_INTERRUPT_CLEAR		0x00b0
+#define EMAC_SGMII_PHY_INTERRUPT_MASK		0x00b4
+#define EMAC_SGMII_PHY_INTERRUPT_STATUS		0x00b8
+#define EMAC_SGMII_PHY_RX_CHK_STATUS		0x00d4
 
-#घोषणा FORCE_AN_TX_CFG				BIT(5)
-#घोषणा FORCE_AN_RX_CFG				BIT(4)
-#घोषणा AN_ENABLE				BIT(0)
+#define FORCE_AN_TX_CFG				BIT(5)
+#define FORCE_AN_RX_CFG				BIT(4)
+#define AN_ENABLE				BIT(0)
 
-#घोषणा DUPLEX_MODE				BIT(4)
-#घोषणा SPDMODE_1000				BIT(1)
-#घोषणा SPDMODE_100				BIT(0)
-#घोषणा SPDMODE_10				0
+#define DUPLEX_MODE				BIT(4)
+#define SPDMODE_1000				BIT(1)
+#define SPDMODE_100				BIT(0)
+#define SPDMODE_10				0
 
-#घोषणा CDR_ALIGN_DET				BIT(6)
+#define CDR_ALIGN_DET				BIT(6)
 
-#घोषणा IRQ_GLOBAL_CLEAR			BIT(0)
+#define IRQ_GLOBAL_CLEAR			BIT(0)
 
-#घोषणा DECODE_CODE_ERR				BIT(7)
-#घोषणा DECODE_DISP_ERR				BIT(6)
+#define DECODE_CODE_ERR				BIT(7)
+#define DECODE_DISP_ERR				BIT(6)
 
-#घोषणा SGMII_PHY_IRQ_CLR_WAIT_TIME		10
+#define SGMII_PHY_IRQ_CLR_WAIT_TIME		10
 
-#घोषणा SGMII_PHY_INTERRUPT_ERR		(DECODE_CODE_ERR | DECODE_DISP_ERR)
-#घोषणा SGMII_ISR_MASK  		(SGMII_PHY_INTERRUPT_ERR)
+#define SGMII_PHY_INTERRUPT_ERR		(DECODE_CODE_ERR | DECODE_DISP_ERR)
+#define SGMII_ISR_MASK  		(SGMII_PHY_INTERRUPT_ERR)
 
-#घोषणा SERDES_START_WAIT_TIMES			100
+#define SERDES_START_WAIT_TIMES			100
 
-पूर्णांक emac_sgmii_init(काष्ठा emac_adapter *adpt)
-अणु
-	अगर (!(adpt->phy.sgmii_ops && adpt->phy.sgmii_ops->init))
-		वापस 0;
+int emac_sgmii_init(struct emac_adapter *adpt)
+{
+	if (!(adpt->phy.sgmii_ops && adpt->phy.sgmii_ops->init))
+		return 0;
 
-	वापस adpt->phy.sgmii_ops->init(adpt);
-पूर्ण
+	return adpt->phy.sgmii_ops->init(adpt);
+}
 
-पूर्णांक emac_sgmii_खोलो(काष्ठा emac_adapter *adpt)
-अणु
-	अगर (!(adpt->phy.sgmii_ops && adpt->phy.sgmii_ops->खोलो))
-		वापस 0;
+int emac_sgmii_open(struct emac_adapter *adpt)
+{
+	if (!(adpt->phy.sgmii_ops && adpt->phy.sgmii_ops->open))
+		return 0;
 
-	वापस adpt->phy.sgmii_ops->खोलो(adpt);
-पूर्ण
+	return adpt->phy.sgmii_ops->open(adpt);
+}
 
-व्योम emac_sgmii_बंद(काष्ठा emac_adapter *adpt)
-अणु
-	अगर (!(adpt->phy.sgmii_ops && adpt->phy.sgmii_ops->बंद))
-		वापस;
+void emac_sgmii_close(struct emac_adapter *adpt)
+{
+	if (!(adpt->phy.sgmii_ops && adpt->phy.sgmii_ops->close))
+		return;
 
-	adpt->phy.sgmii_ops->बंद(adpt);
-पूर्ण
+	adpt->phy.sgmii_ops->close(adpt);
+}
 
-पूर्णांक emac_sgmii_link_change(काष्ठा emac_adapter *adpt, bool link_state)
-अणु
-	अगर (!(adpt->phy.sgmii_ops && adpt->phy.sgmii_ops->link_change))
-		वापस 0;
+int emac_sgmii_link_change(struct emac_adapter *adpt, bool link_state)
+{
+	if (!(adpt->phy.sgmii_ops && adpt->phy.sgmii_ops->link_change))
+		return 0;
 
-	वापस adpt->phy.sgmii_ops->link_change(adpt, link_state);
-पूर्ण
+	return adpt->phy.sgmii_ops->link_change(adpt, link_state);
+}
 
-व्योम emac_sgmii_reset(काष्ठा emac_adapter *adpt)
-अणु
-	अगर (!(adpt->phy.sgmii_ops && adpt->phy.sgmii_ops->reset))
-		वापस;
+void emac_sgmii_reset(struct emac_adapter *adpt)
+{
+	if (!(adpt->phy.sgmii_ops && adpt->phy.sgmii_ops->reset))
+		return;
 
 	adpt->phy.sgmii_ops->reset(adpt);
-पूर्ण
+}
 
-/* Initialize the SGMII link between the पूर्णांकernal and बाह्यal PHYs. */
-अटल व्योम emac_sgmii_link_init(काष्ठा emac_adapter *adpt)
-अणु
-	काष्ठा emac_sgmii *phy = &adpt->phy;
+/* Initialize the SGMII link between the internal and external PHYs. */
+static void emac_sgmii_link_init(struct emac_adapter *adpt)
+{
+	struct emac_sgmii *phy = &adpt->phy;
 	u32 val;
 
-	/* Always use स्वतःnegotiation. It works no matter how the बाह्यal
+	/* Always use autonegotiation. It works no matter how the external
 	 * PHY is configured.
 	 */
-	val = पढ़ोl(phy->base + EMAC_SGMII_PHY_AUTONEG_CFG2);
+	val = readl(phy->base + EMAC_SGMII_PHY_AUTONEG_CFG2);
 	val &= ~(FORCE_AN_RX_CFG | FORCE_AN_TX_CFG);
 	val |= AN_ENABLE;
-	ग_लिखोl(val, phy->base + EMAC_SGMII_PHY_AUTONEG_CFG2);
-पूर्ण
+	writel(val, phy->base + EMAC_SGMII_PHY_AUTONEG_CFG2);
+}
 
-अटल पूर्णांक emac_sgmii_irq_clear(काष्ठा emac_adapter *adpt, u8 irq_bits)
-अणु
-	काष्ठा emac_sgmii *phy = &adpt->phy;
+static int emac_sgmii_irq_clear(struct emac_adapter *adpt, u8 irq_bits)
+{
+	struct emac_sgmii *phy = &adpt->phy;
 	u8 status;
 
-	ग_लिखोl_relaxed(irq_bits, phy->base + EMAC_SGMII_PHY_INTERRUPT_CLEAR);
-	ग_लिखोl_relaxed(IRQ_GLOBAL_CLEAR, phy->base + EMAC_SGMII_PHY_IRQ_CMD);
-	/* Ensure पूर्णांकerrupt clear command is written to HW */
+	writel_relaxed(irq_bits, phy->base + EMAC_SGMII_PHY_INTERRUPT_CLEAR);
+	writel_relaxed(IRQ_GLOBAL_CLEAR, phy->base + EMAC_SGMII_PHY_IRQ_CMD);
+	/* Ensure interrupt clear command is written to HW */
 	wmb();
 
 	/* After set the IRQ_GLOBAL_CLEAR bit, the status clearing must
-	 * be confirmed beक्रमe clearing the bits in other रेजिस्टरs.
-	 * It takes a few cycles क्रम hw to clear the पूर्णांकerrupt status.
+	 * be confirmed before clearing the bits in other registers.
+	 * It takes a few cycles for hw to clear the interrupt status.
 	 */
-	अगर (पढ़ोl_poll_समयout_atomic(phy->base +
+	if (readl_poll_timeout_atomic(phy->base +
 				      EMAC_SGMII_PHY_INTERRUPT_STATUS,
 				      status, !(status & irq_bits), 1,
-				      SGMII_PHY_IRQ_CLR_WAIT_TIME)) अणु
+				      SGMII_PHY_IRQ_CLR_WAIT_TIME)) {
 		net_err_ratelimited("%s: failed to clear SGMII irq: status:0x%x bits:0x%x\n",
 				    adpt->netdev->name, status, irq_bits);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	/* Finalize clearing procedure */
-	ग_लिखोl_relaxed(0, phy->base + EMAC_SGMII_PHY_IRQ_CMD);
-	ग_लिखोl_relaxed(0, phy->base + EMAC_SGMII_PHY_INTERRUPT_CLEAR);
+	writel_relaxed(0, phy->base + EMAC_SGMII_PHY_IRQ_CMD);
+	writel_relaxed(0, phy->base + EMAC_SGMII_PHY_INTERRUPT_CLEAR);
 
 	/* Ensure that clearing procedure finalization is written to HW */
 	wmb();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* The number of decode errors that triggers a reset */
-#घोषणा DECODE_ERROR_LIMIT	2
+#define DECODE_ERROR_LIMIT	2
 
-अटल irqवापस_t emac_sgmii_पूर्णांकerrupt(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा emac_adapter *adpt = data;
-	काष्ठा emac_sgmii *phy = &adpt->phy;
+static irqreturn_t emac_sgmii_interrupt(int irq, void *data)
+{
+	struct emac_adapter *adpt = data;
+	struct emac_sgmii *phy = &adpt->phy;
 	u8 status;
 
-	status = पढ़ोl(phy->base + EMAC_SGMII_PHY_INTERRUPT_STATUS);
+	status = readl(phy->base + EMAC_SGMII_PHY_INTERRUPT_STATUS);
 	status &= SGMII_ISR_MASK;
-	अगर (!status)
-		वापस IRQ_HANDLED;
+	if (!status)
+		return IRQ_HANDLED;
 
 	/* If we get a decoding error and CDR is not locked, then try
-	 * resetting the पूर्णांकernal PHY.  The पूर्णांकernal PHY uses an embedded
-	 * घड़ी with Clock and Data Recovery (CDR) to recover the
-	 * घड़ी and data.
+	 * resetting the internal PHY.  The internal PHY uses an embedded
+	 * clock with Clock and Data Recovery (CDR) to recover the
+	 * clock and data.
 	 */
-	अगर (status & SGMII_PHY_INTERRUPT_ERR) अणु
-		पूर्णांक count;
+	if (status & SGMII_PHY_INTERRUPT_ERR) {
+		int count;
 
 		/* The SGMII is capable of recovering from some decode
-		 * errors स्वतःmatically.  However, अगर we get multiple
+		 * errors automatically.  However, if we get multiple
 		 * decode errors in a row, then assume that something
-		 * is wrong and reset the पूर्णांकerface.
+		 * is wrong and reset the interface.
 		 */
-		count = atomic_inc_वापस(&phy->decode_error_count);
-		अगर (count == DECODE_ERROR_LIMIT) अणु
-			schedule_work(&adpt->work_thपढ़ो);
+		count = atomic_inc_return(&phy->decode_error_count);
+		if (count == DECODE_ERROR_LIMIT) {
+			schedule_work(&adpt->work_thread);
 			atomic_set(&phy->decode_error_count, 0);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		/* We only care about consecutive decode errors. */
 		atomic_set(&phy->decode_error_count, 0);
-	पूर्ण
+	}
 
-	अगर (emac_sgmii_irq_clear(adpt, status))
-		schedule_work(&adpt->work_thपढ़ो);
+	if (emac_sgmii_irq_clear(adpt, status))
+		schedule_work(&adpt->work_thread);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम emac_sgmii_reset_prepare(काष्ठा emac_adapter *adpt)
-अणु
-	काष्ठा emac_sgmii *phy = &adpt->phy;
+static void emac_sgmii_reset_prepare(struct emac_adapter *adpt)
+{
+	struct emac_sgmii *phy = &adpt->phy;
 	u32 val;
 
 	/* Reset PHY */
-	val = पढ़ोl(phy->base + EMAC_EMAC_WRAPPER_CSR2);
-	ग_लिखोl(((val & ~PHY_RESET) | PHY_RESET), phy->base +
+	val = readl(phy->base + EMAC_EMAC_WRAPPER_CSR2);
+	writel(((val & ~PHY_RESET) | PHY_RESET), phy->base +
 	       EMAC_EMAC_WRAPPER_CSR2);
-	/* Ensure phy-reset command is written to HW beक्रमe the release cmd */
+	/* Ensure phy-reset command is written to HW before the release cmd */
 	msleep(50);
-	val = पढ़ोl(phy->base + EMAC_EMAC_WRAPPER_CSR2);
-	ग_लिखोl((val & ~PHY_RESET), phy->base + EMAC_EMAC_WRAPPER_CSR2);
-	/* Ensure phy-reset release command is written to HW beक्रमe initializing
+	val = readl(phy->base + EMAC_EMAC_WRAPPER_CSR2);
+	writel((val & ~PHY_RESET), phy->base + EMAC_EMAC_WRAPPER_CSR2);
+	/* Ensure phy-reset release command is written to HW before initializing
 	 * SGMII
 	 */
 	msleep(50);
-पूर्ण
+}
 
-अटल व्योम emac_sgmii_common_reset(काष्ठा emac_adapter *adpt)
-अणु
-	पूर्णांक ret;
+static void emac_sgmii_common_reset(struct emac_adapter *adpt)
+{
+	int ret;
 
 	emac_sgmii_reset_prepare(adpt);
 	emac_sgmii_link_init(adpt);
 
 	ret = emac_sgmii_init(adpt);
-	अगर (ret)
+	if (ret)
 		netdev_err(adpt->netdev,
 			   "could not reinitialize internal PHY (error=%i)\n",
 			   ret);
-पूर्ण
+}
 
-अटल पूर्णांक emac_sgmii_common_खोलो(काष्ठा emac_adapter *adpt)
-अणु
-	काष्ठा emac_sgmii *sgmii = &adpt->phy;
-	पूर्णांक ret;
+static int emac_sgmii_common_open(struct emac_adapter *adpt)
+{
+	struct emac_sgmii *sgmii = &adpt->phy;
+	int ret;
 
-	अगर (sgmii->irq) अणु
-		/* Make sure पूर्णांकerrupts are cleared and disabled first */
+	if (sgmii->irq) {
+		/* Make sure interrupts are cleared and disabled first */
 		ret = emac_sgmii_irq_clear(adpt, 0xff);
-		अगर (ret)
-			वापस ret;
-		ग_लिखोl(0, sgmii->base + EMAC_SGMII_PHY_INTERRUPT_MASK);
+		if (ret)
+			return ret;
+		writel(0, sgmii->base + EMAC_SGMII_PHY_INTERRUPT_MASK);
 
-		ret = request_irq(sgmii->irq, emac_sgmii_पूर्णांकerrupt, 0,
+		ret = request_irq(sgmii->irq, emac_sgmii_interrupt, 0,
 				  "emac-sgmii", adpt);
-		अगर (ret) अणु
+		if (ret) {
 			netdev_err(adpt->netdev,
 				   "could not register handler for internal PHY\n");
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम emac_sgmii_common_बंद(काष्ठा emac_adapter *adpt)
-अणु
-	काष्ठा emac_sgmii *sgmii = &adpt->phy;
+static void emac_sgmii_common_close(struct emac_adapter *adpt)
+{
+	struct emac_sgmii *sgmii = &adpt->phy;
 
-	/* Make sure पूर्णांकerrupts are disabled */
-	ग_लिखोl(0, sgmii->base + EMAC_SGMII_PHY_INTERRUPT_MASK);
-	मुक्त_irq(sgmii->irq, adpt);
-पूर्ण
+	/* Make sure interrupts are disabled */
+	writel(0, sgmii->base + EMAC_SGMII_PHY_INTERRUPT_MASK);
+	free_irq(sgmii->irq, adpt);
+}
 
-/* The error पूर्णांकerrupts are only valid after the link is up */
-अटल पूर्णांक emac_sgmii_common_link_change(काष्ठा emac_adapter *adpt, bool linkup)
-अणु
-	काष्ठा emac_sgmii *sgmii = &adpt->phy;
-	पूर्णांक ret;
+/* The error interrupts are only valid after the link is up */
+static int emac_sgmii_common_link_change(struct emac_adapter *adpt, bool linkup)
+{
+	struct emac_sgmii *sgmii = &adpt->phy;
+	int ret;
 
-	अगर (linkup) अणु
-		/* Clear and enable पूर्णांकerrupts */
+	if (linkup) {
+		/* Clear and enable interrupts */
 		ret = emac_sgmii_irq_clear(adpt, 0xff);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-		ग_लिखोl(SGMII_ISR_MASK,
+		writel(SGMII_ISR_MASK,
 		       sgmii->base + EMAC_SGMII_PHY_INTERRUPT_MASK);
-	पूर्ण अन्यथा अणु
-		/* Disable पूर्णांकerrupts */
-		ग_लिखोl(0, sgmii->base + EMAC_SGMII_PHY_INTERRUPT_MASK);
+	} else {
+		/* Disable interrupts */
+		writel(0, sgmii->base + EMAC_SGMII_PHY_INTERRUPT_MASK);
 		synchronize_irq(sgmii->irq);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा sgmii_ops fsm9900_ops = अणु
+static struct sgmii_ops fsm9900_ops = {
 	.init = emac_sgmii_init_fsm9900,
-	.खोलो = emac_sgmii_common_खोलो,
-	.बंद = emac_sgmii_common_बंद,
+	.open = emac_sgmii_common_open,
+	.close = emac_sgmii_common_close,
 	.link_change = emac_sgmii_common_link_change,
 	.reset = emac_sgmii_common_reset,
-पूर्ण;
+};
 
-अटल काष्ठा sgmii_ops qdf2432_ops = अणु
+static struct sgmii_ops qdf2432_ops = {
 	.init = emac_sgmii_init_qdf2432,
-	.खोलो = emac_sgmii_common_खोलो,
-	.बंद = emac_sgmii_common_बंद,
+	.open = emac_sgmii_common_open,
+	.close = emac_sgmii_common_close,
 	.link_change = emac_sgmii_common_link_change,
 	.reset = emac_sgmii_common_reset,
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_ACPI
-अटल काष्ठा sgmii_ops qdf2400_ops = अणु
+#ifdef CONFIG_ACPI
+static struct sgmii_ops qdf2400_ops = {
 	.init = emac_sgmii_init_qdf2400,
-	.खोलो = emac_sgmii_common_खोलो,
-	.बंद = emac_sgmii_common_बंद,
+	.open = emac_sgmii_common_open,
+	.close = emac_sgmii_common_close,
 	.link_change = emac_sgmii_common_link_change,
 	.reset = emac_sgmii_common_reset,
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif
 
-अटल पूर्णांक emac_sgmii_acpi_match(काष्ठा device *dev, व्योम *data)
-अणु
-#अगर_घोषित CONFIG_ACPI
-	अटल स्थिर काष्ठा acpi_device_id match_table[] = अणु
-		अणु
+static int emac_sgmii_acpi_match(struct device *dev, void *data)
+{
+#ifdef CONFIG_ACPI
+	static const struct acpi_device_id match_table[] = {
+		{
 			.id = "QCOM8071",
-		पूर्ण,
-		अणुपूर्ण
-	पूर्ण;
-	स्थिर काष्ठा acpi_device_id *id = acpi_match_device(match_table, dev);
-	काष्ठा sgmii_ops **ops = data;
+		},
+		{}
+	};
+	const struct acpi_device_id *id = acpi_match_device(match_table, dev);
+	struct sgmii_ops **ops = data;
 
-	अगर (id) अणु
+	if (id) {
 		acpi_handle handle = ACPI_HANDLE(dev);
-		अचिन्हित दीर्घ दीर्घ hrv;
+		unsigned long long hrv;
 		acpi_status status;
 
-		status = acpi_evaluate_पूर्णांकeger(handle, "_HRV", शून्य, &hrv);
-		अगर (status) अणु
-			अगर (status == AE_NOT_FOUND)
-				/* Older versions of the QDF2432 ACPI tables करो
+		status = acpi_evaluate_integer(handle, "_HRV", NULL, &hrv);
+		if (status) {
+			if (status == AE_NOT_FOUND)
+				/* Older versions of the QDF2432 ACPI tables do
 				 * not have an _HRV property.
 				 */
 				hrv = 1;
-			अन्यथा
+			else
 				/* Something is wrong with the tables */
-				वापस 0;
-		पूर्ण
+				return 0;
+		}
 
-		चयन (hrv) अणु
-		हाल 1:
+		switch (hrv) {
+		case 1:
 			*ops = &qdf2432_ops;
-			वापस 1;
-		हाल 2:
+			return 1;
+		case 2:
 			*ops = &qdf2400_ops;
-			वापस 1;
-		पूर्ण
-	पूर्ण
-#पूर्ण_अगर
+			return 1;
+		}
+	}
+#endif
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id emac_sgmii_dt_match[] = अणु
-	अणु
+static const struct of_device_id emac_sgmii_dt_match[] = {
+	{
 		.compatible = "qcom,fsm9900-emac-sgmii",
 		.data = &fsm9900_ops,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "qcom,qdf2432-emac-sgmii",
 		.data = &qdf2432_ops,
-	पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+	},
+	{}
+};
 
-पूर्णांक emac_sgmii_config(काष्ठा platक्रमm_device *pdev, काष्ठा emac_adapter *adpt)
-अणु
-	काष्ठा platक्रमm_device *sgmii_pdev = शून्य;
-	काष्ठा emac_sgmii *phy = &adpt->phy;
-	काष्ठा resource *res;
-	पूर्णांक ret;
+int emac_sgmii_config(struct platform_device *pdev, struct emac_adapter *adpt)
+{
+	struct platform_device *sgmii_pdev = NULL;
+	struct emac_sgmii *phy = &adpt->phy;
+	struct resource *res;
+	int ret;
 
-	अगर (has_acpi_companion(&pdev->dev)) अणु
-		काष्ठा device *dev;
+	if (has_acpi_companion(&pdev->dev)) {
+		struct device *dev;
 
 		dev = device_find_child(&pdev->dev, &phy->sgmii_ops,
 					emac_sgmii_acpi_match);
 
-		अगर (!dev) अणु
+		if (!dev) {
 			dev_warn(&pdev->dev, "cannot find internal phy node\n");
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
-		sgmii_pdev = to_platक्रमm_device(dev);
-	पूर्ण अन्यथा अणु
-		स्थिर काष्ठा of_device_id *match;
-		काष्ठा device_node *np;
+		sgmii_pdev = to_platform_device(dev);
+	} else {
+		const struct of_device_id *match;
+		struct device_node *np;
 
 		np = of_parse_phandle(pdev->dev.of_node, "internal-phy", 0);
-		अगर (!np) अणु
+		if (!np) {
 			dev_err(&pdev->dev, "missing internal-phy property\n");
-			वापस -ENODEV;
-		पूर्ण
+			return -ENODEV;
+		}
 
 		sgmii_pdev = of_find_device_by_node(np);
 		of_node_put(np);
-		अगर (!sgmii_pdev) अणु
+		if (!sgmii_pdev) {
 			dev_err(&pdev->dev, "invalid internal-phy property\n");
-			वापस -ENODEV;
-		पूर्ण
+			return -ENODEV;
+		}
 
 		match = of_match_device(emac_sgmii_dt_match, &sgmii_pdev->dev);
-		अगर (!match) अणु
+		if (!match) {
 			dev_err(&pdev->dev, "unrecognized internal phy node\n");
 			ret = -ENODEV;
-			जाओ error_put_device;
-		पूर्ण
+			goto error_put_device;
+		}
 
-		phy->sgmii_ops = (काष्ठा sgmii_ops *)match->data;
-	पूर्ण
+		phy->sgmii_ops = (struct sgmii_ops *)match->data;
+	}
 
 	/* Base address is the first address */
-	res = platक्रमm_get_resource(sgmii_pdev, IORESOURCE_MEM, 0);
-	अगर (!res) अणु
+	res = platform_get_resource(sgmii_pdev, IORESOURCE_MEM, 0);
+	if (!res) {
 		ret = -EINVAL;
-		जाओ error_put_device;
-	पूर्ण
+		goto error_put_device;
+	}
 
 	phy->base = ioremap(res->start, resource_size(res));
-	अगर (!phy->base) अणु
+	if (!phy->base) {
 		ret = -ENOMEM;
-		जाओ error_put_device;
-	पूर्ण
+		goto error_put_device;
+	}
 
-	/* v2 SGMII has a per-lane digital digital, so parse it अगर it exists */
-	res = platक्रमm_get_resource(sgmii_pdev, IORESOURCE_MEM, 1);
-	अगर (res) अणु
+	/* v2 SGMII has a per-lane digital digital, so parse it if it exists */
+	res = platform_get_resource(sgmii_pdev, IORESOURCE_MEM, 1);
+	if (res) {
 		phy->digital = ioremap(res->start, resource_size(res));
-		अगर (!phy->digital) अणु
+		if (!phy->digital) {
 			ret = -ENOMEM;
-			जाओ error_unmap_base;
-		पूर्ण
-	पूर्ण
+			goto error_unmap_base;
+		}
+	}
 
 	ret = emac_sgmii_init(adpt);
-	अगर (ret)
-		जाओ error;
+	if (ret)
+		goto error;
 
 	emac_sgmii_link_init(adpt);
 
-	ret = platक्रमm_get_irq(sgmii_pdev, 0);
-	अगर (ret > 0)
+	ret = platform_get_irq(sgmii_pdev, 0);
+	if (ret > 0)
 		phy->irq = ret;
 
 	/* We've remapped the addresses, so we don't need the device any
@@ -431,15 +430,15 @@
 	 */
 	put_device(&sgmii_pdev->dev);
 
-	वापस 0;
+	return 0;
 
 error:
-	अगर (phy->digital)
+	if (phy->digital)
 		iounmap(phy->digital);
 error_unmap_base:
 	iounmap(phy->base);
 error_put_device:
 	put_device(&sgmii_pdev->dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

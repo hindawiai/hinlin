@@ -1,28 +1,27 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Support क्रम Intel Camera Imaging ISP subप्रणाली.
+ * Support for Intel Camera Imaging ISP subsystem.
  * Copyright (c) 2010 - 2015, Intel Corporation.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  */
 
-#अगर_अघोषित __CSI_RX_RMGR_H_INCLUDED__
-#घोषणा __CSI_RX_RMGR_H_INCLUDED__
+#ifndef __CSI_RX_RMGR_H_INCLUDED__
+#define __CSI_RX_RMGR_H_INCLUDED__
 
-प्रकार काष्ठा isys_csi_rx_rsrc_s isys_csi_rx_rsrc_t;
-काष्ठा isys_csi_rx_rsrc_s अणु
+typedef struct isys_csi_rx_rsrc_s isys_csi_rx_rsrc_t;
+struct isys_csi_rx_rsrc_s {
 	u32	active_table;
 	u32        num_active;
-	u16	num_दीर्घ_packets;
-	u16	num_लघु_packets;
-पूर्ण;
+	u16	num_long_packets;
+	u16	num_short_packets;
+};
 
-#पूर्ण_अगर /* __CSI_RX_RMGR_H_INCLUDED__ */
+#endif /* __CSI_RX_RMGR_H_INCLUDED__ */

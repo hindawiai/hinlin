@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
 /*
  * Based on Christian Brauner's clone3() example.
@@ -7,159 +6,159 @@
  * PID namespace.
  */
 
-/* capabilities related code based on selftests/bpf/test_verअगरier.c */
+/* capabilities related code based on selftests/bpf/test_verifier.c */
 
-#घोषणा _GNU_SOURCE
-#समावेश <त्रुटिसं.स>
-#समावेश <linux/types.h>
-#समावेश <linux/sched.h>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <stdbool.h>
-#समावेश <sys/capability.h>
-#समावेश <sys/prctl.h>
-#समावेश <sys/syscall.h>
-#समावेश <sys/types.h>
-#समावेश <sys/un.h>
-#समावेश <sys/रुको.h>
-#समावेश <unistd.h>
-#समावेश <sched.h>
+#define _GNU_SOURCE
+#include <errno.h>
+#include <linux/types.h>
+#include <linux/sched.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <sys/capability.h>
+#include <sys/prctl.h>
+#include <sys/syscall.h>
+#include <sys/types.h>
+#include <sys/un.h>
+#include <sys/wait.h>
+#include <unistd.h>
+#include <sched.h>
 
-#समावेश "../kselftest_harness.h"
-#समावेश "clone3_selftests.h"
+#include "../kselftest_harness.h"
+#include "clone3_selftests.h"
 
-#अगर_अघोषित MAX_PID_NS_LEVEL
-#घोषणा MAX_PID_NS_LEVEL 32
-#पूर्ण_अगर
+#ifndef MAX_PID_NS_LEVEL
+#define MAX_PID_NS_LEVEL 32
+#endif
 
-अटल व्योम child_निकास(पूर्णांक ret)
-अणु
-	ख_साफ(मानक_निकास);
-	ख_साफ(मानक_त्रुटि);
-	_निकास(ret);
-पूर्ण
+static void child_exit(int ret)
+{
+	fflush(stdout);
+	fflush(stderr);
+	_exit(ret);
+}
 
-अटल पूर्णांक call_clone3_set_tid(काष्ठा __test_metadata *_metadata,
-			       pid_t *set_tid, माप_प्रकार set_tid_size)
-अणु
-	पूर्णांक status;
+static int call_clone3_set_tid(struct __test_metadata *_metadata,
+			       pid_t *set_tid, size_t set_tid_size)
+{
+	int status;
 	pid_t pid = -1;
 
-	काष्ठा __clone_args args = अणु
-		.निकास_संकेत = SIGCHLD,
+	struct __clone_args args = {
+		.exit_signal = SIGCHLD,
 		.set_tid = ptr_to_u64(set_tid),
 		.set_tid_size = set_tid_size,
-	पूर्ण;
+	};
 
-	pid = sys_clone3(&args, माप(args));
-	अगर (pid < 0) अणु
-		TH_LOG("%s - Failed to create new process", म_त्रुटि(त्रुटि_सं));
-		वापस -त्रुटि_सं;
-	पूर्ण
+	pid = sys_clone3(&args, sizeof(args));
+	if (pid < 0) {
+		TH_LOG("%s - Failed to create new process", strerror(errno));
+		return -errno;
+	}
 
-	अगर (pid == 0) अणु
-		पूर्णांक ret;
-		अक्षर पंचांगp = 0;
+	if (pid == 0) {
+		int ret;
+		char tmp = 0;
 
 		TH_LOG("I am the child, my PID is %d (expected %d)", getpid(), set_tid[0]);
 
-		अगर (set_tid[0] != getpid())
-			child_निकास(निकास_त्रुटि);
-		child_निकास(निकास_सफल);
-	पूर्ण
+		if (set_tid[0] != getpid())
+			child_exit(EXIT_FAILURE);
+		child_exit(EXIT_SUCCESS);
+	}
 
 	TH_LOG("I am the parent (%d). My child's pid is %d", getpid(), pid);
 
-	अगर (रुकोpid(pid, &status, 0) < 0) अणु
-		TH_LOG("Child returned %s", म_त्रुटि(त्रुटि_सं));
-		वापस -त्रुटि_सं;
-	पूर्ण
+	if (waitpid(pid, &status, 0) < 0) {
+		TH_LOG("Child returned %s", strerror(errno));
+		return -errno;
+	}
 
-	अगर (!WIFEXITED(status))
-		वापस -1;
+	if (!WIFEXITED(status))
+		return -1;
 
-	वापस WEXITSTATUS(status);
-पूर्ण
+	return WEXITSTATUS(status);
+}
 
-अटल पूर्णांक test_clone3_set_tid(काष्ठा __test_metadata *_metadata,
-			       pid_t *set_tid, माप_प्रकार set_tid_size)
-अणु
-	पूर्णांक ret;
+static int test_clone3_set_tid(struct __test_metadata *_metadata,
+			       pid_t *set_tid, size_t set_tid_size)
+{
+	int ret;
 
 	TH_LOG("[%d] Trying clone3() with CLONE_SET_TID to %d", getpid(), set_tid[0]);
 	ret = call_clone3_set_tid(_metadata, set_tid, set_tid_size);
 	TH_LOG("[%d] clone3() with CLONE_SET_TID %d says:%d", getpid(), set_tid[0], ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-काष्ठा libcap अणु
-	काष्ठा __user_cap_header_काष्ठा hdr;
-	काष्ठा __user_cap_data_काष्ठा data[2];
-पूर्ण;
+struct libcap {
+	struct __user_cap_header_struct hdr;
+	struct __user_cap_data_struct data[2];
+};
 
-अटल पूर्णांक set_capability(व्योम)
-अणु
-	cap_value_t cap_values[] = अणु CAP_SETUID, CAP_SETGID पूर्ण;
-	काष्ठा libcap *cap;
-	पूर्णांक ret = -1;
+static int set_capability(void)
+{
+	cap_value_t cap_values[] = { CAP_SETUID, CAP_SETGID };
+	struct libcap *cap;
+	int ret = -1;
 	cap_t caps;
 
 	caps = cap_get_proc();
-	अगर (!caps) अणु
-		लिखो_त्रुटि("cap_get_proc");
-		वापस -1;
-	पूर्ण
+	if (!caps) {
+		perror("cap_get_proc");
+		return -1;
+	}
 
 	/* Drop all capabilities */
-	अगर (cap_clear(caps)) अणु
-		लिखो_त्रुटि("cap_clear");
-		जाओ out;
-	पूर्ण
+	if (cap_clear(caps)) {
+		perror("cap_clear");
+		goto out;
+	}
 
 	cap_set_flag(caps, CAP_EFFECTIVE, 2, cap_values, CAP_SET);
 	cap_set_flag(caps, CAP_PERMITTED, 2, cap_values, CAP_SET);
 
-	cap = (काष्ठा libcap *) caps;
+	cap = (struct libcap *) caps;
 
 	/* 40 -> CAP_CHECKPOINT_RESTORE */
 	cap->data[1].effective |= 1 << (40 - 32);
 	cap->data[1].permitted |= 1 << (40 - 32);
 
-	अगर (cap_set_proc(caps)) अणु
-		लिखो_त्रुटि("cap_set_proc");
-		जाओ out;
-	पूर्ण
+	if (cap_set_proc(caps)) {
+		perror("cap_set_proc");
+		goto out;
+	}
 	ret = 0;
 out:
-	अगर (cap_मुक्त(caps))
-		लिखो_त्रुटि("cap_free");
-	वापस ret;
-पूर्ण
+	if (cap_free(caps))
+		perror("cap_free");
+	return ret;
+}
 
-TEST(clone3_cap_checkpoपूर्णांक_restore)
-अणु
+TEST(clone3_cap_checkpoint_restore)
+{
 	pid_t pid;
-	पूर्णांक status;
-	पूर्णांक ret = 0;
+	int status;
+	int ret = 0;
 	pid_t set_tid[1];
 
 	test_clone3_supported();
 
 	EXPECT_EQ(getuid(), 0)
-		SKIP(वापस, "Skipping all tests as non-root");
+		SKIP(return, "Skipping all tests as non-root");
 
-	स_रखो(&set_tid, 0, माप(set_tid));
+	memset(&set_tid, 0, sizeof(set_tid));
 
 	/* Find the current active PID */
-	pid = विभाजन();
-	अगर (pid == 0) अणु
+	pid = fork();
+	if (pid == 0) {
 		TH_LOG("Child has PID %d", getpid());
-		child_निकास(निकास_सफल);
-	पूर्ण
-	ASSERT_GT(रुकोpid(pid, &status, 0), 0)
+		child_exit(EXIT_SUCCESS);
+	}
+	ASSERT_GT(waitpid(pid, &status, 0), 0)
 		TH_LOG("Waiting for child %d failed", pid);
 
-	/* After the child has finished, its PID should be मुक्त. */
+	/* After the child has finished, its PID should be free. */
 	set_tid[0] = pid;
 
 	ASSERT_EQ(set_capability(), 0)
@@ -178,6 +177,6 @@ TEST(clone3_cap_checkpoपूर्णांक_restore)
 		TH_LOG("Could not set CAP_CHECKPOINT_RESTORE");
 	/* This should work as we have CAP_CHECKPOINT_RESTORE as non-root */
 	ASSERT_EQ(test_clone3_set_tid(_metadata, set_tid, 1), 0);
-पूर्ण
+}
 
 TEST_HARNESS_MAIN

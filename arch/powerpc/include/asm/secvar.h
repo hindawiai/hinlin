@@ -1,36 +1,35 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) 2019 IBM Corporation
  * Author: Nayna Jain
  *
  * PowerPC secure variable operations.
  */
-#अगर_अघोषित SECVAR_OPS_H
-#घोषणा SECVAR_OPS_H
+#ifndef SECVAR_OPS_H
+#define SECVAR_OPS_H
 
-#समावेश <linux/types.h>
-#समावेश <linux/त्रुटिसं.स>
+#include <linux/types.h>
+#include <linux/errno.h>
 
-बाह्य स्थिर काष्ठा secvar_operations *secvar_ops;
+extern const struct secvar_operations *secvar_ops;
 
-काष्ठा secvar_operations अणु
-	पूर्णांक (*get)(स्थिर अक्षर *key, uपूर्णांक64_t key_len, u8 *data,
-		   uपूर्णांक64_t *data_size);
-	पूर्णांक (*get_next)(स्थिर अक्षर *key, uपूर्णांक64_t *key_len,
-			uपूर्णांक64_t keybufsize);
-	पूर्णांक (*set)(स्थिर अक्षर *key, uपूर्णांक64_t key_len, u8 *data,
-		   uपूर्णांक64_t data_size);
-पूर्ण;
+struct secvar_operations {
+	int (*get)(const char *key, uint64_t key_len, u8 *data,
+		   uint64_t *data_size);
+	int (*get_next)(const char *key, uint64_t *key_len,
+			uint64_t keybufsize);
+	int (*set)(const char *key, uint64_t key_len, u8 *data,
+		   uint64_t data_size);
+};
 
-#अगर_घोषित CONFIG_PPC_SECURE_BOOT
+#ifdef CONFIG_PPC_SECURE_BOOT
 
-बाह्य व्योम set_secvar_ops(स्थिर काष्ठा secvar_operations *ops);
+extern void set_secvar_ops(const struct secvar_operations *ops);
 
-#अन्यथा
+#else
 
-अटल अंतरभूत व्योम set_secvar_ops(स्थिर काष्ठा secvar_operations *ops) अणु पूर्ण
+static inline void set_secvar_ops(const struct secvar_operations *ops) { }
 
-#पूर्ण_अगर
+#endif
 
-#पूर्ण_अगर
+#endif

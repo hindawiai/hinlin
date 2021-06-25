@@ -1,8 +1,7 @@
-<शैली गुरु>
-अणु
+{
 	"jset32: BPF_K",
-	.insns = अणु
-	BPF_सूचीECT_PKT_R2,
+	.insns = {
+	BPF_DIRECT_PKT_R2,
 	BPF_LDX_MEM(BPF_DW, BPF_REG_7, BPF_REG_2, 0),
 	/* reg, high bits shouldn't be tested */
 	BPF_JMP32_IMM(BPF_JSET, BPF_REG_7, -2, 1),
@@ -13,27 +12,27 @@
 	BPF_EXIT_INSN(),
 	BPF_MOV64_IMM(BPF_REG_0, 2),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.result = ACCEPT,
 	.runs = 3,
-	.retvals = अणु
-		अणु .retval = 0,
-		  .data64 = अणु 1ULL << 63, पूर्ण
-		पूर्ण,
-		अणु .retval = 2,
-		  .data64 = अणु 1, पूर्ण
-		पूर्ण,
-		अणु .retval = 2,
-		  .data64 = अणु 1ULL << 63 | 1, पूर्ण
-		पूर्ण,
-	पूर्ण,
+	.retvals = {
+		{ .retval = 0,
+		  .data64 = { 1ULL << 63, }
+		},
+		{ .retval = 2,
+		  .data64 = { 1, }
+		},
+		{ .retval = 2,
+		  .data64 = { 1ULL << 63 | 1, }
+		},
+	},
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-पूर्ण,
-अणु
+},
+{
 	"jset32: BPF_X",
-	.insns = अणु
-	BPF_सूचीECT_PKT_R2,
+	.insns = {
+	BPF_DIRECT_PKT_R2,
 	BPF_LDX_MEM(BPF_DW, BPF_REG_7, BPF_REG_2, 0),
 	BPF_LD_IMM64(BPF_REG_8, 0x8000000000000000),
 	BPF_JMP32_REG(BPF_JSET, BPF_REG_7, BPF_REG_8, 1),
@@ -45,26 +44,26 @@
 	BPF_EXIT_INSN(),
 	BPF_MOV64_IMM(BPF_REG_0, 2),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.result = ACCEPT,
 	.runs = 3,
-	.retvals = अणु
-		अणु .retval = 0,
-		  .data64 = अणु 1ULL << 63, पूर्ण
-		पूर्ण,
-		अणु .retval = 2,
-		  .data64 = अणु 1, पूर्ण
-		पूर्ण,
-		अणु .retval = 2,
-		  .data64 = अणु 1ULL << 63 | 1, पूर्ण
-		पूर्ण,
-	पूर्ण,
+	.retvals = {
+		{ .retval = 0,
+		  .data64 = { 1ULL << 63, }
+		},
+		{ .retval = 2,
+		  .data64 = { 1, }
+		},
+		{ .retval = 2,
+		  .data64 = { 1ULL << 63 | 1, }
+		},
+	},
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-पूर्ण,
-अणु
+},
+{
 	"jset32: ignores upper bits",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_LD_IMM64(BPF_REG_7, 0x8000000000000000),
 	BPF_LD_IMM64(BPF_REG_8, 0x8000000000000000),
@@ -73,13 +72,13 @@
 	BPF_JMP32_REG(BPF_JSET, BPF_REG_7, BPF_REG_8, 1),
 	BPF_MOV64_IMM(BPF_REG_0, 2),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = ACCEPT,
 	.retval = 2,
-पूर्ण,
-अणु
+},
+{
 	"jset32: min/max deduction",
-	.insns = अणु
+	.insns = {
 	BPF_RAND_UEXT_R7,
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_JMP32_IMM(BPF_JSET, BPF_REG_7, 0x10, 1),
@@ -87,64 +86,64 @@
 	BPF_JMP32_IMM(BPF_JGE, BPF_REG_7, 0x10, 1),
 	BPF_LDX_MEM(BPF_B, BPF_REG_8, BPF_REG_9, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr_unpriv = "R9 !read_ok",
 	.result_unpriv = REJECT,
 	.result = ACCEPT,
-पूर्ण,
-अणु
+},
+{
 	"jeq32: BPF_K",
-	.insns = अणु
-	BPF_सूचीECT_PKT_R2,
+	.insns = {
+	BPF_DIRECT_PKT_R2,
 	BPF_LDX_MEM(BPF_DW, BPF_REG_7, BPF_REG_2, 0),
 	BPF_JMP32_IMM(BPF_JEQ, BPF_REG_7, -1, 1),
 	BPF_EXIT_INSN(),
 	BPF_MOV64_IMM(BPF_REG_0, 2),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.result = ACCEPT,
 	.runs = 2,
-	.retvals = अणु
-		अणु .retval = 0,
-		  .data64 = अणु -2, पूर्ण
-		पूर्ण,
-		अणु .retval = 2,
-		  .data64 = अणु -1, पूर्ण
-		पूर्ण,
-	पूर्ण,
+	.retvals = {
+		{ .retval = 0,
+		  .data64 = { -2, }
+		},
+		{ .retval = 2,
+		  .data64 = { -1, }
+		},
+	},
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-पूर्ण,
-अणु
+},
+{
 	"jeq32: BPF_X",
-	.insns = अणु
-	BPF_सूचीECT_PKT_R2,
+	.insns = {
+	BPF_DIRECT_PKT_R2,
 	BPF_LDX_MEM(BPF_DW, BPF_REG_7, BPF_REG_2, 0),
 	BPF_LD_IMM64(BPF_REG_8, 0x7000000000000001),
 	BPF_JMP32_REG(BPF_JEQ, BPF_REG_7, BPF_REG_8, 1),
 	BPF_EXIT_INSN(),
 	BPF_MOV64_IMM(BPF_REG_0, 2),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.result = ACCEPT,
 	.runs = 3,
-	.retvals = अणु
-		अणु .retval = 0,
-		  .data64 = अणु 2, पूर्ण
-		पूर्ण,
-		अणु .retval = 2,
-		  .data64 = अणु 1, पूर्ण
-		पूर्ण,
-		अणु .retval = 2,
-		  .data64 = अणु 1ULL << 63 | 1, पूर्ण
-		पूर्ण,
-	पूर्ण,
+	.retvals = {
+		{ .retval = 0,
+		  .data64 = { 2, }
+		},
+		{ .retval = 2,
+		  .data64 = { 1, }
+		},
+		{ .retval = 2,
+		  .data64 = { 1ULL << 63 | 1, }
+		},
+	},
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-पूर्ण,
-अणु
+},
+{
 	"jeq32: min/max deduction",
-	.insns = अणु
+	.insns = {
 	BPF_RAND_UEXT_R7,
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_JMP32_IMM(BPF_JEQ, BPF_REG_7, 0x10, 1),
@@ -152,64 +151,64 @@
 	BPF_JMP32_IMM(BPF_JSGE, BPF_REG_7, 0xf, 1),
 	BPF_LDX_MEM(BPF_B, BPF_REG_8, BPF_REG_9, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr_unpriv = "R9 !read_ok",
 	.result_unpriv = REJECT,
 	.result = ACCEPT,
-पूर्ण,
-अणु
+},
+{
 	"jne32: BPF_K",
-	.insns = अणु
-	BPF_सूचीECT_PKT_R2,
+	.insns = {
+	BPF_DIRECT_PKT_R2,
 	BPF_LDX_MEM(BPF_DW, BPF_REG_7, BPF_REG_2, 0),
 	BPF_JMP32_IMM(BPF_JNE, BPF_REG_7, -1, 1),
 	BPF_EXIT_INSN(),
 	BPF_MOV64_IMM(BPF_REG_0, 2),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.result = ACCEPT,
 	.runs = 2,
-	.retvals = अणु
-		अणु .retval = 2,
-		  .data64 = अणु 1, पूर्ण
-		पूर्ण,
-		अणु .retval = 0,
-		  .data64 = अणु -1, पूर्ण
-		पूर्ण,
-	पूर्ण,
+	.retvals = {
+		{ .retval = 2,
+		  .data64 = { 1, }
+		},
+		{ .retval = 0,
+		  .data64 = { -1, }
+		},
+	},
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-पूर्ण,
-अणु
+},
+{
 	"jne32: BPF_X",
-	.insns = अणु
-	BPF_सूचीECT_PKT_R2,
+	.insns = {
+	BPF_DIRECT_PKT_R2,
 	BPF_LDX_MEM(BPF_DW, BPF_REG_7, BPF_REG_2, 0),
 	BPF_LD_IMM64(BPF_REG_8, 0x8000000000000001),
 	BPF_JMP32_REG(BPF_JNE, BPF_REG_7, BPF_REG_8, 1),
 	BPF_EXIT_INSN(),
 	BPF_MOV64_IMM(BPF_REG_0, 2),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.result = ACCEPT,
 	.runs = 3,
-	.retvals = अणु
-		अणु .retval = 0,
-		  .data64 = अणु 1, पूर्ण
-		पूर्ण,
-		अणु .retval = 2,
-		  .data64 = अणु 2, पूर्ण
-		पूर्ण,
-		अणु .retval = 2,
-		  .data64 = अणु 1ULL << 63 | 2, पूर्ण
-		पूर्ण,
-	पूर्ण,
+	.retvals = {
+		{ .retval = 0,
+		  .data64 = { 1, }
+		},
+		{ .retval = 2,
+		  .data64 = { 2, }
+		},
+		{ .retval = 2,
+		  .data64 = { 1ULL << 63 | 2, }
+		},
+	},
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-पूर्ण,
-अणु
+},
+{
 	"jne32: min/max deduction",
-	.insns = अणु
+	.insns = {
 	BPF_RAND_UEXT_R7,
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_JMP32_IMM(BPF_JNE, BPF_REG_7, 0x10, 1),
@@ -217,67 +216,67 @@
 	BPF_EXIT_INSN(),
 	BPF_LDX_MEM(BPF_B, BPF_REG_8, BPF_REG_9, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr_unpriv = "R9 !read_ok",
 	.result_unpriv = REJECT,
 	.result = ACCEPT,
-पूर्ण,
-अणु
+},
+{
 	"jge32: BPF_K",
-	.insns = अणु
-	BPF_सूचीECT_PKT_R2,
+	.insns = {
+	BPF_DIRECT_PKT_R2,
 	BPF_LDX_MEM(BPF_DW, BPF_REG_7, BPF_REG_2, 0),
-	BPF_JMP32_IMM(BPF_JGE, BPF_REG_7, अच_पूर्णांक_उच्च - 1, 1),
+	BPF_JMP32_IMM(BPF_JGE, BPF_REG_7, UINT_MAX - 1, 1),
 	BPF_EXIT_INSN(),
 	BPF_ALU32_IMM(BPF_MOV, BPF_REG_0, 2),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.result = ACCEPT,
 	.runs = 3,
-	.retvals = अणु
-		अणु .retval = 2,
-		  .data64 = अणु अच_पूर्णांक_उच्च, पूर्ण
-		पूर्ण,
-		अणु .retval = 2,
-		  .data64 = अणु अच_पूर्णांक_उच्च - 1, पूर्ण
-		पूर्ण,
-		अणु .retval = 0,
-		  .data64 = अणु 0, पूर्ण
-		पूर्ण,
-	पूर्ण,
+	.retvals = {
+		{ .retval = 2,
+		  .data64 = { UINT_MAX, }
+		},
+		{ .retval = 2,
+		  .data64 = { UINT_MAX - 1, }
+		},
+		{ .retval = 0,
+		  .data64 = { 0, }
+		},
+	},
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-पूर्ण,
-अणु
+},
+{
 	"jge32: BPF_X",
-	.insns = अणु
-	BPF_सूचीECT_PKT_R2,
-	BPF_LD_IMM64(BPF_REG_8, अच_पूर्णांक_उच्च | 1ULL << 32),
+	.insns = {
+	BPF_DIRECT_PKT_R2,
+	BPF_LD_IMM64(BPF_REG_8, UINT_MAX | 1ULL << 32),
 	BPF_LDX_MEM(BPF_DW, BPF_REG_7, BPF_REG_2, 0),
 	BPF_JMP32_REG(BPF_JGE, BPF_REG_7, BPF_REG_8, 1),
 	BPF_EXIT_INSN(),
 	BPF_ALU32_IMM(BPF_MOV, BPF_REG_0, 2),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.result = ACCEPT,
 	.runs = 3,
-	.retvals = अणु
-		अणु .retval = 2,
-		  .data64 = अणु अच_पूर्णांक_उच्च, पूर्ण
-		पूर्ण,
-		अणु .retval = 0,
-		  .data64 = अणु पूर्णांक_उच्च, पूर्ण
-		पूर्ण,
-		अणु .retval = 0,
-		  .data64 = अणु (अच_पूर्णांक_उच्च - 1) | 2ULL << 32, पूर्ण
-		पूर्ण,
-	पूर्ण,
+	.retvals = {
+		{ .retval = 2,
+		  .data64 = { UINT_MAX, }
+		},
+		{ .retval = 0,
+		  .data64 = { INT_MAX, }
+		},
+		{ .retval = 0,
+		  .data64 = { (UINT_MAX - 1) | 2ULL << 32, }
+		},
+	},
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-पूर्ण,
-अणु
+},
+{
 	"jge32: min/max deduction",
-	.insns = अणु
+	.insns = {
 	BPF_RAND_UEXT_R7,
 	BPF_ALU32_IMM(BPF_MOV, BPF_REG_0, 2),
 	BPF_LD_IMM64(BPF_REG_8, 0x7ffffff0 | 1ULL << 32),
@@ -286,68 +285,68 @@
 	BPF_JMP32_IMM(BPF_JGE, BPF_REG_7, 0x7ffffff0, 1),
 	BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr_unpriv = "R0 invalid mem access 'inv'",
 	.result_unpriv = REJECT,
 	.result = ACCEPT,
 	.retval = 2,
-पूर्ण,
-अणु
+},
+{
 	"jgt32: BPF_K",
-	.insns = अणु
-	BPF_सूचीECT_PKT_R2,
+	.insns = {
+	BPF_DIRECT_PKT_R2,
 	BPF_LDX_MEM(BPF_DW, BPF_REG_7, BPF_REG_2, 0),
-	BPF_JMP32_IMM(BPF_JGT, BPF_REG_7, अच_पूर्णांक_उच्च - 1, 1),
+	BPF_JMP32_IMM(BPF_JGT, BPF_REG_7, UINT_MAX - 1, 1),
 	BPF_EXIT_INSN(),
 	BPF_ALU32_IMM(BPF_MOV, BPF_REG_0, 2),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.result = ACCEPT,
 	.runs = 3,
-	.retvals = अणु
-		अणु .retval = 2,
-		  .data64 = अणु अच_पूर्णांक_उच्च, पूर्ण
-		पूर्ण,
-		अणु .retval = 0,
-		  .data64 = अणु अच_पूर्णांक_उच्च - 1, पूर्ण
-		पूर्ण,
-		अणु .retval = 0,
-		  .data64 = अणु 0, पूर्ण
-		पूर्ण,
-	पूर्ण,
+	.retvals = {
+		{ .retval = 2,
+		  .data64 = { UINT_MAX, }
+		},
+		{ .retval = 0,
+		  .data64 = { UINT_MAX - 1, }
+		},
+		{ .retval = 0,
+		  .data64 = { 0, }
+		},
+	},
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-पूर्ण,
-अणु
+},
+{
 	"jgt32: BPF_X",
-	.insns = अणु
-	BPF_सूचीECT_PKT_R2,
-	BPF_LD_IMM64(BPF_REG_8, (अच_पूर्णांक_उच्च - 1) | 1ULL << 32),
+	.insns = {
+	BPF_DIRECT_PKT_R2,
+	BPF_LD_IMM64(BPF_REG_8, (UINT_MAX - 1) | 1ULL << 32),
 	BPF_LDX_MEM(BPF_DW, BPF_REG_7, BPF_REG_2, 0),
 	BPF_JMP32_REG(BPF_JGT, BPF_REG_7, BPF_REG_8, 1),
 	BPF_EXIT_INSN(),
 	BPF_ALU32_IMM(BPF_MOV, BPF_REG_0, 2),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.result = ACCEPT,
 	.runs = 3,
-	.retvals = अणु
-		अणु .retval = 2,
-		  .data64 = अणु अच_पूर्णांक_उच्च, पूर्ण
-		पूर्ण,
-		अणु .retval = 0,
-		  .data64 = अणु अच_पूर्णांक_उच्च - 1, पूर्ण
-		पूर्ण,
-		अणु .retval = 0,
-		  .data64 = अणु (अच_पूर्णांक_उच्च - 1) | 2ULL << 32, पूर्ण
-		पूर्ण,
-	पूर्ण,
+	.retvals = {
+		{ .retval = 2,
+		  .data64 = { UINT_MAX, }
+		},
+		{ .retval = 0,
+		  .data64 = { UINT_MAX - 1, }
+		},
+		{ .retval = 0,
+		  .data64 = { (UINT_MAX - 1) | 2ULL << 32, }
+		},
+	},
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-पूर्ण,
-अणु
+},
+{
 	"jgt32: min/max deduction",
-	.insns = अणु
+	.insns = {
 	BPF_RAND_UEXT_R7,
 	BPF_ALU32_IMM(BPF_MOV, BPF_REG_0, 2),
 	BPF_LD_IMM64(BPF_REG_8, 0x7ffffff0 | 1ULL << 32),
@@ -356,68 +355,68 @@
 	BPF_JMP_IMM(BPF_JGT, BPF_REG_7, 0x7ffffff0, 1),
 	BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr_unpriv = "R0 invalid mem access 'inv'",
 	.result_unpriv = REJECT,
 	.result = ACCEPT,
 	.retval = 2,
-पूर्ण,
-अणु
+},
+{
 	"jle32: BPF_K",
-	.insns = अणु
-	BPF_सूचीECT_PKT_R2,
+	.insns = {
+	BPF_DIRECT_PKT_R2,
 	BPF_LDX_MEM(BPF_DW, BPF_REG_7, BPF_REG_2, 0),
-	BPF_JMP32_IMM(BPF_JLE, BPF_REG_7, पूर्णांक_उच्च, 1),
+	BPF_JMP32_IMM(BPF_JLE, BPF_REG_7, INT_MAX, 1),
 	BPF_EXIT_INSN(),
 	BPF_ALU32_IMM(BPF_MOV, BPF_REG_0, 2),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.result = ACCEPT,
 	.runs = 3,
-	.retvals = अणु
-		अणु .retval = 2,
-		  .data64 = अणु पूर्णांक_उच्च - 1, पूर्ण
-		पूर्ण,
-		अणु .retval = 0,
-		  .data64 = अणु अच_पूर्णांक_उच्च, पूर्ण
-		पूर्ण,
-		अणु .retval = 2,
-		  .data64 = अणु पूर्णांक_उच्च, पूर्ण
-		पूर्ण,
-	पूर्ण,
+	.retvals = {
+		{ .retval = 2,
+		  .data64 = { INT_MAX - 1, }
+		},
+		{ .retval = 0,
+		  .data64 = { UINT_MAX, }
+		},
+		{ .retval = 2,
+		  .data64 = { INT_MAX, }
+		},
+	},
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-पूर्ण,
-अणु
+},
+{
 	"jle32: BPF_X",
-	.insns = अणु
-	BPF_सूचीECT_PKT_R2,
-	BPF_LD_IMM64(BPF_REG_8, (पूर्णांक_उच्च - 1) | 2ULL << 32),
+	.insns = {
+	BPF_DIRECT_PKT_R2,
+	BPF_LD_IMM64(BPF_REG_8, (INT_MAX - 1) | 2ULL << 32),
 	BPF_LDX_MEM(BPF_DW, BPF_REG_7, BPF_REG_2, 0),
 	BPF_JMP32_REG(BPF_JLE, BPF_REG_7, BPF_REG_8, 1),
 	BPF_EXIT_INSN(),
 	BPF_ALU32_IMM(BPF_MOV, BPF_REG_0, 2),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.result = ACCEPT,
 	.runs = 3,
-	.retvals = अणु
-		अणु .retval = 0,
-		  .data64 = अणु पूर्णांक_उच्च | 1ULL << 32, पूर्ण
-		पूर्ण,
-		अणु .retval = 2,
-		  .data64 = अणु पूर्णांक_उच्च - 2, पूर्ण
-		पूर्ण,
-		अणु .retval = 0,
-		  .data64 = अणु अच_पूर्णांक_उच्च, पूर्ण
-		पूर्ण,
-	पूर्ण,
+	.retvals = {
+		{ .retval = 0,
+		  .data64 = { INT_MAX | 1ULL << 32, }
+		},
+		{ .retval = 2,
+		  .data64 = { INT_MAX - 2, }
+		},
+		{ .retval = 0,
+		  .data64 = { UINT_MAX, }
+		},
+	},
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-पूर्ण,
-अणु
+},
+{
 	"jle32: min/max deduction",
-	.insns = अणु
+	.insns = {
 	BPF_RAND_UEXT_R7,
 	BPF_ALU32_IMM(BPF_MOV, BPF_REG_0, 2),
 	BPF_LD_IMM64(BPF_REG_8, 0x7ffffff0 | 1ULL << 32),
@@ -426,68 +425,68 @@
 	BPF_JMP32_IMM(BPF_JLE, BPF_REG_7, 0x7ffffff0, 1),
 	BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr_unpriv = "R0 invalid mem access 'inv'",
 	.result_unpriv = REJECT,
 	.result = ACCEPT,
 	.retval = 2,
-पूर्ण,
-अणु
+},
+{
 	"jlt32: BPF_K",
-	.insns = अणु
-	BPF_सूचीECT_PKT_R2,
+	.insns = {
+	BPF_DIRECT_PKT_R2,
 	BPF_LDX_MEM(BPF_DW, BPF_REG_7, BPF_REG_2, 0),
-	BPF_JMP32_IMM(BPF_JLT, BPF_REG_7, पूर्णांक_उच्च, 1),
+	BPF_JMP32_IMM(BPF_JLT, BPF_REG_7, INT_MAX, 1),
 	BPF_EXIT_INSN(),
 	BPF_ALU32_IMM(BPF_MOV, BPF_REG_0, 2),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.result = ACCEPT,
 	.runs = 3,
-	.retvals = अणु
-		अणु .retval = 0,
-		  .data64 = अणु पूर्णांक_उच्च, पूर्ण
-		पूर्ण,
-		अणु .retval = 0,
-		  .data64 = अणु अच_पूर्णांक_उच्च, पूर्ण
-		पूर्ण,
-		अणु .retval = 2,
-		  .data64 = अणु पूर्णांक_उच्च - 1, पूर्ण
-		पूर्ण,
-	पूर्ण,
+	.retvals = {
+		{ .retval = 0,
+		  .data64 = { INT_MAX, }
+		},
+		{ .retval = 0,
+		  .data64 = { UINT_MAX, }
+		},
+		{ .retval = 2,
+		  .data64 = { INT_MAX - 1, }
+		},
+	},
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-पूर्ण,
-अणु
+},
+{
 	"jlt32: BPF_X",
-	.insns = अणु
-	BPF_सूचीECT_PKT_R2,
-	BPF_LD_IMM64(BPF_REG_8, पूर्णांक_उच्च | 2ULL << 32),
+	.insns = {
+	BPF_DIRECT_PKT_R2,
+	BPF_LD_IMM64(BPF_REG_8, INT_MAX | 2ULL << 32),
 	BPF_LDX_MEM(BPF_DW, BPF_REG_7, BPF_REG_2, 0),
 	BPF_JMP32_REG(BPF_JLT, BPF_REG_7, BPF_REG_8, 1),
 	BPF_EXIT_INSN(),
 	BPF_ALU32_IMM(BPF_MOV, BPF_REG_0, 2),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.result = ACCEPT,
 	.runs = 3,
-	.retvals = अणु
-		अणु .retval = 0,
-		  .data64 = अणु पूर्णांक_उच्च | 1ULL << 32, पूर्ण
-		पूर्ण,
-		अणु .retval = 0,
-		  .data64 = अणु अच_पूर्णांक_उच्च, पूर्ण
-		पूर्ण,
-		अणु .retval = 2,
-		  .data64 = अणु (पूर्णांक_उच्च - 1) | 3ULL << 32, पूर्ण
-		पूर्ण,
-	पूर्ण,
+	.retvals = {
+		{ .retval = 0,
+		  .data64 = { INT_MAX | 1ULL << 32, }
+		},
+		{ .retval = 0,
+		  .data64 = { UINT_MAX, }
+		},
+		{ .retval = 2,
+		  .data64 = { (INT_MAX - 1) | 3ULL << 32, }
+		},
+	},
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-पूर्ण,
-अणु
+},
+{
 	"jlt32: min/max deduction",
-	.insns = अणु
+	.insns = {
 	BPF_RAND_UEXT_R7,
 	BPF_ALU32_IMM(BPF_MOV, BPF_REG_0, 2),
 	BPF_LD_IMM64(BPF_REG_8, 0x7ffffff0 | 1ULL << 32),
@@ -496,68 +495,68 @@
 	BPF_JMP_IMM(BPF_JSLT, BPF_REG_7, 0x7ffffff0, 1),
 	BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr_unpriv = "R0 invalid mem access 'inv'",
 	.result_unpriv = REJECT,
 	.result = ACCEPT,
 	.retval = 2,
-पूर्ण,
-अणु
+},
+{
 	"jsge32: BPF_K",
-	.insns = अणु
-	BPF_सूचीECT_PKT_R2,
+	.insns = {
+	BPF_DIRECT_PKT_R2,
 	BPF_LDX_MEM(BPF_DW, BPF_REG_7, BPF_REG_2, 0),
 	BPF_JMP32_IMM(BPF_JSGE, BPF_REG_7, -1, 1),
 	BPF_EXIT_INSN(),
 	BPF_ALU32_IMM(BPF_MOV, BPF_REG_0, 2),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.result = ACCEPT,
 	.runs = 3,
-	.retvals = अणु
-		अणु .retval = 2,
-		  .data64 = अणु 0, पूर्ण
-		पूर्ण,
-		अणु .retval = 2,
-		  .data64 = अणु -1, पूर्ण
-		पूर्ण,
-		अणु .retval = 0,
-		  .data64 = अणु -2, पूर्ण
-		पूर्ण,
-	पूर्ण,
+	.retvals = {
+		{ .retval = 2,
+		  .data64 = { 0, }
+		},
+		{ .retval = 2,
+		  .data64 = { -1, }
+		},
+		{ .retval = 0,
+		  .data64 = { -2, }
+		},
+	},
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-पूर्ण,
-अणु
+},
+{
 	"jsge32: BPF_X",
-	.insns = अणु
-	BPF_सूचीECT_PKT_R2,
+	.insns = {
+	BPF_DIRECT_PKT_R2,
 	BPF_LD_IMM64(BPF_REG_8, (__u32)-1 | 2ULL << 32),
 	BPF_LDX_MEM(BPF_DW, BPF_REG_7, BPF_REG_2, 0),
 	BPF_JMP32_REG(BPF_JSGE, BPF_REG_7, BPF_REG_8, 1),
 	BPF_EXIT_INSN(),
 	BPF_ALU32_IMM(BPF_MOV, BPF_REG_0, 2),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.result = ACCEPT,
 	.runs = 3,
-	.retvals = अणु
-		अणु .retval = 2,
-		  .data64 = अणु -1, पूर्ण
-		पूर्ण,
-		अणु .retval = 2,
-		  .data64 = अणु 0x7fffffff | 1ULL << 32, पूर्ण
-		पूर्ण,
-		अणु .retval = 0,
-		  .data64 = अणु -2, पूर्ण
-		पूर्ण,
-	पूर्ण,
+	.retvals = {
+		{ .retval = 2,
+		  .data64 = { -1, }
+		},
+		{ .retval = 2,
+		  .data64 = { 0x7fffffff | 1ULL << 32, }
+		},
+		{ .retval = 0,
+		  .data64 = { -2, }
+		},
+	},
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-पूर्ण,
-अणु
+},
+{
 	"jsge32: min/max deduction",
-	.insns = अणु
+	.insns = {
 	BPF_RAND_UEXT_R7,
 	BPF_ALU32_IMM(BPF_MOV, BPF_REG_0, 2),
 	BPF_LD_IMM64(BPF_REG_8, 0x7ffffff0 | 1ULL << 32),
@@ -566,68 +565,68 @@
 	BPF_JMP_IMM(BPF_JSGE, BPF_REG_7, 0x7ffffff0, 1),
 	BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr_unpriv = "R0 invalid mem access 'inv'",
 	.result_unpriv = REJECT,
 	.result = ACCEPT,
 	.retval = 2,
-पूर्ण,
-अणु
+},
+{
 	"jsgt32: BPF_K",
-	.insns = अणु
-	BPF_सूचीECT_PKT_R2,
+	.insns = {
+	BPF_DIRECT_PKT_R2,
 	BPF_LDX_MEM(BPF_DW, BPF_REG_7, BPF_REG_2, 0),
 	BPF_JMP32_IMM(BPF_JSGT, BPF_REG_7, -1, 1),
 	BPF_EXIT_INSN(),
 	BPF_ALU32_IMM(BPF_MOV, BPF_REG_0, 2),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.result = ACCEPT,
 	.runs = 3,
-	.retvals = अणु
-		अणु .retval = 0,
-		  .data64 = अणु (__u32)-2, पूर्ण
-		पूर्ण,
-		अणु .retval = 0,
-		  .data64 = अणु -1, पूर्ण
-		पूर्ण,
-		अणु .retval = 2,
-		  .data64 = अणु 1, पूर्ण
-		पूर्ण,
-	पूर्ण,
+	.retvals = {
+		{ .retval = 0,
+		  .data64 = { (__u32)-2, }
+		},
+		{ .retval = 0,
+		  .data64 = { -1, }
+		},
+		{ .retval = 2,
+		  .data64 = { 1, }
+		},
+	},
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-पूर्ण,
-अणु
+},
+{
 	"jsgt32: BPF_X",
-	.insns = अणु
-	BPF_सूचीECT_PKT_R2,
+	.insns = {
+	BPF_DIRECT_PKT_R2,
 	BPF_LD_IMM64(BPF_REG_8, 0x7ffffffe | 1ULL << 32),
 	BPF_LDX_MEM(BPF_DW, BPF_REG_7, BPF_REG_2, 0),
 	BPF_JMP32_REG(BPF_JSGT, BPF_REG_7, BPF_REG_8, 1),
 	BPF_EXIT_INSN(),
 	BPF_ALU32_IMM(BPF_MOV, BPF_REG_0, 2),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.result = ACCEPT,
 	.runs = 3,
-	.retvals = अणु
-		अणु .retval = 0,
-		  .data64 = अणु 0x7ffffffe, पूर्ण
-		पूर्ण,
-		अणु .retval = 0,
-		  .data64 = अणु 0x1ffffffffULL, पूर्ण
-		पूर्ण,
-		अणु .retval = 2,
-		  .data64 = अणु 0x7fffffff, पूर्ण
-		पूर्ण,
-	पूर्ण,
+	.retvals = {
+		{ .retval = 0,
+		  .data64 = { 0x7ffffffe, }
+		},
+		{ .retval = 0,
+		  .data64 = { 0x1ffffffffULL, }
+		},
+		{ .retval = 2,
+		  .data64 = { 0x7fffffff, }
+		},
+	},
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-पूर्ण,
-अणु
+},
+{
 	"jsgt32: min/max deduction",
-	.insns = अणु
+	.insns = {
 	BPF_RAND_SEXT_R7,
 	BPF_ALU32_IMM(BPF_MOV, BPF_REG_0, 2),
 	BPF_LD_IMM64(BPF_REG_8, (__u32)(-2) | 1ULL << 32),
@@ -636,68 +635,68 @@
 	BPF_JMP_IMM(BPF_JSGT, BPF_REG_7, -2, 1),
 	BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr_unpriv = "R0 invalid mem access 'inv'",
 	.result_unpriv = REJECT,
 	.result = ACCEPT,
 	.retval = 2,
-पूर्ण,
-अणु
+},
+{
 	"jsle32: BPF_K",
-	.insns = अणु
-	BPF_सूचीECT_PKT_R2,
+	.insns = {
+	BPF_DIRECT_PKT_R2,
 	BPF_LDX_MEM(BPF_DW, BPF_REG_7, BPF_REG_2, 0),
 	BPF_JMP32_IMM(BPF_JSLE, BPF_REG_7, -1, 1),
 	BPF_EXIT_INSN(),
 	BPF_ALU32_IMM(BPF_MOV, BPF_REG_0, 2),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.result = ACCEPT,
 	.runs = 3,
-	.retvals = अणु
-		अणु .retval = 2,
-		  .data64 = अणु (__u32)-2, पूर्ण
-		पूर्ण,
-		अणु .retval = 2,
-		  .data64 = अणु -1, पूर्ण
-		पूर्ण,
-		अणु .retval = 0,
-		  .data64 = अणु 1, पूर्ण
-		पूर्ण,
-	पूर्ण,
+	.retvals = {
+		{ .retval = 2,
+		  .data64 = { (__u32)-2, }
+		},
+		{ .retval = 2,
+		  .data64 = { -1, }
+		},
+		{ .retval = 0,
+		  .data64 = { 1, }
+		},
+	},
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-पूर्ण,
-अणु
+},
+{
 	"jsle32: BPF_X",
-	.insns = अणु
-	BPF_सूचीECT_PKT_R2,
+	.insns = {
+	BPF_DIRECT_PKT_R2,
 	BPF_LD_IMM64(BPF_REG_8, 0x7ffffffe | 1ULL << 32),
 	BPF_LDX_MEM(BPF_DW, BPF_REG_7, BPF_REG_2, 0),
 	BPF_JMP32_REG(BPF_JSLE, BPF_REG_7, BPF_REG_8, 1),
 	BPF_EXIT_INSN(),
 	BPF_ALU32_IMM(BPF_MOV, BPF_REG_0, 2),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.result = ACCEPT,
 	.runs = 3,
-	.retvals = अणु
-		अणु .retval = 2,
-		  .data64 = अणु 0x7ffffffe, पूर्ण
-		पूर्ण,
-		अणु .retval = 2,
-		  .data64 = अणु (__u32)-1, पूर्ण
-		पूर्ण,
-		अणु .retval = 0,
-		  .data64 = अणु 0x7fffffff | 2ULL << 32, पूर्ण
-		पूर्ण,
-	पूर्ण,
+	.retvals = {
+		{ .retval = 2,
+		  .data64 = { 0x7ffffffe, }
+		},
+		{ .retval = 2,
+		  .data64 = { (__u32)-1, }
+		},
+		{ .retval = 0,
+		  .data64 = { 0x7fffffff | 2ULL << 32, }
+		},
+	},
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-पूर्ण,
-अणु
+},
+{
 	"jsle32: min/max deduction",
-	.insns = अणु
+	.insns = {
 	BPF_RAND_UEXT_R7,
 	BPF_ALU32_IMM(BPF_MOV, BPF_REG_0, 2),
 	BPF_LD_IMM64(BPF_REG_8, 0x7ffffff0 | 1ULL << 32),
@@ -706,68 +705,68 @@
 	BPF_JMP_IMM(BPF_JSLE, BPF_REG_7, 0x7ffffff0, 1),
 	BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr_unpriv = "R0 invalid mem access 'inv'",
 	.result_unpriv = REJECT,
 	.result = ACCEPT,
 	.retval = 2,
-पूर्ण,
-अणु
+},
+{
 	"jslt32: BPF_K",
-	.insns = अणु
-	BPF_सूचीECT_PKT_R2,
+	.insns = {
+	BPF_DIRECT_PKT_R2,
 	BPF_LDX_MEM(BPF_DW, BPF_REG_7, BPF_REG_2, 0),
 	BPF_JMP32_IMM(BPF_JSLT, BPF_REG_7, -1, 1),
 	BPF_EXIT_INSN(),
 	BPF_ALU32_IMM(BPF_MOV, BPF_REG_0, 2),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.result = ACCEPT,
 	.runs = 3,
-	.retvals = अणु
-		अणु .retval = 2,
-		  .data64 = अणु (__u32)-2, पूर्ण
-		पूर्ण,
-		अणु .retval = 0,
-		  .data64 = अणु -1, पूर्ण
-		पूर्ण,
-		अणु .retval = 0,
-		  .data64 = अणु 1, पूर्ण
-		पूर्ण,
-	पूर्ण,
+	.retvals = {
+		{ .retval = 2,
+		  .data64 = { (__u32)-2, }
+		},
+		{ .retval = 0,
+		  .data64 = { -1, }
+		},
+		{ .retval = 0,
+		  .data64 = { 1, }
+		},
+	},
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-पूर्ण,
-अणु
+},
+{
 	"jslt32: BPF_X",
-	.insns = अणु
-	BPF_सूचीECT_PKT_R2,
+	.insns = {
+	BPF_DIRECT_PKT_R2,
 	BPF_LD_IMM64(BPF_REG_8, 0x7fffffff | 1ULL << 32),
 	BPF_LDX_MEM(BPF_DW, BPF_REG_7, BPF_REG_2, 0),
 	BPF_JMP32_REG(BPF_JSLT, BPF_REG_7, BPF_REG_8, 1),
 	BPF_EXIT_INSN(),
 	BPF_ALU32_IMM(BPF_MOV, BPF_REG_0, 2),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.result = ACCEPT,
 	.runs = 3,
-	.retvals = अणु
-		अणु .retval = 2,
-		  .data64 = अणु 0x7ffffffe, पूर्ण
-		पूर्ण,
-		अणु .retval = 2,
-		  .data64 = अणु 0xffffffff, पूर्ण
-		पूर्ण,
-		अणु .retval = 0,
-		  .data64 = अणु 0x7fffffff | 2ULL << 32, पूर्ण
-		पूर्ण,
-	पूर्ण,
+	.retvals = {
+		{ .retval = 2,
+		  .data64 = { 0x7ffffffe, }
+		},
+		{ .retval = 2,
+		  .data64 = { 0xffffffff, }
+		},
+		{ .retval = 0,
+		  .data64 = { 0x7fffffff | 2ULL << 32, }
+		},
+	},
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-पूर्ण,
-अणु
+},
+{
 	"jslt32: min/max deduction",
-	.insns = अणु
+	.insns = {
 	BPF_RAND_SEXT_R7,
 	BPF_ALU32_IMM(BPF_MOV, BPF_REG_0, 2),
 	BPF_LD_IMM64(BPF_REG_8, (__u32)(-1) | 1ULL << 32),
@@ -776,15 +775,15 @@
 	BPF_JMP32_IMM(BPF_JSLT, BPF_REG_7, -1, 1),
 	BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr_unpriv = "R0 invalid mem access 'inv'",
 	.result_unpriv = REJECT,
 	.result = ACCEPT,
 	.retval = 2,
-पूर्ण,
-अणु
+},
+{
 	"jgt32: range bound deduction, reg op imm",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_8, BPF_REG_1),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
@@ -803,15 +802,15 @@
 	BPF_ST_MEM(BPF_B, BPF_REG_8, 0, 0),
 	BPF_MOV32_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
-	.fixup_map_hash_48b = अणु 4 पूर्ण,
+	.fixup_map_hash_48b = { 4 },
 	.result = ACCEPT,
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-पूर्ण,
-अणु
+},
+{
 	"jgt32: range bound deduction, reg1 op reg2, reg1 unknown",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_8, BPF_REG_1),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
@@ -831,15 +830,15 @@
 	BPF_ST_MEM(BPF_B, BPF_REG_8, 0, 0),
 	BPF_MOV32_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
-	.fixup_map_hash_48b = अणु 4 पूर्ण,
+	.fixup_map_hash_48b = { 4 },
 	.result = ACCEPT,
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-पूर्ण,
-अणु
+},
+{
 	"jle32: range bound deduction, reg1 op reg2, reg2 unknown",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_8, BPF_REG_1),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
@@ -859,9 +858,9 @@
 	BPF_ST_MEM(BPF_B, BPF_REG_8, 0, 0),
 	BPF_MOV32_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
-	.fixup_map_hash_48b = अणु 4 पूर्ण,
+	.fixup_map_hash_48b = { 4 },
 	.result = ACCEPT,
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-पूर्ण,
+},

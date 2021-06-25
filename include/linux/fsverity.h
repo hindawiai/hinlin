@@ -1,60 +1,59 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * fs-verity: पढ़ो-only file-based authenticity protection
+ * fs-verity: read-only file-based authenticity protection
  *
- * This header declares the पूर्णांकerface between the fs/verity/ support layer and
- * fileप्रणालीs that support fs-verity.
+ * This header declares the interface between the fs/verity/ support layer and
+ * filesystems that support fs-verity.
  *
  * Copyright 2019 Google LLC
  */
 
-#अगर_अघोषित _LINUX_FSVERITY_H
-#घोषणा _LINUX_FSVERITY_H
+#ifndef _LINUX_FSVERITY_H
+#define _LINUX_FSVERITY_H
 
-#समावेश <linux/fs.h>
-#समावेश <uapi/linux/fsverity.h>
+#include <linux/fs.h>
+#include <uapi/linux/fsverity.h>
 
-/* Verity operations क्रम fileप्रणालीs */
-काष्ठा fsverity_operations अणु
+/* Verity operations for filesystems */
+struct fsverity_operations {
 
 	/**
 	 * Begin enabling verity on the given file.
 	 *
-	 * @filp: a पढ़ोonly file descriptor क्रम the file
+	 * @filp: a readonly file descriptor for the file
 	 *
-	 * The fileप्रणाली must करो any needed fileप्रणाली-specअगरic preparations
-	 * क्रम enabling verity, e.g. evicting अंतरभूत data.  It also must वापस
-	 * -EBUSY अगर verity is alपढ़ोy being enabled on the given file.
+	 * The filesystem must do any needed filesystem-specific preparations
+	 * for enabling verity, e.g. evicting inline data.  It also must return
+	 * -EBUSY if verity is already being enabled on the given file.
 	 *
-	 * i_rwsem is held क्रम ग_लिखो.
+	 * i_rwsem is held for write.
 	 *
-	 * Return: 0 on success, -त्रुटि_सं on failure
+	 * Return: 0 on success, -errno on failure
 	 */
-	पूर्णांक (*begin_enable_verity)(काष्ठा file *filp);
+	int (*begin_enable_verity)(struct file *filp);
 
 	/**
 	 * End enabling verity on the given file.
 	 *
-	 * @filp: a पढ़ोonly file descriptor क्रम the file
-	 * @desc: the verity descriptor to ग_लिखो, or शून्य on failure
+	 * @filp: a readonly file descriptor for the file
+	 * @desc: the verity descriptor to write, or NULL on failure
 	 * @desc_size: size of verity descriptor, or 0 on failure
 	 * @merkle_tree_size: total bytes the Merkle tree took up
 	 *
-	 * If desc == शून्य, then enabling verity failed and the fileप्रणाली only
-	 * must करो any necessary cleanups.  Else, it must also store the given
-	 * verity descriptor to a fs-specअगरic location associated with the inode
-	 * and करो any fs-specअगरic actions needed to mark the inode as a verity
-	 * inode, e.g. setting a bit in the on-disk inode.  The fileप्रणाली is
-	 * also responsible क्रम setting the S_VERITY flag in the VFS inode.
+	 * If desc == NULL, then enabling verity failed and the filesystem only
+	 * must do any necessary cleanups.  Else, it must also store the given
+	 * verity descriptor to a fs-specific location associated with the inode
+	 * and do any fs-specific actions needed to mark the inode as a verity
+	 * inode, e.g. setting a bit in the on-disk inode.  The filesystem is
+	 * also responsible for setting the S_VERITY flag in the VFS inode.
 	 *
-	 * i_rwsem is held क्रम ग_लिखो, but it may have been dropped between
+	 * i_rwsem is held for write, but it may have been dropped between
 	 * ->begin_enable_verity() and ->end_enable_verity().
 	 *
-	 * Return: 0 on success, -त्रुटि_सं on failure
+	 * Return: 0 on success, -errno on failure
 	 */
-	पूर्णांक (*end_enable_verity)(काष्ठा file *filp, स्थिर व्योम *desc,
-				 माप_प्रकार desc_size, u64 merkle_tree_size);
+	int (*end_enable_verity)(struct file *filp, const void *desc,
+				 size_t desc_size, u64 merkle_tree_size);
 
 	/**
 	 * Get the verity descriptor of the given inode.
@@ -63,15 +62,15 @@
 	 * @buf: buffer in which to place the verity descriptor
 	 * @bufsize: size of @buf, or 0 to retrieve the size only
 	 *
-	 * If bufsize == 0, then the size of the verity descriptor is वापसed.
+	 * If bufsize == 0, then the size of the verity descriptor is returned.
 	 * Otherwise the verity descriptor is written to 'buf' and its actual
-	 * size is वापसed; -दुस्फल is वापसed अगर it's too large.  This may be
+	 * size is returned; -ERANGE is returned if it's too large.  This may be
 	 * called by multiple processes concurrently on the same inode.
 	 *
-	 * Return: the size on success, -त्रुटि_सं on failure
+	 * Return: the size on success, -errno on failure
 	 */
-	पूर्णांक (*get_verity_descriptor)(काष्ठा inode *inode, व्योम *buf,
-				     माप_प्रकार bufsize);
+	int (*get_verity_descriptor)(struct inode *inode, void *buf,
+				     size_t bufsize);
 
 	/**
 	 * Read a Merkle tree page of the given inode.
@@ -79,11 +78,11 @@
 	 * @inode: the inode
 	 * @index: 0-based index of the page within the Merkle tree
 	 * @num_ra_pages: The number of Merkle tree pages that should be
-	 *		  prefetched starting at @index अगर the page at @index
-	 *		  isn't alपढ़ोy cached.  Implementations may ignore this
-	 *		  argument; it's only a perक्रमmance optimization.
+	 *		  prefetched starting at @index if the page at @index
+	 *		  isn't already cached.  Implementations may ignore this
+	 *		  argument; it's only a performance optimization.
 	 *
-	 * This can be called at any समय on an खोलो verity file, as well as
+	 * This can be called at any time on an open verity file, as well as
 	 * between ->begin_enable_verity() and ->end_enable_verity().  It may be
 	 * called by multiple processes concurrently, even with the same page.
 	 *
@@ -91,147 +90,147 @@
 	 *
 	 * Return: the page on success, ERR_PTR() on failure
 	 */
-	काष्ठा page *(*पढ़ो_merkle_tree_page)(काष्ठा inode *inode,
+	struct page *(*read_merkle_tree_page)(struct inode *inode,
 					      pgoff_t index,
-					      अचिन्हित दीर्घ num_ra_pages);
+					      unsigned long num_ra_pages);
 
 	/**
 	 * Write a Merkle tree block to the given inode.
 	 *
-	 * @inode: the inode क्रम which the Merkle tree is being built
-	 * @buf: block to ग_लिखो
+	 * @inode: the inode for which the Merkle tree is being built
+	 * @buf: block to write
 	 * @index: 0-based index of the block within the Merkle tree
 	 * @log_blocksize: log base 2 of the Merkle tree block size
 	 *
 	 * This is only called between ->begin_enable_verity() and
 	 * ->end_enable_verity().
 	 *
-	 * Return: 0 on success, -त्रुटि_सं on failure
+	 * Return: 0 on success, -errno on failure
 	 */
-	पूर्णांक (*ग_लिखो_merkle_tree_block)(काष्ठा inode *inode, स्थिर व्योम *buf,
-				       u64 index, पूर्णांक log_blocksize);
-पूर्ण;
+	int (*write_merkle_tree_block)(struct inode *inode, const void *buf,
+				       u64 index, int log_blocksize);
+};
 
-#अगर_घोषित CONFIG_FS_VERITY
+#ifdef CONFIG_FS_VERITY
 
-अटल अंतरभूत काष्ठा fsverity_info *fsverity_get_info(स्थिर काष्ठा inode *inode)
-अणु
+static inline struct fsverity_info *fsverity_get_info(const struct inode *inode)
+{
 	/*
 	 * Pairs with the cmpxchg_release() in fsverity_set_info().
 	 * I.e., another task may publish ->i_verity_info concurrently,
 	 * executing a RELEASE barrier.  We need to use smp_load_acquire() here
 	 * to safely ACQUIRE the memory the other task published.
 	 */
-	वापस smp_load_acquire(&inode->i_verity_info);
-पूर्ण
+	return smp_load_acquire(&inode->i_verity_info);
+}
 
 /* enable.c */
 
-पूर्णांक fsverity_ioctl_enable(काष्ठा file *filp, स्थिर व्योम __user *arg);
+int fsverity_ioctl_enable(struct file *filp, const void __user *arg);
 
 /* measure.c */
 
-पूर्णांक fsverity_ioctl_measure(काष्ठा file *filp, व्योम __user *arg);
+int fsverity_ioctl_measure(struct file *filp, void __user *arg);
 
-/* खोलो.c */
+/* open.c */
 
-पूर्णांक fsverity_file_खोलो(काष्ठा inode *inode, काष्ठा file *filp);
-पूर्णांक fsverity_prepare_setattr(काष्ठा dentry *dentry, काष्ठा iattr *attr);
-व्योम fsverity_cleanup_inode(काष्ठा inode *inode);
+int fsverity_file_open(struct inode *inode, struct file *filp);
+int fsverity_prepare_setattr(struct dentry *dentry, struct iattr *attr);
+void fsverity_cleanup_inode(struct inode *inode);
 
-/* पढ़ो_metadata.c */
+/* read_metadata.c */
 
-पूर्णांक fsverity_ioctl_पढ़ो_metadata(काष्ठा file *filp, स्थिर व्योम __user *uarg);
+int fsverity_ioctl_read_metadata(struct file *filp, const void __user *uarg);
 
-/* verअगरy.c */
+/* verify.c */
 
-bool fsverity_verअगरy_page(काष्ठा page *page);
-व्योम fsverity_verअगरy_bio(काष्ठा bio *bio);
-व्योम fsverity_enqueue_verअगरy_work(काष्ठा work_काष्ठा *work);
+bool fsverity_verify_page(struct page *page);
+void fsverity_verify_bio(struct bio *bio);
+void fsverity_enqueue_verify_work(struct work_struct *work);
 
-#अन्यथा /* !CONFIG_FS_VERITY */
+#else /* !CONFIG_FS_VERITY */
 
-अटल अंतरभूत काष्ठा fsverity_info *fsverity_get_info(स्थिर काष्ठा inode *inode)
-अणु
-	वापस शून्य;
-पूर्ण
+static inline struct fsverity_info *fsverity_get_info(const struct inode *inode)
+{
+	return NULL;
+}
 
 /* enable.c */
 
-अटल अंतरभूत पूर्णांक fsverity_ioctl_enable(काष्ठा file *filp,
-					स्थिर व्योम __user *arg)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+static inline int fsverity_ioctl_enable(struct file *filp,
+					const void __user *arg)
+{
+	return -EOPNOTSUPP;
+}
 
 /* measure.c */
 
-अटल अंतरभूत पूर्णांक fsverity_ioctl_measure(काष्ठा file *filp, व्योम __user *arg)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+static inline int fsverity_ioctl_measure(struct file *filp, void __user *arg)
+{
+	return -EOPNOTSUPP;
+}
 
-/* खोलो.c */
+/* open.c */
 
-अटल अंतरभूत पूर्णांक fsverity_file_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
-अणु
-	वापस IS_VERITY(inode) ? -EOPNOTSUPP : 0;
-पूर्ण
+static inline int fsverity_file_open(struct inode *inode, struct file *filp)
+{
+	return IS_VERITY(inode) ? -EOPNOTSUPP : 0;
+}
 
-अटल अंतरभूत पूर्णांक fsverity_prepare_setattr(काष्ठा dentry *dentry,
-					   काष्ठा iattr *attr)
-अणु
-	वापस IS_VERITY(d_inode(dentry)) ? -EOPNOTSUPP : 0;
-पूर्ण
+static inline int fsverity_prepare_setattr(struct dentry *dentry,
+					   struct iattr *attr)
+{
+	return IS_VERITY(d_inode(dentry)) ? -EOPNOTSUPP : 0;
+}
 
-अटल अंतरभूत व्योम fsverity_cleanup_inode(काष्ठा inode *inode)
-अणु
-पूर्ण
+static inline void fsverity_cleanup_inode(struct inode *inode)
+{
+}
 
-/* पढ़ो_metadata.c */
+/* read_metadata.c */
 
-अटल अंतरभूत पूर्णांक fsverity_ioctl_पढ़ो_metadata(काष्ठा file *filp,
-					       स्थिर व्योम __user *uarg)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+static inline int fsverity_ioctl_read_metadata(struct file *filp,
+					       const void __user *uarg)
+{
+	return -EOPNOTSUPP;
+}
 
-/* verअगरy.c */
+/* verify.c */
 
-अटल अंतरभूत bool fsverity_verअगरy_page(काष्ठा page *page)
-अणु
+static inline bool fsverity_verify_page(struct page *page)
+{
 	WARN_ON(1);
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल अंतरभूत व्योम fsverity_verअगरy_bio(काष्ठा bio *bio)
-अणु
+static inline void fsverity_verify_bio(struct bio *bio)
+{
 	WARN_ON(1);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम fsverity_enqueue_verअगरy_work(काष्ठा work_काष्ठा *work)
-अणु
+static inline void fsverity_enqueue_verify_work(struct work_struct *work)
+{
 	WARN_ON(1);
-पूर्ण
+}
 
-#पूर्ण_अगर	/* !CONFIG_FS_VERITY */
+#endif	/* !CONFIG_FS_VERITY */
 
 /**
- * fsverity_active() - करो पढ़ोs from the inode need to go through fs-verity?
+ * fsverity_active() - do reads from the inode need to go through fs-verity?
  * @inode: inode to check
  *
  * This checks whether ->i_verity_info has been set.
  *
- * Fileप्रणालीs call this from ->पढ़ोpages() to check whether the pages need to
- * be verअगरied or not.  Don't use IS_VERITY() for this purpose; it's subject to
- * a race condition where the file is being पढ़ो concurrently with
- * FS_IOC_ENABLE_VERITY completing.  (S_VERITY is set beक्रमe ->i_verity_info.)
+ * Filesystems call this from ->readpages() to check whether the pages need to
+ * be verified or not.  Don't use IS_VERITY() for this purpose; it's subject to
+ * a race condition where the file is being read concurrently with
+ * FS_IOC_ENABLE_VERITY completing.  (S_VERITY is set before ->i_verity_info.)
  *
- * Return: true अगर पढ़ोs need to go through fs-verity, otherwise false
+ * Return: true if reads need to go through fs-verity, otherwise false
  */
-अटल अंतरभूत bool fsverity_active(स्थिर काष्ठा inode *inode)
-अणु
-	वापस fsverity_get_info(inode) != शून्य;
-पूर्ण
+static inline bool fsverity_active(const struct inode *inode)
+{
+	return fsverity_get_info(inode) != NULL;
+}
 
-#पूर्ण_अगर	/* _LINUX_FSVERITY_H */
+#endif	/* _LINUX_FSVERITY_H */

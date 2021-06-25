@@ -1,305 +1,304 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Rockchip समयr support
+ * Rockchip timer support
  *
  * Copyright (C) Daniel Lezcano <daniel.lezcano@linaro.org>
  */
-#समावेश <linux/clk.h>
-#समावेश <linux/घड़ीchips.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/sched_घड़ी.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_irq.h>
+#include <linux/clk.h>
+#include <linux/clockchips.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/sched_clock.h>
+#include <linux/slab.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/of_irq.h>
 
-#घोषणा TIMER_NAME "rk_timer"
+#define TIMER_NAME "rk_timer"
 
-#घोषणा TIMER_LOAD_COUNT0	0x00
-#घोषणा TIMER_LOAD_COUNT1	0x04
-#घोषणा TIMER_CURRENT_VALUE0	0x08
-#घोषणा TIMER_CURRENT_VALUE1	0x0C
-#घोषणा TIMER_CONTROL_REG3288	0x10
-#घोषणा TIMER_CONTROL_REG3399	0x1c
-#घोषणा TIMER_INT_STATUS	0x18
+#define TIMER_LOAD_COUNT0	0x00
+#define TIMER_LOAD_COUNT1	0x04
+#define TIMER_CURRENT_VALUE0	0x08
+#define TIMER_CURRENT_VALUE1	0x0C
+#define TIMER_CONTROL_REG3288	0x10
+#define TIMER_CONTROL_REG3399	0x1c
+#define TIMER_INT_STATUS	0x18
 
-#घोषणा TIMER_DISABLE		0x0
-#घोषणा TIMER_ENABLE		0x1
-#घोषणा TIMER_MODE_FREE_RUNNING			(0 << 1)
-#घोषणा TIMER_MODE_USER_DEFINED_COUNT		(1 << 1)
-#घोषणा TIMER_INT_UNMASK			(1 << 2)
+#define TIMER_DISABLE		0x0
+#define TIMER_ENABLE		0x1
+#define TIMER_MODE_FREE_RUNNING			(0 << 1)
+#define TIMER_MODE_USER_DEFINED_COUNT		(1 << 1)
+#define TIMER_INT_UNMASK			(1 << 2)
 
-काष्ठा rk_समयr अणु
-	व्योम __iomem *base;
-	व्योम __iomem *ctrl;
-	काष्ठा clk *clk;
-	काष्ठा clk *pclk;
+struct rk_timer {
+	void __iomem *base;
+	void __iomem *ctrl;
+	struct clk *clk;
+	struct clk *pclk;
 	u32 freq;
-	पूर्णांक irq;
-पूर्ण;
+	int irq;
+};
 
-काष्ठा rk_clkevt अणु
-	काष्ठा घड़ी_event_device ce;
-	काष्ठा rk_समयr समयr;
-पूर्ण;
+struct rk_clkevt {
+	struct clock_event_device ce;
+	struct rk_timer timer;
+};
 
-अटल काष्ठा rk_clkevt *rk_clkevt;
-अटल काष्ठा rk_समयr *rk_clksrc;
+static struct rk_clkevt *rk_clkevt;
+static struct rk_timer *rk_clksrc;
 
-अटल अंतरभूत काष्ठा rk_समयr *rk_समयr(काष्ठा घड़ी_event_device *ce)
-अणु
-	वापस &container_of(ce, काष्ठा rk_clkevt, ce)->समयr;
-पूर्ण
+static inline struct rk_timer *rk_timer(struct clock_event_device *ce)
+{
+	return &container_of(ce, struct rk_clkevt, ce)->timer;
+}
 
-अटल अंतरभूत व्योम rk_समयr_disable(काष्ठा rk_समयr *समयr)
-अणु
-	ग_लिखोl_relaxed(TIMER_DISABLE, समयr->ctrl);
-पूर्ण
+static inline void rk_timer_disable(struct rk_timer *timer)
+{
+	writel_relaxed(TIMER_DISABLE, timer->ctrl);
+}
 
-अटल अंतरभूत व्योम rk_समयr_enable(काष्ठा rk_समयr *समयr, u32 flags)
-अणु
-	ग_लिखोl_relaxed(TIMER_ENABLE | flags, समयr->ctrl);
-पूर्ण
+static inline void rk_timer_enable(struct rk_timer *timer, u32 flags)
+{
+	writel_relaxed(TIMER_ENABLE | flags, timer->ctrl);
+}
 
-अटल व्योम rk_समयr_update_counter(अचिन्हित दीर्घ cycles,
-				    काष्ठा rk_समयr *समयr)
-अणु
-	ग_लिखोl_relaxed(cycles, समयr->base + TIMER_LOAD_COUNT0);
-	ग_लिखोl_relaxed(0, समयr->base + TIMER_LOAD_COUNT1);
-पूर्ण
+static void rk_timer_update_counter(unsigned long cycles,
+				    struct rk_timer *timer)
+{
+	writel_relaxed(cycles, timer->base + TIMER_LOAD_COUNT0);
+	writel_relaxed(0, timer->base + TIMER_LOAD_COUNT1);
+}
 
-अटल व्योम rk_समयr_पूर्णांकerrupt_clear(काष्ठा rk_समयr *समयr)
-अणु
-	ग_लिखोl_relaxed(1, समयr->base + TIMER_INT_STATUS);
-पूर्ण
+static void rk_timer_interrupt_clear(struct rk_timer *timer)
+{
+	writel_relaxed(1, timer->base + TIMER_INT_STATUS);
+}
 
-अटल अंतरभूत पूर्णांक rk_समयr_set_next_event(अचिन्हित दीर्घ cycles,
-					  काष्ठा घड़ी_event_device *ce)
-अणु
-	काष्ठा rk_समयr *समयr = rk_समयr(ce);
+static inline int rk_timer_set_next_event(unsigned long cycles,
+					  struct clock_event_device *ce)
+{
+	struct rk_timer *timer = rk_timer(ce);
 
-	rk_समयr_disable(समयr);
-	rk_समयr_update_counter(cycles, समयr);
-	rk_समयr_enable(समयr, TIMER_MODE_USER_DEFINED_COUNT |
+	rk_timer_disable(timer);
+	rk_timer_update_counter(cycles, timer);
+	rk_timer_enable(timer, TIMER_MODE_USER_DEFINED_COUNT |
 			       TIMER_INT_UNMASK);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rk_समयr_shutकरोwn(काष्ठा घड़ी_event_device *ce)
-अणु
-	काष्ठा rk_समयr *समयr = rk_समयr(ce);
+static int rk_timer_shutdown(struct clock_event_device *ce)
+{
+	struct rk_timer *timer = rk_timer(ce);
 
-	rk_समयr_disable(समयr);
-	वापस 0;
-पूर्ण
+	rk_timer_disable(timer);
+	return 0;
+}
 
-अटल पूर्णांक rk_समयr_set_periodic(काष्ठा घड़ी_event_device *ce)
-अणु
-	काष्ठा rk_समयr *समयr = rk_समयr(ce);
+static int rk_timer_set_periodic(struct clock_event_device *ce)
+{
+	struct rk_timer *timer = rk_timer(ce);
 
-	rk_समयr_disable(समयr);
-	rk_समयr_update_counter(समयr->freq / HZ - 1, समयr);
-	rk_समयr_enable(समयr, TIMER_MODE_FREE_RUNNING | TIMER_INT_UNMASK);
-	वापस 0;
-पूर्ण
+	rk_timer_disable(timer);
+	rk_timer_update_counter(timer->freq / HZ - 1, timer);
+	rk_timer_enable(timer, TIMER_MODE_FREE_RUNNING | TIMER_INT_UNMASK);
+	return 0;
+}
 
-अटल irqवापस_t rk_समयr_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा घड़ी_event_device *ce = dev_id;
-	काष्ठा rk_समयr *समयr = rk_समयr(ce);
+static irqreturn_t rk_timer_interrupt(int irq, void *dev_id)
+{
+	struct clock_event_device *ce = dev_id;
+	struct rk_timer *timer = rk_timer(ce);
 
-	rk_समयr_पूर्णांकerrupt_clear(समयr);
+	rk_timer_interrupt_clear(timer);
 
-	अगर (घड़ीevent_state_oneshot(ce))
-		rk_समयr_disable(समयr);
+	if (clockevent_state_oneshot(ce))
+		rk_timer_disable(timer);
 
 	ce->event_handler(ce);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल u64 notrace rk_समयr_sched_पढ़ो(व्योम)
-अणु
-	वापस ~पढ़ोl_relaxed(rk_clksrc->base + TIMER_CURRENT_VALUE0);
-पूर्ण
+static u64 notrace rk_timer_sched_read(void)
+{
+	return ~readl_relaxed(rk_clksrc->base + TIMER_CURRENT_VALUE0);
+}
 
-अटल पूर्णांक __init
-rk_समयr_probe(काष्ठा rk_समयr *समयr, काष्ठा device_node *np)
-अणु
-	काष्ठा clk *समयr_clk;
-	काष्ठा clk *pclk;
-	पूर्णांक ret = -EINVAL, irq;
+static int __init
+rk_timer_probe(struct rk_timer *timer, struct device_node *np)
+{
+	struct clk *timer_clk;
+	struct clk *pclk;
+	int ret = -EINVAL, irq;
 	u32 ctrl_reg = TIMER_CONTROL_REG3288;
 
-	समयr->base = of_iomap(np, 0);
-	अगर (!समयr->base) अणु
+	timer->base = of_iomap(np, 0);
+	if (!timer->base) {
 		pr_err("Failed to get base address for '%s'\n", TIMER_NAME);
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
-	अगर (of_device_is_compatible(np, "rockchip,rk3399-timer"))
+	if (of_device_is_compatible(np, "rockchip,rk3399-timer"))
 		ctrl_reg = TIMER_CONTROL_REG3399;
 
-	समयr->ctrl = समयr->base + ctrl_reg;
+	timer->ctrl = timer->base + ctrl_reg;
 
 	pclk = of_clk_get_by_name(np, "pclk");
-	अगर (IS_ERR(pclk)) अणु
+	if (IS_ERR(pclk)) {
 		ret = PTR_ERR(pclk);
 		pr_err("Failed to get pclk for '%s'\n", TIMER_NAME);
-		जाओ out_unmap;
-	पूर्ण
+		goto out_unmap;
+	}
 
 	ret = clk_prepare_enable(pclk);
-	अगर (ret) अणु
+	if (ret) {
 		pr_err("Failed to enable pclk for '%s'\n", TIMER_NAME);
-		जाओ out_unmap;
-	पूर्ण
-	समयr->pclk = pclk;
+		goto out_unmap;
+	}
+	timer->pclk = pclk;
 
-	समयr_clk = of_clk_get_by_name(np, "timer");
-	अगर (IS_ERR(समयr_clk)) अणु
-		ret = PTR_ERR(समयr_clk);
+	timer_clk = of_clk_get_by_name(np, "timer");
+	if (IS_ERR(timer_clk)) {
+		ret = PTR_ERR(timer_clk);
 		pr_err("Failed to get timer clock for '%s'\n", TIMER_NAME);
-		जाओ out_समयr_clk;
-	पूर्ण
+		goto out_timer_clk;
+	}
 
-	ret = clk_prepare_enable(समयr_clk);
-	अगर (ret) अणु
+	ret = clk_prepare_enable(timer_clk);
+	if (ret) {
 		pr_err("Failed to enable timer clock\n");
-		जाओ out_समयr_clk;
-	पूर्ण
-	समयr->clk = समयr_clk;
+		goto out_timer_clk;
+	}
+	timer->clk = timer_clk;
 
-	समयr->freq = clk_get_rate(समयr_clk);
+	timer->freq = clk_get_rate(timer_clk);
 
 	irq = irq_of_parse_and_map(np, 0);
-	अगर (!irq) अणु
+	if (!irq) {
 		ret = -EINVAL;
 		pr_err("Failed to map interrupts for '%s'\n", TIMER_NAME);
-		जाओ out_irq;
-	पूर्ण
-	समयr->irq = irq;
+		goto out_irq;
+	}
+	timer->irq = irq;
 
-	rk_समयr_पूर्णांकerrupt_clear(समयr);
-	rk_समयr_disable(समयr);
-	वापस 0;
+	rk_timer_interrupt_clear(timer);
+	rk_timer_disable(timer);
+	return 0;
 
 out_irq:
-	clk_disable_unprepare(समयr_clk);
-out_समयr_clk:
+	clk_disable_unprepare(timer_clk);
+out_timer_clk:
 	clk_disable_unprepare(pclk);
 out_unmap:
-	iounmap(समयr->base);
+	iounmap(timer->base);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम __init rk_समयr_cleanup(काष्ठा rk_समयr *समयr)
-अणु
-	clk_disable_unprepare(समयr->clk);
-	clk_disable_unprepare(समयr->pclk);
-	iounmap(समयr->base);
-पूर्ण
+static void __init rk_timer_cleanup(struct rk_timer *timer)
+{
+	clk_disable_unprepare(timer->clk);
+	clk_disable_unprepare(timer->pclk);
+	iounmap(timer->base);
+}
 
-अटल पूर्णांक __init rk_clkevt_init(काष्ठा device_node *np)
-अणु
-	काष्ठा घड़ी_event_device *ce;
-	पूर्णांक ret = -EINVAL;
+static int __init rk_clkevt_init(struct device_node *np)
+{
+	struct clock_event_device *ce;
+	int ret = -EINVAL;
 
-	rk_clkevt = kzalloc(माप(काष्ठा rk_clkevt), GFP_KERNEL);
-	अगर (!rk_clkevt) अणु
+	rk_clkevt = kzalloc(sizeof(struct rk_clkevt), GFP_KERNEL);
+	if (!rk_clkevt) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	ret = rk_समयr_probe(&rk_clkevt->समयr, np);
-	अगर (ret)
-		जाओ out_probe;
+	ret = rk_timer_probe(&rk_clkevt->timer, np);
+	if (ret)
+		goto out_probe;
 
 	ce = &rk_clkevt->ce;
 	ce->name = TIMER_NAME;
 	ce->features = CLOCK_EVT_FEAT_PERIODIC | CLOCK_EVT_FEAT_ONESHOT |
 		       CLOCK_EVT_FEAT_DYNIRQ;
-	ce->set_next_event = rk_समयr_set_next_event;
-	ce->set_state_shutकरोwn = rk_समयr_shutकरोwn;
-	ce->set_state_periodic = rk_समयr_set_periodic;
-	ce->irq = rk_clkevt->समयr.irq;
+	ce->set_next_event = rk_timer_set_next_event;
+	ce->set_state_shutdown = rk_timer_shutdown;
+	ce->set_state_periodic = rk_timer_set_periodic;
+	ce->irq = rk_clkevt->timer.irq;
 	ce->cpumask = cpu_possible_mask;
 	ce->rating = 250;
 
-	ret = request_irq(rk_clkevt->समयr.irq, rk_समयr_पूर्णांकerrupt, IRQF_TIMER,
+	ret = request_irq(rk_clkevt->timer.irq, rk_timer_interrupt, IRQF_TIMER,
 			  TIMER_NAME, ce);
-	अगर (ret) अणु
+	if (ret) {
 		pr_err("Failed to initialize '%s': %d\n",
 			TIMER_NAME, ret);
-		जाओ out_irq;
-	पूर्ण
+		goto out_irq;
+	}
 
-	घड़ीevents_config_and_रेजिस्टर(&rk_clkevt->ce,
-					rk_clkevt->समयr.freq, 1, अच_पूर्णांक_उच्च);
-	वापस 0;
+	clockevents_config_and_register(&rk_clkevt->ce,
+					rk_clkevt->timer.freq, 1, UINT_MAX);
+	return 0;
 
 out_irq:
-	rk_समयr_cleanup(&rk_clkevt->समयr);
+	rk_timer_cleanup(&rk_clkevt->timer);
 out_probe:
-	kमुक्त(rk_clkevt);
+	kfree(rk_clkevt);
 out:
-	/* Leave rk_clkevt not शून्य to prevent future init */
+	/* Leave rk_clkevt not NULL to prevent future init */
 	rk_clkevt = ERR_PTR(ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक __init rk_clksrc_init(काष्ठा device_node *np)
-अणु
-	पूर्णांक ret = -EINVAL;
+static int __init rk_clksrc_init(struct device_node *np)
+{
+	int ret = -EINVAL;
 
-	rk_clksrc = kzalloc(माप(काष्ठा rk_समयr), GFP_KERNEL);
-	अगर (!rk_clksrc) अणु
+	rk_clksrc = kzalloc(sizeof(struct rk_timer), GFP_KERNEL);
+	if (!rk_clksrc) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	ret = rk_समयr_probe(rk_clksrc, np);
-	अगर (ret)
-		जाओ out_probe;
+	ret = rk_timer_probe(rk_clksrc, np);
+	if (ret)
+		goto out_probe;
 
-	rk_समयr_update_counter(अच_पूर्णांक_उच्च, rk_clksrc);
-	rk_समयr_enable(rk_clksrc, 0);
+	rk_timer_update_counter(UINT_MAX, rk_clksrc);
+	rk_timer_enable(rk_clksrc, 0);
 
-	ret = घड़ीsource_mmio_init(rk_clksrc->base + TIMER_CURRENT_VALUE0,
+	ret = clocksource_mmio_init(rk_clksrc->base + TIMER_CURRENT_VALUE0,
 		TIMER_NAME, rk_clksrc->freq, 250, 32,
-		घड़ीsource_mmio_पढ़ोl_करोwn);
-	अगर (ret) अणु
+		clocksource_mmio_readl_down);
+	if (ret) {
 		pr_err("Failed to register clocksource\n");
-		जाओ out_घड़ीsource;
-	पूर्ण
+		goto out_clocksource;
+	}
 
-	sched_घड़ी_रेजिस्टर(rk_समयr_sched_पढ़ो, 32, rk_clksrc->freq);
-	वापस 0;
+	sched_clock_register(rk_timer_sched_read, 32, rk_clksrc->freq);
+	return 0;
 
-out_घड़ीsource:
-	rk_समयr_cleanup(rk_clksrc);
+out_clocksource:
+	rk_timer_cleanup(rk_clksrc);
 out_probe:
-	kमुक्त(rk_clksrc);
+	kfree(rk_clksrc);
 out:
-	/* Leave rk_clksrc not शून्य to prevent future init */
+	/* Leave rk_clksrc not NULL to prevent future init */
 	rk_clksrc = ERR_PTR(ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक __init rk_समयr_init(काष्ठा device_node *np)
-अणु
-	अगर (!rk_clkevt)
-		वापस rk_clkevt_init(np);
+static int __init rk_timer_init(struct device_node *np)
+{
+	if (!rk_clkevt)
+		return rk_clkevt_init(np);
 
-	अगर (!rk_clksrc)
-		वापस rk_clksrc_init(np);
+	if (!rk_clksrc)
+		return rk_clksrc_init(np);
 
 	pr_err("Too many timer definitions for '%s'\n", TIMER_NAME);
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-TIMER_OF_DECLARE(rk3288_समयr, "rockchip,rk3288-timer", rk_समयr_init);
-TIMER_OF_DECLARE(rk3399_समयr, "rockchip,rk3399-timer", rk_समयr_init);
+TIMER_OF_DECLARE(rk3288_timer, "rockchip,rk3288-timer", rk_timer_init);
+TIMER_OF_DECLARE(rk3399_timer, "rockchip,rk3399-timer", rk_timer_init);

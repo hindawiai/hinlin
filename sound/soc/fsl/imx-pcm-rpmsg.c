@@ -1,23 +1,22 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 // Copyright 2017-2021 NXP
 
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/rpmsg.h>
-#समावेश <sound/core.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/pcm_params.h>
-#समावेश <sound/dmaengine_pcm.h>
-#समावेश <sound/soc.h>
+#include <linux/dma-mapping.h>
+#include <linux/slab.h>
+#include <linux/module.h>
+#include <linux/delay.h>
+#include <linux/rpmsg.h>
+#include <sound/core.h>
+#include <sound/pcm.h>
+#include <sound/pcm_params.h>
+#include <sound/dmaengine_pcm.h>
+#include <sound/soc.h>
 
-#समावेश "imx-pcm.h"
-#समावेश "fsl_rpmsg.h"
-#समावेश "imx-pcm-rpmsg.h"
+#include "imx-pcm.h"
+#include "fsl_rpmsg.h"
+#include "imx-pcm-rpmsg.h"
 
-अटल काष्ठा snd_pcm_hardware imx_rpmsg_pcm_hardware = अणु
+static struct snd_pcm_hardware imx_rpmsg_pcm_hardware = {
 	.info = SNDRV_PCM_INFO_INTERLEAVED |
 		SNDRV_PCM_INFO_BLOCK_TRANSFER |
 		SNDRV_PCM_INFO_MMAP |
@@ -30,222 +29,222 @@
 	.period_bytes_max = 65536,
 	.periods_min = 2,
 	.periods_max = 6000,
-	.fअगरo_size = 0,
-पूर्ण;
+	.fifo_size = 0,
+};
 
-अटल पूर्णांक imx_rpmsg_pcm_send_message(काष्ठा rpmsg_msg *msg,
-				      काष्ठा rpmsg_info *info)
-अणु
-	काष्ठा rpmsg_device *rpdev = info->rpdev;
-	पूर्णांक ret = 0;
+static int imx_rpmsg_pcm_send_message(struct rpmsg_msg *msg,
+				      struct rpmsg_info *info)
+{
+	struct rpmsg_device *rpdev = info->rpdev;
+	int ret = 0;
 
 	mutex_lock(&info->msg_lock);
-	अगर (!rpdev) अणु
+	if (!rpdev) {
 		dev_err(info->dev, "rpmsg channel not ready\n");
 		mutex_unlock(&info->msg_lock);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	dev_dbg(&rpdev->dev, "send cmd %d\n", msg->s_msg.header.cmd);
 
-	अगर (!(msg->s_msg.header.type == MSG_TYPE_C))
+	if (!(msg->s_msg.header.type == MSG_TYPE_C))
 		reinit_completion(&info->cmd_complete);
 
-	ret = rpmsg_send(rpdev->ept, (व्योम *)&msg->s_msg,
-			 माप(काष्ठा rpmsg_s_msg));
-	अगर (ret) अणु
+	ret = rpmsg_send(rpdev->ept, (void *)&msg->s_msg,
+			 sizeof(struct rpmsg_s_msg));
+	if (ret) {
 		dev_err(&rpdev->dev, "rpmsg_send failed: %d\n", ret);
 		mutex_unlock(&info->msg_lock);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* No receive msg क्रम TYPE_C command */
-	अगर (msg->s_msg.header.type == MSG_TYPE_C) अणु
+	/* No receive msg for TYPE_C command */
+	if (msg->s_msg.header.type == MSG_TYPE_C) {
 		mutex_unlock(&info->msg_lock);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	/* रुको response from rpmsg */
-	ret = रुको_क्रम_completion_समयout(&info->cmd_complete,
-					  msecs_to_jअगरfies(RPMSG_TIMEOUT));
-	अगर (!ret) अणु
+	/* wait response from rpmsg */
+	ret = wait_for_completion_timeout(&info->cmd_complete,
+					  msecs_to_jiffies(RPMSG_TIMEOUT));
+	if (!ret) {
 		dev_err(&rpdev->dev, "rpmsg_send cmd %d timeout!\n",
 			msg->s_msg.header.cmd);
 		mutex_unlock(&info->msg_lock);
-		वापस -ETIMEDOUT;
-	पूर्ण
+		return -ETIMEDOUT;
+	}
 
-	स_नकल(&msg->r_msg, &info->r_msg, माप(काष्ठा rpmsg_r_msg));
-	स_नकल(&info->msg[msg->r_msg.header.cmd].r_msg,
-	       &msg->r_msg, माप(काष्ठा rpmsg_r_msg));
+	memcpy(&msg->r_msg, &info->r_msg, sizeof(struct rpmsg_r_msg));
+	memcpy(&info->msg[msg->r_msg.header.cmd].r_msg,
+	       &msg->r_msg, sizeof(struct rpmsg_r_msg));
 
 	/*
-	 * Reset the buffer poपूर्णांकer to be zero, actully we have
-	 * set the buffer poपूर्णांकer to be zero in imx_rpmsg_terminate_all
-	 * But अगर there is समयr task queued in queue, after it is
-	 * executed the buffer poपूर्णांकer will be changed, so need to
+	 * Reset the buffer pointer to be zero, actully we have
+	 * set the buffer pointer to be zero in imx_rpmsg_terminate_all
+	 * But if there is timer task queued in queue, after it is
+	 * executed the buffer pointer will be changed, so need to
 	 * reset it again with TERMINATE command.
 	 */
-	चयन (msg->s_msg.header.cmd) अणु
-	हाल TX_TERMINATE:
+	switch (msg->s_msg.header.cmd) {
+	case TX_TERMINATE:
 		info->msg[TX_POINTER].r_msg.param.buffer_offset = 0;
-		अवरोध;
-	हाल RX_TERMINATE:
+		break;
+	case RX_TERMINATE:
 		info->msg[RX_POINTER].r_msg.param.buffer_offset = 0;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
 	dev_dbg(&rpdev->dev, "cmd:%d, resp %d\n", msg->s_msg.header.cmd,
 		info->r_msg.param.resp);
 
 	mutex_unlock(&info->msg_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक imx_rpmsg_insert_workqueue(काष्ठा snd_pcm_substream *substream,
-				      काष्ठा rpmsg_msg *msg,
-				      काष्ठा rpmsg_info *info)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret = 0;
+static int imx_rpmsg_insert_workqueue(struct snd_pcm_substream *substream,
+				      struct rpmsg_msg *msg,
+				      struct rpmsg_info *info)
+{
+	unsigned long flags;
+	int ret = 0;
 
 	/*
 	 * Queue the work to workqueue.
 	 * If the queue is full, drop the message.
 	 */
 	spin_lock_irqsave(&info->wq_lock, flags);
-	अगर (info->work_ग_लिखो_index != info->work_पढ़ो_index) अणु
-		पूर्णांक index = info->work_ग_लिखो_index;
+	if (info->work_write_index != info->work_read_index) {
+		int index = info->work_write_index;
 
-		स_नकल(&info->work_list[index].msg, msg,
-		       माप(काष्ठा rpmsg_s_msg));
+		memcpy(&info->work_list[index].msg, msg,
+		       sizeof(struct rpmsg_s_msg));
 
 		queue_work(info->rpmsg_wq, &info->work_list[index].work);
-		info->work_ग_लिखो_index++;
-		info->work_ग_लिखो_index %= WORK_MAX_NUM;
-	पूर्ण अन्यथा अणु
+		info->work_write_index++;
+		info->work_write_index %= WORK_MAX_NUM;
+	} else {
 		info->msg_drop_count[substream->stream]++;
 		ret = -EPIPE;
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&info->wq_lock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक imx_rpmsg_pcm_hw_params(काष्ठा snd_soc_component *component,
-				   काष्ठा snd_pcm_substream *substream,
-				   काष्ठा snd_pcm_hw_params *params)
-अणु
-	काष्ठा rpmsg_info *info = dev_get_drvdata(component->dev);
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा rpmsg_msg *msg;
-	पूर्णांक ret = 0;
+static int imx_rpmsg_pcm_hw_params(struct snd_soc_component *component,
+				   struct snd_pcm_substream *substream,
+				   struct snd_pcm_hw_params *params)
+{
+	struct rpmsg_info *info = dev_get_drvdata(component->dev);
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct rpmsg_msg *msg;
+	int ret = 0;
 
-	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) अणु
+	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
 		msg = &info->msg[TX_HW_PARAM];
 		msg->s_msg.header.cmd = TX_HW_PARAM;
-	पूर्ण अन्यथा अणु
+	} else {
 		msg = &info->msg[RX_HW_PARAM];
 		msg->s_msg.header.cmd = RX_HW_PARAM;
-	पूर्ण
+	}
 
 	msg->s_msg.param.rate = params_rate(params);
 
-	चयन (params_क्रमmat(params)) अणु
-	हाल SNDRV_PCM_FORMAT_S16_LE:
-		msg->s_msg.param.क्रमmat   = RPMSG_S16_LE;
-		अवरोध;
-	हाल SNDRV_PCM_FORMAT_S24_LE:
-		msg->s_msg.param.क्रमmat   = RPMSG_S24_LE;
-		अवरोध;
-	हाल SNDRV_PCM_FORMAT_DSD_U16_LE:
-		msg->s_msg.param.क्रमmat   = SNDRV_PCM_FORMAT_DSD_U16_LE;
-		अवरोध;
-	हाल SNDRV_PCM_FORMAT_DSD_U32_LE:
-		msg->s_msg.param.क्रमmat   = SNDRV_PCM_FORMAT_DSD_U32_LE;
-		अवरोध;
-	शेष:
-		msg->s_msg.param.क्रमmat   = RPMSG_S32_LE;
-		अवरोध;
-	पूर्ण
+	switch (params_format(params)) {
+	case SNDRV_PCM_FORMAT_S16_LE:
+		msg->s_msg.param.format   = RPMSG_S16_LE;
+		break;
+	case SNDRV_PCM_FORMAT_S24_LE:
+		msg->s_msg.param.format   = RPMSG_S24_LE;
+		break;
+	case SNDRV_PCM_FORMAT_DSD_U16_LE:
+		msg->s_msg.param.format   = SNDRV_PCM_FORMAT_DSD_U16_LE;
+		break;
+	case SNDRV_PCM_FORMAT_DSD_U32_LE:
+		msg->s_msg.param.format   = SNDRV_PCM_FORMAT_DSD_U32_LE;
+		break;
+	default:
+		msg->s_msg.param.format   = RPMSG_S32_LE;
+		break;
+	}
 
-	चयन (params_channels(params)) अणु
-	हाल 1:
+	switch (params_channels(params)) {
+	case 1:
 		msg->s_msg.param.channels = RPMSG_CH_LEFT;
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		msg->s_msg.param.channels = RPMSG_CH_STEREO;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	snd_pcm_set_runसमय_buffer(substream, &substream->dma_buffer);
-	runसमय->dma_bytes = params_buffer_bytes(params);
+	snd_pcm_set_runtime_buffer(substream, &substream->dma_buffer);
+	runtime->dma_bytes = params_buffer_bytes(params);
 
 	info->send_message(msg, info);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक imx_rpmsg_pcm_hw_मुक्त(काष्ठा snd_soc_component *component,
-				 काष्ठा snd_pcm_substream *substream)
-अणु
-	snd_pcm_set_runसमय_buffer(substream, शून्य);
-	वापस 0;
-पूर्ण
+static int imx_rpmsg_pcm_hw_free(struct snd_soc_component *component,
+				 struct snd_pcm_substream *substream)
+{
+	snd_pcm_set_runtime_buffer(substream, NULL);
+	return 0;
+}
 
-अटल snd_pcm_uframes_t imx_rpmsg_pcm_poपूर्णांकer(काष्ठा snd_soc_component *component,
-					       काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा rpmsg_info *info = dev_get_drvdata(component->dev);
-	काष्ठा rpmsg_msg *msg;
-	अचिन्हित पूर्णांक pos = 0;
-	पूर्णांक buffer_tail = 0;
+static snd_pcm_uframes_t imx_rpmsg_pcm_pointer(struct snd_soc_component *component,
+					       struct snd_pcm_substream *substream)
+{
+	struct rpmsg_info *info = dev_get_drvdata(component->dev);
+	struct rpmsg_msg *msg;
+	unsigned int pos = 0;
+	int buffer_tail = 0;
 
-	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
 		msg = &info->msg[TX_PERIOD_DONE + MSG_TYPE_A_NUM];
-	अन्यथा
+	else
 		msg = &info->msg[RX_PERIOD_DONE + MSG_TYPE_A_NUM];
 
 	buffer_tail = msg->r_msg.param.buffer_tail;
 	pos = buffer_tail * snd_pcm_lib_period_bytes(substream);
 
-	वापस bytes_to_frames(substream->runसमय, pos);
-पूर्ण
+	return bytes_to_frames(substream->runtime, pos);
+}
 
-अटल व्योम imx_rpmsg_समयr_callback(काष्ठा समयr_list *t)
-अणु
-	काष्ठा stream_समयr  *stream_समयr =
-			from_समयr(stream_समयr, t, समयr);
-	काष्ठा snd_pcm_substream *substream = stream_समयr->substream;
-	काष्ठा rpmsg_info *info = stream_समयr->info;
-	काष्ठा rpmsg_msg *msg;
+static void imx_rpmsg_timer_callback(struct timer_list *t)
+{
+	struct stream_timer  *stream_timer =
+			from_timer(stream_timer, t, timer);
+	struct snd_pcm_substream *substream = stream_timer->substream;
+	struct rpmsg_info *info = stream_timer->info;
+	struct rpmsg_msg *msg;
 
-	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) अणु
+	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
 		msg = &info->msg[TX_PERIOD_DONE + MSG_TYPE_A_NUM];
 		msg->s_msg.header.cmd = TX_PERIOD_DONE;
-	पूर्ण अन्यथा अणु
+	} else {
 		msg = &info->msg[RX_PERIOD_DONE + MSG_TYPE_A_NUM];
 		msg->s_msg.header.cmd = RX_PERIOD_DONE;
-	पूर्ण
+	}
 
 	imx_rpmsg_insert_workqueue(substream, msg, info);
-पूर्ण
+}
 
-अटल पूर्णांक imx_rpmsg_pcm_खोलो(काष्ठा snd_soc_component *component,
-			      काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा rpmsg_info *info = dev_get_drvdata(component->dev);
-	काष्ठा rpmsg_msg *msg;
-	पूर्णांक ret = 0;
-	पूर्णांक cmd;
+static int imx_rpmsg_pcm_open(struct snd_soc_component *component,
+			      struct snd_pcm_substream *substream)
+{
+	struct rpmsg_info *info = dev_get_drvdata(component->dev);
+	struct rpmsg_msg *msg;
+	int ret = 0;
+	int cmd;
 
-	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) अणु
+	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
 		msg = &info->msg[TX_OPEN];
 		msg->s_msg.header.cmd = TX_OPEN;
 
@@ -255,7 +254,7 @@
 		info->msg[cmd].r_msg.param.buffer_tail = 0;
 		info->msg[TX_POINTER].r_msg.param.buffer_offset = 0;
 
-	पूर्ण अन्यथा अणु
+	} else {
 		msg = &info->msg[RX_OPEN];
 		msg->s_msg.header.cmd = RX_OPEN;
 
@@ -264,125 +263,125 @@
 		info->msg[cmd].s_msg.param.buffer_tail = 0;
 		info->msg[cmd].r_msg.param.buffer_tail = 0;
 		info->msg[RX_POINTER].r_msg.param.buffer_offset = 0;
-	पूर्ण
+	}
 
 	info->send_message(msg, info);
 
 	imx_rpmsg_pcm_hardware.period_bytes_max =
 			imx_rpmsg_pcm_hardware.buffer_bytes_max / 2;
 
-	snd_soc_set_runसमय_hwparams(substream, &imx_rpmsg_pcm_hardware);
+	snd_soc_set_runtime_hwparams(substream, &imx_rpmsg_pcm_hardware);
 
-	ret = snd_pcm_hw_स्थिरraपूर्णांक_पूर्णांकeger(substream->runसमय,
+	ret = snd_pcm_hw_constraint_integer(substream->runtime,
 					    SNDRV_PCM_HW_PARAM_PERIODS);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	info->msg_drop_count[substream->stream] = 0;
 
-	/* Create समयr*/
-	info->stream_समयr[substream->stream].info = info;
-	info->stream_समयr[substream->stream].substream = substream;
-	समयr_setup(&info->stream_समयr[substream->stream].समयr,
-		    imx_rpmsg_समयr_callback, 0);
-	वापस ret;
-पूर्ण
+	/* Create timer*/
+	info->stream_timer[substream->stream].info = info;
+	info->stream_timer[substream->stream].substream = substream;
+	timer_setup(&info->stream_timer[substream->stream].timer,
+		    imx_rpmsg_timer_callback, 0);
+	return ret;
+}
 
-अटल पूर्णांक imx_rpmsg_pcm_बंद(काष्ठा snd_soc_component *component,
-			       काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_soc_pcm_runसमय *rtd = asoc_substream_to_rtd(substream);
-	काष्ठा rpmsg_info *info = dev_get_drvdata(component->dev);
-	काष्ठा rpmsg_msg *msg;
-	पूर्णांक ret = 0;
+static int imx_rpmsg_pcm_close(struct snd_soc_component *component,
+			       struct snd_pcm_substream *substream)
+{
+	struct snd_soc_pcm_runtime *rtd = asoc_substream_to_rtd(substream);
+	struct rpmsg_info *info = dev_get_drvdata(component->dev);
+	struct rpmsg_msg *msg;
+	int ret = 0;
 
 	/* Flush work in workqueue to make TX_CLOSE is the last message */
 	flush_workqueue(info->rpmsg_wq);
 
-	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) अणु
+	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
 		msg = &info->msg[TX_CLOSE];
 		msg->s_msg.header.cmd = TX_CLOSE;
-	पूर्ण अन्यथा अणु
+	} else {
 		msg = &info->msg[RX_CLOSE];
 		msg->s_msg.header.cmd = RX_CLOSE;
-	पूर्ण
+	}
 
 	info->send_message(msg, info);
 
-	del_समयr(&info->stream_समयr[substream->stream].समयr);
+	del_timer(&info->stream_timer[substream->stream].timer);
 
 	rtd->dai_link->ignore_suspend = 0;
 
-	अगर (info->msg_drop_count[substream->stream])
+	if (info->msg_drop_count[substream->stream])
 		dev_warn(rtd->dev, "Msg is dropped!, number is %d\n",
 			 info->msg_drop_count[substream->stream]);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक imx_rpmsg_pcm_prepare(काष्ठा snd_soc_component *component,
-				 काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा snd_soc_pcm_runसमय *rtd = substream->निजी_data;
-	काष्ठा snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(rtd, 0);
-	काष्ठा fsl_rpmsg *rpmsg = dev_get_drvdata(cpu_dai->dev);
+static int imx_rpmsg_pcm_prepare(struct snd_soc_component *component,
+				 struct snd_pcm_substream *substream)
+{
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct snd_soc_pcm_runtime *rtd = substream->private_data;
+	struct snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(rtd, 0);
+	struct fsl_rpmsg *rpmsg = dev_get_drvdata(cpu_dai->dev);
 
 	/*
 	 * NON-MMAP mode, NONBLOCK, Version 2, enable lpa in dts
 	 * four conditions to determine the lpa is enabled.
 	 */
-	अगर ((runसमय->access == SNDRV_PCM_ACCESS_RW_INTERLEAVED ||
-	     runसमय->access == SNDRV_PCM_ACCESS_RW_NONINTERLEAVED) &&
-	     rpmsg->enable_lpa) अणु
+	if ((runtime->access == SNDRV_PCM_ACCESS_RW_INTERLEAVED ||
+	     runtime->access == SNDRV_PCM_ACCESS_RW_NONINTERLEAVED) &&
+	     rpmsg->enable_lpa) {
 		/*
-		 * Ignore suspend operation in low घातer mode
-		 * M core will जारी playback music on A core suspend.
+		 * Ignore suspend operation in low power mode
+		 * M core will continue playback music on A core suspend.
 		 */
 		rtd->dai_link->ignore_suspend = 1;
-		rpmsg->क्रमce_lpa = 1;
-	पूर्ण अन्यथा अणु
-		rpmsg->क्रमce_lpa = 0;
-	पूर्ण
+		rpmsg->force_lpa = 1;
+	} else {
+		rpmsg->force_lpa = 0;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक imx_rpmsg_pcm_mmap(काष्ठा snd_soc_component *component,
-			      काष्ठा snd_pcm_substream *substream,
-			      काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+static int imx_rpmsg_pcm_mmap(struct snd_soc_component *component,
+			      struct snd_pcm_substream *substream,
+			      struct vm_area_struct *vma)
+{
+	struct snd_pcm_runtime *runtime = substream->runtime;
 
-	वापस dma_mmap_wc(substream->pcm->card->dev, vma,
-			   runसमय->dma_area,
-			   runसमय->dma_addr,
-			   runसमय->dma_bytes);
-पूर्ण
+	return dma_mmap_wc(substream->pcm->card->dev, vma,
+			   runtime->dma_area,
+			   runtime->dma_addr,
+			   runtime->dma_bytes);
+}
 
-अटल व्योम imx_rpmsg_pcm_dma_complete(व्योम *arg)
-अणु
-	काष्ठा snd_pcm_substream *substream = arg;
+static void imx_rpmsg_pcm_dma_complete(void *arg)
+{
+	struct snd_pcm_substream *substream = arg;
 
 	snd_pcm_period_elapsed(substream);
-पूर्ण
+}
 
-अटल पूर्णांक imx_rpmsg_prepare_and_submit(काष्ठा snd_soc_component *component,
-					काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा rpmsg_info *info = dev_get_drvdata(component->dev);
-	काष्ठा rpmsg_msg *msg;
+static int imx_rpmsg_prepare_and_submit(struct snd_soc_component *component,
+					struct snd_pcm_substream *substream)
+{
+	struct rpmsg_info *info = dev_get_drvdata(component->dev);
+	struct rpmsg_msg *msg;
 
-	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) अणु
+	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
 		msg = &info->msg[TX_BUFFER];
 		msg->s_msg.header.cmd = TX_BUFFER;
-	पूर्ण अन्यथा अणु
+	} else {
 		msg = &info->msg[RX_BUFFER];
 		msg->s_msg.header.cmd = RX_BUFFER;
-	पूर्ण
+	}
 
 	/* Send buffer address and buffer size */
-	msg->s_msg.param.buffer_addr = substream->runसमय->dma_addr;
+	msg->s_msg.param.buffer_addr = substream->runtime->dma_addr;
 	msg->s_msg.param.buffer_size = snd_pcm_lib_buffer_bytes(substream);
 	msg->s_msg.param.period_size = snd_pcm_lib_period_bytes(substream);
 	msg->s_msg.param.buffer_tail = 0;
@@ -393,68 +392,68 @@
 	info->callback[substream->stream] = imx_rpmsg_pcm_dma_complete;
 	info->callback_param[substream->stream] = substream;
 
-	वापस imx_rpmsg_insert_workqueue(substream, msg, info);
-पूर्ण
+	return imx_rpmsg_insert_workqueue(substream, msg, info);
+}
 
-अटल पूर्णांक imx_rpmsg_async_issue_pending(काष्ठा snd_soc_component *component,
-					 काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा rpmsg_info *info = dev_get_drvdata(component->dev);
-	काष्ठा rpmsg_msg *msg;
+static int imx_rpmsg_async_issue_pending(struct snd_soc_component *component,
+					 struct snd_pcm_substream *substream)
+{
+	struct rpmsg_info *info = dev_get_drvdata(component->dev);
+	struct rpmsg_msg *msg;
 
-	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) अणु
+	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
 		msg = &info->msg[TX_START];
 		msg->s_msg.header.cmd = TX_START;
-	पूर्ण अन्यथा अणु
+	} else {
 		msg = &info->msg[RX_START];
 		msg->s_msg.header.cmd = RX_START;
-	पूर्ण
+	}
 
-	वापस imx_rpmsg_insert_workqueue(substream, msg, info);
-पूर्ण
+	return imx_rpmsg_insert_workqueue(substream, msg, info);
+}
 
-अटल पूर्णांक imx_rpmsg_restart(काष्ठा snd_soc_component *component,
-			     काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा rpmsg_info *info = dev_get_drvdata(component->dev);
-	काष्ठा rpmsg_msg *msg;
+static int imx_rpmsg_restart(struct snd_soc_component *component,
+			     struct snd_pcm_substream *substream)
+{
+	struct rpmsg_info *info = dev_get_drvdata(component->dev);
+	struct rpmsg_msg *msg;
 
-	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) अणु
+	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
 		msg = &info->msg[TX_RESTART];
 		msg->s_msg.header.cmd = TX_RESTART;
-	पूर्ण अन्यथा अणु
+	} else {
 		msg = &info->msg[RX_RESTART];
 		msg->s_msg.header.cmd = RX_RESTART;
-	पूर्ण
+	}
 
-	वापस imx_rpmsg_insert_workqueue(substream, msg, info);
-पूर्ण
+	return imx_rpmsg_insert_workqueue(substream, msg, info);
+}
 
-अटल पूर्णांक imx_rpmsg_छोड़ो(काष्ठा snd_soc_component *component,
-			   काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा rpmsg_info *info = dev_get_drvdata(component->dev);
-	काष्ठा rpmsg_msg *msg;
+static int imx_rpmsg_pause(struct snd_soc_component *component,
+			   struct snd_pcm_substream *substream)
+{
+	struct rpmsg_info *info = dev_get_drvdata(component->dev);
+	struct rpmsg_msg *msg;
 
-	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) अणु
+	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
 		msg = &info->msg[TX_PAUSE];
 		msg->s_msg.header.cmd = TX_PAUSE;
-	पूर्ण अन्यथा अणु
+	} else {
 		msg = &info->msg[RX_PAUSE];
 		msg->s_msg.header.cmd = RX_PAUSE;
-	पूर्ण
+	}
 
-	वापस imx_rpmsg_insert_workqueue(substream, msg, info);
-पूर्ण
+	return imx_rpmsg_insert_workqueue(substream, msg, info);
+}
 
-अटल पूर्णांक imx_rpmsg_terminate_all(काष्ठा snd_soc_component *component,
-				   काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा rpmsg_info *info = dev_get_drvdata(component->dev);
-	काष्ठा rpmsg_msg *msg;
-	पूर्णांक cmd;
+static int imx_rpmsg_terminate_all(struct snd_soc_component *component,
+				   struct snd_pcm_substream *substream)
+{
+	struct rpmsg_info *info = dev_get_drvdata(component->dev);
+	struct rpmsg_msg *msg;
+	int cmd;
 
-	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) अणु
+	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
 		msg = &info->msg[TX_TERMINATE];
 		msg->s_msg.header.cmd = TX_TERMINATE;
 		/* Clear buffer count*/
@@ -462,7 +461,7 @@
 		info->msg[cmd].s_msg.param.buffer_tail = 0;
 		info->msg[cmd].r_msg.param.buffer_tail = 0;
 		info->msg[TX_POINTER].r_msg.param.buffer_offset = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		msg = &info->msg[RX_TERMINATE];
 		msg->s_msg.header.cmd = RX_TERMINATE;
 		/* Clear buffer count*/
@@ -470,59 +469,59 @@
 		info->msg[cmd].s_msg.param.buffer_tail = 0;
 		info->msg[cmd].r_msg.param.buffer_tail = 0;
 		info->msg[RX_POINTER].r_msg.param.buffer_offset = 0;
-	पूर्ण
+	}
 
-	del_समयr(&info->stream_समयr[substream->stream].समयr);
+	del_timer(&info->stream_timer[substream->stream].timer);
 
-	वापस imx_rpmsg_insert_workqueue(substream, msg, info);
-पूर्ण
+	return imx_rpmsg_insert_workqueue(substream, msg, info);
+}
 
-अटल पूर्णांक imx_rpmsg_pcm_trigger(काष्ठा snd_soc_component *component,
-				 काष्ठा snd_pcm_substream *substream, पूर्णांक cmd)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा snd_soc_pcm_runसमय *rtd = substream->निजी_data;
-	काष्ठा snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(rtd, 0);
-	काष्ठा fsl_rpmsg *rpmsg = dev_get_drvdata(cpu_dai->dev);
-	पूर्णांक ret = 0;
+static int imx_rpmsg_pcm_trigger(struct snd_soc_component *component,
+				 struct snd_pcm_substream *substream, int cmd)
+{
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct snd_soc_pcm_runtime *rtd = substream->private_data;
+	struct snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(rtd, 0);
+	struct fsl_rpmsg *rpmsg = dev_get_drvdata(cpu_dai->dev);
+	int ret = 0;
 
-	चयन (cmd) अणु
-	हाल SNDRV_PCM_TRIGGER_START:
+	switch (cmd) {
+	case SNDRV_PCM_TRIGGER_START:
 		ret = imx_rpmsg_prepare_and_submit(component, substream);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 		ret = imx_rpmsg_async_issue_pending(component, substream);
-		अवरोध;
-	हाल SNDRV_PCM_TRIGGER_RESUME:
-		अगर (rpmsg->क्रमce_lpa)
-			अवरोध;
+		break;
+	case SNDRV_PCM_TRIGGER_RESUME:
+		if (rpmsg->force_lpa)
+			break;
 		fallthrough;
-	हाल SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
+	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
 		ret = imx_rpmsg_restart(component, substream);
-		अवरोध;
-	हाल SNDRV_PCM_TRIGGER_SUSPEND:
-		अगर (!rpmsg->क्रमce_lpa) अणु
-			अगर (runसमय->info & SNDRV_PCM_INFO_PAUSE)
-				ret = imx_rpmsg_छोड़ो(component, substream);
-			अन्यथा
+		break;
+	case SNDRV_PCM_TRIGGER_SUSPEND:
+		if (!rpmsg->force_lpa) {
+			if (runtime->info & SNDRV_PCM_INFO_PAUSE)
+				ret = imx_rpmsg_pause(component, substream);
+			else
 				ret = imx_rpmsg_terminate_all(component, substream);
-		पूर्ण
-		अवरोध;
-	हाल SNDRV_PCM_TRIGGER_PAUSE_PUSH:
-		ret = imx_rpmsg_छोड़ो(component, substream);
-		अवरोध;
-	हाल SNDRV_PCM_TRIGGER_STOP:
+		}
+		break;
+	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
+		ret = imx_rpmsg_pause(component, substream);
+		break;
+	case SNDRV_PCM_TRIGGER_STOP:
 		ret = imx_rpmsg_terminate_all(component, substream);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * imx_rpmsg_pcm_ack
@@ -531,271 +530,271 @@
  * all the period index to M core, reduce some unnessesary msg
  * to reduce the pressure of rpmsg bandwidth.
  */
-अटल पूर्णांक imx_rpmsg_pcm_ack(काष्ठा snd_soc_component *component,
-			     काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा snd_soc_pcm_runसमय *rtd = substream->निजी_data;
-	काष्ठा snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(rtd, 0);
-	काष्ठा fsl_rpmsg *rpmsg = dev_get_drvdata(cpu_dai->dev);
-	काष्ठा rpmsg_info *info = dev_get_drvdata(component->dev);
-	snd_pcm_uframes_t period_size = runसमय->period_size;
+static int imx_rpmsg_pcm_ack(struct snd_soc_component *component,
+			     struct snd_pcm_substream *substream)
+{
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct snd_soc_pcm_runtime *rtd = substream->private_data;
+	struct snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(rtd, 0);
+	struct fsl_rpmsg *rpmsg = dev_get_drvdata(cpu_dai->dev);
+	struct rpmsg_info *info = dev_get_drvdata(component->dev);
+	snd_pcm_uframes_t period_size = runtime->period_size;
 	snd_pcm_sframes_t avail;
-	काष्ठा समयr_list *समयr;
-	काष्ठा rpmsg_msg *msg;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक buffer_tail = 0;
-	पूर्णांक written_num = 0;
+	struct timer_list *timer;
+	struct rpmsg_msg *msg;
+	unsigned long flags;
+	int buffer_tail = 0;
+	int written_num = 0;
 
-	अगर (!rpmsg->क्रमce_lpa)
-		वापस 0;
+	if (!rpmsg->force_lpa)
+		return 0;
 
-	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) अणु
+	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
 		msg = &info->msg[TX_PERIOD_DONE + MSG_TYPE_A_NUM];
 		msg->s_msg.header.cmd = TX_PERIOD_DONE;
-	पूर्ण अन्यथा अणु
+	} else {
 		msg = &info->msg[RX_PERIOD_DONE + MSG_TYPE_A_NUM];
 		msg->s_msg.header.cmd = RX_PERIOD_DONE;
-	पूर्ण
+	}
 
 	msg->s_msg.header.type = MSG_TYPE_C;
 
-	buffer_tail = (frames_to_bytes(runसमय, runसमय->control->appl_ptr) %
+	buffer_tail = (frames_to_bytes(runtime, runtime->control->appl_ptr) %
 		       snd_pcm_lib_buffer_bytes(substream));
 	buffer_tail = buffer_tail / snd_pcm_lib_period_bytes(substream);
 
-	/* There is update क्रम period index */
-	अगर (buffer_tail != msg->s_msg.param.buffer_tail) अणु
+	/* There is update for period index */
+	if (buffer_tail != msg->s_msg.param.buffer_tail) {
 		written_num = buffer_tail - msg->s_msg.param.buffer_tail;
-		अगर (written_num < 0)
-			written_num += runसमय->periods;
+		if (written_num < 0)
+			written_num += runtime->periods;
 
 		msg->s_msg.param.buffer_tail = buffer_tail;
 
-		/* The notअगरication message is updated to latest */
+		/* The notification message is updated to latest */
 		spin_lock_irqsave(&info->lock[substream->stream], flags);
-		स_नकल(&info->notअगरy[substream->stream], msg,
-		       माप(काष्ठा rpmsg_s_msg));
-		info->notअगरy_updated[substream->stream] = true;
+		memcpy(&info->notify[substream->stream], msg,
+		       sizeof(struct rpmsg_s_msg));
+		info->notify_updated[substream->stream] = true;
 		spin_unlock_irqrestore(&info->lock[substream->stream], flags);
 
-		अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
-			avail = snd_pcm_playback_hw_avail(runसमय);
-		अन्यथा
-			avail = snd_pcm_capture_hw_avail(runसमय);
+		if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+			avail = snd_pcm_playback_hw_avail(runtime);
+		else
+			avail = snd_pcm_capture_hw_avail(runtime);
 
-		समयr = &info->stream_समयr[substream->stream].समयr;
+		timer = &info->stream_timer[substream->stream].timer;
 		/*
-		 * If the data in the buffer is less than one period beक्रमe
+		 * If the data in the buffer is less than one period before
 		 * this fill, which means the data may not enough on M
 		 * core side, we need to send message immediately to let
-		 * M core know the poपूर्णांकer is updated.
-		 * अगर there is more than one period data in the buffer beक्रमe
+		 * M core know the pointer is updated.
+		 * if there is more than one period data in the buffer before
 		 * this fill, which means the data is enough on M core side,
-		 * we can delay one period (using समयr) to send the message
-		 * क्रम reduce the message number in workqueue, because the
-		 * poपूर्णांकer may be updated by ack function later, we can
-		 * send latest poपूर्णांकer to M core side.
+		 * we can delay one period (using timer) to send the message
+		 * for reduce the message number in workqueue, because the
+		 * pointer may be updated by ack function later, we can
+		 * send latest pointer to M core side.
 		 */
-		अगर ((avail - written_num * period_size) <= period_size) अणु
+		if ((avail - written_num * period_size) <= period_size) {
 			imx_rpmsg_insert_workqueue(substream, msg, info);
-		पूर्ण अन्यथा अगर (rpmsg->क्रमce_lpa && !समयr_pending(समयr)) अणु
-			पूर्णांक समय_msec;
+		} else if (rpmsg->force_lpa && !timer_pending(timer)) {
+			int time_msec;
 
-			समय_msec = (पूर्णांक)(runसमय->period_size * 1000 / runसमय->rate);
-			mod_समयr(समयr, jअगरfies + msecs_to_jअगरfies(समय_msec));
-		पूर्ण
-	पूर्ण
+			time_msec = (int)(runtime->period_size * 1000 / runtime->rate);
+			mod_timer(timer, jiffies + msecs_to_jiffies(time_msec));
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक imx_rpmsg_pcm_pपुनः_स्मृतिate_dma_buffer(काष्ठा snd_pcm *pcm,
-						पूर्णांक stream, पूर्णांक size)
-अणु
-	काष्ठा snd_pcm_substream *substream = pcm->streams[stream].substream;
-	काष्ठा snd_dma_buffer *buf = &substream->dma_buffer;
+static int imx_rpmsg_pcm_preallocate_dma_buffer(struct snd_pcm *pcm,
+						int stream, int size)
+{
+	struct snd_pcm_substream *substream = pcm->streams[stream].substream;
+	struct snd_dma_buffer *buf = &substream->dma_buffer;
 
 	buf->dev.type = SNDRV_DMA_TYPE_DEV;
 	buf->dev.dev = pcm->card->dev;
-	buf->निजी_data = शून्य;
+	buf->private_data = NULL;
 	buf->area = dma_alloc_wc(pcm->card->dev, size,
 				 &buf->addr, GFP_KERNEL);
-	अगर (!buf->area)
-		वापस -ENOMEM;
+	if (!buf->area)
+		return -ENOMEM;
 
 	buf->bytes = size;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम imx_rpmsg_pcm_मुक्त_dma_buffers(काष्ठा snd_soc_component *component,
-					   काष्ठा snd_pcm *pcm)
-अणु
-	काष्ठा snd_pcm_substream *substream;
-	काष्ठा snd_dma_buffer *buf;
-	पूर्णांक stream;
+static void imx_rpmsg_pcm_free_dma_buffers(struct snd_soc_component *component,
+					   struct snd_pcm *pcm)
+{
+	struct snd_pcm_substream *substream;
+	struct snd_dma_buffer *buf;
+	int stream;
 
-	क्रम (stream = SNDRV_PCM_STREAM_PLAYBACK;
-	     stream < SNDRV_PCM_STREAM_LAST; stream++) अणु
+	for (stream = SNDRV_PCM_STREAM_PLAYBACK;
+	     stream < SNDRV_PCM_STREAM_LAST; stream++) {
 		substream = pcm->streams[stream].substream;
-		अगर (!substream)
-			जारी;
+		if (!substream)
+			continue;
 
 		buf = &substream->dma_buffer;
-		अगर (!buf->area)
-			जारी;
+		if (!buf->area)
+			continue;
 
-		dma_मुक्त_wc(pcm->card->dev, buf->bytes,
+		dma_free_wc(pcm->card->dev, buf->bytes,
 			    buf->area, buf->addr);
-		buf->area = शून्य;
-	पूर्ण
-पूर्ण
+		buf->area = NULL;
+	}
+}
 
-अटल पूर्णांक imx_rpmsg_pcm_new(काष्ठा snd_soc_component *component,
-			     काष्ठा snd_soc_pcm_runसमय *rtd)
-अणु
-	काष्ठा snd_card *card = rtd->card->snd_card;
-	काष्ठा snd_pcm *pcm = rtd->pcm;
-	काष्ठा snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(rtd, 0);
-	काष्ठा fsl_rpmsg *rpmsg = dev_get_drvdata(cpu_dai->dev);
-	पूर्णांक ret;
+static int imx_rpmsg_pcm_new(struct snd_soc_component *component,
+			     struct snd_soc_pcm_runtime *rtd)
+{
+	struct snd_card *card = rtd->card->snd_card;
+	struct snd_pcm *pcm = rtd->pcm;
+	struct snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(rtd, 0);
+	struct fsl_rpmsg *rpmsg = dev_get_drvdata(cpu_dai->dev);
+	int ret;
 
 	ret = dma_coerce_mask_and_coherent(card->dev, DMA_BIT_MASK(32));
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (pcm->streams[SNDRV_PCM_STREAM_PLAYBACK].substream) अणु
-		ret = imx_rpmsg_pcm_pपुनः_स्मृतिate_dma_buffer(pcm, SNDRV_PCM_STREAM_PLAYBACK,
+	if (pcm->streams[SNDRV_PCM_STREAM_PLAYBACK].substream) {
+		ret = imx_rpmsg_pcm_preallocate_dma_buffer(pcm, SNDRV_PCM_STREAM_PLAYBACK,
 							   rpmsg->buffer_size);
-		अगर (ret)
-			जाओ out;
-	पूर्ण
+		if (ret)
+			goto out;
+	}
 
-	अगर (pcm->streams[SNDRV_PCM_STREAM_CAPTURE].substream) अणु
-		ret = imx_rpmsg_pcm_pपुनः_स्मृतिate_dma_buffer(pcm, SNDRV_PCM_STREAM_CAPTURE,
+	if (pcm->streams[SNDRV_PCM_STREAM_CAPTURE].substream) {
+		ret = imx_rpmsg_pcm_preallocate_dma_buffer(pcm, SNDRV_PCM_STREAM_CAPTURE,
 							   rpmsg->buffer_size);
-		अगर (ret)
-			जाओ out;
-	पूर्ण
+		if (ret)
+			goto out;
+	}
 
 	imx_rpmsg_pcm_hardware.buffer_bytes_max = rpmsg->buffer_size;
 out:
-	/* मुक्त pपुनः_स्मृतिated buffers in हाल of error */
-	अगर (ret)
-		imx_rpmsg_pcm_मुक्त_dma_buffers(component, pcm);
+	/* free preallocated buffers in case of error */
+	if (ret)
+		imx_rpmsg_pcm_free_dma_buffers(component, pcm);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा snd_soc_component_driver imx_rpmsg_soc_component = अणु
+static const struct snd_soc_component_driver imx_rpmsg_soc_component = {
 	.name		= IMX_PCM_DRV_NAME,
-	.pcm_स्थिरruct	= imx_rpmsg_pcm_new,
-	.pcm_deकाष्ठा	= imx_rpmsg_pcm_मुक्त_dma_buffers,
-	.खोलो		= imx_rpmsg_pcm_खोलो,
-	.बंद		= imx_rpmsg_pcm_बंद,
+	.pcm_construct	= imx_rpmsg_pcm_new,
+	.pcm_destruct	= imx_rpmsg_pcm_free_dma_buffers,
+	.open		= imx_rpmsg_pcm_open,
+	.close		= imx_rpmsg_pcm_close,
 	.hw_params	= imx_rpmsg_pcm_hw_params,
-	.hw_मुक्त	= imx_rpmsg_pcm_hw_मुक्त,
+	.hw_free	= imx_rpmsg_pcm_hw_free,
 	.trigger	= imx_rpmsg_pcm_trigger,
-	.poपूर्णांकer	= imx_rpmsg_pcm_poपूर्णांकer,
+	.pointer	= imx_rpmsg_pcm_pointer,
 	.mmap		= imx_rpmsg_pcm_mmap,
 	.ack		= imx_rpmsg_pcm_ack,
 	.prepare	= imx_rpmsg_pcm_prepare,
-पूर्ण;
+};
 
-अटल व्योम imx_rpmsg_pcm_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा work_of_rpmsg *work_of_rpmsg;
-	bool is_notअगरication = false;
-	काष्ठा rpmsg_info *info;
-	काष्ठा rpmsg_msg msg;
-	अचिन्हित दीर्घ flags;
+static void imx_rpmsg_pcm_work(struct work_struct *work)
+{
+	struct work_of_rpmsg *work_of_rpmsg;
+	bool is_notification = false;
+	struct rpmsg_info *info;
+	struct rpmsg_msg msg;
+	unsigned long flags;
 
-	work_of_rpmsg = container_of(work, काष्ठा work_of_rpmsg, work);
+	work_of_rpmsg = container_of(work, struct work_of_rpmsg, work);
 	info = work_of_rpmsg->info;
 
 	/*
-	 * Every work in the work queue, first we check अगर there
-	 * is update क्रम period is filled, because there may be not
+	 * Every work in the work queue, first we check if there
+	 * is update for period is filled, because there may be not
 	 * enough data in M core side, need to let M core know
 	 * data is updated immediately.
 	 */
 	spin_lock_irqsave(&info->lock[TX], flags);
-	अगर (info->notअगरy_updated[TX]) अणु
-		स_नकल(&msg, &info->notअगरy[TX], माप(काष्ठा rpmsg_s_msg));
-		info->notअगरy_updated[TX] = false;
+	if (info->notify_updated[TX]) {
+		memcpy(&msg, &info->notify[TX], sizeof(struct rpmsg_s_msg));
+		info->notify_updated[TX] = false;
 		spin_unlock_irqrestore(&info->lock[TX], flags);
 		info->send_message(&msg, info);
-	पूर्ण अन्यथा अणु
+	} else {
 		spin_unlock_irqrestore(&info->lock[TX], flags);
-	पूर्ण
+	}
 
 	spin_lock_irqsave(&info->lock[RX], flags);
-	अगर (info->notअगरy_updated[RX]) अणु
-		स_नकल(&msg, &info->notअगरy[RX], माप(काष्ठा rpmsg_s_msg));
-		info->notअगरy_updated[RX] = false;
+	if (info->notify_updated[RX]) {
+		memcpy(&msg, &info->notify[RX], sizeof(struct rpmsg_s_msg));
+		info->notify_updated[RX] = false;
 		spin_unlock_irqrestore(&info->lock[RX], flags);
 		info->send_message(&msg, info);
-	पूर्ण अन्यथा अणु
+	} else {
 		spin_unlock_irqrestore(&info->lock[RX], flags);
-	पूर्ण
+	}
 
-	/* Skip the notअगरication message क्रम it has been processed above */
-	अगर (work_of_rpmsg->msg.s_msg.header.type == MSG_TYPE_C &&
+	/* Skip the notification message for it has been processed above */
+	if (work_of_rpmsg->msg.s_msg.header.type == MSG_TYPE_C &&
 	    (work_of_rpmsg->msg.s_msg.header.cmd == TX_PERIOD_DONE ||
 	     work_of_rpmsg->msg.s_msg.header.cmd == RX_PERIOD_DONE))
-		is_notअगरication = true;
+		is_notification = true;
 
-	अगर (!is_notअगरication)
+	if (!is_notification)
 		info->send_message(&work_of_rpmsg->msg, info);
 
-	/* update पढ़ो index */
+	/* update read index */
 	spin_lock_irqsave(&info->wq_lock, flags);
-	info->work_पढ़ो_index++;
-	info->work_पढ़ो_index %= WORK_MAX_NUM;
+	info->work_read_index++;
+	info->work_read_index %= WORK_MAX_NUM;
 	spin_unlock_irqrestore(&info->wq_lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक imx_rpmsg_pcm_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा snd_soc_component *component;
-	काष्ठा rpmsg_info *info;
-	पूर्णांक ret, i;
+static int imx_rpmsg_pcm_probe(struct platform_device *pdev)
+{
+	struct snd_soc_component *component;
+	struct rpmsg_info *info;
+	int ret, i;
 
-	info = devm_kzalloc(&pdev->dev, माप(*info), GFP_KERNEL);
-	अगर (!info)
-		वापस -ENOMEM;
+	info = devm_kzalloc(&pdev->dev, sizeof(*info), GFP_KERNEL);
+	if (!info)
+		return -ENOMEM;
 
-	platक्रमm_set_drvdata(pdev, info);
+	platform_set_drvdata(pdev, info);
 
-	info->rpdev = container_of(pdev->dev.parent, काष्ठा rpmsg_device, dev);
+	info->rpdev = container_of(pdev->dev.parent, struct rpmsg_device, dev);
 	info->dev = &pdev->dev;
 	/* Setup work queue */
 	info->rpmsg_wq = alloc_ordered_workqueue("rpmsg_audio",
 						 WQ_HIGHPRI |
 						 WQ_UNBOUND |
 						 WQ_FREEZABLE);
-	अगर (!info->rpmsg_wq) अणु
+	if (!info->rpmsg_wq) {
 		dev_err(&pdev->dev, "workqueue create failed\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	/* Write index initialize 1, make it dअगरfer with the पढ़ो index */
-	info->work_ग_लिखो_index = 1;
+	/* Write index initialize 1, make it differ with the read index */
+	info->work_write_index = 1;
 	info->send_message = imx_rpmsg_pcm_send_message;
 
-	क्रम (i = 0; i < WORK_MAX_NUM; i++) अणु
+	for (i = 0; i < WORK_MAX_NUM; i++) {
 		INIT_WORK(&info->work_list[i].work, imx_rpmsg_pcm_work);
 		info->work_list[i].info = info;
-	पूर्ण
+	}
 
 	/* Initialize msg */
-	क्रम (i = 0; i < MSG_MAX_NUM; i++) अणु
+	for (i = 0; i < MSG_MAX_NUM; i++) {
 		info->msg[i].s_msg.header.cate  = IMX_RPMSG_AUDIO;
 		info->msg[i].s_msg.header.major = IMX_RMPSG_MAJOR;
 		info->msg[i].s_msg.header.minor = IMX_RMPSG_MINOR;
 		info->msg[i].s_msg.header.type  = MSG_TYPE_A;
 		info->msg[i].s_msg.param.audioindex = 0;
-	पूर्ण
+	}
 
 	init_completion(&info->cmd_complete);
 	mutex_init(&info->msg_lock);
@@ -803,66 +802,66 @@ out:
 	spin_lock_init(&info->lock[RX]);
 	spin_lock_init(&info->wq_lock);
 
-	ret = devm_snd_soc_रेजिस्टर_component(&pdev->dev,
+	ret = devm_snd_soc_register_component(&pdev->dev,
 					      &imx_rpmsg_soc_component,
-					      शून्य, 0);
-	अगर (ret)
-		जाओ fail;
+					      NULL, 0);
+	if (ret)
+		goto fail;
 
 	component = snd_soc_lookup_component(&pdev->dev, IMX_PCM_DRV_NAME);
-	अगर (!component) अणु
+	if (!component) {
 		ret = -EINVAL;
-		जाओ fail;
-	पूर्ण
-#अगर_घोषित CONFIG_DEBUG_FS
+		goto fail;
+	}
+#ifdef CONFIG_DEBUG_FS
 	component->debugfs_prefix = "rpmsg";
-#पूर्ण_अगर
+#endif
 
-	वापस 0;
+	return 0;
 
 fail:
-	अगर (info->rpmsg_wq)
+	if (info->rpmsg_wq)
 		destroy_workqueue(info->rpmsg_wq);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक imx_rpmsg_pcm_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा rpmsg_info *info = platक्रमm_get_drvdata(pdev);
+static int imx_rpmsg_pcm_remove(struct platform_device *pdev)
+{
+	struct rpmsg_info *info = platform_get_drvdata(pdev);
 
-	अगर (info->rpmsg_wq)
+	if (info->rpmsg_wq)
 		destroy_workqueue(info->rpmsg_wq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक imx_rpmsg_pcm_runसमय_resume(काष्ठा device *dev)
-अणु
-	काष्ठा rpmsg_info *info = dev_get_drvdata(dev);
+#ifdef CONFIG_PM
+static int imx_rpmsg_pcm_runtime_resume(struct device *dev)
+{
+	struct rpmsg_info *info = dev_get_drvdata(dev);
 
 	cpu_latency_qos_add_request(&info->pm_qos_req, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक imx_rpmsg_pcm_runसमय_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा rpmsg_info *info = dev_get_drvdata(dev);
+static int imx_rpmsg_pcm_runtime_suspend(struct device *dev)
+{
+	struct rpmsg_info *info = dev_get_drvdata(dev);
 
-	cpu_latency_qos_हटाओ_request(&info->pm_qos_req);
+	cpu_latency_qos_remove_request(&info->pm_qos_req);
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक imx_rpmsg_pcm_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा rpmsg_info *info = dev_get_drvdata(dev);
-	काष्ठा rpmsg_msg *rpmsg_tx;
-	काष्ठा rpmsg_msg *rpmsg_rx;
+#ifdef CONFIG_PM_SLEEP
+static int imx_rpmsg_pcm_suspend(struct device *dev)
+{
+	struct rpmsg_info *info = dev_get_drvdata(dev);
+	struct rpmsg_msg *rpmsg_tx;
+	struct rpmsg_msg *rpmsg_rx;
 
 	rpmsg_tx = &info->msg[TX_SUSPEND];
 	rpmsg_rx = &info->msg[RX_SUSPEND];
@@ -873,14 +872,14 @@ fail:
 	rpmsg_rx->s_msg.header.cmd = RX_SUSPEND;
 	info->send_message(rpmsg_rx, info);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक imx_rpmsg_pcm_resume(काष्ठा device *dev)
-अणु
-	काष्ठा rpmsg_info *info = dev_get_drvdata(dev);
-	काष्ठा rpmsg_msg *rpmsg_tx;
-	काष्ठा rpmsg_msg *rpmsg_rx;
+static int imx_rpmsg_pcm_resume(struct device *dev)
+{
+	struct rpmsg_info *info = dev_get_drvdata(dev);
+	struct rpmsg_msg *rpmsg_tx;
+	struct rpmsg_msg *rpmsg_rx;
 
 	rpmsg_tx = &info->msg[TX_RESUME];
 	rpmsg_rx = &info->msg[RX_RESUME];
@@ -891,27 +890,27 @@ fail:
 	rpmsg_rx->s_msg.header.cmd = RX_RESUME;
 	info->send_message(rpmsg_rx, info);
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_PM_SLEEP */
+	return 0;
+}
+#endif /* CONFIG_PM_SLEEP */
 
-अटल स्थिर काष्ठा dev_pm_ops imx_rpmsg_pcm_pm_ops = अणु
-	SET_RUNTIME_PM_OPS(imx_rpmsg_pcm_runसमय_suspend,
-			   imx_rpmsg_pcm_runसमय_resume,
-			   शून्य)
+static const struct dev_pm_ops imx_rpmsg_pcm_pm_ops = {
+	SET_RUNTIME_PM_OPS(imx_rpmsg_pcm_runtime_suspend,
+			   imx_rpmsg_pcm_runtime_resume,
+			   NULL)
 	SET_SYSTEM_SLEEP_PM_OPS(imx_rpmsg_pcm_suspend,
 				imx_rpmsg_pcm_resume)
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_driver imx_pcm_rpmsg_driver = अणु
+static struct platform_driver imx_pcm_rpmsg_driver = {
 	.probe  = imx_rpmsg_pcm_probe,
-	.हटाओ	= imx_rpmsg_pcm_हटाओ,
-	.driver = अणु
+	.remove	= imx_rpmsg_pcm_remove,
+	.driver = {
 		.name = IMX_PCM_DRV_NAME,
 		.pm = &imx_rpmsg_pcm_pm_ops,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(imx_pcm_rpmsg_driver);
+	},
+};
+module_platform_driver(imx_pcm_rpmsg_driver);
 
 MODULE_DESCRIPTION("Freescale SoC Audio RPMSG PCM interface");
 MODULE_AUTHOR("Shengjiu Wang <shengjiu.wang@nxp.com>");

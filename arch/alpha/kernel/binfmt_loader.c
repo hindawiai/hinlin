@@ -1,47 +1,46 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/init.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/file.h>
-#समावेश <linux/mm_types.h>
-#समावेश <linux/binfmts.h>
-#समावेश <linux/a.out.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/init.h>
+#include <linux/fs.h>
+#include <linux/file.h>
+#include <linux/mm_types.h>
+#include <linux/binfmts.h>
+#include <linux/a.out.h>
 
-अटल पूर्णांक load_binary(काष्ठा linux_binprm *bprm)
-अणु
-	काष्ठा exec *eh = (काष्ठा exec *)bprm->buf;
-	अचिन्हित दीर्घ loader;
-	काष्ठा file *file;
-	पूर्णांक retval;
+static int load_binary(struct linux_binprm *bprm)
+{
+	struct exec *eh = (struct exec *)bprm->buf;
+	unsigned long loader;
+	struct file *file;
+	int retval;
 
-	अगर (eh->fh.f_magic != 0x183 || (eh->fh.f_flags & 0x3000) != 0x3000)
-		वापस -ENOEXEC;
+	if (eh->fh.f_magic != 0x183 || (eh->fh.f_flags & 0x3000) != 0x3000)
+		return -ENOEXEC;
 
-	अगर (bprm->loader)
-		वापस -ENOEXEC;
+	if (bprm->loader)
+		return -ENOEXEC;
 
-	loader = bprm->vma->vm_end - माप(व्योम *);
+	loader = bprm->vma->vm_end - sizeof(void *);
 
-	file = खोलो_exec("/sbin/loader");
+	file = open_exec("/sbin/loader");
 	retval = PTR_ERR(file);
-	अगर (IS_ERR(file))
-		वापस retval;
+	if (IS_ERR(file))
+		return retval;
 
-	/* Remember अगर the application is TASO.  */
+	/* Remember if the application is TASO.  */
 	bprm->taso = eh->ah.entry < 0x100000000UL;
 
-	bprm->पूर्णांकerpreter = file;
+	bprm->interpreter = file;
 	bprm->loader = loader;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा linux_binfmt loader_क्रमmat = अणु
+static struct linux_binfmt loader_format = {
 	.load_binary	= load_binary,
-पूर्ण;
+};
 
-अटल पूर्णांक __init init_loader_binfmt(व्योम)
-अणु
-	insert_binfmt(&loader_क्रमmat);
-	वापस 0;
-पूर्ण
+static int __init init_loader_binfmt(void)
+{
+	insert_binfmt(&loader_format);
+	return 0;
+}
 arch_initcall(init_loader_binfmt);

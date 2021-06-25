@@ -1,42 +1,41 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित DSA_LOOP_H
-#घोषणा DSA_LOOP_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef DSA_LOOP_H
+#define DSA_LOOP_H
 
-#समावेश <linux/types.h>
-#समावेश <linux/ethtool.h>
-#समावेश <net/dsa.h>
+#include <linux/types.h>
+#include <linux/ethtool.h>
+#include <net/dsa.h>
 
-काष्ठा dsa_loop_vlan अणु
+struct dsa_loop_vlan {
 	u16 members;
 	u16 untagged;
-पूर्ण;
+};
 
-काष्ठा dsa_loop_mib_entry अणु
-	अक्षर name[ETH_GSTRING_LEN];
-	अचिन्हित दीर्घ val;
-पूर्ण;
+struct dsa_loop_mib_entry {
+	char name[ETH_GSTRING_LEN];
+	unsigned long val;
+};
 
-क्रमागत dsa_loop_mib_counters अणु
+enum dsa_loop_mib_counters {
 	DSA_LOOP_PHY_READ_OK,
 	DSA_LOOP_PHY_READ_ERR,
 	DSA_LOOP_PHY_WRITE_OK,
 	DSA_LOOP_PHY_WRITE_ERR,
 	__DSA_LOOP_CNT_MAX,
-पूर्ण;
+};
 
-काष्ठा dsa_loop_port अणु
-	काष्ठा dsa_loop_mib_entry mib[__DSA_LOOP_CNT_MAX];
+struct dsa_loop_port {
+	struct dsa_loop_mib_entry mib[__DSA_LOOP_CNT_MAX];
 	u16 pvid;
-	पूर्णांक mtu;
-पूर्ण;
+	int mtu;
+};
 
-काष्ठा dsa_loop_priv अणु
-	काष्ठा mii_bus	*bus;
-	अचिन्हित पूर्णांक	port_base;
-	काष्ठा dsa_loop_vlan vlans[VLAN_N_VID];
-	काष्ठा net_device *netdev;
-	काष्ठा dsa_loop_port ports[DSA_MAX_PORTS];
-पूर्ण;
+struct dsa_loop_priv {
+	struct mii_bus	*bus;
+	unsigned int	port_base;
+	struct dsa_loop_vlan vlans[VLAN_N_VID];
+	struct net_device *netdev;
+	struct dsa_loop_port ports[DSA_MAX_PORTS];
+};
 
-#पूर्ण_अगर /* DSA_LOOP_H */
+#endif /* DSA_LOOP_H */

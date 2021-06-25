@@ -1,99 +1,98 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Generic part */
 
-प्रकार काष्ठा अणु
+typedef struct {
 	block_t	*p;
 	block_t	key;
-	काष्ठा buffer_head *bh;
-पूर्ण Indirect;
+	struct buffer_head *bh;
+} Indirect;
 
-अटल DEFINE_RWLOCK(poपूर्णांकers_lock);
+static DEFINE_RWLOCK(pointers_lock);
 
-अटल अंतरभूत व्योम add_chain(Indirect *p, काष्ठा buffer_head *bh, block_t *v)
-अणु
+static inline void add_chain(Indirect *p, struct buffer_head *bh, block_t *v)
+{
 	p->key = *(p->p = v);
 	p->bh = bh;
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक verअगरy_chain(Indirect *from, Indirect *to)
-अणु
-	जबतक (from <= to && from->key == *from->p)
+static inline int verify_chain(Indirect *from, Indirect *to)
+{
+	while (from <= to && from->key == *from->p)
 		from++;
-	वापस (from > to);
-पूर्ण
+	return (from > to);
+}
 
-अटल अंतरभूत block_t *block_end(काष्ठा buffer_head *bh)
-अणु
-	वापस (block_t *)((अक्षर*)bh->b_data + bh->b_size);
-पूर्ण
+static inline block_t *block_end(struct buffer_head *bh)
+{
+	return (block_t *)((char*)bh->b_data + bh->b_size);
+}
 
-अटल अंतरभूत Indirect *get_branch(काष्ठा inode *inode,
-					पूर्णांक depth,
-					पूर्णांक *offsets,
+static inline Indirect *get_branch(struct inode *inode,
+					int depth,
+					int *offsets,
 					Indirect chain[DEPTH],
-					पूर्णांक *err)
-अणु
-	काष्ठा super_block *sb = inode->i_sb;
+					int *err)
+{
+	struct super_block *sb = inode->i_sb;
 	Indirect *p = chain;
-	काष्ठा buffer_head *bh;
+	struct buffer_head *bh;
 
 	*err = 0;
 	/* i_data is not going away, no lock needed */
-	add_chain (chain, शून्य, i_data(inode) + *offsets);
-	अगर (!p->key)
-		जाओ no_block;
-	जबतक (--depth) अणु
-		bh = sb_bपढ़ो(sb, block_to_cpu(p->key));
-		अगर (!bh)
-			जाओ failure;
-		पढ़ो_lock(&poपूर्णांकers_lock);
-		अगर (!verअगरy_chain(chain, p))
-			जाओ changed;
+	add_chain (chain, NULL, i_data(inode) + *offsets);
+	if (!p->key)
+		goto no_block;
+	while (--depth) {
+		bh = sb_bread(sb, block_to_cpu(p->key));
+		if (!bh)
+			goto failure;
+		read_lock(&pointers_lock);
+		if (!verify_chain(chain, p))
+			goto changed;
 		add_chain(++p, bh, (block_t *)bh->b_data + *++offsets);
-		पढ़ो_unlock(&poपूर्णांकers_lock);
-		अगर (!p->key)
-			जाओ no_block;
-	पूर्ण
-	वापस शून्य;
+		read_unlock(&pointers_lock);
+		if (!p->key)
+			goto no_block;
+	}
+	return NULL;
 
 changed:
-	पढ़ो_unlock(&poपूर्णांकers_lock);
-	brअन्यथा(bh);
+	read_unlock(&pointers_lock);
+	brelse(bh);
 	*err = -EAGAIN;
-	जाओ no_block;
+	goto no_block;
 failure:
 	*err = -EIO;
 no_block:
-	वापस p;
-पूर्ण
+	return p;
+}
 
-अटल पूर्णांक alloc_branch(काष्ठा inode *inode,
-			     पूर्णांक num,
-			     पूर्णांक *offsets,
+static int alloc_branch(struct inode *inode,
+			     int num,
+			     int *offsets,
 			     Indirect *branch)
-अणु
-	पूर्णांक n = 0;
-	पूर्णांक i;
-	पूर्णांक parent = minix_new_block(inode);
-	पूर्णांक err = -ENOSPC;
+{
+	int n = 0;
+	int i;
+	int parent = minix_new_block(inode);
+	int err = -ENOSPC;
 
 	branch[0].key = cpu_to_block(parent);
-	अगर (parent) क्रम (n = 1; n < num; n++) अणु
-		काष्ठा buffer_head *bh;
+	if (parent) for (n = 1; n < num; n++) {
+		struct buffer_head *bh;
 		/* Allocate the next block */
-		पूर्णांक nr = minix_new_block(inode);
-		अगर (!nr)
-			अवरोध;
+		int nr = minix_new_block(inode);
+		if (!nr)
+			break;
 		branch[n].key = cpu_to_block(nr);
 		bh = sb_getblk(inode->i_sb, parent);
-		अगर (!bh) अणु
-			minix_मुक्त_block(inode, nr);
+		if (!bh) {
+			minix_free_block(inode, nr);
 			err = -ENOMEM;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		lock_buffer(bh);
-		स_रखो(bh->b_data, 0, bh->b_size);
+		memset(bh->b_data, 0, bh->b_size);
 		branch[n].bh = bh;
 		branch[n].p = (block_t*) bh->b_data + offsets[n];
 		*branch[n].p = branch[n].key;
@@ -101,272 +100,272 @@ no_block:
 		unlock_buffer(bh);
 		mark_buffer_dirty_inode(bh, inode);
 		parent = nr;
-	पूर्ण
-	अगर (n == num)
-		वापस 0;
+	}
+	if (n == num)
+		return 0;
 
-	/* Allocation failed, मुक्त what we alपढ़ोy allocated */
-	क्रम (i = 1; i < n; i++)
-		bक्रमget(branch[i].bh);
-	क्रम (i = 0; i < n; i++)
-		minix_मुक्त_block(inode, block_to_cpu(branch[i].key));
-	वापस err;
-पूर्ण
+	/* Allocation failed, free what we already allocated */
+	for (i = 1; i < n; i++)
+		bforget(branch[i].bh);
+	for (i = 0; i < n; i++)
+		minix_free_block(inode, block_to_cpu(branch[i].key));
+	return err;
+}
 
-अटल अंतरभूत पूर्णांक splice_branch(काष्ठा inode *inode,
+static inline int splice_branch(struct inode *inode,
 				     Indirect chain[DEPTH],
 				     Indirect *where,
-				     पूर्णांक num)
-अणु
-	पूर्णांक i;
+				     int num)
+{
+	int i;
 
-	ग_लिखो_lock(&poपूर्णांकers_lock);
+	write_lock(&pointers_lock);
 
-	/* Verअगरy that place we are splicing to is still there and vacant */
-	अगर (!verअगरy_chain(chain, where-1) || *where->p)
-		जाओ changed;
+	/* Verify that place we are splicing to is still there and vacant */
+	if (!verify_chain(chain, where-1) || *where->p)
+		goto changed;
 
 	*where->p = where->key;
 
-	ग_लिखो_unlock(&poपूर्णांकers_lock);
+	write_unlock(&pointers_lock);
 
-	/* We are करोne with atomic stuff, now करो the rest of housekeeping */
+	/* We are done with atomic stuff, now do the rest of housekeeping */
 
-	inode->i_स_समय = current_समय(inode);
+	inode->i_ctime = current_time(inode);
 
 	/* had we spliced it onto indirect block? */
-	अगर (where->bh)
+	if (where->bh)
 		mark_buffer_dirty_inode(where->bh, inode);
 
 	mark_inode_dirty(inode);
-	वापस 0;
+	return 0;
 
 changed:
-	ग_लिखो_unlock(&poपूर्णांकers_lock);
-	क्रम (i = 1; i < num; i++)
-		bक्रमget(where[i].bh);
-	क्रम (i = 0; i < num; i++)
-		minix_मुक्त_block(inode, block_to_cpu(where[i].key));
-	वापस -EAGAIN;
-पूर्ण
+	write_unlock(&pointers_lock);
+	for (i = 1; i < num; i++)
+		bforget(where[i].bh);
+	for (i = 0; i < num; i++)
+		minix_free_block(inode, block_to_cpu(where[i].key));
+	return -EAGAIN;
+}
 
-अटल पूर्णांक get_block(काष्ठा inode * inode, sector_t block,
-			काष्ठा buffer_head *bh, पूर्णांक create)
-अणु
-	पूर्णांक err = -EIO;
-	पूर्णांक offsets[DEPTH];
+static int get_block(struct inode * inode, sector_t block,
+			struct buffer_head *bh, int create)
+{
+	int err = -EIO;
+	int offsets[DEPTH];
 	Indirect chain[DEPTH];
 	Indirect *partial;
-	पूर्णांक left;
-	पूर्णांक depth = block_to_path(inode, block, offsets);
+	int left;
+	int depth = block_to_path(inode, block, offsets);
 
-	अगर (depth == 0)
-		जाओ out;
+	if (depth == 0)
+		goto out;
 
-reपढ़ो:
+reread:
 	partial = get_branch(inode, depth, offsets, chain, &err);
 
-	/* Simplest हाल - block found, no allocation needed */
-	अगर (!partial) अणु
+	/* Simplest case - block found, no allocation needed */
+	if (!partial) {
 got_it:
 		map_bh(bh, inode->i_sb, block_to_cpu(chain[depth-1].key));
-		/* Clean up and निकास */
+		/* Clean up and exit */
 		partial = chain+depth-1; /* the whole chain */
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 
-	/* Next simple हाल - plain lookup or failed पढ़ो of indirect block */
-	अगर (!create || err == -EIO) अणु
+	/* Next simple case - plain lookup or failed read of indirect block */
+	if (!create || err == -EIO) {
 cleanup:
-		जबतक (partial > chain) अणु
-			brअन्यथा(partial->bh);
+		while (partial > chain) {
+			brelse(partial->bh);
 			partial--;
-		पूर्ण
+		}
 out:
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	/*
-	 * Indirect block might be हटाओd by truncate जबतक we were
-	 * पढ़ोing it. Handling of that हाल (क्रमget what we've got and
-	 * reपढ़ो) is taken out of the मुख्य path.
+	 * Indirect block might be removed by truncate while we were
+	 * reading it. Handling of that case (forget what we've got and
+	 * reread) is taken out of the main path.
 	 */
-	अगर (err == -EAGAIN)
-		जाओ changed;
+	if (err == -EAGAIN)
+		goto changed;
 
 	left = (chain + depth) - partial;
 	err = alloc_branch(inode, left, offsets+(partial-chain), partial);
-	अगर (err)
-		जाओ cleanup;
+	if (err)
+		goto cleanup;
 
-	अगर (splice_branch(inode, chain, partial, left) < 0)
-		जाओ changed;
+	if (splice_branch(inode, chain, partial, left) < 0)
+		goto changed;
 
 	set_buffer_new(bh);
-	जाओ got_it;
+	goto got_it;
 
 changed:
-	जबतक (partial > chain) अणु
-		brअन्यथा(partial->bh);
+	while (partial > chain) {
+		brelse(partial->bh);
 		partial--;
-	पूर्ण
-	जाओ reपढ़ो;
-पूर्ण
+	}
+	goto reread;
+}
 
-अटल अंतरभूत पूर्णांक all_zeroes(block_t *p, block_t *q)
-अणु
-	जबतक (p < q)
-		अगर (*p++)
-			वापस 0;
-	वापस 1;
-पूर्ण
+static inline int all_zeroes(block_t *p, block_t *q)
+{
+	while (p < q)
+		if (*p++)
+			return 0;
+	return 1;
+}
 
-अटल Indirect *find_shared(काष्ठा inode *inode,
-				पूर्णांक depth,
-				पूर्णांक offsets[DEPTH],
+static Indirect *find_shared(struct inode *inode,
+				int depth,
+				int offsets[DEPTH],
 				Indirect chain[DEPTH],
 				block_t *top)
-अणु
+{
 	Indirect *partial, *p;
-	पूर्णांक k, err;
+	int k, err;
 
 	*top = 0;
-	क्रम (k = depth; k > 1 && !offsets[k-1]; k--)
+	for (k = depth; k > 1 && !offsets[k-1]; k--)
 		;
 	partial = get_branch(inode, k, offsets, chain, &err);
 
-	ग_लिखो_lock(&poपूर्णांकers_lock);
-	अगर (!partial)
+	write_lock(&pointers_lock);
+	if (!partial)
 		partial = chain + k-1;
-	अगर (!partial->key && *partial->p) अणु
-		ग_लिखो_unlock(&poपूर्णांकers_lock);
-		जाओ no_top;
-	पूर्ण
-	क्रम (p=partial;p>chain && all_zeroes((block_t*)p->bh->b_data,p->p);p--)
+	if (!partial->key && *partial->p) {
+		write_unlock(&pointers_lock);
+		goto no_top;
+	}
+	for (p=partial;p>chain && all_zeroes((block_t*)p->bh->b_data,p->p);p--)
 		;
-	अगर (p == chain + k - 1 && p > chain) अणु
+	if (p == chain + k - 1 && p > chain) {
 		p->p--;
-	पूर्ण अन्यथा अणु
+	} else {
 		*top = *p->p;
 		*p->p = 0;
-	पूर्ण
-	ग_लिखो_unlock(&poपूर्णांकers_lock);
+	}
+	write_unlock(&pointers_lock);
 
-	जबतक(partial > p)
-	अणु
-		brअन्यथा(partial->bh);
+	while(partial > p)
+	{
+		brelse(partial->bh);
 		partial--;
-	पूर्ण
+	}
 no_top:
-	वापस partial;
-पूर्ण
+	return partial;
+}
 
-अटल अंतरभूत व्योम मुक्त_data(काष्ठा inode *inode, block_t *p, block_t *q)
-अणु
-	अचिन्हित दीर्घ nr;
+static inline void free_data(struct inode *inode, block_t *p, block_t *q)
+{
+	unsigned long nr;
 
-	क्रम ( ; p < q ; p++) अणु
+	for ( ; p < q ; p++) {
 		nr = block_to_cpu(*p);
-		अगर (nr) अणु
+		if (nr) {
 			*p = 0;
-			minix_मुक्त_block(inode, nr);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			minix_free_block(inode, nr);
+		}
+	}
+}
 
-अटल व्योम मुक्त_branches(काष्ठा inode *inode, block_t *p, block_t *q, पूर्णांक depth)
-अणु
-	काष्ठा buffer_head * bh;
-	अचिन्हित दीर्घ nr;
+static void free_branches(struct inode *inode, block_t *p, block_t *q, int depth)
+{
+	struct buffer_head * bh;
+	unsigned long nr;
 
-	अगर (depth--) अणु
-		क्रम ( ; p < q ; p++) अणु
+	if (depth--) {
+		for ( ; p < q ; p++) {
 			nr = block_to_cpu(*p);
-			अगर (!nr)
-				जारी;
+			if (!nr)
+				continue;
 			*p = 0;
-			bh = sb_bपढ़ो(inode->i_sb, nr);
-			अगर (!bh)
-				जारी;
-			मुक्त_branches(inode, (block_t*)bh->b_data,
+			bh = sb_bread(inode->i_sb, nr);
+			if (!bh)
+				continue;
+			free_branches(inode, (block_t*)bh->b_data,
 				      block_end(bh), depth);
-			bक्रमget(bh);
-			minix_मुक्त_block(inode, nr);
+			bforget(bh);
+			minix_free_block(inode, nr);
 			mark_inode_dirty(inode);
-		पूर्ण
-	पूर्ण अन्यथा
-		मुक्त_data(inode, p, q);
-पूर्ण
+		}
+	} else
+		free_data(inode, p, q);
+}
 
-अटल अंतरभूत व्योम truncate (काष्ठा inode * inode)
-अणु
-	काष्ठा super_block *sb = inode->i_sb;
+static inline void truncate (struct inode * inode)
+{
+	struct super_block *sb = inode->i_sb;
 	block_t *idata = i_data(inode);
-	पूर्णांक offsets[DEPTH];
+	int offsets[DEPTH];
 	Indirect chain[DEPTH];
 	Indirect *partial;
 	block_t nr = 0;
-	पूर्णांक n;
-	पूर्णांक first_whole;
-	दीर्घ iblock;
+	int n;
+	int first_whole;
+	long iblock;
 
 	iblock = (inode->i_size + sb->s_blocksize -1) >> sb->s_blocksize_bits;
 	block_truncate_page(inode->i_mapping, inode->i_size, get_block);
 
 	n = block_to_path(inode, iblock, offsets);
-	अगर (!n)
-		वापस;
+	if (!n)
+		return;
 
-	अगर (n == 1) अणु
-		मुक्त_data(inode, idata+offsets[0], idata + सूचीECT);
+	if (n == 1) {
+		free_data(inode, idata+offsets[0], idata + DIRECT);
 		first_whole = 0;
-		जाओ करो_indirects;
-	पूर्ण
+		goto do_indirects;
+	}
 
-	first_whole = offsets[0] + 1 - सूचीECT;
+	first_whole = offsets[0] + 1 - DIRECT;
 	partial = find_shared(inode, n, offsets, chain, &nr);
-	अगर (nr) अणु
-		अगर (partial == chain)
+	if (nr) {
+		if (partial == chain)
 			mark_inode_dirty(inode);
-		अन्यथा
+		else
 			mark_buffer_dirty_inode(partial->bh, inode);
-		मुक्त_branches(inode, &nr, &nr+1, (chain+n-1) - partial);
-	पूर्ण
+		free_branches(inode, &nr, &nr+1, (chain+n-1) - partial);
+	}
 	/* Clear the ends of indirect blocks on the shared branch */
-	जबतक (partial > chain) अणु
-		मुक्त_branches(inode, partial->p + 1, block_end(partial->bh),
+	while (partial > chain) {
+		free_branches(inode, partial->p + 1, block_end(partial->bh),
 				(chain+n-1) - partial);
 		mark_buffer_dirty_inode(partial->bh, inode);
-		brअन्यथा (partial->bh);
+		brelse (partial->bh);
 		partial--;
-	पूर्ण
-करो_indirects:
-	/* Kill the reमुख्यing (whole) subtrees */
-	जबतक (first_whole < DEPTH-1) अणु
-		nr = idata[सूचीECT+first_whole];
-		अगर (nr) अणु
-			idata[सूचीECT+first_whole] = 0;
+	}
+do_indirects:
+	/* Kill the remaining (whole) subtrees */
+	while (first_whole < DEPTH-1) {
+		nr = idata[DIRECT+first_whole];
+		if (nr) {
+			idata[DIRECT+first_whole] = 0;
 			mark_inode_dirty(inode);
-			मुक्त_branches(inode, &nr, &nr+1, first_whole+1);
-		पूर्ण
+			free_branches(inode, &nr, &nr+1, first_whole+1);
+		}
 		first_whole++;
-	पूर्ण
-	inode->i_mसमय = inode->i_स_समय = current_समय(inode);
+	}
+	inode->i_mtime = inode->i_ctime = current_time(inode);
 	mark_inode_dirty(inode);
-पूर्ण
+}
 
-अटल अंतरभूत अचिन्हित nblocks(loff_t size, काष्ठा super_block *sb)
-अणु
-	पूर्णांक k = sb->s_blocksize_bits - 10;
-	अचिन्हित blocks, res, direct = सूचीECT, i = DEPTH;
+static inline unsigned nblocks(loff_t size, struct super_block *sb)
+{
+	int k = sb->s_blocksize_bits - 10;
+	unsigned blocks, res, direct = DIRECT, i = DEPTH;
 	blocks = (size + sb->s_blocksize - 1) >> (BLOCK_SIZE_BITS + k);
 	res = blocks;
-	जबतक (--i && blocks > direct) अणु
+	while (--i && blocks > direct) {
 		blocks -= direct;
-		blocks += sb->s_blocksize/माप(block_t) - 1;
-		blocks /= sb->s_blocksize/माप(block_t);
+		blocks += sb->s_blocksize/sizeof(block_t) - 1;
+		blocks /= sb->s_blocksize/sizeof(block_t);
 		res += blocks;
 		direct = 1;
-	पूर्ण
-	वापस res;
-पूर्ण
+	}
+	return res;
+}

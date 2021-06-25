@@ -1,52 +1,51 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-1.0+
+// SPDX-License-Identifier: GPL-1.0+
 /*
- * OHCI HCD (Host Controller Driver) क्रम USB.
+ * OHCI HCD (Host Controller Driver) for USB.
  *
  * (C) Copyright 1999 Roman Weissgaerber <weissg@vienna.at>
- * (C) Copyright 2000-2002 David Brownell <dbrownell@users.sourceक्रमge.net>
+ * (C) Copyright 2000-2002 David Brownell <dbrownell@users.sourceforge.net>
  *
  * This file is licenced under the GPL.
  */
 
 /*-------------------------------------------------------------------------*/
 
-#घोषणा edstring(ed_type) (अणु अक्षर *temp; \
-	चयन (ed_type) अणु \
-	हाल PIPE_CONTROL:	temp = "ctrl"; अवरोध; \
-	हाल PIPE_BULK:		temp = "bulk"; अवरोध; \
-	हाल PIPE_INTERRUPT:	temp = "intr"; अवरोध; \
-	शेष:		temp = "isoc"; अवरोध; \
-	पूर्ण temp;पूर्ण)
-#घोषणा pipestring(pipe) edstring(usb_pipetype(pipe))
+#define edstring(ed_type) ({ char *temp; \
+	switch (ed_type) { \
+	case PIPE_CONTROL:	temp = "ctrl"; break; \
+	case PIPE_BULK:		temp = "bulk"; break; \
+	case PIPE_INTERRUPT:	temp = "intr"; break; \
+	default:		temp = "isoc"; break; \
+	} temp;})
+#define pipestring(pipe) edstring(usb_pipetype(pipe))
 
 
-#घोषणा ohci_dbg_sw(ohci, next, size, क्रमmat, arg...) \
-	करो अणु \
-	अगर (next != शून्य) अणु \
-		अचिन्हित s_len; \
-		s_len = scnम_लिखो (*next, *size, क्रमmat, ## arg ); \
+#define ohci_dbg_sw(ohci, next, size, format, arg...) \
+	do { \
+	if (next != NULL) { \
+		unsigned s_len; \
+		s_len = scnprintf (*next, *size, format, ## arg ); \
 		*size -= s_len; *next += s_len; \
-	पूर्ण अन्यथा \
-		ohci_dbg(ohci,क्रमmat, ## arg ); \
-	पूर्ण जबतक (0);
+	} else \
+		ohci_dbg(ohci,format, ## arg ); \
+	} while (0);
 
-/* Version क्रम use where "next" is the address of a local variable */
-#घोषणा ohci_dbg_nosw(ohci, next, size, क्रमmat, arg...) \
-	करो अणु \
-		अचिन्हित s_len; \
-		s_len = scnम_लिखो(*next, *size, क्रमmat, ## arg); \
+/* Version for use where "next" is the address of a local variable */
+#define ohci_dbg_nosw(ohci, next, size, format, arg...) \
+	do { \
+		unsigned s_len; \
+		s_len = scnprintf(*next, *size, format, ## arg); \
 		*size -= s_len; *next += s_len; \
-	पूर्ण जबतक (0);
+	} while (0);
 
 
-अटल व्योम ohci_dump_पूर्णांकr_mask (
-	काष्ठा ohci_hcd *ohci,
-	अक्षर *label,
+static void ohci_dump_intr_mask (
+	struct ohci_hcd *ohci,
+	char *label,
 	u32 mask,
-	अक्षर **next,
-	अचिन्हित *size)
-अणु
+	char **next,
+	unsigned *size)
+{
 	ohci_dbg_sw (ohci, next, size, "%s 0x%08x%s%s%s%s%s%s%s%s%s\n",
 		label,
 		mask,
@@ -60,58 +59,58 @@
 		(mask & OHCI_INTR_WDH) ? " WDH" : "",
 		(mask & OHCI_INTR_SO) ? " SO" : ""
 		);
-पूर्ण
+}
 
-अटल व्योम maybe_prपूर्णांक_eds (
-	काष्ठा ohci_hcd *ohci,
-	अक्षर *label,
+static void maybe_print_eds (
+	struct ohci_hcd *ohci,
+	char *label,
 	u32 value,
-	अक्षर **next,
-	अचिन्हित *size)
-अणु
-	अगर (value)
+	char **next,
+	unsigned *size)
+{
+	if (value)
 		ohci_dbg_sw (ohci, next, size, "%s %08x\n", label, value);
-पूर्ण
+}
 
-अटल अक्षर *hcfs2string (पूर्णांक state)
-अणु
-	चयन (state) अणु
-		हाल OHCI_USB_RESET:	वापस "reset";
-		हाल OHCI_USB_RESUME:	वापस "resume";
-		हाल OHCI_USB_OPER:	वापस "operational";
-		हाल OHCI_USB_SUSPEND:	वापस "suspend";
-	पूर्ण
-	वापस "?";
-पूर्ण
+static char *hcfs2string (int state)
+{
+	switch (state) {
+		case OHCI_USB_RESET:	return "reset";
+		case OHCI_USB_RESUME:	return "resume";
+		case OHCI_USB_OPER:	return "operational";
+		case OHCI_USB_SUSPEND:	return "suspend";
+	}
+	return "?";
+}
 
-अटल स्थिर अक्षर *rh_state_string(काष्ठा ohci_hcd *ohci)
-अणु
-	चयन (ohci->rh_state) अणु
-	हाल OHCI_RH_HALTED:
-		वापस "halted";
-	हाल OHCI_RH_SUSPENDED:
-		वापस "suspended";
-	हाल OHCI_RH_RUNNING:
-		वापस "running";
-	पूर्ण
-	वापस "?";
-पूर्ण
+static const char *rh_state_string(struct ohci_hcd *ohci)
+{
+	switch (ohci->rh_state) {
+	case OHCI_RH_HALTED:
+		return "halted";
+	case OHCI_RH_SUSPENDED:
+		return "suspended";
+	case OHCI_RH_RUNNING:
+		return "running";
+	}
+	return "?";
+}
 
-// dump control and status रेजिस्टरs
-अटल व्योम
-ohci_dump_status (काष्ठा ohci_hcd *controller, अक्षर **next, अचिन्हित *size)
-अणु
-	काष्ठा ohci_regs __iomem *regs = controller->regs;
+// dump control and status registers
+static void
+ohci_dump_status (struct ohci_hcd *controller, char **next, unsigned *size)
+{
+	struct ohci_regs __iomem *regs = controller->regs;
 	u32			temp;
 
-	temp = ohci_पढ़ोl (controller, &regs->revision) & 0xff;
+	temp = ohci_readl (controller, &regs->revision) & 0xff;
 	ohci_dbg_sw (controller, next, size,
 		"OHCI %d.%d, %s legacy support registers, rh state %s\n",
 		0x03 & (temp >> 4), (temp & 0x0f),
 		(temp & 0x0100) ? "with" : "NO",
 		rh_state_string(controller));
 
-	temp = ohci_पढ़ोl (controller, &regs->control);
+	temp = ohci_readl (controller, &regs->control);
 	ohci_dbg_sw (controller, next, size,
 		"control 0x%03x%s%s%s HCFS=%s%s%s%s%s CBSR=%d\n",
 		temp,
@@ -126,7 +125,7 @@ ohci_dump_status (काष्ठा ohci_hcd *controller, अक्षर **nex
 		temp & OHCI_CTRL_CBSR
 		);
 
-	temp = ohci_पढ़ोl (controller, &regs->cmdstatus);
+	temp = ohci_readl (controller, &regs->cmdstatus);
 	ohci_dbg_sw (controller, next, size,
 		"cmdstatus 0x%05x SOC=%d%s%s%s%s\n", temp,
 		(temp & OHCI_SOC) >> 16,
@@ -136,37 +135,37 @@ ohci_dump_status (काष्ठा ohci_hcd *controller, अक्षर **nex
 		(temp & OHCI_HCR) ? " HCR" : ""
 		);
 
-	ohci_dump_पूर्णांकr_mask (controller, "intrstatus",
-			ohci_पढ़ोl (controller, &regs->पूर्णांकrstatus),
+	ohci_dump_intr_mask (controller, "intrstatus",
+			ohci_readl (controller, &regs->intrstatus),
 			next, size);
-	ohci_dump_पूर्णांकr_mask (controller, "intrenable",
-			ohci_पढ़ोl (controller, &regs->पूर्णांकrenable),
+	ohci_dump_intr_mask (controller, "intrenable",
+			ohci_readl (controller, &regs->intrenable),
 			next, size);
-	// पूर्णांकrdisable always same as पूर्णांकrenable
+	// intrdisable always same as intrenable
 
-	maybe_prपूर्णांक_eds (controller, "ed_periodcurrent",
-			ohci_पढ़ोl (controller, &regs->ed_periodcurrent),
-			next, size);
-
-	maybe_prपूर्णांक_eds (controller, "ed_controlhead",
-			ohci_पढ़ोl (controller, &regs->ed_controlhead),
-			next, size);
-	maybe_prपूर्णांक_eds (controller, "ed_controlcurrent",
-			ohci_पढ़ोl (controller, &regs->ed_controlcurrent),
+	maybe_print_eds (controller, "ed_periodcurrent",
+			ohci_readl (controller, &regs->ed_periodcurrent),
 			next, size);
 
-	maybe_prपूर्णांक_eds (controller, "ed_bulkhead",
-			ohci_पढ़ोl (controller, &regs->ed_bulkhead),
+	maybe_print_eds (controller, "ed_controlhead",
+			ohci_readl (controller, &regs->ed_controlhead),
 			next, size);
-	maybe_prपूर्णांक_eds (controller, "ed_bulkcurrent",
-			ohci_पढ़ोl (controller, &regs->ed_bulkcurrent),
+	maybe_print_eds (controller, "ed_controlcurrent",
+			ohci_readl (controller, &regs->ed_controlcurrent),
 			next, size);
 
-	maybe_prपूर्णांक_eds (controller, "donehead",
-			ohci_पढ़ोl (controller, &regs->करोnehead), next, size);
-पूर्ण
+	maybe_print_eds (controller, "ed_bulkhead",
+			ohci_readl (controller, &regs->ed_bulkhead),
+			next, size);
+	maybe_print_eds (controller, "ed_bulkcurrent",
+			ohci_readl (controller, &regs->ed_bulkcurrent),
+			next, size);
 
-#घोषणा dbg_port_sw(hc,num,value,next,size) \
+	maybe_print_eds (controller, "donehead",
+			ohci_readl (controller, &regs->donehead), next, size);
+}
+
+#define dbg_port_sw(hc,num,value,next,size) \
 	ohci_dbg_sw (hc, next, size, \
 		"roothub.portstatus [%d] " \
 		"0x%08x%s%s%s%s%s%s%s%s%s%s%s%s\n", \
@@ -188,20 +187,20 @@ ohci_dump_status (काष्ठा ohci_hcd *controller, अक्षर **nex
 		);
 
 
-अटल व्योम
+static void
 ohci_dump_roothub (
-	काष्ठा ohci_hcd *controller,
-	पूर्णांक verbose,
-	अक्षर **next,
-	अचिन्हित *size)
-अणु
+	struct ohci_hcd *controller,
+	int verbose,
+	char **next,
+	unsigned *size)
+{
 	u32			temp, i;
 
 	temp = roothub_a (controller);
-	अगर (temp == ~(u32)0)
-		वापस;
+	if (temp == ~(u32)0)
+		return;
 
-	अगर (verbose) अणु
+	if (verbose) {
 		ohci_dbg_sw (controller, next, size,
 			"roothub.a %08x POTPGT=%d%s%s%s%s%s NDP=%d(%d)\n", temp,
 			((temp & RH_A_POTPGT) >> 24) & 0xff,
@@ -230,193 +229,193 @@ ohci_dump_roothub (
 			(temp & RH_HS_OCI) ? " OCI" : "",
 			(temp & RH_HS_LPS) ? " LPS" : ""
 			);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < controller->num_ports; i++) अणु
+	for (i = 0; i < controller->num_ports; i++) {
 		temp = roothub_portstatus (controller, i);
 		dbg_port_sw (controller, i, temp, next, size);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम ohci_dump(काष्ठा ohci_hcd *controller)
-अणु
+static void ohci_dump(struct ohci_hcd *controller)
+{
 	ohci_dbg (controller, "OHCI controller state\n");
 
 	// dumps some of the state we know about
-	ohci_dump_status (controller, शून्य, शून्य);
-	अगर (controller->hcca)
+	ohci_dump_status (controller, NULL, NULL);
+	if (controller->hcca)
 		ohci_dbg (controller,
 			"hcca frame #%04x\n", ohci_frame_no(controller));
-	ohci_dump_roothub (controller, 1, शून्य, शून्य);
-पूर्ण
+	ohci_dump_roothub (controller, 1, NULL, NULL);
+}
 
-अटल स्थिर अक्षर data0 [] = "DATA0";
-अटल स्थिर अक्षर data1 [] = "DATA1";
+static const char data0 [] = "DATA0";
+static const char data1 [] = "DATA1";
 
-अटल व्योम ohci_dump_td (स्थिर काष्ठा ohci_hcd *ohci, स्थिर अक्षर *label,
-		स्थिर काष्ठा td *td)
-अणु
-	u32	पंचांगp = hc32_to_cpup (ohci, &td->hwINFO);
+static void ohci_dump_td (const struct ohci_hcd *ohci, const char *label,
+		const struct td *td)
+{
+	u32	tmp = hc32_to_cpup (ohci, &td->hwINFO);
 
 	ohci_dbg (ohci, "%s td %p%s; urb %p index %d; hw next td %08x\n",
 		label, td,
-		(पंचांगp & TD_DONE) ? " (DONE)" : "",
+		(tmp & TD_DONE) ? " (DONE)" : "",
 		td->urb, td->index,
 		hc32_to_cpup (ohci, &td->hwNextTD));
-	अगर ((पंचांगp & TD_ISO) == 0) अणु
-		स्थिर अक्षर	*toggle, *pid;
+	if ((tmp & TD_ISO) == 0) {
+		const char	*toggle, *pid;
 		u32	cbp, be;
 
-		चयन (पंचांगp & TD_T) अणु
-		हाल TD_T_DATA0: toggle = data0; अवरोध;
-		हाल TD_T_DATA1: toggle = data1; अवरोध;
-		हाल TD_T_TOGGLE: toggle = "(CARRY)"; अवरोध;
-		शेष: toggle = "(?)"; अवरोध;
-		पूर्ण
-		चयन (पंचांगp & TD_DP) अणु
-		हाल TD_DP_SETUP: pid = "SETUP"; अवरोध;
-		हाल TD_DP_IN: pid = "IN"; अवरोध;
-		हाल TD_DP_OUT: pid = "OUT"; अवरोध;
-		शेष: pid = "(bad pid)"; अवरोध;
-		पूर्ण
-		ohci_dbg (ohci, "     info %08x CC=%x %s DI=%d %s %s\n", पंचांगp,
-			TD_CC_GET(पंचांगp), /* EC, */ toggle,
-			(पंचांगp & TD_DI) >> 21, pid,
-			(पंचांगp & TD_R) ? "R" : "");
+		switch (tmp & TD_T) {
+		case TD_T_DATA0: toggle = data0; break;
+		case TD_T_DATA1: toggle = data1; break;
+		case TD_T_TOGGLE: toggle = "(CARRY)"; break;
+		default: toggle = "(?)"; break;
+		}
+		switch (tmp & TD_DP) {
+		case TD_DP_SETUP: pid = "SETUP"; break;
+		case TD_DP_IN: pid = "IN"; break;
+		case TD_DP_OUT: pid = "OUT"; break;
+		default: pid = "(bad pid)"; break;
+		}
+		ohci_dbg (ohci, "     info %08x CC=%x %s DI=%d %s %s\n", tmp,
+			TD_CC_GET(tmp), /* EC, */ toggle,
+			(tmp & TD_DI) >> 21, pid,
+			(tmp & TD_R) ? "R" : "");
 		cbp = hc32_to_cpup (ohci, &td->hwCBP);
 		be = hc32_to_cpup (ohci, &td->hwBE);
 		ohci_dbg (ohci, "     cbp %08x be %08x (len %d)\n", cbp, be,
 			cbp ? (be + 1 - cbp) : 0);
-	पूर्ण अन्यथा अणु
-		अचिन्हित	i;
-		ohci_dbg (ohci, "  info %08x CC=%x FC=%d DI=%d SF=%04x\n", पंचांगp,
-			TD_CC_GET(पंचांगp),
-			(पंचांगp >> 24) & 0x07,
-			(पंचांगp & TD_DI) >> 21,
-			पंचांगp & 0x0000ffff);
+	} else {
+		unsigned	i;
+		ohci_dbg (ohci, "  info %08x CC=%x FC=%d DI=%d SF=%04x\n", tmp,
+			TD_CC_GET(tmp),
+			(tmp >> 24) & 0x07,
+			(tmp & TD_DI) >> 21,
+			tmp & 0x0000ffff);
 		ohci_dbg (ohci, "  bp0 %08x be %08x\n",
 			hc32_to_cpup (ohci, &td->hwCBP) & ~0x0fff,
 			hc32_to_cpup (ohci, &td->hwBE));
-		क्रम (i = 0; i < MAXPSW; i++) अणु
+		for (i = 0; i < MAXPSW; i++) {
 			u16	psw = ohci_hwPSW (ohci, td, i);
-			पूर्णांक	cc = (psw >> 12) & 0x0f;
+			int	cc = (psw >> 12) & 0x0f;
 			ohci_dbg (ohci, "    psw [%d] = %2x, CC=%x %s=%d\n", i,
 				psw, cc,
 				(cc >= 0x0e) ? "OFFSET" : "SIZE",
 				psw & 0x0fff);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-/* caller MUST own hcd spinlock अगर verbose is set! */
-अटल व्योम __maybe_unused
-ohci_dump_ed (स्थिर काष्ठा ohci_hcd *ohci, स्थिर अक्षर *label,
-		स्थिर काष्ठा ed *ed, पूर्णांक verbose)
-अणु
-	u32	पंचांगp = hc32_to_cpu (ohci, ed->hwINFO);
-	अक्षर	*type = "";
+/* caller MUST own hcd spinlock if verbose is set! */
+static void __maybe_unused
+ohci_dump_ed (const struct ohci_hcd *ohci, const char *label,
+		const struct ed *ed, int verbose)
+{
+	u32	tmp = hc32_to_cpu (ohci, ed->hwINFO);
+	char	*type = "";
 
 	ohci_dbg (ohci, "%s, ed %p state 0x%x type %s; next ed %08x\n",
 		label,
 		ed, ed->state, edstring (ed->type),
 		hc32_to_cpup (ohci, &ed->hwNextED));
-	चयन (पंचांगp & (ED_IN|ED_OUT)) अणु
-	हाल ED_OUT: type = "-OUT"; अवरोध;
-	हाल ED_IN: type = "-IN"; अवरोध;
-	/* अन्यथा from TDs ... control */
-	पूर्ण
+	switch (tmp & (ED_IN|ED_OUT)) {
+	case ED_OUT: type = "-OUT"; break;
+	case ED_IN: type = "-IN"; break;
+	/* else from TDs ... control */
+	}
 	ohci_dbg (ohci,
-		"  info %08x MAX=%d%s%s%s%s EP=%d%s DEV=%d\n", पंचांगp,
-		0x03ff & (पंचांगp >> 16),
-		(पंचांगp & ED_DEQUEUE) ? " DQ" : "",
-		(पंचांगp & ED_ISO) ? " ISO" : "",
-		(पंचांगp & ED_SKIP) ? " SKIP" : "",
-		(पंचांगp & ED_LOWSPEED) ? " LOW" : "",
-		0x000f & (पंचांगp >> 7),
+		"  info %08x MAX=%d%s%s%s%s EP=%d%s DEV=%d\n", tmp,
+		0x03ff & (tmp >> 16),
+		(tmp & ED_DEQUEUE) ? " DQ" : "",
+		(tmp & ED_ISO) ? " ISO" : "",
+		(tmp & ED_SKIP) ? " SKIP" : "",
+		(tmp & ED_LOWSPEED) ? " LOW" : "",
+		0x000f & (tmp >> 7),
 		type,
-		0x007f & पंचांगp);
-	पंचांगp = hc32_to_cpup (ohci, &ed->hwHeadP);
+		0x007f & tmp);
+	tmp = hc32_to_cpup (ohci, &ed->hwHeadP);
 	ohci_dbg (ohci, "  tds: head %08x %s%s tail %08x%s\n",
-		पंचांगp,
-		(पंचांगp & ED_C) ? data1 : data0,
-		(पंचांगp & ED_H) ? " HALT" : "",
+		tmp,
+		(tmp & ED_C) ? data1 : data0,
+		(tmp & ED_H) ? " HALT" : "",
 		hc32_to_cpup (ohci, &ed->hwTailP),
 		verbose ? "" : " (not listing)");
-	अगर (verbose) अणु
-		काष्ठा list_head	*पंचांगp;
+	if (verbose) {
+		struct list_head	*tmp;
 
-		/* use ed->td_list because HC concurrently modअगरies
-		 * hwNextTD as it accumulates ed_करोnelist.
+		/* use ed->td_list because HC concurrently modifies
+		 * hwNextTD as it accumulates ed_donelist.
 		 */
-		list_क्रम_each (पंचांगp, &ed->td_list) अणु
-			काष्ठा td		*td;
-			td = list_entry (पंचांगp, काष्ठा td, td_list);
+		list_for_each (tmp, &ed->td_list) {
+			struct td		*td;
+			td = list_entry (tmp, struct td, td_list);
 			ohci_dump_td (ohci, "  ->", td);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /*-------------------------------------------------------------------------*/
 
-अटल पूर्णांक debug_async_खोलो(काष्ठा inode *, काष्ठा file *);
-अटल पूर्णांक debug_periodic_खोलो(काष्ठा inode *, काष्ठा file *);
-अटल पूर्णांक debug_रेजिस्टरs_खोलो(काष्ठा inode *, काष्ठा file *);
-अटल पूर्णांक debug_async_खोलो(काष्ठा inode *, काष्ठा file *);
-अटल sमाप_प्रकार debug_output(काष्ठा file*, अक्षर __user*, माप_प्रकार, loff_t*);
-अटल पूर्णांक debug_बंद(काष्ठा inode *, काष्ठा file *);
+static int debug_async_open(struct inode *, struct file *);
+static int debug_periodic_open(struct inode *, struct file *);
+static int debug_registers_open(struct inode *, struct file *);
+static int debug_async_open(struct inode *, struct file *);
+static ssize_t debug_output(struct file*, char __user*, size_t, loff_t*);
+static int debug_close(struct inode *, struct file *);
 
-अटल स्थिर काष्ठा file_operations debug_async_fops = अणु
+static const struct file_operations debug_async_fops = {
 	.owner		= THIS_MODULE,
-	.खोलो		= debug_async_खोलो,
-	.पढ़ो		= debug_output,
-	.release	= debug_बंद,
-	.llseek		= शेष_llseek,
-पूर्ण;
-अटल स्थिर काष्ठा file_operations debug_periodic_fops = अणु
+	.open		= debug_async_open,
+	.read		= debug_output,
+	.release	= debug_close,
+	.llseek		= default_llseek,
+};
+static const struct file_operations debug_periodic_fops = {
 	.owner		= THIS_MODULE,
-	.खोलो		= debug_periodic_खोलो,
-	.पढ़ो		= debug_output,
-	.release	= debug_बंद,
-	.llseek		= शेष_llseek,
-पूर्ण;
-अटल स्थिर काष्ठा file_operations debug_रेजिस्टरs_fops = अणु
+	.open		= debug_periodic_open,
+	.read		= debug_output,
+	.release	= debug_close,
+	.llseek		= default_llseek,
+};
+static const struct file_operations debug_registers_fops = {
 	.owner		= THIS_MODULE,
-	.खोलो		= debug_रेजिस्टरs_खोलो,
-	.पढ़ो		= debug_output,
-	.release	= debug_बंद,
-	.llseek		= शेष_llseek,
-पूर्ण;
+	.open		= debug_registers_open,
+	.read		= debug_output,
+	.release	= debug_close,
+	.llseek		= default_llseek,
+};
 
-अटल काष्ठा dentry *ohci_debug_root;
+static struct dentry *ohci_debug_root;
 
-काष्ठा debug_buffer अणु
-	sमाप_प्रकार (*fill_func)(काष्ठा debug_buffer *);	/* fill method */
-	काष्ठा ohci_hcd *ohci;
-	काष्ठा mutex mutex;	/* protect filling of buffer */
-	माप_प्रकार count;		/* number of अक्षरacters filled पूर्णांकo buffer */
-	अक्षर *page;
-पूर्ण;
+struct debug_buffer {
+	ssize_t (*fill_func)(struct debug_buffer *);	/* fill method */
+	struct ohci_hcd *ohci;
+	struct mutex mutex;	/* protect filling of buffer */
+	size_t count;		/* number of characters filled into buffer */
+	char *page;
+};
 
-अटल sमाप_प्रकार
-show_list (काष्ठा ohci_hcd *ohci, अक्षर *buf, माप_प्रकार count, काष्ठा ed *ed)
-अणु
-	अचिन्हित		temp, size = count;
+static ssize_t
+show_list (struct ohci_hcd *ohci, char *buf, size_t count, struct ed *ed)
+{
+	unsigned		temp, size = count;
 
-	अगर (!ed)
-		वापस 0;
+	if (!ed)
+		return 0;
 
-	/* prपूर्णांक first --> last */
-	जबतक (ed->ed_prev)
+	/* print first --> last */
+	while (ed->ed_prev)
 		ed = ed->ed_prev;
 
 	/* dump a snapshot of the bulk or control schedule */
-	जबतक (ed) अणु
+	while (ed) {
 		u32		info = hc32_to_cpu (ohci, ed->hwINFO);
 		u32		headp = hc32_to_cpu (ohci, ed->hwHeadP);
-		काष्ठा list_head *entry;
-		काष्ठा td	*td;
+		struct list_head *entry;
+		struct td	*td;
 
-		temp = scnम_लिखो (buf, size,
+		temp = scnprintf (buf, size,
 			"ed/%p %cs dev%d ep%d%s max %d %08x%s%s %s",
 			ed,
 			(info & ED_LOWSPEED) ? 'l' : 'f',
@@ -431,113 +430,113 @@ show_list (काष्ठा ohci_hcd *ohci, अक्षर *buf, माप_�
 		size -= temp;
 		buf += temp;
 
-		list_क्रम_each (entry, &ed->td_list) अणु
+		list_for_each (entry, &ed->td_list) {
 			u32		cbp, be;
 
-			td = list_entry (entry, काष्ठा td, td_list);
+			td = list_entry (entry, struct td, td_list);
 			info = hc32_to_cpup (ohci, &td->hwINFO);
 			cbp = hc32_to_cpup (ohci, &td->hwCBP);
 			be = hc32_to_cpup (ohci, &td->hwBE);
-			temp = scnम_लिखो (buf, size,
+			temp = scnprintf (buf, size,
 					"\n\ttd %p %s %d cc=%x urb %p (%08x)",
 					td,
-					(अणु अक्षर *pid;
-					चयन (info & TD_DP) अणु
-					हाल TD_DP_SETUP: pid = "setup"; अवरोध;
-					हाल TD_DP_IN: pid = "in"; अवरोध;
-					हाल TD_DP_OUT: pid = "out"; अवरोध;
-					शेष: pid = "(?)"; अवरोध;
-					 पूर्ण pid;पूर्ण),
+					({ char *pid;
+					switch (info & TD_DP) {
+					case TD_DP_SETUP: pid = "setup"; break;
+					case TD_DP_IN: pid = "in"; break;
+					case TD_DP_OUT: pid = "out"; break;
+					default: pid = "(?)"; break;
+					 } pid;}),
 					cbp ? (be + 1 - cbp) : 0,
 					TD_CC_GET (info), td->urb, info);
 			size -= temp;
 			buf += temp;
-		पूर्ण
+		}
 
-		temp = scnम_लिखो (buf, size, "\n");
+		temp = scnprintf (buf, size, "\n");
 		size -= temp;
 		buf += temp;
 
 		ed = ed->ed_next;
-	पूर्ण
-	वापस count - size;
-पूर्ण
+	}
+	return count - size;
+}
 
-अटल sमाप_प्रकार fill_async_buffer(काष्ठा debug_buffer *buf)
-अणु
-	काष्ठा ohci_hcd		*ohci;
-	माप_प्रकार			temp, size;
-	अचिन्हित दीर्घ		flags;
+static ssize_t fill_async_buffer(struct debug_buffer *buf)
+{
+	struct ohci_hcd		*ohci;
+	size_t			temp, size;
+	unsigned long		flags;
 
 	ohci = buf->ohci;
 	size = PAGE_SIZE;
 
-	/* display control and bulk lists together, क्रम simplicity */
+	/* display control and bulk lists together, for simplicity */
 	spin_lock_irqsave (&ohci->lock, flags);
 	temp = show_list(ohci, buf->page, size, ohci->ed_controltail);
 	temp += show_list(ohci, buf->page + temp, size - temp,
 			  ohci->ed_bulktail);
 	spin_unlock_irqrestore (&ohci->lock, flags);
 
-	वापस temp;
-पूर्ण
+	return temp;
+}
 
-#घोषणा DBG_SCHED_LIMIT 64
+#define DBG_SCHED_LIMIT 64
 
-अटल sमाप_प्रकार fill_periodic_buffer(काष्ठा debug_buffer *buf)
-अणु
-	काष्ठा ohci_hcd		*ohci;
-	काष्ठा ed		**seen, *ed;
-	अचिन्हित दीर्घ		flags;
-	अचिन्हित		temp, size, seen_count;
-	अक्षर			*next;
-	अचिन्हित		i;
+static ssize_t fill_periodic_buffer(struct debug_buffer *buf)
+{
+	struct ohci_hcd		*ohci;
+	struct ed		**seen, *ed;
+	unsigned long		flags;
+	unsigned		temp, size, seen_count;
+	char			*next;
+	unsigned		i;
 
-	seen = kदो_स्मृति_array(DBG_SCHED_LIMIT, माप(*seen), GFP_ATOMIC);
-	अगर (!seen)
-		वापस 0;
+	seen = kmalloc_array(DBG_SCHED_LIMIT, sizeof(*seen), GFP_ATOMIC);
+	if (!seen)
+		return 0;
 	seen_count = 0;
 
 	ohci = buf->ohci;
 	next = buf->page;
 	size = PAGE_SIZE;
 
-	temp = scnम_लिखो (next, size, "size = %d\n", NUM_INTS);
+	temp = scnprintf (next, size, "size = %d\n", NUM_INTS);
 	size -= temp;
 	next += temp;
 
 	/* dump a snapshot of the periodic schedule (and load) */
 	spin_lock_irqsave (&ohci->lock, flags);
-	क्रम (i = 0; i < NUM_INTS; i++) अणु
+	for (i = 0; i < NUM_INTS; i++) {
 		ed = ohci->periodic[i];
-		अगर (!ed)
-			जारी;
+		if (!ed)
+			continue;
 
-		temp = scnम_लिखो (next, size, "%2d [%3d]:", i, ohci->load [i]);
+		temp = scnprintf (next, size, "%2d [%3d]:", i, ohci->load [i]);
 		size -= temp;
 		next += temp;
 
-		करो अणु
-			temp = scnम_लिखो (next, size, " ed%d/%p",
-				ed->पूर्णांकerval, ed);
+		do {
+			temp = scnprintf (next, size, " ed%d/%p",
+				ed->interval, ed);
 			size -= temp;
 			next += temp;
-			क्रम (temp = 0; temp < seen_count; temp++) अणु
-				अगर (seen [temp] == ed)
-					अवरोध;
-			पूर्ण
+			for (temp = 0; temp < seen_count; temp++) {
+				if (seen [temp] == ed)
+					break;
+			}
 
-			/* show more info the first समय around */
-			अगर (temp == seen_count) अणु
+			/* show more info the first time around */
+			if (temp == seen_count) {
 				u32	info = hc32_to_cpu (ohci, ed->hwINFO);
-				काष्ठा list_head	*entry;
-				अचिन्हित		qlen = 0;
+				struct list_head	*entry;
+				unsigned		qlen = 0;
 
 				/* qlen measured here in TDs, not urbs */
-				list_क्रम_each (entry, &ed->td_list)
+				list_for_each (entry, &ed->td_list)
 					qlen++;
 
-				temp = scnम_लिखो (next, size,
+				temp = scnprintf (next, size,
 					" (%cs dev%d ep%d%s-%s qlen %u"
 					" max %d %08x%s%s)",
 					(info & ED_LOWSPEED) ? 'l' : 'f',
@@ -555,38 +554,38 @@ show_list (काष्ठा ohci_hcd *ohci, अक्षर *buf, माप_�
 				size -= temp;
 				next += temp;
 
-				अगर (seen_count < DBG_SCHED_LIMIT)
+				if (seen_count < DBG_SCHED_LIMIT)
 					seen [seen_count++] = ed;
 
 				ed = ed->ed_next;
 
-			पूर्ण अन्यथा अणु
+			} else {
 				/* we've seen it and what's after */
 				temp = 0;
-				ed = शून्य;
-			पूर्ण
+				ed = NULL;
+			}
 
-		पूर्ण जबतक (ed);
+		} while (ed);
 
-		temp = scnम_लिखो (next, size, "\n");
+		temp = scnprintf (next, size, "\n");
 		size -= temp;
 		next += temp;
-	पूर्ण
+	}
 	spin_unlock_irqrestore (&ohci->lock, flags);
-	kमुक्त (seen);
+	kfree (seen);
 
-	वापस PAGE_SIZE - size;
-पूर्ण
-#अघोषित DBG_SCHED_LIMIT
+	return PAGE_SIZE - size;
+}
+#undef DBG_SCHED_LIMIT
 
-अटल sमाप_प्रकार fill_रेजिस्टरs_buffer(काष्ठा debug_buffer *buf)
-अणु
-	काष्ठा usb_hcd		*hcd;
-	काष्ठा ohci_hcd		*ohci;
-	काष्ठा ohci_regs __iomem *regs;
-	अचिन्हित दीर्घ		flags;
-	अचिन्हित		temp, size;
-	अक्षर			*next;
+static ssize_t fill_registers_buffer(struct debug_buffer *buf)
+{
+	struct usb_hcd		*hcd;
+	struct ohci_hcd		*ohci;
+	struct ohci_regs __iomem *regs;
+	unsigned long		flags;
+	unsigned		temp, size;
+	char			*next;
 	u32			rdata;
 
 	ohci = buf->ohci;
@@ -597,7 +596,7 @@ show_list (काष्ठा ohci_hcd *ohci, अक्षर *buf, माप_�
 
 	spin_lock_irqsave (&ohci->lock, flags);
 
-	/* dump driver info, then रेजिस्टरs in spec order */
+	/* dump driver info, then registers in spec order */
 
 	ohci_dbg_nosw(ohci, &next, &size,
 		"bus %s, device %s\n"
@@ -608,48 +607,48 @@ show_list (काष्ठा ohci_hcd *ohci, अक्षर *buf, माप_�
 		hcd->product_desc,
 		hcd_name);
 
-	अगर (!HCD_HW_ACCESSIBLE(hcd)) अणु
-		size -= scnम_लिखो (next, size,
+	if (!HCD_HW_ACCESSIBLE(hcd)) {
+		size -= scnprintf (next, size,
 			"SUSPENDED (no register access)\n");
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	ohci_dump_status(ohci, &next, &size);
 
 	/* hcca */
-	अगर (ohci->hcca)
+	if (ohci->hcca)
 		ohci_dbg_nosw(ohci, &next, &size,
 			"hcca frame 0x%04x\n", ohci_frame_no(ohci));
 
-	/* other रेजिस्टरs mostly affect frame timings */
-	rdata = ohci_पढ़ोl (ohci, &regs->fmपूर्णांकerval);
-	temp = scnम_लिखो (next, size,
+	/* other registers mostly affect frame timings */
+	rdata = ohci_readl (ohci, &regs->fminterval);
+	temp = scnprintf (next, size,
 			"fmintvl 0x%08x %sFSMPS=0x%04x FI=0x%04x\n",
 			rdata, (rdata >> 31) ? "FIT " : "",
 			(rdata >> 16) & 0xefff, rdata & 0xffff);
 	size -= temp;
 	next += temp;
 
-	rdata = ohci_पढ़ोl (ohci, &regs->fmreमुख्यing);
-	temp = scnम_लिखो (next, size, "fmremaining 0x%08x %sFR=0x%04x\n",
+	rdata = ohci_readl (ohci, &regs->fmremaining);
+	temp = scnprintf (next, size, "fmremaining 0x%08x %sFR=0x%04x\n",
 			rdata, (rdata >> 31) ? "FRT " : "",
 			rdata & 0x3fff);
 	size -= temp;
 	next += temp;
 
-	rdata = ohci_पढ़ोl (ohci, &regs->periodicstart);
-	temp = scnम_लिखो (next, size, "periodicstart 0x%04x\n",
+	rdata = ohci_readl (ohci, &regs->periodicstart);
+	temp = scnprintf (next, size, "periodicstart 0x%04x\n",
 			rdata & 0x3fff);
 	size -= temp;
 	next += temp;
 
-	rdata = ohci_पढ़ोl (ohci, &regs->lsthresh);
-	temp = scnम_लिखो (next, size, "lsthresh 0x%04x\n",
+	rdata = ohci_readl (ohci, &regs->lsthresh);
+	temp = scnprintf (next, size, "lsthresh 0x%04x\n",
 			rdata & 0x3fff);
 	size -= temp;
 	next += temp;
 
-	temp = scnम_लिखो (next, size, "hub poll timer %s\n",
+	temp = scnprintf (next, size, "hub poll timer %s\n",
 			HCD_POLL_RH(ohci_to_hcd(ohci)) ? "ON" : "off");
 	size -= temp;
 	next += temp;
@@ -657,113 +656,113 @@ show_list (काष्ठा ohci_hcd *ohci, अक्षर *buf, माप_�
 	/* roothub */
 	ohci_dump_roothub (ohci, 1, &next, &size);
 
-करोne:
+done:
 	spin_unlock_irqrestore (&ohci->lock, flags);
 
-	वापस PAGE_SIZE - size;
-पूर्ण
+	return PAGE_SIZE - size;
+}
 
-अटल काष्ठा debug_buffer *alloc_buffer(काष्ठा ohci_hcd *ohci,
-				sमाप_प्रकार (*fill_func)(काष्ठा debug_buffer *))
-अणु
-	काष्ठा debug_buffer *buf;
+static struct debug_buffer *alloc_buffer(struct ohci_hcd *ohci,
+				ssize_t (*fill_func)(struct debug_buffer *))
+{
+	struct debug_buffer *buf;
 
-	buf = kzalloc(माप(काष्ठा debug_buffer), GFP_KERNEL);
+	buf = kzalloc(sizeof(struct debug_buffer), GFP_KERNEL);
 
-	अगर (buf) अणु
+	if (buf) {
 		buf->ohci = ohci;
 		buf->fill_func = fill_func;
 		mutex_init(&buf->mutex);
-	पूर्ण
+	}
 
-	वापस buf;
-पूर्ण
+	return buf;
+}
 
-अटल पूर्णांक fill_buffer(काष्ठा debug_buffer *buf)
-अणु
-	पूर्णांक ret = 0;
+static int fill_buffer(struct debug_buffer *buf)
+{
+	int ret = 0;
 
-	अगर (!buf->page)
-		buf->page = (अक्षर *)get_zeroed_page(GFP_KERNEL);
+	if (!buf->page)
+		buf->page = (char *)get_zeroed_page(GFP_KERNEL);
 
-	अगर (!buf->page) अणु
+	if (!buf->page) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = buf->fill_func(buf);
 
-	अगर (ret >= 0) अणु
+	if (ret >= 0) {
 		buf->count = ret;
 		ret = 0;
-	पूर्ण
+	}
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार debug_output(काष्ठा file *file, अक्षर __user *user_buf,
-			माप_प्रकार len, loff_t *offset)
-अणु
-	काष्ठा debug_buffer *buf = file->निजी_data;
-	पूर्णांक ret = 0;
+static ssize_t debug_output(struct file *file, char __user *user_buf,
+			size_t len, loff_t *offset)
+{
+	struct debug_buffer *buf = file->private_data;
+	int ret = 0;
 
 	mutex_lock(&buf->mutex);
-	अगर (buf->count == 0) अणु
+	if (buf->count == 0) {
 		ret = fill_buffer(buf);
-		अगर (ret != 0) अणु
+		if (ret != 0) {
 			mutex_unlock(&buf->mutex);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 	mutex_unlock(&buf->mutex);
 
-	ret = simple_पढ़ो_from_buffer(user_buf, len, offset,
+	ret = simple_read_from_buffer(user_buf, len, offset,
 				      buf->page, buf->count);
 
 out:
-	वापस ret;
+	return ret;
 
-पूर्ण
+}
 
-अटल पूर्णांक debug_बंद(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा debug_buffer *buf = file->निजी_data;
+static int debug_close(struct inode *inode, struct file *file)
+{
+	struct debug_buffer *buf = file->private_data;
 
-	अगर (buf) अणु
-		अगर (buf->page)
-			मुक्त_page((अचिन्हित दीर्घ)buf->page);
-		kमुक्त(buf);
-	पूर्ण
+	if (buf) {
+		if (buf->page)
+			free_page((unsigned long)buf->page);
+		kfree(buf);
+	}
 
-	वापस 0;
-पूर्ण
-अटल पूर्णांक debug_async_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	file->निजी_data = alloc_buffer(inode->i_निजी, fill_async_buffer);
+	return 0;
+}
+static int debug_async_open(struct inode *inode, struct file *file)
+{
+	file->private_data = alloc_buffer(inode->i_private, fill_async_buffer);
 
-	वापस file->निजी_data ? 0 : -ENOMEM;
-पूर्ण
+	return file->private_data ? 0 : -ENOMEM;
+}
 
-अटल पूर्णांक debug_periodic_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	file->निजी_data = alloc_buffer(inode->i_निजी,
+static int debug_periodic_open(struct inode *inode, struct file *file)
+{
+	file->private_data = alloc_buffer(inode->i_private,
 					  fill_periodic_buffer);
 
-	वापस file->निजी_data ? 0 : -ENOMEM;
-पूर्ण
+	return file->private_data ? 0 : -ENOMEM;
+}
 
-अटल पूर्णांक debug_रेजिस्टरs_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	file->निजी_data = alloc_buffer(inode->i_निजी,
-					  fill_रेजिस्टरs_buffer);
+static int debug_registers_open(struct inode *inode, struct file *file)
+{
+	file->private_data = alloc_buffer(inode->i_private,
+					  fill_registers_buffer);
 
-	वापस file->निजी_data ? 0 : -ENOMEM;
-पूर्ण
-अटल अंतरभूत व्योम create_debug_files (काष्ठा ohci_hcd *ohci)
-अणु
-	काष्ठा usb_bus *bus = &ohci_to_hcd(ohci)->self;
-	काष्ठा dentry *root;
+	return file->private_data ? 0 : -ENOMEM;
+}
+static inline void create_debug_files (struct ohci_hcd *ohci)
+{
+	struct usb_bus *bus = &ohci_to_hcd(ohci)->self;
+	struct dentry *root;
 
 	root = debugfs_create_dir(bus->bus_name, ohci_debug_root);
 	ohci->debug_dir = root;
@@ -772,15 +771,15 @@ out:
 	debugfs_create_file("periodic", S_IRUGO, root, ohci,
 			    &debug_periodic_fops);
 	debugfs_create_file("registers", S_IRUGO, root, ohci,
-			    &debug_रेजिस्टरs_fops);
+			    &debug_registers_fops);
 
 	ohci_dbg (ohci, "created debug files\n");
-पूर्ण
+}
 
-अटल अंतरभूत व्योम हटाओ_debug_files (काष्ठा ohci_hcd *ohci)
-अणु
-	debugfs_हटाओ_recursive(ohci->debug_dir);
-पूर्ण
+static inline void remove_debug_files (struct ohci_hcd *ohci)
+{
+	debugfs_remove_recursive(ohci->debug_dir);
+}
 
 /*-------------------------------------------------------------------------*/
 

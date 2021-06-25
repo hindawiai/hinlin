@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
     Conexant cx24116/cx24118 - DVBS/S2 Satellite demod/tuner driver
 
@@ -7,40 +6,40 @@
 
 */
 
-#अगर_अघोषित CX24116_H
-#घोषणा CX24116_H
+#ifndef CX24116_H
+#define CX24116_H
 
-#समावेश <linux/dvb/frontend.h>
+#include <linux/dvb/frontend.h>
 
-काष्ठा cx24116_config अणु
+struct cx24116_config {
 	/* the demodulator's i2c address */
 	u8 demod_address;
 
-	/* Need to set device param क्रम start_dma */
-	पूर्णांक (*set_ts_params)(काष्ठा dvb_frontend *fe, पूर्णांक is_punctured);
+	/* Need to set device param for start_dma */
+	int (*set_ts_params)(struct dvb_frontend *fe, int is_punctured);
 
 	/* Need to reset device during firmware loading */
-	पूर्णांक (*reset_device)(काष्ठा dvb_frontend *fe);
+	int (*reset_device)(struct dvb_frontend *fe);
 
 	/* Need to set MPEG parameters */
 	u8 mpg_clk_pos_pol:0x02;
 
-	/* max bytes I2C provider can ग_लिखो at once */
+	/* max bytes I2C provider can write at once */
 	u16 i2c_wr_max;
-पूर्ण;
+};
 
-#अगर IS_REACHABLE(CONFIG_DVB_CX24116)
-बाह्य काष्ठा dvb_frontend *cx24116_attach(
-	स्थिर काष्ठा cx24116_config *config,
-	काष्ठा i2c_adapter *i2c);
-#अन्यथा
-अटल अंतरभूत काष्ठा dvb_frontend *cx24116_attach(
-	स्थिर काष्ठा cx24116_config *config,
-	काष्ठा i2c_adapter *i2c)
-अणु
-	prपूर्णांकk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
-	वापस शून्य;
-पूर्ण
-#पूर्ण_अगर
+#if IS_REACHABLE(CONFIG_DVB_CX24116)
+extern struct dvb_frontend *cx24116_attach(
+	const struct cx24116_config *config,
+	struct i2c_adapter *i2c);
+#else
+static inline struct dvb_frontend *cx24116_attach(
+	const struct cx24116_config *config,
+	struct i2c_adapter *i2c)
+{
+	printk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
+	return NULL;
+}
+#endif
 
-#पूर्ण_अगर /* CX24116_H */
+#endif /* CX24116_H */

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * (C) 2001 Clemson University and The University of Chicago
  *
@@ -9,25 +8,25 @@
  * See COPYING in top-level directory.
  */
 
-#समावेश "protocol.h"
-#समावेश "orangefs-kernel.h"
-#समावेश "orangefs-dev-proto.h"
-#समावेश "orangefs-bufmap.h"
-#समावेश "orangefs-debugfs.h"
+#include "protocol.h"
+#include "orangefs-kernel.h"
+#include "orangefs-dev-proto.h"
+#include "orangefs-bufmap.h"
+#include "orangefs-debugfs.h"
 
-#समावेश <linux/debugfs.h>
-#समावेश <linux/slab.h>
+#include <linux/debugfs.h>
+#include <linux/slab.h>
 
 /* this file implements the /dev/pvfs2-req device node */
 
-uपूर्णांक32_t orangefs_userspace_version;
+uint32_t orangefs_userspace_version;
 
-अटल पूर्णांक खोलो_access_count;
+static int open_access_count;
 
-अटल DEFINE_MUTEX(devreq_mutex);
+static DEFINE_MUTEX(devreq_mutex);
 
-#घोषणा DUMP_DEVICE_ERROR()                                                   \
-करो अणु                                                                          \
+#define DUMP_DEVICE_ERROR()                                                   \
+do {                                                                          \
 	gossip_err("*****************************************************\n");\
 	gossip_err("ORANGEFS Device Error:  You cannot open the device file ");  \
 	gossip_err("\n/dev/%s more than once.  Please make sure that\nthere " \
@@ -37,114 +36,114 @@ uपूर्णांक32_t orangefs_userspace_version;
 	gossip_err("For example, you can use the lsof program as follows:\n");\
 	gossip_err("'lsof | grep %s' (run this as root)\n",                   \
 		   ORANGEFS_REQDEVICE_NAME);                                     \
-	gossip_err("  open_access_count = %d\n", खोलो_access_count);          \
+	gossip_err("  open_access_count = %d\n", open_access_count);          \
 	gossip_err("*****************************************************\n");\
-पूर्ण जबतक (0)
+} while (0)
 
-अटल पूर्णांक hash_func(__u64 tag, पूर्णांक table_size)
-अणु
-	वापस करो_भाग(tag, (अचिन्हित पूर्णांक)table_size);
-पूर्ण
+static int hash_func(__u64 tag, int table_size)
+{
+	return do_div(tag, (unsigned int)table_size);
+}
 
-अटल व्योम orangefs_devreq_add_op(काष्ठा orangefs_kernel_op_s *op)
-अणु
-	पूर्णांक index = hash_func(op->tag, hash_table_size);
+static void orangefs_devreq_add_op(struct orangefs_kernel_op_s *op)
+{
+	int index = hash_func(op->tag, hash_table_size);
 
 	list_add_tail(&op->list, &orangefs_htable_ops_in_progress[index]);
-पूर्ण
+}
 
 /*
- * find the op with this tag and हटाओ it from the in progress
+ * find the op with this tag and remove it from the in progress
  * hash table.
  */
-अटल काष्ठा orangefs_kernel_op_s *orangefs_devreq_हटाओ_op(__u64 tag)
-अणु
-	काष्ठा orangefs_kernel_op_s *op, *next;
-	पूर्णांक index;
+static struct orangefs_kernel_op_s *orangefs_devreq_remove_op(__u64 tag)
+{
+	struct orangefs_kernel_op_s *op, *next;
+	int index;
 
 	index = hash_func(tag, hash_table_size);
 
 	spin_lock(&orangefs_htable_ops_in_progress_lock);
-	list_क्रम_each_entry_safe(op,
+	list_for_each_entry_safe(op,
 				 next,
 				 &orangefs_htable_ops_in_progress[index],
-				 list) अणु
-		अगर (op->tag == tag && !op_state_purged(op) &&
-		    !op_state_given_up(op)) अणु
+				 list) {
+		if (op->tag == tag && !op_state_purged(op) &&
+		    !op_state_given_up(op)) {
 			list_del_init(&op->list);
 			spin_unlock(&orangefs_htable_ops_in_progress_lock);
-			वापस op;
-		पूर्ण
-	पूर्ण
+			return op;
+		}
+	}
 
 	spin_unlock(&orangefs_htable_ops_in_progress_lock);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /* Returns whether any FS are still pending remounted */
-अटल पूर्णांक mark_all_pending_mounts(व्योम)
-अणु
-	पूर्णांक unmounted = 1;
-	काष्ठा orangefs_sb_info_s *orangefs_sb = शून्य;
+static int mark_all_pending_mounts(void)
+{
+	int unmounted = 1;
+	struct orangefs_sb_info_s *orangefs_sb = NULL;
 
 	spin_lock(&orangefs_superblocks_lock);
-	list_क्रम_each_entry(orangefs_sb, &orangefs_superblocks, list) अणु
-		/* All of these file प्रणाली require a remount */
+	list_for_each_entry(orangefs_sb, &orangefs_superblocks, list) {
+		/* All of these file system require a remount */
 		orangefs_sb->mount_pending = 1;
 		unmounted = 0;
-	पूर्ण
+	}
 	spin_unlock(&orangefs_superblocks_lock);
-	वापस unmounted;
-पूर्ण
+	return unmounted;
+}
 
 /*
- * Determine अगर a given file प्रणाली needs to be remounted or not
+ * Determine if a given file system needs to be remounted or not
  *  Returns -1 on error
- *           0 अगर alपढ़ोy mounted
- *           1 अगर needs remount
+ *           0 if already mounted
+ *           1 if needs remount
  */
-अटल पूर्णांक fs_mount_pending(__s32 fsid)
-अणु
-	पूर्णांक mount_pending = -1;
-	काष्ठा orangefs_sb_info_s *orangefs_sb = शून्य;
+static int fs_mount_pending(__s32 fsid)
+{
+	int mount_pending = -1;
+	struct orangefs_sb_info_s *orangefs_sb = NULL;
 
 	spin_lock(&orangefs_superblocks_lock);
-	list_क्रम_each_entry(orangefs_sb, &orangefs_superblocks, list) अणु
-		अगर (orangefs_sb->fs_id == fsid) अणु
+	list_for_each_entry(orangefs_sb, &orangefs_superblocks, list) {
+		if (orangefs_sb->fs_id == fsid) {
 			mount_pending = orangefs_sb->mount_pending;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	spin_unlock(&orangefs_superblocks_lock);
-	वापस mount_pending;
-पूर्ण
+	return mount_pending;
+}
 
-अटल पूर्णांक orangefs_devreq_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	पूर्णांक ret = -EINVAL;
+static int orangefs_devreq_open(struct inode *inode, struct file *file)
+{
+	int ret = -EINVAL;
 
-	/* in order to ensure that the fileप्रणाली driver sees correct UIDs */
-	अगर (file->f_cred->user_ns != &init_user_ns) अणु
+	/* in order to ensure that the filesystem driver sees correct UIDs */
+	if (file->f_cred->user_ns != &init_user_ns) {
 		gossip_err("%s: device cannot be opened outside init_user_ns\n",
 			   __func__);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (!(file->f_flags & O_NONBLOCK)) अणु
+	if (!(file->f_flags & O_NONBLOCK)) {
 		gossip_err("%s: device cannot be opened in blocking mode\n",
 			   __func__);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	ret = -EACCES;
 	gossip_debug(GOSSIP_DEV_DEBUG, "client-core: opening device\n");
 	mutex_lock(&devreq_mutex);
 
-	अगर (खोलो_access_count == 0) अणु
-		खोलो_access_count = 1;
+	if (open_access_count == 0) {
+		open_access_count = 1;
 		ret = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		DUMP_DEVICE_ERROR();
-	पूर्ण
+	}
 	mutex_unlock(&devreq_mutex);
 
 out:
@@ -152,59 +151,59 @@ out:
 	gossip_debug(GOSSIP_DEV_DEBUG,
 		     "pvfs2-client-core: open device complete (ret = %d)\n",
 		     ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* Function क्रम पढ़ो() callers पूर्णांकo the device */
-अटल sमाप_प्रकार orangefs_devreq_पढ़ो(काष्ठा file *file,
-				 अक्षर __user *buf,
-				 माप_प्रकार count, loff_t *offset)
-अणु
-	काष्ठा orangefs_kernel_op_s *op, *temp;
+/* Function for read() callers into the device */
+static ssize_t orangefs_devreq_read(struct file *file,
+				 char __user *buf,
+				 size_t count, loff_t *offset)
+{
+	struct orangefs_kernel_op_s *op, *temp;
 	__s32 proto_ver = ORANGEFS_KERNEL_PROTO_VERSION;
-	अटल __s32 magic = ORANGEFS_DEVREQ_MAGIC;
-	काष्ठा orangefs_kernel_op_s *cur_op;
-	अचिन्हित दीर्घ ret;
+	static __s32 magic = ORANGEFS_DEVREQ_MAGIC;
+	struct orangefs_kernel_op_s *cur_op;
+	unsigned long ret;
 
-	/* We करो not support blocking IO. */
-	अगर (!(file->f_flags & O_NONBLOCK)) अणु
+	/* We do not support blocking IO. */
+	if (!(file->f_flags & O_NONBLOCK)) {
 		gossip_err("%s: blocking read from client-core.\n",
 			   __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/*
-	 * The client will करो an ioctl to find MAX_DEV_REQ_UPSIZE, then
-	 * always पढ़ो with that size buffer.
+	 * The client will do an ioctl to find MAX_DEV_REQ_UPSIZE, then
+	 * always read with that size buffer.
 	 */
-	अगर (count != MAX_DEV_REQ_UPSIZE) अणु
+	if (count != MAX_DEV_REQ_UPSIZE) {
 		gossip_err("orangefs: client-core tried to read wrong size\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* Check क्रम an empty list beक्रमe locking. */
-	अगर (list_empty(&orangefs_request_list))
-		वापस -EAGAIN;
+	/* Check for an empty list before locking. */
+	if (list_empty(&orangefs_request_list))
+		return -EAGAIN;
 
 restart:
-	cur_op = शून्य;
-	/* Get next op (अगर any) from top of list. */
+	cur_op = NULL;
+	/* Get next op (if any) from top of list. */
 	spin_lock(&orangefs_request_list_lock);
-	list_क्रम_each_entry_safe(op, temp, &orangefs_request_list, list) अणु
+	list_for_each_entry_safe(op, temp, &orangefs_request_list, list) {
 		__s32 fsid;
-		/* This lock is held past the end of the loop when we अवरोध. */
+		/* This lock is held past the end of the loop when we break. */
 		spin_lock(&op->lock);
-		अगर (unlikely(op_state_purged(op) || op_state_given_up(op))) अणु
+		if (unlikely(op_state_purged(op) || op_state_given_up(op))) {
 			spin_unlock(&op->lock);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		fsid = fsid_of_op(op);
-		अगर (fsid != ORANGEFS_FS_ID_शून्य) अणु
-			पूर्णांक ret;
-			/* Skip ops whose fileप्रणाली needs to be mounted. */
+		if (fsid != ORANGEFS_FS_ID_NULL) {
+			int ret;
+			/* Skip ops whose filesystem needs to be mounted. */
 			ret = fs_mount_pending(fsid);
-			अगर (ret == 1) अणु
+			if (ret == 1) {
 				gossip_debug(GOSSIP_DEV_DEBUG,
 				    "%s: mount pending, skipping op tag "
 				    "%llu %s\n",
@@ -212,22 +211,22 @@ restart:
 				    llu(op->tag),
 				    get_opname_string(op));
 				spin_unlock(&op->lock);
-				जारी;
+				continue;
 			/*
-			 * Skip ops whose fileप्रणाली we करोn't know about unless
-			 * it is being mounted or unmounted.  It is possible क्रम
-			 * a fileप्रणाली we करोn't know about to be unmounted अगर
+			 * Skip ops whose filesystem we don't know about unless
+			 * it is being mounted or unmounted.  It is possible for
+			 * a filesystem we don't know about to be unmounted if
 			 * it fails to mount in the kernel after userspace has
 			 * been sent the mount request.
 			 */
 			/* XXX: is there a better way to detect this? */
-			पूर्ण अन्यथा अगर (ret == -1 &&
+			} else if (ret == -1 &&
 				   !(op->upcall.type ==
 					ORANGEFS_VFS_OP_FS_MOUNT ||
 				     op->upcall.type ==
 					ORANGEFS_VFS_OP_GETATTR ||
 				     op->upcall.type ==
-					ORANGEFS_VFS_OP_FS_UMOUNT)) अणु
+					ORANGEFS_VFS_OP_FS_UMOUNT)) {
 				gossip_debug(GOSSIP_DEV_DEBUG,
 				    "orangefs: skipping op tag %llu %s\n",
 				    llu(op->tag), get_opname_string(op));
@@ -235,26 +234,26 @@ restart:
 				    "orangefs: ERROR: fs_mount_pending %d\n",
 				    fsid);
 				spin_unlock(&op->lock);
-				जारी;
-			पूर्ण
-		पूर्ण
+				continue;
+			}
+		}
 		/*
-		 * Either this op करोes not pertain to a fileप्रणाली, is mounting
-		 * a fileप्रणाली, or pertains to a mounted fileप्रणाली. Let it
+		 * Either this op does not pertain to a filesystem, is mounting
+		 * a filesystem, or pertains to a mounted filesystem. Let it
 		 * through.
 		 */
 		cur_op = op;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	/*
-	 * At this poपूर्णांक we either have a valid op and can जारी or have not
+	 * At this point we either have a valid op and can continue or have not
 	 * found an op and must ask the client to try again later.
 	 */
-	अगर (!cur_op) अणु
+	if (!cur_op) {
 		spin_unlock(&orangefs_request_list_lock);
-		वापस -EAGAIN;
-	पूर्ण
+		return -EAGAIN;
+	}
 
 	gossip_debug(GOSSIP_DEV_DEBUG, "%s: reading op tag %llu %s\n",
 		     __func__,
@@ -263,15 +262,15 @@ restart:
 
 	/*
 	 * Such an op should never be on the list in the first place. If so, we
-	 * will पात.
+	 * will abort.
 	 */
-	अगर (op_state_in_progress(cur_op) || op_state_serviced(cur_op)) अणु
+	if (op_state_in_progress(cur_op) || op_state_serviced(cur_op)) {
 		gossip_err("orangefs: ERROR: Current op already queued.\n");
 		list_del_init(&cur_op->list);
 		spin_unlock(&cur_op->lock);
 		spin_unlock(&orangefs_request_list_lock);
-		वापस -EAGAIN;
-	पूर्ण
+		return -EAGAIN;
+	}
 
 	list_del_init(&cur_op->list);
 	spin_unlock(&orangefs_request_list_lock);
@@ -279,31 +278,31 @@ restart:
 	spin_unlock(&cur_op->lock);
 
 	/* Push the upcall out. */
-	ret = copy_to_user(buf, &proto_ver, माप(__s32));
-	अगर (ret != 0)
-		जाओ error;
-	ret = copy_to_user(buf + माप(__s32), &magic, माप(__s32));
-	अगर (ret != 0)
-		जाओ error;
-	ret = copy_to_user(buf + 2 * माप(__s32),
+	ret = copy_to_user(buf, &proto_ver, sizeof(__s32));
+	if (ret != 0)
+		goto error;
+	ret = copy_to_user(buf + sizeof(__s32), &magic, sizeof(__s32));
+	if (ret != 0)
+		goto error;
+	ret = copy_to_user(buf + 2 * sizeof(__s32),
 		&cur_op->tag,
-		माप(__u64));
-	अगर (ret != 0)
-		जाओ error;
-	ret = copy_to_user(buf + 2 * माप(__s32) + माप(__u64),
+		sizeof(__u64));
+	if (ret != 0)
+		goto error;
+	ret = copy_to_user(buf + 2 * sizeof(__s32) + sizeof(__u64),
 		&cur_op->upcall,
-		माप(काष्ठा orangefs_upcall_s));
-	अगर (ret != 0)
-		जाओ error;
+		sizeof(struct orangefs_upcall_s));
+	if (ret != 0)
+		goto error;
 
 	spin_lock(&orangefs_htable_ops_in_progress_lock);
 	spin_lock(&cur_op->lock);
-	अगर (unlikely(op_state_given_up(cur_op))) अणु
+	if (unlikely(op_state_given_up(cur_op))) {
 		spin_unlock(&cur_op->lock);
 		spin_unlock(&orangefs_htable_ops_in_progress_lock);
-		complete(&cur_op->रुकोq);
-		जाओ restart;
-	पूर्ण
+		complete(&cur_op->waitq);
+		goto restart;
+	}
 
 	/*
 	 * Set the operation to be in progress and move it between lists since
@@ -320,8 +319,8 @@ restart:
 	spin_unlock(&cur_op->lock);
 	spin_unlock(&orangefs_htable_ops_in_progress_lock);
 
-	/* The client only asks to पढ़ो one size buffer. */
-	वापस MAX_DEV_REQ_UPSIZE;
+	/* The client only asks to read one size buffer. */
+	return MAX_DEV_REQ_UPSIZE;
 error:
 	/*
 	 * We were unable to copy the op data to the client. Put the op back in
@@ -331,8 +330,8 @@ error:
 	gossip_err("orangefs: Failed to copy data to user space\n");
 	spin_lock(&orangefs_request_list_lock);
 	spin_lock(&cur_op->lock);
-	अगर (likely(!op_state_given_up(cur_op))) अणु
-		set_op_state_रुकोing(cur_op);
+	if (likely(!op_state_given_up(cur_op))) {
+		set_op_state_waiting(cur_op);
 		gossip_debug(GOSSIP_DEV_DEBUG,
 			     "%s: 2 op:%s: op_state:%d: process:%s:\n",
 			     __func__,
@@ -341,156 +340,156 @@ error:
 			     current->comm);
 		list_add(&cur_op->list, &orangefs_request_list);
 		spin_unlock(&cur_op->lock);
-	पूर्ण अन्यथा अणु
+	} else {
 		spin_unlock(&cur_op->lock);
-		complete(&cur_op->रुकोq);
-	पूर्ण
+		complete(&cur_op->waitq);
+	}
 	spin_unlock(&orangefs_request_list_lock);
-	वापस -EFAULT;
-पूर्ण
+	return -EFAULT;
+}
 
 /*
- * Function क्रम ग_लिखोv() callers पूर्णांकo the device.
+ * Function for writev() callers into the device.
  *
  * Userspace should have written:
  *  - __u32 version
  *  - __u32 magic
  *  - __u64 tag
- *  - काष्ठा orangefs_करोwncall_s
- *  - trailer buffer (in the हाल of READसूची operations)
+ *  - struct orangefs_downcall_s
+ *  - trailer buffer (in the case of READDIR operations)
  */
-अटल sमाप_प्रकार orangefs_devreq_ग_लिखो_iter(काष्ठा kiocb *iocb,
-				      काष्ठा iov_iter *iter)
-अणु
-	sमाप_प्रकार ret;
-	काष्ठा orangefs_kernel_op_s *op = शून्य;
-	काष्ठा अणु
+static ssize_t orangefs_devreq_write_iter(struct kiocb *iocb,
+				      struct iov_iter *iter)
+{
+	ssize_t ret;
+	struct orangefs_kernel_op_s *op = NULL;
+	struct {
 		__u32 version;
 		__u32 magic;
 		__u64 tag;
-	पूर्ण head;
-	पूर्णांक total = ret = iov_iter_count(iter);
-	पूर्णांक करोwncall_size = माप(काष्ठा orangefs_करोwncall_s);
-	पूर्णांक head_size = माप(head);
+	} head;
+	int total = ret = iov_iter_count(iter);
+	int downcall_size = sizeof(struct orangefs_downcall_s);
+	int head_size = sizeof(head);
 
 	gossip_debug(GOSSIP_DEV_DEBUG, "%s: total:%d: ret:%zd:\n",
 		     __func__,
 		     total,
 		     ret);
 
-        अगर (total < MAX_DEV_REQ_DOWNSIZE) अणु
+        if (total < MAX_DEV_REQ_DOWNSIZE) {
 		gossip_err("%s: total:%d: must be at least:%u:\n",
 			   __func__,
 			   total,
-			   (अचिन्हित पूर्णांक) MAX_DEV_REQ_DOWNSIZE);
-		वापस -EFAULT;
-	पूर्ण
+			   (unsigned int) MAX_DEV_REQ_DOWNSIZE);
+		return -EFAULT;
+	}
 
-	अगर (!copy_from_iter_full(&head, head_size, iter)) अणु
+	if (!copy_from_iter_full(&head, head_size, iter)) {
 		gossip_err("%s: failed to copy head.\n", __func__);
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
-	अगर (head.version < ORANGEFS_MINIMUM_USERSPACE_VERSION) अणु
+	if (head.version < ORANGEFS_MINIMUM_USERSPACE_VERSION) {
 		gossip_err("%s: userspace claims version"
 			   "%d, minimum version required: %d.\n",
 			   __func__,
 			   head.version,
 			   ORANGEFS_MINIMUM_USERSPACE_VERSION);
-		वापस -EPROTO;
-	पूर्ण
+		return -EPROTO;
+	}
 
-	अगर (head.magic != ORANGEFS_DEVREQ_MAGIC) अणु
+	if (head.magic != ORANGEFS_DEVREQ_MAGIC) {
 		gossip_err("Error: Device magic number does not match.\n");
-		वापस -EPROTO;
-	पूर्ण
+		return -EPROTO;
+	}
 
-	अगर (!orangefs_userspace_version) अणु
+	if (!orangefs_userspace_version) {
 		orangefs_userspace_version = head.version;
-	पूर्ण अन्यथा अगर (orangefs_userspace_version != head.version) अणु
+	} else if (orangefs_userspace_version != head.version) {
 		gossip_err("Error: userspace version changes\n");
-		वापस -EPROTO;
-	पूर्ण
+		return -EPROTO;
+	}
 
-	/* हटाओ the op from the in progress hash table */
-	op = orangefs_devreq_हटाओ_op(head.tag);
-	अगर (!op) अणु
+	/* remove the op from the in progress hash table */
+	op = orangefs_devreq_remove_op(head.tag);
+	if (!op) {
 		gossip_debug(GOSSIP_DEV_DEBUG,
 			     "%s: No one's waiting for tag %llu\n",
 			     __func__, llu(head.tag));
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (!copy_from_iter_full(&op->करोwncall, करोwncall_size, iter)) अणु
+	if (!copy_from_iter_full(&op->downcall, downcall_size, iter)) {
 		gossip_err("%s: failed to copy downcall.\n", __func__);
-		जाओ Efault;
-	पूर्ण
+		goto Efault;
+	}
 
-	अगर (op->करोwncall.status)
-		जाओ wakeup;
+	if (op->downcall.status)
+		goto wakeup;
 
 	/*
-	 * We've successfully peeled off the head and the करोwncall.
-	 * Something has gone awry अगर total करोesn't equal the
-	 * sum of head_size, करोwncall_size and trailer_size.
+	 * We've successfully peeled off the head and the downcall.
+	 * Something has gone awry if total doesn't equal the
+	 * sum of head_size, downcall_size and trailer_size.
 	 */
-	अगर ((head_size + करोwncall_size + op->करोwncall.trailer_size) != total) अणु
+	if ((head_size + downcall_size + op->downcall.trailer_size) != total) {
 		gossip_err("%s: funky write, head_size:%d"
 			   ": downcall_size:%d: trailer_size:%lld"
 			   ": total size:%d:\n",
 			   __func__,
 			   head_size,
-			   करोwncall_size,
-			   op->करोwncall.trailer_size,
+			   downcall_size,
+			   op->downcall.trailer_size,
 			   total);
-		जाओ Efault;
-	पूर्ण
+		goto Efault;
+	}
 
-	/* Only READसूची operations should have trailers. */
-	अगर ((op->करोwncall.type != ORANGEFS_VFS_OP_READसूची) &&
-	    (op->करोwncall.trailer_size != 0)) अणु
+	/* Only READDIR operations should have trailers. */
+	if ((op->downcall.type != ORANGEFS_VFS_OP_READDIR) &&
+	    (op->downcall.trailer_size != 0)) {
 		gossip_err("%s: %x operation with trailer.",
 			   __func__,
-			   op->करोwncall.type);
-		जाओ Efault;
-	पूर्ण
+			   op->downcall.type);
+		goto Efault;
+	}
 
-	/* READसूची operations should always have trailers. */
-	अगर ((op->करोwncall.type == ORANGEFS_VFS_OP_READसूची) &&
-	    (op->करोwncall.trailer_size == 0)) अणु
+	/* READDIR operations should always have trailers. */
+	if ((op->downcall.type == ORANGEFS_VFS_OP_READDIR) &&
+	    (op->downcall.trailer_size == 0)) {
 		gossip_err("%s: %x operation with no trailer.",
 			   __func__,
-			   op->करोwncall.type);
-		जाओ Efault;
-	पूर्ण
+			   op->downcall.type);
+		goto Efault;
+	}
 
-	अगर (op->करोwncall.type != ORANGEFS_VFS_OP_READसूची)
-		जाओ wakeup;
+	if (op->downcall.type != ORANGEFS_VFS_OP_READDIR)
+		goto wakeup;
 
-	op->करोwncall.trailer_buf = vzalloc(op->करोwncall.trailer_size);
-	अगर (!op->करोwncall.trailer_buf)
-		जाओ Enomem;
+	op->downcall.trailer_buf = vzalloc(op->downcall.trailer_size);
+	if (!op->downcall.trailer_buf)
+		goto Enomem;
 
-	अगर (!copy_from_iter_full(op->करोwncall.trailer_buf,
-			         op->करोwncall.trailer_size, iter)) अणु
+	if (!copy_from_iter_full(op->downcall.trailer_buf,
+			         op->downcall.trailer_size, iter)) {
 		gossip_err("%s: failed to copy trailer.\n", __func__);
-		vमुक्त(op->करोwncall.trailer_buf);
-		जाओ Efault;
-	पूर्ण
+		vfree(op->downcall.trailer_buf);
+		goto Efault;
+	}
 
 wakeup:
 	/*
-	 * Return to vfs रुकोqueue, and back to service_operation
-	 * through रुको_क्रम_matching_करोwncall.
+	 * Return to vfs waitqueue, and back to service_operation
+	 * through wait_for_matching_downcall.
 	 */
 	spin_lock(&op->lock);
-	अगर (unlikely(op_is_cancel(op))) अणु
+	if (unlikely(op_is_cancel(op))) {
 		spin_unlock(&op->lock);
 		put_cancel(op);
-	पूर्ण अन्यथा अगर (unlikely(op_state_given_up(op))) अणु
+	} else if (unlikely(op_state_given_up(op))) {
 		spin_unlock(&op->lock);
-		complete(&op->रुकोq);
-	पूर्ण अन्यथा अणु
+		complete(&op->waitq);
+	} else {
 		set_op_state_serviced(op);
 		gossip_debug(GOSSIP_DEV_DEBUG,
 			     "%s: op:%s: op_state:%d: process:%s:\n",
@@ -499,31 +498,31 @@ wakeup:
 			     op->op_state,
 			     current->comm);
 		spin_unlock(&op->lock);
-	पूर्ण
-	वापस ret;
+	}
+	return ret;
 
 Efault:
-	op->करोwncall.status = -(ORANGEFS_ERROR_BIT | 9);
+	op->downcall.status = -(ORANGEFS_ERROR_BIT | 9);
 	ret = -EFAULT;
-	जाओ wakeup;
+	goto wakeup;
 
 Enomem:
-	op->करोwncall.status = -(ORANGEFS_ERROR_BIT | 8);
+	op->downcall.status = -(ORANGEFS_ERROR_BIT | 8);
 	ret = -ENOMEM;
-	जाओ wakeup;
-पूर्ण
+	goto wakeup;
+}
 
 /*
- * NOTE: माला_लो called when the last reference to this device is dropped.
- * Using the खोलो_access_count variable, we enक्रमce a reference count
- * on this file so that it can be खोलोed by only one process at a समय.
+ * NOTE: gets called when the last reference to this device is dropped.
+ * Using the open_access_count variable, we enforce a reference count
+ * on this file so that it can be opened by only one process at a time.
  * the devreq_mutex is used to make sure all i/o has completed
- * beक्रमe we call orangefs_bufmap_finalize, and similar such tricky
+ * before we call orangefs_bufmap_finalize, and similar such tricky
  * situations
  */
-अटल पूर्णांक orangefs_devreq_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	पूर्णांक unmounted = 0;
+static int orangefs_devreq_release(struct inode *inode, struct file *file)
+{
+	int unmounted = 0;
 
 	gossip_debug(GOSSIP_DEV_DEBUG,
 		     "%s:pvfs2-client-core: exiting, closing device\n",
@@ -532,127 +531,127 @@ Enomem:
 	mutex_lock(&devreq_mutex);
 	orangefs_bufmap_finalize();
 
-	खोलो_access_count = -1;
+	open_access_count = -1;
 
 	unmounted = mark_all_pending_mounts();
 	gossip_debug(GOSSIP_DEV_DEBUG, "ORANGEFS Device Close: Filesystem(s) %s\n",
 		     (unmounted ? "UNMOUNTED" : "MOUNTED"));
 
-	purge_रुकोing_ops();
+	purge_waiting_ops();
 	purge_inprogress_ops();
 
-	orangefs_bufmap_run_करोwn();
+	orangefs_bufmap_run_down();
 
 	gossip_debug(GOSSIP_DEV_DEBUG,
 		     "pvfs2-client-core: device close complete\n");
-	खोलो_access_count = 0;
+	open_access_count = 0;
 	orangefs_userspace_version = 0;
 	mutex_unlock(&devreq_mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक is_daemon_in_service(व्योम)
-अणु
-	पूर्णांक in_service;
+int is_daemon_in_service(void)
+{
+	int in_service;
 
 	/*
-	 * What this function करोes is checks अगर client-core is alive
-	 * based on the access count we मुख्यtain on the device.
+	 * What this function does is checks if client-core is alive
+	 * based on the access count we maintain on the device.
 	 */
 	mutex_lock(&devreq_mutex);
-	in_service = खोलो_access_count == 1 ? 0 : -EIO;
+	in_service = open_access_count == 1 ? 0 : -EIO;
 	mutex_unlock(&devreq_mutex);
-	वापस in_service;
-पूर्ण
+	return in_service;
+}
 
-bool __is_daemon_in_service(व्योम)
-अणु
-	वापस खोलो_access_count == 1;
-पूर्ण
+bool __is_daemon_in_service(void)
+{
+	return open_access_count == 1;
+}
 
-अटल अंतरभूत दीर्घ check_ioctl_command(अचिन्हित पूर्णांक command)
-अणु
-	/* Check क्रम valid ioctl codes */
-	अगर (_IOC_TYPE(command) != ORANGEFS_DEV_MAGIC) अणु
+static inline long check_ioctl_command(unsigned int command)
+{
+	/* Check for valid ioctl codes */
+	if (_IOC_TYPE(command) != ORANGEFS_DEV_MAGIC) {
 		gossip_err("device ioctl magic numbers don't match! Did you rebuild pvfs2-client-core/libpvfs2? [cmd %x, magic %x != %x]\n",
 			command,
 			_IOC_TYPE(command),
 			ORANGEFS_DEV_MAGIC);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	/* and valid ioctl commands */
-	अगर (_IOC_NR(command) >= ORANGEFS_DEV_MAXNR || _IOC_NR(command) <= 0) अणु
+	if (_IOC_NR(command) >= ORANGEFS_DEV_MAXNR || _IOC_NR(command) <= 0) {
 		gossip_err("Invalid ioctl command number [%d >= %d]\n",
 			   _IOC_NR(command), ORANGEFS_DEV_MAXNR);
-		वापस -ENOIOCTLCMD;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -ENOIOCTLCMD;
+	}
+	return 0;
+}
 
-अटल दीर्घ dispatch_ioctl_command(अचिन्हित पूर्णांक command, अचिन्हित दीर्घ arg)
-अणु
-	अटल __s32 magic = ORANGEFS_DEVREQ_MAGIC;
-	अटल __s32 max_up_size = MAX_DEV_REQ_UPSIZE;
-	अटल __s32 max_करोwn_size = MAX_DEV_REQ_DOWNSIZE;
-	काष्ठा ORANGEFS_dev_map_desc user_desc;
-	पूर्णांक ret = 0;
-	पूर्णांक upstream_kmod = 1;
-	काष्ठा orangefs_sb_info_s *orangefs_sb;
+static long dispatch_ioctl_command(unsigned int command, unsigned long arg)
+{
+	static __s32 magic = ORANGEFS_DEVREQ_MAGIC;
+	static __s32 max_up_size = MAX_DEV_REQ_UPSIZE;
+	static __s32 max_down_size = MAX_DEV_REQ_DOWNSIZE;
+	struct ORANGEFS_dev_map_desc user_desc;
+	int ret = 0;
+	int upstream_kmod = 1;
+	struct orangefs_sb_info_s *orangefs_sb;
 
-	/* mपंचांगoore: add locking here */
+	/* mtmoore: add locking here */
 
-	चयन (command) अणु
-	हाल ORANGEFS_DEV_GET_MAGIC:
-		वापस ((put_user(magic, (__s32 __user *) arg) == -EFAULT) ?
+	switch (command) {
+	case ORANGEFS_DEV_GET_MAGIC:
+		return ((put_user(magic, (__s32 __user *) arg) == -EFAULT) ?
 			-EIO :
 			0);
-	हाल ORANGEFS_DEV_GET_MAX_UPSIZE:
-		वापस ((put_user(max_up_size,
+	case ORANGEFS_DEV_GET_MAX_UPSIZE:
+		return ((put_user(max_up_size,
 				  (__s32 __user *) arg) == -EFAULT) ?
 					-EIO :
 					0);
-	हाल ORANGEFS_DEV_GET_MAX_DOWNSIZE:
-		वापस ((put_user(max_करोwn_size,
+	case ORANGEFS_DEV_GET_MAX_DOWNSIZE:
+		return ((put_user(max_down_size,
 				  (__s32 __user *) arg) == -EFAULT) ?
 					-EIO :
 					0);
-	हाल ORANGEFS_DEV_MAP:
+	case ORANGEFS_DEV_MAP:
 		ret = copy_from_user(&user_desc,
-				     (काष्ठा ORANGEFS_dev_map_desc __user *)
+				     (struct ORANGEFS_dev_map_desc __user *)
 				     arg,
-				     माप(काष्ठा ORANGEFS_dev_map_desc));
+				     sizeof(struct ORANGEFS_dev_map_desc));
 		/* WTF -EIO and not -EFAULT? */
-		वापस ret ? -EIO : orangefs_bufmap_initialize(&user_desc);
-	हाल ORANGEFS_DEV_REMOUNT_ALL:
+		return ret ? -EIO : orangefs_bufmap_initialize(&user_desc);
+	case ORANGEFS_DEV_REMOUNT_ALL:
 		gossip_debug(GOSSIP_DEV_DEBUG,
 			     "%s: got ORANGEFS_DEV_REMOUNT_ALL\n",
 			     __func__);
 
 		/*
 		 * remount all mounted orangefs volumes to regain the lost
-		 * dynamic mount tables (अगर any) -- NOTE: this is करोne
+		 * dynamic mount tables (if any) -- NOTE: this is done
 		 * without keeping the superblock list locked due to the
-		 * upcall/करोwncall रुकोing.  also, the request mutex is
+		 * upcall/downcall waiting.  also, the request mutex is
 		 * used to ensure that no operations will be serviced until
-		 * all of the remounts are serviced (to aव्योम ops between
+		 * all of the remounts are serviced (to avoid ops between
 		 * mounts to fail)
 		 */
-		ret = mutex_lock_पूर्णांकerruptible(&orangefs_request_mutex);
-		अगर (ret < 0)
-			वापस ret;
+		ret = mutex_lock_interruptible(&orangefs_request_mutex);
+		if (ret < 0)
+			return ret;
 		gossip_debug(GOSSIP_DEV_DEBUG,
 			     "%s: priority remount in progress\n",
 			     __func__);
 		spin_lock(&orangefs_superblocks_lock);
-		list_क्रम_each_entry(orangefs_sb, &orangefs_superblocks, list) अणु
+		list_for_each_entry(orangefs_sb, &orangefs_superblocks, list) {
 			/*
 			 * We have to drop the spinlock, so entries can be
-			 * हटाओd.  They can't be मुक्तd, though, so we just
-			 * keep the क्रमward poपूर्णांकers and zero the back ones -
+			 * removed.  They can't be freed, though, so we just
+			 * keep the forward pointers and zero the back ones -
 			 * that way we can get to the rest of the list.
 			 */
-			अगर (!orangefs_sb->list.prev)
-				जारी;
+			if (!orangefs_sb->list.prev)
+				continue;
 			gossip_debug(GOSSIP_DEV_DEBUG,
 				     "%s: Remounting SB %p\n",
 				     __func__,
@@ -661,155 +660,155 @@ bool __is_daemon_in_service(व्योम)
 			spin_unlock(&orangefs_superblocks_lock);
 			ret = orangefs_remount(orangefs_sb);
 			spin_lock(&orangefs_superblocks_lock);
-			अगर (ret) अणु
+			if (ret) {
 				gossip_debug(GOSSIP_DEV_DEBUG,
 					     "SB %p remount failed\n",
 					     orangefs_sb);
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 		spin_unlock(&orangefs_superblocks_lock);
 		gossip_debug(GOSSIP_DEV_DEBUG,
 			     "%s: priority remount complete\n",
 			     __func__);
 		mutex_unlock(&orangefs_request_mutex);
-		वापस ret;
+		return ret;
 
-	हाल ORANGEFS_DEV_UPSTREAM:
-		ret = copy_to_user((व्योम __user *)arg,
+	case ORANGEFS_DEV_UPSTREAM:
+		ret = copy_to_user((void __user *)arg,
 				    &upstream_kmod,
-				    माप(upstream_kmod));
+				    sizeof(upstream_kmod));
 
-		अगर (ret != 0)
-			वापस -EIO;
-		अन्यथा
-			वापस ret;
+		if (ret != 0)
+			return -EIO;
+		else
+			return ret;
 
-	हाल ORANGEFS_DEV_CLIENT_MASK:
-		वापस orangefs_debugfs_new_client_mask((व्योम __user *)arg);
-	हाल ORANGEFS_DEV_CLIENT_STRING:
-		वापस orangefs_debugfs_new_client_string((व्योम __user *)arg);
-	हाल ORANGEFS_DEV_DEBUG:
-		वापस orangefs_debugfs_new_debug((व्योम __user *)arg);
-	शेष:
-		वापस -ENOIOCTLCMD;
-	पूर्ण
-	वापस -ENOIOCTLCMD;
-पूर्ण
+	case ORANGEFS_DEV_CLIENT_MASK:
+		return orangefs_debugfs_new_client_mask((void __user *)arg);
+	case ORANGEFS_DEV_CLIENT_STRING:
+		return orangefs_debugfs_new_client_string((void __user *)arg);
+	case ORANGEFS_DEV_DEBUG:
+		return orangefs_debugfs_new_debug((void __user *)arg);
+	default:
+		return -ENOIOCTLCMD;
+	}
+	return -ENOIOCTLCMD;
+}
 
-अटल दीर्घ orangefs_devreq_ioctl(काष्ठा file *file,
-			       अचिन्हित पूर्णांक command, अचिन्हित दीर्घ arg)
-अणु
-	दीर्घ ret;
+static long orangefs_devreq_ioctl(struct file *file,
+			       unsigned int command, unsigned long arg)
+{
+	long ret;
 
-	/* Check क्रम properly स्थिरructed commands */
+	/* Check for properly constructed commands */
 	ret = check_ioctl_command(command);
-	अगर (ret < 0)
-		वापस (पूर्णांक)ret;
+	if (ret < 0)
+		return (int)ret;
 
-	वापस (पूर्णांक)dispatch_ioctl_command(command, arg);
-पूर्ण
+	return (int)dispatch_ioctl_command(command, arg);
+}
 
-#अगर_घोषित CONFIG_COMPAT		/* CONFIG_COMPAT is in .config */
+#ifdef CONFIG_COMPAT		/* CONFIG_COMPAT is in .config */
 
-/*  Compat काष्ठाure क्रम the ORANGEFS_DEV_MAP ioctl */
-काष्ठा ORANGEFS_dev_map_desc32 अणु
+/*  Compat structure for the ORANGEFS_DEV_MAP ioctl */
+struct ORANGEFS_dev_map_desc32 {
 	compat_uptr_t ptr;
 	__s32 total_size;
 	__s32 size;
 	__s32 count;
-पूर्ण;
+};
 
 /*
  * 32 bit user-space apps' ioctl handlers when kernel modules
  * is compiled as a 64 bit one
  */
-अटल दीर्घ orangefs_devreq_compat_ioctl(काष्ठा file *filp, अचिन्हित पूर्णांक cmd,
-				      अचिन्हित दीर्घ args)
-अणु
-	दीर्घ ret;
+static long orangefs_devreq_compat_ioctl(struct file *filp, unsigned int cmd,
+				      unsigned long args)
+{
+	long ret;
 
-	/* Check क्रम properly स्थिरructed commands */
+	/* Check for properly constructed commands */
 	ret = check_ioctl_command(cmd);
-	अगर (ret < 0)
-		वापस ret;
-	अगर (cmd == ORANGEFS_DEV_MAP) अणु
-		काष्ठा ORANGEFS_dev_map_desc desc;
-		काष्ठा ORANGEFS_dev_map_desc32 d32;
+	if (ret < 0)
+		return ret;
+	if (cmd == ORANGEFS_DEV_MAP) {
+		struct ORANGEFS_dev_map_desc desc;
+		struct ORANGEFS_dev_map_desc32 d32;
 
-		अगर (copy_from_user(&d32, (व्योम __user *)args, माप(d32)))
-			वापस -EFAULT;
+		if (copy_from_user(&d32, (void __user *)args, sizeof(d32)))
+			return -EFAULT;
 
 		desc.ptr = compat_ptr(d32.ptr);
 		desc.total_size = d32.total_size;
 		desc.size = d32.size;
 		desc.count = d32.count;
-		वापस orangefs_bufmap_initialize(&desc);
-	पूर्ण
+		return orangefs_bufmap_initialize(&desc);
+	}
 	/* no other ioctl requires translation */
-	वापस dispatch_ioctl_command(cmd, args);
-पूर्ण
+	return dispatch_ioctl_command(cmd, args);
+}
 
-#पूर्ण_अगर /* CONFIG_COMPAT is in .config */
+#endif /* CONFIG_COMPAT is in .config */
 
-अटल __poll_t orangefs_devreq_poll(काष्ठा file *file,
-				      काष्ठा poll_table_काष्ठा *poll_table)
-अणु
+static __poll_t orangefs_devreq_poll(struct file *file,
+				      struct poll_table_struct *poll_table)
+{
 	__poll_t poll_revent_mask = 0;
 
-	poll_रुको(file, &orangefs_request_list_रुकोq, poll_table);
+	poll_wait(file, &orangefs_request_list_waitq, poll_table);
 
-	अगर (!list_empty(&orangefs_request_list))
+	if (!list_empty(&orangefs_request_list))
 		poll_revent_mask |= EPOLLIN;
-	वापस poll_revent_mask;
-पूर्ण
+	return poll_revent_mask;
+}
 
-/* the asचिन्हित अक्षरacter device major number */
-अटल पूर्णांक orangefs_dev_major;
+/* the assigned character device major number */
+static int orangefs_dev_major;
 
-अटल स्थिर काष्ठा file_operations orangefs_devreq_file_operations = अणु
+static const struct file_operations orangefs_devreq_file_operations = {
 	.owner = THIS_MODULE,
-	.पढ़ो = orangefs_devreq_पढ़ो,
-	.ग_लिखो_iter = orangefs_devreq_ग_लिखो_iter,
-	.खोलो = orangefs_devreq_खोलो,
+	.read = orangefs_devreq_read,
+	.write_iter = orangefs_devreq_write_iter,
+	.open = orangefs_devreq_open,
 	.release = orangefs_devreq_release,
 	.unlocked_ioctl = orangefs_devreq_ioctl,
 
-#अगर_घोषित CONFIG_COMPAT		/* CONFIG_COMPAT is in .config */
+#ifdef CONFIG_COMPAT		/* CONFIG_COMPAT is in .config */
 	.compat_ioctl = orangefs_devreq_compat_ioctl,
-#पूर्ण_अगर
+#endif
 	.poll = orangefs_devreq_poll
-पूर्ण;
+};
 
 /*
- * Initialize orangefs device specअगरic state:
- * Must be called at module load समय only
+ * Initialize orangefs device specific state:
+ * Must be called at module load time only
  */
-पूर्णांक orangefs_dev_init(व्योम)
-अणु
-	/* रेजिस्टर orangefs-req device  */
-	orangefs_dev_major = रेजिस्टर_chrdev(0,
+int orangefs_dev_init(void)
+{
+	/* register orangefs-req device  */
+	orangefs_dev_major = register_chrdev(0,
 					  ORANGEFS_REQDEVICE_NAME,
 					  &orangefs_devreq_file_operations);
-	अगर (orangefs_dev_major < 0) अणु
+	if (orangefs_dev_major < 0) {
 		gossip_debug(GOSSIP_DEV_DEBUG,
 			     "Failed to register /dev/%s (error %d)\n",
 			     ORANGEFS_REQDEVICE_NAME, orangefs_dev_major);
-		वापस orangefs_dev_major;
-	पूर्ण
+		return orangefs_dev_major;
+	}
 
 	gossip_debug(GOSSIP_DEV_DEBUG,
 		     "*** /dev/%s character device registered ***\n",
 		     ORANGEFS_REQDEVICE_NAME);
 	gossip_debug(GOSSIP_DEV_DEBUG, "'mknod /dev/%s c %d 0'.\n",
 		     ORANGEFS_REQDEVICE_NAME, orangefs_dev_major);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम orangefs_dev_cleanup(व्योम)
-अणु
-	unरेजिस्टर_chrdev(orangefs_dev_major, ORANGEFS_REQDEVICE_NAME);
+void orangefs_dev_cleanup(void)
+{
+	unregister_chrdev(orangefs_dev_major, ORANGEFS_REQDEVICE_NAME);
 	gossip_debug(GOSSIP_DEV_DEBUG,
 		     "*** /dev/%s character device unregistered ***\n",
 		     ORANGEFS_REQDEVICE_NAME);
-पूर्ण
+}

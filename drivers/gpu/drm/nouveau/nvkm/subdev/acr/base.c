@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2019 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,348 +19,348 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#समावेश "priv.h"
+#include "priv.h"
 
-#समावेश <core/firmware.h>
-#समावेश <core/memory.h>
-#समावेश <subdev/mmu.h>
+#include <core/firmware.h>
+#include <core/memory.h>
+#include <subdev/mmu.h>
 
-अटल काष्ठा nvkm_acr_hsf *
-nvkm_acr_hsf_find(काष्ठा nvkm_acr *acr, स्थिर अक्षर *name)
-अणु
-	काष्ठा nvkm_acr_hsf *hsf;
-	list_क्रम_each_entry(hsf, &acr->hsf, head) अणु
-		अगर (!म_भेद(hsf->name, name))
-			वापस hsf;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+static struct nvkm_acr_hsf *
+nvkm_acr_hsf_find(struct nvkm_acr *acr, const char *name)
+{
+	struct nvkm_acr_hsf *hsf;
+	list_for_each_entry(hsf, &acr->hsf, head) {
+		if (!strcmp(hsf->name, name))
+			return hsf;
+	}
+	return NULL;
+}
 
-पूर्णांक
-nvkm_acr_hsf_boot(काष्ठा nvkm_acr *acr, स्थिर अक्षर *name)
-अणु
-	काष्ठा nvkm_subdev *subdev = &acr->subdev;
-	काष्ठा nvkm_acr_hsf *hsf;
-	पूर्णांक ret;
+int
+nvkm_acr_hsf_boot(struct nvkm_acr *acr, const char *name)
+{
+	struct nvkm_subdev *subdev = &acr->subdev;
+	struct nvkm_acr_hsf *hsf;
+	int ret;
 
 	hsf = nvkm_acr_hsf_find(acr, name);
-	अगर (!hsf)
-		वापस -EINVAL;
+	if (!hsf)
+		return -EINVAL;
 
 	nvkm_debug(subdev, "executing %s binary\n", hsf->name);
 	ret = nvkm_falcon_get(hsf->falcon, subdev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = hsf->func->boot(acr, hsf);
 	nvkm_falcon_put(hsf->falcon, subdev);
-	अगर (ret) अणु
+	if (ret) {
 		nvkm_error(subdev, "%s binary failed\n", hsf->name);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	nvkm_debug(subdev, "%s binary completed successfully\n", hsf->name);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-nvkm_acr_unload(काष्ठा nvkm_acr *acr)
-अणु
-	अगर (acr->करोne) अणु
+static void
+nvkm_acr_unload(struct nvkm_acr *acr)
+{
+	if (acr->done) {
 		nvkm_acr_hsf_boot(acr, "unload");
-		acr->करोne = false;
-	पूर्ण
-पूर्ण
+		acr->done = false;
+	}
+}
 
-अटल पूर्णांक
-nvkm_acr_load(काष्ठा nvkm_acr *acr)
-अणु
-	काष्ठा nvkm_subdev *subdev = &acr->subdev;
-	काष्ठा nvkm_acr_lsf *lsf;
+static int
+nvkm_acr_load(struct nvkm_acr *acr)
+{
+	struct nvkm_subdev *subdev = &acr->subdev;
+	struct nvkm_acr_lsf *lsf;
 	u64 start, limit;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (list_empty(&acr->lsf)) अणु
+	if (list_empty(&acr->lsf)) {
 		nvkm_debug(subdev, "No LSF(s) present.\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	ret = acr->func->init(acr);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	acr->func->wpr_check(acr, &start, &limit);
 
-	अगर (start != acr->wpr_start || limit != acr->wpr_end) अणु
+	if (start != acr->wpr_start || limit != acr->wpr_end) {
 		nvkm_error(subdev, "WPR not configured as expected: "
 				   "%016llx-%016llx vs %016llx-%016llx\n",
 			   acr->wpr_start, acr->wpr_end, start, limit);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	acr->करोne = true;
+	acr->done = true;
 
-	list_क्रम_each_entry(lsf, &acr->lsf, head) अणु
-		अगर (lsf->func->boot) अणु
+	list_for_each_entry(lsf, &acr->lsf, head) {
+		if (lsf->func->boot) {
 			ret = lsf->func->boot(lsf->falcon);
-			अगर (ret)
-				अवरोध;
-		पूर्ण
-	पूर्ण
+			if (ret)
+				break;
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक
-nvkm_acr_reload(काष्ठा nvkm_acr *acr)
-अणु
+static int
+nvkm_acr_reload(struct nvkm_acr *acr)
+{
 	nvkm_acr_unload(acr);
-	वापस nvkm_acr_load(acr);
-पूर्ण
+	return nvkm_acr_load(acr);
+}
 
-अटल काष्ठा nvkm_acr_lsf *
-nvkm_acr_falcon(काष्ठा nvkm_device *device)
-अणु
-	काष्ठा nvkm_acr *acr = device->acr;
-	काष्ठा nvkm_acr_lsf *lsf;
+static struct nvkm_acr_lsf *
+nvkm_acr_falcon(struct nvkm_device *device)
+{
+	struct nvkm_acr *acr = device->acr;
+	struct nvkm_acr_lsf *lsf;
 
-	अगर (acr) अणु
-		list_क्रम_each_entry(lsf, &acr->lsf, head) अणु
-			अगर (lsf->func->bootstrap_falcon)
-				वापस lsf;
-		पूर्ण
-	पूर्ण
+	if (acr) {
+		list_for_each_entry(lsf, &acr->lsf, head) {
+			if (lsf->func->bootstrap_falcon)
+				return lsf;
+		}
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-पूर्णांक
-nvkm_acr_bootstrap_falcons(काष्ठा nvkm_device *device, अचिन्हित दीर्घ mask)
-अणु
-	काष्ठा nvkm_acr_lsf *acrflcn = nvkm_acr_falcon(device);
-	काष्ठा nvkm_acr *acr = device->acr;
-	अचिन्हित दीर्घ id;
+int
+nvkm_acr_bootstrap_falcons(struct nvkm_device *device, unsigned long mask)
+{
+	struct nvkm_acr_lsf *acrflcn = nvkm_acr_falcon(device);
+	struct nvkm_acr *acr = device->acr;
+	unsigned long id;
 
 	/* If there's no LS FW managing bootstrapping of other LS falcons,
-	 * we depend on the HS firmware being able to करो it instead.
+	 * we depend on the HS firmware being able to do it instead.
 	 */
-	अगर (!acrflcn) अणु
+	if (!acrflcn) {
 		/* Which isn't possible everywhere... */
-		अगर ((mask & acr->func->bootstrap_falcons) == mask) अणु
-			पूर्णांक ret = nvkm_acr_reload(acr);
-			अगर (ret)
-				वापस ret;
+		if ((mask & acr->func->bootstrap_falcons) == mask) {
+			int ret = nvkm_acr_reload(acr);
+			if (ret)
+				return ret;
 
-			वापस acr->करोne ? 0 : -EINVAL;
-		पूर्ण
-		वापस -ENOSYS;
-	पूर्ण
+			return acr->done ? 0 : -EINVAL;
+		}
+		return -ENOSYS;
+	}
 
-	अगर ((mask & acrflcn->func->bootstrap_falcons) != mask)
-		वापस -ENOSYS;
+	if ((mask & acrflcn->func->bootstrap_falcons) != mask)
+		return -ENOSYS;
 
-	अगर (acrflcn->func->bootstrap_multiple_falcons) अणु
-		वापस acrflcn->func->
+	if (acrflcn->func->bootstrap_multiple_falcons) {
+		return acrflcn->func->
 			bootstrap_multiple_falcons(acrflcn->falcon, mask);
-	पूर्ण
+	}
 
-	क्रम_each_set_bit(id, &mask, NVKM_ACR_LSF_NUM) अणु
-		पूर्णांक ret = acrflcn->func->bootstrap_falcon(acrflcn->falcon, id);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+	for_each_set_bit(id, &mask, NVKM_ACR_LSF_NUM) {
+		int ret = acrflcn->func->bootstrap_falcon(acrflcn->falcon, id);
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 bool
-nvkm_acr_managed_falcon(काष्ठा nvkm_device *device, क्रमागत nvkm_acr_lsf_id id)
-अणु
-	काष्ठा nvkm_acr *acr = device->acr;
+nvkm_acr_managed_falcon(struct nvkm_device *device, enum nvkm_acr_lsf_id id)
+{
+	struct nvkm_acr *acr = device->acr;
 
-	अगर (acr) अणु
-		अगर (acr->managed_falcons & BIT_ULL(id))
-			वापस true;
-	पूर्ण
+	if (acr) {
+		if (acr->managed_falcons & BIT_ULL(id))
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल पूर्णांक
-nvkm_acr_fini(काष्ठा nvkm_subdev *subdev, bool suspend)
-अणु
+static int
+nvkm_acr_fini(struct nvkm_subdev *subdev, bool suspend)
+{
 	nvkm_acr_unload(nvkm_acr(subdev));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-nvkm_acr_init(काष्ठा nvkm_subdev *subdev)
-अणु
-	अगर (!nvkm_acr_falcon(subdev->device))
-		वापस 0;
+static int
+nvkm_acr_init(struct nvkm_subdev *subdev)
+{
+	if (!nvkm_acr_falcon(subdev->device))
+		return 0;
 
-	वापस nvkm_acr_load(nvkm_acr(subdev));
-पूर्ण
+	return nvkm_acr_load(nvkm_acr(subdev));
+}
 
-अटल व्योम
-nvkm_acr_cleanup(काष्ठा nvkm_acr *acr)
-अणु
+static void
+nvkm_acr_cleanup(struct nvkm_acr *acr)
+{
 	nvkm_acr_lsfw_del_all(acr);
 	nvkm_acr_hsfw_del_all(acr);
 	nvkm_firmware_put(acr->wpr_fw);
-	acr->wpr_fw = शून्य;
-पूर्ण
+	acr->wpr_fw = NULL;
+}
 
-अटल पूर्णांक
-nvkm_acr_oneinit(काष्ठा nvkm_subdev *subdev)
-अणु
-	काष्ठा nvkm_device *device = subdev->device;
-	काष्ठा nvkm_acr *acr = nvkm_acr(subdev);
-	काष्ठा nvkm_acr_hsfw *hsfw;
-	काष्ठा nvkm_acr_lsfw *lsfw, *lsft;
-	काष्ठा nvkm_acr_lsf *lsf;
+static int
+nvkm_acr_oneinit(struct nvkm_subdev *subdev)
+{
+	struct nvkm_device *device = subdev->device;
+	struct nvkm_acr *acr = nvkm_acr(subdev);
+	struct nvkm_acr_hsfw *hsfw;
+	struct nvkm_acr_lsfw *lsfw, *lsft;
+	struct nvkm_acr_lsf *lsf;
 	u32 wpr_size = 0;
 	u64 falcons;
-	पूर्णांक ret, i;
+	int ret, i;
 
-	अगर (list_empty(&acr->hsfw)) अणु
+	if (list_empty(&acr->hsfw)) {
 		nvkm_debug(subdev, "No HSFW(s)\n");
 		nvkm_acr_cleanup(acr);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* Determine layout/size of WPR image up-front, as we need to know
-	 * it to allocate memory beक्रमe we begin स्थिरructing it.
+	 * it to allocate memory before we begin constructing it.
 	 */
-	list_क्रम_each_entry_safe(lsfw, lsft, &acr->lsfw, head) अणु
+	list_for_each_entry_safe(lsfw, lsft, &acr->lsfw, head) {
 		/* Cull unknown falcons that are present in WPR image. */
-		अगर (acr->wpr_fw) अणु
-			अगर (!lsfw->func) अणु
+		if (acr->wpr_fw) {
+			if (!lsfw->func) {
 				nvkm_acr_lsfw_del(lsfw);
-				जारी;
-			पूर्ण
+				continue;
+			}
 
 			wpr_size = acr->wpr_fw->size;
-		पूर्ण
+		}
 
 		/* Ensure we've fetched falcon configuration. */
 		ret = nvkm_falcon_get(lsfw->falcon, subdev);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		nvkm_falcon_put(lsfw->falcon, subdev);
 
-		अगर (!(lsf = kदो_स्मृति(माप(*lsf), GFP_KERNEL)))
-			वापस -ENOMEM;
+		if (!(lsf = kmalloc(sizeof(*lsf), GFP_KERNEL)))
+			return -ENOMEM;
 		lsf->func = lsfw->func;
 		lsf->falcon = lsfw->falcon;
 		lsf->id = lsfw->id;
 		list_add_tail(&lsf->head, &acr->lsf);
 		acr->managed_falcons |= BIT_ULL(lsf->id);
-	पूर्ण
+	}
 
 	/* Ensure the falcon that'll provide ACR functions is booted first. */
 	lsf = nvkm_acr_falcon(device);
-	अगर (lsf) अणु
+	if (lsf) {
 		falcons = lsf->func->bootstrap_falcons;
 		list_move(&lsf->head, &acr->lsf);
-	पूर्ण अन्यथा अणु
+	} else {
 		falcons = acr->func->bootstrap_falcons;
-	पूर्ण
+	}
 
 	/* Cull falcons that can't be bootstrapped, or the HSFW can fail to
 	 * boot and leave the GPU in a weird state.
 	 */
-	list_क्रम_each_entry_safe(lsfw, lsft, &acr->lsfw, head) अणु
-		अगर (!(falcons & BIT_ULL(lsfw->id))) अणु
+	list_for_each_entry_safe(lsfw, lsft, &acr->lsfw, head) {
+		if (!(falcons & BIT_ULL(lsfw->id))) {
 			nvkm_warn(subdev, "%s falcon cannot be bootstrapped\n",
 				  nvkm_acr_lsf_id(lsfw->id));
 			nvkm_acr_lsfw_del(lsfw);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!acr->wpr_fw || acr->wpr_comp)
+	if (!acr->wpr_fw || acr->wpr_comp)
 		wpr_size = acr->func->wpr_layout(acr);
 
-	/* Allocate/Locate WPR + fill ucode blob poपूर्णांकer.
+	/* Allocate/Locate WPR + fill ucode blob pointer.
 	 *
-	 *  dGPU: allocate WPR + shaकरोw blob
+	 *  dGPU: allocate WPR + shadow blob
 	 * Tegra: locate WPR with regs, ensure size is sufficient,
 	 *        allocate ucode blob.
 	 */
 	ret = acr->func->wpr_alloc(acr, wpr_size);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	nvkm_debug(subdev, "WPR region is from 0x%llx-0x%llx (shadow 0x%llx)\n",
-		   acr->wpr_start, acr->wpr_end, acr->shaकरोw_start);
+		   acr->wpr_start, acr->wpr_end, acr->shadow_start);
 
 	/* Write WPR to ucode blob. */
 	nvkm_kmap(acr->wpr);
-	अगर (acr->wpr_fw && !acr->wpr_comp)
+	if (acr->wpr_fw && !acr->wpr_comp)
 		nvkm_wobj(acr->wpr, 0, acr->wpr_fw->data, acr->wpr_fw->size);
 
-	अगर (!acr->wpr_fw || acr->wpr_comp)
+	if (!acr->wpr_fw || acr->wpr_comp)
 		acr->func->wpr_build(acr, nvkm_acr_falcon(device));
 	acr->func->wpr_patch(acr, (s64)acr->wpr_start - acr->wpr_prev);
 
-	अगर (acr->wpr_fw && acr->wpr_comp) अणु
+	if (acr->wpr_fw && acr->wpr_comp) {
 		nvkm_kmap(acr->wpr);
-		क्रम (i = 0; i < acr->wpr_fw->size; i += 4) अणु
+		for (i = 0; i < acr->wpr_fw->size; i += 4) {
 			u32 us = nvkm_ro32(acr->wpr, i);
 			u32 fw = ((u32 *)acr->wpr_fw->data)[i/4];
-			अगर (fw != us) अणु
+			if (fw != us) {
 				nvkm_warn(subdev, "%08x: %08x %08x\n",
 					  i, us, fw);
-			पूर्ण
-		पूर्ण
-		वापस -EINVAL;
-	पूर्ण
-	nvkm_करोne(acr->wpr);
+			}
+		}
+		return -EINVAL;
+	}
+	nvkm_done(acr->wpr);
 
-	/* Allocate instance block क्रम ACR-related stuff. */
+	/* Allocate instance block for ACR-related stuff. */
 	ret = nvkm_memory_new(device, NVKM_MEM_TARGET_INST, 0x1000, 0, true,
 			      &acr->inst);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = nvkm_vmm_new(device, 0, 0, शून्य, 0, शून्य, "acr", &acr->vmm);
-	अगर (ret)
-		वापस ret;
+	ret = nvkm_vmm_new(device, 0, 0, NULL, 0, NULL, "acr", &acr->vmm);
+	if (ret)
+		return ret;
 
 	acr->vmm->debug = acr->subdev.debug;
 
 	ret = nvkm_vmm_join(acr->vmm, acr->inst);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* Load HS firmware blobs पूर्णांकo ACR VMM. */
-	list_क्रम_each_entry(hsfw, &acr->hsfw, head) अणु
+	/* Load HS firmware blobs into ACR VMM. */
+	list_for_each_entry(hsfw, &acr->hsfw, head) {
 		nvkm_debug(subdev, "loading %s fw\n", hsfw->name);
 		ret = hsfw->func->load(acr, hsfw);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	/* Kill temporary data. */
 	nvkm_acr_cleanup(acr);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम *
-nvkm_acr_dtor(काष्ठा nvkm_subdev *subdev)
-अणु
-	काष्ठा nvkm_acr *acr = nvkm_acr(subdev);
-	काष्ठा nvkm_acr_hsf *hsf, *hst;
-	काष्ठा nvkm_acr_lsf *lsf, *lst;
+static void *
+nvkm_acr_dtor(struct nvkm_subdev *subdev)
+{
+	struct nvkm_acr *acr = nvkm_acr(subdev);
+	struct nvkm_acr_hsf *hsf, *hst;
+	struct nvkm_acr_lsf *lsf, *lst;
 
-	list_क्रम_each_entry_safe(hsf, hst, &acr->hsf, head) अणु
+	list_for_each_entry_safe(hsf, hst, &acr->hsf, head) {
 		nvkm_vmm_put(acr->vmm, &hsf->vma);
 		nvkm_memory_unref(&hsf->ucode);
-		kमुक्त(hsf->imem);
+		kfree(hsf->imem);
 		list_del(&hsf->head);
-		kमुक्त(hsf);
-	पूर्ण
+		kfree(hsf);
+	}
 
 	nvkm_vmm_part(acr->vmm, acr->inst);
 	nvkm_vmm_unref(&acr->vmm);
@@ -369,73 +368,73 @@ nvkm_acr_dtor(काष्ठा nvkm_subdev *subdev)
 
 	nvkm_memory_unref(&acr->wpr);
 
-	list_क्रम_each_entry_safe(lsf, lst, &acr->lsf, head) अणु
+	list_for_each_entry_safe(lsf, lst, &acr->lsf, head) {
 		list_del(&lsf->head);
-		kमुक्त(lsf);
-	पूर्ण
+		kfree(lsf);
+	}
 
 	nvkm_acr_cleanup(acr);
-	वापस acr;
-पूर्ण
+	return acr;
+}
 
-अटल स्थिर काष्ठा nvkm_subdev_func
-nvkm_acr = अणु
+static const struct nvkm_subdev_func
+nvkm_acr = {
 	.dtor = nvkm_acr_dtor,
 	.oneinit = nvkm_acr_oneinit,
 	.init = nvkm_acr_init,
 	.fini = nvkm_acr_fini,
-पूर्ण;
+};
 
-अटल पूर्णांक
-nvkm_acr_ctor_wpr(काष्ठा nvkm_acr *acr, पूर्णांक ver)
-अणु
-	काष्ठा nvkm_subdev *subdev = &acr->subdev;
-	काष्ठा nvkm_device *device = subdev->device;
-	पूर्णांक ret;
+static int
+nvkm_acr_ctor_wpr(struct nvkm_acr *acr, int ver)
+{
+	struct nvkm_subdev *subdev = &acr->subdev;
+	struct nvkm_device *device = subdev->device;
+	int ret;
 
 	ret = nvkm_firmware_get(subdev, "acr/wpr", ver, &acr->wpr_fw);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	/* Pre-add LSFs in the order they appear in the FW WPR image so that
-	 * we're able to करो a binary comparison with our own generator.
+	 * we're able to do a binary comparison with our own generator.
 	 */
 	ret = acr->func->wpr_parse(acr);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	acr->wpr_comp = nvkm_boolopt(device->cfgopt, "NvAcrWprCompare", false);
-	acr->wpr_prev = nvkm_दीर्घopt(device->cfgopt, "NvAcrWprPrevAddr", 0);
-	वापस 0;
-पूर्ण
+	acr->wpr_prev = nvkm_longopt(device->cfgopt, "NvAcrWprPrevAddr", 0);
+	return 0;
+}
 
-पूर्णांक
-nvkm_acr_new_(स्थिर काष्ठा nvkm_acr_fwअगर *fwअगर, काष्ठा nvkm_device *device,
-	      क्रमागत nvkm_subdev_type type, पूर्णांक inst, काष्ठा nvkm_acr **pacr)
-अणु
-	काष्ठा nvkm_acr *acr;
-	दीर्घ wprfw;
+int
+nvkm_acr_new_(const struct nvkm_acr_fwif *fwif, struct nvkm_device *device,
+	      enum nvkm_subdev_type type, int inst, struct nvkm_acr **pacr)
+{
+	struct nvkm_acr *acr;
+	long wprfw;
 
-	अगर (!(acr = *pacr = kzalloc(माप(*acr), GFP_KERNEL)))
-		वापस -ENOMEM;
+	if (!(acr = *pacr = kzalloc(sizeof(*acr), GFP_KERNEL)))
+		return -ENOMEM;
 	nvkm_subdev_ctor(&nvkm_acr, device, type, inst, &acr->subdev);
 	INIT_LIST_HEAD(&acr->hsfw);
 	INIT_LIST_HEAD(&acr->lsfw);
 	INIT_LIST_HEAD(&acr->hsf);
 	INIT_LIST_HEAD(&acr->lsf);
 
-	fwअगर = nvkm_firmware_load(&acr->subdev, fwअगर, "Acr", acr);
-	अगर (IS_ERR(fwअगर))
-		वापस PTR_ERR(fwअगर);
+	fwif = nvkm_firmware_load(&acr->subdev, fwif, "Acr", acr);
+	if (IS_ERR(fwif))
+		return PTR_ERR(fwif);
 
-	acr->func = fwअगर->func;
+	acr->func = fwif->func;
 
-	wprfw = nvkm_दीर्घopt(device->cfgopt, "NvAcrWpr", -1);
-	अगर (wprfw >= 0) अणु
-		पूर्णांक ret = nvkm_acr_ctor_wpr(acr, wprfw);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+	wprfw = nvkm_longopt(device->cfgopt, "NvAcrWpr", -1);
+	if (wprfw >= 0) {
+		int ret = nvkm_acr_ctor_wpr(acr, wprfw);
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

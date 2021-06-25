@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * Driver क्रम Realtek RTS51xx USB card पढ़ोer
+ * Driver for Realtek RTS51xx USB card reader
  *
  * Copyright(c) 2009 Realtek Semiconductor Corp. All rights reserved.
  *
@@ -10,68 +9,68 @@
  *   No. 450, Shenhu Road, Suzhou Industry Park, Suzhou, China
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/blkdev.h>
+#include <linux/kthread.h>
+#include <linux/sched.h>
+#include <linux/kernel.h>
 
-#समावेश <scsi/scsi.h>
-#समावेश <scsi/scsi_cmnd.h>
-#समावेश <scsi/scsi_device.h>
-#समावेश <linux/cdrom.h>
+#include <scsi/scsi.h>
+#include <scsi/scsi_cmnd.h>
+#include <scsi/scsi_device.h>
+#include <linux/cdrom.h>
 
-#समावेश <linux/usb.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/usb_usual.h>
+#include <linux/usb.h>
+#include <linux/slab.h>
+#include <linux/usb_usual.h>
 
-#समावेश "usb.h"
-#समावेश "transport.h"
-#समावेश "protocol.h"
-#समावेश "debug.h"
-#समावेश "scsiglue.h"
+#include "usb.h"
+#include "transport.h"
+#include "protocol.h"
+#include "debug.h"
+#include "scsiglue.h"
 
-#घोषणा DRV_NAME "ums-realtek"
+#define DRV_NAME "ums-realtek"
 
 MODULE_DESCRIPTION("Driver for Realtek USB Card Reader");
 MODULE_AUTHOR("wwang <wei_wang@realsil.com.cn>");
 MODULE_LICENSE("GPL");
 MODULE_IMPORT_NS(USB_STORAGE);
 
-अटल पूर्णांक स्वतः_delink_en = 1;
-module_param(स्वतः_delink_en, पूर्णांक, S_IRUGO | S_IWUSR);
-MODULE_PARM_DESC(स्वतः_delink_en, "auto delink mode (0=firmware, 1=software [default])");
+static int auto_delink_en = 1;
+module_param(auto_delink_en, int, S_IRUGO | S_IWUSR);
+MODULE_PARM_DESC(auto_delink_en, "auto delink mode (0=firmware, 1=software [default])");
 
-#अगर_घोषित CONFIG_REALTEK_AUTOPM
-अटल पूर्णांक ss_en = 1;
-module_param(ss_en, पूर्णांक, S_IRUGO | S_IWUSR);
+#ifdef CONFIG_REALTEK_AUTOPM
+static int ss_en = 1;
+module_param(ss_en, int, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(ss_en, "enable selective suspend");
 
-अटल पूर्णांक ss_delay = 50;
-module_param(ss_delay, पूर्णांक, S_IRUGO | S_IWUSR);
+static int ss_delay = 50;
+module_param(ss_delay, int, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(ss_delay,
 		 "seconds to delay before entering selective suspend");
 
-क्रमागत RTS51X_STAT अणु
+enum RTS51X_STAT {
 	RTS51X_STAT_INIT,
 	RTS51X_STAT_IDLE,
 	RTS51X_STAT_RUN,
 	RTS51X_STAT_SS
-पूर्ण;
+};
 
-#घोषणा POLLING_INTERVAL	50
+#define POLLING_INTERVAL	50
 
-#घोषणा rts51x_set_stat(chip, stat)	\
-	((chip)->state = (क्रमागत RTS51X_STAT)(stat))
-#घोषणा rts51x_get_stat(chip)		((chip)->state)
+#define rts51x_set_stat(chip, stat)	\
+	((chip)->state = (enum RTS51X_STAT)(stat))
+#define rts51x_get_stat(chip)		((chip)->state)
 
-#घोषणा SET_LUN_READY(chip, lun)	((chip)->lun_पढ़ोy |= ((u8)1 << (lun)))
-#घोषणा CLR_LUN_READY(chip, lun)	((chip)->lun_पढ़ोy &= ~((u8)1 << (lun)))
-#घोषणा TST_LUN_READY(chip, lun)	((chip)->lun_पढ़ोy & ((u8)1 << (lun)))
+#define SET_LUN_READY(chip, lun)	((chip)->lun_ready |= ((u8)1 << (lun)))
+#define CLR_LUN_READY(chip, lun)	((chip)->lun_ready &= ~((u8)1 << (lun)))
+#define TST_LUN_READY(chip, lun)	((chip)->lun_ready & ((u8)1 << (lun)))
 
-#पूर्ण_अगर
+#endif
 
-काष्ठा rts51x_status अणु
+struct rts51x_status {
 	u16 vid;
 	u16 pid;
 	u8 cur_lun;
@@ -82,133 +81,133 @@ MODULE_PARM_DESC(ss_delay,
 	u8 multi_flag;
 	u8 multi_card;
 	u8 log_exist;
-	जोड़ अणु
+	union {
 		u8 detailed_type1;
 		u8 detailed_type2;
-	पूर्ण detailed_type;
+	} detailed_type;
 	u8 function[2];
-पूर्ण;
+};
 
-काष्ठा rts51x_chip अणु
-	u16 venकरोr_id;
+struct rts51x_chip {
+	u16 vendor_id;
 	u16 product_id;
-	अक्षर max_lun;
+	char max_lun;
 
-	काष्ठा rts51x_status *status;
-	पूर्णांक status_len;
+	struct rts51x_status *status;
+	int status_len;
 
 	u32 flag;
-	काष्ठा us_data *us;
+	struct us_data *us;
 
-#अगर_घोषित CONFIG_REALTEK_AUTOPM
-	काष्ठा समयr_list rts51x_suspend_समयr;
-	अचिन्हित दीर्घ समयr_expires;
-	पूर्णांक pwr_state;
-	u8 lun_पढ़ोy;
-	क्रमागत RTS51X_STAT state;
-	पूर्णांक support_स्वतः_delink;
-#पूर्ण_अगर
+#ifdef CONFIG_REALTEK_AUTOPM
+	struct timer_list rts51x_suspend_timer;
+	unsigned long timer_expires;
+	int pwr_state;
+	u8 lun_ready;
+	enum RTS51X_STAT state;
+	int support_auto_delink;
+#endif
 	/* used to back up the protocol chosen in probe1 phase */
 	proto_cmnd proto_handler_backup;
-पूर्ण;
+};
 
 /* flag definition */
-#घोषणा FLIDX_AUTO_DELINK		0x01
+#define FLIDX_AUTO_DELINK		0x01
 
-#घोषणा SCSI_LUN(srb)			((srb)->device->lun)
+#define SCSI_LUN(srb)			((srb)->device->lun)
 
 /* Bit Operation */
-#घोषणा SET_BIT(data, idx)		((data) |= 1 << (idx))
-#घोषणा CLR_BIT(data, idx)		((data) &= ~(1 << (idx)))
-#घोषणा CHK_BIT(data, idx)		((data) & (1 << (idx)))
+#define SET_BIT(data, idx)		((data) |= 1 << (idx))
+#define CLR_BIT(data, idx)		((data) &= ~(1 << (idx)))
+#define CHK_BIT(data, idx)		((data) & (1 << (idx)))
 
-#घोषणा SET_AUTO_DELINK(chip)		((chip)->flag |= FLIDX_AUTO_DELINK)
-#घोषणा CLR_AUTO_DELINK(chip)		((chip)->flag &= ~FLIDX_AUTO_DELINK)
-#घोषणा CHK_AUTO_DELINK(chip)		((chip)->flag & FLIDX_AUTO_DELINK)
+#define SET_AUTO_DELINK(chip)		((chip)->flag |= FLIDX_AUTO_DELINK)
+#define CLR_AUTO_DELINK(chip)		((chip)->flag &= ~FLIDX_AUTO_DELINK)
+#define CHK_AUTO_DELINK(chip)		((chip)->flag & FLIDX_AUTO_DELINK)
 
-#घोषणा RTS51X_GET_VID(chip)		((chip)->venकरोr_id)
-#घोषणा RTS51X_GET_PID(chip)		((chip)->product_id)
+#define RTS51X_GET_VID(chip)		((chip)->vendor_id)
+#define RTS51X_GET_PID(chip)		((chip)->product_id)
 
-#घोषणा VENDOR_ID(chip)			((chip)->status[0].vid)
-#घोषणा PRODUCT_ID(chip)		((chip)->status[0].pid)
-#घोषणा FW_VERSION(chip)		((chip)->status[0].fw_ver)
-#घोषणा STATUS_LEN(chip)		((chip)->status_len)
+#define VENDOR_ID(chip)			((chip)->status[0].vid)
+#define PRODUCT_ID(chip)		((chip)->status[0].pid)
+#define FW_VERSION(chip)		((chip)->status[0].fw_ver)
+#define STATUS_LEN(chip)		((chip)->status_len)
 
-#घोषणा STATUS_SUCCESS		0
-#घोषणा STATUS_FAIL		1
+#define STATUS_SUCCESS		0
+#define STATUS_FAIL		1
 
-/* Check card पढ़ोer function */
-#घोषणा SUPPORT_DETAILED_TYPE1(chip)	\
+/* Check card reader function */
+#define SUPPORT_DETAILED_TYPE1(chip)	\
 		CHK_BIT((chip)->status[0].function[0], 1)
-#घोषणा SUPPORT_OT(chip)		\
+#define SUPPORT_OT(chip)		\
 		CHK_BIT((chip)->status[0].function[0], 2)
-#घोषणा SUPPORT_OC(chip)		\
+#define SUPPORT_OC(chip)		\
 		CHK_BIT((chip)->status[0].function[0], 3)
-#घोषणा SUPPORT_AUTO_DELINK(chip)	\
+#define SUPPORT_AUTO_DELINK(chip)	\
 		CHK_BIT((chip)->status[0].function[0], 4)
-#घोषणा SUPPORT_SDIO(chip)		\
+#define SUPPORT_SDIO(chip)		\
 		CHK_BIT((chip)->status[0].function[1], 0)
-#घोषणा SUPPORT_DETAILED_TYPE2(chip)	\
+#define SUPPORT_DETAILED_TYPE2(chip)	\
 		CHK_BIT((chip)->status[0].function[1], 1)
 
-#घोषणा CHECK_PID(chip, pid)		(RTS51X_GET_PID(chip) == (pid))
-#घोषणा CHECK_FW_VER(chip, fw_ver)	(FW_VERSION(chip) == (fw_ver))
-#घोषणा CHECK_ID(chip, pid, fw_ver)	\
+#define CHECK_PID(chip, pid)		(RTS51X_GET_PID(chip) == (pid))
+#define CHECK_FW_VER(chip, fw_ver)	(FW_VERSION(chip) == (fw_ver))
+#define CHECK_ID(chip, pid, fw_ver)	\
 		(CHECK_PID((chip), (pid)) && CHECK_FW_VER((chip), (fw_ver)))
 
-अटल पूर्णांक init_realtek_cr(काष्ठा us_data *us);
+static int init_realtek_cr(struct us_data *us);
 
 /*
  * The table of devices
  */
-#घोषणा UNUSUAL_DEV(id_venकरोr, id_product, bcdDeviceMin, bcdDeviceMax, \
-		    venकरोrName, productName, useProtocol, useTransport, \
+#define UNUSUAL_DEV(id_vendor, id_product, bcdDeviceMin, bcdDeviceMax, \
+		    vendorName, productName, useProtocol, useTransport, \
 		    initFunction, flags) \
-अणु\
-	USB_DEVICE_VER(id_venकरोr, id_product, bcdDeviceMin, bcdDeviceMax), \
+{\
+	USB_DEVICE_VER(id_vendor, id_product, bcdDeviceMin, bcdDeviceMax), \
 	.driver_info = (flags) \
-पूर्ण
+}
 
-अटल स्थिर काष्ठा usb_device_id realtek_cr_ids[] = अणु
+static const struct usb_device_id realtek_cr_ids[] = {
 #	include "unusual_realtek.h"
-	अणुपूर्ण			/* Terminating entry */
-पूर्ण;
+	{}			/* Terminating entry */
+};
 
 MODULE_DEVICE_TABLE(usb, realtek_cr_ids);
 
-#अघोषित UNUSUAL_DEV
+#undef UNUSUAL_DEV
 
 /*
  * The flags table
  */
-#घोषणा UNUSUAL_DEV(idVenकरोr, idProduct, bcdDeviceMin, bcdDeviceMax, \
-		    venकरोr_name, product_name, use_protocol, use_transport, \
+#define UNUSUAL_DEV(idVendor, idProduct, bcdDeviceMin, bcdDeviceMax, \
+		    vendor_name, product_name, use_protocol, use_transport, \
 		    init_function, Flags) \
-अणु \
-	.venकरोrName = venकरोr_name,	\
+{ \
+	.vendorName = vendor_name,	\
 	.productName = product_name,	\
 	.useProtocol = use_protocol,	\
 	.useTransport = use_transport,	\
 	.initFunction = init_function,	\
-पूर्ण
+}
 
-अटल काष्ठा us_unusual_dev realtek_cr_unusual_dev_list[] = अणु
+static struct us_unusual_dev realtek_cr_unusual_dev_list[] = {
 #	include "unusual_realtek.h"
-	अणुपूर्ण			/* Terminating entry */
-पूर्ण;
+	{}			/* Terminating entry */
+};
 
-#अघोषित UNUSUAL_DEV
+#undef UNUSUAL_DEV
 
-अटल पूर्णांक rts51x_bulk_transport(काष्ठा us_data *us, u8 lun,
-				 u8 *cmd, पूर्णांक cmd_len, u8 *buf, पूर्णांक buf_len,
-				 क्रमागत dma_data_direction dir, पूर्णांक *act_len)
-अणु
-	काष्ठा bulk_cb_wrap *bcb = (काष्ठा bulk_cb_wrap *)us->iobuf;
-	काष्ठा bulk_cs_wrap *bcs = (काष्ठा bulk_cs_wrap *)us->iobuf;
-	पूर्णांक result;
-	अचिन्हित पूर्णांक residue;
-	अचिन्हित पूर्णांक cswlen;
-	अचिन्हित पूर्णांक cbwlen = US_BULK_CB_WRAP_LEN;
+static int rts51x_bulk_transport(struct us_data *us, u8 lun,
+				 u8 *cmd, int cmd_len, u8 *buf, int buf_len,
+				 enum dma_data_direction dir, int *act_len)
+{
+	struct bulk_cb_wrap *bcb = (struct bulk_cb_wrap *)us->iobuf;
+	struct bulk_cs_wrap *bcs = (struct bulk_cs_wrap *)us->iobuf;
+	int result;
+	unsigned int residue;
+	unsigned int cswlen;
+	unsigned int cbwlen = US_BULK_CB_WRAP_LEN;
 
 	/* set up the command wrapper */
 	bcb->Signature = cpu_to_le32(US_BULK_CB_SIGN);
@@ -219,85 +218,85 @@ MODULE_DEVICE_TABLE(usb, realtek_cr_ids);
 	bcb->Length = cmd_len;
 
 	/* copy the command payload */
-	स_रखो(bcb->CDB, 0, माप(bcb->CDB));
-	स_नकल(bcb->CDB, cmd, bcb->Length);
+	memset(bcb->CDB, 0, sizeof(bcb->CDB));
+	memcpy(bcb->CDB, cmd, bcb->Length);
 
-	/* send it to out endpoपूर्णांक */
+	/* send it to out endpoint */
 	result = usb_stor_bulk_transfer_buf(us, us->send_bulk_pipe,
-					    bcb, cbwlen, शून्य);
-	अगर (result != USB_STOR_XFER_GOOD)
-		वापस USB_STOR_TRANSPORT_ERROR;
+					    bcb, cbwlen, NULL);
+	if (result != USB_STOR_XFER_GOOD)
+		return USB_STOR_TRANSPORT_ERROR;
 
 	/* DATA STAGE */
-	/* send/receive data payload, अगर there is any */
+	/* send/receive data payload, if there is any */
 
-	अगर (buf && buf_len) अणु
-		अचिन्हित पूर्णांक pipe = (dir == DMA_FROM_DEVICE) ?
+	if (buf && buf_len) {
+		unsigned int pipe = (dir == DMA_FROM_DEVICE) ?
 		    us->recv_bulk_pipe : us->send_bulk_pipe;
 		result = usb_stor_bulk_transfer_buf(us, pipe,
-						    buf, buf_len, शून्य);
-		अगर (result == USB_STOR_XFER_ERROR)
-			वापस USB_STOR_TRANSPORT_ERROR;
-	पूर्ण
+						    buf, buf_len, NULL);
+		if (result == USB_STOR_XFER_ERROR)
+			return USB_STOR_TRANSPORT_ERROR;
+	}
 
-	/* get CSW क्रम device status */
+	/* get CSW for device status */
 	result = usb_stor_bulk_transfer_buf(us, us->recv_bulk_pipe,
 					    bcs, US_BULK_CS_WRAP_LEN, &cswlen);
-	अगर (result != USB_STOR_XFER_GOOD)
-		वापस USB_STOR_TRANSPORT_ERROR;
+	if (result != USB_STOR_XFER_GOOD)
+		return USB_STOR_TRANSPORT_ERROR;
 
 	/* check bulk status */
-	अगर (bcs->Signature != cpu_to_le32(US_BULK_CS_SIGN)) अणु
+	if (bcs->Signature != cpu_to_le32(US_BULK_CS_SIGN)) {
 		usb_stor_dbg(us, "Signature mismatch: got %08X, expecting %08X\n",
 			     le32_to_cpu(bcs->Signature), US_BULK_CS_SIGN);
-		वापस USB_STOR_TRANSPORT_ERROR;
-	पूर्ण
+		return USB_STOR_TRANSPORT_ERROR;
+	}
 
 	residue = bcs->Residue;
-	अगर (bcs->Tag != us->tag)
-		वापस USB_STOR_TRANSPORT_ERROR;
+	if (bcs->Tag != us->tag)
+		return USB_STOR_TRANSPORT_ERROR;
 
 	/*
 	 * try to compute the actual residue, based on how much data
 	 * was really transferred and what the device tells us
 	 */
-	अगर (residue)
+	if (residue)
 		residue = residue < buf_len ? residue : buf_len;
 
-	अगर (act_len)
+	if (act_len)
 		*act_len = buf_len - residue;
 
 	/* based on the status code, we report good or bad */
-	चयन (bcs->Status) अणु
-	हाल US_BULK_STAT_OK:
-		/* command good -- note that data could be लघु */
-		वापस USB_STOR_TRANSPORT_GOOD;
+	switch (bcs->Status) {
+	case US_BULK_STAT_OK:
+		/* command good -- note that data could be short */
+		return USB_STOR_TRANSPORT_GOOD;
 
-	हाल US_BULK_STAT_FAIL:
+	case US_BULK_STAT_FAIL:
 		/* command failed */
-		वापस USB_STOR_TRANSPORT_FAILED;
+		return USB_STOR_TRANSPORT_FAILED;
 
-	हाल US_BULK_STAT_PHASE:
+	case US_BULK_STAT_PHASE:
 		/*
 		 * phase error -- note that a transport reset will be
 		 * invoked by the invoke_transport() function
 		 */
-		वापस USB_STOR_TRANSPORT_ERROR;
-	पूर्ण
+		return USB_STOR_TRANSPORT_ERROR;
+	}
 
-	/* we should never get here, but अगर we करो, we're in trouble */
-	वापस USB_STOR_TRANSPORT_ERROR;
-पूर्ण
+	/* we should never get here, but if we do, we're in trouble */
+	return USB_STOR_TRANSPORT_ERROR;
+}
 
-अटल पूर्णांक rts51x_bulk_transport_special(काष्ठा us_data *us, u8 lun,
-				 u8 *cmd, पूर्णांक cmd_len, u8 *buf, पूर्णांक buf_len,
-				 क्रमागत dma_data_direction dir, पूर्णांक *act_len)
-अणु
-	काष्ठा bulk_cb_wrap *bcb = (काष्ठा bulk_cb_wrap *) us->iobuf;
-	काष्ठा bulk_cs_wrap *bcs = (काष्ठा bulk_cs_wrap *) us->iobuf;
-	पूर्णांक result;
-	अचिन्हित पूर्णांक cswlen;
-	अचिन्हित पूर्णांक cbwlen = US_BULK_CB_WRAP_LEN;
+static int rts51x_bulk_transport_special(struct us_data *us, u8 lun,
+				 u8 *cmd, int cmd_len, u8 *buf, int buf_len,
+				 enum dma_data_direction dir, int *act_len)
+{
+	struct bulk_cb_wrap *bcb = (struct bulk_cb_wrap *) us->iobuf;
+	struct bulk_cs_wrap *bcs = (struct bulk_cs_wrap *) us->iobuf;
+	int result;
+	unsigned int cswlen;
+	unsigned int cbwlen = US_BULK_CB_WRAP_LEN;
 
 	/* set up the command wrapper */
 	bcb->Signature = cpu_to_le32(US_BULK_CB_SIGN);
@@ -308,65 +307,65 @@ MODULE_DEVICE_TABLE(usb, realtek_cr_ids);
 	bcb->Length = cmd_len;
 
 	/* copy the command payload */
-	स_रखो(bcb->CDB, 0, माप(bcb->CDB));
-	स_नकल(bcb->CDB, cmd, bcb->Length);
+	memset(bcb->CDB, 0, sizeof(bcb->CDB));
+	memcpy(bcb->CDB, cmd, bcb->Length);
 
-	/* send it to out endpoपूर्णांक */
+	/* send it to out endpoint */
 	result = usb_stor_bulk_transfer_buf(us, us->send_bulk_pipe,
-				bcb, cbwlen, शून्य);
-	अगर (result != USB_STOR_XFER_GOOD)
-		वापस USB_STOR_TRANSPORT_ERROR;
+				bcb, cbwlen, NULL);
+	if (result != USB_STOR_XFER_GOOD)
+		return USB_STOR_TRANSPORT_ERROR;
 
 	/* DATA STAGE */
-	/* send/receive data payload, अगर there is any */
+	/* send/receive data payload, if there is any */
 
-	अगर (buf && buf_len) अणु
-		अचिन्हित पूर्णांक pipe = (dir == DMA_FROM_DEVICE) ?
+	if (buf && buf_len) {
+		unsigned int pipe = (dir == DMA_FROM_DEVICE) ?
 				us->recv_bulk_pipe : us->send_bulk_pipe;
 		result = usb_stor_bulk_transfer_buf(us, pipe,
-				buf, buf_len, शून्य);
-		अगर (result == USB_STOR_XFER_ERROR)
-			वापस USB_STOR_TRANSPORT_ERROR;
-	पूर्ण
+				buf, buf_len, NULL);
+		if (result == USB_STOR_XFER_ERROR)
+			return USB_STOR_TRANSPORT_ERROR;
+	}
 
-	/* get CSW क्रम device status */
+	/* get CSW for device status */
 	result = usb_bulk_msg(us->pusb_dev, us->recv_bulk_pipe, bcs,
 			US_BULK_CS_WRAP_LEN, &cswlen, 250);
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /* Determine what the maximum LUN supported is */
-अटल पूर्णांक rts51x_get_max_lun(काष्ठा us_data *us)
-अणु
-	पूर्णांक result;
+static int rts51x_get_max_lun(struct us_data *us)
+{
+	int result;
 
 	/* issue the command */
 	us->iobuf[0] = 0;
 	result = usb_stor_control_msg(us, us->recv_ctrl_pipe,
 				      US_BULK_GET_MAX_LUN,
-				      USB_सूची_IN | USB_TYPE_CLASS |
+				      USB_DIR_IN | USB_TYPE_CLASS |
 				      USB_RECIP_INTERFACE,
-				      0, us->अगरnum, us->iobuf, 1, 10 * HZ);
+				      0, us->ifnum, us->iobuf, 1, 10 * HZ);
 
 	usb_stor_dbg(us, "GetMaxLUN command result is %d, data is %d\n",
 		     result, us->iobuf[0]);
 
-	/* अगर we have a successful request, वापस the result */
-	अगर (result > 0)
-		वापस us->iobuf[0];
+	/* if we have a successful request, return the result */
+	if (result > 0)
+		return us->iobuf[0];
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rts51x_पढ़ो_mem(काष्ठा us_data *us, u16 addr, u8 *data, u16 len)
-अणु
-	पूर्णांक retval;
-	u8 cmnd[12] = अणु 0 पूर्ण;
+static int rts51x_read_mem(struct us_data *us, u16 addr, u8 *data, u16 len)
+{
+	int retval;
+	u8 cmnd[12] = { 0 };
 	u8 *buf;
 
-	buf = kदो_स्मृति(len, GFP_NOIO);
-	अगर (buf == शून्य)
-		वापस USB_STOR_TRANSPORT_ERROR;
+	buf = kmalloc(len, GFP_NOIO);
+	if (buf == NULL)
+		return USB_STOR_TRANSPORT_ERROR;
 
 	usb_stor_dbg(us, "addr = 0x%x, len = %d\n", addr, len);
 
@@ -378,26 +377,26 @@ MODULE_DEVICE_TABLE(usb, realtek_cr_ids);
 	cmnd[5] = (u8) len;
 
 	retval = rts51x_bulk_transport(us, 0, cmnd, 12,
-				       buf, len, DMA_FROM_DEVICE, शून्य);
-	अगर (retval != USB_STOR_TRANSPORT_GOOD) अणु
-		kमुक्त(buf);
-		वापस -EIO;
-	पूर्ण
+				       buf, len, DMA_FROM_DEVICE, NULL);
+	if (retval != USB_STOR_TRANSPORT_GOOD) {
+		kfree(buf);
+		return -EIO;
+	}
 
-	स_नकल(data, buf, len);
-	kमुक्त(buf);
-	वापस 0;
-पूर्ण
+	memcpy(data, buf, len);
+	kfree(buf);
+	return 0;
+}
 
-अटल पूर्णांक rts51x_ग_लिखो_mem(काष्ठा us_data *us, u16 addr, u8 *data, u16 len)
-अणु
-	पूर्णांक retval;
-	u8 cmnd[12] = अणु 0 पूर्ण;
+static int rts51x_write_mem(struct us_data *us, u16 addr, u8 *data, u16 len)
+{
+	int retval;
+	u8 cmnd[12] = { 0 };
 	u8 *buf;
 
 	buf = kmemdup(data, len, GFP_NOIO);
-	अगर (buf == शून्य)
-		वापस USB_STOR_TRANSPORT_ERROR;
+	if (buf == NULL)
+		return USB_STOR_TRANSPORT_ERROR;
 
 	usb_stor_dbg(us, "addr = 0x%x, len = %d\n", addr, len);
 
@@ -409,24 +408,24 @@ MODULE_DEVICE_TABLE(usb, realtek_cr_ids);
 	cmnd[5] = (u8) len;
 
 	retval = rts51x_bulk_transport(us, 0, cmnd, 12,
-				       buf, len, DMA_TO_DEVICE, शून्य);
-	kमुक्त(buf);
-	अगर (retval != USB_STOR_TRANSPORT_GOOD)
-		वापस -EIO;
+				       buf, len, DMA_TO_DEVICE, NULL);
+	kfree(buf);
+	if (retval != USB_STOR_TRANSPORT_GOOD)
+		return -EIO;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rts51x_पढ़ो_status(काष्ठा us_data *us,
-			      u8 lun, u8 *status, पूर्णांक len, पूर्णांक *actlen)
-अणु
-	पूर्णांक retval;
-	u8 cmnd[12] = अणु 0 पूर्ण;
+static int rts51x_read_status(struct us_data *us,
+			      u8 lun, u8 *status, int len, int *actlen)
+{
+	int retval;
+	u8 cmnd[12] = { 0 };
 	u8 *buf;
 
-	buf = kदो_स्मृति(len, GFP_NOIO);
-	अगर (buf == शून्य)
-		वापस USB_STOR_TRANSPORT_ERROR;
+	buf = kmalloc(len, GFP_NOIO);
+	if (buf == NULL)
+		return USB_STOR_TRANSPORT_ERROR;
 
 	usb_stor_dbg(us, "lun = %d\n", lun);
 
@@ -435,25 +434,25 @@ MODULE_DEVICE_TABLE(usb, realtek_cr_ids);
 
 	retval = rts51x_bulk_transport(us, lun, cmnd, 12,
 				       buf, len, DMA_FROM_DEVICE, actlen);
-	अगर (retval != USB_STOR_TRANSPORT_GOOD) अणु
-		kमुक्त(buf);
-		वापस -EIO;
-	पूर्ण
+	if (retval != USB_STOR_TRANSPORT_GOOD) {
+		kfree(buf);
+		return -EIO;
+	}
 
-	स_नकल(status, buf, len);
-	kमुक्त(buf);
-	वापस 0;
-पूर्ण
+	memcpy(status, buf, len);
+	kfree(buf);
+	return 0;
+}
 
-अटल पूर्णांक rts51x_check_status(काष्ठा us_data *us, u8 lun)
-अणु
-	काष्ठा rts51x_chip *chip = (काष्ठा rts51x_chip *)(us->extra);
-	पूर्णांक retval;
+static int rts51x_check_status(struct us_data *us, u8 lun)
+{
+	struct rts51x_chip *chip = (struct rts51x_chip *)(us->extra);
+	int retval;
 	u8 buf[16];
 
-	retval = rts51x_पढ़ो_status(us, lun, buf, 16, &(chip->status_len));
-	अगर (retval != STATUS_SUCCESS)
-		वापस -EIO;
+	retval = rts51x_read_status(us, lun, buf, 16, &(chip->status_len));
+	if (retval != STATUS_SUCCESS)
+		return -EIO;
 
 	usb_stor_dbg(us, "chip->status_len = %d\n", chip->status_len);
 
@@ -467,50 +466,50 @@ MODULE_DEVICE_TABLE(usb, realtek_cr_ids);
 	chip->status[lun].multi_flag = buf[10];
 	chip->status[lun].multi_card = buf[11];
 	chip->status[lun].log_exist = buf[12];
-	अगर (chip->status_len == 16) अणु
+	if (chip->status_len == 16) {
 		chip->status[lun].detailed_type.detailed_type1 = buf[13];
 		chip->status[lun].function[0] = buf[14];
 		chip->status[lun].function[1] = buf[15];
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक enable_oscillator(काष्ठा us_data *us)
-अणु
-	पूर्णांक retval;
+static int enable_oscillator(struct us_data *us)
+{
+	int retval;
 	u8 value;
 
-	retval = rts51x_पढ़ो_mem(us, 0xFE77, &value, 1);
-	अगर (retval < 0)
-		वापस -EIO;
+	retval = rts51x_read_mem(us, 0xFE77, &value, 1);
+	if (retval < 0)
+		return -EIO;
 
 	value |= 0x04;
-	retval = rts51x_ग_लिखो_mem(us, 0xFE77, &value, 1);
-	अगर (retval < 0)
-		वापस -EIO;
+	retval = rts51x_write_mem(us, 0xFE77, &value, 1);
+	if (retval < 0)
+		return -EIO;
 
-	retval = rts51x_पढ़ो_mem(us, 0xFE77, &value, 1);
-	अगर (retval < 0)
-		वापस -EIO;
+	retval = rts51x_read_mem(us, 0xFE77, &value, 1);
+	if (retval < 0)
+		return -EIO;
 
-	अगर (!(value & 0x04))
-		वापस -EIO;
+	if (!(value & 0x04))
+		return -EIO;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __करो_config_स्वतःdelink(काष्ठा us_data *us, u8 *data, u16 len)
-अणु
-	पूर्णांक retval;
-	u8 cmnd[12] = अणु0पूर्ण;
+static int __do_config_autodelink(struct us_data *us, u8 *data, u16 len)
+{
+	int retval;
+	u8 cmnd[12] = {0};
 	u8 *buf;
 
 	usb_stor_dbg(us, "addr = 0xfe47, len = %d\n", len);
 
 	buf = kmemdup(data, len, GFP_NOIO);
-	अगर (!buf)
-		वापस USB_STOR_TRANSPORT_ERROR;
+	if (!buf)
+		return USB_STOR_TRANSPORT_ERROR;
 
 	cmnd[0] = 0xF0;
 	cmnd[1] = 0x0E;
@@ -519,377 +518,377 @@ MODULE_DEVICE_TABLE(usb, realtek_cr_ids);
 	cmnd[4] = (u8)(len >> 8);
 	cmnd[5] = (u8)len;
 
-	retval = rts51x_bulk_transport_special(us, 0, cmnd, 12, buf, len, DMA_TO_DEVICE, शून्य);
-	kमुक्त(buf);
-	अगर (retval != USB_STOR_TRANSPORT_GOOD) अणु
-		वापस -EIO;
-	पूर्ण
+	retval = rts51x_bulk_transport_special(us, 0, cmnd, 12, buf, len, DMA_TO_DEVICE, NULL);
+	kfree(buf);
+	if (retval != USB_STOR_TRANSPORT_GOOD) {
+		return -EIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक करो_config_स्वतःdelink(काष्ठा us_data *us, पूर्णांक enable, पूर्णांक क्रमce)
-अणु
-	पूर्णांक retval;
+static int do_config_autodelink(struct us_data *us, int enable, int force)
+{
+	int retval;
 	u8 value;
 
-	retval = rts51x_पढ़ो_mem(us, 0xFE47, &value, 1);
-	अगर (retval < 0)
-		वापस -EIO;
+	retval = rts51x_read_mem(us, 0xFE47, &value, 1);
+	if (retval < 0)
+		return -EIO;
 
-	अगर (enable) अणु
-		अगर (क्रमce)
+	if (enable) {
+		if (force)
 			value |= 0x03;
-		अन्यथा
+		else
 			value |= 0x01;
-	पूर्ण अन्यथा अणु
+	} else {
 		value &= ~0x03;
-	पूर्ण
+	}
 
 	usb_stor_dbg(us, "set 0xfe47 to 0x%x\n", value);
 
-	/* retval = rts51x_ग_लिखो_mem(us, 0xFE47, &value, 1); */
-	retval = __करो_config_स्वतःdelink(us, &value, 1);
-	अगर (retval < 0)
-		वापस -EIO;
+	/* retval = rts51x_write_mem(us, 0xFE47, &value, 1); */
+	retval = __do_config_autodelink(us, &value, 1);
+	if (retval < 0)
+		return -EIO;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक config_स्वतःdelink_after_घातer_on(काष्ठा us_data *us)
-अणु
-	काष्ठा rts51x_chip *chip = (काष्ठा rts51x_chip *)(us->extra);
-	पूर्णांक retval;
+static int config_autodelink_after_power_on(struct us_data *us)
+{
+	struct rts51x_chip *chip = (struct rts51x_chip *)(us->extra);
+	int retval;
 	u8 value;
 
-	अगर (!CHK_AUTO_DELINK(chip))
-		वापस 0;
+	if (!CHK_AUTO_DELINK(chip))
+		return 0;
 
-	retval = rts51x_पढ़ो_mem(us, 0xFE47, &value, 1);
-	अगर (retval < 0)
-		वापस -EIO;
+	retval = rts51x_read_mem(us, 0xFE47, &value, 1);
+	if (retval < 0)
+		return -EIO;
 
-	अगर (स्वतः_delink_en) अणु
+	if (auto_delink_en) {
 		CLR_BIT(value, 0);
 		CLR_BIT(value, 1);
 		SET_BIT(value, 2);
 
-		अगर (CHECK_ID(chip, 0x0138, 0x3882))
+		if (CHECK_ID(chip, 0x0138, 0x3882))
 			CLR_BIT(value, 2);
 
 		SET_BIT(value, 7);
 
-		/* retval = rts51x_ग_लिखो_mem(us, 0xFE47, &value, 1); */
-		retval = __करो_config_स्वतःdelink(us, &value, 1);
-		अगर (retval < 0)
-			वापस -EIO;
+		/* retval = rts51x_write_mem(us, 0xFE47, &value, 1); */
+		retval = __do_config_autodelink(us, &value, 1);
+		if (retval < 0)
+			return -EIO;
 
 		retval = enable_oscillator(us);
-		अगर (retval == 0)
-			(व्योम)करो_config_स्वतःdelink(us, 1, 0);
-	पूर्ण अन्यथा अणु
+		if (retval == 0)
+			(void)do_config_autodelink(us, 1, 0);
+	} else {
 		/* Autodelink controlled by firmware */
 
 		SET_BIT(value, 2);
 
-		अगर (CHECK_ID(chip, 0x0138, 0x3882))
+		if (CHECK_ID(chip, 0x0138, 0x3882))
 			CLR_BIT(value, 2);
 
-		अगर (CHECK_ID(chip, 0x0159, 0x5889) ||
-		    CHECK_ID(chip, 0x0138, 0x3880)) अणु
+		if (CHECK_ID(chip, 0x0159, 0x5889) ||
+		    CHECK_ID(chip, 0x0138, 0x3880)) {
 			CLR_BIT(value, 0);
 			CLR_BIT(value, 7);
-		पूर्ण
+		}
 
-		/* retval = rts51x_ग_लिखो_mem(us, 0xFE47, &value, 1); */
-		retval = __करो_config_स्वतःdelink(us, &value, 1);
-		अगर (retval < 0)
-			वापस -EIO;
+		/* retval = rts51x_write_mem(us, 0xFE47, &value, 1); */
+		retval = __do_config_autodelink(us, &value, 1);
+		if (retval < 0)
+			return -EIO;
 
-		अगर (CHECK_ID(chip, 0x0159, 0x5888)) अणु
+		if (CHECK_ID(chip, 0x0159, 0x5888)) {
 			value = 0xFF;
-			retval = rts51x_ग_लिखो_mem(us, 0xFE79, &value, 1);
-			अगर (retval < 0)
-				वापस -EIO;
+			retval = rts51x_write_mem(us, 0xFE79, &value, 1);
+			if (retval < 0)
+				return -EIO;
 
 			value = 0x01;
-			retval = rts51x_ग_लिखो_mem(us, 0x48, &value, 1);
-			अगर (retval < 0)
-				वापस -EIO;
-		पूर्ण
-	पूर्ण
+			retval = rts51x_write_mem(us, 0x48, &value, 1);
+			if (retval < 0)
+				return -EIO;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक config_स्वतःdelink_beक्रमe_घातer_करोwn(काष्ठा us_data *us)
-अणु
-	काष्ठा rts51x_chip *chip = (काष्ठा rts51x_chip *)(us->extra);
-	पूर्णांक retval;
+#ifdef CONFIG_PM
+static int config_autodelink_before_power_down(struct us_data *us)
+{
+	struct rts51x_chip *chip = (struct rts51x_chip *)(us->extra);
+	int retval;
 	u8 value;
 
-	अगर (!CHK_AUTO_DELINK(chip))
-		वापस 0;
+	if (!CHK_AUTO_DELINK(chip))
+		return 0;
 
-	अगर (स्वतः_delink_en) अणु
-		retval = rts51x_पढ़ो_mem(us, 0xFE77, &value, 1);
-		अगर (retval < 0)
-			वापस -EIO;
+	if (auto_delink_en) {
+		retval = rts51x_read_mem(us, 0xFE77, &value, 1);
+		if (retval < 0)
+			return -EIO;
 
 		SET_BIT(value, 2);
-		retval = rts51x_ग_लिखो_mem(us, 0xFE77, &value, 1);
-		अगर (retval < 0)
-			वापस -EIO;
+		retval = rts51x_write_mem(us, 0xFE77, &value, 1);
+		if (retval < 0)
+			return -EIO;
 
-		अगर (CHECK_ID(chip, 0x0159, 0x5888)) अणु
+		if (CHECK_ID(chip, 0x0159, 0x5888)) {
 			value = 0x01;
-			retval = rts51x_ग_लिखो_mem(us, 0x48, &value, 1);
-			अगर (retval < 0)
-				वापस -EIO;
-		पूर्ण
+			retval = rts51x_write_mem(us, 0x48, &value, 1);
+			if (retval < 0)
+				return -EIO;
+		}
 
-		retval = rts51x_पढ़ो_mem(us, 0xFE47, &value, 1);
-		अगर (retval < 0)
-			वापस -EIO;
+		retval = rts51x_read_mem(us, 0xFE47, &value, 1);
+		if (retval < 0)
+			return -EIO;
 
 		SET_BIT(value, 0);
-		अगर (CHECK_ID(chip, 0x0138, 0x3882))
+		if (CHECK_ID(chip, 0x0138, 0x3882))
 			SET_BIT(value, 2);
-		retval = rts51x_ग_लिखो_mem(us, 0xFE77, &value, 1);
-		अगर (retval < 0)
-			वापस -EIO;
-	पूर्ण अन्यथा अणु
-		अगर (CHECK_ID(chip, 0x0159, 0x5889) ||
+		retval = rts51x_write_mem(us, 0xFE77, &value, 1);
+		if (retval < 0)
+			return -EIO;
+	} else {
+		if (CHECK_ID(chip, 0x0159, 0x5889) ||
 		    CHECK_ID(chip, 0x0138, 0x3880) ||
-		    CHECK_ID(chip, 0x0138, 0x3882)) अणु
-			retval = rts51x_पढ़ो_mem(us, 0xFE47, &value, 1);
-			अगर (retval < 0)
-				वापस -EIO;
+		    CHECK_ID(chip, 0x0138, 0x3882)) {
+			retval = rts51x_read_mem(us, 0xFE47, &value, 1);
+			if (retval < 0)
+				return -EIO;
 
-			अगर (CHECK_ID(chip, 0x0159, 0x5889) ||
-			    CHECK_ID(chip, 0x0138, 0x3880)) अणु
+			if (CHECK_ID(chip, 0x0159, 0x5889) ||
+			    CHECK_ID(chip, 0x0138, 0x3880)) {
 				SET_BIT(value, 0);
 				SET_BIT(value, 7);
-			पूर्ण
+			}
 
-			अगर (CHECK_ID(chip, 0x0138, 0x3882))
+			if (CHECK_ID(chip, 0x0138, 0x3882))
 				SET_BIT(value, 2);
 
-			/* retval = rts51x_ग_लिखो_mem(us, 0xFE47, &value, 1); */
-			retval = __करो_config_स्वतःdelink(us, &value, 1);
-			अगर (retval < 0)
-				वापस -EIO;
-		पूर्ण
+			/* retval = rts51x_write_mem(us, 0xFE47, &value, 1); */
+			retval = __do_config_autodelink(us, &value, 1);
+			if (retval < 0)
+				return -EIO;
+		}
 
-		अगर (CHECK_ID(chip, 0x0159, 0x5888)) अणु
+		if (CHECK_ID(chip, 0x0159, 0x5888)) {
 			value = 0x01;
-			retval = rts51x_ग_लिखो_mem(us, 0x48, &value, 1);
-			अगर (retval < 0)
-				वापस -EIO;
-		पूर्ण
-	पूर्ण
+			retval = rts51x_write_mem(us, 0x48, &value, 1);
+			if (retval < 0)
+				return -EIO;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम fw5895_init(काष्ठा us_data *us)
-अणु
-	काष्ठा rts51x_chip *chip = (काष्ठा rts51x_chip *)(us->extra);
-	पूर्णांक retval;
+static void fw5895_init(struct us_data *us)
+{
+	struct rts51x_chip *chip = (struct rts51x_chip *)(us->extra);
+	int retval;
 	u8 val;
 
-	अगर ((PRODUCT_ID(chip) != 0x0158) || (FW_VERSION(chip) != 0x5895)) अणु
+	if ((PRODUCT_ID(chip) != 0x0158) || (FW_VERSION(chip) != 0x5895)) {
 		usb_stor_dbg(us, "Not the specified device, return immediately!\n");
-	पूर्ण अन्यथा अणु
-		retval = rts51x_पढ़ो_mem(us, 0xFD6F, &val, 1);
-		अगर (retval == STATUS_SUCCESS && (val & 0x1F) == 0) अणु
+	} else {
+		retval = rts51x_read_mem(us, 0xFD6F, &val, 1);
+		if (retval == STATUS_SUCCESS && (val & 0x1F) == 0) {
 			val = 0x1F;
-			retval = rts51x_ग_लिखो_mem(us, 0xFD70, &val, 1);
-			अगर (retval != STATUS_SUCCESS)
+			retval = rts51x_write_mem(us, 0xFD70, &val, 1);
+			if (retval != STATUS_SUCCESS)
 				usb_stor_dbg(us, "Write memory fail\n");
-		पूर्ण अन्यथा अणु
+		} else {
 			usb_stor_dbg(us, "Read memory fail, OR (val & 0x1F) != 0\n");
-		पूर्ण
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर
+		}
+	}
+}
+#endif
 
-#अगर_घोषित CONFIG_REALTEK_AUTOPM
-अटल व्योम fw5895_set_mmc_wp(काष्ठा us_data *us)
-अणु
-	काष्ठा rts51x_chip *chip = (काष्ठा rts51x_chip *)(us->extra);
-	पूर्णांक retval;
+#ifdef CONFIG_REALTEK_AUTOPM
+static void fw5895_set_mmc_wp(struct us_data *us)
+{
+	struct rts51x_chip *chip = (struct rts51x_chip *)(us->extra);
+	int retval;
 	u8 buf[13];
 
-	अगर ((PRODUCT_ID(chip) != 0x0158) || (FW_VERSION(chip) != 0x5895)) अणु
+	if ((PRODUCT_ID(chip) != 0x0158) || (FW_VERSION(chip) != 0x5895)) {
 		usb_stor_dbg(us, "Not the specified device, return immediately!\n");
-	पूर्ण अन्यथा अणु
-		retval = rts51x_पढ़ो_mem(us, 0xFD6F, buf, 1);
-		अगर (retval == STATUS_SUCCESS && (buf[0] & 0x24) == 0x24) अणु
+	} else {
+		retval = rts51x_read_mem(us, 0xFD6F, buf, 1);
+		if (retval == STATUS_SUCCESS && (buf[0] & 0x24) == 0x24) {
 			/* SD Exist and SD WP */
-			retval = rts51x_पढ़ो_mem(us, 0xD04E, buf, 1);
-			अगर (retval == STATUS_SUCCESS) अणु
+			retval = rts51x_read_mem(us, 0xD04E, buf, 1);
+			if (retval == STATUS_SUCCESS) {
 				buf[0] |= 0x04;
-				retval = rts51x_ग_लिखो_mem(us, 0xFD70, buf, 1);
-				अगर (retval != STATUS_SUCCESS)
+				retval = rts51x_write_mem(us, 0xFD70, buf, 1);
+				if (retval != STATUS_SUCCESS)
 					usb_stor_dbg(us, "Write memory fail\n");
-			पूर्ण अन्यथा अणु
+			} else {
 				usb_stor_dbg(us, "Read memory fail\n");
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			usb_stor_dbg(us, "Read memory fail, OR (buf[0]&0x24)!=0x24\n");
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम rts51x_modi_suspend_समयr(काष्ठा rts51x_chip *chip)
-अणु
-	काष्ठा us_data *us = chip->us;
+static void rts51x_modi_suspend_timer(struct rts51x_chip *chip)
+{
+	struct us_data *us = chip->us;
 
 	usb_stor_dbg(us, "state:%d\n", rts51x_get_stat(chip));
 
-	chip->समयr_expires = jअगरfies + msecs_to_jअगरfies(1000*ss_delay);
-	mod_समयr(&chip->rts51x_suspend_समयr, chip->समयr_expires);
-पूर्ण
+	chip->timer_expires = jiffies + msecs_to_jiffies(1000*ss_delay);
+	mod_timer(&chip->rts51x_suspend_timer, chip->timer_expires);
+}
 
-अटल व्योम rts51x_suspend_समयr_fn(काष्ठा समयr_list *t)
-अणु
-	काष्ठा rts51x_chip *chip = from_समयr(chip, t, rts51x_suspend_समयr);
-	काष्ठा us_data *us = chip->us;
+static void rts51x_suspend_timer_fn(struct timer_list *t)
+{
+	struct rts51x_chip *chip = from_timer(chip, t, rts51x_suspend_timer);
+	struct us_data *us = chip->us;
 
-	चयन (rts51x_get_stat(chip)) अणु
-	हाल RTS51X_STAT_INIT:
-	हाल RTS51X_STAT_RUN:
-		rts51x_modi_suspend_समयr(chip);
-		अवरोध;
-	हाल RTS51X_STAT_IDLE:
-	हाल RTS51X_STAT_SS:
+	switch (rts51x_get_stat(chip)) {
+	case RTS51X_STAT_INIT:
+	case RTS51X_STAT_RUN:
+		rts51x_modi_suspend_timer(chip);
+		break;
+	case RTS51X_STAT_IDLE:
+	case RTS51X_STAT_SS:
 		usb_stor_dbg(us, "RTS51X_STAT_SS, power.usage:%d\n",
-			     atomic_पढ़ो(&us->pusb_पूर्णांकf->dev.घातer.usage_count));
+			     atomic_read(&us->pusb_intf->dev.power.usage_count));
 
-		अगर (atomic_पढ़ो(&us->pusb_पूर्णांकf->dev.घातer.usage_count) > 0) अणु
+		if (atomic_read(&us->pusb_intf->dev.power.usage_count) > 0) {
 			usb_stor_dbg(us, "Ready to enter SS state\n");
 			rts51x_set_stat(chip, RTS51X_STAT_SS);
-			/* ignore mass storage पूर्णांकerface's children */
-			pm_suspend_ignore_children(&us->pusb_पूर्णांकf->dev, true);
-			usb_स्वतःpm_put_पूर्णांकerface_async(us->pusb_पूर्णांकf);
+			/* ignore mass storage interface's children */
+			pm_suspend_ignore_children(&us->pusb_intf->dev, true);
+			usb_autopm_put_interface_async(us->pusb_intf);
 			usb_stor_dbg(us, "RTS51X_STAT_SS 01, power.usage:%d\n",
-				     atomic_पढ़ो(&us->pusb_पूर्णांकf->dev.घातer.usage_count));
-		पूर्ण
-		अवरोध;
-	शेष:
+				     atomic_read(&us->pusb_intf->dev.power.usage_count));
+		}
+		break;
+	default:
 		usb_stor_dbg(us, "Unknown state !!!\n");
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल अंतरभूत पूर्णांक working_scsi(काष्ठा scsi_cmnd *srb)
-अणु
-	अगर ((srb->cmnd[0] == TEST_UNIT_READY) ||
-	    (srb->cmnd[0] == ALLOW_MEDIUM_REMOVAL)) अणु
-		वापस 0;
-	पूर्ण
+static inline int working_scsi(struct scsi_cmnd *srb)
+{
+	if ((srb->cmnd[0] == TEST_UNIT_READY) ||
+	    (srb->cmnd[0] == ALLOW_MEDIUM_REMOVAL)) {
+		return 0;
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल व्योम rts51x_invoke_transport(काष्ठा scsi_cmnd *srb, काष्ठा us_data *us)
-अणु
-	काष्ठा rts51x_chip *chip = (काष्ठा rts51x_chip *)(us->extra);
-	अटल पूर्णांक card_first_show = 1;
-	अटल u8 media_not_present[] = अणु 0x70, 0, 0x02, 0, 0, 0, 0,
+static void rts51x_invoke_transport(struct scsi_cmnd *srb, struct us_data *us)
+{
+	struct rts51x_chip *chip = (struct rts51x_chip *)(us->extra);
+	static int card_first_show = 1;
+	static u8 media_not_present[] = { 0x70, 0, 0x02, 0, 0, 0, 0,
 		10, 0, 0, 0, 0, 0x3A, 0, 0, 0, 0, 0
-	पूर्ण;
-	अटल u8 invalid_cmd_field[] = अणु 0x70, 0, 0x05, 0, 0, 0, 0,
+	};
+	static u8 invalid_cmd_field[] = { 0x70, 0, 0x05, 0, 0, 0, 0,
 		10, 0, 0, 0, 0, 0x24, 0, 0, 0, 0, 0
-	पूर्ण;
-	पूर्णांक ret;
+	};
+	int ret;
 
-	अगर (working_scsi(srb)) अणु
+	if (working_scsi(srb)) {
 		usb_stor_dbg(us, "working scsi, power.usage:%d\n",
-			     atomic_पढ़ो(&us->pusb_पूर्णांकf->dev.घातer.usage_count));
+			     atomic_read(&us->pusb_intf->dev.power.usage_count));
 
-		अगर (atomic_पढ़ो(&us->pusb_पूर्णांकf->dev.घातer.usage_count) <= 0) अणु
-			ret = usb_स्वतःpm_get_पूर्णांकerface(us->pusb_पूर्णांकf);
+		if (atomic_read(&us->pusb_intf->dev.power.usage_count) <= 0) {
+			ret = usb_autopm_get_interface(us->pusb_intf);
 			usb_stor_dbg(us, "working scsi, ret=%d\n", ret);
-		पूर्ण
-		अगर (rts51x_get_stat(chip) != RTS51X_STAT_RUN)
+		}
+		if (rts51x_get_stat(chip) != RTS51X_STAT_RUN)
 			rts51x_set_stat(chip, RTS51X_STAT_RUN);
 		chip->proto_handler_backup(srb, us);
-	पूर्ण अन्यथा अणु
-		अगर (rts51x_get_stat(chip) == RTS51X_STAT_SS) अणु
+	} else {
+		if (rts51x_get_stat(chip) == RTS51X_STAT_SS) {
 			usb_stor_dbg(us, "NOT working scsi\n");
-			अगर ((srb->cmnd[0] == TEST_UNIT_READY) &&
-			    (chip->pwr_state == US_SUSPEND)) अणु
-				अगर (TST_LUN_READY(chip, srb->device->lun)) अणु
+			if ((srb->cmnd[0] == TEST_UNIT_READY) &&
+			    (chip->pwr_state == US_SUSPEND)) {
+				if (TST_LUN_READY(chip, srb->device->lun)) {
 					srb->result = SAM_STAT_GOOD;
-				पूर्ण अन्यथा अणु
+				} else {
 					srb->result = SAM_STAT_CHECK_CONDITION;
-					स_नकल(srb->sense_buffer,
+					memcpy(srb->sense_buffer,
 					       media_not_present,
 					       US_SENSE_SIZE);
-				पूर्ण
+				}
 				usb_stor_dbg(us, "TEST_UNIT_READY\n");
-				जाओ out;
-			पूर्ण
-			अगर (srb->cmnd[0] == ALLOW_MEDIUM_REMOVAL) अणु
-				पूर्णांक prevent = srb->cmnd[4] & 0x1;
-				अगर (prevent) अणु
+				goto out;
+			}
+			if (srb->cmnd[0] == ALLOW_MEDIUM_REMOVAL) {
+				int prevent = srb->cmnd[4] & 0x1;
+				if (prevent) {
 					srb->result = SAM_STAT_CHECK_CONDITION;
-					स_नकल(srb->sense_buffer,
+					memcpy(srb->sense_buffer,
 					       invalid_cmd_field,
 					       US_SENSE_SIZE);
-				पूर्ण अन्यथा अणु
+				} else {
 					srb->result = SAM_STAT_GOOD;
-				पूर्ण
+				}
 				usb_stor_dbg(us, "ALLOW_MEDIUM_REMOVAL\n");
-				जाओ out;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				goto out;
+			}
+		} else {
 			usb_stor_dbg(us, "NOT working scsi, not SS\n");
 			chip->proto_handler_backup(srb, us);
 			/* Check whether card is plugged in */
-			अगर (srb->cmnd[0] == TEST_UNIT_READY) अणु
-				अगर (srb->result == SAM_STAT_GOOD) अणु
+			if (srb->cmnd[0] == TEST_UNIT_READY) {
+				if (srb->result == SAM_STAT_GOOD) {
 					SET_LUN_READY(chip, srb->device->lun);
-					अगर (card_first_show) अणु
+					if (card_first_show) {
 						card_first_show = 0;
 						fw5895_set_mmc_wp(us);
-					पूर्ण
-				पूर्ण अन्यथा अणु
+					}
+				} else {
 					CLR_LUN_READY(chip, srb->device->lun);
 					card_first_show = 1;
-				पूर्ण
-			पूर्ण
-			अगर (rts51x_get_stat(chip) != RTS51X_STAT_IDLE)
+				}
+			}
+			if (rts51x_get_stat(chip) != RTS51X_STAT_IDLE)
 				rts51x_set_stat(chip, RTS51X_STAT_IDLE);
-		पूर्ण
-	पूर्ण
+		}
+	}
 out:
 	usb_stor_dbg(us, "state:%d\n", rts51x_get_stat(chip));
-	अगर (rts51x_get_stat(chip) == RTS51X_STAT_RUN)
-		rts51x_modi_suspend_समयr(chip);
-पूर्ण
+	if (rts51x_get_stat(chip) == RTS51X_STAT_RUN)
+		rts51x_modi_suspend_timer(chip);
+}
 
-अटल पूर्णांक realtek_cr_स्वतःsuspend_setup(काष्ठा us_data *us)
-अणु
-	काष्ठा rts51x_chip *chip;
-	काष्ठा rts51x_status *status = शून्य;
+static int realtek_cr_autosuspend_setup(struct us_data *us)
+{
+	struct rts51x_chip *chip;
+	struct rts51x_status *status = NULL;
 	u8 buf[16];
-	पूर्णांक retval;
+	int retval;
 
-	chip = (काष्ठा rts51x_chip *)us->extra;
-	chip->support_स्वतः_delink = 0;
+	chip = (struct rts51x_chip *)us->extra;
+	chip->support_auto_delink = 0;
 	chip->pwr_state = US_RESUME;
-	chip->lun_पढ़ोy = 0;
+	chip->lun_ready = 0;
 	rts51x_set_stat(chip, RTS51X_STAT_INIT);
 
-	retval = rts51x_पढ़ो_status(us, 0, buf, 16, &(chip->status_len));
-	अगर (retval != STATUS_SUCCESS) अणु
+	retval = rts51x_read_status(us, 0, buf, 16, &(chip->status_len));
+	if (retval != STATUS_SUCCESS) {
 		usb_stor_dbg(us, "Read status fail\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 	status = chip->status;
 	status->vid = ((u16) buf[0] << 8) | buf[1];
 	status->pid = ((u16) buf[2] << 8) | buf[3];
@@ -901,157 +900,157 @@ out:
 	status->multi_flag = buf[10];
 	status->multi_card = buf[11];
 	status->log_exist = buf[12];
-	अगर (chip->status_len == 16) अणु
+	if (chip->status_len == 16) {
 		status->detailed_type.detailed_type1 = buf[13];
 		status->function[0] = buf[14];
 		status->function[1] = buf[15];
-	पूर्ण
+	}
 
 	/* back up the proto_handler in us->extra */
-	chip = (काष्ठा rts51x_chip *)(us->extra);
+	chip = (struct rts51x_chip *)(us->extra);
 	chip->proto_handler_backup = us->proto_handler;
-	/* Set the स्वतःsuspend_delay to 0 */
-	pm_runसमय_set_स्वतःsuspend_delay(&us->pusb_dev->dev, 0);
+	/* Set the autosuspend_delay to 0 */
+	pm_runtime_set_autosuspend_delay(&us->pusb_dev->dev, 0);
 	/* override us->proto_handler setted in get_protocol() */
 	us->proto_handler = rts51x_invoke_transport;
 
-	chip->समयr_expires = 0;
-	समयr_setup(&chip->rts51x_suspend_समयr, rts51x_suspend_समयr_fn, 0);
+	chip->timer_expires = 0;
+	timer_setup(&chip->rts51x_suspend_timer, rts51x_suspend_timer_fn, 0);
 	fw5895_init(us);
 
-	/* enable स्वतःsuspend function of the usb device */
-	usb_enable_स्वतःsuspend(us->pusb_dev);
+	/* enable autosuspend function of the usb device */
+	usb_enable_autosuspend(us->pusb_dev);
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल व्योम realtek_cr_deकाष्ठाor(व्योम *extra)
-अणु
-	काष्ठा rts51x_chip *chip = extra;
+static void realtek_cr_destructor(void *extra)
+{
+	struct rts51x_chip *chip = extra;
 
-	अगर (!chip)
-		वापस;
+	if (!chip)
+		return;
 
-#अगर_घोषित CONFIG_REALTEK_AUTOPM
-	अगर (ss_en) अणु
-		del_समयr(&chip->rts51x_suspend_समयr);
-		chip->समयr_expires = 0;
-	पूर्ण
-#पूर्ण_अगर
-	kमुक्त(chip->status);
-पूर्ण
+#ifdef CONFIG_REALTEK_AUTOPM
+	if (ss_en) {
+		del_timer(&chip->rts51x_suspend_timer);
+		chip->timer_expires = 0;
+	}
+#endif
+	kfree(chip->status);
+}
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक realtek_cr_suspend(काष्ठा usb_पूर्णांकerface *अगरace, pm_message_t message)
-अणु
-	काष्ठा us_data *us = usb_get_पूर्णांकfdata(अगरace);
+#ifdef CONFIG_PM
+static int realtek_cr_suspend(struct usb_interface *iface, pm_message_t message)
+{
+	struct us_data *us = usb_get_intfdata(iface);
 
-	/* रुको until no command is running */
+	/* wait until no command is running */
 	mutex_lock(&us->dev_mutex);
 
-	config_स्वतःdelink_beक्रमe_घातer_करोwn(us);
+	config_autodelink_before_power_down(us);
 
 	mutex_unlock(&us->dev_mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक realtek_cr_resume(काष्ठा usb_पूर्णांकerface *अगरace)
-अणु
-	काष्ठा us_data *us = usb_get_पूर्णांकfdata(अगरace);
+static int realtek_cr_resume(struct usb_interface *iface)
+{
+	struct us_data *us = usb_get_intfdata(iface);
 
 	fw5895_init(us);
-	config_स्वतःdelink_after_घातer_on(us);
+	config_autodelink_after_power_on(us);
 
-	वापस 0;
-पूर्ण
-#अन्यथा
-#घोषणा realtek_cr_suspend	शून्य
-#घोषणा realtek_cr_resume	शून्य
-#पूर्ण_अगर
+	return 0;
+}
+#else
+#define realtek_cr_suspend	NULL
+#define realtek_cr_resume	NULL
+#endif
 
-अटल पूर्णांक init_realtek_cr(काष्ठा us_data *us)
-अणु
-	काष्ठा rts51x_chip *chip;
-	पूर्णांक size, i, retval;
+static int init_realtek_cr(struct us_data *us)
+{
+	struct rts51x_chip *chip;
+	int size, i, retval;
 
-	chip = kzalloc(माप(काष्ठा rts51x_chip), GFP_KERNEL);
-	अगर (!chip)
-		वापस -ENOMEM;
+	chip = kzalloc(sizeof(struct rts51x_chip), GFP_KERNEL);
+	if (!chip)
+		return -ENOMEM;
 
 	us->extra = chip;
-	us->extra_deकाष्ठाor = realtek_cr_deकाष्ठाor;
+	us->extra_destructor = realtek_cr_destructor;
 	us->max_lun = chip->max_lun = rts51x_get_max_lun(us);
 	chip->us = us;
 
 	usb_stor_dbg(us, "chip->max_lun = %d\n", chip->max_lun);
 
-	size = (chip->max_lun + 1) * माप(काष्ठा rts51x_status);
+	size = (chip->max_lun + 1) * sizeof(struct rts51x_status);
 	chip->status = kzalloc(size, GFP_KERNEL);
-	अगर (!chip->status)
-		जाओ INIT_FAIL;
+	if (!chip->status)
+		goto INIT_FAIL;
 
-	क्रम (i = 0; i <= (पूर्णांक)(chip->max_lun); i++) अणु
+	for (i = 0; i <= (int)(chip->max_lun); i++) {
 		retval = rts51x_check_status(us, (u8) i);
-		अगर (retval < 0)
-			जाओ INIT_FAIL;
-	पूर्ण
+		if (retval < 0)
+			goto INIT_FAIL;
+	}
 
-	अगर (CHECK_PID(chip, 0x0138) || CHECK_PID(chip, 0x0158) ||
-	    CHECK_PID(chip, 0x0159)) अणु
-		अगर (CHECK_FW_VER(chip, 0x5888) || CHECK_FW_VER(chip, 0x5889) ||
+	if (CHECK_PID(chip, 0x0138) || CHECK_PID(chip, 0x0158) ||
+	    CHECK_PID(chip, 0x0159)) {
+		if (CHECK_FW_VER(chip, 0x5888) || CHECK_FW_VER(chip, 0x5889) ||
 				CHECK_FW_VER(chip, 0x5901))
 			SET_AUTO_DELINK(chip);
-		अगर (STATUS_LEN(chip) == 16) अणु
-			अगर (SUPPORT_AUTO_DELINK(chip))
+		if (STATUS_LEN(chip) == 16) {
+			if (SUPPORT_AUTO_DELINK(chip))
 				SET_AUTO_DELINK(chip);
-		पूर्ण
-	पूर्ण
-#अगर_घोषित CONFIG_REALTEK_AUTOPM
-	अगर (ss_en)
-		realtek_cr_स्वतःsuspend_setup(us);
-#पूर्ण_अगर
+		}
+	}
+#ifdef CONFIG_REALTEK_AUTOPM
+	if (ss_en)
+		realtek_cr_autosuspend_setup(us);
+#endif
 
 	usb_stor_dbg(us, "chip->flag = 0x%x\n", chip->flag);
 
-	(व्योम)config_स्वतःdelink_after_घातer_on(us);
+	(void)config_autodelink_after_power_on(us);
 
-	वापस 0;
+	return 0;
 
 INIT_FAIL:
-	अगर (us->extra) अणु
-		kमुक्त(chip->status);
-		kमुक्त(us->extra);
-		us->extra = शून्य;
-	पूर्ण
+	if (us->extra) {
+		kfree(chip->status);
+		kfree(us->extra);
+		us->extra = NULL;
+	}
 
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
-अटल काष्ठा scsi_host_ढाँचा realtek_cr_host_ढाँचा;
+static struct scsi_host_template realtek_cr_host_template;
 
-अटल पूर्णांक realtek_cr_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकf,
-			    स्थिर काष्ठा usb_device_id *id)
-अणु
-	काष्ठा us_data *us;
-	पूर्णांक result;
+static int realtek_cr_probe(struct usb_interface *intf,
+			    const struct usb_device_id *id)
+{
+	struct us_data *us;
+	int result;
 
-	dev_dbg(&पूर्णांकf->dev, "Probe Realtek Card Reader!\n");
+	dev_dbg(&intf->dev, "Probe Realtek Card Reader!\n");
 
-	result = usb_stor_probe1(&us, पूर्णांकf, id,
+	result = usb_stor_probe1(&us, intf, id,
 				 (id - realtek_cr_ids) +
 				 realtek_cr_unusual_dev_list,
-				 &realtek_cr_host_ढाँचा);
-	अगर (result)
-		वापस result;
+				 &realtek_cr_host_template);
+	if (result)
+		return result;
 
 	result = usb_stor_probe2(us);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल काष्ठा usb_driver realtek_cr_driver = अणु
+static struct usb_driver realtek_cr_driver = {
 	.name = DRV_NAME,
 	.probe = realtek_cr_probe,
 	.disconnect = usb_stor_disconnect,
@@ -1064,8 +1063,8 @@ INIT_FAIL:
 	.post_reset = usb_stor_post_reset,
 	.id_table = realtek_cr_ids,
 	.soft_unbind = 1,
-	.supports_स्वतःsuspend = 1,
+	.supports_autosuspend = 1,
 	.no_dynamic_id = 1,
-पूर्ण;
+};
 
-module_usb_stor_driver(realtek_cr_driver, realtek_cr_host_ढाँचा, DRV_NAME);
+module_usb_stor_driver(realtek_cr_driver, realtek_cr_host_template, DRV_NAME);

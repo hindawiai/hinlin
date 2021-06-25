@@ -1,198 +1,197 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2017, Linaro Ltd
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/mailbox_controller.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/io.h>
+#include <linux/slab.h>
+#include <linux/of.h>
+#include <linux/of_platform.h>
+#include <linux/platform_device.h>
+#include <linux/regmap.h>
+#include <linux/mailbox_controller.h>
 
-#घोषणा QCOM_APCS_IPC_BITS	32
+#define QCOM_APCS_IPC_BITS	32
 
-काष्ठा qcom_apcs_ipc अणु
-	काष्ठा mbox_controller mbox;
-	काष्ठा mbox_chan mbox_chans[QCOM_APCS_IPC_BITS];
+struct qcom_apcs_ipc {
+	struct mbox_controller mbox;
+	struct mbox_chan mbox_chans[QCOM_APCS_IPC_BITS];
 
-	काष्ठा regmap *regmap;
-	अचिन्हित दीर्घ offset;
-	काष्ठा platक्रमm_device *clk;
-पूर्ण;
+	struct regmap *regmap;
+	unsigned long offset;
+	struct platform_device *clk;
+};
 
-काष्ठा qcom_apcs_ipc_data अणु
-	पूर्णांक offset;
-	अक्षर *clk_name;
-पूर्ण;
+struct qcom_apcs_ipc_data {
+	int offset;
+	char *clk_name;
+};
 
-अटल स्थिर काष्ठा qcom_apcs_ipc_data ipq6018_apcs_data = अणु
+static const struct qcom_apcs_ipc_data ipq6018_apcs_data = {
 	.offset = 8, .clk_name = "qcom,apss-ipq6018-clk"
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qcom_apcs_ipc_data ipq8074_apcs_data = अणु
-	.offset = 8, .clk_name = शून्य
-पूर्ण;
+static const struct qcom_apcs_ipc_data ipq8074_apcs_data = {
+	.offset = 8, .clk_name = NULL
+};
 
-अटल स्थिर काष्ठा qcom_apcs_ipc_data msm8916_apcs_data = अणु
+static const struct qcom_apcs_ipc_data msm8916_apcs_data = {
 	.offset = 8, .clk_name = "qcom-apcs-msm8916-clk"
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qcom_apcs_ipc_data msm8994_apcs_data = अणु
-	.offset = 8, .clk_name = शून्य
-पूर्ण;
+static const struct qcom_apcs_ipc_data msm8994_apcs_data = {
+	.offset = 8, .clk_name = NULL
+};
 
-अटल स्थिर काष्ठा qcom_apcs_ipc_data msm8996_apcs_data = अणु
-	.offset = 16, .clk_name = शून्य
-पूर्ण;
+static const struct qcom_apcs_ipc_data msm8996_apcs_data = {
+	.offset = 16, .clk_name = NULL
+};
 
-अटल स्थिर काष्ठा qcom_apcs_ipc_data msm8998_apcs_data = अणु
-	.offset = 8, .clk_name = शून्य
-पूर्ण;
+static const struct qcom_apcs_ipc_data msm8998_apcs_data = {
+	.offset = 8, .clk_name = NULL
+};
 
-अटल स्थिर काष्ठा qcom_apcs_ipc_data sdm660_apcs_data = अणु
-	.offset = 8, .clk_name = शून्य
-पूर्ण;
+static const struct qcom_apcs_ipc_data sdm660_apcs_data = {
+	.offset = 8, .clk_name = NULL
+};
 
-अटल स्थिर काष्ठा qcom_apcs_ipc_data apps_shared_apcs_data = अणु
-	.offset = 12, .clk_name = शून्य
-पूर्ण;
+static const struct qcom_apcs_ipc_data apps_shared_apcs_data = {
+	.offset = 12, .clk_name = NULL
+};
 
-अटल स्थिर काष्ठा qcom_apcs_ipc_data sdx55_apcs_data = अणु
+static const struct qcom_apcs_ipc_data sdx55_apcs_data = {
 	.offset = 0x1008, .clk_name = "qcom-sdx55-acps-clk"
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा regmap_config apcs_regmap_config = अणु
+static const struct regmap_config apcs_regmap_config = {
 	.reg_bits = 32,
 	.reg_stride = 4,
 	.val_bits = 32,
-	.max_रेजिस्टर = 0x1008,
+	.max_register = 0x1008,
 	.fast_io = true,
-पूर्ण;
+};
 
-अटल पूर्णांक qcom_apcs_ipc_send_data(काष्ठा mbox_chan *chan, व्योम *data)
-अणु
-	काष्ठा qcom_apcs_ipc *apcs = container_of(chan->mbox,
-						  काष्ठा qcom_apcs_ipc, mbox);
-	अचिन्हित दीर्घ idx = (अचिन्हित दीर्घ)chan->con_priv;
+static int qcom_apcs_ipc_send_data(struct mbox_chan *chan, void *data)
+{
+	struct qcom_apcs_ipc *apcs = container_of(chan->mbox,
+						  struct qcom_apcs_ipc, mbox);
+	unsigned long idx = (unsigned long)chan->con_priv;
 
-	वापस regmap_ग_लिखो(apcs->regmap, apcs->offset, BIT(idx));
-पूर्ण
+	return regmap_write(apcs->regmap, apcs->offset, BIT(idx));
+}
 
-अटल स्थिर काष्ठा mbox_chan_ops qcom_apcs_ipc_ops = अणु
+static const struct mbox_chan_ops qcom_apcs_ipc_ops = {
 	.send_data = qcom_apcs_ipc_send_data,
-पूर्ण;
+};
 
-अटल पूर्णांक qcom_apcs_ipc_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा qcom_apcs_ipc *apcs;
-	स्थिर काष्ठा qcom_apcs_ipc_data *apcs_data;
-	काष्ठा regmap *regmap;
-	काष्ठा resource *res;
-	व्योम __iomem *base;
-	अचिन्हित दीर्घ i;
-	पूर्णांक ret;
+static int qcom_apcs_ipc_probe(struct platform_device *pdev)
+{
+	struct qcom_apcs_ipc *apcs;
+	const struct qcom_apcs_ipc_data *apcs_data;
+	struct regmap *regmap;
+	struct resource *res;
+	void __iomem *base;
+	unsigned long i;
+	int ret;
 
-	apcs = devm_kzalloc(&pdev->dev, माप(*apcs), GFP_KERNEL);
-	अगर (!apcs)
-		वापस -ENOMEM;
+	apcs = devm_kzalloc(&pdev->dev, sizeof(*apcs), GFP_KERNEL);
+	if (!apcs)
+		return -ENOMEM;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	base = devm_ioremap_resource(&pdev->dev, res);
-	अगर (IS_ERR(base))
-		वापस PTR_ERR(base);
+	if (IS_ERR(base))
+		return PTR_ERR(base);
 
 	regmap = devm_regmap_init_mmio(&pdev->dev, base, &apcs_regmap_config);
-	अगर (IS_ERR(regmap))
-		वापस PTR_ERR(regmap);
+	if (IS_ERR(regmap))
+		return PTR_ERR(regmap);
 
 	apcs_data = of_device_get_match_data(&pdev->dev);
 
 	apcs->regmap = regmap;
 	apcs->offset = apcs_data->offset;
 
-	/* Initialize channel identअगरiers */
-	क्रम (i = 0; i < ARRAY_SIZE(apcs->mbox_chans); i++)
-		apcs->mbox_chans[i].con_priv = (व्योम *)i;
+	/* Initialize channel identifiers */
+	for (i = 0; i < ARRAY_SIZE(apcs->mbox_chans); i++)
+		apcs->mbox_chans[i].con_priv = (void *)i;
 
 	apcs->mbox.dev = &pdev->dev;
 	apcs->mbox.ops = &qcom_apcs_ipc_ops;
 	apcs->mbox.chans = apcs->mbox_chans;
 	apcs->mbox.num_chans = ARRAY_SIZE(apcs->mbox_chans);
 
-	ret = devm_mbox_controller_रेजिस्टर(&pdev->dev, &apcs->mbox);
-	अगर (ret) अणु
+	ret = devm_mbox_controller_register(&pdev->dev, &apcs->mbox);
+	if (ret) {
 		dev_err(&pdev->dev, "failed to register APCS IPC controller\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (apcs_data->clk_name) अणु
-		apcs->clk = platक्रमm_device_रेजिस्टर_data(&pdev->dev,
+	if (apcs_data->clk_name) {
+		apcs->clk = platform_device_register_data(&pdev->dev,
 							  apcs_data->clk_name,
 							  PLATFORM_DEVID_NONE,
-							  शून्य, 0);
-		अगर (IS_ERR(apcs->clk))
+							  NULL, 0);
+		if (IS_ERR(apcs->clk))
 			dev_err(&pdev->dev, "failed to register APCS clk\n");
-	पूर्ण
+	}
 
-	platक्रमm_set_drvdata(pdev, apcs);
+	platform_set_drvdata(pdev, apcs);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक qcom_apcs_ipc_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा qcom_apcs_ipc *apcs = platक्रमm_get_drvdata(pdev);
-	काष्ठा platक्रमm_device *clk = apcs->clk;
+static int qcom_apcs_ipc_remove(struct platform_device *pdev)
+{
+	struct qcom_apcs_ipc *apcs = platform_get_drvdata(pdev);
+	struct platform_device *clk = apcs->clk;
 
-	platक्रमm_device_unरेजिस्टर(clk);
+	platform_device_unregister(clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* .data is the offset of the ipc रेजिस्टर within the global block */
-अटल स्थिर काष्ठा of_device_id qcom_apcs_ipc_of_match[] = अणु
-	अणु .compatible = "qcom,ipq6018-apcs-apps-global", .data = &ipq6018_apcs_data पूर्ण,
-	अणु .compatible = "qcom,ipq8074-apcs-apps-global", .data = &ipq8074_apcs_data पूर्ण,
-	अणु .compatible = "qcom,msm8916-apcs-kpss-global", .data = &msm8916_apcs_data पूर्ण,
-	अणु .compatible = "qcom,msm8994-apcs-kpss-global", .data = &msm8994_apcs_data पूर्ण,
-	अणु .compatible = "qcom,msm8996-apcs-hmss-global", .data = &msm8996_apcs_data पूर्ण,
-	अणु .compatible = "qcom,msm8998-apcs-hmss-global", .data = &msm8998_apcs_data पूर्ण,
-	अणु .compatible = "qcom,qcs404-apcs-apps-global", .data = &msm8916_apcs_data पूर्ण,
-	अणु .compatible = "qcom,sc7180-apss-shared", .data = &apps_shared_apcs_data पूर्ण,
-	अणु .compatible = "qcom,sc8180x-apss-shared", .data = &apps_shared_apcs_data पूर्ण,
-	अणु .compatible = "qcom,sdm660-apcs-hmss-global", .data = &sdm660_apcs_data पूर्ण,
-	अणु .compatible = "qcom,sdm845-apss-shared", .data = &apps_shared_apcs_data पूर्ण,
-	अणु .compatible = "qcom,sm8150-apss-shared", .data = &apps_shared_apcs_data पूर्ण,
-	अणु .compatible = "qcom,sdx55-apcs-gcc", .data = &sdx55_apcs_data पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+/* .data is the offset of the ipc register within the global block */
+static const struct of_device_id qcom_apcs_ipc_of_match[] = {
+	{ .compatible = "qcom,ipq6018-apcs-apps-global", .data = &ipq6018_apcs_data },
+	{ .compatible = "qcom,ipq8074-apcs-apps-global", .data = &ipq8074_apcs_data },
+	{ .compatible = "qcom,msm8916-apcs-kpss-global", .data = &msm8916_apcs_data },
+	{ .compatible = "qcom,msm8994-apcs-kpss-global", .data = &msm8994_apcs_data },
+	{ .compatible = "qcom,msm8996-apcs-hmss-global", .data = &msm8996_apcs_data },
+	{ .compatible = "qcom,msm8998-apcs-hmss-global", .data = &msm8998_apcs_data },
+	{ .compatible = "qcom,qcs404-apcs-apps-global", .data = &msm8916_apcs_data },
+	{ .compatible = "qcom,sc7180-apss-shared", .data = &apps_shared_apcs_data },
+	{ .compatible = "qcom,sc8180x-apss-shared", .data = &apps_shared_apcs_data },
+	{ .compatible = "qcom,sdm660-apcs-hmss-global", .data = &sdm660_apcs_data },
+	{ .compatible = "qcom,sdm845-apss-shared", .data = &apps_shared_apcs_data },
+	{ .compatible = "qcom,sm8150-apss-shared", .data = &apps_shared_apcs_data },
+	{ .compatible = "qcom,sdx55-apcs-gcc", .data = &sdx55_apcs_data },
+	{}
+};
 MODULE_DEVICE_TABLE(of, qcom_apcs_ipc_of_match);
 
-अटल काष्ठा platक्रमm_driver qcom_apcs_ipc_driver = अणु
+static struct platform_driver qcom_apcs_ipc_driver = {
 	.probe = qcom_apcs_ipc_probe,
-	.हटाओ = qcom_apcs_ipc_हटाओ,
-	.driver = अणु
+	.remove = qcom_apcs_ipc_remove,
+	.driver = {
 		.name = "qcom_apcs_ipc",
 		.of_match_table = qcom_apcs_ipc_of_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init qcom_apcs_ipc_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&qcom_apcs_ipc_driver);
-पूर्ण
+static int __init qcom_apcs_ipc_init(void)
+{
+	return platform_driver_register(&qcom_apcs_ipc_driver);
+}
 postcore_initcall(qcom_apcs_ipc_init);
 
-अटल व्योम __निकास qcom_apcs_ipc_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&qcom_apcs_ipc_driver);
-पूर्ण
-module_निकास(qcom_apcs_ipc_निकास);
+static void __exit qcom_apcs_ipc_exit(void)
+{
+	platform_driver_unregister(&qcom_apcs_ipc_driver);
+}
+module_exit(qcom_apcs_ipc_exit);
 
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("Qualcomm APCS IPC driver");

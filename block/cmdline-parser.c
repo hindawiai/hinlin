@@ -1,222 +1,221 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Parse command line, get partition inक्रमmation
+ * Parse command line, get partition information
  *
  * Written by Cai Zhiyong <caizhiyong@huawei.com>
  *
  */
-#समावेश <linux/export.h>
-#समावेश <linux/cmdline-parser.h>
+#include <linux/export.h>
+#include <linux/cmdline-parser.h>
 
-अटल पूर्णांक parse_subpart(काष्ठा cmdline_subpart **subpart, अक्षर *partdef)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा cmdline_subpart *new_subpart;
+static int parse_subpart(struct cmdline_subpart **subpart, char *partdef)
+{
+	int ret = 0;
+	struct cmdline_subpart *new_subpart;
 
-	*subpart = शून्य;
+	*subpart = NULL;
 
-	new_subpart = kzalloc(माप(काष्ठा cmdline_subpart), GFP_KERNEL);
-	अगर (!new_subpart)
-		वापस -ENOMEM;
+	new_subpart = kzalloc(sizeof(struct cmdline_subpart), GFP_KERNEL);
+	if (!new_subpart)
+		return -ENOMEM;
 
-	अगर (*partdef == '-') अणु
+	if (*partdef == '-') {
 		new_subpart->size = (sector_t)(~0ULL);
 		partdef++;
-	पूर्ण अन्यथा अणु
+	} else {
 		new_subpart->size = (sector_t)memparse(partdef, &partdef);
-		अगर (new_subpart->size < (sector_t)PAGE_SIZE) अणु
+		if (new_subpart->size < (sector_t)PAGE_SIZE) {
 			pr_warn("cmdline partition size is invalid.");
 			ret = -EINVAL;
-			जाओ fail;
-		पूर्ण
-	पूर्ण
+			goto fail;
+		}
+	}
 
-	अगर (*partdef == '@') अणु
+	if (*partdef == '@') {
 		partdef++;
 		new_subpart->from = (sector_t)memparse(partdef, &partdef);
-	पूर्ण अन्यथा अणु
+	} else {
 		new_subpart->from = (sector_t)(~0ULL);
-	पूर्ण
+	}
 
-	अगर (*partdef == '(') अणु
-		पूर्णांक length;
-		अक्षर *next = म_अक्षर(++partdef, ')');
+	if (*partdef == '(') {
+		int length;
+		char *next = strchr(++partdef, ')');
 
-		अगर (!next) अणु
+		if (!next) {
 			pr_warn("cmdline partition format is invalid.");
 			ret = -EINVAL;
-			जाओ fail;
-		पूर्ण
+			goto fail;
+		}
 
-		length = min_t(पूर्णांक, next - partdef,
-			       माप(new_subpart->name) - 1);
-		म_नकलन(new_subpart->name, partdef, length);
+		length = min_t(int, next - partdef,
+			       sizeof(new_subpart->name) - 1);
+		strncpy(new_subpart->name, partdef, length);
 		new_subpart->name[length] = '\0';
 
 		partdef = ++next;
-	पूर्ण अन्यथा
+	} else
 		new_subpart->name[0] = '\0';
 
 	new_subpart->flags = 0;
 
-	अगर (!म_भेदन(partdef, "ro", 2)) अणु
+	if (!strncmp(partdef, "ro", 2)) {
 		new_subpart->flags |= PF_RDONLY;
 		partdef += 2;
-	पूर्ण
+	}
 
-	अगर (!म_भेदन(partdef, "lk", 2)) अणु
+	if (!strncmp(partdef, "lk", 2)) {
 		new_subpart->flags |= PF_POWERUP_LOCK;
 		partdef += 2;
-	पूर्ण
+	}
 
 	*subpart = new_subpart;
-	वापस 0;
+	return 0;
 fail:
-	kमुक्त(new_subpart);
-	वापस ret;
-पूर्ण
+	kfree(new_subpart);
+	return ret;
+}
 
-अटल व्योम मुक्त_subpart(काष्ठा cmdline_parts *parts)
-अणु
-	काष्ठा cmdline_subpart *subpart;
+static void free_subpart(struct cmdline_parts *parts)
+{
+	struct cmdline_subpart *subpart;
 
-	जबतक (parts->subpart) अणु
+	while (parts->subpart) {
 		subpart = parts->subpart;
 		parts->subpart = subpart->next_subpart;
-		kमुक्त(subpart);
-	पूर्ण
-पूर्ण
+		kfree(subpart);
+	}
+}
 
-अटल पूर्णांक parse_parts(काष्ठा cmdline_parts **parts, स्थिर अक्षर *bdevdef)
-अणु
-	पूर्णांक ret = -EINVAL;
-	अक्षर *next;
-	पूर्णांक length;
-	काष्ठा cmdline_subpart **next_subpart;
-	काष्ठा cmdline_parts *newparts;
-	अक्षर buf[BDEVNAME_SIZE + 32 + 4];
+static int parse_parts(struct cmdline_parts **parts, const char *bdevdef)
+{
+	int ret = -EINVAL;
+	char *next;
+	int length;
+	struct cmdline_subpart **next_subpart;
+	struct cmdline_parts *newparts;
+	char buf[BDEVNAME_SIZE + 32 + 4];
 
-	*parts = शून्य;
+	*parts = NULL;
 
-	newparts = kzalloc(माप(काष्ठा cmdline_parts), GFP_KERNEL);
-	अगर (!newparts)
-		वापस -ENOMEM;
+	newparts = kzalloc(sizeof(struct cmdline_parts), GFP_KERNEL);
+	if (!newparts)
+		return -ENOMEM;
 
-	next = म_अक्षर(bdevdef, ':');
-	अगर (!next) अणु
+	next = strchr(bdevdef, ':');
+	if (!next) {
 		pr_warn("cmdline partition has no block device.");
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	length = min_t(पूर्णांक, next - bdevdef, माप(newparts->name) - 1);
-	म_नकलन(newparts->name, bdevdef, length);
+	length = min_t(int, next - bdevdef, sizeof(newparts->name) - 1);
+	strncpy(newparts->name, bdevdef, length);
 	newparts->name[length] = '\0';
 	newparts->nr_subparts = 0;
 
 	next_subpart = &newparts->subpart;
 
-	जबतक (next && *(++next)) अणु
+	while (next && *(++next)) {
 		bdevdef = next;
-		next = म_अक्षर(bdevdef, ',');
+		next = strchr(bdevdef, ',');
 
-		length = (!next) ? (माप(buf) - 1) :
-			min_t(पूर्णांक, next - bdevdef, माप(buf) - 1);
+		length = (!next) ? (sizeof(buf) - 1) :
+			min_t(int, next - bdevdef, sizeof(buf) - 1);
 
-		म_नकलन(buf, bdevdef, length);
+		strncpy(buf, bdevdef, length);
 		buf[length] = '\0';
 
 		ret = parse_subpart(next_subpart, buf);
-		अगर (ret)
-			जाओ fail;
+		if (ret)
+			goto fail;
 
 		newparts->nr_subparts++;
 		next_subpart = &(*next_subpart)->next_subpart;
-	पूर्ण
+	}
 
-	अगर (!newparts->subpart) अणु
+	if (!newparts->subpart) {
 		pr_warn("cmdline partition has no valid partition.");
 		ret = -EINVAL;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	*parts = newparts;
 
-	वापस 0;
+	return 0;
 fail:
-	मुक्त_subpart(newparts);
-	kमुक्त(newparts);
-	वापस ret;
-पूर्ण
+	free_subpart(newparts);
+	kfree(newparts);
+	return ret;
+}
 
-व्योम cmdline_parts_मुक्त(काष्ठा cmdline_parts **parts)
-अणु
-	काष्ठा cmdline_parts *next_parts;
+void cmdline_parts_free(struct cmdline_parts **parts)
+{
+	struct cmdline_parts *next_parts;
 
-	जबतक (*parts) अणु
+	while (*parts) {
 		next_parts = (*parts)->next_parts;
-		मुक्त_subpart(*parts);
-		kमुक्त(*parts);
+		free_subpart(*parts);
+		kfree(*parts);
 		*parts = next_parts;
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL(cmdline_parts_मुक्त);
+	}
+}
+EXPORT_SYMBOL(cmdline_parts_free);
 
-पूर्णांक cmdline_parts_parse(काष्ठा cmdline_parts **parts, स्थिर अक्षर *cmdline)
-अणु
-	पूर्णांक ret;
-	अक्षर *buf;
-	अक्षर *pbuf;
-	अक्षर *next;
-	काष्ठा cmdline_parts **next_parts;
+int cmdline_parts_parse(struct cmdline_parts **parts, const char *cmdline)
+{
+	int ret;
+	char *buf;
+	char *pbuf;
+	char *next;
+	struct cmdline_parts **next_parts;
 
-	*parts = शून्य;
+	*parts = NULL;
 
 	next = pbuf = buf = kstrdup(cmdline, GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	if (!buf)
+		return -ENOMEM;
 
 	next_parts = parts;
 
-	जबतक (next && *pbuf) अणु
-		next = म_अक्षर(pbuf, ';');
-		अगर (next)
+	while (next && *pbuf) {
+		next = strchr(pbuf, ';');
+		if (next)
 			*next = '\0';
 
 		ret = parse_parts(next_parts, pbuf);
-		अगर (ret)
-			जाओ fail;
+		if (ret)
+			goto fail;
 
-		अगर (next)
+		if (next)
 			pbuf = ++next;
 
 		next_parts = &(*next_parts)->next_parts;
-	पूर्ण
+	}
 
-	अगर (!*parts) अणु
+	if (!*parts) {
 		pr_warn("cmdline partition has no valid partition.");
 		ret = -EINVAL;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	ret = 0;
-करोne:
-	kमुक्त(buf);
-	वापस ret;
+done:
+	kfree(buf);
+	return ret;
 
 fail:
-	cmdline_parts_मुक्त(parts);
-	जाओ करोne;
-पूर्ण
+	cmdline_parts_free(parts);
+	goto done;
+}
 EXPORT_SYMBOL(cmdline_parts_parse);
 
-काष्ठा cmdline_parts *cmdline_parts_find(काष्ठा cmdline_parts *parts,
-					 स्थिर अक्षर *bdev)
-अणु
-	जबतक (parts && म_भेदन(bdev, parts->name, माप(parts->name)))
+struct cmdline_parts *cmdline_parts_find(struct cmdline_parts *parts,
+					 const char *bdev)
+{
+	while (parts && strncmp(bdev, parts->name, sizeof(parts->name)))
 		parts = parts->next_parts;
-	वापस parts;
-पूर्ण
+	return parts;
+}
 EXPORT_SYMBOL(cmdline_parts_find);
 
 /*
@@ -224,33 +223,33 @@ EXPORT_SYMBOL(cmdline_parts_find);
  *    0 success.
  *    1 can not add so many partitions.
  */
-पूर्णांक cmdline_parts_set(काष्ठा cmdline_parts *parts, sector_t disk_size,
-		      पूर्णांक slot,
-		      पूर्णांक (*add_part)(पूर्णांक, काष्ठा cmdline_subpart *, व्योम *),
-		      व्योम *param)
-अणु
+int cmdline_parts_set(struct cmdline_parts *parts, sector_t disk_size,
+		      int slot,
+		      int (*add_part)(int, struct cmdline_subpart *, void *),
+		      void *param)
+{
 	sector_t from = 0;
-	काष्ठा cmdline_subpart *subpart;
+	struct cmdline_subpart *subpart;
 
-	क्रम (subpart = parts->subpart; subpart;
-	     subpart = subpart->next_subpart, slot++) अणु
-		अगर (subpart->from == (sector_t)(~0ULL))
+	for (subpart = parts->subpart; subpart;
+	     subpart = subpart->next_subpart, slot++) {
+		if (subpart->from == (sector_t)(~0ULL))
 			subpart->from = from;
-		अन्यथा
+		else
 			from = subpart->from;
 
-		अगर (from >= disk_size)
-			अवरोध;
+		if (from >= disk_size)
+			break;
 
-		अगर (subpart->size > (disk_size - from))
+		if (subpart->size > (disk_size - from))
 			subpart->size = disk_size - from;
 
 		from += subpart->size;
 
-		अगर (add_part(slot, subpart, param))
-			अवरोध;
-	पूर्ण
+		if (add_part(slot, subpart, param))
+			break;
+	}
 
-	वापस slot;
-पूर्ण
+	return slot;
+}
 EXPORT_SYMBOL(cmdline_parts_set);

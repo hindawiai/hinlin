@@ -1,46 +1,45 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- *	xt_hashlimit - Netfilter module to limit the number of packets per समय
- *	separately क्रम each hashbucket (sourceip/sourceport/dstip/dstport)
+ *	xt_hashlimit - Netfilter module to limit the number of packets per time
+ *	separately for each hashbucket (sourceip/sourceport/dstip/dstport)
  *
- *	(C) 2003-2004 by Harald Welte <laक्रमge@netfilter.org>
+ *	(C) 2003-2004 by Harald Welte <laforge@netfilter.org>
  *	(C) 2006-2012 Patrick McHardy <kaber@trash.net>
- *	Copyright तऊ CC Computer Consultants GmbH, 2007 - 2008
+ *	Copyright © CC Computer Consultants GmbH, 2007 - 2008
  *
  * Development of this code was funded by Astaro AG, http://www.astaro.com/
  */
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
-#समावेश <linux/module.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/अक्रमom.h>
-#समावेश <linux/jhash.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/list.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/in.h>
-#समावेश <linux/ip.h>
-#अगर IS_ENABLED(CONFIG_IP6_NF_IPTABLES)
-#समावेश <linux/ipv6.h>
-#समावेश <net/ipv6.h>
-#पूर्ण_अगर
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/module.h>
+#include <linux/spinlock.h>
+#include <linux/random.h>
+#include <linux/jhash.h>
+#include <linux/slab.h>
+#include <linux/vmalloc.h>
+#include <linux/proc_fs.h>
+#include <linux/seq_file.h>
+#include <linux/list.h>
+#include <linux/skbuff.h>
+#include <linux/mm.h>
+#include <linux/in.h>
+#include <linux/ip.h>
+#if IS_ENABLED(CONFIG_IP6_NF_IPTABLES)
+#include <linux/ipv6.h>
+#include <net/ipv6.h>
+#endif
 
-#समावेश <net/net_namespace.h>
-#समावेश <net/netns/generic.h>
+#include <net/net_namespace.h>
+#include <net/netns/generic.h>
 
-#समावेश <linux/netfilter/x_tables.h>
-#समावेश <linux/netfilter_ipv4/ip_tables.h>
-#समावेश <linux/netfilter_ipv6/ip6_tables.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/refcount.h>
-#समावेश <uapi/linux/netfilter/xt_hashlimit.h>
+#include <linux/netfilter/x_tables.h>
+#include <linux/netfilter_ipv4/ip_tables.h>
+#include <linux/netfilter_ipv6/ip6_tables.h>
+#include <linux/mutex.h>
+#include <linux/kernel.h>
+#include <linux/refcount.h>
+#include <uapi/linux/netfilter/xt_hashlimit.h>
 
-#घोषणा XT_HASHLIMIT_ALL (XT_HASHLIMIT_HASH_DIP | XT_HASHLIMIT_HASH_DPT | \
+#define XT_HASHLIMIT_ALL (XT_HASHLIMIT_HASH_DIP | XT_HASHLIMIT_HASH_DPT | \
 			  XT_HASHLIMIT_HASH_SIP | XT_HASHLIMIT_HASH_SPT | \
 			  XT_HASHLIMIT_INVERT | XT_HASHLIMIT_BYTES |\
 			  XT_HASHLIMIT_RATE_MATCH)
@@ -52,269 +51,269 @@ MODULE_DESCRIPTION("Xtables: per hash-bucket rate-limit match");
 MODULE_ALIAS("ipt_hashlimit");
 MODULE_ALIAS("ip6t_hashlimit");
 
-काष्ठा hashlimit_net अणु
-	काष्ठा hlist_head	htables;
-	काष्ठा proc_dir_entry	*ipt_hashlimit;
-	काष्ठा proc_dir_entry	*ip6t_hashlimit;
-पूर्ण;
+struct hashlimit_net {
+	struct hlist_head	htables;
+	struct proc_dir_entry	*ipt_hashlimit;
+	struct proc_dir_entry	*ip6t_hashlimit;
+};
 
-अटल अचिन्हित पूर्णांक hashlimit_net_id;
-अटल अंतरभूत काष्ठा hashlimit_net *hashlimit_pernet(काष्ठा net *net)
-अणु
-	वापस net_generic(net, hashlimit_net_id);
-पूर्ण
+static unsigned int hashlimit_net_id;
+static inline struct hashlimit_net *hashlimit_pernet(struct net *net)
+{
+	return net_generic(net, hashlimit_net_id);
+}
 
 /* need to declare this at the top */
-अटल स्थिर काष्ठा seq_operations dl_seq_ops_v2;
-अटल स्थिर काष्ठा seq_operations dl_seq_ops_v1;
-अटल स्थिर काष्ठा seq_operations dl_seq_ops;
+static const struct seq_operations dl_seq_ops_v2;
+static const struct seq_operations dl_seq_ops_v1;
+static const struct seq_operations dl_seq_ops;
 
 /* hash table crap */
-काष्ठा dsthash_dst अणु
-	जोड़ अणु
-		काष्ठा अणु
+struct dsthash_dst {
+	union {
+		struct {
 			__be32 src;
 			__be32 dst;
-		पूर्ण ip;
-#अगर IS_ENABLED(CONFIG_IP6_NF_IPTABLES)
-		काष्ठा अणु
+		} ip;
+#if IS_ENABLED(CONFIG_IP6_NF_IPTABLES)
+		struct {
 			__be32 src[4];
 			__be32 dst[4];
-		पूर्ण ip6;
-#पूर्ण_अगर
-	पूर्ण;
+		} ip6;
+#endif
+	};
 	__be16 src_port;
 	__be16 dst_port;
-पूर्ण;
+};
 
-काष्ठा dsthash_ent अणु
-	/* अटल / पढ़ो-only parts in the beginning */
-	काष्ठा hlist_node node;
-	काष्ठा dsthash_dst dst;
+struct dsthash_ent {
+	/* static / read-only parts in the beginning */
+	struct hlist_node node;
+	struct dsthash_dst dst;
 
-	/* modअगरied काष्ठाure members in the end */
+	/* modified structure members in the end */
 	spinlock_t lock;
-	अचिन्हित दीर्घ expires;		/* precalculated expiry समय */
-	काष्ठा अणु
-		अचिन्हित दीर्घ prev;	/* last modअगरication */
-		जोड़ अणु
-			काष्ठा अणु
-				u_पूर्णांक64_t credit;
-				u_पूर्णांक64_t credit_cap;
-				u_पूर्णांक64_t cost;
-			पूर्ण;
-			काष्ठा अणु
-				u_पूर्णांक32_t पूर्णांकerval, prev_winकरोw;
-				u_पूर्णांक64_t current_rate;
-				u_पूर्णांक64_t rate;
-				पूर्णांक64_t burst;
-			पूर्ण;
-		पूर्ण;
-	पूर्ण rateinfo;
-	काष्ठा rcu_head rcu;
-पूर्ण;
+	unsigned long expires;		/* precalculated expiry time */
+	struct {
+		unsigned long prev;	/* last modification */
+		union {
+			struct {
+				u_int64_t credit;
+				u_int64_t credit_cap;
+				u_int64_t cost;
+			};
+			struct {
+				u_int32_t interval, prev_window;
+				u_int64_t current_rate;
+				u_int64_t rate;
+				int64_t burst;
+			};
+		};
+	} rateinfo;
+	struct rcu_head rcu;
+};
 
-काष्ठा xt_hashlimit_htable अणु
-	काष्ठा hlist_node node;		/* global list of all htables */
+struct xt_hashlimit_htable {
+	struct hlist_node node;		/* global list of all htables */
 	refcount_t use;
-	u_पूर्णांक8_t family;
+	u_int8_t family;
 	bool rnd_initialized;
 
-	काष्ठा hashlimit_cfg3 cfg;	/* config */
+	struct hashlimit_cfg3 cfg;	/* config */
 
-	/* used पूर्णांकernally */
-	spinlock_t lock;		/* lock क्रम list_head */
-	u_पूर्णांक32_t rnd;			/* अक्रमom seed क्रम hash */
-	अचिन्हित पूर्णांक count;		/* number entries in table */
-	काष्ठा delayed_work gc_work;
+	/* used internally */
+	spinlock_t lock;		/* lock for list_head */
+	u_int32_t rnd;			/* random seed for hash */
+	unsigned int count;		/* number entries in table */
+	struct delayed_work gc_work;
 
 	/* seq_file stuff */
-	काष्ठा proc_dir_entry *pde;
-	स्थिर अक्षर *name;
-	काष्ठा net *net;
+	struct proc_dir_entry *pde;
+	const char *name;
+	struct net *net;
 
-	काष्ठा hlist_head hash[];	/* hashtable itself */
-पूर्ण;
+	struct hlist_head hash[];	/* hashtable itself */
+};
 
-अटल पूर्णांक
-cfg_copy(काष्ठा hashlimit_cfg3 *to, स्थिर व्योम *from, पूर्णांक revision)
-अणु
-	अगर (revision == 1) अणु
-		काष्ठा hashlimit_cfg1 *cfg = (काष्ठा hashlimit_cfg1 *)from;
-
-		to->mode = cfg->mode;
-		to->avg = cfg->avg;
-		to->burst = cfg->burst;
-		to->size = cfg->size;
-		to->max = cfg->max;
-		to->gc_पूर्णांकerval = cfg->gc_पूर्णांकerval;
-		to->expire = cfg->expire;
-		to->srcmask = cfg->srcmask;
-		to->dsपंचांगask = cfg->dsपंचांगask;
-	पूर्ण अन्यथा अगर (revision == 2) अणु
-		काष्ठा hashlimit_cfg2 *cfg = (काष्ठा hashlimit_cfg2 *)from;
+static int
+cfg_copy(struct hashlimit_cfg3 *to, const void *from, int revision)
+{
+	if (revision == 1) {
+		struct hashlimit_cfg1 *cfg = (struct hashlimit_cfg1 *)from;
 
 		to->mode = cfg->mode;
 		to->avg = cfg->avg;
 		to->burst = cfg->burst;
 		to->size = cfg->size;
 		to->max = cfg->max;
-		to->gc_पूर्णांकerval = cfg->gc_पूर्णांकerval;
+		to->gc_interval = cfg->gc_interval;
 		to->expire = cfg->expire;
 		to->srcmask = cfg->srcmask;
-		to->dsपंचांगask = cfg->dsपंचांगask;
-	पूर्ण अन्यथा अगर (revision == 3) अणु
-		स_नकल(to, from, माप(काष्ठा hashlimit_cfg3));
-	पूर्ण अन्यथा अणु
-		वापस -EINVAL;
-	पूर्ण
+		to->dstmask = cfg->dstmask;
+	} else if (revision == 2) {
+		struct hashlimit_cfg2 *cfg = (struct hashlimit_cfg2 *)from;
 
-	वापस 0;
-पूर्ण
+		to->mode = cfg->mode;
+		to->avg = cfg->avg;
+		to->burst = cfg->burst;
+		to->size = cfg->size;
+		to->max = cfg->max;
+		to->gc_interval = cfg->gc_interval;
+		to->expire = cfg->expire;
+		to->srcmask = cfg->srcmask;
+		to->dstmask = cfg->dstmask;
+	} else if (revision == 3) {
+		memcpy(to, from, sizeof(struct hashlimit_cfg3));
+	} else {
+		return -EINVAL;
+	}
 
-अटल DEFINE_MUTEX(hashlimit_mutex);	/* protects htables list */
-अटल काष्ठा kmem_cache *hashlimit_cachep __पढ़ो_mostly;
+	return 0;
+}
 
-अटल अंतरभूत bool dst_cmp(स्थिर काष्ठा dsthash_ent *ent,
-			   स्थिर काष्ठा dsthash_dst *b)
-अणु
-	वापस !स_भेद(&ent->dst, b, माप(ent->dst));
-पूर्ण
+static DEFINE_MUTEX(hashlimit_mutex);	/* protects htables list */
+static struct kmem_cache *hashlimit_cachep __read_mostly;
 
-अटल u_पूर्णांक32_t
-hash_dst(स्थिर काष्ठा xt_hashlimit_htable *ht, स्थिर काष्ठा dsthash_dst *dst)
-अणु
-	u_पूर्णांक32_t hash = jhash2((स्थिर u32 *)dst,
-				माप(*dst)/माप(u32),
+static inline bool dst_cmp(const struct dsthash_ent *ent,
+			   const struct dsthash_dst *b)
+{
+	return !memcmp(&ent->dst, b, sizeof(ent->dst));
+}
+
+static u_int32_t
+hash_dst(const struct xt_hashlimit_htable *ht, const struct dsthash_dst *dst)
+{
+	u_int32_t hash = jhash2((const u32 *)dst,
+				sizeof(*dst)/sizeof(u32),
 				ht->rnd);
 	/*
-	 * Instead of वापसing hash % ht->cfg.size (implying a भागide)
-	 * we वापस the high 32 bits of the (hash * ht->cfg.size) that will
+	 * Instead of returning hash % ht->cfg.size (implying a divide)
+	 * we return the high 32 bits of the (hash * ht->cfg.size) that will
 	 * give results between [0 and cfg.size-1] and same hash distribution,
-	 * but using a multiply, less expensive than a भागide
+	 * but using a multiply, less expensive than a divide
 	 */
-	वापस reciprocal_scale(hash, ht->cfg.size);
-पूर्ण
+	return reciprocal_scale(hash, ht->cfg.size);
+}
 
-अटल काष्ठा dsthash_ent *
-dsthash_find(स्थिर काष्ठा xt_hashlimit_htable *ht,
-	     स्थिर काष्ठा dsthash_dst *dst)
-अणु
-	काष्ठा dsthash_ent *ent;
-	u_पूर्णांक32_t hash = hash_dst(ht, dst);
+static struct dsthash_ent *
+dsthash_find(const struct xt_hashlimit_htable *ht,
+	     const struct dsthash_dst *dst)
+{
+	struct dsthash_ent *ent;
+	u_int32_t hash = hash_dst(ht, dst);
 
-	अगर (!hlist_empty(&ht->hash[hash])) अणु
-		hlist_क्रम_each_entry_rcu(ent, &ht->hash[hash], node)
-			अगर (dst_cmp(ent, dst)) अणु
+	if (!hlist_empty(&ht->hash[hash])) {
+		hlist_for_each_entry_rcu(ent, &ht->hash[hash], node)
+			if (dst_cmp(ent, dst)) {
 				spin_lock(&ent->lock);
-				वापस ent;
-			पूर्ण
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+				return ent;
+			}
+	}
+	return NULL;
+}
 
 /* allocate dsthash_ent, initialize dst, put in htable and lock it */
-अटल काष्ठा dsthash_ent *
-dsthash_alloc_init(काष्ठा xt_hashlimit_htable *ht,
-		   स्थिर काष्ठा dsthash_dst *dst, bool *race)
-अणु
-	काष्ठा dsthash_ent *ent;
+static struct dsthash_ent *
+dsthash_alloc_init(struct xt_hashlimit_htable *ht,
+		   const struct dsthash_dst *dst, bool *race)
+{
+	struct dsthash_ent *ent;
 
 	spin_lock(&ht->lock);
 
 	/* Two or more packets may race to create the same entry in the
-	 * hashtable, द्विगुन check अगर this packet lost race.
+	 * hashtable, double check if this packet lost race.
 	 */
 	ent = dsthash_find(ht, dst);
-	अगर (ent != शून्य) अणु
+	if (ent != NULL) {
 		spin_unlock(&ht->lock);
 		*race = true;
-		वापस ent;
-	पूर्ण
+		return ent;
+	}
 
-	/* initialize hash with अक्रमom val at the समय we allocate
+	/* initialize hash with random val at the time we allocate
 	 * the first hashtable entry */
-	अगर (unlikely(!ht->rnd_initialized)) अणु
-		get_अक्रमom_bytes(&ht->rnd, माप(ht->rnd));
+	if (unlikely(!ht->rnd_initialized)) {
+		get_random_bytes(&ht->rnd, sizeof(ht->rnd));
 		ht->rnd_initialized = true;
-	पूर्ण
+	}
 
-	अगर (ht->cfg.max && ht->count >= ht->cfg.max) अणु
-		/* FIXME: करो something. question is what.. */
+	if (ht->cfg.max && ht->count >= ht->cfg.max) {
+		/* FIXME: do something. question is what.. */
 		net_err_ratelimited("max count of %u reached\n", ht->cfg.max);
-		ent = शून्य;
-	पूर्ण अन्यथा
+		ent = NULL;
+	} else
 		ent = kmem_cache_alloc(hashlimit_cachep, GFP_ATOMIC);
-	अगर (ent) अणु
-		स_नकल(&ent->dst, dst, माप(ent->dst));
+	if (ent) {
+		memcpy(&ent->dst, dst, sizeof(ent->dst));
 		spin_lock_init(&ent->lock);
 
 		spin_lock(&ent->lock);
 		hlist_add_head_rcu(&ent->node, &ht->hash[hash_dst(ht, dst)]);
 		ht->count++;
-	पूर्ण
+	}
 	spin_unlock(&ht->lock);
-	वापस ent;
-पूर्ण
+	return ent;
+}
 
-अटल व्योम dsthash_मुक्त_rcu(काष्ठा rcu_head *head)
-अणु
-	काष्ठा dsthash_ent *ent = container_of(head, काष्ठा dsthash_ent, rcu);
+static void dsthash_free_rcu(struct rcu_head *head)
+{
+	struct dsthash_ent *ent = container_of(head, struct dsthash_ent, rcu);
 
-	kmem_cache_मुक्त(hashlimit_cachep, ent);
-पूर्ण
+	kmem_cache_free(hashlimit_cachep, ent);
+}
 
-अटल अंतरभूत व्योम
-dsthash_मुक्त(काष्ठा xt_hashlimit_htable *ht, काष्ठा dsthash_ent *ent)
-अणु
+static inline void
+dsthash_free(struct xt_hashlimit_htable *ht, struct dsthash_ent *ent)
+{
 	hlist_del_rcu(&ent->node);
-	call_rcu(&ent->rcu, dsthash_मुक्त_rcu);
+	call_rcu(&ent->rcu, dsthash_free_rcu);
 	ht->count--;
-पूर्ण
-अटल व्योम htable_gc(काष्ठा work_काष्ठा *work);
+}
+static void htable_gc(struct work_struct *work);
 
-अटल पूर्णांक htable_create(काष्ठा net *net, काष्ठा hashlimit_cfg3 *cfg,
-			 स्थिर अक्षर *name, u_पूर्णांक8_t family,
-			 काष्ठा xt_hashlimit_htable **out_hinfo,
-			 पूर्णांक revision)
-अणु
-	काष्ठा hashlimit_net *hashlimit_net = hashlimit_pernet(net);
-	काष्ठा xt_hashlimit_htable *hinfo;
-	स्थिर काष्ठा seq_operations *ops;
-	अचिन्हित पूर्णांक size, i;
-	अचिन्हित दीर्घ nr_pages = totalram_pages();
-	पूर्णांक ret;
+static int htable_create(struct net *net, struct hashlimit_cfg3 *cfg,
+			 const char *name, u_int8_t family,
+			 struct xt_hashlimit_htable **out_hinfo,
+			 int revision)
+{
+	struct hashlimit_net *hashlimit_net = hashlimit_pernet(net);
+	struct xt_hashlimit_htable *hinfo;
+	const struct seq_operations *ops;
+	unsigned int size, i;
+	unsigned long nr_pages = totalram_pages();
+	int ret;
 
-	अगर (cfg->size) अणु
+	if (cfg->size) {
 		size = cfg->size;
-	पूर्ण अन्यथा अणु
+	} else {
 		size = (nr_pages << PAGE_SHIFT) / 16384 /
-		       माप(काष्ठा hlist_head);
-		अगर (nr_pages > 1024 * 1024 * 1024 / PAGE_SIZE)
+		       sizeof(struct hlist_head);
+		if (nr_pages > 1024 * 1024 * 1024 / PAGE_SIZE)
 			size = 8192;
-		अगर (size < 16)
+		if (size < 16)
 			size = 16;
-	पूर्ण
-	/* FIXME: करोn't use vदो_स्मृति() here or anywhere अन्यथा -HW */
-	hinfo = vदो_स्मृति(काष्ठा_size(hinfo, hash, size));
-	अगर (hinfo == शून्य)
-		वापस -ENOMEM;
+	}
+	/* FIXME: don't use vmalloc() here or anywhere else -HW */
+	hinfo = vmalloc(struct_size(hinfo, hash, size));
+	if (hinfo == NULL)
+		return -ENOMEM;
 	*out_hinfo = hinfo;
 
-	/* copy match config पूर्णांकo hashtable config */
-	ret = cfg_copy(&hinfo->cfg, (व्योम *)cfg, 3);
-	अगर (ret) अणु
-		vमुक्त(hinfo);
-		वापस ret;
-	पूर्ण
+	/* copy match config into hashtable config */
+	ret = cfg_copy(&hinfo->cfg, (void *)cfg, 3);
+	if (ret) {
+		vfree(hinfo);
+		return ret;
+	}
 
 	hinfo->cfg.size = size;
-	अगर (hinfo->cfg.max == 0)
+	if (hinfo->cfg.max == 0)
 		hinfo->cfg.max = 8 * hinfo->cfg.size;
-	अन्यथा अगर (hinfo->cfg.max < hinfo->cfg.size)
+	else if (hinfo->cfg.max < hinfo->cfg.size)
 		hinfo->cfg.max = hinfo->cfg.size;
 
-	क्रम (i = 0; i < hinfo->cfg.size; i++)
+	for (i = 0; i < hinfo->cfg.size; i++)
 		INIT_HLIST_HEAD(&hinfo->hash[i]);
 
 	refcount_set(&hinfo->use, 1);
@@ -322,1012 +321,1012 @@ dsthash_मुक्त(काष्ठा xt_hashlimit_htable *ht, काष्
 	hinfo->family = family;
 	hinfo->rnd_initialized = false;
 	hinfo->name = kstrdup(name, GFP_KERNEL);
-	अगर (!hinfo->name) अणु
-		vमुक्त(hinfo);
-		वापस -ENOMEM;
-	पूर्ण
+	if (!hinfo->name) {
+		vfree(hinfo);
+		return -ENOMEM;
+	}
 	spin_lock_init(&hinfo->lock);
 
-	चयन (revision) अणु
-	हाल 1:
+	switch (revision) {
+	case 1:
 		ops = &dl_seq_ops_v1;
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		ops = &dl_seq_ops_v2;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ops = &dl_seq_ops;
-	पूर्ण
+	}
 
 	hinfo->pde = proc_create_seq_data(name, 0,
 		(family == NFPROTO_IPV4) ?
 		hashlimit_net->ipt_hashlimit : hashlimit_net->ip6t_hashlimit,
 		ops, hinfo);
-	अगर (hinfo->pde == शून्य) अणु
-		kमुक्त(hinfo->name);
-		vमुक्त(hinfo);
-		वापस -ENOMEM;
-	पूर्ण
+	if (hinfo->pde == NULL) {
+		kfree(hinfo->name);
+		vfree(hinfo);
+		return -ENOMEM;
+	}
 	hinfo->net = net;
 
 	INIT_DEFERRABLE_WORK(&hinfo->gc_work, htable_gc);
-	queue_delayed_work(प्रणाली_घातer_efficient_wq, &hinfo->gc_work,
-			   msecs_to_jअगरfies(hinfo->cfg.gc_पूर्णांकerval));
+	queue_delayed_work(system_power_efficient_wq, &hinfo->gc_work,
+			   msecs_to_jiffies(hinfo->cfg.gc_interval));
 
 	hlist_add_head(&hinfo->node, &hashlimit_net->htables);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम htable_selective_cleanup(काष्ठा xt_hashlimit_htable *ht, bool select_all)
-अणु
-	अचिन्हित पूर्णांक i;
+static void htable_selective_cleanup(struct xt_hashlimit_htable *ht, bool select_all)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < ht->cfg.size; i++) अणु
-		काष्ठा dsthash_ent *dh;
-		काष्ठा hlist_node *n;
+	for (i = 0; i < ht->cfg.size; i++) {
+		struct dsthash_ent *dh;
+		struct hlist_node *n;
 
 		spin_lock_bh(&ht->lock);
-		hlist_क्रम_each_entry_safe(dh, n, &ht->hash[i], node) अणु
-			अगर (समय_after_eq(jअगरfies, dh->expires) || select_all)
-				dsthash_मुक्त(ht, dh);
-		पूर्ण
+		hlist_for_each_entry_safe(dh, n, &ht->hash[i], node) {
+			if (time_after_eq(jiffies, dh->expires) || select_all)
+				dsthash_free(ht, dh);
+		}
 		spin_unlock_bh(&ht->lock);
 		cond_resched();
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम htable_gc(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा xt_hashlimit_htable *ht;
+static void htable_gc(struct work_struct *work)
+{
+	struct xt_hashlimit_htable *ht;
 
-	ht = container_of(work, काष्ठा xt_hashlimit_htable, gc_work.work);
+	ht = container_of(work, struct xt_hashlimit_htable, gc_work.work);
 
 	htable_selective_cleanup(ht, false);
 
-	queue_delayed_work(प्रणाली_घातer_efficient_wq,
-			   &ht->gc_work, msecs_to_jअगरfies(ht->cfg.gc_पूर्णांकerval));
-पूर्ण
+	queue_delayed_work(system_power_efficient_wq,
+			   &ht->gc_work, msecs_to_jiffies(ht->cfg.gc_interval));
+}
 
-अटल व्योम htable_हटाओ_proc_entry(काष्ठा xt_hashlimit_htable *hinfo)
-अणु
-	काष्ठा hashlimit_net *hashlimit_net = hashlimit_pernet(hinfo->net);
-	काष्ठा proc_dir_entry *parent;
+static void htable_remove_proc_entry(struct xt_hashlimit_htable *hinfo)
+{
+	struct hashlimit_net *hashlimit_net = hashlimit_pernet(hinfo->net);
+	struct proc_dir_entry *parent;
 
-	अगर (hinfo->family == NFPROTO_IPV4)
+	if (hinfo->family == NFPROTO_IPV4)
 		parent = hashlimit_net->ipt_hashlimit;
-	अन्यथा
+	else
 		parent = hashlimit_net->ip6t_hashlimit;
 
-	अगर (parent != शून्य)
-		हटाओ_proc_entry(hinfo->name, parent);
-पूर्ण
+	if (parent != NULL)
+		remove_proc_entry(hinfo->name, parent);
+}
 
-अटल काष्ठा xt_hashlimit_htable *htable_find_get(काष्ठा net *net,
-						   स्थिर अक्षर *name,
-						   u_पूर्णांक8_t family)
-अणु
-	काष्ठा hashlimit_net *hashlimit_net = hashlimit_pernet(net);
-	काष्ठा xt_hashlimit_htable *hinfo;
+static struct xt_hashlimit_htable *htable_find_get(struct net *net,
+						   const char *name,
+						   u_int8_t family)
+{
+	struct hashlimit_net *hashlimit_net = hashlimit_pernet(net);
+	struct xt_hashlimit_htable *hinfo;
 
-	hlist_क्रम_each_entry(hinfo, &hashlimit_net->htables, node) अणु
-		अगर (!म_भेद(name, hinfo->name) &&
-		    hinfo->family == family) अणु
+	hlist_for_each_entry(hinfo, &hashlimit_net->htables, node) {
+		if (!strcmp(name, hinfo->name) &&
+		    hinfo->family == family) {
 			refcount_inc(&hinfo->use);
-			वापस hinfo;
-		पूर्ण
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+			return hinfo;
+		}
+	}
+	return NULL;
+}
 
-अटल व्योम htable_put(काष्ठा xt_hashlimit_htable *hinfo)
-अणु
-	अगर (refcount_dec_and_mutex_lock(&hinfo->use, &hashlimit_mutex)) अणु
+static void htable_put(struct xt_hashlimit_htable *hinfo)
+{
+	if (refcount_dec_and_mutex_lock(&hinfo->use, &hashlimit_mutex)) {
 		hlist_del(&hinfo->node);
-		htable_हटाओ_proc_entry(hinfo);
+		htable_remove_proc_entry(hinfo);
 		mutex_unlock(&hashlimit_mutex);
 
 		cancel_delayed_work_sync(&hinfo->gc_work);
 		htable_selective_cleanup(hinfo, true);
-		kमुक्त(hinfo->name);
-		vमुक्त(hinfo);
-	पूर्ण
-पूर्ण
+		kfree(hinfo->name);
+		vfree(hinfo);
+	}
+}
 
 /* The algorithm used is the Simple Token Bucket Filter (TBF)
  * see net/sched/sch_tbf.c in the linux source tree
  */
 
 /* Rusty: This is my (non-mathematically-inclined) understanding of
-   this algorithm.  The `average rate' in jअगरfies becomes your initial
+   this algorithm.  The `average rate' in jiffies becomes your initial
    amount of credit `credit' and the most credit you can ever have
    `credit_cap'.  The `peak rate' becomes the cost of passing the
    test, `cost'.
 
-   `prev' tracks the last packet hit: you gain one credit per jअगरfy.
+   `prev' tracks the last packet hit: you gain one credit per jiffy.
    If you get credit balance more than this, the extra credit is
-   discarded.  Every समय the match passes, you lose `cost' credits;
-   अगर you करोn't have that many, the test fails.
+   discarded.  Every time the match passes, you lose `cost' credits;
+   if you don't have that many, the test fails.
 
-   See Alexey's क्रमmal explanation in net/sched/sch_tbf.c.
+   See Alexey's formal explanation in net/sched/sch_tbf.c.
 
    To get the maximum range, we multiply by this factor (ie. you get N
-   credits per jअगरfy).  We want to allow a rate as low as 1 per day
+   credits per jiffy).  We want to allow a rate as low as 1 per day
    (slowest userspace tool allows), which means
    CREDITS_PER_JIFFY*HZ*60*60*24 < 2^32 ie.
 */
-#घोषणा MAX_CPJ_v1 (0xFFFFFFFF / (HZ*60*60*24))
-#घोषणा MAX_CPJ (0xFFFFFFFFFFFFFFFFULL / (HZ*60*60*24))
+#define MAX_CPJ_v1 (0xFFFFFFFF / (HZ*60*60*24))
+#define MAX_CPJ (0xFFFFFFFFFFFFFFFFULL / (HZ*60*60*24))
 
-/* Repeated shअगरt and or gives us all 1s, final shअगरt and add 1 gives
- * us the घातer of 2 below the theoretical max, so GCC simply करोes a
- * shअगरt. */
-#घोषणा _POW2_BELOW2(x) ((x)|((x)>>1))
-#घोषणा _POW2_BELOW4(x) (_POW2_BELOW2(x)|_POW2_BELOW2((x)>>2))
-#घोषणा _POW2_BELOW8(x) (_POW2_BELOW4(x)|_POW2_BELOW4((x)>>4))
-#घोषणा _POW2_BELOW16(x) (_POW2_BELOW8(x)|_POW2_BELOW8((x)>>8))
-#घोषणा _POW2_BELOW32(x) (_POW2_BELOW16(x)|_POW2_BELOW16((x)>>16))
-#घोषणा _POW2_BELOW64(x) (_POW2_BELOW32(x)|_POW2_BELOW32((x)>>32))
-#घोषणा POW2_BELOW32(x) ((_POW2_BELOW32(x)>>1) + 1)
-#घोषणा POW2_BELOW64(x) ((_POW2_BELOW64(x)>>1) + 1)
+/* Repeated shift and or gives us all 1s, final shift and add 1 gives
+ * us the power of 2 below the theoretical max, so GCC simply does a
+ * shift. */
+#define _POW2_BELOW2(x) ((x)|((x)>>1))
+#define _POW2_BELOW4(x) (_POW2_BELOW2(x)|_POW2_BELOW2((x)>>2))
+#define _POW2_BELOW8(x) (_POW2_BELOW4(x)|_POW2_BELOW4((x)>>4))
+#define _POW2_BELOW16(x) (_POW2_BELOW8(x)|_POW2_BELOW8((x)>>8))
+#define _POW2_BELOW32(x) (_POW2_BELOW16(x)|_POW2_BELOW16((x)>>16))
+#define _POW2_BELOW64(x) (_POW2_BELOW32(x)|_POW2_BELOW32((x)>>32))
+#define POW2_BELOW32(x) ((_POW2_BELOW32(x)>>1) + 1)
+#define POW2_BELOW64(x) ((_POW2_BELOW64(x)>>1) + 1)
 
-#घोषणा CREDITS_PER_JIFFY POW2_BELOW64(MAX_CPJ)
-#घोषणा CREDITS_PER_JIFFY_v1 POW2_BELOW32(MAX_CPJ_v1)
+#define CREDITS_PER_JIFFY POW2_BELOW64(MAX_CPJ)
+#define CREDITS_PER_JIFFY_v1 POW2_BELOW32(MAX_CPJ_v1)
 
 /* in byte mode, the lowest possible rate is one packet/second.
- * credit_cap is used as a counter that tells us how many बार we can
+ * credit_cap is used as a counter that tells us how many times we can
  * refill the "credits available" counter when it becomes empty.
  */
-#घोषणा MAX_CPJ_BYTES (0xFFFFFFFF / HZ)
-#घोषणा CREDITS_PER_JIFFY_BYTES POW2_BELOW32(MAX_CPJ_BYTES)
+#define MAX_CPJ_BYTES (0xFFFFFFFF / HZ)
+#define CREDITS_PER_JIFFY_BYTES POW2_BELOW32(MAX_CPJ_BYTES)
 
-अटल u32 xt_hashlimit_len_to_chunks(u32 len)
-अणु
-	वापस (len >> XT_HASHLIMIT_BYTE_SHIFT) + 1;
-पूर्ण
+static u32 xt_hashlimit_len_to_chunks(u32 len)
+{
+	return (len >> XT_HASHLIMIT_BYTE_SHIFT) + 1;
+}
 
 /* Precision saver. */
-अटल u64 user2credits(u64 user, पूर्णांक revision)
-अणु
+static u64 user2credits(u64 user, int revision)
+{
 	u64 scale = (revision == 1) ?
 		XT_HASHLIMIT_SCALE : XT_HASHLIMIT_SCALE_v2;
 	u64 cpj = (revision == 1) ?
 		CREDITS_PER_JIFFY_v1 : CREDITS_PER_JIFFY;
 
-	/* Aव्योम overflow: भागide the स्थिरant opeअक्रमs first */
-	अगर (scale >= HZ * cpj)
-		वापस भाग64_u64(user, भाग64_u64(scale, HZ * cpj));
+	/* Avoid overflow: divide the constant operands first */
+	if (scale >= HZ * cpj)
+		return div64_u64(user, div64_u64(scale, HZ * cpj));
 
-	वापस user * भाग64_u64(HZ * cpj, scale);
-पूर्ण
+	return user * div64_u64(HZ * cpj, scale);
+}
 
-अटल u32 user2credits_byte(u32 user)
-अणु
+static u32 user2credits_byte(u32 user)
+{
 	u64 us = user;
 	us *= HZ * CREDITS_PER_JIFFY_BYTES;
-	वापस (u32) (us >> 32);
-पूर्ण
+	return (u32) (us >> 32);
+}
 
-अटल u64 user2rate(u64 user)
-अणु
-	अगर (user != 0) अणु
-		वापस भाग64_u64(XT_HASHLIMIT_SCALE_v2, user);
-	पूर्ण अन्यथा अणु
+static u64 user2rate(u64 user)
+{
+	if (user != 0) {
+		return div64_u64(XT_HASHLIMIT_SCALE_v2, user);
+	} else {
 		pr_info_ratelimited("invalid rate from userspace: %llu\n",
 				    user);
-		वापस 0;
-	पूर्ण
-पूर्ण
+		return 0;
+	}
+}
 
-अटल u64 user2rate_bytes(u32 user)
-अणु
+static u64 user2rate_bytes(u32 user)
+{
 	u64 r;
 
 	r = user ? U32_MAX / user : U32_MAX;
-	वापस (r - 1) << XT_HASHLIMIT_BYTE_SHIFT;
-पूर्ण
+	return (r - 1) << XT_HASHLIMIT_BYTE_SHIFT;
+}
 
-अटल व्योम rateinfo_recalc(काष्ठा dsthash_ent *dh, अचिन्हित दीर्घ now,
-			    u32 mode, पूर्णांक revision)
-अणु
-	अचिन्हित दीर्घ delta = now - dh->rateinfo.prev;
+static void rateinfo_recalc(struct dsthash_ent *dh, unsigned long now,
+			    u32 mode, int revision)
+{
+	unsigned long delta = now - dh->rateinfo.prev;
 	u64 cap, cpj;
 
-	अगर (delta == 0)
-		वापस;
+	if (delta == 0)
+		return;
 
-	अगर (revision >= 3 && mode & XT_HASHLIMIT_RATE_MATCH) अणु
-		u64 पूर्णांकerval = dh->rateinfo.पूर्णांकerval * HZ;
+	if (revision >= 3 && mode & XT_HASHLIMIT_RATE_MATCH) {
+		u64 interval = dh->rateinfo.interval * HZ;
 
-		अगर (delta < पूर्णांकerval)
-			वापस;
+		if (delta < interval)
+			return;
 
 		dh->rateinfo.prev = now;
-		dh->rateinfo.prev_winकरोw =
-			((dh->rateinfo.current_rate * पूर्णांकerval) >
+		dh->rateinfo.prev_window =
+			((dh->rateinfo.current_rate * interval) >
 			 (delta * dh->rateinfo.rate));
 		dh->rateinfo.current_rate = 0;
 
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	dh->rateinfo.prev = now;
 
-	अगर (mode & XT_HASHLIMIT_BYTES) अणु
-		u64 पंचांगp = dh->rateinfo.credit;
+	if (mode & XT_HASHLIMIT_BYTES) {
+		u64 tmp = dh->rateinfo.credit;
 		dh->rateinfo.credit += CREDITS_PER_JIFFY_BYTES * delta;
 		cap = CREDITS_PER_JIFFY_BYTES * HZ;
-		अगर (पंचांगp >= dh->rateinfo.credit) अणु/* overflow */
+		if (tmp >= dh->rateinfo.credit) {/* overflow */
 			dh->rateinfo.credit = cap;
-			वापस;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			return;
+		}
+	} else {
 		cpj = (revision == 1) ?
 			CREDITS_PER_JIFFY_v1 : CREDITS_PER_JIFFY;
 		dh->rateinfo.credit += delta * cpj;
 		cap = dh->rateinfo.credit_cap;
-	पूर्ण
-	अगर (dh->rateinfo.credit > cap)
+	}
+	if (dh->rateinfo.credit > cap)
 		dh->rateinfo.credit = cap;
-पूर्ण
+}
 
-अटल व्योम rateinfo_init(काष्ठा dsthash_ent *dh,
-			  काष्ठा xt_hashlimit_htable *hinfo, पूर्णांक revision)
-अणु
-	dh->rateinfo.prev = jअगरfies;
-	अगर (revision >= 3 && hinfo->cfg.mode & XT_HASHLIMIT_RATE_MATCH) अणु
-		dh->rateinfo.prev_winकरोw = 0;
+static void rateinfo_init(struct dsthash_ent *dh,
+			  struct xt_hashlimit_htable *hinfo, int revision)
+{
+	dh->rateinfo.prev = jiffies;
+	if (revision >= 3 && hinfo->cfg.mode & XT_HASHLIMIT_RATE_MATCH) {
+		dh->rateinfo.prev_window = 0;
 		dh->rateinfo.current_rate = 0;
-		अगर (hinfo->cfg.mode & XT_HASHLIMIT_BYTES) अणु
+		if (hinfo->cfg.mode & XT_HASHLIMIT_BYTES) {
 			dh->rateinfo.rate =
 				user2rate_bytes((u32)hinfo->cfg.avg);
-			अगर (hinfo->cfg.burst)
+			if (hinfo->cfg.burst)
 				dh->rateinfo.burst =
 					hinfo->cfg.burst * dh->rateinfo.rate;
-			अन्यथा
+			else
 				dh->rateinfo.burst = dh->rateinfo.rate;
-		पूर्ण अन्यथा अणु
+		} else {
 			dh->rateinfo.rate = user2rate(hinfo->cfg.avg);
 			dh->rateinfo.burst =
 				hinfo->cfg.burst + dh->rateinfo.rate;
-		पूर्ण
-		dh->rateinfo.पूर्णांकerval = hinfo->cfg.पूर्णांकerval;
-	पूर्ण अन्यथा अगर (hinfo->cfg.mode & XT_HASHLIMIT_BYTES) अणु
+		}
+		dh->rateinfo.interval = hinfo->cfg.interval;
+	} else if (hinfo->cfg.mode & XT_HASHLIMIT_BYTES) {
 		dh->rateinfo.credit = CREDITS_PER_JIFFY_BYTES * HZ;
 		dh->rateinfo.cost = user2credits_byte(hinfo->cfg.avg);
 		dh->rateinfo.credit_cap = hinfo->cfg.burst;
-	पूर्ण अन्यथा अणु
+	} else {
 		dh->rateinfo.credit = user2credits(hinfo->cfg.avg *
 						   hinfo->cfg.burst, revision);
 		dh->rateinfo.cost = user2credits(hinfo->cfg.avg, revision);
 		dh->rateinfo.credit_cap = dh->rateinfo.credit;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत __be32 maskl(__be32 a, अचिन्हित पूर्णांक l)
-अणु
-	वापस l ? htonl(ntohl(a) & ~0 << (32 - l)) : 0;
-पूर्ण
+static inline __be32 maskl(__be32 a, unsigned int l)
+{
+	return l ? htonl(ntohl(a) & ~0 << (32 - l)) : 0;
+}
 
-#अगर IS_ENABLED(CONFIG_IP6_NF_IPTABLES)
-अटल व्योम hashlimit_ipv6_mask(__be32 *i, अचिन्हित पूर्णांक p)
-अणु
-	चयन (p) अणु
-	हाल 0 ... 31:
+#if IS_ENABLED(CONFIG_IP6_NF_IPTABLES)
+static void hashlimit_ipv6_mask(__be32 *i, unsigned int p)
+{
+	switch (p) {
+	case 0 ... 31:
 		i[0] = maskl(i[0], p);
 		i[1] = i[2] = i[3] = 0;
-		अवरोध;
-	हाल 32 ... 63:
+		break;
+	case 32 ... 63:
 		i[1] = maskl(i[1], p - 32);
 		i[2] = i[3] = 0;
-		अवरोध;
-	हाल 64 ... 95:
+		break;
+	case 64 ... 95:
 		i[2] = maskl(i[2], p - 64);
 		i[3] = 0;
-		अवरोध;
-	हाल 96 ... 127:
+		break;
+	case 96 ... 127:
 		i[3] = maskl(i[3], p - 96);
-		अवरोध;
-	हाल 128:
-		अवरोध;
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर
+		break;
+	case 128:
+		break;
+	}
+}
+#endif
 
-अटल पूर्णांक
-hashlimit_init_dst(स्थिर काष्ठा xt_hashlimit_htable *hinfo,
-		   काष्ठा dsthash_dst *dst,
-		   स्थिर काष्ठा sk_buff *skb, अचिन्हित पूर्णांक protoff)
-अणु
+static int
+hashlimit_init_dst(const struct xt_hashlimit_htable *hinfo,
+		   struct dsthash_dst *dst,
+		   const struct sk_buff *skb, unsigned int protoff)
+{
 	__be16 _ports[2], *ports;
 	u8 nexthdr;
-	पूर्णांक poff;
+	int poff;
 
-	स_रखो(dst, 0, माप(*dst));
+	memset(dst, 0, sizeof(*dst));
 
-	चयन (hinfo->family) अणु
-	हाल NFPROTO_IPV4:
-		अगर (hinfo->cfg.mode & XT_HASHLIMIT_HASH_DIP)
+	switch (hinfo->family) {
+	case NFPROTO_IPV4:
+		if (hinfo->cfg.mode & XT_HASHLIMIT_HASH_DIP)
 			dst->ip.dst = maskl(ip_hdr(skb)->daddr,
-			              hinfo->cfg.dsपंचांगask);
-		अगर (hinfo->cfg.mode & XT_HASHLIMIT_HASH_SIP)
+			              hinfo->cfg.dstmask);
+		if (hinfo->cfg.mode & XT_HASHLIMIT_HASH_SIP)
 			dst->ip.src = maskl(ip_hdr(skb)->saddr,
 			              hinfo->cfg.srcmask);
 
-		अगर (!(hinfo->cfg.mode &
+		if (!(hinfo->cfg.mode &
 		      (XT_HASHLIMIT_HASH_DPT | XT_HASHLIMIT_HASH_SPT)))
-			वापस 0;
+			return 0;
 		nexthdr = ip_hdr(skb)->protocol;
-		अवरोध;
-#अगर IS_ENABLED(CONFIG_IP6_NF_IPTABLES)
-	हाल NFPROTO_IPV6:
-	अणु
+		break;
+#if IS_ENABLED(CONFIG_IP6_NF_IPTABLES)
+	case NFPROTO_IPV6:
+	{
 		__be16 frag_off;
 
-		अगर (hinfo->cfg.mode & XT_HASHLIMIT_HASH_DIP) अणु
-			स_नकल(&dst->ip6.dst, &ipv6_hdr(skb)->daddr,
-			       माप(dst->ip6.dst));
-			hashlimit_ipv6_mask(dst->ip6.dst, hinfo->cfg.dsपंचांगask);
-		पूर्ण
-		अगर (hinfo->cfg.mode & XT_HASHLIMIT_HASH_SIP) अणु
-			स_नकल(&dst->ip6.src, &ipv6_hdr(skb)->saddr,
-			       माप(dst->ip6.src));
+		if (hinfo->cfg.mode & XT_HASHLIMIT_HASH_DIP) {
+			memcpy(&dst->ip6.dst, &ipv6_hdr(skb)->daddr,
+			       sizeof(dst->ip6.dst));
+			hashlimit_ipv6_mask(dst->ip6.dst, hinfo->cfg.dstmask);
+		}
+		if (hinfo->cfg.mode & XT_HASHLIMIT_HASH_SIP) {
+			memcpy(&dst->ip6.src, &ipv6_hdr(skb)->saddr,
+			       sizeof(dst->ip6.src));
 			hashlimit_ipv6_mask(dst->ip6.src, hinfo->cfg.srcmask);
-		पूर्ण
+		}
 
-		अगर (!(hinfo->cfg.mode &
+		if (!(hinfo->cfg.mode &
 		      (XT_HASHLIMIT_HASH_DPT | XT_HASHLIMIT_HASH_SPT)))
-			वापस 0;
+			return 0;
 		nexthdr = ipv6_hdr(skb)->nexthdr;
-		protoff = ipv6_skip_exthdr(skb, माप(काष्ठा ipv6hdr), &nexthdr, &frag_off);
-		अगर ((पूर्णांक)protoff < 0)
-			वापस -1;
-		अवरोध;
-	पूर्ण
-#पूर्ण_अगर
-	शेष:
+		protoff = ipv6_skip_exthdr(skb, sizeof(struct ipv6hdr), &nexthdr, &frag_off);
+		if ((int)protoff < 0)
+			return -1;
+		break;
+	}
+#endif
+	default:
 		BUG();
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	poff = proto_ports_offset(nexthdr);
-	अगर (poff >= 0) अणु
-		ports = skb_header_poपूर्णांकer(skb, protoff + poff, माप(_ports),
+	if (poff >= 0) {
+		ports = skb_header_pointer(skb, protoff + poff, sizeof(_ports),
 					   &_ports);
-	पूर्ण अन्यथा अणु
+	} else {
 		_ports[0] = _ports[1] = 0;
 		ports = _ports;
-	पूर्ण
-	अगर (!ports)
-		वापस -1;
-	अगर (hinfo->cfg.mode & XT_HASHLIMIT_HASH_SPT)
+	}
+	if (!ports)
+		return -1;
+	if (hinfo->cfg.mode & XT_HASHLIMIT_HASH_SPT)
 		dst->src_port = ports[0];
-	अगर (hinfo->cfg.mode & XT_HASHLIMIT_HASH_DPT)
+	if (hinfo->cfg.mode & XT_HASHLIMIT_HASH_DPT)
 		dst->dst_port = ports[1];
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u32 hashlimit_byte_cost(अचिन्हित पूर्णांक len, काष्ठा dsthash_ent *dh)
-अणु
-	u64 पंचांगp = xt_hashlimit_len_to_chunks(len);
-	पंचांगp = पंचांगp * dh->rateinfo.cost;
+static u32 hashlimit_byte_cost(unsigned int len, struct dsthash_ent *dh)
+{
+	u64 tmp = xt_hashlimit_len_to_chunks(len);
+	tmp = tmp * dh->rateinfo.cost;
 
-	अगर (unlikely(पंचांगp > CREDITS_PER_JIFFY_BYTES * HZ))
-		पंचांगp = CREDITS_PER_JIFFY_BYTES * HZ;
+	if (unlikely(tmp > CREDITS_PER_JIFFY_BYTES * HZ))
+		tmp = CREDITS_PER_JIFFY_BYTES * HZ;
 
-	अगर (dh->rateinfo.credit < पंचांगp && dh->rateinfo.credit_cap) अणु
+	if (dh->rateinfo.credit < tmp && dh->rateinfo.credit_cap) {
 		dh->rateinfo.credit_cap--;
 		dh->rateinfo.credit = CREDITS_PER_JIFFY_BYTES * HZ;
-	पूर्ण
-	वापस (u32) पंचांगp;
-पूर्ण
+	}
+	return (u32) tmp;
+}
 
-अटल bool
-hashlimit_mt_common(स्थिर काष्ठा sk_buff *skb, काष्ठा xt_action_param *par,
-		    काष्ठा xt_hashlimit_htable *hinfo,
-		    स्थिर काष्ठा hashlimit_cfg3 *cfg, पूर्णांक revision)
-अणु
-	अचिन्हित दीर्घ now = jअगरfies;
-	काष्ठा dsthash_ent *dh;
-	काष्ठा dsthash_dst dst;
+static bool
+hashlimit_mt_common(const struct sk_buff *skb, struct xt_action_param *par,
+		    struct xt_hashlimit_htable *hinfo,
+		    const struct hashlimit_cfg3 *cfg, int revision)
+{
+	unsigned long now = jiffies;
+	struct dsthash_ent *dh;
+	struct dsthash_dst dst;
 	bool race = false;
 	u64 cost;
 
-	अगर (hashlimit_init_dst(hinfo, &dst, skb, par->thoff) < 0)
-		जाओ hotdrop;
+	if (hashlimit_init_dst(hinfo, &dst, skb, par->thoff) < 0)
+		goto hotdrop;
 
 	local_bh_disable();
 	dh = dsthash_find(hinfo, &dst);
-	अगर (dh == शून्य) अणु
+	if (dh == NULL) {
 		dh = dsthash_alloc_init(hinfo, &dst, &race);
-		अगर (dh == शून्य) अणु
+		if (dh == NULL) {
 			local_bh_enable();
-			जाओ hotdrop;
-		पूर्ण अन्यथा अगर (race) अणु
-			/* Alपढ़ोy got an entry, update expiration समयout */
-			dh->expires = now + msecs_to_jअगरfies(hinfo->cfg.expire);
+			goto hotdrop;
+		} else if (race) {
+			/* Already got an entry, update expiration timeout */
+			dh->expires = now + msecs_to_jiffies(hinfo->cfg.expire);
 			rateinfo_recalc(dh, now, hinfo->cfg.mode, revision);
-		पूर्ण अन्यथा अणु
-			dh->expires = jअगरfies + msecs_to_jअगरfies(hinfo->cfg.expire);
+		} else {
+			dh->expires = jiffies + msecs_to_jiffies(hinfo->cfg.expire);
 			rateinfo_init(dh, hinfo, revision);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		/* update expiration समयout */
-		dh->expires = now + msecs_to_jअगरfies(hinfo->cfg.expire);
+		}
+	} else {
+		/* update expiration timeout */
+		dh->expires = now + msecs_to_jiffies(hinfo->cfg.expire);
 		rateinfo_recalc(dh, now, hinfo->cfg.mode, revision);
-	पूर्ण
+	}
 
-	अगर (cfg->mode & XT_HASHLIMIT_RATE_MATCH) अणु
+	if (cfg->mode & XT_HASHLIMIT_RATE_MATCH) {
 		cost = (cfg->mode & XT_HASHLIMIT_BYTES) ? skb->len : 1;
 		dh->rateinfo.current_rate += cost;
 
-		अगर (!dh->rateinfo.prev_winकरोw &&
-		    (dh->rateinfo.current_rate <= dh->rateinfo.burst)) अणु
+		if (!dh->rateinfo.prev_window &&
+		    (dh->rateinfo.current_rate <= dh->rateinfo.burst)) {
 			spin_unlock(&dh->lock);
 			local_bh_enable();
-			वापस !(cfg->mode & XT_HASHLIMIT_INVERT);
-		पूर्ण अन्यथा अणु
-			जाओ overlimit;
-		पूर्ण
-	पूर्ण
+			return !(cfg->mode & XT_HASHLIMIT_INVERT);
+		} else {
+			goto overlimit;
+		}
+	}
 
-	अगर (cfg->mode & XT_HASHLIMIT_BYTES)
+	if (cfg->mode & XT_HASHLIMIT_BYTES)
 		cost = hashlimit_byte_cost(skb->len, dh);
-	अन्यथा
+	else
 		cost = dh->rateinfo.cost;
 
-	अगर (dh->rateinfo.credit >= cost) अणु
+	if (dh->rateinfo.credit >= cost) {
 		/* below the limit */
 		dh->rateinfo.credit -= cost;
 		spin_unlock(&dh->lock);
 		local_bh_enable();
-		वापस !(cfg->mode & XT_HASHLIMIT_INVERT);
-	पूर्ण
+		return !(cfg->mode & XT_HASHLIMIT_INVERT);
+	}
 
 overlimit:
 	spin_unlock(&dh->lock);
 	local_bh_enable();
-	/* शेष match is underlimit - so over the limit, we need to invert */
-	वापस cfg->mode & XT_HASHLIMIT_INVERT;
+	/* default match is underlimit - so over the limit, we need to invert */
+	return cfg->mode & XT_HASHLIMIT_INVERT;
 
  hotdrop:
 	par->hotdrop = true;
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल bool
-hashlimit_mt_v1(स्थिर काष्ठा sk_buff *skb, काष्ठा xt_action_param *par)
-अणु
-	स्थिर काष्ठा xt_hashlimit_mtinfo1 *info = par->matchinfo;
-	काष्ठा xt_hashlimit_htable *hinfo = info->hinfo;
-	काष्ठा hashlimit_cfg3 cfg = अणुपूर्ण;
-	पूर्णांक ret;
+static bool
+hashlimit_mt_v1(const struct sk_buff *skb, struct xt_action_param *par)
+{
+	const struct xt_hashlimit_mtinfo1 *info = par->matchinfo;
+	struct xt_hashlimit_htable *hinfo = info->hinfo;
+	struct hashlimit_cfg3 cfg = {};
+	int ret;
 
-	ret = cfg_copy(&cfg, (व्योम *)&info->cfg, 1);
-	अगर (ret)
-		वापस ret;
+	ret = cfg_copy(&cfg, (void *)&info->cfg, 1);
+	if (ret)
+		return ret;
 
-	वापस hashlimit_mt_common(skb, par, hinfo, &cfg, 1);
-पूर्ण
+	return hashlimit_mt_common(skb, par, hinfo, &cfg, 1);
+}
 
-अटल bool
-hashlimit_mt_v2(स्थिर काष्ठा sk_buff *skb, काष्ठा xt_action_param *par)
-अणु
-	स्थिर काष्ठा xt_hashlimit_mtinfo2 *info = par->matchinfo;
-	काष्ठा xt_hashlimit_htable *hinfo = info->hinfo;
-	काष्ठा hashlimit_cfg3 cfg = अणुपूर्ण;
-	पूर्णांक ret;
+static bool
+hashlimit_mt_v2(const struct sk_buff *skb, struct xt_action_param *par)
+{
+	const struct xt_hashlimit_mtinfo2 *info = par->matchinfo;
+	struct xt_hashlimit_htable *hinfo = info->hinfo;
+	struct hashlimit_cfg3 cfg = {};
+	int ret;
 
-	ret = cfg_copy(&cfg, (व्योम *)&info->cfg, 2);
-	अगर (ret)
-		वापस ret;
+	ret = cfg_copy(&cfg, (void *)&info->cfg, 2);
+	if (ret)
+		return ret;
 
-	वापस hashlimit_mt_common(skb, par, hinfo, &cfg, 2);
-पूर्ण
+	return hashlimit_mt_common(skb, par, hinfo, &cfg, 2);
+}
 
-अटल bool
-hashlimit_mt(स्थिर काष्ठा sk_buff *skb, काष्ठा xt_action_param *par)
-अणु
-	स्थिर काष्ठा xt_hashlimit_mtinfo3 *info = par->matchinfo;
-	काष्ठा xt_hashlimit_htable *hinfo = info->hinfo;
+static bool
+hashlimit_mt(const struct sk_buff *skb, struct xt_action_param *par)
+{
+	const struct xt_hashlimit_mtinfo3 *info = par->matchinfo;
+	struct xt_hashlimit_htable *hinfo = info->hinfo;
 
-	वापस hashlimit_mt_common(skb, par, hinfo, &info->cfg, 3);
-पूर्ण
+	return hashlimit_mt_common(skb, par, hinfo, &info->cfg, 3);
+}
 
-#घोषणा HASHLIMIT_MAX_SIZE 1048576
+#define HASHLIMIT_MAX_SIZE 1048576
 
-अटल पूर्णांक hashlimit_mt_check_common(स्थिर काष्ठा xt_mtchk_param *par,
-				     काष्ठा xt_hashlimit_htable **hinfo,
-				     काष्ठा hashlimit_cfg3 *cfg,
-				     स्थिर अक्षर *name, पूर्णांक revision)
-अणु
-	काष्ठा net *net = par->net;
-	पूर्णांक ret;
+static int hashlimit_mt_check_common(const struct xt_mtchk_param *par,
+				     struct xt_hashlimit_htable **hinfo,
+				     struct hashlimit_cfg3 *cfg,
+				     const char *name, int revision)
+{
+	struct net *net = par->net;
+	int ret;
 
-	अगर (cfg->gc_पूर्णांकerval == 0 || cfg->expire == 0)
-		वापस -EINVAL;
-	अगर (cfg->size > HASHLIMIT_MAX_SIZE) अणु
+	if (cfg->gc_interval == 0 || cfg->expire == 0)
+		return -EINVAL;
+	if (cfg->size > HASHLIMIT_MAX_SIZE) {
 		cfg->size = HASHLIMIT_MAX_SIZE;
 		pr_info_ratelimited("size too large, truncated to %u\n", cfg->size);
-	पूर्ण
-	अगर (cfg->max > HASHLIMIT_MAX_SIZE) अणु
+	}
+	if (cfg->max > HASHLIMIT_MAX_SIZE) {
 		cfg->max = HASHLIMIT_MAX_SIZE;
 		pr_info_ratelimited("max too large, truncated to %u\n", cfg->max);
-	पूर्ण
-	अगर (par->family == NFPROTO_IPV4) अणु
-		अगर (cfg->srcmask > 32 || cfg->dsपंचांगask > 32)
-			वापस -EINVAL;
-	पूर्ण अन्यथा अणु
-		अगर (cfg->srcmask > 128 || cfg->dsपंचांगask > 128)
-			वापस -EINVAL;
-	पूर्ण
+	}
+	if (par->family == NFPROTO_IPV4) {
+		if (cfg->srcmask > 32 || cfg->dstmask > 32)
+			return -EINVAL;
+	} else {
+		if (cfg->srcmask > 128 || cfg->dstmask > 128)
+			return -EINVAL;
+	}
 
-	अगर (cfg->mode & ~XT_HASHLIMIT_ALL) अणु
+	if (cfg->mode & ~XT_HASHLIMIT_ALL) {
 		pr_info_ratelimited("Unknown mode mask %X, kernel too old?\n",
 				    cfg->mode);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* Check क्रम overflow. */
-	अगर (revision >= 3 && cfg->mode & XT_HASHLIMIT_RATE_MATCH) अणु
-		अगर (cfg->avg == 0 || cfg->avg > U32_MAX) अणु
+	/* Check for overflow. */
+	if (revision >= 3 && cfg->mode & XT_HASHLIMIT_RATE_MATCH) {
+		if (cfg->avg == 0 || cfg->avg > U32_MAX) {
 			pr_info_ratelimited("invalid rate\n");
-			वापस -दुस्फल;
-		पूर्ण
+			return -ERANGE;
+		}
 
-		अगर (cfg->पूर्णांकerval == 0) अणु
+		if (cfg->interval == 0) {
 			pr_info_ratelimited("invalid interval\n");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण अन्यथा अगर (cfg->mode & XT_HASHLIMIT_BYTES) अणु
-		अगर (user2credits_byte(cfg->avg) == 0) अणु
+			return -EINVAL;
+		}
+	} else if (cfg->mode & XT_HASHLIMIT_BYTES) {
+		if (user2credits_byte(cfg->avg) == 0) {
 			pr_info_ratelimited("overflow, rate too high: %llu\n",
 					    cfg->avg);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण अन्यथा अगर (cfg->burst == 0 ||
+			return -EINVAL;
+		}
+	} else if (cfg->burst == 0 ||
 		   user2credits(cfg->avg * cfg->burst, revision) <
-		   user2credits(cfg->avg, revision)) अणु
+		   user2credits(cfg->avg, revision)) {
 		pr_info_ratelimited("overflow, try lower: %llu/%llu\n",
 				    cfg->avg, cfg->burst);
-		वापस -दुस्फल;
-	पूर्ण
+		return -ERANGE;
+	}
 
 	mutex_lock(&hashlimit_mutex);
 	*hinfo = htable_find_get(net, name, par->family);
-	अगर (*hinfo == शून्य) अणु
+	if (*hinfo == NULL) {
 		ret = htable_create(net, cfg, name, par->family,
 				    hinfo, revision);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			mutex_unlock(&hashlimit_mutex);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 	mutex_unlock(&hashlimit_mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hashlimit_mt_check_v1(स्थिर काष्ठा xt_mtchk_param *par)
-अणु
-	काष्ठा xt_hashlimit_mtinfo1 *info = par->matchinfo;
-	काष्ठा hashlimit_cfg3 cfg = अणुपूर्ण;
-	पूर्णांक ret;
+static int hashlimit_mt_check_v1(const struct xt_mtchk_param *par)
+{
+	struct xt_hashlimit_mtinfo1 *info = par->matchinfo;
+	struct hashlimit_cfg3 cfg = {};
+	int ret;
 
-	ret = xt_check_proc_name(info->name, माप(info->name));
-	अगर (ret)
-		वापस ret;
+	ret = xt_check_proc_name(info->name, sizeof(info->name));
+	if (ret)
+		return ret;
 
-	ret = cfg_copy(&cfg, (व्योम *)&info->cfg, 1);
-	अगर (ret)
-		वापस ret;
+	ret = cfg_copy(&cfg, (void *)&info->cfg, 1);
+	if (ret)
+		return ret;
 
-	वापस hashlimit_mt_check_common(par, &info->hinfo,
+	return hashlimit_mt_check_common(par, &info->hinfo,
 					 &cfg, info->name, 1);
-पूर्ण
+}
 
-अटल पूर्णांक hashlimit_mt_check_v2(स्थिर काष्ठा xt_mtchk_param *par)
-अणु
-	काष्ठा xt_hashlimit_mtinfo2 *info = par->matchinfo;
-	काष्ठा hashlimit_cfg3 cfg = अणुपूर्ण;
-	पूर्णांक ret;
+static int hashlimit_mt_check_v2(const struct xt_mtchk_param *par)
+{
+	struct xt_hashlimit_mtinfo2 *info = par->matchinfo;
+	struct hashlimit_cfg3 cfg = {};
+	int ret;
 
-	ret = xt_check_proc_name(info->name, माप(info->name));
-	अगर (ret)
-		वापस ret;
+	ret = xt_check_proc_name(info->name, sizeof(info->name));
+	if (ret)
+		return ret;
 
-	ret = cfg_copy(&cfg, (व्योम *)&info->cfg, 2);
-	अगर (ret)
-		वापस ret;
+	ret = cfg_copy(&cfg, (void *)&info->cfg, 2);
+	if (ret)
+		return ret;
 
-	वापस hashlimit_mt_check_common(par, &info->hinfo,
+	return hashlimit_mt_check_common(par, &info->hinfo,
 					 &cfg, info->name, 2);
-पूर्ण
+}
 
-अटल पूर्णांक hashlimit_mt_check(स्थिर काष्ठा xt_mtchk_param *par)
-अणु
-	काष्ठा xt_hashlimit_mtinfo3 *info = par->matchinfo;
-	पूर्णांक ret;
+static int hashlimit_mt_check(const struct xt_mtchk_param *par)
+{
+	struct xt_hashlimit_mtinfo3 *info = par->matchinfo;
+	int ret;
 
-	ret = xt_check_proc_name(info->name, माप(info->name));
-	अगर (ret)
-		वापस ret;
+	ret = xt_check_proc_name(info->name, sizeof(info->name));
+	if (ret)
+		return ret;
 
-	वापस hashlimit_mt_check_common(par, &info->hinfo, &info->cfg,
+	return hashlimit_mt_check_common(par, &info->hinfo, &info->cfg,
 					 info->name, 3);
-पूर्ण
+}
 
-अटल व्योम hashlimit_mt_destroy_v2(स्थिर काष्ठा xt_mtdtor_param *par)
-अणु
-	स्थिर काष्ठा xt_hashlimit_mtinfo2 *info = par->matchinfo;
-
-	htable_put(info->hinfo);
-पूर्ण
-
-अटल व्योम hashlimit_mt_destroy_v1(स्थिर काष्ठा xt_mtdtor_param *par)
-अणु
-	स्थिर काष्ठा xt_hashlimit_mtinfo1 *info = par->matchinfo;
+static void hashlimit_mt_destroy_v2(const struct xt_mtdtor_param *par)
+{
+	const struct xt_hashlimit_mtinfo2 *info = par->matchinfo;
 
 	htable_put(info->hinfo);
-पूर्ण
+}
 
-अटल व्योम hashlimit_mt_destroy(स्थिर काष्ठा xt_mtdtor_param *par)
-अणु
-	स्थिर काष्ठा xt_hashlimit_mtinfo3 *info = par->matchinfo;
+static void hashlimit_mt_destroy_v1(const struct xt_mtdtor_param *par)
+{
+	const struct xt_hashlimit_mtinfo1 *info = par->matchinfo;
 
 	htable_put(info->hinfo);
-पूर्ण
+}
 
-अटल काष्ठा xt_match hashlimit_mt_reg[] __पढ़ो_mostly = अणु
-	अणु
+static void hashlimit_mt_destroy(const struct xt_mtdtor_param *par)
+{
+	const struct xt_hashlimit_mtinfo3 *info = par->matchinfo;
+
+	htable_put(info->hinfo);
+}
+
+static struct xt_match hashlimit_mt_reg[] __read_mostly = {
+	{
 		.name           = "hashlimit",
 		.revision       = 1,
 		.family         = NFPROTO_IPV4,
 		.match          = hashlimit_mt_v1,
-		.matchsize      = माप(काष्ठा xt_hashlimit_mtinfo1),
-		.usersize	= दुरत्व(काष्ठा xt_hashlimit_mtinfo1, hinfo),
+		.matchsize      = sizeof(struct xt_hashlimit_mtinfo1),
+		.usersize	= offsetof(struct xt_hashlimit_mtinfo1, hinfo),
 		.checkentry     = hashlimit_mt_check_v1,
 		.destroy        = hashlimit_mt_destroy_v1,
 		.me             = THIS_MODULE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name           = "hashlimit",
 		.revision       = 2,
 		.family         = NFPROTO_IPV4,
 		.match          = hashlimit_mt_v2,
-		.matchsize      = माप(काष्ठा xt_hashlimit_mtinfo2),
-		.usersize	= दुरत्व(काष्ठा xt_hashlimit_mtinfo2, hinfo),
+		.matchsize      = sizeof(struct xt_hashlimit_mtinfo2),
+		.usersize	= offsetof(struct xt_hashlimit_mtinfo2, hinfo),
 		.checkentry     = hashlimit_mt_check_v2,
 		.destroy        = hashlimit_mt_destroy_v2,
 		.me             = THIS_MODULE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name           = "hashlimit",
 		.revision       = 3,
 		.family         = NFPROTO_IPV4,
 		.match          = hashlimit_mt,
-		.matchsize      = माप(काष्ठा xt_hashlimit_mtinfo3),
-		.usersize	= दुरत्व(काष्ठा xt_hashlimit_mtinfo3, hinfo),
+		.matchsize      = sizeof(struct xt_hashlimit_mtinfo3),
+		.usersize	= offsetof(struct xt_hashlimit_mtinfo3, hinfo),
 		.checkentry     = hashlimit_mt_check,
 		.destroy        = hashlimit_mt_destroy,
 		.me             = THIS_MODULE,
-	पूर्ण,
-#अगर IS_ENABLED(CONFIG_IP6_NF_IPTABLES)
-	अणु
+	},
+#if IS_ENABLED(CONFIG_IP6_NF_IPTABLES)
+	{
 		.name           = "hashlimit",
 		.revision       = 1,
 		.family         = NFPROTO_IPV6,
 		.match          = hashlimit_mt_v1,
-		.matchsize      = माप(काष्ठा xt_hashlimit_mtinfo1),
-		.usersize	= दुरत्व(काष्ठा xt_hashlimit_mtinfo1, hinfo),
+		.matchsize      = sizeof(struct xt_hashlimit_mtinfo1),
+		.usersize	= offsetof(struct xt_hashlimit_mtinfo1, hinfo),
 		.checkentry     = hashlimit_mt_check_v1,
 		.destroy        = hashlimit_mt_destroy_v1,
 		.me             = THIS_MODULE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name           = "hashlimit",
 		.revision       = 2,
 		.family         = NFPROTO_IPV6,
 		.match          = hashlimit_mt_v2,
-		.matchsize      = माप(काष्ठा xt_hashlimit_mtinfo2),
-		.usersize	= दुरत्व(काष्ठा xt_hashlimit_mtinfo2, hinfo),
+		.matchsize      = sizeof(struct xt_hashlimit_mtinfo2),
+		.usersize	= offsetof(struct xt_hashlimit_mtinfo2, hinfo),
 		.checkentry     = hashlimit_mt_check_v2,
 		.destroy        = hashlimit_mt_destroy_v2,
 		.me             = THIS_MODULE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name           = "hashlimit",
 		.revision       = 3,
 		.family         = NFPROTO_IPV6,
 		.match          = hashlimit_mt,
-		.matchsize      = माप(काष्ठा xt_hashlimit_mtinfo3),
-		.usersize	= दुरत्व(काष्ठा xt_hashlimit_mtinfo3, hinfo),
+		.matchsize      = sizeof(struct xt_hashlimit_mtinfo3),
+		.usersize	= offsetof(struct xt_hashlimit_mtinfo3, hinfo),
 		.checkentry     = hashlimit_mt_check,
 		.destroy        = hashlimit_mt_destroy,
 		.me             = THIS_MODULE,
-	पूर्ण,
-#पूर्ण_अगर
-पूर्ण;
+	},
+#endif
+};
 
 /* PROC stuff */
-अटल व्योम *dl_seq_start(काष्ठा seq_file *s, loff_t *pos)
+static void *dl_seq_start(struct seq_file *s, loff_t *pos)
 	__acquires(htable->lock)
-अणु
-	काष्ठा xt_hashlimit_htable *htable = PDE_DATA(file_inode(s->file));
-	अचिन्हित पूर्णांक *bucket;
+{
+	struct xt_hashlimit_htable *htable = PDE_DATA(file_inode(s->file));
+	unsigned int *bucket;
 
 	spin_lock_bh(&htable->lock);
-	अगर (*pos >= htable->cfg.size)
-		वापस शून्य;
+	if (*pos >= htable->cfg.size)
+		return NULL;
 
-	bucket = kदो_स्मृति(माप(अचिन्हित पूर्णांक), GFP_ATOMIC);
-	अगर (!bucket)
-		वापस ERR_PTR(-ENOMEM);
+	bucket = kmalloc(sizeof(unsigned int), GFP_ATOMIC);
+	if (!bucket)
+		return ERR_PTR(-ENOMEM);
 
 	*bucket = *pos;
-	वापस bucket;
-पूर्ण
+	return bucket;
+}
 
-अटल व्योम *dl_seq_next(काष्ठा seq_file *s, व्योम *v, loff_t *pos)
-अणु
-	काष्ठा xt_hashlimit_htable *htable = PDE_DATA(file_inode(s->file));
-	अचिन्हित पूर्णांक *bucket = v;
+static void *dl_seq_next(struct seq_file *s, void *v, loff_t *pos)
+{
+	struct xt_hashlimit_htable *htable = PDE_DATA(file_inode(s->file));
+	unsigned int *bucket = v;
 
 	*pos = ++(*bucket);
-	अगर (*pos >= htable->cfg.size) अणु
-		kमुक्त(v);
-		वापस शून्य;
-	पूर्ण
-	वापस bucket;
-पूर्ण
+	if (*pos >= htable->cfg.size) {
+		kfree(v);
+		return NULL;
+	}
+	return bucket;
+}
 
-अटल व्योम dl_seq_stop(काष्ठा seq_file *s, व्योम *v)
+static void dl_seq_stop(struct seq_file *s, void *v)
 	__releases(htable->lock)
-अणु
-	काष्ठा xt_hashlimit_htable *htable = PDE_DATA(file_inode(s->file));
-	अचिन्हित पूर्णांक *bucket = v;
+{
+	struct xt_hashlimit_htable *htable = PDE_DATA(file_inode(s->file));
+	unsigned int *bucket = v;
 
-	अगर (!IS_ERR(bucket))
-		kमुक्त(bucket);
+	if (!IS_ERR(bucket))
+		kfree(bucket);
 	spin_unlock_bh(&htable->lock);
-पूर्ण
+}
 
-अटल व्योम dl_seq_prपूर्णांक(काष्ठा dsthash_ent *ent, u_पूर्णांक8_t family,
-			 काष्ठा seq_file *s)
-अणु
-	चयन (family) अणु
-	हाल NFPROTO_IPV4:
-		seq_म_लिखो(s, "%ld %pI4:%u->%pI4:%u %llu %llu %llu\n",
-			   (दीर्घ)(ent->expires - jअगरfies)/HZ,
+static void dl_seq_print(struct dsthash_ent *ent, u_int8_t family,
+			 struct seq_file *s)
+{
+	switch (family) {
+	case NFPROTO_IPV4:
+		seq_printf(s, "%ld %pI4:%u->%pI4:%u %llu %llu %llu\n",
+			   (long)(ent->expires - jiffies)/HZ,
 			   &ent->dst.ip.src,
 			   ntohs(ent->dst.src_port),
 			   &ent->dst.ip.dst,
 			   ntohs(ent->dst.dst_port),
 			   ent->rateinfo.credit, ent->rateinfo.credit_cap,
 			   ent->rateinfo.cost);
-		अवरोध;
-#अगर IS_ENABLED(CONFIG_IP6_NF_IPTABLES)
-	हाल NFPROTO_IPV6:
-		seq_म_लिखो(s, "%ld %pI6:%u->%pI6:%u %llu %llu %llu\n",
-			   (दीर्घ)(ent->expires - jअगरfies)/HZ,
+		break;
+#if IS_ENABLED(CONFIG_IP6_NF_IPTABLES)
+	case NFPROTO_IPV6:
+		seq_printf(s, "%ld %pI6:%u->%pI6:%u %llu %llu %llu\n",
+			   (long)(ent->expires - jiffies)/HZ,
 			   &ent->dst.ip6.src,
 			   ntohs(ent->dst.src_port),
 			   &ent->dst.ip6.dst,
 			   ntohs(ent->dst.dst_port),
 			   ent->rateinfo.credit, ent->rateinfo.credit_cap,
 			   ent->rateinfo.cost);
-		अवरोध;
-#पूर्ण_अगर
-	शेष:
+		break;
+#endif
+	default:
 		BUG();
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक dl_seq_real_show_v2(काष्ठा dsthash_ent *ent, u_पूर्णांक8_t family,
-			       काष्ठा seq_file *s)
-अणु
-	काष्ठा xt_hashlimit_htable *ht = PDE_DATA(file_inode(s->file));
-
-	spin_lock(&ent->lock);
-	/* recalculate to show accurate numbers */
-	rateinfo_recalc(ent, jअगरfies, ht->cfg.mode, 2);
-
-	dl_seq_prपूर्णांक(ent, family, s);
-
-	spin_unlock(&ent->lock);
-	वापस seq_has_overflowed(s);
-पूर्ण
-
-अटल पूर्णांक dl_seq_real_show_v1(काष्ठा dsthash_ent *ent, u_पूर्णांक8_t family,
-			       काष्ठा seq_file *s)
-अणु
-	काष्ठा xt_hashlimit_htable *ht = PDE_DATA(file_inode(s->file));
+static int dl_seq_real_show_v2(struct dsthash_ent *ent, u_int8_t family,
+			       struct seq_file *s)
+{
+	struct xt_hashlimit_htable *ht = PDE_DATA(file_inode(s->file));
 
 	spin_lock(&ent->lock);
 	/* recalculate to show accurate numbers */
-	rateinfo_recalc(ent, jअगरfies, ht->cfg.mode, 1);
+	rateinfo_recalc(ent, jiffies, ht->cfg.mode, 2);
 
-	dl_seq_prपूर्णांक(ent, family, s);
+	dl_seq_print(ent, family, s);
 
 	spin_unlock(&ent->lock);
-	वापस seq_has_overflowed(s);
-पूर्ण
+	return seq_has_overflowed(s);
+}
 
-अटल पूर्णांक dl_seq_real_show(काष्ठा dsthash_ent *ent, u_पूर्णांक8_t family,
-			    काष्ठा seq_file *s)
-अणु
-	काष्ठा xt_hashlimit_htable *ht = PDE_DATA(file_inode(s->file));
+static int dl_seq_real_show_v1(struct dsthash_ent *ent, u_int8_t family,
+			       struct seq_file *s)
+{
+	struct xt_hashlimit_htable *ht = PDE_DATA(file_inode(s->file));
 
 	spin_lock(&ent->lock);
 	/* recalculate to show accurate numbers */
-	rateinfo_recalc(ent, jअगरfies, ht->cfg.mode, 3);
+	rateinfo_recalc(ent, jiffies, ht->cfg.mode, 1);
 
-	dl_seq_prपूर्णांक(ent, family, s);
+	dl_seq_print(ent, family, s);
 
 	spin_unlock(&ent->lock);
-	वापस seq_has_overflowed(s);
-पूर्ण
+	return seq_has_overflowed(s);
+}
 
-अटल पूर्णांक dl_seq_show_v2(काष्ठा seq_file *s, व्योम *v)
-अणु
-	काष्ठा xt_hashlimit_htable *htable = PDE_DATA(file_inode(s->file));
-	अचिन्हित पूर्णांक *bucket = (अचिन्हित पूर्णांक *)v;
-	काष्ठा dsthash_ent *ent;
+static int dl_seq_real_show(struct dsthash_ent *ent, u_int8_t family,
+			    struct seq_file *s)
+{
+	struct xt_hashlimit_htable *ht = PDE_DATA(file_inode(s->file));
 
-	अगर (!hlist_empty(&htable->hash[*bucket])) अणु
-		hlist_क्रम_each_entry(ent, &htable->hash[*bucket], node)
-			अगर (dl_seq_real_show_v2(ent, htable->family, s))
-				वापस -1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	spin_lock(&ent->lock);
+	/* recalculate to show accurate numbers */
+	rateinfo_recalc(ent, jiffies, ht->cfg.mode, 3);
 
-अटल पूर्णांक dl_seq_show_v1(काष्ठा seq_file *s, व्योम *v)
-अणु
-	काष्ठा xt_hashlimit_htable *htable = PDE_DATA(file_inode(s->file));
-	अचिन्हित पूर्णांक *bucket = v;
-	काष्ठा dsthash_ent *ent;
+	dl_seq_print(ent, family, s);
 
-	अगर (!hlist_empty(&htable->hash[*bucket])) अणु
-		hlist_क्रम_each_entry(ent, &htable->hash[*bucket], node)
-			अगर (dl_seq_real_show_v1(ent, htable->family, s))
-				वापस -1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	spin_unlock(&ent->lock);
+	return seq_has_overflowed(s);
+}
 
-अटल पूर्णांक dl_seq_show(काष्ठा seq_file *s, व्योम *v)
-अणु
-	काष्ठा xt_hashlimit_htable *htable = PDE_DATA(file_inode(s->file));
-	अचिन्हित पूर्णांक *bucket = v;
-	काष्ठा dsthash_ent *ent;
+static int dl_seq_show_v2(struct seq_file *s, void *v)
+{
+	struct xt_hashlimit_htable *htable = PDE_DATA(file_inode(s->file));
+	unsigned int *bucket = (unsigned int *)v;
+	struct dsthash_ent *ent;
 
-	अगर (!hlist_empty(&htable->hash[*bucket])) अणु
-		hlist_क्रम_each_entry(ent, &htable->hash[*bucket], node)
-			अगर (dl_seq_real_show(ent, htable->family, s))
-				वापस -1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	if (!hlist_empty(&htable->hash[*bucket])) {
+		hlist_for_each_entry(ent, &htable->hash[*bucket], node)
+			if (dl_seq_real_show_v2(ent, htable->family, s))
+				return -1;
+	}
+	return 0;
+}
 
-अटल स्थिर काष्ठा seq_operations dl_seq_ops_v1 = अणु
+static int dl_seq_show_v1(struct seq_file *s, void *v)
+{
+	struct xt_hashlimit_htable *htable = PDE_DATA(file_inode(s->file));
+	unsigned int *bucket = v;
+	struct dsthash_ent *ent;
+
+	if (!hlist_empty(&htable->hash[*bucket])) {
+		hlist_for_each_entry(ent, &htable->hash[*bucket], node)
+			if (dl_seq_real_show_v1(ent, htable->family, s))
+				return -1;
+	}
+	return 0;
+}
+
+static int dl_seq_show(struct seq_file *s, void *v)
+{
+	struct xt_hashlimit_htable *htable = PDE_DATA(file_inode(s->file));
+	unsigned int *bucket = v;
+	struct dsthash_ent *ent;
+
+	if (!hlist_empty(&htable->hash[*bucket])) {
+		hlist_for_each_entry(ent, &htable->hash[*bucket], node)
+			if (dl_seq_real_show(ent, htable->family, s))
+				return -1;
+	}
+	return 0;
+}
+
+static const struct seq_operations dl_seq_ops_v1 = {
 	.start = dl_seq_start,
 	.next  = dl_seq_next,
 	.stop  = dl_seq_stop,
 	.show  = dl_seq_show_v1
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा seq_operations dl_seq_ops_v2 = अणु
+static const struct seq_operations dl_seq_ops_v2 = {
 	.start = dl_seq_start,
 	.next  = dl_seq_next,
 	.stop  = dl_seq_stop,
 	.show  = dl_seq_show_v2
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा seq_operations dl_seq_ops = अणु
+static const struct seq_operations dl_seq_ops = {
 	.start = dl_seq_start,
 	.next  = dl_seq_next,
 	.stop  = dl_seq_stop,
 	.show  = dl_seq_show
-पूर्ण;
+};
 
-अटल पूर्णांक __net_init hashlimit_proc_net_init(काष्ठा net *net)
-अणु
-	काष्ठा hashlimit_net *hashlimit_net = hashlimit_pernet(net);
+static int __net_init hashlimit_proc_net_init(struct net *net)
+{
+	struct hashlimit_net *hashlimit_net = hashlimit_pernet(net);
 
-	hashlimit_net->ipt_hashlimit = proc_सूची_गढ़ो("ipt_hashlimit", net->proc_net);
-	अगर (!hashlimit_net->ipt_hashlimit)
-		वापस -ENOMEM;
-#अगर IS_ENABLED(CONFIG_IP6_NF_IPTABLES)
-	hashlimit_net->ip6t_hashlimit = proc_सूची_गढ़ो("ip6t_hashlimit", net->proc_net);
-	अगर (!hashlimit_net->ip6t_hashlimit) अणु
-		हटाओ_proc_entry("ipt_hashlimit", net->proc_net);
-		वापस -ENOMEM;
-	पूर्ण
-#पूर्ण_अगर
-	वापस 0;
-पूर्ण
+	hashlimit_net->ipt_hashlimit = proc_mkdir("ipt_hashlimit", net->proc_net);
+	if (!hashlimit_net->ipt_hashlimit)
+		return -ENOMEM;
+#if IS_ENABLED(CONFIG_IP6_NF_IPTABLES)
+	hashlimit_net->ip6t_hashlimit = proc_mkdir("ip6t_hashlimit", net->proc_net);
+	if (!hashlimit_net->ip6t_hashlimit) {
+		remove_proc_entry("ipt_hashlimit", net->proc_net);
+		return -ENOMEM;
+	}
+#endif
+	return 0;
+}
 
-अटल व्योम __net_निकास hashlimit_proc_net_निकास(काष्ठा net *net)
-अणु
-	काष्ठा xt_hashlimit_htable *hinfo;
-	काष्ठा hashlimit_net *hashlimit_net = hashlimit_pernet(net);
+static void __net_exit hashlimit_proc_net_exit(struct net *net)
+{
+	struct xt_hashlimit_htable *hinfo;
+	struct hashlimit_net *hashlimit_net = hashlimit_pernet(net);
 
-	/* hashlimit_net_निकास() is called beक्रमe hashlimit_mt_destroy().
+	/* hashlimit_net_exit() is called before hashlimit_mt_destroy().
 	 * Make sure that the parent ipt_hashlimit and ip6t_hashlimit proc
-	 * entries is empty beक्रमe trying to हटाओ it.
+	 * entries is empty before trying to remove it.
 	 */
 	mutex_lock(&hashlimit_mutex);
-	hlist_क्रम_each_entry(hinfo, &hashlimit_net->htables, node)
-		htable_हटाओ_proc_entry(hinfo);
-	hashlimit_net->ipt_hashlimit = शून्य;
-	hashlimit_net->ip6t_hashlimit = शून्य;
+	hlist_for_each_entry(hinfo, &hashlimit_net->htables, node)
+		htable_remove_proc_entry(hinfo);
+	hashlimit_net->ipt_hashlimit = NULL;
+	hashlimit_net->ip6t_hashlimit = NULL;
 	mutex_unlock(&hashlimit_mutex);
 
-	हटाओ_proc_entry("ipt_hashlimit", net->proc_net);
-#अगर IS_ENABLED(CONFIG_IP6_NF_IPTABLES)
-	हटाओ_proc_entry("ip6t_hashlimit", net->proc_net);
-#पूर्ण_अगर
-पूर्ण
+	remove_proc_entry("ipt_hashlimit", net->proc_net);
+#if IS_ENABLED(CONFIG_IP6_NF_IPTABLES)
+	remove_proc_entry("ip6t_hashlimit", net->proc_net);
+#endif
+}
 
-अटल पूर्णांक __net_init hashlimit_net_init(काष्ठा net *net)
-अणु
-	काष्ठा hashlimit_net *hashlimit_net = hashlimit_pernet(net);
+static int __net_init hashlimit_net_init(struct net *net)
+{
+	struct hashlimit_net *hashlimit_net = hashlimit_pernet(net);
 
 	INIT_HLIST_HEAD(&hashlimit_net->htables);
-	वापस hashlimit_proc_net_init(net);
-पूर्ण
+	return hashlimit_proc_net_init(net);
+}
 
-अटल व्योम __net_निकास hashlimit_net_निकास(काष्ठा net *net)
-अणु
-	hashlimit_proc_net_निकास(net);
-पूर्ण
+static void __net_exit hashlimit_net_exit(struct net *net)
+{
+	hashlimit_proc_net_exit(net);
+}
 
-अटल काष्ठा pernet_operations hashlimit_net_ops = अणु
+static struct pernet_operations hashlimit_net_ops = {
 	.init	= hashlimit_net_init,
-	.निकास	= hashlimit_net_निकास,
+	.exit	= hashlimit_net_exit,
 	.id	= &hashlimit_net_id,
-	.size	= माप(काष्ठा hashlimit_net),
-पूर्ण;
+	.size	= sizeof(struct hashlimit_net),
+};
 
-अटल पूर्णांक __init hashlimit_mt_init(व्योम)
-अणु
-	पूर्णांक err;
+static int __init hashlimit_mt_init(void)
+{
+	int err;
 
-	err = रेजिस्टर_pernet_subsys(&hashlimit_net_ops);
-	अगर (err < 0)
-		वापस err;
-	err = xt_रेजिस्टर_matches(hashlimit_mt_reg,
+	err = register_pernet_subsys(&hashlimit_net_ops);
+	if (err < 0)
+		return err;
+	err = xt_register_matches(hashlimit_mt_reg,
 	      ARRAY_SIZE(hashlimit_mt_reg));
-	अगर (err < 0)
-		जाओ err1;
+	if (err < 0)
+		goto err1;
 
 	err = -ENOMEM;
 	hashlimit_cachep = kmem_cache_create("xt_hashlimit",
-					    माप(काष्ठा dsthash_ent), 0, 0,
-					    शून्य);
-	अगर (!hashlimit_cachep) अणु
+					    sizeof(struct dsthash_ent), 0, 0,
+					    NULL);
+	if (!hashlimit_cachep) {
 		pr_warn("unable to create slab cache\n");
-		जाओ err2;
-	पूर्ण
-	वापस 0;
+		goto err2;
+	}
+	return 0;
 
 err2:
-	xt_unरेजिस्टर_matches(hashlimit_mt_reg, ARRAY_SIZE(hashlimit_mt_reg));
+	xt_unregister_matches(hashlimit_mt_reg, ARRAY_SIZE(hashlimit_mt_reg));
 err1:
-	unरेजिस्टर_pernet_subsys(&hashlimit_net_ops);
-	वापस err;
+	unregister_pernet_subsys(&hashlimit_net_ops);
+	return err;
 
-पूर्ण
+}
 
-अटल व्योम __निकास hashlimit_mt_निकास(व्योम)
-अणु
-	xt_unरेजिस्टर_matches(hashlimit_mt_reg, ARRAY_SIZE(hashlimit_mt_reg));
-	unरेजिस्टर_pernet_subsys(&hashlimit_net_ops);
+static void __exit hashlimit_mt_exit(void)
+{
+	xt_unregister_matches(hashlimit_mt_reg, ARRAY_SIZE(hashlimit_mt_reg));
+	unregister_pernet_subsys(&hashlimit_net_ops);
 
 	rcu_barrier();
 	kmem_cache_destroy(hashlimit_cachep);
-पूर्ण
+}
 
 module_init(hashlimit_mt_init);
-module_निकास(hashlimit_mt_निकास);
+module_exit(hashlimit_mt_exit);

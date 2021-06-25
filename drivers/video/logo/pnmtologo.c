@@ -1,7 +1,6 @@
-<शैली गुरु>
 
 /*
- *  Convert a logo in ASCII PNM क्रमmat to C source suitable क्रम inclusion in
+ *  Convert a logo in ASCII PNM format to C source suitable for inclusion in
  *  the Linux kernel
  *
  *  (C) Copyright 2001-2003 by Geert Uytterhoeven <geert@linux-m68k.org>
@@ -9,427 +8,427 @@
  *  --------------------------------------------------------------------------
  *
  *  This file is subject to the terms and conditions of the GNU General Public
- *  License. See the file COPYING in the मुख्य directory of the Linux
- *  distribution क्रम more details.
+ *  License. See the file COPYING in the main directory of the Linux
+ *  distribution for more details.
  */
 
-#समावेश <प्रकार.स>
-#समावेश <त्रुटिसं.स>
-#समावेश <मानकतर्क.स>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <unistd.h>
+#include <ctype.h>
+#include <errno.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 
-अटल स्थिर अक्षर *programname;
-अटल स्थिर अक्षर *filename;
-अटल स्थिर अक्षर *logoname = "linux_logo";
-अटल स्थिर अक्षर *outputname;
-अटल खाता *out;
+static const char *programname;
+static const char *filename;
+static const char *logoname = "linux_logo";
+static const char *outputname;
+static FILE *out;
 
 
-#घोषणा LINUX_LOGO_MONO		1	/* monochrome black/white */
-#घोषणा LINUX_LOGO_VGA16	2	/* 16 colors VGA text palette */
-#घोषणा LINUX_LOGO_CLUT224	3	/* 224 colors */
-#घोषणा LINUX_LOGO_GRAY256	4	/* 256 levels grayscale */
+#define LINUX_LOGO_MONO		1	/* monochrome black/white */
+#define LINUX_LOGO_VGA16	2	/* 16 colors VGA text palette */
+#define LINUX_LOGO_CLUT224	3	/* 224 colors */
+#define LINUX_LOGO_GRAY256	4	/* 256 levels grayscale */
 
-अटल स्थिर अक्षर *logo_types[LINUX_LOGO_GRAY256+1] = अणु
+static const char *logo_types[LINUX_LOGO_GRAY256+1] = {
     [LINUX_LOGO_MONO] = "LINUX_LOGO_MONO",
     [LINUX_LOGO_VGA16] = "LINUX_LOGO_VGA16",
     [LINUX_LOGO_CLUT224] = "LINUX_LOGO_CLUT224",
     [LINUX_LOGO_GRAY256] = "LINUX_LOGO_GRAY256"
-पूर्ण;
+};
 
-#घोषणा MAX_LINUX_LOGO_COLORS	224
+#define MAX_LINUX_LOGO_COLORS	224
 
-काष्ठा color अणु
-    अचिन्हित अक्षर red;
-    अचिन्हित अक्षर green;
-    अचिन्हित अक्षर blue;
-पूर्ण;
+struct color {
+    unsigned char red;
+    unsigned char green;
+    unsigned char blue;
+};
 
-अटल स्थिर काष्ठा color clut_vga16[16] = अणु
-    अणु 0x00, 0x00, 0x00 पूर्ण,
-    अणु 0x00, 0x00, 0xaa पूर्ण,
-    अणु 0x00, 0xaa, 0x00 पूर्ण,
-    अणु 0x00, 0xaa, 0xaa पूर्ण,
-    अणु 0xaa, 0x00, 0x00 पूर्ण,
-    अणु 0xaa, 0x00, 0xaa पूर्ण,
-    अणु 0xaa, 0x55, 0x00 पूर्ण,
-    अणु 0xaa, 0xaa, 0xaa पूर्ण,
-    अणु 0x55, 0x55, 0x55 पूर्ण,
-    अणु 0x55, 0x55, 0xff पूर्ण,
-    अणु 0x55, 0xff, 0x55 पूर्ण,
-    अणु 0x55, 0xff, 0xff पूर्ण,
-    अणु 0xff, 0x55, 0x55 पूर्ण,
-    अणु 0xff, 0x55, 0xff पूर्ण,
-    अणु 0xff, 0xff, 0x55 पूर्ण,
-    अणु 0xff, 0xff, 0xff पूर्ण,
-पूर्ण;
-
-
-अटल पूर्णांक logo_type = LINUX_LOGO_CLUT224;
-अटल अचिन्हित पूर्णांक logo_width;
-अटल अचिन्हित पूर्णांक logo_height;
-अटल काष्ठा color **logo_data;
-अटल काष्ठा color logo_clut[MAX_LINUX_LOGO_COLORS];
-अटल अचिन्हित पूर्णांक logo_clutsize;
-अटल पूर्णांक is_plain_pbm = 0;
-
-अटल व्योम die(स्थिर अक्षर *fmt, ...)
-    __attribute__ ((noवापस)) __attribute ((क्रमmat (म_लिखो, 1, 2)));
-अटल व्योम usage(व्योम) __attribute ((noवापस));
+static const struct color clut_vga16[16] = {
+    { 0x00, 0x00, 0x00 },
+    { 0x00, 0x00, 0xaa },
+    { 0x00, 0xaa, 0x00 },
+    { 0x00, 0xaa, 0xaa },
+    { 0xaa, 0x00, 0x00 },
+    { 0xaa, 0x00, 0xaa },
+    { 0xaa, 0x55, 0x00 },
+    { 0xaa, 0xaa, 0xaa },
+    { 0x55, 0x55, 0x55 },
+    { 0x55, 0x55, 0xff },
+    { 0x55, 0xff, 0x55 },
+    { 0x55, 0xff, 0xff },
+    { 0xff, 0x55, 0x55 },
+    { 0xff, 0x55, 0xff },
+    { 0xff, 0xff, 0x55 },
+    { 0xff, 0xff, 0xff },
+};
 
 
-अटल अचिन्हित पूर्णांक get_number(खाता *fp)
-अणु
-    पूर्णांक c, val;
+static int logo_type = LINUX_LOGO_CLUT224;
+static unsigned int logo_width;
+static unsigned int logo_height;
+static struct color **logo_data;
+static struct color logo_clut[MAX_LINUX_LOGO_COLORS];
+static unsigned int logo_clutsize;
+static int is_plain_pbm = 0;
+
+static void die(const char *fmt, ...)
+    __attribute__ ((noreturn)) __attribute ((format (printf, 1, 2)));
+static void usage(void) __attribute ((noreturn));
+
+
+static unsigned int get_number(FILE *fp)
+{
+    int c, val;
 
     /* Skip leading whitespace */
-    करो अणु
-	c = ख_अक्षर_लो(fp);
-	अगर (c == खातापूर्ण)
+    do {
+	c = fgetc(fp);
+	if (c == EOF)
 	    die("%s: end of file\n", filename);
-	अगर (c == '#') अणु
+	if (c == '#') {
 	    /* Ignore comments 'till end of line */
-	    करो अणु
-		c = ख_अक्षर_लो(fp);
-		अगर (c == खातापूर्ण)
+	    do {
+		c = fgetc(fp);
+		if (c == EOF)
 		    die("%s: end of file\n", filename);
-	    पूर्ण जबतक (c != '\n');
-	पूर्ण
-    पूर्ण जबतक (है_खाली(c));
+	    } while (c != '\n');
+	}
+    } while (isspace(c));
 
     /* Parse decimal number */
     val = 0;
-    जबतक (है_अंक(c)) अणु
+    while (isdigit(c)) {
 	val = 10*val+c-'0';
-	/* some PBM are 'broken'; GiMP क्रम example exports a PBM without space
+	/* some PBM are 'broken'; GiMP for example exports a PBM without space
 	 * between the digits. This is Ok cause we know a PBM can only have a '1'
-	 * or a '0' क्रम the digit. */
-	अगर (is_plain_pbm)
-		अवरोध;
-	c = ख_अक्षर_लो(fp);
-	अगर (c == खातापूर्ण)
+	 * or a '0' for the digit. */
+	if (is_plain_pbm)
+		break;
+	c = fgetc(fp);
+	if (c == EOF)
 	    die("%s: end of file\n", filename);
-    पूर्ण
-    वापस val;
-पूर्ण
+    }
+    return val;
+}
 
-अटल अचिन्हित पूर्णांक get_number255(खाता *fp, अचिन्हित पूर्णांक maxval)
-अणु
-    अचिन्हित पूर्णांक val = get_number(fp);
-    वापस (255*val+maxval/2)/maxval;
-पूर्ण
+static unsigned int get_number255(FILE *fp, unsigned int maxval)
+{
+    unsigned int val = get_number(fp);
+    return (255*val+maxval/2)/maxval;
+}
 
-अटल व्योम पढ़ो_image(व्योम)
-अणु
-    खाता *fp;
-    अचिन्हित पूर्णांक i, j;
-    पूर्णांक magic;
-    अचिन्हित पूर्णांक maxval;
+static void read_image(void)
+{
+    FILE *fp;
+    unsigned int i, j;
+    int magic;
+    unsigned int maxval;
 
-    /* खोलो image file */
-    fp = ख_खोलो(filename, "r");
-    अगर (!fp)
-	die("Cannot open file %s: %s\n", filename, म_त्रुटि(त्रुटि_सं));
+    /* open image file */
+    fp = fopen(filename, "r");
+    if (!fp)
+	die("Cannot open file %s: %s\n", filename, strerror(errno));
 
-    /* check file type and पढ़ो file header */
-    magic = ख_अक्षर_लो(fp);
-    अगर (magic != 'P')
+    /* check file type and read file header */
+    magic = fgetc(fp);
+    if (magic != 'P')
 	die("%s is not a PNM file\n", filename);
-    magic = ख_अक्षर_लो(fp);
-    चयन (magic) अणु
-	हाल '1':
-	हाल '2':
-	हाल '3':
+    magic = fgetc(fp);
+    switch (magic) {
+	case '1':
+	case '2':
+	case '3':
 	    /* Plain PBM/PGM/PPM */
-	    अवरोध;
+	    break;
 
-	हाल '4':
-	हाल '5':
-	हाल '6':
+	case '4':
+	case '5':
+	case '6':
 	    /* Binary PBM/PGM/PPM */
 	    die("%s: Binary PNM is not supported\n"
 		"Use pnmnoraw(1) to convert it to ASCII PNM\n", filename);
 
-	शेष:
+	default:
 	    die("%s is not a PNM file\n", filename);
-    पूर्ण
+    }
     logo_width = get_number(fp);
     logo_height = get_number(fp);
 
     /* allocate image data */
-    logo_data = (काष्ठा color **)दो_स्मृति(logo_height*माप(काष्ठा color *));
-    अगर (!logo_data)
-	die("%s\n", म_त्रुटि(त्रुटि_सं));
-    क्रम (i = 0; i < logo_height; i++) अणु
-	logo_data[i] = दो_स्मृति(logo_width*माप(काष्ठा color));
-	अगर (!logo_data[i])
-	    die("%s\n", म_त्रुटि(त्रुटि_सं));
-    पूर्ण
+    logo_data = (struct color **)malloc(logo_height*sizeof(struct color *));
+    if (!logo_data)
+	die("%s\n", strerror(errno));
+    for (i = 0; i < logo_height; i++) {
+	logo_data[i] = malloc(logo_width*sizeof(struct color));
+	if (!logo_data[i])
+	    die("%s\n", strerror(errno));
+    }
 
-    /* पढ़ो image data */
-    चयन (magic) अणु
-	हाल '1':
+    /* read image data */
+    switch (magic) {
+	case '1':
 	    /* Plain PBM */
 	    is_plain_pbm = 1;
-	    क्रम (i = 0; i < logo_height; i++)
-		क्रम (j = 0; j < logo_width; j++)
+	    for (i = 0; i < logo_height; i++)
+		for (j = 0; j < logo_width; j++)
 		    logo_data[i][j].red = logo_data[i][j].green =
 			logo_data[i][j].blue = 255*(1-get_number(fp));
-	    अवरोध;
+	    break;
 
-	हाल '2':
+	case '2':
 	    /* Plain PGM */
 	    maxval = get_number(fp);
-	    क्रम (i = 0; i < logo_height; i++)
-		क्रम (j = 0; j < logo_width; j++)
+	    for (i = 0; i < logo_height; i++)
+		for (j = 0; j < logo_width; j++)
 		    logo_data[i][j].red = logo_data[i][j].green =
 			logo_data[i][j].blue = get_number255(fp, maxval);
-	    अवरोध;
+	    break;
 
-	हाल '3':
+	case '3':
 	    /* Plain PPM */
 	    maxval = get_number(fp);
-	    क्रम (i = 0; i < logo_height; i++)
-		क्रम (j = 0; j < logo_width; j++) अणु
+	    for (i = 0; i < logo_height; i++)
+		for (j = 0; j < logo_width; j++) {
 		    logo_data[i][j].red = get_number255(fp, maxval);
 		    logo_data[i][j].green = get_number255(fp, maxval);
 		    logo_data[i][j].blue = get_number255(fp, maxval);
-		पूर्ण
-	    अवरोध;
-    पूर्ण
+		}
+	    break;
+    }
 
-    /* बंद file */
-    ख_बंद(fp);
-पूर्ण
+    /* close file */
+    fclose(fp);
+}
 
-अटल अंतरभूत पूर्णांक is_black(काष्ठा color c)
-अणु
-    वापस c.red == 0 && c.green == 0 && c.blue == 0;
-पूर्ण
+static inline int is_black(struct color c)
+{
+    return c.red == 0 && c.green == 0 && c.blue == 0;
+}
 
-अटल अंतरभूत पूर्णांक is_white(काष्ठा color c)
-अणु
-    वापस c.red == 255 && c.green == 255 && c.blue == 255;
-पूर्ण
+static inline int is_white(struct color c)
+{
+    return c.red == 255 && c.green == 255 && c.blue == 255;
+}
 
-अटल अंतरभूत पूर्णांक is_gray(काष्ठा color c)
-अणु
-    वापस c.red == c.green && c.red == c.blue;
-पूर्ण
+static inline int is_gray(struct color c)
+{
+    return c.red == c.green && c.red == c.blue;
+}
 
-अटल अंतरभूत पूर्णांक is_equal(काष्ठा color c1, काष्ठा color c2)
-अणु
-    वापस c1.red == c2.red && c1.green == c2.green && c1.blue == c2.blue;
-पूर्ण
+static inline int is_equal(struct color c1, struct color c2)
+{
+    return c1.red == c2.red && c1.green == c2.green && c1.blue == c2.blue;
+}
 
-अटल व्योम ग_लिखो_header(व्योम)
-अणु
-    /* खोलो logo file */
-    अगर (outputname) अणु
-	out = ख_खोलो(outputname, "w");
-	अगर (!out)
-	    die("Cannot create file %s: %s\n", outputname, म_त्रुटि(त्रुटि_सं));
-    पूर्ण अन्यथा अणु
-	out = मानक_निकास;
-    पूर्ण
+static void write_header(void)
+{
+    /* open logo file */
+    if (outputname) {
+	out = fopen(outputname, "w");
+	if (!out)
+	    die("Cannot create file %s: %s\n", outputname, strerror(errno));
+    } else {
+	out = stdout;
+    }
 
-    ख_माला_दो("/*\n", out);
-    ख_माला_दो(" *  DO NOT EDIT THIS FILE!\n", out);
-    ख_माला_दो(" *\n", out);
-    ख_लिखो(out, " *  It was automatically generated from %s\n", filename);
-    ख_माला_दो(" *\n", out);
-    ख_लिखो(out, " *  Linux logo %s\n", logoname);
-    ख_माला_दो(" */\n\n", out);
-    ख_माला_दो("#include <linux/linux_logo.h>\n\n", out);
-    ख_लिखो(out, "static unsigned char %s_data[] __initdata = {\n",
+    fputs("/*\n", out);
+    fputs(" *  DO NOT EDIT THIS FILE!\n", out);
+    fputs(" *\n", out);
+    fprintf(out, " *  It was automatically generated from %s\n", filename);
+    fputs(" *\n", out);
+    fprintf(out, " *  Linux logo %s\n", logoname);
+    fputs(" */\n\n", out);
+    fputs("#include <linux/linux_logo.h>\n\n", out);
+    fprintf(out, "static unsigned char %s_data[] __initdata = {\n",
 	    logoname);
-पूर्ण
+}
 
-अटल व्योम ग_लिखो_footer(व्योम)
-अणु
-    ख_माला_दो("\n};\n\n", out);
-    ख_लिखो(out, "const struct linux_logo %s __initconst = {\n", logoname);
-    ख_लिखो(out, "\t.type\t\t= %s,\n", logo_types[logo_type]);
-    ख_लिखो(out, "\t.width\t\t= %d,\n", logo_width);
-    ख_लिखो(out, "\t.height\t\t= %d,\n", logo_height);
-    अगर (logo_type == LINUX_LOGO_CLUT224) अणु
-	ख_लिखो(out, "\t.clutsize\t= %d,\n", logo_clutsize);
-	ख_लिखो(out, "\t.clut\t\t= %s_clut,\n", logoname);
-    पूर्ण
-    ख_लिखो(out, "\t.data\t\t= %s_data\n", logoname);
-    ख_माला_दो("};\n\n", out);
+static void write_footer(void)
+{
+    fputs("\n};\n\n", out);
+    fprintf(out, "const struct linux_logo %s __initconst = {\n", logoname);
+    fprintf(out, "\t.type\t\t= %s,\n", logo_types[logo_type]);
+    fprintf(out, "\t.width\t\t= %d,\n", logo_width);
+    fprintf(out, "\t.height\t\t= %d,\n", logo_height);
+    if (logo_type == LINUX_LOGO_CLUT224) {
+	fprintf(out, "\t.clutsize\t= %d,\n", logo_clutsize);
+	fprintf(out, "\t.clut\t\t= %s_clut,\n", logoname);
+    }
+    fprintf(out, "\t.data\t\t= %s_data\n", logoname);
+    fputs("};\n\n", out);
 
-    /* बंद logo file */
-    अगर (outputname)
-	ख_बंद(out);
-पूर्ण
+    /* close logo file */
+    if (outputname)
+	fclose(out);
+}
 
-अटल पूर्णांक ग_लिखो_hex_cnt;
+static int write_hex_cnt;
 
-अटल व्योम ग_लिखो_hex(अचिन्हित अक्षर byte)
-अणु
-    अगर (ग_लिखो_hex_cnt % 12)
-	ख_लिखो(out, ", 0x%02x", byte);
-    अन्यथा अगर (ग_लिखो_hex_cnt)
-	ख_लिखो(out, ",\n\t0x%02x", byte);
-    अन्यथा
-	ख_लिखो(out, "\t0x%02x", byte);
-    ग_लिखो_hex_cnt++;
-पूर्ण
+static void write_hex(unsigned char byte)
+{
+    if (write_hex_cnt % 12)
+	fprintf(out, ", 0x%02x", byte);
+    else if (write_hex_cnt)
+	fprintf(out, ",\n\t0x%02x", byte);
+    else
+	fprintf(out, "\t0x%02x", byte);
+    write_hex_cnt++;
+}
 
-अटल व्योम ग_लिखो_logo_mono(व्योम)
-अणु
-    अचिन्हित पूर्णांक i, j;
-    अचिन्हित अक्षर val, bit;
+static void write_logo_mono(void)
+{
+    unsigned int i, j;
+    unsigned char val, bit;
 
     /* validate image */
-    क्रम (i = 0; i < logo_height; i++)
-	क्रम (j = 0; j < logo_width; j++)
-	    अगर (!is_black(logo_data[i][j]) && !is_white(logo_data[i][j]))
+    for (i = 0; i < logo_height; i++)
+	for (j = 0; j < logo_width; j++)
+	    if (!is_black(logo_data[i][j]) && !is_white(logo_data[i][j]))
 		die("Image must be monochrome\n");
 
-    /* ग_लिखो file header */
-    ग_लिखो_header();
+    /* write file header */
+    write_header();
 
-    /* ग_लिखो logo data */
-    क्रम (i = 0; i < logo_height; i++) अणु
-	क्रम (j = 0; j < logo_width;) अणु
-	    क्रम (val = 0, bit = 0x80; bit && j < logo_width; j++, bit >>= 1)
-		अगर (logo_data[i][j].red)
+    /* write logo data */
+    for (i = 0; i < logo_height; i++) {
+	for (j = 0; j < logo_width;) {
+	    for (val = 0, bit = 0x80; bit && j < logo_width; j++, bit >>= 1)
+		if (logo_data[i][j].red)
 		    val |= bit;
-	    ग_लिखो_hex(val);
-	पूर्ण
-    पूर्ण
+	    write_hex(val);
+	}
+    }
 
-    /* ग_लिखो logo काष्ठाure and file footer */
-    ग_लिखो_footer();
-पूर्ण
+    /* write logo structure and file footer */
+    write_footer();
+}
 
-अटल व्योम ग_लिखो_logo_vga16(व्योम)
-अणु
-    अचिन्हित पूर्णांक i, j, k;
-    अचिन्हित अक्षर val;
+static void write_logo_vga16(void)
+{
+    unsigned int i, j, k;
+    unsigned char val;
 
     /* validate image */
-    क्रम (i = 0; i < logo_height; i++)
-	क्रम (j = 0; j < logo_width; j++) अणु
-	    क्रम (k = 0; k < 16; k++)
-		अगर (is_equal(logo_data[i][j], clut_vga16[k]))
-		    अवरोध;
-	    अगर (k == 16)
+    for (i = 0; i < logo_height; i++)
+	for (j = 0; j < logo_width; j++) {
+	    for (k = 0; k < 16; k++)
+		if (is_equal(logo_data[i][j], clut_vga16[k]))
+		    break;
+	    if (k == 16)
 		die("Image must use the 16 console colors only\n"
 		    "Use ppmquant(1) -map clut_vga16.ppm to reduce the number "
 		    "of colors\n");
-	पूर्ण
+	}
 
-    /* ग_लिखो file header */
-    ग_लिखो_header();
+    /* write file header */
+    write_header();
 
-    /* ग_लिखो logo data */
-    क्रम (i = 0; i < logo_height; i++)
-	क्रम (j = 0; j < logo_width; j++) अणु
-	    क्रम (k = 0; k < 16; k++)
-		अगर (is_equal(logo_data[i][j], clut_vga16[k]))
-		    अवरोध;
+    /* write logo data */
+    for (i = 0; i < logo_height; i++)
+	for (j = 0; j < logo_width; j++) {
+	    for (k = 0; k < 16; k++)
+		if (is_equal(logo_data[i][j], clut_vga16[k]))
+		    break;
 	    val = k<<4;
-	    अगर (++j < logo_width) अणु
-		क्रम (k = 0; k < 16; k++)
-		    अगर (is_equal(logo_data[i][j], clut_vga16[k]))
-			अवरोध;
+	    if (++j < logo_width) {
+		for (k = 0; k < 16; k++)
+		    if (is_equal(logo_data[i][j], clut_vga16[k]))
+			break;
 		val |= k;
-	    पूर्ण
-	    ग_लिखो_hex(val);
-	पूर्ण
+	    }
+	    write_hex(val);
+	}
 
-    /* ग_लिखो logo काष्ठाure and file footer */
-    ग_लिखो_footer();
-पूर्ण
+    /* write logo structure and file footer */
+    write_footer();
+}
 
-अटल व्योम ग_लिखो_logo_clut224(व्योम)
-अणु
-    अचिन्हित पूर्णांक i, j, k;
+static void write_logo_clut224(void)
+{
+    unsigned int i, j, k;
 
     /* validate image */
-    क्रम (i = 0; i < logo_height; i++)
-	क्रम (j = 0; j < logo_width; j++) अणु
-	    क्रम (k = 0; k < logo_clutsize; k++)
-		अगर (is_equal(logo_data[i][j], logo_clut[k]))
-		    अवरोध;
-	    अगर (k == logo_clutsize) अणु
-		अगर (logo_clutsize == MAX_LINUX_LOGO_COLORS)
+    for (i = 0; i < logo_height; i++)
+	for (j = 0; j < logo_width; j++) {
+	    for (k = 0; k < logo_clutsize; k++)
+		if (is_equal(logo_data[i][j], logo_clut[k]))
+		    break;
+	    if (k == logo_clutsize) {
+		if (logo_clutsize == MAX_LINUX_LOGO_COLORS)
 		    die("Image has more than %d colors\n"
 			"Use ppmquant(1) to reduce the number of colors\n",
 			MAX_LINUX_LOGO_COLORS);
 		logo_clut[logo_clutsize++] = logo_data[i][j];
-	    पूर्ण
-	पूर्ण
+	    }
+	}
 
-    /* ग_लिखो file header */
-    ग_लिखो_header();
+    /* write file header */
+    write_header();
 
-    /* ग_लिखो logo data */
-    क्रम (i = 0; i < logo_height; i++)
-	क्रम (j = 0; j < logo_width; j++) अणु
-	    क्रम (k = 0; k < logo_clutsize; k++)
-		अगर (is_equal(logo_data[i][j], logo_clut[k]))
-		    अवरोध;
-	    ग_लिखो_hex(k+32);
-	पूर्ण
-    ख_माला_दो("\n};\n\n", out);
+    /* write logo data */
+    for (i = 0; i < logo_height; i++)
+	for (j = 0; j < logo_width; j++) {
+	    for (k = 0; k < logo_clutsize; k++)
+		if (is_equal(logo_data[i][j], logo_clut[k]))
+		    break;
+	    write_hex(k+32);
+	}
+    fputs("\n};\n\n", out);
 
-    /* ग_लिखो logo clut */
-    ख_लिखो(out, "static unsigned char %s_clut[] __initdata = {\n",
+    /* write logo clut */
+    fprintf(out, "static unsigned char %s_clut[] __initdata = {\n",
 	    logoname);
-    ग_लिखो_hex_cnt = 0;
-    क्रम (i = 0; i < logo_clutsize; i++) अणु
-	ग_लिखो_hex(logo_clut[i].red);
-	ग_लिखो_hex(logo_clut[i].green);
-	ग_लिखो_hex(logo_clut[i].blue);
-    पूर्ण
+    write_hex_cnt = 0;
+    for (i = 0; i < logo_clutsize; i++) {
+	write_hex(logo_clut[i].red);
+	write_hex(logo_clut[i].green);
+	write_hex(logo_clut[i].blue);
+    }
 
-    /* ग_लिखो logo काष्ठाure and file footer */
-    ग_लिखो_footer();
-पूर्ण
+    /* write logo structure and file footer */
+    write_footer();
+}
 
-अटल व्योम ग_लिखो_logo_gray256(व्योम)
-अणु
-    अचिन्हित पूर्णांक i, j;
+static void write_logo_gray256(void)
+{
+    unsigned int i, j;
 
     /* validate image */
-    क्रम (i = 0; i < logo_height; i++)
-	क्रम (j = 0; j < logo_width; j++)
-	    अगर (!is_gray(logo_data[i][j]))
+    for (i = 0; i < logo_height; i++)
+	for (j = 0; j < logo_width; j++)
+	    if (!is_gray(logo_data[i][j]))
 		die("Image must be grayscale\n");
 
-    /* ग_लिखो file header */
-    ग_लिखो_header();
+    /* write file header */
+    write_header();
 
-    /* ग_लिखो logo data */
-    क्रम (i = 0; i < logo_height; i++)
-	क्रम (j = 0; j < logo_width; j++)
-	    ग_लिखो_hex(logo_data[i][j].red);
+    /* write logo data */
+    for (i = 0; i < logo_height; i++)
+	for (j = 0; j < logo_width; j++)
+	    write_hex(logo_data[i][j].red);
 
-    /* ग_लिखो logo काष्ठाure and file footer */
-    ग_लिखो_footer();
-पूर्ण
+    /* write logo structure and file footer */
+    write_footer();
+}
 
-अटल व्योम die(स्थिर अक्षर *fmt, ...)
-अणु
-    बहु_सूची ap;
+static void die(const char *fmt, ...)
+{
+    va_list ap;
 
-    बहु_शुरू(ap, fmt);
-    भख_लिखो(मानक_त्रुटि, fmt, ap);
-    बहु_पूर्ण(ap);
+    va_start(ap, fmt);
+    vfprintf(stderr, fmt, ap);
+    va_end(ap);
 
-    निकास(1);
-पूर्ण
+    exit(1);
+}
 
-अटल व्योम usage(व्योम)
-अणु
+static void usage(void)
+{
     die("\n"
 	"Usage: %s [options] <filename>\n"
 	"\n"
@@ -443,73 +442,73 @@
 	"                      clut224 : 224 colors (default)\n"
 	"                      gray256 : 256 levels grayscale\n"
 	"\n", programname);
-पूर्ण
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
-अणु
-    पूर्णांक opt;
+int main(int argc, char *argv[])
+{
+    int opt;
 
     programname = argv[0];
 
     opterr = 0;
-    जबतक (1) अणु
+    while (1) {
 	opt = getopt(argc, argv, "hn:o:t:");
-	अगर (opt == -1)
-	    अवरोध;
+	if (opt == -1)
+	    break;
 
-	चयन (opt) अणु
-	    हाल 'h':
+	switch (opt) {
+	    case 'h':
 		usage();
-		अवरोध;
+		break;
 
-	    हाल 'n':
+	    case 'n':
 		logoname = optarg;
-		अवरोध;
+		break;
 
-	    हाल 'o':
+	    case 'o':
 		outputname = optarg;
-		अवरोध;
+		break;
 
-	    हाल 't':
-		अगर (!म_भेद(optarg, "mono"))
+	    case 't':
+		if (!strcmp(optarg, "mono"))
 		    logo_type = LINUX_LOGO_MONO;
-		अन्यथा अगर (!म_भेद(optarg, "vga16"))
+		else if (!strcmp(optarg, "vga16"))
 		    logo_type = LINUX_LOGO_VGA16;
-		अन्यथा अगर (!म_भेद(optarg, "clut224"))
+		else if (!strcmp(optarg, "clut224"))
 		    logo_type = LINUX_LOGO_CLUT224;
-		अन्यथा अगर (!म_भेद(optarg, "gray256"))
+		else if (!strcmp(optarg, "gray256"))
 		    logo_type = LINUX_LOGO_GRAY256;
-		अन्यथा
+		else
 		    usage();
-		अवरोध;
+		break;
 
-	    शेष:
+	    default:
 		usage();
-		अवरोध;
-	पूर्ण
-    पूर्ण
-    अगर (optind != argc-1)
+		break;
+	}
+    }
+    if (optind != argc-1)
 	usage();
 
     filename = argv[optind];
 
-    पढ़ो_image();
-    चयन (logo_type) अणु
-	हाल LINUX_LOGO_MONO:
-	    ग_लिखो_logo_mono();
-	    अवरोध;
+    read_image();
+    switch (logo_type) {
+	case LINUX_LOGO_MONO:
+	    write_logo_mono();
+	    break;
 
-	हाल LINUX_LOGO_VGA16:
-	    ग_लिखो_logo_vga16();
-	    अवरोध;
+	case LINUX_LOGO_VGA16:
+	    write_logo_vga16();
+	    break;
 
-	हाल LINUX_LOGO_CLUT224:
-	    ग_लिखो_logo_clut224();
-	    अवरोध;
+	case LINUX_LOGO_CLUT224:
+	    write_logo_clut224();
+	    break;
 
-	हाल LINUX_LOGO_GRAY256:
-	    ग_लिखो_logo_gray256();
-	    अवरोध;
-    पूर्ण
-    निकास(0);
-पूर्ण
+	case LINUX_LOGO_GRAY256:
+	    write_logo_gray256();
+	    break;
+    }
+    exit(0);
+}

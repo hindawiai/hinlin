@@ -1,24 +1,23 @@
-<शैली गुरु>
 /*
  * This file is provided under a dual BSD/GPLv2 license.  When using or
- * redistributing this file, you may करो so under either license.
+ * redistributing this file, you may do so under either license.
  *
  * GPL LICENSE SUMMARY
  *
  * Copyright(c) 2008 - 2011 Intel Corporation. All rights reserved.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy
+ * This program is free software; you can redistribute it and/or modify
  * it under the terms of version 2 of the GNU General Public License as
  * published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License क्रम more details.
+ * General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * aदीर्घ with this program; अगर not, ग_लिखो to the Free Software
- * Foundation, Inc., 51 Franklin St - Fअगरth Floor, Boston, MA 02110-1301 USA.
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St - Fifth Floor, Boston, MA 02110-1301 USA.
  * The full GNU General Public License is included in this distribution
  * in the file called LICENSE.GPL.
  *
@@ -27,25 +26,25 @@
  * Copyright(c) 2008 - 2011 Intel Corporation. All rights reserved.
  * All rights reserved.
  *
- * Redistribution and use in source and binary क्रमms, with or without
- * modअगरication, are permitted provided that the following conditions
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
  * are met:
  *
  *   * Redistributions of source code must retain the above copyright
  *     notice, this list of conditions and the following disclaimer.
- *   * Redistributions in binary क्रमm must reproduce the above copyright
+ *   * Redistributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in
- *     the करोcumentation and/or other materials provided with the
+ *     the documentation and/or other materials provided with the
  *     distribution.
  *   * Neither the name of Intel Corporation nor the names of its
- *     contributors may be used to enकरोrse or promote products derived
- *     from this software without specअगरic prior written permission.
+ *     contributors may be used to endorse or promote products derived
+ *     from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL,
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
  * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -54,34 +53,34 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#समावेश <linux/completion.h>
-#समावेश <linux/irqflags.h>
-#समावेश "sas.h"
-#समावेश <scsi/libsas.h>
-#समावेश "remote_device.h"
-#समावेश "remote_node_context.h"
-#समावेश "isci.h"
-#समावेश "request.h"
-#समावेश "task.h"
-#समावेश "host.h"
+#include <linux/completion.h>
+#include <linux/irqflags.h>
+#include "sas.h"
+#include <scsi/libsas.h>
+#include "remote_device.h"
+#include "remote_node_context.h"
+#include "isci.h"
+#include "request.h"
+#include "task.h"
+#include "host.h"
 
 /**
 * isci_task_refuse() - complete the request to the upper layer driver in
-*     the हाल where an I/O needs to be completed back in the submit path.
+*     the case where an I/O needs to be completed back in the submit path.
 * @ihost: host on which the the request was queued
 * @task: request to complete
-* @response: response code क्रम the completed task.
-* @status: status code क्रम the completed task.
+* @response: response code for the completed task.
+* @status: status code for the completed task.
 *
 */
-अटल व्योम isci_task_refuse(काष्ठा isci_host *ihost, काष्ठा sas_task *task,
-			     क्रमागत service_response response,
-			     क्रमागत exec_status status)
+static void isci_task_refuse(struct isci_host *ihost, struct sas_task *task,
+			     enum service_response response,
+			     enum exec_status status)
 
-अणु
-	अचिन्हित दीर्घ flags;
+{
+	unsigned long flags;
 
-	/* Normal notअगरication (task_करोne) */
+	/* Normal notification (task_done) */
 	dev_dbg(&ihost->pdev->dev, "%s: task = %p, response=%d, status=%d\n",
 		__func__, task, response, status);
 
@@ -90,50 +89,50 @@
 	task->task_status.resp = response;
 	task->task_status.stat = status;
 
-	/* Normal notअगरication (task_करोne) */
+	/* Normal notification (task_done) */
 	task->task_state_flags |= SAS_TASK_STATE_DONE;
 	task->task_state_flags &= ~(SAS_TASK_AT_INITIATOR |
 				    SAS_TASK_STATE_PENDING);
-	task->lldd_task = शून्य;
+	task->lldd_task = NULL;
 	spin_unlock_irqrestore(&task->task_state_lock, flags);
 
-	task->task_करोne(task);
-पूर्ण
+	task->task_done(task);
+}
 
-#घोषणा क्रम_each_sas_task(num, task) \
-	क्रम (; num > 0; num--,\
-	     task = list_entry(task->list.next, काष्ठा sas_task, list))
+#define for_each_sas_task(num, task) \
+	for (; num > 0; num--,\
+	     task = list_entry(task->list.next, struct sas_task, list))
 
 
-अटल अंतरभूत पूर्णांक isci_device_io_पढ़ोy(काष्ठा isci_remote_device *idev,
-				       काष्ठा sas_task *task)
-अणु
-	वापस idev ? test_bit(IDEV_IO_READY, &idev->flags) ||
+static inline int isci_device_io_ready(struct isci_remote_device *idev,
+				       struct sas_task *task)
+{
+	return idev ? test_bit(IDEV_IO_READY, &idev->flags) ||
 		      (test_bit(IDEV_IO_NCQERROR, &idev->flags) &&
 		       isci_task_is_ncq_recovery(task))
 		    : 0;
-पूर्ण
+}
 /**
- * isci_task_execute_task() - This function is one of the SAS Doमुख्य Template
- *    functions. This function is called by libsas to send a task करोwn to
+ * isci_task_execute_task() - This function is one of the SAS Domain Template
+ *    functions. This function is called by libsas to send a task down to
  *    hardware.
- * @task: This parameter specअगरies the SAS task to send.
- * @gfp_flags: This parameter specअगरies the context of this call.
+ * @task: This parameter specifies the SAS task to send.
+ * @gfp_flags: This parameter specifies the context of this call.
  *
  * status, zero indicates success.
  */
-पूर्णांक isci_task_execute_task(काष्ठा sas_task *task, gfp_t gfp_flags)
-अणु
-	काष्ठा isci_host *ihost = dev_to_ihost(task->dev);
-	काष्ठा isci_remote_device *idev;
-	अचिन्हित दीर्घ flags;
-	क्रमागत sci_status status = SCI_FAILURE;
-	bool io_पढ़ोy;
+int isci_task_execute_task(struct sas_task *task, gfp_t gfp_flags)
+{
+	struct isci_host *ihost = dev_to_ihost(task->dev);
+	struct isci_remote_device *idev;
+	unsigned long flags;
+	enum sci_status status = SCI_FAILURE;
+	bool io_ready;
 	u16 tag;
 
 	spin_lock_irqsave(&ihost->scic_lock, flags);
 	idev = isci_lookup_device(task->dev);
-	io_पढ़ोy = isci_device_io_पढ़ोy(idev, task);
+	io_ready = isci_device_io_ready(idev, task);
 	tag = isci_alloc_tag(ihost);
 	spin_unlock_irqrestore(&ihost->scic_lock, flags);
 
@@ -142,280 +141,280 @@
 		task, task->dev, idev, idev ? idev->flags : 0,
 		task->uldd_task);
 
-	अगर (!idev) अणु
+	if (!idev) {
 		isci_task_refuse(ihost, task, SAS_TASK_UNDELIVERED,
 				 SAS_DEVICE_UNKNOWN);
-	पूर्ण अन्यथा अगर (!io_पढ़ोy || tag == SCI_CONTROLLER_INVALID_IO_TAG) अणु
+	} else if (!io_ready || tag == SCI_CONTROLLER_INVALID_IO_TAG) {
 		/* Indicate QUEUE_FULL so that the scsi midlayer
 		 * retries.
 		  */
 		isci_task_refuse(ihost, task, SAS_TASK_COMPLETE,
 				 SAS_QUEUE_FULL);
-	पूर्ण अन्यथा अणु
-		/* There is a device and it's पढ़ोy क्रम I/O. */
+	} else {
+		/* There is a device and it's ready for I/O. */
 		spin_lock_irqsave(&task->task_state_lock, flags);
 
-		अगर (task->task_state_flags & SAS_TASK_STATE_ABORTED) अणु
-			/* The I/O was पातed. */
+		if (task->task_state_flags & SAS_TASK_STATE_ABORTED) {
+			/* The I/O was aborted. */
 			spin_unlock_irqrestore(&task->task_state_lock, flags);
 
 			isci_task_refuse(ihost, task,
 					 SAS_TASK_UNDELIVERED,
 					 SAM_STAT_TASK_ABORTED);
-		पूर्ण अन्यथा अणु
+		} else {
 			task->task_state_flags |= SAS_TASK_AT_INITIATOR;
 			spin_unlock_irqrestore(&task->task_state_lock, flags);
 
 			/* build and send the request. */
 			status = isci_request_execute(ihost, idev, task, tag);
 
-			अगर (status != SCI_SUCCESS) अणु
+			if (status != SCI_SUCCESS) {
 				spin_lock_irqsave(&task->task_state_lock, flags);
 				/* Did not really start this command. */
 				task->task_state_flags &= ~SAS_TASK_AT_INITIATOR;
 				spin_unlock_irqrestore(&task->task_state_lock, flags);
 
-				अगर (test_bit(IDEV_GONE, &idev->flags)) अणु
+				if (test_bit(IDEV_GONE, &idev->flags)) {
 					/* Indicate that the device
 					 * is gone.
 					 */
 					isci_task_refuse(ihost, task,
 						SAS_TASK_UNDELIVERED,
 						SAS_DEVICE_UNKNOWN);
-				पूर्ण अन्यथा अणु
+				} else {
 					/* Indicate QUEUE_FULL so that
 					 * the scsi midlayer retries.
-					 * If the request failed क्रम
+					 * If the request failed for
 					 * remote device reasons, it
-					 * माला_लो वापसed as
+					 * gets returned as
 					 * SAS_TASK_UNDELIVERED next
-					 * समय through.
+					 * time through.
 					 */
 					isci_task_refuse(ihost, task,
 						SAS_TASK_COMPLETE,
 						SAS_QUEUE_FULL);
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				}
+			}
+		}
+	}
 
-	अगर (status != SCI_SUCCESS && tag != SCI_CONTROLLER_INVALID_IO_TAG) अणु
+	if (status != SCI_SUCCESS && tag != SCI_CONTROLLER_INVALID_IO_TAG) {
 		spin_lock_irqsave(&ihost->scic_lock, flags);
-		/* command never hit the device, so just मुक्त
+		/* command never hit the device, so just free
 		 * the tci and skip the sequence increment
 		 */
-		isci_tci_मुक्त(ihost, ISCI_TAG_TCI(tag));
+		isci_tci_free(ihost, ISCI_TAG_TCI(tag));
 		spin_unlock_irqrestore(&ihost->scic_lock, flags);
-	पूर्ण
+	}
 
 	isci_put_device(idev);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा isci_request *isci_task_request_build(काष्ठा isci_host *ihost,
-						    काष्ठा isci_remote_device *idev,
-						    u16 tag, काष्ठा isci_पंचांगf *isci_पंचांगf)
-अणु
-	क्रमागत sci_status status = SCI_FAILURE;
-	काष्ठा isci_request *ireq = शून्य;
-	काष्ठा करोमुख्य_device *dev;
+static struct isci_request *isci_task_request_build(struct isci_host *ihost,
+						    struct isci_remote_device *idev,
+						    u16 tag, struct isci_tmf *isci_tmf)
+{
+	enum sci_status status = SCI_FAILURE;
+	struct isci_request *ireq = NULL;
+	struct domain_device *dev;
 
 	dev_dbg(&ihost->pdev->dev,
-		"%s: isci_tmf = %p\n", __func__, isci_पंचांगf);
+		"%s: isci_tmf = %p\n", __func__, isci_tmf);
 
-	dev = idev->करोमुख्य_dev;
+	dev = idev->domain_dev;
 
-	/* करो common allocation and init of request object. */
-	ireq = isci_पंचांगf_request_from_tag(ihost, isci_पंचांगf, tag);
-	अगर (!ireq)
-		वापस शून्य;
+	/* do common allocation and init of request object. */
+	ireq = isci_tmf_request_from_tag(ihost, isci_tmf, tag);
+	if (!ireq)
+		return NULL;
 
-	/* let the core करो it's स्थिरruct. */
-	status = sci_task_request_स्थिरruct(ihost, idev, tag,
+	/* let the core do it's construct. */
+	status = sci_task_request_construct(ihost, idev, tag,
 					     ireq);
 
-	अगर (status != SCI_SUCCESS) अणु
+	if (status != SCI_SUCCESS) {
 		dev_warn(&ihost->pdev->dev,
 			 "%s: sci_task_request_construct failed - "
 			 "status = 0x%x\n",
 			 __func__,
 			 status);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	/* XXX convert to get this from task->tproto like other drivers */
-	अगर (dev->dev_type == SAS_END_DEVICE) अणु
-		isci_पंचांगf->proto = SAS_PROTOCOL_SSP;
-		status = sci_task_request_स्थिरruct_ssp(ireq);
-		अगर (status != SCI_SUCCESS)
-			वापस शून्य;
-	पूर्ण
+	if (dev->dev_type == SAS_END_DEVICE) {
+		isci_tmf->proto = SAS_PROTOCOL_SSP;
+		status = sci_task_request_construct_ssp(ireq);
+		if (status != SCI_SUCCESS)
+			return NULL;
+	}
 
-	वापस ireq;
-पूर्ण
+	return ireq;
+}
 
-अटल पूर्णांक isci_task_execute_पंचांगf(काष्ठा isci_host *ihost,
-				 काष्ठा isci_remote_device *idev,
-				 काष्ठा isci_पंचांगf *पंचांगf, अचिन्हित दीर्घ समयout_ms)
-अणु
+static int isci_task_execute_tmf(struct isci_host *ihost,
+				 struct isci_remote_device *idev,
+				 struct isci_tmf *tmf, unsigned long timeout_ms)
+{
 	DECLARE_COMPLETION_ONSTACK(completion);
-	क्रमागत sci_status status = SCI_FAILURE;
-	काष्ठा isci_request *ireq;
-	पूर्णांक ret = TMF_RESP_FUNC_FAILED;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित दीर्घ समयleft;
+	enum sci_status status = SCI_FAILURE;
+	struct isci_request *ireq;
+	int ret = TMF_RESP_FUNC_FAILED;
+	unsigned long flags;
+	unsigned long timeleft;
 	u16 tag;
 
 	spin_lock_irqsave(&ihost->scic_lock, flags);
 	tag = isci_alloc_tag(ihost);
 	spin_unlock_irqrestore(&ihost->scic_lock, flags);
 
-	अगर (tag == SCI_CONTROLLER_INVALID_IO_TAG)
-		वापस ret;
+	if (tag == SCI_CONTROLLER_INVALID_IO_TAG)
+		return ret;
 
-	/* sanity check, वापस TMF_RESP_FUNC_FAILED
-	 * अगर the device is not there and पढ़ोy.
+	/* sanity check, return TMF_RESP_FUNC_FAILED
+	 * if the device is not there and ready.
 	 */
-	अगर (!idev ||
+	if (!idev ||
 	    (!test_bit(IDEV_IO_READY, &idev->flags) &&
-	     !test_bit(IDEV_IO_NCQERROR, &idev->flags))) अणु
+	     !test_bit(IDEV_IO_NCQERROR, &idev->flags))) {
 		dev_dbg(&ihost->pdev->dev,
 			"%s: idev = %p not ready (%#lx)\n",
 			__func__,
 			idev, idev ? idev->flags : 0);
-		जाओ err_tci;
-	पूर्ण अन्यथा
+		goto err_tci;
+	} else
 		dev_dbg(&ihost->pdev->dev,
 			"%s: idev = %p\n",
 			__func__, idev);
 
-	/* Assign the poपूर्णांकer to the TMF's completion kernel रुको काष्ठाure. */
-	पंचांगf->complete = &completion;
-	पंचांगf->status = SCI_FAILURE_TIMEOUT;
+	/* Assign the pointer to the TMF's completion kernel wait structure. */
+	tmf->complete = &completion;
+	tmf->status = SCI_FAILURE_TIMEOUT;
 
-	ireq = isci_task_request_build(ihost, idev, tag, पंचांगf);
-	अगर (!ireq)
-		जाओ err_tci;
+	ireq = isci_task_request_build(ihost, idev, tag, tmf);
+	if (!ireq)
+		goto err_tci;
 
 	spin_lock_irqsave(&ihost->scic_lock, flags);
 
 	/* start the TMF io. */
 	status = sci_controller_start_task(ihost, idev, ireq);
 
-	अगर (status != SCI_SUCCESS) अणु
+	if (status != SCI_SUCCESS) {
 		dev_dbg(&ihost->pdev->dev,
 			 "%s: start_io failed - status = 0x%x, request = %p\n",
 			 __func__,
 			 status,
 			 ireq);
 		spin_unlock_irqrestore(&ihost->scic_lock, flags);
-		जाओ err_tci;
-	पूर्ण
+		goto err_tci;
+	}
 	spin_unlock_irqrestore(&ihost->scic_lock, flags);
 
-	/* The RNC must be unsuspended beक्रमe the TMF can get a response. */
-	isci_remote_device_resume_from_पात(ihost, idev);
+	/* The RNC must be unsuspended before the TMF can get a response. */
+	isci_remote_device_resume_from_abort(ihost, idev);
 
-	/* Wait क्रम the TMF to complete, or a समयout. */
-	समयleft = रुको_क्रम_completion_समयout(&completion,
-					       msecs_to_jअगरfies(समयout_ms));
+	/* Wait for the TMF to complete, or a timeout. */
+	timeleft = wait_for_completion_timeout(&completion,
+					       msecs_to_jiffies(timeout_ms));
 
-	अगर (समयleft == 0) अणु
+	if (timeleft == 0) {
 		/* The TMF did not complete - this could be because
 		 * of an unplug.  Terminate the TMF request now.
 		 */
 		isci_remote_device_suspend_terminate(ihost, idev, ireq);
-	पूर्ण
+	}
 
-	isci_prपूर्णांक_पंचांगf(ihost, पंचांगf);
+	isci_print_tmf(ihost, tmf);
 
-	अगर (पंचांगf->status == SCI_SUCCESS)
+	if (tmf->status == SCI_SUCCESS)
 		ret =  TMF_RESP_FUNC_COMPLETE;
-	अन्यथा अगर (पंचांगf->status == SCI_FAILURE_IO_RESPONSE_VALID) अणु
+	else if (tmf->status == SCI_FAILURE_IO_RESPONSE_VALID) {
 		dev_dbg(&ihost->pdev->dev,
 			"%s: tmf.status == "
 			"SCI_FAILURE_IO_RESPONSE_VALID\n",
 			__func__);
 		ret =  TMF_RESP_FUNC_COMPLETE;
-	पूर्ण
-	/* Else - leave the शेष "failed" status alone. */
+	}
+	/* Else - leave the default "failed" status alone. */
 
 	dev_dbg(&ihost->pdev->dev,
 		"%s: completed request = %p\n",
 		__func__,
 		ireq);
 
-	वापस ret;
+	return ret;
 
  err_tci:
 	spin_lock_irqsave(&ihost->scic_lock, flags);
-	isci_tci_मुक्त(ihost, ISCI_TAG_TCI(tag));
+	isci_tci_free(ihost, ISCI_TAG_TCI(tag));
 	spin_unlock_irqrestore(&ihost->scic_lock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम isci_task_build_पंचांगf(काष्ठा isci_पंचांगf *पंचांगf,
-				क्रमागत isci_पंचांगf_function_codes code)
-अणु
-	स_रखो(पंचांगf, 0, माप(*पंचांगf));
-	पंचांगf->पंचांगf_code = code;
-पूर्ण
+static void isci_task_build_tmf(struct isci_tmf *tmf,
+				enum isci_tmf_function_codes code)
+{
+	memset(tmf, 0, sizeof(*tmf));
+	tmf->tmf_code = code;
+}
 
-अटल व्योम isci_task_build_पात_task_पंचांगf(काष्ठा isci_पंचांगf *पंचांगf,
-					   क्रमागत isci_पंचांगf_function_codes code,
-					   काष्ठा isci_request *old_request)
-अणु
-	isci_task_build_पंचांगf(पंचांगf, code);
-	पंचांगf->io_tag = old_request->io_tag;
-पूर्ण
+static void isci_task_build_abort_task_tmf(struct isci_tmf *tmf,
+					   enum isci_tmf_function_codes code,
+					   struct isci_request *old_request)
+{
+	isci_task_build_tmf(tmf, code);
+	tmf->io_tag = old_request->io_tag;
+}
 
 /*
- * isci_task_send_lu_reset_sas() - This function is called by of the SAS Doमुख्य
+ * isci_task_send_lu_reset_sas() - This function is called by of the SAS Domain
  *    Template functions.
- * @lun: This parameter specअगरies the lun to be reset.
+ * @lun: This parameter specifies the lun to be reset.
  *
  * status, zero indicates success.
  */
-अटल पूर्णांक isci_task_send_lu_reset_sas(
-	काष्ठा isci_host *isci_host,
-	काष्ठा isci_remote_device *isci_device,
+static int isci_task_send_lu_reset_sas(
+	struct isci_host *isci_host,
+	struct isci_remote_device *isci_device,
 	u8 *lun)
-अणु
-	काष्ठा isci_पंचांगf पंचांगf;
-	पूर्णांक ret = TMF_RESP_FUNC_FAILED;
+{
+	struct isci_tmf tmf;
+	int ret = TMF_RESP_FUNC_FAILED;
 
 	dev_dbg(&isci_host->pdev->dev,
 		"%s: isci_host = %p, isci_device = %p\n",
 		__func__, isci_host, isci_device);
-	/* Send the LUN reset to the target.  By the समय the call वापसs,
-	 * the TMF has fully exected in the target (in which हाल the वापस
-	 * value is "TMF_RESP_FUNC_COMPLETE", or the request समयd-out (or
+	/* Send the LUN reset to the target.  By the time the call returns,
+	 * the TMF has fully exected in the target (in which case the return
+	 * value is "TMF_RESP_FUNC_COMPLETE", or the request timed-out (or
 	 * was otherwise unable to be executed ("TMF_RESP_FUNC_FAILED").
 	 */
-	isci_task_build_पंचांगf(&पंचांगf, isci_पंचांगf_ssp_lun_reset);
+	isci_task_build_tmf(&tmf, isci_tmf_ssp_lun_reset);
 
-	#घोषणा ISCI_LU_RESET_TIMEOUT_MS 2000 /* 2 second समयout. */
-	ret = isci_task_execute_पंचांगf(isci_host, isci_device, &पंचांगf, ISCI_LU_RESET_TIMEOUT_MS);
+	#define ISCI_LU_RESET_TIMEOUT_MS 2000 /* 2 second timeout. */
+	ret = isci_task_execute_tmf(isci_host, isci_device, &tmf, ISCI_LU_RESET_TIMEOUT_MS);
 
-	अगर (ret == TMF_RESP_FUNC_COMPLETE)
+	if (ret == TMF_RESP_FUNC_COMPLETE)
 		dev_dbg(&isci_host->pdev->dev,
 			"%s: %p: TMF_LU_RESET passed\n",
 			__func__, isci_device);
-	अन्यथा
+	else
 		dev_dbg(&isci_host->pdev->dev,
 			"%s: %p: TMF_LU_RESET failed (%x)\n",
 			__func__, isci_device, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक isci_task_lu_reset(काष्ठा करोमुख्य_device *dev, u8 *lun)
-अणु
-	काष्ठा isci_host *ihost = dev_to_ihost(dev);
-	काष्ठा isci_remote_device *idev;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret = TMF_RESP_FUNC_COMPLETE;
+int isci_task_lu_reset(struct domain_device *dev, u8 *lun)
+{
+	struct isci_host *ihost = dev_to_ihost(dev);
+	struct isci_remote_device *idev;
+	unsigned long flags;
+	int ret = TMF_RESP_FUNC_COMPLETE;
 
 	spin_lock_irqsave(&ihost->scic_lock, flags);
 	idev = isci_get_device(dev->lldd_dev);
@@ -425,70 +424,70 @@
 		"%s: domain_device=%p, isci_host=%p; isci_device=%p\n",
 		__func__, dev, ihost, idev);
 
-	अगर (!idev) अणु
+	if (!idev) {
 		/* If the device is gone, escalate to I_T_Nexus_Reset. */
 		dev_dbg(&ihost->pdev->dev, "%s: No dev\n", __func__);
 
 		ret = TMF_RESP_FUNC_FAILED;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Suspend the RNC, समाप्त all TCs */
-	अगर (isci_remote_device_suspend_terminate(ihost, idev, शून्य)
-	    != SCI_SUCCESS) अणु
-		/* The suspend/terminate only fails अगर isci_get_device fails */
+	/* Suspend the RNC, kill all TCs */
+	if (isci_remote_device_suspend_terminate(ihost, idev, NULL)
+	    != SCI_SUCCESS) {
+		/* The suspend/terminate only fails if isci_get_device fails */
 		ret = TMF_RESP_FUNC_FAILED;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	/* All pending I/Os have been terminated and cleaned up. */
-	अगर (!test_bit(IDEV_GONE, &idev->flags)) अणु
-		अगर (dev_is_sata(dev))
+	if (!test_bit(IDEV_GONE, &idev->flags)) {
+		if (dev_is_sata(dev))
 			sas_ata_schedule_reset(dev);
-		अन्यथा
+		else
 			/* Send the task management part of the reset. */
 			ret = isci_task_send_lu_reset_sas(ihost, idev, lun);
-	पूर्ण
+	}
  out:
 	isci_put_device(idev);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
-/*	 पूर्णांक (*lldd_clear_nexus_port)(काष्ठा asd_sas_port *); */
-पूर्णांक isci_task_clear_nexus_port(काष्ठा asd_sas_port *port)
-अणु
-	वापस TMF_RESP_FUNC_FAILED;
-पूर्ण
+/*	 int (*lldd_clear_nexus_port)(struct asd_sas_port *); */
+int isci_task_clear_nexus_port(struct asd_sas_port *port)
+{
+	return TMF_RESP_FUNC_FAILED;
+}
 
 
 
-पूर्णांक isci_task_clear_nexus_ha(काष्ठा sas_ha_काष्ठा *ha)
-अणु
-	वापस TMF_RESP_FUNC_FAILED;
-पूर्ण
+int isci_task_clear_nexus_ha(struct sas_ha_struct *ha)
+{
+	return TMF_RESP_FUNC_FAILED;
+}
 
 /* Task Management Functions. Must be called from process context.	 */
 
 /**
- * isci_task_पात_task() - This function is one of the SAS Doमुख्य Template
- *    functions. This function is called by libsas to पात a specअगरied task.
- * @task: This parameter specअगरies the SAS task to पात.
+ * isci_task_abort_task() - This function is one of the SAS Domain Template
+ *    functions. This function is called by libsas to abort a specified task.
+ * @task: This parameter specifies the SAS task to abort.
  *
  * status, zero indicates success.
  */
-पूर्णांक isci_task_पात_task(काष्ठा sas_task *task)
-अणु
-	काष्ठा isci_host *ihost = dev_to_ihost(task->dev);
-	DECLARE_COMPLETION_ONSTACK(पातed_io_completion);
-	काष्ठा isci_request       *old_request = शून्य;
-	काष्ठा isci_remote_device *idev = शून्य;
-	काष्ठा isci_पंचांगf           पंचांगf;
-	पूर्णांक                       ret = TMF_RESP_FUNC_FAILED;
-	अचिन्हित दीर्घ             flags;
-	पूर्णांक                       target_करोne_alपढ़ोy = 0;
+int isci_task_abort_task(struct sas_task *task)
+{
+	struct isci_host *ihost = dev_to_ihost(task->dev);
+	DECLARE_COMPLETION_ONSTACK(aborted_io_completion);
+	struct isci_request       *old_request = NULL;
+	struct isci_remote_device *idev = NULL;
+	struct isci_tmf           tmf;
+	int                       ret = TMF_RESP_FUNC_FAILED;
+	unsigned long             flags;
+	int                       target_done_already = 0;
 
 	/* Get the isci_request reference from the task.  Note that
-	 * this check करोes not depend on the pending request list
+	 * this check does not depend on the pending request list
 	 * in the device, because tasks driving resets may land here
 	 * after completion in the core.
 	 */
@@ -497,14 +496,14 @@
 
 	old_request = task->lldd_task;
 
-	/* If task is alपढ़ोy करोne, the request isn't valid */
-	अगर (!(task->task_state_flags & SAS_TASK_STATE_DONE) &&
+	/* If task is already done, the request isn't valid */
+	if (!(task->task_state_flags & SAS_TASK_STATE_DONE) &&
 	    (task->task_state_flags & SAS_TASK_AT_INITIATOR) &&
-	    old_request) अणु
+	    old_request) {
 		idev = isci_get_device(task->dev->lldd_dev);
-		target_करोne_alपढ़ोy = test_bit(IREQ_COMPLETE_IN_TARGET,
+		target_done_already = test_bit(IREQ_COMPLETE_IN_TARGET,
 					       &old_request->flags);
-	पूर्ण
+	}
 	spin_unlock(&task->task_state_lock);
 	spin_unlock_irqrestore(&ihost->scic_lock, flags);
 
@@ -521,14 +520,14 @@
 			 : " <NULL>"),
 		 task, old_request);
 
-	/* Device reset conditions संकेतled in task_state_flags are the
+	/* Device reset conditions signalled in task_state_flags are the
 	 * responsbility of libsas to observe at the start of the error
-	 * handler thपढ़ो.
+	 * handler thread.
 	 */
-	अगर (!idev || !old_request) अणु
-		/* The request has alपढ़ोy completed and there
-		* is nothing to करो here other than to set the task
-		* करोne bit, and indicate that the task पात function
+	if (!idev || !old_request) {
+		/* The request has already completed and there
+		* is nothing to do here other than to set the task
+		* done bit, and indicate that the task abort function
 		* was successful.
 		*/
 		spin_lock_irqsave(&task->task_state_lock, flags);
@@ -542,29 +541,29 @@
 		dev_warn(&ihost->pdev->dev,
 			 "%s: abort task not needed for %p\n",
 			 __func__, task);
-		जाओ out;
-	पूर्ण
-	/* Suspend the RNC, समाप्त the TC */
-	अगर (isci_remote_device_suspend_terminate(ihost, idev, old_request)
-	    != SCI_SUCCESS) अणु
+		goto out;
+	}
+	/* Suspend the RNC, kill the TC */
+	if (isci_remote_device_suspend_terminate(ihost, idev, old_request)
+	    != SCI_SUCCESS) {
 		dev_warn(&ihost->pdev->dev,
 			 "%s: isci_remote_device_reset_terminate(dev=%p, "
 				 "req=%p, task=%p) failed\n",
 			 __func__, idev, old_request, task);
 		ret = TMF_RESP_FUNC_FAILED;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	spin_lock_irqsave(&ihost->scic_lock, flags);
 
-	अगर (task->task_proto == SAS_PROTOCOL_SMP ||
+	if (task->task_proto == SAS_PROTOCOL_SMP ||
 	    sas_protocol_ata(task->task_proto) ||
-	    target_करोne_alपढ़ोy ||
-	    test_bit(IDEV_GONE, &idev->flags)) अणु
+	    target_done_already ||
+	    test_bit(IDEV_GONE, &idev->flags)) {
 
 		spin_unlock_irqrestore(&ihost->scic_lock, flags);
 
 		/* No task to send, so explicitly resume the device here */
-		isci_remote_device_resume_from_पात(ihost, idev);
+		isci_remote_device_resume_from_abort(ihost, idev);
 
 		dev_warn(&ihost->pdev->dev,
 			 "%s: %s request"
@@ -588,117 +587,117 @@
 		spin_unlock_irqrestore(&task->task_state_lock, flags);
 
 		ret = TMF_RESP_FUNC_COMPLETE;
-	पूर्ण अन्यथा अणु
-		/* Fill in the पंचांगf काष्ठाure */
-		isci_task_build_पात_task_पंचांगf(&पंचांगf, isci_पंचांगf_ssp_task_पात,
+	} else {
+		/* Fill in the tmf structure */
+		isci_task_build_abort_task_tmf(&tmf, isci_tmf_ssp_task_abort,
 					       old_request);
 
 		spin_unlock_irqrestore(&ihost->scic_lock, flags);
 
 		/* Send the task management request. */
-		#घोषणा ISCI_ABORT_TASK_TIMEOUT_MS 500 /* 1/2 second समयout */
-		ret = isci_task_execute_पंचांगf(ihost, idev, &पंचांगf,
+		#define ISCI_ABORT_TASK_TIMEOUT_MS 500 /* 1/2 second timeout */
+		ret = isci_task_execute_tmf(ihost, idev, &tmf,
 					    ISCI_ABORT_TASK_TIMEOUT_MS);
-	पूर्ण
+	}
 out:
 	dev_warn(&ihost->pdev->dev,
 		 "%s: Done; dev = %p, task = %p , old_request == %p\n",
 		 __func__, idev, task, old_request);
 	isci_put_device(idev);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * isci_task_पात_task_set() - This function is one of the SAS Doमुख्य Template
+ * isci_task_abort_task_set() - This function is one of the SAS Domain Template
  *    functions. This is one of the Task Management functoins called by libsas,
- *    to पात all task क्रम the given lun.
- * @d_device: This parameter specअगरies the करोमुख्य device associated with this
+ *    to abort all task for the given lun.
+ * @d_device: This parameter specifies the domain device associated with this
  *    request.
- * @lun: This parameter specअगरies the lun associated with this request.
+ * @lun: This parameter specifies the lun associated with this request.
  *
  * status, zero indicates success.
  */
-पूर्णांक isci_task_पात_task_set(
-	काष्ठा करोमुख्य_device *d_device,
+int isci_task_abort_task_set(
+	struct domain_device *d_device,
 	u8 *lun)
-अणु
-	वापस TMF_RESP_FUNC_FAILED;
-पूर्ण
+{
+	return TMF_RESP_FUNC_FAILED;
+}
 
 
 /**
- * isci_task_clear_aca() - This function is one of the SAS Doमुख्य Template
+ * isci_task_clear_aca() - This function is one of the SAS Domain Template
  *    functions. This is one of the Task Management functoins called by libsas.
- * @d_device: This parameter specअगरies the करोमुख्य device associated with this
+ * @d_device: This parameter specifies the domain device associated with this
  *    request.
- * @lun: This parameter specअगरies the lun	 associated with this request.
+ * @lun: This parameter specifies the lun	 associated with this request.
  *
  * status, zero indicates success.
  */
-पूर्णांक isci_task_clear_aca(
-	काष्ठा करोमुख्य_device *d_device,
+int isci_task_clear_aca(
+	struct domain_device *d_device,
 	u8 *lun)
-अणु
-	वापस TMF_RESP_FUNC_FAILED;
-पूर्ण
+{
+	return TMF_RESP_FUNC_FAILED;
+}
 
 
 
 /**
- * isci_task_clear_task_set() - This function is one of the SAS Doमुख्य Template
+ * isci_task_clear_task_set() - This function is one of the SAS Domain Template
  *    functions. This is one of the Task Management functoins called by libsas.
- * @d_device: This parameter specअगरies the करोमुख्य device associated with this
+ * @d_device: This parameter specifies the domain device associated with this
  *    request.
- * @lun: This parameter specअगरies the lun	 associated with this request.
+ * @lun: This parameter specifies the lun	 associated with this request.
  *
  * status, zero indicates success.
  */
-पूर्णांक isci_task_clear_task_set(
-	काष्ठा करोमुख्य_device *d_device,
+int isci_task_clear_task_set(
+	struct domain_device *d_device,
 	u8 *lun)
-अणु
-	वापस TMF_RESP_FUNC_FAILED;
-पूर्ण
+{
+	return TMF_RESP_FUNC_FAILED;
+}
 
 
 /**
  * isci_task_query_task() - This function is implemented to cause libsas to
- *    correctly escalate the failed पात to a LUN or target reset (this is
- *    because sas_scsi_find_task libsas function करोes not correctly पूर्णांकerpret
- *    all वापस codes from the पात task call).  When TMF_RESP_FUNC_SUCC is
- *    वापसed, libsas turns this पूर्णांकo a LUN reset; when FUNC_FAILED is
- *    वापसed, libsas will turn this पूर्णांकo a target reset
- * @task: This parameter specअगरies the sas task being queried.
+ *    correctly escalate the failed abort to a LUN or target reset (this is
+ *    because sas_scsi_find_task libsas function does not correctly interpret
+ *    all return codes from the abort task call).  When TMF_RESP_FUNC_SUCC is
+ *    returned, libsas turns this into a LUN reset; when FUNC_FAILED is
+ *    returned, libsas will turn this into a target reset
+ * @task: This parameter specifies the sas task being queried.
  *
  * status, zero indicates success.
  */
-पूर्णांक isci_task_query_task(
-	काष्ठा sas_task *task)
-अणु
-	/* See अगर there is a pending device reset क्रम this device. */
-	अगर (task->task_state_flags & SAS_TASK_NEED_DEV_RESET)
-		वापस TMF_RESP_FUNC_FAILED;
-	अन्यथा
-		वापस TMF_RESP_FUNC_SUCC;
-पूर्ण
+int isci_task_query_task(
+	struct sas_task *task)
+{
+	/* See if there is a pending device reset for this device. */
+	if (task->task_state_flags & SAS_TASK_NEED_DEV_RESET)
+		return TMF_RESP_FUNC_FAILED;
+	else
+		return TMF_RESP_FUNC_SUCC;
+}
 
 /*
  * isci_task_request_complete() - This function is called by the sci core when
  *    an task request completes.
- * @ihost: This parameter specअगरies the ISCI host object
+ * @ihost: This parameter specifies the ISCI host object
  * @ireq: This parameter is the completed isci_request object.
- * @completion_status: This parameter specअगरies the completion status from the
+ * @completion_status: This parameter specifies the completion status from the
  *    sci core.
  *
  * none.
  */
-व्योम
-isci_task_request_complete(काष्ठा isci_host *ihost,
-			   काष्ठा isci_request *ireq,
-			   क्रमागत sci_task_status completion_status)
-अणु
-	काष्ठा isci_पंचांगf *पंचांगf = isci_request_access_पंचांगf(ireq);
-	काष्ठा completion *पंचांगf_complete = शून्य;
+void
+isci_task_request_complete(struct isci_host *ihost,
+			   struct isci_request *ireq,
+			   enum sci_task_status completion_status)
+{
+	struct isci_tmf *tmf = isci_request_access_tmf(ireq);
+	struct completion *tmf_complete = NULL;
 
 	dev_dbg(&ihost->pdev->dev,
 		"%s: request = %p, status=%d\n",
@@ -706,100 +705,100 @@ isci_task_request_complete(काष्ठा isci_host *ihost,
 
 	set_bit(IREQ_COMPLETE_IN_TARGET, &ireq->flags);
 
-	अगर (पंचांगf) अणु
-		पंचांगf->status = completion_status;
+	if (tmf) {
+		tmf->status = completion_status;
 
-		अगर (पंचांगf->proto == SAS_PROTOCOL_SSP) अणु
-			स_नकल(&पंचांगf->resp.resp_iu,
+		if (tmf->proto == SAS_PROTOCOL_SSP) {
+			memcpy(&tmf->resp.resp_iu,
 			       &ireq->ssp.rsp,
 			       SSP_RESP_IU_MAX_SIZE);
-		पूर्ण अन्यथा अगर (पंचांगf->proto == SAS_PROTOCOL_SATA) अणु
-			स_नकल(&पंचांगf->resp.d2h_fis,
+		} else if (tmf->proto == SAS_PROTOCOL_SATA) {
+			memcpy(&tmf->resp.d2h_fis,
 			       &ireq->stp.rsp,
-			       माप(काष्ठा dev_to_host_fis));
-		पूर्ण
-		/* PRINT_TMF( ((काष्ठा isci_पंचांगf *)request->task)); */
-		पंचांगf_complete = पंचांगf->complete;
-	पूर्ण
+			       sizeof(struct dev_to_host_fis));
+		}
+		/* PRINT_TMF( ((struct isci_tmf *)request->task)); */
+		tmf_complete = tmf->complete;
+	}
 	sci_controller_complete_io(ihost, ireq->target_device, ireq);
 	/* set the 'terminated' flag handle to make sure it cannot be terminated
 	 *  or completed again.
 	 */
 	set_bit(IREQ_TERMINATED, &ireq->flags);
 
-	अगर (test_and_clear_bit(IREQ_ABORT_PATH_ACTIVE, &ireq->flags))
+	if (test_and_clear_bit(IREQ_ABORT_PATH_ACTIVE, &ireq->flags))
 		wake_up_all(&ihost->eventq);
 
-	अगर (!test_bit(IREQ_NO_AUTO_FREE_TAG, &ireq->flags))
-		isci_मुक्त_tag(ihost, ireq->io_tag);
+	if (!test_bit(IREQ_NO_AUTO_FREE_TAG, &ireq->flags))
+		isci_free_tag(ihost, ireq->io_tag);
 
 	/* The task management part completes last. */
-	अगर (पंचांगf_complete)
-		complete(पंचांगf_complete);
-पूर्ण
+	if (tmf_complete)
+		complete(tmf_complete);
+}
 
-अटल पूर्णांक isci_reset_device(काष्ठा isci_host *ihost,
-			     काष्ठा करोमुख्य_device *dev,
-			     काष्ठा isci_remote_device *idev)
-अणु
-	पूर्णांक rc = TMF_RESP_FUNC_COMPLETE, reset_stat = -1;
-	काष्ठा sas_phy *phy = sas_get_local_phy(dev);
-	काष्ठा isci_port *iport = dev->port->lldd_port;
+static int isci_reset_device(struct isci_host *ihost,
+			     struct domain_device *dev,
+			     struct isci_remote_device *idev)
+{
+	int rc = TMF_RESP_FUNC_COMPLETE, reset_stat = -1;
+	struct sas_phy *phy = sas_get_local_phy(dev);
+	struct isci_port *iport = dev->port->lldd_port;
 
 	dev_dbg(&ihost->pdev->dev, "%s: idev %p\n", __func__, idev);
 
 	/* Suspend the RNC, terminate all outstanding TCs. */
-	अगर (isci_remote_device_suspend_terminate(ihost, idev, शून्य)
-	    != SCI_SUCCESS) अणु
+	if (isci_remote_device_suspend_terminate(ihost, idev, NULL)
+	    != SCI_SUCCESS) {
 		rc = TMF_RESP_FUNC_FAILED;
-		जाओ out;
-	पूर्ण
-	/* Note that since the termination क्रम outstanding requests succeeded,
-	 * this function will वापस success.  This is because the resets will
-	 * only fail अगर the device has been हटाओd (ie. hotplug), and the
+		goto out;
+	}
+	/* Note that since the termination for outstanding requests succeeded,
+	 * this function will return success.  This is because the resets will
+	 * only fail if the device has been removed (ie. hotplug), and the
 	 * primary duty of this function is to cleanup tasks, so that is the
 	 * relevant status.
 	 */
-	अगर (!test_bit(IDEV_GONE, &idev->flags)) अणु
-		अगर (scsi_is_sas_phy_local(phy)) अणु
-			काष्ठा isci_phy *iphy = &ihost->phys[phy->number];
+	if (!test_bit(IDEV_GONE, &idev->flags)) {
+		if (scsi_is_sas_phy_local(phy)) {
+			struct isci_phy *iphy = &ihost->phys[phy->number];
 
-			reset_stat = isci_port_perक्रमm_hard_reset(ihost, iport,
+			reset_stat = isci_port_perform_hard_reset(ihost, iport,
 								  iphy);
-		पूर्ण अन्यथा
+		} else
 			reset_stat = sas_phy_reset(phy, !dev_is_sata(dev));
-	पूर्ण
+	}
 	/* Explicitly resume the RNC here, since there was no task sent. */
-	isci_remote_device_resume_from_पात(ihost, idev);
+	isci_remote_device_resume_from_abort(ihost, idev);
 
 	dev_dbg(&ihost->pdev->dev, "%s: idev %p complete, reset_stat=%d.\n",
 		__func__, idev, reset_stat);
  out:
 	sas_put_local_phy(phy);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-पूर्णांक isci_task_I_T_nexus_reset(काष्ठा करोमुख्य_device *dev)
-अणु
-	काष्ठा isci_host *ihost = dev_to_ihost(dev);
-	काष्ठा isci_remote_device *idev;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+int isci_task_I_T_nexus_reset(struct domain_device *dev)
+{
+	struct isci_host *ihost = dev_to_ihost(dev);
+	struct isci_remote_device *idev;
+	unsigned long flags;
+	int ret;
 
 	spin_lock_irqsave(&ihost->scic_lock, flags);
 	idev = isci_get_device(dev->lldd_dev);
 	spin_unlock_irqrestore(&ihost->scic_lock, flags);
 
-	अगर (!idev) अणु
+	if (!idev) {
 		/* XXX: need to cleanup any ireqs targeting this
-		 * करोमुख्य_device
+		 * domain_device
 		 */
 		ret = -ENODEV;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = isci_reset_device(ihost, dev, idev);
  out:
 	isci_put_device(idev);
-	वापस ret;
-पूर्ण
+	return ret;
+}

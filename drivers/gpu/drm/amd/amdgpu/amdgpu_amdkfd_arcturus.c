@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,99 +19,99 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#समावेश <linux/module.h>
-#समावेश <linux/fdtable.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/firmware.h>
-#समावेश "amdgpu.h"
-#समावेश "amdgpu_amdkfd.h"
-#समावेश "sdma0/sdma0_4_2_2_offset.h"
-#समावेश "sdma0/sdma0_4_2_2_sh_mask.h"
-#समावेश "sdma1/sdma1_4_2_2_offset.h"
-#समावेश "sdma1/sdma1_4_2_2_sh_mask.h"
-#समावेश "sdma2/sdma2_4_2_2_offset.h"
-#समावेश "sdma2/sdma2_4_2_2_sh_mask.h"
-#समावेश "sdma3/sdma3_4_2_2_offset.h"
-#समावेश "sdma3/sdma3_4_2_2_sh_mask.h"
-#समावेश "sdma4/sdma4_4_2_2_offset.h"
-#समावेश "sdma4/sdma4_4_2_2_sh_mask.h"
-#समावेश "sdma5/sdma5_4_2_2_offset.h"
-#समावेश "sdma5/sdma5_4_2_2_sh_mask.h"
-#समावेश "sdma6/sdma6_4_2_2_offset.h"
-#समावेश "sdma6/sdma6_4_2_2_sh_mask.h"
-#समावेश "sdma7/sdma7_4_2_2_offset.h"
-#समावेश "sdma7/sdma7_4_2_2_sh_mask.h"
-#समावेश "v9_structs.h"
-#समावेश "soc15.h"
-#समावेश "soc15d.h"
-#समावेश "amdgpu_amdkfd_gfx_v9.h"
-#समावेश "gfxhub_v1_0.h"
-#समावेश "mmhub_v9_4.h"
+#include <linux/module.h>
+#include <linux/fdtable.h>
+#include <linux/uaccess.h>
+#include <linux/firmware.h>
+#include "amdgpu.h"
+#include "amdgpu_amdkfd.h"
+#include "sdma0/sdma0_4_2_2_offset.h"
+#include "sdma0/sdma0_4_2_2_sh_mask.h"
+#include "sdma1/sdma1_4_2_2_offset.h"
+#include "sdma1/sdma1_4_2_2_sh_mask.h"
+#include "sdma2/sdma2_4_2_2_offset.h"
+#include "sdma2/sdma2_4_2_2_sh_mask.h"
+#include "sdma3/sdma3_4_2_2_offset.h"
+#include "sdma3/sdma3_4_2_2_sh_mask.h"
+#include "sdma4/sdma4_4_2_2_offset.h"
+#include "sdma4/sdma4_4_2_2_sh_mask.h"
+#include "sdma5/sdma5_4_2_2_offset.h"
+#include "sdma5/sdma5_4_2_2_sh_mask.h"
+#include "sdma6/sdma6_4_2_2_offset.h"
+#include "sdma6/sdma6_4_2_2_sh_mask.h"
+#include "sdma7/sdma7_4_2_2_offset.h"
+#include "sdma7/sdma7_4_2_2_sh_mask.h"
+#include "v9_structs.h"
+#include "soc15.h"
+#include "soc15d.h"
+#include "amdgpu_amdkfd_gfx_v9.h"
+#include "gfxhub_v1_0.h"
+#include "mmhub_v9_4.h"
 
-#घोषणा HQD_N_REGS 56
-#घोषणा DUMP_REG(addr) करो अणु				\
-		अगर (WARN_ON_ONCE(i >= HQD_N_REGS))	\
-			अवरोध;				\
+#define HQD_N_REGS 56
+#define DUMP_REG(addr) do {				\
+		if (WARN_ON_ONCE(i >= HQD_N_REGS))	\
+			break;				\
 		(*dump)[i][0] = (addr) << 2;		\
 		(*dump)[i++][1] = RREG32(addr);		\
-	पूर्ण जबतक (0)
+	} while (0)
 
-अटल अंतरभूत काष्ठा amdgpu_device *get_amdgpu_device(काष्ठा kgd_dev *kgd)
-अणु
-	वापस (काष्ठा amdgpu_device *)kgd;
-पूर्ण
+static inline struct amdgpu_device *get_amdgpu_device(struct kgd_dev *kgd)
+{
+	return (struct amdgpu_device *)kgd;
+}
 
-अटल अंतरभूत काष्ठा v9_sdma_mqd *get_sdma_mqd(व्योम *mqd)
-अणु
-	वापस (काष्ठा v9_sdma_mqd *)mqd;
-पूर्ण
+static inline struct v9_sdma_mqd *get_sdma_mqd(void *mqd)
+{
+	return (struct v9_sdma_mqd *)mqd;
+}
 
-अटल uपूर्णांक32_t get_sdma_rlc_reg_offset(काष्ठा amdgpu_device *adev,
-				अचिन्हित पूर्णांक engine_id,
-				अचिन्हित पूर्णांक queue_id)
-अणु
-	uपूर्णांक32_t sdma_engine_reg_base = 0;
-	uपूर्णांक32_t sdma_rlc_reg_offset;
+static uint32_t get_sdma_rlc_reg_offset(struct amdgpu_device *adev,
+				unsigned int engine_id,
+				unsigned int queue_id)
+{
+	uint32_t sdma_engine_reg_base = 0;
+	uint32_t sdma_rlc_reg_offset;
 
-	चयन (engine_id) अणु
-	शेष:
+	switch (engine_id) {
+	default:
 		dev_warn(adev->dev,
 			 "Invalid sdma engine id (%d), using engine id 0\n",
 			 engine_id);
 		fallthrough;
-	हाल 0:
+	case 0:
 		sdma_engine_reg_base = SOC15_REG_OFFSET(SDMA0, 0,
 				mmSDMA0_RLC0_RB_CNTL) - mmSDMA0_RLC0_RB_CNTL;
-		अवरोध;
-	हाल 1:
+		break;
+	case 1:
 		sdma_engine_reg_base = SOC15_REG_OFFSET(SDMA1, 0,
 				mmSDMA1_RLC0_RB_CNTL) - mmSDMA1_RLC0_RB_CNTL;
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		sdma_engine_reg_base = SOC15_REG_OFFSET(SDMA2, 0,
 				mmSDMA2_RLC0_RB_CNTL) - mmSDMA2_RLC0_RB_CNTL;
-		अवरोध;
-	हाल 3:
+		break;
+	case 3:
 		sdma_engine_reg_base = SOC15_REG_OFFSET(SDMA3, 0,
 				mmSDMA3_RLC0_RB_CNTL) - mmSDMA3_RLC0_RB_CNTL;
-		अवरोध;
-	हाल 4:
+		break;
+	case 4:
 		sdma_engine_reg_base = SOC15_REG_OFFSET(SDMA4, 0,
 				mmSDMA4_RLC0_RB_CNTL) - mmSDMA4_RLC0_RB_CNTL;
-		अवरोध;
-	हाल 5:
+		break;
+	case 5:
 		sdma_engine_reg_base = SOC15_REG_OFFSET(SDMA5, 0,
 				mmSDMA5_RLC0_RB_CNTL) - mmSDMA5_RLC0_RB_CNTL;
-		अवरोध;
-	हाल 6:
+		break;
+	case 6:
 		sdma_engine_reg_base = SOC15_REG_OFFSET(SDMA6, 0,
 				mmSDMA6_RLC0_RB_CNTL) - mmSDMA6_RLC0_RB_CNTL;
-		अवरोध;
-	हाल 7:
+		break;
+	case 7:
 		sdma_engine_reg_base = SOC15_REG_OFFSET(SDMA7, 0,
 				mmSDMA7_RLC0_RB_CNTL) - mmSDMA7_RLC0_RB_CNTL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	sdma_rlc_reg_offset = sdma_engine_reg_base
 		+ queue_id * (mmSDMA0_RLC1_RB_CNTL - mmSDMA0_RLC0_RB_CNTL);
@@ -120,19 +119,19 @@
 	pr_debug("RLC register offset for SDMA%d RLC%d: 0x%x\n", engine_id,
 			queue_id, sdma_rlc_reg_offset);
 
-	वापस sdma_rlc_reg_offset;
-पूर्ण
+	return sdma_rlc_reg_offset;
+}
 
-पूर्णांक kgd_arcturus_hqd_sdma_load(काष्ठा kgd_dev *kgd, व्योम *mqd,
-			     uपूर्णांक32_t __user *wptr, काष्ठा mm_काष्ठा *mm)
-अणु
-	काष्ठा amdgpu_device *adev = get_amdgpu_device(kgd);
-	काष्ठा v9_sdma_mqd *m;
-	uपूर्णांक32_t sdma_rlc_reg_offset;
-	अचिन्हित दीर्घ end_jअगरfies;
-	uपूर्णांक32_t data;
-	uपूर्णांक64_t data64;
-	uपूर्णांक64_t __user *wptr64 = (uपूर्णांक64_t __user *)wptr;
+int kgd_arcturus_hqd_sdma_load(struct kgd_dev *kgd, void *mqd,
+			     uint32_t __user *wptr, struct mm_struct *mm)
+{
+	struct amdgpu_device *adev = get_amdgpu_device(kgd);
+	struct v9_sdma_mqd *m;
+	uint32_t sdma_rlc_reg_offset;
+	unsigned long end_jiffies;
+	uint32_t data;
+	uint64_t data64;
+	uint64_t __user *wptr64 = (uint64_t __user *)wptr;
 
 	m = get_sdma_mqd(mqd);
 	sdma_rlc_reg_offset = get_sdma_rlc_reg_offset(adev, m->sdma_engine_id,
@@ -141,22 +140,22 @@
 	WREG32(sdma_rlc_reg_offset + mmSDMA0_RLC0_RB_CNTL,
 		m->sdmax_rlcx_rb_cntl & (~SDMA0_RLC0_RB_CNTL__RB_ENABLE_MASK));
 
-	end_jअगरfies = msecs_to_jअगरfies(2000) + jअगरfies;
-	जबतक (true) अणु
+	end_jiffies = msecs_to_jiffies(2000) + jiffies;
+	while (true) {
 		data = RREG32(sdma_rlc_reg_offset + mmSDMA0_RLC0_CONTEXT_STATUS);
-		अगर (data & SDMA0_RLC0_CONTEXT_STATUS__IDLE_MASK)
-			अवरोध;
-		अगर (समय_after(jअगरfies, end_jअगरfies)) अणु
+		if (data & SDMA0_RLC0_CONTEXT_STATUS__IDLE_MASK)
+			break;
+		if (time_after(jiffies, end_jiffies)) {
 			pr_err("SDMA RLC not idle in %s\n", __func__);
-			वापस -ETIME;
-		पूर्ण
+			return -ETIME;
+		}
 		usleep_range(500, 1000);
-	पूर्ण
+	}
 
 	WREG32(sdma_rlc_reg_offset + mmSDMA0_RLC0_DOORBELL_OFFSET,
-	       m->sdmax_rlcx_करोorbell_offset);
+	       m->sdmax_rlcx_doorbell_offset);
 
-	data = REG_SET_FIELD(m->sdmax_rlcx_करोorbell, SDMA0_RLC0_DOORBELL,
+	data = REG_SET_FIELD(m->sdmax_rlcx_doorbell, SDMA0_RLC0_DOORBELL,
 			     ENABLE, 1);
 	WREG32(sdma_rlc_reg_offset + mmSDMA0_RLC0_DOORBELL, data);
 	WREG32(sdma_rlc_reg_offset + mmSDMA0_RLC0_RB_RPTR,
@@ -165,17 +164,17 @@
 				m->sdmax_rlcx_rb_rptr_hi);
 
 	WREG32(sdma_rlc_reg_offset + mmSDMA0_RLC0_MINOR_PTR_UPDATE, 1);
-	अगर (पढ़ो_user_wptr(mm, wptr64, data64)) अणु
+	if (read_user_wptr(mm, wptr64, data64)) {
 		WREG32(sdma_rlc_reg_offset + mmSDMA0_RLC0_RB_WPTR,
 		       lower_32_bits(data64));
 		WREG32(sdma_rlc_reg_offset + mmSDMA0_RLC0_RB_WPTR_HI,
 		       upper_32_bits(data64));
-	पूर्ण अन्यथा अणु
+	} else {
 		WREG32(sdma_rlc_reg_offset + mmSDMA0_RLC0_RB_WPTR,
 		       m->sdmax_rlcx_rb_rptr);
 		WREG32(sdma_rlc_reg_offset + mmSDMA0_RLC0_RB_WPTR_HI,
 		       m->sdmax_rlcx_rb_rptr_hi);
-	पूर्ण
+	}
 	WREG32(sdma_rlc_reg_offset + mmSDMA0_RLC0_MINOR_PTR_UPDATE, 0);
 
 	WREG32(sdma_rlc_reg_offset + mmSDMA0_RLC0_RB_BASE, m->sdmax_rlcx_rb_base);
@@ -190,47 +189,47 @@
 			     RB_ENABLE, 1);
 	WREG32(sdma_rlc_reg_offset + mmSDMA0_RLC0_RB_CNTL, data);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक kgd_arcturus_hqd_sdma_dump(काष्ठा kgd_dev *kgd,
-			     uपूर्णांक32_t engine_id, uपूर्णांक32_t queue_id,
-			     uपूर्णांक32_t (**dump)[2], uपूर्णांक32_t *n_regs)
-अणु
-	काष्ठा amdgpu_device *adev = get_amdgpu_device(kgd);
-	uपूर्णांक32_t sdma_rlc_reg_offset = get_sdma_rlc_reg_offset(adev,
+int kgd_arcturus_hqd_sdma_dump(struct kgd_dev *kgd,
+			     uint32_t engine_id, uint32_t queue_id,
+			     uint32_t (**dump)[2], uint32_t *n_regs)
+{
+	struct amdgpu_device *adev = get_amdgpu_device(kgd);
+	uint32_t sdma_rlc_reg_offset = get_sdma_rlc_reg_offset(adev,
 			engine_id, queue_id);
-	uपूर्णांक32_t i = 0, reg;
-#अघोषित HQD_N_REGS
-#घोषणा HQD_N_REGS (19+6+7+10)
+	uint32_t i = 0, reg;
+#undef HQD_N_REGS
+#define HQD_N_REGS (19+6+7+10)
 
-	*dump = kदो_स्मृति_array(HQD_N_REGS * 2, माप(uपूर्णांक32_t), GFP_KERNEL);
-	अगर (*dump == शून्य)
-		वापस -ENOMEM;
+	*dump = kmalloc_array(HQD_N_REGS * 2, sizeof(uint32_t), GFP_KERNEL);
+	if (*dump == NULL)
+		return -ENOMEM;
 
-	क्रम (reg = mmSDMA0_RLC0_RB_CNTL; reg <= mmSDMA0_RLC0_DOORBELL; reg++)
+	for (reg = mmSDMA0_RLC0_RB_CNTL; reg <= mmSDMA0_RLC0_DOORBELL; reg++)
 		DUMP_REG(sdma_rlc_reg_offset + reg);
-	क्रम (reg = mmSDMA0_RLC0_STATUS; reg <= mmSDMA0_RLC0_CSA_ADDR_HI; reg++)
+	for (reg = mmSDMA0_RLC0_STATUS; reg <= mmSDMA0_RLC0_CSA_ADDR_HI; reg++)
 		DUMP_REG(sdma_rlc_reg_offset + reg);
-	क्रम (reg = mmSDMA0_RLC0_IB_SUB_REMAIN;
+	for (reg = mmSDMA0_RLC0_IB_SUB_REMAIN;
 	     reg <= mmSDMA0_RLC0_MINOR_PTR_UPDATE; reg++)
 		DUMP_REG(sdma_rlc_reg_offset + reg);
-	क्रम (reg = mmSDMA0_RLC0_MIDCMD_DATA0;
+	for (reg = mmSDMA0_RLC0_MIDCMD_DATA0;
 	     reg <= mmSDMA0_RLC0_MIDCMD_CNTL; reg++)
 		DUMP_REG(sdma_rlc_reg_offset + reg);
 
 	WARN_ON_ONCE(i != HQD_N_REGS);
 	*n_regs = i;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-bool kgd_arcturus_hqd_sdma_is_occupied(काष्ठा kgd_dev *kgd, व्योम *mqd)
-अणु
-	काष्ठा amdgpu_device *adev = get_amdgpu_device(kgd);
-	काष्ठा v9_sdma_mqd *m;
-	uपूर्णांक32_t sdma_rlc_reg_offset;
-	uपूर्णांक32_t sdma_rlc_rb_cntl;
+bool kgd_arcturus_hqd_sdma_is_occupied(struct kgd_dev *kgd, void *mqd)
+{
+	struct amdgpu_device *adev = get_amdgpu_device(kgd);
+	struct v9_sdma_mqd *m;
+	uint32_t sdma_rlc_reg_offset;
+	uint32_t sdma_rlc_rb_cntl;
 
 	m = get_sdma_mqd(mqd);
 	sdma_rlc_reg_offset = get_sdma_rlc_reg_offset(adev, m->sdma_engine_id,
@@ -238,20 +237,20 @@ bool kgd_arcturus_hqd_sdma_is_occupied(काष्ठा kgd_dev *kgd, व्�
 
 	sdma_rlc_rb_cntl = RREG32(sdma_rlc_reg_offset + mmSDMA0_RLC0_RB_CNTL);
 
-	अगर (sdma_rlc_rb_cntl & SDMA0_RLC0_RB_CNTL__RB_ENABLE_MASK)
-		वापस true;
+	if (sdma_rlc_rb_cntl & SDMA0_RLC0_RB_CNTL__RB_ENABLE_MASK)
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-पूर्णांक kgd_arcturus_hqd_sdma_destroy(काष्ठा kgd_dev *kgd, व्योम *mqd,
-				अचिन्हित पूर्णांक uसमयout)
-अणु
-	काष्ठा amdgpu_device *adev = get_amdgpu_device(kgd);
-	काष्ठा v9_sdma_mqd *m;
-	uपूर्णांक32_t sdma_rlc_reg_offset;
-	uपूर्णांक32_t temp;
-	अचिन्हित दीर्घ end_jअगरfies = (uसमयout * HZ / 1000) + jअगरfies;
+int kgd_arcturus_hqd_sdma_destroy(struct kgd_dev *kgd, void *mqd,
+				unsigned int utimeout)
+{
+	struct amdgpu_device *adev = get_amdgpu_device(kgd);
+	struct v9_sdma_mqd *m;
+	uint32_t sdma_rlc_reg_offset;
+	uint32_t temp;
+	unsigned long end_jiffies = (utimeout * HZ / 1000) + jiffies;
 
 	m = get_sdma_mqd(mqd);
 	sdma_rlc_reg_offset = get_sdma_rlc_reg_offset(adev, m->sdma_engine_id,
@@ -261,16 +260,16 @@ bool kgd_arcturus_hqd_sdma_is_occupied(काष्ठा kgd_dev *kgd, व्�
 	temp = temp & ~SDMA0_RLC0_RB_CNTL__RB_ENABLE_MASK;
 	WREG32(sdma_rlc_reg_offset + mmSDMA0_RLC0_RB_CNTL, temp);
 
-	जबतक (true) अणु
+	while (true) {
 		temp = RREG32(sdma_rlc_reg_offset + mmSDMA0_RLC0_CONTEXT_STATUS);
-		अगर (temp & SDMA0_RLC0_CONTEXT_STATUS__IDLE_MASK)
-			अवरोध;
-		अगर (समय_after(jअगरfies, end_jअगरfies)) अणु
+		if (temp & SDMA0_RLC0_CONTEXT_STATUS__IDLE_MASK)
+			break;
+		if (time_after(jiffies, end_jiffies)) {
 			pr_err("SDMA RLC not idle in %s\n", __func__);
-			वापस -ETIME;
-		पूर्ण
+			return -ETIME;
+		}
 		usleep_range(500, 1000);
-	पूर्ण
+	}
 
 	WREG32(sdma_rlc_reg_offset + mmSDMA0_RLC0_DOORBELL, 0);
 	WREG32(sdma_rlc_reg_offset + mmSDMA0_RLC0_RB_CNTL,
@@ -281,13 +280,13 @@ bool kgd_arcturus_hqd_sdma_is_occupied(काष्ठा kgd_dev *kgd, व्�
 	m->sdmax_rlcx_rb_rptr_hi =
 		RREG32(sdma_rlc_reg_offset + mmSDMA0_RLC0_RB_RPTR_HI);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-स्थिर काष्ठा kfd2kgd_calls arcturus_kfd2kgd = अणु
+const struct kfd2kgd_calls arcturus_kfd2kgd = {
 	.program_sh_mem_settings = kgd_gfx_v9_program_sh_mem_settings,
 	.set_pasid_vmid_mapping = kgd_gfx_v9_set_pasid_vmid_mapping,
-	.init_पूर्णांकerrupts = kgd_gfx_v9_init_पूर्णांकerrupts,
+	.init_interrupts = kgd_gfx_v9_init_interrupts,
 	.hqd_load = kgd_gfx_v9_hqd_load,
 	.hiq_mqd_load = kgd_gfx_v9_hiq_mqd_load,
 	.hqd_sdma_load = kgd_arcturus_hqd_sdma_load,
@@ -306,4 +305,4 @@ bool kgd_arcturus_hqd_sdma_is_occupied(काष्ठा kgd_dev *kgd, व्�
 	.set_vm_context_page_table_base =
 				kgd_gfx_v9_set_vm_context_page_table_base,
 	.get_cu_occupancy = kgd_gfx_v9_get_cu_occupancy
-पूर्ण;
+};

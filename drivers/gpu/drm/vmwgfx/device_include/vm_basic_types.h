@@ -1,23 +1,22 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _VM_BASIC_TYPES_H_
-#घोषणा _VM_BASIC_TYPES_H_
-#समावेश <linux/kernel.h>
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _VM_BASIC_TYPES_H_
+#define _VM_BASIC_TYPES_H_
+#include <linux/kernel.h>
 
-प्रकार u32 uपूर्णांक32;
-प्रकार s32 पूर्णांक32;
-प्रकार u64 uपूर्णांक64;
-प्रकार u16 uपूर्णांक16;
-प्रकार s16 पूर्णांक16;
-प्रकार u8  uपूर्णांक8;
-प्रकार s8  पूर्णांक8;
+typedef u32 uint32;
+typedef s32 int32;
+typedef u64 uint64;
+typedef u16 uint16;
+typedef s16 int16;
+typedef u8  uint8;
+typedef s8  int8;
 
-प्रकार uपूर्णांक64 PA;
-प्रकार uपूर्णांक32 PPN;
-प्रकार uपूर्णांक64 PPN64;
+typedef uint64 PA;
+typedef uint32 PPN;
+typedef uint64 PPN64;
 
-प्रकार bool Bool;
+typedef bool Bool;
 
-#घोषणा MAX_UINT32 U32_MAX
+#define MAX_UINT32 U32_MAX
 
-#पूर्ण_अगर
+#endif

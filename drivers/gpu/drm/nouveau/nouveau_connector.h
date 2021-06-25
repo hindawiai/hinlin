@@ -1,14 +1,13 @@
-<शैली गुरु>
 /*
  * Copyright (C) 2008 Maarten Maathuis.
  * All Rights Reserved.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining
- * a copy of this software and associated करोcumentation files (the
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modअगरy, merge, publish,
+ * without limitation the rights to use, copy, modify, merge, publish,
  * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to करो so, subject to
+ * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -25,42 +24,42 @@
  *
  */
 
-#अगर_अघोषित __NOUVEAU_CONNECTOR_H__
-#घोषणा __NOUVEAU_CONNECTOR_H__
+#ifndef __NOUVEAU_CONNECTOR_H__
+#define __NOUVEAU_CONNECTOR_H__
 
-#समावेश <nvअगर/notअगरy.h>
+#include <nvif/notify.h>
 
-#समावेश <nvhw/class/cl507d.h>
-#समावेश <nvhw/class/cl907d.h>
-#समावेश <nvhw/drf.h>
+#include <nvhw/class/cl507d.h>
+#include <nvhw/class/cl907d.h>
+#include <nvhw/drf.h>
 
-#समावेश <drm/drm_crtc.h>
-#समावेश <drm/drm_edid.h>
-#समावेश <drm/drm_encoder.h>
-#समावेश <drm/drm_dp_helper.h>
-#समावेश <drm/drm_util.h>
+#include <drm/drm_crtc.h>
+#include <drm/drm_edid.h>
+#include <drm/drm_encoder.h>
+#include <drm/drm_dp_helper.h>
+#include <drm/drm_util.h>
 
-#समावेश "nouveau_crtc.h"
-#समावेश "nouveau_encoder.h"
+#include "nouveau_crtc.h"
+#include "nouveau_encoder.h"
 
-काष्ठा nvkm_i2c_port;
-काष्ठा dcb_output;
+struct nvkm_i2c_port;
+struct dcb_output;
 
-#अगर_घोषित CONFIG_DRM_NOUVEAU_BACKLIGHT
-काष्ठा nouveau_backlight;
-#पूर्ण_अगर
+#ifdef CONFIG_DRM_NOUVEAU_BACKLIGHT
+struct nouveau_backlight;
+#endif
 
-#घोषणा nouveau_conn_atom(p)                                                   \
-	container_of((p), काष्ठा nouveau_conn_atom, state)
+#define nouveau_conn_atom(p)                                                   \
+	container_of((p), struct nouveau_conn_atom, state)
 
-काष्ठा nouveau_conn_atom अणु
-	काष्ठा drm_connector_state state;
+struct nouveau_conn_atom {
+	struct drm_connector_state state;
 
-	काष्ठा अणु
-		/* The क्रमागत values specअगरically defined here match nv50/gf119
+	struct {
+		/* The enum values specifically defined here match nv50/gf119
 		 * hw values, and the code relies on this.
 		 */
-		क्रमागत अणु
+		enum {
 			DITHERING_MODE_OFF =
 				NVDEF(NV507D, HEAD_SET_DITHER_CONTROL, ENABLE, DISABLE),
 			DITHERING_MODE_ON =
@@ -72,171 +71,171 @@
 			DITHERING_MODE_TEMPORAL = DITHERING_MODE_ON |
 				NVDEF(NV907D, HEAD_SET_DITHER_CONTROL, MODE, TEMPORAL),
 			DITHERING_MODE_AUTO
-		पूर्ण mode;
-		क्रमागत अणु
+		} mode;
+		enum {
 			DITHERING_DEPTH_6BPC =
 				NVDEF(NV507D, HEAD_SET_DITHER_CONTROL, BITS, DITHER_TO_6_BITS),
 			DITHERING_DEPTH_8BPC =
 				NVDEF(NV507D, HEAD_SET_DITHER_CONTROL, BITS, DITHER_TO_8_BITS),
 			DITHERING_DEPTH_AUTO
-		पूर्ण depth;
-	पूर्ण dither;
+		} depth;
+	} dither;
 
-	काष्ठा अणु
-		पूर्णांक mode;	/* DRM_MODE_SCALE_* */
-		काष्ठा अणु
-			क्रमागत अणु
+	struct {
+		int mode;	/* DRM_MODE_SCALE_* */
+		struct {
+			enum {
 				UNDERSCAN_OFF,
 				UNDERSCAN_ON,
 				UNDERSCAN_AUTO,
-			पूर्ण mode;
+			} mode;
 			u32 hborder;
 			u32 vborder;
-		पूर्ण underscan;
+		} underscan;
 		bool full;
-	पूर्ण scaler;
+	} scaler;
 
-	काष्ठा अणु
-		पूर्णांक color_vibrance;
-		पूर्णांक vibrant_hue;
-	पूर्ण procamp;
+	struct {
+		int color_vibrance;
+		int vibrant_hue;
+	} procamp;
 
-	जोड़ अणु
-		काष्ठा अणु
+	union {
+		struct {
 			bool dither:1;
 			bool scaler:1;
 			bool procamp:1;
-		पूर्ण;
+		};
 		u8 mask;
-	पूर्ण set;
-पूर्ण;
+	} set;
+};
 
-काष्ठा nouveau_connector अणु
-	काष्ठा drm_connector base;
-	क्रमागत dcb_connector_type type;
+struct nouveau_connector {
+	struct drm_connector base;
+	enum dcb_connector_type type;
 	u8 index;
 	u8 *dcb;
 
-	काष्ठा nvअगर_notअगरy hpd;
+	struct nvif_notify hpd;
 
-	काष्ठा drm_dp_aux aux;
+	struct drm_dp_aux aux;
 
-	पूर्णांक dithering_mode;
-	पूर्णांक scaling_mode;
+	int dithering_mode;
+	int scaling_mode;
 
-	काष्ठा nouveau_encoder *detected_encoder;
-	काष्ठा edid *edid;
-	काष्ठा drm_display_mode *native_mode;
-#अगर_घोषित CONFIG_DRM_NOUVEAU_BACKLIGHT
-	काष्ठा nouveau_backlight *backlight;
-#पूर्ण_अगर
+	struct nouveau_encoder *detected_encoder;
+	struct edid *edid;
+	struct drm_display_mode *native_mode;
+#ifdef CONFIG_DRM_NOUVEAU_BACKLIGHT
+	struct nouveau_backlight *backlight;
+#endif
 	/*
-	 * Our connector property code expects a nouveau_conn_atom काष्ठा
-	 * even on pre-nv50 where we करो not support atomic. This embedded
-	 * version माला_लो used in the non atomic modeset हाल.
+	 * Our connector property code expects a nouveau_conn_atom struct
+	 * even on pre-nv50 where we do not support atomic. This embedded
+	 * version gets used in the non atomic modeset case.
 	 */
-	काष्ठा nouveau_conn_atom properties_state;
-पूर्ण;
+	struct nouveau_conn_atom properties_state;
+};
 
-अटल अंतरभूत काष्ठा nouveau_connector *nouveau_connector(
-						काष्ठा drm_connector *con)
-अणु
-	वापस container_of(con, काष्ठा nouveau_connector, base);
-पूर्ण
+static inline struct nouveau_connector *nouveau_connector(
+						struct drm_connector *con)
+{
+	return container_of(con, struct nouveau_connector, base);
+}
 
-अटल अंतरभूत bool
-nouveau_connector_is_mst(काष्ठा drm_connector *connector)
-अणु
-	स्थिर काष्ठा nouveau_encoder *nv_encoder;
-	स्थिर काष्ठा drm_encoder *encoder;
+static inline bool
+nouveau_connector_is_mst(struct drm_connector *connector)
+{
+	const struct nouveau_encoder *nv_encoder;
+	const struct drm_encoder *encoder;
 
-	अगर (connector->connector_type != DRM_MODE_CONNECTOR_DisplayPort)
-		वापस false;
+	if (connector->connector_type != DRM_MODE_CONNECTOR_DisplayPort)
+		return false;
 
 	nv_encoder = find_encoder(connector, DCB_OUTPUT_ANY);
-	अगर (!nv_encoder)
-		वापस false;
+	if (!nv_encoder)
+		return false;
 
 	encoder = &nv_encoder->base.base;
-	वापस encoder->encoder_type == DRM_MODE_ENCODER_DPMST;
-पूर्ण
+	return encoder->encoder_type == DRM_MODE_ENCODER_DPMST;
+}
 
-#घोषणा nouveau_क्रम_each_non_mst_connector_iter(connector, iter) \
-	drm_क्रम_each_connector_iter(connector, iter) \
-		क्रम_each_अगर(!nouveau_connector_is_mst(connector))
+#define nouveau_for_each_non_mst_connector_iter(connector, iter) \
+	drm_for_each_connector_iter(connector, iter) \
+		for_each_if(!nouveau_connector_is_mst(connector))
 
-अटल अंतरभूत काष्ठा nouveau_connector *
-nouveau_crtc_connector_get(काष्ठा nouveau_crtc *nv_crtc)
-अणु
-	काष्ठा drm_device *dev = nv_crtc->base.dev;
-	काष्ठा drm_connector *connector;
-	काष्ठा drm_connector_list_iter conn_iter;
-	काष्ठा nouveau_connector *nv_connector = शून्य;
-	काष्ठा drm_crtc *crtc = to_drm_crtc(nv_crtc);
+static inline struct nouveau_connector *
+nouveau_crtc_connector_get(struct nouveau_crtc *nv_crtc)
+{
+	struct drm_device *dev = nv_crtc->base.dev;
+	struct drm_connector *connector;
+	struct drm_connector_list_iter conn_iter;
+	struct nouveau_connector *nv_connector = NULL;
+	struct drm_crtc *crtc = to_drm_crtc(nv_crtc);
 
 	drm_connector_list_iter_begin(dev, &conn_iter);
-	nouveau_क्रम_each_non_mst_connector_iter(connector, &conn_iter) अणु
-		अगर (connector->encoder && connector->encoder->crtc == crtc) अणु
+	nouveau_for_each_non_mst_connector_iter(connector, &conn_iter) {
+		if (connector->encoder && connector->encoder->crtc == crtc) {
 			nv_connector = nouveau_connector(connector);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	drm_connector_list_iter_end(&conn_iter);
 
-	वापस nv_connector;
-पूर्ण
+	return nv_connector;
+}
 
-काष्ठा drm_connector *
-nouveau_connector_create(काष्ठा drm_device *, स्थिर काष्ठा dcb_output *);
-व्योम nouveau_connector_hpd(काष्ठा drm_connector *connector);
+struct drm_connector *
+nouveau_connector_create(struct drm_device *, const struct dcb_output *);
+void nouveau_connector_hpd(struct drm_connector *connector);
 
-बाह्य पूर्णांक nouveau_tv_disable;
-बाह्य पूर्णांक nouveau_ignorelid;
-बाह्य पूर्णांक nouveau_duallink;
-बाह्य पूर्णांक nouveau_hdmimhz;
+extern int nouveau_tv_disable;
+extern int nouveau_ignorelid;
+extern int nouveau_duallink;
+extern int nouveau_hdmimhz;
 
-व्योम nouveau_conn_attach_properties(काष्ठा drm_connector *);
-व्योम nouveau_conn_reset(काष्ठा drm_connector *);
-काष्ठा drm_connector_state *
-nouveau_conn_atomic_duplicate_state(काष्ठा drm_connector *);
-व्योम nouveau_conn_atomic_destroy_state(काष्ठा drm_connector *,
-				       काष्ठा drm_connector_state *);
-पूर्णांक nouveau_conn_atomic_set_property(काष्ठा drm_connector *,
-				     काष्ठा drm_connector_state *,
-				     काष्ठा drm_property *, u64);
-पूर्णांक nouveau_conn_atomic_get_property(काष्ठा drm_connector *,
-				     स्थिर काष्ठा drm_connector_state *,
-				     काष्ठा drm_property *, u64 *);
-काष्ठा drm_display_mode *nouveau_conn_native_mode(काष्ठा drm_connector *);
-क्रमागत drm_mode_status
-nouveau_conn_mode_घड़ी_valid(स्थिर काष्ठा drm_display_mode *,
-			      स्थिर अचिन्हित min_घड़ी,
-			      स्थिर अचिन्हित max_घड़ी,
-			      अचिन्हित *घड़ी);
+void nouveau_conn_attach_properties(struct drm_connector *);
+void nouveau_conn_reset(struct drm_connector *);
+struct drm_connector_state *
+nouveau_conn_atomic_duplicate_state(struct drm_connector *);
+void nouveau_conn_atomic_destroy_state(struct drm_connector *,
+				       struct drm_connector_state *);
+int nouveau_conn_atomic_set_property(struct drm_connector *,
+				     struct drm_connector_state *,
+				     struct drm_property *, u64);
+int nouveau_conn_atomic_get_property(struct drm_connector *,
+				     const struct drm_connector_state *,
+				     struct drm_property *, u64 *);
+struct drm_display_mode *nouveau_conn_native_mode(struct drm_connector *);
+enum drm_mode_status
+nouveau_conn_mode_clock_valid(const struct drm_display_mode *,
+			      const unsigned min_clock,
+			      const unsigned max_clock,
+			      unsigned *clock);
 
-#अगर_घोषित CONFIG_DRM_NOUVEAU_BACKLIGHT
-बाह्य पूर्णांक nouveau_backlight_init(काष्ठा drm_connector *);
-बाह्य व्योम nouveau_backlight_fini(काष्ठा drm_connector *);
-बाह्य व्योम nouveau_backlight_ctor(व्योम);
-बाह्य व्योम nouveau_backlight_dtor(व्योम);
-#अन्यथा
-अटल अंतरभूत पूर्णांक
-nouveau_backlight_init(काष्ठा drm_connector *connector)
-अणु
-	वापस 0;
-पूर्ण
+#ifdef CONFIG_DRM_NOUVEAU_BACKLIGHT
+extern int nouveau_backlight_init(struct drm_connector *);
+extern void nouveau_backlight_fini(struct drm_connector *);
+extern void nouveau_backlight_ctor(void);
+extern void nouveau_backlight_dtor(void);
+#else
+static inline int
+nouveau_backlight_init(struct drm_connector *connector)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम
-nouveau_backlight_fini(काष्ठा drm_connector *connector) अणु
-पूर्ण
+static inline void
+nouveau_backlight_fini(struct drm_connector *connector) {
+}
 
-अटल अंतरभूत व्योम
-nouveau_backlight_ctor(व्योम) अणु
-पूर्ण
+static inline void
+nouveau_backlight_ctor(void) {
+}
 
-अटल अंतरभूत व्योम
-nouveau_backlight_dtor(व्योम) अणु
-पूर्ण
-#पूर्ण_अगर
+static inline void
+nouveau_backlight_dtor(void) {
+}
+#endif
 
-#पूर्ण_अगर /* __NOUVEAU_CONNECTOR_H__ */
+#endif /* __NOUVEAU_CONNECTOR_H__ */

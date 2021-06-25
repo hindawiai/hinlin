@@ -1,32 +1,31 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* Kernel module to match L2TP header parameters. */
 
 /* (C) 2013      James Chapman <jchapman@katalix.com>
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
-#समावेश <linux/module.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/अगर_ether.h>
-#समावेश <net/ip.h>
-#समावेश <linux/ipv6.h>
-#समावेश <net/ipv6.h>
-#समावेश <net/udp.h>
-#समावेश <linux/l2tp.h>
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/module.h>
+#include <linux/skbuff.h>
+#include <linux/if_ether.h>
+#include <net/ip.h>
+#include <linux/ipv6.h>
+#include <net/ipv6.h>
+#include <net/udp.h>
+#include <linux/l2tp.h>
 
-#समावेश <linux/netfilter_ipv4.h>
-#समावेश <linux/netfilter_ipv6.h>
-#समावेश <linux/netfilter_ipv4/ip_tables.h>
-#समावेश <linux/netfilter_ipv6/ip6_tables.h>
-#समावेश <linux/netfilter/x_tables.h>
-#समावेश <linux/netfilter/xt_tcpudp.h>
-#समावेश <linux/netfilter/xt_l2tp.h>
+#include <linux/netfilter_ipv4.h>
+#include <linux/netfilter_ipv6.h>
+#include <linux/netfilter_ipv4/ip_tables.h>
+#include <linux/netfilter_ipv6/ip6_tables.h>
+#include <linux/netfilter/x_tables.h>
+#include <linux/netfilter/xt_tcpudp.h>
+#include <linux/netfilter/xt_l2tp.h>
 
 /* L2TP header masks */
-#घोषणा L2TP_HDR_T_BIT	0x8000
-#घोषणा L2TP_HDR_L_BIT	0x4000
-#घोषणा L2TP_HDR_VER	0x000f
+#define L2TP_HDR_T_BIT	0x8000
+#define L2TP_HDR_L_BIT	0x4000
+#define L2TP_HDR_VER	0x000f
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("James Chapman <jchapman@katalix.com>");
@@ -35,322 +34,322 @@ MODULE_ALIAS("ipt_l2tp");
 MODULE_ALIAS("ip6t_l2tp");
 
 /* The L2TP fields that can be matched */
-काष्ठा l2tp_data अणु
+struct l2tp_data {
 	u32 tid;
 	u32 sid;
 	u8 type;
 	u8 version;
-पूर्ण;
+};
 
-जोड़ l2tp_val अणु
+union l2tp_val {
 	__be16 val16[2];
 	__be32 val32;
-पूर्ण;
+};
 
-अटल bool l2tp_match(स्थिर काष्ठा xt_l2tp_info *info, काष्ठा l2tp_data *data)
-अणु
-	अगर ((info->flags & XT_L2TP_TYPE) && (info->type != data->type))
-		वापस false;
+static bool l2tp_match(const struct xt_l2tp_info *info, struct l2tp_data *data)
+{
+	if ((info->flags & XT_L2TP_TYPE) && (info->type != data->type))
+		return false;
 
-	अगर ((info->flags & XT_L2TP_VERSION) && (info->version != data->version))
-		वापस false;
+	if ((info->flags & XT_L2TP_VERSION) && (info->version != data->version))
+		return false;
 
-	/* Check tid only क्रम L2TPv3 control or any L2TPv2 packets */
-	अगर ((info->flags & XT_L2TP_TID) &&
+	/* Check tid only for L2TPv3 control or any L2TPv2 packets */
+	if ((info->flags & XT_L2TP_TID) &&
 	    ((data->type == XT_L2TP_TYPE_CONTROL) || (data->version == 2)) &&
 	    (info->tid != data->tid))
-		वापस false;
+		return false;
 
-	/* Check sid only क्रम L2TP data packets */
-	अगर ((info->flags & XT_L2TP_SID) && (data->type == XT_L2TP_TYPE_DATA) &&
+	/* Check sid only for L2TP data packets */
+	if ((info->flags & XT_L2TP_SID) && (data->type == XT_L2TP_TYPE_DATA) &&
 	    (info->sid != data->sid))
-		वापस false;
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /* Parse L2TP header fields when UDP encapsulation is used. Handles
  * L2TPv2 and L2TPv3. Note the L2TPv3 control and data packets have a
- * dअगरferent क्रमmat. See
+ * different format. See
  * RFC2661, Section 3.1, L2TPv2 Header Format
  * RFC3931, Section 3.2.1, L2TPv3 Control Message Header
  * RFC3931, Section 3.2.2, L2TPv3 Data Message Header
  * RFC3931, Section 4.1.2.1, L2TPv3 Session Header over UDP
  */
-अटल bool l2tp_udp_mt(स्थिर काष्ठा sk_buff *skb, काष्ठा xt_action_param *par, u16 thoff)
-अणु
-	स्थिर काष्ठा xt_l2tp_info *info = par->matchinfo;
-	पूर्णांक uhlen = माप(काष्ठा udphdr);
-	पूर्णांक offs = thoff + uhlen;
-	जोड़ l2tp_val *lh;
-	जोड़ l2tp_val lhbuf;
+static bool l2tp_udp_mt(const struct sk_buff *skb, struct xt_action_param *par, u16 thoff)
+{
+	const struct xt_l2tp_info *info = par->matchinfo;
+	int uhlen = sizeof(struct udphdr);
+	int offs = thoff + uhlen;
+	union l2tp_val *lh;
+	union l2tp_val lhbuf;
 	u16 flags;
-	काष्ठा l2tp_data data = अणु 0, पूर्ण;
+	struct l2tp_data data = { 0, };
 
-	अगर (par->fragoff != 0)
-		वापस false;
+	if (par->fragoff != 0)
+		return false;
 
 	/* Extract L2TP header fields. The flags in the first 16 bits
 	 * tell us where the other fields are.
 	 */
-	lh = skb_header_poपूर्णांकer(skb, offs, 2, &lhbuf);
-	अगर (lh == शून्य)
-		वापस false;
+	lh = skb_header_pointer(skb, offs, 2, &lhbuf);
+	if (lh == NULL)
+		return false;
 
 	flags = ntohs(lh->val16[0]);
-	अगर (flags & L2TP_HDR_T_BIT)
+	if (flags & L2TP_HDR_T_BIT)
 		data.type = XT_L2TP_TYPE_CONTROL;
-	अन्यथा
+	else
 		data.type = XT_L2TP_TYPE_DATA;
 	data.version = (u8) flags & L2TP_HDR_VER;
 
-	/* Now extract the L2TP tid/sid. These are in dअगरferent places
-	 * क्रम L2TPv2 (rfc2661) and L2TPv3 (rfc3931). For L2TPv2, we
-	 * must also check to see अगर the length field is present,
-	 * since this affects the offsets पूर्णांकo the packet of the
+	/* Now extract the L2TP tid/sid. These are in different places
+	 * for L2TPv2 (rfc2661) and L2TPv3 (rfc3931). For L2TPv2, we
+	 * must also check to see if the length field is present,
+	 * since this affects the offsets into the packet of the
 	 * tid/sid fields.
 	 */
-	अगर (data.version == 3) अणु
-		lh = skb_header_poपूर्णांकer(skb, offs + 4, 4, &lhbuf);
-		अगर (lh == शून्य)
-			वापस false;
-		अगर (data.type == XT_L2TP_TYPE_CONTROL)
+	if (data.version == 3) {
+		lh = skb_header_pointer(skb, offs + 4, 4, &lhbuf);
+		if (lh == NULL)
+			return false;
+		if (data.type == XT_L2TP_TYPE_CONTROL)
 			data.tid = ntohl(lh->val32);
-		अन्यथा
+		else
 			data.sid = ntohl(lh->val32);
-	पूर्ण अन्यथा अगर (data.version == 2) अणु
-		अगर (flags & L2TP_HDR_L_BIT)
+	} else if (data.version == 2) {
+		if (flags & L2TP_HDR_L_BIT)
 			offs += 2;
-		lh = skb_header_poपूर्णांकer(skb, offs + 2, 4, &lhbuf);
-		अगर (lh == शून्य)
-			वापस false;
+		lh = skb_header_pointer(skb, offs + 2, 4, &lhbuf);
+		if (lh == NULL)
+			return false;
 		data.tid = (u32) ntohs(lh->val16[0]);
 		data.sid = (u32) ntohs(lh->val16[1]);
-	पूर्ण अन्यथा
-		वापस false;
+	} else
+		return false;
 
-	वापस l2tp_match(info, &data);
-पूर्ण
+	return l2tp_match(info, &data);
+}
 
-/* Parse L2TP header fields क्रम IP encapsulation (no UDP header).
- * L2TPv3 data packets have a dअगरferent क्रमm with IP encap. See
+/* Parse L2TP header fields for IP encapsulation (no UDP header).
+ * L2TPv3 data packets have a different form with IP encap. See
  * RC3931, Section 4.1.1.1, L2TPv3 Session Header over IP.
  * RC3931, Section 4.1.1.2, L2TPv3 Control and Data Traffic over IP.
  */
-अटल bool l2tp_ip_mt(स्थिर काष्ठा sk_buff *skb, काष्ठा xt_action_param *par, u16 thoff)
-अणु
-	स्थिर काष्ठा xt_l2tp_info *info = par->matchinfo;
-	जोड़ l2tp_val *lh;
-	जोड़ l2tp_val lhbuf;
-	काष्ठा l2tp_data data = अणु 0, पूर्ण;
+static bool l2tp_ip_mt(const struct sk_buff *skb, struct xt_action_param *par, u16 thoff)
+{
+	const struct xt_l2tp_info *info = par->matchinfo;
+	union l2tp_val *lh;
+	union l2tp_val lhbuf;
+	struct l2tp_data data = { 0, };
 
 	/* For IP encap, the L2TP sid is the first 32-bits. */
-	lh = skb_header_poपूर्णांकer(skb, thoff, माप(lhbuf), &lhbuf);
-	अगर (lh == शून्य)
-		वापस false;
-	अगर (lh->val32 == 0) अणु
+	lh = skb_header_pointer(skb, thoff, sizeof(lhbuf), &lhbuf);
+	if (lh == NULL)
+		return false;
+	if (lh->val32 == 0) {
 		/* Must be a control packet. The L2TP tid is further
-		 * पूर्णांकo the packet.
+		 * into the packet.
 		 */
 		data.type = XT_L2TP_TYPE_CONTROL;
-		lh = skb_header_poपूर्णांकer(skb, thoff + 8, माप(lhbuf),
+		lh = skb_header_pointer(skb, thoff + 8, sizeof(lhbuf),
 					&lhbuf);
-		अगर (lh == शून्य)
-			वापस false;
+		if (lh == NULL)
+			return false;
 		data.tid = ntohl(lh->val32);
-	पूर्ण अन्यथा अणु
+	} else {
 		data.sid = ntohl(lh->val32);
 		data.type = XT_L2TP_TYPE_DATA;
-	पूर्ण
+	}
 
 	data.version = 3;
 
-	वापस l2tp_match(info, &data);
-पूर्ण
+	return l2tp_match(info, &data);
+}
 
-अटल bool l2tp_mt4(स्थिर काष्ठा sk_buff *skb, काष्ठा xt_action_param *par)
-अणु
-	काष्ठा iphdr *iph = ip_hdr(skb);
+static bool l2tp_mt4(const struct sk_buff *skb, struct xt_action_param *par)
+{
+	struct iphdr *iph = ip_hdr(skb);
 	u8 ipproto = iph->protocol;
 
-	/* l2tp_mt_check4 alपढ़ोy restricts the transport protocol */
-	चयन (ipproto) अणु
-	हाल IPPROTO_UDP:
-		वापस l2tp_udp_mt(skb, par, par->thoff);
-	हाल IPPROTO_L2TP:
-		वापस l2tp_ip_mt(skb, par, par->thoff);
-	पूर्ण
+	/* l2tp_mt_check4 already restricts the transport protocol */
+	switch (ipproto) {
+	case IPPROTO_UDP:
+		return l2tp_udp_mt(skb, par, par->thoff);
+	case IPPROTO_L2TP:
+		return l2tp_ip_mt(skb, par, par->thoff);
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-#अगर IS_ENABLED(CONFIG_IP6_NF_IPTABLES)
-अटल bool l2tp_mt6(स्थिर काष्ठा sk_buff *skb, काष्ठा xt_action_param *par)
-अणु
-	अचिन्हित पूर्णांक thoff = 0;
-	अचिन्हित लघु fragoff = 0;
-	पूर्णांक ipproto;
+#if IS_ENABLED(CONFIG_IP6_NF_IPTABLES)
+static bool l2tp_mt6(const struct sk_buff *skb, struct xt_action_param *par)
+{
+	unsigned int thoff = 0;
+	unsigned short fragoff = 0;
+	int ipproto;
 
-	ipproto = ipv6_find_hdr(skb, &thoff, -1, &fragoff, शून्य);
-	अगर (fragoff != 0)
-		वापस false;
+	ipproto = ipv6_find_hdr(skb, &thoff, -1, &fragoff, NULL);
+	if (fragoff != 0)
+		return false;
 
-	/* l2tp_mt_check6 alपढ़ोy restricts the transport protocol */
-	चयन (ipproto) अणु
-	हाल IPPROTO_UDP:
-		वापस l2tp_udp_mt(skb, par, thoff);
-	हाल IPPROTO_L2TP:
-		वापस l2tp_ip_mt(skb, par, thoff);
-	पूर्ण
+	/* l2tp_mt_check6 already restricts the transport protocol */
+	switch (ipproto) {
+	case IPPROTO_UDP:
+		return l2tp_udp_mt(skb, par, thoff);
+	case IPPROTO_L2TP:
+		return l2tp_ip_mt(skb, par, thoff);
+	}
 
-	वापस false;
-पूर्ण
-#पूर्ण_अगर
+	return false;
+}
+#endif
 
-अटल पूर्णांक l2tp_mt_check(स्थिर काष्ठा xt_mtchk_param *par)
-अणु
-	स्थिर काष्ठा xt_l2tp_info *info = par->matchinfo;
+static int l2tp_mt_check(const struct xt_mtchk_param *par)
+{
+	const struct xt_l2tp_info *info = par->matchinfo;
 
-	/* Check क्रम invalid flags */
-	अगर (info->flags & ~(XT_L2TP_TID | XT_L2TP_SID | XT_L2TP_VERSION |
-			    XT_L2TP_TYPE)) अणु
+	/* Check for invalid flags */
+	if (info->flags & ~(XT_L2TP_TID | XT_L2TP_SID | XT_L2TP_VERSION |
+			    XT_L2TP_TYPE)) {
 		pr_info_ratelimited("unknown flags: %x\n", info->flags);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* At least one of tid, sid or type=control must be specअगरied */
-	अगर ((!(info->flags & XT_L2TP_TID)) &&
+	/* At least one of tid, sid or type=control must be specified */
+	if ((!(info->flags & XT_L2TP_TID)) &&
 	    (!(info->flags & XT_L2TP_SID)) &&
 	    ((!(info->flags & XT_L2TP_TYPE)) ||
-	     (info->type != XT_L2TP_TYPE_CONTROL))) अणु
+	     (info->type != XT_L2TP_TYPE_CONTROL))) {
 		pr_info_ratelimited("invalid flags combination: %x\n",
 				    info->flags);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* If version 2 is specअगरied, check that incompatible params
+	/* If version 2 is specified, check that incompatible params
 	 * are not supplied
 	 */
-	अगर (info->flags & XT_L2TP_VERSION) अणु
-		अगर ((info->version < 2) || (info->version > 3)) अणु
+	if (info->flags & XT_L2TP_VERSION) {
+		if ((info->version < 2) || (info->version > 3)) {
 			pr_info_ratelimited("wrong L2TP version: %u\n",
 					    info->version);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगर (info->version == 2) अणु
-			अगर ((info->flags & XT_L2TP_TID) &&
-			    (info->tid > 0xffff)) अणु
+		if (info->version == 2) {
+			if ((info->flags & XT_L2TP_TID) &&
+			    (info->tid > 0xffff)) {
 				pr_info_ratelimited("v2 tid > 0xffff: %u\n",
 						    info->tid);
-				वापस -EINVAL;
-			पूर्ण
-			अगर ((info->flags & XT_L2TP_SID) &&
-			    (info->sid > 0xffff)) अणु
+				return -EINVAL;
+			}
+			if ((info->flags & XT_L2TP_SID) &&
+			    (info->sid > 0xffff)) {
 				pr_info_ratelimited("v2 sid > 0xffff: %u\n",
 						    info->sid);
-				वापस -EINVAL;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				return -EINVAL;
+			}
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक l2tp_mt_check4(स्थिर काष्ठा xt_mtchk_param *par)
-अणु
-	स्थिर काष्ठा xt_l2tp_info *info = par->matchinfo;
-	स्थिर काष्ठा ipt_entry *e = par->entryinfo;
-	स्थिर काष्ठा ipt_ip *ip = &e->ip;
-	पूर्णांक ret;
-
-	ret = l2tp_mt_check(par);
-	अगर (ret != 0)
-		वापस ret;
-
-	अगर ((ip->proto != IPPROTO_UDP) &&
-	    (ip->proto != IPPROTO_L2TP)) अणु
-		pr_info_ratelimited("missing protocol rule (udp|l2tpip)\n");
-		वापस -EINVAL;
-	पूर्ण
-
-	अगर ((ip->proto == IPPROTO_L2TP) &&
-	    (info->version == 2)) अणु
-		pr_info_ratelimited("v2 doesn't support IP mode\n");
-		वापस -EINVAL;
-	पूर्ण
-
-	वापस 0;
-पूर्ण
-
-#अगर IS_ENABLED(CONFIG_IP6_NF_IPTABLES)
-अटल पूर्णांक l2tp_mt_check6(स्थिर काष्ठा xt_mtchk_param *par)
-अणु
-	स्थिर काष्ठा xt_l2tp_info *info = par->matchinfo;
-	स्थिर काष्ठा ip6t_entry *e = par->entryinfo;
-	स्थिर काष्ठा ip6t_ip6 *ip = &e->ipv6;
-	पूर्णांक ret;
+static int l2tp_mt_check4(const struct xt_mtchk_param *par)
+{
+	const struct xt_l2tp_info *info = par->matchinfo;
+	const struct ipt_entry *e = par->entryinfo;
+	const struct ipt_ip *ip = &e->ip;
+	int ret;
 
 	ret = l2tp_mt_check(par);
-	अगर (ret != 0)
-		वापस ret;
+	if (ret != 0)
+		return ret;
 
-	अगर ((ip->proto != IPPROTO_UDP) &&
-	    (ip->proto != IPPROTO_L2TP)) अणु
+	if ((ip->proto != IPPROTO_UDP) &&
+	    (ip->proto != IPPROTO_L2TP)) {
 		pr_info_ratelimited("missing protocol rule (udp|l2tpip)\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर ((ip->proto == IPPROTO_L2TP) &&
-	    (info->version == 2)) अणु
+	if ((ip->proto == IPPROTO_L2TP) &&
+	    (info->version == 2)) {
 		pr_info_ratelimited("v2 doesn't support IP mode\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
 
-अटल काष्ठा xt_match l2tp_mt_reg[] __पढ़ो_mostly = अणु
-	अणु
+#if IS_ENABLED(CONFIG_IP6_NF_IPTABLES)
+static int l2tp_mt_check6(const struct xt_mtchk_param *par)
+{
+	const struct xt_l2tp_info *info = par->matchinfo;
+	const struct ip6t_entry *e = par->entryinfo;
+	const struct ip6t_ip6 *ip = &e->ipv6;
+	int ret;
+
+	ret = l2tp_mt_check(par);
+	if (ret != 0)
+		return ret;
+
+	if ((ip->proto != IPPROTO_UDP) &&
+	    (ip->proto != IPPROTO_L2TP)) {
+		pr_info_ratelimited("missing protocol rule (udp|l2tpip)\n");
+		return -EINVAL;
+	}
+
+	if ((ip->proto == IPPROTO_L2TP) &&
+	    (info->version == 2)) {
+		pr_info_ratelimited("v2 doesn't support IP mode\n");
+		return -EINVAL;
+	}
+
+	return 0;
+}
+#endif
+
+static struct xt_match l2tp_mt_reg[] __read_mostly = {
+	{
 		.name      = "l2tp",
 		.revision  = 0,
 		.family    = NFPROTO_IPV4,
 		.match     = l2tp_mt4,
-		.matchsize = XT_ALIGN(माप(काष्ठा xt_l2tp_info)),
+		.matchsize = XT_ALIGN(sizeof(struct xt_l2tp_info)),
 		.checkentry = l2tp_mt_check4,
 		.hooks     = ((1 << NF_INET_PRE_ROUTING) |
 			      (1 << NF_INET_LOCAL_IN) |
 			      (1 << NF_INET_LOCAL_OUT) |
 			      (1 << NF_INET_FORWARD)),
 		.me        = THIS_MODULE,
-	पूर्ण,
-#अगर IS_ENABLED(CONFIG_IP6_NF_IPTABLES)
-	अणु
+	},
+#if IS_ENABLED(CONFIG_IP6_NF_IPTABLES)
+	{
 		.name      = "l2tp",
 		.revision  = 0,
 		.family    = NFPROTO_IPV6,
 		.match     = l2tp_mt6,
-		.matchsize = XT_ALIGN(माप(काष्ठा xt_l2tp_info)),
+		.matchsize = XT_ALIGN(sizeof(struct xt_l2tp_info)),
 		.checkentry = l2tp_mt_check6,
 		.hooks     = ((1 << NF_INET_PRE_ROUTING) |
 			      (1 << NF_INET_LOCAL_IN) |
 			      (1 << NF_INET_LOCAL_OUT) |
 			      (1 << NF_INET_FORWARD)),
 		.me        = THIS_MODULE,
-	पूर्ण,
-#पूर्ण_अगर
-पूर्ण;
+	},
+#endif
+};
 
-अटल पूर्णांक __init l2tp_mt_init(व्योम)
-अणु
-	वापस xt_रेजिस्टर_matches(&l2tp_mt_reg[0], ARRAY_SIZE(l2tp_mt_reg));
-पूर्ण
+static int __init l2tp_mt_init(void)
+{
+	return xt_register_matches(&l2tp_mt_reg[0], ARRAY_SIZE(l2tp_mt_reg));
+}
 
-अटल व्योम __निकास l2tp_mt_निकास(व्योम)
-अणु
-	xt_unरेजिस्टर_matches(&l2tp_mt_reg[0], ARRAY_SIZE(l2tp_mt_reg));
-पूर्ण
+static void __exit l2tp_mt_exit(void)
+{
+	xt_unregister_matches(&l2tp_mt_reg[0], ARRAY_SIZE(l2tp_mt_reg));
+}
 
 module_init(l2tp_mt_init);
-module_निकास(l2tp_mt_निकास);
+module_exit(l2tp_mt_exit);

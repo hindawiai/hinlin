@@ -1,31 +1,30 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __PERF_VDSO__
-#घोषणा __PERF_VDSO__
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __PERF_VDSO__
+#define __PERF_VDSO__
 
-#समावेश <linux/types.h>
-#समावेश <माला.स>
-#समावेश <stdbool.h>
+#include <linux/types.h>
+#include <string.h>
+#include <stdbool.h>
 
-#घोषणा VDSO__MAP_NAME "[vdso]"
+#define VDSO__MAP_NAME "[vdso]"
 
-#घोषणा DSO__NAME_VDSO    "[vdso]"
-#घोषणा DSO__NAME_VDSO32  "[vdso32]"
-#घोषणा DSO__NAME_VDSOX32 "[vdsox32]"
+#define DSO__NAME_VDSO    "[vdso]"
+#define DSO__NAME_VDSO32  "[vdso32]"
+#define DSO__NAME_VDSOX32 "[vdsox32]"
 
-अटल अंतरभूत bool is_vdso_map(स्थिर अक्षर *filename)
-अणु
-	वापस !म_भेद(filename, VDSO__MAP_NAME);
-पूर्ण
+static inline bool is_vdso_map(const char *filename)
+{
+	return !strcmp(filename, VDSO__MAP_NAME);
+}
 
-काष्ठा dso;
+struct dso;
 
-bool dso__is_vdso(काष्ठा dso *dso);
+bool dso__is_vdso(struct dso *dso);
 
-काष्ठा machine;
-काष्ठा thपढ़ो;
+struct machine;
+struct thread;
 
-काष्ठा dso *machine__findnew_vdso(काष्ठा machine *machine, काष्ठा thपढ़ो *thपढ़ो);
-व्योम machine__निकास_vdso(काष्ठा machine *machine);
+struct dso *machine__findnew_vdso(struct machine *machine, struct thread *thread);
+void machine__exit_vdso(struct machine *machine);
 
-#पूर्ण_अगर /* __PERF_VDSO__ */
+#endif /* __PERF_VDSO__ */

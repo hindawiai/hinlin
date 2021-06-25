@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2020 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  *  and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,14 +23,14 @@
  *
  */
 
-#अगर_अघोषित __DC_PANEL_CNTL__DCN301_H__
-#घोषणा __DC_PANEL_CNTL__DCN301_H__
+#ifndef __DC_PANEL_CNTL__DCN301_H__
+#define __DC_PANEL_CNTL__DCN301_H__
 
-#समावेश "panel_cntl.h"
-#समावेश "dce/dce_panel_cntl.h"
+#include "panel_cntl.h"
+#include "dce/dce_panel_cntl.h"
 
 
-#घोषणा DCN301_PANEL_CNTL_REG_LIST(id)\
+#define DCN301_PANEL_CNTL_REG_LIST(id)\
 	SRIR(PWRSEQ_CNTL, CNTL, PANEL_PWRSEQ, id), \
 	SRIR(PWRSEQ_STATE, STATE, PANEL_PWRSEQ, id), \
 	SRIR(PWRSEQ_REF_DIV, REF_DIV, PANEL_PWRSEQ, id), \
@@ -40,10 +39,10 @@
 	SRIR(BL_PWM_PERIOD_CNTL, PERIOD_CNTL, BL_PWM, id), \
 	SRIR(BL_PWM_GRP1_REG_LOCK, GRP1_REG_LOCK, BL_PWM, id)
 
-#घोषणा DCN301_PANEL_CNTL_SF(reg_name, field_name, post_fix)\
+#define DCN301_PANEL_CNTL_SF(reg_name, field_name, post_fix)\
 	.field_name = reg_name ## __ ## field_name ## post_fix
 
-#घोषणा DCN301_PANEL_CNTL_MASK_SH_LIST(mask_sh) \
+#define DCN301_PANEL_CNTL_MASK_SH_LIST(mask_sh) \
 	DCN301_PANEL_CNTL_SF(PANEL_PWRSEQ0_CNTL, PANEL_BLON, mask_sh),\
 	DCN301_PANEL_CNTL_SF(PANEL_PWRSEQ0_CNTL, PANEL_DIGON, mask_sh),\
 	DCN301_PANEL_CNTL_SF(PANEL_PWRSEQ0_CNTL, PANEL_DIGON_OVRD, mask_sh),\
@@ -58,7 +57,7 @@
 	DCN301_PANEL_CNTL_SF(BL_PWM0_GRP1_REG_LOCK, BL_PWM_GRP1_REG_LOCK, mask_sh), \
 	DCN301_PANEL_CNTL_SF(BL_PWM0_GRP1_REG_LOCK, BL_PWM_GRP1_REG_UPDATE_PENDING, mask_sh)
 
-#घोषणा DCN301_PANEL_CNTL_REG_FIELD_LIST(type) \
+#define DCN301_PANEL_CNTL_REG_FIELD_LIST(type) \
 	type PANEL_BLON;\
 	type PANEL_DIGON;\
 	type PANEL_DIGON_OVRD;\
@@ -73,26 +72,26 @@
 	type BL_PWM_GRP1_REG_UPDATE_PENDING; \
 	type BL_PWM_REF_DIV
 
-काष्ठा dcn301_panel_cntl_shअगरt अणु
-	DCN301_PANEL_CNTL_REG_FIELD_LIST(uपूर्णांक8_t);
-पूर्ण;
+struct dcn301_panel_cntl_shift {
+	DCN301_PANEL_CNTL_REG_FIELD_LIST(uint8_t);
+};
 
-काष्ठा dcn301_panel_cntl_mask अणु
-	DCN301_PANEL_CNTL_REG_FIELD_LIST(uपूर्णांक32_t);
-पूर्ण;
+struct dcn301_panel_cntl_mask {
+	DCN301_PANEL_CNTL_REG_FIELD_LIST(uint32_t);
+};
 
-काष्ठा dcn301_panel_cntl अणु
-	काष्ठा panel_cntl base;
-	स्थिर काष्ठा dce_panel_cntl_रेजिस्टरs *regs;
-	स्थिर काष्ठा dcn301_panel_cntl_shअगरt *shअगरt;
-	स्थिर काष्ठा dcn301_panel_cntl_mask *mask;
-पूर्ण;
+struct dcn301_panel_cntl {
+	struct panel_cntl base;
+	const struct dce_panel_cntl_registers *regs;
+	const struct dcn301_panel_cntl_shift *shift;
+	const struct dcn301_panel_cntl_mask *mask;
+};
 
-व्योम dcn301_panel_cntl_स्थिरruct(
-	काष्ठा dcn301_panel_cntl *panel_cntl,
-	स्थिर काष्ठा panel_cntl_init_data *init_data,
-	स्थिर काष्ठा dce_panel_cntl_रेजिस्टरs *regs,
-	स्थिर काष्ठा dcn301_panel_cntl_shअगरt *shअगरt,
-	स्थिर काष्ठा dcn301_panel_cntl_mask *mask);
+void dcn301_panel_cntl_construct(
+	struct dcn301_panel_cntl *panel_cntl,
+	const struct panel_cntl_init_data *init_data,
+	const struct dce_panel_cntl_registers *regs,
+	const struct dcn301_panel_cntl_shift *shift,
+	const struct dcn301_panel_cntl_mask *mask);
 
-#पूर्ण_अगर /* __DC_PANEL_CNTL__DCN301_H__ */
+#endif /* __DC_PANEL_CNTL__DCN301_H__ */

@@ -1,11 +1,10 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/font.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/font.h>
 
-#घोषणा FONTDATAMAX 2048
+#define FONTDATAMAX 2048
 
-अटल स्थिर काष्ठा font_data fontdata_6x8 = अणु
-	अणु 0, 0, FONTDATAMAX, 0 पूर्ण, अणु
+static const struct font_data fontdata_6x8 = {
+	{ 0, 0, FONTDATAMAX, 0 }, {
 	/* 0 0x00 '^@' */
 	0x00, /* 000000 */
 	0x00, /* 000000 */
@@ -2565,14 +2564,14 @@
 	0x00, /* 000000 */
 	0x00, /* 000000 */
 	0x00, /* 000000 */
-पूर्ण पूर्ण;
+} };
 
-स्थिर काष्ठा font_desc font_6x8 = अणु
+const struct font_desc font_6x8 = {
 	.idx	= FONT6x8_IDX,
 	.name	= "6x8",
 	.width	= 6,
 	.height	= 8,
-	.अक्षरcount = 256,
+	.charcount = 256,
 	.data	= fontdata_6x8.data,
 	.pref	= 0,
-पूर्ण;
+};

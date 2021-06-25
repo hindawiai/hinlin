@@ -1,24 +1,23 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2011 Texas Instruments Incorporated - https://www.ti.com/
  * Author: Rob Clark <rob@ti.com>
  */
 
-#समावेश <linux/dma-mapping.h>
+#include <linux/dma-mapping.h>
 
-#समावेश <drm/drm_modeset_helper.h>
-#समावेश <drm/drm_fourcc.h>
-#समावेश <drm/drm_gem_framebuffer_helper.h>
+#include <drm/drm_modeset_helper.h>
+#include <drm/drm_fourcc.h>
+#include <drm/drm_gem_framebuffer_helper.h>
 
-#समावेश "omap_dmm_tiler.h"
-#समावेश "omap_drv.h"
+#include "omap_dmm_tiler.h"
+#include "omap_drv.h"
 
 /*
  * framebuffer funcs
  */
 
-अटल स्थिर u32 क्रमmats[] = अणु
+static const u32 formats[] = {
 	/* 16bpp [A]RGB: */
 	DRM_FORMAT_RGB565, /* RGB16-565 */
 	DRM_FORMAT_RGBX4444, /* RGB12x-4444 */
@@ -38,107 +37,107 @@
 	DRM_FORMAT_NV12,
 	DRM_FORMAT_YUYV,
 	DRM_FORMAT_UYVY,
-पूर्ण;
+};
 
-/* per-plane info क्रम the fb: */
-काष्ठा plane अणु
+/* per-plane info for the fb: */
+struct plane {
 	dma_addr_t dma_addr;
-पूर्ण;
+};
 
-#घोषणा to_omap_framebuffer(x) container_of(x, काष्ठा omap_framebuffer, base)
+#define to_omap_framebuffer(x) container_of(x, struct omap_framebuffer, base)
 
-काष्ठा omap_framebuffer अणु
-	काष्ठा drm_framebuffer base;
-	पूर्णांक pin_count;
-	स्थिर काष्ठा drm_क्रमmat_info *क्रमmat;
-	काष्ठा plane planes[2];
-	/* lock क्रम pinning (pin_count and planes.dma_addr) */
-	काष्ठा mutex lock;
-पूर्ण;
+struct omap_framebuffer {
+	struct drm_framebuffer base;
+	int pin_count;
+	const struct drm_format_info *format;
+	struct plane planes[2];
+	/* lock for pinning (pin_count and planes.dma_addr) */
+	struct mutex lock;
+};
 
-अटल पूर्णांक omap_framebuffer_dirty(काष्ठा drm_framebuffer *fb,
-				  काष्ठा drm_file *file_priv,
-				  अचिन्हित flags, अचिन्हित color,
-				  काष्ठा drm_clip_rect *clips,
-				  अचिन्हित num_clips)
-अणु
-	काष्ठा drm_crtc *crtc;
+static int omap_framebuffer_dirty(struct drm_framebuffer *fb,
+				  struct drm_file *file_priv,
+				  unsigned flags, unsigned color,
+				  struct drm_clip_rect *clips,
+				  unsigned num_clips)
+{
+	struct drm_crtc *crtc;
 
 	drm_modeset_lock_all(fb->dev);
 
-	drm_क्रम_each_crtc(crtc, fb->dev)
+	drm_for_each_crtc(crtc, fb->dev)
 		omap_crtc_flush(crtc);
 
 	drm_modeset_unlock_all(fb->dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा drm_framebuffer_funcs omap_framebuffer_funcs = अणु
+static const struct drm_framebuffer_funcs omap_framebuffer_funcs = {
 	.create_handle = drm_gem_fb_create_handle,
 	.dirty = omap_framebuffer_dirty,
 	.destroy = drm_gem_fb_destroy,
-पूर्ण;
+};
 
-अटल u32 get_linear_addr(काष्ठा drm_framebuffer *fb,
-		स्थिर काष्ठा drm_क्रमmat_info *क्रमmat, पूर्णांक n, पूर्णांक x, पूर्णांक y)
-अणु
-	काष्ठा omap_framebuffer *omap_fb = to_omap_framebuffer(fb);
-	काष्ठा plane *plane = &omap_fb->planes[n];
+static u32 get_linear_addr(struct drm_framebuffer *fb,
+		const struct drm_format_info *format, int n, int x, int y)
+{
+	struct omap_framebuffer *omap_fb = to_omap_framebuffer(fb);
+	struct plane *plane = &omap_fb->planes[n];
 	u32 offset;
 
 	offset = fb->offsets[n]
-	       + (x * क्रमmat->cpp[n] / (n == 0 ? 1 : क्रमmat->hsub))
-	       + (y * fb->pitches[n] / (n == 0 ? 1 : क्रमmat->vsub));
+	       + (x * format->cpp[n] / (n == 0 ? 1 : format->hsub))
+	       + (y * fb->pitches[n] / (n == 0 ? 1 : format->vsub));
 
-	वापस plane->dma_addr + offset;
-पूर्ण
+	return plane->dma_addr + offset;
+}
 
-bool omap_framebuffer_supports_rotation(काष्ठा drm_framebuffer *fb)
-अणु
-	वापस omap_gem_flags(fb->obj[0]) & OMAP_BO_TILED_MASK;
-पूर्ण
+bool omap_framebuffer_supports_rotation(struct drm_framebuffer *fb)
+{
+	return omap_gem_flags(fb->obj[0]) & OMAP_BO_TILED_MASK;
+}
 
-/* Note: DRM rotates counter-घड़ीwise, TILER & DSS rotates घड़ीwise */
-अटल u32 drm_rotation_to_tiler(अचिन्हित पूर्णांक drm_rot)
-अणु
+/* Note: DRM rotates counter-clockwise, TILER & DSS rotates clockwise */
+static u32 drm_rotation_to_tiler(unsigned int drm_rot)
+{
 	u32 orient;
 
-	चयन (drm_rot & DRM_MODE_ROTATE_MASK) अणु
-	शेष:
-	हाल DRM_MODE_ROTATE_0:
+	switch (drm_rot & DRM_MODE_ROTATE_MASK) {
+	default:
+	case DRM_MODE_ROTATE_0:
 		orient = 0;
-		अवरोध;
-	हाल DRM_MODE_ROTATE_90:
+		break;
+	case DRM_MODE_ROTATE_90:
 		orient = MASK_XY_FLIP | MASK_X_INVERT;
-		अवरोध;
-	हाल DRM_MODE_ROTATE_180:
+		break;
+	case DRM_MODE_ROTATE_180:
 		orient = MASK_X_INVERT | MASK_Y_INVERT;
-		अवरोध;
-	हाल DRM_MODE_ROTATE_270:
+		break;
+	case DRM_MODE_ROTATE_270:
 		orient = MASK_XY_FLIP | MASK_Y_INVERT;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (drm_rot & DRM_MODE_REFLECT_X)
+	if (drm_rot & DRM_MODE_REFLECT_X)
 		orient ^= MASK_X_INVERT;
 
-	अगर (drm_rot & DRM_MODE_REFLECT_Y)
+	if (drm_rot & DRM_MODE_REFLECT_Y)
 		orient ^= MASK_Y_INVERT;
 
-	वापस orient;
-पूर्ण
+	return orient;
+}
 
-/* update ovl info क्रम scanout, handles हालs of multi-planar fb's, etc.
+/* update ovl info for scanout, handles cases of multi-planar fb's, etc.
  */
-व्योम omap_framebuffer_update_scanout(काष्ठा drm_framebuffer *fb,
-		काष्ठा drm_plane_state *state, काष्ठा omap_overlay_info *info)
-अणु
-	काष्ठा omap_framebuffer *omap_fb = to_omap_framebuffer(fb);
-	स्थिर काष्ठा drm_क्रमmat_info *क्रमmat = omap_fb->क्रमmat;
+void omap_framebuffer_update_scanout(struct drm_framebuffer *fb,
+		struct drm_plane_state *state, struct omap_overlay_info *info)
+{
+	struct omap_framebuffer *omap_fb = to_omap_framebuffer(fb);
+	const struct drm_format_info *format = omap_fb->format;
 	u32 x, y, orient = 0;
 
-	info->fourcc = fb->क्रमmat->क्रमmat;
+	info->fourcc = fb->format->format;
 
 	info->pos_x      = state->crtc_x;
 	info->pos_y      = state->crtc_y;
@@ -148,13 +147,13 @@ bool omap_framebuffer_supports_rotation(काष्ठा drm_framebuffer *fb)
 	info->height     = state->src_h >> 16;
 
 	/* DSS driver wants the w & h in rotated orientation */
-	अगर (drm_rotation_90_or_270(state->rotation))
+	if (drm_rotation_90_or_270(state->rotation))
 		swap(info->width, info->height);
 
 	x = state->src_x >> 16;
 	y = state->src_y >> 16;
 
-	अगर (omap_gem_flags(fb->obj[0]) & OMAP_BO_TILED_MASK) अणु
+	if (omap_gem_flags(fb->obj[0]) & OMAP_BO_TILED_MASK) {
 		u32 w = state->src_w >> 16;
 		u32 h = state->src_h >> 16;
 
@@ -163,19 +162,19 @@ bool omap_framebuffer_supports_rotation(काष्ठा drm_framebuffer *fb)
 		/*
 		 * omap_gem_rotated_paddr() wants the x & y in tiler units.
 		 * Usually tiler unit size is the same as the pixel size, except
-		 * क्रम YUV422 क्रमmats, क्रम which the tiler unit size is 32 bits
+		 * for YUV422 formats, for which the tiler unit size is 32 bits
 		 * and pixel size is 16 bits.
 		 */
-		अगर (fb->क्रमmat->क्रमmat == DRM_FORMAT_UYVY ||
-				fb->क्रमmat->क्रमmat == DRM_FORMAT_YUYV) अणु
+		if (fb->format->format == DRM_FORMAT_UYVY ||
+				fb->format->format == DRM_FORMAT_YUYV) {
 			x /= 2;
 			w /= 2;
-		पूर्ण
+		}
 
-		/* adjust x,y offset क्रम invert: */
-		अगर (orient & MASK_Y_INVERT)
+		/* adjust x,y offset for invert: */
+		if (orient & MASK_Y_INVERT)
 			y += h - 1;
-		अगर (orient & MASK_X_INVERT)
+		if (orient & MASK_X_INVERT)
 			x += w - 1;
 
 		/* Note: x and y are in TILER units, not pixels */
@@ -185,242 +184,242 @@ bool omap_framebuffer_supports_rotation(काष्ठा drm_framebuffer *fb)
 		info->rotation = state->rotation ?: DRM_MODE_ROTATE_0;
 		/* Note: stride in TILER units, not pixels */
 		info->screen_width  = omap_gem_tiled_stride(fb->obj[0], orient);
-	पूर्ण अन्यथा अणु
-		चयन (state->rotation & DRM_MODE_ROTATE_MASK) अणु
-		हाल 0:
-		हाल DRM_MODE_ROTATE_0:
+	} else {
+		switch (state->rotation & DRM_MODE_ROTATE_MASK) {
+		case 0:
+		case DRM_MODE_ROTATE_0:
 			/* OK */
-			अवरोध;
+			break;
 
-		शेष:
+		default:
 			dev_warn(fb->dev->dev,
 				"rotation '%d' ignored for non-tiled fb\n",
 				state->rotation);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		info->paddr         = get_linear_addr(fb, क्रमmat, 0, x, y);
+		info->paddr         = get_linear_addr(fb, format, 0, x, y);
 		info->rotation_type = OMAP_DSS_ROT_NONE;
 		info->rotation      = DRM_MODE_ROTATE_0;
 		info->screen_width  = fb->pitches[0];
-	पूर्ण
+	}
 
 	/* convert to pixels: */
-	info->screen_width /= क्रमmat->cpp[0];
+	info->screen_width /= format->cpp[0];
 
-	अगर (fb->क्रमmat->क्रमmat == DRM_FORMAT_NV12) अणु
-		अगर (info->rotation_type == OMAP_DSS_ROT_TILER) अणु
+	if (fb->format->format == DRM_FORMAT_NV12) {
+		if (info->rotation_type == OMAP_DSS_ROT_TILER) {
 			WARN_ON(!(omap_gem_flags(fb->obj[1]) & OMAP_BO_TILED_MASK));
 			omap_gem_rotated_dma_addr(fb->obj[1], orient, x/2, y/2,
 						  &info->p_uv_addr);
-		पूर्ण अन्यथा अणु
-			info->p_uv_addr = get_linear_addr(fb, क्रमmat, 1, x, y);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		} else {
+			info->p_uv_addr = get_linear_addr(fb, format, 1, x, y);
+		}
+	} else {
 		info->p_uv_addr = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* pin, prepare क्रम scanout: */
-पूर्णांक omap_framebuffer_pin(काष्ठा drm_framebuffer *fb)
-अणु
-	काष्ठा omap_framebuffer *omap_fb = to_omap_framebuffer(fb);
-	पूर्णांक ret, i, n = fb->क्रमmat->num_planes;
+/* pin, prepare for scanout: */
+int omap_framebuffer_pin(struct drm_framebuffer *fb)
+{
+	struct omap_framebuffer *omap_fb = to_omap_framebuffer(fb);
+	int ret, i, n = fb->format->num_planes;
 
 	mutex_lock(&omap_fb->lock);
 
-	अगर (omap_fb->pin_count > 0) अणु
+	if (omap_fb->pin_count > 0) {
 		omap_fb->pin_count++;
 		mutex_unlock(&omap_fb->lock);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	क्रम (i = 0; i < n; i++) अणु
-		काष्ठा plane *plane = &omap_fb->planes[i];
+	for (i = 0; i < n; i++) {
+		struct plane *plane = &omap_fb->planes[i];
 		ret = omap_gem_pin(fb->obj[i], &plane->dma_addr);
-		अगर (ret)
-			जाओ fail;
+		if (ret)
+			goto fail;
 		omap_gem_dma_sync_buffer(fb->obj[i], DMA_TO_DEVICE);
-	पूर्ण
+	}
 
 	omap_fb->pin_count++;
 
 	mutex_unlock(&omap_fb->lock);
 
-	वापस 0;
+	return 0;
 
 fail:
-	क्रम (i--; i >= 0; i--) अणु
-		काष्ठा plane *plane = &omap_fb->planes[i];
+	for (i--; i >= 0; i--) {
+		struct plane *plane = &omap_fb->planes[i];
 		omap_gem_unpin(fb->obj[i]);
 		plane->dma_addr = 0;
-	पूर्ण
+	}
 
 	mutex_unlock(&omap_fb->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* unpin, no दीर्घer being scanned out: */
-व्योम omap_framebuffer_unpin(काष्ठा drm_framebuffer *fb)
-अणु
-	काष्ठा omap_framebuffer *omap_fb = to_omap_framebuffer(fb);
-	पूर्णांक i, n = fb->क्रमmat->num_planes;
+/* unpin, no longer being scanned out: */
+void omap_framebuffer_unpin(struct drm_framebuffer *fb)
+{
+	struct omap_framebuffer *omap_fb = to_omap_framebuffer(fb);
+	int i, n = fb->format->num_planes;
 
 	mutex_lock(&omap_fb->lock);
 
 	omap_fb->pin_count--;
 
-	अगर (omap_fb->pin_count > 0) अणु
+	if (omap_fb->pin_count > 0) {
 		mutex_unlock(&omap_fb->lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	क्रम (i = 0; i < n; i++) अणु
-		काष्ठा plane *plane = &omap_fb->planes[i];
+	for (i = 0; i < n; i++) {
+		struct plane *plane = &omap_fb->planes[i];
 		omap_gem_unpin(fb->obj[i]);
 		plane->dma_addr = 0;
-	पूर्ण
+	}
 
 	mutex_unlock(&omap_fb->lock);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_DEBUG_FS
-व्योम omap_framebuffer_describe(काष्ठा drm_framebuffer *fb, काष्ठा seq_file *m)
-अणु
-	पूर्णांक i, n = fb->क्रमmat->num_planes;
+#ifdef CONFIG_DEBUG_FS
+void omap_framebuffer_describe(struct drm_framebuffer *fb, struct seq_file *m)
+{
+	int i, n = fb->format->num_planes;
 
-	seq_म_लिखो(m, "fb: %dx%d@%4.4s\n", fb->width, fb->height,
-			(अक्षर *)&fb->क्रमmat->क्रमmat);
+	seq_printf(m, "fb: %dx%d@%4.4s\n", fb->width, fb->height,
+			(char *)&fb->format->format);
 
-	क्रम (i = 0; i < n; i++) अणु
-		seq_म_लिखो(m, "   %d: offset=%d pitch=%d, obj: ",
+	for (i = 0; i < n; i++) {
+		seq_printf(m, "   %d: offset=%d pitch=%d, obj: ",
 				i, fb->offsets[n], fb->pitches[i]);
 		omap_gem_describe(fb->obj[i], m);
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर
+	}
+}
+#endif
 
-काष्ठा drm_framebuffer *omap_framebuffer_create(काष्ठा drm_device *dev,
-		काष्ठा drm_file *file, स्थिर काष्ठा drm_mode_fb_cmd2 *mode_cmd)
-अणु
-	स्थिर काष्ठा drm_क्रमmat_info *info = drm_get_क्रमmat_info(dev,
+struct drm_framebuffer *omap_framebuffer_create(struct drm_device *dev,
+		struct drm_file *file, const struct drm_mode_fb_cmd2 *mode_cmd)
+{
+	const struct drm_format_info *info = drm_get_format_info(dev,
 								 mode_cmd);
-	अचिन्हित पूर्णांक num_planes = info->num_planes;
-	काष्ठा drm_gem_object *bos[4];
-	काष्ठा drm_framebuffer *fb;
-	पूर्णांक i;
+	unsigned int num_planes = info->num_planes;
+	struct drm_gem_object *bos[4];
+	struct drm_framebuffer *fb;
+	int i;
 
-	क्रम (i = 0; i < num_planes; i++) अणु
+	for (i = 0; i < num_planes; i++) {
 		bos[i] = drm_gem_object_lookup(file, mode_cmd->handles[i]);
-		अगर (!bos[i]) अणु
+		if (!bos[i]) {
 			fb = ERR_PTR(-ENOENT);
-			जाओ error;
-		पूर्ण
-	पूर्ण
+			goto error;
+		}
+	}
 
 	fb = omap_framebuffer_init(dev, mode_cmd, bos);
-	अगर (IS_ERR(fb))
-		जाओ error;
+	if (IS_ERR(fb))
+		goto error;
 
-	वापस fb;
+	return fb;
 
 error:
-	जबतक (--i >= 0)
+	while (--i >= 0)
 		drm_gem_object_put(bos[i]);
 
-	वापस fb;
-पूर्ण
+	return fb;
+}
 
-काष्ठा drm_framebuffer *omap_framebuffer_init(काष्ठा drm_device *dev,
-		स्थिर काष्ठा drm_mode_fb_cmd2 *mode_cmd, काष्ठा drm_gem_object **bos)
-अणु
-	स्थिर काष्ठा drm_क्रमmat_info *क्रमmat = शून्य;
-	काष्ठा omap_framebuffer *omap_fb = शून्य;
-	काष्ठा drm_framebuffer *fb = शून्य;
-	अचिन्हित पूर्णांक pitch = mode_cmd->pitches[0];
-	पूर्णांक ret, i;
+struct drm_framebuffer *omap_framebuffer_init(struct drm_device *dev,
+		const struct drm_mode_fb_cmd2 *mode_cmd, struct drm_gem_object **bos)
+{
+	const struct drm_format_info *format = NULL;
+	struct omap_framebuffer *omap_fb = NULL;
+	struct drm_framebuffer *fb = NULL;
+	unsigned int pitch = mode_cmd->pitches[0];
+	int ret, i;
 
 	DBG("create framebuffer: dev=%p, mode_cmd=%p (%dx%d@%4.4s)",
 			dev, mode_cmd, mode_cmd->width, mode_cmd->height,
-			(अक्षर *)&mode_cmd->pixel_क्रमmat);
+			(char *)&mode_cmd->pixel_format);
 
-	क्रमmat = drm_get_क्रमmat_info(dev, mode_cmd);
+	format = drm_get_format_info(dev, mode_cmd);
 
-	क्रम (i = 0; i < ARRAY_SIZE(क्रमmats); i++) अणु
-		अगर (क्रमmats[i] == mode_cmd->pixel_क्रमmat)
-			अवरोध;
-	पूर्ण
+	for (i = 0; i < ARRAY_SIZE(formats); i++) {
+		if (formats[i] == mode_cmd->pixel_format)
+			break;
+	}
 
-	अगर (!क्रमmat || i == ARRAY_SIZE(क्रमmats)) अणु
+	if (!format || i == ARRAY_SIZE(formats)) {
 		dev_dbg(dev->dev, "unsupported pixel format: %4.4s\n",
-			(अक्षर *)&mode_cmd->pixel_क्रमmat);
+			(char *)&mode_cmd->pixel_format);
 		ret = -EINVAL;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	omap_fb = kzalloc(माप(*omap_fb), GFP_KERNEL);
-	अगर (!omap_fb) अणु
+	omap_fb = kzalloc(sizeof(*omap_fb), GFP_KERNEL);
+	if (!omap_fb) {
 		ret = -ENOMEM;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	fb = &omap_fb->base;
-	omap_fb->क्रमmat = क्रमmat;
+	omap_fb->format = format;
 	mutex_init(&omap_fb->lock);
 
 	/*
-	 * The code below assumes that no क्रमmat use more than two planes, and
-	 * that the two planes of multiplane क्रमmats need the same number of
+	 * The code below assumes that no format use more than two planes, and
+	 * that the two planes of multiplane formats need the same number of
 	 * bytes per pixel.
 	 */
-	अगर (क्रमmat->num_planes == 2 && pitch != mode_cmd->pitches[1]) अणु
+	if (format->num_planes == 2 && pitch != mode_cmd->pitches[1]) {
 		dev_dbg(dev->dev, "pitches differ between planes 0 and 1\n");
 		ret = -EINVAL;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	अगर (pitch % क्रमmat->cpp[0]) अणु
+	if (pitch % format->cpp[0]) {
 		dev_dbg(dev->dev,
 			"buffer pitch (%u bytes) is not a multiple of pixel size (%u bytes)\n",
-			pitch, क्रमmat->cpp[0]);
+			pitch, format->cpp[0]);
 		ret = -EINVAL;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	क्रम (i = 0; i < क्रमmat->num_planes; i++) अणु
-		काष्ठा plane *plane = &omap_fb->planes[i];
-		अचिन्हित पूर्णांक vsub = i == 0 ? 1 : क्रमmat->vsub;
-		अचिन्हित पूर्णांक size;
+	for (i = 0; i < format->num_planes; i++) {
+		struct plane *plane = &omap_fb->planes[i];
+		unsigned int vsub = i == 0 ? 1 : format->vsub;
+		unsigned int size;
 
 		size = pitch * mode_cmd->height / vsub;
 
-		अगर (size > omap_gem_mmap_size(bos[i]) - mode_cmd->offsets[i]) अणु
+		if (size > omap_gem_mmap_size(bos[i]) - mode_cmd->offsets[i]) {
 			dev_dbg(dev->dev,
 				"provided buffer object is too small! %zu < %d\n",
 				bos[i]->size - mode_cmd->offsets[i], size);
 			ret = -EINVAL;
-			जाओ fail;
-		पूर्ण
+			goto fail;
+		}
 
 		fb->obj[i]    = bos[i];
 		plane->dma_addr  = 0;
-	पूर्ण
+	}
 
-	drm_helper_mode_fill_fb_काष्ठा(dev, fb, mode_cmd);
+	drm_helper_mode_fill_fb_struct(dev, fb, mode_cmd);
 
 	ret = drm_framebuffer_init(dev, fb, &omap_framebuffer_funcs);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev->dev, "framebuffer init failed: %d\n", ret);
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	DBG("create: FB ID: %d (%p)", fb->base.id, fb);
 
-	वापस fb;
+	return fb;
 
 fail:
-	kमुक्त(omap_fb);
+	kfree(omap_fb);
 
-	वापस ERR_PTR(ret);
-पूर्ण
+	return ERR_PTR(ret);
+}

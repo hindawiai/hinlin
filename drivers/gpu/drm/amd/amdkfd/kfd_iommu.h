@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,64 +20,64 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#अगर_अघोषित __KFD_IOMMU_H__
-#घोषणा __KFD_IOMMU_H__
+#ifndef __KFD_IOMMU_H__
+#define __KFD_IOMMU_H__
 
-#समावेश <linux/kconfig.h>
+#include <linux/kconfig.h>
 
-#अगर IS_REACHABLE(CONFIG_AMD_IOMMU_V2)
+#if IS_REACHABLE(CONFIG_AMD_IOMMU_V2)
 
-#घोषणा KFD_SUPPORT_IOMMU_V2
+#define KFD_SUPPORT_IOMMU_V2
 
-पूर्णांक kfd_iommu_check_device(काष्ठा kfd_dev *kfd);
-पूर्णांक kfd_iommu_device_init(काष्ठा kfd_dev *kfd);
+int kfd_iommu_check_device(struct kfd_dev *kfd);
+int kfd_iommu_device_init(struct kfd_dev *kfd);
 
-पूर्णांक kfd_iommu_bind_process_to_device(काष्ठा kfd_process_device *pdd);
-व्योम kfd_iommu_unbind_process(काष्ठा kfd_process *p);
+int kfd_iommu_bind_process_to_device(struct kfd_process_device *pdd);
+void kfd_iommu_unbind_process(struct kfd_process *p);
 
-व्योम kfd_iommu_suspend(काष्ठा kfd_dev *kfd);
-पूर्णांक kfd_iommu_resume(काष्ठा kfd_dev *kfd);
+void kfd_iommu_suspend(struct kfd_dev *kfd);
+int kfd_iommu_resume(struct kfd_dev *kfd);
 
-पूर्णांक kfd_iommu_add_perf_counters(काष्ठा kfd_topology_device *kdev);
+int kfd_iommu_add_perf_counters(struct kfd_topology_device *kdev);
 
-#अन्यथा
+#else
 
-अटल अंतरभूत पूर्णांक kfd_iommu_check_device(काष्ठा kfd_dev *kfd)
-अणु
-	वापस -ENODEV;
-पूर्ण
-अटल अंतरभूत पूर्णांक kfd_iommu_device_init(काष्ठा kfd_dev *kfd)
-अणु
-#अगर IS_MODULE(CONFIG_AMD_IOMMU_V2)
+static inline int kfd_iommu_check_device(struct kfd_dev *kfd)
+{
+	return -ENODEV;
+}
+static inline int kfd_iommu_device_init(struct kfd_dev *kfd)
+{
+#if IS_MODULE(CONFIG_AMD_IOMMU_V2)
 	WARN_ONCE(1, "iommu_v2 module is not usable by built-in KFD");
-#पूर्ण_अगर
-	वापस 0;
-पूर्ण
+#endif
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक kfd_iommu_bind_process_to_device(
-	काष्ठा kfd_process_device *pdd)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत व्योम kfd_iommu_unbind_process(काष्ठा kfd_process *p)
-अणु
+static inline int kfd_iommu_bind_process_to_device(
+	struct kfd_process_device *pdd)
+{
+	return 0;
+}
+static inline void kfd_iommu_unbind_process(struct kfd_process *p)
+{
 	/* empty */
-पूर्ण
+}
 
-अटल अंतरभूत व्योम kfd_iommu_suspend(काष्ठा kfd_dev *kfd)
-अणु
+static inline void kfd_iommu_suspend(struct kfd_dev *kfd)
+{
 	/* empty */
-पूर्ण
-अटल अंतरभूत पूर्णांक kfd_iommu_resume(काष्ठा kfd_dev *kfd)
-अणु
-	वापस 0;
-पूर्ण
+}
+static inline int kfd_iommu_resume(struct kfd_dev *kfd)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक kfd_iommu_add_perf_counters(काष्ठा kfd_topology_device *kdev)
-अणु
-	वापस 0;
-पूर्ण
+static inline int kfd_iommu_add_perf_counters(struct kfd_topology_device *kdev)
+{
+	return 0;
+}
 
-#पूर्ण_अगर /* IS_REACHABLE(CONFIG_AMD_IOMMU_V2) */
+#endif /* IS_REACHABLE(CONFIG_AMD_IOMMU_V2) */
 
-#पूर्ण_अगर /* __KFD_IOMMU_H__ */
+#endif /* __KFD_IOMMU_H__ */

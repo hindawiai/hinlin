@@ -1,77 +1,76 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __LINUX_DEBUG_LOCKING_H
-#घोषणा __LINUX_DEBUG_LOCKING_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __LINUX_DEBUG_LOCKING_H
+#define __LINUX_DEBUG_LOCKING_H
 
-#समावेश <linux/atomic.h>
-#समावेश <linux/bug.h>
-#समावेश <linux/prपूर्णांकk.h>
+#include <linux/atomic.h>
+#include <linux/bug.h>
+#include <linux/printk.h>
 
-काष्ठा task_काष्ठा;
+struct task_struct;
 
-बाह्य पूर्णांक debug_locks __पढ़ो_mostly;
-बाह्य पूर्णांक debug_locks_silent __पढ़ो_mostly;
+extern int debug_locks __read_mostly;
+extern int debug_locks_silent __read_mostly;
 
 
-अटल __always_अंतरभूत पूर्णांक __debug_locks_off(व्योम)
-अणु
-	वापस xchg(&debug_locks, 0);
-पूर्ण
+static __always_inline int __debug_locks_off(void)
+{
+	return xchg(&debug_locks, 0);
+}
 
 /*
  * Generic 'turn off all lock debugging' function:
  */
-बाह्य पूर्णांक debug_locks_off(व्योम);
+extern int debug_locks_off(void);
 
-#घोषणा DEBUG_LOCKS_WARN_ON(c)						\
-(अणु									\
-	पूर्णांक __ret = 0;							\
+#define DEBUG_LOCKS_WARN_ON(c)						\
+({									\
+	int __ret = 0;							\
 									\
-	अगर (!oops_in_progress && unlikely(c)) अणु				\
-		अगर (debug_locks_off() && !debug_locks_silent)		\
+	if (!oops_in_progress && unlikely(c)) {				\
+		if (debug_locks_off() && !debug_locks_silent)		\
 			WARN(1, "DEBUG_LOCKS_WARN_ON(%s)", #c);		\
 		__ret = 1;						\
-	पूर्ण								\
+	}								\
 	__ret;								\
-पूर्ण)
+})
 
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 # define SMP_DEBUG_LOCKS_WARN_ON(c)			DEBUG_LOCKS_WARN_ON(c)
-#अन्यथा
-# define SMP_DEBUG_LOCKS_WARN_ON(c)			करो अणु पूर्ण जबतक (0)
-#पूर्ण_अगर
+#else
+# define SMP_DEBUG_LOCKS_WARN_ON(c)			do { } while (0)
+#endif
 
-#अगर_घोषित CONFIG_DEBUG_LOCKING_API_SELFTESTS
-  बाह्य व्योम locking_selftest(व्योम);
-#अन्यथा
-# define locking_selftest()	करो अणु पूर्ण जबतक (0)
-#पूर्ण_अगर
+#ifdef CONFIG_DEBUG_LOCKING_API_SELFTESTS
+  extern void locking_selftest(void);
+#else
+# define locking_selftest()	do { } while (0)
+#endif
 
-काष्ठा task_काष्ठा;
+struct task_struct;
 
-#अगर_घोषित CONFIG_LOCKDEP
-बाह्य व्योम debug_show_all_locks(व्योम);
-बाह्य व्योम debug_show_held_locks(काष्ठा task_काष्ठा *task);
-बाह्य व्योम debug_check_no_locks_मुक्तd(स्थिर व्योम *from, अचिन्हित दीर्घ len);
-बाह्य व्योम debug_check_no_locks_held(व्योम);
-#अन्यथा
-अटल अंतरभूत व्योम debug_show_all_locks(व्योम)
-अणु
-पूर्ण
+#ifdef CONFIG_LOCKDEP
+extern void debug_show_all_locks(void);
+extern void debug_show_held_locks(struct task_struct *task);
+extern void debug_check_no_locks_freed(const void *from, unsigned long len);
+extern void debug_check_no_locks_held(void);
+#else
+static inline void debug_show_all_locks(void)
+{
+}
 
-अटल अंतरभूत व्योम debug_show_held_locks(काष्ठा task_काष्ठा *task)
-अणु
-पूर्ण
+static inline void debug_show_held_locks(struct task_struct *task)
+{
+}
 
-अटल अंतरभूत व्योम
-debug_check_no_locks_मुक्तd(स्थिर व्योम *from, अचिन्हित दीर्घ len)
-अणु
-पूर्ण
+static inline void
+debug_check_no_locks_freed(const void *from, unsigned long len)
+{
+}
 
-अटल अंतरभूत व्योम
-debug_check_no_locks_held(व्योम)
-अणु
-पूर्ण
-#पूर्ण_अगर
+static inline void
+debug_check_no_locks_held(void)
+{
+}
+#endif
 
-#पूर्ण_अगर
+#endif

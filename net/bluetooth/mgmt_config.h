@@ -1,18 +1,17 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 
 /*
  * Copyright (C) 2020 Google Corporation
  */
 
-पूर्णांक पढ़ो_def_प्रणाली_config(काष्ठा sock *sk, काष्ठा hci_dev *hdev, व्योम *data,
+int read_def_system_config(struct sock *sk, struct hci_dev *hdev, void *data,
 			   u16 data_len);
 
-पूर्णांक set_def_प्रणाली_config(काष्ठा sock *sk, काष्ठा hci_dev *hdev, व्योम *data,
+int set_def_system_config(struct sock *sk, struct hci_dev *hdev, void *data,
 			  u16 data_len);
 
-पूर्णांक पढ़ो_def_runसमय_config(काष्ठा sock *sk, काष्ठा hci_dev *hdev, व्योम *data,
+int read_def_runtime_config(struct sock *sk, struct hci_dev *hdev, void *data,
 			    u16 data_len);
 
-पूर्णांक set_def_runसमय_config(काष्ठा sock *sk, काष्ठा hci_dev *hdev, व्योम *data,
+int set_def_runtime_config(struct sock *sk, struct hci_dev *hdev, void *data,
 			   u16 data_len);

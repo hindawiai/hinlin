@@ -1,50 +1,49 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Driver क्रम Altera Partial Reconfiguration IP Core
+ * Driver for Altera Partial Reconfiguration IP Core
  *
  * Copyright (C) 2016-2017 Intel Corporation
  *
  * Based on socfpga-a10.c Copyright (C) 2015-2016 Altera Corporation
- *  by Alan Tull <atull@खोलोsource.altera.com>
+ *  by Alan Tull <atull@opensource.altera.com>
  */
-#समावेश <linux/fpga/altera-pr-ip-core.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_device.h>
+#include <linux/fpga/altera-pr-ip-core.h>
+#include <linux/module.h>
+#include <linux/of_device.h>
 
-अटल पूर्णांक alt_pr_platक्रमm_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	व्योम __iomem *reg_base;
-	काष्ठा resource *res;
+static int alt_pr_platform_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	void __iomem *reg_base;
+	struct resource *res;
 
-	/* First mmio base is क्रम रेजिस्टर access */
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	/* First mmio base is for register access */
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 
 	reg_base = devm_ioremap_resource(dev, res);
 
-	अगर (IS_ERR(reg_base))
-		वापस PTR_ERR(reg_base);
+	if (IS_ERR(reg_base))
+		return PTR_ERR(reg_base);
 
-	वापस alt_pr_रेजिस्टर(dev, reg_base);
-पूर्ण
+	return alt_pr_register(dev, reg_base);
+}
 
-अटल स्थिर काष्ठा of_device_id alt_pr_of_match[] = अणु
-	अणु .compatible = "altr,a10-pr-ip", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id alt_pr_of_match[] = {
+	{ .compatible = "altr,a10-pr-ip", },
+	{},
+};
 
 MODULE_DEVICE_TABLE(of, alt_pr_of_match);
 
-अटल काष्ठा platक्रमm_driver alt_pr_platक्रमm_driver = अणु
-	.probe = alt_pr_platक्रमm_probe,
-	.driver = अणु
+static struct platform_driver alt_pr_platform_driver = {
+	.probe = alt_pr_platform_probe,
+	.driver = {
 		.name	= "alt_a10_pr_ip",
 		.of_match_table = alt_pr_of_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(alt_pr_platक्रमm_driver);
+module_platform_driver(alt_pr_platform_driver);
 MODULE_AUTHOR("Matthew Gerlach <matthew.gerlach@linux.intel.com>");
 MODULE_DESCRIPTION("Altera Partial Reconfiguration IP Platform Driver");
 MODULE_LICENSE("GPL v2");

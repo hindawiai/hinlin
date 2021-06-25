@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  The NFC Controller Interface is the communication protocol between an
  *  NFC Controller (NFCC) and a Device Host (DH).
@@ -13,62 +12,62 @@
  *  by Maxim Krasnyansky.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/types.h>
-#समावेश <linux/त्रुटिसं.स>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/errno.h>
 
-#समावेश <net/nfc/nci.h>
-#समावेश <net/nfc/nci_core.h>
+#include <net/nfc/nci.h>
+#include <net/nfc/nci_core.h>
 
-/* NCI status codes to Unix त्रुटि_सं mapping */
-पूर्णांक nci_to_त्रुटि_सं(__u8 code)
-अणु
-	चयन (code) अणु
-	हाल NCI_STATUS_OK:
-		वापस 0;
+/* NCI status codes to Unix errno mapping */
+int nci_to_errno(__u8 code)
+{
+	switch (code) {
+	case NCI_STATUS_OK:
+		return 0;
 
-	हाल NCI_STATUS_REJECTED:
-		वापस -EBUSY;
+	case NCI_STATUS_REJECTED:
+		return -EBUSY;
 
-	हाल NCI_STATUS_RF_FRAME_CORRUPTED:
-		वापस -EBADMSG;
+	case NCI_STATUS_RF_FRAME_CORRUPTED:
+		return -EBADMSG;
 
-	हाल NCI_STATUS_NOT_INITIALIZED:
-		वापस -EHOSTDOWN;
+	case NCI_STATUS_NOT_INITIALIZED:
+		return -EHOSTDOWN;
 
-	हाल NCI_STATUS_SYNTAX_ERROR:
-	हाल NCI_STATUS_SEMANTIC_ERROR:
-	हाल NCI_STATUS_INVALID_PARAM:
-	हाल NCI_STATUS_RF_PROTOCOL_ERROR:
-	हाल NCI_STATUS_NFCEE_PROTOCOL_ERROR:
-		वापस -EPROTO;
+	case NCI_STATUS_SYNTAX_ERROR:
+	case NCI_STATUS_SEMANTIC_ERROR:
+	case NCI_STATUS_INVALID_PARAM:
+	case NCI_STATUS_RF_PROTOCOL_ERROR:
+	case NCI_STATUS_NFCEE_PROTOCOL_ERROR:
+		return -EPROTO;
 
-	हाल NCI_STATUS_UNKNOWN_GID:
-	हाल NCI_STATUS_UNKNOWN_OID:
-		वापस -EBADRQC;
+	case NCI_STATUS_UNKNOWN_GID:
+	case NCI_STATUS_UNKNOWN_OID:
+		return -EBADRQC;
 
-	हाल NCI_STATUS_MESSAGE_SIZE_EXCEEDED:
-		वापस -EMSGSIZE;
+	case NCI_STATUS_MESSAGE_SIZE_EXCEEDED:
+		return -EMSGSIZE;
 
-	हाल NCI_STATUS_DISCOVERY_ALREADY_STARTED:
-		वापस -EALREADY;
+	case NCI_STATUS_DISCOVERY_ALREADY_STARTED:
+		return -EALREADY;
 
-	हाल NCI_STATUS_DISCOVERY_TARGET_ACTIVATION_FAILED:
-	हाल NCI_STATUS_NFCEE_INTERFACE_ACTIVATION_FAILED:
-		वापस -ECONNREFUSED;
+	case NCI_STATUS_DISCOVERY_TARGET_ACTIVATION_FAILED:
+	case NCI_STATUS_NFCEE_INTERFACE_ACTIVATION_FAILED:
+		return -ECONNREFUSED;
 
-	हाल NCI_STATUS_RF_TRANSMISSION_ERROR:
-	हाल NCI_STATUS_NFCEE_TRANSMISSION_ERROR:
-		वापस -ECOMM;
+	case NCI_STATUS_RF_TRANSMISSION_ERROR:
+	case NCI_STATUS_NFCEE_TRANSMISSION_ERROR:
+		return -ECOMM;
 
-	हाल NCI_STATUS_RF_TIMEOUT_ERROR:
-	हाल NCI_STATUS_NFCEE_TIMEOUT_ERROR:
-		वापस -ETIMEDOUT;
+	case NCI_STATUS_RF_TIMEOUT_ERROR:
+	case NCI_STATUS_NFCEE_TIMEOUT_ERROR:
+		return -ETIMEDOUT;
 
-	हाल NCI_STATUS_FAILED:
-	शेष:
-		वापस -ENOSYS;
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL(nci_to_त्रुटि_सं);
+	case NCI_STATUS_FAILED:
+	default:
+		return -ENOSYS;
+	}
+}
+EXPORT_SYMBOL(nci_to_errno);

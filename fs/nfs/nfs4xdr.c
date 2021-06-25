@@ -1,8 +1,7 @@
-<शैली गुरु>
 /*
  *  fs/nfs/nfs4xdr.c
  *
- *  Client-side XDR क्रम NFSv4.
+ *  Client-side XDR for NFSv4.
  *
  *  Copyright (c) 2002 The Regents of the University of Michigan.
  *  All rights reserved.
@@ -10,24 +9,24 @@
  *  Kendrick Smith <kmsmith@umich.edu>
  *  Andy Adamson   <andros@umich.edu>
  *
- *  Redistribution and use in source and binary क्रमms, with or without
- *  modअगरication, are permitted provided that the following conditions
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions
  *  are met:
  *
  *  1. Redistributions of source code must retain the above copyright
  *     notice, this list of conditions and the following disclaimer.
- *  2. Redistributions in binary क्रमm must reproduce the above copyright
+ *  2. Redistributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
- *     करोcumentation and/or other materials provided with the distribution.
+ *     documentation and/or other materials provided with the distribution.
  *  3. Neither the name of the University nor the names of its
- *     contributors may be used to enकरोrse or promote products derived
- *     from this software without specअगरic prior written permission.
+ *     contributors may be used to endorse or promote products derived
+ *     from this software without specific prior written permission.
  *
  *  THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED
  *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
  *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
  *  DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- *  FOR ANY सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ *  FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  *  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  *  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
  *  BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
@@ -36,129 +35,129 @@
  *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#समावेश <linux/param.h>
-#समावेश <linux/समय.स>
-#समावेश <linux/mm.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/माला.स>
-#समावेश <linux/in.h>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/kdev_t.h>
-#समावेश <linux/module.h>
-#समावेश <linux/utsname.h>
-#समावेश <linux/sunrpc/clnt.h>
-#समावेश <linux/sunrpc/msg_prot.h>
-#समावेश <linux/sunrpc/gss_api.h>
-#समावेश <linux/nfs.h>
-#समावेश <linux/nfs4.h>
-#समावेश <linux/nfs_fs.h>
+#include <linux/param.h>
+#include <linux/time.h>
+#include <linux/mm.h>
+#include <linux/errno.h>
+#include <linux/string.h>
+#include <linux/in.h>
+#include <linux/pagemap.h>
+#include <linux/proc_fs.h>
+#include <linux/kdev_t.h>
+#include <linux/module.h>
+#include <linux/utsname.h>
+#include <linux/sunrpc/clnt.h>
+#include <linux/sunrpc/msg_prot.h>
+#include <linux/sunrpc/gss_api.h>
+#include <linux/nfs.h>
+#include <linux/nfs4.h>
+#include <linux/nfs_fs.h>
 
-#समावेश "nfs4_fs.h"
-#समावेश "nfs4trace.h"
-#समावेश "internal.h"
-#समावेश "nfs4idmap.h"
-#समावेश "nfs4session.h"
-#समावेश "pnfs.h"
-#समावेश "netns.h"
+#include "nfs4_fs.h"
+#include "nfs4trace.h"
+#include "internal.h"
+#include "nfs4idmap.h"
+#include "nfs4session.h"
+#include "pnfs.h"
+#include "netns.h"
 
-#घोषणा NFSDBG_FACILITY		NFSDBG_XDR
+#define NFSDBG_FACILITY		NFSDBG_XDR
 
 /* Mapping from NFS error code to "errno" error code. */
-#घोषणा त्रुटि_सं_NFSERR_IO		EIO
+#define errno_NFSERR_IO		EIO
 
-काष्ठा compound_hdr;
-अटल पूर्णांक nfs4_stat_to_त्रुटि_सं(पूर्णांक);
-अटल व्योम encode_layoutget(काष्ठा xdr_stream *xdr,
-			     स्थिर काष्ठा nfs4_layoutget_args *args,
-			     काष्ठा compound_hdr *hdr);
-अटल पूर्णांक decode_layoutget(काष्ठा xdr_stream *xdr, काष्ठा rpc_rqst *req,
-			     काष्ठा nfs4_layoutget_res *res);
+struct compound_hdr;
+static int nfs4_stat_to_errno(int);
+static void encode_layoutget(struct xdr_stream *xdr,
+			     const struct nfs4_layoutget_args *args,
+			     struct compound_hdr *hdr);
+static int decode_layoutget(struct xdr_stream *xdr, struct rpc_rqst *req,
+			     struct nfs4_layoutget_res *res);
 
-/* NFSv4 COMPOUND tags are only wanted क्रम debugging purposes */
-#अगर_घोषित DEBUG
-#घोषणा NFS4_MAXTAGLEN		20
-#अन्यथा
-#घोषणा NFS4_MAXTAGLEN		0
-#पूर्ण_अगर
+/* NFSv4 COMPOUND tags are only wanted for debugging purposes */
+#ifdef DEBUG
+#define NFS4_MAXTAGLEN		20
+#else
+#define NFS4_MAXTAGLEN		0
+#endif
 
-/* lock,खोलो owner id:
+/* lock,open owner id:
  * we currently use size 2 (u64) out of (NFS4_OPAQUE_LIMIT  >> 2)
  */
-#घोषणा pagepad_maxsz		(1)
-#घोषणा खोलो_owner_id_maxsz	(1 + 2 + 1 + 1 + 2)
-#घोषणा lock_owner_id_maxsz	(1 + 1 + 4)
-#घोषणा decode_lockowner_maxsz	(1 + XDR_QUADLEN(IDMAP_NAMESZ))
-#घोषणा compound_encode_hdr_maxsz	(3 + (NFS4_MAXTAGLEN >> 2))
-#घोषणा compound_decode_hdr_maxsz	(3 + (NFS4_MAXTAGLEN >> 2))
-#घोषणा op_encode_hdr_maxsz	(1)
-#घोषणा op_decode_hdr_maxsz	(2)
-#घोषणा encode_stateid_maxsz	(XDR_QUADLEN(NFS4_STATEID_SIZE))
-#घोषणा decode_stateid_maxsz	(XDR_QUADLEN(NFS4_STATEID_SIZE))
-#घोषणा encode_verअगरier_maxsz	(XDR_QUADLEN(NFS4_VERIFIER_SIZE))
-#घोषणा decode_verअगरier_maxsz	(XDR_QUADLEN(NFS4_VERIFIER_SIZE))
-#घोषणा encode_putfh_maxsz	(op_encode_hdr_maxsz + 1 + \
+#define pagepad_maxsz		(1)
+#define open_owner_id_maxsz	(1 + 2 + 1 + 1 + 2)
+#define lock_owner_id_maxsz	(1 + 1 + 4)
+#define decode_lockowner_maxsz	(1 + XDR_QUADLEN(IDMAP_NAMESZ))
+#define compound_encode_hdr_maxsz	(3 + (NFS4_MAXTAGLEN >> 2))
+#define compound_decode_hdr_maxsz	(3 + (NFS4_MAXTAGLEN >> 2))
+#define op_encode_hdr_maxsz	(1)
+#define op_decode_hdr_maxsz	(2)
+#define encode_stateid_maxsz	(XDR_QUADLEN(NFS4_STATEID_SIZE))
+#define decode_stateid_maxsz	(XDR_QUADLEN(NFS4_STATEID_SIZE))
+#define encode_verifier_maxsz	(XDR_QUADLEN(NFS4_VERIFIER_SIZE))
+#define decode_verifier_maxsz	(XDR_QUADLEN(NFS4_VERIFIER_SIZE))
+#define encode_putfh_maxsz	(op_encode_hdr_maxsz + 1 + \
 				(NFS4_FHSIZE >> 2))
-#घोषणा decode_putfh_maxsz	(op_decode_hdr_maxsz)
-#घोषणा encode_putrootfh_maxsz	(op_encode_hdr_maxsz)
-#घोषणा decode_putrootfh_maxsz	(op_decode_hdr_maxsz)
-#घोषणा encode_getfh_maxsz      (op_encode_hdr_maxsz)
-#घोषणा decode_getfh_maxsz      (op_decode_hdr_maxsz + 1 + \
+#define decode_putfh_maxsz	(op_decode_hdr_maxsz)
+#define encode_putrootfh_maxsz	(op_encode_hdr_maxsz)
+#define decode_putrootfh_maxsz	(op_decode_hdr_maxsz)
+#define encode_getfh_maxsz      (op_encode_hdr_maxsz)
+#define decode_getfh_maxsz      (op_decode_hdr_maxsz + 1 + \
 				((3+NFS4_FHSIZE) >> 2))
-#घोषणा nfs4_fattr_biपंचांगap_maxsz 4
-#घोषणा encode_getattr_maxsz    (op_encode_hdr_maxsz + nfs4_fattr_biपंचांगap_maxsz)
-#घोषणा nfsसमय4_maxsz		(3)
-#घोषणा nfs4_name_maxsz		(1 + ((3 + NFS4_MAXNAMLEN) >> 2))
-#घोषणा nfs4_path_maxsz		(1 + ((3 + NFS4_MAXPATHLEN) >> 2))
-#घोषणा nfs4_owner_maxsz	(1 + XDR_QUADLEN(IDMAP_NAMESZ))
-#घोषणा nfs4_group_maxsz	(1 + XDR_QUADLEN(IDMAP_NAMESZ))
-#अगर_घोषित CONFIG_NFS_V4_SECURITY_LABEL
-/* PI(4 bytes) + LFS(4 bytes) + 1(क्रम null terminator?) + MAXLABELLEN */
-#घोषणा	nfs4_label_maxsz	(4 + 4 + 1 + XDR_QUADLEN(NFS4_MAXLABELLEN))
-#अन्यथा
-#घोषणा	nfs4_label_maxsz	0
-#पूर्ण_अगर
-/* We support only one layout type per file प्रणाली */
-#घोषणा decode_mdsthreshold_maxsz (1 + 1 + nfs4_fattr_biपंचांगap_maxsz + 1 + 8)
+#define nfs4_fattr_bitmap_maxsz 4
+#define encode_getattr_maxsz    (op_encode_hdr_maxsz + nfs4_fattr_bitmap_maxsz)
+#define nfstime4_maxsz		(3)
+#define nfs4_name_maxsz		(1 + ((3 + NFS4_MAXNAMLEN) >> 2))
+#define nfs4_path_maxsz		(1 + ((3 + NFS4_MAXPATHLEN) >> 2))
+#define nfs4_owner_maxsz	(1 + XDR_QUADLEN(IDMAP_NAMESZ))
+#define nfs4_group_maxsz	(1 + XDR_QUADLEN(IDMAP_NAMESZ))
+#ifdef CONFIG_NFS_V4_SECURITY_LABEL
+/* PI(4 bytes) + LFS(4 bytes) + 1(for null terminator?) + MAXLABELLEN */
+#define	nfs4_label_maxsz	(4 + 4 + 1 + XDR_QUADLEN(NFS4_MAXLABELLEN))
+#else
+#define	nfs4_label_maxsz	0
+#endif
+/* We support only one layout type per file system */
+#define decode_mdsthreshold_maxsz (1 + 1 + nfs4_fattr_bitmap_maxsz + 1 + 8)
 /* This is based on getfattr, which uses the most attributes: */
-#घोषणा nfs4_fattr_value_maxsz	(1 + (1 + 2 + 2 + 4 + 2 + 1 + 1 + 2 + 2 + \
-				3*nfsसमय4_maxsz + \
+#define nfs4_fattr_value_maxsz	(1 + (1 + 2 + 2 + 4 + 2 + 1 + 1 + 2 + 2 + \
+				3*nfstime4_maxsz + \
 				nfs4_owner_maxsz + \
 				nfs4_group_maxsz + nfs4_label_maxsz + \
 				 decode_mdsthreshold_maxsz))
-#घोषणा nfs4_fattr_maxsz	(nfs4_fattr_biपंचांगap_maxsz + \
+#define nfs4_fattr_maxsz	(nfs4_fattr_bitmap_maxsz + \
 				nfs4_fattr_value_maxsz)
-#घोषणा decode_getattr_maxsz    (op_decode_hdr_maxsz + nfs4_fattr_maxsz)
-#घोषणा encode_attrs_maxsz	(nfs4_fattr_biपंचांगap_maxsz + \
+#define decode_getattr_maxsz    (op_decode_hdr_maxsz + nfs4_fattr_maxsz)
+#define encode_attrs_maxsz	(nfs4_fattr_bitmap_maxsz + \
 				 1 + 2 + 1 + \
 				nfs4_owner_maxsz + \
 				nfs4_group_maxsz + \
 				nfs4_label_maxsz + \
-				1 + nfsसमय4_maxsz + \
-				1 + nfsसमय4_maxsz)
-#घोषणा encode_savefh_maxsz     (op_encode_hdr_maxsz)
-#घोषणा decode_savefh_maxsz     (op_decode_hdr_maxsz)
-#घोषणा encode_restorefh_maxsz  (op_encode_hdr_maxsz)
-#घोषणा decode_restorefh_maxsz  (op_decode_hdr_maxsz)
-#घोषणा encode_fsinfo_maxsz	(encode_getattr_maxsz)
-/* The 5 accounts क्रम the PNFS attributes, and assumes that at most three
- * layout types will be वापसed.
+				1 + nfstime4_maxsz + \
+				1 + nfstime4_maxsz)
+#define encode_savefh_maxsz     (op_encode_hdr_maxsz)
+#define decode_savefh_maxsz     (op_decode_hdr_maxsz)
+#define encode_restorefh_maxsz  (op_encode_hdr_maxsz)
+#define decode_restorefh_maxsz  (op_decode_hdr_maxsz)
+#define encode_fsinfo_maxsz	(encode_getattr_maxsz)
+/* The 5 accounts for the PNFS attributes, and assumes that at most three
+ * layout types will be returned.
  */
-#घोषणा decode_fsinfo_maxsz	(op_decode_hdr_maxsz + \
-				 nfs4_fattr_biपंचांगap_maxsz + 1 + \
-				 1 /* lease समय */ + \
+#define decode_fsinfo_maxsz	(op_decode_hdr_maxsz + \
+				 nfs4_fattr_bitmap_maxsz + 1 + \
+				 1 /* lease time */ + \
 				 2 /* max filesize */ + \
-				 2 /* max पढ़ो */ + \
-				 2 /* max ग_लिखो */ + \
-				 nfsसमय4_maxsz /* समय delta */ + \
+				 2 /* max read */ + \
+				 2 /* max write */ + \
+				 nfstime4_maxsz /* time delta */ + \
 				 5 /* fs layout types */ + \
 				 1 /* layout blksize */ + \
 				 1 /* clone blksize */ + \
 				 1 /* change attr type */ + \
 				 1 /* xattr support */)
-#घोषणा encode_renew_maxsz	(op_encode_hdr_maxsz + 3)
-#घोषणा decode_renew_maxsz	(op_decode_hdr_maxsz)
-#घोषणा encode_setclientid_maxsz \
+#define encode_renew_maxsz	(op_encode_hdr_maxsz + 3)
+#define decode_renew_maxsz	(op_decode_hdr_maxsz)
+#define encode_setclientid_maxsz \
 				(op_encode_hdr_maxsz + \
 				XDR_QUADLEN(NFS4_VERIFIER_SIZE) + \
 				/* client name */ \
@@ -167,173 +166,173 @@
 				1 + XDR_QUADLEN(RPCBIND_MAXNETIDLEN) + \
 				1 + XDR_QUADLEN(RPCBIND_MAXUADDRLEN) + \
 				1) /* sc_cb_ident */
-#घोषणा decode_setclientid_maxsz \
+#define decode_setclientid_maxsz \
 				(op_decode_hdr_maxsz + \
 				2 /* clientid */ + \
 				XDR_QUADLEN(NFS4_VERIFIER_SIZE) + \
 				1 + XDR_QUADLEN(RPCBIND_MAXNETIDLEN) + \
 				1 + XDR_QUADLEN(RPCBIND_MAXUADDRLEN))
-#घोषणा encode_setclientid_confirm_maxsz \
+#define encode_setclientid_confirm_maxsz \
 				(op_encode_hdr_maxsz + \
 				3 + (NFS4_VERIFIER_SIZE >> 2))
-#घोषणा decode_setclientid_confirm_maxsz \
+#define decode_setclientid_confirm_maxsz \
 				(op_decode_hdr_maxsz)
-#घोषणा encode_lookup_maxsz	(op_encode_hdr_maxsz + nfs4_name_maxsz)
-#घोषणा decode_lookup_maxsz	(op_decode_hdr_maxsz)
-#घोषणा encode_lookupp_maxsz	(op_encode_hdr_maxsz)
-#घोषणा decode_lookupp_maxsz	(op_decode_hdr_maxsz)
-#घोषणा encode_share_access_maxsz \
+#define encode_lookup_maxsz	(op_encode_hdr_maxsz + nfs4_name_maxsz)
+#define decode_lookup_maxsz	(op_decode_hdr_maxsz)
+#define encode_lookupp_maxsz	(op_encode_hdr_maxsz)
+#define decode_lookupp_maxsz	(op_decode_hdr_maxsz)
+#define encode_share_access_maxsz \
 				(2)
-#घोषणा encode_createmode_maxsz	(1 + encode_attrs_maxsz + encode_verअगरier_maxsz)
-#घोषणा encode_खोलोtype_maxsz	(1 + encode_createmode_maxsz)
-#घोषणा encode_claim_null_maxsz	(1 + nfs4_name_maxsz)
-#घोषणा encode_खोलो_maxsz	(op_encode_hdr_maxsz + \
+#define encode_createmode_maxsz	(1 + encode_attrs_maxsz + encode_verifier_maxsz)
+#define encode_opentype_maxsz	(1 + encode_createmode_maxsz)
+#define encode_claim_null_maxsz	(1 + nfs4_name_maxsz)
+#define encode_open_maxsz	(op_encode_hdr_maxsz + \
 				2 + encode_share_access_maxsz + 2 + \
-				खोलो_owner_id_maxsz + \
-				encode_खोलोtype_maxsz + \
+				open_owner_id_maxsz + \
+				encode_opentype_maxsz + \
 				encode_claim_null_maxsz)
-#घोषणा decode_space_limit_maxsz	(3)
-#घोषणा decode_ace_maxsz	(3 + nfs4_owner_maxsz)
-#घोषणा decode_delegation_maxsz	(1 + decode_stateid_maxsz + 1 + \
+#define decode_space_limit_maxsz	(3)
+#define decode_ace_maxsz	(3 + nfs4_owner_maxsz)
+#define decode_delegation_maxsz	(1 + decode_stateid_maxsz + 1 + \
 				decode_space_limit_maxsz + \
 				decode_ace_maxsz)
-#घोषणा decode_change_info_maxsz	(5)
-#घोषणा decode_खोलो_maxsz	(op_decode_hdr_maxsz + \
+#define decode_change_info_maxsz	(5)
+#define decode_open_maxsz	(op_decode_hdr_maxsz + \
 				decode_stateid_maxsz + \
 				decode_change_info_maxsz + 1 + \
-				nfs4_fattr_biपंचांगap_maxsz + \
+				nfs4_fattr_bitmap_maxsz + \
 				decode_delegation_maxsz)
-#घोषणा encode_खोलो_confirm_maxsz \
+#define encode_open_confirm_maxsz \
 				(op_encode_hdr_maxsz + \
 				 encode_stateid_maxsz + 1)
-#घोषणा decode_खोलो_confirm_maxsz \
+#define decode_open_confirm_maxsz \
 				(op_decode_hdr_maxsz + \
 				 decode_stateid_maxsz)
-#घोषणा encode_खोलो_करोwngrade_maxsz \
+#define encode_open_downgrade_maxsz \
 				(op_encode_hdr_maxsz + \
 				 encode_stateid_maxsz + 1 + \
 				 encode_share_access_maxsz)
-#घोषणा decode_खोलो_करोwngrade_maxsz \
+#define decode_open_downgrade_maxsz \
 				(op_decode_hdr_maxsz + \
 				 decode_stateid_maxsz)
-#घोषणा encode_बंद_maxsz	(op_encode_hdr_maxsz + \
+#define encode_close_maxsz	(op_encode_hdr_maxsz + \
 				 1 + encode_stateid_maxsz)
-#घोषणा decode_बंद_maxsz	(op_decode_hdr_maxsz + \
+#define decode_close_maxsz	(op_decode_hdr_maxsz + \
 				 decode_stateid_maxsz)
-#घोषणा encode_setattr_maxsz	(op_encode_hdr_maxsz + \
+#define encode_setattr_maxsz	(op_encode_hdr_maxsz + \
 				 encode_stateid_maxsz + \
 				 encode_attrs_maxsz)
-#घोषणा decode_setattr_maxsz	(op_decode_hdr_maxsz + \
-				 nfs4_fattr_biपंचांगap_maxsz)
-#घोषणा encode_पढ़ो_maxsz	(op_encode_hdr_maxsz + \
+#define decode_setattr_maxsz	(op_decode_hdr_maxsz + \
+				 nfs4_fattr_bitmap_maxsz)
+#define encode_read_maxsz	(op_encode_hdr_maxsz + \
 				 encode_stateid_maxsz + 3)
-#घोषणा decode_पढ़ो_maxsz	(op_decode_hdr_maxsz + 2 + pagepad_maxsz)
-#घोषणा encode_सूची_पढ़ो_maxsz	(op_encode_hdr_maxsz + \
-				 2 + encode_verअगरier_maxsz + 5 + \
+#define decode_read_maxsz	(op_decode_hdr_maxsz + 2 + pagepad_maxsz)
+#define encode_readdir_maxsz	(op_encode_hdr_maxsz + \
+				 2 + encode_verifier_maxsz + 5 + \
 				nfs4_label_maxsz)
-#घोषणा decode_सूची_पढ़ो_maxsz	(op_decode_hdr_maxsz + \
-				 decode_verअगरier_maxsz + pagepad_maxsz)
-#घोषणा encode_पढ़ोlink_maxsz	(op_encode_hdr_maxsz)
-#घोषणा decode_पढ़ोlink_maxsz	(op_decode_hdr_maxsz + 1 + pagepad_maxsz)
-#घोषणा encode_ग_लिखो_maxsz	(op_encode_hdr_maxsz + \
+#define decode_readdir_maxsz	(op_decode_hdr_maxsz + \
+				 decode_verifier_maxsz + pagepad_maxsz)
+#define encode_readlink_maxsz	(op_encode_hdr_maxsz)
+#define decode_readlink_maxsz	(op_decode_hdr_maxsz + 1 + pagepad_maxsz)
+#define encode_write_maxsz	(op_encode_hdr_maxsz + \
 				 encode_stateid_maxsz + 4)
-#घोषणा decode_ग_लिखो_maxsz	(op_decode_hdr_maxsz + \
-				 2 + decode_verअगरier_maxsz)
-#घोषणा encode_commit_maxsz	(op_encode_hdr_maxsz + 3)
-#घोषणा decode_commit_maxsz	(op_decode_hdr_maxsz + \
-				 decode_verअगरier_maxsz)
-#घोषणा encode_हटाओ_maxsz	(op_encode_hdr_maxsz + \
+#define decode_write_maxsz	(op_decode_hdr_maxsz + \
+				 2 + decode_verifier_maxsz)
+#define encode_commit_maxsz	(op_encode_hdr_maxsz + 3)
+#define decode_commit_maxsz	(op_decode_hdr_maxsz + \
+				 decode_verifier_maxsz)
+#define encode_remove_maxsz	(op_encode_hdr_maxsz + \
 				nfs4_name_maxsz)
-#घोषणा decode_हटाओ_maxsz	(op_decode_hdr_maxsz + \
+#define decode_remove_maxsz	(op_decode_hdr_maxsz + \
 				 decode_change_info_maxsz)
-#घोषणा encode_नाम_maxsz	(op_encode_hdr_maxsz + \
+#define encode_rename_maxsz	(op_encode_hdr_maxsz + \
 				2 * nfs4_name_maxsz)
-#घोषणा decode_नाम_maxsz	(op_decode_hdr_maxsz + \
+#define decode_rename_maxsz	(op_decode_hdr_maxsz + \
 				 decode_change_info_maxsz + \
 				 decode_change_info_maxsz)
-#घोषणा encode_link_maxsz	(op_encode_hdr_maxsz + \
+#define encode_link_maxsz	(op_encode_hdr_maxsz + \
 				nfs4_name_maxsz)
-#घोषणा decode_link_maxsz	(op_decode_hdr_maxsz + decode_change_info_maxsz)
-#घोषणा encode_lockowner_maxsz	(7)
-#घोषणा encode_lock_maxsz	(op_encode_hdr_maxsz + \
+#define decode_link_maxsz	(op_decode_hdr_maxsz + decode_change_info_maxsz)
+#define encode_lockowner_maxsz	(7)
+#define encode_lock_maxsz	(op_encode_hdr_maxsz + \
 				 7 + \
 				 1 + encode_stateid_maxsz + 1 + \
 				 encode_lockowner_maxsz)
-#घोषणा decode_lock_denied_maxsz \
+#define decode_lock_denied_maxsz \
 				(8 + decode_lockowner_maxsz)
-#घोषणा decode_lock_maxsz	(op_decode_hdr_maxsz + \
+#define decode_lock_maxsz	(op_decode_hdr_maxsz + \
 				 decode_lock_denied_maxsz)
-#घोषणा encode_lockt_maxsz	(op_encode_hdr_maxsz + 5 + \
+#define encode_lockt_maxsz	(op_encode_hdr_maxsz + 5 + \
 				encode_lockowner_maxsz)
-#घोषणा decode_lockt_maxsz	(op_decode_hdr_maxsz + \
+#define decode_lockt_maxsz	(op_decode_hdr_maxsz + \
 				 decode_lock_denied_maxsz)
-#घोषणा encode_locku_maxsz	(op_encode_hdr_maxsz + 3 + \
+#define encode_locku_maxsz	(op_encode_hdr_maxsz + 3 + \
 				 encode_stateid_maxsz + \
 				 4)
-#घोषणा decode_locku_maxsz	(op_decode_hdr_maxsz + \
+#define decode_locku_maxsz	(op_decode_hdr_maxsz + \
 				 decode_stateid_maxsz)
-#घोषणा encode_release_lockowner_maxsz \
+#define encode_release_lockowner_maxsz \
 				(op_encode_hdr_maxsz + \
 				 encode_lockowner_maxsz)
-#घोषणा decode_release_lockowner_maxsz \
+#define decode_release_lockowner_maxsz \
 				(op_decode_hdr_maxsz)
-#घोषणा encode_access_maxsz	(op_encode_hdr_maxsz + 1)
-#घोषणा decode_access_maxsz	(op_decode_hdr_maxsz + 2)
-#घोषणा encode_symlink_maxsz	(op_encode_hdr_maxsz + \
+#define encode_access_maxsz	(op_encode_hdr_maxsz + 1)
+#define decode_access_maxsz	(op_decode_hdr_maxsz + 2)
+#define encode_symlink_maxsz	(op_encode_hdr_maxsz + \
 				1 + nfs4_name_maxsz + \
 				1 + \
 				nfs4_fattr_maxsz)
-#घोषणा decode_symlink_maxsz	(op_decode_hdr_maxsz + 8)
-#घोषणा encode_create_maxsz	(op_encode_hdr_maxsz + \
+#define decode_symlink_maxsz	(op_decode_hdr_maxsz + 8)
+#define encode_create_maxsz	(op_encode_hdr_maxsz + \
 				1 + 2 + nfs4_name_maxsz + \
 				encode_attrs_maxsz)
-#घोषणा decode_create_maxsz	(op_decode_hdr_maxsz + \
+#define decode_create_maxsz	(op_decode_hdr_maxsz + \
 				decode_change_info_maxsz + \
-				nfs4_fattr_biपंचांगap_maxsz)
-#घोषणा encode_statfs_maxsz	(encode_getattr_maxsz)
-#घोषणा decode_statfs_maxsz	(decode_getattr_maxsz)
-#घोषणा encode_delegवापस_maxsz (op_encode_hdr_maxsz + 4)
-#घोषणा decode_delegवापस_maxsz (op_decode_hdr_maxsz)
-#घोषणा encode_getacl_maxsz	(encode_getattr_maxsz)
-#घोषणा decode_getacl_maxsz	(op_decode_hdr_maxsz + \
-				 nfs4_fattr_biपंचांगap_maxsz + 1 + pagepad_maxsz)
-#घोषणा encode_setacl_maxsz	(op_encode_hdr_maxsz + \
+				nfs4_fattr_bitmap_maxsz)
+#define encode_statfs_maxsz	(encode_getattr_maxsz)
+#define decode_statfs_maxsz	(decode_getattr_maxsz)
+#define encode_delegreturn_maxsz (op_encode_hdr_maxsz + 4)
+#define decode_delegreturn_maxsz (op_decode_hdr_maxsz)
+#define encode_getacl_maxsz	(encode_getattr_maxsz)
+#define decode_getacl_maxsz	(op_decode_hdr_maxsz + \
+				 nfs4_fattr_bitmap_maxsz + 1 + pagepad_maxsz)
+#define encode_setacl_maxsz	(op_encode_hdr_maxsz + \
 				 encode_stateid_maxsz + 3)
-#घोषणा decode_setacl_maxsz	(decode_setattr_maxsz)
-#घोषणा encode_fs_locations_maxsz \
+#define decode_setacl_maxsz	(decode_setattr_maxsz)
+#define encode_fs_locations_maxsz \
 				(encode_getattr_maxsz)
-#घोषणा decode_fs_locations_maxsz \
+#define decode_fs_locations_maxsz \
 				(pagepad_maxsz)
-#घोषणा encode_secinfo_maxsz	(op_encode_hdr_maxsz + nfs4_name_maxsz)
-#घोषणा decode_secinfo_maxsz	(op_decode_hdr_maxsz + 1 + ((NFS_MAX_SECFLAVORS * (16 + GSS_OID_MAX_LEN)) / 4))
+#define encode_secinfo_maxsz	(op_encode_hdr_maxsz + nfs4_name_maxsz)
+#define decode_secinfo_maxsz	(op_decode_hdr_maxsz + 1 + ((NFS_MAX_SECFLAVORS * (16 + GSS_OID_MAX_LEN)) / 4))
 
-#अगर defined(CONFIG_NFS_V4_1)
-#घोषणा NFS4_MAX_MACHINE_NAME_LEN (64)
-#घोषणा IMPL_NAME_LIMIT (माप(utsname()->sysname) + माप(utsname()->release) + \
-			 माप(utsname()->version) + माप(utsname()->machine) + 8)
+#if defined(CONFIG_NFS_V4_1)
+#define NFS4_MAX_MACHINE_NAME_LEN (64)
+#define IMPL_NAME_LIMIT (sizeof(utsname()->sysname) + sizeof(utsname()->release) + \
+			 sizeof(utsname()->version) + sizeof(utsname()->machine) + 8)
 
-#घोषणा encode_exchange_id_maxsz (op_encode_hdr_maxsz + \
-				encode_verअगरier_maxsz + \
+#define encode_exchange_id_maxsz (op_encode_hdr_maxsz + \
+				encode_verifier_maxsz + \
 				1 /* co_ownerid.len */ + \
 				/* eia_clientowner */ \
 				1 + XDR_QUADLEN(NFS4_OPAQUE_LIMIT) + \
 				1 /* flags */ + \
 				1 /* spa_how */ + \
-				/* max is SP4_MACH_CRED (क्रम now) */ + \
+				/* max is SP4_MACH_CRED (for now) */ + \
 				1 + NFS4_OP_MAP_NUM_WORDS + \
 				1 + NFS4_OP_MAP_NUM_WORDS + \
 				1 /* implementation id array of size 1 */ + \
-				1 /* nii_करोमुख्य */ + \
+				1 /* nii_domain */ + \
 				XDR_QUADLEN(NFS4_OPAQUE_LIMIT) + \
 				1 /* nii_name */ + \
 				XDR_QUADLEN(IMPL_NAME_LIMIT) + \
 				3 /* nii_date */)
-#घोषणा decode_exchange_id_maxsz (op_decode_hdr_maxsz + \
+#define decode_exchange_id_maxsz (op_decode_hdr_maxsz + \
 				2 /* eir_clientid */ + \
 				1 /* eir_sequenceid */ + \
 				1 /* eir_flags */ + \
 				1 /* spr_how */ + \
-				  /* max is SP4_MACH_CRED (क्रम now) */ + \
+				  /* max is SP4_MACH_CRED (for now) */ + \
 				1 + NFS4_OP_MAP_NUM_WORDS + \
 				1 + NFS4_OP_MAP_NUM_WORDS + \
 				2 /* eir_server_owner.so_minor_id */ + \
@@ -342,16 +341,16 @@
 				/* eir_server_scope<> */ \
 				XDR_QUADLEN(NFS4_OPAQUE_LIMIT) + 1 + \
 				1 /* eir_server_impl_id array length */ + \
-				1 /* nii_करोमुख्य */ + \
+				1 /* nii_domain */ + \
 				XDR_QUADLEN(NFS4_OPAQUE_LIMIT) + \
 				1 /* nii_name */ + \
 				XDR_QUADLEN(NFS4_OPAQUE_LIMIT) + \
 				3 /* nii_date */)
-#घोषणा encode_channel_attrs_maxsz  (6 + 1 /* ca_rdma_ird.len (0) */)
-#घोषणा decode_channel_attrs_maxsz  (6 + \
+#define encode_channel_attrs_maxsz  (6 + 1 /* ca_rdma_ird.len (0) */)
+#define decode_channel_attrs_maxsz  (6 + \
 				     1 /* ca_rdma_ird.len */ + \
 				     1 /* ca_rdma_ird */)
-#घोषणा encode_create_session_maxsz  (op_encode_hdr_maxsz + \
+#define encode_create_session_maxsz  (op_encode_hdr_maxsz + \
 				     2 /* csa_clientid */ + \
 				     1 /* csa_sequence */ + \
 				     1 /* csa_flags */ + \
@@ -366,332 +365,332 @@
 				     1 /* uid */ + \
 				     1 /* gid */ + \
 				     1 /* gids.len (0) */)
-#घोषणा decode_create_session_maxsz  (op_decode_hdr_maxsz +	\
+#define decode_create_session_maxsz  (op_decode_hdr_maxsz +	\
 				     XDR_QUADLEN(NFS4_MAX_SESSIONID_LEN) + \
 				     1 /* csr_sequence */ + \
 				     1 /* csr_flags */ + \
 				     decode_channel_attrs_maxsz + \
 				     decode_channel_attrs_maxsz)
-#घोषणा encode_bind_conn_to_session_maxsz  (op_encode_hdr_maxsz + \
+#define encode_bind_conn_to_session_maxsz  (op_encode_hdr_maxsz + \
 				     /* bctsa_sessid */ \
 				     XDR_QUADLEN(NFS4_MAX_SESSIONID_LEN) + \
 				     1 /* bctsa_dir */ + \
 				     1 /* bctsa_use_conn_in_rdma_mode */)
-#घोषणा decode_bind_conn_to_session_maxsz  (op_decode_hdr_maxsz +	\
+#define decode_bind_conn_to_session_maxsz  (op_decode_hdr_maxsz +	\
 				     /* bctsr_sessid */ \
 				     XDR_QUADLEN(NFS4_MAX_SESSIONID_LEN) + \
 				     1 /* bctsr_dir */ + \
 				     1 /* bctsr_use_conn_in_rdma_mode */)
-#घोषणा encode_destroy_session_maxsz    (op_encode_hdr_maxsz + 4)
-#घोषणा decode_destroy_session_maxsz    (op_decode_hdr_maxsz)
-#घोषणा encode_destroy_clientid_maxsz   (op_encode_hdr_maxsz + 2)
-#घोषणा decode_destroy_clientid_maxsz   (op_decode_hdr_maxsz)
-#घोषणा encode_sequence_maxsz	(op_encode_hdr_maxsz + \
+#define encode_destroy_session_maxsz    (op_encode_hdr_maxsz + 4)
+#define decode_destroy_session_maxsz    (op_decode_hdr_maxsz)
+#define encode_destroy_clientid_maxsz   (op_encode_hdr_maxsz + 2)
+#define decode_destroy_clientid_maxsz   (op_decode_hdr_maxsz)
+#define encode_sequence_maxsz	(op_encode_hdr_maxsz + \
 				XDR_QUADLEN(NFS4_MAX_SESSIONID_LEN) + 4)
-#घोषणा decode_sequence_maxsz	(op_decode_hdr_maxsz + \
+#define decode_sequence_maxsz	(op_decode_hdr_maxsz + \
 				XDR_QUADLEN(NFS4_MAX_SESSIONID_LEN) + 5)
-#घोषणा encode_reclaim_complete_maxsz	(op_encode_hdr_maxsz + 4)
-#घोषणा decode_reclaim_complete_maxsz	(op_decode_hdr_maxsz + 4)
-#घोषणा encode_getdeviceinfo_maxsz (op_encode_hdr_maxsz + \
+#define encode_reclaim_complete_maxsz	(op_encode_hdr_maxsz + 4)
+#define decode_reclaim_complete_maxsz	(op_decode_hdr_maxsz + 4)
+#define encode_getdeviceinfo_maxsz (op_encode_hdr_maxsz + \
 				XDR_QUADLEN(NFS4_DEVICEID4_SIZE) + \
 				1 /* layout type */ + \
 				1 /* maxcount */ + \
-				1 /* biपंचांगap size */ + \
-				1 /* notअगरication biपंचांगap length */ + \
-				1 /* notअगरication biपंचांगap, word 0 */)
-#घोषणा decode_getdeviceinfo_maxsz (op_decode_hdr_maxsz + \
+				1 /* bitmap size */ + \
+				1 /* notification bitmap length */ + \
+				1 /* notification bitmap, word 0 */)
+#define decode_getdeviceinfo_maxsz (op_decode_hdr_maxsz + \
 				1 /* layout type */ + \
 				1 /* opaque devaddr4 length */ + \
-				  /* devaddr4 payload is पढ़ो पूर्णांकo page */ \
-				1 /* notअगरication biपंचांगap length */ + \
-				1 /* notअगरication biपंचांगap, word 0 */ + \
+				  /* devaddr4 payload is read into page */ \
+				1 /* notification bitmap length */ + \
+				1 /* notification bitmap, word 0 */ + \
 				pagepad_maxsz /* possible XDR padding */)
-#घोषणा encode_layoutget_maxsz	(op_encode_hdr_maxsz + 10 + \
+#define encode_layoutget_maxsz	(op_encode_hdr_maxsz + 10 + \
 				encode_stateid_maxsz)
-#घोषणा decode_layoutget_maxsz	(op_decode_hdr_maxsz + 8 + \
+#define decode_layoutget_maxsz	(op_decode_hdr_maxsz + 8 + \
 				decode_stateid_maxsz + \
 				XDR_QUADLEN(PNFS_LAYOUT_MAXSIZE) + \
 				pagepad_maxsz)
-#घोषणा encode_layoutcommit_maxsz (op_encode_hdr_maxsz +          \
+#define encode_layoutcommit_maxsz (op_encode_hdr_maxsz +          \
 				2 /* offset */ + \
 				2 /* length */ + \
 				1 /* reclaim */ + \
 				encode_stateid_maxsz + \
 				1 /* new offset (true) */ + \
 				2 /* last byte written */ + \
-				1 /* nt_समयchanged (false) */ + \
+				1 /* nt_timechanged (false) */ + \
 				1 /* layoutupdate4 layout type */ + \
 				1 /* layoutupdate4 opaqueue len */)
 				  /* the actual content of layoutupdate4 should
 				     be allocated by drivers and spliced in
-				     using xdr_ग_लिखो_pages */
-#घोषणा decode_layoutcommit_maxsz (op_decode_hdr_maxsz + 3)
-#घोषणा encode_layoutवापस_maxsz (8 + op_encode_hdr_maxsz + \
+				     using xdr_write_pages */
+#define decode_layoutcommit_maxsz (op_decode_hdr_maxsz + 3)
+#define encode_layoutreturn_maxsz (8 + op_encode_hdr_maxsz + \
 				encode_stateid_maxsz + \
 				1 + \
 				XDR_QUADLEN(NFS4_OPAQUE_LIMIT))
-#घोषणा decode_layoutवापस_maxsz (op_decode_hdr_maxsz + \
+#define decode_layoutreturn_maxsz (op_decode_hdr_maxsz + \
 				1 + decode_stateid_maxsz)
-#घोषणा encode_secinfo_no_name_maxsz (op_encode_hdr_maxsz + 1)
-#घोषणा decode_secinfo_no_name_maxsz decode_secinfo_maxsz
-#घोषणा encode_test_stateid_maxsz	(op_encode_hdr_maxsz + 2 + \
+#define encode_secinfo_no_name_maxsz (op_encode_hdr_maxsz + 1)
+#define decode_secinfo_no_name_maxsz decode_secinfo_maxsz
+#define encode_test_stateid_maxsz	(op_encode_hdr_maxsz + 2 + \
 					 XDR_QUADLEN(NFS4_STATEID_SIZE))
-#घोषणा decode_test_stateid_maxsz	(op_decode_hdr_maxsz + 2 + 1)
-#घोषणा encode_मुक्त_stateid_maxsz	(op_encode_hdr_maxsz + 1 + \
+#define decode_test_stateid_maxsz	(op_decode_hdr_maxsz + 2 + 1)
+#define encode_free_stateid_maxsz	(op_encode_hdr_maxsz + 1 + \
 					 XDR_QUADLEN(NFS4_STATEID_SIZE))
-#घोषणा decode_मुक्त_stateid_maxsz	(op_decode_hdr_maxsz)
-#अन्यथा /* CONFIG_NFS_V4_1 */
-#घोषणा encode_sequence_maxsz	0
-#घोषणा decode_sequence_maxsz	0
-#घोषणा encode_layoutवापस_maxsz 0
-#घोषणा decode_layoutवापस_maxsz 0
-#घोषणा encode_layoutget_maxsz	0
-#घोषणा decode_layoutget_maxsz	0
-#पूर्ण_अगर /* CONFIG_NFS_V4_1 */
+#define decode_free_stateid_maxsz	(op_decode_hdr_maxsz)
+#else /* CONFIG_NFS_V4_1 */
+#define encode_sequence_maxsz	0
+#define decode_sequence_maxsz	0
+#define encode_layoutreturn_maxsz 0
+#define decode_layoutreturn_maxsz 0
+#define encode_layoutget_maxsz	0
+#define decode_layoutget_maxsz	0
+#endif /* CONFIG_NFS_V4_1 */
 
-#घोषणा NFS4_enc_compound_sz	(1024)  /* XXX: large enough? */
-#घोषणा NFS4_dec_compound_sz	(1024)  /* XXX: large enough? */
-#घोषणा NFS4_enc_पढ़ो_sz	(compound_encode_hdr_maxsz + \
+#define NFS4_enc_compound_sz	(1024)  /* XXX: large enough? */
+#define NFS4_dec_compound_sz	(1024)  /* XXX: large enough? */
+#define NFS4_enc_read_sz	(compound_encode_hdr_maxsz + \
 				encode_sequence_maxsz + \
 				encode_putfh_maxsz + \
-				encode_पढ़ो_maxsz)
-#घोषणा NFS4_dec_पढ़ो_sz	(compound_decode_hdr_maxsz + \
+				encode_read_maxsz)
+#define NFS4_dec_read_sz	(compound_decode_hdr_maxsz + \
 				decode_sequence_maxsz + \
 				decode_putfh_maxsz + \
-				decode_पढ़ो_maxsz)
-#घोषणा NFS4_enc_पढ़ोlink_sz	(compound_encode_hdr_maxsz + \
+				decode_read_maxsz)
+#define NFS4_enc_readlink_sz	(compound_encode_hdr_maxsz + \
 				encode_sequence_maxsz + \
 				encode_putfh_maxsz + \
-				encode_पढ़ोlink_maxsz)
-#घोषणा NFS4_dec_पढ़ोlink_sz	(compound_decode_hdr_maxsz + \
+				encode_readlink_maxsz)
+#define NFS4_dec_readlink_sz	(compound_decode_hdr_maxsz + \
 				decode_sequence_maxsz + \
 				decode_putfh_maxsz + \
-				decode_पढ़ोlink_maxsz)
-#घोषणा NFS4_enc_सूची_पढ़ो_sz	(compound_encode_hdr_maxsz + \
+				decode_readlink_maxsz)
+#define NFS4_enc_readdir_sz	(compound_encode_hdr_maxsz + \
 				encode_sequence_maxsz + \
 				encode_putfh_maxsz + \
-				encode_सूची_पढ़ो_maxsz)
-#घोषणा NFS4_dec_सूची_पढ़ो_sz	(compound_decode_hdr_maxsz + \
+				encode_readdir_maxsz)
+#define NFS4_dec_readdir_sz	(compound_decode_hdr_maxsz + \
 				decode_sequence_maxsz + \
 				decode_putfh_maxsz + \
-				decode_सूची_पढ़ो_maxsz)
-#घोषणा NFS4_enc_ग_लिखो_sz	(compound_encode_hdr_maxsz + \
+				decode_readdir_maxsz)
+#define NFS4_enc_write_sz	(compound_encode_hdr_maxsz + \
 				encode_sequence_maxsz + \
 				encode_putfh_maxsz + \
-				encode_ग_लिखो_maxsz + \
+				encode_write_maxsz + \
 				encode_getattr_maxsz)
-#घोषणा NFS4_dec_ग_लिखो_sz	(compound_decode_hdr_maxsz + \
+#define NFS4_dec_write_sz	(compound_decode_hdr_maxsz + \
 				decode_sequence_maxsz + \
 				decode_putfh_maxsz + \
-				decode_ग_लिखो_maxsz + \
+				decode_write_maxsz + \
 				decode_getattr_maxsz)
-#घोषणा NFS4_enc_commit_sz	(compound_encode_hdr_maxsz + \
+#define NFS4_enc_commit_sz	(compound_encode_hdr_maxsz + \
 				encode_sequence_maxsz + \
 				encode_putfh_maxsz + \
 				encode_commit_maxsz)
-#घोषणा NFS4_dec_commit_sz	(compound_decode_hdr_maxsz + \
+#define NFS4_dec_commit_sz	(compound_decode_hdr_maxsz + \
 				decode_sequence_maxsz + \
 				decode_putfh_maxsz + \
 				decode_commit_maxsz)
-#घोषणा NFS4_enc_खोलो_sz        (compound_encode_hdr_maxsz + \
+#define NFS4_enc_open_sz        (compound_encode_hdr_maxsz + \
 				encode_sequence_maxsz + \
 				encode_putfh_maxsz + \
-				encode_खोलो_maxsz + \
+				encode_open_maxsz + \
 				encode_access_maxsz + \
 				encode_getfh_maxsz + \
 				encode_getattr_maxsz + \
 				encode_layoutget_maxsz)
-#घोषणा NFS4_dec_खोलो_sz        (compound_decode_hdr_maxsz + \
+#define NFS4_dec_open_sz        (compound_decode_hdr_maxsz + \
 				decode_sequence_maxsz + \
 				decode_putfh_maxsz + \
-				decode_खोलो_maxsz + \
+				decode_open_maxsz + \
 				decode_access_maxsz + \
 				decode_getfh_maxsz + \
 				decode_getattr_maxsz + \
 				decode_layoutget_maxsz)
-#घोषणा NFS4_enc_खोलो_confirm_sz \
+#define NFS4_enc_open_confirm_sz \
 				(compound_encode_hdr_maxsz + \
 				 encode_putfh_maxsz + \
-				 encode_खोलो_confirm_maxsz)
-#घोषणा NFS4_dec_खोलो_confirm_sz \
+				 encode_open_confirm_maxsz)
+#define NFS4_dec_open_confirm_sz \
 				(compound_decode_hdr_maxsz + \
 				 decode_putfh_maxsz + \
-				 decode_खोलो_confirm_maxsz)
-#घोषणा NFS4_enc_खोलो_noattr_sz	(compound_encode_hdr_maxsz + \
+				 decode_open_confirm_maxsz)
+#define NFS4_enc_open_noattr_sz	(compound_encode_hdr_maxsz + \
 					encode_sequence_maxsz + \
 					encode_putfh_maxsz + \
-					encode_खोलो_maxsz + \
+					encode_open_maxsz + \
 					encode_access_maxsz + \
 					encode_getattr_maxsz + \
 					encode_layoutget_maxsz)
-#घोषणा NFS4_dec_खोलो_noattr_sz	(compound_decode_hdr_maxsz + \
+#define NFS4_dec_open_noattr_sz	(compound_decode_hdr_maxsz + \
 					decode_sequence_maxsz + \
 					decode_putfh_maxsz + \
-					decode_खोलो_maxsz + \
+					decode_open_maxsz + \
 					decode_access_maxsz + \
 					decode_getattr_maxsz + \
 					decode_layoutget_maxsz)
-#घोषणा NFS4_enc_खोलो_करोwngrade_sz \
+#define NFS4_enc_open_downgrade_sz \
 				(compound_encode_hdr_maxsz + \
 				 encode_sequence_maxsz + \
 				 encode_putfh_maxsz + \
-				 encode_layoutवापस_maxsz + \
-				 encode_खोलो_करोwngrade_maxsz)
-#घोषणा NFS4_dec_खोलो_करोwngrade_sz \
+				 encode_layoutreturn_maxsz + \
+				 encode_open_downgrade_maxsz)
+#define NFS4_dec_open_downgrade_sz \
 				(compound_decode_hdr_maxsz + \
 				 decode_sequence_maxsz + \
 				 decode_putfh_maxsz + \
-				 decode_layoutवापस_maxsz + \
-				 decode_खोलो_करोwngrade_maxsz)
-#घोषणा NFS4_enc_बंद_sz	(compound_encode_hdr_maxsz + \
+				 decode_layoutreturn_maxsz + \
+				 decode_open_downgrade_maxsz)
+#define NFS4_enc_close_sz	(compound_encode_hdr_maxsz + \
 				 encode_sequence_maxsz + \
 				 encode_putfh_maxsz + \
-				 encode_layoutवापस_maxsz + \
-				 encode_बंद_maxsz + \
+				 encode_layoutreturn_maxsz + \
+				 encode_close_maxsz + \
 				 encode_getattr_maxsz)
-#घोषणा NFS4_dec_बंद_sz	(compound_decode_hdr_maxsz + \
+#define NFS4_dec_close_sz	(compound_decode_hdr_maxsz + \
 				 decode_sequence_maxsz + \
 				 decode_putfh_maxsz + \
-				 decode_layoutवापस_maxsz + \
-				 decode_बंद_maxsz + \
+				 decode_layoutreturn_maxsz + \
+				 decode_close_maxsz + \
 				 decode_getattr_maxsz)
-#घोषणा NFS4_enc_setattr_sz	(compound_encode_hdr_maxsz + \
+#define NFS4_enc_setattr_sz	(compound_encode_hdr_maxsz + \
 				 encode_sequence_maxsz + \
 				 encode_putfh_maxsz + \
 				 encode_setattr_maxsz + \
 				 encode_getattr_maxsz)
-#घोषणा NFS4_dec_setattr_sz	(compound_decode_hdr_maxsz + \
+#define NFS4_dec_setattr_sz	(compound_decode_hdr_maxsz + \
 				 decode_sequence_maxsz + \
 				 decode_putfh_maxsz + \
 				 decode_setattr_maxsz + \
 				 decode_getattr_maxsz)
-#घोषणा NFS4_enc_fsinfo_sz	(compound_encode_hdr_maxsz + \
+#define NFS4_enc_fsinfo_sz	(compound_encode_hdr_maxsz + \
 				encode_sequence_maxsz + \
 				encode_putfh_maxsz + \
 				encode_fsinfo_maxsz)
-#घोषणा NFS4_dec_fsinfo_sz	(compound_decode_hdr_maxsz + \
+#define NFS4_dec_fsinfo_sz	(compound_decode_hdr_maxsz + \
 				decode_sequence_maxsz + \
 				decode_putfh_maxsz + \
 				decode_fsinfo_maxsz)
-#घोषणा NFS4_enc_renew_sz	(compound_encode_hdr_maxsz + \
+#define NFS4_enc_renew_sz	(compound_encode_hdr_maxsz + \
 				encode_renew_maxsz)
-#घोषणा NFS4_dec_renew_sz	(compound_decode_hdr_maxsz + \
+#define NFS4_dec_renew_sz	(compound_decode_hdr_maxsz + \
 				decode_renew_maxsz)
-#घोषणा NFS4_enc_setclientid_sz	(compound_encode_hdr_maxsz + \
+#define NFS4_enc_setclientid_sz	(compound_encode_hdr_maxsz + \
 				encode_setclientid_maxsz)
-#घोषणा NFS4_dec_setclientid_sz	(compound_decode_hdr_maxsz + \
+#define NFS4_dec_setclientid_sz	(compound_decode_hdr_maxsz + \
 				decode_setclientid_maxsz)
-#घोषणा NFS4_enc_setclientid_confirm_sz \
+#define NFS4_enc_setclientid_confirm_sz \
 				(compound_encode_hdr_maxsz + \
 				encode_setclientid_confirm_maxsz)
-#घोषणा NFS4_dec_setclientid_confirm_sz \
+#define NFS4_dec_setclientid_confirm_sz \
 				(compound_decode_hdr_maxsz + \
 				decode_setclientid_confirm_maxsz)
-#घोषणा NFS4_enc_lock_sz        (compound_encode_hdr_maxsz + \
+#define NFS4_enc_lock_sz        (compound_encode_hdr_maxsz + \
 				encode_sequence_maxsz + \
 				encode_putfh_maxsz + \
 				encode_lock_maxsz)
-#घोषणा NFS4_dec_lock_sz        (compound_decode_hdr_maxsz + \
+#define NFS4_dec_lock_sz        (compound_decode_hdr_maxsz + \
 				decode_sequence_maxsz + \
 				decode_putfh_maxsz + \
 				decode_lock_maxsz)
-#घोषणा NFS4_enc_lockt_sz       (compound_encode_hdr_maxsz + \
+#define NFS4_enc_lockt_sz       (compound_encode_hdr_maxsz + \
 				encode_sequence_maxsz + \
 				encode_putfh_maxsz + \
 				encode_lockt_maxsz)
-#घोषणा NFS4_dec_lockt_sz       (compound_decode_hdr_maxsz + \
+#define NFS4_dec_lockt_sz       (compound_decode_hdr_maxsz + \
 				 decode_sequence_maxsz + \
 				 decode_putfh_maxsz + \
 				 decode_lockt_maxsz)
-#घोषणा NFS4_enc_locku_sz       (compound_encode_hdr_maxsz + \
+#define NFS4_enc_locku_sz       (compound_encode_hdr_maxsz + \
 				encode_sequence_maxsz + \
 				encode_putfh_maxsz + \
 				encode_locku_maxsz)
-#घोषणा NFS4_dec_locku_sz       (compound_decode_hdr_maxsz + \
+#define NFS4_dec_locku_sz       (compound_decode_hdr_maxsz + \
 				decode_sequence_maxsz + \
 				decode_putfh_maxsz + \
 				decode_locku_maxsz)
-#घोषणा NFS4_enc_release_lockowner_sz \
+#define NFS4_enc_release_lockowner_sz \
 				(compound_encode_hdr_maxsz + \
 				 encode_lockowner_maxsz)
-#घोषणा NFS4_dec_release_lockowner_sz \
+#define NFS4_dec_release_lockowner_sz \
 				(compound_decode_hdr_maxsz + \
 				 decode_lockowner_maxsz)
-#घोषणा NFS4_enc_access_sz	(compound_encode_hdr_maxsz + \
+#define NFS4_enc_access_sz	(compound_encode_hdr_maxsz + \
 				encode_sequence_maxsz + \
 				encode_putfh_maxsz + \
 				encode_access_maxsz + \
 				encode_getattr_maxsz)
-#घोषणा NFS4_dec_access_sz	(compound_decode_hdr_maxsz + \
+#define NFS4_dec_access_sz	(compound_decode_hdr_maxsz + \
 				decode_sequence_maxsz + \
 				decode_putfh_maxsz + \
 				decode_access_maxsz + \
 				decode_getattr_maxsz)
-#घोषणा NFS4_enc_getattr_sz	(compound_encode_hdr_maxsz + \
+#define NFS4_enc_getattr_sz	(compound_encode_hdr_maxsz + \
 				encode_sequence_maxsz + \
 				encode_putfh_maxsz + \
 				encode_getattr_maxsz + \
 				encode_renew_maxsz)
-#घोषणा NFS4_dec_getattr_sz	(compound_decode_hdr_maxsz + \
+#define NFS4_dec_getattr_sz	(compound_decode_hdr_maxsz + \
 				decode_sequence_maxsz + \
 				decode_putfh_maxsz + \
 				decode_getattr_maxsz + \
 				decode_renew_maxsz)
-#घोषणा NFS4_enc_lookup_sz	(compound_encode_hdr_maxsz + \
+#define NFS4_enc_lookup_sz	(compound_encode_hdr_maxsz + \
 				encode_sequence_maxsz + \
 				encode_putfh_maxsz + \
 				encode_lookup_maxsz + \
 				encode_getattr_maxsz + \
 				encode_getfh_maxsz)
-#घोषणा NFS4_dec_lookup_sz	(compound_decode_hdr_maxsz + \
+#define NFS4_dec_lookup_sz	(compound_decode_hdr_maxsz + \
 				decode_sequence_maxsz + \
 				decode_putfh_maxsz + \
 				decode_lookup_maxsz + \
 				decode_getattr_maxsz + \
 				decode_getfh_maxsz)
-#घोषणा NFS4_enc_lookupp_sz	(compound_encode_hdr_maxsz + \
+#define NFS4_enc_lookupp_sz	(compound_encode_hdr_maxsz + \
 				encode_sequence_maxsz + \
 				encode_putfh_maxsz + \
 				encode_lookupp_maxsz + \
 				encode_getattr_maxsz + \
 				encode_getfh_maxsz)
-#घोषणा NFS4_dec_lookupp_sz	(compound_decode_hdr_maxsz + \
+#define NFS4_dec_lookupp_sz	(compound_decode_hdr_maxsz + \
 				decode_sequence_maxsz + \
 				decode_putfh_maxsz + \
 				decode_lookupp_maxsz + \
 				decode_getattr_maxsz + \
 				decode_getfh_maxsz)
-#घोषणा NFS4_enc_lookup_root_sz (compound_encode_hdr_maxsz + \
+#define NFS4_enc_lookup_root_sz (compound_encode_hdr_maxsz + \
 				encode_sequence_maxsz + \
 				encode_putrootfh_maxsz + \
 				encode_getattr_maxsz + \
 				encode_getfh_maxsz)
-#घोषणा NFS4_dec_lookup_root_sz (compound_decode_hdr_maxsz + \
+#define NFS4_dec_lookup_root_sz (compound_decode_hdr_maxsz + \
 				decode_sequence_maxsz + \
 				decode_putrootfh_maxsz + \
 				decode_getattr_maxsz + \
 				decode_getfh_maxsz)
-#घोषणा NFS4_enc_हटाओ_sz	(compound_encode_hdr_maxsz + \
+#define NFS4_enc_remove_sz	(compound_encode_hdr_maxsz + \
 				encode_sequence_maxsz + \
 				encode_putfh_maxsz + \
-				encode_हटाओ_maxsz)
-#घोषणा NFS4_dec_हटाओ_sz	(compound_decode_hdr_maxsz + \
+				encode_remove_maxsz)
+#define NFS4_dec_remove_sz	(compound_decode_hdr_maxsz + \
 				decode_sequence_maxsz + \
 				decode_putfh_maxsz + \
-				decode_हटाओ_maxsz)
-#घोषणा NFS4_enc_नाम_sz	(compound_encode_hdr_maxsz + \
+				decode_remove_maxsz)
+#define NFS4_enc_rename_sz	(compound_encode_hdr_maxsz + \
 				encode_sequence_maxsz + \
 				encode_putfh_maxsz + \
 				encode_savefh_maxsz + \
 				encode_putfh_maxsz + \
-				encode_नाम_maxsz)
-#घोषणा NFS4_dec_नाम_sz	(compound_decode_hdr_maxsz + \
+				encode_rename_maxsz)
+#define NFS4_dec_rename_sz	(compound_decode_hdr_maxsz + \
 				decode_sequence_maxsz + \
 				decode_putfh_maxsz + \
 				decode_savefh_maxsz + \
 				decode_putfh_maxsz + \
-				decode_नाम_maxsz)
-#घोषणा NFS4_enc_link_sz	(compound_encode_hdr_maxsz + \
+				decode_rename_maxsz)
+#define NFS4_enc_link_sz	(compound_encode_hdr_maxsz + \
 				encode_sequence_maxsz + \
 				encode_putfh_maxsz + \
 				encode_savefh_maxsz + \
@@ -699,7 +698,7 @@
 				encode_link_maxsz + \
 				encode_restorefh_maxsz + \
 				encode_getattr_maxsz)
-#घोषणा NFS4_dec_link_sz	(compound_decode_hdr_maxsz + \
+#define NFS4_dec_link_sz	(compound_decode_hdr_maxsz + \
 				decode_sequence_maxsz + \
 				decode_putfh_maxsz + \
 				decode_savefh_maxsz + \
@@ -707,335 +706,335 @@
 				decode_link_maxsz + \
 				decode_restorefh_maxsz + \
 				decode_getattr_maxsz)
-#घोषणा NFS4_enc_symlink_sz	(compound_encode_hdr_maxsz + \
+#define NFS4_enc_symlink_sz	(compound_encode_hdr_maxsz + \
 				encode_sequence_maxsz + \
 				encode_putfh_maxsz + \
 				encode_symlink_maxsz + \
 				encode_getattr_maxsz + \
 				encode_getfh_maxsz)
-#घोषणा NFS4_dec_symlink_sz	(compound_decode_hdr_maxsz + \
+#define NFS4_dec_symlink_sz	(compound_decode_hdr_maxsz + \
 				decode_sequence_maxsz + \
 				decode_putfh_maxsz + \
 				decode_symlink_maxsz + \
 				decode_getattr_maxsz + \
 				decode_getfh_maxsz)
-#घोषणा NFS4_enc_create_sz	(compound_encode_hdr_maxsz + \
+#define NFS4_enc_create_sz	(compound_encode_hdr_maxsz + \
 				encode_sequence_maxsz + \
 				encode_putfh_maxsz + \
 				encode_create_maxsz + \
 				encode_getfh_maxsz + \
 				encode_getattr_maxsz)
-#घोषणा NFS4_dec_create_sz	(compound_decode_hdr_maxsz + \
+#define NFS4_dec_create_sz	(compound_decode_hdr_maxsz + \
 				decode_sequence_maxsz + \
 				decode_putfh_maxsz + \
 				decode_create_maxsz + \
 				decode_getfh_maxsz + \
 				decode_getattr_maxsz)
-#घोषणा NFS4_enc_pathconf_sz	(compound_encode_hdr_maxsz + \
+#define NFS4_enc_pathconf_sz	(compound_encode_hdr_maxsz + \
 				encode_sequence_maxsz + \
 				encode_putfh_maxsz + \
 				encode_getattr_maxsz)
-#घोषणा NFS4_dec_pathconf_sz	(compound_decode_hdr_maxsz + \
+#define NFS4_dec_pathconf_sz	(compound_decode_hdr_maxsz + \
 				decode_sequence_maxsz + \
 				decode_putfh_maxsz + \
 				decode_getattr_maxsz)
-#घोषणा NFS4_enc_statfs_sz	(compound_encode_hdr_maxsz + \
+#define NFS4_enc_statfs_sz	(compound_encode_hdr_maxsz + \
 				encode_sequence_maxsz + \
 				encode_putfh_maxsz + \
 				encode_statfs_maxsz)
-#घोषणा NFS4_dec_statfs_sz	(compound_decode_hdr_maxsz + \
+#define NFS4_dec_statfs_sz	(compound_decode_hdr_maxsz + \
 				decode_sequence_maxsz + \
 				decode_putfh_maxsz + \
 				decode_statfs_maxsz)
-#घोषणा NFS4_enc_server_caps_sz (compound_encode_hdr_maxsz + \
+#define NFS4_enc_server_caps_sz (compound_encode_hdr_maxsz + \
 				encode_sequence_maxsz + \
 				encode_putfh_maxsz + \
 				encode_getattr_maxsz)
-#घोषणा NFS4_dec_server_caps_sz (compound_decode_hdr_maxsz + \
+#define NFS4_dec_server_caps_sz (compound_decode_hdr_maxsz + \
 				decode_sequence_maxsz + \
 				decode_putfh_maxsz + \
 				decode_getattr_maxsz)
-#घोषणा NFS4_enc_delegवापस_sz	(compound_encode_hdr_maxsz + \
+#define NFS4_enc_delegreturn_sz	(compound_encode_hdr_maxsz + \
 				encode_sequence_maxsz + \
 				encode_putfh_maxsz + \
-				encode_layoutवापस_maxsz + \
-				encode_delegवापस_maxsz + \
+				encode_layoutreturn_maxsz + \
+				encode_delegreturn_maxsz + \
 				encode_getattr_maxsz)
-#घोषणा NFS4_dec_delegवापस_sz (compound_decode_hdr_maxsz + \
+#define NFS4_dec_delegreturn_sz (compound_decode_hdr_maxsz + \
 				decode_sequence_maxsz + \
 				decode_putfh_maxsz + \
-				decode_layoutवापस_maxsz + \
-				decode_delegवापस_maxsz + \
+				decode_layoutreturn_maxsz + \
+				decode_delegreturn_maxsz + \
 				decode_getattr_maxsz)
-#घोषणा NFS4_enc_getacl_sz	(compound_encode_hdr_maxsz + \
+#define NFS4_enc_getacl_sz	(compound_encode_hdr_maxsz + \
 				encode_sequence_maxsz + \
 				encode_putfh_maxsz + \
 				encode_getacl_maxsz)
-#घोषणा NFS4_dec_getacl_sz	(compound_decode_hdr_maxsz + \
+#define NFS4_dec_getacl_sz	(compound_decode_hdr_maxsz + \
 				decode_sequence_maxsz + \
 				decode_putfh_maxsz + \
 				decode_getacl_maxsz)
-#घोषणा NFS4_enc_setacl_sz	(compound_encode_hdr_maxsz + \
+#define NFS4_enc_setacl_sz	(compound_encode_hdr_maxsz + \
 				encode_sequence_maxsz + \
 				encode_putfh_maxsz + \
 				encode_setacl_maxsz)
-#घोषणा NFS4_dec_setacl_sz	(compound_decode_hdr_maxsz + \
+#define NFS4_dec_setacl_sz	(compound_decode_hdr_maxsz + \
 				decode_sequence_maxsz + \
 				decode_putfh_maxsz + \
 				decode_setacl_maxsz)
-#घोषणा NFS4_enc_fs_locations_sz \
+#define NFS4_enc_fs_locations_sz \
 				(compound_encode_hdr_maxsz + \
 				 encode_sequence_maxsz + \
 				 encode_putfh_maxsz + \
 				 encode_lookup_maxsz + \
 				 encode_fs_locations_maxsz + \
 				 encode_renew_maxsz)
-#घोषणा NFS4_dec_fs_locations_sz \
+#define NFS4_dec_fs_locations_sz \
 				(compound_decode_hdr_maxsz + \
 				 decode_sequence_maxsz + \
 				 decode_putfh_maxsz + \
 				 decode_lookup_maxsz + \
 				 decode_fs_locations_maxsz + \
 				 decode_renew_maxsz)
-#घोषणा NFS4_enc_secinfo_sz 	(compound_encode_hdr_maxsz + \
+#define NFS4_enc_secinfo_sz 	(compound_encode_hdr_maxsz + \
 				encode_sequence_maxsz + \
 				encode_putfh_maxsz + \
 				encode_secinfo_maxsz)
-#घोषणा NFS4_dec_secinfo_sz	(compound_decode_hdr_maxsz + \
+#define NFS4_dec_secinfo_sz	(compound_decode_hdr_maxsz + \
 				decode_sequence_maxsz + \
 				decode_putfh_maxsz + \
 				decode_secinfo_maxsz)
-#घोषणा NFS4_enc_fsid_present_sz \
+#define NFS4_enc_fsid_present_sz \
 				(compound_encode_hdr_maxsz + \
 				 encode_sequence_maxsz + \
 				 encode_putfh_maxsz + \
 				 encode_getfh_maxsz + \
 				 encode_renew_maxsz)
-#घोषणा NFS4_dec_fsid_present_sz \
+#define NFS4_dec_fsid_present_sz \
 				(compound_decode_hdr_maxsz + \
 				 decode_sequence_maxsz + \
 				 decode_putfh_maxsz + \
 				 decode_getfh_maxsz + \
 				 decode_renew_maxsz)
-#अगर defined(CONFIG_NFS_V4_1)
-#घोषणा NFS4_enc_bind_conn_to_session_sz \
+#if defined(CONFIG_NFS_V4_1)
+#define NFS4_enc_bind_conn_to_session_sz \
 				(compound_encode_hdr_maxsz + \
 				 encode_bind_conn_to_session_maxsz)
-#घोषणा NFS4_dec_bind_conn_to_session_sz \
+#define NFS4_dec_bind_conn_to_session_sz \
 				(compound_decode_hdr_maxsz + \
 				 decode_bind_conn_to_session_maxsz)
-#घोषणा NFS4_enc_exchange_id_sz \
+#define NFS4_enc_exchange_id_sz \
 				(compound_encode_hdr_maxsz + \
 				 encode_exchange_id_maxsz)
-#घोषणा NFS4_dec_exchange_id_sz \
+#define NFS4_dec_exchange_id_sz \
 				(compound_decode_hdr_maxsz + \
 				 decode_exchange_id_maxsz)
-#घोषणा NFS4_enc_create_session_sz \
+#define NFS4_enc_create_session_sz \
 				(compound_encode_hdr_maxsz + \
 				 encode_create_session_maxsz)
-#घोषणा NFS4_dec_create_session_sz \
+#define NFS4_dec_create_session_sz \
 				(compound_decode_hdr_maxsz + \
 				 decode_create_session_maxsz)
-#घोषणा NFS4_enc_destroy_session_sz	(compound_encode_hdr_maxsz + \
+#define NFS4_enc_destroy_session_sz	(compound_encode_hdr_maxsz + \
 					 encode_destroy_session_maxsz)
-#घोषणा NFS4_dec_destroy_session_sz	(compound_decode_hdr_maxsz + \
+#define NFS4_dec_destroy_session_sz	(compound_decode_hdr_maxsz + \
 					 decode_destroy_session_maxsz)
-#घोषणा NFS4_enc_destroy_clientid_sz	(compound_encode_hdr_maxsz + \
+#define NFS4_enc_destroy_clientid_sz	(compound_encode_hdr_maxsz + \
 					 encode_destroy_clientid_maxsz)
-#घोषणा NFS4_dec_destroy_clientid_sz	(compound_decode_hdr_maxsz + \
+#define NFS4_dec_destroy_clientid_sz	(compound_decode_hdr_maxsz + \
 					 decode_destroy_clientid_maxsz)
-#घोषणा NFS4_enc_sequence_sz \
+#define NFS4_enc_sequence_sz \
 				(compound_decode_hdr_maxsz + \
 				 encode_sequence_maxsz)
-#घोषणा NFS4_dec_sequence_sz \
+#define NFS4_dec_sequence_sz \
 				(compound_decode_hdr_maxsz + \
 				 decode_sequence_maxsz)
-#पूर्ण_अगर
-#घोषणा NFS4_enc_get_lease_समय_sz	(compound_encode_hdr_maxsz + \
+#endif
+#define NFS4_enc_get_lease_time_sz	(compound_encode_hdr_maxsz + \
 					 encode_sequence_maxsz + \
 					 encode_putrootfh_maxsz + \
 					 encode_fsinfo_maxsz)
-#घोषणा NFS4_dec_get_lease_समय_sz	(compound_decode_hdr_maxsz + \
+#define NFS4_dec_get_lease_time_sz	(compound_decode_hdr_maxsz + \
 					 decode_sequence_maxsz + \
 					 decode_putrootfh_maxsz + \
 					 decode_fsinfo_maxsz)
-#अगर defined(CONFIG_NFS_V4_1)
-#घोषणा NFS4_enc_reclaim_complete_sz	(compound_encode_hdr_maxsz + \
+#if defined(CONFIG_NFS_V4_1)
+#define NFS4_enc_reclaim_complete_sz	(compound_encode_hdr_maxsz + \
 					 encode_sequence_maxsz + \
 					 encode_reclaim_complete_maxsz)
-#घोषणा NFS4_dec_reclaim_complete_sz	(compound_decode_hdr_maxsz + \
+#define NFS4_dec_reclaim_complete_sz	(compound_decode_hdr_maxsz + \
 					 decode_sequence_maxsz + \
 					 decode_reclaim_complete_maxsz)
-#घोषणा NFS4_enc_getdeviceinfo_sz (compound_encode_hdr_maxsz +    \
+#define NFS4_enc_getdeviceinfo_sz (compound_encode_hdr_maxsz +    \
 				encode_sequence_maxsz +\
 				encode_getdeviceinfo_maxsz)
-#घोषणा NFS4_dec_getdeviceinfo_sz (compound_decode_hdr_maxsz +    \
+#define NFS4_dec_getdeviceinfo_sz (compound_decode_hdr_maxsz +    \
 				decode_sequence_maxsz + \
 				decode_getdeviceinfo_maxsz)
-#घोषणा NFS4_enc_layoutget_sz	(compound_encode_hdr_maxsz + \
+#define NFS4_enc_layoutget_sz	(compound_encode_hdr_maxsz + \
 				encode_sequence_maxsz + \
 				encode_putfh_maxsz +        \
 				encode_layoutget_maxsz)
-#घोषणा NFS4_dec_layoutget_sz	(compound_decode_hdr_maxsz + \
+#define NFS4_dec_layoutget_sz	(compound_decode_hdr_maxsz + \
 				decode_sequence_maxsz + \
 				decode_putfh_maxsz +        \
 				decode_layoutget_maxsz)
-#घोषणा NFS4_enc_layoutcommit_sz (compound_encode_hdr_maxsz + \
+#define NFS4_enc_layoutcommit_sz (compound_encode_hdr_maxsz + \
 				encode_sequence_maxsz +\
 				encode_putfh_maxsz + \
 				encode_layoutcommit_maxsz + \
 				encode_getattr_maxsz)
-#घोषणा NFS4_dec_layoutcommit_sz (compound_decode_hdr_maxsz + \
+#define NFS4_dec_layoutcommit_sz (compound_decode_hdr_maxsz + \
 				decode_sequence_maxsz + \
 				decode_putfh_maxsz + \
 				decode_layoutcommit_maxsz + \
 				decode_getattr_maxsz)
-#घोषणा NFS4_enc_layoutवापस_sz (compound_encode_hdr_maxsz + \
+#define NFS4_enc_layoutreturn_sz (compound_encode_hdr_maxsz + \
 				encode_sequence_maxsz + \
 				encode_putfh_maxsz + \
-				encode_layoutवापस_maxsz)
-#घोषणा NFS4_dec_layoutवापस_sz (compound_decode_hdr_maxsz + \
+				encode_layoutreturn_maxsz)
+#define NFS4_dec_layoutreturn_sz (compound_decode_hdr_maxsz + \
 				decode_sequence_maxsz + \
 				decode_putfh_maxsz + \
-				decode_layoutवापस_maxsz)
-#घोषणा NFS4_enc_secinfo_no_name_sz	(compound_encode_hdr_maxsz + \
+				decode_layoutreturn_maxsz)
+#define NFS4_enc_secinfo_no_name_sz	(compound_encode_hdr_maxsz + \
 					encode_sequence_maxsz + \
 					encode_putrootfh_maxsz +\
 					encode_secinfo_no_name_maxsz)
-#घोषणा NFS4_dec_secinfo_no_name_sz	(compound_decode_hdr_maxsz + \
+#define NFS4_dec_secinfo_no_name_sz	(compound_decode_hdr_maxsz + \
 					decode_sequence_maxsz + \
 					decode_putrootfh_maxsz + \
 					decode_secinfo_no_name_maxsz)
-#घोषणा NFS4_enc_test_stateid_sz	(compound_encode_hdr_maxsz + \
+#define NFS4_enc_test_stateid_sz	(compound_encode_hdr_maxsz + \
 					 encode_sequence_maxsz + \
 					 encode_test_stateid_maxsz)
-#घोषणा NFS4_dec_test_stateid_sz	(compound_decode_hdr_maxsz + \
+#define NFS4_dec_test_stateid_sz	(compound_decode_hdr_maxsz + \
 					 decode_sequence_maxsz + \
 					 decode_test_stateid_maxsz)
-#घोषणा NFS4_enc_मुक्त_stateid_sz	(compound_encode_hdr_maxsz + \
+#define NFS4_enc_free_stateid_sz	(compound_encode_hdr_maxsz + \
 					 encode_sequence_maxsz + \
-					 encode_मुक्त_stateid_maxsz)
-#घोषणा NFS4_dec_मुक्त_stateid_sz	(compound_decode_hdr_maxsz + \
+					 encode_free_stateid_maxsz)
+#define NFS4_dec_free_stateid_sz	(compound_decode_hdr_maxsz + \
 					 decode_sequence_maxsz + \
-					 decode_मुक्त_stateid_maxsz)
+					 decode_free_stateid_maxsz)
 
-स्थिर u32 nfs41_maxग_लिखो_overhead = ((RPC_MAX_HEADER_WITH_AUTH +
+const u32 nfs41_maxwrite_overhead = ((RPC_MAX_HEADER_WITH_AUTH +
 				      compound_encode_hdr_maxsz +
 				      encode_sequence_maxsz +
 				      encode_putfh_maxsz +
 				      encode_getattr_maxsz) *
 				     XDR_UNIT);
 
-स्थिर u32 nfs41_maxपढ़ो_overhead = ((RPC_MAX_HEADER_WITH_AUTH +
+const u32 nfs41_maxread_overhead = ((RPC_MAX_HEADER_WITH_AUTH +
 				     compound_decode_hdr_maxsz +
 				     decode_sequence_maxsz +
 				     decode_putfh_maxsz) *
 				    XDR_UNIT);
 
-स्थिर u32 nfs41_maxgetdevinfo_overhead = ((RPC_MAX_REPHEADER_WITH_AUTH +
+const u32 nfs41_maxgetdevinfo_overhead = ((RPC_MAX_REPHEADER_WITH_AUTH +
 					   compound_decode_hdr_maxsz +
 					   decode_sequence_maxsz) *
 					  XDR_UNIT);
 EXPORT_SYMBOL_GPL(nfs41_maxgetdevinfo_overhead);
-#पूर्ण_अगर /* CONFIG_NFS_V4_1 */
+#endif /* CONFIG_NFS_V4_1 */
 
-अटल स्थिर umode_t nfs_type2fmt[] = अणु
+static const umode_t nfs_type2fmt[] = {
 	[NF4BAD] = 0,
 	[NF4REG] = S_IFREG,
-	[NF4सूची] = S_IFसूची,
+	[NF4DIR] = S_IFDIR,
 	[NF4BLK] = S_IFBLK,
 	[NF4CHR] = S_IFCHR,
 	[NF4LNK] = S_IFLNK,
 	[NF4SOCK] = S_IFSOCK,
 	[NF4FIFO] = S_IFIFO,
-	[NF4ATTRसूची] = 0,
+	[NF4ATTRDIR] = 0,
 	[NF4NAMEDATTR] = 0,
-पूर्ण;
+};
 
-काष्ठा compound_hdr अणु
-	पूर्णांक32_t		status;
-	uपूर्णांक32_t	nops;
+struct compound_hdr {
+	int32_t		status;
+	uint32_t	nops;
 	__be32 *	nops_p;
-	uपूर्णांक32_t	taglen;
-	अक्षर *		tag;
-	uपूर्णांक32_t	replen;		/* expected reply words */
+	uint32_t	taglen;
+	char *		tag;
+	uint32_t	replen;		/* expected reply words */
 	u32		minorversion;
-पूर्ण;
+};
 
-अटल __be32 *reserve_space(काष्ठा xdr_stream *xdr, माप_प्रकार nbytes)
-अणु
+static __be32 *reserve_space(struct xdr_stream *xdr, size_t nbytes)
+{
 	__be32 *p = xdr_reserve_space(xdr, nbytes);
 	BUG_ON(!p);
-	वापस p;
-पूर्ण
+	return p;
+}
 
-अटल व्योम encode_opaque_fixed(काष्ठा xdr_stream *xdr, स्थिर व्योम *buf, माप_प्रकार len)
-अणु
+static void encode_opaque_fixed(struct xdr_stream *xdr, const void *buf, size_t len)
+{
 	WARN_ON_ONCE(xdr_stream_encode_opaque_fixed(xdr, buf, len) < 0);
-पूर्ण
+}
 
-अटल व्योम encode_string(काष्ठा xdr_stream *xdr, अचिन्हित पूर्णांक len, स्थिर अक्षर *str)
-अणु
+static void encode_string(struct xdr_stream *xdr, unsigned int len, const char *str)
+{
 	WARN_ON_ONCE(xdr_stream_encode_opaque(xdr, str, len) < 0);
-पूर्ण
+}
 
-अटल व्योम encode_uपूर्णांक32(काष्ठा xdr_stream *xdr, u32 n)
-अणु
+static void encode_uint32(struct xdr_stream *xdr, u32 n)
+{
 	WARN_ON_ONCE(xdr_stream_encode_u32(xdr, n) < 0);
-पूर्ण
+}
 
-अटल व्योम encode_uपूर्णांक64(काष्ठा xdr_stream *xdr, u64 n)
-अणु
+static void encode_uint64(struct xdr_stream *xdr, u64 n)
+{
 	WARN_ON_ONCE(xdr_stream_encode_u64(xdr, n) < 0);
-पूर्ण
+}
 
-अटल sमाप_प्रकार xdr_encode_biपंचांगap4(काष्ठा xdr_stream *xdr,
-		स्थिर __u32 *biपंचांगap, माप_प्रकार len)
-अणु
-	sमाप_प्रकार ret;
+static ssize_t xdr_encode_bitmap4(struct xdr_stream *xdr,
+		const __u32 *bitmap, size_t len)
+{
+	ssize_t ret;
 
 	/* Trim empty words */
-	जबतक (len > 0 && biपंचांगap[len-1] == 0)
+	while (len > 0 && bitmap[len-1] == 0)
 		len--;
-	ret = xdr_stream_encode_uपूर्णांक32_array(xdr, biपंचांगap, len);
-	अगर (WARN_ON_ONCE(ret < 0))
-		वापस ret;
-	वापस len;
-पूर्ण
+	ret = xdr_stream_encode_uint32_array(xdr, bitmap, len);
+	if (WARN_ON_ONCE(ret < 0))
+		return ret;
+	return len;
+}
 
-अटल माप_प्रकार mask_biपंचांगap4(स्थिर __u32 *biपंचांगap, स्थिर __u32 *mask,
-		__u32 *res, माप_प्रकार len)
-अणु
-	माप_प्रकार i;
-	__u32 पंचांगp;
+static size_t mask_bitmap4(const __u32 *bitmap, const __u32 *mask,
+		__u32 *res, size_t len)
+{
+	size_t i;
+	__u32 tmp;
 
-	जबतक (len > 0 && (biपंचांगap[len-1] == 0 || mask[len-1] == 0))
+	while (len > 0 && (bitmap[len-1] == 0 || mask[len-1] == 0))
 		len--;
-	क्रम (i = len; i-- > 0;) अणु
-		पंचांगp = biपंचांगap[i] & mask[i];
-		res[i] = पंचांगp;
-	पूर्ण
-	वापस len;
-पूर्ण
+	for (i = len; i-- > 0;) {
+		tmp = bitmap[i] & mask[i];
+		res[i] = tmp;
+	}
+	return len;
+}
 
-अटल व्योम encode_nfs4_seqid(काष्ठा xdr_stream *xdr,
-		स्थिर काष्ठा nfs_seqid *seqid)
-अणु
-	अगर (seqid != शून्य)
-		encode_uपूर्णांक32(xdr, seqid->sequence->counter);
-	अन्यथा
-		encode_uपूर्णांक32(xdr, 0);
-पूर्ण
+static void encode_nfs4_seqid(struct xdr_stream *xdr,
+		const struct nfs_seqid *seqid)
+{
+	if (seqid != NULL)
+		encode_uint32(xdr, seqid->sequence->counter);
+	else
+		encode_uint32(xdr, 0);
+}
 
-अटल व्योम encode_compound_hdr(काष्ठा xdr_stream *xdr,
-				काष्ठा rpc_rqst *req,
-				काष्ठा compound_hdr *hdr)
-अणु
+static void encode_compound_hdr(struct xdr_stream *xdr,
+				struct rpc_rqst *req,
+				struct compound_hdr *hdr)
+{
 	__be32 *p;
 
 	/* initialize running count of expected bytes in reply.
 	 * NOTE: the replied tag SHOULD be the same is the one sent,
-	 * but this is not required as a MUST क्रम the server to करो so. */
+	 * but this is not required as a MUST for the server to do so. */
 	hdr->replen = 3 + hdr->taglen;
 
 	WARN_ON_ONCE(hdr->taglen > NFS4_MAXTAGLEN);
@@ -1044,282 +1043,282 @@ EXPORT_SYMBOL_GPL(nfs41_maxgetdevinfo_overhead);
 	*p++ = cpu_to_be32(hdr->minorversion);
 	hdr->nops_p = p;
 	*p = cpu_to_be32(hdr->nops);
-पूर्ण
+}
 
-अटल व्योम encode_op_hdr(काष्ठा xdr_stream *xdr, क्रमागत nfs_opnum4 op,
-		uपूर्णांक32_t replen,
-		काष्ठा compound_hdr *hdr)
-अणु
-	encode_uपूर्णांक32(xdr, op);
+static void encode_op_hdr(struct xdr_stream *xdr, enum nfs_opnum4 op,
+		uint32_t replen,
+		struct compound_hdr *hdr)
+{
+	encode_uint32(xdr, op);
 	hdr->nops++;
 	hdr->replen += replen;
-पूर्ण
+}
 
-अटल व्योम encode_nops(काष्ठा compound_hdr *hdr)
-अणु
+static void encode_nops(struct compound_hdr *hdr)
+{
 	WARN_ON_ONCE(hdr->nops > NFS4_MAX_OPS);
 	*hdr->nops_p = htonl(hdr->nops);
-पूर्ण
+}
 
-अटल व्योम encode_nfs4_stateid(काष्ठा xdr_stream *xdr, स्थिर nfs4_stateid *stateid)
-अणु
+static void encode_nfs4_stateid(struct xdr_stream *xdr, const nfs4_stateid *stateid)
+{
 	encode_opaque_fixed(xdr, stateid, NFS4_STATEID_SIZE);
-पूर्ण
+}
 
-अटल व्योम encode_nfs4_verअगरier(काष्ठा xdr_stream *xdr, स्थिर nfs4_verअगरier *verf)
-अणु
+static void encode_nfs4_verifier(struct xdr_stream *xdr, const nfs4_verifier *verf)
+{
 	encode_opaque_fixed(xdr, verf->data, NFS4_VERIFIER_SIZE);
-पूर्ण
+}
 
-अटल __be32 *
-xdr_encode_nfsसमय4(__be32 *p, स्थिर काष्ठा बारpec64 *t)
-अणु
+static __be32 *
+xdr_encode_nfstime4(__be32 *p, const struct timespec64 *t)
+{
 	p = xdr_encode_hyper(p, t->tv_sec);
 	*p++ = cpu_to_be32(t->tv_nsec);
-	वापस p;
-पूर्ण
+	return p;
+}
 
-अटल व्योम encode_attrs(काष्ठा xdr_stream *xdr, स्थिर काष्ठा iattr *iap,
-				स्थिर काष्ठा nfs4_label *label,
-				स्थिर umode_t *umask,
-				स्थिर काष्ठा nfs_server *server,
-				स्थिर uपूर्णांक32_t attrmask[])
-अणु
-	अक्षर owner_name[IDMAP_NAMESZ];
-	अक्षर owner_group[IDMAP_NAMESZ];
-	पूर्णांक owner_namelen = 0;
-	पूर्णांक owner_grouplen = 0;
+static void encode_attrs(struct xdr_stream *xdr, const struct iattr *iap,
+				const struct nfs4_label *label,
+				const umode_t *umask,
+				const struct nfs_server *server,
+				const uint32_t attrmask[])
+{
+	char owner_name[IDMAP_NAMESZ];
+	char owner_group[IDMAP_NAMESZ];
+	int owner_namelen = 0;
+	int owner_grouplen = 0;
 	__be32 *p;
-	uपूर्णांक32_t len = 0;
-	uपूर्णांक32_t bmval[3] = अणु 0 पूर्ण;
+	uint32_t len = 0;
+	uint32_t bmval[3] = { 0 };
 
 	/*
-	 * We reserve enough space to ग_लिखो the entire attribute buffer at once.
+	 * We reserve enough space to write the entire attribute buffer at once.
 	 */
-	अगर ((iap->ia_valid & ATTR_SIZE) && (attrmask[0] & FATTR4_WORD0_SIZE)) अणु
+	if ((iap->ia_valid & ATTR_SIZE) && (attrmask[0] & FATTR4_WORD0_SIZE)) {
 		bmval[0] |= FATTR4_WORD0_SIZE;
 		len += 8;
-	पूर्ण
-	अगर (iap->ia_valid & ATTR_MODE) अणु
-		अगर (umask && (attrmask[2] & FATTR4_WORD2_MODE_UMASK)) अणु
+	}
+	if (iap->ia_valid & ATTR_MODE) {
+		if (umask && (attrmask[2] & FATTR4_WORD2_MODE_UMASK)) {
 			bmval[2] |= FATTR4_WORD2_MODE_UMASK;
 			len += 8;
-		पूर्ण अन्यथा अगर (attrmask[1] & FATTR4_WORD1_MODE) अणु
+		} else if (attrmask[1] & FATTR4_WORD1_MODE) {
 			bmval[1] |= FATTR4_WORD1_MODE;
 			len += 4;
-		पूर्ण
-	पूर्ण
-	अगर ((iap->ia_valid & ATTR_UID) && (attrmask[1] & FATTR4_WORD1_OWNER)) अणु
+		}
+	}
+	if ((iap->ia_valid & ATTR_UID) && (attrmask[1] & FATTR4_WORD1_OWNER)) {
 		owner_namelen = nfs_map_uid_to_name(server, iap->ia_uid, owner_name, IDMAP_NAMESZ);
-		अगर (owner_namelen < 0) अणु
-			dprपूर्णांकk("nfs: couldn't resolve uid %d to string\n",
+		if (owner_namelen < 0) {
+			dprintk("nfs: couldn't resolve uid %d to string\n",
 					from_kuid(&init_user_ns, iap->ia_uid));
 			/* XXX */
-			म_नकल(owner_name, "nobody");
-			owner_namelen = माप("nobody") - 1;
-			/* जाओ out; */
-		पूर्ण
+			strcpy(owner_name, "nobody");
+			owner_namelen = sizeof("nobody") - 1;
+			/* goto out; */
+		}
 		bmval[1] |= FATTR4_WORD1_OWNER;
 		len += 4 + (XDR_QUADLEN(owner_namelen) << 2);
-	पूर्ण
-	अगर ((iap->ia_valid & ATTR_GID) &&
-	   (attrmask[1] & FATTR4_WORD1_OWNER_GROUP)) अणु
+	}
+	if ((iap->ia_valid & ATTR_GID) &&
+	   (attrmask[1] & FATTR4_WORD1_OWNER_GROUP)) {
 		owner_grouplen = nfs_map_gid_to_group(server, iap->ia_gid, owner_group, IDMAP_NAMESZ);
-		अगर (owner_grouplen < 0) अणु
-			dprपूर्णांकk("nfs: couldn't resolve gid %d to string\n",
+		if (owner_grouplen < 0) {
+			dprintk("nfs: couldn't resolve gid %d to string\n",
 					from_kgid(&init_user_ns, iap->ia_gid));
-			म_नकल(owner_group, "nobody");
-			owner_grouplen = माप("nobody") - 1;
-			/* जाओ out; */
-		पूर्ण
+			strcpy(owner_group, "nobody");
+			owner_grouplen = sizeof("nobody") - 1;
+			/* goto out; */
+		}
 		bmval[1] |= FATTR4_WORD1_OWNER_GROUP;
 		len += 4 + (XDR_QUADLEN(owner_grouplen) << 2);
-	पूर्ण
-	अगर (attrmask[1] & FATTR4_WORD1_TIME_ACCESS_SET) अणु
-		अगर (iap->ia_valid & ATTR_ATIME_SET) अणु
+	}
+	if (attrmask[1] & FATTR4_WORD1_TIME_ACCESS_SET) {
+		if (iap->ia_valid & ATTR_ATIME_SET) {
 			bmval[1] |= FATTR4_WORD1_TIME_ACCESS_SET;
-			len += 4 + (nfsसमय4_maxsz << 2);
-		पूर्ण अन्यथा अगर (iap->ia_valid & ATTR_ATIME) अणु
+			len += 4 + (nfstime4_maxsz << 2);
+		} else if (iap->ia_valid & ATTR_ATIME) {
 			bmval[1] |= FATTR4_WORD1_TIME_ACCESS_SET;
 			len += 4;
-		पूर्ण
-	पूर्ण
-	अगर (attrmask[1] & FATTR4_WORD1_TIME_MODIFY_SET) अणु
-		अगर (iap->ia_valid & ATTR_MTIME_SET) अणु
+		}
+	}
+	if (attrmask[1] & FATTR4_WORD1_TIME_MODIFY_SET) {
+		if (iap->ia_valid & ATTR_MTIME_SET) {
 			bmval[1] |= FATTR4_WORD1_TIME_MODIFY_SET;
-			len += 4 + (nfsसमय4_maxsz << 2);
-		पूर्ण अन्यथा अगर (iap->ia_valid & ATTR_MTIME) अणु
+			len += 4 + (nfstime4_maxsz << 2);
+		} else if (iap->ia_valid & ATTR_MTIME) {
 			bmval[1] |= FATTR4_WORD1_TIME_MODIFY_SET;
 			len += 4;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (label && (attrmask[2] & FATTR4_WORD2_SECURITY_LABEL)) अणु
+	if (label && (attrmask[2] & FATTR4_WORD2_SECURITY_LABEL)) {
 		len += 4 + 4 + 4 + (XDR_QUADLEN(label->len) << 2);
 		bmval[2] |= FATTR4_WORD2_SECURITY_LABEL;
-	पूर्ण
+	}
 
-	xdr_encode_biपंचांगap4(xdr, bmval, ARRAY_SIZE(bmval));
-	xdr_stream_encode_opaque_अंतरभूत(xdr, (व्योम **)&p, len);
+	xdr_encode_bitmap4(xdr, bmval, ARRAY_SIZE(bmval));
+	xdr_stream_encode_opaque_inline(xdr, (void **)&p, len);
 
-	अगर (bmval[0] & FATTR4_WORD0_SIZE)
+	if (bmval[0] & FATTR4_WORD0_SIZE)
 		p = xdr_encode_hyper(p, iap->ia_size);
-	अगर (bmval[1] & FATTR4_WORD1_MODE)
+	if (bmval[1] & FATTR4_WORD1_MODE)
 		*p++ = cpu_to_be32(iap->ia_mode & S_IALLUGO);
-	अगर (bmval[1] & FATTR4_WORD1_OWNER)
+	if (bmval[1] & FATTR4_WORD1_OWNER)
 		p = xdr_encode_opaque(p, owner_name, owner_namelen);
-	अगर (bmval[1] & FATTR4_WORD1_OWNER_GROUP)
+	if (bmval[1] & FATTR4_WORD1_OWNER_GROUP)
 		p = xdr_encode_opaque(p, owner_group, owner_grouplen);
-	अगर (bmval[1] & FATTR4_WORD1_TIME_ACCESS_SET) अणु
-		अगर (iap->ia_valid & ATTR_ATIME_SET) अणु
+	if (bmval[1] & FATTR4_WORD1_TIME_ACCESS_SET) {
+		if (iap->ia_valid & ATTR_ATIME_SET) {
 			*p++ = cpu_to_be32(NFS4_SET_TO_CLIENT_TIME);
-			p = xdr_encode_nfsसमय4(p, &iap->ia_aसमय);
-		पूर्ण अन्यथा
+			p = xdr_encode_nfstime4(p, &iap->ia_atime);
+		} else
 			*p++ = cpu_to_be32(NFS4_SET_TO_SERVER_TIME);
-	पूर्ण
-	अगर (bmval[1] & FATTR4_WORD1_TIME_MODIFY_SET) अणु
-		अगर (iap->ia_valid & ATTR_MTIME_SET) अणु
+	}
+	if (bmval[1] & FATTR4_WORD1_TIME_MODIFY_SET) {
+		if (iap->ia_valid & ATTR_MTIME_SET) {
 			*p++ = cpu_to_be32(NFS4_SET_TO_CLIENT_TIME);
-			p = xdr_encode_nfsसमय4(p, &iap->ia_mसमय);
-		पूर्ण अन्यथा
+			p = xdr_encode_nfstime4(p, &iap->ia_mtime);
+		} else
 			*p++ = cpu_to_be32(NFS4_SET_TO_SERVER_TIME);
-	पूर्ण
-	अगर (label && (bmval[2] & FATTR4_WORD2_SECURITY_LABEL)) अणु
+	}
+	if (label && (bmval[2] & FATTR4_WORD2_SECURITY_LABEL)) {
 		*p++ = cpu_to_be32(label->lfs);
 		*p++ = cpu_to_be32(label->pi);
 		*p++ = cpu_to_be32(label->len);
 		p = xdr_encode_opaque_fixed(p, label->label, label->len);
-	पूर्ण
-	अगर (bmval[2] & FATTR4_WORD2_MODE_UMASK) अणु
+	}
+	if (bmval[2] & FATTR4_WORD2_MODE_UMASK) {
 		*p++ = cpu_to_be32(iap->ia_mode & S_IALLUGO);
 		*p++ = cpu_to_be32(*umask);
-	पूर्ण
+	}
 
 /* out: */
-पूर्ण
+}
 
-अटल व्योम encode_access(काष्ठा xdr_stream *xdr, u32 access, काष्ठा compound_hdr *hdr)
-अणु
+static void encode_access(struct xdr_stream *xdr, u32 access, struct compound_hdr *hdr)
+{
 	encode_op_hdr(xdr, OP_ACCESS, decode_access_maxsz, hdr);
-	encode_uपूर्णांक32(xdr, access);
-पूर्ण
+	encode_uint32(xdr, access);
+}
 
-अटल व्योम encode_बंद(काष्ठा xdr_stream *xdr, स्थिर काष्ठा nfs_बंदargs *arg, काष्ठा compound_hdr *hdr)
-अणु
-	encode_op_hdr(xdr, OP_CLOSE, decode_बंद_maxsz, hdr);
+static void encode_close(struct xdr_stream *xdr, const struct nfs_closeargs *arg, struct compound_hdr *hdr)
+{
+	encode_op_hdr(xdr, OP_CLOSE, decode_close_maxsz, hdr);
 	encode_nfs4_seqid(xdr, arg->seqid);
 	encode_nfs4_stateid(xdr, &arg->stateid);
-पूर्ण
+}
 
-अटल व्योम encode_commit(काष्ठा xdr_stream *xdr, स्थिर काष्ठा nfs_commitargs *args, काष्ठा compound_hdr *hdr)
-अणु
+static void encode_commit(struct xdr_stream *xdr, const struct nfs_commitargs *args, struct compound_hdr *hdr)
+{
 	__be32 *p;
 
 	encode_op_hdr(xdr, OP_COMMIT, decode_commit_maxsz, hdr);
 	p = reserve_space(xdr, 12);
 	p = xdr_encode_hyper(p, args->offset);
 	*p = cpu_to_be32(args->count);
-पूर्ण
+}
 
-अटल व्योम encode_create(काष्ठा xdr_stream *xdr, स्थिर काष्ठा nfs4_create_arg *create, काष्ठा compound_hdr *hdr)
-अणु
+static void encode_create(struct xdr_stream *xdr, const struct nfs4_create_arg *create, struct compound_hdr *hdr)
+{
 	__be32 *p;
 
 	encode_op_hdr(xdr, OP_CREATE, decode_create_maxsz, hdr);
-	encode_uपूर्णांक32(xdr, create->ftype);
+	encode_uint32(xdr, create->ftype);
 
-	चयन (create->ftype) अणु
-	हाल NF4LNK:
+	switch (create->ftype) {
+	case NF4LNK:
 		p = reserve_space(xdr, 4);
 		*p = cpu_to_be32(create->u.symlink.len);
-		xdr_ग_लिखो_pages(xdr, create->u.symlink.pages, 0,
+		xdr_write_pages(xdr, create->u.symlink.pages, 0,
 				create->u.symlink.len);
 		xdr->buf->flags |= XDRBUF_WRITE;
-		अवरोध;
+		break;
 
-	हाल NF4BLK: हाल NF4CHR:
+	case NF4BLK: case NF4CHR:
 		p = reserve_space(xdr, 8);
 		*p++ = cpu_to_be32(create->u.device.specdata1);
 		*p = cpu_to_be32(create->u.device.specdata2);
-		अवरोध;
+		break;
 
-	शेष:
-		अवरोध;
-	पूर्ण
+	default:
+		break;
+	}
 
 	encode_string(xdr, create->name->len, create->name->name);
 	encode_attrs(xdr, create->attrs, create->label, &create->umask,
-			create->server, create->server->attr_biपंचांगask);
-पूर्ण
+			create->server, create->server->attr_bitmask);
+}
 
-अटल व्योम encode_getattr(काष्ठा xdr_stream *xdr,
-		स्थिर __u32 *biपंचांगap, स्थिर __u32 *mask, माप_प्रकार len,
-		काष्ठा compound_hdr *hdr)
-अणु
-	__u32 masked_biपंचांगap[nfs4_fattr_biपंचांगap_maxsz];
+static void encode_getattr(struct xdr_stream *xdr,
+		const __u32 *bitmap, const __u32 *mask, size_t len,
+		struct compound_hdr *hdr)
+{
+	__u32 masked_bitmap[nfs4_fattr_bitmap_maxsz];
 
 	encode_op_hdr(xdr, OP_GETATTR, decode_getattr_maxsz, hdr);
-	अगर (mask) अणु
-		अगर (WARN_ON_ONCE(len > ARRAY_SIZE(masked_biपंचांगap)))
-			len = ARRAY_SIZE(masked_biपंचांगap);
-		len = mask_biपंचांगap4(biपंचांगap, mask, masked_biपंचांगap, len);
-		biपंचांगap = masked_biपंचांगap;
-	पूर्ण
-	xdr_encode_biपंचांगap4(xdr, biपंचांगap, len);
-पूर्ण
+	if (mask) {
+		if (WARN_ON_ONCE(len > ARRAY_SIZE(masked_bitmap)))
+			len = ARRAY_SIZE(masked_bitmap);
+		len = mask_bitmap4(bitmap, mask, masked_bitmap, len);
+		bitmap = masked_bitmap;
+	}
+	xdr_encode_bitmap4(xdr, bitmap, len);
+}
 
-अटल व्योम encode_getfattr(काष्ठा xdr_stream *xdr, स्थिर u32* biपंचांगask, काष्ठा compound_hdr *hdr)
-अणु
-	encode_getattr(xdr, nfs4_fattr_biपंचांगap, biपंचांगask,
-			ARRAY_SIZE(nfs4_fattr_biपंचांगap), hdr);
-पूर्ण
+static void encode_getfattr(struct xdr_stream *xdr, const u32* bitmask, struct compound_hdr *hdr)
+{
+	encode_getattr(xdr, nfs4_fattr_bitmap, bitmask,
+			ARRAY_SIZE(nfs4_fattr_bitmap), hdr);
+}
 
-अटल व्योम encode_getfattr_खोलो(काष्ठा xdr_stream *xdr, स्थिर u32 *biपंचांगask,
-				 स्थिर u32 *खोलो_biपंचांगap,
-				 काष्ठा compound_hdr *hdr)
-अणु
-	encode_getattr(xdr, खोलो_biपंचांगap, biपंचांगask, 3, hdr);
-पूर्ण
+static void encode_getfattr_open(struct xdr_stream *xdr, const u32 *bitmask,
+				 const u32 *open_bitmap,
+				 struct compound_hdr *hdr)
+{
+	encode_getattr(xdr, open_bitmap, bitmask, 3, hdr);
+}
 
-अटल व्योम encode_fsinfo(काष्ठा xdr_stream *xdr, स्थिर u32* biपंचांगask, काष्ठा compound_hdr *hdr)
-अणु
-	encode_getattr(xdr, nfs4_fsinfo_biपंचांगap, biपंचांगask,
-			ARRAY_SIZE(nfs4_fsinfo_biपंचांगap), hdr);
-पूर्ण
+static void encode_fsinfo(struct xdr_stream *xdr, const u32* bitmask, struct compound_hdr *hdr)
+{
+	encode_getattr(xdr, nfs4_fsinfo_bitmap, bitmask,
+			ARRAY_SIZE(nfs4_fsinfo_bitmap), hdr);
+}
 
-अटल व्योम encode_fs_locations(काष्ठा xdr_stream *xdr, स्थिर u32* biपंचांगask, काष्ठा compound_hdr *hdr)
-अणु
-	encode_getattr(xdr, nfs4_fs_locations_biपंचांगap, biपंचांगask,
-			ARRAY_SIZE(nfs4_fs_locations_biपंचांगap), hdr);
-पूर्ण
+static void encode_fs_locations(struct xdr_stream *xdr, const u32* bitmask, struct compound_hdr *hdr)
+{
+	encode_getattr(xdr, nfs4_fs_locations_bitmap, bitmask,
+			ARRAY_SIZE(nfs4_fs_locations_bitmap), hdr);
+}
 
-अटल व्योम encode_getfh(काष्ठा xdr_stream *xdr, काष्ठा compound_hdr *hdr)
-अणु
+static void encode_getfh(struct xdr_stream *xdr, struct compound_hdr *hdr)
+{
 	encode_op_hdr(xdr, OP_GETFH, decode_getfh_maxsz, hdr);
-पूर्ण
+}
 
-अटल व्योम encode_link(काष्ठा xdr_stream *xdr, स्थिर काष्ठा qstr *name, काष्ठा compound_hdr *hdr)
-अणु
+static void encode_link(struct xdr_stream *xdr, const struct qstr *name, struct compound_hdr *hdr)
+{
 	encode_op_hdr(xdr, OP_LINK, decode_link_maxsz, hdr);
 	encode_string(xdr, name->len, name->name);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक nfs4_lock_type(काष्ठा file_lock *fl, पूर्णांक block)
-अणु
-	अगर (fl->fl_type == F_RDLCK)
-		वापस block ? NFS4_READW_LT : NFS4_READ_LT;
-	वापस block ? NFS4_WRITEW_LT : NFS4_WRITE_LT;
-पूर्ण
+static inline int nfs4_lock_type(struct file_lock *fl, int block)
+{
+	if (fl->fl_type == F_RDLCK)
+		return block ? NFS4_READW_LT : NFS4_READ_LT;
+	return block ? NFS4_WRITEW_LT : NFS4_WRITE_LT;
+}
 
-अटल अंतरभूत uपूर्णांक64_t nfs4_lock_length(काष्ठा file_lock *fl)
-अणु
-	अगर (fl->fl_end == OFFSET_MAX)
-		वापस ~(uपूर्णांक64_t)0;
-	वापस fl->fl_end - fl->fl_start + 1;
-पूर्ण
+static inline uint64_t nfs4_lock_length(struct file_lock *fl)
+{
+	if (fl->fl_end == OFFSET_MAX)
+		return ~(uint64_t)0;
+	return fl->fl_end - fl->fl_start + 1;
+}
 
-अटल व्योम encode_lockowner(काष्ठा xdr_stream *xdr, स्थिर काष्ठा nfs_lowner *lowner)
-अणु
+static void encode_lockowner(struct xdr_stream *xdr, const struct nfs_lowner *lowner)
+{
 	__be32 *p;
 
 	p = reserve_space(xdr, 32);
@@ -1328,14 +1327,14 @@ xdr_encode_nfsसमय4(__be32 *p, स्थिर काष्ठा बार
 	p = xdr_encode_opaque_fixed(p, "lock id:", 8);
 	*p++ = cpu_to_be32(lowner->s_dev);
 	xdr_encode_hyper(p, lowner->id);
-पूर्ण
+}
 
 /*
  * opcode,type,reclaim,offset,length,new_lock_owner = 32
- * खोलो_seqid,खोलो_stateid,lock_seqid,lock_owner.clientid, lock_owner.id = 40
+ * open_seqid,open_stateid,lock_seqid,lock_owner.clientid, lock_owner.id = 40
  */
-अटल व्योम encode_lock(काष्ठा xdr_stream *xdr, स्थिर काष्ठा nfs_lock_args *args, काष्ठा compound_hdr *hdr)
-अणु
+static void encode_lock(struct xdr_stream *xdr, const struct nfs_lock_args *args, struct compound_hdr *hdr)
+{
 	__be32 *p;
 
 	encode_op_hdr(xdr, OP_LOCK, decode_lock_maxsz, hdr);
@@ -1345,20 +1344,20 @@ xdr_encode_nfsसमय4(__be32 *p, स्थिर काष्ठा बार
 	p = xdr_encode_hyper(p, args->fl->fl_start);
 	p = xdr_encode_hyper(p, nfs4_lock_length(args->fl));
 	*p = cpu_to_be32(args->new_lock_owner);
-	अगर (args->new_lock_owner)अणु
-		encode_nfs4_seqid(xdr, args->खोलो_seqid);
-		encode_nfs4_stateid(xdr, &args->खोलो_stateid);
+	if (args->new_lock_owner){
+		encode_nfs4_seqid(xdr, args->open_seqid);
+		encode_nfs4_stateid(xdr, &args->open_stateid);
 		encode_nfs4_seqid(xdr, args->lock_seqid);
 		encode_lockowner(xdr, &args->lock_owner);
-	पूर्ण
-	अन्यथा अणु
+	}
+	else {
 		encode_nfs4_stateid(xdr, &args->lock_stateid);
 		encode_nfs4_seqid(xdr, args->lock_seqid);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम encode_lockt(काष्ठा xdr_stream *xdr, स्थिर काष्ठा nfs_lockt_args *args, काष्ठा compound_hdr *hdr)
-अणु
+static void encode_lockt(struct xdr_stream *xdr, const struct nfs_lockt_args *args, struct compound_hdr *hdr)
+{
 	__be32 *p;
 
 	encode_op_hdr(xdr, OP_LOCKT, decode_lockt_maxsz, hdr);
@@ -1367,49 +1366,49 @@ xdr_encode_nfsसमय4(__be32 *p, स्थिर काष्ठा बार
 	p = xdr_encode_hyper(p, args->fl->fl_start);
 	p = xdr_encode_hyper(p, nfs4_lock_length(args->fl));
 	encode_lockowner(xdr, &args->lock_owner);
-पूर्ण
+}
 
-अटल व्योम encode_locku(काष्ठा xdr_stream *xdr, स्थिर काष्ठा nfs_locku_args *args, काष्ठा compound_hdr *hdr)
-अणु
+static void encode_locku(struct xdr_stream *xdr, const struct nfs_locku_args *args, struct compound_hdr *hdr)
+{
 	__be32 *p;
 
 	encode_op_hdr(xdr, OP_LOCKU, decode_locku_maxsz, hdr);
-	encode_uपूर्णांक32(xdr, nfs4_lock_type(args->fl, 0));
+	encode_uint32(xdr, nfs4_lock_type(args->fl, 0));
 	encode_nfs4_seqid(xdr, args->seqid);
 	encode_nfs4_stateid(xdr, &args->stateid);
 	p = reserve_space(xdr, 16);
 	p = xdr_encode_hyper(p, args->fl->fl_start);
 	xdr_encode_hyper(p, nfs4_lock_length(args->fl));
-पूर्ण
+}
 
-अटल व्योम encode_release_lockowner(काष्ठा xdr_stream *xdr, स्थिर काष्ठा nfs_lowner *lowner, काष्ठा compound_hdr *hdr)
-अणु
+static void encode_release_lockowner(struct xdr_stream *xdr, const struct nfs_lowner *lowner, struct compound_hdr *hdr)
+{
 	encode_op_hdr(xdr, OP_RELEASE_LOCKOWNER, decode_release_lockowner_maxsz, hdr);
 	encode_lockowner(xdr, lowner);
-पूर्ण
+}
 
-अटल व्योम encode_lookup(काष्ठा xdr_stream *xdr, स्थिर काष्ठा qstr *name, काष्ठा compound_hdr *hdr)
-अणु
+static void encode_lookup(struct xdr_stream *xdr, const struct qstr *name, struct compound_hdr *hdr)
+{
 	encode_op_hdr(xdr, OP_LOOKUP, decode_lookup_maxsz, hdr);
 	encode_string(xdr, name->len, name->name);
-पूर्ण
+}
 
-अटल व्योम encode_lookupp(काष्ठा xdr_stream *xdr, काष्ठा compound_hdr *hdr)
-अणु
+static void encode_lookupp(struct xdr_stream *xdr, struct compound_hdr *hdr)
+{
 	encode_op_hdr(xdr, OP_LOOKUPP, decode_lookupp_maxsz, hdr);
-पूर्ण
+}
 
-अटल व्योम encode_share_access(काष्ठा xdr_stream *xdr, u32 share_access)
-अणु
+static void encode_share_access(struct xdr_stream *xdr, u32 share_access)
+{
 	__be32 *p;
 
 	p = reserve_space(xdr, 8);
 	*p++ = cpu_to_be32(share_access);
-	*p = cpu_to_be32(0);		/* क्रम linux, share_deny = 0 always */
-पूर्ण
+	*p = cpu_to_be32(0);		/* for linux, share_deny = 0 always */
+}
 
-अटल अंतरभूत व्योम encode_खोलोhdr(काष्ठा xdr_stream *xdr, स्थिर काष्ठा nfs_खोलोargs *arg)
-अणु
+static inline void encode_openhdr(struct xdr_stream *xdr, const struct nfs_openargs *arg)
+{
 	__be32 *p;
  /*
  * opcode 4, seqid 4, share_access 4, share_deny 4, clientid 8, ownerlen 4,
@@ -1422,269 +1421,269 @@ xdr_encode_nfsसमय4(__be32 *p, स्थिर काष्ठा बार
 	*p++ = cpu_to_be32(24);
 	p = xdr_encode_opaque_fixed(p, "open id:", 8);
 	*p++ = cpu_to_be32(arg->server->s_dev);
-	*p++ = cpu_to_be32(arg->id.uniquअगरier);
-	xdr_encode_hyper(p, arg->id.create_समय);
-पूर्ण
+	*p++ = cpu_to_be32(arg->id.uniquifier);
+	xdr_encode_hyper(p, arg->id.create_time);
+}
 
-अटल अंतरभूत व्योम encode_createmode(काष्ठा xdr_stream *xdr, स्थिर काष्ठा nfs_खोलोargs *arg)
-अणु
+static inline void encode_createmode(struct xdr_stream *xdr, const struct nfs_openargs *arg)
+{
 	__be32 *p;
 
 	p = reserve_space(xdr, 4);
-	चयन(arg->createmode) अणु
-	हाल NFS4_CREATE_UNCHECKED:
+	switch(arg->createmode) {
+	case NFS4_CREATE_UNCHECKED:
 		*p = cpu_to_be32(NFS4_CREATE_UNCHECKED);
 		encode_attrs(xdr, arg->u.attrs, arg->label, &arg->umask,
-				arg->server, arg->server->attr_biपंचांगask);
-		अवरोध;
-	हाल NFS4_CREATE_GUARDED:
+				arg->server, arg->server->attr_bitmask);
+		break;
+	case NFS4_CREATE_GUARDED:
 		*p = cpu_to_be32(NFS4_CREATE_GUARDED);
 		encode_attrs(xdr, arg->u.attrs, arg->label, &arg->umask,
-				arg->server, arg->server->attr_biपंचांगask);
-		अवरोध;
-	हाल NFS4_CREATE_EXCLUSIVE:
+				arg->server, arg->server->attr_bitmask);
+		break;
+	case NFS4_CREATE_EXCLUSIVE:
 		*p = cpu_to_be32(NFS4_CREATE_EXCLUSIVE);
-		encode_nfs4_verअगरier(xdr, &arg->u.verअगरier);
-		अवरोध;
-	हाल NFS4_CREATE_EXCLUSIVE4_1:
+		encode_nfs4_verifier(xdr, &arg->u.verifier);
+		break;
+	case NFS4_CREATE_EXCLUSIVE4_1:
 		*p = cpu_to_be32(NFS4_CREATE_EXCLUSIVE4_1);
-		encode_nfs4_verअगरier(xdr, &arg->u.verअगरier);
+		encode_nfs4_verifier(xdr, &arg->u.verifier);
 		encode_attrs(xdr, arg->u.attrs, arg->label, &arg->umask,
-				arg->server, arg->server->exclcreat_biपंचांगask);
-	पूर्ण
-पूर्ण
+				arg->server, arg->server->exclcreat_bitmask);
+	}
+}
 
-अटल व्योम encode_खोलोtype(काष्ठा xdr_stream *xdr, स्थिर काष्ठा nfs_खोलोargs *arg)
-अणु
+static void encode_opentype(struct xdr_stream *xdr, const struct nfs_openargs *arg)
+{
 	__be32 *p;
 
 	p = reserve_space(xdr, 4);
-	चयन (arg->खोलो_flags & O_CREAT) अणु
-	हाल 0:
+	switch (arg->open_flags & O_CREAT) {
+	case 0:
 		*p = cpu_to_be32(NFS4_OPEN_NOCREATE);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		*p = cpu_to_be32(NFS4_OPEN_CREATE);
 		encode_createmode(xdr, arg);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम encode_delegation_type(काष्ठा xdr_stream *xdr, भ_शेषe_t delegation_type)
-अणु
+static inline void encode_delegation_type(struct xdr_stream *xdr, fmode_t delegation_type)
+{
 	__be32 *p;
 
 	p = reserve_space(xdr, 4);
-	चयन (delegation_type) अणु
-	हाल 0:
+	switch (delegation_type) {
+	case 0:
 		*p = cpu_to_be32(NFS4_OPEN_DELEGATE_NONE);
-		अवरोध;
-	हाल FMODE_READ:
+		break;
+	case FMODE_READ:
 		*p = cpu_to_be32(NFS4_OPEN_DELEGATE_READ);
-		अवरोध;
-	हाल FMODE_WRITE|FMODE_READ:
+		break;
+	case FMODE_WRITE|FMODE_READ:
 		*p = cpu_to_be32(NFS4_OPEN_DELEGATE_WRITE);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		BUG();
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम encode_claim_null(काष्ठा xdr_stream *xdr, स्थिर काष्ठा qstr *name)
-अणु
+static inline void encode_claim_null(struct xdr_stream *xdr, const struct qstr *name)
+{
 	__be32 *p;
 
 	p = reserve_space(xdr, 4);
-	*p = cpu_to_be32(NFS4_OPEN_CLAIM_शून्य);
+	*p = cpu_to_be32(NFS4_OPEN_CLAIM_NULL);
 	encode_string(xdr, name->len, name->name);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम encode_claim_previous(काष्ठा xdr_stream *xdr, भ_शेषe_t type)
-अणु
+static inline void encode_claim_previous(struct xdr_stream *xdr, fmode_t type)
+{
 	__be32 *p;
 
 	p = reserve_space(xdr, 4);
 	*p = cpu_to_be32(NFS4_OPEN_CLAIM_PREVIOUS);
 	encode_delegation_type(xdr, type);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम encode_claim_delegate_cur(काष्ठा xdr_stream *xdr, स्थिर काष्ठा qstr *name, स्थिर nfs4_stateid *stateid)
-अणु
+static inline void encode_claim_delegate_cur(struct xdr_stream *xdr, const struct qstr *name, const nfs4_stateid *stateid)
+{
 	__be32 *p;
 
 	p = reserve_space(xdr, 4);
 	*p = cpu_to_be32(NFS4_OPEN_CLAIM_DELEGATE_CUR);
 	encode_nfs4_stateid(xdr, stateid);
 	encode_string(xdr, name->len, name->name);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम encode_claim_fh(काष्ठा xdr_stream *xdr)
-अणु
+static inline void encode_claim_fh(struct xdr_stream *xdr)
+{
 	__be32 *p;
 
 	p = reserve_space(xdr, 4);
 	*p = cpu_to_be32(NFS4_OPEN_CLAIM_FH);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम encode_claim_delegate_cur_fh(काष्ठा xdr_stream *xdr, स्थिर nfs4_stateid *stateid)
-अणु
+static inline void encode_claim_delegate_cur_fh(struct xdr_stream *xdr, const nfs4_stateid *stateid)
+{
 	__be32 *p;
 
 	p = reserve_space(xdr, 4);
 	*p = cpu_to_be32(NFS4_OPEN_CLAIM_DELEG_CUR_FH);
 	encode_nfs4_stateid(xdr, stateid);
-पूर्ण
+}
 
-अटल व्योम encode_खोलो(काष्ठा xdr_stream *xdr, स्थिर काष्ठा nfs_खोलोargs *arg, काष्ठा compound_hdr *hdr)
-अणु
-	encode_op_hdr(xdr, OP_OPEN, decode_खोलो_maxsz, hdr);
-	encode_खोलोhdr(xdr, arg);
-	encode_खोलोtype(xdr, arg);
-	चयन (arg->claim) अणु
-	हाल NFS4_OPEN_CLAIM_शून्य:
+static void encode_open(struct xdr_stream *xdr, const struct nfs_openargs *arg, struct compound_hdr *hdr)
+{
+	encode_op_hdr(xdr, OP_OPEN, decode_open_maxsz, hdr);
+	encode_openhdr(xdr, arg);
+	encode_opentype(xdr, arg);
+	switch (arg->claim) {
+	case NFS4_OPEN_CLAIM_NULL:
 		encode_claim_null(xdr, arg->name);
-		अवरोध;
-	हाल NFS4_OPEN_CLAIM_PREVIOUS:
+		break;
+	case NFS4_OPEN_CLAIM_PREVIOUS:
 		encode_claim_previous(xdr, arg->u.delegation_type);
-		अवरोध;
-	हाल NFS4_OPEN_CLAIM_DELEGATE_CUR:
+		break;
+	case NFS4_OPEN_CLAIM_DELEGATE_CUR:
 		encode_claim_delegate_cur(xdr, arg->name, &arg->u.delegation);
-		अवरोध;
-	हाल NFS4_OPEN_CLAIM_FH:
+		break;
+	case NFS4_OPEN_CLAIM_FH:
 		encode_claim_fh(xdr);
-		अवरोध;
-	हाल NFS4_OPEN_CLAIM_DELEG_CUR_FH:
+		break;
+	case NFS4_OPEN_CLAIM_DELEG_CUR_FH:
 		encode_claim_delegate_cur_fh(xdr, &arg->u.delegation);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		BUG();
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम encode_खोलो_confirm(काष्ठा xdr_stream *xdr, स्थिर काष्ठा nfs_खोलो_confirmargs *arg, काष्ठा compound_hdr *hdr)
-अणु
-	encode_op_hdr(xdr, OP_OPEN_CONFIRM, decode_खोलो_confirm_maxsz, hdr);
+static void encode_open_confirm(struct xdr_stream *xdr, const struct nfs_open_confirmargs *arg, struct compound_hdr *hdr)
+{
+	encode_op_hdr(xdr, OP_OPEN_CONFIRM, decode_open_confirm_maxsz, hdr);
 	encode_nfs4_stateid(xdr, arg->stateid);
 	encode_nfs4_seqid(xdr, arg->seqid);
-पूर्ण
+}
 
-अटल व्योम encode_खोलो_करोwngrade(काष्ठा xdr_stream *xdr, स्थिर काष्ठा nfs_बंदargs *arg, काष्ठा compound_hdr *hdr)
-अणु
-	encode_op_hdr(xdr, OP_OPEN_DOWNGRADE, decode_खोलो_करोwngrade_maxsz, hdr);
+static void encode_open_downgrade(struct xdr_stream *xdr, const struct nfs_closeargs *arg, struct compound_hdr *hdr)
+{
+	encode_op_hdr(xdr, OP_OPEN_DOWNGRADE, decode_open_downgrade_maxsz, hdr);
 	encode_nfs4_stateid(xdr, &arg->stateid);
 	encode_nfs4_seqid(xdr, arg->seqid);
 	encode_share_access(xdr, arg->share_access);
-पूर्ण
+}
 
-अटल व्योम
-encode_putfh(काष्ठा xdr_stream *xdr, स्थिर काष्ठा nfs_fh *fh, काष्ठा compound_hdr *hdr)
-अणु
+static void
+encode_putfh(struct xdr_stream *xdr, const struct nfs_fh *fh, struct compound_hdr *hdr)
+{
 	encode_op_hdr(xdr, OP_PUTFH, decode_putfh_maxsz, hdr);
 	encode_string(xdr, fh->size, fh->data);
-पूर्ण
+}
 
-अटल व्योम encode_putrootfh(काष्ठा xdr_stream *xdr, काष्ठा compound_hdr *hdr)
-अणु
+static void encode_putrootfh(struct xdr_stream *xdr, struct compound_hdr *hdr)
+{
 	encode_op_hdr(xdr, OP_PUTROOTFH, decode_putrootfh_maxsz, hdr);
-पूर्ण
+}
 
-अटल व्योम encode_पढ़ो(काष्ठा xdr_stream *xdr, स्थिर काष्ठा nfs_pgio_args *args,
-			काष्ठा compound_hdr *hdr)
-अणु
+static void encode_read(struct xdr_stream *xdr, const struct nfs_pgio_args *args,
+			struct compound_hdr *hdr)
+{
 	__be32 *p;
 
-	encode_op_hdr(xdr, OP_READ, decode_पढ़ो_maxsz, hdr);
+	encode_op_hdr(xdr, OP_READ, decode_read_maxsz, hdr);
 	encode_nfs4_stateid(xdr, &args->stateid);
 
 	p = reserve_space(xdr, 12);
 	p = xdr_encode_hyper(p, args->offset);
 	*p = cpu_to_be32(args->count);
-पूर्ण
+}
 
-अटल व्योम encode_सूची_पढ़ो(काष्ठा xdr_stream *xdr, स्थिर काष्ठा nfs4_सूची_पढ़ो_arg *सूची_पढ़ो, काष्ठा rpc_rqst *req, काष्ठा compound_hdr *hdr)
-अणु
-	uपूर्णांक32_t attrs[3] = अणु
+static void encode_readdir(struct xdr_stream *xdr, const struct nfs4_readdir_arg *readdir, struct rpc_rqst *req, struct compound_hdr *hdr)
+{
+	uint32_t attrs[3] = {
 		FATTR4_WORD0_RDATTR_ERROR,
-		FATTR4_WORD1_MOUNTED_ON_खाताID,
-	पूर्ण;
-	uपूर्णांक32_t dircount = सूची_पढ़ो->count >> 1;
+		FATTR4_WORD1_MOUNTED_ON_FILEID,
+	};
+	uint32_t dircount = readdir->count >> 1;
 	__be32 *p, verf[2];
-	uपूर्णांक32_t attrlen = 0;
-	अचिन्हित पूर्णांक i;
+	uint32_t attrlen = 0;
+	unsigned int i;
 
-	अगर (सूची_पढ़ो->plus) अणु
+	if (readdir->plus) {
 		attrs[0] |= FATTR4_WORD0_TYPE|FATTR4_WORD0_CHANGE|FATTR4_WORD0_SIZE|
-			FATTR4_WORD0_FSID|FATTR4_WORD0_खाताHANDLE|FATTR4_WORD0_खाताID;
+			FATTR4_WORD0_FSID|FATTR4_WORD0_FILEHANDLE|FATTR4_WORD0_FILEID;
 		attrs[1] |= FATTR4_WORD1_MODE|FATTR4_WORD1_NUMLINKS|FATTR4_WORD1_OWNER|
 			FATTR4_WORD1_OWNER_GROUP|FATTR4_WORD1_RAWDEV|
 			FATTR4_WORD1_SPACE_USED|FATTR4_WORD1_TIME_ACCESS|
 			FATTR4_WORD1_TIME_METADATA|FATTR4_WORD1_TIME_MODIFY;
 		attrs[2] |= FATTR4_WORD2_SECURITY_LABEL;
 		dircount >>= 1;
-	पूर्ण
-	/* Use mounted_on_fileid only अगर the server supports it */
-	अगर (!(सूची_पढ़ो->biपंचांगask[1] & FATTR4_WORD1_MOUNTED_ON_खाताID))
-		attrs[0] |= FATTR4_WORD0_खाताID;
-	क्रम (i = 0; i < ARRAY_SIZE(attrs); i++) अणु
-		attrs[i] &= सूची_पढ़ो->biपंचांगask[i];
-		अगर (attrs[i] != 0)
+	}
+	/* Use mounted_on_fileid only if the server supports it */
+	if (!(readdir->bitmask[1] & FATTR4_WORD1_MOUNTED_ON_FILEID))
+		attrs[0] |= FATTR4_WORD0_FILEID;
+	for (i = 0; i < ARRAY_SIZE(attrs); i++) {
+		attrs[i] &= readdir->bitmask[i];
+		if (attrs[i] != 0)
 			attrlen = i+1;
-	पूर्ण
+	}
 
-	encode_op_hdr(xdr, OP_READसूची, decode_सूची_पढ़ो_maxsz, hdr);
-	encode_uपूर्णांक64(xdr, सूची_पढ़ो->cookie);
-	encode_nfs4_verअगरier(xdr, &सूची_पढ़ो->verअगरier);
+	encode_op_hdr(xdr, OP_READDIR, decode_readdir_maxsz, hdr);
+	encode_uint64(xdr, readdir->cookie);
+	encode_nfs4_verifier(xdr, &readdir->verifier);
 	p = reserve_space(xdr, 12 + (attrlen << 2));
 	*p++ = cpu_to_be32(dircount);
-	*p++ = cpu_to_be32(सूची_पढ़ो->count);
+	*p++ = cpu_to_be32(readdir->count);
 	*p++ = cpu_to_be32(attrlen);
-	क्रम (i = 0; i < attrlen; i++)
+	for (i = 0; i < attrlen; i++)
 		*p++ = cpu_to_be32(attrs[i]);
-	स_नकल(verf, सूची_पढ़ो->verअगरier.data, माप(verf));
+	memcpy(verf, readdir->verifier.data, sizeof(verf));
 
-	dprपूर्णांकk("%s: cookie = %llu, verifier = %08x:%08x, bitmap = %08x:%08x:%08x\n",
+	dprintk("%s: cookie = %llu, verifier = %08x:%08x, bitmap = %08x:%08x:%08x\n",
 			__func__,
-			(अचिन्हित दीर्घ दीर्घ)सूची_पढ़ो->cookie,
+			(unsigned long long)readdir->cookie,
 			verf[0], verf[1],
-			attrs[0] & सूची_पढ़ो->biपंचांगask[0],
-			attrs[1] & सूची_पढ़ो->biपंचांगask[1],
-			attrs[2] & सूची_पढ़ो->biपंचांगask[2]);
-पूर्ण
+			attrs[0] & readdir->bitmask[0],
+			attrs[1] & readdir->bitmask[1],
+			attrs[2] & readdir->bitmask[2]);
+}
 
-अटल व्योम encode_पढ़ोlink(काष्ठा xdr_stream *xdr, स्थिर काष्ठा nfs4_पढ़ोlink *पढ़ोlink, काष्ठा rpc_rqst *req, काष्ठा compound_hdr *hdr)
-अणु
-	encode_op_hdr(xdr, OP_READLINK, decode_पढ़ोlink_maxsz, hdr);
-पूर्ण
+static void encode_readlink(struct xdr_stream *xdr, const struct nfs4_readlink *readlink, struct rpc_rqst *req, struct compound_hdr *hdr)
+{
+	encode_op_hdr(xdr, OP_READLINK, decode_readlink_maxsz, hdr);
+}
 
-अटल व्योम encode_हटाओ(काष्ठा xdr_stream *xdr, स्थिर काष्ठा qstr *name, काष्ठा compound_hdr *hdr)
-अणु
-	encode_op_hdr(xdr, OP_REMOVE, decode_हटाओ_maxsz, hdr);
+static void encode_remove(struct xdr_stream *xdr, const struct qstr *name, struct compound_hdr *hdr)
+{
+	encode_op_hdr(xdr, OP_REMOVE, decode_remove_maxsz, hdr);
 	encode_string(xdr, name->len, name->name);
-पूर्ण
+}
 
-अटल व्योम encode_नाम(काष्ठा xdr_stream *xdr, स्थिर काष्ठा qstr *oldname, स्थिर काष्ठा qstr *newname, काष्ठा compound_hdr *hdr)
-अणु
-	encode_op_hdr(xdr, OP_RENAME, decode_नाम_maxsz, hdr);
+static void encode_rename(struct xdr_stream *xdr, const struct qstr *oldname, const struct qstr *newname, struct compound_hdr *hdr)
+{
+	encode_op_hdr(xdr, OP_RENAME, decode_rename_maxsz, hdr);
 	encode_string(xdr, oldname->len, oldname->name);
 	encode_string(xdr, newname->len, newname->name);
-पूर्ण
+}
 
-अटल व्योम encode_renew(काष्ठा xdr_stream *xdr, clientid4 clid,
-			 काष्ठा compound_hdr *hdr)
-अणु
+static void encode_renew(struct xdr_stream *xdr, clientid4 clid,
+			 struct compound_hdr *hdr)
+{
 	encode_op_hdr(xdr, OP_RENEW, decode_renew_maxsz, hdr);
-	encode_uपूर्णांक64(xdr, clid);
-पूर्ण
+	encode_uint64(xdr, clid);
+}
 
-अटल व्योम
-encode_restorefh(काष्ठा xdr_stream *xdr, काष्ठा compound_hdr *hdr)
-अणु
+static void
+encode_restorefh(struct xdr_stream *xdr, struct compound_hdr *hdr)
+{
 	encode_op_hdr(xdr, OP_RESTOREFH, decode_restorefh_maxsz, hdr);
-पूर्ण
+}
 
-अटल व्योम
-encode_setacl(काष्ठा xdr_stream *xdr, स्थिर काष्ठा nfs_setaclargs *arg,
-		काष्ठा compound_hdr *hdr)
-अणु
+static void
+encode_setacl(struct xdr_stream *xdr, const struct nfs_setaclargs *arg,
+		struct compound_hdr *hdr)
+{
 	__be32 *p;
 
 	encode_op_hdr(xdr, OP_SETATTR, decode_setacl_maxsz, hdr);
@@ -1694,31 +1693,31 @@ encode_setacl(काष्ठा xdr_stream *xdr, स्थिर काष्�
 	*p = cpu_to_be32(FATTR4_WORD0_ACL);
 	p = reserve_space(xdr, 4);
 	*p = cpu_to_be32(arg->acl_len);
-	xdr_ग_लिखो_pages(xdr, arg->acl_pages, 0, arg->acl_len);
-पूर्ण
+	xdr_write_pages(xdr, arg->acl_pages, 0, arg->acl_len);
+}
 
-अटल व्योम
-encode_savefh(काष्ठा xdr_stream *xdr, काष्ठा compound_hdr *hdr)
-अणु
+static void
+encode_savefh(struct xdr_stream *xdr, struct compound_hdr *hdr)
+{
 	encode_op_hdr(xdr, OP_SAVEFH, decode_savefh_maxsz, hdr);
-पूर्ण
+}
 
-अटल व्योम encode_setattr(काष्ठा xdr_stream *xdr, स्थिर काष्ठा nfs_setattrargs *arg, स्थिर काष्ठा nfs_server *server, काष्ठा compound_hdr *hdr)
-अणु
+static void encode_setattr(struct xdr_stream *xdr, const struct nfs_setattrargs *arg, const struct nfs_server *server, struct compound_hdr *hdr)
+{
 	encode_op_hdr(xdr, OP_SETATTR, decode_setattr_maxsz, hdr);
 	encode_nfs4_stateid(xdr, &arg->stateid);
-	encode_attrs(xdr, arg->iap, arg->label, शून्य, server,
-			server->attr_biपंचांगask);
-पूर्ण
+	encode_attrs(xdr, arg->iap, arg->label, NULL, server,
+			server->attr_bitmask);
+}
 
-अटल व्योम encode_setclientid(काष्ठा xdr_stream *xdr, स्थिर काष्ठा nfs4_setclientid *setclientid, काष्ठा compound_hdr *hdr)
-अणु
+static void encode_setclientid(struct xdr_stream *xdr, const struct nfs4_setclientid *setclientid, struct compound_hdr *hdr)
+{
 	__be32 *p;
 
 	encode_op_hdr(xdr, OP_SETCLIENTID, decode_setclientid_maxsz, hdr);
-	encode_nfs4_verअगरier(xdr, setclientid->sc_verअगरier);
+	encode_nfs4_verifier(xdr, setclientid->sc_verifier);
 
-	encode_string(xdr, म_माप(setclientid->sc_clnt->cl_owner_id),
+	encode_string(xdr, strlen(setclientid->sc_clnt->cl_owner_id),
 			setclientid->sc_clnt->cl_owner_id);
 	p = reserve_space(xdr, 4);
 	*p = cpu_to_be32(setclientid->sc_prog);
@@ -1726,22 +1725,22 @@ encode_savefh(काष्ठा xdr_stream *xdr, काष्ठा compound_hd
 	encode_string(xdr, setclientid->sc_uaddr_len, setclientid->sc_uaddr);
 	p = reserve_space(xdr, 4);
 	*p = cpu_to_be32(setclientid->sc_clnt->cl_cb_ident);
-पूर्ण
+}
 
-अटल व्योम encode_setclientid_confirm(काष्ठा xdr_stream *xdr, स्थिर काष्ठा nfs4_setclientid_res *arg, काष्ठा compound_hdr *hdr)
-अणु
+static void encode_setclientid_confirm(struct xdr_stream *xdr, const struct nfs4_setclientid_res *arg, struct compound_hdr *hdr)
+{
 	encode_op_hdr(xdr, OP_SETCLIENTID_CONFIRM,
 			decode_setclientid_confirm_maxsz, hdr);
-	encode_uपूर्णांक64(xdr, arg->clientid);
-	encode_nfs4_verअगरier(xdr, &arg->confirm);
-पूर्ण
+	encode_uint64(xdr, arg->clientid);
+	encode_nfs4_verifier(xdr, &arg->confirm);
+}
 
-अटल व्योम encode_ग_लिखो(काष्ठा xdr_stream *xdr, स्थिर काष्ठा nfs_pgio_args *args,
-			 काष्ठा compound_hdr *hdr)
-अणु
+static void encode_write(struct xdr_stream *xdr, const struct nfs_pgio_args *args,
+			 struct compound_hdr *hdr)
+{
 	__be32 *p;
 
-	encode_op_hdr(xdr, OP_WRITE, decode_ग_लिखो_maxsz, hdr);
+	encode_op_hdr(xdr, OP_WRITE, decode_write_maxsz, hdr);
 	encode_nfs4_stateid(xdr, &args->stateid);
 
 	p = reserve_space(xdr, 16);
@@ -1749,27 +1748,27 @@ encode_savefh(काष्ठा xdr_stream *xdr, काष्ठा compound_hd
 	*p++ = cpu_to_be32(args->stable);
 	*p = cpu_to_be32(args->count);
 
-	xdr_ग_लिखो_pages(xdr, args->pages, args->pgbase, args->count);
-पूर्ण
+	xdr_write_pages(xdr, args->pages, args->pgbase, args->count);
+}
 
-अटल व्योम encode_delegवापस(काष्ठा xdr_stream *xdr, स्थिर nfs4_stateid *stateid, काष्ठा compound_hdr *hdr)
-अणु
-	encode_op_hdr(xdr, OP_DELEGRETURN, decode_delegवापस_maxsz, hdr);
+static void encode_delegreturn(struct xdr_stream *xdr, const nfs4_stateid *stateid, struct compound_hdr *hdr)
+{
+	encode_op_hdr(xdr, OP_DELEGRETURN, decode_delegreturn_maxsz, hdr);
 	encode_nfs4_stateid(xdr, stateid);
-पूर्ण
+}
 
-अटल व्योम encode_secinfo(काष्ठा xdr_stream *xdr, स्थिर काष्ठा qstr *name, काष्ठा compound_hdr *hdr)
-अणु
+static void encode_secinfo(struct xdr_stream *xdr, const struct qstr *name, struct compound_hdr *hdr)
+{
 	encode_op_hdr(xdr, OP_SECINFO, decode_secinfo_maxsz, hdr);
 	encode_string(xdr, name->len, name->name);
-पूर्ण
+}
 
-#अगर defined(CONFIG_NFS_V4_1)
+#if defined(CONFIG_NFS_V4_1)
 /* NFSv4.1 operations */
-अटल व्योम encode_bind_conn_to_session(काष्ठा xdr_stream *xdr,
-				   स्थिर काष्ठा nfs41_bind_conn_to_session_args *args,
-				   काष्ठा compound_hdr *hdr)
-अणु
+static void encode_bind_conn_to_session(struct xdr_stream *xdr,
+				   const struct nfs41_bind_conn_to_session_args *args,
+				   struct compound_hdr *hdr)
+{
 	__be32 *p;
 
 	encode_op_hdr(xdr, OP_BIND_CONN_TO_SESSION,
@@ -1778,83 +1777,83 @@ encode_savefh(काष्ठा xdr_stream *xdr, काष्ठा compound_hd
 	p = xdr_reserve_space(xdr, 8);
 	*p++ = cpu_to_be32(args->dir);
 	*p = (args->use_conn_in_rdma_mode) ? cpu_to_be32(1) : cpu_to_be32(0);
-पूर्ण
+}
 
-अटल व्योम encode_op_map(काष्ठा xdr_stream *xdr, स्थिर काष्ठा nfs4_op_map *op_map)
-अणु
-	अचिन्हित पूर्णांक i;
-	encode_uपूर्णांक32(xdr, NFS4_OP_MAP_NUM_WORDS);
-	क्रम (i = 0; i < NFS4_OP_MAP_NUM_WORDS; i++)
-		encode_uपूर्णांक32(xdr, op_map->u.words[i]);
-पूर्ण
+static void encode_op_map(struct xdr_stream *xdr, const struct nfs4_op_map *op_map)
+{
+	unsigned int i;
+	encode_uint32(xdr, NFS4_OP_MAP_NUM_WORDS);
+	for (i = 0; i < NFS4_OP_MAP_NUM_WORDS; i++)
+		encode_uint32(xdr, op_map->u.words[i]);
+}
 
-अटल व्योम encode_exchange_id(काष्ठा xdr_stream *xdr,
-			       स्थिर काष्ठा nfs41_exchange_id_args *args,
-			       काष्ठा compound_hdr *hdr)
-अणु
+static void encode_exchange_id(struct xdr_stream *xdr,
+			       const struct nfs41_exchange_id_args *args,
+			       struct compound_hdr *hdr)
+{
 	__be32 *p;
-	अक्षर impl_name[IMPL_NAME_LIMIT];
-	पूर्णांक len = 0;
+	char impl_name[IMPL_NAME_LIMIT];
+	int len = 0;
 
 	encode_op_hdr(xdr, OP_EXCHANGE_ID, decode_exchange_id_maxsz, hdr);
-	encode_nfs4_verअगरier(xdr, &args->verअगरier);
+	encode_nfs4_verifier(xdr, &args->verifier);
 
-	encode_string(xdr, म_माप(args->client->cl_owner_id),
+	encode_string(xdr, strlen(args->client->cl_owner_id),
 			args->client->cl_owner_id);
 
-	encode_uपूर्णांक32(xdr, args->flags);
-	encode_uपूर्णांक32(xdr, args->state_protect.how);
+	encode_uint32(xdr, args->flags);
+	encode_uint32(xdr, args->state_protect.how);
 
-	चयन (args->state_protect.how) अणु
-	हाल SP4_NONE:
-		अवरोध;
-	हाल SP4_MACH_CRED:
-		encode_op_map(xdr, &args->state_protect.enक्रमce);
+	switch (args->state_protect.how) {
+	case SP4_NONE:
+		break;
+	case SP4_MACH_CRED:
+		encode_op_map(xdr, &args->state_protect.enforce);
 		encode_op_map(xdr, &args->state_protect.allow);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		WARN_ON_ONCE(1);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (send_implementation_id &&
-	    माप(CONFIG_NFS_V4_1_IMPLEMENTATION_ID_DOMAIN) > 1 &&
-	    माप(CONFIG_NFS_V4_1_IMPLEMENTATION_ID_DOMAIN)
-		<= माप(impl_name) + 1)
-		len = snम_लिखो(impl_name, माप(impl_name), "%s %s %s %s",
+	if (send_implementation_id &&
+	    sizeof(CONFIG_NFS_V4_1_IMPLEMENTATION_ID_DOMAIN) > 1 &&
+	    sizeof(CONFIG_NFS_V4_1_IMPLEMENTATION_ID_DOMAIN)
+		<= sizeof(impl_name) + 1)
+		len = snprintf(impl_name, sizeof(impl_name), "%s %s %s %s",
 			       utsname()->sysname, utsname()->release,
 			       utsname()->version, utsname()->machine);
 
-	अगर (len > 0) अणु
-		encode_uपूर्णांक32(xdr, 1);	/* implementation id array length=1 */
+	if (len > 0) {
+		encode_uint32(xdr, 1);	/* implementation id array length=1 */
 
 		encode_string(xdr,
-			माप(CONFIG_NFS_V4_1_IMPLEMENTATION_ID_DOMAIN) - 1,
+			sizeof(CONFIG_NFS_V4_1_IMPLEMENTATION_ID_DOMAIN) - 1,
 			CONFIG_NFS_V4_1_IMPLEMENTATION_ID_DOMAIN);
 		encode_string(xdr, len, impl_name);
-		/* just send zeros क्रम nii_date - the date is in nii_name */
+		/* just send zeros for nii_date - the date is in nii_name */
 		p = reserve_space(xdr, 12);
 		p = xdr_encode_hyper(p, 0);
 		*p = cpu_to_be32(0);
-	पूर्ण अन्यथा
-		encode_uपूर्णांक32(xdr, 0);	/* implementation id array length=0 */
-पूर्ण
+	} else
+		encode_uint32(xdr, 0);	/* implementation id array length=0 */
+}
 
-अटल व्योम encode_create_session(काष्ठा xdr_stream *xdr,
-				  स्थिर काष्ठा nfs41_create_session_args *args,
-				  काष्ठा compound_hdr *hdr)
-अणु
+static void encode_create_session(struct xdr_stream *xdr,
+				  const struct nfs41_create_session_args *args,
+				  struct compound_hdr *hdr)
+{
 	__be32 *p;
-	काष्ठा nfs_client *clp = args->client;
-	काष्ठा rpc_clnt *clnt = clp->cl_rpcclient;
-	काष्ठा nfs_net *nn = net_generic(clp->cl_net, nfs_net_id);
+	struct nfs_client *clp = args->client;
+	struct rpc_clnt *clnt = clp->cl_rpcclient;
+	struct nfs_net *nn = net_generic(clp->cl_net, nfs_net_id);
 	u32 max_resp_sz_cached;
 
 	/*
 	 * Assumes OPEN is the biggest non-idempotent compound.
-	 * 2 is the verअगरier.
+	 * 2 is the verifier.
 	 */
-	max_resp_sz_cached = (NFS4_dec_खोलो_sz + RPC_REPHDRSIZE + 2)
+	max_resp_sz_cached = (NFS4_dec_open_sz + RPC_REPHDRSIZE + 2)
 				* XDR_UNIT + RPC_MAX_AUTH_SIZE;
 
 	encode_op_hdr(xdr, OP_CREATE_SESSION, decode_create_session_maxsz, hdr);
@@ -1886,59 +1885,59 @@ encode_savefh(काष्ठा xdr_stream *xdr, काष्ठा compound_hd
 	*p++ = cpu_to_be32(RPC_AUTH_UNIX);			/* auth_sys */
 
 	/* authsys_parms rfc1831 */
-	*p++ = cpu_to_be32(kसमय_प्रकारo_ns(nn->boot_समय));	/* stamp */
+	*p++ = cpu_to_be32(ktime_to_ns(nn->boot_time));	/* stamp */
 	p = xdr_encode_array(p, clnt->cl_nodename, clnt->cl_nodelen);
 	*p++ = cpu_to_be32(0);				/* UID */
 	*p++ = cpu_to_be32(0);				/* GID */
 	*p = cpu_to_be32(0);				/* No more gids */
-पूर्ण
+}
 
-अटल व्योम encode_destroy_session(काष्ठा xdr_stream *xdr,
-				   स्थिर काष्ठा nfs4_session *session,
-				   काष्ठा compound_hdr *hdr)
-अणु
+static void encode_destroy_session(struct xdr_stream *xdr,
+				   const struct nfs4_session *session,
+				   struct compound_hdr *hdr)
+{
 	encode_op_hdr(xdr, OP_DESTROY_SESSION, decode_destroy_session_maxsz, hdr);
 	encode_opaque_fixed(xdr, session->sess_id.data, NFS4_MAX_SESSIONID_LEN);
-पूर्ण
+}
 
-अटल व्योम encode_destroy_clientid(काष्ठा xdr_stream *xdr,
-				   uपूर्णांक64_t clientid,
-				   काष्ठा compound_hdr *hdr)
-अणु
+static void encode_destroy_clientid(struct xdr_stream *xdr,
+				   uint64_t clientid,
+				   struct compound_hdr *hdr)
+{
 	encode_op_hdr(xdr, OP_DESTROY_CLIENTID, decode_destroy_clientid_maxsz, hdr);
-	encode_uपूर्णांक64(xdr, clientid);
-पूर्ण
+	encode_uint64(xdr, clientid);
+}
 
-अटल व्योम encode_reclaim_complete(काष्ठा xdr_stream *xdr,
-				    स्थिर काष्ठा nfs41_reclaim_complete_args *args,
-				    काष्ठा compound_hdr *hdr)
-अणु
+static void encode_reclaim_complete(struct xdr_stream *xdr,
+				    const struct nfs41_reclaim_complete_args *args,
+				    struct compound_hdr *hdr)
+{
 	encode_op_hdr(xdr, OP_RECLAIM_COMPLETE, decode_reclaim_complete_maxsz, hdr);
-	encode_uपूर्णांक32(xdr, args->one_fs);
-पूर्ण
-#पूर्ण_अगर /* CONFIG_NFS_V4_1 */
+	encode_uint32(xdr, args->one_fs);
+}
+#endif /* CONFIG_NFS_V4_1 */
 
-अटल व्योम encode_sequence(काष्ठा xdr_stream *xdr,
-			    स्थिर काष्ठा nfs4_sequence_args *args,
-			    काष्ठा compound_hdr *hdr)
-अणु
-#अगर defined(CONFIG_NFS_V4_1)
-	काष्ठा nfs4_session *session;
-	काष्ठा nfs4_slot_table *tp;
-	काष्ठा nfs4_slot *slot = args->sa_slot;
+static void encode_sequence(struct xdr_stream *xdr,
+			    const struct nfs4_sequence_args *args,
+			    struct compound_hdr *hdr)
+{
+#if defined(CONFIG_NFS_V4_1)
+	struct nfs4_session *session;
+	struct nfs4_slot_table *tp;
+	struct nfs4_slot *slot = args->sa_slot;
 	__be32 *p;
 
 	tp = slot->table;
 	session = tp->session;
-	अगर (!session)
-		वापस;
+	if (!session)
+		return;
 
 	encode_op_hdr(xdr, OP_SEQUENCE, decode_sequence_maxsz, hdr);
 
 	/*
 	 * Sessionid + seqid + slotid + max slotid + cache_this
 	 */
-	dprपूर्णांकk("%s: sessionid=%u:%u:%u:%u seqid=%d slotid=%d "
+	dprintk("%s: sessionid=%u:%u:%u:%u seqid=%d slotid=%d "
 		"max_slotid=%d cache_this=%d\n",
 		__func__,
 		((u32 *)session->sess_id.data)[0],
@@ -1953,15 +1952,15 @@ encode_savefh(काष्ठा xdr_stream *xdr, काष्ठा compound_hd
 	*p++ = cpu_to_be32(slot->slot_nr);
 	*p++ = cpu_to_be32(tp->highest_used_slotid);
 	*p = cpu_to_be32(args->sa_cache_this);
-#पूर्ण_अगर /* CONFIG_NFS_V4_1 */
-पूर्ण
+#endif /* CONFIG_NFS_V4_1 */
+}
 
-#अगर_घोषित CONFIG_NFS_V4_1
-अटल व्योम
-encode_getdeviceinfo(काष्ठा xdr_stream *xdr,
-		     स्थिर काष्ठा nfs4_getdeviceinfo_args *args,
-		     काष्ठा compound_hdr *hdr)
-अणु
+#ifdef CONFIG_NFS_V4_1
+static void
+encode_getdeviceinfo(struct xdr_stream *xdr,
+		     const struct nfs4_getdeviceinfo_args *args,
+		     struct compound_hdr *hdr)
+{
 	__be32 *p;
 
 	encode_op_hdr(xdr, OP_GETDEVICEINFO, decode_getdeviceinfo_maxsz, hdr);
@@ -1972,15 +1971,15 @@ encode_getdeviceinfo(काष्ठा xdr_stream *xdr,
 	*p++ = cpu_to_be32(args->pdev->maxcount);	/* gdia_maxcount */
 
 	p = reserve_space(xdr, 4 + 4);
-	*p++ = cpu_to_be32(1);			/* biपंचांगap length */
-	*p++ = cpu_to_be32(args->notअगरy_types);
-पूर्ण
+	*p++ = cpu_to_be32(1);			/* bitmap length */
+	*p++ = cpu_to_be32(args->notify_types);
+}
 
-अटल व्योम
-encode_layoutget(काष्ठा xdr_stream *xdr,
-		      स्थिर काष्ठा nfs4_layoutget_args *args,
-		      काष्ठा compound_hdr *hdr)
-अणु
+static void
+encode_layoutget(struct xdr_stream *xdr,
+		      const struct nfs4_layoutget_args *args,
+		      struct compound_hdr *hdr)
+{
 	__be32 *p;
 
 	encode_op_hdr(xdr, OP_LAYOUTGET, decode_layoutget_maxsz, hdr);
@@ -1992,26 +1991,26 @@ encode_layoutget(काष्ठा xdr_stream *xdr,
 	p = xdr_encode_hyper(p, args->range.length);
 	p = xdr_encode_hyper(p, args->minlength);
 	encode_nfs4_stateid(xdr, &args->stateid);
-	encode_uपूर्णांक32(xdr, args->maxcount);
+	encode_uint32(xdr, args->maxcount);
 
-	dprपूर्णांकk("%s: 1st type:0x%x iomode:%d off:%lu len:%lu mc:%d\n",
+	dprintk("%s: 1st type:0x%x iomode:%d off:%lu len:%lu mc:%d\n",
 		__func__,
 		args->type,
 		args->range.iomode,
-		(अचिन्हित दीर्घ)args->range.offset,
-		(अचिन्हित दीर्घ)args->range.length,
+		(unsigned long)args->range.offset,
+		(unsigned long)args->range.length,
 		args->maxcount);
-पूर्ण
+}
 
-अटल पूर्णांक
-encode_layoutcommit(काष्ठा xdr_stream *xdr,
-		    काष्ठा inode *inode,
-		    स्थिर काष्ठा nfs4_layoutcommit_args *args,
-		    काष्ठा compound_hdr *hdr)
-अणु
+static int
+encode_layoutcommit(struct xdr_stream *xdr,
+		    struct inode *inode,
+		    const struct nfs4_layoutcommit_args *args,
+		    struct compound_hdr *hdr)
+{
 	__be32 *p;
 
-	dprपूर्णांकk("%s: lbw: %llu type: %d\n", __func__, args->lastbytewritten,
+	dprintk("%s: lbw: %llu type: %d\n", __func__, args->lastbytewritten,
 		NFS_SERVER(args->inode)->pnfs_curr_ld->id);
 
 	encode_op_hdr(xdr, OP_LAYOUTCOMMIT, decode_layoutcommit_maxsz, hdr);
@@ -2021,234 +2020,234 @@ encode_layoutcommit(काष्ठा xdr_stream *xdr,
 	p = xdr_encode_hyper(p, args->lastbytewritten + 1);	/* length */
 	*p = cpu_to_be32(0); /* reclaim */
 	encode_nfs4_stateid(xdr, &args->stateid);
-	अगर (args->lastbytewritten != U64_MAX) अणु
+	if (args->lastbytewritten != U64_MAX) {
 		p = reserve_space(xdr, 20);
 		*p++ = cpu_to_be32(1); /* newoffset = TRUE */
 		p = xdr_encode_hyper(p, args->lastbytewritten);
-	पूर्ण अन्यथा अणु
+	} else {
 		p = reserve_space(xdr, 12);
 		*p++ = cpu_to_be32(0); /* newoffset = FALSE */
-	पूर्ण
-	*p++ = cpu_to_be32(0); /* Never send समय_modअगरy_changed */
+	}
+	*p++ = cpu_to_be32(0); /* Never send time_modify_changed */
 	*p++ = cpu_to_be32(NFS_SERVER(args->inode)->pnfs_curr_ld->id);/* type */
 
-	encode_uपूर्णांक32(xdr, args->layoutupdate_len);
-	अगर (args->layoutupdate_pages)
-		xdr_ग_लिखो_pages(xdr, args->layoutupdate_pages, 0,
+	encode_uint32(xdr, args->layoutupdate_len);
+	if (args->layoutupdate_pages)
+		xdr_write_pages(xdr, args->layoutupdate_pages, 0,
 				args->layoutupdate_len);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-encode_layoutवापस(काष्ठा xdr_stream *xdr,
-		    स्थिर काष्ठा nfs4_layoutवापस_args *args,
-		    काष्ठा compound_hdr *hdr)
-अणु
+static void
+encode_layoutreturn(struct xdr_stream *xdr,
+		    const struct nfs4_layoutreturn_args *args,
+		    struct compound_hdr *hdr)
+{
 	__be32 *p;
 
-	encode_op_hdr(xdr, OP_LAYOUTRETURN, decode_layoutवापस_maxsz, hdr);
+	encode_op_hdr(xdr, OP_LAYOUTRETURN, decode_layoutreturn_maxsz, hdr);
 	p = reserve_space(xdr, 16);
-	*p++ = cpu_to_be32(0);		/* reclaim. always 0 क्रम now */
+	*p++ = cpu_to_be32(0);		/* reclaim. always 0 for now */
 	*p++ = cpu_to_be32(args->layout_type);
 	*p++ = cpu_to_be32(args->range.iomode);
-	*p = cpu_to_be32(RETURN_खाता);
+	*p = cpu_to_be32(RETURN_FILE);
 	p = reserve_space(xdr, 16);
 	p = xdr_encode_hyper(p, args->range.offset);
 	p = xdr_encode_hyper(p, args->range.length);
 	spin_lock(&args->inode->i_lock);
 	encode_nfs4_stateid(xdr, &args->stateid);
 	spin_unlock(&args->inode->i_lock);
-	अगर (args->ld_निजी->ops && args->ld_निजी->ops->encode)
-		args->ld_निजी->ops->encode(xdr, args, args->ld_निजी);
-	अन्यथा
-		encode_uपूर्णांक32(xdr, 0);
-पूर्ण
+	if (args->ld_private->ops && args->ld_private->ops->encode)
+		args->ld_private->ops->encode(xdr, args, args->ld_private);
+	else
+		encode_uint32(xdr, 0);
+}
 
-अटल पूर्णांक
-encode_secinfo_no_name(काष्ठा xdr_stream *xdr,
-		       स्थिर काष्ठा nfs41_secinfo_no_name_args *args,
-		       काष्ठा compound_hdr *hdr)
-अणु
+static int
+encode_secinfo_no_name(struct xdr_stream *xdr,
+		       const struct nfs41_secinfo_no_name_args *args,
+		       struct compound_hdr *hdr)
+{
 	encode_op_hdr(xdr, OP_SECINFO_NO_NAME, decode_secinfo_no_name_maxsz, hdr);
-	encode_uपूर्णांक32(xdr, args->style);
-	वापस 0;
-पूर्ण
+	encode_uint32(xdr, args->style);
+	return 0;
+}
 
-अटल व्योम encode_test_stateid(काष्ठा xdr_stream *xdr,
-				स्थिर काष्ठा nfs41_test_stateid_args *args,
-				काष्ठा compound_hdr *hdr)
-अणु
+static void encode_test_stateid(struct xdr_stream *xdr,
+				const struct nfs41_test_stateid_args *args,
+				struct compound_hdr *hdr)
+{
 	encode_op_hdr(xdr, OP_TEST_STATEID, decode_test_stateid_maxsz, hdr);
-	encode_uपूर्णांक32(xdr, 1);
+	encode_uint32(xdr, 1);
 	encode_nfs4_stateid(xdr, args->stateid);
-पूर्ण
+}
 
-अटल व्योम encode_मुक्त_stateid(काष्ठा xdr_stream *xdr,
-				स्थिर काष्ठा nfs41_मुक्त_stateid_args *args,
-				काष्ठा compound_hdr *hdr)
-अणु
-	encode_op_hdr(xdr, OP_FREE_STATEID, decode_मुक्त_stateid_maxsz, hdr);
+static void encode_free_stateid(struct xdr_stream *xdr,
+				const struct nfs41_free_stateid_args *args,
+				struct compound_hdr *hdr)
+{
+	encode_op_hdr(xdr, OP_FREE_STATEID, decode_free_stateid_maxsz, hdr);
 	encode_nfs4_stateid(xdr, &args->stateid);
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम
-encode_layoutवापस(काष्ठा xdr_stream *xdr,
-		    स्थिर काष्ठा nfs4_layoutवापस_args *args,
-		    काष्ठा compound_hdr *hdr)
-अणु
-पूर्ण
+}
+#else
+static inline void
+encode_layoutreturn(struct xdr_stream *xdr,
+		    const struct nfs4_layoutreturn_args *args,
+		    struct compound_hdr *hdr)
+{
+}
 
-अटल व्योम
-encode_layoutget(काष्ठा xdr_stream *xdr,
-		      स्थिर काष्ठा nfs4_layoutget_args *args,
-		      काष्ठा compound_hdr *hdr)
-अणु
-पूर्ण
-#पूर्ण_अगर /* CONFIG_NFS_V4_1 */
+static void
+encode_layoutget(struct xdr_stream *xdr,
+		      const struct nfs4_layoutget_args *args,
+		      struct compound_hdr *hdr)
+{
+}
+#endif /* CONFIG_NFS_V4_1 */
 
 /*
  * END OF "GENERIC" ENCODE ROUTINES.
  */
 
-अटल u32 nfs4_xdr_minorversion(स्थिर काष्ठा nfs4_sequence_args *args)
-अणु
-#अगर defined(CONFIG_NFS_V4_1)
-	काष्ठा nfs4_session *session = args->sa_slot->table->session;
-	अगर (session)
-		वापस session->clp->cl_mvops->minor_version;
-#पूर्ण_अगर /* CONFIG_NFS_V4_1 */
-	वापस 0;
-पूर्ण
+static u32 nfs4_xdr_minorversion(const struct nfs4_sequence_args *args)
+{
+#if defined(CONFIG_NFS_V4_1)
+	struct nfs4_session *session = args->sa_slot->table->session;
+	if (session)
+		return session->clp->cl_mvops->minor_version;
+#endif /* CONFIG_NFS_V4_1 */
+	return 0;
+}
 
 /*
  * Encode an ACCESS request
  */
-अटल व्योम nfs4_xdr_enc_access(काष्ठा rpc_rqst *req, काष्ठा xdr_stream *xdr,
-				स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा nfs4_accessargs *args = data;
-	काष्ठा compound_hdr hdr = अणु
+static void nfs4_xdr_enc_access(struct rpc_rqst *req, struct xdr_stream *xdr,
+				const void *data)
+{
+	const struct nfs4_accessargs *args = data;
+	struct compound_hdr hdr = {
 		.minorversion = nfs4_xdr_minorversion(&args->seq_args),
-	पूर्ण;
+	};
 
 	encode_compound_hdr(xdr, req, &hdr);
 	encode_sequence(xdr, &args->seq_args, &hdr);
 	encode_putfh(xdr, args->fh, &hdr);
 	encode_access(xdr, args->access, &hdr);
-	अगर (args->biपंचांगask)
-		encode_getfattr(xdr, args->biपंचांगask, &hdr);
+	if (args->bitmask)
+		encode_getfattr(xdr, args->bitmask, &hdr);
 	encode_nops(&hdr);
-पूर्ण
+}
 
 /*
  * Encode LOOKUP request
  */
-अटल व्योम nfs4_xdr_enc_lookup(काष्ठा rpc_rqst *req, काष्ठा xdr_stream *xdr,
-				स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा nfs4_lookup_arg *args = data;
-	काष्ठा compound_hdr hdr = अणु
+static void nfs4_xdr_enc_lookup(struct rpc_rqst *req, struct xdr_stream *xdr,
+				const void *data)
+{
+	const struct nfs4_lookup_arg *args = data;
+	struct compound_hdr hdr = {
 		.minorversion = nfs4_xdr_minorversion(&args->seq_args),
-	पूर्ण;
+	};
 
 	encode_compound_hdr(xdr, req, &hdr);
 	encode_sequence(xdr, &args->seq_args, &hdr);
 	encode_putfh(xdr, args->dir_fh, &hdr);
 	encode_lookup(xdr, args->name, &hdr);
 	encode_getfh(xdr, &hdr);
-	encode_getfattr(xdr, args->biपंचांगask, &hdr);
+	encode_getfattr(xdr, args->bitmask, &hdr);
 	encode_nops(&hdr);
-पूर्ण
+}
 
 /*
  * Encode LOOKUPP request
  */
-अटल व्योम nfs4_xdr_enc_lookupp(काष्ठा rpc_rqst *req, काष्ठा xdr_stream *xdr,
-		स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा nfs4_lookupp_arg *args = data;
-	काष्ठा compound_hdr hdr = अणु
+static void nfs4_xdr_enc_lookupp(struct rpc_rqst *req, struct xdr_stream *xdr,
+		const void *data)
+{
+	const struct nfs4_lookupp_arg *args = data;
+	struct compound_hdr hdr = {
 		.minorversion = nfs4_xdr_minorversion(&args->seq_args),
-	पूर्ण;
+	};
 
 	encode_compound_hdr(xdr, req, &hdr);
 	encode_sequence(xdr, &args->seq_args, &hdr);
 	encode_putfh(xdr, args->fh, &hdr);
 	encode_lookupp(xdr, &hdr);
 	encode_getfh(xdr, &hdr);
-	encode_getfattr(xdr, args->biपंचांगask, &hdr);
+	encode_getfattr(xdr, args->bitmask, &hdr);
 	encode_nops(&hdr);
-पूर्ण
+}
 
 /*
  * Encode LOOKUP_ROOT request
  */
-अटल व्योम nfs4_xdr_enc_lookup_root(काष्ठा rpc_rqst *req,
-				     काष्ठा xdr_stream *xdr,
-				     स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा nfs4_lookup_root_arg *args = data;
-	काष्ठा compound_hdr hdr = अणु
+static void nfs4_xdr_enc_lookup_root(struct rpc_rqst *req,
+				     struct xdr_stream *xdr,
+				     const void *data)
+{
+	const struct nfs4_lookup_root_arg *args = data;
+	struct compound_hdr hdr = {
 		.minorversion = nfs4_xdr_minorversion(&args->seq_args),
-	पूर्ण;
+	};
 
 	encode_compound_hdr(xdr, req, &hdr);
 	encode_sequence(xdr, &args->seq_args, &hdr);
 	encode_putrootfh(xdr, &hdr);
 	encode_getfh(xdr, &hdr);
-	encode_getfattr(xdr, args->biपंचांगask, &hdr);
+	encode_getfattr(xdr, args->bitmask, &hdr);
 	encode_nops(&hdr);
-पूर्ण
+}
 
 /*
  * Encode REMOVE request
  */
-अटल व्योम nfs4_xdr_enc_हटाओ(काष्ठा rpc_rqst *req, काष्ठा xdr_stream *xdr,
-				स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा nfs_हटाओargs *args = data;
-	काष्ठा compound_hdr hdr = अणु
+static void nfs4_xdr_enc_remove(struct rpc_rqst *req, struct xdr_stream *xdr,
+				const void *data)
+{
+	const struct nfs_removeargs *args = data;
+	struct compound_hdr hdr = {
 		.minorversion = nfs4_xdr_minorversion(&args->seq_args),
-	पूर्ण;
+	};
 
 	encode_compound_hdr(xdr, req, &hdr);
 	encode_sequence(xdr, &args->seq_args, &hdr);
 	encode_putfh(xdr, args->fh, &hdr);
-	encode_हटाओ(xdr, &args->name, &hdr);
+	encode_remove(xdr, &args->name, &hdr);
 	encode_nops(&hdr);
-पूर्ण
+}
 
 /*
  * Encode RENAME request
  */
-अटल व्योम nfs4_xdr_enc_नाम(काष्ठा rpc_rqst *req, काष्ठा xdr_stream *xdr,
-				स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा nfs_नामargs *args = data;
-	काष्ठा compound_hdr hdr = अणु
+static void nfs4_xdr_enc_rename(struct rpc_rqst *req, struct xdr_stream *xdr,
+				const void *data)
+{
+	const struct nfs_renameargs *args = data;
+	struct compound_hdr hdr = {
 		.minorversion = nfs4_xdr_minorversion(&args->seq_args),
-	पूर्ण;
+	};
 
 	encode_compound_hdr(xdr, req, &hdr);
 	encode_sequence(xdr, &args->seq_args, &hdr);
 	encode_putfh(xdr, args->old_dir, &hdr);
 	encode_savefh(xdr, &hdr);
 	encode_putfh(xdr, args->new_dir, &hdr);
-	encode_नाम(xdr, args->old_name, args->new_name, &hdr);
+	encode_rename(xdr, args->old_name, args->new_name, &hdr);
 	encode_nops(&hdr);
-पूर्ण
+}
 
 /*
  * Encode LINK request
  */
-अटल व्योम nfs4_xdr_enc_link(काष्ठा rpc_rqst *req, काष्ठा xdr_stream *xdr,
-			      स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा nfs4_link_arg *args = data;
-	काष्ठा compound_hdr hdr = अणु
+static void nfs4_xdr_enc_link(struct rpc_rqst *req, struct xdr_stream *xdr,
+			      const void *data)
+{
+	const struct nfs4_link_arg *args = data;
+	struct compound_hdr hdr = {
 		.minorversion = nfs4_xdr_minorversion(&args->seq_args),
-	पूर्ण;
+	};
 
 	encode_compound_hdr(xdr, req, &hdr);
 	encode_sequence(xdr, &args->seq_args, &hdr);
@@ -2257,772 +2256,772 @@ encode_layoutget(काष्ठा xdr_stream *xdr,
 	encode_putfh(xdr, args->dir_fh, &hdr);
 	encode_link(xdr, args->name, &hdr);
 	encode_restorefh(xdr, &hdr);
-	encode_getfattr(xdr, args->biपंचांगask, &hdr);
+	encode_getfattr(xdr, args->bitmask, &hdr);
 	encode_nops(&hdr);
-पूर्ण
+}
 
 /*
  * Encode CREATE request
  */
-अटल व्योम nfs4_xdr_enc_create(काष्ठा rpc_rqst *req, काष्ठा xdr_stream *xdr,
-				स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा nfs4_create_arg *args = data;
-	काष्ठा compound_hdr hdr = अणु
+static void nfs4_xdr_enc_create(struct rpc_rqst *req, struct xdr_stream *xdr,
+				const void *data)
+{
+	const struct nfs4_create_arg *args = data;
+	struct compound_hdr hdr = {
 		.minorversion = nfs4_xdr_minorversion(&args->seq_args),
-	पूर्ण;
+	};
 
 	encode_compound_hdr(xdr, req, &hdr);
 	encode_sequence(xdr, &args->seq_args, &hdr);
 	encode_putfh(xdr, args->dir_fh, &hdr);
 	encode_create(xdr, args, &hdr);
 	encode_getfh(xdr, &hdr);
-	encode_getfattr(xdr, args->biपंचांगask, &hdr);
+	encode_getfattr(xdr, args->bitmask, &hdr);
 	encode_nops(&hdr);
-पूर्ण
+}
 
 /*
  * Encode SYMLINK request
  */
-अटल व्योम nfs4_xdr_enc_symlink(काष्ठा rpc_rqst *req, काष्ठा xdr_stream *xdr,
-				 स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा nfs4_create_arg *args = data;
+static void nfs4_xdr_enc_symlink(struct rpc_rqst *req, struct xdr_stream *xdr,
+				 const void *data)
+{
+	const struct nfs4_create_arg *args = data;
 
 	nfs4_xdr_enc_create(req, xdr, args);
-पूर्ण
+}
 
 /*
  * Encode GETATTR request
  */
-अटल व्योम nfs4_xdr_enc_getattr(काष्ठा rpc_rqst *req, काष्ठा xdr_stream *xdr,
-				 स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा nfs4_getattr_arg *args = data;
-	काष्ठा compound_hdr hdr = अणु
+static void nfs4_xdr_enc_getattr(struct rpc_rqst *req, struct xdr_stream *xdr,
+				 const void *data)
+{
+	const struct nfs4_getattr_arg *args = data;
+	struct compound_hdr hdr = {
 		.minorversion = nfs4_xdr_minorversion(&args->seq_args),
-	पूर्ण;
+	};
 
 	encode_compound_hdr(xdr, req, &hdr);
 	encode_sequence(xdr, &args->seq_args, &hdr);
 	encode_putfh(xdr, args->fh, &hdr);
-	encode_getfattr(xdr, args->biपंचांगask, &hdr);
+	encode_getfattr(xdr, args->bitmask, &hdr);
 	encode_nops(&hdr);
-पूर्ण
+}
 
 /*
  * Encode a CLOSE request
  */
-अटल व्योम nfs4_xdr_enc_बंद(काष्ठा rpc_rqst *req, काष्ठा xdr_stream *xdr,
-			       स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा nfs_बंदargs *args = data;
-	काष्ठा compound_hdr hdr = अणु
+static void nfs4_xdr_enc_close(struct rpc_rqst *req, struct xdr_stream *xdr,
+			       const void *data)
+{
+	const struct nfs_closeargs *args = data;
+	struct compound_hdr hdr = {
 		.minorversion = nfs4_xdr_minorversion(&args->seq_args),
-	पूर्ण;
+	};
 
 	encode_compound_hdr(xdr, req, &hdr);
 	encode_sequence(xdr, &args->seq_args, &hdr);
 	encode_putfh(xdr, args->fh, &hdr);
-	अगर (args->lr_args)
-		encode_layoutवापस(xdr, args->lr_args, &hdr);
-	अगर (args->biपंचांगask != शून्य)
-		encode_getfattr(xdr, args->biपंचांगask, &hdr);
-	encode_बंद(xdr, args, &hdr);
+	if (args->lr_args)
+		encode_layoutreturn(xdr, args->lr_args, &hdr);
+	if (args->bitmask != NULL)
+		encode_getfattr(xdr, args->bitmask, &hdr);
+	encode_close(xdr, args, &hdr);
 	encode_nops(&hdr);
-पूर्ण
+}
 
 /*
  * Encode an OPEN request
  */
-अटल व्योम nfs4_xdr_enc_खोलो(काष्ठा rpc_rqst *req, काष्ठा xdr_stream *xdr,
-			      स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा nfs_खोलोargs *args = data;
-	काष्ठा compound_hdr hdr = अणु
+static void nfs4_xdr_enc_open(struct rpc_rqst *req, struct xdr_stream *xdr,
+			      const void *data)
+{
+	const struct nfs_openargs *args = data;
+	struct compound_hdr hdr = {
 		.minorversion = nfs4_xdr_minorversion(&args->seq_args),
-	पूर्ण;
+	};
 
 	encode_compound_hdr(xdr, req, &hdr);
 	encode_sequence(xdr, &args->seq_args, &hdr);
 	encode_putfh(xdr, args->fh, &hdr);
-	encode_खोलो(xdr, args, &hdr);
+	encode_open(xdr, args, &hdr);
 	encode_getfh(xdr, &hdr);
-	अगर (args->access)
+	if (args->access)
 		encode_access(xdr, args->access, &hdr);
-	encode_getfattr_खोलो(xdr, args->biपंचांगask, args->खोलो_biपंचांगap, &hdr);
-	अगर (args->lg_args) अणु
+	encode_getfattr_open(xdr, args->bitmask, args->open_bitmap, &hdr);
+	if (args->lg_args) {
 		encode_layoutget(xdr, args->lg_args, &hdr);
 		rpc_prepare_reply_pages(req, args->lg_args->layout.pages, 0,
 					args->lg_args->layout.pglen,
 					hdr.replen - pagepad_maxsz);
-	पूर्ण
+	}
 	encode_nops(&hdr);
-पूर्ण
+}
 
 /*
  * Encode an OPEN_CONFIRM request
  */
-अटल व्योम nfs4_xdr_enc_खोलो_confirm(काष्ठा rpc_rqst *req,
-				      काष्ठा xdr_stream *xdr,
-				      स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा nfs_खोलो_confirmargs *args = data;
-	काष्ठा compound_hdr hdr = अणु
+static void nfs4_xdr_enc_open_confirm(struct rpc_rqst *req,
+				      struct xdr_stream *xdr,
+				      const void *data)
+{
+	const struct nfs_open_confirmargs *args = data;
+	struct compound_hdr hdr = {
 		.nops   = 0,
-	पूर्ण;
+	};
 
 	encode_compound_hdr(xdr, req, &hdr);
 	encode_putfh(xdr, args->fh, &hdr);
-	encode_खोलो_confirm(xdr, args, &hdr);
+	encode_open_confirm(xdr, args, &hdr);
 	encode_nops(&hdr);
-पूर्ण
+}
 
 /*
  * Encode an OPEN request with no attributes.
  */
-अटल व्योम nfs4_xdr_enc_खोलो_noattr(काष्ठा rpc_rqst *req,
-				     काष्ठा xdr_stream *xdr,
-				     स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा nfs_खोलोargs *args = data;
-	काष्ठा compound_hdr hdr = अणु
+static void nfs4_xdr_enc_open_noattr(struct rpc_rqst *req,
+				     struct xdr_stream *xdr,
+				     const void *data)
+{
+	const struct nfs_openargs *args = data;
+	struct compound_hdr hdr = {
 		.minorversion = nfs4_xdr_minorversion(&args->seq_args),
-	पूर्ण;
+	};
 
 	encode_compound_hdr(xdr, req, &hdr);
 	encode_sequence(xdr, &args->seq_args, &hdr);
 	encode_putfh(xdr, args->fh, &hdr);
-	encode_खोलो(xdr, args, &hdr);
-	अगर (args->access)
+	encode_open(xdr, args, &hdr);
+	if (args->access)
 		encode_access(xdr, args->access, &hdr);
-	encode_getfattr_खोलो(xdr, args->biपंचांगask, args->खोलो_biपंचांगap, &hdr);
-	अगर (args->lg_args) अणु
+	encode_getfattr_open(xdr, args->bitmask, args->open_bitmap, &hdr);
+	if (args->lg_args) {
 		encode_layoutget(xdr, args->lg_args, &hdr);
 		rpc_prepare_reply_pages(req, args->lg_args->layout.pages, 0,
 					args->lg_args->layout.pglen,
 					hdr.replen - pagepad_maxsz);
-	पूर्ण
+	}
 	encode_nops(&hdr);
-पूर्ण
+}
 
 /*
  * Encode an OPEN_DOWNGRADE request
  */
-अटल व्योम nfs4_xdr_enc_खोलो_करोwngrade(काष्ठा rpc_rqst *req,
-					काष्ठा xdr_stream *xdr,
-					स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा nfs_बंदargs *args = data;
-	काष्ठा compound_hdr hdr = अणु
+static void nfs4_xdr_enc_open_downgrade(struct rpc_rqst *req,
+					struct xdr_stream *xdr,
+					const void *data)
+{
+	const struct nfs_closeargs *args = data;
+	struct compound_hdr hdr = {
 		.minorversion = nfs4_xdr_minorversion(&args->seq_args),
-	पूर्ण;
+	};
 
 	encode_compound_hdr(xdr, req, &hdr);
 	encode_sequence(xdr, &args->seq_args, &hdr);
 	encode_putfh(xdr, args->fh, &hdr);
-	अगर (args->lr_args)
-		encode_layoutवापस(xdr, args->lr_args, &hdr);
-	encode_खोलो_करोwngrade(xdr, args, &hdr);
+	if (args->lr_args)
+		encode_layoutreturn(xdr, args->lr_args, &hdr);
+	encode_open_downgrade(xdr, args, &hdr);
 	encode_nops(&hdr);
-पूर्ण
+}
 
 /*
  * Encode a LOCK request
  */
-अटल व्योम nfs4_xdr_enc_lock(काष्ठा rpc_rqst *req, काष्ठा xdr_stream *xdr,
-			      स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा nfs_lock_args *args = data;
-	काष्ठा compound_hdr hdr = अणु
+static void nfs4_xdr_enc_lock(struct rpc_rqst *req, struct xdr_stream *xdr,
+			      const void *data)
+{
+	const struct nfs_lock_args *args = data;
+	struct compound_hdr hdr = {
 		.minorversion = nfs4_xdr_minorversion(&args->seq_args),
-	पूर्ण;
+	};
 
 	encode_compound_hdr(xdr, req, &hdr);
 	encode_sequence(xdr, &args->seq_args, &hdr);
 	encode_putfh(xdr, args->fh, &hdr);
 	encode_lock(xdr, args, &hdr);
 	encode_nops(&hdr);
-पूर्ण
+}
 
 /*
  * Encode a LOCKT request
  */
-अटल व्योम nfs4_xdr_enc_lockt(काष्ठा rpc_rqst *req, काष्ठा xdr_stream *xdr,
-			       स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा nfs_lockt_args *args = data;
-	काष्ठा compound_hdr hdr = अणु
+static void nfs4_xdr_enc_lockt(struct rpc_rqst *req, struct xdr_stream *xdr,
+			       const void *data)
+{
+	const struct nfs_lockt_args *args = data;
+	struct compound_hdr hdr = {
 		.minorversion = nfs4_xdr_minorversion(&args->seq_args),
-	पूर्ण;
+	};
 
 	encode_compound_hdr(xdr, req, &hdr);
 	encode_sequence(xdr, &args->seq_args, &hdr);
 	encode_putfh(xdr, args->fh, &hdr);
 	encode_lockt(xdr, args, &hdr);
 	encode_nops(&hdr);
-पूर्ण
+}
 
 /*
  * Encode a LOCKU request
  */
-अटल व्योम nfs4_xdr_enc_locku(काष्ठा rpc_rqst *req, काष्ठा xdr_stream *xdr,
-			       स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा nfs_locku_args *args = data;
-	काष्ठा compound_hdr hdr = अणु
+static void nfs4_xdr_enc_locku(struct rpc_rqst *req, struct xdr_stream *xdr,
+			       const void *data)
+{
+	const struct nfs_locku_args *args = data;
+	struct compound_hdr hdr = {
 		.minorversion = nfs4_xdr_minorversion(&args->seq_args),
-	पूर्ण;
+	};
 
 	encode_compound_hdr(xdr, req, &hdr);
 	encode_sequence(xdr, &args->seq_args, &hdr);
 	encode_putfh(xdr, args->fh, &hdr);
 	encode_locku(xdr, args, &hdr);
 	encode_nops(&hdr);
-पूर्ण
+}
 
-अटल व्योम nfs4_xdr_enc_release_lockowner(काष्ठा rpc_rqst *req,
-					   काष्ठा xdr_stream *xdr,
-					   स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा nfs_release_lockowner_args *args = data;
-	काष्ठा compound_hdr hdr = अणु
+static void nfs4_xdr_enc_release_lockowner(struct rpc_rqst *req,
+					   struct xdr_stream *xdr,
+					   const void *data)
+{
+	const struct nfs_release_lockowner_args *args = data;
+	struct compound_hdr hdr = {
 		.minorversion = 0,
-	पूर्ण;
+	};
 
 	encode_compound_hdr(xdr, req, &hdr);
 	encode_release_lockowner(xdr, &args->lock_owner, &hdr);
 	encode_nops(&hdr);
-पूर्ण
+}
 
 /*
  * Encode a READLINK request
  */
-अटल व्योम nfs4_xdr_enc_पढ़ोlink(काष्ठा rpc_rqst *req, काष्ठा xdr_stream *xdr,
-				  स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा nfs4_पढ़ोlink *args = data;
-	काष्ठा compound_hdr hdr = अणु
+static void nfs4_xdr_enc_readlink(struct rpc_rqst *req, struct xdr_stream *xdr,
+				  const void *data)
+{
+	const struct nfs4_readlink *args = data;
+	struct compound_hdr hdr = {
 		.minorversion = nfs4_xdr_minorversion(&args->seq_args),
-	पूर्ण;
+	};
 
 	encode_compound_hdr(xdr, req, &hdr);
 	encode_sequence(xdr, &args->seq_args, &hdr);
 	encode_putfh(xdr, args->fh, &hdr);
-	encode_पढ़ोlink(xdr, args, req, &hdr);
+	encode_readlink(xdr, args, req, &hdr);
 
 	rpc_prepare_reply_pages(req, args->pages, args->pgbase,
 				args->pglen, hdr.replen - pagepad_maxsz);
 	encode_nops(&hdr);
-पूर्ण
+}
 
 /*
- * Encode a READसूची request
+ * Encode a READDIR request
  */
-अटल व्योम nfs4_xdr_enc_सूची_पढ़ो(काष्ठा rpc_rqst *req, काष्ठा xdr_stream *xdr,
-				 स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा nfs4_सूची_पढ़ो_arg *args = data;
-	काष्ठा compound_hdr hdr = अणु
+static void nfs4_xdr_enc_readdir(struct rpc_rqst *req, struct xdr_stream *xdr,
+				 const void *data)
+{
+	const struct nfs4_readdir_arg *args = data;
+	struct compound_hdr hdr = {
 		.minorversion = nfs4_xdr_minorversion(&args->seq_args),
-	पूर्ण;
+	};
 
 	encode_compound_hdr(xdr, req, &hdr);
 	encode_sequence(xdr, &args->seq_args, &hdr);
 	encode_putfh(xdr, args->fh, &hdr);
-	encode_सूची_पढ़ो(xdr, args, req, &hdr);
+	encode_readdir(xdr, args, req, &hdr);
 
 	rpc_prepare_reply_pages(req, args->pages, args->pgbase,
 				args->count, hdr.replen - pagepad_maxsz);
 	encode_nops(&hdr);
-पूर्ण
+}
 
 /*
  * Encode a READ request
  */
-अटल व्योम nfs4_xdr_enc_पढ़ो(काष्ठा rpc_rqst *req, काष्ठा xdr_stream *xdr,
-			      स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा nfs_pgio_args *args = data;
-	काष्ठा compound_hdr hdr = अणु
+static void nfs4_xdr_enc_read(struct rpc_rqst *req, struct xdr_stream *xdr,
+			      const void *data)
+{
+	const struct nfs_pgio_args *args = data;
+	struct compound_hdr hdr = {
 		.minorversion = nfs4_xdr_minorversion(&args->seq_args),
-	पूर्ण;
+	};
 
 	encode_compound_hdr(xdr, req, &hdr);
 	encode_sequence(xdr, &args->seq_args, &hdr);
 	encode_putfh(xdr, args->fh, &hdr);
-	encode_पढ़ो(xdr, args, &hdr);
+	encode_read(xdr, args, &hdr);
 
 	rpc_prepare_reply_pages(req, args->pages, args->pgbase,
 				args->count, hdr.replen - pagepad_maxsz);
 	req->rq_rcv_buf.flags |= XDRBUF_READ;
 	encode_nops(&hdr);
-पूर्ण
+}
 
 /*
  * Encode an SETATTR request
  */
-अटल व्योम nfs4_xdr_enc_setattr(काष्ठा rpc_rqst *req, काष्ठा xdr_stream *xdr,
-				 स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा nfs_setattrargs *args = data;
-	काष्ठा compound_hdr hdr = अणु
+static void nfs4_xdr_enc_setattr(struct rpc_rqst *req, struct xdr_stream *xdr,
+				 const void *data)
+{
+	const struct nfs_setattrargs *args = data;
+	struct compound_hdr hdr = {
 		.minorversion = nfs4_xdr_minorversion(&args->seq_args),
-	पूर्ण;
+	};
 
 	encode_compound_hdr(xdr, req, &hdr);
 	encode_sequence(xdr, &args->seq_args, &hdr);
 	encode_putfh(xdr, args->fh, &hdr);
 	encode_setattr(xdr, args, args->server, &hdr);
-	encode_getfattr(xdr, args->biपंचांगask, &hdr);
+	encode_getfattr(xdr, args->bitmask, &hdr);
 	encode_nops(&hdr);
-पूर्ण
+}
 
 /*
  * Encode a GETACL request
  */
-अटल व्योम nfs4_xdr_enc_getacl(काष्ठा rpc_rqst *req, काष्ठा xdr_stream *xdr,
-				स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा nfs_getaclargs *args = data;
-	काष्ठा compound_hdr hdr = अणु
+static void nfs4_xdr_enc_getacl(struct rpc_rqst *req, struct xdr_stream *xdr,
+				const void *data)
+{
+	const struct nfs_getaclargs *args = data;
+	struct compound_hdr hdr = {
 		.minorversion = nfs4_xdr_minorversion(&args->seq_args),
-	पूर्ण;
-	स्थिर __u32 nfs4_acl_biपंचांगap[1] = अणु
+	};
+	const __u32 nfs4_acl_bitmap[1] = {
 		[0] = FATTR4_WORD0_ACL,
-	पूर्ण;
-	uपूर्णांक32_t replen;
+	};
+	uint32_t replen;
 
 	encode_compound_hdr(xdr, req, &hdr);
 	encode_sequence(xdr, &args->seq_args, &hdr);
 	encode_putfh(xdr, args->fh, &hdr);
 	replen = hdr.replen + op_decode_hdr_maxsz;
-	encode_getattr(xdr, nfs4_acl_biपंचांगap, शून्य,
-			ARRAY_SIZE(nfs4_acl_biपंचांगap), &hdr);
+	encode_getattr(xdr, nfs4_acl_bitmap, NULL,
+			ARRAY_SIZE(nfs4_acl_bitmap), &hdr);
 
 	rpc_prepare_reply_pages(req, args->acl_pages, 0,
 				args->acl_len, replen);
 	encode_nops(&hdr);
-पूर्ण
+}
 
 /*
  * Encode a WRITE request
  */
-अटल व्योम nfs4_xdr_enc_ग_लिखो(काष्ठा rpc_rqst *req, काष्ठा xdr_stream *xdr,
-			       स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा nfs_pgio_args *args = data;
-	काष्ठा compound_hdr hdr = अणु
+static void nfs4_xdr_enc_write(struct rpc_rqst *req, struct xdr_stream *xdr,
+			       const void *data)
+{
+	const struct nfs_pgio_args *args = data;
+	struct compound_hdr hdr = {
 		.minorversion = nfs4_xdr_minorversion(&args->seq_args),
-	पूर्ण;
+	};
 
 	encode_compound_hdr(xdr, req, &hdr);
 	encode_sequence(xdr, &args->seq_args, &hdr);
 	encode_putfh(xdr, args->fh, &hdr);
-	encode_ग_लिखो(xdr, args, &hdr);
+	encode_write(xdr, args, &hdr);
 	req->rq_snd_buf.flags |= XDRBUF_WRITE;
-	अगर (args->biपंचांगask)
-		encode_getfattr(xdr, args->biपंचांगask, &hdr);
+	if (args->bitmask)
+		encode_getfattr(xdr, args->bitmask, &hdr);
 	encode_nops(&hdr);
-पूर्ण
+}
 
 /*
  *  a COMMIT request
  */
-अटल व्योम nfs4_xdr_enc_commit(काष्ठा rpc_rqst *req, काष्ठा xdr_stream *xdr,
-				स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा nfs_commitargs *args = data;
-	काष्ठा compound_hdr hdr = अणु
+static void nfs4_xdr_enc_commit(struct rpc_rqst *req, struct xdr_stream *xdr,
+				const void *data)
+{
+	const struct nfs_commitargs *args = data;
+	struct compound_hdr hdr = {
 		.minorversion = nfs4_xdr_minorversion(&args->seq_args),
-	पूर्ण;
+	};
 
 	encode_compound_hdr(xdr, req, &hdr);
 	encode_sequence(xdr, &args->seq_args, &hdr);
 	encode_putfh(xdr, args->fh, &hdr);
 	encode_commit(xdr, args, &hdr);
 	encode_nops(&hdr);
-पूर्ण
+}
 
 /*
  * FSINFO request
  */
-अटल व्योम nfs4_xdr_enc_fsinfo(काष्ठा rpc_rqst *req, काष्ठा xdr_stream *xdr,
-				स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा nfs4_fsinfo_arg *args = data;
-	काष्ठा compound_hdr hdr = अणु
+static void nfs4_xdr_enc_fsinfo(struct rpc_rqst *req, struct xdr_stream *xdr,
+				const void *data)
+{
+	const struct nfs4_fsinfo_arg *args = data;
+	struct compound_hdr hdr = {
 		.minorversion = nfs4_xdr_minorversion(&args->seq_args),
-	पूर्ण;
+	};
 
 	encode_compound_hdr(xdr, req, &hdr);
 	encode_sequence(xdr, &args->seq_args, &hdr);
 	encode_putfh(xdr, args->fh, &hdr);
-	encode_fsinfo(xdr, args->biपंचांगask, &hdr);
+	encode_fsinfo(xdr, args->bitmask, &hdr);
 	encode_nops(&hdr);
-पूर्ण
+}
 
 /*
  * a PATHCONF request
  */
-अटल व्योम nfs4_xdr_enc_pathconf(काष्ठा rpc_rqst *req, काष्ठा xdr_stream *xdr,
-				  स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा nfs4_pathconf_arg *args = data;
-	काष्ठा compound_hdr hdr = अणु
+static void nfs4_xdr_enc_pathconf(struct rpc_rqst *req, struct xdr_stream *xdr,
+				  const void *data)
+{
+	const struct nfs4_pathconf_arg *args = data;
+	struct compound_hdr hdr = {
 		.minorversion = nfs4_xdr_minorversion(&args->seq_args),
-	पूर्ण;
+	};
 
 	encode_compound_hdr(xdr, req, &hdr);
 	encode_sequence(xdr, &args->seq_args, &hdr);
 	encode_putfh(xdr, args->fh, &hdr);
-	encode_getattr(xdr, nfs4_pathconf_biपंचांगap, args->biपंचांगask,
-			ARRAY_SIZE(nfs4_pathconf_biपंचांगap), &hdr);
+	encode_getattr(xdr, nfs4_pathconf_bitmap, args->bitmask,
+			ARRAY_SIZE(nfs4_pathconf_bitmap), &hdr);
 	encode_nops(&hdr);
-पूर्ण
+}
 
 /*
  * a STATFS request
  */
-अटल व्योम nfs4_xdr_enc_statfs(काष्ठा rpc_rqst *req, काष्ठा xdr_stream *xdr,
-				स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा nfs4_statfs_arg *args = data;
-	काष्ठा compound_hdr hdr = अणु
+static void nfs4_xdr_enc_statfs(struct rpc_rqst *req, struct xdr_stream *xdr,
+				const void *data)
+{
+	const struct nfs4_statfs_arg *args = data;
+	struct compound_hdr hdr = {
 		.minorversion = nfs4_xdr_minorversion(&args->seq_args),
-	पूर्ण;
+	};
 
 	encode_compound_hdr(xdr, req, &hdr);
 	encode_sequence(xdr, &args->seq_args, &hdr);
 	encode_putfh(xdr, args->fh, &hdr);
-	encode_getattr(xdr, nfs4_statfs_biपंचांगap, args->biपंचांगask,
-			ARRAY_SIZE(nfs4_statfs_biपंचांगap), &hdr);
+	encode_getattr(xdr, nfs4_statfs_bitmap, args->bitmask,
+			ARRAY_SIZE(nfs4_statfs_bitmap), &hdr);
 	encode_nops(&hdr);
-पूर्ण
+}
 
 /*
  * GETATTR_BITMAP request
  */
-अटल व्योम nfs4_xdr_enc_server_caps(काष्ठा rpc_rqst *req,
-				     काष्ठा xdr_stream *xdr,
-				     स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा nfs4_server_caps_arg *args = data;
-	स्थिर u32 *biपंचांगask = args->biपंचांगask;
-	काष्ठा compound_hdr hdr = अणु
+static void nfs4_xdr_enc_server_caps(struct rpc_rqst *req,
+				     struct xdr_stream *xdr,
+				     const void *data)
+{
+	const struct nfs4_server_caps_arg *args = data;
+	const u32 *bitmask = args->bitmask;
+	struct compound_hdr hdr = {
 		.minorversion = nfs4_xdr_minorversion(&args->seq_args),
-	पूर्ण;
+	};
 
 	encode_compound_hdr(xdr, req, &hdr);
 	encode_sequence(xdr, &args->seq_args, &hdr);
 	encode_putfh(xdr, args->fhandle, &hdr);
-	encode_getattr(xdr, biपंचांगask, शून्य, 3, &hdr);
+	encode_getattr(xdr, bitmask, NULL, 3, &hdr);
 	encode_nops(&hdr);
-पूर्ण
+}
 
 /*
  * a RENEW request
  */
-अटल व्योम nfs4_xdr_enc_renew(काष्ठा rpc_rqst *req, काष्ठा xdr_stream *xdr,
-			       स्थिर व्योम *data)
+static void nfs4_xdr_enc_renew(struct rpc_rqst *req, struct xdr_stream *xdr,
+			       const void *data)
 
-अणु
-	स्थिर काष्ठा nfs_client *clp = data;
-	काष्ठा compound_hdr hdr = अणु
+{
+	const struct nfs_client *clp = data;
+	struct compound_hdr hdr = {
 		.nops	= 0,
-	पूर्ण;
+	};
 
 	encode_compound_hdr(xdr, req, &hdr);
 	encode_renew(xdr, clp->cl_clientid, &hdr);
 	encode_nops(&hdr);
-पूर्ण
+}
 
 /*
  * a SETCLIENTID request
  */
-अटल व्योम nfs4_xdr_enc_setclientid(काष्ठा rpc_rqst *req,
-				     काष्ठा xdr_stream *xdr,
-				     स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा nfs4_setclientid *sc = data;
-	काष्ठा compound_hdr hdr = अणु
+static void nfs4_xdr_enc_setclientid(struct rpc_rqst *req,
+				     struct xdr_stream *xdr,
+				     const void *data)
+{
+	const struct nfs4_setclientid *sc = data;
+	struct compound_hdr hdr = {
 		.nops	= 0,
-	पूर्ण;
+	};
 
 	encode_compound_hdr(xdr, req, &hdr);
 	encode_setclientid(xdr, sc, &hdr);
 	encode_nops(&hdr);
-पूर्ण
+}
 
 /*
  * a SETCLIENTID_CONFIRM request
  */
-अटल व्योम nfs4_xdr_enc_setclientid_confirm(काष्ठा rpc_rqst *req,
-					     काष्ठा xdr_stream *xdr,
-					     स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा nfs4_setclientid_res *arg = data;
-	काष्ठा compound_hdr hdr = अणु
+static void nfs4_xdr_enc_setclientid_confirm(struct rpc_rqst *req,
+					     struct xdr_stream *xdr,
+					     const void *data)
+{
+	const struct nfs4_setclientid_res *arg = data;
+	struct compound_hdr hdr = {
 		.nops	= 0,
-	पूर्ण;
+	};
 
 	encode_compound_hdr(xdr, req, &hdr);
 	encode_setclientid_confirm(xdr, arg, &hdr);
 	encode_nops(&hdr);
-पूर्ण
+}
 
 /*
  * DELEGRETURN request
  */
-अटल व्योम nfs4_xdr_enc_delegवापस(काष्ठा rpc_rqst *req,
-				     काष्ठा xdr_stream *xdr,
-				     स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा nfs4_delegवापसargs *args = data;
-	काष्ठा compound_hdr hdr = अणु
+static void nfs4_xdr_enc_delegreturn(struct rpc_rqst *req,
+				     struct xdr_stream *xdr,
+				     const void *data)
+{
+	const struct nfs4_delegreturnargs *args = data;
+	struct compound_hdr hdr = {
 		.minorversion = nfs4_xdr_minorversion(&args->seq_args),
-	पूर्ण;
+	};
 
 	encode_compound_hdr(xdr, req, &hdr);
 	encode_sequence(xdr, &args->seq_args, &hdr);
 	encode_putfh(xdr, args->fhandle, &hdr);
-	अगर (args->lr_args)
-		encode_layoutवापस(xdr, args->lr_args, &hdr);
-	अगर (args->biपंचांगask)
-		encode_getfattr(xdr, args->biपंचांगask, &hdr);
-	encode_delegवापस(xdr, args->stateid, &hdr);
+	if (args->lr_args)
+		encode_layoutreturn(xdr, args->lr_args, &hdr);
+	if (args->bitmask)
+		encode_getfattr(xdr, args->bitmask, &hdr);
+	encode_delegreturn(xdr, args->stateid, &hdr);
 	encode_nops(&hdr);
-पूर्ण
+}
 
 /*
  * Encode FS_LOCATIONS request
  */
-अटल व्योम nfs4_xdr_enc_fs_locations(काष्ठा rpc_rqst *req,
-				      काष्ठा xdr_stream *xdr,
-				      स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा nfs4_fs_locations_arg *args = data;
-	काष्ठा compound_hdr hdr = अणु
+static void nfs4_xdr_enc_fs_locations(struct rpc_rqst *req,
+				      struct xdr_stream *xdr,
+				      const void *data)
+{
+	const struct nfs4_fs_locations_arg *args = data;
+	struct compound_hdr hdr = {
 		.minorversion = nfs4_xdr_minorversion(&args->seq_args),
-	पूर्ण;
-	uपूर्णांक32_t replen;
+	};
+	uint32_t replen;
 
 	encode_compound_hdr(xdr, req, &hdr);
 	encode_sequence(xdr, &args->seq_args, &hdr);
-	अगर (args->migration) अणु
+	if (args->migration) {
 		encode_putfh(xdr, args->fh, &hdr);
 		replen = hdr.replen;
-		encode_fs_locations(xdr, args->biपंचांगask, &hdr);
-		अगर (args->renew)
+		encode_fs_locations(xdr, args->bitmask, &hdr);
+		if (args->renew)
 			encode_renew(xdr, args->clientid, &hdr);
-	पूर्ण अन्यथा अणु
+	} else {
 		encode_putfh(xdr, args->dir_fh, &hdr);
 		encode_lookup(xdr, args->name, &hdr);
 		replen = hdr.replen;
-		encode_fs_locations(xdr, args->biपंचांगask, &hdr);
-	पूर्ण
+		encode_fs_locations(xdr, args->bitmask, &hdr);
+	}
 
-	rpc_prepare_reply_pages(req, (काष्ठा page **)&args->page, 0,
+	rpc_prepare_reply_pages(req, (struct page **)&args->page, 0,
 				PAGE_SIZE, replen);
 	encode_nops(&hdr);
-पूर्ण
+}
 
 /*
  * Encode SECINFO request
  */
-अटल व्योम nfs4_xdr_enc_secinfo(काष्ठा rpc_rqst *req,
-				काष्ठा xdr_stream *xdr,
-				स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा nfs4_secinfo_arg *args = data;
-	काष्ठा compound_hdr hdr = अणु
+static void nfs4_xdr_enc_secinfo(struct rpc_rqst *req,
+				struct xdr_stream *xdr,
+				const void *data)
+{
+	const struct nfs4_secinfo_arg *args = data;
+	struct compound_hdr hdr = {
 		.minorversion = nfs4_xdr_minorversion(&args->seq_args),
-	पूर्ण;
+	};
 
 	encode_compound_hdr(xdr, req, &hdr);
 	encode_sequence(xdr, &args->seq_args, &hdr);
 	encode_putfh(xdr, args->dir_fh, &hdr);
 	encode_secinfo(xdr, args->name, &hdr);
 	encode_nops(&hdr);
-पूर्ण
+}
 
 /*
  * Encode FSID_PRESENT request
  */
-अटल व्योम nfs4_xdr_enc_fsid_present(काष्ठा rpc_rqst *req,
-				      काष्ठा xdr_stream *xdr,
-				      स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा nfs4_fsid_present_arg *args = data;
-	काष्ठा compound_hdr hdr = अणु
+static void nfs4_xdr_enc_fsid_present(struct rpc_rqst *req,
+				      struct xdr_stream *xdr,
+				      const void *data)
+{
+	const struct nfs4_fsid_present_arg *args = data;
+	struct compound_hdr hdr = {
 		.minorversion = nfs4_xdr_minorversion(&args->seq_args),
-	पूर्ण;
+	};
 
 	encode_compound_hdr(xdr, req, &hdr);
 	encode_sequence(xdr, &args->seq_args, &hdr);
 	encode_putfh(xdr, args->fh, &hdr);
 	encode_getfh(xdr, &hdr);
-	अगर (args->renew)
+	if (args->renew)
 		encode_renew(xdr, args->clientid, &hdr);
 	encode_nops(&hdr);
-पूर्ण
+}
 
-#अगर defined(CONFIG_NFS_V4_1)
+#if defined(CONFIG_NFS_V4_1)
 /*
  * BIND_CONN_TO_SESSION request
  */
-अटल व्योम nfs4_xdr_enc_bind_conn_to_session(काष्ठा rpc_rqst *req,
-				काष्ठा xdr_stream *xdr,
-				स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा nfs41_bind_conn_to_session_args *args = data;
-	काष्ठा compound_hdr hdr = अणु
+static void nfs4_xdr_enc_bind_conn_to_session(struct rpc_rqst *req,
+				struct xdr_stream *xdr,
+				const void *data)
+{
+	const struct nfs41_bind_conn_to_session_args *args = data;
+	struct compound_hdr hdr = {
 		.minorversion = args->client->cl_mvops->minor_version,
-	पूर्ण;
+	};
 
 	encode_compound_hdr(xdr, req, &hdr);
 	encode_bind_conn_to_session(xdr, args, &hdr);
 	encode_nops(&hdr);
-पूर्ण
+}
 
 /*
  * EXCHANGE_ID request
  */
-अटल व्योम nfs4_xdr_enc_exchange_id(काष्ठा rpc_rqst *req,
-				     काष्ठा xdr_stream *xdr,
-				     स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा nfs41_exchange_id_args *args = data;
-	काष्ठा compound_hdr hdr = अणु
+static void nfs4_xdr_enc_exchange_id(struct rpc_rqst *req,
+				     struct xdr_stream *xdr,
+				     const void *data)
+{
+	const struct nfs41_exchange_id_args *args = data;
+	struct compound_hdr hdr = {
 		.minorversion = args->client->cl_mvops->minor_version,
-	पूर्ण;
+	};
 
 	encode_compound_hdr(xdr, req, &hdr);
 	encode_exchange_id(xdr, args, &hdr);
 	encode_nops(&hdr);
-पूर्ण
+}
 
 /*
  * a CREATE_SESSION request
  */
-अटल व्योम nfs4_xdr_enc_create_session(काष्ठा rpc_rqst *req,
-					काष्ठा xdr_stream *xdr,
-					स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा nfs41_create_session_args *args = data;
-	काष्ठा compound_hdr hdr = अणु
+static void nfs4_xdr_enc_create_session(struct rpc_rqst *req,
+					struct xdr_stream *xdr,
+					const void *data)
+{
+	const struct nfs41_create_session_args *args = data;
+	struct compound_hdr hdr = {
 		.minorversion = args->client->cl_mvops->minor_version,
-	पूर्ण;
+	};
 
 	encode_compound_hdr(xdr, req, &hdr);
 	encode_create_session(xdr, args, &hdr);
 	encode_nops(&hdr);
-पूर्ण
+}
 
 /*
  * a DESTROY_SESSION request
  */
-अटल व्योम nfs4_xdr_enc_destroy_session(काष्ठा rpc_rqst *req,
-					 काष्ठा xdr_stream *xdr,
-					 स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा nfs4_session *session = data;
-	काष्ठा compound_hdr hdr = अणु
+static void nfs4_xdr_enc_destroy_session(struct rpc_rqst *req,
+					 struct xdr_stream *xdr,
+					 const void *data)
+{
+	const struct nfs4_session *session = data;
+	struct compound_hdr hdr = {
 		.minorversion = session->clp->cl_mvops->minor_version,
-	पूर्ण;
+	};
 
 	encode_compound_hdr(xdr, req, &hdr);
 	encode_destroy_session(xdr, session, &hdr);
 	encode_nops(&hdr);
-पूर्ण
+}
 
 /*
  * a DESTROY_CLIENTID request
  */
-अटल व्योम nfs4_xdr_enc_destroy_clientid(काष्ठा rpc_rqst *req,
-					 काष्ठा xdr_stream *xdr,
-					 स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा nfs_client *clp = data;
-	काष्ठा compound_hdr hdr = अणु
+static void nfs4_xdr_enc_destroy_clientid(struct rpc_rqst *req,
+					 struct xdr_stream *xdr,
+					 const void *data)
+{
+	const struct nfs_client *clp = data;
+	struct compound_hdr hdr = {
 		.minorversion = clp->cl_mvops->minor_version,
-	पूर्ण;
+	};
 
 	encode_compound_hdr(xdr, req, &hdr);
 	encode_destroy_clientid(xdr, clp->cl_clientid, &hdr);
 	encode_nops(&hdr);
-पूर्ण
+}
 
 /*
  * a SEQUENCE request
  */
-अटल व्योम nfs4_xdr_enc_sequence(काष्ठा rpc_rqst *req, काष्ठा xdr_stream *xdr,
-				  स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा nfs4_sequence_args *args = data;
-	काष्ठा compound_hdr hdr = अणु
+static void nfs4_xdr_enc_sequence(struct rpc_rqst *req, struct xdr_stream *xdr,
+				  const void *data)
+{
+	const struct nfs4_sequence_args *args = data;
+	struct compound_hdr hdr = {
 		.minorversion = nfs4_xdr_minorversion(args),
-	पूर्ण;
+	};
 
 	encode_compound_hdr(xdr, req, &hdr);
 	encode_sequence(xdr, args, &hdr);
 	encode_nops(&hdr);
-पूर्ण
+}
 
-#पूर्ण_अगर
+#endif
 
 /*
  * a GET_LEASE_TIME request
  */
-अटल व्योम nfs4_xdr_enc_get_lease_समय(काष्ठा rpc_rqst *req,
-					काष्ठा xdr_stream *xdr,
-					स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा nfs4_get_lease_समय_args *args = data;
-	काष्ठा compound_hdr hdr = अणु
+static void nfs4_xdr_enc_get_lease_time(struct rpc_rqst *req,
+					struct xdr_stream *xdr,
+					const void *data)
+{
+	const struct nfs4_get_lease_time_args *args = data;
+	struct compound_hdr hdr = {
 		.minorversion = nfs4_xdr_minorversion(&args->la_seq_args),
-	पूर्ण;
-	स्थिर u32 lease_biपंचांगap[3] = अणु FATTR4_WORD0_LEASE_TIME पूर्ण;
+	};
+	const u32 lease_bitmap[3] = { FATTR4_WORD0_LEASE_TIME };
 
 	encode_compound_hdr(xdr, req, &hdr);
 	encode_sequence(xdr, &args->la_seq_args, &hdr);
 	encode_putrootfh(xdr, &hdr);
-	encode_fsinfo(xdr, lease_biपंचांगap, &hdr);
+	encode_fsinfo(xdr, lease_bitmap, &hdr);
 	encode_nops(&hdr);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_NFS_V4_1
+#ifdef CONFIG_NFS_V4_1
 
 /*
  * a RECLAIM_COMPLETE request
  */
-अटल व्योम nfs4_xdr_enc_reclaim_complete(काष्ठा rpc_rqst *req,
-					  काष्ठा xdr_stream *xdr,
-					  स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा nfs41_reclaim_complete_args *args = data;
-	काष्ठा compound_hdr hdr = अणु
+static void nfs4_xdr_enc_reclaim_complete(struct rpc_rqst *req,
+					  struct xdr_stream *xdr,
+					  const void *data)
+{
+	const struct nfs41_reclaim_complete_args *args = data;
+	struct compound_hdr hdr = {
 		.minorversion = nfs4_xdr_minorversion(&args->seq_args)
-	पूर्ण;
+	};
 
 	encode_compound_hdr(xdr, req, &hdr);
 	encode_sequence(xdr, &args->seq_args, &hdr);
 	encode_reclaim_complete(xdr, args, &hdr);
 	encode_nops(&hdr);
-पूर्ण
+}
 
 /*
  * Encode GETDEVICEINFO request
  */
-अटल व्योम nfs4_xdr_enc_getdeviceinfo(काष्ठा rpc_rqst *req,
-				       काष्ठा xdr_stream *xdr,
-				       स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा nfs4_getdeviceinfo_args *args = data;
-	काष्ठा compound_hdr hdr = अणु
+static void nfs4_xdr_enc_getdeviceinfo(struct rpc_rqst *req,
+				       struct xdr_stream *xdr,
+				       const void *data)
+{
+	const struct nfs4_getdeviceinfo_args *args = data;
+	struct compound_hdr hdr = {
 		.minorversion = nfs4_xdr_minorversion(&args->seq_args),
-	पूर्ण;
-	uपूर्णांक32_t replen;
+	};
+	uint32_t replen;
 
 	encode_compound_hdr(xdr, req, &hdr);
 	encode_sequence(xdr, &args->seq_args, &hdr);
@@ -3031,24 +3030,24 @@ encode_layoutget(काष्ठा xdr_stream *xdr,
 
 	encode_getdeviceinfo(xdr, args, &hdr);
 
-	/* set up reply kvec. device_addr4 opaque data is पढ़ो पूर्णांकo the
+	/* set up reply kvec. device_addr4 opaque data is read into the
 	 * pages */
 	rpc_prepare_reply_pages(req, args->pdev->pages, args->pdev->pgbase,
 				args->pdev->pglen, replen);
 	encode_nops(&hdr);
-पूर्ण
+}
 
 /*
  *  Encode LAYOUTGET request
  */
-अटल व्योम nfs4_xdr_enc_layoutget(काष्ठा rpc_rqst *req,
-				   काष्ठा xdr_stream *xdr,
-				   स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा nfs4_layoutget_args *args = data;
-	काष्ठा compound_hdr hdr = अणु
+static void nfs4_xdr_enc_layoutget(struct rpc_rqst *req,
+				   struct xdr_stream *xdr,
+				   const void *data)
+{
+	const struct nfs4_layoutget_args *args = data;
+	struct compound_hdr hdr = {
 		.minorversion = nfs4_xdr_minorversion(&args->seq_args),
-	पूर्ण;
+	};
 
 	encode_compound_hdr(xdr, req, &hdr);
 	encode_sequence(xdr, &args->seq_args, &hdr);
@@ -3058,2786 +3057,2786 @@ encode_layoutget(काष्ठा xdr_stream *xdr,
 	rpc_prepare_reply_pages(req, args->layout.pages, 0,
 				args->layout.pglen, hdr.replen - pagepad_maxsz);
 	encode_nops(&hdr);
-पूर्ण
+}
 
 /*
  *  Encode LAYOUTCOMMIT request
  */
-अटल व्योम nfs4_xdr_enc_layoutcommit(काष्ठा rpc_rqst *req,
-				      काष्ठा xdr_stream *xdr,
-				      स्थिर व्योम *priv)
-अणु
-	स्थिर काष्ठा nfs4_layoutcommit_args *args = priv;
-	काष्ठा nfs4_layoutcommit_data *data =
-		container_of(args, काष्ठा nfs4_layoutcommit_data, args);
-	काष्ठा compound_hdr hdr = अणु
+static void nfs4_xdr_enc_layoutcommit(struct rpc_rqst *req,
+				      struct xdr_stream *xdr,
+				      const void *priv)
+{
+	const struct nfs4_layoutcommit_args *args = priv;
+	struct nfs4_layoutcommit_data *data =
+		container_of(args, struct nfs4_layoutcommit_data, args);
+	struct compound_hdr hdr = {
 		.minorversion = nfs4_xdr_minorversion(&args->seq_args),
-	पूर्ण;
+	};
 
 	encode_compound_hdr(xdr, req, &hdr);
 	encode_sequence(xdr, &args->seq_args, &hdr);
 	encode_putfh(xdr, NFS_FH(args->inode), &hdr);
 	encode_layoutcommit(xdr, data->args.inode, args, &hdr);
-	encode_getfattr(xdr, args->biपंचांगask, &hdr);
+	encode_getfattr(xdr, args->bitmask, &hdr);
 	encode_nops(&hdr);
-पूर्ण
+}
 
 /*
  * Encode LAYOUTRETURN request
  */
-अटल व्योम nfs4_xdr_enc_layoutवापस(काष्ठा rpc_rqst *req,
-				      काष्ठा xdr_stream *xdr,
-				      स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा nfs4_layoutवापस_args *args = data;
-	काष्ठा compound_hdr hdr = अणु
+static void nfs4_xdr_enc_layoutreturn(struct rpc_rqst *req,
+				      struct xdr_stream *xdr,
+				      const void *data)
+{
+	const struct nfs4_layoutreturn_args *args = data;
+	struct compound_hdr hdr = {
 		.minorversion = nfs4_xdr_minorversion(&args->seq_args),
-	पूर्ण;
+	};
 
 	encode_compound_hdr(xdr, req, &hdr);
 	encode_sequence(xdr, &args->seq_args, &hdr);
 	encode_putfh(xdr, NFS_FH(args->inode), &hdr);
-	encode_layoutवापस(xdr, args, &hdr);
+	encode_layoutreturn(xdr, args, &hdr);
 	encode_nops(&hdr);
-पूर्ण
+}
 
 /*
  * Encode SECINFO_NO_NAME request
  */
-अटल व्योम nfs4_xdr_enc_secinfo_no_name(काष्ठा rpc_rqst *req,
-					काष्ठा xdr_stream *xdr,
-					स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा nfs41_secinfo_no_name_args *args = data;
-	काष्ठा compound_hdr hdr = अणु
+static void nfs4_xdr_enc_secinfo_no_name(struct rpc_rqst *req,
+					struct xdr_stream *xdr,
+					const void *data)
+{
+	const struct nfs41_secinfo_no_name_args *args = data;
+	struct compound_hdr hdr = {
 		.minorversion = nfs4_xdr_minorversion(&args->seq_args),
-	पूर्ण;
+	};
 
 	encode_compound_hdr(xdr, req, &hdr);
 	encode_sequence(xdr, &args->seq_args, &hdr);
 	encode_putrootfh(xdr, &hdr);
 	encode_secinfo_no_name(xdr, args, &hdr);
 	encode_nops(&hdr);
-पूर्ण
+}
 
 /*
  *  Encode TEST_STATEID request
  */
-अटल व्योम nfs4_xdr_enc_test_stateid(काष्ठा rpc_rqst *req,
-				      काष्ठा xdr_stream *xdr,
-				      स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा nfs41_test_stateid_args *args = data;
-	काष्ठा compound_hdr hdr = अणु
+static void nfs4_xdr_enc_test_stateid(struct rpc_rqst *req,
+				      struct xdr_stream *xdr,
+				      const void *data)
+{
+	const struct nfs41_test_stateid_args *args = data;
+	struct compound_hdr hdr = {
 		.minorversion = nfs4_xdr_minorversion(&args->seq_args),
-	पूर्ण;
+	};
 
 	encode_compound_hdr(xdr, req, &hdr);
 	encode_sequence(xdr, &args->seq_args, &hdr);
 	encode_test_stateid(xdr, args, &hdr);
 	encode_nops(&hdr);
-पूर्ण
+}
 
 /*
  *  Encode FREE_STATEID request
  */
-अटल व्योम nfs4_xdr_enc_मुक्त_stateid(काष्ठा rpc_rqst *req,
-				     काष्ठा xdr_stream *xdr,
-				     स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा nfs41_मुक्त_stateid_args *args = data;
-	काष्ठा compound_hdr hdr = अणु
+static void nfs4_xdr_enc_free_stateid(struct rpc_rqst *req,
+				     struct xdr_stream *xdr,
+				     const void *data)
+{
+	const struct nfs41_free_stateid_args *args = data;
+	struct compound_hdr hdr = {
 		.minorversion = nfs4_xdr_minorversion(&args->seq_args),
-	पूर्ण;
+	};
 
 	encode_compound_hdr(xdr, req, &hdr);
 	encode_sequence(xdr, &args->seq_args, &hdr);
-	encode_मुक्त_stateid(xdr, args, &hdr);
+	encode_free_stateid(xdr, args, &hdr);
 	encode_nops(&hdr);
-पूर्ण
-#पूर्ण_अगर /* CONFIG_NFS_V4_1 */
+}
+#endif /* CONFIG_NFS_V4_1 */
 
-अटल पूर्णांक decode_opaque_अंतरभूत(काष्ठा xdr_stream *xdr, अचिन्हित पूर्णांक *len, अक्षर **string)
-अणु
-	sमाप_प्रकार ret = xdr_stream_decode_opaque_अंतरभूत(xdr, (व्योम **)string,
+static int decode_opaque_inline(struct xdr_stream *xdr, unsigned int *len, char **string)
+{
+	ssize_t ret = xdr_stream_decode_opaque_inline(xdr, (void **)string,
 			NFS4_OPAQUE_LIMIT);
-	अगर (unlikely(ret < 0))
-		वापस -EIO;
+	if (unlikely(ret < 0))
+		return -EIO;
 	*len = ret;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक decode_compound_hdr(काष्ठा xdr_stream *xdr, काष्ठा compound_hdr *hdr)
-अणु
+static int decode_compound_hdr(struct xdr_stream *xdr, struct compound_hdr *hdr)
+{
 	__be32 *p;
 
-	p = xdr_अंतरभूत_decode(xdr, 8);
-	अगर (unlikely(!p))
-		वापस -EIO;
+	p = xdr_inline_decode(xdr, 8);
+	if (unlikely(!p))
+		return -EIO;
 	hdr->status = be32_to_cpup(p++);
 	hdr->taglen = be32_to_cpup(p);
 
-	p = xdr_अंतरभूत_decode(xdr, hdr->taglen + 4);
-	अगर (unlikely(!p))
-		वापस -EIO;
-	hdr->tag = (अक्षर *)p;
+	p = xdr_inline_decode(xdr, hdr->taglen + 4);
+	if (unlikely(!p))
+		return -EIO;
+	hdr->tag = (char *)p;
 	p += XDR_QUADLEN(hdr->taglen);
 	hdr->nops = be32_to_cpup(p);
-	अगर (unlikely(hdr->nops < 1))
-		वापस nfs4_stat_to_त्रुटि_सं(hdr->status);
-	वापस 0;
-पूर्ण
+	if (unlikely(hdr->nops < 1))
+		return nfs4_stat_to_errno(hdr->status);
+	return 0;
+}
 
-अटल bool __decode_op_hdr(काष्ठा xdr_stream *xdr, क्रमागत nfs_opnum4 expected,
-		पूर्णांक *nfs_retval)
-अणु
+static bool __decode_op_hdr(struct xdr_stream *xdr, enum nfs_opnum4 expected,
+		int *nfs_retval)
+{
 	__be32 *p;
-	uपूर्णांक32_t opnum;
-	पूर्णांक32_t nfserr;
+	uint32_t opnum;
+	int32_t nfserr;
 
-	p = xdr_अंतरभूत_decode(xdr, 8);
-	अगर (unlikely(!p))
-		जाओ out_overflow;
+	p = xdr_inline_decode(xdr, 8);
+	if (unlikely(!p))
+		goto out_overflow;
 	opnum = be32_to_cpup(p++);
-	अगर (unlikely(opnum != expected))
-		जाओ out_bad_operation;
-	अगर (unlikely(*p != cpu_to_be32(NFS_OK)))
-		जाओ out_status;
+	if (unlikely(opnum != expected))
+		goto out_bad_operation;
+	if (unlikely(*p != cpu_to_be32(NFS_OK)))
+		goto out_status;
 	*nfs_retval = 0;
-	वापस true;
+	return true;
 out_status:
 	nfserr = be32_to_cpup(p);
 	trace_nfs4_xdr_status(xdr, opnum, nfserr);
-	*nfs_retval = nfs4_stat_to_त्रुटि_सं(nfserr);
-	वापस true;
+	*nfs_retval = nfs4_stat_to_errno(nfserr);
+	return true;
 out_bad_operation:
 	trace_nfs4_xdr_bad_operation(xdr, opnum, expected);
 	*nfs_retval = -EREMOTEIO;
-	वापस false;
+	return false;
 out_overflow:
 	*nfs_retval = -EIO;
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल पूर्णांक decode_op_hdr(काष्ठा xdr_stream *xdr, क्रमागत nfs_opnum4 expected)
-अणु
-	पूर्णांक retval;
+static int decode_op_hdr(struct xdr_stream *xdr, enum nfs_opnum4 expected)
+{
+	int retval;
 
 	__decode_op_hdr(xdr, expected, &retval);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
 /* Dummy routine */
-अटल पूर्णांक decode_ace(काष्ठा xdr_stream *xdr, व्योम *ace)
-अणु
+static int decode_ace(struct xdr_stream *xdr, void *ace)
+{
 	__be32 *p;
-	अचिन्हित पूर्णांक म_माप;
-	अक्षर *str;
+	unsigned int strlen;
+	char *str;
 
-	p = xdr_अंतरभूत_decode(xdr, 12);
-	अगर (unlikely(!p))
-		वापस -EIO;
-	वापस decode_opaque_अंतरभूत(xdr, &म_माप, &str);
-पूर्ण
+	p = xdr_inline_decode(xdr, 12);
+	if (unlikely(!p))
+		return -EIO;
+	return decode_opaque_inline(xdr, &strlen, &str);
+}
 
-अटल sमाप_प्रकार
-decode_biपंचांगap4(काष्ठा xdr_stream *xdr, uपूर्णांक32_t *biपंचांगap, माप_प्रकार sz)
-अणु
-	sमाप_प्रकार ret;
+static ssize_t
+decode_bitmap4(struct xdr_stream *xdr, uint32_t *bitmap, size_t sz)
+{
+	ssize_t ret;
 
-	ret = xdr_stream_decode_uपूर्णांक32_array(xdr, biपंचांगap, sz);
-	अगर (likely(ret >= 0))
-		वापस ret;
-	अगर (ret != -EMSGSIZE)
-		वापस -EIO;
-	वापस sz;
-पूर्ण
+	ret = xdr_stream_decode_uint32_array(xdr, bitmap, sz);
+	if (likely(ret >= 0))
+		return ret;
+	if (ret != -EMSGSIZE)
+		return -EIO;
+	return sz;
+}
 
-अटल पूर्णांक decode_attr_biपंचांगap(काष्ठा xdr_stream *xdr, uपूर्णांक32_t *biपंचांगap)
-अणु
-	sमाप_प्रकार ret;
-	ret = decode_biपंचांगap4(xdr, biपंचांगap, 3);
-	वापस ret < 0 ? ret : 0;
-पूर्ण
+static int decode_attr_bitmap(struct xdr_stream *xdr, uint32_t *bitmap)
+{
+	ssize_t ret;
+	ret = decode_bitmap4(xdr, bitmap, 3);
+	return ret < 0 ? ret : 0;
+}
 
-अटल पूर्णांक decode_attr_length(काष्ठा xdr_stream *xdr, uपूर्णांक32_t *attrlen, अचिन्हित पूर्णांक *savep)
-अणु
+static int decode_attr_length(struct xdr_stream *xdr, uint32_t *attrlen, unsigned int *savep)
+{
 	__be32 *p;
 
-	p = xdr_अंतरभूत_decode(xdr, 4);
-	अगर (unlikely(!p))
-		वापस -EIO;
+	p = xdr_inline_decode(xdr, 4);
+	if (unlikely(!p))
+		return -EIO;
 	*attrlen = be32_to_cpup(p);
 	*savep = xdr_stream_pos(xdr);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक decode_attr_supported(काष्ठा xdr_stream *xdr, uपूर्णांक32_t *biपंचांगap, uपूर्णांक32_t *biपंचांगask)
-अणु
-	अगर (likely(biपंचांगap[0] & FATTR4_WORD0_SUPPORTED_ATTRS)) अणु
-		पूर्णांक ret;
-		ret = decode_attr_biपंचांगap(xdr, biपंचांगask);
-		अगर (unlikely(ret < 0))
-			वापस ret;
-		biपंचांगap[0] &= ~FATTR4_WORD0_SUPPORTED_ATTRS;
-	पूर्ण अन्यथा
-		biपंचांगask[0] = biपंचांगask[1] = biपंचांगask[2] = 0;
-	dprपूर्णांकk("%s: bitmask=%08x:%08x:%08x\n", __func__,
-		biपंचांगask[0], biपंचांगask[1], biपंचांगask[2]);
-	वापस 0;
-पूर्ण
+static int decode_attr_supported(struct xdr_stream *xdr, uint32_t *bitmap, uint32_t *bitmask)
+{
+	if (likely(bitmap[0] & FATTR4_WORD0_SUPPORTED_ATTRS)) {
+		int ret;
+		ret = decode_attr_bitmap(xdr, bitmask);
+		if (unlikely(ret < 0))
+			return ret;
+		bitmap[0] &= ~FATTR4_WORD0_SUPPORTED_ATTRS;
+	} else
+		bitmask[0] = bitmask[1] = bitmask[2] = 0;
+	dprintk("%s: bitmask=%08x:%08x:%08x\n", __func__,
+		bitmask[0], bitmask[1], bitmask[2]);
+	return 0;
+}
 
-अटल पूर्णांक decode_attr_type(काष्ठा xdr_stream *xdr, uपूर्णांक32_t *biपंचांगap, uपूर्णांक32_t *type)
-अणु
+static int decode_attr_type(struct xdr_stream *xdr, uint32_t *bitmap, uint32_t *type)
+{
 	__be32 *p;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	*type = 0;
-	अगर (unlikely(biपंचांगap[0] & (FATTR4_WORD0_TYPE - 1U)))
-		वापस -EIO;
-	अगर (likely(biपंचांगap[0] & FATTR4_WORD0_TYPE)) अणु
-		p = xdr_अंतरभूत_decode(xdr, 4);
-		अगर (unlikely(!p))
-			वापस -EIO;
+	if (unlikely(bitmap[0] & (FATTR4_WORD0_TYPE - 1U)))
+		return -EIO;
+	if (likely(bitmap[0] & FATTR4_WORD0_TYPE)) {
+		p = xdr_inline_decode(xdr, 4);
+		if (unlikely(!p))
+			return -EIO;
 		*type = be32_to_cpup(p);
-		अगर (*type < NF4REG || *type > NF4NAMEDATTR) अणु
-			dprपूर्णांकk("%s: bad type %d\n", __func__, *type);
-			वापस -EIO;
-		पूर्ण
-		biपंचांगap[0] &= ~FATTR4_WORD0_TYPE;
+		if (*type < NF4REG || *type > NF4NAMEDATTR) {
+			dprintk("%s: bad type %d\n", __func__, *type);
+			return -EIO;
+		}
+		bitmap[0] &= ~FATTR4_WORD0_TYPE;
 		ret = NFS_ATTR_FATTR_TYPE;
-	पूर्ण
-	dprपूर्णांकk("%s: type=0%o\n", __func__, nfs_type2fmt[*type]);
-	वापस ret;
-पूर्ण
+	}
+	dprintk("%s: type=0%o\n", __func__, nfs_type2fmt[*type]);
+	return ret;
+}
 
-अटल पूर्णांक decode_attr_fh_expire_type(काष्ठा xdr_stream *xdr,
-				      uपूर्णांक32_t *biपंचांगap, uपूर्णांक32_t *type)
-अणु
+static int decode_attr_fh_expire_type(struct xdr_stream *xdr,
+				      uint32_t *bitmap, uint32_t *type)
+{
 	__be32 *p;
 
 	*type = 0;
-	अगर (unlikely(biपंचांगap[0] & (FATTR4_WORD0_FH_EXPIRE_TYPE - 1U)))
-		वापस -EIO;
-	अगर (likely(biपंचांगap[0] & FATTR4_WORD0_FH_EXPIRE_TYPE)) अणु
-		p = xdr_अंतरभूत_decode(xdr, 4);
-		अगर (unlikely(!p))
-			वापस -EIO;
+	if (unlikely(bitmap[0] & (FATTR4_WORD0_FH_EXPIRE_TYPE - 1U)))
+		return -EIO;
+	if (likely(bitmap[0] & FATTR4_WORD0_FH_EXPIRE_TYPE)) {
+		p = xdr_inline_decode(xdr, 4);
+		if (unlikely(!p))
+			return -EIO;
 		*type = be32_to_cpup(p);
-		biपंचांगap[0] &= ~FATTR4_WORD0_FH_EXPIRE_TYPE;
-	पूर्ण
-	dprपूर्णांकk("%s: expire type=0x%x\n", __func__, *type);
-	वापस 0;
-पूर्ण
+		bitmap[0] &= ~FATTR4_WORD0_FH_EXPIRE_TYPE;
+	}
+	dprintk("%s: expire type=0x%x\n", __func__, *type);
+	return 0;
+}
 
-अटल पूर्णांक decode_attr_change(काष्ठा xdr_stream *xdr, uपूर्णांक32_t *biपंचांगap, uपूर्णांक64_t *change)
-अणु
+static int decode_attr_change(struct xdr_stream *xdr, uint32_t *bitmap, uint64_t *change)
+{
 	__be32 *p;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	*change = 0;
-	अगर (unlikely(biपंचांगap[0] & (FATTR4_WORD0_CHANGE - 1U)))
-		वापस -EIO;
-	अगर (likely(biपंचांगap[0] & FATTR4_WORD0_CHANGE)) अणु
-		p = xdr_अंतरभूत_decode(xdr, 8);
-		अगर (unlikely(!p))
-			वापस -EIO;
+	if (unlikely(bitmap[0] & (FATTR4_WORD0_CHANGE - 1U)))
+		return -EIO;
+	if (likely(bitmap[0] & FATTR4_WORD0_CHANGE)) {
+		p = xdr_inline_decode(xdr, 8);
+		if (unlikely(!p))
+			return -EIO;
 		xdr_decode_hyper(p, change);
-		biपंचांगap[0] &= ~FATTR4_WORD0_CHANGE;
+		bitmap[0] &= ~FATTR4_WORD0_CHANGE;
 		ret = NFS_ATTR_FATTR_CHANGE;
-	पूर्ण
-	dprपूर्णांकk("%s: change attribute=%Lu\n", __func__,
-			(अचिन्हित दीर्घ दीर्घ)*change);
-	वापस ret;
-पूर्ण
+	}
+	dprintk("%s: change attribute=%Lu\n", __func__,
+			(unsigned long long)*change);
+	return ret;
+}
 
-अटल पूर्णांक decode_attr_size(काष्ठा xdr_stream *xdr, uपूर्णांक32_t *biपंचांगap, uपूर्णांक64_t *size)
-अणु
+static int decode_attr_size(struct xdr_stream *xdr, uint32_t *bitmap, uint64_t *size)
+{
 	__be32 *p;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	*size = 0;
-	अगर (unlikely(biपंचांगap[0] & (FATTR4_WORD0_SIZE - 1U)))
-		वापस -EIO;
-	अगर (likely(biपंचांगap[0] & FATTR4_WORD0_SIZE)) अणु
-		p = xdr_अंतरभूत_decode(xdr, 8);
-		अगर (unlikely(!p))
-			वापस -EIO;
+	if (unlikely(bitmap[0] & (FATTR4_WORD0_SIZE - 1U)))
+		return -EIO;
+	if (likely(bitmap[0] & FATTR4_WORD0_SIZE)) {
+		p = xdr_inline_decode(xdr, 8);
+		if (unlikely(!p))
+			return -EIO;
 		xdr_decode_hyper(p, size);
-		biपंचांगap[0] &= ~FATTR4_WORD0_SIZE;
+		bitmap[0] &= ~FATTR4_WORD0_SIZE;
 		ret = NFS_ATTR_FATTR_SIZE;
-	पूर्ण
-	dprपूर्णांकk("%s: file size=%Lu\n", __func__, (अचिन्हित दीर्घ दीर्घ)*size);
-	वापस ret;
-पूर्ण
+	}
+	dprintk("%s: file size=%Lu\n", __func__, (unsigned long long)*size);
+	return ret;
+}
 
-अटल पूर्णांक decode_attr_link_support(काष्ठा xdr_stream *xdr, uपूर्णांक32_t *biपंचांगap, uपूर्णांक32_t *res)
-अणु
+static int decode_attr_link_support(struct xdr_stream *xdr, uint32_t *bitmap, uint32_t *res)
+{
 	__be32 *p;
 
 	*res = 0;
-	अगर (unlikely(biपंचांगap[0] & (FATTR4_WORD0_LINK_SUPPORT - 1U)))
-		वापस -EIO;
-	अगर (likely(biपंचांगap[0] & FATTR4_WORD0_LINK_SUPPORT)) अणु
-		p = xdr_अंतरभूत_decode(xdr, 4);
-		अगर (unlikely(!p))
-			वापस -EIO;
+	if (unlikely(bitmap[0] & (FATTR4_WORD0_LINK_SUPPORT - 1U)))
+		return -EIO;
+	if (likely(bitmap[0] & FATTR4_WORD0_LINK_SUPPORT)) {
+		p = xdr_inline_decode(xdr, 4);
+		if (unlikely(!p))
+			return -EIO;
 		*res = be32_to_cpup(p);
-		biपंचांगap[0] &= ~FATTR4_WORD0_LINK_SUPPORT;
-	पूर्ण
-	dprपूर्णांकk("%s: link support=%s\n", __func__, *res == 0 ? "false" : "true");
-	वापस 0;
-पूर्ण
+		bitmap[0] &= ~FATTR4_WORD0_LINK_SUPPORT;
+	}
+	dprintk("%s: link support=%s\n", __func__, *res == 0 ? "false" : "true");
+	return 0;
+}
 
-अटल पूर्णांक decode_attr_symlink_support(काष्ठा xdr_stream *xdr, uपूर्णांक32_t *biपंचांगap, uपूर्णांक32_t *res)
-अणु
+static int decode_attr_symlink_support(struct xdr_stream *xdr, uint32_t *bitmap, uint32_t *res)
+{
 	__be32 *p;
 
 	*res = 0;
-	अगर (unlikely(biपंचांगap[0] & (FATTR4_WORD0_SYMLINK_SUPPORT - 1U)))
-		वापस -EIO;
-	अगर (likely(biपंचांगap[0] & FATTR4_WORD0_SYMLINK_SUPPORT)) अणु
-		p = xdr_अंतरभूत_decode(xdr, 4);
-		अगर (unlikely(!p))
-			वापस -EIO;
+	if (unlikely(bitmap[0] & (FATTR4_WORD0_SYMLINK_SUPPORT - 1U)))
+		return -EIO;
+	if (likely(bitmap[0] & FATTR4_WORD0_SYMLINK_SUPPORT)) {
+		p = xdr_inline_decode(xdr, 4);
+		if (unlikely(!p))
+			return -EIO;
 		*res = be32_to_cpup(p);
-		biपंचांगap[0] &= ~FATTR4_WORD0_SYMLINK_SUPPORT;
-	पूर्ण
-	dprपूर्णांकk("%s: symlink support=%s\n", __func__, *res == 0 ? "false" : "true");
-	वापस 0;
-पूर्ण
+		bitmap[0] &= ~FATTR4_WORD0_SYMLINK_SUPPORT;
+	}
+	dprintk("%s: symlink support=%s\n", __func__, *res == 0 ? "false" : "true");
+	return 0;
+}
 
-अटल पूर्णांक decode_attr_fsid(काष्ठा xdr_stream *xdr, uपूर्णांक32_t *biपंचांगap, काष्ठा nfs_fsid *fsid)
-अणु
+static int decode_attr_fsid(struct xdr_stream *xdr, uint32_t *bitmap, struct nfs_fsid *fsid)
+{
 	__be32 *p;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	fsid->major = 0;
 	fsid->minor = 0;
-	अगर (unlikely(biपंचांगap[0] & (FATTR4_WORD0_FSID - 1U)))
-		वापस -EIO;
-	अगर (likely(biपंचांगap[0] & FATTR4_WORD0_FSID)) अणु
-		p = xdr_अंतरभूत_decode(xdr, 16);
-		अगर (unlikely(!p))
-			वापस -EIO;
+	if (unlikely(bitmap[0] & (FATTR4_WORD0_FSID - 1U)))
+		return -EIO;
+	if (likely(bitmap[0] & FATTR4_WORD0_FSID)) {
+		p = xdr_inline_decode(xdr, 16);
+		if (unlikely(!p))
+			return -EIO;
 		p = xdr_decode_hyper(p, &fsid->major);
 		xdr_decode_hyper(p, &fsid->minor);
-		biपंचांगap[0] &= ~FATTR4_WORD0_FSID;
+		bitmap[0] &= ~FATTR4_WORD0_FSID;
 		ret = NFS_ATTR_FATTR_FSID;
-	पूर्ण
-	dprपूर्णांकk("%s: fsid=(0x%Lx/0x%Lx)\n", __func__,
-			(अचिन्हित दीर्घ दीर्घ)fsid->major,
-			(अचिन्हित दीर्घ दीर्घ)fsid->minor);
-	वापस ret;
-पूर्ण
+	}
+	dprintk("%s: fsid=(0x%Lx/0x%Lx)\n", __func__,
+			(unsigned long long)fsid->major,
+			(unsigned long long)fsid->minor);
+	return ret;
+}
 
-अटल पूर्णांक decode_attr_lease_समय(काष्ठा xdr_stream *xdr, uपूर्णांक32_t *biपंचांगap, uपूर्णांक32_t *res)
-अणु
+static int decode_attr_lease_time(struct xdr_stream *xdr, uint32_t *bitmap, uint32_t *res)
+{
 	__be32 *p;
 
 	*res = 60;
-	अगर (unlikely(biपंचांगap[0] & (FATTR4_WORD0_LEASE_TIME - 1U)))
-		वापस -EIO;
-	अगर (likely(biपंचांगap[0] & FATTR4_WORD0_LEASE_TIME)) अणु
-		p = xdr_अंतरभूत_decode(xdr, 4);
-		अगर (unlikely(!p))
-			वापस -EIO;
+	if (unlikely(bitmap[0] & (FATTR4_WORD0_LEASE_TIME - 1U)))
+		return -EIO;
+	if (likely(bitmap[0] & FATTR4_WORD0_LEASE_TIME)) {
+		p = xdr_inline_decode(xdr, 4);
+		if (unlikely(!p))
+			return -EIO;
 		*res = be32_to_cpup(p);
-		biपंचांगap[0] &= ~FATTR4_WORD0_LEASE_TIME;
-	पूर्ण
-	dprपूर्णांकk("%s: lease time=%u\n", __func__, (अचिन्हित पूर्णांक)*res);
-	वापस 0;
-पूर्ण
+		bitmap[0] &= ~FATTR4_WORD0_LEASE_TIME;
+	}
+	dprintk("%s: lease time=%u\n", __func__, (unsigned int)*res);
+	return 0;
+}
 
-अटल पूर्णांक decode_attr_error(काष्ठा xdr_stream *xdr, uपूर्णांक32_t *biपंचांगap, पूर्णांक32_t *res)
-अणु
+static int decode_attr_error(struct xdr_stream *xdr, uint32_t *bitmap, int32_t *res)
+{
 	__be32 *p;
 
-	अगर (unlikely(biपंचांगap[0] & (FATTR4_WORD0_RDATTR_ERROR - 1U)))
-		वापस -EIO;
-	अगर (likely(biपंचांगap[0] & FATTR4_WORD0_RDATTR_ERROR)) अणु
-		p = xdr_अंतरभूत_decode(xdr, 4);
-		अगर (unlikely(!p))
-			वापस -EIO;
-		biपंचांगap[0] &= ~FATTR4_WORD0_RDATTR_ERROR;
+	if (unlikely(bitmap[0] & (FATTR4_WORD0_RDATTR_ERROR - 1U)))
+		return -EIO;
+	if (likely(bitmap[0] & FATTR4_WORD0_RDATTR_ERROR)) {
+		p = xdr_inline_decode(xdr, 4);
+		if (unlikely(!p))
+			return -EIO;
+		bitmap[0] &= ~FATTR4_WORD0_RDATTR_ERROR;
 		*res = -be32_to_cpup(p);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक decode_attr_exclcreat_supported(काष्ठा xdr_stream *xdr,
-				 uपूर्णांक32_t *biपंचांगap, uपूर्णांक32_t *biपंचांगask)
-अणु
-	अगर (likely(biपंचांगap[2] & FATTR4_WORD2_SUPPATTR_EXCLCREAT)) अणु
-		पूर्णांक ret;
-		ret = decode_attr_biपंचांगap(xdr, biपंचांगask);
-		अगर (unlikely(ret < 0))
-			वापस ret;
-		biपंचांगap[2] &= ~FATTR4_WORD2_SUPPATTR_EXCLCREAT;
-	पूर्ण अन्यथा
-		biपंचांगask[0] = biपंचांगask[1] = biपंचांगask[2] = 0;
-	dprपूर्णांकk("%s: bitmask=%08x:%08x:%08x\n", __func__,
-		biपंचांगask[0], biपंचांगask[1], biपंचांगask[2]);
-	वापस 0;
-पूर्ण
+static int decode_attr_exclcreat_supported(struct xdr_stream *xdr,
+				 uint32_t *bitmap, uint32_t *bitmask)
+{
+	if (likely(bitmap[2] & FATTR4_WORD2_SUPPATTR_EXCLCREAT)) {
+		int ret;
+		ret = decode_attr_bitmap(xdr, bitmask);
+		if (unlikely(ret < 0))
+			return ret;
+		bitmap[2] &= ~FATTR4_WORD2_SUPPATTR_EXCLCREAT;
+	} else
+		bitmask[0] = bitmask[1] = bitmask[2] = 0;
+	dprintk("%s: bitmask=%08x:%08x:%08x\n", __func__,
+		bitmask[0], bitmask[1], bitmask[2]);
+	return 0;
+}
 
-अटल पूर्णांक decode_attr_filehandle(काष्ठा xdr_stream *xdr, uपूर्णांक32_t *biपंचांगap, काष्ठा nfs_fh *fh)
-अणु
+static int decode_attr_filehandle(struct xdr_stream *xdr, uint32_t *bitmap, struct nfs_fh *fh)
+{
 	__be32 *p;
 	u32 len;
 
-	अगर (fh != शून्य)
-		स_रखो(fh, 0, माप(*fh));
+	if (fh != NULL)
+		memset(fh, 0, sizeof(*fh));
 
-	अगर (unlikely(biपंचांगap[0] & (FATTR4_WORD0_खाताHANDLE - 1U)))
-		वापस -EIO;
-	अगर (likely(biपंचांगap[0] & FATTR4_WORD0_खाताHANDLE)) अणु
-		p = xdr_अंतरभूत_decode(xdr, 4);
-		अगर (unlikely(!p))
-			वापस -EIO;
+	if (unlikely(bitmap[0] & (FATTR4_WORD0_FILEHANDLE - 1U)))
+		return -EIO;
+	if (likely(bitmap[0] & FATTR4_WORD0_FILEHANDLE)) {
+		p = xdr_inline_decode(xdr, 4);
+		if (unlikely(!p))
+			return -EIO;
 		len = be32_to_cpup(p);
-		अगर (len > NFS4_FHSIZE || len == 0) अणु
-			trace_nfs4_xdr_bad_filehandle(xdr, OP_READसूची,
+		if (len > NFS4_FHSIZE || len == 0) {
+			trace_nfs4_xdr_bad_filehandle(xdr, OP_READDIR,
 						      NFS4ERR_BADHANDLE);
-			वापस -EREMOTEIO;
-		पूर्ण
-		p = xdr_अंतरभूत_decode(xdr, len);
-		अगर (unlikely(!p))
-			वापस -EIO;
-		अगर (fh != शून्य) अणु
-			स_नकल(fh->data, p, len);
+			return -EREMOTEIO;
+		}
+		p = xdr_inline_decode(xdr, len);
+		if (unlikely(!p))
+			return -EIO;
+		if (fh != NULL) {
+			memcpy(fh->data, p, len);
 			fh->size = len;
-		पूर्ण
-		biपंचांगap[0] &= ~FATTR4_WORD0_खाताHANDLE;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+		bitmap[0] &= ~FATTR4_WORD0_FILEHANDLE;
+	}
+	return 0;
+}
 
-अटल पूर्णांक decode_attr_aclsupport(काष्ठा xdr_stream *xdr, uपूर्णांक32_t *biपंचांगap, uपूर्णांक32_t *res)
-अणु
+static int decode_attr_aclsupport(struct xdr_stream *xdr, uint32_t *bitmap, uint32_t *res)
+{
 	__be32 *p;
 
 	*res = 0;
-	अगर (unlikely(biपंचांगap[0] & (FATTR4_WORD0_ACLSUPPORT - 1U)))
-		वापस -EIO;
-	अगर (likely(biपंचांगap[0] & FATTR4_WORD0_ACLSUPPORT)) अणु
-		p = xdr_अंतरभूत_decode(xdr, 4);
-		अगर (unlikely(!p))
-			वापस -EIO;
+	if (unlikely(bitmap[0] & (FATTR4_WORD0_ACLSUPPORT - 1U)))
+		return -EIO;
+	if (likely(bitmap[0] & FATTR4_WORD0_ACLSUPPORT)) {
+		p = xdr_inline_decode(xdr, 4);
+		if (unlikely(!p))
+			return -EIO;
 		*res = be32_to_cpup(p);
-		biपंचांगap[0] &= ~FATTR4_WORD0_ACLSUPPORT;
-	पूर्ण
-	dprपूर्णांकk("%s: ACLs supported=%u\n", __func__, (अचिन्हित पूर्णांक)*res);
-	वापस 0;
-पूर्ण
+		bitmap[0] &= ~FATTR4_WORD0_ACLSUPPORT;
+	}
+	dprintk("%s: ACLs supported=%u\n", __func__, (unsigned int)*res);
+	return 0;
+}
 
-अटल पूर्णांक decode_attr_fileid(काष्ठा xdr_stream *xdr, uपूर्णांक32_t *biपंचांगap, uपूर्णांक64_t *fileid)
-अणु
+static int decode_attr_fileid(struct xdr_stream *xdr, uint32_t *bitmap, uint64_t *fileid)
+{
 	__be32 *p;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	*fileid = 0;
-	अगर (unlikely(biपंचांगap[0] & (FATTR4_WORD0_खाताID - 1U)))
-		वापस -EIO;
-	अगर (likely(biपंचांगap[0] & FATTR4_WORD0_खाताID)) अणु
-		p = xdr_अंतरभूत_decode(xdr, 8);
-		अगर (unlikely(!p))
-			वापस -EIO;
+	if (unlikely(bitmap[0] & (FATTR4_WORD0_FILEID - 1U)))
+		return -EIO;
+	if (likely(bitmap[0] & FATTR4_WORD0_FILEID)) {
+		p = xdr_inline_decode(xdr, 8);
+		if (unlikely(!p))
+			return -EIO;
 		xdr_decode_hyper(p, fileid);
-		biपंचांगap[0] &= ~FATTR4_WORD0_खाताID;
-		ret = NFS_ATTR_FATTR_खाताID;
-	पूर्ण
-	dprपूर्णांकk("%s: fileid=%Lu\n", __func__, (अचिन्हित दीर्घ दीर्घ)*fileid);
-	वापस ret;
-पूर्ण
+		bitmap[0] &= ~FATTR4_WORD0_FILEID;
+		ret = NFS_ATTR_FATTR_FILEID;
+	}
+	dprintk("%s: fileid=%Lu\n", __func__, (unsigned long long)*fileid);
+	return ret;
+}
 
-अटल पूर्णांक decode_attr_mounted_on_fileid(काष्ठा xdr_stream *xdr, uपूर्णांक32_t *biपंचांगap, uपूर्णांक64_t *fileid)
-अणु
+static int decode_attr_mounted_on_fileid(struct xdr_stream *xdr, uint32_t *bitmap, uint64_t *fileid)
+{
 	__be32 *p;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	*fileid = 0;
-	अगर (unlikely(biपंचांगap[1] & (FATTR4_WORD1_MOUNTED_ON_खाताID - 1U)))
-		वापस -EIO;
-	अगर (likely(biपंचांगap[1] & FATTR4_WORD1_MOUNTED_ON_खाताID)) अणु
-		p = xdr_अंतरभूत_decode(xdr, 8);
-		अगर (unlikely(!p))
-			वापस -EIO;
+	if (unlikely(bitmap[1] & (FATTR4_WORD1_MOUNTED_ON_FILEID - 1U)))
+		return -EIO;
+	if (likely(bitmap[1] & FATTR4_WORD1_MOUNTED_ON_FILEID)) {
+		p = xdr_inline_decode(xdr, 8);
+		if (unlikely(!p))
+			return -EIO;
 		xdr_decode_hyper(p, fileid);
-		biपंचांगap[1] &= ~FATTR4_WORD1_MOUNTED_ON_खाताID;
-		ret = NFS_ATTR_FATTR_MOUNTED_ON_खाताID;
-	पूर्ण
-	dprपूर्णांकk("%s: fileid=%Lu\n", __func__, (अचिन्हित दीर्घ दीर्घ)*fileid);
-	वापस ret;
-पूर्ण
+		bitmap[1] &= ~FATTR4_WORD1_MOUNTED_ON_FILEID;
+		ret = NFS_ATTR_FATTR_MOUNTED_ON_FILEID;
+	}
+	dprintk("%s: fileid=%Lu\n", __func__, (unsigned long long)*fileid);
+	return ret;
+}
 
-अटल पूर्णांक decode_attr_files_avail(काष्ठा xdr_stream *xdr, uपूर्णांक32_t *biपंचांगap, uपूर्णांक64_t *res)
-अणु
+static int decode_attr_files_avail(struct xdr_stream *xdr, uint32_t *bitmap, uint64_t *res)
+{
 	__be32 *p;
-	पूर्णांक status = 0;
+	int status = 0;
 
 	*res = 0;
-	अगर (unlikely(biपंचांगap[0] & (FATTR4_WORD0_खाताS_AVAIL - 1U)))
-		वापस -EIO;
-	अगर (likely(biपंचांगap[0] & FATTR4_WORD0_खाताS_AVAIL)) अणु
-		p = xdr_अंतरभूत_decode(xdr, 8);
-		अगर (unlikely(!p))
-			वापस -EIO;
+	if (unlikely(bitmap[0] & (FATTR4_WORD0_FILES_AVAIL - 1U)))
+		return -EIO;
+	if (likely(bitmap[0] & FATTR4_WORD0_FILES_AVAIL)) {
+		p = xdr_inline_decode(xdr, 8);
+		if (unlikely(!p))
+			return -EIO;
 		xdr_decode_hyper(p, res);
-		biपंचांगap[0] &= ~FATTR4_WORD0_खाताS_AVAIL;
-	पूर्ण
-	dprपूर्णांकk("%s: files avail=%Lu\n", __func__, (अचिन्हित दीर्घ दीर्घ)*res);
-	वापस status;
-पूर्ण
+		bitmap[0] &= ~FATTR4_WORD0_FILES_AVAIL;
+	}
+	dprintk("%s: files avail=%Lu\n", __func__, (unsigned long long)*res);
+	return status;
+}
 
-अटल पूर्णांक decode_attr_files_मुक्त(काष्ठा xdr_stream *xdr, uपूर्णांक32_t *biपंचांगap, uपूर्णांक64_t *res)
-अणु
+static int decode_attr_files_free(struct xdr_stream *xdr, uint32_t *bitmap, uint64_t *res)
+{
 	__be32 *p;
-	पूर्णांक status = 0;
+	int status = 0;
 
 	*res = 0;
-	अगर (unlikely(biपंचांगap[0] & (FATTR4_WORD0_खाताS_FREE - 1U)))
-		वापस -EIO;
-	अगर (likely(biपंचांगap[0] & FATTR4_WORD0_खाताS_FREE)) अणु
-		p = xdr_अंतरभूत_decode(xdr, 8);
-		अगर (unlikely(!p))
-			वापस -EIO;
+	if (unlikely(bitmap[0] & (FATTR4_WORD0_FILES_FREE - 1U)))
+		return -EIO;
+	if (likely(bitmap[0] & FATTR4_WORD0_FILES_FREE)) {
+		p = xdr_inline_decode(xdr, 8);
+		if (unlikely(!p))
+			return -EIO;
 		xdr_decode_hyper(p, res);
-		biपंचांगap[0] &= ~FATTR4_WORD0_खाताS_FREE;
-	पूर्ण
-	dprपूर्णांकk("%s: files free=%Lu\n", __func__, (अचिन्हित दीर्घ दीर्घ)*res);
-	वापस status;
-पूर्ण
+		bitmap[0] &= ~FATTR4_WORD0_FILES_FREE;
+	}
+	dprintk("%s: files free=%Lu\n", __func__, (unsigned long long)*res);
+	return status;
+}
 
-अटल पूर्णांक decode_attr_files_total(काष्ठा xdr_stream *xdr, uपूर्णांक32_t *biपंचांगap, uपूर्णांक64_t *res)
-अणु
+static int decode_attr_files_total(struct xdr_stream *xdr, uint32_t *bitmap, uint64_t *res)
+{
 	__be32 *p;
-	पूर्णांक status = 0;
+	int status = 0;
 
 	*res = 0;
-	अगर (unlikely(biपंचांगap[0] & (FATTR4_WORD0_खाताS_TOTAL - 1U)))
-		वापस -EIO;
-	अगर (likely(biपंचांगap[0] & FATTR4_WORD0_खाताS_TOTAL)) अणु
-		p = xdr_अंतरभूत_decode(xdr, 8);
-		अगर (unlikely(!p))
-			वापस -EIO;
+	if (unlikely(bitmap[0] & (FATTR4_WORD0_FILES_TOTAL - 1U)))
+		return -EIO;
+	if (likely(bitmap[0] & FATTR4_WORD0_FILES_TOTAL)) {
+		p = xdr_inline_decode(xdr, 8);
+		if (unlikely(!p))
+			return -EIO;
 		xdr_decode_hyper(p, res);
-		biपंचांगap[0] &= ~FATTR4_WORD0_खाताS_TOTAL;
-	पूर्ण
-	dprपूर्णांकk("%s: files total=%Lu\n", __func__, (अचिन्हित दीर्घ दीर्घ)*res);
-	वापस status;
-पूर्ण
+		bitmap[0] &= ~FATTR4_WORD0_FILES_TOTAL;
+	}
+	dprintk("%s: files total=%Lu\n", __func__, (unsigned long long)*res);
+	return status;
+}
 
-अटल पूर्णांक decode_pathname(काष्ठा xdr_stream *xdr, काष्ठा nfs4_pathname *path)
-अणु
+static int decode_pathname(struct xdr_stream *xdr, struct nfs4_pathname *path)
+{
 	u32 n;
 	__be32 *p;
-	पूर्णांक status = 0;
+	int status = 0;
 
-	p = xdr_अंतरभूत_decode(xdr, 4);
-	अगर (unlikely(!p))
-		वापस -EIO;
+	p = xdr_inline_decode(xdr, 4);
+	if (unlikely(!p))
+		return -EIO;
 	n = be32_to_cpup(p);
-	अगर (n == 0)
-		जाओ root_path;
-	dprपूर्णांकk("pathname4: ");
-	अगर (n > NFS4_PATHNAME_MAXCOMPONENTS) अणु
-		dprपूर्णांकk("cannot parse %d components in path\n", n);
-		जाओ out_eio;
-	पूर्ण
-	क्रम (path->ncomponents = 0; path->ncomponents < n; path->ncomponents++) अणु
-		काष्ठा nfs4_string *component = &path->components[path->ncomponents];
-		status = decode_opaque_अंतरभूत(xdr, &component->len, &component->data);
-		अगर (unlikely(status != 0))
-			जाओ out_eio;
-		अगरdebug (XDR)
+	if (n == 0)
+		goto root_path;
+	dprintk("pathname4: ");
+	if (n > NFS4_PATHNAME_MAXCOMPONENTS) {
+		dprintk("cannot parse %d components in path\n", n);
+		goto out_eio;
+	}
+	for (path->ncomponents = 0; path->ncomponents < n; path->ncomponents++) {
+		struct nfs4_string *component = &path->components[path->ncomponents];
+		status = decode_opaque_inline(xdr, &component->len, &component->data);
+		if (unlikely(status != 0))
+			goto out_eio;
+		ifdebug (XDR)
 			pr_cont("%s%.*s ",
 				(path->ncomponents != n ? "/ " : ""),
 				component->len, component->data);
-	पूर्ण
+	}
 out:
-	वापस status;
+	return status;
 root_path:
 /* a root pathname is sent as a zero component4 */
 	path->ncomponents = 1;
 	path->components[0].len=0;
-	path->components[0].data=शून्य;
-	dprपूर्णांकk("pathname4: /\n");
-	जाओ out;
+	path->components[0].data=NULL;
+	dprintk("pathname4: /\n");
+	goto out;
 out_eio:
-	dprपूर्णांकk(" status %d", status);
+	dprintk(" status %d", status);
 	status = -EIO;
-	जाओ out;
-पूर्ण
+	goto out;
+}
 
-अटल पूर्णांक decode_attr_fs_locations(काष्ठा xdr_stream *xdr, uपूर्णांक32_t *biपंचांगap, काष्ठा nfs4_fs_locations *res)
-अणु
-	पूर्णांक n;
+static int decode_attr_fs_locations(struct xdr_stream *xdr, uint32_t *bitmap, struct nfs4_fs_locations *res)
+{
+	int n;
 	__be32 *p;
-	पूर्णांक status = -EIO;
+	int status = -EIO;
 
-	अगर (unlikely(biपंचांगap[0] & (FATTR4_WORD0_FS_LOCATIONS -1U)))
-		जाओ out;
+	if (unlikely(bitmap[0] & (FATTR4_WORD0_FS_LOCATIONS -1U)))
+		goto out;
 	status = 0;
-	अगर (unlikely(!(biपंचांगap[0] & FATTR4_WORD0_FS_LOCATIONS)))
-		जाओ out;
-	biपंचांगap[0] &= ~FATTR4_WORD0_FS_LOCATIONS;
+	if (unlikely(!(bitmap[0] & FATTR4_WORD0_FS_LOCATIONS)))
+		goto out;
+	bitmap[0] &= ~FATTR4_WORD0_FS_LOCATIONS;
 	status = -EIO;
-	/* Ignore borken servers that वापस unrequested attrs */
-	अगर (unlikely(res == शून्य))
-		जाओ out;
-	dprपूर्णांकk("%s: fsroot:\n", __func__);
+	/* Ignore borken servers that return unrequested attrs */
+	if (unlikely(res == NULL))
+		goto out;
+	dprintk("%s: fsroot:\n", __func__);
 	status = decode_pathname(xdr, &res->fs_path);
-	अगर (unlikely(status != 0))
-		जाओ out;
-	p = xdr_अंतरभूत_decode(xdr, 4);
-	अगर (unlikely(!p))
-		जाओ out_eio;
+	if (unlikely(status != 0))
+		goto out;
+	p = xdr_inline_decode(xdr, 4);
+	if (unlikely(!p))
+		goto out_eio;
 	n = be32_to_cpup(p);
-	अगर (n <= 0)
-		जाओ out_eio;
-	क्रम (res->nlocations = 0; res->nlocations < n; res->nlocations++) अणु
+	if (n <= 0)
+		goto out_eio;
+	for (res->nlocations = 0; res->nlocations < n; res->nlocations++) {
 		u32 m;
-		काष्ठा nfs4_fs_location *loc;
+		struct nfs4_fs_location *loc;
 
-		अगर (res->nlocations == NFS4_FS_LOCATIONS_MAXENTRIES)
-			अवरोध;
+		if (res->nlocations == NFS4_FS_LOCATIONS_MAXENTRIES)
+			break;
 		loc = &res->locations[res->nlocations];
-		p = xdr_अंतरभूत_decode(xdr, 4);
-		अगर (unlikely(!p))
-			जाओ out_eio;
+		p = xdr_inline_decode(xdr, 4);
+		if (unlikely(!p))
+			goto out_eio;
 		m = be32_to_cpup(p);
 
-		dprपूर्णांकk("%s: servers:\n", __func__);
-		क्रम (loc->nservers = 0; loc->nservers < m; loc->nservers++) अणु
-			काष्ठा nfs4_string *server;
+		dprintk("%s: servers:\n", __func__);
+		for (loc->nservers = 0; loc->nservers < m; loc->nservers++) {
+			struct nfs4_string *server;
 
-			अगर (loc->nservers == NFS4_FS_LOCATION_MAXSERVERS) अणु
-				अचिन्हित पूर्णांक i;
-				dprपूर्णांकk("%s: using first %u of %u servers "
+			if (loc->nservers == NFS4_FS_LOCATION_MAXSERVERS) {
+				unsigned int i;
+				dprintk("%s: using first %u of %u servers "
 					"returned for location %u\n",
 						__func__,
 						NFS4_FS_LOCATION_MAXSERVERS,
 						m, res->nlocations);
-				क्रम (i = loc->nservers; i < m; i++) अणु
-					अचिन्हित पूर्णांक len;
-					अक्षर *data;
-					status = decode_opaque_अंतरभूत(xdr, &len, &data);
-					अगर (unlikely(status != 0))
-						जाओ out_eio;
-				पूर्ण
-				अवरोध;
-			पूर्ण
+				for (i = loc->nservers; i < m; i++) {
+					unsigned int len;
+					char *data;
+					status = decode_opaque_inline(xdr, &len, &data);
+					if (unlikely(status != 0))
+						goto out_eio;
+				}
+				break;
+			}
 			server = &loc->servers[loc->nservers];
-			status = decode_opaque_अंतरभूत(xdr, &server->len, &server->data);
-			अगर (unlikely(status != 0))
-				जाओ out_eio;
-			dprपूर्णांकk("%s ", server->data);
-		पूर्ण
+			status = decode_opaque_inline(xdr, &server->len, &server->data);
+			if (unlikely(status != 0))
+				goto out_eio;
+			dprintk("%s ", server->data);
+		}
 		status = decode_pathname(xdr, &loc->rootpath);
-		अगर (unlikely(status != 0))
-			जाओ out_eio;
-	पूर्ण
-	अगर (res->nlocations != 0)
+		if (unlikely(status != 0))
+			goto out_eio;
+	}
+	if (res->nlocations != 0)
 		status = NFS_ATTR_FATTR_V4_LOCATIONS;
 out:
-	dprपूर्णांकk("%s: fs_locations done, error = %d\n", __func__, status);
-	वापस status;
+	dprintk("%s: fs_locations done, error = %d\n", __func__, status);
+	return status;
 out_eio:
 	status = -EIO;
-	जाओ out;
-पूर्ण
+	goto out;
+}
 
-अटल पूर्णांक decode_attr_maxfilesize(काष्ठा xdr_stream *xdr, uपूर्णांक32_t *biपंचांगap, uपूर्णांक64_t *res)
-अणु
+static int decode_attr_maxfilesize(struct xdr_stream *xdr, uint32_t *bitmap, uint64_t *res)
+{
 	__be32 *p;
-	पूर्णांक status = 0;
+	int status = 0;
 
 	*res = 0;
-	अगर (unlikely(biपंचांगap[0] & (FATTR4_WORD0_MAXखाताSIZE - 1U)))
-		वापस -EIO;
-	अगर (likely(biपंचांगap[0] & FATTR4_WORD0_MAXखाताSIZE)) अणु
-		p = xdr_अंतरभूत_decode(xdr, 8);
-		अगर (unlikely(!p))
-			वापस -EIO;
+	if (unlikely(bitmap[0] & (FATTR4_WORD0_MAXFILESIZE - 1U)))
+		return -EIO;
+	if (likely(bitmap[0] & FATTR4_WORD0_MAXFILESIZE)) {
+		p = xdr_inline_decode(xdr, 8);
+		if (unlikely(!p))
+			return -EIO;
 		xdr_decode_hyper(p, res);
-		biपंचांगap[0] &= ~FATTR4_WORD0_MAXखाताSIZE;
-	पूर्ण
-	dprपूर्णांकk("%s: maxfilesize=%Lu\n", __func__, (अचिन्हित दीर्घ दीर्घ)*res);
-	वापस status;
-पूर्ण
+		bitmap[0] &= ~FATTR4_WORD0_MAXFILESIZE;
+	}
+	dprintk("%s: maxfilesize=%Lu\n", __func__, (unsigned long long)*res);
+	return status;
+}
 
-अटल पूर्णांक decode_attr_maxlink(काष्ठा xdr_stream *xdr, uपूर्णांक32_t *biपंचांगap, uपूर्णांक32_t *maxlink)
-अणु
+static int decode_attr_maxlink(struct xdr_stream *xdr, uint32_t *bitmap, uint32_t *maxlink)
+{
 	__be32 *p;
-	पूर्णांक status = 0;
+	int status = 0;
 
 	*maxlink = 1;
-	अगर (unlikely(biपंचांगap[0] & (FATTR4_WORD0_MAXLINK - 1U)))
-		वापस -EIO;
-	अगर (likely(biपंचांगap[0] & FATTR4_WORD0_MAXLINK)) अणु
-		p = xdr_अंतरभूत_decode(xdr, 4);
-		अगर (unlikely(!p))
-			वापस -EIO;
+	if (unlikely(bitmap[0] & (FATTR4_WORD0_MAXLINK - 1U)))
+		return -EIO;
+	if (likely(bitmap[0] & FATTR4_WORD0_MAXLINK)) {
+		p = xdr_inline_decode(xdr, 4);
+		if (unlikely(!p))
+			return -EIO;
 		*maxlink = be32_to_cpup(p);
-		biपंचांगap[0] &= ~FATTR4_WORD0_MAXLINK;
-	पूर्ण
-	dprपूर्णांकk("%s: maxlink=%u\n", __func__, *maxlink);
-	वापस status;
-पूर्ण
+		bitmap[0] &= ~FATTR4_WORD0_MAXLINK;
+	}
+	dprintk("%s: maxlink=%u\n", __func__, *maxlink);
+	return status;
+}
 
-अटल पूर्णांक decode_attr_maxname(काष्ठा xdr_stream *xdr, uपूर्णांक32_t *biपंचांगap, uपूर्णांक32_t *maxname)
-अणु
+static int decode_attr_maxname(struct xdr_stream *xdr, uint32_t *bitmap, uint32_t *maxname)
+{
 	__be32 *p;
-	पूर्णांक status = 0;
+	int status = 0;
 
 	*maxname = 1024;
-	अगर (unlikely(biपंचांगap[0] & (FATTR4_WORD0_MAXNAME - 1U)))
-		वापस -EIO;
-	अगर (likely(biपंचांगap[0] & FATTR4_WORD0_MAXNAME)) अणु
-		p = xdr_अंतरभूत_decode(xdr, 4);
-		अगर (unlikely(!p))
-			वापस -EIO;
+	if (unlikely(bitmap[0] & (FATTR4_WORD0_MAXNAME - 1U)))
+		return -EIO;
+	if (likely(bitmap[0] & FATTR4_WORD0_MAXNAME)) {
+		p = xdr_inline_decode(xdr, 4);
+		if (unlikely(!p))
+			return -EIO;
 		*maxname = be32_to_cpup(p);
-		biपंचांगap[0] &= ~FATTR4_WORD0_MAXNAME;
-	पूर्ण
-	dprपूर्णांकk("%s: maxname=%u\n", __func__, *maxname);
-	वापस status;
-पूर्ण
+		bitmap[0] &= ~FATTR4_WORD0_MAXNAME;
+	}
+	dprintk("%s: maxname=%u\n", __func__, *maxname);
+	return status;
+}
 
-अटल पूर्णांक decode_attr_maxपढ़ो(काष्ठा xdr_stream *xdr, uपूर्णांक32_t *biपंचांगap, uपूर्णांक32_t *res)
-अणु
+static int decode_attr_maxread(struct xdr_stream *xdr, uint32_t *bitmap, uint32_t *res)
+{
 	__be32 *p;
-	पूर्णांक status = 0;
+	int status = 0;
 
 	*res = 1024;
-	अगर (unlikely(biपंचांगap[0] & (FATTR4_WORD0_MAXREAD - 1U)))
-		वापस -EIO;
-	अगर (likely(biपंचांगap[0] & FATTR4_WORD0_MAXREAD)) अणु
-		uपूर्णांक64_t maxपढ़ो;
-		p = xdr_अंतरभूत_decode(xdr, 8);
-		अगर (unlikely(!p))
-			वापस -EIO;
-		xdr_decode_hyper(p, &maxपढ़ो);
-		अगर (maxपढ़ो > 0x7FFFFFFF)
-			maxपढ़ो = 0x7FFFFFFF;
-		*res = (uपूर्णांक32_t)maxपढ़ो;
-		biपंचांगap[0] &= ~FATTR4_WORD0_MAXREAD;
-	पूर्ण
-	dprपूर्णांकk("%s: maxread=%lu\n", __func__, (अचिन्हित दीर्घ)*res);
-	वापस status;
-पूर्ण
+	if (unlikely(bitmap[0] & (FATTR4_WORD0_MAXREAD - 1U)))
+		return -EIO;
+	if (likely(bitmap[0] & FATTR4_WORD0_MAXREAD)) {
+		uint64_t maxread;
+		p = xdr_inline_decode(xdr, 8);
+		if (unlikely(!p))
+			return -EIO;
+		xdr_decode_hyper(p, &maxread);
+		if (maxread > 0x7FFFFFFF)
+			maxread = 0x7FFFFFFF;
+		*res = (uint32_t)maxread;
+		bitmap[0] &= ~FATTR4_WORD0_MAXREAD;
+	}
+	dprintk("%s: maxread=%lu\n", __func__, (unsigned long)*res);
+	return status;
+}
 
-अटल पूर्णांक decode_attr_maxग_लिखो(काष्ठा xdr_stream *xdr, uपूर्णांक32_t *biपंचांगap, uपूर्णांक32_t *res)
-अणु
+static int decode_attr_maxwrite(struct xdr_stream *xdr, uint32_t *bitmap, uint32_t *res)
+{
 	__be32 *p;
-	पूर्णांक status = 0;
+	int status = 0;
 
 	*res = 1024;
-	अगर (unlikely(biपंचांगap[0] & (FATTR4_WORD0_MAXWRITE - 1U)))
-		वापस -EIO;
-	अगर (likely(biपंचांगap[0] & FATTR4_WORD0_MAXWRITE)) अणु
-		uपूर्णांक64_t maxग_लिखो;
-		p = xdr_अंतरभूत_decode(xdr, 8);
-		अगर (unlikely(!p))
-			वापस -EIO;
-		xdr_decode_hyper(p, &maxग_लिखो);
-		अगर (maxग_लिखो > 0x7FFFFFFF)
-			maxग_लिखो = 0x7FFFFFFF;
-		*res = (uपूर्णांक32_t)maxग_लिखो;
-		biपंचांगap[0] &= ~FATTR4_WORD0_MAXWRITE;
-	पूर्ण
-	dprपूर्णांकk("%s: maxwrite=%lu\n", __func__, (अचिन्हित दीर्घ)*res);
-	वापस status;
-पूर्ण
+	if (unlikely(bitmap[0] & (FATTR4_WORD0_MAXWRITE - 1U)))
+		return -EIO;
+	if (likely(bitmap[0] & FATTR4_WORD0_MAXWRITE)) {
+		uint64_t maxwrite;
+		p = xdr_inline_decode(xdr, 8);
+		if (unlikely(!p))
+			return -EIO;
+		xdr_decode_hyper(p, &maxwrite);
+		if (maxwrite > 0x7FFFFFFF)
+			maxwrite = 0x7FFFFFFF;
+		*res = (uint32_t)maxwrite;
+		bitmap[0] &= ~FATTR4_WORD0_MAXWRITE;
+	}
+	dprintk("%s: maxwrite=%lu\n", __func__, (unsigned long)*res);
+	return status;
+}
 
-अटल पूर्णांक decode_attr_mode(काष्ठा xdr_stream *xdr, uपूर्णांक32_t *biपंचांगap, umode_t *mode)
-अणु
-	uपूर्णांक32_t पंचांगp;
+static int decode_attr_mode(struct xdr_stream *xdr, uint32_t *bitmap, umode_t *mode)
+{
+	uint32_t tmp;
 	__be32 *p;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	*mode = 0;
-	अगर (unlikely(biपंचांगap[1] & (FATTR4_WORD1_MODE - 1U)))
-		वापस -EIO;
-	अगर (likely(biपंचांगap[1] & FATTR4_WORD1_MODE)) अणु
-		p = xdr_अंतरभूत_decode(xdr, 4);
-		अगर (unlikely(!p))
-			वापस -EIO;
-		पंचांगp = be32_to_cpup(p);
-		*mode = पंचांगp & ~S_IFMT;
-		biपंचांगap[1] &= ~FATTR4_WORD1_MODE;
+	if (unlikely(bitmap[1] & (FATTR4_WORD1_MODE - 1U)))
+		return -EIO;
+	if (likely(bitmap[1] & FATTR4_WORD1_MODE)) {
+		p = xdr_inline_decode(xdr, 4);
+		if (unlikely(!p))
+			return -EIO;
+		tmp = be32_to_cpup(p);
+		*mode = tmp & ~S_IFMT;
+		bitmap[1] &= ~FATTR4_WORD1_MODE;
 		ret = NFS_ATTR_FATTR_MODE;
-	पूर्ण
-	dprपूर्णांकk("%s: file mode=0%o\n", __func__, (अचिन्हित पूर्णांक)*mode);
-	वापस ret;
-पूर्ण
+	}
+	dprintk("%s: file mode=0%o\n", __func__, (unsigned int)*mode);
+	return ret;
+}
 
-अटल पूर्णांक decode_attr_nlink(काष्ठा xdr_stream *xdr, uपूर्णांक32_t *biपंचांगap, uपूर्णांक32_t *nlink)
-अणु
+static int decode_attr_nlink(struct xdr_stream *xdr, uint32_t *bitmap, uint32_t *nlink)
+{
 	__be32 *p;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	*nlink = 1;
-	अगर (unlikely(biपंचांगap[1] & (FATTR4_WORD1_NUMLINKS - 1U)))
-		वापस -EIO;
-	अगर (likely(biपंचांगap[1] & FATTR4_WORD1_NUMLINKS)) अणु
-		p = xdr_अंतरभूत_decode(xdr, 4);
-		अगर (unlikely(!p))
-			वापस -EIO;
+	if (unlikely(bitmap[1] & (FATTR4_WORD1_NUMLINKS - 1U)))
+		return -EIO;
+	if (likely(bitmap[1] & FATTR4_WORD1_NUMLINKS)) {
+		p = xdr_inline_decode(xdr, 4);
+		if (unlikely(!p))
+			return -EIO;
 		*nlink = be32_to_cpup(p);
-		biपंचांगap[1] &= ~FATTR4_WORD1_NUMLINKS;
+		bitmap[1] &= ~FATTR4_WORD1_NUMLINKS;
 		ret = NFS_ATTR_FATTR_NLINK;
-	पूर्ण
-	dprपूर्णांकk("%s: nlink=%u\n", __func__, (अचिन्हित पूर्णांक)*nlink);
-	वापस ret;
-पूर्ण
+	}
+	dprintk("%s: nlink=%u\n", __func__, (unsigned int)*nlink);
+	return ret;
+}
 
-अटल sमाप_प्रकार decode_nfs4_string(काष्ठा xdr_stream *xdr,
-		काष्ठा nfs4_string *name, gfp_t gfp_flags)
-अणु
-	sमाप_प्रकार ret;
+static ssize_t decode_nfs4_string(struct xdr_stream *xdr,
+		struct nfs4_string *name, gfp_t gfp_flags)
+{
+	ssize_t ret;
 
 	ret = xdr_stream_decode_string_dup(xdr, &name->data,
 			XDR_MAX_NETOBJ, gfp_flags);
 	name->len = 0;
-	अगर (ret > 0)
+	if (ret > 0)
 		name->len = ret;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक decode_attr_owner(काष्ठा xdr_stream *xdr, uपूर्णांक32_t *biपंचांगap,
-		स्थिर काष्ठा nfs_server *server, kuid_t *uid,
-		काष्ठा nfs4_string *owner_name)
-अणु
-	sमाप_प्रकार len;
-	अक्षर *p;
+static int decode_attr_owner(struct xdr_stream *xdr, uint32_t *bitmap,
+		const struct nfs_server *server, kuid_t *uid,
+		struct nfs4_string *owner_name)
+{
+	ssize_t len;
+	char *p;
 
 	*uid = make_kuid(&init_user_ns, -2);
-	अगर (unlikely(biपंचांगap[1] & (FATTR4_WORD1_OWNER - 1U)))
-		वापस -EIO;
-	अगर (!(biपंचांगap[1] & FATTR4_WORD1_OWNER))
-		वापस 0;
-	biपंचांगap[1] &= ~FATTR4_WORD1_OWNER;
+	if (unlikely(bitmap[1] & (FATTR4_WORD1_OWNER - 1U)))
+		return -EIO;
+	if (!(bitmap[1] & FATTR4_WORD1_OWNER))
+		return 0;
+	bitmap[1] &= ~FATTR4_WORD1_OWNER;
 
-	अगर (owner_name != शून्य) अणु
+	if (owner_name != NULL) {
 		len = decode_nfs4_string(xdr, owner_name, GFP_NOIO);
-		अगर (len <= 0)
-			जाओ out;
-		dprपूर्णांकk("%s: name=%s\n", __func__, owner_name->data);
-		वापस NFS_ATTR_FATTR_OWNER_NAME;
-	पूर्ण अन्यथा अणु
-		len = xdr_stream_decode_opaque_अंतरभूत(xdr, (व्योम **)&p,
+		if (len <= 0)
+			goto out;
+		dprintk("%s: name=%s\n", __func__, owner_name->data);
+		return NFS_ATTR_FATTR_OWNER_NAME;
+	} else {
+		len = xdr_stream_decode_opaque_inline(xdr, (void **)&p,
 				XDR_MAX_NETOBJ);
-		अगर (len <= 0 || nfs_map_name_to_uid(server, p, len, uid) != 0)
-			जाओ out;
-		dprपूर्णांकk("%s: uid=%d\n", __func__, (पूर्णांक)from_kuid(&init_user_ns, *uid));
-		वापस NFS_ATTR_FATTR_OWNER;
-	पूर्ण
+		if (len <= 0 || nfs_map_name_to_uid(server, p, len, uid) != 0)
+			goto out;
+		dprintk("%s: uid=%d\n", __func__, (int)from_kuid(&init_user_ns, *uid));
+		return NFS_ATTR_FATTR_OWNER;
+	}
 out:
-	अगर (len == -EBADMSG)
-		वापस -EIO;
-	वापस 0;
-पूर्ण
+	if (len == -EBADMSG)
+		return -EIO;
+	return 0;
+}
 
-अटल पूर्णांक decode_attr_group(काष्ठा xdr_stream *xdr, uपूर्णांक32_t *biपंचांगap,
-		स्थिर काष्ठा nfs_server *server, kgid_t *gid,
-		काष्ठा nfs4_string *group_name)
-अणु
-	sमाप_प्रकार len;
-	अक्षर *p;
+static int decode_attr_group(struct xdr_stream *xdr, uint32_t *bitmap,
+		const struct nfs_server *server, kgid_t *gid,
+		struct nfs4_string *group_name)
+{
+	ssize_t len;
+	char *p;
 
 	*gid = make_kgid(&init_user_ns, -2);
-	अगर (unlikely(biपंचांगap[1] & (FATTR4_WORD1_OWNER_GROUP - 1U)))
-		वापस -EIO;
-	अगर (!(biपंचांगap[1] & FATTR4_WORD1_OWNER_GROUP))
-		वापस 0;
-	biपंचांगap[1] &= ~FATTR4_WORD1_OWNER_GROUP;
+	if (unlikely(bitmap[1] & (FATTR4_WORD1_OWNER_GROUP - 1U)))
+		return -EIO;
+	if (!(bitmap[1] & FATTR4_WORD1_OWNER_GROUP))
+		return 0;
+	bitmap[1] &= ~FATTR4_WORD1_OWNER_GROUP;
 
-	अगर (group_name != शून्य) अणु
+	if (group_name != NULL) {
 		len = decode_nfs4_string(xdr, group_name, GFP_NOIO);
-		अगर (len <= 0)
-			जाओ out;
-		dprपूर्णांकk("%s: name=%s\n", __func__, group_name->data);
-		वापस NFS_ATTR_FATTR_GROUP_NAME;
-	पूर्ण अन्यथा अणु
-		len = xdr_stream_decode_opaque_अंतरभूत(xdr, (व्योम **)&p,
+		if (len <= 0)
+			goto out;
+		dprintk("%s: name=%s\n", __func__, group_name->data);
+		return NFS_ATTR_FATTR_GROUP_NAME;
+	} else {
+		len = xdr_stream_decode_opaque_inline(xdr, (void **)&p,
 				XDR_MAX_NETOBJ);
-		अगर (len <= 0 || nfs_map_group_to_gid(server, p, len, gid) != 0)
-			जाओ out;
-		dprपूर्णांकk("%s: gid=%d\n", __func__, (पूर्णांक)from_kgid(&init_user_ns, *gid));
-		वापस NFS_ATTR_FATTR_GROUP;
-	पूर्ण
+		if (len <= 0 || nfs_map_group_to_gid(server, p, len, gid) != 0)
+			goto out;
+		dprintk("%s: gid=%d\n", __func__, (int)from_kgid(&init_user_ns, *gid));
+		return NFS_ATTR_FATTR_GROUP;
+	}
 out:
-	अगर (len == -EBADMSG)
-		वापस -EIO;
-	वापस 0;
-पूर्ण
+	if (len == -EBADMSG)
+		return -EIO;
+	return 0;
+}
 
-अटल पूर्णांक decode_attr_rdev(काष्ठा xdr_stream *xdr, uपूर्णांक32_t *biपंचांगap, dev_t *rdev)
-अणु
-	uपूर्णांक32_t major = 0, minor = 0;
+static int decode_attr_rdev(struct xdr_stream *xdr, uint32_t *bitmap, dev_t *rdev)
+{
+	uint32_t major = 0, minor = 0;
 	__be32 *p;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	*rdev = MKDEV(0,0);
-	अगर (unlikely(biपंचांगap[1] & (FATTR4_WORD1_RAWDEV - 1U)))
-		वापस -EIO;
-	अगर (likely(biपंचांगap[1] & FATTR4_WORD1_RAWDEV)) अणु
-		dev_t पंचांगp;
+	if (unlikely(bitmap[1] & (FATTR4_WORD1_RAWDEV - 1U)))
+		return -EIO;
+	if (likely(bitmap[1] & FATTR4_WORD1_RAWDEV)) {
+		dev_t tmp;
 
-		p = xdr_अंतरभूत_decode(xdr, 8);
-		अगर (unlikely(!p))
-			वापस -EIO;
+		p = xdr_inline_decode(xdr, 8);
+		if (unlikely(!p))
+			return -EIO;
 		major = be32_to_cpup(p++);
 		minor = be32_to_cpup(p);
-		पंचांगp = MKDEV(major, minor);
-		अगर (MAJOR(पंचांगp) == major && MINOR(पंचांगp) == minor)
-			*rdev = पंचांगp;
-		biपंचांगap[1] &= ~ FATTR4_WORD1_RAWDEV;
+		tmp = MKDEV(major, minor);
+		if (MAJOR(tmp) == major && MINOR(tmp) == minor)
+			*rdev = tmp;
+		bitmap[1] &= ~ FATTR4_WORD1_RAWDEV;
 		ret = NFS_ATTR_FATTR_RDEV;
-	पूर्ण
-	dprपूर्णांकk("%s: rdev=(0x%x:0x%x)\n", __func__, major, minor);
-	वापस ret;
-पूर्ण
+	}
+	dprintk("%s: rdev=(0x%x:0x%x)\n", __func__, major, minor);
+	return ret;
+}
 
-अटल पूर्णांक decode_attr_space_avail(काष्ठा xdr_stream *xdr, uपूर्णांक32_t *biपंचांगap, uपूर्णांक64_t *res)
-अणु
+static int decode_attr_space_avail(struct xdr_stream *xdr, uint32_t *bitmap, uint64_t *res)
+{
 	__be32 *p;
-	पूर्णांक status = 0;
+	int status = 0;
 
 	*res = 0;
-	अगर (unlikely(biपंचांगap[1] & (FATTR4_WORD1_SPACE_AVAIL - 1U)))
-		वापस -EIO;
-	अगर (likely(biपंचांगap[1] & FATTR4_WORD1_SPACE_AVAIL)) अणु
-		p = xdr_अंतरभूत_decode(xdr, 8);
-		अगर (unlikely(!p))
-			वापस -EIO;
+	if (unlikely(bitmap[1] & (FATTR4_WORD1_SPACE_AVAIL - 1U)))
+		return -EIO;
+	if (likely(bitmap[1] & FATTR4_WORD1_SPACE_AVAIL)) {
+		p = xdr_inline_decode(xdr, 8);
+		if (unlikely(!p))
+			return -EIO;
 		xdr_decode_hyper(p, res);
-		biपंचांगap[1] &= ~FATTR4_WORD1_SPACE_AVAIL;
-	पूर्ण
-	dprपूर्णांकk("%s: space avail=%Lu\n", __func__, (अचिन्हित दीर्घ दीर्घ)*res);
-	वापस status;
-पूर्ण
+		bitmap[1] &= ~FATTR4_WORD1_SPACE_AVAIL;
+	}
+	dprintk("%s: space avail=%Lu\n", __func__, (unsigned long long)*res);
+	return status;
+}
 
-अटल पूर्णांक decode_attr_space_मुक्त(काष्ठा xdr_stream *xdr, uपूर्णांक32_t *biपंचांगap, uपूर्णांक64_t *res)
-अणु
+static int decode_attr_space_free(struct xdr_stream *xdr, uint32_t *bitmap, uint64_t *res)
+{
 	__be32 *p;
-	पूर्णांक status = 0;
+	int status = 0;
 
 	*res = 0;
-	अगर (unlikely(biपंचांगap[1] & (FATTR4_WORD1_SPACE_FREE - 1U)))
-		वापस -EIO;
-	अगर (likely(biपंचांगap[1] & FATTR4_WORD1_SPACE_FREE)) अणु
-		p = xdr_अंतरभूत_decode(xdr, 8);
-		अगर (unlikely(!p))
-			वापस -EIO;
+	if (unlikely(bitmap[1] & (FATTR4_WORD1_SPACE_FREE - 1U)))
+		return -EIO;
+	if (likely(bitmap[1] & FATTR4_WORD1_SPACE_FREE)) {
+		p = xdr_inline_decode(xdr, 8);
+		if (unlikely(!p))
+			return -EIO;
 		xdr_decode_hyper(p, res);
-		biपंचांगap[1] &= ~FATTR4_WORD1_SPACE_FREE;
-	पूर्ण
-	dprपूर्णांकk("%s: space free=%Lu\n", __func__, (अचिन्हित दीर्घ दीर्घ)*res);
-	वापस status;
-पूर्ण
+		bitmap[1] &= ~FATTR4_WORD1_SPACE_FREE;
+	}
+	dprintk("%s: space free=%Lu\n", __func__, (unsigned long long)*res);
+	return status;
+}
 
-अटल पूर्णांक decode_attr_space_total(काष्ठा xdr_stream *xdr, uपूर्णांक32_t *biपंचांगap, uपूर्णांक64_t *res)
-अणु
+static int decode_attr_space_total(struct xdr_stream *xdr, uint32_t *bitmap, uint64_t *res)
+{
 	__be32 *p;
-	पूर्णांक status = 0;
+	int status = 0;
 
 	*res = 0;
-	अगर (unlikely(biपंचांगap[1] & (FATTR4_WORD1_SPACE_TOTAL - 1U)))
-		वापस -EIO;
-	अगर (likely(biपंचांगap[1] & FATTR4_WORD1_SPACE_TOTAL)) अणु
-		p = xdr_अंतरभूत_decode(xdr, 8);
-		अगर (unlikely(!p))
-			वापस -EIO;
+	if (unlikely(bitmap[1] & (FATTR4_WORD1_SPACE_TOTAL - 1U)))
+		return -EIO;
+	if (likely(bitmap[1] & FATTR4_WORD1_SPACE_TOTAL)) {
+		p = xdr_inline_decode(xdr, 8);
+		if (unlikely(!p))
+			return -EIO;
 		xdr_decode_hyper(p, res);
-		biपंचांगap[1] &= ~FATTR4_WORD1_SPACE_TOTAL;
-	पूर्ण
-	dprपूर्णांकk("%s: space total=%Lu\n", __func__, (अचिन्हित दीर्घ दीर्घ)*res);
-	वापस status;
-पूर्ण
+		bitmap[1] &= ~FATTR4_WORD1_SPACE_TOTAL;
+	}
+	dprintk("%s: space total=%Lu\n", __func__, (unsigned long long)*res);
+	return status;
+}
 
-अटल पूर्णांक decode_attr_space_used(काष्ठा xdr_stream *xdr, uपूर्णांक32_t *biपंचांगap, uपूर्णांक64_t *used)
-अणु
+static int decode_attr_space_used(struct xdr_stream *xdr, uint32_t *bitmap, uint64_t *used)
+{
 	__be32 *p;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	*used = 0;
-	अगर (unlikely(biपंचांगap[1] & (FATTR4_WORD1_SPACE_USED - 1U)))
-		वापस -EIO;
-	अगर (likely(biपंचांगap[1] & FATTR4_WORD1_SPACE_USED)) अणु
-		p = xdr_अंतरभूत_decode(xdr, 8);
-		अगर (unlikely(!p))
-			वापस -EIO;
+	if (unlikely(bitmap[1] & (FATTR4_WORD1_SPACE_USED - 1U)))
+		return -EIO;
+	if (likely(bitmap[1] & FATTR4_WORD1_SPACE_USED)) {
+		p = xdr_inline_decode(xdr, 8);
+		if (unlikely(!p))
+			return -EIO;
 		xdr_decode_hyper(p, used);
-		biपंचांगap[1] &= ~FATTR4_WORD1_SPACE_USED;
+		bitmap[1] &= ~FATTR4_WORD1_SPACE_USED;
 		ret = NFS_ATTR_FATTR_SPACE_USED;
-	पूर्ण
-	dprपूर्णांकk("%s: space used=%Lu\n", __func__,
-			(अचिन्हित दीर्घ दीर्घ)*used);
-	वापस ret;
-पूर्ण
+	}
+	dprintk("%s: space used=%Lu\n", __func__,
+			(unsigned long long)*used);
+	return ret;
+}
 
-अटल __be32 *
-xdr_decode_nfsसमय4(__be32 *p, काष्ठा बारpec64 *t)
-अणु
+static __be32 *
+xdr_decode_nfstime4(__be32 *p, struct timespec64 *t)
+{
 	__u64 sec;
 
 	p = xdr_decode_hyper(p, &sec);
 	t-> tv_sec = sec;
 	t->tv_nsec = be32_to_cpup(p++);
-	वापस p;
-पूर्ण
+	return p;
+}
 
-अटल पूर्णांक decode_attr_समय(काष्ठा xdr_stream *xdr, काष्ठा बारpec64 *समय)
-अणु
+static int decode_attr_time(struct xdr_stream *xdr, struct timespec64 *time)
+{
 	__be32 *p;
 
-	p = xdr_अंतरभूत_decode(xdr, nfsसमय4_maxsz << 2);
-	अगर (unlikely(!p))
-		वापस -EIO;
-	xdr_decode_nfsसमय4(p, समय);
-	वापस 0;
-पूर्ण
+	p = xdr_inline_decode(xdr, nfstime4_maxsz << 2);
+	if (unlikely(!p))
+		return -EIO;
+	xdr_decode_nfstime4(p, time);
+	return 0;
+}
 
-अटल पूर्णांक decode_attr_समय_access(काष्ठा xdr_stream *xdr, uपूर्णांक32_t *biपंचांगap, काष्ठा बारpec64 *समय)
-अणु
-	पूर्णांक status = 0;
+static int decode_attr_time_access(struct xdr_stream *xdr, uint32_t *bitmap, struct timespec64 *time)
+{
+	int status = 0;
 
-	समय->tv_sec = 0;
-	समय->tv_nsec = 0;
-	अगर (unlikely(biपंचांगap[1] & (FATTR4_WORD1_TIME_ACCESS - 1U)))
-		वापस -EIO;
-	अगर (likely(biपंचांगap[1] & FATTR4_WORD1_TIME_ACCESS)) अणु
-		status = decode_attr_समय(xdr, समय);
-		अगर (status == 0)
+	time->tv_sec = 0;
+	time->tv_nsec = 0;
+	if (unlikely(bitmap[1] & (FATTR4_WORD1_TIME_ACCESS - 1U)))
+		return -EIO;
+	if (likely(bitmap[1] & FATTR4_WORD1_TIME_ACCESS)) {
+		status = decode_attr_time(xdr, time);
+		if (status == 0)
 			status = NFS_ATTR_FATTR_ATIME;
-		biपंचांगap[1] &= ~FATTR4_WORD1_TIME_ACCESS;
-	पूर्ण
-	dprपूर्णांकk("%s: atime=%lld\n", __func__, समय->tv_sec);
-	वापस status;
-पूर्ण
+		bitmap[1] &= ~FATTR4_WORD1_TIME_ACCESS;
+	}
+	dprintk("%s: atime=%lld\n", __func__, time->tv_sec);
+	return status;
+}
 
-अटल पूर्णांक decode_attr_समय_metadata(काष्ठा xdr_stream *xdr, uपूर्णांक32_t *biपंचांगap, काष्ठा बारpec64 *समय)
-अणु
-	पूर्णांक status = 0;
+static int decode_attr_time_metadata(struct xdr_stream *xdr, uint32_t *bitmap, struct timespec64 *time)
+{
+	int status = 0;
 
-	समय->tv_sec = 0;
-	समय->tv_nsec = 0;
-	अगर (unlikely(biपंचांगap[1] & (FATTR4_WORD1_TIME_METADATA - 1U)))
-		वापस -EIO;
-	अगर (likely(biपंचांगap[1] & FATTR4_WORD1_TIME_METADATA)) अणु
-		status = decode_attr_समय(xdr, समय);
-		अगर (status == 0)
+	time->tv_sec = 0;
+	time->tv_nsec = 0;
+	if (unlikely(bitmap[1] & (FATTR4_WORD1_TIME_METADATA - 1U)))
+		return -EIO;
+	if (likely(bitmap[1] & FATTR4_WORD1_TIME_METADATA)) {
+		status = decode_attr_time(xdr, time);
+		if (status == 0)
 			status = NFS_ATTR_FATTR_CTIME;
-		biपंचांगap[1] &= ~FATTR4_WORD1_TIME_METADATA;
-	पूर्ण
-	dprपूर्णांकk("%s: ctime=%lld\n", __func__, समय->tv_sec);
-	वापस status;
-पूर्ण
+		bitmap[1] &= ~FATTR4_WORD1_TIME_METADATA;
+	}
+	dprintk("%s: ctime=%lld\n", __func__, time->tv_sec);
+	return status;
+}
 
-अटल पूर्णांक decode_attr_समय_delta(काष्ठा xdr_stream *xdr, uपूर्णांक32_t *biपंचांगap,
-				  काष्ठा बारpec64 *समय)
-अणु
-	पूर्णांक status = 0;
+static int decode_attr_time_delta(struct xdr_stream *xdr, uint32_t *bitmap,
+				  struct timespec64 *time)
+{
+	int status = 0;
 
-	समय->tv_sec = 0;
-	समय->tv_nsec = 0;
-	अगर (unlikely(biपंचांगap[1] & (FATTR4_WORD1_TIME_DELTA - 1U)))
-		वापस -EIO;
-	अगर (likely(biपंचांगap[1] & FATTR4_WORD1_TIME_DELTA)) अणु
-		status = decode_attr_समय(xdr, समय);
-		biपंचांगap[1] &= ~FATTR4_WORD1_TIME_DELTA;
-	पूर्ण
-	dprपूर्णांकk("%s: time_delta=%lld %ld\n", __func__, समय->tv_sec,
-		समय->tv_nsec);
-	वापस status;
-पूर्ण
+	time->tv_sec = 0;
+	time->tv_nsec = 0;
+	if (unlikely(bitmap[1] & (FATTR4_WORD1_TIME_DELTA - 1U)))
+		return -EIO;
+	if (likely(bitmap[1] & FATTR4_WORD1_TIME_DELTA)) {
+		status = decode_attr_time(xdr, time);
+		bitmap[1] &= ~FATTR4_WORD1_TIME_DELTA;
+	}
+	dprintk("%s: time_delta=%lld %ld\n", __func__, time->tv_sec,
+		time->tv_nsec);
+	return status;
+}
 
-अटल पूर्णांक decode_attr_security_label(काष्ठा xdr_stream *xdr, uपूर्णांक32_t *biपंचांगap,
-					काष्ठा nfs4_label *label)
-अणु
-	uपूर्णांक32_t pi = 0;
-	uपूर्णांक32_t lfs = 0;
+static int decode_attr_security_label(struct xdr_stream *xdr, uint32_t *bitmap,
+					struct nfs4_label *label)
+{
+	uint32_t pi = 0;
+	uint32_t lfs = 0;
 	__u32 len;
 	__be32 *p;
-	पूर्णांक status = 0;
+	int status = 0;
 
-	अगर (unlikely(biपंचांगap[2] & (FATTR4_WORD2_SECURITY_LABEL - 1U)))
-		वापस -EIO;
-	अगर (likely(biपंचांगap[2] & FATTR4_WORD2_SECURITY_LABEL)) अणु
-		p = xdr_अंतरभूत_decode(xdr, 4);
-		अगर (unlikely(!p))
-			वापस -EIO;
+	if (unlikely(bitmap[2] & (FATTR4_WORD2_SECURITY_LABEL - 1U)))
+		return -EIO;
+	if (likely(bitmap[2] & FATTR4_WORD2_SECURITY_LABEL)) {
+		p = xdr_inline_decode(xdr, 4);
+		if (unlikely(!p))
+			return -EIO;
 		lfs = be32_to_cpup(p++);
-		p = xdr_अंतरभूत_decode(xdr, 4);
-		अगर (unlikely(!p))
-			वापस -EIO;
+		p = xdr_inline_decode(xdr, 4);
+		if (unlikely(!p))
+			return -EIO;
 		pi = be32_to_cpup(p++);
-		p = xdr_अंतरभूत_decode(xdr, 4);
-		अगर (unlikely(!p))
-			वापस -EIO;
+		p = xdr_inline_decode(xdr, 4);
+		if (unlikely(!p))
+			return -EIO;
 		len = be32_to_cpup(p++);
-		p = xdr_अंतरभूत_decode(xdr, len);
-		अगर (unlikely(!p))
-			वापस -EIO;
-		अगर (len < NFS4_MAXLABELLEN) अणु
-			अगर (label) अणु
-				अगर (label->len) अणु
-					अगर (label->len < len)
-						वापस -दुस्फल;
-					स_नकल(label->label, p, len);
-				पूर्ण
+		p = xdr_inline_decode(xdr, len);
+		if (unlikely(!p))
+			return -EIO;
+		if (len < NFS4_MAXLABELLEN) {
+			if (label) {
+				if (label->len) {
+					if (label->len < len)
+						return -ERANGE;
+					memcpy(label->label, p, len);
+				}
 				label->len = len;
 				label->pi = pi;
 				label->lfs = lfs;
 				status = NFS_ATTR_FATTR_V4_SECURITY_LABEL;
-			पूर्ण
-			biपंचांगap[2] &= ~FATTR4_WORD2_SECURITY_LABEL;
-		पूर्ण अन्यथा
-			prपूर्णांकk(KERN_WARNING "%s: label too long (%u)!\n",
+			}
+			bitmap[2] &= ~FATTR4_WORD2_SECURITY_LABEL;
+		} else
+			printk(KERN_WARNING "%s: label too long (%u)!\n",
 					__func__, len);
-	पूर्ण
-	अगर (label && label->label)
-		dprपूर्णांकk("%s: label=%s, len=%d, PI=%d, LFS=%d\n", __func__,
-			(अक्षर *)label->label, label->len, label->pi, label->lfs);
-	वापस status;
-पूर्ण
+	}
+	if (label && label->label)
+		dprintk("%s: label=%s, len=%d, PI=%d, LFS=%d\n", __func__,
+			(char *)label->label, label->len, label->pi, label->lfs);
+	return status;
+}
 
-अटल पूर्णांक decode_attr_समय_modअगरy(काष्ठा xdr_stream *xdr, uपूर्णांक32_t *biपंचांगap, काष्ठा बारpec64 *समय)
-अणु
-	पूर्णांक status = 0;
+static int decode_attr_time_modify(struct xdr_stream *xdr, uint32_t *bitmap, struct timespec64 *time)
+{
+	int status = 0;
 
-	समय->tv_sec = 0;
-	समय->tv_nsec = 0;
-	अगर (unlikely(biपंचांगap[1] & (FATTR4_WORD1_TIME_MODIFY - 1U)))
-		वापस -EIO;
-	अगर (likely(biपंचांगap[1] & FATTR4_WORD1_TIME_MODIFY)) अणु
-		status = decode_attr_समय(xdr, समय);
-		अगर (status == 0)
+	time->tv_sec = 0;
+	time->tv_nsec = 0;
+	if (unlikely(bitmap[1] & (FATTR4_WORD1_TIME_MODIFY - 1U)))
+		return -EIO;
+	if (likely(bitmap[1] & FATTR4_WORD1_TIME_MODIFY)) {
+		status = decode_attr_time(xdr, time);
+		if (status == 0)
 			status = NFS_ATTR_FATTR_MTIME;
-		biपंचांगap[1] &= ~FATTR4_WORD1_TIME_MODIFY;
-	पूर्ण
-	dprपूर्णांकk("%s: mtime=%lld\n", __func__, समय->tv_sec);
-	वापस status;
-पूर्ण
+		bitmap[1] &= ~FATTR4_WORD1_TIME_MODIFY;
+	}
+	dprintk("%s: mtime=%lld\n", __func__, time->tv_sec);
+	return status;
+}
 
-अटल पूर्णांक decode_attr_xattrsupport(काष्ठा xdr_stream *xdr, uपूर्णांक32_t *biपंचांगap,
-				    uपूर्णांक32_t *res)
-अणु
+static int decode_attr_xattrsupport(struct xdr_stream *xdr, uint32_t *bitmap,
+				    uint32_t *res)
+{
 	__be32 *p;
 
 	*res = 0;
-	अगर (unlikely(biपंचांगap[2] & (FATTR4_WORD2_XATTR_SUPPORT - 1U)))
-		वापस -EIO;
-	अगर (likely(biपंचांगap[2] & FATTR4_WORD2_XATTR_SUPPORT)) अणु
-		p = xdr_अंतरभूत_decode(xdr, 4);
-		अगर (unlikely(!p))
-			वापस -EIO;
+	if (unlikely(bitmap[2] & (FATTR4_WORD2_XATTR_SUPPORT - 1U)))
+		return -EIO;
+	if (likely(bitmap[2] & FATTR4_WORD2_XATTR_SUPPORT)) {
+		p = xdr_inline_decode(xdr, 4);
+		if (unlikely(!p))
+			return -EIO;
 		*res = be32_to_cpup(p);
-		biपंचांगap[2] &= ~FATTR4_WORD2_XATTR_SUPPORT;
-	पूर्ण
-	dprपूर्णांकk("%s: XATTR support=%s\n", __func__,
+		bitmap[2] &= ~FATTR4_WORD2_XATTR_SUPPORT;
+	}
+	dprintk("%s: XATTR support=%s\n", __func__,
 		*res == 0 ? "false" : "true");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक verअगरy_attr_len(काष्ठा xdr_stream *xdr, अचिन्हित पूर्णांक savep, uपूर्णांक32_t attrlen)
-अणु
-	अचिन्हित पूर्णांक attrwords = XDR_QUADLEN(attrlen);
-	अचिन्हित पूर्णांक nwords = (xdr_stream_pos(xdr) - savep) >> 2;
+static int verify_attr_len(struct xdr_stream *xdr, unsigned int savep, uint32_t attrlen)
+{
+	unsigned int attrwords = XDR_QUADLEN(attrlen);
+	unsigned int nwords = (xdr_stream_pos(xdr) - savep) >> 2;
 
-	अगर (unlikely(attrwords != nwords)) अणु
-		dprपूर्णांकk("%s: server returned incorrect attribute length: "
+	if (unlikely(attrwords != nwords)) {
+		dprintk("%s: server returned incorrect attribute length: "
 			"%u %c %u\n",
 				__func__,
 				attrwords << 2,
 				(attrwords < nwords) ? '<' : '>',
 				nwords << 2);
-		वापस -EIO;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EIO;
+	}
+	return 0;
+}
 
-अटल पूर्णांक decode_change_info(काष्ठा xdr_stream *xdr, काष्ठा nfs4_change_info *cinfo)
-अणु
+static int decode_change_info(struct xdr_stream *xdr, struct nfs4_change_info *cinfo)
+{
 	__be32 *p;
 
-	p = xdr_अंतरभूत_decode(xdr, 20);
-	अगर (unlikely(!p))
-		वापस -EIO;
+	p = xdr_inline_decode(xdr, 20);
+	if (unlikely(!p))
+		return -EIO;
 	cinfo->atomic = be32_to_cpup(p++);
-	p = xdr_decode_hyper(p, &cinfo->beक्रमe);
+	p = xdr_decode_hyper(p, &cinfo->before);
 	xdr_decode_hyper(p, &cinfo->after);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक decode_access(काष्ठा xdr_stream *xdr, u32 *supported, u32 *access)
-अणु
+static int decode_access(struct xdr_stream *xdr, u32 *supported, u32 *access)
+{
 	__be32 *p;
-	uपूर्णांक32_t supp, acc;
-	पूर्णांक status;
+	uint32_t supp, acc;
+	int status;
 
 	status = decode_op_hdr(xdr, OP_ACCESS);
-	अगर (status)
-		वापस status;
-	p = xdr_अंतरभूत_decode(xdr, 8);
-	अगर (unlikely(!p))
-		वापस -EIO;
+	if (status)
+		return status;
+	p = xdr_inline_decode(xdr, 8);
+	if (unlikely(!p))
+		return -EIO;
 	supp = be32_to_cpup(p++);
 	acc = be32_to_cpup(p);
 	*supported = supp;
 	*access = acc;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक decode_opaque_fixed(काष्ठा xdr_stream *xdr, व्योम *buf, माप_प्रकार len)
-अणु
-	sमाप_प्रकार ret = xdr_stream_decode_opaque_fixed(xdr, buf, len);
-	अगर (unlikely(ret < 0))
-		वापस -EIO;
-	वापस 0;
-पूर्ण
+static int decode_opaque_fixed(struct xdr_stream *xdr, void *buf, size_t len)
+{
+	ssize_t ret = xdr_stream_decode_opaque_fixed(xdr, buf, len);
+	if (unlikely(ret < 0))
+		return -EIO;
+	return 0;
+}
 
-अटल पूर्णांक decode_stateid(काष्ठा xdr_stream *xdr, nfs4_stateid *stateid)
-अणु
-	वापस decode_opaque_fixed(xdr, stateid, NFS4_STATEID_SIZE);
-पूर्ण
+static int decode_stateid(struct xdr_stream *xdr, nfs4_stateid *stateid)
+{
+	return decode_opaque_fixed(xdr, stateid, NFS4_STATEID_SIZE);
+}
 
-अटल पूर्णांक decode_खोलो_stateid(काष्ठा xdr_stream *xdr, nfs4_stateid *stateid)
-अणु
+static int decode_open_stateid(struct xdr_stream *xdr, nfs4_stateid *stateid)
+{
 	stateid->type = NFS4_OPEN_STATEID_TYPE;
-	वापस decode_stateid(xdr, stateid);
-पूर्ण
+	return decode_stateid(xdr, stateid);
+}
 
-अटल पूर्णांक decode_lock_stateid(काष्ठा xdr_stream *xdr, nfs4_stateid *stateid)
-अणु
+static int decode_lock_stateid(struct xdr_stream *xdr, nfs4_stateid *stateid)
+{
 	stateid->type = NFS4_LOCK_STATEID_TYPE;
-	वापस decode_stateid(xdr, stateid);
-पूर्ण
+	return decode_stateid(xdr, stateid);
+}
 
-अटल पूर्णांक decode_delegation_stateid(काष्ठा xdr_stream *xdr, nfs4_stateid *stateid)
-अणु
+static int decode_delegation_stateid(struct xdr_stream *xdr, nfs4_stateid *stateid)
+{
 	stateid->type = NFS4_DELEGATION_STATEID_TYPE;
-	वापस decode_stateid(xdr, stateid);
-पूर्ण
+	return decode_stateid(xdr, stateid);
+}
 
-अटल पूर्णांक decode_invalid_stateid(काष्ठा xdr_stream *xdr, nfs4_stateid *stateid)
-अणु
+static int decode_invalid_stateid(struct xdr_stream *xdr, nfs4_stateid *stateid)
+{
 	nfs4_stateid dummy;
 
 	nfs4_stateid_copy(stateid, &invalid_stateid);
-	वापस decode_stateid(xdr, &dummy);
-पूर्ण
+	return decode_stateid(xdr, &dummy);
+}
 
-अटल पूर्णांक decode_बंद(काष्ठा xdr_stream *xdr, काष्ठा nfs_बंदres *res)
-अणु
-	पूर्णांक status;
+static int decode_close(struct xdr_stream *xdr, struct nfs_closeres *res)
+{
+	int status;
 
 	status = decode_op_hdr(xdr, OP_CLOSE);
-	अगर (status != -EIO)
-		nfs_increment_खोलो_seqid(status, res->seqid);
-	अगर (!status)
+	if (status != -EIO)
+		nfs_increment_open_seqid(status, res->seqid);
+	if (!status)
 		status = decode_invalid_stateid(xdr, &res->stateid);
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक decode_verअगरier(काष्ठा xdr_stream *xdr, व्योम *verअगरier)
-अणु
-	वापस decode_opaque_fixed(xdr, verअगरier, NFS4_VERIFIER_SIZE);
-पूर्ण
+static int decode_verifier(struct xdr_stream *xdr, void *verifier)
+{
+	return decode_opaque_fixed(xdr, verifier, NFS4_VERIFIER_SIZE);
+}
 
-अटल पूर्णांक decode_ग_लिखो_verअगरier(काष्ठा xdr_stream *xdr, काष्ठा nfs_ग_लिखो_verअगरier *verअगरier)
-अणु
-	वापस decode_opaque_fixed(xdr, verअगरier->data, NFS4_VERIFIER_SIZE);
-पूर्ण
+static int decode_write_verifier(struct xdr_stream *xdr, struct nfs_write_verifier *verifier)
+{
+	return decode_opaque_fixed(xdr, verifier->data, NFS4_VERIFIER_SIZE);
+}
 
-अटल पूर्णांक decode_commit(काष्ठा xdr_stream *xdr, काष्ठा nfs_commitres *res)
-अणु
-	काष्ठा nfs_ग_लिखोverf *verf = res->verf;
-	पूर्णांक status;
+static int decode_commit(struct xdr_stream *xdr, struct nfs_commitres *res)
+{
+	struct nfs_writeverf *verf = res->verf;
+	int status;
 
 	status = decode_op_hdr(xdr, OP_COMMIT);
-	अगर (!status)
-		status = decode_ग_लिखो_verअगरier(xdr, &verf->verअगरier);
-	अगर (!status)
-		verf->committed = NFS_खाता_SYNC;
-	वापस status;
-पूर्ण
+	if (!status)
+		status = decode_write_verifier(xdr, &verf->verifier);
+	if (!status)
+		verf->committed = NFS_FILE_SYNC;
+	return status;
+}
 
-अटल पूर्णांक decode_create(काष्ठा xdr_stream *xdr, काष्ठा nfs4_change_info *cinfo)
-अणु
+static int decode_create(struct xdr_stream *xdr, struct nfs4_change_info *cinfo)
+{
 	__be32 *p;
-	uपूर्णांक32_t bmlen;
-	पूर्णांक status;
+	uint32_t bmlen;
+	int status;
 
 	status = decode_op_hdr(xdr, OP_CREATE);
-	अगर (status)
-		वापस status;
-	अगर ((status = decode_change_info(xdr, cinfo)))
-		वापस status;
-	p = xdr_अंतरभूत_decode(xdr, 4);
-	अगर (unlikely(!p))
-		वापस -EIO;
+	if (status)
+		return status;
+	if ((status = decode_change_info(xdr, cinfo)))
+		return status;
+	p = xdr_inline_decode(xdr, 4);
+	if (unlikely(!p))
+		return -EIO;
 	bmlen = be32_to_cpup(p);
-	p = xdr_अंतरभूत_decode(xdr, bmlen << 2);
-	अगर (likely(p))
-		वापस 0;
-	वापस -EIO;
-पूर्ण
+	p = xdr_inline_decode(xdr, bmlen << 2);
+	if (likely(p))
+		return 0;
+	return -EIO;
+}
 
-अटल पूर्णांक decode_server_caps(काष्ठा xdr_stream *xdr, काष्ठा nfs4_server_caps_res *res)
-अणु
-	अचिन्हित पूर्णांक savep;
-	uपूर्णांक32_t attrlen, biपंचांगap[3] = अणु0पूर्ण;
-	पूर्णांक status;
+static int decode_server_caps(struct xdr_stream *xdr, struct nfs4_server_caps_res *res)
+{
+	unsigned int savep;
+	uint32_t attrlen, bitmap[3] = {0};
+	int status;
 
-	अगर ((status = decode_op_hdr(xdr, OP_GETATTR)) != 0)
-		जाओ xdr_error;
-	अगर ((status = decode_attr_biपंचांगap(xdr, biपंचांगap)) != 0)
-		जाओ xdr_error;
-	अगर ((status = decode_attr_length(xdr, &attrlen, &savep)) != 0)
-		जाओ xdr_error;
-	अगर ((status = decode_attr_supported(xdr, biपंचांगap, res->attr_biपंचांगask)) != 0)
-		जाओ xdr_error;
-	अगर ((status = decode_attr_fh_expire_type(xdr, biपंचांगap,
+	if ((status = decode_op_hdr(xdr, OP_GETATTR)) != 0)
+		goto xdr_error;
+	if ((status = decode_attr_bitmap(xdr, bitmap)) != 0)
+		goto xdr_error;
+	if ((status = decode_attr_length(xdr, &attrlen, &savep)) != 0)
+		goto xdr_error;
+	if ((status = decode_attr_supported(xdr, bitmap, res->attr_bitmask)) != 0)
+		goto xdr_error;
+	if ((status = decode_attr_fh_expire_type(xdr, bitmap,
 						 &res->fh_expire_type)) != 0)
-		जाओ xdr_error;
-	अगर ((status = decode_attr_link_support(xdr, biपंचांगap, &res->has_links)) != 0)
-		जाओ xdr_error;
-	अगर ((status = decode_attr_symlink_support(xdr, biपंचांगap, &res->has_symlinks)) != 0)
-		जाओ xdr_error;
-	अगर ((status = decode_attr_aclsupport(xdr, biपंचांगap, &res->acl_biपंचांगask)) != 0)
-		जाओ xdr_error;
-	अगर ((status = decode_attr_exclcreat_supported(xdr, biपंचांगap,
-				res->exclcreat_biपंचांगask)) != 0)
-		जाओ xdr_error;
-	status = verअगरy_attr_len(xdr, savep, attrlen);
+		goto xdr_error;
+	if ((status = decode_attr_link_support(xdr, bitmap, &res->has_links)) != 0)
+		goto xdr_error;
+	if ((status = decode_attr_symlink_support(xdr, bitmap, &res->has_symlinks)) != 0)
+		goto xdr_error;
+	if ((status = decode_attr_aclsupport(xdr, bitmap, &res->acl_bitmask)) != 0)
+		goto xdr_error;
+	if ((status = decode_attr_exclcreat_supported(xdr, bitmap,
+				res->exclcreat_bitmask)) != 0)
+		goto xdr_error;
+	status = verify_attr_len(xdr, savep, attrlen);
 xdr_error:
-	dprपूर्णांकk("%s: xdr returned %d!\n", __func__, -status);
-	वापस status;
-पूर्ण
+	dprintk("%s: xdr returned %d!\n", __func__, -status);
+	return status;
+}
 
-अटल पूर्णांक decode_statfs(काष्ठा xdr_stream *xdr, काष्ठा nfs_fsstat *fsstat)
-अणु
-	अचिन्हित पूर्णांक savep;
-	uपूर्णांक32_t attrlen, biपंचांगap[3] = अणु0पूर्ण;
-	पूर्णांक status;
+static int decode_statfs(struct xdr_stream *xdr, struct nfs_fsstat *fsstat)
+{
+	unsigned int savep;
+	uint32_t attrlen, bitmap[3] = {0};
+	int status;
 
-	अगर ((status = decode_op_hdr(xdr, OP_GETATTR)) != 0)
-		जाओ xdr_error;
-	अगर ((status = decode_attr_biपंचांगap(xdr, biपंचांगap)) != 0)
-		जाओ xdr_error;
-	अगर ((status = decode_attr_length(xdr, &attrlen, &savep)) != 0)
-		जाओ xdr_error;
+	if ((status = decode_op_hdr(xdr, OP_GETATTR)) != 0)
+		goto xdr_error;
+	if ((status = decode_attr_bitmap(xdr, bitmap)) != 0)
+		goto xdr_error;
+	if ((status = decode_attr_length(xdr, &attrlen, &savep)) != 0)
+		goto xdr_error;
 
-	अगर ((status = decode_attr_files_avail(xdr, biपंचांगap, &fsstat->afiles)) != 0)
-		जाओ xdr_error;
-	अगर ((status = decode_attr_files_मुक्त(xdr, biपंचांगap, &fsstat->ffiles)) != 0)
-		जाओ xdr_error;
-	अगर ((status = decode_attr_files_total(xdr, biपंचांगap, &fsstat->tfiles)) != 0)
-		जाओ xdr_error;
+	if ((status = decode_attr_files_avail(xdr, bitmap, &fsstat->afiles)) != 0)
+		goto xdr_error;
+	if ((status = decode_attr_files_free(xdr, bitmap, &fsstat->ffiles)) != 0)
+		goto xdr_error;
+	if ((status = decode_attr_files_total(xdr, bitmap, &fsstat->tfiles)) != 0)
+		goto xdr_error;
 
 	status = -EIO;
-	अगर (unlikely(biपंचांगap[0]))
-		जाओ xdr_error;
+	if (unlikely(bitmap[0]))
+		goto xdr_error;
 
-	अगर ((status = decode_attr_space_avail(xdr, biपंचांगap, &fsstat->abytes)) != 0)
-		जाओ xdr_error;
-	अगर ((status = decode_attr_space_मुक्त(xdr, biपंचांगap, &fsstat->fbytes)) != 0)
-		जाओ xdr_error;
-	अगर ((status = decode_attr_space_total(xdr, biपंचांगap, &fsstat->tbytes)) != 0)
-		जाओ xdr_error;
+	if ((status = decode_attr_space_avail(xdr, bitmap, &fsstat->abytes)) != 0)
+		goto xdr_error;
+	if ((status = decode_attr_space_free(xdr, bitmap, &fsstat->fbytes)) != 0)
+		goto xdr_error;
+	if ((status = decode_attr_space_total(xdr, bitmap, &fsstat->tbytes)) != 0)
+		goto xdr_error;
 
-	status = verअगरy_attr_len(xdr, savep, attrlen);
+	status = verify_attr_len(xdr, savep, attrlen);
 xdr_error:
-	dprपूर्णांकk("%s: xdr returned %d!\n", __func__, -status);
-	वापस status;
-पूर्ण
+	dprintk("%s: xdr returned %d!\n", __func__, -status);
+	return status;
+}
 
-अटल पूर्णांक decode_pathconf(काष्ठा xdr_stream *xdr, काष्ठा nfs_pathconf *pathconf)
-अणु
-	अचिन्हित पूर्णांक savep;
-	uपूर्णांक32_t attrlen, biपंचांगap[3] = अणु0पूर्ण;
-	पूर्णांक status;
+static int decode_pathconf(struct xdr_stream *xdr, struct nfs_pathconf *pathconf)
+{
+	unsigned int savep;
+	uint32_t attrlen, bitmap[3] = {0};
+	int status;
 
-	अगर ((status = decode_op_hdr(xdr, OP_GETATTR)) != 0)
-		जाओ xdr_error;
-	अगर ((status = decode_attr_biपंचांगap(xdr, biपंचांगap)) != 0)
-		जाओ xdr_error;
-	अगर ((status = decode_attr_length(xdr, &attrlen, &savep)) != 0)
-		जाओ xdr_error;
+	if ((status = decode_op_hdr(xdr, OP_GETATTR)) != 0)
+		goto xdr_error;
+	if ((status = decode_attr_bitmap(xdr, bitmap)) != 0)
+		goto xdr_error;
+	if ((status = decode_attr_length(xdr, &attrlen, &savep)) != 0)
+		goto xdr_error;
 
-	अगर ((status = decode_attr_maxlink(xdr, biपंचांगap, &pathconf->max_link)) != 0)
-		जाओ xdr_error;
-	अगर ((status = decode_attr_maxname(xdr, biपंचांगap, &pathconf->max_namelen)) != 0)
-		जाओ xdr_error;
+	if ((status = decode_attr_maxlink(xdr, bitmap, &pathconf->max_link)) != 0)
+		goto xdr_error;
+	if ((status = decode_attr_maxname(xdr, bitmap, &pathconf->max_namelen)) != 0)
+		goto xdr_error;
 
-	status = verअगरy_attr_len(xdr, savep, attrlen);
+	status = verify_attr_len(xdr, savep, attrlen);
 xdr_error:
-	dprपूर्णांकk("%s: xdr returned %d!\n", __func__, -status);
-	वापस status;
-पूर्ण
+	dprintk("%s: xdr returned %d!\n", __func__, -status);
+	return status;
+}
 
-अटल पूर्णांक decode_threshold_hपूर्णांक(काष्ठा xdr_stream *xdr,
-				  uपूर्णांक32_t *biपंचांगap,
-				  uपूर्णांक64_t *res,
-				  uपूर्णांक32_t hपूर्णांक_bit)
-अणु
+static int decode_threshold_hint(struct xdr_stream *xdr,
+				  uint32_t *bitmap,
+				  uint64_t *res,
+				  uint32_t hint_bit)
+{
 	__be32 *p;
 
 	*res = 0;
-	अगर (likely(biपंचांगap[0] & hपूर्णांक_bit)) अणु
-		p = xdr_अंतरभूत_decode(xdr, 8);
-		अगर (unlikely(!p))
-			वापस -EIO;
+	if (likely(bitmap[0] & hint_bit)) {
+		p = xdr_inline_decode(xdr, 8);
+		if (unlikely(!p))
+			return -EIO;
 		xdr_decode_hyper(p, res);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक decode_first_threshold_item4(काष्ठा xdr_stream *xdr,
-					काष्ठा nfs4_threshold *res)
-अणु
+static int decode_first_threshold_item4(struct xdr_stream *xdr,
+					struct nfs4_threshold *res)
+{
 	__be32 *p;
-	अचिन्हित पूर्णांक savep;
-	uपूर्णांक32_t biपंचांगap[3] = अणु0,पूर्ण, attrlen;
-	पूर्णांक status;
+	unsigned int savep;
+	uint32_t bitmap[3] = {0,}, attrlen;
+	int status;
 
 	/* layout type */
-	p = xdr_अंतरभूत_decode(xdr, 4);
-	अगर (unlikely(!p))
-		वापस -EIO;
+	p = xdr_inline_decode(xdr, 4);
+	if (unlikely(!p))
+		return -EIO;
 	res->l_type = be32_to_cpup(p);
 
-	/* thi_hपूर्णांकset biपंचांगap */
-	status = decode_attr_biपंचांगap(xdr, biपंचांगap);
-	अगर (status < 0)
-		जाओ xdr_error;
+	/* thi_hintset bitmap */
+	status = decode_attr_bitmap(xdr, bitmap);
+	if (status < 0)
+		goto xdr_error;
 
-	/* thi_hपूर्णांकlist length */
+	/* thi_hintlist length */
 	status = decode_attr_length(xdr, &attrlen, &savep);
-	अगर (status < 0)
-		जाओ xdr_error;
-	/* thi_hपूर्णांकlist */
-	status = decode_threshold_hपूर्णांक(xdr, biपंचांगap, &res->rd_sz, THRESHOLD_RD);
-	अगर (status < 0)
-		जाओ xdr_error;
-	status = decode_threshold_hपूर्णांक(xdr, biपंचांगap, &res->wr_sz, THRESHOLD_WR);
-	अगर (status < 0)
-		जाओ xdr_error;
-	status = decode_threshold_hपूर्णांक(xdr, biपंचांगap, &res->rd_io_sz,
+	if (status < 0)
+		goto xdr_error;
+	/* thi_hintlist */
+	status = decode_threshold_hint(xdr, bitmap, &res->rd_sz, THRESHOLD_RD);
+	if (status < 0)
+		goto xdr_error;
+	status = decode_threshold_hint(xdr, bitmap, &res->wr_sz, THRESHOLD_WR);
+	if (status < 0)
+		goto xdr_error;
+	status = decode_threshold_hint(xdr, bitmap, &res->rd_io_sz,
 				       THRESHOLD_RD_IO);
-	अगर (status < 0)
-		जाओ xdr_error;
-	status = decode_threshold_hपूर्णांक(xdr, biपंचांगap, &res->wr_io_sz,
+	if (status < 0)
+		goto xdr_error;
+	status = decode_threshold_hint(xdr, bitmap, &res->wr_io_sz,
 				       THRESHOLD_WR_IO);
-	अगर (status < 0)
-		जाओ xdr_error;
+	if (status < 0)
+		goto xdr_error;
 
-	status = verअगरy_attr_len(xdr, savep, attrlen);
-	res->bm = biपंचांगap[0];
+	status = verify_attr_len(xdr, savep, attrlen);
+	res->bm = bitmap[0];
 
-	dprपूर्णांकk("%s bm=0x%x rd_sz=%llu wr_sz=%llu rd_io=%llu wr_io=%llu\n",
+	dprintk("%s bm=0x%x rd_sz=%llu wr_sz=%llu rd_io=%llu wr_io=%llu\n",
 		 __func__, res->bm, res->rd_sz, res->wr_sz, res->rd_io_sz,
 		res->wr_io_sz);
 xdr_error:
-	dprपूर्णांकk("%s ret=%d!\n", __func__, status);
-	वापस status;
-पूर्ण
+	dprintk("%s ret=%d!\n", __func__, status);
+	return status;
+}
 
 /*
  * Thresholds on pNFS direct I/O vrs MDS I/O
  */
-अटल पूर्णांक decode_attr_mdsthreshold(काष्ठा xdr_stream *xdr,
-				    uपूर्णांक32_t *biपंचांगap,
-				    काष्ठा nfs4_threshold *res)
-अणु
+static int decode_attr_mdsthreshold(struct xdr_stream *xdr,
+				    uint32_t *bitmap,
+				    struct nfs4_threshold *res)
+{
 	__be32 *p;
-	पूर्णांक status = 0;
-	uपूर्णांक32_t num;
+	int status = 0;
+	uint32_t num;
 
-	अगर (unlikely(biपंचांगap[2] & (FATTR4_WORD2_MDSTHRESHOLD - 1U)))
-		वापस -EIO;
-	अगर (biपंचांगap[2] & FATTR4_WORD2_MDSTHRESHOLD) अणु
-		/* Did the server वापस an unrequested attribute? */
-		अगर (unlikely(res == शून्य))
-			वापस -EREMOTEIO;
-		p = xdr_अंतरभूत_decode(xdr, 4);
-		अगर (unlikely(!p))
-			वापस -EIO;
+	if (unlikely(bitmap[2] & (FATTR4_WORD2_MDSTHRESHOLD - 1U)))
+		return -EIO;
+	if (bitmap[2] & FATTR4_WORD2_MDSTHRESHOLD) {
+		/* Did the server return an unrequested attribute? */
+		if (unlikely(res == NULL))
+			return -EREMOTEIO;
+		p = xdr_inline_decode(xdr, 4);
+		if (unlikely(!p))
+			return -EIO;
 		num = be32_to_cpup(p);
-		अगर (num == 0)
-			वापस 0;
-		अगर (num > 1)
-			prपूर्णांकk(KERN_INFO "%s: Warning: Multiple pNFS layout "
+		if (num == 0)
+			return 0;
+		if (num > 1)
+			printk(KERN_INFO "%s: Warning: Multiple pNFS layout "
 				"drivers per filesystem not supported\n",
 				__func__);
 
 		status = decode_first_threshold_item4(xdr, res);
-		biपंचांगap[2] &= ~FATTR4_WORD2_MDSTHRESHOLD;
-	पूर्ण
-	वापस status;
-पूर्ण
+		bitmap[2] &= ~FATTR4_WORD2_MDSTHRESHOLD;
+	}
+	return status;
+}
 
-अटल पूर्णांक decode_getfattr_attrs(काष्ठा xdr_stream *xdr, uपूर्णांक32_t *biपंचांगap,
-		काष्ठा nfs_fattr *fattr, काष्ठा nfs_fh *fh,
-		काष्ठा nfs4_fs_locations *fs_loc, काष्ठा nfs4_label *label,
-		स्थिर काष्ठा nfs_server *server)
-अणु
-	पूर्णांक status;
-	umode_t भ_शेषe = 0;
-	uपूर्णांक32_t type;
-	पूर्णांक32_t err;
+static int decode_getfattr_attrs(struct xdr_stream *xdr, uint32_t *bitmap,
+		struct nfs_fattr *fattr, struct nfs_fh *fh,
+		struct nfs4_fs_locations *fs_loc, struct nfs4_label *label,
+		const struct nfs_server *server)
+{
+	int status;
+	umode_t fmode = 0;
+	uint32_t type;
+	int32_t err;
 
-	status = decode_attr_type(xdr, biपंचांगap, &type);
-	अगर (status < 0)
-		जाओ xdr_error;
+	status = decode_attr_type(xdr, bitmap, &type);
+	if (status < 0)
+		goto xdr_error;
 	fattr->mode = 0;
-	अगर (status != 0) अणु
+	if (status != 0) {
 		fattr->mode |= nfs_type2fmt[type];
 		fattr->valid |= status;
-	पूर्ण
+	}
 
-	status = decode_attr_change(xdr, biपंचांगap, &fattr->change_attr);
-	अगर (status < 0)
-		जाओ xdr_error;
+	status = decode_attr_change(xdr, bitmap, &fattr->change_attr);
+	if (status < 0)
+		goto xdr_error;
 	fattr->valid |= status;
 
-	status = decode_attr_size(xdr, biपंचांगap, &fattr->size);
-	अगर (status < 0)
-		जाओ xdr_error;
+	status = decode_attr_size(xdr, bitmap, &fattr->size);
+	if (status < 0)
+		goto xdr_error;
 	fattr->valid |= status;
 
-	status = decode_attr_fsid(xdr, biपंचांगap, &fattr->fsid);
-	अगर (status < 0)
-		जाओ xdr_error;
+	status = decode_attr_fsid(xdr, bitmap, &fattr->fsid);
+	if (status < 0)
+		goto xdr_error;
 	fattr->valid |= status;
 
 	err = 0;
-	status = decode_attr_error(xdr, biपंचांगap, &err);
-	अगर (status < 0)
-		जाओ xdr_error;
+	status = decode_attr_error(xdr, bitmap, &err);
+	if (status < 0)
+		goto xdr_error;
 
-	status = decode_attr_filehandle(xdr, biपंचांगap, fh);
-	अगर (status < 0)
-		जाओ xdr_error;
+	status = decode_attr_filehandle(xdr, bitmap, fh);
+	if (status < 0)
+		goto xdr_error;
 
-	status = decode_attr_fileid(xdr, biपंचांगap, &fattr->fileid);
-	अगर (status < 0)
-		जाओ xdr_error;
+	status = decode_attr_fileid(xdr, bitmap, &fattr->fileid);
+	if (status < 0)
+		goto xdr_error;
 	fattr->valid |= status;
 
-	status = decode_attr_fs_locations(xdr, biपंचांगap, fs_loc);
-	अगर (status < 0)
-		जाओ xdr_error;
-	fattr->valid |= status;
-
-	status = -EIO;
-	अगर (unlikely(biपंचांगap[0]))
-		जाओ xdr_error;
-
-	status = decode_attr_mode(xdr, biपंचांगap, &भ_शेषe);
-	अगर (status < 0)
-		जाओ xdr_error;
-	अगर (status != 0) अणु
-		fattr->mode |= भ_शेषe;
-		fattr->valid |= status;
-	पूर्ण
-
-	status = decode_attr_nlink(xdr, biपंचांगap, &fattr->nlink);
-	अगर (status < 0)
-		जाओ xdr_error;
-	fattr->valid |= status;
-
-	status = decode_attr_owner(xdr, biपंचांगap, server, &fattr->uid, fattr->owner_name);
-	अगर (status < 0)
-		जाओ xdr_error;
-	fattr->valid |= status;
-
-	status = decode_attr_group(xdr, biपंचांगap, server, &fattr->gid, fattr->group_name);
-	अगर (status < 0)
-		जाओ xdr_error;
-	fattr->valid |= status;
-
-	status = decode_attr_rdev(xdr, biपंचांगap, &fattr->rdev);
-	अगर (status < 0)
-		जाओ xdr_error;
-	fattr->valid |= status;
-
-	status = decode_attr_space_used(xdr, biपंचांगap, &fattr->du.nfs3.used);
-	अगर (status < 0)
-		जाओ xdr_error;
-	fattr->valid |= status;
-
-	status = decode_attr_समय_access(xdr, biपंचांगap, &fattr->aसमय);
-	अगर (status < 0)
-		जाओ xdr_error;
-	fattr->valid |= status;
-
-	status = decode_attr_समय_metadata(xdr, biपंचांगap, &fattr->स_समय);
-	अगर (status < 0)
-		जाओ xdr_error;
-	fattr->valid |= status;
-
-	status = decode_attr_समय_modअगरy(xdr, biपंचांगap, &fattr->mसमय);
-	अगर (status < 0)
-		जाओ xdr_error;
-	fattr->valid |= status;
-
-	status = decode_attr_mounted_on_fileid(xdr, biपंचांगap, &fattr->mounted_on_fileid);
-	अगर (status < 0)
-		जाओ xdr_error;
+	status = decode_attr_fs_locations(xdr, bitmap, fs_loc);
+	if (status < 0)
+		goto xdr_error;
 	fattr->valid |= status;
 
 	status = -EIO;
-	अगर (unlikely(biपंचांगap[1]))
-		जाओ xdr_error;
+	if (unlikely(bitmap[0]))
+		goto xdr_error;
 
-	status = decode_attr_mdsthreshold(xdr, biपंचांगap, fattr->mdsthreshold);
-	अगर (status < 0)
-		जाओ xdr_error;
-
-	अगर (label) अणु
-		status = decode_attr_security_label(xdr, biपंचांगap, label);
-		अगर (status < 0)
-			जाओ xdr_error;
+	status = decode_attr_mode(xdr, bitmap, &fmode);
+	if (status < 0)
+		goto xdr_error;
+	if (status != 0) {
+		fattr->mode |= fmode;
 		fattr->valid |= status;
-	पूर्ण
+	}
+
+	status = decode_attr_nlink(xdr, bitmap, &fattr->nlink);
+	if (status < 0)
+		goto xdr_error;
+	fattr->valid |= status;
+
+	status = decode_attr_owner(xdr, bitmap, server, &fattr->uid, fattr->owner_name);
+	if (status < 0)
+		goto xdr_error;
+	fattr->valid |= status;
+
+	status = decode_attr_group(xdr, bitmap, server, &fattr->gid, fattr->group_name);
+	if (status < 0)
+		goto xdr_error;
+	fattr->valid |= status;
+
+	status = decode_attr_rdev(xdr, bitmap, &fattr->rdev);
+	if (status < 0)
+		goto xdr_error;
+	fattr->valid |= status;
+
+	status = decode_attr_space_used(xdr, bitmap, &fattr->du.nfs3.used);
+	if (status < 0)
+		goto xdr_error;
+	fattr->valid |= status;
+
+	status = decode_attr_time_access(xdr, bitmap, &fattr->atime);
+	if (status < 0)
+		goto xdr_error;
+	fattr->valid |= status;
+
+	status = decode_attr_time_metadata(xdr, bitmap, &fattr->ctime);
+	if (status < 0)
+		goto xdr_error;
+	fattr->valid |= status;
+
+	status = decode_attr_time_modify(xdr, bitmap, &fattr->mtime);
+	if (status < 0)
+		goto xdr_error;
+	fattr->valid |= status;
+
+	status = decode_attr_mounted_on_fileid(xdr, bitmap, &fattr->mounted_on_fileid);
+	if (status < 0)
+		goto xdr_error;
+	fattr->valid |= status;
+
+	status = -EIO;
+	if (unlikely(bitmap[1]))
+		goto xdr_error;
+
+	status = decode_attr_mdsthreshold(xdr, bitmap, fattr->mdsthreshold);
+	if (status < 0)
+		goto xdr_error;
+
+	if (label) {
+		status = decode_attr_security_label(xdr, bitmap, label);
+		if (status < 0)
+			goto xdr_error;
+		fattr->valid |= status;
+	}
 
 xdr_error:
-	dprपूर्णांकk("%s: xdr returned %d\n", __func__, -status);
-	वापस status;
-पूर्ण
+	dprintk("%s: xdr returned %d\n", __func__, -status);
+	return status;
+}
 
-अटल पूर्णांक decode_getfattr_generic(काष्ठा xdr_stream *xdr, काष्ठा nfs_fattr *fattr,
-		काष्ठा nfs_fh *fh, काष्ठा nfs4_fs_locations *fs_loc,
-		काष्ठा nfs4_label *label, स्थिर काष्ठा nfs_server *server)
-अणु
-	अचिन्हित पूर्णांक savep;
-	uपूर्णांक32_t attrlen,
-		 biपंचांगap[3] = अणु0पूर्ण;
-	पूर्णांक status;
+static int decode_getfattr_generic(struct xdr_stream *xdr, struct nfs_fattr *fattr,
+		struct nfs_fh *fh, struct nfs4_fs_locations *fs_loc,
+		struct nfs4_label *label, const struct nfs_server *server)
+{
+	unsigned int savep;
+	uint32_t attrlen,
+		 bitmap[3] = {0};
+	int status;
 
 	status = decode_op_hdr(xdr, OP_GETATTR);
-	अगर (status < 0)
-		जाओ xdr_error;
+	if (status < 0)
+		goto xdr_error;
 
-	status = decode_attr_biपंचांगap(xdr, biपंचांगap);
-	अगर (status < 0)
-		जाओ xdr_error;
+	status = decode_attr_bitmap(xdr, bitmap);
+	if (status < 0)
+		goto xdr_error;
 
 	status = decode_attr_length(xdr, &attrlen, &savep);
-	अगर (status < 0)
-		जाओ xdr_error;
+	if (status < 0)
+		goto xdr_error;
 
-	status = decode_getfattr_attrs(xdr, biपंचांगap, fattr, fh, fs_loc,
+	status = decode_getfattr_attrs(xdr, bitmap, fattr, fh, fs_loc,
 					label, server);
-	अगर (status < 0)
-		जाओ xdr_error;
+	if (status < 0)
+		goto xdr_error;
 
-	status = verअगरy_attr_len(xdr, savep, attrlen);
+	status = verify_attr_len(xdr, savep, attrlen);
 xdr_error:
-	dprपूर्णांकk("%s: xdr returned %d\n", __func__, -status);
-	वापस status;
-पूर्ण
+	dprintk("%s: xdr returned %d\n", __func__, -status);
+	return status;
+}
 
-अटल पूर्णांक decode_getfattr_label(काष्ठा xdr_stream *xdr, काष्ठा nfs_fattr *fattr,
-		काष्ठा nfs4_label *label, स्थिर काष्ठा nfs_server *server)
-अणु
-	वापस decode_getfattr_generic(xdr, fattr, शून्य, शून्य, label, server);
-पूर्ण
+static int decode_getfattr_label(struct xdr_stream *xdr, struct nfs_fattr *fattr,
+		struct nfs4_label *label, const struct nfs_server *server)
+{
+	return decode_getfattr_generic(xdr, fattr, NULL, NULL, label, server);
+}
 
-अटल पूर्णांक decode_getfattr(काष्ठा xdr_stream *xdr, काष्ठा nfs_fattr *fattr,
-		स्थिर काष्ठा nfs_server *server)
-अणु
-	वापस decode_getfattr_generic(xdr, fattr, शून्य, शून्य, शून्य, server);
-पूर्ण
+static int decode_getfattr(struct xdr_stream *xdr, struct nfs_fattr *fattr,
+		const struct nfs_server *server)
+{
+	return decode_getfattr_generic(xdr, fattr, NULL, NULL, NULL, server);
+}
 
 /*
  * Decode potentially multiple layout types.
  */
-अटल पूर्णांक decode_pnfs_layout_types(काष्ठा xdr_stream *xdr,
-				    काष्ठा nfs_fsinfo *fsinfo)
-अणु
+static int decode_pnfs_layout_types(struct xdr_stream *xdr,
+				    struct nfs_fsinfo *fsinfo)
+{
 	__be32 *p;
-	uपूर्णांक32_t i;
+	uint32_t i;
 
-	p = xdr_अंतरभूत_decode(xdr, 4);
-	अगर (unlikely(!p))
-		वापस -EIO;
+	p = xdr_inline_decode(xdr, 4);
+	if (unlikely(!p))
+		return -EIO;
 	fsinfo->nlayouttypes = be32_to_cpup(p);
 
-	/* pNFS is not supported by the underlying file प्रणाली */
-	अगर (fsinfo->nlayouttypes == 0)
-		वापस 0;
+	/* pNFS is not supported by the underlying file system */
+	if (fsinfo->nlayouttypes == 0)
+		return 0;
 
 	/* Decode and set first layout type, move xdr->p past unused types */
-	p = xdr_अंतरभूत_decode(xdr, fsinfo->nlayouttypes * 4);
-	अगर (unlikely(!p))
-		वापस -EIO;
+	p = xdr_inline_decode(xdr, fsinfo->nlayouttypes * 4);
+	if (unlikely(!p))
+		return -EIO;
 
 	/* If we get too many, then just cap it at the max */
-	अगर (fsinfo->nlayouttypes > NFS_MAX_LAYOUT_TYPES) अणु
-		prपूर्णांकk(KERN_INFO "NFS: %s: Warning: Too many (%u) pNFS layout types\n",
+	if (fsinfo->nlayouttypes > NFS_MAX_LAYOUT_TYPES) {
+		printk(KERN_INFO "NFS: %s: Warning: Too many (%u) pNFS layout types\n",
 			__func__, fsinfo->nlayouttypes);
 		fsinfo->nlayouttypes = NFS_MAX_LAYOUT_TYPES;
-	पूर्ण
+	}
 
-	क्रम(i = 0; i < fsinfo->nlayouttypes; ++i)
+	for(i = 0; i < fsinfo->nlayouttypes; ++i)
 		fsinfo->layouttype[i] = be32_to_cpup(p++);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * The type of file प्रणाली exported.
- * Note we must ensure that layouttype is set in any non-error हाल.
+ * The type of file system exported.
+ * Note we must ensure that layouttype is set in any non-error case.
  */
-अटल पूर्णांक decode_attr_pnfstype(काष्ठा xdr_stream *xdr, uपूर्णांक32_t *biपंचांगap,
-				काष्ठा nfs_fsinfo *fsinfo)
-अणु
-	पूर्णांक status = 0;
+static int decode_attr_pnfstype(struct xdr_stream *xdr, uint32_t *bitmap,
+				struct nfs_fsinfo *fsinfo)
+{
+	int status = 0;
 
-	dprपूर्णांकk("%s: bitmap is %x\n", __func__, biपंचांगap[1]);
-	अगर (unlikely(biपंचांगap[1] & (FATTR4_WORD1_FS_LAYOUT_TYPES - 1U)))
-		वापस -EIO;
-	अगर (biपंचांगap[1] & FATTR4_WORD1_FS_LAYOUT_TYPES) अणु
+	dprintk("%s: bitmap is %x\n", __func__, bitmap[1]);
+	if (unlikely(bitmap[1] & (FATTR4_WORD1_FS_LAYOUT_TYPES - 1U)))
+		return -EIO;
+	if (bitmap[1] & FATTR4_WORD1_FS_LAYOUT_TYPES) {
 		status = decode_pnfs_layout_types(xdr, fsinfo);
-		biपंचांगap[1] &= ~FATTR4_WORD1_FS_LAYOUT_TYPES;
-	पूर्ण
-	वापस status;
-पूर्ण
+		bitmap[1] &= ~FATTR4_WORD1_FS_LAYOUT_TYPES;
+	}
+	return status;
+}
 
 /*
- * The prefered block size क्रम layout directed io
+ * The prefered block size for layout directed io
  */
-अटल पूर्णांक decode_attr_layout_blksize(काष्ठा xdr_stream *xdr, uपूर्णांक32_t *biपंचांगap,
-				      uपूर्णांक32_t *res)
-अणु
+static int decode_attr_layout_blksize(struct xdr_stream *xdr, uint32_t *bitmap,
+				      uint32_t *res)
+{
 	__be32 *p;
 
-	dprपूर्णांकk("%s: bitmap is %x\n", __func__, biपंचांगap[2]);
+	dprintk("%s: bitmap is %x\n", __func__, bitmap[2]);
 	*res = 0;
-	अगर (biपंचांगap[2] & FATTR4_WORD2_LAYOUT_BLKSIZE) अणु
-		p = xdr_अंतरभूत_decode(xdr, 4);
-		अगर (unlikely(!p))
-			वापस -EIO;
+	if (bitmap[2] & FATTR4_WORD2_LAYOUT_BLKSIZE) {
+		p = xdr_inline_decode(xdr, 4);
+		if (unlikely(!p))
+			return -EIO;
 		*res = be32_to_cpup(p);
-		biपंचांगap[2] &= ~FATTR4_WORD2_LAYOUT_BLKSIZE;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		bitmap[2] &= ~FATTR4_WORD2_LAYOUT_BLKSIZE;
+	}
+	return 0;
+}
 
 /*
  * The granularity of a CLONE operation.
  */
-अटल पूर्णांक decode_attr_clone_blksize(काष्ठा xdr_stream *xdr, uपूर्णांक32_t *biपंचांगap,
-				     uपूर्णांक32_t *res)
-अणु
+static int decode_attr_clone_blksize(struct xdr_stream *xdr, uint32_t *bitmap,
+				     uint32_t *res)
+{
 	__be32 *p;
 
-	dprपूर्णांकk("%s: bitmap is %x\n", __func__, biपंचांगap[2]);
+	dprintk("%s: bitmap is %x\n", __func__, bitmap[2]);
 	*res = 0;
-	अगर (biपंचांगap[2] & FATTR4_WORD2_CLONE_BLKSIZE) अणु
-		p = xdr_अंतरभूत_decode(xdr, 4);
-		अगर (unlikely(!p))
-			वापस -EIO;
+	if (bitmap[2] & FATTR4_WORD2_CLONE_BLKSIZE) {
+		p = xdr_inline_decode(xdr, 4);
+		if (unlikely(!p))
+			return -EIO;
 		*res = be32_to_cpup(p);
-		biपंचांगap[2] &= ~FATTR4_WORD2_CLONE_BLKSIZE;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		bitmap[2] &= ~FATTR4_WORD2_CLONE_BLKSIZE;
+	}
+	return 0;
+}
 
-अटल पूर्णांक decode_attr_change_attr_type(काष्ठा xdr_stream *xdr,
-					uपूर्णांक32_t *biपंचांगap,
-					क्रमागत nfs4_change_attr_type *res)
-अणु
-	u32 पंचांगp = NFS4_CHANGE_TYPE_IS_UNDEFINED;
+static int decode_attr_change_attr_type(struct xdr_stream *xdr,
+					uint32_t *bitmap,
+					enum nfs4_change_attr_type *res)
+{
+	u32 tmp = NFS4_CHANGE_TYPE_IS_UNDEFINED;
 
-	dprपूर्णांकk("%s: bitmap is %x\n", __func__, biपंचांगap[2]);
-	अगर (biपंचांगap[2] & FATTR4_WORD2_CHANGE_ATTR_TYPE) अणु
-		अगर (xdr_stream_decode_u32(xdr, &पंचांगp))
-			वापस -EIO;
-		biपंचांगap[2] &= ~FATTR4_WORD2_CHANGE_ATTR_TYPE;
-	पूर्ण
+	dprintk("%s: bitmap is %x\n", __func__, bitmap[2]);
+	if (bitmap[2] & FATTR4_WORD2_CHANGE_ATTR_TYPE) {
+		if (xdr_stream_decode_u32(xdr, &tmp))
+			return -EIO;
+		bitmap[2] &= ~FATTR4_WORD2_CHANGE_ATTR_TYPE;
+	}
 
-	चयन(पंचांगp) अणु
-	हाल NFS4_CHANGE_TYPE_IS_MONOTONIC_INCR:
-	हाल NFS4_CHANGE_TYPE_IS_VERSION_COUNTER:
-	हाल NFS4_CHANGE_TYPE_IS_VERSION_COUNTER_NOPNFS:
-	हाल NFS4_CHANGE_TYPE_IS_TIME_METADATA:
-		*res = पंचांगp;
-		अवरोध;
-	शेष:
+	switch(tmp) {
+	case NFS4_CHANGE_TYPE_IS_MONOTONIC_INCR:
+	case NFS4_CHANGE_TYPE_IS_VERSION_COUNTER:
+	case NFS4_CHANGE_TYPE_IS_VERSION_COUNTER_NOPNFS:
+	case NFS4_CHANGE_TYPE_IS_TIME_METADATA:
+		*res = tmp;
+		break;
+	default:
 		*res = NFS4_CHANGE_TYPE_IS_UNDEFINED;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक decode_fsinfo(काष्ठा xdr_stream *xdr, काष्ठा nfs_fsinfo *fsinfo)
-अणु
-	अचिन्हित पूर्णांक savep;
-	uपूर्णांक32_t attrlen, biपंचांगap[3];
-	पूर्णांक status;
+static int decode_fsinfo(struct xdr_stream *xdr, struct nfs_fsinfo *fsinfo)
+{
+	unsigned int savep;
+	uint32_t attrlen, bitmap[3];
+	int status;
 
-	अगर ((status = decode_op_hdr(xdr, OP_GETATTR)) != 0)
-		जाओ xdr_error;
-	अगर ((status = decode_attr_biपंचांगap(xdr, biपंचांगap)) != 0)
-		जाओ xdr_error;
-	अगर ((status = decode_attr_length(xdr, &attrlen, &savep)) != 0)
-		जाओ xdr_error;
+	if ((status = decode_op_hdr(xdr, OP_GETATTR)) != 0)
+		goto xdr_error;
+	if ((status = decode_attr_bitmap(xdr, bitmap)) != 0)
+		goto xdr_error;
+	if ((status = decode_attr_length(xdr, &attrlen, &savep)) != 0)
+		goto xdr_error;
 
-	fsinfo->rपंचांगult = fsinfo->wपंचांगult = 512;	/* ??? */
+	fsinfo->rtmult = fsinfo->wtmult = 512;	/* ??? */
 
-	अगर ((status = decode_attr_lease_समय(xdr, biपंचांगap, &fsinfo->lease_समय)) != 0)
-		जाओ xdr_error;
-	अगर ((status = decode_attr_maxfilesize(xdr, biपंचांगap, &fsinfo->maxfilesize)) != 0)
-		जाओ xdr_error;
-	अगर ((status = decode_attr_maxपढ़ो(xdr, biपंचांगap, &fsinfo->rपंचांगax)) != 0)
-		जाओ xdr_error;
-	fsinfo->rtpref = fsinfo->dtpref = fsinfo->rपंचांगax;
-	अगर ((status = decode_attr_maxग_लिखो(xdr, biपंचांगap, &fsinfo->wपंचांगax)) != 0)
-		जाओ xdr_error;
-	fsinfo->wtpref = fsinfo->wपंचांगax;
-
-	status = -EIO;
-	अगर (unlikely(biपंचांगap[0]))
-		जाओ xdr_error;
-
-	status = decode_attr_समय_delta(xdr, biपंचांगap, &fsinfo->समय_delta);
-	अगर (status != 0)
-		जाओ xdr_error;
-	status = decode_attr_pnfstype(xdr, biपंचांगap, fsinfo);
-	अगर (status != 0)
-		जाओ xdr_error;
+	if ((status = decode_attr_lease_time(xdr, bitmap, &fsinfo->lease_time)) != 0)
+		goto xdr_error;
+	if ((status = decode_attr_maxfilesize(xdr, bitmap, &fsinfo->maxfilesize)) != 0)
+		goto xdr_error;
+	if ((status = decode_attr_maxread(xdr, bitmap, &fsinfo->rtmax)) != 0)
+		goto xdr_error;
+	fsinfo->rtpref = fsinfo->dtpref = fsinfo->rtmax;
+	if ((status = decode_attr_maxwrite(xdr, bitmap, &fsinfo->wtmax)) != 0)
+		goto xdr_error;
+	fsinfo->wtpref = fsinfo->wtmax;
 
 	status = -EIO;
-	अगर (unlikely(biपंचांगap[1]))
-		जाओ xdr_error;
+	if (unlikely(bitmap[0]))
+		goto xdr_error;
 
-	status = decode_attr_layout_blksize(xdr, biपंचांगap, &fsinfo->blksize);
-	अगर (status)
-		जाओ xdr_error;
-	status = decode_attr_clone_blksize(xdr, biपंचांगap, &fsinfo->clone_blksize);
-	अगर (status)
-		जाओ xdr_error;
+	status = decode_attr_time_delta(xdr, bitmap, &fsinfo->time_delta);
+	if (status != 0)
+		goto xdr_error;
+	status = decode_attr_pnfstype(xdr, bitmap, fsinfo);
+	if (status != 0)
+		goto xdr_error;
 
-	status = decode_attr_change_attr_type(xdr, biपंचांगap,
+	status = -EIO;
+	if (unlikely(bitmap[1]))
+		goto xdr_error;
+
+	status = decode_attr_layout_blksize(xdr, bitmap, &fsinfo->blksize);
+	if (status)
+		goto xdr_error;
+	status = decode_attr_clone_blksize(xdr, bitmap, &fsinfo->clone_blksize);
+	if (status)
+		goto xdr_error;
+
+	status = decode_attr_change_attr_type(xdr, bitmap,
 					      &fsinfo->change_attr_type);
-	अगर (status)
-		जाओ xdr_error;
+	if (status)
+		goto xdr_error;
 
-	status = decode_attr_xattrsupport(xdr, biपंचांगap,
+	status = decode_attr_xattrsupport(xdr, bitmap,
 					  &fsinfo->xattr_support);
-	अगर (status)
-		जाओ xdr_error;
+	if (status)
+		goto xdr_error;
 
-	status = verअगरy_attr_len(xdr, savep, attrlen);
+	status = verify_attr_len(xdr, savep, attrlen);
 xdr_error:
-	dprपूर्णांकk("%s: xdr returned %d!\n", __func__, -status);
-	वापस status;
-पूर्ण
+	dprintk("%s: xdr returned %d!\n", __func__, -status);
+	return status;
+}
 
-अटल पूर्णांक decode_getfh(काष्ठा xdr_stream *xdr, काष्ठा nfs_fh *fh)
-अणु
+static int decode_getfh(struct xdr_stream *xdr, struct nfs_fh *fh)
+{
 	__be32 *p;
-	uपूर्णांक32_t len;
-	पूर्णांक status;
+	uint32_t len;
+	int status;
 
 	/* Zero handle first to allow comparisons */
-	स_रखो(fh, 0, माप(*fh));
+	memset(fh, 0, sizeof(*fh));
 
 	status = decode_op_hdr(xdr, OP_GETFH);
-	अगर (status)
-		वापस status;
+	if (status)
+		return status;
 
-	p = xdr_अंतरभूत_decode(xdr, 4);
-	अगर (unlikely(!p))
-		वापस -EIO;
+	p = xdr_inline_decode(xdr, 4);
+	if (unlikely(!p))
+		return -EIO;
 	len = be32_to_cpup(p);
-	अगर (len > NFS4_FHSIZE || len == 0) अणु
+	if (len > NFS4_FHSIZE || len == 0) {
 		trace_nfs4_xdr_bad_filehandle(xdr, OP_GETFH, NFS4ERR_BADHANDLE);
-		वापस -EREMOTEIO;
-	पूर्ण
+		return -EREMOTEIO;
+	}
 	fh->size = len;
-	p = xdr_अंतरभूत_decode(xdr, len);
-	अगर (unlikely(!p))
-		वापस -EIO;
-	स_नकल(fh->data, p, len);
-	वापस 0;
-पूर्ण
+	p = xdr_inline_decode(xdr, len);
+	if (unlikely(!p))
+		return -EIO;
+	memcpy(fh->data, p, len);
+	return 0;
+}
 
-अटल पूर्णांक decode_link(काष्ठा xdr_stream *xdr, काष्ठा nfs4_change_info *cinfo)
-अणु
-	पूर्णांक status;
+static int decode_link(struct xdr_stream *xdr, struct nfs4_change_info *cinfo)
+{
+	int status;
 
 	status = decode_op_hdr(xdr, OP_LINK);
-	अगर (status)
-		वापस status;
-	वापस decode_change_info(xdr, cinfo);
-पूर्ण
+	if (status)
+		return status;
+	return decode_change_info(xdr, cinfo);
+}
 
 /*
  * We create the owner, so we know a proper owner.id length is 4.
  */
-अटल पूर्णांक decode_lock_denied (काष्ठा xdr_stream *xdr, काष्ठा file_lock *fl)
-अणु
-	uपूर्णांक64_t offset, length, clientid;
+static int decode_lock_denied (struct xdr_stream *xdr, struct file_lock *fl)
+{
+	uint64_t offset, length, clientid;
 	__be32 *p;
-	uपूर्णांक32_t namelen, type;
+	uint32_t namelen, type;
 
-	p = xdr_अंतरभूत_decode(xdr, 32); /* पढ़ो 32 bytes */
-	अगर (unlikely(!p))
-		वापस -EIO;
-	p = xdr_decode_hyper(p, &offset); /* पढ़ो 2 8-byte दीर्घ words */
+	p = xdr_inline_decode(xdr, 32); /* read 32 bytes */
+	if (unlikely(!p))
+		return -EIO;
+	p = xdr_decode_hyper(p, &offset); /* read 2 8-byte long words */
 	p = xdr_decode_hyper(p, &length);
-	type = be32_to_cpup(p++); /* 4 byte पढ़ो */
-	अगर (fl != शून्य) अणु /* manipulate file lock */
+	type = be32_to_cpup(p++); /* 4 byte read */
+	if (fl != NULL) { /* manipulate file lock */
 		fl->fl_start = (loff_t)offset;
 		fl->fl_end = fl->fl_start + (loff_t)length - 1;
-		अगर (length == ~(uपूर्णांक64_t)0)
+		if (length == ~(uint64_t)0)
 			fl->fl_end = OFFSET_MAX;
 		fl->fl_type = F_WRLCK;
-		अगर (type & 1)
+		if (type & 1)
 			fl->fl_type = F_RDLCK;
 		fl->fl_pid = 0;
-	पूर्ण
-	p = xdr_decode_hyper(p, &clientid); /* पढ़ो 8 bytes */
-	namelen = be32_to_cpup(p); /* पढ़ो 4 bytes */  /* have पढ़ो all 32 bytes now */
-	p = xdr_अंतरभूत_decode(xdr, namelen); /* variable size field */
-	अगर (likely(!p))
-		वापस -EIO;
-	वापस -NFS4ERR_DENIED;
-पूर्ण
+	}
+	p = xdr_decode_hyper(p, &clientid); /* read 8 bytes */
+	namelen = be32_to_cpup(p); /* read 4 bytes */  /* have read all 32 bytes now */
+	p = xdr_inline_decode(xdr, namelen); /* variable size field */
+	if (likely(!p))
+		return -EIO;
+	return -NFS4ERR_DENIED;
+}
 
-अटल पूर्णांक decode_lock(काष्ठा xdr_stream *xdr, काष्ठा nfs_lock_res *res)
-अणु
-	पूर्णांक status;
+static int decode_lock(struct xdr_stream *xdr, struct nfs_lock_res *res)
+{
+	int status;
 
 	status = decode_op_hdr(xdr, OP_LOCK);
-	अगर (status == -EIO)
-		जाओ out;
-	अगर (status == 0) अणु
+	if (status == -EIO)
+		goto out;
+	if (status == 0) {
 		status = decode_lock_stateid(xdr, &res->stateid);
-		अगर (unlikely(status))
-			जाओ out;
-	पूर्ण अन्यथा अगर (status == -NFS4ERR_DENIED)
-		status = decode_lock_denied(xdr, शून्य);
-	अगर (res->खोलो_seqid != शून्य)
-		nfs_increment_खोलो_seqid(status, res->खोलो_seqid);
+		if (unlikely(status))
+			goto out;
+	} else if (status == -NFS4ERR_DENIED)
+		status = decode_lock_denied(xdr, NULL);
+	if (res->open_seqid != NULL)
+		nfs_increment_open_seqid(status, res->open_seqid);
 	nfs_increment_lock_seqid(status, res->lock_seqid);
 out:
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक decode_lockt(काष्ठा xdr_stream *xdr, काष्ठा nfs_lockt_res *res)
-अणु
-	पूर्णांक status;
+static int decode_lockt(struct xdr_stream *xdr, struct nfs_lockt_res *res)
+{
+	int status;
 	status = decode_op_hdr(xdr, OP_LOCKT);
-	अगर (status == -NFS4ERR_DENIED)
-		वापस decode_lock_denied(xdr, res->denied);
-	वापस status;
-पूर्ण
+	if (status == -NFS4ERR_DENIED)
+		return decode_lock_denied(xdr, res->denied);
+	return status;
+}
 
-अटल पूर्णांक decode_locku(काष्ठा xdr_stream *xdr, काष्ठा nfs_locku_res *res)
-अणु
-	पूर्णांक status;
+static int decode_locku(struct xdr_stream *xdr, struct nfs_locku_res *res)
+{
+	int status;
 
 	status = decode_op_hdr(xdr, OP_LOCKU);
-	अगर (status != -EIO)
+	if (status != -EIO)
 		nfs_increment_lock_seqid(status, res->seqid);
-	अगर (status == 0)
+	if (status == 0)
 		status = decode_lock_stateid(xdr, &res->stateid);
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक decode_release_lockowner(काष्ठा xdr_stream *xdr)
-अणु
-	वापस decode_op_hdr(xdr, OP_RELEASE_LOCKOWNER);
-पूर्ण
+static int decode_release_lockowner(struct xdr_stream *xdr)
+{
+	return decode_op_hdr(xdr, OP_RELEASE_LOCKOWNER);
+}
 
-अटल पूर्णांक decode_lookup(काष्ठा xdr_stream *xdr)
-अणु
-	वापस decode_op_hdr(xdr, OP_LOOKUP);
-पूर्ण
+static int decode_lookup(struct xdr_stream *xdr)
+{
+	return decode_op_hdr(xdr, OP_LOOKUP);
+}
 
-अटल पूर्णांक decode_lookupp(काष्ठा xdr_stream *xdr)
-अणु
-	वापस decode_op_hdr(xdr, OP_LOOKUPP);
-पूर्ण
+static int decode_lookupp(struct xdr_stream *xdr)
+{
+	return decode_op_hdr(xdr, OP_LOOKUPP);
+}
 
 /* This is too sick! */
-अटल पूर्णांक decode_space_limit(काष्ठा xdr_stream *xdr,
-		अचिन्हित दीर्घ *pagemod_limit)
-अणु
+static int decode_space_limit(struct xdr_stream *xdr,
+		unsigned long *pagemod_limit)
+{
 	__be32 *p;
-	uपूर्णांक32_t limit_type, nblocks, blocksize;
+	uint32_t limit_type, nblocks, blocksize;
 	u64 maxsize = 0;
 
-	p = xdr_अंतरभूत_decode(xdr, 12);
-	अगर (unlikely(!p))
-		वापस -EIO;
+	p = xdr_inline_decode(xdr, 12);
+	if (unlikely(!p))
+		return -EIO;
 	limit_type = be32_to_cpup(p++);
-	चयन (limit_type) अणु
-	हाल NFS4_LIMIT_SIZE:
+	switch (limit_type) {
+	case NFS4_LIMIT_SIZE:
 		xdr_decode_hyper(p, &maxsize);
-		अवरोध;
-	हाल NFS4_LIMIT_BLOCKS:
+		break;
+	case NFS4_LIMIT_BLOCKS:
 		nblocks = be32_to_cpup(p++);
 		blocksize = be32_to_cpup(p);
-		maxsize = (uपूर्णांक64_t)nblocks * (uपूर्णांक64_t)blocksize;
-	पूर्ण
+		maxsize = (uint64_t)nblocks * (uint64_t)blocksize;
+	}
 	maxsize >>= PAGE_SHIFT;
-	*pagemod_limit = min_t(u64, maxsize, अच_दीर्घ_उच्च);
-	वापस 0;
-पूर्ण
+	*pagemod_limit = min_t(u64, maxsize, ULONG_MAX);
+	return 0;
+}
 
-अटल पूर्णांक decode_rw_delegation(काष्ठा xdr_stream *xdr,
-		uपूर्णांक32_t delegation_type,
-		काष्ठा nfs_खोलोres *res)
-अणु
+static int decode_rw_delegation(struct xdr_stream *xdr,
+		uint32_t delegation_type,
+		struct nfs_openres *res)
+{
 	__be32 *p;
-	पूर्णांक status;
+	int status;
 
 	status = decode_delegation_stateid(xdr, &res->delegation);
-	अगर (unlikely(status))
-		वापस status;
-	p = xdr_अंतरभूत_decode(xdr, 4);
-	अगर (unlikely(!p))
-		वापस -EIO;
-	res->करो_recall = be32_to_cpup(p);
+	if (unlikely(status))
+		return status;
+	p = xdr_inline_decode(xdr, 4);
+	if (unlikely(!p))
+		return -EIO;
+	res->do_recall = be32_to_cpup(p);
 
-	चयन (delegation_type) अणु
-	हाल NFS4_OPEN_DELEGATE_READ:
+	switch (delegation_type) {
+	case NFS4_OPEN_DELEGATE_READ:
 		res->delegation_type = FMODE_READ;
-		अवरोध;
-	हाल NFS4_OPEN_DELEGATE_WRITE:
+		break;
+	case NFS4_OPEN_DELEGATE_WRITE:
 		res->delegation_type = FMODE_WRITE|FMODE_READ;
-		अगर (decode_space_limit(xdr, &res->pagemod_limit) < 0)
-				वापस -EIO;
-	पूर्ण
-	वापस decode_ace(xdr, शून्य);
-पूर्ण
+		if (decode_space_limit(xdr, &res->pagemod_limit) < 0)
+				return -EIO;
+	}
+	return decode_ace(xdr, NULL);
+}
 
-अटल पूर्णांक decode_no_delegation(काष्ठा xdr_stream *xdr, काष्ठा nfs_खोलोres *res)
-अणु
+static int decode_no_delegation(struct xdr_stream *xdr, struct nfs_openres *res)
+{
 	__be32 *p;
-	uपूर्णांक32_t why_no_delegation;
+	uint32_t why_no_delegation;
 
-	p = xdr_अंतरभूत_decode(xdr, 4);
-	अगर (unlikely(!p))
-		वापस -EIO;
+	p = xdr_inline_decode(xdr, 4);
+	if (unlikely(!p))
+		return -EIO;
 	why_no_delegation = be32_to_cpup(p);
-	चयन (why_no_delegation) अणु
-		हाल WND4_CONTENTION:
-		हाल WND4_RESOURCE:
-			xdr_अंतरभूत_decode(xdr, 4);
-			/* Ignore क्रम now */
-	पूर्ण
-	वापस 0;
-पूर्ण
+	switch (why_no_delegation) {
+		case WND4_CONTENTION:
+		case WND4_RESOURCE:
+			xdr_inline_decode(xdr, 4);
+			/* Ignore for now */
+	}
+	return 0;
+}
 
-अटल पूर्णांक decode_delegation(काष्ठा xdr_stream *xdr, काष्ठा nfs_खोलोres *res)
-अणु
+static int decode_delegation(struct xdr_stream *xdr, struct nfs_openres *res)
+{
 	__be32 *p;
-	uपूर्णांक32_t delegation_type;
+	uint32_t delegation_type;
 
-	p = xdr_अंतरभूत_decode(xdr, 4);
-	अगर (unlikely(!p))
-		वापस -EIO;
+	p = xdr_inline_decode(xdr, 4);
+	if (unlikely(!p))
+		return -EIO;
 	delegation_type = be32_to_cpup(p);
 	res->delegation_type = 0;
-	चयन (delegation_type) अणु
-	हाल NFS4_OPEN_DELEGATE_NONE:
-		वापस 0;
-	हाल NFS4_OPEN_DELEGATE_READ:
-	हाल NFS4_OPEN_DELEGATE_WRITE:
-		वापस decode_rw_delegation(xdr, delegation_type, res);
-	हाल NFS4_OPEN_DELEGATE_NONE_EXT:
-		वापस decode_no_delegation(xdr, res);
-	पूर्ण
-	वापस -EIO;
-पूर्ण
+	switch (delegation_type) {
+	case NFS4_OPEN_DELEGATE_NONE:
+		return 0;
+	case NFS4_OPEN_DELEGATE_READ:
+	case NFS4_OPEN_DELEGATE_WRITE:
+		return decode_rw_delegation(xdr, delegation_type, res);
+	case NFS4_OPEN_DELEGATE_NONE_EXT:
+		return decode_no_delegation(xdr, res);
+	}
+	return -EIO;
+}
 
-अटल पूर्णांक decode_खोलो(काष्ठा xdr_stream *xdr, काष्ठा nfs_खोलोres *res)
-अणु
+static int decode_open(struct xdr_stream *xdr, struct nfs_openres *res)
+{
 	__be32 *p;
-	uपूर्णांक32_t savewords, bmlen, i;
-	पूर्णांक status;
+	uint32_t savewords, bmlen, i;
+	int status;
 
-	अगर (!__decode_op_hdr(xdr, OP_OPEN, &status))
-		वापस status;
-	nfs_increment_खोलो_seqid(status, res->seqid);
-	अगर (status)
-		वापस status;
-	status = decode_खोलो_stateid(xdr, &res->stateid);
-	अगर (unlikely(status))
-		वापस status;
+	if (!__decode_op_hdr(xdr, OP_OPEN, &status))
+		return status;
+	nfs_increment_open_seqid(status, res->seqid);
+	if (status)
+		return status;
+	status = decode_open_stateid(xdr, &res->stateid);
+	if (unlikely(status))
+		return status;
 
 	decode_change_info(xdr, &res->cinfo);
 
-	p = xdr_अंतरभूत_decode(xdr, 8);
-	अगर (unlikely(!p))
-		वापस -EIO;
+	p = xdr_inline_decode(xdr, 8);
+	if (unlikely(!p))
+		return -EIO;
 	res->rflags = be32_to_cpup(p++);
 	bmlen = be32_to_cpup(p);
-	अगर (bmlen > 10)
-		जाओ xdr_error;
+	if (bmlen > 10)
+		goto xdr_error;
 
-	p = xdr_अंतरभूत_decode(xdr, bmlen << 2);
-	अगर (unlikely(!p))
-		वापस -EIO;
-	savewords = min_t(uपूर्णांक32_t, bmlen, NFS4_BITMAP_SIZE);
-	क्रम (i = 0; i < savewords; ++i)
+	p = xdr_inline_decode(xdr, bmlen << 2);
+	if (unlikely(!p))
+		return -EIO;
+	savewords = min_t(uint32_t, bmlen, NFS4_BITMAP_SIZE);
+	for (i = 0; i < savewords; ++i)
 		res->attrset[i] = be32_to_cpup(p++);
-	क्रम (; i < NFS4_BITMAP_SIZE; i++)
+	for (; i < NFS4_BITMAP_SIZE; i++)
 		res->attrset[i] = 0;
 
-	वापस decode_delegation(xdr, res);
+	return decode_delegation(xdr, res);
 xdr_error:
-	dprपूर्णांकk("%s: Bitmap too large! Length = %u\n", __func__, bmlen);
-	वापस -EIO;
-पूर्ण
+	dprintk("%s: Bitmap too large! Length = %u\n", __func__, bmlen);
+	return -EIO;
+}
 
-अटल पूर्णांक decode_खोलो_confirm(काष्ठा xdr_stream *xdr, काष्ठा nfs_खोलो_confirmres *res)
-अणु
-	पूर्णांक status;
+static int decode_open_confirm(struct xdr_stream *xdr, struct nfs_open_confirmres *res)
+{
+	int status;
 
 	status = decode_op_hdr(xdr, OP_OPEN_CONFIRM);
-	अगर (status != -EIO)
-		nfs_increment_खोलो_seqid(status, res->seqid);
-	अगर (!status)
-		status = decode_खोलो_stateid(xdr, &res->stateid);
-	वापस status;
-पूर्ण
+	if (status != -EIO)
+		nfs_increment_open_seqid(status, res->seqid);
+	if (!status)
+		status = decode_open_stateid(xdr, &res->stateid);
+	return status;
+}
 
-अटल पूर्णांक decode_खोलो_करोwngrade(काष्ठा xdr_stream *xdr, काष्ठा nfs_बंदres *res)
-अणु
-	पूर्णांक status;
+static int decode_open_downgrade(struct xdr_stream *xdr, struct nfs_closeres *res)
+{
+	int status;
 
 	status = decode_op_hdr(xdr, OP_OPEN_DOWNGRADE);
-	अगर (status != -EIO)
-		nfs_increment_खोलो_seqid(status, res->seqid);
-	अगर (!status)
-		status = decode_खोलो_stateid(xdr, &res->stateid);
-	वापस status;
-पूर्ण
+	if (status != -EIO)
+		nfs_increment_open_seqid(status, res->seqid);
+	if (!status)
+		status = decode_open_stateid(xdr, &res->stateid);
+	return status;
+}
 
-अटल पूर्णांक decode_putfh(काष्ठा xdr_stream *xdr)
-अणु
-	वापस decode_op_hdr(xdr, OP_PUTFH);
-पूर्ण
+static int decode_putfh(struct xdr_stream *xdr)
+{
+	return decode_op_hdr(xdr, OP_PUTFH);
+}
 
-अटल पूर्णांक decode_putrootfh(काष्ठा xdr_stream *xdr)
-अणु
-	वापस decode_op_hdr(xdr, OP_PUTROOTFH);
-पूर्ण
+static int decode_putrootfh(struct xdr_stream *xdr)
+{
+	return decode_op_hdr(xdr, OP_PUTROOTFH);
+}
 
-अटल पूर्णांक decode_पढ़ो(काष्ठा xdr_stream *xdr, काष्ठा rpc_rqst *req,
-		       काष्ठा nfs_pgio_res *res)
-अणु
+static int decode_read(struct xdr_stream *xdr, struct rpc_rqst *req,
+		       struct nfs_pgio_res *res)
+{
 	__be32 *p;
-	uपूर्णांक32_t count, eof, recvd;
-	पूर्णांक status;
+	uint32_t count, eof, recvd;
+	int status;
 
 	status = decode_op_hdr(xdr, OP_READ);
-	अगर (status)
-		वापस status;
-	p = xdr_अंतरभूत_decode(xdr, 8);
-	अगर (unlikely(!p))
-		वापस -EIO;
+	if (status)
+		return status;
+	p = xdr_inline_decode(xdr, 8);
+	if (unlikely(!p))
+		return -EIO;
 	eof = be32_to_cpup(p++);
 	count = be32_to_cpup(p);
-	recvd = xdr_पढ़ो_pages(xdr, count);
-	अगर (count > recvd) अणु
-		dprपूर्णांकk("NFS: server cheating in read reply: "
+	recvd = xdr_read_pages(xdr, count);
+	if (count > recvd) {
+		dprintk("NFS: server cheating in read reply: "
 				"count %u > recvd %u\n", count, recvd);
 		count = recvd;
 		eof = 0;
-	पूर्ण
+	}
 	res->eof = eof;
 	res->count = count;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक decode_सूची_पढ़ो(काष्ठा xdr_stream *xdr, काष्ठा rpc_rqst *req, काष्ठा nfs4_सूची_पढ़ो_res *सूची_पढ़ो)
-अणु
-	पूर्णांक		status;
+static int decode_readdir(struct xdr_stream *xdr, struct rpc_rqst *req, struct nfs4_readdir_res *readdir)
+{
+	int		status;
 	__be32		verf[2];
 
-	status = decode_op_hdr(xdr, OP_READसूची);
-	अगर (!status)
-		status = decode_verअगरier(xdr, सूची_पढ़ो->verअगरier.data);
-	अगर (unlikely(status))
-		वापस status;
-	स_नकल(verf, सूची_पढ़ो->verअगरier.data, माप(verf));
-	dprपूर्णांकk("%s: verifier = %08x:%08x\n",
+	status = decode_op_hdr(xdr, OP_READDIR);
+	if (!status)
+		status = decode_verifier(xdr, readdir->verifier.data);
+	if (unlikely(status))
+		return status;
+	memcpy(verf, readdir->verifier.data, sizeof(verf));
+	dprintk("%s: verifier = %08x:%08x\n",
 			__func__, verf[0], verf[1]);
-	वापस xdr_पढ़ो_pages(xdr, xdr->buf->page_len);
-पूर्ण
+	return xdr_read_pages(xdr, xdr->buf->page_len);
+}
 
-अटल पूर्णांक decode_पढ़ोlink(काष्ठा xdr_stream *xdr, काष्ठा rpc_rqst *req)
-अणु
-	काष्ठा xdr_buf *rcvbuf = &req->rq_rcv_buf;
+static int decode_readlink(struct xdr_stream *xdr, struct rpc_rqst *req)
+{
+	struct xdr_buf *rcvbuf = &req->rq_rcv_buf;
 	u32 len, recvd;
 	__be32 *p;
-	पूर्णांक status;
+	int status;
 
 	status = decode_op_hdr(xdr, OP_READLINK);
-	अगर (status)
-		वापस status;
+	if (status)
+		return status;
 
 	/* Convert length of symlink */
-	p = xdr_अंतरभूत_decode(xdr, 4);
-	अगर (unlikely(!p))
-		वापस -EIO;
+	p = xdr_inline_decode(xdr, 4);
+	if (unlikely(!p))
+		return -EIO;
 	len = be32_to_cpup(p);
-	अगर (len >= rcvbuf->page_len || len <= 0) अणु
-		dprपूर्णांकk("nfs: server returned giant symlink!\n");
-		वापस -ENAMETOOLONG;
-	पूर्ण
-	recvd = xdr_पढ़ो_pages(xdr, len);
-	अगर (recvd < len) अणु
-		dprपूर्णांकk("NFS: server cheating in readlink reply: "
+	if (len >= rcvbuf->page_len || len <= 0) {
+		dprintk("nfs: server returned giant symlink!\n");
+		return -ENAMETOOLONG;
+	}
+	recvd = xdr_read_pages(xdr, len);
+	if (recvd < len) {
+		dprintk("NFS: server cheating in readlink reply: "
 				"count %u > recvd %u\n", len, recvd);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 	/*
 	 * The XDR encode routine has set things up so that
-	 * the link text will be copied directly पूर्णांकo the
-	 * buffer.  We just have to करो overflow-checking,
+	 * the link text will be copied directly into the
+	 * buffer.  We just have to do overflow-checking,
 	 * and null-terminate the text (the VFS expects
 	 * null-termination).
 	 */
 	xdr_terminate_string(rcvbuf, len);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक decode_हटाओ(काष्ठा xdr_stream *xdr, काष्ठा nfs4_change_info *cinfo)
-अणु
-	पूर्णांक status;
+static int decode_remove(struct xdr_stream *xdr, struct nfs4_change_info *cinfo)
+{
+	int status;
 
 	status = decode_op_hdr(xdr, OP_REMOVE);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_change_info(xdr, cinfo);
 out:
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक decode_नाम(काष्ठा xdr_stream *xdr, काष्ठा nfs4_change_info *old_cinfo,
-	      काष्ठा nfs4_change_info *new_cinfo)
-अणु
-	पूर्णांक status;
+static int decode_rename(struct xdr_stream *xdr, struct nfs4_change_info *old_cinfo,
+	      struct nfs4_change_info *new_cinfo)
+{
+	int status;
 
 	status = decode_op_hdr(xdr, OP_RENAME);
-	अगर (status)
-		जाओ out;
-	अगर ((status = decode_change_info(xdr, old_cinfo)))
-		जाओ out;
+	if (status)
+		goto out;
+	if ((status = decode_change_info(xdr, old_cinfo)))
+		goto out;
 	status = decode_change_info(xdr, new_cinfo);
 out:
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक decode_renew(काष्ठा xdr_stream *xdr)
-अणु
-	वापस decode_op_hdr(xdr, OP_RENEW);
-पूर्ण
+static int decode_renew(struct xdr_stream *xdr)
+{
+	return decode_op_hdr(xdr, OP_RENEW);
+}
 
-अटल पूर्णांक
-decode_restorefh(काष्ठा xdr_stream *xdr)
-अणु
-	वापस decode_op_hdr(xdr, OP_RESTOREFH);
-पूर्ण
+static int
+decode_restorefh(struct xdr_stream *xdr)
+{
+	return decode_op_hdr(xdr, OP_RESTOREFH);
+}
 
-अटल पूर्णांक decode_getacl(काष्ठा xdr_stream *xdr, काष्ठा rpc_rqst *req,
-			 काष्ठा nfs_getaclres *res)
-अणु
-	अचिन्हित पूर्णांक savep;
-	uपूर्णांक32_t attrlen,
-		 biपंचांगap[3] = अणु0पूर्ण;
-	पूर्णांक status;
+static int decode_getacl(struct xdr_stream *xdr, struct rpc_rqst *req,
+			 struct nfs_getaclres *res)
+{
+	unsigned int savep;
+	uint32_t attrlen,
+		 bitmap[3] = {0};
+	int status;
 
 	res->acl_len = 0;
-	अगर ((status = decode_op_hdr(xdr, OP_GETATTR)) != 0)
-		जाओ out;
+	if ((status = decode_op_hdr(xdr, OP_GETATTR)) != 0)
+		goto out;
 
 	xdr_enter_page(xdr, xdr->buf->page_len);
 
-	अगर ((status = decode_attr_biपंचांगap(xdr, biपंचांगap)) != 0)
-		जाओ out;
-	अगर ((status = decode_attr_length(xdr, &attrlen, &savep)) != 0)
-		जाओ out;
+	if ((status = decode_attr_bitmap(xdr, bitmap)) != 0)
+		goto out;
+	if ((status = decode_attr_length(xdr, &attrlen, &savep)) != 0)
+		goto out;
 
-	अगर (unlikely(biपंचांगap[0] & (FATTR4_WORD0_ACL - 1U)))
-		वापस -EIO;
-	अगर (likely(biपंचांगap[0] & FATTR4_WORD0_ACL)) अणु
+	if (unlikely(bitmap[0] & (FATTR4_WORD0_ACL - 1U)))
+		return -EIO;
+	if (likely(bitmap[0] & FATTR4_WORD0_ACL)) {
 
-		/* The biपंचांगap (xdr len + biपंचांगaps) and the attr xdr len words
+		/* The bitmap (xdr len + bitmaps) and the attr xdr len words
 		 * are stored with the acl data to handle the problem of
-		 * variable length biपंचांगaps.*/
+		 * variable length bitmaps.*/
 		res->acl_data_offset = xdr_page_pos(xdr);
 		res->acl_len = attrlen;
 
-		/* Check क्रम receive buffer overflow */
-		अगर (res->acl_len > xdr_stream_reमुख्यing(xdr) ||
-		    res->acl_len + res->acl_data_offset > xdr->buf->page_len) अणु
+		/* Check for receive buffer overflow */
+		if (res->acl_len > xdr_stream_remaining(xdr) ||
+		    res->acl_len + res->acl_data_offset > xdr->buf->page_len) {
 			res->acl_flags |= NFS4_ACL_TRUNC;
-			dprपूर्णांकk("NFS: acl reply: attrlen %u > page_len %zu\n",
-				attrlen, xdr_stream_reमुख्यing(xdr));
-		पूर्ण
-	पूर्ण अन्यथा
+			dprintk("NFS: acl reply: attrlen %u > page_len %zu\n",
+				attrlen, xdr_stream_remaining(xdr));
+		}
+	} else
 		status = -EOPNOTSUPP;
 
 out:
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक
-decode_savefh(काष्ठा xdr_stream *xdr)
-अणु
-	वापस decode_op_hdr(xdr, OP_SAVEFH);
-पूर्ण
+static int
+decode_savefh(struct xdr_stream *xdr)
+{
+	return decode_op_hdr(xdr, OP_SAVEFH);
+}
 
-अटल पूर्णांक decode_setattr(काष्ठा xdr_stream *xdr)
-अणु
-	पूर्णांक status;
+static int decode_setattr(struct xdr_stream *xdr)
+{
+	int status;
 
 	status = decode_op_hdr(xdr, OP_SETATTR);
-	अगर (status)
-		वापस status;
-	अगर (decode_biपंचांगap4(xdr, शून्य, 0) >= 0)
-		वापस 0;
-	वापस -EIO;
-पूर्ण
+	if (status)
+		return status;
+	if (decode_bitmap4(xdr, NULL, 0) >= 0)
+		return 0;
+	return -EIO;
+}
 
-अटल पूर्णांक decode_setclientid(काष्ठा xdr_stream *xdr, काष्ठा nfs4_setclientid_res *res)
-अणु
+static int decode_setclientid(struct xdr_stream *xdr, struct nfs4_setclientid_res *res)
+{
 	__be32 *p;
-	uपूर्णांक32_t opnum;
-	पूर्णांक32_t nfserr;
+	uint32_t opnum;
+	int32_t nfserr;
 
-	p = xdr_अंतरभूत_decode(xdr, 8);
-	अगर (unlikely(!p))
-		वापस -EIO;
+	p = xdr_inline_decode(xdr, 8);
+	if (unlikely(!p))
+		return -EIO;
 	opnum = be32_to_cpup(p++);
-	अगर (opnum != OP_SETCLIENTID) अणु
-		dprपूर्णांकk("nfs: decode_setclientid: Server returned operation"
+	if (opnum != OP_SETCLIENTID) {
+		dprintk("nfs: decode_setclientid: Server returned operation"
 			" %d\n", opnum);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 	nfserr = be32_to_cpup(p);
-	अगर (nfserr == NFS_OK) अणु
-		p = xdr_अंतरभूत_decode(xdr, 8 + NFS4_VERIFIER_SIZE);
-		अगर (unlikely(!p))
-			वापस -EIO;
+	if (nfserr == NFS_OK) {
+		p = xdr_inline_decode(xdr, 8 + NFS4_VERIFIER_SIZE);
+		if (unlikely(!p))
+			return -EIO;
 		p = xdr_decode_hyper(p, &res->clientid);
-		स_नकल(res->confirm.data, p, NFS4_VERIFIER_SIZE);
-	पूर्ण अन्यथा अगर (nfserr == NFSERR_CLID_INUSE) अणु
-		uपूर्णांक32_t len;
+		memcpy(res->confirm.data, p, NFS4_VERIFIER_SIZE);
+	} else if (nfserr == NFSERR_CLID_INUSE) {
+		uint32_t len;
 
 		/* skip netid string */
-		p = xdr_अंतरभूत_decode(xdr, 4);
-		अगर (unlikely(!p))
-			वापस -EIO;
+		p = xdr_inline_decode(xdr, 4);
+		if (unlikely(!p))
+			return -EIO;
 		len = be32_to_cpup(p);
-		p = xdr_अंतरभूत_decode(xdr, len);
-		अगर (unlikely(!p))
-			वापस -EIO;
+		p = xdr_inline_decode(xdr, len);
+		if (unlikely(!p))
+			return -EIO;
 
 		/* skip uaddr string */
-		p = xdr_अंतरभूत_decode(xdr, 4);
-		अगर (unlikely(!p))
-			वापस -EIO;
+		p = xdr_inline_decode(xdr, 4);
+		if (unlikely(!p))
+			return -EIO;
 		len = be32_to_cpup(p);
-		p = xdr_अंतरभूत_decode(xdr, len);
-		अगर (unlikely(!p))
-			वापस -EIO;
-		वापस -NFSERR_CLID_INUSE;
-	पूर्ण अन्यथा
-		वापस nfs4_stat_to_त्रुटि_सं(nfserr);
+		p = xdr_inline_decode(xdr, len);
+		if (unlikely(!p))
+			return -EIO;
+		return -NFSERR_CLID_INUSE;
+	} else
+		return nfs4_stat_to_errno(nfserr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक decode_setclientid_confirm(काष्ठा xdr_stream *xdr)
-अणु
-	वापस decode_op_hdr(xdr, OP_SETCLIENTID_CONFIRM);
-पूर्ण
+static int decode_setclientid_confirm(struct xdr_stream *xdr)
+{
+	return decode_op_hdr(xdr, OP_SETCLIENTID_CONFIRM);
+}
 
-अटल पूर्णांक decode_ग_लिखो(काष्ठा xdr_stream *xdr, काष्ठा nfs_pgio_res *res)
-अणु
+static int decode_write(struct xdr_stream *xdr, struct nfs_pgio_res *res)
+{
 	__be32 *p;
-	पूर्णांक status;
+	int status;
 
 	status = decode_op_hdr(xdr, OP_WRITE);
-	अगर (status)
-		वापस status;
+	if (status)
+		return status;
 
-	p = xdr_अंतरभूत_decode(xdr, 8);
-	अगर (unlikely(!p))
-		वापस -EIO;
+	p = xdr_inline_decode(xdr, 8);
+	if (unlikely(!p))
+		return -EIO;
 	res->count = be32_to_cpup(p++);
 	res->verf->committed = be32_to_cpup(p++);
-	वापस decode_ग_लिखो_verअगरier(xdr, &res->verf->verअगरier);
-पूर्ण
+	return decode_write_verifier(xdr, &res->verf->verifier);
+}
 
-अटल पूर्णांक decode_delegवापस(काष्ठा xdr_stream *xdr)
-अणु
-	वापस decode_op_hdr(xdr, OP_DELEGRETURN);
-पूर्ण
+static int decode_delegreturn(struct xdr_stream *xdr)
+{
+	return decode_op_hdr(xdr, OP_DELEGRETURN);
+}
 
-अटल पूर्णांक decode_secinfo_gss(काष्ठा xdr_stream *xdr,
-			      काष्ठा nfs4_secinfo4 *flavor)
-अणु
+static int decode_secinfo_gss(struct xdr_stream *xdr,
+			      struct nfs4_secinfo4 *flavor)
+{
 	u32 oid_len;
 	__be32 *p;
 
-	p = xdr_अंतरभूत_decode(xdr, 4);
-	अगर (unlikely(!p))
-		वापस -EIO;
+	p = xdr_inline_decode(xdr, 4);
+	if (unlikely(!p))
+		return -EIO;
 	oid_len = be32_to_cpup(p);
-	अगर (oid_len > GSS_OID_MAX_LEN)
-		वापस -EINVAL;
+	if (oid_len > GSS_OID_MAX_LEN)
+		return -EINVAL;
 
-	p = xdr_अंतरभूत_decode(xdr, oid_len);
-	अगर (unlikely(!p))
-		वापस -EIO;
-	स_नकल(flavor->flavor_info.oid.data, p, oid_len);
+	p = xdr_inline_decode(xdr, oid_len);
+	if (unlikely(!p))
+		return -EIO;
+	memcpy(flavor->flavor_info.oid.data, p, oid_len);
 	flavor->flavor_info.oid.len = oid_len;
 
-	p = xdr_अंतरभूत_decode(xdr, 8);
-	अगर (unlikely(!p))
-		वापस -EIO;
+	p = xdr_inline_decode(xdr, 8);
+	if (unlikely(!p))
+		return -EIO;
 	flavor->flavor_info.qop = be32_to_cpup(p++);
 	flavor->flavor_info.service = be32_to_cpup(p);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक decode_secinfo_common(काष्ठा xdr_stream *xdr, काष्ठा nfs4_secinfo_res *res)
-अणु
-	काष्ठा nfs4_secinfo4 *sec_flavor;
-	अचिन्हित पूर्णांक i, num_flavors;
-	पूर्णांक status;
+static int decode_secinfo_common(struct xdr_stream *xdr, struct nfs4_secinfo_res *res)
+{
+	struct nfs4_secinfo4 *sec_flavor;
+	unsigned int i, num_flavors;
+	int status;
 	__be32 *p;
 
-	p = xdr_अंतरभूत_decode(xdr, 4);
-	अगर (unlikely(!p))
-		वापस -EIO;
+	p = xdr_inline_decode(xdr, 4);
+	if (unlikely(!p))
+		return -EIO;
 
 	res->flavors->num_flavors = 0;
 	num_flavors = be32_to_cpup(p);
 
-	क्रम (i = 0; i < num_flavors; i++) अणु
+	for (i = 0; i < num_flavors; i++) {
 		sec_flavor = &res->flavors->flavors[i];
-		अगर ((अक्षर *)&sec_flavor[1] - (अक्षर *)res->flavors > PAGE_SIZE)
-			अवरोध;
+		if ((char *)&sec_flavor[1] - (char *)res->flavors > PAGE_SIZE)
+			break;
 
-		p = xdr_अंतरभूत_decode(xdr, 4);
-		अगर (unlikely(!p))
-			वापस -EIO;
+		p = xdr_inline_decode(xdr, 4);
+		if (unlikely(!p))
+			return -EIO;
 		sec_flavor->flavor = be32_to_cpup(p);
 
-		अगर (sec_flavor->flavor == RPC_AUTH_GSS) अणु
+		if (sec_flavor->flavor == RPC_AUTH_GSS) {
 			status = decode_secinfo_gss(xdr, sec_flavor);
-			अगर (status)
-				जाओ out;
-		पूर्ण
+			if (status)
+				goto out;
+		}
 		res->flavors->num_flavors++;
-	पूर्ण
+	}
 
 	status = 0;
 out:
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक decode_secinfo(काष्ठा xdr_stream *xdr, काष्ठा nfs4_secinfo_res *res)
-अणु
-	पूर्णांक status = decode_op_hdr(xdr, OP_SECINFO);
-	अगर (status)
-		वापस status;
-	वापस decode_secinfo_common(xdr, res);
-पूर्ण
+static int decode_secinfo(struct xdr_stream *xdr, struct nfs4_secinfo_res *res)
+{
+	int status = decode_op_hdr(xdr, OP_SECINFO);
+	if (status)
+		return status;
+	return decode_secinfo_common(xdr, res);
+}
 
-#अगर defined(CONFIG_NFS_V4_1)
-अटल पूर्णांक decode_secinfo_no_name(काष्ठा xdr_stream *xdr, काष्ठा nfs4_secinfo_res *res)
-अणु
-	पूर्णांक status = decode_op_hdr(xdr, OP_SECINFO_NO_NAME);
-	अगर (status)
-		वापस status;
-	वापस decode_secinfo_common(xdr, res);
-पूर्ण
+#if defined(CONFIG_NFS_V4_1)
+static int decode_secinfo_no_name(struct xdr_stream *xdr, struct nfs4_secinfo_res *res)
+{
+	int status = decode_op_hdr(xdr, OP_SECINFO_NO_NAME);
+	if (status)
+		return status;
+	return decode_secinfo_common(xdr, res);
+}
 
-अटल पूर्णांक decode_op_map(काष्ठा xdr_stream *xdr, काष्ठा nfs4_op_map *op_map)
-अणु
+static int decode_op_map(struct xdr_stream *xdr, struct nfs4_op_map *op_map)
+{
 	__be32 *p;
-	uपूर्णांक32_t biपंचांगap_words;
-	अचिन्हित पूर्णांक i;
+	uint32_t bitmap_words;
+	unsigned int i;
 
-	p = xdr_अंतरभूत_decode(xdr, 4);
-	अगर (!p)
-		वापस -EIO;
-	biपंचांगap_words = be32_to_cpup(p++);
-	अगर (biपंचांगap_words > NFS4_OP_MAP_NUM_WORDS)
-		वापस -EIO;
-	p = xdr_अंतरभूत_decode(xdr, 4 * biपंचांगap_words);
-	क्रम (i = 0; i < biपंचांगap_words; i++)
+	p = xdr_inline_decode(xdr, 4);
+	if (!p)
+		return -EIO;
+	bitmap_words = be32_to_cpup(p++);
+	if (bitmap_words > NFS4_OP_MAP_NUM_WORDS)
+		return -EIO;
+	p = xdr_inline_decode(xdr, 4 * bitmap_words);
+	for (i = 0; i < bitmap_words; i++)
 		op_map->u.words[i] = be32_to_cpup(p++);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक decode_exchange_id(काष्ठा xdr_stream *xdr,
-			      काष्ठा nfs41_exchange_id_res *res)
-अणु
+static int decode_exchange_id(struct xdr_stream *xdr,
+			      struct nfs41_exchange_id_res *res)
+{
 	__be32 *p;
-	uपूर्णांक32_t dummy;
-	अक्षर *dummy_str;
-	पूर्णांक status;
-	uपूर्णांक32_t impl_id_count;
+	uint32_t dummy;
+	char *dummy_str;
+	int status;
+	uint32_t impl_id_count;
 
 	status = decode_op_hdr(xdr, OP_EXCHANGE_ID);
-	अगर (status)
-		वापस status;
+	if (status)
+		return status;
 
-	p = xdr_अंतरभूत_decode(xdr, 8);
-	अगर (unlikely(!p))
-		वापस -EIO;
+	p = xdr_inline_decode(xdr, 8);
+	if (unlikely(!p))
+		return -EIO;
 	xdr_decode_hyper(p, &res->clientid);
-	p = xdr_अंतरभूत_decode(xdr, 12);
-	अगर (unlikely(!p))
-		वापस -EIO;
+	p = xdr_inline_decode(xdr, 12);
+	if (unlikely(!p))
+		return -EIO;
 	res->seqid = be32_to_cpup(p++);
 	res->flags = be32_to_cpup(p++);
 
 	res->state_protect.how = be32_to_cpup(p);
-	चयन (res->state_protect.how) अणु
-	हाल SP4_NONE:
-		अवरोध;
-	हाल SP4_MACH_CRED:
-		status = decode_op_map(xdr, &res->state_protect.enक्रमce);
-		अगर (status)
-			वापस status;
+	switch (res->state_protect.how) {
+	case SP4_NONE:
+		break;
+	case SP4_MACH_CRED:
+		status = decode_op_map(xdr, &res->state_protect.enforce);
+		if (status)
+			return status;
 		status = decode_op_map(xdr, &res->state_protect.allow);
-		अगर (status)
-			वापस status;
-		अवरोध;
-	शेष:
+		if (status)
+			return status;
+		break;
+	default:
 		WARN_ON_ONCE(1);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	/* server_owner4.so_minor_id */
-	p = xdr_अंतरभूत_decode(xdr, 8);
-	अगर (unlikely(!p))
-		वापस -EIO;
+	p = xdr_inline_decode(xdr, 8);
+	if (unlikely(!p))
+		return -EIO;
 	p = xdr_decode_hyper(p, &res->server_owner->minor_id);
 
 	/* server_owner4.so_major_id */
-	status = decode_opaque_अंतरभूत(xdr, &dummy, &dummy_str);
-	अगर (unlikely(status))
-		वापस status;
-	स_नकल(res->server_owner->major_id, dummy_str, dummy);
+	status = decode_opaque_inline(xdr, &dummy, &dummy_str);
+	if (unlikely(status))
+		return status;
+	memcpy(res->server_owner->major_id, dummy_str, dummy);
 	res->server_owner->major_id_sz = dummy;
 
 	/* server_scope4 */
-	status = decode_opaque_अंतरभूत(xdr, &dummy, &dummy_str);
-	अगर (unlikely(status))
-		वापस status;
-	स_नकल(res->server_scope->server_scope, dummy_str, dummy);
+	status = decode_opaque_inline(xdr, &dummy, &dummy_str);
+	if (unlikely(status))
+		return status;
+	memcpy(res->server_scope->server_scope, dummy_str, dummy);
 	res->server_scope->server_scope_sz = dummy;
 
 	/* Implementation Id */
-	p = xdr_अंतरभूत_decode(xdr, 4);
-	अगर (unlikely(!p))
-		वापस -EIO;
+	p = xdr_inline_decode(xdr, 4);
+	if (unlikely(!p))
+		return -EIO;
 	impl_id_count = be32_to_cpup(p++);
 
-	अगर (impl_id_count) अणु
-		/* nii_करोमुख्य */
-		status = decode_opaque_अंतरभूत(xdr, &dummy, &dummy_str);
-		अगर (unlikely(status))
-			वापस status;
-		स_नकल(res->impl_id->करोमुख्य, dummy_str, dummy);
+	if (impl_id_count) {
+		/* nii_domain */
+		status = decode_opaque_inline(xdr, &dummy, &dummy_str);
+		if (unlikely(status))
+			return status;
+		memcpy(res->impl_id->domain, dummy_str, dummy);
 
 		/* nii_name */
-		status = decode_opaque_अंतरभूत(xdr, &dummy, &dummy_str);
-		अगर (unlikely(status))
-			वापस status;
-		स_नकल(res->impl_id->name, dummy_str, dummy);
+		status = decode_opaque_inline(xdr, &dummy, &dummy_str);
+		if (unlikely(status))
+			return status;
+		memcpy(res->impl_id->name, dummy_str, dummy);
 
 		/* nii_date */
-		p = xdr_अंतरभूत_decode(xdr, 12);
-		अगर (unlikely(!p))
-			वापस -EIO;
+		p = xdr_inline_decode(xdr, 12);
+		if (unlikely(!p))
+			return -EIO;
 		p = xdr_decode_hyper(p, &res->impl_id->date.seconds);
 		res->impl_id->date.nseconds = be32_to_cpup(p);
 
-		/* अगर there's more than one entry, ignore the rest */
-	पूर्ण
-	वापस 0;
-पूर्ण
+		/* if there's more than one entry, ignore the rest */
+	}
+	return 0;
+}
 
-अटल पूर्णांक decode_chan_attrs(काष्ठा xdr_stream *xdr,
-			     काष्ठा nfs4_channel_attrs *attrs)
-अणु
+static int decode_chan_attrs(struct xdr_stream *xdr,
+			     struct nfs4_channel_attrs *attrs)
+{
 	__be32 *p;
 	u32 nr_attrs, val;
 
-	p = xdr_अंतरभूत_decode(xdr, 28);
-	अगर (unlikely(!p))
-		वापस -EIO;
+	p = xdr_inline_decode(xdr, 28);
+	if (unlikely(!p))
+		return -EIO;
 	val = be32_to_cpup(p++);	/* headerpadsz */
-	अगर (val)
-		वापस -EINVAL;		/* no support क्रम header padding yet */
+	if (val)
+		return -EINVAL;		/* no support for header padding yet */
 	attrs->max_rqst_sz = be32_to_cpup(p++);
 	attrs->max_resp_sz = be32_to_cpup(p++);
 	attrs->max_resp_sz_cached = be32_to_cpup(p++);
 	attrs->max_ops = be32_to_cpup(p++);
 	attrs->max_reqs = be32_to_cpup(p++);
 	nr_attrs = be32_to_cpup(p);
-	अगर (unlikely(nr_attrs > 1)) अणु
-		prपूर्णांकk(KERN_WARNING "NFS: %s: Invalid rdma channel attrs "
+	if (unlikely(nr_attrs > 1)) {
+		printk(KERN_WARNING "NFS: %s: Invalid rdma channel attrs "
 			"count %u\n", __func__, nr_attrs);
-		वापस -EINVAL;
-	पूर्ण
-	अगर (nr_attrs == 1) अणु
-		p = xdr_अंतरभूत_decode(xdr, 4); /* skip rdma_attrs */
-		अगर (unlikely(!p))
-			वापस -EIO;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EINVAL;
+	}
+	if (nr_attrs == 1) {
+		p = xdr_inline_decode(xdr, 4); /* skip rdma_attrs */
+		if (unlikely(!p))
+			return -EIO;
+	}
+	return 0;
+}
 
-अटल पूर्णांक decode_sessionid(काष्ठा xdr_stream *xdr, काष्ठा nfs4_sessionid *sid)
-अणु
-	वापस decode_opaque_fixed(xdr, sid->data, NFS4_MAX_SESSIONID_LEN);
-पूर्ण
+static int decode_sessionid(struct xdr_stream *xdr, struct nfs4_sessionid *sid)
+{
+	return decode_opaque_fixed(xdr, sid->data, NFS4_MAX_SESSIONID_LEN);
+}
 
-अटल पूर्णांक decode_bind_conn_to_session(काष्ठा xdr_stream *xdr,
-				काष्ठा nfs41_bind_conn_to_session_res *res)
-अणु
+static int decode_bind_conn_to_session(struct xdr_stream *xdr,
+				struct nfs41_bind_conn_to_session_res *res)
+{
 	__be32 *p;
-	पूर्णांक status;
+	int status;
 
 	status = decode_op_hdr(xdr, OP_BIND_CONN_TO_SESSION);
-	अगर (!status)
+	if (!status)
 		status = decode_sessionid(xdr, &res->sessionid);
-	अगर (unlikely(status))
-		वापस status;
+	if (unlikely(status))
+		return status;
 
 	/* dir flags, rdma mode bool */
-	p = xdr_अंतरभूत_decode(xdr, 8);
-	अगर (unlikely(!p))
-		वापस -EIO;
+	p = xdr_inline_decode(xdr, 8);
+	if (unlikely(!p))
+		return -EIO;
 
 	res->dir = be32_to_cpup(p++);
-	अगर (res->dir == 0 || res->dir > NFS4_CDFS4_BOTH)
-		वापस -EIO;
-	अगर (be32_to_cpup(p) == 0)
+	if (res->dir == 0 || res->dir > NFS4_CDFS4_BOTH)
+		return -EIO;
+	if (be32_to_cpup(p) == 0)
 		res->use_conn_in_rdma_mode = false;
-	अन्यथा
+	else
 		res->use_conn_in_rdma_mode = true;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक decode_create_session(काष्ठा xdr_stream *xdr,
-				 काष्ठा nfs41_create_session_res *res)
-अणु
+static int decode_create_session(struct xdr_stream *xdr,
+				 struct nfs41_create_session_res *res)
+{
 	__be32 *p;
-	पूर्णांक status;
+	int status;
 
 	status = decode_op_hdr(xdr, OP_CREATE_SESSION);
-	अगर (!status)
+	if (!status)
 		status = decode_sessionid(xdr, &res->sessionid);
-	अगर (unlikely(status))
-		वापस status;
+	if (unlikely(status))
+		return status;
 
 	/* seqid, flags */
-	p = xdr_अंतरभूत_decode(xdr, 8);
-	अगर (unlikely(!p))
-		वापस -EIO;
+	p = xdr_inline_decode(xdr, 8);
+	if (unlikely(!p))
+		return -EIO;
 	res->seqid = be32_to_cpup(p++);
 	res->flags = be32_to_cpup(p);
 
 	/* Channel attributes */
 	status = decode_chan_attrs(xdr, &res->fc_attrs);
-	अगर (!status)
+	if (!status)
 		status = decode_chan_attrs(xdr, &res->bc_attrs);
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक decode_destroy_session(काष्ठा xdr_stream *xdr, व्योम *dummy)
-अणु
-	वापस decode_op_hdr(xdr, OP_DESTROY_SESSION);
-पूर्ण
+static int decode_destroy_session(struct xdr_stream *xdr, void *dummy)
+{
+	return decode_op_hdr(xdr, OP_DESTROY_SESSION);
+}
 
-अटल पूर्णांक decode_destroy_clientid(काष्ठा xdr_stream *xdr, व्योम *dummy)
-अणु
-	वापस decode_op_hdr(xdr, OP_DESTROY_CLIENTID);
-पूर्ण
+static int decode_destroy_clientid(struct xdr_stream *xdr, void *dummy)
+{
+	return decode_op_hdr(xdr, OP_DESTROY_CLIENTID);
+}
 
-अटल पूर्णांक decode_reclaim_complete(काष्ठा xdr_stream *xdr, व्योम *dummy)
-अणु
-	वापस decode_op_hdr(xdr, OP_RECLAIM_COMPLETE);
-पूर्ण
-#पूर्ण_अगर /* CONFIG_NFS_V4_1 */
+static int decode_reclaim_complete(struct xdr_stream *xdr, void *dummy)
+{
+	return decode_op_hdr(xdr, OP_RECLAIM_COMPLETE);
+}
+#endif /* CONFIG_NFS_V4_1 */
 
-अटल पूर्णांक decode_sequence(काष्ठा xdr_stream *xdr,
-			   काष्ठा nfs4_sequence_res *res,
-			   काष्ठा rpc_rqst *rqstp)
-अणु
-#अगर defined(CONFIG_NFS_V4_1)
-	काष्ठा nfs4_session *session;
-	काष्ठा nfs4_sessionid id;
+static int decode_sequence(struct xdr_stream *xdr,
+			   struct nfs4_sequence_res *res,
+			   struct rpc_rqst *rqstp)
+{
+#if defined(CONFIG_NFS_V4_1)
+	struct nfs4_session *session;
+	struct nfs4_sessionid id;
 	u32 dummy;
-	पूर्णांक status;
+	int status;
 	__be32 *p;
 
-	अगर (res->sr_slot == शून्य)
-		वापस 0;
-	अगर (!res->sr_slot->table->session)
-		वापस 0;
+	if (res->sr_slot == NULL)
+		return 0;
+	if (!res->sr_slot->table->session)
+		return 0;
 
 	status = decode_op_hdr(xdr, OP_SEQUENCE);
-	अगर (!status)
+	if (!status)
 		status = decode_sessionid(xdr, &id);
-	अगर (unlikely(status))
-		जाओ out_err;
+	if (unlikely(status))
+		goto out_err;
 
 	/*
-	 * If the server वापसs dअगरferent values क्रम sessionID, slotID or
+	 * If the server returns different values for sessionID, slotID or
 	 * sequence number, the server is looney tunes.
 	 */
 	status = -EREMOTEIO;
 	session = res->sr_slot->table->session;
 
-	अगर (स_भेद(id.data, session->sess_id.data,
-		   NFS4_MAX_SESSIONID_LEN)) अणु
-		dprपूर्णांकk("%s Invalid session id\n", __func__);
-		जाओ out_err;
-	पूर्ण
+	if (memcmp(id.data, session->sess_id.data,
+		   NFS4_MAX_SESSIONID_LEN)) {
+		dprintk("%s Invalid session id\n", __func__);
+		goto out_err;
+	}
 
-	p = xdr_अंतरभूत_decode(xdr, 20);
-	अगर (unlikely(!p))
-		जाओ out_overflow;
+	p = xdr_inline_decode(xdr, 20);
+	if (unlikely(!p))
+		goto out_overflow;
 
 	/* seqid */
 	dummy = be32_to_cpup(p++);
-	अगर (dummy != res->sr_slot->seq_nr) अणु
-		dprपूर्णांकk("%s Invalid sequence number\n", __func__);
-		जाओ out_err;
-	पूर्ण
+	if (dummy != res->sr_slot->seq_nr) {
+		dprintk("%s Invalid sequence number\n", __func__);
+		goto out_err;
+	}
 	/* slot id */
 	dummy = be32_to_cpup(p++);
-	अगर (dummy != res->sr_slot->slot_nr) अणु
-		dprपूर्णांकk("%s Invalid slot id\n", __func__);
-		जाओ out_err;
-	पूर्ण
+	if (dummy != res->sr_slot->slot_nr) {
+		dprintk("%s Invalid slot id\n", __func__);
+		goto out_err;
+	}
 	/* highest slot id */
 	res->sr_highest_slotid = be32_to_cpup(p++);
 	/* target highest slot id */
@@ -5847,250 +5846,250 @@ out:
 	status = 0;
 out_err:
 	res->sr_status = status;
-	वापस status;
+	return status;
 out_overflow:
 	status = -EIO;
-	जाओ out_err;
-#अन्यथा  /* CONFIG_NFS_V4_1 */
-	वापस 0;
-#पूर्ण_अगर /* CONFIG_NFS_V4_1 */
-पूर्ण
+	goto out_err;
+#else  /* CONFIG_NFS_V4_1 */
+	return 0;
+#endif /* CONFIG_NFS_V4_1 */
+}
 
-#अगर defined(CONFIG_NFS_V4_1)
-अटल पूर्णांक decode_layout_stateid(काष्ठा xdr_stream *xdr, nfs4_stateid *stateid)
-अणु
+#if defined(CONFIG_NFS_V4_1)
+static int decode_layout_stateid(struct xdr_stream *xdr, nfs4_stateid *stateid)
+{
 	stateid->type = NFS4_LAYOUT_STATEID_TYPE;
-	वापस decode_stateid(xdr, stateid);
-पूर्ण
+	return decode_stateid(xdr, stateid);
+}
 
-अटल पूर्णांक decode_getdeviceinfo(काष्ठा xdr_stream *xdr,
-				काष्ठा nfs4_getdeviceinfo_res *res)
-अणु
-	काष्ठा pnfs_device *pdev = res->pdev;
+static int decode_getdeviceinfo(struct xdr_stream *xdr,
+				struct nfs4_getdeviceinfo_res *res)
+{
+	struct pnfs_device *pdev = res->pdev;
 	__be32 *p;
-	uपूर्णांक32_t len, type;
-	पूर्णांक status;
+	uint32_t len, type;
+	int status;
 
 	status = decode_op_hdr(xdr, OP_GETDEVICEINFO);
-	अगर (status) अणु
-		अगर (status == -ETOOSMALL) अणु
-			p = xdr_अंतरभूत_decode(xdr, 4);
-			अगर (unlikely(!p))
-				वापस -EIO;
+	if (status) {
+		if (status == -ETOOSMALL) {
+			p = xdr_inline_decode(xdr, 4);
+			if (unlikely(!p))
+				return -EIO;
 			pdev->mincount = be32_to_cpup(p);
-			dprपूर्णांकk("%s: Min count too small. mincnt = %u\n",
+			dprintk("%s: Min count too small. mincnt = %u\n",
 				__func__, pdev->mincount);
-		पूर्ण
-		वापस status;
-	पूर्ण
+		}
+		return status;
+	}
 
-	p = xdr_अंतरभूत_decode(xdr, 8);
-	अगर (unlikely(!p))
-		वापस -EIO;
+	p = xdr_inline_decode(xdr, 8);
+	if (unlikely(!p))
+		return -EIO;
 	type = be32_to_cpup(p++);
-	अगर (type != pdev->layout_type) अणु
-		dprपूर्णांकk("%s: layout mismatch req: %u pdev: %u\n",
+	if (type != pdev->layout_type) {
+		dprintk("%s: layout mismatch req: %u pdev: %u\n",
 			__func__, pdev->layout_type, type);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	/*
-	 * Get the length of the opaque device_addr4. xdr_पढ़ो_pages places
+	 * Get the length of the opaque device_addr4. xdr_read_pages places
 	 * the opaque device_addr4 in the xdr_buf->pages (pnfs_device->pages)
-	 * and places the reमुख्यing xdr data in xdr_buf->tail
+	 * and places the remaining xdr data in xdr_buf->tail
 	 */
 	pdev->mincount = be32_to_cpup(p);
-	अगर (xdr_पढ़ो_pages(xdr, pdev->mincount) != pdev->mincount)
-		वापस -EIO;
+	if (xdr_read_pages(xdr, pdev->mincount) != pdev->mincount)
+		return -EIO;
 
-	/* Parse notअगरication biपंचांगap, verअगरying that it is zero. */
-	p = xdr_अंतरभूत_decode(xdr, 4);
-	अगर (unlikely(!p))
-		वापस -EIO;
+	/* Parse notification bitmap, verifying that it is zero. */
+	p = xdr_inline_decode(xdr, 4);
+	if (unlikely(!p))
+		return -EIO;
 	len = be32_to_cpup(p);
-	अगर (len) अणु
-		uपूर्णांक32_t i;
+	if (len) {
+		uint32_t i;
 
-		p = xdr_अंतरभूत_decode(xdr, 4 * len);
-		अगर (unlikely(!p))
-			वापस -EIO;
+		p = xdr_inline_decode(xdr, 4 * len);
+		if (unlikely(!p))
+			return -EIO;
 
-		res->notअगरication = be32_to_cpup(p++);
-		क्रम (i = 1; i < len; i++) अणु
-			अगर (be32_to_cpup(p++)) अणु
-				dprपूर्णांकk("%s: unsupported notification\n",
+		res->notification = be32_to_cpup(p++);
+		for (i = 1; i < len; i++) {
+			if (be32_to_cpup(p++)) {
+				dprintk("%s: unsupported notification\n",
 					__func__);
-				वापस -EIO;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+				return -EIO;
+			}
+		}
+	}
+	return 0;
+}
 
-अटल पूर्णांक decode_layoutget(काष्ठा xdr_stream *xdr, काष्ठा rpc_rqst *req,
-			    काष्ठा nfs4_layoutget_res *res)
-अणु
+static int decode_layoutget(struct xdr_stream *xdr, struct rpc_rqst *req,
+			    struct nfs4_layoutget_res *res)
+{
 	__be32 *p;
-	पूर्णांक status;
+	int status;
 	u32 layout_count;
 	u32 recvd;
 
 	status = decode_op_hdr(xdr, OP_LAYOUTGET);
-	अगर (status)
-		जाओ out;
-	p = xdr_अंतरभूत_decode(xdr, 4);
-	अगर (unlikely(!p))
-		जाओ out_overflow;
-	res->वापस_on_बंद = be32_to_cpup(p);
+	if (status)
+		goto out;
+	p = xdr_inline_decode(xdr, 4);
+	if (unlikely(!p))
+		goto out_overflow;
+	res->return_on_close = be32_to_cpup(p);
 	decode_layout_stateid(xdr, &res->stateid);
-	p = xdr_अंतरभूत_decode(xdr, 4);
-	अगर (unlikely(!p))
-		जाओ out_overflow;
+	p = xdr_inline_decode(xdr, 4);
+	if (unlikely(!p))
+		goto out_overflow;
 	layout_count = be32_to_cpup(p);
-	अगर (!layout_count) अणु
-		dprपूर्णांकk("%s: server responded with empty layout array\n",
+	if (!layout_count) {
+		dprintk("%s: server responded with empty layout array\n",
 			__func__);
 		status = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	p = xdr_अंतरभूत_decode(xdr, 28);
-	अगर (unlikely(!p))
-		जाओ out_overflow;
+	p = xdr_inline_decode(xdr, 28);
+	if (unlikely(!p))
+		goto out_overflow;
 	p = xdr_decode_hyper(p, &res->range.offset);
 	p = xdr_decode_hyper(p, &res->range.length);
 	res->range.iomode = be32_to_cpup(p++);
 	res->type = be32_to_cpup(p++);
 	res->layoutp->len = be32_to_cpup(p);
 
-	dprपूर्णांकk("%s roff:%lu rlen:%lu riomode:%d, lo_type:0x%x, lo.len:%d\n",
+	dprintk("%s roff:%lu rlen:%lu riomode:%d, lo_type:0x%x, lo.len:%d\n",
 		__func__,
-		(अचिन्हित दीर्घ)res->range.offset,
-		(अचिन्हित दीर्घ)res->range.length,
+		(unsigned long)res->range.offset,
+		(unsigned long)res->range.length,
 		res->range.iomode,
 		res->type,
 		res->layoutp->len);
 
-	recvd = xdr_पढ़ो_pages(xdr, res->layoutp->len);
-	अगर (res->layoutp->len > recvd) अणु
-		dprपूर्णांकk("NFS: server cheating in layoutget reply: "
+	recvd = xdr_read_pages(xdr, res->layoutp->len);
+	if (res->layoutp->len > recvd) {
+		dprintk("NFS: server cheating in layoutget reply: "
 				"layout len %u > recvd %u\n",
 				res->layoutp->len, recvd);
 		status = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (layout_count > 1) अणु
+	if (layout_count > 1) {
 		/* We only handle a length one array at the moment.  Any
 		 * further entries are just ignored.  Note that this means
 		 * the client may see a response that is less than the
 		 * minimum it requested.
 		 */
-		dprपूर्णांकk("%s: server responded with %d layouts, dropping tail\n",
+		dprintk("%s: server responded with %d layouts, dropping tail\n",
 			__func__, layout_count);
-	पूर्ण
+	}
 
 out:
 	res->status = status;
-	वापस status;
+	return status;
 out_overflow:
 	status = -EIO;
-	जाओ out;
-पूर्ण
+	goto out;
+}
 
-अटल पूर्णांक decode_layoutवापस(काष्ठा xdr_stream *xdr,
-			       काष्ठा nfs4_layoutवापस_res *res)
-अणु
+static int decode_layoutreturn(struct xdr_stream *xdr,
+			       struct nfs4_layoutreturn_res *res)
+{
 	__be32 *p;
-	पूर्णांक status;
+	int status;
 
 	status = decode_op_hdr(xdr, OP_LAYOUTRETURN);
-	अगर (status)
-		वापस status;
-	p = xdr_अंतरभूत_decode(xdr, 4);
-	अगर (unlikely(!p))
-		वापस -EIO;
+	if (status)
+		return status;
+	p = xdr_inline_decode(xdr, 4);
+	if (unlikely(!p))
+		return -EIO;
 	res->lrs_present = be32_to_cpup(p);
-	अगर (res->lrs_present)
+	if (res->lrs_present)
 		status = decode_layout_stateid(xdr, &res->stateid);
-	अन्यथा
+	else
 		nfs4_stateid_copy(&res->stateid, &invalid_stateid);
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक decode_layoutcommit(काष्ठा xdr_stream *xdr,
-			       काष्ठा rpc_rqst *req,
-			       काष्ठा nfs4_layoutcommit_res *res)
-अणु
+static int decode_layoutcommit(struct xdr_stream *xdr,
+			       struct rpc_rqst *req,
+			       struct nfs4_layoutcommit_res *res)
+{
 	__be32 *p;
 	__u32 sizechanged;
-	पूर्णांक status;
+	int status;
 
 	status = decode_op_hdr(xdr, OP_LAYOUTCOMMIT);
 	res->status = status;
-	अगर (status)
-		वापस status;
+	if (status)
+		return status;
 
-	p = xdr_अंतरभूत_decode(xdr, 4);
-	अगर (unlikely(!p))
-		वापस -EIO;
+	p = xdr_inline_decode(xdr, 4);
+	if (unlikely(!p))
+		return -EIO;
 	sizechanged = be32_to_cpup(p);
 
-	अगर (sizechanged) अणु
+	if (sizechanged) {
 		/* throw away new size */
-		p = xdr_अंतरभूत_decode(xdr, 8);
-		अगर (unlikely(!p))
-			वापस -EIO;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		p = xdr_inline_decode(xdr, 8);
+		if (unlikely(!p))
+			return -EIO;
+	}
+	return 0;
+}
 
-अटल पूर्णांक decode_test_stateid(काष्ठा xdr_stream *xdr,
-			       काष्ठा nfs41_test_stateid_res *res)
-अणु
+static int decode_test_stateid(struct xdr_stream *xdr,
+			       struct nfs41_test_stateid_res *res)
+{
 	__be32 *p;
-	पूर्णांक status;
-	पूर्णांक num_res;
+	int status;
+	int num_res;
 
 	status = decode_op_hdr(xdr, OP_TEST_STATEID);
-	अगर (status)
-		वापस status;
+	if (status)
+		return status;
 
-	p = xdr_अंतरभूत_decode(xdr, 4);
-	अगर (unlikely(!p))
-		वापस -EIO;
+	p = xdr_inline_decode(xdr, 4);
+	if (unlikely(!p))
+		return -EIO;
 	num_res = be32_to_cpup(p++);
-	अगर (num_res != 1)
-		वापस -EIO;
+	if (num_res != 1)
+		return -EIO;
 
-	p = xdr_अंतरभूत_decode(xdr, 4);
-	अगर (unlikely(!p))
-		वापस -EIO;
+	p = xdr_inline_decode(xdr, 4);
+	if (unlikely(!p))
+		return -EIO;
 	res->status = be32_to_cpup(p++);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक decode_मुक्त_stateid(काष्ठा xdr_stream *xdr,
-			       काष्ठा nfs41_मुक्त_stateid_res *res)
-अणु
+static int decode_free_stateid(struct xdr_stream *xdr,
+			       struct nfs41_free_stateid_res *res)
+{
 	res->status = decode_op_hdr(xdr, OP_FREE_STATEID);
-	वापस res->status;
-पूर्ण
-#अन्यथा
-अटल अंतरभूत
-पूर्णांक decode_layoutवापस(काष्ठा xdr_stream *xdr,
-			       काष्ठा nfs4_layoutवापस_res *res)
-अणु
-	वापस 0;
-पूर्ण
+	return res->status;
+}
+#else
+static inline
+int decode_layoutreturn(struct xdr_stream *xdr,
+			       struct nfs4_layoutreturn_res *res)
+{
+	return 0;
+}
 
-अटल पूर्णांक decode_layoutget(काष्ठा xdr_stream *xdr, काष्ठा rpc_rqst *req,
-			    काष्ठा nfs4_layoutget_res *res)
-अणु
-	वापस 0;
-पूर्ण
+static int decode_layoutget(struct xdr_stream *xdr, struct rpc_rqst *req,
+			    struct nfs4_layoutget_res *res)
+{
+	return 0;
+}
 
-#पूर्ण_अगर /* CONFIG_NFS_V4_1 */
+#endif /* CONFIG_NFS_V4_1 */
 
 /*
  * END OF "GENERIC" DECODE ROUTINES.
@@ -6099,1472 +6098,1472 @@ out_overflow:
 /*
  * Decode OPEN_DOWNGRADE response
  */
-अटल पूर्णांक nfs4_xdr_dec_खोलो_करोwngrade(काष्ठा rpc_rqst *rqstp,
-				       काष्ठा xdr_stream *xdr,
-				       व्योम *data)
-अणु
-	काष्ठा nfs_बंदres *res = data;
-	काष्ठा compound_hdr hdr;
-	पूर्णांक status;
+static int nfs4_xdr_dec_open_downgrade(struct rpc_rqst *rqstp,
+				       struct xdr_stream *xdr,
+				       void *data)
+{
+	struct nfs_closeres *res = data;
+	struct compound_hdr hdr;
+	int status;
 
 	status = decode_compound_hdr(xdr, &hdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_sequence(xdr, &res->seq_res, rqstp);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_putfh(xdr);
-	अगर (status)
-		जाओ out;
-	अगर (res->lr_res) अणु
-		status = decode_layoutवापस(xdr, res->lr_res);
+	if (status)
+		goto out;
+	if (res->lr_res) {
+		status = decode_layoutreturn(xdr, res->lr_res);
 		res->lr_ret = status;
-		अगर (status)
-			जाओ out;
-	पूर्ण
-	status = decode_खोलो_करोwngrade(xdr, res);
+		if (status)
+			goto out;
+	}
+	status = decode_open_downgrade(xdr, res);
 out:
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Decode ACCESS response
  */
-अटल पूर्णांक nfs4_xdr_dec_access(काष्ठा rpc_rqst *rqstp, काष्ठा xdr_stream *xdr,
-			       व्योम *data)
-अणु
-	काष्ठा nfs4_accessres *res = data;
-	काष्ठा compound_hdr hdr;
-	पूर्णांक status;
+static int nfs4_xdr_dec_access(struct rpc_rqst *rqstp, struct xdr_stream *xdr,
+			       void *data)
+{
+	struct nfs4_accessres *res = data;
+	struct compound_hdr hdr;
+	int status;
 
 	status = decode_compound_hdr(xdr, &hdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_sequence(xdr, &res->seq_res, rqstp);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_putfh(xdr);
-	अगर (status != 0)
-		जाओ out;
+	if (status != 0)
+		goto out;
 	status = decode_access(xdr, &res->supported, &res->access);
-	अगर (status != 0)
-		जाओ out;
-	अगर (res->fattr)
+	if (status != 0)
+		goto out;
+	if (res->fattr)
 		decode_getfattr(xdr, res->fattr, res->server);
 out:
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Decode LOOKUP response
  */
-अटल पूर्णांक nfs4_xdr_dec_lookup(काष्ठा rpc_rqst *rqstp, काष्ठा xdr_stream *xdr,
-			       व्योम *data)
-अणु
-	काष्ठा nfs4_lookup_res *res = data;
-	काष्ठा compound_hdr hdr;
-	पूर्णांक status;
+static int nfs4_xdr_dec_lookup(struct rpc_rqst *rqstp, struct xdr_stream *xdr,
+			       void *data)
+{
+	struct nfs4_lookup_res *res = data;
+	struct compound_hdr hdr;
+	int status;
 
 	status = decode_compound_hdr(xdr, &hdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_sequence(xdr, &res->seq_res, rqstp);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_putfh(xdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_lookup(xdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_getfh(xdr, res->fh);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_getfattr_label(xdr, res->fattr, res->label, res->server);
 out:
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Decode LOOKUPP response
  */
-अटल पूर्णांक nfs4_xdr_dec_lookupp(काष्ठा rpc_rqst *rqstp, काष्ठा xdr_stream *xdr,
-		व्योम *data)
-अणु
-	काष्ठा nfs4_lookupp_res *res = data;
-	काष्ठा compound_hdr hdr;
-	पूर्णांक status;
+static int nfs4_xdr_dec_lookupp(struct rpc_rqst *rqstp, struct xdr_stream *xdr,
+		void *data)
+{
+	struct nfs4_lookupp_res *res = data;
+	struct compound_hdr hdr;
+	int status;
 
 	status = decode_compound_hdr(xdr, &hdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_sequence(xdr, &res->seq_res, rqstp);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_putfh(xdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_lookupp(xdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_getfh(xdr, res->fh);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_getfattr_label(xdr, res->fattr, res->label, res->server);
 out:
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Decode LOOKUP_ROOT response
  */
-अटल पूर्णांक nfs4_xdr_dec_lookup_root(काष्ठा rpc_rqst *rqstp,
-				    काष्ठा xdr_stream *xdr,
-				    व्योम *data)
-अणु
-	काष्ठा nfs4_lookup_res *res = data;
-	काष्ठा compound_hdr hdr;
-	पूर्णांक status;
+static int nfs4_xdr_dec_lookup_root(struct rpc_rqst *rqstp,
+				    struct xdr_stream *xdr,
+				    void *data)
+{
+	struct nfs4_lookup_res *res = data;
+	struct compound_hdr hdr;
+	int status;
 
 	status = decode_compound_hdr(xdr, &hdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_sequence(xdr, &res->seq_res, rqstp);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_putrootfh(xdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_getfh(xdr, res->fh);
-	अगर (status == 0)
+	if (status == 0)
 		status = decode_getfattr_label(xdr, res->fattr,
 						res->label, res->server);
 out:
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Decode REMOVE response
  */
-अटल पूर्णांक nfs4_xdr_dec_हटाओ(काष्ठा rpc_rqst *rqstp, काष्ठा xdr_stream *xdr,
-			       व्योम *data)
-अणु
-	काष्ठा nfs_हटाओres *res = data;
-	काष्ठा compound_hdr hdr;
-	पूर्णांक status;
+static int nfs4_xdr_dec_remove(struct rpc_rqst *rqstp, struct xdr_stream *xdr,
+			       void *data)
+{
+	struct nfs_removeres *res = data;
+	struct compound_hdr hdr;
+	int status;
 
 	status = decode_compound_hdr(xdr, &hdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_sequence(xdr, &res->seq_res, rqstp);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_putfh(xdr);
-	अगर (status)
-		जाओ out;
-	status = decode_हटाओ(xdr, &res->cinfo);
+	if (status)
+		goto out;
+	status = decode_remove(xdr, &res->cinfo);
 out:
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Decode RENAME response
  */
-अटल पूर्णांक nfs4_xdr_dec_नाम(काष्ठा rpc_rqst *rqstp, काष्ठा xdr_stream *xdr,
-			       व्योम *data)
-अणु
-	काष्ठा nfs_नामres *res = data;
-	काष्ठा compound_hdr hdr;
-	पूर्णांक status;
+static int nfs4_xdr_dec_rename(struct rpc_rqst *rqstp, struct xdr_stream *xdr,
+			       void *data)
+{
+	struct nfs_renameres *res = data;
+	struct compound_hdr hdr;
+	int status;
 
 	status = decode_compound_hdr(xdr, &hdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_sequence(xdr, &res->seq_res, rqstp);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_putfh(xdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_savefh(xdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_putfh(xdr);
-	अगर (status)
-		जाओ out;
-	status = decode_नाम(xdr, &res->old_cinfo, &res->new_cinfo);
+	if (status)
+		goto out;
+	status = decode_rename(xdr, &res->old_cinfo, &res->new_cinfo);
 out:
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Decode LINK response
  */
-अटल पूर्णांक nfs4_xdr_dec_link(काष्ठा rpc_rqst *rqstp, काष्ठा xdr_stream *xdr,
-			     व्योम *data)
-अणु
-	काष्ठा nfs4_link_res *res = data;
-	काष्ठा compound_hdr hdr;
-	पूर्णांक status;
+static int nfs4_xdr_dec_link(struct rpc_rqst *rqstp, struct xdr_stream *xdr,
+			     void *data)
+{
+	struct nfs4_link_res *res = data;
+	struct compound_hdr hdr;
+	int status;
 
 	status = decode_compound_hdr(xdr, &hdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_sequence(xdr, &res->seq_res, rqstp);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_putfh(xdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_savefh(xdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_putfh(xdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_link(xdr, &res->cinfo);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	/*
 	 * Note order: OP_LINK leaves the directory as the current
 	 *             filehandle.
 	 */
 	status = decode_restorefh(xdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	decode_getfattr_label(xdr, res->fattr, res->label, res->server);
 out:
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Decode CREATE response
  */
-अटल पूर्णांक nfs4_xdr_dec_create(काष्ठा rpc_rqst *rqstp, काष्ठा xdr_stream *xdr,
-			       व्योम *data)
-अणु
-	काष्ठा nfs4_create_res *res = data;
-	काष्ठा compound_hdr hdr;
-	पूर्णांक status;
+static int nfs4_xdr_dec_create(struct rpc_rqst *rqstp, struct xdr_stream *xdr,
+			       void *data)
+{
+	struct nfs4_create_res *res = data;
+	struct compound_hdr hdr;
+	int status;
 
 	status = decode_compound_hdr(xdr, &hdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_sequence(xdr, &res->seq_res, rqstp);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_putfh(xdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_create(xdr, &res->dir_cinfo);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_getfh(xdr, res->fh);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	decode_getfattr_label(xdr, res->fattr, res->label, res->server);
 out:
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Decode SYMLINK response
  */
-अटल पूर्णांक nfs4_xdr_dec_symlink(काष्ठा rpc_rqst *rqstp, काष्ठा xdr_stream *xdr,
-				व्योम *res)
-अणु
-	वापस nfs4_xdr_dec_create(rqstp, xdr, res);
-पूर्ण
+static int nfs4_xdr_dec_symlink(struct rpc_rqst *rqstp, struct xdr_stream *xdr,
+				void *res)
+{
+	return nfs4_xdr_dec_create(rqstp, xdr, res);
+}
 
 /*
  * Decode GETATTR response
  */
-अटल पूर्णांक nfs4_xdr_dec_getattr(काष्ठा rpc_rqst *rqstp, काष्ठा xdr_stream *xdr,
-				व्योम *data)
-अणु
-	काष्ठा nfs4_getattr_res *res = data;
-	काष्ठा compound_hdr hdr;
-	पूर्णांक status;
+static int nfs4_xdr_dec_getattr(struct rpc_rqst *rqstp, struct xdr_stream *xdr,
+				void *data)
+{
+	struct nfs4_getattr_res *res = data;
+	struct compound_hdr hdr;
+	int status;
 
 	status = decode_compound_hdr(xdr, &hdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_sequence(xdr, &res->seq_res, rqstp);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_putfh(xdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_getfattr_label(xdr, res->fattr, res->label, res->server);
 out:
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Encode an SETACL request
  */
-अटल व्योम nfs4_xdr_enc_setacl(काष्ठा rpc_rqst *req, काष्ठा xdr_stream *xdr,
-				स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा nfs_setaclargs *args = data;
-	काष्ठा compound_hdr hdr = अणु
+static void nfs4_xdr_enc_setacl(struct rpc_rqst *req, struct xdr_stream *xdr,
+				const void *data)
+{
+	const struct nfs_setaclargs *args = data;
+	struct compound_hdr hdr = {
 		.minorversion = nfs4_xdr_minorversion(&args->seq_args),
-	पूर्ण;
+	};
 
 	encode_compound_hdr(xdr, req, &hdr);
 	encode_sequence(xdr, &args->seq_args, &hdr);
 	encode_putfh(xdr, args->fh, &hdr);
 	encode_setacl(xdr, args, &hdr);
 	encode_nops(&hdr);
-पूर्ण
+}
 
 /*
  * Decode SETACL response
  */
-अटल पूर्णांक
-nfs4_xdr_dec_setacl(काष्ठा rpc_rqst *rqstp, काष्ठा xdr_stream *xdr,
-		    व्योम *data)
-अणु
-	काष्ठा nfs_setaclres *res = data;
-	काष्ठा compound_hdr hdr;
-	पूर्णांक status;
+static int
+nfs4_xdr_dec_setacl(struct rpc_rqst *rqstp, struct xdr_stream *xdr,
+		    void *data)
+{
+	struct nfs_setaclres *res = data;
+	struct compound_hdr hdr;
+	int status;
 
 	status = decode_compound_hdr(xdr, &hdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_sequence(xdr, &res->seq_res, rqstp);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_putfh(xdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_setattr(xdr);
 out:
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Decode GETACL response
  */
-अटल पूर्णांक
-nfs4_xdr_dec_getacl(काष्ठा rpc_rqst *rqstp, काष्ठा xdr_stream *xdr,
-		    व्योम *data)
-अणु
-	काष्ठा nfs_getaclres *res = data;
-	काष्ठा compound_hdr hdr;
-	पूर्णांक status;
+static int
+nfs4_xdr_dec_getacl(struct rpc_rqst *rqstp, struct xdr_stream *xdr,
+		    void *data)
+{
+	struct nfs_getaclres *res = data;
+	struct compound_hdr hdr;
+	int status;
 
-	अगर (res->acl_scratch != शून्य)
+	if (res->acl_scratch != NULL)
 		xdr_set_scratch_page(xdr, res->acl_scratch);
 	status = decode_compound_hdr(xdr, &hdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_sequence(xdr, &res->seq_res, rqstp);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_putfh(xdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_getacl(xdr, rqstp, res);
 
 out:
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Decode CLOSE response
  */
-अटल पूर्णांक nfs4_xdr_dec_बंद(काष्ठा rpc_rqst *rqstp, काष्ठा xdr_stream *xdr,
-			      व्योम *data)
-अणु
-	काष्ठा nfs_बंदres *res = data;
-	काष्ठा compound_hdr hdr;
-	पूर्णांक status;
+static int nfs4_xdr_dec_close(struct rpc_rqst *rqstp, struct xdr_stream *xdr,
+			      void *data)
+{
+	struct nfs_closeres *res = data;
+	struct compound_hdr hdr;
+	int status;
 
 	status = decode_compound_hdr(xdr, &hdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_sequence(xdr, &res->seq_res, rqstp);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_putfh(xdr);
-	अगर (status)
-		जाओ out;
-	अगर (res->lr_res) अणु
-		status = decode_layoutवापस(xdr, res->lr_res);
+	if (status)
+		goto out;
+	if (res->lr_res) {
+		status = decode_layoutreturn(xdr, res->lr_res);
 		res->lr_ret = status;
-		अगर (status)
-			जाओ out;
-	पूर्ण
-	अगर (res->fattr != शून्य) अणु
+		if (status)
+			goto out;
+	}
+	if (res->fattr != NULL) {
 		status = decode_getfattr(xdr, res->fattr, res->server);
-		अगर (status != 0)
-			जाओ out;
-	पूर्ण
-	status = decode_बंद(xdr, res);
+		if (status != 0)
+			goto out;
+	}
+	status = decode_close(xdr, res);
 out:
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Decode OPEN response
  */
-अटल पूर्णांक nfs4_xdr_dec_खोलो(काष्ठा rpc_rqst *rqstp, काष्ठा xdr_stream *xdr,
-			     व्योम *data)
-अणु
-	काष्ठा nfs_खोलोres *res = data;
-	काष्ठा compound_hdr hdr;
-	पूर्णांक status;
+static int nfs4_xdr_dec_open(struct rpc_rqst *rqstp, struct xdr_stream *xdr,
+			     void *data)
+{
+	struct nfs_openres *res = data;
+	struct compound_hdr hdr;
+	int status;
 
 	status = decode_compound_hdr(xdr, &hdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_sequence(xdr, &res->seq_res, rqstp);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_putfh(xdr);
-	अगर (status)
-		जाओ out;
-	status = decode_खोलो(xdr, res);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
+	status = decode_open(xdr, res);
+	if (status)
+		goto out;
 	status = decode_getfh(xdr, &res->fh);
-	अगर (status)
-		जाओ out;
-	अगर (res->access_request)
+	if (status)
+		goto out;
+	if (res->access_request)
 		decode_access(xdr, &res->access_supported, &res->access_result);
 	decode_getfattr_label(xdr, res->f_attr, res->f_label, res->server);
-	अगर (res->lg_res)
+	if (res->lg_res)
 		decode_layoutget(xdr, rqstp, res->lg_res);
 out:
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Decode OPEN_CONFIRM response
  */
-अटल पूर्णांक nfs4_xdr_dec_खोलो_confirm(काष्ठा rpc_rqst *rqstp,
-				     काष्ठा xdr_stream *xdr,
-				     व्योम *data)
-अणु
-	काष्ठा nfs_खोलो_confirmres *res = data;
-	काष्ठा compound_hdr hdr;
-	पूर्णांक status;
+static int nfs4_xdr_dec_open_confirm(struct rpc_rqst *rqstp,
+				     struct xdr_stream *xdr,
+				     void *data)
+{
+	struct nfs_open_confirmres *res = data;
+	struct compound_hdr hdr;
+	int status;
 
 	status = decode_compound_hdr(xdr, &hdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_putfh(xdr);
-	अगर (status)
-		जाओ out;
-	status = decode_खोलो_confirm(xdr, res);
+	if (status)
+		goto out;
+	status = decode_open_confirm(xdr, res);
 out:
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Decode OPEN response
  */
-अटल पूर्णांक nfs4_xdr_dec_खोलो_noattr(काष्ठा rpc_rqst *rqstp,
-				    काष्ठा xdr_stream *xdr,
-				    व्योम *data)
-अणु
-	काष्ठा nfs_खोलोres *res = data;
-	काष्ठा compound_hdr hdr;
-	पूर्णांक status;
+static int nfs4_xdr_dec_open_noattr(struct rpc_rqst *rqstp,
+				    struct xdr_stream *xdr,
+				    void *data)
+{
+	struct nfs_openres *res = data;
+	struct compound_hdr hdr;
+	int status;
 
 	status = decode_compound_hdr(xdr, &hdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_sequence(xdr, &res->seq_res, rqstp);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_putfh(xdr);
-	अगर (status)
-		जाओ out;
-	status = decode_खोलो(xdr, res);
-	अगर (status)
-		जाओ out;
-	अगर (res->access_request)
+	if (status)
+		goto out;
+	status = decode_open(xdr, res);
+	if (status)
+		goto out;
+	if (res->access_request)
 		decode_access(xdr, &res->access_supported, &res->access_result);
 	decode_getfattr(xdr, res->f_attr, res->server);
-	अगर (res->lg_res)
+	if (res->lg_res)
 		decode_layoutget(xdr, rqstp, res->lg_res);
 out:
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Decode SETATTR response
  */
-अटल पूर्णांक nfs4_xdr_dec_setattr(काष्ठा rpc_rqst *rqstp,
-				काष्ठा xdr_stream *xdr,
-				व्योम *data)
-अणु
-	काष्ठा nfs_setattrres *res = data;
-	काष्ठा compound_hdr hdr;
-	पूर्णांक status;
+static int nfs4_xdr_dec_setattr(struct rpc_rqst *rqstp,
+				struct xdr_stream *xdr,
+				void *data)
+{
+	struct nfs_setattrres *res = data;
+	struct compound_hdr hdr;
+	int status;
 
 	status = decode_compound_hdr(xdr, &hdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_sequence(xdr, &res->seq_res, rqstp);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_putfh(xdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_setattr(xdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	decode_getfattr_label(xdr, res->fattr, res->label, res->server);
 out:
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Decode LOCK response
  */
-अटल पूर्णांक nfs4_xdr_dec_lock(काष्ठा rpc_rqst *rqstp, काष्ठा xdr_stream *xdr,
-			     व्योम *data)
-अणु
-	काष्ठा nfs_lock_res *res = data;
-	काष्ठा compound_hdr hdr;
-	पूर्णांक status;
+static int nfs4_xdr_dec_lock(struct rpc_rqst *rqstp, struct xdr_stream *xdr,
+			     void *data)
+{
+	struct nfs_lock_res *res = data;
+	struct compound_hdr hdr;
+	int status;
 
 	status = decode_compound_hdr(xdr, &hdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_sequence(xdr, &res->seq_res, rqstp);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_putfh(xdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_lock(xdr, res);
 out:
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Decode LOCKT response
  */
-अटल पूर्णांक nfs4_xdr_dec_lockt(काष्ठा rpc_rqst *rqstp, काष्ठा xdr_stream *xdr,
-			      व्योम *data)
-अणु
-	काष्ठा nfs_lockt_res *res = data;
-	काष्ठा compound_hdr hdr;
-	पूर्णांक status;
+static int nfs4_xdr_dec_lockt(struct rpc_rqst *rqstp, struct xdr_stream *xdr,
+			      void *data)
+{
+	struct nfs_lockt_res *res = data;
+	struct compound_hdr hdr;
+	int status;
 
 	status = decode_compound_hdr(xdr, &hdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_sequence(xdr, &res->seq_res, rqstp);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_putfh(xdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_lockt(xdr, res);
 out:
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Decode LOCKU response
  */
-अटल पूर्णांक nfs4_xdr_dec_locku(काष्ठा rpc_rqst *rqstp, काष्ठा xdr_stream *xdr,
-			      व्योम *data)
-अणु
-	काष्ठा nfs_locku_res *res = data;
-	काष्ठा compound_hdr hdr;
-	पूर्णांक status;
+static int nfs4_xdr_dec_locku(struct rpc_rqst *rqstp, struct xdr_stream *xdr,
+			      void *data)
+{
+	struct nfs_locku_res *res = data;
+	struct compound_hdr hdr;
+	int status;
 
 	status = decode_compound_hdr(xdr, &hdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_sequence(xdr, &res->seq_res, rqstp);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_putfh(xdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_locku(xdr, res);
 out:
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक nfs4_xdr_dec_release_lockowner(काष्ठा rpc_rqst *rqstp,
-					  काष्ठा xdr_stream *xdr, व्योम *dummy)
-अणु
-	काष्ठा compound_hdr hdr;
-	पूर्णांक status;
+static int nfs4_xdr_dec_release_lockowner(struct rpc_rqst *rqstp,
+					  struct xdr_stream *xdr, void *dummy)
+{
+	struct compound_hdr hdr;
+	int status;
 
 	status = decode_compound_hdr(xdr, &hdr);
-	अगर (!status)
+	if (!status)
 		status = decode_release_lockowner(xdr);
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Decode READLINK response
  */
-अटल पूर्णांक nfs4_xdr_dec_पढ़ोlink(काष्ठा rpc_rqst *rqstp,
-				 काष्ठा xdr_stream *xdr,
-				 व्योम *data)
-अणु
-	काष्ठा nfs4_पढ़ोlink_res *res = data;
-	काष्ठा compound_hdr hdr;
-	पूर्णांक status;
+static int nfs4_xdr_dec_readlink(struct rpc_rqst *rqstp,
+				 struct xdr_stream *xdr,
+				 void *data)
+{
+	struct nfs4_readlink_res *res = data;
+	struct compound_hdr hdr;
+	int status;
 
 	status = decode_compound_hdr(xdr, &hdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_sequence(xdr, &res->seq_res, rqstp);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_putfh(xdr);
-	अगर (status)
-		जाओ out;
-	status = decode_पढ़ोlink(xdr, rqstp);
+	if (status)
+		goto out;
+	status = decode_readlink(xdr, rqstp);
 out:
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
- * Decode READसूची response
+ * Decode READDIR response
  */
-अटल पूर्णांक nfs4_xdr_dec_सूची_पढ़ो(काष्ठा rpc_rqst *rqstp, काष्ठा xdr_stream *xdr,
-				व्योम *data)
-अणु
-	काष्ठा nfs4_सूची_पढ़ो_res *res = data;
-	काष्ठा compound_hdr hdr;
-	पूर्णांक status;
+static int nfs4_xdr_dec_readdir(struct rpc_rqst *rqstp, struct xdr_stream *xdr,
+				void *data)
+{
+	struct nfs4_readdir_res *res = data;
+	struct compound_hdr hdr;
+	int status;
 
 	status = decode_compound_hdr(xdr, &hdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_sequence(xdr, &res->seq_res, rqstp);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_putfh(xdr);
-	अगर (status)
-		जाओ out;
-	status = decode_सूची_पढ़ो(xdr, rqstp, res);
+	if (status)
+		goto out;
+	status = decode_readdir(xdr, rqstp, res);
 out:
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Decode Read response
  */
-अटल पूर्णांक nfs4_xdr_dec_पढ़ो(काष्ठा rpc_rqst *rqstp, काष्ठा xdr_stream *xdr,
-			     व्योम *data)
-अणु
-	काष्ठा nfs_pgio_res *res = data;
-	काष्ठा compound_hdr hdr;
-	पूर्णांक status;
+static int nfs4_xdr_dec_read(struct rpc_rqst *rqstp, struct xdr_stream *xdr,
+			     void *data)
+{
+	struct nfs_pgio_res *res = data;
+	struct compound_hdr hdr;
+	int status;
 
 	status = decode_compound_hdr(xdr, &hdr);
 	res->op_status = hdr.status;
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_sequence(xdr, &res->seq_res, rqstp);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_putfh(xdr);
-	अगर (status)
-		जाओ out;
-	status = decode_पढ़ो(xdr, rqstp, res);
-	अगर (!status)
+	if (status)
+		goto out;
+	status = decode_read(xdr, rqstp, res);
+	if (!status)
 		status = res->count;
 out:
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Decode WRITE response
  */
-अटल पूर्णांक nfs4_xdr_dec_ग_लिखो(काष्ठा rpc_rqst *rqstp, काष्ठा xdr_stream *xdr,
-			      व्योम *data)
-अणु
-	काष्ठा nfs_pgio_res *res = data;
-	काष्ठा compound_hdr hdr;
-	पूर्णांक status;
+static int nfs4_xdr_dec_write(struct rpc_rqst *rqstp, struct xdr_stream *xdr,
+			      void *data)
+{
+	struct nfs_pgio_res *res = data;
+	struct compound_hdr hdr;
+	int status;
 
 	status = decode_compound_hdr(xdr, &hdr);
 	res->op_status = hdr.status;
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_sequence(xdr, &res->seq_res, rqstp);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_putfh(xdr);
-	अगर (status)
-		जाओ out;
-	status = decode_ग_लिखो(xdr, res);
-	अगर (status)
-		जाओ out;
-	अगर (res->fattr)
+	if (status)
+		goto out;
+	status = decode_write(xdr, res);
+	if (status)
+		goto out;
+	if (res->fattr)
 		decode_getfattr(xdr, res->fattr, res->server);
-	अगर (!status)
+	if (!status)
 		status = res->count;
 out:
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Decode COMMIT response
  */
-अटल पूर्णांक nfs4_xdr_dec_commit(काष्ठा rpc_rqst *rqstp, काष्ठा xdr_stream *xdr,
-			       व्योम *data)
-अणु
-	काष्ठा nfs_commitres *res = data;
-	काष्ठा compound_hdr hdr;
-	पूर्णांक status;
+static int nfs4_xdr_dec_commit(struct rpc_rqst *rqstp, struct xdr_stream *xdr,
+			       void *data)
+{
+	struct nfs_commitres *res = data;
+	struct compound_hdr hdr;
+	int status;
 
 	status = decode_compound_hdr(xdr, &hdr);
 	res->op_status = hdr.status;
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_sequence(xdr, &res->seq_res, rqstp);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_putfh(xdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_commit(xdr, res);
 out:
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Decode FSINFO response
  */
-अटल पूर्णांक nfs4_xdr_dec_fsinfo(काष्ठा rpc_rqst *req, काष्ठा xdr_stream *xdr,
-			       व्योम *data)
-अणु
-	काष्ठा nfs4_fsinfo_res *res = data;
-	काष्ठा compound_hdr hdr;
-	पूर्णांक status;
+static int nfs4_xdr_dec_fsinfo(struct rpc_rqst *req, struct xdr_stream *xdr,
+			       void *data)
+{
+	struct nfs4_fsinfo_res *res = data;
+	struct compound_hdr hdr;
+	int status;
 
 	status = decode_compound_hdr(xdr, &hdr);
-	अगर (!status)
+	if (!status)
 		status = decode_sequence(xdr, &res->seq_res, req);
-	अगर (!status)
+	if (!status)
 		status = decode_putfh(xdr);
-	अगर (!status)
+	if (!status)
 		status = decode_fsinfo(xdr, res->fsinfo);
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Decode PATHCONF response
  */
-अटल पूर्णांक nfs4_xdr_dec_pathconf(काष्ठा rpc_rqst *req, काष्ठा xdr_stream *xdr,
-				 व्योम *data)
-अणु
-	काष्ठा nfs4_pathconf_res *res = data;
-	काष्ठा compound_hdr hdr;
-	पूर्णांक status;
+static int nfs4_xdr_dec_pathconf(struct rpc_rqst *req, struct xdr_stream *xdr,
+				 void *data)
+{
+	struct nfs4_pathconf_res *res = data;
+	struct compound_hdr hdr;
+	int status;
 
 	status = decode_compound_hdr(xdr, &hdr);
-	अगर (!status)
+	if (!status)
 		status = decode_sequence(xdr, &res->seq_res, req);
-	अगर (!status)
+	if (!status)
 		status = decode_putfh(xdr);
-	अगर (!status)
+	if (!status)
 		status = decode_pathconf(xdr, res->pathconf);
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Decode STATFS response
  */
-अटल पूर्णांक nfs4_xdr_dec_statfs(काष्ठा rpc_rqst *req, काष्ठा xdr_stream *xdr,
-			       व्योम *data)
-अणु
-	काष्ठा nfs4_statfs_res *res = data;
-	काष्ठा compound_hdr hdr;
-	पूर्णांक status;
+static int nfs4_xdr_dec_statfs(struct rpc_rqst *req, struct xdr_stream *xdr,
+			       void *data)
+{
+	struct nfs4_statfs_res *res = data;
+	struct compound_hdr hdr;
+	int status;
 
 	status = decode_compound_hdr(xdr, &hdr);
-	अगर (!status)
+	if (!status)
 		status = decode_sequence(xdr, &res->seq_res, req);
-	अगर (!status)
+	if (!status)
 		status = decode_putfh(xdr);
-	अगर (!status)
+	if (!status)
 		status = decode_statfs(xdr, res->fsstat);
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Decode GETATTR_BITMAP response
  */
-अटल पूर्णांक nfs4_xdr_dec_server_caps(काष्ठा rpc_rqst *req,
-				    काष्ठा xdr_stream *xdr,
-				    व्योम *data)
-अणु
-	काष्ठा nfs4_server_caps_res *res = data;
-	काष्ठा compound_hdr hdr;
-	पूर्णांक status;
+static int nfs4_xdr_dec_server_caps(struct rpc_rqst *req,
+				    struct xdr_stream *xdr,
+				    void *data)
+{
+	struct nfs4_server_caps_res *res = data;
+	struct compound_hdr hdr;
+	int status;
 
 	status = decode_compound_hdr(xdr, &hdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_sequence(xdr, &res->seq_res, req);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_putfh(xdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_server_caps(xdr, res);
 out:
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Decode RENEW response
  */
-अटल पूर्णांक nfs4_xdr_dec_renew(काष्ठा rpc_rqst *rqstp, काष्ठा xdr_stream *xdr,
-			      व्योम *__unused)
-अणु
-	काष्ठा compound_hdr hdr;
-	पूर्णांक status;
+static int nfs4_xdr_dec_renew(struct rpc_rqst *rqstp, struct xdr_stream *xdr,
+			      void *__unused)
+{
+	struct compound_hdr hdr;
+	int status;
 
 	status = decode_compound_hdr(xdr, &hdr);
-	अगर (!status)
+	if (!status)
 		status = decode_renew(xdr);
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Decode SETCLIENTID response
  */
-अटल पूर्णांक nfs4_xdr_dec_setclientid(काष्ठा rpc_rqst *req,
-				    काष्ठा xdr_stream *xdr,
-				    व्योम *data)
-अणु
-	काष्ठा nfs4_setclientid_res *res = data;
-	काष्ठा compound_hdr hdr;
-	पूर्णांक status;
+static int nfs4_xdr_dec_setclientid(struct rpc_rqst *req,
+				    struct xdr_stream *xdr,
+				    void *data)
+{
+	struct nfs4_setclientid_res *res = data;
+	struct compound_hdr hdr;
+	int status;
 
 	status = decode_compound_hdr(xdr, &hdr);
-	अगर (!status)
+	if (!status)
 		status = decode_setclientid(xdr, res);
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Decode SETCLIENTID_CONFIRM response
  */
-अटल पूर्णांक nfs4_xdr_dec_setclientid_confirm(काष्ठा rpc_rqst *req,
-					    काष्ठा xdr_stream *xdr,
-					    व्योम *data)
-अणु
-	काष्ठा compound_hdr hdr;
-	पूर्णांक status;
+static int nfs4_xdr_dec_setclientid_confirm(struct rpc_rqst *req,
+					    struct xdr_stream *xdr,
+					    void *data)
+{
+	struct compound_hdr hdr;
+	int status;
 
 	status = decode_compound_hdr(xdr, &hdr);
-	अगर (!status)
+	if (!status)
 		status = decode_setclientid_confirm(xdr);
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Decode DELEGRETURN response
  */
-अटल पूर्णांक nfs4_xdr_dec_delegवापस(काष्ठा rpc_rqst *rqstp,
-				    काष्ठा xdr_stream *xdr,
-				    व्योम *data)
-अणु
-	काष्ठा nfs4_delegवापसres *res = data;
-	काष्ठा compound_hdr hdr;
-	पूर्णांक status;
+static int nfs4_xdr_dec_delegreturn(struct rpc_rqst *rqstp,
+				    struct xdr_stream *xdr,
+				    void *data)
+{
+	struct nfs4_delegreturnres *res = data;
+	struct compound_hdr hdr;
+	int status;
 
 	status = decode_compound_hdr(xdr, &hdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_sequence(xdr, &res->seq_res, rqstp);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_putfh(xdr);
-	अगर (status != 0)
-		जाओ out;
-	अगर (res->lr_res) अणु
-		status = decode_layoutवापस(xdr, res->lr_res);
+	if (status != 0)
+		goto out;
+	if (res->lr_res) {
+		status = decode_layoutreturn(xdr, res->lr_res);
 		res->lr_ret = status;
-		अगर (status)
-			जाओ out;
-	पूर्ण
-	अगर (res->fattr) अणु
+		if (status)
+			goto out;
+	}
+	if (res->fattr) {
 		status = decode_getfattr(xdr, res->fattr, res->server);
-		अगर (status != 0)
-			जाओ out;
-	पूर्ण
-	status = decode_delegवापस(xdr);
+		if (status != 0)
+			goto out;
+	}
+	status = decode_delegreturn(xdr);
 out:
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Decode FS_LOCATIONS response
  */
-अटल पूर्णांक nfs4_xdr_dec_fs_locations(काष्ठा rpc_rqst *req,
-				     काष्ठा xdr_stream *xdr,
-				     व्योम *data)
-अणु
-	काष्ठा nfs4_fs_locations_res *res = data;
-	काष्ठा compound_hdr hdr;
-	पूर्णांक status;
+static int nfs4_xdr_dec_fs_locations(struct rpc_rqst *req,
+				     struct xdr_stream *xdr,
+				     void *data)
+{
+	struct nfs4_fs_locations_res *res = data;
+	struct compound_hdr hdr;
+	int status;
 
 	status = decode_compound_hdr(xdr, &hdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_sequence(xdr, &res->seq_res, req);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_putfh(xdr);
-	अगर (status)
-		जाओ out;
-	अगर (res->migration) अणु
+	if (status)
+		goto out;
+	if (res->migration) {
 		xdr_enter_page(xdr, PAGE_SIZE);
 		status = decode_getfattr_generic(xdr,
 					&res->fs_locations->fattr,
-					 शून्य, res->fs_locations,
-					 शून्य, res->fs_locations->server);
-		अगर (status)
-			जाओ out;
-		अगर (res->renew)
+					 NULL, res->fs_locations,
+					 NULL, res->fs_locations->server);
+		if (status)
+			goto out;
+		if (res->renew)
 			status = decode_renew(xdr);
-	पूर्ण अन्यथा अणु
+	} else {
 		status = decode_lookup(xdr);
-		अगर (status)
-			जाओ out;
+		if (status)
+			goto out;
 		xdr_enter_page(xdr, PAGE_SIZE);
 		status = decode_getfattr_generic(xdr,
 					&res->fs_locations->fattr,
-					 शून्य, res->fs_locations,
-					 शून्य, res->fs_locations->server);
-	पूर्ण
+					 NULL, res->fs_locations,
+					 NULL, res->fs_locations->server);
+	}
 out:
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Decode SECINFO response
  */
-अटल पूर्णांक nfs4_xdr_dec_secinfo(काष्ठा rpc_rqst *rqstp,
-				काष्ठा xdr_stream *xdr,
-				व्योम *data)
-अणु
-	काष्ठा nfs4_secinfo_res *res = data;
-	काष्ठा compound_hdr hdr;
-	पूर्णांक status;
+static int nfs4_xdr_dec_secinfo(struct rpc_rqst *rqstp,
+				struct xdr_stream *xdr,
+				void *data)
+{
+	struct nfs4_secinfo_res *res = data;
+	struct compound_hdr hdr;
+	int status;
 
 	status = decode_compound_hdr(xdr, &hdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_sequence(xdr, &res->seq_res, rqstp);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_putfh(xdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_secinfo(xdr, res);
 out:
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Decode FSID_PRESENT response
  */
-अटल पूर्णांक nfs4_xdr_dec_fsid_present(काष्ठा rpc_rqst *rqstp,
-				     काष्ठा xdr_stream *xdr,
-				     व्योम *data)
-अणु
-	काष्ठा nfs4_fsid_present_res *res = data;
-	काष्ठा compound_hdr hdr;
-	पूर्णांक status;
+static int nfs4_xdr_dec_fsid_present(struct rpc_rqst *rqstp,
+				     struct xdr_stream *xdr,
+				     void *data)
+{
+	struct nfs4_fsid_present_res *res = data;
+	struct compound_hdr hdr;
+	int status;
 
 	status = decode_compound_hdr(xdr, &hdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_sequence(xdr, &res->seq_res, rqstp);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_putfh(xdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_getfh(xdr, res->fh);
-	अगर (status)
-		जाओ out;
-	अगर (res->renew)
+	if (status)
+		goto out;
+	if (res->renew)
 		status = decode_renew(xdr);
 out:
-	वापस status;
-पूर्ण
+	return status;
+}
 
-#अगर defined(CONFIG_NFS_V4_1)
+#if defined(CONFIG_NFS_V4_1)
 /*
  * Decode BIND_CONN_TO_SESSION response
  */
-अटल पूर्णांक nfs4_xdr_dec_bind_conn_to_session(काष्ठा rpc_rqst *rqstp,
-					काष्ठा xdr_stream *xdr,
-					व्योम *res)
-अणु
-	काष्ठा compound_hdr hdr;
-	पूर्णांक status;
+static int nfs4_xdr_dec_bind_conn_to_session(struct rpc_rqst *rqstp,
+					struct xdr_stream *xdr,
+					void *res)
+{
+	struct compound_hdr hdr;
+	int status;
 
 	status = decode_compound_hdr(xdr, &hdr);
-	अगर (!status)
+	if (!status)
 		status = decode_bind_conn_to_session(xdr, res);
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Decode EXCHANGE_ID response
  */
-अटल पूर्णांक nfs4_xdr_dec_exchange_id(काष्ठा rpc_rqst *rqstp,
-				    काष्ठा xdr_stream *xdr,
-				    व्योम *res)
-अणु
-	काष्ठा compound_hdr hdr;
-	पूर्णांक status;
+static int nfs4_xdr_dec_exchange_id(struct rpc_rqst *rqstp,
+				    struct xdr_stream *xdr,
+				    void *res)
+{
+	struct compound_hdr hdr;
+	int status;
 
 	status = decode_compound_hdr(xdr, &hdr);
-	अगर (!status)
+	if (!status)
 		status = decode_exchange_id(xdr, res);
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Decode CREATE_SESSION response
  */
-अटल पूर्णांक nfs4_xdr_dec_create_session(काष्ठा rpc_rqst *rqstp,
-				       काष्ठा xdr_stream *xdr,
-				       व्योम *res)
-अणु
-	काष्ठा compound_hdr hdr;
-	पूर्णांक status;
+static int nfs4_xdr_dec_create_session(struct rpc_rqst *rqstp,
+				       struct xdr_stream *xdr,
+				       void *res)
+{
+	struct compound_hdr hdr;
+	int status;
 
 	status = decode_compound_hdr(xdr, &hdr);
-	अगर (!status)
+	if (!status)
 		status = decode_create_session(xdr, res);
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Decode DESTROY_SESSION response
  */
-अटल पूर्णांक nfs4_xdr_dec_destroy_session(काष्ठा rpc_rqst *rqstp,
-					काष्ठा xdr_stream *xdr,
-					व्योम *res)
-अणु
-	काष्ठा compound_hdr hdr;
-	पूर्णांक status;
+static int nfs4_xdr_dec_destroy_session(struct rpc_rqst *rqstp,
+					struct xdr_stream *xdr,
+					void *res)
+{
+	struct compound_hdr hdr;
+	int status;
 
 	status = decode_compound_hdr(xdr, &hdr);
-	अगर (!status)
+	if (!status)
 		status = decode_destroy_session(xdr, res);
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Decode DESTROY_CLIENTID response
  */
-अटल पूर्णांक nfs4_xdr_dec_destroy_clientid(काष्ठा rpc_rqst *rqstp,
-					काष्ठा xdr_stream *xdr,
-					व्योम *res)
-अणु
-	काष्ठा compound_hdr hdr;
-	पूर्णांक status;
+static int nfs4_xdr_dec_destroy_clientid(struct rpc_rqst *rqstp,
+					struct xdr_stream *xdr,
+					void *res)
+{
+	struct compound_hdr hdr;
+	int status;
 
 	status = decode_compound_hdr(xdr, &hdr);
-	अगर (!status)
+	if (!status)
 		status = decode_destroy_clientid(xdr, res);
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Decode SEQUENCE response
  */
-अटल पूर्णांक nfs4_xdr_dec_sequence(काष्ठा rpc_rqst *rqstp,
-				 काष्ठा xdr_stream *xdr,
-				 व्योम *res)
-अणु
-	काष्ठा compound_hdr hdr;
-	पूर्णांक status;
+static int nfs4_xdr_dec_sequence(struct rpc_rqst *rqstp,
+				 struct xdr_stream *xdr,
+				 void *res)
+{
+	struct compound_hdr hdr;
+	int status;
 
 	status = decode_compound_hdr(xdr, &hdr);
-	अगर (!status)
+	if (!status)
 		status = decode_sequence(xdr, res, rqstp);
-	वापस status;
-पूर्ण
+	return status;
+}
 
-#पूर्ण_अगर
+#endif
 
 /*
  * Decode GET_LEASE_TIME response
  */
-अटल पूर्णांक nfs4_xdr_dec_get_lease_समय(काष्ठा rpc_rqst *rqstp,
-				       काष्ठा xdr_stream *xdr,
-				       व्योम *data)
-अणु
-	काष्ठा nfs4_get_lease_समय_res *res = data;
-	काष्ठा compound_hdr hdr;
-	पूर्णांक status;
+static int nfs4_xdr_dec_get_lease_time(struct rpc_rqst *rqstp,
+				       struct xdr_stream *xdr,
+				       void *data)
+{
+	struct nfs4_get_lease_time_res *res = data;
+	struct compound_hdr hdr;
+	int status;
 
 	status = decode_compound_hdr(xdr, &hdr);
-	अगर (!status)
+	if (!status)
 		status = decode_sequence(xdr, &res->lr_seq_res, rqstp);
-	अगर (!status)
+	if (!status)
 		status = decode_putrootfh(xdr);
-	अगर (!status)
+	if (!status)
 		status = decode_fsinfo(xdr, res->lr_fsinfo);
-	वापस status;
-पूर्ण
+	return status;
+}
 
-#अगर_घोषित CONFIG_NFS_V4_1
+#ifdef CONFIG_NFS_V4_1
 
 /*
  * Decode RECLAIM_COMPLETE response
  */
-अटल पूर्णांक nfs4_xdr_dec_reclaim_complete(काष्ठा rpc_rqst *rqstp,
-					 काष्ठा xdr_stream *xdr,
-					 व्योम *data)
-अणु
-	काष्ठा nfs41_reclaim_complete_res *res = data;
-	काष्ठा compound_hdr hdr;
-	पूर्णांक status;
+static int nfs4_xdr_dec_reclaim_complete(struct rpc_rqst *rqstp,
+					 struct xdr_stream *xdr,
+					 void *data)
+{
+	struct nfs41_reclaim_complete_res *res = data;
+	struct compound_hdr hdr;
+	int status;
 
 	status = decode_compound_hdr(xdr, &hdr);
-	अगर (!status)
+	if (!status)
 		status = decode_sequence(xdr, &res->seq_res, rqstp);
-	अगर (!status)
-		status = decode_reclaim_complete(xdr, शून्य);
-	वापस status;
-पूर्ण
+	if (!status)
+		status = decode_reclaim_complete(xdr, NULL);
+	return status;
+}
 
 /*
  * Decode GETDEVINFO response
  */
-अटल पूर्णांक nfs4_xdr_dec_getdeviceinfo(काष्ठा rpc_rqst *rqstp,
-				      काष्ठा xdr_stream *xdr,
-				      व्योम *data)
-अणु
-	काष्ठा nfs4_getdeviceinfo_res *res = data;
-	काष्ठा compound_hdr hdr;
-	पूर्णांक status;
+static int nfs4_xdr_dec_getdeviceinfo(struct rpc_rqst *rqstp,
+				      struct xdr_stream *xdr,
+				      void *data)
+{
+	struct nfs4_getdeviceinfo_res *res = data;
+	struct compound_hdr hdr;
+	int status;
 
 	status = decode_compound_hdr(xdr, &hdr);
-	अगर (status != 0)
-		जाओ out;
+	if (status != 0)
+		goto out;
 	status = decode_sequence(xdr, &res->seq_res, rqstp);
-	अगर (status != 0)
-		जाओ out;
+	if (status != 0)
+		goto out;
 	status = decode_getdeviceinfo(xdr, res);
 out:
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Decode LAYOUTGET response
  */
-अटल पूर्णांक nfs4_xdr_dec_layoutget(काष्ठा rpc_rqst *rqstp,
-				  काष्ठा xdr_stream *xdr,
-				  व्योम *data)
-अणु
-	काष्ठा nfs4_layoutget_res *res = data;
-	काष्ठा compound_hdr hdr;
-	पूर्णांक status;
+static int nfs4_xdr_dec_layoutget(struct rpc_rqst *rqstp,
+				  struct xdr_stream *xdr,
+				  void *data)
+{
+	struct nfs4_layoutget_res *res = data;
+	struct compound_hdr hdr;
+	int status;
 
 	status = decode_compound_hdr(xdr, &hdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_sequence(xdr, &res->seq_res, rqstp);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_putfh(xdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_layoutget(xdr, rqstp, res);
 out:
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Decode LAYOUTRETURN response
  */
-अटल पूर्णांक nfs4_xdr_dec_layoutवापस(काष्ठा rpc_rqst *rqstp,
-				     काष्ठा xdr_stream *xdr,
-				     व्योम *data)
-अणु
-	काष्ठा nfs4_layoutवापस_res *res = data;
-	काष्ठा compound_hdr hdr;
-	पूर्णांक status;
+static int nfs4_xdr_dec_layoutreturn(struct rpc_rqst *rqstp,
+				     struct xdr_stream *xdr,
+				     void *data)
+{
+	struct nfs4_layoutreturn_res *res = data;
+	struct compound_hdr hdr;
+	int status;
 
 	status = decode_compound_hdr(xdr, &hdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_sequence(xdr, &res->seq_res, rqstp);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_putfh(xdr);
-	अगर (status)
-		जाओ out;
-	status = decode_layoutवापस(xdr, res);
+	if (status)
+		goto out;
+	status = decode_layoutreturn(xdr, res);
 out:
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Decode LAYOUTCOMMIT response
  */
-अटल पूर्णांक nfs4_xdr_dec_layoutcommit(काष्ठा rpc_rqst *rqstp,
-				     काष्ठा xdr_stream *xdr,
-				     व्योम *data)
-अणु
-	काष्ठा nfs4_layoutcommit_res *res = data;
-	काष्ठा compound_hdr hdr;
-	पूर्णांक status;
+static int nfs4_xdr_dec_layoutcommit(struct rpc_rqst *rqstp,
+				     struct xdr_stream *xdr,
+				     void *data)
+{
+	struct nfs4_layoutcommit_res *res = data;
+	struct compound_hdr hdr;
+	int status;
 
 	status = decode_compound_hdr(xdr, &hdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_sequence(xdr, &res->seq_res, rqstp);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_putfh(xdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_layoutcommit(xdr, rqstp, res);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	decode_getfattr(xdr, res->fattr, res->server);
 out:
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Decode SECINFO_NO_NAME response
  */
-अटल पूर्णांक nfs4_xdr_dec_secinfo_no_name(काष्ठा rpc_rqst *rqstp,
-					काष्ठा xdr_stream *xdr,
-					व्योम *data)
-अणु
-	काष्ठा nfs4_secinfo_res *res = data;
-	काष्ठा compound_hdr hdr;
-	पूर्णांक status;
+static int nfs4_xdr_dec_secinfo_no_name(struct rpc_rqst *rqstp,
+					struct xdr_stream *xdr,
+					void *data)
+{
+	struct nfs4_secinfo_res *res = data;
+	struct compound_hdr hdr;
+	int status;
 
 	status = decode_compound_hdr(xdr, &hdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_sequence(xdr, &res->seq_res, rqstp);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_putrootfh(xdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_secinfo_no_name(xdr, res);
 out:
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Decode TEST_STATEID response
  */
-अटल पूर्णांक nfs4_xdr_dec_test_stateid(काष्ठा rpc_rqst *rqstp,
-				     काष्ठा xdr_stream *xdr,
-				     व्योम *data)
-अणु
-	काष्ठा nfs41_test_stateid_res *res = data;
-	काष्ठा compound_hdr hdr;
-	पूर्णांक status;
+static int nfs4_xdr_dec_test_stateid(struct rpc_rqst *rqstp,
+				     struct xdr_stream *xdr,
+				     void *data)
+{
+	struct nfs41_test_stateid_res *res = data;
+	struct compound_hdr hdr;
+	int status;
 
 	status = decode_compound_hdr(xdr, &hdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_sequence(xdr, &res->seq_res, rqstp);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_test_stateid(xdr, res);
 out:
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Decode FREE_STATEID response
  */
-अटल पूर्णांक nfs4_xdr_dec_मुक्त_stateid(काष्ठा rpc_rqst *rqstp,
-				     काष्ठा xdr_stream *xdr,
-				     व्योम *data)
-अणु
-	काष्ठा nfs41_मुक्त_stateid_res *res = data;
-	काष्ठा compound_hdr hdr;
-	पूर्णांक status;
+static int nfs4_xdr_dec_free_stateid(struct rpc_rqst *rqstp,
+				     struct xdr_stream *xdr,
+				     void *data)
+{
+	struct nfs41_free_stateid_res *res = data;
+	struct compound_hdr hdr;
+	int status;
 
 	status = decode_compound_hdr(xdr, &hdr);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 	status = decode_sequence(xdr, &res->seq_res, rqstp);
-	अगर (status)
-		जाओ out;
-	status = decode_मुक्त_stateid(xdr, res);
+	if (status)
+		goto out;
+	status = decode_free_stateid(xdr, res);
 out:
-	वापस status;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_NFS_V4_1 */
+	return status;
+}
+#endif /* CONFIG_NFS_V4_1 */
 
 /**
  * nfs4_decode_dirent - Decode a single NFSv4 directory entry stored in
  *                      the local page cache.
  * @xdr: XDR stream where entry resides
  * @entry: buffer to fill in with entry data
- * @plus: boolean indicating whether this should be a सूची_पढ़ोplus entry
+ * @plus: boolean indicating whether this should be a readdirplus entry
  *
- * Returns zero अगर successful, otherwise a negative त्रुटि_सं value is
- * वापसed.
+ * Returns zero if successful, otherwise a negative errno value is
+ * returned.
  *
- * This function is not invoked during READसूची reply decoding, but
- * rather whenever an application invokes the getdents(2) प्रणाली call
- * on a directory alपढ़ोy in our cache.
+ * This function is not invoked during READDIR reply decoding, but
+ * rather whenever an application invokes the getdents(2) system call
+ * on a directory already in our cache.
  */
-पूर्णांक nfs4_decode_dirent(काष्ठा xdr_stream *xdr, काष्ठा nfs_entry *entry,
+int nfs4_decode_dirent(struct xdr_stream *xdr, struct nfs_entry *entry,
 		       bool plus)
-अणु
-	अचिन्हित पूर्णांक savep;
-	uपूर्णांक32_t biपंचांगap[3] = अणु0पूर्ण;
-	uपूर्णांक32_t len;
-	uपूर्णांक64_t new_cookie;
-	__be32 *p = xdr_अंतरभूत_decode(xdr, 4);
-	अगर (unlikely(!p))
-		वापस -EAGAIN;
-	अगर (*p == xdr_zero) अणु
-		p = xdr_अंतरभूत_decode(xdr, 4);
-		अगर (unlikely(!p))
-			वापस -EAGAIN;
-		अगर (*p == xdr_zero)
-			वापस -EAGAIN;
+{
+	unsigned int savep;
+	uint32_t bitmap[3] = {0};
+	uint32_t len;
+	uint64_t new_cookie;
+	__be32 *p = xdr_inline_decode(xdr, 4);
+	if (unlikely(!p))
+		return -EAGAIN;
+	if (*p == xdr_zero) {
+		p = xdr_inline_decode(xdr, 4);
+		if (unlikely(!p))
+			return -EAGAIN;
+		if (*p == xdr_zero)
+			return -EAGAIN;
 		entry->eof = 1;
-		वापस -EBADCOOKIE;
-	पूर्ण
+		return -EBADCOOKIE;
+	}
 
-	p = xdr_अंतरभूत_decode(xdr, 12);
-	अगर (unlikely(!p))
-		वापस -EAGAIN;
+	p = xdr_inline_decode(xdr, 12);
+	if (unlikely(!p))
+		return -EAGAIN;
 	p = xdr_decode_hyper(p, &new_cookie);
 	entry->len = be32_to_cpup(p);
 
-	p = xdr_अंतरभूत_decode(xdr, entry->len);
-	अगर (unlikely(!p))
-		वापस -EAGAIN;
-	entry->name = (स्थिर अक्षर *) p;
+	p = xdr_inline_decode(xdr, entry->len);
+	if (unlikely(!p))
+		return -EAGAIN;
+	entry->name = (const char *) p;
 
 	/*
-	 * In हाल the server करोesn't वापस an inode number,
-	 * we fake one here.  (We करोn't use inode number 0,
+	 * In case the server doesn't return an inode number,
+	 * we fake one here.  (We don't use inode number 0,
 	 * since glibc seems to choke on it...)
 	 */
 	entry->ino = 1;
 	entry->fattr->valid = 0;
 
-	अगर (decode_attr_biपंचांगap(xdr, biपंचांगap) < 0)
-		वापस -EAGAIN;
+	if (decode_attr_bitmap(xdr, bitmap) < 0)
+		return -EAGAIN;
 
-	अगर (decode_attr_length(xdr, &len, &savep) < 0)
-		वापस -EAGAIN;
+	if (decode_attr_length(xdr, &len, &savep) < 0)
+		return -EAGAIN;
 
-	अगर (decode_getfattr_attrs(xdr, biपंचांगap, entry->fattr, entry->fh,
-			शून्य, entry->label, entry->server) < 0)
-		वापस -EAGAIN;
-	अगर (entry->fattr->valid & NFS_ATTR_FATTR_MOUNTED_ON_खाताID)
+	if (decode_getfattr_attrs(xdr, bitmap, entry->fattr, entry->fh,
+			NULL, entry->label, entry->server) < 0)
+		return -EAGAIN;
+	if (entry->fattr->valid & NFS_ATTR_FATTR_MOUNTED_ON_FILEID)
 		entry->ino = entry->fattr->mounted_on_fileid;
-	अन्यथा अगर (entry->fattr->valid & NFS_ATTR_FATTR_खाताID)
+	else if (entry->fattr->valid & NFS_ATTR_FATTR_FILEID)
 		entry->ino = entry->fattr->fileid;
 
 	entry->d_type = DT_UNKNOWN;
-	अगर (entry->fattr->valid & NFS_ATTR_FATTR_TYPE)
+	if (entry->fattr->valid & NFS_ATTR_FATTR_TYPE)
 		entry->d_type = nfs_umode_to_dtype(entry->fattr->mode);
 
 	entry->prev_cookie = entry->cookie;
 	entry->cookie = new_cookie;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * We need to translate between nfs status वापस values and
- * the local त्रुटि_सं values which may not be the same.
+ * We need to translate between nfs status return values and
+ * the local errno values which may not be the same.
  */
-अटल काष्ठा अणु
-	पूर्णांक stat;
-	पूर्णांक त्रुटि_सं;
-पूर्ण nfs_errtbl[] = अणु
-	अणु NFS4_OK,		0		पूर्ण,
-	अणु NFS4ERR_PERM,		-EPERM		पूर्ण,
-	अणु NFS4ERR_NOENT,	-ENOENT		पूर्ण,
-	अणु NFS4ERR_IO,		-त्रुटि_सं_NFSERR_IOपूर्ण,
-	अणु NFS4ERR_NXIO,		-ENXIO		पूर्ण,
-	अणु NFS4ERR_ACCESS,	-EACCES		पूर्ण,
-	अणु NFS4ERR_EXIST,	-EEXIST		पूर्ण,
-	अणु NFS4ERR_XDEV,		-EXDEV		पूर्ण,
-	अणु NFS4ERR_NOTसूची,	-ENOTसूची	पूर्ण,
-	अणु NFS4ERR_ISसूची,	-EISसूची		पूर्ण,
-	अणु NFS4ERR_INVAL,	-EINVAL		पूर्ण,
-	अणु NFS4ERR_FBIG,		-EFBIG		पूर्ण,
-	अणु NFS4ERR_NOSPC,	-ENOSPC		पूर्ण,
-	अणु NFS4ERR_ROFS,		-EROFS		पूर्ण,
-	अणु NFS4ERR_MLINK,	-EMLINK		पूर्ण,
-	अणु NFS4ERR_NAMETOOLONG,	-ENAMETOOLONG	पूर्ण,
-	अणु NFS4ERR_NOTEMPTY,	-ENOTEMPTY	पूर्ण,
-	अणु NFS4ERR_DQUOT,	-EDQUOT		पूर्ण,
-	अणु NFS4ERR_STALE,	-ESTALE		पूर्ण,
-	अणु NFS4ERR_BADHANDLE,	-EBADHANDLE	पूर्ण,
-	अणु NFS4ERR_BAD_COOKIE,	-EBADCOOKIE	पूर्ण,
-	अणु NFS4ERR_NOTSUPP,	-ENOTSUPP	पूर्ण,
-	अणु NFS4ERR_TOOSMALL,	-ETOOSMALL	पूर्ण,
-	अणु NFS4ERR_SERVERFAULT,	-EREMOTEIO	पूर्ण,
-	अणु NFS4ERR_BADTYPE,	-EBADTYPE	पूर्ण,
-	अणु NFS4ERR_LOCKED,	-EAGAIN		पूर्ण,
-	अणु NFS4ERR_SYMLINK,	-ELOOP		पूर्ण,
-	अणु NFS4ERR_OP_ILLEGAL,	-EOPNOTSUPP	पूर्ण,
-	अणु NFS4ERR_DEADLOCK,	-EDEADLK	पूर्ण,
-	अणु NFS4ERR_NOXATTR,	-ENODATA	पूर्ण,
-	अणु NFS4ERR_XATTR2BIG,	-E2BIG		पूर्ण,
-	अणु -1,			-EIO		पूर्ण
-पूर्ण;
+static struct {
+	int stat;
+	int errno;
+} nfs_errtbl[] = {
+	{ NFS4_OK,		0		},
+	{ NFS4ERR_PERM,		-EPERM		},
+	{ NFS4ERR_NOENT,	-ENOENT		},
+	{ NFS4ERR_IO,		-errno_NFSERR_IO},
+	{ NFS4ERR_NXIO,		-ENXIO		},
+	{ NFS4ERR_ACCESS,	-EACCES		},
+	{ NFS4ERR_EXIST,	-EEXIST		},
+	{ NFS4ERR_XDEV,		-EXDEV		},
+	{ NFS4ERR_NOTDIR,	-ENOTDIR	},
+	{ NFS4ERR_ISDIR,	-EISDIR		},
+	{ NFS4ERR_INVAL,	-EINVAL		},
+	{ NFS4ERR_FBIG,		-EFBIG		},
+	{ NFS4ERR_NOSPC,	-ENOSPC		},
+	{ NFS4ERR_ROFS,		-EROFS		},
+	{ NFS4ERR_MLINK,	-EMLINK		},
+	{ NFS4ERR_NAMETOOLONG,	-ENAMETOOLONG	},
+	{ NFS4ERR_NOTEMPTY,	-ENOTEMPTY	},
+	{ NFS4ERR_DQUOT,	-EDQUOT		},
+	{ NFS4ERR_STALE,	-ESTALE		},
+	{ NFS4ERR_BADHANDLE,	-EBADHANDLE	},
+	{ NFS4ERR_BAD_COOKIE,	-EBADCOOKIE	},
+	{ NFS4ERR_NOTSUPP,	-ENOTSUPP	},
+	{ NFS4ERR_TOOSMALL,	-ETOOSMALL	},
+	{ NFS4ERR_SERVERFAULT,	-EREMOTEIO	},
+	{ NFS4ERR_BADTYPE,	-EBADTYPE	},
+	{ NFS4ERR_LOCKED,	-EAGAIN		},
+	{ NFS4ERR_SYMLINK,	-ELOOP		},
+	{ NFS4ERR_OP_ILLEGAL,	-EOPNOTSUPP	},
+	{ NFS4ERR_DEADLOCK,	-EDEADLK	},
+	{ NFS4ERR_NOXATTR,	-ENODATA	},
+	{ NFS4ERR_XATTR2BIG,	-E2BIG		},
+	{ -1,			-EIO		}
+};
 
 /*
  * Convert an NFS error code to a local one.
- * This one is used joपूर्णांकly by NFSv2 and NFSv3.
+ * This one is used jointly by NFSv2 and NFSv3.
  */
-अटल पूर्णांक
-nfs4_stat_to_त्रुटि_सं(पूर्णांक stat)
-अणु
-	पूर्णांक i;
-	क्रम (i = 0; nfs_errtbl[i].stat != -1; i++) अणु
-		अगर (nfs_errtbl[i].stat == stat)
-			वापस nfs_errtbl[i].त्रुटि_सं;
-	पूर्ण
-	अगर (stat <= 10000 || stat > 10100) अणु
+static int
+nfs4_stat_to_errno(int stat)
+{
+	int i;
+	for (i = 0; nfs_errtbl[i].stat != -1; i++) {
+		if (nfs_errtbl[i].stat == stat)
+			return nfs_errtbl[i].errno;
+	}
+	if (stat <= 10000 || stat > 10100) {
 		/* The server is looney tunes. */
-		वापस -EREMOTEIO;
-	पूर्ण
+		return -EREMOTEIO;
+	}
 	/* If we cannot translate the error, the recovery routines should
 	 * handle it.
-	 * Note: reमुख्यing NFSv4 error codes have values > 10000, so should
+	 * Note: remaining NFSv4 error codes have values > 10000, so should
 	 * not conflict with native Linux error codes.
 	 */
-	वापस -stat;
-पूर्ण
+	return -stat;
+}
 
-#अगर_घोषित CONFIG_NFS_V4_2
-#समावेश "nfs42xdr.c"
-#पूर्ण_अगर /* CONFIG_NFS_V4_2 */
+#ifdef CONFIG_NFS_V4_2
+#include "nfs42xdr.c"
+#endif /* CONFIG_NFS_V4_2 */
 
-#घोषणा PROC(proc, argtype, restype)				\
-[NFSPROC4_CLNT_##proc] = अणु					\
+#define PROC(proc, argtype, restype)				\
+[NFSPROC4_CLNT_##proc] = {					\
 	.p_proc   = NFSPROC4_COMPOUND,				\
 	.p_encode = nfs4_xdr_##argtype,				\
 	.p_decode = nfs4_xdr_##restype,				\
@@ -7572,38 +7571,38 @@ nfs4_stat_to_त्रुटि_सं(पूर्णांक stat)
 	.p_replen = NFS4_##restype##_sz,			\
 	.p_statidx = NFSPROC4_CLNT_##proc,			\
 	.p_name   = #proc,					\
-पूर्ण
+}
 
-#घोषणा STUB(proc)		\
-[NFSPROC4_CLNT_##proc] = अणु	\
+#define STUB(proc)		\
+[NFSPROC4_CLNT_##proc] = {	\
 	.p_name = #proc,	\
-पूर्ण
+}
 
-#अगर defined(CONFIG_NFS_V4_1)
-#घोषणा PROC41(proc, argtype, restype)				\
+#if defined(CONFIG_NFS_V4_1)
+#define PROC41(proc, argtype, restype)				\
 	PROC(proc, argtype, restype)
-#अन्यथा
-#घोषणा PROC41(proc, argtype, restype)				\
+#else
+#define PROC41(proc, argtype, restype)				\
 	STUB(proc)
-#पूर्ण_अगर
+#endif
 
-#अगर defined(CONFIG_NFS_V4_2)
-#घोषणा PROC42(proc, argtype, restype)				\
+#if defined(CONFIG_NFS_V4_2)
+#define PROC42(proc, argtype, restype)				\
 	PROC(proc, argtype, restype)
-#अन्यथा
-#घोषणा PROC42(proc, argtype, restype)				\
+#else
+#define PROC42(proc, argtype, restype)				\
 	STUB(proc)
-#पूर्ण_अगर
+#endif
 
-स्थिर काष्ठा rpc_procinfo nfs4_procedures[] = अणु
-	PROC(READ,		enc_पढ़ो,		dec_पढ़ो),
-	PROC(WRITE,		enc_ग_लिखो,		dec_ग_लिखो),
+const struct rpc_procinfo nfs4_procedures[] = {
+	PROC(READ,		enc_read,		dec_read),
+	PROC(WRITE,		enc_write,		dec_write),
 	PROC(COMMIT,		enc_commit,		dec_commit),
-	PROC(OPEN,		enc_खोलो,		dec_खोलो),
-	PROC(OPEN_CONFIRM,	enc_खोलो_confirm,	dec_खोलो_confirm),
-	PROC(OPEN_NOATTR,	enc_खोलो_noattr,	dec_खोलो_noattr),
-	PROC(OPEN_DOWNGRADE,	enc_खोलो_करोwngrade,	dec_खोलो_करोwngrade),
-	PROC(CLOSE,		enc_बंद,		dec_बंद),
+	PROC(OPEN,		enc_open,		dec_open),
+	PROC(OPEN_CONFIRM,	enc_open_confirm,	dec_open_confirm),
+	PROC(OPEN_NOATTR,	enc_open_noattr,	dec_open_noattr),
+	PROC(OPEN_DOWNGRADE,	enc_open_downgrade,	dec_open_downgrade),
+	PROC(CLOSE,		enc_close,		dec_close),
 	PROC(SETATTR,		enc_setattr,		dec_setattr),
 	PROC(FSINFO,		enc_fsinfo,		dec_fsinfo),
 	PROC(RENEW,		enc_renew,		dec_renew),
@@ -7616,17 +7615,17 @@ nfs4_stat_to_त्रुटि_सं(पूर्णांक stat)
 	PROC(GETATTR,		enc_getattr,		dec_getattr),
 	PROC(LOOKUP,		enc_lookup,		dec_lookup),
 	PROC(LOOKUP_ROOT,	enc_lookup_root,	dec_lookup_root),
-	PROC(REMOVE,		enc_हटाओ,		dec_हटाओ),
-	PROC(RENAME,		enc_नाम,		dec_नाम),
+	PROC(REMOVE,		enc_remove,		dec_remove),
+	PROC(RENAME,		enc_rename,		dec_rename),
 	PROC(LINK,		enc_link,		dec_link),
 	PROC(SYMLINK,		enc_symlink,		dec_symlink),
 	PROC(CREATE,		enc_create,		dec_create),
 	PROC(PATHCONF,		enc_pathconf,		dec_pathconf),
 	PROC(STATFS,		enc_statfs,		dec_statfs),
-	PROC(READLINK,		enc_पढ़ोlink,		dec_पढ़ोlink),
-	PROC(READसूची,		enc_सूची_पढ़ो,		dec_सूची_पढ़ो),
+	PROC(READLINK,		enc_readlink,		dec_readlink),
+	PROC(READDIR,		enc_readdir,		dec_readdir),
 	PROC(SERVER_CAPS,	enc_server_caps,	dec_server_caps),
-	PROC(DELEGRETURN,	enc_delegवापस,	dec_delegवापस),
+	PROC(DELEGRETURN,	enc_delegreturn,	dec_delegreturn),
 	PROC(GETACL,		enc_getacl,		dec_getacl),
 	PROC(SETACL,		enc_setacl,		dec_setacl),
 	PROC(FS_LOCATIONS,	enc_fs_locations,	dec_fs_locations),
@@ -7637,15 +7636,15 @@ nfs4_stat_to_त्रुटि_सं(पूर्णांक stat)
 	PROC41(CREATE_SESSION,	enc_create_session,	dec_create_session),
 	PROC41(DESTROY_SESSION,	enc_destroy_session,	dec_destroy_session),
 	PROC41(SEQUENCE,	enc_sequence,		dec_sequence),
-	PROC(GET_LEASE_TIME,	enc_get_lease_समय,	dec_get_lease_समय),
+	PROC(GET_LEASE_TIME,	enc_get_lease_time,	dec_get_lease_time),
 	PROC41(RECLAIM_COMPLETE,enc_reclaim_complete,	dec_reclaim_complete),
 	PROC41(GETDEVICEINFO,	enc_getdeviceinfo,	dec_getdeviceinfo),
 	PROC41(LAYOUTGET,	enc_layoutget,		dec_layoutget),
 	PROC41(LAYOUTCOMMIT,	enc_layoutcommit,	dec_layoutcommit),
-	PROC41(LAYOUTRETURN,	enc_layoutवापस,	dec_layoutवापस),
+	PROC41(LAYOUTRETURN,	enc_layoutreturn,	dec_layoutreturn),
 	PROC41(SECINFO_NO_NAME,	enc_secinfo_no_name,	dec_secinfo_no_name),
 	PROC41(TEST_STATEID,	enc_test_stateid,	dec_test_stateid),
-	PROC41(FREE_STATEID,	enc_मुक्त_stateid,	dec_मुक्त_stateid),
+	PROC41(FREE_STATEID,	enc_free_stateid,	dec_free_stateid),
 	STUB(GETDEVICELIST),
 	PROC41(BIND_CONN_TO_SESSION,
 			enc_bind_conn_to_session, dec_bind_conn_to_session),
@@ -7657,20 +7656,20 @@ nfs4_stat_to_त्रुटि_सं(पूर्णांक stat)
 	PROC42(CLONE,		enc_clone,		dec_clone),
 	PROC42(COPY,		enc_copy,		dec_copy),
 	PROC42(OFFLOAD_CANCEL,	enc_offload_cancel,	dec_offload_cancel),
-	PROC42(COPY_NOTIFY,	enc_copy_notअगरy,	dec_copy_notअगरy),
+	PROC42(COPY_NOTIFY,	enc_copy_notify,	dec_copy_notify),
 	PROC(LOOKUPP,		enc_lookupp,		dec_lookupp),
 	PROC42(LAYOUTERROR,	enc_layouterror,	dec_layouterror),
 	PROC42(GETXATTR,	enc_getxattr,		dec_getxattr),
 	PROC42(SETXATTR,	enc_setxattr,		dec_setxattr),
 	PROC42(LISTXATTRS,	enc_listxattrs,		dec_listxattrs),
-	PROC42(REMOVEXATTR,	enc_हटाओxattr,	dec_हटाओxattr),
-	PROC42(READ_PLUS,	enc_पढ़ो_plus,		dec_पढ़ो_plus),
-पूर्ण;
+	PROC42(REMOVEXATTR,	enc_removexattr,	dec_removexattr),
+	PROC42(READ_PLUS,	enc_read_plus,		dec_read_plus),
+};
 
-अटल अचिन्हित पूर्णांक nfs_version4_counts[ARRAY_SIZE(nfs4_procedures)];
-स्थिर काष्ठा rpc_version nfs_version4 = अणु
+static unsigned int nfs_version4_counts[ARRAY_SIZE(nfs4_procedures)];
+const struct rpc_version nfs_version4 = {
 	.number			= 4,
 	.nrprocs		= ARRAY_SIZE(nfs4_procedures),
 	.procs			= nfs4_procedures,
 	.counts			= nfs_version4_counts,
-पूर्ण;
+};

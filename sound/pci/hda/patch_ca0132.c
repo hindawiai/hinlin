@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * HD audio पूर्णांकerface patch क्रम Creative CA0132 chip
+ * HD audio interface patch for Creative CA0132 chip
  *
  * Copyright (c) 2011, Creative Technology Ltd.
  *
@@ -9,103 +8,103 @@
  * Copyright (c) 2008 Takashi Iwai <tiwai@suse.de>
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/module.h>
-#समावेश <linux/firmware.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/types.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/pci.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <sound/core.h>
-#समावेश <sound/hda_codec.h>
-#समावेश "hda_local.h"
-#समावेश "hda_auto_parser.h"
-#समावेश "hda_jack.h"
+#include <linux/init.h>
+#include <linux/delay.h>
+#include <linux/slab.h>
+#include <linux/mutex.h>
+#include <linux/module.h>
+#include <linux/firmware.h>
+#include <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/io.h>
+#include <linux/pci.h>
+#include <asm/io.h>
+#include <sound/core.h>
+#include <sound/hda_codec.h>
+#include "hda_local.h"
+#include "hda_auto_parser.h"
+#include "hda_jack.h"
 
-#समावेश "ca0132_regs.h"
+#include "ca0132_regs.h"
 
-/* Enable this to see controls क्रम tuning purpose. */
-/*#घोषणा ENABLE_TUNING_CONTROLS*/
+/* Enable this to see controls for tuning purpose. */
+/*#define ENABLE_TUNING_CONTROLS*/
 
-#अगर_घोषित ENABLE_TUNING_CONTROLS
-#समावेश <sound/tlv.h>
-#पूर्ण_अगर
+#ifdef ENABLE_TUNING_CONTROLS
+#include <sound/tlv.h>
+#endif
 
-#घोषणा FLOAT_ZERO	0x00000000
-#घोषणा FLOAT_ONE	0x3f800000
-#घोषणा FLOAT_TWO	0x40000000
-#घोषणा FLOAT_THREE     0x40400000
-#घोषणा FLOAT_FIVE	0x40a00000
-#घोषणा FLOAT_SIX       0x40c00000
-#घोषणा FLOAT_EIGHT     0x41000000
-#घोषणा FLOAT_MINUS_5	0xc0a00000
+#define FLOAT_ZERO	0x00000000
+#define FLOAT_ONE	0x3f800000
+#define FLOAT_TWO	0x40000000
+#define FLOAT_THREE     0x40400000
+#define FLOAT_FIVE	0x40a00000
+#define FLOAT_SIX       0x40c00000
+#define FLOAT_EIGHT     0x41000000
+#define FLOAT_MINUS_5	0xc0a00000
 
-#घोषणा UNSOL_TAG_DSP	0x16
+#define UNSOL_TAG_DSP	0x16
 
-#घोषणा DSP_DMA_WRITE_BUFLEN_INIT (1UL<<18)
-#घोषणा DSP_DMA_WRITE_BUFLEN_OVLY (1UL<<15)
+#define DSP_DMA_WRITE_BUFLEN_INIT (1UL<<18)
+#define DSP_DMA_WRITE_BUFLEN_OVLY (1UL<<15)
 
-#घोषणा DMA_TRANSFER_FRAME_SIZE_NWORDS		8
-#घोषणा DMA_TRANSFER_MAX_FRAME_SIZE_NWORDS	32
-#घोषणा DMA_OVERLAY_FRAME_SIZE_NWORDS		2
+#define DMA_TRANSFER_FRAME_SIZE_NWORDS		8
+#define DMA_TRANSFER_MAX_FRAME_SIZE_NWORDS	32
+#define DMA_OVERLAY_FRAME_SIZE_NWORDS		2
 
-#घोषणा MASTERCONTROL				0x80
-#घोषणा MASTERCONTROL_ALLOC_DMA_CHAN		10
-#घोषणा MASTERCONTROL_QUERY_SPEAKER_EQ_ADDRESS	60
+#define MASTERCONTROL				0x80
+#define MASTERCONTROL_ALLOC_DMA_CHAN		10
+#define MASTERCONTROL_QUERY_SPEAKER_EQ_ADDRESS	60
 
-#घोषणा WIDGET_CHIP_CTRL      0x15
-#घोषणा WIDGET_DSP_CTRL       0x16
+#define WIDGET_CHIP_CTRL      0x15
+#define WIDGET_DSP_CTRL       0x16
 
-#घोषणा MEM_CONNID_MICIN1     3
-#घोषणा MEM_CONNID_MICIN2     5
-#घोषणा MEM_CONNID_MICOUT1    12
-#घोषणा MEM_CONNID_MICOUT2    14
-#घोषणा MEM_CONNID_WUH        10
-#घोषणा MEM_CONNID_DSP        16
-#घोषणा MEM_CONNID_DMIC       100
+#define MEM_CONNID_MICIN1     3
+#define MEM_CONNID_MICIN2     5
+#define MEM_CONNID_MICOUT1    12
+#define MEM_CONNID_MICOUT2    14
+#define MEM_CONNID_WUH        10
+#define MEM_CONNID_DSP        16
+#define MEM_CONNID_DMIC       100
 
-#घोषणा SCP_SET    0
-#घोषणा SCP_GET    1
+#define SCP_SET    0
+#define SCP_GET    1
 
-#घोषणा EFX_खाता   "ctefx.bin"
-#घोषणा DESKTOP_EFX_खाता   "ctefx-desktop.bin"
-#घोषणा R3DI_EFX_खाता  "ctefx-r3di.bin"
+#define EFX_FILE   "ctefx.bin"
+#define DESKTOP_EFX_FILE   "ctefx-desktop.bin"
+#define R3DI_EFX_FILE  "ctefx-r3di.bin"
 
-#अगर_घोषित CONFIG_SND_HDA_CODEC_CA0132_DSP
-MODULE_FIRMWARE(EFX_खाता);
-MODULE_FIRMWARE(DESKTOP_EFX_खाता);
-MODULE_FIRMWARE(R3DI_EFX_खाता);
-#पूर्ण_अगर
+#ifdef CONFIG_SND_HDA_CODEC_CA0132_DSP
+MODULE_FIRMWARE(EFX_FILE);
+MODULE_FIRMWARE(DESKTOP_EFX_FILE);
+MODULE_FIRMWARE(R3DI_EFX_FILE);
+#endif
 
-अटल स्थिर अक्षर *स्थिर dirstr[2] = अणु "Playback", "Capture" पूर्ण;
+static const char *const dirstr[2] = { "Playback", "Capture" };
 
-#घोषणा NUM_OF_OUTPUTS 2
-अटल स्थिर अक्षर *स्थिर out_type_str[2] = अणु "Speakers", "Headphone" पूर्ण;
-क्रमागत अणु
+#define NUM_OF_OUTPUTS 2
+static const char *const out_type_str[2] = { "Speakers", "Headphone" };
+enum {
 	SPEAKER_OUT,
 	HEADPHONE_OUT,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	DIGITAL_MIC,
 	LINE_MIC_IN
-पूर्ण;
+};
 
-/* Strings क्रम Input Source Enum Control */
-अटल स्थिर अक्षर *स्थिर in_src_str[3] = अणु "Microphone", "Line In", "Front Microphone" पूर्ण;
-#घोषणा IN_SRC_NUM_OF_INPUTS 3
-क्रमागत अणु
+/* Strings for Input Source Enum Control */
+static const char *const in_src_str[3] = { "Microphone", "Line In", "Front Microphone" };
+#define IN_SRC_NUM_OF_INPUTS 3
+enum {
 	REAR_MIC,
 	REAR_LINE_IN,
 	FRONT_MIC,
-पूर्ण;
+};
 
-क्रमागत अणु
-#घोषणा VNODE_START_NID    0x80
+enum {
+#define VNODE_START_NID    0x80
 	VNID_SPK = VNODE_START_NID,			/* Speaker vnid */
 	VNID_MIC,
 	VNID_HP_SEL,
@@ -113,10 +112,10 @@ MODULE_FIRMWARE(R3DI_EFX_खाता);
 	VNID_HP_ASEL,
 	VNID_AMIC1_ASEL,
 	VNODE_END_NID,
-#घोषणा VNODES_COUNT  (VNODE_END_NID - VNODE_START_NID)
+#define VNODES_COUNT  (VNODE_END_NID - VNODE_START_NID)
 
-#घोषणा EFFECT_START_NID    0x90
-#घोषणा OUT_EFFECT_START_NID    EFFECT_START_NID
+#define EFFECT_START_NID    0x90
+#define OUT_EFFECT_START_NID    EFFECT_START_NID
 	SURROUND = OUT_EFFECT_START_NID,
 	CRYSTALIZER,
 	DIALOG_PLUS,
@@ -124,15 +123,15 @@ MODULE_FIRMWARE(R3DI_EFX_खाता);
 	X_BASS,
 	EQUALIZER,
 	OUT_EFFECT_END_NID,
-#घोषणा OUT_EFFECTS_COUNT  (OUT_EFFECT_END_NID - OUT_EFFECT_START_NID)
+#define OUT_EFFECTS_COUNT  (OUT_EFFECT_END_NID - OUT_EFFECT_START_NID)
 
-#घोषणा IN_EFFECT_START_NID  OUT_EFFECT_END_NID
+#define IN_EFFECT_START_NID  OUT_EFFECT_END_NID
 	ECHO_CANCELLATION = IN_EFFECT_START_NID,
 	VOICE_FOCUS,
 	MIC_SVM,
 	NOISE_REDUCTION,
 	IN_EFFECT_END_NID,
-#घोषणा IN_EFFECTS_COUNT  (IN_EFFECT_END_NID - IN_EFFECT_START_NID)
+#define IN_EFFECTS_COUNT  (IN_EFFECT_END_NID - IN_EFFECT_START_NID)
 
 	VOICEFX = IN_EFFECT_END_NID,
 	PLAY_ENHANCEMENT,
@@ -150,145 +149,145 @@ MODULE_FIRMWARE(R3DI_EFX_खाता);
 	SPEAKER_CHANNEL_CFG_ENUM,
 	SPEAKER_FULL_RANGE_FRONT,
 	SPEAKER_FULL_RANGE_REAR,
-	BASS_REसूचीECTION,
-	BASS_REसूचीECTION_XOVER,
-#घोषणा EFFECTS_COUNT  (EFFECT_END_NID - EFFECT_START_NID)
-पूर्ण;
+	BASS_REDIRECTION,
+	BASS_REDIRECTION_XOVER,
+#define EFFECTS_COUNT  (EFFECT_END_NID - EFFECT_START_NID)
+};
 
 /* Effects values size*/
-#घोषणा EFFECT_VALS_MAX_COUNT 12
+#define EFFECT_VALS_MAX_COUNT 12
 
 /*
- * Default values क्रम the effect slider controls, they are in order of their
+ * Default values for the effect slider controls, they are in order of their
  * effect NID's. Surround, Crystalizer, Dialog Plus, Smart Volume, and then
  * X-bass.
  */
-अटल स्थिर अचिन्हित पूर्णांक effect_slider_शेषs[] = अणु67, 65, 50, 74, 50पूर्ण;
-/* Amount of effect level sliders क्रम ca0132_alt controls. */
-#घोषणा EFFECT_LEVEL_SLIDERS 5
+static const unsigned int effect_slider_defaults[] = {67, 65, 50, 74, 50};
+/* Amount of effect level sliders for ca0132_alt controls. */
+#define EFFECT_LEVEL_SLIDERS 5
 
-/* Latency पूर्णांकroduced by DSP blocks in milliseconds. */
-#घोषणा DSP_CAPTURE_INIT_LATENCY        0
-#घोषणा DSP_CRYSTAL_VOICE_LATENCY       124
-#घोषणा DSP_PLAYBACK_INIT_LATENCY       13
-#घोषणा DSP_PLAY_ENHANCEMENT_LATENCY    30
-#घोषणा DSP_SPEAKER_OUT_LATENCY         7
+/* Latency introduced by DSP blocks in milliseconds. */
+#define DSP_CAPTURE_INIT_LATENCY        0
+#define DSP_CRYSTAL_VOICE_LATENCY       124
+#define DSP_PLAYBACK_INIT_LATENCY       13
+#define DSP_PLAY_ENHANCEMENT_LATENCY    30
+#define DSP_SPEAKER_OUT_LATENCY         7
 
-काष्ठा ct_effect अणु
-	अक्षर name[SNDRV_CTL_ELEM_ID_NAME_MAXLEN];
+struct ct_effect {
+	char name[SNDRV_CTL_ELEM_ID_NAME_MAXLEN];
 	hda_nid_t nid;
-	पूर्णांक mid; /*effect module ID*/
-	पूर्णांक reqs[EFFECT_VALS_MAX_COUNT]; /*effect module request*/
-	पूर्णांक direct; /* 0:output; 1:input*/
-	पूर्णांक params; /* number of शेष non-on/off params */
-	/*effect शेष values, 1st is on/off. */
-	अचिन्हित पूर्णांक def_vals[EFFECT_VALS_MAX_COUNT];
-पूर्ण;
+	int mid; /*effect module ID*/
+	int reqs[EFFECT_VALS_MAX_COUNT]; /*effect module request*/
+	int direct; /* 0:output; 1:input*/
+	int params; /* number of default non-on/off params */
+	/*effect default values, 1st is on/off. */
+	unsigned int def_vals[EFFECT_VALS_MAX_COUNT];
+};
 
-#घोषणा EFX_सूची_OUT 0
-#घोषणा EFX_सूची_IN  1
+#define EFX_DIR_OUT 0
+#define EFX_DIR_IN  1
 
-अटल स्थिर काष्ठा ct_effect ca0132_effects[EFFECTS_COUNT] = अणु
-	अणु .name = "Surround",
+static const struct ct_effect ca0132_effects[EFFECTS_COUNT] = {
+	{ .name = "Surround",
 	  .nid = SURROUND,
 	  .mid = 0x96,
-	  .reqs = अणु0, 1पूर्ण,
-	  .direct = EFX_सूची_OUT,
+	  .reqs = {0, 1},
+	  .direct = EFX_DIR_OUT,
 	  .params = 1,
-	  .def_vals = अणु0x3F800000, 0x3F2B851Fपूर्ण
-	पूर्ण,
-	अणु .name = "Crystalizer",
+	  .def_vals = {0x3F800000, 0x3F2B851F}
+	},
+	{ .name = "Crystalizer",
 	  .nid = CRYSTALIZER,
 	  .mid = 0x96,
-	  .reqs = अणु7, 8पूर्ण,
-	  .direct = EFX_सूची_OUT,
+	  .reqs = {7, 8},
+	  .direct = EFX_DIR_OUT,
 	  .params = 1,
-	  .def_vals = अणु0x3F800000, 0x3F266666पूर्ण
-	पूर्ण,
-	अणु .name = "Dialog Plus",
+	  .def_vals = {0x3F800000, 0x3F266666}
+	},
+	{ .name = "Dialog Plus",
 	  .nid = DIALOG_PLUS,
 	  .mid = 0x96,
-	  .reqs = अणु2, 3पूर्ण,
-	  .direct = EFX_सूची_OUT,
+	  .reqs = {2, 3},
+	  .direct = EFX_DIR_OUT,
 	  .params = 1,
-	  .def_vals = अणु0x00000000, 0x3F000000पूर्ण
-	पूर्ण,
-	अणु .name = "Smart Volume",
+	  .def_vals = {0x00000000, 0x3F000000}
+	},
+	{ .name = "Smart Volume",
 	  .nid = SMART_VOLUME,
 	  .mid = 0x96,
-	  .reqs = अणु4, 5, 6पूर्ण,
-	  .direct = EFX_सूची_OUT,
+	  .reqs = {4, 5, 6},
+	  .direct = EFX_DIR_OUT,
 	  .params = 2,
-	  .def_vals = अणु0x3F800000, 0x3F3D70A4, 0x00000000पूर्ण
-	पूर्ण,
-	अणु .name = "X-Bass",
+	  .def_vals = {0x3F800000, 0x3F3D70A4, 0x00000000}
+	},
+	{ .name = "X-Bass",
 	  .nid = X_BASS,
 	  .mid = 0x96,
-	  .reqs = अणु24, 23, 25पूर्ण,
-	  .direct = EFX_सूची_OUT,
+	  .reqs = {24, 23, 25},
+	  .direct = EFX_DIR_OUT,
 	  .params = 2,
-	  .def_vals = अणु0x3F800000, 0x42A00000, 0x3F000000पूर्ण
-	पूर्ण,
-	अणु .name = "Equalizer",
+	  .def_vals = {0x3F800000, 0x42A00000, 0x3F000000}
+	},
+	{ .name = "Equalizer",
 	  .nid = EQUALIZER,
 	  .mid = 0x96,
-	  .reqs = अणु9, 10, 11, 12, 13, 14,
-			15, 16, 17, 18, 19, 20पूर्ण,
-	  .direct = EFX_सूची_OUT,
+	  .reqs = {9, 10, 11, 12, 13, 14,
+			15, 16, 17, 18, 19, 20},
+	  .direct = EFX_DIR_OUT,
 	  .params = 11,
-	  .def_vals = अणु0x00000000, 0x00000000, 0x00000000, 0x00000000,
+	  .def_vals = {0x00000000, 0x00000000, 0x00000000, 0x00000000,
 		       0x00000000, 0x00000000, 0x00000000, 0x00000000,
-		       0x00000000, 0x00000000, 0x00000000, 0x00000000पूर्ण
-	पूर्ण,
-	अणु .name = "Echo Cancellation",
+		       0x00000000, 0x00000000, 0x00000000, 0x00000000}
+	},
+	{ .name = "Echo Cancellation",
 	  .nid = ECHO_CANCELLATION,
 	  .mid = 0x95,
-	  .reqs = अणु0, 1, 2, 3पूर्ण,
-	  .direct = EFX_सूची_IN,
+	  .reqs = {0, 1, 2, 3},
+	  .direct = EFX_DIR_IN,
 	  .params = 3,
-	  .def_vals = अणु0x00000000, 0x3F3A9692, 0x00000000, 0x00000000पूर्ण
-	पूर्ण,
-	अणु .name = "Voice Focus",
+	  .def_vals = {0x00000000, 0x3F3A9692, 0x00000000, 0x00000000}
+	},
+	{ .name = "Voice Focus",
 	  .nid = VOICE_FOCUS,
 	  .mid = 0x95,
-	  .reqs = अणु6, 7, 8, 9पूर्ण,
-	  .direct = EFX_सूची_IN,
+	  .reqs = {6, 7, 8, 9},
+	  .direct = EFX_DIR_IN,
 	  .params = 3,
-	  .def_vals = अणु0x3F800000, 0x3D7DF3B6, 0x41F00000, 0x41F00000पूर्ण
-	पूर्ण,
-	अणु .name = "Mic SVM",
+	  .def_vals = {0x3F800000, 0x3D7DF3B6, 0x41F00000, 0x41F00000}
+	},
+	{ .name = "Mic SVM",
 	  .nid = MIC_SVM,
 	  .mid = 0x95,
-	  .reqs = अणु44, 45पूर्ण,
-	  .direct = EFX_सूची_IN,
+	  .reqs = {44, 45},
+	  .direct = EFX_DIR_IN,
 	  .params = 1,
-	  .def_vals = अणु0x00000000, 0x3F3D70A4पूर्ण
-	पूर्ण,
-	अणु .name = "Noise Reduction",
+	  .def_vals = {0x00000000, 0x3F3D70A4}
+	},
+	{ .name = "Noise Reduction",
 	  .nid = NOISE_REDUCTION,
 	  .mid = 0x95,
-	  .reqs = अणु4, 5पूर्ण,
-	  .direct = EFX_सूची_IN,
+	  .reqs = {4, 5},
+	  .direct = EFX_DIR_IN,
 	  .params = 1,
-	  .def_vals = अणु0x3F800000, 0x3F000000पूर्ण
-	पूर्ण,
-	अणु .name = "VoiceFX",
+	  .def_vals = {0x3F800000, 0x3F000000}
+	},
+	{ .name = "VoiceFX",
 	  .nid = VOICEFX,
 	  .mid = 0x95,
-	  .reqs = अणु10, 11, 12, 13, 14, 15, 16, 17, 18पूर्ण,
-	  .direct = EFX_सूची_IN,
+	  .reqs = {10, 11, 12, 13, 14, 15, 16, 17, 18},
+	  .direct = EFX_DIR_IN,
 	  .params = 8,
-	  .def_vals = अणु0x00000000, 0x43C80000, 0x44AF0000, 0x44FA0000,
+	  .def_vals = {0x00000000, 0x43C80000, 0x44AF0000, 0x44FA0000,
 		       0x3F800000, 0x3F800000, 0x3F800000, 0x00000000,
-		       0x00000000पूर्ण
-	पूर्ण
-पूर्ण;
+		       0x00000000}
+	}
+};
 
 /* Tuning controls */
-#अगर_घोषित ENABLE_TUNING_CONTROLS
+#ifdef ENABLE_TUNING_CONTROLS
 
-क्रमागत अणु
-#घोषणा TUNING_CTL_START_NID  0xC0
+enum {
+#define TUNING_CTL_START_NID  0xC0
 	WEDGE_ANGLE = TUNING_CTL_START_NID,
 	SVM_LEVEL,
 	EQUALIZER_BAND_0,
@@ -302,330 +301,330 @@ MODULE_FIRMWARE(R3DI_EFX_खाता);
 	EQUALIZER_BAND_8,
 	EQUALIZER_BAND_9,
 	TUNING_CTL_END_NID
-#घोषणा TUNING_CTLS_COUNT  (TUNING_CTL_END_NID - TUNING_CTL_START_NID)
-पूर्ण;
+#define TUNING_CTLS_COUNT  (TUNING_CTL_END_NID - TUNING_CTL_START_NID)
+};
 
-काष्ठा ct_tuning_ctl अणु
-	अक्षर name[SNDRV_CTL_ELEM_ID_NAME_MAXLEN];
+struct ct_tuning_ctl {
+	char name[SNDRV_CTL_ELEM_ID_NAME_MAXLEN];
 	hda_nid_t parent_nid;
 	hda_nid_t nid;
-	पूर्णांक mid; /*effect module ID*/
-	पूर्णांक req; /*effect module request*/
-	पूर्णांक direct; /* 0:output; 1:input*/
-	अचिन्हित पूर्णांक def_val;/*effect शेष values*/
-पूर्ण;
+	int mid; /*effect module ID*/
+	int req; /*effect module request*/
+	int direct; /* 0:output; 1:input*/
+	unsigned int def_val;/*effect default values*/
+};
 
-अटल स्थिर काष्ठा ct_tuning_ctl ca0132_tuning_ctls[] = अणु
-	अणु .name = "Wedge Angle",
+static const struct ct_tuning_ctl ca0132_tuning_ctls[] = {
+	{ .name = "Wedge Angle",
 	  .parent_nid = VOICE_FOCUS,
 	  .nid = WEDGE_ANGLE,
 	  .mid = 0x95,
 	  .req = 8,
-	  .direct = EFX_सूची_IN,
+	  .direct = EFX_DIR_IN,
 	  .def_val = 0x41F00000
-	पूर्ण,
-	अणु .name = "SVM Level",
+	},
+	{ .name = "SVM Level",
 	  .parent_nid = MIC_SVM,
 	  .nid = SVM_LEVEL,
 	  .mid = 0x95,
 	  .req = 45,
-	  .direct = EFX_सूची_IN,
+	  .direct = EFX_DIR_IN,
 	  .def_val = 0x3F3D70A4
-	पूर्ण,
-	अणु .name = "EQ Band0",
+	},
+	{ .name = "EQ Band0",
 	  .parent_nid = EQUALIZER,
 	  .nid = EQUALIZER_BAND_0,
 	  .mid = 0x96,
 	  .req = 11,
-	  .direct = EFX_सूची_OUT,
+	  .direct = EFX_DIR_OUT,
 	  .def_val = 0x00000000
-	पूर्ण,
-	अणु .name = "EQ Band1",
+	},
+	{ .name = "EQ Band1",
 	  .parent_nid = EQUALIZER,
 	  .nid = EQUALIZER_BAND_1,
 	  .mid = 0x96,
 	  .req = 12,
-	  .direct = EFX_सूची_OUT,
+	  .direct = EFX_DIR_OUT,
 	  .def_val = 0x00000000
-	पूर्ण,
-	अणु .name = "EQ Band2",
+	},
+	{ .name = "EQ Band2",
 	  .parent_nid = EQUALIZER,
 	  .nid = EQUALIZER_BAND_2,
 	  .mid = 0x96,
 	  .req = 13,
-	  .direct = EFX_सूची_OUT,
+	  .direct = EFX_DIR_OUT,
 	  .def_val = 0x00000000
-	पूर्ण,
-	अणु .name = "EQ Band3",
+	},
+	{ .name = "EQ Band3",
 	  .parent_nid = EQUALIZER,
 	  .nid = EQUALIZER_BAND_3,
 	  .mid = 0x96,
 	  .req = 14,
-	  .direct = EFX_सूची_OUT,
+	  .direct = EFX_DIR_OUT,
 	  .def_val = 0x00000000
-	पूर्ण,
-	अणु .name = "EQ Band4",
+	},
+	{ .name = "EQ Band4",
 	  .parent_nid = EQUALIZER,
 	  .nid = EQUALIZER_BAND_4,
 	  .mid = 0x96,
 	  .req = 15,
-	  .direct = EFX_सूची_OUT,
+	  .direct = EFX_DIR_OUT,
 	  .def_val = 0x00000000
-	पूर्ण,
-	अणु .name = "EQ Band5",
+	},
+	{ .name = "EQ Band5",
 	  .parent_nid = EQUALIZER,
 	  .nid = EQUALIZER_BAND_5,
 	  .mid = 0x96,
 	  .req = 16,
-	  .direct = EFX_सूची_OUT,
+	  .direct = EFX_DIR_OUT,
 	  .def_val = 0x00000000
-	पूर्ण,
-	अणु .name = "EQ Band6",
+	},
+	{ .name = "EQ Band6",
 	  .parent_nid = EQUALIZER,
 	  .nid = EQUALIZER_BAND_6,
 	  .mid = 0x96,
 	  .req = 17,
-	  .direct = EFX_सूची_OUT,
+	  .direct = EFX_DIR_OUT,
 	  .def_val = 0x00000000
-	पूर्ण,
-	अणु .name = "EQ Band7",
+	},
+	{ .name = "EQ Band7",
 	  .parent_nid = EQUALIZER,
 	  .nid = EQUALIZER_BAND_7,
 	  .mid = 0x96,
 	  .req = 18,
-	  .direct = EFX_सूची_OUT,
+	  .direct = EFX_DIR_OUT,
 	  .def_val = 0x00000000
-	पूर्ण,
-	अणु .name = "EQ Band8",
+	},
+	{ .name = "EQ Band8",
 	  .parent_nid = EQUALIZER,
 	  .nid = EQUALIZER_BAND_8,
 	  .mid = 0x96,
 	  .req = 19,
-	  .direct = EFX_सूची_OUT,
+	  .direct = EFX_DIR_OUT,
 	  .def_val = 0x00000000
-	पूर्ण,
-	अणु .name = "EQ Band9",
+	},
+	{ .name = "EQ Band9",
 	  .parent_nid = EQUALIZER,
 	  .nid = EQUALIZER_BAND_9,
 	  .mid = 0x96,
 	  .req = 20,
-	  .direct = EFX_सूची_OUT,
+	  .direct = EFX_DIR_OUT,
 	  .def_val = 0x00000000
-	पूर्ण
-पूर्ण;
-#पूर्ण_अगर
+	}
+};
+#endif
 
 /* Voice FX Presets */
-#घोषणा VOICEFX_MAX_PARAM_COUNT 9
+#define VOICEFX_MAX_PARAM_COUNT 9
 
-काष्ठा ct_voicefx अणु
-	अक्षर *name;
+struct ct_voicefx {
+	char *name;
 	hda_nid_t nid;
-	पूर्णांक mid;
-	पूर्णांक reqs[VOICEFX_MAX_PARAM_COUNT]; /*effect module request*/
-पूर्ण;
+	int mid;
+	int reqs[VOICEFX_MAX_PARAM_COUNT]; /*effect module request*/
+};
 
-काष्ठा ct_voicefx_preset अणु
-	अक्षर *name; /*preset name*/
-	अचिन्हित पूर्णांक vals[VOICEFX_MAX_PARAM_COUNT];
-पूर्ण;
+struct ct_voicefx_preset {
+	char *name; /*preset name*/
+	unsigned int vals[VOICEFX_MAX_PARAM_COUNT];
+};
 
-अटल स्थिर काष्ठा ct_voicefx ca0132_voicefx = अणु
+static const struct ct_voicefx ca0132_voicefx = {
 	.name = "VoiceFX Capture Switch",
 	.nid = VOICEFX,
 	.mid = 0x95,
-	.reqs = अणु10, 11, 12, 13, 14, 15, 16, 17, 18पूर्ण
-पूर्ण;
+	.reqs = {10, 11, 12, 13, 14, 15, 16, 17, 18}
+};
 
-अटल स्थिर काष्ठा ct_voicefx_preset ca0132_voicefx_presets[] = अणु
-	अणु .name = "Neutral",
-	  .vals = अणु 0x00000000, 0x43C80000, 0x44AF0000,
+static const struct ct_voicefx_preset ca0132_voicefx_presets[] = {
+	{ .name = "Neutral",
+	  .vals = { 0x00000000, 0x43C80000, 0x44AF0000,
 		    0x44FA0000, 0x3F800000, 0x3F800000,
-		    0x3F800000, 0x00000000, 0x00000000 पूर्ण
-	पूर्ण,
-	अणु .name = "Female2Male",
-	  .vals = अणु 0x3F800000, 0x43C80000, 0x44AF0000,
+		    0x3F800000, 0x00000000, 0x00000000 }
+	},
+	{ .name = "Female2Male",
+	  .vals = { 0x3F800000, 0x43C80000, 0x44AF0000,
 		    0x44FA0000, 0x3F19999A, 0x3F866666,
-		    0x3F800000, 0x00000000, 0x00000000 पूर्ण
-	पूर्ण,
-	अणु .name = "Male2Female",
-	  .vals = अणु 0x3F800000, 0x43C80000, 0x44AF0000,
+		    0x3F800000, 0x00000000, 0x00000000 }
+	},
+	{ .name = "Male2Female",
+	  .vals = { 0x3F800000, 0x43C80000, 0x44AF0000,
 		    0x450AC000, 0x4017AE14, 0x3F6B851F,
-		    0x3F800000, 0x00000000, 0x00000000 पूर्ण
-	पूर्ण,
-	अणु .name = "ScrappyKid",
-	  .vals = अणु 0x3F800000, 0x43C80000, 0x44AF0000,
+		    0x3F800000, 0x00000000, 0x00000000 }
+	},
+	{ .name = "ScrappyKid",
+	  .vals = { 0x3F800000, 0x43C80000, 0x44AF0000,
 		    0x44FA0000, 0x40400000, 0x3F28F5C3,
-		    0x3F800000, 0x00000000, 0x00000000 पूर्ण
-	पूर्ण,
-	अणु .name = "Elderly",
-	  .vals = अणु 0x3F800000, 0x44324000, 0x44BB8000,
+		    0x3F800000, 0x00000000, 0x00000000 }
+	},
+	{ .name = "Elderly",
+	  .vals = { 0x3F800000, 0x44324000, 0x44BB8000,
 		    0x44E10000, 0x3FB33333, 0x3FB9999A,
-		    0x3F800000, 0x3E3A2E43, 0x00000000 पूर्ण
-	पूर्ण,
-	अणु .name = "Orc",
-	  .vals = अणु 0x3F800000, 0x43EA0000, 0x44A52000,
+		    0x3F800000, 0x3E3A2E43, 0x00000000 }
+	},
+	{ .name = "Orc",
+	  .vals = { 0x3F800000, 0x43EA0000, 0x44A52000,
 		    0x45098000, 0x3F266666, 0x3FC00000,
-		    0x3F800000, 0x00000000, 0x00000000 पूर्ण
-	पूर्ण,
-	अणु .name = "Elf",
-	  .vals = अणु 0x3F800000, 0x43C70000, 0x44AE6000,
+		    0x3F800000, 0x00000000, 0x00000000 }
+	},
+	{ .name = "Elf",
+	  .vals = { 0x3F800000, 0x43C70000, 0x44AE6000,
 		    0x45193000, 0x3F8E147B, 0x3F75C28F,
-		    0x3F800000, 0x00000000, 0x00000000 पूर्ण
-	पूर्ण,
-	अणु .name = "Dwarf",
-	  .vals = अणु 0x3F800000, 0x43930000, 0x44BEE000,
+		    0x3F800000, 0x00000000, 0x00000000 }
+	},
+	{ .name = "Dwarf",
+	  .vals = { 0x3F800000, 0x43930000, 0x44BEE000,
 		    0x45007000, 0x3F451EB8, 0x3F7851EC,
-		    0x3F800000, 0x00000000, 0x00000000 पूर्ण
-	पूर्ण,
-	अणु .name = "AlienBrute",
-	  .vals = अणु 0x3F800000, 0x43BFC5AC, 0x44B28FDF,
+		    0x3F800000, 0x00000000, 0x00000000 }
+	},
+	{ .name = "AlienBrute",
+	  .vals = { 0x3F800000, 0x43BFC5AC, 0x44B28FDF,
 		    0x451F6000, 0x3F266666, 0x3FA7D945,
-		    0x3F800000, 0x3CF5C28F, 0x00000000 पूर्ण
-	पूर्ण,
-	अणु .name = "Robot",
-	  .vals = अणु 0x3F800000, 0x43C80000, 0x44AF0000,
+		    0x3F800000, 0x3CF5C28F, 0x00000000 }
+	},
+	{ .name = "Robot",
+	  .vals = { 0x3F800000, 0x43C80000, 0x44AF0000,
 		    0x44FA0000, 0x3FB2718B, 0x3F800000,
-		    0xBC07010E, 0x00000000, 0x00000000 पूर्ण
-	पूर्ण,
-	अणु .name = "Marine",
-	  .vals = अणु 0x3F800000, 0x43C20000, 0x44906000,
+		    0xBC07010E, 0x00000000, 0x00000000 }
+	},
+	{ .name = "Marine",
+	  .vals = { 0x3F800000, 0x43C20000, 0x44906000,
 		    0x44E70000, 0x3F4CCCCD, 0x3F8A3D71,
-		    0x3F0A3D71, 0x00000000, 0x00000000 पूर्ण
-	पूर्ण,
-	अणु .name = "Emo",
-	  .vals = अणु 0x3F800000, 0x43C80000, 0x44AF0000,
+		    0x3F0A3D71, 0x00000000, 0x00000000 }
+	},
+	{ .name = "Emo",
+	  .vals = { 0x3F800000, 0x43C80000, 0x44AF0000,
 		    0x44FA0000, 0x3F800000, 0x3F800000,
-		    0x3E4CCCCD, 0x00000000, 0x00000000 पूर्ण
-	पूर्ण,
-	अणु .name = "DeepVoice",
-	  .vals = अणु 0x3F800000, 0x43A9C5AC, 0x44AA4FDF,
+		    0x3E4CCCCD, 0x00000000, 0x00000000 }
+	},
+	{ .name = "DeepVoice",
+	  .vals = { 0x3F800000, 0x43A9C5AC, 0x44AA4FDF,
 		    0x44FFC000, 0x3EDBB56F, 0x3F99C4CA,
-		    0x3F800000, 0x00000000, 0x00000000 पूर्ण
-	पूर्ण,
-	अणु .name = "Munchkin",
-	  .vals = अणु 0x3F800000, 0x43C80000, 0x44AF0000,
+		    0x3F800000, 0x00000000, 0x00000000 }
+	},
+	{ .name = "Munchkin",
+	  .vals = { 0x3F800000, 0x43C80000, 0x44AF0000,
 		    0x44FA0000, 0x3F800000, 0x3F1A043C,
-		    0x3F800000, 0x00000000, 0x00000000 पूर्ण
-	पूर्ण
-पूर्ण;
+		    0x3F800000, 0x00000000, 0x00000000 }
+	}
+};
 
-/* ca0132 EQ presets, taken from Winकरोws Sound Blaster Z Driver */
+/* ca0132 EQ presets, taken from Windows Sound Blaster Z Driver */
 
-#घोषणा EQ_PRESET_MAX_PARAM_COUNT 11
+#define EQ_PRESET_MAX_PARAM_COUNT 11
 
-काष्ठा ct_eq अणु
-	अक्षर *name;
+struct ct_eq {
+	char *name;
 	hda_nid_t nid;
-	पूर्णांक mid;
-	पूर्णांक reqs[EQ_PRESET_MAX_PARAM_COUNT]; /*effect module request*/
-पूर्ण;
+	int mid;
+	int reqs[EQ_PRESET_MAX_PARAM_COUNT]; /*effect module request*/
+};
 
-काष्ठा ct_eq_preset अणु
-	अक्षर *name; /*preset name*/
-	अचिन्हित पूर्णांक vals[EQ_PRESET_MAX_PARAM_COUNT];
-पूर्ण;
+struct ct_eq_preset {
+	char *name; /*preset name*/
+	unsigned int vals[EQ_PRESET_MAX_PARAM_COUNT];
+};
 
-अटल स्थिर काष्ठा ct_eq ca0132_alt_eq_क्रमागत = अणु
+static const struct ct_eq ca0132_alt_eq_enum = {
 	.name = "FX: Equalizer Preset Switch",
 	.nid = EQ_PRESET_ENUM,
 	.mid = 0x96,
-	.reqs = अणु10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20पूर्ण
-पूर्ण;
+	.reqs = {10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20}
+};
 
 
-अटल स्थिर काष्ठा ct_eq_preset ca0132_alt_eq_presets[] = अणु
-	अणु .name = "Flat",
-	 .vals = अणु 0x00000000, 0x00000000, 0x00000000,
+static const struct ct_eq_preset ca0132_alt_eq_presets[] = {
+	{ .name = "Flat",
+	 .vals = { 0x00000000, 0x00000000, 0x00000000,
 		   0x00000000, 0x00000000, 0x00000000,
 		   0x00000000, 0x00000000, 0x00000000,
-		   0x00000000, 0x00000000	     पूर्ण
-	पूर्ण,
-	अणु .name = "Acoustic",
-	 .vals = अणु 0x00000000, 0x00000000, 0x3F8CCCCD,
+		   0x00000000, 0x00000000	     }
+	},
+	{ .name = "Acoustic",
+	 .vals = { 0x00000000, 0x00000000, 0x3F8CCCCD,
 		   0x40000000, 0x00000000, 0x00000000,
 		   0x00000000, 0x00000000, 0x40000000,
-		   0x40000000, 0x40000000	     पूर्ण
-	पूर्ण,
-	अणु .name = "Classical",
-	 .vals = अणु 0x00000000, 0x00000000, 0x40C00000,
+		   0x40000000, 0x40000000	     }
+	},
+	{ .name = "Classical",
+	 .vals = { 0x00000000, 0x00000000, 0x40C00000,
 		   0x40C00000, 0x40466666, 0x00000000,
 		   0x00000000, 0x00000000, 0x00000000,
-		   0x40466666, 0x40466666	     पूर्ण
-	पूर्ण,
-	अणु .name = "Country",
-	 .vals = अणु 0x00000000, 0xBF99999A, 0x00000000,
+		   0x40466666, 0x40466666	     }
+	},
+	{ .name = "Country",
+	 .vals = { 0x00000000, 0xBF99999A, 0x00000000,
 		   0x3FA66666, 0x3FA66666, 0x3F8CCCCD,
 		   0x00000000, 0x00000000, 0x40000000,
-		   0x40466666, 0x40800000	     पूर्ण
-	पूर्ण,
-	अणु .name = "Dance",
-	 .vals = अणु 0x00000000, 0xBF99999A, 0x40000000,
+		   0x40466666, 0x40800000	     }
+	},
+	{ .name = "Dance",
+	 .vals = { 0x00000000, 0xBF99999A, 0x40000000,
 		   0x40466666, 0x40866666, 0xBF99999A,
 		   0xBF99999A, 0x00000000, 0x00000000,
-		   0x40800000, 0x40800000	     पूर्ण
-	पूर्ण,
-	अणु .name = "Jazz",
-	 .vals = अणु 0x00000000, 0x00000000, 0x00000000,
+		   0x40800000, 0x40800000	     }
+	},
+	{ .name = "Jazz",
+	 .vals = { 0x00000000, 0x00000000, 0x00000000,
 		   0x3F8CCCCD, 0x40800000, 0x40800000,
 		   0x40800000, 0x00000000, 0x3F8CCCCD,
-		   0x40466666, 0x40466666	     पूर्ण
-	पूर्ण,
-	अणु .name = "New Age",
-	 .vals = अणु 0x00000000, 0x00000000, 0x40000000,
+		   0x40466666, 0x40466666	     }
+	},
+	{ .name = "New Age",
+	 .vals = { 0x00000000, 0x00000000, 0x40000000,
 		   0x40000000, 0x00000000, 0x00000000,
 		   0x00000000, 0x3F8CCCCD, 0x40000000,
-		   0x40000000, 0x40000000	     पूर्ण
-	पूर्ण,
-	अणु .name = "Pop",
-	 .vals = अणु 0x00000000, 0xBFCCCCCD, 0x00000000,
+		   0x40000000, 0x40000000	     }
+	},
+	{ .name = "Pop",
+	 .vals = { 0x00000000, 0xBFCCCCCD, 0x00000000,
 		   0x40000000, 0x40000000, 0x00000000,
 		   0xBF99999A, 0xBF99999A, 0x00000000,
-		   0x40466666, 0x40C00000	     पूर्ण
-	पूर्ण,
-	अणु .name = "Rock",
-	 .vals = अणु 0x00000000, 0xBF99999A, 0xBF99999A,
+		   0x40466666, 0x40C00000	     }
+	},
+	{ .name = "Rock",
+	 .vals = { 0x00000000, 0xBF99999A, 0xBF99999A,
 		   0x3F8CCCCD, 0x40000000, 0xBF99999A,
 		   0xBF99999A, 0x00000000, 0x00000000,
-		   0x40800000, 0x40800000	     पूर्ण
-	पूर्ण,
-	अणु .name = "Vocal",
-	 .vals = अणु 0x00000000, 0xC0000000, 0xBF99999A,
+		   0x40800000, 0x40800000	     }
+	},
+	{ .name = "Vocal",
+	 .vals = { 0x00000000, 0xC0000000, 0xBF99999A,
 		   0xBF99999A, 0x00000000, 0x40466666,
 		   0x40800000, 0x40466666, 0x00000000,
-		   0x00000000, 0x3F8CCCCD	     पूर्ण
-	पूर्ण
-पूर्ण;
+		   0x00000000, 0x3F8CCCCD	     }
+	}
+};
 
 /*
- * DSP reqs क्रम handling full-range speakers/bass redirection. If a speaker is
+ * DSP reqs for handling full-range speakers/bass redirection. If a speaker is
  * set as not being full range, and bass redirection is enabled, all
  * frequencies below the crossover frequency are redirected to the LFE
  * channel. If the surround configuration has no LFE channel, this can't be
  * enabled. X-Bass must be disabled when using these.
  */
-क्रमागत speaker_range_reqs अणु
-	SPEAKER_BASS_REसूचीECT            = 0x15,
-	SPEAKER_BASS_REसूचीECT_XOVER_FREQ = 0x16,
+enum speaker_range_reqs {
+	SPEAKER_BASS_REDIRECT            = 0x15,
+	SPEAKER_BASS_REDIRECT_XOVER_FREQ = 0x16,
 	/* Between 0x16-0x1a are the X-Bass reqs. */
 	SPEAKER_FULL_RANGE_FRONT_L_R     = 0x1a,
 	SPEAKER_FULL_RANGE_CENTER_LFE    = 0x1b,
 	SPEAKER_FULL_RANGE_REAR_L_R      = 0x1c,
 	SPEAKER_FULL_RANGE_SURROUND_L_R  = 0x1d,
-	SPEAKER_BASS_REसूचीECT_SUB_GAIN   = 0x1e,
-पूर्ण;
+	SPEAKER_BASS_REDIRECT_SUB_GAIN   = 0x1e,
+};
 
 /*
- * Definitions क्रम the DSP req's to handle speaker tuning. These all beदीर्घ to
+ * Definitions for the DSP req's to handle speaker tuning. These all belong to
  * module ID 0x96, the output effects module.
  */
-क्रमागत speaker_tuning_reqs अणु
+enum speaker_tuning_reqs {
 	/*
-	 * Currently, this value is always set to 0.0f. However, on Winकरोws,
+	 * Currently, this value is always set to 0.0f. However, on Windows,
 	 * when selecting certain headphone profiles on the new Sound Blaster
 	 * connect software, the QUERY_SPEAKER_EQ_ADDRESS req on mid 0x80 is
-	 * sent. This माला_लो the speaker EQ address area, which is then used to
-	 * send over (presumably) an equalizer profile क्रम the specअगरic
+	 * sent. This gets the speaker EQ address area, which is then used to
+	 * send over (presumably) an equalizer profile for the specific
 	 * headphone setup. It is sent using the same method the DSP
 	 * firmware is uploaded with, which I believe is why the 'ctspeq.bin'
 	 * file exists in linux firmware tree but goes unused. It would also
@@ -644,7 +643,7 @@ MODULE_FIRMWARE(R3DI_EFX_खाता);
 	SPEAKER_TUNING_SURROUND_LEFT_VOL_LEVEL  = 0x27,
 	SPEAKER_TUNING_SURROUND_RIGHT_VOL_LEVEL = 0x28,
 	/*
-	 * Inversion is used when setting headphone भवization to line
+	 * Inversion is used when setting headphone virtualization to line
 	 * out. Not sure why this is, but it's the only place it's ever used.
 	 */
 	SPEAKER_TUNING_FRONT_LEFT_INVERT        = 0x29,
@@ -655,7 +654,7 @@ MODULE_FIRMWARE(R3DI_EFX_खाता);
 	SPEAKER_TUNING_REAR_RIGHT_INVERT        = 0x2e,
 	SPEAKER_TUNING_SURROUND_LEFT_INVERT     = 0x2f,
 	SPEAKER_TUNING_SURROUND_RIGHT_INVERT    = 0x30,
-	/* Delay is used when setting surround speaker distance in Winकरोws. */
+	/* Delay is used when setting surround speaker distance in Windows. */
 	SPEAKER_TUNING_FRONT_LEFT_DELAY         = 0x31,
 	SPEAKER_TUNING_FRONT_RIGHT_DELAY        = 0x32,
 	SPEAKER_TUNING_CENTER_DELAY             = 0x33,
@@ -667,164 +666,164 @@ MODULE_FIRMWARE(R3DI_EFX_खाता);
 	/* Of these two, only mute seems to ever be used. */
 	SPEAKER_TUNING_MAIN_VOLUME              = 0x39,
 	SPEAKER_TUNING_MUTE                     = 0x3a,
-पूर्ण;
+};
 
-/* Surround output channel count configuration काष्ठाures. */
-#घोषणा SPEAKER_CHANNEL_CFG_COUNT 5
-क्रमागत अणु
+/* Surround output channel count configuration structures. */
+#define SPEAKER_CHANNEL_CFG_COUNT 5
+enum {
 	SPEAKER_CHANNELS_2_0,
 	SPEAKER_CHANNELS_2_1,
 	SPEAKER_CHANNELS_4_0,
 	SPEAKER_CHANNELS_4_1,
 	SPEAKER_CHANNELS_5_1,
-पूर्ण;
+};
 
-काष्ठा ca0132_alt_speaker_channel_cfg अणु
-	अक्षर *name;
-	अचिन्हित पूर्णांक val;
-पूर्ण;
+struct ca0132_alt_speaker_channel_cfg {
+	char *name;
+	unsigned int val;
+};
 
-अटल स्थिर काष्ठा ca0132_alt_speaker_channel_cfg speaker_channel_cfgs[] = अणु
-	अणु .name = "2.0",
+static const struct ca0132_alt_speaker_channel_cfg speaker_channel_cfgs[] = {
+	{ .name = "2.0",
 	  .val = FLOAT_ONE
-	पूर्ण,
-	अणु .name = "2.1",
+	},
+	{ .name = "2.1",
 	  .val = FLOAT_TWO
-	पूर्ण,
-	अणु .name = "4.0",
+	},
+	{ .name = "4.0",
 	  .val = FLOAT_FIVE
-	पूर्ण,
-	अणु .name = "4.1",
+	},
+	{ .name = "4.1",
 	  .val = FLOAT_SIX
-	पूर्ण,
-	अणु .name = "5.1",
+	},
+	{ .name = "5.1",
 	  .val = FLOAT_EIGHT
-	पूर्ण
-पूर्ण;
+	}
+};
 
 /*
- * DSP volume setting काष्ठाs. Req 1 is left volume, req 2 is right volume,
- * and I करोn't know what the third req is, but it's always zero. I assume it's
+ * DSP volume setting structs. Req 1 is left volume, req 2 is right volume,
+ * and I don't know what the third req is, but it's always zero. I assume it's
  * some sort of update or set command to tell the DSP there's new volume info.
  */
-#घोषणा DSP_VOL_OUT 0
-#घोषणा DSP_VOL_IN  1
+#define DSP_VOL_OUT 0
+#define DSP_VOL_IN  1
 
-काष्ठा ct_dsp_volume_ctl अणु
+struct ct_dsp_volume_ctl {
 	hda_nid_t vnid;
-	पूर्णांक mid; /* module ID*/
-	अचिन्हित पूर्णांक reqs[3]; /* scp req ID */
-पूर्ण;
+	int mid; /* module ID*/
+	unsigned int reqs[3]; /* scp req ID */
+};
 
-अटल स्थिर काष्ठा ct_dsp_volume_ctl ca0132_alt_vol_ctls[] = अणु
-	अणु .vnid = VNID_SPK,
+static const struct ct_dsp_volume_ctl ca0132_alt_vol_ctls[] = {
+	{ .vnid = VNID_SPK,
 	  .mid = 0x32,
-	  .reqs = अणु3, 4, 2पूर्ण
-	पूर्ण,
-	अणु .vnid = VNID_MIC,
+	  .reqs = {3, 4, 2}
+	},
+	{ .vnid = VNID_MIC,
 	  .mid = 0x37,
-	  .reqs = अणु2, 3, 1पूर्ण
-	पूर्ण
-पूर्ण;
+	  .reqs = {2, 3, 1}
+	}
+};
 
-/* Values क्रम ca0113_mmio_command_set क्रम selecting output. */
-#घोषणा AE_CA0113_OUT_SET_COMMANDS 6
-काष्ठा ae_ca0113_output_set अणु
-	अचिन्हित पूर्णांक group[AE_CA0113_OUT_SET_COMMANDS];
-	अचिन्हित पूर्णांक target[AE_CA0113_OUT_SET_COMMANDS];
-	अचिन्हित पूर्णांक vals[NUM_OF_OUTPUTS][AE_CA0113_OUT_SET_COMMANDS];
-पूर्ण;
+/* Values for ca0113_mmio_command_set for selecting output. */
+#define AE_CA0113_OUT_SET_COMMANDS 6
+struct ae_ca0113_output_set {
+	unsigned int group[AE_CA0113_OUT_SET_COMMANDS];
+	unsigned int target[AE_CA0113_OUT_SET_COMMANDS];
+	unsigned int vals[NUM_OF_OUTPUTS][AE_CA0113_OUT_SET_COMMANDS];
+};
 
-अटल स्थिर काष्ठा ae_ca0113_output_set ae5_ca0113_output_presets = अणु
-	.group =  अणु 0x30, 0x30, 0x48, 0x48, 0x48, 0x30 पूर्ण,
-	.target = अणु 0x2e, 0x30, 0x0d, 0x17, 0x19, 0x32 पूर्ण,
+static const struct ae_ca0113_output_set ae5_ca0113_output_presets = {
+	.group =  { 0x30, 0x30, 0x48, 0x48, 0x48, 0x30 },
+	.target = { 0x2e, 0x30, 0x0d, 0x17, 0x19, 0x32 },
 		    /* Speakers. */
-	.vals =   अणु अणु 0x00, 0x00, 0x40, 0x00, 0x00, 0x3f पूर्ण,
+	.vals =   { { 0x00, 0x00, 0x40, 0x00, 0x00, 0x3f },
 		    /* Headphones. */
-		    अणु 0x3f, 0x3f, 0x00, 0x00, 0x00, 0x00 पूर्ण पूर्ण,
-पूर्ण;
+		    { 0x3f, 0x3f, 0x00, 0x00, 0x00, 0x00 } },
+};
 
-अटल स्थिर काष्ठा ae_ca0113_output_set ae7_ca0113_output_presets = अणु
-	.group  = अणु 0x30, 0x30, 0x48, 0x48, 0x48, 0x30 पूर्ण,
-	.target = अणु 0x2e, 0x30, 0x0d, 0x17, 0x19, 0x32 पूर्ण,
+static const struct ae_ca0113_output_set ae7_ca0113_output_presets = {
+	.group  = { 0x30, 0x30, 0x48, 0x48, 0x48, 0x30 },
+	.target = { 0x2e, 0x30, 0x0d, 0x17, 0x19, 0x32 },
 		    /* Speakers. */
-	.vals   = अणु अणु 0x00, 0x00, 0x40, 0x00, 0x00, 0x3f पूर्ण,
+	.vals   = { { 0x00, 0x00, 0x40, 0x00, 0x00, 0x3f },
 		    /* Headphones. */
-		    अणु 0x3f, 0x3f, 0x00, 0x00, 0x02, 0x00 पूर्ण पूर्ण,
-पूर्ण;
+		    { 0x3f, 0x3f, 0x00, 0x00, 0x02, 0x00 } },
+};
 
 /* ae5 ca0113 command sequences to set headphone gain levels. */
-#घोषणा AE5_HEADPHONE_GAIN_PRESET_MAX_COMMANDS 4
-काष्ठा ae5_headphone_gain_set अणु
-	अक्षर *name;
-	अचिन्हित पूर्णांक vals[AE5_HEADPHONE_GAIN_PRESET_MAX_COMMANDS];
-पूर्ण;
+#define AE5_HEADPHONE_GAIN_PRESET_MAX_COMMANDS 4
+struct ae5_headphone_gain_set {
+	char *name;
+	unsigned int vals[AE5_HEADPHONE_GAIN_PRESET_MAX_COMMANDS];
+};
 
-अटल स्थिर काष्ठा ae5_headphone_gain_set ae5_headphone_gain_presets[] = अणु
-	अणु .name = "Low (16-31",
-	  .vals = अणु 0xff, 0x2c, 0xf5, 0x32 पूर्ण
-	पूर्ण,
-	अणु .name = "Medium (32-149",
-	  .vals = अणु 0x38, 0xa8, 0x3e, 0x4c पूर्ण
-	पूर्ण,
-	अणु .name = "High (150-600",
-	  .vals = अणु 0xff, 0xff, 0xff, 0x7f पूर्ण
-	पूर्ण
-पूर्ण;
+static const struct ae5_headphone_gain_set ae5_headphone_gain_presets[] = {
+	{ .name = "Low (16-31",
+	  .vals = { 0xff, 0x2c, 0xf5, 0x32 }
+	},
+	{ .name = "Medium (32-149",
+	  .vals = { 0x38, 0xa8, 0x3e, 0x4c }
+	},
+	{ .name = "High (150-600",
+	  .vals = { 0xff, 0xff, 0xff, 0x7f }
+	}
+};
 
-काष्ठा ae5_filter_set अणु
-	अक्षर *name;
-	अचिन्हित पूर्णांक val;
-पूर्ण;
+struct ae5_filter_set {
+	char *name;
+	unsigned int val;
+};
 
-अटल स्थिर काष्ठा ae5_filter_set ae5_filter_presets[] = अणु
-	अणु .name = "Slow Roll Off",
+static const struct ae5_filter_set ae5_filter_presets[] = {
+	{ .name = "Slow Roll Off",
 	  .val = 0xa0
-	पूर्ण,
-	अणु .name = "Minimum Phase",
+	},
+	{ .name = "Minimum Phase",
 	  .val = 0xc0
-	पूर्ण,
-	अणु .name = "Fast Roll Off",
+	},
+	{ .name = "Fast Roll Off",
 	  .val = 0x80
-	पूर्ण
-पूर्ण;
+	}
+};
 
 /*
- * Data काष्ठाures क्रम storing audio router remapping data. These are used to
+ * Data structures for storing audio router remapping data. These are used to
  * remap a currently active streams ports.
  */
-काष्ठा chipio_stream_remap_data अणु
-	अचिन्हित पूर्णांक stream_id;
-	अचिन्हित पूर्णांक count;
+struct chipio_stream_remap_data {
+	unsigned int stream_id;
+	unsigned int count;
 
-	अचिन्हित पूर्णांक offset[16];
-	अचिन्हित पूर्णांक value[16];
-पूर्ण;
+	unsigned int offset[16];
+	unsigned int value[16];
+};
 
-अटल स्थिर काष्ठा chipio_stream_remap_data stream_remap_data[] = अणु
-	अणु .stream_id = 0x14,
+static const struct chipio_stream_remap_data stream_remap_data[] = {
+	{ .stream_id = 0x14,
 	  .count     = 0x04,
-	  .offset    = अणु 0x00, 0x04, 0x08, 0x0c पूर्ण,
-	  .value     = अणु 0x0001f8c0, 0x0001f9c1, 0x0001fac6, 0x0001fbc7 पूर्ण,
-	पूर्ण,
-	अणु .stream_id = 0x0c,
+	  .offset    = { 0x00, 0x04, 0x08, 0x0c },
+	  .value     = { 0x0001f8c0, 0x0001f9c1, 0x0001fac6, 0x0001fbc7 },
+	},
+	{ .stream_id = 0x0c,
 	  .count     = 0x0c,
-	  .offset    = अणु 0x00, 0x04, 0x08, 0x0c, 0x10, 0x14, 0x18, 0x1c,
-			 0x20, 0x24, 0x28, 0x2c पूर्ण,
-	  .value     = अणु 0x0001e0c0, 0x0001e1c1, 0x0001e4c2, 0x0001e5c3,
+	  .offset    = { 0x00, 0x04, 0x08, 0x0c, 0x10, 0x14, 0x18, 0x1c,
+			 0x20, 0x24, 0x28, 0x2c },
+	  .value     = { 0x0001e0c0, 0x0001e1c1, 0x0001e4c2, 0x0001e5c3,
 			 0x0001e2c4, 0x0001e3c5, 0x0001e8c6, 0x0001e9c7,
-			 0x0001ecc8, 0x0001edc9, 0x0001eaca, 0x0001ebcb पूर्ण,
-	पूर्ण,
-	अणु .stream_id = 0x0c,
+			 0x0001ecc8, 0x0001edc9, 0x0001eaca, 0x0001ebcb },
+	},
+	{ .stream_id = 0x0c,
 	  .count     = 0x08,
-	  .offset    = अणु 0x08, 0x0c, 0x10, 0x14, 0x20, 0x24, 0x28, 0x2c पूर्ण,
-	  .value     = अणु 0x000140c2, 0x000141c3, 0x000150c4, 0x000151c5,
-			 0x000142c8, 0x000143c9, 0x000152ca, 0x000153cb पूर्ण,
-	पूर्ण
-पूर्ण;
+	  .offset    = { 0x08, 0x0c, 0x10, 0x14, 0x20, 0x24, 0x28, 0x2c },
+	  .value     = { 0x000140c2, 0x000141c3, 0x000150c4, 0x000151c5,
+			 0x000142c8, 0x000143c9, 0x000152ca, 0x000153cb },
+	}
+};
 
-क्रमागत hda_cmd_venकरोr_io अणु
-	/* क्रम DspIO node */
+enum hda_cmd_vendor_io {
+	/* for DspIO node */
 	VENDOR_DSPIO_SCP_WRITE_DATA_LOW      = 0x000,
 	VENDOR_DSPIO_SCP_WRITE_DATA_HIGH     = 0x100,
 
@@ -835,15 +834,15 @@ MODULE_FIRMWARE(R3DI_EFX_खाता);
 	VENDOR_DSPIO_SCP_POST_COUNT_QUERY    = 0x704,
 	VENDOR_DSPIO_SCP_READ_COUNT          = 0xF04,
 
-	/* क्रम ChipIO node */
+	/* for ChipIO node */
 	VENDOR_CHIPIO_ADDRESS_LOW            = 0x000,
 	VENDOR_CHIPIO_ADDRESS_HIGH           = 0x100,
 	VENDOR_CHIPIO_STREAM_FORMAT          = 0x200,
 	VENDOR_CHIPIO_DATA_LOW               = 0x300,
 	VENDOR_CHIPIO_DATA_HIGH              = 0x400,
 
-	VENDOR_CHIPIO_8051_WRITE_सूचीECT      = 0x500,
-	VENDOR_CHIPIO_8051_READ_सूचीECT       = 0xD00,
+	VENDOR_CHIPIO_8051_WRITE_DIRECT      = 0x500,
+	VENDOR_CHIPIO_8051_READ_DIRECT       = 0xD00,
 
 	VENDOR_CHIPIO_GET_PARAMETER          = 0xF00,
 	VENDOR_CHIPIO_STATUS                 = 0xF01,
@@ -886,21 +885,21 @@ MODULE_FIRMWARE(R3DI_EFX_खाता);
 	VENDOR_CHIPIO_DMIC_MCLK_GET          = 0xF8A,
 
 	VENDOR_CHIPIO_EAPD_SEL_SET           = 0x78D
-पूर्ण;
+};
 
 /*
  *  Control flag IDs
  */
-क्रमागत control_flag_id अणु
+enum control_flag_id {
 	/* Connection manager stream setup is bypassed/enabled */
 	CONTROL_FLAG_C_MGR                  = 0,
 	/* DSP DMA is bypassed/enabled */
 	CONTROL_FLAG_DMA                    = 1,
 	/* 8051 'idle' mode is disabled/enabled */
 	CONTROL_FLAG_IDLE_ENABLE            = 2,
-	/* Tracker क्रम the SPDIF-in path is bypassed/enabled */
+	/* Tracker for the SPDIF-in path is bypassed/enabled */
 	CONTROL_FLAG_TRACKER                = 3,
-	/* DigitalOut to Spdअगर2Out connection is disabled/enabled */
+	/* DigitalOut to Spdif2Out connection is disabled/enabled */
 	CONTROL_FLAG_SPDIF2OUT              = 4,
 	/* Digital Microphone is disabled/enabled */
 	CONTROL_FLAG_DMIC                   = 5,
@@ -912,9 +911,9 @@ MODULE_FIRMWARE(R3DI_EFX_खाता);
 	CONTROL_FLAG_DAC_96KHZ              = 8,
 	/* DSP rate is 48 kHz/96 kHz */
 	CONTROL_FLAG_DSP_96KHZ              = 9,
-	/* SRC घड़ी is 98 MHz/196 MHz (196 MHz क्रमces rate to 96 KHz) */
+	/* SRC clock is 98 MHz/196 MHz (196 MHz forces rate to 96 KHz) */
 	CONTROL_FLAG_SRC_CLOCK_196MHZ       = 10,
-	/* SRC rate is 48 kHz/96 kHz (48 kHz disabled when घड़ी is 196 MHz) */
+	/* SRC rate is 48 kHz/96 kHz (48 kHz disabled when clock is 196 MHz) */
 	CONTROL_FLAG_SRC_RATE_96KHZ         = 11,
 	/* Decode Loop (DSP->SRC->DSP) is disabled/enabled */
 	CONTROL_FLAG_DECODE_LOOP            = 12,
@@ -932,27 +931,27 @@ MODULE_FIRMWARE(R3DI_EFX_खाता);
 	CONTROL_FLAG_PORT_A_COMMON_MODE     = 18,
 	/* Common mode on Port_D disabled/enabled */
 	CONTROL_FLAG_PORT_D_COMMON_MODE     = 19,
-	/* Impedance क्रम ramp generator on Port_A 16 Ohm/10K Ohm */
+	/* Impedance for ramp generator on Port_A 16 Ohm/10K Ohm */
 	CONTROL_FLAG_PORT_A_10KOHM_LOAD     = 20,
-	/* Impedance क्रम ramp generator on Port_D, 16 Ohm/10K Ohm */
+	/* Impedance for ramp generator on Port_D, 16 Ohm/10K Ohm */
 	CONTROL_FLAG_PORT_D_10KOHM_LOAD     = 21,
 	/* ASI rate is 48kHz/96kHz */
 	CONTROL_FLAG_ASI_96KHZ              = 22,
-	/* DAC घातer settings able to control attached ports no/yes */
+	/* DAC power settings able to control attached ports no/yes */
 	CONTROL_FLAG_DACS_CONTROL_PORTS     = 23,
 	/* Clock Stop OK reporting is disabled/enabled */
 	CONTROL_FLAG_CONTROL_STOP_OK_ENABLE = 24,
 	/* Number of control flags */
 	CONTROL_FLAGS_MAX = (CONTROL_FLAG_CONTROL_STOP_OK_ENABLE+1)
-पूर्ण;
+};
 
 /*
  * Control parameter IDs
  */
-क्रमागत control_param_id अणु
+enum control_param_id {
 	/* 0: None, 1: Mic1In*/
 	CONTROL_PARAM_VIP_SOURCE               = 1,
-	/* 0: क्रमce HDA, 1: allow DSP अगर HDA Spdअगर1Out stream is idle */
+	/* 0: force HDA, 1: allow DSP if HDA Spdif1Out stream is idle */
 	CONTROL_PARAM_SPDIF1_SOURCE            = 2,
 	/* Port A output stage gain setting to use when 16 Ohm output
 	 * impedance is selected*/
@@ -971,32 +970,32 @@ MODULE_FIRMWARE(R3DI_EFX_खाता);
 
 	/* Select stream with the given ID */
 	CONTROL_PARAM_STREAM_ID                = 24,
-	/* Source connection poपूर्णांक क्रम the selected stream */
+	/* Source connection point for the selected stream */
 	CONTROL_PARAM_STREAM_SOURCE_CONN_POINT = 25,
-	/* Destination connection poपूर्णांक क्रम the selected stream */
+	/* Destination connection point for the selected stream */
 	CONTROL_PARAM_STREAM_DEST_CONN_POINT   = 26,
 	/* Number of audio channels in the selected stream */
 	CONTROL_PARAM_STREAMS_CHANNELS         = 27,
-	/*Enable control क्रम the selected stream */
+	/*Enable control for the selected stream */
 	CONTROL_PARAM_STREAM_CONTROL           = 28,
 
-	/* Connection Poपूर्णांक Control */
+	/* Connection Point Control */
 
-	/* Select connection poपूर्णांक with the given ID */
+	/* Select connection point with the given ID */
 	CONTROL_PARAM_CONN_POINT_ID            = 29,
-	/* Connection poपूर्णांक sample rate */
+	/* Connection point sample rate */
 	CONTROL_PARAM_CONN_POINT_SAMPLE_RATE   = 30,
 
 	/* Node Control */
 
 	/* Select HDA node with the given ID */
 	CONTROL_PARAM_NODE_ID                  = 31
-पूर्ण;
+};
 
 /*
  *  Dsp Io Status codes
  */
-क्रमागत hda_venकरोr_status_dspio अणु
+enum hda_vendor_status_dspio {
 	/* Success */
 	VENDOR_STATUS_DSPIO_OK                       = 0x00,
 	/* Busy, unable to accept new command, the host must retry */
@@ -1005,22 +1004,22 @@ MODULE_FIRMWARE(R3DI_EFX_खाता);
 	VENDOR_STATUS_DSPIO_SCP_COMMAND_QUEUE_FULL   = 0x02,
 	/* SCP response queue is empty */
 	VENDOR_STATUS_DSPIO_SCP_RESPONSE_QUEUE_EMPTY = 0x03
-पूर्ण;
+};
 
 /*
  *  Chip Io Status codes
  */
-क्रमागत hda_venकरोr_status_chipio अणु
+enum hda_vendor_status_chipio {
 	/* Success */
 	VENDOR_STATUS_CHIPIO_OK   = 0x00,
 	/* Busy, unable to accept new command, the host must retry */
 	VENDOR_STATUS_CHIPIO_BUSY = 0x01
-पूर्ण;
+};
 
 /*
  *  CA0132 sample rate
  */
-क्रमागत ca0132_sample_rate अणु
+enum ca0132_sample_rate {
 	SR_6_000        = 0x00,
 	SR_8_000        = 0x01,
 	SR_9_600        = 0x02,
@@ -1041,116 +1040,116 @@ MODULE_FIRMWARE(R3DI_EFX_खाता);
 	SR_COUNT        = 0x10,
 
 	SR_RATE_UNKNOWN = 0x1F
-पूर्ण;
+};
 
-क्रमागत dsp_करोwnload_state अणु
+enum dsp_download_state {
 	DSP_DOWNLOAD_FAILED = -1,
 	DSP_DOWNLOAD_INIT   = 0,
 	DSP_DOWNLOADING     = 1,
 	DSP_DOWNLOADED      = 2
-पूर्ण;
+};
 
-/* retrieve parameters from hda क्रमmat */
-#घोषणा get_hdafmt_chs(fmt)	(fmt & 0xf)
-#घोषणा get_hdafmt_bits(fmt)	((fmt >> 4) & 0x7)
-#घोषणा get_hdafmt_rate(fmt)	((fmt >> 8) & 0x7f)
-#घोषणा get_hdafmt_type(fmt)	((fmt >> 15) & 0x1)
+/* retrieve parameters from hda format */
+#define get_hdafmt_chs(fmt)	(fmt & 0xf)
+#define get_hdafmt_bits(fmt)	((fmt >> 4) & 0x7)
+#define get_hdafmt_rate(fmt)	((fmt >> 8) & 0x7f)
+#define get_hdafmt_type(fmt)	((fmt >> 15) & 0x1)
 
 /*
- * CA0132 specअगरic
+ * CA0132 specific
  */
 
-काष्ठा ca0132_spec अणु
-	स्थिर काष्ठा snd_kcontrol_new *mixers[5];
-	अचिन्हित पूर्णांक num_mixers;
-	स्थिर काष्ठा hda_verb *base_init_verbs;
-	स्थिर काष्ठा hda_verb *base_निकास_verbs;
-	स्थिर काष्ठा hda_verb *chip_init_verbs;
-	स्थिर काष्ठा hda_verb *desktop_init_verbs;
-	काष्ठा hda_verb *spec_init_verbs;
-	काष्ठा स्वतः_pin_cfg स्वतःcfg;
+struct ca0132_spec {
+	const struct snd_kcontrol_new *mixers[5];
+	unsigned int num_mixers;
+	const struct hda_verb *base_init_verbs;
+	const struct hda_verb *base_exit_verbs;
+	const struct hda_verb *chip_init_verbs;
+	const struct hda_verb *desktop_init_verbs;
+	struct hda_verb *spec_init_verbs;
+	struct auto_pin_cfg autocfg;
 
 	/* Nodes configurations */
-	काष्ठा hda_multi_out multiout;
+	struct hda_multi_out multiout;
 	hda_nid_t out_pins[AUTO_CFG_MAX_OUTS];
 	hda_nid_t dacs[AUTO_CFG_MAX_OUTS];
-	अचिन्हित पूर्णांक num_outमाला_दो;
+	unsigned int num_outputs;
 	hda_nid_t input_pins[AUTO_PIN_LAST];
 	hda_nid_t adcs[AUTO_PIN_LAST];
 	hda_nid_t dig_out;
 	hda_nid_t dig_in;
-	अचिन्हित पूर्णांक num_inमाला_दो;
+	unsigned int num_inputs;
 	hda_nid_t shared_mic_nid;
 	hda_nid_t shared_out_nid;
 	hda_nid_t unsol_tag_hp;
-	hda_nid_t unsol_tag_front_hp; /* क्रम desktop ca0132 codecs */
+	hda_nid_t unsol_tag_front_hp; /* for desktop ca0132 codecs */
 	hda_nid_t unsol_tag_amic1;
 
 	/* chip access */
-	काष्ठा mutex chipio_mutex; /* chip access mutex */
+	struct mutex chipio_mutex; /* chip access mutex */
 	u32 curr_chip_addx;
 
-	/* DSP करोwnload related */
-	क्रमागत dsp_करोwnload_state dsp_state;
-	अचिन्हित पूर्णांक dsp_stream_id;
-	अचिन्हित पूर्णांक रुको_scp;
-	अचिन्हित पूर्णांक रुको_scp_header;
-	अचिन्हित पूर्णांक रुको_num_data;
-	अचिन्हित पूर्णांक scp_resp_header;
-	अचिन्हित पूर्णांक scp_resp_data[4];
-	अचिन्हित पूर्णांक scp_resp_count;
+	/* DSP download related */
+	enum dsp_download_state dsp_state;
+	unsigned int dsp_stream_id;
+	unsigned int wait_scp;
+	unsigned int wait_scp_header;
+	unsigned int wait_num_data;
+	unsigned int scp_resp_header;
+	unsigned int scp_resp_data[4];
+	unsigned int scp_resp_count;
 	bool startup_check_entered;
 	bool dsp_reload;
 
 	/* mixer and effects related */
-	अचिन्हित अक्षर dmic_ctl;
-	पूर्णांक cur_out_type;
-	पूर्णांक cur_mic_type;
-	दीर्घ vnode_lvol[VNODES_COUNT];
-	दीर्घ vnode_rvol[VNODES_COUNT];
-	दीर्घ vnode_lचयन[VNODES_COUNT];
-	दीर्घ vnode_rचयन[VNODES_COUNT];
-	दीर्घ effects_चयन[EFFECTS_COUNT];
-	दीर्घ voicefx_val;
-	दीर्घ cur_mic_boost;
+	unsigned char dmic_ctl;
+	int cur_out_type;
+	int cur_mic_type;
+	long vnode_lvol[VNODES_COUNT];
+	long vnode_rvol[VNODES_COUNT];
+	long vnode_lswitch[VNODES_COUNT];
+	long vnode_rswitch[VNODES_COUNT];
+	long effects_switch[EFFECTS_COUNT];
+	long voicefx_val;
+	long cur_mic_boost;
 	/* ca0132_alt control related values */
-	अचिन्हित अक्षर in_क्रमागत_val;
-	अचिन्हित अक्षर out_क्रमागत_val;
-	अचिन्हित अक्षर channel_cfg_val;
-	अचिन्हित अक्षर speaker_range_val[2];
-	अचिन्हित अक्षर mic_boost_क्रमागत_val;
-	अचिन्हित अक्षर smart_volume_setting;
-	अचिन्हित अक्षर bass_redirection_val;
-	दीर्घ bass_redirect_xover_freq;
-	दीर्घ fx_ctl_val[EFFECT_LEVEL_SLIDERS];
-	दीर्घ xbass_xover_freq;
-	दीर्घ eq_preset_val;
-	अचिन्हित पूर्णांक tlv[4];
-	काष्ठा hda_vmaster_mute_hook vmaster_mute;
+	unsigned char in_enum_val;
+	unsigned char out_enum_val;
+	unsigned char channel_cfg_val;
+	unsigned char speaker_range_val[2];
+	unsigned char mic_boost_enum_val;
+	unsigned char smart_volume_setting;
+	unsigned char bass_redirection_val;
+	long bass_redirect_xover_freq;
+	long fx_ctl_val[EFFECT_LEVEL_SLIDERS];
+	long xbass_xover_freq;
+	long eq_preset_val;
+	unsigned int tlv[4];
+	struct hda_vmaster_mute_hook vmaster_mute;
 	/* AE-5 Control values */
-	अचिन्हित अक्षर ae5_headphone_gain_val;
-	अचिन्हित अक्षर ae5_filter_val;
+	unsigned char ae5_headphone_gain_val;
+	unsigned char ae5_filter_val;
 	/* ZxR Control Values */
-	अचिन्हित अक्षर zxr_gain_set;
+	unsigned char zxr_gain_set;
 
-	काष्ठा hda_codec *codec;
-	काष्ठा delayed_work unsol_hp_work;
-	पूर्णांक quirk;
+	struct hda_codec *codec;
+	struct delayed_work unsol_hp_work;
+	int quirk;
 
-#अगर_घोषित ENABLE_TUNING_CONTROLS
-	दीर्घ cur_ctl_vals[TUNING_CTLS_COUNT];
-#पूर्ण_अगर
+#ifdef ENABLE_TUNING_CONTROLS
+	long cur_ctl_vals[TUNING_CTLS_COUNT];
+#endif
 	/*
 	 * The Recon3D, Sound Blaster Z, Sound Blaster ZxR, and Sound Blaster
 	 * AE-5 all use PCI region 2 to toggle GPIO and other currently unknown
 	 * things.
 	 */
 	bool use_pci_mmio;
-	व्योम __iomem *mem_base;
+	void __iomem *mem_base;
 
 	/*
 	 * Whether or not to use the alt functions like alt_select_out,
-	 * alt_select_in, etc. Only used on desktop codecs क्रम now, because of
+	 * alt_select_in, etc. Only used on desktop codecs for now, because of
 	 * surround sound support.
 	 */
 	bool use_alt_functions;
@@ -1161,12 +1160,12 @@ MODULE_FIRMWARE(R3DI_EFX_खाता);
 	 * Renames PlayEnhancement and CrystalVoice too.
 	 */
 	bool use_alt_controls;
-पूर्ण;
+};
 
 /*
  * CA0132 quirks table
  */
-क्रमागत अणु
+enum {
 	QUIRK_NONE,
 	QUIRK_ALIENWARE,
 	QUIRK_ALIENWARE_M17XR4,
@@ -1177,124 +1176,124 @@ MODULE_FIRMWARE(R3DI_EFX_खाता);
 	QUIRK_R3D,
 	QUIRK_AE5,
 	QUIRK_AE7,
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_PCI
-#घोषणा ca0132_quirk(spec)		((spec)->quirk)
-#घोषणा ca0132_use_pci_mmio(spec)	((spec)->use_pci_mmio)
-#घोषणा ca0132_use_alt_functions(spec)	((spec)->use_alt_functions)
-#घोषणा ca0132_use_alt_controls(spec)	((spec)->use_alt_controls)
-#अन्यथा
-#घोषणा ca0132_quirk(spec)		(अणु (व्योम)(spec); QUIRK_NONE; पूर्ण)
-#घोषणा ca0132_use_alt_functions(spec)	(अणु (व्योम)(spec); false; पूर्ण)
-#घोषणा ca0132_use_pci_mmio(spec)	(अणु (व्योम)(spec); false; पूर्ण)
-#घोषणा ca0132_use_alt_controls(spec)	(अणु (व्योम)(spec); false; पूर्ण)
-#पूर्ण_अगर
+#ifdef CONFIG_PCI
+#define ca0132_quirk(spec)		((spec)->quirk)
+#define ca0132_use_pci_mmio(spec)	((spec)->use_pci_mmio)
+#define ca0132_use_alt_functions(spec)	((spec)->use_alt_functions)
+#define ca0132_use_alt_controls(spec)	((spec)->use_alt_controls)
+#else
+#define ca0132_quirk(spec)		({ (void)(spec); QUIRK_NONE; })
+#define ca0132_use_alt_functions(spec)	({ (void)(spec); false; })
+#define ca0132_use_pci_mmio(spec)	({ (void)(spec); false; })
+#define ca0132_use_alt_controls(spec)	({ (void)(spec); false; })
+#endif
 
-अटल स्थिर काष्ठा hda_pपूर्णांकbl alienware_pincfgs[] = अणु
-	अणु 0x0b, 0x90170110 पूर्ण, /* Builtin Speaker */
-	अणु 0x0c, 0x411111f0 पूर्ण, /* N/A */
-	अणु 0x0d, 0x411111f0 पूर्ण, /* N/A */
-	अणु 0x0e, 0x411111f0 पूर्ण, /* N/A */
-	अणु 0x0f, 0x0321101f पूर्ण, /* HP */
-	अणु 0x10, 0x411111f0 पूर्ण, /* Headset?  disabled क्रम now */
-	अणु 0x11, 0x03a11021 पूर्ण, /* Mic */
-	अणु 0x12, 0xd5a30140 पूर्ण, /* Builtin Mic */
-	अणु 0x13, 0x411111f0 पूर्ण, /* N/A */
-	अणु 0x18, 0x411111f0 पूर्ण, /* N/A */
-	अणुपूर्ण
-पूर्ण;
+static const struct hda_pintbl alienware_pincfgs[] = {
+	{ 0x0b, 0x90170110 }, /* Builtin Speaker */
+	{ 0x0c, 0x411111f0 }, /* N/A */
+	{ 0x0d, 0x411111f0 }, /* N/A */
+	{ 0x0e, 0x411111f0 }, /* N/A */
+	{ 0x0f, 0x0321101f }, /* HP */
+	{ 0x10, 0x411111f0 }, /* Headset?  disabled for now */
+	{ 0x11, 0x03a11021 }, /* Mic */
+	{ 0x12, 0xd5a30140 }, /* Builtin Mic */
+	{ 0x13, 0x411111f0 }, /* N/A */
+	{ 0x18, 0x411111f0 }, /* N/A */
+	{}
+};
 
-/* Sound Blaster Z pin configs taken from Winकरोws Driver */
-अटल स्थिर काष्ठा hda_pपूर्णांकbl sbz_pincfgs[] = अणु
-	अणु 0x0b, 0x01017010 पूर्ण, /* Port G -- Lineout FRONT L/R */
-	अणु 0x0c, 0x014510f0 पूर्ण, /* SPDIF Out 1 */
-	अणु 0x0d, 0x014510f0 पूर्ण, /* Digital Out */
-	अणु 0x0e, 0x01c510f0 पूर्ण, /* SPDIF In */
-	अणु 0x0f, 0x0221701f पूर्ण, /* Port A -- BackPanel HP */
-	अणु 0x10, 0x01017012 पूर्ण, /* Port D -- Center/LFE or FP Hp */
-	अणु 0x11, 0x01017014 पूर्ण, /* Port B -- LineMicIn2 / Rear L/R */
-	अणु 0x12, 0x01a170f0 पूर्ण, /* Port C -- LineIn1 */
-	अणु 0x13, 0x908700f0 पूर्ण, /* What U Hear In*/
-	अणु 0x18, 0x50d000f0 पूर्ण, /* N/A */
-	अणुपूर्ण
-पूर्ण;
+/* Sound Blaster Z pin configs taken from Windows Driver */
+static const struct hda_pintbl sbz_pincfgs[] = {
+	{ 0x0b, 0x01017010 }, /* Port G -- Lineout FRONT L/R */
+	{ 0x0c, 0x014510f0 }, /* SPDIF Out 1 */
+	{ 0x0d, 0x014510f0 }, /* Digital Out */
+	{ 0x0e, 0x01c510f0 }, /* SPDIF In */
+	{ 0x0f, 0x0221701f }, /* Port A -- BackPanel HP */
+	{ 0x10, 0x01017012 }, /* Port D -- Center/LFE or FP Hp */
+	{ 0x11, 0x01017014 }, /* Port B -- LineMicIn2 / Rear L/R */
+	{ 0x12, 0x01a170f0 }, /* Port C -- LineIn1 */
+	{ 0x13, 0x908700f0 }, /* What U Hear In*/
+	{ 0x18, 0x50d000f0 }, /* N/A */
+	{}
+};
 
-/* Sound Blaster ZxR pin configs taken from Winकरोws Driver */
-अटल स्थिर काष्ठा hda_pपूर्णांकbl zxr_pincfgs[] = अणु
-	अणु 0x0b, 0x01047110 पूर्ण, /* Port G -- Lineout FRONT L/R */
-	अणु 0x0c, 0x414510f0 पूर्ण, /* SPDIF Out 1 - Disabled*/
-	अणु 0x0d, 0x014510f0 पूर्ण, /* Digital Out */
-	अणु 0x0e, 0x41c520f0 पूर्ण, /* SPDIF In - Disabled*/
-	अणु 0x0f, 0x0122711f पूर्ण, /* Port A -- BackPanel HP */
-	अणु 0x10, 0x01017111 पूर्ण, /* Port D -- Center/LFE */
-	अणु 0x11, 0x01017114 पूर्ण, /* Port B -- LineMicIn2 / Rear L/R */
-	अणु 0x12, 0x01a271f0 पूर्ण, /* Port C -- LineIn1 */
-	अणु 0x13, 0x908700f0 पूर्ण, /* What U Hear In*/
-	अणु 0x18, 0x50d000f0 पूर्ण, /* N/A */
-	अणुपूर्ण
-पूर्ण;
+/* Sound Blaster ZxR pin configs taken from Windows Driver */
+static const struct hda_pintbl zxr_pincfgs[] = {
+	{ 0x0b, 0x01047110 }, /* Port G -- Lineout FRONT L/R */
+	{ 0x0c, 0x414510f0 }, /* SPDIF Out 1 - Disabled*/
+	{ 0x0d, 0x014510f0 }, /* Digital Out */
+	{ 0x0e, 0x41c520f0 }, /* SPDIF In - Disabled*/
+	{ 0x0f, 0x0122711f }, /* Port A -- BackPanel HP */
+	{ 0x10, 0x01017111 }, /* Port D -- Center/LFE */
+	{ 0x11, 0x01017114 }, /* Port B -- LineMicIn2 / Rear L/R */
+	{ 0x12, 0x01a271f0 }, /* Port C -- LineIn1 */
+	{ 0x13, 0x908700f0 }, /* What U Hear In*/
+	{ 0x18, 0x50d000f0 }, /* N/A */
+	{}
+};
 
-/* Recon3D pin configs taken from Winकरोws Driver */
-अटल स्थिर काष्ठा hda_pपूर्णांकbl r3d_pincfgs[] = अणु
-	अणु 0x0b, 0x01014110 पूर्ण, /* Port G -- Lineout FRONT L/R */
-	अणु 0x0c, 0x014510f0 पूर्ण, /* SPDIF Out 1 */
-	अणु 0x0d, 0x014510f0 पूर्ण, /* Digital Out */
-	अणु 0x0e, 0x01c520f0 पूर्ण, /* SPDIF In */
-	अणु 0x0f, 0x0221401f पूर्ण, /* Port A -- BackPanel HP */
-	अणु 0x10, 0x01016011 पूर्ण, /* Port D -- Center/LFE or FP Hp */
-	अणु 0x11, 0x01011014 पूर्ण, /* Port B -- LineMicIn2 / Rear L/R */
-	अणु 0x12, 0x02a090f0 पूर्ण, /* Port C -- LineIn1 */
-	अणु 0x13, 0x908700f0 पूर्ण, /* What U Hear In*/
-	अणु 0x18, 0x50d000f0 पूर्ण, /* N/A */
-	अणुपूर्ण
-पूर्ण;
+/* Recon3D pin configs taken from Windows Driver */
+static const struct hda_pintbl r3d_pincfgs[] = {
+	{ 0x0b, 0x01014110 }, /* Port G -- Lineout FRONT L/R */
+	{ 0x0c, 0x014510f0 }, /* SPDIF Out 1 */
+	{ 0x0d, 0x014510f0 }, /* Digital Out */
+	{ 0x0e, 0x01c520f0 }, /* SPDIF In */
+	{ 0x0f, 0x0221401f }, /* Port A -- BackPanel HP */
+	{ 0x10, 0x01016011 }, /* Port D -- Center/LFE or FP Hp */
+	{ 0x11, 0x01011014 }, /* Port B -- LineMicIn2 / Rear L/R */
+	{ 0x12, 0x02a090f0 }, /* Port C -- LineIn1 */
+	{ 0x13, 0x908700f0 }, /* What U Hear In*/
+	{ 0x18, 0x50d000f0 }, /* N/A */
+	{}
+};
 
-/* Sound Blaster AE-5 pin configs taken from Winकरोws Driver */
-अटल स्थिर काष्ठा hda_pपूर्णांकbl ae5_pincfgs[] = अणु
-	अणु 0x0b, 0x01017010 पूर्ण, /* Port G -- Lineout FRONT L/R */
-	अणु 0x0c, 0x014510f0 पूर्ण, /* SPDIF Out 1 */
-	अणु 0x0d, 0x014510f0 पूर्ण, /* Digital Out */
-	अणु 0x0e, 0x01c510f0 पूर्ण, /* SPDIF In */
-	अणु 0x0f, 0x01017114 पूर्ण, /* Port A -- Rear L/R. */
-	अणु 0x10, 0x01017012 पूर्ण, /* Port D -- Center/LFE or FP Hp */
-	अणु 0x11, 0x012170ff पूर्ण, /* Port B -- LineMicIn2 / Rear Headphone */
-	अणु 0x12, 0x01a170f0 पूर्ण, /* Port C -- LineIn1 */
-	अणु 0x13, 0x908700f0 पूर्ण, /* What U Hear In*/
-	अणु 0x18, 0x50d000f0 पूर्ण, /* N/A */
-	अणुपूर्ण
-पूर्ण;
+/* Sound Blaster AE-5 pin configs taken from Windows Driver */
+static const struct hda_pintbl ae5_pincfgs[] = {
+	{ 0x0b, 0x01017010 }, /* Port G -- Lineout FRONT L/R */
+	{ 0x0c, 0x014510f0 }, /* SPDIF Out 1 */
+	{ 0x0d, 0x014510f0 }, /* Digital Out */
+	{ 0x0e, 0x01c510f0 }, /* SPDIF In */
+	{ 0x0f, 0x01017114 }, /* Port A -- Rear L/R. */
+	{ 0x10, 0x01017012 }, /* Port D -- Center/LFE or FP Hp */
+	{ 0x11, 0x012170ff }, /* Port B -- LineMicIn2 / Rear Headphone */
+	{ 0x12, 0x01a170f0 }, /* Port C -- LineIn1 */
+	{ 0x13, 0x908700f0 }, /* What U Hear In*/
+	{ 0x18, 0x50d000f0 }, /* N/A */
+	{}
+};
 
-/* Recon3D पूर्णांकegrated pin configs taken from Winकरोws Driver */
-अटल स्थिर काष्ठा hda_pपूर्णांकbl r3di_pincfgs[] = अणु
-	अणु 0x0b, 0x01014110 पूर्ण, /* Port G -- Lineout FRONT L/R */
-	अणु 0x0c, 0x014510f0 पूर्ण, /* SPDIF Out 1 */
-	अणु 0x0d, 0x014510f0 पूर्ण, /* Digital Out */
-	अणु 0x0e, 0x41c520f0 पूर्ण, /* SPDIF In */
-	अणु 0x0f, 0x0221401f पूर्ण, /* Port A -- BackPanel HP */
-	अणु 0x10, 0x01016011 पूर्ण, /* Port D -- Center/LFE or FP Hp */
-	अणु 0x11, 0x01011014 पूर्ण, /* Port B -- LineMicIn2 / Rear L/R */
-	अणु 0x12, 0x02a090f0 पूर्ण, /* Port C -- LineIn1 */
-	अणु 0x13, 0x908700f0 पूर्ण, /* What U Hear In*/
-	अणु 0x18, 0x500000f0 पूर्ण, /* N/A */
-	अणुपूर्ण
-पूर्ण;
+/* Recon3D integrated pin configs taken from Windows Driver */
+static const struct hda_pintbl r3di_pincfgs[] = {
+	{ 0x0b, 0x01014110 }, /* Port G -- Lineout FRONT L/R */
+	{ 0x0c, 0x014510f0 }, /* SPDIF Out 1 */
+	{ 0x0d, 0x014510f0 }, /* Digital Out */
+	{ 0x0e, 0x41c520f0 }, /* SPDIF In */
+	{ 0x0f, 0x0221401f }, /* Port A -- BackPanel HP */
+	{ 0x10, 0x01016011 }, /* Port D -- Center/LFE or FP Hp */
+	{ 0x11, 0x01011014 }, /* Port B -- LineMicIn2 / Rear L/R */
+	{ 0x12, 0x02a090f0 }, /* Port C -- LineIn1 */
+	{ 0x13, 0x908700f0 }, /* What U Hear In*/
+	{ 0x18, 0x500000f0 }, /* N/A */
+	{}
+};
 
-अटल स्थिर काष्ठा hda_pपूर्णांकbl ae7_pincfgs[] = अणु
-	अणु 0x0b, 0x01017010 पूर्ण,
-	अणु 0x0c, 0x014510f0 पूर्ण,
-	अणु 0x0d, 0x414510f0 पूर्ण,
-	अणु 0x0e, 0x01c520f0 पूर्ण,
-	अणु 0x0f, 0x01017114 पूर्ण,
-	अणु 0x10, 0x01017011 पूर्ण,
-	अणु 0x11, 0x018170ff पूर्ण,
-	अणु 0x12, 0x01a170f0 पूर्ण,
-	अणु 0x13, 0x908700f0 पूर्ण,
-	अणु 0x18, 0x500000f0 पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct hda_pintbl ae7_pincfgs[] = {
+	{ 0x0b, 0x01017010 },
+	{ 0x0c, 0x014510f0 },
+	{ 0x0d, 0x414510f0 },
+	{ 0x0e, 0x01c520f0 },
+	{ 0x0f, 0x01017114 },
+	{ 0x10, 0x01017011 },
+	{ 0x11, 0x018170ff },
+	{ 0x12, 0x01a170f0 },
+	{ 0x13, 0x908700f0 },
+	{ 0x18, 0x500000f0 },
+	{}
+};
 
-अटल स्थिर काष्ठा snd_pci_quirk ca0132_quirks[] = अणु
+static const struct snd_pci_quirk ca0132_quirks[] = {
 	SND_PCI_QUIRK(0x1028, 0x057b, "Alienware M17x R4", QUIRK_ALIENWARE_M17XR4),
 	SND_PCI_QUIRK(0x1028, 0x0685, "Alienware 15 2015", QUIRK_ALIENWARE),
 	SND_PCI_QUIRK(0x1028, 0x0688, "Alienware 17 2015", QUIRK_ALIENWARE),
@@ -1312,657 +1311,657 @@ MODULE_FIRMWARE(R3DI_EFX_खाता);
 	SND_PCI_QUIRK(0x1102, 0x0051, "Sound Blaster AE-5", QUIRK_AE5),
 	SND_PCI_QUIRK(0x1102, 0x0191, "Sound Blaster AE-5 Plus", QUIRK_AE5),
 	SND_PCI_QUIRK(0x1102, 0x0081, "Sound Blaster AE-7", QUIRK_AE7),
-	अणुपूर्ण
-पूर्ण;
+	{}
+};
 
-/* Output selection quirk info काष्ठाures. */
-#घोषणा MAX_QUIRK_MMIO_GPIO_SET_VALS 3
-#घोषणा MAX_QUIRK_SCP_SET_VALS 2
-काष्ठा ca0132_alt_out_set_info अणु
-	अचिन्हित पूर्णांक dac2port; /* ParamID 0x0d value. */
+/* Output selection quirk info structures. */
+#define MAX_QUIRK_MMIO_GPIO_SET_VALS 3
+#define MAX_QUIRK_SCP_SET_VALS 2
+struct ca0132_alt_out_set_info {
+	unsigned int dac2port; /* ParamID 0x0d value. */
 
 	bool has_hda_gpio;
-	अक्षर hda_gpio_pin;
-	अक्षर hda_gpio_set;
+	char hda_gpio_pin;
+	char hda_gpio_set;
 
-	अचिन्हित पूर्णांक mmio_gpio_count;
-	अक्षर mmio_gpio_pin[MAX_QUIRK_MMIO_GPIO_SET_VALS];
-	अक्षर mmio_gpio_set[MAX_QUIRK_MMIO_GPIO_SET_VALS];
+	unsigned int mmio_gpio_count;
+	char mmio_gpio_pin[MAX_QUIRK_MMIO_GPIO_SET_VALS];
+	char mmio_gpio_set[MAX_QUIRK_MMIO_GPIO_SET_VALS];
 
-	अचिन्हित पूर्णांक scp_cmds_count;
-	अचिन्हित पूर्णांक scp_cmd_mid[MAX_QUIRK_SCP_SET_VALS];
-	अचिन्हित पूर्णांक scp_cmd_req[MAX_QUIRK_SCP_SET_VALS];
-	अचिन्हित पूर्णांक scp_cmd_val[MAX_QUIRK_SCP_SET_VALS];
+	unsigned int scp_cmds_count;
+	unsigned int scp_cmd_mid[MAX_QUIRK_SCP_SET_VALS];
+	unsigned int scp_cmd_req[MAX_QUIRK_SCP_SET_VALS];
+	unsigned int scp_cmd_val[MAX_QUIRK_SCP_SET_VALS];
 
-	bool has_chipio_ग_लिखो;
-	अचिन्हित पूर्णांक chipio_ग_लिखो_addr;
-	अचिन्हित पूर्णांक chipio_ग_लिखो_data;
-पूर्ण;
+	bool has_chipio_write;
+	unsigned int chipio_write_addr;
+	unsigned int chipio_write_data;
+};
 
-काष्ठा ca0132_alt_out_set_quirk_data अणु
-	पूर्णांक quirk_id;
+struct ca0132_alt_out_set_quirk_data {
+	int quirk_id;
 
 	bool has_headphone_gain;
 	bool is_ae_series;
 
-	काष्ठा ca0132_alt_out_set_info out_set_info[NUM_OF_OUTPUTS];
-पूर्ण;
+	struct ca0132_alt_out_set_info out_set_info[NUM_OF_OUTPUTS];
+};
 
-अटल स्थिर काष्ठा ca0132_alt_out_set_quirk_data quirk_out_set_data[] = अणु
-	अणु .quirk_id = QUIRK_R3DI,
+static const struct ca0132_alt_out_set_quirk_data quirk_out_set_data[] = {
+	{ .quirk_id = QUIRK_R3DI,
 	  .has_headphone_gain = false,
 	  .is_ae_series       = false,
-	  .out_set_info = अणु
+	  .out_set_info = {
 		/* Speakers. */
-		अणु .dac2port         = 0x24,
+		{ .dac2port         = 0x24,
 		  .has_hda_gpio     = true,
 		  .hda_gpio_pin     = 2,
 		  .hda_gpio_set     = 1,
 		  .mmio_gpio_count  = 0,
 		  .scp_cmds_count   = 0,
-		  .has_chipio_ग_लिखो = false,
-		पूर्ण,
+		  .has_chipio_write = false,
+		},
 		/* Headphones. */
-		अणु .dac2port         = 0x21,
+		{ .dac2port         = 0x21,
 		  .has_hda_gpio     = true,
 		  .hda_gpio_pin     = 2,
 		  .hda_gpio_set     = 0,
 		  .mmio_gpio_count  = 0,
 		  .scp_cmds_count   = 0,
-		  .has_chipio_ग_लिखो = false,
-		पूर्ण पूर्ण,
-	पूर्ण,
-	अणु .quirk_id = QUIRK_R3D,
+		  .has_chipio_write = false,
+		} },
+	},
+	{ .quirk_id = QUIRK_R3D,
 	  .has_headphone_gain = false,
 	  .is_ae_series       = false,
-	  .out_set_info = अणु
+	  .out_set_info = {
 		/* Speakers. */
-		अणु .dac2port         = 0x24,
+		{ .dac2port         = 0x24,
 		  .has_hda_gpio     = false,
 		  .mmio_gpio_count  = 1,
-		  .mmio_gpio_pin    = अणु 1 पूर्ण,
-		  .mmio_gpio_set    = अणु 1 पूर्ण,
+		  .mmio_gpio_pin    = { 1 },
+		  .mmio_gpio_set    = { 1 },
 		  .scp_cmds_count   = 0,
-		  .has_chipio_ग_लिखो = false,
-		पूर्ण,
+		  .has_chipio_write = false,
+		},
 		/* Headphones. */
-		अणु .dac2port         = 0x21,
+		{ .dac2port         = 0x21,
 		  .has_hda_gpio     = false,
 		  .mmio_gpio_count  = 1,
-		  .mmio_gpio_pin    = अणु 1 पूर्ण,
-		  .mmio_gpio_set    = अणु 0 पूर्ण,
+		  .mmio_gpio_pin    = { 1 },
+		  .mmio_gpio_set    = { 0 },
 		  .scp_cmds_count   = 0,
-		  .has_chipio_ग_लिखो = false,
-		पूर्ण पूर्ण,
-	पूर्ण,
-	अणु .quirk_id = QUIRK_SBZ,
+		  .has_chipio_write = false,
+		} },
+	},
+	{ .quirk_id = QUIRK_SBZ,
 	  .has_headphone_gain = false,
 	  .is_ae_series       = false,
-	  .out_set_info = अणु
+	  .out_set_info = {
 		/* Speakers. */
-		अणु .dac2port         = 0x18,
+		{ .dac2port         = 0x18,
 		  .has_hda_gpio     = false,
 		  .mmio_gpio_count  = 3,
-		  .mmio_gpio_pin    = अणु 7, 4, 1 पूर्ण,
-		  .mmio_gpio_set    = अणु 0, 1, 1 पूर्ण,
+		  .mmio_gpio_pin    = { 7, 4, 1 },
+		  .mmio_gpio_set    = { 0, 1, 1 },
 		  .scp_cmds_count   = 0,
-		  .has_chipio_ग_लिखो = false, पूर्ण,
+		  .has_chipio_write = false, },
 		/* Headphones. */
-		अणु .dac2port         = 0x12,
+		{ .dac2port         = 0x12,
 		  .has_hda_gpio     = false,
 		  .mmio_gpio_count  = 3,
-		  .mmio_gpio_pin    = अणु 7, 4, 1 पूर्ण,
-		  .mmio_gpio_set    = अणु 1, 1, 0 पूर्ण,
+		  .mmio_gpio_pin    = { 7, 4, 1 },
+		  .mmio_gpio_set    = { 1, 1, 0 },
 		  .scp_cmds_count   = 0,
-		  .has_chipio_ग_लिखो = false,
-		पूर्ण पूर्ण,
-	पूर्ण,
-	अणु .quirk_id = QUIRK_ZXR,
+		  .has_chipio_write = false,
+		} },
+	},
+	{ .quirk_id = QUIRK_ZXR,
 	  .has_headphone_gain = true,
 	  .is_ae_series       = false,
-	  .out_set_info = अणु
+	  .out_set_info = {
 		/* Speakers. */
-		अणु .dac2port         = 0x24,
+		{ .dac2port         = 0x24,
 		  .has_hda_gpio     = false,
 		  .mmio_gpio_count  = 3,
-		  .mmio_gpio_pin    = अणु 2, 3, 5 पूर्ण,
-		  .mmio_gpio_set    = अणु 1, 1, 0 पूर्ण,
+		  .mmio_gpio_pin    = { 2, 3, 5 },
+		  .mmio_gpio_set    = { 1, 1, 0 },
 		  .scp_cmds_count   = 0,
-		  .has_chipio_ग_लिखो = false,
-		पूर्ण,
+		  .has_chipio_write = false,
+		},
 		/* Headphones. */
-		अणु .dac2port         = 0x21,
+		{ .dac2port         = 0x21,
 		  .has_hda_gpio     = false,
 		  .mmio_gpio_count  = 3,
-		  .mmio_gpio_pin    = अणु 2, 3, 5 पूर्ण,
-		  .mmio_gpio_set    = अणु 0, 1, 1 पूर्ण,
+		  .mmio_gpio_pin    = { 2, 3, 5 },
+		  .mmio_gpio_set    = { 0, 1, 1 },
 		  .scp_cmds_count   = 0,
-		  .has_chipio_ग_लिखो = false,
-		पूर्ण पूर्ण,
-	पूर्ण,
-	अणु .quirk_id = QUIRK_AE5,
+		  .has_chipio_write = false,
+		} },
+	},
+	{ .quirk_id = QUIRK_AE5,
 	  .has_headphone_gain = true,
 	  .is_ae_series       = true,
-	  .out_set_info = अणु
+	  .out_set_info = {
 		/* Speakers. */
-		अणु .dac2port          = 0xa4,
+		{ .dac2port          = 0xa4,
 		  .has_hda_gpio      = false,
 		  .mmio_gpio_count   = 0,
 		  .scp_cmds_count    = 2,
-		  .scp_cmd_mid       = अणु 0x96, 0x96 पूर्ण,
-		  .scp_cmd_req       = अणु SPEAKER_TUNING_FRONT_LEFT_INVERT,
-					 SPEAKER_TUNING_FRONT_RIGHT_INVERT पूर्ण,
-		  .scp_cmd_val       = अणु FLOAT_ZERO, FLOAT_ZERO पूर्ण,
-		  .has_chipio_ग_लिखो  = true,
-		  .chipio_ग_लिखो_addr = 0x0018b03c,
-		  .chipio_ग_लिखो_data = 0x00000012
-		पूर्ण,
+		  .scp_cmd_mid       = { 0x96, 0x96 },
+		  .scp_cmd_req       = { SPEAKER_TUNING_FRONT_LEFT_INVERT,
+					 SPEAKER_TUNING_FRONT_RIGHT_INVERT },
+		  .scp_cmd_val       = { FLOAT_ZERO, FLOAT_ZERO },
+		  .has_chipio_write  = true,
+		  .chipio_write_addr = 0x0018b03c,
+		  .chipio_write_data = 0x00000012
+		},
 		/* Headphones. */
-		अणु .dac2port          = 0xa1,
+		{ .dac2port          = 0xa1,
 		  .has_hda_gpio      = false,
 		  .mmio_gpio_count   = 0,
 		  .scp_cmds_count    = 2,
-		  .scp_cmd_mid       = अणु 0x96, 0x96 पूर्ण,
-		  .scp_cmd_req       = अणु SPEAKER_TUNING_FRONT_LEFT_INVERT,
-					 SPEAKER_TUNING_FRONT_RIGHT_INVERT पूर्ण,
-		  .scp_cmd_val       = अणु FLOAT_ONE, FLOAT_ONE पूर्ण,
-		  .has_chipio_ग_लिखो  = true,
-		  .chipio_ग_लिखो_addr = 0x0018b03c,
-		  .chipio_ग_लिखो_data = 0x00000012
-		पूर्ण पूर्ण,
-	पूर्ण,
-	अणु .quirk_id = QUIRK_AE7,
+		  .scp_cmd_mid       = { 0x96, 0x96 },
+		  .scp_cmd_req       = { SPEAKER_TUNING_FRONT_LEFT_INVERT,
+					 SPEAKER_TUNING_FRONT_RIGHT_INVERT },
+		  .scp_cmd_val       = { FLOAT_ONE, FLOAT_ONE },
+		  .has_chipio_write  = true,
+		  .chipio_write_addr = 0x0018b03c,
+		  .chipio_write_data = 0x00000012
+		} },
+	},
+	{ .quirk_id = QUIRK_AE7,
 	  .has_headphone_gain = true,
 	  .is_ae_series       = true,
-	  .out_set_info = अणु
+	  .out_set_info = {
 		/* Speakers. */
-		अणु .dac2port          = 0x58,
+		{ .dac2port          = 0x58,
 		  .has_hda_gpio      = false,
 		  .mmio_gpio_count   = 1,
-		  .mmio_gpio_pin     = अणु 0 पूर्ण,
-		  .mmio_gpio_set     = अणु 1 पूर्ण,
+		  .mmio_gpio_pin     = { 0 },
+		  .mmio_gpio_set     = { 1 },
 		  .scp_cmds_count    = 2,
-		  .scp_cmd_mid       = अणु 0x96, 0x96 पूर्ण,
-		  .scp_cmd_req       = अणु SPEAKER_TUNING_FRONT_LEFT_INVERT,
-					 SPEAKER_TUNING_FRONT_RIGHT_INVERT पूर्ण,
-		  .scp_cmd_val       = अणु FLOAT_ZERO, FLOAT_ZERO पूर्ण,
-		  .has_chipio_ग_लिखो  = true,
-		  .chipio_ग_लिखो_addr = 0x0018b03c,
-		  .chipio_ग_लिखो_data = 0x00000000
-		पूर्ण,
+		  .scp_cmd_mid       = { 0x96, 0x96 },
+		  .scp_cmd_req       = { SPEAKER_TUNING_FRONT_LEFT_INVERT,
+					 SPEAKER_TUNING_FRONT_RIGHT_INVERT },
+		  .scp_cmd_val       = { FLOAT_ZERO, FLOAT_ZERO },
+		  .has_chipio_write  = true,
+		  .chipio_write_addr = 0x0018b03c,
+		  .chipio_write_data = 0x00000000
+		},
 		/* Headphones. */
-		अणु .dac2port          = 0x58,
+		{ .dac2port          = 0x58,
 		  .has_hda_gpio      = false,
 		  .mmio_gpio_count   = 1,
-		  .mmio_gpio_pin     = अणु 0 पूर्ण,
-		  .mmio_gpio_set     = अणु 1 पूर्ण,
+		  .mmio_gpio_pin     = { 0 },
+		  .mmio_gpio_set     = { 1 },
 		  .scp_cmds_count    = 2,
-		  .scp_cmd_mid       = अणु 0x96, 0x96 पूर्ण,
-		  .scp_cmd_req       = अणु SPEAKER_TUNING_FRONT_LEFT_INVERT,
-					 SPEAKER_TUNING_FRONT_RIGHT_INVERT पूर्ण,
-		  .scp_cmd_val       = अणु FLOAT_ONE, FLOAT_ONE पूर्ण,
-		  .has_chipio_ग_लिखो  = true,
-		  .chipio_ग_लिखो_addr = 0x0018b03c,
-		  .chipio_ग_लिखो_data = 0x00000010
-		पूर्ण पूर्ण,
-	पूर्ण
-पूर्ण;
+		  .scp_cmd_mid       = { 0x96, 0x96 },
+		  .scp_cmd_req       = { SPEAKER_TUNING_FRONT_LEFT_INVERT,
+					 SPEAKER_TUNING_FRONT_RIGHT_INVERT },
+		  .scp_cmd_val       = { FLOAT_ONE, FLOAT_ONE },
+		  .has_chipio_write  = true,
+		  .chipio_write_addr = 0x0018b03c,
+		  .chipio_write_data = 0x00000010
+		} },
+	}
+};
 
 /*
  * CA0132 codec access
  */
-अटल अचिन्हित पूर्णांक codec_send_command(काष्ठा hda_codec *codec, hda_nid_t nid,
-		अचिन्हित पूर्णांक verb, अचिन्हित पूर्णांक parm, अचिन्हित पूर्णांक *res)
-अणु
-	अचिन्हित पूर्णांक response;
-	response = snd_hda_codec_पढ़ो(codec, nid, 0, verb, parm);
+static unsigned int codec_send_command(struct hda_codec *codec, hda_nid_t nid,
+		unsigned int verb, unsigned int parm, unsigned int *res)
+{
+	unsigned int response;
+	response = snd_hda_codec_read(codec, nid, 0, verb, parm);
 	*res = response;
 
-	वापस ((response == -1) ? -1 : 0);
-पूर्ण
+	return ((response == -1) ? -1 : 0);
+}
 
-अटल पूर्णांक codec_set_converter_क्रमmat(काष्ठा hda_codec *codec, hda_nid_t nid,
-		अचिन्हित लघु converter_क्रमmat, अचिन्हित पूर्णांक *res)
-अणु
-	वापस codec_send_command(codec, nid, VENDOR_CHIPIO_STREAM_FORMAT,
-				converter_क्रमmat & 0xffff, res);
-पूर्ण
+static int codec_set_converter_format(struct hda_codec *codec, hda_nid_t nid,
+		unsigned short converter_format, unsigned int *res)
+{
+	return codec_send_command(codec, nid, VENDOR_CHIPIO_STREAM_FORMAT,
+				converter_format & 0xffff, res);
+}
 
-अटल पूर्णांक codec_set_converter_stream_channel(काष्ठा hda_codec *codec,
-				hda_nid_t nid, अचिन्हित अक्षर stream,
-				अचिन्हित अक्षर channel, अचिन्हित पूर्णांक *res)
-अणु
-	अचिन्हित अक्षर converter_stream_channel = 0;
+static int codec_set_converter_stream_channel(struct hda_codec *codec,
+				hda_nid_t nid, unsigned char stream,
+				unsigned char channel, unsigned int *res)
+{
+	unsigned char converter_stream_channel = 0;
 
 	converter_stream_channel = (stream << 4) | (channel & 0x0f);
-	वापस codec_send_command(codec, nid, AC_VERB_SET_CHANNEL_STREAMID,
+	return codec_send_command(codec, nid, AC_VERB_SET_CHANNEL_STREAMID,
 				converter_stream_channel, res);
-पूर्ण
+}
 
 /* Chip access helper function */
-अटल पूर्णांक chipio_send(काष्ठा hda_codec *codec,
-		       अचिन्हित पूर्णांक reg,
-		       अचिन्हित पूर्णांक data)
-अणु
-	अचिन्हित पूर्णांक res;
-	अचिन्हित दीर्घ समयout = jअगरfies + msecs_to_jअगरfies(1000);
+static int chipio_send(struct hda_codec *codec,
+		       unsigned int reg,
+		       unsigned int data)
+{
+	unsigned int res;
+	unsigned long timeout = jiffies + msecs_to_jiffies(1000);
 
-	/* send bits of data specअगरied by reg */
-	करो अणु
-		res = snd_hda_codec_पढ़ो(codec, WIDGET_CHIP_CTRL, 0,
+	/* send bits of data specified by reg */
+	do {
+		res = snd_hda_codec_read(codec, WIDGET_CHIP_CTRL, 0,
 					 reg, data);
-		अगर (res == VENDOR_STATUS_CHIPIO_OK)
-			वापस 0;
+		if (res == VENDOR_STATUS_CHIPIO_OK)
+			return 0;
 		msleep(20);
-	पूर्ण जबतक (समय_beक्रमe(jअगरfies, समयout));
+	} while (time_before(jiffies, timeout));
 
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
 /*
- * Write chip address through the venकरोr widget -- NOT रक्षित by the Mutex!
+ * Write chip address through the vendor widget -- NOT protected by the Mutex!
  */
-अटल पूर्णांक chipio_ग_लिखो_address(काष्ठा hda_codec *codec,
-				अचिन्हित पूर्णांक chip_addx)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	पूर्णांक res;
+static int chipio_write_address(struct hda_codec *codec,
+				unsigned int chip_addx)
+{
+	struct ca0132_spec *spec = codec->spec;
+	int res;
 
-	अगर (spec->curr_chip_addx == chip_addx)
-			वापस 0;
+	if (spec->curr_chip_addx == chip_addx)
+			return 0;
 
 	/* send low 16 bits of the address */
 	res = chipio_send(codec, VENDOR_CHIPIO_ADDRESS_LOW,
 			  chip_addx & 0xffff);
 
-	अगर (res != -EIO) अणु
+	if (res != -EIO) {
 		/* send high 16 bits of the address */
 		res = chipio_send(codec, VENDOR_CHIPIO_ADDRESS_HIGH,
 				  chip_addx >> 16);
-	पूर्ण
+	}
 
 	spec->curr_chip_addx = (res < 0) ? ~0U : chip_addx;
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
 /*
- * Write data through the venकरोr widget -- NOT रक्षित by the Mutex!
+ * Write data through the vendor widget -- NOT protected by the Mutex!
  */
-अटल पूर्णांक chipio_ग_लिखो_data(काष्ठा hda_codec *codec, अचिन्हित पूर्णांक data)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	पूर्णांक res;
+static int chipio_write_data(struct hda_codec *codec, unsigned int data)
+{
+	struct ca0132_spec *spec = codec->spec;
+	int res;
 
 	/* send low 16 bits of the data */
 	res = chipio_send(codec, VENDOR_CHIPIO_DATA_LOW, data & 0xffff);
 
-	अगर (res != -EIO) अणु
+	if (res != -EIO) {
 		/* send high 16 bits of the data */
 		res = chipio_send(codec, VENDOR_CHIPIO_DATA_HIGH,
 				  data >> 16);
-	पूर्ण
+	}
 
-	/*If no error encountered, स्वतःmatically increment the address
+	/*If no error encountered, automatically increment the address
 	as per chip behaviour*/
 	spec->curr_chip_addx = (res != -EIO) ?
 					(spec->curr_chip_addx + 4) : ~0U;
-	वापस res;
-पूर्ण
+	return res;
+}
 
 /*
- * Write multiple data through the venकरोr widget -- NOT रक्षित by the Mutex!
+ * Write multiple data through the vendor widget -- NOT protected by the Mutex!
  */
-अटल पूर्णांक chipio_ग_लिखो_data_multiple(काष्ठा hda_codec *codec,
-				      स्थिर u32 *data,
-				      अचिन्हित पूर्णांक count)
-अणु
-	पूर्णांक status = 0;
+static int chipio_write_data_multiple(struct hda_codec *codec,
+				      const u32 *data,
+				      unsigned int count)
+{
+	int status = 0;
 
-	अगर (data == शून्य) अणु
+	if (data == NULL) {
 		codec_dbg(codec, "chipio_write_data null ptr\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	जबतक ((count-- != 0) && (status == 0))
-		status = chipio_ग_लिखो_data(codec, *data++);
+	while ((count-- != 0) && (status == 0))
+		status = chipio_write_data(codec, *data++);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
 
 /*
- * Read data through the venकरोr widget -- NOT रक्षित by the Mutex!
+ * Read data through the vendor widget -- NOT protected by the Mutex!
  */
-अटल पूर्णांक chipio_पढ़ो_data(काष्ठा hda_codec *codec, अचिन्हित पूर्णांक *data)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	पूर्णांक res;
+static int chipio_read_data(struct hda_codec *codec, unsigned int *data)
+{
+	struct ca0132_spec *spec = codec->spec;
+	int res;
 
-	/* post पढ़ो */
+	/* post read */
 	res = chipio_send(codec, VENDOR_CHIPIO_HIC_POST_READ, 0);
 
-	अगर (res != -EIO) अणु
-		/* पढ़ो status */
+	if (res != -EIO) {
+		/* read status */
 		res = chipio_send(codec, VENDOR_CHIPIO_STATUS, 0);
-	पूर्ण
+	}
 
-	अगर (res != -EIO) अणु
-		/* पढ़ो data */
-		*data = snd_hda_codec_पढ़ो(codec, WIDGET_CHIP_CTRL, 0,
+	if (res != -EIO) {
+		/* read data */
+		*data = snd_hda_codec_read(codec, WIDGET_CHIP_CTRL, 0,
 					   VENDOR_CHIPIO_HIC_READ_DATA,
 					   0);
-	पूर्ण
+	}
 
-	/*If no error encountered, स्वतःmatically increment the address
+	/*If no error encountered, automatically increment the address
 	as per chip behaviour*/
 	spec->curr_chip_addx = (res != -EIO) ?
 					(spec->curr_chip_addx + 4) : ~0U;
-	वापस res;
-पूर्ण
+	return res;
+}
 
 /*
  * Write given value to the given address through the chip I/O widget.
- * रक्षित by the Mutex
+ * protected by the Mutex
  */
-अटल पूर्णांक chipio_ग_लिखो(काष्ठा hda_codec *codec,
-		अचिन्हित पूर्णांक chip_addx, स्थिर अचिन्हित पूर्णांक data)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	पूर्णांक err;
+static int chipio_write(struct hda_codec *codec,
+		unsigned int chip_addx, const unsigned int data)
+{
+	struct ca0132_spec *spec = codec->spec;
+	int err;
 
 	mutex_lock(&spec->chipio_mutex);
 
-	/* ग_लिखो the address, and अगर successful proceed to ग_लिखो data */
-	err = chipio_ग_लिखो_address(codec, chip_addx);
-	अगर (err < 0)
-		जाओ निकास;
+	/* write the address, and if successful proceed to write data */
+	err = chipio_write_address(codec, chip_addx);
+	if (err < 0)
+		goto exit;
 
-	err = chipio_ग_लिखो_data(codec, data);
-	अगर (err < 0)
-		जाओ निकास;
+	err = chipio_write_data(codec, data);
+	if (err < 0)
+		goto exit;
 
-निकास:
+exit:
 	mutex_unlock(&spec->chipio_mutex);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
  * Write given value to the given address through the chip I/O widget.
- * not रक्षित by the Mutex
+ * not protected by the Mutex
  */
-अटल पूर्णांक chipio_ग_लिखो_no_mutex(काष्ठा hda_codec *codec,
-		अचिन्हित पूर्णांक chip_addx, स्थिर अचिन्हित पूर्णांक data)
-अणु
-	पूर्णांक err;
+static int chipio_write_no_mutex(struct hda_codec *codec,
+		unsigned int chip_addx, const unsigned int data)
+{
+	int err;
 
 
-	/* ग_लिखो the address, and अगर successful proceed to ग_लिखो data */
-	err = chipio_ग_लिखो_address(codec, chip_addx);
-	अगर (err < 0)
-		जाओ निकास;
+	/* write the address, and if successful proceed to write data */
+	err = chipio_write_address(codec, chip_addx);
+	if (err < 0)
+		goto exit;
 
-	err = chipio_ग_लिखो_data(codec, data);
-	अगर (err < 0)
-		जाओ निकास;
+	err = chipio_write_data(codec, data);
+	if (err < 0)
+		goto exit;
 
-निकास:
-	वापस err;
-पूर्ण
+exit:
+	return err;
+}
 
 /*
  * Write multiple values to the given address through the chip I/O widget.
- * रक्षित by the Mutex
+ * protected by the Mutex
  */
-अटल पूर्णांक chipio_ग_लिखो_multiple(काष्ठा hda_codec *codec,
+static int chipio_write_multiple(struct hda_codec *codec,
 				 u32 chip_addx,
-				 स्थिर u32 *data,
-				 अचिन्हित पूर्णांक count)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	पूर्णांक status;
+				 const u32 *data,
+				 unsigned int count)
+{
+	struct ca0132_spec *spec = codec->spec;
+	int status;
 
 	mutex_lock(&spec->chipio_mutex);
-	status = chipio_ग_लिखो_address(codec, chip_addx);
-	अगर (status < 0)
-		जाओ error;
+	status = chipio_write_address(codec, chip_addx);
+	if (status < 0)
+		goto error;
 
-	status = chipio_ग_लिखो_data_multiple(codec, data, count);
+	status = chipio_write_data_multiple(codec, data, count);
 error:
 	mutex_unlock(&spec->chipio_mutex);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Read the given address through the chip I/O widget
- * रक्षित by the Mutex
+ * protected by the Mutex
  */
-अटल पूर्णांक chipio_पढ़ो(काष्ठा hda_codec *codec,
-		अचिन्हित पूर्णांक chip_addx, अचिन्हित पूर्णांक *data)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	पूर्णांक err;
+static int chipio_read(struct hda_codec *codec,
+		unsigned int chip_addx, unsigned int *data)
+{
+	struct ca0132_spec *spec = codec->spec;
+	int err;
 
 	mutex_lock(&spec->chipio_mutex);
 
-	/* ग_लिखो the address, and अगर successful proceed to ग_लिखो data */
-	err = chipio_ग_लिखो_address(codec, chip_addx);
-	अगर (err < 0)
-		जाओ निकास;
+	/* write the address, and if successful proceed to write data */
+	err = chipio_write_address(codec, chip_addx);
+	if (err < 0)
+		goto exit;
 
-	err = chipio_पढ़ो_data(codec, data);
-	अगर (err < 0)
-		जाओ निकास;
+	err = chipio_read_data(codec, data);
+	if (err < 0)
+		goto exit;
 
-निकास:
+exit:
 	mutex_unlock(&spec->chipio_mutex);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
  * Set chip control flags through the chip I/O widget.
  */
-अटल व्योम chipio_set_control_flag(काष्ठा hda_codec *codec,
-				    क्रमागत control_flag_id flag_id,
+static void chipio_set_control_flag(struct hda_codec *codec,
+				    enum control_flag_id flag_id,
 				    bool flag_state)
-अणु
-	अचिन्हित पूर्णांक val;
-	अचिन्हित पूर्णांक flag_bit;
+{
+	unsigned int val;
+	unsigned int flag_bit;
 
 	flag_bit = (flag_state ? 1 : 0);
 	val = (flag_bit << 7) | (flag_id);
-	snd_hda_codec_ग_लिखो(codec, WIDGET_CHIP_CTRL, 0,
+	snd_hda_codec_write(codec, WIDGET_CHIP_CTRL, 0,
 			    VENDOR_CHIPIO_FLAG_SET, val);
-पूर्ण
+}
 
 /*
  * Set chip parameters through the chip I/O widget.
  */
-अटल व्योम chipio_set_control_param(काष्ठा hda_codec *codec,
-		क्रमागत control_param_id param_id, पूर्णांक param_val)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	पूर्णांक val;
+static void chipio_set_control_param(struct hda_codec *codec,
+		enum control_param_id param_id, int param_val)
+{
+	struct ca0132_spec *spec = codec->spec;
+	int val;
 
-	अगर ((param_id < 32) && (param_val < 8)) अणु
+	if ((param_id < 32) && (param_val < 8)) {
 		val = (param_val << 5) | (param_id);
-		snd_hda_codec_ग_लिखो(codec, WIDGET_CHIP_CTRL, 0,
+		snd_hda_codec_write(codec, WIDGET_CHIP_CTRL, 0,
 				    VENDOR_CHIPIO_PARAM_SET, val);
-	पूर्ण अन्यथा अणु
+	} else {
 		mutex_lock(&spec->chipio_mutex);
-		अगर (chipio_send(codec, VENDOR_CHIPIO_STATUS, 0) == 0) अणु
-			snd_hda_codec_ग_लिखो(codec, WIDGET_CHIP_CTRL, 0,
+		if (chipio_send(codec, VENDOR_CHIPIO_STATUS, 0) == 0) {
+			snd_hda_codec_write(codec, WIDGET_CHIP_CTRL, 0,
 					    VENDOR_CHIPIO_PARAM_EX_ID_SET,
 					    param_id);
-			snd_hda_codec_ग_लिखो(codec, WIDGET_CHIP_CTRL, 0,
+			snd_hda_codec_write(codec, WIDGET_CHIP_CTRL, 0,
 					    VENDOR_CHIPIO_PARAM_EX_VALUE_SET,
 					    param_val);
-		पूर्ण
+		}
 		mutex_unlock(&spec->chipio_mutex);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Set chip parameters through the chip I/O widget. NO MUTEX.
  */
-अटल व्योम chipio_set_control_param_no_mutex(काष्ठा hda_codec *codec,
-		क्रमागत control_param_id param_id, पूर्णांक param_val)
-अणु
-	पूर्णांक val;
+static void chipio_set_control_param_no_mutex(struct hda_codec *codec,
+		enum control_param_id param_id, int param_val)
+{
+	int val;
 
-	अगर ((param_id < 32) && (param_val < 8)) अणु
+	if ((param_id < 32) && (param_val < 8)) {
 		val = (param_val << 5) | (param_id);
-		snd_hda_codec_ग_लिखो(codec, WIDGET_CHIP_CTRL, 0,
+		snd_hda_codec_write(codec, WIDGET_CHIP_CTRL, 0,
 				    VENDOR_CHIPIO_PARAM_SET, val);
-	पूर्ण अन्यथा अणु
-		अगर (chipio_send(codec, VENDOR_CHIPIO_STATUS, 0) == 0) अणु
-			snd_hda_codec_ग_लिखो(codec, WIDGET_CHIP_CTRL, 0,
+	} else {
+		if (chipio_send(codec, VENDOR_CHIPIO_STATUS, 0) == 0) {
+			snd_hda_codec_write(codec, WIDGET_CHIP_CTRL, 0,
 					    VENDOR_CHIPIO_PARAM_EX_ID_SET,
 					    param_id);
-			snd_hda_codec_ग_लिखो(codec, WIDGET_CHIP_CTRL, 0,
+			snd_hda_codec_write(codec, WIDGET_CHIP_CTRL, 0,
 					    VENDOR_CHIPIO_PARAM_EX_VALUE_SET,
 					    param_val);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 /*
- * Connect stream to a source poपूर्णांक, and then connect
- * that source poपूर्णांक to a destination poपूर्णांक.
+ * Connect stream to a source point, and then connect
+ * that source point to a destination point.
  */
-अटल व्योम chipio_set_stream_source_dest(काष्ठा hda_codec *codec,
-				पूर्णांक streamid, पूर्णांक source_poपूर्णांक, पूर्णांक dest_poपूर्णांक)
-अणु
+static void chipio_set_stream_source_dest(struct hda_codec *codec,
+				int streamid, int source_point, int dest_point)
+{
 	chipio_set_control_param_no_mutex(codec,
 			CONTROL_PARAM_STREAM_ID, streamid);
 	chipio_set_control_param_no_mutex(codec,
-			CONTROL_PARAM_STREAM_SOURCE_CONN_POINT, source_poपूर्णांक);
+			CONTROL_PARAM_STREAM_SOURCE_CONN_POINT, source_point);
 	chipio_set_control_param_no_mutex(codec,
-			CONTROL_PARAM_STREAM_DEST_CONN_POINT, dest_poपूर्णांक);
-पूर्ण
+			CONTROL_PARAM_STREAM_DEST_CONN_POINT, dest_point);
+}
 
 /*
  * Set number of channels in the selected stream.
  */
-अटल व्योम chipio_set_stream_channels(काष्ठा hda_codec *codec,
-				पूर्णांक streamid, अचिन्हित पूर्णांक channels)
-अणु
+static void chipio_set_stream_channels(struct hda_codec *codec,
+				int streamid, unsigned int channels)
+{
 	chipio_set_control_param_no_mutex(codec,
 			CONTROL_PARAM_STREAM_ID, streamid);
 	chipio_set_control_param_no_mutex(codec,
 			CONTROL_PARAM_STREAMS_CHANNELS, channels);
-पूर्ण
+}
 
 /*
  * Enable/Disable audio stream.
  */
-अटल व्योम chipio_set_stream_control(काष्ठा hda_codec *codec,
-				पूर्णांक streamid, पूर्णांक enable)
-अणु
+static void chipio_set_stream_control(struct hda_codec *codec,
+				int streamid, int enable)
+{
 	chipio_set_control_param_no_mutex(codec,
 			CONTROL_PARAM_STREAM_ID, streamid);
 	chipio_set_control_param_no_mutex(codec,
 			CONTROL_PARAM_STREAM_CONTROL, enable);
-पूर्ण
+}
 
 /*
  * Get ChipIO audio stream's status.
  */
-अटल व्योम chipio_get_stream_control(काष्ठा hda_codec *codec,
-				पूर्णांक streamid, अचिन्हित पूर्णांक *enable)
-अणु
+static void chipio_get_stream_control(struct hda_codec *codec,
+				int streamid, unsigned int *enable)
+{
 	chipio_set_control_param_no_mutex(codec,
 			CONTROL_PARAM_STREAM_ID, streamid);
-	*enable = snd_hda_codec_पढ़ो(codec, WIDGET_CHIP_CTRL, 0,
+	*enable = snd_hda_codec_read(codec, WIDGET_CHIP_CTRL, 0,
 			   VENDOR_CHIPIO_PARAM_GET,
 			   CONTROL_PARAM_STREAM_CONTROL);
-पूर्ण
+}
 
 /*
- * Set sampling rate of the connection poपूर्णांक. NO MUTEX.
+ * Set sampling rate of the connection point. NO MUTEX.
  */
-अटल व्योम chipio_set_conn_rate_no_mutex(काष्ठा hda_codec *codec,
-				पूर्णांक connid, क्रमागत ca0132_sample_rate rate)
-अणु
+static void chipio_set_conn_rate_no_mutex(struct hda_codec *codec,
+				int connid, enum ca0132_sample_rate rate)
+{
 	chipio_set_control_param_no_mutex(codec,
 			CONTROL_PARAM_CONN_POINT_ID, connid);
 	chipio_set_control_param_no_mutex(codec,
 			CONTROL_PARAM_CONN_POINT_SAMPLE_RATE, rate);
-पूर्ण
+}
 
 /*
- * Set sampling rate of the connection poपूर्णांक.
+ * Set sampling rate of the connection point.
  */
-अटल व्योम chipio_set_conn_rate(काष्ठा hda_codec *codec,
-				पूर्णांक connid, क्रमागत ca0132_sample_rate rate)
-अणु
+static void chipio_set_conn_rate(struct hda_codec *codec,
+				int connid, enum ca0132_sample_rate rate)
+{
 	chipio_set_control_param(codec, CONTROL_PARAM_CONN_POINT_ID, connid);
 	chipio_set_control_param(codec, CONTROL_PARAM_CONN_POINT_SAMPLE_RATE,
 				 rate);
-पूर्ण
+}
 
 /*
- * Writes to the 8051's पूर्णांकernal address space directly instead of indirectly,
- * giving access to the special function रेजिस्टरs located at addresses
+ * Writes to the 8051's internal address space directly instead of indirectly,
+ * giving access to the special function registers located at addresses
  * 0x80-0xFF.
  */
-अटल व्योम chipio_8051_ग_लिखो_direct(काष्ठा hda_codec *codec,
-		अचिन्हित पूर्णांक addr, अचिन्हित पूर्णांक data)
-अणु
-	अचिन्हित पूर्णांक verb;
+static void chipio_8051_write_direct(struct hda_codec *codec,
+		unsigned int addr, unsigned int data)
+{
+	unsigned int verb;
 
-	verb = VENDOR_CHIPIO_8051_WRITE_सूचीECT | data;
-	snd_hda_codec_ग_लिखो(codec, WIDGET_CHIP_CTRL, 0, verb, addr);
-पूर्ण
+	verb = VENDOR_CHIPIO_8051_WRITE_DIRECT | data;
+	snd_hda_codec_write(codec, WIDGET_CHIP_CTRL, 0, verb, addr);
+}
 
 /*
  * Writes to the 8051's exram, which has 16-bits of address space.
  * Data at addresses 0x2000-0x7fff is mirrored to 0x8000-0xdfff.
- * Data at 0x8000-0xdfff can also be used as program memory क्रम the 8051 by
+ * Data at 0x8000-0xdfff can also be used as program memory for the 8051 by
  * setting the pmem bank selection SFR.
  * 0xe000-0xffff is always mapped as program memory, with only 0xf000-0xffff
  * being writable.
  */
-अटल व्योम chipio_8051_set_address(काष्ठा hda_codec *codec, अचिन्हित पूर्णांक addr)
-अणु
-	अचिन्हित पूर्णांक पंचांगp;
+static void chipio_8051_set_address(struct hda_codec *codec, unsigned int addr)
+{
+	unsigned int tmp;
 
 	/* Lower 8-bits. */
-	पंचांगp = addr & 0xff;
-	snd_hda_codec_ग_लिखो(codec, WIDGET_CHIP_CTRL, 0,
-			    VENDOR_CHIPIO_8051_ADDRESS_LOW, पंचांगp);
+	tmp = addr & 0xff;
+	snd_hda_codec_write(codec, WIDGET_CHIP_CTRL, 0,
+			    VENDOR_CHIPIO_8051_ADDRESS_LOW, tmp);
 
 	/* Upper 8-bits. */
-	पंचांगp = (addr >> 8) & 0xff;
-	snd_hda_codec_ग_लिखो(codec, WIDGET_CHIP_CTRL, 0,
-			    VENDOR_CHIPIO_8051_ADDRESS_HIGH, पंचांगp);
-पूर्ण
+	tmp = (addr >> 8) & 0xff;
+	snd_hda_codec_write(codec, WIDGET_CHIP_CTRL, 0,
+			    VENDOR_CHIPIO_8051_ADDRESS_HIGH, tmp);
+}
 
-अटल व्योम chipio_8051_set_data(काष्ठा hda_codec *codec, अचिन्हित पूर्णांक data)
-अणु
+static void chipio_8051_set_data(struct hda_codec *codec, unsigned int data)
+{
 	/* 8-bits of data. */
-	snd_hda_codec_ग_लिखो(codec, WIDGET_CHIP_CTRL, 0,
+	snd_hda_codec_write(codec, WIDGET_CHIP_CTRL, 0,
 			    VENDOR_CHIPIO_8051_DATA_WRITE, data & 0xff);
-पूर्ण
+}
 
-अटल अचिन्हित पूर्णांक chipio_8051_get_data(काष्ठा hda_codec *codec)
-अणु
-	वापस snd_hda_codec_पढ़ो(codec, WIDGET_CHIP_CTRL, 0,
+static unsigned int chipio_8051_get_data(struct hda_codec *codec)
+{
+	return snd_hda_codec_read(codec, WIDGET_CHIP_CTRL, 0,
 				   VENDOR_CHIPIO_8051_DATA_READ, 0);
-पूर्ण
+}
 
-/* PLL_PMU ग_लिखोs share the lower address रेजिस्टर of the 8051 exram ग_लिखोs. */
-अटल व्योम chipio_8051_set_data_pll(काष्ठा hda_codec *codec, अचिन्हित पूर्णांक data)
-अणु
+/* PLL_PMU writes share the lower address register of the 8051 exram writes. */
+static void chipio_8051_set_data_pll(struct hda_codec *codec, unsigned int data)
+{
 	/* 8-bits of data. */
-	snd_hda_codec_ग_लिखो(codec, WIDGET_CHIP_CTRL, 0,
+	snd_hda_codec_write(codec, WIDGET_CHIP_CTRL, 0,
 			    VENDOR_CHIPIO_PLL_PMU_WRITE, data & 0xff);
-पूर्ण
+}
 
-अटल व्योम chipio_8051_ग_लिखो_exram(काष्ठा hda_codec *codec,
-		अचिन्हित पूर्णांक addr, अचिन्हित पूर्णांक data)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
+static void chipio_8051_write_exram(struct hda_codec *codec,
+		unsigned int addr, unsigned int data)
+{
+	struct ca0132_spec *spec = codec->spec;
 
 	mutex_lock(&spec->chipio_mutex);
 
@@ -1970,27 +1969,27 @@ error:
 	chipio_8051_set_data(codec, data);
 
 	mutex_unlock(&spec->chipio_mutex);
-पूर्ण
+}
 
-अटल व्योम chipio_8051_ग_लिखो_exram_no_mutex(काष्ठा hda_codec *codec,
-		अचिन्हित पूर्णांक addr, अचिन्हित पूर्णांक data)
-अणु
+static void chipio_8051_write_exram_no_mutex(struct hda_codec *codec,
+		unsigned int addr, unsigned int data)
+{
 	chipio_8051_set_address(codec, addr);
 	chipio_8051_set_data(codec, data);
-पूर्ण
+}
 
 /* Readback data from the 8051's exram. No mutex. */
-अटल व्योम chipio_8051_पढ़ो_exram(काष्ठा hda_codec *codec,
-		अचिन्हित पूर्णांक addr, अचिन्हित पूर्णांक *data)
-अणु
+static void chipio_8051_read_exram(struct hda_codec *codec,
+		unsigned int addr, unsigned int *data)
+{
 	chipio_8051_set_address(codec, addr);
 	*data = chipio_8051_get_data(codec);
-पूर्ण
+}
 
-अटल व्योम chipio_8051_ग_लिखो_pll_pmu(काष्ठा hda_codec *codec,
-		अचिन्हित पूर्णांक addr, अचिन्हित पूर्णांक data)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
+static void chipio_8051_write_pll_pmu(struct hda_codec *codec,
+		unsigned int addr, unsigned int data)
+{
+	struct ca0132_spec *spec = codec->spec;
 
 	mutex_lock(&spec->chipio_mutex);
 
@@ -1998,186 +1997,186 @@ error:
 	chipio_8051_set_data_pll(codec, data);
 
 	mutex_unlock(&spec->chipio_mutex);
-पूर्ण
+}
 
-अटल व्योम chipio_8051_ग_लिखो_pll_pmu_no_mutex(काष्ठा hda_codec *codec,
-		अचिन्हित पूर्णांक addr, अचिन्हित पूर्णांक data)
-अणु
+static void chipio_8051_write_pll_pmu_no_mutex(struct hda_codec *codec,
+		unsigned int addr, unsigned int data)
+{
 	chipio_8051_set_address(codec, addr & 0xff);
 	chipio_8051_set_data_pll(codec, data);
-पूर्ण
+}
 
 /*
- * Enable घड़ीs.
+ * Enable clocks.
  */
-अटल व्योम chipio_enable_घड़ीs(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
+static void chipio_enable_clocks(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
 
 	mutex_lock(&spec->chipio_mutex);
 
-	chipio_8051_ग_लिखो_pll_pmu_no_mutex(codec, 0x00, 0xff);
-	chipio_8051_ग_लिखो_pll_pmu_no_mutex(codec, 0x05, 0x0b);
-	chipio_8051_ग_लिखो_pll_pmu_no_mutex(codec, 0x06, 0xff);
+	chipio_8051_write_pll_pmu_no_mutex(codec, 0x00, 0xff);
+	chipio_8051_write_pll_pmu_no_mutex(codec, 0x05, 0x0b);
+	chipio_8051_write_pll_pmu_no_mutex(codec, 0x06, 0xff);
 
 	mutex_unlock(&spec->chipio_mutex);
-पूर्ण
+}
 
 /*
  * CA0132 DSP IO stuffs
  */
-अटल पूर्णांक dspio_send(काष्ठा hda_codec *codec, अचिन्हित पूर्णांक reg,
-		      अचिन्हित पूर्णांक data)
-अणु
-	पूर्णांक res;
-	अचिन्हित दीर्घ समयout = jअगरfies + msecs_to_jअगरfies(1000);
+static int dspio_send(struct hda_codec *codec, unsigned int reg,
+		      unsigned int data)
+{
+	int res;
+	unsigned long timeout = jiffies + msecs_to_jiffies(1000);
 
-	/* send bits of data specअगरied by reg to dsp */
-	करो अणु
-		res = snd_hda_codec_पढ़ो(codec, WIDGET_DSP_CTRL, 0, reg, data);
-		अगर ((res >= 0) && (res != VENDOR_STATUS_DSPIO_BUSY))
-			वापस res;
+	/* send bits of data specified by reg to dsp */
+	do {
+		res = snd_hda_codec_read(codec, WIDGET_DSP_CTRL, 0, reg, data);
+		if ((res >= 0) && (res != VENDOR_STATUS_DSPIO_BUSY))
+			return res;
 		msleep(20);
-	पूर्ण जबतक (समय_beक्रमe(jअगरfies, समयout));
+	} while (time_before(jiffies, timeout));
 
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
 /*
- * Wait क्रम DSP to be पढ़ोy क्रम commands
+ * Wait for DSP to be ready for commands
  */
-अटल व्योम dspio_ग_लिखो_रुको(काष्ठा hda_codec *codec)
-अणु
-	पूर्णांक status;
-	अचिन्हित दीर्घ समयout = jअगरfies + msecs_to_jअगरfies(1000);
+static void dspio_write_wait(struct hda_codec *codec)
+{
+	int status;
+	unsigned long timeout = jiffies + msecs_to_jiffies(1000);
 
-	करो अणु
-		status = snd_hda_codec_पढ़ो(codec, WIDGET_DSP_CTRL, 0,
+	do {
+		status = snd_hda_codec_read(codec, WIDGET_DSP_CTRL, 0,
 						VENDOR_DSPIO_STATUS, 0);
-		अगर ((status == VENDOR_STATUS_DSPIO_OK) ||
+		if ((status == VENDOR_STATUS_DSPIO_OK) ||
 		    (status == VENDOR_STATUS_DSPIO_SCP_RESPONSE_QUEUE_EMPTY))
-			अवरोध;
+			break;
 		msleep(1);
-	पूर्ण जबतक (समय_beक्रमe(jअगरfies, समयout));
-पूर्ण
+	} while (time_before(jiffies, timeout));
+}
 
 /*
  * Write SCP data to DSP
  */
-अटल पूर्णांक dspio_ग_लिखो(काष्ठा hda_codec *codec, अचिन्हित पूर्णांक scp_data)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	पूर्णांक status;
+static int dspio_write(struct hda_codec *codec, unsigned int scp_data)
+{
+	struct ca0132_spec *spec = codec->spec;
+	int status;
 
-	dspio_ग_लिखो_रुको(codec);
+	dspio_write_wait(codec);
 
 	mutex_lock(&spec->chipio_mutex);
 	status = dspio_send(codec, VENDOR_DSPIO_SCP_WRITE_DATA_LOW,
 			    scp_data & 0xffff);
-	अगर (status < 0)
-		जाओ error;
+	if (status < 0)
+		goto error;
 
 	status = dspio_send(codec, VENDOR_DSPIO_SCP_WRITE_DATA_HIGH,
 				    scp_data >> 16);
-	अगर (status < 0)
-		जाओ error;
+	if (status < 0)
+		goto error;
 
-	/* OK, now check अगर the ग_लिखो itself has executed*/
-	status = snd_hda_codec_पढ़ो(codec, WIDGET_DSP_CTRL, 0,
+	/* OK, now check if the write itself has executed*/
+	status = snd_hda_codec_read(codec, WIDGET_DSP_CTRL, 0,
 				    VENDOR_DSPIO_STATUS, 0);
 error:
 	mutex_unlock(&spec->chipio_mutex);
 
-	वापस (status == VENDOR_STATUS_DSPIO_SCP_COMMAND_QUEUE_FULL) ?
+	return (status == VENDOR_STATUS_DSPIO_SCP_COMMAND_QUEUE_FULL) ?
 			-EIO : 0;
-पूर्ण
+}
 
 /*
  * Write multiple SCP data to DSP
  */
-अटल पूर्णांक dspio_ग_लिखो_multiple(काष्ठा hda_codec *codec,
-				अचिन्हित पूर्णांक *buffer, अचिन्हित पूर्णांक size)
-अणु
-	पूर्णांक status = 0;
-	अचिन्हित पूर्णांक count;
+static int dspio_write_multiple(struct hda_codec *codec,
+				unsigned int *buffer, unsigned int size)
+{
+	int status = 0;
+	unsigned int count;
 
-	अगर (buffer == शून्य)
-		वापस -EINVAL;
+	if (buffer == NULL)
+		return -EINVAL;
 
 	count = 0;
-	जबतक (count < size) अणु
-		status = dspio_ग_लिखो(codec, *buffer++);
-		अगर (status != 0)
-			अवरोध;
+	while (count < size) {
+		status = dspio_write(codec, *buffer++);
+		if (status != 0)
+			break;
 		count++;
-	पूर्ण
+	}
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक dspio_पढ़ो(काष्ठा hda_codec *codec, अचिन्हित पूर्णांक *data)
-अणु
-	पूर्णांक status;
+static int dspio_read(struct hda_codec *codec, unsigned int *data)
+{
+	int status;
 
 	status = dspio_send(codec, VENDOR_DSPIO_SCP_POST_READ_DATA, 0);
-	अगर (status == -EIO)
-		वापस status;
+	if (status == -EIO)
+		return status;
 
 	status = dspio_send(codec, VENDOR_DSPIO_STATUS, 0);
-	अगर (status == -EIO ||
+	if (status == -EIO ||
 	    status == VENDOR_STATUS_DSPIO_SCP_RESPONSE_QUEUE_EMPTY)
-		वापस -EIO;
+		return -EIO;
 
-	*data = snd_hda_codec_पढ़ो(codec, WIDGET_DSP_CTRL, 0,
+	*data = snd_hda_codec_read(codec, WIDGET_DSP_CTRL, 0,
 				   VENDOR_DSPIO_SCP_READ_DATA, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dspio_पढ़ो_multiple(काष्ठा hda_codec *codec, अचिन्हित पूर्णांक *buffer,
-			       अचिन्हित पूर्णांक *buf_size, अचिन्हित पूर्णांक size_count)
-अणु
-	पूर्णांक status = 0;
-	अचिन्हित पूर्णांक size = *buf_size;
-	अचिन्हित पूर्णांक count;
-	अचिन्हित पूर्णांक skip_count;
-	अचिन्हित पूर्णांक dummy;
+static int dspio_read_multiple(struct hda_codec *codec, unsigned int *buffer,
+			       unsigned int *buf_size, unsigned int size_count)
+{
+	int status = 0;
+	unsigned int size = *buf_size;
+	unsigned int count;
+	unsigned int skip_count;
+	unsigned int dummy;
 
-	अगर (buffer == शून्य)
-		वापस -1;
+	if (buffer == NULL)
+		return -1;
 
 	count = 0;
-	जबतक (count < size && count < size_count) अणु
-		status = dspio_पढ़ो(codec, buffer++);
-		अगर (status != 0)
-			अवरोध;
+	while (count < size && count < size_count) {
+		status = dspio_read(codec, buffer++);
+		if (status != 0)
+			break;
 		count++;
-	पूर्ण
+	}
 
 	skip_count = count;
-	अगर (status == 0) अणु
-		जबतक (skip_count < size) अणु
-			status = dspio_पढ़ो(codec, &dummy);
-			अगर (status != 0)
-				अवरोध;
+	if (status == 0) {
+		while (skip_count < size) {
+			status = dspio_read(codec, &dummy);
+			if (status != 0)
+				break;
 			skip_count++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	*buf_size = count;
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
- * Conकाष्ठा the SCP header using corresponding fields
+ * Construct the SCP header using corresponding fields
  */
-अटल अंतरभूत अचिन्हित पूर्णांक
-make_scp_header(अचिन्हित पूर्णांक target_id, अचिन्हित पूर्णांक source_id,
-		अचिन्हित पूर्णांक get_flag, अचिन्हित पूर्णांक req,
-		अचिन्हित पूर्णांक device_flag, अचिन्हित पूर्णांक resp_flag,
-		अचिन्हित पूर्णांक error_flag, अचिन्हित पूर्णांक data_size)
-अणु
-	अचिन्हित पूर्णांक header = 0;
+static inline unsigned int
+make_scp_header(unsigned int target_id, unsigned int source_id,
+		unsigned int get_flag, unsigned int req,
+		unsigned int device_flag, unsigned int resp_flag,
+		unsigned int error_flag, unsigned int data_size)
+{
+	unsigned int header = 0;
 
 	header = (data_size & 0x1f) << 27;
 	header |= (error_flag & 0x01) << 26;
@@ -2188,156 +2187,156 @@ make_scp_header(अचिन्हित पूर्णांक target_id, अ
 	header |= (source_id & 0xff) << 8;
 	header |= target_id & 0xff;
 
-	वापस header;
-पूर्ण
+	return header;
+}
 
 /*
  * Extract corresponding fields from SCP header
  */
-अटल अंतरभूत व्योम
-extract_scp_header(अचिन्हित पूर्णांक header,
-		   अचिन्हित पूर्णांक *target_id, अचिन्हित पूर्णांक *source_id,
-		   अचिन्हित पूर्णांक *get_flag, अचिन्हित पूर्णांक *req,
-		   अचिन्हित पूर्णांक *device_flag, अचिन्हित पूर्णांक *resp_flag,
-		   अचिन्हित पूर्णांक *error_flag, अचिन्हित पूर्णांक *data_size)
-अणु
-	अगर (data_size)
+static inline void
+extract_scp_header(unsigned int header,
+		   unsigned int *target_id, unsigned int *source_id,
+		   unsigned int *get_flag, unsigned int *req,
+		   unsigned int *device_flag, unsigned int *resp_flag,
+		   unsigned int *error_flag, unsigned int *data_size)
+{
+	if (data_size)
 		*data_size = (header >> 27) & 0x1f;
-	अगर (error_flag)
+	if (error_flag)
 		*error_flag = (header >> 26) & 0x01;
-	अगर (resp_flag)
+	if (resp_flag)
 		*resp_flag = (header >> 25) & 0x01;
-	अगर (device_flag)
+	if (device_flag)
 		*device_flag = (header >> 24) & 0x01;
-	अगर (req)
+	if (req)
 		*req = (header >> 17) & 0x7f;
-	अगर (get_flag)
+	if (get_flag)
 		*get_flag = (header >> 16) & 0x01;
-	अगर (source_id)
+	if (source_id)
 		*source_id = (header >> 8) & 0xff;
-	अगर (target_id)
+	if (target_id)
 		*target_id = header & 0xff;
-पूर्ण
+}
 
-#घोषणा SCP_MAX_DATA_WORDS  (16)
+#define SCP_MAX_DATA_WORDS  (16)
 
 /* Structure to contain any SCP message */
-काष्ठा scp_msg अणु
-	अचिन्हित पूर्णांक hdr;
-	अचिन्हित पूर्णांक data[SCP_MAX_DATA_WORDS];
-पूर्ण;
+struct scp_msg {
+	unsigned int hdr;
+	unsigned int data[SCP_MAX_DATA_WORDS];
+};
 
-अटल व्योम dspio_clear_response_queue(काष्ठा hda_codec *codec)
-अणु
-	अचिन्हित दीर्घ समयout = jअगरfies + msecs_to_jअगरfies(1000);
-	अचिन्हित पूर्णांक dummy = 0;
-	पूर्णांक status;
+static void dspio_clear_response_queue(struct hda_codec *codec)
+{
+	unsigned long timeout = jiffies + msecs_to_jiffies(1000);
+	unsigned int dummy = 0;
+	int status;
 
 	/* clear all from the response queue */
-	करो अणु
-		status = dspio_पढ़ो(codec, &dummy);
-	पूर्ण जबतक (status == 0 && समय_beक्रमe(jअगरfies, समयout));
-पूर्ण
+	do {
+		status = dspio_read(codec, &dummy);
+	} while (status == 0 && time_before(jiffies, timeout));
+}
 
-अटल पूर्णांक dspio_get_response_data(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	अचिन्हित पूर्णांक data = 0;
-	अचिन्हित पूर्णांक count;
+static int dspio_get_response_data(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
+	unsigned int data = 0;
+	unsigned int count;
 
-	अगर (dspio_पढ़ो(codec, &data) < 0)
-		वापस -EIO;
+	if (dspio_read(codec, &data) < 0)
+		return -EIO;
 
-	अगर ((data & 0x00ffffff) == spec->रुको_scp_header) अणु
+	if ((data & 0x00ffffff) == spec->wait_scp_header) {
 		spec->scp_resp_header = data;
 		spec->scp_resp_count = data >> 27;
-		count = spec->रुको_num_data;
-		dspio_पढ़ो_multiple(codec, spec->scp_resp_data,
+		count = spec->wait_num_data;
+		dspio_read_multiple(codec, spec->scp_resp_data,
 				    &spec->scp_resp_count, count);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
 /*
  * Send SCP message to DSP
  */
-अटल पूर्णांक dspio_send_scp_message(काष्ठा hda_codec *codec,
-				  अचिन्हित अक्षर *send_buf,
-				  अचिन्हित पूर्णांक send_buf_size,
-				  अचिन्हित अक्षर *वापस_buf,
-				  अचिन्हित पूर्णांक वापस_buf_size,
-				  अचिन्हित पूर्णांक *bytes_वापसed)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	पूर्णांक status = -1;
-	अचिन्हित पूर्णांक scp_send_size = 0;
-	अचिन्हित पूर्णांक total_size;
-	bool रुकोing_क्रम_resp = false;
-	अचिन्हित पूर्णांक header;
-	काष्ठा scp_msg *ret_msg;
-	अचिन्हित पूर्णांक resp_src_id, resp_target_id;
-	अचिन्हित पूर्णांक data_size, src_id, target_id, get_flag, device_flag;
+static int dspio_send_scp_message(struct hda_codec *codec,
+				  unsigned char *send_buf,
+				  unsigned int send_buf_size,
+				  unsigned char *return_buf,
+				  unsigned int return_buf_size,
+				  unsigned int *bytes_returned)
+{
+	struct ca0132_spec *spec = codec->spec;
+	int status = -1;
+	unsigned int scp_send_size = 0;
+	unsigned int total_size;
+	bool waiting_for_resp = false;
+	unsigned int header;
+	struct scp_msg *ret_msg;
+	unsigned int resp_src_id, resp_target_id;
+	unsigned int data_size, src_id, target_id, get_flag, device_flag;
 
-	अगर (bytes_वापसed)
-		*bytes_वापसed = 0;
+	if (bytes_returned)
+		*bytes_returned = 0;
 
 	/* get scp header from buffer */
-	header = *((अचिन्हित पूर्णांक *)send_buf);
-	extract_scp_header(header, &target_id, &src_id, &get_flag, शून्य,
-			   &device_flag, शून्य, शून्य, &data_size);
+	header = *((unsigned int *)send_buf);
+	extract_scp_header(header, &target_id, &src_id, &get_flag, NULL,
+			   &device_flag, NULL, NULL, &data_size);
 	scp_send_size = data_size + 1;
 	total_size = (scp_send_size * 4);
 
-	अगर (send_buf_size < total_size)
-		वापस -EINVAL;
+	if (send_buf_size < total_size)
+		return -EINVAL;
 
-	अगर (get_flag || device_flag) अणु
-		अगर (!वापस_buf || वापस_buf_size < 4 || !bytes_वापसed)
-			वापस -EINVAL;
+	if (get_flag || device_flag) {
+		if (!return_buf || return_buf_size < 4 || !bytes_returned)
+			return -EINVAL;
 
-		spec->रुको_scp_header = *((अचिन्हित पूर्णांक *)send_buf);
+		spec->wait_scp_header = *((unsigned int *)send_buf);
 
 		/* swap source id with target id */
 		resp_target_id = src_id;
 		resp_src_id = target_id;
-		spec->रुको_scp_header &= 0xffff0000;
-		spec->रुको_scp_header |= (resp_src_id << 8) | (resp_target_id);
-		spec->रुको_num_data = वापस_buf_size/माप(अचिन्हित पूर्णांक) - 1;
-		spec->रुको_scp = 1;
-		रुकोing_क्रम_resp = true;
-	पूर्ण
+		spec->wait_scp_header &= 0xffff0000;
+		spec->wait_scp_header |= (resp_src_id << 8) | (resp_target_id);
+		spec->wait_num_data = return_buf_size/sizeof(unsigned int) - 1;
+		spec->wait_scp = 1;
+		waiting_for_resp = true;
+	}
 
-	status = dspio_ग_लिखो_multiple(codec, (अचिन्हित पूर्णांक *)send_buf,
+	status = dspio_write_multiple(codec, (unsigned int *)send_buf,
 				      scp_send_size);
-	अगर (status < 0) अणु
-		spec->रुको_scp = 0;
-		वापस status;
-	पूर्ण
+	if (status < 0) {
+		spec->wait_scp = 0;
+		return status;
+	}
 
-	अगर (रुकोing_क्रम_resp) अणु
-		अचिन्हित दीर्घ समयout = jअगरfies + msecs_to_jअगरfies(1000);
-		स_रखो(वापस_buf, 0, वापस_buf_size);
-		करो अणु
+	if (waiting_for_resp) {
+		unsigned long timeout = jiffies + msecs_to_jiffies(1000);
+		memset(return_buf, 0, return_buf_size);
+		do {
 			msleep(20);
-		पूर्ण जबतक (spec->रुको_scp && समय_beक्रमe(jअगरfies, समयout));
-		रुकोing_क्रम_resp = false;
-		अगर (!spec->रुको_scp) अणु
-			ret_msg = (काष्ठा scp_msg *)वापस_buf;
-			स_नकल(&ret_msg->hdr, &spec->scp_resp_header, 4);
-			स_नकल(&ret_msg->data, spec->scp_resp_data,
-			       spec->रुको_num_data);
-			*bytes_वापसed = (spec->scp_resp_count + 1) * 4;
+		} while (spec->wait_scp && time_before(jiffies, timeout));
+		waiting_for_resp = false;
+		if (!spec->wait_scp) {
+			ret_msg = (struct scp_msg *)return_buf;
+			memcpy(&ret_msg->hdr, &spec->scp_resp_header, 4);
+			memcpy(&ret_msg->data, spec->scp_resp_data,
+			       spec->wait_num_data);
+			*bytes_returned = (spec->scp_resp_count + 1) * 4;
 			status = 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			status = -EIO;
-		पूर्ण
-		spec->रुको_scp = 0;
-	पूर्ण
+		}
+		spec->wait_scp = 0;
+	}
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /**
  * dspio_scp - Prepare and send the SCP message to DSP
@@ -2346,351 +2345,351 @@ extract_scp_header(अचिन्हित पूर्णांक header,
  * @src_id: ID of the source
  * @req: ID of request to send to the DSP module
  * @dir: SET or GET
- * @data: poपूर्णांकer to the data to send with the request, request specअगरic
+ * @data: pointer to the data to send with the request, request specific
  * @len: length of the data, in bytes
- * @reply: poपूर्णांक to the buffer to hold data वापसed क्रम a reply
- * @reply_len: length of the reply buffer वापसed from GET
+ * @reply: point to the buffer to hold data returned for a reply
+ * @reply_len: length of the reply buffer returned from GET
  *
  * Returns zero or a negative error code.
  */
-अटल पूर्णांक dspio_scp(काष्ठा hda_codec *codec,
-		पूर्णांक mod_id, पूर्णांक src_id, पूर्णांक req, पूर्णांक dir, स्थिर व्योम *data,
-		अचिन्हित पूर्णांक len, व्योम *reply, अचिन्हित पूर्णांक *reply_len)
-अणु
-	पूर्णांक status = 0;
-	काष्ठा scp_msg scp_send, scp_reply;
-	अचिन्हित पूर्णांक ret_bytes, send_size, ret_size;
-	अचिन्हित पूर्णांक send_get_flag, reply_resp_flag, reply_error_flag;
-	अचिन्हित पूर्णांक reply_data_size;
+static int dspio_scp(struct hda_codec *codec,
+		int mod_id, int src_id, int req, int dir, const void *data,
+		unsigned int len, void *reply, unsigned int *reply_len)
+{
+	int status = 0;
+	struct scp_msg scp_send, scp_reply;
+	unsigned int ret_bytes, send_size, ret_size;
+	unsigned int send_get_flag, reply_resp_flag, reply_error_flag;
+	unsigned int reply_data_size;
 
-	स_रखो(&scp_send, 0, माप(scp_send));
-	स_रखो(&scp_reply, 0, माप(scp_reply));
+	memset(&scp_send, 0, sizeof(scp_send));
+	memset(&scp_reply, 0, sizeof(scp_reply));
 
-	अगर ((len != 0 && data == शून्य) || (len > SCP_MAX_DATA_WORDS))
-		वापस -EINVAL;
+	if ((len != 0 && data == NULL) || (len > SCP_MAX_DATA_WORDS))
+		return -EINVAL;
 
-	अगर (dir == SCP_GET && reply == शून्य) अणु
+	if (dir == SCP_GET && reply == NULL) {
 		codec_dbg(codec, "dspio_scp get but has no buffer\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (reply != शून्य && (reply_len == शून्य || (*reply_len == 0))) अणु
+	if (reply != NULL && (reply_len == NULL || (*reply_len == 0))) {
 		codec_dbg(codec, "dspio_scp bad resp buf len parms\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	scp_send.hdr = make_scp_header(mod_id, src_id, (dir == SCP_GET), req,
-				       0, 0, 0, len/माप(अचिन्हित पूर्णांक));
-	अगर (data != शून्य && len > 0) अणु
-		len = min((अचिन्हित पूर्णांक)(माप(scp_send.data)), len);
-		स_नकल(scp_send.data, data, len);
-	पूर्ण
+				       0, 0, 0, len/sizeof(unsigned int));
+	if (data != NULL && len > 0) {
+		len = min((unsigned int)(sizeof(scp_send.data)), len);
+		memcpy(scp_send.data, data, len);
+	}
 
 	ret_bytes = 0;
-	send_size = माप(अचिन्हित पूर्णांक) + len;
-	status = dspio_send_scp_message(codec, (अचिन्हित अक्षर *)&scp_send,
-					send_size, (अचिन्हित अक्षर *)&scp_reply,
-					माप(scp_reply), &ret_bytes);
+	send_size = sizeof(unsigned int) + len;
+	status = dspio_send_scp_message(codec, (unsigned char *)&scp_send,
+					send_size, (unsigned char *)&scp_reply,
+					sizeof(scp_reply), &ret_bytes);
 
-	अगर (status < 0) अणु
+	if (status < 0) {
 		codec_dbg(codec, "dspio_scp: send scp msg failed\n");
-		वापस status;
-	पूर्ण
+		return status;
+	}
 
 	/* extract send and reply headers members */
-	extract_scp_header(scp_send.hdr, शून्य, शून्य, &send_get_flag,
-			   शून्य, शून्य, शून्य, शून्य, शून्य);
-	extract_scp_header(scp_reply.hdr, शून्य, शून्य, शून्य, शून्य, शून्य,
+	extract_scp_header(scp_send.hdr, NULL, NULL, &send_get_flag,
+			   NULL, NULL, NULL, NULL, NULL);
+	extract_scp_header(scp_reply.hdr, NULL, NULL, NULL, NULL, NULL,
 			   &reply_resp_flag, &reply_error_flag,
 			   &reply_data_size);
 
-	अगर (!send_get_flag)
-		वापस 0;
+	if (!send_get_flag)
+		return 0;
 
-	अगर (reply_resp_flag && !reply_error_flag) अणु
-		ret_size = (ret_bytes - माप(scp_reply.hdr))
-					/ माप(अचिन्हित पूर्णांक);
+	if (reply_resp_flag && !reply_error_flag) {
+		ret_size = (ret_bytes - sizeof(scp_reply.hdr))
+					/ sizeof(unsigned int);
 
-		अगर (*reply_len < ret_size*माप(अचिन्हित पूर्णांक)) अणु
+		if (*reply_len < ret_size*sizeof(unsigned int)) {
 			codec_dbg(codec, "reply too long for buf\n");
-			वापस -EINVAL;
-		पूर्ण अन्यथा अगर (ret_size != reply_data_size) अणु
+			return -EINVAL;
+		} else if (ret_size != reply_data_size) {
 			codec_dbg(codec, "RetLen and HdrLen .NE.\n");
-			वापस -EINVAL;
-		पूर्ण अन्यथा अगर (!reply) अणु
+			return -EINVAL;
+		} else if (!reply) {
 			codec_dbg(codec, "NULL reply\n");
-			वापस -EINVAL;
-		पूर्ण अन्यथा अणु
-			*reply_len = ret_size*माप(अचिन्हित पूर्णांक);
-			स_नकल(reply, scp_reply.data, *reply_len);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			return -EINVAL;
+		} else {
+			*reply_len = ret_size*sizeof(unsigned int);
+			memcpy(reply, scp_reply.data, *reply_len);
+		}
+	} else {
 		codec_dbg(codec, "reply ill-formed or errflag set\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Set DSP parameters
  */
-अटल पूर्णांक dspio_set_param(काष्ठा hda_codec *codec, पूर्णांक mod_id,
-			पूर्णांक src_id, पूर्णांक req, स्थिर व्योम *data, अचिन्हित पूर्णांक len)
-अणु
-	वापस dspio_scp(codec, mod_id, src_id, req, SCP_SET, data, len, शून्य,
-			शून्य);
-पूर्ण
+static int dspio_set_param(struct hda_codec *codec, int mod_id,
+			int src_id, int req, const void *data, unsigned int len)
+{
+	return dspio_scp(codec, mod_id, src_id, req, SCP_SET, data, len, NULL,
+			NULL);
+}
 
-अटल पूर्णांक dspio_set_uपूर्णांक_param(काष्ठा hda_codec *codec, पूर्णांक mod_id,
-			पूर्णांक req, स्थिर अचिन्हित पूर्णांक data)
-अणु
-	वापस dspio_set_param(codec, mod_id, 0x20, req, &data,
-			माप(अचिन्हित पूर्णांक));
-पूर्ण
+static int dspio_set_uint_param(struct hda_codec *codec, int mod_id,
+			int req, const unsigned int data)
+{
+	return dspio_set_param(codec, mod_id, 0x20, req, &data,
+			sizeof(unsigned int));
+}
 
 /*
  * Allocate a DSP DMA channel via an SCP message
  */
-अटल पूर्णांक dspio_alloc_dma_chan(काष्ठा hda_codec *codec, अचिन्हित पूर्णांक *dma_chan)
-अणु
-	पूर्णांक status = 0;
-	अचिन्हित पूर्णांक size = माप(dma_chan);
+static int dspio_alloc_dma_chan(struct hda_codec *codec, unsigned int *dma_chan)
+{
+	int status = 0;
+	unsigned int size = sizeof(dma_chan);
 
 	codec_dbg(codec, "     dspio_alloc_dma_chan() -- begin\n");
 	status = dspio_scp(codec, MASTERCONTROL, 0x20,
-			MASTERCONTROL_ALLOC_DMA_CHAN, SCP_GET, शून्य, 0,
+			MASTERCONTROL_ALLOC_DMA_CHAN, SCP_GET, NULL, 0,
 			dma_chan, &size);
 
-	अगर (status < 0) अणु
+	if (status < 0) {
 		codec_dbg(codec, "dspio_alloc_dma_chan: SCP Failed\n");
-		वापस status;
-	पूर्ण
+		return status;
+	}
 
-	अगर ((*dma_chan + 1) == 0) अणु
+	if ((*dma_chan + 1) == 0) {
 		codec_dbg(codec, "no free dma channels to allocate\n");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	codec_dbg(codec, "dspio_alloc_dma_chan: chan=%d\n", *dma_chan);
 	codec_dbg(codec, "     dspio_alloc_dma_chan() -- complete\n");
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Free a DSP DMA via an SCP message
  */
-अटल पूर्णांक dspio_मुक्त_dma_chan(काष्ठा hda_codec *codec, अचिन्हित पूर्णांक dma_chan)
-अणु
-	पूर्णांक status = 0;
-	अचिन्हित पूर्णांक dummy = 0;
+static int dspio_free_dma_chan(struct hda_codec *codec, unsigned int dma_chan)
+{
+	int status = 0;
+	unsigned int dummy = 0;
 
 	codec_dbg(codec, "     dspio_free_dma_chan() -- begin\n");
 	codec_dbg(codec, "dspio_free_dma_chan: chan=%d\n", dma_chan);
 
 	status = dspio_scp(codec, MASTERCONTROL, 0x20,
 			MASTERCONTROL_ALLOC_DMA_CHAN, SCP_SET, &dma_chan,
-			माप(dma_chan), शून्य, &dummy);
+			sizeof(dma_chan), NULL, &dummy);
 
-	अगर (status < 0) अणु
+	if (status < 0) {
 		codec_dbg(codec, "dspio_free_dma_chan: SCP Failed\n");
-		वापस status;
-	पूर्ण
+		return status;
+	}
 
 	codec_dbg(codec, "     dspio_free_dma_chan() -- complete\n");
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * (Re)start the DSP
  */
-अटल पूर्णांक dsp_set_run_state(काष्ठा hda_codec *codec)
-अणु
-	अचिन्हित पूर्णांक dbg_ctrl_reg;
-	अचिन्हित पूर्णांक halt_state;
-	पूर्णांक err;
+static int dsp_set_run_state(struct hda_codec *codec)
+{
+	unsigned int dbg_ctrl_reg;
+	unsigned int halt_state;
+	int err;
 
-	err = chipio_पढ़ो(codec, DSP_DBGCNTL_INST_OFFSET, &dbg_ctrl_reg);
-	अगर (err < 0)
-		वापस err;
+	err = chipio_read(codec, DSP_DBGCNTL_INST_OFFSET, &dbg_ctrl_reg);
+	if (err < 0)
+		return err;
 
 	halt_state = (dbg_ctrl_reg & DSP_DBGCNTL_STATE_MASK) >>
 		      DSP_DBGCNTL_STATE_LOBIT;
 
-	अगर (halt_state != 0) अणु
+	if (halt_state != 0) {
 		dbg_ctrl_reg &= ~((halt_state << DSP_DBGCNTL_SS_LOBIT) &
 				  DSP_DBGCNTL_SS_MASK);
-		err = chipio_ग_लिखो(codec, DSP_DBGCNTL_INST_OFFSET,
+		err = chipio_write(codec, DSP_DBGCNTL_INST_OFFSET,
 				   dbg_ctrl_reg);
-		अगर (err < 0)
-			वापस err;
+		if (err < 0)
+			return err;
 
 		dbg_ctrl_reg |= (halt_state << DSP_DBGCNTL_EXEC_LOBIT) &
 				DSP_DBGCNTL_EXEC_MASK;
-		err = chipio_ग_लिखो(codec, DSP_DBGCNTL_INST_OFFSET,
+		err = chipio_write(codec, DSP_DBGCNTL_INST_OFFSET,
 				   dbg_ctrl_reg);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+		if (err < 0)
+			return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Reset the DSP
  */
-अटल पूर्णांक dsp_reset(काष्ठा hda_codec *codec)
-अणु
-	अचिन्हित पूर्णांक res;
-	पूर्णांक retry = 20;
+static int dsp_reset(struct hda_codec *codec)
+{
+	unsigned int res;
+	int retry = 20;
 
 	codec_dbg(codec, "dsp_reset\n");
-	करो अणु
+	do {
 		res = dspio_send(codec, VENDOR_DSPIO_DSP_INIT, 0);
 		retry--;
-	पूर्ण जबतक (res == -EIO && retry);
+	} while (res == -EIO && retry);
 
-	अगर (!retry) अणु
+	if (!retry) {
 		codec_dbg(codec, "dsp_reset timeout\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Convert chip address to DSP address
  */
-अटल अचिन्हित पूर्णांक dsp_chip_to_dsp_addx(अचिन्हित पूर्णांक chip_addx,
+static unsigned int dsp_chip_to_dsp_addx(unsigned int chip_addx,
 					bool *code, bool *yram)
-अणु
+{
 	*code = *yram = false;
 
-	अगर (UC_RANGE(chip_addx, 1)) अणु
+	if (UC_RANGE(chip_addx, 1)) {
 		*code = true;
-		वापस UC_OFF(chip_addx);
-	पूर्ण अन्यथा अगर (X_RANGE_ALL(chip_addx, 1)) अणु
-		वापस X_OFF(chip_addx);
-	पूर्ण अन्यथा अगर (Y_RANGE_ALL(chip_addx, 1)) अणु
+		return UC_OFF(chip_addx);
+	} else if (X_RANGE_ALL(chip_addx, 1)) {
+		return X_OFF(chip_addx);
+	} else if (Y_RANGE_ALL(chip_addx, 1)) {
 		*yram = true;
-		वापस Y_OFF(chip_addx);
-	पूर्ण
+		return Y_OFF(chip_addx);
+	}
 
-	वापस INVALID_CHIP_ADDRESS;
-पूर्ण
+	return INVALID_CHIP_ADDRESS;
+}
 
 /*
- * Check अगर the DSP DMA is active
+ * Check if the DSP DMA is active
  */
-अटल bool dsp_is_dma_active(काष्ठा hda_codec *codec, अचिन्हित पूर्णांक dma_chan)
-अणु
-	अचिन्हित पूर्णांक dma_chnlstart_reg;
+static bool dsp_is_dma_active(struct hda_codec *codec, unsigned int dma_chan)
+{
+	unsigned int dma_chnlstart_reg;
 
-	chipio_पढ़ो(codec, DSPDMAC_CHNLSTART_INST_OFFSET, &dma_chnlstart_reg);
+	chipio_read(codec, DSPDMAC_CHNLSTART_INST_OFFSET, &dma_chnlstart_reg);
 
-	वापस ((dma_chnlstart_reg & (1 <<
+	return ((dma_chnlstart_reg & (1 <<
 			(DSPDMAC_CHNLSTART_EN_LOBIT + dma_chan))) != 0);
-पूर्ण
+}
 
-अटल पूर्णांक dsp_dma_setup_common(काष्ठा hda_codec *codec,
-				अचिन्हित पूर्णांक chip_addx,
-				अचिन्हित पूर्णांक dma_chan,
-				अचिन्हित पूर्णांक port_map_mask,
+static int dsp_dma_setup_common(struct hda_codec *codec,
+				unsigned int chip_addx,
+				unsigned int dma_chan,
+				unsigned int port_map_mask,
 				bool ovly)
-अणु
-	पूर्णांक status = 0;
-	अचिन्हित पूर्णांक chnl_prop;
-	अचिन्हित पूर्णांक dsp_addx;
-	अचिन्हित पूर्णांक active;
+{
+	int status = 0;
+	unsigned int chnl_prop;
+	unsigned int dsp_addx;
+	unsigned int active;
 	bool code, yram;
 
 	codec_dbg(codec, "-- dsp_dma_setup_common() -- Begin ---------\n");
 
-	अगर (dma_chan >= DSPDMAC_DMA_CFG_CHANNEL_COUNT) अणु
+	if (dma_chan >= DSPDMAC_DMA_CFG_CHANNEL_COUNT) {
 		codec_dbg(codec, "dma chan num invalid\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (dsp_is_dma_active(codec, dma_chan)) अणु
+	if (dsp_is_dma_active(codec, dma_chan)) {
 		codec_dbg(codec, "dma already active\n");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	dsp_addx = dsp_chip_to_dsp_addx(chip_addx, &code, &yram);
 
-	अगर (dsp_addx == INVALID_CHIP_ADDRESS) अणु
+	if (dsp_addx == INVALID_CHIP_ADDRESS) {
 		codec_dbg(codec, "invalid chip addr\n");
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
 	chnl_prop = DSPDMAC_CHNLPROP_AC_MASK;
 	active = 0;
 
 	codec_dbg(codec, "   dsp_dma_setup_common()    start reg pgm\n");
 
-	अगर (ovly) अणु
-		status = chipio_पढ़ो(codec, DSPDMAC_CHNLPROP_INST_OFFSET,
+	if (ovly) {
+		status = chipio_read(codec, DSPDMAC_CHNLPROP_INST_OFFSET,
 				     &chnl_prop);
 
-		अगर (status < 0) अणु
+		if (status < 0) {
 			codec_dbg(codec, "read CHNLPROP Reg fail\n");
-			वापस status;
-		पूर्ण
+			return status;
+		}
 		codec_dbg(codec, "dsp_dma_setup_common() Read CHNLPROP\n");
-	पूर्ण
+	}
 
-	अगर (!code)
+	if (!code)
 		chnl_prop &= ~(1 << (DSPDMAC_CHNLPROP_MSPCE_LOBIT + dma_chan));
-	अन्यथा
+	else
 		chnl_prop |=  (1 << (DSPDMAC_CHNLPROP_MSPCE_LOBIT + dma_chan));
 
 	chnl_prop &= ~(1 << (DSPDMAC_CHNLPROP_DCON_LOBIT + dma_chan));
 
-	status = chipio_ग_लिखो(codec, DSPDMAC_CHNLPROP_INST_OFFSET, chnl_prop);
-	अगर (status < 0) अणु
+	status = chipio_write(codec, DSPDMAC_CHNLPROP_INST_OFFSET, chnl_prop);
+	if (status < 0) {
 		codec_dbg(codec, "write CHNLPROP Reg fail\n");
-		वापस status;
-	पूर्ण
+		return status;
+	}
 	codec_dbg(codec, "   dsp_dma_setup_common()    Write CHNLPROP\n");
 
-	अगर (ovly) अणु
-		status = chipio_पढ़ो(codec, DSPDMAC_ACTIVE_INST_OFFSET,
+	if (ovly) {
+		status = chipio_read(codec, DSPDMAC_ACTIVE_INST_OFFSET,
 				     &active);
 
-		अगर (status < 0) अणु
+		if (status < 0) {
 			codec_dbg(codec, "read ACTIVE Reg fail\n");
-			वापस status;
-		पूर्ण
+			return status;
+		}
 		codec_dbg(codec, "dsp_dma_setup_common() Read ACTIVE\n");
-	पूर्ण
+	}
 
 	active &= (~(1 << (DSPDMAC_ACTIVE_AAR_LOBIT + dma_chan))) &
 		DSPDMAC_ACTIVE_AAR_MASK;
 
-	status = chipio_ग_लिखो(codec, DSPDMAC_ACTIVE_INST_OFFSET, active);
-	अगर (status < 0) अणु
+	status = chipio_write(codec, DSPDMAC_ACTIVE_INST_OFFSET, active);
+	if (status < 0) {
 		codec_dbg(codec, "write ACTIVE Reg fail\n");
-		वापस status;
-	पूर्ण
+		return status;
+	}
 
 	codec_dbg(codec, "   dsp_dma_setup_common()    Write ACTIVE\n");
 
-	status = chipio_ग_लिखो(codec, DSPDMAC_AUDCHSEL_INST_OFFSET(dma_chan),
+	status = chipio_write(codec, DSPDMAC_AUDCHSEL_INST_OFFSET(dma_chan),
 			      port_map_mask);
-	अगर (status < 0) अणु
+	if (status < 0) {
 		codec_dbg(codec, "write AUDCHSEL Reg fail\n");
-		वापस status;
-	पूर्ण
+		return status;
+	}
 	codec_dbg(codec, "   dsp_dma_setup_common()    Write AUDCHSEL\n");
 
-	status = chipio_ग_लिखो(codec, DSPDMAC_IRQCNT_INST_OFFSET(dma_chan),
+	status = chipio_write(codec, DSPDMAC_IRQCNT_INST_OFFSET(dma_chan),
 			DSPDMAC_IRQCNT_BICNT_MASK | DSPDMAC_IRQCNT_CICNT_MASK);
-	अगर (status < 0) अणु
+	if (status < 0) {
 		codec_dbg(codec, "write IRQCNT Reg fail\n");
-		वापस status;
-	पूर्ण
+		return status;
+	}
 	codec_dbg(codec, "   dsp_dma_setup_common()    Write IRQCNT\n");
 
 	codec_dbg(codec,
@@ -2701,74 +2700,74 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 
 	codec_dbg(codec, "-- dsp_dma_setup_common() -- Complete ------\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Setup the DSP DMA per-transfer-specअगरic रेजिस्टरs
+ * Setup the DSP DMA per-transfer-specific registers
  */
-अटल पूर्णांक dsp_dma_setup(काष्ठा hda_codec *codec,
-			अचिन्हित पूर्णांक chip_addx,
-			अचिन्हित पूर्णांक count,
-			अचिन्हित पूर्णांक dma_chan)
-अणु
-	पूर्णांक status = 0;
+static int dsp_dma_setup(struct hda_codec *codec,
+			unsigned int chip_addx,
+			unsigned int count,
+			unsigned int dma_chan)
+{
+	int status = 0;
 	bool code, yram;
-	अचिन्हित पूर्णांक dsp_addx;
-	अचिन्हित पूर्णांक addr_field;
-	अचिन्हित पूर्णांक incr_field;
-	अचिन्हित पूर्णांक base_cnt;
-	अचिन्हित पूर्णांक cur_cnt;
-	अचिन्हित पूर्णांक dma_cfg = 0;
-	अचिन्हित पूर्णांक adr_ofs = 0;
-	अचिन्हित पूर्णांक xfr_cnt = 0;
-	स्थिर अचिन्हित पूर्णांक max_dma_count = 1 << (DSPDMAC_XFRCNT_BCNT_HIBIT -
+	unsigned int dsp_addx;
+	unsigned int addr_field;
+	unsigned int incr_field;
+	unsigned int base_cnt;
+	unsigned int cur_cnt;
+	unsigned int dma_cfg = 0;
+	unsigned int adr_ofs = 0;
+	unsigned int xfr_cnt = 0;
+	const unsigned int max_dma_count = 1 << (DSPDMAC_XFRCNT_BCNT_HIBIT -
 						DSPDMAC_XFRCNT_BCNT_LOBIT + 1);
 
 	codec_dbg(codec, "-- dsp_dma_setup() -- Begin ---------\n");
 
-	अगर (count > max_dma_count) अणु
+	if (count > max_dma_count) {
 		codec_dbg(codec, "count too big\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	dsp_addx = dsp_chip_to_dsp_addx(chip_addx, &code, &yram);
-	अगर (dsp_addx == INVALID_CHIP_ADDRESS) अणु
+	if (dsp_addx == INVALID_CHIP_ADDRESS) {
 		codec_dbg(codec, "invalid chip addr\n");
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
 	codec_dbg(codec, "   dsp_dma_setup()    start reg pgm\n");
 
 	addr_field = dsp_addx << DSPDMAC_DMACFG_DBADR_LOBIT;
 	incr_field   = 0;
 
-	अगर (!code) अणु
+	if (!code) {
 		addr_field <<= 1;
-		अगर (yram)
+		if (yram)
 			addr_field |= (1 << DSPDMAC_DMACFG_DBADR_LOBIT);
 
 		incr_field  = (1 << DSPDMAC_DMACFG_AINCR_LOBIT);
-	पूर्ण
+	}
 
 	dma_cfg = addr_field + incr_field;
-	status = chipio_ग_लिखो(codec, DSPDMAC_DMACFG_INST_OFFSET(dma_chan),
+	status = chipio_write(codec, DSPDMAC_DMACFG_INST_OFFSET(dma_chan),
 				dma_cfg);
-	अगर (status < 0) अणु
+	if (status < 0) {
 		codec_dbg(codec, "write DMACFG Reg fail\n");
-		वापस status;
-	पूर्ण
+		return status;
+	}
 	codec_dbg(codec, "   dsp_dma_setup()    Write DMACFG\n");
 
 	adr_ofs = (count - 1) << (DSPDMAC_DSPADROFS_BOFS_LOBIT +
 							(code ? 0 : 1));
 
-	status = chipio_ग_लिखो(codec, DSPDMAC_DSPADROFS_INST_OFFSET(dma_chan),
+	status = chipio_write(codec, DSPDMAC_DSPADROFS_INST_OFFSET(dma_chan),
 				adr_ofs);
-	अगर (status < 0) अणु
+	if (status < 0) {
 		codec_dbg(codec, "write DSPADROFS Reg fail\n");
-		वापस status;
-	पूर्ण
+		return status;
+	}
 	codec_dbg(codec, "   dsp_dma_setup()    Write DSPADROFS\n");
 
 	base_cnt = (count - 1) << DSPDMAC_XFRCNT_BCNT_LOBIT;
@@ -2777,12 +2776,12 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 
 	xfr_cnt = base_cnt | cur_cnt;
 
-	status = chipio_ग_लिखो(codec,
+	status = chipio_write(codec,
 				DSPDMAC_XFRCNT_INST_OFFSET(dma_chan), xfr_cnt);
-	अगर (status < 0) अणु
+	if (status < 0) {
 		codec_dbg(codec, "write XFRCNT Reg fail\n");
-		वापस status;
-	पूर्ण
+		return status;
+	}
 	codec_dbg(codec, "   dsp_dma_setup()    Write XFRCNT\n");
 
 	codec_dbg(codec,
@@ -2792,79 +2791,79 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 
 	codec_dbg(codec, "-- dsp_dma_setup() -- Complete ---------\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Start the DSP DMA
  */
-अटल पूर्णांक dsp_dma_start(काष्ठा hda_codec *codec,
-			 अचिन्हित पूर्णांक dma_chan, bool ovly)
-अणु
-	अचिन्हित पूर्णांक reg = 0;
-	पूर्णांक status = 0;
+static int dsp_dma_start(struct hda_codec *codec,
+			 unsigned int dma_chan, bool ovly)
+{
+	unsigned int reg = 0;
+	int status = 0;
 
 	codec_dbg(codec, "-- dsp_dma_start() -- Begin ---------\n");
 
-	अगर (ovly) अणु
-		status = chipio_पढ़ो(codec,
+	if (ovly) {
+		status = chipio_read(codec,
 				     DSPDMAC_CHNLSTART_INST_OFFSET, &reg);
 
-		अगर (status < 0) अणु
+		if (status < 0) {
 			codec_dbg(codec, "read CHNLSTART reg fail\n");
-			वापस status;
-		पूर्ण
+			return status;
+		}
 		codec_dbg(codec, "-- dsp_dma_start()    Read CHNLSTART\n");
 
 		reg &= ~(DSPDMAC_CHNLSTART_EN_MASK |
 				DSPDMAC_CHNLSTART_DIS_MASK);
-	पूर्ण
+	}
 
-	status = chipio_ग_लिखो(codec, DSPDMAC_CHNLSTART_INST_OFFSET,
+	status = chipio_write(codec, DSPDMAC_CHNLSTART_INST_OFFSET,
 			reg | (1 << (dma_chan + DSPDMAC_CHNLSTART_EN_LOBIT)));
-	अगर (status < 0) अणु
+	if (status < 0) {
 		codec_dbg(codec, "write CHNLSTART reg fail\n");
-		वापस status;
-	पूर्ण
+		return status;
+	}
 	codec_dbg(codec, "-- dsp_dma_start() -- Complete ---------\n");
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Stop the DSP DMA
  */
-अटल पूर्णांक dsp_dma_stop(काष्ठा hda_codec *codec,
-			अचिन्हित पूर्णांक dma_chan, bool ovly)
-अणु
-	अचिन्हित पूर्णांक reg = 0;
-	पूर्णांक status = 0;
+static int dsp_dma_stop(struct hda_codec *codec,
+			unsigned int dma_chan, bool ovly)
+{
+	unsigned int reg = 0;
+	int status = 0;
 
 	codec_dbg(codec, "-- dsp_dma_stop() -- Begin ---------\n");
 
-	अगर (ovly) अणु
-		status = chipio_पढ़ो(codec,
+	if (ovly) {
+		status = chipio_read(codec,
 				     DSPDMAC_CHNLSTART_INST_OFFSET, &reg);
 
-		अगर (status < 0) अणु
+		if (status < 0) {
 			codec_dbg(codec, "read CHNLSTART reg fail\n");
-			वापस status;
-		पूर्ण
+			return status;
+		}
 		codec_dbg(codec, "-- dsp_dma_stop()    Read CHNLSTART\n");
 		reg &= ~(DSPDMAC_CHNLSTART_EN_MASK |
 				DSPDMAC_CHNLSTART_DIS_MASK);
-	पूर्ण
+	}
 
-	status = chipio_ग_लिखो(codec, DSPDMAC_CHNLSTART_INST_OFFSET,
+	status = chipio_write(codec, DSPDMAC_CHNLSTART_INST_OFFSET,
 			reg | (1 << (dma_chan + DSPDMAC_CHNLSTART_DIS_LOBIT)));
-	अगर (status < 0) अणु
+	if (status < 0) {
 		codec_dbg(codec, "write CHNLSTART reg fail\n");
-		वापस status;
-	पूर्ण
+		return status;
+	}
 	codec_dbg(codec, "-- dsp_dma_stop() -- Complete ---------\n");
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /**
  * dsp_allocate_router_ports - Allocate router ports
@@ -2873,1159 +2872,1159 @@ extract_scp_header(अचिन्हित पूर्णांक header,
  * @num_chans: number of channels in the stream
  * @ports_per_channel: number of ports per channel
  * @start_device: start device
- * @port_map: poपूर्णांकer to the port list to hold the allocated ports
+ * @port_map: pointer to the port list to hold the allocated ports
  *
  * Returns zero or a negative error code.
  */
-अटल पूर्णांक dsp_allocate_router_ports(काष्ठा hda_codec *codec,
-				     अचिन्हित पूर्णांक num_chans,
-				     अचिन्हित पूर्णांक ports_per_channel,
-				     अचिन्हित पूर्णांक start_device,
-				     अचिन्हित पूर्णांक *port_map)
-अणु
-	पूर्णांक status = 0;
-	पूर्णांक res;
+static int dsp_allocate_router_ports(struct hda_codec *codec,
+				     unsigned int num_chans,
+				     unsigned int ports_per_channel,
+				     unsigned int start_device,
+				     unsigned int *port_map)
+{
+	int status = 0;
+	int res;
 	u8 val;
 
 	status = chipio_send(codec, VENDOR_CHIPIO_STATUS, 0);
-	अगर (status < 0)
-		वापस status;
+	if (status < 0)
+		return status;
 
 	val = start_device << 6;
 	val |= (ports_per_channel - 1) << 4;
 	val |= num_chans - 1;
 
-	snd_hda_codec_ग_लिखो(codec, WIDGET_CHIP_CTRL, 0,
+	snd_hda_codec_write(codec, WIDGET_CHIP_CTRL, 0,
 			    VENDOR_CHIPIO_PORT_ALLOC_CONFIG_SET,
 			    val);
 
-	snd_hda_codec_ग_लिखो(codec, WIDGET_CHIP_CTRL, 0,
+	snd_hda_codec_write(codec, WIDGET_CHIP_CTRL, 0,
 			    VENDOR_CHIPIO_PORT_ALLOC_SET,
 			    MEM_CONNID_DSP);
 
 	status = chipio_send(codec, VENDOR_CHIPIO_STATUS, 0);
-	अगर (status < 0)
-		वापस status;
+	if (status < 0)
+		return status;
 
-	res = snd_hda_codec_पढ़ो(codec, WIDGET_CHIP_CTRL, 0,
+	res = snd_hda_codec_read(codec, WIDGET_CHIP_CTRL, 0,
 				VENDOR_CHIPIO_PORT_ALLOC_GET, 0);
 
 	*port_map = res;
 
-	वापस (res < 0) ? res : 0;
-पूर्ण
+	return (res < 0) ? res : 0;
+}
 
 /*
  * Free router ports
  */
-अटल पूर्णांक dsp_मुक्त_router_ports(काष्ठा hda_codec *codec)
-अणु
-	पूर्णांक status = 0;
+static int dsp_free_router_ports(struct hda_codec *codec)
+{
+	int status = 0;
 
 	status = chipio_send(codec, VENDOR_CHIPIO_STATUS, 0);
-	अगर (status < 0)
-		वापस status;
+	if (status < 0)
+		return status;
 
-	snd_hda_codec_ग_लिखो(codec, WIDGET_CHIP_CTRL, 0,
+	snd_hda_codec_write(codec, WIDGET_CHIP_CTRL, 0,
 			    VENDOR_CHIPIO_PORT_FREE_SET,
 			    MEM_CONNID_DSP);
 
 	status = chipio_send(codec, VENDOR_CHIPIO_STATUS, 0);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
- * Allocate DSP ports क्रम the करोwnload stream
+ * Allocate DSP ports for the download stream
  */
-अटल पूर्णांक dsp_allocate_ports(काष्ठा hda_codec *codec,
-			अचिन्हित पूर्णांक num_chans,
-			अचिन्हित पूर्णांक rate_multi, अचिन्हित पूर्णांक *port_map)
-अणु
-	पूर्णांक status;
+static int dsp_allocate_ports(struct hda_codec *codec,
+			unsigned int num_chans,
+			unsigned int rate_multi, unsigned int *port_map)
+{
+	int status;
 
 	codec_dbg(codec, "     dsp_allocate_ports() -- begin\n");
 
-	अगर ((rate_multi != 1) && (rate_multi != 2) && (rate_multi != 4)) अणु
+	if ((rate_multi != 1) && (rate_multi != 2) && (rate_multi != 4)) {
 		codec_dbg(codec, "bad rate multiple\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	status = dsp_allocate_router_ports(codec, num_chans,
 					   rate_multi, 0, port_map);
 
 	codec_dbg(codec, "     dsp_allocate_ports() -- complete\n");
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक dsp_allocate_ports_क्रमmat(काष्ठा hda_codec *codec,
-			स्थिर अचिन्हित लघु fmt,
-			अचिन्हित पूर्णांक *port_map)
-अणु
-	पूर्णांक status;
-	अचिन्हित पूर्णांक num_chans;
+static int dsp_allocate_ports_format(struct hda_codec *codec,
+			const unsigned short fmt,
+			unsigned int *port_map)
+{
+	int status;
+	unsigned int num_chans;
 
-	अचिन्हित पूर्णांक sample_rate_भाग = ((get_hdafmt_rate(fmt) >> 0) & 3) + 1;
-	अचिन्हित पूर्णांक sample_rate_mul = ((get_hdafmt_rate(fmt) >> 3) & 3) + 1;
-	अचिन्हित पूर्णांक rate_multi = sample_rate_mul / sample_rate_भाग;
+	unsigned int sample_rate_div = ((get_hdafmt_rate(fmt) >> 0) & 3) + 1;
+	unsigned int sample_rate_mul = ((get_hdafmt_rate(fmt) >> 3) & 3) + 1;
+	unsigned int rate_multi = sample_rate_mul / sample_rate_div;
 
-	अगर ((rate_multi != 1) && (rate_multi != 2) && (rate_multi != 4)) अणु
+	if ((rate_multi != 1) && (rate_multi != 2) && (rate_multi != 4)) {
 		codec_dbg(codec, "bad rate multiple\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	num_chans = get_hdafmt_chs(fmt) + 1;
 
 	status = dsp_allocate_ports(codec, num_chans, rate_multi, port_map);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
- * मुक्त DSP ports
+ * free DSP ports
  */
-अटल पूर्णांक dsp_मुक्त_ports(काष्ठा hda_codec *codec)
-अणु
-	पूर्णांक status;
+static int dsp_free_ports(struct hda_codec *codec)
+{
+	int status;
 
 	codec_dbg(codec, "     dsp_free_ports() -- begin\n");
 
-	status = dsp_मुक्त_router_ports(codec);
-	अगर (status < 0) अणु
+	status = dsp_free_router_ports(codec);
+	if (status < 0) {
 		codec_dbg(codec, "free router ports fail\n");
-		वापस status;
-	पूर्ण
+		return status;
+	}
 	codec_dbg(codec, "     dsp_free_ports() -- complete\n");
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
- *  HDA DMA engine stuffs क्रम DSP code करोwnload
+ *  HDA DMA engine stuffs for DSP code download
  */
-काष्ठा dma_engine अणु
-	काष्ठा hda_codec *codec;
-	अचिन्हित लघु m_converter_क्रमmat;
-	काष्ठा snd_dma_buffer *dmab;
-	अचिन्हित पूर्णांक buf_size;
-पूर्ण;
+struct dma_engine {
+	struct hda_codec *codec;
+	unsigned short m_converter_format;
+	struct snd_dma_buffer *dmab;
+	unsigned int buf_size;
+};
 
 
-क्रमागत dma_state अणु
+enum dma_state {
 	DMA_STATE_STOP  = 0,
 	DMA_STATE_RUN   = 1
-पूर्ण;
+};
 
-अटल पूर्णांक dma_convert_to_hda_क्रमmat(काष्ठा hda_codec *codec,
-		अचिन्हित पूर्णांक sample_rate,
-		अचिन्हित लघु channels,
-		अचिन्हित लघु *hda_क्रमmat)
-अणु
-	अचिन्हित पूर्णांक क्रमmat_val;
+static int dma_convert_to_hda_format(struct hda_codec *codec,
+		unsigned int sample_rate,
+		unsigned short channels,
+		unsigned short *hda_format)
+{
+	unsigned int format_val;
 
-	क्रमmat_val = snd_hdac_calc_stream_क्रमmat(sample_rate,
+	format_val = snd_hdac_calc_stream_format(sample_rate,
 				channels, SNDRV_PCM_FORMAT_S32_LE, 32, 0);
 
-	अगर (hda_क्रमmat)
-		*hda_क्रमmat = (अचिन्हित लघु)क्रमmat_val;
+	if (hda_format)
+		*hda_format = (unsigned short)format_val;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- *  Reset DMA क्रम DSP करोwnload
+ *  Reset DMA for DSP download
  */
-अटल पूर्णांक dma_reset(काष्ठा dma_engine *dma)
-अणु
-	काष्ठा hda_codec *codec = dma->codec;
-	काष्ठा ca0132_spec *spec = codec->spec;
-	पूर्णांक status;
+static int dma_reset(struct dma_engine *dma)
+{
+	struct hda_codec *codec = dma->codec;
+	struct ca0132_spec *spec = codec->spec;
+	int status;
 
-	अगर (dma->dmab->area)
+	if (dma->dmab->area)
 		snd_hda_codec_load_dsp_cleanup(codec, dma->dmab);
 
 	status = snd_hda_codec_load_dsp_prepare(codec,
-			dma->m_converter_क्रमmat,
+			dma->m_converter_format,
 			dma->buf_size,
 			dma->dmab);
-	अगर (status < 0)
-		वापस status;
+	if (status < 0)
+		return status;
 	spec->dsp_stream_id = status;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dma_set_state(काष्ठा dma_engine *dma, क्रमागत dma_state state)
-अणु
+static int dma_set_state(struct dma_engine *dma, enum dma_state state)
+{
 	bool cmd;
 
-	चयन (state) अणु
-	हाल DMA_STATE_STOP:
+	switch (state) {
+	case DMA_STATE_STOP:
 		cmd = false;
-		अवरोध;
-	हाल DMA_STATE_RUN:
+		break;
+	case DMA_STATE_RUN:
 		cmd = true;
-		अवरोध;
-	शेष:
-		वापस 0;
-	पूर्ण
+		break;
+	default:
+		return 0;
+	}
 
 	snd_hda_codec_load_dsp_trigger(dma->codec, cmd);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अचिन्हित पूर्णांक dma_get_buffer_size(काष्ठा dma_engine *dma)
-अणु
-	वापस dma->dmab->bytes;
-पूर्ण
+static unsigned int dma_get_buffer_size(struct dma_engine *dma)
+{
+	return dma->dmab->bytes;
+}
 
-अटल अचिन्हित अक्षर *dma_get_buffer_addr(काष्ठा dma_engine *dma)
-अणु
-	वापस dma->dmab->area;
-पूर्ण
+static unsigned char *dma_get_buffer_addr(struct dma_engine *dma)
+{
+	return dma->dmab->area;
+}
 
-अटल पूर्णांक dma_xfer(काष्ठा dma_engine *dma,
-		स्थिर अचिन्हित पूर्णांक *data,
-		अचिन्हित पूर्णांक count)
-अणु
-	स_नकल(dma->dmab->area, data, count);
-	वापस 0;
-पूर्ण
+static int dma_xfer(struct dma_engine *dma,
+		const unsigned int *data,
+		unsigned int count)
+{
+	memcpy(dma->dmab->area, data, count);
+	return 0;
+}
 
-अटल व्योम dma_get_converter_क्रमmat(
-		काष्ठा dma_engine *dma,
-		अचिन्हित लघु *क्रमmat)
-अणु
-	अगर (क्रमmat)
-		*क्रमmat = dma->m_converter_क्रमmat;
-पूर्ण
+static void dma_get_converter_format(
+		struct dma_engine *dma,
+		unsigned short *format)
+{
+	if (format)
+		*format = dma->m_converter_format;
+}
 
-अटल अचिन्हित पूर्णांक dma_get_stream_id(काष्ठा dma_engine *dma)
-अणु
-	काष्ठा ca0132_spec *spec = dma->codec->spec;
+static unsigned int dma_get_stream_id(struct dma_engine *dma)
+{
+	struct ca0132_spec *spec = dma->codec->spec;
 
-	वापस spec->dsp_stream_id;
-पूर्ण
+	return spec->dsp_stream_id;
+}
 
-काष्ठा dsp_image_seg अणु
+struct dsp_image_seg {
 	u32 magic;
 	u32 chip_addr;
 	u32 count;
 	u32 data[];
-पूर्ण;
+};
 
-अटल स्थिर u32 g_magic_value = 0x4c46584d;
-अटल स्थिर u32 g_chip_addr_magic_value = 0xFFFFFF01;
+static const u32 g_magic_value = 0x4c46584d;
+static const u32 g_chip_addr_magic_value = 0xFFFFFF01;
 
-अटल bool is_valid(स्थिर काष्ठा dsp_image_seg *p)
-अणु
-	वापस p->magic == g_magic_value;
-पूर्ण
+static bool is_valid(const struct dsp_image_seg *p)
+{
+	return p->magic == g_magic_value;
+}
 
-अटल bool is_hci_prog_list_seg(स्थिर काष्ठा dsp_image_seg *p)
-अणु
-	वापस g_chip_addr_magic_value == p->chip_addr;
-पूर्ण
+static bool is_hci_prog_list_seg(const struct dsp_image_seg *p)
+{
+	return g_chip_addr_magic_value == p->chip_addr;
+}
 
-अटल bool is_last(स्थिर काष्ठा dsp_image_seg *p)
-अणु
-	वापस p->count == 0;
-पूर्ण
+static bool is_last(const struct dsp_image_seg *p)
+{
+	return p->count == 0;
+}
 
-अटल माप_प्रकार dsp_माप(स्थिर काष्ठा dsp_image_seg *p)
-अणु
-	वापस काष्ठा_size(p, data, p->count);
-पूर्ण
+static size_t dsp_sizeof(const struct dsp_image_seg *p)
+{
+	return struct_size(p, data, p->count);
+}
 
-अटल स्थिर काष्ठा dsp_image_seg *get_next_seg_ptr(
-				स्थिर काष्ठा dsp_image_seg *p)
-अणु
-	वापस (काष्ठा dsp_image_seg *)((अचिन्हित अक्षर *)(p) + dsp_माप(p));
-पूर्ण
+static const struct dsp_image_seg *get_next_seg_ptr(
+				const struct dsp_image_seg *p)
+{
+	return (struct dsp_image_seg *)((unsigned char *)(p) + dsp_sizeof(p));
+}
 
 /*
- * CA0132 chip DSP transfer stuffs.  For DSP करोwnload.
+ * CA0132 chip DSP transfer stuffs.  For DSP download.
  */
-#घोषणा INVALID_DMA_CHANNEL (~0U)
+#define INVALID_DMA_CHANNEL (~0U)
 
 /*
  * Program a list of address/data pairs via the ChipIO widget.
- * The segment data is in the क्रमmat of successive pairs of words.
+ * The segment data is in the format of successive pairs of words.
  * These are repeated as indicated by the segment's count field.
  */
-अटल पूर्णांक dspxfr_hci_ग_लिखो(काष्ठा hda_codec *codec,
-			स्थिर काष्ठा dsp_image_seg *fls)
-अणु
-	पूर्णांक status;
-	स्थिर u32 *data;
-	अचिन्हित पूर्णांक count;
+static int dspxfr_hci_write(struct hda_codec *codec,
+			const struct dsp_image_seg *fls)
+{
+	int status;
+	const u32 *data;
+	unsigned int count;
 
-	अगर (fls == शून्य || fls->chip_addr != g_chip_addr_magic_value) अणु
+	if (fls == NULL || fls->chip_addr != g_chip_addr_magic_value) {
 		codec_dbg(codec, "hci_write invalid params\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	count = fls->count;
 	data = (u32 *)(fls->data);
-	जबतक (count >= 2) अणु
-		status = chipio_ग_लिखो(codec, data[0], data[1]);
-		अगर (status < 0) अणु
+	while (count >= 2) {
+		status = chipio_write(codec, data[0], data[1]);
+		if (status < 0) {
 			codec_dbg(codec, "hci_write chipio failed\n");
-			वापस status;
-		पूर्ण
+			return status;
+		}
 		count -= 2;
 		data  += 2;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 /**
- * dspxfr_one_seg - Write a block of data पूर्णांकo DSP code or data RAM using pre-allocated DMA engine.
+ * dspxfr_one_seg - Write a block of data into DSP code or data RAM using pre-allocated DMA engine.
  *
  * @codec: the HDA codec
- * @fls: poपूर्णांकer to a fast load image
- * @reloc: Relocation address क्रम loading single-segment overlays, or 0 क्रम
+ * @fls: pointer to a fast load image
+ * @reloc: Relocation address for loading single-segment overlays, or 0 for
  *	   no relocation
- * @dma_engine: poपूर्णांकer to DMA engine to be used क्रम DSP करोwnload
- * @dma_chan: The number of DMA channels used क्रम DSP करोwnload
+ * @dma_engine: pointer to DMA engine to be used for DSP download
+ * @dma_chan: The number of DMA channels used for DSP download
  * @port_map_mask: port mapping
- * @ovly: TRUE अगर overlay क्रमmat is required
+ * @ovly: TRUE if overlay format is required
  *
  * Returns zero or a negative error code.
  */
-अटल पूर्णांक dspxfr_one_seg(काष्ठा hda_codec *codec,
-			स्थिर काष्ठा dsp_image_seg *fls,
-			अचिन्हित पूर्णांक reloc,
-			काष्ठा dma_engine *dma_engine,
-			अचिन्हित पूर्णांक dma_chan,
-			अचिन्हित पूर्णांक port_map_mask,
+static int dspxfr_one_seg(struct hda_codec *codec,
+			const struct dsp_image_seg *fls,
+			unsigned int reloc,
+			struct dma_engine *dma_engine,
+			unsigned int dma_chan,
+			unsigned int port_map_mask,
 			bool ovly)
-अणु
-	पूर्णांक status = 0;
-	bool comm_dma_setup_करोne = false;
-	स्थिर अचिन्हित पूर्णांक *data;
-	अचिन्हित पूर्णांक chip_addx;
-	अचिन्हित पूर्णांक words_to_ग_लिखो;
-	अचिन्हित पूर्णांक buffer_size_words;
-	अचिन्हित अक्षर *buffer_addx;
-	अचिन्हित लघु hda_क्रमmat;
-	अचिन्हित पूर्णांक sample_rate_भाग;
-	अचिन्हित पूर्णांक sample_rate_mul;
-	अचिन्हित पूर्णांक num_chans;
-	अचिन्हित पूर्णांक hda_frame_size_words;
-	अचिन्हित पूर्णांक reमुख्यder_words;
-	स्थिर u32 *data_reमुख्यder;
-	u32 chip_addx_reमुख्यder;
-	अचिन्हित पूर्णांक run_size_words;
-	स्थिर काष्ठा dsp_image_seg *hci_ग_लिखो = शून्य;
-	अचिन्हित दीर्घ समयout;
+{
+	int status = 0;
+	bool comm_dma_setup_done = false;
+	const unsigned int *data;
+	unsigned int chip_addx;
+	unsigned int words_to_write;
+	unsigned int buffer_size_words;
+	unsigned char *buffer_addx;
+	unsigned short hda_format;
+	unsigned int sample_rate_div;
+	unsigned int sample_rate_mul;
+	unsigned int num_chans;
+	unsigned int hda_frame_size_words;
+	unsigned int remainder_words;
+	const u32 *data_remainder;
+	u32 chip_addx_remainder;
+	unsigned int run_size_words;
+	const struct dsp_image_seg *hci_write = NULL;
+	unsigned long timeout;
 	bool dma_active;
 
-	अगर (fls == शून्य)
-		वापस -EINVAL;
-	अगर (is_hci_prog_list_seg(fls)) अणु
-		hci_ग_लिखो = fls;
+	if (fls == NULL)
+		return -EINVAL;
+	if (is_hci_prog_list_seg(fls)) {
+		hci_write = fls;
 		fls = get_next_seg_ptr(fls);
-	पूर्ण
+	}
 
-	अगर (hci_ग_लिखो && (!fls || is_last(fls))) अणु
+	if (hci_write && (!fls || is_last(fls))) {
 		codec_dbg(codec, "hci_write\n");
-		वापस dspxfr_hci_ग_लिखो(codec, hci_ग_लिखो);
-	पूर्ण
+		return dspxfr_hci_write(codec, hci_write);
+	}
 
-	अगर (fls == शून्य || dma_engine == शून्य || port_map_mask == 0) अणु
+	if (fls == NULL || dma_engine == NULL || port_map_mask == 0) {
 		codec_dbg(codec, "Invalid Params\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	data = fls->data;
 	chip_addx = fls->chip_addr;
-	words_to_ग_लिखो = fls->count;
+	words_to_write = fls->count;
 
-	अगर (!words_to_ग_लिखो)
-		वापस hci_ग_लिखो ? dspxfr_hci_ग_लिखो(codec, hci_ग_लिखो) : 0;
-	अगर (reloc)
+	if (!words_to_write)
+		return hci_write ? dspxfr_hci_write(codec, hci_write) : 0;
+	if (reloc)
 		chip_addx = (chip_addx & (0xFFFF0000 << 2)) + (reloc << 2);
 
-	अगर (!UC_RANGE(chip_addx, words_to_ग_लिखो) &&
-	    !X_RANGE_ALL(chip_addx, words_to_ग_लिखो) &&
-	    !Y_RANGE_ALL(chip_addx, words_to_ग_लिखो)) अणु
+	if (!UC_RANGE(chip_addx, words_to_write) &&
+	    !X_RANGE_ALL(chip_addx, words_to_write) &&
+	    !Y_RANGE_ALL(chip_addx, words_to_write)) {
 		codec_dbg(codec, "Invalid chip_addx Params\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	buffer_size_words = (अचिन्हित पूर्णांक)dma_get_buffer_size(dma_engine) /
-					माप(u32);
+	buffer_size_words = (unsigned int)dma_get_buffer_size(dma_engine) /
+					sizeof(u32);
 
 	buffer_addx = dma_get_buffer_addr(dma_engine);
 
-	अगर (buffer_addx == शून्य) अणु
+	if (buffer_addx == NULL) {
 		codec_dbg(codec, "dma_engine buffer NULL\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	dma_get_converter_क्रमmat(dma_engine, &hda_क्रमmat);
-	sample_rate_भाग = ((get_hdafmt_rate(hda_क्रमmat) >> 0) & 3) + 1;
-	sample_rate_mul = ((get_hdafmt_rate(hda_क्रमmat) >> 3) & 3) + 1;
-	num_chans = get_hdafmt_chs(hda_क्रमmat) + 1;
+	dma_get_converter_format(dma_engine, &hda_format);
+	sample_rate_div = ((get_hdafmt_rate(hda_format) >> 0) & 3) + 1;
+	sample_rate_mul = ((get_hdafmt_rate(hda_format) >> 3) & 3) + 1;
+	num_chans = get_hdafmt_chs(hda_format) + 1;
 
-	hda_frame_size_words = ((sample_rate_भाग == 0) ? 0 :
-			(num_chans * sample_rate_mul / sample_rate_भाग));
+	hda_frame_size_words = ((sample_rate_div == 0) ? 0 :
+			(num_chans * sample_rate_mul / sample_rate_div));
 
-	अगर (hda_frame_size_words == 0) अणु
+	if (hda_frame_size_words == 0) {
 		codec_dbg(codec, "frmsz zero\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	buffer_size_words = min(buffer_size_words,
-				(अचिन्हित पूर्णांक)(UC_RANGE(chip_addx, 1) ?
+				(unsigned int)(UC_RANGE(chip_addx, 1) ?
 				65536 : 32768));
 	buffer_size_words -= buffer_size_words % hda_frame_size_words;
 	codec_dbg(codec,
 		   "chpadr=0x%08x frmsz=%u nchan=%u "
 		   "rate_mul=%u div=%u bufsz=%u\n",
 		   chip_addx, hda_frame_size_words, num_chans,
-		   sample_rate_mul, sample_rate_भाग, buffer_size_words);
+		   sample_rate_mul, sample_rate_div, buffer_size_words);
 
-	अगर (buffer_size_words < hda_frame_size_words) अणु
+	if (buffer_size_words < hda_frame_size_words) {
 		codec_dbg(codec, "dspxfr_one_seg:failed\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	reमुख्यder_words = words_to_ग_लिखो % hda_frame_size_words;
-	data_reमुख्यder = data;
-	chip_addx_reमुख्यder = chip_addx;
+	remainder_words = words_to_write % hda_frame_size_words;
+	data_remainder = data;
+	chip_addx_remainder = chip_addx;
 
-	data += reमुख्यder_words;
-	chip_addx += reमुख्यder_words*माप(u32);
-	words_to_ग_लिखो -= reमुख्यder_words;
+	data += remainder_words;
+	chip_addx += remainder_words*sizeof(u32);
+	words_to_write -= remainder_words;
 
-	जबतक (words_to_ग_लिखो != 0) अणु
-		run_size_words = min(buffer_size_words, words_to_ग_लिखो);
+	while (words_to_write != 0) {
+		run_size_words = min(buffer_size_words, words_to_write);
 		codec_dbg(codec, "dspxfr (seg loop)cnt=%u rs=%u remainder=%u\n",
-			    words_to_ग_लिखो, run_size_words, reमुख्यder_words);
-		dma_xfer(dma_engine, data, run_size_words*माप(u32));
-		अगर (!comm_dma_setup_करोne) अणु
+			    words_to_write, run_size_words, remainder_words);
+		dma_xfer(dma_engine, data, run_size_words*sizeof(u32));
+		if (!comm_dma_setup_done) {
 			status = dsp_dma_stop(codec, dma_chan, ovly);
-			अगर (status < 0)
-				वापस status;
+			if (status < 0)
+				return status;
 			status = dsp_dma_setup_common(codec, chip_addx,
 						dma_chan, port_map_mask, ovly);
-			अगर (status < 0)
-				वापस status;
-			comm_dma_setup_करोne = true;
-		पूर्ण
+			if (status < 0)
+				return status;
+			comm_dma_setup_done = true;
+		}
 
 		status = dsp_dma_setup(codec, chip_addx,
 						run_size_words, dma_chan);
-		अगर (status < 0)
-			वापस status;
+		if (status < 0)
+			return status;
 		status = dsp_dma_start(codec, dma_chan, ovly);
-		अगर (status < 0)
-			वापस status;
-		अगर (!dsp_is_dma_active(codec, dma_chan)) अणु
+		if (status < 0)
+			return status;
+		if (!dsp_is_dma_active(codec, dma_chan)) {
 			codec_dbg(codec, "dspxfr:DMA did not start\n");
-			वापस -EIO;
-		पूर्ण
+			return -EIO;
+		}
 		status = dma_set_state(dma_engine, DMA_STATE_RUN);
-		अगर (status < 0)
-			वापस status;
-		अगर (reमुख्यder_words != 0) अणु
-			status = chipio_ग_लिखो_multiple(codec,
-						chip_addx_reमुख्यder,
-						data_reमुख्यder,
-						reमुख्यder_words);
-			अगर (status < 0)
-				वापस status;
-			reमुख्यder_words = 0;
-		पूर्ण
-		अगर (hci_ग_लिखो) अणु
-			status = dspxfr_hci_ग_लिखो(codec, hci_ग_लिखो);
-			अगर (status < 0)
-				वापस status;
-			hci_ग_लिखो = शून्य;
-		पूर्ण
+		if (status < 0)
+			return status;
+		if (remainder_words != 0) {
+			status = chipio_write_multiple(codec,
+						chip_addx_remainder,
+						data_remainder,
+						remainder_words);
+			if (status < 0)
+				return status;
+			remainder_words = 0;
+		}
+		if (hci_write) {
+			status = dspxfr_hci_write(codec, hci_write);
+			if (status < 0)
+				return status;
+			hci_write = NULL;
+		}
 
-		समयout = jअगरfies + msecs_to_jअगरfies(2000);
-		करो अणु
+		timeout = jiffies + msecs_to_jiffies(2000);
+		do {
 			dma_active = dsp_is_dma_active(codec, dma_chan);
-			अगर (!dma_active)
-				अवरोध;
+			if (!dma_active)
+				break;
 			msleep(20);
-		पूर्ण जबतक (समय_beक्रमe(jअगरfies, समयout));
-		अगर (dma_active)
-			अवरोध;
+		} while (time_before(jiffies, timeout));
+		if (dma_active)
+			break;
 
 		codec_dbg(codec, "+++++ DMA complete\n");
 		dma_set_state(dma_engine, DMA_STATE_STOP);
 		status = dma_reset(dma_engine);
 
-		अगर (status < 0)
-			वापस status;
+		if (status < 0)
+			return status;
 
 		data += run_size_words;
-		chip_addx += run_size_words*माप(u32);
-		words_to_ग_लिखो -= run_size_words;
-	पूर्ण
+		chip_addx += run_size_words*sizeof(u32);
+		words_to_write -= run_size_words;
+	}
 
-	अगर (reमुख्यder_words != 0) अणु
-		status = chipio_ग_लिखो_multiple(codec, chip_addx_reमुख्यder,
-					data_reमुख्यder, reमुख्यder_words);
-	पूर्ण
+	if (remainder_words != 0) {
+		status = chipio_write_multiple(codec, chip_addx_remainder,
+					data_remainder, remainder_words);
+	}
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /**
  * dspxfr_image - Write the entire DSP image of a DSP code/data overlay to DSP memories
  *
  * @codec: the HDA codec
- * @fls_data: poपूर्णांकer to a fast load image
- * @reloc: Relocation address क्रम loading single-segment overlays, or 0 क्रम
+ * @fls_data: pointer to a fast load image
+ * @reloc: Relocation address for loading single-segment overlays, or 0 for
  *	   no relocation
- * @sample_rate: sampling rate of the stream used क्रम DSP करोwnload
- * @channels: channels of the stream used क्रम DSP करोwnload
- * @ovly: TRUE अगर overlay क्रमmat is required
+ * @sample_rate: sampling rate of the stream used for DSP download
+ * @channels: channels of the stream used for DSP download
+ * @ovly: TRUE if overlay format is required
  *
  * Returns zero or a negative error code.
  */
-अटल पूर्णांक dspxfr_image(काष्ठा hda_codec *codec,
-			स्थिर काष्ठा dsp_image_seg *fls_data,
-			अचिन्हित पूर्णांक reloc,
-			अचिन्हित पूर्णांक sample_rate,
-			अचिन्हित लघु channels,
+static int dspxfr_image(struct hda_codec *codec,
+			const struct dsp_image_seg *fls_data,
+			unsigned int reloc,
+			unsigned int sample_rate,
+			unsigned short channels,
 			bool ovly)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	पूर्णांक status;
-	अचिन्हित लघु hda_क्रमmat = 0;
-	अचिन्हित पूर्णांक response;
-	अचिन्हित अक्षर stream_id = 0;
-	काष्ठा dma_engine *dma_engine;
-	अचिन्हित पूर्णांक dma_chan;
-	अचिन्हित पूर्णांक port_map_mask;
+{
+	struct ca0132_spec *spec = codec->spec;
+	int status;
+	unsigned short hda_format = 0;
+	unsigned int response;
+	unsigned char stream_id = 0;
+	struct dma_engine *dma_engine;
+	unsigned int dma_chan;
+	unsigned int port_map_mask;
 
-	अगर (fls_data == शून्य)
-		वापस -EINVAL;
+	if (fls_data == NULL)
+		return -EINVAL;
 
-	dma_engine = kzalloc(माप(*dma_engine), GFP_KERNEL);
-	अगर (!dma_engine)
-		वापस -ENOMEM;
+	dma_engine = kzalloc(sizeof(*dma_engine), GFP_KERNEL);
+	if (!dma_engine)
+		return -ENOMEM;
 
-	dma_engine->dmab = kzalloc(माप(*dma_engine->dmab), GFP_KERNEL);
-	अगर (!dma_engine->dmab) अणु
-		kमुक्त(dma_engine);
-		वापस -ENOMEM;
-	पूर्ण
+	dma_engine->dmab = kzalloc(sizeof(*dma_engine->dmab), GFP_KERNEL);
+	if (!dma_engine->dmab) {
+		kfree(dma_engine);
+		return -ENOMEM;
+	}
 
 	dma_engine->codec = codec;
-	dma_convert_to_hda_क्रमmat(codec, sample_rate, channels, &hda_क्रमmat);
-	dma_engine->m_converter_क्रमmat = hda_क्रमmat;
+	dma_convert_to_hda_format(codec, sample_rate, channels, &hda_format);
+	dma_engine->m_converter_format = hda_format;
 	dma_engine->buf_size = (ovly ? DSP_DMA_WRITE_BUFLEN_OVLY :
 			DSP_DMA_WRITE_BUFLEN_INIT) * 2;
 
 	dma_chan = ovly ? INVALID_DMA_CHANNEL : 0;
 
-	status = codec_set_converter_क्रमmat(codec, WIDGET_CHIP_CTRL,
-					hda_क्रमmat, &response);
+	status = codec_set_converter_format(codec, WIDGET_CHIP_CTRL,
+					hda_format, &response);
 
-	अगर (status < 0) अणु
+	if (status < 0) {
 		codec_dbg(codec, "set converter format fail\n");
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	status = snd_hda_codec_load_dsp_prepare(codec,
-				dma_engine->m_converter_क्रमmat,
+				dma_engine->m_converter_format,
 				dma_engine->buf_size,
 				dma_engine->dmab);
-	अगर (status < 0)
-		जाओ निकास;
+	if (status < 0)
+		goto exit;
 	spec->dsp_stream_id = status;
 
-	अगर (ovly) अणु
+	if (ovly) {
 		status = dspio_alloc_dma_chan(codec, &dma_chan);
-		अगर (status < 0) अणु
+		if (status < 0) {
 			codec_dbg(codec, "alloc dmachan fail\n");
 			dma_chan = INVALID_DMA_CHANNEL;
-			जाओ निकास;
-		पूर्ण
-	पूर्ण
+			goto exit;
+		}
+	}
 
 	port_map_mask = 0;
-	status = dsp_allocate_ports_क्रमmat(codec, hda_क्रमmat,
+	status = dsp_allocate_ports_format(codec, hda_format,
 					&port_map_mask);
-	अगर (status < 0) अणु
+	if (status < 0) {
 		codec_dbg(codec, "alloc ports fail\n");
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	stream_id = dma_get_stream_id(dma_engine);
 	status = codec_set_converter_stream_channel(codec,
 			WIDGET_CHIP_CTRL, stream_id, 0, &response);
-	अगर (status < 0) अणु
+	if (status < 0) {
 		codec_dbg(codec, "set stream chan fail\n");
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	जबतक ((fls_data != शून्य) && !is_last(fls_data)) अणु
-		अगर (!is_valid(fls_data)) अणु
+	while ((fls_data != NULL) && !is_last(fls_data)) {
+		if (!is_valid(fls_data)) {
 			codec_dbg(codec, "FLS check fail\n");
 			status = -EINVAL;
-			जाओ निकास;
-		पूर्ण
+			goto exit;
+		}
 		status = dspxfr_one_seg(codec, fls_data, reloc,
 					dma_engine, dma_chan,
 					port_map_mask, ovly);
-		अगर (status < 0)
-			अवरोध;
+		if (status < 0)
+			break;
 
-		अगर (is_hci_prog_list_seg(fls_data))
+		if (is_hci_prog_list_seg(fls_data))
 			fls_data = get_next_seg_ptr(fls_data);
 
-		अगर ((fls_data != शून्य) && !is_last(fls_data))
+		if ((fls_data != NULL) && !is_last(fls_data))
 			fls_data = get_next_seg_ptr(fls_data);
-	पूर्ण
+	}
 
-	अगर (port_map_mask != 0)
-		status = dsp_मुक्त_ports(codec);
+	if (port_map_mask != 0)
+		status = dsp_free_ports(codec);
 
-	अगर (status < 0)
-		जाओ निकास;
+	if (status < 0)
+		goto exit;
 
 	status = codec_set_converter_stream_channel(codec,
 				WIDGET_CHIP_CTRL, 0, 0, &response);
 
-निकास:
-	अगर (ovly && (dma_chan != INVALID_DMA_CHANNEL))
-		dspio_मुक्त_dma_chan(codec, dma_chan);
+exit:
+	if (ovly && (dma_chan != INVALID_DMA_CHANNEL))
+		dspio_free_dma_chan(codec, dma_chan);
 
-	अगर (dma_engine->dmab->area)
+	if (dma_engine->dmab->area)
 		snd_hda_codec_load_dsp_cleanup(codec, dma_engine->dmab);
-	kमुक्त(dma_engine->dmab);
-	kमुक्त(dma_engine);
+	kfree(dma_engine->dmab);
+	kfree(dma_engine);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
- * CA0132 DSP करोwnload stuffs.
+ * CA0132 DSP download stuffs.
  */
-अटल व्योम dspload_post_setup(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
+static void dspload_post_setup(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
 	codec_dbg(codec, "---- dspload_post_setup ------\n");
-	अगर (!ca0132_use_alt_functions(spec)) अणु
+	if (!ca0132_use_alt_functions(spec)) {
 		/*set DSP speaker to 2.0 configuration*/
-		chipio_ग_लिखो(codec, XRAM_XRAM_INST_OFFSET(0x18), 0x08080080);
-		chipio_ग_लिखो(codec, XRAM_XRAM_INST_OFFSET(0x19), 0x3f800000);
+		chipio_write(codec, XRAM_XRAM_INST_OFFSET(0x18), 0x08080080);
+		chipio_write(codec, XRAM_XRAM_INST_OFFSET(0x19), 0x3f800000);
 
-		/*update ग_लिखो poपूर्णांकer*/
-		chipio_ग_लिखो(codec, XRAM_XRAM_INST_OFFSET(0x29), 0x00000002);
-	पूर्ण
-पूर्ण
+		/*update write pointer*/
+		chipio_write(codec, XRAM_XRAM_INST_OFFSET(0x29), 0x00000002);
+	}
+}
 
 /**
- * dspload_image - Download DSP from a DSP Image Fast Load काष्ठाure.
+ * dspload_image - Download DSP from a DSP Image Fast Load structure.
  *
  * @codec: the HDA codec
- * @fls: poपूर्णांकer to a fast load image
- * @ovly: TRUE अगर overlay क्रमmat is required
- * @reloc: Relocation address क्रम loading single-segment overlays, or 0 क्रम
+ * @fls: pointer to a fast load image
+ * @ovly: TRUE if overlay format is required
+ * @reloc: Relocation address for loading single-segment overlays, or 0 for
  *	   no relocation
- * @स्वतःstart: TRUE अगर DSP starts after loading; ignored अगर ovly is TRUE
+ * @autostart: TRUE if DSP starts after loading; ignored if ovly is TRUE
  * @router_chans: number of audio router channels to be allocated (0 means use
- *		  पूर्णांकernal शेषs; max is 32)
+ *		  internal defaults; max is 32)
  *
- * Download DSP from a DSP Image Fast Load काष्ठाure. This काष्ठाure is a
- * linear, non-स्थिरant sized element array of काष्ठाures, each of which
+ * Download DSP from a DSP Image Fast Load structure. This structure is a
+ * linear, non-constant sized element array of structures, each of which
  * contain the count of the data to be loaded, the data itself, and the
  * corresponding starting chip address of the starting data location.
  * Returns zero or a negative error code.
  */
-अटल पूर्णांक dspload_image(काष्ठा hda_codec *codec,
-			स्थिर काष्ठा dsp_image_seg *fls,
+static int dspload_image(struct hda_codec *codec,
+			const struct dsp_image_seg *fls,
 			bool ovly,
-			अचिन्हित पूर्णांक reloc,
-			bool स्वतःstart,
-			पूर्णांक router_chans)
-अणु
-	पूर्णांक status = 0;
-	अचिन्हित पूर्णांक sample_rate;
-	अचिन्हित लघु channels;
+			unsigned int reloc,
+			bool autostart,
+			int router_chans)
+{
+	int status = 0;
+	unsigned int sample_rate;
+	unsigned short channels;
 
 	codec_dbg(codec, "---- dspload_image begin ------\n");
-	अगर (router_chans == 0) अणु
-		अगर (!ovly)
+	if (router_chans == 0) {
+		if (!ovly)
 			router_chans = DMA_TRANSFER_FRAME_SIZE_NWORDS;
-		अन्यथा
+		else
 			router_chans = DMA_OVERLAY_FRAME_SIZE_NWORDS;
-	पूर्ण
+	}
 
 	sample_rate = 48000;
-	channels = (अचिन्हित लघु)router_chans;
+	channels = (unsigned short)router_chans;
 
-	जबतक (channels > 16) अणु
+	while (channels > 16) {
 		sample_rate *= 2;
 		channels /= 2;
-	पूर्ण
+	}
 
-	करो अणु
+	do {
 		codec_dbg(codec, "Ready to program DMA\n");
-		अगर (!ovly)
+		if (!ovly)
 			status = dsp_reset(codec);
 
-		अगर (status < 0)
-			अवरोध;
+		if (status < 0)
+			break;
 
 		codec_dbg(codec, "dsp_reset() complete\n");
 		status = dspxfr_image(codec, fls, reloc, sample_rate, channels,
 				      ovly);
 
-		अगर (status < 0)
-			अवरोध;
+		if (status < 0)
+			break;
 
 		codec_dbg(codec, "dspxfr_image() complete\n");
-		अगर (स्वतःstart && !ovly) अणु
+		if (autostart && !ovly) {
 			dspload_post_setup(codec);
 			status = dsp_set_run_state(codec);
-		पूर्ण
+		}
 
 		codec_dbg(codec, "LOAD FINISHED\n");
-	पूर्ण जबतक (0);
+	} while (0);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-#अगर_घोषित CONFIG_SND_HDA_CODEC_CA0132_DSP
-अटल bool dspload_is_loaded(काष्ठा hda_codec *codec)
-अणु
-	अचिन्हित पूर्णांक data = 0;
-	पूर्णांक status = 0;
+#ifdef CONFIG_SND_HDA_CODEC_CA0132_DSP
+static bool dspload_is_loaded(struct hda_codec *codec)
+{
+	unsigned int data = 0;
+	int status = 0;
 
-	status = chipio_पढ़ो(codec, 0x40004, &data);
-	अगर ((status < 0) || (data != 1))
-		वापस false;
+	status = chipio_read(codec, 0x40004, &data);
+	if ((status < 0) || (data != 1))
+		return false;
 
-	वापस true;
-पूर्ण
-#अन्यथा
-#घोषणा dspload_is_loaded(codec)	false
-#पूर्ण_अगर
+	return true;
+}
+#else
+#define dspload_is_loaded(codec)	false
+#endif
 
-अटल bool dspload_रुको_loaded(काष्ठा hda_codec *codec)
-अणु
-	अचिन्हित दीर्घ समयout = jअगरfies + msecs_to_jअगरfies(2000);
+static bool dspload_wait_loaded(struct hda_codec *codec)
+{
+	unsigned long timeout = jiffies + msecs_to_jiffies(2000);
 
-	करो अणु
-		अगर (dspload_is_loaded(codec)) अणु
+	do {
+		if (dspload_is_loaded(codec)) {
 			codec_info(codec, "ca0132 DSP downloaded and running\n");
-			वापस true;
-		पूर्ण
+			return true;
+		}
 		msleep(20);
-	पूर्ण जबतक (समय_beक्रमe(jअगरfies, समयout));
+	} while (time_before(jiffies, timeout));
 
 	codec_err(codec, "ca0132 failed to download DSP\n");
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /*
- * ca0113 related functions. The ca0113 acts as the HDA bus क्रम the pci-e
- * based cards, and has a second mmio region, region2, that's used क्रम special
+ * ca0113 related functions. The ca0113 acts as the HDA bus for the pci-e
+ * based cards, and has a second mmio region, region2, that's used for special
  * commands.
  */
 
 /*
  * For cards with PCI-E region2 (Sound Blaster Z/ZxR, Recon3D, and AE-5)
- * the mmio address 0x320 is used to set GPIO pins. The क्रमmat क्रम the data
+ * the mmio address 0x320 is used to set GPIO pins. The format for the data
  * The first eight bits are just the number of the pin. So far, I've only seen
  * this number go to 7.
  * AE-5 note: The AE-5 seems to use pins 2 and 3 to somehow set the color value
- * of the on-card LED. It seems to use pin 2 क्रम data, then toggles 3 to on and
+ * of the on-card LED. It seems to use pin 2 for data, then toggles 3 to on and
  * then off to send that bit.
  */
-अटल व्योम ca0113_mmio_gpio_set(काष्ठा hda_codec *codec, अचिन्हित पूर्णांक gpio_pin,
+static void ca0113_mmio_gpio_set(struct hda_codec *codec, unsigned int gpio_pin,
 		bool enable)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	अचिन्हित लघु gpio_data;
+{
+	struct ca0132_spec *spec = codec->spec;
+	unsigned short gpio_data;
 
 	gpio_data = gpio_pin & 0xF;
 	gpio_data |= ((enable << 8) & 0x100);
 
-	ग_लिखोw(gpio_data, spec->mem_base + 0x320);
-पूर्ण
+	writew(gpio_data, spec->mem_base + 0x320);
+}
 
 /*
  * Special pci region2 commands that are only used by the AE-5. They follow
- * a set क्रमmat, and require पढ़ोs at certain poपूर्णांकs to seemingly 'clear'
- * the response data. My first tests didn't करो these पढ़ोs, and would cause
- * the card to get locked up until the memory was पढ़ो. These commands
+ * a set format, and require reads at certain points to seemingly 'clear'
+ * the response data. My first tests didn't do these reads, and would cause
+ * the card to get locked up until the memory was read. These commands
  * seem to work with three distinct values that I've taken to calling group,
  * target-id, and value.
  */
-अटल व्योम ca0113_mmio_command_set(काष्ठा hda_codec *codec, अचिन्हित पूर्णांक group,
-		अचिन्हित पूर्णांक target, अचिन्हित पूर्णांक value)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	अचिन्हित पूर्णांक ग_लिखो_val;
+static void ca0113_mmio_command_set(struct hda_codec *codec, unsigned int group,
+		unsigned int target, unsigned int value)
+{
+	struct ca0132_spec *spec = codec->spec;
+	unsigned int write_val;
 
-	ग_लिखोl(0x0000007e, spec->mem_base + 0x210);
-	पढ़ोl(spec->mem_base + 0x210);
-	ग_लिखोl(0x0000005a, spec->mem_base + 0x210);
-	पढ़ोl(spec->mem_base + 0x210);
-	पढ़ोl(spec->mem_base + 0x210);
+	writel(0x0000007e, spec->mem_base + 0x210);
+	readl(spec->mem_base + 0x210);
+	writel(0x0000005a, spec->mem_base + 0x210);
+	readl(spec->mem_base + 0x210);
+	readl(spec->mem_base + 0x210);
 
-	ग_लिखोl(0x00800005, spec->mem_base + 0x20c);
-	ग_लिखोl(group, spec->mem_base + 0x804);
+	writel(0x00800005, spec->mem_base + 0x20c);
+	writel(group, spec->mem_base + 0x804);
 
-	ग_लिखोl(0x00800005, spec->mem_base + 0x20c);
-	ग_लिखो_val = (target & 0xff);
-	ग_लिखो_val |= (value << 8);
+	writel(0x00800005, spec->mem_base + 0x20c);
+	write_val = (target & 0xff);
+	write_val |= (value << 8);
 
 
-	ग_लिखोl(ग_लिखो_val, spec->mem_base + 0x204);
+	writel(write_val, spec->mem_base + 0x204);
 	/*
-	 * Need delay here or अन्यथा it goes too fast and works inconsistently.
+	 * Need delay here or else it goes too fast and works inconsistently.
 	 */
 	msleep(20);
 
-	पढ़ोl(spec->mem_base + 0x860);
-	पढ़ोl(spec->mem_base + 0x854);
-	पढ़ोl(spec->mem_base + 0x840);
+	readl(spec->mem_base + 0x860);
+	readl(spec->mem_base + 0x854);
+	readl(spec->mem_base + 0x840);
 
-	ग_लिखोl(0x00800004, spec->mem_base + 0x20c);
-	ग_लिखोl(0x00000000, spec->mem_base + 0x210);
-	पढ़ोl(spec->mem_base + 0x210);
-	पढ़ोl(spec->mem_base + 0x210);
-पूर्ण
+	writel(0x00800004, spec->mem_base + 0x20c);
+	writel(0x00000000, spec->mem_base + 0x210);
+	readl(spec->mem_base + 0x210);
+	readl(spec->mem_base + 0x210);
+}
 
 /*
- * This second type of command is used क्रम setting the sound filter type.
+ * This second type of command is used for setting the sound filter type.
  */
-अटल व्योम ca0113_mmio_command_set_type2(काष्ठा hda_codec *codec,
-		अचिन्हित पूर्णांक group, अचिन्हित पूर्णांक target, अचिन्हित पूर्णांक value)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	अचिन्हित पूर्णांक ग_लिखो_val;
+static void ca0113_mmio_command_set_type2(struct hda_codec *codec,
+		unsigned int group, unsigned int target, unsigned int value)
+{
+	struct ca0132_spec *spec = codec->spec;
+	unsigned int write_val;
 
-	ग_लिखोl(0x0000007e, spec->mem_base + 0x210);
-	पढ़ोl(spec->mem_base + 0x210);
-	ग_लिखोl(0x0000005a, spec->mem_base + 0x210);
-	पढ़ोl(spec->mem_base + 0x210);
-	पढ़ोl(spec->mem_base + 0x210);
+	writel(0x0000007e, spec->mem_base + 0x210);
+	readl(spec->mem_base + 0x210);
+	writel(0x0000005a, spec->mem_base + 0x210);
+	readl(spec->mem_base + 0x210);
+	readl(spec->mem_base + 0x210);
 
-	ग_लिखोl(0x00800003, spec->mem_base + 0x20c);
-	ग_लिखोl(group, spec->mem_base + 0x804);
+	writel(0x00800003, spec->mem_base + 0x20c);
+	writel(group, spec->mem_base + 0x804);
 
-	ग_लिखोl(0x00800005, spec->mem_base + 0x20c);
-	ग_लिखो_val = (target & 0xff);
-	ग_लिखो_val |= (value << 8);
+	writel(0x00800005, spec->mem_base + 0x20c);
+	write_val = (target & 0xff);
+	write_val |= (value << 8);
 
 
-	ग_लिखोl(ग_लिखो_val, spec->mem_base + 0x204);
+	writel(write_val, spec->mem_base + 0x204);
 	msleep(20);
-	पढ़ोl(spec->mem_base + 0x860);
-	पढ़ोl(spec->mem_base + 0x854);
-	पढ़ोl(spec->mem_base + 0x840);
+	readl(spec->mem_base + 0x860);
+	readl(spec->mem_base + 0x854);
+	readl(spec->mem_base + 0x840);
 
-	ग_लिखोl(0x00800004, spec->mem_base + 0x20c);
-	ग_लिखोl(0x00000000, spec->mem_base + 0x210);
-	पढ़ोl(spec->mem_base + 0x210);
-	पढ़ोl(spec->mem_base + 0x210);
-पूर्ण
+	writel(0x00800004, spec->mem_base + 0x20c);
+	writel(0x00000000, spec->mem_base + 0x210);
+	readl(spec->mem_base + 0x210);
+	readl(spec->mem_base + 0x210);
+}
 
 /*
- * Setup GPIO क्रम the other variants of Core3D.
+ * Setup GPIO for the other variants of Core3D.
  */
 
 /*
- * Sets up the GPIO pins so that they are discoverable. If this isn't करोne,
+ * Sets up the GPIO pins so that they are discoverable. If this isn't done,
  * the card shows as having no GPIO pins.
  */
-अटल व्योम ca0132_gpio_init(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
+static void ca0132_gpio_init(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
 
-	चयन (ca0132_quirk(spec)) अणु
-	हाल QUIRK_SBZ:
-	हाल QUIRK_AE5:
-	हाल QUIRK_AE7:
-		snd_hda_codec_ग_लिखो(codec, 0x01, 0, 0x793, 0x00);
-		snd_hda_codec_ग_लिखो(codec, 0x01, 0, 0x794, 0x53);
-		snd_hda_codec_ग_लिखो(codec, 0x01, 0, 0x790, 0x23);
-		अवरोध;
-	हाल QUIRK_R3DI:
-		snd_hda_codec_ग_लिखो(codec, 0x01, 0, 0x793, 0x00);
-		snd_hda_codec_ग_लिखो(codec, 0x01, 0, 0x794, 0x5B);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+	switch (ca0132_quirk(spec)) {
+	case QUIRK_SBZ:
+	case QUIRK_AE5:
+	case QUIRK_AE7:
+		snd_hda_codec_write(codec, 0x01, 0, 0x793, 0x00);
+		snd_hda_codec_write(codec, 0x01, 0, 0x794, 0x53);
+		snd_hda_codec_write(codec, 0x01, 0, 0x790, 0x23);
+		break;
+	case QUIRK_R3DI:
+		snd_hda_codec_write(codec, 0x01, 0, 0x793, 0x00);
+		snd_hda_codec_write(codec, 0x01, 0, 0x794, 0x5B);
+		break;
+	default:
+		break;
+	}
 
-पूर्ण
+}
 
-/* Sets the GPIO क्रम audio output. */
-अटल व्योम ca0132_gpio_setup(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
+/* Sets the GPIO for audio output. */
+static void ca0132_gpio_setup(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
 
-	चयन (ca0132_quirk(spec)) अणु
-	हाल QUIRK_SBZ:
-		snd_hda_codec_ग_लिखो(codec, 0x01, 0,
-				AC_VERB_SET_GPIO_सूचीECTION, 0x07);
-		snd_hda_codec_ग_लिखो(codec, 0x01, 0,
+	switch (ca0132_quirk(spec)) {
+	case QUIRK_SBZ:
+		snd_hda_codec_write(codec, 0x01, 0,
+				AC_VERB_SET_GPIO_DIRECTION, 0x07);
+		snd_hda_codec_write(codec, 0x01, 0,
 				AC_VERB_SET_GPIO_MASK, 0x07);
-		snd_hda_codec_ग_लिखो(codec, 0x01, 0,
+		snd_hda_codec_write(codec, 0x01, 0,
 				AC_VERB_SET_GPIO_DATA, 0x04);
-		snd_hda_codec_ग_लिखो(codec, 0x01, 0,
+		snd_hda_codec_write(codec, 0x01, 0,
 				AC_VERB_SET_GPIO_DATA, 0x06);
-		अवरोध;
-	हाल QUIRK_R3DI:
-		snd_hda_codec_ग_लिखो(codec, 0x01, 0,
-				AC_VERB_SET_GPIO_सूचीECTION, 0x1E);
-		snd_hda_codec_ग_लिखो(codec, 0x01, 0,
+		break;
+	case QUIRK_R3DI:
+		snd_hda_codec_write(codec, 0x01, 0,
+				AC_VERB_SET_GPIO_DIRECTION, 0x1E);
+		snd_hda_codec_write(codec, 0x01, 0,
 				AC_VERB_SET_GPIO_MASK, 0x1F);
-		snd_hda_codec_ग_लिखो(codec, 0x01, 0,
+		snd_hda_codec_write(codec, 0x01, 0,
 				AC_VERB_SET_GPIO_DATA, 0x0C);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 
 /*
- * GPIO control functions क्रम the Recon3D पूर्णांकegrated.
+ * GPIO control functions for the Recon3D integrated.
  */
 
-क्रमागत r3di_gpio_bit अणु
+enum r3di_gpio_bit {
 	/* Bit 1 - Switch between front/rear mic. 0 = rear, 1 = front */
 	R3DI_MIC_SELECT_BIT = 1,
 	/* Bit 2 - Switch between headphone/line out. 0 = Headphone, 1 = Line */
 	R3DI_OUT_SELECT_BIT = 2,
 	/*
-	 * I dunno what this actually करोes, but it stays on until the dsp
-	 * is करोwnloaded.
+	 * I dunno what this actually does, but it stays on until the dsp
+	 * is downloaded.
 	 */
 	R3DI_GPIO_DSP_DOWNLOADING = 3,
 	/*
-	 * Same as above, no clue what it करोes, but it comes on after the dsp
-	 * is करोwnloaded.
+	 * Same as above, no clue what it does, but it comes on after the dsp
+	 * is downloaded.
 	 */
 	R3DI_GPIO_DSP_DOWNLOADED = 4
-पूर्ण;
+};
 
-क्रमागत r3di_mic_select अणु
-	/* Set GPIO bit 1 to 0 क्रम rear mic */
+enum r3di_mic_select {
+	/* Set GPIO bit 1 to 0 for rear mic */
 	R3DI_REAR_MIC = 0,
-	/* Set GPIO bit 1 to 1 क्रम front microphone*/
+	/* Set GPIO bit 1 to 1 for front microphone*/
 	R3DI_FRONT_MIC = 1
-पूर्ण;
+};
 
-क्रमागत r3di_out_select अणु
-	/* Set GPIO bit 2 to 0 क्रम headphone */
+enum r3di_out_select {
+	/* Set GPIO bit 2 to 0 for headphone */
 	R3DI_HEADPHONE_OUT = 0,
-	/* Set GPIO bit 2 to 1 क्रम speaker */
+	/* Set GPIO bit 2 to 1 for speaker */
 	R3DI_LINE_OUT = 1
-पूर्ण;
-क्रमागत r3di_dsp_status अणु
-	/* Set GPIO bit 3 to 1 until DSP is करोwnloaded */
+};
+enum r3di_dsp_status {
+	/* Set GPIO bit 3 to 1 until DSP is downloaded */
 	R3DI_DSP_DOWNLOADING = 0,
-	/* Set GPIO bit 4 to 1 once DSP is करोwnloaded */
+	/* Set GPIO bit 4 to 1 once DSP is downloaded */
 	R3DI_DSP_DOWNLOADED = 1
-पूर्ण;
+};
 
 
-अटल व्योम r3di_gpio_mic_set(काष्ठा hda_codec *codec,
-		क्रमागत r3di_mic_select cur_mic)
-अणु
-	अचिन्हित पूर्णांक cur_gpio;
+static void r3di_gpio_mic_set(struct hda_codec *codec,
+		enum r3di_mic_select cur_mic)
+{
+	unsigned int cur_gpio;
 
 	/* Get the current GPIO Data setup */
-	cur_gpio = snd_hda_codec_पढ़ो(codec, 0x01, 0, AC_VERB_GET_GPIO_DATA, 0);
+	cur_gpio = snd_hda_codec_read(codec, 0x01, 0, AC_VERB_GET_GPIO_DATA, 0);
 
-	चयन (cur_mic) अणु
-	हाल R3DI_REAR_MIC:
+	switch (cur_mic) {
+	case R3DI_REAR_MIC:
 		cur_gpio &= ~(1 << R3DI_MIC_SELECT_BIT);
-		अवरोध;
-	हाल R3DI_FRONT_MIC:
+		break;
+	case R3DI_FRONT_MIC:
 		cur_gpio |= (1 << R3DI_MIC_SELECT_BIT);
-		अवरोध;
-	पूर्ण
-	snd_hda_codec_ग_लिखो(codec, codec->core.afg, 0,
+		break;
+	}
+	snd_hda_codec_write(codec, codec->core.afg, 0,
 			    AC_VERB_SET_GPIO_DATA, cur_gpio);
-पूर्ण
+}
 
-अटल व्योम r3di_gpio_dsp_status_set(काष्ठा hda_codec *codec,
-		क्रमागत r3di_dsp_status dsp_status)
-अणु
-	अचिन्हित पूर्णांक cur_gpio;
+static void r3di_gpio_dsp_status_set(struct hda_codec *codec,
+		enum r3di_dsp_status dsp_status)
+{
+	unsigned int cur_gpio;
 
 	/* Get the current GPIO Data setup */
-	cur_gpio = snd_hda_codec_पढ़ो(codec, 0x01, 0, AC_VERB_GET_GPIO_DATA, 0);
+	cur_gpio = snd_hda_codec_read(codec, 0x01, 0, AC_VERB_GET_GPIO_DATA, 0);
 
-	चयन (dsp_status) अणु
-	हाल R3DI_DSP_DOWNLOADING:
+	switch (dsp_status) {
+	case R3DI_DSP_DOWNLOADING:
 		cur_gpio |= (1 << R3DI_GPIO_DSP_DOWNLOADING);
-		snd_hda_codec_ग_लिखो(codec, codec->core.afg, 0,
+		snd_hda_codec_write(codec, codec->core.afg, 0,
 				AC_VERB_SET_GPIO_DATA, cur_gpio);
-		अवरोध;
-	हाल R3DI_DSP_DOWNLOADED:
+		break;
+	case R3DI_DSP_DOWNLOADED:
 		/* Set DOWNLOADING bit to 0. */
 		cur_gpio &= ~(1 << R3DI_GPIO_DSP_DOWNLOADING);
 
-		snd_hda_codec_ग_लिखो(codec, codec->core.afg, 0,
+		snd_hda_codec_write(codec, codec->core.afg, 0,
 				AC_VERB_SET_GPIO_DATA, cur_gpio);
 
 		cur_gpio |= (1 << R3DI_GPIO_DSP_DOWNLOADED);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	snd_hda_codec_ग_लिखो(codec, codec->core.afg, 0,
+	snd_hda_codec_write(codec, codec->core.afg, 0,
 			    AC_VERB_SET_GPIO_DATA, cur_gpio);
-पूर्ण
+}
 
 /*
  * PCM callbacks
  */
-अटल पूर्णांक ca0132_playback_pcm_prepare(काष्ठा hda_pcm_stream *hinfo,
-			काष्ठा hda_codec *codec,
-			अचिन्हित पूर्णांक stream_tag,
-			अचिन्हित पूर्णांक क्रमmat,
-			काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
+static int ca0132_playback_pcm_prepare(struct hda_pcm_stream *hinfo,
+			struct hda_codec *codec,
+			unsigned int stream_tag,
+			unsigned int format,
+			struct snd_pcm_substream *substream)
+{
+	struct ca0132_spec *spec = codec->spec;
 
-	snd_hda_codec_setup_stream(codec, spec->dacs[0], stream_tag, 0, क्रमmat);
+	snd_hda_codec_setup_stream(codec, spec->dacs[0], stream_tag, 0, format);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ca0132_playback_pcm_cleanup(काष्ठा hda_pcm_stream *hinfo,
-			काष्ठा hda_codec *codec,
-			काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
+static int ca0132_playback_pcm_cleanup(struct hda_pcm_stream *hinfo,
+			struct hda_codec *codec,
+			struct snd_pcm_substream *substream)
+{
+	struct ca0132_spec *spec = codec->spec;
 
-	अगर (spec->dsp_state == DSP_DOWNLOADING)
-		वापस 0;
+	if (spec->dsp_state == DSP_DOWNLOADING)
+		return 0;
 
-	/*If Playback effects are on, allow stream some समय to flush
+	/*If Playback effects are on, allow stream some time to flush
 	 *effects tail*/
-	अगर (spec->effects_चयन[PLAY_ENHANCEMENT - EFFECT_START_NID])
+	if (spec->effects_switch[PLAY_ENHANCEMENT - EFFECT_START_NID])
 		msleep(50);
 
 	snd_hda_codec_cleanup_stream(codec, spec->dacs[0]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अचिन्हित पूर्णांक ca0132_playback_pcm_delay(काष्ठा hda_pcm_stream *info,
-			काष्ठा hda_codec *codec,
-			काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	अचिन्हित पूर्णांक latency = DSP_PLAYBACK_INIT_LATENCY;
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+static unsigned int ca0132_playback_pcm_delay(struct hda_pcm_stream *info,
+			struct hda_codec *codec,
+			struct snd_pcm_substream *substream)
+{
+	struct ca0132_spec *spec = codec->spec;
+	unsigned int latency = DSP_PLAYBACK_INIT_LATENCY;
+	struct snd_pcm_runtime *runtime = substream->runtime;
 
-	अगर (spec->dsp_state != DSP_DOWNLOADED)
-		वापस 0;
+	if (spec->dsp_state != DSP_DOWNLOADED)
+		return 0;
 
-	/* Add latency अगर playback enhancement and either effect is enabled. */
-	अगर (spec->effects_चयन[PLAY_ENHANCEMENT - EFFECT_START_NID]) अणु
-		अगर ((spec->effects_चयन[SURROUND - EFFECT_START_NID]) ||
-		    (spec->effects_चयन[DIALOG_PLUS - EFFECT_START_NID]))
+	/* Add latency if playback enhancement and either effect is enabled. */
+	if (spec->effects_switch[PLAY_ENHANCEMENT - EFFECT_START_NID]) {
+		if ((spec->effects_switch[SURROUND - EFFECT_START_NID]) ||
+		    (spec->effects_switch[DIALOG_PLUS - EFFECT_START_NID]))
 			latency += DSP_PLAY_ENHANCEMENT_LATENCY;
-	पूर्ण
+	}
 
 	/* Applying Speaker EQ adds latency as well. */
-	अगर (spec->cur_out_type == SPEAKER_OUT)
+	if (spec->cur_out_type == SPEAKER_OUT)
 		latency += DSP_SPEAKER_OUT_LATENCY;
 
-	वापस (latency * runसमय->rate) / 1000;
-पूर्ण
+	return (latency * runtime->rate) / 1000;
+}
 
 /*
  * Digital out
  */
-अटल पूर्णांक ca0132_dig_playback_pcm_खोलो(काष्ठा hda_pcm_stream *hinfo,
-					काष्ठा hda_codec *codec,
-					काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	वापस snd_hda_multi_out_dig_खोलो(codec, &spec->multiout);
-पूर्ण
+static int ca0132_dig_playback_pcm_open(struct hda_pcm_stream *hinfo,
+					struct hda_codec *codec,
+					struct snd_pcm_substream *substream)
+{
+	struct ca0132_spec *spec = codec->spec;
+	return snd_hda_multi_out_dig_open(codec, &spec->multiout);
+}
 
-अटल पूर्णांक ca0132_dig_playback_pcm_prepare(काष्ठा hda_pcm_stream *hinfo,
-			काष्ठा hda_codec *codec,
-			अचिन्हित पूर्णांक stream_tag,
-			अचिन्हित पूर्णांक क्रमmat,
-			काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	वापस snd_hda_multi_out_dig_prepare(codec, &spec->multiout,
-					     stream_tag, क्रमmat, substream);
-पूर्ण
+static int ca0132_dig_playback_pcm_prepare(struct hda_pcm_stream *hinfo,
+			struct hda_codec *codec,
+			unsigned int stream_tag,
+			unsigned int format,
+			struct snd_pcm_substream *substream)
+{
+	struct ca0132_spec *spec = codec->spec;
+	return snd_hda_multi_out_dig_prepare(codec, &spec->multiout,
+					     stream_tag, format, substream);
+}
 
-अटल पूर्णांक ca0132_dig_playback_pcm_cleanup(काष्ठा hda_pcm_stream *hinfo,
-			काष्ठा hda_codec *codec,
-			काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	वापस snd_hda_multi_out_dig_cleanup(codec, &spec->multiout);
-पूर्ण
+static int ca0132_dig_playback_pcm_cleanup(struct hda_pcm_stream *hinfo,
+			struct hda_codec *codec,
+			struct snd_pcm_substream *substream)
+{
+	struct ca0132_spec *spec = codec->spec;
+	return snd_hda_multi_out_dig_cleanup(codec, &spec->multiout);
+}
 
-अटल पूर्णांक ca0132_dig_playback_pcm_बंद(काष्ठा hda_pcm_stream *hinfo,
-					 काष्ठा hda_codec *codec,
-					 काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	वापस snd_hda_multi_out_dig_बंद(codec, &spec->multiout);
-पूर्ण
+static int ca0132_dig_playback_pcm_close(struct hda_pcm_stream *hinfo,
+					 struct hda_codec *codec,
+					 struct snd_pcm_substream *substream)
+{
+	struct ca0132_spec *spec = codec->spec;
+	return snd_hda_multi_out_dig_close(codec, &spec->multiout);
+}
 
 /*
  * Analog capture
  */
-अटल पूर्णांक ca0132_capture_pcm_prepare(काष्ठा hda_pcm_stream *hinfo,
-					काष्ठा hda_codec *codec,
-					अचिन्हित पूर्णांक stream_tag,
-					अचिन्हित पूर्णांक क्रमmat,
-					काष्ठा snd_pcm_substream *substream)
-अणु
+static int ca0132_capture_pcm_prepare(struct hda_pcm_stream *hinfo,
+					struct hda_codec *codec,
+					unsigned int stream_tag,
+					unsigned int format,
+					struct snd_pcm_substream *substream)
+{
 	snd_hda_codec_setup_stream(codec, hinfo->nid,
-				   stream_tag, 0, क्रमmat);
+				   stream_tag, 0, format);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ca0132_capture_pcm_cleanup(काष्ठा hda_pcm_stream *hinfo,
-			काष्ठा hda_codec *codec,
-			काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
+static int ca0132_capture_pcm_cleanup(struct hda_pcm_stream *hinfo,
+			struct hda_codec *codec,
+			struct snd_pcm_substream *substream)
+{
+	struct ca0132_spec *spec = codec->spec;
 
-	अगर (spec->dsp_state == DSP_DOWNLOADING)
-		वापस 0;
+	if (spec->dsp_state == DSP_DOWNLOADING)
+		return 0;
 
 	snd_hda_codec_cleanup_stream(codec, hinfo->nid);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अचिन्हित पूर्णांक ca0132_capture_pcm_delay(काष्ठा hda_pcm_stream *info,
-			काष्ठा hda_codec *codec,
-			काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	अचिन्हित पूर्णांक latency = DSP_CAPTURE_INIT_LATENCY;
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+static unsigned int ca0132_capture_pcm_delay(struct hda_pcm_stream *info,
+			struct hda_codec *codec,
+			struct snd_pcm_substream *substream)
+{
+	struct ca0132_spec *spec = codec->spec;
+	unsigned int latency = DSP_CAPTURE_INIT_LATENCY;
+	struct snd_pcm_runtime *runtime = substream->runtime;
 
-	अगर (spec->dsp_state != DSP_DOWNLOADED)
-		वापस 0;
+	if (spec->dsp_state != DSP_DOWNLOADED)
+		return 0;
 
-	अगर (spec->effects_चयन[CRYSTAL_VOICE - EFFECT_START_NID])
+	if (spec->effects_switch[CRYSTAL_VOICE - EFFECT_START_NID])
 		latency += DSP_CRYSTAL_VOICE_LATENCY;
 
-	वापस (latency * runसमय->rate) / 1000;
-पूर्ण
+	return (latency * runtime->rate) / 1000;
+}
 
 /*
  * Controls stuffs.
@@ -4034,8 +4033,8 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 /*
  * Mixer controls helpers.
  */
-#घोषणा CA0132_CODEC_VOL_MONO(xname, nid, channel, dir) \
-	अणु .अगरace = SNDRV_CTL_ELEM_IFACE_MIXER, \
+#define CA0132_CODEC_VOL_MONO(xname, nid, channel, dir) \
+	{ .iface = SNDRV_CTL_ELEM_IFACE_MIXER, \
 	  .name = xname, \
 	  .subdevice = HDA_SUBDEV_AMP_FLAG, \
 	  .access = SNDRV_CTL_ELEM_ACCESS_READWRITE | \
@@ -4044,16 +4043,16 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 	  .info = ca0132_volume_info, \
 	  .get = ca0132_volume_get, \
 	  .put = ca0132_volume_put, \
-	  .tlv = अणु .c = ca0132_volume_tlv पूर्ण, \
-	  .निजी_value = HDA_COMPOSE_AMP_VAL(nid, channel, 0, dir) पूर्ण
+	  .tlv = { .c = ca0132_volume_tlv }, \
+	  .private_value = HDA_COMPOSE_AMP_VAL(nid, channel, 0, dir) }
 
 /*
- * Creates a mixer control that uses शेषs of HDA_CODEC_VOL except क्रम the
- * volume put, which is used क्रम setting the DSP volume. This was करोne because
- * the ca0132 functions were taking too much समय and causing lag.
+ * Creates a mixer control that uses defaults of HDA_CODEC_VOL except for the
+ * volume put, which is used for setting the DSP volume. This was done because
+ * the ca0132 functions were taking too much time and causing lag.
  */
-#घोषणा CA0132_ALT_CODEC_VOL_MONO(xname, nid, channel, dir) \
-	अणु .अगरace = SNDRV_CTL_ELEM_IFACE_MIXER, \
+#define CA0132_ALT_CODEC_VOL_MONO(xname, nid, channel, dir) \
+	{ .iface = SNDRV_CTL_ELEM_IFACE_MIXER, \
 	  .name = xname, \
 	  .subdevice = HDA_SUBDEV_AMP_FLAG, \
 	  .access = SNDRV_CTL_ELEM_ACCESS_READWRITE | \
@@ -4062,36 +4061,36 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 	  .info = snd_hda_mixer_amp_volume_info, \
 	  .get = snd_hda_mixer_amp_volume_get, \
 	  .put = ca0132_alt_volume_put, \
-	  .tlv = अणु .c = snd_hda_mixer_amp_tlv पूर्ण, \
-	  .निजी_value = HDA_COMPOSE_AMP_VAL(nid, channel, 0, dir) पूर्ण
+	  .tlv = { .c = snd_hda_mixer_amp_tlv }, \
+	  .private_value = HDA_COMPOSE_AMP_VAL(nid, channel, 0, dir) }
 
-#घोषणा CA0132_CODEC_MUTE_MONO(xname, nid, channel, dir) \
-	अणु .अगरace = SNDRV_CTL_ELEM_IFACE_MIXER, \
+#define CA0132_CODEC_MUTE_MONO(xname, nid, channel, dir) \
+	{ .iface = SNDRV_CTL_ELEM_IFACE_MIXER, \
 	  .name = xname, \
 	  .subdevice = HDA_SUBDEV_AMP_FLAG, \
-	  .info = snd_hda_mixer_amp_चयन_info, \
-	  .get = ca0132_चयन_get, \
-	  .put = ca0132_चयन_put, \
-	  .निजी_value = HDA_COMPOSE_AMP_VAL(nid, channel, 0, dir) पूर्ण
+	  .info = snd_hda_mixer_amp_switch_info, \
+	  .get = ca0132_switch_get, \
+	  .put = ca0132_switch_put, \
+	  .private_value = HDA_COMPOSE_AMP_VAL(nid, channel, 0, dir) }
 
 /* stereo */
-#घोषणा CA0132_CODEC_VOL(xname, nid, dir) \
+#define CA0132_CODEC_VOL(xname, nid, dir) \
 	CA0132_CODEC_VOL_MONO(xname, nid, 3, dir)
-#घोषणा CA0132_ALT_CODEC_VOL(xname, nid, dir) \
+#define CA0132_ALT_CODEC_VOL(xname, nid, dir) \
 	CA0132_ALT_CODEC_VOL_MONO(xname, nid, 3, dir)
-#घोषणा CA0132_CODEC_MUTE(xname, nid, dir) \
+#define CA0132_CODEC_MUTE(xname, nid, dir) \
 	CA0132_CODEC_MUTE_MONO(xname, nid, 3, dir)
 
 /* lookup tables */
 /*
- * Lookup table with decibel values क्रम the DSP. When volume is changed in
- * Winकरोws, the DSP is also sent the dB value in भग्नing poपूर्णांक. In Winकरोws,
- * these values have decimal poपूर्णांकs, probably because the Winकरोws driver
- * actually uses भग्नing poपूर्णांक. We can't here, so I made a lookup table of
- * values -90 to 9. -90 is the lowest decibel value क्रम both the ADC's and the
+ * Lookup table with decibel values for the DSP. When volume is changed in
+ * Windows, the DSP is also sent the dB value in floating point. In Windows,
+ * these values have decimal points, probably because the Windows driver
+ * actually uses floating point. We can't here, so I made a lookup table of
+ * values -90 to 9. -90 is the lowest decibel value for both the ADC's and the
  * DAC's, and 9 is the maximum.
  */
-अटल स्थिर अचिन्हित पूर्णांक भग्न_vol_db_lookup[] = अणु
+static const unsigned int float_vol_db_lookup[] = {
 0xC2B40000, 0xC2B20000, 0xC2B00000, 0xC2AE0000, 0xC2AC0000, 0xC2AA0000,
 0xC2A80000, 0xC2A60000, 0xC2A40000, 0xC2A20000, 0xC2A00000, 0xC29E0000,
 0xC29C0000, 0xC29A0000, 0xC2980000, 0xC2960000, 0xC2940000, 0xC2920000,
@@ -4109,13 +4108,13 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 0xC0C00000, 0xC0A00000, 0xC0800000, 0xC0400000, 0xC0000000, 0xBF800000,
 0x00000000, 0x3F800000, 0x40000000, 0x40400000, 0x40800000, 0x40A00000,
 0x40C00000, 0x40E00000, 0x41000000, 0x41100000
-पूर्ण;
+};
 
 /*
- * This table counts from भग्न 0 to 1 in increments of .01, which is
- * useful क्रम a few dअगरferent sliders.
+ * This table counts from float 0 to 1 in increments of .01, which is
+ * useful for a few different sliders.
  */
-अटल स्थिर अचिन्हित पूर्णांक भग्न_zero_to_one_lookup[] = अणु
+static const unsigned int float_zero_to_one_lookup[] = {
 0x00000000, 0x3C23D70A, 0x3CA3D70A, 0x3CF5C28F, 0x3D23D70A, 0x3D4CCCCD,
 0x3D75C28F, 0x3D8F5C29, 0x3DA3D70A, 0x3DB851EC, 0x3DCCCCCD, 0x3DE147AE,
 0x3DF5C28F, 0x3E051EB8, 0x3E0F5C29, 0x3E19999A, 0x3E23D70A, 0x3E2E147B,
@@ -4133,13 +4132,13 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 0x3F570A3D, 0x3F59999A, 0x3F5C28F6, 0x3F5EB852, 0x3F6147AE, 0x3F63D70A,
 0x3F666666, 0x3F68F5C3, 0x3F6B851F, 0x3F6E147B, 0x3F70A3D7, 0x3F733333,
 0x3F75C28F, 0x3F7851EC, 0x3F7AE148, 0x3F7D70A4, 0x3F800000
-पूर्ण;
+};
 
 /*
- * This table counts from भग्न 10 to 1000, which is the range of the x-bass
- * crossover slider in Winकरोws.
+ * This table counts from float 10 to 1000, which is the range of the x-bass
+ * crossover slider in Windows.
  */
-अटल स्थिर अचिन्हित पूर्णांक भग्न_xbass_xover_lookup[] = अणु
+static const unsigned int float_xbass_xover_lookup[] = {
 0x41200000, 0x41A00000, 0x41F00000, 0x42200000, 0x42480000, 0x42700000,
 0x428C0000, 0x42A00000, 0x42B40000, 0x42C80000, 0x42DC0000, 0x42F00000,
 0x43020000, 0x430C0000, 0x43160000, 0x43200000, 0x432A0000, 0x43340000,
@@ -4157,12 +4156,12 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 0x44548000, 0x44570000, 0x44598000, 0x445C0000, 0x445E8000, 0x44610000,
 0x44638000, 0x44660000, 0x44688000, 0x446B0000, 0x446D8000, 0x44700000,
 0x44728000, 0x44750000, 0x44778000, 0x447A0000
-पूर्ण;
+};
 
-/* The following are क्रम tuning of products */
-#अगर_घोषित ENABLE_TUNING_CONTROLS
+/* The following are for tuning of products */
+#ifdef ENABLE_TUNING_CONTROLS
 
-अटल स्थिर अचिन्हित पूर्णांक voice_focus_vals_lookup[] = अणु
+static const unsigned int voice_focus_vals_lookup[] = {
 0x41A00000, 0x41A80000, 0x41B00000, 0x41B80000, 0x41C00000, 0x41C80000,
 0x41D00000, 0x41D80000, 0x41E00000, 0x41E80000, 0x41F00000, 0x41F80000,
 0x42000000, 0x42040000, 0x42080000, 0x420C0000, 0x42100000, 0x42140000,
@@ -4190,9 +4189,9 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 0x43240000, 0x43250000, 0x43260000, 0x43270000, 0x43280000, 0x43290000,
 0x432A0000, 0x432B0000, 0x432C0000, 0x432D0000, 0x432E0000, 0x432F0000,
 0x43300000, 0x43310000, 0x43320000, 0x43330000, 0x43340000
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक mic_svm_vals_lookup[] = अणु
+static const unsigned int mic_svm_vals_lookup[] = {
 0x00000000, 0x3C23D70A, 0x3CA3D70A, 0x3CF5C28F, 0x3D23D70A, 0x3D4CCCCD,
 0x3D75C28F, 0x3D8F5C29, 0x3DA3D70A, 0x3DB851EC, 0x3DCCCCCD, 0x3DE147AE,
 0x3DF5C28F, 0x3E051EB8, 0x3E0F5C29, 0x3E19999A, 0x3E23D70A, 0x3E2E147B,
@@ -4210,9 +4209,9 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 0x3F570A3D, 0x3F59999A, 0x3F5C28F6, 0x3F5EB852, 0x3F6147AE, 0x3F63D70A,
 0x3F666666, 0x3F68F5C3, 0x3F6B851F, 0x3F6E147B, 0x3F70A3D7, 0x3F733333,
 0x3F75C28F, 0x3F7851EC, 0x3F7AE148, 0x3F7D70A4, 0x3F800000
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक equalizer_vals_lookup[] = अणु
+static const unsigned int equalizer_vals_lookup[] = {
 0xC1C00000, 0xC1B80000, 0xC1B00000, 0xC1A80000, 0xC1A00000, 0xC1980000,
 0xC1900000, 0xC1880000, 0xC1800000, 0xC1700000, 0xC1600000, 0xC1500000,
 0xC1400000, 0xC1300000, 0xC1200000, 0xC1100000, 0xC1000000, 0xC0E00000,
@@ -4222,584 +4221,584 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 0x41400000, 0x41500000, 0x41600000, 0x41700000, 0x41800000, 0x41880000,
 0x41900000, 0x41980000, 0x41A00000, 0x41A80000, 0x41B00000, 0x41B80000,
 0x41C00000
-पूर्ण;
+};
 
-अटल पूर्णांक tuning_ctl_set(काष्ठा hda_codec *codec, hda_nid_t nid,
-			  स्थिर अचिन्हित पूर्णांक *lookup, पूर्णांक idx)
-अणु
-	पूर्णांक i = 0;
+static int tuning_ctl_set(struct hda_codec *codec, hda_nid_t nid,
+			  const unsigned int *lookup, int idx)
+{
+	int i = 0;
 
-	क्रम (i = 0; i < TUNING_CTLS_COUNT; i++)
-		अगर (nid == ca0132_tuning_ctls[i].nid)
-			अवरोध;
+	for (i = 0; i < TUNING_CTLS_COUNT; i++)
+		if (nid == ca0132_tuning_ctls[i].nid)
+			break;
 
-	snd_hda_घातer_up(codec);
+	snd_hda_power_up(codec);
 	dspio_set_param(codec, ca0132_tuning_ctls[i].mid, 0x20,
 			ca0132_tuning_ctls[i].req,
-			&(lookup[idx]), माप(अचिन्हित पूर्णांक));
-	snd_hda_घातer_करोwn(codec);
+			&(lookup[idx]), sizeof(unsigned int));
+	snd_hda_power_down(codec);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक tuning_ctl_get(काष्ठा snd_kcontrol *kcontrol,
-			  काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा hda_codec *codec = snd_kcontrol_chip(kcontrol);
-	काष्ठा ca0132_spec *spec = codec->spec;
+static int tuning_ctl_get(struct snd_kcontrol *kcontrol,
+			  struct snd_ctl_elem_value *ucontrol)
+{
+	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
+	struct ca0132_spec *spec = codec->spec;
 	hda_nid_t nid = get_amp_nid(kcontrol);
-	दीर्घ *valp = ucontrol->value.पूर्णांकeger.value;
-	पूर्णांक idx = nid - TUNING_CTL_START_NID;
+	long *valp = ucontrol->value.integer.value;
+	int idx = nid - TUNING_CTL_START_NID;
 
 	*valp = spec->cur_ctl_vals[idx];
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक voice_focus_ctl_info(काष्ठा snd_kcontrol *kcontrol,
-			      काष्ठा snd_ctl_elem_info *uinfo)
-अणु
-	पूर्णांक chs = get_amp_channels(kcontrol);
+static int voice_focus_ctl_info(struct snd_kcontrol *kcontrol,
+			      struct snd_ctl_elem_info *uinfo)
+{
+	int chs = get_amp_channels(kcontrol);
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = chs == 3 ? 2 : 1;
-	uinfo->value.पूर्णांकeger.min = 20;
-	uinfo->value.पूर्णांकeger.max = 180;
-	uinfo->value.पूर्णांकeger.step = 1;
+	uinfo->value.integer.min = 20;
+	uinfo->value.integer.max = 180;
+	uinfo->value.integer.step = 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक voice_focus_ctl_put(काष्ठा snd_kcontrol *kcontrol,
-				काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा hda_codec *codec = snd_kcontrol_chip(kcontrol);
-	काष्ठा ca0132_spec *spec = codec->spec;
+static int voice_focus_ctl_put(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
+	struct ca0132_spec *spec = codec->spec;
 	hda_nid_t nid = get_amp_nid(kcontrol);
-	दीर्घ *valp = ucontrol->value.पूर्णांकeger.value;
-	पूर्णांक idx;
+	long *valp = ucontrol->value.integer.value;
+	int idx;
 
 	idx = nid - TUNING_CTL_START_NID;
 	/* any change? */
-	अगर (spec->cur_ctl_vals[idx] == *valp)
-		वापस 0;
+	if (spec->cur_ctl_vals[idx] == *valp)
+		return 0;
 
 	spec->cur_ctl_vals[idx] = *valp;
 
 	idx = *valp - 20;
 	tuning_ctl_set(codec, nid, voice_focus_vals_lookup, idx);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक mic_svm_ctl_info(काष्ठा snd_kcontrol *kcontrol,
-			      काष्ठा snd_ctl_elem_info *uinfo)
-अणु
-	पूर्णांक chs = get_amp_channels(kcontrol);
+static int mic_svm_ctl_info(struct snd_kcontrol *kcontrol,
+			      struct snd_ctl_elem_info *uinfo)
+{
+	int chs = get_amp_channels(kcontrol);
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = chs == 3 ? 2 : 1;
-	uinfo->value.पूर्णांकeger.min = 0;
-	uinfo->value.पूर्णांकeger.max = 100;
-	uinfo->value.पूर्णांकeger.step = 1;
+	uinfo->value.integer.min = 0;
+	uinfo->value.integer.max = 100;
+	uinfo->value.integer.step = 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mic_svm_ctl_put(काष्ठा snd_kcontrol *kcontrol,
-				काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा hda_codec *codec = snd_kcontrol_chip(kcontrol);
-	काष्ठा ca0132_spec *spec = codec->spec;
+static int mic_svm_ctl_put(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
+	struct ca0132_spec *spec = codec->spec;
 	hda_nid_t nid = get_amp_nid(kcontrol);
-	दीर्घ *valp = ucontrol->value.पूर्णांकeger.value;
-	पूर्णांक idx;
+	long *valp = ucontrol->value.integer.value;
+	int idx;
 
 	idx = nid - TUNING_CTL_START_NID;
 	/* any change? */
-	अगर (spec->cur_ctl_vals[idx] == *valp)
-		वापस 0;
+	if (spec->cur_ctl_vals[idx] == *valp)
+		return 0;
 
 	spec->cur_ctl_vals[idx] = *valp;
 
 	idx = *valp;
 	tuning_ctl_set(codec, nid, mic_svm_vals_lookup, idx);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक equalizer_ctl_info(काष्ठा snd_kcontrol *kcontrol,
-			      काष्ठा snd_ctl_elem_info *uinfo)
-अणु
-	पूर्णांक chs = get_amp_channels(kcontrol);
+static int equalizer_ctl_info(struct snd_kcontrol *kcontrol,
+			      struct snd_ctl_elem_info *uinfo)
+{
+	int chs = get_amp_channels(kcontrol);
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = chs == 3 ? 2 : 1;
-	uinfo->value.पूर्णांकeger.min = 0;
-	uinfo->value.पूर्णांकeger.max = 48;
-	uinfo->value.पूर्णांकeger.step = 1;
+	uinfo->value.integer.min = 0;
+	uinfo->value.integer.max = 48;
+	uinfo->value.integer.step = 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक equalizer_ctl_put(काष्ठा snd_kcontrol *kcontrol,
-				काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा hda_codec *codec = snd_kcontrol_chip(kcontrol);
-	काष्ठा ca0132_spec *spec = codec->spec;
+static int equalizer_ctl_put(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
+	struct ca0132_spec *spec = codec->spec;
 	hda_nid_t nid = get_amp_nid(kcontrol);
-	दीर्घ *valp = ucontrol->value.पूर्णांकeger.value;
-	पूर्णांक idx;
+	long *valp = ucontrol->value.integer.value;
+	int idx;
 
 	idx = nid - TUNING_CTL_START_NID;
 	/* any change? */
-	अगर (spec->cur_ctl_vals[idx] == *valp)
-		वापस 0;
+	if (spec->cur_ctl_vals[idx] == *valp)
+		return 0;
 
 	spec->cur_ctl_vals[idx] = *valp;
 
 	idx = *valp;
 	tuning_ctl_set(codec, nid, equalizer_vals_lookup, idx);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल स्थिर SNDRV_CTL_TLVD_DECLARE_DB_SCALE(voice_focus_db_scale, 2000, 100, 0);
-अटल स्थिर SNDRV_CTL_TLVD_DECLARE_DB_SCALE(eq_db_scale, -2400, 100, 0);
+static const SNDRV_CTL_TLVD_DECLARE_DB_SCALE(voice_focus_db_scale, 2000, 100, 0);
+static const SNDRV_CTL_TLVD_DECLARE_DB_SCALE(eq_db_scale, -2400, 100, 0);
 
-अटल पूर्णांक add_tuning_control(काष्ठा hda_codec *codec,
+static int add_tuning_control(struct hda_codec *codec,
 				hda_nid_t pnid, hda_nid_t nid,
-				स्थिर अक्षर *name, पूर्णांक dir)
-अणु
-	अक्षर namestr[SNDRV_CTL_ELEM_ID_NAME_MAXLEN];
-	पूर्णांक type = dir ? HDA_INPUT : HDA_OUTPUT;
-	काष्ठा snd_kcontrol_new knew =
+				const char *name, int dir)
+{
+	char namestr[SNDRV_CTL_ELEM_ID_NAME_MAXLEN];
+	int type = dir ? HDA_INPUT : HDA_OUTPUT;
+	struct snd_kcontrol_new knew =
 		HDA_CODEC_VOLUME_MONO(namestr, nid, 1, 0, type);
 
 	knew.access = SNDRV_CTL_ELEM_ACCESS_READWRITE |
 			SNDRV_CTL_ELEM_ACCESS_TLV_READ;
 	knew.tlv.c = 0;
 	knew.tlv.p = 0;
-	चयन (pnid) अणु
-	हाल VOICE_FOCUS:
+	switch (pnid) {
+	case VOICE_FOCUS:
 		knew.info = voice_focus_ctl_info;
 		knew.get = tuning_ctl_get;
 		knew.put = voice_focus_ctl_put;
 		knew.tlv.p = voice_focus_db_scale;
-		अवरोध;
-	हाल MIC_SVM:
+		break;
+	case MIC_SVM:
 		knew.info = mic_svm_ctl_info;
 		knew.get = tuning_ctl_get;
 		knew.put = mic_svm_ctl_put;
-		अवरोध;
-	हाल EQUALIZER:
+		break;
+	case EQUALIZER:
 		knew.info = equalizer_ctl_info;
 		knew.get = tuning_ctl_get;
 		knew.put = equalizer_ctl_put;
 		knew.tlv.p = eq_db_scale;
-		अवरोध;
-	शेष:
-		वापस 0;
-	पूर्ण
-	knew.निजी_value =
+		break;
+	default:
+		return 0;
+	}
+	knew.private_value =
 		HDA_COMPOSE_AMP_VAL(nid, 1, 0, type);
-	प्र_लिखो(namestr, "%s %s Volume", name, dirstr[dir]);
-	वापस snd_hda_ctl_add(codec, nid, snd_ctl_new1(&knew, codec));
-पूर्ण
+	sprintf(namestr, "%s %s Volume", name, dirstr[dir]);
+	return snd_hda_ctl_add(codec, nid, snd_ctl_new1(&knew, codec));
+}
 
-अटल पूर्णांक add_tuning_ctls(काष्ठा hda_codec *codec)
-अणु
-	पूर्णांक i;
-	पूर्णांक err;
+static int add_tuning_ctls(struct hda_codec *codec)
+{
+	int i;
+	int err;
 
-	क्रम (i = 0; i < TUNING_CTLS_COUNT; i++) अणु
+	for (i = 0; i < TUNING_CTLS_COUNT; i++) {
 		err = add_tuning_control(codec,
 					ca0132_tuning_ctls[i].parent_nid,
 					ca0132_tuning_ctls[i].nid,
 					ca0132_tuning_ctls[i].name,
 					ca0132_tuning_ctls[i].direct);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+		if (err < 0)
+			return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ca0132_init_tuning_शेषs(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	पूर्णांक i;
+static void ca0132_init_tuning_defaults(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
+	int i;
 
-	/* Wedge Angle शेषs to 30.  10 below is 30 - 20.  20 is min. */
+	/* Wedge Angle defaults to 30.  10 below is 30 - 20.  20 is min. */
 	spec->cur_ctl_vals[WEDGE_ANGLE - TUNING_CTL_START_NID] = 10;
-	/* SVM level शेषs to 0.74. */
+	/* SVM level defaults to 0.74. */
 	spec->cur_ctl_vals[SVM_LEVEL - TUNING_CTL_START_NID] = 74;
 
-	/* EQ शेषs to 0dB. */
-	क्रम (i = 2; i < TUNING_CTLS_COUNT; i++)
+	/* EQ defaults to 0dB. */
+	for (i = 2; i < TUNING_CTLS_COUNT; i++)
 		spec->cur_ctl_vals[i] = 24;
-पूर्ण
-#पूर्ण_अगर /*ENABLE_TUNING_CONTROLS*/
+}
+#endif /*ENABLE_TUNING_CONTROLS*/
 
 /*
  * Select the active output.
- * If स्वतःdetect is enabled, output will be selected based on jack detection.
- * If jack inserted, headphone will be selected, अन्यथा built-in speakers
- * If स्वतःdetect is disabled, output will be selected based on selection.
+ * If autodetect is enabled, output will be selected based on jack detection.
+ * If jack inserted, headphone will be selected, else built-in speakers
+ * If autodetect is disabled, output will be selected based on selection.
  */
-अटल पूर्णांक ca0132_select_out(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	अचिन्हित पूर्णांक pin_ctl;
-	पूर्णांक jack_present;
-	पूर्णांक स्वतः_jack;
-	अचिन्हित पूर्णांक पंचांगp;
-	पूर्णांक err;
+static int ca0132_select_out(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
+	unsigned int pin_ctl;
+	int jack_present;
+	int auto_jack;
+	unsigned int tmp;
+	int err;
 
 	codec_dbg(codec, "ca0132_select_out\n");
 
-	snd_hda_घातer_up_pm(codec);
+	snd_hda_power_up_pm(codec);
 
-	स्वतः_jack = spec->vnode_lचयन[VNID_HP_ASEL - VNODE_START_NID];
+	auto_jack = spec->vnode_lswitch[VNID_HP_ASEL - VNODE_START_NID];
 
-	अगर (स्वतः_jack)
+	if (auto_jack)
 		jack_present = snd_hda_jack_detect(codec, spec->unsol_tag_hp);
-	अन्यथा
+	else
 		jack_present =
-			spec->vnode_lचयन[VNID_HP_SEL - VNODE_START_NID];
+			spec->vnode_lswitch[VNID_HP_SEL - VNODE_START_NID];
 
-	अगर (jack_present)
+	if (jack_present)
 		spec->cur_out_type = HEADPHONE_OUT;
-	अन्यथा
+	else
 		spec->cur_out_type = SPEAKER_OUT;
 
-	अगर (spec->cur_out_type == SPEAKER_OUT) अणु
+	if (spec->cur_out_type == SPEAKER_OUT) {
 		codec_dbg(codec, "ca0132_select_out speaker\n");
 		/*speaker out config*/
-		पंचांगp = FLOAT_ONE;
-		err = dspio_set_uपूर्णांक_param(codec, 0x80, 0x04, पंचांगp);
-		अगर (err < 0)
-			जाओ निकास;
+		tmp = FLOAT_ONE;
+		err = dspio_set_uint_param(codec, 0x80, 0x04, tmp);
+		if (err < 0)
+			goto exit;
 		/*enable speaker EQ*/
-		पंचांगp = FLOAT_ONE;
-		err = dspio_set_uपूर्णांक_param(codec, 0x8f, 0x00, पंचांगp);
-		अगर (err < 0)
-			जाओ निकास;
+		tmp = FLOAT_ONE;
+		err = dspio_set_uint_param(codec, 0x8f, 0x00, tmp);
+		if (err < 0)
+			goto exit;
 
 		/* Setup EAPD */
-		snd_hda_codec_ग_लिखो(codec, spec->out_pins[1], 0,
+		snd_hda_codec_write(codec, spec->out_pins[1], 0,
 				    VENDOR_CHIPIO_EAPD_SEL_SET, 0x02);
-		snd_hda_codec_ग_लिखो(codec, spec->out_pins[0], 0,
+		snd_hda_codec_write(codec, spec->out_pins[0], 0,
 				    AC_VERB_SET_EAPD_BTLENABLE, 0x00);
-		snd_hda_codec_ग_लिखो(codec, spec->out_pins[0], 0,
+		snd_hda_codec_write(codec, spec->out_pins[0], 0,
 				    VENDOR_CHIPIO_EAPD_SEL_SET, 0x00);
-		snd_hda_codec_ग_लिखो(codec, spec->out_pins[0], 0,
+		snd_hda_codec_write(codec, spec->out_pins[0], 0,
 				    AC_VERB_SET_EAPD_BTLENABLE, 0x02);
 
 		/* disable headphone node */
-		pin_ctl = snd_hda_codec_पढ़ो(codec, spec->out_pins[1], 0,
+		pin_ctl = snd_hda_codec_read(codec, spec->out_pins[1], 0,
 					AC_VERB_GET_PIN_WIDGET_CONTROL, 0);
 		snd_hda_set_pin_ctl(codec, spec->out_pins[1],
 				    pin_ctl & ~PIN_HP);
 		/* enable speaker node */
-		pin_ctl = snd_hda_codec_पढ़ो(codec, spec->out_pins[0], 0,
+		pin_ctl = snd_hda_codec_read(codec, spec->out_pins[0], 0,
 				AC_VERB_GET_PIN_WIDGET_CONTROL, 0);
 		snd_hda_set_pin_ctl(codec, spec->out_pins[0],
 				    pin_ctl | PIN_OUT);
-	पूर्ण अन्यथा अणु
+	} else {
 		codec_dbg(codec, "ca0132_select_out hp\n");
 		/*headphone out config*/
-		पंचांगp = FLOAT_ZERO;
-		err = dspio_set_uपूर्णांक_param(codec, 0x80, 0x04, पंचांगp);
-		अगर (err < 0)
-			जाओ निकास;
+		tmp = FLOAT_ZERO;
+		err = dspio_set_uint_param(codec, 0x80, 0x04, tmp);
+		if (err < 0)
+			goto exit;
 		/*disable speaker EQ*/
-		पंचांगp = FLOAT_ZERO;
-		err = dspio_set_uपूर्णांक_param(codec, 0x8f, 0x00, पंचांगp);
-		अगर (err < 0)
-			जाओ निकास;
+		tmp = FLOAT_ZERO;
+		err = dspio_set_uint_param(codec, 0x8f, 0x00, tmp);
+		if (err < 0)
+			goto exit;
 
 		/* Setup EAPD */
-		snd_hda_codec_ग_लिखो(codec, spec->out_pins[0], 0,
+		snd_hda_codec_write(codec, spec->out_pins[0], 0,
 				    VENDOR_CHIPIO_EAPD_SEL_SET, 0x00);
-		snd_hda_codec_ग_लिखो(codec, spec->out_pins[0], 0,
+		snd_hda_codec_write(codec, spec->out_pins[0], 0,
 				    AC_VERB_SET_EAPD_BTLENABLE, 0x00);
-		snd_hda_codec_ग_लिखो(codec, spec->out_pins[1], 0,
+		snd_hda_codec_write(codec, spec->out_pins[1], 0,
 				    VENDOR_CHIPIO_EAPD_SEL_SET, 0x02);
-		snd_hda_codec_ग_लिखो(codec, spec->out_pins[0], 0,
+		snd_hda_codec_write(codec, spec->out_pins[0], 0,
 				    AC_VERB_SET_EAPD_BTLENABLE, 0x02);
 
 		/* disable speaker*/
-		pin_ctl = snd_hda_codec_पढ़ो(codec, spec->out_pins[0], 0,
+		pin_ctl = snd_hda_codec_read(codec, spec->out_pins[0], 0,
 					AC_VERB_GET_PIN_WIDGET_CONTROL, 0);
 		snd_hda_set_pin_ctl(codec, spec->out_pins[0],
 				    pin_ctl & ~PIN_HP);
 		/* enable headphone*/
-		pin_ctl = snd_hda_codec_पढ़ो(codec, spec->out_pins[1], 0,
+		pin_ctl = snd_hda_codec_read(codec, spec->out_pins[1], 0,
 					AC_VERB_GET_PIN_WIDGET_CONTROL, 0);
 		snd_hda_set_pin_ctl(codec, spec->out_pins[1],
 				    pin_ctl | PIN_HP);
-	पूर्ण
+	}
 
-निकास:
-	snd_hda_घातer_करोwn_pm(codec);
+exit:
+	snd_hda_power_down_pm(codec);
 
-	वापस err < 0 ? err : 0;
-पूर्ण
+	return err < 0 ? err : 0;
+}
 
-अटल पूर्णांक ae5_headphone_gain_set(काष्ठा hda_codec *codec, दीर्घ val);
-अटल पूर्णांक zxr_headphone_gain_set(काष्ठा hda_codec *codec, दीर्घ val);
-अटल पूर्णांक ca0132_effects_set(काष्ठा hda_codec *codec, hda_nid_t nid, दीर्घ val);
+static int ae5_headphone_gain_set(struct hda_codec *codec, long val);
+static int zxr_headphone_gain_set(struct hda_codec *codec, long val);
+static int ca0132_effects_set(struct hda_codec *codec, hda_nid_t nid, long val);
 
-अटल व्योम ae5_mmio_select_out(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	स्थिर काष्ठा ae_ca0113_output_set *out_cmds;
-	अचिन्हित पूर्णांक i;
+static void ae5_mmio_select_out(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
+	const struct ae_ca0113_output_set *out_cmds;
+	unsigned int i;
 
-	अगर (ca0132_quirk(spec) == QUIRK_AE5)
+	if (ca0132_quirk(spec) == QUIRK_AE5)
 		out_cmds = &ae5_ca0113_output_presets;
-	अन्यथा
+	else
 		out_cmds = &ae7_ca0113_output_presets;
 
-	क्रम (i = 0; i < AE_CA0113_OUT_SET_COMMANDS; i++)
+	for (i = 0; i < AE_CA0113_OUT_SET_COMMANDS; i++)
 		ca0113_mmio_command_set(codec, out_cmds->group[i],
 				out_cmds->target[i],
 				out_cmds->vals[spec->cur_out_type][i]);
-पूर्ण
+}
 
-अटल पूर्णांक ca0132_alt_set_full_range_speaker(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	पूर्णांक quirk = ca0132_quirk(spec);
-	अचिन्हित पूर्णांक पंचांगp;
-	पूर्णांक err;
+static int ca0132_alt_set_full_range_speaker(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
+	int quirk = ca0132_quirk(spec);
+	unsigned int tmp;
+	int err;
 
-	/* 2.0/4.0 setup has no LFE channel, so setting full-range करोes nothing. */
-	अगर (spec->channel_cfg_val == SPEAKER_CHANNELS_4_0
+	/* 2.0/4.0 setup has no LFE channel, so setting full-range does nothing. */
+	if (spec->channel_cfg_val == SPEAKER_CHANNELS_4_0
 			|| spec->channel_cfg_val == SPEAKER_CHANNELS_2_0)
-		वापस 0;
+		return 0;
 
-	/* Set front L/R full range. Zero क्रम full-range, one क्रम redirection. */
-	पंचांगp = spec->speaker_range_val[0] ? FLOAT_ZERO : FLOAT_ONE;
-	err = dspio_set_uपूर्णांक_param(codec, 0x96,
-			SPEAKER_FULL_RANGE_FRONT_L_R, पंचांगp);
-	अगर (err < 0)
-		वापस err;
+	/* Set front L/R full range. Zero for full-range, one for redirection. */
+	tmp = spec->speaker_range_val[0] ? FLOAT_ZERO : FLOAT_ONE;
+	err = dspio_set_uint_param(codec, 0x96,
+			SPEAKER_FULL_RANGE_FRONT_L_R, tmp);
+	if (err < 0)
+		return err;
 
 	/* When setting full-range rear, both rear and center/lfe are set. */
-	पंचांगp = spec->speaker_range_val[1] ? FLOAT_ZERO : FLOAT_ONE;
-	err = dspio_set_uपूर्णांक_param(codec, 0x96,
-			SPEAKER_FULL_RANGE_CENTER_LFE, पंचांगp);
-	अगर (err < 0)
-		वापस err;
+	tmp = spec->speaker_range_val[1] ? FLOAT_ZERO : FLOAT_ONE;
+	err = dspio_set_uint_param(codec, 0x96,
+			SPEAKER_FULL_RANGE_CENTER_LFE, tmp);
+	if (err < 0)
+		return err;
 
-	err = dspio_set_uपूर्णांक_param(codec, 0x96,
-			SPEAKER_FULL_RANGE_REAR_L_R, पंचांगp);
-	अगर (err < 0)
-		वापस err;
+	err = dspio_set_uint_param(codec, 0x96,
+			SPEAKER_FULL_RANGE_REAR_L_R, tmp);
+	if (err < 0)
+		return err;
 
 	/*
 	 * Only the AE series cards set this value when setting full-range,
 	 * and it's always 1.0f.
 	 */
-	अगर (quirk == QUIRK_AE5 || quirk == QUIRK_AE7) अणु
-		err = dspio_set_uपूर्णांक_param(codec, 0x96,
+	if (quirk == QUIRK_AE5 || quirk == QUIRK_AE7) {
+		err = dspio_set_uint_param(codec, 0x96,
 				SPEAKER_FULL_RANGE_SURROUND_L_R, FLOAT_ONE);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+		if (err < 0)
+			return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ca0132_alt_surround_set_bass_redirection(काष्ठा hda_codec *codec,
+static int ca0132_alt_surround_set_bass_redirection(struct hda_codec *codec,
 		bool val)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	अचिन्हित पूर्णांक पंचांगp;
-	पूर्णांक err;
+{
+	struct ca0132_spec *spec = codec->spec;
+	unsigned int tmp;
+	int err;
 
-	अगर (val && spec->channel_cfg_val != SPEAKER_CHANNELS_4_0 &&
+	if (val && spec->channel_cfg_val != SPEAKER_CHANNELS_4_0 &&
 			spec->channel_cfg_val != SPEAKER_CHANNELS_2_0)
-		पंचांगp = FLOAT_ONE;
-	अन्यथा
-		पंचांगp = FLOAT_ZERO;
+		tmp = FLOAT_ONE;
+	else
+		tmp = FLOAT_ZERO;
 
-	err = dspio_set_uपूर्णांक_param(codec, 0x96, SPEAKER_BASS_REसूचीECT, पंचांगp);
-	अगर (err < 0)
-		वापस err;
+	err = dspio_set_uint_param(codec, 0x96, SPEAKER_BASS_REDIRECT, tmp);
+	if (err < 0)
+		return err;
 
 	/* If it is enabled, make sure to set the crossover frequency. */
-	अगर (पंचांगp) अणु
-		पंचांगp = भग्न_xbass_xover_lookup[spec->xbass_xover_freq];
-		err = dspio_set_uपूर्णांक_param(codec, 0x96,
-				SPEAKER_BASS_REसूचीECT_XOVER_FREQ, पंचांगp);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+	if (tmp) {
+		tmp = float_xbass_xover_lookup[spec->xbass_xover_freq];
+		err = dspio_set_uint_param(codec, 0x96,
+				SPEAKER_BASS_REDIRECT_XOVER_FREQ, tmp);
+		if (err < 0)
+			return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * These are the commands needed to setup output on each of the dअगरferent card
+ * These are the commands needed to setup output on each of the different card
  * types.
  */
-अटल व्योम ca0132_alt_select_out_get_quirk_data(काष्ठा hda_codec *codec,
-		स्थिर काष्ठा ca0132_alt_out_set_quirk_data **quirk_data)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	पूर्णांक quirk = ca0132_quirk(spec);
-	अचिन्हित पूर्णांक i;
+static void ca0132_alt_select_out_get_quirk_data(struct hda_codec *codec,
+		const struct ca0132_alt_out_set_quirk_data **quirk_data)
+{
+	struct ca0132_spec *spec = codec->spec;
+	int quirk = ca0132_quirk(spec);
+	unsigned int i;
 
-	*quirk_data = शून्य;
-	क्रम (i = 0; i < ARRAY_SIZE(quirk_out_set_data); i++) अणु
-		अगर (quirk_out_set_data[i].quirk_id == quirk) अणु
+	*quirk_data = NULL;
+	for (i = 0; i < ARRAY_SIZE(quirk_out_set_data); i++) {
+		if (quirk_out_set_data[i].quirk_id == quirk) {
 			*quirk_data = &quirk_out_set_data[i];
-			वापस;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			return;
+		}
+	}
+}
 
-अटल पूर्णांक ca0132_alt_select_out_quirk_set(काष्ठा hda_codec *codec)
-अणु
-	स्थिर काष्ठा ca0132_alt_out_set_quirk_data *quirk_data;
-	स्थिर काष्ठा ca0132_alt_out_set_info *out_info;
-	काष्ठा ca0132_spec *spec = codec->spec;
-	अचिन्हित पूर्णांक i, gpio_data;
-	पूर्णांक err;
+static int ca0132_alt_select_out_quirk_set(struct hda_codec *codec)
+{
+	const struct ca0132_alt_out_set_quirk_data *quirk_data;
+	const struct ca0132_alt_out_set_info *out_info;
+	struct ca0132_spec *spec = codec->spec;
+	unsigned int i, gpio_data;
+	int err;
 
 	ca0132_alt_select_out_get_quirk_data(codec, &quirk_data);
-	अगर (!quirk_data)
-		वापस 0;
+	if (!quirk_data)
+		return 0;
 
 	out_info = &quirk_data->out_set_info[spec->cur_out_type];
-	अगर (quirk_data->is_ae_series)
+	if (quirk_data->is_ae_series)
 		ae5_mmio_select_out(codec);
 
-	अगर (out_info->has_hda_gpio) अणु
-		gpio_data = snd_hda_codec_पढ़ो(codec, codec->core.afg, 0,
+	if (out_info->has_hda_gpio) {
+		gpio_data = snd_hda_codec_read(codec, codec->core.afg, 0,
 				AC_VERB_GET_GPIO_DATA, 0);
 
-		अगर (out_info->hda_gpio_set)
+		if (out_info->hda_gpio_set)
 			gpio_data |= (1 << out_info->hda_gpio_pin);
-		अन्यथा
+		else
 			gpio_data &= ~(1 << out_info->hda_gpio_pin);
 
-		snd_hda_codec_ग_लिखो(codec, codec->core.afg, 0,
+		snd_hda_codec_write(codec, codec->core.afg, 0,
 				    AC_VERB_SET_GPIO_DATA, gpio_data);
-	पूर्ण
+	}
 
-	अगर (out_info->mmio_gpio_count) अणु
-		क्रम (i = 0; i < out_info->mmio_gpio_count; i++) अणु
+	if (out_info->mmio_gpio_count) {
+		for (i = 0; i < out_info->mmio_gpio_count; i++) {
 			ca0113_mmio_gpio_set(codec, out_info->mmio_gpio_pin[i],
 					out_info->mmio_gpio_set[i]);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (out_info->scp_cmds_count) अणु
-		क्रम (i = 0; i < out_info->scp_cmds_count; i++) अणु
-			err = dspio_set_uपूर्णांक_param(codec,
+	if (out_info->scp_cmds_count) {
+		for (i = 0; i < out_info->scp_cmds_count; i++) {
+			err = dspio_set_uint_param(codec,
 					out_info->scp_cmd_mid[i],
 					out_info->scp_cmd_req[i],
 					out_info->scp_cmd_val[i]);
-			अगर (err < 0)
-				वापस err;
-		पूर्ण
-	पूर्ण
+			if (err < 0)
+				return err;
+		}
+	}
 
 	chipio_set_control_param(codec, 0x0d, out_info->dac2port);
 
-	अगर (out_info->has_chipio_ग_लिखो) अणु
-		chipio_ग_लिखो(codec, out_info->chipio_ग_लिखो_addr,
-				out_info->chipio_ग_लिखो_data);
-	पूर्ण
+	if (out_info->has_chipio_write) {
+		chipio_write(codec, out_info->chipio_write_addr,
+				out_info->chipio_write_data);
+	}
 
-	अगर (quirk_data->has_headphone_gain) अणु
-		अगर (spec->cur_out_type != HEADPHONE_OUT) अणु
-			अगर (quirk_data->is_ae_series)
+	if (quirk_data->has_headphone_gain) {
+		if (spec->cur_out_type != HEADPHONE_OUT) {
+			if (quirk_data->is_ae_series)
 				ae5_headphone_gain_set(codec, 2);
-			अन्यथा
+			else
 				zxr_headphone_gain_set(codec, 0);
-		पूर्ण अन्यथा अणु
-			अगर (quirk_data->is_ae_series)
+		} else {
+			if (quirk_data->is_ae_series)
 				ae5_headphone_gain_set(codec,
 						spec->ae5_headphone_gain_val);
-			अन्यथा
+			else
 				zxr_headphone_gain_set(codec,
 						spec->zxr_gain_set);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ca0132_set_out_node_pincfg(काष्ठा hda_codec *codec, hda_nid_t nid,
+static void ca0132_set_out_node_pincfg(struct hda_codec *codec, hda_nid_t nid,
 		bool out_enable, bool hp_enable)
-अणु
-	अचिन्हित पूर्णांक pin_ctl;
+{
+	unsigned int pin_ctl;
 
-	pin_ctl = snd_hda_codec_पढ़ो(codec, nid, 0,
+	pin_ctl = snd_hda_codec_read(codec, nid, 0,
 			AC_VERB_GET_PIN_WIDGET_CONTROL, 0);
 
 	pin_ctl = hp_enable ? pin_ctl | PIN_HP_AMP : pin_ctl & ~PIN_HP_AMP;
 	pin_ctl = out_enable ? pin_ctl | PIN_OUT : pin_ctl & ~PIN_OUT;
 	snd_hda_set_pin_ctl(codec, nid, pin_ctl);
-पूर्ण
+}
 
 /*
  * This function behaves similarly to the ca0132_select_out funciton above,
- * except with a few dअगरferences. It adds the ability to select the current
- * output with an क्रमागतerated control "output source" अगर the स्वतः detect
- * mute चयन is set to off. If the स्वतः detect mute चयन is enabled, it
+ * except with a few differences. It adds the ability to select the current
+ * output with an enumerated control "output source" if the auto detect
+ * mute switch is set to off. If the auto detect mute switch is enabled, it
  * will detect either headphone or lineout(SPEAKER_OUT) from jack detection.
- * It also adds the ability to स्वतः-detect the front headphone port.
+ * It also adds the ability to auto-detect the front headphone port.
  */
-अटल पूर्णांक ca0132_alt_select_out(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	अचिन्हित पूर्णांक पंचांगp, outfx_set;
-	पूर्णांक jack_present;
-	पूर्णांक स्वतः_jack;
-	पूर्णांक err;
+static int ca0132_alt_select_out(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
+	unsigned int tmp, outfx_set;
+	int jack_present;
+	int auto_jack;
+	int err;
 	/* Default Headphone is rear headphone */
 	hda_nid_t headphone_nid = spec->out_pins[1];
 
 	codec_dbg(codec, "%s\n", __func__);
 
-	snd_hda_घातer_up_pm(codec);
+	snd_hda_power_up_pm(codec);
 
-	स्वतः_jack = spec->vnode_lचयन[VNID_HP_ASEL - VNODE_START_NID];
+	auto_jack = spec->vnode_lswitch[VNID_HP_ASEL - VNODE_START_NID];
 
 	/*
 	 * If headphone rear or front is plugged in, set to headphone.
-	 * If neither is plugged in, set to rear line out. Only अगर
-	 * hp/speaker स्वतः detect is enabled.
+	 * If neither is plugged in, set to rear line out. Only if
+	 * hp/speaker auto detect is enabled.
 	 */
-	अगर (स्वतः_jack) अणु
+	if (auto_jack) {
 		jack_present = snd_hda_jack_detect(codec, spec->unsol_tag_hp) ||
 			   snd_hda_jack_detect(codec, spec->unsol_tag_front_hp);
 
-		अगर (jack_present)
+		if (jack_present)
 			spec->cur_out_type = HEADPHONE_OUT;
-		अन्यथा
+		else
 			spec->cur_out_type = SPEAKER_OUT;
-	पूर्ण अन्यथा
-		spec->cur_out_type = spec->out_क्रमागत_val;
+	} else
+		spec->cur_out_type = spec->out_enum_val;
 
-	outfx_set = spec->effects_चयन[PLAY_ENHANCEMENT - EFFECT_START_NID];
+	outfx_set = spec->effects_switch[PLAY_ENHANCEMENT - EFFECT_START_NID];
 
-	/* Begin DSP output चयन, mute DSP volume. */
-	err = dspio_set_uपूर्णांक_param(codec, 0x96, SPEAKER_TUNING_MUTE, FLOAT_ONE);
-	अगर (err < 0)
-		जाओ निकास;
+	/* Begin DSP output switch, mute DSP volume. */
+	err = dspio_set_uint_param(codec, 0x96, SPEAKER_TUNING_MUTE, FLOAT_ONE);
+	if (err < 0)
+		goto exit;
 
-	अगर (ca0132_alt_select_out_quirk_set(codec) < 0)
-		जाओ निकास;
+	if (ca0132_alt_select_out_quirk_set(codec) < 0)
+		goto exit;
 
-	चयन (spec->cur_out_type) अणु
-	हाल SPEAKER_OUT:
+	switch (spec->cur_out_type) {
+	case SPEAKER_OUT:
 		codec_dbg(codec, "%s speaker\n", __func__);
 
 		/* Enable EAPD */
-		snd_hda_codec_ग_लिखो(codec, spec->out_pins[0], 0,
+		snd_hda_codec_write(codec, spec->out_pins[0], 0,
 			AC_VERB_SET_EAPD_BTLENABLE, 0x01);
 
 		/* Disable headphone node. */
@@ -4812,23 +4811,23 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 		ca0132_set_out_node_pincfg(codec, spec->out_pins[3], 1, 0);
 
 		/*
-		 * Without PlayEnhancement being enabled, अगर we've got a 2.0
-		 * setup, set it to भग्नing poपूर्णांक eight to disable any DSP
+		 * Without PlayEnhancement being enabled, if we've got a 2.0
+		 * setup, set it to floating point eight to disable any DSP
 		 * processing effects.
 		 */
-		अगर (!outfx_set && spec->channel_cfg_val == SPEAKER_CHANNELS_2_0)
-			पंचांगp = FLOAT_EIGHT;
-		अन्यथा
-			पंचांगp = speaker_channel_cfgs[spec->channel_cfg_val].val;
+		if (!outfx_set && spec->channel_cfg_val == SPEAKER_CHANNELS_2_0)
+			tmp = FLOAT_EIGHT;
+		else
+			tmp = speaker_channel_cfgs[spec->channel_cfg_val].val;
 
-		err = dspio_set_uपूर्णांक_param(codec, 0x80, 0x04, पंचांगp);
-		अगर (err < 0)
-			जाओ निकास;
+		err = dspio_set_uint_param(codec, 0x80, 0x04, tmp);
+		if (err < 0)
+			goto exit;
 
-		अवरोध;
-	हाल HEADPHONE_OUT:
+		break;
+	case HEADPHONE_OUT:
 		codec_dbg(codec, "%s hp\n", __func__);
-		snd_hda_codec_ग_लिखो(codec, spec->out_pins[0], 0,
+		snd_hda_codec_write(codec, spec->out_pins[0], 0,
 			AC_VERB_SET_EAPD_BTLENABLE, 0x00);
 
 		/* Disable all speaker nodes. */
@@ -4837,1085 +4836,1085 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 		ca0132_set_out_node_pincfg(codec, spec->out_pins[3], 0, 0);
 
 		/* enable headphone, either front or rear */
-		अगर (snd_hda_jack_detect(codec, spec->unsol_tag_front_hp))
+		if (snd_hda_jack_detect(codec, spec->unsol_tag_front_hp))
 			headphone_nid = spec->out_pins[2];
-		अन्यथा अगर (snd_hda_jack_detect(codec, spec->unsol_tag_hp))
+		else if (snd_hda_jack_detect(codec, spec->unsol_tag_hp))
 			headphone_nid = spec->out_pins[1];
 
 		ca0132_set_out_node_pincfg(codec, headphone_nid, 1, 1);
 
-		अगर (outfx_set)
-			err = dspio_set_uपूर्णांक_param(codec, 0x80, 0x04, FLOAT_ONE);
-		अन्यथा
-			err = dspio_set_uपूर्णांक_param(codec, 0x80, 0x04, FLOAT_ZERO);
+		if (outfx_set)
+			err = dspio_set_uint_param(codec, 0x80, 0x04, FLOAT_ONE);
+		else
+			err = dspio_set_uint_param(codec, 0x80, 0x04, FLOAT_ZERO);
 
-		अगर (err < 0)
-			जाओ निकास;
-		अवरोध;
-	पूर्ण
+		if (err < 0)
+			goto exit;
+		break;
+	}
 	/*
 	 * If output effects are enabled, set the X-Bass effect value again to
-	 * make sure that it's properly enabled/disabled क्रम speaker
+	 * make sure that it's properly enabled/disabled for speaker
 	 * configurations with an LFE channel.
 	 */
-	अगर (outfx_set)
+	if (outfx_set)
 		ca0132_effects_set(codec, X_BASS,
-			spec->effects_चयन[X_BASS - EFFECT_START_NID]);
+			spec->effects_switch[X_BASS - EFFECT_START_NID]);
 
 	/* Set speaker EQ bypass attenuation to 0. */
-	err = dspio_set_uपूर्णांक_param(codec, 0x8f, 0x01, FLOAT_ZERO);
-	अगर (err < 0)
-		जाओ निकास;
+	err = dspio_set_uint_param(codec, 0x8f, 0x01, FLOAT_ZERO);
+	if (err < 0)
+		goto exit;
 
 	/*
 	 * Although unused on all cards but the AE series, this is always set
 	 * to zero when setting the output.
 	 */
-	err = dspio_set_uपूर्णांक_param(codec, 0x96,
+	err = dspio_set_uint_param(codec, 0x96,
 			SPEAKER_TUNING_USE_SPEAKER_EQ, FLOAT_ZERO);
-	अगर (err < 0)
-		जाओ निकास;
+	if (err < 0)
+		goto exit;
 
-	अगर (spec->cur_out_type == SPEAKER_OUT)
+	if (spec->cur_out_type == SPEAKER_OUT)
 		err = ca0132_alt_surround_set_bass_redirection(codec,
 				spec->bass_redirection_val);
-	अन्यथा
+	else
 		err = ca0132_alt_surround_set_bass_redirection(codec, 0);
 
-	/* Unmute DSP now that we're करोne with output selection. */
-	err = dspio_set_uपूर्णांक_param(codec, 0x96,
+	/* Unmute DSP now that we're done with output selection. */
+	err = dspio_set_uint_param(codec, 0x96,
 			SPEAKER_TUNING_MUTE, FLOAT_ZERO);
-	अगर (err < 0)
-		जाओ निकास;
+	if (err < 0)
+		goto exit;
 
-	अगर (spec->cur_out_type == SPEAKER_OUT) अणु
+	if (spec->cur_out_type == SPEAKER_OUT) {
 		err = ca0132_alt_set_full_range_speaker(codec);
-		अगर (err < 0)
-			जाओ निकास;
-	पूर्ण
+		if (err < 0)
+			goto exit;
+	}
 
-निकास:
-	snd_hda_घातer_करोwn_pm(codec);
+exit:
+	snd_hda_power_down_pm(codec);
 
-	वापस err < 0 ? err : 0;
-पूर्ण
+	return err < 0 ? err : 0;
+}
 
-अटल व्योम ca0132_unsol_hp_delayed(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा ca0132_spec *spec = container_of(
-		to_delayed_work(work), काष्ठा ca0132_spec, unsol_hp_work);
-	काष्ठा hda_jack_tbl *jack;
+static void ca0132_unsol_hp_delayed(struct work_struct *work)
+{
+	struct ca0132_spec *spec = container_of(
+		to_delayed_work(work), struct ca0132_spec, unsol_hp_work);
+	struct hda_jack_tbl *jack;
 
-	अगर (ca0132_use_alt_functions(spec))
+	if (ca0132_use_alt_functions(spec))
 		ca0132_alt_select_out(spec->codec);
-	अन्यथा
+	else
 		ca0132_select_out(spec->codec);
 
 	jack = snd_hda_jack_tbl_get(spec->codec, spec->unsol_tag_hp);
-	अगर (jack) अणु
+	if (jack) {
 		jack->block_report = 0;
 		snd_hda_jack_report_sync(spec->codec);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम ca0132_set_dmic(काष्ठा hda_codec *codec, पूर्णांक enable);
-अटल पूर्णांक ca0132_mic_boost_set(काष्ठा hda_codec *codec, दीर्घ val);
-अटल व्योम resume_mic1(काष्ठा hda_codec *codec, अचिन्हित पूर्णांक oldval);
-अटल पूर्णांक stop_mic1(काष्ठा hda_codec *codec);
-अटल पूर्णांक ca0132_cvoice_चयन_set(काष्ठा hda_codec *codec);
-अटल पूर्णांक ca0132_alt_mic_boost_set(काष्ठा hda_codec *codec, दीर्घ val);
+static void ca0132_set_dmic(struct hda_codec *codec, int enable);
+static int ca0132_mic_boost_set(struct hda_codec *codec, long val);
+static void resume_mic1(struct hda_codec *codec, unsigned int oldval);
+static int stop_mic1(struct hda_codec *codec);
+static int ca0132_cvoice_switch_set(struct hda_codec *codec);
+static int ca0132_alt_mic_boost_set(struct hda_codec *codec, long val);
 
 /*
  * Select the active VIP source
  */
-अटल पूर्णांक ca0132_set_vipsource(काष्ठा hda_codec *codec, पूर्णांक val)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	अचिन्हित पूर्णांक पंचांगp;
+static int ca0132_set_vipsource(struct hda_codec *codec, int val)
+{
+	struct ca0132_spec *spec = codec->spec;
+	unsigned int tmp;
 
-	अगर (spec->dsp_state != DSP_DOWNLOADED)
-		वापस 0;
+	if (spec->dsp_state != DSP_DOWNLOADED)
+		return 0;
 
-	/* अगर CrystalVoice अगर off, vipsource should be 0 */
-	अगर (!spec->effects_चयन[CRYSTAL_VOICE - EFFECT_START_NID] ||
-	    (val == 0)) अणु
+	/* if CrystalVoice if off, vipsource should be 0 */
+	if (!spec->effects_switch[CRYSTAL_VOICE - EFFECT_START_NID] ||
+	    (val == 0)) {
 		chipio_set_control_param(codec, CONTROL_PARAM_VIP_SOURCE, 0);
 		chipio_set_conn_rate(codec, MEM_CONNID_MICIN1, SR_96_000);
 		chipio_set_conn_rate(codec, MEM_CONNID_MICOUT1, SR_96_000);
-		अगर (spec->cur_mic_type == DIGITAL_MIC)
-			पंचांगp = FLOAT_TWO;
-		अन्यथा
-			पंचांगp = FLOAT_ONE;
-		dspio_set_uपूर्णांक_param(codec, 0x80, 0x00, पंचांगp);
-		पंचांगp = FLOAT_ZERO;
-		dspio_set_uपूर्णांक_param(codec, 0x80, 0x05, पंचांगp);
-	पूर्ण अन्यथा अणु
+		if (spec->cur_mic_type == DIGITAL_MIC)
+			tmp = FLOAT_TWO;
+		else
+			tmp = FLOAT_ONE;
+		dspio_set_uint_param(codec, 0x80, 0x00, tmp);
+		tmp = FLOAT_ZERO;
+		dspio_set_uint_param(codec, 0x80, 0x05, tmp);
+	} else {
 		chipio_set_conn_rate(codec, MEM_CONNID_MICIN1, SR_16_000);
 		chipio_set_conn_rate(codec, MEM_CONNID_MICOUT1, SR_16_000);
-		अगर (spec->cur_mic_type == DIGITAL_MIC)
-			पंचांगp = FLOAT_TWO;
-		अन्यथा
-			पंचांगp = FLOAT_ONE;
-		dspio_set_uपूर्णांक_param(codec, 0x80, 0x00, पंचांगp);
-		पंचांगp = FLOAT_ONE;
-		dspio_set_uपूर्णांक_param(codec, 0x80, 0x05, पंचांगp);
+		if (spec->cur_mic_type == DIGITAL_MIC)
+			tmp = FLOAT_TWO;
+		else
+			tmp = FLOAT_ONE;
+		dspio_set_uint_param(codec, 0x80, 0x00, tmp);
+		tmp = FLOAT_ONE;
+		dspio_set_uint_param(codec, 0x80, 0x05, tmp);
 		msleep(20);
 		chipio_set_control_param(codec, CONTROL_PARAM_VIP_SOURCE, val);
-	पूर्ण
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक ca0132_alt_set_vipsource(काष्ठा hda_codec *codec, पूर्णांक val)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	अचिन्हित पूर्णांक पंचांगp;
+static int ca0132_alt_set_vipsource(struct hda_codec *codec, int val)
+{
+	struct ca0132_spec *spec = codec->spec;
+	unsigned int tmp;
 
-	अगर (spec->dsp_state != DSP_DOWNLOADED)
-		वापस 0;
+	if (spec->dsp_state != DSP_DOWNLOADED)
+		return 0;
 
 	codec_dbg(codec, "%s\n", __func__);
 
 	chipio_set_stream_control(codec, 0x03, 0);
 	chipio_set_stream_control(codec, 0x04, 0);
 
-	/* अगर CrystalVoice is off, vipsource should be 0 */
-	अगर (!spec->effects_चयन[CRYSTAL_VOICE - EFFECT_START_NID] ||
-	    (val == 0) || spec->in_क्रमागत_val == REAR_LINE_IN) अणु
+	/* if CrystalVoice is off, vipsource should be 0 */
+	if (!spec->effects_switch[CRYSTAL_VOICE - EFFECT_START_NID] ||
+	    (val == 0) || spec->in_enum_val == REAR_LINE_IN) {
 		codec_dbg(codec, "%s: off.", __func__);
 		chipio_set_control_param(codec, CONTROL_PARAM_VIP_SOURCE, 0);
 
-		पंचांगp = FLOAT_ZERO;
-		dspio_set_uपूर्णांक_param(codec, 0x80, 0x05, पंचांगp);
+		tmp = FLOAT_ZERO;
+		dspio_set_uint_param(codec, 0x80, 0x05, tmp);
 
 		chipio_set_conn_rate(codec, MEM_CONNID_MICIN1, SR_96_000);
 		chipio_set_conn_rate(codec, MEM_CONNID_MICOUT1, SR_96_000);
-		अगर (ca0132_quirk(spec) == QUIRK_R3DI)
+		if (ca0132_quirk(spec) == QUIRK_R3DI)
 			chipio_set_conn_rate(codec, 0x0F, SR_96_000);
 
 
-		अगर (spec->in_क्रमागत_val == REAR_LINE_IN)
-			पंचांगp = FLOAT_ZERO;
-		अन्यथा अणु
-			अगर (ca0132_quirk(spec) == QUIRK_SBZ)
-				पंचांगp = FLOAT_THREE;
-			अन्यथा
-				पंचांगp = FLOAT_ONE;
-		पूर्ण
+		if (spec->in_enum_val == REAR_LINE_IN)
+			tmp = FLOAT_ZERO;
+		else {
+			if (ca0132_quirk(spec) == QUIRK_SBZ)
+				tmp = FLOAT_THREE;
+			else
+				tmp = FLOAT_ONE;
+		}
 
-		dspio_set_uपूर्णांक_param(codec, 0x80, 0x00, पंचांगp);
+		dspio_set_uint_param(codec, 0x80, 0x00, tmp);
 
-	पूर्ण अन्यथा अणु
+	} else {
 		codec_dbg(codec, "%s: on.", __func__);
 		chipio_set_conn_rate(codec, MEM_CONNID_MICIN1, SR_16_000);
 		chipio_set_conn_rate(codec, MEM_CONNID_MICOUT1, SR_16_000);
-		अगर (ca0132_quirk(spec) == QUIRK_R3DI)
+		if (ca0132_quirk(spec) == QUIRK_R3DI)
 			chipio_set_conn_rate(codec, 0x0F, SR_16_000);
 
-		अगर (spec->effects_चयन[VOICE_FOCUS - EFFECT_START_NID])
-			पंचांगp = FLOAT_TWO;
-		अन्यथा
-			पंचांगp = FLOAT_ONE;
-		dspio_set_uपूर्णांक_param(codec, 0x80, 0x00, पंचांगp);
+		if (spec->effects_switch[VOICE_FOCUS - EFFECT_START_NID])
+			tmp = FLOAT_TWO;
+		else
+			tmp = FLOAT_ONE;
+		dspio_set_uint_param(codec, 0x80, 0x00, tmp);
 
-		पंचांगp = FLOAT_ONE;
-		dspio_set_uपूर्णांक_param(codec, 0x80, 0x05, पंचांगp);
+		tmp = FLOAT_ONE;
+		dspio_set_uint_param(codec, 0x80, 0x05, tmp);
 
 		msleep(20);
 		chipio_set_control_param(codec, CONTROL_PARAM_VIP_SOURCE, val);
-	पूर्ण
+	}
 
 	chipio_set_stream_control(codec, 0x03, 1);
 	chipio_set_stream_control(codec, 0x04, 1);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /*
  * Select the active microphone.
- * If स्वतःdetect is enabled, mic will be selected based on jack detection.
- * If jack inserted, ext.mic will be selected, अन्यथा built-in mic
- * If स्वतःdetect is disabled, mic will be selected based on selection.
+ * If autodetect is enabled, mic will be selected based on jack detection.
+ * If jack inserted, ext.mic will be selected, else built-in mic
+ * If autodetect is disabled, mic will be selected based on selection.
  */
-अटल पूर्णांक ca0132_select_mic(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	पूर्णांक jack_present;
-	पूर्णांक स्वतः_jack;
+static int ca0132_select_mic(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
+	int jack_present;
+	int auto_jack;
 
 	codec_dbg(codec, "ca0132_select_mic\n");
 
-	snd_hda_घातer_up_pm(codec);
+	snd_hda_power_up_pm(codec);
 
-	स्वतः_jack = spec->vnode_lचयन[VNID_AMIC1_ASEL - VNODE_START_NID];
+	auto_jack = spec->vnode_lswitch[VNID_AMIC1_ASEL - VNODE_START_NID];
 
-	अगर (स्वतः_jack)
+	if (auto_jack)
 		jack_present = snd_hda_jack_detect(codec, spec->unsol_tag_amic1);
-	अन्यथा
+	else
 		jack_present =
-			spec->vnode_lचयन[VNID_AMIC1_SEL - VNODE_START_NID];
+			spec->vnode_lswitch[VNID_AMIC1_SEL - VNODE_START_NID];
 
-	अगर (jack_present)
+	if (jack_present)
 		spec->cur_mic_type = LINE_MIC_IN;
-	अन्यथा
+	else
 		spec->cur_mic_type = DIGITAL_MIC;
 
-	अगर (spec->cur_mic_type == DIGITAL_MIC) अणु
+	if (spec->cur_mic_type == DIGITAL_MIC) {
 		/* enable digital Mic */
 		chipio_set_conn_rate(codec, MEM_CONNID_DMIC, SR_32_000);
 		ca0132_set_dmic(codec, 1);
 		ca0132_mic_boost_set(codec, 0);
 		/* set voice focus */
 		ca0132_effects_set(codec, VOICE_FOCUS,
-				   spec->effects_चयन
+				   spec->effects_switch
 				   [VOICE_FOCUS - EFFECT_START_NID]);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* disable digital Mic */
 		chipio_set_conn_rate(codec, MEM_CONNID_DMIC, SR_96_000);
 		ca0132_set_dmic(codec, 0);
 		ca0132_mic_boost_set(codec, spec->cur_mic_boost);
 		/* disable voice focus */
 		ca0132_effects_set(codec, VOICE_FOCUS, 0);
-	पूर्ण
+	}
 
-	snd_hda_घातer_करोwn_pm(codec);
+	snd_hda_power_down_pm(codec);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Select the active input.
- * Mic detection isn't used, because it's kind of poपूर्णांकless on the SBZ.
- * The front mic has no jack-detection, so the only way to चयन to it
- * is to करो it manually in alsamixer.
+ * Mic detection isn't used, because it's kind of pointless on the SBZ.
+ * The front mic has no jack-detection, so the only way to switch to it
+ * is to do it manually in alsamixer.
  */
-अटल पूर्णांक ca0132_alt_select_in(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	अचिन्हित पूर्णांक पंचांगp;
+static int ca0132_alt_select_in(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
+	unsigned int tmp;
 
 	codec_dbg(codec, "%s\n", __func__);
 
-	snd_hda_घातer_up_pm(codec);
+	snd_hda_power_up_pm(codec);
 
 	chipio_set_stream_control(codec, 0x03, 0);
 	chipio_set_stream_control(codec, 0x04, 0);
 
-	spec->cur_mic_type = spec->in_क्रमागत_val;
+	spec->cur_mic_type = spec->in_enum_val;
 
-	चयन (spec->cur_mic_type) अणु
-	हाल REAR_MIC:
-		चयन (ca0132_quirk(spec)) अणु
-		हाल QUIRK_SBZ:
-		हाल QUIRK_R3D:
+	switch (spec->cur_mic_type) {
+	case REAR_MIC:
+		switch (ca0132_quirk(spec)) {
+		case QUIRK_SBZ:
+		case QUIRK_R3D:
 			ca0113_mmio_gpio_set(codec, 0, false);
-			पंचांगp = FLOAT_THREE;
-			अवरोध;
-		हाल QUIRK_ZXR:
-			पंचांगp = FLOAT_THREE;
-			अवरोध;
-		हाल QUIRK_R3DI:
+			tmp = FLOAT_THREE;
+			break;
+		case QUIRK_ZXR:
+			tmp = FLOAT_THREE;
+			break;
+		case QUIRK_R3DI:
 			r3di_gpio_mic_set(codec, R3DI_REAR_MIC);
-			पंचांगp = FLOAT_ONE;
-			अवरोध;
-		हाल QUIRK_AE5:
+			tmp = FLOAT_ONE;
+			break;
+		case QUIRK_AE5:
 			ca0113_mmio_command_set(codec, 0x30, 0x28, 0x00);
-			पंचांगp = FLOAT_THREE;
-			अवरोध;
-		हाल QUIRK_AE7:
+			tmp = FLOAT_THREE;
+			break;
+		case QUIRK_AE7:
 			ca0113_mmio_command_set(codec, 0x30, 0x28, 0x00);
-			पंचांगp = FLOAT_THREE;
+			tmp = FLOAT_THREE;
 			chipio_set_conn_rate(codec, MEM_CONNID_MICIN2,
 					SR_96_000);
 			chipio_set_conn_rate(codec, MEM_CONNID_MICOUT2,
 					SR_96_000);
-			dspio_set_uपूर्णांक_param(codec, 0x80, 0x01, FLOAT_ZERO);
-			अवरोध;
-		शेष:
-			पंचांगp = FLOAT_ONE;
-			अवरोध;
-		पूर्ण
+			dspio_set_uint_param(codec, 0x80, 0x01, FLOAT_ZERO);
+			break;
+		default:
+			tmp = FLOAT_ONE;
+			break;
+		}
 
 		chipio_set_conn_rate(codec, MEM_CONNID_MICIN1, SR_96_000);
 		chipio_set_conn_rate(codec, MEM_CONNID_MICOUT1, SR_96_000);
-		अगर (ca0132_quirk(spec) == QUIRK_R3DI)
+		if (ca0132_quirk(spec) == QUIRK_R3DI)
 			chipio_set_conn_rate(codec, 0x0F, SR_96_000);
 
-		dspio_set_uपूर्णांक_param(codec, 0x80, 0x00, पंचांगp);
+		dspio_set_uint_param(codec, 0x80, 0x00, tmp);
 
 		chipio_set_stream_control(codec, 0x03, 1);
 		chipio_set_stream_control(codec, 0x04, 1);
-		चयन (ca0132_quirk(spec)) अणु
-		हाल QUIRK_SBZ:
-			chipio_ग_लिखो(codec, 0x18B098, 0x0000000C);
-			chipio_ग_लिखो(codec, 0x18B09C, 0x0000000C);
-			अवरोध;
-		हाल QUIRK_ZXR:
-			chipio_ग_लिखो(codec, 0x18B098, 0x0000000C);
-			chipio_ग_लिखो(codec, 0x18B09C, 0x000000CC);
-			अवरोध;
-		हाल QUIRK_AE5:
-			chipio_ग_लिखो(codec, 0x18B098, 0x0000000C);
-			chipio_ग_लिखो(codec, 0x18B09C, 0x0000004C);
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-		ca0132_alt_mic_boost_set(codec, spec->mic_boost_क्रमागत_val);
-		अवरोध;
-	हाल REAR_LINE_IN:
+		switch (ca0132_quirk(spec)) {
+		case QUIRK_SBZ:
+			chipio_write(codec, 0x18B098, 0x0000000C);
+			chipio_write(codec, 0x18B09C, 0x0000000C);
+			break;
+		case QUIRK_ZXR:
+			chipio_write(codec, 0x18B098, 0x0000000C);
+			chipio_write(codec, 0x18B09C, 0x000000CC);
+			break;
+		case QUIRK_AE5:
+			chipio_write(codec, 0x18B098, 0x0000000C);
+			chipio_write(codec, 0x18B09C, 0x0000004C);
+			break;
+		default:
+			break;
+		}
+		ca0132_alt_mic_boost_set(codec, spec->mic_boost_enum_val);
+		break;
+	case REAR_LINE_IN:
 		ca0132_mic_boost_set(codec, 0);
-		चयन (ca0132_quirk(spec)) अणु
-		हाल QUIRK_SBZ:
-		हाल QUIRK_R3D:
+		switch (ca0132_quirk(spec)) {
+		case QUIRK_SBZ:
+		case QUIRK_R3D:
 			ca0113_mmio_gpio_set(codec, 0, false);
-			अवरोध;
-		हाल QUIRK_R3DI:
+			break;
+		case QUIRK_R3DI:
 			r3di_gpio_mic_set(codec, R3DI_REAR_MIC);
-			अवरोध;
-		हाल QUIRK_AE5:
+			break;
+		case QUIRK_AE5:
 			ca0113_mmio_command_set(codec, 0x30, 0x28, 0x00);
-			अवरोध;
-		हाल QUIRK_AE7:
+			break;
+		case QUIRK_AE7:
 			ca0113_mmio_command_set(codec, 0x30, 0x28, 0x3f);
 			chipio_set_conn_rate(codec, MEM_CONNID_MICIN2,
 					SR_96_000);
 			chipio_set_conn_rate(codec, MEM_CONNID_MICOUT2,
 					SR_96_000);
-			dspio_set_uपूर्णांक_param(codec, 0x80, 0x01, FLOAT_ZERO);
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
+			dspio_set_uint_param(codec, 0x80, 0x01, FLOAT_ZERO);
+			break;
+		default:
+			break;
+		}
 
 		chipio_set_conn_rate(codec, MEM_CONNID_MICIN1, SR_96_000);
 		chipio_set_conn_rate(codec, MEM_CONNID_MICOUT1, SR_96_000);
-		अगर (ca0132_quirk(spec) == QUIRK_R3DI)
+		if (ca0132_quirk(spec) == QUIRK_R3DI)
 			chipio_set_conn_rate(codec, 0x0F, SR_96_000);
 
-		अगर (ca0132_quirk(spec) == QUIRK_AE7)
-			पंचांगp = FLOAT_THREE;
-		अन्यथा
-			पंचांगp = FLOAT_ZERO;
-		dspio_set_uपूर्णांक_param(codec, 0x80, 0x00, पंचांगp);
+		if (ca0132_quirk(spec) == QUIRK_AE7)
+			tmp = FLOAT_THREE;
+		else
+			tmp = FLOAT_ZERO;
+		dspio_set_uint_param(codec, 0x80, 0x00, tmp);
 
-		चयन (ca0132_quirk(spec)) अणु
-		हाल QUIRK_SBZ:
-		हाल QUIRK_AE5:
-			chipio_ग_लिखो(codec, 0x18B098, 0x00000000);
-			chipio_ग_लिखो(codec, 0x18B09C, 0x00000000);
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
+		switch (ca0132_quirk(spec)) {
+		case QUIRK_SBZ:
+		case QUIRK_AE5:
+			chipio_write(codec, 0x18B098, 0x00000000);
+			chipio_write(codec, 0x18B09C, 0x00000000);
+			break;
+		default:
+			break;
+		}
 		chipio_set_stream_control(codec, 0x03, 1);
 		chipio_set_stream_control(codec, 0x04, 1);
-		अवरोध;
-	हाल FRONT_MIC:
-		चयन (ca0132_quirk(spec)) अणु
-		हाल QUIRK_SBZ:
-		हाल QUIRK_R3D:
+		break;
+	case FRONT_MIC:
+		switch (ca0132_quirk(spec)) {
+		case QUIRK_SBZ:
+		case QUIRK_R3D:
 			ca0113_mmio_gpio_set(codec, 0, true);
 			ca0113_mmio_gpio_set(codec, 5, false);
-			पंचांगp = FLOAT_THREE;
-			अवरोध;
-		हाल QUIRK_R3DI:
+			tmp = FLOAT_THREE;
+			break;
+		case QUIRK_R3DI:
 			r3di_gpio_mic_set(codec, R3DI_FRONT_MIC);
-			पंचांगp = FLOAT_ONE;
-			अवरोध;
-		हाल QUIRK_AE5:
+			tmp = FLOAT_ONE;
+			break;
+		case QUIRK_AE5:
 			ca0113_mmio_command_set(codec, 0x30, 0x28, 0x3f);
-			पंचांगp = FLOAT_THREE;
-			अवरोध;
-		शेष:
-			पंचांगp = FLOAT_ONE;
-			अवरोध;
-		पूर्ण
+			tmp = FLOAT_THREE;
+			break;
+		default:
+			tmp = FLOAT_ONE;
+			break;
+		}
 
 		chipio_set_conn_rate(codec, MEM_CONNID_MICIN1, SR_96_000);
 		chipio_set_conn_rate(codec, MEM_CONNID_MICOUT1, SR_96_000);
-		अगर (ca0132_quirk(spec) == QUIRK_R3DI)
+		if (ca0132_quirk(spec) == QUIRK_R3DI)
 			chipio_set_conn_rate(codec, 0x0F, SR_96_000);
 
-		dspio_set_uपूर्णांक_param(codec, 0x80, 0x00, पंचांगp);
+		dspio_set_uint_param(codec, 0x80, 0x00, tmp);
 
 		chipio_set_stream_control(codec, 0x03, 1);
 		chipio_set_stream_control(codec, 0x04, 1);
 
-		चयन (ca0132_quirk(spec)) अणु
-		हाल QUIRK_SBZ:
-			chipio_ग_लिखो(codec, 0x18B098, 0x0000000C);
-			chipio_ग_लिखो(codec, 0x18B09C, 0x000000CC);
-			अवरोध;
-		हाल QUIRK_AE5:
-			chipio_ग_लिखो(codec, 0x18B098, 0x0000000C);
-			chipio_ग_लिखो(codec, 0x18B09C, 0x0000004C);
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-		ca0132_alt_mic_boost_set(codec, spec->mic_boost_क्रमागत_val);
-		अवरोध;
-	पूर्ण
-	ca0132_cvoice_चयन_set(codec);
+		switch (ca0132_quirk(spec)) {
+		case QUIRK_SBZ:
+			chipio_write(codec, 0x18B098, 0x0000000C);
+			chipio_write(codec, 0x18B09C, 0x000000CC);
+			break;
+		case QUIRK_AE5:
+			chipio_write(codec, 0x18B098, 0x0000000C);
+			chipio_write(codec, 0x18B09C, 0x0000004C);
+			break;
+		default:
+			break;
+		}
+		ca0132_alt_mic_boost_set(codec, spec->mic_boost_enum_val);
+		break;
+	}
+	ca0132_cvoice_switch_set(codec);
 
-	snd_hda_घातer_करोwn_pm(codec);
-	वापस 0;
-पूर्ण
+	snd_hda_power_down_pm(codec);
+	return 0;
+}
 
 /*
- * Check अगर VNODE settings take effect immediately.
+ * Check if VNODE settings take effect immediately.
  */
-अटल bool ca0132_is_vnode_effective(काष्ठा hda_codec *codec,
+static bool ca0132_is_vnode_effective(struct hda_codec *codec,
 				     hda_nid_t vnid,
 				     hda_nid_t *shared_nid)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
+{
+	struct ca0132_spec *spec = codec->spec;
 	hda_nid_t nid;
 
-	चयन (vnid) अणु
-	हाल VNID_SPK:
+	switch (vnid) {
+	case VNID_SPK:
 		nid = spec->shared_out_nid;
-		अवरोध;
-	हाल VNID_MIC:
+		break;
+	case VNID_MIC:
 		nid = spec->shared_mic_nid;
-		अवरोध;
-	शेष:
-		वापस false;
-	पूर्ण
+		break;
+	default:
+		return false;
+	}
 
-	अगर (shared_nid)
+	if (shared_nid)
 		*shared_nid = nid;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /*
 * The following functions are control change helpers.
-* They वापस 0 अगर no changed.  Return 1 अगर changed.
+* They return 0 if no changed.  Return 1 if changed.
 */
-अटल पूर्णांक ca0132_voicefx_set(काष्ठा hda_codec *codec, पूर्णांक enable)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	अचिन्हित पूर्णांक पंचांगp;
+static int ca0132_voicefx_set(struct hda_codec *codec, int enable)
+{
+	struct ca0132_spec *spec = codec->spec;
+	unsigned int tmp;
 
 	/* based on CrystalVoice state to enable VoiceFX. */
-	अगर (enable) अणु
-		पंचांगp = spec->effects_चयन[CRYSTAL_VOICE - EFFECT_START_NID] ?
+	if (enable) {
+		tmp = spec->effects_switch[CRYSTAL_VOICE - EFFECT_START_NID] ?
 			FLOAT_ONE : FLOAT_ZERO;
-	पूर्ण अन्यथा अणु
-		पंचांगp = FLOAT_ZERO;
-	पूर्ण
+	} else {
+		tmp = FLOAT_ZERO;
+	}
 
-	dspio_set_uपूर्णांक_param(codec, ca0132_voicefx.mid,
-			     ca0132_voicefx.reqs[0], पंचांगp);
+	dspio_set_uint_param(codec, ca0132_voicefx.mid,
+			     ca0132_voicefx.reqs[0], tmp);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /*
  * Set the effects parameters
  */
-अटल पूर्णांक ca0132_effects_set(काष्ठा hda_codec *codec, hda_nid_t nid, दीर्घ val)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	अचिन्हित पूर्णांक on, पंचांगp, channel_cfg;
-	पूर्णांक num_fx = OUT_EFFECTS_COUNT + IN_EFFECTS_COUNT;
-	पूर्णांक err = 0;
-	पूर्णांक idx = nid - EFFECT_START_NID;
+static int ca0132_effects_set(struct hda_codec *codec, hda_nid_t nid, long val)
+{
+	struct ca0132_spec *spec = codec->spec;
+	unsigned int on, tmp, channel_cfg;
+	int num_fx = OUT_EFFECTS_COUNT + IN_EFFECTS_COUNT;
+	int err = 0;
+	int idx = nid - EFFECT_START_NID;
 
-	अगर ((idx < 0) || (idx >= num_fx))
-		वापस 0; /* no changed */
+	if ((idx < 0) || (idx >= num_fx))
+		return 0; /* no changed */
 
-	/* क्रम out effect, qualअगरy with PE */
-	अगर ((nid >= OUT_EFFECT_START_NID) && (nid < OUT_EFFECT_END_NID)) अणु
-		/* अगर PE अगर off, turn off out effects. */
-		अगर (!spec->effects_चयन[PLAY_ENHANCEMENT - EFFECT_START_NID])
+	/* for out effect, qualify with PE */
+	if ((nid >= OUT_EFFECT_START_NID) && (nid < OUT_EFFECT_END_NID)) {
+		/* if PE if off, turn off out effects. */
+		if (!spec->effects_switch[PLAY_ENHANCEMENT - EFFECT_START_NID])
 			val = 0;
-		अगर (spec->cur_out_type == SPEAKER_OUT && nid == X_BASS) अणु
+		if (spec->cur_out_type == SPEAKER_OUT && nid == X_BASS) {
 			channel_cfg = spec->channel_cfg_val;
-			अगर (channel_cfg != SPEAKER_CHANNELS_2_0 &&
+			if (channel_cfg != SPEAKER_CHANNELS_2_0 &&
 					channel_cfg != SPEAKER_CHANNELS_4_0)
 				val = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* क्रम in effect, qualअगरy with CrystalVoice */
-	अगर ((nid >= IN_EFFECT_START_NID) && (nid < IN_EFFECT_END_NID)) अणु
-		/* अगर CrystalVoice अगर off, turn off in effects. */
-		अगर (!spec->effects_चयन[CRYSTAL_VOICE - EFFECT_START_NID])
+	/* for in effect, qualify with CrystalVoice */
+	if ((nid >= IN_EFFECT_START_NID) && (nid < IN_EFFECT_END_NID)) {
+		/* if CrystalVoice if off, turn off in effects. */
+		if (!spec->effects_switch[CRYSTAL_VOICE - EFFECT_START_NID])
 			val = 0;
 
 		/* Voice Focus applies to 2-ch Mic, Digital Mic */
-		अगर ((nid == VOICE_FOCUS) && (spec->cur_mic_type != DIGITAL_MIC))
+		if ((nid == VOICE_FOCUS) && (spec->cur_mic_type != DIGITAL_MIC))
 			val = 0;
 
 		/* If Voice Focus on SBZ, set to two channel. */
-		अगर ((nid == VOICE_FOCUS) && ca0132_use_pci_mmio(spec)
-				&& (spec->cur_mic_type != REAR_LINE_IN)) अणु
-			अगर (spec->effects_चयन[CRYSTAL_VOICE -
-						 EFFECT_START_NID]) अणु
+		if ((nid == VOICE_FOCUS) && ca0132_use_pci_mmio(spec)
+				&& (spec->cur_mic_type != REAR_LINE_IN)) {
+			if (spec->effects_switch[CRYSTAL_VOICE -
+						 EFFECT_START_NID]) {
 
-				अगर (spec->effects_चयन[VOICE_FOCUS -
-							 EFFECT_START_NID]) अणु
-					पंचांगp = FLOAT_TWO;
+				if (spec->effects_switch[VOICE_FOCUS -
+							 EFFECT_START_NID]) {
+					tmp = FLOAT_TWO;
 					val = 1;
-				पूर्ण अन्यथा
-					पंचांगp = FLOAT_ONE;
+				} else
+					tmp = FLOAT_ONE;
 
-				dspio_set_uपूर्णांक_param(codec, 0x80, 0x00, पंचांगp);
-			पूर्ण
-		पूर्ण
+				dspio_set_uint_param(codec, 0x80, 0x00, tmp);
+			}
+		}
 		/*
 		 * For SBZ noise reduction, there's an extra command
 		 * to module ID 0x47. No clue why.
 		 */
-		अगर ((nid == NOISE_REDUCTION) && ca0132_use_pci_mmio(spec)
-				&& (spec->cur_mic_type != REAR_LINE_IN)) अणु
-			अगर (spec->effects_चयन[CRYSTAL_VOICE -
-						 EFFECT_START_NID]) अणु
-				अगर (spec->effects_चयन[NOISE_REDUCTION -
+		if ((nid == NOISE_REDUCTION) && ca0132_use_pci_mmio(spec)
+				&& (spec->cur_mic_type != REAR_LINE_IN)) {
+			if (spec->effects_switch[CRYSTAL_VOICE -
+						 EFFECT_START_NID]) {
+				if (spec->effects_switch[NOISE_REDUCTION -
 							 EFFECT_START_NID])
-					पंचांगp = FLOAT_ONE;
-				अन्यथा
-					पंचांगp = FLOAT_ZERO;
-			पूर्ण अन्यथा
-				पंचांगp = FLOAT_ZERO;
+					tmp = FLOAT_ONE;
+				else
+					tmp = FLOAT_ZERO;
+			} else
+				tmp = FLOAT_ZERO;
 
-			dspio_set_uपूर्णांक_param(codec, 0x47, 0x00, पंचांगp);
-		पूर्ण
+			dspio_set_uint_param(codec, 0x47, 0x00, tmp);
+		}
 
 		/* If rear line in disable effects. */
-		अगर (ca0132_use_alt_functions(spec) &&
-				spec->in_क्रमागत_val == REAR_LINE_IN)
+		if (ca0132_use_alt_functions(spec) &&
+				spec->in_enum_val == REAR_LINE_IN)
 			val = 0;
-	पूर्ण
+	}
 
 	codec_dbg(codec, "ca0132_effect_set: nid=0x%x, val=%ld\n",
 		    nid, val);
 
 	on = (val == 0) ? FLOAT_ZERO : FLOAT_ONE;
-	err = dspio_set_uपूर्णांक_param(codec, ca0132_effects[idx].mid,
+	err = dspio_set_uint_param(codec, ca0132_effects[idx].mid,
 				   ca0132_effects[idx].reqs[0], on);
 
-	अगर (err < 0)
-		वापस 0; /* no changed */
+	if (err < 0)
+		return 0; /* no changed */
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /*
  * Turn on/off Playback Enhancements
  */
-अटल पूर्णांक ca0132_pe_चयन_set(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
+static int ca0132_pe_switch_set(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
 	hda_nid_t nid;
-	पूर्णांक i, ret = 0;
+	int i, ret = 0;
 
 	codec_dbg(codec, "ca0132_pe_switch_set: val=%ld\n",
-		    spec->effects_चयन[PLAY_ENHANCEMENT - EFFECT_START_NID]);
+		    spec->effects_switch[PLAY_ENHANCEMENT - EFFECT_START_NID]);
 
-	अगर (ca0132_use_alt_functions(spec))
+	if (ca0132_use_alt_functions(spec))
 		ca0132_alt_select_out(codec);
 
 	i = OUT_EFFECT_START_NID - EFFECT_START_NID;
 	nid = OUT_EFFECT_START_NID;
 	/* PE affects all out effects */
-	क्रम (; nid < OUT_EFFECT_END_NID; nid++, i++)
-		ret |= ca0132_effects_set(codec, nid, spec->effects_चयन[i]);
+	for (; nid < OUT_EFFECT_END_NID; nid++, i++)
+		ret |= ca0132_effects_set(codec, nid, spec->effects_switch[i]);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* Check अगर Mic1 is streaming, अगर so, stop streaming */
-अटल पूर्णांक stop_mic1(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	अचिन्हित पूर्णांक oldval = snd_hda_codec_पढ़ो(codec, spec->adcs[0], 0,
+/* Check if Mic1 is streaming, if so, stop streaming */
+static int stop_mic1(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
+	unsigned int oldval = snd_hda_codec_read(codec, spec->adcs[0], 0,
 						 AC_VERB_GET_CONV, 0);
-	अगर (oldval != 0)
-		snd_hda_codec_ग_लिखो(codec, spec->adcs[0], 0,
+	if (oldval != 0)
+		snd_hda_codec_write(codec, spec->adcs[0], 0,
 				    AC_VERB_SET_CHANNEL_STREAMID,
 				    0);
-	वापस oldval;
-पूर्ण
+	return oldval;
+}
 
-/* Resume Mic1 streaming अगर it was stopped. */
-अटल व्योम resume_mic1(काष्ठा hda_codec *codec, अचिन्हित पूर्णांक oldval)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
+/* Resume Mic1 streaming if it was stopped. */
+static void resume_mic1(struct hda_codec *codec, unsigned int oldval)
+{
+	struct ca0132_spec *spec = codec->spec;
 	/* Restore the previous stream and channel */
-	अगर (oldval != 0)
-		snd_hda_codec_ग_लिखो(codec, spec->adcs[0], 0,
+	if (oldval != 0)
+		snd_hda_codec_write(codec, spec->adcs[0], 0,
 				    AC_VERB_SET_CHANNEL_STREAMID,
 				    oldval);
-पूर्ण
+}
 
 /*
  * Turn on/off CrystalVoice
  */
-अटल पूर्णांक ca0132_cvoice_चयन_set(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
+static int ca0132_cvoice_switch_set(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
 	hda_nid_t nid;
-	पूर्णांक i, ret = 0;
-	अचिन्हित पूर्णांक oldval;
+	int i, ret = 0;
+	unsigned int oldval;
 
 	codec_dbg(codec, "ca0132_cvoice_switch_set: val=%ld\n",
-		    spec->effects_चयन[CRYSTAL_VOICE - EFFECT_START_NID]);
+		    spec->effects_switch[CRYSTAL_VOICE - EFFECT_START_NID]);
 
 	i = IN_EFFECT_START_NID - EFFECT_START_NID;
 	nid = IN_EFFECT_START_NID;
 	/* CrystalVoice affects all in effects */
-	क्रम (; nid < IN_EFFECT_END_NID; nid++, i++)
-		ret |= ca0132_effects_set(codec, nid, spec->effects_चयन[i]);
+	for (; nid < IN_EFFECT_END_NID; nid++, i++)
+		ret |= ca0132_effects_set(codec, nid, spec->effects_switch[i]);
 
 	/* including VoiceFX */
 	ret |= ca0132_voicefx_set(codec, (spec->voicefx_val ? 1 : 0));
 
 	/* set correct vipsource */
 	oldval = stop_mic1(codec);
-	अगर (ca0132_use_alt_functions(spec))
+	if (ca0132_use_alt_functions(spec))
 		ret |= ca0132_alt_set_vipsource(codec, 1);
-	अन्यथा
+	else
 		ret |= ca0132_set_vipsource(codec, 1);
 	resume_mic1(codec, oldval);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ca0132_mic_boost_set(काष्ठा hda_codec *codec, दीर्घ val)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	पूर्णांक ret = 0;
+static int ca0132_mic_boost_set(struct hda_codec *codec, long val)
+{
+	struct ca0132_spec *spec = codec->spec;
+	int ret = 0;
 
-	अगर (val) /* on */
+	if (val) /* on */
 		ret = snd_hda_codec_amp_update(codec, spec->input_pins[0], 0,
 					HDA_INPUT, 0, HDA_AMP_VOLMASK, 3);
-	अन्यथा /* off */
+	else /* off */
 		ret = snd_hda_codec_amp_update(codec, spec->input_pins[0], 0,
 					HDA_INPUT, 0, HDA_AMP_VOLMASK, 0);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ca0132_alt_mic_boost_set(काष्ठा hda_codec *codec, दीर्घ val)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	पूर्णांक ret = 0;
+static int ca0132_alt_mic_boost_set(struct hda_codec *codec, long val)
+{
+	struct ca0132_spec *spec = codec->spec;
+	int ret = 0;
 
 	ret = snd_hda_codec_amp_update(codec, spec->input_pins[0], 0,
 				HDA_INPUT, 0, HDA_AMP_VOLMASK, val);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ae5_headphone_gain_set(काष्ठा hda_codec *codec, दीर्घ val)
-अणु
-	अचिन्हित पूर्णांक i;
+static int ae5_headphone_gain_set(struct hda_codec *codec, long val)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < 4; i++)
+	for (i = 0; i < 4; i++)
 		ca0113_mmio_command_set(codec, 0x48, 0x11 + i,
 				ae5_headphone_gain_presets[val].vals[i]);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * gpio pin 1 is a relay that चयनes on/off, apparently setting the headphone
- * amplअगरier to handle a 600 ohm load.
+ * gpio pin 1 is a relay that switches on/off, apparently setting the headphone
+ * amplifier to handle a 600 ohm load.
  */
-अटल पूर्णांक zxr_headphone_gain_set(काष्ठा hda_codec *codec, दीर्घ val)
-अणु
+static int zxr_headphone_gain_set(struct hda_codec *codec, long val)
+{
 	ca0113_mmio_gpio_set(codec, 1, val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ca0132_vnode_चयन_set(काष्ठा snd_kcontrol *kcontrol,
-				काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा hda_codec *codec = snd_kcontrol_chip(kcontrol);
+static int ca0132_vnode_switch_set(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
 	hda_nid_t nid = get_amp_nid(kcontrol);
 	hda_nid_t shared_nid = 0;
 	bool effective;
-	पूर्णांक ret = 0;
-	काष्ठा ca0132_spec *spec = codec->spec;
-	पूर्णांक स्वतः_jack;
+	int ret = 0;
+	struct ca0132_spec *spec = codec->spec;
+	int auto_jack;
 
-	अगर (nid == VNID_HP_SEL) अणु
-		स्वतः_jack =
-			spec->vnode_lचयन[VNID_HP_ASEL - VNODE_START_NID];
-		अगर (!स्वतः_jack) अणु
-			अगर (ca0132_use_alt_functions(spec))
+	if (nid == VNID_HP_SEL) {
+		auto_jack =
+			spec->vnode_lswitch[VNID_HP_ASEL - VNODE_START_NID];
+		if (!auto_jack) {
+			if (ca0132_use_alt_functions(spec))
 				ca0132_alt_select_out(codec);
-			अन्यथा
+			else
 				ca0132_select_out(codec);
-		पूर्ण
-		वापस 1;
-	पूर्ण
+		}
+		return 1;
+	}
 
-	अगर (nid == VNID_AMIC1_SEL) अणु
-		स्वतः_jack =
-			spec->vnode_lचयन[VNID_AMIC1_ASEL - VNODE_START_NID];
-		अगर (!स्वतः_jack)
+	if (nid == VNID_AMIC1_SEL) {
+		auto_jack =
+			spec->vnode_lswitch[VNID_AMIC1_ASEL - VNODE_START_NID];
+		if (!auto_jack)
 			ca0132_select_mic(codec);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	अगर (nid == VNID_HP_ASEL) अणु
-		अगर (ca0132_use_alt_functions(spec))
+	if (nid == VNID_HP_ASEL) {
+		if (ca0132_use_alt_functions(spec))
 			ca0132_alt_select_out(codec);
-		अन्यथा
+		else
 			ca0132_select_out(codec);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	अगर (nid == VNID_AMIC1_ASEL) अणु
+	if (nid == VNID_AMIC1_ASEL) {
 		ca0132_select_mic(codec);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	/* अगर effective conditions, then update hw immediately. */
+	/* if effective conditions, then update hw immediately. */
 	effective = ca0132_is_vnode_effective(codec, nid, &shared_nid);
-	अगर (effective) अणु
-		पूर्णांक dir = get_amp_direction(kcontrol);
-		पूर्णांक ch = get_amp_channels(kcontrol);
-		अचिन्हित दीर्घ pval;
+	if (effective) {
+		int dir = get_amp_direction(kcontrol);
+		int ch = get_amp_channels(kcontrol);
+		unsigned long pval;
 
 		mutex_lock(&codec->control_mutex);
-		pval = kcontrol->निजी_value;
-		kcontrol->निजी_value = HDA_COMPOSE_AMP_VAL(shared_nid, ch,
+		pval = kcontrol->private_value;
+		kcontrol->private_value = HDA_COMPOSE_AMP_VAL(shared_nid, ch,
 								0, dir);
-		ret = snd_hda_mixer_amp_चयन_put(kcontrol, ucontrol);
-		kcontrol->निजी_value = pval;
+		ret = snd_hda_mixer_amp_switch_put(kcontrol, ucontrol);
+		kcontrol->private_value = pval;
 		mutex_unlock(&codec->control_mutex);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 /* End of control change helpers. */
 
-अटल व्योम ca0132_alt_bass_redirection_xover_set(काष्ठा hda_codec *codec,
-		दीर्घ idx)
-अणु
-	snd_hda_घातer_up(codec);
+static void ca0132_alt_bass_redirection_xover_set(struct hda_codec *codec,
+		long idx)
+{
+	snd_hda_power_up(codec);
 
-	dspio_set_param(codec, 0x96, 0x20, SPEAKER_BASS_REसूचीECT_XOVER_FREQ,
-			&(भग्न_xbass_xover_lookup[idx]), माप(अचिन्हित पूर्णांक));
+	dspio_set_param(codec, 0x96, 0x20, SPEAKER_BASS_REDIRECT_XOVER_FREQ,
+			&(float_xbass_xover_lookup[idx]), sizeof(unsigned int));
 
-	snd_hda_घातer_करोwn(codec);
-पूर्ण
+	snd_hda_power_down(codec);
+}
 
 /*
  * Below I've added controls to mess with the effect levels, I've only enabled
  * them on the Sound Blaster Z, but they would probably also work on the
- * Chromebook. I figured they were probably tuned specअगरically क्रम it, and left
- * out क्रम a reason.
+ * Chromebook. I figured they were probably tuned specifically for it, and left
+ * out for a reason.
  */
 
 /* Sets DSP effect level from the sliders above the controls */
 
-अटल पूर्णांक ca0132_alt_slider_ctl_set(काष्ठा hda_codec *codec, hda_nid_t nid,
-			  स्थिर अचिन्हित पूर्णांक *lookup, पूर्णांक idx)
-अणु
-	पूर्णांक i = 0;
-	अचिन्हित पूर्णांक y;
+static int ca0132_alt_slider_ctl_set(struct hda_codec *codec, hda_nid_t nid,
+			  const unsigned int *lookup, int idx)
+{
+	int i = 0;
+	unsigned int y;
 	/*
 	 * For X_BASS, req 2 is actually crossover freq instead of
 	 * effect level
 	 */
-	अगर (nid == X_BASS)
+	if (nid == X_BASS)
 		y = 2;
-	अन्यथा
+	else
 		y = 1;
 
-	snd_hda_घातer_up(codec);
-	अगर (nid == XBASS_XOVER) अणु
-		क्रम (i = 0; i < OUT_EFFECTS_COUNT; i++)
-			अगर (ca0132_effects[i].nid == X_BASS)
-				अवरोध;
+	snd_hda_power_up(codec);
+	if (nid == XBASS_XOVER) {
+		for (i = 0; i < OUT_EFFECTS_COUNT; i++)
+			if (ca0132_effects[i].nid == X_BASS)
+				break;
 
 		dspio_set_param(codec, ca0132_effects[i].mid, 0x20,
 				ca0132_effects[i].reqs[1],
-				&(lookup[idx - 1]), माप(अचिन्हित पूर्णांक));
-	पूर्ण अन्यथा अणु
-		/* Find the actual effect काष्ठाure */
-		क्रम (i = 0; i < OUT_EFFECTS_COUNT; i++)
-			अगर (nid == ca0132_effects[i].nid)
-				अवरोध;
+				&(lookup[idx - 1]), sizeof(unsigned int));
+	} else {
+		/* Find the actual effect structure */
+		for (i = 0; i < OUT_EFFECTS_COUNT; i++)
+			if (nid == ca0132_effects[i].nid)
+				break;
 
 		dspio_set_param(codec, ca0132_effects[i].mid, 0x20,
 				ca0132_effects[i].reqs[y],
-				&(lookup[idx]), माप(अचिन्हित पूर्णांक));
-	पूर्ण
+				&(lookup[idx]), sizeof(unsigned int));
+	}
 
-	snd_hda_घातer_करोwn(codec);
+	snd_hda_power_down(codec);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ca0132_alt_xbass_xover_slider_ctl_get(काष्ठा snd_kcontrol *kcontrol,
-			  काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा hda_codec *codec = snd_kcontrol_chip(kcontrol);
-	काष्ठा ca0132_spec *spec = codec->spec;
-	दीर्घ *valp = ucontrol->value.पूर्णांकeger.value;
+static int ca0132_alt_xbass_xover_slider_ctl_get(struct snd_kcontrol *kcontrol,
+			  struct snd_ctl_elem_value *ucontrol)
+{
+	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
+	struct ca0132_spec *spec = codec->spec;
+	long *valp = ucontrol->value.integer.value;
 	hda_nid_t nid = get_amp_nid(kcontrol);
 
-	अगर (nid == BASS_REसूचीECTION_XOVER)
+	if (nid == BASS_REDIRECTION_XOVER)
 		*valp = spec->bass_redirect_xover_freq;
-	अन्यथा
+	else
 		*valp = spec->xbass_xover_freq;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ca0132_alt_slider_ctl_get(काष्ठा snd_kcontrol *kcontrol,
-			  काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा hda_codec *codec = snd_kcontrol_chip(kcontrol);
-	काष्ठा ca0132_spec *spec = codec->spec;
+static int ca0132_alt_slider_ctl_get(struct snd_kcontrol *kcontrol,
+			  struct snd_ctl_elem_value *ucontrol)
+{
+	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
+	struct ca0132_spec *spec = codec->spec;
 	hda_nid_t nid = get_amp_nid(kcontrol);
-	दीर्घ *valp = ucontrol->value.पूर्णांकeger.value;
-	पूर्णांक idx = nid - OUT_EFFECT_START_NID;
+	long *valp = ucontrol->value.integer.value;
+	int idx = nid - OUT_EFFECT_START_NID;
 
 	*valp = spec->fx_ctl_val[idx];
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * The X-bass crossover starts at 10hz, so the min is 1. The
  * frequency is set in multiples of 10.
  */
-अटल पूर्णांक ca0132_alt_xbass_xover_slider_info(काष्ठा snd_kcontrol *kcontrol,
-		काष्ठा snd_ctl_elem_info *uinfo)
-अणु
+static int ca0132_alt_xbass_xover_slider_info(struct snd_kcontrol *kcontrol,
+		struct snd_ctl_elem_info *uinfo)
+{
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 1;
-	uinfo->value.पूर्णांकeger.min = 1;
-	uinfo->value.पूर्णांकeger.max = 100;
-	uinfo->value.पूर्णांकeger.step = 1;
+	uinfo->value.integer.min = 1;
+	uinfo->value.integer.max = 100;
+	uinfo->value.integer.step = 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ca0132_alt_effect_slider_info(काष्ठा snd_kcontrol *kcontrol,
-		काष्ठा snd_ctl_elem_info *uinfo)
-अणु
-	पूर्णांक chs = get_amp_channels(kcontrol);
+static int ca0132_alt_effect_slider_info(struct snd_kcontrol *kcontrol,
+		struct snd_ctl_elem_info *uinfo)
+{
+	int chs = get_amp_channels(kcontrol);
 
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = chs == 3 ? 2 : 1;
-	uinfo->value.पूर्णांकeger.min = 0;
-	uinfo->value.पूर्णांकeger.max = 100;
-	uinfo->value.पूर्णांकeger.step = 1;
+	uinfo->value.integer.min = 0;
+	uinfo->value.integer.max = 100;
+	uinfo->value.integer.step = 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ca0132_alt_xbass_xover_slider_put(काष्ठा snd_kcontrol *kcontrol,
-				काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा hda_codec *codec = snd_kcontrol_chip(kcontrol);
-	काष्ठा ca0132_spec *spec = codec->spec;
+static int ca0132_alt_xbass_xover_slider_put(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
+	struct ca0132_spec *spec = codec->spec;
 	hda_nid_t nid = get_amp_nid(kcontrol);
-	दीर्घ *valp = ucontrol->value.पूर्णांकeger.value;
-	दीर्घ *cur_val;
-	पूर्णांक idx;
+	long *valp = ucontrol->value.integer.value;
+	long *cur_val;
+	int idx;
 
-	अगर (nid == BASS_REसूचीECTION_XOVER)
+	if (nid == BASS_REDIRECTION_XOVER)
 		cur_val = &spec->bass_redirect_xover_freq;
-	अन्यथा
+	else
 		cur_val = &spec->xbass_xover_freq;
 
 	/* any change? */
-	अगर (*cur_val == *valp)
-		वापस 0;
+	if (*cur_val == *valp)
+		return 0;
 
 	*cur_val = *valp;
 
 	idx = *valp;
-	अगर (nid == BASS_REसूचीECTION_XOVER)
+	if (nid == BASS_REDIRECTION_XOVER)
 		ca0132_alt_bass_redirection_xover_set(codec, *cur_val);
-	अन्यथा
-		ca0132_alt_slider_ctl_set(codec, nid, भग्न_xbass_xover_lookup, idx);
+	else
+		ca0132_alt_slider_ctl_set(codec, nid, float_xbass_xover_lookup, idx);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ca0132_alt_effect_slider_put(काष्ठा snd_kcontrol *kcontrol,
-				काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा hda_codec *codec = snd_kcontrol_chip(kcontrol);
-	काष्ठा ca0132_spec *spec = codec->spec;
+static int ca0132_alt_effect_slider_put(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
+	struct ca0132_spec *spec = codec->spec;
 	hda_nid_t nid = get_amp_nid(kcontrol);
-	दीर्घ *valp = ucontrol->value.पूर्णांकeger.value;
-	पूर्णांक idx;
+	long *valp = ucontrol->value.integer.value;
+	int idx;
 
 	idx = nid - EFFECT_START_NID;
 	/* any change? */
-	अगर (spec->fx_ctl_val[idx] == *valp)
-		वापस 0;
+	if (spec->fx_ctl_val[idx] == *valp)
+		return 0;
 
 	spec->fx_ctl_val[idx] = *valp;
 
 	idx = *valp;
-	ca0132_alt_slider_ctl_set(codec, nid, भग्न_zero_to_one_lookup, idx);
+	ca0132_alt_slider_ctl_set(codec, nid, float_zero_to_one_lookup, idx);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /*
- * Mic Boost Enum क्रम alternative ca0132 codecs. I didn't like that the original
+ * Mic Boost Enum for alternative ca0132 codecs. I didn't like that the original
  * only has off or full 30 dB, and didn't like making a volume slider that has
- * traditional 0-100 in alsamixer that goes in big steps. I like क्रमागत better.
+ * traditional 0-100 in alsamixer that goes in big steps. I like enum better.
  */
-#घोषणा MIC_BOOST_NUM_OF_STEPS 4
-#घोषणा MIC_BOOST_ENUM_MAX_STRLEN 10
+#define MIC_BOOST_NUM_OF_STEPS 4
+#define MIC_BOOST_ENUM_MAX_STRLEN 10
 
-अटल पूर्णांक ca0132_alt_mic_boost_info(काष्ठा snd_kcontrol *kcontrol,
-				 काष्ठा snd_ctl_elem_info *uinfo)
-अणु
-	अक्षर *sfx = "dB";
-	अक्षर namestr[SNDRV_CTL_ELEM_ID_NAME_MAXLEN];
+static int ca0132_alt_mic_boost_info(struct snd_kcontrol *kcontrol,
+				 struct snd_ctl_elem_info *uinfo)
+{
+	char *sfx = "dB";
+	char namestr[SNDRV_CTL_ELEM_ID_NAME_MAXLEN];
 
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_ENUMERATED;
 	uinfo->count = 1;
-	uinfo->value.क्रमागतerated.items = MIC_BOOST_NUM_OF_STEPS;
-	अगर (uinfo->value.क्रमागतerated.item >= MIC_BOOST_NUM_OF_STEPS)
-		uinfo->value.क्रमागतerated.item = MIC_BOOST_NUM_OF_STEPS - 1;
-	प्र_लिखो(namestr, "%d %s", (uinfo->value.क्रमागतerated.item * 10), sfx);
-	म_नकल(uinfo->value.क्रमागतerated.name, namestr);
-	वापस 0;
-पूर्ण
+	uinfo->value.enumerated.items = MIC_BOOST_NUM_OF_STEPS;
+	if (uinfo->value.enumerated.item >= MIC_BOOST_NUM_OF_STEPS)
+		uinfo->value.enumerated.item = MIC_BOOST_NUM_OF_STEPS - 1;
+	sprintf(namestr, "%d %s", (uinfo->value.enumerated.item * 10), sfx);
+	strcpy(uinfo->value.enumerated.name, namestr);
+	return 0;
+}
 
-अटल पूर्णांक ca0132_alt_mic_boost_get(काष्ठा snd_kcontrol *kcontrol,
-				काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा hda_codec *codec = snd_kcontrol_chip(kcontrol);
-	काष्ठा ca0132_spec *spec = codec->spec;
+static int ca0132_alt_mic_boost_get(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
+	struct ca0132_spec *spec = codec->spec;
 
-	ucontrol->value.क्रमागतerated.item[0] = spec->mic_boost_क्रमागत_val;
-	वापस 0;
-पूर्ण
+	ucontrol->value.enumerated.item[0] = spec->mic_boost_enum_val;
+	return 0;
+}
 
-अटल पूर्णांक ca0132_alt_mic_boost_put(काष्ठा snd_kcontrol *kcontrol,
-				काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा hda_codec *codec = snd_kcontrol_chip(kcontrol);
-	काष्ठा ca0132_spec *spec = codec->spec;
-	पूर्णांक sel = ucontrol->value.क्रमागतerated.item[0];
-	अचिन्हित पूर्णांक items = MIC_BOOST_NUM_OF_STEPS;
+static int ca0132_alt_mic_boost_put(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
+	struct ca0132_spec *spec = codec->spec;
+	int sel = ucontrol->value.enumerated.item[0];
+	unsigned int items = MIC_BOOST_NUM_OF_STEPS;
 
-	अगर (sel >= items)
-		वापस 0;
+	if (sel >= items)
+		return 0;
 
 	codec_dbg(codec, "ca0132_alt_mic_boost: boost=%d\n",
 		    sel);
 
-	spec->mic_boost_क्रमागत_val = sel;
+	spec->mic_boost_enum_val = sel;
 
-	अगर (spec->in_क्रमागत_val != REAR_LINE_IN)
-		ca0132_alt_mic_boost_set(codec, spec->mic_boost_क्रमागत_val);
+	if (spec->in_enum_val != REAR_LINE_IN)
+		ca0132_alt_mic_boost_set(codec, spec->mic_boost_enum_val);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /*
  * Sound BlasterX AE-5 Headphone Gain Controls.
  */
-#घोषणा AE5_HEADPHONE_GAIN_MAX 3
-अटल पूर्णांक ae5_headphone_gain_info(काष्ठा snd_kcontrol *kcontrol,
-				 काष्ठा snd_ctl_elem_info *uinfo)
-अणु
-	अक्षर *sfx = " Ohms)";
-	अक्षर namestr[SNDRV_CTL_ELEM_ID_NAME_MAXLEN];
+#define AE5_HEADPHONE_GAIN_MAX 3
+static int ae5_headphone_gain_info(struct snd_kcontrol *kcontrol,
+				 struct snd_ctl_elem_info *uinfo)
+{
+	char *sfx = " Ohms)";
+	char namestr[SNDRV_CTL_ELEM_ID_NAME_MAXLEN];
 
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_ENUMERATED;
 	uinfo->count = 1;
-	uinfo->value.क्रमागतerated.items = AE5_HEADPHONE_GAIN_MAX;
-	अगर (uinfo->value.क्रमागतerated.item >= AE5_HEADPHONE_GAIN_MAX)
-		uinfo->value.क्रमागतerated.item = AE5_HEADPHONE_GAIN_MAX - 1;
-	प्र_लिखो(namestr, "%s %s",
-		ae5_headphone_gain_presets[uinfo->value.क्रमागतerated.item].name,
+	uinfo->value.enumerated.items = AE5_HEADPHONE_GAIN_MAX;
+	if (uinfo->value.enumerated.item >= AE5_HEADPHONE_GAIN_MAX)
+		uinfo->value.enumerated.item = AE5_HEADPHONE_GAIN_MAX - 1;
+	sprintf(namestr, "%s %s",
+		ae5_headphone_gain_presets[uinfo->value.enumerated.item].name,
 		sfx);
-	म_नकल(uinfo->value.क्रमागतerated.name, namestr);
-	वापस 0;
-पूर्ण
+	strcpy(uinfo->value.enumerated.name, namestr);
+	return 0;
+}
 
-अटल पूर्णांक ae5_headphone_gain_get(काष्ठा snd_kcontrol *kcontrol,
-				काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा hda_codec *codec = snd_kcontrol_chip(kcontrol);
-	काष्ठा ca0132_spec *spec = codec->spec;
+static int ae5_headphone_gain_get(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
+	struct ca0132_spec *spec = codec->spec;
 
-	ucontrol->value.क्रमागतerated.item[0] = spec->ae5_headphone_gain_val;
-	वापस 0;
-पूर्ण
+	ucontrol->value.enumerated.item[0] = spec->ae5_headphone_gain_val;
+	return 0;
+}
 
-अटल पूर्णांक ae5_headphone_gain_put(काष्ठा snd_kcontrol *kcontrol,
-				काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा hda_codec *codec = snd_kcontrol_chip(kcontrol);
-	काष्ठा ca0132_spec *spec = codec->spec;
-	पूर्णांक sel = ucontrol->value.क्रमागतerated.item[0];
-	अचिन्हित पूर्णांक items = AE5_HEADPHONE_GAIN_MAX;
+static int ae5_headphone_gain_put(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
+	struct ca0132_spec *spec = codec->spec;
+	int sel = ucontrol->value.enumerated.item[0];
+	unsigned int items = AE5_HEADPHONE_GAIN_MAX;
 
-	अगर (sel >= items)
-		वापस 0;
+	if (sel >= items)
+		return 0;
 
 	codec_dbg(codec, "ae5_headphone_gain: boost=%d\n",
 		    sel);
 
 	spec->ae5_headphone_gain_val = sel;
 
-	अगर (spec->out_क्रमागत_val == HEADPHONE_OUT)
+	if (spec->out_enum_val == HEADPHONE_OUT)
 		ae5_headphone_gain_set(codec, spec->ae5_headphone_gain_val);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /*
- * Sound BlasterX AE-5 sound filter क्रमागतerated control.
+ * Sound BlasterX AE-5 sound filter enumerated control.
  */
-#घोषणा AE5_SOUND_FILTER_MAX 3
+#define AE5_SOUND_FILTER_MAX 3
 
-अटल पूर्णांक ae5_sound_filter_info(काष्ठा snd_kcontrol *kcontrol,
-				 काष्ठा snd_ctl_elem_info *uinfo)
-अणु
-	अक्षर namestr[SNDRV_CTL_ELEM_ID_NAME_MAXLEN];
+static int ae5_sound_filter_info(struct snd_kcontrol *kcontrol,
+				 struct snd_ctl_elem_info *uinfo)
+{
+	char namestr[SNDRV_CTL_ELEM_ID_NAME_MAXLEN];
 
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_ENUMERATED;
 	uinfo->count = 1;
-	uinfo->value.क्रमागतerated.items = AE5_SOUND_FILTER_MAX;
-	अगर (uinfo->value.क्रमागतerated.item >= AE5_SOUND_FILTER_MAX)
-		uinfo->value.क्रमागतerated.item = AE5_SOUND_FILTER_MAX - 1;
-	प्र_लिखो(namestr, "%s",
-			ae5_filter_presets[uinfo->value.क्रमागतerated.item].name);
-	म_नकल(uinfo->value.क्रमागतerated.name, namestr);
-	वापस 0;
-पूर्ण
+	uinfo->value.enumerated.items = AE5_SOUND_FILTER_MAX;
+	if (uinfo->value.enumerated.item >= AE5_SOUND_FILTER_MAX)
+		uinfo->value.enumerated.item = AE5_SOUND_FILTER_MAX - 1;
+	sprintf(namestr, "%s",
+			ae5_filter_presets[uinfo->value.enumerated.item].name);
+	strcpy(uinfo->value.enumerated.name, namestr);
+	return 0;
+}
 
-अटल पूर्णांक ae5_sound_filter_get(काष्ठा snd_kcontrol *kcontrol,
-				काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा hda_codec *codec = snd_kcontrol_chip(kcontrol);
-	काष्ठा ca0132_spec *spec = codec->spec;
+static int ae5_sound_filter_get(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
+	struct ca0132_spec *spec = codec->spec;
 
-	ucontrol->value.क्रमागतerated.item[0] = spec->ae5_filter_val;
-	वापस 0;
-पूर्ण
+	ucontrol->value.enumerated.item[0] = spec->ae5_filter_val;
+	return 0;
+}
 
-अटल पूर्णांक ae5_sound_filter_put(काष्ठा snd_kcontrol *kcontrol,
-				काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा hda_codec *codec = snd_kcontrol_chip(kcontrol);
-	काष्ठा ca0132_spec *spec = codec->spec;
-	पूर्णांक sel = ucontrol->value.क्रमागतerated.item[0];
-	अचिन्हित पूर्णांक items = AE5_SOUND_FILTER_MAX;
+static int ae5_sound_filter_put(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
+	struct ca0132_spec *spec = codec->spec;
+	int sel = ucontrol->value.enumerated.item[0];
+	unsigned int items = AE5_SOUND_FILTER_MAX;
 
-	अगर (sel >= items)
-		वापस 0;
+	if (sel >= items)
+		return 0;
 
 	codec_dbg(codec, "ae5_sound_filter: %s\n",
 			ae5_filter_presets[sel].name);
@@ -5925,1039 +5924,1039 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 	ca0113_mmio_command_set_type2(codec, 0x48, 0x07,
 			ae5_filter_presets[sel].val);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /*
- * Input Select Control क्रम alternative ca0132 codecs. This exists because
- * front microphone has no स्वतः-detect, and we need a way to set the rear
+ * Input Select Control for alternative ca0132 codecs. This exists because
+ * front microphone has no auto-detect, and we need a way to set the rear
  * as line-in
  */
-अटल पूर्णांक ca0132_alt_input_source_info(काष्ठा snd_kcontrol *kcontrol,
-				 काष्ठा snd_ctl_elem_info *uinfo)
-अणु
+static int ca0132_alt_input_source_info(struct snd_kcontrol *kcontrol,
+				 struct snd_ctl_elem_info *uinfo)
+{
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_ENUMERATED;
 	uinfo->count = 1;
-	uinfo->value.क्रमागतerated.items = IN_SRC_NUM_OF_INPUTS;
-	अगर (uinfo->value.क्रमागतerated.item >= IN_SRC_NUM_OF_INPUTS)
-		uinfo->value.क्रमागतerated.item = IN_SRC_NUM_OF_INPUTS - 1;
-	म_नकल(uinfo->value.क्रमागतerated.name,
-			in_src_str[uinfo->value.क्रमागतerated.item]);
-	वापस 0;
-पूर्ण
+	uinfo->value.enumerated.items = IN_SRC_NUM_OF_INPUTS;
+	if (uinfo->value.enumerated.item >= IN_SRC_NUM_OF_INPUTS)
+		uinfo->value.enumerated.item = IN_SRC_NUM_OF_INPUTS - 1;
+	strcpy(uinfo->value.enumerated.name,
+			in_src_str[uinfo->value.enumerated.item]);
+	return 0;
+}
 
-अटल पूर्णांक ca0132_alt_input_source_get(काष्ठा snd_kcontrol *kcontrol,
-				काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा hda_codec *codec = snd_kcontrol_chip(kcontrol);
-	काष्ठा ca0132_spec *spec = codec->spec;
+static int ca0132_alt_input_source_get(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
+	struct ca0132_spec *spec = codec->spec;
 
-	ucontrol->value.क्रमागतerated.item[0] = spec->in_क्रमागत_val;
-	वापस 0;
-पूर्ण
+	ucontrol->value.enumerated.item[0] = spec->in_enum_val;
+	return 0;
+}
 
-अटल पूर्णांक ca0132_alt_input_source_put(काष्ठा snd_kcontrol *kcontrol,
-				काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा hda_codec *codec = snd_kcontrol_chip(kcontrol);
-	काष्ठा ca0132_spec *spec = codec->spec;
-	पूर्णांक sel = ucontrol->value.क्रमागतerated.item[0];
-	अचिन्हित पूर्णांक items = IN_SRC_NUM_OF_INPUTS;
+static int ca0132_alt_input_source_put(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
+	struct ca0132_spec *spec = codec->spec;
+	int sel = ucontrol->value.enumerated.item[0];
+	unsigned int items = IN_SRC_NUM_OF_INPUTS;
 
 	/*
 	 * The AE-7 has no front microphone, so limit items to 2: rear mic and
 	 * line-in.
 	 */
-	अगर (ca0132_quirk(spec) == QUIRK_AE7)
+	if (ca0132_quirk(spec) == QUIRK_AE7)
 		items = 2;
 
-	अगर (sel >= items)
-		वापस 0;
+	if (sel >= items)
+		return 0;
 
 	codec_dbg(codec, "ca0132_alt_input_select: sel=%d, preset=%s\n",
 		    sel, in_src_str[sel]);
 
-	spec->in_क्रमागत_val = sel;
+	spec->in_enum_val = sel;
 
 	ca0132_alt_select_in(codec);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /* Sound Blaster Z Output Select Control */
-अटल पूर्णांक ca0132_alt_output_select_get_info(काष्ठा snd_kcontrol *kcontrol,
-				 काष्ठा snd_ctl_elem_info *uinfo)
-अणु
+static int ca0132_alt_output_select_get_info(struct snd_kcontrol *kcontrol,
+				 struct snd_ctl_elem_info *uinfo)
+{
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_ENUMERATED;
 	uinfo->count = 1;
-	uinfo->value.क्रमागतerated.items = NUM_OF_OUTPUTS;
-	अगर (uinfo->value.क्रमागतerated.item >= NUM_OF_OUTPUTS)
-		uinfo->value.क्रमागतerated.item = NUM_OF_OUTPUTS - 1;
-	म_नकल(uinfo->value.क्रमागतerated.name,
-			out_type_str[uinfo->value.क्रमागतerated.item]);
-	वापस 0;
-पूर्ण
+	uinfo->value.enumerated.items = NUM_OF_OUTPUTS;
+	if (uinfo->value.enumerated.item >= NUM_OF_OUTPUTS)
+		uinfo->value.enumerated.item = NUM_OF_OUTPUTS - 1;
+	strcpy(uinfo->value.enumerated.name,
+			out_type_str[uinfo->value.enumerated.item]);
+	return 0;
+}
 
-अटल पूर्णांक ca0132_alt_output_select_get(काष्ठा snd_kcontrol *kcontrol,
-				काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा hda_codec *codec = snd_kcontrol_chip(kcontrol);
-	काष्ठा ca0132_spec *spec = codec->spec;
+static int ca0132_alt_output_select_get(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
+	struct ca0132_spec *spec = codec->spec;
 
-	ucontrol->value.क्रमागतerated.item[0] = spec->out_क्रमागत_val;
-	वापस 0;
-पूर्ण
+	ucontrol->value.enumerated.item[0] = spec->out_enum_val;
+	return 0;
+}
 
-अटल पूर्णांक ca0132_alt_output_select_put(काष्ठा snd_kcontrol *kcontrol,
-				काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा hda_codec *codec = snd_kcontrol_chip(kcontrol);
-	काष्ठा ca0132_spec *spec = codec->spec;
-	पूर्णांक sel = ucontrol->value.क्रमागतerated.item[0];
-	अचिन्हित पूर्णांक items = NUM_OF_OUTPUTS;
-	अचिन्हित पूर्णांक स्वतः_jack;
+static int ca0132_alt_output_select_put(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
+	struct ca0132_spec *spec = codec->spec;
+	int sel = ucontrol->value.enumerated.item[0];
+	unsigned int items = NUM_OF_OUTPUTS;
+	unsigned int auto_jack;
 
-	अगर (sel >= items)
-		वापस 0;
+	if (sel >= items)
+		return 0;
 
 	codec_dbg(codec, "ca0132_alt_output_select: sel=%d, preset=%s\n",
 		    sel, out_type_str[sel]);
 
-	spec->out_क्रमागत_val = sel;
+	spec->out_enum_val = sel;
 
-	स्वतः_jack = spec->vnode_lचयन[VNID_HP_ASEL - VNODE_START_NID];
+	auto_jack = spec->vnode_lswitch[VNID_HP_ASEL - VNODE_START_NID];
 
-	अगर (!स्वतः_jack)
+	if (!auto_jack)
 		ca0132_alt_select_out(codec);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /* Select surround output type: 2.1, 4.0, 4.1, or 5.1. */
-अटल पूर्णांक ca0132_alt_speaker_channel_cfg_get_info(काष्ठा snd_kcontrol *kcontrol,
-				 काष्ठा snd_ctl_elem_info *uinfo)
-अणु
-	अचिन्हित पूर्णांक items = SPEAKER_CHANNEL_CFG_COUNT;
+static int ca0132_alt_speaker_channel_cfg_get_info(struct snd_kcontrol *kcontrol,
+				 struct snd_ctl_elem_info *uinfo)
+{
+	unsigned int items = SPEAKER_CHANNEL_CFG_COUNT;
 
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_ENUMERATED;
 	uinfo->count = 1;
-	uinfo->value.क्रमागतerated.items = items;
-	अगर (uinfo->value.क्रमागतerated.item >= items)
-		uinfo->value.क्रमागतerated.item = items - 1;
-	म_नकल(uinfo->value.क्रमागतerated.name,
-			speaker_channel_cfgs[uinfo->value.क्रमागतerated.item].name);
-	वापस 0;
-पूर्ण
+	uinfo->value.enumerated.items = items;
+	if (uinfo->value.enumerated.item >= items)
+		uinfo->value.enumerated.item = items - 1;
+	strcpy(uinfo->value.enumerated.name,
+			speaker_channel_cfgs[uinfo->value.enumerated.item].name);
+	return 0;
+}
 
-अटल पूर्णांक ca0132_alt_speaker_channel_cfg_get(काष्ठा snd_kcontrol *kcontrol,
-				काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा hda_codec *codec = snd_kcontrol_chip(kcontrol);
-	काष्ठा ca0132_spec *spec = codec->spec;
+static int ca0132_alt_speaker_channel_cfg_get(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
+	struct ca0132_spec *spec = codec->spec;
 
-	ucontrol->value.क्रमागतerated.item[0] = spec->channel_cfg_val;
-	वापस 0;
-पूर्ण
+	ucontrol->value.enumerated.item[0] = spec->channel_cfg_val;
+	return 0;
+}
 
-अटल पूर्णांक ca0132_alt_speaker_channel_cfg_put(काष्ठा snd_kcontrol *kcontrol,
-				काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा hda_codec *codec = snd_kcontrol_chip(kcontrol);
-	काष्ठा ca0132_spec *spec = codec->spec;
-	पूर्णांक sel = ucontrol->value.क्रमागतerated.item[0];
-	अचिन्हित पूर्णांक items = SPEAKER_CHANNEL_CFG_COUNT;
+static int ca0132_alt_speaker_channel_cfg_put(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
+	struct ca0132_spec *spec = codec->spec;
+	int sel = ucontrol->value.enumerated.item[0];
+	unsigned int items = SPEAKER_CHANNEL_CFG_COUNT;
 
-	अगर (sel >= items)
-		वापस 0;
+	if (sel >= items)
+		return 0;
 
 	codec_dbg(codec, "ca0132_alt_speaker_channels: sel=%d, channels=%s\n",
 		    sel, speaker_channel_cfgs[sel].name);
 
 	spec->channel_cfg_val = sel;
 
-	अगर (spec->out_क्रमागत_val == SPEAKER_OUT)
+	if (spec->out_enum_val == SPEAKER_OUT)
 		ca0132_alt_select_out(codec);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /*
- * Smart Volume output setting control. Three dअगरferent settings, Normal,
+ * Smart Volume output setting control. Three different settings, Normal,
  * which takes the value from the smart volume slider. The two others, loud
  * and night, disregard the slider value and have uneditable values.
  */
-#घोषणा NUM_OF_SVM_SETTINGS 3
-अटल स्थिर अक्षर *स्थिर out_svm_set_क्रमागत_str[3] = अणु"Normal", "Loud", "Night" पूर्ण;
+#define NUM_OF_SVM_SETTINGS 3
+static const char *const out_svm_set_enum_str[3] = {"Normal", "Loud", "Night" };
 
-अटल पूर्णांक ca0132_alt_svm_setting_info(काष्ठा snd_kcontrol *kcontrol,
-				 काष्ठा snd_ctl_elem_info *uinfo)
-अणु
+static int ca0132_alt_svm_setting_info(struct snd_kcontrol *kcontrol,
+				 struct snd_ctl_elem_info *uinfo)
+{
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_ENUMERATED;
 	uinfo->count = 1;
-	uinfo->value.क्रमागतerated.items = NUM_OF_SVM_SETTINGS;
-	अगर (uinfo->value.क्रमागतerated.item >= NUM_OF_SVM_SETTINGS)
-		uinfo->value.क्रमागतerated.item = NUM_OF_SVM_SETTINGS - 1;
-	म_नकल(uinfo->value.क्रमागतerated.name,
-			out_svm_set_क्रमागत_str[uinfo->value.क्रमागतerated.item]);
-	वापस 0;
-पूर्ण
+	uinfo->value.enumerated.items = NUM_OF_SVM_SETTINGS;
+	if (uinfo->value.enumerated.item >= NUM_OF_SVM_SETTINGS)
+		uinfo->value.enumerated.item = NUM_OF_SVM_SETTINGS - 1;
+	strcpy(uinfo->value.enumerated.name,
+			out_svm_set_enum_str[uinfo->value.enumerated.item]);
+	return 0;
+}
 
-अटल पूर्णांक ca0132_alt_svm_setting_get(काष्ठा snd_kcontrol *kcontrol,
-				काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा hda_codec *codec = snd_kcontrol_chip(kcontrol);
-	काष्ठा ca0132_spec *spec = codec->spec;
+static int ca0132_alt_svm_setting_get(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
+	struct ca0132_spec *spec = codec->spec;
 
-	ucontrol->value.क्रमागतerated.item[0] = spec->smart_volume_setting;
-	वापस 0;
-पूर्ण
+	ucontrol->value.enumerated.item[0] = spec->smart_volume_setting;
+	return 0;
+}
 
-अटल पूर्णांक ca0132_alt_svm_setting_put(काष्ठा snd_kcontrol *kcontrol,
-				काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा hda_codec *codec = snd_kcontrol_chip(kcontrol);
-	काष्ठा ca0132_spec *spec = codec->spec;
-	पूर्णांक sel = ucontrol->value.क्रमागतerated.item[0];
-	अचिन्हित पूर्णांक items = NUM_OF_SVM_SETTINGS;
-	अचिन्हित पूर्णांक idx = SMART_VOLUME - EFFECT_START_NID;
-	अचिन्हित पूर्णांक पंचांगp;
+static int ca0132_alt_svm_setting_put(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
+	struct ca0132_spec *spec = codec->spec;
+	int sel = ucontrol->value.enumerated.item[0];
+	unsigned int items = NUM_OF_SVM_SETTINGS;
+	unsigned int idx = SMART_VOLUME - EFFECT_START_NID;
+	unsigned int tmp;
 
-	अगर (sel >= items)
-		वापस 0;
+	if (sel >= items)
+		return 0;
 
 	codec_dbg(codec, "ca0132_alt_svm_setting: sel=%d, preset=%s\n",
-		    sel, out_svm_set_क्रमागत_str[sel]);
+		    sel, out_svm_set_enum_str[sel]);
 
 	spec->smart_volume_setting = sel;
 
-	चयन (sel) अणु
-	हाल 0:
-		पंचांगp = FLOAT_ZERO;
-		अवरोध;
-	हाल 1:
-		पंचांगp = FLOAT_ONE;
-		अवरोध;
-	हाल 2:
-		पंचांगp = FLOAT_TWO;
-		अवरोध;
-	शेष:
-		पंचांगp = FLOAT_ZERO;
-		अवरोध;
-	पूर्ण
+	switch (sel) {
+	case 0:
+		tmp = FLOAT_ZERO;
+		break;
+	case 1:
+		tmp = FLOAT_ONE;
+		break;
+	case 2:
+		tmp = FLOAT_TWO;
+		break;
+	default:
+		tmp = FLOAT_ZERO;
+		break;
+	}
 	/* Req 2 is the Smart Volume Setting req. */
-	dspio_set_uपूर्णांक_param(codec, ca0132_effects[idx].mid,
-			ca0132_effects[idx].reqs[2], पंचांगp);
-	वापस 1;
-पूर्ण
+	dspio_set_uint_param(codec, ca0132_effects[idx].mid,
+			ca0132_effects[idx].reqs[2], tmp);
+	return 1;
+}
 
 /* Sound Blaster Z EQ preset controls */
-अटल पूर्णांक ca0132_alt_eq_preset_info(काष्ठा snd_kcontrol *kcontrol,
-				 काष्ठा snd_ctl_elem_info *uinfo)
-अणु
-	अचिन्हित पूर्णांक items = ARRAY_SIZE(ca0132_alt_eq_presets);
+static int ca0132_alt_eq_preset_info(struct snd_kcontrol *kcontrol,
+				 struct snd_ctl_elem_info *uinfo)
+{
+	unsigned int items = ARRAY_SIZE(ca0132_alt_eq_presets);
 
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_ENUMERATED;
 	uinfo->count = 1;
-	uinfo->value.क्रमागतerated.items = items;
-	अगर (uinfo->value.क्रमागतerated.item >= items)
-		uinfo->value.क्रमागतerated.item = items - 1;
-	म_नकल(uinfo->value.क्रमागतerated.name,
-		ca0132_alt_eq_presets[uinfo->value.क्रमागतerated.item].name);
-	वापस 0;
-पूर्ण
+	uinfo->value.enumerated.items = items;
+	if (uinfo->value.enumerated.item >= items)
+		uinfo->value.enumerated.item = items - 1;
+	strcpy(uinfo->value.enumerated.name,
+		ca0132_alt_eq_presets[uinfo->value.enumerated.item].name);
+	return 0;
+}
 
-अटल पूर्णांक ca0132_alt_eq_preset_get(काष्ठा snd_kcontrol *kcontrol,
-				काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा hda_codec *codec = snd_kcontrol_chip(kcontrol);
-	काष्ठा ca0132_spec *spec = codec->spec;
+static int ca0132_alt_eq_preset_get(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
+	struct ca0132_spec *spec = codec->spec;
 
-	ucontrol->value.क्रमागतerated.item[0] = spec->eq_preset_val;
-	वापस 0;
-पूर्ण
+	ucontrol->value.enumerated.item[0] = spec->eq_preset_val;
+	return 0;
+}
 
-अटल पूर्णांक ca0132_alt_eq_preset_put(काष्ठा snd_kcontrol *kcontrol,
-				काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा hda_codec *codec = snd_kcontrol_chip(kcontrol);
-	काष्ठा ca0132_spec *spec = codec->spec;
-	पूर्णांक i, err = 0;
-	पूर्णांक sel = ucontrol->value.क्रमागतerated.item[0];
-	अचिन्हित पूर्णांक items = ARRAY_SIZE(ca0132_alt_eq_presets);
+static int ca0132_alt_eq_preset_put(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
+	struct ca0132_spec *spec = codec->spec;
+	int i, err = 0;
+	int sel = ucontrol->value.enumerated.item[0];
+	unsigned int items = ARRAY_SIZE(ca0132_alt_eq_presets);
 
-	अगर (sel >= items)
-		वापस 0;
+	if (sel >= items)
+		return 0;
 
 	codec_dbg(codec, "%s: sel=%d, preset=%s\n", __func__, sel,
 			ca0132_alt_eq_presets[sel].name);
 	/*
-	 * Idx 0 is शेष.
-	 * Default needs to qualअगरy with CrystalVoice state.
+	 * Idx 0 is default.
+	 * Default needs to qualify with CrystalVoice state.
 	 */
-	क्रम (i = 0; i < EQ_PRESET_MAX_PARAM_COUNT; i++) अणु
-		err = dspio_set_uपूर्णांक_param(codec, ca0132_alt_eq_क्रमागत.mid,
-				ca0132_alt_eq_क्रमागत.reqs[i],
+	for (i = 0; i < EQ_PRESET_MAX_PARAM_COUNT; i++) {
+		err = dspio_set_uint_param(codec, ca0132_alt_eq_enum.mid,
+				ca0132_alt_eq_enum.reqs[i],
 				ca0132_alt_eq_presets[sel].vals[i]);
-		अगर (err < 0)
-			अवरोध;
-	पूर्ण
+		if (err < 0)
+			break;
+	}
 
-	अगर (err >= 0)
+	if (err >= 0)
 		spec->eq_preset_val = sel;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक ca0132_voicefx_info(काष्ठा snd_kcontrol *kcontrol,
-				 काष्ठा snd_ctl_elem_info *uinfo)
-अणु
-	अचिन्हित पूर्णांक items = ARRAY_SIZE(ca0132_voicefx_presets);
+static int ca0132_voicefx_info(struct snd_kcontrol *kcontrol,
+				 struct snd_ctl_elem_info *uinfo)
+{
+	unsigned int items = ARRAY_SIZE(ca0132_voicefx_presets);
 
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_ENUMERATED;
 	uinfo->count = 1;
-	uinfo->value.क्रमागतerated.items = items;
-	अगर (uinfo->value.क्रमागतerated.item >= items)
-		uinfo->value.क्रमागतerated.item = items - 1;
-	म_नकल(uinfo->value.क्रमागतerated.name,
-	       ca0132_voicefx_presets[uinfo->value.क्रमागतerated.item].name);
-	वापस 0;
-पूर्ण
+	uinfo->value.enumerated.items = items;
+	if (uinfo->value.enumerated.item >= items)
+		uinfo->value.enumerated.item = items - 1;
+	strcpy(uinfo->value.enumerated.name,
+	       ca0132_voicefx_presets[uinfo->value.enumerated.item].name);
+	return 0;
+}
 
-अटल पूर्णांक ca0132_voicefx_get(काष्ठा snd_kcontrol *kcontrol,
-				काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा hda_codec *codec = snd_kcontrol_chip(kcontrol);
-	काष्ठा ca0132_spec *spec = codec->spec;
+static int ca0132_voicefx_get(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
+	struct ca0132_spec *spec = codec->spec;
 
-	ucontrol->value.क्रमागतerated.item[0] = spec->voicefx_val;
-	वापस 0;
-पूर्ण
+	ucontrol->value.enumerated.item[0] = spec->voicefx_val;
+	return 0;
+}
 
-अटल पूर्णांक ca0132_voicefx_put(काष्ठा snd_kcontrol *kcontrol,
-				काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा hda_codec *codec = snd_kcontrol_chip(kcontrol);
-	काष्ठा ca0132_spec *spec = codec->spec;
-	पूर्णांक i, err = 0;
-	पूर्णांक sel = ucontrol->value.क्रमागतerated.item[0];
+static int ca0132_voicefx_put(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
+	struct ca0132_spec *spec = codec->spec;
+	int i, err = 0;
+	int sel = ucontrol->value.enumerated.item[0];
 
-	अगर (sel >= ARRAY_SIZE(ca0132_voicefx_presets))
-		वापस 0;
+	if (sel >= ARRAY_SIZE(ca0132_voicefx_presets))
+		return 0;
 
 	codec_dbg(codec, "ca0132_voicefx_put: sel=%d, preset=%s\n",
 		    sel, ca0132_voicefx_presets[sel].name);
 
 	/*
-	 * Idx 0 is शेष.
-	 * Default needs to qualअगरy with CrystalVoice state.
+	 * Idx 0 is default.
+	 * Default needs to qualify with CrystalVoice state.
 	 */
-	क्रम (i = 0; i < VOICEFX_MAX_PARAM_COUNT; i++) अणु
-		err = dspio_set_uपूर्णांक_param(codec, ca0132_voicefx.mid,
+	for (i = 0; i < VOICEFX_MAX_PARAM_COUNT; i++) {
+		err = dspio_set_uint_param(codec, ca0132_voicefx.mid,
 				ca0132_voicefx.reqs[i],
 				ca0132_voicefx_presets[sel].vals[i]);
-		अगर (err < 0)
-			अवरोध;
-	पूर्ण
+		if (err < 0)
+			break;
+	}
 
-	अगर (err >= 0) अणु
+	if (err >= 0) {
 		spec->voicefx_val = sel;
 		/* enable voice fx */
 		ca0132_voicefx_set(codec, (sel ? 1 : 0));
-	पूर्ण
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक ca0132_चयन_get(काष्ठा snd_kcontrol *kcontrol,
-				काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा hda_codec *codec = snd_kcontrol_chip(kcontrol);
-	काष्ठा ca0132_spec *spec = codec->spec;
+static int ca0132_switch_get(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
+	struct ca0132_spec *spec = codec->spec;
 	hda_nid_t nid = get_amp_nid(kcontrol);
-	पूर्णांक ch = get_amp_channels(kcontrol);
-	दीर्घ *valp = ucontrol->value.पूर्णांकeger.value;
+	int ch = get_amp_channels(kcontrol);
+	long *valp = ucontrol->value.integer.value;
 
 	/* vnode */
-	अगर ((nid >= VNODE_START_NID) && (nid < VNODE_END_NID)) अणु
-		अगर (ch & 1) अणु
-			*valp = spec->vnode_lचयन[nid - VNODE_START_NID];
+	if ((nid >= VNODE_START_NID) && (nid < VNODE_END_NID)) {
+		if (ch & 1) {
+			*valp = spec->vnode_lswitch[nid - VNODE_START_NID];
 			valp++;
-		पूर्ण
-		अगर (ch & 2) अणु
-			*valp = spec->vnode_rचयन[nid - VNODE_START_NID];
+		}
+		if (ch & 2) {
+			*valp = spec->vnode_rswitch[nid - VNODE_START_NID];
 			valp++;
-		पूर्ण
-		वापस 0;
-	पूर्ण
+		}
+		return 0;
+	}
 
 	/* effects, include PE and CrystalVoice */
-	अगर ((nid >= EFFECT_START_NID) && (nid < EFFECT_END_NID)) अणु
-		*valp = spec->effects_चयन[nid - EFFECT_START_NID];
-		वापस 0;
-	पूर्ण
+	if ((nid >= EFFECT_START_NID) && (nid < EFFECT_END_NID)) {
+		*valp = spec->effects_switch[nid - EFFECT_START_NID];
+		return 0;
+	}
 
 	/* mic boost */
-	अगर (nid == spec->input_pins[0]) अणु
+	if (nid == spec->input_pins[0]) {
 		*valp = spec->cur_mic_boost;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (nid == ZXR_HEADPHONE_GAIN) अणु
+	if (nid == ZXR_HEADPHONE_GAIN) {
 		*valp = spec->zxr_gain_set;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (nid == SPEAKER_FULL_RANGE_FRONT || nid == SPEAKER_FULL_RANGE_REAR) अणु
+	if (nid == SPEAKER_FULL_RANGE_FRONT || nid == SPEAKER_FULL_RANGE_REAR) {
 		*valp = spec->speaker_range_val[nid - SPEAKER_FULL_RANGE_FRONT];
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (nid == BASS_REसूचीECTION) अणु
+	if (nid == BASS_REDIRECTION) {
 		*valp = spec->bass_redirection_val;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ca0132_चयन_put(काष्ठा snd_kcontrol *kcontrol,
-			     काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा hda_codec *codec = snd_kcontrol_chip(kcontrol);
-	काष्ठा ca0132_spec *spec = codec->spec;
+static int ca0132_switch_put(struct snd_kcontrol *kcontrol,
+			     struct snd_ctl_elem_value *ucontrol)
+{
+	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
+	struct ca0132_spec *spec = codec->spec;
 	hda_nid_t nid = get_amp_nid(kcontrol);
-	पूर्णांक ch = get_amp_channels(kcontrol);
-	दीर्घ *valp = ucontrol->value.पूर्णांकeger.value;
-	पूर्णांक changed = 1;
+	int ch = get_amp_channels(kcontrol);
+	long *valp = ucontrol->value.integer.value;
+	int changed = 1;
 
 	codec_dbg(codec, "ca0132_switch_put: nid=0x%x, val=%ld\n",
 		    nid, *valp);
 
-	snd_hda_घातer_up(codec);
+	snd_hda_power_up(codec);
 	/* vnode */
-	अगर ((nid >= VNODE_START_NID) && (nid < VNODE_END_NID)) अणु
-		अगर (ch & 1) अणु
-			spec->vnode_lचयन[nid - VNODE_START_NID] = *valp;
+	if ((nid >= VNODE_START_NID) && (nid < VNODE_END_NID)) {
+		if (ch & 1) {
+			spec->vnode_lswitch[nid - VNODE_START_NID] = *valp;
 			valp++;
-		पूर्ण
-		अगर (ch & 2) अणु
-			spec->vnode_rचयन[nid - VNODE_START_NID] = *valp;
+		}
+		if (ch & 2) {
+			spec->vnode_rswitch[nid - VNODE_START_NID] = *valp;
 			valp++;
-		पूर्ण
-		changed = ca0132_vnode_चयन_set(kcontrol, ucontrol);
-		जाओ निकास;
-	पूर्ण
+		}
+		changed = ca0132_vnode_switch_set(kcontrol, ucontrol);
+		goto exit;
+	}
 
 	/* PE */
-	अगर (nid == PLAY_ENHANCEMENT) अणु
-		spec->effects_चयन[nid - EFFECT_START_NID] = *valp;
-		changed = ca0132_pe_चयन_set(codec);
-		जाओ निकास;
-	पूर्ण
+	if (nid == PLAY_ENHANCEMENT) {
+		spec->effects_switch[nid - EFFECT_START_NID] = *valp;
+		changed = ca0132_pe_switch_set(codec);
+		goto exit;
+	}
 
 	/* CrystalVoice */
-	अगर (nid == CRYSTAL_VOICE) अणु
-		spec->effects_चयन[nid - EFFECT_START_NID] = *valp;
-		changed = ca0132_cvoice_चयन_set(codec);
-		जाओ निकास;
-	पूर्ण
+	if (nid == CRYSTAL_VOICE) {
+		spec->effects_switch[nid - EFFECT_START_NID] = *valp;
+		changed = ca0132_cvoice_switch_set(codec);
+		goto exit;
+	}
 
 	/* out and in effects */
-	अगर (((nid >= OUT_EFFECT_START_NID) && (nid < OUT_EFFECT_END_NID)) ||
-	    ((nid >= IN_EFFECT_START_NID) && (nid < IN_EFFECT_END_NID))) अणु
-		spec->effects_चयन[nid - EFFECT_START_NID] = *valp;
+	if (((nid >= OUT_EFFECT_START_NID) && (nid < OUT_EFFECT_END_NID)) ||
+	    ((nid >= IN_EFFECT_START_NID) && (nid < IN_EFFECT_END_NID))) {
+		spec->effects_switch[nid - EFFECT_START_NID] = *valp;
 		changed = ca0132_effects_set(codec, nid, *valp);
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	/* mic boost */
-	अगर (nid == spec->input_pins[0]) अणु
+	if (nid == spec->input_pins[0]) {
 		spec->cur_mic_boost = *valp;
-		अगर (ca0132_use_alt_functions(spec)) अणु
-			अगर (spec->in_क्रमागत_val != REAR_LINE_IN)
+		if (ca0132_use_alt_functions(spec)) {
+			if (spec->in_enum_val != REAR_LINE_IN)
 				changed = ca0132_mic_boost_set(codec, *valp);
-		पूर्ण अन्यथा अणु
-			/* Mic boost करोes not apply to Digital Mic */
-			अगर (spec->cur_mic_type != DIGITAL_MIC)
+		} else {
+			/* Mic boost does not apply to Digital Mic */
+			if (spec->cur_mic_type != DIGITAL_MIC)
 				changed = ca0132_mic_boost_set(codec, *valp);
-		पूर्ण
+		}
 
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	अगर (nid == ZXR_HEADPHONE_GAIN) अणु
+	if (nid == ZXR_HEADPHONE_GAIN) {
 		spec->zxr_gain_set = *valp;
-		अगर (spec->cur_out_type == HEADPHONE_OUT)
+		if (spec->cur_out_type == HEADPHONE_OUT)
 			changed = zxr_headphone_gain_set(codec, *valp);
-		अन्यथा
+		else
 			changed = 0;
 
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	अगर (nid == SPEAKER_FULL_RANGE_FRONT || nid == SPEAKER_FULL_RANGE_REAR) अणु
+	if (nid == SPEAKER_FULL_RANGE_FRONT || nid == SPEAKER_FULL_RANGE_REAR) {
 		spec->speaker_range_val[nid - SPEAKER_FULL_RANGE_FRONT] = *valp;
-		अगर (spec->cur_out_type == SPEAKER_OUT)
+		if (spec->cur_out_type == SPEAKER_OUT)
 			ca0132_alt_set_full_range_speaker(codec);
 
 		changed = 0;
-	पूर्ण
+	}
 
-	अगर (nid == BASS_REसूचीECTION) अणु
+	if (nid == BASS_REDIRECTION) {
 		spec->bass_redirection_val = *valp;
-		अगर (spec->cur_out_type == SPEAKER_OUT)
+		if (spec->cur_out_type == SPEAKER_OUT)
 			ca0132_alt_surround_set_bass_redirection(codec, *valp);
 
 		changed = 0;
-	पूर्ण
+	}
 
-निकास:
-	snd_hda_घातer_करोwn(codec);
-	वापस changed;
-पूर्ण
+exit:
+	snd_hda_power_down(codec);
+	return changed;
+}
 
 /*
  * Volume related
  */
 /*
- * Sets the पूर्णांकernal DSP decibel level to match the DAC क्रम output, and the
- * ADC क्रम input. Currently only the SBZ sets dsp capture volume level, and
+ * Sets the internal DSP decibel level to match the DAC for output, and the
+ * ADC for input. Currently only the SBZ sets dsp capture volume level, and
  * all alternative codecs set DSP playback volume.
  */
-अटल व्योम ca0132_alt_dsp_volume_put(काष्ठा hda_codec *codec, hda_nid_t nid)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	अचिन्हित पूर्णांक dsp_dir;
-	अचिन्हित पूर्णांक lookup_val;
+static void ca0132_alt_dsp_volume_put(struct hda_codec *codec, hda_nid_t nid)
+{
+	struct ca0132_spec *spec = codec->spec;
+	unsigned int dsp_dir;
+	unsigned int lookup_val;
 
-	अगर (nid == VNID_SPK)
+	if (nid == VNID_SPK)
 		dsp_dir = DSP_VOL_OUT;
-	अन्यथा
+	else
 		dsp_dir = DSP_VOL_IN;
 
 	lookup_val = spec->vnode_lvol[nid - VNODE_START_NID];
 
-	dspio_set_uपूर्णांक_param(codec,
+	dspio_set_uint_param(codec,
 		ca0132_alt_vol_ctls[dsp_dir].mid,
 		ca0132_alt_vol_ctls[dsp_dir].reqs[0],
-		भग्न_vol_db_lookup[lookup_val]);
+		float_vol_db_lookup[lookup_val]);
 
 	lookup_val = spec->vnode_rvol[nid - VNODE_START_NID];
 
-	dspio_set_uपूर्णांक_param(codec,
+	dspio_set_uint_param(codec,
 		ca0132_alt_vol_ctls[dsp_dir].mid,
 		ca0132_alt_vol_ctls[dsp_dir].reqs[1],
-		भग्न_vol_db_lookup[lookup_val]);
+		float_vol_db_lookup[lookup_val]);
 
-	dspio_set_uपूर्णांक_param(codec,
+	dspio_set_uint_param(codec,
 		ca0132_alt_vol_ctls[dsp_dir].mid,
 		ca0132_alt_vol_ctls[dsp_dir].reqs[2], FLOAT_ZERO);
-पूर्ण
+}
 
-अटल पूर्णांक ca0132_volume_info(काष्ठा snd_kcontrol *kcontrol,
-			      काष्ठा snd_ctl_elem_info *uinfo)
-अणु
-	काष्ठा hda_codec *codec = snd_kcontrol_chip(kcontrol);
-	काष्ठा ca0132_spec *spec = codec->spec;
+static int ca0132_volume_info(struct snd_kcontrol *kcontrol,
+			      struct snd_ctl_elem_info *uinfo)
+{
+	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
+	struct ca0132_spec *spec = codec->spec;
 	hda_nid_t nid = get_amp_nid(kcontrol);
-	पूर्णांक ch = get_amp_channels(kcontrol);
-	पूर्णांक dir = get_amp_direction(kcontrol);
-	अचिन्हित दीर्घ pval;
-	पूर्णांक err;
+	int ch = get_amp_channels(kcontrol);
+	int dir = get_amp_direction(kcontrol);
+	unsigned long pval;
+	int err;
 
-	चयन (nid) अणु
-	हाल VNID_SPK:
+	switch (nid) {
+	case VNID_SPK:
 		/* follow shared_out info */
 		nid = spec->shared_out_nid;
 		mutex_lock(&codec->control_mutex);
-		pval = kcontrol->निजी_value;
-		kcontrol->निजी_value = HDA_COMPOSE_AMP_VAL(nid, ch, 0, dir);
+		pval = kcontrol->private_value;
+		kcontrol->private_value = HDA_COMPOSE_AMP_VAL(nid, ch, 0, dir);
 		err = snd_hda_mixer_amp_volume_info(kcontrol, uinfo);
-		kcontrol->निजी_value = pval;
+		kcontrol->private_value = pval;
 		mutex_unlock(&codec->control_mutex);
-		अवरोध;
-	हाल VNID_MIC:
+		break;
+	case VNID_MIC:
 		/* follow shared_mic info */
 		nid = spec->shared_mic_nid;
 		mutex_lock(&codec->control_mutex);
-		pval = kcontrol->निजी_value;
-		kcontrol->निजी_value = HDA_COMPOSE_AMP_VAL(nid, ch, 0, dir);
+		pval = kcontrol->private_value;
+		kcontrol->private_value = HDA_COMPOSE_AMP_VAL(nid, ch, 0, dir);
 		err = snd_hda_mixer_amp_volume_info(kcontrol, uinfo);
-		kcontrol->निजी_value = pval;
+		kcontrol->private_value = pval;
 		mutex_unlock(&codec->control_mutex);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		err = snd_hda_mixer_amp_volume_info(kcontrol, uinfo);
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
-अटल पूर्णांक ca0132_volume_get(काष्ठा snd_kcontrol *kcontrol,
-				काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा hda_codec *codec = snd_kcontrol_chip(kcontrol);
-	काष्ठा ca0132_spec *spec = codec->spec;
+static int ca0132_volume_get(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
+	struct ca0132_spec *spec = codec->spec;
 	hda_nid_t nid = get_amp_nid(kcontrol);
-	पूर्णांक ch = get_amp_channels(kcontrol);
-	दीर्घ *valp = ucontrol->value.पूर्णांकeger.value;
+	int ch = get_amp_channels(kcontrol);
+	long *valp = ucontrol->value.integer.value;
 
 	/* store the left and right volume */
-	अगर (ch & 1) अणु
+	if (ch & 1) {
 		*valp = spec->vnode_lvol[nid - VNODE_START_NID];
 		valp++;
-	पूर्ण
-	अगर (ch & 2) अणु
+	}
+	if (ch & 2) {
 		*valp = spec->vnode_rvol[nid - VNODE_START_NID];
 		valp++;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक ca0132_volume_put(काष्ठा snd_kcontrol *kcontrol,
-				काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा hda_codec *codec = snd_kcontrol_chip(kcontrol);
-	काष्ठा ca0132_spec *spec = codec->spec;
+static int ca0132_volume_put(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
+	struct ca0132_spec *spec = codec->spec;
 	hda_nid_t nid = get_amp_nid(kcontrol);
-	पूर्णांक ch = get_amp_channels(kcontrol);
-	दीर्घ *valp = ucontrol->value.पूर्णांकeger.value;
+	int ch = get_amp_channels(kcontrol);
+	long *valp = ucontrol->value.integer.value;
 	hda_nid_t shared_nid = 0;
 	bool effective;
-	पूर्णांक changed = 1;
+	int changed = 1;
 
 	/* store the left and right volume */
-	अगर (ch & 1) अणु
+	if (ch & 1) {
 		spec->vnode_lvol[nid - VNODE_START_NID] = *valp;
 		valp++;
-	पूर्ण
-	अगर (ch & 2) अणु
+	}
+	if (ch & 2) {
 		spec->vnode_rvol[nid - VNODE_START_NID] = *valp;
 		valp++;
-	पूर्ण
+	}
 
-	/* अगर effective conditions, then update hw immediately. */
+	/* if effective conditions, then update hw immediately. */
 	effective = ca0132_is_vnode_effective(codec, nid, &shared_nid);
-	अगर (effective) अणु
-		पूर्णांक dir = get_amp_direction(kcontrol);
-		अचिन्हित दीर्घ pval;
+	if (effective) {
+		int dir = get_amp_direction(kcontrol);
+		unsigned long pval;
 
-		snd_hda_घातer_up(codec);
+		snd_hda_power_up(codec);
 		mutex_lock(&codec->control_mutex);
-		pval = kcontrol->निजी_value;
-		kcontrol->निजी_value = HDA_COMPOSE_AMP_VAL(shared_nid, ch,
+		pval = kcontrol->private_value;
+		kcontrol->private_value = HDA_COMPOSE_AMP_VAL(shared_nid, ch,
 								0, dir);
 		changed = snd_hda_mixer_amp_volume_put(kcontrol, ucontrol);
-		kcontrol->निजी_value = pval;
+		kcontrol->private_value = pval;
 		mutex_unlock(&codec->control_mutex);
-		snd_hda_घातer_करोwn(codec);
-	पूर्ण
+		snd_hda_power_down(codec);
+	}
 
-	वापस changed;
-पूर्ण
+	return changed;
+}
 
 /*
- * This function is the same as the one above, because using an अगर statement
- * inside of the above volume control क्रम the DSP volume would cause too much
+ * This function is the same as the one above, because using an if statement
+ * inside of the above volume control for the DSP volume would cause too much
  * lag. This is a lot more smooth.
  */
-अटल पूर्णांक ca0132_alt_volume_put(काष्ठा snd_kcontrol *kcontrol,
-				काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा hda_codec *codec = snd_kcontrol_chip(kcontrol);
-	काष्ठा ca0132_spec *spec = codec->spec;
+static int ca0132_alt_volume_put(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
+	struct ca0132_spec *spec = codec->spec;
 	hda_nid_t nid = get_amp_nid(kcontrol);
-	पूर्णांक ch = get_amp_channels(kcontrol);
-	दीर्घ *valp = ucontrol->value.पूर्णांकeger.value;
+	int ch = get_amp_channels(kcontrol);
+	long *valp = ucontrol->value.integer.value;
 	hda_nid_t vnid = 0;
-	पूर्णांक changed;
+	int changed;
 
-	चयन (nid) अणु
-	हाल 0x02:
+	switch (nid) {
+	case 0x02:
 		vnid = VNID_SPK;
-		अवरोध;
-	हाल 0x07:
+		break;
+	case 0x07:
 		vnid = VNID_MIC;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	/* store the left and right volume */
-	अगर (ch & 1) अणु
+	if (ch & 1) {
 		spec->vnode_lvol[vnid - VNODE_START_NID] = *valp;
 		valp++;
-	पूर्ण
-	अगर (ch & 2) अणु
+	}
+	if (ch & 2) {
 		spec->vnode_rvol[vnid - VNODE_START_NID] = *valp;
 		valp++;
-	पूर्ण
+	}
 
-	snd_hda_घातer_up(codec);
+	snd_hda_power_up(codec);
 	ca0132_alt_dsp_volume_put(codec, vnid);
 	mutex_lock(&codec->control_mutex);
 	changed = snd_hda_mixer_amp_volume_put(kcontrol, ucontrol);
 	mutex_unlock(&codec->control_mutex);
-	snd_hda_घातer_करोwn(codec);
+	snd_hda_power_down(codec);
 
-	वापस changed;
-पूर्ण
+	return changed;
+}
 
-अटल पूर्णांक ca0132_volume_tlv(काष्ठा snd_kcontrol *kcontrol, पूर्णांक op_flag,
-			     अचिन्हित पूर्णांक size, अचिन्हित पूर्णांक __user *tlv)
-अणु
-	काष्ठा hda_codec *codec = snd_kcontrol_chip(kcontrol);
-	काष्ठा ca0132_spec *spec = codec->spec;
+static int ca0132_volume_tlv(struct snd_kcontrol *kcontrol, int op_flag,
+			     unsigned int size, unsigned int __user *tlv)
+{
+	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
+	struct ca0132_spec *spec = codec->spec;
 	hda_nid_t nid = get_amp_nid(kcontrol);
-	पूर्णांक ch = get_amp_channels(kcontrol);
-	पूर्णांक dir = get_amp_direction(kcontrol);
-	अचिन्हित दीर्घ pval;
-	पूर्णांक err;
+	int ch = get_amp_channels(kcontrol);
+	int dir = get_amp_direction(kcontrol);
+	unsigned long pval;
+	int err;
 
-	चयन (nid) अणु
-	हाल VNID_SPK:
+	switch (nid) {
+	case VNID_SPK:
 		/* follow shared_out tlv */
 		nid = spec->shared_out_nid;
 		mutex_lock(&codec->control_mutex);
-		pval = kcontrol->निजी_value;
-		kcontrol->निजी_value = HDA_COMPOSE_AMP_VAL(nid, ch, 0, dir);
+		pval = kcontrol->private_value;
+		kcontrol->private_value = HDA_COMPOSE_AMP_VAL(nid, ch, 0, dir);
 		err = snd_hda_mixer_amp_tlv(kcontrol, op_flag, size, tlv);
-		kcontrol->निजी_value = pval;
+		kcontrol->private_value = pval;
 		mutex_unlock(&codec->control_mutex);
-		अवरोध;
-	हाल VNID_MIC:
+		break;
+	case VNID_MIC:
 		/* follow shared_mic tlv */
 		nid = spec->shared_mic_nid;
 		mutex_lock(&codec->control_mutex);
-		pval = kcontrol->निजी_value;
-		kcontrol->निजी_value = HDA_COMPOSE_AMP_VAL(nid, ch, 0, dir);
+		pval = kcontrol->private_value;
+		kcontrol->private_value = HDA_COMPOSE_AMP_VAL(nid, ch, 0, dir);
 		err = snd_hda_mixer_amp_tlv(kcontrol, op_flag, size, tlv);
-		kcontrol->निजी_value = pval;
+		kcontrol->private_value = pval;
 		mutex_unlock(&codec->control_mutex);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		err = snd_hda_mixer_amp_tlv(kcontrol, op_flag, size, tlv);
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
-/* Add volume slider control क्रम effect level */
-अटल पूर्णांक ca0132_alt_add_effect_slider(काष्ठा hda_codec *codec, hda_nid_t nid,
-					स्थिर अक्षर *pfx, पूर्णांक dir)
-अणु
-	अक्षर namestr[SNDRV_CTL_ELEM_ID_NAME_MAXLEN];
-	पूर्णांक type = dir ? HDA_INPUT : HDA_OUTPUT;
-	काष्ठा snd_kcontrol_new knew =
+/* Add volume slider control for effect level */
+static int ca0132_alt_add_effect_slider(struct hda_codec *codec, hda_nid_t nid,
+					const char *pfx, int dir)
+{
+	char namestr[SNDRV_CTL_ELEM_ID_NAME_MAXLEN];
+	int type = dir ? HDA_INPUT : HDA_OUTPUT;
+	struct snd_kcontrol_new knew =
 		HDA_CODEC_VOLUME_MONO(namestr, nid, 1, 0, type);
 
-	प्र_लिखो(namestr, "FX: %s %s Volume", pfx, dirstr[dir]);
+	sprintf(namestr, "FX: %s %s Volume", pfx, dirstr[dir]);
 
-	knew.tlv.c = शून्य;
+	knew.tlv.c = NULL;
 
-	चयन (nid) अणु
-	हाल XBASS_XOVER:
+	switch (nid) {
+	case XBASS_XOVER:
 		knew.info = ca0132_alt_xbass_xover_slider_info;
 		knew.get = ca0132_alt_xbass_xover_slider_ctl_get;
 		knew.put = ca0132_alt_xbass_xover_slider_put;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		knew.info = ca0132_alt_effect_slider_info;
 		knew.get = ca0132_alt_slider_ctl_get;
 		knew.put = ca0132_alt_effect_slider_put;
-		knew.निजी_value =
+		knew.private_value =
 			HDA_COMPOSE_AMP_VAL(nid, 1, 0, type);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस snd_hda_ctl_add(codec, nid, snd_ctl_new1(&knew, codec));
-पूर्ण
+	return snd_hda_ctl_add(codec, nid, snd_ctl_new1(&knew, codec));
+}
 
 /*
- * Added FX: prefix क्रम the alternative codecs, because otherwise the surround
+ * Added FX: prefix for the alternative codecs, because otherwise the surround
  * effect would conflict with the Surround sound volume control. Also seems more
- * clear as to what the चयनes करो. Left alone क्रम others.
+ * clear as to what the switches do. Left alone for others.
  */
-अटल पूर्णांक add_fx_चयन(काष्ठा hda_codec *codec, hda_nid_t nid,
-			 स्थिर अक्षर *pfx, पूर्णांक dir)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	अक्षर namestr[SNDRV_CTL_ELEM_ID_NAME_MAXLEN];
-	पूर्णांक type = dir ? HDA_INPUT : HDA_OUTPUT;
-	काष्ठा snd_kcontrol_new knew =
+static int add_fx_switch(struct hda_codec *codec, hda_nid_t nid,
+			 const char *pfx, int dir)
+{
+	struct ca0132_spec *spec = codec->spec;
+	char namestr[SNDRV_CTL_ELEM_ID_NAME_MAXLEN];
+	int type = dir ? HDA_INPUT : HDA_OUTPUT;
+	struct snd_kcontrol_new knew =
 		CA0132_CODEC_MUTE_MONO(namestr, nid, 1, type);
-	/* If using alt_controls, add FX: prefix. But, करोn't add FX:
+	/* If using alt_controls, add FX: prefix. But, don't add FX:
 	 * prefix to OutFX or InFX enable controls.
 	 */
-	अगर (ca0132_use_alt_controls(spec) && (nid <= IN_EFFECT_END_NID))
-		प्र_लिखो(namestr, "FX: %s %s Switch", pfx, dirstr[dir]);
-	अन्यथा
-		प्र_लिखो(namestr, "%s %s Switch", pfx, dirstr[dir]);
+	if (ca0132_use_alt_controls(spec) && (nid <= IN_EFFECT_END_NID))
+		sprintf(namestr, "FX: %s %s Switch", pfx, dirstr[dir]);
+	else
+		sprintf(namestr, "%s %s Switch", pfx, dirstr[dir]);
 
-	वापस snd_hda_ctl_add(codec, nid, snd_ctl_new1(&knew, codec));
-पूर्ण
+	return snd_hda_ctl_add(codec, nid, snd_ctl_new1(&knew, codec));
+}
 
-अटल पूर्णांक add_voicefx(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा snd_kcontrol_new knew =
+static int add_voicefx(struct hda_codec *codec)
+{
+	struct snd_kcontrol_new knew =
 		HDA_CODEC_MUTE_MONO(ca0132_voicefx.name,
 				    VOICEFX, 1, 0, HDA_INPUT);
 	knew.info = ca0132_voicefx_info;
 	knew.get = ca0132_voicefx_get;
 	knew.put = ca0132_voicefx_put;
-	वापस snd_hda_ctl_add(codec, VOICEFX, snd_ctl_new1(&knew, codec));
-पूर्ण
+	return snd_hda_ctl_add(codec, VOICEFX, snd_ctl_new1(&knew, codec));
+}
 
 /* Create the EQ Preset control */
-अटल पूर्णांक add_ca0132_alt_eq_presets(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा snd_kcontrol_new knew =
-		HDA_CODEC_MUTE_MONO(ca0132_alt_eq_क्रमागत.name,
+static int add_ca0132_alt_eq_presets(struct hda_codec *codec)
+{
+	struct snd_kcontrol_new knew =
+		HDA_CODEC_MUTE_MONO(ca0132_alt_eq_enum.name,
 				    EQ_PRESET_ENUM, 1, 0, HDA_OUTPUT);
 	knew.info = ca0132_alt_eq_preset_info;
 	knew.get = ca0132_alt_eq_preset_get;
 	knew.put = ca0132_alt_eq_preset_put;
-	वापस snd_hda_ctl_add(codec, EQ_PRESET_ENUM,
+	return snd_hda_ctl_add(codec, EQ_PRESET_ENUM,
 				snd_ctl_new1(&knew, codec));
-पूर्ण
+}
 
 /*
- * Add क्रमागतerated control क्रम the three dअगरferent settings of the smart volume
+ * Add enumerated control for the three different settings of the smart volume
  * output effect. Normal just uses the slider value, and loud and night are
  * their own things that ignore that value.
  */
-अटल पूर्णांक ca0132_alt_add_svm_क्रमागत(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा snd_kcontrol_new knew =
+static int ca0132_alt_add_svm_enum(struct hda_codec *codec)
+{
+	struct snd_kcontrol_new knew =
 		HDA_CODEC_MUTE_MONO("FX: Smart Volume Setting",
 				    SMART_VOLUME_ENUM, 1, 0, HDA_OUTPUT);
 	knew.info = ca0132_alt_svm_setting_info;
 	knew.get = ca0132_alt_svm_setting_get;
 	knew.put = ca0132_alt_svm_setting_put;
-	वापस snd_hda_ctl_add(codec, SMART_VOLUME_ENUM,
+	return snd_hda_ctl_add(codec, SMART_VOLUME_ENUM,
 				snd_ctl_new1(&knew, codec));
 
-पूर्ण
+}
 
 /*
- * Create an Output Select क्रमागतerated control क्रम codecs with surround
+ * Create an Output Select enumerated control for codecs with surround
  * out capabilities.
  */
-अटल पूर्णांक ca0132_alt_add_output_क्रमागत(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा snd_kcontrol_new knew =
+static int ca0132_alt_add_output_enum(struct hda_codec *codec)
+{
+	struct snd_kcontrol_new knew =
 		HDA_CODEC_MUTE_MONO("Output Select",
 				    OUTPUT_SOURCE_ENUM, 1, 0, HDA_OUTPUT);
 	knew.info = ca0132_alt_output_select_get_info;
 	knew.get = ca0132_alt_output_select_get;
 	knew.put = ca0132_alt_output_select_put;
-	वापस snd_hda_ctl_add(codec, OUTPUT_SOURCE_ENUM,
+	return snd_hda_ctl_add(codec, OUTPUT_SOURCE_ENUM,
 				snd_ctl_new1(&knew, codec));
-पूर्ण
+}
 
 /*
- * Add a control क्रम selecting channel count on speaker output. Setting this
- * allows the DSP to करो bass redirection and channel upmixing on surround
+ * Add a control for selecting channel count on speaker output. Setting this
+ * allows the DSP to do bass redirection and channel upmixing on surround
  * configurations.
  */
-अटल पूर्णांक ca0132_alt_add_speaker_channel_cfg_क्रमागत(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा snd_kcontrol_new knew =
+static int ca0132_alt_add_speaker_channel_cfg_enum(struct hda_codec *codec)
+{
+	struct snd_kcontrol_new knew =
 		HDA_CODEC_MUTE_MONO("Surround Channel Config",
 				    SPEAKER_CHANNEL_CFG_ENUM, 1, 0, HDA_OUTPUT);
 	knew.info = ca0132_alt_speaker_channel_cfg_get_info;
 	knew.get = ca0132_alt_speaker_channel_cfg_get;
 	knew.put = ca0132_alt_speaker_channel_cfg_put;
-	वापस snd_hda_ctl_add(codec, SPEAKER_CHANNEL_CFG_ENUM,
+	return snd_hda_ctl_add(codec, SPEAKER_CHANNEL_CFG_ENUM,
 				snd_ctl_new1(&knew, codec));
-पूर्ण
+}
 
 /*
- * Full range front stereo and rear surround चयनes. When these are set to
- * full range, the lower frequencies from these channels are no दीर्घer
+ * Full range front stereo and rear surround switches. When these are set to
+ * full range, the lower frequencies from these channels are no longer
  * redirected to the LFE channel.
  */
-अटल पूर्णांक ca0132_alt_add_front_full_range_चयन(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा snd_kcontrol_new knew =
+static int ca0132_alt_add_front_full_range_switch(struct hda_codec *codec)
+{
+	struct snd_kcontrol_new knew =
 		CA0132_CODEC_MUTE_MONO("Full-Range Front Speakers",
 				    SPEAKER_FULL_RANGE_FRONT, 1, HDA_OUTPUT);
 
-	वापस snd_hda_ctl_add(codec, SPEAKER_FULL_RANGE_FRONT,
+	return snd_hda_ctl_add(codec, SPEAKER_FULL_RANGE_FRONT,
 				snd_ctl_new1(&knew, codec));
-पूर्ण
+}
 
-अटल पूर्णांक ca0132_alt_add_rear_full_range_चयन(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा snd_kcontrol_new knew =
+static int ca0132_alt_add_rear_full_range_switch(struct hda_codec *codec)
+{
+	struct snd_kcontrol_new knew =
 		CA0132_CODEC_MUTE_MONO("Full-Range Rear Speakers",
 				    SPEAKER_FULL_RANGE_REAR, 1, HDA_OUTPUT);
 
-	वापस snd_hda_ctl_add(codec, SPEAKER_FULL_RANGE_REAR,
+	return snd_hda_ctl_add(codec, SPEAKER_FULL_RANGE_REAR,
 				snd_ctl_new1(&knew, codec));
-पूर्ण
+}
 
 /*
  * Bass redirection redirects audio below the crossover frequency to the LFE
  * channel on speakers that are set as not being full-range. On configurations
- * without an LFE channel, it करोes nothing. Bass redirection seems to be the
- * replacement क्रम X-Bass on configurations with an LFE channel.
+ * without an LFE channel, it does nothing. Bass redirection seems to be the
+ * replacement for X-Bass on configurations with an LFE channel.
  */
-अटल पूर्णांक ca0132_alt_add_bass_redirection_crossover(काष्ठा hda_codec *codec)
-अणु
-	स्थिर अक्षर *namestr = "Bass Redirection Crossover";
-	काष्ठा snd_kcontrol_new knew =
-		HDA_CODEC_VOLUME_MONO(namestr, BASS_REसूचीECTION_XOVER, 1, 0,
+static int ca0132_alt_add_bass_redirection_crossover(struct hda_codec *codec)
+{
+	const char *namestr = "Bass Redirection Crossover";
+	struct snd_kcontrol_new knew =
+		HDA_CODEC_VOLUME_MONO(namestr, BASS_REDIRECTION_XOVER, 1, 0,
 				HDA_OUTPUT);
 
-	knew.tlv.c = शून्य;
+	knew.tlv.c = NULL;
 	knew.info = ca0132_alt_xbass_xover_slider_info;
 	knew.get = ca0132_alt_xbass_xover_slider_ctl_get;
 	knew.put = ca0132_alt_xbass_xover_slider_put;
 
-	वापस snd_hda_ctl_add(codec, BASS_REसूचीECTION_XOVER,
+	return snd_hda_ctl_add(codec, BASS_REDIRECTION_XOVER,
 			snd_ctl_new1(&knew, codec));
-पूर्ण
+}
 
-अटल पूर्णांक ca0132_alt_add_bass_redirection_चयन(काष्ठा hda_codec *codec)
-अणु
-	स्थिर अक्षर *namestr = "Bass Redirection";
-	काष्ठा snd_kcontrol_new knew =
-		CA0132_CODEC_MUTE_MONO(namestr, BASS_REसूचीECTION, 1,
+static int ca0132_alt_add_bass_redirection_switch(struct hda_codec *codec)
+{
+	const char *namestr = "Bass Redirection";
+	struct snd_kcontrol_new knew =
+		CA0132_CODEC_MUTE_MONO(namestr, BASS_REDIRECTION, 1,
 				HDA_OUTPUT);
 
-	वापस snd_hda_ctl_add(codec, BASS_REसूचीECTION,
+	return snd_hda_ctl_add(codec, BASS_REDIRECTION,
 			snd_ctl_new1(&knew, codec));
-पूर्ण
+}
 
 /*
- * Create an Input Source क्रमागतerated control क्रम the alternate ca0132 codecs
- * because the front microphone has no स्वतः-detect, and Line-in has to be set
+ * Create an Input Source enumerated control for the alternate ca0132 codecs
+ * because the front microphone has no auto-detect, and Line-in has to be set
  * somehow.
  */
-अटल पूर्णांक ca0132_alt_add_input_क्रमागत(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा snd_kcontrol_new knew =
+static int ca0132_alt_add_input_enum(struct hda_codec *codec)
+{
+	struct snd_kcontrol_new knew =
 		HDA_CODEC_MUTE_MONO("Input Source",
 				    INPUT_SOURCE_ENUM, 1, 0, HDA_INPUT);
 	knew.info = ca0132_alt_input_source_info;
 	knew.get = ca0132_alt_input_source_get;
 	knew.put = ca0132_alt_input_source_put;
-	वापस snd_hda_ctl_add(codec, INPUT_SOURCE_ENUM,
+	return snd_hda_ctl_add(codec, INPUT_SOURCE_ENUM,
 				snd_ctl_new1(&knew, codec));
-पूर्ण
+}
 
 /*
- * Add mic boost क्रमागतerated control. Switches through 0dB to 30dB. This adds
+ * Add mic boost enumerated control. Switches through 0dB to 30dB. This adds
  * more control than the original mic boost, which is either full 30dB or off.
  */
-अटल पूर्णांक ca0132_alt_add_mic_boost_क्रमागत(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा snd_kcontrol_new knew =
+static int ca0132_alt_add_mic_boost_enum(struct hda_codec *codec)
+{
+	struct snd_kcontrol_new knew =
 		HDA_CODEC_MUTE_MONO("Mic Boost Capture Switch",
 				    MIC_BOOST_ENUM, 1, 0, HDA_INPUT);
 	knew.info = ca0132_alt_mic_boost_info;
 	knew.get = ca0132_alt_mic_boost_get;
 	knew.put = ca0132_alt_mic_boost_put;
-	वापस snd_hda_ctl_add(codec, MIC_BOOST_ENUM,
+	return snd_hda_ctl_add(codec, MIC_BOOST_ENUM,
 				snd_ctl_new1(&knew, codec));
 
-पूर्ण
+}
 
 /*
- * Add headphone gain क्रमागतerated control क्रम the AE-5. This चयनes between
- * three modes, low, medium, and high. When non-headphone outमाला_दो are selected,
- * it is स्वतःmatically set to high. This is the same behavior as Winकरोws.
+ * Add headphone gain enumerated control for the AE-5. This switches between
+ * three modes, low, medium, and high. When non-headphone outputs are selected,
+ * it is automatically set to high. This is the same behavior as Windows.
  */
-अटल पूर्णांक ae5_add_headphone_gain_क्रमागत(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा snd_kcontrol_new knew =
+static int ae5_add_headphone_gain_enum(struct hda_codec *codec)
+{
+	struct snd_kcontrol_new knew =
 		HDA_CODEC_MUTE_MONO("AE-5: Headphone Gain",
 				    AE5_HEADPHONE_GAIN_ENUM, 1, 0, HDA_OUTPUT);
 	knew.info = ae5_headphone_gain_info;
 	knew.get = ae5_headphone_gain_get;
 	knew.put = ae5_headphone_gain_put;
-	वापस snd_hda_ctl_add(codec, AE5_HEADPHONE_GAIN_ENUM,
+	return snd_hda_ctl_add(codec, AE5_HEADPHONE_GAIN_ENUM,
 				snd_ctl_new1(&knew, codec));
-पूर्ण
+}
 
 /*
- * Add sound filter क्रमागतerated control क्रम the AE-5. This adds three dअगरferent
+ * Add sound filter enumerated control for the AE-5. This adds three different
  * settings: Slow Roll Off, Minimum Phase, and Fast Roll Off. From what I've
- * पढ़ो पूर्णांकo it, it changes the DAC's पूर्णांकerpolation filter.
+ * read into it, it changes the DAC's interpolation filter.
  */
-अटल पूर्णांक ae5_add_sound_filter_क्रमागत(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा snd_kcontrol_new knew =
+static int ae5_add_sound_filter_enum(struct hda_codec *codec)
+{
+	struct snd_kcontrol_new knew =
 		HDA_CODEC_MUTE_MONO("AE-5: Sound Filter",
 				    AE5_SOUND_FILTER_ENUM, 1, 0, HDA_OUTPUT);
 	knew.info = ae5_sound_filter_info;
 	knew.get = ae5_sound_filter_get;
 	knew.put = ae5_sound_filter_put;
-	वापस snd_hda_ctl_add(codec, AE5_SOUND_FILTER_ENUM,
+	return snd_hda_ctl_add(codec, AE5_SOUND_FILTER_ENUM,
 				snd_ctl_new1(&knew, codec));
-पूर्ण
+}
 
-अटल पूर्णांक zxr_add_headphone_gain_चयन(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा snd_kcontrol_new knew =
+static int zxr_add_headphone_gain_switch(struct hda_codec *codec)
+{
+	struct snd_kcontrol_new knew =
 		CA0132_CODEC_MUTE_MONO("ZxR: 600 Ohm Gain",
 				    ZXR_HEADPHONE_GAIN, 1, HDA_OUTPUT);
 
-	वापस snd_hda_ctl_add(codec, ZXR_HEADPHONE_GAIN,
+	return snd_hda_ctl_add(codec, ZXR_HEADPHONE_GAIN,
 				snd_ctl_new1(&knew, codec));
-पूर्ण
+}
 
 /*
- * Need to create follower controls क्रम the alternate codecs that have surround
+ * Need to create follower controls for the alternate codecs that have surround
  * capabilities.
  */
-अटल स्थिर अक्षर * स्थिर ca0132_alt_follower_pfxs[] = अणु
-	"Front", "Surround", "Center", "LFE", शून्य,
-पूर्ण;
+static const char * const ca0132_alt_follower_pfxs[] = {
+	"Front", "Surround", "Center", "LFE", NULL,
+};
 
 /*
- * Also need special channel map, because the शेष one is incorrect.
- * I think this has to करो with the pin क्रम rear surround being 0x11,
+ * Also need special channel map, because the default one is incorrect.
+ * I think this has to do with the pin for rear surround being 0x11,
  * and the center/lfe being 0x10. Usually the pin order is the opposite.
  */
-अटल स्थिर काष्ठा snd_pcm_chmap_elem ca0132_alt_chmaps[] = अणु
-	अणु .channels = 2,
-	  .map = अणु SNDRV_CHMAP_FL, SNDRV_CHMAP_FR पूर्ण पूर्ण,
-	अणु .channels = 4,
-	  .map = अणु SNDRV_CHMAP_FL, SNDRV_CHMAP_FR,
-		   SNDRV_CHMAP_RL, SNDRV_CHMAP_RR पूर्ण पूर्ण,
-	अणु .channels = 6,
-	  .map = अणु SNDRV_CHMAP_FL, SNDRV_CHMAP_FR,
+static const struct snd_pcm_chmap_elem ca0132_alt_chmaps[] = {
+	{ .channels = 2,
+	  .map = { SNDRV_CHMAP_FL, SNDRV_CHMAP_FR } },
+	{ .channels = 4,
+	  .map = { SNDRV_CHMAP_FL, SNDRV_CHMAP_FR,
+		   SNDRV_CHMAP_RL, SNDRV_CHMAP_RR } },
+	{ .channels = 6,
+	  .map = { SNDRV_CHMAP_FL, SNDRV_CHMAP_FR,
 		   SNDRV_CHMAP_FC, SNDRV_CHMAP_LFE,
-		   SNDRV_CHMAP_RL, SNDRV_CHMAP_RR पूर्ण पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+		   SNDRV_CHMAP_RL, SNDRV_CHMAP_RR } },
+	{ }
+};
 
-/* Add the correct chmap क्रम streams with 6 channels. */
-अटल व्योम ca0132_alt_add_chmap_ctls(काष्ठा hda_codec *codec)
-अणु
-	पूर्णांक err = 0;
-	काष्ठा hda_pcm *pcm;
+/* Add the correct chmap for streams with 6 channels. */
+static void ca0132_alt_add_chmap_ctls(struct hda_codec *codec)
+{
+	int err = 0;
+	struct hda_pcm *pcm;
 
-	list_क्रम_each_entry(pcm, &codec->pcm_list_head, list) अणु
-		काष्ठा hda_pcm_stream *hinfo =
+	list_for_each_entry(pcm, &codec->pcm_list_head, list) {
+		struct hda_pcm_stream *hinfo =
 			&pcm->stream[SNDRV_PCM_STREAM_PLAYBACK];
-		काष्ठा snd_pcm_chmap *chmap;
-		स्थिर काष्ठा snd_pcm_chmap_elem *elem;
+		struct snd_pcm_chmap *chmap;
+		const struct snd_pcm_chmap_elem *elem;
 
 		elem = ca0132_alt_chmaps;
-		अगर (hinfo->channels_max == 6) अणु
+		if (hinfo->channels_max == 6) {
 			err = snd_pcm_add_chmap_ctls(pcm->pcm,
 					SNDRV_PCM_STREAM_PLAYBACK,
 					elem, hinfo->channels_max, 0, &chmap);
-			अगर (err < 0)
+			if (err < 0)
 				codec_dbg(codec, "snd_pcm_add_chmap_ctls failed!");
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /*
- * When changing Node IDs क्रम Mixer Controls below, make sure to update
+ * When changing Node IDs for Mixer Controls below, make sure to update
  * Node IDs in ca0132_config() as well.
  */
-अटल स्थिर काष्ठा snd_kcontrol_new ca0132_mixer[] = अणु
+static const struct snd_kcontrol_new ca0132_mixer[] = {
 	CA0132_CODEC_VOL("Master Playback Volume", VNID_SPK, HDA_OUTPUT),
 	CA0132_CODEC_MUTE("Master Playback Switch", VNID_SPK, HDA_OUTPUT),
 	CA0132_CODEC_VOL("Capture Volume", VNID_MIC, HDA_INPUT),
@@ -6976,15 +6975,15 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 			       VNID_HP_ASEL, 1, HDA_OUTPUT),
 	CA0132_CODEC_MUTE_MONO("AMic1/DMic Auto Detect Capture Switch",
 			       VNID_AMIC1_ASEL, 1, HDA_INPUT),
-	अणु पूर्ण /* end */
-पूर्ण;
+	{ } /* end */
+};
 
 /*
- * Desktop specअगरic control mixer. Removes स्वतः-detect क्रम mic, and adds
+ * Desktop specific control mixer. Removes auto-detect for mic, and adds
  * surround controls. Also sets both the Front Playback and Capture Volume
  * controls to alt so they set the DSP's decibel level.
  */
-अटल स्थिर काष्ठा snd_kcontrol_new desktop_mixer[] = अणु
+static const struct snd_kcontrol_new desktop_mixer[] = {
 	CA0132_ALT_CODEC_VOL("Front Playback Volume", 0x02, HDA_OUTPUT),
 	CA0132_CODEC_MUTE("Front Playback Switch", VNID_SPK, HDA_OUTPUT),
 	HDA_CODEC_VOLUME("Surround Playback Volume", 0x04, 0, HDA_OUTPUT),
@@ -6999,14 +6998,14 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 	HDA_CODEC_MUTE("What U Hear Capture Switch", 0x0a, 0, HDA_INPUT),
 	CA0132_CODEC_MUTE_MONO("HP/Speaker Auto Detect Playback Switch",
 				VNID_HP_ASEL, 1, HDA_OUTPUT),
-	अणु पूर्ण /* end */
-पूर्ण;
+	{ } /* end */
+};
 
 /*
- * Same as the Sound Blaster Z, except करोesn't use the alt volume क्रम capture
- * because it करोesn't set decibel levels क्रम the DSP क्रम capture.
+ * Same as the Sound Blaster Z, except doesn't use the alt volume for capture
+ * because it doesn't set decibel levels for the DSP for capture.
  */
-अटल स्थिर काष्ठा snd_kcontrol_new r3di_mixer[] = अणु
+static const struct snd_kcontrol_new r3di_mixer[] = {
 	CA0132_ALT_CODEC_VOL("Front Playback Volume", 0x02, HDA_OUTPUT),
 	CA0132_CODEC_MUTE("Front Playback Switch", VNID_SPK, HDA_OUTPUT),
 	HDA_CODEC_VOLUME("Surround Playback Volume", 0x04, 0, HDA_OUTPUT),
@@ -7021,273 +7020,273 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 	HDA_CODEC_MUTE("What U Hear Capture Switch", 0x0a, 0, HDA_INPUT),
 	CA0132_CODEC_MUTE_MONO("HP/Speaker Auto Detect Playback Switch",
 				VNID_HP_ASEL, 1, HDA_OUTPUT),
-	अणु पूर्ण /* end */
-पूर्ण;
+	{ } /* end */
+};
 
-अटल पूर्णांक ca0132_build_controls(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	पूर्णांक i, num_fx, num_sliders;
-	पूर्णांक err = 0;
+static int ca0132_build_controls(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
+	int i, num_fx, num_sliders;
+	int err = 0;
 
 	/* Add Mixer controls */
-	क्रम (i = 0; i < spec->num_mixers; i++) अणु
+	for (i = 0; i < spec->num_mixers; i++) {
 		err = snd_hda_add_new_ctls(codec, spec->mixers[i]);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
-	/* Setup vmaster with surround followers क्रम desktop ca0132 devices */
-	अगर (ca0132_use_alt_functions(spec)) अणु
+		if (err < 0)
+			return err;
+	}
+	/* Setup vmaster with surround followers for desktop ca0132 devices */
+	if (ca0132_use_alt_functions(spec)) {
 		snd_hda_set_vmaster_tlv(codec, spec->dacs[0], HDA_OUTPUT,
 					spec->tlv);
 		snd_hda_add_vmaster(codec, "Master Playback Volume",
 					spec->tlv, ca0132_alt_follower_pfxs,
 					"Playback Volume", 0);
 		err = __snd_hda_add_vmaster(codec, "Master Playback Switch",
-					    शून्य, ca0132_alt_follower_pfxs,
+					    NULL, ca0132_alt_follower_pfxs,
 					    "Playback Switch",
 					    true, 0, &spec->vmaster_mute.sw_kctl);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+		if (err < 0)
+			return err;
+	}
 
 	/* Add in and out effects controls.
 	 * VoiceFX, PE and CrystalVoice are added separately.
 	 */
 	num_fx = OUT_EFFECTS_COUNT + IN_EFFECTS_COUNT;
-	क्रम (i = 0; i < num_fx; i++) अणु
-		/* Desktop cards अवरोध अगर Echo Cancellation is used. */
-		अगर (ca0132_use_pci_mmio(spec)) अणु
-			अगर (i == (ECHO_CANCELLATION - IN_EFFECT_START_NID +
+	for (i = 0; i < num_fx; i++) {
+		/* Desktop cards break if Echo Cancellation is used. */
+		if (ca0132_use_pci_mmio(spec)) {
+			if (i == (ECHO_CANCELLATION - IN_EFFECT_START_NID +
 						OUT_EFFECTS_COUNT))
-				जारी;
-		पूर्ण
+				continue;
+		}
 
-		err = add_fx_चयन(codec, ca0132_effects[i].nid,
+		err = add_fx_switch(codec, ca0132_effects[i].nid,
 				    ca0132_effects[i].name,
 				    ca0132_effects[i].direct);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+		if (err < 0)
+			return err;
+	}
 	/*
 	 * If codec has use_alt_controls set to true, add effect level sliders,
 	 * EQ presets, and Smart Volume presets. Also, change names to add FX
 	 * prefix, and change PlayEnhancement and CrystalVoice to match.
 	 */
-	अगर (ca0132_use_alt_controls(spec)) अणु
-		err = ca0132_alt_add_svm_क्रमागत(codec);
-		अगर (err < 0)
-			वापस err;
+	if (ca0132_use_alt_controls(spec)) {
+		err = ca0132_alt_add_svm_enum(codec);
+		if (err < 0)
+			return err;
 
 		err = add_ca0132_alt_eq_presets(codec);
-		अगर (err < 0)
-			वापस err;
+		if (err < 0)
+			return err;
 
-		err = add_fx_चयन(codec, PLAY_ENHANCEMENT,
+		err = add_fx_switch(codec, PLAY_ENHANCEMENT,
 					"Enable OutFX", 0);
-		अगर (err < 0)
-			वापस err;
+		if (err < 0)
+			return err;
 
-		err = add_fx_चयन(codec, CRYSTAL_VOICE,
+		err = add_fx_switch(codec, CRYSTAL_VOICE,
 					"Enable InFX", 1);
-		अगर (err < 0)
-			वापस err;
+		if (err < 0)
+			return err;
 
 		num_sliders = OUT_EFFECTS_COUNT - 1;
-		क्रम (i = 0; i < num_sliders; i++) अणु
+		for (i = 0; i < num_sliders; i++) {
 			err = ca0132_alt_add_effect_slider(codec,
 					    ca0132_effects[i].nid,
 					    ca0132_effects[i].name,
 					    ca0132_effects[i].direct);
-			अगर (err < 0)
-				वापस err;
-		पूर्ण
+			if (err < 0)
+				return err;
+		}
 
 		err = ca0132_alt_add_effect_slider(codec, XBASS_XOVER,
-					"X-Bass Crossover", EFX_सूची_OUT);
+					"X-Bass Crossover", EFX_DIR_OUT);
 
-		अगर (err < 0)
-			वापस err;
-	पूर्ण अन्यथा अणु
-		err = add_fx_चयन(codec, PLAY_ENHANCEMENT,
+		if (err < 0)
+			return err;
+	} else {
+		err = add_fx_switch(codec, PLAY_ENHANCEMENT,
 					"PlayEnhancement", 0);
-		अगर (err < 0)
-			वापस err;
+		if (err < 0)
+			return err;
 
-		err = add_fx_चयन(codec, CRYSTAL_VOICE,
+		err = add_fx_switch(codec, CRYSTAL_VOICE,
 					"CrystalVoice", 1);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+		if (err < 0)
+			return err;
+	}
 	err = add_voicefx(codec);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	/*
-	 * If the codec uses alt_functions, you need the क्रमागतerated controls
-	 * to select the new outमाला_दो and inमाला_दो, plus add the new mic boost
+	 * If the codec uses alt_functions, you need the enumerated controls
+	 * to select the new outputs and inputs, plus add the new mic boost
 	 * setting control.
 	 */
-	अगर (ca0132_use_alt_functions(spec)) अणु
-		err = ca0132_alt_add_output_क्रमागत(codec);
-		अगर (err < 0)
-			वापस err;
-		err = ca0132_alt_add_speaker_channel_cfg_क्रमागत(codec);
-		अगर (err < 0)
-			वापस err;
-		err = ca0132_alt_add_front_full_range_चयन(codec);
-		अगर (err < 0)
-			वापस err;
-		err = ca0132_alt_add_rear_full_range_चयन(codec);
-		अगर (err < 0)
-			वापस err;
+	if (ca0132_use_alt_functions(spec)) {
+		err = ca0132_alt_add_output_enum(codec);
+		if (err < 0)
+			return err;
+		err = ca0132_alt_add_speaker_channel_cfg_enum(codec);
+		if (err < 0)
+			return err;
+		err = ca0132_alt_add_front_full_range_switch(codec);
+		if (err < 0)
+			return err;
+		err = ca0132_alt_add_rear_full_range_switch(codec);
+		if (err < 0)
+			return err;
 		err = ca0132_alt_add_bass_redirection_crossover(codec);
-		अगर (err < 0)
-			वापस err;
-		err = ca0132_alt_add_bass_redirection_चयन(codec);
-		अगर (err < 0)
-			वापस err;
-		err = ca0132_alt_add_mic_boost_क्रमागत(codec);
-		अगर (err < 0)
-			वापस err;
+		if (err < 0)
+			return err;
+		err = ca0132_alt_add_bass_redirection_switch(codec);
+		if (err < 0)
+			return err;
+		err = ca0132_alt_add_mic_boost_enum(codec);
+		if (err < 0)
+			return err;
 		/*
 		 * ZxR only has microphone input, there is no front panel
 		 * header on the card, and aux-in is handled by the DBPro board.
 		 */
-		अगर (ca0132_quirk(spec) != QUIRK_ZXR) अणु
-			err = ca0132_alt_add_input_क्रमागत(codec);
-			अगर (err < 0)
-				वापस err;
-		पूर्ण
-	पूर्ण
+		if (ca0132_quirk(spec) != QUIRK_ZXR) {
+			err = ca0132_alt_add_input_enum(codec);
+			if (err < 0)
+				return err;
+		}
+	}
 
-	चयन (ca0132_quirk(spec)) अणु
-	हाल QUIRK_AE5:
-	हाल QUIRK_AE7:
-		err = ae5_add_headphone_gain_क्रमागत(codec);
-		अगर (err < 0)
-			वापस err;
-		err = ae5_add_sound_filter_क्रमागत(codec);
-		अगर (err < 0)
-			वापस err;
-		अवरोध;
-	हाल QUIRK_ZXR:
-		err = zxr_add_headphone_gain_चयन(codec);
-		अगर (err < 0)
-			वापस err;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+	switch (ca0132_quirk(spec)) {
+	case QUIRK_AE5:
+	case QUIRK_AE7:
+		err = ae5_add_headphone_gain_enum(codec);
+		if (err < 0)
+			return err;
+		err = ae5_add_sound_filter_enum(codec);
+		if (err < 0)
+			return err;
+		break;
+	case QUIRK_ZXR:
+		err = zxr_add_headphone_gain_switch(codec);
+		if (err < 0)
+			return err;
+		break;
+	default:
+		break;
+	}
 
-#अगर_घोषित ENABLE_TUNING_CONTROLS
+#ifdef ENABLE_TUNING_CONTROLS
 	add_tuning_ctls(codec);
-#पूर्ण_अगर
+#endif
 
-	err = snd_hda_jack_add_kctls(codec, &spec->स्वतःcfg);
-	अगर (err < 0)
-		वापस err;
+	err = snd_hda_jack_add_kctls(codec, &spec->autocfg);
+	if (err < 0)
+		return err;
 
-	अगर (spec->dig_out) अणु
-		err = snd_hda_create_spdअगर_out_ctls(codec, spec->dig_out,
+	if (spec->dig_out) {
+		err = snd_hda_create_spdif_out_ctls(codec, spec->dig_out,
 						    spec->dig_out);
-		अगर (err < 0)
-			वापस err;
-		err = snd_hda_create_spdअगर_share_sw(codec, &spec->multiout);
-		अगर (err < 0)
-			वापस err;
-		/* spec->multiout.share_spdअगर = 1; */
-	पूर्ण
+		if (err < 0)
+			return err;
+		err = snd_hda_create_spdif_share_sw(codec, &spec->multiout);
+		if (err < 0)
+			return err;
+		/* spec->multiout.share_spdif = 1; */
+	}
 
-	अगर (spec->dig_in) अणु
-		err = snd_hda_create_spdअगर_in_ctls(codec, spec->dig_in);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+	if (spec->dig_in) {
+		err = snd_hda_create_spdif_in_ctls(codec, spec->dig_in);
+		if (err < 0)
+			return err;
+	}
 
-	अगर (ca0132_use_alt_functions(spec))
+	if (ca0132_use_alt_functions(spec))
 		ca0132_alt_add_chmap_ctls(codec);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dbpro_build_controls(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	पूर्णांक err = 0;
+static int dbpro_build_controls(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
+	int err = 0;
 
-	अगर (spec->dig_out) अणु
-		err = snd_hda_create_spdअगर_out_ctls(codec, spec->dig_out,
+	if (spec->dig_out) {
+		err = snd_hda_create_spdif_out_ctls(codec, spec->dig_out,
 				spec->dig_out);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+		if (err < 0)
+			return err;
+	}
 
-	अगर (spec->dig_in) अणु
-		err = snd_hda_create_spdअगर_in_ctls(codec, spec->dig_in);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+	if (spec->dig_in) {
+		err = snd_hda_create_spdif_in_ctls(codec, spec->dig_in);
+		if (err < 0)
+			return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * PCM
  */
-अटल स्थिर काष्ठा hda_pcm_stream ca0132_pcm_analog_playback = अणु
+static const struct hda_pcm_stream ca0132_pcm_analog_playback = {
 	.substreams = 1,
 	.channels_min = 2,
 	.channels_max = 6,
-	.ops = अणु
+	.ops = {
 		.prepare = ca0132_playback_pcm_prepare,
 		.cleanup = ca0132_playback_pcm_cleanup,
 		.get_delay = ca0132_playback_pcm_delay,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा hda_pcm_stream ca0132_pcm_analog_capture = अणु
+static const struct hda_pcm_stream ca0132_pcm_analog_capture = {
 	.substreams = 1,
 	.channels_min = 2,
 	.channels_max = 2,
-	.ops = अणु
+	.ops = {
 		.prepare = ca0132_capture_pcm_prepare,
 		.cleanup = ca0132_capture_pcm_cleanup,
 		.get_delay = ca0132_capture_pcm_delay,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा hda_pcm_stream ca0132_pcm_digital_playback = अणु
+static const struct hda_pcm_stream ca0132_pcm_digital_playback = {
 	.substreams = 1,
 	.channels_min = 2,
 	.channels_max = 2,
-	.ops = अणु
-		.खोलो = ca0132_dig_playback_pcm_खोलो,
-		.बंद = ca0132_dig_playback_pcm_बंद,
+	.ops = {
+		.open = ca0132_dig_playback_pcm_open,
+		.close = ca0132_dig_playback_pcm_close,
 		.prepare = ca0132_dig_playback_pcm_prepare,
 		.cleanup = ca0132_dig_playback_pcm_cleanup
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा hda_pcm_stream ca0132_pcm_digital_capture = अणु
+static const struct hda_pcm_stream ca0132_pcm_digital_capture = {
 	.substreams = 1,
 	.channels_min = 2,
 	.channels_max = 2,
-पूर्ण;
+};
 
-अटल पूर्णांक ca0132_build_pcms(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	काष्ठा hda_pcm *info;
+static int ca0132_build_pcms(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
+	struct hda_pcm *info;
 
 	info = snd_hda_codec_pcm_new(codec, "CA0132 Analog");
-	अगर (!info)
-		वापस -ENOMEM;
-	अगर (ca0132_use_alt_functions(spec)) अणु
+	if (!info)
+		return -ENOMEM;
+	if (ca0132_use_alt_functions(spec)) {
 		info->own_chmap = true;
 		info->stream[SNDRV_PCM_STREAM_PLAYBACK].chmap
 			= ca0132_alt_chmaps;
-	पूर्ण
+	}
 	info->stream[SNDRV_PCM_STREAM_PLAYBACK] = ca0132_pcm_analog_playback;
 	info->stream[SNDRV_PCM_STREAM_PLAYBACK].nid = spec->dacs[0];
 	info->stream[SNDRV_PCM_STREAM_PLAYBACK].channels_max =
@@ -7296,104 +7295,104 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 	info->stream[SNDRV_PCM_STREAM_CAPTURE].substreams = 1;
 	info->stream[SNDRV_PCM_STREAM_CAPTURE].nid = spec->adcs[0];
 
-	/* With the DSP enabled, desktops करोn't use this ADC. */
-	अगर (!ca0132_use_alt_functions(spec)) अणु
+	/* With the DSP enabled, desktops don't use this ADC. */
+	if (!ca0132_use_alt_functions(spec)) {
 		info = snd_hda_codec_pcm_new(codec, "CA0132 Analog Mic-In2");
-		अगर (!info)
-			वापस -ENOMEM;
+		if (!info)
+			return -ENOMEM;
 		info->stream[SNDRV_PCM_STREAM_CAPTURE] =
 			ca0132_pcm_analog_capture;
 		info->stream[SNDRV_PCM_STREAM_CAPTURE].substreams = 1;
 		info->stream[SNDRV_PCM_STREAM_CAPTURE].nid = spec->adcs[1];
-	पूर्ण
+	}
 
 	info = snd_hda_codec_pcm_new(codec, "CA0132 What U Hear");
-	अगर (!info)
-		वापस -ENOMEM;
+	if (!info)
+		return -ENOMEM;
 	info->stream[SNDRV_PCM_STREAM_CAPTURE] = ca0132_pcm_analog_capture;
 	info->stream[SNDRV_PCM_STREAM_CAPTURE].substreams = 1;
 	info->stream[SNDRV_PCM_STREAM_CAPTURE].nid = spec->adcs[2];
 
-	अगर (!spec->dig_out && !spec->dig_in)
-		वापस 0;
+	if (!spec->dig_out && !spec->dig_in)
+		return 0;
 
 	info = snd_hda_codec_pcm_new(codec, "CA0132 Digital");
-	अगर (!info)
-		वापस -ENOMEM;
+	if (!info)
+		return -ENOMEM;
 	info->pcm_type = HDA_PCM_TYPE_SPDIF;
-	अगर (spec->dig_out) अणु
+	if (spec->dig_out) {
 		info->stream[SNDRV_PCM_STREAM_PLAYBACK] =
 			ca0132_pcm_digital_playback;
 		info->stream[SNDRV_PCM_STREAM_PLAYBACK].nid = spec->dig_out;
-	पूर्ण
-	अगर (spec->dig_in) अणु
+	}
+	if (spec->dig_in) {
 		info->stream[SNDRV_PCM_STREAM_CAPTURE] =
 			ca0132_pcm_digital_capture;
 		info->stream[SNDRV_PCM_STREAM_CAPTURE].nid = spec->dig_in;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dbpro_build_pcms(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	काष्ठा hda_pcm *info;
+static int dbpro_build_pcms(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
+	struct hda_pcm *info;
 
 	info = snd_hda_codec_pcm_new(codec, "CA0132 Alt Analog");
-	अगर (!info)
-		वापस -ENOMEM;
+	if (!info)
+		return -ENOMEM;
 	info->stream[SNDRV_PCM_STREAM_CAPTURE] = ca0132_pcm_analog_capture;
 	info->stream[SNDRV_PCM_STREAM_CAPTURE].substreams = 1;
 	info->stream[SNDRV_PCM_STREAM_CAPTURE].nid = spec->adcs[0];
 
 
-	अगर (!spec->dig_out && !spec->dig_in)
-		वापस 0;
+	if (!spec->dig_out && !spec->dig_in)
+		return 0;
 
 	info = snd_hda_codec_pcm_new(codec, "CA0132 Digital");
-	अगर (!info)
-		वापस -ENOMEM;
+	if (!info)
+		return -ENOMEM;
 	info->pcm_type = HDA_PCM_TYPE_SPDIF;
-	अगर (spec->dig_out) अणु
+	if (spec->dig_out) {
 		info->stream[SNDRV_PCM_STREAM_PLAYBACK] =
 			ca0132_pcm_digital_playback;
 		info->stream[SNDRV_PCM_STREAM_PLAYBACK].nid = spec->dig_out;
-	पूर्ण
-	अगर (spec->dig_in) अणु
+	}
+	if (spec->dig_in) {
 		info->stream[SNDRV_PCM_STREAM_CAPTURE] =
 			ca0132_pcm_digital_capture;
 		info->stream[SNDRV_PCM_STREAM_CAPTURE].nid = spec->dig_in;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम init_output(काष्ठा hda_codec *codec, hda_nid_t pin, hda_nid_t dac)
-अणु
-	अगर (pin) अणु
+static void init_output(struct hda_codec *codec, hda_nid_t pin, hda_nid_t dac)
+{
+	if (pin) {
 		snd_hda_set_pin_ctl(codec, pin, PIN_HP);
-		अगर (get_wcaps(codec, pin) & AC_WCAP_OUT_AMP)
-			snd_hda_codec_ग_लिखो(codec, pin, 0,
+		if (get_wcaps(codec, pin) & AC_WCAP_OUT_AMP)
+			snd_hda_codec_write(codec, pin, 0,
 					    AC_VERB_SET_AMP_GAIN_MUTE,
 					    AMP_OUT_UNMUTE);
-	पूर्ण
-	अगर (dac && (get_wcaps(codec, dac) & AC_WCAP_OUT_AMP))
-		snd_hda_codec_ग_लिखो(codec, dac, 0,
+	}
+	if (dac && (get_wcaps(codec, dac) & AC_WCAP_OUT_AMP))
+		snd_hda_codec_write(codec, dac, 0,
 				    AC_VERB_SET_AMP_GAIN_MUTE, AMP_OUT_ZERO);
-पूर्ण
+}
 
-अटल व्योम init_input(काष्ठा hda_codec *codec, hda_nid_t pin, hda_nid_t adc)
-अणु
-	अगर (pin) अणु
+static void init_input(struct hda_codec *codec, hda_nid_t pin, hda_nid_t adc)
+{
+	if (pin) {
 		snd_hda_set_pin_ctl(codec, pin, PIN_VREF80);
-		अगर (get_wcaps(codec, pin) & AC_WCAP_IN_AMP)
-			snd_hda_codec_ग_लिखो(codec, pin, 0,
+		if (get_wcaps(codec, pin) & AC_WCAP_IN_AMP)
+			snd_hda_codec_write(codec, pin, 0,
 					    AC_VERB_SET_AMP_GAIN_MUTE,
 					    AMP_IN_UNMUTE(0));
-	पूर्ण
-	अगर (adc && (get_wcaps(codec, adc) & AC_WCAP_IN_AMP)) अणु
-		snd_hda_codec_ग_लिखो(codec, adc, 0, AC_VERB_SET_AMP_GAIN_MUTE,
+	}
+	if (adc && (get_wcaps(codec, adc) & AC_WCAP_IN_AMP)) {
+		snd_hda_codec_write(codec, adc, 0, AC_VERB_SET_AMP_GAIN_MUTE,
 				    AMP_IN_UNMUTE(0));
 
 		/* init to 0 dB and unmute. */
@@ -7401,71 +7400,71 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 					 HDA_AMP_VOLMASK, 0x5a);
 		snd_hda_codec_amp_stereo(codec, adc, HDA_INPUT, 0,
 					 HDA_AMP_MUTE, 0);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम refresh_amp_caps(काष्ठा hda_codec *codec, hda_nid_t nid, पूर्णांक dir)
-अणु
-	अचिन्हित पूर्णांक caps;
+static void refresh_amp_caps(struct hda_codec *codec, hda_nid_t nid, int dir)
+{
+	unsigned int caps;
 
-	caps = snd_hda_param_पढ़ो(codec, nid, dir == HDA_OUTPUT ?
+	caps = snd_hda_param_read(codec, nid, dir == HDA_OUTPUT ?
 				  AC_PAR_AMP_OUT_CAP : AC_PAR_AMP_IN_CAP);
 	snd_hda_override_amp_caps(codec, nid, dir, caps);
-पूर्ण
+}
 
 /*
  * Switch between Digital built-in mic and analog mic.
  */
-अटल व्योम ca0132_set_dmic(काष्ठा hda_codec *codec, पूर्णांक enable)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	अचिन्हित पूर्णांक पंचांगp;
+static void ca0132_set_dmic(struct hda_codec *codec, int enable)
+{
+	struct ca0132_spec *spec = codec->spec;
+	unsigned int tmp;
 	u8 val;
-	अचिन्हित पूर्णांक oldval;
+	unsigned int oldval;
 
 	codec_dbg(codec, "ca0132_set_dmic: enable=%d\n", enable);
 
 	oldval = stop_mic1(codec);
 	ca0132_set_vipsource(codec, 0);
-	अगर (enable) अणु
+	if (enable) {
 		/* set DMic input as 2-ch */
-		पंचांगp = FLOAT_TWO;
-		dspio_set_uपूर्णांक_param(codec, 0x80, 0x00, पंचांगp);
+		tmp = FLOAT_TWO;
+		dspio_set_uint_param(codec, 0x80, 0x00, tmp);
 
 		val = spec->dmic_ctl;
 		val |= 0x80;
-		snd_hda_codec_ग_लिखो(codec, spec->input_pins[0], 0,
+		snd_hda_codec_write(codec, spec->input_pins[0], 0,
 				    VENDOR_CHIPIO_DMIC_CTL_SET, val);
 
-		अगर (!(spec->dmic_ctl & 0x20))
+		if (!(spec->dmic_ctl & 0x20))
 			chipio_set_control_flag(codec, CONTROL_FLAG_DMIC, 1);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* set AMic input as mono */
-		पंचांगp = FLOAT_ONE;
-		dspio_set_uपूर्णांक_param(codec, 0x80, 0x00, पंचांगp);
+		tmp = FLOAT_ONE;
+		dspio_set_uint_param(codec, 0x80, 0x00, tmp);
 
 		val = spec->dmic_ctl;
 		/* clear bit7 and bit5 to disable dmic */
 		val &= 0x5f;
-		snd_hda_codec_ग_लिखो(codec, spec->input_pins[0], 0,
+		snd_hda_codec_write(codec, spec->input_pins[0], 0,
 				    VENDOR_CHIPIO_DMIC_CTL_SET, val);
 
-		अगर (!(spec->dmic_ctl & 0x20))
+		if (!(spec->dmic_ctl & 0x20))
 			chipio_set_control_flag(codec, CONTROL_FLAG_DMIC, 0);
-	पूर्ण
+	}
 	ca0132_set_vipsource(codec, 1);
 	resume_mic1(codec, oldval);
-पूर्ण
+}
 
 /*
- * Initialization क्रम Digital Mic.
+ * Initialization for Digital Mic.
  */
-अटल व्योम ca0132_init_dmic(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
+static void ca0132_init_dmic(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
 	u8 val;
 
-	/* Setup Digital Mic here, but करोn't enable.
+	/* Setup Digital Mic here, but don't enable.
 	 * Enable based on jack detect.
 	 */
 
@@ -7475,7 +7474,7 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 	 * Bit 7-4: reserved
 	 */
 	val = 0x01;
-	snd_hda_codec_ग_लिखो(codec, spec->input_pins[0], 0,
+	snd_hda_codec_write(codec, spec->input_pins[0], 0,
 			    VENDOR_CHIPIO_DMIC_MCLK_SET, val);
 
 	/* Data1 uses MPIO3. Data2 not use
@@ -7485,182 +7484,182 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 	 * Bit   7: set disable Data2
 	 */
 	val = 0x83;
-	snd_hda_codec_ग_लिखो(codec, spec->input_pins[0], 0,
+	snd_hda_codec_write(codec, spec->input_pins[0], 0,
 			    VENDOR_CHIPIO_DMIC_PIN_SET, val);
 
 	/* Use Ch-0 and Ch-1. Rate is 48K, mode 1. Disable DMic first.
 	 * Bit 3-0: Channel mask
-	 * Bit   4: set क्रम 48KHz, clear क्रम 32KHz
+	 * Bit   4: set for 48KHz, clear for 32KHz
 	 * Bit   5: mode
-	 * Bit   6: set to select Data2, clear क्रम Data1
-	 * Bit   7: set to enable DMic, clear क्रम AMic
+	 * Bit   6: set to select Data2, clear for Data1
+	 * Bit   7: set to enable DMic, clear for AMic
 	 */
-	अगर (ca0132_quirk(spec) == QUIRK_ALIENWARE_M17XR4)
+	if (ca0132_quirk(spec) == QUIRK_ALIENWARE_M17XR4)
 		val = 0x33;
-	अन्यथा
+	else
 		val = 0x23;
-	/* keep a copy of dmic ctl val क्रम enable/disable dmic purpuse */
+	/* keep a copy of dmic ctl val for enable/disable dmic purpuse */
 	spec->dmic_ctl = val;
-	snd_hda_codec_ग_लिखो(codec, spec->input_pins[0], 0,
+	snd_hda_codec_write(codec, spec->input_pins[0], 0,
 			    VENDOR_CHIPIO_DMIC_CTL_SET, val);
-पूर्ण
+}
 
 /*
- * Initialization क्रम Analog Mic 2
+ * Initialization for Analog Mic 2
  */
-अटल व्योम ca0132_init_analog_mic2(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
+static void ca0132_init_analog_mic2(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
 
 	mutex_lock(&spec->chipio_mutex);
 
-	chipio_8051_ग_लिखो_exram_no_mutex(codec, 0x1920, 0x00);
-	chipio_8051_ग_लिखो_exram_no_mutex(codec, 0x192d, 0x00);
+	chipio_8051_write_exram_no_mutex(codec, 0x1920, 0x00);
+	chipio_8051_write_exram_no_mutex(codec, 0x192d, 0x00);
 
 	mutex_unlock(&spec->chipio_mutex);
-पूर्ण
+}
 
-अटल व्योम ca0132_refresh_widget_caps(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	पूर्णांक i;
+static void ca0132_refresh_widget_caps(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
+	int i;
 
 	codec_dbg(codec, "ca0132_refresh_widget_caps.\n");
-	snd_hda_codec_update_widमाला_लो(codec);
+	snd_hda_codec_update_widgets(codec);
 
-	क्रम (i = 0; i < spec->multiout.num_dacs; i++)
+	for (i = 0; i < spec->multiout.num_dacs; i++)
 		refresh_amp_caps(codec, spec->dacs[i], HDA_OUTPUT);
 
-	क्रम (i = 0; i < spec->num_outमाला_दो; i++)
+	for (i = 0; i < spec->num_outputs; i++)
 		refresh_amp_caps(codec, spec->out_pins[i], HDA_OUTPUT);
 
-	क्रम (i = 0; i < spec->num_inमाला_दो; i++) अणु
+	for (i = 0; i < spec->num_inputs; i++) {
 		refresh_amp_caps(codec, spec->adcs[i], HDA_INPUT);
 		refresh_amp_caps(codec, spec->input_pins[i], HDA_INPUT);
-	पूर्ण
-पूर्ण
+	}
+}
 
 
-/* If there is an active channel क्रम some reason, find it and मुक्त it. */
-अटल व्योम ca0132_alt_मुक्त_active_dma_channels(काष्ठा hda_codec *codec)
-अणु
-	अचिन्हित पूर्णांक i, पंचांगp;
-	पूर्णांक status;
+/* If there is an active channel for some reason, find it and free it. */
+static void ca0132_alt_free_active_dma_channels(struct hda_codec *codec)
+{
+	unsigned int i, tmp;
+	int status;
 
-	/* Read active DSPDMAC channel रेजिस्टर. */
-	status = chipio_पढ़ो(codec, DSPDMAC_CHNLSTART_MODULE_OFFSET, &पंचांगp);
-	अगर (status >= 0) अणु
+	/* Read active DSPDMAC channel register. */
+	status = chipio_read(codec, DSPDMAC_CHNLSTART_MODULE_OFFSET, &tmp);
+	if (status >= 0) {
 		/* AND against 0xfff to get the active channel bits. */
-		पंचांगp = पंचांगp & 0xfff;
+		tmp = tmp & 0xfff;
 
-		/* If there are no active channels, nothing to मुक्त. */
-		अगर (!पंचांगp)
-			वापस;
-	पूर्ण अन्यथा अणु
+		/* If there are no active channels, nothing to free. */
+		if (!tmp)
+			return;
+	} else {
 		codec_dbg(codec, "%s: Failed to read active DSP DMA channel register.\n",
 				__func__);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
-	 * Check each DSP DMA channel क्रम activity, and अगर the channel is
-	 * active, मुक्त it.
+	 * Check each DSP DMA channel for activity, and if the channel is
+	 * active, free it.
 	 */
-	क्रम (i = 0; i < DSPDMAC_DMA_CFG_CHANNEL_COUNT; i++) अणु
-		अगर (dsp_is_dma_active(codec, i)) अणु
-			status = dspio_मुक्त_dma_chan(codec, i);
-			अगर (status < 0)
+	for (i = 0; i < DSPDMAC_DMA_CFG_CHANNEL_COUNT; i++) {
+		if (dsp_is_dma_active(codec, i)) {
+			status = dspio_free_dma_chan(codec, i);
+			if (status < 0)
 				codec_dbg(codec, "%s: Failed to free active DSP DMA channel %d.\n",
 						__func__, i);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /*
- * In the हाल of CT_EXTENSIONS_ENABLE being set to 1, and the DSP being in
- * use, audio is no दीर्घer routed directly to the DAC/ADC from the HDA stream.
+ * In the case of CT_EXTENSIONS_ENABLE being set to 1, and the DSP being in
+ * use, audio is no longer routed directly to the DAC/ADC from the HDA stream.
  * Instead, audio is now routed through the DSP's DMA controllers, which
  * the DSP is tasked with setting up itself. Through debugging, it seems the
  * cause of most of the no-audio on startup issues were due to improperly
  * configured DSP DMA channels.
  *
- * Normally, the DSP configures these the first समय an HDA audio stream is
- * started post DSP firmware करोwnload. That is why creating a 'dummy' stream
- * worked in fixing the audio in some हालs. This works most of the समय, but
- * someबार अगर a stream is started/stopped beक्रमe the DSP can setup the DMA
- * configuration रेजिस्टरs, it ends up in a broken state. Issues can also
- * arise अगर streams are started in an unusual order, i.e the audio output dma
+ * Normally, the DSP configures these the first time an HDA audio stream is
+ * started post DSP firmware download. That is why creating a 'dummy' stream
+ * worked in fixing the audio in some cases. This works most of the time, but
+ * sometimes if a stream is started/stopped before the DSP can setup the DMA
+ * configuration registers, it ends up in a broken state. Issues can also
+ * arise if streams are started in an unusual order, i.e the audio output dma
  * channel being sandwiched between the mic1 and mic2 dma channels.
  *
  * The solution to this is to make sure that the DSP has no DMA channels
- * in use post DSP firmware करोwnload, and then to manually start each शेष
+ * in use post DSP firmware download, and then to manually start each default
  * DSP stream that uses the DMA channels. These are 0x0c, the audio output
  * stream, 0x03, analog mic 1, and 0x04, analog mic 2.
  */
-अटल व्योम ca0132_alt_start_dsp_audio_streams(काष्ठा hda_codec *codec)
-अणु
-	स्थिर अचिन्हित पूर्णांक dsp_dma_stream_ids[] = अणु 0x0c, 0x03, 0x04 पूर्ण;
-	काष्ठा ca0132_spec *spec = codec->spec;
-	अचिन्हित पूर्णांक i, पंचांगp;
+static void ca0132_alt_start_dsp_audio_streams(struct hda_codec *codec)
+{
+	const unsigned int dsp_dma_stream_ids[] = { 0x0c, 0x03, 0x04 };
+	struct ca0132_spec *spec = codec->spec;
+	unsigned int i, tmp;
 
 	/*
-	 * Check अगर any of the शेष streams are active, and अगर they are,
+	 * Check if any of the default streams are active, and if they are,
 	 * stop them.
 	 */
 	mutex_lock(&spec->chipio_mutex);
 
-	क्रम (i = 0; i < ARRAY_SIZE(dsp_dma_stream_ids); i++) अणु
-		chipio_get_stream_control(codec, dsp_dma_stream_ids[i], &पंचांगp);
+	for (i = 0; i < ARRAY_SIZE(dsp_dma_stream_ids); i++) {
+		chipio_get_stream_control(codec, dsp_dma_stream_ids[i], &tmp);
 
-		अगर (पंचांगp) अणु
+		if (tmp) {
 			chipio_set_stream_control(codec,
 					dsp_dma_stream_ids[i], 0);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	mutex_unlock(&spec->chipio_mutex);
 
 	/*
 	 * If all DSP streams are inactive, there should be no active DSP DMA
-	 * channels. Check and make sure this is the हाल, and अगर it isn't,
-	 * मुक्त any active channels.
+	 * channels. Check and make sure this is the case, and if it isn't,
+	 * free any active channels.
 	 */
-	ca0132_alt_मुक्त_active_dma_channels(codec);
+	ca0132_alt_free_active_dma_channels(codec);
 
 	mutex_lock(&spec->chipio_mutex);
 
 	/* Make sure stream 0x0c is six channels. */
 	chipio_set_stream_channels(codec, 0x0c, 6);
 
-	क्रम (i = 0; i < ARRAY_SIZE(dsp_dma_stream_ids); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(dsp_dma_stream_ids); i++) {
 		chipio_set_stream_control(codec,
 				dsp_dma_stream_ids[i], 1);
 
-		/* Give the DSP some समय to setup the DMA channel. */
+		/* Give the DSP some time to setup the DMA channel. */
 		msleep(75);
-	पूर्ण
+	}
 
 	mutex_unlock(&spec->chipio_mutex);
-पूर्ण
+}
 
 /*
  * The region of ChipIO memory from 0x190000-0x1903fc is a sort of 'audio
- * router', where each entry represents a 48khz audio channel, with a क्रमmat
+ * router', where each entry represents a 48khz audio channel, with a format
  * of an 8-bit destination, an 8-bit source, and an unknown 2-bit number
- * value. The 2-bit number value is seemingly 0 अगर inactive, 1 अगर active,
- * and 3 अगर it's using Sample Rate Converter ports.
+ * value. The 2-bit number value is seemingly 0 if inactive, 1 if active,
+ * and 3 if it's using Sample Rate Converter ports.
  * An example is:
  * 0x0001f8c0
- * In this हाल, f8 is the destination, and c0 is the source. The number value
+ * In this case, f8 is the destination, and c0 is the source. The number value
  * is 1.
- * This region of memory is normally managed पूर्णांकernally by the 8051, where
+ * This region of memory is normally managed internally by the 8051, where
  * the region of exram memory from 0x1477-0x1575 has each byte represent an
  * entry within the 0x190000 range, and when a range of entries is in use, the
  * ending value is overwritten with 0xff.
  * 0x1578 in exram is a table of 0x25 entries, corresponding to the ChipIO
  * streamID's, where each entry is a starting 0x190000 port offset.
  * 0x159d in exram is the same as 0x1578, except it contains the ending port
- * offset क्रम the corresponding streamID.
+ * offset for the corresponding streamID.
  *
  * On certain cards, such as the SBZ/ZxR/AE7, these are originally setup by
  * the 8051, then manually overwritten to remap the ports to work with the
@@ -7668,178 +7667,178 @@ extract_scp_header(अचिन्हित पूर्णांक header,
  *
  * Currently known portID's:
  * 0x00-0x1f: HDA audio stream input/output ports.
- * 0x80-0xbf: Sample rate converter input/outमाला_दो. Only valid ports seem to
+ * 0x80-0xbf: Sample rate converter input/outputs. Only valid ports seem to
  *            have the lower-nibble set to 0x1, 0x2, and 0x9.
- * 0xc0-0xdf: DSP DMA input/output ports. Dynamically asचिन्हित.
+ * 0xc0-0xdf: DSP DMA input/output ports. Dynamically assigned.
  * 0xe0-0xff: DAC/ADC audio input/output ports.
  *
  * Currently known streamID's:
  * 0x03: Mic1 ADC to DSP.
  * 0x04: Mic2 ADC to DSP.
  * 0x05: HDA node 0x02 audio stream to DSP.
- * 0x0f: DSP Mic निकास to HDA node 0x07.
+ * 0x0f: DSP Mic exit to HDA node 0x07.
  * 0x0c: DSP processed audio to DACs.
  * 0x14: DAC0, front L/R.
  *
  * It is possible to route the HDA audio streams directly to the DAC and
- * bypass the DSP entirely, with the only करोwnside being that since the DSP
- * करोes volume control, the only volume control you'll get is through PCM on
- * the PC side, in the same way volume is handled क्रम optical out. This may be
- * useful क्रम debugging.
+ * bypass the DSP entirely, with the only downside being that since the DSP
+ * does volume control, the only volume control you'll get is through PCM on
+ * the PC side, in the same way volume is handled for optical out. This may be
+ * useful for debugging.
  */
-अटल व्योम chipio_remap_stream(काष्ठा hda_codec *codec,
-		स्थिर काष्ठा chipio_stream_remap_data *remap_data)
-अणु
-	अचिन्हित पूर्णांक i, stream_offset;
+static void chipio_remap_stream(struct hda_codec *codec,
+		const struct chipio_stream_remap_data *remap_data)
+{
+	unsigned int i, stream_offset;
 
-	/* Get the starting port क्रम the stream to be remapped. */
-	chipio_8051_पढ़ो_exram(codec, 0x1578 + remap_data->stream_id,
+	/* Get the starting port for the stream to be remapped. */
+	chipio_8051_read_exram(codec, 0x1578 + remap_data->stream_id,
 			&stream_offset);
 
 	/*
-	 * Check अगर the stream's port value is 0xff, because the 8051 may not
+	 * Check if the stream's port value is 0xff, because the 8051 may not
 	 * have gotten around to setting up the stream yet. Wait until it's
 	 * setup to remap it's ports.
 	 */
-	अगर (stream_offset == 0xff) अणु
-		क्रम (i = 0; i < 5; i++) अणु
+	if (stream_offset == 0xff) {
+		for (i = 0; i < 5; i++) {
 			msleep(25);
 
-			chipio_8051_पढ़ो_exram(codec, 0x1578 + remap_data->stream_id,
+			chipio_8051_read_exram(codec, 0x1578 + remap_data->stream_id,
 					&stream_offset);
 
-			अगर (stream_offset != 0xff)
-				अवरोध;
-		पूर्ण
-	पूर्ण
+			if (stream_offset != 0xff)
+				break;
+		}
+	}
 
-	अगर (stream_offset == 0xff) अणु
+	if (stream_offset == 0xff) {
 		codec_info(codec, "%s: Stream 0x%02x ports aren't allocated, remap failed!\n",
 				__func__, remap_data->stream_id);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* Offset isn't in bytes, its in 32-bit words, so multiply it by 4. */
 	stream_offset *= 0x04;
 	stream_offset += 0x190000;
 
-	क्रम (i = 0; i < remap_data->count; i++) अणु
-		chipio_ग_लिखो_no_mutex(codec,
+	for (i = 0; i < remap_data->count; i++) {
+		chipio_write_no_mutex(codec,
 				stream_offset + remap_data->offset[i],
 				remap_data->value[i]);
-	पूर्ण
+	}
 
 	/* Update stream map configuration. */
-	chipio_ग_लिखो_no_mutex(codec, 0x19042c, 0x00000001);
-पूर्ण
+	chipio_write_no_mutex(codec, 0x19042c, 0x00000001);
+}
 
 /*
- * Default speaker tuning values setup क्रम alternative codecs.
+ * Default speaker tuning values setup for alternative codecs.
  */
-अटल स्थिर अचिन्हित पूर्णांक sbz_शेष_delay_values[] = अणु
-	/* Non-zero values are भग्नing poपूर्णांक 0.000198. */
+static const unsigned int sbz_default_delay_values[] = {
+	/* Non-zero values are floating point 0.000198. */
 	0x394f9e38, 0x394f9e38, 0x00000000, 0x00000000, 0x00000000, 0x00000000
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक zxr_शेष_delay_values[] = अणु
-	/* Non-zero values are भग्नing poपूर्णांक 0.000220. */
+static const unsigned int zxr_default_delay_values[] = {
+	/* Non-zero values are floating point 0.000220. */
 	0x00000000, 0x00000000, 0x3966afcd, 0x3966afcd, 0x3966afcd, 0x3966afcd
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक ae5_शेष_delay_values[] = अणु
-	/* Non-zero values are भग्नing poपूर्णांक 0.000100. */
+static const unsigned int ae5_default_delay_values[] = {
+	/* Non-zero values are floating point 0.000100. */
 	0x00000000, 0x00000000, 0x38d1b717, 0x38d1b717, 0x38d1b717, 0x38d1b717
-पूर्ण;
+};
 
 /*
  * If we never change these, probably only need them on initialization.
  */
-अटल व्योम ca0132_alt_init_speaker_tuning(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	अचिन्हित पूर्णांक i, पंचांगp, start_req, end_req;
-	स्थिर अचिन्हित पूर्णांक *values;
+static void ca0132_alt_init_speaker_tuning(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
+	unsigned int i, tmp, start_req, end_req;
+	const unsigned int *values;
 
-	चयन (ca0132_quirk(spec)) अणु
-	हाल QUIRK_SBZ:
-		values = sbz_शेष_delay_values;
-		अवरोध;
-	हाल QUIRK_ZXR:
-		values = zxr_शेष_delay_values;
-		अवरोध;
-	हाल QUIRK_AE5:
-	हाल QUIRK_AE7:
-		values = ae5_शेष_delay_values;
-		अवरोध;
-	शेष:
-		values = sbz_शेष_delay_values;
-		अवरोध;
-	पूर्ण
+	switch (ca0132_quirk(spec)) {
+	case QUIRK_SBZ:
+		values = sbz_default_delay_values;
+		break;
+	case QUIRK_ZXR:
+		values = zxr_default_delay_values;
+		break;
+	case QUIRK_AE5:
+	case QUIRK_AE7:
+		values = ae5_default_delay_values;
+		break;
+	default:
+		values = sbz_default_delay_values;
+		break;
+	}
 
-	पंचांगp = FLOAT_ZERO;
-	dspio_set_uपूर्णांक_param(codec, 0x96, SPEAKER_TUNING_ENABLE_CENTER_EQ, पंचांगp);
+	tmp = FLOAT_ZERO;
+	dspio_set_uint_param(codec, 0x96, SPEAKER_TUNING_ENABLE_CENTER_EQ, tmp);
 
 	start_req = SPEAKER_TUNING_FRONT_LEFT_VOL_LEVEL;
 	end_req = SPEAKER_TUNING_REAR_RIGHT_VOL_LEVEL;
-	क्रम (i = start_req; i < end_req + 1; i++)
-		dspio_set_uपूर्णांक_param(codec, 0x96, i, पंचांगp);
+	for (i = start_req; i < end_req + 1; i++)
+		dspio_set_uint_param(codec, 0x96, i, tmp);
 
 	start_req = SPEAKER_TUNING_FRONT_LEFT_INVERT;
 	end_req = SPEAKER_TUNING_REAR_RIGHT_INVERT;
-	क्रम (i = start_req; i < end_req + 1; i++)
-		dspio_set_uपूर्णांक_param(codec, 0x96, i, पंचांगp);
+	for (i = start_req; i < end_req + 1; i++)
+		dspio_set_uint_param(codec, 0x96, i, tmp);
 
 
-	क्रम (i = 0; i < 6; i++)
-		dspio_set_uपूर्णांक_param(codec, 0x96,
+	for (i = 0; i < 6; i++)
+		dspio_set_uint_param(codec, 0x96,
 				SPEAKER_TUNING_FRONT_LEFT_DELAY + i, values[i]);
-पूर्ण
+}
 
 /*
- * Initialize mic क्रम non-chromebook ca0132 implementations.
+ * Initialize mic for non-chromebook ca0132 implementations.
  */
-अटल व्योम ca0132_alt_init_analog_mics(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	अचिन्हित पूर्णांक पंचांगp;
+static void ca0132_alt_init_analog_mics(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
+	unsigned int tmp;
 
 	/* Mic 1 Setup */
 	chipio_set_conn_rate(codec, MEM_CONNID_MICIN1, SR_96_000);
 	chipio_set_conn_rate(codec, MEM_CONNID_MICOUT1, SR_96_000);
-	अगर (ca0132_quirk(spec) == QUIRK_R3DI) अणु
+	if (ca0132_quirk(spec) == QUIRK_R3DI) {
 		chipio_set_conn_rate(codec, 0x0F, SR_96_000);
-		पंचांगp = FLOAT_ONE;
-	पूर्ण अन्यथा
-		पंचांगp = FLOAT_THREE;
-	dspio_set_uपूर्णांक_param(codec, 0x80, 0x00, पंचांगp);
+		tmp = FLOAT_ONE;
+	} else
+		tmp = FLOAT_THREE;
+	dspio_set_uint_param(codec, 0x80, 0x00, tmp);
 
 	/* Mic 2 setup (not present on desktop cards) */
 	chipio_set_conn_rate(codec, MEM_CONNID_MICIN2, SR_96_000);
 	chipio_set_conn_rate(codec, MEM_CONNID_MICOUT2, SR_96_000);
-	अगर (ca0132_quirk(spec) == QUIRK_R3DI)
+	if (ca0132_quirk(spec) == QUIRK_R3DI)
 		chipio_set_conn_rate(codec, 0x0F, SR_96_000);
-	पंचांगp = FLOAT_ZERO;
-	dspio_set_uपूर्णांक_param(codec, 0x80, 0x01, पंचांगp);
-पूर्ण
+	tmp = FLOAT_ZERO;
+	dspio_set_uint_param(codec, 0x80, 0x01, tmp);
+}
 
 /*
- * Sets the source of stream 0x14 to connpoपूर्णांकID 0x48, and the destination
- * connpoपूर्णांकID to 0x91. If this isn't करोne, the destination is 0x71, and
- * you get no sound. I'm guessing this has to करो with the Sound Blaster Z
+ * Sets the source of stream 0x14 to connpointID 0x48, and the destination
+ * connpointID to 0x91. If this isn't done, the destination is 0x71, and
+ * you get no sound. I'm guessing this has to do with the Sound Blaster Z
  * having an updated DAC, which changes the destination to that DAC.
  */
-अटल व्योम sbz_connect_streams(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
+static void sbz_connect_streams(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
 
 	mutex_lock(&spec->chipio_mutex);
 
 	codec_dbg(codec, "Connect Streams entered, mutex locked and loaded.\n");
 
-	/* This value is 0x43 क्रम 96khz, and 0x83 क्रम 192khz. */
-	chipio_ग_लिखो_no_mutex(codec, 0x18a020, 0x00000043);
+	/* This value is 0x43 for 96khz, and 0x83 for 192khz. */
+	chipio_write_no_mutex(codec, 0x18a020, 0x00000043);
 
-	/* Setup stream 0x14 with it's source and destination poपूर्णांकs */
+	/* Setup stream 0x14 with it's source and destination points */
 	chipio_set_stream_source_dest(codec, 0x14, 0x48, 0x91);
 	chipio_set_conn_rate_no_mutex(codec, 0x48, SR_96_000);
 	chipio_set_conn_rate_no_mutex(codec, 0x91, SR_96_000);
@@ -7849,18 +7848,18 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 	codec_dbg(codec, "Connect Streams exited, mutex released.\n");
 
 	mutex_unlock(&spec->chipio_mutex);
-पूर्ण
+}
 
 /*
  * Write data through ChipIO to setup proper stream destinations.
  * Not sure how it exactly works, but it seems to direct data
- * to dअगरferent destinations. Example is f8 to c0, e0 to c0.
- * All I know is, अगर you करोn't set these, you get no sound.
+ * to different destinations. Example is f8 to c0, e0 to c0.
+ * All I know is, if you don't set these, you get no sound.
  */
-अटल व्योम sbz_chipio_startup_data(काष्ठा hda_codec *codec)
-अणु
-	स्थिर काष्ठा chipio_stream_remap_data *dsp_out_remap_data;
-	काष्ठा ca0132_spec *spec = codec->spec;
+static void sbz_chipio_startup_data(struct hda_codec *codec)
+{
+	const struct chipio_stream_remap_data *dsp_out_remap_data;
+	struct ca0132_spec *spec = codec->spec;
 
 	mutex_lock(&spec->chipio_mutex);
 	codec_dbg(codec, "Startup Data entered, mutex locked and loaded.\n");
@@ -7869,31 +7868,31 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 	chipio_remap_stream(codec, &stream_remap_data[0]);
 
 	/* Remap DSP audio output stream ports. */
-	चयन (ca0132_quirk(spec)) अणु
-	हाल QUIRK_SBZ:
+	switch (ca0132_quirk(spec)) {
+	case QUIRK_SBZ:
 		dsp_out_remap_data = &stream_remap_data[1];
-		अवरोध;
+		break;
 
-	हाल QUIRK_ZXR:
+	case QUIRK_ZXR:
 		dsp_out_remap_data = &stream_remap_data[2];
-		अवरोध;
+		break;
 
-	शेष:
-		dsp_out_remap_data = शून्य;
-		अवरोध;
-	पूर्ण
+	default:
+		dsp_out_remap_data = NULL;
+		break;
+	}
 
-	अगर (dsp_out_remap_data)
+	if (dsp_out_remap_data)
 		chipio_remap_stream(codec, dsp_out_remap_data);
 
 	codec_dbg(codec, "Startup Data exited, mutex released.\n");
 	mutex_unlock(&spec->chipio_mutex);
-पूर्ण
+}
 
-अटल व्योम ca0132_alt_dsp_initial_mic_setup(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	अचिन्हित पूर्णांक पंचांगp;
+static void ca0132_alt_dsp_initial_mic_setup(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
+	unsigned int tmp;
 
 	chipio_set_stream_control(codec, 0x03, 0);
 	chipio_set_stream_control(codec, 0x04, 0);
@@ -7901,87 +7900,87 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 	chipio_set_conn_rate(codec, MEM_CONNID_MICIN1, SR_96_000);
 	chipio_set_conn_rate(codec, MEM_CONNID_MICOUT1, SR_96_000);
 
-	पंचांगp = FLOAT_THREE;
-	dspio_set_uपूर्णांक_param(codec, 0x80, 0x00, पंचांगp);
+	tmp = FLOAT_THREE;
+	dspio_set_uint_param(codec, 0x80, 0x00, tmp);
 
 	chipio_set_stream_control(codec, 0x03, 1);
 	chipio_set_stream_control(codec, 0x04, 1);
 
-	चयन (ca0132_quirk(spec)) अणु
-	हाल QUIRK_SBZ:
-		chipio_ग_लिखो(codec, 0x18b098, 0x0000000c);
-		chipio_ग_लिखो(codec, 0x18b09C, 0x0000000c);
-		अवरोध;
-	हाल QUIRK_AE5:
-		chipio_ग_लिखो(codec, 0x18b098, 0x0000000c);
-		chipio_ग_लिखो(codec, 0x18b09c, 0x0000004c);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+	switch (ca0132_quirk(spec)) {
+	case QUIRK_SBZ:
+		chipio_write(codec, 0x18b098, 0x0000000c);
+		chipio_write(codec, 0x18b09C, 0x0000000c);
+		break;
+	case QUIRK_AE5:
+		chipio_write(codec, 0x18b098, 0x0000000c);
+		chipio_write(codec, 0x18b09c, 0x0000004c);
+		break;
+	default:
+		break;
+	}
+}
 
-अटल व्योम ae5_post_dsp_रेजिस्टर_set(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
+static void ae5_post_dsp_register_set(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
 
-	chipio_8051_ग_लिखो_direct(codec, 0x93, 0x10);
-	chipio_8051_ग_लिखो_pll_pmu(codec, 0x44, 0xc2);
+	chipio_8051_write_direct(codec, 0x93, 0x10);
+	chipio_8051_write_pll_pmu(codec, 0x44, 0xc2);
 
-	ग_लिखोb(0xff, spec->mem_base + 0x304);
-	ग_लिखोb(0xff, spec->mem_base + 0x304);
-	ग_लिखोb(0xff, spec->mem_base + 0x304);
-	ग_लिखोb(0xff, spec->mem_base + 0x304);
-	ग_लिखोb(0x00, spec->mem_base + 0x100);
-	ग_लिखोb(0xff, spec->mem_base + 0x304);
-	ग_लिखोb(0x00, spec->mem_base + 0x100);
-	ग_लिखोb(0xff, spec->mem_base + 0x304);
-	ग_लिखोb(0x00, spec->mem_base + 0x100);
-	ग_लिखोb(0xff, spec->mem_base + 0x304);
-	ग_लिखोb(0x00, spec->mem_base + 0x100);
-	ग_लिखोb(0xff, spec->mem_base + 0x304);
+	writeb(0xff, spec->mem_base + 0x304);
+	writeb(0xff, spec->mem_base + 0x304);
+	writeb(0xff, spec->mem_base + 0x304);
+	writeb(0xff, spec->mem_base + 0x304);
+	writeb(0x00, spec->mem_base + 0x100);
+	writeb(0xff, spec->mem_base + 0x304);
+	writeb(0x00, spec->mem_base + 0x100);
+	writeb(0xff, spec->mem_base + 0x304);
+	writeb(0x00, spec->mem_base + 0x100);
+	writeb(0xff, spec->mem_base + 0x304);
+	writeb(0x00, spec->mem_base + 0x100);
+	writeb(0xff, spec->mem_base + 0x304);
 
 	ca0113_mmio_command_set(codec, 0x30, 0x2b, 0x3f);
 	ca0113_mmio_command_set(codec, 0x30, 0x2d, 0x3f);
 	ca0113_mmio_command_set(codec, 0x48, 0x07, 0x83);
-पूर्ण
+}
 
-अटल व्योम ae5_post_dsp_param_setup(काष्ठा hda_codec *codec)
-अणु
+static void ae5_post_dsp_param_setup(struct hda_codec *codec)
+{
 	/*
 	 * Param3 in the 8051's memory is represented by the ascii string 'mch'
 	 * which seems to be 'multichannel'. This is also mentioned in the
-	 * AE-5's registry values in Winकरोws.
+	 * AE-5's registry values in Windows.
 	 */
 	chipio_set_control_param(codec, 3, 0);
 	/*
 	 * I believe ASI is 'audio serial interface' and that it's used to
-	 * change colors on the बाह्यal LED strip connected to the AE-5.
+	 * change colors on the external LED strip connected to the AE-5.
 	 */
 	chipio_set_control_flag(codec, CONTROL_FLAG_ASI_96KHZ, 1);
 
-	snd_hda_codec_ग_लिखो(codec, WIDGET_CHIP_CTRL, 0, 0x724, 0x83);
+	snd_hda_codec_write(codec, WIDGET_CHIP_CTRL, 0, 0x724, 0x83);
 	chipio_set_control_param(codec, CONTROL_PARAM_ASI, 0);
 
-	chipio_8051_ग_लिखो_exram(codec, 0xfa92, 0x22);
-पूर्ण
+	chipio_8051_write_exram(codec, 0xfa92, 0x22);
+}
 
-अटल व्योम ae5_post_dsp_pll_setup(काष्ठा hda_codec *codec)
-अणु
-	chipio_8051_ग_लिखो_pll_pmu(codec, 0x41, 0xc8);
-	chipio_8051_ग_लिखो_pll_pmu(codec, 0x45, 0xcc);
-	chipio_8051_ग_लिखो_pll_pmu(codec, 0x40, 0xcb);
-	chipio_8051_ग_लिखो_pll_pmu(codec, 0x43, 0xc7);
-	chipio_8051_ग_लिखो_pll_pmu(codec, 0x51, 0x8d);
-पूर्ण
+static void ae5_post_dsp_pll_setup(struct hda_codec *codec)
+{
+	chipio_8051_write_pll_pmu(codec, 0x41, 0xc8);
+	chipio_8051_write_pll_pmu(codec, 0x45, 0xcc);
+	chipio_8051_write_pll_pmu(codec, 0x40, 0xcb);
+	chipio_8051_write_pll_pmu(codec, 0x43, 0xc7);
+	chipio_8051_write_pll_pmu(codec, 0x51, 0x8d);
+}
 
-अटल व्योम ae5_post_dsp_stream_setup(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
+static void ae5_post_dsp_stream_setup(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
 
 	mutex_lock(&spec->chipio_mutex);
 
-	snd_hda_codec_ग_लिखो(codec, WIDGET_CHIP_CTRL, 0, 0x725, 0x81);
+	snd_hda_codec_write(codec, WIDGET_CHIP_CTRL, 0, 0x725, 0x81);
 
 	chipio_set_conn_rate_no_mutex(codec, 0x70, SR_96_000);
 
@@ -7994,23 +7993,23 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 
 	chipio_set_control_param_no_mutex(codec, CONTROL_PARAM_ASI, 4);
 
-	chipio_8051_ग_लिखो_pll_pmu_no_mutex(codec, 0x43, 0xc7);
+	chipio_8051_write_pll_pmu_no_mutex(codec, 0x43, 0xc7);
 
 	ca0113_mmio_command_set(codec, 0x48, 0x01, 0x80);
 
 	mutex_unlock(&spec->chipio_mutex);
-पूर्ण
+}
 
-अटल व्योम ae5_post_dsp_startup_data(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
+static void ae5_post_dsp_startup_data(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
 
 	mutex_lock(&spec->chipio_mutex);
 
-	chipio_ग_लिखो_no_mutex(codec, 0x189000, 0x0001f101);
-	chipio_ग_लिखो_no_mutex(codec, 0x189004, 0x0001f101);
-	chipio_ग_लिखो_no_mutex(codec, 0x189024, 0x00014004);
-	chipio_ग_लिखो_no_mutex(codec, 0x189028, 0x0002000f);
+	chipio_write_no_mutex(codec, 0x189000, 0x0001f101);
+	chipio_write_no_mutex(codec, 0x189004, 0x0001f101);
+	chipio_write_no_mutex(codec, 0x189024, 0x00014004);
+	chipio_write_no_mutex(codec, 0x189028, 0x0002000f);
 
 	ca0113_mmio_command_set(codec, 0x48, 0x0a, 0x05);
 	chipio_set_control_param_no_mutex(codec, CONTROL_PARAM_ASI, 7);
@@ -8025,17 +8024,17 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 	ca0113_mmio_gpio_set(codec, 1, true);
 	ca0113_mmio_command_set(codec, 0x48, 0x07, 0x80);
 
-	chipio_ग_लिखो_no_mutex(codec, 0x18b03c, 0x00000012);
+	chipio_write_no_mutex(codec, 0x18b03c, 0x00000012);
 
 	ca0113_mmio_command_set(codec, 0x48, 0x0f, 0x00);
 	ca0113_mmio_command_set(codec, 0x48, 0x10, 0x00);
 
 	mutex_unlock(&spec->chipio_mutex);
-पूर्ण
+}
 
-अटल व्योम ae7_post_dsp_setup_ports(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
+static void ae7_post_dsp_setup_ports(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
 
 	mutex_lock(&spec->chipio_mutex);
 
@@ -8052,15 +8051,15 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 	ca0113_mmio_command_set(codec, 0x48, 0x14, 0x7f);
 
 	mutex_unlock(&spec->chipio_mutex);
-पूर्ण
+}
 
-अटल व्योम ae7_post_dsp_asi_stream_setup(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
+static void ae7_post_dsp_asi_stream_setup(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
 
 	mutex_lock(&spec->chipio_mutex);
 
-	snd_hda_codec_ग_लिखो(codec, WIDGET_CHIP_CTRL, 0, 0x725, 0x81);
+	snd_hda_codec_write(codec, WIDGET_CHIP_CTRL, 0, 0x725, 0x81);
 	ca0113_mmio_command_set(codec, 0x30, 0x2b, 0x00);
 
 	chipio_set_conn_rate_no_mutex(codec, 0x70, SR_96_000);
@@ -8075,46 +8074,46 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 	chipio_set_control_param_no_mutex(codec, CONTROL_PARAM_ASI, 4);
 
 	mutex_unlock(&spec->chipio_mutex);
-पूर्ण
+}
 
-अटल व्योम ae7_post_dsp_pll_setup(काष्ठा hda_codec *codec)
-अणु
-	अटल स्थिर अचिन्हित पूर्णांक addr[] = अणु
+static void ae7_post_dsp_pll_setup(struct hda_codec *codec)
+{
+	static const unsigned int addr[] = {
 		0x41, 0x45, 0x40, 0x43, 0x51
-	पूर्ण;
-	अटल स्थिर अचिन्हित पूर्णांक data[] = अणु
+	};
+	static const unsigned int data[] = {
 		0xc8, 0xcc, 0xcb, 0xc7, 0x8d
-	पूर्ण;
-	अचिन्हित पूर्णांक i;
+	};
+	unsigned int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(addr); i++)
-		chipio_8051_ग_लिखो_pll_pmu_no_mutex(codec, addr[i], data[i]);
-पूर्ण
+	for (i = 0; i < ARRAY_SIZE(addr); i++)
+		chipio_8051_write_pll_pmu_no_mutex(codec, addr[i], data[i]);
+}
 
-अटल व्योम ae7_post_dsp_asi_setup_ports(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	अटल स्थिर अचिन्हित पूर्णांक target[] = अणु
+static void ae7_post_dsp_asi_setup_ports(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
+	static const unsigned int target[] = {
 		0x0b, 0x04, 0x06, 0x0a, 0x0c, 0x11, 0x12, 0x13, 0x14
-	पूर्ण;
-	अटल स्थिर अचिन्हित पूर्णांक data[] = अणु
+	};
+	static const unsigned int data[] = {
 		0x12, 0x00, 0x48, 0x05, 0x5f, 0xff, 0xff, 0xff, 0x7f
-	पूर्ण;
-	अचिन्हित पूर्णांक i;
+	};
+	unsigned int i;
 
 	mutex_lock(&spec->chipio_mutex);
 
-	chipio_8051_ग_लिखो_pll_pmu_no_mutex(codec, 0x43, 0xc7);
+	chipio_8051_write_pll_pmu_no_mutex(codec, 0x43, 0xc7);
 
-	chipio_ग_लिखो_no_mutex(codec, 0x189000, 0x0001f101);
-	chipio_ग_लिखो_no_mutex(codec, 0x189004, 0x0001f101);
-	chipio_ग_लिखो_no_mutex(codec, 0x189024, 0x00014004);
-	chipio_ग_लिखो_no_mutex(codec, 0x189028, 0x0002000f);
+	chipio_write_no_mutex(codec, 0x189000, 0x0001f101);
+	chipio_write_no_mutex(codec, 0x189004, 0x0001f101);
+	chipio_write_no_mutex(codec, 0x189024, 0x00014004);
+	chipio_write_no_mutex(codec, 0x189028, 0x0002000f);
 
 	ae7_post_dsp_pll_setup(codec);
 	chipio_set_control_param_no_mutex(codec, CONTROL_PARAM_ASI, 7);
 
-	क्रम (i = 0; i < ARRAY_SIZE(target); i++)
+	for (i = 0; i < ARRAY_SIZE(target); i++)
 		ca0113_mmio_command_set(codec, 0x48, target[i], data[i]);
 
 	ca0113_mmio_command_set_type2(codec, 0x48, 0x07, 0x83);
@@ -8133,22 +8132,22 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 	 */
 	chipio_set_control_param_no_mutex(codec, 0x20, 0x21);
 
-	chipio_ग_लिखो_no_mutex(codec, 0x18b038, 0x00000088);
+	chipio_write_no_mutex(codec, 0x18b038, 0x00000088);
 
 	/*
-	 * Now, at this poपूर्णांक on Winकरोws, an actual stream is setup and
+	 * Now, at this point on Windows, an actual stream is setup and
 	 * seemingly sends data to the HDA node 0x09, which is the digital
-	 * audio input node. This is left out here, because obviously I करोn't
+	 * audio input node. This is left out here, because obviously I don't
 	 * know what data is being sent. Interestingly, the AE-5 seems to go
 	 * through the motions of getting here and never actually takes this
-	 * step, but the AE-7 करोes.
+	 * step, but the AE-7 does.
 	 */
 
 	ca0113_mmio_gpio_set(codec, 0, 1);
 	ca0113_mmio_gpio_set(codec, 1, 1);
 
 	ca0113_mmio_command_set_type2(codec, 0x48, 0x07, 0x83);
-	chipio_ग_लिखो_no_mutex(codec, 0x18b03c, 0x00000000);
+	chipio_write_no_mutex(codec, 0x18b03c, 0x00000000);
 	ca0113_mmio_command_set(codec, 0x48, 0x0f, 0x00);
 	ca0113_mmio_command_set(codec, 0x48, 0x10, 0x00);
 
@@ -8159,25 +8158,25 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 	chipio_set_stream_channels(codec, 0x18, 6);
 
 	/*
-	 * Runs again, this has been repeated a few बार, but I'm just
-	 * following what the Winकरोws driver करोes.
+	 * Runs again, this has been repeated a few times, but I'm just
+	 * following what the Windows driver does.
 	 */
 	ae7_post_dsp_pll_setup(codec);
 	chipio_set_control_param_no_mutex(codec, CONTROL_PARAM_ASI, 7);
 
 	mutex_unlock(&spec->chipio_mutex);
-पूर्ण
+}
 
 /*
- * The Winकरोws driver has commands that seem to setup ASI, which I believe to
- * be some sort of audio serial पूर्णांकerface. My current speculation is that it's
+ * The Windows driver has commands that seem to setup ASI, which I believe to
+ * be some sort of audio serial interface. My current speculation is that it's
  * related to communicating with the new DAC.
  */
-अटल व्योम ae7_post_dsp_asi_setup(काष्ठा hda_codec *codec)
-अणु
-	chipio_8051_ग_लिखो_direct(codec, 0x93, 0x10);
+static void ae7_post_dsp_asi_setup(struct hda_codec *codec)
+{
+	chipio_8051_write_direct(codec, 0x93, 0x10);
 
-	chipio_8051_ग_लिखो_pll_pmu(codec, 0x44, 0xc2);
+	chipio_8051_write_pll_pmu(codec, 0x44, 0xc2);
 
 	ca0113_mmio_command_set_type2(codec, 0x48, 0x07, 0x83);
 	ca0113_mmio_command_set(codec, 0x30, 0x2e, 0x3f);
@@ -8185,127 +8184,127 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 	chipio_set_control_param(codec, 3, 3);
 	chipio_set_control_flag(codec, CONTROL_FLAG_ASI_96KHZ, 1);
 
-	snd_hda_codec_ग_लिखो(codec, WIDGET_CHIP_CTRL, 0, 0x724, 0x83);
+	snd_hda_codec_write(codec, WIDGET_CHIP_CTRL, 0, 0x724, 0x83);
 	chipio_set_control_param(codec, CONTROL_PARAM_ASI, 0);
-	snd_hda_codec_ग_लिखो(codec, 0x17, 0, 0x794, 0x00);
+	snd_hda_codec_write(codec, 0x17, 0, 0x794, 0x00);
 
-	chipio_8051_ग_लिखो_exram(codec, 0xfa92, 0x22);
+	chipio_8051_write_exram(codec, 0xfa92, 0x22);
 
 	ae7_post_dsp_pll_setup(codec);
 	ae7_post_dsp_asi_stream_setup(codec);
 
-	chipio_8051_ग_लिखो_pll_pmu(codec, 0x43, 0xc7);
+	chipio_8051_write_pll_pmu(codec, 0x43, 0xc7);
 
 	ae7_post_dsp_asi_setup_ports(codec);
-पूर्ण
+}
 
 /*
- * Setup शेष parameters क्रम DSP
+ * Setup default parameters for DSP
  */
-अटल व्योम ca0132_setup_शेषs(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	अचिन्हित पूर्णांक पंचांगp;
-	पूर्णांक num_fx;
-	पूर्णांक idx, i;
+static void ca0132_setup_defaults(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
+	unsigned int tmp;
+	int num_fx;
+	int idx, i;
 
-	अगर (spec->dsp_state != DSP_DOWNLOADED)
-		वापस;
+	if (spec->dsp_state != DSP_DOWNLOADED)
+		return;
 
 	/* out, in effects + voicefx */
 	num_fx = OUT_EFFECTS_COUNT + IN_EFFECTS_COUNT + 1;
-	क्रम (idx = 0; idx < num_fx; idx++) अणु
-		क्रम (i = 0; i <= ca0132_effects[idx].params; i++) अणु
-			dspio_set_uपूर्णांक_param(codec, ca0132_effects[idx].mid,
+	for (idx = 0; idx < num_fx; idx++) {
+		for (i = 0; i <= ca0132_effects[idx].params; i++) {
+			dspio_set_uint_param(codec, ca0132_effects[idx].mid,
 					     ca0132_effects[idx].reqs[i],
 					     ca0132_effects[idx].def_vals[i]);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/*हटाओ DSP headroom*/
-	पंचांगp = FLOAT_ZERO;
-	dspio_set_uपूर्णांक_param(codec, 0x96, 0x3C, पंचांगp);
+	/*remove DSP headroom*/
+	tmp = FLOAT_ZERO;
+	dspio_set_uint_param(codec, 0x96, 0x3C, tmp);
 
 	/*set speaker EQ bypass attenuation*/
-	dspio_set_uपूर्णांक_param(codec, 0x8f, 0x01, पंचांगp);
+	dspio_set_uint_param(codec, 0x8f, 0x01, tmp);
 
 	/* set AMic1 and AMic2 as mono mic */
-	पंचांगp = FLOAT_ONE;
-	dspio_set_uपूर्णांक_param(codec, 0x80, 0x00, पंचांगp);
-	dspio_set_uपूर्णांक_param(codec, 0x80, 0x01, पंचांगp);
+	tmp = FLOAT_ONE;
+	dspio_set_uint_param(codec, 0x80, 0x00, tmp);
+	dspio_set_uint_param(codec, 0x80, 0x01, tmp);
 
 	/* set AMic1 as CrystalVoice input */
-	पंचांगp = FLOAT_ONE;
-	dspio_set_uपूर्णांक_param(codec, 0x80, 0x05, पंचांगp);
+	tmp = FLOAT_ONE;
+	dspio_set_uint_param(codec, 0x80, 0x05, tmp);
 
 	/* set WUH source */
-	पंचांगp = FLOAT_TWO;
-	dspio_set_uपूर्णांक_param(codec, 0x31, 0x00, पंचांगp);
-पूर्ण
+	tmp = FLOAT_TWO;
+	dspio_set_uint_param(codec, 0x31, 0x00, tmp);
+}
 
 /*
- * Setup शेष parameters क्रम Recon3D/Recon3Di DSP.
+ * Setup default parameters for Recon3D/Recon3Di DSP.
  */
 
-अटल व्योम r3d_setup_शेषs(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	अचिन्हित पूर्णांक पंचांगp;
-	पूर्णांक num_fx;
-	पूर्णांक idx, i;
+static void r3d_setup_defaults(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
+	unsigned int tmp;
+	int num_fx;
+	int idx, i;
 
-	अगर (spec->dsp_state != DSP_DOWNLOADED)
-		वापस;
+	if (spec->dsp_state != DSP_DOWNLOADED)
+		return;
 
 	ca0132_alt_init_analog_mics(codec);
 	ca0132_alt_start_dsp_audio_streams(codec);
 
-	/*हटाओ DSP headroom*/
-	पंचांगp = FLOAT_ZERO;
-	dspio_set_uपूर्णांक_param(codec, 0x96, 0x3C, पंचांगp);
+	/*remove DSP headroom*/
+	tmp = FLOAT_ZERO;
+	dspio_set_uint_param(codec, 0x96, 0x3C, tmp);
 
 	/* set WUH source */
-	पंचांगp = FLOAT_TWO;
-	dspio_set_uपूर्णांक_param(codec, 0x31, 0x00, पंचांगp);
+	tmp = FLOAT_TWO;
+	dspio_set_uint_param(codec, 0x31, 0x00, tmp);
 	chipio_set_conn_rate(codec, MEM_CONNID_WUH, SR_48_000);
 
 	/* Set speaker source? */
-	dspio_set_uपूर्णांक_param(codec, 0x32, 0x00, पंचांगp);
+	dspio_set_uint_param(codec, 0x32, 0x00, tmp);
 
-	अगर (ca0132_quirk(spec) == QUIRK_R3DI)
+	if (ca0132_quirk(spec) == QUIRK_R3DI)
 		r3di_gpio_dsp_status_set(codec, R3DI_DSP_DOWNLOADED);
 
 	/* Disable mute on Center/LFE. */
-	अगर (ca0132_quirk(spec) == QUIRK_R3D) अणु
+	if (ca0132_quirk(spec) == QUIRK_R3D) {
 		ca0113_mmio_gpio_set(codec, 2, false);
 		ca0113_mmio_gpio_set(codec, 4, true);
-	पूर्ण
+	}
 
-	/* Setup effect शेषs */
+	/* Setup effect defaults */
 	num_fx = OUT_EFFECTS_COUNT + IN_EFFECTS_COUNT + 1;
-	क्रम (idx = 0; idx < num_fx; idx++) अणु
-		क्रम (i = 0; i <= ca0132_effects[idx].params; i++) अणु
-			dspio_set_uपूर्णांक_param(codec,
+	for (idx = 0; idx < num_fx; idx++) {
+		for (i = 0; i <= ca0132_effects[idx].params; i++) {
+			dspio_set_uint_param(codec,
 					ca0132_effects[idx].mid,
 					ca0132_effects[idx].reqs[i],
 					ca0132_effects[idx].def_vals[i]);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /*
- * Setup शेष parameters क्रम the Sound Blaster Z DSP. A lot more going on
+ * Setup default parameters for the Sound Blaster Z DSP. A lot more going on
  * than the Chromebook setup.
  */
-अटल व्योम sbz_setup_शेषs(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	अचिन्हित पूर्णांक पंचांगp;
-	पूर्णांक num_fx;
-	पूर्णांक idx, i;
+static void sbz_setup_defaults(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
+	unsigned int tmp;
+	int num_fx;
+	int idx, i;
 
-	अगर (spec->dsp_state != DSP_DOWNLOADED)
-		वापस;
+	if (spec->dsp_state != DSP_DOWNLOADED)
+		return;
 
 	ca0132_alt_init_analog_mics(codec);
 	ca0132_alt_start_dsp_audio_streams(codec);
@@ -8313,87 +8312,87 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 	sbz_chipio_startup_data(codec);
 
 	/*
-	 * Sets पूर्णांकernal input loopback to off, used to have a चयन to
+	 * Sets internal input loopback to off, used to have a switch to
 	 * enable input loopback, but turned out to be way too buggy.
 	 */
-	पंचांगp = FLOAT_ONE;
-	dspio_set_uपूर्णांक_param(codec, 0x37, 0x08, पंचांगp);
-	dspio_set_uपूर्णांक_param(codec, 0x37, 0x10, पंचांगp);
+	tmp = FLOAT_ONE;
+	dspio_set_uint_param(codec, 0x37, 0x08, tmp);
+	dspio_set_uint_param(codec, 0x37, 0x10, tmp);
 
-	/*हटाओ DSP headroom*/
-	पंचांगp = FLOAT_ZERO;
-	dspio_set_uपूर्णांक_param(codec, 0x96, 0x3C, पंचांगp);
+	/*remove DSP headroom*/
+	tmp = FLOAT_ZERO;
+	dspio_set_uint_param(codec, 0x96, 0x3C, tmp);
 
 	/* set WUH source */
-	पंचांगp = FLOAT_TWO;
-	dspio_set_uपूर्णांक_param(codec, 0x31, 0x00, पंचांगp);
+	tmp = FLOAT_TWO;
+	dspio_set_uint_param(codec, 0x31, 0x00, tmp);
 	chipio_set_conn_rate(codec, MEM_CONNID_WUH, SR_48_000);
 
 	/* Set speaker source? */
-	dspio_set_uपूर्णांक_param(codec, 0x32, 0x00, पंचांगp);
+	dspio_set_uint_param(codec, 0x32, 0x00, tmp);
 
 	ca0132_alt_dsp_initial_mic_setup(codec);
 
 	/* out, in effects + voicefx */
 	num_fx = OUT_EFFECTS_COUNT + IN_EFFECTS_COUNT + 1;
-	क्रम (idx = 0; idx < num_fx; idx++) अणु
-		क्रम (i = 0; i <= ca0132_effects[idx].params; i++) अणु
-			dspio_set_uपूर्णांक_param(codec,
+	for (idx = 0; idx < num_fx; idx++) {
+		for (i = 0; i <= ca0132_effects[idx].params; i++) {
+			dspio_set_uint_param(codec,
 					ca0132_effects[idx].mid,
 					ca0132_effects[idx].reqs[i],
 					ca0132_effects[idx].def_vals[i]);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	ca0132_alt_init_speaker_tuning(codec);
-पूर्ण
+}
 
 /*
- * Setup शेष parameters क्रम the Sound BlasterX AE-5 DSP.
+ * Setup default parameters for the Sound BlasterX AE-5 DSP.
  */
-अटल व्योम ae5_setup_शेषs(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	अचिन्हित पूर्णांक पंचांगp;
-	पूर्णांक num_fx;
-	पूर्णांक idx, i;
+static void ae5_setup_defaults(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
+	unsigned int tmp;
+	int num_fx;
+	int idx, i;
 
-	अगर (spec->dsp_state != DSP_DOWNLOADED)
-		वापस;
+	if (spec->dsp_state != DSP_DOWNLOADED)
+		return;
 
 	ca0132_alt_init_analog_mics(codec);
 	ca0132_alt_start_dsp_audio_streams(codec);
 
 	/* New, unknown SCP req's */
-	पंचांगp = FLOAT_ZERO;
-	dspio_set_uपूर्णांक_param(codec, 0x96, 0x29, पंचांगp);
-	dspio_set_uपूर्णांक_param(codec, 0x96, 0x2a, पंचांगp);
-	dspio_set_uपूर्णांक_param(codec, 0x80, 0x0d, पंचांगp);
-	dspio_set_uपूर्णांक_param(codec, 0x80, 0x0e, पंचांगp);
+	tmp = FLOAT_ZERO;
+	dspio_set_uint_param(codec, 0x96, 0x29, tmp);
+	dspio_set_uint_param(codec, 0x96, 0x2a, tmp);
+	dspio_set_uint_param(codec, 0x80, 0x0d, tmp);
+	dspio_set_uint_param(codec, 0x80, 0x0e, tmp);
 
 	ca0113_mmio_command_set(codec, 0x30, 0x2e, 0x3f);
 	ca0113_mmio_gpio_set(codec, 0, false);
 	ca0113_mmio_command_set(codec, 0x30, 0x28, 0x00);
 
 	/* Internal loopback off */
-	पंचांगp = FLOAT_ONE;
-	dspio_set_uपूर्णांक_param(codec, 0x37, 0x08, पंचांगp);
-	dspio_set_uपूर्णांक_param(codec, 0x37, 0x10, पंचांगp);
+	tmp = FLOAT_ONE;
+	dspio_set_uint_param(codec, 0x37, 0x08, tmp);
+	dspio_set_uint_param(codec, 0x37, 0x10, tmp);
 
-	/*हटाओ DSP headroom*/
-	पंचांगp = FLOAT_ZERO;
-	dspio_set_uपूर्णांक_param(codec, 0x96, 0x3C, पंचांगp);
+	/*remove DSP headroom*/
+	tmp = FLOAT_ZERO;
+	dspio_set_uint_param(codec, 0x96, 0x3C, tmp);
 
 	/* set WUH source */
-	पंचांगp = FLOAT_TWO;
-	dspio_set_uपूर्णांक_param(codec, 0x31, 0x00, पंचांगp);
+	tmp = FLOAT_TWO;
+	dspio_set_uint_param(codec, 0x31, 0x00, tmp);
 	chipio_set_conn_rate(codec, MEM_CONNID_WUH, SR_48_000);
 
 	/* Set speaker source? */
-	dspio_set_uपूर्णांक_param(codec, 0x32, 0x00, पंचांगp);
+	dspio_set_uint_param(codec, 0x32, 0x00, tmp);
 
 	ca0132_alt_dsp_initial_mic_setup(codec);
-	ae5_post_dsp_रेजिस्टर_set(codec);
+	ae5_post_dsp_register_set(codec);
 	ae5_post_dsp_param_setup(codec);
 	ae5_post_dsp_pll_setup(codec);
 	ae5_post_dsp_stream_setup(codec);
@@ -8401,70 +8400,70 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 
 	/* out, in effects + voicefx */
 	num_fx = OUT_EFFECTS_COUNT + IN_EFFECTS_COUNT + 1;
-	क्रम (idx = 0; idx < num_fx; idx++) अणु
-		क्रम (i = 0; i <= ca0132_effects[idx].params; i++) अणु
-			dspio_set_uपूर्णांक_param(codec,
+	for (idx = 0; idx < num_fx; idx++) {
+		for (i = 0; i <= ca0132_effects[idx].params; i++) {
+			dspio_set_uint_param(codec,
 					ca0132_effects[idx].mid,
 					ca0132_effects[idx].reqs[i],
 					ca0132_effects[idx].def_vals[i]);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	ca0132_alt_init_speaker_tuning(codec);
-पूर्ण
+}
 
 /*
- * Setup शेष parameters क्रम the Sound Blaster AE-7 DSP.
+ * Setup default parameters for the Sound Blaster AE-7 DSP.
  */
-अटल व्योम ae7_setup_शेषs(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	अचिन्हित पूर्णांक पंचांगp;
-	पूर्णांक num_fx;
-	पूर्णांक idx, i;
+static void ae7_setup_defaults(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
+	unsigned int tmp;
+	int num_fx;
+	int idx, i;
 
-	अगर (spec->dsp_state != DSP_DOWNLOADED)
-		वापस;
+	if (spec->dsp_state != DSP_DOWNLOADED)
+		return;
 
 	ca0132_alt_init_analog_mics(codec);
 	ca0132_alt_start_dsp_audio_streams(codec);
 	ae7_post_dsp_setup_ports(codec);
 
-	पंचांगp = FLOAT_ZERO;
-	dspio_set_uपूर्णांक_param(codec, 0x96,
-			SPEAKER_TUNING_FRONT_LEFT_INVERT, पंचांगp);
-	dspio_set_uपूर्णांक_param(codec, 0x96,
-			SPEAKER_TUNING_FRONT_RIGHT_INVERT, पंचांगp);
+	tmp = FLOAT_ZERO;
+	dspio_set_uint_param(codec, 0x96,
+			SPEAKER_TUNING_FRONT_LEFT_INVERT, tmp);
+	dspio_set_uint_param(codec, 0x96,
+			SPEAKER_TUNING_FRONT_RIGHT_INVERT, tmp);
 
 	ca0113_mmio_command_set(codec, 0x30, 0x2e, 0x3f);
 
 	/* New, unknown SCP req's */
-	dspio_set_uपूर्णांक_param(codec, 0x80, 0x0d, पंचांगp);
-	dspio_set_uपूर्णांक_param(codec, 0x80, 0x0e, पंचांगp);
+	dspio_set_uint_param(codec, 0x80, 0x0d, tmp);
+	dspio_set_uint_param(codec, 0x80, 0x0e, tmp);
 
 	ca0113_mmio_gpio_set(codec, 0, false);
 
 	/* Internal loopback off */
-	पंचांगp = FLOAT_ONE;
-	dspio_set_uपूर्णांक_param(codec, 0x37, 0x08, पंचांगp);
-	dspio_set_uपूर्णांक_param(codec, 0x37, 0x10, पंचांगp);
+	tmp = FLOAT_ONE;
+	dspio_set_uint_param(codec, 0x37, 0x08, tmp);
+	dspio_set_uint_param(codec, 0x37, 0x10, tmp);
 
-	/*हटाओ DSP headroom*/
-	पंचांगp = FLOAT_ZERO;
-	dspio_set_uपूर्णांक_param(codec, 0x96, 0x3C, पंचांगp);
+	/*remove DSP headroom*/
+	tmp = FLOAT_ZERO;
+	dspio_set_uint_param(codec, 0x96, 0x3C, tmp);
 
 	/* set WUH source */
-	पंचांगp = FLOAT_TWO;
-	dspio_set_uपूर्णांक_param(codec, 0x31, 0x00, पंचांगp);
+	tmp = FLOAT_TWO;
+	dspio_set_uint_param(codec, 0x31, 0x00, tmp);
 	chipio_set_conn_rate(codec, MEM_CONNID_WUH, SR_48_000);
 
 	/* Set speaker source? */
-	dspio_set_uपूर्णांक_param(codec, 0x32, 0x00, पंचांगp);
+	dspio_set_uint_param(codec, 0x32, 0x00, tmp);
 	ca0113_mmio_command_set(codec, 0x30, 0x28, 0x00);
 
 	/*
-	 * This is the second समय we've called this, but this is seemingly
-	 * what Winकरोws करोes.
+	 * This is the second time we've called this, but this is seemingly
+	 * what Windows does.
 	 */
 	ca0132_alt_init_analog_mics(codec);
 
@@ -8472,7 +8471,7 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 
 	/*
 	 * Not sure why, but these are both set to 1. They're only set to 0
-	 * upon shutकरोwn.
+	 * upon shutdown.
 	 */
 	ca0113_mmio_gpio_set(codec, 0, true);
 	ca0113_mmio_gpio_set(codec, 1, true);
@@ -8484,26 +8483,26 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 
 	/* out, in effects + voicefx */
 	num_fx = OUT_EFFECTS_COUNT + IN_EFFECTS_COUNT + 1;
-	क्रम (idx = 0; idx < num_fx; idx++) अणु
-		क्रम (i = 0; i <= ca0132_effects[idx].params; i++) अणु
-			dspio_set_uपूर्णांक_param(codec,
+	for (idx = 0; idx < num_fx; idx++) {
+		for (i = 0; i <= ca0132_effects[idx].params; i++) {
+			dspio_set_uint_param(codec,
 					ca0132_effects[idx].mid,
 					ca0132_effects[idx].reqs[i],
 					ca0132_effects[idx].def_vals[i]);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	ca0132_alt_init_speaker_tuning(codec);
-पूर्ण
+}
 
 /*
  * Initialization of flags in chip
  */
-अटल व्योम ca0132_init_flags(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
+static void ca0132_init_flags(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
 
-	अगर (ca0132_use_alt_functions(spec)) अणु
+	if (ca0132_use_alt_functions(spec)) {
 		chipio_set_control_flag(codec, CONTROL_FLAG_DSP_96KHZ, 1);
 		chipio_set_control_flag(codec, CONTROL_FLAG_DAC_96KHZ, 1);
 		chipio_set_control_flag(codec, CONTROL_FLAG_ADC_B_96KHZ, 1);
@@ -8515,7 +8514,7 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 				CONTROL_FLAG_PORT_D_10KOHM_LOAD, 0);
 		chipio_set_control_flag(codec,
 				CONTROL_FLAG_PORT_A_10KOHM_LOAD, 1);
-	पूर्ण अन्यथा अणु
+	} else {
 		chipio_set_control_flag(codec, CONTROL_FLAG_IDLE_ENABLE, 0);
 		chipio_set_control_flag(codec,
 				CONTROL_FLAG_PORT_A_COMMON_MODE, 0);
@@ -8526,30 +8525,30 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 		chipio_set_control_flag(codec,
 				CONTROL_FLAG_PORT_D_10KOHM_LOAD, 0);
 		chipio_set_control_flag(codec, CONTROL_FLAG_ADC_C_HIGH_PASS, 1);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Initialization of parameters in chip
  */
-अटल व्योम ca0132_init_params(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
+static void ca0132_init_params(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
 
-	अगर (ca0132_use_alt_functions(spec)) अणु
+	if (ca0132_use_alt_functions(spec)) {
 		chipio_set_conn_rate(codec, MEM_CONNID_WUH, SR_48_000);
 		chipio_set_conn_rate(codec, 0x0B, SR_48_000);
 		chipio_set_control_param(codec, CONTROL_PARAM_SPDIF1_SOURCE, 0);
 		chipio_set_control_param(codec, 0, 0);
 		chipio_set_control_param(codec, CONTROL_PARAM_VIP_SOURCE, 0);
-	पूर्ण
+	}
 
 	chipio_set_control_param(codec, CONTROL_PARAM_PORTA_160OHM_GAIN, 6);
 	chipio_set_control_param(codec, CONTROL_PARAM_PORTD_160OHM_GAIN, 6);
-पूर्ण
+}
 
-अटल व्योम ca0132_set_dsp_msr(काष्ठा hda_codec *codec, bool is96k)
-अणु
+static void ca0132_set_dsp_msr(struct hda_codec *codec, bool is96k)
+{
 	chipio_set_control_flag(codec, CONTROL_FLAG_DSP_96KHZ, is96k);
 	chipio_set_control_flag(codec, CONTROL_FLAG_DAC_96KHZ, is96k);
 	chipio_set_control_flag(codec, CONTROL_FLAG_SRC_RATE_96KHZ, is96k);
@@ -8560,388 +8559,388 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 	chipio_set_conn_rate(codec, MEM_CONNID_MICIN1, SR_96_000);
 	chipio_set_conn_rate(codec, MEM_CONNID_MICOUT1, SR_96_000);
 	chipio_set_conn_rate(codec, MEM_CONNID_WUH, SR_48_000);
-पूर्ण
+}
 
-अटल bool ca0132_करोwnload_dsp_images(काष्ठा hda_codec *codec)
-अणु
+static bool ca0132_download_dsp_images(struct hda_codec *codec)
+{
 	bool dsp_loaded = false;
-	काष्ठा ca0132_spec *spec = codec->spec;
-	स्थिर काष्ठा dsp_image_seg *dsp_os_image;
-	स्थिर काष्ठा firmware *fw_entry = शून्य;
+	struct ca0132_spec *spec = codec->spec;
+	const struct dsp_image_seg *dsp_os_image;
+	const struct firmware *fw_entry = NULL;
 	/*
-	 * Alternate firmwares क्रम dअगरferent variants. The Recon3Di apparently
-	 * can use the शेष firmware, but I'll leave the option in हाल
+	 * Alternate firmwares for different variants. The Recon3Di apparently
+	 * can use the default firmware, but I'll leave the option in case
 	 * it needs it again.
 	 */
-	चयन (ca0132_quirk(spec)) अणु
-	हाल QUIRK_SBZ:
-	हाल QUIRK_R3D:
-	हाल QUIRK_AE5:
-		अगर (request_firmware(&fw_entry, DESKTOP_EFX_खाता,
+	switch (ca0132_quirk(spec)) {
+	case QUIRK_SBZ:
+	case QUIRK_R3D:
+	case QUIRK_AE5:
+		if (request_firmware(&fw_entry, DESKTOP_EFX_FILE,
 					codec->card->dev) != 0)
 			codec_dbg(codec, "Desktop firmware not found.");
-		अन्यथा
+		else
 			codec_dbg(codec, "Desktop firmware selected.");
-		अवरोध;
-	हाल QUIRK_R3DI:
-		अगर (request_firmware(&fw_entry, R3DI_EFX_खाता,
+		break;
+	case QUIRK_R3DI:
+		if (request_firmware(&fw_entry, R3DI_EFX_FILE,
 					codec->card->dev) != 0)
 			codec_dbg(codec, "Recon3Di alt firmware not detected.");
-		अन्यथा
+		else
 			codec_dbg(codec, "Recon3Di firmware selected.");
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 	/*
-	 * Use शेष ctefx.bin अगर no alt firmware is detected, or अगर none
-	 * exists क्रम your particular codec.
+	 * Use default ctefx.bin if no alt firmware is detected, or if none
+	 * exists for your particular codec.
 	 */
-	अगर (!fw_entry) अणु
+	if (!fw_entry) {
 		codec_dbg(codec, "Default firmware selected.");
-		अगर (request_firmware(&fw_entry, EFX_खाता,
+		if (request_firmware(&fw_entry, EFX_FILE,
 					codec->card->dev) != 0)
-			वापस false;
-	पूर्ण
+			return false;
+	}
 
-	dsp_os_image = (काष्ठा dsp_image_seg *)(fw_entry->data);
-	अगर (dspload_image(codec, dsp_os_image, 0, 0, true, 0)) अणु
+	dsp_os_image = (struct dsp_image_seg *)(fw_entry->data);
+	if (dspload_image(codec, dsp_os_image, 0, 0, true, 0)) {
 		codec_err(codec, "ca0132 DSP load image failed\n");
-		जाओ निकास_करोwnload;
-	पूर्ण
+		goto exit_download;
+	}
 
-	dsp_loaded = dspload_रुको_loaded(codec);
+	dsp_loaded = dspload_wait_loaded(codec);
 
-निकास_करोwnload:
+exit_download:
 	release_firmware(fw_entry);
 
-	वापस dsp_loaded;
-पूर्ण
+	return dsp_loaded;
+}
 
-अटल व्योम ca0132_करोwnload_dsp(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
+static void ca0132_download_dsp(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
 
-#अगर_अघोषित CONFIG_SND_HDA_CODEC_CA0132_DSP
-	वापस; /* NOP */
-#पूर्ण_अगर
+#ifndef CONFIG_SND_HDA_CODEC_CA0132_DSP
+	return; /* NOP */
+#endif
 
-	अगर (spec->dsp_state == DSP_DOWNLOAD_FAILED)
-		वापस; /* करोn't retry failures */
+	if (spec->dsp_state == DSP_DOWNLOAD_FAILED)
+		return; /* don't retry failures */
 
-	chipio_enable_घड़ीs(codec);
-	अगर (spec->dsp_state != DSP_DOWNLOADED) अणु
+	chipio_enable_clocks(codec);
+	if (spec->dsp_state != DSP_DOWNLOADED) {
 		spec->dsp_state = DSP_DOWNLOADING;
 
-		अगर (!ca0132_करोwnload_dsp_images(codec))
+		if (!ca0132_download_dsp_images(codec))
 			spec->dsp_state = DSP_DOWNLOAD_FAILED;
-		अन्यथा
+		else
 			spec->dsp_state = DSP_DOWNLOADED;
-	पूर्ण
+	}
 
-	/* For codecs using alt functions, this is alपढ़ोy करोne earlier */
-	अगर (spec->dsp_state == DSP_DOWNLOADED && !ca0132_use_alt_functions(spec))
+	/* For codecs using alt functions, this is already done earlier */
+	if (spec->dsp_state == DSP_DOWNLOADED && !ca0132_use_alt_functions(spec))
 		ca0132_set_dsp_msr(codec, true);
-पूर्ण
+}
 
-अटल व्योम ca0132_process_dsp_response(काष्ठा hda_codec *codec,
-					काष्ठा hda_jack_callback *callback)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
+static void ca0132_process_dsp_response(struct hda_codec *codec,
+					struct hda_jack_callback *callback)
+{
+	struct ca0132_spec *spec = codec->spec;
 
 	codec_dbg(codec, "ca0132_process_dsp_response\n");
-	snd_hda_घातer_up_pm(codec);
-	अगर (spec->रुको_scp) अणु
-		अगर (dspio_get_response_data(codec) >= 0)
-			spec->रुको_scp = 0;
-	पूर्ण
+	snd_hda_power_up_pm(codec);
+	if (spec->wait_scp) {
+		if (dspio_get_response_data(codec) >= 0)
+			spec->wait_scp = 0;
+	}
 
 	dspio_clear_response_queue(codec);
-	snd_hda_घातer_करोwn_pm(codec);
-पूर्ण
+	snd_hda_power_down_pm(codec);
+}
 
-अटल व्योम hp_callback(काष्ठा hda_codec *codec, काष्ठा hda_jack_callback *cb)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	काष्ठा hda_jack_tbl *tbl;
+static void hp_callback(struct hda_codec *codec, struct hda_jack_callback *cb)
+{
+	struct ca0132_spec *spec = codec->spec;
+	struct hda_jack_tbl *tbl;
 
 	/* Delay enabling the HP amp, to let the mic-detection
 	 * state machine run.
 	 */
 	tbl = snd_hda_jack_tbl_get(codec, cb->nid);
-	अगर (tbl)
+	if (tbl)
 		tbl->block_report = 1;
-	schedule_delayed_work(&spec->unsol_hp_work, msecs_to_jअगरfies(500));
-पूर्ण
+	schedule_delayed_work(&spec->unsol_hp_work, msecs_to_jiffies(500));
+}
 
-अटल व्योम amic_callback(काष्ठा hda_codec *codec, काष्ठा hda_jack_callback *cb)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
+static void amic_callback(struct hda_codec *codec, struct hda_jack_callback *cb)
+{
+	struct ca0132_spec *spec = codec->spec;
 
-	अगर (ca0132_use_alt_functions(spec))
+	if (ca0132_use_alt_functions(spec))
 		ca0132_alt_select_in(codec);
-	अन्यथा
+	else
 		ca0132_select_mic(codec);
-पूर्ण
+}
 
-अटल व्योम ca0132_setup_unsol(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
+static void ca0132_setup_unsol(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
 	snd_hda_jack_detect_enable_callback(codec, spec->unsol_tag_hp, hp_callback);
 	snd_hda_jack_detect_enable_callback(codec, spec->unsol_tag_amic1,
 					    amic_callback);
 	snd_hda_jack_detect_enable_callback(codec, UNSOL_TAG_DSP,
 					    ca0132_process_dsp_response);
 	/* Front headphone jack detection */
-	अगर (ca0132_use_alt_functions(spec))
+	if (ca0132_use_alt_functions(spec))
 		snd_hda_jack_detect_enable_callback(codec,
 			spec->unsol_tag_front_hp, hp_callback);
-पूर्ण
+}
 
 /*
  * Verbs tables.
  */
 
-/* Sends beक्रमe DSP करोwnload. */
-अटल स्थिर काष्ठा hda_verb ca0132_base_init_verbs[] = अणु
+/* Sends before DSP download. */
+static const struct hda_verb ca0132_base_init_verbs[] = {
 	/*enable ct extension*/
-	अणु0x15, VENDOR_CHIPIO_CT_EXTENSIONS_ENABLE, 0x1पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+	{0x15, VENDOR_CHIPIO_CT_EXTENSIONS_ENABLE, 0x1},
+	{}
+};
 
-/* Send at निकास. */
-अटल स्थिर काष्ठा hda_verb ca0132_base_निकास_verbs[] = अणु
+/* Send at exit. */
+static const struct hda_verb ca0132_base_exit_verbs[] = {
 	/*set afg to D3*/
-	अणु0x01, AC_VERB_SET_POWER_STATE, 0x03पूर्ण,
+	{0x01, AC_VERB_SET_POWER_STATE, 0x03},
 	/*disable ct extension*/
-	अणु0x15, VENDOR_CHIPIO_CT_EXTENSIONS_ENABLE, 0पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+	{0x15, VENDOR_CHIPIO_CT_EXTENSIONS_ENABLE, 0},
+	{}
+};
 
-/* Other verbs tables. Sends after DSP करोwnload. */
+/* Other verbs tables. Sends after DSP download. */
 
-अटल स्थिर काष्ठा hda_verb ca0132_init_verbs0[] = अणु
+static const struct hda_verb ca0132_init_verbs0[] = {
 	/* chip init verbs */
-	अणु0x15, 0x70D, 0xF0पूर्ण,
-	अणु0x15, 0x70E, 0xFEपूर्ण,
-	अणु0x15, 0x707, 0x75पूर्ण,
-	अणु0x15, 0x707, 0xD3पूर्ण,
-	अणु0x15, 0x707, 0x09पूर्ण,
-	अणु0x15, 0x707, 0x53पूर्ण,
-	अणु0x15, 0x707, 0xD4पूर्ण,
-	अणु0x15, 0x707, 0xEFपूर्ण,
-	अणु0x15, 0x707, 0x75पूर्ण,
-	अणु0x15, 0x707, 0xD3पूर्ण,
-	अणु0x15, 0x707, 0x09पूर्ण,
-	अणु0x15, 0x707, 0x02पूर्ण,
-	अणु0x15, 0x707, 0x37पूर्ण,
-	अणु0x15, 0x707, 0x78पूर्ण,
-	अणु0x15, 0x53C, 0xCEपूर्ण,
-	अणु0x15, 0x575, 0xC9पूर्ण,
-	अणु0x15, 0x53D, 0xCEपूर्ण,
-	अणु0x15, 0x5B7, 0xC9पूर्ण,
-	अणु0x15, 0x70D, 0xE8पूर्ण,
-	अणु0x15, 0x70E, 0xFEपूर्ण,
-	अणु0x15, 0x707, 0x02पूर्ण,
-	अणु0x15, 0x707, 0x68पूर्ण,
-	अणु0x15, 0x707, 0x62पूर्ण,
-	अणु0x15, 0x53A, 0xCEपूर्ण,
-	अणु0x15, 0x546, 0xC9पूर्ण,
-	अणु0x15, 0x53B, 0xCEपूर्ण,
-	अणु0x15, 0x5E8, 0xC9पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+	{0x15, 0x70D, 0xF0},
+	{0x15, 0x70E, 0xFE},
+	{0x15, 0x707, 0x75},
+	{0x15, 0x707, 0xD3},
+	{0x15, 0x707, 0x09},
+	{0x15, 0x707, 0x53},
+	{0x15, 0x707, 0xD4},
+	{0x15, 0x707, 0xEF},
+	{0x15, 0x707, 0x75},
+	{0x15, 0x707, 0xD3},
+	{0x15, 0x707, 0x09},
+	{0x15, 0x707, 0x02},
+	{0x15, 0x707, 0x37},
+	{0x15, 0x707, 0x78},
+	{0x15, 0x53C, 0xCE},
+	{0x15, 0x575, 0xC9},
+	{0x15, 0x53D, 0xCE},
+	{0x15, 0x5B7, 0xC9},
+	{0x15, 0x70D, 0xE8},
+	{0x15, 0x70E, 0xFE},
+	{0x15, 0x707, 0x02},
+	{0x15, 0x707, 0x68},
+	{0x15, 0x707, 0x62},
+	{0x15, 0x53A, 0xCE},
+	{0x15, 0x546, 0xC9},
+	{0x15, 0x53B, 0xCE},
+	{0x15, 0x5E8, 0xC9},
+	{}
+};
 
-/* Extra init verbs क्रम desktop cards. */
-अटल स्थिर काष्ठा hda_verb ca0132_init_verbs1[] = अणु
-	अणु0x15, 0x70D, 0x20पूर्ण,
-	अणु0x15, 0x70E, 0x19पूर्ण,
-	अणु0x15, 0x707, 0x00पूर्ण,
-	अणु0x15, 0x539, 0xCEपूर्ण,
-	अणु0x15, 0x546, 0xC9पूर्ण,
-	अणु0x15, 0x70D, 0xB7पूर्ण,
-	अणु0x15, 0x70E, 0x09पूर्ण,
-	अणु0x15, 0x707, 0x10पूर्ण,
-	अणु0x15, 0x70D, 0xAFपूर्ण,
-	अणु0x15, 0x70E, 0x09पूर्ण,
-	अणु0x15, 0x707, 0x01पूर्ण,
-	अणु0x15, 0x707, 0x05पूर्ण,
-	अणु0x15, 0x70D, 0x73पूर्ण,
-	अणु0x15, 0x70E, 0x09पूर्ण,
-	अणु0x15, 0x707, 0x14पूर्ण,
-	अणु0x15, 0x6FF, 0xC4पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+/* Extra init verbs for desktop cards. */
+static const struct hda_verb ca0132_init_verbs1[] = {
+	{0x15, 0x70D, 0x20},
+	{0x15, 0x70E, 0x19},
+	{0x15, 0x707, 0x00},
+	{0x15, 0x539, 0xCE},
+	{0x15, 0x546, 0xC9},
+	{0x15, 0x70D, 0xB7},
+	{0x15, 0x70E, 0x09},
+	{0x15, 0x707, 0x10},
+	{0x15, 0x70D, 0xAF},
+	{0x15, 0x70E, 0x09},
+	{0x15, 0x707, 0x01},
+	{0x15, 0x707, 0x05},
+	{0x15, 0x70D, 0x73},
+	{0x15, 0x70E, 0x09},
+	{0x15, 0x707, 0x14},
+	{0x15, 0x6FF, 0xC4},
+	{}
+};
 
-अटल व्योम ca0132_init_chip(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	पूर्णांक num_fx;
-	पूर्णांक i;
-	अचिन्हित पूर्णांक on;
+static void ca0132_init_chip(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
+	int num_fx;
+	int i;
+	unsigned int on;
 
 	mutex_init(&spec->chipio_mutex);
 
 	/*
-	 * The Winकरोws driver always करोes this upon startup, which seems to
+	 * The Windows driver always does this upon startup, which seems to
 	 * clear out any previous configuration. This should help issues where
-	 * a boot पूर्णांकo Winकरोws prior to a boot पूर्णांकo Linux अवरोधs things. Also,
-	 * Winकरोws always sends the reset twice.
+	 * a boot into Windows prior to a boot into Linux breaks things. Also,
+	 * Windows always sends the reset twice.
 	 */
-	अगर (ca0132_use_alt_functions(spec)) अणु
+	if (ca0132_use_alt_functions(spec)) {
 		chipio_set_control_flag(codec, CONTROL_FLAG_IDLE_ENABLE, 0);
-		chipio_ग_लिखो_no_mutex(codec, 0x18b0a4, 0x000000c2);
+		chipio_write_no_mutex(codec, 0x18b0a4, 0x000000c2);
 
-		snd_hda_codec_ग_लिखो(codec, codec->core.afg, 0,
+		snd_hda_codec_write(codec, codec->core.afg, 0,
 			    AC_VERB_SET_CODEC_RESET, 0);
-		snd_hda_codec_ग_लिखो(codec, codec->core.afg, 0,
+		snd_hda_codec_write(codec, codec->core.afg, 0,
 			    AC_VERB_SET_CODEC_RESET, 0);
-	पूर्ण
+	}
 
 	spec->cur_out_type = SPEAKER_OUT;
-	अगर (!ca0132_use_alt_functions(spec))
+	if (!ca0132_use_alt_functions(spec))
 		spec->cur_mic_type = DIGITAL_MIC;
-	अन्यथा
+	else
 		spec->cur_mic_type = REAR_MIC;
 
 	spec->cur_mic_boost = 0;
 
-	क्रम (i = 0; i < VNODES_COUNT; i++) अणु
+	for (i = 0; i < VNODES_COUNT; i++) {
 		spec->vnode_lvol[i] = 0x5a;
 		spec->vnode_rvol[i] = 0x5a;
-		spec->vnode_lचयन[i] = 0;
-		spec->vnode_rचयन[i] = 0;
-	पूर्ण
+		spec->vnode_lswitch[i] = 0;
+		spec->vnode_rswitch[i] = 0;
+	}
 
 	/*
-	 * Default states क्रम effects are in ca0132_effects[].
+	 * Default states for effects are in ca0132_effects[].
 	 */
 	num_fx = OUT_EFFECTS_COUNT + IN_EFFECTS_COUNT;
-	क्रम (i = 0; i < num_fx; i++) अणु
-		on = (अचिन्हित पूर्णांक)ca0132_effects[i].reqs[0];
-		spec->effects_चयन[i] = on ? 1 : 0;
-	पूर्ण
+	for (i = 0; i < num_fx; i++) {
+		on = (unsigned int)ca0132_effects[i].reqs[0];
+		spec->effects_switch[i] = on ? 1 : 0;
+	}
 	/*
-	 * Sets शेषs क्रम the effect slider controls, only क्रम alternative
+	 * Sets defaults for the effect slider controls, only for alternative
 	 * ca0132 codecs. Also sets x-bass crossover frequency to 80hz.
 	 */
-	अगर (ca0132_use_alt_controls(spec)) अणु
-		/* Set speakers to शेष to full range. */
+	if (ca0132_use_alt_controls(spec)) {
+		/* Set speakers to default to full range. */
 		spec->speaker_range_val[0] = 1;
 		spec->speaker_range_val[1] = 1;
 
 		spec->xbass_xover_freq = 8;
-		क्रम (i = 0; i < EFFECT_LEVEL_SLIDERS; i++)
-			spec->fx_ctl_val[i] = effect_slider_शेषs[i];
+		for (i = 0; i < EFFECT_LEVEL_SLIDERS; i++)
+			spec->fx_ctl_val[i] = effect_slider_defaults[i];
 
 		spec->bass_redirect_xover_freq = 8;
-	पूर्ण
+	}
 
 	spec->voicefx_val = 0;
-	spec->effects_चयन[PLAY_ENHANCEMENT - EFFECT_START_NID] = 1;
-	spec->effects_चयन[CRYSTAL_VOICE - EFFECT_START_NID] = 0;
+	spec->effects_switch[PLAY_ENHANCEMENT - EFFECT_START_NID] = 1;
+	spec->effects_switch[CRYSTAL_VOICE - EFFECT_START_NID] = 0;
 
 	/*
-	 * The ZxR करोesn't have a front panel header, and it's line-in is on
-	 * the daughter board. So, there is no input क्रमागत control, and we need
-	 * to make sure that spec->in_क्रमागत_val is set properly.
+	 * The ZxR doesn't have a front panel header, and it's line-in is on
+	 * the daughter board. So, there is no input enum control, and we need
+	 * to make sure that spec->in_enum_val is set properly.
 	 */
-	अगर (ca0132_quirk(spec) == QUIRK_ZXR)
-		spec->in_क्रमागत_val = REAR_MIC;
+	if (ca0132_quirk(spec) == QUIRK_ZXR)
+		spec->in_enum_val = REAR_MIC;
 
-#अगर_घोषित ENABLE_TUNING_CONTROLS
-	ca0132_init_tuning_शेषs(codec);
-#पूर्ण_अगर
-पूर्ण
-
-/*
- * Recon3Di निकास specअगरic commands.
- */
-/* prevents popping noise on shutकरोwn */
-अटल व्योम r3di_gpio_shutकरोwn(काष्ठा hda_codec *codec)
-अणु
-	snd_hda_codec_ग_लिखो(codec, 0x01, 0, AC_VERB_SET_GPIO_DATA, 0x00);
-पूर्ण
+#ifdef ENABLE_TUNING_CONTROLS
+	ca0132_init_tuning_defaults(codec);
+#endif
+}
 
 /*
- * Sound Blaster Z निकास specअगरic commands.
+ * Recon3Di exit specific commands.
  */
-अटल व्योम sbz_region2_निकास(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	अचिन्हित पूर्णांक i;
+/* prevents popping noise on shutdown */
+static void r3di_gpio_shutdown(struct hda_codec *codec)
+{
+	snd_hda_codec_write(codec, 0x01, 0, AC_VERB_SET_GPIO_DATA, 0x00);
+}
 
-	क्रम (i = 0; i < 4; i++)
-		ग_लिखोb(0x0, spec->mem_base + 0x100);
-	क्रम (i = 0; i < 8; i++)
-		ग_लिखोb(0xb3, spec->mem_base + 0x304);
+/*
+ * Sound Blaster Z exit specific commands.
+ */
+static void sbz_region2_exit(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
+	unsigned int i;
+
+	for (i = 0; i < 4; i++)
+		writeb(0x0, spec->mem_base + 0x100);
+	for (i = 0; i < 8; i++)
+		writeb(0xb3, spec->mem_base + 0x304);
 
 	ca0113_mmio_gpio_set(codec, 0, false);
 	ca0113_mmio_gpio_set(codec, 1, false);
 	ca0113_mmio_gpio_set(codec, 4, true);
 	ca0113_mmio_gpio_set(codec, 5, false);
 	ca0113_mmio_gpio_set(codec, 7, false);
-पूर्ण
+}
 
-अटल व्योम sbz_set_pin_ctl_शेष(काष्ठा hda_codec *codec)
-अणु
-	अटल स्थिर hda_nid_t pins[] = अणु0x0B, 0x0C, 0x0E, 0x12, 0x13पूर्ण;
-	अचिन्हित पूर्णांक i;
+static void sbz_set_pin_ctl_default(struct hda_codec *codec)
+{
+	static const hda_nid_t pins[] = {0x0B, 0x0C, 0x0E, 0x12, 0x13};
+	unsigned int i;
 
-	snd_hda_codec_ग_लिखो(codec, 0x11, 0,
+	snd_hda_codec_write(codec, 0x11, 0,
 			AC_VERB_SET_PIN_WIDGET_CONTROL, 0x40);
 
-	क्रम (i = 0; i < ARRAY_SIZE(pins); i++)
-		snd_hda_codec_ग_लिखो(codec, pins[i], 0,
+	for (i = 0; i < ARRAY_SIZE(pins); i++)
+		snd_hda_codec_write(codec, pins[i], 0,
 				AC_VERB_SET_PIN_WIDGET_CONTROL, 0x00);
-पूर्ण
+}
 
-अटल व्योम ca0132_clear_unsolicited(काष्ठा hda_codec *codec)
-अणु
-	अटल स्थिर hda_nid_t pins[] = अणु0x0B, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13पूर्ण;
-	अचिन्हित पूर्णांक i;
+static void ca0132_clear_unsolicited(struct hda_codec *codec)
+{
+	static const hda_nid_t pins[] = {0x0B, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13};
+	unsigned int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(pins); i++) अणु
-		snd_hda_codec_ग_लिखो(codec, pins[i], 0,
+	for (i = 0; i < ARRAY_SIZE(pins); i++) {
+		snd_hda_codec_write(codec, pins[i], 0,
 				AC_VERB_SET_UNSOLICITED_ENABLE, 0x00);
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* On shutकरोwn, sends commands in sets of three */
-अटल व्योम sbz_gpio_shutकरोwn_commands(काष्ठा hda_codec *codec, पूर्णांक dir,
-							पूर्णांक mask, पूर्णांक data)
-अणु
-	अगर (dir >= 0)
-		snd_hda_codec_ग_लिखो(codec, 0x01, 0,
-				AC_VERB_SET_GPIO_सूचीECTION, dir);
-	अगर (mask >= 0)
-		snd_hda_codec_ग_लिखो(codec, 0x01, 0,
+/* On shutdown, sends commands in sets of three */
+static void sbz_gpio_shutdown_commands(struct hda_codec *codec, int dir,
+							int mask, int data)
+{
+	if (dir >= 0)
+		snd_hda_codec_write(codec, 0x01, 0,
+				AC_VERB_SET_GPIO_DIRECTION, dir);
+	if (mask >= 0)
+		snd_hda_codec_write(codec, 0x01, 0,
 				AC_VERB_SET_GPIO_MASK, mask);
 
-	अगर (data >= 0)
-		snd_hda_codec_ग_लिखो(codec, 0x01, 0,
+	if (data >= 0)
+		snd_hda_codec_write(codec, 0x01, 0,
 				AC_VERB_SET_GPIO_DATA, data);
-पूर्ण
+}
 
-अटल व्योम zxr_dbpro_घातer_state_shutकरोwn(काष्ठा hda_codec *codec)
-अणु
-	अटल स्थिर hda_nid_t pins[] = अणु0x05, 0x0c, 0x09, 0x0e, 0x08, 0x11, 0x01पूर्ण;
-	अचिन्हित पूर्णांक i;
+static void zxr_dbpro_power_state_shutdown(struct hda_codec *codec)
+{
+	static const hda_nid_t pins[] = {0x05, 0x0c, 0x09, 0x0e, 0x08, 0x11, 0x01};
+	unsigned int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(pins); i++)
-		snd_hda_codec_ग_लिखो(codec, pins[i], 0,
+	for (i = 0; i < ARRAY_SIZE(pins); i++)
+		snd_hda_codec_write(codec, pins[i], 0,
 				AC_VERB_SET_POWER_STATE, 0x03);
-पूर्ण
+}
 
-अटल व्योम sbz_निकास_chip(काष्ठा hda_codec *codec)
-अणु
+static void sbz_exit_chip(struct hda_codec *codec)
+{
 	chipio_set_stream_control(codec, 0x03, 0);
 	chipio_set_stream_control(codec, 0x04, 0);
 
 	/* Mess with GPIO */
-	sbz_gpio_shutकरोwn_commands(codec, 0x07, 0x07, -1);
-	sbz_gpio_shutकरोwn_commands(codec, 0x07, 0x07, 0x05);
-	sbz_gpio_shutकरोwn_commands(codec, 0x07, 0x07, 0x01);
+	sbz_gpio_shutdown_commands(codec, 0x07, 0x07, -1);
+	sbz_gpio_shutdown_commands(codec, 0x07, 0x07, 0x05);
+	sbz_gpio_shutdown_commands(codec, 0x07, 0x07, 0x01);
 
 	chipio_set_stream_control(codec, 0x14, 0);
 	chipio_set_stream_control(codec, 0x0C, 0);
@@ -8949,34 +8948,34 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 	chipio_set_conn_rate(codec, 0x41, SR_192_000);
 	chipio_set_conn_rate(codec, 0x91, SR_192_000);
 
-	chipio_ग_लिखो(codec, 0x18a020, 0x00000083);
+	chipio_write(codec, 0x18a020, 0x00000083);
 
-	sbz_gpio_shutकरोwn_commands(codec, 0x07, 0x07, 0x03);
-	sbz_gpio_shutकरोwn_commands(codec, 0x07, 0x07, 0x07);
-	sbz_gpio_shutकरोwn_commands(codec, 0x07, 0x07, 0x06);
+	sbz_gpio_shutdown_commands(codec, 0x07, 0x07, 0x03);
+	sbz_gpio_shutdown_commands(codec, 0x07, 0x07, 0x07);
+	sbz_gpio_shutdown_commands(codec, 0x07, 0x07, 0x06);
 
 	chipio_set_stream_control(codec, 0x0C, 0);
 
 	chipio_set_control_param(codec, 0x0D, 0x24);
 
 	ca0132_clear_unsolicited(codec);
-	sbz_set_pin_ctl_शेष(codec);
+	sbz_set_pin_ctl_default(codec);
 
-	snd_hda_codec_ग_लिखो(codec, 0x0B, 0,
+	snd_hda_codec_write(codec, 0x0B, 0,
 		AC_VERB_SET_EAPD_BTLENABLE, 0x00);
 
-	sbz_region2_निकास(codec);
-पूर्ण
+	sbz_region2_exit(codec);
+}
 
-अटल व्योम r3d_निकास_chip(काष्ठा hda_codec *codec)
-अणु
+static void r3d_exit_chip(struct hda_codec *codec)
+{
 	ca0132_clear_unsolicited(codec);
-	snd_hda_codec_ग_लिखो(codec, 0x01, 0, 0x793, 0x00);
-	snd_hda_codec_ग_लिखो(codec, 0x01, 0, 0x794, 0x5b);
-पूर्ण
+	snd_hda_codec_write(codec, 0x01, 0, 0x793, 0x00);
+	snd_hda_codec_write(codec, 0x01, 0, 0x794, 0x5b);
+}
 
-अटल व्योम ae5_निकास_chip(काष्ठा hda_codec *codec)
-अणु
+static void ae5_exit_chip(struct hda_codec *codec)
+{
 	chipio_set_stream_control(codec, 0x03, 0);
 	chipio_set_stream_control(codec, 0x04, 0);
 
@@ -8989,19 +8988,19 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 	ca0113_mmio_gpio_set(codec, 0, false);
 	ca0113_mmio_gpio_set(codec, 1, false);
 
-	snd_hda_codec_ग_लिखो(codec, 0x01, 0, 0x793, 0x00);
-	snd_hda_codec_ग_लिखो(codec, 0x01, 0, 0x794, 0x53);
+	snd_hda_codec_write(codec, 0x01, 0, 0x793, 0x00);
+	snd_hda_codec_write(codec, 0x01, 0, 0x794, 0x53);
 
 	chipio_set_control_param(codec, CONTROL_PARAM_ASI, 0);
 
 	chipio_set_stream_control(codec, 0x18, 0);
 	chipio_set_stream_control(codec, 0x0c, 0);
 
-	snd_hda_codec_ग_लिखो(codec, 0x01, 0, 0x724, 0x83);
-पूर्ण
+	snd_hda_codec_write(codec, 0x01, 0, 0x724, 0x83);
+}
 
-अटल व्योम ae7_निकास_chip(काष्ठा hda_codec *codec)
-अणु
+static void ae7_exit_chip(struct hda_codec *codec)
+{
 	chipio_set_stream_control(codec, 0x18, 0);
 	chipio_set_stream_source_dest(codec, 0x21, 0xc8, 0xc8);
 	chipio_set_stream_channels(codec, 0x21, 0);
@@ -9014,7 +9013,7 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 	chipio_set_stream_control(codec, 0x0c, 0);
 
 	ca0113_mmio_command_set(codec, 0x30, 0x2b, 0x00);
-	snd_hda_codec_ग_लिखो(codec, 0x15, 0, 0x724, 0x83);
+	snd_hda_codec_write(codec, 0x15, 0, 0x724, 0x83);
 	ca0113_mmio_command_set_type2(codec, 0x48, 0x07, 0x83);
 	ca0113_mmio_command_set(codec, 0x30, 0x30, 0x00);
 	ca0113_mmio_command_set(codec, 0x30, 0x2e, 0x00);
@@ -9022,12 +9021,12 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 	ca0113_mmio_gpio_set(codec, 1, false);
 	ca0113_mmio_command_set(codec, 0x30, 0x32, 0x3f);
 
-	snd_hda_codec_ग_लिखो(codec, 0x01, 0, 0x793, 0x00);
-	snd_hda_codec_ग_लिखो(codec, 0x01, 0, 0x794, 0x53);
-पूर्ण
+	snd_hda_codec_write(codec, 0x01, 0, 0x793, 0x00);
+	snd_hda_codec_write(codec, 0x01, 0, 0x794, 0x53);
+}
 
-अटल व्योम zxr_निकास_chip(काष्ठा hda_codec *codec)
-अणु
+static void zxr_exit_chip(struct hda_codec *codec)
+{
 	chipio_set_stream_control(codec, 0x03, 0);
 	chipio_set_stream_control(codec, 0x04, 0);
 	chipio_set_stream_control(codec, 0x14, 0);
@@ -9036,14 +9035,14 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 	chipio_set_conn_rate(codec, 0x41, SR_192_000);
 	chipio_set_conn_rate(codec, 0x91, SR_192_000);
 
-	chipio_ग_लिखो(codec, 0x18a020, 0x00000083);
+	chipio_write(codec, 0x18a020, 0x00000083);
 
-	snd_hda_codec_ग_लिखो(codec, 0x01, 0, 0x793, 0x00);
-	snd_hda_codec_ग_लिखो(codec, 0x01, 0, 0x794, 0x53);
+	snd_hda_codec_write(codec, 0x01, 0, 0x793, 0x00);
+	snd_hda_codec_write(codec, 0x01, 0, 0x794, 0x53);
 
 	ca0132_clear_unsolicited(codec);
-	sbz_set_pin_ctl_शेष(codec);
-	snd_hda_codec_ग_लिखो(codec, 0x0B, 0, AC_VERB_SET_EAPD_BTLENABLE, 0x00);
+	sbz_set_pin_ctl_default(codec);
+	snd_hda_codec_write(codec, 0x0B, 0, AC_VERB_SET_EAPD_BTLENABLE, 0x00);
 
 	ca0113_mmio_gpio_set(codec, 5, false);
 	ca0113_mmio_gpio_set(codec, 2, false);
@@ -9054,207 +9053,207 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 	ca0113_mmio_gpio_set(codec, 5, true);
 	ca0113_mmio_gpio_set(codec, 2, false);
 	ca0113_mmio_gpio_set(codec, 3, false);
-पूर्ण
+}
 
-अटल व्योम ca0132_निकास_chip(काष्ठा hda_codec *codec)
-अणु
+static void ca0132_exit_chip(struct hda_codec *codec)
+{
 	/* put any chip cleanup stuffs here. */
 
-	अगर (dspload_is_loaded(codec))
+	if (dspload_is_loaded(codec))
 		dsp_reset(codec);
-पूर्ण
+}
 
 /*
  * This fixes a problem that was hard to reproduce. Very rarely, I would
  * boot up, and there would be no sound, but the DSP indicated it had loaded
- * properly. I did a few memory dumps to see अगर anything was dअगरferent, and
+ * properly. I did a few memory dumps to see if anything was different, and
  * there were a few areas of memory uninitialized with a1a2a3a4. This function
- * checks अगर those areas are uninitialized, and अगर they are, it'll attempt to
- * reload the card 3 बार. Usually it fixes by the second.
+ * checks if those areas are uninitialized, and if they are, it'll attempt to
+ * reload the card 3 times. Usually it fixes by the second.
  */
-अटल व्योम sbz_dsp_startup_check(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	अचिन्हित पूर्णांक dsp_data_check[4];
-	अचिन्हित पूर्णांक cur_address = 0x390;
-	अचिन्हित पूर्णांक i;
-	अचिन्हित पूर्णांक failure = 0;
-	अचिन्हित पूर्णांक reload = 3;
+static void sbz_dsp_startup_check(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
+	unsigned int dsp_data_check[4];
+	unsigned int cur_address = 0x390;
+	unsigned int i;
+	unsigned int failure = 0;
+	unsigned int reload = 3;
 
-	अगर (spec->startup_check_entered)
-		वापस;
+	if (spec->startup_check_entered)
+		return;
 
 	spec->startup_check_entered = true;
 
-	क्रम (i = 0; i < 4; i++) अणु
-		chipio_पढ़ो(codec, cur_address, &dsp_data_check[i]);
+	for (i = 0; i < 4; i++) {
+		chipio_read(codec, cur_address, &dsp_data_check[i]);
 		cur_address += 0x4;
-	पूर्ण
-	क्रम (i = 0; i < 4; i++) अणु
-		अगर (dsp_data_check[i] == 0xa1a2a3a4)
+	}
+	for (i = 0; i < 4; i++) {
+		if (dsp_data_check[i] == 0xa1a2a3a4)
 			failure = 1;
-	पूर्ण
+	}
 
 	codec_dbg(codec, "Startup Check: %d ", failure);
-	अगर (failure)
+	if (failure)
 		codec_info(codec, "DSP not initialized properly. Attempting to fix.");
 	/*
 	 * While the failure condition is true, and we haven't reached our
-	 * three reload limit, जारी trying to reload the driver and
+	 * three reload limit, continue trying to reload the driver and
 	 * fix the issue.
 	 */
-	जबतक (failure && (reload != 0)) अणु
+	while (failure && (reload != 0)) {
 		codec_info(codec, "Reloading... Tries left: %d", reload);
-		sbz_निकास_chip(codec);
+		sbz_exit_chip(codec);
 		spec->dsp_state = DSP_DOWNLOAD_INIT;
 		codec->patch_ops.init(codec);
 		failure = 0;
-		क्रम (i = 0; i < 4; i++) अणु
-			chipio_पढ़ो(codec, cur_address, &dsp_data_check[i]);
+		for (i = 0; i < 4; i++) {
+			chipio_read(codec, cur_address, &dsp_data_check[i]);
 			cur_address += 0x4;
-		पूर्ण
-		क्रम (i = 0; i < 4; i++) अणु
-			अगर (dsp_data_check[i] == 0xa1a2a3a4)
+		}
+		for (i = 0; i < 4; i++) {
+			if (dsp_data_check[i] == 0xa1a2a3a4)
 				failure = 1;
-		पूर्ण
+		}
 		reload--;
-	पूर्ण
+	}
 
-	अगर (!failure && reload < 3)
+	if (!failure && reload < 3)
 		codec_info(codec, "DSP fixed.");
 
-	अगर (!failure)
-		वापस;
+	if (!failure)
+		return;
 
 	codec_info(codec, "DSP failed to initialize properly. Either try a full shutdown or a suspend to clear the internal memory.");
-पूर्ण
+}
 
 /*
- * This is क्रम the extra volume verbs 0x797 (left) and 0x798 (right). These add
- * extra precision क्रम decibel values. If you had the dB value in भग्नing poपूर्णांक
- * you would take the value after the decimal poपूर्णांक, multiply by 64, and भागide
- * by 2. So क्रम 8.59, it's (59 * 64) / 100. Useful अगर someone wanted to
- * implement fixed poपूर्णांक or भग्नing poपूर्णांक dB volumes. For now, I'll set them
- * to 0 just inहाल a value has lingered from a boot पूर्णांकo Winकरोws.
+ * This is for the extra volume verbs 0x797 (left) and 0x798 (right). These add
+ * extra precision for decibel values. If you had the dB value in floating point
+ * you would take the value after the decimal point, multiply by 64, and divide
+ * by 2. So for 8.59, it's (59 * 64) / 100. Useful if someone wanted to
+ * implement fixed point or floating point dB volumes. For now, I'll set them
+ * to 0 just incase a value has lingered from a boot into Windows.
  */
-अटल व्योम ca0132_alt_vol_setup(काष्ठा hda_codec *codec)
-अणु
-	snd_hda_codec_ग_लिखो(codec, 0x02, 0, 0x797, 0x00);
-	snd_hda_codec_ग_लिखो(codec, 0x02, 0, 0x798, 0x00);
-	snd_hda_codec_ग_लिखो(codec, 0x03, 0, 0x797, 0x00);
-	snd_hda_codec_ग_लिखो(codec, 0x03, 0, 0x798, 0x00);
-	snd_hda_codec_ग_लिखो(codec, 0x04, 0, 0x797, 0x00);
-	snd_hda_codec_ग_लिखो(codec, 0x04, 0, 0x798, 0x00);
-	snd_hda_codec_ग_लिखो(codec, 0x07, 0, 0x797, 0x00);
-	snd_hda_codec_ग_लिखो(codec, 0x07, 0, 0x798, 0x00);
-पूर्ण
+static void ca0132_alt_vol_setup(struct hda_codec *codec)
+{
+	snd_hda_codec_write(codec, 0x02, 0, 0x797, 0x00);
+	snd_hda_codec_write(codec, 0x02, 0, 0x798, 0x00);
+	snd_hda_codec_write(codec, 0x03, 0, 0x797, 0x00);
+	snd_hda_codec_write(codec, 0x03, 0, 0x798, 0x00);
+	snd_hda_codec_write(codec, 0x04, 0, 0x797, 0x00);
+	snd_hda_codec_write(codec, 0x04, 0, 0x798, 0x00);
+	snd_hda_codec_write(codec, 0x07, 0, 0x797, 0x00);
+	snd_hda_codec_write(codec, 0x07, 0, 0x798, 0x00);
+}
 
 /*
- * Extra commands that करोn't really fit anywhere अन्यथा.
+ * Extra commands that don't really fit anywhere else.
  */
-अटल व्योम sbz_pre_dsp_setup(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
+static void sbz_pre_dsp_setup(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
 
-	ग_लिखोl(0x00820680, spec->mem_base + 0x01C);
-	ग_लिखोl(0x00820680, spec->mem_base + 0x01C);
+	writel(0x00820680, spec->mem_base + 0x01C);
+	writel(0x00820680, spec->mem_base + 0x01C);
 
-	chipio_ग_लिखो(codec, 0x18b0a4, 0x000000c2);
+	chipio_write(codec, 0x18b0a4, 0x000000c2);
 
-	snd_hda_codec_ग_लिखो(codec, 0x11, 0,
+	snd_hda_codec_write(codec, 0x11, 0,
 			AC_VERB_SET_PIN_WIDGET_CONTROL, 0x44);
-पूर्ण
+}
 
-अटल व्योम r3d_pre_dsp_setup(काष्ठा hda_codec *codec)
-अणु
-	chipio_ग_लिखो(codec, 0x18b0a4, 0x000000c2);
+static void r3d_pre_dsp_setup(struct hda_codec *codec)
+{
+	chipio_write(codec, 0x18b0a4, 0x000000c2);
 
-	chipio_8051_ग_लिखो_exram(codec, 0x1c1e, 0x5b);
+	chipio_8051_write_exram(codec, 0x1c1e, 0x5b);
 
-	snd_hda_codec_ग_लिखो(codec, 0x11, 0,
+	snd_hda_codec_write(codec, 0x11, 0,
 			AC_VERB_SET_PIN_WIDGET_CONTROL, 0x44);
-पूर्ण
+}
 
-अटल व्योम r3di_pre_dsp_setup(काष्ठा hda_codec *codec)
-अणु
-	chipio_ग_लिखो(codec, 0x18b0a4, 0x000000c2);
+static void r3di_pre_dsp_setup(struct hda_codec *codec)
+{
+	chipio_write(codec, 0x18b0a4, 0x000000c2);
 
-	chipio_8051_ग_लिखो_exram(codec, 0x1c1e, 0x5b);
-	chipio_8051_ग_लिखो_exram(codec, 0x1920, 0x00);
-	chipio_8051_ग_लिखो_exram(codec, 0x1921, 0x40);
+	chipio_8051_write_exram(codec, 0x1c1e, 0x5b);
+	chipio_8051_write_exram(codec, 0x1920, 0x00);
+	chipio_8051_write_exram(codec, 0x1921, 0x40);
 
-	snd_hda_codec_ग_लिखो(codec, 0x11, 0,
+	snd_hda_codec_write(codec, 0x11, 0,
 			AC_VERB_SET_PIN_WIDGET_CONTROL, 0x04);
-पूर्ण
+}
 
 /*
- * The ZxR seems to use alternative DAC's क्रम the surround channels, which
- * require PLL PMU setup क्रम the घड़ी rate, I'm guessing. Without setting
+ * The ZxR seems to use alternative DAC's for the surround channels, which
+ * require PLL PMU setup for the clock rate, I'm guessing. Without setting
  * this up, we get no audio out of the surround jacks.
  */
-अटल व्योम zxr_pre_dsp_setup(काष्ठा hda_codec *codec)
-अणु
-	अटल स्थिर अचिन्हित पूर्णांक addr[] = अणु 0x43, 0x40, 0x41, 0x42, 0x45 पूर्ण;
-	अटल स्थिर अचिन्हित पूर्णांक data[] = अणु 0x08, 0x0c, 0x0b, 0x07, 0x0d पूर्ण;
-	अचिन्हित पूर्णांक i;
+static void zxr_pre_dsp_setup(struct hda_codec *codec)
+{
+	static const unsigned int addr[] = { 0x43, 0x40, 0x41, 0x42, 0x45 };
+	static const unsigned int data[] = { 0x08, 0x0c, 0x0b, 0x07, 0x0d };
+	unsigned int i;
 
-	chipio_ग_लिखो(codec, 0x189000, 0x0001f100);
+	chipio_write(codec, 0x189000, 0x0001f100);
 	msleep(50);
-	chipio_ग_लिखो(codec, 0x18900c, 0x0001f100);
+	chipio_write(codec, 0x18900c, 0x0001f100);
 	msleep(50);
 
 	/*
-	 * This ग_लिखोs a RET inकाष्ठाion at the entry poपूर्णांक of the function at
-	 * 0xfa92 in exram. This function seems to have something to करो with
+	 * This writes a RET instruction at the entry point of the function at
+	 * 0xfa92 in exram. This function seems to have something to do with
 	 * ASI. Might be some way to prevent the card from reconfiguring the
 	 * ASI stuff itself.
 	 */
-	chipio_8051_ग_लिखो_exram(codec, 0xfa92, 0x22);
+	chipio_8051_write_exram(codec, 0xfa92, 0x22);
 
-	chipio_8051_ग_लिखो_pll_pmu(codec, 0x51, 0x98);
+	chipio_8051_write_pll_pmu(codec, 0x51, 0x98);
 
-	snd_hda_codec_ग_लिखो(codec, WIDGET_CHIP_CTRL, 0, 0x725, 0x82);
+	snd_hda_codec_write(codec, WIDGET_CHIP_CTRL, 0, 0x725, 0x82);
 	chipio_set_control_param(codec, CONTROL_PARAM_ASI, 3);
 
-	chipio_ग_लिखो(codec, 0x18902c, 0x00000000);
+	chipio_write(codec, 0x18902c, 0x00000000);
 	msleep(50);
-	chipio_ग_लिखो(codec, 0x18902c, 0x00000003);
+	chipio_write(codec, 0x18902c, 0x00000003);
 	msleep(50);
 
-	क्रम (i = 0; i < ARRAY_SIZE(addr); i++)
-		chipio_8051_ग_लिखो_pll_pmu(codec, addr[i], data[i]);
-पूर्ण
+	for (i = 0; i < ARRAY_SIZE(addr); i++)
+		chipio_8051_write_pll_pmu(codec, addr[i], data[i]);
+}
 
 /*
- * These are sent beक्रमe the DSP is करोwnloaded. Not sure
- * what they करो, or अगर they're necessary. Could possibly
- * be हटाओd. Figure they're better to leave in.
+ * These are sent before the DSP is downloaded. Not sure
+ * what they do, or if they're necessary. Could possibly
+ * be removed. Figure they're better to leave in.
  */
-अटल स्थिर अचिन्हित पूर्णांक ca0113_mmio_init_address_sbz[] = अणु
+static const unsigned int ca0113_mmio_init_address_sbz[] = {
 	0x400, 0x408, 0x40c, 0x01c, 0xc0c, 0xc00, 0xc04, 0xc0c, 0xc0c, 0xc0c,
 	0xc0c, 0xc08, 0xc08, 0xc08, 0xc08, 0xc08, 0xc04
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक ca0113_mmio_init_data_sbz[] = अणु
+static const unsigned int ca0113_mmio_init_data_sbz[] = {
 	0x00000030, 0x00000000, 0x00000003, 0x00000003, 0x00000003,
 	0x00000003, 0x000000c1, 0x000000f1, 0x00000001, 0x000000c7,
 	0x000000c1, 0x00000080
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक ca0113_mmio_init_data_zxr[] = अणु
+static const unsigned int ca0113_mmio_init_data_zxr[] = {
 	0x00000030, 0x00000000, 0x00000000, 0x00000003, 0x00000003,
 	0x00000003, 0x00000001, 0x000000f1, 0x00000001, 0x000000c7,
 	0x000000c1, 0x00000080
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक ca0113_mmio_init_address_ae5[] = अणु
+static const unsigned int ca0113_mmio_init_address_ae5[] = {
 	0x400, 0x42c, 0x46c, 0x4ac, 0x4ec, 0x43c, 0x47c, 0x4bc, 0x4fc, 0x408,
 	0x100, 0x410, 0x40c, 0x100, 0x100, 0x830, 0x86c, 0x800, 0x86c, 0x800,
 	0x804, 0x20c, 0x01c, 0xc0c, 0xc00, 0xc04, 0xc0c, 0xc0c, 0xc0c, 0xc0c,
 	0xc08, 0xc08, 0xc08, 0xc08, 0xc08, 0xc04, 0x01c
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक ca0113_mmio_init_data_ae5[] = अणु
+static const unsigned int ca0113_mmio_init_data_ae5[] = {
 	0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 	0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000001,
 	0x00000600, 0x00000014, 0x00000001, 0x0000060f, 0x0000070f,
@@ -9263,463 +9262,463 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 	0x00000000, 0x00000000, 0x00000003, 0x00000003, 0x00000003,
 	0x00000001, 0x000000f1, 0x00000001, 0x000000c7, 0x000000c1,
 	0x00000080, 0x00880680
-पूर्ण;
+};
 
-अटल व्योम ca0132_mmio_init_sbz(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	अचिन्हित पूर्णांक पंचांगp[2], i, count, cur_addr;
-	स्थिर अचिन्हित पूर्णांक *addr, *data;
+static void ca0132_mmio_init_sbz(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
+	unsigned int tmp[2], i, count, cur_addr;
+	const unsigned int *addr, *data;
 
 	addr = ca0113_mmio_init_address_sbz;
-	क्रम (i = 0; i < 3; i++)
-		ग_लिखोl(0x00000000, spec->mem_base + addr[i]);
+	for (i = 0; i < 3; i++)
+		writel(0x00000000, spec->mem_base + addr[i]);
 
 	cur_addr = i;
-	चयन (ca0132_quirk(spec)) अणु
-	हाल QUIRK_ZXR:
-		पंचांगp[0] = 0x00880480;
-		पंचांगp[1] = 0x00000080;
-		अवरोध;
-	हाल QUIRK_SBZ:
-		पंचांगp[0] = 0x00820680;
-		पंचांगp[1] = 0x00000083;
-		अवरोध;
-	हाल QUIRK_R3D:
-		पंचांगp[0] = 0x00880680;
-		पंचांगp[1] = 0x00000083;
-		अवरोध;
-	शेष:
-		पंचांगp[0] = 0x00000000;
-		पंचांगp[1] = 0x00000000;
-		अवरोध;
-	पूर्ण
+	switch (ca0132_quirk(spec)) {
+	case QUIRK_ZXR:
+		tmp[0] = 0x00880480;
+		tmp[1] = 0x00000080;
+		break;
+	case QUIRK_SBZ:
+		tmp[0] = 0x00820680;
+		tmp[1] = 0x00000083;
+		break;
+	case QUIRK_R3D:
+		tmp[0] = 0x00880680;
+		tmp[1] = 0x00000083;
+		break;
+	default:
+		tmp[0] = 0x00000000;
+		tmp[1] = 0x00000000;
+		break;
+	}
 
-	क्रम (i = 0; i < 2; i++)
-		ग_लिखोl(पंचांगp[i], spec->mem_base + addr[cur_addr + i]);
+	for (i = 0; i < 2; i++)
+		writel(tmp[i], spec->mem_base + addr[cur_addr + i]);
 
 	cur_addr += i;
 
-	चयन (ca0132_quirk(spec)) अणु
-	हाल QUIRK_ZXR:
+	switch (ca0132_quirk(spec)) {
+	case QUIRK_ZXR:
 		count = ARRAY_SIZE(ca0113_mmio_init_data_zxr);
 		data = ca0113_mmio_init_data_zxr;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		count = ARRAY_SIZE(ca0113_mmio_init_data_sbz);
 		data = ca0113_mmio_init_data_sbz;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	क्रम (i = 0; i < count; i++)
-		ग_लिखोl(data[i], spec->mem_base + addr[cur_addr + i]);
-पूर्ण
+	for (i = 0; i < count; i++)
+		writel(data[i], spec->mem_base + addr[cur_addr + i]);
+}
 
-अटल व्योम ca0132_mmio_init_ae5(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	स्थिर अचिन्हित पूर्णांक *addr, *data;
-	अचिन्हित पूर्णांक i, count;
+static void ca0132_mmio_init_ae5(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
+	const unsigned int *addr, *data;
+	unsigned int i, count;
 
 	addr = ca0113_mmio_init_address_ae5;
 	data = ca0113_mmio_init_data_ae5;
 	count = ARRAY_SIZE(ca0113_mmio_init_data_ae5);
 
-	अगर (ca0132_quirk(spec) == QUIRK_AE7) अणु
-		ग_लिखोl(0x00000680, spec->mem_base + 0x1c);
-		ग_लिखोl(0x00880680, spec->mem_base + 0x1c);
-	पूर्ण
+	if (ca0132_quirk(spec) == QUIRK_AE7) {
+		writel(0x00000680, spec->mem_base + 0x1c);
+		writel(0x00880680, spec->mem_base + 0x1c);
+	}
 
-	क्रम (i = 0; i < count; i++) अणु
+	for (i = 0; i < count; i++) {
 		/*
-		 * AE-7 shares all ग_लिखोs with the AE-5, except that it ग_लिखोs
-		 * a dअगरferent value to 0x20c.
+		 * AE-7 shares all writes with the AE-5, except that it writes
+		 * a different value to 0x20c.
 		 */
-		अगर (i == 21 && ca0132_quirk(spec) == QUIRK_AE7) अणु
-			ग_लिखोl(0x00800001, spec->mem_base + addr[i]);
-			जारी;
-		पूर्ण
+		if (i == 21 && ca0132_quirk(spec) == QUIRK_AE7) {
+			writel(0x00800001, spec->mem_base + addr[i]);
+			continue;
+		}
 
-		ग_लिखोl(data[i], spec->mem_base + addr[i]);
-	पूर्ण
+		writel(data[i], spec->mem_base + addr[i]);
+	}
 
-	अगर (ca0132_quirk(spec) == QUIRK_AE5)
-		ग_लिखोl(0x00880680, spec->mem_base + 0x1c);
-पूर्ण
+	if (ca0132_quirk(spec) == QUIRK_AE5)
+		writel(0x00880680, spec->mem_base + 0x1c);
+}
 
-अटल व्योम ca0132_mmio_init(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
+static void ca0132_mmio_init(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
 
-	चयन (ca0132_quirk(spec)) अणु
-	हाल QUIRK_R3D:
-	हाल QUIRK_SBZ:
-	हाल QUIRK_ZXR:
+	switch (ca0132_quirk(spec)) {
+	case QUIRK_R3D:
+	case QUIRK_SBZ:
+	case QUIRK_ZXR:
 		ca0132_mmio_init_sbz(codec);
-		अवरोध;
-	हाल QUIRK_AE5:
+		break;
+	case QUIRK_AE5:
 		ca0132_mmio_init_ae5(codec);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 
-अटल स्थिर अचिन्हित पूर्णांक ca0132_ae5_रेजिस्टर_set_addresses[] = अणु
+static const unsigned int ca0132_ae5_register_set_addresses[] = {
 	0x304, 0x304, 0x304, 0x304, 0x100, 0x304, 0x100, 0x304, 0x100, 0x304,
 	0x100, 0x304, 0x86c, 0x800, 0x86c, 0x800, 0x804
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित अक्षर ca0132_ae5_रेजिस्टर_set_data[] = अणु
+static const unsigned char ca0132_ae5_register_set_data[] = {
 	0x0f, 0x0e, 0x1f, 0x0c, 0x3f, 0x08, 0x7f, 0x00, 0xff, 0x00, 0x6b,
 	0x01, 0x6b, 0x57
-पूर्ण;
+};
 
 /*
- * This function ग_लिखोs to some SFR's, करोes some region2 ग_लिखोs, and then
- * eventually resets the codec with the 0x7ff verb. Not quite sure why it करोes
- * what it करोes.
+ * This function writes to some SFR's, does some region2 writes, and then
+ * eventually resets the codec with the 0x7ff verb. Not quite sure why it does
+ * what it does.
  */
-अटल व्योम ae5_रेजिस्टर_set(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	अचिन्हित पूर्णांक count = ARRAY_SIZE(ca0132_ae5_रेजिस्टर_set_addresses);
-	स्थिर अचिन्हित पूर्णांक *addr = ca0132_ae5_रेजिस्टर_set_addresses;
-	स्थिर अचिन्हित अक्षर *data = ca0132_ae5_रेजिस्टर_set_data;
-	अचिन्हित पूर्णांक i, cur_addr;
-	अचिन्हित अक्षर पंचांगp[3];
+static void ae5_register_set(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
+	unsigned int count = ARRAY_SIZE(ca0132_ae5_register_set_addresses);
+	const unsigned int *addr = ca0132_ae5_register_set_addresses;
+	const unsigned char *data = ca0132_ae5_register_set_data;
+	unsigned int i, cur_addr;
+	unsigned char tmp[3];
 
-	अगर (ca0132_quirk(spec) == QUIRK_AE7)
-		chipio_8051_ग_लिखो_pll_pmu(codec, 0x41, 0xc8);
+	if (ca0132_quirk(spec) == QUIRK_AE7)
+		chipio_8051_write_pll_pmu(codec, 0x41, 0xc8);
 
-	chipio_8051_ग_लिखो_direct(codec, 0x93, 0x10);
-	chipio_8051_ग_लिखो_pll_pmu(codec, 0x44, 0xc2);
+	chipio_8051_write_direct(codec, 0x93, 0x10);
+	chipio_8051_write_pll_pmu(codec, 0x44, 0xc2);
 
-	अगर (ca0132_quirk(spec) == QUIRK_AE7) अणु
-		पंचांगp[0] = 0x03;
-		पंचांगp[1] = 0x03;
-		पंचांगp[2] = 0x07;
-	पूर्ण अन्यथा अणु
-		पंचांगp[0] = 0x0f;
-		पंचांगp[1] = 0x0f;
-		पंचांगp[2] = 0x0f;
-	पूर्ण
+	if (ca0132_quirk(spec) == QUIRK_AE7) {
+		tmp[0] = 0x03;
+		tmp[1] = 0x03;
+		tmp[2] = 0x07;
+	} else {
+		tmp[0] = 0x0f;
+		tmp[1] = 0x0f;
+		tmp[2] = 0x0f;
+	}
 
-	क्रम (i = cur_addr = 0; i < 3; i++, cur_addr++)
-		ग_लिखोb(पंचांगp[i], spec->mem_base + addr[cur_addr]);
+	for (i = cur_addr = 0; i < 3; i++, cur_addr++)
+		writeb(tmp[i], spec->mem_base + addr[cur_addr]);
 
 	/*
-	 * First ग_लिखोs are in single bytes, final are in 4 bytes. So, we use
-	 * ग_लिखोb, then ग_लिखोl.
+	 * First writes are in single bytes, final are in 4 bytes. So, we use
+	 * writeb, then writel.
 	 */
-	क्रम (i = 0; cur_addr < 12; i++, cur_addr++)
-		ग_लिखोb(data[i], spec->mem_base + addr[cur_addr]);
+	for (i = 0; cur_addr < 12; i++, cur_addr++)
+		writeb(data[i], spec->mem_base + addr[cur_addr]);
 
-	क्रम (; cur_addr < count; i++, cur_addr++)
-		ग_लिखोl(data[i], spec->mem_base + addr[cur_addr]);
+	for (; cur_addr < count; i++, cur_addr++)
+		writel(data[i], spec->mem_base + addr[cur_addr]);
 
-	ग_लिखोl(0x00800001, spec->mem_base + 0x20c);
+	writel(0x00800001, spec->mem_base + 0x20c);
 
-	अगर (ca0132_quirk(spec) == QUIRK_AE7) अणु
+	if (ca0132_quirk(spec) == QUIRK_AE7) {
 		ca0113_mmio_command_set_type2(codec, 0x48, 0x07, 0x83);
 		ca0113_mmio_command_set(codec, 0x30, 0x2e, 0x3f);
-	पूर्ण अन्यथा अणु
+	} else {
 		ca0113_mmio_command_set(codec, 0x30, 0x2d, 0x3f);
-	पूर्ण
+	}
 
-	chipio_8051_ग_लिखो_direct(codec, 0x90, 0x00);
-	chipio_8051_ग_लिखो_direct(codec, 0x90, 0x10);
+	chipio_8051_write_direct(codec, 0x90, 0x00);
+	chipio_8051_write_direct(codec, 0x90, 0x10);
 
-	अगर (ca0132_quirk(spec) == QUIRK_AE5)
+	if (ca0132_quirk(spec) == QUIRK_AE5)
 		ca0113_mmio_command_set(codec, 0x48, 0x07, 0x83);
-पूर्ण
+}
 
 /*
- * Extra init functions क्रम alternative ca0132 codecs. Done
- * here so they करोn't clutter up the मुख्य ca0132_init function
+ * Extra init functions for alternative ca0132 codecs. Done
+ * here so they don't clutter up the main ca0132_init function
  * anymore than they have to.
  */
-अटल व्योम ca0132_alt_init(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
+static void ca0132_alt_init(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
 
 	ca0132_alt_vol_setup(codec);
 
-	चयन (ca0132_quirk(spec)) अणु
-	हाल QUIRK_SBZ:
+	switch (ca0132_quirk(spec)) {
+	case QUIRK_SBZ:
 		codec_dbg(codec, "SBZ alt_init");
 		ca0132_gpio_init(codec);
 		sbz_pre_dsp_setup(codec);
-		snd_hda_sequence_ग_लिखो(codec, spec->chip_init_verbs);
-		snd_hda_sequence_ग_लिखो(codec, spec->desktop_init_verbs);
-		अवरोध;
-	हाल QUIRK_R3DI:
+		snd_hda_sequence_write(codec, spec->chip_init_verbs);
+		snd_hda_sequence_write(codec, spec->desktop_init_verbs);
+		break;
+	case QUIRK_R3DI:
 		codec_dbg(codec, "R3DI alt_init");
 		ca0132_gpio_init(codec);
 		ca0132_gpio_setup(codec);
 		r3di_gpio_dsp_status_set(codec, R3DI_DSP_DOWNLOADING);
 		r3di_pre_dsp_setup(codec);
-		snd_hda_sequence_ग_लिखो(codec, spec->chip_init_verbs);
-		snd_hda_codec_ग_लिखो(codec, WIDGET_CHIP_CTRL, 0, 0x6FF, 0xC4);
-		अवरोध;
-	हाल QUIRK_R3D:
+		snd_hda_sequence_write(codec, spec->chip_init_verbs);
+		snd_hda_codec_write(codec, WIDGET_CHIP_CTRL, 0, 0x6FF, 0xC4);
+		break;
+	case QUIRK_R3D:
 		r3d_pre_dsp_setup(codec);
-		snd_hda_sequence_ग_लिखो(codec, spec->chip_init_verbs);
-		snd_hda_sequence_ग_लिखो(codec, spec->desktop_init_verbs);
-		अवरोध;
-	हाल QUIRK_AE5:
+		snd_hda_sequence_write(codec, spec->chip_init_verbs);
+		snd_hda_sequence_write(codec, spec->desktop_init_verbs);
+		break;
+	case QUIRK_AE5:
 		ca0132_gpio_init(codec);
-		chipio_8051_ग_लिखो_pll_pmu(codec, 0x49, 0x88);
-		chipio_ग_लिखो(codec, 0x18b030, 0x00000020);
-		snd_hda_sequence_ग_लिखो(codec, spec->chip_init_verbs);
-		snd_hda_sequence_ग_लिखो(codec, spec->desktop_init_verbs);
+		chipio_8051_write_pll_pmu(codec, 0x49, 0x88);
+		chipio_write(codec, 0x18b030, 0x00000020);
+		snd_hda_sequence_write(codec, spec->chip_init_verbs);
+		snd_hda_sequence_write(codec, spec->desktop_init_verbs);
 		ca0113_mmio_command_set(codec, 0x30, 0x32, 0x3f);
-		अवरोध;
-	हाल QUIRK_AE7:
+		break;
+	case QUIRK_AE7:
 		ca0132_gpio_init(codec);
-		chipio_8051_ग_लिखो_pll_pmu(codec, 0x49, 0x88);
-		snd_hda_sequence_ग_लिखो(codec, spec->chip_init_verbs);
-		snd_hda_sequence_ग_लिखो(codec, spec->desktop_init_verbs);
-		chipio_ग_लिखो(codec, 0x18b008, 0x000000f8);
-		chipio_ग_लिखो(codec, 0x18b008, 0x000000f0);
-		chipio_ग_लिखो(codec, 0x18b030, 0x00000020);
+		chipio_8051_write_pll_pmu(codec, 0x49, 0x88);
+		snd_hda_sequence_write(codec, spec->chip_init_verbs);
+		snd_hda_sequence_write(codec, spec->desktop_init_verbs);
+		chipio_write(codec, 0x18b008, 0x000000f8);
+		chipio_write(codec, 0x18b008, 0x000000f0);
+		chipio_write(codec, 0x18b030, 0x00000020);
 		ca0113_mmio_command_set(codec, 0x30, 0x32, 0x3f);
-		अवरोध;
-	हाल QUIRK_ZXR:
-		chipio_8051_ग_लिखो_pll_pmu(codec, 0x49, 0x88);
-		snd_hda_sequence_ग_लिखो(codec, spec->chip_init_verbs);
-		snd_hda_sequence_ग_लिखो(codec, spec->desktop_init_verbs);
+		break;
+	case QUIRK_ZXR:
+		chipio_8051_write_pll_pmu(codec, 0x49, 0x88);
+		snd_hda_sequence_write(codec, spec->chip_init_verbs);
+		snd_hda_sequence_write(codec, spec->desktop_init_verbs);
 		zxr_pre_dsp_setup(codec);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 
-अटल पूर्णांक ca0132_init(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	काष्ठा स्वतः_pin_cfg *cfg = &spec->स्वतःcfg;
-	पूर्णांक i;
+static int ca0132_init(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
+	struct auto_pin_cfg *cfg = &spec->autocfg;
+	int i;
 	bool dsp_loaded;
 
 	/*
-	 * If the DSP is alपढ़ोy करोwnloaded, and init has been entered again,
-	 * there's only two reasons क्रम it. One, the codec has awaken from a
-	 * suspended state, and in that हाल dspload_is_loaded will वापस
-	 * false, and the init will be ran again. The other reason it माला_लो
-	 * re entered is on startup क्रम some reason it triggers a suspend and
-	 * resume state. In this हाल, it will check अगर the DSP is करोwnloaded,
+	 * If the DSP is already downloaded, and init has been entered again,
+	 * there's only two reasons for it. One, the codec has awaken from a
+	 * suspended state, and in that case dspload_is_loaded will return
+	 * false, and the init will be ran again. The other reason it gets
+	 * re entered is on startup for some reason it triggers a suspend and
+	 * resume state. In this case, it will check if the DSP is downloaded,
 	 * and not run the init function again. For codecs using alt_functions,
-	 * it will check अगर the DSP is loaded properly.
+	 * it will check if the DSP is loaded properly.
 	 */
-	अगर (spec->dsp_state == DSP_DOWNLOADED) अणु
+	if (spec->dsp_state == DSP_DOWNLOADED) {
 		dsp_loaded = dspload_is_loaded(codec);
-		अगर (!dsp_loaded) अणु
+		if (!dsp_loaded) {
 			spec->dsp_reload = true;
 			spec->dsp_state = DSP_DOWNLOAD_INIT;
-		पूर्ण अन्यथा अणु
-			अगर (ca0132_quirk(spec) == QUIRK_SBZ)
+		} else {
+			if (ca0132_quirk(spec) == QUIRK_SBZ)
 				sbz_dsp_startup_check(codec);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
-	अगर (spec->dsp_state != DSP_DOWNLOAD_FAILED)
+	if (spec->dsp_state != DSP_DOWNLOAD_FAILED)
 		spec->dsp_state = DSP_DOWNLOAD_INIT;
 	spec->curr_chip_addx = INVALID_CHIP_ADDRESS;
 
-	अगर (ca0132_use_pci_mmio(spec))
+	if (ca0132_use_pci_mmio(spec))
 		ca0132_mmio_init(codec);
 
-	snd_hda_घातer_up_pm(codec);
+	snd_hda_power_up_pm(codec);
 
-	अगर (ca0132_quirk(spec) == QUIRK_AE5 || ca0132_quirk(spec) == QUIRK_AE7)
-		ae5_रेजिस्टर_set(codec);
+	if (ca0132_quirk(spec) == QUIRK_AE5 || ca0132_quirk(spec) == QUIRK_AE7)
+		ae5_register_set(codec);
 
 	ca0132_init_params(codec);
 	ca0132_init_flags(codec);
 
-	snd_hda_sequence_ग_लिखो(codec, spec->base_init_verbs);
+	snd_hda_sequence_write(codec, spec->base_init_verbs);
 
-	अगर (ca0132_use_alt_functions(spec))
+	if (ca0132_use_alt_functions(spec))
 		ca0132_alt_init(codec);
 
-	ca0132_करोwnload_dsp(codec);
+	ca0132_download_dsp(codec);
 
 	ca0132_refresh_widget_caps(codec);
 
-	चयन (ca0132_quirk(spec)) अणु
-	हाल QUIRK_R3DI:
-	हाल QUIRK_R3D:
-		r3d_setup_शेषs(codec);
-		अवरोध;
-	हाल QUIRK_SBZ:
-	हाल QUIRK_ZXR:
-		sbz_setup_शेषs(codec);
-		अवरोध;
-	हाल QUIRK_AE5:
-		ae5_setup_शेषs(codec);
-		अवरोध;
-	हाल QUIRK_AE7:
-		ae7_setup_शेषs(codec);
-		अवरोध;
-	शेष:
-		ca0132_setup_शेषs(codec);
+	switch (ca0132_quirk(spec)) {
+	case QUIRK_R3DI:
+	case QUIRK_R3D:
+		r3d_setup_defaults(codec);
+		break;
+	case QUIRK_SBZ:
+	case QUIRK_ZXR:
+		sbz_setup_defaults(codec);
+		break;
+	case QUIRK_AE5:
+		ae5_setup_defaults(codec);
+		break;
+	case QUIRK_AE7:
+		ae7_setup_defaults(codec);
+		break;
+	default:
+		ca0132_setup_defaults(codec);
 		ca0132_init_analog_mic2(codec);
 		ca0132_init_dmic(codec);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	क्रम (i = 0; i < spec->num_outमाला_दो; i++)
+	for (i = 0; i < spec->num_outputs; i++)
 		init_output(codec, spec->out_pins[i], spec->dacs[0]);
 
 	init_output(codec, cfg->dig_out_pins[0], spec->dig_out);
 
-	क्रम (i = 0; i < spec->num_inमाला_दो; i++)
+	for (i = 0; i < spec->num_inputs; i++)
 		init_input(codec, spec->input_pins[i], spec->adcs[i]);
 
 	init_input(codec, cfg->dig_in_pin, spec->dig_in);
 
-	अगर (!ca0132_use_alt_functions(spec)) अणु
-		snd_hda_sequence_ग_लिखो(codec, spec->chip_init_verbs);
-		snd_hda_codec_ग_लिखो(codec, WIDGET_CHIP_CTRL, 0,
+	if (!ca0132_use_alt_functions(spec)) {
+		snd_hda_sequence_write(codec, spec->chip_init_verbs);
+		snd_hda_codec_write(codec, WIDGET_CHIP_CTRL, 0,
 			    VENDOR_CHIPIO_PARAM_EX_ID_SET, 0x0D);
-		snd_hda_codec_ग_लिखो(codec, WIDGET_CHIP_CTRL, 0,
+		snd_hda_codec_write(codec, WIDGET_CHIP_CTRL, 0,
 			    VENDOR_CHIPIO_PARAM_EX_VALUE_SET, 0x20);
-	पूर्ण
+	}
 
-	अगर (ca0132_quirk(spec) == QUIRK_SBZ)
+	if (ca0132_quirk(spec) == QUIRK_SBZ)
 		ca0132_gpio_setup(codec);
 
-	snd_hda_sequence_ग_लिखो(codec, spec->spec_init_verbs);
-	अगर (ca0132_use_alt_functions(spec)) अणु
+	snd_hda_sequence_write(codec, spec->spec_init_verbs);
+	if (ca0132_use_alt_functions(spec)) {
 		ca0132_alt_select_out(codec);
 		ca0132_alt_select_in(codec);
-	पूर्ण अन्यथा अणु
+	} else {
 		ca0132_select_out(codec);
 		ca0132_select_mic(codec);
-	पूर्ण
+	}
 
 	snd_hda_jack_report_sync(codec);
 
 	/*
-	 * Re set the PlayEnhancement चयन on a resume event, because the
+	 * Re set the PlayEnhancement switch on a resume event, because the
 	 * controls will not be reloaded.
 	 */
-	अगर (spec->dsp_reload) अणु
+	if (spec->dsp_reload) {
 		spec->dsp_reload = false;
-		ca0132_pe_चयन_set(codec);
-	पूर्ण
+		ca0132_pe_switch_set(codec);
+	}
 
-	snd_hda_घातer_करोwn_pm(codec);
+	snd_hda_power_down_pm(codec);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dbpro_init(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
-	काष्ठा स्वतः_pin_cfg *cfg = &spec->स्वतःcfg;
-	अचिन्हित पूर्णांक i;
+static int dbpro_init(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
+	struct auto_pin_cfg *cfg = &spec->autocfg;
+	unsigned int i;
 
 	init_output(codec, cfg->dig_out_pins[0], spec->dig_out);
 	init_input(codec, cfg->dig_in_pin, spec->dig_in);
 
-	क्रम (i = 0; i < spec->num_inमाला_दो; i++)
+	for (i = 0; i < spec->num_inputs; i++)
 		init_input(codec, spec->input_pins[i], spec->adcs[i]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ca0132_मुक्त(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
+static void ca0132_free(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
 
 	cancel_delayed_work_sync(&spec->unsol_hp_work);
-	snd_hda_घातer_up(codec);
-	चयन (ca0132_quirk(spec)) अणु
-	हाल QUIRK_SBZ:
-		sbz_निकास_chip(codec);
-		अवरोध;
-	हाल QUIRK_ZXR:
-		zxr_निकास_chip(codec);
-		अवरोध;
-	हाल QUIRK_R3D:
-		r3d_निकास_chip(codec);
-		अवरोध;
-	हाल QUIRK_AE5:
-		ae5_निकास_chip(codec);
-		अवरोध;
-	हाल QUIRK_AE7:
-		ae7_निकास_chip(codec);
-		अवरोध;
-	हाल QUIRK_R3DI:
-		r3di_gpio_shutकरोwn(codec);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+	snd_hda_power_up(codec);
+	switch (ca0132_quirk(spec)) {
+	case QUIRK_SBZ:
+		sbz_exit_chip(codec);
+		break;
+	case QUIRK_ZXR:
+		zxr_exit_chip(codec);
+		break;
+	case QUIRK_R3D:
+		r3d_exit_chip(codec);
+		break;
+	case QUIRK_AE5:
+		ae5_exit_chip(codec);
+		break;
+	case QUIRK_AE7:
+		ae7_exit_chip(codec);
+		break;
+	case QUIRK_R3DI:
+		r3di_gpio_shutdown(codec);
+		break;
+	default:
+		break;
+	}
 
-	snd_hda_sequence_ग_लिखो(codec, spec->base_निकास_verbs);
-	ca0132_निकास_chip(codec);
+	snd_hda_sequence_write(codec, spec->base_exit_verbs);
+	ca0132_exit_chip(codec);
 
-	snd_hda_घातer_करोwn(codec);
-#अगर_घोषित CONFIG_PCI
-	अगर (spec->mem_base)
+	snd_hda_power_down(codec);
+#ifdef CONFIG_PCI
+	if (spec->mem_base)
 		pci_iounmap(codec->bus->pci, spec->mem_base);
-#पूर्ण_अगर
-	kमुक्त(spec->spec_init_verbs);
-	kमुक्त(codec->spec);
-पूर्ण
+#endif
+	kfree(spec->spec_init_verbs);
+	kfree(codec->spec);
+}
 
-अटल व्योम dbpro_मुक्त(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
+static void dbpro_free(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
 
-	zxr_dbpro_घातer_state_shutकरोwn(codec);
+	zxr_dbpro_power_state_shutdown(codec);
 
-	kमुक्त(spec->spec_init_verbs);
-	kमुक्त(codec->spec);
-पूर्ण
+	kfree(spec->spec_init_verbs);
+	kfree(codec->spec);
+}
 
-अटल व्योम ca0132_reboot_notअगरy(काष्ठा hda_codec *codec)
-अणु
-	codec->patch_ops.मुक्त(codec);
-पूर्ण
+static void ca0132_reboot_notify(struct hda_codec *codec)
+{
+	codec->patch_ops.free(codec);
+}
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक ca0132_suspend(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
+#ifdef CONFIG_PM
+static int ca0132_suspend(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
 
 	cancel_delayed_work_sync(&spec->unsol_hp_work);
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल स्थिर काष्ठा hda_codec_ops ca0132_patch_ops = अणु
+static const struct hda_codec_ops ca0132_patch_ops = {
 	.build_controls = ca0132_build_controls,
 	.build_pcms = ca0132_build_pcms,
 	.init = ca0132_init,
-	.मुक्त = ca0132_मुक्त,
+	.free = ca0132_free,
 	.unsol_event = snd_hda_jack_unsol_event,
-#अगर_घोषित CONFIG_PM
+#ifdef CONFIG_PM
 	.suspend = ca0132_suspend,
-#पूर्ण_अगर
-	.reboot_notअगरy = ca0132_reboot_notअगरy,
-पूर्ण;
+#endif
+	.reboot_notify = ca0132_reboot_notify,
+};
 
-अटल स्थिर काष्ठा hda_codec_ops dbpro_patch_ops = अणु
+static const struct hda_codec_ops dbpro_patch_ops = {
 	.build_controls = dbpro_build_controls,
 	.build_pcms = dbpro_build_pcms,
 	.init = dbpro_init,
-	.मुक्त = dbpro_मुक्त,
-पूर्ण;
+	.free = dbpro_free,
+};
 
-अटल व्योम ca0132_config(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
+static void ca0132_config(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
 
 	spec->dacs[0] = 0x2;
 	spec->dacs[1] = 0x3;
@@ -9728,47 +9727,47 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 	spec->multiout.dac_nids = spec->dacs;
 	spec->multiout.num_dacs = 3;
 
-	अगर (!ca0132_use_alt_functions(spec))
+	if (!ca0132_use_alt_functions(spec))
 		spec->multiout.max_channels = 2;
-	अन्यथा
+	else
 		spec->multiout.max_channels = 6;
 
-	चयन (ca0132_quirk(spec)) अणु
-	हाल QUIRK_ALIENWARE:
+	switch (ca0132_quirk(spec)) {
+	case QUIRK_ALIENWARE:
 		codec_dbg(codec, "%s: QUIRK_ALIENWARE applied.\n", __func__);
 		snd_hda_apply_pincfgs(codec, alienware_pincfgs);
-		अवरोध;
-	हाल QUIRK_SBZ:
+		break;
+	case QUIRK_SBZ:
 		codec_dbg(codec, "%s: QUIRK_SBZ applied.\n", __func__);
 		snd_hda_apply_pincfgs(codec, sbz_pincfgs);
-		अवरोध;
-	हाल QUIRK_ZXR:
+		break;
+	case QUIRK_ZXR:
 		codec_dbg(codec, "%s: QUIRK_ZXR applied.\n", __func__);
 		snd_hda_apply_pincfgs(codec, zxr_pincfgs);
-		अवरोध;
-	हाल QUIRK_R3D:
+		break;
+	case QUIRK_R3D:
 		codec_dbg(codec, "%s: QUIRK_R3D applied.\n", __func__);
 		snd_hda_apply_pincfgs(codec, r3d_pincfgs);
-		अवरोध;
-	हाल QUIRK_R3DI:
+		break;
+	case QUIRK_R3DI:
 		codec_dbg(codec, "%s: QUIRK_R3DI applied.\n", __func__);
 		snd_hda_apply_pincfgs(codec, r3di_pincfgs);
-		अवरोध;
-	हाल QUIRK_AE5:
+		break;
+	case QUIRK_AE5:
 		codec_dbg(codec, "%s: QUIRK_AE5 applied.\n", __func__);
 		snd_hda_apply_pincfgs(codec, ae5_pincfgs);
-		अवरोध;
-	हाल QUIRK_AE7:
+		break;
+	case QUIRK_AE7:
 		codec_dbg(codec, "%s: QUIRK_AE7 applied.\n", __func__);
 		snd_hda_apply_pincfgs(codec, ae7_pincfgs);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	चयन (ca0132_quirk(spec)) अणु
-	हाल QUIRK_ALIENWARE:
-		spec->num_outमाला_दो = 2;
+	switch (ca0132_quirk(spec)) {
+	case QUIRK_ALIENWARE:
+		spec->num_outputs = 2;
 		spec->out_pins[0] = 0x0b; /* speaker out */
 		spec->out_pins[1] = 0x0f;
 		spec->shared_out_nid = 0x2;
@@ -9778,16 +9777,16 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 		spec->adcs[1] = 0x8; /* analog mic2 */
 		spec->adcs[2] = 0xa; /* what u hear */
 
-		spec->num_inमाला_दो = 3;
+		spec->num_inputs = 3;
 		spec->input_pins[0] = 0x12;
 		spec->input_pins[1] = 0x11;
 		spec->input_pins[2] = 0x13;
 		spec->shared_mic_nid = 0x7;
 		spec->unsol_tag_amic1 = 0x11;
-		अवरोध;
-	हाल QUIRK_SBZ:
-	हाल QUIRK_R3D:
-		spec->num_outमाला_दो = 2;
+		break;
+	case QUIRK_SBZ:
+	case QUIRK_R3D:
+		spec->num_outputs = 2;
 		spec->out_pins[0] = 0x0B; /* Line out */
 		spec->out_pins[1] = 0x0F; /* Rear headphone out */
 		spec->out_pins[2] = 0x10; /* Front Headphone / Center/LFE*/
@@ -9797,10 +9796,10 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 		spec->unsol_tag_front_hp = spec->out_pins[2];
 
 		spec->adcs[0] = 0x7; /* Rear Mic / Line-in */
-		spec->adcs[1] = 0x8; /* Front Mic, but only अगर no DSP */
+		spec->adcs[1] = 0x8; /* Front Mic, but only if no DSP */
 		spec->adcs[2] = 0xa; /* what u hear */
 
-		spec->num_inमाला_दो = 2;
+		spec->num_inputs = 2;
 		spec->input_pins[0] = 0x12; /* Rear Mic / Line-in */
 		spec->input_pins[1] = 0x13; /* What U Hear */
 		spec->shared_mic_nid = 0x7;
@@ -9810,9 +9809,9 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 		spec->dig_out = 0x05;
 		spec->multiout.dig_out_nid = spec->dig_out;
 		spec->dig_in = 0x09;
-		अवरोध;
-	हाल QUIRK_ZXR:
-		spec->num_outमाला_दो = 2;
+		break;
+	case QUIRK_ZXR:
+		spec->num_outputs = 2;
 		spec->out_pins[0] = 0x0B; /* Line out */
 		spec->out_pins[1] = 0x0F; /* Rear headphone out */
 		spec->out_pins[2] = 0x10; /* Center/LFE */
@@ -9825,26 +9824,26 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 		spec->adcs[1] = 0x8; /* Not connected, no front mic */
 		spec->adcs[2] = 0xa; /* what u hear */
 
-		spec->num_inमाला_दो = 2;
+		spec->num_inputs = 2;
 		spec->input_pins[0] = 0x12; /* Rear Mic / Line-in */
 		spec->input_pins[1] = 0x13; /* What U Hear */
 		spec->shared_mic_nid = 0x7;
 		spec->unsol_tag_amic1 = spec->input_pins[0];
-		अवरोध;
-	हाल QUIRK_ZXR_DBPRO:
+		break;
+	case QUIRK_ZXR_DBPRO:
 		spec->adcs[0] = 0x8; /* ZxR DBPro Aux In */
 
-		spec->num_inमाला_दो = 1;
+		spec->num_inputs = 1;
 		spec->input_pins[0] = 0x11; /* RCA Line-in */
 
 		spec->dig_out = 0x05;
 		spec->multiout.dig_out_nid = spec->dig_out;
 
 		spec->dig_in = 0x09;
-		अवरोध;
-	हाल QUIRK_AE5:
-	हाल QUIRK_AE7:
-		spec->num_outमाला_दो = 2;
+		break;
+	case QUIRK_AE5:
+	case QUIRK_AE7:
+		spec->num_outputs = 2;
 		spec->out_pins[0] = 0x0B; /* Line out */
 		spec->out_pins[1] = 0x11; /* Rear headphone out */
 		spec->out_pins[2] = 0x10; /* Front Headphone / Center/LFE*/
@@ -9854,10 +9853,10 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 		spec->unsol_tag_front_hp = spec->out_pins[2];
 
 		spec->adcs[0] = 0x7; /* Rear Mic / Line-in */
-		spec->adcs[1] = 0x8; /* Front Mic, but only अगर no DSP */
+		spec->adcs[1] = 0x8; /* Front Mic, but only if no DSP */
 		spec->adcs[2] = 0xa; /* what u hear */
 
-		spec->num_inमाला_दो = 2;
+		spec->num_inputs = 2;
 		spec->input_pins[0] = 0x12; /* Rear Mic / Line-in */
 		spec->input_pins[1] = 0x13; /* What U Hear */
 		spec->shared_mic_nid = 0x7;
@@ -9866,9 +9865,9 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 		/* SPDIF I/O */
 		spec->dig_out = 0x05;
 		spec->multiout.dig_out_nid = spec->dig_out;
-		अवरोध;
-	हाल QUIRK_R3DI:
-		spec->num_outमाला_दो = 2;
+		break;
+	case QUIRK_R3DI:
+		spec->num_outputs = 2;
 		spec->out_pins[0] = 0x0B; /* Line out */
 		spec->out_pins[1] = 0x0F; /* Rear headphone out */
 		spec->out_pins[2] = 0x10; /* Front Headphone / Center/LFE*/
@@ -9878,10 +9877,10 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 		spec->unsol_tag_front_hp = spec->out_pins[2];
 
 		spec->adcs[0] = 0x07; /* Rear Mic / Line-in */
-		spec->adcs[1] = 0x08; /* Front Mic, but only अगर no DSP */
+		spec->adcs[1] = 0x08; /* Front Mic, but only if no DSP */
 		spec->adcs[2] = 0x0a; /* what u hear */
 
-		spec->num_inमाला_दो = 2;
+		spec->num_inputs = 2;
 		spec->input_pins[0] = 0x12; /* Rear Mic / Line-in */
 		spec->input_pins[1] = 0x13; /* What U Hear */
 		spec->shared_mic_nid = 0x7;
@@ -9890,9 +9889,9 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 		/* SPDIF I/O */
 		spec->dig_out = 0x05;
 		spec->multiout.dig_out_nid = spec->dig_out;
-		अवरोध;
-	शेष:
-		spec->num_outमाला_दो = 2;
+		break;
+	default:
+		spec->num_outputs = 2;
 		spec->out_pins[0] = 0x0b; /* speaker out */
 		spec->out_pins[1] = 0x10; /* headphone out */
 		spec->shared_out_nid = 0x2;
@@ -9902,7 +9901,7 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 		spec->adcs[1] = 0x8; /* analog mic2 */
 		spec->adcs[2] = 0xa; /* what u hear */
 
-		spec->num_inमाला_दो = 3;
+		spec->num_inputs = 3;
 		spec->input_pins[0] = 0x12;
 		spec->input_pins[1] = 0x11;
 		spec->input_pins[2] = 0x13;
@@ -9913,28 +9912,28 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 		spec->dig_out = 0x05;
 		spec->multiout.dig_out_nid = spec->dig_out;
 		spec->dig_in = 0x09;
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल पूर्णांक ca0132_prepare_verbs(काष्ठा hda_codec *codec)
-अणु
+static int ca0132_prepare_verbs(struct hda_codec *codec)
+{
 /* Verbs + terminator (an empty element) */
-#घोषणा NUM_SPEC_VERBS 2
-	काष्ठा ca0132_spec *spec = codec->spec;
+#define NUM_SPEC_VERBS 2
+	struct ca0132_spec *spec = codec->spec;
 
 	spec->chip_init_verbs = ca0132_init_verbs0;
 	/*
 	 * Since desktop cards use pci_mmio, this can be used to determine
 	 * whether or not to use these verbs instead of a separate bool.
 	 */
-	अगर (ca0132_use_pci_mmio(spec))
+	if (ca0132_use_pci_mmio(spec))
 		spec->desktop_init_verbs = ca0132_init_verbs1;
-	spec->spec_init_verbs = kसुस्मृति(NUM_SPEC_VERBS,
-					माप(काष्ठा hda_verb),
+	spec->spec_init_verbs = kcalloc(NUM_SPEC_VERBS,
+					sizeof(struct hda_verb),
 					GFP_KERNEL);
-	अगर (!spec->spec_init_verbs)
-		वापस -ENOMEM;
+	if (!spec->spec_init_verbs)
+		return -ENOMEM;
 
 	/* config EAPD */
 	spec->spec_init_verbs[0].nid = 0x0b;
@@ -9957,61 +9956,61 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 	*/
 
 	/* Terminator: spec->spec_init_verbs[NUM_SPEC_VERBS-1] */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * The Sound Blaster ZxR shares the same PCI subप्रणाली ID as some regular
- * Sound Blaster Z cards. However, they have dअगरferent HDA codec subप्रणाली
- * ID's. So, we check for the ZxR's subप्रणाली ID, as well as the DBPro
+ * The Sound Blaster ZxR shares the same PCI subsystem ID as some regular
+ * Sound Blaster Z cards. However, they have different HDA codec subsystem
+ * ID's. So, we check for the ZxR's subsystem ID, as well as the DBPro
  * daughter boards ID.
  */
-अटल व्योम sbz_detect_quirk(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec = codec->spec;
+static void sbz_detect_quirk(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec = codec->spec;
 
-	चयन (codec->core.subप्रणाली_id) अणु
-	हाल 0x11020033:
+	switch (codec->core.subsystem_id) {
+	case 0x11020033:
 		spec->quirk = QUIRK_ZXR;
-		अवरोध;
-	हाल 0x1102003f:
+		break;
+	case 0x1102003f:
 		spec->quirk = QUIRK_ZXR_DBPRO;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		spec->quirk = QUIRK_SBZ;
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल पूर्णांक patch_ca0132(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा ca0132_spec *spec;
-	पूर्णांक err;
-	स्थिर काष्ठा snd_pci_quirk *quirk;
+static int patch_ca0132(struct hda_codec *codec)
+{
+	struct ca0132_spec *spec;
+	int err;
+	const struct snd_pci_quirk *quirk;
 
 	codec_dbg(codec, "patch_ca0132\n");
 
-	spec = kzalloc(माप(*spec), GFP_KERNEL);
-	अगर (!spec)
-		वापस -ENOMEM;
+	spec = kzalloc(sizeof(*spec), GFP_KERNEL);
+	if (!spec)
+		return -ENOMEM;
 	codec->spec = spec;
 	spec->codec = codec;
 
 	/* Detect codec quirk */
 	quirk = snd_pci_quirk_lookup(codec->bus->pci, ca0132_quirks);
-	अगर (quirk)
+	if (quirk)
 		spec->quirk = quirk->value;
-	अन्यथा
+	else
 		spec->quirk = QUIRK_NONE;
-	अगर (ca0132_quirk(spec) == QUIRK_SBZ)
+	if (ca0132_quirk(spec) == QUIRK_SBZ)
 		sbz_detect_quirk(codec);
 
-	अगर (ca0132_quirk(spec) == QUIRK_ZXR_DBPRO)
+	if (ca0132_quirk(spec) == QUIRK_ZXR_DBPRO)
 		codec->patch_ops = dbpro_patch_ops;
-	अन्यथा
+	else
 		codec->patch_ops = ca0132_patch_ops;
 
-	codec->pcm_क्रमmat_first = 1;
+	codec->pcm_format_first = 1;
 	codec->no_sticky_stream = 1;
 
 
@@ -10019,73 +10018,73 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 	spec->num_mixers = 1;
 
 	/* Set which mixers each quirk uses. */
-	चयन (ca0132_quirk(spec)) अणु
-	हाल QUIRK_SBZ:
+	switch (ca0132_quirk(spec)) {
+	case QUIRK_SBZ:
 		spec->mixers[0] = desktop_mixer;
 		snd_hda_codec_set_name(codec, "Sound Blaster Z");
-		अवरोध;
-	हाल QUIRK_ZXR:
+		break;
+	case QUIRK_ZXR:
 		spec->mixers[0] = desktop_mixer;
 		snd_hda_codec_set_name(codec, "Sound Blaster ZxR");
-		अवरोध;
-	हाल QUIRK_ZXR_DBPRO:
-		अवरोध;
-	हाल QUIRK_R3D:
+		break;
+	case QUIRK_ZXR_DBPRO:
+		break;
+	case QUIRK_R3D:
 		spec->mixers[0] = desktop_mixer;
 		snd_hda_codec_set_name(codec, "Recon3D");
-		अवरोध;
-	हाल QUIRK_R3DI:
+		break;
+	case QUIRK_R3DI:
 		spec->mixers[0] = r3di_mixer;
 		snd_hda_codec_set_name(codec, "Recon3Di");
-		अवरोध;
-	हाल QUIRK_AE5:
+		break;
+	case QUIRK_AE5:
 		spec->mixers[0] = desktop_mixer;
 		snd_hda_codec_set_name(codec, "Sound BlasterX AE-5");
-		अवरोध;
-	हाल QUIRK_AE7:
+		break;
+	case QUIRK_AE7:
 		spec->mixers[0] = desktop_mixer;
 		snd_hda_codec_set_name(codec, "Sound Blaster AE-7");
-		अवरोध;
-	शेष:
+		break;
+	default:
 		spec->mixers[0] = ca0132_mixer;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	/* Setup whether or not to use alt functions/controls/pci_mmio */
-	चयन (ca0132_quirk(spec)) अणु
-	हाल QUIRK_SBZ:
-	हाल QUIRK_R3D:
-	हाल QUIRK_AE5:
-	हाल QUIRK_AE7:
-	हाल QUIRK_ZXR:
+	switch (ca0132_quirk(spec)) {
+	case QUIRK_SBZ:
+	case QUIRK_R3D:
+	case QUIRK_AE5:
+	case QUIRK_AE7:
+	case QUIRK_ZXR:
 		spec->use_alt_controls = true;
 		spec->use_alt_functions = true;
 		spec->use_pci_mmio = true;
-		अवरोध;
-	हाल QUIRK_R3DI:
+		break;
+	case QUIRK_R3DI:
 		spec->use_alt_controls = true;
 		spec->use_alt_functions = true;
 		spec->use_pci_mmio = false;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		spec->use_alt_controls = false;
 		spec->use_alt_functions = false;
 		spec->use_pci_mmio = false;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-#अगर_घोषित CONFIG_PCI
-	अगर (spec->use_pci_mmio) अणु
+#ifdef CONFIG_PCI
+	if (spec->use_pci_mmio) {
 		spec->mem_base = pci_iomap(codec->bus->pci, 2, 0xC20);
-		अगर (spec->mem_base == शून्य) अणु
+		if (spec->mem_base == NULL) {
 			codec_warn(codec, "pci_iomap failed! Setting quirk to QUIRK_NONE.");
 			spec->quirk = QUIRK_NONE;
-		पूर्ण
-	पूर्ण
-#पूर्ण_अगर
+		}
+	}
+#endif
 
 	spec->base_init_verbs = ca0132_base_init_verbs;
-	spec->base_निकास_verbs = ca0132_base_निकास_verbs;
+	spec->base_exit_verbs = ca0132_base_exit_verbs;
 
 	INIT_DELAYED_WORK(&spec->unsol_hp_work, ca0132_unsol_hp_delayed);
 
@@ -10094,36 +10093,36 @@ extract_scp_header(अचिन्हित पूर्णांक header,
 	ca0132_config(codec);
 
 	err = ca0132_prepare_verbs(codec);
-	अगर (err < 0)
-		जाओ error;
+	if (err < 0)
+		goto error;
 
-	err = snd_hda_parse_pin_def_config(codec, &spec->स्वतःcfg, शून्य);
-	अगर (err < 0)
-		जाओ error;
+	err = snd_hda_parse_pin_def_config(codec, &spec->autocfg, NULL);
+	if (err < 0)
+		goto error;
 
 	ca0132_setup_unsol(codec);
 
-	वापस 0;
+	return 0;
 
  error:
-	ca0132_मुक्त(codec);
-	वापस err;
-पूर्ण
+	ca0132_free(codec);
+	return err;
+}
 
 /*
  * patch entries
  */
-अटल स्थिर काष्ठा hda_device_id snd_hda_id_ca0132[] = अणु
+static const struct hda_device_id snd_hda_id_ca0132[] = {
 	HDA_CODEC_ENTRY(0x11020011, "CA0132", patch_ca0132),
-	अणुपूर्ण /* terminator */
-पूर्ण;
+	{} /* terminator */
+};
 MODULE_DEVICE_TABLE(hdaudio, snd_hda_id_ca0132);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Creative Sound Core3D codec");
 
-अटल काष्ठा hda_codec_driver ca0132_driver = अणु
+static struct hda_codec_driver ca0132_driver = {
 	.id = snd_hda_id_ca0132,
-पूर्ण;
+};
 
 module_hda_codec_driver(ca0132_driver);

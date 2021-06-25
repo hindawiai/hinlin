@@ -1,109 +1,108 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright 2019 NXP
  *
  */
 
-#अगर_अघोषित _FSL_ASRC_COMMON_H
-#घोषणा _FSL_ASRC_COMMON_H
+#ifndef _FSL_ASRC_COMMON_H
+#define _FSL_ASRC_COMMON_H
 
 /* directions */
-#घोषणा IN	0
-#घोषणा OUT	1
+#define IN	0
+#define OUT	1
 
-क्रमागत asrc_pair_index अणु
+enum asrc_pair_index {
 	ASRC_INVALID_PAIR = -1,
 	ASRC_PAIR_A = 0,
 	ASRC_PAIR_B = 1,
 	ASRC_PAIR_C = 2,
 	ASRC_PAIR_D = 3,
-पूर्ण;
+};
 
-#घोषणा PAIR_CTX_NUM  0x4
+#define PAIR_CTX_NUM  0x4
 
 /**
  * fsl_asrc_pair: ASRC Pair common data
  *
- * @asrc: poपूर्णांकer to its parent module
+ * @asrc: pointer to its parent module
  * @error: error record
  * @index: pair index (ASRC_PAIR_A, ASRC_PAIR_B, ASRC_PAIR_C)
  * @channels: occupied channel number
  * @desc: input and output dma descriptors
  * @dma_chan: inputer and output DMA channels
- * @dma_data: निजी dma data
- * @pos: hardware poपूर्णांकer position
+ * @dma_data: private dma data
+ * @pos: hardware pointer position
  * @req_dma_chan: flag to release dev_to_dev chan
- * @निजी: pair निजी area
+ * @private: pair private area
  */
-काष्ठा fsl_asrc_pair अणु
-	काष्ठा fsl_asrc *asrc;
-	अचिन्हित पूर्णांक error;
+struct fsl_asrc_pair {
+	struct fsl_asrc *asrc;
+	unsigned int error;
 
-	क्रमागत asrc_pair_index index;
-	अचिन्हित पूर्णांक channels;
+	enum asrc_pair_index index;
+	unsigned int channels;
 
-	काष्ठा dma_async_tx_descriptor *desc[2];
-	काष्ठा dma_chan *dma_chan[2];
-	काष्ठा imx_dma_data dma_data;
-	अचिन्हित पूर्णांक pos;
+	struct dma_async_tx_descriptor *desc[2];
+	struct dma_chan *dma_chan[2];
+	struct imx_dma_data dma_data;
+	unsigned int pos;
 	bool req_dma_chan;
 
-	व्योम *निजी;
-पूर्ण;
+	void *private;
+};
 
 /**
  * fsl_asrc: ASRC common data
  *
- * @dma_params_rx: DMA parameters क्रम receive channel
- * @dma_params_tx: DMA parameters क्रम transmit channel
- * @pdev: platक्रमm device poपूर्णांकer
+ * @dma_params_rx: DMA parameters for receive channel
+ * @dma_params_tx: DMA parameters for transmit channel
+ * @pdev: platform device pointer
  * @regmap: regmap handler
- * @paddr: physical address to the base address of रेजिस्टरs
- * @mem_clk: घड़ी source to access रेजिस्टर
- * @ipg_clk: घड़ी source to drive peripheral
- * @spba_clk: SPBA घड़ी (optional, depending on SoC design)
- * @lock: spin lock क्रम resource protection
- * @pair: pair poपूर्णांकers
+ * @paddr: physical address to the base address of registers
+ * @mem_clk: clock source to access register
+ * @ipg_clk: clock source to drive peripheral
+ * @spba_clk: SPBA clock (optional, depending on SoC design)
+ * @lock: spin lock for resource protection
+ * @pair: pair pointers
  * @channel_avail: non-occupied channel numbers
- * @asrc_rate: शेष sample rate क्रम ASoC Back-Ends
- * @asrc_क्रमmat: शेष sample क्रमmat क्रम ASoC Back-Ends
+ * @asrc_rate: default sample rate for ASoC Back-Ends
+ * @asrc_format: default sample format for ASoC Back-Ends
  * @use_edma: edma is used
- * @get_dma_channel: function poपूर्णांकer
- * @request_pair: function poपूर्णांकer
- * @release_pair: function poपूर्णांकer
- * @get_fअगरo_addr: function poपूर्णांकer
- * @pair_priv_size: size of pair निजी काष्ठा.
- * @निजी: निजी data काष्ठाure
+ * @get_dma_channel: function pointer
+ * @request_pair: function pointer
+ * @release_pair: function pointer
+ * @get_fifo_addr: function pointer
+ * @pair_priv_size: size of pair private struct.
+ * @private: private data structure
  */
-काष्ठा fsl_asrc अणु
-	काष्ठा snd_dmaengine_dai_dma_data dma_params_rx;
-	काष्ठा snd_dmaengine_dai_dma_data dma_params_tx;
-	काष्ठा platक्रमm_device *pdev;
-	काष्ठा regmap *regmap;
-	अचिन्हित दीर्घ paddr;
-	काष्ठा clk *mem_clk;
-	काष्ठा clk *ipg_clk;
-	काष्ठा clk *spba_clk;
-	spinlock_t lock;      /* spin lock क्रम resource protection */
+struct fsl_asrc {
+	struct snd_dmaengine_dai_dma_data dma_params_rx;
+	struct snd_dmaengine_dai_dma_data dma_params_tx;
+	struct platform_device *pdev;
+	struct regmap *regmap;
+	unsigned long paddr;
+	struct clk *mem_clk;
+	struct clk *ipg_clk;
+	struct clk *spba_clk;
+	spinlock_t lock;      /* spin lock for resource protection */
 
-	काष्ठा fsl_asrc_pair *pair[PAIR_CTX_NUM];
-	अचिन्हित पूर्णांक channel_avail;
+	struct fsl_asrc_pair *pair[PAIR_CTX_NUM];
+	unsigned int channel_avail;
 
-	पूर्णांक asrc_rate;
-	snd_pcm_क्रमmat_t asrc_क्रमmat;
+	int asrc_rate;
+	snd_pcm_format_t asrc_format;
 	bool use_edma;
 
-	काष्ठा dma_chan *(*get_dma_channel)(काष्ठा fsl_asrc_pair *pair, bool dir);
-	पूर्णांक (*request_pair)(पूर्णांक channels, काष्ठा fsl_asrc_pair *pair);
-	व्योम (*release_pair)(काष्ठा fsl_asrc_pair *pair);
-	पूर्णांक (*get_fअगरo_addr)(u8 dir, क्रमागत asrc_pair_index index);
-	माप_प्रकार pair_priv_size;
+	struct dma_chan *(*get_dma_channel)(struct fsl_asrc_pair *pair, bool dir);
+	int (*request_pair)(int channels, struct fsl_asrc_pair *pair);
+	void (*release_pair)(struct fsl_asrc_pair *pair);
+	int (*get_fifo_addr)(u8 dir, enum asrc_pair_index index);
+	size_t pair_priv_size;
 
-	व्योम *निजी;
-पूर्ण;
+	void *private;
+};
 
-#घोषणा DRV_NAME "fsl-asrc-dai"
-बाह्य काष्ठा snd_soc_component_driver fsl_asrc_component;
+#define DRV_NAME "fsl-asrc-dai"
+extern struct snd_soc_component_driver fsl_asrc_component;
 
-#पूर्ण_अगर /* _FSL_ASRC_COMMON_H */
+#endif /* _FSL_ASRC_COMMON_H */

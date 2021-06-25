@@ -1,42 +1,41 @@
-<शैली गुरु>
 /*
  * Copyright(c) 2015-2017 Intel Corporation.
  *
  * This file is provided under a dual BSD/GPLv2 license.  When using or
- * redistributing this file, you may करो so under either license.
+ * redistributing this file, you may do so under either license.
  *
  * GPL LICENSE SUMMARY
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy
+ * This program is free software; you can redistribute it and/or modify
  * it under the terms of version 2 of the GNU General Public License as
  * published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License क्रम more details.
+ * General Public License for more details.
  *
  * BSD LICENSE
  *
- * Redistribution and use in source and binary क्रमms, with or without
- * modअगरication, are permitted provided that the following conditions
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
  * are met:
  *
  *  - Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- *  - Redistributions in binary क्रमm must reproduce the above copyright
+ *  - Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
- *    the करोcumentation and/or other materials provided with the
+ *    the documentation and/or other materials provided with the
  *    distribution.
  *  - Neither the name of Intel Corporation nor the names of its
- *    contributors may be used to enकरोrse or promote products derived
- *    from this software without specअगरic prior written permission.
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL,
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
  * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -45,179 +44,179 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#समावेश <linux/प्रकार.स>
+#include <linux/ctype.h>
 
-#समावेश "hfi.h"
-#समावेश "mad.h"
-#समावेश "trace.h"
+#include "hfi.h"
+#include "mad.h"
+#include "trace.h"
 
 /*
- * Start of per-port congestion control काष्ठाures and support code
+ * Start of per-port congestion control structures and support code
  */
 
 /*
  * Congestion control table size followed by table entries
  */
-अटल sमाप_प्रकार पढ़ो_cc_table_bin(काष्ठा file *filp, काष्ठा kobject *kobj,
-				 काष्ठा bin_attribute *bin_attr,
-				 अक्षर *buf, loff_t pos, माप_प्रकार count)
-अणु
-	पूर्णांक ret;
-	काष्ठा hfi1_pportdata *ppd =
-		container_of(kobj, काष्ठा hfi1_pportdata, pport_cc_kobj);
-	काष्ठा cc_state *cc_state;
+static ssize_t read_cc_table_bin(struct file *filp, struct kobject *kobj,
+				 struct bin_attribute *bin_attr,
+				 char *buf, loff_t pos, size_t count)
+{
+	int ret;
+	struct hfi1_pportdata *ppd =
+		container_of(kobj, struct hfi1_pportdata, pport_cc_kobj);
+	struct cc_state *cc_state;
 
-	ret = ppd->total_cct_entry * माप(काष्ठा ib_cc_table_entry_shaकरोw)
-		 + माप(__be16);
+	ret = ppd->total_cct_entry * sizeof(struct ib_cc_table_entry_shadow)
+		 + sizeof(__be16);
 
-	अगर (pos > ret)
-		वापस -EINVAL;
+	if (pos > ret)
+		return -EINVAL;
 
-	अगर (count > ret - pos)
+	if (count > ret - pos)
 		count = ret - pos;
 
-	अगर (!count)
-		वापस count;
+	if (!count)
+		return count;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	cc_state = get_cc_state(ppd);
-	अगर (!cc_state) अणु
-		rcu_पढ़ो_unlock();
-		वापस -EINVAL;
-	पूर्ण
-	स_नकल(buf, (व्योम *)&cc_state->cct + pos, count);
-	rcu_पढ़ो_unlock();
+	if (!cc_state) {
+		rcu_read_unlock();
+		return -EINVAL;
+	}
+	memcpy(buf, (void *)&cc_state->cct + pos, count);
+	rcu_read_unlock();
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल व्योम port_release(काष्ठा kobject *kobj)
-अणु
-	/* nothing to करो since memory is मुक्तd by hfi1_मुक्त_devdata() */
-पूर्ण
+static void port_release(struct kobject *kobj)
+{
+	/* nothing to do since memory is freed by hfi1_free_devdata() */
+}
 
-अटल स्थिर काष्ठा bin_attribute cc_table_bin_attr = अणु
-	.attr = अणु.name = "cc_table_bin", .mode = 0444पूर्ण,
-	.पढ़ो = पढ़ो_cc_table_bin,
+static const struct bin_attribute cc_table_bin_attr = {
+	.attr = {.name = "cc_table_bin", .mode = 0444},
+	.read = read_cc_table_bin,
 	.size = PAGE_SIZE,
-पूर्ण;
+};
 
 /*
  * Congestion settings: port control, control map and an array of 16
- * entries क्रम the congestion entries - increase, समयr, event log
+ * entries for the congestion entries - increase, timer, event log
  * trigger threshold and the minimum injection rate delay.
  */
-अटल sमाप_प्रकार पढ़ो_cc_setting_bin(काष्ठा file *filp, काष्ठा kobject *kobj,
-				   काष्ठा bin_attribute *bin_attr,
-				   अक्षर *buf, loff_t pos, माप_प्रकार count)
-अणु
-	पूर्णांक ret;
-	काष्ठा hfi1_pportdata *ppd =
-		container_of(kobj, काष्ठा hfi1_pportdata, pport_cc_kobj);
-	काष्ठा cc_state *cc_state;
+static ssize_t read_cc_setting_bin(struct file *filp, struct kobject *kobj,
+				   struct bin_attribute *bin_attr,
+				   char *buf, loff_t pos, size_t count)
+{
+	int ret;
+	struct hfi1_pportdata *ppd =
+		container_of(kobj, struct hfi1_pportdata, pport_cc_kobj);
+	struct cc_state *cc_state;
 
-	ret = माप(काष्ठा opa_congestion_setting_attr_shaकरोw);
+	ret = sizeof(struct opa_congestion_setting_attr_shadow);
 
-	अगर (pos > ret)
-		वापस -EINVAL;
-	अगर (count > ret - pos)
+	if (pos > ret)
+		return -EINVAL;
+	if (count > ret - pos)
 		count = ret - pos;
 
-	अगर (!count)
-		वापस count;
+	if (!count)
+		return count;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	cc_state = get_cc_state(ppd);
-	अगर (!cc_state) अणु
-		rcu_पढ़ो_unlock();
-		वापस -EINVAL;
-	पूर्ण
-	स_नकल(buf, (व्योम *)&cc_state->cong_setting + pos, count);
-	rcu_पढ़ो_unlock();
+	if (!cc_state) {
+		rcu_read_unlock();
+		return -EINVAL;
+	}
+	memcpy(buf, (void *)&cc_state->cong_setting + pos, count);
+	rcu_read_unlock();
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल स्थिर काष्ठा bin_attribute cc_setting_bin_attr = अणु
-	.attr = अणु.name = "cc_settings_bin", .mode = 0444पूर्ण,
-	.पढ़ो = पढ़ो_cc_setting_bin,
+static const struct bin_attribute cc_setting_bin_attr = {
+	.attr = {.name = "cc_settings_bin", .mode = 0444},
+	.read = read_cc_setting_bin,
 	.size = PAGE_SIZE,
-पूर्ण;
+};
 
-काष्ठा hfi1_port_attr अणु
-	काष्ठा attribute attr;
-	sमाप_प्रकार	(*show)(काष्ठा hfi1_pportdata *, अक्षर *);
-	sमाप_प्रकार	(*store)(काष्ठा hfi1_pportdata *, स्थिर अक्षर *, माप_प्रकार);
-पूर्ण;
+struct hfi1_port_attr {
+	struct attribute attr;
+	ssize_t	(*show)(struct hfi1_pportdata *, char *);
+	ssize_t	(*store)(struct hfi1_pportdata *, const char *, size_t);
+};
 
-अटल sमाप_प्रकार cc_prescan_show(काष्ठा hfi1_pportdata *ppd, अक्षर *buf)
-अणु
-	वापस sysfs_emit(buf, "%s\n", ppd->cc_prescan ? "on" : "off");
-पूर्ण
+static ssize_t cc_prescan_show(struct hfi1_pportdata *ppd, char *buf)
+{
+	return sysfs_emit(buf, "%s\n", ppd->cc_prescan ? "on" : "off");
+}
 
-अटल sमाप_प्रकार cc_prescan_store(काष्ठा hfi1_pportdata *ppd, स्थिर अक्षर *buf,
-				माप_प्रकार count)
-अणु
-	अगर (!स_भेद(buf, "on", 2))
+static ssize_t cc_prescan_store(struct hfi1_pportdata *ppd, const char *buf,
+				size_t count)
+{
+	if (!memcmp(buf, "on", 2))
 		ppd->cc_prescan = true;
-	अन्यथा अगर (!स_भेद(buf, "off", 3))
+	else if (!memcmp(buf, "off", 3))
 		ppd->cc_prescan = false;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल काष्ठा hfi1_port_attr cc_prescan_attr =
+static struct hfi1_port_attr cc_prescan_attr =
 		__ATTR(cc_prescan, 0600, cc_prescan_show, cc_prescan_store);
 
-अटल sमाप_प्रकार cc_attr_show(काष्ठा kobject *kobj, काष्ठा attribute *attr,
-			    अक्षर *buf)
-अणु
-	काष्ठा hfi1_port_attr *port_attr =
-		container_of(attr, काष्ठा hfi1_port_attr, attr);
-	काष्ठा hfi1_pportdata *ppd =
-		container_of(kobj, काष्ठा hfi1_pportdata, pport_cc_kobj);
+static ssize_t cc_attr_show(struct kobject *kobj, struct attribute *attr,
+			    char *buf)
+{
+	struct hfi1_port_attr *port_attr =
+		container_of(attr, struct hfi1_port_attr, attr);
+	struct hfi1_pportdata *ppd =
+		container_of(kobj, struct hfi1_pportdata, pport_cc_kobj);
 
-	वापस port_attr->show(ppd, buf);
-पूर्ण
+	return port_attr->show(ppd, buf);
+}
 
-अटल sमाप_प्रकार cc_attr_store(काष्ठा kobject *kobj, काष्ठा attribute *attr,
-			     स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा hfi1_port_attr *port_attr =
-		container_of(attr, काष्ठा hfi1_port_attr, attr);
-	काष्ठा hfi1_pportdata *ppd =
-		container_of(kobj, काष्ठा hfi1_pportdata, pport_cc_kobj);
+static ssize_t cc_attr_store(struct kobject *kobj, struct attribute *attr,
+			     const char *buf, size_t count)
+{
+	struct hfi1_port_attr *port_attr =
+		container_of(attr, struct hfi1_port_attr, attr);
+	struct hfi1_pportdata *ppd =
+		container_of(kobj, struct hfi1_pportdata, pport_cc_kobj);
 
-	वापस port_attr->store(ppd, buf, count);
-पूर्ण
+	return port_attr->store(ppd, buf, count);
+}
 
-अटल स्थिर काष्ठा sysfs_ops port_cc_sysfs_ops = अणु
+static const struct sysfs_ops port_cc_sysfs_ops = {
 	.show = cc_attr_show,
 	.store = cc_attr_store
-पूर्ण;
+};
 
-अटल काष्ठा attribute *port_cc_शेष_attributes[] = अणु
+static struct attribute *port_cc_default_attributes[] = {
 	&cc_prescan_attr.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल काष्ठा kobj_type port_cc_ktype = अणु
+static struct kobj_type port_cc_ktype = {
 	.release = port_release,
 	.sysfs_ops = &port_cc_sysfs_ops,
-	.शेष_attrs = port_cc_शेष_attributes
-पूर्ण;
+	.default_attrs = port_cc_default_attributes
+};
 
 /* Start sc2vl */
-#घोषणा HFI1_SC2VL_ATTR(N)				    \
-	अटल काष्ठा hfi1_sc2vl_attr hfi1_sc2vl_attr_##N = अणु \
-		.attr = अणु .name = __stringअगरy(N), .mode = 0444 पूर्ण, \
+#define HFI1_SC2VL_ATTR(N)				    \
+	static struct hfi1_sc2vl_attr hfi1_sc2vl_attr_##N = { \
+		.attr = { .name = __stringify(N), .mode = 0444 }, \
 		.sc = N \
-	पूर्ण
+	}
 
-काष्ठा hfi1_sc2vl_attr अणु
-	काष्ठा attribute attr;
-	पूर्णांक sc;
-पूर्ण;
+struct hfi1_sc2vl_attr {
+	struct attribute attr;
+	int sc;
+};
 
 HFI1_SC2VL_ATTR(0);
 HFI1_SC2VL_ATTR(1);
@@ -252,7 +251,7 @@ HFI1_SC2VL_ATTR(29);
 HFI1_SC2VL_ATTR(30);
 HFI1_SC2VL_ATTR(31);
 
-अटल काष्ठा attribute *sc2vl_शेष_attributes[] = अणु
+static struct attribute *sc2vl_default_attributes[] = {
 	&hfi1_sc2vl_attr_0.attr,
 	&hfi1_sc2vl_attr_1.attr,
 	&hfi1_sc2vl_attr_2.attr,
@@ -285,44 +284,44 @@ HFI1_SC2VL_ATTR(31);
 	&hfi1_sc2vl_attr_29.attr,
 	&hfi1_sc2vl_attr_30.attr,
 	&hfi1_sc2vl_attr_31.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल sमाप_प्रकार sc2vl_attr_show(काष्ठा kobject *kobj, काष्ठा attribute *attr,
-			       अक्षर *buf)
-अणु
-	काष्ठा hfi1_sc2vl_attr *sattr =
-		container_of(attr, काष्ठा hfi1_sc2vl_attr, attr);
-	काष्ठा hfi1_pportdata *ppd =
-		container_of(kobj, काष्ठा hfi1_pportdata, sc2vl_kobj);
-	काष्ठा hfi1_devdata *dd = ppd->dd;
+static ssize_t sc2vl_attr_show(struct kobject *kobj, struct attribute *attr,
+			       char *buf)
+{
+	struct hfi1_sc2vl_attr *sattr =
+		container_of(attr, struct hfi1_sc2vl_attr, attr);
+	struct hfi1_pportdata *ppd =
+		container_of(kobj, struct hfi1_pportdata, sc2vl_kobj);
+	struct hfi1_devdata *dd = ppd->dd;
 
-	वापस sysfs_emit(buf, "%u\n", *((u8 *)dd->sc2vl + sattr->sc));
-पूर्ण
+	return sysfs_emit(buf, "%u\n", *((u8 *)dd->sc2vl + sattr->sc));
+}
 
-अटल स्थिर काष्ठा sysfs_ops hfi1_sc2vl_ops = अणु
+static const struct sysfs_ops hfi1_sc2vl_ops = {
 	.show = sc2vl_attr_show,
-पूर्ण;
+};
 
-अटल काष्ठा kobj_type hfi1_sc2vl_ktype = अणु
+static struct kobj_type hfi1_sc2vl_ktype = {
 	.release = port_release,
 	.sysfs_ops = &hfi1_sc2vl_ops,
-	.शेष_attrs = sc2vl_शेष_attributes
-पूर्ण;
+	.default_attrs = sc2vl_default_attributes
+};
 
 /* End sc2vl */
 
 /* Start sl2sc */
-#घोषणा HFI1_SL2SC_ATTR(N)				    \
-	अटल काष्ठा hfi1_sl2sc_attr hfi1_sl2sc_attr_##N = अणु	  \
-		.attr = अणु .name = __stringअगरy(N), .mode = 0444 पूर्ण, \
+#define HFI1_SL2SC_ATTR(N)				    \
+	static struct hfi1_sl2sc_attr hfi1_sl2sc_attr_##N = {	  \
+		.attr = { .name = __stringify(N), .mode = 0444 }, \
 		.sl = N						  \
-	पूर्ण
+	}
 
-काष्ठा hfi1_sl2sc_attr अणु
-	काष्ठा attribute attr;
-	पूर्णांक sl;
-पूर्ण;
+struct hfi1_sl2sc_attr {
+	struct attribute attr;
+	int sl;
+};
 
 HFI1_SL2SC_ATTR(0);
 HFI1_SL2SC_ATTR(1);
@@ -357,7 +356,7 @@ HFI1_SL2SC_ATTR(29);
 HFI1_SL2SC_ATTR(30);
 HFI1_SL2SC_ATTR(31);
 
-अटल काष्ठा attribute *sl2sc_शेष_attributes[] = अणु
+static struct attribute *sl2sc_default_attributes[] = {
 	&hfi1_sl2sc_attr_0.attr,
 	&hfi1_sl2sc_attr_1.attr,
 	&hfi1_sl2sc_attr_2.attr,
@@ -390,45 +389,45 @@ HFI1_SL2SC_ATTR(31);
 	&hfi1_sl2sc_attr_29.attr,
 	&hfi1_sl2sc_attr_30.attr,
 	&hfi1_sl2sc_attr_31.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल sमाप_प्रकार sl2sc_attr_show(काष्ठा kobject *kobj, काष्ठा attribute *attr,
-			       अक्षर *buf)
-अणु
-	काष्ठा hfi1_sl2sc_attr *sattr =
-		container_of(attr, काष्ठा hfi1_sl2sc_attr, attr);
-	काष्ठा hfi1_pportdata *ppd =
-		container_of(kobj, काष्ठा hfi1_pportdata, sl2sc_kobj);
-	काष्ठा hfi1_ibport *ibp = &ppd->ibport_data;
+static ssize_t sl2sc_attr_show(struct kobject *kobj, struct attribute *attr,
+			       char *buf)
+{
+	struct hfi1_sl2sc_attr *sattr =
+		container_of(attr, struct hfi1_sl2sc_attr, attr);
+	struct hfi1_pportdata *ppd =
+		container_of(kobj, struct hfi1_pportdata, sl2sc_kobj);
+	struct hfi1_ibport *ibp = &ppd->ibport_data;
 
-	वापस sysfs_emit(buf, "%u\n", ibp->sl_to_sc[sattr->sl]);
-पूर्ण
+	return sysfs_emit(buf, "%u\n", ibp->sl_to_sc[sattr->sl]);
+}
 
-अटल स्थिर काष्ठा sysfs_ops hfi1_sl2sc_ops = अणु
+static const struct sysfs_ops hfi1_sl2sc_ops = {
 	.show = sl2sc_attr_show,
-पूर्ण;
+};
 
-अटल काष्ठा kobj_type hfi1_sl2sc_ktype = अणु
+static struct kobj_type hfi1_sl2sc_ktype = {
 	.release = port_release,
 	.sysfs_ops = &hfi1_sl2sc_ops,
-	.शेष_attrs = sl2sc_शेष_attributes
-पूर्ण;
+	.default_attrs = sl2sc_default_attributes
+};
 
 /* End sl2sc */
 
 /* Start vl2mtu */
 
-#घोषणा HFI1_VL2MTU_ATTR(N) \
-	अटल काष्ठा hfi1_vl2mtu_attr hfi1_vl2mtu_attr_##N = अणु \
-		.attr = अणु .name = __stringअगरy(N), .mode = 0444 पूर्ण, \
+#define HFI1_VL2MTU_ATTR(N) \
+	static struct hfi1_vl2mtu_attr hfi1_vl2mtu_attr_##N = { \
+		.attr = { .name = __stringify(N), .mode = 0444 }, \
 		.vl = N						  \
-	पूर्ण
+	}
 
-काष्ठा hfi1_vl2mtu_attr अणु
-	काष्ठा attribute attr;
-	पूर्णांक vl;
-पूर्ण;
+struct hfi1_vl2mtu_attr {
+	struct attribute attr;
+	int vl;
+};
 
 HFI1_VL2MTU_ATTR(0);
 HFI1_VL2MTU_ATTR(1);
@@ -447,7 +446,7 @@ HFI1_VL2MTU_ATTR(13);
 HFI1_VL2MTU_ATTR(14);
 HFI1_VL2MTU_ATTR(15);
 
-अटल काष्ठा attribute *vl2mtu_शेष_attributes[] = अणु
+static struct attribute *vl2mtu_default_attributes[] = {
 	&hfi1_vl2mtu_attr_0.attr,
 	&hfi1_vl2mtu_attr_1.attr,
 	&hfi1_vl2mtu_attr_2.attr,
@@ -464,160 +463,160 @@ HFI1_VL2MTU_ATTR(15);
 	&hfi1_vl2mtu_attr_13.attr,
 	&hfi1_vl2mtu_attr_14.attr,
 	&hfi1_vl2mtu_attr_15.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल sमाप_प्रकार vl2mtu_attr_show(काष्ठा kobject *kobj, काष्ठा attribute *attr,
-				अक्षर *buf)
-अणु
-	काष्ठा hfi1_vl2mtu_attr *vlattr =
-		container_of(attr, काष्ठा hfi1_vl2mtu_attr, attr);
-	काष्ठा hfi1_pportdata *ppd =
-		container_of(kobj, काष्ठा hfi1_pportdata, vl2mtu_kobj);
-	काष्ठा hfi1_devdata *dd = ppd->dd;
+static ssize_t vl2mtu_attr_show(struct kobject *kobj, struct attribute *attr,
+				char *buf)
+{
+	struct hfi1_vl2mtu_attr *vlattr =
+		container_of(attr, struct hfi1_vl2mtu_attr, attr);
+	struct hfi1_pportdata *ppd =
+		container_of(kobj, struct hfi1_pportdata, vl2mtu_kobj);
+	struct hfi1_devdata *dd = ppd->dd;
 
-	वापस sysfs_emit(buf, "%u\n", dd->vld[vlattr->vl].mtu);
-पूर्ण
+	return sysfs_emit(buf, "%u\n", dd->vld[vlattr->vl].mtu);
+}
 
-अटल स्थिर काष्ठा sysfs_ops hfi1_vl2mtu_ops = अणु
+static const struct sysfs_ops hfi1_vl2mtu_ops = {
 	.show = vl2mtu_attr_show,
-पूर्ण;
+};
 
-अटल काष्ठा kobj_type hfi1_vl2mtu_ktype = अणु
+static struct kobj_type hfi1_vl2mtu_ktype = {
 	.release = port_release,
 	.sysfs_ops = &hfi1_vl2mtu_ops,
-	.शेष_attrs = vl2mtu_शेष_attributes
-पूर्ण;
+	.default_attrs = vl2mtu_default_attributes
+};
 
-/* end of per-port file काष्ठाures and support code */
+/* end of per-port file structures and support code */
 
 /*
- * Start of per-unit (or driver, in some हालs, but replicated
+ * Start of per-unit (or driver, in some cases, but replicated
  * per unit) functions (these get a device *)
  */
-अटल sमाप_प्रकार hw_rev_show(काष्ठा device *device, काष्ठा device_attribute *attr,
-			   अक्षर *buf)
-अणु
-	काष्ठा hfi1_ibdev *dev =
-		rdma_device_to_drv_device(device, काष्ठा hfi1_ibdev, rdi.ibdev);
+static ssize_t hw_rev_show(struct device *device, struct device_attribute *attr,
+			   char *buf)
+{
+	struct hfi1_ibdev *dev =
+		rdma_device_to_drv_device(device, struct hfi1_ibdev, rdi.ibdev);
 
-	वापस sysfs_emit(buf, "%x\n", dd_from_dev(dev)->minrev);
-पूर्ण
-अटल DEVICE_ATTR_RO(hw_rev);
+	return sysfs_emit(buf, "%x\n", dd_from_dev(dev)->minrev);
+}
+static DEVICE_ATTR_RO(hw_rev);
 
-अटल sमाप_प्रकार board_id_show(काष्ठा device *device,
-			     काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा hfi1_ibdev *dev =
-		rdma_device_to_drv_device(device, काष्ठा hfi1_ibdev, rdi.ibdev);
-	काष्ठा hfi1_devdata *dd = dd_from_dev(dev);
+static ssize_t board_id_show(struct device *device,
+			     struct device_attribute *attr, char *buf)
+{
+	struct hfi1_ibdev *dev =
+		rdma_device_to_drv_device(device, struct hfi1_ibdev, rdi.ibdev);
+	struct hfi1_devdata *dd = dd_from_dev(dev);
 
-	अगर (!dd->boardname)
-		वापस -EINVAL;
+	if (!dd->boardname)
+		return -EINVAL;
 
-	वापस sysfs_emit(buf, "%s\n", dd->boardname);
-पूर्ण
-अटल DEVICE_ATTR_RO(board_id);
+	return sysfs_emit(buf, "%s\n", dd->boardname);
+}
+static DEVICE_ATTR_RO(board_id);
 
-अटल sमाप_प्रकार boardversion_show(काष्ठा device *device,
-				 काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा hfi1_ibdev *dev =
-		rdma_device_to_drv_device(device, काष्ठा hfi1_ibdev, rdi.ibdev);
-	काष्ठा hfi1_devdata *dd = dd_from_dev(dev);
+static ssize_t boardversion_show(struct device *device,
+				 struct device_attribute *attr, char *buf)
+{
+	struct hfi1_ibdev *dev =
+		rdma_device_to_drv_device(device, struct hfi1_ibdev, rdi.ibdev);
+	struct hfi1_devdata *dd = dd_from_dev(dev);
 
-	/* The string prपूर्णांकed here is alपढ़ोy newline-terminated. */
-	वापस sysfs_emit(buf, "%s", dd->boardversion);
-पूर्ण
-अटल DEVICE_ATTR_RO(boardversion);
+	/* The string printed here is already newline-terminated. */
+	return sysfs_emit(buf, "%s", dd->boardversion);
+}
+static DEVICE_ATTR_RO(boardversion);
 
-अटल sमाप_प्रकार nctxts_show(काष्ठा device *device,
-			   काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा hfi1_ibdev *dev =
-		rdma_device_to_drv_device(device, काष्ठा hfi1_ibdev, rdi.ibdev);
-	काष्ठा hfi1_devdata *dd = dd_from_dev(dev);
+static ssize_t nctxts_show(struct device *device,
+			   struct device_attribute *attr, char *buf)
+{
+	struct hfi1_ibdev *dev =
+		rdma_device_to_drv_device(device, struct hfi1_ibdev, rdi.ibdev);
+	struct hfi1_devdata *dd = dd_from_dev(dev);
 
 	/*
 	 * Return the smaller of send and receive contexts.
 	 * Normally, user level applications would require both a send
-	 * and a receive context, so वापसing the smaller of the two counts
+	 * and a receive context, so returning the smaller of the two counts
 	 * give a more accurate picture of total contexts available.
 	 */
-	वापस sysfs_emit(buf, "%u\n",
+	return sysfs_emit(buf, "%u\n",
 			  min(dd->num_user_contexts,
 			      (u32)dd->sc_sizes[SC_USER].count));
-पूर्ण
-अटल DEVICE_ATTR_RO(nctxts);
+}
+static DEVICE_ATTR_RO(nctxts);
 
-अटल sमाप_प्रकार nमुक्तctxts_show(काष्ठा device *device,
-			       काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा hfi1_ibdev *dev =
-		rdma_device_to_drv_device(device, काष्ठा hfi1_ibdev, rdi.ibdev);
-	काष्ठा hfi1_devdata *dd = dd_from_dev(dev);
+static ssize_t nfreectxts_show(struct device *device,
+			       struct device_attribute *attr, char *buf)
+{
+	struct hfi1_ibdev *dev =
+		rdma_device_to_drv_device(device, struct hfi1_ibdev, rdi.ibdev);
+	struct hfi1_devdata *dd = dd_from_dev(dev);
 
-	/* Return the number of मुक्त user ports (contexts) available. */
-	वापस sysfs_emit(buf, "%u\n", dd->मुक्तctxts);
-पूर्ण
-अटल DEVICE_ATTR_RO(nमुक्तctxts);
+	/* Return the number of free user ports (contexts) available. */
+	return sysfs_emit(buf, "%u\n", dd->freectxts);
+}
+static DEVICE_ATTR_RO(nfreectxts);
 
-अटल sमाप_प्रकार serial_show(काष्ठा device *device,
-			   काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा hfi1_ibdev *dev =
-		rdma_device_to_drv_device(device, काष्ठा hfi1_ibdev, rdi.ibdev);
-	काष्ठा hfi1_devdata *dd = dd_from_dev(dev);
+static ssize_t serial_show(struct device *device,
+			   struct device_attribute *attr, char *buf)
+{
+	struct hfi1_ibdev *dev =
+		rdma_device_to_drv_device(device, struct hfi1_ibdev, rdi.ibdev);
+	struct hfi1_devdata *dd = dd_from_dev(dev);
 
-	/* dd->serial is alपढ़ोy newline terminated in chip.c */
-	वापस sysfs_emit(buf, "%s", dd->serial);
-पूर्ण
-अटल DEVICE_ATTR_RO(serial);
+	/* dd->serial is already newline terminated in chip.c */
+	return sysfs_emit(buf, "%s", dd->serial);
+}
+static DEVICE_ATTR_RO(serial);
 
-अटल sमाप_प्रकार chip_reset_store(काष्ठा device *device,
-				काष्ठा device_attribute *attr, स्थिर अक्षर *buf,
-				माप_प्रकार count)
-अणु
-	काष्ठा hfi1_ibdev *dev =
-		rdma_device_to_drv_device(device, काष्ठा hfi1_ibdev, rdi.ibdev);
-	काष्ठा hfi1_devdata *dd = dd_from_dev(dev);
-	पूर्णांक ret;
+static ssize_t chip_reset_store(struct device *device,
+				struct device_attribute *attr, const char *buf,
+				size_t count)
+{
+	struct hfi1_ibdev *dev =
+		rdma_device_to_drv_device(device, struct hfi1_ibdev, rdi.ibdev);
+	struct hfi1_devdata *dd = dd_from_dev(dev);
+	int ret;
 
-	अगर (count < 5 || स_भेद(buf, "reset", 5) || !dd->diag_client) अणु
+	if (count < 5 || memcmp(buf, "reset", 5) || !dd->diag_client) {
 		ret = -EINVAL;
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 
 	ret = hfi1_reset_device(dd->unit);
 bail:
-	वापस ret < 0 ? ret : count;
-पूर्ण
-अटल DEVICE_ATTR_WO(chip_reset);
+	return ret < 0 ? ret : count;
+}
+static DEVICE_ATTR_WO(chip_reset);
 
 /*
- * Convert the reported temperature from an पूर्णांकeger (reported in
- * units of 0.25C) to a भग्नing poपूर्णांक number.
+ * Convert the reported temperature from an integer (reported in
+ * units of 0.25C) to a floating point number.
  */
-#घोषणा temp_d(t) ((t) >> 2)
-#घोषणा temp_f(t) (((t)&0x3) * 25u)
+#define temp_d(t) ((t) >> 2)
+#define temp_f(t) (((t)&0x3) * 25u)
 
 /*
  * Dump tempsense values, in decimal, to ease shell-scripts.
  */
-अटल sमाप_प्रकार tempsense_show(काष्ठा device *device,
-			      काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा hfi1_ibdev *dev =
-		rdma_device_to_drv_device(device, काष्ठा hfi1_ibdev, rdi.ibdev);
-	काष्ठा hfi1_devdata *dd = dd_from_dev(dev);
-	काष्ठा hfi1_temp temp;
-	पूर्णांक ret;
+static ssize_t tempsense_show(struct device *device,
+			      struct device_attribute *attr, char *buf)
+{
+	struct hfi1_ibdev *dev =
+		rdma_device_to_drv_device(device, struct hfi1_ibdev, rdi.ibdev);
+	struct hfi1_devdata *dd = dd_from_dev(dev);
+	struct hfi1_temp temp;
+	int ret;
 
 	ret = hfi1_tempsense_rd(dd, &temp);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस sysfs_emit(buf, "%u.%02u %u.%02u %u.%02u %u.%02u %u %u %u\n",
+	return sysfs_emit(buf, "%u.%02u %u.%02u %u.%02u %u.%02u %u %u %u\n",
 			  temp_d(temp.curr), temp_f(temp.curr),
 			  temp_d(temp.lo_lim), temp_f(temp.lo_lim),
 			  temp_d(temp.hi_lim), temp_f(temp.hi_lim),
@@ -625,115 +624,115 @@ bail:
 			  temp.triggers & 0x1,
 			  temp.triggers & 0x2,
 			  temp.triggers & 0x4);
-पूर्ण
-अटल DEVICE_ATTR_RO(tempsense);
+}
+static DEVICE_ATTR_RO(tempsense);
 
 /*
- * end of per-unit (or driver, in some हालs, but replicated
+ * end of per-unit (or driver, in some cases, but replicated
  * per unit) functions
  */
 
-/* start of per-unit file काष्ठाures and support code */
-अटल काष्ठा attribute *hfi1_attributes[] = अणु
+/* start of per-unit file structures and support code */
+static struct attribute *hfi1_attributes[] = {
 	&dev_attr_hw_rev.attr,
 	&dev_attr_board_id.attr,
 	&dev_attr_nctxts.attr,
-	&dev_attr_nमुक्तctxts.attr,
+	&dev_attr_nfreectxts.attr,
 	&dev_attr_serial.attr,
 	&dev_attr_boardversion.attr,
 	&dev_attr_tempsense.attr,
 	&dev_attr_chip_reset.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-स्थिर काष्ठा attribute_group ib_hfi1_attr_group = अणु
+const struct attribute_group ib_hfi1_attr_group = {
 	.attrs = hfi1_attributes,
-पूर्ण;
+};
 
-पूर्णांक hfi1_create_port_files(काष्ठा ib_device *ibdev, u32 port_num,
-			   काष्ठा kobject *kobj)
-अणु
-	काष्ठा hfi1_pportdata *ppd;
-	काष्ठा hfi1_devdata *dd = dd_from_ibdev(ibdev);
-	पूर्णांक ret;
+int hfi1_create_port_files(struct ib_device *ibdev, u32 port_num,
+			   struct kobject *kobj)
+{
+	struct hfi1_pportdata *ppd;
+	struct hfi1_devdata *dd = dd_from_ibdev(ibdev);
+	int ret;
 
-	अगर (!port_num || port_num > dd->num_pports) अणु
+	if (!port_num || port_num > dd->num_pports) {
 		dd_dev_err(dd,
 			   "Skipping infiniband class with invalid port %u\n",
 			   port_num);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 	ppd = &dd->pport[port_num - 1];
 
 	ret = kobject_init_and_add(&ppd->sc2vl_kobj, &hfi1_sc2vl_ktype, kobj,
 				   "sc2vl");
-	अगर (ret) अणु
+	if (ret) {
 		dd_dev_err(dd,
 			   "Skipping sc2vl sysfs info, (err %d) port %u\n",
 			   ret, port_num);
 		/*
-		 * Based on the करोcumentation क्रम kobject_init_and_add(), the
-		 * caller should call kobject_put even अगर this call fails.
+		 * Based on the documentation for kobject_init_and_add(), the
+		 * caller should call kobject_put even if this call fails.
 		 */
-		जाओ bail_sc2vl;
-	पूर्ण
+		goto bail_sc2vl;
+	}
 	kobject_uevent(&ppd->sc2vl_kobj, KOBJ_ADD);
 
 	ret = kobject_init_and_add(&ppd->sl2sc_kobj, &hfi1_sl2sc_ktype, kobj,
 				   "sl2sc");
-	अगर (ret) अणु
+	if (ret) {
 		dd_dev_err(dd,
 			   "Skipping sl2sc sysfs info, (err %d) port %u\n",
 			   ret, port_num);
-		जाओ bail_sl2sc;
-	पूर्ण
+		goto bail_sl2sc;
+	}
 	kobject_uevent(&ppd->sl2sc_kobj, KOBJ_ADD);
 
 	ret = kobject_init_and_add(&ppd->vl2mtu_kobj, &hfi1_vl2mtu_ktype, kobj,
 				   "vl2mtu");
-	अगर (ret) अणु
+	if (ret) {
 		dd_dev_err(dd,
 			   "Skipping vl2mtu sysfs info, (err %d) port %u\n",
 			   ret, port_num);
-		जाओ bail_vl2mtu;
-	पूर्ण
+		goto bail_vl2mtu;
+	}
 	kobject_uevent(&ppd->vl2mtu_kobj, KOBJ_ADD);
 
 	ret = kobject_init_and_add(&ppd->pport_cc_kobj, &port_cc_ktype,
 				   kobj, "CCMgtA");
-	अगर (ret) अणु
+	if (ret) {
 		dd_dev_err(dd,
 			   "Skipping Congestion Control sysfs info, (err %d) port %u\n",
 			   ret, port_num);
-		जाओ bail_cc;
-	पूर्ण
+		goto bail_cc;
+	}
 
 	kobject_uevent(&ppd->pport_cc_kobj, KOBJ_ADD);
 
 	ret = sysfs_create_bin_file(&ppd->pport_cc_kobj, &cc_setting_bin_attr);
-	अगर (ret) अणु
+	if (ret) {
 		dd_dev_err(dd,
 			   "Skipping Congestion Control setting sysfs info, (err %d) port %u\n",
 			   ret, port_num);
-		जाओ bail_cc;
-	पूर्ण
+		goto bail_cc;
+	}
 
 	ret = sysfs_create_bin_file(&ppd->pport_cc_kobj, &cc_table_bin_attr);
-	अगर (ret) अणु
+	if (ret) {
 		dd_dev_err(dd,
 			   "Skipping Congestion Control table sysfs info, (err %d) port %u\n",
 			   ret, port_num);
-		जाओ bail_cc_entry_bin;
-	पूर्ण
+		goto bail_cc_entry_bin;
+	}
 
 	dd_dev_info(dd,
 		    "Congestion Control Agent enabled for port %d\n",
 		    port_num);
 
-	वापस 0;
+	return 0;
 
 bail_cc_entry_bin:
-	sysfs_हटाओ_bin_file(&ppd->pport_cc_kobj,
+	sysfs_remove_bin_file(&ppd->pport_cc_kobj,
 			      &cc_setting_bin_attr);
 bail_cc:
 	kobject_put(&ppd->pport_cc_kobj);
@@ -743,149 +742,149 @@ bail_sl2sc:
 	kobject_put(&ppd->sl2sc_kobj);
 bail_sc2vl:
 	kobject_put(&ppd->sc2vl_kobj);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-काष्ठा sde_attribute अणु
-	काष्ठा attribute attr;
-	sमाप_प्रकार (*show)(काष्ठा sdma_engine *sde, अक्षर *buf);
-	sमाप_प्रकार (*store)(काष्ठा sdma_engine *sde, स्थिर अक्षर *buf, माप_प्रकार cnt);
-पूर्ण;
+struct sde_attribute {
+	struct attribute attr;
+	ssize_t (*show)(struct sdma_engine *sde, char *buf);
+	ssize_t (*store)(struct sdma_engine *sde, const char *buf, size_t cnt);
+};
 
-अटल sमाप_प्रकार sde_show(काष्ठा kobject *kobj, काष्ठा attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा sde_attribute *sde_attr =
-		container_of(attr, काष्ठा sde_attribute, attr);
-	काष्ठा sdma_engine *sde =
-		container_of(kobj, काष्ठा sdma_engine, kobj);
+static ssize_t sde_show(struct kobject *kobj, struct attribute *attr, char *buf)
+{
+	struct sde_attribute *sde_attr =
+		container_of(attr, struct sde_attribute, attr);
+	struct sdma_engine *sde =
+		container_of(kobj, struct sdma_engine, kobj);
 
-	अगर (!sde_attr->show)
-		वापस -EINVAL;
+	if (!sde_attr->show)
+		return -EINVAL;
 
-	वापस sde_attr->show(sde, buf);
-पूर्ण
+	return sde_attr->show(sde, buf);
+}
 
-अटल sमाप_प्रकार sde_store(काष्ठा kobject *kobj, काष्ठा attribute *attr,
-			 स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा sde_attribute *sde_attr =
-		container_of(attr, काष्ठा sde_attribute, attr);
-	काष्ठा sdma_engine *sde =
-		container_of(kobj, काष्ठा sdma_engine, kobj);
+static ssize_t sde_store(struct kobject *kobj, struct attribute *attr,
+			 const char *buf, size_t count)
+{
+	struct sde_attribute *sde_attr =
+		container_of(attr, struct sde_attribute, attr);
+	struct sdma_engine *sde =
+		container_of(kobj, struct sdma_engine, kobj);
 
-	अगर (!capable(CAP_SYS_ADMIN))
-		वापस -EPERM;
+	if (!capable(CAP_SYS_ADMIN))
+		return -EPERM;
 
-	अगर (!sde_attr->store)
-		वापस -EINVAL;
+	if (!sde_attr->store)
+		return -EINVAL;
 
-	वापस sde_attr->store(sde, buf, count);
-पूर्ण
+	return sde_attr->store(sde, buf, count);
+}
 
-अटल स्थिर काष्ठा sysfs_ops sde_sysfs_ops = अणु
+static const struct sysfs_ops sde_sysfs_ops = {
 	.show = sde_show,
 	.store = sde_store,
-पूर्ण;
+};
 
-अटल काष्ठा kobj_type sde_ktype = अणु
+static struct kobj_type sde_ktype = {
 	.sysfs_ops = &sde_sysfs_ops,
-पूर्ण;
+};
 
-#घोषणा SDE_ATTR(_name, _mode, _show, _store) \
-	काष्ठा sde_attribute sde_attr_##_name = \
+#define SDE_ATTR(_name, _mode, _show, _store) \
+	struct sde_attribute sde_attr_##_name = \
 		__ATTR(_name, _mode, _show, _store)
 
-अटल sमाप_प्रकार sde_show_cpu_to_sde_map(काष्ठा sdma_engine *sde, अक्षर *buf)
-अणु
-	वापस sdma_get_cpu_to_sde_map(sde, buf);
-पूर्ण
+static ssize_t sde_show_cpu_to_sde_map(struct sdma_engine *sde, char *buf)
+{
+	return sdma_get_cpu_to_sde_map(sde, buf);
+}
 
-अटल sमाप_प्रकार sde_store_cpu_to_sde_map(काष्ठा sdma_engine *sde,
-					स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	वापस sdma_set_cpu_to_sde_map(sde, buf, count);
-पूर्ण
+static ssize_t sde_store_cpu_to_sde_map(struct sdma_engine *sde,
+					const char *buf, size_t count)
+{
+	return sdma_set_cpu_to_sde_map(sde, buf, count);
+}
 
-अटल sमाप_प्रकार sde_show_vl(काष्ठा sdma_engine *sde, अक्षर *buf)
-अणु
-	पूर्णांक vl;
+static ssize_t sde_show_vl(struct sdma_engine *sde, char *buf)
+{
+	int vl;
 
 	vl = sdma_engine_get_vl(sde);
-	अगर (vl < 0)
-		वापस vl;
+	if (vl < 0)
+		return vl;
 
-	वापस sysfs_emit(buf, "%d\n", vl);
-पूर्ण
+	return sysfs_emit(buf, "%d\n", vl);
+}
 
-अटल SDE_ATTR(cpu_list, S_IWUSR | S_IRUGO,
+static SDE_ATTR(cpu_list, S_IWUSR | S_IRUGO,
 		sde_show_cpu_to_sde_map,
 		sde_store_cpu_to_sde_map);
-अटल SDE_ATTR(vl, S_IRUGO, sde_show_vl, शून्य);
+static SDE_ATTR(vl, S_IRUGO, sde_show_vl, NULL);
 
-अटल काष्ठा sde_attribute *sde_attribs[] = अणु
+static struct sde_attribute *sde_attribs[] = {
 	&sde_attr_cpu_list,
 	&sde_attr_vl
-पूर्ण;
+};
 
 /*
  * Register and create our files in /sys/class/infiniband.
  */
-पूर्णांक hfi1_verbs_रेजिस्टर_sysfs(काष्ठा hfi1_devdata *dd)
-अणु
-	काष्ठा ib_device *dev = &dd->verbs_dev.rdi.ibdev;
-	काष्ठा device *class_dev = &dev->dev;
-	पूर्णांक i, j, ret;
+int hfi1_verbs_register_sysfs(struct hfi1_devdata *dd)
+{
+	struct ib_device *dev = &dd->verbs_dev.rdi.ibdev;
+	struct device *class_dev = &dev->dev;
+	int i, j, ret;
 
-	क्रम (i = 0; i < dd->num_sdma; i++) अणु
+	for (i = 0; i < dd->num_sdma; i++) {
 		ret = kobject_init_and_add(&dd->per_sdma[i].kobj,
 					   &sde_ktype, &class_dev->kobj,
 					   "sdma%d", i);
-		अगर (ret)
-			जाओ bail;
+		if (ret)
+			goto bail;
 
-		क्रम (j = 0; j < ARRAY_SIZE(sde_attribs); j++) अणु
+		for (j = 0; j < ARRAY_SIZE(sde_attribs); j++) {
 			ret = sysfs_create_file(&dd->per_sdma[i].kobj,
 						&sde_attribs[j]->attr);
-			अगर (ret)
-				जाओ bail;
-		पूर्ण
-	पूर्ण
+			if (ret)
+				goto bail;
+		}
+	}
 
-	वापस 0;
+	return 0;
 bail:
 	/*
-	 * The function kobject_put() will call kobject_del() अगर the kobject
+	 * The function kobject_put() will call kobject_del() if the kobject
 	 * has been added successfully. The sysfs files created under the
-	 * kobject directory will also be हटाओd during the process.
+	 * kobject directory will also be removed during the process.
 	 */
-	क्रम (; i >= 0; i--)
+	for (; i >= 0; i--)
 		kobject_put(&dd->per_sdma[i].kobj);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Unरेजिस्टर and हटाओ our files in /sys/class/infiniband.
+ * Unregister and remove our files in /sys/class/infiniband.
  */
-व्योम hfi1_verbs_unरेजिस्टर_sysfs(काष्ठा hfi1_devdata *dd)
-अणु
-	काष्ठा hfi1_pportdata *ppd;
-	पूर्णांक i;
+void hfi1_verbs_unregister_sysfs(struct hfi1_devdata *dd)
+{
+	struct hfi1_pportdata *ppd;
+	int i;
 
-	/* Unwind operations in hfi1_verbs_रेजिस्टर_sysfs() */
-	क्रम (i = 0; i < dd->num_sdma; i++)
+	/* Unwind operations in hfi1_verbs_register_sysfs() */
+	for (i = 0; i < dd->num_sdma; i++)
 		kobject_put(&dd->per_sdma[i].kobj);
 
-	क्रम (i = 0; i < dd->num_pports; i++) अणु
+	for (i = 0; i < dd->num_pports; i++) {
 		ppd = &dd->pport[i];
 
-		sysfs_हटाओ_bin_file(&ppd->pport_cc_kobj,
+		sysfs_remove_bin_file(&ppd->pport_cc_kobj,
 				      &cc_setting_bin_attr);
-		sysfs_हटाओ_bin_file(&ppd->pport_cc_kobj,
+		sysfs_remove_bin_file(&ppd->pport_cc_kobj,
 				      &cc_table_bin_attr);
 		kobject_put(&ppd->pport_cc_kobj);
 		kobject_put(&ppd->vl2mtu_kobj);
 		kobject_put(&ppd->sl2sc_kobj);
 		kobject_put(&ppd->sc2vl_kobj);
-	पूर्ण
-पूर्ण
+	}
+}

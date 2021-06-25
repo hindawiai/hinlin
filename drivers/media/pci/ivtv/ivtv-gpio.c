@@ -1,19 +1,18 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
     gpio functions.
-    Merging GPIO support पूर्णांकo driver:
+    Merging GPIO support into driver:
     Copyright (C) 2004  Chris Kennedy <c@groovy.org>
     Copyright (C) 2005-2007  Hans Verkuil <hverkuil@xs4all.nl>
 
  */
 
-#समावेश "ivtv-driver.h"
-#समावेश "ivtv-cards.h"
-#समावेश "ivtv-gpio.h"
-#समावेश "tuner-xc2028.h"
-#समावेश <media/tuner.h>
-#समावेश <media/v4l2-ctrls.h>
+#include "ivtv-driver.h"
+#include "ivtv-cards.h"
+#include "ivtv-gpio.h"
+#include "tuner-xc2028.h"
+#include <media/tuner.h>
+#include <media/v4l2-ctrls.h>
 
 /*
  * GPIO assignment of Yuan MPG600/MPG160
@@ -41,15 +40,15 @@
  *
  * GPIO Initial Settings
  *           MPG600   MPG160
- *     सूची   0x3080   0x7080
+ *     DIR   0x3080   0x7080
  *  OUTPUT   0x000C   0x400C
  *
  *  Special thanks to Makoto Iguchi <iguchi@tahoo.org> and Mr. Anonymous
- *  क्रम analyzing GPIO of MPG160.
+ *  for analyzing GPIO of MPG160.
  *
  *****************************************************************************
  *
- * GPIO assignment of Avermedia M179 (per inक्रमmation direct from AVerMedia)
+ * GPIO assignment of Avermedia M179 (per information direct from AVerMedia)
  *
  *    bit 15  14  13  12 |  11  10   9   8 |   7   6   5   4 |   3   2   1   0
  * OUTPUT IN0 AM0 IN1               AM1 AM2       IN2     BR0   BR1
@@ -71,7 +70,7 @@
  *           0   1   1  TV Tuner Audio: mute
  *           1   *   *  TV Tuner Audio: L_OUT=R_OUT=(L+R)/2   (mono)
  *
- *   BR* : Audio Sample Rate (BR stands क्रम bitrate क्रम some reason)
+ *   BR* : Audio Sample Rate (BR stands for bitrate for some reason)
  *          BR0 BR1
  *           0   0   32 kHz
  *           0   1   44.1 kHz
@@ -81,276 +80,276 @@
  *         Unknown currently
  *
  * Special thanks to AVerMedia Technologies, Inc. and Jiun-Kuei Jung at
- * AVerMedia क्रम providing the GPIO inक्रमmation used to add support
- * क्रम the M179 cards.
+ * AVerMedia for providing the GPIO information used to add support
+ * for the M179 cards.
  */
 
 /********************* GPIO stuffs *********************/
 
-/* GPIO रेजिस्टरs */
-#घोषणा IVTV_REG_GPIO_IN    0x9008
-#घोषणा IVTV_REG_GPIO_OUT   0x900c
-#घोषणा IVTV_REG_GPIO_सूची   0x9020
+/* GPIO registers */
+#define IVTV_REG_GPIO_IN    0x9008
+#define IVTV_REG_GPIO_OUT   0x900c
+#define IVTV_REG_GPIO_DIR   0x9020
 
-व्योम ivtv_reset_ir_gpio(काष्ठा ivtv *itv)
-अणु
-	पूर्णांक curdir, curout;
+void ivtv_reset_ir_gpio(struct ivtv *itv)
+{
+	int curdir, curout;
 
-	अगर (itv->card->type != IVTV_CARD_PVR_150)
-		वापस;
+	if (itv->card->type != IVTV_CARD_PVR_150)
+		return;
 	IVTV_DEBUG_INFO("Resetting PVR150 IR\n");
-	curout = पढ़ो_reg(IVTV_REG_GPIO_OUT);
-	curdir = पढ़ो_reg(IVTV_REG_GPIO_सूची);
+	curout = read_reg(IVTV_REG_GPIO_OUT);
+	curdir = read_reg(IVTV_REG_GPIO_DIR);
 	curdir |= 0x80;
-	ग_लिखो_reg(curdir, IVTV_REG_GPIO_सूची);
+	write_reg(curdir, IVTV_REG_GPIO_DIR);
 	curout = (curout & ~0xF) | 1;
-	ग_लिखो_reg(curout, IVTV_REG_GPIO_OUT);
-	/* We could use something अन्यथा क्रम smaller समय */
-	schedule_समयout_पूर्णांकerruptible(msecs_to_jअगरfies(1));
+	write_reg(curout, IVTV_REG_GPIO_OUT);
+	/* We could use something else for smaller time */
+	schedule_timeout_interruptible(msecs_to_jiffies(1));
 	curout |= 2;
-	ग_लिखो_reg(curout, IVTV_REG_GPIO_OUT);
+	write_reg(curout, IVTV_REG_GPIO_OUT);
 	curdir &= ~0x80;
-	ग_लिखो_reg(curdir, IVTV_REG_GPIO_सूची);
-पूर्ण
+	write_reg(curdir, IVTV_REG_GPIO_DIR);
+}
 
 /* Xceive tuner reset function */
-पूर्णांक ivtv_reset_tuner_gpio(व्योम *dev, पूर्णांक component, पूर्णांक cmd, पूर्णांक value)
-अणु
-	काष्ठा i2c_algo_bit_data *algo = dev;
-	काष्ठा ivtv *itv = algo->data;
+int ivtv_reset_tuner_gpio(void *dev, int component, int cmd, int value)
+{
+	struct i2c_algo_bit_data *algo = dev;
+	struct ivtv *itv = algo->data;
 	u32 curout;
 
-	अगर (cmd != XC2028_TUNER_RESET)
-		वापस 0;
+	if (cmd != XC2028_TUNER_RESET)
+		return 0;
 	IVTV_DEBUG_INFO("Resetting tuner\n");
-	curout = पढ़ो_reg(IVTV_REG_GPIO_OUT);
+	curout = read_reg(IVTV_REG_GPIO_OUT);
 	curout &= ~(1 << itv->card->xceive_pin);
-	ग_लिखो_reg(curout, IVTV_REG_GPIO_OUT);
-	schedule_समयout_पूर्णांकerruptible(msecs_to_jअगरfies(1));
+	write_reg(curout, IVTV_REG_GPIO_OUT);
+	schedule_timeout_interruptible(msecs_to_jiffies(1));
 
 	curout |= 1 << itv->card->xceive_pin;
-	ग_लिखो_reg(curout, IVTV_REG_GPIO_OUT);
-	schedule_समयout_पूर्णांकerruptible(msecs_to_jअगरfies(1));
-	वापस 0;
-पूर्ण
+	write_reg(curout, IVTV_REG_GPIO_OUT);
+	schedule_timeout_interruptible(msecs_to_jiffies(1));
+	return 0;
+}
 
-अटल अंतरभूत काष्ठा ivtv *sd_to_ivtv(काष्ठा v4l2_subdev *sd)
-अणु
-	वापस container_of(sd, काष्ठा ivtv, sd_gpio);
-पूर्ण
+static inline struct ivtv *sd_to_ivtv(struct v4l2_subdev *sd)
+{
+	return container_of(sd, struct ivtv, sd_gpio);
+}
 
-अटल अंतरभूत काष्ठा v4l2_subdev *to_sd(काष्ठा v4l2_ctrl *ctrl)
-अणु
-	वापस &container_of(ctrl->handler, काष्ठा ivtv, hdl_gpio)->sd_gpio;
-पूर्ण
+static inline struct v4l2_subdev *to_sd(struct v4l2_ctrl *ctrl)
+{
+	return &container_of(ctrl->handler, struct ivtv, hdl_gpio)->sd_gpio;
+}
 
-अटल पूर्णांक subdev_s_घड़ी_freq(काष्ठा v4l2_subdev *sd, u32 freq)
-अणु
-	काष्ठा ivtv *itv = sd_to_ivtv(sd);
+static int subdev_s_clock_freq(struct v4l2_subdev *sd, u32 freq)
+{
+	struct ivtv *itv = sd_to_ivtv(sd);
 	u16 mask, data;
 
 	mask = itv->card->gpio_audio_freq.mask;
-	चयन (freq) अणु
-	हाल 32000:
+	switch (freq) {
+	case 32000:
 		data = itv->card->gpio_audio_freq.f32000;
-		अवरोध;
-	हाल 44100:
+		break;
+	case 44100:
 		data = itv->card->gpio_audio_freq.f44100;
-		अवरोध;
-	हाल 48000:
-	शेष:
+		break;
+	case 48000:
+	default:
 		data = itv->card->gpio_audio_freq.f48000;
-		अवरोध;
-	पूर्ण
-	अगर (mask)
-		ग_लिखो_reg((पढ़ो_reg(IVTV_REG_GPIO_OUT) & ~mask) | (data & mask), IVTV_REG_GPIO_OUT);
-	वापस 0;
-पूर्ण
+		break;
+	}
+	if (mask)
+		write_reg((read_reg(IVTV_REG_GPIO_OUT) & ~mask) | (data & mask), IVTV_REG_GPIO_OUT);
+	return 0;
+}
 
-अटल पूर्णांक subdev_g_tuner(काष्ठा v4l2_subdev *sd, काष्ठा v4l2_tuner *vt)
-अणु
-	काष्ठा ivtv *itv = sd_to_ivtv(sd);
+static int subdev_g_tuner(struct v4l2_subdev *sd, struct v4l2_tuner *vt)
+{
+	struct ivtv *itv = sd_to_ivtv(sd);
 	u16 mask;
 
 	mask = itv->card->gpio_audio_detect.mask;
-	अगर (mask == 0 || (पढ़ो_reg(IVTV_REG_GPIO_IN) & mask))
+	if (mask == 0 || (read_reg(IVTV_REG_GPIO_IN) & mask))
 		vt->rxsubchans = V4L2_TUNER_SUB_STEREO |
 			V4L2_TUNER_SUB_LANG1 | V4L2_TUNER_SUB_LANG2;
-	अन्यथा
+	else
 		vt->rxsubchans = V4L2_TUNER_SUB_MONO;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक subdev_s_tuner(काष्ठा v4l2_subdev *sd, स्थिर काष्ठा v4l2_tuner *vt)
-अणु
-	काष्ठा ivtv *itv = sd_to_ivtv(sd);
+static int subdev_s_tuner(struct v4l2_subdev *sd, const struct v4l2_tuner *vt)
+{
+	struct ivtv *itv = sd_to_ivtv(sd);
 	u16 mask, data;
 
 	mask = itv->card->gpio_audio_mode.mask;
-	चयन (vt->audmode) अणु
-	हाल V4L2_TUNER_MODE_LANG1:
+	switch (vt->audmode) {
+	case V4L2_TUNER_MODE_LANG1:
 		data = itv->card->gpio_audio_mode.lang1;
-		अवरोध;
-	हाल V4L2_TUNER_MODE_LANG2:
+		break;
+	case V4L2_TUNER_MODE_LANG2:
 		data = itv->card->gpio_audio_mode.lang2;
-		अवरोध;
-	हाल V4L2_TUNER_MODE_MONO:
+		break;
+	case V4L2_TUNER_MODE_MONO:
 		data = itv->card->gpio_audio_mode.mono;
-		अवरोध;
-	हाल V4L2_TUNER_MODE_STEREO:
-	हाल V4L2_TUNER_MODE_LANG1_LANG2:
-	शेष:
+		break;
+	case V4L2_TUNER_MODE_STEREO:
+	case V4L2_TUNER_MODE_LANG1_LANG2:
+	default:
 		data = itv->card->gpio_audio_mode.stereo;
-		अवरोध;
-	पूर्ण
-	अगर (mask)
-		ग_लिखो_reg((पढ़ो_reg(IVTV_REG_GPIO_OUT) & ~mask) | (data & mask), IVTV_REG_GPIO_OUT);
-	वापस 0;
-पूर्ण
+		break;
+	}
+	if (mask)
+		write_reg((read_reg(IVTV_REG_GPIO_OUT) & ~mask) | (data & mask), IVTV_REG_GPIO_OUT);
+	return 0;
+}
 
-अटल पूर्णांक subdev_s_radio(काष्ठा v4l2_subdev *sd)
-अणु
-	काष्ठा ivtv *itv = sd_to_ivtv(sd);
+static int subdev_s_radio(struct v4l2_subdev *sd)
+{
+	struct ivtv *itv = sd_to_ivtv(sd);
 	u16 mask, data;
 
 	mask = itv->card->gpio_audio_input.mask;
 	data = itv->card->gpio_audio_input.radio;
-	अगर (mask)
-		ग_लिखो_reg((पढ़ो_reg(IVTV_REG_GPIO_OUT) & ~mask) | (data & mask), IVTV_REG_GPIO_OUT);
-	वापस 0;
-पूर्ण
+	if (mask)
+		write_reg((read_reg(IVTV_REG_GPIO_OUT) & ~mask) | (data & mask), IVTV_REG_GPIO_OUT);
+	return 0;
+}
 
-अटल पूर्णांक subdev_s_audio_routing(काष्ठा v4l2_subdev *sd,
+static int subdev_s_audio_routing(struct v4l2_subdev *sd,
 				  u32 input, u32 output, u32 config)
-अणु
-	काष्ठा ivtv *itv = sd_to_ivtv(sd);
+{
+	struct ivtv *itv = sd_to_ivtv(sd);
 	u16 mask, data;
 
-	अगर (input > 2)
-		वापस -EINVAL;
+	if (input > 2)
+		return -EINVAL;
 	mask = itv->card->gpio_audio_input.mask;
-	चयन (input) अणु
-	हाल 0:
+	switch (input) {
+	case 0:
 		data = itv->card->gpio_audio_input.tuner;
-		अवरोध;
-	हाल 1:
+		break;
+	case 1:
 		data = itv->card->gpio_audio_input.linein;
-		अवरोध;
-	हाल 2:
-	शेष:
+		break;
+	case 2:
+	default:
 		data = itv->card->gpio_audio_input.radio;
-		अवरोध;
-	पूर्ण
-	अगर (mask)
-		ग_लिखो_reg((पढ़ो_reg(IVTV_REG_GPIO_OUT) & ~mask) | (data & mask), IVTV_REG_GPIO_OUT);
-	वापस 0;
-पूर्ण
+		break;
+	}
+	if (mask)
+		write_reg((read_reg(IVTV_REG_GPIO_OUT) & ~mask) | (data & mask), IVTV_REG_GPIO_OUT);
+	return 0;
+}
 
-अटल पूर्णांक subdev_s_ctrl(काष्ठा v4l2_ctrl *ctrl)
-अणु
-	काष्ठा v4l2_subdev *sd = to_sd(ctrl);
-	काष्ठा ivtv *itv = sd_to_ivtv(sd);
+static int subdev_s_ctrl(struct v4l2_ctrl *ctrl)
+{
+	struct v4l2_subdev *sd = to_sd(ctrl);
+	struct ivtv *itv = sd_to_ivtv(sd);
 	u16 mask, data;
 
-	चयन (ctrl->id) अणु
-	हाल V4L2_CID_AUDIO_MUTE:
+	switch (ctrl->id) {
+	case V4L2_CID_AUDIO_MUTE:
 		mask = itv->card->gpio_audio_mute.mask;
 		data = ctrl->val ? itv->card->gpio_audio_mute.mute : 0;
-		अगर (mask)
-			ग_लिखो_reg((पढ़ो_reg(IVTV_REG_GPIO_OUT) & ~mask) |
+		if (mask)
+			write_reg((read_reg(IVTV_REG_GPIO_OUT) & ~mask) |
 					(data & mask), IVTV_REG_GPIO_OUT);
-		वापस 0;
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+		return 0;
+	}
+	return -EINVAL;
+}
 
 
-अटल पूर्णांक subdev_log_status(काष्ठा v4l2_subdev *sd)
-अणु
-	काष्ठा ivtv *itv = sd_to_ivtv(sd);
+static int subdev_log_status(struct v4l2_subdev *sd)
+{
+	struct ivtv *itv = sd_to_ivtv(sd);
 
 	IVTV_INFO("GPIO status: DIR=0x%04x OUT=0x%04x IN=0x%04x\n",
-			पढ़ो_reg(IVTV_REG_GPIO_सूची), पढ़ो_reg(IVTV_REG_GPIO_OUT),
-			पढ़ो_reg(IVTV_REG_GPIO_IN));
+			read_reg(IVTV_REG_GPIO_DIR), read_reg(IVTV_REG_GPIO_OUT),
+			read_reg(IVTV_REG_GPIO_IN));
 	v4l2_ctrl_handler_log_status(&itv->hdl_gpio, sd->name);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक subdev_s_video_routing(काष्ठा v4l2_subdev *sd,
+static int subdev_s_video_routing(struct v4l2_subdev *sd,
 				  u32 input, u32 output, u32 config)
-अणु
-	काष्ठा ivtv *itv = sd_to_ivtv(sd);
+{
+	struct ivtv *itv = sd_to_ivtv(sd);
 	u16 mask, data;
 
-	अगर (input > 2) /* 0:Tuner 1:Composite 2:S-Video */
-		वापस -EINVAL;
+	if (input > 2) /* 0:Tuner 1:Composite 2:S-Video */
+		return -EINVAL;
 	mask = itv->card->gpio_video_input.mask;
-	अगर (input == 0)
+	if (input == 0)
 		data = itv->card->gpio_video_input.tuner;
-	अन्यथा अगर (input == 1)
+	else if (input == 1)
 		data = itv->card->gpio_video_input.composite;
-	अन्यथा
+	else
 		data = itv->card->gpio_video_input.svideo;
-	अगर (mask)
-		ग_लिखो_reg((पढ़ो_reg(IVTV_REG_GPIO_OUT) & ~mask) | (data & mask), IVTV_REG_GPIO_OUT);
-	वापस 0;
-पूर्ण
+	if (mask)
+		write_reg((read_reg(IVTV_REG_GPIO_OUT) & ~mask) | (data & mask), IVTV_REG_GPIO_OUT);
+	return 0;
+}
 
-अटल स्थिर काष्ठा v4l2_ctrl_ops gpio_ctrl_ops = अणु
+static const struct v4l2_ctrl_ops gpio_ctrl_ops = {
 	.s_ctrl = subdev_s_ctrl,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_core_ops subdev_core_ops = अणु
+static const struct v4l2_subdev_core_ops subdev_core_ops = {
 	.log_status = subdev_log_status,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_tuner_ops subdev_tuner_ops = अणु
+static const struct v4l2_subdev_tuner_ops subdev_tuner_ops = {
 	.s_radio = subdev_s_radio,
 	.g_tuner = subdev_g_tuner,
 	.s_tuner = subdev_s_tuner,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_audio_ops subdev_audio_ops = अणु
-	.s_घड़ी_freq = subdev_s_घड़ी_freq,
+static const struct v4l2_subdev_audio_ops subdev_audio_ops = {
+	.s_clock_freq = subdev_s_clock_freq,
 	.s_routing = subdev_s_audio_routing,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_video_ops subdev_video_ops = अणु
+static const struct v4l2_subdev_video_ops subdev_video_ops = {
 	.s_routing = subdev_s_video_routing,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_ops subdev_ops = अणु
+static const struct v4l2_subdev_ops subdev_ops = {
 	.core = &subdev_core_ops,
 	.tuner = &subdev_tuner_ops,
 	.audio = &subdev_audio_ops,
 	.video = &subdev_video_ops,
-पूर्ण;
+};
 
-पूर्णांक ivtv_gpio_init(काष्ठा ivtv *itv)
-अणु
+int ivtv_gpio_init(struct ivtv *itv)
+{
 	u16 pin = 0;
 
-	अगर (itv->card->xceive_pin)
+	if (itv->card->xceive_pin)
 		pin = 1 << itv->card->xceive_pin;
 
-	अगर ((itv->card->gpio_init.direction | pin) == 0)
-		वापस 0;
+	if ((itv->card->gpio_init.direction | pin) == 0)
+		return 0;
 
 	IVTV_DEBUG_INFO("GPIO initial dir: %08x out: %08x\n",
-		   पढ़ो_reg(IVTV_REG_GPIO_सूची), पढ़ो_reg(IVTV_REG_GPIO_OUT));
+		   read_reg(IVTV_REG_GPIO_DIR), read_reg(IVTV_REG_GPIO_OUT));
 
 	/* init output data then direction */
-	ग_लिखो_reg(itv->card->gpio_init.initial_value | pin, IVTV_REG_GPIO_OUT);
-	ग_लिखो_reg(itv->card->gpio_init.direction | pin, IVTV_REG_GPIO_सूची);
+	write_reg(itv->card->gpio_init.initial_value | pin, IVTV_REG_GPIO_OUT);
+	write_reg(itv->card->gpio_init.direction | pin, IVTV_REG_GPIO_DIR);
 	v4l2_subdev_init(&itv->sd_gpio, &subdev_ops);
-	snम_लिखो(itv->sd_gpio.name, माप(itv->sd_gpio.name), "%s-gpio", itv->v4l2_dev.name);
+	snprintf(itv->sd_gpio.name, sizeof(itv->sd_gpio.name), "%s-gpio", itv->v4l2_dev.name);
 	itv->sd_gpio.grp_id = IVTV_HW_GPIO;
 	v4l2_ctrl_handler_init(&itv->hdl_gpio, 1);
 	v4l2_ctrl_new_std(&itv->hdl_gpio, &gpio_ctrl_ops,
 			V4L2_CID_AUDIO_MUTE, 0, 1, 1, 0);
-	अगर (itv->hdl_gpio.error)
-		वापस itv->hdl_gpio.error;
+	if (itv->hdl_gpio.error)
+		return itv->hdl_gpio.error;
 	itv->sd_gpio.ctrl_handler = &itv->hdl_gpio;
 	v4l2_ctrl_handler_setup(&itv->hdl_gpio);
-	वापस v4l2_device_रेजिस्टर_subdev(&itv->v4l2_dev, &itv->sd_gpio);
-पूर्ण
+	return v4l2_device_register_subdev(&itv->v4l2_dev, &itv->sd_gpio);
+}

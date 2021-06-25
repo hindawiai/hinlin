@@ -1,122 +1,121 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  Copyright (C) 2001 Ben. Herrenschmidt (benh@kernel.crashing.org)
  *
- *  Modअगरications क्रम ppc64:
+ *  Modifications for ppc64:
  *      Copyright (C) 2003 Dave Engebretsen <engebret@us.ibm.com>
  */
 
-#समावेश <linux/माला.स>
-#समावेश <linux/sched.h>
-#समावेश <linux/thपढ़ोs.h>
-#समावेश <linux/init.h>
-#समावेश <linux/export.h>
-#समावेश <linux/jump_label.h>
+#include <linux/string.h>
+#include <linux/sched.h>
+#include <linux/threads.h>
+#include <linux/init.h>
+#include <linux/export.h>
+#include <linux/jump_label.h>
 
-#समावेश <यंत्र/cputable.h>
-#समावेश <यंत्र/prom.h>		/* क्रम PTRRELOC on ARCH=ppc */
-#समावेश <यंत्र/mce.h>
-#समावेश <यंत्र/mmu.h>
-#समावेश <यंत्र/setup.h>
+#include <asm/cputable.h>
+#include <asm/prom.h>		/* for PTRRELOC on ARCH=ppc */
+#include <asm/mce.h>
+#include <asm/mmu.h>
+#include <asm/setup.h>
 
-अटल काष्ठा cpu_spec the_cpu_spec __पढ़ो_mostly;
+static struct cpu_spec the_cpu_spec __read_mostly;
 
-काष्ठा cpu_spec* cur_cpu_spec __पढ़ो_mostly = शून्य;
+struct cpu_spec* cur_cpu_spec __read_mostly = NULL;
 EXPORT_SYMBOL(cur_cpu_spec);
 
-/* The platक्रमm string corresponding to the real PVR */
-स्थिर अक्षर *घातerpc_base_platक्रमm;
+/* The platform string corresponding to the real PVR */
+const char *powerpc_base_platform;
 
 /* NOTE:
- * Unlike ppc32, ppc64 will only call this once क्रम the boot CPU, it's
+ * Unlike ppc32, ppc64 will only call this once for the boot CPU, it's
  * the responsibility of the appropriate CPU save/restore functions to
  * eventually copy these settings over. Those save/restore aren't yet
- * part of the cputable though. That has to be fixed क्रम both ppc32
+ * part of the cputable though. That has to be fixed for both ppc32
  * and ppc64
  */
-#अगर_घोषित CONFIG_PPC32
-बाह्य व्योम __setup_cpu_e500v1(अचिन्हित दीर्घ offset, काष्ठा cpu_spec* spec);
-बाह्य व्योम __setup_cpu_e500v2(अचिन्हित दीर्घ offset, काष्ठा cpu_spec* spec);
-बाह्य व्योम __setup_cpu_e500mc(अचिन्हित दीर्घ offset, काष्ठा cpu_spec* spec);
-बाह्य व्योम __setup_cpu_440ep(अचिन्हित दीर्घ offset, काष्ठा cpu_spec* spec);
-बाह्य व्योम __setup_cpu_440epx(अचिन्हित दीर्घ offset, काष्ठा cpu_spec* spec);
-बाह्य व्योम __setup_cpu_440gx(अचिन्हित दीर्घ offset, काष्ठा cpu_spec* spec);
-बाह्य व्योम __setup_cpu_440grx(अचिन्हित दीर्घ offset, काष्ठा cpu_spec* spec);
-बाह्य व्योम __setup_cpu_440spe(अचिन्हित दीर्घ offset, काष्ठा cpu_spec* spec);
-बाह्य व्योम __setup_cpu_440x5(अचिन्हित दीर्घ offset, काष्ठा cpu_spec* spec);
-बाह्य व्योम __setup_cpu_460ex(अचिन्हित दीर्घ offset, काष्ठा cpu_spec* spec);
-बाह्य व्योम __setup_cpu_460gt(अचिन्हित दीर्घ offset, काष्ठा cpu_spec* spec);
-बाह्य व्योम __setup_cpu_460sx(अचिन्हित दीर्घ offset, काष्ठा cpu_spec *spec);
-बाह्य व्योम __setup_cpu_apm821xx(अचिन्हित दीर्घ offset, काष्ठा cpu_spec *spec);
-बाह्य व्योम __setup_cpu_603(अचिन्हित दीर्घ offset, काष्ठा cpu_spec* spec);
-बाह्य व्योम __setup_cpu_604(अचिन्हित दीर्घ offset, काष्ठा cpu_spec* spec);
-बाह्य व्योम __setup_cpu_750(अचिन्हित दीर्घ offset, काष्ठा cpu_spec* spec);
-बाह्य व्योम __setup_cpu_750cx(अचिन्हित दीर्घ offset, काष्ठा cpu_spec* spec);
-बाह्य व्योम __setup_cpu_750fx(अचिन्हित दीर्घ offset, काष्ठा cpu_spec* spec);
-बाह्य व्योम __setup_cpu_7400(अचिन्हित दीर्घ offset, काष्ठा cpu_spec* spec);
-बाह्य व्योम __setup_cpu_7410(अचिन्हित दीर्घ offset, काष्ठा cpu_spec* spec);
-बाह्य व्योम __setup_cpu_745x(अचिन्हित दीर्घ offset, काष्ठा cpu_spec* spec);
-#पूर्ण_अगर /* CONFIG_PPC32 */
-#अगर_घोषित CONFIG_PPC64
-#समावेश <यंत्र/cpu_setup_घातer.h>
-बाह्य व्योम __setup_cpu_ppc970(अचिन्हित दीर्घ offset, काष्ठा cpu_spec* spec);
-बाह्य व्योम __setup_cpu_ppc970MP(अचिन्हित दीर्घ offset, काष्ठा cpu_spec* spec);
-बाह्य व्योम __setup_cpu_pa6t(अचिन्हित दीर्घ offset, काष्ठा cpu_spec* spec);
-बाह्य व्योम __restore_cpu_pa6t(व्योम);
-बाह्य व्योम __restore_cpu_ppc970(व्योम);
-बाह्य दीर्घ __machine_check_early_realmode_p7(काष्ठा pt_regs *regs);
-बाह्य दीर्घ __machine_check_early_realmode_p8(काष्ठा pt_regs *regs);
-बाह्य दीर्घ __machine_check_early_realmode_p9(काष्ठा pt_regs *regs);
-#पूर्ण_अगर /* CONFIG_PPC64 */
-#अगर defined(CONFIG_E500)
-बाह्य व्योम __setup_cpu_e5500(अचिन्हित दीर्घ offset, काष्ठा cpu_spec* spec);
-बाह्य व्योम __setup_cpu_e6500(अचिन्हित दीर्घ offset, काष्ठा cpu_spec* spec);
-बाह्य व्योम __restore_cpu_e5500(व्योम);
-बाह्य व्योम __restore_cpu_e6500(व्योम);
-#पूर्ण_अगर /* CONFIG_E500 */
+#ifdef CONFIG_PPC32
+extern void __setup_cpu_e500v1(unsigned long offset, struct cpu_spec* spec);
+extern void __setup_cpu_e500v2(unsigned long offset, struct cpu_spec* spec);
+extern void __setup_cpu_e500mc(unsigned long offset, struct cpu_spec* spec);
+extern void __setup_cpu_440ep(unsigned long offset, struct cpu_spec* spec);
+extern void __setup_cpu_440epx(unsigned long offset, struct cpu_spec* spec);
+extern void __setup_cpu_440gx(unsigned long offset, struct cpu_spec* spec);
+extern void __setup_cpu_440grx(unsigned long offset, struct cpu_spec* spec);
+extern void __setup_cpu_440spe(unsigned long offset, struct cpu_spec* spec);
+extern void __setup_cpu_440x5(unsigned long offset, struct cpu_spec* spec);
+extern void __setup_cpu_460ex(unsigned long offset, struct cpu_spec* spec);
+extern void __setup_cpu_460gt(unsigned long offset, struct cpu_spec* spec);
+extern void __setup_cpu_460sx(unsigned long offset, struct cpu_spec *spec);
+extern void __setup_cpu_apm821xx(unsigned long offset, struct cpu_spec *spec);
+extern void __setup_cpu_603(unsigned long offset, struct cpu_spec* spec);
+extern void __setup_cpu_604(unsigned long offset, struct cpu_spec* spec);
+extern void __setup_cpu_750(unsigned long offset, struct cpu_spec* spec);
+extern void __setup_cpu_750cx(unsigned long offset, struct cpu_spec* spec);
+extern void __setup_cpu_750fx(unsigned long offset, struct cpu_spec* spec);
+extern void __setup_cpu_7400(unsigned long offset, struct cpu_spec* spec);
+extern void __setup_cpu_7410(unsigned long offset, struct cpu_spec* spec);
+extern void __setup_cpu_745x(unsigned long offset, struct cpu_spec* spec);
+#endif /* CONFIG_PPC32 */
+#ifdef CONFIG_PPC64
+#include <asm/cpu_setup_power.h>
+extern void __setup_cpu_ppc970(unsigned long offset, struct cpu_spec* spec);
+extern void __setup_cpu_ppc970MP(unsigned long offset, struct cpu_spec* spec);
+extern void __setup_cpu_pa6t(unsigned long offset, struct cpu_spec* spec);
+extern void __restore_cpu_pa6t(void);
+extern void __restore_cpu_ppc970(void);
+extern long __machine_check_early_realmode_p7(struct pt_regs *regs);
+extern long __machine_check_early_realmode_p8(struct pt_regs *regs);
+extern long __machine_check_early_realmode_p9(struct pt_regs *regs);
+#endif /* CONFIG_PPC64 */
+#if defined(CONFIG_E500)
+extern void __setup_cpu_e5500(unsigned long offset, struct cpu_spec* spec);
+extern void __setup_cpu_e6500(unsigned long offset, struct cpu_spec* spec);
+extern void __restore_cpu_e5500(void);
+extern void __restore_cpu_e6500(void);
+#endif /* CONFIG_E500 */
 
 /* This table only contains "desktop" CPUs, it need to be filled with embedded
  * ones as well...
  */
-#घोषणा COMMON_USER		(PPC_FEATURE_32 | PPC_FEATURE_HAS_FPU | \
+#define COMMON_USER		(PPC_FEATURE_32 | PPC_FEATURE_HAS_FPU | \
 				 PPC_FEATURE_HAS_MMU)
-#घोषणा COMMON_USER_PPC64	(COMMON_USER | PPC_FEATURE_64)
-#घोषणा COMMON_USER_POWER4	(COMMON_USER_PPC64 | PPC_FEATURE_POWER4)
-#घोषणा COMMON_USER_POWER5	(COMMON_USER_PPC64 | PPC_FEATURE_POWER5 |\
+#define COMMON_USER_PPC64	(COMMON_USER | PPC_FEATURE_64)
+#define COMMON_USER_POWER4	(COMMON_USER_PPC64 | PPC_FEATURE_POWER4)
+#define COMMON_USER_POWER5	(COMMON_USER_PPC64 | PPC_FEATURE_POWER5 |\
 				 PPC_FEATURE_SMT | PPC_FEATURE_ICACHE_SNOOP)
-#घोषणा COMMON_USER_POWER5_PLUS	(COMMON_USER_PPC64 | PPC_FEATURE_POWER5_PLUS|\
+#define COMMON_USER_POWER5_PLUS	(COMMON_USER_PPC64 | PPC_FEATURE_POWER5_PLUS|\
 				 PPC_FEATURE_SMT | PPC_FEATURE_ICACHE_SNOOP)
-#घोषणा COMMON_USER_POWER6	(COMMON_USER_PPC64 | PPC_FEATURE_ARCH_2_05 |\
+#define COMMON_USER_POWER6	(COMMON_USER_PPC64 | PPC_FEATURE_ARCH_2_05 |\
 				 PPC_FEATURE_SMT | PPC_FEATURE_ICACHE_SNOOP | \
 				 PPC_FEATURE_TRUE_LE | \
 				 PPC_FEATURE_PSERIES_PERFMON_COMPAT)
-#घोषणा COMMON_USER_POWER7	(COMMON_USER_PPC64 | PPC_FEATURE_ARCH_2_06 |\
+#define COMMON_USER_POWER7	(COMMON_USER_PPC64 | PPC_FEATURE_ARCH_2_06 |\
 				 PPC_FEATURE_SMT | PPC_FEATURE_ICACHE_SNOOP | \
 				 PPC_FEATURE_TRUE_LE | \
 				 PPC_FEATURE_PSERIES_PERFMON_COMPAT)
-#घोषणा COMMON_USER2_POWER7	(PPC_FEATURE2_DSCR)
-#घोषणा COMMON_USER_POWER8	(COMMON_USER_PPC64 | PPC_FEATURE_ARCH_2_06 |\
+#define COMMON_USER2_POWER7	(PPC_FEATURE2_DSCR)
+#define COMMON_USER_POWER8	(COMMON_USER_PPC64 | PPC_FEATURE_ARCH_2_06 |\
 				 PPC_FEATURE_SMT | PPC_FEATURE_ICACHE_SNOOP | \
 				 PPC_FEATURE_TRUE_LE | \
 				 PPC_FEATURE_PSERIES_PERFMON_COMPAT)
-#घोषणा COMMON_USER2_POWER8	(PPC_FEATURE2_ARCH_2_07 | \
+#define COMMON_USER2_POWER8	(PPC_FEATURE2_ARCH_2_07 | \
 				 PPC_FEATURE2_HTM_COMP | \
 				 PPC_FEATURE2_HTM_NOSC_COMP | \
 				 PPC_FEATURE2_DSCR | \
 				 PPC_FEATURE2_ISEL | PPC_FEATURE2_TAR | \
 				 PPC_FEATURE2_VEC_CRYPTO)
-#घोषणा COMMON_USER_PA6T	(COMMON_USER_PPC64 | PPC_FEATURE_PA6T |\
+#define COMMON_USER_PA6T	(COMMON_USER_PPC64 | PPC_FEATURE_PA6T |\
 				 PPC_FEATURE_TRUE_LE | \
 				 PPC_FEATURE_HAS_ALTIVEC_COMP)
-#घोषणा COMMON_USER_POWER9	COMMON_USER_POWER8
-#घोषणा COMMON_USER2_POWER9	(COMMON_USER2_POWER8 | \
+#define COMMON_USER_POWER9	COMMON_USER_POWER8
+#define COMMON_USER2_POWER9	(COMMON_USER2_POWER8 | \
 				 PPC_FEATURE2_ARCH_3_00 | \
 				 PPC_FEATURE2_HAS_IEEE128 | \
 				 PPC_FEATURE2_DARN | \
 				 PPC_FEATURE2_SCV)
-#घोषणा COMMON_USER_POWER10	COMMON_USER_POWER9
-#घोषणा COMMON_USER2_POWER10	(PPC_FEATURE2_ARCH_3_1 | \
+#define COMMON_USER_POWER10	COMMON_USER_POWER9
+#define COMMON_USER2_POWER10	(PPC_FEATURE2_ARCH_3_1 | \
 				 PPC_FEATURE2_MMA | \
 				 PPC_FEATURE2_ARCH_3_00 | \
 				 PPC_FEATURE2_HAS_IEEE128 | \
@@ -127,16 +126,16 @@ EXPORT_SYMBOL(cur_cpu_spec);
 				 PPC_FEATURE2_ISEL | PPC_FEATURE2_TAR | \
 				 PPC_FEATURE2_VEC_CRYPTO)
 
-#अगर_घोषित CONFIG_PPC_BOOK3E_64
-#घोषणा COMMON_USER_BOOKE	(COMMON_USER_PPC64 | PPC_FEATURE_BOOKE)
-#अन्यथा
-#घोषणा COMMON_USER_BOOKE	(PPC_FEATURE_32 | PPC_FEATURE_HAS_MMU | \
+#ifdef CONFIG_PPC_BOOK3E_64
+#define COMMON_USER_BOOKE	(COMMON_USER_PPC64 | PPC_FEATURE_BOOKE)
+#else
+#define COMMON_USER_BOOKE	(PPC_FEATURE_32 | PPC_FEATURE_HAS_MMU | \
 				 PPC_FEATURE_BOOKE)
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा cpu_spec __initdata cpu_specs[] = अणु
-#अगर_घोषित CONFIG_PPC_BOOK3S_64
-	अणु	/* PPC970 */
+static struct cpu_spec __initdata cpu_specs[] = {
+#ifdef CONFIG_PPC_BOOK3S_64
+	{	/* PPC970 */
 		.pvr_mask		= 0xffff0000,
 		.pvr_value		= 0x00390000,
 		.cpu_name		= "PPC970",
@@ -151,9 +150,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.cpu_setup		= __setup_cpu_ppc970,
 		.cpu_restore		= __restore_cpu_ppc970,
 		.oprofile_cpu_type	= "ppc64/970",
-		.platक्रमm		= "ppc970",
-	पूर्ण,
-	अणु	/* PPC970FX */
+		.platform		= "ppc970",
+	},
+	{	/* PPC970FX */
 		.pvr_mask		= 0xffff0000,
 		.pvr_value		= 0x003c0000,
 		.cpu_name		= "PPC970FX",
@@ -168,9 +167,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.cpu_setup		= __setup_cpu_ppc970,
 		.cpu_restore		= __restore_cpu_ppc970,
 		.oprofile_cpu_type	= "ppc64/970",
-		.platक्रमm		= "ppc970",
-	पूर्ण,
-	अणु	/* PPC970MP DD1.0 - no DEEPNAP, use regular 970 init */
+		.platform		= "ppc970",
+	},
+	{	/* PPC970MP DD1.0 - no DEEPNAP, use regular 970 init */
 		.pvr_mask		= 0xffffffff,
 		.pvr_value		= 0x00440100,
 		.cpu_name		= "PPC970MP",
@@ -185,9 +184,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.cpu_setup		= __setup_cpu_ppc970,
 		.cpu_restore		= __restore_cpu_ppc970,
 		.oprofile_cpu_type	= "ppc64/970MP",
-		.platक्रमm		= "ppc970",
-	पूर्ण,
-	अणु	/* PPC970MP */
+		.platform		= "ppc970",
+	},
+	{	/* PPC970MP */
 		.pvr_mask		= 0xffff0000,
 		.pvr_value		= 0x00440000,
 		.cpu_name		= "PPC970MP",
@@ -202,9 +201,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.cpu_setup		= __setup_cpu_ppc970MP,
 		.cpu_restore		= __restore_cpu_ppc970,
 		.oprofile_cpu_type	= "ppc64/970MP",
-		.platक्रमm		= "ppc970",
-	पूर्ण,
-	अणु	/* PPC970GX */
+		.platform		= "ppc970",
+	},
+	{	/* PPC970GX */
 		.pvr_mask		= 0xffff0000,
 		.pvr_value		= 0x00450000,
 		.cpu_name		= "PPC970GX",
@@ -218,9 +217,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.pmc_type		= PPC_PMC_IBM,
 		.cpu_setup		= __setup_cpu_ppc970,
 		.oprofile_cpu_type	= "ppc64/970",
-		.platक्रमm		= "ppc970",
-	पूर्ण,
-	अणु	/* Power5 GR */
+		.platform		= "ppc970",
+	},
+	{	/* Power5 GR */
 		.pvr_mask		= 0xffff0000,
 		.pvr_value		= 0x003a0000,
 		.cpu_name		= "POWER5 (gr)",
@@ -232,9 +231,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.num_pmcs		= 6,
 		.pmc_type		= PPC_PMC_IBM,
 		.oprofile_cpu_type	= "ppc64/power5",
-		.platक्रमm		= "power5",
-	पूर्ण,
-	अणु	/* Power5++ */
+		.platform		= "power5",
+	},
+	{	/* Power5++ */
 		.pvr_mask		= 0xffffff00,
 		.pvr_value		= 0x003b0300,
 		.cpu_name		= "POWER5+ (gs)",
@@ -245,9 +244,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.dcache_bsize		= 128,
 		.num_pmcs		= 6,
 		.oprofile_cpu_type	= "ppc64/power5++",
-		.platक्रमm		= "power5+",
-	पूर्ण,
-	अणु	/* Power5 GS */
+		.platform		= "power5+",
+	},
+	{	/* Power5 GS */
 		.pvr_mask		= 0xffff0000,
 		.pvr_value		= 0x003b0000,
 		.cpu_name		= "POWER5+ (gs)",
@@ -259,9 +258,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.num_pmcs		= 6,
 		.pmc_type		= PPC_PMC_IBM,
 		.oprofile_cpu_type	= "ppc64/power5+",
-		.platक्रमm		= "power5+",
-	पूर्ण,
-	अणु	/* POWER6 in P5+ mode; 2.04-compliant processor */
+		.platform		= "power5+",
+	},
+	{	/* POWER6 in P5+ mode; 2.04-compliant processor */
 		.pvr_mask		= 0xffffffff,
 		.pvr_value		= 0x0f000001,
 		.cpu_name		= "POWER5+",
@@ -271,9 +270,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.icache_bsize		= 128,
 		.dcache_bsize		= 128,
 		.oprofile_cpu_type	= "ppc64/ibm-compat-v1",
-		.platक्रमm		= "power5+",
-	पूर्ण,
-	अणु	/* Power6 */
+		.platform		= "power5+",
+	},
+	{	/* Power6 */
 		.pvr_mask		= 0xffff0000,
 		.pvr_value		= 0x003e0000,
 		.cpu_name		= "POWER6 (raw)",
@@ -286,9 +285,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.num_pmcs		= 6,
 		.pmc_type		= PPC_PMC_IBM,
 		.oprofile_cpu_type	= "ppc64/power6",
-		.platक्रमm		= "power6x",
-	पूर्ण,
-	अणु	/* 2.05-compliant processor, i.e. Power6 "architected" mode */
+		.platform		= "power6x",
+	},
+	{	/* 2.05-compliant processor, i.e. Power6 "architected" mode */
 		.pvr_mask		= 0xffffffff,
 		.pvr_value		= 0x0f000002,
 		.cpu_name		= "POWER6 (architected)",
@@ -298,9 +297,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.icache_bsize		= 128,
 		.dcache_bsize		= 128,
 		.oprofile_cpu_type	= "ppc64/ibm-compat-v1",
-		.platक्रमm		= "power6",
-	पूर्ण,
-	अणु	/* 2.06-compliant processor, i.e. Power7 "architected" mode */
+		.platform		= "power6",
+	},
+	{	/* 2.06-compliant processor, i.e. Power7 "architected" mode */
 		.pvr_mask		= 0xffffffff,
 		.pvr_value		= 0x0f000003,
 		.cpu_name		= "POWER7 (architected)",
@@ -311,12 +310,12 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.icache_bsize		= 128,
 		.dcache_bsize		= 128,
 		.oprofile_cpu_type	= "ppc64/ibm-compat-v1",
-		.cpu_setup		= __setup_cpu_घातer7,
-		.cpu_restore		= __restore_cpu_घातer7,
+		.cpu_setup		= __setup_cpu_power7,
+		.cpu_restore		= __restore_cpu_power7,
 		.machine_check_early	= __machine_check_early_realmode_p7,
-		.platक्रमm		= "power7",
-	पूर्ण,
-	अणु	/* 2.07-compliant processor, i.e. Power8 "architected" mode */
+		.platform		= "power7",
+	},
+	{	/* 2.07-compliant processor, i.e. Power8 "architected" mode */
 		.pvr_mask		= 0xffffffff,
 		.pvr_value		= 0x0f000004,
 		.cpu_name		= "POWER8 (architected)",
@@ -327,12 +326,12 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.icache_bsize		= 128,
 		.dcache_bsize		= 128,
 		.oprofile_cpu_type	= "ppc64/ibm-compat-v1",
-		.cpu_setup		= __setup_cpu_घातer8,
-		.cpu_restore		= __restore_cpu_घातer8,
+		.cpu_setup		= __setup_cpu_power8,
+		.cpu_restore		= __restore_cpu_power8,
 		.machine_check_early	= __machine_check_early_realmode_p8,
-		.platक्रमm		= "power8",
-	पूर्ण,
-	अणु	/* 3.00-compliant processor, i.e. Power9 "architected" mode */
+		.platform		= "power8",
+	},
+	{	/* 3.00-compliant processor, i.e. Power9 "architected" mode */
 		.pvr_mask		= 0xffffffff,
 		.pvr_value		= 0x0f000005,
 		.cpu_name		= "POWER9 (architected)",
@@ -343,11 +342,11 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.icache_bsize		= 128,
 		.dcache_bsize		= 128,
 		.oprofile_cpu_type	= "ppc64/ibm-compat-v1",
-		.cpu_setup		= __setup_cpu_घातer9,
-		.cpu_restore		= __restore_cpu_घातer9,
-		.platक्रमm		= "power9",
-	पूर्ण,
-	अणु	/* 3.1-compliant processor, i.e. Power10 "architected" mode */
+		.cpu_setup		= __setup_cpu_power9,
+		.cpu_restore		= __restore_cpu_power9,
+		.platform		= "power9",
+	},
+	{	/* 3.1-compliant processor, i.e. Power10 "architected" mode */
 		.pvr_mask		= 0xffffffff,
 		.pvr_value		= 0x0f000006,
 		.cpu_name		= "POWER10 (architected)",
@@ -358,11 +357,11 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.icache_bsize		= 128,
 		.dcache_bsize		= 128,
 		.oprofile_cpu_type	= "ppc64/ibm-compat-v1",
-		.cpu_setup		= __setup_cpu_घातer10,
-		.cpu_restore		= __restore_cpu_घातer10,
-		.platक्रमm		= "power10",
-	पूर्ण,
-	अणु	/* Power7 */
+		.cpu_setup		= __setup_cpu_power10,
+		.cpu_restore		= __restore_cpu_power10,
+		.platform		= "power10",
+	},
+	{	/* Power7 */
 		.pvr_mask		= 0xffff0000,
 		.pvr_value		= 0x003f0000,
 		.cpu_name		= "POWER7 (raw)",
@@ -375,12 +374,12 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.num_pmcs		= 6,
 		.pmc_type		= PPC_PMC_IBM,
 		.oprofile_cpu_type	= "ppc64/power7",
-		.cpu_setup		= __setup_cpu_घातer7,
-		.cpu_restore		= __restore_cpu_घातer7,
+		.cpu_setup		= __setup_cpu_power7,
+		.cpu_restore		= __restore_cpu_power7,
 		.machine_check_early	= __machine_check_early_realmode_p7,
-		.platक्रमm		= "power7",
-	पूर्ण,
-	अणु	/* Power7+ */
+		.platform		= "power7",
+	},
+	{	/* Power7+ */
 		.pvr_mask		= 0xffff0000,
 		.pvr_value		= 0x004A0000,
 		.cpu_name		= "POWER7+ (raw)",
@@ -393,12 +392,12 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.num_pmcs		= 6,
 		.pmc_type		= PPC_PMC_IBM,
 		.oprofile_cpu_type	= "ppc64/power7",
-		.cpu_setup		= __setup_cpu_घातer7,
-		.cpu_restore		= __restore_cpu_घातer7,
+		.cpu_setup		= __setup_cpu_power7,
+		.cpu_restore		= __restore_cpu_power7,
 		.machine_check_early	= __machine_check_early_realmode_p7,
-		.platक्रमm		= "power7+",
-	पूर्ण,
-	अणु	/* Power8E */
+		.platform		= "power7+",
+	},
+	{	/* Power8E */
 		.pvr_mask		= 0xffff0000,
 		.pvr_value		= 0x004b0000,
 		.cpu_name		= "POWER8E (raw)",
@@ -411,12 +410,12 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.num_pmcs		= 6,
 		.pmc_type		= PPC_PMC_IBM,
 		.oprofile_cpu_type	= "ppc64/power8",
-		.cpu_setup		= __setup_cpu_घातer8,
-		.cpu_restore		= __restore_cpu_घातer8,
+		.cpu_setup		= __setup_cpu_power8,
+		.cpu_restore		= __restore_cpu_power8,
 		.machine_check_early	= __machine_check_early_realmode_p8,
-		.platक्रमm		= "power8",
-	पूर्ण,
-	अणु	/* Power8NVL */
+		.platform		= "power8",
+	},
+	{	/* Power8NVL */
 		.pvr_mask		= 0xffff0000,
 		.pvr_value		= 0x004c0000,
 		.cpu_name		= "POWER8NVL (raw)",
@@ -429,12 +428,12 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.num_pmcs		= 6,
 		.pmc_type		= PPC_PMC_IBM,
 		.oprofile_cpu_type	= "ppc64/power8",
-		.cpu_setup		= __setup_cpu_घातer8,
-		.cpu_restore		= __restore_cpu_घातer8,
+		.cpu_setup		= __setup_cpu_power8,
+		.cpu_restore		= __restore_cpu_power8,
 		.machine_check_early	= __machine_check_early_realmode_p8,
-		.platक्रमm		= "power8",
-	पूर्ण,
-	अणु	/* Power8 */
+		.platform		= "power8",
+	},
+	{	/* Power8 */
 		.pvr_mask		= 0xffff0000,
 		.pvr_value		= 0x004d0000,
 		.cpu_name		= "POWER8 (raw)",
@@ -447,12 +446,12 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.num_pmcs		= 6,
 		.pmc_type		= PPC_PMC_IBM,
 		.oprofile_cpu_type	= "ppc64/power8",
-		.cpu_setup		= __setup_cpu_घातer8,
-		.cpu_restore		= __restore_cpu_घातer8,
+		.cpu_setup		= __setup_cpu_power8,
+		.cpu_restore		= __restore_cpu_power8,
 		.machine_check_early	= __machine_check_early_realmode_p8,
-		.platक्रमm		= "power8",
-	पूर्ण,
-	अणु	/* Power9 DD2.0 */
+		.platform		= "power8",
+	},
+	{	/* Power9 DD2.0 */
 		.pvr_mask		= 0xffffefff,
 		.pvr_value		= 0x004e0200,
 		.cpu_name		= "POWER9 (raw)",
@@ -465,12 +464,12 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.num_pmcs		= 6,
 		.pmc_type		= PPC_PMC_IBM,
 		.oprofile_cpu_type	= "ppc64/power9",
-		.cpu_setup		= __setup_cpu_घातer9,
-		.cpu_restore		= __restore_cpu_घातer9,
+		.cpu_setup		= __setup_cpu_power9,
+		.cpu_restore		= __restore_cpu_power9,
 		.machine_check_early	= __machine_check_early_realmode_p9,
-		.platक्रमm		= "power9",
-	पूर्ण,
-	अणु	/* Power9 DD 2.1 */
+		.platform		= "power9",
+	},
+	{	/* Power9 DD 2.1 */
 		.pvr_mask		= 0xffffefff,
 		.pvr_value		= 0x004e0201,
 		.cpu_name		= "POWER9 (raw)",
@@ -483,12 +482,12 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.num_pmcs		= 6,
 		.pmc_type		= PPC_PMC_IBM,
 		.oprofile_cpu_type	= "ppc64/power9",
-		.cpu_setup		= __setup_cpu_घातer9,
-		.cpu_restore		= __restore_cpu_घातer9,
+		.cpu_setup		= __setup_cpu_power9,
+		.cpu_restore		= __restore_cpu_power9,
 		.machine_check_early	= __machine_check_early_realmode_p9,
-		.platक्रमm		= "power9",
-	पूर्ण,
-	अणु	/* Power9 DD2.2 or later */
+		.platform		= "power9",
+	},
+	{	/* Power9 DD2.2 or later */
 		.pvr_mask		= 0xffff0000,
 		.pvr_value		= 0x004e0000,
 		.cpu_name		= "POWER9 (raw)",
@@ -501,12 +500,12 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.num_pmcs		= 6,
 		.pmc_type		= PPC_PMC_IBM,
 		.oprofile_cpu_type	= "ppc64/power9",
-		.cpu_setup		= __setup_cpu_घातer9,
-		.cpu_restore		= __restore_cpu_घातer9,
+		.cpu_setup		= __setup_cpu_power9,
+		.cpu_restore		= __restore_cpu_power9,
 		.machine_check_early	= __machine_check_early_realmode_p9,
-		.platक्रमm		= "power9",
-	पूर्ण,
-	अणु	/* Power10 */
+		.platform		= "power9",
+	},
+	{	/* Power10 */
 		.pvr_mask		= 0xffff0000,
 		.pvr_value		= 0x00800000,
 		.cpu_name		= "POWER10 (raw)",
@@ -519,12 +518,12 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.num_pmcs		= 6,
 		.pmc_type		= PPC_PMC_IBM,
 		.oprofile_cpu_type	= "ppc64/power10",
-		.cpu_setup		= __setup_cpu_घातer10,
-		.cpu_restore		= __restore_cpu_घातer10,
+		.cpu_setup		= __setup_cpu_power10,
+		.cpu_restore		= __restore_cpu_power10,
 		.machine_check_early	= __machine_check_early_realmode_p10,
-		.platक्रमm		= "power10",
-	पूर्ण,
-	अणु	/* Cell Broadband Engine */
+		.platform		= "power10",
+	},
+	{	/* Cell Broadband Engine */
 		.pvr_mask		= 0xffff0000,
 		.pvr_value		= 0x00700000,
 		.cpu_name		= "Cell Broadband Engine",
@@ -538,9 +537,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.num_pmcs		= 4,
 		.pmc_type		= PPC_PMC_IBM,
 		.oprofile_cpu_type	= "ppc64/cell-be",
-		.platक्रमm		= "ppc-cell-be",
-	पूर्ण,
-	अणु	/* PA Semi PA6T */
+		.platform		= "ppc-cell-be",
+	},
+	{	/* PA Semi PA6T */
 		.pvr_mask		= 0x7fff0000,
 		.pvr_value		= 0x00900000,
 		.cpu_name		= "PA6T",
@@ -554,9 +553,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.cpu_setup		= __setup_cpu_pa6t,
 		.cpu_restore		= __restore_cpu_pa6t,
 		.oprofile_cpu_type	= "ppc64/pa6t",
-		.platक्रमm		= "pa6t",
-	पूर्ण,
-	अणु	/* शेष match */
+		.platform		= "pa6t",
+	},
+	{	/* default match */
 		.pvr_mask		= 0x00000000,
 		.pvr_value		= 0x00000000,
 		.cpu_name		= "POWER5 (compatible)",
@@ -567,14 +566,14 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.dcache_bsize		= 128,
 		.num_pmcs		= 6,
 		.pmc_type		= PPC_PMC_IBM,
-		.platक्रमm		= "power5",
-	पूर्ण
-#पूर्ण_अगर	/* CONFIG_PPC_BOOK3S_64 */
+		.platform		= "power5",
+	}
+#endif	/* CONFIG_PPC_BOOK3S_64 */
 
-#अगर_घोषित CONFIG_PPC32
-#अगर_घोषित CONFIG_PPC_BOOK3S_32
-#अगर_घोषित CONFIG_PPC_BOOK3S_604
-	अणु	/* 604 */
+#ifdef CONFIG_PPC32
+#ifdef CONFIG_PPC_BOOK3S_32
+#ifdef CONFIG_PPC_BOOK3S_604
+	{	/* 604 */
 		.pvr_mask		= 0xffff0000,
 		.pvr_value		= 0x00040000,
 		.cpu_name		= "604",
@@ -586,9 +585,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.num_pmcs		= 2,
 		.cpu_setup		= __setup_cpu_604,
 		.machine_check		= machine_check_generic,
-		.platक्रमm		= "ppc604",
-	पूर्ण,
-	अणु	/* 604e */
+		.platform		= "ppc604",
+	},
+	{	/* 604e */
 		.pvr_mask		= 0xfffff000,
 		.pvr_value		= 0x00090000,
 		.cpu_name		= "604e",
@@ -600,9 +599,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.num_pmcs		= 4,
 		.cpu_setup		= __setup_cpu_604,
 		.machine_check		= machine_check_generic,
-		.platक्रमm		= "ppc604",
-	पूर्ण,
-	अणु	/* 604r */
+		.platform		= "ppc604",
+	},
+	{	/* 604r */
 		.pvr_mask		= 0xffff0000,
 		.pvr_value		= 0x00090000,
 		.cpu_name		= "604r",
@@ -614,9 +613,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.num_pmcs		= 4,
 		.cpu_setup		= __setup_cpu_604,
 		.machine_check		= machine_check_generic,
-		.platक्रमm		= "ppc604",
-	पूर्ण,
-	अणु	/* 604ev */
+		.platform		= "ppc604",
+	},
+	{	/* 604ev */
 		.pvr_mask		= 0xffff0000,
 		.pvr_value		= 0x000a0000,
 		.cpu_name		= "604ev",
@@ -628,9 +627,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.num_pmcs		= 4,
 		.cpu_setup		= __setup_cpu_604,
 		.machine_check		= machine_check_generic,
-		.platक्रमm		= "ppc604",
-	पूर्ण,
-	अणु	/* 740/750 (0x4202, करोn't support TAU ?) */
+		.platform		= "ppc604",
+	},
+	{	/* 740/750 (0x4202, don't support TAU ?) */
 		.pvr_mask		= 0xffffffff,
 		.pvr_value		= 0x00084202,
 		.cpu_name		= "740/750",
@@ -642,9 +641,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.num_pmcs		= 4,
 		.cpu_setup		= __setup_cpu_750,
 		.machine_check		= machine_check_generic,
-		.platक्रमm		= "ppc750",
-	पूर्ण,
-	अणु	/* 750CX (80100 and 8010x?) */
+		.platform		= "ppc750",
+	},
+	{	/* 750CX (80100 and 8010x?) */
 		.pvr_mask		= 0xfffffff0,
 		.pvr_value		= 0x00080100,
 		.cpu_name		= "750CX",
@@ -656,9 +655,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.num_pmcs		= 4,
 		.cpu_setup		= __setup_cpu_750cx,
 		.machine_check		= machine_check_generic,
-		.platक्रमm		= "ppc750",
-	पूर्ण,
-	अणु	/* 750CX (82201 and 82202) */
+		.platform		= "ppc750",
+	},
+	{	/* 750CX (82201 and 82202) */
 		.pvr_mask		= 0xfffffff0,
 		.pvr_value		= 0x00082200,
 		.cpu_name		= "750CX",
@@ -671,9 +670,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.pmc_type		= PPC_PMC_IBM,
 		.cpu_setup		= __setup_cpu_750cx,
 		.machine_check		= machine_check_generic,
-		.platक्रमm		= "ppc750",
-	पूर्ण,
-	अणु	/* 750CXe (82214) */
+		.platform		= "ppc750",
+	},
+	{	/* 750CXe (82214) */
 		.pvr_mask		= 0xfffffff0,
 		.pvr_value		= 0x00082210,
 		.cpu_name		= "750CXe",
@@ -686,9 +685,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.pmc_type		= PPC_PMC_IBM,
 		.cpu_setup		= __setup_cpu_750cx,
 		.machine_check		= machine_check_generic,
-		.platक्रमm		= "ppc750",
-	पूर्ण,
-	अणु	/* 750CXe "Gekko" (83214) */
+		.platform		= "ppc750",
+	},
+	{	/* 750CXe "Gekko" (83214) */
 		.pvr_mask		= 0xffffffff,
 		.pvr_value		= 0x00083214,
 		.cpu_name		= "750CXe",
@@ -701,9 +700,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.pmc_type		= PPC_PMC_IBM,
 		.cpu_setup		= __setup_cpu_750cx,
 		.machine_check		= machine_check_generic,
-		.platक्रमm		= "ppc750",
-	पूर्ण,
-	अणु	/* 750CL (and "Broadway") */
+		.platform		= "ppc750",
+	},
+	{	/* 750CL (and "Broadway") */
 		.pvr_mask		= 0xfffff0e0,
 		.pvr_value		= 0x00087000,
 		.cpu_name		= "750CL",
@@ -716,10 +715,10 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.pmc_type		= PPC_PMC_IBM,
 		.cpu_setup		= __setup_cpu_750,
 		.machine_check		= machine_check_generic,
-		.platक्रमm		= "ppc750",
+		.platform		= "ppc750",
 		.oprofile_cpu_type      = "ppc/750",
-	पूर्ण,
-	अणु	/* 745/755 */
+	},
+	{	/* 745/755 */
 		.pvr_mask		= 0xfffff000,
 		.pvr_value		= 0x00083000,
 		.cpu_name		= "745/755",
@@ -732,9 +731,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.pmc_type		= PPC_PMC_IBM,
 		.cpu_setup		= __setup_cpu_750,
 		.machine_check		= machine_check_generic,
-		.platक्रमm		= "ppc750",
-	पूर्ण,
-	अणु	/* 750FX rev 1.x */
+		.platform		= "ppc750",
+	},
+	{	/* 750FX rev 1.x */
 		.pvr_mask		= 0xffffff00,
 		.pvr_value		= 0x70000100,
 		.cpu_name		= "750FX",
@@ -747,10 +746,10 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.pmc_type		= PPC_PMC_IBM,
 		.cpu_setup		= __setup_cpu_750,
 		.machine_check		= machine_check_generic,
-		.platक्रमm		= "ppc750",
+		.platform		= "ppc750",
 		.oprofile_cpu_type      = "ppc/750",
-	पूर्ण,
-	अणु	/* 750FX rev 2.0 must disable HID0[DPM] */
+	},
+	{	/* 750FX rev 2.0 must disable HID0[DPM] */
 		.pvr_mask		= 0xffffffff,
 		.pvr_value		= 0x70000200,
 		.cpu_name		= "750FX",
@@ -763,10 +762,10 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.pmc_type		= PPC_PMC_IBM,
 		.cpu_setup		= __setup_cpu_750,
 		.machine_check		= machine_check_generic,
-		.platक्रमm		= "ppc750",
+		.platform		= "ppc750",
 		.oprofile_cpu_type      = "ppc/750",
-	पूर्ण,
-	अणु	/* 750FX (All revs except 2.0) */
+	},
+	{	/* 750FX (All revs except 2.0) */
 		.pvr_mask		= 0xffff0000,
 		.pvr_value		= 0x70000000,
 		.cpu_name		= "750FX",
@@ -779,10 +778,10 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.pmc_type		= PPC_PMC_IBM,
 		.cpu_setup		= __setup_cpu_750fx,
 		.machine_check		= machine_check_generic,
-		.platक्रमm		= "ppc750",
+		.platform		= "ppc750",
 		.oprofile_cpu_type      = "ppc/750",
-	पूर्ण,
-	अणु	/* 750GX */
+	},
+	{	/* 750GX */
 		.pvr_mask		= 0xffff0000,
 		.pvr_value		= 0x70020000,
 		.cpu_name		= "750GX",
@@ -795,10 +794,10 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.pmc_type		= PPC_PMC_IBM,
 		.cpu_setup		= __setup_cpu_750fx,
 		.machine_check		= machine_check_generic,
-		.platक्रमm		= "ppc750",
+		.platform		= "ppc750",
 		.oprofile_cpu_type      = "ppc/750",
-	पूर्ण,
-	अणु	/* 740/750 (L2CR bit need fixup क्रम 740) */
+	},
+	{	/* 740/750 (L2CR bit need fixup for 740) */
 		.pvr_mask		= 0xffff0000,
 		.pvr_value		= 0x00080000,
 		.cpu_name		= "740/750",
@@ -811,9 +810,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.pmc_type		= PPC_PMC_IBM,
 		.cpu_setup		= __setup_cpu_750,
 		.machine_check		= machine_check_generic,
-		.platक्रमm		= "ppc750",
-	पूर्ण,
-	अणु	/* 7400 rev 1.1 ? (no TAU) */
+		.platform		= "ppc750",
+	},
+	{	/* 7400 rev 1.1 ? (no TAU) */
 		.pvr_mask		= 0xffffffff,
 		.pvr_value		= 0x000c1101,
 		.cpu_name		= "7400 (1.1)",
@@ -827,9 +826,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.pmc_type		= PPC_PMC_G4,
 		.cpu_setup		= __setup_cpu_7400,
 		.machine_check		= machine_check_generic,
-		.platक्रमm		= "ppc7400",
-	पूर्ण,
-	अणु	/* 7400 */
+		.platform		= "ppc7400",
+	},
+	{	/* 7400 */
 		.pvr_mask		= 0xffff0000,
 		.pvr_value		= 0x000c0000,
 		.cpu_name		= "7400",
@@ -843,9 +842,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.pmc_type		= PPC_PMC_G4,
 		.cpu_setup		= __setup_cpu_7400,
 		.machine_check		= machine_check_generic,
-		.platक्रमm		= "ppc7400",
-	पूर्ण,
-	अणु	/* 7410 */
+		.platform		= "ppc7400",
+	},
+	{	/* 7410 */
 		.pvr_mask		= 0xffff0000,
 		.pvr_value		= 0x800c0000,
 		.cpu_name		= "7410",
@@ -859,9 +858,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.pmc_type		= PPC_PMC_G4,
 		.cpu_setup		= __setup_cpu_7410,
 		.machine_check		= machine_check_generic,
-		.platक्रमm		= "ppc7400",
-	पूर्ण,
-	अणु	/* 7450 2.0 - no करोze/nap */
+		.platform		= "ppc7400",
+	},
+	{	/* 7450 2.0 - no doze/nap */
 		.pvr_mask		= 0xffffffff,
 		.pvr_value		= 0x80000200,
 		.cpu_name		= "7450",
@@ -876,9 +875,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.cpu_setup		= __setup_cpu_745x,
 		.oprofile_cpu_type      = "ppc/7450",
 		.machine_check		= machine_check_generic,
-		.platक्रमm		= "ppc7450",
-	पूर्ण,
-	अणु	/* 7450 2.1 */
+		.platform		= "ppc7450",
+	},
+	{	/* 7450 2.1 */
 		.pvr_mask		= 0xffffffff,
 		.pvr_value		= 0x80000201,
 		.cpu_name		= "7450",
@@ -893,9 +892,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.cpu_setup		= __setup_cpu_745x,
 		.oprofile_cpu_type      = "ppc/7450",
 		.machine_check		= machine_check_generic,
-		.platक्रमm		= "ppc7450",
-	पूर्ण,
-	अणु	/* 7450 2.3 and newer */
+		.platform		= "ppc7450",
+	},
+	{	/* 7450 2.3 and newer */
 		.pvr_mask		= 0xffff0000,
 		.pvr_value		= 0x80000000,
 		.cpu_name		= "7450",
@@ -910,9 +909,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.cpu_setup		= __setup_cpu_745x,
 		.oprofile_cpu_type      = "ppc/7450",
 		.machine_check		= machine_check_generic,
-		.platक्रमm		= "ppc7450",
-	पूर्ण,
-	अणु	/* 7455 rev 1.x */
+		.platform		= "ppc7450",
+	},
+	{	/* 7455 rev 1.x */
 		.pvr_mask		= 0xffffff00,
 		.pvr_value		= 0x80010100,
 		.cpu_name		= "7455",
@@ -927,9 +926,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.cpu_setup		= __setup_cpu_745x,
 		.oprofile_cpu_type      = "ppc/7450",
 		.machine_check		= machine_check_generic,
-		.platक्रमm		= "ppc7450",
-	पूर्ण,
-	अणु	/* 7455 rev 2.0 */
+		.platform		= "ppc7450",
+	},
+	{	/* 7455 rev 2.0 */
 		.pvr_mask		= 0xffffffff,
 		.pvr_value		= 0x80010200,
 		.cpu_name		= "7455",
@@ -944,9 +943,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.cpu_setup		= __setup_cpu_745x,
 		.oprofile_cpu_type      = "ppc/7450",
 		.machine_check		= machine_check_generic,
-		.platक्रमm		= "ppc7450",
-	पूर्ण,
-	अणु	/* 7455 others */
+		.platform		= "ppc7450",
+	},
+	{	/* 7455 others */
 		.pvr_mask		= 0xffff0000,
 		.pvr_value		= 0x80010000,
 		.cpu_name		= "7455",
@@ -961,9 +960,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.cpu_setup		= __setup_cpu_745x,
 		.oprofile_cpu_type      = "ppc/7450",
 		.machine_check		= machine_check_generic,
-		.platक्रमm		= "ppc7450",
-	पूर्ण,
-	अणु	/* 7447/7457 Rev 1.0 */
+		.platform		= "ppc7450",
+	},
+	{	/* 7447/7457 Rev 1.0 */
 		.pvr_mask		= 0xffffffff,
 		.pvr_value		= 0x80020100,
 		.cpu_name		= "7447/7457",
@@ -978,9 +977,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.cpu_setup		= __setup_cpu_745x,
 		.oprofile_cpu_type      = "ppc/7450",
 		.machine_check		= machine_check_generic,
-		.platक्रमm		= "ppc7450",
-	पूर्ण,
-	अणु	/* 7447/7457 Rev 1.1 */
+		.platform		= "ppc7450",
+	},
+	{	/* 7447/7457 Rev 1.1 */
 		.pvr_mask		= 0xffffffff,
 		.pvr_value		= 0x80020101,
 		.cpu_name		= "7447/7457",
@@ -995,9 +994,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.cpu_setup		= __setup_cpu_745x,
 		.oprofile_cpu_type      = "ppc/7450",
 		.machine_check		= machine_check_generic,
-		.platक्रमm		= "ppc7450",
-	पूर्ण,
-	अणु	/* 7447/7457 Rev 1.2 and later */
+		.platform		= "ppc7450",
+	},
+	{	/* 7447/7457 Rev 1.2 and later */
 		.pvr_mask		= 0xffff0000,
 		.pvr_value		= 0x80020000,
 		.cpu_name		= "7447/7457",
@@ -1011,9 +1010,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.cpu_setup		= __setup_cpu_745x,
 		.oprofile_cpu_type      = "ppc/7450",
 		.machine_check		= machine_check_generic,
-		.platक्रमm		= "ppc7450",
-	पूर्ण,
-	अणु	/* 7447A */
+		.platform		= "ppc7450",
+	},
+	{	/* 7447A */
 		.pvr_mask		= 0xffff0000,
 		.pvr_value		= 0x80030000,
 		.cpu_name		= "7447A",
@@ -1028,9 +1027,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.cpu_setup		= __setup_cpu_745x,
 		.oprofile_cpu_type      = "ppc/7450",
 		.machine_check		= machine_check_generic,
-		.platक्रमm		= "ppc7450",
-	पूर्ण,
-	अणु	/* 7448 */
+		.platform		= "ppc7450",
+	},
+	{	/* 7448 */
 		.pvr_mask		= 0xffff0000,
 		.pvr_value		= 0x80040000,
 		.cpu_name		= "7448",
@@ -1045,11 +1044,11 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.cpu_setup		= __setup_cpu_745x,
 		.oprofile_cpu_type      = "ppc/7450",
 		.machine_check		= machine_check_generic,
-		.platक्रमm		= "ppc7450",
-	पूर्ण,
-#पूर्ण_अगर /* CONFIG_PPC_BOOK3S_604 */
-#अगर_घोषित CONFIG_PPC_BOOK3S_603
-	अणु	/* 603 */
+		.platform		= "ppc7450",
+	},
+#endif /* CONFIG_PPC_BOOK3S_604 */
+#ifdef CONFIG_PPC_BOOK3S_603
+	{	/* 603 */
 		.pvr_mask		= 0xffff0000,
 		.pvr_value		= 0x00030000,
 		.cpu_name		= "603",
@@ -1060,9 +1059,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.dcache_bsize		= 32,
 		.cpu_setup		= __setup_cpu_603,
 		.machine_check		= machine_check_generic,
-		.platक्रमm		= "ppc603",
-	पूर्ण,
-	अणु	/* 603e */
+		.platform		= "ppc603",
+	},
+	{	/* 603e */
 		.pvr_mask		= 0xffff0000,
 		.pvr_value		= 0x00060000,
 		.cpu_name		= "603e",
@@ -1073,9 +1072,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.dcache_bsize		= 32,
 		.cpu_setup		= __setup_cpu_603,
 		.machine_check		= machine_check_generic,
-		.platक्रमm		= "ppc603",
-	पूर्ण,
-	अणु	/* 603ev */
+		.platform		= "ppc603",
+	},
+	{	/* 603ev */
 		.pvr_mask		= 0xffff0000,
 		.pvr_value		= 0x00070000,
 		.cpu_name		= "603ev",
@@ -1086,9 +1085,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.dcache_bsize		= 32,
 		.cpu_setup		= __setup_cpu_603,
 		.machine_check		= machine_check_generic,
-		.platक्रमm		= "ppc603",
-	पूर्ण,
-	अणु	/* 82xx (8240, 8245, 8260 are all 603e cores) */
+		.platform		= "ppc603",
+	},
+	{	/* 82xx (8240, 8245, 8260 are all 603e cores) */
 		.pvr_mask		= 0x7fff0000,
 		.pvr_value		= 0x00810000,
 		.cpu_name		= "82xx",
@@ -1099,9 +1098,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.dcache_bsize		= 32,
 		.cpu_setup		= __setup_cpu_603,
 		.machine_check		= machine_check_generic,
-		.platक्रमm		= "ppc603",
-	पूर्ण,
-	अणु	/* All G2_LE (603e core, plus some) have the same pvr */
+		.platform		= "ppc603",
+	},
+	{	/* All G2_LE (603e core, plus some) have the same pvr */
 		.pvr_mask		= 0x7fff0000,
 		.pvr_value		= 0x00820000,
 		.cpu_name		= "G2_LE",
@@ -1112,10 +1111,10 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.dcache_bsize		= 32,
 		.cpu_setup		= __setup_cpu_603,
 		.machine_check		= machine_check_generic,
-		.platक्रमm		= "ppc603",
-	पूर्ण,
-#अगर_घोषित CONFIG_PPC_83xx
-	अणु	/* e300c1 (a 603e core, plus some) on 83xx */
+		.platform		= "ppc603",
+	},
+#ifdef CONFIG_PPC_83xx
+	{	/* e300c1 (a 603e core, plus some) on 83xx */
 		.pvr_mask		= 0x7fff0000,
 		.pvr_value		= 0x00830000,
 		.cpu_name		= "e300c1",
@@ -1126,9 +1125,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.dcache_bsize		= 32,
 		.cpu_setup		= __setup_cpu_603,
 		.machine_check		= machine_check_83xx,
-		.platक्रमm		= "ppc603",
-	पूर्ण,
-	अणु	/* e300c2 (an e300c1 core, plus some, minus FPU) on 83xx */
+		.platform		= "ppc603",
+	},
+	{	/* e300c2 (an e300c1 core, plus some, minus FPU) on 83xx */
 		.pvr_mask		= 0x7fff0000,
 		.pvr_value		= 0x00840000,
 		.cpu_name		= "e300c2",
@@ -1140,9 +1139,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.dcache_bsize		= 32,
 		.cpu_setup		= __setup_cpu_603,
 		.machine_check		= machine_check_83xx,
-		.platक्रमm		= "ppc603",
-	पूर्ण,
-	अणु	/* e300c3 (e300c1, plus one IU, half cache size) on 83xx */
+		.platform		= "ppc603",
+	},
+	{	/* e300c3 (e300c1, plus one IU, half cache size) on 83xx */
 		.pvr_mask		= 0x7fff0000,
 		.pvr_value		= 0x00850000,
 		.cpu_name		= "e300c3",
@@ -1156,9 +1155,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.machine_check		= machine_check_83xx,
 		.num_pmcs		= 4,
 		.oprofile_cpu_type	= "ppc/e300",
-		.platक्रमm		= "ppc603",
-	पूर्ण,
-	अणु	/* e300c4 (e300c1, plus one IU) */
+		.platform		= "ppc603",
+	},
+	{	/* e300c4 (e300c1, plus one IU) */
 		.pvr_mask		= 0x7fff0000,
 		.pvr_value		= 0x00860000,
 		.cpu_name		= "e300c4",
@@ -1172,12 +1171,12 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.machine_check		= machine_check_83xx,
 		.num_pmcs		= 4,
 		.oprofile_cpu_type	= "ppc/e300",
-		.platक्रमm		= "ppc603",
-	पूर्ण,
-#पूर्ण_अगर
-#पूर्ण_अगर /* CONFIG_PPC_BOOK3S_603 */
-#अगर_घोषित CONFIG_PPC_BOOK3S_604
-	अणु	/* शेष match, we assume split I/D cache & TB (non-601)... */
+		.platform		= "ppc603",
+	},
+#endif
+#endif /* CONFIG_PPC_BOOK3S_603 */
+#ifdef CONFIG_PPC_BOOK3S_604
+	{	/* default match, we assume split I/D cache & TB (non-601)... */
 		.pvr_mask		= 0x00000000,
 		.pvr_value		= 0x00000000,
 		.cpu_name		= "(generic PPC)",
@@ -1187,28 +1186,28 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.icache_bsize		= 32,
 		.dcache_bsize		= 32,
 		.machine_check		= machine_check_generic,
-		.platक्रमm		= "ppc603",
-	पूर्ण,
-#पूर्ण_अगर /* CONFIG_PPC_BOOK3S_604 */
-#पूर्ण_अगर /* CONFIG_PPC_BOOK3S_32 */
-#अगर_घोषित CONFIG_PPC_8xx
-	अणु	/* 8xx */
+		.platform		= "ppc603",
+	},
+#endif /* CONFIG_PPC_BOOK3S_604 */
+#endif /* CONFIG_PPC_BOOK3S_32 */
+#ifdef CONFIG_PPC_8xx
+	{	/* 8xx */
 		.pvr_mask		= 0xffff0000,
 		.pvr_value		= PVR_8xx,
 		.cpu_name		= "8xx",
 		/* CPU_FTR_MAYBE_CAN_DOZE is possible,
-		 * अगर the 8xx code is there.... */
+		 * if the 8xx code is there.... */
 		.cpu_features		= CPU_FTRS_8XX,
 		.cpu_user_features	= PPC_FEATURE_32 | PPC_FEATURE_HAS_MMU,
 		.mmu_features		= MMU_FTR_TYPE_8xx,
 		.icache_bsize		= 16,
 		.dcache_bsize		= 16,
 		.machine_check		= machine_check_8xx,
-		.platक्रमm		= "ppc823",
-	पूर्ण,
-#पूर्ण_अगर /* CONFIG_PPC_8xx */
-#अगर_घोषित CONFIG_40x
-	अणु	/* STB 04xxx */
+		.platform		= "ppc823",
+	},
+#endif /* CONFIG_PPC_8xx */
+#ifdef CONFIG_40x
+	{	/* STB 04xxx */
 		.pvr_mask		= 0xffff0000,
 		.pvr_value		= 0x41810000,
 		.cpu_name		= "STB04xxx",
@@ -1219,9 +1218,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.icache_bsize		= 32,
 		.dcache_bsize		= 32,
 		.machine_check		= machine_check_4xx,
-		.platक्रमm		= "ppc405",
-	पूर्ण,
-	अणु	/* NP405L */
+		.platform		= "ppc405",
+	},
+	{	/* NP405L */
 		.pvr_mask		= 0xffff0000,
 		.pvr_value		= 0x41610000,
 		.cpu_name		= "NP405L",
@@ -1232,9 +1231,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.icache_bsize		= 32,
 		.dcache_bsize		= 32,
 		.machine_check		= machine_check_4xx,
-		.platक्रमm		= "ppc405",
-	पूर्ण,
-	अणु	/* NP4GS3 */
+		.platform		= "ppc405",
+	},
+	{	/* NP4GS3 */
 		.pvr_mask		= 0xffff0000,
 		.pvr_value		= 0x40B10000,
 		.cpu_name		= "NP4GS3",
@@ -1245,9 +1244,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.icache_bsize		= 32,
 		.dcache_bsize		= 32,
 		.machine_check		= machine_check_4xx,
-		.platक्रमm		= "ppc405",
-	पूर्ण,
-	अणु   /* NP405H */
+		.platform		= "ppc405",
+	},
+	{   /* NP405H */
 		.pvr_mask		= 0xffff0000,
 		.pvr_value		= 0x41410000,
 		.cpu_name		= "NP405H",
@@ -1258,9 +1257,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.icache_bsize		= 32,
 		.dcache_bsize		= 32,
 		.machine_check		= machine_check_4xx,
-		.platक्रमm		= "ppc405",
-	पूर्ण,
-	अणु	/* 405GPr */
+		.platform		= "ppc405",
+	},
+	{	/* 405GPr */
 		.pvr_mask		= 0xffff0000,
 		.pvr_value		= 0x50910000,
 		.cpu_name		= "405GPr",
@@ -1271,9 +1270,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.icache_bsize		= 32,
 		.dcache_bsize		= 32,
 		.machine_check		= machine_check_4xx,
-		.platक्रमm		= "ppc405",
-	पूर्ण,
-	अणु   /* STBx25xx */
+		.platform		= "ppc405",
+	},
+	{   /* STBx25xx */
 		.pvr_mask		= 0xffff0000,
 		.pvr_value		= 0x51510000,
 		.cpu_name		= "STBx25xx",
@@ -1284,9 +1283,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.icache_bsize		= 32,
 		.dcache_bsize		= 32,
 		.machine_check		= machine_check_4xx,
-		.platक्रमm		= "ppc405",
-	पूर्ण,
-	अणु	/* 405LP */
+		.platform		= "ppc405",
+	},
+	{	/* 405LP */
 		.pvr_mask		= 0xffff0000,
 		.pvr_value		= 0x41F10000,
 		.cpu_name		= "405LP",
@@ -1296,9 +1295,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.icache_bsize		= 32,
 		.dcache_bsize		= 32,
 		.machine_check		= machine_check_4xx,
-		.platक्रमm		= "ppc405",
-	पूर्ण,
-	अणु	/* 405EP */
+		.platform		= "ppc405",
+	},
+	{	/* 405EP */
 		.pvr_mask		= 0xffff0000,
 		.pvr_value		= 0x51210000,
 		.cpu_name		= "405EP",
@@ -1309,9 +1308,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.icache_bsize		= 32,
 		.dcache_bsize		= 32,
 		.machine_check		= machine_check_4xx,
-		.platक्रमm		= "ppc405",
-	पूर्ण,
-	अणु	/* 405EX Rev. A/B with Security */
+		.platform		= "ppc405",
+	},
+	{	/* 405EX Rev. A/B with Security */
 		.pvr_mask		= 0xffff000f,
 		.pvr_value		= 0x12910007,
 		.cpu_name		= "405EX Rev. A/B",
@@ -1322,9 +1321,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.icache_bsize		= 32,
 		.dcache_bsize		= 32,
 		.machine_check		= machine_check_4xx,
-		.platक्रमm		= "ppc405",
-	पूर्ण,
-	अणु	/* 405EX Rev. C without Security */
+		.platform		= "ppc405",
+	},
+	{	/* 405EX Rev. C without Security */
 		.pvr_mask		= 0xffff000f,
 		.pvr_value		= 0x1291000d,
 		.cpu_name		= "405EX Rev. C",
@@ -1335,9 +1334,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.icache_bsize		= 32,
 		.dcache_bsize		= 32,
 		.machine_check		= machine_check_4xx,
-		.platक्रमm		= "ppc405",
-	पूर्ण,
-	अणु	/* 405EX Rev. C with Security */
+		.platform		= "ppc405",
+	},
+	{	/* 405EX Rev. C with Security */
 		.pvr_mask		= 0xffff000f,
 		.pvr_value		= 0x1291000f,
 		.cpu_name		= "405EX Rev. C",
@@ -1348,9 +1347,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.icache_bsize		= 32,
 		.dcache_bsize		= 32,
 		.machine_check		= machine_check_4xx,
-		.platक्रमm		= "ppc405",
-	पूर्ण,
-	अणु	/* 405EX Rev. D without Security */
+		.platform		= "ppc405",
+	},
+	{	/* 405EX Rev. D without Security */
 		.pvr_mask		= 0xffff000f,
 		.pvr_value		= 0x12910003,
 		.cpu_name		= "405EX Rev. D",
@@ -1361,9 +1360,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.icache_bsize		= 32,
 		.dcache_bsize		= 32,
 		.machine_check		= machine_check_4xx,
-		.platक्रमm		= "ppc405",
-	पूर्ण,
-	अणु	/* 405EX Rev. D with Security */
+		.platform		= "ppc405",
+	},
+	{	/* 405EX Rev. D with Security */
 		.pvr_mask		= 0xffff000f,
 		.pvr_value		= 0x12910005,
 		.cpu_name		= "405EX Rev. D",
@@ -1374,9 +1373,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.icache_bsize		= 32,
 		.dcache_bsize		= 32,
 		.machine_check		= machine_check_4xx,
-		.platक्रमm		= "ppc405",
-	पूर्ण,
-	अणु	/* 405EXr Rev. A/B without Security */
+		.platform		= "ppc405",
+	},
+	{	/* 405EXr Rev. A/B without Security */
 		.pvr_mask		= 0xffff000f,
 		.pvr_value		= 0x12910001,
 		.cpu_name		= "405EXr Rev. A/B",
@@ -1387,9 +1386,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.icache_bsize		= 32,
 		.dcache_bsize		= 32,
 		.machine_check		= machine_check_4xx,
-		.platक्रमm		= "ppc405",
-	पूर्ण,
-	अणु	/* 405EXr Rev. C without Security */
+		.platform		= "ppc405",
+	},
+	{	/* 405EXr Rev. C without Security */
 		.pvr_mask		= 0xffff000f,
 		.pvr_value		= 0x12910009,
 		.cpu_name		= "405EXr Rev. C",
@@ -1400,9 +1399,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.icache_bsize		= 32,
 		.dcache_bsize		= 32,
 		.machine_check		= machine_check_4xx,
-		.platक्रमm		= "ppc405",
-	पूर्ण,
-	अणु	/* 405EXr Rev. C with Security */
+		.platform		= "ppc405",
+	},
+	{	/* 405EXr Rev. C with Security */
 		.pvr_mask		= 0xffff000f,
 		.pvr_value		= 0x1291000b,
 		.cpu_name		= "405EXr Rev. C",
@@ -1413,9 +1412,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.icache_bsize		= 32,
 		.dcache_bsize		= 32,
 		.machine_check		= machine_check_4xx,
-		.platक्रमm		= "ppc405",
-	पूर्ण,
-	अणु	/* 405EXr Rev. D without Security */
+		.platform		= "ppc405",
+	},
+	{	/* 405EXr Rev. D without Security */
 		.pvr_mask		= 0xffff000f,
 		.pvr_value		= 0x12910000,
 		.cpu_name		= "405EXr Rev. D",
@@ -1426,9 +1425,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.icache_bsize		= 32,
 		.dcache_bsize		= 32,
 		.machine_check		= machine_check_4xx,
-		.platक्रमm		= "ppc405",
-	पूर्ण,
-	अणु	/* 405EXr Rev. D with Security */
+		.platform		= "ppc405",
+	},
+	{	/* 405EXr Rev. D with Security */
 		.pvr_mask		= 0xffff000f,
 		.pvr_value		= 0x12910002,
 		.cpu_name		= "405EXr Rev. D",
@@ -1439,9 +1438,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.icache_bsize		= 32,
 		.dcache_bsize		= 32,
 		.machine_check		= machine_check_4xx,
-		.platक्रमm		= "ppc405",
-	पूर्ण,
-	अणु
+		.platform		= "ppc405",
+	},
+	{
 		/* 405EZ */
 		.pvr_mask		= 0xffff0000,
 		.pvr_value		= 0x41510000,
@@ -1453,9 +1452,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.icache_bsize		= 32,
 		.dcache_bsize		= 32,
 		.machine_check		= machine_check_4xx,
-		.platक्रमm		= "ppc405",
-	पूर्ण,
-	अणु	/* APM8018X */
+		.platform		= "ppc405",
+	},
+	{	/* APM8018X */
 		.pvr_mask		= 0xffff0000,
 		.pvr_value		= 0x7ff11432,
 		.cpu_name		= "APM8018X",
@@ -1466,9 +1465,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.icache_bsize		= 32,
 		.dcache_bsize		= 32,
 		.machine_check		= machine_check_4xx,
-		.platक्रमm		= "ppc405",
-	पूर्ण,
-	अणु	/* शेष match */
+		.platform		= "ppc405",
+	},
+	{	/* default match */
 		.pvr_mask		= 0x00000000,
 		.pvr_value		= 0x00000000,
 		.cpu_name		= "(generic 40x PPC)",
@@ -1479,13 +1478,13 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.icache_bsize		= 32,
 		.dcache_bsize		= 32,
 		.machine_check		= machine_check_4xx,
-		.platक्रमm		= "ppc405",
-	पूर्ण
+		.platform		= "ppc405",
+	}
 
-#पूर्ण_अगर /* CONFIG_40x */
-#अगर_घोषित CONFIG_44x
-#अगर_अघोषित CONFIG_PPC_47x
-	अणु
+#endif /* CONFIG_40x */
+#ifdef CONFIG_44x
+#ifndef CONFIG_PPC_47x
+	{
 		.pvr_mask		= 0xf0000fff,
 		.pvr_value		= 0x40000850,
 		.cpu_name		= "440GR Rev. A",
@@ -1495,9 +1494,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.icache_bsize		= 32,
 		.dcache_bsize		= 32,
 		.machine_check		= machine_check_4xx,
-		.platक्रमm		= "ppc440",
-	पूर्ण,
-	अणु /* Use logical PVR क्रम 440EP (logical pvr = pvr | 0x8) */
+		.platform		= "ppc440",
+	},
+	{ /* Use logical PVR for 440EP (logical pvr = pvr | 0x8) */
 		.pvr_mask		= 0xf0000fff,
 		.pvr_value		= 0x40000858,
 		.cpu_name		= "440EP Rev. A",
@@ -1508,9 +1507,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.dcache_bsize		= 32,
 		.cpu_setup		= __setup_cpu_440ep,
 		.machine_check		= machine_check_4xx,
-		.platक्रमm		= "ppc440",
-	पूर्ण,
-	अणु
+		.platform		= "ppc440",
+	},
+	{
 		.pvr_mask		= 0xf0000fff,
 		.pvr_value		= 0x400008d3,
 		.cpu_name		= "440GR Rev. B",
@@ -1520,9 +1519,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.icache_bsize		= 32,
 		.dcache_bsize		= 32,
 		.machine_check		= machine_check_4xx,
-		.platक्रमm		= "ppc440",
-	पूर्ण,
-	अणु /* Matches both physical and logical PVR क्रम 440EP (logical pvr = pvr | 0x8) */
+		.platform		= "ppc440",
+	},
+	{ /* Matches both physical and logical PVR for 440EP (logical pvr = pvr | 0x8) */
 		.pvr_mask		= 0xf0000ff7,
 		.pvr_value		= 0x400008d4,
 		.cpu_name		= "440EP Rev. C",
@@ -1533,9 +1532,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.dcache_bsize		= 32,
 		.cpu_setup		= __setup_cpu_440ep,
 		.machine_check		= machine_check_4xx,
-		.platक्रमm		= "ppc440",
-	पूर्ण,
-	अणु /* Use logical PVR क्रम 440EP (logical pvr = pvr | 0x8) */
+		.platform		= "ppc440",
+	},
+	{ /* Use logical PVR for 440EP (logical pvr = pvr | 0x8) */
 		.pvr_mask		= 0xf0000fff,
 		.pvr_value		= 0x400008db,
 		.cpu_name		= "440EP Rev. B",
@@ -1546,9 +1545,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.dcache_bsize		= 32,
 		.cpu_setup		= __setup_cpu_440ep,
 		.machine_check		= machine_check_4xx,
-		.platक्रमm		= "ppc440",
-	पूर्ण,
-	अणु /* 440GRX */
+		.platform		= "ppc440",
+	},
+	{ /* 440GRX */
 		.pvr_mask		= 0xf0000ffb,
 		.pvr_value		= 0x200008D0,
 		.cpu_name		= "440GRX",
@@ -1559,9 +1558,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.dcache_bsize		= 32,
 		.cpu_setup		= __setup_cpu_440grx,
 		.machine_check		= machine_check_440A,
-		.platक्रमm		= "ppc440",
-	पूर्ण,
-	अणु /* Use logical PVR क्रम 440EPx (logical pvr = pvr | 0x8) */
+		.platform		= "ppc440",
+	},
+	{ /* Use logical PVR for 440EPx (logical pvr = pvr | 0x8) */
 		.pvr_mask		= 0xf0000ffb,
 		.pvr_value		= 0x200008D8,
 		.cpu_name		= "440EPX",
@@ -1572,9 +1571,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.dcache_bsize		= 32,
 		.cpu_setup		= __setup_cpu_440epx,
 		.machine_check		= machine_check_440A,
-		.platक्रमm		= "ppc440",
-	पूर्ण,
-	अणु	/* 440GP Rev. B */
+		.platform		= "ppc440",
+	},
+	{	/* 440GP Rev. B */
 		.pvr_mask		= 0xf0000fff,
 		.pvr_value		= 0x40000440,
 		.cpu_name		= "440GP Rev. B",
@@ -1584,9 +1583,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.icache_bsize		= 32,
 		.dcache_bsize		= 32,
 		.machine_check		= machine_check_4xx,
-		.platक्रमm		= "ppc440gp",
-	पूर्ण,
-	अणु	/* 440GP Rev. C */
+		.platform		= "ppc440gp",
+	},
+	{	/* 440GP Rev. C */
 		.pvr_mask		= 0xf0000fff,
 		.pvr_value		= 0x40000481,
 		.cpu_name		= "440GP Rev. C",
@@ -1596,9 +1595,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.icache_bsize		= 32,
 		.dcache_bsize		= 32,
 		.machine_check		= machine_check_4xx,
-		.platक्रमm		= "ppc440gp",
-	पूर्ण,
-	अणु /* 440GX Rev. A */
+		.platform		= "ppc440gp",
+	},
+	{ /* 440GX Rev. A */
 		.pvr_mask		= 0xf0000fff,
 		.pvr_value		= 0x50000850,
 		.cpu_name		= "440GX Rev. A",
@@ -1609,9 +1608,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.dcache_bsize		= 32,
 		.cpu_setup		= __setup_cpu_440gx,
 		.machine_check		= machine_check_440A,
-		.platक्रमm		= "ppc440",
-	पूर्ण,
-	अणु /* 440GX Rev. B */
+		.platform		= "ppc440",
+	},
+	{ /* 440GX Rev. B */
 		.pvr_mask		= 0xf0000fff,
 		.pvr_value		= 0x50000851,
 		.cpu_name		= "440GX Rev. B",
@@ -1622,9 +1621,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.dcache_bsize		= 32,
 		.cpu_setup		= __setup_cpu_440gx,
 		.machine_check		= machine_check_440A,
-		.platक्रमm		= "ppc440",
-	पूर्ण,
-	अणु /* 440GX Rev. C */
+		.platform		= "ppc440",
+	},
+	{ /* 440GX Rev. C */
 		.pvr_mask		= 0xf0000fff,
 		.pvr_value		= 0x50000892,
 		.cpu_name		= "440GX Rev. C",
@@ -1635,9 +1634,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.dcache_bsize		= 32,
 		.cpu_setup		= __setup_cpu_440gx,
 		.machine_check		= machine_check_440A,
-		.platक्रमm		= "ppc440",
-	पूर्ण,
-	अणु /* 440GX Rev. F */
+		.platform		= "ppc440",
+	},
+	{ /* 440GX Rev. F */
 		.pvr_mask		= 0xf0000fff,
 		.pvr_value		= 0x50000894,
 		.cpu_name		= "440GX Rev. F",
@@ -1648,9 +1647,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.dcache_bsize		= 32,
 		.cpu_setup		= __setup_cpu_440gx,
 		.machine_check		= machine_check_440A,
-		.platक्रमm		= "ppc440",
-	पूर्ण,
-	अणु /* 440SP Rev. A */
+		.platform		= "ppc440",
+	},
+	{ /* 440SP Rev. A */
 		.pvr_mask		= 0xfff00fff,
 		.pvr_value		= 0x53200891,
 		.cpu_name		= "440SP Rev. A",
@@ -1660,9 +1659,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.icache_bsize		= 32,
 		.dcache_bsize		= 32,
 		.machine_check		= machine_check_4xx,
-		.platक्रमm		= "ppc440",
-	पूर्ण,
-	अणु /* 440SPe Rev. A */
+		.platform		= "ppc440",
+	},
+	{ /* 440SPe Rev. A */
 		.pvr_mask               = 0xfff00fff,
 		.pvr_value              = 0x53400890,
 		.cpu_name               = "440SPe Rev. A",
@@ -1673,9 +1672,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.dcache_bsize           = 32,
 		.cpu_setup		= __setup_cpu_440spe,
 		.machine_check		= machine_check_440A,
-		.platक्रमm               = "ppc440",
-	पूर्ण,
-	अणु /* 440SPe Rev. B */
+		.platform               = "ppc440",
+	},
+	{ /* 440SPe Rev. B */
 		.pvr_mask		= 0xfff00fff,
 		.pvr_value		= 0x53400891,
 		.cpu_name		= "440SPe Rev. B",
@@ -1686,9 +1685,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.dcache_bsize		= 32,
 		.cpu_setup		= __setup_cpu_440spe,
 		.machine_check		= machine_check_440A,
-		.platक्रमm		= "ppc440",
-	पूर्ण,
-	अणु /* 460EX */
+		.platform		= "ppc440",
+	},
+	{ /* 460EX */
 		.pvr_mask		= 0xffff0006,
 		.pvr_value		= 0x13020002,
 		.cpu_name		= "460EX",
@@ -1699,9 +1698,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.dcache_bsize		= 32,
 		.cpu_setup		= __setup_cpu_460ex,
 		.machine_check		= machine_check_440A,
-		.platक्रमm		= "ppc440",
-	पूर्ण,
-	अणु /* 460EX Rev B */
+		.platform		= "ppc440",
+	},
+	{ /* 460EX Rev B */
 		.pvr_mask		= 0xffff0007,
 		.pvr_value		= 0x13020004,
 		.cpu_name		= "460EX Rev. B",
@@ -1712,9 +1711,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.dcache_bsize		= 32,
 		.cpu_setup		= __setup_cpu_460ex,
 		.machine_check		= machine_check_440A,
-		.platक्रमm		= "ppc440",
-	पूर्ण,
-	अणु /* 460GT */
+		.platform		= "ppc440",
+	},
+	{ /* 460GT */
 		.pvr_mask		= 0xffff0006,
 		.pvr_value		= 0x13020000,
 		.cpu_name		= "460GT",
@@ -1725,9 +1724,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.dcache_bsize		= 32,
 		.cpu_setup		= __setup_cpu_460gt,
 		.machine_check		= machine_check_440A,
-		.platक्रमm		= "ppc440",
-	पूर्ण,
-	अणु /* 460GT Rev B */
+		.platform		= "ppc440",
+	},
+	{ /* 460GT Rev B */
 		.pvr_mask		= 0xffff0007,
 		.pvr_value		= 0x13020005,
 		.cpu_name		= "460GT Rev. B",
@@ -1738,9 +1737,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.dcache_bsize		= 32,
 		.cpu_setup		= __setup_cpu_460gt,
 		.machine_check		= machine_check_440A,
-		.platक्रमm		= "ppc440",
-	पूर्ण,
-	अणु /* 460SX */
+		.platform		= "ppc440",
+	},
+	{ /* 460SX */
 		.pvr_mask		= 0xffffff00,
 		.pvr_value		= 0x13541800,
 		.cpu_name		= "460SX",
@@ -1751,9 +1750,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.dcache_bsize		= 32,
 		.cpu_setup		= __setup_cpu_460sx,
 		.machine_check		= machine_check_440A,
-		.platक्रमm		= "ppc440",
-	पूर्ण,
-	अणु /* 464 in APM821xx */
+		.platform		= "ppc440",
+	},
+	{ /* 464 in APM821xx */
 		.pvr_mask		= 0xfffffff0,
 		.pvr_value		= 0x12C41C80,
 		.cpu_name		= "APM821XX",
@@ -1765,9 +1764,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.dcache_bsize		= 32,
 		.cpu_setup		= __setup_cpu_apm821xx,
 		.machine_check		= machine_check_440A,
-		.platक्रमm		= "ppc440",
-	पूर्ण,
-	अणु	/* शेष match */
+		.platform		= "ppc440",
+	},
+	{	/* default match */
 		.pvr_mask		= 0x00000000,
 		.pvr_value		= 0x00000000,
 		.cpu_name		= "(generic 44x PPC)",
@@ -1777,10 +1776,10 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.icache_bsize		= 32,
 		.dcache_bsize		= 32,
 		.machine_check		= machine_check_4xx,
-		.platक्रमm		= "ppc440",
-	पूर्ण
-#अन्यथा /* CONFIG_PPC_47x */
-	अणु /* 476 DD2 core */
+		.platform		= "ppc440",
+	}
+#else /* CONFIG_PPC_47x */
+	{ /* 476 DD2 core */
 		.pvr_mask		= 0xffffffff,
 		.pvr_value		= 0x11a52080,
 		.cpu_name		= "476",
@@ -1792,9 +1791,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.icache_bsize		= 32,
 		.dcache_bsize		= 128,
 		.machine_check		= machine_check_47x,
-		.platक्रमm		= "ppc470",
-	पूर्ण,
-	अणु /* 476fpe */
+		.platform		= "ppc470",
+	},
+	{ /* 476fpe */
 		.pvr_mask		= 0xffff0000,
 		.pvr_value		= 0x7ff50000,
 		.cpu_name		= "476fpe",
@@ -1806,9 +1805,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.icache_bsize		= 32,
 		.dcache_bsize		= 128,
 		.machine_check		= machine_check_47x,
-		.platक्रमm		= "ppc470",
-	पूर्ण,
-	अणु /* 476 iss */
+		.platform		= "ppc470",
+	},
+	{ /* 476 iss */
 		.pvr_mask		= 0xffff0000,
 		.pvr_value		= 0x00050000,
 		.cpu_name		= "476",
@@ -1820,9 +1819,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.icache_bsize		= 32,
 		.dcache_bsize		= 128,
 		.machine_check		= machine_check_47x,
-		.platक्रमm		= "ppc470",
-	पूर्ण,
-	अणु /* 476 others */
+		.platform		= "ppc470",
+	},
+	{ /* 476 others */
 		.pvr_mask		= 0xffff0000,
 		.pvr_value		= 0x11a50000,
 		.cpu_name		= "476",
@@ -1834,9 +1833,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.icache_bsize		= 32,
 		.dcache_bsize		= 128,
 		.machine_check		= machine_check_47x,
-		.platक्रमm		= "ppc470",
-	पूर्ण,
-	अणु	/* शेष match */
+		.platform		= "ppc470",
+	},
+	{	/* default match */
 		.pvr_mask		= 0x00000000,
 		.pvr_value		= 0x00000000,
 		.cpu_name		= "(generic 47x PPC)",
@@ -1846,15 +1845,15 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.icache_bsize		= 32,
 		.dcache_bsize		= 128,
 		.machine_check		= machine_check_47x,
-		.platक्रमm		= "ppc470",
-	पूर्ण
-#पूर्ण_अगर /* CONFIG_PPC_47x */
-#पूर्ण_अगर /* CONFIG_44x */
-#पूर्ण_अगर /* CONFIG_PPC32 */
-#अगर_घोषित CONFIG_E500
-#अगर_घोषित CONFIG_PPC32
-#अगर_अघोषित CONFIG_PPC_E500MC
-	अणु	/* e500 */
+		.platform		= "ppc470",
+	}
+#endif /* CONFIG_PPC_47x */
+#endif /* CONFIG_44x */
+#endif /* CONFIG_PPC32 */
+#ifdef CONFIG_E500
+#ifdef CONFIG_PPC32
+#ifndef CONFIG_PPC_E500MC
+	{	/* e500 */
 		.pvr_mask		= 0xffff0000,
 		.pvr_value		= 0x80200000,
 		.cpu_name		= "e500",
@@ -1870,9 +1869,9 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.oprofile_cpu_type	= "ppc/e500",
 		.cpu_setup		= __setup_cpu_e500v1,
 		.machine_check		= machine_check_e500,
-		.platक्रमm		= "ppc8540",
-	पूर्ण,
-	अणु	/* e500v2 */
+		.platform		= "ppc8540",
+	},
+	{	/* e500v2 */
 		.pvr_mask		= 0xffff0000,
 		.pvr_value		= 0x80210000,
 		.cpu_name		= "e500v2",
@@ -1889,11 +1888,11 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.oprofile_cpu_type	= "ppc/e500",
 		.cpu_setup		= __setup_cpu_e500v2,
 		.machine_check		= machine_check_e500,
-		.platक्रमm		= "ppc8548",
-		.cpu_करोwn_flush		= cpu_करोwn_flush_e500v2,
-	पूर्ण,
-#अन्यथा
-	अणु	/* e500mc */
+		.platform		= "ppc8548",
+		.cpu_down_flush		= cpu_down_flush_e500v2,
+	},
+#else
+	{	/* e500mc */
 		.pvr_mask		= 0xffff0000,
 		.pvr_value		= 0x80230000,
 		.cpu_name		= "e500mc",
@@ -1908,13 +1907,13 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.oprofile_cpu_type	= "ppc/e500mc",
 		.cpu_setup		= __setup_cpu_e500mc,
 		.machine_check		= machine_check_e500mc,
-		.platक्रमm		= "ppce500mc",
-		.cpu_करोwn_flush		= cpu_करोwn_flush_e500mc,
-	पूर्ण,
-#पूर्ण_अगर /* CONFIG_PPC_E500MC */
-#पूर्ण_अगर /* CONFIG_PPC32 */
-#अगर_घोषित CONFIG_PPC_E500MC
-	अणु	/* e5500 */
+		.platform		= "ppce500mc",
+		.cpu_down_flush		= cpu_down_flush_e500mc,
+	},
+#endif /* CONFIG_PPC_E500MC */
+#endif /* CONFIG_PPC32 */
+#ifdef CONFIG_PPC_E500MC
+	{	/* e5500 */
 		.pvr_mask		= 0xffff0000,
 		.pvr_value		= 0x80240000,
 		.cpu_name		= "e5500",
@@ -1928,14 +1927,14 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.num_pmcs		= 4,
 		.oprofile_cpu_type	= "ppc/e500mc",
 		.cpu_setup		= __setup_cpu_e5500,
-#अगर_अघोषित CONFIG_PPC32
+#ifndef CONFIG_PPC32
 		.cpu_restore		= __restore_cpu_e5500,
-#पूर्ण_अगर
+#endif
 		.machine_check		= machine_check_e500mc,
-		.platक्रमm		= "ppce5500",
-		.cpu_करोwn_flush		= cpu_करोwn_flush_e5500,
-	पूर्ण,
-	अणु	/* e6500 */
+		.platform		= "ppce5500",
+		.cpu_down_flush		= cpu_down_flush_e5500,
+	},
+	{	/* e6500 */
 		.pvr_mask		= 0xffff0000,
 		.pvr_value		= 0x80400000,
 		.cpu_name		= "e6500",
@@ -1950,16 +1949,16 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.num_pmcs		= 6,
 		.oprofile_cpu_type	= "ppc/e6500",
 		.cpu_setup		= __setup_cpu_e6500,
-#अगर_अघोषित CONFIG_PPC32
+#ifndef CONFIG_PPC32
 		.cpu_restore		= __restore_cpu_e6500,
-#पूर्ण_अगर
+#endif
 		.machine_check		= machine_check_e500mc,
-		.platक्रमm		= "ppce6500",
-		.cpu_करोwn_flush		= cpu_करोwn_flush_e6500,
-	पूर्ण,
-#पूर्ण_अगर /* CONFIG_PPC_E500MC */
-#अगर_घोषित CONFIG_PPC32
-	अणु	/* शेष match */
+		.platform		= "ppce6500",
+		.cpu_down_flush		= cpu_down_flush_e6500,
+	},
+#endif /* CONFIG_PPC_E500MC */
+#ifdef CONFIG_PPC32
+	{	/* default match */
 		.pvr_mask		= 0x00000000,
 		.pvr_value		= 0x00000000,
 		.cpu_name		= "(generic E500 PPC)",
@@ -1971,166 +1970,166 @@ EXPORT_SYMBOL(cur_cpu_spec);
 		.icache_bsize		= 32,
 		.dcache_bsize		= 32,
 		.machine_check		= machine_check_e500,
-		.platक्रमm		= "powerpc",
-	पूर्ण
-#पूर्ण_अगर /* CONFIG_PPC32 */
-#पूर्ण_अगर /* CONFIG_E500 */
-पूर्ण;
+		.platform		= "powerpc",
+	}
+#endif /* CONFIG_PPC32 */
+#endif /* CONFIG_E500 */
+};
 
-व्योम __init set_cur_cpu_spec(काष्ठा cpu_spec *s)
-अणु
-	काष्ठा cpu_spec *t = &the_cpu_spec;
+void __init set_cur_cpu_spec(struct cpu_spec *s)
+{
+	struct cpu_spec *t = &the_cpu_spec;
 
 	t = PTRRELOC(t);
 	/*
-	 * use स_नकल() instead of *t = *s so that GCC replaces it
-	 * by __स_नकल() when KASAN is active
+	 * use memcpy() instead of *t = *s so that GCC replaces it
+	 * by __memcpy() when KASAN is active
 	 */
-	स_नकल(t, s, माप(*t));
+	memcpy(t, s, sizeof(*t));
 
 	*PTRRELOC(&cur_cpu_spec) = &the_cpu_spec;
-पूर्ण
+}
 
-अटल काष्ठा cpu_spec * __init setup_cpu_spec(अचिन्हित दीर्घ offset,
-					       काष्ठा cpu_spec *s)
-अणु
-	काष्ठा cpu_spec *t = &the_cpu_spec;
-	काष्ठा cpu_spec old;
+static struct cpu_spec * __init setup_cpu_spec(unsigned long offset,
+					       struct cpu_spec *s)
+{
+	struct cpu_spec *t = &the_cpu_spec;
+	struct cpu_spec old;
 
 	t = PTRRELOC(t);
 	old = *t;
 
 	/*
-	 * Copy everything, then करो fixups. Use स_नकल() instead of *t = *s
-	 * so that GCC replaces it by __स_नकल() when KASAN is active
+	 * Copy everything, then do fixups. Use memcpy() instead of *t = *s
+	 * so that GCC replaces it by __memcpy() when KASAN is active
 	 */
-	स_नकल(t, s, माप(*t));
+	memcpy(t, s, sizeof(*t));
 
 	/*
 	 * If we are overriding a previous value derived from the real
 	 * PVR with a new value obtained using a logical PVR value,
-	 * करोn't modअगरy the perक्रमmance monitor fields.
+	 * don't modify the performance monitor fields.
 	 */
-	अगर (old.num_pmcs && !s->num_pmcs) अणु
+	if (old.num_pmcs && !s->num_pmcs) {
 		t->num_pmcs = old.num_pmcs;
 		t->pmc_type = old.pmc_type;
 
 		/*
-		 * If we have passed through this logic once beक्रमe and
-		 * have pulled the शेष हाल because the real PVR was
+		 * If we have passed through this logic once before and
+		 * have pulled the default case because the real PVR was
 		 * not found inside cpu_specs[], then we are possibly
-		 * running in compatibility mode. In that हाल, let the
+		 * running in compatibility mode. In that case, let the
 		 * oprofiler know which set of compatibility counters to
 		 * pull from by making sure the oprofile_cpu_type string
 		 * is set to that of compatibility mode. If the
-		 * oprofile_cpu_type alपढ़ोy has a value, then we are
+		 * oprofile_cpu_type already has a value, then we are
 		 * possibly overriding a real PVR with a logical one,
-		 * and, in that हाल, keep the current value क्रम
+		 * and, in that case, keep the current value for
 		 * oprofile_cpu_type. Futhermore, let's ensure that the
-		 * fix क्रम the PMAO bug is enabled on compatibility mode.
+		 * fix for the PMAO bug is enabled on compatibility mode.
 		 */
-		अगर (old.oprofile_cpu_type != शून्य) अणु
+		if (old.oprofile_cpu_type != NULL) {
 			t->oprofile_cpu_type = old.oprofile_cpu_type;
 			t->cpu_features |= old.cpu_features & CPU_FTR_PMAO_BUG;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	*PTRRELOC(&cur_cpu_spec) = &the_cpu_spec;
 
 	/*
-	 * Set the base platक्रमm string once; assumes
+	 * Set the base platform string once; assumes
 	 * we're called with real pvr first.
 	 */
-	अगर (*PTRRELOC(&घातerpc_base_platक्रमm) == शून्य)
-		*PTRRELOC(&घातerpc_base_platक्रमm) = t->platक्रमm;
+	if (*PTRRELOC(&powerpc_base_platform) == NULL)
+		*PTRRELOC(&powerpc_base_platform) = t->platform;
 
-#अगर defined(CONFIG_PPC64) || defined(CONFIG_BOOKE)
-	/* ppc64 and booke expect identअगरy_cpu to also call setup_cpu क्रम
-	 * that processor. I will consolidate that at a later समय, क्रम now,
-	 * just use #अगर_घोषित. We also करोn't need to PTRRELOC the function
-	 * poपूर्णांकer on ppc64 and booke as we are running at 0 in real mode
+#if defined(CONFIG_PPC64) || defined(CONFIG_BOOKE)
+	/* ppc64 and booke expect identify_cpu to also call setup_cpu for
+	 * that processor. I will consolidate that at a later time, for now,
+	 * just use #ifdef. We also don't need to PTRRELOC the function
+	 * pointer on ppc64 and booke as we are running at 0 in real mode
 	 * on ppc64 and reloc_offset is always 0 on booke.
 	 */
-	अगर (t->cpu_setup) अणु
+	if (t->cpu_setup) {
 		t->cpu_setup(offset, t);
-	पूर्ण
-#पूर्ण_अगर /* CONFIG_PPC64 || CONFIG_BOOKE */
+	}
+#endif /* CONFIG_PPC64 || CONFIG_BOOKE */
 
-	वापस t;
-पूर्ण
+	return t;
+}
 
-काष्ठा cpu_spec * __init identअगरy_cpu(अचिन्हित दीर्घ offset, अचिन्हित पूर्णांक pvr)
-अणु
-	काष्ठा cpu_spec *s = cpu_specs;
-	पूर्णांक i;
+struct cpu_spec * __init identify_cpu(unsigned long offset, unsigned int pvr)
+{
+	struct cpu_spec *s = cpu_specs;
+	int i;
 
 	s = PTRRELOC(s);
 
-	क्रम (i = 0; i < ARRAY_SIZE(cpu_specs); i++,s++) अणु
-		अगर ((pvr & s->pvr_mask) == s->pvr_value)
-			वापस setup_cpu_spec(offset, s);
-	पूर्ण
+	for (i = 0; i < ARRAY_SIZE(cpu_specs); i++,s++) {
+		if ((pvr & s->pvr_mask) == s->pvr_value)
+			return setup_cpu_spec(offset, s);
+	}
 
 	BUG();
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /*
- * Used by cpufeatures to get the name क्रम CPUs with a PVR table.
- * If they करोn't hae a PVR table, cpufeatures माला_लो the name from
+ * Used by cpufeatures to get the name for CPUs with a PVR table.
+ * If they don't hae a PVR table, cpufeatures gets the name from
  * cpu device-tree node.
  */
-व्योम __init identअगरy_cpu_name(अचिन्हित पूर्णांक pvr)
-अणु
-	काष्ठा cpu_spec *s = cpu_specs;
-	काष्ठा cpu_spec *t = &the_cpu_spec;
-	पूर्णांक i;
+void __init identify_cpu_name(unsigned int pvr)
+{
+	struct cpu_spec *s = cpu_specs;
+	struct cpu_spec *t = &the_cpu_spec;
+	int i;
 
 	s = PTRRELOC(s);
 	t = PTRRELOC(t);
 
-	क्रम (i = 0; i < ARRAY_SIZE(cpu_specs); i++,s++) अणु
-		अगर ((pvr & s->pvr_mask) == s->pvr_value) अणु
+	for (i = 0; i < ARRAY_SIZE(cpu_specs); i++,s++) {
+		if ((pvr & s->pvr_mask) == s->pvr_value) {
 			t->cpu_name = s->cpu_name;
-			वापस;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			return;
+		}
+	}
+}
 
 
-#अगर_घोषित CONFIG_JUMP_LABEL_FEATURE_CHECKS
-काष्ठा अटल_key_true cpu_feature_keys[NUM_CPU_FTR_KEYS] = अणु
+#ifdef CONFIG_JUMP_LABEL_FEATURE_CHECKS
+struct static_key_true cpu_feature_keys[NUM_CPU_FTR_KEYS] = {
 			[0 ... NUM_CPU_FTR_KEYS - 1] = STATIC_KEY_TRUE_INIT
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(cpu_feature_keys);
 
-व्योम __init cpu_feature_keys_init(व्योम)
-अणु
-	पूर्णांक i;
+void __init cpu_feature_keys_init(void)
+{
+	int i;
 
-	क्रम (i = 0; i < NUM_CPU_FTR_KEYS; i++) अणु
-		अचिन्हित दीर्घ f = 1ul << i;
+	for (i = 0; i < NUM_CPU_FTR_KEYS; i++) {
+		unsigned long f = 1ul << i;
 
-		अगर (!(cur_cpu_spec->cpu_features & f))
-			अटल_branch_disable(&cpu_feature_keys[i]);
-	पूर्ण
-पूर्ण
+		if (!(cur_cpu_spec->cpu_features & f))
+			static_branch_disable(&cpu_feature_keys[i]);
+	}
+}
 
-काष्ठा अटल_key_true mmu_feature_keys[NUM_MMU_FTR_KEYS] = अणु
+struct static_key_true mmu_feature_keys[NUM_MMU_FTR_KEYS] = {
 			[0 ... NUM_MMU_FTR_KEYS - 1] = STATIC_KEY_TRUE_INIT
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(mmu_feature_keys);
 
-व्योम __init mmu_feature_keys_init(व्योम)
-अणु
-	पूर्णांक i;
+void __init mmu_feature_keys_init(void)
+{
+	int i;
 
-	क्रम (i = 0; i < NUM_MMU_FTR_KEYS; i++) अणु
-		अचिन्हित दीर्घ f = 1ul << i;
+	for (i = 0; i < NUM_MMU_FTR_KEYS; i++) {
+		unsigned long f = 1ul << i;
 
-		अगर (!(cur_cpu_spec->mmu_features & f))
-			अटल_branch_disable(&mmu_feature_keys[i]);
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर
+		if (!(cur_cpu_spec->mmu_features & f))
+			static_branch_disable(&mmu_feature_keys[i]);
+	}
+}
+#endif

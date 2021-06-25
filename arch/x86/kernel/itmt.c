@@ -1,180 +1,179 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * iपंचांगt.c: Support Intel Turbo Boost Max Technology 3.0
+ * itmt.c: Support Intel Turbo Boost Max Technology 3.0
  *
  * (C) Copyright 2016 Intel Corporation
- * Author: Tim Chen <tim.c.chen@linux.पूर्णांकel.com>
+ * Author: Tim Chen <tim.c.chen@linux.intel.com>
  *
- * On platक्रमms supporting Intel Turbo Boost Max Technology 3.0, (ITMT),
+ * On platforms supporting Intel Turbo Boost Max Technology 3.0, (ITMT),
  * the maximum turbo frequencies of some cores in a CPU package may be
- * higher than क्रम the other cores in the same package.  In that हाल,
- * better perक्रमmance can be achieved by making the scheduler prefer
+ * higher than for the other cores in the same package.  In that case,
+ * better performance can be achieved by making the scheduler prefer
  * to run tasks on the CPUs with higher max turbo frequencies.
  *
- * This file provides functions and data काष्ठाures क्रम enabling the
+ * This file provides functions and data structures for enabling the
  * scheduler to favor scheduling on cores can be boosted to a higher
  * frequency under ITMT.
  */
 
-#समावेश <linux/sched.h>
-#समावेश <linux/cpumask.h>
-#समावेश <linux/cpuset.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/sysctl.h>
-#समावेश <linux/nodemask.h>
+#include <linux/sched.h>
+#include <linux/cpumask.h>
+#include <linux/cpuset.h>
+#include <linux/mutex.h>
+#include <linux/sysctl.h>
+#include <linux/nodemask.h>
 
-अटल DEFINE_MUTEX(iपंचांगt_update_mutex);
-DEFINE_PER_CPU_READ_MOSTLY(पूर्णांक, sched_core_priority);
+static DEFINE_MUTEX(itmt_update_mutex);
+DEFINE_PER_CPU_READ_MOSTLY(int, sched_core_priority);
 
-/* Boolean to track अगर प्रणाली has ITMT capabilities */
-अटल bool __पढ़ो_mostly sched_iपंचांगt_capable;
+/* Boolean to track if system has ITMT capabilities */
+static bool __read_mostly sched_itmt_capable;
 
 /*
  * Boolean to control whether we want to move processes to cpu capable
- * of higher turbo frequency क्रम cpus supporting Intel Turbo Boost Max
+ * of higher turbo frequency for cpus supporting Intel Turbo Boost Max
  * Technology 3.0.
  *
- * It can be set via /proc/sys/kernel/sched_iपंचांगt_enabled
+ * It can be set via /proc/sys/kernel/sched_itmt_enabled
  */
-अचिन्हित पूर्णांक __पढ़ो_mostly sysctl_sched_iपंचांगt_enabled;
+unsigned int __read_mostly sysctl_sched_itmt_enabled;
 
-अटल पूर्णांक sched_iपंचांगt_update_handler(काष्ठा ctl_table *table, पूर्णांक ग_लिखो,
-				     व्योम *buffer, माप_प्रकार *lenp, loff_t *ppos)
-अणु
-	अचिन्हित पूर्णांक old_sysctl;
-	पूर्णांक ret;
+static int sched_itmt_update_handler(struct ctl_table *table, int write,
+				     void *buffer, size_t *lenp, loff_t *ppos)
+{
+	unsigned int old_sysctl;
+	int ret;
 
-	mutex_lock(&iपंचांगt_update_mutex);
+	mutex_lock(&itmt_update_mutex);
 
-	अगर (!sched_iपंचांगt_capable) अणु
-		mutex_unlock(&iपंचांगt_update_mutex);
-		वापस -EINVAL;
-	पूर्ण
+	if (!sched_itmt_capable) {
+		mutex_unlock(&itmt_update_mutex);
+		return -EINVAL;
+	}
 
-	old_sysctl = sysctl_sched_iपंचांगt_enabled;
-	ret = proc_करोपूर्णांकvec_minmax(table, ग_लिखो, buffer, lenp, ppos);
+	old_sysctl = sysctl_sched_itmt_enabled;
+	ret = proc_dointvec_minmax(table, write, buffer, lenp, ppos);
 
-	अगर (!ret && ग_लिखो && old_sysctl != sysctl_sched_iपंचांगt_enabled) अणु
+	if (!ret && write && old_sysctl != sysctl_sched_itmt_enabled) {
 		x86_topology_update = true;
-		rebuild_sched_करोमुख्यs();
-	पूर्ण
+		rebuild_sched_domains();
+	}
 
-	mutex_unlock(&iपंचांगt_update_mutex);
+	mutex_unlock(&itmt_update_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा ctl_table iपंचांगt_kern_table[] = अणु
-	अणु
+static struct ctl_table itmt_kern_table[] = {
+	{
 		.procname	= "sched_itmt_enabled",
-		.data		= &sysctl_sched_iपंचांगt_enabled,
-		.maxlen		= माप(अचिन्हित पूर्णांक),
+		.data		= &sysctl_sched_itmt_enabled,
+		.maxlen		= sizeof(unsigned int),
 		.mode		= 0644,
-		.proc_handler	= sched_iपंचांगt_update_handler,
+		.proc_handler	= sched_itmt_update_handler,
 		.extra1		= SYSCTL_ZERO,
 		.extra2		= SYSCTL_ONE,
-	पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+	},
+	{}
+};
 
-अटल काष्ठा ctl_table iपंचांगt_root_table[] = अणु
-	अणु
+static struct ctl_table itmt_root_table[] = {
+	{
 		.procname	= "kernel",
 		.mode		= 0555,
-		.child		= iपंचांगt_kern_table,
-	पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+		.child		= itmt_kern_table,
+	},
+	{}
+};
 
-अटल काष्ठा ctl_table_header *iपंचांगt_sysctl_header;
+static struct ctl_table_header *itmt_sysctl_header;
 
 /**
- * sched_set_iपंचांगt_support() - Indicate platक्रमm supports ITMT
+ * sched_set_itmt_support() - Indicate platform supports ITMT
  *
- * This function is used by the OS to indicate to scheduler that the platक्रमm
+ * This function is used by the OS to indicate to scheduler that the platform
  * is capable of supporting the ITMT feature.
  *
- * The current scheme has the pstate driver detects अगर the प्रणाली
- * is ITMT capable and call sched_set_iपंचांगt_support.
+ * The current scheme has the pstate driver detects if the system
+ * is ITMT capable and call sched_set_itmt_support.
  *
- * This must be करोne only after sched_set_iपंचांगt_core_prio
+ * This must be done only after sched_set_itmt_core_prio
  * has been called to set the cpus' priorities.
  * It must not be called with cpu hot plug lock
- * held as we need to acquire the lock to rebuild sched करोमुख्यs
+ * held as we need to acquire the lock to rebuild sched domains
  * later.
  *
  * Return: 0 on success
  */
-पूर्णांक sched_set_iपंचांगt_support(व्योम)
-अणु
-	mutex_lock(&iपंचांगt_update_mutex);
+int sched_set_itmt_support(void)
+{
+	mutex_lock(&itmt_update_mutex);
 
-	अगर (sched_iपंचांगt_capable) अणु
-		mutex_unlock(&iपंचांगt_update_mutex);
-		वापस 0;
-	पूर्ण
+	if (sched_itmt_capable) {
+		mutex_unlock(&itmt_update_mutex);
+		return 0;
+	}
 
-	iपंचांगt_sysctl_header = रेजिस्टर_sysctl_table(iपंचांगt_root_table);
-	अगर (!iपंचांगt_sysctl_header) अणु
-		mutex_unlock(&iपंचांगt_update_mutex);
-		वापस -ENOMEM;
-	पूर्ण
+	itmt_sysctl_header = register_sysctl_table(itmt_root_table);
+	if (!itmt_sysctl_header) {
+		mutex_unlock(&itmt_update_mutex);
+		return -ENOMEM;
+	}
 
-	sched_iपंचांगt_capable = true;
+	sched_itmt_capable = true;
 
-	sysctl_sched_iपंचांगt_enabled = 1;
+	sysctl_sched_itmt_enabled = 1;
 
 	x86_topology_update = true;
-	rebuild_sched_करोमुख्यs();
+	rebuild_sched_domains();
 
-	mutex_unlock(&iपंचांगt_update_mutex);
+	mutex_unlock(&itmt_update_mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * sched_clear_iपंचांगt_support() - Revoke platक्रमm's support of ITMT
+ * sched_clear_itmt_support() - Revoke platform's support of ITMT
  *
  * This function is used by the OS to indicate that it has
- * revoked the platक्रमm's support of ITMT feature.
+ * revoked the platform's support of ITMT feature.
  *
  * It must not be called with cpu hot plug lock
- * held as we need to acquire the lock to rebuild sched करोमुख्यs
+ * held as we need to acquire the lock to rebuild sched domains
  * later.
  */
-व्योम sched_clear_iपंचांगt_support(व्योम)
-अणु
-	mutex_lock(&iपंचांगt_update_mutex);
+void sched_clear_itmt_support(void)
+{
+	mutex_lock(&itmt_update_mutex);
 
-	अगर (!sched_iपंचांगt_capable) अणु
-		mutex_unlock(&iपंचांगt_update_mutex);
-		वापस;
-	पूर्ण
-	sched_iपंचांगt_capable = false;
+	if (!sched_itmt_capable) {
+		mutex_unlock(&itmt_update_mutex);
+		return;
+	}
+	sched_itmt_capable = false;
 
-	अगर (iपंचांगt_sysctl_header) अणु
-		unरेजिस्टर_sysctl_table(iपंचांगt_sysctl_header);
-		iपंचांगt_sysctl_header = शून्य;
-	पूर्ण
+	if (itmt_sysctl_header) {
+		unregister_sysctl_table(itmt_sysctl_header);
+		itmt_sysctl_header = NULL;
+	}
 
-	अगर (sysctl_sched_iपंचांगt_enabled) अणु
-		/* disable sched_iपंचांगt अगर we are no दीर्घer ITMT capable */
-		sysctl_sched_iपंचांगt_enabled = 0;
+	if (sysctl_sched_itmt_enabled) {
+		/* disable sched_itmt if we are no longer ITMT capable */
+		sysctl_sched_itmt_enabled = 0;
 		x86_topology_update = true;
-		rebuild_sched_करोमुख्यs();
-	पूर्ण
+		rebuild_sched_domains();
+	}
 
-	mutex_unlock(&iपंचांगt_update_mutex);
-पूर्ण
+	mutex_unlock(&itmt_update_mutex);
+}
 
-पूर्णांक arch_asym_cpu_priority(पूर्णांक cpu)
-अणु
-	वापस per_cpu(sched_core_priority, cpu);
-पूर्ण
+int arch_asym_cpu_priority(int cpu)
+{
+	return per_cpu(sched_core_priority, cpu);
+}
 
 /**
- * sched_set_iपंचांगt_core_prio() - Set CPU priority based on ITMT
+ * sched_set_itmt_core_prio() - Set CPU priority based on ITMT
  * @prio:	Priority of cpu core
  * @core_cpu:	The cpu number associated with the core
  *
@@ -183,16 +182,16 @@ DEFINE_PER_CPU_READ_MOSTLY(पूर्णांक, sched_core_priority);
  * to the max boost frequency. CPU with higher boost
  * frequency will receive higher priority.
  *
- * No need to rebuild sched करोमुख्य after updating
- * the CPU priorities. The sched करोमुख्यs have no
+ * No need to rebuild sched domain after updating
+ * the CPU priorities. The sched domains have no
  * dependency on CPU priorities.
  */
-व्योम sched_set_iपंचांगt_core_prio(पूर्णांक prio, पूर्णांक core_cpu)
-अणु
-	पूर्णांक cpu, i = 1;
+void sched_set_itmt_core_prio(int prio, int core_cpu)
+{
+	int cpu, i = 1;
 
-	क्रम_each_cpu(cpu, topology_sibling_cpumask(core_cpu)) अणु
-		पूर्णांक smt_prio;
+	for_each_cpu(cpu, topology_sibling_cpumask(core_cpu)) {
+		int smt_prio;
 
 		/*
 		 * Ensure that the siblings are moved to the end
@@ -202,5 +201,5 @@ DEFINE_PER_CPU_READ_MOSTLY(पूर्णांक, sched_core_priority);
 		smt_prio = prio * smp_num_siblings / i;
 		per_cpu(sched_core_priority, cpu) = smt_prio;
 		i++;
-	पूर्ण
-पूर्ण
+	}
+}

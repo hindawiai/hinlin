@@ -1,9 +1,8 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*---------------------------------------------------------------------------+
  |  fpu_etc.c                                                                |
  |                                                                           |
- | Implement a few FPU inकाष्ठाions.                                         |
+ | Implement a few FPU instructions.                                         |
  |                                                                           |
  | Copyright (C) 1992,1993,1994,1997                                         |
  |                       W. Metzenthen, 22 Parker St, Ormond, Vic 3163,      |
@@ -12,121 +11,121 @@
  |                                                                           |
  +---------------------------------------------------------------------------*/
 
-#समावेश "fpu_system.h"
-#समावेश "exception.h"
-#समावेश "fpu_emu.h"
-#समावेश "status_w.h"
-#समावेश "reg_constant.h"
+#include "fpu_system.h"
+#include "exception.h"
+#include "fpu_emu.h"
+#include "status_w.h"
+#include "reg_constant.h"
 
-अटल व्योम fchs(FPU_REG *st0_ptr, u_अक्षर st0tag)
-अणु
-	अगर (st0tag ^ TAG_Empty) अणु
+static void fchs(FPU_REG *st0_ptr, u_char st0tag)
+{
+	if (st0tag ^ TAG_Empty) {
 		signbyte(st0_ptr) ^= SIGN_NEG;
 		clear_C1();
-	पूर्ण अन्यथा
+	} else
 		FPU_stack_underflow();
-पूर्ण
+}
 
-अटल व्योम भ_असल(FPU_REG *st0_ptr, u_अक्षर st0tag)
-अणु
-	अगर (st0tag ^ TAG_Empty) अणु
+static void fabs(FPU_REG *st0_ptr, u_char st0tag)
+{
+	if (st0tag ^ TAG_Empty) {
 		setpositive(st0_ptr);
 		clear_C1();
-	पूर्ण अन्यथा
+	} else
 		FPU_stack_underflow();
-पूर्ण
+}
 
-अटल व्योम ftst_(FPU_REG *st0_ptr, u_अक्षर st0tag)
-अणु
-	चयन (st0tag) अणु
-	हाल TAG_Zero:
+static void ftst_(FPU_REG *st0_ptr, u_char st0tag)
+{
+	switch (st0tag) {
+	case TAG_Zero:
 		setcc(SW_C3);
-		अवरोध;
-	हाल TAG_Valid:
-		अगर (माला_लोign(st0_ptr) == SIGN_POS)
+		break;
+	case TAG_Valid:
+		if (getsign(st0_ptr) == SIGN_POS)
 			setcc(0);
-		अन्यथा
+		else
 			setcc(SW_C0);
-		अवरोध;
-	हाल TAG_Special:
-		चयन (FPU_Special(st0_ptr)) अणु
-		हाल TW_Denormal:
-			अगर (माला_लोign(st0_ptr) == SIGN_POS)
+		break;
+	case TAG_Special:
+		switch (FPU_Special(st0_ptr)) {
+		case TW_Denormal:
+			if (getsign(st0_ptr) == SIGN_POS)
 				setcc(0);
-			अन्यथा
+			else
 				setcc(SW_C0);
-			अगर (denormal_opeअक्रम() < 0) अणु
-#अगर_घोषित PECULIAR_486
+			if (denormal_operand() < 0) {
+#ifdef PECULIAR_486
 				/* This is weird! */
-				अगर (माला_लोign(st0_ptr) == SIGN_POS)
+				if (getsign(st0_ptr) == SIGN_POS)
 					setcc(SW_C3);
-#पूर्ण_अगर /* PECULIAR_486 */
-				वापस;
-			पूर्ण
-			अवरोध;
-		हाल TW_NaN:
-			setcc(SW_C0 | SW_C2 | SW_C3);	/* Opeअक्रम is not comparable */
+#endif /* PECULIAR_486 */
+				return;
+			}
+			break;
+		case TW_NaN:
+			setcc(SW_C0 | SW_C2 | SW_C3);	/* Operand is not comparable */
 			EXCEPTION(EX_Invalid);
-			अवरोध;
-		हाल TW_Infinity:
-			अगर (माला_लोign(st0_ptr) == SIGN_POS)
+			break;
+		case TW_Infinity:
+			if (getsign(st0_ptr) == SIGN_POS)
 				setcc(0);
-			अन्यथा
+			else
 				setcc(SW_C0);
-			अवरोध;
-		शेष:
-			setcc(SW_C0 | SW_C2 | SW_C3);	/* Opeअक्रम is not comparable */
+			break;
+		default:
+			setcc(SW_C0 | SW_C2 | SW_C3);	/* Operand is not comparable */
 			EXCEPTION(EX_INTERNAL | 0x14);
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल TAG_Empty:
+			break;
+		}
+		break;
+	case TAG_Empty:
 		setcc(SW_C0 | SW_C2 | SW_C3);
 		EXCEPTION(EX_StackUnder);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम fxam(FPU_REG *st0_ptr, u_अक्षर st0tag)
-अणु
-	पूर्णांक c = 0;
-	चयन (st0tag) अणु
-	हाल TAG_Empty:
+static void fxam(FPU_REG *st0_ptr, u_char st0tag)
+{
+	int c = 0;
+	switch (st0tag) {
+	case TAG_Empty:
 		c = SW_C3 | SW_C0;
-		अवरोध;
-	हाल TAG_Zero:
+		break;
+	case TAG_Zero:
 		c = SW_C3;
-		अवरोध;
-	हाल TAG_Valid:
+		break;
+	case TAG_Valid:
 		c = SW_C2;
-		अवरोध;
-	हाल TAG_Special:
-		चयन (FPU_Special(st0_ptr)) अणु
-		हाल TW_Denormal:
+		break;
+	case TAG_Special:
+		switch (FPU_Special(st0_ptr)) {
+		case TW_Denormal:
 			c = SW_C2 | SW_C3;	/* Denormal */
-			अवरोध;
-		हाल TW_NaN:
-			/* We also use NaN क्रम unsupported types. */
-			अगर ((st0_ptr->sigh & 0x80000000)
+			break;
+		case TW_NaN:
+			/* We also use NaN for unsupported types. */
+			if ((st0_ptr->sigh & 0x80000000)
 			    && (exponent(st0_ptr) == EXP_OVER))
 				c = SW_C0;
-			अवरोध;
-		हाल TW_Infinity:
+			break;
+		case TW_Infinity:
 			c = SW_C2 | SW_C0;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (माला_लोign(st0_ptr) == SIGN_NEG)
+			break;
+		}
+	}
+	if (getsign(st0_ptr) == SIGN_NEG)
 		c |= SW_C1;
 	setcc(c);
-पूर्ण
+}
 
-अटल FUNC_ST0 स्थिर fp_etc_table[] = अणु
-	fchs, भ_असल, (FUNC_ST0) FPU_illegal, (FUNC_ST0) FPU_illegal,
+static FUNC_ST0 const fp_etc_table[] = {
+	fchs, fabs, (FUNC_ST0) FPU_illegal, (FUNC_ST0) FPU_illegal,
 	ftst_, fxam, (FUNC_ST0) FPU_illegal, (FUNC_ST0) FPU_illegal
-पूर्ण;
+};
 
-व्योम FPU_etc(व्योम)
-अणु
+void FPU_etc(void)
+{
 	(fp_etc_table[FPU_rm]) (&st(0), FPU_gettag0());
-पूर्ण
+}

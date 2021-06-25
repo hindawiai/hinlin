@@ -1,37 +1,36 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/cred.h>
-#समावेश <linux/err.h>
-#समावेश <linux/efi.h>
-#समावेश <linux/slab.h>
-#समावेश <keys/asymmetric-type.h>
-#समावेश <keys/प्रणाली_keyring.h>
-#समावेश <यंत्र/boot_data.h>
-#समावेश "../integrity.h"
+#include <linux/kernel.h>
+#include <linux/sched.h>
+#include <linux/cred.h>
+#include <linux/err.h>
+#include <linux/efi.h>
+#include <linux/slab.h>
+#include <keys/asymmetric-type.h>
+#include <keys/system_keyring.h>
+#include <asm/boot_data.h>
+#include "../integrity.h"
 
 /*
  * Load the certs contained in the IPL report created by the machine loader
- * पूर्णांकo the platक्रमm trusted keyring.
+ * into the platform trusted keyring.
  */
-अटल पूर्णांक __init load_ipl_certs(व्योम)
-अणु
-	व्योम *ptr, *end;
-	अचिन्हित पूर्णांक len;
+static int __init load_ipl_certs(void)
+{
+	void *ptr, *end;
+	unsigned int len;
 
-	अगर (!ipl_cert_list_addr)
-		वापस 0;
-	/* Copy the certअगरicates to the प्रणाली keyring */
-	ptr = (व्योम *) ipl_cert_list_addr;
+	if (!ipl_cert_list_addr)
+		return 0;
+	/* Copy the certificates to the system keyring */
+	ptr = (void *) ipl_cert_list_addr;
 	end = ptr + ipl_cert_list_size;
-	जबतक ((व्योम *) ptr < end) अणु
-		len = *(अचिन्हित पूर्णांक *) ptr;
-		ptr += माप(अचिन्हित पूर्णांक);
-		add_to_platक्रमm_keyring("IPL:db", ptr, len);
+	while ((void *) ptr < end) {
+		len = *(unsigned int *) ptr;
+		ptr += sizeof(unsigned int);
+		add_to_platform_keyring("IPL:db", ptr, len);
 		ptr += len;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 late_initcall(load_ipl_certs);

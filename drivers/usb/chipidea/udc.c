@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * udc.c - ChipIdea UDC driver
  *
@@ -8,141 +7,141 @@
  * Author: David Lopo
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/device.h>
-#समावेश <linux/dmapool.h>
-#समावेश <linux/err.h>
-#समावेश <linux/irqवापस.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/pinctrl/consumer.h>
-#समावेश <linux/usb/ch9.h>
-#समावेश <linux/usb/gadget.h>
-#समावेश <linux/usb/otg-fsm.h>
-#समावेश <linux/usb/chipidea.h>
+#include <linux/delay.h>
+#include <linux/device.h>
+#include <linux/dmapool.h>
+#include <linux/err.h>
+#include <linux/irqreturn.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/pm_runtime.h>
+#include <linux/pinctrl/consumer.h>
+#include <linux/usb/ch9.h>
+#include <linux/usb/gadget.h>
+#include <linux/usb/otg-fsm.h>
+#include <linux/usb/chipidea.h>
 
-#समावेश "ci.h"
-#समावेश "udc.h"
-#समावेश "bits.h"
-#समावेश "otg.h"
-#समावेश "otg_fsm.h"
-#समावेश "trace.h"
+#include "ci.h"
+#include "udc.h"
+#include "bits.h"
+#include "otg.h"
+#include "otg_fsm.h"
+#include "trace.h"
 
-/* control endpoपूर्णांक description */
-अटल स्थिर काष्ठा usb_endpoपूर्णांक_descriptor
-ctrl_endpt_out_desc = अणु
+/* control endpoint description */
+static const struct usb_endpoint_descriptor
+ctrl_endpt_out_desc = {
 	.bLength         = USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType = USB_DT_ENDPOINT,
 
-	.bEndpoपूर्णांकAddress = USB_सूची_OUT,
+	.bEndpointAddress = USB_DIR_OUT,
 	.bmAttributes    = USB_ENDPOINT_XFER_CONTROL,
 	.wMaxPacketSize  = cpu_to_le16(CTRL_PAYLOAD_MAX),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा usb_endpoपूर्णांक_descriptor
-ctrl_endpt_in_desc = अणु
+static const struct usb_endpoint_descriptor
+ctrl_endpt_in_desc = {
 	.bLength         = USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType = USB_DT_ENDPOINT,
 
-	.bEndpoपूर्णांकAddress = USB_सूची_IN,
+	.bEndpointAddress = USB_DIR_IN,
 	.bmAttributes    = USB_ENDPOINT_XFER_CONTROL,
 	.wMaxPacketSize  = cpu_to_le16(CTRL_PAYLOAD_MAX),
-पूर्ण;
+};
 
 /**
  * hw_ep_bit: calculates the bit number
- * @num: endpoपूर्णांक number
- * @dir: endpoपूर्णांक direction
+ * @num: endpoint number
+ * @dir: endpoint direction
  *
- * This function वापसs bit number
+ * This function returns bit number
  */
-अटल अंतरभूत पूर्णांक hw_ep_bit(पूर्णांक num, पूर्णांक dir)
-अणु
-	वापस num + ((dir == TX) ? 16 : 0);
-पूर्ण
+static inline int hw_ep_bit(int num, int dir)
+{
+	return num + ((dir == TX) ? 16 : 0);
+}
 
-अटल अंतरभूत पूर्णांक ep_to_bit(काष्ठा ci_hdrc *ci, पूर्णांक n)
-अणु
-	पूर्णांक fill = 16 - ci->hw_ep_max / 2;
+static inline int ep_to_bit(struct ci_hdrc *ci, int n)
+{
+	int fill = 16 - ci->hw_ep_max / 2;
 
-	अगर (n >= ci->hw_ep_max / 2)
+	if (n >= ci->hw_ep_max / 2)
 		n += fill;
 
-	वापस n;
-पूर्ण
+	return n;
+}
 
 /**
- * hw_device_state: enables/disables पूर्णांकerrupts (execute without पूर्णांकerruption)
+ * hw_device_state: enables/disables interrupts (execute without interruption)
  * @ci: the controller
  * @dma: 0 => disable, !0 => enable and set dma engine
  *
- * This function वापसs an error code
+ * This function returns an error code
  */
-अटल पूर्णांक hw_device_state(काष्ठा ci_hdrc *ci, u32 dma)
-अणु
-	अगर (dma) अणु
-		hw_ग_लिखो(ci, OP_ENDPTLISTADDR, ~0, dma);
-		/* पूर्णांकerrupt, error, port change, reset, sleep/suspend */
-		hw_ग_लिखो(ci, OP_USBINTR, ~0,
+static int hw_device_state(struct ci_hdrc *ci, u32 dma)
+{
+	if (dma) {
+		hw_write(ci, OP_ENDPTLISTADDR, ~0, dma);
+		/* interrupt, error, port change, reset, sleep/suspend */
+		hw_write(ci, OP_USBINTR, ~0,
 			     USBi_UI|USBi_UEI|USBi_PCI|USBi_URI|USBi_SLI);
-	पूर्ण अन्यथा अणु
-		hw_ग_लिखो(ci, OP_USBINTR, ~0, 0);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	} else {
+		hw_write(ci, OP_USBINTR, ~0, 0);
+	}
+	return 0;
+}
 
 /**
- * hw_ep_flush: flush endpoपूर्णांक fअगरo (execute without पूर्णांकerruption)
+ * hw_ep_flush: flush endpoint fifo (execute without interruption)
  * @ci: the controller
- * @num: endpoपूर्णांक number
- * @dir: endpoपूर्णांक direction
+ * @num: endpoint number
+ * @dir: endpoint direction
  *
- * This function वापसs an error code
+ * This function returns an error code
  */
-अटल पूर्णांक hw_ep_flush(काष्ठा ci_hdrc *ci, पूर्णांक num, पूर्णांक dir)
-अणु
-	पूर्णांक n = hw_ep_bit(num, dir);
+static int hw_ep_flush(struct ci_hdrc *ci, int num, int dir)
+{
+	int n = hw_ep_bit(num, dir);
 
-	करो अणु
+	do {
 		/* flush any pending transfer */
-		hw_ग_लिखो(ci, OP_ENDPTFLUSH, ~0, BIT(n));
-		जबतक (hw_पढ़ो(ci, OP_ENDPTFLUSH, BIT(n)))
+		hw_write(ci, OP_ENDPTFLUSH, ~0, BIT(n));
+		while (hw_read(ci, OP_ENDPTFLUSH, BIT(n)))
 			cpu_relax();
-	पूर्ण जबतक (hw_पढ़ो(ci, OP_ENDPTSTAT, BIT(n)));
+	} while (hw_read(ci, OP_ENDPTSTAT, BIT(n)));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * hw_ep_disable: disables endpoपूर्णांक (execute without पूर्णांकerruption)
+ * hw_ep_disable: disables endpoint (execute without interruption)
  * @ci: the controller
- * @num: endpoपूर्णांक number
- * @dir: endpoपूर्णांक direction
+ * @num: endpoint number
+ * @dir: endpoint direction
  *
- * This function वापसs an error code
+ * This function returns an error code
  */
-अटल पूर्णांक hw_ep_disable(काष्ठा ci_hdrc *ci, पूर्णांक num, पूर्णांक dir)
-अणु
-	hw_ग_लिखो(ci, OP_ENDPTCTRL + num,
+static int hw_ep_disable(struct ci_hdrc *ci, int num, int dir)
+{
+	hw_write(ci, OP_ENDPTCTRL + num,
 		 (dir == TX) ? ENDPTCTRL_TXE : ENDPTCTRL_RXE, 0);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * hw_ep_enable: enables endpoपूर्णांक (execute without पूर्णांकerruption)
+ * hw_ep_enable: enables endpoint (execute without interruption)
  * @ci: the controller
- * @num:  endpoपूर्णांक number
- * @dir:  endpoपूर्णांक direction
- * @type: endpoपूर्णांक type
+ * @num:  endpoint number
+ * @dir:  endpoint direction
+ * @type: endpoint type
  *
- * This function वापसs an error code
+ * This function returns an error code
  */
-अटल पूर्णांक hw_ep_enable(काष्ठा ci_hdrc *ci, पूर्णांक num, पूर्णांक dir, पूर्णांक type)
-अणु
+static int hw_ep_enable(struct ci_hdrc *ci, int num, int dir, int type)
+{
 	u32 mask, data;
 
-	अगर (dir == TX) अणु
+	if (dir == TX) {
 		mask  = ENDPTCTRL_TXT;  /* type    */
 		data  = type << __ffs(mask);
 
@@ -151,7 +150,7 @@ ctrl_endpt_in_desc = अणु
 		data |= ENDPTCTRL_TXR;
 		mask |= ENDPTCTRL_TXE;  /* enable  */
 		data |= ENDPTCTRL_TXE;
-	पूर्ण अन्यथा अणु
+	} else {
 		mask  = ENDPTCTRL_RXT;  /* type    */
 		data  = type << __ffs(mask);
 
@@ -160,691 +159,691 @@ ctrl_endpt_in_desc = अणु
 		data |= ENDPTCTRL_RXR;
 		mask |= ENDPTCTRL_RXE;  /* enable  */
 		data |= ENDPTCTRL_RXE;
-	पूर्ण
-	hw_ग_लिखो(ci, OP_ENDPTCTRL + num, mask, data);
-	वापस 0;
-पूर्ण
+	}
+	hw_write(ci, OP_ENDPTCTRL + num, mask, data);
+	return 0;
+}
 
 /**
- * hw_ep_get_halt: वापस endpoपूर्णांक halt status
+ * hw_ep_get_halt: return endpoint halt status
  * @ci: the controller
- * @num: endpoपूर्णांक number
- * @dir: endpoपूर्णांक direction
+ * @num: endpoint number
+ * @dir: endpoint direction
  *
- * This function वापसs 1 अगर endpoपूर्णांक halted
+ * This function returns 1 if endpoint halted
  */
-अटल पूर्णांक hw_ep_get_halt(काष्ठा ci_hdrc *ci, पूर्णांक num, पूर्णांक dir)
-अणु
+static int hw_ep_get_halt(struct ci_hdrc *ci, int num, int dir)
+{
 	u32 mask = (dir == TX) ? ENDPTCTRL_TXS : ENDPTCTRL_RXS;
 
-	वापस hw_पढ़ो(ci, OP_ENDPTCTRL + num, mask) ? 1 : 0;
-पूर्ण
+	return hw_read(ci, OP_ENDPTCTRL + num, mask) ? 1 : 0;
+}
 
 /**
- * hw_ep_prime: primes endpoपूर्णांक (execute without पूर्णांकerruption)
+ * hw_ep_prime: primes endpoint (execute without interruption)
  * @ci: the controller
- * @num:     endpoपूर्णांक number
- * @dir:     endpoपूर्णांक direction
- * @is_ctrl: true अगर control endpoपूर्णांक
+ * @num:     endpoint number
+ * @dir:     endpoint direction
+ * @is_ctrl: true if control endpoint
  *
- * This function वापसs an error code
+ * This function returns an error code
  */
-अटल पूर्णांक hw_ep_prime(काष्ठा ci_hdrc *ci, पूर्णांक num, पूर्णांक dir, पूर्णांक is_ctrl)
-अणु
-	पूर्णांक n = hw_ep_bit(num, dir);
+static int hw_ep_prime(struct ci_hdrc *ci, int num, int dir, int is_ctrl)
+{
+	int n = hw_ep_bit(num, dir);
 
-	/* Synchronize beक्रमe ep prime */
+	/* Synchronize before ep prime */
 	wmb();
 
-	अगर (is_ctrl && dir == RX && hw_पढ़ो(ci, OP_ENDPTSETUPSTAT, BIT(num)))
-		वापस -EAGAIN;
+	if (is_ctrl && dir == RX && hw_read(ci, OP_ENDPTSETUPSTAT, BIT(num)))
+		return -EAGAIN;
 
-	hw_ग_लिखो(ci, OP_ENDPTPRIME, ~0, BIT(n));
+	hw_write(ci, OP_ENDPTPRIME, ~0, BIT(n));
 
-	जबतक (hw_पढ़ो(ci, OP_ENDPTPRIME, BIT(n)))
+	while (hw_read(ci, OP_ENDPTPRIME, BIT(n)))
 		cpu_relax();
-	अगर (is_ctrl && dir == RX && hw_पढ़ो(ci, OP_ENDPTSETUPSTAT, BIT(num)))
-		वापस -EAGAIN;
+	if (is_ctrl && dir == RX && hw_read(ci, OP_ENDPTSETUPSTAT, BIT(num)))
+		return -EAGAIN;
 
-	/* status shoult be tested according with manual but it करोesn't work */
-	वापस 0;
-पूर्ण
+	/* status shoult be tested according with manual but it doesn't work */
+	return 0;
+}
 
 /**
  * hw_ep_set_halt: configures ep halt & resets data toggle after clear (execute
- *                 without पूर्णांकerruption)
+ *                 without interruption)
  * @ci: the controller
- * @num:   endpoपूर्णांक number
- * @dir:   endpoपूर्णांक direction
+ * @num:   endpoint number
+ * @dir:   endpoint direction
  * @value: true => stall, false => unstall
  *
- * This function वापसs an error code
+ * This function returns an error code
  */
-अटल पूर्णांक hw_ep_set_halt(काष्ठा ci_hdrc *ci, पूर्णांक num, पूर्णांक dir, पूर्णांक value)
-अणु
-	अगर (value != 0 && value != 1)
-		वापस -EINVAL;
+static int hw_ep_set_halt(struct ci_hdrc *ci, int num, int dir, int value)
+{
+	if (value != 0 && value != 1)
+		return -EINVAL;
 
-	करो अणु
-		क्रमागत ci_hw_regs reg = OP_ENDPTCTRL + num;
+	do {
+		enum ci_hw_regs reg = OP_ENDPTCTRL + num;
 		u32 mask_xs = (dir == TX) ? ENDPTCTRL_TXS : ENDPTCTRL_RXS;
 		u32 mask_xr = (dir == TX) ? ENDPTCTRL_TXR : ENDPTCTRL_RXR;
 
-		/* data toggle - reserved क्रम EP0 but it's in ESS */
-		hw_ग_लिखो(ci, reg, mask_xs|mask_xr,
+		/* data toggle - reserved for EP0 but it's in ESS */
+		hw_write(ci, reg, mask_xs|mask_xr,
 			  value ? mask_xs : mask_xr);
-	पूर्ण जबतक (value != hw_ep_get_halt(ci, num, dir));
+	} while (value != hw_ep_get_halt(ci, num, dir));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * hw_is_port_high_speed: test अगर port is high speed
+ * hw_is_port_high_speed: test if port is high speed
  * @ci: the controller
  *
- * This function वापसs true अगर high speed port
+ * This function returns true if high speed port
  */
-अटल पूर्णांक hw_port_is_high_speed(काष्ठा ci_hdrc *ci)
-अणु
-	वापस ci->hw_bank.lpm ? hw_पढ़ो(ci, OP_DEVLC, DEVLC_PSPD) :
-		hw_पढ़ो(ci, OP_PORTSC, PORTSC_HSP);
-पूर्ण
+static int hw_port_is_high_speed(struct ci_hdrc *ci)
+{
+	return ci->hw_bank.lpm ? hw_read(ci, OP_DEVLC, DEVLC_PSPD) :
+		hw_read(ci, OP_PORTSC, PORTSC_HSP);
+}
 
 /**
  * hw_test_and_clear_complete: test & clear complete status (execute without
- *                             पूर्णांकerruption)
+ *                             interruption)
  * @ci: the controller
- * @n: endpoपूर्णांक number
+ * @n: endpoint number
  *
- * This function वापसs complete status
+ * This function returns complete status
  */
-अटल पूर्णांक hw_test_and_clear_complete(काष्ठा ci_hdrc *ci, पूर्णांक n)
-अणु
+static int hw_test_and_clear_complete(struct ci_hdrc *ci, int n)
+{
 	n = ep_to_bit(ci, n);
-	वापस hw_test_and_clear(ci, OP_ENDPTCOMPLETE, BIT(n));
-पूर्ण
+	return hw_test_and_clear(ci, OP_ENDPTCOMPLETE, BIT(n));
+}
 
 /**
- * hw_test_and_clear_पूर्णांकr_active: test & clear active पूर्णांकerrupts (execute
- *                                without पूर्णांकerruption)
+ * hw_test_and_clear_intr_active: test & clear active interrupts (execute
+ *                                without interruption)
  * @ci: the controller
  *
- * This function वापसs active पूर्णांकerrutps
+ * This function returns active interrutps
  */
-अटल u32 hw_test_and_clear_पूर्णांकr_active(काष्ठा ci_hdrc *ci)
-अणु
-	u32 reg = hw_पढ़ो_पूर्णांकr_status(ci) & hw_पढ़ो_पूर्णांकr_enable(ci);
+static u32 hw_test_and_clear_intr_active(struct ci_hdrc *ci)
+{
+	u32 reg = hw_read_intr_status(ci) & hw_read_intr_enable(ci);
 
-	hw_ग_लिखो(ci, OP_USBSTS, ~0, reg);
-	वापस reg;
-पूर्ण
+	hw_write(ci, OP_USBSTS, ~0, reg);
+	return reg;
+}
 
 /**
  * hw_test_and_clear_setup_guard: test & clear setup guard (execute without
- *                                पूर्णांकerruption)
+ *                                interruption)
  * @ci: the controller
  *
- * This function वापसs guard value
+ * This function returns guard value
  */
-अटल पूर्णांक hw_test_and_clear_setup_guard(काष्ठा ci_hdrc *ci)
-अणु
-	वापस hw_test_and_ग_लिखो(ci, OP_USBCMD, USBCMD_SUTW, 0);
-पूर्ण
+static int hw_test_and_clear_setup_guard(struct ci_hdrc *ci)
+{
+	return hw_test_and_write(ci, OP_USBCMD, USBCMD_SUTW, 0);
+}
 
 /**
  * hw_test_and_set_setup_guard: test & set setup guard (execute without
- *                              पूर्णांकerruption)
+ *                              interruption)
  * @ci: the controller
  *
- * This function वापसs guard value
+ * This function returns guard value
  */
-अटल पूर्णांक hw_test_and_set_setup_guard(काष्ठा ci_hdrc *ci)
-अणु
-	वापस hw_test_and_ग_लिखो(ci, OP_USBCMD, USBCMD_SUTW, USBCMD_SUTW);
-पूर्ण
+static int hw_test_and_set_setup_guard(struct ci_hdrc *ci)
+{
+	return hw_test_and_write(ci, OP_USBCMD, USBCMD_SUTW, USBCMD_SUTW);
+}
 
 /**
- * hw_usb_set_address: configures USB address (execute without पूर्णांकerruption)
+ * hw_usb_set_address: configures USB address (execute without interruption)
  * @ci: the controller
  * @value: new USB address
  *
  * This function explicitly sets the address, without the "USBADRA" (advance)
  * feature, which is not supported by older versions of the controller.
  */
-अटल व्योम hw_usb_set_address(काष्ठा ci_hdrc *ci, u8 value)
-अणु
-	hw_ग_लिखो(ci, OP_DEVICEADDR, DEVICEADDR_USBADR,
+static void hw_usb_set_address(struct ci_hdrc *ci, u8 value)
+{
+	hw_write(ci, OP_DEVICEADDR, DEVICEADDR_USBADR,
 		 value << __ffs(DEVICEADDR_USBADR));
-पूर्ण
+}
 
 /**
  * hw_usb_reset: restart device after a bus reset (execute without
- *               पूर्णांकerruption)
+ *               interruption)
  * @ci: the controller
  *
- * This function वापसs an error code
+ * This function returns an error code
  */
-अटल पूर्णांक hw_usb_reset(काष्ठा ci_hdrc *ci)
-अणु
+static int hw_usb_reset(struct ci_hdrc *ci)
+{
 	hw_usb_set_address(ci, 0);
 
 	/* ESS flushes only at end?!? */
-	hw_ग_लिखो(ci, OP_ENDPTFLUSH,    ~0, ~0);
+	hw_write(ci, OP_ENDPTFLUSH,    ~0, ~0);
 
 	/* clear setup token semaphores */
-	hw_ग_लिखो(ci, OP_ENDPTSETUPSTAT, 0,  0);
+	hw_write(ci, OP_ENDPTSETUPSTAT, 0,  0);
 
 	/* clear complete status */
-	hw_ग_लिखो(ci, OP_ENDPTCOMPLETE,  0,  0);
+	hw_write(ci, OP_ENDPTCOMPLETE,  0,  0);
 
-	/* रुको until all bits cleared */
-	जबतक (hw_पढ़ो(ci, OP_ENDPTPRIME, ~0))
-		udelay(10);             /* not RTOS मित्रly */
+	/* wait until all bits cleared */
+	while (hw_read(ci, OP_ENDPTPRIME, ~0))
+		udelay(10);             /* not RTOS friendly */
 
-	/* reset all endpoपूर्णांकs ? */
+	/* reset all endpoints ? */
 
-	/* reset पूर्णांकernal status and रुको क्रम further inकाष्ठाions
-	   no need to verअगरy the port reset status (ESS करोes it) */
+	/* reset internal status and wait for further instructions
+	   no need to verify the port reset status (ESS does it) */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /******************************************************************************
  * UTIL block
  *****************************************************************************/
 
-अटल पूर्णांक add_td_to_list(काष्ठा ci_hw_ep *hwep, काष्ठा ci_hw_req *hwreq,
-			अचिन्हित पूर्णांक length, काष्ठा scatterlist *s)
-अणु
-	पूर्णांक i;
+static int add_td_to_list(struct ci_hw_ep *hwep, struct ci_hw_req *hwreq,
+			unsigned int length, struct scatterlist *s)
+{
+	int i;
 	u32 temp;
-	काष्ठा td_node *lastnode, *node = kzalloc(माप(काष्ठा td_node),
+	struct td_node *lastnode, *node = kzalloc(sizeof(struct td_node),
 						  GFP_ATOMIC);
 
-	अगर (node == शून्य)
-		वापस -ENOMEM;
+	if (node == NULL)
+		return -ENOMEM;
 
 	node->ptr = dma_pool_zalloc(hwep->td_pool, GFP_ATOMIC, &node->dma);
-	अगर (node->ptr == शून्य) अणु
-		kमुक्त(node);
-		वापस -ENOMEM;
-	पूर्ण
+	if (node->ptr == NULL) {
+		kfree(node);
+		return -ENOMEM;
+	}
 
 	node->ptr->token = cpu_to_le32(length << __ffs(TD_TOTAL_BYTES));
 	node->ptr->token &= cpu_to_le32(TD_TOTAL_BYTES);
 	node->ptr->token |= cpu_to_le32(TD_STATUS_ACTIVE);
-	अगर (hwep->type == USB_ENDPOINT_XFER_ISOC && hwep->dir == TX) अणु
+	if (hwep->type == USB_ENDPOINT_XFER_ISOC && hwep->dir == TX) {
 		u32 mul = hwreq->req.length / hwep->ep.maxpacket;
 
-		अगर (hwreq->req.length == 0
+		if (hwreq->req.length == 0
 				|| hwreq->req.length % hwep->ep.maxpacket)
 			mul++;
 		node->ptr->token |= cpu_to_le32(mul << __ffs(TD_MULTO));
-	पूर्ण
+	}
 
-	अगर (s) अणु
+	if (s) {
 		temp = (u32) (sg_dma_address(s) + hwreq->req.actual);
-		node->td_reमुख्यing_size = CI_MAX_BUF_SIZE - length;
-	पूर्ण अन्यथा अणु
+		node->td_remaining_size = CI_MAX_BUF_SIZE - length;
+	} else {
 		temp = (u32) (hwreq->req.dma + hwreq->req.actual);
-	पूर्ण
+	}
 
-	अगर (length) अणु
+	if (length) {
 		node->ptr->page[0] = cpu_to_le32(temp);
-		क्रम (i = 1; i < TD_PAGE_COUNT; i++) अणु
+		for (i = 1; i < TD_PAGE_COUNT; i++) {
 			u32 page = temp + i * CI_HDRC_PAGE_SIZE;
 			page &= ~TD_RESERVED_MASK;
 			node->ptr->page[i] = cpu_to_le32(page);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	hwreq->req.actual += length;
 
-	अगर (!list_empty(&hwreq->tds)) अणु
+	if (!list_empty(&hwreq->tds)) {
 		/* get the last entry */
 		lastnode = list_entry(hwreq->tds.prev,
-				काष्ठा td_node, td);
+				struct td_node, td);
 		lastnode->ptr->next = cpu_to_le32(node->dma);
-	पूर्ण
+	}
 
 	INIT_LIST_HEAD(&node->td);
 	list_add_tail(&node->td, &hwreq->tds);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * _usb_addr: calculates endpoपूर्णांक address from direction & number
- * @ep:  endpoपूर्णांक
+ * _usb_addr: calculates endpoint address from direction & number
+ * @ep:  endpoint
  */
-अटल अंतरभूत u8 _usb_addr(काष्ठा ci_hw_ep *ep)
-अणु
-	वापस ((ep->dir == TX) ? USB_ENDPOINT_सूची_MASK : 0) | ep->num;
-पूर्ण
+static inline u8 _usb_addr(struct ci_hw_ep *ep)
+{
+	return ((ep->dir == TX) ? USB_ENDPOINT_DIR_MASK : 0) | ep->num;
+}
 
-अटल पूर्णांक prepare_td_क्रम_non_sg(काष्ठा ci_hw_ep *hwep,
-		काष्ठा ci_hw_req *hwreq)
-अणु
-	अचिन्हित पूर्णांक rest = hwreq->req.length;
-	पूर्णांक pages = TD_PAGE_COUNT;
-	पूर्णांक ret = 0;
+static int prepare_td_for_non_sg(struct ci_hw_ep *hwep,
+		struct ci_hw_req *hwreq)
+{
+	unsigned int rest = hwreq->req.length;
+	int pages = TD_PAGE_COUNT;
+	int ret = 0;
 
-	अगर (rest == 0) अणु
-		ret = add_td_to_list(hwep, hwreq, 0, शून्य);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
+	if (rest == 0) {
+		ret = add_td_to_list(hwep, hwreq, 0, NULL);
+		if (ret < 0)
+			return ret;
+	}
 
 	/*
 	 * The first buffer could be not page aligned.
-	 * In that हाल we have to span पूर्णांकo one extra td.
+	 * In that case we have to span into one extra td.
 	 */
-	अगर (hwreq->req.dma % PAGE_SIZE)
+	if (hwreq->req.dma % PAGE_SIZE)
 		pages--;
 
-	जबतक (rest > 0) अणु
-		अचिन्हित पूर्णांक count = min(hwreq->req.length - hwreq->req.actual,
-			(अचिन्हित पूर्णांक)(pages * CI_HDRC_PAGE_SIZE));
+	while (rest > 0) {
+		unsigned int count = min(hwreq->req.length - hwreq->req.actual,
+			(unsigned int)(pages * CI_HDRC_PAGE_SIZE));
 
-		ret = add_td_to_list(hwep, hwreq, count, शून्य);
-		अगर (ret < 0)
-			वापस ret;
+		ret = add_td_to_list(hwep, hwreq, count, NULL);
+		if (ret < 0)
+			return ret;
 
 		rest -= count;
-	पूर्ण
+	}
 
-	अगर (hwreq->req.zero && hwreq->req.length && hwep->dir == TX
-	    && (hwreq->req.length % hwep->ep.maxpacket == 0)) अणु
-		ret = add_td_to_list(hwep, hwreq, 0, शून्य);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
+	if (hwreq->req.zero && hwreq->req.length && hwep->dir == TX
+	    && (hwreq->req.length % hwep->ep.maxpacket == 0)) {
+		ret = add_td_to_list(hwep, hwreq, 0, NULL);
+		if (ret < 0)
+			return ret;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक prepare_td_per_sg(काष्ठा ci_hw_ep *hwep, काष्ठा ci_hw_req *hwreq,
-		काष्ठा scatterlist *s)
-अणु
-	अचिन्हित पूर्णांक rest = sg_dma_len(s);
-	पूर्णांक ret = 0;
+static int prepare_td_per_sg(struct ci_hw_ep *hwep, struct ci_hw_req *hwreq,
+		struct scatterlist *s)
+{
+	unsigned int rest = sg_dma_len(s);
+	int ret = 0;
 
 	hwreq->req.actual = 0;
-	जबतक (rest > 0) अणु
-		अचिन्हित पूर्णांक count = min_t(अचिन्हित पूर्णांक, rest,
+	while (rest > 0) {
+		unsigned int count = min_t(unsigned int, rest,
 				CI_MAX_BUF_SIZE);
 
 		ret = add_td_to_list(hwep, hwreq, count, s);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 
 		rest -= count;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम ci_add_buffer_entry(काष्ठा td_node *node, काष्ठा scatterlist *s)
-अणु
-	पूर्णांक empty_td_slot_index = (CI_MAX_BUF_SIZE - node->td_reमुख्यing_size)
+static void ci_add_buffer_entry(struct td_node *node, struct scatterlist *s)
+{
+	int empty_td_slot_index = (CI_MAX_BUF_SIZE - node->td_remaining_size)
 			/ CI_HDRC_PAGE_SIZE;
-	पूर्णांक i;
+	int i;
 	u32 token;
 
 	token = le32_to_cpu(node->ptr->token) + (sg_dma_len(s) << __ffs(TD_TOTAL_BYTES));
 	node->ptr->token = cpu_to_le32(token);
 
-	क्रम (i = empty_td_slot_index; i < TD_PAGE_COUNT; i++) अणु
+	for (i = empty_td_slot_index; i < TD_PAGE_COUNT; i++) {
 		u32 page = (u32) sg_dma_address(s) +
 			(i - empty_td_slot_index) * CI_HDRC_PAGE_SIZE;
 
 		page &= ~TD_RESERVED_MASK;
 		node->ptr->page[i] = cpu_to_le32(page);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक prepare_td_क्रम_sg(काष्ठा ci_hw_ep *hwep, काष्ठा ci_hw_req *hwreq)
-अणु
-	काष्ठा usb_request *req = &hwreq->req;
-	काष्ठा scatterlist *s = req->sg;
-	पूर्णांक ret = 0, i = 0;
-	काष्ठा td_node *node = शून्य;
+static int prepare_td_for_sg(struct ci_hw_ep *hwep, struct ci_hw_req *hwreq)
+{
+	struct usb_request *req = &hwreq->req;
+	struct scatterlist *s = req->sg;
+	int ret = 0, i = 0;
+	struct td_node *node = NULL;
 
-	अगर (!s || req->zero || req->length == 0) अणु
+	if (!s || req->zero || req->length == 0) {
 		dev_err(hwep->ci->dev, "not supported operation for sg\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	जबतक (i++ < req->num_mapped_sgs) अणु
-		अगर (sg_dma_address(s) % PAGE_SIZE) अणु
+	while (i++ < req->num_mapped_sgs) {
+		if (sg_dma_address(s) % PAGE_SIZE) {
 			dev_err(hwep->ci->dev, "not page aligned sg buffer\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगर (node && (node->td_reमुख्यing_size >= sg_dma_len(s))) अणु
+		if (node && (node->td_remaining_size >= sg_dma_len(s))) {
 			ci_add_buffer_entry(node, s);
-			node->td_reमुख्यing_size -= sg_dma_len(s);
-		पूर्ण अन्यथा अणु
+			node->td_remaining_size -= sg_dma_len(s);
+		} else {
 			ret = prepare_td_per_sg(hwep, hwreq, s);
-			अगर (ret)
-				वापस ret;
+			if (ret)
+				return ret;
 
 			node = list_entry(hwreq->tds.prev,
-				काष्ठा td_node, td);
-		पूर्ण
+				struct td_node, td);
+		}
 
 		s = sg_next(s);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * _hardware_enqueue: configures a request at hardware level
- * @hwep:   endpoपूर्णांक
+ * @hwep:   endpoint
  * @hwreq:  request
  *
- * This function वापसs an error code
+ * This function returns an error code
  */
-अटल पूर्णांक _hardware_enqueue(काष्ठा ci_hw_ep *hwep, काष्ठा ci_hw_req *hwreq)
-अणु
-	काष्ठा ci_hdrc *ci = hwep->ci;
-	पूर्णांक ret = 0;
-	काष्ठा td_node *firstnode, *lastnode;
+static int _hardware_enqueue(struct ci_hw_ep *hwep, struct ci_hw_req *hwreq)
+{
+	struct ci_hdrc *ci = hwep->ci;
+	int ret = 0;
+	struct td_node *firstnode, *lastnode;
 
-	/* करोn't queue twice */
-	अगर (hwreq->req.status == -EALREADY)
-		वापस -EALREADY;
+	/* don't queue twice */
+	if (hwreq->req.status == -EALREADY)
+		return -EALREADY;
 
 	hwreq->req.status = -EALREADY;
 
 	ret = usb_gadget_map_request_by_dev(ci->dev->parent,
 					    &hwreq->req, hwep->dir);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (hwreq->req.num_mapped_sgs)
-		ret = prepare_td_क्रम_sg(hwep, hwreq);
-	अन्यथा
-		ret = prepare_td_क्रम_non_sg(hwep, hwreq);
+	if (hwreq->req.num_mapped_sgs)
+		ret = prepare_td_for_sg(hwep, hwreq);
+	else
+		ret = prepare_td_for_non_sg(hwep, hwreq);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	lastnode = list_entry(hwreq->tds.prev,
-		काष्ठा td_node, td);
+		struct td_node, td);
 
 	lastnode->ptr->next = cpu_to_le32(TD_TERMINATE);
-	अगर (!hwreq->req.no_पूर्णांकerrupt)
+	if (!hwreq->req.no_interrupt)
 		lastnode->ptr->token |= cpu_to_le32(TD_IOC);
 
-	list_क्रम_each_entry_safe(firstnode, lastnode, &hwreq->tds, td)
+	list_for_each_entry_safe(firstnode, lastnode, &hwreq->tds, td)
 		trace_ci_prepare_td(hwep, hwreq, firstnode);
 
-	firstnode = list_first_entry(&hwreq->tds, काष्ठा td_node, td);
+	firstnode = list_first_entry(&hwreq->tds, struct td_node, td);
 
 	wmb();
 
 	hwreq->req.actual = 0;
-	अगर (!list_empty(&hwep->qh.queue)) अणु
-		काष्ठा ci_hw_req *hwreqprev;
-		पूर्णांक n = hw_ep_bit(hwep->num, hwep->dir);
-		पूर्णांक पंचांगp_stat;
-		काष्ठा td_node *prevlastnode;
+	if (!list_empty(&hwep->qh.queue)) {
+		struct ci_hw_req *hwreqprev;
+		int n = hw_ep_bit(hwep->num, hwep->dir);
+		int tmp_stat;
+		struct td_node *prevlastnode;
 		u32 next = firstnode->dma & TD_ADDR_MASK;
 
 		hwreqprev = list_entry(hwep->qh.queue.prev,
-				काष्ठा ci_hw_req, queue);
+				struct ci_hw_req, queue);
 		prevlastnode = list_entry(hwreqprev->tds.prev,
-				काष्ठा td_node, td);
+				struct td_node, td);
 
 		prevlastnode->ptr->next = cpu_to_le32(next);
 		wmb();
-		अगर (hw_पढ़ो(ci, OP_ENDPTPRIME, BIT(n)))
-			जाओ करोne;
-		करो अणु
-			hw_ग_लिखो(ci, OP_USBCMD, USBCMD_ATDTW, USBCMD_ATDTW);
-			पंचांगp_stat = hw_पढ़ो(ci, OP_ENDPTSTAT, BIT(n));
-		पूर्ण जबतक (!hw_पढ़ो(ci, OP_USBCMD, USBCMD_ATDTW));
-		hw_ग_लिखो(ci, OP_USBCMD, USBCMD_ATDTW, 0);
-		अगर (पंचांगp_stat)
-			जाओ करोne;
-	पूर्ण
+		if (hw_read(ci, OP_ENDPTPRIME, BIT(n)))
+			goto done;
+		do {
+			hw_write(ci, OP_USBCMD, USBCMD_ATDTW, USBCMD_ATDTW);
+			tmp_stat = hw_read(ci, OP_ENDPTSTAT, BIT(n));
+		} while (!hw_read(ci, OP_USBCMD, USBCMD_ATDTW));
+		hw_write(ci, OP_USBCMD, USBCMD_ATDTW, 0);
+		if (tmp_stat)
+			goto done;
+	}
 
 	/*  QH configuration */
 	hwep->qh.ptr->td.next = cpu_to_le32(firstnode->dma);
 	hwep->qh.ptr->td.token &=
 		cpu_to_le32(~(TD_STATUS_HALTED|TD_STATUS_ACTIVE));
 
-	अगर (hwep->type == USB_ENDPOINT_XFER_ISOC && hwep->dir == RX) अणु
+	if (hwep->type == USB_ENDPOINT_XFER_ISOC && hwep->dir == RX) {
 		u32 mul = hwreq->req.length / hwep->ep.maxpacket;
 
-		अगर (hwreq->req.length == 0
+		if (hwreq->req.length == 0
 				|| hwreq->req.length % hwep->ep.maxpacket)
 			mul++;
 		hwep->qh.ptr->cap |= cpu_to_le32(mul << __ffs(QH_MULT));
-	पूर्ण
+	}
 
 	ret = hw_ep_prime(ci, hwep->num, hwep->dir,
 			   hwep->type == USB_ENDPOINT_XFER_CONTROL);
-करोne:
-	वापस ret;
-पूर्ण
+done:
+	return ret;
+}
 
 /**
- * मुक्त_pending_td: हटाओ a pending request क्रम the endpoपूर्णांक
- * @hwep: endpoपूर्णांक
+ * free_pending_td: remove a pending request for the endpoint
+ * @hwep: endpoint
  */
-अटल व्योम मुक्त_pending_td(काष्ठा ci_hw_ep *hwep)
-अणु
-	काष्ठा td_node *pending = hwep->pending_td;
+static void free_pending_td(struct ci_hw_ep *hwep)
+{
+	struct td_node *pending = hwep->pending_td;
 
-	dma_pool_मुक्त(hwep->td_pool, pending->ptr, pending->dma);
-	hwep->pending_td = शून्य;
-	kमुक्त(pending);
-पूर्ण
+	dma_pool_free(hwep->td_pool, pending->ptr, pending->dma);
+	hwep->pending_td = NULL;
+	kfree(pending);
+}
 
-अटल पूर्णांक reprime_dtd(काष्ठा ci_hdrc *ci, काष्ठा ci_hw_ep *hwep,
-					   काष्ठा td_node *node)
-अणु
+static int reprime_dtd(struct ci_hdrc *ci, struct ci_hw_ep *hwep,
+					   struct td_node *node)
+{
 	hwep->qh.ptr->td.next = cpu_to_le32(node->dma);
 	hwep->qh.ptr->td.token &=
 		cpu_to_le32(~(TD_STATUS_HALTED | TD_STATUS_ACTIVE));
 
-	वापस hw_ep_prime(ci, hwep->num, hwep->dir,
+	return hw_ep_prime(ci, hwep->num, hwep->dir,
 				hwep->type == USB_ENDPOINT_XFER_CONTROL);
-पूर्ण
+}
 
 /**
  * _hardware_dequeue: handles a request at hardware level
- * @hwep: endpoपूर्णांक
+ * @hwep: endpoint
  * @hwreq:  request
  *
- * This function वापसs an error code
+ * This function returns an error code
  */
-अटल पूर्णांक _hardware_dequeue(काष्ठा ci_hw_ep *hwep, काष्ठा ci_hw_req *hwreq)
-अणु
-	u32 पंचांगptoken;
-	काष्ठा td_node *node, *पंचांगpnode;
-	अचिन्हित reमुख्यing_length;
-	अचिन्हित actual = hwreq->req.length;
-	काष्ठा ci_hdrc *ci = hwep->ci;
+static int _hardware_dequeue(struct ci_hw_ep *hwep, struct ci_hw_req *hwreq)
+{
+	u32 tmptoken;
+	struct td_node *node, *tmpnode;
+	unsigned remaining_length;
+	unsigned actual = hwreq->req.length;
+	struct ci_hdrc *ci = hwep->ci;
 
-	अगर (hwreq->req.status != -EALREADY)
-		वापस -EINVAL;
+	if (hwreq->req.status != -EALREADY)
+		return -EINVAL;
 
 	hwreq->req.status = 0;
 
-	list_क्रम_each_entry_safe(node, पंचांगpnode, &hwreq->tds, td) अणु
-		पंचांगptoken = le32_to_cpu(node->ptr->token);
+	list_for_each_entry_safe(node, tmpnode, &hwreq->tds, td) {
+		tmptoken = le32_to_cpu(node->ptr->token);
 		trace_ci_complete_td(hwep, hwreq, node);
-		अगर ((TD_STATUS_ACTIVE & पंचांगptoken) != 0) अणु
-			पूर्णांक n = hw_ep_bit(hwep->num, hwep->dir);
+		if ((TD_STATUS_ACTIVE & tmptoken) != 0) {
+			int n = hw_ep_bit(hwep->num, hwep->dir);
 
-			अगर (ci->rev == CI_REVISION_24)
-				अगर (!hw_पढ़ो(ci, OP_ENDPTSTAT, BIT(n)))
+			if (ci->rev == CI_REVISION_24)
+				if (!hw_read(ci, OP_ENDPTSTAT, BIT(n)))
 					reprime_dtd(ci, hwep, node);
 			hwreq->req.status = -EALREADY;
-			वापस -EBUSY;
-		पूर्ण
+			return -EBUSY;
+		}
 
-		reमुख्यing_length = (पंचांगptoken & TD_TOTAL_BYTES);
-		reमुख्यing_length >>= __ffs(TD_TOTAL_BYTES);
-		actual -= reमुख्यing_length;
+		remaining_length = (tmptoken & TD_TOTAL_BYTES);
+		remaining_length >>= __ffs(TD_TOTAL_BYTES);
+		actual -= remaining_length;
 
-		hwreq->req.status = पंचांगptoken & TD_STATUS;
-		अगर ((TD_STATUS_HALTED & hwreq->req.status)) अणु
+		hwreq->req.status = tmptoken & TD_STATUS;
+		if ((TD_STATUS_HALTED & hwreq->req.status)) {
 			hwreq->req.status = -EPIPE;
-			अवरोध;
-		पूर्ण अन्यथा अगर ((TD_STATUS_DT_ERR & hwreq->req.status)) अणु
+			break;
+		} else if ((TD_STATUS_DT_ERR & hwreq->req.status)) {
 			hwreq->req.status = -EPROTO;
-			अवरोध;
-		पूर्ण अन्यथा अगर ((TD_STATUS_TR_ERR & hwreq->req.status)) अणु
+			break;
+		} else if ((TD_STATUS_TR_ERR & hwreq->req.status)) {
 			hwreq->req.status = -EILSEQ;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (reमुख्यing_length) अणु
-			अगर (hwep->dir == TX) अणु
+		if (remaining_length) {
+			if (hwep->dir == TX) {
 				hwreq->req.status = -EPROTO;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 		/*
-		 * As the hardware could still address the मुक्तd td
+		 * As the hardware could still address the freed td
 		 * which will run the udc unusable, the cleanup of the
 		 * td has to be delayed by one.
 		 */
-		अगर (hwep->pending_td)
-			मुक्त_pending_td(hwep);
+		if (hwep->pending_td)
+			free_pending_td(hwep);
 
 		hwep->pending_td = node;
 		list_del_init(&node->td);
-	पूर्ण
+	}
 
 	usb_gadget_unmap_request_by_dev(hwep->ci->dev->parent,
 					&hwreq->req, hwep->dir);
 
 	hwreq->req.actual += actual;
 
-	अगर (hwreq->req.status)
-		वापस hwreq->req.status;
+	if (hwreq->req.status)
+		return hwreq->req.status;
 
-	वापस hwreq->req.actual;
-पूर्ण
+	return hwreq->req.actual;
+}
 
 /**
- * _ep_nuke: dequeues all endpoपूर्णांक requests
- * @hwep: endpoपूर्णांक
+ * _ep_nuke: dequeues all endpoint requests
+ * @hwep: endpoint
  *
- * This function वापसs an error code
+ * This function returns an error code
  * Caller must hold lock
  */
-अटल पूर्णांक _ep_nuke(काष्ठा ci_hw_ep *hwep)
+static int _ep_nuke(struct ci_hw_ep *hwep)
 __releases(hwep->lock)
 __acquires(hwep->lock)
-अणु
-	काष्ठा td_node *node, *पंचांगpnode;
-	अगर (hwep == शून्य)
-		वापस -EINVAL;
+{
+	struct td_node *node, *tmpnode;
+	if (hwep == NULL)
+		return -EINVAL;
 
 	hw_ep_flush(hwep->ci, hwep->num, hwep->dir);
 
-	जबतक (!list_empty(&hwep->qh.queue)) अणु
+	while (!list_empty(&hwep->qh.queue)) {
 
 		/* pop oldest request */
-		काष्ठा ci_hw_req *hwreq = list_entry(hwep->qh.queue.next,
-						     काष्ठा ci_hw_req, queue);
+		struct ci_hw_req *hwreq = list_entry(hwep->qh.queue.next,
+						     struct ci_hw_req, queue);
 
-		list_क्रम_each_entry_safe(node, पंचांगpnode, &hwreq->tds, td) अणु
-			dma_pool_मुक्त(hwep->td_pool, node->ptr, node->dma);
+		list_for_each_entry_safe(node, tmpnode, &hwreq->tds, td) {
+			dma_pool_free(hwep->td_pool, node->ptr, node->dma);
 			list_del_init(&node->td);
-			node->ptr = शून्य;
-			kमुक्त(node);
-		पूर्ण
+			node->ptr = NULL;
+			kfree(node);
+		}
 
 		list_del_init(&hwreq->queue);
 		hwreq->req.status = -ESHUTDOWN;
 
-		अगर (hwreq->req.complete != शून्य) अणु
+		if (hwreq->req.complete != NULL) {
 			spin_unlock(hwep->lock);
 			usb_gadget_giveback_request(&hwep->ep, &hwreq->req);
 			spin_lock(hwep->lock);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (hwep->pending_td)
-		मुक्त_pending_td(hwep);
+	if (hwep->pending_td)
+		free_pending_td(hwep);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक _ep_set_halt(काष्ठा usb_ep *ep, पूर्णांक value, bool check_transfer)
-अणु
-	काष्ठा ci_hw_ep *hwep = container_of(ep, काष्ठा ci_hw_ep, ep);
-	पूर्णांक direction, retval = 0;
-	अचिन्हित दीर्घ flags;
+static int _ep_set_halt(struct usb_ep *ep, int value, bool check_transfer)
+{
+	struct ci_hw_ep *hwep = container_of(ep, struct ci_hw_ep, ep);
+	int direction, retval = 0;
+	unsigned long flags;
 
-	अगर (ep == शून्य || hwep->ep.desc == शून्य)
-		वापस -EINVAL;
+	if (ep == NULL || hwep->ep.desc == NULL)
+		return -EINVAL;
 
-	अगर (usb_endpoपूर्णांक_xfer_isoc(hwep->ep.desc))
-		वापस -EOPNOTSUPP;
+	if (usb_endpoint_xfer_isoc(hwep->ep.desc))
+		return -EOPNOTSUPP;
 
 	spin_lock_irqsave(hwep->lock, flags);
 
-	अगर (value && hwep->dir == TX && check_transfer &&
+	if (value && hwep->dir == TX && check_transfer &&
 		!list_empty(&hwep->qh.queue) &&
-			!usb_endpoपूर्णांक_xfer_control(hwep->ep.desc)) अणु
+			!usb_endpoint_xfer_control(hwep->ep.desc)) {
 		spin_unlock_irqrestore(hwep->lock, flags);
-		वापस -EAGAIN;
-	पूर्ण
+		return -EAGAIN;
+	}
 
 	direction = hwep->dir;
-	करो अणु
+	do {
 		retval |= hw_ep_set_halt(hwep->ci, hwep->num, hwep->dir, value);
 
-		अगर (!value)
+		if (!value)
 			hwep->wedge = 0;
 
-		अगर (hwep->type == USB_ENDPOINT_XFER_CONTROL)
+		if (hwep->type == USB_ENDPOINT_XFER_CONTROL)
 			hwep->dir = (hwep->dir == TX) ? RX : TX;
 
-	पूर्ण जबतक (hwep->dir != direction);
+	} while (hwep->dir != direction);
 
 	spin_unlock_irqrestore(hwep->lock, flags);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
 
 /**
  * _gadget_stop_activity: stops all USB activity, flushes & disables all endpts
  * @gadget: gadget
  *
- * This function वापसs an error code
+ * This function returns an error code
  */
-अटल पूर्णांक _gadget_stop_activity(काष्ठा usb_gadget *gadget)
-अणु
-	काष्ठा usb_ep *ep;
-	काष्ठा ci_hdrc    *ci = container_of(gadget, काष्ठा ci_hdrc, gadget);
-	अचिन्हित दीर्घ flags;
+static int _gadget_stop_activity(struct usb_gadget *gadget)
+{
+	struct usb_ep *ep;
+	struct ci_hdrc    *ci = container_of(gadget, struct ci_hdrc, gadget);
+	unsigned long flags;
 
-	/* flush all endpoपूर्णांकs */
-	gadget_क्रम_each_ep(ep, gadget) अणु
-		usb_ep_fअगरo_flush(ep);
-	पूर्ण
-	usb_ep_fअगरo_flush(&ci->ep0out->ep);
-	usb_ep_fअगरo_flush(&ci->ep0in->ep);
+	/* flush all endpoints */
+	gadget_for_each_ep(ep, gadget) {
+		usb_ep_fifo_flush(ep);
+	}
+	usb_ep_fifo_flush(&ci->ep0out->ep);
+	usb_ep_fifo_flush(&ci->ep0in->ep);
 
-	/* make sure to disable all endpoपूर्णांकs */
-	gadget_क्रम_each_ep(ep, gadget) अणु
+	/* make sure to disable all endpoints */
+	gadget_for_each_ep(ep, gadget) {
 		usb_ep_disable(ep);
-	पूर्ण
+	}
 
-	अगर (ci->status != शून्य) अणु
-		usb_ep_मुक्त_request(&ci->ep0in->ep, ci->status);
-		ci->status = शून्य;
-	पूर्ण
+	if (ci->status != NULL) {
+		usb_ep_free_request(&ci->ep0in->ep, ci->status);
+		ci->status = NULL;
+	}
 
 	spin_lock_irqsave(&ci->lock, flags);
 	ci->gadget.speed = USB_SPEED_UNKNOWN;
@@ -852,105 +851,105 @@ __acquires(hwep->lock)
 	ci->suspended = 0;
 	spin_unlock_irqrestore(&ci->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /******************************************************************************
  * ISR block
  *****************************************************************************/
 /**
- * isr_reset_handler: USB reset पूर्णांकerrupt handler
+ * isr_reset_handler: USB reset interrupt handler
  * @ci: UDC device
  *
  * This function resets USB engine after a bus reset occurred
  */
-अटल व्योम isr_reset_handler(काष्ठा ci_hdrc *ci)
+static void isr_reset_handler(struct ci_hdrc *ci)
 __releases(ci->lock)
 __acquires(ci->lock)
-अणु
-	पूर्णांक retval;
+{
+	int retval;
 
 	spin_unlock(&ci->lock);
-	अगर (ci->gadget.speed != USB_SPEED_UNKNOWN)
+	if (ci->gadget.speed != USB_SPEED_UNKNOWN)
 		usb_gadget_udc_reset(&ci->gadget, ci->driver);
 
 	retval = _gadget_stop_activity(&ci->gadget);
-	अगर (retval)
-		जाओ करोne;
+	if (retval)
+		goto done;
 
 	retval = hw_usb_reset(ci);
-	अगर (retval)
-		जाओ करोne;
+	if (retval)
+		goto done;
 
 	ci->status = usb_ep_alloc_request(&ci->ep0in->ep, GFP_ATOMIC);
-	अगर (ci->status == शून्य)
+	if (ci->status == NULL)
 		retval = -ENOMEM;
 
-करोne:
+done:
 	spin_lock(&ci->lock);
 
-	अगर (retval)
+	if (retval)
 		dev_err(ci->dev, "error: %i\n", retval);
-पूर्ण
+}
 
 /**
  * isr_get_status_complete: get_status request complete function
- * @ep:  endpoपूर्णांक
+ * @ep:  endpoint
  * @req: request handled
  *
  * Caller must release lock
  */
-अटल व्योम isr_get_status_complete(काष्ठा usb_ep *ep, काष्ठा usb_request *req)
-अणु
-	अगर (ep == शून्य || req == शून्य)
-		वापस;
+static void isr_get_status_complete(struct usb_ep *ep, struct usb_request *req)
+{
+	if (ep == NULL || req == NULL)
+		return;
 
-	kमुक्त(req->buf);
-	usb_ep_मुक्त_request(ep, req);
-पूर्ण
+	kfree(req->buf);
+	usb_ep_free_request(ep, req);
+}
 
 /**
- * _ep_queue: queues (submits) an I/O request to an endpoपूर्णांक
- * @ep:        endpoपूर्णांक
+ * _ep_queue: queues (submits) an I/O request to an endpoint
+ * @ep:        endpoint
  * @req:       request
  * @gfp_flags: GFP flags (not used)
  *
  * Caller must hold lock
- * This function वापसs an error code
+ * This function returns an error code
  */
-अटल पूर्णांक _ep_queue(काष्ठा usb_ep *ep, काष्ठा usb_request *req,
+static int _ep_queue(struct usb_ep *ep, struct usb_request *req,
 		    gfp_t __maybe_unused gfp_flags)
-अणु
-	काष्ठा ci_hw_ep  *hwep  = container_of(ep,  काष्ठा ci_hw_ep, ep);
-	काष्ठा ci_hw_req *hwreq = container_of(req, काष्ठा ci_hw_req, req);
-	काष्ठा ci_hdrc *ci = hwep->ci;
-	पूर्णांक retval = 0;
+{
+	struct ci_hw_ep  *hwep  = container_of(ep,  struct ci_hw_ep, ep);
+	struct ci_hw_req *hwreq = container_of(req, struct ci_hw_req, req);
+	struct ci_hdrc *ci = hwep->ci;
+	int retval = 0;
 
-	अगर (ep == शून्य || req == शून्य || hwep->ep.desc == शून्य)
-		वापस -EINVAL;
+	if (ep == NULL || req == NULL || hwep->ep.desc == NULL)
+		return -EINVAL;
 
-	अगर (hwep->type == USB_ENDPOINT_XFER_CONTROL) अणु
-		अगर (req->length)
+	if (hwep->type == USB_ENDPOINT_XFER_CONTROL) {
+		if (req->length)
 			hwep = (ci->ep0_dir == RX) ?
 			       ci->ep0out : ci->ep0in;
-		अगर (!list_empty(&hwep->qh.queue)) अणु
+		if (!list_empty(&hwep->qh.queue)) {
 			_ep_nuke(hwep);
 			dev_warn(hwep->ci->dev, "endpoint ctrl %X nuked\n",
 				 _usb_addr(hwep));
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (usb_endpoपूर्णांक_xfer_isoc(hwep->ep.desc) &&
-	    hwreq->req.length > hwep->ep.mult * hwep->ep.maxpacket) अणु
+	if (usb_endpoint_xfer_isoc(hwep->ep.desc) &&
+	    hwreq->req.length > hwep->ep.mult * hwep->ep.maxpacket) {
 		dev_err(hwep->ci->dev, "request length too big for isochronous\n");
-		वापस -EMSGSIZE;
-	पूर्ण
+		return -EMSGSIZE;
+	}
 
 	/* first nuke then test link, e.g. previous status has not sent */
-	अगर (!list_empty(&hwreq->queue)) अणु
+	if (!list_empty(&hwreq->queue)) {
 		dev_err(hwep->ci->dev, "request already in queue\n");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	/* push request */
 	hwreq->req.status = -EINPROGRESS;
@@ -958,171 +957,171 @@ __acquires(ci->lock)
 
 	retval = _hardware_enqueue(hwep, hwreq);
 
-	अगर (retval == -EALREADY)
+	if (retval == -EALREADY)
 		retval = 0;
-	अगर (!retval)
+	if (!retval)
 		list_add_tail(&hwreq->queue, &hwep->qh.queue);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
 /**
  * isr_get_status_response: get_status request response
- * @ci: ci काष्ठा
+ * @ci: ci struct
  * @setup: setup request packet
  *
- * This function वापसs an error code
+ * This function returns an error code
  */
-अटल पूर्णांक isr_get_status_response(काष्ठा ci_hdrc *ci,
-				   काष्ठा usb_ctrlrequest *setup)
+static int isr_get_status_response(struct ci_hdrc *ci,
+				   struct usb_ctrlrequest *setup)
 __releases(hwep->lock)
 __acquires(hwep->lock)
-अणु
-	काष्ठा ci_hw_ep *hwep = ci->ep0in;
-	काष्ठा usb_request *req = शून्य;
+{
+	struct ci_hw_ep *hwep = ci->ep0in;
+	struct usb_request *req = NULL;
 	gfp_t gfp_flags = GFP_ATOMIC;
-	पूर्णांक dir, num, retval;
+	int dir, num, retval;
 
-	अगर (hwep == शून्य || setup == शून्य)
-		वापस -EINVAL;
+	if (hwep == NULL || setup == NULL)
+		return -EINVAL;
 
 	spin_unlock(hwep->lock);
 	req = usb_ep_alloc_request(&hwep->ep, gfp_flags);
 	spin_lock(hwep->lock);
-	अगर (req == शून्य)
-		वापस -ENOMEM;
+	if (req == NULL)
+		return -ENOMEM;
 
 	req->complete = isr_get_status_complete;
 	req->length   = 2;
 	req->buf      = kzalloc(req->length, gfp_flags);
-	अगर (req->buf == शून्य) अणु
+	if (req->buf == NULL) {
 		retval = -ENOMEM;
-		जाओ err_मुक्त_req;
-	पूर्ण
+		goto err_free_req;
+	}
 
-	अगर ((setup->bRequestType & USB_RECIP_MASK) == USB_RECIP_DEVICE) अणु
+	if ((setup->bRequestType & USB_RECIP_MASK) == USB_RECIP_DEVICE) {
 		*(u16 *)req->buf = (ci->remote_wakeup << 1) |
-			ci->gadget.is_selfघातered;
-	पूर्ण अन्यथा अगर ((setup->bRequestType & USB_RECIP_MASK) \
-		   == USB_RECIP_ENDPOINT) अणु
-		dir = (le16_to_cpu(setup->wIndex) & USB_ENDPOINT_सूची_MASK) ?
+			ci->gadget.is_selfpowered;
+	} else if ((setup->bRequestType & USB_RECIP_MASK) \
+		   == USB_RECIP_ENDPOINT) {
+		dir = (le16_to_cpu(setup->wIndex) & USB_ENDPOINT_DIR_MASK) ?
 			TX : RX;
 		num =  le16_to_cpu(setup->wIndex) & USB_ENDPOINT_NUMBER_MASK;
 		*(u16 *)req->buf = hw_ep_get_halt(ci, num, dir);
-	पूर्ण
-	/* अन्यथा करो nothing; reserved क्रम future use */
+	}
+	/* else do nothing; reserved for future use */
 
 	retval = _ep_queue(&hwep->ep, req, gfp_flags);
-	अगर (retval)
-		जाओ err_मुक्त_buf;
+	if (retval)
+		goto err_free_buf;
 
-	वापस 0;
+	return 0;
 
- err_मुक्त_buf:
-	kमुक्त(req->buf);
- err_मुक्त_req:
+ err_free_buf:
+	kfree(req->buf);
+ err_free_req:
 	spin_unlock(hwep->lock);
-	usb_ep_मुक्त_request(&hwep->ep, req);
+	usb_ep_free_request(&hwep->ep, req);
 	spin_lock(hwep->lock);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
 /**
  * isr_setup_status_complete: setup_status request complete function
- * @ep:  endpoपूर्णांक
+ * @ep:  endpoint
  * @req: request handled
  *
- * Caller must release lock. Put the port in test mode अगर test mode
+ * Caller must release lock. Put the port in test mode if test mode
  * feature is selected.
  */
-अटल व्योम
-isr_setup_status_complete(काष्ठा usb_ep *ep, काष्ठा usb_request *req)
-अणु
-	काष्ठा ci_hdrc *ci = req->context;
-	अचिन्हित दीर्घ flags;
+static void
+isr_setup_status_complete(struct usb_ep *ep, struct usb_request *req)
+{
+	struct ci_hdrc *ci = req->context;
+	unsigned long flags;
 
-	अगर (ci->setaddr) अणु
+	if (ci->setaddr) {
 		hw_usb_set_address(ci, ci->address);
 		ci->setaddr = false;
-		अगर (ci->address)
+		if (ci->address)
 			usb_gadget_set_state(&ci->gadget, USB_STATE_ADDRESS);
-	पूर्ण
+	}
 
 	spin_lock_irqsave(&ci->lock, flags);
-	अगर (ci->test_mode)
+	if (ci->test_mode)
 		hw_port_test_set(ci, ci->test_mode);
 	spin_unlock_irqrestore(&ci->lock, flags);
-पूर्ण
+}
 
 /**
  * isr_setup_status_phase: queues the status phase of a setup transation
- * @ci: ci काष्ठा
+ * @ci: ci struct
  *
- * This function वापसs an error code
+ * This function returns an error code
  */
-अटल पूर्णांक isr_setup_status_phase(काष्ठा ci_hdrc *ci)
-अणु
-	काष्ठा ci_hw_ep *hwep;
+static int isr_setup_status_phase(struct ci_hdrc *ci)
+{
+	struct ci_hw_ep *hwep;
 
 	/*
-	 * Unexpected USB controller behavior, caused by bad संकेत पूर्णांकegrity
+	 * Unexpected USB controller behavior, caused by bad signal integrity
 	 * or ground reference problems, can lead to isr_setup_status_phase
-	 * being called with ci->status equal to शून्य.
+	 * being called with ci->status equal to NULL.
 	 * If this situation occurs, you should review your USB hardware design.
 	 */
-	अगर (WARN_ON_ONCE(!ci->status))
-		वापस -EPIPE;
+	if (WARN_ON_ONCE(!ci->status))
+		return -EPIPE;
 
 	hwep = (ci->ep0_dir == TX) ? ci->ep0out : ci->ep0in;
 	ci->status->context = ci;
 	ci->status->complete = isr_setup_status_complete;
 
-	वापस _ep_queue(&hwep->ep, ci->status, GFP_ATOMIC);
-पूर्ण
+	return _ep_queue(&hwep->ep, ci->status, GFP_ATOMIC);
+}
 
 /**
  * isr_tr_complete_low: transaction complete low level handler
- * @hwep: endpoपूर्णांक
+ * @hwep: endpoint
  *
- * This function वापसs an error code
+ * This function returns an error code
  * Caller must hold lock
  */
-अटल पूर्णांक isr_tr_complete_low(काष्ठा ci_hw_ep *hwep)
+static int isr_tr_complete_low(struct ci_hw_ep *hwep)
 __releases(hwep->lock)
 __acquires(hwep->lock)
-अणु
-	काष्ठा ci_hw_req *hwreq, *hwreqtemp;
-	काष्ठा ci_hw_ep *hweptemp = hwep;
-	पूर्णांक retval = 0;
+{
+	struct ci_hw_req *hwreq, *hwreqtemp;
+	struct ci_hw_ep *hweptemp = hwep;
+	int retval = 0;
 
-	list_क्रम_each_entry_safe(hwreq, hwreqtemp, &hwep->qh.queue,
-			queue) अणु
+	list_for_each_entry_safe(hwreq, hwreqtemp, &hwep->qh.queue,
+			queue) {
 		retval = _hardware_dequeue(hwep, hwreq);
-		अगर (retval < 0)
-			अवरोध;
+		if (retval < 0)
+			break;
 		list_del_init(&hwreq->queue);
-		अगर (hwreq->req.complete != शून्य) अणु
+		if (hwreq->req.complete != NULL) {
 			spin_unlock(hwep->lock);
-			अगर ((hwep->type == USB_ENDPOINT_XFER_CONTROL) &&
+			if ((hwep->type == USB_ENDPOINT_XFER_CONTROL) &&
 					hwreq->req.length)
 				hweptemp = hwep->ci->ep0in;
 			usb_gadget_giveback_request(&hweptemp->ep, &hwreq->req);
 			spin_lock(hwep->lock);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (retval == -EBUSY)
+	if (retval == -EBUSY)
 		retval = 0;
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल पूर्णांक otg_a_alt_hnp_support(काष्ठा ci_hdrc *ci)
-अणु
+static int otg_a_alt_hnp_support(struct ci_hdrc *ci)
+{
 	dev_warn(&ci->gadget.dev,
 		"connect the device to an alternate port if you want HNP\n");
-	वापस isr_setup_status_phase(ci);
-पूर्ण
+	return isr_setup_status_phase(ci);
+}
 
 /**
  * isr_setup_packet_handler: setup packet handler
@@ -1130,14 +1129,14 @@ __acquires(hwep->lock)
  *
  * This function handles setup packet 
  */
-अटल व्योम isr_setup_packet_handler(काष्ठा ci_hdrc *ci)
+static void isr_setup_packet_handler(struct ci_hdrc *ci)
 __releases(ci->lock)
 __acquires(ci->lock)
-अणु
-	काष्ठा ci_hw_ep *hwep = &ci->ci_hw_ep[0];
-	काष्ठा usb_ctrlrequest req;
-	पूर्णांक type, num, dir, err = -EINVAL;
-	u8 पंचांगode = 0;
+{
+	struct ci_hw_ep *hwep = &ci->ci_hw_ep[0];
+	struct usb_ctrlrequest req;
+	int type, num, dir, err = -EINVAL;
+	u8 tmode = 0;
 
 	/*
 	 * Flush data and handshake transactions of previous
@@ -1146,234 +1145,234 @@ __acquires(ci->lock)
 	_ep_nuke(ci->ep0out);
 	_ep_nuke(ci->ep0in);
 
-	/* पढ़ो_setup_packet */
-	करो अणु
+	/* read_setup_packet */
+	do {
 		hw_test_and_set_setup_guard(ci);
-		स_नकल(&req, &hwep->qh.ptr->setup, माप(req));
-	पूर्ण जबतक (!hw_test_and_clear_setup_guard(ci));
+		memcpy(&req, &hwep->qh.ptr->setup, sizeof(req));
+	} while (!hw_test_and_clear_setup_guard(ci));
 
 	type = req.bRequestType;
 
-	ci->ep0_dir = (type & USB_सूची_IN) ? TX : RX;
+	ci->ep0_dir = (type & USB_DIR_IN) ? TX : RX;
 
-	चयन (req.bRequest) अणु
-	हाल USB_REQ_CLEAR_FEATURE:
-		अगर (type == (USB_सूची_OUT|USB_RECIP_ENDPOINT) &&
+	switch (req.bRequest) {
+	case USB_REQ_CLEAR_FEATURE:
+		if (type == (USB_DIR_OUT|USB_RECIP_ENDPOINT) &&
 				le16_to_cpu(req.wValue) ==
-				USB_ENDPOINT_HALT) अणु
-			अगर (req.wLength != 0)
-				अवरोध;
+				USB_ENDPOINT_HALT) {
+			if (req.wLength != 0)
+				break;
 			num  = le16_to_cpu(req.wIndex);
-			dir = (num & USB_ENDPOINT_सूची_MASK) ? TX : RX;
+			dir = (num & USB_ENDPOINT_DIR_MASK) ? TX : RX;
 			num &= USB_ENDPOINT_NUMBER_MASK;
-			अगर (dir == TX)
+			if (dir == TX)
 				num += ci->hw_ep_max / 2;
-			अगर (!ci->ci_hw_ep[num].wedge) अणु
+			if (!ci->ci_hw_ep[num].wedge) {
 				spin_unlock(&ci->lock);
 				err = usb_ep_clear_halt(
 					&ci->ci_hw_ep[num].ep);
 				spin_lock(&ci->lock);
-				अगर (err)
-					अवरोध;
-			पूर्ण
+				if (err)
+					break;
+			}
 			err = isr_setup_status_phase(ci);
-		पूर्ण अन्यथा अगर (type == (USB_सूची_OUT|USB_RECIP_DEVICE) &&
+		} else if (type == (USB_DIR_OUT|USB_RECIP_DEVICE) &&
 				le16_to_cpu(req.wValue) ==
-				USB_DEVICE_REMOTE_WAKEUP) अणु
-			अगर (req.wLength != 0)
-				अवरोध;
+				USB_DEVICE_REMOTE_WAKEUP) {
+			if (req.wLength != 0)
+				break;
 			ci->remote_wakeup = 0;
 			err = isr_setup_status_phase(ci);
-		पूर्ण अन्यथा अणु
-			जाओ delegate;
-		पूर्ण
-		अवरोध;
-	हाल USB_REQ_GET_STATUS:
-		अगर ((type != (USB_सूची_IN|USB_RECIP_DEVICE) ||
+		} else {
+			goto delegate;
+		}
+		break;
+	case USB_REQ_GET_STATUS:
+		if ((type != (USB_DIR_IN|USB_RECIP_DEVICE) ||
 			le16_to_cpu(req.wIndex) == OTG_STS_SELECTOR) &&
-		    type != (USB_सूची_IN|USB_RECIP_ENDPOINT) &&
-		    type != (USB_सूची_IN|USB_RECIP_INTERFACE))
-			जाओ delegate;
-		अगर (le16_to_cpu(req.wLength) != 2 ||
+		    type != (USB_DIR_IN|USB_RECIP_ENDPOINT) &&
+		    type != (USB_DIR_IN|USB_RECIP_INTERFACE))
+			goto delegate;
+		if (le16_to_cpu(req.wLength) != 2 ||
 		    le16_to_cpu(req.wValue)  != 0)
-			अवरोध;
+			break;
 		err = isr_get_status_response(ci, &req);
-		अवरोध;
-	हाल USB_REQ_SET_ADDRESS:
-		अगर (type != (USB_सूची_OUT|USB_RECIP_DEVICE))
-			जाओ delegate;
-		अगर (le16_to_cpu(req.wLength) != 0 ||
+		break;
+	case USB_REQ_SET_ADDRESS:
+		if (type != (USB_DIR_OUT|USB_RECIP_DEVICE))
+			goto delegate;
+		if (le16_to_cpu(req.wLength) != 0 ||
 		    le16_to_cpu(req.wIndex)  != 0)
-			अवरोध;
+			break;
 		ci->address = (u8)le16_to_cpu(req.wValue);
 		ci->setaddr = true;
 		err = isr_setup_status_phase(ci);
-		अवरोध;
-	हाल USB_REQ_SET_FEATURE:
-		अगर (type == (USB_सूची_OUT|USB_RECIP_ENDPOINT) &&
+		break;
+	case USB_REQ_SET_FEATURE:
+		if (type == (USB_DIR_OUT|USB_RECIP_ENDPOINT) &&
 				le16_to_cpu(req.wValue) ==
-				USB_ENDPOINT_HALT) अणु
-			अगर (req.wLength != 0)
-				अवरोध;
+				USB_ENDPOINT_HALT) {
+			if (req.wLength != 0)
+				break;
 			num  = le16_to_cpu(req.wIndex);
-			dir = (num & USB_ENDPOINT_सूची_MASK) ? TX : RX;
+			dir = (num & USB_ENDPOINT_DIR_MASK) ? TX : RX;
 			num &= USB_ENDPOINT_NUMBER_MASK;
-			अगर (dir == TX)
+			if (dir == TX)
 				num += ci->hw_ep_max / 2;
 
 			spin_unlock(&ci->lock);
 			err = _ep_set_halt(&ci->ci_hw_ep[num].ep, 1, false);
 			spin_lock(&ci->lock);
-			अगर (!err)
+			if (!err)
 				isr_setup_status_phase(ci);
-		पूर्ण अन्यथा अगर (type == (USB_सूची_OUT|USB_RECIP_DEVICE)) अणु
-			अगर (req.wLength != 0)
-				अवरोध;
-			चयन (le16_to_cpu(req.wValue)) अणु
-			हाल USB_DEVICE_REMOTE_WAKEUP:
+		} else if (type == (USB_DIR_OUT|USB_RECIP_DEVICE)) {
+			if (req.wLength != 0)
+				break;
+			switch (le16_to_cpu(req.wValue)) {
+			case USB_DEVICE_REMOTE_WAKEUP:
 				ci->remote_wakeup = 1;
 				err = isr_setup_status_phase(ci);
-				अवरोध;
-			हाल USB_DEVICE_TEST_MODE:
-				पंचांगode = le16_to_cpu(req.wIndex) >> 8;
-				चयन (पंचांगode) अणु
-				हाल USB_TEST_J:
-				हाल USB_TEST_K:
-				हाल USB_TEST_SE0_NAK:
-				हाल USB_TEST_PACKET:
-				हाल USB_TEST_FORCE_ENABLE:
-					ci->test_mode = पंचांगode;
+				break;
+			case USB_DEVICE_TEST_MODE:
+				tmode = le16_to_cpu(req.wIndex) >> 8;
+				switch (tmode) {
+				case USB_TEST_J:
+				case USB_TEST_K:
+				case USB_TEST_SE0_NAK:
+				case USB_TEST_PACKET:
+				case USB_TEST_FORCE_ENABLE:
+					ci->test_mode = tmode;
 					err = isr_setup_status_phase(
 							ci);
-					अवरोध;
-				शेष:
-					अवरोध;
-				पूर्ण
-				अवरोध;
-			हाल USB_DEVICE_B_HNP_ENABLE:
-				अगर (ci_otg_is_fsm_mode(ci)) अणु
+					break;
+				default:
+					break;
+				}
+				break;
+			case USB_DEVICE_B_HNP_ENABLE:
+				if (ci_otg_is_fsm_mode(ci)) {
 					ci->gadget.b_hnp_enable = 1;
 					err = isr_setup_status_phase(
 							ci);
-				पूर्ण
-				अवरोध;
-			हाल USB_DEVICE_A_ALT_HNP_SUPPORT:
-				अगर (ci_otg_is_fsm_mode(ci))
+				}
+				break;
+			case USB_DEVICE_A_ALT_HNP_SUPPORT:
+				if (ci_otg_is_fsm_mode(ci))
 					err = otg_a_alt_hnp_support(ci);
-				अवरोध;
-			हाल USB_DEVICE_A_HNP_SUPPORT:
-				अगर (ci_otg_is_fsm_mode(ci)) अणु
+				break;
+			case USB_DEVICE_A_HNP_SUPPORT:
+				if (ci_otg_is_fsm_mode(ci)) {
 					ci->gadget.a_hnp_support = 1;
 					err = isr_setup_status_phase(
 							ci);
-				पूर्ण
-				अवरोध;
-			शेष:
-				जाओ delegate;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			जाओ delegate;
-		पूर्ण
-		अवरोध;
-	शेष:
+				}
+				break;
+			default:
+				goto delegate;
+			}
+		} else {
+			goto delegate;
+		}
+		break;
+	default:
 delegate:
-		अगर (req.wLength == 0)   /* no data phase */
+		if (req.wLength == 0)   /* no data phase */
 			ci->ep0_dir = TX;
 
 		spin_unlock(&ci->lock);
 		err = ci->driver->setup(&ci->gadget, &req);
 		spin_lock(&ci->lock);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (err < 0) अणु
+	if (err < 0) {
 		spin_unlock(&ci->lock);
-		अगर (_ep_set_halt(&hwep->ep, 1, false))
+		if (_ep_set_halt(&hwep->ep, 1, false))
 			dev_err(ci->dev, "error: _ep_set_halt\n");
 		spin_lock(&ci->lock);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * isr_tr_complete_handler: transaction complete पूर्णांकerrupt handler
+ * isr_tr_complete_handler: transaction complete interrupt handler
  * @ci: UDC descriptor
  *
  * This function handles traffic events
  */
-अटल व्योम isr_tr_complete_handler(काष्ठा ci_hdrc *ci)
+static void isr_tr_complete_handler(struct ci_hdrc *ci)
 __releases(ci->lock)
 __acquires(ci->lock)
-अणु
-	अचिन्हित i;
-	पूर्णांक err;
+{
+	unsigned i;
+	int err;
 
-	क्रम (i = 0; i < ci->hw_ep_max; i++) अणु
-		काष्ठा ci_hw_ep *hwep  = &ci->ci_hw_ep[i];
+	for (i = 0; i < ci->hw_ep_max; i++) {
+		struct ci_hw_ep *hwep  = &ci->ci_hw_ep[i];
 
-		अगर (hwep->ep.desc == शून्य)
-			जारी;   /* not configured */
+		if (hwep->ep.desc == NULL)
+			continue;   /* not configured */
 
-		अगर (hw_test_and_clear_complete(ci, i)) अणु
+		if (hw_test_and_clear_complete(ci, i)) {
 			err = isr_tr_complete_low(hwep);
-			अगर (hwep->type == USB_ENDPOINT_XFER_CONTROL) अणु
-				अगर (err > 0)   /* needs status phase */
+			if (hwep->type == USB_ENDPOINT_XFER_CONTROL) {
+				if (err > 0)   /* needs status phase */
 					err = isr_setup_status_phase(ci);
-				अगर (err < 0) अणु
+				if (err < 0) {
 					spin_unlock(&ci->lock);
-					अगर (_ep_set_halt(&hwep->ep, 1, false))
+					if (_ep_set_halt(&hwep->ep, 1, false))
 						dev_err(ci->dev,
 						"error: _ep_set_halt\n");
 					spin_lock(&ci->lock);
-				पूर्ण
-			पूर्ण
-		पूर्ण
+				}
+			}
+		}
 
 		/* Only handle setup packet below */
-		अगर (i == 0 &&
+		if (i == 0 &&
 			hw_test_and_clear(ci, OP_ENDPTSETUPSTAT, BIT(0)))
 			isr_setup_packet_handler(ci);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /******************************************************************************
  * ENDPT block
  *****************************************************************************/
 /*
- * ep_enable: configure endpoपूर्णांक, making it usable
+ * ep_enable: configure endpoint, making it usable
  *
- * Check usb_ep_enable() at "usb_gadget.h" क्रम details
+ * Check usb_ep_enable() at "usb_gadget.h" for details
  */
-अटल पूर्णांक ep_enable(काष्ठा usb_ep *ep,
-		     स्थिर काष्ठा usb_endpoपूर्णांक_descriptor *desc)
-अणु
-	काष्ठा ci_hw_ep *hwep = container_of(ep, काष्ठा ci_hw_ep, ep);
-	पूर्णांक retval = 0;
-	अचिन्हित दीर्घ flags;
+static int ep_enable(struct usb_ep *ep,
+		     const struct usb_endpoint_descriptor *desc)
+{
+	struct ci_hw_ep *hwep = container_of(ep, struct ci_hw_ep, ep);
+	int retval = 0;
+	unsigned long flags;
 	u32 cap = 0;
 
-	अगर (ep == शून्य || desc == शून्य)
-		वापस -EINVAL;
+	if (ep == NULL || desc == NULL)
+		return -EINVAL;
 
 	spin_lock_irqsave(hwep->lock, flags);
 
-	/* only पूर्णांकernal SW should enable ctrl endpts */
+	/* only internal SW should enable ctrl endpts */
 
-	अगर (!list_empty(&hwep->qh.queue)) अणु
+	if (!list_empty(&hwep->qh.queue)) {
 		dev_warn(hwep->ci->dev, "enabling a non-empty endpoint!\n");
 		spin_unlock_irqrestore(hwep->lock, flags);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	hwep->ep.desc = desc;
 
-	hwep->dir  = usb_endpoपूर्णांक_dir_in(desc) ? TX : RX;
-	hwep->num  = usb_endpoपूर्णांक_num(desc);
-	hwep->type = usb_endpoपूर्णांक_type(desc);
+	hwep->dir  = usb_endpoint_dir_in(desc) ? TX : RX;
+	hwep->num  = usb_endpoint_num(desc);
+	hwep->type = usb_endpoint_type(desc);
 
-	hwep->ep.maxpacket = usb_endpoपूर्णांक_maxp(desc);
-	hwep->ep.mult = usb_endpoपूर्णांक_maxp_mult(desc);
+	hwep->ep.maxpacket = usb_endpoint_maxp(desc);
+	hwep->ep.mult = usb_endpoint_maxp_mult(desc);
 
-	अगर (hwep->type == USB_ENDPOINT_XFER_CONTROL)
+	if (hwep->type == USB_ENDPOINT_XFER_CONTROL)
 		cap |= QH_IOS;
 
 	cap |= QH_ZLT;
@@ -1382,175 +1381,175 @@ __acquires(ci->lock)
 	 * For ISO-TX, we set mult at QH as the largest value, and use
 	 * MultO at TD as real mult value.
 	 */
-	अगर (hwep->type == USB_ENDPOINT_XFER_ISOC && hwep->dir == TX)
+	if (hwep->type == USB_ENDPOINT_XFER_ISOC && hwep->dir == TX)
 		cap |= 3 << __ffs(QH_MULT);
 
 	hwep->qh.ptr->cap = cpu_to_le32(cap);
 
 	hwep->qh.ptr->td.next |= cpu_to_le32(TD_TERMINATE);   /* needed? */
 
-	अगर (hwep->num != 0 && hwep->type == USB_ENDPOINT_XFER_CONTROL) अणु
+	if (hwep->num != 0 && hwep->type == USB_ENDPOINT_XFER_CONTROL) {
 		dev_err(hwep->ci->dev, "Set control xfer at non-ep0\n");
 		retval = -EINVAL;
-	पूर्ण
+	}
 
 	/*
-	 * Enable endpoपूर्णांकs in the HW other than ep0 as ep0
+	 * Enable endpoints in the HW other than ep0 as ep0
 	 * is always enabled
 	 */
-	अगर (hwep->num)
+	if (hwep->num)
 		retval |= hw_ep_enable(hwep->ci, hwep->num, hwep->dir,
 				       hwep->type);
 
 	spin_unlock_irqrestore(hwep->lock, flags);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
 /*
- * ep_disable: endpoपूर्णांक is no दीर्घer usable
+ * ep_disable: endpoint is no longer usable
  *
- * Check usb_ep_disable() at "usb_gadget.h" क्रम details
+ * Check usb_ep_disable() at "usb_gadget.h" for details
  */
-अटल पूर्णांक ep_disable(काष्ठा usb_ep *ep)
-अणु
-	काष्ठा ci_hw_ep *hwep = container_of(ep, काष्ठा ci_hw_ep, ep);
-	पूर्णांक direction, retval = 0;
-	अचिन्हित दीर्घ flags;
+static int ep_disable(struct usb_ep *ep)
+{
+	struct ci_hw_ep *hwep = container_of(ep, struct ci_hw_ep, ep);
+	int direction, retval = 0;
+	unsigned long flags;
 
-	अगर (ep == शून्य)
-		वापस -EINVAL;
-	अन्यथा अगर (hwep->ep.desc == शून्य)
-		वापस -EBUSY;
+	if (ep == NULL)
+		return -EINVAL;
+	else if (hwep->ep.desc == NULL)
+		return -EBUSY;
 
 	spin_lock_irqsave(hwep->lock, flags);
-	अगर (hwep->ci->gadget.speed == USB_SPEED_UNKNOWN) अणु
+	if (hwep->ci->gadget.speed == USB_SPEED_UNKNOWN) {
 		spin_unlock_irqrestore(hwep->lock, flags);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	/* only पूर्णांकernal SW should disable ctrl endpts */
+	/* only internal SW should disable ctrl endpts */
 
 	direction = hwep->dir;
-	करो अणु
+	do {
 		retval |= _ep_nuke(hwep);
 		retval |= hw_ep_disable(hwep->ci, hwep->num, hwep->dir);
 
-		अगर (hwep->type == USB_ENDPOINT_XFER_CONTROL)
+		if (hwep->type == USB_ENDPOINT_XFER_CONTROL)
 			hwep->dir = (hwep->dir == TX) ? RX : TX;
 
-	पूर्ण जबतक (hwep->dir != direction);
+	} while (hwep->dir != direction);
 
-	hwep->ep.desc = शून्य;
+	hwep->ep.desc = NULL;
 
 	spin_unlock_irqrestore(hwep->lock, flags);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
 /*
- * ep_alloc_request: allocate a request object to use with this endpoपूर्णांक
+ * ep_alloc_request: allocate a request object to use with this endpoint
  *
- * Check usb_ep_alloc_request() at "usb_gadget.h" क्रम details
+ * Check usb_ep_alloc_request() at "usb_gadget.h" for details
  */
-अटल काष्ठा usb_request *ep_alloc_request(काष्ठा usb_ep *ep, gfp_t gfp_flags)
-अणु
-	काष्ठा ci_hw_req *hwreq = शून्य;
+static struct usb_request *ep_alloc_request(struct usb_ep *ep, gfp_t gfp_flags)
+{
+	struct ci_hw_req *hwreq = NULL;
 
-	अगर (ep == शून्य)
-		वापस शून्य;
+	if (ep == NULL)
+		return NULL;
 
-	hwreq = kzalloc(माप(काष्ठा ci_hw_req), gfp_flags);
-	अगर (hwreq != शून्य) अणु
+	hwreq = kzalloc(sizeof(struct ci_hw_req), gfp_flags);
+	if (hwreq != NULL) {
 		INIT_LIST_HEAD(&hwreq->queue);
 		INIT_LIST_HEAD(&hwreq->tds);
-	पूर्ण
+	}
 
-	वापस (hwreq == शून्य) ? शून्य : &hwreq->req;
-पूर्ण
+	return (hwreq == NULL) ? NULL : &hwreq->req;
+}
 
 /*
- * ep_मुक्त_request: मुक्तs a request object
+ * ep_free_request: frees a request object
  *
- * Check usb_ep_मुक्त_request() at "usb_gadget.h" क्रम details
+ * Check usb_ep_free_request() at "usb_gadget.h" for details
  */
-अटल व्योम ep_मुक्त_request(काष्ठा usb_ep *ep, काष्ठा usb_request *req)
-अणु
-	काष्ठा ci_hw_ep  *hwep  = container_of(ep,  काष्ठा ci_hw_ep, ep);
-	काष्ठा ci_hw_req *hwreq = container_of(req, काष्ठा ci_hw_req, req);
-	काष्ठा td_node *node, *पंचांगpnode;
-	अचिन्हित दीर्घ flags;
+static void ep_free_request(struct usb_ep *ep, struct usb_request *req)
+{
+	struct ci_hw_ep  *hwep  = container_of(ep,  struct ci_hw_ep, ep);
+	struct ci_hw_req *hwreq = container_of(req, struct ci_hw_req, req);
+	struct td_node *node, *tmpnode;
+	unsigned long flags;
 
-	अगर (ep == शून्य || req == शून्य) अणु
-		वापस;
-	पूर्ण अन्यथा अगर (!list_empty(&hwreq->queue)) अणु
+	if (ep == NULL || req == NULL) {
+		return;
+	} else if (!list_empty(&hwreq->queue)) {
 		dev_err(hwep->ci->dev, "freeing queued request\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	spin_lock_irqsave(hwep->lock, flags);
 
-	list_क्रम_each_entry_safe(node, पंचांगpnode, &hwreq->tds, td) अणु
-		dma_pool_मुक्त(hwep->td_pool, node->ptr, node->dma);
+	list_for_each_entry_safe(node, tmpnode, &hwreq->tds, td) {
+		dma_pool_free(hwep->td_pool, node->ptr, node->dma);
 		list_del_init(&node->td);
-		node->ptr = शून्य;
-		kमुक्त(node);
-	पूर्ण
+		node->ptr = NULL;
+		kfree(node);
+	}
 
-	kमुक्त(hwreq);
+	kfree(hwreq);
 
 	spin_unlock_irqrestore(hwep->lock, flags);
-पूर्ण
+}
 
 /*
- * ep_queue: queues (submits) an I/O request to an endpoपूर्णांक
+ * ep_queue: queues (submits) an I/O request to an endpoint
  *
- * Check usb_ep_queue()* at usb_gadget.h" क्रम details
+ * Check usb_ep_queue()* at usb_gadget.h" for details
  */
-अटल पूर्णांक ep_queue(काष्ठा usb_ep *ep, काष्ठा usb_request *req,
+static int ep_queue(struct usb_ep *ep, struct usb_request *req,
 		    gfp_t __maybe_unused gfp_flags)
-अणु
-	काष्ठा ci_hw_ep  *hwep  = container_of(ep,  काष्ठा ci_hw_ep, ep);
-	पूर्णांक retval = 0;
-	अचिन्हित दीर्घ flags;
+{
+	struct ci_hw_ep  *hwep  = container_of(ep,  struct ci_hw_ep, ep);
+	int retval = 0;
+	unsigned long flags;
 
-	अगर (ep == शून्य || req == शून्य || hwep->ep.desc == शून्य)
-		वापस -EINVAL;
+	if (ep == NULL || req == NULL || hwep->ep.desc == NULL)
+		return -EINVAL;
 
 	spin_lock_irqsave(hwep->lock, flags);
-	अगर (hwep->ci->gadget.speed == USB_SPEED_UNKNOWN) अणु
+	if (hwep->ci->gadget.speed == USB_SPEED_UNKNOWN) {
 		spin_unlock_irqrestore(hwep->lock, flags);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	retval = _ep_queue(ep, req, gfp_flags);
 	spin_unlock_irqrestore(hwep->lock, flags);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
 /*
- * ep_dequeue: dequeues (cancels, unlinks) an I/O request from an endpoपूर्णांक
+ * ep_dequeue: dequeues (cancels, unlinks) an I/O request from an endpoint
  *
- * Check usb_ep_dequeue() at "usb_gadget.h" क्रम details
+ * Check usb_ep_dequeue() at "usb_gadget.h" for details
  */
-अटल पूर्णांक ep_dequeue(काष्ठा usb_ep *ep, काष्ठा usb_request *req)
-अणु
-	काष्ठा ci_hw_ep  *hwep  = container_of(ep,  काष्ठा ci_hw_ep, ep);
-	काष्ठा ci_hw_req *hwreq = container_of(req, काष्ठा ci_hw_req, req);
-	अचिन्हित दीर्घ flags;
-	काष्ठा td_node *node, *पंचांगpnode;
+static int ep_dequeue(struct usb_ep *ep, struct usb_request *req)
+{
+	struct ci_hw_ep  *hwep  = container_of(ep,  struct ci_hw_ep, ep);
+	struct ci_hw_req *hwreq = container_of(req, struct ci_hw_req, req);
+	unsigned long flags;
+	struct td_node *node, *tmpnode;
 
-	अगर (ep == शून्य || req == शून्य || hwreq->req.status != -EALREADY ||
-		hwep->ep.desc == शून्य || list_empty(&hwreq->queue) ||
+	if (ep == NULL || req == NULL || hwreq->req.status != -EALREADY ||
+		hwep->ep.desc == NULL || list_empty(&hwreq->queue) ||
 		list_empty(&hwep->qh.queue))
-		वापस -EINVAL;
+		return -EINVAL;
 
 	spin_lock_irqsave(hwep->lock, flags);
-	अगर (hwep->ci->gadget.speed != USB_SPEED_UNKNOWN)
+	if (hwep->ci->gadget.speed != USB_SPEED_UNKNOWN)
 		hw_ep_flush(hwep->ci, hwep->num, hwep->dir);
 
-	list_क्रम_each_entry_safe(node, पंचांगpnode, &hwreq->tds, td) अणु
-		dma_pool_मुक्त(hwep->td_pool, node->ptr, node->dma);
+	list_for_each_entry_safe(node, tmpnode, &hwreq->tds, td) {
+		dma_pool_free(hwep->td_pool, node->ptr, node->dma);
 		list_del(&node->td);
-		kमुक्त(node);
-	पूर्ण
+		kfree(node);
+	}
 
 	/* pop request */
 	list_del_init(&hwreq->queue);
@@ -1559,87 +1558,87 @@ __acquires(ci->lock)
 
 	req->status = -ECONNRESET;
 
-	अगर (hwreq->req.complete != शून्य) अणु
+	if (hwreq->req.complete != NULL) {
 		spin_unlock(hwep->lock);
 		usb_gadget_giveback_request(&hwep->ep, &hwreq->req);
 		spin_lock(hwep->lock);
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(hwep->lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * ep_set_halt: sets the endpoपूर्णांक halt feature
+ * ep_set_halt: sets the endpoint halt feature
  *
- * Check usb_ep_set_halt() at "usb_gadget.h" क्रम details
+ * Check usb_ep_set_halt() at "usb_gadget.h" for details
  */
-अटल पूर्णांक ep_set_halt(काष्ठा usb_ep *ep, पूर्णांक value)
-अणु
-	वापस _ep_set_halt(ep, value, true);
-पूर्ण
+static int ep_set_halt(struct usb_ep *ep, int value)
+{
+	return _ep_set_halt(ep, value, true);
+}
 
 /*
  * ep_set_wedge: sets the halt feature and ignores clear requests
  *
- * Check usb_ep_set_wedge() at "usb_gadget.h" क्रम details
+ * Check usb_ep_set_wedge() at "usb_gadget.h" for details
  */
-अटल पूर्णांक ep_set_wedge(काष्ठा usb_ep *ep)
-अणु
-	काष्ठा ci_hw_ep *hwep = container_of(ep, काष्ठा ci_hw_ep, ep);
-	अचिन्हित दीर्घ flags;
+static int ep_set_wedge(struct usb_ep *ep)
+{
+	struct ci_hw_ep *hwep = container_of(ep, struct ci_hw_ep, ep);
+	unsigned long flags;
 
-	अगर (ep == शून्य || hwep->ep.desc == शून्य)
-		वापस -EINVAL;
+	if (ep == NULL || hwep->ep.desc == NULL)
+		return -EINVAL;
 
 	spin_lock_irqsave(hwep->lock, flags);
 	hwep->wedge = 1;
 	spin_unlock_irqrestore(hwep->lock, flags);
 
-	वापस usb_ep_set_halt(ep);
-पूर्ण
+	return usb_ep_set_halt(ep);
+}
 
 /*
- * ep_fअगरo_flush: flushes contents of a fअगरo
+ * ep_fifo_flush: flushes contents of a fifo
  *
- * Check usb_ep_fअगरo_flush() at "usb_gadget.h" क्रम details
+ * Check usb_ep_fifo_flush() at "usb_gadget.h" for details
  */
-अटल व्योम ep_fअगरo_flush(काष्ठा usb_ep *ep)
-अणु
-	काष्ठा ci_hw_ep *hwep = container_of(ep, काष्ठा ci_hw_ep, ep);
-	अचिन्हित दीर्घ flags;
+static void ep_fifo_flush(struct usb_ep *ep)
+{
+	struct ci_hw_ep *hwep = container_of(ep, struct ci_hw_ep, ep);
+	unsigned long flags;
 
-	अगर (ep == शून्य) अणु
+	if (ep == NULL) {
 		dev_err(hwep->ci->dev, "%02X: -EINVAL\n", _usb_addr(hwep));
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	spin_lock_irqsave(hwep->lock, flags);
-	अगर (hwep->ci->gadget.speed == USB_SPEED_UNKNOWN) अणु
+	if (hwep->ci->gadget.speed == USB_SPEED_UNKNOWN) {
 		spin_unlock_irqrestore(hwep->lock, flags);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	hw_ep_flush(hwep->ci, hwep->num, hwep->dir);
 
 	spin_unlock_irqrestore(hwep->lock, flags);
-पूर्ण
+}
 
 /*
- * Endpoपूर्णांक-specअगरic part of the API to the USB controller hardware
- * Check "usb_gadget.h" क्रम details
+ * Endpoint-specific part of the API to the USB controller hardware
+ * Check "usb_gadget.h" for details
  */
-अटल स्थिर काष्ठा usb_ep_ops usb_ep_ops = अणु
+static const struct usb_ep_ops usb_ep_ops = {
 	.enable	       = ep_enable,
 	.disable       = ep_disable,
 	.alloc_request = ep_alloc_request,
-	.मुक्त_request  = ep_मुक्त_request,
+	.free_request  = ep_free_request,
 	.queue	       = ep_queue,
 	.dequeue       = ep_dequeue,
 	.set_halt      = ep_set_halt,
 	.set_wedge     = ep_set_wedge,
-	.fअगरo_flush    = ep_fअगरo_flush,
-पूर्ण;
+	.fifo_flush    = ep_fifo_flush,
+};
 
 /******************************************************************************
  * GADGET block
@@ -1647,179 +1646,179 @@ __acquires(ci->lock)
 /*
  * ci_hdrc_gadget_connect: caller makes sure gadget driver is binded
  */
-अटल व्योम ci_hdrc_gadget_connect(काष्ठा usb_gadget *_gadget, पूर्णांक is_active)
-अणु
-	काष्ठा ci_hdrc *ci = container_of(_gadget, काष्ठा ci_hdrc, gadget);
+static void ci_hdrc_gadget_connect(struct usb_gadget *_gadget, int is_active)
+{
+	struct ci_hdrc *ci = container_of(_gadget, struct ci_hdrc, gadget);
 
-	अगर (is_active) अणु
-		pm_runसमय_get_sync(ci->dev);
+	if (is_active) {
+		pm_runtime_get_sync(ci->dev);
 		hw_device_reset(ci);
 		spin_lock_irq(&ci->lock);
-		अगर (ci->driver) अणु
+		if (ci->driver) {
 			hw_device_state(ci, ci->ep0out->qh.dma);
 			usb_gadget_set_state(_gadget, USB_STATE_POWERED);
 			spin_unlock_irq(&ci->lock);
 			usb_udc_vbus_handler(_gadget, true);
-		पूर्ण अन्यथा अणु
+		} else {
 			spin_unlock_irq(&ci->lock);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		usb_udc_vbus_handler(_gadget, false);
-		अगर (ci->driver)
+		if (ci->driver)
 			ci->driver->disconnect(&ci->gadget);
 		hw_device_state(ci, 0);
-		अगर (ci->platdata->notअगरy_event)
-			ci->platdata->notअगरy_event(ci,
+		if (ci->platdata->notify_event)
+			ci->platdata->notify_event(ci,
 			CI_HDRC_CONTROLLER_STOPPED_EVENT);
 		_gadget_stop_activity(&ci->gadget);
-		pm_runसमय_put_sync(ci->dev);
+		pm_runtime_put_sync(ci->dev);
 		usb_gadget_set_state(_gadget, USB_STATE_NOTATTACHED);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक ci_udc_vbus_session(काष्ठा usb_gadget *_gadget, पूर्णांक is_active)
-अणु
-	काष्ठा ci_hdrc *ci = container_of(_gadget, काष्ठा ci_hdrc, gadget);
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret = 0;
+static int ci_udc_vbus_session(struct usb_gadget *_gadget, int is_active)
+{
+	struct ci_hdrc *ci = container_of(_gadget, struct ci_hdrc, gadget);
+	unsigned long flags;
+	int ret = 0;
 
 	spin_lock_irqsave(&ci->lock, flags);
 	ci->vbus_active = is_active;
 	spin_unlock_irqrestore(&ci->lock, flags);
 
-	अगर (ci->usb_phy)
-		usb_phy_set_अक्षरger_state(ci->usb_phy, is_active ?
+	if (ci->usb_phy)
+		usb_phy_set_charger_state(ci->usb_phy, is_active ?
 			USB_CHARGER_PRESENT : USB_CHARGER_ABSENT);
 
-	अगर (ci->platdata->notअगरy_event)
-		ret = ci->platdata->notअगरy_event(ci,
+	if (ci->platdata->notify_event)
+		ret = ci->platdata->notify_event(ci,
 				CI_HDRC_CONTROLLER_VBUS_EVENT);
 
-	अगर (ci->driver)
+	if (ci->driver)
 		ci_hdrc_gadget_connect(_gadget, is_active);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ci_udc_wakeup(काष्ठा usb_gadget *_gadget)
-अणु
-	काष्ठा ci_hdrc *ci = container_of(_gadget, काष्ठा ci_hdrc, gadget);
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret = 0;
+static int ci_udc_wakeup(struct usb_gadget *_gadget)
+{
+	struct ci_hdrc *ci = container_of(_gadget, struct ci_hdrc, gadget);
+	unsigned long flags;
+	int ret = 0;
 
 	spin_lock_irqsave(&ci->lock, flags);
-	अगर (ci->gadget.speed == USB_SPEED_UNKNOWN) अणु
+	if (ci->gadget.speed == USB_SPEED_UNKNOWN) {
 		spin_unlock_irqrestore(&ci->lock, flags);
-		वापस 0;
-	पूर्ण
-	अगर (!ci->remote_wakeup) अणु
+		return 0;
+	}
+	if (!ci->remote_wakeup) {
 		ret = -EOPNOTSUPP;
-		जाओ out;
-	पूर्ण
-	अगर (!hw_पढ़ो(ci, OP_PORTSC, PORTSC_SUSP)) अणु
+		goto out;
+	}
+	if (!hw_read(ci, OP_PORTSC, PORTSC_SUSP)) {
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
-	hw_ग_लिखो(ci, OP_PORTSC, PORTSC_FPR, PORTSC_FPR);
+		goto out;
+	}
+	hw_write(ci, OP_PORTSC, PORTSC_FPR, PORTSC_FPR);
 out:
 	spin_unlock_irqrestore(&ci->lock, flags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ci_udc_vbus_draw(काष्ठा usb_gadget *_gadget, अचिन्हित ma)
-अणु
-	काष्ठा ci_hdrc *ci = container_of(_gadget, काष्ठा ci_hdrc, gadget);
+static int ci_udc_vbus_draw(struct usb_gadget *_gadget, unsigned ma)
+{
+	struct ci_hdrc *ci = container_of(_gadget, struct ci_hdrc, gadget);
 
-	अगर (ci->usb_phy)
-		वापस usb_phy_set_घातer(ci->usb_phy, ma);
-	वापस -ENOTSUPP;
-पूर्ण
+	if (ci->usb_phy)
+		return usb_phy_set_power(ci->usb_phy, ma);
+	return -ENOTSUPP;
+}
 
-अटल पूर्णांक ci_udc_selfघातered(काष्ठा usb_gadget *_gadget, पूर्णांक is_on)
-अणु
-	काष्ठा ci_hdrc *ci = container_of(_gadget, काष्ठा ci_hdrc, gadget);
-	काष्ठा ci_hw_ep *hwep = ci->ep0in;
-	अचिन्हित दीर्घ flags;
+static int ci_udc_selfpowered(struct usb_gadget *_gadget, int is_on)
+{
+	struct ci_hdrc *ci = container_of(_gadget, struct ci_hdrc, gadget);
+	struct ci_hw_ep *hwep = ci->ep0in;
+	unsigned long flags;
 
 	spin_lock_irqsave(hwep->lock, flags);
-	_gadget->is_selfघातered = (is_on != 0);
+	_gadget->is_selfpowered = (is_on != 0);
 	spin_unlock_irqrestore(hwep->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Change Data+ pullup status
  * this func is used by usb_gadget_connect/disconnect
  */
-अटल पूर्णांक ci_udc_pullup(काष्ठा usb_gadget *_gadget, पूर्णांक is_on)
-अणु
-	काष्ठा ci_hdrc *ci = container_of(_gadget, काष्ठा ci_hdrc, gadget);
+static int ci_udc_pullup(struct usb_gadget *_gadget, int is_on)
+{
+	struct ci_hdrc *ci = container_of(_gadget, struct ci_hdrc, gadget);
 
 	/*
 	 * Data+ pullup controlled by OTG state machine in OTG fsm mode;
-	 * and करोn't touch Data+ in host mode क्रम dual role config.
+	 * and don't touch Data+ in host mode for dual role config.
 	 */
-	अगर (ci_otg_is_fsm_mode(ci) || ci->role == CI_ROLE_HOST)
-		वापस 0;
+	if (ci_otg_is_fsm_mode(ci) || ci->role == CI_ROLE_HOST)
+		return 0;
 
-	pm_runसमय_get_sync(ci->dev);
-	अगर (is_on)
-		hw_ग_लिखो(ci, OP_USBCMD, USBCMD_RS, USBCMD_RS);
-	अन्यथा
-		hw_ग_लिखो(ci, OP_USBCMD, USBCMD_RS, 0);
-	pm_runसमय_put_sync(ci->dev);
+	pm_runtime_get_sync(ci->dev);
+	if (is_on)
+		hw_write(ci, OP_USBCMD, USBCMD_RS, USBCMD_RS);
+	else
+		hw_write(ci, OP_USBCMD, USBCMD_RS, 0);
+	pm_runtime_put_sync(ci->dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ci_udc_start(काष्ठा usb_gadget *gadget,
-			 काष्ठा usb_gadget_driver *driver);
-अटल पूर्णांक ci_udc_stop(काष्ठा usb_gadget *gadget);
+static int ci_udc_start(struct usb_gadget *gadget,
+			 struct usb_gadget_driver *driver);
+static int ci_udc_stop(struct usb_gadget *gadget);
 
-/* Match ISOC IN from the highest endpoपूर्णांक */
-अटल काष्ठा usb_ep *ci_udc_match_ep(काष्ठा usb_gadget *gadget,
-			      काष्ठा usb_endpoपूर्णांक_descriptor *desc,
-			      काष्ठा usb_ss_ep_comp_descriptor *comp_desc)
-अणु
-	काष्ठा ci_hdrc *ci = container_of(gadget, काष्ठा ci_hdrc, gadget);
-	काष्ठा usb_ep *ep;
+/* Match ISOC IN from the highest endpoint */
+static struct usb_ep *ci_udc_match_ep(struct usb_gadget *gadget,
+			      struct usb_endpoint_descriptor *desc,
+			      struct usb_ss_ep_comp_descriptor *comp_desc)
+{
+	struct ci_hdrc *ci = container_of(gadget, struct ci_hdrc, gadget);
+	struct usb_ep *ep;
 
-	अगर (usb_endpoपूर्णांक_xfer_isoc(desc) && usb_endpoपूर्णांक_dir_in(desc)) अणु
-		list_क्रम_each_entry_reverse(ep, &ci->gadget.ep_list, ep_list) अणु
-			अगर (ep->caps.dir_in && !ep->claimed)
-				वापस ep;
-		पूर्ण
-	पूर्ण
+	if (usb_endpoint_xfer_isoc(desc) && usb_endpoint_dir_in(desc)) {
+		list_for_each_entry_reverse(ep, &ci->gadget.ep_list, ep_list) {
+			if (ep->caps.dir_in && !ep->claimed)
+				return ep;
+		}
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /*
  * Device operations part of the API to the USB controller hardware,
- * which करोn't involve endpoपूर्णांकs (or i/o)
- * Check  "usb_gadget.h" क्रम details
+ * which don't involve endpoints (or i/o)
+ * Check  "usb_gadget.h" for details
  */
-अटल स्थिर काष्ठा usb_gadget_ops usb_gadget_ops = अणु
+static const struct usb_gadget_ops usb_gadget_ops = {
 	.vbus_session	= ci_udc_vbus_session,
 	.wakeup		= ci_udc_wakeup,
-	.set_selfघातered	= ci_udc_selfघातered,
+	.set_selfpowered	= ci_udc_selfpowered,
 	.pullup		= ci_udc_pullup,
 	.vbus_draw	= ci_udc_vbus_draw,
 	.udc_start	= ci_udc_start,
 	.udc_stop	= ci_udc_stop,
 	.match_ep 	= ci_udc_match_ep,
-पूर्ण;
+};
 
-अटल पूर्णांक init_eps(काष्ठा ci_hdrc *ci)
-अणु
-	पूर्णांक retval = 0, i, j;
+static int init_eps(struct ci_hdrc *ci)
+{
+	int retval = 0, i, j;
 
-	क्रम (i = 0; i < ci->hw_ep_max/2; i++)
-		क्रम (j = RX; j <= TX; j++) अणु
-			पूर्णांक k = i + j * ci->hw_ep_max/2;
-			काष्ठा ci_hw_ep *hwep = &ci->ci_hw_ep[k];
+	for (i = 0; i < ci->hw_ep_max/2; i++)
+		for (j = RX; j <= TX; j++) {
+			int k = i + j * ci->hw_ep_max/2;
+			struct ci_hw_ep *hwep = &ci->ci_hw_ep[k];
 
-			scnम_लिखो(hwep->name, माप(hwep->name), "ep%i%s", i,
+			scnprintf(hwep->name, sizeof(hwep->name), "ep%i%s", i,
 					(j == TX)  ? "in" : "out");
 
 			hwep->ci          = ci;
@@ -1829,232 +1828,232 @@ out:
 			hwep->ep.name      = hwep->name;
 			hwep->ep.ops       = &usb_ep_ops;
 
-			अगर (i == 0) अणु
+			if (i == 0) {
 				hwep->ep.caps.type_control = true;
-			पूर्ण अन्यथा अणु
+			} else {
 				hwep->ep.caps.type_iso = true;
 				hwep->ep.caps.type_bulk = true;
-				hwep->ep.caps.type_पूर्णांक = true;
-			पूर्ण
+				hwep->ep.caps.type_int = true;
+			}
 
-			अगर (j == TX)
+			if (j == TX)
 				hwep->ep.caps.dir_in = true;
-			अन्यथा
+			else
 				hwep->ep.caps.dir_out = true;
 
 			/*
-			 * क्रम ep0: maxP defined in desc, क्रम other
-			 * eps, maxP is set by epस्वतःconfig() called
+			 * for ep0: maxP defined in desc, for other
+			 * eps, maxP is set by epautoconfig() called
 			 * by gadget layer
 			 */
-			usb_ep_set_maxpacket_limit(&hwep->ep, (अचिन्हित लघु)~0);
+			usb_ep_set_maxpacket_limit(&hwep->ep, (unsigned short)~0);
 
 			INIT_LIST_HEAD(&hwep->qh.queue);
 			hwep->qh.ptr = dma_pool_zalloc(ci->qh_pool, GFP_KERNEL,
 						       &hwep->qh.dma);
-			अगर (hwep->qh.ptr == शून्य)
+			if (hwep->qh.ptr == NULL)
 				retval = -ENOMEM;
 
 			/*
-			 * set up लघुhands क्रम ep0 out and in endpoपूर्णांकs,
-			 * करोn't add to gadget's ep_list
+			 * set up shorthands for ep0 out and in endpoints,
+			 * don't add to gadget's ep_list
 			 */
-			अगर (i == 0) अणु
-				अगर (j == RX)
+			if (i == 0) {
+				if (j == RX)
 					ci->ep0out = hwep;
-				अन्यथा
+				else
 					ci->ep0in = hwep;
 
 				usb_ep_set_maxpacket_limit(&hwep->ep, CTRL_PAYLOAD_MAX);
-				जारी;
-			पूर्ण
+				continue;
+			}
 
 			list_add_tail(&hwep->ep.ep_list, &ci->gadget.ep_list);
-		पूर्ण
+		}
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल व्योम destroy_eps(काष्ठा ci_hdrc *ci)
-अणु
-	पूर्णांक i;
+static void destroy_eps(struct ci_hdrc *ci)
+{
+	int i;
 
-	क्रम (i = 0; i < ci->hw_ep_max; i++) अणु
-		काष्ठा ci_hw_ep *hwep = &ci->ci_hw_ep[i];
+	for (i = 0; i < ci->hw_ep_max; i++) {
+		struct ci_hw_ep *hwep = &ci->ci_hw_ep[i];
 
-		अगर (hwep->pending_td)
-			मुक्त_pending_td(hwep);
-		dma_pool_मुक्त(ci->qh_pool, hwep->qh.ptr, hwep->qh.dma);
-	पूर्ण
-पूर्ण
+		if (hwep->pending_td)
+			free_pending_td(hwep);
+		dma_pool_free(ci->qh_pool, hwep->qh.ptr, hwep->qh.dma);
+	}
+}
 
 /**
- * ci_udc_start: रेजिस्टर a gadget driver
+ * ci_udc_start: register a gadget driver
  * @gadget: our gadget
- * @driver: the driver being रेजिस्टरed
+ * @driver: the driver being registered
  *
  * Interrupts are enabled here.
  */
-अटल पूर्णांक ci_udc_start(काष्ठा usb_gadget *gadget,
-			 काष्ठा usb_gadget_driver *driver)
-अणु
-	काष्ठा ci_hdrc *ci = container_of(gadget, काष्ठा ci_hdrc, gadget);
-	पूर्णांक retval;
+static int ci_udc_start(struct usb_gadget *gadget,
+			 struct usb_gadget_driver *driver)
+{
+	struct ci_hdrc *ci = container_of(gadget, struct ci_hdrc, gadget);
+	int retval;
 
-	अगर (driver->disconnect == शून्य)
-		वापस -EINVAL;
+	if (driver->disconnect == NULL)
+		return -EINVAL;
 
 	ci->ep0out->ep.desc = &ctrl_endpt_out_desc;
 	retval = usb_ep_enable(&ci->ep0out->ep);
-	अगर (retval)
-		वापस retval;
+	if (retval)
+		return retval;
 
 	ci->ep0in->ep.desc = &ctrl_endpt_in_desc;
 	retval = usb_ep_enable(&ci->ep0in->ep);
-	अगर (retval)
-		वापस retval;
+	if (retval)
+		return retval;
 
 	ci->driver = driver;
 
-	/* Start otg fsm क्रम B-device */
-	अगर (ci_otg_is_fsm_mode(ci) && ci->fsm.id) अणु
+	/* Start otg fsm for B-device */
+	if (ci_otg_is_fsm_mode(ci) && ci->fsm.id) {
 		ci_hdrc_otg_fsm_start(ci);
-		वापस retval;
-	पूर्ण
+		return retval;
+	}
 
-	अगर (ci->vbus_active)
+	if (ci->vbus_active)
 		ci_hdrc_gadget_connect(gadget, 1);
-	अन्यथा
+	else
 		usb_udc_vbus_handler(&ci->gadget, false);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल व्योम ci_udc_stop_क्रम_otg_fsm(काष्ठा ci_hdrc *ci)
-अणु
-	अगर (!ci_otg_is_fsm_mode(ci))
-		वापस;
+static void ci_udc_stop_for_otg_fsm(struct ci_hdrc *ci)
+{
+	if (!ci_otg_is_fsm_mode(ci))
+		return;
 
 	mutex_lock(&ci->fsm.lock);
-	अगर (ci->fsm.otg->state == OTG_STATE_A_PERIPHERAL) अणु
-		ci->fsm.a_bidl_adis_पंचांगout = 1;
+	if (ci->fsm.otg->state == OTG_STATE_A_PERIPHERAL) {
+		ci->fsm.a_bidl_adis_tmout = 1;
 		ci_hdrc_otg_fsm_start(ci);
-	पूर्ण अन्यथा अगर (ci->fsm.otg->state == OTG_STATE_B_PERIPHERAL) अणु
+	} else if (ci->fsm.otg->state == OTG_STATE_B_PERIPHERAL) {
 		ci->fsm.protocol = PROTO_UNDEF;
 		ci->fsm.otg->state = OTG_STATE_UNDEFINED;
-	पूर्ण
+	}
 	mutex_unlock(&ci->fsm.lock);
-पूर्ण
+}
 
 /*
- * ci_udc_stop: unरेजिस्टर a gadget driver
+ * ci_udc_stop: unregister a gadget driver
  */
-अटल पूर्णांक ci_udc_stop(काष्ठा usb_gadget *gadget)
-अणु
-	काष्ठा ci_hdrc *ci = container_of(gadget, काष्ठा ci_hdrc, gadget);
-	अचिन्हित दीर्घ flags;
+static int ci_udc_stop(struct usb_gadget *gadget)
+{
+	struct ci_hdrc *ci = container_of(gadget, struct ci_hdrc, gadget);
+	unsigned long flags;
 
 	spin_lock_irqsave(&ci->lock, flags);
-	ci->driver = शून्य;
+	ci->driver = NULL;
 
-	अगर (ci->vbus_active) अणु
+	if (ci->vbus_active) {
 		hw_device_state(ci, 0);
 		spin_unlock_irqrestore(&ci->lock, flags);
-		अगर (ci->platdata->notअगरy_event)
-			ci->platdata->notअगरy_event(ci,
+		if (ci->platdata->notify_event)
+			ci->platdata->notify_event(ci,
 			CI_HDRC_CONTROLLER_STOPPED_EVENT);
 		_gadget_stop_activity(&ci->gadget);
 		spin_lock_irqsave(&ci->lock, flags);
-		pm_runसमय_put(ci->dev);
-	पूर्ण
+		pm_runtime_put(ci->dev);
+	}
 
 	spin_unlock_irqrestore(&ci->lock, flags);
 
-	ci_udc_stop_क्रम_otg_fsm(ci);
-	वापस 0;
-पूर्ण
+	ci_udc_stop_for_otg_fsm(ci);
+	return 0;
+}
 
 /******************************************************************************
  * BUS block
  *****************************************************************************/
 /*
- * udc_irq: ci पूर्णांकerrupt handler
+ * udc_irq: ci interrupt handler
  *
- * This function वापसs IRQ_HANDLED अगर the IRQ has been handled
- * It locks access to रेजिस्टरs
+ * This function returns IRQ_HANDLED if the IRQ has been handled
+ * It locks access to registers
  */
-अटल irqवापस_t udc_irq(काष्ठा ci_hdrc *ci)
-अणु
-	irqवापस_t retval;
-	u32 पूर्णांकr;
+static irqreturn_t udc_irq(struct ci_hdrc *ci)
+{
+	irqreturn_t retval;
+	u32 intr;
 
-	अगर (ci == शून्य)
-		वापस IRQ_HANDLED;
+	if (ci == NULL)
+		return IRQ_HANDLED;
 
 	spin_lock(&ci->lock);
 
-	अगर (ci->platdata->flags & CI_HDRC_REGS_SHARED) अणु
-		अगर (hw_पढ़ो(ci, OP_USBMODE, USBMODE_CM) !=
-				USBMODE_CM_DC) अणु
+	if (ci->platdata->flags & CI_HDRC_REGS_SHARED) {
+		if (hw_read(ci, OP_USBMODE, USBMODE_CM) !=
+				USBMODE_CM_DC) {
 			spin_unlock(&ci->lock);
-			वापस IRQ_NONE;
-		पूर्ण
-	पूर्ण
-	पूर्णांकr = hw_test_and_clear_पूर्णांकr_active(ci);
+			return IRQ_NONE;
+		}
+	}
+	intr = hw_test_and_clear_intr_active(ci);
 
-	अगर (पूर्णांकr) अणु
-		/* order defines priority - करो NOT change it */
-		अगर (USBi_URI & पूर्णांकr)
+	if (intr) {
+		/* order defines priority - do NOT change it */
+		if (USBi_URI & intr)
 			isr_reset_handler(ci);
 
-		अगर (USBi_PCI & पूर्णांकr) अणु
+		if (USBi_PCI & intr) {
 			ci->gadget.speed = hw_port_is_high_speed(ci) ?
 				USB_SPEED_HIGH : USB_SPEED_FULL;
-			अगर (ci->suspended) अणु
-				अगर (ci->driver->resume) अणु
+			if (ci->suspended) {
+				if (ci->driver->resume) {
 					spin_unlock(&ci->lock);
 					ci->driver->resume(&ci->gadget);
 					spin_lock(&ci->lock);
-				पूर्ण
+				}
 				ci->suspended = 0;
 				usb_gadget_set_state(&ci->gadget,
 						ci->resume_state);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अगर (USBi_UI  & पूर्णांकr)
+		if (USBi_UI  & intr)
 			isr_tr_complete_handler(ci);
 
-		अगर ((USBi_SLI & पूर्णांकr) && !(ci->suspended)) अणु
+		if ((USBi_SLI & intr) && !(ci->suspended)) {
 			ci->suspended = 1;
 			ci->resume_state = ci->gadget.state;
-			अगर (ci->gadget.speed != USB_SPEED_UNKNOWN &&
-			    ci->driver->suspend) अणु
+			if (ci->gadget.speed != USB_SPEED_UNKNOWN &&
+			    ci->driver->suspend) {
 				spin_unlock(&ci->lock);
 				ci->driver->suspend(&ci->gadget);
 				spin_lock(&ci->lock);
-			पूर्ण
+			}
 			usb_gadget_set_state(&ci->gadget,
 					USB_STATE_SUSPENDED);
-		पूर्ण
+		}
 		retval = IRQ_HANDLED;
-	पूर्ण अन्यथा अणु
+	} else {
 		retval = IRQ_NONE;
-	पूर्ण
+	}
 	spin_unlock(&ci->lock);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
 /**
  * udc_start: initialize gadget role
  * @ci: chipidea controller
  */
-अटल पूर्णांक udc_start(काष्ठा ci_hdrc *ci)
-अणु
-	काष्ठा device *dev = ci->dev;
-	काष्ठा usb_otg_caps *otg_caps = &ci->platdata->ci_otg_caps;
-	पूर्णांक retval = 0;
+static int udc_start(struct ci_hdrc *ci)
+{
+	struct device *dev = ci->dev;
+	struct usb_otg_caps *otg_caps = &ci->platdata->ci_otg_caps;
+	int retval = 0;
 
 	ci->gadget.ops          = &usb_gadget_ops;
 	ci->gadget.speed        = USB_SPEED_UNKNOWN;
@@ -2064,10 +2063,10 @@ out:
 	ci->gadget.sg_supported = 1;
 	ci->gadget.irq		= ci->irq;
 
-	अगर (ci->platdata->flags & CI_HDRC_REQUIRES_ALIGNED_DMA)
-		ci->gadget.quirk_aव्योमs_skb_reserve = 1;
+	if (ci->platdata->flags & CI_HDRC_REQUIRES_ALIGNED_DMA)
+		ci->gadget.quirk_avoids_skb_reserve = 1;
 
-	अगर (ci->is_otg && (otg_caps->hnp_support || otg_caps->srp_support ||
+	if (ci->is_otg && (otg_caps->hnp_support || otg_caps->srp_support ||
 						otg_caps->adp_support))
 		ci->gadget.is_otg = 1;
 
@@ -2075,49 +2074,49 @@ out:
 
 	/* alloc resources */
 	ci->qh_pool = dma_pool_create("ci_hw_qh", dev->parent,
-				       माप(काष्ठा ci_hw_qh),
+				       sizeof(struct ci_hw_qh),
 				       64, CI_HDRC_PAGE_SIZE);
-	अगर (ci->qh_pool == शून्य)
-		वापस -ENOMEM;
+	if (ci->qh_pool == NULL)
+		return -ENOMEM;
 
 	ci->td_pool = dma_pool_create("ci_hw_td", dev->parent,
-				       माप(काष्ठा ci_hw_td),
+				       sizeof(struct ci_hw_td),
 				       64, CI_HDRC_PAGE_SIZE);
-	अगर (ci->td_pool == शून्य) अणु
+	if (ci->td_pool == NULL) {
 		retval = -ENOMEM;
-		जाओ मुक्त_qh_pool;
-	पूर्ण
+		goto free_qh_pool;
+	}
 
 	retval = init_eps(ci);
-	अगर (retval)
-		जाओ मुक्त_pools;
+	if (retval)
+		goto free_pools;
 
 	ci->gadget.ep0 = &ci->ep0in->ep;
 
 	retval = usb_add_gadget_udc(dev, &ci->gadget);
-	अगर (retval)
-		जाओ destroy_eps;
+	if (retval)
+		goto destroy_eps;
 
-	वापस retval;
+	return retval;
 
 destroy_eps:
 	destroy_eps(ci);
-मुक्त_pools:
+free_pools:
 	dma_pool_destroy(ci->td_pool);
-मुक्त_qh_pool:
+free_qh_pool:
 	dma_pool_destroy(ci->qh_pool);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
 /*
- * ci_hdrc_gadget_destroy: parent हटाओ must call this to हटाओ UDC
+ * ci_hdrc_gadget_destroy: parent remove must call this to remove UDC
  *
- * No पूर्णांकerrupts active, the IRQ has been released
+ * No interrupts active, the IRQ has been released
  */
-व्योम ci_hdrc_gadget_destroy(काष्ठा ci_hdrc *ci)
-अणु
-	अगर (!ci->roles[CI_ROLE_GADGET])
-		वापस;
+void ci_hdrc_gadget_destroy(struct ci_hdrc *ci)
+{
+	if (!ci->roles[CI_ROLE_GADGET])
+		return;
 
 	usb_del_gadget_udc(&ci->gadget);
 
@@ -2125,64 +2124,64 @@ destroy_eps:
 
 	dma_pool_destroy(ci->td_pool);
 	dma_pool_destroy(ci->qh_pool);
-पूर्ण
+}
 
-अटल पूर्णांक udc_id_चयन_क्रम_device(काष्ठा ci_hdrc *ci)
-अणु
-	अगर (ci->platdata->pins_device)
+static int udc_id_switch_for_device(struct ci_hdrc *ci)
+{
+	if (ci->platdata->pins_device)
 		pinctrl_select_state(ci->platdata->pctl,
 				     ci->platdata->pins_device);
 
-	अगर (ci->is_otg)
+	if (ci->is_otg)
 		/* Clear and enable BSV irq */
-		hw_ग_लिखो_otgsc(ci, OTGSC_BSVIS | OTGSC_BSVIE,
+		hw_write_otgsc(ci, OTGSC_BSVIS | OTGSC_BSVIE,
 					OTGSC_BSVIS | OTGSC_BSVIE);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम udc_id_चयन_क्रम_host(काष्ठा ci_hdrc *ci)
-अणु
+static void udc_id_switch_for_host(struct ci_hdrc *ci)
+{
 	/*
-	 * host करोesn't care B_SESSION_VALID event
+	 * host doesn't care B_SESSION_VALID event
 	 * so clear and disbale BSV irq
 	 */
-	अगर (ci->is_otg)
-		hw_ग_लिखो_otgsc(ci, OTGSC_BSVIE | OTGSC_BSVIS, OTGSC_BSVIS);
+	if (ci->is_otg)
+		hw_write_otgsc(ci, OTGSC_BSVIE | OTGSC_BSVIS, OTGSC_BSVIS);
 
 	ci->vbus_active = 0;
 
-	अगर (ci->platdata->pins_device && ci->platdata->pins_शेष)
+	if (ci->platdata->pins_device && ci->platdata->pins_default)
 		pinctrl_select_state(ci->platdata->pctl,
-				     ci->platdata->pins_शेष);
-पूर्ण
+				     ci->platdata->pins_default);
+}
 
 /**
  * ci_hdrc_gadget_init - initialize device related bits
  * @ci: the controller
  *
- * This function initializes the gadget, अगर the device is "device capable".
+ * This function initializes the gadget, if the device is "device capable".
  */
-पूर्णांक ci_hdrc_gadget_init(काष्ठा ci_hdrc *ci)
-अणु
-	काष्ठा ci_role_driver *rdrv;
-	पूर्णांक ret;
+int ci_hdrc_gadget_init(struct ci_hdrc *ci)
+{
+	struct ci_role_driver *rdrv;
+	int ret;
 
-	अगर (!hw_पढ़ो(ci, CAP_DCCPARAMS, DCCPARAMS_DC))
-		वापस -ENXIO;
+	if (!hw_read(ci, CAP_DCCPARAMS, DCCPARAMS_DC))
+		return -ENXIO;
 
-	rdrv = devm_kzalloc(ci->dev, माप(*rdrv), GFP_KERNEL);
-	अगर (!rdrv)
-		वापस -ENOMEM;
+	rdrv = devm_kzalloc(ci->dev, sizeof(*rdrv), GFP_KERNEL);
+	if (!rdrv)
+		return -ENOMEM;
 
-	rdrv->start	= udc_id_चयन_क्रम_device;
-	rdrv->stop	= udc_id_चयन_क्रम_host;
+	rdrv->start	= udc_id_switch_for_device;
+	rdrv->stop	= udc_id_switch_for_host;
 	rdrv->irq	= udc_irq;
 	rdrv->name	= "gadget";
 
 	ret = udc_start(ci);
-	अगर (!ret)
+	if (!ret)
 		ci->roles[CI_ROLE_GADGET] = rdrv;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

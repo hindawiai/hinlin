@@ -1,9 +1,8 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __BCM63XX_RESET_H
-#घोषणा __BCM63XX_RESET_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __BCM63XX_RESET_H
+#define __BCM63XX_RESET_H
 
-क्रमागत bcm63xx_core_reset अणु
+enum bcm63xx_core_reset {
 	BCM63XX_RESET_SPI,
 	BCM63XX_RESET_ENET,
 	BCM63XX_RESET_USBH,
@@ -16,8 +15,8 @@
 	BCM63XX_RESET_MPI,
 	BCM63XX_RESET_PCIE,
 	BCM63XX_RESET_PCIE_EXT,
-पूर्ण;
+};
 
-व्योम bcm63xx_core_set_reset(क्रमागत bcm63xx_core_reset, पूर्णांक reset);
+void bcm63xx_core_set_reset(enum bcm63xx_core_reset, int reset);
 
-#पूर्ण_अगर
+#endif

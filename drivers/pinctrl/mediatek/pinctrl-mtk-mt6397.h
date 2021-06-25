@@ -1,12 +1,11 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __PINCTRL_MTK_MT6397_H
-#घोषणा __PINCTRL_MTK_MT6397_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __PINCTRL_MTK_MT6397_H
+#define __PINCTRL_MTK_MT6397_H
 
-#समावेश <linux/pinctrl/pinctrl.h>
-#समावेश "pinctrl-mtk-common.h"
+#include <linux/pinctrl/pinctrl.h>
+#include "pinctrl-mtk-common.h"
 
-अटल स्थिर काष्ठा mtk_desc_pin mtk_pins_mt6397[] = अणु
+static const struct mtk_desc_pin mtk_pins_mt6397[] = {
 	MTK_PIN(PINCTRL_PIN(0, "INT"),
 		"N2", "mt6397",
 		MTK_EINT_FUNCTION(NO_EINT_SUPPORT, NO_EINT_SUPPORT),
@@ -380,6 +379,6 @@
 		MTK_FUNCTION(6, "TEST_IN31"),
 		MTK_FUNCTION(7, "TEST_OUT31")
 	),
-पूर्ण;
+};
 
-#पूर्ण_अगर /* __PINCTRL_MTK_MT6397_H */
+#endif /* __PINCTRL_MTK_MT6397_H */

@@ -1,10 +1,9 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
 /*
- * EDAC driver क्रम DMC-520 memory controller.
+ * EDAC driver for DMC-520 memory controller.
  *
- * The driver supports 10 पूर्णांकerrupt lines,
+ * The driver supports 10 interrupt lines,
  * though only dram_ecc_errc and dram_ecc_errd are currently handled.
  *
  * Authors:	Rui Zhao <ruizhao@microsoft.com>
@@ -12,195 +11,195 @@
  *		Shiping Ji <shji@microsoft.com>
  */
 
-#समावेश <linux/bitfield.h>
-#समावेश <linux/edac.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
-#समावेश "edac_mc.h"
+#include <linux/bitfield.h>
+#include <linux/edac.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
+#include "edac_mc.h"
 
-/* DMC-520 रेजिस्टरs */
-#घोषणा REG_OFFSET_FEATURE_CONFIG			0x130
-#घोषणा REG_OFFSET_ECC_ERRC_COUNT_31_00		0x158
-#घोषणा REG_OFFSET_ECC_ERRC_COUNT_63_32		0x15C
-#घोषणा REG_OFFSET_ECC_ERRD_COUNT_31_00		0x160
-#घोषणा REG_OFFSET_ECC_ERRD_COUNT_63_32		0x164
-#घोषणा REG_OFFSET_INTERRUPT_CONTROL			0x500
-#घोषणा REG_OFFSET_INTERRUPT_CLR			0x508
-#घोषणा REG_OFFSET_INTERRUPT_STATUS			0x510
-#घोषणा REG_OFFSET_DRAM_ECC_ERRC_INT_INFO_31_00	0x528
-#घोषणा REG_OFFSET_DRAM_ECC_ERRC_INT_INFO_63_32	0x52C
-#घोषणा REG_OFFSET_DRAM_ECC_ERRD_INT_INFO_31_00	0x530
-#घोषणा REG_OFFSET_DRAM_ECC_ERRD_INT_INFO_63_32	0x534
-#घोषणा REG_OFFSET_ADDRESS_CONTROL_NOW			0x1010
-#घोषणा REG_OFFSET_MEMORY_TYPE_NOW			0x1128
-#घोषणा REG_OFFSET_SCRUB_CONTROL0_NOW			0x1170
-#घोषणा REG_OFFSET_FORMAT_CONTROL			0x18
+/* DMC-520 registers */
+#define REG_OFFSET_FEATURE_CONFIG			0x130
+#define REG_OFFSET_ECC_ERRC_COUNT_31_00		0x158
+#define REG_OFFSET_ECC_ERRC_COUNT_63_32		0x15C
+#define REG_OFFSET_ECC_ERRD_COUNT_31_00		0x160
+#define REG_OFFSET_ECC_ERRD_COUNT_63_32		0x164
+#define REG_OFFSET_INTERRUPT_CONTROL			0x500
+#define REG_OFFSET_INTERRUPT_CLR			0x508
+#define REG_OFFSET_INTERRUPT_STATUS			0x510
+#define REG_OFFSET_DRAM_ECC_ERRC_INT_INFO_31_00	0x528
+#define REG_OFFSET_DRAM_ECC_ERRC_INT_INFO_63_32	0x52C
+#define REG_OFFSET_DRAM_ECC_ERRD_INT_INFO_31_00	0x530
+#define REG_OFFSET_DRAM_ECC_ERRD_INT_INFO_63_32	0x534
+#define REG_OFFSET_ADDRESS_CONTROL_NOW			0x1010
+#define REG_OFFSET_MEMORY_TYPE_NOW			0x1128
+#define REG_OFFSET_SCRUB_CONTROL0_NOW			0x1170
+#define REG_OFFSET_FORMAT_CONTROL			0x18
 
 /* DMC-520 types, masks and bitfields */
-#घोषणा RAM_ECC_INT_CE_BIT			BIT(0)
-#घोषणा RAM_ECC_INT_UE_BIT			BIT(1)
-#घोषणा DRAM_ECC_INT_CE_BIT			BIT(2)
-#घोषणा DRAM_ECC_INT_UE_BIT			BIT(3)
-#घोषणा FAILED_ACCESS_INT_BIT			BIT(4)
-#घोषणा FAILED_PROG_INT_BIT			BIT(5)
-#घोषणा LINK_ERR_INT_BIT			BIT(6)
-#घोषणा TEMPERATURE_EVENT_INT_BIT		BIT(7)
-#घोषणा ARCH_FSM_INT_BIT			BIT(8)
-#घोषणा PHY_REQUEST_INT_BIT			BIT(9)
-#घोषणा MEMORY_WIDTH_MASK			GENMASK(1, 0)
-#घोषणा SCRUB_TRIGGER0_NEXT_MASK		GENMASK(1, 0)
-#घोषणा REG_FIELD_DRAM_ECC_ENABLED		GENMASK(1, 0)
-#घोषणा REG_FIELD_MEMORY_TYPE			GENMASK(2, 0)
-#घोषणा REG_FIELD_DEVICE_WIDTH			GENMASK(9, 8)
-#घोषणा REG_FIELD_ADDRESS_CONTROL_COL		GENMASK(2,  0)
-#घोषणा REG_FIELD_ADDRESS_CONTROL_ROW		GENMASK(10, 8)
-#घोषणा REG_FIELD_ADDRESS_CONTROL_BANK		GENMASK(18, 16)
-#घोषणा REG_FIELD_ADDRESS_CONTROL_RANK		GENMASK(25, 24)
-#घोषणा REG_FIELD_ERR_INFO_LOW_VALID		BIT(0)
-#घोषणा REG_FIELD_ERR_INFO_LOW_COL		GENMASK(10, 1)
-#घोषणा REG_FIELD_ERR_INFO_LOW_ROW		GENMASK(28, 11)
-#घोषणा REG_FIELD_ERR_INFO_LOW_RANK		GENMASK(31, 29)
-#घोषणा REG_FIELD_ERR_INFO_HIGH_BANK		GENMASK(3, 0)
-#घोषणा REG_FIELD_ERR_INFO_HIGH_VALID		BIT(31)
+#define RAM_ECC_INT_CE_BIT			BIT(0)
+#define RAM_ECC_INT_UE_BIT			BIT(1)
+#define DRAM_ECC_INT_CE_BIT			BIT(2)
+#define DRAM_ECC_INT_UE_BIT			BIT(3)
+#define FAILED_ACCESS_INT_BIT			BIT(4)
+#define FAILED_PROG_INT_BIT			BIT(5)
+#define LINK_ERR_INT_BIT			BIT(6)
+#define TEMPERATURE_EVENT_INT_BIT		BIT(7)
+#define ARCH_FSM_INT_BIT			BIT(8)
+#define PHY_REQUEST_INT_BIT			BIT(9)
+#define MEMORY_WIDTH_MASK			GENMASK(1, 0)
+#define SCRUB_TRIGGER0_NEXT_MASK		GENMASK(1, 0)
+#define REG_FIELD_DRAM_ECC_ENABLED		GENMASK(1, 0)
+#define REG_FIELD_MEMORY_TYPE			GENMASK(2, 0)
+#define REG_FIELD_DEVICE_WIDTH			GENMASK(9, 8)
+#define REG_FIELD_ADDRESS_CONTROL_COL		GENMASK(2,  0)
+#define REG_FIELD_ADDRESS_CONTROL_ROW		GENMASK(10, 8)
+#define REG_FIELD_ADDRESS_CONTROL_BANK		GENMASK(18, 16)
+#define REG_FIELD_ADDRESS_CONTROL_RANK		GENMASK(25, 24)
+#define REG_FIELD_ERR_INFO_LOW_VALID		BIT(0)
+#define REG_FIELD_ERR_INFO_LOW_COL		GENMASK(10, 1)
+#define REG_FIELD_ERR_INFO_LOW_ROW		GENMASK(28, 11)
+#define REG_FIELD_ERR_INFO_LOW_RANK		GENMASK(31, 29)
+#define REG_FIELD_ERR_INFO_HIGH_BANK		GENMASK(3, 0)
+#define REG_FIELD_ERR_INFO_HIGH_VALID		BIT(31)
 
-#घोषणा DRAM_ADDRESS_CONTROL_MIN_COL_BITS	8
-#घोषणा DRAM_ADDRESS_CONTROL_MIN_ROW_BITS	11
+#define DRAM_ADDRESS_CONTROL_MIN_COL_BITS	8
+#define DRAM_ADDRESS_CONTROL_MIN_ROW_BITS	11
 
-#घोषणा DMC520_SCRUB_TRIGGER_ERR_DETECT	2
-#घोषणा DMC520_SCRUB_TRIGGER_IDLE		3
+#define DMC520_SCRUB_TRIGGER_ERR_DETECT	2
+#define DMC520_SCRUB_TRIGGER_IDLE		3
 
 /* Driver settings */
 /*
  * The max-length message would be: "rank:7 bank:15 row:262143 col:1023".
  * Max length is 34. Using a 40-size buffer is enough.
  */
-#घोषणा DMC520_MSG_BUF_SIZE			40
-#घोषणा EDAC_MOD_NAME				"dmc520-edac"
-#घोषणा EDAC_CTL_NAME				"dmc520"
+#define DMC520_MSG_BUF_SIZE			40
+#define EDAC_MOD_NAME				"dmc520-edac"
+#define EDAC_CTL_NAME				"dmc520"
 
-/* the data bus width क्रम the attached memory chips. */
-क्रमागत dmc520_mem_width अणु
+/* the data bus width for the attached memory chips. */
+enum dmc520_mem_width {
 	MEM_WIDTH_X32 = 2,
 	MEM_WIDTH_X64 = 3
-पूर्ण;
+};
 
 /* memory type */
-क्रमागत dmc520_mem_type अणु
+enum dmc520_mem_type {
 	MEM_TYPE_DDR3 = 1,
 	MEM_TYPE_DDR4 = 2
-पूर्ण;
+};
 
 /* memory device width */
-क्रमागत dmc520_dev_width अणु
+enum dmc520_dev_width {
 	DEV_WIDTH_X4 = 0,
 	DEV_WIDTH_X8 = 1,
 	DEV_WIDTH_X16 = 2
-पूर्ण;
+};
 
-काष्ठा ecc_error_info अणु
+struct ecc_error_info {
 	u32 col;
 	u32 row;
 	u32 bank;
 	u32 rank;
-पूर्ण;
+};
 
-/* The पूर्णांकerrupt config */
-काष्ठा dmc520_irq_config अणु
-	अक्षर *name;
-	पूर्णांक mask;
-पूर्ण;
+/* The interrupt config */
+struct dmc520_irq_config {
+	char *name;
+	int mask;
+};
 
-/* The पूर्णांकerrupt mappings */
-अटल काष्ठा dmc520_irq_config dmc520_irq_configs[] = अणु
-	अणु
+/* The interrupt mappings */
+static struct dmc520_irq_config dmc520_irq_configs[] = {
+	{
 		.name = "ram_ecc_errc",
 		.mask = RAM_ECC_INT_CE_BIT
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "ram_ecc_errd",
 		.mask = RAM_ECC_INT_UE_BIT
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "dram_ecc_errc",
 		.mask = DRAM_ECC_INT_CE_BIT
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "dram_ecc_errd",
 		.mask = DRAM_ECC_INT_UE_BIT
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "failed_access",
 		.mask = FAILED_ACCESS_INT_BIT
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "failed_prog",
 		.mask = FAILED_PROG_INT_BIT
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "link_err",
 		.mask = LINK_ERR_INT_BIT
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "temperature_event",
 		.mask = TEMPERATURE_EVENT_INT_BIT
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "arch_fsm",
 		.mask = ARCH_FSM_INT_BIT
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "phy_request",
 		.mask = PHY_REQUEST_INT_BIT
-	पूर्ण
-पूर्ण;
+	}
+};
 
-#घोषणा NUMBER_OF_IRQS				ARRAY_SIZE(dmc520_irq_configs)
+#define NUMBER_OF_IRQS				ARRAY_SIZE(dmc520_irq_configs)
 
 /*
- * The EDAC driver निजी data.
- * error_lock is to protect concurrent ग_लिखोs to the mci->error_desc through
+ * The EDAC driver private data.
+ * error_lock is to protect concurrent writes to the mci->error_desc through
  * edac_mc_handle_error().
  */
-काष्ठा dmc520_edac अणु
-	व्योम __iomem *reg_base;
+struct dmc520_edac {
+	void __iomem *reg_base;
 	spinlock_t error_lock;
 	u32 mem_width_in_bytes;
-	पूर्णांक irqs[NUMBER_OF_IRQS];
-	पूर्णांक masks[NUMBER_OF_IRQS];
-पूर्ण;
+	int irqs[NUMBER_OF_IRQS];
+	int masks[NUMBER_OF_IRQS];
+};
 
-अटल पूर्णांक dmc520_mc_idx;
+static int dmc520_mc_idx;
 
-अटल u32 dmc520_पढ़ो_reg(काष्ठा dmc520_edac *pvt, u32 offset)
-अणु
-	वापस पढ़ोl(pvt->reg_base + offset);
-पूर्ण
+static u32 dmc520_read_reg(struct dmc520_edac *pvt, u32 offset)
+{
+	return readl(pvt->reg_base + offset);
+}
 
-अटल व्योम dmc520_ग_लिखो_reg(काष्ठा dmc520_edac *pvt, u32 val, u32 offset)
-अणु
-	ग_लिखोl(val, pvt->reg_base + offset);
-पूर्ण
+static void dmc520_write_reg(struct dmc520_edac *pvt, u32 val, u32 offset)
+{
+	writel(val, pvt->reg_base + offset);
+}
 
-अटल u32 dmc520_calc_dram_ecc_error(u32 value)
-अणु
+static u32 dmc520_calc_dram_ecc_error(u32 value)
+{
 	u32 total = 0;
 
 	/* Each rank's error counter takes one byte. */
-	जबतक (value > 0) अणु
+	while (value > 0) {
 		total += (value & 0xFF);
 		value >>= 8;
-	पूर्ण
-	वापस total;
-पूर्ण
+	}
+	return total;
+}
 
-अटल u32 dmc520_get_dram_ecc_error_count(काष्ठा dmc520_edac *pvt,
+static u32 dmc520_get_dram_ecc_error_count(struct dmc520_edac *pvt,
 					    bool is_ce)
-अणु
+{
 	u32 reg_offset_low, reg_offset_high;
 	u32 err_low, err_high;
 	u32 err_count;
@@ -210,22 +209,22 @@
 	reg_offset_high = is_ce ? REG_OFFSET_ECC_ERRC_COUNT_63_32 :
 				  REG_OFFSET_ECC_ERRD_COUNT_63_32;
 
-	err_low = dmc520_पढ़ो_reg(pvt, reg_offset_low);
-	err_high = dmc520_पढ़ो_reg(pvt, reg_offset_high);
+	err_low = dmc520_read_reg(pvt, reg_offset_low);
+	err_high = dmc520_read_reg(pvt, reg_offset_high);
 	/* Reset error counters */
-	dmc520_ग_लिखो_reg(pvt, 0, reg_offset_low);
-	dmc520_ग_लिखो_reg(pvt, 0, reg_offset_high);
+	dmc520_write_reg(pvt, 0, reg_offset_low);
+	dmc520_write_reg(pvt, 0, reg_offset_high);
 
 	err_count = dmc520_calc_dram_ecc_error(err_low) +
 		   dmc520_calc_dram_ecc_error(err_high);
 
-	वापस err_count;
-पूर्ण
+	return err_count;
+}
 
-अटल व्योम dmc520_get_dram_ecc_error_info(काष्ठा dmc520_edac *pvt,
+static void dmc520_get_dram_ecc_error_info(struct dmc520_edac *pvt,
 					    bool is_ce,
-					    काष्ठा ecc_error_info *info)
-अणु
+					    struct ecc_error_info *info)
+{
 	u32 reg_offset_low, reg_offset_high;
 	u32 reg_val_low, reg_val_high;
 	bool valid;
@@ -235,124 +234,124 @@
 	reg_offset_high = is_ce ? REG_OFFSET_DRAM_ECC_ERRC_INT_INFO_63_32 :
 				  REG_OFFSET_DRAM_ECC_ERRD_INT_INFO_63_32;
 
-	reg_val_low = dmc520_पढ़ो_reg(pvt, reg_offset_low);
-	reg_val_high = dmc520_पढ़ो_reg(pvt, reg_offset_high);
+	reg_val_low = dmc520_read_reg(pvt, reg_offset_low);
+	reg_val_high = dmc520_read_reg(pvt, reg_offset_high);
 
 	valid = (FIELD_GET(REG_FIELD_ERR_INFO_LOW_VALID, reg_val_low) != 0) &&
 		(FIELD_GET(REG_FIELD_ERR_INFO_HIGH_VALID, reg_val_high) != 0);
 
-	अगर (valid) अणु
+	if (valid) {
 		info->col = FIELD_GET(REG_FIELD_ERR_INFO_LOW_COL, reg_val_low);
 		info->row = FIELD_GET(REG_FIELD_ERR_INFO_LOW_ROW, reg_val_low);
 		info->rank = FIELD_GET(REG_FIELD_ERR_INFO_LOW_RANK, reg_val_low);
 		info->bank = FIELD_GET(REG_FIELD_ERR_INFO_HIGH_BANK, reg_val_high);
-	पूर्ण अन्यथा अणु
-		स_रखो(info, 0, माप(*info));
-	पूर्ण
-पूर्ण
+	} else {
+		memset(info, 0, sizeof(*info));
+	}
+}
 
-अटल bool dmc520_is_ecc_enabled(व्योम __iomem *reg_base)
-अणु
-	u32 reg_val = पढ़ोl(reg_base + REG_OFFSET_FEATURE_CONFIG);
+static bool dmc520_is_ecc_enabled(void __iomem *reg_base)
+{
+	u32 reg_val = readl(reg_base + REG_OFFSET_FEATURE_CONFIG);
 
-	वापस FIELD_GET(REG_FIELD_DRAM_ECC_ENABLED, reg_val);
-पूर्ण
+	return FIELD_GET(REG_FIELD_DRAM_ECC_ENABLED, reg_val);
+}
 
-अटल क्रमागत scrub_type dmc520_get_scrub_type(काष्ठा dmc520_edac *pvt)
-अणु
-	क्रमागत scrub_type type = SCRUB_NONE;
+static enum scrub_type dmc520_get_scrub_type(struct dmc520_edac *pvt)
+{
+	enum scrub_type type = SCRUB_NONE;
 	u32 reg_val, scrub_cfg;
 
-	reg_val = dmc520_पढ़ो_reg(pvt, REG_OFFSET_SCRUB_CONTROL0_NOW);
+	reg_val = dmc520_read_reg(pvt, REG_OFFSET_SCRUB_CONTROL0_NOW);
 	scrub_cfg = FIELD_GET(SCRUB_TRIGGER0_NEXT_MASK, reg_val);
 
-	अगर (scrub_cfg == DMC520_SCRUB_TRIGGER_ERR_DETECT ||
+	if (scrub_cfg == DMC520_SCRUB_TRIGGER_ERR_DETECT ||
 	    scrub_cfg == DMC520_SCRUB_TRIGGER_IDLE)
 		type = SCRUB_HW_PROG;
 
-	वापस type;
-पूर्ण
+	return type;
+}
 
 /* Get the memory data bus width, in number of bytes. */
-अटल u32 dmc520_get_memory_width(काष्ठा dmc520_edac *pvt)
-अणु
-	क्रमागत dmc520_mem_width mem_width_field;
+static u32 dmc520_get_memory_width(struct dmc520_edac *pvt)
+{
+	enum dmc520_mem_width mem_width_field;
 	u32 mem_width_in_bytes = 0;
 	u32 reg_val;
 
-	reg_val = dmc520_पढ़ो_reg(pvt, REG_OFFSET_FORMAT_CONTROL);
+	reg_val = dmc520_read_reg(pvt, REG_OFFSET_FORMAT_CONTROL);
 	mem_width_field = FIELD_GET(MEMORY_WIDTH_MASK, reg_val);
 
-	अगर (mem_width_field == MEM_WIDTH_X32)
+	if (mem_width_field == MEM_WIDTH_X32)
 		mem_width_in_bytes = 4;
-	अन्यथा अगर (mem_width_field == MEM_WIDTH_X64)
+	else if (mem_width_field == MEM_WIDTH_X64)
 		mem_width_in_bytes = 8;
-	वापस mem_width_in_bytes;
-पूर्ण
+	return mem_width_in_bytes;
+}
 
-अटल क्रमागत mem_type dmc520_get_mtype(काष्ठा dmc520_edac *pvt)
-अणु
-	क्रमागत mem_type mt = MEM_UNKNOWN;
-	क्रमागत dmc520_mem_type type;
+static enum mem_type dmc520_get_mtype(struct dmc520_edac *pvt)
+{
+	enum mem_type mt = MEM_UNKNOWN;
+	enum dmc520_mem_type type;
 	u32 reg_val;
 
-	reg_val = dmc520_पढ़ो_reg(pvt, REG_OFFSET_MEMORY_TYPE_NOW);
+	reg_val = dmc520_read_reg(pvt, REG_OFFSET_MEMORY_TYPE_NOW);
 	type = FIELD_GET(REG_FIELD_MEMORY_TYPE, reg_val);
 
-	चयन (type) अणु
-	हाल MEM_TYPE_DDR3:
+	switch (type) {
+	case MEM_TYPE_DDR3:
 		mt = MEM_DDR3;
-		अवरोध;
+		break;
 
-	हाल MEM_TYPE_DDR4:
+	case MEM_TYPE_DDR4:
 		mt = MEM_DDR4;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस mt;
-पूर्ण
+	return mt;
+}
 
-अटल क्रमागत dev_type dmc520_get_dtype(काष्ठा dmc520_edac *pvt)
-अणु
-	क्रमागत dmc520_dev_width device_width;
-	क्रमागत dev_type dt = DEV_UNKNOWN;
+static enum dev_type dmc520_get_dtype(struct dmc520_edac *pvt)
+{
+	enum dmc520_dev_width device_width;
+	enum dev_type dt = DEV_UNKNOWN;
 	u32 reg_val;
 
-	reg_val = dmc520_पढ़ो_reg(pvt, REG_OFFSET_MEMORY_TYPE_NOW);
+	reg_val = dmc520_read_reg(pvt, REG_OFFSET_MEMORY_TYPE_NOW);
 	device_width = FIELD_GET(REG_FIELD_DEVICE_WIDTH, reg_val);
 
-	चयन (device_width) अणु
-	हाल DEV_WIDTH_X4:
+	switch (device_width) {
+	case DEV_WIDTH_X4:
 		dt = DEV_X4;
-		अवरोध;
+		break;
 
-	हाल DEV_WIDTH_X8:
+	case DEV_WIDTH_X8:
 		dt = DEV_X8;
-		अवरोध;
+		break;
 
-	हाल DEV_WIDTH_X16:
+	case DEV_WIDTH_X16:
 		dt = DEV_X16;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस dt;
-पूर्ण
+	return dt;
+}
 
-अटल u32 dmc520_get_rank_count(व्योम __iomem *reg_base)
-अणु
+static u32 dmc520_get_rank_count(void __iomem *reg_base)
+{
 	u32 reg_val, rank_bits;
 
-	reg_val = पढ़ोl(reg_base + REG_OFFSET_ADDRESS_CONTROL_NOW);
+	reg_val = readl(reg_base + REG_OFFSET_ADDRESS_CONTROL_NOW);
 	rank_bits = FIELD_GET(REG_FIELD_ADDRESS_CONTROL_RANK, reg_val);
 
-	वापस BIT(rank_bits);
-पूर्ण
+	return BIT(rank_bits);
+}
 
-अटल u64 dmc520_get_rank_size(काष्ठा dmc520_edac *pvt)
-अणु
+static u64 dmc520_get_rank_size(struct dmc520_edac *pvt)
+{
 	u32 reg_val, col_bits, row_bits, bank_bits;
 
-	reg_val = dmc520_पढ़ो_reg(pvt, REG_OFFSET_ADDRESS_CONTROL_NOW);
+	reg_val = dmc520_read_reg(pvt, REG_OFFSET_ADDRESS_CONTROL_NOW);
 
 	col_bits = FIELD_GET(REG_FIELD_ADDRESS_CONTROL_COL, reg_val) +
 		   DRAM_ADDRESS_CONTROL_MIN_COL_BITS;
@@ -360,24 +359,24 @@
 		   DRAM_ADDRESS_CONTROL_MIN_ROW_BITS;
 	bank_bits = FIELD_GET(REG_FIELD_ADDRESS_CONTROL_BANK, reg_val);
 
-	वापस (u64)pvt->mem_width_in_bytes << (col_bits + row_bits + bank_bits);
-पूर्ण
+	return (u64)pvt->mem_width_in_bytes << (col_bits + row_bits + bank_bits);
+}
 
-अटल व्योम dmc520_handle_dram_ecc_errors(काष्ठा mem_ctl_info *mci,
+static void dmc520_handle_dram_ecc_errors(struct mem_ctl_info *mci,
 					   bool is_ce)
-अणु
-	काष्ठा dmc520_edac *pvt = mci->pvt_info;
-	अक्षर message[DMC520_MSG_BUF_SIZE];
-	काष्ठा ecc_error_info info;
+{
+	struct dmc520_edac *pvt = mci->pvt_info;
+	char message[DMC520_MSG_BUF_SIZE];
+	struct ecc_error_info info;
 	u32 cnt;
 
 	dmc520_get_dram_ecc_error_info(pvt, is_ce, &info);
 
 	cnt = dmc520_get_dram_ecc_error_count(pvt, is_ce);
-	अगर (!cnt)
-		वापस;
+	if (!cnt)
+		return;
 
-	snम_लिखो(message, ARRAY_SIZE(message),
+	snprintf(message, ARRAY_SIZE(message),
 		 "rank:%d bank:%d row:%d col:%d",
 		 info.rank, info.bank,
 		 info.row, info.col);
@@ -388,68 +387,68 @@
 			     mci, cnt, 0, 0, 0, info.rank, -1, -1,
 			     message, "");
 	spin_unlock(&pvt->error_lock);
-पूर्ण
+}
 
-अटल irqवापस_t dmc520_edac_dram_ecc_isr(पूर्णांक irq, काष्ठा mem_ctl_info *mci,
+static irqreturn_t dmc520_edac_dram_ecc_isr(int irq, struct mem_ctl_info *mci,
 					     bool is_ce)
-अणु
-	काष्ठा dmc520_edac *pvt = mci->pvt_info;
+{
+	struct dmc520_edac *pvt = mci->pvt_info;
 	u32 i_mask;
 
 	i_mask = is_ce ? DRAM_ECC_INT_CE_BIT : DRAM_ECC_INT_UE_BIT;
 
 	dmc520_handle_dram_ecc_errors(mci, is_ce);
 
-	dmc520_ग_लिखो_reg(pvt, i_mask, REG_OFFSET_INTERRUPT_CLR);
+	dmc520_write_reg(pvt, i_mask, REG_OFFSET_INTERRUPT_CLR);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t dmc520_edac_dram_all_isr(पूर्णांक irq, काष्ठा mem_ctl_info *mci,
+static irqreturn_t dmc520_edac_dram_all_isr(int irq, struct mem_ctl_info *mci,
 					     u32 irq_mask)
-अणु
-	काष्ठा dmc520_edac *pvt = mci->pvt_info;
-	irqवापस_t irq_ret = IRQ_NONE;
+{
+	struct dmc520_edac *pvt = mci->pvt_info;
+	irqreturn_t irq_ret = IRQ_NONE;
 	u32 status;
 
-	status = dmc520_पढ़ो_reg(pvt, REG_OFFSET_INTERRUPT_STATUS);
+	status = dmc520_read_reg(pvt, REG_OFFSET_INTERRUPT_STATUS);
 
-	अगर ((irq_mask & DRAM_ECC_INT_CE_BIT) &&
+	if ((irq_mask & DRAM_ECC_INT_CE_BIT) &&
 		(status & DRAM_ECC_INT_CE_BIT))
 		irq_ret = dmc520_edac_dram_ecc_isr(irq, mci, true);
 
-	अगर ((irq_mask & DRAM_ECC_INT_UE_BIT) &&
+	if ((irq_mask & DRAM_ECC_INT_UE_BIT) &&
 		(status & DRAM_ECC_INT_UE_BIT))
 		irq_ret = dmc520_edac_dram_ecc_isr(irq, mci, false);
 
-	वापस irq_ret;
-पूर्ण
+	return irq_ret;
+}
 
-अटल irqवापस_t dmc520_isr(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा mem_ctl_info *mci = data;
-	काष्ठा dmc520_edac *pvt = mci->pvt_info;
+static irqreturn_t dmc520_isr(int irq, void *data)
+{
+	struct mem_ctl_info *mci = data;
+	struct dmc520_edac *pvt = mci->pvt_info;
 	u32 mask = 0;
-	पूर्णांक idx;
+	int idx;
 
-	क्रम (idx = 0; idx < NUMBER_OF_IRQS; idx++) अणु
-		अगर (pvt->irqs[idx] == irq) अणु
+	for (idx = 0; idx < NUMBER_OF_IRQS; idx++) {
+		if (pvt->irqs[idx] == irq) {
 			mask = pvt->masks[idx];
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	वापस dmc520_edac_dram_all_isr(irq, mci, mask);
-पूर्ण
+			break;
+		}
+	}
+	return dmc520_edac_dram_all_isr(irq, mci, mask);
+}
 
-अटल व्योम dmc520_init_csrow(काष्ठा mem_ctl_info *mci)
-अणु
-	काष्ठा dmc520_edac *pvt = mci->pvt_info;
-	काष्ठा csrow_info *csi;
-	काष्ठा dimm_info *dimm;
+static void dmc520_init_csrow(struct mem_ctl_info *mci)
+{
+	struct dmc520_edac *pvt = mci->pvt_info;
+	struct csrow_info *csi;
+	struct dimm_info *dimm;
 	u32 pages_per_rank;
-	क्रमागत dev_type dt;
-	क्रमागत mem_type mt;
-	पूर्णांक row, ch;
+	enum dev_type dt;
+	enum mem_type mt;
+	int row, ch;
 	u64 rs;
 
 	dt = dmc520_get_dtype(pvt);
@@ -457,83 +456,83 @@
 	rs = dmc520_get_rank_size(pvt);
 	pages_per_rank = rs >> PAGE_SHIFT;
 
-	क्रम (row = 0; row < mci->nr_csrows; row++) अणु
+	for (row = 0; row < mci->nr_csrows; row++) {
 		csi = mci->csrows[row];
 
-		क्रम (ch = 0; ch < csi->nr_channels; ch++) अणु
+		for (ch = 0; ch < csi->nr_channels; ch++) {
 			dimm		= csi->channels[ch]->dimm;
 			dimm->grain	= pvt->mem_width_in_bytes;
 			dimm->dtype	= dt;
 			dimm->mtype	= mt;
 			dimm->edac_mode	= EDAC_FLAG_SECDED;
 			dimm->nr_pages	= pages_per_rank / csi->nr_channels;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल पूर्णांक dmc520_edac_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	bool रेजिस्टरed[NUMBER_OF_IRQS] = अणु false पूर्ण;
-	पूर्णांक irqs[NUMBER_OF_IRQS] = अणु -ENXIO पूर्ण;
-	पूर्णांक masks[NUMBER_OF_IRQS] = अणु 0 पूर्ण;
-	काष्ठा edac_mc_layer layers[1];
-	काष्ठा dmc520_edac *pvt = शून्य;
-	काष्ठा mem_ctl_info *mci;
-	व्योम __iomem *reg_base;
+static int dmc520_edac_probe(struct platform_device *pdev)
+{
+	bool registered[NUMBER_OF_IRQS] = { false };
+	int irqs[NUMBER_OF_IRQS] = { -ENXIO };
+	int masks[NUMBER_OF_IRQS] = { 0 };
+	struct edac_mc_layer layers[1];
+	struct dmc520_edac *pvt = NULL;
+	struct mem_ctl_info *mci;
+	void __iomem *reg_base;
 	u32 irq_mask_all = 0;
-	काष्ठा resource *res;
-	काष्ठा device *dev;
-	पूर्णांक ret, idx, irq;
+	struct resource *res;
+	struct device *dev;
+	int ret, idx, irq;
 	u32 reg_val;
 
 	/* Parse the device node */
 	dev = &pdev->dev;
 
-	क्रम (idx = 0; idx < NUMBER_OF_IRQS; idx++) अणु
-		irq = platक्रमm_get_irq_byname(pdev, dmc520_irq_configs[idx].name);
+	for (idx = 0; idx < NUMBER_OF_IRQS; idx++) {
+		irq = platform_get_irq_byname(pdev, dmc520_irq_configs[idx].name);
 		irqs[idx] = irq;
 		masks[idx] = dmc520_irq_configs[idx].mask;
-		अगर (irq >= 0) अणु
+		if (irq >= 0) {
 			irq_mask_all |= dmc520_irq_configs[idx].mask;
 			edac_dbg(0, "Discovered %s, irq: %d.\n", dmc520_irq_configs[idx].name, irq);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!irq_mask_all) अणु
-		edac_prपूर्णांकk(KERN_ERR, EDAC_MOD_NAME,
+	if (!irq_mask_all) {
+		edac_printk(KERN_ERR, EDAC_MOD_NAME,
 			    "At least one valid interrupt line is expected.\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* Initialize dmc520 edac */
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	reg_base = devm_ioremap_resource(dev, res);
-	अगर (IS_ERR(reg_base))
-		वापस PTR_ERR(reg_base);
+	if (IS_ERR(reg_base))
+		return PTR_ERR(reg_base);
 
-	अगर (!dmc520_is_ecc_enabled(reg_base))
-		वापस -ENXIO;
+	if (!dmc520_is_ecc_enabled(reg_base))
+		return -ENXIO;
 
 	layers[0].type = EDAC_MC_LAYER_CHIP_SELECT;
 	layers[0].size = dmc520_get_rank_count(reg_base);
 	layers[0].is_virt_csrow = true;
 
-	mci = edac_mc_alloc(dmc520_mc_idx++, ARRAY_SIZE(layers), layers, माप(*pvt));
-	अगर (!mci) अणु
-		edac_prपूर्णांकk(KERN_ERR, EDAC_MOD_NAME,
+	mci = edac_mc_alloc(dmc520_mc_idx++, ARRAY_SIZE(layers), layers, sizeof(*pvt));
+	if (!mci) {
+		edac_printk(KERN_ERR, EDAC_MOD_NAME,
 			    "Failed to allocate memory for mc instance\n");
 		ret = -ENOMEM;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	pvt = mci->pvt_info;
 
 	pvt->reg_base = reg_base;
 	spin_lock_init(&pvt->error_lock);
-	स_नकल(pvt->irqs, irqs, माप(irqs));
-	स_नकल(pvt->masks, masks, माप(masks));
+	memcpy(pvt->irqs, irqs, sizeof(irqs));
+	memcpy(pvt->masks, masks, sizeof(masks));
 
-	platक्रमm_set_drvdata(pdev, mci);
+	platform_set_drvdata(pdev, mci);
 
 	mci->pdev = dev;
 	mci->mtype_cap		= MEM_FLAG_DDR3 | MEM_FLAG_DDR4;
@@ -551,104 +550,104 @@
 
 	dmc520_init_csrow(mci);
 
-	/* Clear पूर्णांकerrupts, not affecting other unrelated पूर्णांकerrupts */
-	reg_val = dmc520_पढ़ो_reg(pvt, REG_OFFSET_INTERRUPT_CONTROL);
-	dmc520_ग_लिखो_reg(pvt, reg_val & (~irq_mask_all),
+	/* Clear interrupts, not affecting other unrelated interrupts */
+	reg_val = dmc520_read_reg(pvt, REG_OFFSET_INTERRUPT_CONTROL);
+	dmc520_write_reg(pvt, reg_val & (~irq_mask_all),
 			 REG_OFFSET_INTERRUPT_CONTROL);
-	dmc520_ग_लिखो_reg(pvt, irq_mask_all, REG_OFFSET_INTERRUPT_CLR);
+	dmc520_write_reg(pvt, irq_mask_all, REG_OFFSET_INTERRUPT_CLR);
 
-	क्रम (idx = 0; idx < NUMBER_OF_IRQS; idx++) अणु
+	for (idx = 0; idx < NUMBER_OF_IRQS; idx++) {
 		irq = irqs[idx];
-		अगर (irq >= 0) अणु
+		if (irq >= 0) {
 			ret = devm_request_irq(&pdev->dev, irq,
 					       dmc520_isr, IRQF_SHARED,
 					       dev_name(&pdev->dev), mci);
-			अगर (ret < 0) अणु
-				edac_prपूर्णांकk(KERN_ERR, EDAC_MC,
+			if (ret < 0) {
+				edac_printk(KERN_ERR, EDAC_MC,
 					    "Failed to request irq %d\n", irq);
-				जाओ err;
-			पूर्ण
-			रेजिस्टरed[idx] = true;
-		पूर्ण
-	पूर्ण
+				goto err;
+			}
+			registered[idx] = true;
+		}
+	}
 
 	/* Reset DRAM CE/UE counters */
-	अगर (irq_mask_all & DRAM_ECC_INT_CE_BIT)
+	if (irq_mask_all & DRAM_ECC_INT_CE_BIT)
 		dmc520_get_dram_ecc_error_count(pvt, true);
 
-	अगर (irq_mask_all & DRAM_ECC_INT_UE_BIT)
+	if (irq_mask_all & DRAM_ECC_INT_UE_BIT)
 		dmc520_get_dram_ecc_error_count(pvt, false);
 
 	ret = edac_mc_add_mc(mci);
-	अगर (ret) अणु
-		edac_prपूर्णांकk(KERN_ERR, EDAC_MOD_NAME,
+	if (ret) {
+		edac_printk(KERN_ERR, EDAC_MOD_NAME,
 			    "Failed to register with EDAC core\n");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	/* Enable पूर्णांकerrupts, not affecting other unrelated पूर्णांकerrupts */
-	dmc520_ग_लिखो_reg(pvt, reg_val | irq_mask_all,
+	/* Enable interrupts, not affecting other unrelated interrupts */
+	dmc520_write_reg(pvt, reg_val | irq_mask_all,
 			 REG_OFFSET_INTERRUPT_CONTROL);
 
-	वापस 0;
+	return 0;
 
 err:
-	क्रम (idx = 0; idx < NUMBER_OF_IRQS; idx++) अणु
-		अगर (रेजिस्टरed[idx])
-			devm_मुक्त_irq(&pdev->dev, pvt->irqs[idx], mci);
-	पूर्ण
-	अगर (mci)
-		edac_mc_मुक्त(mci);
+	for (idx = 0; idx < NUMBER_OF_IRQS; idx++) {
+		if (registered[idx])
+			devm_free_irq(&pdev->dev, pvt->irqs[idx], mci);
+	}
+	if (mci)
+		edac_mc_free(mci);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक dmc520_edac_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
+static int dmc520_edac_remove(struct platform_device *pdev)
+{
 	u32 reg_val, idx, irq_mask_all = 0;
-	काष्ठा mem_ctl_info *mci;
-	काष्ठा dmc520_edac *pvt;
+	struct mem_ctl_info *mci;
+	struct dmc520_edac *pvt;
 
-	mci = platक्रमm_get_drvdata(pdev);
+	mci = platform_get_drvdata(pdev);
 	pvt = mci->pvt_info;
 
-	/* Disable पूर्णांकerrupts */
-	reg_val = dmc520_पढ़ो_reg(pvt, REG_OFFSET_INTERRUPT_CONTROL);
-	dmc520_ग_लिखो_reg(pvt, reg_val & (~irq_mask_all),
+	/* Disable interrupts */
+	reg_val = dmc520_read_reg(pvt, REG_OFFSET_INTERRUPT_CONTROL);
+	dmc520_write_reg(pvt, reg_val & (~irq_mask_all),
 			 REG_OFFSET_INTERRUPT_CONTROL);
 
-	/* मुक्त irq's */
-	क्रम (idx = 0; idx < NUMBER_OF_IRQS; idx++) अणु
-		अगर (pvt->irqs[idx] >= 0) अणु
+	/* free irq's */
+	for (idx = 0; idx < NUMBER_OF_IRQS; idx++) {
+		if (pvt->irqs[idx] >= 0) {
 			irq_mask_all |= pvt->masks[idx];
-			devm_मुक्त_irq(&pdev->dev, pvt->irqs[idx], mci);
-		पूर्ण
-	पूर्ण
+			devm_free_irq(&pdev->dev, pvt->irqs[idx], mci);
+		}
+	}
 
 	edac_mc_del_mc(&pdev->dev);
-	edac_mc_मुक्त(mci);
+	edac_mc_free(mci);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id dmc520_edac_driver_id[] = अणु
-	अणु .compatible = "arm,dmc-520", पूर्ण,
-	अणु /* end of table */ पूर्ण
-पूर्ण;
+static const struct of_device_id dmc520_edac_driver_id[] = {
+	{ .compatible = "arm,dmc-520", },
+	{ /* end of table */ }
+};
 
 MODULE_DEVICE_TABLE(of, dmc520_edac_driver_id);
 
-अटल काष्ठा platक्रमm_driver dmc520_edac_driver = अणु
-	.driver = अणु
+static struct platform_driver dmc520_edac_driver = {
+	.driver = {
 		.name = "dmc520",
 		.of_match_table = dmc520_edac_driver_id,
-	पूर्ण,
+	},
 
 	.probe = dmc520_edac_probe,
-	.हटाओ = dmc520_edac_हटाओ
-पूर्ण;
+	.remove = dmc520_edac_remove
+};
 
-module_platक्रमm_driver(dmc520_edac_driver);
+module_platform_driver(dmc520_edac_driver);
 
 MODULE_AUTHOR("Rui Zhao <ruizhao@microsoft.com>");
 MODULE_AUTHOR("Lei Wang <lewan@microsoft.com>");

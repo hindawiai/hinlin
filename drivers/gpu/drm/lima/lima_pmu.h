@@ -1,15 +1,14 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 OR MIT */
+/* SPDX-License-Identifier: GPL-2.0 OR MIT */
 /* Copyright 2017-2019 Qiang Yu <yuq825@gmail.com> */
 
-#अगर_अघोषित __LIMA_PMU_H__
-#घोषणा __LIMA_PMU_H__
+#ifndef __LIMA_PMU_H__
+#define __LIMA_PMU_H__
 
-काष्ठा lima_ip;
+struct lima_ip;
 
-पूर्णांक lima_pmu_resume(काष्ठा lima_ip *ip);
-व्योम lima_pmu_suspend(काष्ठा lima_ip *ip);
-पूर्णांक lima_pmu_init(काष्ठा lima_ip *ip);
-व्योम lima_pmu_fini(काष्ठा lima_ip *ip);
+int lima_pmu_resume(struct lima_ip *ip);
+void lima_pmu_suspend(struct lima_ip *ip);
+int lima_pmu_init(struct lima_ip *ip);
+void lima_pmu_fini(struct lima_ip *ip);
 
-#पूर्ण_अगर
+#endif

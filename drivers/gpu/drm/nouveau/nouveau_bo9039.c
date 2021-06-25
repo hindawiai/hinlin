@@ -1,14 +1,13 @@
-<शैली गुरु>
 /*
  * Copyright 2007 Dave Airlied
  * All Rights Reserved.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -25,34 +24,34 @@
 /*
  * Authors: Dave Airlied <airlied@linux.ie>
  *	    Ben Skeggs   <darktama@iinet.net.au>
- *	    Jeremy Kolb  <jkolb@bअक्रमeis.edu>
+ *	    Jeremy Kolb  <jkolb@brandeis.edu>
  */
-#समावेश "nouveau_bo.h"
-#समावेश "nouveau_dma.h"
-#समावेश "nouveau_mem.h"
+#include "nouveau_bo.h"
+#include "nouveau_dma.h"
+#include "nouveau_mem.h"
 
-#समावेश <nvअगर/push906f.h>
+#include <nvif/push906f.h>
 
-#समावेश <nvhw/class/cl9039.h>
+#include <nvhw/class/cl9039.h>
 
-पूर्णांक
-nvc0_bo_move_m2mf(काष्ठा nouveau_channel *chan, काष्ठा tपंचांग_buffer_object *bo,
-		  काष्ठा tपंचांग_resource *old_reg, काष्ठा tपंचांग_resource *new_reg)
-अणु
-	काष्ठा nvअगर_push *push = chan->chan.push;
-	काष्ठा nouveau_mem *mem = nouveau_mem(old_reg);
+int
+nvc0_bo_move_m2mf(struct nouveau_channel *chan, struct ttm_buffer_object *bo,
+		  struct ttm_resource *old_reg, struct ttm_resource *new_reg)
+{
+	struct nvif_push *push = chan->chan.push;
+	struct nouveau_mem *mem = nouveau_mem(old_reg);
 	u64 src_offset = mem->vma[0].addr;
 	u64 dst_offset = mem->vma[1].addr;
 	u32 page_count = new_reg->num_pages;
-	पूर्णांक ret;
+	int ret;
 
 	page_count = new_reg->num_pages;
-	जबतक (page_count) अणु
-		पूर्णांक line_count = (page_count > 2047) ? 2047 : page_count;
+	while (page_count) {
+		int line_count = (page_count > 2047) ? 2047 : page_count;
 
 		ret = PUSH_WAIT(push, 12);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		PUSH_MTHD(push, NV9039, OFFSET_OUT_UPPER,
 			  NVVAL(NV9039, OFFSET_OUT_UPPER, VALUE, upper_32_bits(dst_offset)),
@@ -79,21 +78,21 @@ nvc0_bo_move_m2mf(काष्ठा nouveau_channel *chan, काष्ठा t
 		page_count -= line_count;
 		src_offset += (PAGE_SIZE * line_count);
 		dst_offset += (PAGE_SIZE * line_count);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक
-nvc0_bo_move_init(काष्ठा nouveau_channel *chan, u32 handle)
-अणु
-	काष्ठा nvअगर_push *push = chan->chan.push;
-	पूर्णांक ret;
+int
+nvc0_bo_move_init(struct nouveau_channel *chan, u32 handle)
+{
+	struct nvif_push *push = chan->chan.push;
+	int ret;
 
 	ret = PUSH_WAIT(push, 2);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	PUSH_MTHD(push, NV9039, SET_OBJECT, handle);
-	वापस 0;
-पूर्ण
+	return 0;
+}

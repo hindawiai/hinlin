@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
- * Copyright तऊ 2016 Intel Corporation
+ * Copyright © 2016 Intel Corporation
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -23,313 +22,313 @@
  *
  */
 
-#समावेश "../i915_selftest.h"
+#include "../i915_selftest.h"
 
-अटल पूर्णांक पूर्णांकel_fw_table_check(स्थिर काष्ठा पूर्णांकel_क्रमcewake_range *ranges,
-				अचिन्हित पूर्णांक num_ranges,
+static int intel_fw_table_check(const struct intel_forcewake_range *ranges,
+				unsigned int num_ranges,
 				bool is_watertight)
-अणु
-	अचिन्हित पूर्णांक i;
+{
+	unsigned int i;
 	s32 prev;
 
-	क्रम (i = 0, prev = -1; i < num_ranges; i++, ranges++) अणु
+	for (i = 0, prev = -1; i < num_ranges; i++, ranges++) {
 		/* Check that the table is watertight */
-		अगर (is_watertight && (prev + 1) != (s32)ranges->start) अणु
+		if (is_watertight && (prev + 1) != (s32)ranges->start) {
 			pr_err("%s: entry[%d]:(%x, %x) is not watertight to previous (%x)\n",
 			       __func__, i, ranges->start, ranges->end, prev);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		/* Check that the table never goes backwards */
-		अगर (prev >= (s32)ranges->start) अणु
+		if (prev >= (s32)ranges->start) {
 			pr_err("%s: entry[%d]:(%x, %x) is less than the previous (%x)\n",
 			       __func__, i, ranges->start, ranges->end, prev);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		/* Check that the entry is valid */
-		अगर (ranges->start >= ranges->end) अणु
+		if (ranges->start >= ranges->end) {
 			pr_err("%s: entry[%d]:(%x, %x) has negative length\n",
 			       __func__, i, ranges->start, ranges->end);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		prev = ranges->end;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक पूर्णांकel_shaकरोw_table_check(व्योम)
-अणु
-	काष्ठा अणु
-		स्थिर i915_reg_t *regs;
-		अचिन्हित पूर्णांक size;
-	पूर्ण reg_lists[] = अणु
-		अणु gen8_shaकरोwed_regs, ARRAY_SIZE(gen8_shaकरोwed_regs) पूर्ण,
-		अणु gen11_shaकरोwed_regs, ARRAY_SIZE(gen11_shaकरोwed_regs) पूर्ण,
-		अणु gen12_shaकरोwed_regs, ARRAY_SIZE(gen12_shaकरोwed_regs) पूर्ण,
-	पूर्ण;
-	स्थिर i915_reg_t *reg;
-	अचिन्हित पूर्णांक i, j;
+static int intel_shadow_table_check(void)
+{
+	struct {
+		const i915_reg_t *regs;
+		unsigned int size;
+	} reg_lists[] = {
+		{ gen8_shadowed_regs, ARRAY_SIZE(gen8_shadowed_regs) },
+		{ gen11_shadowed_regs, ARRAY_SIZE(gen11_shadowed_regs) },
+		{ gen12_shadowed_regs, ARRAY_SIZE(gen12_shadowed_regs) },
+	};
+	const i915_reg_t *reg;
+	unsigned int i, j;
 	s32 prev;
 
-	क्रम (j = 0; j < ARRAY_SIZE(reg_lists); ++j) अणु
+	for (j = 0; j < ARRAY_SIZE(reg_lists); ++j) {
 		reg = reg_lists[j].regs;
-		क्रम (i = 0, prev = -1; i < reg_lists[j].size; i++, reg++) अणु
+		for (i = 0, prev = -1; i < reg_lists[j].size; i++, reg++) {
 			u32 offset = i915_mmio_reg_offset(*reg);
 
-			अगर (prev >= (s32)offset) अणु
+			if (prev >= (s32)offset) {
 				pr_err("%s: entry[%d]:(%x) is before previous (%x)\n",
 				       __func__, i, offset, prev);
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 
 			prev = offset;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक पूर्णांकel_uncore_mock_selftests(व्योम)
-अणु
-	काष्ठा अणु
-		स्थिर काष्ठा पूर्णांकel_क्रमcewake_range *ranges;
-		अचिन्हित पूर्णांक num_ranges;
+int intel_uncore_mock_selftests(void)
+{
+	struct {
+		const struct intel_forcewake_range *ranges;
+		unsigned int num_ranges;
 		bool is_watertight;
-	पूर्ण fw[] = अणु
-		अणु __vlv_fw_ranges, ARRAY_SIZE(__vlv_fw_ranges), false पूर्ण,
-		अणु __chv_fw_ranges, ARRAY_SIZE(__chv_fw_ranges), false पूर्ण,
-		अणु __gen9_fw_ranges, ARRAY_SIZE(__gen9_fw_ranges), true पूर्ण,
-		अणु __gen11_fw_ranges, ARRAY_SIZE(__gen11_fw_ranges), true पूर्ण,
-		अणु __gen12_fw_ranges, ARRAY_SIZE(__gen12_fw_ranges), true पूर्ण,
-	पूर्ण;
-	पूर्णांक err, i;
+	} fw[] = {
+		{ __vlv_fw_ranges, ARRAY_SIZE(__vlv_fw_ranges), false },
+		{ __chv_fw_ranges, ARRAY_SIZE(__chv_fw_ranges), false },
+		{ __gen9_fw_ranges, ARRAY_SIZE(__gen9_fw_ranges), true },
+		{ __gen11_fw_ranges, ARRAY_SIZE(__gen11_fw_ranges), true },
+		{ __gen12_fw_ranges, ARRAY_SIZE(__gen12_fw_ranges), true },
+	};
+	int err, i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(fw); i++) अणु
-		err = पूर्णांकel_fw_table_check(fw[i].ranges,
+	for (i = 0; i < ARRAY_SIZE(fw); i++) {
+		err = intel_fw_table_check(fw[i].ranges,
 					   fw[i].num_ranges,
 					   fw[i].is_watertight);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	err = पूर्णांकel_shaकरोw_table_check();
-	अगर (err)
-		वापस err;
+	err = intel_shadow_table_check();
+	if (err)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक live_क्रमcewake_ops(व्योम *arg)
-अणु
-	अटल स्थिर काष्ठा reg अणु
-		स्थिर अक्षर *name;
-		अचिन्हित दीर्घ platक्रमms;
-		अचिन्हित पूर्णांक offset;
-	पूर्ण रेजिस्टरs[] = अणु
-		अणु
+static int live_forcewake_ops(void *arg)
+{
+	static const struct reg {
+		const char *name;
+		unsigned long platforms;
+		unsigned int offset;
+	} registers[] = {
+		{
 			"RING_START",
 			INTEL_GEN_MASK(6, 7),
 			0x38,
-		पूर्ण,
-		अणु
+		},
+		{
 			"RING_MI_MODE",
 			INTEL_GEN_MASK(8, BITS_PER_LONG),
 			0x9c,
-		पूर्ण
-	पूर्ण;
-	स्थिर काष्ठा reg *r;
-	काष्ठा पूर्णांकel_gt *gt = arg;
-	काष्ठा पूर्णांकel_uncore_क्रमcewake_करोमुख्य *करोमुख्य;
-	काष्ठा पूर्णांकel_uncore *uncore = gt->uncore;
-	काष्ठा पूर्णांकel_engine_cs *engine;
-	क्रमागत पूर्णांकel_engine_id id;
-	पूर्णांकel_wakeref_t wakeref;
-	अचिन्हित पूर्णांक पंचांगp;
-	पूर्णांक err = 0;
+		}
+	};
+	const struct reg *r;
+	struct intel_gt *gt = arg;
+	struct intel_uncore_forcewake_domain *domain;
+	struct intel_uncore *uncore = gt->uncore;
+	struct intel_engine_cs *engine;
+	enum intel_engine_id id;
+	intel_wakeref_t wakeref;
+	unsigned int tmp;
+	int err = 0;
 
 	GEM_BUG_ON(gt->awake);
 
-	/* vlv/chv with their pcu behave dअगरferently wrt पढ़ोs */
-	अगर (IS_VALLEYVIEW(gt->i915) || IS_CHERRYVIEW(gt->i915)) अणु
+	/* vlv/chv with their pcu behave differently wrt reads */
+	if (IS_VALLEYVIEW(gt->i915) || IS_CHERRYVIEW(gt->i915)) {
 		pr_debug("PCU fakes forcewake badly; skipping\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/*
 	 * Not quite as reliable across the gen as one would hope.
 	 *
-	 * Either our theory of operation is incorrect, or there reमुख्य
-	 * बाह्यal parties पूर्णांकerfering with the घातerwells.
+	 * Either our theory of operation is incorrect, or there remain
+	 * external parties interfering with the powerwells.
 	 *
-	 * https://bugs.मुक्तdesktop.org/show_bug.cgi?id=110210
+	 * https://bugs.freedesktop.org/show_bug.cgi?id=110210
 	 */
-	अगर (!IS_ENABLED(CONFIG_DRM_I915_SELFTEST_BROKEN))
-		वापस 0;
+	if (!IS_ENABLED(CONFIG_DRM_I915_SELFTEST_BROKEN))
+		return 0;
 
 	/* We have to pick carefully to get the exact behaviour we need */
-	क्रम (r = रेजिस्टरs; r->name; r++)
-		अगर (r->platक्रमms & INTEL_INFO(gt->i915)->gen_mask)
-			अवरोध;
-	अगर (!r->name) अणु
+	for (r = registers; r->name; r++)
+		if (r->platforms & INTEL_INFO(gt->i915)->gen_mask)
+			break;
+	if (!r->name) {
 		pr_debug("Forcewaked register not known for %s; skipping\n",
-			 पूर्णांकel_platक्रमm_name(INTEL_INFO(gt->i915)->platक्रमm));
-		वापस 0;
-	पूर्ण
+			 intel_platform_name(INTEL_INFO(gt->i915)->platform));
+		return 0;
+	}
 
-	wakeref = पूर्णांकel_runसमय_pm_get(uncore->rpm);
+	wakeref = intel_runtime_pm_get(uncore->rpm);
 
-	क्रम_each_fw_करोमुख्य(करोमुख्य, uncore, पंचांगp) अणु
-		smp_store_mb(करोमुख्य->active, false);
-		अगर (!hrसमयr_cancel(&करोमुख्य->समयr))
-			जारी;
+	for_each_fw_domain(domain, uncore, tmp) {
+		smp_store_mb(domain->active, false);
+		if (!hrtimer_cancel(&domain->timer))
+			continue;
 
-		पूर्णांकel_uncore_fw_release_समयr(&करोमुख्य->समयr);
-	पूर्ण
+		intel_uncore_fw_release_timer(&domain->timer);
+	}
 
-	क्रम_each_engine(engine, gt, id) अणु
+	for_each_engine(engine, gt, id) {
 		i915_reg_t mmio = _MMIO(engine->mmio_base + r->offset);
 		u32 __iomem *reg = uncore->regs + engine->mmio_base + r->offset;
-		क्रमागत क्रमcewake_करोमुख्यs fw_करोमुख्यs;
+		enum forcewake_domains fw_domains;
 		u32 val;
 
-		अगर (!engine->शेष_state)
-			जारी;
+		if (!engine->default_state)
+			continue;
 
-		fw_करोमुख्यs = पूर्णांकel_uncore_क्रमcewake_क्रम_reg(uncore, mmio,
+		fw_domains = intel_uncore_forcewake_for_reg(uncore, mmio,
 							    FW_REG_READ);
-		अगर (!fw_करोमुख्यs)
-			जारी;
+		if (!fw_domains)
+			continue;
 
-		क्रम_each_fw_करोमुख्य_masked(करोमुख्य, fw_करोमुख्यs, uncore, पंचांगp) अणु
-			अगर (!करोमुख्य->wake_count)
-				जारी;
+		for_each_fw_domain_masked(domain, fw_domains, uncore, tmp) {
+			if (!domain->wake_count)
+				continue;
 
 			pr_err("fw_domain %s still active, aborting test!\n",
-			       पूर्णांकel_uncore_क्रमcewake_करोमुख्य_to_str(करोमुख्य->id));
+			       intel_uncore_forcewake_domain_to_str(domain->id));
 			err = -EINVAL;
-			जाओ out_rpm;
-		पूर्ण
+			goto out_rpm;
+		}
 
-		पूर्णांकel_uncore_क्रमcewake_get(uncore, fw_करोमुख्यs);
-		val = पढ़ोl(reg);
-		पूर्णांकel_uncore_क्रमcewake_put(uncore, fw_करोमुख्यs);
+		intel_uncore_forcewake_get(uncore, fw_domains);
+		val = readl(reg);
+		intel_uncore_forcewake_put(uncore, fw_domains);
 
-		/* Flush the क्रमcewake release (delayed onto a समयr) */
-		क्रम_each_fw_करोमुख्य_masked(करोमुख्य, fw_करोमुख्यs, uncore, पंचांगp) अणु
-			smp_store_mb(करोमुख्य->active, false);
-			अगर (hrसमयr_cancel(&करोमुख्य->समयr))
-				पूर्णांकel_uncore_fw_release_समयr(&करोमुख्य->समयr);
+		/* Flush the forcewake release (delayed onto a timer) */
+		for_each_fw_domain_masked(domain, fw_domains, uncore, tmp) {
+			smp_store_mb(domain->active, false);
+			if (hrtimer_cancel(&domain->timer))
+				intel_uncore_fw_release_timer(&domain->timer);
 
 			preempt_disable();
-			err = रुको_ack_clear(करोमुख्य, FORCEWAKE_KERNEL);
+			err = wait_ack_clear(domain, FORCEWAKE_KERNEL);
 			preempt_enable();
-			अगर (err) अणु
+			if (err) {
 				pr_err("Failed to clear fw_domain %s\n",
-				       पूर्णांकel_uncore_क्रमcewake_करोमुख्य_to_str(करोमुख्य->id));
-				जाओ out_rpm;
-			पूर्ण
-		पूर्ण
+				       intel_uncore_forcewake_domain_to_str(domain->id));
+				goto out_rpm;
+			}
+		}
 
-		अगर (!val) अणु
+		if (!val) {
 			pr_err("%s:%s was zero while fw was held!\n",
 			       engine->name, r->name);
 			err = -EINVAL;
-			जाओ out_rpm;
-		पूर्ण
+			goto out_rpm;
+		}
 
-		/* We then expect the पढ़ो to वापस 0 outside of the fw */
-		अगर (रुको_क्रम(पढ़ोl(reg) == 0, 100)) अणु
+		/* We then expect the read to return 0 outside of the fw */
+		if (wait_for(readl(reg) == 0, 100)) {
 			pr_err("%s:%s=%0x, fw_domains 0x%x still up after 100ms!\n",
-			       engine->name, r->name, पढ़ोl(reg), fw_करोमुख्यs);
+			       engine->name, r->name, readl(reg), fw_domains);
 			err = -ETIMEDOUT;
-			जाओ out_rpm;
-		पूर्ण
-	पूर्ण
+			goto out_rpm;
+		}
+	}
 
 out_rpm:
-	पूर्णांकel_runसमय_pm_put(uncore->rpm, wakeref);
-	वापस err;
-पूर्ण
+	intel_runtime_pm_put(uncore->rpm, wakeref);
+	return err;
+}
 
-अटल पूर्णांक live_क्रमcewake_करोमुख्यs(व्योम *arg)
-अणु
-#घोषणा FW_RANGE 0x40000
-	काष्ठा पूर्णांकel_gt *gt = arg;
-	काष्ठा पूर्णांकel_uncore *uncore = gt->uncore;
-	अचिन्हित दीर्घ *valid;
+static int live_forcewake_domains(void *arg)
+{
+#define FW_RANGE 0x40000
+	struct intel_gt *gt = arg;
+	struct intel_uncore *uncore = gt->uncore;
+	unsigned long *valid;
 	u32 offset;
-	पूर्णांक err;
+	int err;
 
-	अगर (!HAS_FPGA_DBG_UNCLAIMED(gt->i915) &&
+	if (!HAS_FPGA_DBG_UNCLAIMED(gt->i915) &&
 	    !IS_VALLEYVIEW(gt->i915) &&
 	    !IS_CHERRYVIEW(gt->i915))
-		वापस 0;
+		return 0;
 
 	/*
 	 * This test may lockup the machine or cause GPU hangs afterwards.
 	 */
-	अगर (!IS_ENABLED(CONFIG_DRM_I915_SELFTEST_BROKEN))
-		वापस 0;
+	if (!IS_ENABLED(CONFIG_DRM_I915_SELFTEST_BROKEN))
+		return 0;
 
-	valid = biपंचांगap_zalloc(FW_RANGE, GFP_KERNEL);
-	अगर (!valid)
-		वापस -ENOMEM;
+	valid = bitmap_zalloc(FW_RANGE, GFP_KERNEL);
+	if (!valid)
+		return -ENOMEM;
 
-	पूर्णांकel_uncore_क्रमcewake_get(uncore, FORCEWAKE_ALL);
+	intel_uncore_forcewake_get(uncore, FORCEWAKE_ALL);
 
-	check_क्रम_unclaimed_mmio(uncore);
-	क्रम (offset = 0; offset < FW_RANGE; offset += 4) अणु
-		i915_reg_t reg = अणु offset पूर्ण;
+	check_for_unclaimed_mmio(uncore);
+	for (offset = 0; offset < FW_RANGE; offset += 4) {
+		i915_reg_t reg = { offset };
 
-		पूर्णांकel_uncore_posting_पढ़ो_fw(uncore, reg);
-		अगर (!check_क्रम_unclaimed_mmio(uncore))
+		intel_uncore_posting_read_fw(uncore, reg);
+		if (!check_for_unclaimed_mmio(uncore))
 			set_bit(offset, valid);
-	पूर्ण
+	}
 
-	पूर्णांकel_uncore_क्रमcewake_put(uncore, FORCEWAKE_ALL);
+	intel_uncore_forcewake_put(uncore, FORCEWAKE_ALL);
 
 	err = 0;
-	क्रम_each_set_bit(offset, valid, FW_RANGE) अणु
-		i915_reg_t reg = अणु offset पूर्ण;
+	for_each_set_bit(offset, valid, FW_RANGE) {
+		i915_reg_t reg = { offset };
 
 		iosf_mbi_punit_acquire();
-		पूर्णांकel_uncore_क्रमcewake_reset(uncore);
+		intel_uncore_forcewake_reset(uncore);
 		iosf_mbi_punit_release();
 
-		check_क्रम_unclaimed_mmio(uncore);
+		check_for_unclaimed_mmio(uncore);
 
-		पूर्णांकel_uncore_posting_पढ़ो_fw(uncore, reg);
-		अगर (check_क्रम_unclaimed_mmio(uncore)) अणु
+		intel_uncore_posting_read_fw(uncore, reg);
+		if (check_for_unclaimed_mmio(uncore)) {
 			pr_err("Unclaimed mmio read to register 0x%04x\n",
 			       offset);
 			err = -EINVAL;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	biपंचांगap_मुक्त(valid);
-	वापस err;
-पूर्ण
+	bitmap_free(valid);
+	return err;
+}
 
-अटल पूर्णांक live_fw_table(व्योम *arg)
-अणु
-	काष्ठा पूर्णांकel_gt *gt = arg;
+static int live_fw_table(void *arg)
+{
+	struct intel_gt *gt = arg;
 
 	/* Confirm the table we load is still valid */
-	वापस पूर्णांकel_fw_table_check(gt->uncore->fw_करोमुख्यs_table,
-				    gt->uncore->fw_करोमुख्यs_table_entries,
+	return intel_fw_table_check(gt->uncore->fw_domains_table,
+				    gt->uncore->fw_domains_table_entries,
 				    INTEL_GEN(gt->i915) >= 9);
-पूर्ण
+}
 
-पूर्णांक पूर्णांकel_uncore_live_selftests(काष्ठा drm_i915_निजी *i915)
-अणु
-	अटल स्थिर काष्ठा i915_subtest tests[] = अणु
+int intel_uncore_live_selftests(struct drm_i915_private *i915)
+{
+	static const struct i915_subtest tests[] = {
 		SUBTEST(live_fw_table),
-		SUBTEST(live_क्रमcewake_ops),
-		SUBTEST(live_क्रमcewake_करोमुख्यs),
-	पूर्ण;
+		SUBTEST(live_forcewake_ops),
+		SUBTEST(live_forcewake_domains),
+	};
 
-	वापस पूर्णांकel_gt_live_subtests(tests, &i915->gt);
-पूर्ण
+	return intel_gt_live_subtests(tests, &i915->gt);
+}

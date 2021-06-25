@@ -1,11 +1,10 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2004-2007,2011-2012 Freescale Semiconductor, Inc.
  * All rights reserved.
  *
- * Author: Li Yang <leoli@मुक्तscale.com>
- *         Jiang Bo <tanya.jiang@मुक्तscale.com>
+ * Author: Li Yang <leoli@freescale.com>
+ *         Jiang Bo <tanya.jiang@freescale.com>
  *
  * Description:
  * Freescale high-speed USB SOC DR module device controller driver.
@@ -14,178 +13,178 @@
  * code from Dave Liu and Shlomi Gridish.
  */
 
-#अघोषित VERBOSE
+#undef VERBOSE
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/types.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/err.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/init.h>
-#समावेश <linux/list.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/device.h>
-#समावेश <linux/usb/ch9.h>
-#समावेश <linux/usb/gadget.h>
-#समावेश <linux/usb/otg.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/fsl_devices.h>
-#समावेश <linux/dmapool.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/of_device.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/ioport.h>
+#include <linux/types.h>
+#include <linux/errno.h>
+#include <linux/err.h>
+#include <linux/slab.h>
+#include <linux/init.h>
+#include <linux/list.h>
+#include <linux/interrupt.h>
+#include <linux/proc_fs.h>
+#include <linux/mm.h>
+#include <linux/moduleparam.h>
+#include <linux/device.h>
+#include <linux/usb/ch9.h>
+#include <linux/usb/gadget.h>
+#include <linux/usb/otg.h>
+#include <linux/dma-mapping.h>
+#include <linux/platform_device.h>
+#include <linux/fsl_devices.h>
+#include <linux/dmapool.h>
+#include <linux/delay.h>
+#include <linux/of_device.h>
 
-#समावेश <यंत्र/byteorder.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/unaligned.h>
-#समावेश <यंत्र/dma.h>
+#include <asm/byteorder.h>
+#include <asm/io.h>
+#include <asm/unaligned.h>
+#include <asm/dma.h>
 
-#समावेश "fsl_usb2_udc.h"
+#include "fsl_usb2_udc.h"
 
-#घोषणा	DRIVER_DESC	"Freescale High-Speed USB SOC Device Controller driver"
-#घोषणा	DRIVER_AUTHOR	"Li Yang/Jiang Bo"
-#घोषणा	DRIVER_VERSION	"Apr 20, 2007"
+#define	DRIVER_DESC	"Freescale High-Speed USB SOC Device Controller driver"
+#define	DRIVER_AUTHOR	"Li Yang/Jiang Bo"
+#define	DRIVER_VERSION	"Apr 20, 2007"
 
-#घोषणा	DMA_ADDR_INVALID	(~(dma_addr_t)0)
+#define	DMA_ADDR_INVALID	(~(dma_addr_t)0)
 
-अटल स्थिर अक्षर driver_name[] = "fsl-usb2-udc";
+static const char driver_name[] = "fsl-usb2-udc";
 
-अटल काष्ठा usb_dr_device __iomem *dr_regs;
+static struct usb_dr_device __iomem *dr_regs;
 
-अटल काष्ठा usb_sys_पूर्णांकerface __iomem *usb_sys_regs;
+static struct usb_sys_interface __iomem *usb_sys_regs;
 
 /* it is initialized in probe()  */
-अटल काष्ठा fsl_udc *udc_controller = शून्य;
+static struct fsl_udc *udc_controller = NULL;
 
-अटल स्थिर काष्ठा usb_endpoपूर्णांक_descriptor
-fsl_ep0_desc = अणु
+static const struct usb_endpoint_descriptor
+fsl_ep0_desc = {
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
-	.bEndpoपूर्णांकAddress =	0,
+	.bEndpointAddress =	0,
 	.bmAttributes =		USB_ENDPOINT_XFER_CONTROL,
 	.wMaxPacketSize =	USB_MAX_CTRL_PAYLOAD,
-पूर्ण;
+};
 
-अटल व्योम fsl_ep_fअगरo_flush(काष्ठा usb_ep *_ep);
+static void fsl_ep_fifo_flush(struct usb_ep *_ep);
 
-#अगर_घोषित CONFIG_PPC32
+#ifdef CONFIG_PPC32
 /*
- * On some SoCs, the USB controller रेजिस्टरs can be big or little endian,
+ * On some SoCs, the USB controller registers can be big or little endian,
  * depending on the version of the chip. In order to be able to run the
- * same kernel binary on 2 dअगरferent versions of an SoC, the BE/LE decision
- * must be made at run समय. _fsl_पढ़ोl and fsl_ग_लिखोl are poपूर्णांकers to the
- * BE or LE पढ़ोl() and ग_लिखोl() functions, and fsl_पढ़ोl() and fsl_ग_लिखोl()
- * call through those poपूर्णांकers. Platक्रमm code क्रम SoCs that have BE USB
- * रेजिस्टरs should set pdata->big_endian_mmio flag.
+ * same kernel binary on 2 different versions of an SoC, the BE/LE decision
+ * must be made at run time. _fsl_readl and fsl_writel are pointers to the
+ * BE or LE readl() and writel() functions, and fsl_readl() and fsl_writel()
+ * call through those pointers. Platform code for SoCs that have BE USB
+ * registers should set pdata->big_endian_mmio flag.
  *
- * This also applies to controller-to-cpu accessors क्रम the USB descriptors,
- * since their endianness is also SoC dependant. Platक्रमm code क्रम SoCs that
+ * This also applies to controller-to-cpu accessors for the USB descriptors,
+ * since their endianness is also SoC dependant. Platform code for SoCs that
  * have BE USB descriptors should set pdata->big_endian_desc flag.
  */
-अटल u32 _fsl_पढ़ोl_be(स्थिर अचिन्हित __iomem *p)
-अणु
-	वापस in_be32(p);
-पूर्ण
+static u32 _fsl_readl_be(const unsigned __iomem *p)
+{
+	return in_be32(p);
+}
 
-अटल u32 _fsl_पढ़ोl_le(स्थिर अचिन्हित __iomem *p)
-अणु
-	वापस in_le32(p);
-पूर्ण
+static u32 _fsl_readl_le(const unsigned __iomem *p)
+{
+	return in_le32(p);
+}
 
-अटल व्योम _fsl_ग_लिखोl_be(u32 v, अचिन्हित __iomem *p)
-अणु
+static void _fsl_writel_be(u32 v, unsigned __iomem *p)
+{
 	out_be32(p, v);
-पूर्ण
+}
 
-अटल व्योम _fsl_ग_लिखोl_le(u32 v, अचिन्हित __iomem *p)
-अणु
+static void _fsl_writel_le(u32 v, unsigned __iomem *p)
+{
 	out_le32(p, v);
-पूर्ण
+}
 
-अटल u32 (*_fsl_पढ़ोl)(स्थिर अचिन्हित __iomem *p);
-अटल व्योम (*_fsl_ग_लिखोl)(u32 v, अचिन्हित __iomem *p);
+static u32 (*_fsl_readl)(const unsigned __iomem *p);
+static void (*_fsl_writel)(u32 v, unsigned __iomem *p);
 
-#घोषणा fsl_पढ़ोl(p)		(*_fsl_पढ़ोl)((p))
-#घोषणा fsl_ग_लिखोl(v, p)	(*_fsl_ग_लिखोl)((v), (p))
+#define fsl_readl(p)		(*_fsl_readl)((p))
+#define fsl_writel(v, p)	(*_fsl_writel)((v), (p))
 
-अटल अंतरभूत व्योम fsl_set_accessors(काष्ठा fsl_usb2_platक्रमm_data *pdata)
-अणु
-	अगर (pdata->big_endian_mmio) अणु
-		_fsl_पढ़ोl = _fsl_पढ़ोl_be;
-		_fsl_ग_लिखोl = _fsl_ग_लिखोl_be;
-	पूर्ण अन्यथा अणु
-		_fsl_पढ़ोl = _fsl_पढ़ोl_le;
-		_fsl_ग_लिखोl = _fsl_ग_लिखोl_le;
-	पूर्ण
-पूर्ण
+static inline void fsl_set_accessors(struct fsl_usb2_platform_data *pdata)
+{
+	if (pdata->big_endian_mmio) {
+		_fsl_readl = _fsl_readl_be;
+		_fsl_writel = _fsl_writel_be;
+	} else {
+		_fsl_readl = _fsl_readl_le;
+		_fsl_writel = _fsl_writel_le;
+	}
+}
 
-अटल अंतरभूत u32 cpu_to_hc32(स्थिर u32 x)
-अणु
-	वापस udc_controller->pdata->big_endian_desc
-		? (__क्रमce u32)cpu_to_be32(x)
-		: (__क्रमce u32)cpu_to_le32(x);
-पूर्ण
+static inline u32 cpu_to_hc32(const u32 x)
+{
+	return udc_controller->pdata->big_endian_desc
+		? (__force u32)cpu_to_be32(x)
+		: (__force u32)cpu_to_le32(x);
+}
 
-अटल अंतरभूत u32 hc32_to_cpu(स्थिर u32 x)
-अणु
-	वापस udc_controller->pdata->big_endian_desc
-		? be32_to_cpu((__क्रमce __be32)x)
-		: le32_to_cpu((__क्रमce __le32)x);
-पूर्ण
-#अन्यथा /* !CONFIG_PPC32 */
-अटल अंतरभूत व्योम fsl_set_accessors(काष्ठा fsl_usb2_platक्रमm_data *pdata) अणुपूर्ण
+static inline u32 hc32_to_cpu(const u32 x)
+{
+	return udc_controller->pdata->big_endian_desc
+		? be32_to_cpu((__force __be32)x)
+		: le32_to_cpu((__force __le32)x);
+}
+#else /* !CONFIG_PPC32 */
+static inline void fsl_set_accessors(struct fsl_usb2_platform_data *pdata) {}
 
-#घोषणा fsl_पढ़ोl(addr)		पढ़ोl(addr)
-#घोषणा fsl_ग_लिखोl(val32, addr) ग_लिखोl(val32, addr)
-#घोषणा cpu_to_hc32(x)		cpu_to_le32(x)
-#घोषणा hc32_to_cpu(x)		le32_to_cpu(x)
-#पूर्ण_अगर /* CONFIG_PPC32 */
+#define fsl_readl(addr)		readl(addr)
+#define fsl_writel(val32, addr) writel(val32, addr)
+#define cpu_to_hc32(x)		cpu_to_le32(x)
+#define hc32_to_cpu(x)		le32_to_cpu(x)
+#endif /* CONFIG_PPC32 */
 
 /********************************************************************
  *	Internal Used Function
 ********************************************************************/
 /*-----------------------------------------------------------------
- * करोne() - retire a request; caller blocked irqs
+ * done() - retire a request; caller blocked irqs
  * @status : request status to be set, only works when
  *	request is still in progress.
  *--------------------------------------------------------------*/
-अटल व्योम करोne(काष्ठा fsl_ep *ep, काष्ठा fsl_req *req, पूर्णांक status)
+static void done(struct fsl_ep *ep, struct fsl_req *req, int status)
 __releases(ep->udc->lock)
 __acquires(ep->udc->lock)
-अणु
-	काष्ठा fsl_udc *udc = शून्य;
-	अचिन्हित अक्षर stopped = ep->stopped;
-	काष्ठा ep_td_काष्ठा *curr_td, *next_td;
-	पूर्णांक j;
+{
+	struct fsl_udc *udc = NULL;
+	unsigned char stopped = ep->stopped;
+	struct ep_td_struct *curr_td, *next_td;
+	int j;
 
-	udc = (काष्ठा fsl_udc *)ep->udc;
+	udc = (struct fsl_udc *)ep->udc;
 	/* Removed the req from fsl_ep->queue */
 	list_del_init(&req->queue);
 
 	/* req.status should be set as -EINPROGRESS in ep_queue() */
-	अगर (req->req.status == -EINPROGRESS)
+	if (req->req.status == -EINPROGRESS)
 		req->req.status = status;
-	अन्यथा
+	else
 		status = req->req.status;
 
-	/* Free dtd क्रम the request */
+	/* Free dtd for the request */
 	next_td = req->head;
-	क्रम (j = 0; j < req->dtd_count; j++) अणु
+	for (j = 0; j < req->dtd_count; j++) {
 		curr_td = next_td;
-		अगर (j != req->dtd_count - 1) अणु
+		if (j != req->dtd_count - 1) {
 			next_td = curr_td->next_td_virt;
-		पूर्ण
-		dma_pool_मुक्त(udc->td_pool, curr_td, curr_td->td_dma);
-	पूर्ण
+		}
+		dma_pool_free(udc->td_pool, curr_td, curr_td->td_dma);
+	}
 
 	usb_gadget_unmap_request(&ep->udc->gadget, &req->req, ep_is_in(ep));
 
-	अगर (status && (status != -ESHUTDOWN))
+	if (status && (status != -ESHUTDOWN))
 		VDBG("complete %s req %p stat %d len %u/%u",
 			ep->ep.name, &req->req, status,
 			req->req.actual, req->req.length);
@@ -198,159 +197,159 @@ __acquires(ep->udc->lock)
 
 	spin_lock(&ep->udc->lock);
 	ep->stopped = stopped;
-पूर्ण
+}
 
 /*-----------------------------------------------------------------
  * nuke(): delete all requests related to this ep
  * called with spinlock held
  *--------------------------------------------------------------*/
-अटल व्योम nuke(काष्ठा fsl_ep *ep, पूर्णांक status)
-अणु
+static void nuke(struct fsl_ep *ep, int status)
+{
 	ep->stopped = 1;
 
-	/* Flush fअगरo */
-	fsl_ep_fअगरo_flush(&ep->ep);
+	/* Flush fifo */
+	fsl_ep_fifo_flush(&ep->ep);
 
 	/* Whether this eq has request linked */
-	जबतक (!list_empty(&ep->queue)) अणु
-		काष्ठा fsl_req *req = शून्य;
+	while (!list_empty(&ep->queue)) {
+		struct fsl_req *req = NULL;
 
-		req = list_entry(ep->queue.next, काष्ठा fsl_req, queue);
-		करोne(ep, req, status);
-	पूर्ण
-पूर्ण
+		req = list_entry(ep->queue.next, struct fsl_req, queue);
+		done(ep, req, status);
+	}
+}
 
 /*------------------------------------------------------------------
 	Internal Hardware related function
  ------------------------------------------------------------------*/
 
-अटल पूर्णांक dr_controller_setup(काष्ठा fsl_udc *udc)
-अणु
-	अचिन्हित पूर्णांक पंचांगp, portctrl, ep_num;
-	अचिन्हित पूर्णांक max_no_of_ep;
-	अचिन्हित पूर्णांक ctrl;
-	अचिन्हित दीर्घ समयout;
+static int dr_controller_setup(struct fsl_udc *udc)
+{
+	unsigned int tmp, portctrl, ep_num;
+	unsigned int max_no_of_ep;
+	unsigned int ctrl;
+	unsigned long timeout;
 
-#घोषणा FSL_UDC_RESET_TIMEOUT 1000
+#define FSL_UDC_RESET_TIMEOUT 1000
 
-	/* Config PHY पूर्णांकerface */
-	portctrl = fsl_पढ़ोl(&dr_regs->portsc1);
+	/* Config PHY interface */
+	portctrl = fsl_readl(&dr_regs->portsc1);
 	portctrl &= ~(PORTSCX_PHY_TYPE_SEL | PORTSCX_PORT_WIDTH);
-	चयन (udc->phy_mode) अणु
-	हाल FSL_USB2_PHY_ULPI:
-		अगर (udc->pdata->have_sysअगर_regs) अणु
-			अगर (udc->pdata->controller_ver) अणु
+	switch (udc->phy_mode) {
+	case FSL_USB2_PHY_ULPI:
+		if (udc->pdata->have_sysif_regs) {
+			if (udc->pdata->controller_ver) {
 				/* controller version 1.6 or above */
-				ctrl = __raw_पढ़ोl(&usb_sys_regs->control);
+				ctrl = __raw_readl(&usb_sys_regs->control);
 				ctrl &= ~USB_CTRL_UTMI_PHY_EN;
 				ctrl |= USB_CTRL_USB_EN;
-				__raw_ग_लिखोl(ctrl, &usb_sys_regs->control);
-			पूर्ण
-		पूर्ण
+				__raw_writel(ctrl, &usb_sys_regs->control);
+			}
+		}
 		portctrl |= PORTSCX_PTS_ULPI;
-		अवरोध;
-	हाल FSL_USB2_PHY_UTMI_WIDE:
+		break;
+	case FSL_USB2_PHY_UTMI_WIDE:
 		portctrl |= PORTSCX_PTW_16BIT;
 		fallthrough;
-	हाल FSL_USB2_PHY_UTMI:
-	हाल FSL_USB2_PHY_UTMI_DUAL:
-		अगर (udc->pdata->have_sysअगर_regs) अणु
-			अगर (udc->pdata->controller_ver) अणु
+	case FSL_USB2_PHY_UTMI:
+	case FSL_USB2_PHY_UTMI_DUAL:
+		if (udc->pdata->have_sysif_regs) {
+			if (udc->pdata->controller_ver) {
 				/* controller version 1.6 or above */
-				ctrl = __raw_पढ़ोl(&usb_sys_regs->control);
+				ctrl = __raw_readl(&usb_sys_regs->control);
 				ctrl |= (USB_CTRL_UTMI_PHY_EN |
 					USB_CTRL_USB_EN);
-				__raw_ग_लिखोl(ctrl, &usb_sys_regs->control);
-				mdelay(FSL_UTMI_PHY_DLY); /* Delay क्रम UTMI
+				__raw_writel(ctrl, &usb_sys_regs->control);
+				mdelay(FSL_UTMI_PHY_DLY); /* Delay for UTMI
 					PHY CLK to become stable - 10ms*/
-			पूर्ण
-		पूर्ण
+			}
+		}
 		portctrl |= PORTSCX_PTS_UTMI;
-		अवरोध;
-	हाल FSL_USB2_PHY_SERIAL:
+		break;
+	case FSL_USB2_PHY_SERIAL:
 		portctrl |= PORTSCX_PTS_FSLS;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	fsl_ग_लिखोl(portctrl, &dr_regs->portsc1);
+		break;
+	default:
+		return -EINVAL;
+	}
+	fsl_writel(portctrl, &dr_regs->portsc1);
 
 	/* Stop and reset the usb controller */
-	पंचांगp = fsl_पढ़ोl(&dr_regs->usbcmd);
-	पंचांगp &= ~USB_CMD_RUN_STOP;
-	fsl_ग_लिखोl(पंचांगp, &dr_regs->usbcmd);
+	tmp = fsl_readl(&dr_regs->usbcmd);
+	tmp &= ~USB_CMD_RUN_STOP;
+	fsl_writel(tmp, &dr_regs->usbcmd);
 
-	पंचांगp = fsl_पढ़ोl(&dr_regs->usbcmd);
-	पंचांगp |= USB_CMD_CTRL_RESET;
-	fsl_ग_लिखोl(पंचांगp, &dr_regs->usbcmd);
+	tmp = fsl_readl(&dr_regs->usbcmd);
+	tmp |= USB_CMD_CTRL_RESET;
+	fsl_writel(tmp, &dr_regs->usbcmd);
 
-	/* Wait क्रम reset to complete */
-	समयout = jअगरfies + FSL_UDC_RESET_TIMEOUT;
-	जबतक (fsl_पढ़ोl(&dr_regs->usbcmd) & USB_CMD_CTRL_RESET) अणु
-		अगर (समय_after(jअगरfies, समयout)) अणु
+	/* Wait for reset to complete */
+	timeout = jiffies + FSL_UDC_RESET_TIMEOUT;
+	while (fsl_readl(&dr_regs->usbcmd) & USB_CMD_CTRL_RESET) {
+		if (time_after(jiffies, timeout)) {
 			ERR("udc reset timeout!\n");
-			वापस -ETIMEDOUT;
-		पूर्ण
+			return -ETIMEDOUT;
+		}
 		cpu_relax();
-	पूर्ण
+	}
 
 	/* Set the controller as device mode */
-	पंचांगp = fsl_पढ़ोl(&dr_regs->usbmode);
-	पंचांगp &= ~USB_MODE_CTRL_MODE_MASK;	/* clear mode bits */
-	पंचांगp |= USB_MODE_CTRL_MODE_DEVICE;
+	tmp = fsl_readl(&dr_regs->usbmode);
+	tmp &= ~USB_MODE_CTRL_MODE_MASK;	/* clear mode bits */
+	tmp |= USB_MODE_CTRL_MODE_DEVICE;
 	/* Disable Setup Lockout */
-	पंचांगp |= USB_MODE_SETUP_LOCK_OFF;
-	अगर (udc->pdata->es)
-		पंचांगp |= USB_MODE_ES;
-	fsl_ग_लिखोl(पंचांगp, &dr_regs->usbmode);
+	tmp |= USB_MODE_SETUP_LOCK_OFF;
+	if (udc->pdata->es)
+		tmp |= USB_MODE_ES;
+	fsl_writel(tmp, &dr_regs->usbmode);
 
 	/* Clear the setup status */
-	fsl_ग_लिखोl(0, &dr_regs->usbsts);
+	fsl_writel(0, &dr_regs->usbsts);
 
-	पंचांगp = udc->ep_qh_dma;
-	पंचांगp &= USB_EP_LIST_ADDRESS_MASK;
-	fsl_ग_लिखोl(पंचांगp, &dr_regs->endpoपूर्णांकlistaddr);
+	tmp = udc->ep_qh_dma;
+	tmp &= USB_EP_LIST_ADDRESS_MASK;
+	fsl_writel(tmp, &dr_regs->endpointlistaddr);
 
 	VDBG("vir[qh_base] is %p phy[qh_base] is 0x%8x reg is 0x%8x",
-		udc->ep_qh, (पूर्णांक)पंचांगp,
-		fsl_पढ़ोl(&dr_regs->endpoपूर्णांकlistaddr));
+		udc->ep_qh, (int)tmp,
+		fsl_readl(&dr_regs->endpointlistaddr));
 
-	max_no_of_ep = (0x0000001F & fsl_पढ़ोl(&dr_regs->dccparams));
-	क्रम (ep_num = 1; ep_num < max_no_of_ep; ep_num++) अणु
-		पंचांगp = fsl_पढ़ोl(&dr_regs->endptctrl[ep_num]);
-		पंचांगp &= ~(EPCTRL_TX_TYPE | EPCTRL_RX_TYPE);
-		पंचांगp |= (EPCTRL_EP_TYPE_BULK << EPCTRL_TX_EP_TYPE_SHIFT)
+	max_no_of_ep = (0x0000001F & fsl_readl(&dr_regs->dccparams));
+	for (ep_num = 1; ep_num < max_no_of_ep; ep_num++) {
+		tmp = fsl_readl(&dr_regs->endptctrl[ep_num]);
+		tmp &= ~(EPCTRL_TX_TYPE | EPCTRL_RX_TYPE);
+		tmp |= (EPCTRL_EP_TYPE_BULK << EPCTRL_TX_EP_TYPE_SHIFT)
 		| (EPCTRL_EP_TYPE_BULK << EPCTRL_RX_EP_TYPE_SHIFT);
-		fsl_ग_लिखोl(पंचांगp, &dr_regs->endptctrl[ep_num]);
-	पूर्ण
-	/* Config control enable i/o output, cpu endian रेजिस्टर */
-#अगर_अघोषित CONFIG_ARCH_MXC
-	अगर (udc->pdata->have_sysअगर_regs) अणु
-		ctrl = __raw_पढ़ोl(&usb_sys_regs->control);
+		fsl_writel(tmp, &dr_regs->endptctrl[ep_num]);
+	}
+	/* Config control enable i/o output, cpu endian register */
+#ifndef CONFIG_ARCH_MXC
+	if (udc->pdata->have_sysif_regs) {
+		ctrl = __raw_readl(&usb_sys_regs->control);
 		ctrl |= USB_CTRL_IOENB;
-		__raw_ग_लिखोl(ctrl, &usb_sys_regs->control);
-	पूर्ण
-#पूर्ण_अगर
+		__raw_writel(ctrl, &usb_sys_regs->control);
+	}
+#endif
 
-#अगर defined(CONFIG_PPC32) && !defined(CONFIG_NOT_COHERENT_CACHE)
-	/* Turn on cache snooping hardware, since some PowerPC platक्रमms
+#if defined(CONFIG_PPC32) && !defined(CONFIG_NOT_COHERENT_CACHE)
+	/* Turn on cache snooping hardware, since some PowerPC platforms
 	 * wholly rely on hardware to deal with cache coherent. */
 
-	अगर (udc->pdata->have_sysअगर_regs) अणु
-		/* Setup Snooping क्रम all the 4GB space */
-		पंचांगp = SNOOP_SIZE_2GB;	/* starts from 0x0, size 2G */
-		__raw_ग_लिखोl(पंचांगp, &usb_sys_regs->snoop1);
-		पंचांगp |= 0x80000000;	/* starts from 0x8000000, size 2G */
-		__raw_ग_लिखोl(पंचांगp, &usb_sys_regs->snoop2);
-	पूर्ण
-#पूर्ण_अगर
+	if (udc->pdata->have_sysif_regs) {
+		/* Setup Snooping for all the 4GB space */
+		tmp = SNOOP_SIZE_2GB;	/* starts from 0x0, size 2G */
+		__raw_writel(tmp, &usb_sys_regs->snoop1);
+		tmp |= 0x80000000;	/* starts from 0x8000000, size 2G */
+		__raw_writel(tmp, &usb_sys_regs->snoop2);
+	}
+#endif
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Enable DR irq and set controller to run state */
-अटल व्योम dr_controller_run(काष्ठा fsl_udc *udc)
-अणु
+static void dr_controller_run(struct fsl_udc *udc)
+{
 	u32 temp;
 
 	/* Enable DR irq reg */
@@ -358,238 +357,238 @@ __acquires(ep->udc->lock)
 		| USB_INTR_PTC_DETECT_EN | USB_INTR_RESET_EN
 		| USB_INTR_DEVICE_SUSPEND | USB_INTR_SYS_ERR_EN;
 
-	fsl_ग_लिखोl(temp, &dr_regs->usbपूर्णांकr);
+	fsl_writel(temp, &dr_regs->usbintr);
 
 	/* Clear stopped bit */
 	udc->stopped = 0;
 
 	/* Set the controller as device mode */
-	temp = fsl_पढ़ोl(&dr_regs->usbmode);
+	temp = fsl_readl(&dr_regs->usbmode);
 	temp |= USB_MODE_CTRL_MODE_DEVICE;
-	fsl_ग_लिखोl(temp, &dr_regs->usbmode);
+	fsl_writel(temp, &dr_regs->usbmode);
 
 	/* Set controller to Run */
-	temp = fsl_पढ़ोl(&dr_regs->usbcmd);
+	temp = fsl_readl(&dr_regs->usbcmd);
 	temp |= USB_CMD_RUN_STOP;
-	fsl_ग_लिखोl(temp, &dr_regs->usbcmd);
-पूर्ण
+	fsl_writel(temp, &dr_regs->usbcmd);
+}
 
-अटल व्योम dr_controller_stop(काष्ठा fsl_udc *udc)
-अणु
-	अचिन्हित पूर्णांक पंचांगp;
+static void dr_controller_stop(struct fsl_udc *udc)
+{
+	unsigned int tmp;
 
 	pr_debug("%s\n", __func__);
 
-	/* अगर we're in OTG mode, and the Host is currently using the port,
-	 * stop now and करोn't rip the controller out from under the
+	/* if we're in OTG mode, and the Host is currently using the port,
+	 * stop now and don't rip the controller out from under the
 	 * ehci driver
 	 */
-	अगर (udc->gadget.is_otg) अणु
-		अगर (!(fsl_पढ़ोl(&dr_regs->otgsc) & OTGSC_STS_USB_ID)) अणु
+	if (udc->gadget.is_otg) {
+		if (!(fsl_readl(&dr_regs->otgsc) & OTGSC_STS_USB_ID)) {
 			pr_debug("udc: Leaving early\n");
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 
 	/* disable all INTR */
-	fsl_ग_लिखोl(0, &dr_regs->usbपूर्णांकr);
+	fsl_writel(0, &dr_regs->usbintr);
 
-	/* Set stopped bit क्रम isr */
+	/* Set stopped bit for isr */
 	udc->stopped = 1;
 
 	/* disable IO output */
 /*	usb_sys_regs->control = 0; */
 
 	/* set controller to Stop */
-	पंचांगp = fsl_पढ़ोl(&dr_regs->usbcmd);
-	पंचांगp &= ~USB_CMD_RUN_STOP;
-	fsl_ग_लिखोl(पंचांगp, &dr_regs->usbcmd);
-पूर्ण
+	tmp = fsl_readl(&dr_regs->usbcmd);
+	tmp &= ~USB_CMD_RUN_STOP;
+	fsl_writel(tmp, &dr_regs->usbcmd);
+}
 
-अटल व्योम dr_ep_setup(अचिन्हित अक्षर ep_num, अचिन्हित अक्षर dir,
-			अचिन्हित अक्षर ep_type)
-अणु
-	अचिन्हित पूर्णांक पंचांगp_epctrl = 0;
+static void dr_ep_setup(unsigned char ep_num, unsigned char dir,
+			unsigned char ep_type)
+{
+	unsigned int tmp_epctrl = 0;
 
-	पंचांगp_epctrl = fsl_पढ़ोl(&dr_regs->endptctrl[ep_num]);
-	अगर (dir) अणु
-		अगर (ep_num)
-			पंचांगp_epctrl |= EPCTRL_TX_DATA_TOGGLE_RST;
-		पंचांगp_epctrl |= EPCTRL_TX_ENABLE;
-		पंचांगp_epctrl &= ~EPCTRL_TX_TYPE;
-		पंचांगp_epctrl |= ((अचिन्हित पूर्णांक)(ep_type)
+	tmp_epctrl = fsl_readl(&dr_regs->endptctrl[ep_num]);
+	if (dir) {
+		if (ep_num)
+			tmp_epctrl |= EPCTRL_TX_DATA_TOGGLE_RST;
+		tmp_epctrl |= EPCTRL_TX_ENABLE;
+		tmp_epctrl &= ~EPCTRL_TX_TYPE;
+		tmp_epctrl |= ((unsigned int)(ep_type)
 				<< EPCTRL_TX_EP_TYPE_SHIFT);
-	पूर्ण अन्यथा अणु
-		अगर (ep_num)
-			पंचांगp_epctrl |= EPCTRL_RX_DATA_TOGGLE_RST;
-		पंचांगp_epctrl |= EPCTRL_RX_ENABLE;
-		पंचांगp_epctrl &= ~EPCTRL_RX_TYPE;
-		पंचांगp_epctrl |= ((अचिन्हित पूर्णांक)(ep_type)
+	} else {
+		if (ep_num)
+			tmp_epctrl |= EPCTRL_RX_DATA_TOGGLE_RST;
+		tmp_epctrl |= EPCTRL_RX_ENABLE;
+		tmp_epctrl &= ~EPCTRL_RX_TYPE;
+		tmp_epctrl |= ((unsigned int)(ep_type)
 				<< EPCTRL_RX_EP_TYPE_SHIFT);
-	पूर्ण
+	}
 
-	fsl_ग_लिखोl(पंचांगp_epctrl, &dr_regs->endptctrl[ep_num]);
-पूर्ण
+	fsl_writel(tmp_epctrl, &dr_regs->endptctrl[ep_num]);
+}
 
-अटल व्योम
-dr_ep_change_stall(अचिन्हित अक्षर ep_num, अचिन्हित अक्षर dir, पूर्णांक value)
-अणु
-	u32 पंचांगp_epctrl = 0;
+static void
+dr_ep_change_stall(unsigned char ep_num, unsigned char dir, int value)
+{
+	u32 tmp_epctrl = 0;
 
-	पंचांगp_epctrl = fsl_पढ़ोl(&dr_regs->endptctrl[ep_num]);
+	tmp_epctrl = fsl_readl(&dr_regs->endptctrl[ep_num]);
 
-	अगर (value) अणु
+	if (value) {
 		/* set the stall bit */
-		अगर (dir)
-			पंचांगp_epctrl |= EPCTRL_TX_EP_STALL;
-		अन्यथा
-			पंचांगp_epctrl |= EPCTRL_RX_EP_STALL;
-	पूर्ण अन्यथा अणु
+		if (dir)
+			tmp_epctrl |= EPCTRL_TX_EP_STALL;
+		else
+			tmp_epctrl |= EPCTRL_RX_EP_STALL;
+	} else {
 		/* clear the stall bit and reset data toggle */
-		अगर (dir) अणु
-			पंचांगp_epctrl &= ~EPCTRL_TX_EP_STALL;
-			पंचांगp_epctrl |= EPCTRL_TX_DATA_TOGGLE_RST;
-		पूर्ण अन्यथा अणु
-			पंचांगp_epctrl &= ~EPCTRL_RX_EP_STALL;
-			पंचांगp_epctrl |= EPCTRL_RX_DATA_TOGGLE_RST;
-		पूर्ण
-	पूर्ण
-	fsl_ग_लिखोl(पंचांगp_epctrl, &dr_regs->endptctrl[ep_num]);
-पूर्ण
+		if (dir) {
+			tmp_epctrl &= ~EPCTRL_TX_EP_STALL;
+			tmp_epctrl |= EPCTRL_TX_DATA_TOGGLE_RST;
+		} else {
+			tmp_epctrl &= ~EPCTRL_RX_EP_STALL;
+			tmp_epctrl |= EPCTRL_RX_DATA_TOGGLE_RST;
+		}
+	}
+	fsl_writel(tmp_epctrl, &dr_regs->endptctrl[ep_num]);
+}
 
-/* Get stall status of a specअगरic ep
+/* Get stall status of a specific ep
    Return: 0: not stalled; 1:stalled */
-अटल पूर्णांक dr_ep_get_stall(अचिन्हित अक्षर ep_num, अचिन्हित अक्षर dir)
-अणु
+static int dr_ep_get_stall(unsigned char ep_num, unsigned char dir)
+{
 	u32 epctrl;
 
-	epctrl = fsl_पढ़ोl(&dr_regs->endptctrl[ep_num]);
-	अगर (dir)
-		वापस (epctrl & EPCTRL_TX_EP_STALL) ? 1 : 0;
-	अन्यथा
-		वापस (epctrl & EPCTRL_RX_EP_STALL) ? 1 : 0;
-पूर्ण
+	epctrl = fsl_readl(&dr_regs->endptctrl[ep_num]);
+	if (dir)
+		return (epctrl & EPCTRL_TX_EP_STALL) ? 1 : 0;
+	else
+		return (epctrl & EPCTRL_RX_EP_STALL) ? 1 : 0;
+}
 
 /********************************************************************
 	Internal Structure Build up functions
 ********************************************************************/
 
 /*------------------------------------------------------------------
-* काष्ठा_ep_qh_setup(): set the Endpoपूर्णांक Capabilites field of QH
+* struct_ep_qh_setup(): set the Endpoint Capabilites field of QH
  * @zlt: Zero Length Termination Select (1: disable; 0: enable)
  * @mult: Mult field
  ------------------------------------------------------------------*/
-अटल व्योम काष्ठा_ep_qh_setup(काष्ठा fsl_udc *udc, अचिन्हित अक्षर ep_num,
-		अचिन्हित अक्षर dir, अचिन्हित अक्षर ep_type,
-		अचिन्हित पूर्णांक max_pkt_len,
-		अचिन्हित पूर्णांक zlt, अचिन्हित अक्षर mult)
-अणु
-	काष्ठा ep_queue_head *p_QH = &udc->ep_qh[2 * ep_num + dir];
-	अचिन्हित पूर्णांक पंचांगp = 0;
+static void struct_ep_qh_setup(struct fsl_udc *udc, unsigned char ep_num,
+		unsigned char dir, unsigned char ep_type,
+		unsigned int max_pkt_len,
+		unsigned int zlt, unsigned char mult)
+{
+	struct ep_queue_head *p_QH = &udc->ep_qh[2 * ep_num + dir];
+	unsigned int tmp = 0;
 
-	/* set the Endpoपूर्णांक Capabilites in QH */
-	चयन (ep_type) अणु
-	हाल USB_ENDPOINT_XFER_CONTROL:
-		/* Interrupt On Setup (IOS). क्रम control ep  */
-		पंचांगp = (max_pkt_len << EP_QUEUE_HEAD_MAX_PKT_LEN_POS)
+	/* set the Endpoint Capabilites in QH */
+	switch (ep_type) {
+	case USB_ENDPOINT_XFER_CONTROL:
+		/* Interrupt On Setup (IOS). for control ep  */
+		tmp = (max_pkt_len << EP_QUEUE_HEAD_MAX_PKT_LEN_POS)
 			| EP_QUEUE_HEAD_IOS;
-		अवरोध;
-	हाल USB_ENDPOINT_XFER_ISOC:
-		पंचांगp = (max_pkt_len << EP_QUEUE_HEAD_MAX_PKT_LEN_POS)
+		break;
+	case USB_ENDPOINT_XFER_ISOC:
+		tmp = (max_pkt_len << EP_QUEUE_HEAD_MAX_PKT_LEN_POS)
 			| (mult << EP_QUEUE_HEAD_MULT_POS);
-		अवरोध;
-	हाल USB_ENDPOINT_XFER_BULK:
-	हाल USB_ENDPOINT_XFER_INT:
-		पंचांगp = max_pkt_len << EP_QUEUE_HEAD_MAX_PKT_LEN_POS;
-		अवरोध;
-	शेष:
+		break;
+	case USB_ENDPOINT_XFER_BULK:
+	case USB_ENDPOINT_XFER_INT:
+		tmp = max_pkt_len << EP_QUEUE_HEAD_MAX_PKT_LEN_POS;
+		break;
+	default:
 		VDBG("error ep type is %d", ep_type);
-		वापस;
-	पूर्ण
-	अगर (zlt)
-		पंचांगp |= EP_QUEUE_HEAD_ZLT_SEL;
+		return;
+	}
+	if (zlt)
+		tmp |= EP_QUEUE_HEAD_ZLT_SEL;
 
-	p_QH->max_pkt_length = cpu_to_hc32(पंचांगp);
+	p_QH->max_pkt_length = cpu_to_hc32(tmp);
 	p_QH->next_dtd_ptr = 1;
-	p_QH->size_ioc_पूर्णांक_sts = 0;
-पूर्ण
+	p_QH->size_ioc_int_sts = 0;
+}
 
-/* Setup qh काष्ठाure and ep रेजिस्टर क्रम ep0. */
-अटल व्योम ep0_setup(काष्ठा fsl_udc *udc)
-अणु
+/* Setup qh structure and ep register for ep0. */
+static void ep0_setup(struct fsl_udc *udc)
+{
 	/* the initialization of an ep includes: fields in QH, Regs,
-	 * fsl_ep काष्ठा */
-	काष्ठा_ep_qh_setup(udc, 0, USB_RECV, USB_ENDPOINT_XFER_CONTROL,
+	 * fsl_ep struct */
+	struct_ep_qh_setup(udc, 0, USB_RECV, USB_ENDPOINT_XFER_CONTROL,
 			USB_MAX_CTRL_PAYLOAD, 0, 0);
-	काष्ठा_ep_qh_setup(udc, 0, USB_SEND, USB_ENDPOINT_XFER_CONTROL,
+	struct_ep_qh_setup(udc, 0, USB_SEND, USB_ENDPOINT_XFER_CONTROL,
 			USB_MAX_CTRL_PAYLOAD, 0, 0);
 	dr_ep_setup(0, USB_RECV, USB_ENDPOINT_XFER_CONTROL);
 	dr_ep_setup(0, USB_SEND, USB_ENDPOINT_XFER_CONTROL);
 
-	वापस;
+	return;
 
-पूर्ण
+}
 
 /***********************************************************************
-		Endpoपूर्णांक Management Functions
+		Endpoint Management Functions
 ***********************************************************************/
 
 /*-------------------------------------------------------------------------
- * when configurations are set, or when पूर्णांकerface settings change
- * क्रम example the करो_set_पूर्णांकerface() in gadget layer,
- * the driver will enable or disable the relevant endpoपूर्णांकs
- * ep0 करोesn't use this routine. It is always enabled.
+ * when configurations are set, or when interface settings change
+ * for example the do_set_interface() in gadget layer,
+ * the driver will enable or disable the relevant endpoints
+ * ep0 doesn't use this routine. It is always enabled.
 -------------------------------------------------------------------------*/
-अटल पूर्णांक fsl_ep_enable(काष्ठा usb_ep *_ep,
-		स्थिर काष्ठा usb_endpoपूर्णांक_descriptor *desc)
-अणु
-	काष्ठा fsl_udc *udc = शून्य;
-	काष्ठा fsl_ep *ep = शून्य;
-	अचिन्हित लघु max = 0;
-	अचिन्हित अक्षर mult = 0, zlt;
-	पूर्णांक retval = -EINVAL;
-	अचिन्हित दीर्घ flags = 0;
+static int fsl_ep_enable(struct usb_ep *_ep,
+		const struct usb_endpoint_descriptor *desc)
+{
+	struct fsl_udc *udc = NULL;
+	struct fsl_ep *ep = NULL;
+	unsigned short max = 0;
+	unsigned char mult = 0, zlt;
+	int retval = -EINVAL;
+	unsigned long flags = 0;
 
-	ep = container_of(_ep, काष्ठा fsl_ep, ep);
+	ep = container_of(_ep, struct fsl_ep, ep);
 
 	/* catch various bogus parameters */
-	अगर (!_ep || !desc
+	if (!_ep || !desc
 			|| (desc->bDescriptorType != USB_DT_ENDPOINT))
-		वापस -EINVAL;
+		return -EINVAL;
 
 	udc = ep->udc;
 
-	अगर (!udc->driver || (udc->gadget.speed == USB_SPEED_UNKNOWN))
-		वापस -ESHUTDOWN;
+	if (!udc->driver || (udc->gadget.speed == USB_SPEED_UNKNOWN))
+		return -ESHUTDOWN;
 
-	max = usb_endpoपूर्णांक_maxp(desc);
+	max = usb_endpoint_maxp(desc);
 
-	/* Disable स्वतःmatic zlp generation.  Driver is responsible to indicate
+	/* Disable automatic zlp generation.  Driver is responsible to indicate
 	 * explicitly through req->req.zero.  This is needed to enable multi-td
 	 * request. */
 	zlt = 1;
 
 	/* Assume the max packet size from gadget is always correct */
-	चयन (desc->bmAttributes & 0x03) अणु
-	हाल USB_ENDPOINT_XFER_CONTROL:
-	हाल USB_ENDPOINT_XFER_BULK:
-	हाल USB_ENDPOINT_XFER_INT:
+	switch (desc->bmAttributes & 0x03) {
+	case USB_ENDPOINT_XFER_CONTROL:
+	case USB_ENDPOINT_XFER_BULK:
+	case USB_ENDPOINT_XFER_INT:
 		/* mult = 0.  Execute N Transactions as demonstrated by
 		 * the USB variable length packet protocol where N is
 		 * computed using the Maximum Packet Length (dQH) and
 		 * the Total Bytes field (dTD) */
 		mult = 0;
-		अवरोध;
-	हाल USB_ENDPOINT_XFER_ISOC:
-		/* Calculate transactions needed क्रम high bandwidth iso */
-		mult = usb_endpoपूर्णांक_maxp_mult(desc);
+		break;
+	case USB_ENDPOINT_XFER_ISOC:
+		/* Calculate transactions needed for high bandwidth iso */
+		mult = usb_endpoint_maxp_mult(desc);
 		/* 3 transactions at most */
-		अगर (mult > 3)
-			जाओ en_करोne;
-		अवरोध;
-	शेष:
-		जाओ en_करोne;
-	पूर्ण
+		if (mult > 3)
+			goto en_done;
+		break;
+	default:
+		goto en_done;
+	}
 
 	spin_lock_irqsave(&udc->lock, flags);
 	ep->ep.maxpacket = max;
@@ -599,191 +598,191 @@ dr_ep_change_stall(अचिन्हित अक्षर ep_num, अचिन
 	/* Controller related setup */
 	/* Init EPx Queue Head (Ep Capabilites field in QH
 	 * according to max, zlt, mult) */
-	काष्ठा_ep_qh_setup(udc, (अचिन्हित अक्षर) ep_index(ep),
-			(अचिन्हित अक्षर) ((desc->bEndpoपूर्णांकAddress & USB_सूची_IN)
+	struct_ep_qh_setup(udc, (unsigned char) ep_index(ep),
+			(unsigned char) ((desc->bEndpointAddress & USB_DIR_IN)
 					?  USB_SEND : USB_RECV),
-			(अचिन्हित अक्षर) (desc->bmAttributes
+			(unsigned char) (desc->bmAttributes
 					& USB_ENDPOINT_XFERTYPE_MASK),
 			max, zlt, mult);
 
-	/* Init endpoपूर्णांक ctrl रेजिस्टर */
-	dr_ep_setup((अचिन्हित अक्षर) ep_index(ep),
-			(अचिन्हित अक्षर) ((desc->bEndpoपूर्णांकAddress & USB_सूची_IN)
+	/* Init endpoint ctrl register */
+	dr_ep_setup((unsigned char) ep_index(ep),
+			(unsigned char) ((desc->bEndpointAddress & USB_DIR_IN)
 					? USB_SEND : USB_RECV),
-			(अचिन्हित अक्षर) (desc->bmAttributes
+			(unsigned char) (desc->bmAttributes
 					& USB_ENDPOINT_XFERTYPE_MASK));
 
 	spin_unlock_irqrestore(&udc->lock, flags);
 	retval = 0;
 
 	VDBG("enabled %s (ep%d%s) maxpacket %d",ep->ep.name,
-			ep->ep.desc->bEndpoपूर्णांकAddress & 0x0f,
-			(desc->bEndpoपूर्णांकAddress & USB_सूची_IN)
+			ep->ep.desc->bEndpointAddress & 0x0f,
+			(desc->bEndpointAddress & USB_DIR_IN)
 				? "in" : "out", max);
-en_करोne:
-	वापस retval;
-पूर्ण
+en_done:
+	return retval;
+}
 
 /*---------------------------------------------------------------------
  * @ep : the ep being unconfigured. May not be ep0
  * Any pending and uncomplete req will complete with status (-ESHUTDOWN)
 *---------------------------------------------------------------------*/
-अटल पूर्णांक fsl_ep_disable(काष्ठा usb_ep *_ep)
-अणु
-	काष्ठा fsl_udc *udc = शून्य;
-	काष्ठा fsl_ep *ep = शून्य;
-	अचिन्हित दीर्घ flags = 0;
+static int fsl_ep_disable(struct usb_ep *_ep)
+{
+	struct fsl_udc *udc = NULL;
+	struct fsl_ep *ep = NULL;
+	unsigned long flags = 0;
 	u32 epctrl;
-	पूर्णांक ep_num;
+	int ep_num;
 
-	ep = container_of(_ep, काष्ठा fsl_ep, ep);
-	अगर (!_ep || !ep->ep.desc) अणु
-		VDBG("%s not enabled", _ep ? ep->ep.name : शून्य);
-		वापस -EINVAL;
-	पूर्ण
+	ep = container_of(_ep, struct fsl_ep, ep);
+	if (!_ep || !ep->ep.desc) {
+		VDBG("%s not enabled", _ep ? ep->ep.name : NULL);
+		return -EINVAL;
+	}
 
 	/* disable ep on controller */
 	ep_num = ep_index(ep);
-	epctrl = fsl_पढ़ोl(&dr_regs->endptctrl[ep_num]);
-	अगर (ep_is_in(ep)) अणु
+	epctrl = fsl_readl(&dr_regs->endptctrl[ep_num]);
+	if (ep_is_in(ep)) {
 		epctrl &= ~(EPCTRL_TX_ENABLE | EPCTRL_TX_TYPE);
 		epctrl |= EPCTRL_EP_TYPE_BULK << EPCTRL_TX_EP_TYPE_SHIFT;
-	पूर्ण अन्यथा अणु
+	} else {
 		epctrl &= ~(EPCTRL_RX_ENABLE | EPCTRL_TX_TYPE);
 		epctrl |= EPCTRL_EP_TYPE_BULK << EPCTRL_RX_EP_TYPE_SHIFT;
-	पूर्ण
-	fsl_ग_लिखोl(epctrl, &dr_regs->endptctrl[ep_num]);
+	}
+	fsl_writel(epctrl, &dr_regs->endptctrl[ep_num]);
 
-	udc = (काष्ठा fsl_udc *)ep->udc;
+	udc = (struct fsl_udc *)ep->udc;
 	spin_lock_irqsave(&udc->lock, flags);
 
-	/* nuke all pending requests (करोes flush) */
+	/* nuke all pending requests (does flush) */
 	nuke(ep, -ESHUTDOWN);
 
-	ep->ep.desc = शून्य;
+	ep->ep.desc = NULL;
 	ep->stopped = 1;
 	spin_unlock_irqrestore(&udc->lock, flags);
 
 	VDBG("disabled %s OK", _ep->name);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*---------------------------------------------------------------------
- * allocate a request object used by this endpoपूर्णांक
- * the मुख्य operation is to insert the req->queue to the eq->queue
- * Returns the request, or null अगर one could not be allocated
+ * allocate a request object used by this endpoint
+ * the main operation is to insert the req->queue to the eq->queue
+ * Returns the request, or null if one could not be allocated
 *---------------------------------------------------------------------*/
-अटल काष्ठा usb_request *
-fsl_alloc_request(काष्ठा usb_ep *_ep, gfp_t gfp_flags)
-अणु
-	काष्ठा fsl_req *req = शून्य;
+static struct usb_request *
+fsl_alloc_request(struct usb_ep *_ep, gfp_t gfp_flags)
+{
+	struct fsl_req *req = NULL;
 
-	req = kzalloc(माप *req, gfp_flags);
-	अगर (!req)
-		वापस शून्य;
+	req = kzalloc(sizeof *req, gfp_flags);
+	if (!req)
+		return NULL;
 
 	req->req.dma = DMA_ADDR_INVALID;
 	INIT_LIST_HEAD(&req->queue);
 
-	वापस &req->req;
-पूर्ण
+	return &req->req;
+}
 
-अटल व्योम fsl_मुक्त_request(काष्ठा usb_ep *_ep, काष्ठा usb_request *_req)
-अणु
-	काष्ठा fsl_req *req = शून्य;
+static void fsl_free_request(struct usb_ep *_ep, struct usb_request *_req)
+{
+	struct fsl_req *req = NULL;
 
-	req = container_of(_req, काष्ठा fsl_req, req);
+	req = container_of(_req, struct fsl_req, req);
 
-	अगर (_req)
-		kमुक्त(req);
-पूर्ण
+	if (_req)
+		kfree(req);
+}
 
 /* Actually add a dTD chain to an empty dQH and let go */
-अटल व्योम fsl_prime_ep(काष्ठा fsl_ep *ep, काष्ठा ep_td_काष्ठा *td)
-अणु
-	काष्ठा ep_queue_head *qh = get_qh_by_ep(ep);
+static void fsl_prime_ep(struct fsl_ep *ep, struct ep_td_struct *td)
+{
+	struct ep_queue_head *qh = get_qh_by_ep(ep);
 
-	/* Write dQH next poपूर्णांकer and terminate bit to 0 */
+	/* Write dQH next pointer and terminate bit to 0 */
 	qh->next_dtd_ptr = cpu_to_hc32(td->td_dma
 			& EP_QUEUE_HEAD_NEXT_POINTER_MASK);
 
 	/* Clear active and halt bit */
-	qh->size_ioc_पूर्णांक_sts &= cpu_to_hc32(~(EP_QUEUE_HEAD_STATUS_ACTIVE
+	qh->size_ioc_int_sts &= cpu_to_hc32(~(EP_QUEUE_HEAD_STATUS_ACTIVE
 					| EP_QUEUE_HEAD_STATUS_HALT));
 
-	/* Ensure that updates to the QH will occur beक्रमe priming. */
+	/* Ensure that updates to the QH will occur before priming. */
 	wmb();
 
-	/* Prime endpoपूर्णांक by writing correct bit to ENDPTPRIME */
-	fsl_ग_लिखोl(ep_is_in(ep) ? (1 << (ep_index(ep) + 16))
-			: (1 << (ep_index(ep))), &dr_regs->endpoपूर्णांकprime);
-पूर्ण
+	/* Prime endpoint by writing correct bit to ENDPTPRIME */
+	fsl_writel(ep_is_in(ep) ? (1 << (ep_index(ep) + 16))
+			: (1 << (ep_index(ep))), &dr_regs->endpointprime);
+}
 
 /* Add dTD chain to the dQH of an EP */
-अटल व्योम fsl_queue_td(काष्ठा fsl_ep *ep, काष्ठा fsl_req *req)
-अणु
-	u32 temp, biपंचांगask, पंचांगp_stat;
+static void fsl_queue_td(struct fsl_ep *ep, struct fsl_req *req)
+{
+	u32 temp, bitmask, tmp_stat;
 
-	/* VDBG("QH addr Register 0x%8x", dr_regs->endpoपूर्णांकlistaddr);
+	/* VDBG("QH addr Register 0x%8x", dr_regs->endpointlistaddr);
 	VDBG("ep_qh[%d] addr is 0x%8x", i, (u32)&(ep->udc->ep_qh[i])); */
 
-	biपंचांगask = ep_is_in(ep)
+	bitmask = ep_is_in(ep)
 		? (1 << (ep_index(ep) + 16))
 		: (1 << (ep_index(ep)));
 
-	/* check अगर the pipe is empty */
-	अगर (!(list_empty(&ep->queue)) && !(ep_index(ep) == 0)) अणु
+	/* check if the pipe is empty */
+	if (!(list_empty(&ep->queue)) && !(ep_index(ep) == 0)) {
 		/* Add td to the end */
-		काष्ठा fsl_req *lastreq;
-		lastreq = list_entry(ep->queue.prev, काष्ठा fsl_req, queue);
+		struct fsl_req *lastreq;
+		lastreq = list_entry(ep->queue.prev, struct fsl_req, queue);
 		lastreq->tail->next_td_ptr =
 			cpu_to_hc32(req->head->td_dma & DTD_ADDR_MASK);
-		/* Ensure dTD's next dtd poपूर्णांकer to be updated */
+		/* Ensure dTD's next dtd pointer to be updated */
 		wmb();
-		/* Read prime bit, अगर 1 जाओ करोne */
-		अगर (fsl_पढ़ोl(&dr_regs->endpoपूर्णांकprime) & biपंचांगask)
-			वापस;
+		/* Read prime bit, if 1 goto done */
+		if (fsl_readl(&dr_regs->endpointprime) & bitmask)
+			return;
 
-		करो अणु
+		do {
 			/* Set ATDTW bit in USBCMD */
-			temp = fsl_पढ़ोl(&dr_regs->usbcmd);
-			fsl_ग_लिखोl(temp | USB_CMD_ATDTW, &dr_regs->usbcmd);
+			temp = fsl_readl(&dr_regs->usbcmd);
+			fsl_writel(temp | USB_CMD_ATDTW, &dr_regs->usbcmd);
 
 			/* Read correct status bit */
-			पंचांगp_stat = fsl_पढ़ोl(&dr_regs->endptstatus) & biपंचांगask;
+			tmp_stat = fsl_readl(&dr_regs->endptstatus) & bitmask;
 
-		पूर्ण जबतक (!(fsl_पढ़ोl(&dr_regs->usbcmd) & USB_CMD_ATDTW));
+		} while (!(fsl_readl(&dr_regs->usbcmd) & USB_CMD_ATDTW));
 
 		/* Write ATDTW bit to 0 */
-		temp = fsl_पढ़ोl(&dr_regs->usbcmd);
-		fsl_ग_लिखोl(temp & ~USB_CMD_ATDTW, &dr_regs->usbcmd);
+		temp = fsl_readl(&dr_regs->usbcmd);
+		fsl_writel(temp & ~USB_CMD_ATDTW, &dr_regs->usbcmd);
 
-		अगर (पंचांगp_stat)
-			वापस;
-	पूर्ण
+		if (tmp_stat)
+			return;
+	}
 
 	fsl_prime_ep(ep, req->head);
-पूर्ण
+}
 
-/* Fill in the dTD काष्ठाure
- * @req: request that the transfer beदीर्घs to
- * @length: वापस actually data length of the dTD
- * @dma: वापस dma address of the dTD
- * @is_last: वापस flag अगर it is the last dTD of the request
- * वापस: poपूर्णांकer to the built dTD */
-अटल काष्ठा ep_td_काष्ठा *fsl_build_dtd(काष्ठा fsl_req *req, अचिन्हित *length,
-		dma_addr_t *dma, पूर्णांक *is_last, gfp_t gfp_flags)
-अणु
+/* Fill in the dTD structure
+ * @req: request that the transfer belongs to
+ * @length: return actually data length of the dTD
+ * @dma: return dma address of the dTD
+ * @is_last: return flag if it is the last dTD of the request
+ * return: pointer to the built dTD */
+static struct ep_td_struct *fsl_build_dtd(struct fsl_req *req, unsigned *length,
+		dma_addr_t *dma, int *is_last, gfp_t gfp_flags)
+{
 	u32 swap_temp;
-	काष्ठा ep_td_काष्ठा *dtd;
+	struct ep_td_struct *dtd;
 
 	/* how big will this transfer be? */
 	*length = min(req->req.length - req->req.actual,
-			(अचिन्हित)EP_MAX_LENGTH_TRANSFER);
+			(unsigned)EP_MAX_LENGTH_TRANSFER);
 
 	dtd = dma_pool_alloc(udc_controller->td_pool, gfp_flags, dma);
-	अगर (dtd == शून्य)
-		वापस dtd;
+	if (dtd == NULL)
+		return dtd;
 
 	dtd->td_dma = *dma;
 	/* Clear reserved field */
@@ -791,7 +790,7 @@ fsl_alloc_request(काष्ठा usb_ep *_ep, gfp_t gfp_flags)
 	swap_temp &= ~DTD_RESERVED_FIELDS;
 	dtd->size_ioc_sts = cpu_to_hc32(swap_temp);
 
-	/* Init all of buffer page poपूर्णांकers */
+	/* Init all of buffer page pointers */
 	swap_temp = (u32) (req->req.dma + req->req.actual);
 	dtd->buff_ptr0 = cpu_to_hc32(swap_temp);
 	dtd->buff_ptr1 = cpu_to_hc32(swap_temp + 0x1000);
@@ -801,335 +800,335 @@ fsl_alloc_request(काष्ठा usb_ep *_ep, gfp_t gfp_flags)
 
 	req->req.actual += *length;
 
-	/* zlp is needed अगर req->req.zero is set */
-	अगर (req->req.zero) अणु
-		अगर (*length == 0 || (*length % req->ep->ep.maxpacket) != 0)
+	/* zlp is needed if req->req.zero is set */
+	if (req->req.zero) {
+		if (*length == 0 || (*length % req->ep->ep.maxpacket) != 0)
 			*is_last = 1;
-		अन्यथा
+		else
 			*is_last = 0;
-	पूर्ण अन्यथा अगर (req->req.length == req->req.actual)
+	} else if (req->req.length == req->req.actual)
 		*is_last = 1;
-	अन्यथा
+	else
 		*is_last = 0;
 
-	अगर ((*is_last) == 0)
+	if ((*is_last) == 0)
 		VDBG("multi-dtd request!");
 	/* Fill in the transfer size; set active bit */
 	swap_temp = ((*length << DTD_LENGTH_BIT_POS) | DTD_STATUS_ACTIVE);
 
-	/* Enable पूर्णांकerrupt क्रम the last dtd of a request */
-	अगर (*is_last && !req->req.no_पूर्णांकerrupt)
+	/* Enable interrupt for the last dtd of a request */
+	if (*is_last && !req->req.no_interrupt)
 		swap_temp |= DTD_IOC;
 
 	dtd->size_ioc_sts = cpu_to_hc32(swap_temp);
 
 	mb();
 
-	VDBG("length = %d address= 0x%x", *length, (पूर्णांक)*dma);
+	VDBG("length = %d address= 0x%x", *length, (int)*dma);
 
-	वापस dtd;
-पूर्ण
+	return dtd;
+}
 
-/* Generate dtd chain क्रम a request */
-अटल पूर्णांक fsl_req_to_dtd(काष्ठा fsl_req *req, gfp_t gfp_flags)
-अणु
-	अचिन्हित	count;
-	पूर्णांक		is_last;
-	पूर्णांक		is_first =1;
-	काष्ठा ep_td_काष्ठा	*last_dtd = शून्य, *dtd;
+/* Generate dtd chain for a request */
+static int fsl_req_to_dtd(struct fsl_req *req, gfp_t gfp_flags)
+{
+	unsigned	count;
+	int		is_last;
+	int		is_first =1;
+	struct ep_td_struct	*last_dtd = NULL, *dtd;
 	dma_addr_t dma;
 
-	करो अणु
+	do {
 		dtd = fsl_build_dtd(req, &count, &dma, &is_last, gfp_flags);
-		अगर (dtd == शून्य)
-			वापस -ENOMEM;
+		if (dtd == NULL)
+			return -ENOMEM;
 
-		अगर (is_first) अणु
+		if (is_first) {
 			is_first = 0;
 			req->head = dtd;
-		पूर्ण अन्यथा अणु
+		} else {
 			last_dtd->next_td_ptr = cpu_to_hc32(dma);
 			last_dtd->next_td_virt = dtd;
-		पूर्ण
+		}
 		last_dtd = dtd;
 
 		req->dtd_count++;
-	पूर्ण जबतक (!is_last);
+	} while (!is_last);
 
 	dtd->next_td_ptr = cpu_to_hc32(DTD_NEXT_TERMINATE);
 
 	req->tail = dtd;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* queues (submits) an I/O request to an endpoपूर्णांक */
-अटल पूर्णांक
-fsl_ep_queue(काष्ठा usb_ep *_ep, काष्ठा usb_request *_req, gfp_t gfp_flags)
-अणु
-	काष्ठा fsl_ep *ep = container_of(_ep, काष्ठा fsl_ep, ep);
-	काष्ठा fsl_req *req = container_of(_req, काष्ठा fsl_req, req);
-	काष्ठा fsl_udc *udc;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+/* queues (submits) an I/O request to an endpoint */
+static int
+fsl_ep_queue(struct usb_ep *_ep, struct usb_request *_req, gfp_t gfp_flags)
+{
+	struct fsl_ep *ep = container_of(_ep, struct fsl_ep, ep);
+	struct fsl_req *req = container_of(_req, struct fsl_req, req);
+	struct fsl_udc *udc;
+	unsigned long flags;
+	int ret;
 
 	/* catch various bogus parameters */
-	अगर (!_req || !req->req.complete || !req->req.buf
-			|| !list_empty(&req->queue)) अणु
+	if (!_req || !req->req.complete || !req->req.buf
+			|| !list_empty(&req->queue)) {
 		VDBG("%s, bad params", __func__);
-		वापस -EINVAL;
-	पूर्ण
-	अगर (unlikely(!_ep || !ep->ep.desc)) अणु
+		return -EINVAL;
+	}
+	if (unlikely(!_ep || !ep->ep.desc)) {
 		VDBG("%s, bad ep", __func__);
-		वापस -EINVAL;
-	पूर्ण
-	अगर (usb_endpoपूर्णांक_xfer_isoc(ep->ep.desc)) अणु
-		अगर (req->req.length > ep->ep.maxpacket)
-			वापस -EMSGSIZE;
-	पूर्ण
+		return -EINVAL;
+	}
+	if (usb_endpoint_xfer_isoc(ep->ep.desc)) {
+		if (req->req.length > ep->ep.maxpacket)
+			return -EMSGSIZE;
+	}
 
 	udc = ep->udc;
-	अगर (!udc->driver || udc->gadget.speed == USB_SPEED_UNKNOWN)
-		वापस -ESHUTDOWN;
+	if (!udc->driver || udc->gadget.speed == USB_SPEED_UNKNOWN)
+		return -ESHUTDOWN;
 
 	req->ep = ep;
 
 	ret = usb_gadget_map_request(&ep->udc->gadget, &req->req, ep_is_in(ep));
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	req->req.status = -EINPROGRESS;
 	req->req.actual = 0;
 	req->dtd_count = 0;
 
 	/* build dtds and push them to device queue */
-	अगर (!fsl_req_to_dtd(req, gfp_flags)) अणु
+	if (!fsl_req_to_dtd(req, gfp_flags)) {
 		spin_lock_irqsave(&udc->lock, flags);
 		fsl_queue_td(ep, req);
-	पूर्ण अन्यथा अणु
-		वापस -ENOMEM;
-	पूर्ण
+	} else {
+		return -ENOMEM;
+	}
 
 	/* irq handler advances the queue */
-	अगर (req != शून्य)
+	if (req != NULL)
 		list_add_tail(&req->queue, &ep->queue);
 	spin_unlock_irqrestore(&udc->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* dequeues (cancels, unlinks) an I/O request from an endpoपूर्णांक */
-अटल पूर्णांक fsl_ep_dequeue(काष्ठा usb_ep *_ep, काष्ठा usb_request *_req)
-अणु
-	काष्ठा fsl_ep *ep = container_of(_ep, काष्ठा fsl_ep, ep);
-	काष्ठा fsl_req *req;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ep_num, stopped, ret = 0;
+/* dequeues (cancels, unlinks) an I/O request from an endpoint */
+static int fsl_ep_dequeue(struct usb_ep *_ep, struct usb_request *_req)
+{
+	struct fsl_ep *ep = container_of(_ep, struct fsl_ep, ep);
+	struct fsl_req *req;
+	unsigned long flags;
+	int ep_num, stopped, ret = 0;
 	u32 epctrl;
 
-	अगर (!_ep || !_req)
-		वापस -EINVAL;
+	if (!_ep || !_req)
+		return -EINVAL;
 
 	spin_lock_irqsave(&ep->udc->lock, flags);
 	stopped = ep->stopped;
 
-	/* Stop the ep beक्रमe we deal with the queue */
+	/* Stop the ep before we deal with the queue */
 	ep->stopped = 1;
 	ep_num = ep_index(ep);
-	epctrl = fsl_पढ़ोl(&dr_regs->endptctrl[ep_num]);
-	अगर (ep_is_in(ep))
+	epctrl = fsl_readl(&dr_regs->endptctrl[ep_num]);
+	if (ep_is_in(ep))
 		epctrl &= ~EPCTRL_TX_ENABLE;
-	अन्यथा
+	else
 		epctrl &= ~EPCTRL_RX_ENABLE;
-	fsl_ग_लिखोl(epctrl, &dr_regs->endptctrl[ep_num]);
+	fsl_writel(epctrl, &dr_regs->endptctrl[ep_num]);
 
-	/* make sure it's actually queued on this endpoपूर्णांक */
-	list_क्रम_each_entry(req, &ep->queue, queue) अणु
-		अगर (&req->req == _req)
-			अवरोध;
-	पूर्ण
-	अगर (&req->req != _req) अणु
+	/* make sure it's actually queued on this endpoint */
+	list_for_each_entry(req, &ep->queue, queue) {
+		if (&req->req == _req)
+			break;
+	}
+	if (&req->req != _req) {
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* The request is in progress, or completed but not dequeued */
-	अगर (ep->queue.next == &req->queue) अणु
+	if (ep->queue.next == &req->queue) {
 		_req->status = -ECONNRESET;
-		fsl_ep_fअगरo_flush(_ep);	/* flush current transfer */
+		fsl_ep_fifo_flush(_ep);	/* flush current transfer */
 
 		/* The request isn't the last request in this ep queue */
-		अगर (req->queue.next != &ep->queue) अणु
-			काष्ठा fsl_req *next_req;
+		if (req->queue.next != &ep->queue) {
+			struct fsl_req *next_req;
 
-			next_req = list_entry(req->queue.next, काष्ठा fsl_req,
+			next_req = list_entry(req->queue.next, struct fsl_req,
 					queue);
 
 			/* prime with dTD of next request */
 			fsl_prime_ep(ep, next_req->head);
-		पूर्ण
+		}
 	/* The request hasn't been processed, patch up the TD chain */
-	पूर्ण अन्यथा अणु
-		काष्ठा fsl_req *prev_req;
+	} else {
+		struct fsl_req *prev_req;
 
-		prev_req = list_entry(req->queue.prev, काष्ठा fsl_req, queue);
+		prev_req = list_entry(req->queue.prev, struct fsl_req, queue);
 		prev_req->tail->next_td_ptr = req->tail->next_td_ptr;
-	पूर्ण
+	}
 
-	करोne(ep, req, -ECONNRESET);
+	done(ep, req, -ECONNRESET);
 
 	/* Enable EP */
-out:	epctrl = fsl_पढ़ोl(&dr_regs->endptctrl[ep_num]);
-	अगर (ep_is_in(ep))
+out:	epctrl = fsl_readl(&dr_regs->endptctrl[ep_num]);
+	if (ep_is_in(ep))
 		epctrl |= EPCTRL_TX_ENABLE;
-	अन्यथा
+	else
 		epctrl |= EPCTRL_RX_ENABLE;
-	fsl_ग_लिखोl(epctrl, &dr_regs->endptctrl[ep_num]);
+	fsl_writel(epctrl, &dr_regs->endptctrl[ep_num]);
 	ep->stopped = stopped;
 
 	spin_unlock_irqrestore(&ep->udc->lock, flags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*-------------------------------------------------------------------------*/
 
 /*-----------------------------------------------------------------
- * modअगरy the endpoपूर्णांक halt feature
- * @ep: the non-isochronous endpoपूर्णांक being stalled
+ * modify the endpoint halt feature
+ * @ep: the non-isochronous endpoint being stalled
  * @value: 1--set halt  0--clear halt
  * Returns zero, or a negative error code.
 *----------------------------------------------------------------*/
-अटल पूर्णांक fsl_ep_set_halt(काष्ठा usb_ep *_ep, पूर्णांक value)
-अणु
-	काष्ठा fsl_ep *ep = शून्य;
-	अचिन्हित दीर्घ flags = 0;
-	पूर्णांक status = -EOPNOTSUPP;	/* operation not supported */
-	अचिन्हित अक्षर ep_dir = 0, ep_num = 0;
-	काष्ठा fsl_udc *udc = शून्य;
+static int fsl_ep_set_halt(struct usb_ep *_ep, int value)
+{
+	struct fsl_ep *ep = NULL;
+	unsigned long flags = 0;
+	int status = -EOPNOTSUPP;	/* operation not supported */
+	unsigned char ep_dir = 0, ep_num = 0;
+	struct fsl_udc *udc = NULL;
 
-	ep = container_of(_ep, काष्ठा fsl_ep, ep);
+	ep = container_of(_ep, struct fsl_ep, ep);
 	udc = ep->udc;
-	अगर (!_ep || !ep->ep.desc) अणु
+	if (!_ep || !ep->ep.desc) {
 		status = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (usb_endpoपूर्णांक_xfer_isoc(ep->ep.desc)) अणु
+	if (usb_endpoint_xfer_isoc(ep->ep.desc)) {
 		status = -EOPNOTSUPP;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Attempt to halt IN ep will fail अगर any transfer requests
+	/* Attempt to halt IN ep will fail if any transfer requests
 	 * are still queue */
-	अगर (value && ep_is_in(ep) && !list_empty(&ep->queue)) अणु
+	if (value && ep_is_in(ep) && !list_empty(&ep->queue)) {
 		status = -EAGAIN;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	status = 0;
 	ep_dir = ep_is_in(ep) ? USB_SEND : USB_RECV;
-	ep_num = (अचिन्हित अक्षर)(ep_index(ep));
+	ep_num = (unsigned char)(ep_index(ep));
 	spin_lock_irqsave(&ep->udc->lock, flags);
 	dr_ep_change_stall(ep_num, ep_dir, value);
 	spin_unlock_irqrestore(&ep->udc->lock, flags);
 
-	अगर (ep_index(ep) == 0) अणु
+	if (ep_index(ep) == 0) {
 		udc->ep0_state = WAIT_FOR_SETUP;
 		udc->ep0_dir = 0;
-	पूर्ण
+	}
 out:
 	VDBG(" %s %s halt stat %d", ep->ep.name,
 			value ?  "set" : "clear", status);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक fsl_ep_fअगरo_status(काष्ठा usb_ep *_ep)
-अणु
-	काष्ठा fsl_ep *ep;
-	काष्ठा fsl_udc *udc;
-	पूर्णांक size = 0;
-	u32 biपंचांगask;
-	काष्ठा ep_queue_head *qh;
+static int fsl_ep_fifo_status(struct usb_ep *_ep)
+{
+	struct fsl_ep *ep;
+	struct fsl_udc *udc;
+	int size = 0;
+	u32 bitmask;
+	struct ep_queue_head *qh;
 
-	अगर (!_ep || !_ep->desc || !(_ep->desc->bEndpoपूर्णांकAddress&0xF))
-		वापस -ENODEV;
+	if (!_ep || !_ep->desc || !(_ep->desc->bEndpointAddress&0xF))
+		return -ENODEV;
 
-	ep = container_of(_ep, काष्ठा fsl_ep, ep);
+	ep = container_of(_ep, struct fsl_ep, ep);
 
-	udc = (काष्ठा fsl_udc *)ep->udc;
+	udc = (struct fsl_udc *)ep->udc;
 
-	अगर (!udc->driver || udc->gadget.speed == USB_SPEED_UNKNOWN)
-		वापस -ESHUTDOWN;
+	if (!udc->driver || udc->gadget.speed == USB_SPEED_UNKNOWN)
+		return -ESHUTDOWN;
 
 	qh = get_qh_by_ep(ep);
 
-	biपंचांगask = (ep_is_in(ep)) ? (1 << (ep_index(ep) + 16)) :
+	bitmask = (ep_is_in(ep)) ? (1 << (ep_index(ep) + 16)) :
 	    (1 << (ep_index(ep)));
 
-	अगर (fsl_पढ़ोl(&dr_regs->endptstatus) & biपंचांगask)
-		size = (qh->size_ioc_पूर्णांक_sts & DTD_PACKET_SIZE)
+	if (fsl_readl(&dr_regs->endptstatus) & bitmask)
+		size = (qh->size_ioc_int_sts & DTD_PACKET_SIZE)
 		    >> DTD_LENGTH_BIT_POS;
 
 	pr_debug("%s %u\n", __func__, size);
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल व्योम fsl_ep_fअगरo_flush(काष्ठा usb_ep *_ep)
-अणु
-	काष्ठा fsl_ep *ep;
-	पूर्णांक ep_num, ep_dir;
+static void fsl_ep_fifo_flush(struct usb_ep *_ep)
+{
+	struct fsl_ep *ep;
+	int ep_num, ep_dir;
 	u32 bits;
-	अचिन्हित दीर्घ समयout;
-#घोषणा FSL_UDC_FLUSH_TIMEOUT 1000
+	unsigned long timeout;
+#define FSL_UDC_FLUSH_TIMEOUT 1000
 
-	अगर (!_ep) अणु
-		वापस;
-	पूर्ण अन्यथा अणु
-		ep = container_of(_ep, काष्ठा fsl_ep, ep);
-		अगर (!ep->ep.desc)
-			वापस;
-	पूर्ण
+	if (!_ep) {
+		return;
+	} else {
+		ep = container_of(_ep, struct fsl_ep, ep);
+		if (!ep->ep.desc)
+			return;
+	}
 	ep_num = ep_index(ep);
 	ep_dir = ep_is_in(ep) ? USB_SEND : USB_RECV;
 
-	अगर (ep_num == 0)
+	if (ep_num == 0)
 		bits = (1 << 16) | 1;
-	अन्यथा अगर (ep_dir == USB_SEND)
+	else if (ep_dir == USB_SEND)
 		bits = 1 << (16 + ep_num);
-	अन्यथा
+	else
 		bits = 1 << ep_num;
 
-	समयout = jअगरfies + FSL_UDC_FLUSH_TIMEOUT;
-	करो अणु
-		fsl_ग_लिखोl(bits, &dr_regs->endptflush);
+	timeout = jiffies + FSL_UDC_FLUSH_TIMEOUT;
+	do {
+		fsl_writel(bits, &dr_regs->endptflush);
 
 		/* Wait until flush complete */
-		जबतक (fsl_पढ़ोl(&dr_regs->endptflush)) अणु
-			अगर (समय_after(jअगरfies, समयout)) अणु
+		while (fsl_readl(&dr_regs->endptflush)) {
+			if (time_after(jiffies, timeout)) {
 				ERR("ep flush timeout\n");
-				वापस;
-			पूर्ण
+				return;
+			}
 			cpu_relax();
-		पूर्ण
-		/* See अगर we need to flush again */
-	पूर्ण जबतक (fsl_पढ़ोl(&dr_regs->endptstatus) & bits);
-पूर्ण
+		}
+		/* See if we need to flush again */
+	} while (fsl_readl(&dr_regs->endptstatus) & bits);
+}
 
-अटल स्थिर काष्ठा usb_ep_ops fsl_ep_ops = अणु
+static const struct usb_ep_ops fsl_ep_ops = {
 	.enable = fsl_ep_enable,
 	.disable = fsl_ep_disable,
 
 	.alloc_request = fsl_alloc_request,
-	.मुक्त_request = fsl_मुक्त_request,
+	.free_request = fsl_free_request,
 
 	.queue = fsl_ep_queue,
 	.dequeue = fsl_ep_dequeue,
 
 	.set_halt = fsl_ep_set_halt,
-	.fअगरo_status = fsl_ep_fअगरo_status,
-	.fअगरo_flush = fsl_ep_fअगरo_flush,	/* flush fअगरo */
-पूर्ण;
+	.fifo_status = fsl_ep_fifo_status,
+	.fifo_flush = fsl_ep_fifo_flush,	/* flush fifo */
+};
 
 /*-------------------------------------------------------------------------
 		Gadget Driver Layer Operations
@@ -1138,148 +1137,148 @@ out:
 /*----------------------------------------------------------------------
  * Get the current frame number (from DR frame_index Reg )
  *----------------------------------------------------------------------*/
-अटल पूर्णांक fsl_get_frame(काष्ठा usb_gadget *gadget)
-अणु
-	वापस (पूर्णांक)(fsl_पढ़ोl(&dr_regs->frindex) & USB_FRINDEX_MASKS);
-पूर्ण
+static int fsl_get_frame(struct usb_gadget *gadget)
+{
+	return (int)(fsl_readl(&dr_regs->frindex) & USB_FRINDEX_MASKS);
+}
 
 /*-----------------------------------------------------------------------
  * Tries to wake up the host connected to this gadget
  -----------------------------------------------------------------------*/
-अटल पूर्णांक fsl_wakeup(काष्ठा usb_gadget *gadget)
-अणु
-	काष्ठा fsl_udc *udc = container_of(gadget, काष्ठा fsl_udc, gadget);
+static int fsl_wakeup(struct usb_gadget *gadget)
+{
+	struct fsl_udc *udc = container_of(gadget, struct fsl_udc, gadget);
 	u32 portsc;
 
 	/* Remote wakeup feature not enabled by host */
-	अगर (!udc->remote_wakeup)
-		वापस -ENOTSUPP;
+	if (!udc->remote_wakeup)
+		return -ENOTSUPP;
 
-	portsc = fsl_पढ़ोl(&dr_regs->portsc1);
+	portsc = fsl_readl(&dr_regs->portsc1);
 	/* not suspended? */
-	अगर (!(portsc & PORTSCX_PORT_SUSPEND))
-		वापस 0;
-	/* trigger क्रमce resume */
+	if (!(portsc & PORTSCX_PORT_SUSPEND))
+		return 0;
+	/* trigger force resume */
 	portsc |= PORTSCX_PORT_FORCE_RESUME;
-	fsl_ग_लिखोl(portsc, &dr_regs->portsc1);
-	वापस 0;
-पूर्ण
+	fsl_writel(portsc, &dr_regs->portsc1);
+	return 0;
+}
 
-अटल पूर्णांक can_pullup(काष्ठा fsl_udc *udc)
-अणु
-	वापस udc->driver && udc->softconnect && udc->vbus_active;
-पूर्ण
+static int can_pullup(struct fsl_udc *udc)
+{
+	return udc->driver && udc->softconnect && udc->vbus_active;
+}
 
-/* Notअगरy controller that VBUS is घातered, Called by whatever
+/* Notify controller that VBUS is powered, Called by whatever
    detects VBUS sessions */
-अटल पूर्णांक fsl_vbus_session(काष्ठा usb_gadget *gadget, पूर्णांक is_active)
-अणु
-	काष्ठा fsl_udc	*udc;
-	अचिन्हित दीर्घ	flags;
+static int fsl_vbus_session(struct usb_gadget *gadget, int is_active)
+{
+	struct fsl_udc	*udc;
+	unsigned long	flags;
 
-	udc = container_of(gadget, काष्ठा fsl_udc, gadget);
+	udc = container_of(gadget, struct fsl_udc, gadget);
 	spin_lock_irqsave(&udc->lock, flags);
 	VDBG("VBUS %s", is_active ? "on" : "off");
 	udc->vbus_active = (is_active != 0);
-	अगर (can_pullup(udc))
-		fsl_ग_लिखोl((fsl_पढ़ोl(&dr_regs->usbcmd) | USB_CMD_RUN_STOP),
+	if (can_pullup(udc))
+		fsl_writel((fsl_readl(&dr_regs->usbcmd) | USB_CMD_RUN_STOP),
 				&dr_regs->usbcmd);
-	अन्यथा
-		fsl_ग_लिखोl((fsl_पढ़ोl(&dr_regs->usbcmd) & ~USB_CMD_RUN_STOP),
+	else
+		fsl_writel((fsl_readl(&dr_regs->usbcmd) & ~USB_CMD_RUN_STOP),
 				&dr_regs->usbcmd);
 	spin_unlock_irqrestore(&udc->lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* स्थिरrain controller's VBUS घातer usage
+/* constrain controller's VBUS power usage
  * This call is used by gadget drivers during SET_CONFIGURATION calls,
- * reporting how much घातer the device may consume.  For example, this
- * could affect how quickly batteries are reअक्षरged.
+ * reporting how much power the device may consume.  For example, this
+ * could affect how quickly batteries are recharged.
  *
- * Returns zero on success, अन्यथा negative त्रुटि_सं.
+ * Returns zero on success, else negative errno.
  */
-अटल पूर्णांक fsl_vbus_draw(काष्ठा usb_gadget *gadget, अचिन्हित mA)
-अणु
-	काष्ठा fsl_udc *udc;
+static int fsl_vbus_draw(struct usb_gadget *gadget, unsigned mA)
+{
+	struct fsl_udc *udc;
 
-	udc = container_of(gadget, काष्ठा fsl_udc, gadget);
-	अगर (!IS_ERR_OR_शून्य(udc->transceiver))
-		वापस usb_phy_set_घातer(udc->transceiver, mA);
-	वापस -ENOTSUPP;
-पूर्ण
+	udc = container_of(gadget, struct fsl_udc, gadget);
+	if (!IS_ERR_OR_NULL(udc->transceiver))
+		return usb_phy_set_power(udc->transceiver, mA);
+	return -ENOTSUPP;
+}
 
 /* Change Data+ pullup status
  * this func is used by usb_gadget_connect/disconnect
  */
-अटल पूर्णांक fsl_pullup(काष्ठा usb_gadget *gadget, पूर्णांक is_on)
-अणु
-	काष्ठा fsl_udc *udc;
+static int fsl_pullup(struct usb_gadget *gadget, int is_on)
+{
+	struct fsl_udc *udc;
 
-	udc = container_of(gadget, काष्ठा fsl_udc, gadget);
+	udc = container_of(gadget, struct fsl_udc, gadget);
 
-	अगर (!udc->vbus_active)
-		वापस -EOPNOTSUPP;
+	if (!udc->vbus_active)
+		return -EOPNOTSUPP;
 
 	udc->softconnect = (is_on != 0);
-	अगर (can_pullup(udc))
-		fsl_ग_लिखोl((fsl_पढ़ोl(&dr_regs->usbcmd) | USB_CMD_RUN_STOP),
+	if (can_pullup(udc))
+		fsl_writel((fsl_readl(&dr_regs->usbcmd) | USB_CMD_RUN_STOP),
 				&dr_regs->usbcmd);
-	अन्यथा
-		fsl_ग_लिखोl((fsl_पढ़ोl(&dr_regs->usbcmd) & ~USB_CMD_RUN_STOP),
+	else
+		fsl_writel((fsl_readl(&dr_regs->usbcmd) & ~USB_CMD_RUN_STOP),
 				&dr_regs->usbcmd);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fsl_udc_start(काष्ठा usb_gadget *g,
-		काष्ठा usb_gadget_driver *driver);
-अटल पूर्णांक fsl_udc_stop(काष्ठा usb_gadget *g);
+static int fsl_udc_start(struct usb_gadget *g,
+		struct usb_gadget_driver *driver);
+static int fsl_udc_stop(struct usb_gadget *g);
 
-अटल स्थिर काष्ठा usb_gadget_ops fsl_gadget_ops = अणु
+static const struct usb_gadget_ops fsl_gadget_ops = {
 	.get_frame = fsl_get_frame,
 	.wakeup = fsl_wakeup,
-/*	.set_selfघातered = fsl_set_selfघातered,	*/ /* Always selfघातered */
+/*	.set_selfpowered = fsl_set_selfpowered,	*/ /* Always selfpowered */
 	.vbus_session = fsl_vbus_session,
 	.vbus_draw = fsl_vbus_draw,
 	.pullup = fsl_pullup,
 	.udc_start = fsl_udc_start,
 	.udc_stop = fsl_udc_stop,
-पूर्ण;
+};
 
 /*
  * Empty complete function used by this driver to fill in the req->complete
  * field when creating a request since the complete field is mandatory.
  */
-अटल व्योम fsl_noop_complete(काष्ठा usb_ep *ep, काष्ठा usb_request *req) अणु पूर्ण
+static void fsl_noop_complete(struct usb_ep *ep, struct usb_request *req) { }
 
-/* Set protocol stall on ep0, protocol stall will स्वतःmatically be cleared
+/* Set protocol stall on ep0, protocol stall will automatically be cleared
    on new transaction */
-अटल व्योम ep0stall(काष्ठा fsl_udc *udc)
-अणु
-	u32 पंचांगp;
+static void ep0stall(struct fsl_udc *udc)
+{
+	u32 tmp;
 
-	/* must set tx and rx to stall at the same समय */
-	पंचांगp = fsl_पढ़ोl(&dr_regs->endptctrl[0]);
-	पंचांगp |= EPCTRL_TX_EP_STALL | EPCTRL_RX_EP_STALL;
-	fsl_ग_लिखोl(पंचांगp, &dr_regs->endptctrl[0]);
+	/* must set tx and rx to stall at the same time */
+	tmp = fsl_readl(&dr_regs->endptctrl[0]);
+	tmp |= EPCTRL_TX_EP_STALL | EPCTRL_RX_EP_STALL;
+	fsl_writel(tmp, &dr_regs->endptctrl[0]);
 	udc->ep0_state = WAIT_FOR_SETUP;
 	udc->ep0_dir = 0;
-पूर्ण
+}
 
-/* Prime a status phase क्रम ep0 */
-अटल पूर्णांक ep0_prime_status(काष्ठा fsl_udc *udc, पूर्णांक direction)
-अणु
-	काष्ठा fsl_req *req = udc->status_req;
-	काष्ठा fsl_ep *ep;
-	पूर्णांक ret;
+/* Prime a status phase for ep0 */
+static int ep0_prime_status(struct fsl_udc *udc, int direction)
+{
+	struct fsl_req *req = udc->status_req;
+	struct fsl_ep *ep;
+	int ret;
 
-	अगर (direction == EP_सूची_IN)
-		udc->ep0_dir = USB_सूची_IN;
-	अन्यथा
-		udc->ep0_dir = USB_सूची_OUT;
+	if (direction == EP_DIR_IN)
+		udc->ep0_dir = USB_DIR_IN;
+	else
+		udc->ep0_dir = USB_DIR_OUT;
 
 	ep = &udc->eps[0];
-	अगर (udc->ep0_state != DATA_STATE_XMIT)
+	if (udc->ep0_state != DATA_STATE_XMIT)
 		udc->ep0_state = WAIT_FOR_OUT_STATUS;
 
 	req->ep = ep;
@@ -1290,80 +1289,80 @@ out:
 	req->dtd_count = 0;
 
 	ret = usb_gadget_map_request(&ep->udc->gadget, &req->req, ep_is_in(ep));
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (fsl_req_to_dtd(req, GFP_ATOMIC) == 0)
+	if (fsl_req_to_dtd(req, GFP_ATOMIC) == 0)
 		fsl_queue_td(ep, req);
-	अन्यथा
-		वापस -ENOMEM;
+	else
+		return -ENOMEM;
 
 	list_add_tail(&req->queue, &ep->queue);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम udc_reset_ep_queue(काष्ठा fsl_udc *udc, u8 pipe)
-अणु
-	काष्ठा fsl_ep *ep = get_ep_by_pipe(udc, pipe);
+static void udc_reset_ep_queue(struct fsl_udc *udc, u8 pipe)
+{
+	struct fsl_ep *ep = get_ep_by_pipe(udc, pipe);
 
-	अगर (ep->ep.name)
+	if (ep->ep.name)
 		nuke(ep, -ESHUTDOWN);
-पूर्ण
+}
 
 /*
  * ch9 Set address
  */
-अटल व्योम ch9setaddress(काष्ठा fsl_udc *udc, u16 value, u16 index, u16 length)
-अणु
-	/* Save the new address to device काष्ठा */
+static void ch9setaddress(struct fsl_udc *udc, u16 value, u16 index, u16 length)
+{
+	/* Save the new address to device struct */
 	udc->device_address = (u8) value;
 	/* Update usb state */
 	udc->usb_state = USB_STATE_ADDRESS;
 	/* Status phase */
-	अगर (ep0_prime_status(udc, EP_सूची_IN))
+	if (ep0_prime_status(udc, EP_DIR_IN))
 		ep0stall(udc);
-पूर्ण
+}
 
 /*
  * ch9 Get status
  */
-अटल व्योम ch9माला_लोtatus(काष्ठा fsl_udc *udc, u8 request_type, u16 value,
+static void ch9getstatus(struct fsl_udc *udc, u8 request_type, u16 value,
 		u16 index, u16 length)
-अणु
-	u16 पंचांगp = 0;		/* Status, cpu endian */
-	काष्ठा fsl_req *req;
-	काष्ठा fsl_ep *ep;
-	पूर्णांक ret;
+{
+	u16 tmp = 0;		/* Status, cpu endian */
+	struct fsl_req *req;
+	struct fsl_ep *ep;
+	int ret;
 
 	ep = &udc->eps[0];
 
-	अगर ((request_type & USB_RECIP_MASK) == USB_RECIP_DEVICE) अणु
+	if ((request_type & USB_RECIP_MASK) == USB_RECIP_DEVICE) {
 		/* Get device status */
-		पंचांगp = udc->gadget.is_selfघातered;
-		पंचांगp |= udc->remote_wakeup << USB_DEVICE_REMOTE_WAKEUP;
-	पूर्ण अन्यथा अगर ((request_type & USB_RECIP_MASK) == USB_RECIP_INTERFACE) अणु
-		/* Get पूर्णांकerface status */
-		/* We करोn't have पूर्णांकerface inक्रमmation in udc driver */
-		पंचांगp = 0;
-	पूर्ण अन्यथा अगर ((request_type & USB_RECIP_MASK) == USB_RECIP_ENDPOINT) अणु
-		/* Get endpoपूर्णांक status */
-		काष्ठा fsl_ep *target_ep;
+		tmp = udc->gadget.is_selfpowered;
+		tmp |= udc->remote_wakeup << USB_DEVICE_REMOTE_WAKEUP;
+	} else if ((request_type & USB_RECIP_MASK) == USB_RECIP_INTERFACE) {
+		/* Get interface status */
+		/* We don't have interface information in udc driver */
+		tmp = 0;
+	} else if ((request_type & USB_RECIP_MASK) == USB_RECIP_ENDPOINT) {
+		/* Get endpoint status */
+		struct fsl_ep *target_ep;
 
 		target_ep = get_ep_by_pipe(udc, get_pipe_by_windex(index));
 
-		/* stall अगर endpoपूर्णांक करोesn't exist */
-		अगर (!target_ep->ep.desc)
-			जाओ stall;
-		पंचांगp = dr_ep_get_stall(ep_index(target_ep), ep_is_in(target_ep))
+		/* stall if endpoint doesn't exist */
+		if (!target_ep->ep.desc)
+			goto stall;
+		tmp = dr_ep_get_stall(ep_index(target_ep), ep_is_in(target_ep))
 				<< USB_ENDPOINT_HALT;
-	पूर्ण
+	}
 
-	udc->ep0_dir = USB_सूची_IN;
+	udc->ep0_dir = USB_DIR_IN;
 	/* Borrow the per device status_req */
 	req = udc->status_req;
-	/* Fill in the reqest काष्ठाure */
-	*((u16 *) req->req.buf) = cpu_to_le16(पंचांगp);
+	/* Fill in the reqest structure */
+	*((u16 *) req->req.buf) = cpu_to_le16(tmp);
 
 	req->ep = ep;
 	req->req.length = 2;
@@ -1373,30 +1372,30 @@ out:
 	req->dtd_count = 0;
 
 	ret = usb_gadget_map_request(&ep->udc->gadget, &req->req, ep_is_in(ep));
-	अगर (ret)
-		जाओ stall;
+	if (ret)
+		goto stall;
 
 	/* prime the data phase */
-	अगर ((fsl_req_to_dtd(req, GFP_ATOMIC) == 0))
+	if ((fsl_req_to_dtd(req, GFP_ATOMIC) == 0))
 		fsl_queue_td(ep, req);
-	अन्यथा			/* no mem */
-		जाओ stall;
+	else			/* no mem */
+		goto stall;
 
 	list_add_tail(&req->queue, &ep->queue);
 	udc->ep0_state = DATA_STATE_XMIT;
-	अगर (ep0_prime_status(udc, EP_सूची_OUT))
+	if (ep0_prime_status(udc, EP_DIR_OUT))
 		ep0stall(udc);
 
-	वापस;
+	return;
 stall:
 	ep0stall(udc);
-पूर्ण
+}
 
-अटल व्योम setup_received_irq(काष्ठा fsl_udc *udc,
-		काष्ठा usb_ctrlrequest *setup)
+static void setup_received_irq(struct fsl_udc *udc,
+		struct usb_ctrlrequest *setup)
 __releases(udc->lock)
 __acquires(udc->lock)
-अणु
+{
 	u16 wValue = le16_to_cpu(setup->wValue);
 	u16 wIndex = le16_to_cpu(setup->wIndex);
 	u16 wLength = le16_to_cpu(setup->wLength);
@@ -1404,37 +1403,37 @@ __acquires(udc->lock)
 	udc_reset_ep_queue(udc, 0);
 
 	/* We process some stardard setup requests here */
-	चयन (setup->bRequest) अणु
-	हाल USB_REQ_GET_STATUS:
+	switch (setup->bRequest) {
+	case USB_REQ_GET_STATUS:
 		/* Data+Status phase from udc */
-		अगर ((setup->bRequestType & (USB_सूची_IN | USB_TYPE_MASK))
-					!= (USB_सूची_IN | USB_TYPE_STANDARD))
-			अवरोध;
-		ch9माला_लोtatus(udc, setup->bRequestType, wValue, wIndex, wLength);
-		वापस;
+		if ((setup->bRequestType & (USB_DIR_IN | USB_TYPE_MASK))
+					!= (USB_DIR_IN | USB_TYPE_STANDARD))
+			break;
+		ch9getstatus(udc, setup->bRequestType, wValue, wIndex, wLength);
+		return;
 
-	हाल USB_REQ_SET_ADDRESS:
+	case USB_REQ_SET_ADDRESS:
 		/* Status phase from udc */
-		अगर (setup->bRequestType != (USB_सूची_OUT | USB_TYPE_STANDARD
+		if (setup->bRequestType != (USB_DIR_OUT | USB_TYPE_STANDARD
 						| USB_RECIP_DEVICE))
-			अवरोध;
+			break;
 		ch9setaddress(udc, wValue, wIndex, wLength);
-		वापस;
+		return;
 
-	हाल USB_REQ_CLEAR_FEATURE:
-	हाल USB_REQ_SET_FEATURE:
+	case USB_REQ_CLEAR_FEATURE:
+	case USB_REQ_SET_FEATURE:
 		/* Status phase from udc */
-	अणु
-		पूर्णांक rc = -EOPNOTSUPP;
+	{
+		int rc = -EOPNOTSUPP;
 		u16 ptc = 0;
 
-		अगर ((setup->bRequestType & (USB_RECIP_MASK | USB_TYPE_MASK))
-				== (USB_RECIP_ENDPOINT | USB_TYPE_STANDARD)) अणु
-			पूर्णांक pipe = get_pipe_by_windex(wIndex);
-			काष्ठा fsl_ep *ep;
+		if ((setup->bRequestType & (USB_RECIP_MASK | USB_TYPE_MASK))
+				== (USB_RECIP_ENDPOINT | USB_TYPE_STANDARD)) {
+			int pipe = get_pipe_by_windex(wIndex);
+			struct fsl_ep *ep;
 
-			अगर (wValue != 0 || wLength != 0 || pipe >= udc->max_ep)
-				अवरोध;
+			if (wValue != 0 || wLength != 0 || pipe >= udc->max_ep)
+				break;
 			ep = get_ep_by_pipe(udc, pipe);
 
 			spin_unlock(&udc->lock);
@@ -1443,361 +1442,361 @@ __acquires(udc->lock)
 						? 1 : 0);
 			spin_lock(&udc->lock);
 
-		पूर्ण अन्यथा अगर ((setup->bRequestType & (USB_RECIP_MASK
+		} else if ((setup->bRequestType & (USB_RECIP_MASK
 				| USB_TYPE_MASK)) == (USB_RECIP_DEVICE
-				| USB_TYPE_STANDARD)) अणु
+				| USB_TYPE_STANDARD)) {
 			/* Note: The driver has not include OTG support yet.
 			 * This will be set when OTG support is added */
-			अगर (wValue == USB_DEVICE_TEST_MODE)
+			if (wValue == USB_DEVICE_TEST_MODE)
 				ptc = wIndex >> 8;
-			अन्यथा अगर (gadget_is_otg(&udc->gadget)) अणु
-				अगर (setup->bRequest ==
+			else if (gadget_is_otg(&udc->gadget)) {
+				if (setup->bRequest ==
 				    USB_DEVICE_B_HNP_ENABLE)
 					udc->gadget.b_hnp_enable = 1;
-				अन्यथा अगर (setup->bRequest ==
+				else if (setup->bRequest ==
 					 USB_DEVICE_A_HNP_SUPPORT)
 					udc->gadget.a_hnp_support = 1;
-				अन्यथा अगर (setup->bRequest ==
+				else if (setup->bRequest ==
 					 USB_DEVICE_A_ALT_HNP_SUPPORT)
 					udc->gadget.a_alt_hnp_support = 1;
-			पूर्ण
+			}
 			rc = 0;
-		पूर्ण अन्यथा
-			अवरोध;
+		} else
+			break;
 
-		अगर (rc == 0) अणु
-			अगर (ep0_prime_status(udc, EP_सूची_IN))
+		if (rc == 0) {
+			if (ep0_prime_status(udc, EP_DIR_IN))
 				ep0stall(udc);
-		पूर्ण
-		अगर (ptc) अणु
-			u32 पंचांगp;
+		}
+		if (ptc) {
+			u32 tmp;
 
 			mdelay(10);
-			पंचांगp = fsl_पढ़ोl(&dr_regs->portsc1) | (ptc << 16);
-			fsl_ग_लिखोl(पंचांगp, &dr_regs->portsc1);
-			prपूर्णांकk(KERN_INFO "udc: switch to test mode %d.\n", ptc);
-		पूर्ण
+			tmp = fsl_readl(&dr_regs->portsc1) | (ptc << 16);
+			fsl_writel(tmp, &dr_regs->portsc1);
+			printk(KERN_INFO "udc: switch to test mode %d.\n", ptc);
+		}
 
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	शेष:
-		अवरोध;
-	पूर्ण
+	default:
+		break;
+	}
 
 	/* Requests handled by gadget */
-	अगर (wLength) अणु
+	if (wLength) {
 		/* Data phase from gadget, status phase from udc */
-		udc->ep0_dir = (setup->bRequestType & USB_सूची_IN)
-				?  USB_सूची_IN : USB_सूची_OUT;
+		udc->ep0_dir = (setup->bRequestType & USB_DIR_IN)
+				?  USB_DIR_IN : USB_DIR_OUT;
 		spin_unlock(&udc->lock);
-		अगर (udc->driver->setup(&udc->gadget,
+		if (udc->driver->setup(&udc->gadget,
 				&udc->local_setup_buff) < 0)
 			ep0stall(udc);
 		spin_lock(&udc->lock);
-		udc->ep0_state = (setup->bRequestType & USB_सूची_IN)
+		udc->ep0_state = (setup->bRequestType & USB_DIR_IN)
 				?  DATA_STATE_XMIT : DATA_STATE_RECV;
 		/*
 		 * If the data stage is IN, send status prime immediately.
-		 * See 2.0 Spec chapter 8.5.3.3 क्रम detail.
+		 * See 2.0 Spec chapter 8.5.3.3 for detail.
 		 */
-		अगर (udc->ep0_state == DATA_STATE_XMIT)
-			अगर (ep0_prime_status(udc, EP_सूची_OUT))
+		if (udc->ep0_state == DATA_STATE_XMIT)
+			if (ep0_prime_status(udc, EP_DIR_OUT))
 				ep0stall(udc);
 
-	पूर्ण अन्यथा अणु
+	} else {
 		/* No data phase, IN status from gadget */
-		udc->ep0_dir = USB_सूची_IN;
+		udc->ep0_dir = USB_DIR_IN;
 		spin_unlock(&udc->lock);
-		अगर (udc->driver->setup(&udc->gadget,
+		if (udc->driver->setup(&udc->gadget,
 				&udc->local_setup_buff) < 0)
 			ep0stall(udc);
 		spin_lock(&udc->lock);
 		udc->ep0_state = WAIT_FOR_OUT_STATUS;
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* Process request क्रम Data or Status phase of ep0
- * prime status phase अगर needed */
-अटल व्योम ep0_req_complete(काष्ठा fsl_udc *udc, काष्ठा fsl_ep *ep0,
-		काष्ठा fsl_req *req)
-अणु
-	अगर (udc->usb_state == USB_STATE_ADDRESS) अणु
+/* Process request for Data or Status phase of ep0
+ * prime status phase if needed */
+static void ep0_req_complete(struct fsl_udc *udc, struct fsl_ep *ep0,
+		struct fsl_req *req)
+{
+	if (udc->usb_state == USB_STATE_ADDRESS) {
 		/* Set the new address */
 		u32 new_address = (u32) udc->device_address;
-		fsl_ग_लिखोl(new_address << USB_DEVICE_ADDRESS_BIT_POS,
+		fsl_writel(new_address << USB_DEVICE_ADDRESS_BIT_POS,
 				&dr_regs->deviceaddr);
-	पूर्ण
+	}
 
-	करोne(ep0, req, 0);
+	done(ep0, req, 0);
 
-	चयन (udc->ep0_state) अणु
-	हाल DATA_STATE_XMIT:
-		/* alपढ़ोy primed at setup_received_irq */
+	switch (udc->ep0_state) {
+	case DATA_STATE_XMIT:
+		/* already primed at setup_received_irq */
 		udc->ep0_state = WAIT_FOR_OUT_STATUS;
-		अवरोध;
-	हाल DATA_STATE_RECV:
+		break;
+	case DATA_STATE_RECV:
 		/* send status phase */
-		अगर (ep0_prime_status(udc, EP_सूची_IN))
+		if (ep0_prime_status(udc, EP_DIR_IN))
 			ep0stall(udc);
-		अवरोध;
-	हाल WAIT_FOR_OUT_STATUS:
+		break;
+	case WAIT_FOR_OUT_STATUS:
 		udc->ep0_state = WAIT_FOR_SETUP;
-		अवरोध;
-	हाल WAIT_FOR_SETUP:
+		break;
+	case WAIT_FOR_SETUP:
 		ERR("Unexpected ep0 packets\n");
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ep0stall(udc);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
 /* Tripwire mechanism to ensure a setup packet payload is extracted without
  * being corrupted by another incoming setup packet */
-अटल व्योम tripwire_handler(काष्ठा fsl_udc *udc, u8 ep_num, u8 *buffer_ptr)
-अणु
+static void tripwire_handler(struct fsl_udc *udc, u8 ep_num, u8 *buffer_ptr)
+{
 	u32 temp;
-	काष्ठा ep_queue_head *qh;
-	काष्ठा fsl_usb2_platक्रमm_data *pdata = udc->pdata;
+	struct ep_queue_head *qh;
+	struct fsl_usb2_platform_data *pdata = udc->pdata;
 
-	qh = &udc->ep_qh[ep_num * 2 + EP_सूची_OUT];
+	qh = &udc->ep_qh[ep_num * 2 + EP_DIR_OUT];
 
 	/* Clear bit in ENDPTSETUPSTAT */
-	temp = fsl_पढ़ोl(&dr_regs->endptsetupstat);
-	fsl_ग_लिखोl(temp | (1 << ep_num), &dr_regs->endptsetupstat);
+	temp = fsl_readl(&dr_regs->endptsetupstat);
+	fsl_writel(temp | (1 << ep_num), &dr_regs->endptsetupstat);
 
-	/* जबतक a hazard exists when setup package arrives */
-	करो अणु
+	/* while a hazard exists when setup package arrives */
+	do {
 		/* Set Setup Tripwire */
-		temp = fsl_पढ़ोl(&dr_regs->usbcmd);
-		fsl_ग_लिखोl(temp | USB_CMD_SUTW, &dr_regs->usbcmd);
+		temp = fsl_readl(&dr_regs->usbcmd);
+		fsl_writel(temp | USB_CMD_SUTW, &dr_regs->usbcmd);
 
 		/* Copy the setup packet to local buffer */
-		अगर (pdata->le_setup_buf) अणु
+		if (pdata->le_setup_buf) {
 			u32 *p = (u32 *)buffer_ptr;
 			u32 *s = (u32 *)qh->setup_buffer;
 
 			/* Convert little endian setup buffer to CPU endian */
 			*p++ = le32_to_cpu(*s++);
 			*p = le32_to_cpu(*s);
-		पूर्ण अन्यथा अणु
-			स_नकल(buffer_ptr, (u8 *) qh->setup_buffer, 8);
-		पूर्ण
-	पूर्ण जबतक (!(fsl_पढ़ोl(&dr_regs->usbcmd) & USB_CMD_SUTW));
+		} else {
+			memcpy(buffer_ptr, (u8 *) qh->setup_buffer, 8);
+		}
+	} while (!(fsl_readl(&dr_regs->usbcmd) & USB_CMD_SUTW));
 
 	/* Clear Setup Tripwire */
-	temp = fsl_पढ़ोl(&dr_regs->usbcmd);
-	fsl_ग_लिखोl(temp & ~USB_CMD_SUTW, &dr_regs->usbcmd);
-पूर्ण
+	temp = fsl_readl(&dr_regs->usbcmd);
+	fsl_writel(temp & ~USB_CMD_SUTW, &dr_regs->usbcmd);
+}
 
-/* process-ep_req(): मुक्त the completed Tds क्रम this req */
-अटल पूर्णांक process_ep_req(काष्ठा fsl_udc *udc, पूर्णांक pipe,
-		काष्ठा fsl_req *curr_req)
-अणु
-	काष्ठा ep_td_काष्ठा *curr_td;
-	पूर्णांक	actual, reमुख्यing_length, j, पंचांगp;
-	पूर्णांक	status = 0;
-	पूर्णांक	errors = 0;
-	काष्ठा  ep_queue_head *curr_qh = &udc->ep_qh[pipe];
-	पूर्णांक direction = pipe % 2;
+/* process-ep_req(): free the completed Tds for this req */
+static int process_ep_req(struct fsl_udc *udc, int pipe,
+		struct fsl_req *curr_req)
+{
+	struct ep_td_struct *curr_td;
+	int	actual, remaining_length, j, tmp;
+	int	status = 0;
+	int	errors = 0;
+	struct  ep_queue_head *curr_qh = &udc->ep_qh[pipe];
+	int direction = pipe % 2;
 
 	curr_td = curr_req->head;
 	actual = curr_req->req.length;
 
-	क्रम (j = 0; j < curr_req->dtd_count; j++) अणु
-		reमुख्यing_length = (hc32_to_cpu(curr_td->size_ioc_sts)
+	for (j = 0; j < curr_req->dtd_count; j++) {
+		remaining_length = (hc32_to_cpu(curr_td->size_ioc_sts)
 					& DTD_PACKET_SIZE)
 				>> DTD_LENGTH_BIT_POS;
-		actual -= reमुख्यing_length;
+		actual -= remaining_length;
 
 		errors = hc32_to_cpu(curr_td->size_ioc_sts);
-		अगर (errors & DTD_ERROR_MASK) अणु
-			अगर (errors & DTD_STATUS_HALTED) अणु
+		if (errors & DTD_ERROR_MASK) {
+			if (errors & DTD_STATUS_HALTED) {
 				ERR("dTD error %08x QH=%d\n", errors, pipe);
 				/* Clear the errors and Halt condition */
-				पंचांगp = hc32_to_cpu(curr_qh->size_ioc_पूर्णांक_sts);
-				पंचांगp &= ~errors;
-				curr_qh->size_ioc_पूर्णांक_sts = cpu_to_hc32(पंचांगp);
+				tmp = hc32_to_cpu(curr_qh->size_ioc_int_sts);
+				tmp &= ~errors;
+				curr_qh->size_ioc_int_sts = cpu_to_hc32(tmp);
 				status = -EPIPE;
-				/* FIXME: जारी with next queued TD? */
+				/* FIXME: continue with next queued TD? */
 
-				अवरोध;
-			पूर्ण
-			अगर (errors & DTD_STATUS_DATA_BUFF_ERR) अणु
+				break;
+			}
+			if (errors & DTD_STATUS_DATA_BUFF_ERR) {
 				VDBG("Transfer overflow");
 				status = -EPROTO;
-				अवरोध;
-			पूर्ण अन्यथा अगर (errors & DTD_STATUS_TRANSACTION_ERR) अणु
+				break;
+			} else if (errors & DTD_STATUS_TRANSACTION_ERR) {
 				VDBG("ISO error");
 				status = -EILSEQ;
-				अवरोध;
-			पूर्ण अन्यथा
+				break;
+			} else
 				ERR("Unknown error has occurred (0x%x)!\n",
 					errors);
 
-		पूर्ण अन्यथा अगर (hc32_to_cpu(curr_td->size_ioc_sts)
-				& DTD_STATUS_ACTIVE) अणु
+		} else if (hc32_to_cpu(curr_td->size_ioc_sts)
+				& DTD_STATUS_ACTIVE) {
 			VDBG("Request not complete");
 			status = REQ_UNCOMPLETE;
-			वापस status;
-		पूर्ण अन्यथा अगर (reमुख्यing_length) अणु
-			अगर (direction) अणु
+			return status;
+		} else if (remaining_length) {
+			if (direction) {
 				VDBG("Transmit dTD remaining length not zero");
 				status = -EPROTO;
-				अवरोध;
-			पूर्ण अन्यथा अणु
-				अवरोध;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				break;
+			} else {
+				break;
+			}
+		} else {
 			VDBG("dTD transmitted successful");
-		पूर्ण
+		}
 
-		अगर (j != curr_req->dtd_count - 1)
-			curr_td = (काष्ठा ep_td_काष्ठा *)curr_td->next_td_virt;
-	पूर्ण
+		if (j != curr_req->dtd_count - 1)
+			curr_td = (struct ep_td_struct *)curr_td->next_td_virt;
+	}
 
-	अगर (status)
-		वापस status;
+	if (status)
+		return status;
 
 	curr_req->req.actual = actual;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Process a DTD completion पूर्णांकerrupt */
-अटल व्योम dtd_complete_irq(काष्ठा fsl_udc *udc)
-अणु
+/* Process a DTD completion interrupt */
+static void dtd_complete_irq(struct fsl_udc *udc)
+{
 	u32 bit_pos;
-	पूर्णांक i, ep_num, direction, bit_mask, status;
-	काष्ठा fsl_ep *curr_ep;
-	काष्ठा fsl_req *curr_req, *temp_req;
+	int i, ep_num, direction, bit_mask, status;
+	struct fsl_ep *curr_ep;
+	struct fsl_req *curr_req, *temp_req;
 
-	/* Clear the bits in the रेजिस्टर */
-	bit_pos = fsl_पढ़ोl(&dr_regs->endptcomplete);
-	fsl_ग_लिखोl(bit_pos, &dr_regs->endptcomplete);
+	/* Clear the bits in the register */
+	bit_pos = fsl_readl(&dr_regs->endptcomplete);
+	fsl_writel(bit_pos, &dr_regs->endptcomplete);
 
-	अगर (!bit_pos)
-		वापस;
+	if (!bit_pos)
+		return;
 
-	क्रम (i = 0; i < udc->max_ep; i++) अणु
+	for (i = 0; i < udc->max_ep; i++) {
 		ep_num = i >> 1;
 		direction = i % 2;
 
 		bit_mask = 1 << (ep_num + 16 * direction);
 
-		अगर (!(bit_pos & bit_mask))
-			जारी;
+		if (!(bit_pos & bit_mask))
+			continue;
 
 		curr_ep = get_ep_by_pipe(udc, i);
 
 		/* If the ep is configured */
-		अगर (!curr_ep->ep.name) अणु
+		if (!curr_ep->ep.name) {
 			WARNING("Invalid EP?");
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/* process the req queue until an uncomplete request */
-		list_क्रम_each_entry_safe(curr_req, temp_req, &curr_ep->queue,
-				queue) अणु
+		list_for_each_entry_safe(curr_req, temp_req, &curr_ep->queue,
+				queue) {
 			status = process_ep_req(udc, i, curr_req);
 
 			VDBG("status of process_ep_req= %d, ep = %d",
 					status, ep_num);
-			अगर (status == REQ_UNCOMPLETE)
-				अवरोध;
-			/* ग_लिखो back status to req */
+			if (status == REQ_UNCOMPLETE)
+				break;
+			/* write back status to req */
 			curr_req->req.status = status;
 
-			अगर (ep_num == 0) अणु
+			if (ep_num == 0) {
 				ep0_req_complete(udc, curr_ep, curr_req);
-				अवरोध;
-			पूर्ण अन्यथा
-				करोne(curr_ep, curr_req, status);
-		पूर्ण
-	पूर्ण
-पूर्ण
+				break;
+			} else
+				done(curr_ep, curr_req, status);
+		}
+	}
+}
 
-अटल अंतरभूत क्रमागत usb_device_speed portscx_device_speed(u32 reg)
-अणु
-	चयन (reg & PORTSCX_PORT_SPEED_MASK) अणु
-	हाल PORTSCX_PORT_SPEED_HIGH:
-		वापस USB_SPEED_HIGH;
-	हाल PORTSCX_PORT_SPEED_FULL:
-		वापस USB_SPEED_FULL;
-	हाल PORTSCX_PORT_SPEED_LOW:
-		वापस USB_SPEED_LOW;
-	शेष:
-		वापस USB_SPEED_UNKNOWN;
-	पूर्ण
-पूर्ण
+static inline enum usb_device_speed portscx_device_speed(u32 reg)
+{
+	switch (reg & PORTSCX_PORT_SPEED_MASK) {
+	case PORTSCX_PORT_SPEED_HIGH:
+		return USB_SPEED_HIGH;
+	case PORTSCX_PORT_SPEED_FULL:
+		return USB_SPEED_FULL;
+	case PORTSCX_PORT_SPEED_LOW:
+		return USB_SPEED_LOW;
+	default:
+		return USB_SPEED_UNKNOWN;
+	}
+}
 
-/* Process a port change पूर्णांकerrupt */
-अटल व्योम port_change_irq(काष्ठा fsl_udc *udc)
-अणु
-	अगर (udc->bus_reset)
+/* Process a port change interrupt */
+static void port_change_irq(struct fsl_udc *udc)
+{
+	if (udc->bus_reset)
 		udc->bus_reset = 0;
 
 	/* Bus resetting is finished */
-	अगर (!(fsl_पढ़ोl(&dr_regs->portsc1) & PORTSCX_PORT_RESET))
+	if (!(fsl_readl(&dr_regs->portsc1) & PORTSCX_PORT_RESET))
 		/* Get the speed */
 		udc->gadget.speed =
-			portscx_device_speed(fsl_पढ़ोl(&dr_regs->portsc1));
+			portscx_device_speed(fsl_readl(&dr_regs->portsc1));
 
 	/* Update USB state */
-	अगर (!udc->resume_state)
+	if (!udc->resume_state)
 		udc->usb_state = USB_STATE_DEFAULT;
-पूर्ण
+}
 
-/* Process suspend पूर्णांकerrupt */
-अटल व्योम suspend_irq(काष्ठा fsl_udc *udc)
-अणु
+/* Process suspend interrupt */
+static void suspend_irq(struct fsl_udc *udc)
+{
 	udc->resume_state = udc->usb_state;
 	udc->usb_state = USB_STATE_SUSPENDED;
 
-	/* report suspend to the driver, serial.c करोes not support this */
-	अगर (udc->driver->suspend)
+	/* report suspend to the driver, serial.c does not support this */
+	if (udc->driver->suspend)
 		udc->driver->suspend(&udc->gadget);
-पूर्ण
+}
 
-अटल व्योम bus_resume(काष्ठा fsl_udc *udc)
-अणु
+static void bus_resume(struct fsl_udc *udc)
+{
 	udc->usb_state = udc->resume_state;
 	udc->resume_state = 0;
 
-	/* report resume to the driver, serial.c करोes not support this */
-	अगर (udc->driver->resume)
+	/* report resume to the driver, serial.c does not support this */
+	if (udc->driver->resume)
 		udc->driver->resume(&udc->gadget);
-पूर्ण
+}
 
 /* Clear up all ep queues */
-अटल पूर्णांक reset_queues(काष्ठा fsl_udc *udc, bool bus_reset)
-अणु
+static int reset_queues(struct fsl_udc *udc, bool bus_reset)
+{
 	u8 pipe;
 
-	क्रम (pipe = 0; pipe < udc->max_pipes; pipe++)
+	for (pipe = 0; pipe < udc->max_pipes; pipe++)
 		udc_reset_ep_queue(udc, pipe);
 
-	/* report disconnect; the driver is alपढ़ोy quiesced */
+	/* report disconnect; the driver is already quiesced */
 	spin_unlock(&udc->lock);
-	अगर (bus_reset)
+	if (bus_reset)
 		usb_gadget_udc_reset(&udc->gadget, udc->driver);
-	अन्यथा
+	else
 		udc->driver->disconnect(&udc->gadget);
 	spin_lock(&udc->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Process reset पूर्णांकerrupt */
-अटल व्योम reset_irq(काष्ठा fsl_udc *udc)
-अणु
+/* Process reset interrupt */
+static void reset_irq(struct fsl_udc *udc)
+{
 	u32 temp;
-	अचिन्हित दीर्घ समयout;
+	unsigned long timeout;
 
 	/* Clear the device address */
-	temp = fsl_पढ़ोl(&dr_regs->deviceaddr);
-	fsl_ग_लिखोl(temp & ~USB_DEVICE_ADDRESS_MASK, &dr_regs->deviceaddr);
+	temp = fsl_readl(&dr_regs->deviceaddr);
+	fsl_writel(temp & ~USB_DEVICE_ADDRESS_MASK, &dr_regs->deviceaddr);
 
 	udc->device_address = 0;
 
@@ -1805,33 +1804,33 @@ __acquires(udc->lock)
 	udc->resume_state = 0;
 	udc->ep0_dir = 0;
 	udc->ep0_state = WAIT_FOR_SETUP;
-	udc->remote_wakeup = 0;	/* शेष to 0 on reset */
+	udc->remote_wakeup = 0;	/* default to 0 on reset */
 	udc->gadget.b_hnp_enable = 0;
 	udc->gadget.a_hnp_support = 0;
 	udc->gadget.a_alt_hnp_support = 0;
 
 	/* Clear all the setup token semaphores */
-	temp = fsl_पढ़ोl(&dr_regs->endptsetupstat);
-	fsl_ग_लिखोl(temp, &dr_regs->endptsetupstat);
+	temp = fsl_readl(&dr_regs->endptsetupstat);
+	fsl_writel(temp, &dr_regs->endptsetupstat);
 
-	/* Clear all the endpoपूर्णांक complete status bits */
-	temp = fsl_पढ़ोl(&dr_regs->endptcomplete);
-	fsl_ग_लिखोl(temp, &dr_regs->endptcomplete);
+	/* Clear all the endpoint complete status bits */
+	temp = fsl_readl(&dr_regs->endptcomplete);
+	fsl_writel(temp, &dr_regs->endptcomplete);
 
-	समयout = jअगरfies + 100;
-	जबतक (fsl_पढ़ोl(&dr_regs->endpoपूर्णांकprime)) अणु
+	timeout = jiffies + 100;
+	while (fsl_readl(&dr_regs->endpointprime)) {
 		/* Wait until all endptprime bits cleared */
-		अगर (समय_after(jअगरfies, समयout)) अणु
+		if (time_after(jiffies, timeout)) {
 			ERR("Timeout for reset\n");
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		cpu_relax();
-	पूर्ण
+	}
 
-	/* Write 1s to the flush रेजिस्टर */
-	fsl_ग_लिखोl(0xffffffff, &dr_regs->endptflush);
+	/* Write 1s to the flush register */
+	fsl_writel(0xffffffff, &dr_regs->endptflush);
 
-	अगर (fsl_पढ़ोl(&dr_regs->portsc1) & PORTSCX_PORT_RESET) अणु
+	if (fsl_readl(&dr_regs->portsc1) & PORTSCX_PORT_RESET) {
 		VDBG("Bus reset");
 		/* Bus is reseting */
 		udc->bus_reset = 1;
@@ -1839,13 +1838,13 @@ __acquires(udc->lock)
 		 * head and TR Queue */
 		reset_queues(udc, true);
 		udc->usb_state = USB_STATE_DEFAULT;
-	पूर्ण अन्यथा अणु
+	} else {
 		VDBG("Controller reset");
-		/* initialize usb hw reg except क्रम regs क्रम EP, not
-		 * touch usbपूर्णांकr reg */
+		/* initialize usb hw reg except for regs for EP, not
+		 * touch usbintr reg */
 		dr_controller_setup(udc);
 
-		/* Reset all पूर्णांकernal used Queues */
+		/* Reset all internal used Queues */
 		reset_queues(udc, false);
 
 		ep0_setup(udc);
@@ -1853,140 +1852,140 @@ __acquires(udc->lock)
 		/* Enable DR IRQ reg, Set Run bit, change udc state */
 		dr_controller_run(udc);
 		udc->usb_state = USB_STATE_ATTACHED;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * USB device controller पूर्णांकerrupt handler
+ * USB device controller interrupt handler
  */
-अटल irqवापस_t fsl_udc_irq(पूर्णांक irq, व्योम *_udc)
-अणु
-	काष्ठा fsl_udc *udc = _udc;
+static irqreturn_t fsl_udc_irq(int irq, void *_udc)
+{
+	struct fsl_udc *udc = _udc;
 	u32 irq_src;
-	irqवापस_t status = IRQ_NONE;
-	अचिन्हित दीर्घ flags;
+	irqreturn_t status = IRQ_NONE;
+	unsigned long flags;
 
-	/* Disable ISR क्रम OTG host mode */
-	अगर (udc->stopped)
-		वापस IRQ_NONE;
+	/* Disable ISR for OTG host mode */
+	if (udc->stopped)
+		return IRQ_NONE;
 	spin_lock_irqsave(&udc->lock, flags);
-	irq_src = fsl_पढ़ोl(&dr_regs->usbsts) & fsl_पढ़ोl(&dr_regs->usbपूर्णांकr);
-	/* Clear notअगरication bits */
-	fsl_ग_लिखोl(irq_src, &dr_regs->usbsts);
+	irq_src = fsl_readl(&dr_regs->usbsts) & fsl_readl(&dr_regs->usbintr);
+	/* Clear notification bits */
+	fsl_writel(irq_src, &dr_regs->usbsts);
 
 	/* VDBG("irq_src [0x%8x]", irq_src); */
 
 	/* Need to resume? */
-	अगर (udc->usb_state == USB_STATE_SUSPENDED)
-		अगर ((fsl_पढ़ोl(&dr_regs->portsc1) & PORTSCX_PORT_SUSPEND) == 0)
+	if (udc->usb_state == USB_STATE_SUSPENDED)
+		if ((fsl_readl(&dr_regs->portsc1) & PORTSCX_PORT_SUSPEND) == 0)
 			bus_resume(udc);
 
 	/* USB Interrupt */
-	अगर (irq_src & USB_STS_INT) अणु
+	if (irq_src & USB_STS_INT) {
 		VDBG("Packet int");
 		/* Setup package, we only support ep0 as control ep */
-		अगर (fsl_पढ़ोl(&dr_regs->endptsetupstat) & EP_SETUP_STATUS_EP0) अणु
+		if (fsl_readl(&dr_regs->endptsetupstat) & EP_SETUP_STATUS_EP0) {
 			tripwire_handler(udc, 0,
 					(u8 *) (&udc->local_setup_buff));
 			setup_received_irq(udc, &udc->local_setup_buff);
 			status = IRQ_HANDLED;
-		पूर्ण
+		}
 
 		/* completion of dtd */
-		अगर (fsl_पढ़ोl(&dr_regs->endptcomplete)) अणु
+		if (fsl_readl(&dr_regs->endptcomplete)) {
 			dtd_complete_irq(udc);
 			status = IRQ_HANDLED;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* SOF (क्रम ISO transfer) */
-	अगर (irq_src & USB_STS_SOF) अणु
+	/* SOF (for ISO transfer) */
+	if (irq_src & USB_STS_SOF) {
 		status = IRQ_HANDLED;
-	पूर्ण
+	}
 
 	/* Port Change */
-	अगर (irq_src & USB_STS_PORT_CHANGE) अणु
+	if (irq_src & USB_STS_PORT_CHANGE) {
 		port_change_irq(udc);
 		status = IRQ_HANDLED;
-	पूर्ण
+	}
 
 	/* Reset Received */
-	अगर (irq_src & USB_STS_RESET) अणु
+	if (irq_src & USB_STS_RESET) {
 		VDBG("reset int");
 		reset_irq(udc);
 		status = IRQ_HANDLED;
-	पूर्ण
+	}
 
 	/* Sleep Enable (Suspend) */
-	अगर (irq_src & USB_STS_SUSPEND) अणु
+	if (irq_src & USB_STS_SUSPEND) {
 		suspend_irq(udc);
 		status = IRQ_HANDLED;
-	पूर्ण
+	}
 
-	अगर (irq_src & (USB_STS_ERR | USB_STS_SYS_ERR)) अणु
+	if (irq_src & (USB_STS_ERR | USB_STS_SYS_ERR)) {
 		VDBG("Error IRQ %x", irq_src);
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&udc->lock, flags);
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*----------------------------------------------------------------*
  * Hook to gadget drivers
  * Called by initialization code of gadget drivers
 *----------------------------------------------------------------*/
-अटल पूर्णांक fsl_udc_start(काष्ठा usb_gadget *g,
-		काष्ठा usb_gadget_driver *driver)
-अणु
-	पूर्णांक retval = 0;
-	अचिन्हित दीर्घ flags = 0;
+static int fsl_udc_start(struct usb_gadget *g,
+		struct usb_gadget_driver *driver)
+{
+	int retval = 0;
+	unsigned long flags = 0;
 
 	/* lock is needed but whether should use this lock or another */
 	spin_lock_irqsave(&udc_controller->lock, flags);
 
-	driver->driver.bus = शून्य;
+	driver->driver.bus = NULL;
 	/* hook up the driver */
 	udc_controller->driver = driver;
 	spin_unlock_irqrestore(&udc_controller->lock, flags);
-	g->is_selfघातered = 1;
+	g->is_selfpowered = 1;
 
-	अगर (!IS_ERR_OR_शून्य(udc_controller->transceiver)) अणु
+	if (!IS_ERR_OR_NULL(udc_controller->transceiver)) {
 		/* Suspend the controller until OTG enable it */
 		udc_controller->stopped = 1;
-		prपूर्णांकk(KERN_INFO "Suspend udc for OTG auto detect\n");
+		printk(KERN_INFO "Suspend udc for OTG auto detect\n");
 
 		/* connect to bus through transceiver */
-		अगर (!IS_ERR_OR_शून्य(udc_controller->transceiver)) अणु
+		if (!IS_ERR_OR_NULL(udc_controller->transceiver)) {
 			retval = otg_set_peripheral(
 					udc_controller->transceiver->otg,
 						    &udc_controller->gadget);
-			अगर (retval < 0) अणु
+			if (retval < 0) {
 				ERR("can't bind to transceiver\n");
-				udc_controller->driver = शून्य;
-				वापस retval;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
+				udc_controller->driver = NULL;
+				return retval;
+			}
+		}
+	} else {
 		/* Enable DR IRQ reg and set USBCMD reg Run bit */
 		dr_controller_run(udc_controller);
 		udc_controller->usb_state = USB_STATE_ATTACHED;
 		udc_controller->ep0_state = WAIT_FOR_SETUP;
 		udc_controller->ep0_dir = 0;
-	पूर्ण
+	}
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
 /* Disconnect from gadget driver */
-अटल पूर्णांक fsl_udc_stop(काष्ठा usb_gadget *g)
-अणु
-	काष्ठा fsl_ep *loop_ep;
-	अचिन्हित दीर्घ flags;
+static int fsl_udc_stop(struct usb_gadget *g)
+{
+	struct fsl_ep *loop_ep;
+	unsigned long flags;
 
-	अगर (!IS_ERR_OR_शून्य(udc_controller->transceiver))
-		otg_set_peripheral(udc_controller->transceiver->otg, शून्य);
+	if (!IS_ERR_OR_NULL(udc_controller->transceiver))
+		otg_set_peripheral(udc_controller->transceiver->otg, NULL);
 
-	/* stop DR, disable पूर्णांकr */
+	/* stop DR, disable intr */
 	dr_controller_stop(udc_controller);
 
 	/* in fact, no needed */
@@ -1998,39 +1997,39 @@ __acquires(udc->lock)
 	spin_lock_irqsave(&udc_controller->lock, flags);
 	udc_controller->gadget.speed = USB_SPEED_UNKNOWN;
 	nuke(&udc_controller->eps[0], -ESHUTDOWN);
-	list_क्रम_each_entry(loop_ep, &udc_controller->gadget.ep_list,
+	list_for_each_entry(loop_ep, &udc_controller->gadget.ep_list,
 			ep.ep_list)
 		nuke(loop_ep, -ESHUTDOWN);
 	spin_unlock_irqrestore(&udc_controller->lock, flags);
 
-	udc_controller->driver = शून्य;
+	udc_controller->driver = NULL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*-------------------------------------------------------------------------
 		PROC File System Support
 -------------------------------------------------------------------------*/
-#अगर_घोषित CONFIG_USB_GADGET_DEBUG_खाताS
+#ifdef CONFIG_USB_GADGET_DEBUG_FILES
 
-#समावेश <linux/seq_file.h>
+#include <linux/seq_file.h>
 
-अटल स्थिर अक्षर proc_filename[] = "driver/fsl_usb2_udc";
+static const char proc_filename[] = "driver/fsl_usb2_udc";
 
-अटल पूर्णांक fsl_proc_पढ़ो(काष्ठा seq_file *m, व्योम *v)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक i;
-	u32 पंचांगp_reg;
-	काष्ठा fsl_ep *ep = शून्य;
-	काष्ठा fsl_req *req;
+static int fsl_proc_read(struct seq_file *m, void *v)
+{
+	unsigned long flags;
+	int i;
+	u32 tmp_reg;
+	struct fsl_ep *ep = NULL;
+	struct fsl_req *req;
 
-	काष्ठा fsl_udc *udc = udc_controller;
+	struct fsl_udc *udc = udc_controller;
 
 	spin_lock_irqsave(&udc->lock, flags);
 
-	/* ------basic driver inक्रमmation ---- */
-	seq_म_लिखो(m,
+	/* ------basic driver information ---- */
+	seq_printf(m,
 			DRIVER_DESC "\n"
 			"%s version: %s\n"
 			"Gadget driver: %s\n\n",
@@ -2038,58 +2037,58 @@ __acquires(udc->lock)
 			udc->driver ? udc->driver->driver.name : "(none)");
 
 	/* ------ DR Registers ----- */
-	पंचांगp_reg = fsl_पढ़ोl(&dr_regs->usbcmd);
-	seq_म_लिखो(m,
+	tmp_reg = fsl_readl(&dr_regs->usbcmd);
+	seq_printf(m,
 			"USBCMD reg:\n"
 			"SetupTW: %d\n"
 			"Run/Stop: %s\n\n",
-			(पंचांगp_reg & USB_CMD_SUTW) ? 1 : 0,
-			(पंचांगp_reg & USB_CMD_RUN_STOP) ? "Run" : "Stop");
+			(tmp_reg & USB_CMD_SUTW) ? 1 : 0,
+			(tmp_reg & USB_CMD_RUN_STOP) ? "Run" : "Stop");
 
-	पंचांगp_reg = fsl_पढ़ोl(&dr_regs->usbsts);
-	seq_म_लिखो(m,
+	tmp_reg = fsl_readl(&dr_regs->usbsts);
+	seq_printf(m,
 			"USB Status Reg:\n"
 			"Dr Suspend: %d Reset Received: %d System Error: %s "
 			"USB Error Interrupt: %s\n\n",
-			(पंचांगp_reg & USB_STS_SUSPEND) ? 1 : 0,
-			(पंचांगp_reg & USB_STS_RESET) ? 1 : 0,
-			(पंचांगp_reg & USB_STS_SYS_ERR) ? "Err" : "Normal",
-			(पंचांगp_reg & USB_STS_ERR) ? "Err detected" : "No err");
+			(tmp_reg & USB_STS_SUSPEND) ? 1 : 0,
+			(tmp_reg & USB_STS_RESET) ? 1 : 0,
+			(tmp_reg & USB_STS_SYS_ERR) ? "Err" : "Normal",
+			(tmp_reg & USB_STS_ERR) ? "Err detected" : "No err");
 
-	पंचांगp_reg = fsl_पढ़ोl(&dr_regs->usbपूर्णांकr);
-	seq_म_लिखो(m,
+	tmp_reg = fsl_readl(&dr_regs->usbintr);
+	seq_printf(m,
 			"USB Interrupt Enable Reg:\n"
 			"Sleep Enable: %d SOF Received Enable: %d "
 			"Reset Enable: %d\n"
 			"System Error Enable: %d "
 			"Port Change Detected Enable: %d\n"
 			"USB Error Intr Enable: %d USB Intr Enable: %d\n\n",
-			(पंचांगp_reg & USB_INTR_DEVICE_SUSPEND) ? 1 : 0,
-			(पंचांगp_reg & USB_INTR_SOF_EN) ? 1 : 0,
-			(पंचांगp_reg & USB_INTR_RESET_EN) ? 1 : 0,
-			(पंचांगp_reg & USB_INTR_SYS_ERR_EN) ? 1 : 0,
-			(पंचांगp_reg & USB_INTR_PTC_DETECT_EN) ? 1 : 0,
-			(पंचांगp_reg & USB_INTR_ERR_INT_EN) ? 1 : 0,
-			(पंचांगp_reg & USB_INTR_INT_EN) ? 1 : 0);
+			(tmp_reg & USB_INTR_DEVICE_SUSPEND) ? 1 : 0,
+			(tmp_reg & USB_INTR_SOF_EN) ? 1 : 0,
+			(tmp_reg & USB_INTR_RESET_EN) ? 1 : 0,
+			(tmp_reg & USB_INTR_SYS_ERR_EN) ? 1 : 0,
+			(tmp_reg & USB_INTR_PTC_DETECT_EN) ? 1 : 0,
+			(tmp_reg & USB_INTR_ERR_INT_EN) ? 1 : 0,
+			(tmp_reg & USB_INTR_INT_EN) ? 1 : 0);
 
-	पंचांगp_reg = fsl_पढ़ोl(&dr_regs->frindex);
-	seq_म_लिखो(m,
+	tmp_reg = fsl_readl(&dr_regs->frindex);
+	seq_printf(m,
 			"USB Frame Index Reg: Frame Number is 0x%x\n\n",
-			(पंचांगp_reg & USB_FRINDEX_MASKS));
+			(tmp_reg & USB_FRINDEX_MASKS));
 
-	पंचांगp_reg = fsl_पढ़ोl(&dr_regs->deviceaddr);
-	seq_म_लिखो(m,
+	tmp_reg = fsl_readl(&dr_regs->deviceaddr);
+	seq_printf(m,
 			"USB Device Address Reg: Device Addr is 0x%x\n\n",
-			(पंचांगp_reg & USB_DEVICE_ADDRESS_MASK));
+			(tmp_reg & USB_DEVICE_ADDRESS_MASK));
 
-	पंचांगp_reg = fsl_पढ़ोl(&dr_regs->endpoपूर्णांकlistaddr);
-	seq_म_लिखो(m,
+	tmp_reg = fsl_readl(&dr_regs->endpointlistaddr);
+	seq_printf(m,
 			"USB Endpoint List Address Reg: "
 			"Device Addr is 0x%x\n\n",
-			(पंचांगp_reg & USB_EP_LIST_ADDRESS_MASK));
+			(tmp_reg & USB_EP_LIST_ADDRESS_MASK));
 
-	पंचांगp_reg = fsl_पढ़ोl(&dr_regs->portsc1);
-	seq_म_लिखो(m,
+	tmp_reg = fsl_readl(&dr_regs->portsc1);
+	seq_printf(m,
 		"USB Port Status&Control Reg:\n"
 		"Port Transceiver Type : %s Port Speed: %s\n"
 		"PHY Low Power Suspend: %s Port Reset: %s "
@@ -2097,382 +2096,382 @@ __acquires(udc->lock)
 		"Over-current Change: %s "
 		"Port Enable/Disable Change: %s\n"
 		"Port Enabled/Disabled: %s "
-		"Current Connect Status: %s\n\n", ( अणु
-			स्थिर अक्षर *s;
-			चयन (पंचांगp_reg & PORTSCX_PTS_FSLS) अणु
-			हाल PORTSCX_PTS_UTMI:
-				s = "UTMI"; अवरोध;
-			हाल PORTSCX_PTS_ULPI:
-				s = "ULPI "; अवरोध;
-			हाल PORTSCX_PTS_FSLS:
-				s = "FS/LS Serial"; अवरोध;
-			शेष:
-				s = "None"; अवरोध;
-			पूर्ण
-			s;पूर्ण ),
-		usb_speed_string(portscx_device_speed(पंचांगp_reg)),
-		(पंचांगp_reg & PORTSCX_PHY_LOW_POWER_SPD) ?
+		"Current Connect Status: %s\n\n", ( {
+			const char *s;
+			switch (tmp_reg & PORTSCX_PTS_FSLS) {
+			case PORTSCX_PTS_UTMI:
+				s = "UTMI"; break;
+			case PORTSCX_PTS_ULPI:
+				s = "ULPI "; break;
+			case PORTSCX_PTS_FSLS:
+				s = "FS/LS Serial"; break;
+			default:
+				s = "None"; break;
+			}
+			s;} ),
+		usb_speed_string(portscx_device_speed(tmp_reg)),
+		(tmp_reg & PORTSCX_PHY_LOW_POWER_SPD) ?
 		"Normal PHY mode" : "Low power mode",
-		(पंचांगp_reg & PORTSCX_PORT_RESET) ? "In Reset" :
+		(tmp_reg & PORTSCX_PORT_RESET) ? "In Reset" :
 		"Not in Reset",
-		(पंचांगp_reg & PORTSCX_PORT_SUSPEND) ? "In " : "Not in",
-		(पंचांगp_reg & PORTSCX_OVER_CURRENT_CHG) ? "Dected" :
+		(tmp_reg & PORTSCX_PORT_SUSPEND) ? "In " : "Not in",
+		(tmp_reg & PORTSCX_OVER_CURRENT_CHG) ? "Dected" :
 		"No",
-		(पंचांगp_reg & PORTSCX_PORT_EN_DIS_CHANGE) ? "Disable" :
+		(tmp_reg & PORTSCX_PORT_EN_DIS_CHANGE) ? "Disable" :
 		"Not change",
-		(पंचांगp_reg & PORTSCX_PORT_ENABLE) ? "Enable" :
+		(tmp_reg & PORTSCX_PORT_ENABLE) ? "Enable" :
 		"Not correct",
-		(पंचांगp_reg & PORTSCX_CURRENT_CONNECT_STATUS) ?
+		(tmp_reg & PORTSCX_CURRENT_CONNECT_STATUS) ?
 		"Attached" : "Not-Att");
 
-	पंचांगp_reg = fsl_पढ़ोl(&dr_regs->usbmode);
-	seq_म_लिखो(m,
-			"USB Mode Reg: Controller Mode is: %s\n\n", ( अणु
-				स्थिर अक्षर *s;
-				चयन (पंचांगp_reg & USB_MODE_CTRL_MODE_HOST) अणु
-				हाल USB_MODE_CTRL_MODE_IDLE:
-					s = "Idle"; अवरोध;
-				हाल USB_MODE_CTRL_MODE_DEVICE:
-					s = "Device Controller"; अवरोध;
-				हाल USB_MODE_CTRL_MODE_HOST:
-					s = "Host Controller"; अवरोध;
-				शेष:
-					s = "None"; अवरोध;
-				पूर्ण
+	tmp_reg = fsl_readl(&dr_regs->usbmode);
+	seq_printf(m,
+			"USB Mode Reg: Controller Mode is: %s\n\n", ( {
+				const char *s;
+				switch (tmp_reg & USB_MODE_CTRL_MODE_HOST) {
+				case USB_MODE_CTRL_MODE_IDLE:
+					s = "Idle"; break;
+				case USB_MODE_CTRL_MODE_DEVICE:
+					s = "Device Controller"; break;
+				case USB_MODE_CTRL_MODE_HOST:
+					s = "Host Controller"; break;
+				default:
+					s = "None"; break;
+				}
 				s;
-			पूर्ण ));
+			} ));
 
-	पंचांगp_reg = fsl_पढ़ोl(&dr_regs->endptsetupstat);
-	seq_म_लिखो(m,
+	tmp_reg = fsl_readl(&dr_regs->endptsetupstat);
+	seq_printf(m,
 			"Endpoint Setup Status Reg: SETUP on ep 0x%x\n\n",
-			(पंचांगp_reg & EP_SETUP_STATUS_MASK));
+			(tmp_reg & EP_SETUP_STATUS_MASK));
 
-	क्रम (i = 0; i < udc->max_ep / 2; i++) अणु
-		पंचांगp_reg = fsl_पढ़ोl(&dr_regs->endptctrl[i]);
-		seq_म_लिखो(m, "EP Ctrl Reg [0x%x]: = [0x%x]\n", i, पंचांगp_reg);
-	पूर्ण
-	पंचांगp_reg = fsl_पढ़ोl(&dr_regs->endpoपूर्णांकprime);
-	seq_म_लिखो(m, "EP Prime Reg = [0x%x]\n\n", पंचांगp_reg);
+	for (i = 0; i < udc->max_ep / 2; i++) {
+		tmp_reg = fsl_readl(&dr_regs->endptctrl[i]);
+		seq_printf(m, "EP Ctrl Reg [0x%x]: = [0x%x]\n", i, tmp_reg);
+	}
+	tmp_reg = fsl_readl(&dr_regs->endpointprime);
+	seq_printf(m, "EP Prime Reg = [0x%x]\n\n", tmp_reg);
 
-#अगर_अघोषित CONFIG_ARCH_MXC
-	अगर (udc->pdata->have_sysअगर_regs) अणु
-		पंचांगp_reg = usb_sys_regs->snoop1;
-		seq_म_लिखो(m, "Snoop1 Reg : = [0x%x]\n\n", पंचांगp_reg);
+#ifndef CONFIG_ARCH_MXC
+	if (udc->pdata->have_sysif_regs) {
+		tmp_reg = usb_sys_regs->snoop1;
+		seq_printf(m, "Snoop1 Reg : = [0x%x]\n\n", tmp_reg);
 
-		पंचांगp_reg = usb_sys_regs->control;
-		seq_म_लिखो(m, "General Control Reg : = [0x%x]\n\n", पंचांगp_reg);
-	पूर्ण
-#पूर्ण_अगर
+		tmp_reg = usb_sys_regs->control;
+		seq_printf(m, "General Control Reg : = [0x%x]\n\n", tmp_reg);
+	}
+#endif
 
-	/* ------fsl_udc, fsl_ep, fsl_request काष्ठाure inक्रमmation ----- */
+	/* ------fsl_udc, fsl_ep, fsl_request structure information ----- */
 	ep = &udc->eps[0];
-	seq_म_लिखो(m, "For %s Maxpkt is 0x%x index is 0x%x\n",
+	seq_printf(m, "For %s Maxpkt is 0x%x index is 0x%x\n",
 			ep->ep.name, ep_maxpacket(ep), ep_index(ep));
 
-	अगर (list_empty(&ep->queue)) अणु
-		seq_माला_दो(m, "its req queue is empty\n\n");
-	पूर्ण अन्यथा अणु
-		list_क्रम_each_entry(req, &ep->queue, queue) अणु
-			seq_म_लिखो(m,
+	if (list_empty(&ep->queue)) {
+		seq_puts(m, "its req queue is empty\n\n");
+	} else {
+		list_for_each_entry(req, &ep->queue, queue) {
+			seq_printf(m,
 				"req %p actual 0x%x length 0x%x buf %p\n",
 				&req->req, req->req.actual,
 				req->req.length, req->req.buf);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	/* other gadget->eplist ep */
-	list_क्रम_each_entry(ep, &udc->gadget.ep_list, ep.ep_list) अणु
-		अगर (ep->ep.desc) अणु
-			seq_म_लिखो(m,
+	list_for_each_entry(ep, &udc->gadget.ep_list, ep.ep_list) {
+		if (ep->ep.desc) {
+			seq_printf(m,
 					"\nFor %s Maxpkt is 0x%x "
 					"index is 0x%x\n",
 					ep->ep.name, ep_maxpacket(ep),
 					ep_index(ep));
 
-			अगर (list_empty(&ep->queue)) अणु
-				seq_माला_दो(m, "its req queue is empty\n\n");
-			पूर्ण अन्यथा अणु
-				list_क्रम_each_entry(req, &ep->queue, queue) अणु
-					seq_म_लिखो(m,
+			if (list_empty(&ep->queue)) {
+				seq_puts(m, "its req queue is empty\n\n");
+			} else {
+				list_for_each_entry(req, &ep->queue, queue) {
+					seq_printf(m,
 						"req %p actual 0x%x length "
 						"0x%x  buf %p\n",
 						&req->req, req->req.actual,
 						req->req.length, req->req.buf);
-				पूर्ण	/* end क्रम each_entry of ep req */
-			पूर्ण	/* end क्रम अन्यथा */
-		पूर्ण	/* end क्रम अगर(ep->queue) */
-	पूर्ण	/* end (ep->desc) */
+				}	/* end for each_entry of ep req */
+			}	/* end for else */
+		}	/* end for if(ep->queue) */
+	}	/* end (ep->desc) */
 
 	spin_unlock_irqrestore(&udc->lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा create_proc_file() \
-	proc_create_single(proc_filename, 0, शून्य, fsl_proc_पढ़ो)
-#घोषणा हटाओ_proc_file()	हटाओ_proc_entry(proc_filename, शून्य)
+#define create_proc_file() \
+	proc_create_single(proc_filename, 0, NULL, fsl_proc_read)
+#define remove_proc_file()	remove_proc_entry(proc_filename, NULL)
 
-#अन्यथा				/* !CONFIG_USB_GADGET_DEBUG_खाताS */
+#else				/* !CONFIG_USB_GADGET_DEBUG_FILES */
 
-#घोषणा create_proc_file()	करो अणुपूर्ण जबतक (0)
-#घोषणा हटाओ_proc_file()	करो अणुपूर्ण जबतक (0)
+#define create_proc_file()	do {} while (0)
+#define remove_proc_file()	do {} while (0)
 
-#पूर्ण_अगर				/* CONFIG_USB_GADGET_DEBUG_खाताS */
+#endif				/* CONFIG_USB_GADGET_DEBUG_FILES */
 
 /*-------------------------------------------------------------------------*/
 
-/* Release udc काष्ठाures */
-अटल व्योम fsl_udc_release(काष्ठा device *dev)
-अणु
-	complete(udc_controller->करोne);
-	dma_मुक्त_coherent(dev->parent, udc_controller->ep_qh_size,
+/* Release udc structures */
+static void fsl_udc_release(struct device *dev)
+{
+	complete(udc_controller->done);
+	dma_free_coherent(dev->parent, udc_controller->ep_qh_size,
 			udc_controller->ep_qh, udc_controller->ep_qh_dma);
-	kमुक्त(udc_controller);
-पूर्ण
+	kfree(udc_controller);
+}
 
 /******************************************************************
-	Internal काष्ठाure setup functions
+	Internal structure setup functions
 *******************************************************************/
 /*------------------------------------------------------------------
- * init resource क्रम global controller called by fsl_udc_probe()
+ * init resource for global controller called by fsl_udc_probe()
  * On success the udc handle is initialized, on failure it is
  * unchanged (reset).
  * Return 0 on success and -1 on allocation failure
  ------------------------------------------------------------------*/
-अटल पूर्णांक काष्ठा_udc_setup(काष्ठा fsl_udc *udc,
-		काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा fsl_usb2_platक्रमm_data *pdata;
-	माप_प्रकार size;
+static int struct_udc_setup(struct fsl_udc *udc,
+		struct platform_device *pdev)
+{
+	struct fsl_usb2_platform_data *pdata;
+	size_t size;
 
 	pdata = dev_get_platdata(&pdev->dev);
 	udc->phy_mode = pdata->phy_mode;
 
-	udc->eps = kसुस्मृति(udc->max_ep, माप(काष्ठा fsl_ep), GFP_KERNEL);
-	अगर (!udc->eps) अणु
+	udc->eps = kcalloc(udc->max_ep, sizeof(struct fsl_ep), GFP_KERNEL);
+	if (!udc->eps) {
 		ERR("kmalloc udc endpoint status failed\n");
-		जाओ eps_alloc_failed;
-	पूर्ण
+		goto eps_alloc_failed;
+	}
 
 	/* initialized QHs, take care of alignment */
-	size = udc->max_ep * माप(काष्ठा ep_queue_head);
-	अगर (size < QH_ALIGNMENT)
+	size = udc->max_ep * sizeof(struct ep_queue_head);
+	if (size < QH_ALIGNMENT)
 		size = QH_ALIGNMENT;
-	अन्यथा अगर ((size % QH_ALIGNMENT) != 0) अणु
+	else if ((size % QH_ALIGNMENT) != 0) {
 		size += QH_ALIGNMENT + 1;
 		size &= ~(QH_ALIGNMENT - 1);
-	पूर्ण
+	}
 	udc->ep_qh = dma_alloc_coherent(&pdev->dev, size,
 					&udc->ep_qh_dma, GFP_KERNEL);
-	अगर (!udc->ep_qh) अणु
+	if (!udc->ep_qh) {
 		ERR("malloc QHs for udc failed\n");
-		जाओ ep_queue_alloc_failed;
-	पूर्ण
+		goto ep_queue_alloc_failed;
+	}
 
 	udc->ep_qh_size = size;
 
-	/* Initialize ep0 status request काष्ठाure */
+	/* Initialize ep0 status request structure */
 	/* FIXME: fsl_alloc_request() ignores ep argument */
-	udc->status_req = container_of(fsl_alloc_request(शून्य, GFP_KERNEL),
-			काष्ठा fsl_req, req);
-	अगर (!udc->status_req) अणु
+	udc->status_req = container_of(fsl_alloc_request(NULL, GFP_KERNEL),
+			struct fsl_req, req);
+	if (!udc->status_req) {
 		ERR("kzalloc for udc status request failed\n");
-		जाओ udc_status_alloc_failed;
-	पूर्ण
+		goto udc_status_alloc_failed;
+	}
 
 	/* allocate a small amount of memory to get valid address */
-	udc->status_req->req.buf = kदो_स्मृति(8, GFP_KERNEL);
-	अगर (!udc->status_req->req.buf) अणु
+	udc->status_req->req.buf = kmalloc(8, GFP_KERNEL);
+	if (!udc->status_req->req.buf) {
 		ERR("kzalloc for udc request buffer failed\n");
-		जाओ udc_req_buf_alloc_failed;
-	पूर्ण
+		goto udc_req_buf_alloc_failed;
+	}
 
 	udc->resume_state = USB_STATE_NOTATTACHED;
 	udc->usb_state = USB_STATE_POWERED;
 	udc->ep0_dir = 0;
-	udc->remote_wakeup = 0;	/* शेष to 0 on reset */
+	udc->remote_wakeup = 0;	/* default to 0 on reset */
 
-	वापस 0;
+	return 0;
 
 udc_req_buf_alloc_failed:
-	kमुक्त(udc->status_req);
+	kfree(udc->status_req);
 udc_status_alloc_failed:
-	kमुक्त(udc->ep_qh);
+	kfree(udc->ep_qh);
 	udc->ep_qh_size = 0;
 ep_queue_alloc_failed:
-	kमुक्त(udc->eps);
+	kfree(udc->eps);
 eps_alloc_failed:
 	udc->phy_mode = 0;
-	वापस -1;
+	return -1;
 
-पूर्ण
+}
 
 /*----------------------------------------------------------------
- * Setup the fsl_ep काष्ठा क्रम eps
+ * Setup the fsl_ep struct for eps
  * Link fsl_ep->ep to gadget->ep_list
- * ep0out is not used so करो nothing here
+ * ep0out is not used so do nothing here
  * ep0in should be taken care
  *--------------------------------------------------------------*/
-अटल पूर्णांक काष्ठा_ep_setup(काष्ठा fsl_udc *udc, अचिन्हित अक्षर index,
-		अक्षर *name, पूर्णांक link)
-अणु
-	काष्ठा fsl_ep *ep = &udc->eps[index];
+static int struct_ep_setup(struct fsl_udc *udc, unsigned char index,
+		char *name, int link)
+{
+	struct fsl_ep *ep = &udc->eps[index];
 
 	ep->udc = udc;
-	म_नकल(ep->name, name);
+	strcpy(ep->name, name);
 	ep->ep.name = ep->name;
 
 	ep->ep.ops = &fsl_ep_ops;
 	ep->stopped = 0;
 
-	अगर (index == 0) अणु
+	if (index == 0) {
 		ep->ep.caps.type_control = true;
-	पूर्ण अन्यथा अणु
+	} else {
 		ep->ep.caps.type_iso = true;
 		ep->ep.caps.type_bulk = true;
-		ep->ep.caps.type_पूर्णांक = true;
-	पूर्ण
+		ep->ep.caps.type_int = true;
+	}
 
-	अगर (index & 1)
+	if (index & 1)
 		ep->ep.caps.dir_in = true;
-	अन्यथा
+	else
 		ep->ep.caps.dir_out = true;
 
-	/* क्रम ep0: maxP defined in desc
-	 * क्रम other eps, maxP is set by epस्वतःconfig() called by gadget layer
+	/* for ep0: maxP defined in desc
+	 * for other eps, maxP is set by epautoconfig() called by gadget layer
 	 */
-	usb_ep_set_maxpacket_limit(&ep->ep, (अचिन्हित लघु) ~0);
+	usb_ep_set_maxpacket_limit(&ep->ep, (unsigned short) ~0);
 
-	/* the queue lists any req क्रम this ep */
+	/* the queue lists any req for this ep */
 	INIT_LIST_HEAD(&ep->queue);
 
-	/* gagdet.ep_list used क्रम ep_स्वतःconfig so no ep0 */
-	अगर (link)
+	/* gagdet.ep_list used for ep_autoconfig so no ep0 */
+	if (link)
 		list_add_tail(&ep->ep.ep_list, &udc->gadget.ep_list);
 	ep->gadget = &udc->gadget;
 	ep->qh = &udc->ep_qh[index];
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Driver probe function
- * all initialization operations implemented here except enabling usb_पूर्णांकr reg
- * board setup should have been करोne in the platक्रमm code
+ * all initialization operations implemented here except enabling usb_intr reg
+ * board setup should have been done in the platform code
  */
-अटल पूर्णांक fsl_udc_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा fsl_usb2_platक्रमm_data *pdata;
-	काष्ठा resource *res;
-	पूर्णांक ret = -ENODEV;
-	अचिन्हित पूर्णांक i;
+static int fsl_udc_probe(struct platform_device *pdev)
+{
+	struct fsl_usb2_platform_data *pdata;
+	struct resource *res;
+	int ret = -ENODEV;
+	unsigned int i;
 	u32 dccparams;
 
-	udc_controller = kzalloc(माप(काष्ठा fsl_udc), GFP_KERNEL);
-	अगर (udc_controller == शून्य)
-		वापस -ENOMEM;
+	udc_controller = kzalloc(sizeof(struct fsl_udc), GFP_KERNEL);
+	if (udc_controller == NULL)
+		return -ENOMEM;
 
 	pdata = dev_get_platdata(&pdev->dev);
 	udc_controller->pdata = pdata;
 	spin_lock_init(&udc_controller->lock);
 	udc_controller->stopped = 1;
 
-#अगर_घोषित CONFIG_USB_OTG
-	अगर (pdata->operating_mode == FSL_USB2_DR_OTG) अणु
+#ifdef CONFIG_USB_OTG
+	if (pdata->operating_mode == FSL_USB2_DR_OTG) {
 		udc_controller->transceiver = usb_get_phy(USB_PHY_TYPE_USB2);
-		अगर (IS_ERR_OR_शून्य(udc_controller->transceiver)) अणु
+		if (IS_ERR_OR_NULL(udc_controller->transceiver)) {
 			ERR("Can't find OTG driver!\n");
 			ret = -ENODEV;
-			जाओ err_kमुक्त;
-		पूर्ण
-	पूर्ण
-#पूर्ण_अगर
+			goto err_kfree;
+		}
+	}
+#endif
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (!res) अणु
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (!res) {
 		ret = -ENXIO;
-		जाओ err_kमुक्त;
-	पूर्ण
+		goto err_kfree;
+	}
 
-	अगर (pdata->operating_mode == FSL_USB2_DR_DEVICE) अणु
-		अगर (!request_mem_region(res->start, resource_size(res),
-					driver_name)) अणु
+	if (pdata->operating_mode == FSL_USB2_DR_DEVICE) {
+		if (!request_mem_region(res->start, resource_size(res),
+					driver_name)) {
 			ERR("request mem region for %s failed\n", pdev->name);
 			ret = -EBUSY;
-			जाओ err_kमुक्त;
-		पूर्ण
-	पूर्ण
+			goto err_kfree;
+		}
+	}
 
 	dr_regs = ioremap(res->start, resource_size(res));
-	अगर (!dr_regs) अणु
+	if (!dr_regs) {
 		ret = -ENOMEM;
-		जाओ err_release_mem_region;
-	पूर्ण
+		goto err_release_mem_region;
+	}
 
-	pdata->regs = (व्योम __iomem *)dr_regs;
+	pdata->regs = (void __iomem *)dr_regs;
 
 	/*
-	 * करो platक्रमm specअगरic init: check the घड़ी, grab/config pins, etc.
+	 * do platform specific init: check the clock, grab/config pins, etc.
 	 */
-	अगर (pdata->init && pdata->init(pdev)) अणु
+	if (pdata->init && pdata->init(pdev)) {
 		ret = -ENODEV;
-		जाओ err_iounmap_noclk;
-	पूर्ण
+		goto err_iounmap_noclk;
+	}
 
 	/* Set accessors only after pdata->init() ! */
 	fsl_set_accessors(pdata);
 
-#अगर_अघोषित CONFIG_ARCH_MXC
-	अगर (pdata->have_sysअगर_regs)
-		usb_sys_regs = (व्योम *)dr_regs + USB_DR_SYS_OFFSET;
-#पूर्ण_अगर
+#ifndef CONFIG_ARCH_MXC
+	if (pdata->have_sysif_regs)
+		usb_sys_regs = (void *)dr_regs + USB_DR_SYS_OFFSET;
+#endif
 
-	/* Initialize USB घड़ीs */
+	/* Initialize USB clocks */
 	ret = fsl_udc_clk_init(pdev);
-	अगर (ret < 0)
-		जाओ err_iounmap_noclk;
+	if (ret < 0)
+		goto err_iounmap_noclk;
 
-	/* Read Device Controller Capability Parameters रेजिस्टर */
-	dccparams = fsl_पढ़ोl(&dr_regs->dccparams);
-	अगर (!(dccparams & DCCPARAMS_DC)) अणु
+	/* Read Device Controller Capability Parameters register */
+	dccparams = fsl_readl(&dr_regs->dccparams);
+	if (!(dccparams & DCCPARAMS_DC)) {
 		ERR("This SOC doesn't support device role\n");
 		ret = -ENODEV;
-		जाओ err_iounmap;
-	पूर्ण
-	/* Get max device endpoपूर्णांकs */
-	/* DEN is bidirectional ep number, max_ep द्विगुनs the number */
+		goto err_iounmap;
+	}
+	/* Get max device endpoints */
+	/* DEN is bidirectional ep number, max_ep doubles the number */
 	udc_controller->max_ep = (dccparams & DCCPARAMS_DEN_MASK) * 2;
 
-	ret = platक्रमm_get_irq(pdev, 0);
-	अगर (ret <= 0) अणु
+	ret = platform_get_irq(pdev, 0);
+	if (ret <= 0) {
 		ret = ret ? : -ENODEV;
-		जाओ err_iounmap;
-	पूर्ण
+		goto err_iounmap;
+	}
 	udc_controller->irq = ret;
 
 	ret = request_irq(udc_controller->irq, fsl_udc_irq, IRQF_SHARED,
 			driver_name, udc_controller);
-	अगर (ret != 0) अणु
+	if (ret != 0) {
 		ERR("cannot request irq %d err %d\n",
 				udc_controller->irq, ret);
-		जाओ err_iounmap;
-	पूर्ण
+		goto err_iounmap;
+	}
 
-	/* Initialize the udc काष्ठाure including QH member and other member */
-	अगर (काष्ठा_udc_setup(udc_controller, pdev)) अणु
+	/* Initialize the udc structure including QH member and other member */
+	if (struct_udc_setup(udc_controller, pdev)) {
 		ERR("Can't initialize udc data structure\n");
 		ret = -ENOMEM;
-		जाओ err_मुक्त_irq;
-	पूर्ण
+		goto err_free_irq;
+	}
 
-	अगर (IS_ERR_OR_शून्य(udc_controller->transceiver)) अणु
-		/* initialize usb hw reg except क्रम regs क्रम EP,
-		 * leave usbपूर्णांकr reg untouched */
+	if (IS_ERR_OR_NULL(udc_controller->transceiver)) {
+		/* initialize usb hw reg except for regs for EP,
+		 * leave usbintr reg untouched */
 		dr_controller_setup(udc_controller);
-	पूर्ण
+	}
 
 	ret = fsl_udc_clk_finalize(pdev);
-	अगर (ret)
-		जाओ err_मुक्त_irq;
+	if (ret)
+		goto err_free_irq;
 
-	/* Setup gadget काष्ठाure */
+	/* Setup gadget structure */
 	udc_controller->gadget.ops = &fsl_gadget_ops;
 	udc_controller->gadget.max_speed = USB_SPEED_HIGH;
 	udc_controller->gadget.ep0 = &udc_controller->eps[0].ep;
@@ -2480,230 +2479,230 @@ eps_alloc_failed:
 	udc_controller->gadget.speed = USB_SPEED_UNKNOWN;
 	udc_controller->gadget.name = driver_name;
 
-	/* Setup gadget.dev and रेजिस्टर with kernel */
+	/* Setup gadget.dev and register with kernel */
 	dev_set_name(&udc_controller->gadget.dev, "gadget");
 	udc_controller->gadget.dev.of_node = pdev->dev.of_node;
 
-	अगर (!IS_ERR_OR_शून्य(udc_controller->transceiver))
+	if (!IS_ERR_OR_NULL(udc_controller->transceiver))
 		udc_controller->gadget.is_otg = 1;
 
-	/* setup QH and epctrl क्रम ep0 */
+	/* setup QH and epctrl for ep0 */
 	ep0_setup(udc_controller);
 
-	/* setup udc->eps[] क्रम ep0 */
-	काष्ठा_ep_setup(udc_controller, 0, "ep0", 0);
-	/* क्रम ep0: the desc defined here;
-	 * क्रम other eps, gadget layer called ep_enable with defined desc
+	/* setup udc->eps[] for ep0 */
+	struct_ep_setup(udc_controller, 0, "ep0", 0);
+	/* for ep0: the desc defined here;
+	 * for other eps, gadget layer called ep_enable with defined desc
 	 */
 	udc_controller->eps[0].ep.desc = &fsl_ep0_desc;
 	usb_ep_set_maxpacket_limit(&udc_controller->eps[0].ep,
 				   USB_MAX_CTRL_PAYLOAD);
 
-	/* setup the udc->eps[] क्रम non-control endpoपूर्णांकs and link
+	/* setup the udc->eps[] for non-control endpoints and link
 	 * to gadget.ep_list */
-	क्रम (i = 1; i < (पूर्णांक)(udc_controller->max_ep / 2); i++) अणु
-		अक्षर name[14];
+	for (i = 1; i < (int)(udc_controller->max_ep / 2); i++) {
+		char name[14];
 
-		प्र_लिखो(name, "ep%dout", i);
-		काष्ठा_ep_setup(udc_controller, i * 2, name, 1);
-		प्र_लिखो(name, "ep%din", i);
-		काष्ठा_ep_setup(udc_controller, i * 2 + 1, name, 1);
-	पूर्ण
+		sprintf(name, "ep%dout", i);
+		struct_ep_setup(udc_controller, i * 2, name, 1);
+		sprintf(name, "ep%din", i);
+		struct_ep_setup(udc_controller, i * 2 + 1, name, 1);
+	}
 
-	/* use dma_pool क्रम TD management */
+	/* use dma_pool for TD management */
 	udc_controller->td_pool = dma_pool_create("udc_td", &pdev->dev,
-			माप(काष्ठा ep_td_काष्ठा),
+			sizeof(struct ep_td_struct),
 			DTD_ALIGNMENT, UDC_DMA_BOUNDARY);
-	अगर (udc_controller->td_pool == शून्य) अणु
+	if (udc_controller->td_pool == NULL) {
 		ret = -ENOMEM;
-		जाओ err_मुक्त_irq;
-	पूर्ण
+		goto err_free_irq;
+	}
 
 	ret = usb_add_gadget_udc_release(&pdev->dev, &udc_controller->gadget,
 			fsl_udc_release);
-	अगर (ret)
-		जाओ err_del_udc;
+	if (ret)
+		goto err_del_udc;
 
 	create_proc_file();
-	वापस 0;
+	return 0;
 
 err_del_udc:
 	dma_pool_destroy(udc_controller->td_pool);
-err_मुक्त_irq:
-	मुक्त_irq(udc_controller->irq, udc_controller);
+err_free_irq:
+	free_irq(udc_controller->irq, udc_controller);
 err_iounmap:
-	अगर (pdata->निकास)
-		pdata->निकास(pdev);
+	if (pdata->exit)
+		pdata->exit(pdev);
 	fsl_udc_clk_release();
 err_iounmap_noclk:
 	iounmap(dr_regs);
 err_release_mem_region:
-	अगर (pdata->operating_mode == FSL_USB2_DR_DEVICE)
+	if (pdata->operating_mode == FSL_USB2_DR_DEVICE)
 		release_mem_region(res->start, resource_size(res));
-err_kमुक्त:
-	kमुक्त(udc_controller);
-	udc_controller = शून्य;
-	वापस ret;
-पूर्ण
+err_kfree:
+	kfree(udc_controller);
+	udc_controller = NULL;
+	return ret;
+}
 
 /* Driver removal function
  * Free resources and finish pending transactions
  */
-अटल पूर्णांक fsl_udc_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा resource *res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	काष्ठा fsl_usb2_platक्रमm_data *pdata = dev_get_platdata(&pdev->dev);
+static int fsl_udc_remove(struct platform_device *pdev)
+{
+	struct resource *res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	struct fsl_usb2_platform_data *pdata = dev_get_platdata(&pdev->dev);
 
-	DECLARE_COMPLETION_ONSTACK(करोne);
+	DECLARE_COMPLETION_ONSTACK(done);
 
-	अगर (!udc_controller)
-		वापस -ENODEV;
+	if (!udc_controller)
+		return -ENODEV;
 
-	udc_controller->करोne = &करोne;
+	udc_controller->done = &done;
 	usb_del_gadget_udc(&udc_controller->gadget);
 
 	fsl_udc_clk_release();
 
-	/* DR has been stopped in usb_gadget_unरेजिस्टर_driver() */
-	हटाओ_proc_file();
+	/* DR has been stopped in usb_gadget_unregister_driver() */
+	remove_proc_file();
 
 	/* Free allocated memory */
-	kमुक्त(udc_controller->status_req->req.buf);
-	kमुक्त(udc_controller->status_req);
-	kमुक्त(udc_controller->eps);
+	kfree(udc_controller->status_req->req.buf);
+	kfree(udc_controller->status_req);
+	kfree(udc_controller->eps);
 
 	dma_pool_destroy(udc_controller->td_pool);
-	मुक्त_irq(udc_controller->irq, udc_controller);
+	free_irq(udc_controller->irq, udc_controller);
 	iounmap(dr_regs);
-	अगर (res && (pdata->operating_mode == FSL_USB2_DR_DEVICE))
+	if (res && (pdata->operating_mode == FSL_USB2_DR_DEVICE))
 		release_mem_region(res->start, resource_size(res));
 
-	/* मुक्त udc --रुको क्रम the release() finished */
-	रुको_क्रम_completion(&करोne);
+	/* free udc --wait for the release() finished */
+	wait_for_completion(&done);
 
 	/*
-	 * करो platक्रमm specअगरic un-initialization:
+	 * do platform specific un-initialization:
 	 * release iomux pins, etc.
 	 */
-	अगर (pdata->निकास)
-		pdata->निकास(pdev);
+	if (pdata->exit)
+		pdata->exit(pdev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*-----------------------------------------------------------------
- * Modअगरy Power management attributes
+ * Modify Power management attributes
  * Used by OTG statemachine to disable gadget temporarily
  -----------------------------------------------------------------*/
-अटल पूर्णांक fsl_udc_suspend(काष्ठा platक्रमm_device *pdev, pm_message_t state)
-अणु
+static int fsl_udc_suspend(struct platform_device *pdev, pm_message_t state)
+{
 	dr_controller_stop(udc_controller);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*-----------------------------------------------------------------
- * Invoked on USB resume. May be called in_पूर्णांकerrupt.
+ * Invoked on USB resume. May be called in_interrupt.
  * Here we start the DR controller and enable the irq
  *-----------------------------------------------------------------*/
-अटल पूर्णांक fsl_udc_resume(काष्ठा platक्रमm_device *pdev)
-अणु
+static int fsl_udc_resume(struct platform_device *pdev)
+{
 	/* Enable DR irq reg and set controller Run */
-	अगर (udc_controller->stopped) अणु
+	if (udc_controller->stopped) {
 		dr_controller_setup(udc_controller);
 		dr_controller_run(udc_controller);
-	पूर्ण
+	}
 	udc_controller->usb_state = USB_STATE_ATTACHED;
 	udc_controller->ep0_state = WAIT_FOR_SETUP;
 	udc_controller->ep0_dir = 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fsl_udc_otg_suspend(काष्ठा device *dev, pm_message_t state)
-अणु
-	काष्ठा fsl_udc *udc = udc_controller;
+static int fsl_udc_otg_suspend(struct device *dev, pm_message_t state)
+{
+	struct fsl_udc *udc = udc_controller;
 	u32 mode, usbcmd;
 
-	mode = fsl_पढ़ोl(&dr_regs->usbmode) & USB_MODE_CTRL_MODE_MASK;
+	mode = fsl_readl(&dr_regs->usbmode) & USB_MODE_CTRL_MODE_MASK;
 
 	pr_debug("%s(): mode 0x%x stopped %d\n", __func__, mode, udc->stopped);
 
 	/*
-	 * If the controller is alपढ़ोy stopped, then this must be a
+	 * If the controller is already stopped, then this must be a
 	 * PM suspend.  Remember this fact, so that we will leave the
-	 * controller stopped at PM resume समय.
+	 * controller stopped at PM resume time.
 	 */
-	अगर (udc->stopped) अणु
+	if (udc->stopped) {
 		pr_debug("gadget already stopped, leaving early\n");
-		udc->alपढ़ोy_stopped = 1;
-		वापस 0;
-	पूर्ण
+		udc->already_stopped = 1;
+		return 0;
+	}
 
-	अगर (mode != USB_MODE_CTRL_MODE_DEVICE) अणु
+	if (mode != USB_MODE_CTRL_MODE_DEVICE) {
 		pr_debug("gadget not in device mode, leaving early\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* stop the controller */
-	usbcmd = fsl_पढ़ोl(&dr_regs->usbcmd) & ~USB_CMD_RUN_STOP;
-	fsl_ग_लिखोl(usbcmd, &dr_regs->usbcmd);
+	usbcmd = fsl_readl(&dr_regs->usbcmd) & ~USB_CMD_RUN_STOP;
+	fsl_writel(usbcmd, &dr_regs->usbcmd);
 
 	udc->stopped = 1;
 
 	pr_info("USB Gadget suspended\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fsl_udc_otg_resume(काष्ठा device *dev)
-अणु
+static int fsl_udc_otg_resume(struct device *dev)
+{
 	pr_debug("%s(): stopped %d  already_stopped %d\n", __func__,
-		 udc_controller->stopped, udc_controller->alपढ़ोy_stopped);
+		 udc_controller->stopped, udc_controller->already_stopped);
 
 	/*
-	 * If the controller was stopped at suspend समय, then
-	 * करोn't resume it now.
+	 * If the controller was stopped at suspend time, then
+	 * don't resume it now.
 	 */
-	अगर (udc_controller->alपढ़ोy_stopped) अणु
-		udc_controller->alपढ़ोy_stopped = 0;
+	if (udc_controller->already_stopped) {
+		udc_controller->already_stopped = 0;
 		pr_debug("gadget was already stopped, leaving early\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	pr_info("USB Gadget resume\n");
 
-	वापस fsl_udc_resume(शून्य);
-पूर्ण
+	return fsl_udc_resume(NULL);
+}
 /*-------------------------------------------------------------------------
-	Register entry poपूर्णांक क्रम the peripheral controller driver
+	Register entry point for the peripheral controller driver
 --------------------------------------------------------------------------*/
-अटल स्थिर काष्ठा platक्रमm_device_id fsl_udc_devtype[] = अणु
-	अणु
+static const struct platform_device_id fsl_udc_devtype[] = {
+	{
 		.name = "imx-udc-mx27",
-	पूर्ण, अणु
+	}, {
 		.name = "imx-udc-mx51",
-	पूर्ण, अणु
+	}, {
 		.name = "fsl-usb2-udc",
-	पूर्ण, अणु
+	}, {
 		/* sentinel */
-	पूर्ण
-पूर्ण;
-MODULE_DEVICE_TABLE(platक्रमm, fsl_udc_devtype);
-अटल काष्ठा platक्रमm_driver udc_driver = अणु
-	.हटाओ		= fsl_udc_हटाओ,
-	/* Just क्रम FSL i.mx SoC currently */
+	}
+};
+MODULE_DEVICE_TABLE(platform, fsl_udc_devtype);
+static struct platform_driver udc_driver = {
+	.remove		= fsl_udc_remove,
+	/* Just for FSL i.mx SoC currently */
 	.id_table	= fsl_udc_devtype,
 	/* these suspend and resume are not usb suspend and resume */
 	.suspend	= fsl_udc_suspend,
 	.resume		= fsl_udc_resume,
-	.driver		= अणु
+	.driver		= {
 			.name = driver_name,
 			/* udc suspend/resume called from OTG driver */
 			.suspend = fsl_udc_otg_suspend,
 			.resume  = fsl_udc_otg_resume,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver_probe(udc_driver, fsl_udc_probe);
+module_platform_driver_probe(udc_driver, fsl_udc_probe);
 
 MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_AUTHOR(DRIVER_AUTHOR);

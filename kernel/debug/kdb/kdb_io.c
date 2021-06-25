@@ -1,447 +1,446 @@
-<शैली गुरु>
 /*
  * Kernel Debugger Architecture Independent Console I/O handler
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (c) 1999-2006 Silicon Graphics, Inc.  All Rights Reserved.
  * Copyright (c) 2009 Wind River Systems, Inc.  All Rights Reserved.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kdev_t.h>
-#समावेश <linux/console.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/sched.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/nmi.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/kgdb.h>
-#समावेश <linux/kdb.h>
-#समावेश <linux/kallsyms.h>
-#समावेश "kdb_private.h"
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/ctype.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/kdev_t.h>
+#include <linux/console.h>
+#include <linux/string.h>
+#include <linux/sched.h>
+#include <linux/smp.h>
+#include <linux/nmi.h>
+#include <linux/delay.h>
+#include <linux/kgdb.h>
+#include <linux/kdb.h>
+#include <linux/kallsyms.h>
+#include "kdb_private.h"
 
-#घोषणा CMD_BUFLEN 256
-अक्षर kdb_prompt_str[CMD_BUFLEN];
+#define CMD_BUFLEN 256
+char kdb_prompt_str[CMD_BUFLEN];
 
-पूर्णांक kdb_trap_prपूर्णांकk;
-पूर्णांक kdb_म_लिखो_cpu = -1;
+int kdb_trap_printk;
+int kdb_printf_cpu = -1;
 
-अटल पूर्णांक kgdb_transition_check(अक्षर *buffer)
-अणु
-	अगर (buffer[0] != '+' && buffer[0] != '$') अणु
+static int kgdb_transition_check(char *buffer)
+{
+	if (buffer[0] != '+' && buffer[0] != '$') {
 		KDB_STATE_SET(KGDB_TRANS);
-		kdb_म_लिखो("%s", buffer);
-	पूर्ण अन्यथा अणु
-		पूर्णांक slen = म_माप(buffer);
-		अगर (slen > 3 && buffer[slen - 3] == '#') अणु
+		kdb_printf("%s", buffer);
+	} else {
+		int slen = strlen(buffer);
+		if (slen > 3 && buffer[slen - 3] == '#') {
 			kdb_gdb_state_pass(buffer);
-			म_नकल(buffer, "kgdb");
+			strcpy(buffer, "kgdb");
 			KDB_STATE_SET(DOING_KGDB);
-			वापस 1;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return 1;
+		}
+	}
+	return 0;
+}
 
 /**
  * kdb_handle_escape() - validity check on an accumulated escape sequence.
- * @buf:	Accumulated escape अक्षरacters to be examined. Note that buf
- *		is not a string, it is an array of अक्षरacters and need not be
+ * @buf:	Accumulated escape characters to be examined. Note that buf
+ *		is not a string, it is an array of characters and need not be
  *		nil terminated.
- * @sz:		Number of accumulated escape अक्षरacters.
+ * @sz:		Number of accumulated escape characters.
  *
- * Return: -1 अगर the escape sequence is unwanted, 0 अगर it is incomplete,
- * otherwise it वापसs a mapped key value to pass to the upper layers.
+ * Return: -1 if the escape sequence is unwanted, 0 if it is incomplete,
+ * otherwise it returns a mapped key value to pass to the upper layers.
  */
-अटल पूर्णांक kdb_handle_escape(अक्षर *buf, माप_प्रकार sz)
-अणु
-	अक्षर *lastkey = buf + sz - 1;
+static int kdb_handle_escape(char *buf, size_t sz)
+{
+	char *lastkey = buf + sz - 1;
 
-	चयन (sz) अणु
-	हाल 1:
-		अगर (*lastkey == '\e')
-			वापस 0;
-		अवरोध;
+	switch (sz) {
+	case 1:
+		if (*lastkey == '\e')
+			return 0;
+		break;
 
-	हाल 2: /* \e<something> */
-		अगर (*lastkey == '[')
-			वापस 0;
-		अवरोध;
+	case 2: /* \e<something> */
+		if (*lastkey == '[')
+			return 0;
+		break;
 
-	हाल 3:
-		चयन (*lastkey) अणु
-		हाल 'A': /* \e[A, up arrow */
-			वापस 16;
-		हाल 'B': /* \e[B, करोwn arrow */
-			वापस 14;
-		हाल 'C': /* \e[C, right arrow */
-			वापस 6;
-		हाल 'D': /* \e[D, left arrow */
-			वापस 2;
-		हाल '1': /* \e[<1,3,4>], may be home, del, end */
-		हाल '3':
-		हाल '4':
-			वापस 0;
-		पूर्ण
-		अवरोध;
+	case 3:
+		switch (*lastkey) {
+		case 'A': /* \e[A, up arrow */
+			return 16;
+		case 'B': /* \e[B, down arrow */
+			return 14;
+		case 'C': /* \e[C, right arrow */
+			return 6;
+		case 'D': /* \e[D, left arrow */
+			return 2;
+		case '1': /* \e[<1,3,4>], may be home, del, end */
+		case '3':
+		case '4':
+			return 0;
+		}
+		break;
 
-	हाल 4:
-		अगर (*lastkey == '~') अणु
-			चयन (buf[2]) अणु
-			हाल '1': /* \e[1~, home */
-				वापस 1;
-			हाल '3': /* \e[3~, del */
-				वापस 4;
-			हाल '4': /* \e[4~, end */
-				वापस 5;
-			पूर्ण
-		पूर्ण
-		अवरोध;
-	पूर्ण
+	case 4:
+		if (*lastkey == '~') {
+			switch (buf[2]) {
+			case '1': /* \e[1~, home */
+				return 1;
+			case '3': /* \e[3~, del */
+				return 4;
+			case '4': /* \e[4~, end */
+				return 5;
+			}
+		}
+		break;
+	}
 
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
 /**
- * kdb_अक्षर_लो() - Read a single अक्षरacter from a kdb console (or consoles).
+ * kdb_getchar() - Read a single character from a kdb console (or consoles).
  *
  * Other than polling the various consoles that are currently enabled,
- * most of the work करोne in this function is dealing with escape sequences.
+ * most of the work done in this function is dealing with escape sequences.
  *
  * An escape key could be the start of a vt100 control sequence such as \e[D
- * (left arrow) or it could be a अक्षरacter in its own right.  The standard
- * method क्रम detecting the dअगरference is to रुको क्रम 2 seconds to see अगर there
- * are any other अक्षरacters.  kdb is complicated by the lack of a समयr service
- * (पूर्णांकerrupts are off), by multiple input sources. Escape sequence processing
- * has to be करोne as states in the polling loop.
+ * (left arrow) or it could be a character in its own right.  The standard
+ * method for detecting the difference is to wait for 2 seconds to see if there
+ * are any other characters.  kdb is complicated by the lack of a timer service
+ * (interrupts are off), by multiple input sources. Escape sequence processing
+ * has to be done as states in the polling loop.
  *
  * Return: The key pressed or a control code derived from an escape sequence.
  */
-अक्षर kdb_अक्षर_लो(व्योम)
-अणु
-#घोषणा ESCAPE_UDELAY 1000
-#घोषणा ESCAPE_DELAY (2*1000000/ESCAPE_UDELAY) /* 2 seconds worth of udelays */
-	अक्षर buf[4];	/* दीर्घest vt100 escape sequence is 4 bytes */
-	अक्षर *pbuf = buf;
-	पूर्णांक escape_delay = 0;
-	get_अक्षर_func *f, *f_prev = शून्य;
-	पूर्णांक key;
+char kdb_getchar(void)
+{
+#define ESCAPE_UDELAY 1000
+#define ESCAPE_DELAY (2*1000000/ESCAPE_UDELAY) /* 2 seconds worth of udelays */
+	char buf[4];	/* longest vt100 escape sequence is 4 bytes */
+	char *pbuf = buf;
+	int escape_delay = 0;
+	get_char_func *f, *f_prev = NULL;
+	int key;
 
-	क्रम (f = &kdb_poll_funcs[0]; ; ++f) अणु
-		अगर (*f == शून्य) अणु
-			/* Reset NMI watchकरोg once per poll loop */
-			touch_nmi_watchकरोg();
+	for (f = &kdb_poll_funcs[0]; ; ++f) {
+		if (*f == NULL) {
+			/* Reset NMI watchdog once per poll loop */
+			touch_nmi_watchdog();
 			f = &kdb_poll_funcs[0];
-		पूर्ण
+		}
 
 		key = (*f)();
-		अगर (key == -1) अणु
-			अगर (escape_delay) अणु
+		if (key == -1) {
+			if (escape_delay) {
 				udelay(ESCAPE_UDELAY);
-				अगर (--escape_delay == 0)
-					वापस '\e';
-			पूर्ण
-			जारी;
-		पूर्ण
+				if (--escape_delay == 0)
+					return '\e';
+			}
+			continue;
+		}
 
 		/*
-		 * When the first अक्षरacter is received (or we get a change
+		 * When the first character is received (or we get a change
 		 * input source) we set ourselves up to handle an escape
-		 * sequences (just in हाल).
+		 * sequences (just in case).
 		 */
-		अगर (f_prev != f) अणु
+		if (f_prev != f) {
 			f_prev = f;
 			pbuf = buf;
 			escape_delay = ESCAPE_DELAY;
-		पूर्ण
+		}
 
 		*pbuf++ = key;
 		key = kdb_handle_escape(buf, pbuf - buf);
-		अगर (key < 0) /* no escape sequence; वापस best अक्षरacter */
-			वापस buf[pbuf - buf == 2 ? 1 : 0];
-		अगर (key > 0)
-			वापस key;
-	पूर्ण
+		if (key < 0) /* no escape sequence; return best character */
+			return buf[pbuf - buf == 2 ? 1 : 0];
+		if (key > 0)
+			return key;
+	}
 
 	unreachable();
-पूर्ण
+}
 
 /*
- * kdb_पढ़ो
+ * kdb_read
  *
- *	This function पढ़ोs a string of अक्षरacters, terminated by
+ *	This function reads a string of characters, terminated by
  *	a newline, or by reaching the end of the supplied buffer,
  *	from the current kernel debugger console device.
  * Parameters:
- *	buffer	- Address of अक्षरacter buffer to receive input अक्षरacters.
- *	bufsize - size, in bytes, of the अक्षरacter buffer
+ *	buffer	- Address of character buffer to receive input characters.
+ *	bufsize - size, in bytes, of the character buffer
  * Returns:
- *	Returns a poपूर्णांकer to the buffer containing the received
- *	अक्षरacter string.  This string will be terminated by a
- *	newline अक्षरacter.
+ *	Returns a pointer to the buffer containing the received
+ *	character string.  This string will be terminated by a
+ *	newline character.
  * Locking:
  *	No locks are required to be held upon entry to this
  *	function.  It is not reentrant - it relies on the fact
- *	that जबतक kdb is running on only one "master debug" cpu.
+ *	that while kdb is running on only one "master debug" cpu.
  * Remarks:
  *	The buffer size must be >= 2.
  */
 
-अटल अक्षर *kdb_पढ़ो(अक्षर *buffer, माप_प्रकार bufsize)
-अणु
-	अक्षर *cp = buffer;
-	अक्षर *bufend = buffer+bufsize-2;	/* Reserve space क्रम newline
+static char *kdb_read(char *buffer, size_t bufsize)
+{
+	char *cp = buffer;
+	char *bufend = buffer+bufsize-2;	/* Reserve space for newline
 						 * and null byte */
-	अक्षर *lastअक्षर;
-	अक्षर *p_पंचांगp;
-	अक्षर पंचांगp;
-	अटल अक्षर पंचांगpbuffer[CMD_BUFLEN];
-	पूर्णांक len = म_माप(buffer);
-	पूर्णांक len_पंचांगp;
-	पूर्णांक tab = 0;
-	पूर्णांक count;
-	पूर्णांक i;
-	पूर्णांक diag, dtab_count;
-	पूर्णांक key, buf_size, ret;
+	char *lastchar;
+	char *p_tmp;
+	char tmp;
+	static char tmpbuffer[CMD_BUFLEN];
+	int len = strlen(buffer);
+	int len_tmp;
+	int tab = 0;
+	int count;
+	int i;
+	int diag, dtab_count;
+	int key, buf_size, ret;
 
 
-	diag = kdbgetपूर्णांकenv("DTABCOUNT", &dtab_count);
-	अगर (diag)
+	diag = kdbgetintenv("DTABCOUNT", &dtab_count);
+	if (diag)
 		dtab_count = 30;
 
-	अगर (len > 0) अणु
+	if (len > 0) {
 		cp += len;
-		अगर (*(buffer+len-1) == '\n')
+		if (*(buffer+len-1) == '\n')
 			cp--;
-	पूर्ण
+	}
 
-	lastअक्षर = cp;
+	lastchar = cp;
 	*cp = '\0';
-	kdb_म_लिखो("%s", buffer);
+	kdb_printf("%s", buffer);
 poll_again:
-	key = kdb_अक्षर_लो();
-	अगर (key != 9)
+	key = kdb_getchar();
+	if (key != 9)
 		tab = 0;
-	चयन (key) अणु
-	हाल 8: /* backspace */
-		अगर (cp > buffer) अणु
-			अगर (cp < lastअक्षर) अणु
-				स_नकल(पंचांगpbuffer, cp, lastअक्षर - cp);
-				स_नकल(cp-1, पंचांगpbuffer, lastअक्षर - cp);
-			पूर्ण
-			*(--lastअक्षर) = '\0';
+	switch (key) {
+	case 8: /* backspace */
+		if (cp > buffer) {
+			if (cp < lastchar) {
+				memcpy(tmpbuffer, cp, lastchar - cp);
+				memcpy(cp-1, tmpbuffer, lastchar - cp);
+			}
+			*(--lastchar) = '\0';
 			--cp;
-			kdb_म_लिखो("\b%s \r", cp);
-			पंचांगp = *cp;
+			kdb_printf("\b%s \r", cp);
+			tmp = *cp;
 			*cp = '\0';
-			kdb_म_लिखो(kdb_prompt_str);
-			kdb_म_लिखो("%s", buffer);
-			*cp = पंचांगp;
-		पूर्ण
-		अवरोध;
-	हाल 13: /* enter */
-		*lastअक्षर++ = '\n';
-		*lastअक्षर++ = '\0';
-		अगर (!KDB_STATE(KGDB_TRANS)) अणु
+			kdb_printf(kdb_prompt_str);
+			kdb_printf("%s", buffer);
+			*cp = tmp;
+		}
+		break;
+	case 13: /* enter */
+		*lastchar++ = '\n';
+		*lastchar++ = '\0';
+		if (!KDB_STATE(KGDB_TRANS)) {
 			KDB_STATE_SET(KGDB_TRANS);
-			kdb_म_लिखो("%s", buffer);
-		पूर्ण
-		kdb_म_लिखो("\n");
-		वापस buffer;
-	हाल 4: /* Del */
-		अगर (cp < lastअक्षर) अणु
-			स_नकल(पंचांगpbuffer, cp+1, lastअक्षर - cp - 1);
-			स_नकल(cp, पंचांगpbuffer, lastअक्षर - cp - 1);
-			*(--lastअक्षर) = '\0';
-			kdb_म_लिखो("%s \r", cp);
-			पंचांगp = *cp;
+			kdb_printf("%s", buffer);
+		}
+		kdb_printf("\n");
+		return buffer;
+	case 4: /* Del */
+		if (cp < lastchar) {
+			memcpy(tmpbuffer, cp+1, lastchar - cp - 1);
+			memcpy(cp, tmpbuffer, lastchar - cp - 1);
+			*(--lastchar) = '\0';
+			kdb_printf("%s \r", cp);
+			tmp = *cp;
 			*cp = '\0';
-			kdb_म_लिखो(kdb_prompt_str);
-			kdb_म_लिखो("%s", buffer);
-			*cp = पंचांगp;
-		पूर्ण
-		अवरोध;
-	हाल 1: /* Home */
-		अगर (cp > buffer) अणु
-			kdb_म_लिखो("\r");
-			kdb_म_लिखो(kdb_prompt_str);
+			kdb_printf(kdb_prompt_str);
+			kdb_printf("%s", buffer);
+			*cp = tmp;
+		}
+		break;
+	case 1: /* Home */
+		if (cp > buffer) {
+			kdb_printf("\r");
+			kdb_printf(kdb_prompt_str);
 			cp = buffer;
-		पूर्ण
-		अवरोध;
-	हाल 5: /* End */
-		अगर (cp < lastअक्षर) अणु
-			kdb_म_लिखो("%s", cp);
-			cp = lastअक्षर;
-		पूर्ण
-		अवरोध;
-	हाल 2: /* Left */
-		अगर (cp > buffer) अणु
-			kdb_म_लिखो("\b");
+		}
+		break;
+	case 5: /* End */
+		if (cp < lastchar) {
+			kdb_printf("%s", cp);
+			cp = lastchar;
+		}
+		break;
+	case 2: /* Left */
+		if (cp > buffer) {
+			kdb_printf("\b");
 			--cp;
-		पूर्ण
-		अवरोध;
-	हाल 14: /* Down */
-		स_रखो(पंचांगpbuffer, ' ',
-		       म_माप(kdb_prompt_str) + (lastअक्षर-buffer));
-		*(पंचांगpbuffer+म_माप(kdb_prompt_str) +
-		  (lastअक्षर-buffer)) = '\0';
-		kdb_म_लिखो("\r%s\r", पंचांगpbuffer);
-		*lastअक्षर = (अक्षर)key;
-		*(lastअक्षर+1) = '\0';
-		वापस lastअक्षर;
-	हाल 6: /* Right */
-		अगर (cp < lastअक्षर) अणु
-			kdb_म_लिखो("%c", *cp);
+		}
+		break;
+	case 14: /* Down */
+		memset(tmpbuffer, ' ',
+		       strlen(kdb_prompt_str) + (lastchar-buffer));
+		*(tmpbuffer+strlen(kdb_prompt_str) +
+		  (lastchar-buffer)) = '\0';
+		kdb_printf("\r%s\r", tmpbuffer);
+		*lastchar = (char)key;
+		*(lastchar+1) = '\0';
+		return lastchar;
+	case 6: /* Right */
+		if (cp < lastchar) {
+			kdb_printf("%c", *cp);
 			++cp;
-		पूर्ण
-		अवरोध;
-	हाल 16: /* Up */
-		स_रखो(पंचांगpbuffer, ' ',
-		       म_माप(kdb_prompt_str) + (lastअक्षर-buffer));
-		*(पंचांगpbuffer+म_माप(kdb_prompt_str) +
-		  (lastअक्षर-buffer)) = '\0';
-		kdb_म_लिखो("\r%s\r", पंचांगpbuffer);
-		*lastअक्षर = (अक्षर)key;
-		*(lastअक्षर+1) = '\0';
-		वापस lastअक्षर;
-	हाल 9: /* Tab */
-		अगर (tab < 2)
+		}
+		break;
+	case 16: /* Up */
+		memset(tmpbuffer, ' ',
+		       strlen(kdb_prompt_str) + (lastchar-buffer));
+		*(tmpbuffer+strlen(kdb_prompt_str) +
+		  (lastchar-buffer)) = '\0';
+		kdb_printf("\r%s\r", tmpbuffer);
+		*lastchar = (char)key;
+		*(lastchar+1) = '\0';
+		return lastchar;
+	case 9: /* Tab */
+		if (tab < 2)
 			++tab;
-		p_पंचांगp = buffer;
-		जबतक (*p_पंचांगp == ' ')
-			p_पंचांगp++;
-		अगर (p_पंचांगp > cp)
-			अवरोध;
-		स_नकल(पंचांगpbuffer, p_पंचांगp, cp-p_पंचांगp);
-		*(पंचांगpbuffer + (cp-p_पंचांगp)) = '\0';
-		p_पंचांगp = म_खोजप(पंचांगpbuffer, ' ');
-		अगर (p_पंचांगp)
-			++p_पंचांगp;
-		अन्यथा
-			p_पंचांगp = पंचांगpbuffer;
-		len = म_माप(p_पंचांगp);
-		buf_size = माप(पंचांगpbuffer) - (p_पंचांगp - पंचांगpbuffer);
-		count = kallsyms_symbol_complete(p_पंचांगp, buf_size);
-		अगर (tab == 2 && count > 0) अणु
-			kdb_म_लिखो("\n%d symbols are found.", count);
-			अगर (count > dtab_count) अणु
+		p_tmp = buffer;
+		while (*p_tmp == ' ')
+			p_tmp++;
+		if (p_tmp > cp)
+			break;
+		memcpy(tmpbuffer, p_tmp, cp-p_tmp);
+		*(tmpbuffer + (cp-p_tmp)) = '\0';
+		p_tmp = strrchr(tmpbuffer, ' ');
+		if (p_tmp)
+			++p_tmp;
+		else
+			p_tmp = tmpbuffer;
+		len = strlen(p_tmp);
+		buf_size = sizeof(tmpbuffer) - (p_tmp - tmpbuffer);
+		count = kallsyms_symbol_complete(p_tmp, buf_size);
+		if (tab == 2 && count > 0) {
+			kdb_printf("\n%d symbols are found.", count);
+			if (count > dtab_count) {
 				count = dtab_count;
-				kdb_म_लिखो(" But only first %d symbols will"
+				kdb_printf(" But only first %d symbols will"
 					   " be printed.\nYou can change the"
 					   " environment variable DTABCOUNT.",
 					   count);
-			पूर्ण
-			kdb_म_लिखो("\n");
-			क्रम (i = 0; i < count; i++) अणु
-				ret = kallsyms_symbol_next(p_पंचांगp, i, buf_size);
-				अगर (WARN_ON(!ret))
-					अवरोध;
-				अगर (ret != -E2BIG)
-					kdb_म_लिखो("%s ", p_पंचांगp);
-				अन्यथा
-					kdb_म_लिखो("%s... ", p_पंचांगp);
-				*(p_पंचांगp + len) = '\0';
-			पूर्ण
-			अगर (i >= dtab_count)
-				kdb_म_लिखो("...");
-			kdb_म_लिखो("\n");
-			kdb_म_लिखो(kdb_prompt_str);
-			kdb_म_लिखो("%s", buffer);
-		पूर्ण अन्यथा अगर (tab != 2 && count > 0) अणु
-			len_पंचांगp = म_माप(p_पंचांगp);
-			म_नकलन(p_पंचांगp+len_पंचांगp, cp, lastअक्षर-cp+1);
-			len_पंचांगp = म_माप(p_पंचांगp);
-			म_नकलन(cp, p_पंचांगp+len, len_पंचांगp-len + 1);
-			len = len_पंचांगp - len;
-			kdb_म_लिखो("%s", cp);
+			}
+			kdb_printf("\n");
+			for (i = 0; i < count; i++) {
+				ret = kallsyms_symbol_next(p_tmp, i, buf_size);
+				if (WARN_ON(!ret))
+					break;
+				if (ret != -E2BIG)
+					kdb_printf("%s ", p_tmp);
+				else
+					kdb_printf("%s... ", p_tmp);
+				*(p_tmp + len) = '\0';
+			}
+			if (i >= dtab_count)
+				kdb_printf("...");
+			kdb_printf("\n");
+			kdb_printf(kdb_prompt_str);
+			kdb_printf("%s", buffer);
+		} else if (tab != 2 && count > 0) {
+			len_tmp = strlen(p_tmp);
+			strncpy(p_tmp+len_tmp, cp, lastchar-cp+1);
+			len_tmp = strlen(p_tmp);
+			strncpy(cp, p_tmp+len, len_tmp-len + 1);
+			len = len_tmp - len;
+			kdb_printf("%s", cp);
 			cp += len;
-			lastअक्षर += len;
-		पूर्ण
+			lastchar += len;
+		}
 		kdb_nextline = 1; /* reset output line number */
-		अवरोध;
-	शेष:
-		अगर (key >= 32 && lastअक्षर < bufend) अणु
-			अगर (cp < lastअक्षर) अणु
-				स_नकल(पंचांगpbuffer, cp, lastअक्षर - cp);
-				स_नकल(cp+1, पंचांगpbuffer, lastअक्षर - cp);
-				*++lastअक्षर = '\0';
+		break;
+	default:
+		if (key >= 32 && lastchar < bufend) {
+			if (cp < lastchar) {
+				memcpy(tmpbuffer, cp, lastchar - cp);
+				memcpy(cp+1, tmpbuffer, lastchar - cp);
+				*++lastchar = '\0';
 				*cp = key;
-				kdb_म_लिखो("%s\r", cp);
+				kdb_printf("%s\r", cp);
 				++cp;
-				पंचांगp = *cp;
+				tmp = *cp;
 				*cp = '\0';
-				kdb_म_लिखो(kdb_prompt_str);
-				kdb_म_लिखो("%s", buffer);
-				*cp = पंचांगp;
-			पूर्ण अन्यथा अणु
-				*++lastअक्षर = '\0';
+				kdb_printf(kdb_prompt_str);
+				kdb_printf("%s", buffer);
+				*cp = tmp;
+			} else {
+				*++lastchar = '\0';
 				*cp++ = key;
 				/* The kgdb transition check will hide
-				 * prपूर्णांकed अक्षरacters अगर we think that
+				 * printed characters if we think that
 				 * kgdb is connecting, until the check
 				 * fails */
-				अगर (!KDB_STATE(KGDB_TRANS)) अणु
-					अगर (kgdb_transition_check(buffer))
-						वापस buffer;
-				पूर्ण अन्यथा अणु
-					kdb_म_लिखो("%c", key);
-				पूर्ण
-			पूर्ण
+				if (!KDB_STATE(KGDB_TRANS)) {
+					if (kgdb_transition_check(buffer))
+						return buffer;
+				} else {
+					kdb_printf("%c", key);
+				}
+			}
 			/* Special escape to kgdb */
-			अगर (lastअक्षर - buffer >= 5 &&
-			    म_भेद(lastअक्षर - 5, "$?#3f") == 0) अणु
-				kdb_gdb_state_pass(lastअक्षर - 5);
-				म_नकल(buffer, "kgdb");
+			if (lastchar - buffer >= 5 &&
+			    strcmp(lastchar - 5, "$?#3f") == 0) {
+				kdb_gdb_state_pass(lastchar - 5);
+				strcpy(buffer, "kgdb");
 				KDB_STATE_SET(DOING_KGDB);
-				वापस buffer;
-			पूर्ण
-			अगर (lastअक्षर - buffer >= 11 &&
-			    म_भेद(lastअक्षर - 11, "$qSupported") == 0) अणु
-				kdb_gdb_state_pass(lastअक्षर - 11);
-				म_नकल(buffer, "kgdb");
+				return buffer;
+			}
+			if (lastchar - buffer >= 11 &&
+			    strcmp(lastchar - 11, "$qSupported") == 0) {
+				kdb_gdb_state_pass(lastchar - 11);
+				strcpy(buffer, "kgdb");
 				KDB_STATE_SET(DOING_KGDB);
-				वापस buffer;
-			पूर्ण
-		पूर्ण
-		अवरोध;
-	पूर्ण
-	जाओ poll_again;
-पूर्ण
+				return buffer;
+			}
+		}
+		break;
+	}
+	goto poll_again;
+}
 
 /*
- * kdb_माला_लोtr
+ * kdb_getstr
  *
- *	Prपूर्णांक the prompt string and पढ़ो a command from the
+ *	Print the prompt string and read a command from the
  *	input device.
  *
  * Parameters:
  *	buffer	Address of buffer to receive command
  *	bufsize Size of buffer in bytes
- *	prompt	Poपूर्णांकer to string to use as prompt string
+ *	prompt	Pointer to string to use as prompt string
  * Returns:
- *	Poपूर्णांकer to command buffer.
+ *	Pointer to command buffer.
  * Locking:
  *	None.
  * Remarks:
  *	For SMP kernels, the processor number will be
- *	substituted क्रम %d, %x or %o in the prompt.
+ *	substituted for %d, %x or %o in the prompt.
  */
 
-अक्षर *kdb_माला_लोtr(अक्षर *buffer, माप_प्रकार bufsize, स्थिर अक्षर *prompt)
-अणु
-	अगर (prompt && kdb_prompt_str != prompt)
+char *kdb_getstr(char *buffer, size_t bufsize, const char *prompt)
+{
+	if (prompt && kdb_prompt_str != prompt)
 		strscpy(kdb_prompt_str, prompt, CMD_BUFLEN);
-	kdb_म_लिखो(kdb_prompt_str);
+	kdb_printf(kdb_prompt_str);
 	kdb_nextline = 1;	/* Prompt and input resets line number */
-	वापस kdb_पढ़ो(buffer, bufsize);
-पूर्ण
+	return kdb_read(buffer, bufsize);
+}
 
 /*
  * kdb_input_flush
@@ -456,38 +455,38 @@ poll_again:
  *	none
  * Remarks:
  *	Call this function whenever you want to flush input.  If there is any
- *	outstanding input, it ignores all अक्षरacters until there has been no
- *	data क्रम approximately 1ms.
+ *	outstanding input, it ignores all characters until there has been no
+ *	data for approximately 1ms.
  */
 
-अटल व्योम kdb_input_flush(व्योम)
-अणु
-	get_अक्षर_func *f;
-	पूर्णांक res;
-	पूर्णांक flush_delay = 1;
-	जबतक (flush_delay) अणु
+static void kdb_input_flush(void)
+{
+	get_char_func *f;
+	int res;
+	int flush_delay = 1;
+	while (flush_delay) {
 		flush_delay--;
 empty:
-		touch_nmi_watchकरोg();
-		क्रम (f = &kdb_poll_funcs[0]; *f; ++f) अणु
+		touch_nmi_watchdog();
+		for (f = &kdb_poll_funcs[0]; *f; ++f) {
 			res = (*f)();
-			अगर (res != -1) अणु
+			if (res != -1) {
 				flush_delay = 1;
-				जाओ empty;
-			पूर्ण
-		पूर्ण
-		अगर (flush_delay)
+				goto empty;
+			}
+		}
+		if (flush_delay)
 			mdelay(1);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * kdb_म_लिखो
+ * kdb_printf
  *
- *	Prपूर्णांक a string to the output device(s).
+ *	Print a string to the output device(s).
  *
  * Parameters:
- *	म_लिखो-like क्रमmat and optional args.
+ *	printf-like format and optional args.
  * Returns:
  *	0
  * Locking:
@@ -496,376 +495,376 @@ empty:
  *	use 'kdbcons->write()' to avoid polluting 'log_buf' with
  *	kdb output.
  *
- *  If the user is करोing a cmd args | grep srch
+ *  If the user is doing a cmd args | grep srch
  *  then kdb_grepping_flag is set.
- *  In that हाल we need to accumulate full lines (ending in \न) beक्रमe
- *  searching क्रम the pattern.
+ *  In that case we need to accumulate full lines (ending in \n) before
+ *  searching for the pattern.
  */
 
-अटल अक्षर kdb_buffer[256];	/* A bit too big to go on stack */
-अटल अक्षर *next_avail = kdb_buffer;
-अटल पूर्णांक  size_avail;
-अटल पूर्णांक  suspend_grep;
+static char kdb_buffer[256];	/* A bit too big to go on stack */
+static char *next_avail = kdb_buffer;
+static int  size_avail;
+static int  suspend_grep;
 
 /*
- * search arg1 to see अगर it contains arg2
- * (kdमुख्य.c provides flags क्रम ^pat and pat$)
+ * search arg1 to see if it contains arg2
+ * (kdmain.c provides flags for ^pat and pat$)
  *
- * वापस 1 क्रम found, 0 क्रम not found
+ * return 1 for found, 0 for not found
  */
-अटल पूर्णांक kdb_search_string(अक्षर *searched, अक्षर *searchक्रम)
-अणु
-	अक्षर firstअक्षर, *cp;
-	पूर्णांक len1, len2;
+static int kdb_search_string(char *searched, char *searchfor)
+{
+	char firstchar, *cp;
+	int len1, len2;
 
 	/* not counting the newline at the end of "searched" */
-	len1 = म_माप(searched)-1;
-	len2 = म_माप(searchक्रम);
-	अगर (len1 < len2)
-		वापस 0;
-	अगर (kdb_grep_leading && kdb_grep_trailing && len1 != len2)
-		वापस 0;
-	अगर (kdb_grep_leading) अणु
-		अगर (!म_भेदन(searched, searchक्रम, len2))
-			वापस 1;
-	पूर्ण अन्यथा अगर (kdb_grep_trailing) अणु
-		अगर (!म_भेदन(searched+len1-len2, searchक्रम, len2))
-			वापस 1;
-	पूर्ण अन्यथा अणु
-		firstअक्षर = *searchक्रम;
+	len1 = strlen(searched)-1;
+	len2 = strlen(searchfor);
+	if (len1 < len2)
+		return 0;
+	if (kdb_grep_leading && kdb_grep_trailing && len1 != len2)
+		return 0;
+	if (kdb_grep_leading) {
+		if (!strncmp(searched, searchfor, len2))
+			return 1;
+	} else if (kdb_grep_trailing) {
+		if (!strncmp(searched+len1-len2, searchfor, len2))
+			return 1;
+	} else {
+		firstchar = *searchfor;
 		cp = searched;
-		जबतक ((cp = म_अक्षर(cp, firstअक्षर))) अणु
-			अगर (!म_भेदन(cp, searchक्रम, len2))
-				वापस 1;
+		while ((cp = strchr(cp, firstchar))) {
+			if (!strncmp(cp, searchfor, len2))
+				return 1;
 			cp++;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+	}
+	return 0;
+}
 
-अटल व्योम kdb_msg_ग_लिखो(स्थिर अक्षर *msg, पूर्णांक msg_len)
-अणु
-	काष्ठा console *c;
-	स्थिर अक्षर *cp;
-	पूर्णांक len;
+static void kdb_msg_write(const char *msg, int msg_len)
+{
+	struct console *c;
+	const char *cp;
+	int len;
 
-	अगर (msg_len == 0)
-		वापस;
+	if (msg_len == 0)
+		return;
 
 	cp = msg;
 	len = msg_len;
 
-	जबतक (len--) अणु
-		dbg_io_ops->ग_लिखो_अक्षर(*cp);
+	while (len--) {
+		dbg_io_ops->write_char(*cp);
 		cp++;
-	पूर्ण
+	}
 
-	क्रम_each_console(c) अणु
-		अगर (!(c->flags & CON_ENABLED))
-			जारी;
-		अगर (c == dbg_io_ops->cons)
-			जारी;
+	for_each_console(c) {
+		if (!(c->flags & CON_ENABLED))
+			continue;
+		if (c == dbg_io_ops->cons)
+			continue;
 		/*
 		 * Set oops_in_progress to encourage the console drivers to
-		 * disregard their पूर्णांकernal spin locks: in the current calling
+		 * disregard their internal spin locks: in the current calling
 		 * context the risk of deadlock is a bigger problem than risks
 		 * due to re-entering the console driver. We operate directly on
 		 * oops_in_progress rather than using bust_spinlocks() because
-		 * the calls bust_spinlocks() makes on निकास are not appropriate
-		 * क्रम this calling context.
+		 * the calls bust_spinlocks() makes on exit are not appropriate
+		 * for this calling context.
 		 */
 		++oops_in_progress;
-		c->ग_लिखो(c, msg, msg_len);
+		c->write(c, msg, msg_len);
 		--oops_in_progress;
-		touch_nmi_watchकरोg();
-	पूर्ण
-पूर्ण
+		touch_nmi_watchdog();
+	}
+}
 
-पूर्णांक vkdb_म_लिखो(क्रमागत kdb_msgsrc src, स्थिर अक्षर *fmt, बहु_सूची ap)
-अणु
-	पूर्णांक diag;
-	पूर्णांक linecount;
-	पूर्णांक colcount;
-	पूर्णांक logging, saved_loglevel = 0;
-	पूर्णांक retlen = 0;
-	पूर्णांक fnd, len;
-	पूर्णांक this_cpu, old_cpu;
-	अक्षर *cp, *cp2, *cphold = शून्य, replaced_byte = ' ';
-	अक्षर *moreprompt = "more> ";
-	अचिन्हित दीर्घ flags;
+int vkdb_printf(enum kdb_msgsrc src, const char *fmt, va_list ap)
+{
+	int diag;
+	int linecount;
+	int colcount;
+	int logging, saved_loglevel = 0;
+	int retlen = 0;
+	int fnd, len;
+	int this_cpu, old_cpu;
+	char *cp, *cp2, *cphold = NULL, replaced_byte = ' ';
+	char *moreprompt = "more> ";
+	unsigned long flags;
 
-	/* Serialize kdb_म_लिखो अगर multiple cpus try to ग_लिखो at once.
-	 * But अगर any cpu goes recursive in kdb, just prपूर्णांक the output,
-	 * even अगर it is पूर्णांकerleaved with any other text.
+	/* Serialize kdb_printf if multiple cpus try to write at once.
+	 * But if any cpu goes recursive in kdb, just print the output,
+	 * even if it is interleaved with any other text.
 	 */
 	local_irq_save(flags);
 	this_cpu = smp_processor_id();
-	क्रम (;;) अणु
-		old_cpu = cmpxchg(&kdb_म_लिखो_cpu, -1, this_cpu);
-		अगर (old_cpu == -1 || old_cpu == this_cpu)
-			अवरोध;
+	for (;;) {
+		old_cpu = cmpxchg(&kdb_printf_cpu, -1, this_cpu);
+		if (old_cpu == -1 || old_cpu == this_cpu)
+			break;
 
 		cpu_relax();
-	पूर्ण
+	}
 
-	diag = kdbgetपूर्णांकenv("LINES", &linecount);
-	अगर (diag || linecount <= 1)
+	diag = kdbgetintenv("LINES", &linecount);
+	if (diag || linecount <= 1)
 		linecount = 24;
 
-	diag = kdbgetपूर्णांकenv("COLUMNS", &colcount);
-	अगर (diag || colcount <= 1)
+	diag = kdbgetintenv("COLUMNS", &colcount);
+	if (diag || colcount <= 1)
 		colcount = 80;
 
-	diag = kdbgetपूर्णांकenv("LOGGING", &logging);
-	अगर (diag)
+	diag = kdbgetintenv("LOGGING", &logging);
+	if (diag)
 		logging = 0;
 
-	अगर (!kdb_grepping_flag || suspend_grep) अणु
-		/* normally, every vsnम_लिखो starts a new buffer */
+	if (!kdb_grepping_flag || suspend_grep) {
+		/* normally, every vsnprintf starts a new buffer */
 		next_avail = kdb_buffer;
-		size_avail = माप(kdb_buffer);
-	पूर्ण
-	vsnम_लिखो(next_avail, size_avail, fmt, ap);
+		size_avail = sizeof(kdb_buffer);
+	}
+	vsnprintf(next_avail, size_avail, fmt, ap);
 
 	/*
 	 * If kdb_parse() found that the command was cmd xxx | grep yyy
 	 * then kdb_grepping_flag is set, and kdb_grep_string contains yyy
 	 *
-	 * Accumulate the prपूर्णांक data up to a newline beक्रमe searching it.
-	 * (vsnम_लिखो करोes null-terminate the string that it generates)
+	 * Accumulate the print data up to a newline before searching it.
+	 * (vsnprintf does null-terminate the string that it generates)
 	 */
 
-	/* skip the search अगर prपूर्णांकs are temporarily unconditional */
-	अगर (!suspend_grep && kdb_grepping_flag) अणु
-		cp = म_अक्षर(kdb_buffer, '\n');
-		अगर (!cp) अणु
+	/* skip the search if prints are temporarily unconditional */
+	if (!suspend_grep && kdb_grepping_flag) {
+		cp = strchr(kdb_buffer, '\n');
+		if (!cp) {
 			/*
-			 * Special हालs that करोn't end with newlines
+			 * Special cases that don't end with newlines
 			 * but should be written without one:
 			 *   The "[nn]kdb> " prompt should
 			 *   appear at the front of the buffer.
 			 *
 			 *   The "[nn]more " prompt should also be
 			 *     (MOREPROMPT -> moreprompt)
-			 *   written *   but we prपूर्णांक that ourselves,
+			 *   written *   but we print that ourselves,
 			 *   we set the suspend_grep flag to make
 			 *   it unconditional.
 			 *
 			 */
-			अगर (next_avail == kdb_buffer) अणु
+			if (next_avail == kdb_buffer) {
 				/*
 				 * these should occur after a newline,
 				 * so they will be at the front of the
 				 * buffer
 				 */
 				cp2 = kdb_buffer;
-				len = म_माप(kdb_prompt_str);
-				अगर (!म_भेदन(cp2, kdb_prompt_str, len)) अणु
+				len = strlen(kdb_prompt_str);
+				if (!strncmp(cp2, kdb_prompt_str, len)) {
 					/*
 					 * We're about to start a new
 					 * command, so we can go back
 					 * to normal mode.
 					 */
 					kdb_grepping_flag = 0;
-					जाओ kdb_prपूर्णांकit;
-				पूर्ण
-			पूर्ण
-			/* no newline; करोn't search/ग_लिखो the buffer
+					goto kdb_printit;
+				}
+			}
+			/* no newline; don't search/write the buffer
 			   until one is there */
-			len = म_माप(kdb_buffer);
+			len = strlen(kdb_buffer);
 			next_avail = kdb_buffer + len;
-			size_avail = माप(kdb_buffer) - len;
-			जाओ kdb_prपूर्णांक_out;
-		पूर्ण
+			size_avail = sizeof(kdb_buffer) - len;
+			goto kdb_print_out;
+		}
 
 		/*
-		 * The newline is present; prपूर्णांक through it or discard
+		 * The newline is present; print through it or discard
 		 * it, depending on the results of the search.
 		 */
 		cp++;	 	     /* to byte after the newline */
 		replaced_byte = *cp; /* remember what/where it was */
 		cphold = cp;
-		*cp = '\0';	     /* end the string क्रम our search */
+		*cp = '\0';	     /* end the string for our search */
 
 		/*
 		 * We now have a newline at the end of the string
-		 * Only जारी with this output अगर it contains the
+		 * Only continue with this output if it contains the
 		 * search string.
 		 */
 		fnd = kdb_search_string(kdb_buffer, kdb_grep_string);
-		अगर (!fnd) अणु
+		if (!fnd) {
 			/*
-			 * At this poपूर्णांक the complete line at the start
-			 * of kdb_buffer can be discarded, as it करोes
-			 * not contain what the user is looking क्रम.
-			 * Shअगरt the buffer left.
+			 * At this point the complete line at the start
+			 * of kdb_buffer can be discarded, as it does
+			 * not contain what the user is looking for.
+			 * Shift the buffer left.
 			 */
 			*cphold = replaced_byte;
-			म_नकल(kdb_buffer, cphold);
-			len = म_माप(kdb_buffer);
+			strcpy(kdb_buffer, cphold);
+			len = strlen(kdb_buffer);
 			next_avail = kdb_buffer + len;
-			size_avail = माप(kdb_buffer) - len;
-			जाओ kdb_prपूर्णांक_out;
-		पूर्ण
-		अगर (kdb_grepping_flag >= KDB_GREPPING_FLAG_SEARCH) अणु
+			size_avail = sizeof(kdb_buffer) - len;
+			goto kdb_print_out;
+		}
+		if (kdb_grepping_flag >= KDB_GREPPING_FLAG_SEARCH) {
 			/*
-			 * This was a पूर्णांकeractive search (using '/' at more
+			 * This was a interactive search (using '/' at more
 			 * prompt) and it has completed. Replace the \0 with
 			 * its original value to ensure multi-line strings
-			 * are handled properly, and वापस to normal mode.
+			 * are handled properly, and return to normal mode.
 			 */
 			*cphold = replaced_byte;
 			kdb_grepping_flag = 0;
-		पूर्ण
+		}
 		/*
-		 * at this poपूर्णांक the string is a full line and
-		 * should be prपूर्णांकed, up to the null.
+		 * at this point the string is a full line and
+		 * should be printed, up to the null.
 		 */
-	पूर्ण
-kdb_prपूर्णांकit:
+	}
+kdb_printit:
 
 	/*
 	 * Write to all consoles.
 	 */
-	retlen = म_माप(kdb_buffer);
-	cp = (अक्षर *) prपूर्णांकk_skip_headers(kdb_buffer);
-	अगर (!dbg_kdb_mode && kgdb_connected)
-		gdbstub_msg_ग_लिखो(cp, retlen - (cp - kdb_buffer));
-	अन्यथा
-		kdb_msg_ग_लिखो(cp, retlen - (cp - kdb_buffer));
+	retlen = strlen(kdb_buffer);
+	cp = (char *) printk_skip_headers(kdb_buffer);
+	if (!dbg_kdb_mode && kgdb_connected)
+		gdbstub_msg_write(cp, retlen - (cp - kdb_buffer));
+	else
+		kdb_msg_write(cp, retlen - (cp - kdb_buffer));
 
-	अगर (logging) अणु
+	if (logging) {
 		saved_loglevel = console_loglevel;
 		console_loglevel = CONSOLE_LOGLEVEL_SILENT;
-		अगर (prपूर्णांकk_get_level(kdb_buffer) || src == KDB_MSGSRC_PRINTK)
-			prपूर्णांकk("%s", kdb_buffer);
-		अन्यथा
+		if (printk_get_level(kdb_buffer) || src == KDB_MSGSRC_PRINTK)
+			printk("%s", kdb_buffer);
+		else
 			pr_info("%s", kdb_buffer);
-	पूर्ण
+	}
 
-	अगर (KDB_STATE(PAGER)) अणु
+	if (KDB_STATE(PAGER)) {
 		/*
-		 * Check prपूर्णांकed string to decide how to bump the
+		 * Check printed string to decide how to bump the
 		 * kdb_nextline to control when the more prompt should
 		 * show up.
 		 */
-		पूर्णांक got = 0;
+		int got = 0;
 		len = retlen;
-		जबतक (len--) अणु
-			अगर (kdb_buffer[len] == '\n') अणु
+		while (len--) {
+			if (kdb_buffer[len] == '\n') {
 				kdb_nextline++;
 				got = 0;
-			पूर्ण अन्यथा अगर (kdb_buffer[len] == '\r') अणु
+			} else if (kdb_buffer[len] == '\r') {
 				got = 0;
-			पूर्ण अन्यथा अणु
+			} else {
 				got++;
-			पूर्ण
-		पूर्ण
+			}
+		}
 		kdb_nextline += got / (colcount + 1);
-	पूर्ण
+	}
 
-	/* check क्रम having reached the LINES number of prपूर्णांकed lines */
-	अगर (kdb_nextline >= linecount) अणु
-		अक्षर ch;
+	/* check for having reached the LINES number of printed lines */
+	if (kdb_nextline >= linecount) {
+		char ch;
 
-		/* Watch out क्रम recursion here.  Any routine that calls
-		 * kdb_म_लिखो will come back through here.  And kdb_पढ़ो
-		 * uses kdb_म_लिखो to echo on serial consoles ...
+		/* Watch out for recursion here.  Any routine that calls
+		 * kdb_printf will come back through here.  And kdb_read
+		 * uses kdb_printf to echo on serial consoles ...
 		 */
-		kdb_nextline = 1;	/* In हाल of recursion */
+		kdb_nextline = 1;	/* In case of recursion */
 
 		/*
 		 * Pause until cr.
 		 */
-		moreprompt = kdbदो_पर्या("MOREPROMPT");
-		अगर (moreprompt == शून्य)
+		moreprompt = kdbgetenv("MOREPROMPT");
+		if (moreprompt == NULL)
 			moreprompt = "more> ";
 
 		kdb_input_flush();
-		kdb_msg_ग_लिखो(moreprompt, म_माप(moreprompt));
+		kdb_msg_write(moreprompt, strlen(moreprompt));
 
-		अगर (logging)
-			prपूर्णांकk("%s", moreprompt);
+		if (logging)
+			printk("%s", moreprompt);
 
-		ch = kdb_अक्षर_लो();
+		ch = kdb_getchar();
 		kdb_nextline = 1;	/* Really set output line 1 */
 
 		/* empty and reset the buffer: */
 		kdb_buffer[0] = '\0';
 		next_avail = kdb_buffer;
-		size_avail = माप(kdb_buffer);
-		अगर ((ch == 'q') || (ch == 'Q')) अणु
+		size_avail = sizeof(kdb_buffer);
+		if ((ch == 'q') || (ch == 'Q')) {
 			/* user hit q or Q */
-			KDB_FLAG_SET(CMD_INTERRUPT); /* command पूर्णांकerrupted */
+			KDB_FLAG_SET(CMD_INTERRUPT); /* command interrupted */
 			KDB_STATE_CLEAR(PAGER);
 			/* end of command output; back to normal mode */
 			kdb_grepping_flag = 0;
-			kdb_म_लिखो("\n");
-		पूर्ण अन्यथा अगर (ch == ' ') अणु
-			kdb_म_लिखो("\r");
-			suspend_grep = 1; /* क्रम this recursion */
-		पूर्ण अन्यथा अगर (ch == '\n' || ch == '\r') अणु
+			kdb_printf("\n");
+		} else if (ch == ' ') {
+			kdb_printf("\r");
+			suspend_grep = 1; /* for this recursion */
+		} else if (ch == '\n' || ch == '\r') {
 			kdb_nextline = linecount - 1;
-			kdb_म_लिखो("\r");
-			suspend_grep = 1; /* क्रम this recursion */
-		पूर्ण अन्यथा अगर (ch == '/' && !kdb_grepping_flag) अणु
-			kdb_म_लिखो("\r");
-			kdb_माला_लोtr(kdb_grep_string, KDB_GREP_STRLEN,
-				   kdbदो_पर्या("SEARCHPROMPT") ?: "search> ");
-			*म_अक्षरnul(kdb_grep_string, '\n') = '\0';
+			kdb_printf("\r");
+			suspend_grep = 1; /* for this recursion */
+		} else if (ch == '/' && !kdb_grepping_flag) {
+			kdb_printf("\r");
+			kdb_getstr(kdb_grep_string, KDB_GREP_STRLEN,
+				   kdbgetenv("SEARCHPROMPT") ?: "search> ");
+			*strchrnul(kdb_grep_string, '\n') = '\0';
 			kdb_grepping_flag += KDB_GREPPING_FLAG_SEARCH;
-			suspend_grep = 1; /* क्रम this recursion */
-		पूर्ण अन्यथा अगर (ch) अणु
+			suspend_grep = 1; /* for this recursion */
+		} else if (ch) {
 			/* user hit something unexpected */
-			suspend_grep = 1; /* क्रम this recursion */
-			अगर (ch != '/')
-				kdb_म_लिखो(
+			suspend_grep = 1; /* for this recursion */
+			if (ch != '/')
+				kdb_printf(
 				    "\nOnly 'q', 'Q' or '/' are processed at "
 				    "more prompt, input ignored\n");
-			अन्यथा
-				kdb_म_लिखो("\n'/' cannot be used during | "
+			else
+				kdb_printf("\n'/' cannot be used during | "
 					   "grep filtering, input ignored\n");
-		पूर्ण अन्यथा अगर (kdb_grepping_flag) अणु
+		} else if (kdb_grepping_flag) {
 			/* user hit enter */
-			suspend_grep = 1; /* क्रम this recursion */
-			kdb_म_लिखो("\n");
-		पूर्ण
+			suspend_grep = 1; /* for this recursion */
+			kdb_printf("\n");
+		}
 		kdb_input_flush();
-	पूर्ण
+	}
 
 	/*
-	 * For grep searches, shअगरt the prपूर्णांकed string left.
-	 *  replaced_byte contains the अक्षरacter that was overwritten with
-	 *  the terminating null, and cphold poपूर्णांकs to the null.
+	 * For grep searches, shift the printed string left.
+	 *  replaced_byte contains the character that was overwritten with
+	 *  the terminating null, and cphold points to the null.
 	 * Then adjust the notion of available space in the buffer.
 	 */
-	अगर (kdb_grepping_flag && !suspend_grep) अणु
+	if (kdb_grepping_flag && !suspend_grep) {
 		*cphold = replaced_byte;
-		म_नकल(kdb_buffer, cphold);
-		len = म_माप(kdb_buffer);
+		strcpy(kdb_buffer, cphold);
+		len = strlen(kdb_buffer);
 		next_avail = kdb_buffer + len;
-		size_avail = माप(kdb_buffer) - len;
-	पूर्ण
+		size_avail = sizeof(kdb_buffer) - len;
+	}
 
-kdb_prपूर्णांक_out:
+kdb_print_out:
 	suspend_grep = 0; /* end of what may have been a recursive call */
-	अगर (logging)
+	if (logging)
 		console_loglevel = saved_loglevel;
-	/* kdb_म_लिखो_cpu locked the code above. */
-	smp_store_release(&kdb_म_लिखो_cpu, old_cpu);
+	/* kdb_printf_cpu locked the code above. */
+	smp_store_release(&kdb_printf_cpu, old_cpu);
 	local_irq_restore(flags);
-	वापस retlen;
-पूर्ण
+	return retlen;
+}
 
-पूर्णांक kdb_म_लिखो(स्थिर अक्षर *fmt, ...)
-अणु
-	बहु_सूची ap;
-	पूर्णांक r;
+int kdb_printf(const char *fmt, ...)
+{
+	va_list ap;
+	int r;
 
-	बहु_शुरू(ap, fmt);
-	r = vkdb_म_लिखो(KDB_MSGSRC_INTERNAL, fmt, ap);
-	बहु_पूर्ण(ap);
+	va_start(ap, fmt);
+	r = vkdb_printf(KDB_MSGSRC_INTERNAL, fmt, ap);
+	va_end(ap);
 
-	वापस r;
-पूर्ण
-EXPORT_SYMBOL_GPL(kdb_म_लिखो);
+	return r;
+}
+EXPORT_SYMBOL_GPL(kdb_printf);

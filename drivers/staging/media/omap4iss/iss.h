@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * TI OMAP4 ISS V4L2 Driver
  *
@@ -8,34 +7,34 @@
  * Author: Sergio Aguirre <sergio.a.aguirre@gmail.com>
  */
 
-#अगर_अघोषित _OMAP4_ISS_H_
-#घोषणा _OMAP4_ISS_H_
+#ifndef _OMAP4_ISS_H_
+#define _OMAP4_ISS_H_
 
-#समावेश <media/v4l2-device.h>
-#समावेश <media/v4l2-mc.h>
+#include <media/v4l2-device.h>
+#include <media/v4l2-mc.h>
 
-#समावेश <linux/device.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/रुको.h>
+#include <linux/device.h>
+#include <linux/io.h>
+#include <linux/platform_device.h>
+#include <linux/wait.h>
 
-#समावेश <linux/platक्रमm_data/media/omap4iss.h>
+#include <linux/platform_data/media/omap4iss.h>
 
-#समावेश "iss_regs.h"
-#समावेश "iss_csiphy.h"
-#समावेश "iss_csi2.h"
-#समावेश "iss_ipipeif.h"
-#समावेश "iss_ipipe.h"
-#समावेश "iss_resizer.h"
+#include "iss_regs.h"
+#include "iss_csiphy.h"
+#include "iss_csi2.h"
+#include "iss_ipipeif.h"
+#include "iss_ipipe.h"
+#include "iss_resizer.h"
 
-काष्ठा regmap;
+struct regmap;
 
-#घोषणा to_iss_device(ptr_module)				\
-	container_of(ptr_module, काष्ठा iss_device, ptr_module)
-#घोषणा to_device(ptr_module)						\
+#define to_iss_device(ptr_module)				\
+	container_of(ptr_module, struct iss_device, ptr_module)
+#define to_device(ptr_module)						\
 	(to_iss_device(ptr_module)->dev)
 
-क्रमागत iss_mem_resources अणु
+enum iss_mem_resources {
 	OMAP4_ISS_MEM_TOP,
 	OMAP4_ISS_MEM_CSI2_A_REGS1,
 	OMAP4_ISS_MEM_CAMERARX_CORE1,
@@ -48,204 +47,204 @@
 	OMAP4_ISS_MEM_ISP_ISIF,
 	OMAP4_ISS_MEM_ISP_IPIPEIF,
 	OMAP4_ISS_MEM_LAST,
-पूर्ण;
+};
 
-क्रमागत iss_subclk_resource अणु
+enum iss_subclk_resource {
 	OMAP4_ISS_SUBCLK_SIMCOP		= (1 << 0),
 	OMAP4_ISS_SUBCLK_ISP		= (1 << 1),
 	OMAP4_ISS_SUBCLK_CSI2_A		= (1 << 2),
 	OMAP4_ISS_SUBCLK_CSI2_B		= (1 << 3),
 	OMAP4_ISS_SUBCLK_CCP2		= (1 << 4),
-पूर्ण;
+};
 
-क्रमागत iss_isp_subclk_resource अणु
+enum iss_isp_subclk_resource {
 	OMAP4_ISS_ISP_SUBCLK_BL		= (1 << 0),
 	OMAP4_ISS_ISP_SUBCLK_ISIF	= (1 << 1),
 	OMAP4_ISS_ISP_SUBCLK_H3A	= (1 << 2),
 	OMAP4_ISS_ISP_SUBCLK_RSZ	= (1 << 3),
 	OMAP4_ISS_ISP_SUBCLK_IPIPE	= (1 << 4),
 	OMAP4_ISS_ISP_SUBCLK_IPIPEIF	= (1 << 5),
-पूर्ण;
+};
 
 /*
- * काष्ठा iss_reg - Structure क्रम ISS रेजिस्टर values.
+ * struct iss_reg - Structure for ISS register values.
  * @reg: 32-bit Register address.
  * @val: 32-bit Register value.
  */
-काष्ठा iss_reg अणु
-	क्रमागत iss_mem_resources mmio_range;
+struct iss_reg {
+	enum iss_mem_resources mmio_range;
 	u32 reg;
 	u32 val;
-पूर्ण;
+};
 
 /*
- * काष्ठा iss_device - ISS device काष्ठाure.
- * @syscon: Regmap क्रम the syscon रेजिस्टर space
+ * struct iss_device - ISS device structure.
+ * @syscon: Regmap for the syscon register space
  * @crashed: Crashed entities
  */
-काष्ठा iss_device अणु
-	काष्ठा v4l2_device v4l2_dev;
-	काष्ठा media_device media_dev;
-	काष्ठा device *dev;
+struct iss_device {
+	struct v4l2_device v4l2_dev;
+	struct media_device media_dev;
+	struct device *dev;
 	u32 revision;
 
-	/* platक्रमm HW resources */
-	काष्ठा iss_platक्रमm_data *pdata;
-	अचिन्हित पूर्णांक irq_num;
+	/* platform HW resources */
+	struct iss_platform_data *pdata;
+	unsigned int irq_num;
 
-	काष्ठा resource *res[OMAP4_ISS_MEM_LAST];
-	व्योम __iomem *regs[OMAP4_ISS_MEM_LAST];
-	काष्ठा regmap *syscon;
+	struct resource *res[OMAP4_ISS_MEM_LAST];
+	void __iomem *regs[OMAP4_ISS_MEM_LAST];
+	struct regmap *syscon;
 
 	u64 raw_dmamask;
 
-	काष्ठा mutex iss_mutex;	/* For handling ref_count field */
-	काष्ठा media_entity_क्रमागत crashed;
-	पूर्णांक has_context;
-	पूर्णांक ref_count;
+	struct mutex iss_mutex;	/* For handling ref_count field */
+	struct media_entity_enum crashed;
+	int has_context;
+	int ref_count;
 
-	काष्ठा clk *iss_fck;
-	काष्ठा clk *iss_ctrlclk;
+	struct clk *iss_fck;
+	struct clk *iss_ctrlclk;
 
 	/* ISS modules */
-	काष्ठा iss_csi2_device csi2a;
-	काष्ठा iss_csi2_device csi2b;
-	काष्ठा iss_csiphy csiphy1;
-	काष्ठा iss_csiphy csiphy2;
-	काष्ठा iss_ipipeअगर_device ipipeअगर;
-	काष्ठा iss_ipipe_device ipipe;
-	काष्ठा iss_resizer_device resizer;
+	struct iss_csi2_device csi2a;
+	struct iss_csi2_device csi2b;
+	struct iss_csiphy csiphy1;
+	struct iss_csiphy csiphy2;
+	struct iss_ipipeif_device ipipeif;
+	struct iss_ipipe_device ipipe;
+	struct iss_resizer_device resizer;
 
-	अचिन्हित पूर्णांक subclk_resources;
-	अचिन्हित पूर्णांक isp_subclk_resources;
-पूर्ण;
+	unsigned int subclk_resources;
+	unsigned int isp_subclk_resources;
+};
 
-#घोषणा v4l2_dev_to_iss_device(dev) \
-	container_of(dev, काष्ठा iss_device, v4l2_dev)
+#define v4l2_dev_to_iss_device(dev) \
+	container_of(dev, struct iss_device, v4l2_dev)
 
-पूर्णांक omap4iss_get_बाह्यal_info(काष्ठा iss_pipeline *pipe,
-			       काष्ठा media_link *link);
+int omap4iss_get_external_info(struct iss_pipeline *pipe,
+			       struct media_link *link);
 
-पूर्णांक omap4iss_module_sync_idle(काष्ठा media_entity *me, रुको_queue_head_t *रुको,
+int omap4iss_module_sync_idle(struct media_entity *me, wait_queue_head_t *wait,
 			      atomic_t *stopping);
 
-पूर्णांक omap4iss_module_sync_is_stopping(रुको_queue_head_t *रुको,
+int omap4iss_module_sync_is_stopping(wait_queue_head_t *wait,
 				     atomic_t *stopping);
 
-पूर्णांक omap4iss_pipeline_set_stream(काष्ठा iss_pipeline *pipe,
-				 क्रमागत iss_pipeline_stream_state state);
-व्योम omap4iss_pipeline_cancel_stream(काष्ठा iss_pipeline *pipe);
+int omap4iss_pipeline_set_stream(struct iss_pipeline *pipe,
+				 enum iss_pipeline_stream_state state);
+void omap4iss_pipeline_cancel_stream(struct iss_pipeline *pipe);
 
-व्योम omap4iss_configure_bridge(काष्ठा iss_device *iss,
-			       क्रमागत ipipeअगर_input_entity input);
+void omap4iss_configure_bridge(struct iss_device *iss,
+			       enum ipipeif_input_entity input);
 
-काष्ठा iss_device *omap4iss_get(काष्ठा iss_device *iss);
-व्योम omap4iss_put(काष्ठा iss_device *iss);
-पूर्णांक omap4iss_subclk_enable(काष्ठा iss_device *iss,
-			   क्रमागत iss_subclk_resource res);
-पूर्णांक omap4iss_subclk_disable(काष्ठा iss_device *iss,
-			    क्रमागत iss_subclk_resource res);
-व्योम omap4iss_isp_subclk_enable(काष्ठा iss_device *iss,
-				क्रमागत iss_isp_subclk_resource res);
-व्योम omap4iss_isp_subclk_disable(काष्ठा iss_device *iss,
-				 क्रमागत iss_isp_subclk_resource res);
+struct iss_device *omap4iss_get(struct iss_device *iss);
+void omap4iss_put(struct iss_device *iss);
+int omap4iss_subclk_enable(struct iss_device *iss,
+			   enum iss_subclk_resource res);
+int omap4iss_subclk_disable(struct iss_device *iss,
+			    enum iss_subclk_resource res);
+void omap4iss_isp_subclk_enable(struct iss_device *iss,
+				enum iss_isp_subclk_resource res);
+void omap4iss_isp_subclk_disable(struct iss_device *iss,
+				 enum iss_isp_subclk_resource res);
 
-पूर्णांक omap4iss_रेजिस्टर_entities(काष्ठा platक्रमm_device *pdev,
-			       काष्ठा v4l2_device *v4l2_dev);
-व्योम omap4iss_unरेजिस्टर_entities(काष्ठा platक्रमm_device *pdev);
+int omap4iss_register_entities(struct platform_device *pdev,
+			       struct v4l2_device *v4l2_dev);
+void omap4iss_unregister_entities(struct platform_device *pdev);
 
 /*
- * iss_reg_पढ़ो - Read the value of an OMAP4 ISS रेजिस्टर
+ * iss_reg_read - Read the value of an OMAP4 ISS register
  * @iss: the ISS device
- * @res: memory resource in which the रेजिस्टर is located
- * @offset: रेजिस्टर offset in the memory resource
+ * @res: memory resource in which the register is located
+ * @offset: register offset in the memory resource
  *
- * Return the रेजिस्टर value.
+ * Return the register value.
  */
-अटल अंतरभूत
-u32 iss_reg_पढ़ो(काष्ठा iss_device *iss, क्रमागत iss_mem_resources res,
+static inline
+u32 iss_reg_read(struct iss_device *iss, enum iss_mem_resources res,
 		 u32 offset)
-अणु
-	वापस पढ़ोl(iss->regs[res] + offset);
-पूर्ण
+{
+	return readl(iss->regs[res] + offset);
+}
 
 /*
- * iss_reg_ग_लिखो - Write a value to an OMAP4 ISS रेजिस्टर
+ * iss_reg_write - Write a value to an OMAP4 ISS register
  * @iss: the ISS device
- * @res: memory resource in which the रेजिस्टर is located
- * @offset: रेजिस्टर offset in the memory resource
+ * @res: memory resource in which the register is located
+ * @offset: register offset in the memory resource
  * @value: value to be written
  */
-अटल अंतरभूत
-व्योम iss_reg_ग_लिखो(काष्ठा iss_device *iss, क्रमागत iss_mem_resources res,
+static inline
+void iss_reg_write(struct iss_device *iss, enum iss_mem_resources res,
 		   u32 offset, u32 value)
-अणु
-	ग_लिखोl(value, iss->regs[res] + offset);
-पूर्ण
+{
+	writel(value, iss->regs[res] + offset);
+}
 
 /*
- * iss_reg_clr - Clear bits in an OMAP4 ISS रेजिस्टर
+ * iss_reg_clr - Clear bits in an OMAP4 ISS register
  * @iss: the ISS device
- * @res: memory resource in which the रेजिस्टर is located
- * @offset: रेजिस्टर offset in the memory resource
+ * @res: memory resource in which the register is located
+ * @offset: register offset in the memory resource
  * @clr: bit mask to be cleared
  */
-अटल अंतरभूत
-व्योम iss_reg_clr(काष्ठा iss_device *iss, क्रमागत iss_mem_resources res,
+static inline
+void iss_reg_clr(struct iss_device *iss, enum iss_mem_resources res,
 		 u32 offset, u32 clr)
-अणु
-	u32 v = iss_reg_पढ़ो(iss, res, offset);
+{
+	u32 v = iss_reg_read(iss, res, offset);
 
-	iss_reg_ग_लिखो(iss, res, offset, v & ~clr);
-पूर्ण
+	iss_reg_write(iss, res, offset, v & ~clr);
+}
 
 /*
- * iss_reg_set - Set bits in an OMAP4 ISS रेजिस्टर
+ * iss_reg_set - Set bits in an OMAP4 ISS register
  * @iss: the ISS device
- * @res: memory resource in which the रेजिस्टर is located
- * @offset: रेजिस्टर offset in the memory resource
+ * @res: memory resource in which the register is located
+ * @offset: register offset in the memory resource
  * @set: bit mask to be set
  */
-अटल अंतरभूत
-व्योम iss_reg_set(काष्ठा iss_device *iss, क्रमागत iss_mem_resources res,
+static inline
+void iss_reg_set(struct iss_device *iss, enum iss_mem_resources res,
 		 u32 offset, u32 set)
-अणु
-	u32 v = iss_reg_पढ़ो(iss, res, offset);
+{
+	u32 v = iss_reg_read(iss, res, offset);
 
-	iss_reg_ग_लिखो(iss, res, offset, v | set);
-पूर्ण
+	iss_reg_write(iss, res, offset, v | set);
+}
 
 /*
- * iss_reg_update - Clear and set bits in an OMAP4 ISS रेजिस्टर
+ * iss_reg_update - Clear and set bits in an OMAP4 ISS register
  * @iss: the ISS device
- * @res: memory resource in which the रेजिस्टर is located
- * @offset: रेजिस्टर offset in the memory resource
+ * @res: memory resource in which the register is located
+ * @offset: register offset in the memory resource
  * @clr: bit mask to be cleared
  * @set: bit mask to be set
  *
  * Clear the clr mask first and then set the set mask.
  */
-अटल अंतरभूत
-व्योम iss_reg_update(काष्ठा iss_device *iss, क्रमागत iss_mem_resources res,
+static inline
+void iss_reg_update(struct iss_device *iss, enum iss_mem_resources res,
 		    u32 offset, u32 clr, u32 set)
-अणु
-	u32 v = iss_reg_पढ़ो(iss, res, offset);
+{
+	u32 v = iss_reg_read(iss, res, offset);
 
-	iss_reg_ग_लिखो(iss, res, offset, (v & ~clr) | set);
-पूर्ण
+	iss_reg_write(iss, res, offset, (v & ~clr) | set);
+}
 
-#घोषणा iss_poll_condition_समयout(cond, समयout, min_ival, max_ival)	\
-(अणु									\
-	अचिन्हित दीर्घ __समयout = jअगरfies + usecs_to_jअगरfies(समयout);	\
-	अचिन्हित पूर्णांक __min_ival = (min_ival);				\
-	अचिन्हित पूर्णांक __max_ival = (max_ival);				\
+#define iss_poll_condition_timeout(cond, timeout, min_ival, max_ival)	\
+({									\
+	unsigned long __timeout = jiffies + usecs_to_jiffies(timeout);	\
+	unsigned int __min_ival = (min_ival);				\
+	unsigned int __max_ival = (max_ival);				\
 	bool __cond;							\
-	जबतक (!(__cond = (cond))) अणु					\
-		अगर (समय_after(jअगरfies, __समयout))			\
-			अवरोध;						\
+	while (!(__cond = (cond))) {					\
+		if (time_after(jiffies, __timeout))			\
+			break;						\
 		usleep_range(__min_ival, __max_ival);			\
-	पूर्ण								\
+	}								\
 	!__cond;							\
-पूर्ण)
+})
 
-#पूर्ण_अगर /* _OMAP4_ISS_H_ */
+#endif /* _OMAP4_ISS_H_ */

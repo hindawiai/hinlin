@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
  * Module Name: tbfadt   - FADT table utilities
@@ -8,186 +7,186 @@
  *
  *****************************************************************************/
 
-#समावेश <acpi/acpi.h>
-#समावेश "accommon.h"
-#समावेश "actables.h"
+#include <acpi/acpi.h>
+#include "accommon.h"
+#include "actables.h"
 
-#घोषणा _COMPONENT          ACPI_TABLES
+#define _COMPONENT          ACPI_TABLES
 ACPI_MODULE_NAME("tbfadt")
 
 /* Local prototypes */
-अटल व्योम
-acpi_tb_init_generic_address(काष्ठा acpi_generic_address *generic_address,
+static void
+acpi_tb_init_generic_address(struct acpi_generic_address *generic_address,
 			     u8 space_id,
 			     u8 byte_width,
-			     u64 address, स्थिर अक्षर *रेजिस्टर_name, u8 flags);
+			     u64 address, const char *register_name, u8 flags);
 
-अटल व्योम acpi_tb_convert_fadt(व्योम);
+static void acpi_tb_convert_fadt(void);
 
-अटल व्योम acpi_tb_setup_fadt_रेजिस्टरs(व्योम);
+static void acpi_tb_setup_fadt_registers(void);
 
-अटल u64
-acpi_tb_select_address(अक्षर *रेजिस्टर_name, u32 address32, u64 address64);
+static u64
+acpi_tb_select_address(char *register_name, u32 address32, u64 address64);
 
-/* Table क्रम conversion of FADT to common पूर्णांकernal क्रमmat and FADT validation */
+/* Table for conversion of FADT to common internal format and FADT validation */
 
-प्रकार काष्ठा acpi_fadt_info अणु
-	स्थिर अक्षर *name;
+typedef struct acpi_fadt_info {
+	const char *name;
 	u16 address64;
 	u16 address32;
 	u16 length;
-	u8 शेष_length;
+	u8 default_length;
 	u8 flags;
 
-पूर्ण acpi_fadt_info;
+} acpi_fadt_info;
 
-#घोषणा ACPI_FADT_OPTIONAL          0
-#घोषणा ACPI_FADT_REQUIRED          1
-#घोषणा ACPI_FADT_SEPARATE_LENGTH   2
-#घोषणा ACPI_FADT_GPE_REGISTER      4
+#define ACPI_FADT_OPTIONAL          0
+#define ACPI_FADT_REQUIRED          1
+#define ACPI_FADT_SEPARATE_LENGTH   2
+#define ACPI_FADT_GPE_REGISTER      4
 
-अटल काष्ठा acpi_fadt_info fadt_info_table[] = अणु
-	अणु"Pm1aEventBlock",
+static struct acpi_fadt_info fadt_info_table[] = {
+	{"Pm1aEventBlock",
 	 ACPI_FADT_OFFSET(xpm1a_event_block),
 	 ACPI_FADT_OFFSET(pm1a_event_block),
 	 ACPI_FADT_OFFSET(pm1_event_length),
-	 ACPI_PM1_REGISTER_WIDTH * 2,	/* Enable + Status रेजिस्टर */
-	 ACPI_FADT_REQUIREDपूर्ण,
+	 ACPI_PM1_REGISTER_WIDTH * 2,	/* Enable + Status register */
+	 ACPI_FADT_REQUIRED},
 
-	अणु"Pm1bEventBlock",
+	{"Pm1bEventBlock",
 	 ACPI_FADT_OFFSET(xpm1b_event_block),
 	 ACPI_FADT_OFFSET(pm1b_event_block),
 	 ACPI_FADT_OFFSET(pm1_event_length),
-	 ACPI_PM1_REGISTER_WIDTH * 2,	/* Enable + Status रेजिस्टर */
-	 ACPI_FADT_OPTIONALपूर्ण,
+	 ACPI_PM1_REGISTER_WIDTH * 2,	/* Enable + Status register */
+	 ACPI_FADT_OPTIONAL},
 
-	अणु"Pm1aControlBlock",
+	{"Pm1aControlBlock",
 	 ACPI_FADT_OFFSET(xpm1a_control_block),
 	 ACPI_FADT_OFFSET(pm1a_control_block),
 	 ACPI_FADT_OFFSET(pm1_control_length),
 	 ACPI_PM1_REGISTER_WIDTH,
-	 ACPI_FADT_REQUIREDपूर्ण,
+	 ACPI_FADT_REQUIRED},
 
-	अणु"Pm1bControlBlock",
+	{"Pm1bControlBlock",
 	 ACPI_FADT_OFFSET(xpm1b_control_block),
 	 ACPI_FADT_OFFSET(pm1b_control_block),
 	 ACPI_FADT_OFFSET(pm1_control_length),
 	 ACPI_PM1_REGISTER_WIDTH,
-	 ACPI_FADT_OPTIONALपूर्ण,
+	 ACPI_FADT_OPTIONAL},
 
-	अणु"Pm2ControlBlock",
+	{"Pm2ControlBlock",
 	 ACPI_FADT_OFFSET(xpm2_control_block),
 	 ACPI_FADT_OFFSET(pm2_control_block),
 	 ACPI_FADT_OFFSET(pm2_control_length),
 	 ACPI_PM2_REGISTER_WIDTH,
-	 ACPI_FADT_SEPARATE_LENGTHपूर्ण,
+	 ACPI_FADT_SEPARATE_LENGTH},
 
-	अणु"PmTimerBlock",
-	 ACPI_FADT_OFFSET(xpm_समयr_block),
-	 ACPI_FADT_OFFSET(pm_समयr_block),
-	 ACPI_FADT_OFFSET(pm_समयr_length),
+	{"PmTimerBlock",
+	 ACPI_FADT_OFFSET(xpm_timer_block),
+	 ACPI_FADT_OFFSET(pm_timer_block),
+	 ACPI_FADT_OFFSET(pm_timer_length),
 	 ACPI_PM_TIMER_WIDTH,
-	 ACPI_FADT_SEPARATE_LENGTHपूर्ण,	/* ACPI 5.0A: Timer is optional */
+	 ACPI_FADT_SEPARATE_LENGTH},	/* ACPI 5.0A: Timer is optional */
 
-	अणु"Gpe0Block",
+	{"Gpe0Block",
 	 ACPI_FADT_OFFSET(xgpe0_block),
 	 ACPI_FADT_OFFSET(gpe0_block),
 	 ACPI_FADT_OFFSET(gpe0_block_length),
 	 0,
-	 ACPI_FADT_SEPARATE_LENGTH | ACPI_FADT_GPE_REGISTERपूर्ण,
+	 ACPI_FADT_SEPARATE_LENGTH | ACPI_FADT_GPE_REGISTER},
 
-	अणु"Gpe1Block",
+	{"Gpe1Block",
 	 ACPI_FADT_OFFSET(xgpe1_block),
 	 ACPI_FADT_OFFSET(gpe1_block),
 	 ACPI_FADT_OFFSET(gpe1_block_length),
 	 0,
-	 ACPI_FADT_SEPARATE_LENGTH | ACPI_FADT_GPE_REGISTERपूर्ण
-पूर्ण;
+	 ACPI_FADT_SEPARATE_LENGTH | ACPI_FADT_GPE_REGISTER}
+};
 
-#घोषणा ACPI_FADT_INFO_ENTRIES \
-			(माप (fadt_info_table) / माप (काष्ठा acpi_fadt_info))
+#define ACPI_FADT_INFO_ENTRIES \
+			(sizeof (fadt_info_table) / sizeof (struct acpi_fadt_info))
 
-/* Table used to split Event Blocks पूर्णांकo separate status/enable रेजिस्टरs */
+/* Table used to split Event Blocks into separate status/enable registers */
 
-प्रकार काष्ठा acpi_fadt_pm_info अणु
-	काष्ठा acpi_generic_address *target;
+typedef struct acpi_fadt_pm_info {
+	struct acpi_generic_address *target;
 	u16 source;
-	u8 रेजिस्टर_num;
+	u8 register_num;
 
-पूर्ण acpi_fadt_pm_info;
+} acpi_fadt_pm_info;
 
-अटल काष्ठा acpi_fadt_pm_info fadt_pm_info_table[] = अणु
-	अणु&acpi_gbl_xpm1a_status,
+static struct acpi_fadt_pm_info fadt_pm_info_table[] = {
+	{&acpi_gbl_xpm1a_status,
 	 ACPI_FADT_OFFSET(xpm1a_event_block),
-	 0पूर्ण,
+	 0},
 
-	अणु&acpi_gbl_xpm1a_enable,
+	{&acpi_gbl_xpm1a_enable,
 	 ACPI_FADT_OFFSET(xpm1a_event_block),
-	 1पूर्ण,
+	 1},
 
-	अणु&acpi_gbl_xpm1b_status,
+	{&acpi_gbl_xpm1b_status,
 	 ACPI_FADT_OFFSET(xpm1b_event_block),
-	 0पूर्ण,
+	 0},
 
-	अणु&acpi_gbl_xpm1b_enable,
+	{&acpi_gbl_xpm1b_enable,
 	 ACPI_FADT_OFFSET(xpm1b_event_block),
-	 1पूर्ण
-पूर्ण;
+	 1}
+};
 
-#घोषणा ACPI_FADT_PM_INFO_ENTRIES \
-			(माप (fadt_pm_info_table) / माप (काष्ठा acpi_fadt_pm_info))
+#define ACPI_FADT_PM_INFO_ENTRIES \
+			(sizeof (fadt_pm_info_table) / sizeof (struct acpi_fadt_pm_info))
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_tb_init_generic_address
  *
- * PARAMETERS:  generic_address     - GAS काष्ठा to be initialized
- *              space_id            - ACPI Space ID क्रम this रेजिस्टर
- *              byte_width          - Width of this रेजिस्टर
- *              address             - Address of the रेजिस्टर
- *              रेजिस्टर_name       - ASCII name of the ACPI रेजिस्टर
+ * PARAMETERS:  generic_address     - GAS struct to be initialized
+ *              space_id            - ACPI Space ID for this register
+ *              byte_width          - Width of this register
+ *              address             - Address of the register
+ *              register_name       - ASCII name of the ACPI register
  *
  * RETURN:      None
  *
  * DESCRIPTION: Initialize a Generic Address Structure (GAS)
- *              See the ACPI specअगरication क्रम a full description and
- *              definition of this काष्ठाure.
+ *              See the ACPI specification for a full description and
+ *              definition of this structure.
  *
  ******************************************************************************/
 
-अटल व्योम
-acpi_tb_init_generic_address(काष्ठा acpi_generic_address *generic_address,
+static void
+acpi_tb_init_generic_address(struct acpi_generic_address *generic_address,
 			     u8 space_id,
 			     u8 byte_width,
-			     u64 address, स्थिर अक्षर *रेजिस्टर_name, u8 flags)
-अणु
+			     u64 address, const char *register_name, u8 flags)
+{
 	u8 bit_width;
 
 	/*
-	 * Bit width field in the GAS is only one byte दीर्घ, 255 max.
-	 * Check क्रम bit_width overflow in GAS.
+	 * Bit width field in the GAS is only one byte long, 255 max.
+	 * Check for bit_width overflow in GAS.
 	 */
 	bit_width = (u8)(byte_width * 8);
-	अगर (byte_width > 31) अणु	/* (31*8)=248, (32*8)=256 */
+	if (byte_width > 31) {	/* (31*8)=248, (32*8)=256 */
 		/*
-		 * No error क्रम GPE blocks, because we करो not use the bit_width
-		 * क्रम GPEs, the legacy length (byte_width) is used instead to
-		 * allow क्रम a large number of GPEs.
+		 * No error for GPE blocks, because we do not use the bit_width
+		 * for GPEs, the legacy length (byte_width) is used instead to
+		 * allow for a large number of GPEs.
 		 */
-		अगर (!(flags & ACPI_FADT_GPE_REGISTER)) अणु
+		if (!(flags & ACPI_FADT_GPE_REGISTER)) {
 			ACPI_ERROR((AE_INFO,
 				    "%s - 32-bit FADT register is too long (%u bytes, %u bits) "
 				    "to convert to GAS struct - 255 bits max, truncating",
-				    रेजिस्टर_name, byte_width,
+				    register_name, byte_width,
 				    (byte_width * 8)));
-		पूर्ण
+		}
 
 		bit_width = 255;
-	पूर्ण
+	}
 
 	/*
 	 * The 64-bit Address field is non-aligned in the byte packed
-	 * GAS काष्ठा.
+	 * GAS struct.
 	 */
 	ACPI_MOVE_64_TO_64(&generic_address->address, &address);
 
@@ -197,69 +196,69 @@ acpi_tb_init_generic_address(काष्ठा acpi_generic_address *generic_ad
 	generic_address->bit_width = bit_width;
 	generic_address->bit_offset = 0;
 	generic_address->access_width = 0;	/* Access width ANY */
-पूर्ण
+}
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_tb_select_address
  *
- * PARAMETERS:  रेजिस्टर_name       - ASCII name of the ACPI रेजिस्टर
- *              address32           - 32-bit address of the रेजिस्टर
- *              address64           - 64-bit address of the रेजिस्टर
+ * PARAMETERS:  register_name       - ASCII name of the ACPI register
+ *              address32           - 32-bit address of the register
+ *              address64           - 64-bit address of the register
  *
  * RETURN:      The resolved 64-bit address
  *
  * DESCRIPTION: Select between 32-bit and 64-bit versions of addresses within
- *              the FADT. Used क्रम the FACS and DSDT addresses.
+ *              the FADT. Used for the FACS and DSDT addresses.
  *
  * NOTES:
  *
- * Check क्रम FACS and DSDT address mismatches. An address mismatch between
+ * Check for FACS and DSDT address mismatches. An address mismatch between
  * the 32-bit and 64-bit address fields (FIRMWARE_CTRL/X_FIRMWARE_CTRL and
  * DSDT/X_DSDT) could be a corrupted address field or it might indicate
  * the presence of two FACS or two DSDT tables.
  *
  * November 2013:
- * By शेष, as per the ACPICA specअगरication, a valid 64-bit address is
+ * By default, as per the ACPICA specification, a valid 64-bit address is
  * used regardless of the value of the 32-bit address. However, this
  * behavior can be overridden via the acpi_gbl_use32_bit_fadt_addresses flag.
  *
  ******************************************************************************/
 
-अटल u64
-acpi_tb_select_address(अक्षर *रेजिस्टर_name, u32 address32, u64 address64)
-अणु
+static u64
+acpi_tb_select_address(char *register_name, u32 address32, u64 address64)
+{
 
-	अगर (!address64) अणु
+	if (!address64) {
 
 		/* 64-bit address is zero, use 32-bit address */
 
-		वापस ((u64)address32);
-	पूर्ण
+		return ((u64)address32);
+	}
 
-	अगर (address32 && (address64 != (u64)address32)) अणु
+	if (address32 && (address64 != (u64)address32)) {
 
 		/* Address mismatch between 32-bit and 64-bit versions */
 
 		ACPI_BIOS_WARNING((AE_INFO,
 				   "32/64X %s address mismatch in FADT: "
 				   "0x%8.8X/0x%8.8X%8.8X, using %u-bit address",
-				   रेजिस्टर_name, address32,
+				   register_name, address32,
 				   ACPI_FORMAT_UINT64(address64),
 				   acpi_gbl_use32_bit_fadt_addresses ? 32 :
 				   64));
 
 		/* 32-bit address override */
 
-		अगर (acpi_gbl_use32_bit_fadt_addresses) अणु
-			वापस ((u64)address32);
-		पूर्ण
-	पूर्ण
+		if (acpi_gbl_use32_bit_fadt_addresses) {
+			return ((u64)address32);
+		}
+	}
 
 	/* Default is to use the 64-bit address */
 
-	वापस (address64);
-पूर्ण
+	return (address64);
+}
 
 /*******************************************************************************
  *
@@ -274,38 +273,38 @@ acpi_tb_select_address(अक्षर *रेजिस्टर_name, u32 addre
  *
  ******************************************************************************/
 
-व्योम acpi_tb_parse_fadt(व्योम)
-अणु
+void acpi_tb_parse_fadt(void)
+{
 	u32 length;
-	काष्ठा acpi_table_header *table;
-	काष्ठा acpi_table_desc *fadt_desc;
+	struct acpi_table_header *table;
+	struct acpi_table_desc *fadt_desc;
 	acpi_status status;
 
 	/*
-	 * The FADT has multiple versions with dअगरferent lengths,
-	 * and it contains poपूर्णांकers to both the DSDT and FACS tables.
+	 * The FADT has multiple versions with different lengths,
+	 * and it contains pointers to both the DSDT and FACS tables.
 	 *
-	 * Get a local copy of the FADT and convert it to a common क्रमmat
+	 * Get a local copy of the FADT and convert it to a common format
 	 * Map entire FADT, assumed to be smaller than one page.
 	 */
 	fadt_desc = &acpi_gbl_root_table_list.tables[acpi_gbl_fadt_index];
 	status = acpi_tb_get_table(fadt_desc, &table);
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस;
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		return;
+	}
 	length = fadt_desc->length;
 
 	/*
-	 * Validate the FADT checksum beक्रमe we copy the table. Ignore
+	 * Validate the FADT checksum before we copy the table. Ignore
 	 * checksum error as we want to try to get the DSDT and FACS.
 	 */
-	(व्योम)acpi_tb_verअगरy_checksum(table, length);
+	(void)acpi_tb_verify_checksum(table, length);
 
-	/* Create a local copy of the FADT in common ACPI 2.0+ क्रमmat */
+	/* Create a local copy of the FADT in common ACPI 2.0+ format */
 
 	acpi_tb_create_local_fadt(table, length);
 
-	/* All करोne with the real FADT, unmap it */
+	/* All done with the real FADT, unmap it */
 
 	acpi_tb_put_table(fadt_desc);
 
@@ -318,80 +317,80 @@ acpi_tb_select_address(अक्षर *रेजिस्टर_name, u32 addre
 
 	/* If Hardware Reduced flag is set, there is no FACS */
 
-	अगर (!acpi_gbl_reduced_hardware) अणु
-		अगर (acpi_gbl_FADT.facs) अणु
+	if (!acpi_gbl_reduced_hardware) {
+		if (acpi_gbl_FADT.facs) {
 			acpi_tb_install_standard_table((acpi_physical_address)
 						       acpi_gbl_FADT.facs,
 						       ACPI_TABLE_ORIGIN_INTERNAL_PHYSICAL,
 						       FALSE, TRUE,
 						       &acpi_gbl_facs_index);
-		पूर्ण
-		अगर (acpi_gbl_FADT.Xfacs) अणु
+		}
+		if (acpi_gbl_FADT.Xfacs) {
 			acpi_tb_install_standard_table((acpi_physical_address)
 						       acpi_gbl_FADT.Xfacs,
 						       ACPI_TABLE_ORIGIN_INTERNAL_PHYSICAL,
 						       FALSE, TRUE,
 						       &acpi_gbl_xfacs_index);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_tb_create_local_fadt
  *
- * PARAMETERS:  table               - Poपूर्णांकer to BIOS FADT
+ * PARAMETERS:  table               - Pointer to BIOS FADT
  *              length              - Length of the table
  *
  * RETURN:      None
  *
- * DESCRIPTION: Get a local copy of the FADT and convert it to a common क्रमmat.
- *              Perक्रमms validation on some important FADT fields.
+ * DESCRIPTION: Get a local copy of the FADT and convert it to a common format.
+ *              Performs validation on some important FADT fields.
  *
  * NOTE:        We create a local copy of the FADT regardless of the version.
  *
  ******************************************************************************/
 
-व्योम acpi_tb_create_local_fadt(काष्ठा acpi_table_header *table, u32 length)
-अणु
+void acpi_tb_create_local_fadt(struct acpi_table_header *table, u32 length)
+{
 	/*
-	 * Check अगर the FADT is larger than the largest table that we expect
-	 * (typically the current ACPI specअगरication version). If so, truncate
+	 * Check if the FADT is larger than the largest table that we expect
+	 * (typically the current ACPI specification version). If so, truncate
 	 * the table, and issue a warning.
 	 */
-	अगर (length > माप(काष्ठा acpi_table_fadt)) अणु
+	if (length > sizeof(struct acpi_table_fadt)) {
 		ACPI_BIOS_WARNING((AE_INFO,
 				   "FADT (revision %u) is longer than %s length, "
 				   "truncating length %u to %u",
 				   table->revision, ACPI_FADT_CONFORMANCE,
 				   length,
-				   (u32)माप(काष्ठा acpi_table_fadt)));
-	पूर्ण
+				   (u32)sizeof(struct acpi_table_fadt)));
+	}
 
 	/* Clear the entire local FADT */
 
-	स_रखो(&acpi_gbl_FADT, 0, माप(काष्ठा acpi_table_fadt));
+	memset(&acpi_gbl_FADT, 0, sizeof(struct acpi_table_fadt));
 
-	/* Copy the original FADT, up to माप (काष्ठा acpi_table_fadt) */
+	/* Copy the original FADT, up to sizeof (struct acpi_table_fadt) */
 
-	स_नकल(&acpi_gbl_FADT, table,
-	       ACPI_MIN(length, माप(काष्ठा acpi_table_fadt)));
+	memcpy(&acpi_gbl_FADT, table,
+	       ACPI_MIN(length, sizeof(struct acpi_table_fadt)));
 
 	/* Take a copy of the Hardware Reduced flag */
 
 	acpi_gbl_reduced_hardware = FALSE;
-	अगर (acpi_gbl_FADT.flags & ACPI_FADT_HW_REDUCED) अणु
+	if (acpi_gbl_FADT.flags & ACPI_FADT_HW_REDUCED) {
 		acpi_gbl_reduced_hardware = TRUE;
-	पूर्ण
+	}
 
-	/* Convert the local copy of the FADT to the common पूर्णांकernal क्रमmat */
+	/* Convert the local copy of the FADT to the common internal format */
 
 	acpi_tb_convert_fadt();
 
-	/* Initialize the global ACPI रेजिस्टर काष्ठाures */
+	/* Initialize the global ACPI register structures */
 
-	acpi_tb_setup_fadt_रेजिस्टरs();
-पूर्ण
+	acpi_tb_setup_fadt_registers();
+}
 
 /*******************************************************************************
  *
@@ -401,46 +400,46 @@ acpi_tb_select_address(अक्षर *रेजिस्टर_name, u32 addre
  *
  * RETURN:      None
  *
- * DESCRIPTION: Converts all versions of the FADT to a common पूर्णांकernal क्रमmat.
+ * DESCRIPTION: Converts all versions of the FADT to a common internal format.
  *              Expand 32-bit addresses to 64-bit as necessary. Also validate
  *              important fields within the FADT.
  *
- * NOTE:        acpi_gbl_FADT must be of size (काष्ठा acpi_table_fadt), and must
+ * NOTE:        acpi_gbl_FADT must be of size (struct acpi_table_fadt), and must
  *              contain a copy of the actual BIOS-provided FADT.
  *
- * Notes on 64-bit रेजिस्टर addresses:
+ * Notes on 64-bit register addresses:
  *
  * After this FADT conversion, later ACPICA code will only use the 64-bit "X"
- * fields of the FADT क्रम all ACPI रेजिस्टर addresses.
+ * fields of the FADT for all ACPI register addresses.
  *
  * The 64-bit X fields are optional extensions to the original 32-bit FADT
- * V1.0 fields. Even अगर they are present in the FADT, they are optional and
- * are unused अगर the BIOS sets them to zero. Thereक्रमe, we must copy/expand
- * 32-bit V1.0 fields to the 64-bit X fields अगर the 64-bit X field is originally
+ * V1.0 fields. Even if they are present in the FADT, they are optional and
+ * are unused if the BIOS sets them to zero. Therefore, we must copy/expand
+ * 32-bit V1.0 fields to the 64-bit X fields if the 64-bit X field is originally
  * zero.
  *
  * For ACPI 1.0 FADTs (that contain no 64-bit addresses), all 32-bit address
- * fields are expanded to the corresponding 64-bit X fields in the पूर्णांकernal
+ * fields are expanded to the corresponding 64-bit X fields in the internal
  * common FADT.
  *
  * For ACPI 2.0+ FADTs, all valid (non-zero) 32-bit address fields are expanded
- * to the corresponding 64-bit X fields, अगर the 64-bit field is originally
- * zero. Adhering to the ACPI specअगरication, we completely ignore the 32-bit
- * field अगर the 64-bit field is valid, regardless of whether the host OS is
+ * to the corresponding 64-bit X fields, if the 64-bit field is originally
+ * zero. Adhering to the ACPI specification, we completely ignore the 32-bit
+ * field if the 64-bit field is valid, regardless of whether the host OS is
  * 32-bit or 64-bit.
  *
  * Possible additional checks:
  *  (acpi_gbl_FADT.pm1_event_length >= 4)
  *  (acpi_gbl_FADT.pm1_control_length >= 2)
- *  (acpi_gbl_FADT.pm_समयr_length >= 4)
+ *  (acpi_gbl_FADT.pm_timer_length >= 4)
  *  Gpe block lengths must be multiple of 2
  *
  ******************************************************************************/
 
-अटल व्योम acpi_tb_convert_fadt(व्योम)
-अणु
-	स्थिर अक्षर *name;
-	काष्ठा acpi_generic_address *address64;
+static void acpi_tb_convert_fadt(void)
+{
+	const char *name;
+	struct acpi_generic_address *address64;
 	u32 address32;
 	u8 length;
 	u8 flags;
@@ -457,19 +456,19 @@ acpi_tb_select_address(अक्षर *रेजिस्टर_name, u32 addre
 	 * Note: The FADT revision value is unreliable. Only the length can be
 	 * trusted.
 	 */
-	अगर (acpi_gbl_FADT.header.length <= ACPI_FADT_V2_SIZE) अणु
+	if (acpi_gbl_FADT.header.length <= ACPI_FADT_V2_SIZE) {
 		acpi_gbl_FADT.preferred_profile = 0;
 		acpi_gbl_FADT.pstate_control = 0;
 		acpi_gbl_FADT.cst_control = 0;
 		acpi_gbl_FADT.boot_flags = 0;
-	पूर्ण
+	}
 
 	/*
 	 * Now we can update the local FADT length to the length of the
-	 * current FADT version as defined by the ACPI specअगरication.
-	 * Thus, we will have a common FADT पूर्णांकernally.
+	 * current FADT version as defined by the ACPI specification.
+	 * Thus, we will have a common FADT internally.
 	 */
-	acpi_gbl_FADT.header.length = माप(काष्ठा acpi_table_fadt);
+	acpi_gbl_FADT.header.length = sizeof(struct acpi_table_fadt);
 
 	/*
 	 * Expand the 32-bit DSDT addresses to 64-bit as necessary.
@@ -479,24 +478,24 @@ acpi_tb_select_address(अक्षर *रेजिस्टर_name, u32 addre
 						     acpi_gbl_FADT.dsdt,
 						     acpi_gbl_FADT.Xdsdt);
 
-	/* If Hardware Reduced flag is set, we are all करोne */
+	/* If Hardware Reduced flag is set, we are all done */
 
-	अगर (acpi_gbl_reduced_hardware) अणु
-		वापस;
-	पूर्ण
+	if (acpi_gbl_reduced_hardware) {
+		return;
+	}
 
 	/* Examine all of the 64-bit extended address fields (X fields) */
 
-	क्रम (i = 0; i < ACPI_FADT_INFO_ENTRIES; i++) अणु
+	for (i = 0; i < ACPI_FADT_INFO_ENTRIES; i++) {
 		/*
-		 * Get the 32-bit and 64-bit addresses, as well as the रेजिस्टर
-		 * length and रेजिस्टर name.
+		 * Get the 32-bit and 64-bit addresses, as well as the register
+		 * length and register name.
 		 */
 		address32 = *ACPI_ADD_PTR(u32,
 					  &acpi_gbl_FADT,
 					  fadt_info_table[i].address32);
 
-		address64 = ACPI_ADD_PTR(काष्ठा acpi_generic_address,
+		address64 = ACPI_ADD_PTR(struct acpi_generic_address,
 					 &acpi_gbl_FADT,
 					 fadt_info_table[i].address64);
 
@@ -509,35 +508,35 @@ acpi_tb_select_address(अक्षर *रेजिस्टर_name, u32 addre
 
 		/*
 		 * Expand the ACPI 1.0 32-bit addresses to the ACPI 2.0 64-bit "X"
-		 * generic address काष्ठाures as necessary. Later code will always use
-		 * the 64-bit address काष्ठाures.
+		 * generic address structures as necessary. Later code will always use
+		 * the 64-bit address structures.
 		 *
 		 * November 2013:
-		 * Now always use the 64-bit address अगर it is valid (non-zero), in
-		 * accordance with the ACPI specअगरication which states that a 64-bit
+		 * Now always use the 64-bit address if it is valid (non-zero), in
+		 * accordance with the ACPI specification which states that a 64-bit
 		 * address supersedes the 32-bit version. This behavior can be
 		 * overridden by the acpi_gbl_use32_bit_fadt_addresses flag.
 		 *
-		 * During 64-bit address स्थिरruction and verअगरication,
-		 * these हालs are handled:
+		 * During 64-bit address construction and verification,
+		 * these cases are handled:
 		 *
-		 * Address32 zero, Address64 [करोn't care]   - Use Address64
+		 * Address32 zero, Address64 [don't care]   - Use Address64
 		 *
-		 * No override: अगर acpi_gbl_use32_bit_fadt_addresses is FALSE, and:
+		 * No override: if acpi_gbl_use32_bit_fadt_addresses is FALSE, and:
 		 * Address32 non-zero, Address64 zero       - Copy/use Address32
 		 * Address32 non-zero == Address64 non-zero - Use Address64
 		 * Address32 non-zero != Address64 non-zero - Warning, use Address64
 		 *
-		 * Override: अगर acpi_gbl_use32_bit_fadt_addresses is TRUE, and:
+		 * Override: if acpi_gbl_use32_bit_fadt_addresses is TRUE, and:
 		 * Address32 non-zero, Address64 zero       - Copy/use Address32
 		 * Address32 non-zero == Address64 non-zero - Copy/use Address32
 		 * Address32 non-zero != Address64 non-zero - Warning, copy/use Address32
 		 *
-		 * Note: space_id is always I/O क्रम 32-bit legacy address fields
+		 * Note: space_id is always I/O for 32-bit legacy address fields
 		 */
-		अगर (address32) अणु
-			अगर (address64->address) अणु
-				अगर (address64->address != (u64)address32) अणु
+		if (address32) {
+			if (address64->address) {
+				if (address64->address != (u64)address32) {
 
 					/* Address mismatch */
 
@@ -549,54 +548,54 @@ acpi_tb_select_address(अक्षर *रेजिस्टर_name, u32 addre
 							   (address64->address),
 							   acpi_gbl_use32_bit_fadt_addresses
 							   ? 32 : 64));
-				पूर्ण
+				}
 
 				/*
-				 * For each extended field, check क्रम length mismatch
+				 * For each extended field, check for length mismatch
 				 * between the legacy length field and the corresponding
 				 * 64-bit X length field.
 				 * Note: If the legacy length field is > 0xFF bits, ignore
-				 * this check. (GPE रेजिस्टरs can be larger than the
-				 * 64-bit GAS काष्ठाure can accommodate, 0xFF bits).
+				 * this check. (GPE registers can be larger than the
+				 * 64-bit GAS structure can accommodate, 0xFF bits).
 				 */
-				अगर ((ACPI_MUL_8(length) <= ACPI_UINT8_MAX) &&
+				if ((ACPI_MUL_8(length) <= ACPI_UINT8_MAX) &&
 				    (address64->bit_width !=
-				     ACPI_MUL_8(length))) अणु
+				     ACPI_MUL_8(length))) {
 					ACPI_BIOS_WARNING((AE_INFO,
 							   "32/64X length mismatch in FADT/%s: %u/%u",
 							   name,
 							   ACPI_MUL_8(length),
 							   address64->
 							   bit_width));
-				पूर्ण
-			पूर्ण
+				}
+			}
 
 			/*
-			 * Hardware रेजिस्टर access code always uses the 64-bit fields.
-			 * So अगर the 64-bit field is zero or is to be overridden,
+			 * Hardware register access code always uses the 64-bit fields.
+			 * So if the 64-bit field is zero or is to be overridden,
 			 * initialize it with the 32-bit fields.
-			 * Note that when the 32-bit address favor is specअगरied, the
+			 * Note that when the 32-bit address favor is specified, the
 			 * 64-bit fields are always re-initialized so that
 			 * access_size/bit_width/bit_offset fields can be correctly
 			 * configured to the values to trigger a 32-bit compatible
-			 * access mode in the hardware रेजिस्टर access code.
+			 * access mode in the hardware register access code.
 			 */
-			अगर (!address64->address
-			    || acpi_gbl_use32_bit_fadt_addresses) अणु
+			if (!address64->address
+			    || acpi_gbl_use32_bit_fadt_addresses) {
 				acpi_tb_init_generic_address(address64,
 							     ACPI_ADR_SPACE_SYSTEM_IO,
 							     length,
 							     (u64)address32,
 							     name, flags);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अगर (fadt_info_table[i].flags & ACPI_FADT_REQUIRED) अणु
+		if (fadt_info_table[i].flags & ACPI_FADT_REQUIRED) {
 			/*
 			 * Field is required (Pm1a_event, Pm1a_control).
 			 * Both the address and length must be non-zero.
 			 */
-			अगर (!address64->address || !length) अणु
+			if (!address64->address || !length) {
 				ACPI_BIOS_ERROR((AE_INFO,
 						 "Required FADT field %s has zero address and/or length: "
 						 "0x%8.8X%8.8X/0x%X",
@@ -604,15 +603,15 @@ acpi_tb_select_address(अक्षर *रेजिस्टर_name, u32 addre
 						 ACPI_FORMAT_UINT64(address64->
 								    address),
 						 length));
-			पूर्ण
-		पूर्ण अन्यथा अगर (fadt_info_table[i].flags & ACPI_FADT_SEPARATE_LENGTH) अणु
+			}
+		} else if (fadt_info_table[i].flags & ACPI_FADT_SEPARATE_LENGTH) {
 			/*
 			 * Field is optional (Pm2_control, GPE0, GPE1) AND has its own
 			 * length field. If present, both the address and length must
 			 * be valid.
 			 */
-			अगर ((address64->address && !length) ||
-			    (!address64->address && length)) अणु
+			if ((address64->address && !length) ||
+			    (!address64->address && length)) {
 				ACPI_BIOS_WARNING((AE_INFO,
 						   "Optional FADT field %s has valid %s but zero %s: "
 						   "0x%8.8X%8.8X/0x%X", name,
@@ -623,101 +622,101 @@ acpi_tb_select_address(अक्षर *रेजिस्टर_name, u32 addre
 						   ACPI_FORMAT_UINT64
 						   (address64->address),
 						   length));
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+			}
+		}
+	}
+}
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_tb_setup_fadt_रेजिस्टरs
+ * FUNCTION:    acpi_tb_setup_fadt_registers
  *
  * PARAMETERS:  None, uses acpi_gbl_FADT.
  *
  * RETURN:      None
  *
- * DESCRIPTION: Initialize global ACPI PM1 रेजिस्टर definitions. Optionally,
- *              क्रमce FADT रेजिस्टर definitions to their शेष lengths.
+ * DESCRIPTION: Initialize global ACPI PM1 register definitions. Optionally,
+ *              force FADT register definitions to their default lengths.
  *
  ******************************************************************************/
 
-अटल व्योम acpi_tb_setup_fadt_रेजिस्टरs(व्योम)
-अणु
-	काष्ठा acpi_generic_address *target64;
-	काष्ठा acpi_generic_address *source64;
-	u8 pm1_रेजिस्टर_byte_width;
+static void acpi_tb_setup_fadt_registers(void)
+{
+	struct acpi_generic_address *target64;
+	struct acpi_generic_address *source64;
+	u8 pm1_register_byte_width;
 	u32 i;
 
 	/*
-	 * Optionally check all रेजिस्टर lengths against the शेष values and
-	 * update them अगर they are incorrect.
+	 * Optionally check all register lengths against the default values and
+	 * update them if they are incorrect.
 	 */
-	अगर (acpi_gbl_use_शेष_रेजिस्टर_widths) अणु
-		क्रम (i = 0; i < ACPI_FADT_INFO_ENTRIES; i++) अणु
+	if (acpi_gbl_use_default_register_widths) {
+		for (i = 0; i < ACPI_FADT_INFO_ENTRIES; i++) {
 			target64 =
-			    ACPI_ADD_PTR(काष्ठा acpi_generic_address,
+			    ACPI_ADD_PTR(struct acpi_generic_address,
 					 &acpi_gbl_FADT,
 					 fadt_info_table[i].address64);
 
 			/*
-			 * If a valid रेजिस्टर (Address != 0) and the (शेष_length > 0)
-			 * (Not a GPE रेजिस्टर), then check the width against the शेष.
+			 * If a valid register (Address != 0) and the (default_length > 0)
+			 * (Not a GPE register), then check the width against the default.
 			 */
-			अगर ((target64->address) &&
-			    (fadt_info_table[i].शेष_length > 0) &&
-			    (fadt_info_table[i].शेष_length !=
-			     target64->bit_width)) अणु
+			if ((target64->address) &&
+			    (fadt_info_table[i].default_length > 0) &&
+			    (fadt_info_table[i].default_length !=
+			     target64->bit_width)) {
 				ACPI_BIOS_WARNING((AE_INFO,
 						   "Invalid length for FADT/%s: %u, using default %u",
 						   fadt_info_table[i].name,
 						   target64->bit_width,
 						   fadt_info_table[i].
-						   शेष_length));
+						   default_length));
 
-				/* Incorrect size, set width to the शेष */
+				/* Incorrect size, set width to the default */
 
 				target64->bit_width =
-				    fadt_info_table[i].शेष_length;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				    fadt_info_table[i].default_length;
+			}
+		}
+	}
 
 	/*
-	 * Get the length of the inभागidual PM1 रेजिस्टरs (enable and status).
-	 * Each रेजिस्टर is defined to be (event block length / 2). Extra भागide
+	 * Get the length of the individual PM1 registers (enable and status).
+	 * Each register is defined to be (event block length / 2). Extra divide
 	 * by 8 converts bits to bytes.
 	 */
-	pm1_रेजिस्टर_byte_width = (u8)
+	pm1_register_byte_width = (u8)
 	    ACPI_DIV_16(acpi_gbl_FADT.xpm1a_event_block.bit_width);
 
 	/*
-	 * Calculate separate GAS काष्ठाs क्रम the PM1x (A/B) Status and Enable
-	 * रेजिस्टरs. These addresses करो not appear (directly) in the FADT, so it
+	 * Calculate separate GAS structs for the PM1x (A/B) Status and Enable
+	 * registers. These addresses do not appear (directly) in the FADT, so it
 	 * is useful to pre-calculate them from the PM1 Event Block definitions.
 	 *
-	 * The PM event blocks are split पूर्णांकo two रेजिस्टर blocks, first is the
+	 * The PM event blocks are split into two register blocks, first is the
 	 * PM Status Register block, followed immediately by the PM Enable
 	 * Register block. Each is of length (pm1_event_length/2)
 	 *
-	 * Note: The PM1A event block is required by the ACPI specअगरication.
-	 * However, the PM1B event block is optional and is rarely, अगर ever,
+	 * Note: The PM1A event block is required by the ACPI specification.
+	 * However, the PM1B event block is optional and is rarely, if ever,
 	 * used.
 	 */
 
-	क्रम (i = 0; i < ACPI_FADT_PM_INFO_ENTRIES; i++) अणु
+	for (i = 0; i < ACPI_FADT_PM_INFO_ENTRIES; i++) {
 		source64 =
-		    ACPI_ADD_PTR(काष्ठा acpi_generic_address, &acpi_gbl_FADT,
+		    ACPI_ADD_PTR(struct acpi_generic_address, &acpi_gbl_FADT,
 				 fadt_pm_info_table[i].source);
 
-		अगर (source64->address) अणु
+		if (source64->address) {
 			acpi_tb_init_generic_address(fadt_pm_info_table[i].
 						     target, source64->space_id,
-						     pm1_रेजिस्टर_byte_width,
+						     pm1_register_byte_width,
 						     source64->address +
 						     (fadt_pm_info_table[i].
-						      रेजिस्टर_num *
-						      pm1_रेजिस्टर_byte_width),
+						      register_num *
+						      pm1_register_byte_width),
 						     "PmRegisters", 0);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}

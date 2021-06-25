@@ -1,27 +1,26 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2018 Etnaviv Project
  */
 
-#समावेश "etnaviv_gpu.h"
+#include "etnaviv_gpu.h"
 
-अटल स्थिर काष्ठा etnaviv_chip_identity etnaviv_chip_identities[] = अणु
-	अणु
+static const struct etnaviv_chip_identity etnaviv_chip_identities[] = {
+	{
 		.model = 0x400,
 		.revision = 0x4652,
 		.product_id = 0x70001,
 		.customer_id = 0x100,
 		.eco_id = 0,
 		.stream_count = 4,
-		.रेजिस्टर_max = 64,
-		.thपढ़ो_count = 128,
+		.register_max = 64,
+		.thread_count = 128,
 		.shader_core_count = 1,
 		.vertex_cache_size = 8,
 		.vertex_output_buffer_size = 1024,
 		.pixel_pipes = 1,
-		.inकाष्ठाion_count = 256,
-		.num_स्थिरants = 320,
+		.instruction_count = 256,
+		.num_constants = 320,
 		.buffer_size = 0,
 		.varyings_count = 8,
 		.features = 0xa0e9e004,
@@ -37,22 +36,22 @@
 		.minor_features9 = 0x0,
 		.minor_features10 = 0x0,
 		.minor_features11 = 0x0,
-	पूर्ण,
-	अणु
+	},
+	{
 		.model = 0x7000,
 		.revision = 0x6214,
 		.product_id = ~0U,
 		.customer_id = ~0U,
 		.eco_id = ~0U,
 		.stream_count = 16,
-		.रेजिस्टर_max = 64,
-		.thपढ़ो_count = 1024,
+		.register_max = 64,
+		.thread_count = 1024,
 		.shader_core_count = 4,
 		.vertex_cache_size = 16,
 		.vertex_output_buffer_size = 1024,
 		.pixel_pipes = 2,
-		.inकाष्ठाion_count = 512,
-		.num_स्थिरants = 320,
+		.instruction_count = 512,
+		.num_constants = 320,
 		.buffer_size = 0,
 		.varyings_count = 16,
 		.features = 0xe0287cad,
@@ -68,28 +67,28 @@
 		.minor_features9 = 0x0edbf03c,
 		.minor_features10 = 0x90044250,
 		.minor_features11 = 0x00000024,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-bool etnaviv_fill_identity_from_hwdb(काष्ठा etnaviv_gpu *gpu)
-अणु
-	काष्ठा etnaviv_chip_identity *ident = &gpu->identity;
-	पूर्णांक i;
+bool etnaviv_fill_identity_from_hwdb(struct etnaviv_gpu *gpu)
+{
+	struct etnaviv_chip_identity *ident = &gpu->identity;
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(etnaviv_chip_identities); i++) अणु
-		अगर (etnaviv_chip_identities[i].model == ident->model &&
+	for (i = 0; i < ARRAY_SIZE(etnaviv_chip_identities); i++) {
+		if (etnaviv_chip_identities[i].model == ident->model &&
 		    etnaviv_chip_identities[i].revision == ident->revision &&
 		    (etnaviv_chip_identities[i].product_id == ident->product_id ||
 			 etnaviv_chip_identities[i].product_id == ~0U) &&
 		    (etnaviv_chip_identities[i].customer_id == ident->customer_id ||
 			 etnaviv_chip_identities[i].customer_id == ~0U) &&
 		    (etnaviv_chip_identities[i].eco_id == ident->eco_id ||
-			 etnaviv_chip_identities[i].eco_id == ~0U)) अणु
-			स_नकल(ident, &etnaviv_chip_identities[i],
-			       माप(*ident));
-			वापस true;
-		पूर्ण
-	पूर्ण
+			 etnaviv_chip_identities[i].eco_id == ~0U)) {
+			memcpy(ident, &etnaviv_chip_identities[i],
+			       sizeof(*ident));
+			return true;
+		}
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}

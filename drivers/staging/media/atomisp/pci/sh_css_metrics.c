@@ -1,180 +1,179 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Support क्रम Intel Camera Imaging ISP subप्रणाली.
+ * Support for Intel Camera Imaging ISP subsystem.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  */
 
-#समावेश "assert_support.h"
-#समावेश "sh_css_metrics.h"
+#include "assert_support.h"
+#include "sh_css_metrics.h"
 
-#समावेश "sp.h"
-#समावेश "isp.h"
+#include "sp.h"
+#include "isp.h"
 
-#समावेश "sh_css_internal.h"
+#include "sh_css_internal.h"
 
-#घोषणा MULTIPLE_PCS 0
-#घोषणा SUSPEND      0
-#घोषणा NOF_PCS      1
-#घोषणा RESUME_MASK  0x8
-#घोषणा STOP_MASK    0x0
+#define MULTIPLE_PCS 0
+#define SUSPEND      0
+#define NOF_PCS      1
+#define RESUME_MASK  0x8
+#define STOP_MASK    0x0
 
-अटल bool pc_histogram_enabled;
-अटल काष्ठा sh_css_pc_histogram *isp_histogram;
-अटल काष्ठा sh_css_pc_histogram *sp_histogram;
+static bool pc_histogram_enabled;
+static struct sh_css_pc_histogram *isp_histogram;
+static struct sh_css_pc_histogram *sp_histogram;
 
-काष्ठा sh_css_metrics sh_css_metrics;
+struct sh_css_metrics sh_css_metrics;
 
-व्योम
-sh_css_metrics_start_frame(व्योम)
-अणु
+void
+sh_css_metrics_start_frame(void)
+{
 	sh_css_metrics.frame_metrics.num_frames++;
-पूर्ण
+}
 
-अटल व्योम
-clear_histogram(काष्ठा sh_css_pc_histogram *histogram)
-अणु
-	अचिन्हित पूर्णांक i;
+static void
+clear_histogram(struct sh_css_pc_histogram *histogram)
+{
+	unsigned int i;
 
-	निश्चित(histogram);
+	assert(histogram);
 
-	क्रम (i = 0; i < histogram->length; i++) अणु
+	for (i = 0; i < histogram->length; i++) {
 		histogram->run[i] = 0;
 		histogram->stall[i] = 0;
 		histogram->msink[i] = 0xFFFF;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम
+void
 sh_css_metrics_enable_pc_histogram(bool enable)
-अणु
+{
 	pc_histogram_enabled = enable;
-पूर्ण
+}
 
-अटल व्योम
-make_histogram(काष्ठा sh_css_pc_histogram *histogram, अचिन्हित पूर्णांक length)
-अणु
-	निश्चित(histogram);
+static void
+make_histogram(struct sh_css_pc_histogram *histogram, unsigned int length)
+{
+	assert(histogram);
 
-	अगर (histogram->length)
-		वापस;
-	अगर (histogram->run)
-		वापस;
-	histogram->run = kvदो_स्मृति(length * माप(*histogram->run),
+	if (histogram->length)
+		return;
+	if (histogram->run)
+		return;
+	histogram->run = kvmalloc(length * sizeof(*histogram->run),
 				  GFP_KERNEL);
-	अगर (!histogram->run)
-		वापस;
-	histogram->stall = kvदो_स्मृति(length * माप(*histogram->stall),
+	if (!histogram->run)
+		return;
+	histogram->stall = kvmalloc(length * sizeof(*histogram->stall),
 				    GFP_KERNEL);
-	अगर (!histogram->stall)
-		वापस;
-	histogram->msink = kvदो_स्मृति(length * माप(*histogram->msink),
+	if (!histogram->stall)
+		return;
+	histogram->msink = kvmalloc(length * sizeof(*histogram->msink),
 				    GFP_KERNEL);
-	अगर (!histogram->msink)
-		वापस;
+	if (!histogram->msink)
+		return;
 
 	histogram->length = length;
 	clear_histogram(histogram);
-पूर्ण
+}
 
-अटल व्योम
-insert_binary_metrics(काष्ठा sh_css_binary_metrics **l,
-		      काष्ठा sh_css_binary_metrics *metrics)
-अणु
-	निश्चित(l);
-	निश्चित(*l);
-	निश्चित(metrics);
+static void
+insert_binary_metrics(struct sh_css_binary_metrics **l,
+		      struct sh_css_binary_metrics *metrics)
+{
+	assert(l);
+	assert(*l);
+	assert(metrics);
 
-	क्रम (; *l; l = &(*l)->next)
-		अगर (*l == metrics)
-			वापस;
+	for (; *l; l = &(*l)->next)
+		if (*l == metrics)
+			return;
 
 	*l = metrics;
-	metrics->next = शून्य;
-पूर्ण
+	metrics->next = NULL;
+}
 
-व्योम
-sh_css_metrics_start_binary(काष्ठा sh_css_binary_metrics *metrics)
-अणु
-	निश्चित(metrics);
+void
+sh_css_metrics_start_binary(struct sh_css_binary_metrics *metrics)
+{
+	assert(metrics);
 
-	अगर (!pc_histogram_enabled)
-		वापस;
+	if (!pc_histogram_enabled)
+		return;
 
 	isp_histogram = &metrics->isp_histogram;
 	sp_histogram = &metrics->sp_histogram;
 	make_histogram(isp_histogram, ISP_PMEM_DEPTH);
 	make_histogram(sp_histogram, SP_PMEM_DEPTH);
 	insert_binary_metrics(&sh_css_metrics.binary_metrics, metrics);
-पूर्ण
+}
 
-व्योम
-sh_css_metrics_sample_pcs(व्योम)
-अणु
+void
+sh_css_metrics_sample_pcs(void)
+{
 	bool stall;
-	अचिन्हित पूर्णांक pc;
-	अचिन्हित पूर्णांक msink;
+	unsigned int pc;
+	unsigned int msink;
 
-#अगर SUSPEND
-	अचिन्हित पूर्णांक sc = 0;
-	अचिन्हित पूर्णांक stopped_sc = 0;
-	अचिन्हित पूर्णांक resume_sc = 0;
-#पूर्ण_अगर
+#if SUSPEND
+	unsigned int sc = 0;
+	unsigned int stopped_sc = 0;
+	unsigned int resume_sc = 0;
+#endif
 
-#अगर MULTIPLE_PCS
-	पूर्णांक i;
-	अचिन्हित पूर्णांक pc_tab[NOF_PCS];
+#if MULTIPLE_PCS
+	int i;
+	unsigned int pc_tab[NOF_PCS];
 
-	क्रम (i = 0; i < NOF_PCS; i++)
+	for (i = 0; i < NOF_PCS; i++)
 		pc_tab[i] = 0;
-#पूर्ण_अगर
+#endif
 
-	अगर (!pc_histogram_enabled)
-		वापस;
+	if (!pc_histogram_enabled)
+		return;
 
-	अगर (isp_histogram) अणु
-#अगर SUSPEND
+	if (isp_histogram) {
+#if SUSPEND
 		/* STOP the ISP */
 		isp_ctrl_store(ISP0_ID, ISP_SC_REG, STOP_MASK);
-#पूर्ण_अगर
+#endif
 		msink = isp_ctrl_load(ISP0_ID, ISP_CTRL_SINK_REG);
-#अगर MULTIPLE_PCS
-		क्रम (i = 0; i < NOF_PCS; i++)
+#if MULTIPLE_PCS
+		for (i = 0; i < NOF_PCS; i++)
 			pc_tab[i] = isp_ctrl_load(ISP0_ID, ISP_PC_REG);
-#अन्यथा
+#else
 		pc = isp_ctrl_load(ISP0_ID, ISP_PC_REG);
-#पूर्ण_अगर
+#endif
 
-#अगर SUSPEND
+#if SUSPEND
 		/* RESUME the ISP */
 		isp_ctrl_store(ISP0_ID, ISP_SC_REG, RESUME_MASK);
-#पूर्ण_अगर
+#endif
 		isp_histogram->msink[pc] &= msink;
 		stall = (msink != 0x7FF);
 
-		अगर (stall)
+		if (stall)
 			isp_histogram->stall[pc]++;
-		अन्यथा
+		else
 			isp_histogram->run[pc]++;
-	पूर्ण
+	}
 
-	अगर (sp_histogram && 0) अणु
+	if (sp_histogram && 0) {
 		msink = sp_ctrl_load(SP0_ID, SP_CTRL_SINK_REG);
 		pc = sp_ctrl_load(SP0_ID, SP_PC_REG);
 		sp_histogram->msink[pc] &= msink;
 		stall = (msink != 0x7FF);
-		अगर (stall)
+		if (stall)
 			sp_histogram->stall[pc]++;
-		अन्यथा
+		else
 			sp_histogram->run[pc]++;
-	पूर्ण
-पूर्ण
+	}
+}

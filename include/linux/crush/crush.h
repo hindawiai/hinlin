@@ -1,19 +1,18 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित CEPH_CRUSH_CRUSH_H
-#घोषणा CEPH_CRUSH_CRUSH_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef CEPH_CRUSH_CRUSH_H
+#define CEPH_CRUSH_CRUSH_H
 
-#अगर_घोषित __KERNEL__
+#ifdef __KERNEL__
 # include <linux/rbtree.h>
 # include <linux/types.h>
-#अन्यथा
+#else
 # include "crush_compat.h"
-#पूर्ण_अगर
+#endif
 
 /*
- * CRUSH is a pseuकरो-अक्रमom data distribution algorithm that
+ * CRUSH is a pseudo-random data distribution algorithm that
  * efficiently distributes input values (typically, data objects)
- * across a heterogeneous, काष्ठाured storage cluster.
+ * across a heterogeneous, structured storage cluster.
  *
  * The algorithm was originally described in detail in this paper
  * (although the algorithm has evolved somewhat since then):
@@ -24,31 +23,31 @@
  */
 
 
-#घोषणा CRUSH_MAGIC 0x00010000ul   /* क्रम detecting algorithm revisions */
+#define CRUSH_MAGIC 0x00010000ul   /* for detecting algorithm revisions */
 
-#घोषणा CRUSH_MAX_DEPTH 10  /* max crush hierarchy depth */
-#घोषणा CRUSH_MAX_RULESET (1<<8)  /* max crush ruleset number */
-#घोषणा CRUSH_MAX_RULES CRUSH_MAX_RULESET  /* should be the same as max rulesets */
+#define CRUSH_MAX_DEPTH 10  /* max crush hierarchy depth */
+#define CRUSH_MAX_RULESET (1<<8)  /* max crush ruleset number */
+#define CRUSH_MAX_RULES CRUSH_MAX_RULESET  /* should be the same as max rulesets */
 
-#घोषणा CRUSH_MAX_DEVICE_WEIGHT (100u * 0x10000u)
-#घोषणा CRUSH_MAX_BUCKET_WEIGHT (65535u * 0x10000u)
+#define CRUSH_MAX_DEVICE_WEIGHT (100u * 0x10000u)
+#define CRUSH_MAX_BUCKET_WEIGHT (65535u * 0x10000u)
 
-#घोषणा CRUSH_ITEM_UNDEF  0x7ffffffe  /* undefined result (पूर्णांकernal use only) */
-#घोषणा CRUSH_ITEM_NONE   0x7fffffff  /* no result */
+#define CRUSH_ITEM_UNDEF  0x7ffffffe  /* undefined result (internal use only) */
+#define CRUSH_ITEM_NONE   0x7fffffff  /* no result */
 
 /*
- * CRUSH uses user-defined "rules" to describe how inमाला_दो should be
- * mapped to devices.  A rule consists of sequence of steps to perक्रमm
+ * CRUSH uses user-defined "rules" to describe how inputs should be
+ * mapped to devices.  A rule consists of sequence of steps to perform
  * to generate the set of output devices.
  */
-काष्ठा crush_rule_step अणु
+struct crush_rule_step {
 	__u32 op;
 	__s32 arg1;
 	__s32 arg2;
-पूर्ण;
+};
 
 /* step op codes */
-क्रमागत अणु
+enum {
 	CRUSH_RULE_NOOP = 0,
 	CRUSH_RULE_TAKE = 1,          /* arg1 = value to start with */
 	CRUSH_RULE_CHOOSE_FIRSTN = 2, /* arg1 = num items to pick */
@@ -64,105 +63,105 @@
 	CRUSH_RULE_SET_CHOOSE_LOCAL_FALLBACK_TRIES = 11,
 	CRUSH_RULE_SET_CHOOSELEAF_VARY_R = 12,
 	CRUSH_RULE_SET_CHOOSELEAF_STABLE = 13
-पूर्ण;
+};
 
 /*
- * क्रम specअगरying choose num (arg1) relative to the max parameter
- * passed to करो_rule
+ * for specifying choose num (arg1) relative to the max parameter
+ * passed to do_rule
  */
-#घोषणा CRUSH_CHOOSE_N            0
-#घोषणा CRUSH_CHOOSE_N_MINUS(x)   (-(x))
+#define CRUSH_CHOOSE_N            0
+#define CRUSH_CHOOSE_N_MINUS(x)   (-(x))
 
 /*
- * The rule mask is used to describe what the rule is पूर्णांकended क्रम.
+ * The rule mask is used to describe what the rule is intended for.
  * Given a ruleset and size of output set, we search through the
- * rule list क्रम a matching rule_mask.
+ * rule list for a matching rule_mask.
  */
-काष्ठा crush_rule_mask अणु
+struct crush_rule_mask {
 	__u8 ruleset;
 	__u8 type;
 	__u8 min_size;
 	__u8 max_size;
-पूर्ण;
+};
 
-काष्ठा crush_rule अणु
+struct crush_rule {
 	__u32 len;
-	काष्ठा crush_rule_mask mask;
-	काष्ठा crush_rule_step steps[];
-पूर्ण;
+	struct crush_rule_mask mask;
+	struct crush_rule_step steps[];
+};
 
-#घोषणा crush_rule_size(len) (माप(काष्ठा crush_rule) + \
-			      (len)*माप(काष्ठा crush_rule_step))
+#define crush_rule_size(len) (sizeof(struct crush_rule) + \
+			      (len)*sizeof(struct crush_rule_step))
 
 
 
 /*
  * A bucket is a named container of other items (either devices or
  * other buckets).  Items within a bucket are chosen using one of a
- * few dअगरferent algorithms.  The table summarizes how the speed of
+ * few different algorithms.  The table summarizes how the speed of
  * each option measures up against mapping stability when items are
- * added or हटाओd.
+ * added or removed.
  *
  *  Bucket Alg     Speed       Additions    Removals
  *  ------------------------------------------------
- *  unअगरorm         O(1)       poor         poor
+ *  uniform         O(1)       poor         poor
  *  list            O(n)       optimal      poor
  *  tree            O(log n)   good         good
  *  straw           O(n)       better       better
  *  straw2          O(n)       optimal      optimal
  */
-क्रमागत अणु
+enum {
 	CRUSH_BUCKET_UNIFORM = 1,
 	CRUSH_BUCKET_LIST = 2,
 	CRUSH_BUCKET_TREE = 3,
 	CRUSH_BUCKET_STRAW = 4,
 	CRUSH_BUCKET_STRAW2 = 5,
-पूर्ण;
-बाह्य स्थिर अक्षर *crush_bucket_alg_name(पूर्णांक alg);
+};
+extern const char *crush_bucket_alg_name(int alg);
 
 /*
  * although tree was a legacy algorithm, it has been buggy, so
  * exclude it.
  */
-#घोषणा CRUSH_LEGACY_ALLOWED_BUCKET_ALGS (	\
+#define CRUSH_LEGACY_ALLOWED_BUCKET_ALGS (	\
 		(1 << CRUSH_BUCKET_UNIFORM) |	\
 		(1 << CRUSH_BUCKET_LIST) |	\
 		(1 << CRUSH_BUCKET_STRAW))
 
-काष्ठा crush_bucket अणु
+struct crush_bucket {
 	__s32 id;        /* this'll be negative */
-	__u16 type;      /* non-zero; type=0 is reserved क्रम devices */
+	__u16 type;      /* non-zero; type=0 is reserved for devices */
 	__u8 alg;        /* one of CRUSH_BUCKET_* */
 	__u8 hash;       /* which hash function to use, CRUSH_HASH_* */
-	__u32 weight;    /* 16-bit fixed poपूर्णांक */
+	__u32 weight;    /* 16-bit fixed point */
 	__u32 size;      /* num items */
 	__s32 *items;
 
-पूर्ण;
+};
 
 /** @ingroup API
  *
- * Replacement weights क्रम each item in a bucket. The size of the
+ * Replacement weights for each item in a bucket. The size of the
  * array must be exactly the size of the straw2 bucket, just as the
  * item_weights array.
  *
  */
-काष्ठा crush_weight_set अणु
-	__u32 *weights; /*!< 16.16 fixed poपूर्णांक weights
+struct crush_weight_set {
+	__u32 *weights; /*!< 16.16 fixed point weights
                              in the same order as items */
 	__u32 size;     /*!< size of the __weights__ array */
-पूर्ण;
+};
 
 /** @ingroup API
  *
- * Replacement weights and ids क्रम a given straw2 bucket, क्रम
+ * Replacement weights and ids for a given straw2 bucket, for
  * placement purposes.
  *
- * When crush_करो_rule() chooses the Nth item from a straw2 bucket, the
+ * When crush_do_rule() chooses the Nth item from a straw2 bucket, the
  * replacement weights found at __weight_set[N]__ are used instead of
  * the weights from __item_weights__. If __N__ is greater than
  * __weight_set_size__, the weights found at __weight_set_size-1__ are
- * used instead. For instance अगर __weight_set__ is:
+ * used instead. For instance if __weight_set__ is:
  *
  *    [ [ 0x10000, 0x20000 ],   // position 0
  *      [ 0x20000, 0x40000 ] ]  // position 1
@@ -173,17 +172,17 @@
  * etc.
  *
  */
-काष्ठा crush_choose_arg अणु
+struct crush_choose_arg {
 	__s32 *ids;            /*!< values to use instead of items */
 	__u32 ids_size;        /*!< size of the __ids__ array */
-	काष्ठा crush_weight_set *weight_set; /*!< weight replacements क्रम
+	struct crush_weight_set *weight_set; /*!< weight replacements for
                                                   a given position */
 	__u32 weight_set_size; /*!< size of the __weight_set__ array */
-पूर्ण;
+};
 
 /** @ingroup API
  *
- * Replacement weights and ids क्रम each bucket in the crushmap. The
+ * Replacement weights and ids for each bucket in the crushmap. The
  * __size__ of the __args__ array must be exactly the same as the
  * __map->max_buckets__.
  *
@@ -192,99 +191,99 @@
  * is a straw2 bucket.
  *
  */
-काष्ठा crush_choose_arg_map अणु
-#अगर_घोषित __KERNEL__
-	काष्ठा rb_node node;
+struct crush_choose_arg_map {
+#ifdef __KERNEL__
+	struct rb_node node;
 	s64 choose_args_index;
-#पूर्ण_अगर
-	काष्ठा crush_choose_arg *args; /*!< replacement क्रम each bucket
+#endif
+	struct crush_choose_arg *args; /*!< replacement for each bucket
                                             in the crushmap */
 	__u32 size;                    /*!< size of the __args__ array */
-पूर्ण;
+};
 
-काष्ठा crush_bucket_unअगरorm अणु
-	काष्ठा crush_bucket h;
-	__u32 item_weight;  /* 16-bit fixed poपूर्णांक; all items equally weighted */
-पूर्ण;
+struct crush_bucket_uniform {
+	struct crush_bucket h;
+	__u32 item_weight;  /* 16-bit fixed point; all items equally weighted */
+};
 
-काष्ठा crush_bucket_list अणु
-	काष्ठा crush_bucket h;
-	__u32 *item_weights;  /* 16-bit fixed poपूर्णांक */
-	__u32 *sum_weights;   /* 16-bit fixed poपूर्णांक.  element i is sum
+struct crush_bucket_list {
+	struct crush_bucket h;
+	__u32 *item_weights;  /* 16-bit fixed point */
+	__u32 *sum_weights;   /* 16-bit fixed point.  element i is sum
 				 of weights 0..i, inclusive */
-पूर्ण;
+};
 
-काष्ठा crush_bucket_tree अणु
-	काष्ठा crush_bucket h;  /* note: h.size is _tree_ size, not number of
+struct crush_bucket_tree {
+	struct crush_bucket h;  /* note: h.size is _tree_ size, not number of
 				   actual items */
 	__u8 num_nodes;
 	__u32 *node_weights;
-पूर्ण;
+};
 
-काष्ठा crush_bucket_straw अणु
-	काष्ठा crush_bucket h;
-	__u32 *item_weights;   /* 16-bit fixed poपूर्णांक */
-	__u32 *straws;         /* 16-bit fixed poपूर्णांक */
-पूर्ण;
+struct crush_bucket_straw {
+	struct crush_bucket h;
+	__u32 *item_weights;   /* 16-bit fixed point */
+	__u32 *straws;         /* 16-bit fixed point */
+};
 
-काष्ठा crush_bucket_straw2 अणु
-	काष्ठा crush_bucket h;
-	__u32 *item_weights;   /* 16-bit fixed poपूर्णांक */
-पूर्ण;
+struct crush_bucket_straw2 {
+	struct crush_bucket h;
+	__u32 *item_weights;   /* 16-bit fixed point */
+};
 
 
 
 /*
  * CRUSH map includes all buckets, rules, etc.
  */
-काष्ठा crush_map अणु
-	काष्ठा crush_bucket **buckets;
-	काष्ठा crush_rule **rules;
+struct crush_map {
+	struct crush_bucket **buckets;
+	struct crush_rule **rules;
 
 	__s32 max_buckets;
 	__u32 max_rules;
 	__s32 max_devices;
 
-	/* choose local retries beक्रमe re-descent */
+	/* choose local retries before re-descent */
 	__u32 choose_local_tries;
-	/* choose local attempts using a fallback permutation beक्रमe
+	/* choose local attempts using a fallback permutation before
 	 * re-descent */
 	__u32 choose_local_fallback_tries;
-	/* choose attempts beक्रमe giving up */
+	/* choose attempts before giving up */
 	__u32 choose_total_tries;
-	/* attempt chooseleaf inner descent once क्रम firstn mode; on
-	 * reject retry outer descent.  Note that this करोes *not*
-	 * apply to a collision: in that हाल we will retry as we used
+	/* attempt chooseleaf inner descent once for firstn mode; on
+	 * reject retry outer descent.  Note that this does *not*
+	 * apply to a collision: in that case we will retry as we used
 	 * to. */
 	__u32 chooseleaf_descend_once;
 
-	/* अगर non-zero, feed r पूर्णांकo chooseleaf, bit-shअगरted right by (r-1)
-	 * bits.  a value of 1 is best क्रम new clusters.  क्रम legacy clusters
+	/* if non-zero, feed r into chooseleaf, bit-shifted right by (r-1)
+	 * bits.  a value of 1 is best for new clusters.  for legacy clusters
 	 * that want to limit reshuffling, a value of 3 or 4 will make the
 	 * mappings line up a bit better with previous mappings. */
 	__u8 chooseleaf_vary_r;
 
-	/* अगर true, it makes chooseleaf firstn to वापस stable results (अगर
+	/* if true, it makes chooseleaf firstn to return stable results (if
 	 * no local retry) so that data migrations would be optimal when some
 	 * device fails. */
 	__u8 chooseleaf_stable;
 
 	/*
-	 * This value is calculated after decode or स्थिरruction by
+	 * This value is calculated after decode or construction by
 	 * the builder. It is exposed here (rather than having a
 	 * 'build CRUSH working space' function) so that callers can
-	 * reserve a अटल buffer, allocate space on the stack, or
-	 * otherwise aव्योम calling पूर्णांकo the heap allocator अगर they
+	 * reserve a static buffer, allocate space on the stack, or
+	 * otherwise avoid calling into the heap allocator if they
 	 * want to. The size of the working space depends on the map,
-	 * जबतक the size of the scratch vector passed to the mapper
+	 * while the size of the scratch vector passed to the mapper
 	 * depends on the size of the desired result set.
 	 *
 	 * Nothing stops the caller from allocating both in one swell
-	 * foop and passing in two poपूर्णांकs, though.
+	 * foop and passing in two points, though.
 	 */
-	माप_प्रकार working_size;
+	size_t working_size;
 
-#अगर_अघोषित __KERNEL__
+#ifndef __KERNEL__
 	/*
 	 * version 0 (original) of straw_calc has various flaws.  version 1
 	 * fixes a few of them.
@@ -292,7 +291,7 @@
 	__u8 straw_calc_version;
 
 	/*
-	 * allowed bucket algs is a biपंचांगask, here the bit positions
+	 * allowed bucket algs is a bitmask, here the bit positions
 	 * are CRUSH_BUCKET_*.  note that these are *bits* and
 	 * CRUSH_BUCKET_* values are not, so we need to or together (1
 	 * << CRUSH_BUCKET_WHATEVER).  The 0th bit is not used to
@@ -301,61 +300,61 @@
 	__u32 allowed_bucket_algs;
 
 	__u32 *choose_tries;
-#अन्यथा
+#else
 	/* device/bucket type id -> type name (CrushWrapper::type_map) */
-	काष्ठा rb_root type_names;
+	struct rb_root type_names;
 
 	/* device/bucket id -> name (CrushWrapper::name_map) */
-	काष्ठा rb_root names;
+	struct rb_root names;
 
 	/* CrushWrapper::choose_args */
-	काष्ठा rb_root choose_args;
-#पूर्ण_अगर
-पूर्ण;
+	struct rb_root choose_args;
+#endif
+};
 
 
 /* crush.c */
-बाह्य पूर्णांक crush_get_bucket_item_weight(स्थिर काष्ठा crush_bucket *b, पूर्णांक pos);
-बाह्य व्योम crush_destroy_bucket_unअगरorm(काष्ठा crush_bucket_unअगरorm *b);
-बाह्य व्योम crush_destroy_bucket_list(काष्ठा crush_bucket_list *b);
-बाह्य व्योम crush_destroy_bucket_tree(काष्ठा crush_bucket_tree *b);
-बाह्य व्योम crush_destroy_bucket_straw(काष्ठा crush_bucket_straw *b);
-बाह्य व्योम crush_destroy_bucket_straw2(काष्ठा crush_bucket_straw2 *b);
-बाह्य व्योम crush_destroy_bucket(काष्ठा crush_bucket *b);
-बाह्य व्योम crush_destroy_rule(काष्ठा crush_rule *r);
-बाह्य व्योम crush_destroy(काष्ठा crush_map *map);
+extern int crush_get_bucket_item_weight(const struct crush_bucket *b, int pos);
+extern void crush_destroy_bucket_uniform(struct crush_bucket_uniform *b);
+extern void crush_destroy_bucket_list(struct crush_bucket_list *b);
+extern void crush_destroy_bucket_tree(struct crush_bucket_tree *b);
+extern void crush_destroy_bucket_straw(struct crush_bucket_straw *b);
+extern void crush_destroy_bucket_straw2(struct crush_bucket_straw2 *b);
+extern void crush_destroy_bucket(struct crush_bucket *b);
+extern void crush_destroy_rule(struct crush_rule *r);
+extern void crush_destroy(struct crush_map *map);
 
-अटल अंतरभूत पूर्णांक crush_calc_tree_node(पूर्णांक i)
-अणु
-	वापस ((i+1) << 1)-1;
-पूर्ण
+static inline int crush_calc_tree_node(int i)
+{
+	return ((i+1) << 1)-1;
+}
 
 /*
- * These data काष्ठाures are निजी to the CRUSH implementation. They
+ * These data structures are private to the CRUSH implementation. They
  * are exposed in this header file because builder needs their
  * definitions to calculate the total working size.
  *
  * Moving this out of the crush map allow us to treat the CRUSH map as
- * immutable within the mapper and हटाओs the requirement क्रम a CRUSH
+ * immutable within the mapper and removes the requirement for a CRUSH
  * map lock.
  */
-काष्ठा crush_work_bucket अणु
-	__u32 perm_x; /* @x क्रम which *perm is defined */
+struct crush_work_bucket {
+	__u32 perm_x; /* @x for which *perm is defined */
 	__u32 perm_n; /* num elements of *perm that are permuted/defined */
 	__u32 *perm;  /* Permutation of the bucket's items */
-पूर्ण;
+};
 
-काष्ठा crush_work अणु
-	काष्ठा crush_work_bucket **work; /* Per-bucket working store */
-#अगर_घोषित __KERNEL__
-	काष्ठा list_head item;
-#पूर्ण_अगर
-पूर्ण;
+struct crush_work {
+	struct crush_work_bucket **work; /* Per-bucket working store */
+#ifdef __KERNEL__
+	struct list_head item;
+#endif
+};
 
-#अगर_घोषित __KERNEL__
+#ifdef __KERNEL__
 /* osdmap.c */
-व्योम clear_crush_names(काष्ठा rb_root *root);
-व्योम clear_choose_args(काष्ठा crush_map *c);
-#पूर्ण_अगर
+void clear_crush_names(struct rb_root *root);
+void clear_choose_args(struct crush_map *c);
+#endif
 
-#पूर्ण_अगर
+#endif

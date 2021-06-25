@@ -1,58 +1,57 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * devres.c  --  Voltage/Current Regulator framework devres implementation.
  *
  * Copyright 2013 Linaro Ltd
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/err.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/regulator/consumer.h>
-#समावेश <linux/regulator/driver.h>
-#समावेश <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/err.h>
+#include <linux/regmap.h>
+#include <linux/regulator/consumer.h>
+#include <linux/regulator/driver.h>
+#include <linux/module.h>
 
-#समावेश "internal.h"
+#include "internal.h"
 
-अटल व्योम devm_regulator_release(काष्ठा device *dev, व्योम *res)
-अणु
-	regulator_put(*(काष्ठा regulator **)res);
-पूर्ण
+static void devm_regulator_release(struct device *dev, void *res)
+{
+	regulator_put(*(struct regulator **)res);
+}
 
-अटल काष्ठा regulator *_devm_regulator_get(काष्ठा device *dev, स्थिर अक्षर *id,
-					     पूर्णांक get_type)
-अणु
-	काष्ठा regulator **ptr, *regulator;
+static struct regulator *_devm_regulator_get(struct device *dev, const char *id,
+					     int get_type)
+{
+	struct regulator **ptr, *regulator;
 
-	ptr = devres_alloc(devm_regulator_release, माप(*ptr), GFP_KERNEL);
-	अगर (!ptr)
-		वापस ERR_PTR(-ENOMEM);
+	ptr = devres_alloc(devm_regulator_release, sizeof(*ptr), GFP_KERNEL);
+	if (!ptr)
+		return ERR_PTR(-ENOMEM);
 
 	regulator = _regulator_get(dev, id, get_type);
-	अगर (!IS_ERR(regulator)) अणु
+	if (!IS_ERR(regulator)) {
 		*ptr = regulator;
 		devres_add(dev, ptr);
-	पूर्ण अन्यथा अणु
-		devres_मुक्त(ptr);
-	पूर्ण
+	} else {
+		devres_free(ptr);
+	}
 
-	वापस regulator;
-पूर्ण
+	return regulator;
+}
 
 /**
  * devm_regulator_get - Resource managed regulator_get()
  * @dev: device to supply
  * @id:  supply name or regulator ID.
  *
- * Managed regulator_get(). Regulators वापसed from this function are
- * स्वतःmatically regulator_put() on driver detach. See regulator_get() क्रम more
- * inक्रमmation.
+ * Managed regulator_get(). Regulators returned from this function are
+ * automatically regulator_put() on driver detach. See regulator_get() for more
+ * information.
  */
-काष्ठा regulator *devm_regulator_get(काष्ठा device *dev, स्थिर अक्षर *id)
-अणु
-	वापस _devm_regulator_get(dev, id, NORMAL_GET);
-पूर्ण
+struct regulator *devm_regulator_get(struct device *dev, const char *id)
+{
+	return _devm_regulator_get(dev, id, NORMAL_GET);
+}
 EXPORT_SYMBOL_GPL(devm_regulator_get);
 
 /**
@@ -60,15 +59,15 @@ EXPORT_SYMBOL_GPL(devm_regulator_get);
  * @dev: device to supply
  * @id:  supply name or regulator ID.
  *
- * Managed regulator_get_exclusive(). Regulators वापसed from this function
- * are स्वतःmatically regulator_put() on driver detach. See regulator_get() क्रम
- * more inक्रमmation.
+ * Managed regulator_get_exclusive(). Regulators returned from this function
+ * are automatically regulator_put() on driver detach. See regulator_get() for
+ * more information.
  */
-काष्ठा regulator *devm_regulator_get_exclusive(काष्ठा device *dev,
-					       स्थिर अक्षर *id)
-अणु
-	वापस _devm_regulator_get(dev, id, EXCLUSIVE_GET);
-पूर्ण
+struct regulator *devm_regulator_get_exclusive(struct device *dev,
+					       const char *id)
+{
+	return _devm_regulator_get(dev, id, EXCLUSIVE_GET);
+}
 EXPORT_SYMBOL_GPL(devm_regulator_get_exclusive);
 
 /**
@@ -76,189 +75,189 @@ EXPORT_SYMBOL_GPL(devm_regulator_get_exclusive);
  * @dev: device to supply
  * @id:  supply name or regulator ID.
  *
- * Managed regulator_get_optional(). Regulators वापसed from this
- * function are स्वतःmatically regulator_put() on driver detach. See
- * regulator_get_optional() क्रम more inक्रमmation.
+ * Managed regulator_get_optional(). Regulators returned from this
+ * function are automatically regulator_put() on driver detach. See
+ * regulator_get_optional() for more information.
  */
-काष्ठा regulator *devm_regulator_get_optional(काष्ठा device *dev,
-					      स्थिर अक्षर *id)
-अणु
-	वापस _devm_regulator_get(dev, id, OPTIONAL_GET);
-पूर्ण
+struct regulator *devm_regulator_get_optional(struct device *dev,
+					      const char *id)
+{
+	return _devm_regulator_get(dev, id, OPTIONAL_GET);
+}
 EXPORT_SYMBOL_GPL(devm_regulator_get_optional);
 
-अटल पूर्णांक devm_regulator_match(काष्ठा device *dev, व्योम *res, व्योम *data)
-अणु
-	काष्ठा regulator **r = res;
-	अगर (!r || !*r) अणु
+static int devm_regulator_match(struct device *dev, void *res, void *data)
+{
+	struct regulator **r = res;
+	if (!r || !*r) {
 		WARN_ON(!r || !*r);
-		वापस 0;
-	पूर्ण
-	वापस *r == data;
-पूर्ण
+		return 0;
+	}
+	return *r == data;
+}
 
 /**
  * devm_regulator_put - Resource managed regulator_put()
- * @regulator: regulator to मुक्त
+ * @regulator: regulator to free
  *
  * Deallocate a regulator allocated with devm_regulator_get(). Normally
  * this function will not need to be called and the resource management
- * code will ensure that the resource is मुक्तd.
+ * code will ensure that the resource is freed.
  */
-व्योम devm_regulator_put(काष्ठा regulator *regulator)
-अणु
-	पूर्णांक rc;
+void devm_regulator_put(struct regulator *regulator)
+{
+	int rc;
 
 	rc = devres_release(regulator->dev, devm_regulator_release,
 			    devm_regulator_match, regulator);
-	अगर (rc != 0)
+	if (rc != 0)
 		WARN_ON(rc);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(devm_regulator_put);
 
-काष्ठा regulator_bulk_devres अणु
-	काष्ठा regulator_bulk_data *consumers;
-	पूर्णांक num_consumers;
-पूर्ण;
+struct regulator_bulk_devres {
+	struct regulator_bulk_data *consumers;
+	int num_consumers;
+};
 
-अटल व्योम devm_regulator_bulk_release(काष्ठा device *dev, व्योम *res)
-अणु
-	काष्ठा regulator_bulk_devres *devres = res;
+static void devm_regulator_bulk_release(struct device *dev, void *res)
+{
+	struct regulator_bulk_devres *devres = res;
 
-	regulator_bulk_मुक्त(devres->num_consumers, devres->consumers);
-पूर्ण
+	regulator_bulk_free(devres->num_consumers, devres->consumers);
+}
 
 /**
  * devm_regulator_bulk_get - managed get multiple regulator consumers
  *
  * @dev:           device to supply
- * @num_consumers: number of consumers to रेजिस्टर
+ * @num_consumers: number of consumers to register
  * @consumers:     configuration of consumers; clients are stored here.
  *
- * @वापस 0 on success, an त्रुटि_सं on failure.
+ * @return 0 on success, an errno on failure.
  *
  * This helper function allows drivers to get several regulator
  * consumers in one operation with management, the regulators will
- * स्वतःmatically be मुक्तd when the device is unbound.  If any of the
+ * automatically be freed when the device is unbound.  If any of the
  * regulators cannot be acquired then any regulators that were
- * allocated will be मुक्तd beक्रमe वापसing to the caller.
+ * allocated will be freed before returning to the caller.
  */
-पूर्णांक devm_regulator_bulk_get(काष्ठा device *dev, पूर्णांक num_consumers,
-			    काष्ठा regulator_bulk_data *consumers)
-अणु
-	काष्ठा regulator_bulk_devres *devres;
-	पूर्णांक ret;
+int devm_regulator_bulk_get(struct device *dev, int num_consumers,
+			    struct regulator_bulk_data *consumers)
+{
+	struct regulator_bulk_devres *devres;
+	int ret;
 
 	devres = devres_alloc(devm_regulator_bulk_release,
-			      माप(*devres), GFP_KERNEL);
-	अगर (!devres)
-		वापस -ENOMEM;
+			      sizeof(*devres), GFP_KERNEL);
+	if (!devres)
+		return -ENOMEM;
 
 	ret = regulator_bulk_get(dev, num_consumers, consumers);
-	अगर (!ret) अणु
+	if (!ret) {
 		devres->consumers = consumers;
 		devres->num_consumers = num_consumers;
 		devres_add(dev, devres);
-	पूर्ण अन्यथा अणु
-		devres_मुक्त(devres);
-	पूर्ण
+	} else {
+		devres_free(devres);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(devm_regulator_bulk_get);
 
-अटल व्योम devm_rdev_release(काष्ठा device *dev, व्योम *res)
-अणु
-	regulator_unरेजिस्टर(*(काष्ठा regulator_dev **)res);
-पूर्ण
+static void devm_rdev_release(struct device *dev, void *res)
+{
+	regulator_unregister(*(struct regulator_dev **)res);
+}
 
 /**
- * devm_regulator_रेजिस्टर - Resource managed regulator_रेजिस्टर()
+ * devm_regulator_register - Resource managed regulator_register()
  * @dev:            device to supply
- * @regulator_desc: regulator to रेजिस्टर
- * @config:         runसमय configuration क्रम regulator
+ * @regulator_desc: regulator to register
+ * @config:         runtime configuration for regulator
  *
- * Called by regulator drivers to रेजिस्टर a regulator.  Returns a
- * valid poपूर्णांकer to काष्ठा regulator_dev on success or an ERR_PTR() on
- * error.  The regulator will स्वतःmatically be released when the device
+ * Called by regulator drivers to register a regulator.  Returns a
+ * valid pointer to struct regulator_dev on success or an ERR_PTR() on
+ * error.  The regulator will automatically be released when the device
  * is unbound.
  */
-काष्ठा regulator_dev *devm_regulator_रेजिस्टर(काष्ठा device *dev,
-				  स्थिर काष्ठा regulator_desc *regulator_desc,
-				  स्थिर काष्ठा regulator_config *config)
-अणु
-	काष्ठा regulator_dev **ptr, *rdev;
+struct regulator_dev *devm_regulator_register(struct device *dev,
+				  const struct regulator_desc *regulator_desc,
+				  const struct regulator_config *config)
+{
+	struct regulator_dev **ptr, *rdev;
 
-	ptr = devres_alloc(devm_rdev_release, माप(*ptr),
+	ptr = devres_alloc(devm_rdev_release, sizeof(*ptr),
 			   GFP_KERNEL);
-	अगर (!ptr)
-		वापस ERR_PTR(-ENOMEM);
+	if (!ptr)
+		return ERR_PTR(-ENOMEM);
 
-	rdev = regulator_रेजिस्टर(regulator_desc, config);
-	अगर (!IS_ERR(rdev)) अणु
+	rdev = regulator_register(regulator_desc, config);
+	if (!IS_ERR(rdev)) {
 		*ptr = rdev;
 		devres_add(dev, ptr);
-	पूर्ण अन्यथा अणु
-		devres_मुक्त(ptr);
-	पूर्ण
+	} else {
+		devres_free(ptr);
+	}
 
-	वापस rdev;
-पूर्ण
-EXPORT_SYMBOL_GPL(devm_regulator_रेजिस्टर);
+	return rdev;
+}
+EXPORT_SYMBOL_GPL(devm_regulator_register);
 
-अटल पूर्णांक devm_rdev_match(काष्ठा device *dev, व्योम *res, व्योम *data)
-अणु
-	काष्ठा regulator_dev **r = res;
-	अगर (!r || !*r) अणु
+static int devm_rdev_match(struct device *dev, void *res, void *data)
+{
+	struct regulator_dev **r = res;
+	if (!r || !*r) {
 		WARN_ON(!r || !*r);
-		वापस 0;
-	पूर्ण
-	वापस *r == data;
-पूर्ण
+		return 0;
+	}
+	return *r == data;
+}
 
 /**
- * devm_regulator_unरेजिस्टर - Resource managed regulator_unरेजिस्टर()
+ * devm_regulator_unregister - Resource managed regulator_unregister()
  * @dev:  device to supply
- * @rdev: regulator to मुक्त
+ * @rdev: regulator to free
  *
- * Unरेजिस्टर a regulator रेजिस्टरed with devm_regulator_रेजिस्टर().
+ * Unregister a regulator registered with devm_regulator_register().
  * Normally this function will not need to be called and the resource
- * management code will ensure that the resource is मुक्तd.
+ * management code will ensure that the resource is freed.
  */
-व्योम devm_regulator_unरेजिस्टर(काष्ठा device *dev, काष्ठा regulator_dev *rdev)
-अणु
-	पूर्णांक rc;
+void devm_regulator_unregister(struct device *dev, struct regulator_dev *rdev)
+{
+	int rc;
 
 	rc = devres_release(dev, devm_rdev_release, devm_rdev_match, rdev);
-	अगर (rc != 0)
+	if (rc != 0)
 		WARN_ON(rc);
-पूर्ण
-EXPORT_SYMBOL_GPL(devm_regulator_unरेजिस्टर);
+}
+EXPORT_SYMBOL_GPL(devm_regulator_unregister);
 
-काष्ठा regulator_supply_alias_match अणु
-	काष्ठा device *dev;
-	स्थिर अक्षर *id;
-पूर्ण;
+struct regulator_supply_alias_match {
+	struct device *dev;
+	const char *id;
+};
 
-अटल पूर्णांक devm_regulator_match_supply_alias(काष्ठा device *dev, व्योम *res,
-					     व्योम *data)
-अणु
-	काष्ठा regulator_supply_alias_match *match = res;
-	काष्ठा regulator_supply_alias_match *target = data;
+static int devm_regulator_match_supply_alias(struct device *dev, void *res,
+					     void *data)
+{
+	struct regulator_supply_alias_match *match = res;
+	struct regulator_supply_alias_match *target = data;
 
-	वापस match->dev == target->dev && म_भेद(match->id, target->id) == 0;
-पूर्ण
+	return match->dev == target->dev && strcmp(match->id, target->id) == 0;
+}
 
-अटल व्योम devm_regulator_destroy_supply_alias(काष्ठा device *dev, व्योम *res)
-अणु
-	काष्ठा regulator_supply_alias_match *match = res;
+static void devm_regulator_destroy_supply_alias(struct device *dev, void *res)
+{
+	struct regulator_supply_alias_match *match = res;
 
-	regulator_unरेजिस्टर_supply_alias(match->dev, match->id);
-पूर्ण
+	regulator_unregister_supply_alias(match->dev, match->id);
+}
 
 /**
- * devm_regulator_रेजिस्टर_supply_alias - Resource managed
- * regulator_रेजिस्टर_supply_alias()
+ * devm_regulator_register_supply_alias - Resource managed
+ * regulator_register_supply_alias()
  *
  * @dev:       device to supply
  * @id:        supply name or regulator ID
@@ -266,66 +265,66 @@ EXPORT_SYMBOL_GPL(devm_regulator_unरेजिस्टर);
  * @alias_id:  supply name or regulator ID that should be used to lookup the
  * supply
  *
- * The supply alias will स्वतःmatically be unरेजिस्टरed when the source
+ * The supply alias will automatically be unregistered when the source
  * device is unbound.
  */
-पूर्णांक devm_regulator_रेजिस्टर_supply_alias(काष्ठा device *dev, स्थिर अक्षर *id,
-					 काष्ठा device *alias_dev,
-					 स्थिर अक्षर *alias_id)
-अणु
-	काष्ठा regulator_supply_alias_match *match;
-	पूर्णांक ret;
+int devm_regulator_register_supply_alias(struct device *dev, const char *id,
+					 struct device *alias_dev,
+					 const char *alias_id)
+{
+	struct regulator_supply_alias_match *match;
+	int ret;
 
 	match = devres_alloc(devm_regulator_destroy_supply_alias,
-			   माप(काष्ठा regulator_supply_alias_match),
+			   sizeof(struct regulator_supply_alias_match),
 			   GFP_KERNEL);
-	अगर (!match)
-		वापस -ENOMEM;
+	if (!match)
+		return -ENOMEM;
 
 	match->dev = dev;
 	match->id = id;
 
-	ret = regulator_रेजिस्टर_supply_alias(dev, id, alias_dev, alias_id);
-	अगर (ret < 0) अणु
-		devres_मुक्त(match);
-		वापस ret;
-	पूर्ण
+	ret = regulator_register_supply_alias(dev, id, alias_dev, alias_id);
+	if (ret < 0) {
+		devres_free(match);
+		return ret;
+	}
 
 	devres_add(dev, match);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(devm_regulator_रेजिस्टर_supply_alias);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(devm_regulator_register_supply_alias);
 
 /**
- * devm_regulator_unरेजिस्टर_supply_alias - Resource managed
- * regulator_unरेजिस्टर_supply_alias()
+ * devm_regulator_unregister_supply_alias - Resource managed
+ * regulator_unregister_supply_alias()
  *
  * @dev: device to supply
  * @id:  supply name or regulator ID
  *
- * Unरेजिस्टर an alias रेजिस्टरed with
- * devm_regulator_रेजिस्टर_supply_alias(). Normally this function
+ * Unregister an alias registered with
+ * devm_regulator_register_supply_alias(). Normally this function
  * will not need to be called and the resource management code
- * will ensure that the resource is मुक्तd.
+ * will ensure that the resource is freed.
  */
-व्योम devm_regulator_unरेजिस्टर_supply_alias(काष्ठा device *dev, स्थिर अक्षर *id)
-अणु
-	काष्ठा regulator_supply_alias_match match;
-	पूर्णांक rc;
+void devm_regulator_unregister_supply_alias(struct device *dev, const char *id)
+{
+	struct regulator_supply_alias_match match;
+	int rc;
 
 	match.dev = dev;
 	match.id = id;
 
 	rc = devres_release(dev, devm_regulator_destroy_supply_alias,
 			    devm_regulator_match_supply_alias, &match);
-	अगर (rc != 0)
+	if (rc != 0)
 		WARN_ON(rc);
-पूर्ण
-EXPORT_SYMBOL_GPL(devm_regulator_unरेजिस्टर_supply_alias);
+}
+EXPORT_SYMBOL_GPL(devm_regulator_unregister_supply_alias);
 
 /**
- * devm_regulator_bulk_रेजिस्टर_supply_alias - Managed रेजिस्टर
+ * devm_regulator_bulk_register_supply_alias - Managed register
  * multiple aliases
  *
  * @dev:       device to supply
@@ -333,152 +332,152 @@ EXPORT_SYMBOL_GPL(devm_regulator_unरेजिस्टर_supply_alias);
  * @alias_dev: device that should be used to lookup the supply
  * @alias_id:  list of supply names or regulator IDs that should be used to
  *             lookup the supply
- * @num_id:    number of aliases to रेजिस्टर
+ * @num_id:    number of aliases to register
  *
- * @वापस 0 on success, an त्रुटि_सं on failure.
+ * @return 0 on success, an errno on failure.
  *
- * This helper function allows drivers to रेजिस्टर several supply
- * aliases in one operation, the aliases will be स्वतःmatically
- * unरेजिस्टरs when the source device is unbound.  If any of the
- * aliases cannot be रेजिस्टरed any aliases that were रेजिस्टरed
- * will be हटाओd beक्रमe वापसing to the caller.
+ * This helper function allows drivers to register several supply
+ * aliases in one operation, the aliases will be automatically
+ * unregisters when the source device is unbound.  If any of the
+ * aliases cannot be registered any aliases that were registered
+ * will be removed before returning to the caller.
  */
-पूर्णांक devm_regulator_bulk_रेजिस्टर_supply_alias(काष्ठा device *dev,
-					      स्थिर अक्षर *स्थिर *id,
-					      काष्ठा device *alias_dev,
-					      स्थिर अक्षर *स्थिर *alias_id,
-					      पूर्णांक num_id)
-अणु
-	पूर्णांक i;
-	पूर्णांक ret;
+int devm_regulator_bulk_register_supply_alias(struct device *dev,
+					      const char *const *id,
+					      struct device *alias_dev,
+					      const char *const *alias_id,
+					      int num_id)
+{
+	int i;
+	int ret;
 
-	क्रम (i = 0; i < num_id; ++i) अणु
-		ret = devm_regulator_रेजिस्टर_supply_alias(dev, id[i],
+	for (i = 0; i < num_id; ++i) {
+		ret = devm_regulator_register_supply_alias(dev, id[i],
 							   alias_dev,
 							   alias_id[i]);
-		अगर (ret < 0)
-			जाओ err;
-	पूर्ण
+		if (ret < 0)
+			goto err;
+	}
 
-	वापस 0;
+	return 0;
 
 err:
 	dev_err(dev,
 		"Failed to create supply alias %s,%s -> %s,%s\n",
 		id[i], dev_name(dev), alias_id[i], dev_name(alias_dev));
 
-	जबतक (--i >= 0)
-		devm_regulator_unरेजिस्टर_supply_alias(dev, id[i]);
+	while (--i >= 0)
+		devm_regulator_unregister_supply_alias(dev, id[i]);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(devm_regulator_bulk_रेजिस्टर_supply_alias);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(devm_regulator_bulk_register_supply_alias);
 
 /**
- * devm_regulator_bulk_unरेजिस्टर_supply_alias - Managed unरेजिस्टर
+ * devm_regulator_bulk_unregister_supply_alias - Managed unregister
  * multiple aliases
  *
  * @dev:    device to supply
  * @id:     list of supply names or regulator IDs
- * @num_id: number of aliases to unरेजिस्टर
+ * @num_id: number of aliases to unregister
  *
- * Unरेजिस्टर aliases रेजिस्टरed with
- * devm_regulator_bulk_रेजिस्टर_supply_alias(). Normally this function
+ * Unregister aliases registered with
+ * devm_regulator_bulk_register_supply_alias(). Normally this function
  * will not need to be called and the resource management code
- * will ensure that the resource is मुक्तd.
+ * will ensure that the resource is freed.
  */
-व्योम devm_regulator_bulk_unरेजिस्टर_supply_alias(काष्ठा device *dev,
-						 स्थिर अक्षर *स्थिर *id,
-						 पूर्णांक num_id)
-अणु
-	पूर्णांक i;
+void devm_regulator_bulk_unregister_supply_alias(struct device *dev,
+						 const char *const *id,
+						 int num_id)
+{
+	int i;
 
-	क्रम (i = 0; i < num_id; ++i)
-		devm_regulator_unरेजिस्टर_supply_alias(dev, id[i]);
-पूर्ण
-EXPORT_SYMBOL_GPL(devm_regulator_bulk_unरेजिस्टर_supply_alias);
+	for (i = 0; i < num_id; ++i)
+		devm_regulator_unregister_supply_alias(dev, id[i]);
+}
+EXPORT_SYMBOL_GPL(devm_regulator_bulk_unregister_supply_alias);
 
-काष्ठा regulator_notअगरier_match अणु
-	काष्ठा regulator *regulator;
-	काष्ठा notअगरier_block *nb;
-पूर्ण;
+struct regulator_notifier_match {
+	struct regulator *regulator;
+	struct notifier_block *nb;
+};
 
-अटल पूर्णांक devm_regulator_match_notअगरier(काष्ठा device *dev, व्योम *res,
-					 व्योम *data)
-अणु
-	काष्ठा regulator_notअगरier_match *match = res;
-	काष्ठा regulator_notअगरier_match *target = data;
+static int devm_regulator_match_notifier(struct device *dev, void *res,
+					 void *data)
+{
+	struct regulator_notifier_match *match = res;
+	struct regulator_notifier_match *target = data;
 
-	वापस match->regulator == target->regulator && match->nb == target->nb;
-पूर्ण
+	return match->regulator == target->regulator && match->nb == target->nb;
+}
 
-अटल व्योम devm_regulator_destroy_notअगरier(काष्ठा device *dev, व्योम *res)
-अणु
-	काष्ठा regulator_notअगरier_match *match = res;
+static void devm_regulator_destroy_notifier(struct device *dev, void *res)
+{
+	struct regulator_notifier_match *match = res;
 
-	regulator_unरेजिस्टर_notअगरier(match->regulator, match->nb);
-पूर्ण
+	regulator_unregister_notifier(match->regulator, match->nb);
+}
 
 /**
- * devm_regulator_रेजिस्टर_notअगरier - Resource managed
- * regulator_रेजिस्टर_notअगरier
+ * devm_regulator_register_notifier - Resource managed
+ * regulator_register_notifier
  *
  * @regulator: regulator source
- * @nb:        notअगरier block
+ * @nb:        notifier block
  *
- * The notअगरier will be रेजिस्टरs under the consumer device and be
- * स्वतःmatically be unरेजिस्टरed when the source device is unbound.
+ * The notifier will be registers under the consumer device and be
+ * automatically be unregistered when the source device is unbound.
  */
-पूर्णांक devm_regulator_रेजिस्टर_notअगरier(काष्ठा regulator *regulator,
-				     काष्ठा notअगरier_block *nb)
-अणु
-	काष्ठा regulator_notअगरier_match *match;
-	पूर्णांक ret;
+int devm_regulator_register_notifier(struct regulator *regulator,
+				     struct notifier_block *nb)
+{
+	struct regulator_notifier_match *match;
+	int ret;
 
-	match = devres_alloc(devm_regulator_destroy_notअगरier,
-			     माप(काष्ठा regulator_notअगरier_match),
+	match = devres_alloc(devm_regulator_destroy_notifier,
+			     sizeof(struct regulator_notifier_match),
 			     GFP_KERNEL);
-	अगर (!match)
-		वापस -ENOMEM;
+	if (!match)
+		return -ENOMEM;
 
 	match->regulator = regulator;
 	match->nb = nb;
 
-	ret = regulator_रेजिस्टर_notअगरier(regulator, nb);
-	अगर (ret < 0) अणु
-		devres_मुक्त(match);
-		वापस ret;
-	पूर्ण
+	ret = regulator_register_notifier(regulator, nb);
+	if (ret < 0) {
+		devres_free(match);
+		return ret;
+	}
 
 	devres_add(regulator->dev, match);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(devm_regulator_रेजिस्टर_notअगरier);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(devm_regulator_register_notifier);
 
 /**
- * devm_regulator_unरेजिस्टर_notअगरier - Resource managed
- * regulator_unरेजिस्टर_notअगरier()
+ * devm_regulator_unregister_notifier - Resource managed
+ * regulator_unregister_notifier()
  *
  * @regulator: regulator source
- * @nb:        notअगरier block
+ * @nb:        notifier block
  *
- * Unरेजिस्टर a notअगरier रेजिस्टरed with devm_regulator_रेजिस्टर_notअगरier().
+ * Unregister a notifier registered with devm_regulator_register_notifier().
  * Normally this function will not need to be called and the resource
- * management code will ensure that the resource is मुक्तd.
+ * management code will ensure that the resource is freed.
  */
-व्योम devm_regulator_unरेजिस्टर_notअगरier(काष्ठा regulator *regulator,
-					काष्ठा notअगरier_block *nb)
-अणु
-	काष्ठा regulator_notअगरier_match match;
-	पूर्णांक rc;
+void devm_regulator_unregister_notifier(struct regulator *regulator,
+					struct notifier_block *nb)
+{
+	struct regulator_notifier_match match;
+	int rc;
 
 	match.regulator = regulator;
 	match.nb = nb;
 
-	rc = devres_release(regulator->dev, devm_regulator_destroy_notअगरier,
-			    devm_regulator_match_notअगरier, &match);
-	अगर (rc != 0)
+	rc = devres_release(regulator->dev, devm_regulator_destroy_notifier,
+			    devm_regulator_match_notifier, &match);
+	if (rc != 0)
 		WARN_ON(rc);
-पूर्ण
-EXPORT_SYMBOL_GPL(devm_regulator_unरेजिस्टर_notअगरier);
+}
+EXPORT_SYMBOL_GPL(devm_regulator_unregister_notifier);

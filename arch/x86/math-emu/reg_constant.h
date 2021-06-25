@@ -1,27 +1,26 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*---------------------------------------------------------------------------+
- |  reg_स्थिरant.h                                                           |
+ |  reg_constant.h                                                           |
  |                                                                           |
  | Copyright (C) 1992    W. Metzenthen, 22 Parker St, Ormond, Vic 3163,      |
  |                       Australia.  E-mail   billm@vaxc.cc.monash.edu.au    |
  |                                                                           |
  +---------------------------------------------------------------------------*/
 
-#अगर_अघोषित _REG_CONSTANT_H_
-#घोषणा _REG_CONSTANT_H_
+#ifndef _REG_CONSTANT_H_
+#define _REG_CONSTANT_H_
 
-#समावेश "fpu_emu.h"
+#include "fpu_emu.h"
 
-बाह्य FPU_REG स्थिर CONST_1;
-बाह्य FPU_REG स्थिर CONST_PI;
-बाह्य FPU_REG स्थिर CONST_PI2;
-बाह्य FPU_REG स्थिर CONST_PI2extra;
-बाह्य FPU_REG स्थिर CONST_PI4;
-बाह्य FPU_REG स्थिर CONST_Z;
-बाह्य FPU_REG स्थिर CONST_PINF;
-बाह्य FPU_REG स्थिर CONST_INF;
-बाह्य FPU_REG स्थिर CONST_MINF;
-बाह्य FPU_REG स्थिर CONST_QNaN;
+extern FPU_REG const CONST_1;
+extern FPU_REG const CONST_PI;
+extern FPU_REG const CONST_PI2;
+extern FPU_REG const CONST_PI2extra;
+extern FPU_REG const CONST_PI4;
+extern FPU_REG const CONST_Z;
+extern FPU_REG const CONST_PINF;
+extern FPU_REG const CONST_INF;
+extern FPU_REG const CONST_MINF;
+extern FPU_REG const CONST_QNaN;
 
-#पूर्ण_अगर /* _REG_CONSTANT_H_ */
+#endif /* _REG_CONSTANT_H_ */

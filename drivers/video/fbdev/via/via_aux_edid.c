@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright 2011 Florian Tobias Schandinat <FlorianSchandinat@gmx.de>
  */
@@ -7,80 +6,80 @@
  * generic EDID driver
  */
 
-#समावेश <linux/slab.h>
-#समावेश <linux/fb.h>
-#समावेश "via_aux.h"
-#समावेश "../edid.h"
+#include <linux/slab.h>
+#include <linux/fb.h>
+#include "via_aux.h"
+#include "../edid.h"
 
 
-अटल स्थिर अक्षर *name = "EDID";
+static const char *name = "EDID";
 
 
-अटल व्योम query_edid(काष्ठा via_aux_drv *drv)
-अणु
-	काष्ठा fb_monspecs *spec = drv->data;
-	अचिन्हित अक्षर edid[EDID_LENGTH];
+static void query_edid(struct via_aux_drv *drv)
+{
+	struct fb_monspecs *spec = drv->data;
+	unsigned char edid[EDID_LENGTH];
 	bool valid = false;
 
-	अगर (spec) अणु
+	if (spec) {
 		fb_destroy_modedb(spec->modedb);
-	पूर्ण अन्यथा अणु
-		spec = kदो_स्मृति(माप(*spec), GFP_KERNEL);
-		अगर (!spec)
-			वापस;
-	पूर्ण
+	} else {
+		spec = kmalloc(sizeof(*spec), GFP_KERNEL);
+		if (!spec)
+			return;
+	}
 
 	spec->version = spec->revision = 0;
-	अगर (via_aux_पढ़ो(drv, 0x00, edid, EDID_LENGTH)) अणु
+	if (via_aux_read(drv, 0x00, edid, EDID_LENGTH)) {
 		fb_edid_to_monspecs(edid, spec);
 		valid = spec->version || spec->revision;
-	पूर्ण
+	}
 
-	अगर (!valid) अणु
-		kमुक्त(spec);
-		spec = शून्य;
-	पूर्ण अन्यथा
-		prपूर्णांकk(KERN_DEBUG "EDID: %s %s\n", spec->manufacturer, spec->monitor);
+	if (!valid) {
+		kfree(spec);
+		spec = NULL;
+	} else
+		printk(KERN_DEBUG "EDID: %s %s\n", spec->manufacturer, spec->monitor);
 
 	drv->data = spec;
-पूर्ण
+}
 
-अटल स्थिर काष्ठा fb_videomode *get_preferred_mode(काष्ठा via_aux_drv *drv)
-अणु
-	काष्ठा fb_monspecs *spec = drv->data;
-	पूर्णांक i;
+static const struct fb_videomode *get_preferred_mode(struct via_aux_drv *drv)
+{
+	struct fb_monspecs *spec = drv->data;
+	int i;
 
-	अगर (!spec || !spec->modedb || !(spec->misc & FB_MISC_1ST_DETAIL))
-		वापस शून्य;
+	if (!spec || !spec->modedb || !(spec->misc & FB_MISC_1ST_DETAIL))
+		return NULL;
 
-	क्रम (i = 0; i < spec->modedb_len; i++) अणु
-		अगर (spec->modedb[i].flag & FB_MODE_IS_FIRST &&
+	for (i = 0; i < spec->modedb_len; i++) {
+		if (spec->modedb[i].flag & FB_MODE_IS_FIRST &&
 			spec->modedb[i].flag & FB_MODE_IS_DETAILED)
-			वापस &spec->modedb[i];
-	पूर्ण
+			return &spec->modedb[i];
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम cleanup(काष्ठा via_aux_drv *drv)
-अणु
-	काष्ठा fb_monspecs *spec = drv->data;
+static void cleanup(struct via_aux_drv *drv)
+{
+	struct fb_monspecs *spec = drv->data;
 
-	अगर (spec)
+	if (spec)
 		fb_destroy_modedb(spec->modedb);
-पूर्ण
+}
 
-व्योम via_aux_edid_probe(काष्ठा via_aux_bus *bus)
-अणु
-	काष्ठा via_aux_drv drv = अणु
+void via_aux_edid_probe(struct via_aux_bus *bus)
+{
+	struct via_aux_drv drv = {
 		.bus	=	bus,
 		.addr	=	0x50,
 		.name	=	name,
 		.cleanup	=	cleanup,
-		.get_preferred_mode	=	get_preferred_modeपूर्ण;
+		.get_preferred_mode	=	get_preferred_mode};
 
 	query_edid(&drv);
 
 	/* as EDID devices can be connected/disconnected just add the driver */
 	via_aux_add(&drv);
-पूर्ण
+}

@@ -1,382 +1,381 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Debug controller
  *
- * WARNING: This controller is क्रम cgroup core debugging only.
- * Its पूर्णांकerfaces are unstable and subject to changes at any समय.
+ * WARNING: This controller is for cgroup core debugging only.
+ * Its interfaces are unstable and subject to changes at any time.
  */
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/mm.h>
-#समावेश <linux/slab.h>
+#include <linux/ctype.h>
+#include <linux/mm.h>
+#include <linux/slab.h>
 
-#समावेश "cgroup-internal.h"
+#include "cgroup-internal.h"
 
-अटल काष्ठा cgroup_subsys_state *
-debug_css_alloc(काष्ठा cgroup_subsys_state *parent_css)
-अणु
-	काष्ठा cgroup_subsys_state *css = kzalloc(माप(*css), GFP_KERNEL);
+static struct cgroup_subsys_state *
+debug_css_alloc(struct cgroup_subsys_state *parent_css)
+{
+	struct cgroup_subsys_state *css = kzalloc(sizeof(*css), GFP_KERNEL);
 
-	अगर (!css)
-		वापस ERR_PTR(-ENOMEM);
+	if (!css)
+		return ERR_PTR(-ENOMEM);
 
-	वापस css;
-पूर्ण
+	return css;
+}
 
-अटल व्योम debug_css_मुक्त(काष्ठा cgroup_subsys_state *css)
-अणु
-	kमुक्त(css);
-पूर्ण
+static void debug_css_free(struct cgroup_subsys_state *css)
+{
+	kfree(css);
+}
 
 /*
- * debug_taskcount_पढ़ो - वापस the number of tasks in a cgroup.
+ * debug_taskcount_read - return the number of tasks in a cgroup.
  * @cgrp: the cgroup in question
  */
-अटल u64 debug_taskcount_पढ़ो(काष्ठा cgroup_subsys_state *css,
-				काष्ठा cftype *cft)
-अणु
-	वापस cgroup_task_count(css->cgroup);
-पूर्ण
+static u64 debug_taskcount_read(struct cgroup_subsys_state *css,
+				struct cftype *cft)
+{
+	return cgroup_task_count(css->cgroup);
+}
 
-अटल पूर्णांक current_css_set_पढ़ो(काष्ठा seq_file *seq, व्योम *v)
-अणु
-	काष्ठा kernfs_खोलो_file *of = seq->निजी;
-	काष्ठा css_set *cset;
-	काष्ठा cgroup_subsys *ss;
-	काष्ठा cgroup_subsys_state *css;
-	पूर्णांक i, refcnt;
+static int current_css_set_read(struct seq_file *seq, void *v)
+{
+	struct kernfs_open_file *of = seq->private;
+	struct css_set *cset;
+	struct cgroup_subsys *ss;
+	struct cgroup_subsys_state *css;
+	int i, refcnt;
 
-	अगर (!cgroup_kn_lock_live(of->kn, false))
-		वापस -ENODEV;
+	if (!cgroup_kn_lock_live(of->kn, false))
+		return -ENODEV;
 
 	spin_lock_irq(&css_set_lock);
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	cset = task_css_set(current);
-	refcnt = refcount_पढ़ो(&cset->refcount);
-	seq_म_लिखो(seq, "css_set %pK %d", cset, refcnt);
-	अगर (refcnt > cset->nr_tasks)
-		seq_म_लिखो(seq, " +%d", refcnt - cset->nr_tasks);
-	seq_माला_दो(seq, "\n");
+	refcnt = refcount_read(&cset->refcount);
+	seq_printf(seq, "css_set %pK %d", cset, refcnt);
+	if (refcnt > cset->nr_tasks)
+		seq_printf(seq, " +%d", refcnt - cset->nr_tasks);
+	seq_puts(seq, "\n");
 
 	/*
-	 * Prपूर्णांक the css'es stored in the current css_set.
+	 * Print the css'es stored in the current css_set.
 	 */
-	क्रम_each_subsys(ss, i) अणु
+	for_each_subsys(ss, i) {
 		css = cset->subsys[ss->id];
-		अगर (!css)
-			जारी;
-		seq_म_लिखो(seq, "%2d: %-4s\t- %p[%d]\n", ss->id, ss->name,
+		if (!css)
+			continue;
+		seq_printf(seq, "%2d: %-4s\t- %p[%d]\n", ss->id, ss->name,
 			  css, css->id);
-	पूर्ण
-	rcu_पढ़ो_unlock();
+	}
+	rcu_read_unlock();
 	spin_unlock_irq(&css_set_lock);
 	cgroup_kn_unlock(of->kn);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u64 current_css_set_refcount_पढ़ो(काष्ठा cgroup_subsys_state *css,
-					 काष्ठा cftype *cft)
-अणु
+static u64 current_css_set_refcount_read(struct cgroup_subsys_state *css,
+					 struct cftype *cft)
+{
 	u64 count;
 
-	rcu_पढ़ो_lock();
-	count = refcount_पढ़ो(&task_css_set(current)->refcount);
-	rcu_पढ़ो_unlock();
-	वापस count;
-पूर्ण
+	rcu_read_lock();
+	count = refcount_read(&task_css_set(current)->refcount);
+	rcu_read_unlock();
+	return count;
+}
 
-अटल पूर्णांक current_css_set_cg_links_पढ़ो(काष्ठा seq_file *seq, व्योम *v)
-अणु
-	काष्ठा cgrp_cset_link *link;
-	काष्ठा css_set *cset;
-	अक्षर *name_buf;
+static int current_css_set_cg_links_read(struct seq_file *seq, void *v)
+{
+	struct cgrp_cset_link *link;
+	struct css_set *cset;
+	char *name_buf;
 
-	name_buf = kदो_स्मृति(NAME_MAX + 1, GFP_KERNEL);
-	अगर (!name_buf)
-		वापस -ENOMEM;
+	name_buf = kmalloc(NAME_MAX + 1, GFP_KERNEL);
+	if (!name_buf)
+		return -ENOMEM;
 
 	spin_lock_irq(&css_set_lock);
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	cset = task_css_set(current);
-	list_क्रम_each_entry(link, &cset->cgrp_links, cgrp_link) अणु
-		काष्ठा cgroup *c = link->cgrp;
+	list_for_each_entry(link, &cset->cgrp_links, cgrp_link) {
+		struct cgroup *c = link->cgrp;
 
 		cgroup_name(c, name_buf, NAME_MAX + 1);
-		seq_म_लिखो(seq, "Root %d group %s\n",
+		seq_printf(seq, "Root %d group %s\n",
 			   c->root->hierarchy_id, name_buf);
-	पूर्ण
-	rcu_पढ़ो_unlock();
+	}
+	rcu_read_unlock();
 	spin_unlock_irq(&css_set_lock);
-	kमुक्त(name_buf);
-	वापस 0;
-पूर्ण
+	kfree(name_buf);
+	return 0;
+}
 
-#घोषणा MAX_TASKS_SHOWN_PER_CSS 25
-अटल पूर्णांक cgroup_css_links_पढ़ो(काष्ठा seq_file *seq, व्योम *v)
-अणु
-	काष्ठा cgroup_subsys_state *css = seq_css(seq);
-	काष्ठा cgrp_cset_link *link;
-	पूर्णांक dead_cnt = 0, extra_refs = 0, thपढ़ोed_csets = 0;
+#define MAX_TASKS_SHOWN_PER_CSS 25
+static int cgroup_css_links_read(struct seq_file *seq, void *v)
+{
+	struct cgroup_subsys_state *css = seq_css(seq);
+	struct cgrp_cset_link *link;
+	int dead_cnt = 0, extra_refs = 0, threaded_csets = 0;
 
 	spin_lock_irq(&css_set_lock);
 
-	list_क्रम_each_entry(link, &css->cgroup->cset_links, cset_link) अणु
-		काष्ठा css_set *cset = link->cset;
-		काष्ठा task_काष्ठा *task;
-		पूर्णांक count = 0;
-		पूर्णांक refcnt = refcount_पढ़ो(&cset->refcount);
+	list_for_each_entry(link, &css->cgroup->cset_links, cset_link) {
+		struct css_set *cset = link->cset;
+		struct task_struct *task;
+		int count = 0;
+		int refcnt = refcount_read(&cset->refcount);
 
 		/*
-		 * Prपूर्णांक out the proc_cset and thपढ़ोed_cset relationship
-		 * and highlight dअगरference between refcount and task_count.
+		 * Print out the proc_cset and threaded_cset relationship
+		 * and highlight difference between refcount and task_count.
 		 */
-		seq_म_लिखो(seq, "css_set %pK", cset);
-		अगर (rcu_dereference_रक्षित(cset->करोm_cset, 1) != cset) अणु
-			thपढ़ोed_csets++;
-			seq_म_लिखो(seq, "=>%pK", cset->करोm_cset);
-		पूर्ण
-		अगर (!list_empty(&cset->thपढ़ोed_csets)) अणु
-			काष्ठा css_set *tcset;
-			पूर्णांक idx = 0;
+		seq_printf(seq, "css_set %pK", cset);
+		if (rcu_dereference_protected(cset->dom_cset, 1) != cset) {
+			threaded_csets++;
+			seq_printf(seq, "=>%pK", cset->dom_cset);
+		}
+		if (!list_empty(&cset->threaded_csets)) {
+			struct css_set *tcset;
+			int idx = 0;
 
-			list_क्रम_each_entry(tcset, &cset->thपढ़ोed_csets,
-					    thपढ़ोed_csets_node) अणु
-				seq_माला_दो(seq, idx ? "," : "<=");
-				seq_म_लिखो(seq, "%pK", tcset);
+			list_for_each_entry(tcset, &cset->threaded_csets,
+					    threaded_csets_node) {
+				seq_puts(seq, idx ? "," : "<=");
+				seq_printf(seq, "%pK", tcset);
 				idx++;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			seq_म_लिखो(seq, " %d", refcnt);
-			अगर (refcnt - cset->nr_tasks > 0) अणु
-				पूर्णांक extra = refcnt - cset->nr_tasks;
+			}
+		} else {
+			seq_printf(seq, " %d", refcnt);
+			if (refcnt - cset->nr_tasks > 0) {
+				int extra = refcnt - cset->nr_tasks;
 
-				seq_म_लिखो(seq, " +%d", extra);
+				seq_printf(seq, " +%d", extra);
 				/*
 				 * Take out the one additional reference in
 				 * init_css_set.
 				 */
-				अगर (cset == &init_css_set)
+				if (cset == &init_css_set)
 					extra--;
 				extra_refs += extra;
-			पूर्ण
-		पूर्ण
-		seq_माला_दो(seq, "\n");
+			}
+		}
+		seq_puts(seq, "\n");
 
-		list_क्रम_each_entry(task, &cset->tasks, cg_list) अणु
-			अगर (count++ <= MAX_TASKS_SHOWN_PER_CSS)
-				seq_म_लिखो(seq, "  task %d\n",
+		list_for_each_entry(task, &cset->tasks, cg_list) {
+			if (count++ <= MAX_TASKS_SHOWN_PER_CSS)
+				seq_printf(seq, "  task %d\n",
 					   task_pid_vnr(task));
-		पूर्ण
+		}
 
-		list_क्रम_each_entry(task, &cset->mg_tasks, cg_list) अणु
-			अगर (count++ <= MAX_TASKS_SHOWN_PER_CSS)
-				seq_म_लिखो(seq, "  task %d\n",
+		list_for_each_entry(task, &cset->mg_tasks, cg_list) {
+			if (count++ <= MAX_TASKS_SHOWN_PER_CSS)
+				seq_printf(seq, "  task %d\n",
 					   task_pid_vnr(task));
-		पूर्ण
+		}
 		/* show # of overflowed tasks */
-		अगर (count > MAX_TASKS_SHOWN_PER_CSS)
-			seq_म_लिखो(seq, "  ... (%d)\n",
+		if (count > MAX_TASKS_SHOWN_PER_CSS)
+			seq_printf(seq, "  ... (%d)\n",
 				   count - MAX_TASKS_SHOWN_PER_CSS);
 
-		अगर (cset->dead) अणु
-			seq_माला_दो(seq, "    [dead]\n");
+		if (cset->dead) {
+			seq_puts(seq, "    [dead]\n");
 			dead_cnt++;
-		पूर्ण
+		}
 
 		WARN_ON(count != cset->nr_tasks);
-	पूर्ण
+	}
 	spin_unlock_irq(&css_set_lock);
 
-	अगर (!dead_cnt && !extra_refs && !thपढ़ोed_csets)
-		वापस 0;
+	if (!dead_cnt && !extra_refs && !threaded_csets)
+		return 0;
 
-	seq_माला_दो(seq, "\n");
-	अगर (thपढ़ोed_csets)
-		seq_म_लिखो(seq, "threaded css_sets = %d\n", thपढ़ोed_csets);
-	अगर (extra_refs)
-		seq_म_लिखो(seq, "extra references = %d\n", extra_refs);
-	अगर (dead_cnt)
-		seq_म_लिखो(seq, "dead css_sets = %d\n", dead_cnt);
+	seq_puts(seq, "\n");
+	if (threaded_csets)
+		seq_printf(seq, "threaded css_sets = %d\n", threaded_csets);
+	if (extra_refs)
+		seq_printf(seq, "extra references = %d\n", extra_refs);
+	if (dead_cnt)
+		seq_printf(seq, "dead css_sets = %d\n", dead_cnt);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cgroup_subsys_states_पढ़ो(काष्ठा seq_file *seq, व्योम *v)
-अणु
-	काष्ठा kernfs_खोलो_file *of = seq->निजी;
-	काष्ठा cgroup *cgrp;
-	काष्ठा cgroup_subsys *ss;
-	काष्ठा cgroup_subsys_state *css;
-	अक्षर pbuf[16];
-	पूर्णांक i;
+static int cgroup_subsys_states_read(struct seq_file *seq, void *v)
+{
+	struct kernfs_open_file *of = seq->private;
+	struct cgroup *cgrp;
+	struct cgroup_subsys *ss;
+	struct cgroup_subsys_state *css;
+	char pbuf[16];
+	int i;
 
 	cgrp = cgroup_kn_lock_live(of->kn, false);
-	अगर (!cgrp)
-		वापस -ENODEV;
+	if (!cgrp)
+		return -ENODEV;
 
-	क्रम_each_subsys(ss, i) अणु
+	for_each_subsys(ss, i) {
 		css = rcu_dereference_check(cgrp->subsys[ss->id], true);
-		अगर (!css)
-			जारी;
+		if (!css)
+			continue;
 
 		pbuf[0] = '\0';
 
-		/* Show the parent CSS अगर applicable*/
-		अगर (css->parent)
-			snम_लिखो(pbuf, माप(pbuf) - 1, " P=%d",
+		/* Show the parent CSS if applicable*/
+		if (css->parent)
+			snprintf(pbuf, sizeof(pbuf) - 1, " P=%d",
 				 css->parent->id);
-		seq_म_लिखो(seq, "%2d: %-4s\t- %p[%d] %d%s\n", ss->id, ss->name,
+		seq_printf(seq, "%2d: %-4s\t- %p[%d] %d%s\n", ss->id, ss->name,
 			  css, css->id,
-			  atomic_पढ़ो(&css->online_cnt), pbuf);
-	पूर्ण
+			  atomic_read(&css->online_cnt), pbuf);
+	}
 
 	cgroup_kn_unlock(of->kn);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम cgroup_masks_पढ़ो_one(काष्ठा seq_file *seq, स्थिर अक्षर *name,
+static void cgroup_masks_read_one(struct seq_file *seq, const char *name,
 				  u16 mask)
-अणु
-	काष्ठा cgroup_subsys *ss;
-	पूर्णांक ssid;
+{
+	struct cgroup_subsys *ss;
+	int ssid;
 	bool first = true;
 
-	seq_म_लिखो(seq, "%-17s: ", name);
-	क्रम_each_subsys(ss, ssid) अणु
-		अगर (!(mask & (1 << ssid)))
-			जारी;
-		अगर (!first)
-			seq_माला_दो(seq, ", ");
-		seq_माला_दो(seq, ss->name);
+	seq_printf(seq, "%-17s: ", name);
+	for_each_subsys(ss, ssid) {
+		if (!(mask & (1 << ssid)))
+			continue;
+		if (!first)
+			seq_puts(seq, ", ");
+		seq_puts(seq, ss->name);
 		first = false;
-	पूर्ण
-	seq_अ_दो(seq, '\n');
-पूर्ण
+	}
+	seq_putc(seq, '\n');
+}
 
-अटल पूर्णांक cgroup_masks_पढ़ो(काष्ठा seq_file *seq, व्योम *v)
-अणु
-	काष्ठा kernfs_खोलो_file *of = seq->निजी;
-	काष्ठा cgroup *cgrp;
+static int cgroup_masks_read(struct seq_file *seq, void *v)
+{
+	struct kernfs_open_file *of = seq->private;
+	struct cgroup *cgrp;
 
 	cgrp = cgroup_kn_lock_live(of->kn, false);
-	अगर (!cgrp)
-		वापस -ENODEV;
+	if (!cgrp)
+		return -ENODEV;
 
-	cgroup_masks_पढ़ो_one(seq, "subtree_control", cgrp->subtree_control);
-	cgroup_masks_पढ़ो_one(seq, "subtree_ss_mask", cgrp->subtree_ss_mask);
+	cgroup_masks_read_one(seq, "subtree_control", cgrp->subtree_control);
+	cgroup_masks_read_one(seq, "subtree_ss_mask", cgrp->subtree_ss_mask);
 
 	cgroup_kn_unlock(of->kn);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u64 releasable_पढ़ो(काष्ठा cgroup_subsys_state *css, काष्ठा cftype *cft)
-अणु
-	वापस (!cgroup_is_populated(css->cgroup) &&
+static u64 releasable_read(struct cgroup_subsys_state *css, struct cftype *cft)
+{
+	return (!cgroup_is_populated(css->cgroup) &&
 		!css_has_online_children(&css->cgroup->self));
-पूर्ण
+}
 
-अटल काष्ठा cftype debug_legacy_files[] =  अणु
-	अणु
+static struct cftype debug_legacy_files[] =  {
+	{
 		.name = "taskcount",
-		.पढ़ो_u64 = debug_taskcount_पढ़ो,
-	पूर्ण,
+		.read_u64 = debug_taskcount_read,
+	},
 
-	अणु
+	{
 		.name = "current_css_set",
-		.seq_show = current_css_set_पढ़ो,
+		.seq_show = current_css_set_read,
 		.flags = CFTYPE_ONLY_ON_ROOT,
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.name = "current_css_set_refcount",
-		.पढ़ो_u64 = current_css_set_refcount_पढ़ो,
+		.read_u64 = current_css_set_refcount_read,
 		.flags = CFTYPE_ONLY_ON_ROOT,
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.name = "current_css_set_cg_links",
-		.seq_show = current_css_set_cg_links_पढ़ो,
+		.seq_show = current_css_set_cg_links_read,
 		.flags = CFTYPE_ONLY_ON_ROOT,
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.name = "cgroup_css_links",
-		.seq_show = cgroup_css_links_पढ़ो,
-	पूर्ण,
+		.seq_show = cgroup_css_links_read,
+	},
 
-	अणु
+	{
 		.name = "cgroup_subsys_states",
-		.seq_show = cgroup_subsys_states_पढ़ो,
-	पूर्ण,
+		.seq_show = cgroup_subsys_states_read,
+	},
 
-	अणु
+	{
 		.name = "cgroup_masks",
-		.seq_show = cgroup_masks_पढ़ो,
-	पूर्ण,
+		.seq_show = cgroup_masks_read,
+	},
 
-	अणु
+	{
 		.name = "releasable",
-		.पढ़ो_u64 = releasable_पढ़ो,
-	पूर्ण,
+		.read_u64 = releasable_read,
+	},
 
-	अणु पूर्ण	/* terminate */
-पूर्ण;
+	{ }	/* terminate */
+};
 
-अटल काष्ठा cftype debug_files[] =  अणु
-	अणु
+static struct cftype debug_files[] =  {
+	{
 		.name = "taskcount",
-		.पढ़ो_u64 = debug_taskcount_पढ़ो,
-	पूर्ण,
+		.read_u64 = debug_taskcount_read,
+	},
 
-	अणु
+	{
 		.name = "current_css_set",
-		.seq_show = current_css_set_पढ़ो,
+		.seq_show = current_css_set_read,
 		.flags = CFTYPE_ONLY_ON_ROOT,
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.name = "current_css_set_refcount",
-		.पढ़ो_u64 = current_css_set_refcount_पढ़ो,
+		.read_u64 = current_css_set_refcount_read,
 		.flags = CFTYPE_ONLY_ON_ROOT,
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.name = "current_css_set_cg_links",
-		.seq_show = current_css_set_cg_links_पढ़ो,
+		.seq_show = current_css_set_cg_links_read,
 		.flags = CFTYPE_ONLY_ON_ROOT,
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.name = "css_links",
-		.seq_show = cgroup_css_links_पढ़ो,
-	पूर्ण,
+		.seq_show = cgroup_css_links_read,
+	},
 
-	अणु
+	{
 		.name = "csses",
-		.seq_show = cgroup_subsys_states_पढ़ो,
-	पूर्ण,
+		.seq_show = cgroup_subsys_states_read,
+	},
 
-	अणु
+	{
 		.name = "masks",
-		.seq_show = cgroup_masks_पढ़ो,
-	पूर्ण,
+		.seq_show = cgroup_masks_read,
+	},
 
-	अणु पूर्ण	/* terminate */
-पूर्ण;
+	{ }	/* terminate */
+};
 
-काष्ठा cgroup_subsys debug_cgrp_subsys = अणु
+struct cgroup_subsys debug_cgrp_subsys = {
 	.css_alloc	= debug_css_alloc,
-	.css_मुक्त	= debug_css_मुक्त,
+	.css_free	= debug_css_free,
 	.legacy_cftypes	= debug_legacy_files,
-पूर्ण;
+};
 
 /*
  * On v2, debug is an implicit controller enabled by "cgroup_debug" boot
  * parameter.
  */
-व्योम __init enable_debug_cgroup(व्योम)
-अणु
+void __init enable_debug_cgroup(void)
+{
 	debug_cgrp_subsys.dfl_cftypes = debug_files;
 	debug_cgrp_subsys.implicit_on_dfl = true;
-	debug_cgrp_subsys.thपढ़ोed = true;
-पूर्ण
+	debug_cgrp_subsys.threaded = true;
+}

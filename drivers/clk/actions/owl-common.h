@@ -1,7 +1,6 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 //
-// OWL common घड़ी driver
+// OWL common clock driver
 //
 // Copyright (c) 2014 Actions Semi Inc.
 // Author: David Liu <liuwei@actions-semi.com>
@@ -9,37 +8,37 @@
 // Copyright (c) 2018 Linaro Ltd.
 // Author: Manivannan Sadhasivam <manivannan.sadhasivam@linaro.org>
 
-#अगर_अघोषित _OWL_COMMON_H_
-#घोषणा _OWL_COMMON_H_
+#ifndef _OWL_COMMON_H_
+#define _OWL_COMMON_H_
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/regmap.h>
+#include <linux/clk-provider.h>
+#include <linux/of_platform.h>
+#include <linux/regmap.h>
 
-काष्ठा device_node;
+struct device_node;
 
-काष्ठा owl_clk_common अणु
-	काष्ठा regmap			*regmap;
-	काष्ठा clk_hw			hw;
-पूर्ण;
+struct owl_clk_common {
+	struct regmap			*regmap;
+	struct clk_hw			hw;
+};
 
-काष्ठा owl_clk_desc अणु
-	काष्ठा owl_clk_common		**clks;
-	अचिन्हित दीर्घ			num_clks;
-	काष्ठा clk_hw_onecell_data	*hw_clks;
-	स्थिर काष्ठा owl_reset_map	*resets;
-	अचिन्हित दीर्घ			num_resets;
-	काष्ठा regmap			*regmap;
-पूर्ण;
+struct owl_clk_desc {
+	struct owl_clk_common		**clks;
+	unsigned long			num_clks;
+	struct clk_hw_onecell_data	*hw_clks;
+	const struct owl_reset_map	*resets;
+	unsigned long			num_resets;
+	struct regmap			*regmap;
+};
 
-अटल अंतरभूत काष्ठा owl_clk_common *
-	hw_to_owl_clk_common(स्थिर काष्ठा clk_hw *hw)
-अणु
-	वापस container_of(hw, काष्ठा owl_clk_common, hw);
-पूर्ण
+static inline struct owl_clk_common *
+	hw_to_owl_clk_common(const struct clk_hw *hw)
+{
+	return container_of(hw, struct owl_clk_common, hw);
+}
 
-पूर्णांक owl_clk_regmap_init(काष्ठा platक्रमm_device *pdev,
-			काष्ठा owl_clk_desc *desc);
-पूर्णांक owl_clk_probe(काष्ठा device *dev, काष्ठा clk_hw_onecell_data *hw_clks);
+int owl_clk_regmap_init(struct platform_device *pdev,
+			struct owl_clk_desc *desc);
+int owl_clk_probe(struct device *dev, struct clk_hw_onecell_data *hw_clks);
 
-#पूर्ण_अगर /* _OWL_COMMON_H_ */
+#endif /* _OWL_COMMON_H_ */

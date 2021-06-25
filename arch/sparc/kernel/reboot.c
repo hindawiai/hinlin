@@ -1,56 +1,55 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-/* reboot.c: reboot/shutकरोwn/halt/घातeroff handling
+// SPDX-License-Identifier: GPL-2.0
+/* reboot.c: reboot/shutdown/halt/poweroff handling
  *
  * Copyright (C) 2008 David S. Miller <davem@davemloft.net>
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/reboot.h>
-#समावेश <linux/export.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/of.h>
+#include <linux/kernel.h>
+#include <linux/reboot.h>
+#include <linux/export.h>
+#include <linux/pm.h>
+#include <linux/of.h>
 
-#समावेश <यंत्र/oplib.h>
-#समावेश <यंत्र/prom.h>
-#समावेश <यंत्र/setup.h>
+#include <asm/oplib.h>
+#include <asm/prom.h>
+#include <asm/setup.h>
 
-/* sysctl - toggle घातer-off restriction क्रम serial console
- * प्रणालीs in machine_घातer_off()
+/* sysctl - toggle power-off restriction for serial console
+ * systems in machine_power_off()
  */
-पूर्णांक scons_pwroff = 1;
+int scons_pwroff = 1;
 
 /* This isn't actually used, it exists merely to satisfy the
  * reference in kernel/sys.c
  */
-व्योम (*pm_घातer_off)(व्योम) = machine_घातer_off;
-EXPORT_SYMBOL(pm_घातer_off);
+void (*pm_power_off)(void) = machine_power_off;
+EXPORT_SYMBOL(pm_power_off);
 
-व्योम machine_घातer_off(व्योम)
-अणु
-	अगर (!of_node_is_type(of_console_device, "serial") || scons_pwroff)
-		prom_halt_घातer_off();
+void machine_power_off(void)
+{
+	if (!of_node_is_type(of_console_device, "serial") || scons_pwroff)
+		prom_halt_power_off();
 
 	prom_halt();
-पूर्ण
+}
 
-व्योम machine_halt(व्योम)
-अणु
+void machine_halt(void)
+{
 	prom_halt();
 	panic("Halt failed!");
-पूर्ण
+}
 
-व्योम machine_restart(अक्षर *cmd)
-अणु
-	अक्षर *p;
+void machine_restart(char *cmd)
+{
+	char *p;
 
-	p = म_अक्षर(reboot_command, '\n');
-	अगर (p)
+	p = strchr(reboot_command, '\n');
+	if (p)
 		*p = 0;
-	अगर (cmd)
+	if (cmd)
 		prom_reboot(cmd);
-	अगर (*reboot_command)
+	if (*reboot_command)
 		prom_reboot(reboot_command);
 	prom_reboot("");
 	panic("Reboot failed!");
-पूर्ण
+}
 

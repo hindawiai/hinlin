@@ -1,17 +1,16 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 /*
  *	Just a place holder. 
  */
 
-#अगर_अघोषित _UAPI_SPARC_SETUP_H
-#घोषणा _UAPI_SPARC_SETUP_H
+#ifndef _UAPI_SPARC_SETUP_H
+#define _UAPI_SPARC_SETUP_H
 
-#अगर defined(__sparc__) && defined(__arch64__)
+#if defined(__sparc__) && defined(__arch64__)
 # define COMMAND_LINE_SIZE 2048
-#अन्यथा
+#else
 # define COMMAND_LINE_SIZE 256
-#पूर्ण_अगर
+#endif
 
 
-#पूर्ण_अगर /* _UAPI_SPARC_SETUP_H */
+#endif /* _UAPI_SPARC_SETUP_H */

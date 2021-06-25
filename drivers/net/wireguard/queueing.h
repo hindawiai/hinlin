@@ -1,101 +1,100 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) 2015-2019 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
  */
 
-#अगर_अघोषित _WG_QUEUEING_H
-#घोषणा _WG_QUEUEING_H
+#ifndef _WG_QUEUEING_H
+#define _WG_QUEUEING_H
 
-#समावेश "peer.h"
-#समावेश <linux/types.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/ip.h>
-#समावेश <linux/ipv6.h>
-#समावेश <net/ip_tunnels.h>
+#include "peer.h"
+#include <linux/types.h>
+#include <linux/skbuff.h>
+#include <linux/ip.h>
+#include <linux/ipv6.h>
+#include <net/ip_tunnels.h>
 
-काष्ठा wg_device;
-काष्ठा wg_peer;
-काष्ठा multicore_worker;
-काष्ठा crypt_queue;
-काष्ठा prev_queue;
-काष्ठा sk_buff;
+struct wg_device;
+struct wg_peer;
+struct multicore_worker;
+struct crypt_queue;
+struct prev_queue;
+struct sk_buff;
 
 /* queueing.c APIs: */
-पूर्णांक wg_packet_queue_init(काष्ठा crypt_queue *queue, work_func_t function,
-			 अचिन्हित पूर्णांक len);
-व्योम wg_packet_queue_मुक्त(काष्ठा crypt_queue *queue);
-काष्ठा multicore_worker __percpu *
-wg_packet_percpu_multicore_worker_alloc(work_func_t function, व्योम *ptr);
+int wg_packet_queue_init(struct crypt_queue *queue, work_func_t function,
+			 unsigned int len);
+void wg_packet_queue_free(struct crypt_queue *queue);
+struct multicore_worker __percpu *
+wg_packet_percpu_multicore_worker_alloc(work_func_t function, void *ptr);
 
 /* receive.c APIs: */
-व्योम wg_packet_receive(काष्ठा wg_device *wg, काष्ठा sk_buff *skb);
-व्योम wg_packet_handshake_receive_worker(काष्ठा work_काष्ठा *work);
+void wg_packet_receive(struct wg_device *wg, struct sk_buff *skb);
+void wg_packet_handshake_receive_worker(struct work_struct *work);
 /* NAPI poll function: */
-पूर्णांक wg_packet_rx_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget);
+int wg_packet_rx_poll(struct napi_struct *napi, int budget);
 /* Workqueue worker: */
-व्योम wg_packet_decrypt_worker(काष्ठा work_काष्ठा *work);
+void wg_packet_decrypt_worker(struct work_struct *work);
 
 /* send.c APIs: */
-व्योम wg_packet_send_queued_handshake_initiation(काष्ठा wg_peer *peer,
+void wg_packet_send_queued_handshake_initiation(struct wg_peer *peer,
 						bool is_retry);
-व्योम wg_packet_send_handshake_response(काष्ठा wg_peer *peer);
-व्योम wg_packet_send_handshake_cookie(काष्ठा wg_device *wg,
-				     काष्ठा sk_buff *initiating_skb,
+void wg_packet_send_handshake_response(struct wg_peer *peer);
+void wg_packet_send_handshake_cookie(struct wg_device *wg,
+				     struct sk_buff *initiating_skb,
 				     __le32 sender_index);
-व्योम wg_packet_send_keepalive(काष्ठा wg_peer *peer);
-व्योम wg_packet_purge_staged_packets(काष्ठा wg_peer *peer);
-व्योम wg_packet_send_staged_packets(काष्ठा wg_peer *peer);
+void wg_packet_send_keepalive(struct wg_peer *peer);
+void wg_packet_purge_staged_packets(struct wg_peer *peer);
+void wg_packet_send_staged_packets(struct wg_peer *peer);
 /* Workqueue workers: */
-व्योम wg_packet_handshake_send_worker(काष्ठा work_काष्ठा *work);
-व्योम wg_packet_tx_worker(काष्ठा work_काष्ठा *work);
-व्योम wg_packet_encrypt_worker(काष्ठा work_काष्ठा *work);
+void wg_packet_handshake_send_worker(struct work_struct *work);
+void wg_packet_tx_worker(struct work_struct *work);
+void wg_packet_encrypt_worker(struct work_struct *work);
 
-क्रमागत packet_state अणु
+enum packet_state {
 	PACKET_STATE_UNCRYPTED,
 	PACKET_STATE_CRYPTED,
 	PACKET_STATE_DEAD
-पूर्ण;
+};
 
-काष्ठा packet_cb अणु
+struct packet_cb {
 	u64 nonce;
-	काष्ठा noise_keypair *keypair;
+	struct noise_keypair *keypair;
 	atomic_t state;
 	u32 mtu;
 	u8 ds;
-पूर्ण;
+};
 
-#घोषणा PACKET_CB(skb) ((काष्ठा packet_cb *)((skb)->cb))
-#घोषणा PACKET_PEER(skb) (PACKET_CB(skb)->keypair->entry.peer)
+#define PACKET_CB(skb) ((struct packet_cb *)((skb)->cb))
+#define PACKET_PEER(skb) (PACKET_CB(skb)->keypair->entry.peer)
 
-अटल अंतरभूत bool wg_check_packet_protocol(काष्ठा sk_buff *skb)
-अणु
+static inline bool wg_check_packet_protocol(struct sk_buff *skb)
+{
 	__be16 real_protocol = ip_tunnel_parse_protocol(skb);
-	वापस real_protocol && skb->protocol == real_protocol;
-पूर्ण
+	return real_protocol && skb->protocol == real_protocol;
+}
 
-अटल अंतरभूत व्योम wg_reset_packet(काष्ठा sk_buff *skb, bool encapsulating)
-अणु
+static inline void wg_reset_packet(struct sk_buff *skb, bool encapsulating)
+{
 	u8 l4_hash = skb->l4_hash;
 	u8 sw_hash = skb->sw_hash;
 	u32 hash = skb->hash;
 	skb_scrub_packet(skb, true);
-	स_रखो(&skb->headers_start, 0,
-	       दुरत्व(काष्ठा sk_buff, headers_end) -
-		       दुरत्व(काष्ठा sk_buff, headers_start));
-	अगर (encapsulating) अणु
+	memset(&skb->headers_start, 0,
+	       offsetof(struct sk_buff, headers_end) -
+		       offsetof(struct sk_buff, headers_start));
+	if (encapsulating) {
 		skb->l4_hash = l4_hash;
 		skb->sw_hash = sw_hash;
 		skb->hash = hash;
-	पूर्ण
+	}
 	skb->queue_mapping = 0;
 	skb->nohdr = 0;
 	skb->peeked = 0;
 	skb->mac_len = 0;
-	skb->dev = शून्य;
-#अगर_घोषित CONFIG_NET_SCHED
+	skb->dev = NULL;
+#ifdef CONFIG_NET_SCHED
 	skb->tc_index = 0;
-#पूर्ण_अगर
+#endif
 	skb_reset_redirect(skb);
 	skb->hdr_len = skb_headroom(skb);
 	skb_reset_mac_header(skb);
@@ -103,113 +102,113 @@ wg_packet_percpu_multicore_worker_alloc(work_func_t function, व्योम *p
 	skb_reset_transport_header(skb);
 	skb_probe_transport_header(skb);
 	skb_reset_inner_headers(skb);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक wg_cpumask_choose_online(पूर्णांक *stored_cpu, अचिन्हित पूर्णांक id)
-अणु
-	अचिन्हित पूर्णांक cpu = *stored_cpu, cpu_index, i;
+static inline int wg_cpumask_choose_online(int *stored_cpu, unsigned int id)
+{
+	unsigned int cpu = *stored_cpu, cpu_index, i;
 
-	अगर (unlikely(cpu == nr_cpumask_bits ||
-		     !cpumask_test_cpu(cpu, cpu_online_mask))) अणु
+	if (unlikely(cpu == nr_cpumask_bits ||
+		     !cpumask_test_cpu(cpu, cpu_online_mask))) {
 		cpu_index = id % cpumask_weight(cpu_online_mask);
 		cpu = cpumask_first(cpu_online_mask);
-		क्रम (i = 0; i < cpu_index; ++i)
+		for (i = 0; i < cpu_index; ++i)
 			cpu = cpumask_next(cpu, cpu_online_mask);
 		*stored_cpu = cpu;
-	पूर्ण
-	वापस cpu;
-पूर्ण
+	}
+	return cpu;
+}
 
-/* This function is racy, in the sense that next is unlocked, so it could वापस
- * the same CPU twice. A race-मुक्त version of this would be to instead store an
- * atomic sequence number, करो an increment-and-वापस, and then iterate through
+/* This function is racy, in the sense that next is unlocked, so it could return
+ * the same CPU twice. A race-free version of this would be to instead store an
+ * atomic sequence number, do an increment-and-return, and then iterate through
  * every possible CPU until we get to that index -- choose_cpu. However that's
- * a bit slower, and it करोesn't seem like this potential race actually
- * पूर्णांकroduces any perक्रमmance loss, so we live with it.
+ * a bit slower, and it doesn't seem like this potential race actually
+ * introduces any performance loss, so we live with it.
  */
-अटल अंतरभूत पूर्णांक wg_cpumask_next_online(पूर्णांक *next)
-अणु
-	पूर्णांक cpu = *next;
+static inline int wg_cpumask_next_online(int *next)
+{
+	int cpu = *next;
 
-	जबतक (unlikely(!cpumask_test_cpu(cpu, cpu_online_mask)))
+	while (unlikely(!cpumask_test_cpu(cpu, cpu_online_mask)))
 		cpu = cpumask_next(cpu, cpu_online_mask) % nr_cpumask_bits;
 	*next = cpumask_next(cpu, cpu_online_mask) % nr_cpumask_bits;
-	वापस cpu;
-पूर्ण
+	return cpu;
+}
 
-व्योम wg_prev_queue_init(काष्ठा prev_queue *queue);
+void wg_prev_queue_init(struct prev_queue *queue);
 
 /* Multi producer */
-bool wg_prev_queue_enqueue(काष्ठा prev_queue *queue, काष्ठा sk_buff *skb);
+bool wg_prev_queue_enqueue(struct prev_queue *queue, struct sk_buff *skb);
 
 /* Single consumer */
-काष्ठा sk_buff *wg_prev_queue_dequeue(काष्ठा prev_queue *queue);
+struct sk_buff *wg_prev_queue_dequeue(struct prev_queue *queue);
 
 /* Single consumer */
-अटल अंतरभूत काष्ठा sk_buff *wg_prev_queue_peek(काष्ठा prev_queue *queue)
-अणु
-	अगर (queue->peeked)
-		वापस queue->peeked;
+static inline struct sk_buff *wg_prev_queue_peek(struct prev_queue *queue)
+{
+	if (queue->peeked)
+		return queue->peeked;
 	queue->peeked = wg_prev_queue_dequeue(queue);
-	वापस queue->peeked;
-पूर्ण
+	return queue->peeked;
+}
 
 /* Single consumer */
-अटल अंतरभूत व्योम wg_prev_queue_drop_peeked(काष्ठा prev_queue *queue)
-अणु
-	queue->peeked = शून्य;
-पूर्ण
+static inline void wg_prev_queue_drop_peeked(struct prev_queue *queue)
+{
+	queue->peeked = NULL;
+}
 
-अटल अंतरभूत पूर्णांक wg_queue_enqueue_per_device_and_peer(
-	काष्ठा crypt_queue *device_queue, काष्ठा prev_queue *peer_queue,
-	काष्ठा sk_buff *skb, काष्ठा workqueue_काष्ठा *wq, पूर्णांक *next_cpu)
-अणु
-	पूर्णांक cpu;
+static inline int wg_queue_enqueue_per_device_and_peer(
+	struct crypt_queue *device_queue, struct prev_queue *peer_queue,
+	struct sk_buff *skb, struct workqueue_struct *wq, int *next_cpu)
+{
+	int cpu;
 
 	atomic_set_release(&PACKET_CB(skb)->state, PACKET_STATE_UNCRYPTED);
-	/* We first queue this up क्रम the peer ingestion, but the consumer
-	 * will रुको क्रम the state to change to CRYPTED or DEAD beक्रमe.
+	/* We first queue this up for the peer ingestion, but the consumer
+	 * will wait for the state to change to CRYPTED or DEAD before.
 	 */
-	अगर (unlikely(!wg_prev_queue_enqueue(peer_queue, skb)))
-		वापस -ENOSPC;
+	if (unlikely(!wg_prev_queue_enqueue(peer_queue, skb)))
+		return -ENOSPC;
 
 	/* Then we queue it up in the device queue, which consumes the
 	 * packet as soon as it can.
 	 */
 	cpu = wg_cpumask_next_online(next_cpu);
-	अगर (unlikely(ptr_ring_produce_bh(&device_queue->ring, skb)))
-		वापस -EPIPE;
+	if (unlikely(ptr_ring_produce_bh(&device_queue->ring, skb)))
+		return -EPIPE;
 	queue_work_on(cpu, wq, &per_cpu_ptr(device_queue->worker, cpu)->work);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत व्योम wg_queue_enqueue_per_peer_tx(काष्ठा sk_buff *skb, क्रमागत packet_state state)
-अणु
+static inline void wg_queue_enqueue_per_peer_tx(struct sk_buff *skb, enum packet_state state)
+{
 	/* We take a reference, because as soon as we call atomic_set, the
-	 * peer can be मुक्तd from below us.
+	 * peer can be freed from below us.
 	 */
-	काष्ठा wg_peer *peer = wg_peer_get(PACKET_PEER(skb));
+	struct wg_peer *peer = wg_peer_get(PACKET_PEER(skb));
 
 	atomic_set_release(&PACKET_CB(skb)->state, state);
-	queue_work_on(wg_cpumask_choose_online(&peer->serial_work_cpu, peer->पूर्णांकernal_id),
+	queue_work_on(wg_cpumask_choose_online(&peer->serial_work_cpu, peer->internal_id),
 		      peer->device->packet_crypt_wq, &peer->transmit_packet_work);
 	wg_peer_put(peer);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम wg_queue_enqueue_per_peer_rx(काष्ठा sk_buff *skb, क्रमागत packet_state state)
-अणु
+static inline void wg_queue_enqueue_per_peer_rx(struct sk_buff *skb, enum packet_state state)
+{
 	/* We take a reference, because as soon as we call atomic_set, the
-	 * peer can be मुक्तd from below us.
+	 * peer can be freed from below us.
 	 */
-	काष्ठा wg_peer *peer = wg_peer_get(PACKET_PEER(skb));
+	struct wg_peer *peer = wg_peer_get(PACKET_PEER(skb));
 
 	atomic_set_release(&PACKET_CB(skb)->state, state);
 	napi_schedule(&peer->napi);
 	wg_peer_put(peer);
-पूर्ण
+}
 
-#अगर_घोषित DEBUG
-bool wg_packet_counter_selftest(व्योम);
-#पूर्ण_अगर
+#ifdef DEBUG
+bool wg_packet_counter_selftest(void);
+#endif
 
-#पूर्ण_अगर /* _WG_QUEUEING_H */
+#endif /* _WG_QUEUEING_H */

@@ -1,137 +1,136 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
+/* SPDX-License-Identifier: MIT */
 /*
- * Copyright तऊ 2014-2018 Broadcom
- * Copyright तऊ 2019 Collabora ltd.
+ * Copyright © 2014-2018 Broadcom
+ * Copyright © 2019 Collabora ltd.
  */
-#अगर_अघोषित _PANFROST_DRM_H_
-#घोषणा _PANFROST_DRM_H_
+#ifndef _PANFROST_DRM_H_
+#define _PANFROST_DRM_H_
 
-#समावेश "drm.h"
+#include "drm.h"
 
-#अगर defined(__cplusplus)
-बाह्य "C" अणु
-#पूर्ण_अगर
+#if defined(__cplusplus)
+extern "C" {
+#endif
 
-#घोषणा DRM_PANFROST_SUBMIT			0x00
-#घोषणा DRM_PANFROST_WAIT_BO			0x01
-#घोषणा DRM_PANFROST_CREATE_BO			0x02
-#घोषणा DRM_PANFROST_MMAP_BO			0x03
-#घोषणा DRM_PANFROST_GET_PARAM			0x04
-#घोषणा DRM_PANFROST_GET_BO_OFFSET		0x05
-#घोषणा DRM_PANFROST_PERFCNT_ENABLE		0x06
-#घोषणा DRM_PANFROST_PERFCNT_DUMP		0x07
-#घोषणा DRM_PANFROST_MADVISE			0x08
+#define DRM_PANFROST_SUBMIT			0x00
+#define DRM_PANFROST_WAIT_BO			0x01
+#define DRM_PANFROST_CREATE_BO			0x02
+#define DRM_PANFROST_MMAP_BO			0x03
+#define DRM_PANFROST_GET_PARAM			0x04
+#define DRM_PANFROST_GET_BO_OFFSET		0x05
+#define DRM_PANFROST_PERFCNT_ENABLE		0x06
+#define DRM_PANFROST_PERFCNT_DUMP		0x07
+#define DRM_PANFROST_MADVISE			0x08
 
-#घोषणा DRM_IOCTL_PANFROST_SUBMIT		DRM_IOW(DRM_COMMAND_BASE + DRM_PANFROST_SUBMIT, काष्ठा drm_panfrost_submit)
-#घोषणा DRM_IOCTL_PANFROST_WAIT_BO		DRM_IOW(DRM_COMMAND_BASE + DRM_PANFROST_WAIT_BO, काष्ठा drm_panfrost_रुको_bo)
-#घोषणा DRM_IOCTL_PANFROST_CREATE_BO		DRM_IOWR(DRM_COMMAND_BASE + DRM_PANFROST_CREATE_BO, काष्ठा drm_panfrost_create_bo)
-#घोषणा DRM_IOCTL_PANFROST_MMAP_BO		DRM_IOWR(DRM_COMMAND_BASE + DRM_PANFROST_MMAP_BO, काष्ठा drm_panfrost_mmap_bo)
-#घोषणा DRM_IOCTL_PANFROST_GET_PARAM		DRM_IOWR(DRM_COMMAND_BASE + DRM_PANFROST_GET_PARAM, काष्ठा drm_panfrost_get_param)
-#घोषणा DRM_IOCTL_PANFROST_GET_BO_OFFSET	DRM_IOWR(DRM_COMMAND_BASE + DRM_PANFROST_GET_BO_OFFSET, काष्ठा drm_panfrost_get_bo_offset)
-#घोषणा DRM_IOCTL_PANFROST_MADVISE		DRM_IOWR(DRM_COMMAND_BASE + DRM_PANFROST_MADVISE, काष्ठा drm_panfrost_madvise)
+#define DRM_IOCTL_PANFROST_SUBMIT		DRM_IOW(DRM_COMMAND_BASE + DRM_PANFROST_SUBMIT, struct drm_panfrost_submit)
+#define DRM_IOCTL_PANFROST_WAIT_BO		DRM_IOW(DRM_COMMAND_BASE + DRM_PANFROST_WAIT_BO, struct drm_panfrost_wait_bo)
+#define DRM_IOCTL_PANFROST_CREATE_BO		DRM_IOWR(DRM_COMMAND_BASE + DRM_PANFROST_CREATE_BO, struct drm_panfrost_create_bo)
+#define DRM_IOCTL_PANFROST_MMAP_BO		DRM_IOWR(DRM_COMMAND_BASE + DRM_PANFROST_MMAP_BO, struct drm_panfrost_mmap_bo)
+#define DRM_IOCTL_PANFROST_GET_PARAM		DRM_IOWR(DRM_COMMAND_BASE + DRM_PANFROST_GET_PARAM, struct drm_panfrost_get_param)
+#define DRM_IOCTL_PANFROST_GET_BO_OFFSET	DRM_IOWR(DRM_COMMAND_BASE + DRM_PANFROST_GET_BO_OFFSET, struct drm_panfrost_get_bo_offset)
+#define DRM_IOCTL_PANFROST_MADVISE		DRM_IOWR(DRM_COMMAND_BASE + DRM_PANFROST_MADVISE, struct drm_panfrost_madvise)
 
 /*
  * Unstable ioctl(s): only exposed when the unsafe unstable_ioctls module
  * param is set to true.
- * All these ioctl(s) are subject to deprecation, so please करोn't rely on
- * them क्रम anything but debugging purpose.
+ * All these ioctl(s) are subject to deprecation, so please don't rely on
+ * them for anything but debugging purpose.
  */
-#घोषणा DRM_IOCTL_PANFROST_PERFCNT_ENABLE	DRM_IOW(DRM_COMMAND_BASE + DRM_PANFROST_PERFCNT_ENABLE, काष्ठा drm_panfrost_perfcnt_enable)
-#घोषणा DRM_IOCTL_PANFROST_PERFCNT_DUMP		DRM_IOW(DRM_COMMAND_BASE + DRM_PANFROST_PERFCNT_DUMP, काष्ठा drm_panfrost_perfcnt_dump)
+#define DRM_IOCTL_PANFROST_PERFCNT_ENABLE	DRM_IOW(DRM_COMMAND_BASE + DRM_PANFROST_PERFCNT_ENABLE, struct drm_panfrost_perfcnt_enable)
+#define DRM_IOCTL_PANFROST_PERFCNT_DUMP		DRM_IOW(DRM_COMMAND_BASE + DRM_PANFROST_PERFCNT_DUMP, struct drm_panfrost_perfcnt_dump)
 
-#घोषणा PANFROST_JD_REQ_FS (1 << 0)
+#define PANFROST_JD_REQ_FS (1 << 0)
 /**
- * काष्ठा drm_panfrost_submit - ioctl argument क्रम submitting commands to the 3D
+ * struct drm_panfrost_submit - ioctl argument for submitting commands to the 3D
  * engine.
  *
  * This asks the kernel to have the GPU execute a render command list.
  */
-काष्ठा drm_panfrost_submit अणु
+struct drm_panfrost_submit {
 
 	/** Address to GPU mapping of job descriptor */
 	__u64 jc;
 
-	/** An optional array of sync objects to रुको on beक्रमe starting this job. */
+	/** An optional array of sync objects to wait on before starting this job. */
 	__u64 in_syncs;
 
-	/** Number of sync objects to रुको on beक्रमe starting this job. */
+	/** Number of sync objects to wait on before starting this job. */
 	__u32 in_sync_count;
 
 	/** An optional sync object to place the completion fence in. */
 	__u32 out_sync;
 
-	/** Poपूर्णांकer to a u32 array of the BOs that are referenced by the job. */
+	/** Pointer to a u32 array of the BOs that are referenced by the job. */
 	__u64 bo_handles;
 
-	/** Number of BO handles passed in (size is that बार 4). */
+	/** Number of BO handles passed in (size is that times 4). */
 	__u32 bo_handle_count;
 
 	/** A combination of PANFROST_JD_REQ_* */
 	__u32 requirements;
-पूर्ण;
+};
 
 /**
- * काष्ठा drm_panfrost_रुको_bo - ioctl argument क्रम रुकोing क्रम
+ * struct drm_panfrost_wait_bo - ioctl argument for waiting for
  * completion of the last DRM_PANFROST_SUBMIT on a BO.
  *
- * This is useful क्रम हालs where multiple processes might be
- * rendering to a BO and you want to रुको क्रम all rendering to be
+ * This is useful for cases where multiple processes might be
+ * rendering to a BO and you want to wait for all rendering to be
  * completed.
  */
-काष्ठा drm_panfrost_रुको_bo अणु
+struct drm_panfrost_wait_bo {
 	__u32 handle;
 	__u32 pad;
-	__s64 समयout_ns;	/* असलolute */
-पूर्ण;
+	__s64 timeout_ns;	/* absolute */
+};
 
-#घोषणा PANFROST_BO_NOEXEC	1
-#घोषणा PANFROST_BO_HEAP	2
+#define PANFROST_BO_NOEXEC	1
+#define PANFROST_BO_HEAP	2
 
 /**
- * काष्ठा drm_panfrost_create_bo - ioctl argument क्रम creating Panfrost BOs.
+ * struct drm_panfrost_create_bo - ioctl argument for creating Panfrost BOs.
  *
- * There are currently no values क्रम the flags argument, but it may be
+ * There are currently no values for the flags argument, but it may be
  * used in a future extension.
  */
-काष्ठा drm_panfrost_create_bo अणु
+struct drm_panfrost_create_bo {
 	__u32 size;
 	__u32 flags;
-	/** Returned GEM handle क्रम the BO. */
+	/** Returned GEM handle for the BO. */
 	__u32 handle;
 	/* Pad, must be zero-filled. */
 	__u32 pad;
 	/**
-	 * Returned offset क्रम the BO in the GPU address space.  This offset
-	 * is निजी to the DRM fd and is valid क्रम the lअगरeसमय of the GEM
+	 * Returned offset for the BO in the GPU address space.  This offset
+	 * is private to the DRM fd and is valid for the lifetime of the GEM
 	 * handle.
 	 *
 	 * This offset value will always be nonzero, since various HW
 	 * units treat 0 specially.
 	 */
 	__u64 offset;
-पूर्ण;
+};
 
 /**
- * काष्ठा drm_panfrost_mmap_bo - ioctl argument क्रम mapping Panfrost BOs.
+ * struct drm_panfrost_mmap_bo - ioctl argument for mapping Panfrost BOs.
  *
- * This करोesn't actually perक्रमm an mmap.  Instead, it वापसs the
+ * This doesn't actually perform an mmap.  Instead, it returns the
  * offset you need to use in an mmap on the DRM device node.  This
  * means that tools like valgrind end up knowing about the mapped
  * memory.
  *
- * There are currently no values क्रम the flags argument, but it may be
+ * There are currently no values for the flags argument, but it may be
  * used in a future extension.
  */
-काष्ठा drm_panfrost_mmap_bo अणु
-	/** Handle क्रम the object being mapped. */
+struct drm_panfrost_mmap_bo {
+	/** Handle for the object being mapped. */
 	__u32 handle;
 	__u32 flags;
-	/** offset पूर्णांकo the drm node to use क्रम subsequent mmap call. */
+	/** offset into the drm node to use for subsequent mmap call. */
 	__u64 offset;
-पूर्ण;
+};
 
-क्रमागत drm_panfrost_param अणु
+enum drm_panfrost_param {
 	DRM_PANFROST_PARAM_GPU_PROD_ID,
 	DRM_PANFROST_PARAM_GPU_REVISION,
 	DRM_PANFROST_PARAM_SHADER_PRESENT,
@@ -172,60 +171,60 @@
 	DRM_PANFROST_PARAM_JS_FEATURES15,
 	DRM_PANFROST_PARAM_NR_CORE_GROUPS,
 	DRM_PANFROST_PARAM_THREAD_TLS_ALLOC,
-पूर्ण;
+};
 
-काष्ठा drm_panfrost_get_param अणु
+struct drm_panfrost_get_param {
 	__u32 param;
 	__u32 pad;
 	__u64 value;
-पूर्ण;
+};
 
 /**
- * Returns the offset क्रम the BO in the GPU address space क्रम this DRM fd.
- * This is the same value वापसed by drm_panfrost_create_bo, अगर that was called
+ * Returns the offset for the BO in the GPU address space for this DRM fd.
+ * This is the same value returned by drm_panfrost_create_bo, if that was called
  * from this DRM fd.
  */
-काष्ठा drm_panfrost_get_bo_offset अणु
+struct drm_panfrost_get_bo_offset {
 	__u32 handle;
 	__u32 pad;
 	__u64 offset;
-पूर्ण;
+};
 
-काष्ठा drm_panfrost_perfcnt_enable अणु
+struct drm_panfrost_perfcnt_enable {
 	__u32 enable;
 	/*
-	 * On bअगरrost we have 2 sets of counters, this parameter defines the
+	 * On bifrost we have 2 sets of counters, this parameter defines the
 	 * one to track.
 	 */
 	__u32 counterset;
-पूर्ण;
+};
 
-काष्ठा drm_panfrost_perfcnt_dump अणु
+struct drm_panfrost_perfcnt_dump {
 	__u64 buf_ptr;
-पूर्ण;
+};
 
-/* madvise provides a way to tell the kernel in हाल a buffers contents
- * can be discarded under memory pressure, which is useful क्रम userspace
+/* madvise provides a way to tell the kernel in case a buffers contents
+ * can be discarded under memory pressure, which is useful for userspace
  * bo cache where we want to optimistically hold on to buffer allocate
  * and potential mmap, but allow the pages to be discarded under memory
  * pressure.
  *
  * Typical usage would involve madvise(DONTNEED) when buffer enters BO
- * cache, and madvise(WILLNEED) अगर trying to recycle buffer from BO cache.
- * In the WILLNEED हाल, 'retained' indicates to userspace whether the
+ * cache, and madvise(WILLNEED) if trying to recycle buffer from BO cache.
+ * In the WILLNEED case, 'retained' indicates to userspace whether the
  * backing pages still exist.
  */
-#घोषणा PANFROST_MADV_WILLNEED 0	/* backing pages are needed, status वापसed in 'retained' */
-#घोषणा PANFROST_MADV_DONTNEED 1	/* backing pages not needed */
+#define PANFROST_MADV_WILLNEED 0	/* backing pages are needed, status returned in 'retained' */
+#define PANFROST_MADV_DONTNEED 1	/* backing pages not needed */
 
-काष्ठा drm_panfrost_madvise अणु
+struct drm_panfrost_madvise {
 	__u32 handle;         /* in, GEM handle */
 	__u32 madv;           /* in, PANFROST_MADV_x */
 	__u32 retained;       /* out, whether backing store still exists */
-पूर्ण;
+};
 
-#अगर defined(__cplusplus)
-पूर्ण
-#पूर्ण_अगर
+#if defined(__cplusplus)
+}
+#endif
 
-#पूर्ण_अगर /* _PANFROST_DRM_H_ */
+#endif /* _PANFROST_DRM_H_ */

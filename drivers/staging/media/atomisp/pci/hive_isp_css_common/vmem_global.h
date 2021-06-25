@@ -1,30 +1,29 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Support क्रम Intel Camera Imaging ISP subप्रणाली.
+ * Support for Intel Camera Imaging ISP subsystem.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  */
 
-#अगर_अघोषित __VMEM_GLOBAL_H_INCLUDED__
-#घोषणा __VMEM_GLOBAL_H_INCLUDED__
+#ifndef __VMEM_GLOBAL_H_INCLUDED__
+#define __VMEM_GLOBAL_H_INCLUDED__
 
-#समावेश "isp.h"
+#include "isp.h"
 
-#घोषणा VMEM_SIZE	ISP_VMEM_DEPTH
-#घोषणा VMEM_ELEMBITS	ISP_VMEM_ELEMBITS
-#घोषणा VMEM_ALIGN	ISP_VMEM_ALIGN
+#define VMEM_SIZE	ISP_VMEM_DEPTH
+#define VMEM_ELEMBITS	ISP_VMEM_ELEMBITS
+#define VMEM_ALIGN	ISP_VMEM_ALIGN
 
-#अगर_अघोषित PIPE_GENERATION
-प्रकार tvector *pvector;
-#पूर्ण_अगर
+#ifndef PIPE_GENERATION
+typedef tvector *pvector;
+#endif
 
-#पूर्ण_अगर /* __VMEM_GLOBAL_H_INCLUDED__ */
+#endif /* __VMEM_GLOBAL_H_INCLUDED__ */

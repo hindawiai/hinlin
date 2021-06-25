@@ -1,75 +1,74 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __TIMER_OF_H__
-#घोषणा __TIMER_OF_H__
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __TIMER_OF_H__
+#define __TIMER_OF_H__
 
-#समावेश <linux/घड़ीchips.h>
+#include <linux/clockchips.h>
 
-#घोषणा TIMER_OF_BASE	0x1
-#घोषणा TIMER_OF_CLOCK	0x2
-#घोषणा TIMER_OF_IRQ	0x4
+#define TIMER_OF_BASE	0x1
+#define TIMER_OF_CLOCK	0x2
+#define TIMER_OF_IRQ	0x4
 
-काष्ठा of_समयr_irq अणु
-	पूर्णांक irq;
-	पूर्णांक index;
-	पूर्णांक percpu;
-	स्थिर अक्षर *name;
-	अचिन्हित दीर्घ flags;
+struct of_timer_irq {
+	int irq;
+	int index;
+	int percpu;
+	const char *name;
+	unsigned long flags;
 	irq_handler_t handler;
-पूर्ण;
+};
 
-काष्ठा of_समयr_base अणु
-	व्योम __iomem *base;
-	स्थिर अक्षर *name;
-	पूर्णांक index;
-पूर्ण;
+struct of_timer_base {
+	void __iomem *base;
+	const char *name;
+	int index;
+};
 
-काष्ठा of_समयr_clk अणु
-	काष्ठा clk *clk;
-	स्थिर अक्षर *name;
-	पूर्णांक index;
-	अचिन्हित दीर्घ rate;
-	अचिन्हित दीर्घ period;
-पूर्ण;
+struct of_timer_clk {
+	struct clk *clk;
+	const char *name;
+	int index;
+	unsigned long rate;
+	unsigned long period;
+};
 
-काष्ठा समयr_of अणु
-	अचिन्हित पूर्णांक flags;
-	काष्ठा device_node *np;
-	काष्ठा घड़ी_event_device clkevt;
-	काष्ठा of_समयr_base of_base;
-	काष्ठा of_समयr_irq  of_irq;
-	काष्ठा of_समयr_clk  of_clk;
-	व्योम *निजी_data;
-पूर्ण;
+struct timer_of {
+	unsigned int flags;
+	struct device_node *np;
+	struct clock_event_device clkevt;
+	struct of_timer_base of_base;
+	struct of_timer_irq  of_irq;
+	struct of_timer_clk  of_clk;
+	void *private_data;
+};
 
-अटल अंतरभूत काष्ठा समयr_of *to_समयr_of(काष्ठा घड़ी_event_device *clkevt)
-अणु
-	वापस container_of(clkevt, काष्ठा समयr_of, clkevt);
-पूर्ण
+static inline struct timer_of *to_timer_of(struct clock_event_device *clkevt)
+{
+	return container_of(clkevt, struct timer_of, clkevt);
+}
 
-अटल अंतरभूत व्योम __iomem *समयr_of_base(काष्ठा समयr_of *to)
-अणु
-	वापस to->of_base.base;
-पूर्ण
+static inline void __iomem *timer_of_base(struct timer_of *to)
+{
+	return to->of_base.base;
+}
 
-अटल अंतरभूत पूर्णांक समयr_of_irq(काष्ठा समयr_of *to)
-अणु
-	वापस to->of_irq.irq;
-पूर्ण
+static inline int timer_of_irq(struct timer_of *to)
+{
+	return to->of_irq.irq;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ समयr_of_rate(काष्ठा समयr_of *to)
-अणु
-	वापस to->of_clk.rate;
-पूर्ण
+static inline unsigned long timer_of_rate(struct timer_of *to)
+{
+	return to->of_clk.rate;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ समयr_of_period(काष्ठा समयr_of *to)
-अणु
-	वापस to->of_clk.period;
-पूर्ण
+static inline unsigned long timer_of_period(struct timer_of *to)
+{
+	return to->of_clk.period;
+}
 
-बाह्य पूर्णांक __init समयr_of_init(काष्ठा device_node *np,
-				काष्ठा समयr_of *to);
+extern int __init timer_of_init(struct device_node *np,
+				struct timer_of *to);
 
-बाह्य व्योम __init समयr_of_cleanup(काष्ठा समयr_of *to);
+extern void __init timer_of_cleanup(struct timer_of *to);
 
-#पूर्ण_अगर
+#endif

@@ -1,94 +1,93 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  arch/arm/common/dmabounce.c
  *
- *  Special dma_अणुmap/unmap/dma_syncपूर्ण_* routines क्रम प्रणालीs that have
- *  limited DMA winकरोws. These functions utilize bounce buffers to
+ *  Special dma_{map/unmap/dma_sync}_* routines for systems that have
+ *  limited DMA windows. These functions utilize bounce buffers to
  *  copy data to/from buffers located outside the DMA region. This
- *  only works क्रम प्रणालीs in which DMA memory is at the bottom of
- *  RAM, the reमुख्यder of memory is at the top and the DMA memory
+ *  only works for systems in which DMA memory is at the bottom of
+ *  RAM, the remainder of memory is at the top and the DMA memory
  *  can be marked as ZONE_DMA. Anything beyond that such as discontiguous
- *  DMA winकरोws will require custom implementations that reserve memory
+ *  DMA windows will require custom implementations that reserve memory
  *  areas at early bootup.
  *
  *  Original version by Brad Parker (brad@heeltoe.com)
  *  Re-written by Christopher Hoover <ch@murgatroid.com>
- *  Made generic by Deepak Saxena <dsaxena@plनिकासy.net>
+ *  Made generic by Deepak Saxena <dsaxena@plexity.net>
  *
  *  Copyright (C) 2002 Hewlett Packard Company.
  *  Copyright (C) 2004 MontaVista Software, Inc.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/page-flags.h>
-#समावेश <linux/device.h>
-#समावेश <linux/dma-direct.h>
-#समावेश <linux/dma-map-ops.h>
-#समावेश <linux/dmapool.h>
-#समावेश <linux/list.h>
-#समावेश <linux/scatterlist.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/page-flags.h>
+#include <linux/device.h>
+#include <linux/dma-direct.h>
+#include <linux/dma-map-ops.h>
+#include <linux/dmapool.h>
+#include <linux/list.h>
+#include <linux/scatterlist.h>
 
-#समावेश <यंत्र/cacheflush.h>
-#समावेश <यंत्र/dma-iommu.h>
+#include <asm/cacheflush.h>
+#include <asm/dma-iommu.h>
 
-#अघोषित STATS
+#undef STATS
 
-#अगर_घोषित STATS
-#घोषणा DO_STATS(X) करो अणु X ; पूर्ण जबतक (0)
-#अन्यथा
-#घोषणा DO_STATS(X) करो अणु पूर्ण जबतक (0)
-#पूर्ण_अगर
+#ifdef STATS
+#define DO_STATS(X) do { X ; } while (0)
+#else
+#define DO_STATS(X) do { } while (0)
+#endif
 
 /* ************************************************** */
 
-काष्ठा safe_buffer अणु
-	काष्ठा list_head node;
+struct safe_buffer {
+	struct list_head node;
 
 	/* original request */
-	व्योम		*ptr;
-	माप_प्रकार		size;
-	पूर्णांक		direction;
+	void		*ptr;
+	size_t		size;
+	int		direction;
 
 	/* safe buffer info */
-	काष्ठा dmabounce_pool *pool;
-	व्योम		*safe;
+	struct dmabounce_pool *pool;
+	void		*safe;
 	dma_addr_t	safe_dma_addr;
-पूर्ण;
+};
 
-काष्ठा dmabounce_pool अणु
-	अचिन्हित दीर्घ	size;
-	काष्ठा dma_pool	*pool;
-#अगर_घोषित STATS
-	अचिन्हित दीर्घ	allocs;
-#पूर्ण_अगर
-पूर्ण;
+struct dmabounce_pool {
+	unsigned long	size;
+	struct dma_pool	*pool;
+#ifdef STATS
+	unsigned long	allocs;
+#endif
+};
 
-काष्ठा dmabounce_device_info अणु
-	काष्ठा device *dev;
-	काष्ठा list_head safe_buffers;
-#अगर_घोषित STATS
-	अचिन्हित दीर्घ total_allocs;
-	अचिन्हित दीर्घ map_op_count;
-	अचिन्हित दीर्घ bounce_count;
-	पूर्णांक attr_res;
-#पूर्ण_अगर
-	काष्ठा dmabounce_pool	small;
-	काष्ठा dmabounce_pool	large;
+struct dmabounce_device_info {
+	struct device *dev;
+	struct list_head safe_buffers;
+#ifdef STATS
+	unsigned long total_allocs;
+	unsigned long map_op_count;
+	unsigned long bounce_count;
+	int attr_res;
+#endif
+	struct dmabounce_pool	small;
+	struct dmabounce_pool	large;
 
 	rwlock_t lock;
 
-	पूर्णांक (*needs_bounce)(काष्ठा device *, dma_addr_t, माप_प्रकार);
-पूर्ण;
+	int (*needs_bounce)(struct device *, dma_addr_t, size_t);
+};
 
-#अगर_घोषित STATS
-अटल sमाप_प्रकार dmabounce_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			      अक्षर *buf)
-अणु
-	काष्ठा dmabounce_device_info *device_info = dev->archdata.dmabounce;
-	वापस प्र_लिखो(buf, "%lu %lu %lu %lu %lu %lu\n",
+#ifdef STATS
+static ssize_t dmabounce_show(struct device *dev, struct device_attribute *attr,
+			      char *buf)
+{
+	struct dmabounce_device_info *device_info = dev->archdata.dmabounce;
+	return sprintf(buf, "%lu %lu %lu %lu %lu %lu\n",
 		device_info->small.allocs,
 		device_info->large.allocs,
 		device_info->total_allocs - device_info->small.allocs -
@@ -96,187 +95,187 @@
 		device_info->total_allocs,
 		device_info->map_op_count,
 		device_info->bounce_count);
-पूर्ण
+}
 
-अटल DEVICE_ATTR(dmabounce_stats, 0400, dmabounce_show, शून्य);
-#पूर्ण_अगर
+static DEVICE_ATTR(dmabounce_stats, 0400, dmabounce_show, NULL);
+#endif
 
 
 /* allocate a 'safe' buffer and keep track of it */
-अटल अंतरभूत काष्ठा safe_buffer *
-alloc_safe_buffer(काष्ठा dmabounce_device_info *device_info, व्योम *ptr,
-		  माप_प्रकार size, क्रमागत dma_data_direction dir)
-अणु
-	काष्ठा safe_buffer *buf;
-	काष्ठा dmabounce_pool *pool;
-	काष्ठा device *dev = device_info->dev;
-	अचिन्हित दीर्घ flags;
+static inline struct safe_buffer *
+alloc_safe_buffer(struct dmabounce_device_info *device_info, void *ptr,
+		  size_t size, enum dma_data_direction dir)
+{
+	struct safe_buffer *buf;
+	struct dmabounce_pool *pool;
+	struct device *dev = device_info->dev;
+	unsigned long flags;
 
 	dev_dbg(dev, "%s(ptr=%p, size=%d, dir=%d)\n",
 		__func__, ptr, size, dir);
 
-	अगर (size <= device_info->small.size) अणु
+	if (size <= device_info->small.size) {
 		pool = &device_info->small;
-	पूर्ण अन्यथा अगर (size <= device_info->large.size) अणु
+	} else if (size <= device_info->large.size) {
 		pool = &device_info->large;
-	पूर्ण अन्यथा अणु
-		pool = शून्य;
-	पूर्ण
+	} else {
+		pool = NULL;
+	}
 
-	buf = kदो_स्मृति(माप(काष्ठा safe_buffer), GFP_ATOMIC);
-	अगर (buf == शून्य) अणु
+	buf = kmalloc(sizeof(struct safe_buffer), GFP_ATOMIC);
+	if (buf == NULL) {
 		dev_warn(dev, "%s: kmalloc failed\n", __func__);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	buf->ptr = ptr;
 	buf->size = size;
 	buf->direction = dir;
 	buf->pool = pool;
 
-	अगर (pool) अणु
+	if (pool) {
 		buf->safe = dma_pool_alloc(pool->pool, GFP_ATOMIC,
 					   &buf->safe_dma_addr);
-	पूर्ण अन्यथा अणु
+	} else {
 		buf->safe = dma_alloc_coherent(dev, size, &buf->safe_dma_addr,
 					       GFP_ATOMIC);
-	पूर्ण
+	}
 
-	अगर (buf->safe == शून्य) अणु
+	if (buf->safe == NULL) {
 		dev_warn(dev,
 			 "%s: could not alloc dma memory (size=%d)\n",
 			 __func__, size);
-		kमुक्त(buf);
-		वापस शून्य;
-	पूर्ण
+		kfree(buf);
+		return NULL;
+	}
 
-#अगर_घोषित STATS
-	अगर (pool)
+#ifdef STATS
+	if (pool)
 		pool->allocs++;
 	device_info->total_allocs++;
-#पूर्ण_अगर
+#endif
 
-	ग_लिखो_lock_irqsave(&device_info->lock, flags);
+	write_lock_irqsave(&device_info->lock, flags);
 	list_add(&buf->node, &device_info->safe_buffers);
-	ग_लिखो_unlock_irqrestore(&device_info->lock, flags);
+	write_unlock_irqrestore(&device_info->lock, flags);
 
-	वापस buf;
-पूर्ण
+	return buf;
+}
 
-/* determine अगर a buffer is from our "safe" pool */
-अटल अंतरभूत काष्ठा safe_buffer *
-find_safe_buffer(काष्ठा dmabounce_device_info *device_info, dma_addr_t safe_dma_addr)
-अणु
-	काष्ठा safe_buffer *b, *rb = शून्य;
-	अचिन्हित दीर्घ flags;
+/* determine if a buffer is from our "safe" pool */
+static inline struct safe_buffer *
+find_safe_buffer(struct dmabounce_device_info *device_info, dma_addr_t safe_dma_addr)
+{
+	struct safe_buffer *b, *rb = NULL;
+	unsigned long flags;
 
-	पढ़ो_lock_irqsave(&device_info->lock, flags);
+	read_lock_irqsave(&device_info->lock, flags);
 
-	list_क्रम_each_entry(b, &device_info->safe_buffers, node)
-		अगर (b->safe_dma_addr <= safe_dma_addr &&
-		    b->safe_dma_addr + b->size > safe_dma_addr) अणु
+	list_for_each_entry(b, &device_info->safe_buffers, node)
+		if (b->safe_dma_addr <= safe_dma_addr &&
+		    b->safe_dma_addr + b->size > safe_dma_addr) {
 			rb = b;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-	पढ़ो_unlock_irqrestore(&device_info->lock, flags);
-	वापस rb;
-पूर्ण
+	read_unlock_irqrestore(&device_info->lock, flags);
+	return rb;
+}
 
-अटल अंतरभूत व्योम
-मुक्त_safe_buffer(काष्ठा dmabounce_device_info *device_info, काष्ठा safe_buffer *buf)
-अणु
-	अचिन्हित दीर्घ flags;
+static inline void
+free_safe_buffer(struct dmabounce_device_info *device_info, struct safe_buffer *buf)
+{
+	unsigned long flags;
 
 	dev_dbg(device_info->dev, "%s(buf=%p)\n", __func__, buf);
 
-	ग_लिखो_lock_irqsave(&device_info->lock, flags);
+	write_lock_irqsave(&device_info->lock, flags);
 
 	list_del(&buf->node);
 
-	ग_लिखो_unlock_irqrestore(&device_info->lock, flags);
+	write_unlock_irqrestore(&device_info->lock, flags);
 
-	अगर (buf->pool)
-		dma_pool_मुक्त(buf->pool->pool, buf->safe, buf->safe_dma_addr);
-	अन्यथा
-		dma_मुक्त_coherent(device_info->dev, buf->size, buf->safe,
+	if (buf->pool)
+		dma_pool_free(buf->pool->pool, buf->safe, buf->safe_dma_addr);
+	else
+		dma_free_coherent(device_info->dev, buf->size, buf->safe,
 				    buf->safe_dma_addr);
 
-	kमुक्त(buf);
-पूर्ण
+	kfree(buf);
+}
 
 /* ************************************************** */
 
-अटल काष्ठा safe_buffer *find_safe_buffer_dev(काष्ठा device *dev,
-		dma_addr_t dma_addr, स्थिर अक्षर *where)
-अणु
-	अगर (!dev || !dev->archdata.dmabounce)
-		वापस शून्य;
-	अगर (dma_mapping_error(dev, dma_addr)) अणु
+static struct safe_buffer *find_safe_buffer_dev(struct device *dev,
+		dma_addr_t dma_addr, const char *where)
+{
+	if (!dev || !dev->archdata.dmabounce)
+		return NULL;
+	if (dma_mapping_error(dev, dma_addr)) {
 		dev_err(dev, "Trying to %s invalid mapping\n", where);
-		वापस शून्य;
-	पूर्ण
-	वापस find_safe_buffer(dev->archdata.dmabounce, dma_addr);
-पूर्ण
+		return NULL;
+	}
+	return find_safe_buffer(dev->archdata.dmabounce, dma_addr);
+}
 
-अटल पूर्णांक needs_bounce(काष्ठा device *dev, dma_addr_t dma_addr, माप_प्रकार size)
-अणु
-	अगर (!dev || !dev->archdata.dmabounce)
-		वापस 0;
+static int needs_bounce(struct device *dev, dma_addr_t dma_addr, size_t size)
+{
+	if (!dev || !dev->archdata.dmabounce)
+		return 0;
 
-	अगर (dev->dma_mask) अणु
-		अचिन्हित दीर्घ limit, mask = *dev->dma_mask;
+	if (dev->dma_mask) {
+		unsigned long limit, mask = *dev->dma_mask;
 
 		limit = (mask + 1) & ~mask;
-		अगर (limit && size > limit) अणु
+		if (limit && size > limit) {
 			dev_err(dev, "DMA mapping too big (requested %#x "
 				"mask %#Lx)\n", size, *dev->dma_mask);
-			वापस -E2BIG;
-		पूर्ण
+			return -E2BIG;
+		}
 
-		/* Figure out अगर we need to bounce from the DMA mask. */
-		अगर ((dma_addr | (dma_addr + size - 1)) & ~mask)
-			वापस 1;
-	पूर्ण
+		/* Figure out if we need to bounce from the DMA mask. */
+		if ((dma_addr | (dma_addr + size - 1)) & ~mask)
+			return 1;
+	}
 
-	वापस !!dev->archdata.dmabounce->needs_bounce(dev, dma_addr, size);
-पूर्ण
+	return !!dev->archdata.dmabounce->needs_bounce(dev, dma_addr, size);
+}
 
-अटल अंतरभूत dma_addr_t map_single(काष्ठा device *dev, व्योम *ptr, माप_प्रकार size,
-				    क्रमागत dma_data_direction dir,
-				    अचिन्हित दीर्घ attrs)
-अणु
-	काष्ठा dmabounce_device_info *device_info = dev->archdata.dmabounce;
-	काष्ठा safe_buffer *buf;
+static inline dma_addr_t map_single(struct device *dev, void *ptr, size_t size,
+				    enum dma_data_direction dir,
+				    unsigned long attrs)
+{
+	struct dmabounce_device_info *device_info = dev->archdata.dmabounce;
+	struct safe_buffer *buf;
 
-	अगर (device_info)
+	if (device_info)
 		DO_STATS ( device_info->map_op_count++ );
 
 	buf = alloc_safe_buffer(device_info, ptr, size, dir);
-	अगर (buf == शून्य) अणु
+	if (buf == NULL) {
 		dev_err(dev, "%s: unable to map unsafe buffer %p!\n",
 		       __func__, ptr);
-		वापस DMA_MAPPING_ERROR;
-	पूर्ण
+		return DMA_MAPPING_ERROR;
+	}
 
 	dev_dbg(dev, "%s: unsafe buffer %p (dma=%#x) mapped to %p (dma=%#x)\n",
 		__func__, buf->ptr, virt_to_dma(dev, buf->ptr),
 		buf->safe, buf->safe_dma_addr);
 
-	अगर ((dir == DMA_TO_DEVICE || dir == DMA_BIसूचीECTIONAL) &&
-	    !(attrs & DMA_ATTR_SKIP_CPU_SYNC)) अणु
+	if ((dir == DMA_TO_DEVICE || dir == DMA_BIDIRECTIONAL) &&
+	    !(attrs & DMA_ATTR_SKIP_CPU_SYNC)) {
 		dev_dbg(dev, "%s: copy unsafe %p to safe %p, size %d\n",
 			__func__, ptr, buf->safe, size);
-		स_नकल(buf->safe, ptr, size);
-	पूर्ण
+		memcpy(buf->safe, ptr, size);
+	}
 
-	वापस buf->safe_dma_addr;
-पूर्ण
+	return buf->safe_dma_addr;
+}
 
-अटल अंतरभूत व्योम unmap_single(काष्ठा device *dev, काष्ठा safe_buffer *buf,
-				माप_प्रकार size, क्रमागत dma_data_direction dir,
-				अचिन्हित दीर्घ attrs)
-अणु
+static inline void unmap_single(struct device *dev, struct safe_buffer *buf,
+				size_t size, enum dma_data_direction dir,
+				unsigned long attrs)
+{
 	BUG_ON(buf->size != size);
 	BUG_ON(buf->direction != dir);
 
@@ -286,13 +285,13 @@ find_safe_buffer(काष्ठा dmabounce_device_info *device_info, dma_addr
 
 	DO_STATS(dev->archdata.dmabounce->bounce_count++);
 
-	अगर ((dir == DMA_FROM_DEVICE || dir == DMA_BIसूचीECTIONAL) &&
-	    !(attrs & DMA_ATTR_SKIP_CPU_SYNC)) अणु
-		व्योम *ptr = buf->ptr;
+	if ((dir == DMA_FROM_DEVICE || dir == DMA_BIDIRECTIONAL) &&
+	    !(attrs & DMA_ATTR_SKIP_CPU_SYNC)) {
+		void *ptr = buf->ptr;
 
 		dev_dbg(dev, "%s: copy back safe %p to unsafe %p size %d\n",
 			__func__, buf->safe, ptr, size);
-		स_नकल(ptr, buf->safe, size);
+		memcpy(ptr, buf->safe, size);
 
 		/*
 		 * Since we may have written to a page cache page,
@@ -300,24 +299,24 @@ find_safe_buffer(काष्ठा dmabounce_device_info *device_info, dma_addr
 		 * with user mappings.
 		 */
 		__cpuc_flush_dcache_area(ptr, size);
-	पूर्ण
-	मुक्त_safe_buffer(dev->archdata.dmabounce, buf);
-पूर्ण
+	}
+	free_safe_buffer(dev->archdata.dmabounce, buf);
+}
 
 /* ************************************************** */
 
 /*
- * see अगर a buffer address is in an 'unsafe' range.  अगर it is
- * allocate a 'safe' buffer and copy the unsafe buffer पूर्णांकo it.
- * substitute the safe buffer क्रम the unsafe one.
+ * see if a buffer address is in an 'unsafe' range.  if it is
+ * allocate a 'safe' buffer and copy the unsafe buffer into it.
+ * substitute the safe buffer for the unsafe one.
  * (basically move the buffer from an unsafe area to a safe one)
  */
-अटल dma_addr_t dmabounce_map_page(काष्ठा device *dev, काष्ठा page *page,
-		अचिन्हित दीर्घ offset, माप_प्रकार size, क्रमागत dma_data_direction dir,
-		अचिन्हित दीर्घ attrs)
-अणु
+static dma_addr_t dmabounce_map_page(struct device *dev, struct page *page,
+		unsigned long offset, size_t size, enum dma_data_direction dir,
+		unsigned long attrs)
+{
 	dma_addr_t dma_addr;
-	पूर्णांक ret;
+	int ret;
 
 	dev_dbg(dev, "%s(page=%p,off=%#lx,size=%zx,dir=%x)\n",
 		__func__, page, offset, size, dir);
@@ -325,57 +324,57 @@ find_safe_buffer(काष्ठा dmabounce_device_info *device_info, dma_addr
 	dma_addr = pfn_to_dma(dev, page_to_pfn(page)) + offset;
 
 	ret = needs_bounce(dev, dma_addr, size);
-	अगर (ret < 0)
-		वापस DMA_MAPPING_ERROR;
+	if (ret < 0)
+		return DMA_MAPPING_ERROR;
 
-	अगर (ret == 0) अणु
-		arm_dma_ops.sync_single_क्रम_device(dev, dma_addr, size, dir);
-		वापस dma_addr;
-	पूर्ण
+	if (ret == 0) {
+		arm_dma_ops.sync_single_for_device(dev, dma_addr, size, dir);
+		return dma_addr;
+	}
 
-	अगर (PageHighMem(page)) अणु
+	if (PageHighMem(page)) {
 		dev_err(dev, "DMA buffer bouncing of HIGHMEM pages is not supported\n");
-		वापस DMA_MAPPING_ERROR;
-	पूर्ण
+		return DMA_MAPPING_ERROR;
+	}
 
-	वापस map_single(dev, page_address(page) + offset, size, dir, attrs);
-पूर्ण
+	return map_single(dev, page_address(page) + offset, size, dir, attrs);
+}
 
 /*
- * see अगर a mapped address was really a "safe" buffer and अगर so, copy
- * the data from the safe buffer back to the unsafe buffer and मुक्त up
- * the safe buffer.  (basically वापस things back to the way they
+ * see if a mapped address was really a "safe" buffer and if so, copy
+ * the data from the safe buffer back to the unsafe buffer and free up
+ * the safe buffer.  (basically return things back to the way they
  * should be)
  */
-अटल व्योम dmabounce_unmap_page(काष्ठा device *dev, dma_addr_t dma_addr, माप_प्रकार size,
-		क्रमागत dma_data_direction dir, अचिन्हित दीर्घ attrs)
-अणु
-	काष्ठा safe_buffer *buf;
+static void dmabounce_unmap_page(struct device *dev, dma_addr_t dma_addr, size_t size,
+		enum dma_data_direction dir, unsigned long attrs)
+{
+	struct safe_buffer *buf;
 
 	dev_dbg(dev, "%s(dma=%#x,size=%d,dir=%x)\n",
 		__func__, dma_addr, size, dir);
 
 	buf = find_safe_buffer_dev(dev, dma_addr, __func__);
-	अगर (!buf) अणु
-		arm_dma_ops.sync_single_क्रम_cpu(dev, dma_addr, size, dir);
-		वापस;
-	पूर्ण
+	if (!buf) {
+		arm_dma_ops.sync_single_for_cpu(dev, dma_addr, size, dir);
+		return;
+	}
 
 	unmap_single(dev, buf, size, dir, attrs);
-पूर्ण
+}
 
-अटल पूर्णांक __dmabounce_sync_क्रम_cpu(काष्ठा device *dev, dma_addr_t addr,
-		माप_प्रकार sz, क्रमागत dma_data_direction dir)
-अणु
-	काष्ठा safe_buffer *buf;
-	अचिन्हित दीर्घ off;
+static int __dmabounce_sync_for_cpu(struct device *dev, dma_addr_t addr,
+		size_t sz, enum dma_data_direction dir)
+{
+	struct safe_buffer *buf;
+	unsigned long off;
 
 	dev_dbg(dev, "%s(dma=%#x,sz=%zx,dir=%x)\n",
 		__func__, addr, sz, dir);
 
 	buf = find_safe_buffer_dev(dev, addr, __func__);
-	अगर (!buf)
-		वापस 1;
+	if (!buf)
+		return 1;
 
 	off = addr - buf->safe_dma_addr;
 
@@ -387,35 +386,35 @@ find_safe_buffer(काष्ठा dmabounce_device_info *device_info, dma_addr
 
 	DO_STATS(dev->archdata.dmabounce->bounce_count++);
 
-	अगर (dir == DMA_FROM_DEVICE || dir == DMA_BIसूचीECTIONAL) अणु
+	if (dir == DMA_FROM_DEVICE || dir == DMA_BIDIRECTIONAL) {
 		dev_dbg(dev, "%s: copy back safe %p to unsafe %p size %d\n",
 			__func__, buf->safe + off, buf->ptr + off, sz);
-		स_नकल(buf->ptr + off, buf->safe + off, sz);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		memcpy(buf->ptr + off, buf->safe + off, sz);
+	}
+	return 0;
+}
 
-अटल व्योम dmabounce_sync_क्रम_cpu(काष्ठा device *dev,
-		dma_addr_t handle, माप_प्रकार size, क्रमागत dma_data_direction dir)
-अणु
-	अगर (!__dmabounce_sync_क्रम_cpu(dev, handle, size, dir))
-		वापस;
+static void dmabounce_sync_for_cpu(struct device *dev,
+		dma_addr_t handle, size_t size, enum dma_data_direction dir)
+{
+	if (!__dmabounce_sync_for_cpu(dev, handle, size, dir))
+		return;
 
-	arm_dma_ops.sync_single_क्रम_cpu(dev, handle, size, dir);
-पूर्ण
+	arm_dma_ops.sync_single_for_cpu(dev, handle, size, dir);
+}
 
-अटल पूर्णांक __dmabounce_sync_क्रम_device(काष्ठा device *dev, dma_addr_t addr,
-		माप_प्रकार sz, क्रमागत dma_data_direction dir)
-अणु
-	काष्ठा safe_buffer *buf;
-	अचिन्हित दीर्घ off;
+static int __dmabounce_sync_for_device(struct device *dev, dma_addr_t addr,
+		size_t sz, enum dma_data_direction dir)
+{
+	struct safe_buffer *buf;
+	unsigned long off;
 
 	dev_dbg(dev, "%s(dma=%#x,sz=%zx,dir=%x)\n",
 		__func__, addr, sz, dir);
 
 	buf = find_safe_buffer_dev(dev, addr, __func__);
-	अगर (!buf)
-		वापस 1;
+	if (!buf)
+		return 1;
 
 	off = addr - buf->safe_dma_addr;
 
@@ -427,156 +426,156 @@ find_safe_buffer(काष्ठा dmabounce_device_info *device_info, dma_addr
 
 	DO_STATS(dev->archdata.dmabounce->bounce_count++);
 
-	अगर (dir == DMA_TO_DEVICE || dir == DMA_BIसूचीECTIONAL) अणु
+	if (dir == DMA_TO_DEVICE || dir == DMA_BIDIRECTIONAL) {
 		dev_dbg(dev, "%s: copy out unsafe %p to safe %p, size %d\n",
 			__func__,buf->ptr + off, buf->safe + off, sz);
-		स_नकल(buf->safe + off, buf->ptr + off, sz);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		memcpy(buf->safe + off, buf->ptr + off, sz);
+	}
+	return 0;
+}
 
-अटल व्योम dmabounce_sync_क्रम_device(काष्ठा device *dev,
-		dma_addr_t handle, माप_प्रकार size, क्रमागत dma_data_direction dir)
-अणु
-	अगर (!__dmabounce_sync_क्रम_device(dev, handle, size, dir))
-		वापस;
+static void dmabounce_sync_for_device(struct device *dev,
+		dma_addr_t handle, size_t size, enum dma_data_direction dir)
+{
+	if (!__dmabounce_sync_for_device(dev, handle, size, dir))
+		return;
 
-	arm_dma_ops.sync_single_क्रम_device(dev, handle, size, dir);
-पूर्ण
+	arm_dma_ops.sync_single_for_device(dev, handle, size, dir);
+}
 
-अटल पूर्णांक dmabounce_dma_supported(काष्ठा device *dev, u64 dma_mask)
-अणु
-	अगर (dev->archdata.dmabounce)
-		वापस 0;
+static int dmabounce_dma_supported(struct device *dev, u64 dma_mask)
+{
+	if (dev->archdata.dmabounce)
+		return 0;
 
-	वापस arm_dma_ops.dma_supported(dev, dma_mask);
-पूर्ण
+	return arm_dma_ops.dma_supported(dev, dma_mask);
+}
 
-अटल स्थिर काष्ठा dma_map_ops dmabounce_ops = अणु
+static const struct dma_map_ops dmabounce_ops = {
 	.alloc			= arm_dma_alloc,
-	.मुक्त			= arm_dma_मुक्त,
+	.free			= arm_dma_free,
 	.mmap			= arm_dma_mmap,
 	.get_sgtable		= arm_dma_get_sgtable,
 	.map_page		= dmabounce_map_page,
 	.unmap_page		= dmabounce_unmap_page,
-	.sync_single_क्रम_cpu	= dmabounce_sync_क्रम_cpu,
-	.sync_single_क्रम_device	= dmabounce_sync_क्रम_device,
+	.sync_single_for_cpu	= dmabounce_sync_for_cpu,
+	.sync_single_for_device	= dmabounce_sync_for_device,
 	.map_sg			= arm_dma_map_sg,
 	.unmap_sg		= arm_dma_unmap_sg,
-	.sync_sg_क्रम_cpu	= arm_dma_sync_sg_क्रम_cpu,
-	.sync_sg_क्रम_device	= arm_dma_sync_sg_क्रम_device,
+	.sync_sg_for_cpu	= arm_dma_sync_sg_for_cpu,
+	.sync_sg_for_device	= arm_dma_sync_sg_for_device,
 	.dma_supported		= dmabounce_dma_supported,
-पूर्ण;
+};
 
-अटल पूर्णांक dmabounce_init_pool(काष्ठा dmabounce_pool *pool, काष्ठा device *dev,
-		स्थिर अक्षर *name, अचिन्हित दीर्घ size)
-अणु
+static int dmabounce_init_pool(struct dmabounce_pool *pool, struct device *dev,
+		const char *name, unsigned long size)
+{
 	pool->size = size;
 	DO_STATS(pool->allocs = 0);
 	pool->pool = dma_pool_create(name, dev, size,
 				     0 /* byte alignment */,
 				     0 /* no page-crossing issues */);
 
-	वापस pool->pool ? 0 : -ENOMEM;
-पूर्ण
+	return pool->pool ? 0 : -ENOMEM;
+}
 
-पूर्णांक dmabounce_रेजिस्टर_dev(काष्ठा device *dev, अचिन्हित दीर्घ small_buffer_size,
-		अचिन्हित दीर्घ large_buffer_size,
-		पूर्णांक (*needs_bounce_fn)(काष्ठा device *, dma_addr_t, माप_प्रकार))
-अणु
-	काष्ठा dmabounce_device_info *device_info;
-	पूर्णांक ret;
+int dmabounce_register_dev(struct device *dev, unsigned long small_buffer_size,
+		unsigned long large_buffer_size,
+		int (*needs_bounce_fn)(struct device *, dma_addr_t, size_t))
+{
+	struct dmabounce_device_info *device_info;
+	int ret;
 
-	device_info = kदो_स्मृति(माप(काष्ठा dmabounce_device_info), GFP_ATOMIC);
-	अगर (!device_info) अणु
+	device_info = kmalloc(sizeof(struct dmabounce_device_info), GFP_ATOMIC);
+	if (!device_info) {
 		dev_err(dev,
 			"Could not allocated dmabounce_device_info\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	ret = dmabounce_init_pool(&device_info->small, dev,
 				  "small_dmabounce_pool", small_buffer_size);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev,
 			"dmabounce: could not allocate DMA pool for %ld byte objects\n",
 			small_buffer_size);
-		जाओ err_मुक्त;
-	पूर्ण
+		goto err_free;
+	}
 
-	अगर (large_buffer_size) अणु
+	if (large_buffer_size) {
 		ret = dmabounce_init_pool(&device_info->large, dev,
 					  "large_dmabounce_pool",
 					  large_buffer_size);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev,
 				"dmabounce: could not allocate DMA pool for %ld byte objects\n",
 				large_buffer_size);
-			जाओ err_destroy;
-		पूर्ण
-	पूर्ण
+			goto err_destroy;
+		}
+	}
 
 	device_info->dev = dev;
 	INIT_LIST_HEAD(&device_info->safe_buffers);
 	rwlock_init(&device_info->lock);
 	device_info->needs_bounce = needs_bounce_fn;
 
-#अगर_घोषित STATS
+#ifdef STATS
 	device_info->total_allocs = 0;
 	device_info->map_op_count = 0;
 	device_info->bounce_count = 0;
 	device_info->attr_res = device_create_file(dev, &dev_attr_dmabounce_stats);
-#पूर्ण_अगर
+#endif
 
 	dev->archdata.dmabounce = device_info;
 	set_dma_ops(dev, &dmabounce_ops);
 
 	dev_info(dev, "dmabounce: registered device\n");
 
-	वापस 0;
+	return 0;
 
  err_destroy:
 	dma_pool_destroy(device_info->small.pool);
- err_मुक्त:
-	kमुक्त(device_info);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(dmabounce_रेजिस्टर_dev);
+ err_free:
+	kfree(device_info);
+	return ret;
+}
+EXPORT_SYMBOL(dmabounce_register_dev);
 
-व्योम dmabounce_unरेजिस्टर_dev(काष्ठा device *dev)
-अणु
-	काष्ठा dmabounce_device_info *device_info = dev->archdata.dmabounce;
+void dmabounce_unregister_dev(struct device *dev)
+{
+	struct dmabounce_device_info *device_info = dev->archdata.dmabounce;
 
-	dev->archdata.dmabounce = शून्य;
-	set_dma_ops(dev, शून्य);
+	dev->archdata.dmabounce = NULL;
+	set_dma_ops(dev, NULL);
 
-	अगर (!device_info) अणु
+	if (!device_info) {
 		dev_warn(dev,
 			 "Never registered with dmabounce but attempting"
 			 "to unregister!\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (!list_empty(&device_info->safe_buffers)) अणु
+	if (!list_empty(&device_info->safe_buffers)) {
 		dev_err(dev,
 			"Removing from dmabounce with pending buffers!\n");
 		BUG();
-	पूर्ण
+	}
 
-	अगर (device_info->small.pool)
+	if (device_info->small.pool)
 		dma_pool_destroy(device_info->small.pool);
-	अगर (device_info->large.pool)
+	if (device_info->large.pool)
 		dma_pool_destroy(device_info->large.pool);
 
-#अगर_घोषित STATS
-	अगर (device_info->attr_res == 0)
-		device_हटाओ_file(dev, &dev_attr_dmabounce_stats);
-#पूर्ण_अगर
+#ifdef STATS
+	if (device_info->attr_res == 0)
+		device_remove_file(dev, &dev_attr_dmabounce_stats);
+#endif
 
-	kमुक्त(device_info);
+	kfree(device_info);
 
 	dev_info(dev, "dmabounce: device unregistered\n");
-पूर्ण
-EXPORT_SYMBOL(dmabounce_unरेजिस्टर_dev);
+}
+EXPORT_SYMBOL(dmabounce_unregister_dev);
 
 MODULE_AUTHOR("Christopher Hoover <ch@hpl.hp.com>, Deepak Saxena <dsaxena@plexity.net>");
 MODULE_DESCRIPTION("Special dma_{map/unmap/dma_sync}_* routines for systems with limited DMA windows");

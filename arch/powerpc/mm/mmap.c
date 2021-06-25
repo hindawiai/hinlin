@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  flexible mmap layout support
  *
@@ -9,115 +8,115 @@
  * Started by Ingo Molnar <mingo@elte.hu>
  */
 
-#समावेश <linux/personality.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/अक्रमom.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/sched/mm.h>
-#समावेश <linux/elf-अक्रमomize.h>
-#समावेश <linux/security.h>
-#समावेश <linux/mman.h>
+#include <linux/personality.h>
+#include <linux/mm.h>
+#include <linux/random.h>
+#include <linux/sched/signal.h>
+#include <linux/sched/mm.h>
+#include <linux/elf-randomize.h>
+#include <linux/security.h>
+#include <linux/mman.h>
 
 /*
  * Top of mmap area (just below the process stack).
  *
  * Leave at least a ~128 MB hole.
  */
-#घोषणा MIN_GAP (128*1024*1024)
-#घोषणा MAX_GAP (TASK_SIZE/6*5)
+#define MIN_GAP (128*1024*1024)
+#define MAX_GAP (TASK_SIZE/6*5)
 
-अटल अंतरभूत पूर्णांक mmap_is_legacy(काष्ठा rlimit *rlim_stack)
-अणु
-	अगर (current->personality & ADDR_COMPAT_LAYOUT)
-		वापस 1;
+static inline int mmap_is_legacy(struct rlimit *rlim_stack)
+{
+	if (current->personality & ADDR_COMPAT_LAYOUT)
+		return 1;
 
-	अगर (rlim_stack->rlim_cur == RLIM_अनन्त)
-		वापस 1;
+	if (rlim_stack->rlim_cur == RLIM_INFINITY)
+		return 1;
 
-	वापस sysctl_legacy_va_layout;
-पूर्ण
+	return sysctl_legacy_va_layout;
+}
 
-अचिन्हित दीर्घ arch_mmap_rnd(व्योम)
-अणु
-	अचिन्हित दीर्घ shअगरt, rnd;
+unsigned long arch_mmap_rnd(void)
+{
+	unsigned long shift, rnd;
 
-	shअगरt = mmap_rnd_bits;
-#अगर_घोषित CONFIG_COMPAT
-	अगर (is_32bit_task())
-		shअगरt = mmap_rnd_compat_bits;
-#पूर्ण_अगर
-	rnd = get_अक्रमom_दीर्घ() % (1ul << shअगरt);
+	shift = mmap_rnd_bits;
+#ifdef CONFIG_COMPAT
+	if (is_32bit_task())
+		shift = mmap_rnd_compat_bits;
+#endif
+	rnd = get_random_long() % (1ul << shift);
 
-	वापस rnd << PAGE_SHIFT;
-पूर्ण
+	return rnd << PAGE_SHIFT;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ stack_maxअक्रमom_size(व्योम)
-अणु
-	अगर (!(current->flags & PF_RANDOMIZE))
-		वापस 0;
+static inline unsigned long stack_maxrandom_size(void)
+{
+	if (!(current->flags & PF_RANDOMIZE))
+		return 0;
 
-	/* 8MB क्रम 32bit, 1GB क्रम 64bit */
-	अगर (is_32bit_task())
-		वापस (1<<23);
-	अन्यथा
-		वापस (1<<30);
-पूर्ण
+	/* 8MB for 32bit, 1GB for 64bit */
+	if (is_32bit_task())
+		return (1<<23);
+	else
+		return (1<<30);
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ mmap_base(अचिन्हित दीर्घ rnd,
-				      काष्ठा rlimit *rlim_stack)
-अणु
-	अचिन्हित दीर्घ gap = rlim_stack->rlim_cur;
-	अचिन्हित दीर्घ pad = stack_maxअक्रमom_size() + stack_guard_gap;
+static inline unsigned long mmap_base(unsigned long rnd,
+				      struct rlimit *rlim_stack)
+{
+	unsigned long gap = rlim_stack->rlim_cur;
+	unsigned long pad = stack_maxrandom_size() + stack_guard_gap;
 
-	/* Values बंद to RLIM_अनन्त can overflow. */
-	अगर (gap + pad > gap)
+	/* Values close to RLIM_INFINITY can overflow. */
+	if (gap + pad > gap)
 		gap += pad;
 
-	अगर (gap < MIN_GAP)
+	if (gap < MIN_GAP)
 		gap = MIN_GAP;
-	अन्यथा अगर (gap > MAX_GAP)
+	else if (gap > MAX_GAP)
 		gap = MAX_GAP;
 
-	वापस PAGE_ALIGN(DEFAULT_MAP_WINDOW - gap - rnd);
-पूर्ण
+	return PAGE_ALIGN(DEFAULT_MAP_WINDOW - gap - rnd);
+}
 
-#अगर_घोषित CONFIG_PPC_RADIX_MMU
+#ifdef CONFIG_PPC_RADIX_MMU
 /*
- * Same function as generic code used only क्रम radix, because we करोn't need to overload
+ * Same function as generic code used only for radix, because we don't need to overload
  * the generic one. But we will have to duplicate, because hash select
  * HAVE_ARCH_UNMAPPED_AREA
  */
-अटल अचिन्हित दीर्घ
-radix__arch_get_unmapped_area(काष्ठा file *filp, अचिन्हित दीर्घ addr,
-			     अचिन्हित दीर्घ len, अचिन्हित दीर्घ pgoff,
-			     अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा mm_काष्ठा *mm = current->mm;
-	काष्ठा vm_area_काष्ठा *vma;
-	पूर्णांक fixed = (flags & MAP_FIXED);
-	अचिन्हित दीर्घ high_limit;
-	काष्ठा vm_unmapped_area_info info;
+static unsigned long
+radix__arch_get_unmapped_area(struct file *filp, unsigned long addr,
+			     unsigned long len, unsigned long pgoff,
+			     unsigned long flags)
+{
+	struct mm_struct *mm = current->mm;
+	struct vm_area_struct *vma;
+	int fixed = (flags & MAP_FIXED);
+	unsigned long high_limit;
+	struct vm_unmapped_area_info info;
 
 	high_limit = DEFAULT_MAP_WINDOW;
-	अगर (addr >= high_limit || (fixed && (addr + len > high_limit)))
+	if (addr >= high_limit || (fixed && (addr + len > high_limit)))
 		high_limit = TASK_SIZE;
 
-	अगर (len > high_limit)
-		वापस -ENOMEM;
+	if (len > high_limit)
+		return -ENOMEM;
 
-	अगर (fixed) अणु
-		अगर (addr > high_limit - len)
-			वापस -ENOMEM;
-		वापस addr;
-	पूर्ण
+	if (fixed) {
+		if (addr > high_limit - len)
+			return -ENOMEM;
+		return addr;
+	}
 
-	अगर (addr) अणु
+	if (addr) {
 		addr = PAGE_ALIGN(addr);
 		vma = find_vma(mm, addr);
-		अगर (high_limit - len >= addr && addr >= mmap_min_addr &&
+		if (high_limit - len >= addr && addr >= mmap_min_addr &&
 		    (!vma || addr + len <= vm_start_gap(vma)))
-			वापस addr;
-	पूर्ण
+			return addr;
+	}
 
 	info.flags = 0;
 	info.length = len;
@@ -125,43 +124,43 @@ radix__arch_get_unmapped_area(काष्ठा file *filp, अचिन्ह�
 	info.high_limit = high_limit;
 	info.align_mask = 0;
 
-	वापस vm_unmapped_area(&info);
-पूर्ण
+	return vm_unmapped_area(&info);
+}
 
-अटल अचिन्हित दीर्घ
-radix__arch_get_unmapped_area_topकरोwn(काष्ठा file *filp,
-				     स्थिर अचिन्हित दीर्घ addr0,
-				     स्थिर अचिन्हित दीर्घ len,
-				     स्थिर अचिन्हित दीर्घ pgoff,
-				     स्थिर अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा vm_area_काष्ठा *vma;
-	काष्ठा mm_काष्ठा *mm = current->mm;
-	अचिन्हित दीर्घ addr = addr0;
-	पूर्णांक fixed = (flags & MAP_FIXED);
-	अचिन्हित दीर्घ high_limit;
-	काष्ठा vm_unmapped_area_info info;
+static unsigned long
+radix__arch_get_unmapped_area_topdown(struct file *filp,
+				     const unsigned long addr0,
+				     const unsigned long len,
+				     const unsigned long pgoff,
+				     const unsigned long flags)
+{
+	struct vm_area_struct *vma;
+	struct mm_struct *mm = current->mm;
+	unsigned long addr = addr0;
+	int fixed = (flags & MAP_FIXED);
+	unsigned long high_limit;
+	struct vm_unmapped_area_info info;
 
 	high_limit = DEFAULT_MAP_WINDOW;
-	अगर (addr >= high_limit || (fixed && (addr + len > high_limit)))
+	if (addr >= high_limit || (fixed && (addr + len > high_limit)))
 		high_limit = TASK_SIZE;
 
-	अगर (len > high_limit)
-		वापस -ENOMEM;
+	if (len > high_limit)
+		return -ENOMEM;
 
-	अगर (fixed) अणु
-		अगर (addr > high_limit - len)
-			वापस -ENOMEM;
-		वापस addr;
-	पूर्ण
+	if (fixed) {
+		if (addr > high_limit - len)
+			return -ENOMEM;
+		return addr;
+	}
 
-	अगर (addr) अणु
+	if (addr) {
 		addr = PAGE_ALIGN(addr);
 		vma = find_vma(mm, addr);
-		अगर (high_limit - len >= addr && addr >= mmap_min_addr &&
+		if (high_limit - len >= addr && addr >= mmap_min_addr &&
 		    (!vma || addr + len <= vm_start_gap(vma)))
-			वापस addr;
-	पूर्ण
+			return addr;
+	}
 
 	info.flags = VM_UNMAPPED_AREA_TOPDOWN;
 	info.length = len;
@@ -170,8 +169,8 @@ radix__arch_get_unmapped_area_topकरोwn(काष्ठा file *filp,
 	info.align_mask = 0;
 
 	addr = vm_unmapped_area(&info);
-	अगर (!(addr & ~PAGE_MASK))
-		वापस addr;
+	if (!(addr & ~PAGE_MASK))
+		return addr;
 	VM_BUG_ON(addr != -ENOMEM);
 
 	/*
@@ -180,50 +179,50 @@ radix__arch_get_unmapped_area_topकरोwn(काष्ठा file *filp,
 	 * can happen with large stack limits and large mmap()
 	 * allocations.
 	 */
-	वापस radix__arch_get_unmapped_area(filp, addr0, len, pgoff, flags);
-पूर्ण
+	return radix__arch_get_unmapped_area(filp, addr0, len, pgoff, flags);
+}
 
-अटल व्योम radix__arch_pick_mmap_layout(काष्ठा mm_काष्ठा *mm,
-					अचिन्हित दीर्घ अक्रमom_factor,
-					काष्ठा rlimit *rlim_stack)
-अणु
-	अगर (mmap_is_legacy(rlim_stack)) अणु
+static void radix__arch_pick_mmap_layout(struct mm_struct *mm,
+					unsigned long random_factor,
+					struct rlimit *rlim_stack)
+{
+	if (mmap_is_legacy(rlim_stack)) {
 		mm->mmap_base = TASK_UNMAPPED_BASE;
 		mm->get_unmapped_area = radix__arch_get_unmapped_area;
-	पूर्ण अन्यथा अणु
-		mm->mmap_base = mmap_base(अक्रमom_factor, rlim_stack);
-		mm->get_unmapped_area = radix__arch_get_unmapped_area_topकरोwn;
-	पूर्ण
-पूर्ण
-#अन्यथा
+	} else {
+		mm->mmap_base = mmap_base(random_factor, rlim_stack);
+		mm->get_unmapped_area = radix__arch_get_unmapped_area_topdown;
+	}
+}
+#else
 /* dummy */
-बाह्य व्योम radix__arch_pick_mmap_layout(काष्ठा mm_काष्ठा *mm,
-					अचिन्हित दीर्घ अक्रमom_factor,
-					काष्ठा rlimit *rlim_stack);
-#पूर्ण_अगर
+extern void radix__arch_pick_mmap_layout(struct mm_struct *mm,
+					unsigned long random_factor,
+					struct rlimit *rlim_stack);
+#endif
 /*
  * This function, called very early during the creation of a new
  * process VM image, sets up which VM layout function to use:
  */
-व्योम arch_pick_mmap_layout(काष्ठा mm_काष्ठा *mm, काष्ठा rlimit *rlim_stack)
-अणु
-	अचिन्हित दीर्घ अक्रमom_factor = 0UL;
+void arch_pick_mmap_layout(struct mm_struct *mm, struct rlimit *rlim_stack)
+{
+	unsigned long random_factor = 0UL;
 
-	अगर (current->flags & PF_RANDOMIZE)
-		अक्रमom_factor = arch_mmap_rnd();
+	if (current->flags & PF_RANDOMIZE)
+		random_factor = arch_mmap_rnd();
 
-	अगर (radix_enabled())
-		वापस radix__arch_pick_mmap_layout(mm, अक्रमom_factor,
+	if (radix_enabled())
+		return radix__arch_pick_mmap_layout(mm, random_factor,
 						    rlim_stack);
 	/*
-	 * Fall back to the standard layout अगर the personality
-	 * bit is set, or अगर the expected stack growth is unlimited:
+	 * Fall back to the standard layout if the personality
+	 * bit is set, or if the expected stack growth is unlimited:
 	 */
-	अगर (mmap_is_legacy(rlim_stack)) अणु
+	if (mmap_is_legacy(rlim_stack)) {
 		mm->mmap_base = TASK_UNMAPPED_BASE;
 		mm->get_unmapped_area = arch_get_unmapped_area;
-	पूर्ण अन्यथा अणु
-		mm->mmap_base = mmap_base(अक्रमom_factor, rlim_stack);
-		mm->get_unmapped_area = arch_get_unmapped_area_topकरोwn;
-	पूर्ण
-पूर्ण
+	} else {
+		mm->mmap_base = mmap_base(random_factor, rlim_stack);
+		mm->get_unmapped_area = arch_get_unmapped_area_topdown;
+	}
+}

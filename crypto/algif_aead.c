@@ -1,117 +1,116 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * algअगर_aead: User-space पूर्णांकerface क्रम AEAD algorithms
+ * algif_aead: User-space interface for AEAD algorithms
  *
  * Copyright (C) 2014, Stephan Mueller <smueller@chronox.de>
  *
- * This file provides the user-space API क्रम AEAD ciphers.
+ * This file provides the user-space API for AEAD ciphers.
  *
  * The following concept of the memory management is used:
  *
- * The kernel मुख्यtains two SGLs, the TX SGL and the RX SGL. The TX SGL is
+ * The kernel maintains two SGLs, the TX SGL and the RX SGL. The TX SGL is
  * filled by user space with the data submitted via sendpage/sendmsg. Filling
- * up the TX SGL करोes not cause a crypto operation -- the data will only be
+ * up the TX SGL does not cause a crypto operation -- the data will only be
  * tracked by the kernel. Upon receipt of one recvmsg call, the caller must
  * provide a buffer which is tracked with the RX SGL.
  *
  * During the processing of the recvmsg operation, the cipher request is
  * allocated and prepared. As part of the recvmsg operation, the processed
- * TX buffers are extracted from the TX SGL पूर्णांकo a separate SGL.
+ * TX buffers are extracted from the TX SGL into a separate SGL.
  *
  * After the completion of the crypto operation, the RX SGL and the cipher
  * request is released. The extracted TX SGL parts are released together with
  * the RX SGL release.
  */
 
-#समावेश <crypto/पूर्णांकernal/aead.h>
-#समावेश <crypto/scatterwalk.h>
-#समावेश <crypto/अगर_alg.h>
-#समावेश <crypto/skcipher.h>
-#समावेश <crypto/null.h>
-#समावेश <linux/init.h>
-#समावेश <linux/list.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/module.h>
-#समावेश <linux/net.h>
-#समावेश <net/sock.h>
+#include <crypto/internal/aead.h>
+#include <crypto/scatterwalk.h>
+#include <crypto/if_alg.h>
+#include <crypto/skcipher.h>
+#include <crypto/null.h>
+#include <linux/init.h>
+#include <linux/list.h>
+#include <linux/kernel.h>
+#include <linux/mm.h>
+#include <linux/module.h>
+#include <linux/net.h>
+#include <net/sock.h>
 
-काष्ठा aead_tfm अणु
-	काष्ठा crypto_aead *aead;
-	काष्ठा crypto_sync_skcipher *null_tfm;
-पूर्ण;
+struct aead_tfm {
+	struct crypto_aead *aead;
+	struct crypto_sync_skcipher *null_tfm;
+};
 
-अटल अंतरभूत bool aead_sufficient_data(काष्ठा sock *sk)
-अणु
-	काष्ठा alg_sock *ask = alg_sk(sk);
-	काष्ठा sock *psk = ask->parent;
-	काष्ठा alg_sock *pask = alg_sk(psk);
-	काष्ठा af_alg_ctx *ctx = ask->निजी;
-	काष्ठा aead_tfm *aeadc = pask->निजी;
-	काष्ठा crypto_aead *tfm = aeadc->aead;
-	अचिन्हित पूर्णांक as = crypto_aead_authsize(tfm);
+static inline bool aead_sufficient_data(struct sock *sk)
+{
+	struct alg_sock *ask = alg_sk(sk);
+	struct sock *psk = ask->parent;
+	struct alg_sock *pask = alg_sk(psk);
+	struct af_alg_ctx *ctx = ask->private;
+	struct aead_tfm *aeadc = pask->private;
+	struct crypto_aead *tfm = aeadc->aead;
+	unsigned int as = crypto_aead_authsize(tfm);
 
 	/*
-	 * The minimum amount of memory needed क्रम an AEAD cipher is
-	 * the AAD and in हाल of decryption the tag.
+	 * The minimum amount of memory needed for an AEAD cipher is
+	 * the AAD and in case of decryption the tag.
 	 */
-	वापस ctx->used >= ctx->aead_assoclen + (ctx->enc ? 0 : as);
-पूर्ण
+	return ctx->used >= ctx->aead_assoclen + (ctx->enc ? 0 : as);
+}
 
-अटल पूर्णांक aead_sendmsg(काष्ठा socket *sock, काष्ठा msghdr *msg, माप_प्रकार size)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा alg_sock *ask = alg_sk(sk);
-	काष्ठा sock *psk = ask->parent;
-	काष्ठा alg_sock *pask = alg_sk(psk);
-	काष्ठा aead_tfm *aeadc = pask->निजी;
-	काष्ठा crypto_aead *tfm = aeadc->aead;
-	अचिन्हित पूर्णांक ivsize = crypto_aead_ivsize(tfm);
+static int aead_sendmsg(struct socket *sock, struct msghdr *msg, size_t size)
+{
+	struct sock *sk = sock->sk;
+	struct alg_sock *ask = alg_sk(sk);
+	struct sock *psk = ask->parent;
+	struct alg_sock *pask = alg_sk(psk);
+	struct aead_tfm *aeadc = pask->private;
+	struct crypto_aead *tfm = aeadc->aead;
+	unsigned int ivsize = crypto_aead_ivsize(tfm);
 
-	वापस af_alg_sendmsg(sock, msg, size, ivsize);
-पूर्ण
+	return af_alg_sendmsg(sock, msg, size, ivsize);
+}
 
-अटल पूर्णांक crypto_aead_copy_sgl(काष्ठा crypto_sync_skcipher *null_tfm,
-				काष्ठा scatterlist *src,
-				काष्ठा scatterlist *dst, अचिन्हित पूर्णांक len)
-अणु
+static int crypto_aead_copy_sgl(struct crypto_sync_skcipher *null_tfm,
+				struct scatterlist *src,
+				struct scatterlist *dst, unsigned int len)
+{
 	SYNC_SKCIPHER_REQUEST_ON_STACK(skreq, null_tfm);
 
 	skcipher_request_set_sync_tfm(skreq, null_tfm);
 	skcipher_request_set_callback(skreq, CRYPTO_TFM_REQ_MAY_SLEEP,
-				      शून्य, शून्य);
-	skcipher_request_set_crypt(skreq, src, dst, len, शून्य);
+				      NULL, NULL);
+	skcipher_request_set_crypt(skreq, src, dst, len, NULL);
 
-	वापस crypto_skcipher_encrypt(skreq);
-पूर्ण
+	return crypto_skcipher_encrypt(skreq);
+}
 
-अटल पूर्णांक _aead_recvmsg(काष्ठा socket *sock, काष्ठा msghdr *msg,
-			 माप_प्रकार ignored, पूर्णांक flags)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा alg_sock *ask = alg_sk(sk);
-	काष्ठा sock *psk = ask->parent;
-	काष्ठा alg_sock *pask = alg_sk(psk);
-	काष्ठा af_alg_ctx *ctx = ask->निजी;
-	काष्ठा aead_tfm *aeadc = pask->निजी;
-	काष्ठा crypto_aead *tfm = aeadc->aead;
-	काष्ठा crypto_sync_skcipher *null_tfm = aeadc->null_tfm;
-	अचिन्हित पूर्णांक i, as = crypto_aead_authsize(tfm);
-	काष्ठा af_alg_async_req *areq;
-	काष्ठा af_alg_tsgl *tsgl, *पंचांगp;
-	काष्ठा scatterlist *rsgl_src, *tsgl_src = शून्य;
-	पूर्णांक err = 0;
-	माप_प्रकार used = 0;		/* [in]  TX bufs to be en/decrypted */
-	माप_प्रकार outlen = 0;		/* [out] RX bufs produced by kernel */
-	माप_प्रकार usedpages = 0;		/* [in]  RX bufs to be used from user */
-	माप_प्रकार processed = 0;		/* [in]  TX bufs to be consumed */
+static int _aead_recvmsg(struct socket *sock, struct msghdr *msg,
+			 size_t ignored, int flags)
+{
+	struct sock *sk = sock->sk;
+	struct alg_sock *ask = alg_sk(sk);
+	struct sock *psk = ask->parent;
+	struct alg_sock *pask = alg_sk(psk);
+	struct af_alg_ctx *ctx = ask->private;
+	struct aead_tfm *aeadc = pask->private;
+	struct crypto_aead *tfm = aeadc->aead;
+	struct crypto_sync_skcipher *null_tfm = aeadc->null_tfm;
+	unsigned int i, as = crypto_aead_authsize(tfm);
+	struct af_alg_async_req *areq;
+	struct af_alg_tsgl *tsgl, *tmp;
+	struct scatterlist *rsgl_src, *tsgl_src = NULL;
+	int err = 0;
+	size_t used = 0;		/* [in]  TX bufs to be en/decrypted */
+	size_t outlen = 0;		/* [out] RX bufs produced by kernel */
+	size_t usedpages = 0;		/* [in]  RX bufs to be used from user */
+	size_t processed = 0;		/* [in]  TX bufs to be consumed */
 
-	अगर (!ctx->init || ctx->more) अणु
-		err = af_alg_रुको_क्रम_data(sk, flags, 0);
-		अगर (err)
-			वापस err;
-	पूर्ण
+	if (!ctx->init || ctx->more) {
+		err = af_alg_wait_for_data(sk, flags, 0);
+		if (err)
+			return err;
+	}
 
 	/*
 	 * Data length provided by caller via sendmsg/sendpage that has not
@@ -122,14 +121,14 @@
 	/*
 	 * Make sure sufficient data is present -- note, the same check is
 	 * also present in sendmsg/sendpage. The checks in sendpage/sendmsg
-	 * shall provide an inक्रमmation to the data sender that something is
-	 * wrong, but they are irrelevant to मुख्यtain the kernel पूर्णांकegrity.
-	 * We need this check here too in हाल user space decides to not honor
+	 * shall provide an information to the data sender that something is
+	 * wrong, but they are irrelevant to maintain the kernel integrity.
+	 * We need this check here too in case user space decides to not honor
 	 * the error message in sendmsg/sendpage and still call recvmsg. This
-	 * check here protects the kernel पूर्णांकegrity.
+	 * check here protects the kernel integrity.
 	 */
-	अगर (!aead_sufficient_data(sk))
-		वापस -EINVAL;
+	if (!aead_sufficient_data(sk))
+		return -EINVAL;
 
 	/*
 	 * Calculate the minimum output buffer size holding the result of the
@@ -137,11 +136,11 @@
 	 * larger by the tag length compared to the input buffer as the
 	 * encryption operation generates the tag. For decryption, the input
 	 * buffer provides the tag which is consumed resulting in only the
-	 * plaपूर्णांकext without a buffer क्रम the tag वापसed to the caller.
+	 * plaintext without a buffer for the tag returned to the caller.
 	 */
-	अगर (ctx->enc)
+	if (ctx->enc)
 		outlen = used + as;
-	अन्यथा
+	else
 		outlen = used - as;
 
 	/*
@@ -150,70 +149,70 @@
 	 */
 	used -= ctx->aead_assoclen;
 
-	/* Allocate cipher request क्रम current operation. */
-	areq = af_alg_alloc_areq(sk, माप(काष्ठा af_alg_async_req) +
+	/* Allocate cipher request for current operation. */
+	areq = af_alg_alloc_areq(sk, sizeof(struct af_alg_async_req) +
 				     crypto_aead_reqsize(tfm));
-	अगर (IS_ERR(areq))
-		वापस PTR_ERR(areq);
+	if (IS_ERR(areq))
+		return PTR_ERR(areq);
 
-	/* convert iovecs of output buffers पूर्णांकo RX SGL */
+	/* convert iovecs of output buffers into RX SGL */
 	err = af_alg_get_rsgl(sk, msg, flags, areq, outlen, &usedpages);
-	अगर (err)
-		जाओ मुक्त;
+	if (err)
+		goto free;
 
 	/*
 	 * Ensure output buffer is sufficiently large. If the caller provides
 	 * less buffer space, only use the relative required input size. This
 	 * allows AIO operation where the caller sent all data to be processed
-	 * and the AIO operation perक्रमms the operation on the dअगरferent chunks
+	 * and the AIO operation performs the operation on the different chunks
 	 * of the input data.
 	 */
-	अगर (usedpages < outlen) अणु
-		माप_प्रकार less = outlen - usedpages;
+	if (usedpages < outlen) {
+		size_t less = outlen - usedpages;
 
-		अगर (used < less) अणु
+		if (used < less) {
 			err = -EINVAL;
-			जाओ मुक्त;
-		पूर्ण
+			goto free;
+		}
 		used -= less;
 		outlen -= less;
-	पूर्ण
+	}
 
 	processed = used + ctx->aead_assoclen;
-	list_क्रम_each_entry_safe(tsgl, पंचांगp, &ctx->tsgl_list, list) अणु
-		क्रम (i = 0; i < tsgl->cur; i++) अणु
-			काष्ठा scatterlist *process_sg = tsgl->sg + i;
+	list_for_each_entry_safe(tsgl, tmp, &ctx->tsgl_list, list) {
+		for (i = 0; i < tsgl->cur; i++) {
+			struct scatterlist *process_sg = tsgl->sg + i;
 
-			अगर (!(process_sg->length) || !sg_page(process_sg))
-				जारी;
+			if (!(process_sg->length) || !sg_page(process_sg))
+				continue;
 			tsgl_src = process_sg;
-			अवरोध;
-		पूर्ण
-		अगर (tsgl_src)
-			अवरोध;
-	पूर्ण
-	अगर (processed && !tsgl_src) अणु
+			break;
+		}
+		if (tsgl_src)
+			break;
+	}
+	if (processed && !tsgl_src) {
 		err = -EFAULT;
-		जाओ मुक्त;
-	पूर्ण
+		goto free;
+	}
 
 	/*
 	 * Copy of AAD from source to destination
 	 *
 	 * The AAD is copied to the destination buffer without change. Even
 	 * when user space uses an in-place cipher operation, the kernel
-	 * will copy the data as it करोes not see whether such in-place operation
+	 * will copy the data as it does not see whether such in-place operation
 	 * is initiated.
 	 *
 	 * To ensure efficiency, the following implementation ensure that the
-	 * ciphers are invoked to perक्रमm a crypto operation in-place. This
-	 * is achieved by memory management specअगरied as follows.
+	 * ciphers are invoked to perform a crypto operation in-place. This
+	 * is achieved by memory management specified as follows.
 	 */
 
-	/* Use the RX SGL as source (and destination) क्रम crypto op. */
+	/* Use the RX SGL as source (and destination) for crypto op. */
 	rsgl_src = areq->first_rsgl.sgl.sg;
 
-	अगर (ctx->enc) अणु
+	if (ctx->enc) {
 		/*
 		 * Encryption operation - The in-place cipher operation is
 		 * achieved by the following operation:
@@ -226,13 +225,13 @@
 		 */
 		err = crypto_aead_copy_sgl(null_tfm, tsgl_src,
 					   areq->first_rsgl.sgl.sg, processed);
-		अगर (err)
-			जाओ मुक्त;
-		af_alg_pull_tsgl(sk, processed, शून्य, 0);
-	पूर्ण अन्यथा अणु
+		if (err)
+			goto free;
+		af_alg_pull_tsgl(sk, processed, NULL, 0);
+	} else {
 		/*
 		 * Decryption operation - To achieve an in-place cipher
-		 * operation, the following  SGL काष्ठाure is used:
+		 * operation, the following  SGL structure is used:
 		 *
 		 * TX SGL: AAD || CT || Tag
 		 *	    |	   |	 ^
@@ -241,41 +240,41 @@
 		 * RX SGL: AAD || CT ----+
 		 */
 
-		 /* Copy AAD || CT to RX SGL buffer क्रम in-place operation. */
+		 /* Copy AAD || CT to RX SGL buffer for in-place operation. */
 		err = crypto_aead_copy_sgl(null_tfm, tsgl_src,
 					   areq->first_rsgl.sgl.sg, outlen);
-		अगर (err)
-			जाओ मुक्त;
+		if (err)
+			goto free;
 
-		/* Create TX SGL क्रम tag and chain it to RX SGL. */
+		/* Create TX SGL for tag and chain it to RX SGL. */
 		areq->tsgl_entries = af_alg_count_tsgl(sk, processed,
 						       processed - as);
-		अगर (!areq->tsgl_entries)
+		if (!areq->tsgl_entries)
 			areq->tsgl_entries = 1;
-		areq->tsgl = sock_kदो_स्मृति(sk, array_size(माप(*areq->tsgl),
+		areq->tsgl = sock_kmalloc(sk, array_size(sizeof(*areq->tsgl),
 							 areq->tsgl_entries),
 					  GFP_KERNEL);
-		अगर (!areq->tsgl) अणु
+		if (!areq->tsgl) {
 			err = -ENOMEM;
-			जाओ मुक्त;
-		पूर्ण
+			goto free;
+		}
 		sg_init_table(areq->tsgl, areq->tsgl_entries);
 
-		/* Release TX SGL, except क्रम tag data and reassign tag data. */
+		/* Release TX SGL, except for tag data and reassign tag data. */
 		af_alg_pull_tsgl(sk, processed, areq->tsgl, processed - as);
 
 		/* chain the areq TX SGL holding the tag with RX SGL */
-		अगर (usedpages) अणु
+		if (usedpages) {
 			/* RX SGL present */
-			काष्ठा af_alg_sgl *sgl_prev = &areq->last_rsgl->sgl;
+			struct af_alg_sgl *sgl_prev = &areq->last_rsgl->sgl;
 
 			sg_unmark_end(sgl_prev->sg + sgl_prev->npages - 1);
 			sg_chain(sgl_prev->sg, sgl_prev->npages + 1,
 				 areq->tsgl);
-		पूर्ण अन्यथा
+		} else
 			/* no RX SGL present (e.g. authentication only) */
 			rsgl_src = areq->tsgl;
-	पूर्ण
+	}
 
 	/* Initialize the crypto operation */
 	aead_request_set_crypt(&areq->cra_u.aead_req, rsgl_src,
@@ -283,7 +282,7 @@
 	aead_request_set_ad(&areq->cra_u.aead_req, ctx->aead_assoclen);
 	aead_request_set_tfm(&areq->cra_u.aead_req, tfm);
 
-	अगर (msg->msg_iocb && !is_sync_kiocb(msg->msg_iocb)) अणु
+	if (msg->msg_iocb && !is_sync_kiocb(msg->msg_iocb)) {
 		/* AIO operation */
 		sock_hold(sk);
 		areq->iocb = msg->msg_iocb;
@@ -298,38 +297,38 @@
 				 crypto_aead_decrypt(&areq->cra_u.aead_req);
 
 		/* AIO operation in progress */
-		अगर (err == -EINPROGRESS)
-			वापस -EIOCBQUEUED;
+		if (err == -EINPROGRESS)
+			return -EIOCBQUEUED;
 
 		sock_put(sk);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Synchronous operation */
 		aead_request_set_callback(&areq->cra_u.aead_req,
 					  CRYPTO_TFM_REQ_MAY_SLEEP |
 					  CRYPTO_TFM_REQ_MAY_BACKLOG,
-					  crypto_req_करोne, &ctx->रुको);
-		err = crypto_रुको_req(ctx->enc ?
+					  crypto_req_done, &ctx->wait);
+		err = crypto_wait_req(ctx->enc ?
 				crypto_aead_encrypt(&areq->cra_u.aead_req) :
 				crypto_aead_decrypt(&areq->cra_u.aead_req),
-				&ctx->रुको);
-	पूर्ण
+				&ctx->wait);
+	}
 
 
-मुक्त:
-	af_alg_मुक्त_resources(areq);
+free:
+	af_alg_free_resources(areq);
 
-	वापस err ? err : outlen;
-पूर्ण
+	return err ? err : outlen;
+}
 
-अटल पूर्णांक aead_recvmsg(काष्ठा socket *sock, काष्ठा msghdr *msg,
-			माप_प्रकार ignored, पूर्णांक flags)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	पूर्णांक ret = 0;
+static int aead_recvmsg(struct socket *sock, struct msghdr *msg,
+			size_t ignored, int flags)
+{
+	struct sock *sk = sock->sk;
+	int ret = 0;
 
 	lock_sock(sk);
-	जबतक (msg_data_left(msg)) अणु
-		पूर्णांक err = _aead_recvmsg(sock, msg, ignored, flags);
+	while (msg_data_left(msg)) {
+		int err = _aead_recvmsg(sock, msg, ignored, flags);
 
 		/*
 		 * This error covers -EIOCBQUEUED which implies that we can
@@ -337,24 +336,24 @@
 		 * multiple AIO requests in parallel, he must make multiple
 		 * separate AIO calls.
 		 *
-		 * Also वापस the error अगर no data has been processed so far.
+		 * Also return the error if no data has been processed so far.
 		 */
-		अगर (err <= 0) अणु
-			अगर (err == -EIOCBQUEUED || err == -EBADMSG || !ret)
+		if (err <= 0) {
+			if (err == -EIOCBQUEUED || err == -EBADMSG || !ret)
 				ret = err;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		ret += err;
-	पूर्ण
+	}
 
 out:
 	af_alg_wmem_wakeup(sk);
 	release_sock(sk);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा proto_ops algअगर_aead_ops = अणु
+static struct proto_ops algif_aead_ops = {
 	.family		=	PF_ALG,
 
 	.connect	=	sock_no_connect,
@@ -362,7 +361,7 @@ out:
 	.getname	=	sock_no_getname,
 	.ioctl		=	sock_no_ioctl,
 	.listen		=	sock_no_listen,
-	.shutकरोwn	=	sock_no_shutकरोwn,
+	.shutdown	=	sock_no_shutdown,
 	.mmap		=	sock_no_mmap,
 	.bind		=	sock_no_bind,
 	.accept		=	sock_no_accept,
@@ -372,29 +371,29 @@ out:
 	.sendpage	=	af_alg_sendpage,
 	.recvmsg	=	aead_recvmsg,
 	.poll		=	af_alg_poll,
-पूर्ण;
+};
 
-अटल पूर्णांक aead_check_key(काष्ठा socket *sock)
-अणु
-	पूर्णांक err = 0;
-	काष्ठा sock *psk;
-	काष्ठा alg_sock *pask;
-	काष्ठा aead_tfm *tfm;
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा alg_sock *ask = alg_sk(sk);
+static int aead_check_key(struct socket *sock)
+{
+	int err = 0;
+	struct sock *psk;
+	struct alg_sock *pask;
+	struct aead_tfm *tfm;
+	struct sock *sk = sock->sk;
+	struct alg_sock *ask = alg_sk(sk);
 
 	lock_sock(sk);
-	अगर (!atomic_पढ़ो(&ask->nokey_refcnt))
-		जाओ unlock_child;
+	if (!atomic_read(&ask->nokey_refcnt))
+		goto unlock_child;
 
 	psk = ask->parent;
 	pask = alg_sk(ask->parent);
-	tfm = pask->निजी;
+	tfm = pask->private;
 
 	err = -ENOKEY;
 	lock_sock_nested(psk, SINGLE_DEPTH_NESTING);
-	अगर (crypto_aead_get_flags(tfm->aead) & CRYPTO_TFM_NEED_KEY)
-		जाओ unlock;
+	if (crypto_aead_get_flags(tfm->aead) & CRYPTO_TFM_NEED_KEY)
+		goto unlock;
 
 	atomic_dec(&pask->nokey_refcnt);
 	atomic_set(&ask->nokey_refcnt, 0);
@@ -406,46 +405,46 @@ unlock:
 unlock_child:
 	release_sock(sk);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक aead_sendmsg_nokey(काष्ठा socket *sock, काष्ठा msghdr *msg,
-				  माप_प्रकार size)
-अणु
-	पूर्णांक err;
-
-	err = aead_check_key(sock);
-	अगर (err)
-		वापस err;
-
-	वापस aead_sendmsg(sock, msg, size);
-पूर्ण
-
-अटल sमाप_प्रकार aead_sendpage_nokey(काष्ठा socket *sock, काष्ठा page *page,
-				       पूर्णांक offset, माप_प्रकार size, पूर्णांक flags)
-अणु
-	पूर्णांक err;
+static int aead_sendmsg_nokey(struct socket *sock, struct msghdr *msg,
+				  size_t size)
+{
+	int err;
 
 	err = aead_check_key(sock);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	वापस af_alg_sendpage(sock, page, offset, size, flags);
-पूर्ण
+	return aead_sendmsg(sock, msg, size);
+}
 
-अटल पूर्णांक aead_recvmsg_nokey(काष्ठा socket *sock, काष्ठा msghdr *msg,
-				  माप_प्रकार ignored, पूर्णांक flags)
-अणु
-	पूर्णांक err;
+static ssize_t aead_sendpage_nokey(struct socket *sock, struct page *page,
+				       int offset, size_t size, int flags)
+{
+	int err;
 
 	err = aead_check_key(sock);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	वापस aead_recvmsg(sock, msg, ignored, flags);
-पूर्ण
+	return af_alg_sendpage(sock, page, offset, size, flags);
+}
 
-अटल काष्ठा proto_ops algअगर_aead_ops_nokey = अणु
+static int aead_recvmsg_nokey(struct socket *sock, struct msghdr *msg,
+				  size_t ignored, int flags)
+{
+	int err;
+
+	err = aead_check_key(sock);
+	if (err)
+		return err;
+
+	return aead_recvmsg(sock, msg, ignored, flags);
+}
+
+static struct proto_ops algif_aead_ops_nokey = {
 	.family		=	PF_ALG,
 
 	.connect	=	sock_no_connect,
@@ -453,7 +452,7 @@ unlock_child:
 	.getname	=	sock_no_getname,
 	.ioctl		=	sock_no_ioctl,
 	.listen		=	sock_no_listen,
-	.shutकरोwn	=	sock_no_shutकरोwn,
+	.shutdown	=	sock_no_shutdown,
 	.mmap		=	sock_no_mmap,
 	.bind		=	sock_no_bind,
 	.accept		=	sock_no_accept,
@@ -463,144 +462,144 @@ unlock_child:
 	.sendpage	=	aead_sendpage_nokey,
 	.recvmsg	=	aead_recvmsg_nokey,
 	.poll		=	af_alg_poll,
-पूर्ण;
+};
 
-अटल व्योम *aead_bind(स्थिर अक्षर *name, u32 type, u32 mask)
-अणु
-	काष्ठा aead_tfm *tfm;
-	काष्ठा crypto_aead *aead;
-	काष्ठा crypto_sync_skcipher *null_tfm;
+static void *aead_bind(const char *name, u32 type, u32 mask)
+{
+	struct aead_tfm *tfm;
+	struct crypto_aead *aead;
+	struct crypto_sync_skcipher *null_tfm;
 
-	tfm = kzalloc(माप(*tfm), GFP_KERNEL);
-	अगर (!tfm)
-		वापस ERR_PTR(-ENOMEM);
+	tfm = kzalloc(sizeof(*tfm), GFP_KERNEL);
+	if (!tfm)
+		return ERR_PTR(-ENOMEM);
 
 	aead = crypto_alloc_aead(name, type, mask);
-	अगर (IS_ERR(aead)) अणु
-		kमुक्त(tfm);
-		वापस ERR_CAST(aead);
-	पूर्ण
+	if (IS_ERR(aead)) {
+		kfree(tfm);
+		return ERR_CAST(aead);
+	}
 
-	null_tfm = crypto_get_शेष_null_skcipher();
-	अगर (IS_ERR(null_tfm)) अणु
-		crypto_मुक्त_aead(aead);
-		kमुक्त(tfm);
-		वापस ERR_CAST(null_tfm);
-	पूर्ण
+	null_tfm = crypto_get_default_null_skcipher();
+	if (IS_ERR(null_tfm)) {
+		crypto_free_aead(aead);
+		kfree(tfm);
+		return ERR_CAST(null_tfm);
+	}
 
 	tfm->aead = aead;
 	tfm->null_tfm = null_tfm;
 
-	वापस tfm;
-पूर्ण
+	return tfm;
+}
 
-अटल व्योम aead_release(व्योम *निजी)
-अणु
-	काष्ठा aead_tfm *tfm = निजी;
+static void aead_release(void *private)
+{
+	struct aead_tfm *tfm = private;
 
-	crypto_मुक्त_aead(tfm->aead);
-	crypto_put_शेष_null_skcipher();
-	kमुक्त(tfm);
-पूर्ण
+	crypto_free_aead(tfm->aead);
+	crypto_put_default_null_skcipher();
+	kfree(tfm);
+}
 
-अटल पूर्णांक aead_setauthsize(व्योम *निजी, अचिन्हित पूर्णांक authsize)
-अणु
-	काष्ठा aead_tfm *tfm = निजी;
+static int aead_setauthsize(void *private, unsigned int authsize)
+{
+	struct aead_tfm *tfm = private;
 
-	वापस crypto_aead_setauthsize(tfm->aead, authsize);
-पूर्ण
+	return crypto_aead_setauthsize(tfm->aead, authsize);
+}
 
-अटल पूर्णांक aead_setkey(व्योम *निजी, स्थिर u8 *key, अचिन्हित पूर्णांक keylen)
-अणु
-	काष्ठा aead_tfm *tfm = निजी;
+static int aead_setkey(void *private, const u8 *key, unsigned int keylen)
+{
+	struct aead_tfm *tfm = private;
 
-	वापस crypto_aead_setkey(tfm->aead, key, keylen);
-पूर्ण
+	return crypto_aead_setkey(tfm->aead, key, keylen);
+}
 
-अटल व्योम aead_sock_deकाष्ठा(काष्ठा sock *sk)
-अणु
-	काष्ठा alg_sock *ask = alg_sk(sk);
-	काष्ठा af_alg_ctx *ctx = ask->निजी;
-	काष्ठा sock *psk = ask->parent;
-	काष्ठा alg_sock *pask = alg_sk(psk);
-	काष्ठा aead_tfm *aeadc = pask->निजी;
-	काष्ठा crypto_aead *tfm = aeadc->aead;
-	अचिन्हित पूर्णांक ivlen = crypto_aead_ivsize(tfm);
+static void aead_sock_destruct(struct sock *sk)
+{
+	struct alg_sock *ask = alg_sk(sk);
+	struct af_alg_ctx *ctx = ask->private;
+	struct sock *psk = ask->parent;
+	struct alg_sock *pask = alg_sk(psk);
+	struct aead_tfm *aeadc = pask->private;
+	struct crypto_aead *tfm = aeadc->aead;
+	unsigned int ivlen = crypto_aead_ivsize(tfm);
 
-	af_alg_pull_tsgl(sk, ctx->used, शून्य, 0);
-	sock_kzमुक्त_s(sk, ctx->iv, ivlen);
-	sock_kमुक्त_s(sk, ctx, ctx->len);
+	af_alg_pull_tsgl(sk, ctx->used, NULL, 0);
+	sock_kzfree_s(sk, ctx->iv, ivlen);
+	sock_kfree_s(sk, ctx, ctx->len);
 	af_alg_release_parent(sk);
-पूर्ण
+}
 
-अटल पूर्णांक aead_accept_parent_nokey(व्योम *निजी, काष्ठा sock *sk)
-अणु
-	काष्ठा af_alg_ctx *ctx;
-	काष्ठा alg_sock *ask = alg_sk(sk);
-	काष्ठा aead_tfm *tfm = निजी;
-	काष्ठा crypto_aead *aead = tfm->aead;
-	अचिन्हित पूर्णांक len = माप(*ctx);
-	अचिन्हित पूर्णांक ivlen = crypto_aead_ivsize(aead);
+static int aead_accept_parent_nokey(void *private, struct sock *sk)
+{
+	struct af_alg_ctx *ctx;
+	struct alg_sock *ask = alg_sk(sk);
+	struct aead_tfm *tfm = private;
+	struct crypto_aead *aead = tfm->aead;
+	unsigned int len = sizeof(*ctx);
+	unsigned int ivlen = crypto_aead_ivsize(aead);
 
-	ctx = sock_kदो_स्मृति(sk, len, GFP_KERNEL);
-	अगर (!ctx)
-		वापस -ENOMEM;
-	स_रखो(ctx, 0, len);
+	ctx = sock_kmalloc(sk, len, GFP_KERNEL);
+	if (!ctx)
+		return -ENOMEM;
+	memset(ctx, 0, len);
 
-	ctx->iv = sock_kदो_स्मृति(sk, ivlen, GFP_KERNEL);
-	अगर (!ctx->iv) अणु
-		sock_kमुक्त_s(sk, ctx, len);
-		वापस -ENOMEM;
-	पूर्ण
-	स_रखो(ctx->iv, 0, ivlen);
+	ctx->iv = sock_kmalloc(sk, ivlen, GFP_KERNEL);
+	if (!ctx->iv) {
+		sock_kfree_s(sk, ctx, len);
+		return -ENOMEM;
+	}
+	memset(ctx->iv, 0, ivlen);
 
 	INIT_LIST_HEAD(&ctx->tsgl_list);
 	ctx->len = len;
-	crypto_init_रुको(&ctx->रुको);
+	crypto_init_wait(&ctx->wait);
 
-	ask->निजी = ctx;
+	ask->private = ctx;
 
-	sk->sk_deकाष्ठा = aead_sock_deकाष्ठा;
+	sk->sk_destruct = aead_sock_destruct;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक aead_accept_parent(व्योम *निजी, काष्ठा sock *sk)
-अणु
-	काष्ठा aead_tfm *tfm = निजी;
+static int aead_accept_parent(void *private, struct sock *sk)
+{
+	struct aead_tfm *tfm = private;
 
-	अगर (crypto_aead_get_flags(tfm->aead) & CRYPTO_TFM_NEED_KEY)
-		वापस -ENOKEY;
+	if (crypto_aead_get_flags(tfm->aead) & CRYPTO_TFM_NEED_KEY)
+		return -ENOKEY;
 
-	वापस aead_accept_parent_nokey(निजी, sk);
-पूर्ण
+	return aead_accept_parent_nokey(private, sk);
+}
 
-अटल स्थिर काष्ठा af_alg_type algअगर_type_aead = अणु
+static const struct af_alg_type algif_type_aead = {
 	.bind		=	aead_bind,
 	.release	=	aead_release,
 	.setkey		=	aead_setkey,
 	.setauthsize	=	aead_setauthsize,
 	.accept		=	aead_accept_parent,
 	.accept_nokey	=	aead_accept_parent_nokey,
-	.ops		=	&algअगर_aead_ops,
-	.ops_nokey	=	&algअगर_aead_ops_nokey,
+	.ops		=	&algif_aead_ops,
+	.ops_nokey	=	&algif_aead_ops_nokey,
 	.name		=	"aead",
 	.owner		=	THIS_MODULE
-पूर्ण;
+};
 
-अटल पूर्णांक __init algअगर_aead_init(व्योम)
-अणु
-	वापस af_alg_रेजिस्टर_type(&algअगर_type_aead);
-पूर्ण
+static int __init algif_aead_init(void)
+{
+	return af_alg_register_type(&algif_type_aead);
+}
 
-अटल व्योम __निकास algअगर_aead_निकास(व्योम)
-अणु
-	पूर्णांक err = af_alg_unरेजिस्टर_type(&algअगर_type_aead);
+static void __exit algif_aead_exit(void)
+{
+	int err = af_alg_unregister_type(&algif_type_aead);
 	BUG_ON(err);
-पूर्ण
+}
 
-module_init(algअगर_aead_init);
-module_निकास(algअगर_aead_निकास);
+module_init(algif_aead_init);
+module_exit(algif_aead_exit);
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Stephan Mueller <smueller@chronox.de>");
 MODULE_DESCRIPTION("AEAD kernel crypto API user space interface");

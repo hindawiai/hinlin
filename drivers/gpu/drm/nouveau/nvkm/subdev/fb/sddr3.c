@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2013 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,69 +22,69 @@
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  * 	    Roy Spliet <rspliet@eclipso.eu>
  */
-#समावेश "priv.h"
-#समावेश "ram.h"
+#include "priv.h"
+#include "ram.h"
 
-काष्ठा ramxlat अणु
-	पूर्णांक id;
+struct ramxlat {
+	int id;
 	u8 enc;
-पूर्ण;
+};
 
-अटल अंतरभूत पूर्णांक
-ramxlat(स्थिर काष्ठा ramxlat *xlat, पूर्णांक id)
-अणु
-	जबतक (xlat->id >= 0) अणु
-		अगर (xlat->id == id)
-			वापस xlat->enc;
+static inline int
+ramxlat(const struct ramxlat *xlat, int id)
+{
+	while (xlat->id >= 0) {
+		if (xlat->id == id)
+			return xlat->enc;
 		xlat++;
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+	}
+	return -EINVAL;
+}
 
-अटल स्थिर काष्ठा ramxlat
-ramddr3_cl[] = अणु
-	अणु 5, 2 पूर्ण, अणु 6, 4 पूर्ण, अणु 7, 6 पूर्ण, अणु 8, 8 पूर्ण, अणु 9, 10 पूर्ण, अणु 10, 12 पूर्ण,
-	अणु 11, 14 पूर्ण,
-	/* the below are mentioned in some, but not all, ddr3 करोcs */
-	अणु 12, 1 पूर्ण, अणु 13, 3 पूर्ण, अणु 14, 5 पूर्ण,
-	अणु -1 पूर्ण
-पूर्ण;
+static const struct ramxlat
+ramddr3_cl[] = {
+	{ 5, 2 }, { 6, 4 }, { 7, 6 }, { 8, 8 }, { 9, 10 }, { 10, 12 },
+	{ 11, 14 },
+	/* the below are mentioned in some, but not all, ddr3 docs */
+	{ 12, 1 }, { 13, 3 }, { 14, 5 },
+	{ -1 }
+};
 
-अटल स्थिर काष्ठा ramxlat
-ramddr3_wr[] = अणु
-	अणु 5, 1 पूर्ण, अणु 6, 2 पूर्ण, अणु 7, 3 पूर्ण, अणु 8, 4 पूर्ण, अणु 10, 5 पूर्ण, अणु 12, 6 पूर्ण,
-	/* the below are mentioned in some, but not all, ddr3 करोcs */
-	अणु 14, 7 पूर्ण, अणु 15, 7 पूर्ण, अणु 16, 0 पूर्ण,
-	अणु -1 पूर्ण
-पूर्ण;
+static const struct ramxlat
+ramddr3_wr[] = {
+	{ 5, 1 }, { 6, 2 }, { 7, 3 }, { 8, 4 }, { 10, 5 }, { 12, 6 },
+	/* the below are mentioned in some, but not all, ddr3 docs */
+	{ 14, 7 }, { 15, 7 }, { 16, 0 },
+	{ -1 }
+};
 
-अटल स्थिर काष्ठा ramxlat
-ramddr3_cwl[] = अणु
-	अणु 5, 0 पूर्ण, अणु 6, 1 पूर्ण, अणु 7, 2 पूर्ण, अणु 8, 3 पूर्ण,
-	/* the below are mentioned in some, but not all, ddr3 करोcs */
-	अणु 9, 4 पूर्ण, अणु 10, 5 पूर्ण,
-	अणु -1 पूर्ण
-पूर्ण;
+static const struct ramxlat
+ramddr3_cwl[] = {
+	{ 5, 0 }, { 6, 1 }, { 7, 2 }, { 8, 3 },
+	/* the below are mentioned in some, but not all, ddr3 docs */
+	{ 9, 4 }, { 10, 5 },
+	{ -1 }
+};
 
-पूर्णांक
-nvkm_sddr3_calc(काष्ठा nvkm_ram *ram)
-अणु
-	पूर्णांक CWL, CL, WR, DLL = 0, ODT = 0;
+int
+nvkm_sddr3_calc(struct nvkm_ram *ram)
+{
+	int CWL, CL, WR, DLL = 0, ODT = 0;
 
 	DLL = !ram->next->bios.ramcfg_DLLoff;
 
-	चयन (ram->next->bios.timing_ver) अणु
-	हाल 0x10:
-		अगर (ram->next->bios.timing_hdr < 0x17) अणु
-			/* XXX: NV50: Get CWL from the timing रेजिस्टर */
-			वापस -ENOSYS;
-		पूर्ण
+	switch (ram->next->bios.timing_ver) {
+	case 0x10:
+		if (ram->next->bios.timing_hdr < 0x17) {
+			/* XXX: NV50: Get CWL from the timing register */
+			return -ENOSYS;
+		}
 		CWL = ram->next->bios.timing_10_CWL;
 		CL  = ram->next->bios.timing_10_CL;
 		WR  = ram->next->bios.timing_10_WR;
 		ODT = ram->next->bios.timing_10_ODT;
-		अवरोध;
-	हाल 0x20:
+		break;
+	case 0x20:
 		CWL = (ram->next->bios.timing[1] & 0x00000f80) >> 7;
 		CL  = (ram->next->bios.timing[1] & 0x0000001f) >> 0;
 		WR  = (ram->next->bios.timing[2] & 0x007f0000) >> 16;
@@ -93,16 +92,16 @@ nvkm_sddr3_calc(काष्ठा nvkm_ram *ram)
 		ODT =   (ram->mr[1] & 0x004) >> 2 |
 			(ram->mr[1] & 0x040) >> 5 |
 		        (ram->mr[1] & 0x200) >> 7;
-		अवरोध;
-	शेष:
-		वापस -ENOSYS;
-	पूर्ण
+		break;
+	default:
+		return -ENOSYS;
+	}
 
 	CWL = ramxlat(ramddr3_cwl, CWL);
 	CL  = ramxlat(ramddr3_cl, CL);
 	WR  = ramxlat(ramddr3_wr, WR);
-	अगर (CL < 0 || CWL < 0 || WR < 0)
-		वापस -EINVAL;
+	if (CL < 0 || CWL < 0 || WR < 0)
+		return -EINVAL;
 
 	ram->mr[0] &= ~0xf74;
 	ram->mr[0] |= (WR & 0x07) << 9;
@@ -117,5 +116,5 @@ nvkm_sddr3_calc(काष्ठा nvkm_ram *ram)
 
 	ram->mr[2] &= ~0x038;
 	ram->mr[2] |= (CWL & 0x07) << 3;
-	वापस 0;
-पूर्ण
+	return 0;
+}

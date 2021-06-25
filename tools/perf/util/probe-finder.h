@@ -1,127 +1,126 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _PROBE_FINDER_H
-#घोषणा _PROBE_FINDER_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _PROBE_FINDER_H
+#define _PROBE_FINDER_H
 
-#समावेश <stdbool.h>
-#समावेश "intlist.h"
-#समावेश "build-id.h"
-#समावेश "probe-event.h"
-#समावेश <linux/प्रकार.स>
+#include <stdbool.h>
+#include "intlist.h"
+#include "build-id.h"
+#include "probe-event.h"
+#include <linux/ctype.h>
 
-#घोषणा MAX_PROBE_BUFFER	1024
-#घोषणा MAX_PROBES		 128
-#घोषणा MAX_PROBE_ARGS		 128
+#define MAX_PROBE_BUFFER	1024
+#define MAX_PROBES		 128
+#define MAX_PROBE_ARGS		 128
 
-#घोषणा PROBE_ARG_VARS		"$vars"
-#घोषणा PROBE_ARG_PARAMS	"$params"
+#define PROBE_ARG_VARS		"$vars"
+#define PROBE_ARG_PARAMS	"$params"
 
-अटल अंतरभूत पूर्णांक is_c_varname(स्थिर अक्षर *name)
-अणु
+static inline int is_c_varname(const char *name)
+{
 	/* TODO */
-	वापस है_अक्षर(name[0]) || name[0] == '_';
-पूर्ण
+	return isalpha(name[0]) || name[0] == '_';
+}
 
-#अगर_घोषित HAVE_DWARF_SUPPORT
+#ifdef HAVE_DWARF_SUPPORT
 
-#समावेश "dwarf-aux.h"
+#include "dwarf-aux.h"
 
-/* TODO: export debuginfo data काष्ठाure even अगर no dwarf support */
+/* TODO: export debuginfo data structure even if no dwarf support */
 
-/* debug inक्रमmation काष्ठाure */
-काष्ठा debuginfo अणु
+/* debug information structure */
+struct debuginfo {
 	Dwarf		*dbg;
 	Dwfl_Module	*mod;
 	Dwfl		*dwfl;
 	Dwarf_Addr	bias;
-	स्थिर अचिन्हित अक्षर	*build_id;
-पूर्ण;
+	const unsigned char	*build_id;
+};
 
-/* This also tries to खोलो distro debuginfo */
-काष्ठा debuginfo *debuginfo__new(स्थिर अक्षर *path);
-व्योम debuginfo__delete(काष्ठा debuginfo *dbg);
+/* This also tries to open distro debuginfo */
+struct debuginfo *debuginfo__new(const char *path);
+void debuginfo__delete(struct debuginfo *dbg);
 
-/* Find probe_trace_events specअगरied by perf_probe_event from debuginfo */
-पूर्णांक debuginfo__find_trace_events(काष्ठा debuginfo *dbg,
-				 काष्ठा perf_probe_event *pev,
-				 काष्ठा probe_trace_event **tevs);
+/* Find probe_trace_events specified by perf_probe_event from debuginfo */
+int debuginfo__find_trace_events(struct debuginfo *dbg,
+				 struct perf_probe_event *pev,
+				 struct probe_trace_event **tevs);
 
-/* Find a perf_probe_poपूर्णांक from debuginfo */
-पूर्णांक debuginfo__find_probe_poपूर्णांक(काष्ठा debuginfo *dbg, अचिन्हित दीर्घ addr,
-				काष्ठा perf_probe_poपूर्णांक *ppt);
+/* Find a perf_probe_point from debuginfo */
+int debuginfo__find_probe_point(struct debuginfo *dbg, unsigned long addr,
+				struct perf_probe_point *ppt);
 
-पूर्णांक debuginfo__get_text_offset(काष्ठा debuginfo *dbg, Dwarf_Addr *offs,
+int debuginfo__get_text_offset(struct debuginfo *dbg, Dwarf_Addr *offs,
 			       bool adjust_offset);
 
 /* Find a line range */
-पूर्णांक debuginfo__find_line_range(काष्ठा debuginfo *dbg, काष्ठा line_range *lr);
+int debuginfo__find_line_range(struct debuginfo *dbg, struct line_range *lr);
 
 /* Find available variables */
-पूर्णांक debuginfo__find_available_vars_at(काष्ठा debuginfo *dbg,
-				      काष्ठा perf_probe_event *pev,
-				      काष्ठा variable_list **vls);
+int debuginfo__find_available_vars_at(struct debuginfo *dbg,
+				      struct perf_probe_event *pev,
+				      struct variable_list **vls);
 
 /* Find a src file from a DWARF tag path */
-पूर्णांक find_source_path(स्थिर अक्षर *raw_path, स्थिर अक्षर *sbuild_id,
-		     स्थिर अक्षर *comp_dir, अक्षर **new_path);
+int find_source_path(const char *raw_path, const char *sbuild_id,
+		     const char *comp_dir, char **new_path);
 
-काष्ठा probe_finder अणु
-	काष्ठा perf_probe_event	*pev;		/* Target probe event */
-	काष्ठा debuginfo	*dbg;
+struct probe_finder {
+	struct perf_probe_event	*pev;		/* Target probe event */
+	struct debuginfo	*dbg;
 
-	/* Callback when a probe poपूर्णांक is found */
-	पूर्णांक (*callback)(Dwarf_Die *sc_die, काष्ठा probe_finder *pf);
+	/* Callback when a probe point is found */
+	int (*callback)(Dwarf_Die *sc_die, struct probe_finder *pf);
 
 	/* For function searching */
-	पूर्णांक			lno;		/* Line number */
+	int			lno;		/* Line number */
 	Dwarf_Addr		addr;		/* Address */
-	स्थिर अक्षर		*fname;		/* Real file name */
+	const char		*fname;		/* Real file name */
 	Dwarf_Die		cu_die;		/* Current CU */
 	Dwarf_Die		sp_die;
-	काष्ठा पूर्णांकlist		*lcache;	/* Line cache क्रम lazy match */
+	struct intlist		*lcache;	/* Line cache for lazy match */
 
 	/* For variable searching */
-#अगर _ELFUTILS_PREREQ(0, 142)
-	/* Call Frame Inक्रमmation from .eh_frame */
+#if _ELFUTILS_PREREQ(0, 142)
+	/* Call Frame Information from .eh_frame */
 	Dwarf_CFI		*cfi_eh;
-	/* Call Frame Inक्रमmation from .debug_frame */
+	/* Call Frame Information from .debug_frame */
 	Dwarf_CFI		*cfi_dbg;
-#पूर्ण_अगर
+#endif
 	Dwarf_Op		*fb_ops;	/* Frame base attribute */
-	अचिन्हित पूर्णांक		machine;	/* Target machine arch */
-	काष्ठा perf_probe_arg	*pvar;		/* Current target variable */
-	काष्ठा probe_trace_arg	*tvar;		/* Current result variable */
+	unsigned int		machine;	/* Target machine arch */
+	struct perf_probe_arg	*pvar;		/* Current target variable */
+	struct probe_trace_arg	*tvar;		/* Current result variable */
 	bool			skip_empty_arg;	/* Skip non-exist args */
-पूर्ण;
+};
 
-काष्ठा trace_event_finder अणु
-	काष्ठा probe_finder	pf;
+struct trace_event_finder {
+	struct probe_finder	pf;
 	Dwfl_Module		*mod;		/* For solving symbols */
-	काष्ठा probe_trace_event *tevs;		/* Found trace events */
-	पूर्णांक			ntevs;		/* Number of trace events */
-	पूर्णांक			max_tevs;	/* Max number of trace events */
-पूर्ण;
+	struct probe_trace_event *tevs;		/* Found trace events */
+	int			ntevs;		/* Number of trace events */
+	int			max_tevs;	/* Max number of trace events */
+};
 
-काष्ठा available_var_finder अणु
-	काष्ठा probe_finder	pf;
+struct available_var_finder {
+	struct probe_finder	pf;
 	Dwfl_Module		*mod;		/* For solving symbols */
-	काष्ठा variable_list	*vls;		/* Found variable lists */
-	पूर्णांक			nvls;		/* Number of variable lists */
-	पूर्णांक			max_vls;	/* Max no. of variable lists */
+	struct variable_list	*vls;		/* Found variable lists */
+	int			nvls;		/* Number of variable lists */
+	int			max_vls;	/* Max no. of variable lists */
 	bool			child;		/* Search child scopes */
-पूर्ण;
+};
 
-काष्ठा line_finder अणु
-	काष्ठा line_range	*lr;		/* Target line range */
+struct line_finder {
+	struct line_range	*lr;		/* Target line range */
 
-	स्थिर अक्षर		*fname;		/* File name */
-	पूर्णांक			lno_s;		/* Start line number */
-	पूर्णांक			lno_e;		/* End line number */
+	const char		*fname;		/* File name */
+	int			lno_s;		/* Start line number */
+	int			lno_e;		/* End line number */
 	Dwarf_Die		cu_die;		/* Current CU */
 	Dwarf_Die		sp_die;
-	पूर्णांक			found;
-पूर्ण;
+	int			found;
+};
 
-#पूर्ण_अगर /* HAVE_DWARF_SUPPORT */
+#endif /* HAVE_DWARF_SUPPORT */
 
-#पूर्ण_अगर /*_PROBE_FINDER_H */
+#endif /*_PROBE_FINDER_H */

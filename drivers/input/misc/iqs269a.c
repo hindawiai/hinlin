@@ -1,252 +1,251 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Azoteq IQS269A Capacitive Touch Controller
  *
  * Copyright (C) 2020 Jeff LaBundy <jeff@labundy.com>
  *
- * This driver रेजिस्टरs up to 3 input devices: one representing capacitive or
- * inductive keys as well as Hall-effect चयनes, and one क्रम each of the two
+ * This driver registers up to 3 input devices: one representing capacitive or
+ * inductive keys as well as Hall-effect switches, and one for each of the two
  * axial sliders presented by the device.
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/device.h>
-#समावेश <linux/err.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/input.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/property.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/slab.h>
+#include <linux/delay.h>
+#include <linux/device.h>
+#include <linux/err.h>
+#include <linux/i2c.h>
+#include <linux/input.h>
+#include <linux/interrupt.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <linux/of_device.h>
+#include <linux/property.h>
+#include <linux/regmap.h>
+#include <linux/slab.h>
 
-#घोषणा IQS269_VER_INFO				0x00
-#घोषणा IQS269_VER_INFO_PROD_NUM		0x4F
+#define IQS269_VER_INFO				0x00
+#define IQS269_VER_INFO_PROD_NUM		0x4F
 
-#घोषणा IQS269_SYS_FLAGS			0x02
-#घोषणा IQS269_SYS_FLAGS_SHOW_RESET		BIT(15)
-#घोषणा IQS269_SYS_FLAGS_PWR_MODE_MASK		GENMASK(12, 11)
-#घोषणा IQS269_SYS_FLAGS_PWR_MODE_SHIFT		11
-#घोषणा IQS269_SYS_FLAGS_IN_ATI			BIT(10)
+#define IQS269_SYS_FLAGS			0x02
+#define IQS269_SYS_FLAGS_SHOW_RESET		BIT(15)
+#define IQS269_SYS_FLAGS_PWR_MODE_MASK		GENMASK(12, 11)
+#define IQS269_SYS_FLAGS_PWR_MODE_SHIFT		11
+#define IQS269_SYS_FLAGS_IN_ATI			BIT(10)
 
-#घोषणा IQS269_CHx_COUNTS			0x08
+#define IQS269_CHx_COUNTS			0x08
 
-#घोषणा IQS269_SLIDER_X				0x30
+#define IQS269_SLIDER_X				0x30
 
-#घोषणा IQS269_CAL_DATA_A			0x35
-#घोषणा IQS269_CAL_DATA_A_HALL_BIN_L_MASK	GENMASK(15, 12)
-#घोषणा IQS269_CAL_DATA_A_HALL_BIN_L_SHIFT	12
-#घोषणा IQS269_CAL_DATA_A_HALL_BIN_R_MASK	GENMASK(11, 8)
-#घोषणा IQS269_CAL_DATA_A_HALL_BIN_R_SHIFT	8
+#define IQS269_CAL_DATA_A			0x35
+#define IQS269_CAL_DATA_A_HALL_BIN_L_MASK	GENMASK(15, 12)
+#define IQS269_CAL_DATA_A_HALL_BIN_L_SHIFT	12
+#define IQS269_CAL_DATA_A_HALL_BIN_R_MASK	GENMASK(11, 8)
+#define IQS269_CAL_DATA_A_HALL_BIN_R_SHIFT	8
 
-#घोषणा IQS269_SYS_SETTINGS			0x80
-#घोषणा IQS269_SYS_SETTINGS_CLK_DIV		BIT(15)
-#घोषणा IQS269_SYS_SETTINGS_ULP_AUTO		BIT(14)
-#घोषणा IQS269_SYS_SETTINGS_DIS_AUTO		BIT(13)
-#घोषणा IQS269_SYS_SETTINGS_PWR_MODE_MASK	GENMASK(12, 11)
-#घोषणा IQS269_SYS_SETTINGS_PWR_MODE_SHIFT	11
-#घोषणा IQS269_SYS_SETTINGS_PWR_MODE_MAX	3
-#घोषणा IQS269_SYS_SETTINGS_ULP_UPDATE_MASK	GENMASK(10, 8)
-#घोषणा IQS269_SYS_SETTINGS_ULP_UPDATE_SHIFT	8
-#घोषणा IQS269_SYS_SETTINGS_ULP_UPDATE_MAX	7
-#घोषणा IQS269_SYS_SETTINGS_RESEED_OFFSET	BIT(6)
-#घोषणा IQS269_SYS_SETTINGS_EVENT_MODE		BIT(5)
-#घोषणा IQS269_SYS_SETTINGS_EVENT_MODE_LP	BIT(4)
-#घोषणा IQS269_SYS_SETTINGS_REDO_ATI		BIT(2)
-#घोषणा IQS269_SYS_SETTINGS_ACK_RESET		BIT(0)
+#define IQS269_SYS_SETTINGS			0x80
+#define IQS269_SYS_SETTINGS_CLK_DIV		BIT(15)
+#define IQS269_SYS_SETTINGS_ULP_AUTO		BIT(14)
+#define IQS269_SYS_SETTINGS_DIS_AUTO		BIT(13)
+#define IQS269_SYS_SETTINGS_PWR_MODE_MASK	GENMASK(12, 11)
+#define IQS269_SYS_SETTINGS_PWR_MODE_SHIFT	11
+#define IQS269_SYS_SETTINGS_PWR_MODE_MAX	3
+#define IQS269_SYS_SETTINGS_ULP_UPDATE_MASK	GENMASK(10, 8)
+#define IQS269_SYS_SETTINGS_ULP_UPDATE_SHIFT	8
+#define IQS269_SYS_SETTINGS_ULP_UPDATE_MAX	7
+#define IQS269_SYS_SETTINGS_RESEED_OFFSET	BIT(6)
+#define IQS269_SYS_SETTINGS_EVENT_MODE		BIT(5)
+#define IQS269_SYS_SETTINGS_EVENT_MODE_LP	BIT(4)
+#define IQS269_SYS_SETTINGS_REDO_ATI		BIT(2)
+#define IQS269_SYS_SETTINGS_ACK_RESET		BIT(0)
 
-#घोषणा IQS269_FILT_STR_LP_LTA_MASK		GENMASK(7, 6)
-#घोषणा IQS269_FILT_STR_LP_LTA_SHIFT		6
-#घोषणा IQS269_FILT_STR_LP_CNT_MASK		GENMASK(5, 4)
-#घोषणा IQS269_FILT_STR_LP_CNT_SHIFT		4
-#घोषणा IQS269_FILT_STR_NP_LTA_MASK		GENMASK(3, 2)
-#घोषणा IQS269_FILT_STR_NP_LTA_SHIFT		2
-#घोषणा IQS269_FILT_STR_NP_CNT_MASK		GENMASK(1, 0)
-#घोषणा IQS269_FILT_STR_MAX			3
+#define IQS269_FILT_STR_LP_LTA_MASK		GENMASK(7, 6)
+#define IQS269_FILT_STR_LP_LTA_SHIFT		6
+#define IQS269_FILT_STR_LP_CNT_MASK		GENMASK(5, 4)
+#define IQS269_FILT_STR_LP_CNT_SHIFT		4
+#define IQS269_FILT_STR_NP_LTA_MASK		GENMASK(3, 2)
+#define IQS269_FILT_STR_NP_LTA_SHIFT		2
+#define IQS269_FILT_STR_NP_CNT_MASK		GENMASK(1, 0)
+#define IQS269_FILT_STR_MAX			3
 
-#घोषणा IQS269_EVENT_MASK_SYS			BIT(6)
-#घोषणा IQS269_EVENT_MASK_DEEP			BIT(2)
-#घोषणा IQS269_EVENT_MASK_TOUCH			BIT(1)
-#घोषणा IQS269_EVENT_MASK_PROX			BIT(0)
+#define IQS269_EVENT_MASK_SYS			BIT(6)
+#define IQS269_EVENT_MASK_DEEP			BIT(2)
+#define IQS269_EVENT_MASK_TOUCH			BIT(1)
+#define IQS269_EVENT_MASK_PROX			BIT(0)
 
-#घोषणा IQS269_RATE_NP_MS_MAX			255
-#घोषणा IQS269_RATE_LP_MS_MAX			255
-#घोषणा IQS269_RATE_ULP_MS_MAX			4080
-#घोषणा IQS269_TIMEOUT_PWR_MS_MAX		130560
-#घोषणा IQS269_TIMEOUT_LTA_MS_MAX		130560
+#define IQS269_RATE_NP_MS_MAX			255
+#define IQS269_RATE_LP_MS_MAX			255
+#define IQS269_RATE_ULP_MS_MAX			4080
+#define IQS269_TIMEOUT_PWR_MS_MAX		130560
+#define IQS269_TIMEOUT_LTA_MS_MAX		130560
 
-#घोषणा IQS269_MISC_A_ATI_BAND_DISABLE		BIT(15)
-#घोषणा IQS269_MISC_A_ATI_LP_ONLY		BIT(14)
-#घोषणा IQS269_MISC_A_ATI_BAND_TIGHTEN		BIT(13)
-#घोषणा IQS269_MISC_A_FILT_DISABLE		BIT(12)
-#घोषणा IQS269_MISC_A_GPIO3_SELECT_MASK		GENMASK(10, 8)
-#घोषणा IQS269_MISC_A_GPIO3_SELECT_SHIFT	8
-#घोषणा IQS269_MISC_A_DUAL_सूची			BIT(6)
-#घोषणा IQS269_MISC_A_TX_FREQ_MASK		GENMASK(5, 4)
-#घोषणा IQS269_MISC_A_TX_FREQ_SHIFT		4
-#घोषणा IQS269_MISC_A_TX_FREQ_MAX		3
-#घोषणा IQS269_MISC_A_GLOBAL_CAP_SIZE		BIT(0)
+#define IQS269_MISC_A_ATI_BAND_DISABLE		BIT(15)
+#define IQS269_MISC_A_ATI_LP_ONLY		BIT(14)
+#define IQS269_MISC_A_ATI_BAND_TIGHTEN		BIT(13)
+#define IQS269_MISC_A_FILT_DISABLE		BIT(12)
+#define IQS269_MISC_A_GPIO3_SELECT_MASK		GENMASK(10, 8)
+#define IQS269_MISC_A_GPIO3_SELECT_SHIFT	8
+#define IQS269_MISC_A_DUAL_DIR			BIT(6)
+#define IQS269_MISC_A_TX_FREQ_MASK		GENMASK(5, 4)
+#define IQS269_MISC_A_TX_FREQ_SHIFT		4
+#define IQS269_MISC_A_TX_FREQ_MAX		3
+#define IQS269_MISC_A_GLOBAL_CAP_SIZE		BIT(0)
 
-#घोषणा IQS269_MISC_B_RESEED_UI_SEL_MASK	GENMASK(7, 6)
-#घोषणा IQS269_MISC_B_RESEED_UI_SEL_SHIFT	6
-#घोषणा IQS269_MISC_B_RESEED_UI_SEL_MAX		3
-#घोषणा IQS269_MISC_B_TRACKING_UI_ENABLE	BIT(4)
-#घोषणा IQS269_MISC_B_FILT_STR_SLIDER		GENMASK(1, 0)
+#define IQS269_MISC_B_RESEED_UI_SEL_MASK	GENMASK(7, 6)
+#define IQS269_MISC_B_RESEED_UI_SEL_SHIFT	6
+#define IQS269_MISC_B_RESEED_UI_SEL_MAX		3
+#define IQS269_MISC_B_TRACKING_UI_ENABLE	BIT(4)
+#define IQS269_MISC_B_FILT_STR_SLIDER		GENMASK(1, 0)
 
-#घोषणा IQS269_CHx_SETTINGS			0x8C
+#define IQS269_CHx_SETTINGS			0x8C
 
-#घोषणा IQS269_CHx_ENG_A_MEAS_CAP_SIZE		BIT(15)
-#घोषणा IQS269_CHx_ENG_A_RX_GND_INACTIVE	BIT(13)
-#घोषणा IQS269_CHx_ENG_A_LOCAL_CAP_SIZE		BIT(12)
-#घोषणा IQS269_CHx_ENG_A_ATI_MODE_MASK		GENMASK(9, 8)
-#घोषणा IQS269_CHx_ENG_A_ATI_MODE_SHIFT		8
-#घोषणा IQS269_CHx_ENG_A_ATI_MODE_MAX		3
-#घोषणा IQS269_CHx_ENG_A_INV_LOGIC		BIT(7)
-#घोषणा IQS269_CHx_ENG_A_PROJ_BIAS_MASK		GENMASK(6, 5)
-#घोषणा IQS269_CHx_ENG_A_PROJ_BIAS_SHIFT	5
-#घोषणा IQS269_CHx_ENG_A_PROJ_BIAS_MAX		3
-#घोषणा IQS269_CHx_ENG_A_SENSE_MODE_MASK	GENMASK(3, 0)
-#घोषणा IQS269_CHx_ENG_A_SENSE_MODE_MAX		15
+#define IQS269_CHx_ENG_A_MEAS_CAP_SIZE		BIT(15)
+#define IQS269_CHx_ENG_A_RX_GND_INACTIVE	BIT(13)
+#define IQS269_CHx_ENG_A_LOCAL_CAP_SIZE		BIT(12)
+#define IQS269_CHx_ENG_A_ATI_MODE_MASK		GENMASK(9, 8)
+#define IQS269_CHx_ENG_A_ATI_MODE_SHIFT		8
+#define IQS269_CHx_ENG_A_ATI_MODE_MAX		3
+#define IQS269_CHx_ENG_A_INV_LOGIC		BIT(7)
+#define IQS269_CHx_ENG_A_PROJ_BIAS_MASK		GENMASK(6, 5)
+#define IQS269_CHx_ENG_A_PROJ_BIAS_SHIFT	5
+#define IQS269_CHx_ENG_A_PROJ_BIAS_MAX		3
+#define IQS269_CHx_ENG_A_SENSE_MODE_MASK	GENMASK(3, 0)
+#define IQS269_CHx_ENG_A_SENSE_MODE_MAX		15
 
-#घोषणा IQS269_CHx_ENG_B_LOCAL_CAP_ENABLE	BIT(13)
-#घोषणा IQS269_CHx_ENG_B_SENSE_FREQ_MASK	GENMASK(10, 9)
-#घोषणा IQS269_CHx_ENG_B_SENSE_FREQ_SHIFT	9
-#घोषणा IQS269_CHx_ENG_B_SENSE_FREQ_MAX		3
-#घोषणा IQS269_CHx_ENG_B_STATIC_ENABLE		BIT(8)
-#घोषणा IQS269_CHx_ENG_B_ATI_BASE_MASK		GENMASK(7, 6)
-#घोषणा IQS269_CHx_ENG_B_ATI_BASE_75		0x00
-#घोषणा IQS269_CHx_ENG_B_ATI_BASE_100		0x40
-#घोषणा IQS269_CHx_ENG_B_ATI_BASE_150		0x80
-#घोषणा IQS269_CHx_ENG_B_ATI_BASE_200		0xC0
-#घोषणा IQS269_CHx_ENG_B_ATI_TARGET_MASK	GENMASK(5, 0)
-#घोषणा IQS269_CHx_ENG_B_ATI_TARGET_MAX		2016
+#define IQS269_CHx_ENG_B_LOCAL_CAP_ENABLE	BIT(13)
+#define IQS269_CHx_ENG_B_SENSE_FREQ_MASK	GENMASK(10, 9)
+#define IQS269_CHx_ENG_B_SENSE_FREQ_SHIFT	9
+#define IQS269_CHx_ENG_B_SENSE_FREQ_MAX		3
+#define IQS269_CHx_ENG_B_STATIC_ENABLE		BIT(8)
+#define IQS269_CHx_ENG_B_ATI_BASE_MASK		GENMASK(7, 6)
+#define IQS269_CHx_ENG_B_ATI_BASE_75		0x00
+#define IQS269_CHx_ENG_B_ATI_BASE_100		0x40
+#define IQS269_CHx_ENG_B_ATI_BASE_150		0x80
+#define IQS269_CHx_ENG_B_ATI_BASE_200		0xC0
+#define IQS269_CHx_ENG_B_ATI_TARGET_MASK	GENMASK(5, 0)
+#define IQS269_CHx_ENG_B_ATI_TARGET_MAX		2016
 
-#घोषणा IQS269_CHx_WEIGHT_MAX			255
-#घोषणा IQS269_CHx_THRESH_MAX			255
-#घोषणा IQS269_CHx_HYST_DEEP_MASK		GENMASK(7, 4)
-#घोषणा IQS269_CHx_HYST_DEEP_SHIFT		4
-#घोषणा IQS269_CHx_HYST_TOUCH_MASK		GENMASK(3, 0)
-#घोषणा IQS269_CHx_HYST_MAX			15
+#define IQS269_CHx_WEIGHT_MAX			255
+#define IQS269_CHx_THRESH_MAX			255
+#define IQS269_CHx_HYST_DEEP_MASK		GENMASK(7, 4)
+#define IQS269_CHx_HYST_DEEP_SHIFT		4
+#define IQS269_CHx_HYST_TOUCH_MASK		GENMASK(3, 0)
+#define IQS269_CHx_HYST_MAX			15
 
-#घोषणा IQS269_CHx_HALL_INACTIVE		6
-#घोषणा IQS269_CHx_HALL_ACTIVE			7
+#define IQS269_CHx_HALL_INACTIVE		6
+#define IQS269_CHx_HALL_ACTIVE			7
 
-#घोषणा IQS269_HALL_PAD_R			BIT(0)
-#घोषणा IQS269_HALL_PAD_L			BIT(1)
-#घोषणा IQS269_HALL_PAD_INV			BIT(6)
+#define IQS269_HALL_PAD_R			BIT(0)
+#define IQS269_HALL_PAD_L			BIT(1)
+#define IQS269_HALL_PAD_INV			BIT(6)
 
-#घोषणा IQS269_HALL_UI				0xF5
-#घोषणा IQS269_HALL_UI_ENABLE			BIT(15)
+#define IQS269_HALL_UI				0xF5
+#define IQS269_HALL_UI_ENABLE			BIT(15)
 
-#घोषणा IQS269_MAX_REG				0xFF
+#define IQS269_MAX_REG				0xFF
 
-#घोषणा IQS269_NUM_CH				8
-#घोषणा IQS269_NUM_SL				2
+#define IQS269_NUM_CH				8
+#define IQS269_NUM_SL				2
 
-#घोषणा IQS269_ATI_POLL_SLEEP_US		(iqs269->delay_mult * 10000)
-#घोषणा IQS269_ATI_POLL_TIMEOUT_US		(iqs269->delay_mult * 500000)
-#घोषणा IQS269_ATI_STABLE_DELAY_MS		(iqs269->delay_mult * 150)
+#define IQS269_ATI_POLL_SLEEP_US		(iqs269->delay_mult * 10000)
+#define IQS269_ATI_POLL_TIMEOUT_US		(iqs269->delay_mult * 500000)
+#define IQS269_ATI_STABLE_DELAY_MS		(iqs269->delay_mult * 150)
 
-#घोषणा IQS269_PWR_MODE_POLL_SLEEP_US		IQS269_ATI_POLL_SLEEP_US
-#घोषणा IQS269_PWR_MODE_POLL_TIMEOUT_US		IQS269_ATI_POLL_TIMEOUT_US
+#define IQS269_PWR_MODE_POLL_SLEEP_US		IQS269_ATI_POLL_SLEEP_US
+#define IQS269_PWR_MODE_POLL_TIMEOUT_US		IQS269_ATI_POLL_TIMEOUT_US
 
-#घोषणा iqs269_irq_रुको()			usleep_range(100, 150)
+#define iqs269_irq_wait()			usleep_range(100, 150)
 
-क्रमागत iqs269_local_cap_size अणु
+enum iqs269_local_cap_size {
 	IQS269_LOCAL_CAP_SIZE_0,
 	IQS269_LOCAL_CAP_SIZE_GLOBAL_ONLY,
 	IQS269_LOCAL_CAP_SIZE_GLOBAL_0pF5,
-पूर्ण;
+};
 
-क्रमागत iqs269_st_offs अणु
+enum iqs269_st_offs {
 	IQS269_ST_OFFS_PROX,
-	IQS269_ST_OFFS_सूची,
+	IQS269_ST_OFFS_DIR,
 	IQS269_ST_OFFS_TOUCH,
 	IQS269_ST_OFFS_DEEP,
-पूर्ण;
+};
 
-क्रमागत iqs269_th_offs अणु
+enum iqs269_th_offs {
 	IQS269_TH_OFFS_PROX,
 	IQS269_TH_OFFS_TOUCH,
 	IQS269_TH_OFFS_DEEP,
-पूर्ण;
+};
 
-क्रमागत iqs269_event_id अणु
+enum iqs269_event_id {
 	IQS269_EVENT_PROX_DN,
 	IQS269_EVENT_PROX_UP,
 	IQS269_EVENT_TOUCH_DN,
 	IQS269_EVENT_TOUCH_UP,
 	IQS269_EVENT_DEEP_DN,
 	IQS269_EVENT_DEEP_UP,
-पूर्ण;
+};
 
-काष्ठा iqs269_चयन_desc अणु
-	अचिन्हित पूर्णांक code;
+struct iqs269_switch_desc {
+	unsigned int code;
 	bool enabled;
-पूर्ण;
+};
 
-काष्ठा iqs269_event_desc अणु
-	स्थिर अक्षर *name;
-	क्रमागत iqs269_st_offs st_offs;
-	क्रमागत iqs269_th_offs th_offs;
+struct iqs269_event_desc {
+	const char *name;
+	enum iqs269_st_offs st_offs;
+	enum iqs269_th_offs th_offs;
 	bool dir_up;
 	u8 mask;
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा iqs269_event_desc iqs269_events[] = अणु
-	[IQS269_EVENT_PROX_DN] = अणु
+static const struct iqs269_event_desc iqs269_events[] = {
+	[IQS269_EVENT_PROX_DN] = {
 		.name = "event-prox",
 		.st_offs = IQS269_ST_OFFS_PROX,
 		.th_offs = IQS269_TH_OFFS_PROX,
 		.mask = IQS269_EVENT_MASK_PROX,
-	पूर्ण,
-	[IQS269_EVENT_PROX_UP] = अणु
+	},
+	[IQS269_EVENT_PROX_UP] = {
 		.name = "event-prox-alt",
 		.st_offs = IQS269_ST_OFFS_PROX,
 		.th_offs = IQS269_TH_OFFS_PROX,
 		.dir_up = true,
 		.mask = IQS269_EVENT_MASK_PROX,
-	पूर्ण,
-	[IQS269_EVENT_TOUCH_DN] = अणु
+	},
+	[IQS269_EVENT_TOUCH_DN] = {
 		.name = "event-touch",
 		.st_offs = IQS269_ST_OFFS_TOUCH,
 		.th_offs = IQS269_TH_OFFS_TOUCH,
 		.mask = IQS269_EVENT_MASK_TOUCH,
-	पूर्ण,
-	[IQS269_EVENT_TOUCH_UP] = अणु
+	},
+	[IQS269_EVENT_TOUCH_UP] = {
 		.name = "event-touch-alt",
 		.st_offs = IQS269_ST_OFFS_TOUCH,
 		.th_offs = IQS269_TH_OFFS_TOUCH,
 		.dir_up = true,
 		.mask = IQS269_EVENT_MASK_TOUCH,
-	पूर्ण,
-	[IQS269_EVENT_DEEP_DN] = अणु
+	},
+	[IQS269_EVENT_DEEP_DN] = {
 		.name = "event-deep",
 		.st_offs = IQS269_ST_OFFS_DEEP,
 		.th_offs = IQS269_TH_OFFS_DEEP,
 		.mask = IQS269_EVENT_MASK_DEEP,
-	पूर्ण,
-	[IQS269_EVENT_DEEP_UP] = अणु
+	},
+	[IQS269_EVENT_DEEP_UP] = {
 		.name = "event-deep-alt",
 		.st_offs = IQS269_ST_OFFS_DEEP,
 		.th_offs = IQS269_TH_OFFS_DEEP,
 		.dir_up = true,
 		.mask = IQS269_EVENT_MASK_DEEP,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-काष्ठा iqs269_ver_info अणु
+struct iqs269_ver_info {
 	u8 prod_num;
 	u8 sw_num;
 	u8 hw_num;
 	u8 padding;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा iqs269_sys_reg अणु
+struct iqs269_sys_reg {
 	__be16 general;
 	u8 active;
 	u8 filter;
@@ -255,21 +254,21 @@
 	u8 rate_np;
 	u8 rate_lp;
 	u8 rate_ulp;
-	u8 समयout_pwr;
-	u8 समयout_rdy;
-	u8 समयout_lta;
+	u8 timeout_pwr;
+	u8 timeout_rdy;
+	u8 timeout_lta;
 	__be16 misc_a;
 	__be16 misc_b;
 	u8 blocking;
 	u8 padding;
 	u8 slider_select[IQS269_NUM_SL];
-	u8 समयout_tap;
-	u8 समयout_swipe;
+	u8 timeout_tap;
+	u8 timeout_swipe;
 	u8 thresh_swipe;
-	u8 reकरो_ati;
-पूर्ण __packed;
+	u8 redo_ati;
+} __packed;
 
-काष्ठा iqs269_ch_reg अणु
+struct iqs269_ch_reg {
 	u8 rx_enable;
 	u8 tx_enable;
 	__be16 engine_a;
@@ -279,42 +278,42 @@
 	u8 hyst;
 	u8 assoc_select;
 	u8 assoc_weight;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा iqs269_flags अणु
-	__be16 प्रणाली;
+struct iqs269_flags {
+	__be16 system;
 	u8 gesture;
 	u8 padding;
 	u8 states[4];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा iqs269_निजी अणु
-	काष्ठा i2c_client *client;
-	काष्ठा regmap *regmap;
-	काष्ठा mutex lock;
-	काष्ठा iqs269_चयन_desc चयनes[ARRAY_SIZE(iqs269_events)];
-	काष्ठा iqs269_ch_reg ch_reg[IQS269_NUM_CH];
-	काष्ठा iqs269_sys_reg sys_reg;
-	काष्ठा input_dev *keypad;
-	काष्ठा input_dev *slider[IQS269_NUM_SL];
-	अचिन्हित पूर्णांक keycode[ARRAY_SIZE(iqs269_events) * IQS269_NUM_CH];
-	अचिन्हित पूर्णांक suspend_mode;
-	अचिन्हित पूर्णांक delay_mult;
-	अचिन्हित पूर्णांक ch_num;
+struct iqs269_private {
+	struct i2c_client *client;
+	struct regmap *regmap;
+	struct mutex lock;
+	struct iqs269_switch_desc switches[ARRAY_SIZE(iqs269_events)];
+	struct iqs269_ch_reg ch_reg[IQS269_NUM_CH];
+	struct iqs269_sys_reg sys_reg;
+	struct input_dev *keypad;
+	struct input_dev *slider[IQS269_NUM_SL];
+	unsigned int keycode[ARRAY_SIZE(iqs269_events) * IQS269_NUM_CH];
+	unsigned int suspend_mode;
+	unsigned int delay_mult;
+	unsigned int ch_num;
 	bool hall_enable;
 	bool ati_current;
-पूर्ण;
+};
 
-अटल पूर्णांक iqs269_ati_mode_set(काष्ठा iqs269_निजी *iqs269,
-			       अचिन्हित पूर्णांक ch_num, अचिन्हित पूर्णांक mode)
-अणु
+static int iqs269_ati_mode_set(struct iqs269_private *iqs269,
+			       unsigned int ch_num, unsigned int mode)
+{
 	u16 engine_a;
 
-	अगर (ch_num >= IQS269_NUM_CH)
-		वापस -EINVAL;
+	if (ch_num >= IQS269_NUM_CH)
+		return -EINVAL;
 
-	अगर (mode > IQS269_CHx_ENG_A_ATI_MODE_MAX)
-		वापस -EINVAL;
+	if (mode > IQS269_CHx_ENG_A_ATI_MODE_MAX)
+		return -EINVAL;
 
 	mutex_lock(&iqs269->lock);
 
@@ -328,16 +327,16 @@
 
 	mutex_unlock(&iqs269->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक iqs269_ati_mode_get(काष्ठा iqs269_निजी *iqs269,
-			       अचिन्हित पूर्णांक ch_num, अचिन्हित पूर्णांक *mode)
-अणु
+static int iqs269_ati_mode_get(struct iqs269_private *iqs269,
+			       unsigned int ch_num, unsigned int *mode)
+{
 	u16 engine_a;
 
-	अगर (ch_num >= IQS269_NUM_CH)
-		वापस -EINVAL;
+	if (ch_num >= IQS269_NUM_CH)
+		return -EINVAL;
 
 	mutex_lock(&iqs269->lock);
 	engine_a = be16_to_cpu(iqs269->ch_reg[ch_num].engine_a);
@@ -346,37 +345,37 @@
 	engine_a &= IQS269_CHx_ENG_A_ATI_MODE_MASK;
 	*mode = (engine_a >> IQS269_CHx_ENG_A_ATI_MODE_SHIFT);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक iqs269_ati_base_set(काष्ठा iqs269_निजी *iqs269,
-			       अचिन्हित पूर्णांक ch_num, अचिन्हित पूर्णांक base)
-अणु
+static int iqs269_ati_base_set(struct iqs269_private *iqs269,
+			       unsigned int ch_num, unsigned int base)
+{
 	u16 engine_b;
 
-	अगर (ch_num >= IQS269_NUM_CH)
-		वापस -EINVAL;
+	if (ch_num >= IQS269_NUM_CH)
+		return -EINVAL;
 
-	चयन (base) अणु
-	हाल 75:
+	switch (base) {
+	case 75:
 		base = IQS269_CHx_ENG_B_ATI_BASE_75;
-		अवरोध;
+		break;
 
-	हाल 100:
+	case 100:
 		base = IQS269_CHx_ENG_B_ATI_BASE_100;
-		अवरोध;
+		break;
 
-	हाल 150:
+	case 150:
 		base = IQS269_CHx_ENG_B_ATI_BASE_150;
-		अवरोध;
+		break;
 
-	हाल 200:
+	case 200:
 		base = IQS269_CHx_ENG_B_ATI_BASE_200;
-		अवरोध;
+		break;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		return -EINVAL;
+	}
 
 	mutex_lock(&iqs269->lock);
 
@@ -390,53 +389,53 @@
 
 	mutex_unlock(&iqs269->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक iqs269_ati_base_get(काष्ठा iqs269_निजी *iqs269,
-			       अचिन्हित पूर्णांक ch_num, अचिन्हित पूर्णांक *base)
-अणु
+static int iqs269_ati_base_get(struct iqs269_private *iqs269,
+			       unsigned int ch_num, unsigned int *base)
+{
 	u16 engine_b;
 
-	अगर (ch_num >= IQS269_NUM_CH)
-		वापस -EINVAL;
+	if (ch_num >= IQS269_NUM_CH)
+		return -EINVAL;
 
 	mutex_lock(&iqs269->lock);
 	engine_b = be16_to_cpu(iqs269->ch_reg[ch_num].engine_b);
 	mutex_unlock(&iqs269->lock);
 
-	चयन (engine_b & IQS269_CHx_ENG_B_ATI_BASE_MASK) अणु
-	हाल IQS269_CHx_ENG_B_ATI_BASE_75:
+	switch (engine_b & IQS269_CHx_ENG_B_ATI_BASE_MASK) {
+	case IQS269_CHx_ENG_B_ATI_BASE_75:
 		*base = 75;
-		वापस 0;
+		return 0;
 
-	हाल IQS269_CHx_ENG_B_ATI_BASE_100:
+	case IQS269_CHx_ENG_B_ATI_BASE_100:
 		*base = 100;
-		वापस 0;
+		return 0;
 
-	हाल IQS269_CHx_ENG_B_ATI_BASE_150:
+	case IQS269_CHx_ENG_B_ATI_BASE_150:
 		*base = 150;
-		वापस 0;
+		return 0;
 
-	हाल IQS269_CHx_ENG_B_ATI_BASE_200:
+	case IQS269_CHx_ENG_B_ATI_BASE_200:
 		*base = 200;
-		वापस 0;
+		return 0;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल पूर्णांक iqs269_ati_target_set(काष्ठा iqs269_निजी *iqs269,
-				 अचिन्हित पूर्णांक ch_num, अचिन्हित पूर्णांक target)
-अणु
+static int iqs269_ati_target_set(struct iqs269_private *iqs269,
+				 unsigned int ch_num, unsigned int target)
+{
 	u16 engine_b;
 
-	अगर (ch_num >= IQS269_NUM_CH)
-		वापस -EINVAL;
+	if (ch_num >= IQS269_NUM_CH)
+		return -EINVAL;
 
-	अगर (target > IQS269_CHx_ENG_B_ATI_TARGET_MAX)
-		वापस -EINVAL;
+	if (target > IQS269_CHx_ENG_B_ATI_TARGET_MAX)
+		return -EINVAL;
 
 	mutex_lock(&iqs269->lock);
 
@@ -450,16 +449,16 @@
 
 	mutex_unlock(&iqs269->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक iqs269_ati_target_get(काष्ठा iqs269_निजी *iqs269,
-				 अचिन्हित पूर्णांक ch_num, अचिन्हित पूर्णांक *target)
-अणु
+static int iqs269_ati_target_get(struct iqs269_private *iqs269,
+				 unsigned int ch_num, unsigned int *target)
+{
 	u16 engine_b;
 
-	अगर (ch_num >= IQS269_NUM_CH)
-		वापस -EINVAL;
+	if (ch_num >= IQS269_NUM_CH)
+		return -EINVAL;
 
 	mutex_lock(&iqs269->lock);
 	engine_b = be16_to_cpu(iqs269->ch_reg[ch_num].engine_b);
@@ -467,490 +466,490 @@
 
 	*target = (engine_b & IQS269_CHx_ENG_B_ATI_TARGET_MASK) * 32;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक iqs269_parse_mask(स्थिर काष्ठा fwnode_handle *fwnode,
-			     स्थिर अक्षर *propname, u8 *mask)
-अणु
-	अचिन्हित पूर्णांक val[IQS269_NUM_CH];
-	पूर्णांक count, error, i;
+static int iqs269_parse_mask(const struct fwnode_handle *fwnode,
+			     const char *propname, u8 *mask)
+{
+	unsigned int val[IQS269_NUM_CH];
+	int count, error, i;
 
 	count = fwnode_property_count_u32(fwnode, propname);
-	अगर (count < 0)
-		वापस 0;
+	if (count < 0)
+		return 0;
 
-	अगर (count > IQS269_NUM_CH)
-		वापस -EINVAL;
+	if (count > IQS269_NUM_CH)
+		return -EINVAL;
 
-	error = fwnode_property_पढ़ो_u32_array(fwnode, propname, val, count);
-	अगर (error)
-		वापस error;
+	error = fwnode_property_read_u32_array(fwnode, propname, val, count);
+	if (error)
+		return error;
 
 	*mask = 0;
 
-	क्रम (i = 0; i < count; i++) अणु
-		अगर (val[i] >= IQS269_NUM_CH)
-			वापस -EINVAL;
+	for (i = 0; i < count; i++) {
+		if (val[i] >= IQS269_NUM_CH)
+			return -EINVAL;
 
 		*mask |= BIT(val[i]);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक iqs269_parse_chan(काष्ठा iqs269_निजी *iqs269,
-			     स्थिर काष्ठा fwnode_handle *ch_node)
-अणु
-	काष्ठा i2c_client *client = iqs269->client;
-	काष्ठा fwnode_handle *ev_node;
-	काष्ठा iqs269_ch_reg *ch_reg;
+static int iqs269_parse_chan(struct iqs269_private *iqs269,
+			     const struct fwnode_handle *ch_node)
+{
+	struct i2c_client *client = iqs269->client;
+	struct fwnode_handle *ev_node;
+	struct iqs269_ch_reg *ch_reg;
 	u16 engine_a, engine_b;
-	अचिन्हित पूर्णांक reg, val;
-	पूर्णांक error, i;
+	unsigned int reg, val;
+	int error, i;
 
-	error = fwnode_property_पढ़ो_u32(ch_node, "reg", &reg);
-	अगर (error) अणु
+	error = fwnode_property_read_u32(ch_node, "reg", &reg);
+	if (error) {
 		dev_err(&client->dev, "Failed to read channel number: %d\n",
 			error);
-		वापस error;
-	पूर्ण अन्यथा अगर (reg >= IQS269_NUM_CH) अणु
+		return error;
+	} else if (reg >= IQS269_NUM_CH) {
 		dev_err(&client->dev, "Invalid channel number: %u\n", reg);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	iqs269->sys_reg.active |= BIT(reg);
-	अगर (!fwnode_property_present(ch_node, "azoteq,reseed-disable"))
+	if (!fwnode_property_present(ch_node, "azoteq,reseed-disable"))
 		iqs269->sys_reg.reseed |= BIT(reg);
 
-	अगर (fwnode_property_present(ch_node, "azoteq,blocking-enable"))
+	if (fwnode_property_present(ch_node, "azoteq,blocking-enable"))
 		iqs269->sys_reg.blocking |= BIT(reg);
 
-	अगर (fwnode_property_present(ch_node, "azoteq,slider0-select"))
+	if (fwnode_property_present(ch_node, "azoteq,slider0-select"))
 		iqs269->sys_reg.slider_select[0] |= BIT(reg);
 
-	अगर (fwnode_property_present(ch_node, "azoteq,slider1-select"))
+	if (fwnode_property_present(ch_node, "azoteq,slider1-select"))
 		iqs269->sys_reg.slider_select[1] |= BIT(reg);
 
 	ch_reg = &iqs269->ch_reg[reg];
 
-	error = regmap_raw_पढ़ो(iqs269->regmap,
-				IQS269_CHx_SETTINGS + reg * माप(*ch_reg) / 2,
-				ch_reg, माप(*ch_reg));
-	अगर (error)
-		वापस error;
+	error = regmap_raw_read(iqs269->regmap,
+				IQS269_CHx_SETTINGS + reg * sizeof(*ch_reg) / 2,
+				ch_reg, sizeof(*ch_reg));
+	if (error)
+		return error;
 
 	error = iqs269_parse_mask(ch_node, "azoteq,rx-enable",
 				  &ch_reg->rx_enable);
-	अगर (error) अणु
+	if (error) {
 		dev_err(&client->dev, "Invalid channel %u RX enable mask: %d\n",
 			reg, error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
 	error = iqs269_parse_mask(ch_node, "azoteq,tx-enable",
 				  &ch_reg->tx_enable);
-	अगर (error) अणु
+	if (error) {
 		dev_err(&client->dev, "Invalid channel %u TX enable mask: %d\n",
 			reg, error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
 	engine_a = be16_to_cpu(ch_reg->engine_a);
 	engine_b = be16_to_cpu(ch_reg->engine_b);
 
 	engine_a |= IQS269_CHx_ENG_A_MEAS_CAP_SIZE;
-	अगर (fwnode_property_present(ch_node, "azoteq,meas-cap-decrease"))
+	if (fwnode_property_present(ch_node, "azoteq,meas-cap-decrease"))
 		engine_a &= ~IQS269_CHx_ENG_A_MEAS_CAP_SIZE;
 
 	engine_a |= IQS269_CHx_ENG_A_RX_GND_INACTIVE;
-	अगर (fwnode_property_present(ch_node, "azoteq,rx-float-inactive"))
+	if (fwnode_property_present(ch_node, "azoteq,rx-float-inactive"))
 		engine_a &= ~IQS269_CHx_ENG_A_RX_GND_INACTIVE;
 
 	engine_a &= ~IQS269_CHx_ENG_A_LOCAL_CAP_SIZE;
 	engine_b &= ~IQS269_CHx_ENG_B_LOCAL_CAP_ENABLE;
-	अगर (!fwnode_property_पढ़ो_u32(ch_node, "azoteq,local-cap-size", &val)) अणु
-		चयन (val) अणु
-		हाल IQS269_LOCAL_CAP_SIZE_0:
-			अवरोध;
+	if (!fwnode_property_read_u32(ch_node, "azoteq,local-cap-size", &val)) {
+		switch (val) {
+		case IQS269_LOCAL_CAP_SIZE_0:
+			break;
 
-		हाल IQS269_LOCAL_CAP_SIZE_GLOBAL_0pF5:
+		case IQS269_LOCAL_CAP_SIZE_GLOBAL_0pF5:
 			engine_a |= IQS269_CHx_ENG_A_LOCAL_CAP_SIZE;
 			fallthrough;
 
-		हाल IQS269_LOCAL_CAP_SIZE_GLOBAL_ONLY:
+		case IQS269_LOCAL_CAP_SIZE_GLOBAL_ONLY:
 			engine_b |= IQS269_CHx_ENG_B_LOCAL_CAP_ENABLE;
-			अवरोध;
+			break;
 
-		शेष:
+		default:
 			dev_err(&client->dev,
 				"Invalid channel %u local cap. size: %u\n", reg,
 				val);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
 	engine_a &= ~IQS269_CHx_ENG_A_INV_LOGIC;
-	अगर (fwnode_property_present(ch_node, "azoteq,invert-enable"))
+	if (fwnode_property_present(ch_node, "azoteq,invert-enable"))
 		engine_a |= IQS269_CHx_ENG_A_INV_LOGIC;
 
-	अगर (!fwnode_property_पढ़ो_u32(ch_node, "azoteq,proj-bias", &val)) अणु
-		अगर (val > IQS269_CHx_ENG_A_PROJ_BIAS_MAX) अणु
+	if (!fwnode_property_read_u32(ch_node, "azoteq,proj-bias", &val)) {
+		if (val > IQS269_CHx_ENG_A_PROJ_BIAS_MAX) {
 			dev_err(&client->dev,
 				"Invalid channel %u bias current: %u\n", reg,
 				val);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		engine_a &= ~IQS269_CHx_ENG_A_PROJ_BIAS_MASK;
 		engine_a |= (val << IQS269_CHx_ENG_A_PROJ_BIAS_SHIFT);
-	पूर्ण
+	}
 
-	अगर (!fwnode_property_पढ़ो_u32(ch_node, "azoteq,sense-mode", &val)) अणु
-		अगर (val > IQS269_CHx_ENG_A_SENSE_MODE_MAX) अणु
+	if (!fwnode_property_read_u32(ch_node, "azoteq,sense-mode", &val)) {
+		if (val > IQS269_CHx_ENG_A_SENSE_MODE_MAX) {
 			dev_err(&client->dev,
 				"Invalid channel %u sensing mode: %u\n", reg,
 				val);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		engine_a &= ~IQS269_CHx_ENG_A_SENSE_MODE_MASK;
 		engine_a |= val;
-	पूर्ण
+	}
 
-	अगर (!fwnode_property_पढ़ो_u32(ch_node, "azoteq,sense-freq", &val)) अणु
-		अगर (val > IQS269_CHx_ENG_B_SENSE_FREQ_MAX) अणु
+	if (!fwnode_property_read_u32(ch_node, "azoteq,sense-freq", &val)) {
+		if (val > IQS269_CHx_ENG_B_SENSE_FREQ_MAX) {
 			dev_err(&client->dev,
 				"Invalid channel %u sensing frequency: %u\n",
 				reg, val);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		engine_b &= ~IQS269_CHx_ENG_B_SENSE_FREQ_MASK;
 		engine_b |= (val << IQS269_CHx_ENG_B_SENSE_FREQ_SHIFT);
-	पूर्ण
+	}
 
 	engine_b &= ~IQS269_CHx_ENG_B_STATIC_ENABLE;
-	अगर (fwnode_property_present(ch_node, "azoteq,static-enable"))
+	if (fwnode_property_present(ch_node, "azoteq,static-enable"))
 		engine_b |= IQS269_CHx_ENG_B_STATIC_ENABLE;
 
 	ch_reg->engine_a = cpu_to_be16(engine_a);
 	ch_reg->engine_b = cpu_to_be16(engine_b);
 
-	अगर (!fwnode_property_पढ़ो_u32(ch_node, "azoteq,ati-mode", &val)) अणु
+	if (!fwnode_property_read_u32(ch_node, "azoteq,ati-mode", &val)) {
 		error = iqs269_ati_mode_set(iqs269, reg, val);
-		अगर (error) अणु
+		if (error) {
 			dev_err(&client->dev,
 				"Invalid channel %u ATI mode: %u\n", reg, val);
-			वापस error;
-		पूर्ण
-	पूर्ण
+			return error;
+		}
+	}
 
-	अगर (!fwnode_property_पढ़ो_u32(ch_node, "azoteq,ati-base", &val)) अणु
+	if (!fwnode_property_read_u32(ch_node, "azoteq,ati-base", &val)) {
 		error = iqs269_ati_base_set(iqs269, reg, val);
-		अगर (error) अणु
+		if (error) {
 			dev_err(&client->dev,
 				"Invalid channel %u ATI base: %u\n", reg, val);
-			वापस error;
-		पूर्ण
-	पूर्ण
+			return error;
+		}
+	}
 
-	अगर (!fwnode_property_पढ़ो_u32(ch_node, "azoteq,ati-target", &val)) अणु
+	if (!fwnode_property_read_u32(ch_node, "azoteq,ati-target", &val)) {
 		error = iqs269_ati_target_set(iqs269, reg, val);
-		अगर (error) अणु
+		if (error) {
 			dev_err(&client->dev,
 				"Invalid channel %u ATI target: %u\n", reg,
 				val);
-			वापस error;
-		पूर्ण
-	पूर्ण
+			return error;
+		}
+	}
 
 	error = iqs269_parse_mask(ch_node, "azoteq,assoc-select",
 				  &ch_reg->assoc_select);
-	अगर (error) अणु
+	if (error) {
 		dev_err(&client->dev, "Invalid channel %u association: %d\n",
 			reg, error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	अगर (!fwnode_property_पढ़ो_u32(ch_node, "azoteq,assoc-weight", &val)) अणु
-		अगर (val > IQS269_CHx_WEIGHT_MAX) अणु
+	if (!fwnode_property_read_u32(ch_node, "azoteq,assoc-weight", &val)) {
+		if (val > IQS269_CHx_WEIGHT_MAX) {
 			dev_err(&client->dev,
 				"Invalid channel %u associated weight: %u\n",
 				reg, val);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		ch_reg->assoc_weight = val;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(iqs269_events); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(iqs269_events); i++) {
 		ev_node = fwnode_get_named_child_node(ch_node,
 						      iqs269_events[i].name);
-		अगर (!ev_node)
-			जारी;
+		if (!ev_node)
+			continue;
 
-		अगर (!fwnode_property_पढ़ो_u32(ev_node, "azoteq,thresh", &val)) अणु
-			अगर (val > IQS269_CHx_THRESH_MAX) अणु
+		if (!fwnode_property_read_u32(ev_node, "azoteq,thresh", &val)) {
+			if (val > IQS269_CHx_THRESH_MAX) {
 				dev_err(&client->dev,
 					"Invalid channel %u threshold: %u\n",
 					reg, val);
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 
 			ch_reg->thresh[iqs269_events[i].th_offs] = val;
-		पूर्ण
+		}
 
-		अगर (!fwnode_property_पढ़ो_u32(ev_node, "azoteq,hyst", &val)) अणु
+		if (!fwnode_property_read_u32(ev_node, "azoteq,hyst", &val)) {
 			u8 *hyst = &ch_reg->hyst;
 
-			अगर (val > IQS269_CHx_HYST_MAX) अणु
+			if (val > IQS269_CHx_HYST_MAX) {
 				dev_err(&client->dev,
 					"Invalid channel %u hysteresis: %u\n",
 					reg, val);
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 
-			अगर (i == IQS269_EVENT_DEEP_DN ||
-			    i == IQS269_EVENT_DEEP_UP) अणु
+			if (i == IQS269_EVENT_DEEP_DN ||
+			    i == IQS269_EVENT_DEEP_UP) {
 				*hyst &= ~IQS269_CHx_HYST_DEEP_MASK;
 				*hyst |= (val << IQS269_CHx_HYST_DEEP_SHIFT);
-			पूर्ण अन्यथा अगर (i == IQS269_EVENT_TOUCH_DN ||
-				   i == IQS269_EVENT_TOUCH_UP) अणु
+			} else if (i == IQS269_EVENT_TOUCH_DN ||
+				   i == IQS269_EVENT_TOUCH_UP) {
 				*hyst &= ~IQS269_CHx_HYST_TOUCH_MASK;
 				*hyst |= val;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अगर (fwnode_property_पढ़ो_u32(ev_node, "linux,code", &val))
-			जारी;
+		if (fwnode_property_read_u32(ev_node, "linux,code", &val))
+			continue;
 
-		चयन (reg) अणु
-		हाल IQS269_CHx_HALL_ACTIVE:
-			अगर (iqs269->hall_enable) अणु
-				iqs269->चयनes[i].code = val;
-				iqs269->चयनes[i].enabled = true;
-			पूर्ण
+		switch (reg) {
+		case IQS269_CHx_HALL_ACTIVE:
+			if (iqs269->hall_enable) {
+				iqs269->switches[i].code = val;
+				iqs269->switches[i].enabled = true;
+			}
 			fallthrough;
 
-		हाल IQS269_CHx_HALL_INACTIVE:
-			अगर (iqs269->hall_enable)
-				अवरोध;
+		case IQS269_CHx_HALL_INACTIVE:
+			if (iqs269->hall_enable)
+				break;
 			fallthrough;
 
-		शेष:
+		default:
 			iqs269->keycode[i * IQS269_NUM_CH + reg] = val;
-		पूर्ण
+		}
 
 		iqs269->sys_reg.event_mask &= ~iqs269_events[i].mask;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक iqs269_parse_prop(काष्ठा iqs269_निजी *iqs269)
-अणु
-	काष्ठा iqs269_sys_reg *sys_reg = &iqs269->sys_reg;
-	काष्ठा i2c_client *client = iqs269->client;
-	काष्ठा fwnode_handle *ch_node;
+static int iqs269_parse_prop(struct iqs269_private *iqs269)
+{
+	struct iqs269_sys_reg *sys_reg = &iqs269->sys_reg;
+	struct i2c_client *client = iqs269->client;
+	struct fwnode_handle *ch_node;
 	u16 general, misc_a, misc_b;
-	अचिन्हित पूर्णांक val;
-	पूर्णांक error;
+	unsigned int val;
+	int error;
 
 	iqs269->hall_enable = device_property_present(&client->dev,
 						      "azoteq,hall-enable");
 
-	अगर (!device_property_पढ़ो_u32(&client->dev, "azoteq,suspend-mode",
-				      &val)) अणु
-		अगर (val > IQS269_SYS_SETTINGS_PWR_MODE_MAX) अणु
+	if (!device_property_read_u32(&client->dev, "azoteq,suspend-mode",
+				      &val)) {
+		if (val > IQS269_SYS_SETTINGS_PWR_MODE_MAX) {
 			dev_err(&client->dev, "Invalid suspend mode: %u\n",
 				val);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		iqs269->suspend_mode = val;
-	पूर्ण
+	}
 
-	error = regmap_raw_पढ़ो(iqs269->regmap, IQS269_SYS_SETTINGS, sys_reg,
-				माप(*sys_reg));
-	अगर (error)
-		वापस error;
+	error = regmap_raw_read(iqs269->regmap, IQS269_SYS_SETTINGS, sys_reg,
+				sizeof(*sys_reg));
+	if (error)
+		return error;
 
-	अगर (!device_property_पढ़ो_u32(&client->dev, "azoteq,filt-str-lp-lta",
-				      &val)) अणु
-		अगर (val > IQS269_FILT_STR_MAX) अणु
+	if (!device_property_read_u32(&client->dev, "azoteq,filt-str-lp-lta",
+				      &val)) {
+		if (val > IQS269_FILT_STR_MAX) {
 			dev_err(&client->dev, "Invalid filter strength: %u\n",
 				val);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		sys_reg->filter &= ~IQS269_FILT_STR_LP_LTA_MASK;
 		sys_reg->filter |= (val << IQS269_FILT_STR_LP_LTA_SHIFT);
-	पूर्ण
+	}
 
-	अगर (!device_property_पढ़ो_u32(&client->dev, "azoteq,filt-str-lp-cnt",
-				      &val)) अणु
-		अगर (val > IQS269_FILT_STR_MAX) अणु
+	if (!device_property_read_u32(&client->dev, "azoteq,filt-str-lp-cnt",
+				      &val)) {
+		if (val > IQS269_FILT_STR_MAX) {
 			dev_err(&client->dev, "Invalid filter strength: %u\n",
 				val);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		sys_reg->filter &= ~IQS269_FILT_STR_LP_CNT_MASK;
 		sys_reg->filter |= (val << IQS269_FILT_STR_LP_CNT_SHIFT);
-	पूर्ण
+	}
 
-	अगर (!device_property_पढ़ो_u32(&client->dev, "azoteq,filt-str-np-lta",
-				      &val)) अणु
-		अगर (val > IQS269_FILT_STR_MAX) अणु
+	if (!device_property_read_u32(&client->dev, "azoteq,filt-str-np-lta",
+				      &val)) {
+		if (val > IQS269_FILT_STR_MAX) {
 			dev_err(&client->dev, "Invalid filter strength: %u\n",
 				val);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		sys_reg->filter &= ~IQS269_FILT_STR_NP_LTA_MASK;
 		sys_reg->filter |= (val << IQS269_FILT_STR_NP_LTA_SHIFT);
-	पूर्ण
+	}
 
-	अगर (!device_property_पढ़ो_u32(&client->dev, "azoteq,filt-str-np-cnt",
-				      &val)) अणु
-		अगर (val > IQS269_FILT_STR_MAX) अणु
+	if (!device_property_read_u32(&client->dev, "azoteq,filt-str-np-cnt",
+				      &val)) {
+		if (val > IQS269_FILT_STR_MAX) {
 			dev_err(&client->dev, "Invalid filter strength: %u\n",
 				val);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		sys_reg->filter &= ~IQS269_FILT_STR_NP_CNT_MASK;
 		sys_reg->filter |= val;
-	पूर्ण
+	}
 
-	अगर (!device_property_पढ़ो_u32(&client->dev, "azoteq,rate-np-ms",
-				      &val)) अणु
-		अगर (val > IQS269_RATE_NP_MS_MAX) अणु
+	if (!device_property_read_u32(&client->dev, "azoteq,rate-np-ms",
+				      &val)) {
+		if (val > IQS269_RATE_NP_MS_MAX) {
 			dev_err(&client->dev, "Invalid report rate: %u\n", val);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		sys_reg->rate_np = val;
-	पूर्ण
+	}
 
-	अगर (!device_property_पढ़ो_u32(&client->dev, "azoteq,rate-lp-ms",
-				      &val)) अणु
-		अगर (val > IQS269_RATE_LP_MS_MAX) अणु
+	if (!device_property_read_u32(&client->dev, "azoteq,rate-lp-ms",
+				      &val)) {
+		if (val > IQS269_RATE_LP_MS_MAX) {
 			dev_err(&client->dev, "Invalid report rate: %u\n", val);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		sys_reg->rate_lp = val;
-	पूर्ण
+	}
 
-	अगर (!device_property_पढ़ो_u32(&client->dev, "azoteq,rate-ulp-ms",
-				      &val)) अणु
-		अगर (val > IQS269_RATE_ULP_MS_MAX) अणु
+	if (!device_property_read_u32(&client->dev, "azoteq,rate-ulp-ms",
+				      &val)) {
+		if (val > IQS269_RATE_ULP_MS_MAX) {
 			dev_err(&client->dev, "Invalid report rate: %u\n", val);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		sys_reg->rate_ulp = val / 16;
-	पूर्ण
+	}
 
-	अगर (!device_property_पढ़ो_u32(&client->dev, "azoteq,timeout-pwr-ms",
-				      &val)) अणु
-		अगर (val > IQS269_TIMEOUT_PWR_MS_MAX) अणु
+	if (!device_property_read_u32(&client->dev, "azoteq,timeout-pwr-ms",
+				      &val)) {
+		if (val > IQS269_TIMEOUT_PWR_MS_MAX) {
 			dev_err(&client->dev, "Invalid timeout: %u\n", val);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		sys_reg->समयout_pwr = val / 512;
-	पूर्ण
+		sys_reg->timeout_pwr = val / 512;
+	}
 
-	अगर (!device_property_पढ़ो_u32(&client->dev, "azoteq,timeout-lta-ms",
-				      &val)) अणु
-		अगर (val > IQS269_TIMEOUT_LTA_MS_MAX) अणु
+	if (!device_property_read_u32(&client->dev, "azoteq,timeout-lta-ms",
+				      &val)) {
+		if (val > IQS269_TIMEOUT_LTA_MS_MAX) {
 			dev_err(&client->dev, "Invalid timeout: %u\n", val);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		sys_reg->समयout_lta = val / 512;
-	पूर्ण
+		sys_reg->timeout_lta = val / 512;
+	}
 
 	misc_a = be16_to_cpu(sys_reg->misc_a);
 	misc_b = be16_to_cpu(sys_reg->misc_b);
 
 	misc_a &= ~IQS269_MISC_A_ATI_BAND_DISABLE;
-	अगर (device_property_present(&client->dev, "azoteq,ati-band-disable"))
+	if (device_property_present(&client->dev, "azoteq,ati-band-disable"))
 		misc_a |= IQS269_MISC_A_ATI_BAND_DISABLE;
 
 	misc_a &= ~IQS269_MISC_A_ATI_LP_ONLY;
-	अगर (device_property_present(&client->dev, "azoteq,ati-lp-only"))
+	if (device_property_present(&client->dev, "azoteq,ati-lp-only"))
 		misc_a |= IQS269_MISC_A_ATI_LP_ONLY;
 
 	misc_a &= ~IQS269_MISC_A_ATI_BAND_TIGHTEN;
-	अगर (device_property_present(&client->dev, "azoteq,ati-band-tighten"))
+	if (device_property_present(&client->dev, "azoteq,ati-band-tighten"))
 		misc_a |= IQS269_MISC_A_ATI_BAND_TIGHTEN;
 
 	misc_a &= ~IQS269_MISC_A_FILT_DISABLE;
-	अगर (device_property_present(&client->dev, "azoteq,filt-disable"))
+	if (device_property_present(&client->dev, "azoteq,filt-disable"))
 		misc_a |= IQS269_MISC_A_FILT_DISABLE;
 
-	अगर (!device_property_पढ़ो_u32(&client->dev, "azoteq,gpio3-select",
-				      &val)) अणु
-		अगर (val >= IQS269_NUM_CH) अणु
+	if (!device_property_read_u32(&client->dev, "azoteq,gpio3-select",
+				      &val)) {
+		if (val >= IQS269_NUM_CH) {
 			dev_err(&client->dev, "Invalid GPIO3 selection: %u\n",
 				val);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		misc_a &= ~IQS269_MISC_A_GPIO3_SELECT_MASK;
 		misc_a |= (val << IQS269_MISC_A_GPIO3_SELECT_SHIFT);
-	पूर्ण
+	}
 
-	misc_a &= ~IQS269_MISC_A_DUAL_सूची;
-	अगर (device_property_present(&client->dev, "azoteq,dual-direction"))
-		misc_a |= IQS269_MISC_A_DUAL_सूची;
+	misc_a &= ~IQS269_MISC_A_DUAL_DIR;
+	if (device_property_present(&client->dev, "azoteq,dual-direction"))
+		misc_a |= IQS269_MISC_A_DUAL_DIR;
 
-	अगर (!device_property_पढ़ो_u32(&client->dev, "azoteq,tx-freq", &val)) अणु
-		अगर (val > IQS269_MISC_A_TX_FREQ_MAX) अणु
+	if (!device_property_read_u32(&client->dev, "azoteq,tx-freq", &val)) {
+		if (val > IQS269_MISC_A_TX_FREQ_MAX) {
 			dev_err(&client->dev,
 				"Invalid excitation frequency: %u\n", val);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		misc_a &= ~IQS269_MISC_A_TX_FREQ_MASK;
 		misc_a |= (val << IQS269_MISC_A_TX_FREQ_SHIFT);
-	पूर्ण
+	}
 
 	misc_a &= ~IQS269_MISC_A_GLOBAL_CAP_SIZE;
-	अगर (device_property_present(&client->dev, "azoteq,global-cap-increase"))
+	if (device_property_present(&client->dev, "azoteq,global-cap-increase"))
 		misc_a |= IQS269_MISC_A_GLOBAL_CAP_SIZE;
 
-	अगर (!device_property_पढ़ो_u32(&client->dev, "azoteq,reseed-select",
-				      &val)) अणु
-		अगर (val > IQS269_MISC_B_RESEED_UI_SEL_MAX) अणु
+	if (!device_property_read_u32(&client->dev, "azoteq,reseed-select",
+				      &val)) {
+		if (val > IQS269_MISC_B_RESEED_UI_SEL_MAX) {
 			dev_err(&client->dev, "Invalid reseed selection: %u\n",
 				val);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		misc_b &= ~IQS269_MISC_B_RESEED_UI_SEL_MASK;
 		misc_b |= (val << IQS269_MISC_B_RESEED_UI_SEL_SHIFT);
-	पूर्ण
+	}
 
 	misc_b &= ~IQS269_MISC_B_TRACKING_UI_ENABLE;
-	अगर (device_property_present(&client->dev, "azoteq,tracking-enable"))
+	if (device_property_present(&client->dev, "azoteq,tracking-enable"))
 		misc_b |= IQS269_MISC_B_TRACKING_UI_ENABLE;
 
-	अगर (!device_property_पढ़ो_u32(&client->dev, "azoteq,filt-str-slider",
-				      &val)) अणु
-		अगर (val > IQS269_FILT_STR_MAX) अणु
+	if (!device_property_read_u32(&client->dev, "azoteq,filt-str-slider",
+				      &val)) {
+		if (val > IQS269_FILT_STR_MAX) {
 			dev_err(&client->dev, "Invalid filter strength: %u\n",
 				val);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		misc_b &= ~IQS269_MISC_B_FILT_STR_SLIDER;
 		misc_b |= val;
-	पूर्ण
+	}
 
 	sys_reg->misc_a = cpu_to_be16(misc_a);
 	sys_reg->misc_b = cpu_to_be16(misc_b);
@@ -965,62 +964,62 @@
 
 	sys_reg->event_mask = ~((u8)IQS269_EVENT_MASK_SYS);
 
-	device_क्रम_each_child_node(&client->dev, ch_node) अणु
+	device_for_each_child_node(&client->dev, ch_node) {
 		error = iqs269_parse_chan(iqs269, ch_node);
-		अगर (error) अणु
+		if (error) {
 			fwnode_handle_put(ch_node);
-			वापस error;
-		पूर्ण
-	पूर्ण
+			return error;
+		}
+	}
 
 	/*
 	 * Volunteer all active channels to participate in ATI when REDO-ATI is
 	 * manually triggered.
 	 */
-	sys_reg->reकरो_ati = sys_reg->active;
+	sys_reg->redo_ati = sys_reg->active;
 
 	general = be16_to_cpu(sys_reg->general);
 
-	अगर (device_property_present(&client->dev, "azoteq,clk-div")) अणु
+	if (device_property_present(&client->dev, "azoteq,clk-div")) {
 		general |= IQS269_SYS_SETTINGS_CLK_DIV;
 		iqs269->delay_mult = 4;
-	पूर्ण अन्यथा अणु
+	} else {
 		general &= ~IQS269_SYS_SETTINGS_CLK_DIV;
 		iqs269->delay_mult = 1;
-	पूर्ण
+	}
 
 	/*
-	 * Configure the device to स्वतःmatically चयन between normal and low-
-	 * घातer modes as a function of sensing activity. Ultra-low-घातer mode,
-	 * अगर enabled, is reserved क्रम suspend.
+	 * Configure the device to automatically switch between normal and low-
+	 * power modes as a function of sensing activity. Ultra-low-power mode,
+	 * if enabled, is reserved for suspend.
 	 */
 	general &= ~IQS269_SYS_SETTINGS_ULP_AUTO;
 	general &= ~IQS269_SYS_SETTINGS_DIS_AUTO;
 	general &= ~IQS269_SYS_SETTINGS_PWR_MODE_MASK;
 
-	अगर (!device_property_पढ़ो_u32(&client->dev, "azoteq,ulp-update",
-				      &val)) अणु
-		अगर (val > IQS269_SYS_SETTINGS_ULP_UPDATE_MAX) अणु
+	if (!device_property_read_u32(&client->dev, "azoteq,ulp-update",
+				      &val)) {
+		if (val > IQS269_SYS_SETTINGS_ULP_UPDATE_MAX) {
 			dev_err(&client->dev, "Invalid update rate: %u\n", val);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		general &= ~IQS269_SYS_SETTINGS_ULP_UPDATE_MASK;
 		general |= (val << IQS269_SYS_SETTINGS_ULP_UPDATE_SHIFT);
-	पूर्ण
+	}
 
 	general &= ~IQS269_SYS_SETTINGS_RESEED_OFFSET;
-	अगर (device_property_present(&client->dev, "azoteq,reseed-offset"))
+	if (device_property_present(&client->dev, "azoteq,reseed-offset"))
 		general |= IQS269_SYS_SETTINGS_RESEED_OFFSET;
 
 	general |= IQS269_SYS_SETTINGS_EVENT_MODE;
 
 	/*
-	 * As per the datasheet, enable streaming during normal-घातer mode अगर
-	 * either slider is in use. In that हाल, the device वापसs to event
-	 * mode during low-घातer mode.
+	 * As per the datasheet, enable streaming during normal-power mode if
+	 * either slider is in use. In that case, the device returns to event
+	 * mode during low-power mode.
 	 */
-	अगर (sys_reg->slider_select[0] || sys_reg->slider_select[1])
+	if (sys_reg->slider_select[0] || sys_reg->slider_select[1])
 		general |= IQS269_SYS_SETTINGS_EVENT_MODE_LP;
 
 	general |= IQS269_SYS_SETTINGS_REDO_ATI;
@@ -1028,54 +1027,54 @@
 
 	sys_reg->general = cpu_to_be16(general);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक iqs269_dev_init(काष्ठा iqs269_निजी *iqs269)
-अणु
-	काष्ठा iqs269_sys_reg *sys_reg = &iqs269->sys_reg;
-	काष्ठा iqs269_ch_reg *ch_reg;
-	अचिन्हित पूर्णांक val;
-	पूर्णांक error, i;
+static int iqs269_dev_init(struct iqs269_private *iqs269)
+{
+	struct iqs269_sys_reg *sys_reg = &iqs269->sys_reg;
+	struct iqs269_ch_reg *ch_reg;
+	unsigned int val;
+	int error, i;
 
 	mutex_lock(&iqs269->lock);
 
 	error = regmap_update_bits(iqs269->regmap, IQS269_HALL_UI,
 				   IQS269_HALL_UI_ENABLE,
 				   iqs269->hall_enable ? ~0 : 0);
-	अगर (error)
-		जाओ err_mutex;
+	if (error)
+		goto err_mutex;
 
-	क्रम (i = 0; i < IQS269_NUM_CH; i++) अणु
-		अगर (!(sys_reg->active & BIT(i)))
-			जारी;
+	for (i = 0; i < IQS269_NUM_CH; i++) {
+		if (!(sys_reg->active & BIT(i)))
+			continue;
 
 		ch_reg = &iqs269->ch_reg[i];
 
-		error = regmap_raw_ग_लिखो(iqs269->regmap,
+		error = regmap_raw_write(iqs269->regmap,
 					 IQS269_CHx_SETTINGS + i *
-					 माप(*ch_reg) / 2, ch_reg,
-					 माप(*ch_reg));
-		अगर (error)
-			जाओ err_mutex;
-	पूर्ण
+					 sizeof(*ch_reg) / 2, ch_reg,
+					 sizeof(*ch_reg));
+		if (error)
+			goto err_mutex;
+	}
 
 	/*
 	 * The REDO-ATI and ATI channel selection fields must be written in the
-	 * same block ग_लिखो, so every field between रेजिस्टरs 0x80 through 0x8B
+	 * same block write, so every field between registers 0x80 through 0x8B
 	 * (inclusive) must be written as well.
 	 */
-	error = regmap_raw_ग_लिखो(iqs269->regmap, IQS269_SYS_SETTINGS, sys_reg,
-				 माप(*sys_reg));
-	अगर (error)
-		जाओ err_mutex;
+	error = regmap_raw_write(iqs269->regmap, IQS269_SYS_SETTINGS, sys_reg,
+				 sizeof(*sys_reg));
+	if (error)
+		goto err_mutex;
 
-	error = regmap_पढ़ो_poll_समयout(iqs269->regmap, IQS269_SYS_FLAGS, val,
+	error = regmap_read_poll_timeout(iqs269->regmap, IQS269_SYS_FLAGS, val,
 					!(val & IQS269_SYS_FLAGS_IN_ATI),
 					 IQS269_ATI_POLL_SLEEP_US,
 					 IQS269_ATI_POLL_TIMEOUT_US);
-	अगर (error)
-		जाओ err_mutex;
+	if (error)
+		goto err_mutex;
 
 	msleep(IQS269_ATI_STABLE_DELAY_MS);
 	iqs269->ati_current = true;
@@ -1083,315 +1082,315 @@
 err_mutex:
 	mutex_unlock(&iqs269->lock);
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक iqs269_input_init(काष्ठा iqs269_निजी *iqs269)
-अणु
-	काष्ठा i2c_client *client = iqs269->client;
-	काष्ठा iqs269_flags flags;
-	अचिन्हित पूर्णांक sw_code, keycode;
-	पूर्णांक error, i, j;
+static int iqs269_input_init(struct iqs269_private *iqs269)
+{
+	struct i2c_client *client = iqs269->client;
+	struct iqs269_flags flags;
+	unsigned int sw_code, keycode;
+	int error, i, j;
 	u8 dir_mask, state;
 
 	iqs269->keypad = devm_input_allocate_device(&client->dev);
-	अगर (!iqs269->keypad)
-		वापस -ENOMEM;
+	if (!iqs269->keypad)
+		return -ENOMEM;
 
 	iqs269->keypad->keycodemax = ARRAY_SIZE(iqs269->keycode);
 	iqs269->keypad->keycode = iqs269->keycode;
-	iqs269->keypad->keycodesize = माप(*iqs269->keycode);
+	iqs269->keypad->keycodesize = sizeof(*iqs269->keycode);
 
 	iqs269->keypad->name = "iqs269a_keypad";
 	iqs269->keypad->id.bustype = BUS_I2C;
 
-	अगर (iqs269->hall_enable) अणु
-		error = regmap_raw_पढ़ो(iqs269->regmap, IQS269_SYS_FLAGS,
-					&flags, माप(flags));
-		अगर (error) अणु
+	if (iqs269->hall_enable) {
+		error = regmap_raw_read(iqs269->regmap, IQS269_SYS_FLAGS,
+					&flags, sizeof(flags));
+		if (error) {
 			dev_err(&client->dev,
 				"Failed to read initial status: %d\n", error);
-			वापस error;
-		पूर्ण
-	पूर्ण
+			return error;
+		}
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(iqs269_events); i++) अणु
-		dir_mask = flags.states[IQS269_ST_OFFS_सूची];
-		अगर (!iqs269_events[i].dir_up)
+	for (i = 0; i < ARRAY_SIZE(iqs269_events); i++) {
+		dir_mask = flags.states[IQS269_ST_OFFS_DIR];
+		if (!iqs269_events[i].dir_up)
 			dir_mask = ~dir_mask;
 
 		state = flags.states[iqs269_events[i].st_offs] & dir_mask;
 
-		sw_code = iqs269->चयनes[i].code;
+		sw_code = iqs269->switches[i].code;
 
-		क्रम (j = 0; j < IQS269_NUM_CH; j++) अणु
+		for (j = 0; j < IQS269_NUM_CH; j++) {
 			keycode = iqs269->keycode[i * IQS269_NUM_CH + j];
 
 			/*
 			 * Hall-effect sensing repurposes a pair of dedicated
 			 * channels, only one of which reports events.
 			 */
-			चयन (j) अणु
-			हाल IQS269_CHx_HALL_ACTIVE:
-				अगर (iqs269->hall_enable &&
-				    iqs269->चयनes[i].enabled) अणु
+			switch (j) {
+			case IQS269_CHx_HALL_ACTIVE:
+				if (iqs269->hall_enable &&
+				    iqs269->switches[i].enabled) {
 					input_set_capability(iqs269->keypad,
 							     EV_SW, sw_code);
-					input_report_चयन(iqs269->keypad,
+					input_report_switch(iqs269->keypad,
 							    sw_code,
 							    state & BIT(j));
-				पूर्ण
+				}
 				fallthrough;
 
-			हाल IQS269_CHx_HALL_INACTIVE:
-				अगर (iqs269->hall_enable)
-					जारी;
+			case IQS269_CHx_HALL_INACTIVE:
+				if (iqs269->hall_enable)
+					continue;
 				fallthrough;
 
-			शेष:
-				अगर (keycode != KEY_RESERVED)
+			default:
+				if (keycode != KEY_RESERVED)
 					input_set_capability(iqs269->keypad,
 							     EV_KEY, keycode);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 	input_sync(iqs269->keypad);
 
-	error = input_रेजिस्टर_device(iqs269->keypad);
-	अगर (error) अणु
+	error = input_register_device(iqs269->keypad);
+	if (error) {
 		dev_err(&client->dev, "Failed to register keypad: %d\n", error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	क्रम (i = 0; i < IQS269_NUM_SL; i++) अणु
-		अगर (!iqs269->sys_reg.slider_select[i])
-			जारी;
+	for (i = 0; i < IQS269_NUM_SL; i++) {
+		if (!iqs269->sys_reg.slider_select[i])
+			continue;
 
 		iqs269->slider[i] = devm_input_allocate_device(&client->dev);
-		अगर (!iqs269->slider[i])
-			वापस -ENOMEM;
+		if (!iqs269->slider[i])
+			return -ENOMEM;
 
 		iqs269->slider[i]->name = i ? "iqs269a_slider_1"
 					    : "iqs269a_slider_0";
 		iqs269->slider[i]->id.bustype = BUS_I2C;
 
 		input_set_capability(iqs269->slider[i], EV_KEY, BTN_TOUCH);
-		input_set_असल_params(iqs269->slider[i], ABS_X, 0, 255, 0, 0);
+		input_set_abs_params(iqs269->slider[i], ABS_X, 0, 255, 0, 0);
 
-		error = input_रेजिस्टर_device(iqs269->slider[i]);
-		अगर (error) अणु
+		error = input_register_device(iqs269->slider[i]);
+		if (error) {
 			dev_err(&client->dev,
 				"Failed to register slider %d: %d\n", i, error);
-			वापस error;
-		पूर्ण
-	पूर्ण
+			return error;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक iqs269_report(काष्ठा iqs269_निजी *iqs269)
-अणु
-	काष्ठा i2c_client *client = iqs269->client;
-	काष्ठा iqs269_flags flags;
-	अचिन्हित पूर्णांक sw_code, keycode;
-	पूर्णांक error, i, j;
+static int iqs269_report(struct iqs269_private *iqs269)
+{
+	struct i2c_client *client = iqs269->client;
+	struct iqs269_flags flags;
+	unsigned int sw_code, keycode;
+	int error, i, j;
 	u8 slider_x[IQS269_NUM_SL];
 	u8 dir_mask, state;
 
-	error = regmap_raw_पढ़ो(iqs269->regmap, IQS269_SYS_FLAGS, &flags,
-				माप(flags));
-	अगर (error) अणु
+	error = regmap_raw_read(iqs269->regmap, IQS269_SYS_FLAGS, &flags,
+				sizeof(flags));
+	if (error) {
 		dev_err(&client->dev, "Failed to read device status: %d\n",
 			error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
 	/*
-	 * The device resets itself अगर its own watchकरोg bites, which can happen
-	 * in the event of an I2C communication error. In this हाल, the device
-	 * निश्चितs a SHOW_RESET पूर्णांकerrupt and all रेजिस्टरs must be restored.
+	 * The device resets itself if its own watchdog bites, which can happen
+	 * in the event of an I2C communication error. In this case, the device
+	 * asserts a SHOW_RESET interrupt and all registers must be restored.
 	 */
-	अगर (be16_to_cpu(flags.प्रणाली) & IQS269_SYS_FLAGS_SHOW_RESET) अणु
+	if (be16_to_cpu(flags.system) & IQS269_SYS_FLAGS_SHOW_RESET) {
 		dev_err(&client->dev, "Unexpected device reset\n");
 
 		error = iqs269_dev_init(iqs269);
-		अगर (error)
+		if (error)
 			dev_err(&client->dev,
 				"Failed to re-initialize device: %d\n", error);
 
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	error = regmap_raw_पढ़ो(iqs269->regmap, IQS269_SLIDER_X, slider_x,
-				माप(slider_x));
-	अगर (error) अणु
+	error = regmap_raw_read(iqs269->regmap, IQS269_SLIDER_X, slider_x,
+				sizeof(slider_x));
+	if (error) {
 		dev_err(&client->dev, "Failed to read slider position: %d\n",
 			error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	क्रम (i = 0; i < IQS269_NUM_SL; i++) अणु
-		अगर (!iqs269->sys_reg.slider_select[i])
-			जारी;
+	for (i = 0; i < IQS269_NUM_SL; i++) {
+		if (!iqs269->sys_reg.slider_select[i])
+			continue;
 
 		/*
-		 * Report BTN_TOUCH अगर any channel that participates in the
+		 * Report BTN_TOUCH if any channel that participates in the
 		 * slider is in a state of touch.
 		 */
-		अगर (flags.states[IQS269_ST_OFFS_TOUCH] &
-		    iqs269->sys_reg.slider_select[i]) अणु
+		if (flags.states[IQS269_ST_OFFS_TOUCH] &
+		    iqs269->sys_reg.slider_select[i]) {
 			input_report_key(iqs269->slider[i], BTN_TOUCH, 1);
-			input_report_असल(iqs269->slider[i], ABS_X, slider_x[i]);
-		पूर्ण अन्यथा अणु
+			input_report_abs(iqs269->slider[i], ABS_X, slider_x[i]);
+		} else {
 			input_report_key(iqs269->slider[i], BTN_TOUCH, 0);
-		पूर्ण
+		}
 
 		input_sync(iqs269->slider[i]);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(iqs269_events); i++) अणु
-		dir_mask = flags.states[IQS269_ST_OFFS_सूची];
-		अगर (!iqs269_events[i].dir_up)
+	for (i = 0; i < ARRAY_SIZE(iqs269_events); i++) {
+		dir_mask = flags.states[IQS269_ST_OFFS_DIR];
+		if (!iqs269_events[i].dir_up)
 			dir_mask = ~dir_mask;
 
 		state = flags.states[iqs269_events[i].st_offs] & dir_mask;
 
-		sw_code = iqs269->चयनes[i].code;
+		sw_code = iqs269->switches[i].code;
 
-		क्रम (j = 0; j < IQS269_NUM_CH; j++) अणु
+		for (j = 0; j < IQS269_NUM_CH; j++) {
 			keycode = iqs269->keycode[i * IQS269_NUM_CH + j];
 
-			चयन (j) अणु
-			हाल IQS269_CHx_HALL_ACTIVE:
-				अगर (iqs269->hall_enable &&
-				    iqs269->चयनes[i].enabled)
-					input_report_चयन(iqs269->keypad,
+			switch (j) {
+			case IQS269_CHx_HALL_ACTIVE:
+				if (iqs269->hall_enable &&
+				    iqs269->switches[i].enabled)
+					input_report_switch(iqs269->keypad,
 							    sw_code,
 							    state & BIT(j));
 				fallthrough;
 
-			हाल IQS269_CHx_HALL_INACTIVE:
-				अगर (iqs269->hall_enable)
-					जारी;
+			case IQS269_CHx_HALL_INACTIVE:
+				if (iqs269->hall_enable)
+					continue;
 				fallthrough;
 
-			शेष:
+			default:
 				input_report_key(iqs269->keypad, keycode,
 						 state & BIT(j));
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 	input_sync(iqs269->keypad);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल irqवापस_t iqs269_irq(पूर्णांक irq, व्योम *context)
-अणु
-	काष्ठा iqs269_निजी *iqs269 = context;
+static irqreturn_t iqs269_irq(int irq, void *context)
+{
+	struct iqs269_private *iqs269 = context;
 
-	अगर (iqs269_report(iqs269))
-		वापस IRQ_NONE;
+	if (iqs269_report(iqs269))
+		return IRQ_NONE;
 
 	/*
-	 * The device करोes not deनिश्चित its पूर्णांकerrupt (RDY) pin until लघुly
+	 * The device does not deassert its interrupt (RDY) pin until shortly
 	 * after receiving an I2C stop condition; the following delay ensures
-	 * the पूर्णांकerrupt handler करोes not वापस beक्रमe this समय.
+	 * the interrupt handler does not return before this time.
 	 */
-	iqs269_irq_रुको();
+	iqs269_irq_wait();
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल sमाप_प्रकार counts_show(काष्ठा device *dev,
-			   काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा iqs269_निजी *iqs269 = dev_get_drvdata(dev);
-	काष्ठा i2c_client *client = iqs269->client;
+static ssize_t counts_show(struct device *dev,
+			   struct device_attribute *attr, char *buf)
+{
+	struct iqs269_private *iqs269 = dev_get_drvdata(dev);
+	struct i2c_client *client = iqs269->client;
 	__le16 counts;
-	पूर्णांक error;
+	int error;
 
-	अगर (!iqs269->ati_current || iqs269->hall_enable)
-		वापस -EPERM;
+	if (!iqs269->ati_current || iqs269->hall_enable)
+		return -EPERM;
 
 	/*
-	 * Unsolicited I2C communication prompts the device to निश्चित its RDY
-	 * pin, so disable the पूर्णांकerrupt line until the operation is finished
-	 * and RDY has been deनिश्चितed.
+	 * Unsolicited I2C communication prompts the device to assert its RDY
+	 * pin, so disable the interrupt line until the operation is finished
+	 * and RDY has been deasserted.
 	 */
 	disable_irq(client->irq);
 
-	error = regmap_raw_पढ़ो(iqs269->regmap,
+	error = regmap_raw_read(iqs269->regmap,
 				IQS269_CHx_COUNTS + iqs269->ch_num * 2,
-				&counts, माप(counts));
+				&counts, sizeof(counts));
 
-	iqs269_irq_रुको();
+	iqs269_irq_wait();
 	enable_irq(client->irq);
 
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%u\n", le16_to_cpu(counts));
-पूर्ण
+	return scnprintf(buf, PAGE_SIZE, "%u\n", le16_to_cpu(counts));
+}
 
-अटल sमाप_प्रकार hall_bin_show(काष्ठा device *dev,
-			     काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा iqs269_निजी *iqs269 = dev_get_drvdata(dev);
-	काष्ठा i2c_client *client = iqs269->client;
-	अचिन्हित पूर्णांक val;
-	पूर्णांक error;
+static ssize_t hall_bin_show(struct device *dev,
+			     struct device_attribute *attr, char *buf)
+{
+	struct iqs269_private *iqs269 = dev_get_drvdata(dev);
+	struct i2c_client *client = iqs269->client;
+	unsigned int val;
+	int error;
 
 	disable_irq(client->irq);
 
-	error = regmap_पढ़ो(iqs269->regmap, IQS269_CAL_DATA_A, &val);
+	error = regmap_read(iqs269->regmap, IQS269_CAL_DATA_A, &val);
 
-	iqs269_irq_रुको();
+	iqs269_irq_wait();
 	enable_irq(client->irq);
 
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	चयन (iqs269->ch_reg[IQS269_CHx_HALL_ACTIVE].rx_enable &
-		iqs269->ch_reg[IQS269_CHx_HALL_INACTIVE].rx_enable) अणु
-	हाल IQS269_HALL_PAD_R:
+	switch (iqs269->ch_reg[IQS269_CHx_HALL_ACTIVE].rx_enable &
+		iqs269->ch_reg[IQS269_CHx_HALL_INACTIVE].rx_enable) {
+	case IQS269_HALL_PAD_R:
 		val &= IQS269_CAL_DATA_A_HALL_BIN_R_MASK;
 		val >>= IQS269_CAL_DATA_A_HALL_BIN_R_SHIFT;
-		अवरोध;
+		break;
 
-	हाल IQS269_HALL_PAD_L:
+	case IQS269_HALL_PAD_L:
 		val &= IQS269_CAL_DATA_A_HALL_BIN_L_MASK;
 		val >>= IQS269_CAL_DATA_A_HALL_BIN_L_SHIFT;
-		अवरोध;
+		break;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		return -EINVAL;
+	}
 
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%u\n", val);
-पूर्ण
+	return scnprintf(buf, PAGE_SIZE, "%u\n", val);
+}
 
-अटल sमाप_प्रकार hall_enable_show(काष्ठा device *dev,
-				काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा iqs269_निजी *iqs269 = dev_get_drvdata(dev);
+static ssize_t hall_enable_show(struct device *dev,
+				struct device_attribute *attr, char *buf)
+{
+	struct iqs269_private *iqs269 = dev_get_drvdata(dev);
 
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%u\n", iqs269->hall_enable);
-पूर्ण
+	return scnprintf(buf, PAGE_SIZE, "%u\n", iqs269->hall_enable);
+}
 
-अटल sमाप_प्रकार hall_enable_store(काष्ठा device *dev,
-				 काष्ठा device_attribute *attr, स्थिर अक्षर *buf,
-				 माप_प्रकार count)
-अणु
-	काष्ठा iqs269_निजी *iqs269 = dev_get_drvdata(dev);
-	अचिन्हित पूर्णांक val;
-	पूर्णांक error;
+static ssize_t hall_enable_store(struct device *dev,
+				 struct device_attribute *attr, const char *buf,
+				 size_t count)
+{
+	struct iqs269_private *iqs269 = dev_get_drvdata(dev);
+	unsigned int val;
+	int error;
 
-	error = kstrtouपूर्णांक(buf, 10, &val);
-	अगर (error)
-		वापस error;
+	error = kstrtouint(buf, 10, &val);
+	if (error)
+		return error;
 
 	mutex_lock(&iqs269->lock);
 
@@ -1400,60 +1399,60 @@ err_mutex:
 
 	mutex_unlock(&iqs269->lock);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार ch_number_show(काष्ठा device *dev,
-			      काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा iqs269_निजी *iqs269 = dev_get_drvdata(dev);
+static ssize_t ch_number_show(struct device *dev,
+			      struct device_attribute *attr, char *buf)
+{
+	struct iqs269_private *iqs269 = dev_get_drvdata(dev);
 
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%u\n", iqs269->ch_num);
-पूर्ण
+	return scnprintf(buf, PAGE_SIZE, "%u\n", iqs269->ch_num);
+}
 
-अटल sमाप_प्रकार ch_number_store(काष्ठा device *dev,
-			       काष्ठा device_attribute *attr, स्थिर अक्षर *buf,
-			       माप_प्रकार count)
-अणु
-	काष्ठा iqs269_निजी *iqs269 = dev_get_drvdata(dev);
-	अचिन्हित पूर्णांक val;
-	पूर्णांक error;
+static ssize_t ch_number_store(struct device *dev,
+			       struct device_attribute *attr, const char *buf,
+			       size_t count)
+{
+	struct iqs269_private *iqs269 = dev_get_drvdata(dev);
+	unsigned int val;
+	int error;
 
-	error = kstrtouपूर्णांक(buf, 10, &val);
-	अगर (error)
-		वापस error;
+	error = kstrtouint(buf, 10, &val);
+	if (error)
+		return error;
 
-	अगर (val >= IQS269_NUM_CH)
-		वापस -EINVAL;
+	if (val >= IQS269_NUM_CH)
+		return -EINVAL;
 
 	iqs269->ch_num = val;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार rx_enable_show(काष्ठा device *dev,
-			      काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा iqs269_निजी *iqs269 = dev_get_drvdata(dev);
+static ssize_t rx_enable_show(struct device *dev,
+			      struct device_attribute *attr, char *buf)
+{
+	struct iqs269_private *iqs269 = dev_get_drvdata(dev);
 
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%u\n",
+	return scnprintf(buf, PAGE_SIZE, "%u\n",
 			 iqs269->ch_reg[iqs269->ch_num].rx_enable);
-पूर्ण
+}
 
-अटल sमाप_प्रकार rx_enable_store(काष्ठा device *dev,
-			       काष्ठा device_attribute *attr, स्थिर अक्षर *buf,
-			       माप_प्रकार count)
-अणु
-	काष्ठा iqs269_निजी *iqs269 = dev_get_drvdata(dev);
-	अचिन्हित पूर्णांक val;
-	पूर्णांक error;
+static ssize_t rx_enable_store(struct device *dev,
+			       struct device_attribute *attr, const char *buf,
+			       size_t count)
+{
+	struct iqs269_private *iqs269 = dev_get_drvdata(dev);
+	unsigned int val;
+	int error;
 
-	error = kstrtouपूर्णांक(buf, 10, &val);
-	अगर (error)
-		वापस error;
+	error = kstrtouint(buf, 10, &val);
+	if (error)
+		return error;
 
-	अगर (val > 0xFF)
-		वापस -EINVAL;
+	if (val > 0xFF)
+		return -EINVAL;
 
 	mutex_lock(&iqs269->lock);
 
@@ -1462,156 +1461,156 @@ err_mutex:
 
 	mutex_unlock(&iqs269->lock);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार ati_mode_show(काष्ठा device *dev,
-			     काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा iqs269_निजी *iqs269 = dev_get_drvdata(dev);
-	अचिन्हित पूर्णांक val;
-	पूर्णांक error;
+static ssize_t ati_mode_show(struct device *dev,
+			     struct device_attribute *attr, char *buf)
+{
+	struct iqs269_private *iqs269 = dev_get_drvdata(dev);
+	unsigned int val;
+	int error;
 
 	error = iqs269_ati_mode_get(iqs269, iqs269->ch_num, &val);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%u\n", val);
-पूर्ण
+	return scnprintf(buf, PAGE_SIZE, "%u\n", val);
+}
 
-अटल sमाप_प्रकार ati_mode_store(काष्ठा device *dev,
-			      काष्ठा device_attribute *attr, स्थिर अक्षर *buf,
-			      माप_प्रकार count)
-अणु
-	काष्ठा iqs269_निजी *iqs269 = dev_get_drvdata(dev);
-	अचिन्हित पूर्णांक val;
-	पूर्णांक error;
+static ssize_t ati_mode_store(struct device *dev,
+			      struct device_attribute *attr, const char *buf,
+			      size_t count)
+{
+	struct iqs269_private *iqs269 = dev_get_drvdata(dev);
+	unsigned int val;
+	int error;
 
-	error = kstrtouपूर्णांक(buf, 10, &val);
-	अगर (error)
-		वापस error;
+	error = kstrtouint(buf, 10, &val);
+	if (error)
+		return error;
 
 	error = iqs269_ati_mode_set(iqs269, iqs269->ch_num, val);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार ati_base_show(काष्ठा device *dev,
-			     काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा iqs269_निजी *iqs269 = dev_get_drvdata(dev);
-	अचिन्हित पूर्णांक val;
-	पूर्णांक error;
+static ssize_t ati_base_show(struct device *dev,
+			     struct device_attribute *attr, char *buf)
+{
+	struct iqs269_private *iqs269 = dev_get_drvdata(dev);
+	unsigned int val;
+	int error;
 
 	error = iqs269_ati_base_get(iqs269, iqs269->ch_num, &val);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%u\n", val);
-पूर्ण
+	return scnprintf(buf, PAGE_SIZE, "%u\n", val);
+}
 
-अटल sमाप_प्रकार ati_base_store(काष्ठा device *dev,
-			      काष्ठा device_attribute *attr, स्थिर अक्षर *buf,
-			      माप_प्रकार count)
-अणु
-	काष्ठा iqs269_निजी *iqs269 = dev_get_drvdata(dev);
-	अचिन्हित पूर्णांक val;
-	पूर्णांक error;
+static ssize_t ati_base_store(struct device *dev,
+			      struct device_attribute *attr, const char *buf,
+			      size_t count)
+{
+	struct iqs269_private *iqs269 = dev_get_drvdata(dev);
+	unsigned int val;
+	int error;
 
-	error = kstrtouपूर्णांक(buf, 10, &val);
-	अगर (error)
-		वापस error;
+	error = kstrtouint(buf, 10, &val);
+	if (error)
+		return error;
 
 	error = iqs269_ati_base_set(iqs269, iqs269->ch_num, val);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार ati_target_show(काष्ठा device *dev,
-			       काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा iqs269_निजी *iqs269 = dev_get_drvdata(dev);
-	अचिन्हित पूर्णांक val;
-	पूर्णांक error;
+static ssize_t ati_target_show(struct device *dev,
+			       struct device_attribute *attr, char *buf)
+{
+	struct iqs269_private *iqs269 = dev_get_drvdata(dev);
+	unsigned int val;
+	int error;
 
 	error = iqs269_ati_target_get(iqs269, iqs269->ch_num, &val);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%u\n", val);
-पूर्ण
+	return scnprintf(buf, PAGE_SIZE, "%u\n", val);
+}
 
-अटल sमाप_प्रकार ati_target_store(काष्ठा device *dev,
-				काष्ठा device_attribute *attr, स्थिर अक्षर *buf,
-				माप_प्रकार count)
-अणु
-	काष्ठा iqs269_निजी *iqs269 = dev_get_drvdata(dev);
-	अचिन्हित पूर्णांक val;
-	पूर्णांक error;
+static ssize_t ati_target_store(struct device *dev,
+				struct device_attribute *attr, const char *buf,
+				size_t count)
+{
+	struct iqs269_private *iqs269 = dev_get_drvdata(dev);
+	unsigned int val;
+	int error;
 
-	error = kstrtouपूर्णांक(buf, 10, &val);
-	अगर (error)
-		वापस error;
+	error = kstrtouint(buf, 10, &val);
+	if (error)
+		return error;
 
 	error = iqs269_ati_target_set(iqs269, iqs269->ch_num, val);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार ati_trigger_show(काष्ठा device *dev,
-				काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा iqs269_निजी *iqs269 = dev_get_drvdata(dev);
+static ssize_t ati_trigger_show(struct device *dev,
+				struct device_attribute *attr, char *buf)
+{
+	struct iqs269_private *iqs269 = dev_get_drvdata(dev);
 
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%u\n", iqs269->ati_current);
-पूर्ण
+	return scnprintf(buf, PAGE_SIZE, "%u\n", iqs269->ati_current);
+}
 
-अटल sमाप_प्रकार ati_trigger_store(काष्ठा device *dev,
-				 काष्ठा device_attribute *attr, स्थिर अक्षर *buf,
-				 माप_प्रकार count)
-अणु
-	काष्ठा iqs269_निजी *iqs269 = dev_get_drvdata(dev);
-	काष्ठा i2c_client *client = iqs269->client;
-	अचिन्हित पूर्णांक val;
-	पूर्णांक error;
+static ssize_t ati_trigger_store(struct device *dev,
+				 struct device_attribute *attr, const char *buf,
+				 size_t count)
+{
+	struct iqs269_private *iqs269 = dev_get_drvdata(dev);
+	struct i2c_client *client = iqs269->client;
+	unsigned int val;
+	int error;
 
-	error = kstrtouपूर्णांक(buf, 10, &val);
-	अगर (error)
-		वापस error;
+	error = kstrtouint(buf, 10, &val);
+	if (error)
+		return error;
 
-	अगर (!val)
-		वापस count;
+	if (!val)
+		return count;
 
 	disable_irq(client->irq);
 
 	error = iqs269_dev_init(iqs269);
 
-	iqs269_irq_रुको();
+	iqs269_irq_wait();
 	enable_irq(client->irq);
 
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल DEVICE_ATTR_RO(counts);
-अटल DEVICE_ATTR_RO(hall_bin);
-अटल DEVICE_ATTR_RW(hall_enable);
-अटल DEVICE_ATTR_RW(ch_number);
-अटल DEVICE_ATTR_RW(rx_enable);
-अटल DEVICE_ATTR_RW(ati_mode);
-अटल DEVICE_ATTR_RW(ati_base);
-अटल DEVICE_ATTR_RW(ati_target);
-अटल DEVICE_ATTR_RW(ati_trigger);
+static DEVICE_ATTR_RO(counts);
+static DEVICE_ATTR_RO(hall_bin);
+static DEVICE_ATTR_RW(hall_enable);
+static DEVICE_ATTR_RW(ch_number);
+static DEVICE_ATTR_RW(rx_enable);
+static DEVICE_ATTR_RW(ati_mode);
+static DEVICE_ATTR_RW(ati_base);
+static DEVICE_ATTR_RW(ati_target);
+static DEVICE_ATTR_RW(ati_trigger);
 
-अटल काष्ठा attribute *iqs269_attrs[] = अणु
+static struct attribute *iqs269_attrs[] = {
 	&dev_attr_counts.attr,
 	&dev_attr_hall_bin.attr,
 	&dev_attr_hall_enable.attr,
@@ -1621,129 +1620,129 @@ err_mutex:
 	&dev_attr_ati_base.attr,
 	&dev_attr_ati_target.attr,
 	&dev_attr_ati_trigger.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group iqs269_attr_group = अणु
+static const struct attribute_group iqs269_attr_group = {
 	.attrs = iqs269_attrs,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा regmap_config iqs269_regmap_config = अणु
+static const struct regmap_config iqs269_regmap_config = {
 	.reg_bits = 8,
 	.val_bits = 16,
-	.max_रेजिस्टर = IQS269_MAX_REG,
-पूर्ण;
+	.max_register = IQS269_MAX_REG,
+};
 
-अटल पूर्णांक iqs269_probe(काष्ठा i2c_client *client)
-अणु
-	काष्ठा iqs269_ver_info ver_info;
-	काष्ठा iqs269_निजी *iqs269;
-	पूर्णांक error;
+static int iqs269_probe(struct i2c_client *client)
+{
+	struct iqs269_ver_info ver_info;
+	struct iqs269_private *iqs269;
+	int error;
 
-	iqs269 = devm_kzalloc(&client->dev, माप(*iqs269), GFP_KERNEL);
-	अगर (!iqs269)
-		वापस -ENOMEM;
+	iqs269 = devm_kzalloc(&client->dev, sizeof(*iqs269), GFP_KERNEL);
+	if (!iqs269)
+		return -ENOMEM;
 
 	i2c_set_clientdata(client, iqs269);
 	iqs269->client = client;
 
 	iqs269->regmap = devm_regmap_init_i2c(client, &iqs269_regmap_config);
-	अगर (IS_ERR(iqs269->regmap)) अणु
+	if (IS_ERR(iqs269->regmap)) {
 		error = PTR_ERR(iqs269->regmap);
 		dev_err(&client->dev, "Failed to initialize register map: %d\n",
 			error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
 	mutex_init(&iqs269->lock);
 
-	error = regmap_raw_पढ़ो(iqs269->regmap, IQS269_VER_INFO, &ver_info,
-				माप(ver_info));
-	अगर (error)
-		वापस error;
+	error = regmap_raw_read(iqs269->regmap, IQS269_VER_INFO, &ver_info,
+				sizeof(ver_info));
+	if (error)
+		return error;
 
-	अगर (ver_info.prod_num != IQS269_VER_INFO_PROD_NUM) अणु
+	if (ver_info.prod_num != IQS269_VER_INFO_PROD_NUM) {
 		dev_err(&client->dev, "Unrecognized product number: 0x%02X\n",
 			ver_info.prod_num);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	error = iqs269_parse_prop(iqs269);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	error = iqs269_dev_init(iqs269);
-	अगर (error) अणु
+	if (error) {
 		dev_err(&client->dev, "Failed to initialize device: %d\n",
 			error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
 	error = iqs269_input_init(iqs269);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	error = devm_request_thपढ़ोed_irq(&client->dev, client->irq,
-					  शून्य, iqs269_irq, IRQF_ONESHOT,
+	error = devm_request_threaded_irq(&client->dev, client->irq,
+					  NULL, iqs269_irq, IRQF_ONESHOT,
 					  client->name, iqs269);
-	अगर (error) अणु
+	if (error) {
 		dev_err(&client->dev, "Failed to request IRQ: %d\n", error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
 	error = devm_device_add_group(&client->dev, &iqs269_attr_group);
-	अगर (error)
+	if (error)
 		dev_err(&client->dev, "Failed to add attributes: %d\n", error);
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक __maybe_unused iqs269_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा iqs269_निजी *iqs269 = dev_get_drvdata(dev);
-	काष्ठा i2c_client *client = iqs269->client;
-	अचिन्हित पूर्णांक val;
-	पूर्णांक error;
+static int __maybe_unused iqs269_suspend(struct device *dev)
+{
+	struct iqs269_private *iqs269 = dev_get_drvdata(dev);
+	struct i2c_client *client = iqs269->client;
+	unsigned int val;
+	int error;
 
-	अगर (!iqs269->suspend_mode)
-		वापस 0;
+	if (!iqs269->suspend_mode)
+		return 0;
 
 	disable_irq(client->irq);
 
 	/*
-	 * Automatic घातer mode चयनing must be disabled beक्रमe the device is
-	 * क्रमced पूर्णांकo any particular घातer mode. In this हाल, the device will
-	 * transition पूर्णांकo normal-घातer mode.
+	 * Automatic power mode switching must be disabled before the device is
+	 * forced into any particular power mode. In this case, the device will
+	 * transition into normal-power mode.
 	 */
 	error = regmap_update_bits(iqs269->regmap, IQS269_SYS_SETTINGS,
 				   IQS269_SYS_SETTINGS_DIS_AUTO, ~0);
-	अगर (error)
-		जाओ err_irq;
+	if (error)
+		goto err_irq;
 
 	/*
 	 * The following check ensures the device has completed its transition
-	 * पूर्णांकo normal-घातer mode beक्रमe a manual mode चयन is perक्रमmed.
+	 * into normal-power mode before a manual mode switch is performed.
 	 */
-	error = regmap_पढ़ो_poll_समयout(iqs269->regmap, IQS269_SYS_FLAGS, val,
+	error = regmap_read_poll_timeout(iqs269->regmap, IQS269_SYS_FLAGS, val,
 					!(val & IQS269_SYS_FLAGS_PWR_MODE_MASK),
 					 IQS269_PWR_MODE_POLL_SLEEP_US,
 					 IQS269_PWR_MODE_POLL_TIMEOUT_US);
-	अगर (error)
-		जाओ err_irq;
+	if (error)
+		goto err_irq;
 
 	error = regmap_update_bits(iqs269->regmap, IQS269_SYS_SETTINGS,
 				   IQS269_SYS_SETTINGS_PWR_MODE_MASK,
 				   iqs269->suspend_mode <<
 				   IQS269_SYS_SETTINGS_PWR_MODE_SHIFT);
-	अगर (error)
-		जाओ err_irq;
+	if (error)
+		goto err_irq;
 
 	/*
-	 * This last check ensures the device has completed its transition पूर्णांकo
-	 * the desired घातer mode to prevent any spurious पूर्णांकerrupts from being
-	 * triggered after iqs269_suspend has alपढ़ोy वापसed.
+	 * This last check ensures the device has completed its transition into
+	 * the desired power mode to prevent any spurious interrupts from being
+	 * triggered after iqs269_suspend has already returned.
 	 */
-	error = regmap_पढ़ो_poll_समयout(iqs269->regmap, IQS269_SYS_FLAGS, val,
+	error = regmap_read_poll_timeout(iqs269->regmap, IQS269_SYS_FLAGS, val,
 					 (val & IQS269_SYS_FLAGS_PWR_MODE_MASK)
 					 == (iqs269->suspend_mode <<
 					     IQS269_SYS_FLAGS_PWR_MODE_SHIFT),
@@ -1751,75 +1750,75 @@ err_mutex:
 					 IQS269_PWR_MODE_POLL_TIMEOUT_US);
 
 err_irq:
-	iqs269_irq_रुको();
+	iqs269_irq_wait();
 	enable_irq(client->irq);
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक __maybe_unused iqs269_resume(काष्ठा device *dev)
-अणु
-	काष्ठा iqs269_निजी *iqs269 = dev_get_drvdata(dev);
-	काष्ठा i2c_client *client = iqs269->client;
-	अचिन्हित पूर्णांक val;
-	पूर्णांक error;
+static int __maybe_unused iqs269_resume(struct device *dev)
+{
+	struct iqs269_private *iqs269 = dev_get_drvdata(dev);
+	struct i2c_client *client = iqs269->client;
+	unsigned int val;
+	int error;
 
-	अगर (!iqs269->suspend_mode)
-		वापस 0;
+	if (!iqs269->suspend_mode)
+		return 0;
 
 	disable_irq(client->irq);
 
 	error = regmap_update_bits(iqs269->regmap, IQS269_SYS_SETTINGS,
 				   IQS269_SYS_SETTINGS_PWR_MODE_MASK, 0);
-	अगर (error)
-		जाओ err_irq;
+	if (error)
+		goto err_irq;
 
 	/*
-	 * This check ensures the device has वापसed to normal-घातer mode
-	 * beक्रमe स्वतःmatic घातer mode चयनing is re-enabled.
+	 * This check ensures the device has returned to normal-power mode
+	 * before automatic power mode switching is re-enabled.
 	 */
-	error = regmap_पढ़ो_poll_समयout(iqs269->regmap, IQS269_SYS_FLAGS, val,
+	error = regmap_read_poll_timeout(iqs269->regmap, IQS269_SYS_FLAGS, val,
 					!(val & IQS269_SYS_FLAGS_PWR_MODE_MASK),
 					 IQS269_PWR_MODE_POLL_SLEEP_US,
 					 IQS269_PWR_MODE_POLL_TIMEOUT_US);
-	अगर (error)
-		जाओ err_irq;
+	if (error)
+		goto err_irq;
 
 	error = regmap_update_bits(iqs269->regmap, IQS269_SYS_SETTINGS,
 				   IQS269_SYS_SETTINGS_DIS_AUTO, 0);
-	अगर (error)
-		जाओ err_irq;
+	if (error)
+		goto err_irq;
 
 	/*
 	 * This step reports any events that may have been "swallowed" as a
-	 * result of polling PWR_MODE (which स्वतःmatically acknowledges any
-	 * pending पूर्णांकerrupts).
+	 * result of polling PWR_MODE (which automatically acknowledges any
+	 * pending interrupts).
 	 */
 	error = iqs269_report(iqs269);
 
 err_irq:
-	iqs269_irq_रुको();
+	iqs269_irq_wait();
 	enable_irq(client->irq);
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल SIMPLE_DEV_PM_OPS(iqs269_pm, iqs269_suspend, iqs269_resume);
+static SIMPLE_DEV_PM_OPS(iqs269_pm, iqs269_suspend, iqs269_resume);
 
-अटल स्थिर काष्ठा of_device_id iqs269_of_match[] = अणु
-	अणु .compatible = "azoteq,iqs269a" पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id iqs269_of_match[] = {
+	{ .compatible = "azoteq,iqs269a" },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, iqs269_of_match);
 
-अटल काष्ठा i2c_driver iqs269_i2c_driver = अणु
-	.driver = अणु
+static struct i2c_driver iqs269_i2c_driver = {
+	.driver = {
 		.name = "iqs269a",
 		.of_match_table = iqs269_of_match,
 		.pm = &iqs269_pm,
-	पूर्ण,
+	},
 	.probe_new = iqs269_probe,
-पूर्ण;
+};
 module_i2c_driver(iqs269_i2c_driver);
 
 MODULE_AUTHOR("Jeff LaBundy <jeff@labundy.com>");

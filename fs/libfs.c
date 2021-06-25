@@ -1,167 +1,166 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *	fs/libfs.c
- *	Library क्रम fileप्रणालीs ग_लिखोrs.
+ *	Library for filesystems writers.
  */
 
-#समावेश <linux/blkdev.h>
-#समावेश <linux/export.h>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/cred.h>
-#समावेश <linux/mount.h>
-#समावेश <linux/vfs.h>
-#समावेश <linux/quotaops.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/namei.h>
-#समावेश <linux/exportfs.h>
-#समावेश <linux/ग_लिखोback.h>
-#समावेश <linux/buffer_head.h> /* sync_mapping_buffers */
-#समावेश <linux/fs_context.h>
-#समावेश <linux/pseuकरो_fs.h>
-#समावेश <linux/fsnotअगरy.h>
-#समावेश <linux/unicode.h>
-#समावेश <linux/fscrypt.h>
+#include <linux/blkdev.h>
+#include <linux/export.h>
+#include <linux/pagemap.h>
+#include <linux/slab.h>
+#include <linux/cred.h>
+#include <linux/mount.h>
+#include <linux/vfs.h>
+#include <linux/quotaops.h>
+#include <linux/mutex.h>
+#include <linux/namei.h>
+#include <linux/exportfs.h>
+#include <linux/writeback.h>
+#include <linux/buffer_head.h> /* sync_mapping_buffers */
+#include <linux/fs_context.h>
+#include <linux/pseudo_fs.h>
+#include <linux/fsnotify.h>
+#include <linux/unicode.h>
+#include <linux/fscrypt.h>
 
-#समावेश <linux/uaccess.h>
+#include <linux/uaccess.h>
 
-#समावेश "internal.h"
+#include "internal.h"
 
-पूर्णांक simple_getattr(काष्ठा user_namespace *mnt_userns, स्थिर काष्ठा path *path,
-		   काष्ठा kstat *stat, u32 request_mask,
-		   अचिन्हित पूर्णांक query_flags)
-अणु
-	काष्ठा inode *inode = d_inode(path->dentry);
+int simple_getattr(struct user_namespace *mnt_userns, const struct path *path,
+		   struct kstat *stat, u32 request_mask,
+		   unsigned int query_flags)
+{
+	struct inode *inode = d_inode(path->dentry);
 	generic_fillattr(&init_user_ns, inode, stat);
 	stat->blocks = inode->i_mapping->nrpages << (PAGE_SHIFT - 9);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(simple_getattr);
 
-पूर्णांक simple_statfs(काष्ठा dentry *dentry, काष्ठा kstatfs *buf)
-अणु
+int simple_statfs(struct dentry *dentry, struct kstatfs *buf)
+{
 	buf->f_type = dentry->d_sb->s_magic;
 	buf->f_bsize = PAGE_SIZE;
 	buf->f_namelen = NAME_MAX;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(simple_statfs);
 
 /*
- * Retaining negative dentries क्रम an in-memory fileप्रणाली just wastes
- * memory and lookup समय: arrange क्रम them to be deleted immediately.
+ * Retaining negative dentries for an in-memory filesystem just wastes
+ * memory and lookup time: arrange for them to be deleted immediately.
  */
-पूर्णांक always_delete_dentry(स्थिर काष्ठा dentry *dentry)
-अणु
-	वापस 1;
-पूर्ण
+int always_delete_dentry(const struct dentry *dentry)
+{
+	return 1;
+}
 EXPORT_SYMBOL(always_delete_dentry);
 
-स्थिर काष्ठा dentry_operations simple_dentry_operations = अणु
+const struct dentry_operations simple_dentry_operations = {
 	.d_delete = always_delete_dentry,
-पूर्ण;
+};
 EXPORT_SYMBOL(simple_dentry_operations);
 
 /*
- * Lookup the data. This is trivial - अगर the dentry didn't alपढ़ोy
+ * Lookup the data. This is trivial - if the dentry didn't already
  * exist, we know it is negative.  Set d_op to delete negative dentries.
  */
-काष्ठा dentry *simple_lookup(काष्ठा inode *dir, काष्ठा dentry *dentry, अचिन्हित पूर्णांक flags)
-अणु
-	अगर (dentry->d_name.len > NAME_MAX)
-		वापस ERR_PTR(-ENAMETOOLONG);
-	अगर (!dentry->d_sb->s_d_op)
+struct dentry *simple_lookup(struct inode *dir, struct dentry *dentry, unsigned int flags)
+{
+	if (dentry->d_name.len > NAME_MAX)
+		return ERR_PTR(-ENAMETOOLONG);
+	if (!dentry->d_sb->s_d_op)
 		d_set_d_op(dentry, &simple_dentry_operations);
-	d_add(dentry, शून्य);
-	वापस शून्य;
-पूर्ण
+	d_add(dentry, NULL);
+	return NULL;
+}
 EXPORT_SYMBOL(simple_lookup);
 
-पूर्णांक dcache_dir_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	file->निजी_data = d_alloc_cursor(file->f_path.dentry);
+int dcache_dir_open(struct inode *inode, struct file *file)
+{
+	file->private_data = d_alloc_cursor(file->f_path.dentry);
 
-	वापस file->निजी_data ? 0 : -ENOMEM;
-पूर्ण
-EXPORT_SYMBOL(dcache_dir_खोलो);
+	return file->private_data ? 0 : -ENOMEM;
+}
+EXPORT_SYMBOL(dcache_dir_open);
 
-पूर्णांक dcache_dir_बंद(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	dput(file->निजी_data);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(dcache_dir_बंद);
+int dcache_dir_close(struct inode *inode, struct file *file)
+{
+	dput(file->private_data);
+	return 0;
+}
+EXPORT_SYMBOL(dcache_dir_close);
 
 /* parent is locked at least shared */
 /*
  * Returns an element of siblings' list.
- * We are looking क्रम <count>th positive after <p>; अगर
- * found, dentry is grabbed and वापसed to caller.
- * If no such element exists, शून्य is वापसed.
+ * We are looking for <count>th positive after <p>; if
+ * found, dentry is grabbed and returned to caller.
+ * If no such element exists, NULL is returned.
  */
-अटल काष्ठा dentry *scan_positives(काष्ठा dentry *cursor,
-					काष्ठा list_head *p,
+static struct dentry *scan_positives(struct dentry *cursor,
+					struct list_head *p,
 					loff_t count,
-					काष्ठा dentry *last)
-अणु
-	काष्ठा dentry *dentry = cursor->d_parent, *found = शून्य;
+					struct dentry *last)
+{
+	struct dentry *dentry = cursor->d_parent, *found = NULL;
 
 	spin_lock(&dentry->d_lock);
-	जबतक ((p = p->next) != &dentry->d_subdirs) अणु
-		काष्ठा dentry *d = list_entry(p, काष्ठा dentry, d_child);
-		// we must at least skip cursors, to aव्योम livelocks
-		अगर (d->d_flags & DCACHE_DENTRY_CURSOR)
-			जारी;
-		अगर (simple_positive(d) && !--count) अणु
+	while ((p = p->next) != &dentry->d_subdirs) {
+		struct dentry *d = list_entry(p, struct dentry, d_child);
+		// we must at least skip cursors, to avoid livelocks
+		if (d->d_flags & DCACHE_DENTRY_CURSOR)
+			continue;
+		if (simple_positive(d) && !--count) {
 			spin_lock_nested(&d->d_lock, DENTRY_D_LOCK_NESTED);
-			अगर (simple_positive(d))
+			if (simple_positive(d))
 				found = dget_dlock(d);
 			spin_unlock(&d->d_lock);
-			अगर (likely(found))
-				अवरोध;
+			if (likely(found))
+				break;
 			count = 1;
-		पूर्ण
-		अगर (need_resched()) अणु
+		}
+		if (need_resched()) {
 			list_move(&cursor->d_child, p);
 			p = &cursor->d_child;
 			spin_unlock(&dentry->d_lock);
 			cond_resched();
 			spin_lock(&dentry->d_lock);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	spin_unlock(&dentry->d_lock);
 	dput(last);
-	वापस found;
-पूर्ण
+	return found;
+}
 
-loff_t dcache_dir_lseek(काष्ठा file *file, loff_t offset, पूर्णांक whence)
-अणु
-	काष्ठा dentry *dentry = file->f_path.dentry;
-	चयन (whence) अणु
-		हाल 1:
+loff_t dcache_dir_lseek(struct file *file, loff_t offset, int whence)
+{
+	struct dentry *dentry = file->f_path.dentry;
+	switch (whence) {
+		case 1:
 			offset += file->f_pos;
 			fallthrough;
-		हाल 0:
-			अगर (offset >= 0)
-				अवरोध;
+		case 0:
+			if (offset >= 0)
+				break;
 			fallthrough;
-		शेष:
-			वापस -EINVAL;
-	पूर्ण
-	अगर (offset != file->f_pos) अणु
-		काष्ठा dentry *cursor = file->निजी_data;
-		काष्ठा dentry *to = शून्य;
+		default:
+			return -EINVAL;
+	}
+	if (offset != file->f_pos) {
+		struct dentry *cursor = file->private_data;
+		struct dentry *to = NULL;
 
 		inode_lock_shared(dentry->d_inode);
 
-		अगर (offset > 2)
+		if (offset > 2)
 			to = scan_positives(cursor, &dentry->d_subdirs,
-					    offset - 2, शून्य);
+					    offset - 2, NULL);
 		spin_lock(&dentry->d_lock);
-		अगर (to)
+		if (to)
 			list_move(&cursor->d_child, &to->d_child);
-		अन्यथा
+		else
 			list_del_init(&cursor->d_child);
 		spin_unlock(&dentry->d_lock);
 		dput(to);
@@ -169,169 +168,169 @@ loff_t dcache_dir_lseek(काष्ठा file *file, loff_t offset, पूर�
 		file->f_pos = offset;
 
 		inode_unlock_shared(dentry->d_inode);
-	पूर्ण
-	वापस offset;
-पूर्ण
+	}
+	return offset;
+}
 EXPORT_SYMBOL(dcache_dir_lseek);
 
 /* Relationship between i_mode and the DT_xxx types */
-अटल अंतरभूत अचिन्हित अक्षर dt_type(काष्ठा inode *inode)
-अणु
-	वापस (inode->i_mode >> 12) & 15;
-पूर्ण
+static inline unsigned char dt_type(struct inode *inode)
+{
+	return (inode->i_mode >> 12) & 15;
+}
 
 /*
  * Directory is locked and all positive dentries in it are safe, since
- * क्रम ramfs-type trees they can't go away without unlink() or सूची_हटाओ(),
+ * for ramfs-type trees they can't go away without unlink() or rmdir(),
  * both impossible due to the lock on directory.
  */
 
-पूर्णांक dcache_सूची_पढ़ो(काष्ठा file *file, काष्ठा dir_context *ctx)
-अणु
-	काष्ठा dentry *dentry = file->f_path.dentry;
-	काष्ठा dentry *cursor = file->निजी_data;
-	काष्ठा list_head *anchor = &dentry->d_subdirs;
-	काष्ठा dentry *next = शून्य;
-	काष्ठा list_head *p;
+int dcache_readdir(struct file *file, struct dir_context *ctx)
+{
+	struct dentry *dentry = file->f_path.dentry;
+	struct dentry *cursor = file->private_data;
+	struct list_head *anchor = &dentry->d_subdirs;
+	struct dentry *next = NULL;
+	struct list_head *p;
 
-	अगर (!dir_emit_करोts(file, ctx))
-		वापस 0;
+	if (!dir_emit_dots(file, ctx))
+		return 0;
 
-	अगर (ctx->pos == 2)
+	if (ctx->pos == 2)
 		p = anchor;
-	अन्यथा अगर (!list_empty(&cursor->d_child))
+	else if (!list_empty(&cursor->d_child))
 		p = &cursor->d_child;
-	अन्यथा
-		वापस 0;
+	else
+		return 0;
 
-	जबतक ((next = scan_positives(cursor, p, 1, next)) != शून्य) अणु
-		अगर (!dir_emit(ctx, next->d_name.name, next->d_name.len,
+	while ((next = scan_positives(cursor, p, 1, next)) != NULL) {
+		if (!dir_emit(ctx, next->d_name.name, next->d_name.len,
 			      d_inode(next)->i_ino, dt_type(d_inode(next))))
-			अवरोध;
+			break;
 		ctx->pos++;
 		p = &next->d_child;
-	पूर्ण
+	}
 	spin_lock(&dentry->d_lock);
-	अगर (next)
+	if (next)
 		list_move_tail(&cursor->d_child, &next->d_child);
-	अन्यथा
+	else
 		list_del_init(&cursor->d_child);
 	spin_unlock(&dentry->d_lock);
 	dput(next);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(dcache_सूची_पढ़ो);
+	return 0;
+}
+EXPORT_SYMBOL(dcache_readdir);
 
-sमाप_प्रकार generic_पढ़ो_dir(काष्ठा file *filp, अक्षर __user *buf, माप_प्रकार siz, loff_t *ppos)
-अणु
-	वापस -EISसूची;
-पूर्ण
-EXPORT_SYMBOL(generic_पढ़ो_dir);
+ssize_t generic_read_dir(struct file *filp, char __user *buf, size_t siz, loff_t *ppos)
+{
+	return -EISDIR;
+}
+EXPORT_SYMBOL(generic_read_dir);
 
-स्थिर काष्ठा file_operations simple_dir_operations = अणु
-	.खोलो		= dcache_dir_खोलो,
-	.release	= dcache_dir_बंद,
+const struct file_operations simple_dir_operations = {
+	.open		= dcache_dir_open,
+	.release	= dcache_dir_close,
 	.llseek		= dcache_dir_lseek,
-	.पढ़ो		= generic_पढ़ो_dir,
-	.iterate_shared	= dcache_सूची_पढ़ो,
+	.read		= generic_read_dir,
+	.iterate_shared	= dcache_readdir,
 	.fsync		= noop_fsync,
-पूर्ण;
+};
 EXPORT_SYMBOL(simple_dir_operations);
 
-स्थिर काष्ठा inode_operations simple_dir_inode_operations = अणु
+const struct inode_operations simple_dir_inode_operations = {
 	.lookup		= simple_lookup,
-पूर्ण;
+};
 EXPORT_SYMBOL(simple_dir_inode_operations);
 
-अटल काष्ठा dentry *find_next_child(काष्ठा dentry *parent, काष्ठा dentry *prev)
-अणु
-	काष्ठा dentry *child = शून्य;
-	काष्ठा list_head *p = prev ? &prev->d_child : &parent->d_subdirs;
+static struct dentry *find_next_child(struct dentry *parent, struct dentry *prev)
+{
+	struct dentry *child = NULL;
+	struct list_head *p = prev ? &prev->d_child : &parent->d_subdirs;
 
 	spin_lock(&parent->d_lock);
-	जबतक ((p = p->next) != &parent->d_subdirs) अणु
-		काष्ठा dentry *d = container_of(p, काष्ठा dentry, d_child);
-		अगर (simple_positive(d)) अणु
+	while ((p = p->next) != &parent->d_subdirs) {
+		struct dentry *d = container_of(p, struct dentry, d_child);
+		if (simple_positive(d)) {
 			spin_lock_nested(&d->d_lock, DENTRY_D_LOCK_NESTED);
-			अगर (simple_positive(d))
+			if (simple_positive(d))
 				child = dget_dlock(d);
 			spin_unlock(&d->d_lock);
-			अगर (likely(child))
-				अवरोध;
-		पूर्ण
-	पूर्ण
+			if (likely(child))
+				break;
+		}
+	}
 	spin_unlock(&parent->d_lock);
 	dput(prev);
-	वापस child;
-पूर्ण
+	return child;
+}
 
-व्योम simple_recursive_removal(काष्ठा dentry *dentry,
-                              व्योम (*callback)(काष्ठा dentry *))
-अणु
-	काष्ठा dentry *this = dget(dentry);
-	जबतक (true) अणु
-		काष्ठा dentry *victim = शून्य, *child;
-		काष्ठा inode *inode = this->d_inode;
+void simple_recursive_removal(struct dentry *dentry,
+                              void (*callback)(struct dentry *))
+{
+	struct dentry *this = dget(dentry);
+	while (true) {
+		struct dentry *victim = NULL, *child;
+		struct inode *inode = this->d_inode;
 
 		inode_lock(inode);
-		अगर (d_is_dir(this))
+		if (d_is_dir(this))
 			inode->i_flags |= S_DEAD;
-		जबतक ((child = find_next_child(this, victim)) == शून्य) अणु
-			// समाप्त and ascend
-			// update metadata जबतक it's still locked
-			inode->i_स_समय = current_समय(inode);
+		while ((child = find_next_child(this, victim)) == NULL) {
+			// kill and ascend
+			// update metadata while it's still locked
+			inode->i_ctime = current_time(inode);
 			clear_nlink(inode);
 			inode_unlock(inode);
 			victim = this;
 			this = this->d_parent;
 			inode = this->d_inode;
 			inode_lock(inode);
-			अगर (simple_positive(victim)) अणु
-				d_invalidate(victim);	// aव्योम lost mounts
-				अगर (d_is_dir(victim))
-					fsnotअगरy_सूची_हटाओ(inode, victim);
-				अन्यथा
-					fsnotअगरy_unlink(inode, victim);
-				अगर (callback)
+			if (simple_positive(victim)) {
+				d_invalidate(victim);	// avoid lost mounts
+				if (d_is_dir(victim))
+					fsnotify_rmdir(inode, victim);
+				else
+					fsnotify_unlink(inode, victim);
+				if (callback)
 					callback(victim);
 				dput(victim);		// unpin it
-			पूर्ण
-			अगर (victim == dentry) अणु
-				inode->i_स_समय = inode->i_mसमय =
-					current_समय(inode);
-				अगर (d_is_dir(dentry))
+			}
+			if (victim == dentry) {
+				inode->i_ctime = inode->i_mtime =
+					current_time(inode);
+				if (d_is_dir(dentry))
 					drop_nlink(inode);
 				inode_unlock(inode);
 				dput(dentry);
-				वापस;
-			पूर्ण
-		पूर्ण
+				return;
+			}
+		}
 		inode_unlock(inode);
 		this = child;
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL(simple_recursive_removal);
 
-अटल स्थिर काष्ठा super_operations simple_super_operations = अणु
+static const struct super_operations simple_super_operations = {
 	.statfs		= simple_statfs,
-पूर्ण;
+};
 
-अटल पूर्णांक pseuकरो_fs_fill_super(काष्ठा super_block *s, काष्ठा fs_context *fc)
-अणु
-	काष्ठा pseuकरो_fs_context *ctx = fc->fs_निजी;
-	काष्ठा inode *root;
+static int pseudo_fs_fill_super(struct super_block *s, struct fs_context *fc)
+{
+	struct pseudo_fs_context *ctx = fc->fs_private;
+	struct inode *root;
 
-	s->s_maxbytes = MAX_LFS_खाताSIZE;
+	s->s_maxbytes = MAX_LFS_FILESIZE;
 	s->s_blocksize = PAGE_SIZE;
 	s->s_blocksize_bits = PAGE_SHIFT;
 	s->s_magic = ctx->magic;
 	s->s_op = ctx->ops ?: &simple_super_operations;
 	s->s_xattr = ctx->xattr;
-	s->s_समय_gran = 1;
+	s->s_time_gran = 1;
 	root = new_inode(s);
-	अगर (!root)
-		वापस -ENOMEM;
+	if (!root)
+		return -ENOMEM;
 
 	/*
 	 * since this is the first inode, make it number 1. New inodes created
@@ -339,217 +338,217 @@ EXPORT_SYMBOL(simple_recursive_removal);
 	 * max_reserved of 1 to iunique).
 	 */
 	root->i_ino = 1;
-	root->i_mode = S_IFसूची | S_IRUSR | S_IWUSR;
-	root->i_aसमय = root->i_mसमय = root->i_स_समय = current_समय(root);
+	root->i_mode = S_IFDIR | S_IRUSR | S_IWUSR;
+	root->i_atime = root->i_mtime = root->i_ctime = current_time(root);
 	s->s_root = d_make_root(root);
-	अगर (!s->s_root)
-		वापस -ENOMEM;
-	s->s_d_op = ctx->करोps;
-	वापस 0;
-पूर्ण
+	if (!s->s_root)
+		return -ENOMEM;
+	s->s_d_op = ctx->dops;
+	return 0;
+}
 
-अटल पूर्णांक pseuकरो_fs_get_tree(काष्ठा fs_context *fc)
-अणु
-	वापस get_tree_nodev(fc, pseuकरो_fs_fill_super);
-पूर्ण
+static int pseudo_fs_get_tree(struct fs_context *fc)
+{
+	return get_tree_nodev(fc, pseudo_fs_fill_super);
+}
 
-अटल व्योम pseuकरो_fs_मुक्त(काष्ठा fs_context *fc)
-अणु
-	kमुक्त(fc->fs_निजी);
-पूर्ण
+static void pseudo_fs_free(struct fs_context *fc)
+{
+	kfree(fc->fs_private);
+}
 
-अटल स्थिर काष्ठा fs_context_operations pseuकरो_fs_context_ops = अणु
-	.मुक्त		= pseuकरो_fs_मुक्त,
-	.get_tree	= pseuकरो_fs_get_tree,
-पूर्ण;
+static const struct fs_context_operations pseudo_fs_context_ops = {
+	.free		= pseudo_fs_free,
+	.get_tree	= pseudo_fs_get_tree,
+};
 
 /*
- * Common helper क्रम pseuकरो-fileप्रणालीs (sockfs, pipefs, bdev - stuff that
+ * Common helper for pseudo-filesystems (sockfs, pipefs, bdev - stuff that
  * will never be mountable)
  */
-काष्ठा pseuकरो_fs_context *init_pseuकरो(काष्ठा fs_context *fc,
-					अचिन्हित दीर्घ magic)
-अणु
-	काष्ठा pseuकरो_fs_context *ctx;
+struct pseudo_fs_context *init_pseudo(struct fs_context *fc,
+					unsigned long magic)
+{
+	struct pseudo_fs_context *ctx;
 
-	ctx = kzalloc(माप(काष्ठा pseuकरो_fs_context), GFP_KERNEL);
-	अगर (likely(ctx)) अणु
+	ctx = kzalloc(sizeof(struct pseudo_fs_context), GFP_KERNEL);
+	if (likely(ctx)) {
 		ctx->magic = magic;
-		fc->fs_निजी = ctx;
-		fc->ops = &pseuकरो_fs_context_ops;
+		fc->fs_private = ctx;
+		fc->ops = &pseudo_fs_context_ops;
 		fc->sb_flags |= SB_NOUSER;
 		fc->global = true;
-	पूर्ण
-	वापस ctx;
-पूर्ण
-EXPORT_SYMBOL(init_pseuकरो);
+	}
+	return ctx;
+}
+EXPORT_SYMBOL(init_pseudo);
 
-पूर्णांक simple_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	अगर (inode->i_निजी)
-		file->निजी_data = inode->i_निजी;
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(simple_खोलो);
+int simple_open(struct inode *inode, struct file *file)
+{
+	if (inode->i_private)
+		file->private_data = inode->i_private;
+	return 0;
+}
+EXPORT_SYMBOL(simple_open);
 
-पूर्णांक simple_link(काष्ठा dentry *old_dentry, काष्ठा inode *dir, काष्ठा dentry *dentry)
-अणु
-	काष्ठा inode *inode = d_inode(old_dentry);
+int simple_link(struct dentry *old_dentry, struct inode *dir, struct dentry *dentry)
+{
+	struct inode *inode = d_inode(old_dentry);
 
-	inode->i_स_समय = dir->i_स_समय = dir->i_mसमय = current_समय(inode);
+	inode->i_ctime = dir->i_ctime = dir->i_mtime = current_time(inode);
 	inc_nlink(inode);
 	ihold(inode);
 	dget(dentry);
 	d_instantiate(dentry, inode);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(simple_link);
 
-पूर्णांक simple_empty(काष्ठा dentry *dentry)
-अणु
-	काष्ठा dentry *child;
-	पूर्णांक ret = 0;
+int simple_empty(struct dentry *dentry)
+{
+	struct dentry *child;
+	int ret = 0;
 
 	spin_lock(&dentry->d_lock);
-	list_क्रम_each_entry(child, &dentry->d_subdirs, d_child) अणु
+	list_for_each_entry(child, &dentry->d_subdirs, d_child) {
 		spin_lock_nested(&child->d_lock, DENTRY_D_LOCK_NESTED);
-		अगर (simple_positive(child)) अणु
+		if (simple_positive(child)) {
 			spin_unlock(&child->d_lock);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		spin_unlock(&child->d_lock);
-	पूर्ण
+	}
 	ret = 1;
 out:
 	spin_unlock(&dentry->d_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(simple_empty);
 
-पूर्णांक simple_unlink(काष्ठा inode *dir, काष्ठा dentry *dentry)
-अणु
-	काष्ठा inode *inode = d_inode(dentry);
+int simple_unlink(struct inode *dir, struct dentry *dentry)
+{
+	struct inode *inode = d_inode(dentry);
 
-	inode->i_स_समय = dir->i_स_समय = dir->i_mसमय = current_समय(inode);
+	inode->i_ctime = dir->i_ctime = dir->i_mtime = current_time(inode);
 	drop_nlink(inode);
 	dput(dentry);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(simple_unlink);
 
-पूर्णांक simple_सूची_हटाओ(काष्ठा inode *dir, काष्ठा dentry *dentry)
-अणु
-	अगर (!simple_empty(dentry))
-		वापस -ENOTEMPTY;
+int simple_rmdir(struct inode *dir, struct dentry *dentry)
+{
+	if (!simple_empty(dentry))
+		return -ENOTEMPTY;
 
 	drop_nlink(d_inode(dentry));
 	simple_unlink(dir, dentry);
 	drop_nlink(dir);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(simple_सूची_हटाओ);
+	return 0;
+}
+EXPORT_SYMBOL(simple_rmdir);
 
-पूर्णांक simple_नाम(काष्ठा user_namespace *mnt_userns, काष्ठा inode *old_dir,
-		  काष्ठा dentry *old_dentry, काष्ठा inode *new_dir,
-		  काष्ठा dentry *new_dentry, अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा inode *inode = d_inode(old_dentry);
-	पूर्णांक they_are_dirs = d_is_dir(old_dentry);
+int simple_rename(struct user_namespace *mnt_userns, struct inode *old_dir,
+		  struct dentry *old_dentry, struct inode *new_dir,
+		  struct dentry *new_dentry, unsigned int flags)
+{
+	struct inode *inode = d_inode(old_dentry);
+	int they_are_dirs = d_is_dir(old_dentry);
 
-	अगर (flags & ~RENAME_NOREPLACE)
-		वापस -EINVAL;
+	if (flags & ~RENAME_NOREPLACE)
+		return -EINVAL;
 
-	अगर (!simple_empty(new_dentry))
-		वापस -ENOTEMPTY;
+	if (!simple_empty(new_dentry))
+		return -ENOTEMPTY;
 
-	अगर (d_really_is_positive(new_dentry)) अणु
+	if (d_really_is_positive(new_dentry)) {
 		simple_unlink(new_dir, new_dentry);
-		अगर (they_are_dirs) अणु
+		if (they_are_dirs) {
 			drop_nlink(d_inode(new_dentry));
 			drop_nlink(old_dir);
-		पूर्ण
-	पूर्ण अन्यथा अगर (they_are_dirs) अणु
+		}
+	} else if (they_are_dirs) {
 		drop_nlink(old_dir);
 		inc_nlink(new_dir);
-	पूर्ण
+	}
 
-	old_dir->i_स_समय = old_dir->i_mसमय = new_dir->i_स_समय =
-		new_dir->i_mसमय = inode->i_स_समय = current_समय(old_dir);
+	old_dir->i_ctime = old_dir->i_mtime = new_dir->i_ctime =
+		new_dir->i_mtime = inode->i_ctime = current_time(old_dir);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(simple_नाम);
+	return 0;
+}
+EXPORT_SYMBOL(simple_rename);
 
 /**
- * simple_setattr - setattr क्रम simple fileप्रणाली
+ * simple_setattr - setattr for simple filesystem
  * @mnt_userns: user namespace of the target mount
  * @dentry: dentry
- * @iattr: iattr काष्ठाure
+ * @iattr: iattr structure
  *
  * Returns 0 on success, -error on failure.
  *
  * simple_setattr is a simple ->setattr implementation without a proper
  * implementation of size changes.
  *
- * It can either be used क्रम in-memory fileप्रणालीs or special files
- * on simple regular fileप्रणालीs.  Anything that needs to change on-disk
+ * It can either be used for in-memory filesystems or special files
+ * on simple regular filesystems.  Anything that needs to change on-disk
  * or wire state on size changes needs its own setattr method.
  */
-पूर्णांक simple_setattr(काष्ठा user_namespace *mnt_userns, काष्ठा dentry *dentry,
-		   काष्ठा iattr *iattr)
-अणु
-	काष्ठा inode *inode = d_inode(dentry);
-	पूर्णांक error;
+int simple_setattr(struct user_namespace *mnt_userns, struct dentry *dentry,
+		   struct iattr *iattr)
+{
+	struct inode *inode = d_inode(dentry);
+	int error;
 
 	error = setattr_prepare(mnt_userns, dentry, iattr);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	अगर (iattr->ia_valid & ATTR_SIZE)
+	if (iattr->ia_valid & ATTR_SIZE)
 		truncate_setsize(inode, iattr->ia_size);
 	setattr_copy(mnt_userns, inode, iattr);
 	mark_inode_dirty(inode);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(simple_setattr);
 
-पूर्णांक simple_पढ़ोpage(काष्ठा file *file, काष्ठा page *page)
-अणु
+int simple_readpage(struct file *file, struct page *page)
+{
 	clear_highpage(page);
 	flush_dcache_page(page);
 	SetPageUptodate(page);
 	unlock_page(page);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(simple_पढ़ोpage);
+	return 0;
+}
+EXPORT_SYMBOL(simple_readpage);
 
-पूर्णांक simple_ग_लिखो_begin(काष्ठा file *file, काष्ठा address_space *mapping,
-			loff_t pos, अचिन्हित len, अचिन्हित flags,
-			काष्ठा page **pagep, व्योम **fsdata)
-अणु
-	काष्ठा page *page;
+int simple_write_begin(struct file *file, struct address_space *mapping,
+			loff_t pos, unsigned len, unsigned flags,
+			struct page **pagep, void **fsdata)
+{
+	struct page *page;
 	pgoff_t index;
 
 	index = pos >> PAGE_SHIFT;
 
-	page = grab_cache_page_ग_लिखो_begin(mapping, index, flags);
-	अगर (!page)
-		वापस -ENOMEM;
+	page = grab_cache_page_write_begin(mapping, index, flags);
+	if (!page)
+		return -ENOMEM;
 
 	*pagep = page;
 
-	अगर (!PageUptodate(page) && (len != PAGE_SIZE)) अणु
-		अचिन्हित from = pos & (PAGE_SIZE - 1);
+	if (!PageUptodate(page) && (len != PAGE_SIZE)) {
+		unsigned from = pos & (PAGE_SIZE - 1);
 
 		zero_user_segments(page, 0, from, from + len, PAGE_SIZE);
-	पूर्ण
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(simple_ग_लिखो_begin);
+	}
+	return 0;
+}
+EXPORT_SYMBOL(simple_write_begin);
 
 /**
- * simple_ग_लिखो_end - .ग_लिखो_end helper क्रम non-block-device FSes
- * @file: See .ग_लिखो_end of address_space_operations
+ * simple_write_end - .write_end helper for non-block-device FSes
+ * @file: See .write_end of address_space_operations
  * @mapping: 		"
  * @pos: 		"
  * @len: 		"
@@ -557,676 +556,676 @@ EXPORT_SYMBOL(simple_ग_लिखो_begin);
  * @page: 		"
  * @fsdata: 		"
  *
- * simple_ग_लिखो_end करोes the minimum needed क्रम updating a page after writing is
- * करोne. It has the same API signature as the .ग_लिखो_end of
- * address_space_operations vector. So it can just be set onto .ग_लिखो_end क्रम
- * FSes that करोn't need any other processing. i_mutex is assumed to be held.
- * Block based fileप्रणालीs should use generic_ग_लिखो_end().
+ * simple_write_end does the minimum needed for updating a page after writing is
+ * done. It has the same API signature as the .write_end of
+ * address_space_operations vector. So it can just be set onto .write_end for
+ * FSes that don't need any other processing. i_mutex is assumed to be held.
+ * Block based filesystems should use generic_write_end().
  * NOTE: Even though i_size might get updated by this function, mark_inode_dirty
- * is not called, so a fileप्रणाली that actually करोes store data in .ग_लिखो_inode
- * should extend on what's करोne here with a call to mark_inode_dirty() in the
- * हाल that i_size has changed.
+ * is not called, so a filesystem that actually does store data in .write_inode
+ * should extend on what's done here with a call to mark_inode_dirty() in the
+ * case that i_size has changed.
  *
- * Use *ONLY* with simple_पढ़ोpage()
+ * Use *ONLY* with simple_readpage()
  */
-पूर्णांक simple_ग_लिखो_end(काष्ठा file *file, काष्ठा address_space *mapping,
-			loff_t pos, अचिन्हित len, अचिन्हित copied,
-			काष्ठा page *page, व्योम *fsdata)
-अणु
-	काष्ठा inode *inode = page->mapping->host;
+int simple_write_end(struct file *file, struct address_space *mapping,
+			loff_t pos, unsigned len, unsigned copied,
+			struct page *page, void *fsdata)
+{
+	struct inode *inode = page->mapping->host;
 	loff_t last_pos = pos + copied;
 
-	/* zero the stale part of the page अगर we did a लघु copy */
-	अगर (!PageUptodate(page)) अणु
-		अगर (copied < len) अणु
-			अचिन्हित from = pos & (PAGE_SIZE - 1);
+	/* zero the stale part of the page if we did a short copy */
+	if (!PageUptodate(page)) {
+		if (copied < len) {
+			unsigned from = pos & (PAGE_SIZE - 1);
 
 			zero_user(page, from + copied, len - copied);
-		पूर्ण
+		}
 		SetPageUptodate(page);
-	पूर्ण
+	}
 	/*
-	 * No need to use i_size_पढ़ो() here, the i_size
+	 * No need to use i_size_read() here, the i_size
 	 * cannot change under us because we hold the i_mutex.
 	 */
-	अगर (last_pos > inode->i_size)
-		i_size_ग_लिखो(inode, last_pos);
+	if (last_pos > inode->i_size)
+		i_size_write(inode, last_pos);
 
 	set_page_dirty(page);
 	unlock_page(page);
 	put_page(page);
 
-	वापस copied;
-पूर्ण
-EXPORT_SYMBOL(simple_ग_लिखो_end);
+	return copied;
+}
+EXPORT_SYMBOL(simple_write_end);
 
 /*
  * the inodes created here are not hashed. If you use iunique to generate
- * unique inode values later क्रम this fileप्रणाली, then you must take care
- * to pass it an appropriate max_reserved value to aव्योम collisions.
+ * unique inode values later for this filesystem, then you must take care
+ * to pass it an appropriate max_reserved value to avoid collisions.
  */
-पूर्णांक simple_fill_super(काष्ठा super_block *s, अचिन्हित दीर्घ magic,
-		      स्थिर काष्ठा tree_descr *files)
-अणु
-	काष्ठा inode *inode;
-	काष्ठा dentry *root;
-	काष्ठा dentry *dentry;
-	पूर्णांक i;
+int simple_fill_super(struct super_block *s, unsigned long magic,
+		      const struct tree_descr *files)
+{
+	struct inode *inode;
+	struct dentry *root;
+	struct dentry *dentry;
+	int i;
 
 	s->s_blocksize = PAGE_SIZE;
 	s->s_blocksize_bits = PAGE_SHIFT;
 	s->s_magic = magic;
 	s->s_op = &simple_super_operations;
-	s->s_समय_gran = 1;
+	s->s_time_gran = 1;
 
 	inode = new_inode(s);
-	अगर (!inode)
-		वापस -ENOMEM;
+	if (!inode)
+		return -ENOMEM;
 	/*
 	 * because the root inode is 1, the files array must not contain an
 	 * entry at index 1
 	 */
 	inode->i_ino = 1;
-	inode->i_mode = S_IFसूची | 0755;
-	inode->i_aसमय = inode->i_mसमय = inode->i_स_समय = current_समय(inode);
+	inode->i_mode = S_IFDIR | 0755;
+	inode->i_atime = inode->i_mtime = inode->i_ctime = current_time(inode);
 	inode->i_op = &simple_dir_inode_operations;
 	inode->i_fop = &simple_dir_operations;
 	set_nlink(inode, 2);
 	root = d_make_root(inode);
-	अगर (!root)
-		वापस -ENOMEM;
-	क्रम (i = 0; !files->name || files->name[0]; i++, files++) अणु
-		अगर (!files->name)
-			जारी;
+	if (!root)
+		return -ENOMEM;
+	for (i = 0; !files->name || files->name[0]; i++, files++) {
+		if (!files->name)
+			continue;
 
-		/* warn अगर it tries to conflict with the root inode */
-		अगर (unlikely(i == 1))
-			prपूर्णांकk(KERN_WARNING "%s: %s passed in a files array"
+		/* warn if it tries to conflict with the root inode */
+		if (unlikely(i == 1))
+			printk(KERN_WARNING "%s: %s passed in a files array"
 				"with an index of 1!\n", __func__,
 				s->s_type->name);
 
 		dentry = d_alloc_name(root, files->name);
-		अगर (!dentry)
-			जाओ out;
+		if (!dentry)
+			goto out;
 		inode = new_inode(s);
-		अगर (!inode) अणु
+		if (!inode) {
 			dput(dentry);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		inode->i_mode = S_IFREG | files->mode;
-		inode->i_aसमय = inode->i_mसमय = inode->i_स_समय = current_समय(inode);
+		inode->i_atime = inode->i_mtime = inode->i_ctime = current_time(inode);
 		inode->i_fop = files->ops;
 		inode->i_ino = i;
 		d_add(dentry, inode);
-	पूर्ण
+	}
 	s->s_root = root;
-	वापस 0;
+	return 0;
 out:
 	d_genocide(root);
 	shrink_dcache_parent(root);
 	dput(root);
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 EXPORT_SYMBOL(simple_fill_super);
 
-अटल DEFINE_SPINLOCK(pin_fs_lock);
+static DEFINE_SPINLOCK(pin_fs_lock);
 
-पूर्णांक simple_pin_fs(काष्ठा file_प्रणाली_type *type, काष्ठा vfsmount **mount, पूर्णांक *count)
-अणु
-	काष्ठा vfsmount *mnt = शून्य;
+int simple_pin_fs(struct file_system_type *type, struct vfsmount **mount, int *count)
+{
+	struct vfsmount *mnt = NULL;
 	spin_lock(&pin_fs_lock);
-	अगर (unlikely(!*mount)) अणु
+	if (unlikely(!*mount)) {
 		spin_unlock(&pin_fs_lock);
-		mnt = vfs_kern_mount(type, SB_KERNMOUNT, type->name, शून्य);
-		अगर (IS_ERR(mnt))
-			वापस PTR_ERR(mnt);
+		mnt = vfs_kern_mount(type, SB_KERNMOUNT, type->name, NULL);
+		if (IS_ERR(mnt))
+			return PTR_ERR(mnt);
 		spin_lock(&pin_fs_lock);
-		अगर (!*mount)
+		if (!*mount)
 			*mount = mnt;
-	पूर्ण
+	}
 	mntget(*mount);
 	++*count;
 	spin_unlock(&pin_fs_lock);
 	mntput(mnt);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(simple_pin_fs);
 
-व्योम simple_release_fs(काष्ठा vfsmount **mount, पूर्णांक *count)
-अणु
-	काष्ठा vfsmount *mnt;
+void simple_release_fs(struct vfsmount **mount, int *count)
+{
+	struct vfsmount *mnt;
 	spin_lock(&pin_fs_lock);
 	mnt = *mount;
-	अगर (!--*count)
-		*mount = शून्य;
+	if (!--*count)
+		*mount = NULL;
 	spin_unlock(&pin_fs_lock);
 	mntput(mnt);
-पूर्ण
+}
 EXPORT_SYMBOL(simple_release_fs);
 
 /**
- * simple_पढ़ो_from_buffer - copy data from the buffer to user space
- * @to: the user space buffer to पढ़ो to
- * @count: the maximum number of bytes to पढ़ो
+ * simple_read_from_buffer - copy data from the buffer to user space
+ * @to: the user space buffer to read to
+ * @count: the maximum number of bytes to read
  * @ppos: the current position in the buffer
- * @from: the buffer to पढ़ो from
+ * @from: the buffer to read from
  * @available: the size of the buffer
  *
- * The simple_पढ़ो_from_buffer() function पढ़ोs up to @count bytes from the
- * buffer @from at offset @ppos पूर्णांकo the user space address starting at @to.
+ * The simple_read_from_buffer() function reads up to @count bytes from the
+ * buffer @from at offset @ppos into the user space address starting at @to.
  *
- * On success, the number of bytes पढ़ो is वापसed and the offset @ppos is
- * advanced by this number, or negative value is वापसed on error.
+ * On success, the number of bytes read is returned and the offset @ppos is
+ * advanced by this number, or negative value is returned on error.
  **/
-sमाप_प्रकार simple_पढ़ो_from_buffer(व्योम __user *to, माप_प्रकार count, loff_t *ppos,
-				स्थिर व्योम *from, माप_प्रकार available)
-अणु
+ssize_t simple_read_from_buffer(void __user *to, size_t count, loff_t *ppos,
+				const void *from, size_t available)
+{
 	loff_t pos = *ppos;
-	माप_प्रकार ret;
+	size_t ret;
 
-	अगर (pos < 0)
-		वापस -EINVAL;
-	अगर (pos >= available || !count)
-		वापस 0;
-	अगर (count > available - pos)
+	if (pos < 0)
+		return -EINVAL;
+	if (pos >= available || !count)
+		return 0;
+	if (count > available - pos)
 		count = available - pos;
 	ret = copy_to_user(to, from + pos, count);
-	अगर (ret == count)
-		वापस -EFAULT;
+	if (ret == count)
+		return -EFAULT;
 	count -= ret;
 	*ppos = pos + count;
-	वापस count;
-पूर्ण
-EXPORT_SYMBOL(simple_पढ़ो_from_buffer);
+	return count;
+}
+EXPORT_SYMBOL(simple_read_from_buffer);
 
 /**
- * simple_ग_लिखो_to_buffer - copy data from user space to the buffer
- * @to: the buffer to ग_लिखो to
+ * simple_write_to_buffer - copy data from user space to the buffer
+ * @to: the buffer to write to
  * @available: the size of the buffer
  * @ppos: the current position in the buffer
- * @from: the user space buffer to पढ़ो from
- * @count: the maximum number of bytes to पढ़ो
+ * @from: the user space buffer to read from
+ * @count: the maximum number of bytes to read
  *
- * The simple_ग_लिखो_to_buffer() function पढ़ोs up to @count bytes from the user
- * space address starting at @from पूर्णांकo the buffer @to at offset @ppos.
+ * The simple_write_to_buffer() function reads up to @count bytes from the user
+ * space address starting at @from into the buffer @to at offset @ppos.
  *
- * On success, the number of bytes written is वापसed and the offset @ppos is
- * advanced by this number, or negative value is वापसed on error.
+ * On success, the number of bytes written is returned and the offset @ppos is
+ * advanced by this number, or negative value is returned on error.
  **/
-sमाप_प्रकार simple_ग_लिखो_to_buffer(व्योम *to, माप_प्रकार available, loff_t *ppos,
-		स्थिर व्योम __user *from, माप_प्रकार count)
-अणु
+ssize_t simple_write_to_buffer(void *to, size_t available, loff_t *ppos,
+		const void __user *from, size_t count)
+{
 	loff_t pos = *ppos;
-	माप_प्रकार res;
+	size_t res;
 
-	अगर (pos < 0)
-		वापस -EINVAL;
-	अगर (pos >= available || !count)
-		वापस 0;
-	अगर (count > available - pos)
+	if (pos < 0)
+		return -EINVAL;
+	if (pos >= available || !count)
+		return 0;
+	if (count > available - pos)
 		count = available - pos;
 	res = copy_from_user(to + pos, from, count);
-	अगर (res == count)
-		वापस -EFAULT;
+	if (res == count)
+		return -EFAULT;
 	count -= res;
 	*ppos = pos + count;
-	वापस count;
-पूर्ण
-EXPORT_SYMBOL(simple_ग_लिखो_to_buffer);
+	return count;
+}
+EXPORT_SYMBOL(simple_write_to_buffer);
 
 /**
- * memory_पढ़ो_from_buffer - copy data from the buffer
- * @to: the kernel space buffer to पढ़ो to
- * @count: the maximum number of bytes to पढ़ो
+ * memory_read_from_buffer - copy data from the buffer
+ * @to: the kernel space buffer to read to
+ * @count: the maximum number of bytes to read
  * @ppos: the current position in the buffer
- * @from: the buffer to पढ़ो from
+ * @from: the buffer to read from
  * @available: the size of the buffer
  *
- * The memory_पढ़ो_from_buffer() function पढ़ोs up to @count bytes from the
- * buffer @from at offset @ppos पूर्णांकo the kernel space address starting at @to.
+ * The memory_read_from_buffer() function reads up to @count bytes from the
+ * buffer @from at offset @ppos into the kernel space address starting at @to.
  *
- * On success, the number of bytes पढ़ो is वापसed and the offset @ppos is
- * advanced by this number, or negative value is वापसed on error.
+ * On success, the number of bytes read is returned and the offset @ppos is
+ * advanced by this number, or negative value is returned on error.
  **/
-sमाप_प्रकार memory_पढ़ो_from_buffer(व्योम *to, माप_प्रकार count, loff_t *ppos,
-				स्थिर व्योम *from, माप_प्रकार available)
-अणु
+ssize_t memory_read_from_buffer(void *to, size_t count, loff_t *ppos,
+				const void *from, size_t available)
+{
 	loff_t pos = *ppos;
 
-	अगर (pos < 0)
-		वापस -EINVAL;
-	अगर (pos >= available)
-		वापस 0;
-	अगर (count > available - pos)
+	if (pos < 0)
+		return -EINVAL;
+	if (pos >= available)
+		return 0;
+	if (count > available - pos)
 		count = available - pos;
-	स_नकल(to, from + pos, count);
+	memcpy(to, from + pos, count);
 	*ppos = pos + count;
 
-	वापस count;
-पूर्ण
-EXPORT_SYMBOL(memory_पढ़ो_from_buffer);
+	return count;
+}
+EXPORT_SYMBOL(memory_read_from_buffer);
 
 /*
  * Transaction based IO.
- * The file expects a single ग_लिखो which triggers the transaction, and then
- * possibly a पढ़ो which collects the result - which is stored in a
+ * The file expects a single write which triggers the transaction, and then
+ * possibly a read which collects the result - which is stored in a
  * file-local buffer.
  */
 
-व्योम simple_transaction_set(काष्ठा file *file, माप_प्रकार n)
-अणु
-	काष्ठा simple_transaction_argresp *ar = file->निजी_data;
+void simple_transaction_set(struct file *file, size_t n)
+{
+	struct simple_transaction_argresp *ar = file->private_data;
 
 	BUG_ON(n > SIMPLE_TRANSACTION_LIMIT);
 
 	/*
-	 * The barrier ensures that ar->size will really reमुख्य zero until
-	 * ar->data is पढ़ोy क्रम पढ़ोing.
+	 * The barrier ensures that ar->size will really remain zero until
+	 * ar->data is ready for reading.
 	 */
 	smp_mb();
 	ar->size = n;
-पूर्ण
+}
 EXPORT_SYMBOL(simple_transaction_set);
 
-अक्षर *simple_transaction_get(काष्ठा file *file, स्थिर अक्षर __user *buf, माप_प्रकार size)
-अणु
-	काष्ठा simple_transaction_argresp *ar;
-	अटल DEFINE_SPINLOCK(simple_transaction_lock);
+char *simple_transaction_get(struct file *file, const char __user *buf, size_t size)
+{
+	struct simple_transaction_argresp *ar;
+	static DEFINE_SPINLOCK(simple_transaction_lock);
 
-	अगर (size > SIMPLE_TRANSACTION_LIMIT - 1)
-		वापस ERR_PTR(-EFBIG);
+	if (size > SIMPLE_TRANSACTION_LIMIT - 1)
+		return ERR_PTR(-EFBIG);
 
-	ar = (काष्ठा simple_transaction_argresp *)get_zeroed_page(GFP_KERNEL);
-	अगर (!ar)
-		वापस ERR_PTR(-ENOMEM);
+	ar = (struct simple_transaction_argresp *)get_zeroed_page(GFP_KERNEL);
+	if (!ar)
+		return ERR_PTR(-ENOMEM);
 
 	spin_lock(&simple_transaction_lock);
 
-	/* only one ग_लिखो allowed per खोलो */
-	अगर (file->निजी_data) अणु
+	/* only one write allowed per open */
+	if (file->private_data) {
 		spin_unlock(&simple_transaction_lock);
-		मुक्त_page((अचिन्हित दीर्घ)ar);
-		वापस ERR_PTR(-EBUSY);
-	पूर्ण
+		free_page((unsigned long)ar);
+		return ERR_PTR(-EBUSY);
+	}
 
-	file->निजी_data = ar;
+	file->private_data = ar;
 
 	spin_unlock(&simple_transaction_lock);
 
-	अगर (copy_from_user(ar->data, buf, size))
-		वापस ERR_PTR(-EFAULT);
+	if (copy_from_user(ar->data, buf, size))
+		return ERR_PTR(-EFAULT);
 
-	वापस ar->data;
-पूर्ण
+	return ar->data;
+}
 EXPORT_SYMBOL(simple_transaction_get);
 
-sमाप_प्रकार simple_transaction_पढ़ो(काष्ठा file *file, अक्षर __user *buf, माप_प्रकार size, loff_t *pos)
-अणु
-	काष्ठा simple_transaction_argresp *ar = file->निजी_data;
+ssize_t simple_transaction_read(struct file *file, char __user *buf, size_t size, loff_t *pos)
+{
+	struct simple_transaction_argresp *ar = file->private_data;
 
-	अगर (!ar)
-		वापस 0;
-	वापस simple_पढ़ो_from_buffer(buf, size, pos, ar->data, ar->size);
-पूर्ण
-EXPORT_SYMBOL(simple_transaction_पढ़ो);
+	if (!ar)
+		return 0;
+	return simple_read_from_buffer(buf, size, pos, ar->data, ar->size);
+}
+EXPORT_SYMBOL(simple_transaction_read);
 
-पूर्णांक simple_transaction_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	मुक्त_page((अचिन्हित दीर्घ)file->निजी_data);
-	वापस 0;
-पूर्ण
+int simple_transaction_release(struct inode *inode, struct file *file)
+{
+	free_page((unsigned long)file->private_data);
+	return 0;
+}
 EXPORT_SYMBOL(simple_transaction_release);
 
 /* Simple attribute files */
 
-काष्ठा simple_attr अणु
-	पूर्णांक (*get)(व्योम *, u64 *);
-	पूर्णांक (*set)(व्योम *, u64);
-	अक्षर get_buf[24];	/* enough to store a u64 and "\n\0" */
-	अक्षर set_buf[24];
-	व्योम *data;
-	स्थिर अक्षर *fmt;	/* क्रमmat क्रम पढ़ो operation */
-	काष्ठा mutex mutex;	/* protects access to these buffers */
-पूर्ण;
+struct simple_attr {
+	int (*get)(void *, u64 *);
+	int (*set)(void *, u64);
+	char get_buf[24];	/* enough to store a u64 and "\n\0" */
+	char set_buf[24];
+	void *data;
+	const char *fmt;	/* format for read operation */
+	struct mutex mutex;	/* protects access to these buffers */
+};
 
-/* simple_attr_खोलो is called by an actual attribute खोलो file operation
- * to set the attribute specअगरic access operations. */
-पूर्णांक simple_attr_खोलो(काष्ठा inode *inode, काष्ठा file *file,
-		     पूर्णांक (*get)(व्योम *, u64 *), पूर्णांक (*set)(व्योम *, u64),
-		     स्थिर अक्षर *fmt)
-अणु
-	काष्ठा simple_attr *attr;
+/* simple_attr_open is called by an actual attribute open file operation
+ * to set the attribute specific access operations. */
+int simple_attr_open(struct inode *inode, struct file *file,
+		     int (*get)(void *, u64 *), int (*set)(void *, u64),
+		     const char *fmt)
+{
+	struct simple_attr *attr;
 
-	attr = kzalloc(माप(*attr), GFP_KERNEL);
-	अगर (!attr)
-		वापस -ENOMEM;
+	attr = kzalloc(sizeof(*attr), GFP_KERNEL);
+	if (!attr)
+		return -ENOMEM;
 
 	attr->get = get;
 	attr->set = set;
-	attr->data = inode->i_निजी;
+	attr->data = inode->i_private;
 	attr->fmt = fmt;
 	mutex_init(&attr->mutex);
 
-	file->निजी_data = attr;
+	file->private_data = attr;
 
-	वापस nonseekable_खोलो(inode, file);
-पूर्ण
-EXPORT_SYMBOL_GPL(simple_attr_खोलो);
+	return nonseekable_open(inode, file);
+}
+EXPORT_SYMBOL_GPL(simple_attr_open);
 
-पूर्णांक simple_attr_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	kमुक्त(file->निजी_data);
-	वापस 0;
-पूर्ण
+int simple_attr_release(struct inode *inode, struct file *file)
+{
+	kfree(file->private_data);
+	return 0;
+}
 EXPORT_SYMBOL_GPL(simple_attr_release);	/* GPL-only?  This?  Really? */
 
-/* पढ़ो from the buffer that is filled with the get function */
-sमाप_प्रकार simple_attr_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
-			 माप_प्रकार len, loff_t *ppos)
-अणु
-	काष्ठा simple_attr *attr;
-	माप_प्रकार size;
-	sमाप_प्रकार ret;
+/* read from the buffer that is filled with the get function */
+ssize_t simple_attr_read(struct file *file, char __user *buf,
+			 size_t len, loff_t *ppos)
+{
+	struct simple_attr *attr;
+	size_t size;
+	ssize_t ret;
 
-	attr = file->निजी_data;
+	attr = file->private_data;
 
-	अगर (!attr->get)
-		वापस -EACCES;
+	if (!attr->get)
+		return -EACCES;
 
-	ret = mutex_lock_पूर्णांकerruptible(&attr->mutex);
-	अगर (ret)
-		वापस ret;
+	ret = mutex_lock_interruptible(&attr->mutex);
+	if (ret)
+		return ret;
 
-	अगर (*ppos && attr->get_buf[0]) अणु
-		/* जारीd पढ़ो */
-		size = म_माप(attr->get_buf);
-	पूर्ण अन्यथा अणु
-		/* first पढ़ो */
+	if (*ppos && attr->get_buf[0]) {
+		/* continued read */
+		size = strlen(attr->get_buf);
+	} else {
+		/* first read */
 		u64 val;
 		ret = attr->get(attr->data, &val);
-		अगर (ret)
-			जाओ out;
+		if (ret)
+			goto out;
 
-		size = scnम_लिखो(attr->get_buf, माप(attr->get_buf),
-				 attr->fmt, (अचिन्हित दीर्घ दीर्घ)val);
-	पूर्ण
+		size = scnprintf(attr->get_buf, sizeof(attr->get_buf),
+				 attr->fmt, (unsigned long long)val);
+	}
 
-	ret = simple_पढ़ो_from_buffer(buf, len, ppos, attr->get_buf, size);
+	ret = simple_read_from_buffer(buf, len, ppos, attr->get_buf, size);
 out:
 	mutex_unlock(&attr->mutex);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(simple_attr_पढ़ो);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(simple_attr_read);
 
-/* पूर्णांकerpret the buffer as a number to call the set function with */
-sमाप_प्रकार simple_attr_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
-			  माप_प्रकार len, loff_t *ppos)
-अणु
-	काष्ठा simple_attr *attr;
-	अचिन्हित दीर्घ दीर्घ val;
-	माप_प्रकार size;
-	sमाप_प्रकार ret;
+/* interpret the buffer as a number to call the set function with */
+ssize_t simple_attr_write(struct file *file, const char __user *buf,
+			  size_t len, loff_t *ppos)
+{
+	struct simple_attr *attr;
+	unsigned long long val;
+	size_t size;
+	ssize_t ret;
 
-	attr = file->निजी_data;
-	अगर (!attr->set)
-		वापस -EACCES;
+	attr = file->private_data;
+	if (!attr->set)
+		return -EACCES;
 
-	ret = mutex_lock_पूर्णांकerruptible(&attr->mutex);
-	अगर (ret)
-		वापस ret;
+	ret = mutex_lock_interruptible(&attr->mutex);
+	if (ret)
+		return ret;
 
 	ret = -EFAULT;
-	size = min(माप(attr->set_buf) - 1, len);
-	अगर (copy_from_user(attr->set_buf, buf, size))
-		जाओ out;
+	size = min(sizeof(attr->set_buf) - 1, len);
+	if (copy_from_user(attr->set_buf, buf, size))
+		goto out;
 
 	attr->set_buf[size] = '\0';
-	ret = kम_से_अदीर्घl(attr->set_buf, 0, &val);
-	अगर (ret)
-		जाओ out;
+	ret = kstrtoull(attr->set_buf, 0, &val);
+	if (ret)
+		goto out;
 	ret = attr->set(attr->data, val);
-	अगर (ret == 0)
+	if (ret == 0)
 		ret = len; /* on success, claim we got the whole input */
 out:
 	mutex_unlock(&attr->mutex);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(simple_attr_ग_लिखो);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(simple_attr_write);
 
 /**
- * generic_fh_to_dentry - generic helper क्रम the fh_to_dentry export operation
- * @sb:		fileप्रणाली to करो the file handle conversion on
+ * generic_fh_to_dentry - generic helper for the fh_to_dentry export operation
+ * @sb:		filesystem to do the file handle conversion on
  * @fid:	file handle to convert
  * @fh_len:	length of the file handle in bytes
  * @fh_type:	type of file handle
- * @get_inode:	fileप्रणाली callback to retrieve inode
+ * @get_inode:	filesystem callback to retrieve inode
  *
- * This function decodes @fid as दीर्घ as it has one of the well-known
+ * This function decodes @fid as long as it has one of the well-known
  * Linux filehandle types and calls @get_inode on it to retrieve the
- * inode क्रम the object specअगरied in the file handle.
+ * inode for the object specified in the file handle.
  */
-काष्ठा dentry *generic_fh_to_dentry(काष्ठा super_block *sb, काष्ठा fid *fid,
-		पूर्णांक fh_len, पूर्णांक fh_type, काष्ठा inode *(*get_inode)
-			(काष्ठा super_block *sb, u64 ino, u32 gen))
-अणु
-	काष्ठा inode *inode = शून्य;
+struct dentry *generic_fh_to_dentry(struct super_block *sb, struct fid *fid,
+		int fh_len, int fh_type, struct inode *(*get_inode)
+			(struct super_block *sb, u64 ino, u32 gen))
+{
+	struct inode *inode = NULL;
 
-	अगर (fh_len < 2)
-		वापस शून्य;
+	if (fh_len < 2)
+		return NULL;
 
-	चयन (fh_type) अणु
-	हाल खाताID_INO32_GEN:
-	हाल खाताID_INO32_GEN_PARENT:
+	switch (fh_type) {
+	case FILEID_INO32_GEN:
+	case FILEID_INO32_GEN_PARENT:
 		inode = get_inode(sb, fid->i32.ino, fid->i32.gen);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस d_obtain_alias(inode);
-पूर्ण
+	return d_obtain_alias(inode);
+}
 EXPORT_SYMBOL_GPL(generic_fh_to_dentry);
 
 /**
- * generic_fh_to_parent - generic helper क्रम the fh_to_parent export operation
- * @sb:		fileप्रणाली to करो the file handle conversion on
+ * generic_fh_to_parent - generic helper for the fh_to_parent export operation
+ * @sb:		filesystem to do the file handle conversion on
  * @fid:	file handle to convert
  * @fh_len:	length of the file handle in bytes
  * @fh_type:	type of file handle
- * @get_inode:	fileप्रणाली callback to retrieve inode
+ * @get_inode:	filesystem callback to retrieve inode
  *
- * This function decodes @fid as दीर्घ as it has one of the well-known
+ * This function decodes @fid as long as it has one of the well-known
  * Linux filehandle types and calls @get_inode on it to retrieve the
- * inode क्रम the _parent_ object specअगरied in the file handle अगर it
- * is specअगरied in the file handle, or शून्य otherwise.
+ * inode for the _parent_ object specified in the file handle if it
+ * is specified in the file handle, or NULL otherwise.
  */
-काष्ठा dentry *generic_fh_to_parent(काष्ठा super_block *sb, काष्ठा fid *fid,
-		पूर्णांक fh_len, पूर्णांक fh_type, काष्ठा inode *(*get_inode)
-			(काष्ठा super_block *sb, u64 ino, u32 gen))
-अणु
-	काष्ठा inode *inode = शून्य;
+struct dentry *generic_fh_to_parent(struct super_block *sb, struct fid *fid,
+		int fh_len, int fh_type, struct inode *(*get_inode)
+			(struct super_block *sb, u64 ino, u32 gen))
+{
+	struct inode *inode = NULL;
 
-	अगर (fh_len <= 2)
-		वापस शून्य;
+	if (fh_len <= 2)
+		return NULL;
 
-	चयन (fh_type) अणु
-	हाल खाताID_INO32_GEN_PARENT:
+	switch (fh_type) {
+	case FILEID_INO32_GEN_PARENT:
 		inode = get_inode(sb, fid->i32.parent_ino,
 				  (fh_len > 3 ? fid->i32.parent_gen : 0));
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस d_obtain_alias(inode);
-पूर्ण
+	return d_obtain_alias(inode);
+}
 EXPORT_SYMBOL_GPL(generic_fh_to_parent);
 
 /**
- * __generic_file_fsync - generic fsync implementation क्रम simple fileप्रणालीs
+ * __generic_file_fsync - generic fsync implementation for simple filesystems
  *
  * @file:	file to synchronize
  * @start:	start offset in bytes
  * @end:	end offset in bytes (inclusive)
- * @datasync:	only synchronize essential metadata अगर true
+ * @datasync:	only synchronize essential metadata if true
  *
- * This is a generic implementation of the fsync method क्रम simple
- * fileप्रणालीs which track all non-inode metadata in the buffers list
- * hanging off the address_space काष्ठाure.
+ * This is a generic implementation of the fsync method for simple
+ * filesystems which track all non-inode metadata in the buffers list
+ * hanging off the address_space structure.
  */
-पूर्णांक __generic_file_fsync(काष्ठा file *file, loff_t start, loff_t end,
-				 पूर्णांक datasync)
-अणु
-	काष्ठा inode *inode = file->f_mapping->host;
-	पूर्णांक err;
-	पूर्णांक ret;
+int __generic_file_fsync(struct file *file, loff_t start, loff_t end,
+				 int datasync)
+{
+	struct inode *inode = file->f_mapping->host;
+	int err;
+	int ret;
 
-	err = file_ग_लिखो_and_रुको_range(file, start, end);
-	अगर (err)
-		वापस err;
+	err = file_write_and_wait_range(file, start, end);
+	if (err)
+		return err;
 
 	inode_lock(inode);
 	ret = sync_mapping_buffers(inode->i_mapping);
-	अगर (!(inode->i_state & I_सूचीTY_ALL))
-		जाओ out;
-	अगर (datasync && !(inode->i_state & I_सूचीTY_DATASYNC))
-		जाओ out;
+	if (!(inode->i_state & I_DIRTY_ALL))
+		goto out;
+	if (datasync && !(inode->i_state & I_DIRTY_DATASYNC))
+		goto out;
 
 	err = sync_inode_metadata(inode, 1);
-	अगर (ret == 0)
+	if (ret == 0)
 		ret = err;
 
 out:
 	inode_unlock(inode);
 	/* check and advance again to catch errors after syncing out buffers */
 	err = file_check_and_advance_wb_err(file);
-	अगर (ret == 0)
+	if (ret == 0)
 		ret = err;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(__generic_file_fsync);
 
 /**
- * generic_file_fsync - generic fsync implementation क्रम simple fileप्रणालीs
+ * generic_file_fsync - generic fsync implementation for simple filesystems
  *			with flush
  * @file:	file to synchronize
  * @start:	start offset in bytes
  * @end:	end offset in bytes (inclusive)
- * @datasync:	only synchronize essential metadata अगर true
+ * @datasync:	only synchronize essential metadata if true
  *
  */
 
-पूर्णांक generic_file_fsync(काष्ठा file *file, loff_t start, loff_t end,
-		       पूर्णांक datasync)
-अणु
-	काष्ठा inode *inode = file->f_mapping->host;
-	पूर्णांक err;
+int generic_file_fsync(struct file *file, loff_t start, loff_t end,
+		       int datasync)
+{
+	struct inode *inode = file->f_mapping->host;
+	int err;
 
 	err = __generic_file_fsync(file, start, end, datasync);
-	अगर (err)
-		वापस err;
-	वापस blkdev_issue_flush(inode->i_sb->s_bdev);
-पूर्ण
+	if (err)
+		return err;
+	return blkdev_issue_flush(inode->i_sb->s_bdev);
+}
 EXPORT_SYMBOL(generic_file_fsync);
 
 /**
- * generic_check_addressable - Check addressability of file प्रणाली
- * @blocksize_bits:	log of file प्रणाली block size
- * @num_blocks:		number of blocks in file प्रणाली
+ * generic_check_addressable - Check addressability of file system
+ * @blocksize_bits:	log of file system block size
+ * @num_blocks:		number of blocks in file system
  *
- * Determine whether a file प्रणाली with @num_blocks blocks (and a
+ * Determine whether a file system with @num_blocks blocks (and a
  * block size of 2**@blocksize_bits) is addressable by the sector_t
- * and page cache of the प्रणाली.  Return 0 अगर so and -EFBIG otherwise.
+ * and page cache of the system.  Return 0 if so and -EFBIG otherwise.
  */
-पूर्णांक generic_check_addressable(अचिन्हित blocksize_bits, u64 num_blocks)
-अणु
+int generic_check_addressable(unsigned blocksize_bits, u64 num_blocks)
+{
 	u64 last_fs_block = num_blocks - 1;
 	u64 last_fs_page =
 		last_fs_block >> (PAGE_SHIFT - blocksize_bits);
 
-	अगर (unlikely(num_blocks == 0))
-		वापस 0;
+	if (unlikely(num_blocks == 0))
+		return 0;
 
-	अगर ((blocksize_bits < 9) || (blocksize_bits > PAGE_SHIFT))
-		वापस -EINVAL;
+	if ((blocksize_bits < 9) || (blocksize_bits > PAGE_SHIFT))
+		return -EINVAL;
 
-	अगर ((last_fs_block > (sector_t)(~0ULL) >> (blocksize_bits - 9)) ||
-	    (last_fs_page > (pgoff_t)(~0ULL))) अणु
-		वापस -EFBIG;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	if ((last_fs_block > (sector_t)(~0ULL) >> (blocksize_bits - 9)) ||
+	    (last_fs_page > (pgoff_t)(~0ULL))) {
+		return -EFBIG;
+	}
+	return 0;
+}
 EXPORT_SYMBOL(generic_check_addressable);
 
 /*
- * No-op implementation of ->fsync क्रम in-memory fileप्रणालीs.
+ * No-op implementation of ->fsync for in-memory filesystems.
  */
-पूर्णांक noop_fsync(काष्ठा file *file, loff_t start, loff_t end, पूर्णांक datasync)
-अणु
-	वापस 0;
-पूर्ण
+int noop_fsync(struct file *file, loff_t start, loff_t end, int datasync)
+{
+	return 0;
+}
 EXPORT_SYMBOL(noop_fsync);
 
-पूर्णांक noop_set_page_dirty(काष्ठा page *page)
-अणु
+int noop_set_page_dirty(struct page *page)
+{
 	/*
-	 * Unlike __set_page_dirty_no_ग_लिखोback that handles dirty page
-	 * tracking in the page object, dax करोes all dirty tracking in
-	 * the inode address_space in response to mkग_लिखो faults. In the
-	 * dax हाल we only need to worry about potentially dirty CPU
-	 * caches, not dirty page cache pages to ग_लिखो back.
+	 * Unlike __set_page_dirty_no_writeback that handles dirty page
+	 * tracking in the page object, dax does all dirty tracking in
+	 * the inode address_space in response to mkwrite faults. In the
+	 * dax case we only need to worry about potentially dirty CPU
+	 * caches, not dirty page cache pages to write back.
 	 *
 	 * This callback is defined to prevent fallback to
 	 * __set_page_dirty_buffers() in set_page_dirty().
 	 */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(noop_set_page_dirty);
 
-व्योम noop_invalidatepage(काष्ठा page *page, अचिन्हित पूर्णांक offset,
-		अचिन्हित पूर्णांक length)
-अणु
+void noop_invalidatepage(struct page *page, unsigned int offset,
+		unsigned int length)
+{
 	/*
-	 * There is no page cache to invalidate in the dax हाल, however
+	 * There is no page cache to invalidate in the dax case, however
 	 * we need this callback defined to prevent falling back to
-	 * block_invalidatepage() in करो_invalidatepage().
+	 * block_invalidatepage() in do_invalidatepage().
 	 */
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(noop_invalidatepage);
 
-sमाप_प्रकार noop_direct_IO(काष्ठा kiocb *iocb, काष्ठा iov_iter *iter)
-अणु
+ssize_t noop_direct_IO(struct kiocb *iocb, struct iov_iter *iter)
+{
 	/*
-	 * iomap based fileप्रणालीs support direct I/O without need क्रम
+	 * iomap based filesystems support direct I/O without need for
 	 * this callback. However, it still needs to be set in
-	 * inode->a_ops so that खोलो/fcntl know that direct I/O is
+	 * inode->a_ops so that open/fcntl know that direct I/O is
 	 * generally supported.
 	 */
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 EXPORT_SYMBOL_GPL(noop_direct_IO);
 
-/* Because kमुक्त isn't assignment-compatible with व्योम(व्योम*) ;-/ */
-व्योम kमुक्त_link(व्योम *p)
-अणु
-	kमुक्त(p);
-पूर्ण
-EXPORT_SYMBOL(kमुक्त_link);
+/* Because kfree isn't assignment-compatible with void(void*) ;-/ */
+void kfree_link(void *p)
+{
+	kfree(p);
+}
+EXPORT_SYMBOL(kfree_link);
 
 /*
- * nop .set_page_dirty method so that people can use .page_mkग_लिखो on
+ * nop .set_page_dirty method so that people can use .page_mkwrite on
  * anon inodes.
  */
-अटल पूर्णांक anon_set_page_dirty(काष्ठा page *page)
-अणु
-	वापस 0;
-पूर्ण;
+static int anon_set_page_dirty(struct page *page)
+{
+	return 0;
+};
 
-काष्ठा inode *alloc_anon_inode(काष्ठा super_block *s)
-अणु
-	अटल स्थिर काष्ठा address_space_operations anon_aops = अणु
+struct inode *alloc_anon_inode(struct super_block *s)
+{
+	static const struct address_space_operations anon_aops = {
 		.set_page_dirty = anon_set_page_dirty,
-	पूर्ण;
-	काष्ठा inode *inode = new_inode_pseuकरो(s);
+	};
+	struct inode *inode = new_inode_pseudo(s);
 
-	अगर (!inode)
-		वापस ERR_PTR(-ENOMEM);
+	if (!inode)
+		return ERR_PTR(-ENOMEM);
 
 	inode->i_ino = get_next_ino();
 	inode->i_mapping->a_ops = &anon_aops;
@@ -1235,122 +1234,122 @@ EXPORT_SYMBOL(kमुक्त_link);
 	 * Mark the inode dirty from the very beginning,
 	 * that way it will never be moved to the dirty
 	 * list because mark_inode_dirty() will think
-	 * that it alपढ़ोy _is_ on the dirty list.
+	 * that it already _is_ on the dirty list.
 	 */
-	inode->i_state = I_सूचीTY;
+	inode->i_state = I_DIRTY;
 	inode->i_mode = S_IRUSR | S_IWUSR;
 	inode->i_uid = current_fsuid();
 	inode->i_gid = current_fsgid();
 	inode->i_flags |= S_PRIVATE;
-	inode->i_aसमय = inode->i_mसमय = inode->i_स_समय = current_समय(inode);
-	वापस inode;
-पूर्ण
+	inode->i_atime = inode->i_mtime = inode->i_ctime = current_time(inode);
+	return inode;
+}
 EXPORT_SYMBOL(alloc_anon_inode);
 
 /**
- * simple_nosetlease - generic helper क्रम prohibiting leases
- * @filp: file poपूर्णांकer
+ * simple_nosetlease - generic helper for prohibiting leases
+ * @filp: file pointer
  * @arg: type of lease to obtain
- * @flp: new lease supplied क्रम insertion
- * @priv: निजी data क्रम lm_setup operation
+ * @flp: new lease supplied for insertion
+ * @priv: private data for lm_setup operation
  *
- * Generic helper क्रम fileप्रणालीs that करो not wish to allow leases to be set.
- * All arguments are ignored and it just वापसs -EINVAL.
+ * Generic helper for filesystems that do not wish to allow leases to be set.
+ * All arguments are ignored and it just returns -EINVAL.
  */
-पूर्णांक
-simple_nosetlease(काष्ठा file *filp, दीर्घ arg, काष्ठा file_lock **flp,
-		  व्योम **priv)
-अणु
-	वापस -EINVAL;
-पूर्ण
+int
+simple_nosetlease(struct file *filp, long arg, struct file_lock **flp,
+		  void **priv)
+{
+	return -EINVAL;
+}
 EXPORT_SYMBOL(simple_nosetlease);
 
 /**
  * simple_get_link - generic helper to get the target of "fast" symlinks
  * @dentry: not used here
  * @inode: the symlink inode
- * @करोne: not used here
+ * @done: not used here
  *
- * Generic helper क्रम fileप्रणालीs to use क्रम symlink inodes where a poपूर्णांकer to
+ * Generic helper for filesystems to use for symlink inodes where a pointer to
  * the symlink target is stored in ->i_link.  NOTE: this isn't normally called,
- * since as an optimization the path lookup code uses any non-शून्य ->i_link
+ * since as an optimization the path lookup code uses any non-NULL ->i_link
  * directly, without calling ->get_link().  But ->get_link() still must be set,
- * to mark the inode_operations as being क्रम a symlink.
+ * to mark the inode_operations as being for a symlink.
  *
  * Return: the symlink target
  */
-स्थिर अक्षर *simple_get_link(काष्ठा dentry *dentry, काष्ठा inode *inode,
-			    काष्ठा delayed_call *करोne)
-अणु
-	वापस inode->i_link;
-पूर्ण
+const char *simple_get_link(struct dentry *dentry, struct inode *inode,
+			    struct delayed_call *done)
+{
+	return inode->i_link;
+}
 EXPORT_SYMBOL(simple_get_link);
 
-स्थिर काष्ठा inode_operations simple_symlink_inode_operations = अणु
+const struct inode_operations simple_symlink_inode_operations = {
 	.get_link = simple_get_link,
-पूर्ण;
+};
 EXPORT_SYMBOL(simple_symlink_inode_operations);
 
 /*
- * Operations क्रम a permanently empty directory.
+ * Operations for a permanently empty directory.
  */
-अटल काष्ठा dentry *empty_dir_lookup(काष्ठा inode *dir, काष्ठा dentry *dentry, अचिन्हित पूर्णांक flags)
-अणु
-	वापस ERR_PTR(-ENOENT);
-पूर्ण
+static struct dentry *empty_dir_lookup(struct inode *dir, struct dentry *dentry, unsigned int flags)
+{
+	return ERR_PTR(-ENOENT);
+}
 
-अटल पूर्णांक empty_dir_getattr(काष्ठा user_namespace *mnt_userns,
-			     स्थिर काष्ठा path *path, काष्ठा kstat *stat,
-			     u32 request_mask, अचिन्हित पूर्णांक query_flags)
-अणु
-	काष्ठा inode *inode = d_inode(path->dentry);
+static int empty_dir_getattr(struct user_namespace *mnt_userns,
+			     const struct path *path, struct kstat *stat,
+			     u32 request_mask, unsigned int query_flags)
+{
+	struct inode *inode = d_inode(path->dentry);
 	generic_fillattr(&init_user_ns, inode, stat);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक empty_dir_setattr(काष्ठा user_namespace *mnt_userns,
-			     काष्ठा dentry *dentry, काष्ठा iattr *attr)
-अणु
-	वापस -EPERM;
-पूर्ण
+static int empty_dir_setattr(struct user_namespace *mnt_userns,
+			     struct dentry *dentry, struct iattr *attr)
+{
+	return -EPERM;
+}
 
-अटल sमाप_प्रकार empty_dir_listxattr(काष्ठा dentry *dentry, अक्षर *list, माप_प्रकार size)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+static ssize_t empty_dir_listxattr(struct dentry *dentry, char *list, size_t size)
+{
+	return -EOPNOTSUPP;
+}
 
-अटल स्थिर काष्ठा inode_operations empty_dir_inode_operations = अणु
+static const struct inode_operations empty_dir_inode_operations = {
 	.lookup		= empty_dir_lookup,
 	.permission	= generic_permission,
 	.setattr	= empty_dir_setattr,
 	.getattr	= empty_dir_getattr,
 	.listxattr	= empty_dir_listxattr,
-पूर्ण;
+};
 
-अटल loff_t empty_dir_llseek(काष्ठा file *file, loff_t offset, पूर्णांक whence)
-अणु
+static loff_t empty_dir_llseek(struct file *file, loff_t offset, int whence)
+{
 	/* An empty directory has two entries . and .. at offsets 0 and 1 */
-	वापस generic_file_llseek_size(file, offset, whence, 2, 2);
-पूर्ण
+	return generic_file_llseek_size(file, offset, whence, 2, 2);
+}
 
-अटल पूर्णांक empty_dir_सूची_पढ़ो(काष्ठा file *file, काष्ठा dir_context *ctx)
-अणु
-	dir_emit_करोts(file, ctx);
-	वापस 0;
-पूर्ण
+static int empty_dir_readdir(struct file *file, struct dir_context *ctx)
+{
+	dir_emit_dots(file, ctx);
+	return 0;
+}
 
-अटल स्थिर काष्ठा file_operations empty_dir_operations = अणु
+static const struct file_operations empty_dir_operations = {
 	.llseek		= empty_dir_llseek,
-	.पढ़ो		= generic_पढ़ो_dir,
-	.iterate_shared	= empty_dir_सूची_पढ़ो,
+	.read		= generic_read_dir,
+	.iterate_shared	= empty_dir_readdir,
 	.fsync		= noop_fsync,
-पूर्ण;
+};
 
 
-व्योम make_empty_dir_inode(काष्ठा inode *inode)
-अणु
+void make_empty_dir_inode(struct inode *inode)
+{
 	set_nlink(inode, 2);
-	inode->i_mode = S_IFसूची | S_IRUGO | S_IXUGO;
+	inode->i_mode = S_IFDIR | S_IRUGO | S_IXUGO;
 	inode->i_uid = GLOBAL_ROOT_UID;
 	inode->i_gid = GLOBAL_ROOT_GID;
 	inode->i_rdev = 0;
@@ -1361,163 +1360,163 @@ EXPORT_SYMBOL(simple_symlink_inode_operations);
 	inode->i_op = &empty_dir_inode_operations;
 	inode->i_opflags &= ~IOP_XATTR;
 	inode->i_fop = &empty_dir_operations;
-पूर्ण
+}
 
-bool is_empty_dir_inode(काष्ठा inode *inode)
-अणु
-	वापस (inode->i_fop == &empty_dir_operations) &&
+bool is_empty_dir_inode(struct inode *inode)
+{
+	return (inode->i_fop == &empty_dir_operations) &&
 		(inode->i_op == &empty_dir_inode_operations);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_UNICODE
+#ifdef CONFIG_UNICODE
 /*
- * Determine अगर the name of a dentry should be हालfolded.
+ * Determine if the name of a dentry should be casefolded.
  *
- * Return: अगर names will need हालfolding
+ * Return: if names will need casefolding
  */
-अटल bool needs_हालfold(स्थिर काष्ठा inode *dir)
-अणु
-	वापस IS_CASEFOLDED(dir) && dir->i_sb->s_encoding;
-पूर्ण
+static bool needs_casefold(const struct inode *dir)
+{
+	return IS_CASEFOLDED(dir) && dir->i_sb->s_encoding;
+}
 
 /**
- * generic_ci_d_compare - generic d_compare implementation क्रम हालfolding fileप्रणालीs
+ * generic_ci_d_compare - generic d_compare implementation for casefolding filesystems
  * @dentry:	dentry whose name we are checking against
  * @len:	len of name of dentry
- * @str:	str poपूर्णांकer to name of dentry
+ * @str:	str pointer to name of dentry
  * @name:	Name to compare against
  *
- * Return: 0 अगर names match, 1 अगर mismatch, or -ERRNO
+ * Return: 0 if names match, 1 if mismatch, or -ERRNO
  */
-अटल पूर्णांक generic_ci_d_compare(स्थिर काष्ठा dentry *dentry, अचिन्हित पूर्णांक len,
-				स्थिर अक्षर *str, स्थिर काष्ठा qstr *name)
-अणु
-	स्थिर काष्ठा dentry *parent = READ_ONCE(dentry->d_parent);
-	स्थिर काष्ठा inode *dir = READ_ONCE(parent->d_inode);
-	स्थिर काष्ठा super_block *sb = dentry->d_sb;
-	स्थिर काष्ठा unicode_map *um = sb->s_encoding;
-	काष्ठा qstr qstr = QSTR_INIT(str, len);
-	अक्षर strbuf[DNAME_INLINE_LEN];
-	पूर्णांक ret;
+static int generic_ci_d_compare(const struct dentry *dentry, unsigned int len,
+				const char *str, const struct qstr *name)
+{
+	const struct dentry *parent = READ_ONCE(dentry->d_parent);
+	const struct inode *dir = READ_ONCE(parent->d_inode);
+	const struct super_block *sb = dentry->d_sb;
+	const struct unicode_map *um = sb->s_encoding;
+	struct qstr qstr = QSTR_INIT(str, len);
+	char strbuf[DNAME_INLINE_LEN];
+	int ret;
 
-	अगर (!dir || !needs_हालfold(dir))
-		जाओ fallback;
+	if (!dir || !needs_casefold(dir))
+		goto fallback;
 	/*
 	 * If the dentry name is stored in-line, then it may be concurrently
-	 * modअगरied by a नाम.  If this happens, the VFS will eventually retry
-	 * the lookup, so it करोesn't matter what ->d_compare() वापसs.
-	 * However, it's unsafe to call utf8_strnहालcmp() with an unstable
-	 * string.  Thereक्रमe, we have to copy the name पूर्णांकo a temporary buffer.
+	 * modified by a rename.  If this happens, the VFS will eventually retry
+	 * the lookup, so it doesn't matter what ->d_compare() returns.
+	 * However, it's unsafe to call utf8_strncasecmp() with an unstable
+	 * string.  Therefore, we have to copy the name into a temporary buffer.
 	 */
-	अगर (len <= DNAME_INLINE_LEN - 1) अणु
-		स_नकल(strbuf, str, len);
+	if (len <= DNAME_INLINE_LEN - 1) {
+		memcpy(strbuf, str, len);
 		strbuf[len] = 0;
 		qstr.name = strbuf;
 		/* prevent compiler from optimizing out the temporary buffer */
 		barrier();
-	पूर्ण
-	ret = utf8_strnहालcmp(um, name, &qstr);
-	अगर (ret >= 0)
-		वापस ret;
+	}
+	ret = utf8_strncasecmp(um, name, &qstr);
+	if (ret >= 0)
+		return ret;
 
-	अगर (sb_has_strict_encoding(sb))
-		वापस -EINVAL;
+	if (sb_has_strict_encoding(sb))
+		return -EINVAL;
 fallback:
-	अगर (len != name->len)
-		वापस 1;
-	वापस !!स_भेद(str, name->name, len);
-पूर्ण
+	if (len != name->len)
+		return 1;
+	return !!memcmp(str, name->name, len);
+}
 
 /**
- * generic_ci_d_hash - generic d_hash implementation क्रम हालfolding fileप्रणालीs
+ * generic_ci_d_hash - generic d_hash implementation for casefolding filesystems
  * @dentry:	dentry of the parent directory
  * @str:	qstr of name whose hash we should fill in
  *
- * Return: 0 अगर hash was successful or unchanged, and -EINVAL on error
+ * Return: 0 if hash was successful or unchanged, and -EINVAL on error
  */
-अटल पूर्णांक generic_ci_d_hash(स्थिर काष्ठा dentry *dentry, काष्ठा qstr *str)
-अणु
-	स्थिर काष्ठा inode *dir = READ_ONCE(dentry->d_inode);
-	काष्ठा super_block *sb = dentry->d_sb;
-	स्थिर काष्ठा unicode_map *um = sb->s_encoding;
-	पूर्णांक ret = 0;
+static int generic_ci_d_hash(const struct dentry *dentry, struct qstr *str)
+{
+	const struct inode *dir = READ_ONCE(dentry->d_inode);
+	struct super_block *sb = dentry->d_sb;
+	const struct unicode_map *um = sb->s_encoding;
+	int ret = 0;
 
-	अगर (!dir || !needs_हालfold(dir))
-		वापस 0;
+	if (!dir || !needs_casefold(dir))
+		return 0;
 
-	ret = utf8_हालfold_hash(um, dentry, str);
-	अगर (ret < 0 && sb_has_strict_encoding(sb))
-		वापस -EINVAL;
-	वापस 0;
-पूर्ण
+	ret = utf8_casefold_hash(um, dentry, str);
+	if (ret < 0 && sb_has_strict_encoding(sb))
+		return -EINVAL;
+	return 0;
+}
 
-अटल स्थिर काष्ठा dentry_operations generic_ci_dentry_ops = अणु
+static const struct dentry_operations generic_ci_dentry_ops = {
 	.d_hash = generic_ci_d_hash,
 	.d_compare = generic_ci_d_compare,
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif
 
-#अगर_घोषित CONFIG_FS_ENCRYPTION
-अटल स्थिर काष्ठा dentry_operations generic_encrypted_dentry_ops = अणु
+#ifdef CONFIG_FS_ENCRYPTION
+static const struct dentry_operations generic_encrypted_dentry_ops = {
 	.d_revalidate = fscrypt_d_revalidate,
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif
 
-#अगर defined(CONFIG_FS_ENCRYPTION) && defined(CONFIG_UNICODE)
-अटल स्थिर काष्ठा dentry_operations generic_encrypted_ci_dentry_ops = अणु
+#if defined(CONFIG_FS_ENCRYPTION) && defined(CONFIG_UNICODE)
+static const struct dentry_operations generic_encrypted_ci_dentry_ops = {
 	.d_hash = generic_ci_d_hash,
 	.d_compare = generic_ci_d_compare,
 	.d_revalidate = fscrypt_d_revalidate,
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif
 
 /**
- * generic_set_encrypted_ci_d_ops - helper क्रम setting d_ops क्रम given dentry
+ * generic_set_encrypted_ci_d_ops - helper for setting d_ops for given dentry
  * @dentry:	dentry to set ops on
  *
  * Casefolded directories need d_hash and d_compare set, so that the dentries
- * contained in them are handled हाल-insensitively.  Note that these operations
+ * contained in them are handled case-insensitively.  Note that these operations
  * are needed on the parent directory rather than on the dentries in it, and
- * जबतक the हालfolding flag can be toggled on and off on an empty directory,
- * dentry_operations can't be changed later.  As a result, अगर the fileप्रणाली has
- * हालfolding support enabled at all, we have to give all dentries the
- * हालfolding operations even अगर their inode करोesn't have the हालfolding flag
- * currently (and thus the हालfolding ops would be no-ops क्रम now).
+ * while the casefolding flag can be toggled on and off on an empty directory,
+ * dentry_operations can't be changed later.  As a result, if the filesystem has
+ * casefolding support enabled at all, we have to give all dentries the
+ * casefolding operations even if their inode doesn't have the casefolding flag
+ * currently (and thus the casefolding ops would be no-ops for now).
  *
- * Encryption works dअगरferently in that the only dentry operation it needs is
+ * Encryption works differently in that the only dentry operation it needs is
  * d_revalidate, which it only needs on dentries that have the no-key name flag.
  * The no-key flag can't be set "later", so we don't have to worry about that.
  *
  * Finally, to maximize compatibility with overlayfs (which isn't compatible
- * with certain dentry operations) and to aव्योम taking an unnecessary
- * perक्रमmance hit, we use custom dentry_operations क्रम each possible
+ * with certain dentry operations) and to avoid taking an unnecessary
+ * performance hit, we use custom dentry_operations for each possible
  * combination rather than always installing all operations.
  */
-व्योम generic_set_encrypted_ci_d_ops(काष्ठा dentry *dentry)
-अणु
-#अगर_घोषित CONFIG_FS_ENCRYPTION
+void generic_set_encrypted_ci_d_ops(struct dentry *dentry)
+{
+#ifdef CONFIG_FS_ENCRYPTION
 	bool needs_encrypt_ops = dentry->d_flags & DCACHE_NOKEY_NAME;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_UNICODE
+#endif
+#ifdef CONFIG_UNICODE
 	bool needs_ci_ops = dentry->d_sb->s_encoding;
-#पूर्ण_अगर
-#अगर defined(CONFIG_FS_ENCRYPTION) && defined(CONFIG_UNICODE)
-	अगर (needs_encrypt_ops && needs_ci_ops) अणु
+#endif
+#if defined(CONFIG_FS_ENCRYPTION) && defined(CONFIG_UNICODE)
+	if (needs_encrypt_ops && needs_ci_ops) {
 		d_set_d_op(dentry, &generic_encrypted_ci_dentry_ops);
-		वापस;
-	पूर्ण
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_FS_ENCRYPTION
-	अगर (needs_encrypt_ops) अणु
+		return;
+	}
+#endif
+#ifdef CONFIG_FS_ENCRYPTION
+	if (needs_encrypt_ops) {
 		d_set_d_op(dentry, &generic_encrypted_dentry_ops);
-		वापस;
-	पूर्ण
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_UNICODE
-	अगर (needs_ci_ops) अणु
+		return;
+	}
+#endif
+#ifdef CONFIG_UNICODE
+	if (needs_ci_ops) {
 		d_set_d_op(dentry, &generic_ci_dentry_ops);
-		वापस;
-	पूर्ण
-#पूर्ण_अगर
-पूर्ण
+		return;
+	}
+#endif
+}
 EXPORT_SYMBOL(generic_set_encrypted_ci_d_ops);

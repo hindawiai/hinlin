@@ -1,18 +1,17 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * turbosparc.h:  Defines specअगरic to the TurboSparc module.
+ * turbosparc.h:  Defines specific to the TurboSparc module.
  *            This is SRMMU stuff.
  *
  * Copyright (C) 1997 Jakub Jelinek (jj@sunsite.mff.cuni.cz)
  */
-#अगर_अघोषित _SPARC_TURBOSPARC_H
-#घोषणा _SPARC_TURBOSPARC_H
+#ifndef _SPARC_TURBOSPARC_H
+#define _SPARC_TURBOSPARC_H
 
-#समावेश <यंत्र/asi.h>
-#समावेश <यंत्र/pgtsrmmu.h>
+#include <asm/asi.h>
+#include <asm/pgtsrmmu.h>
 
-/* Bits in the SRMMU control रेजिस्टर क्रम TurboSparc modules.
+/* Bits in the SRMMU control register for TurboSparc modules.
  *
  * -------------------------------------------------------------------
  * |impl-vers| RSV| PMC |PE|PC| RSV |BM| RFR |IC|DC|PSO|RSV|ICS|NF|ME|
@@ -23,28 +22,28 @@
  *
  * This indicates whether the TurboSparc is in boot-mode or not.
  *
- * IC: Inकाष्ठाion Cache -- 0 = off, 1 = on
+ * IC: Instruction Cache -- 0 = off, 1 = on
  * DC: Data Cache -- 0 = off, 1 = 0n
  *
  * These bits enable the on-cpu TurboSparc split I/D caches.
  *
  * ICS: ICache Snooping -- 0 = disable, 1 = enable snooping of icache
- * NF: No Fault -- 0 = faults generate traps, 1 = faults करोn't trap
+ * NF: No Fault -- 0 = faults generate traps, 1 = faults don't trap
  * ME: MMU enable -- 0 = mmu not translating, 1 = mmu translating
  *
  */
 
-#घोषणा TURBOSPARC_MMUENABLE    0x00000001
-#घोषणा TURBOSPARC_NOFAULT      0x00000002
-#घोषणा TURBOSPARC_ICSNOOP	0x00000004
-#घोषणा TURBOSPARC_PSO          0x00000080
-#घोषणा TURBOSPARC_DCENABLE     0x00000100   /* Enable data cache */
-#घोषणा TURBOSPARC_ICENABLE     0x00000200   /* Enable inकाष्ठाion cache */
-#घोषणा TURBOSPARC_BMODE        0x00004000   
-#घोषणा TURBOSPARC_PARITYODD	0x00020000   /* Parity odd, अगर enabled */
-#घोषणा TURBOSPARC_PCENABLE	0x00040000   /* Enable parity checking */
+#define TURBOSPARC_MMUENABLE    0x00000001
+#define TURBOSPARC_NOFAULT      0x00000002
+#define TURBOSPARC_ICSNOOP	0x00000004
+#define TURBOSPARC_PSO          0x00000080
+#define TURBOSPARC_DCENABLE     0x00000100   /* Enable data cache */
+#define TURBOSPARC_ICENABLE     0x00000200   /* Enable instruction cache */
+#define TURBOSPARC_BMODE        0x00004000   
+#define TURBOSPARC_PARITYODD	0x00020000   /* Parity odd, if enabled */
+#define TURBOSPARC_PCENABLE	0x00040000   /* Enable parity checking */
 
-/* Bits in the CPU configuration रेजिस्टर क्रम TurboSparc modules.
+/* Bits in the CPU configuration register for TurboSparc modules.
  *
  * -------------------------------------------------------
  * |IOClk|SNP|AXClk| RAH |  WS |  RSV  |SBC|WT|uS2|SE|SCC|
@@ -53,75 +52,75 @@
  *
  */
 
-#घोषणा TURBOSPARC_SCENABLE 0x00000008	 /* Secondary cache enable */
-#घोषणा TURBOSPARC_uS2	    0x00000010   /* Swअगरt compatibility mode */
-#घोषणा TURBOSPARC_WTENABLE 0x00000020	 /* Write thru क्रम dcache */
-#घोषणा TURBOSPARC_SNENABLE 0x40000000	 /* DVMA snoop enable */
+#define TURBOSPARC_SCENABLE 0x00000008	 /* Secondary cache enable */
+#define TURBOSPARC_uS2	    0x00000010   /* Swift compatibility mode */
+#define TURBOSPARC_WTENABLE 0x00000020	 /* Write thru for dcache */
+#define TURBOSPARC_SNENABLE 0x40000000	 /* DVMA snoop enable */
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-/* Bits [13:5] select one of 512 inकाष्ठाion cache tags */
-अटल अंतरभूत व्योम turbosparc_inv_insn_tag(अचिन्हित दीर्घ addr)
-अणु
-        __यंत्र__ __अस्थिर__("sta %%g0, [%0] %1\n\t"
-			     : /* no outमाला_दो */
+/* Bits [13:5] select one of 512 instruction cache tags */
+static inline void turbosparc_inv_insn_tag(unsigned long addr)
+{
+        __asm__ __volatile__("sta %%g0, [%0] %1\n\t"
+			     : /* no outputs */
 			     : "r" (addr), "i" (ASI_M_TXTC_TAG)
 			     : "memory");
-पूर्ण
+}
 
 /* Bits [13:5] select one of 512 data cache tags */
-अटल अंतरभूत व्योम turbosparc_inv_data_tag(अचिन्हित दीर्घ addr)
-अणु
-        __यंत्र__ __अस्थिर__("sta %%g0, [%0] %1\n\t"
-			     : /* no outमाला_दो */
+static inline void turbosparc_inv_data_tag(unsigned long addr)
+{
+        __asm__ __volatile__("sta %%g0, [%0] %1\n\t"
+			     : /* no outputs */
 			     : "r" (addr), "i" (ASI_M_DATAC_TAG)
 			     : "memory");
-पूर्ण
+}
 
-अटल अंतरभूत व्योम turbosparc_flush_icache(व्योम)
-अणु
-	अचिन्हित दीर्घ addr;
+static inline void turbosparc_flush_icache(void)
+{
+	unsigned long addr;
 
-        क्रम (addr = 0; addr < 0x4000; addr += 0x20)
+        for (addr = 0; addr < 0x4000; addr += 0x20)
                 turbosparc_inv_insn_tag(addr);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम turbosparc_flush_dcache(व्योम)
-अणु
-	अचिन्हित दीर्घ addr;
+static inline void turbosparc_flush_dcache(void)
+{
+	unsigned long addr;
 
-        क्रम (addr = 0; addr < 0x4000; addr += 0x20)
+        for (addr = 0; addr < 0x4000; addr += 0x20)
                 turbosparc_inv_data_tag(addr);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम turbosparc_idflash_clear(व्योम)
-अणु
-	अचिन्हित दीर्घ addr;
+static inline void turbosparc_idflash_clear(void)
+{
+	unsigned long addr;
 
-        क्रम (addr = 0; addr < 0x4000; addr += 0x20) अणु
+        for (addr = 0; addr < 0x4000; addr += 0x20) {
                 turbosparc_inv_insn_tag(addr);
                 turbosparc_inv_data_tag(addr);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम turbosparc_set_ccreg(अचिन्हित दीर्घ regval)
-अणु
-	__यंत्र__ __अस्थिर__("sta %0, [%1] %2\n\t"
-			     : /* no outमाला_दो */
+static inline void turbosparc_set_ccreg(unsigned long regval)
+{
+	__asm__ __volatile__("sta %0, [%1] %2\n\t"
+			     : /* no outputs */
 			     : "r" (regval), "r" (0x600), "i" (ASI_M_MMUREGS)
 			     : "memory");
-पूर्ण
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ turbosparc_get_ccreg(व्योम)
-अणु
-	अचिन्हित दीर्घ regval;
+static inline unsigned long turbosparc_get_ccreg(void)
+{
+	unsigned long regval;
 
-	__यंत्र__ __अस्थिर__("lda [%1] %2, %0\n\t"
+	__asm__ __volatile__("lda [%1] %2, %0\n\t"
 			     : "=r" (regval)
 			     : "r" (0x600), "i" (ASI_M_MMUREGS));
-	वापस regval;
-पूर्ण
+	return regval;
+}
 
-#पूर्ण_अगर /* !__ASSEMBLY__ */
+#endif /* !__ASSEMBLY__ */
 
-#पूर्ण_अगर /* !(_SPARC_TURBOSPARC_H) */
+#endif /* !(_SPARC_TURBOSPARC_H) */

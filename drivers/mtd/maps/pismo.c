@@ -1,163 +1,162 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * PISMO memory driver - http://www.pismoworld.org/
  *
- * For ARM Realview and Versatile platक्रमms
+ * For ARM Realview and Versatile platforms
  */
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/mtd/physmap.h>
-#समावेश <linux/mtd/plat-ram.h>
-#समावेश <linux/mtd/pismo.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/i2c.h>
+#include <linux/slab.h>
+#include <linux/platform_device.h>
+#include <linux/spinlock.h>
+#include <linux/mutex.h>
+#include <linux/mtd/physmap.h>
+#include <linux/mtd/plat-ram.h>
+#include <linux/mtd/pismo.h>
 
-#घोषणा PISMO_NUM_CS	5
+#define PISMO_NUM_CS	5
 
-काष्ठा pismo_cs_block अणु
+struct pismo_cs_block {
 	u8	type;
 	u8	width;
 	__le16	access;
 	__le32	size;
 	u32	reserved[2];
-	अक्षर	device[32];
-पूर्ण __packed;
+	char	device[32];
+} __packed;
 
-काष्ठा pismo_eeprom अणु
-	काष्ठा pismo_cs_block cs[PISMO_NUM_CS];
-	अक्षर	board[15];
+struct pismo_eeprom {
+	struct pismo_cs_block cs[PISMO_NUM_CS];
+	char	board[15];
 	u8	sum;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा pismo_mem अणु
+struct pismo_mem {
 	phys_addr_t base;
 	u32	size;
 	u16	access;
 	u8	width;
 	u8	type;
-पूर्ण;
+};
 
-काष्ठा pismo_data अणु
-	काष्ठा i2c_client	*client;
-	व्योम			(*vpp)(व्योम *, पूर्णांक);
-	व्योम			*vpp_data;
-	काष्ठा platक्रमm_device	*dev[PISMO_NUM_CS];
-पूर्ण;
+struct pismo_data {
+	struct i2c_client	*client;
+	void			(*vpp)(void *, int);
+	void			*vpp_data;
+	struct platform_device	*dev[PISMO_NUM_CS];
+};
 
-अटल व्योम pismo_set_vpp(काष्ठा platक्रमm_device *pdev, पूर्णांक on)
-अणु
-	काष्ठा i2c_client *client = to_i2c_client(pdev->dev.parent);
-	काष्ठा pismo_data *pismo = i2c_get_clientdata(client);
+static void pismo_set_vpp(struct platform_device *pdev, int on)
+{
+	struct i2c_client *client = to_i2c_client(pdev->dev.parent);
+	struct pismo_data *pismo = i2c_get_clientdata(client);
 
 	pismo->vpp(pismo->vpp_data, on);
-पूर्ण
+}
 
-अटल अचिन्हित पूर्णांक pismo_width_to_bytes(अचिन्हित पूर्णांक width)
-अणु
+static unsigned int pismo_width_to_bytes(unsigned int width)
+{
 	width &= 15;
-	अगर (width > 2)
-		वापस 0;
-	वापस 1 << width;
-पूर्ण
+	if (width > 2)
+		return 0;
+	return 1 << width;
+}
 
-अटल पूर्णांक pismo_eeprom_पढ़ो(काष्ठा i2c_client *client, व्योम *buf, u8 addr,
-			     माप_प्रकार size)
-अणु
-	पूर्णांक ret;
-	काष्ठा i2c_msg msg[] = अणु
-		अणु
+static int pismo_eeprom_read(struct i2c_client *client, void *buf, u8 addr,
+			     size_t size)
+{
+	int ret;
+	struct i2c_msg msg[] = {
+		{
 			.addr = client->addr,
-			.len = माप(addr),
+			.len = sizeof(addr),
 			.buf = &addr,
-		पूर्ण, अणु
+		}, {
 			.addr = client->addr,
 			.flags = I2C_M_RD,
 			.len = size,
 			.buf = buf,
-		पूर्ण,
-	पूर्ण;
+		},
+	};
 
 	ret = i2c_transfer(client->adapter, msg, ARRAY_SIZE(msg));
 
-	वापस ret == ARRAY_SIZE(msg) ? size : -EIO;
-पूर्ण
+	return ret == ARRAY_SIZE(msg) ? size : -EIO;
+}
 
-अटल पूर्णांक pismo_add_device(काष्ठा pismo_data *pismo, पूर्णांक i,
-			    काष्ठा pismo_mem *region, स्थिर अक्षर *name,
-			    व्योम *pdata, माप_प्रकार psize)
-अणु
-	काष्ठा platक्रमm_device *dev;
-	काष्ठा resource res = अणु पूर्ण;
+static int pismo_add_device(struct pismo_data *pismo, int i,
+			    struct pismo_mem *region, const char *name,
+			    void *pdata, size_t psize)
+{
+	struct platform_device *dev;
+	struct resource res = { };
 	phys_addr_t base = region->base;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (base == ~0)
-		वापस -ENXIO;
+	if (base == ~0)
+		return -ENXIO;
 
 	res.start = base;
 	res.end = base + region->size - 1;
 	res.flags = IORESOURCE_MEM;
 
-	dev = platक्रमm_device_alloc(name, i);
-	अगर (!dev)
-		वापस -ENOMEM;
+	dev = platform_device_alloc(name, i);
+	if (!dev)
+		return -ENOMEM;
 	dev->dev.parent = &pismo->client->dev;
 
-	करो अणु
-		ret = platक्रमm_device_add_resources(dev, &res, 1);
-		अगर (ret)
-			अवरोध;
+	do {
+		ret = platform_device_add_resources(dev, &res, 1);
+		if (ret)
+			break;
 
-		ret = platक्रमm_device_add_data(dev, pdata, psize);
-		अगर (ret)
-			अवरोध;
+		ret = platform_device_add_data(dev, pdata, psize);
+		if (ret)
+			break;
 
-		ret = platक्रमm_device_add(dev);
-		अगर (ret)
-			अवरोध;
+		ret = platform_device_add(dev);
+		if (ret)
+			break;
 
 		pismo->dev[i] = dev;
-		वापस 0;
-	पूर्ण जबतक (0);
+		return 0;
+	} while (0);
 
-	platक्रमm_device_put(dev);
-	वापस ret;
-पूर्ण
+	platform_device_put(dev);
+	return ret;
+}
 
-अटल पूर्णांक pismo_add_nor(काष्ठा pismo_data *pismo, पूर्णांक i,
-			 काष्ठा pismo_mem *region)
-अणु
-	काष्ठा physmap_flash_data data = अणु
+static int pismo_add_nor(struct pismo_data *pismo, int i,
+			 struct pismo_mem *region)
+{
+	struct physmap_flash_data data = {
 		.width = region->width,
-	पूर्ण;
+	};
 
-	अगर (pismo->vpp)
+	if (pismo->vpp)
 		data.set_vpp = pismo_set_vpp;
 
-	वापस pismo_add_device(pismo, i, region, "physmap-flash",
-		&data, माप(data));
-पूर्ण
+	return pismo_add_device(pismo, i, region, "physmap-flash",
+		&data, sizeof(data));
+}
 
-अटल पूर्णांक pismo_add_sram(काष्ठा pismo_data *pismo, पूर्णांक i,
-			  काष्ठा pismo_mem *region)
-अणु
-	काष्ठा platdata_mtd_ram data = अणु
+static int pismo_add_sram(struct pismo_data *pismo, int i,
+			  struct pismo_mem *region)
+{
+	struct platdata_mtd_ram data = {
 		.bankwidth = region->width,
-	पूर्ण;
+	};
 
-	वापस pismo_add_device(pismo, i, region, "mtd-ram",
-		&data, माप(data));
-पूर्ण
+	return pismo_add_device(pismo, i, region, "mtd-ram",
+		&data, sizeof(data));
+}
 
-अटल व्योम pismo_add_one(काष्ठा pismo_data *pismo, पूर्णांक i,
-			  स्थिर काष्ठा pismo_cs_block *cs, phys_addr_t base)
-अणु
-	काष्ठा device *dev = &pismo->client->dev;
-	काष्ठा pismo_mem region;
+static void pismo_add_one(struct pismo_data *pismo, int i,
+			  const struct pismo_cs_block *cs, phys_addr_t base)
+{
+	struct device *dev = &pismo->client->dev;
+	struct pismo_mem region;
 
 	region.base = base;
 	region.type = cs->type;
@@ -165,123 +164,123 @@
 	region.access = le16_to_cpu(cs->access);
 	region.size = le32_to_cpu(cs->size);
 
-	अगर (region.width == 0) अणु
+	if (region.width == 0) {
 		dev_err(dev, "cs%u: bad width: %02x, ignoring\n", i, cs->width);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
-	 * FIXME: may need to the platक्रमms memory controller here, but at
-	 * the moment we assume that it has alपढ़ोy been correctly setup.
+	 * FIXME: may need to the platforms memory controller here, but at
+	 * the moment we assume that it has already been correctly setup.
 	 * The memory controller can also tell us the base address as well.
 	 */
 
 	dev_info(dev, "cs%u: %.32s: type %02x access %u00ps size %uK\n",
 		i, cs->device, region.type, region.access, region.size / 1024);
 
-	चयन (region.type) अणु
-	हाल 0:
-		अवरोध;
-	हाल 1:
-		/* अटल DOC */
-		अवरोध;
-	हाल 2:
-		/* अटल NOR */
+	switch (region.type) {
+	case 0:
+		break;
+	case 1:
+		/* static DOC */
+		break;
+	case 2:
+		/* static NOR */
 		pismo_add_nor(pismo, i, &region);
-		अवरोध;
-	हाल 3:
-		/* अटल RAM */
+		break;
+	case 3:
+		/* static RAM */
 		pismo_add_sram(pismo, i, &region);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल पूर्णांक pismo_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा pismo_data *pismo = i2c_get_clientdata(client);
-	पूर्णांक i;
+static int pismo_remove(struct i2c_client *client)
+{
+	struct pismo_data *pismo = i2c_get_clientdata(client);
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(pismo->dev); i++)
-		platक्रमm_device_unरेजिस्टर(pismo->dev[i]);
+	for (i = 0; i < ARRAY_SIZE(pismo->dev); i++)
+		platform_device_unregister(pismo->dev[i]);
 
-	kमुक्त(pismo);
+	kfree(pismo);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pismo_probe(काष्ठा i2c_client *client,
-		       स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा pismo_pdata *pdata = client->dev.platक्रमm_data;
-	काष्ठा pismo_eeprom eeprom;
-	काष्ठा pismo_data *pismo;
-	पूर्णांक ret, i;
+static int pismo_probe(struct i2c_client *client,
+		       const struct i2c_device_id *id)
+{
+	struct pismo_pdata *pdata = client->dev.platform_data;
+	struct pismo_eeprom eeprom;
+	struct pismo_data *pismo;
+	int ret, i;
 
-	अगर (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C)) अणु
+	if (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C)) {
 		dev_err(&client->dev, "functionality mismatch\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	pismo = kzalloc(माप(*pismo), GFP_KERNEL);
-	अगर (!pismo)
-		वापस -ENOMEM;
+	pismo = kzalloc(sizeof(*pismo), GFP_KERNEL);
+	if (!pismo)
+		return -ENOMEM;
 
 	pismo->client = client;
-	अगर (pdata) अणु
+	if (pdata) {
 		pismo->vpp = pdata->set_vpp;
 		pismo->vpp_data = pdata->vpp_data;
-	पूर्ण
+	}
 	i2c_set_clientdata(client, pismo);
 
-	ret = pismo_eeprom_पढ़ो(client, &eeprom, 0, माप(eeprom));
-	अगर (ret < 0) अणु
+	ret = pismo_eeprom_read(client, &eeprom, 0, sizeof(eeprom));
+	if (ret < 0) {
 		dev_err(&client->dev, "error reading EEPROM: %d\n", ret);
-		जाओ निकास_मुक्त;
-	पूर्ण
+		goto exit_free;
+	}
 
 	dev_info(&client->dev, "%.15s board found\n", eeprom.board);
 
-	क्रम (i = 0; i < ARRAY_SIZE(eeprom.cs); i++)
-		अगर (eeprom.cs[i].type != 0xff)
+	for (i = 0; i < ARRAY_SIZE(eeprom.cs); i++)
+		if (eeprom.cs[i].type != 0xff)
 			pismo_add_one(pismo, i, &eeprom.cs[i],
 				      pdata->cs_addrs[i]);
 
-	वापस 0;
+	return 0;
 
- निकास_मुक्त:
-	kमुक्त(pismo);
-	वापस ret;
-पूर्ण
+ exit_free:
+	kfree(pismo);
+	return ret;
+}
 
-अटल स्थिर काष्ठा i2c_device_id pismo_id[] = अणु
-	अणु "pismo" पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct i2c_device_id pismo_id[] = {
+	{ "pismo" },
+	{ },
+};
 MODULE_DEVICE_TABLE(i2c, pismo_id);
 
-अटल काष्ठा i2c_driver pismo_driver = अणु
-	.driver	= अणु
+static struct i2c_driver pismo_driver = {
+	.driver	= {
 		.name	= "pismo",
-	पूर्ण,
+	},
 	.probe		= pismo_probe,
-	.हटाओ		= pismo_हटाओ,
+	.remove		= pismo_remove,
 	.id_table	= pismo_id,
-पूर्ण;
+};
 
-अटल पूर्णांक __init pismo_init(व्योम)
-अणु
-	BUILD_BUG_ON(माप(काष्ठा pismo_cs_block) != 48);
-	BUILD_BUG_ON(माप(काष्ठा pismo_eeprom) != 256);
+static int __init pismo_init(void)
+{
+	BUILD_BUG_ON(sizeof(struct pismo_cs_block) != 48);
+	BUILD_BUG_ON(sizeof(struct pismo_eeprom) != 256);
 
-	वापस i2c_add_driver(&pismo_driver);
-पूर्ण
+	return i2c_add_driver(&pismo_driver);
+}
 module_init(pismo_init);
 
-अटल व्योम __निकास pismo_निकास(व्योम)
-अणु
+static void __exit pismo_exit(void)
+{
 	i2c_del_driver(&pismo_driver);
-पूर्ण
-module_निकास(pismo_निकास);
+}
+module_exit(pismo_exit);
 
 MODULE_AUTHOR("Russell King <linux@arm.linux.org.uk>");
 MODULE_DESCRIPTION("PISMO memory driver");

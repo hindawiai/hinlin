@@ -1,37 +1,36 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * Ethernet driver क्रम the WIZnet W5100 chip.
+ * Ethernet driver for the WIZnet W5100 chip.
  *
  * Copyright (C) 2006-2008 WIZnet Co.,Ltd.
  * Copyright (C) 2012 Mike Sinkovsky <msink@permonline.ru>
  */
 
-क्रमागत अणु
+enum {
 	W5100,
 	W5200,
 	W5500,
-पूर्ण;
+};
 
-काष्ठा w5100_ops अणु
+struct w5100_ops {
 	bool may_sleep;
-	पूर्णांक chip_id;
-	पूर्णांक (*पढ़ो)(काष्ठा net_device *ndev, u32 addr);
-	पूर्णांक (*ग_लिखो)(काष्ठा net_device *ndev, u32 addr, u8 data);
-	पूर्णांक (*पढ़ो16)(काष्ठा net_device *ndev, u32 addr);
-	पूर्णांक (*ग_लिखो16)(काष्ठा net_device *ndev, u32 addr, u16 data);
-	पूर्णांक (*पढ़ोbulk)(काष्ठा net_device *ndev, u32 addr, u8 *buf, पूर्णांक len);
-	पूर्णांक (*ग_लिखोbulk)(काष्ठा net_device *ndev, u32 addr, स्थिर u8 *buf,
-			 पूर्णांक len);
-	पूर्णांक (*reset)(काष्ठा net_device *ndev);
-	पूर्णांक (*init)(काष्ठा net_device *ndev);
-पूर्ण;
+	int chip_id;
+	int (*read)(struct net_device *ndev, u32 addr);
+	int (*write)(struct net_device *ndev, u32 addr, u8 data);
+	int (*read16)(struct net_device *ndev, u32 addr);
+	int (*write16)(struct net_device *ndev, u32 addr, u16 data);
+	int (*readbulk)(struct net_device *ndev, u32 addr, u8 *buf, int len);
+	int (*writebulk)(struct net_device *ndev, u32 addr, const u8 *buf,
+			 int len);
+	int (*reset)(struct net_device *ndev);
+	int (*init)(struct net_device *ndev);
+};
 
-व्योम *w5100_ops_priv(स्थिर काष्ठा net_device *ndev);
+void *w5100_ops_priv(const struct net_device *ndev);
 
-पूर्णांक w5100_probe(काष्ठा device *dev, स्थिर काष्ठा w5100_ops *ops,
-		पूर्णांक माप_ops_priv, स्थिर व्योम *mac_addr, पूर्णांक irq,
-		पूर्णांक link_gpio);
-पूर्णांक w5100_हटाओ(काष्ठा device *dev);
+int w5100_probe(struct device *dev, const struct w5100_ops *ops,
+		int sizeof_ops_priv, const void *mac_addr, int irq,
+		int link_gpio);
+int w5100_remove(struct device *dev);
 
-बाह्य स्थिर काष्ठा dev_pm_ops w5100_pm_ops;
+extern const struct dev_pm_ops w5100_pm_ops;

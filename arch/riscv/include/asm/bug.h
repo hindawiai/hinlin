@@ -1,59 +1,58 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (C) 2012 Regents of the University of Calअगरornia
+ * Copyright (C) 2012 Regents of the University of California
  */
 
-#अगर_अघोषित _ASM_RISCV_BUG_H
-#घोषणा _ASM_RISCV_BUG_H
+#ifndef _ASM_RISCV_BUG_H
+#define _ASM_RISCV_BUG_H
 
-#समावेश <linux/compiler.h>
-#समावेश <linux/स्थिर.h>
-#समावेश <linux/types.h>
+#include <linux/compiler.h>
+#include <linux/const.h>
+#include <linux/types.h>
 
-#समावेश <यंत्र/यंत्र.h>
+#include <asm/asm.h>
 
-#घोषणा __INSN_LENGTH_MASK  _UL(0x3)
-#घोषणा __INSN_LENGTH_32    _UL(0x3)
-#घोषणा __COMPRESSED_INSN_MASK	_UL(0xffff)
+#define __INSN_LENGTH_MASK  _UL(0x3)
+#define __INSN_LENGTH_32    _UL(0x3)
+#define __COMPRESSED_INSN_MASK	_UL(0xffff)
 
-#घोषणा __BUG_INSN_32	_UL(0x00100073) /* eअवरोध */
-#घोषणा __BUG_INSN_16	_UL(0x9002) /* c.eअवरोध */
+#define __BUG_INSN_32	_UL(0x00100073) /* ebreak */
+#define __BUG_INSN_16	_UL(0x9002) /* c.ebreak */
 
-#घोषणा GET_INSN_LENGTH(insn)						\
-(अणु									\
-	अचिन्हित दीर्घ __len;						\
+#define GET_INSN_LENGTH(insn)						\
+({									\
+	unsigned long __len;						\
 	__len = ((insn & __INSN_LENGTH_MASK) == __INSN_LENGTH_32) ?	\
 		4UL : 2UL;						\
 	__len;								\
-पूर्ण)
+})
 
-प्रकार u32 bug_insn_t;
+typedef u32 bug_insn_t;
 
-#अगर_घोषित CONFIG_GENERIC_BUG_RELATIVE_POINTERS
-#घोषणा __BUG_ENTRY_ADDR	RISCV_INT " 1b - 2b"
-#घोषणा __BUG_ENTRY_खाता	RISCV_INT " %0 - 2b"
-#अन्यथा
-#घोषणा __BUG_ENTRY_ADDR	RISCV_PTR " 1b"
-#घोषणा __BUG_ENTRY_खाता	RISCV_PTR " %0"
-#पूर्ण_अगर
+#ifdef CONFIG_GENERIC_BUG_RELATIVE_POINTERS
+#define __BUG_ENTRY_ADDR	RISCV_INT " 1b - 2b"
+#define __BUG_ENTRY_FILE	RISCV_INT " %0 - 2b"
+#else
+#define __BUG_ENTRY_ADDR	RISCV_PTR " 1b"
+#define __BUG_ENTRY_FILE	RISCV_PTR " %0"
+#endif
 
-#अगर_घोषित CONFIG_DEBUG_BUGVERBOSE
-#घोषणा __BUG_ENTRY			\
+#ifdef CONFIG_DEBUG_BUGVERBOSE
+#define __BUG_ENTRY			\
 	__BUG_ENTRY_ADDR "\n\t"		\
-	__BUG_ENTRY_खाता "\n\t"		\
+	__BUG_ENTRY_FILE "\n\t"		\
 	RISCV_SHORT " %1\n\t"		\
 	RISCV_SHORT " %2"
-#अन्यथा
-#घोषणा __BUG_ENTRY			\
+#else
+#define __BUG_ENTRY			\
 	__BUG_ENTRY_ADDR "\n\t"		\
 	RISCV_SHORT " %2"
-#पूर्ण_अगर
+#endif
 
-#अगर_घोषित CONFIG_GENERIC_BUG
-#घोषणा __BUG_FLAGS(flags)					\
-करो अणु								\
-	__यंत्र__ __अस्थिर__ (					\
+#ifdef CONFIG_GENERIC_BUG
+#define __BUG_FLAGS(flags)					\
+do {								\
+	__asm__ __volatile__ (					\
 		"1:\n\t"					\
 			"ebreak\n"				\
 			".pushsection __bug_table,\"aw\"\n\t"	\
@@ -62,32 +61,32 @@
 			".org 2b + %3\n\t"                      \
 			".popsection"				\
 		:						\
-		: "i" (__खाता__), "i" (__LINE__),		\
+		: "i" (__FILE__), "i" (__LINE__),		\
 		  "i" (flags),					\
-		  "i" (माप(काष्ठा bug_entry)));              \
-पूर्ण जबतक (0)
-#अन्यथा /* CONFIG_GENERIC_BUG */
-#घोषणा __BUG_FLAGS(flags) करो अणु					\
-	__यंत्र__ __अस्थिर__ ("ebreak\n");			\
-पूर्ण जबतक (0)
-#पूर्ण_अगर /* CONFIG_GENERIC_BUG */
+		  "i" (sizeof(struct bug_entry)));              \
+} while (0)
+#else /* CONFIG_GENERIC_BUG */
+#define __BUG_FLAGS(flags) do {					\
+	__asm__ __volatile__ ("ebreak\n");			\
+} while (0)
+#endif /* CONFIG_GENERIC_BUG */
 
-#घोषणा BUG() करो अणु						\
+#define BUG() do {						\
 	__BUG_FLAGS(0);						\
 	unreachable();						\
-पूर्ण जबतक (0)
+} while (0)
 
-#घोषणा __WARN_FLAGS(flags) __BUG_FLAGS(BUGFLAG_WARNING|(flags))
+#define __WARN_FLAGS(flags) __BUG_FLAGS(BUGFLAG_WARNING|(flags))
 
-#घोषणा HAVE_ARCH_BUG
+#define HAVE_ARCH_BUG
 
-#समावेश <यंत्र-generic/bug.h>
+#include <asm-generic/bug.h>
 
-काष्ठा pt_regs;
-काष्ठा task_काष्ठा;
+struct pt_regs;
+struct task_struct;
 
-व्योम __show_regs(काष्ठा pt_regs *regs);
-व्योम die(काष्ठा pt_regs *regs, स्थिर अक्षर *str);
-व्योम करो_trap(काष्ठा pt_regs *regs, पूर्णांक signo, पूर्णांक code, अचिन्हित दीर्घ addr);
+void __show_regs(struct pt_regs *regs);
+void die(struct pt_regs *regs, const char *str);
+void do_trap(struct pt_regs *regs, int signo, int code, unsigned long addr);
 
-#पूर्ण_अगर /* _ASM_RISCV_BUG_H */
+#endif /* _ASM_RISCV_BUG_H */

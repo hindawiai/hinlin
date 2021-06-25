@@ -1,113 +1,112 @@
-<शैली गुरु>
-#अगर_अघोषित DEFUTIL_H
-#घोषणा DEFUTIL_H
+#ifndef DEFUTIL_H
+#define DEFUTIL_H
 
-#समावेश <linux/zutil.h>
+#include <linux/zutil.h>
 
-#घोषणा Assert(err, str) 
-#घोषणा Trace(dummy) 
-#घोषणा Tracev(dummy) 
-#घोषणा Tracecv(err, dummy) 
-#घोषणा Tracevv(dummy) 
-
+#define Assert(err, str) 
+#define Trace(dummy) 
+#define Tracev(dummy) 
+#define Tracecv(err, dummy) 
+#define Tracevv(dummy) 
 
 
-#घोषणा LENGTH_CODES 29
+
+#define LENGTH_CODES 29
 /* number of length codes, not counting the special END_BLOCK code */
 
-#घोषणा LITERALS  256
+#define LITERALS  256
 /* number of literal bytes 0..255 */
 
-#घोषणा L_CODES (LITERALS+1+LENGTH_CODES)
+#define L_CODES (LITERALS+1+LENGTH_CODES)
 /* number of Literal or Length codes, including the END_BLOCK code */
 
-#घोषणा D_CODES   30
+#define D_CODES   30
 /* number of distance codes */
 
-#घोषणा BL_CODES  19
+#define BL_CODES  19
 /* number of codes used to transfer the bit lengths */
 
-#घोषणा HEAP_SIZE (2*L_CODES+1)
+#define HEAP_SIZE (2*L_CODES+1)
 /* maximum heap size */
 
-#घोषणा MAX_BITS 15
+#define MAX_BITS 15
 /* All codes must not exceed MAX_BITS bits */
 
-#घोषणा INIT_STATE    42
-#घोषणा BUSY_STATE   113
-#घोषणा FINISH_STATE 666
+#define INIT_STATE    42
+#define BUSY_STATE   113
+#define FINISH_STATE 666
 /* Stream status */
 
 
-/* Data काष्ठाure describing a single value and its code string. */
-प्रकार काष्ठा ct_data_s अणु
-    जोड़ अणु
+/* Data structure describing a single value and its code string. */
+typedef struct ct_data_s {
+    union {
         ush  freq;       /* frequency count */
         ush  code;       /* bit string */
-    पूर्ण fc;
-    जोड़ अणु
+    } fc;
+    union {
         ush  dad;        /* father node in Huffman tree */
         ush  len;        /* length of bit string */
-    पूर्ण dl;
-पूर्ण ct_data;
+    } dl;
+} ct_data;
 
-#घोषणा Freq fc.freq
-#घोषणा Code fc.code
-#घोषणा Dad  dl.dad
-#घोषणा Len  dl.len
+#define Freq fc.freq
+#define Code fc.code
+#define Dad  dl.dad
+#define Len  dl.len
 
-प्रकार काष्ठा अटल_tree_desc_s  अटल_tree_desc;
+typedef struct static_tree_desc_s  static_tree_desc;
 
-प्रकार काष्ठा tree_desc_s अणु
+typedef struct tree_desc_s {
     ct_data *dyn_tree;           /* the dynamic tree */
-    पूर्णांक     max_code;            /* largest code with non zero frequency */
-    अटल_tree_desc *stat_desc; /* the corresponding अटल tree */
-पूर्ण tree_desc;
+    int     max_code;            /* largest code with non zero frequency */
+    static_tree_desc *stat_desc; /* the corresponding static tree */
+} tree_desc;
 
-प्रकार ush Pos;
-प्रकार अचिन्हित IPos;
+typedef ush Pos;
+typedef unsigned IPos;
 
-/* A Pos is an index in the अक्षरacter winकरोw. We use लघु instead of पूर्णांक to
- * save space in the various tables. IPos is used only क्रम parameter passing.
+/* A Pos is an index in the character window. We use short instead of int to
+ * save space in the various tables. IPos is used only for parameter passing.
  */
 
-प्रकार काष्ठा deflate_state अणु
-    z_streamp strm;      /* poपूर्णांकer back to this zlib stream */
-    पूर्णांक   status;        /* as the name implies */
+typedef struct deflate_state {
+    z_streamp strm;      /* pointer back to this zlib stream */
+    int   status;        /* as the name implies */
     Byte *pending_buf;   /* output still pending */
     ulg   pending_buf_size; /* size of pending_buf */
     Byte *pending_out;   /* next pending byte to output to the stream */
-    पूर्णांक   pending;       /* nb of bytes in the pending buffer */
-    पूर्णांक   noheader;      /* suppress zlib header and adler32 */
+    int   pending;       /* nb of bytes in the pending buffer */
+    int   noheader;      /* suppress zlib header and adler32 */
     Byte  data_type;     /* UNKNOWN, BINARY or ASCII */
-    Byte  method;        /* STORED (क्रम zip only) or DEFLATED */
-    पूर्णांक   last_flush;    /* value of flush param क्रम previous deflate call */
+    Byte  method;        /* STORED (for zip only) or DEFLATED */
+    int   last_flush;    /* value of flush param for previous deflate call */
 
                 /* used by deflate.c: */
 
-    uInt  w_size;        /* LZ77 winकरोw size (32K by शेष) */
+    uInt  w_size;        /* LZ77 window size (32K by default) */
     uInt  w_bits;        /* log2(w_size)  (8..16) */
     uInt  w_mask;        /* w_size - 1 */
 
-    Byte *winकरोw;
-    /* Sliding winकरोw. Input bytes are पढ़ो पूर्णांकo the second half of the winकरोw,
+    Byte *window;
+    /* Sliding window. Input bytes are read into the second half of the window,
      * and move to the first half later to keep a dictionary of at least wSize
      * bytes. With this organization, matches are limited to a distance of
      * wSize-MAX_MATCH bytes, but this ensures that IO is always
-     * perक्रमmed with a length multiple of the block size. Also, it limits
-     * the winकरोw size to 64K, which is quite useful on MSDOS.
-     * To करो: use the user input buffer as sliding winकरोw.
+     * performed with a length multiple of the block size. Also, it limits
+     * the window size to 64K, which is quite useful on MSDOS.
+     * To do: use the user input buffer as sliding window.
      */
 
-    ulg winकरोw_size;
-    /* Actual size of winकरोw: 2*wSize, except when the user input buffer
-     * is directly used as sliding winकरोw.
+    ulg window_size;
+    /* Actual size of window: 2*wSize, except when the user input buffer
+     * is directly used as sliding window.
      */
 
     Pos *prev;
     /* Link to older string with same hash index. To limit the size of this
-     * array to 64K, this link is मुख्यtained only क्रम the last 32K strings.
-     * An index in this array is thus a winकरोw index modulo 32K.
+     * array to 64K, this link is maintained only for the last 32K strings.
+     * An index in this array is thus a window index modulo 32K.
      */
 
     Pos *head; /* Heads of the hash chains or NIL. */
@@ -117,24 +116,24 @@
     uInt  hash_bits;      /* log2(hash_size) */
     uInt  hash_mask;      /* hash_size-1 */
 
-    uInt  hash_shअगरt;
-    /* Number of bits by which ins_h must be shअगरted at each input
+    uInt  hash_shift;
+    /* Number of bits by which ins_h must be shifted at each input
      * step. It must be such that after MIN_MATCH steps, the oldest
-     * byte no दीर्घer takes part in the hash key, that is:
-     *   hash_shअगरt * MIN_MATCH >= hash_bits
+     * byte no longer takes part in the hash key, that is:
+     *   hash_shift * MIN_MATCH >= hash_bits
      */
 
-    दीर्घ block_start;
-    /* Winकरोw position at the beginning of the current output block. Gets
-     * negative when the winकरोw is moved backwards.
+    long block_start;
+    /* Window position at the beginning of the current output block. Gets
+     * negative when the window is moved backwards.
      */
 
     uInt match_length;           /* length of best match */
     IPos prev_match;             /* previous match */
-    पूर्णांक match_available;         /* set अगर previous match exists */
+    int match_available;         /* set if previous match exists */
     uInt strstart;               /* start of string to insert */
     uInt match_start;            /* start of matching string */
-    uInt lookahead;              /* number of valid bytes ahead in winकरोw */
+    uInt lookahead;              /* number of valid bytes ahead in window */
 
     uInt prev_length;
     /* Length of the best match at previous step. Matches not greater than this
@@ -149,62 +148,62 @@
 
     uInt max_lazy_match;
     /* Attempt to find a better match only when the current match is strictly
-     * smaller than this value. This mechanism is used only क्रम compression
+     * smaller than this value. This mechanism is used only for compression
      * levels >= 4.
      */
 #   define max_insert_length  max_lazy_match
-    /* Insert new strings in the hash table only अगर the match length is not
-     * greater than this length. This saves समय but degrades compression.
-     * max_insert_length is used only क्रम compression levels <= 3.
+    /* Insert new strings in the hash table only if the match length is not
+     * greater than this length. This saves time but degrades compression.
+     * max_insert_length is used only for compression levels <= 3.
      */
 
-    पूर्णांक level;    /* compression level (1..9) */
-    पूर्णांक strategy; /* favor or क्रमce Huffman coding*/
+    int level;    /* compression level (1..9) */
+    int strategy; /* favor or force Huffman coding*/
 
     uInt good_match;
-    /* Use a faster search when the previous match is दीर्घer than this */
+    /* Use a faster search when the previous match is longer than this */
 
-    पूर्णांक nice_match; /* Stop searching when current match exceeds this */
+    int nice_match; /* Stop searching when current match exceeds this */
 
                 /* used by trees.c: */
-    /* Didn't use ct_data प्रकार below to suppress compiler warning */
-    काष्ठा ct_data_s dyn_ltree[HEAP_SIZE];   /* literal and length tree */
-    काष्ठा ct_data_s dyn_dtree[2*D_CODES+1]; /* distance tree */
-    काष्ठा ct_data_s bl_tree[2*BL_CODES+1];  /* Huffman tree क्रम bit lengths */
+    /* Didn't use ct_data typedef below to suppress compiler warning */
+    struct ct_data_s dyn_ltree[HEAP_SIZE];   /* literal and length tree */
+    struct ct_data_s dyn_dtree[2*D_CODES+1]; /* distance tree */
+    struct ct_data_s bl_tree[2*BL_CODES+1];  /* Huffman tree for bit lengths */
 
-    काष्ठा tree_desc_s l_desc;               /* desc. क्रम literal tree */
-    काष्ठा tree_desc_s d_desc;               /* desc. क्रम distance tree */
-    काष्ठा tree_desc_s bl_desc;              /* desc. क्रम bit length tree */
+    struct tree_desc_s l_desc;               /* desc. for literal tree */
+    struct tree_desc_s d_desc;               /* desc. for distance tree */
+    struct tree_desc_s bl_desc;              /* desc. for bit length tree */
 
     ush bl_count[MAX_BITS+1];
-    /* number of codes at each bit length क्रम an optimal tree */
+    /* number of codes at each bit length for an optimal tree */
 
-    पूर्णांक heap[2*L_CODES+1];      /* heap used to build the Huffman trees */
-    पूर्णांक heap_len;               /* number of elements in the heap */
-    पूर्णांक heap_max;               /* element of largest frequency */
+    int heap[2*L_CODES+1];      /* heap used to build the Huffman trees */
+    int heap_len;               /* number of elements in the heap */
+    int heap_max;               /* element of largest frequency */
     /* The sons of heap[n] are heap[2*n] and heap[2*n+1]. heap[0] is not used.
      * The same heap array is used to build all trees.
      */
 
     uch depth[2*L_CODES+1];
-    /* Depth of each subtree used as tie अवरोधer क्रम trees of equal frequency
+    /* Depth of each subtree used as tie breaker for trees of equal frequency
      */
 
-    uch *l_buf;          /* buffer क्रम literals or lengths */
+    uch *l_buf;          /* buffer for literals or lengths */
 
     uInt  lit_bufsize;
-    /* Size of match buffer क्रम literals/lengths.  There are 4 reasons क्रम
+    /* Size of match buffer for literals/lengths.  There are 4 reasons for
      * limiting lit_bufsize to 64K:
      *   - frequencies can be kept in 16 bit counters
-     *   - अगर compression is not successful क्रम the first block, all input
-     *     data is still in the winकरोw so we can still emit a stored block even
-     *     when input comes from standard input.  (This can also be करोne क्रम
-     *     all blocks अगर lit_bufsize is not greater than 32K.)
-     *   - अगर compression is not successful क्रम a file smaller than 64K, we can
+     *   - if compression is not successful for the first block, all input
+     *     data is still in the window so we can still emit a stored block even
+     *     when input comes from standard input.  (This can also be done for
+     *     all blocks if lit_bufsize is not greater than 32K.)
+     *   - if compression is not successful for a file smaller than 64K, we can
      *     even emit a stored file instead of a stored block (saving 5 bytes).
-     *     This is applicable only क्रम zip (not gzip or zlib).
+     *     This is applicable only for zip (not gzip or zlib).
      *   - creating new Huffman trees less frequently may not provide fast
-     *     adaptation to changes in the input data statistics. (Take क्रम
+     *     adaptation to changes in the input data statistics. (Take for
      *     example a binary file with poorly compressible code followed by
      *     a highly compressible string table.) Smaller buffer sizes give
      *     fast adaptation but have of course the overhead of transmitting
@@ -215,159 +214,159 @@
     uInt last_lit;      /* running index in l_buf */
 
     ush *d_buf;
-    /* Buffer क्रम distances. To simplअगरy the code, d_buf and l_buf have
-     * the same number of elements. To use dअगरferent lengths, an extra flag
+    /* Buffer for distances. To simplify the code, d_buf and l_buf have
+     * the same number of elements. To use different lengths, an extra flag
      * array would be necessary.
      */
 
     ulg opt_len;        /* bit length of current block with optimal trees */
-    ulg अटल_len;     /* bit length of current block with अटल trees */
+    ulg static_len;     /* bit length of current block with static trees */
     ulg compressed_len; /* total bit length of compressed file */
     uInt matches;       /* number of string matches in current block */
-    पूर्णांक last_eob_len;   /* bit length of EOB code क्रम last block */
+    int last_eob_len;   /* bit length of EOB code for last block */
 
-#अगर_घोषित DEBUG_ZLIB
+#ifdef DEBUG_ZLIB
     ulg bits_sent;      /* bit length of the compressed data */
-#पूर्ण_अगर
+#endif
 
     ush bi_buf;
     /* Output buffer. bits are inserted starting at the bottom (least
-     * signअगरicant bits).
+     * significant bits).
      */
-    पूर्णांक bi_valid;
+    int bi_valid;
     /* Number of valid bits in bi_buf.  All bits above the last valid bit
      * are always zero.
      */
 
-पूर्ण deflate_state;
+} deflate_state;
 
-#अगर_घोषित CONFIG_ZLIB_DFLTCC
-#घोषणा zlib_deflate_winकरोw_memsize(winकरोwBits) \
-	(2 * (1 << (winकरोwBits)) * माप(Byte) + PAGE_SIZE)
-#अन्यथा
-#घोषणा zlib_deflate_winकरोw_memsize(winकरोwBits) \
-	(2 * (1 << (winकरोwBits)) * माप(Byte))
-#पूर्ण_अगर
-#घोषणा zlib_deflate_prev_memsize(winकरोwBits) \
-	((1 << (winकरोwBits)) * माप(Pos))
-#घोषणा zlib_deflate_head_memsize(memLevel) \
-	((1 << ((memLevel)+7)) * माप(Pos))
-#घोषणा zlib_deflate_overlay_memsize(memLevel) \
-	((1 << ((memLevel)+6)) * (माप(ush)+2))
+#ifdef CONFIG_ZLIB_DFLTCC
+#define zlib_deflate_window_memsize(windowBits) \
+	(2 * (1 << (windowBits)) * sizeof(Byte) + PAGE_SIZE)
+#else
+#define zlib_deflate_window_memsize(windowBits) \
+	(2 * (1 << (windowBits)) * sizeof(Byte))
+#endif
+#define zlib_deflate_prev_memsize(windowBits) \
+	((1 << (windowBits)) * sizeof(Pos))
+#define zlib_deflate_head_memsize(memLevel) \
+	((1 << ((memLevel)+7)) * sizeof(Pos))
+#define zlib_deflate_overlay_memsize(memLevel) \
+	((1 << ((memLevel)+6)) * (sizeof(ush)+2))
 
 /* Output a byte on the stream.
- * IN निश्चितion: there is enough room in pending_buf.
+ * IN assertion: there is enough room in pending_buf.
  */
-#घोषणा put_byte(s, c) अणुs->pending_buf[s->pending++] = (c);पूर्ण
+#define put_byte(s, c) {s->pending_buf[s->pending++] = (c);}
 
 
-#घोषणा MIN_LOOKAHEAD (MAX_MATCH+MIN_MATCH+1)
+#define MIN_LOOKAHEAD (MAX_MATCH+MIN_MATCH+1)
 /* Minimum amount of lookahead, except at the end of the input file.
- * See deflate.c क्रम comments about the MIN_MATCH+1.
+ * See deflate.c for comments about the MIN_MATCH+1.
  */
 
-#घोषणा MAX_DIST(s)  ((s)->w_size-MIN_LOOKAHEAD)
-/* In order to simplअगरy the code, particularly on 16 bit machines, match
+#define MAX_DIST(s)  ((s)->w_size-MIN_LOOKAHEAD)
+/* In order to simplify the code, particularly on 16 bit machines, match
  * distances are limited to MAX_DIST instead of WSIZE.
  */
 
         /* in trees.c */
-व्योम zlib_tr_init         (deflate_state *s);
-पूर्णांक  zlib_tr_tally        (deflate_state *s, अचिन्हित dist, अचिन्हित lc);
-ulg  zlib_tr_flush_block  (deflate_state *s, अक्षर *buf, ulg stored_len,
-			   पूर्णांक eof);
-व्योम zlib_tr_align        (deflate_state *s);
-व्योम zlib_tr_stored_block (deflate_state *s, अक्षर *buf, ulg stored_len,
-			   पूर्णांक eof);
-व्योम zlib_tr_stored_type_only (deflate_state *);
+void zlib_tr_init         (deflate_state *s);
+int  zlib_tr_tally        (deflate_state *s, unsigned dist, unsigned lc);
+ulg  zlib_tr_flush_block  (deflate_state *s, char *buf, ulg stored_len,
+			   int eof);
+void zlib_tr_align        (deflate_state *s);
+void zlib_tr_stored_block (deflate_state *s, char *buf, ulg stored_len,
+			   int eof);
+void zlib_tr_stored_type_only (deflate_state *);
 
 
 /* ===========================================================================
- * Output a लघु LSB first on the stream.
- * IN निश्चितion: there is enough room in pendingBuf.
+ * Output a short LSB first on the stream.
+ * IN assertion: there is enough room in pendingBuf.
  */
-#घोषणा put_लघु(s, w) अणु \
+#define put_short(s, w) { \
     put_byte(s, (uch)((w) & 0xff)); \
     put_byte(s, (uch)((ush)(w) >> 8)); \
-पूर्ण
+}
 
 /* ===========================================================================
- * Reverse the first len bits of a code, using straightक्रमward code (a faster
+ * Reverse the first len bits of a code, using straightforward code (a faster
  * method would use a table)
- * IN निश्चितion: 1 <= len <= 15
+ * IN assertion: 1 <= len <= 15
  */
-अटल अंतरभूत अचिन्हित  bi_reverse(
-    अचिन्हित code, /* the value to invert */
-    पूर्णांक len        /* its bit length */
+static inline unsigned  bi_reverse(
+    unsigned code, /* the value to invert */
+    int len        /* its bit length */
 )
-अणु
-    रेजिस्टर अचिन्हित res = 0;
-    करो अणु
+{
+    register unsigned res = 0;
+    do {
         res |= code & 1;
         code >>= 1, res <<= 1;
-    पूर्ण जबतक (--len > 0);
-    वापस res >> 1;
-पूर्ण
+    } while (--len > 0);
+    return res >> 1;
+}
 
 /* ===========================================================================
  * Flush the bit buffer, keeping at most 7 bits in it.
  */
-अटल अंतरभूत व्योम bi_flush(deflate_state *s)
-अणु
-    अगर (s->bi_valid == 16) अणु
-        put_लघु(s, s->bi_buf);
+static inline void bi_flush(deflate_state *s)
+{
+    if (s->bi_valid == 16) {
+        put_short(s, s->bi_buf);
         s->bi_buf = 0;
         s->bi_valid = 0;
-    पूर्ण अन्यथा अगर (s->bi_valid >= 8) अणु
+    } else if (s->bi_valid >= 8) {
         put_byte(s, (Byte)s->bi_buf);
         s->bi_buf >>= 8;
         s->bi_valid -= 8;
-    पूर्ण
-पूर्ण
+    }
+}
 
 /* ===========================================================================
  * Flush the bit buffer and align the output on a byte boundary
  */
-अटल अंतरभूत व्योम bi_windup(deflate_state *s)
-अणु
-    अगर (s->bi_valid > 8) अणु
-        put_लघु(s, s->bi_buf);
-    पूर्ण अन्यथा अगर (s->bi_valid > 0) अणु
+static inline void bi_windup(deflate_state *s)
+{
+    if (s->bi_valid > 8) {
+        put_short(s, s->bi_buf);
+    } else if (s->bi_valid > 0) {
         put_byte(s, (Byte)s->bi_buf);
-    पूर्ण
+    }
     s->bi_buf = 0;
     s->bi_valid = 0;
-#अगर_घोषित DEBUG_ZLIB
+#ifdef DEBUG_ZLIB
     s->bits_sent = (s->bits_sent+7) & ~7;
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-प्रकार क्रमागत अणु
+typedef enum {
     need_more,      /* block not completed, need more input or more output */
-    block_करोne,     /* block flush perक्रमmed */
+    block_done,     /* block flush performed */
     finish_started, /* finish started, need only more output at next deflate */
-    finish_करोne     /* finish करोne, accept no more input or output */
-पूर्ण block_state;
+    finish_done     /* finish done, accept no more input or output */
+} block_state;
 
-#घोषणा Buf_size (8 * 2*माप(अक्षर))
+#define Buf_size (8 * 2*sizeof(char))
 /* Number of bits used within bi_buf. (bi_buf might be implemented on
- * more than 16 bits on some प्रणालीs.)
+ * more than 16 bits on some systems.)
  */
 
 /* ===========================================================================
  * Send a value on a given number of bits.
- * IN निश्चितion: length <= 16 and value fits in length bits.
+ * IN assertion: length <= 16 and value fits in length bits.
  */
-#अगर_घोषित DEBUG_ZLIB
-अटल व्योम send_bits      (deflate_state *s, पूर्णांक value, पूर्णांक length);
+#ifdef DEBUG_ZLIB
+static void send_bits      (deflate_state *s, int value, int length);
 
-अटल व्योम send_bits(
+static void send_bits(
     deflate_state *s,
-    पूर्णांक value,  /* value to send */
-    पूर्णांक length  /* number of bits */
+    int value,  /* value to send */
+    int length  /* number of bits */
 )
-अणु
-    Tracevv((मानक_त्रुटि," l %2d v %4x ", length, value));
+{
+    Tracevv((stderr," l %2d v %4x ", length, value));
     Assert(length > 0 && length <= 15, "invalid length");
     s->bits_sent += (ulg)length;
 
@@ -375,68 +374,68 @@ ulg  zlib_tr_flush_block  (deflate_state *s, अक्षर *buf, ulg stored_le
      * (16 - bi_valid) bits from value, leaving (width - (16-bi_valid))
      * unused bits in value.
      */
-    अगर (s->bi_valid > (पूर्णांक)Buf_size - length) अणु
+    if (s->bi_valid > (int)Buf_size - length) {
         s->bi_buf |= (value << s->bi_valid);
-        put_लघु(s, s->bi_buf);
+        put_short(s, s->bi_buf);
         s->bi_buf = (ush)value >> (Buf_size - s->bi_valid);
         s->bi_valid += length - Buf_size;
-    पूर्ण अन्यथा अणु
+    } else {
         s->bi_buf |= value << s->bi_valid;
         s->bi_valid += length;
-    पूर्ण
-पूर्ण
-#अन्यथा /* !DEBUG_ZLIB */
+    }
+}
+#else /* !DEBUG_ZLIB */
 
-#घोषणा send_bits(s, value, length) \
-अणु पूर्णांक len = length;\
-  अगर (s->bi_valid > (पूर्णांक)Buf_size - len) अणु\
-    पूर्णांक val = value;\
+#define send_bits(s, value, length) \
+{ int len = length;\
+  if (s->bi_valid > (int)Buf_size - len) {\
+    int val = value;\
     s->bi_buf |= (val << s->bi_valid);\
-    put_लघु(s, s->bi_buf);\
+    put_short(s, s->bi_buf);\
     s->bi_buf = (ush)val >> (Buf_size - s->bi_valid);\
     s->bi_valid += len - Buf_size;\
-  पूर्ण अन्यथा अणु\
+  } else {\
     s->bi_buf |= (value) << s->bi_valid;\
     s->bi_valid += len;\
-  पूर्ण\
-पूर्ण
-#पूर्ण_अगर /* DEBUG_ZLIB */
+  }\
+}
+#endif /* DEBUG_ZLIB */
 
-अटल अंतरभूत व्योम zlib_tr_send_bits(
+static inline void zlib_tr_send_bits(
     deflate_state *s,
-    पूर्णांक value,
-    पूर्णांक length
+    int value,
+    int length
 )
-अणु
+{
     send_bits(s, value, length);
-पूर्ण
+}
 
 /* =========================================================================
  * Flush as much pending output as possible. All deflate() output goes
- * through this function so some applications may wish to modअगरy it
- * to aव्योम allocating a large strm->next_out buffer and copying पूर्णांकo it.
- * (See also पढ़ो_buf()).
+ * through this function so some applications may wish to modify it
+ * to avoid allocating a large strm->next_out buffer and copying into it.
+ * (See also read_buf()).
  */
-अटल अंतरभूत व्योम flush_pending(
+static inline void flush_pending(
 	z_streamp strm
 )
-अणु
+{
     deflate_state *s = (deflate_state *) strm->state;
-    अचिन्हित len = s->pending;
+    unsigned len = s->pending;
 
-    अगर (len > strm->avail_out) len = strm->avail_out;
-    अगर (len == 0) वापस;
+    if (len > strm->avail_out) len = strm->avail_out;
+    if (len == 0) return;
 
-    अगर (strm->next_out != शून्य) अणु
-	स_नकल(strm->next_out, s->pending_out, len);
+    if (strm->next_out != NULL) {
+	memcpy(strm->next_out, s->pending_out, len);
 	strm->next_out += len;
-    पूर्ण
+    }
     s->pending_out += len;
     strm->total_out += len;
     strm->avail_out  -= len;
     s->pending -= len;
-    अगर (s->pending == 0) अणु
+    if (s->pending == 0) {
         s->pending_out = s->pending_buf;
-    पूर्ण
-पूर्ण
-#पूर्ण_अगर /* DEFUTIL_H */
+    }
+}
+#endif /* DEFUTIL_H */

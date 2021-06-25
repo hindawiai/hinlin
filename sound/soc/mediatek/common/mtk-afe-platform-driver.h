@@ -1,29 +1,28 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * mtk-afe-platक्रमm-driver.h  --  Mediatek afe platक्रमm driver definition
+ * mtk-afe-platform-driver.h  --  Mediatek afe platform driver definition
  *
  * Copyright (c) 2016 MediaTek Inc.
  * Author: Garlic Tseng <garlic.tseng@mediatek.com>
  */
 
-#अगर_अघोषित _MTK_AFE_PLATFORM_DRIVER_H_
-#घोषणा _MTK_AFE_PLATFORM_DRIVER_H_
+#ifndef _MTK_AFE_PLATFORM_DRIVER_H_
+#define _MTK_AFE_PLATFORM_DRIVER_H_
 
-#घोषणा AFE_PCM_NAME "mtk-afe-pcm"
-बाह्य स्थिर काष्ठा snd_soc_component_driver mtk_afe_pcm_platक्रमm;
+#define AFE_PCM_NAME "mtk-afe-pcm"
+extern const struct snd_soc_component_driver mtk_afe_pcm_platform;
 
-काष्ठा mtk_base_afe;
-काष्ठा snd_pcm;
-काष्ठा snd_soc_component;
-काष्ठा snd_soc_pcm_runसमय;
+struct mtk_base_afe;
+struct snd_pcm;
+struct snd_soc_component;
+struct snd_soc_pcm_runtime;
 
-snd_pcm_uframes_t mtk_afe_pcm_poपूर्णांकer(काष्ठा snd_soc_component *component,
-				      काष्ठा snd_pcm_substream *substream);
-पूर्णांक mtk_afe_pcm_new(काष्ठा snd_soc_component *component,
-		    काष्ठा snd_soc_pcm_runसमय *rtd);
+snd_pcm_uframes_t mtk_afe_pcm_pointer(struct snd_soc_component *component,
+				      struct snd_pcm_substream *substream);
+int mtk_afe_pcm_new(struct snd_soc_component *component,
+		    struct snd_soc_pcm_runtime *rtd);
 
-पूर्णांक mtk_afe_combine_sub_dai(काष्ठा mtk_base_afe *afe);
-पूर्णांक mtk_afe_add_sub_dai_control(काष्ठा snd_soc_component *component);
-#पूर्ण_अगर
+int mtk_afe_combine_sub_dai(struct mtk_base_afe *afe);
+int mtk_afe_add_sub_dai_control(struct snd_soc_component *component);
+#endif
 

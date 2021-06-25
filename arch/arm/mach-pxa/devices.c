@@ -1,1121 +1,1120 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/clkdev.h>
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/dmaengine.h>
-#समावेश <linux/spi/pxa2xx_spi.h>
-#समावेश <linux/platक्रमm_data/i2c-pxa.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/platform_device.h>
+#include <linux/clkdev.h>
+#include <linux/clk-provider.h>
+#include <linux/dma-mapping.h>
+#include <linux/dmaengine.h>
+#include <linux/spi/pxa2xx_spi.h>
+#include <linux/platform_data/i2c-pxa.h>
 
-#समावेश "udc.h"
-#समावेश <linux/platक्रमm_data/usb-pxa3xx-ulpi.h>
-#समावेश <linux/platक्रमm_data/video-pxafb.h>
-#समावेश <linux/platक्रमm_data/mmc-pxamci.h>
-#समावेश <linux/platक्रमm_data/irda-pxaficp.h>
-#समावेश <mach/irqs.h>
-#समावेश <linux/platक्रमm_data/usb-ohci-pxa27x.h>
-#समावेश <linux/platक्रमm_data/keypad-pxa27x.h>
-#समावेश <linux/platक्रमm_data/media/camera-pxa.h>
-#समावेश <mach/audपन.स>
-#समावेश <mach/hardware.h>
-#समावेश <linux/platक्रमm_data/mmp_dma.h>
-#समावेश <linux/platक्रमm_data/mtd-nand-pxa3xx.h>
+#include "udc.h"
+#include <linux/platform_data/usb-pxa3xx-ulpi.h>
+#include <linux/platform_data/video-pxafb.h>
+#include <linux/platform_data/mmc-pxamci.h>
+#include <linux/platform_data/irda-pxaficp.h>
+#include <mach/irqs.h>
+#include <linux/platform_data/usb-ohci-pxa27x.h>
+#include <linux/platform_data/keypad-pxa27x.h>
+#include <linux/platform_data/media/camera-pxa.h>
+#include <mach/audio.h>
+#include <mach/hardware.h>
+#include <linux/platform_data/mmp_dma.h>
+#include <linux/platform_data/mtd-nand-pxa3xx.h>
 
-#समावेश "devices.h"
-#समावेश "generic.h"
+#include "devices.h"
+#include "generic.h"
 
-व्योम __init pxa_रेजिस्टर_device(काष्ठा platक्रमm_device *dev, व्योम *data)
-अणु
-	पूर्णांक ret;
+void __init pxa_register_device(struct platform_device *dev, void *data)
+{
+	int ret;
 
-	dev->dev.platक्रमm_data = data;
+	dev->dev.platform_data = data;
 
-	ret = platक्रमm_device_रेजिस्टर(dev);
-	अगर (ret)
+	ret = platform_device_register(dev);
+	if (ret)
 		dev_err(&dev->dev, "unable to register device: %d\n", ret);
-पूर्ण
+}
 
-अटल काष्ठा resource pxa_resource_pmu = अणु
+static struct resource pxa_resource_pmu = {
 	.start	= IRQ_PMU,
 	.end	= IRQ_PMU,
 	.flags	= IORESOURCE_IRQ,
-पूर्ण;
+};
 
-काष्ठा platक्रमm_device pxa_device_pmu = अणु
+struct platform_device pxa_device_pmu = {
 	.name		= "xscale-pmu",
 	.id		= -1,
 	.resource	= &pxa_resource_pmu,
 	.num_resources	= 1,
-पूर्ण;
+};
 
-अटल काष्ठा resource pxamci_resources[] = अणु
-	[0] = अणु
+static struct resource pxamci_resources[] = {
+	[0] = {
 		.start	= 0x41100000,
 		.end	= 0x41100fff,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-	[1] = अणु
+	},
+	[1] = {
 		.start	= IRQ_MMC,
 		.end	= IRQ_MMC,
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल u64 pxamci_dmamask = 0xffffffffUL;
+static u64 pxamci_dmamask = 0xffffffffUL;
 
-काष्ठा platक्रमm_device pxa_device_mci = अणु
+struct platform_device pxa_device_mci = {
 	.name		= "pxa2xx-mci",
 	.id		= 0,
-	.dev		= अणु
+	.dev		= {
 		.dma_mask = &pxamci_dmamask,
 		.coherent_dma_mask = 0xffffffff,
-	पूर्ण,
+	},
 	.num_resources	= ARRAY_SIZE(pxamci_resources),
 	.resource	= pxamci_resources,
-पूर्ण;
+};
 
-व्योम __init pxa_set_mci_info(काष्ठा pxamci_platक्रमm_data *info)
-अणु
-	pxa_रेजिस्टर_device(&pxa_device_mci, info);
-पूर्ण
+void __init pxa_set_mci_info(struct pxamci_platform_data *info)
+{
+	pxa_register_device(&pxa_device_mci, info);
+}
 
 
-अटल काष्ठा pxa2xx_udc_mach_info pxa_udc_info = अणु
+static struct pxa2xx_udc_mach_info pxa_udc_info = {
 	.gpio_pullup = -1,
-पूर्ण;
+};
 
-व्योम __init pxa_set_udc_info(काष्ठा pxa2xx_udc_mach_info *info)
-अणु
-	स_नकल(&pxa_udc_info, info, माप *info);
-पूर्ण
+void __init pxa_set_udc_info(struct pxa2xx_udc_mach_info *info)
+{
+	memcpy(&pxa_udc_info, info, sizeof *info);
+}
 
-अटल काष्ठा resource pxa2xx_udc_resources[] = अणु
-	[0] = अणु
+static struct resource pxa2xx_udc_resources[] = {
+	[0] = {
 		.start	= 0x40600000,
 		.end	= 0x4060ffff,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-	[1] = अणु
+	},
+	[1] = {
 		.start	= IRQ_USB,
 		.end	= IRQ_USB,
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल u64 udc_dma_mask = ~(u32)0;
+static u64 udc_dma_mask = ~(u32)0;
 
-काष्ठा platक्रमm_device pxa25x_device_udc = अणु
+struct platform_device pxa25x_device_udc = {
 	.name		= "pxa25x-udc",
 	.id		= -1,
 	.resource	= pxa2xx_udc_resources,
 	.num_resources	= ARRAY_SIZE(pxa2xx_udc_resources),
-	.dev		=  अणु
-		.platक्रमm_data	= &pxa_udc_info,
+	.dev		=  {
+		.platform_data	= &pxa_udc_info,
 		.dma_mask	= &udc_dma_mask,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-काष्ठा platक्रमm_device pxa27x_device_udc = अणु
+struct platform_device pxa27x_device_udc = {
 	.name		= "pxa27x-udc",
 	.id		= -1,
 	.resource	= pxa2xx_udc_resources,
 	.num_resources	= ARRAY_SIZE(pxa2xx_udc_resources),
-	.dev		=  अणु
-		.platक्रमm_data	= &pxa_udc_info,
+	.dev		=  {
+		.platform_data	= &pxa_udc_info,
 		.dma_mask	= &udc_dma_mask,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-#अगर_घोषित CONFIG_PXA3xx
-अटल काष्ठा resource pxa3xx_u2d_resources[] = अणु
-	[0] = अणु
+#ifdef CONFIG_PXA3xx
+static struct resource pxa3xx_u2d_resources[] = {
+	[0] = {
 		.start	= 0x54100000,
 		.end	= 0x54100fff,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-	[1] = अणु
+	},
+	[1] = {
 		.start	= IRQ_USB2,
 		.end	= IRQ_USB2,
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-काष्ठा platक्रमm_device pxa3xx_device_u2d = अणु
+struct platform_device pxa3xx_device_u2d = {
 	.name		= "pxa3xx-u2d",
 	.id		= -1,
 	.resource	= pxa3xx_u2d_resources,
 	.num_resources	= ARRAY_SIZE(pxa3xx_u2d_resources),
-पूर्ण;
+};
 
-व्योम __init pxa3xx_set_u2d_info(काष्ठा pxa3xx_u2d_platक्रमm_data *info)
-अणु
-	pxa_रेजिस्टर_device(&pxa3xx_device_u2d, info);
-पूर्ण
-#पूर्ण_अगर /* CONFIG_PXA3xx */
+void __init pxa3xx_set_u2d_info(struct pxa3xx_u2d_platform_data *info)
+{
+	pxa_register_device(&pxa3xx_device_u2d, info);
+}
+#endif /* CONFIG_PXA3xx */
 
-अटल काष्ठा resource pxafb_resources[] = अणु
-	[0] = अणु
+static struct resource pxafb_resources[] = {
+	[0] = {
 		.start	= 0x44000000,
 		.end	= 0x4400ffff,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-	[1] = अणु
+	},
+	[1] = {
 		.start	= IRQ_LCD,
 		.end	= IRQ_LCD,
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल u64 fb_dma_mask = ~(u64)0;
+static u64 fb_dma_mask = ~(u64)0;
 
-काष्ठा platक्रमm_device pxa_device_fb = अणु
+struct platform_device pxa_device_fb = {
 	.name		= "pxa2xx-fb",
 	.id		= -1,
-	.dev		= अणु
+	.dev		= {
 		.dma_mask	= &fb_dma_mask,
 		.coherent_dma_mask = 0xffffffff,
-	पूर्ण,
+	},
 	.num_resources	= ARRAY_SIZE(pxafb_resources),
 	.resource	= pxafb_resources,
-पूर्ण;
+};
 
-व्योम __init pxa_set_fb_info(काष्ठा device *parent, काष्ठा pxafb_mach_info *info)
-अणु
+void __init pxa_set_fb_info(struct device *parent, struct pxafb_mach_info *info)
+{
 	pxa_device_fb.dev.parent = parent;
-	pxa_रेजिस्टर_device(&pxa_device_fb, info);
-पूर्ण
+	pxa_register_device(&pxa_device_fb, info);
+}
 
-अटल काष्ठा resource pxa_resource_ffuart[] = अणु
-	अणु
+static struct resource pxa_resource_ffuart[] = {
+	{
 		.start	= 0x40100000,
 		.end	= 0x40100023,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण, अणु
+	}, {
 		.start	= IRQ_FFUART,
 		.end	= IRQ_FFUART,
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-काष्ठा platक्रमm_device pxa_device_ffuart = अणु
+struct platform_device pxa_device_ffuart = {
 	.name		= "pxa2xx-uart",
 	.id		= 0,
 	.resource	= pxa_resource_ffuart,
 	.num_resources	= ARRAY_SIZE(pxa_resource_ffuart),
-पूर्ण;
+};
 
-व्योम __init pxa_set_ffuart_info(व्योम *info)
-अणु
-	pxa_रेजिस्टर_device(&pxa_device_ffuart, info);
-पूर्ण
+void __init pxa_set_ffuart_info(void *info)
+{
+	pxa_register_device(&pxa_device_ffuart, info);
+}
 
-अटल काष्ठा resource pxa_resource_btuart[] = अणु
-	अणु
+static struct resource pxa_resource_btuart[] = {
+	{
 		.start	= 0x40200000,
 		.end	= 0x40200023,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण, अणु
+	}, {
 		.start	= IRQ_BTUART,
 		.end	= IRQ_BTUART,
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-काष्ठा platक्रमm_device pxa_device_btuart = अणु
+struct platform_device pxa_device_btuart = {
 	.name		= "pxa2xx-uart",
 	.id		= 1,
 	.resource	= pxa_resource_btuart,
 	.num_resources	= ARRAY_SIZE(pxa_resource_btuart),
-पूर्ण;
+};
 
-व्योम __init pxa_set_btuart_info(व्योम *info)
-अणु
-	pxa_रेजिस्टर_device(&pxa_device_btuart, info);
-पूर्ण
+void __init pxa_set_btuart_info(void *info)
+{
+	pxa_register_device(&pxa_device_btuart, info);
+}
 
-अटल काष्ठा resource pxa_resource_stuart[] = अणु
-	अणु
+static struct resource pxa_resource_stuart[] = {
+	{
 		.start	= 0x40700000,
 		.end	= 0x40700023,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण, अणु
+	}, {
 		.start	= IRQ_STUART,
 		.end	= IRQ_STUART,
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-काष्ठा platक्रमm_device pxa_device_stuart = अणु
+struct platform_device pxa_device_stuart = {
 	.name		= "pxa2xx-uart",
 	.id		= 2,
 	.resource	= pxa_resource_stuart,
 	.num_resources	= ARRAY_SIZE(pxa_resource_stuart),
-पूर्ण;
+};
 
-व्योम __init pxa_set_stuart_info(व्योम *info)
-अणु
-	pxa_रेजिस्टर_device(&pxa_device_stuart, info);
-पूर्ण
+void __init pxa_set_stuart_info(void *info)
+{
+	pxa_register_device(&pxa_device_stuart, info);
+}
 
-अटल काष्ठा resource pxa_resource_hwuart[] = अणु
-	अणु
+static struct resource pxa_resource_hwuart[] = {
+	{
 		.start	= 0x41600000,
 		.end	= 0x4160002F,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण, अणु
+	}, {
 		.start	= IRQ_HWUART,
 		.end	= IRQ_HWUART,
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-काष्ठा platक्रमm_device pxa_device_hwuart = अणु
+struct platform_device pxa_device_hwuart = {
 	.name		= "pxa2xx-uart",
 	.id		= 3,
 	.resource	= pxa_resource_hwuart,
 	.num_resources	= ARRAY_SIZE(pxa_resource_hwuart),
-पूर्ण;
+};
 
-व्योम __init pxa_set_hwuart_info(व्योम *info)
-अणु
-	अगर (cpu_is_pxa255())
-		pxa_रेजिस्टर_device(&pxa_device_hwuart, info);
-	अन्यथा
+void __init pxa_set_hwuart_info(void *info)
+{
+	if (cpu_is_pxa255())
+		pxa_register_device(&pxa_device_hwuart, info);
+	else
 		pr_info("UART: Ignoring attempt to register HWUART on non-PXA255 hardware");
-पूर्ण
+}
 
-अटल काष्ठा resource pxai2c_resources[] = अणु
-	अणु
+static struct resource pxai2c_resources[] = {
+	{
 		.start	= 0x40301680,
 		.end	= 0x403016a3,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण, अणु
+	}, {
 		.start	= IRQ_I2C,
 		.end	= IRQ_I2C,
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-काष्ठा platक्रमm_device pxa_device_i2c = अणु
+struct platform_device pxa_device_i2c = {
 	.name		= "pxa2xx-i2c",
 	.id		= 0,
 	.resource	= pxai2c_resources,
 	.num_resources	= ARRAY_SIZE(pxai2c_resources),
-पूर्ण;
+};
 
-व्योम __init pxa_set_i2c_info(काष्ठा i2c_pxa_platक्रमm_data *info)
-अणु
-	pxa_रेजिस्टर_device(&pxa_device_i2c, info);
-पूर्ण
+void __init pxa_set_i2c_info(struct i2c_pxa_platform_data *info)
+{
+	pxa_register_device(&pxa_device_i2c, info);
+}
 
-#अगर_घोषित CONFIG_PXA27x
-अटल काष्ठा resource pxa27x_resources_i2c_घातer[] = अणु
-	अणु
+#ifdef CONFIG_PXA27x
+static struct resource pxa27x_resources_i2c_power[] = {
+	{
 		.start	= 0x40f00180,
 		.end	= 0x40f001a3,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण, अणु
+	}, {
 		.start	= IRQ_PWRI2C,
 		.end	= IRQ_PWRI2C,
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-काष्ठा platक्रमm_device pxa27x_device_i2c_घातer = अणु
+struct platform_device pxa27x_device_i2c_power = {
 	.name		= "pxa2xx-i2c",
 	.id		= 1,
-	.resource	= pxa27x_resources_i2c_घातer,
-	.num_resources	= ARRAY_SIZE(pxa27x_resources_i2c_घातer),
-पूर्ण;
-#पूर्ण_अगर
+	.resource	= pxa27x_resources_i2c_power,
+	.num_resources	= ARRAY_SIZE(pxa27x_resources_i2c_power),
+};
+#endif
 
-अटल काष्ठा resource pxai2s_resources[] = अणु
-	अणु
+static struct resource pxai2s_resources[] = {
+	{
 		.start	= 0x40400000,
 		.end	= 0x40400083,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण, अणु
+	}, {
 		.start	= IRQ_I2S,
 		.end	= IRQ_I2S,
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-काष्ठा platक्रमm_device pxa_device_i2s = अणु
+struct platform_device pxa_device_i2s = {
 	.name		= "pxa2xx-i2s",
 	.id		= -1,
 	.resource	= pxai2s_resources,
 	.num_resources	= ARRAY_SIZE(pxai2s_resources),
-पूर्ण;
+};
 
-काष्ठा platक्रमm_device pxa_device_asoc_ssp1 = अणु
+struct platform_device pxa_device_asoc_ssp1 = {
 	.name		= "pxa-ssp-dai",
 	.id		= 0,
-पूर्ण;
+};
 
-काष्ठा platक्रमm_device pxa_device_asoc_ssp2= अणु
+struct platform_device pxa_device_asoc_ssp2= {
 	.name		= "pxa-ssp-dai",
 	.id		= 1,
-पूर्ण;
+};
 
-काष्ठा platक्रमm_device pxa_device_asoc_ssp3 = अणु
+struct platform_device pxa_device_asoc_ssp3 = {
 	.name		= "pxa-ssp-dai",
 	.id		= 2,
-पूर्ण;
+};
 
-काष्ठा platक्रमm_device pxa_device_asoc_ssp4 = अणु
+struct platform_device pxa_device_asoc_ssp4 = {
 	.name		= "pxa-ssp-dai",
 	.id		= 3,
-पूर्ण;
+};
 
-काष्ठा platक्रमm_device pxa_device_asoc_platक्रमm = अणु
+struct platform_device pxa_device_asoc_platform = {
 	.name		= "pxa-pcm-audio",
 	.id		= -1,
-पूर्ण;
+};
 
-अटल u64 pxaficp_dmamask = ~(u32)0;
+static u64 pxaficp_dmamask = ~(u32)0;
 
-अटल काष्ठा resource pxa_ir_resources[] = अणु
-	[0] = अणु
+static struct resource pxa_ir_resources[] = {
+	[0] = {
 		.start  = IRQ_STUART,
 		.end    = IRQ_STUART,
 		.flags  = IORESOURCE_IRQ,
-	पूर्ण,
-	[1] = अणु
+	},
+	[1] = {
 		.start  = IRQ_ICP,
 		.end    = IRQ_ICP,
 		.flags  = IORESOURCE_IRQ,
-	पूर्ण,
-	[3] = अणु
+	},
+	[3] = {
 		.start  = 0x40800000,
 		.end	= 0x4080001b,
 		.flags  = IORESOURCE_MEM,
-	पूर्ण,
-	[4] = अणु
+	},
+	[4] = {
 		.start  = 0x40700000,
 		.end	= 0x40700023,
 		.flags  = IORESOURCE_MEM,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-काष्ठा platक्रमm_device pxa_device_ficp = अणु
+struct platform_device pxa_device_ficp = {
 	.name		= "pxa2xx-ir",
 	.id		= -1,
 	.num_resources	= ARRAY_SIZE(pxa_ir_resources),
 	.resource	= pxa_ir_resources,
-	.dev		= अणु
+	.dev		= {
 		.dma_mask = &pxaficp_dmamask,
 		.coherent_dma_mask = 0xffffffff,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-व्योम __init pxa_set_ficp_info(काष्ठा pxaficp_platक्रमm_data *info)
-अणु
-	pxa_रेजिस्टर_device(&pxa_device_ficp, info);
-पूर्ण
+void __init pxa_set_ficp_info(struct pxaficp_platform_data *info)
+{
+	pxa_register_device(&pxa_device_ficp, info);
+}
 
-अटल काष्ठा resource pxa_rtc_resources[] = अणु
-	[0] = अणु
+static struct resource pxa_rtc_resources[] = {
+	[0] = {
 		.start  = 0x40900000,
 		.end	= 0x40900000 + 0x3b,
 		.flags  = IORESOURCE_MEM,
-	पूर्ण,
-	[1] = अणु
+	},
+	[1] = {
 		.start  = IRQ_RTC1Hz,
 		.end    = IRQ_RTC1Hz,
 		.name	= "rtc 1Hz",
 		.flags  = IORESOURCE_IRQ,
-	पूर्ण,
-	[2] = अणु
+	},
+	[2] = {
 		.start  = IRQ_RTCAlrm,
 		.end    = IRQ_RTCAlrm,
 		.name	= "rtc alarm",
 		.flags  = IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-काष्ठा platक्रमm_device pxa_device_rtc = अणु
+struct platform_device pxa_device_rtc = {
 	.name		= "pxa-rtc",
 	.id		= -1,
 	.num_resources  = ARRAY_SIZE(pxa_rtc_resources),
 	.resource       = pxa_rtc_resources,
-पूर्ण;
+};
 
-काष्ठा platक्रमm_device sa1100_device_rtc = अणु
+struct platform_device sa1100_device_rtc = {
 	.name		= "sa1100-rtc",
 	.id		= -1,
 	.num_resources  = ARRAY_SIZE(pxa_rtc_resources),
 	.resource       = pxa_rtc_resources,
-पूर्ण;
+};
 
-अटल काष्ठा resource pxa_ac97_resources[] = अणु
-	[0] = अणु
+static struct resource pxa_ac97_resources[] = {
+	[0] = {
 		.start  = 0x40500000,
 		.end	= 0x40500000 + 0xfff,
 		.flags  = IORESOURCE_MEM,
-	पूर्ण,
-	[1] = अणु
+	},
+	[1] = {
 		.start  = IRQ_AC97,
 		.end    = IRQ_AC97,
 		.flags  = IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल u64 pxa_ac97_dmamask = 0xffffffffUL;
+static u64 pxa_ac97_dmamask = 0xffffffffUL;
 
-काष्ठा platक्रमm_device pxa_device_ac97 = अणु
+struct platform_device pxa_device_ac97 = {
 	.name           = "pxa2xx-ac97",
 	.id             = -1,
-	.dev            = अणु
+	.dev            = {
 		.dma_mask = &pxa_ac97_dmamask,
 		.coherent_dma_mask = 0xffffffff,
-	पूर्ण,
+	},
 	.num_resources  = ARRAY_SIZE(pxa_ac97_resources),
 	.resource       = pxa_ac97_resources,
-पूर्ण;
+};
 
-व्योम __init pxa_set_ac97_info(pxa2xx_audio_ops_t *ops)
-अणु
-	पूर्णांक ret;
+void __init pxa_set_ac97_info(pxa2xx_audio_ops_t *ops)
+{
+	int ret;
 
 	ret = clk_add_alias("ac97_clk", "pxa2xx-ac97:0", "AC97CLK",
 			   &pxa_device_ac97.dev);
-	अगर (ret)
+	if (ret)
 		pr_err("PXA AC97 clock1 alias error: %d\n", ret);
 
 	ret = clk_add_alias("ac97_clk", "pxa2xx-ac97:1", "AC97CLK",
 			    &pxa_device_ac97.dev);
-	अगर (ret)
+	if (ret)
 		pr_err("PXA AC97 clock2 alias error: %d\n", ret);
 
-	pxa_रेजिस्टर_device(&pxa_device_ac97, ops);
-पूर्ण
+	pxa_register_device(&pxa_device_ac97, ops);
+}
 
-#अगर_घोषित CONFIG_PXA25x
+#ifdef CONFIG_PXA25x
 
-अटल काष्ठा resource pxa25x_resource_pwm0[] = अणु
-	[0] = अणु
+static struct resource pxa25x_resource_pwm0[] = {
+	[0] = {
 		.start	= 0x40b00000,
 		.end	= 0x40b0000f,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-काष्ठा platक्रमm_device pxa25x_device_pwm0 = अणु
+struct platform_device pxa25x_device_pwm0 = {
 	.name		= "pxa25x-pwm",
 	.id		= 0,
 	.resource	= pxa25x_resource_pwm0,
 	.num_resources	= ARRAY_SIZE(pxa25x_resource_pwm0),
-पूर्ण;
+};
 
-अटल काष्ठा resource pxa25x_resource_pwm1[] = अणु
-	[0] = अणु
+static struct resource pxa25x_resource_pwm1[] = {
+	[0] = {
 		.start	= 0x40c00000,
 		.end	= 0x40c0000f,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-काष्ठा platक्रमm_device pxa25x_device_pwm1 = अणु
+struct platform_device pxa25x_device_pwm1 = {
 	.name		= "pxa25x-pwm",
 	.id		= 1,
 	.resource	= pxa25x_resource_pwm1,
 	.num_resources	= ARRAY_SIZE(pxa25x_resource_pwm1),
-पूर्ण;
+};
 
-अटल u64 pxa25x_ssp_dma_mask = DMA_BIT_MASK(32);
+static u64 pxa25x_ssp_dma_mask = DMA_BIT_MASK(32);
 
-अटल काष्ठा resource pxa25x_resource_ssp[] = अणु
-	[0] = अणु
+static struct resource pxa25x_resource_ssp[] = {
+	[0] = {
 		.start	= 0x41000000,
 		.end	= 0x4100001f,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-	[1] = अणु
+	},
+	[1] = {
 		.start	= IRQ_SSP,
 		.end	= IRQ_SSP,
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-काष्ठा platक्रमm_device pxa25x_device_ssp = अणु
+struct platform_device pxa25x_device_ssp = {
 	.name		= "pxa25x-ssp",
 	.id		= 0,
-	.dev		= अणु
+	.dev		= {
 		.dma_mask = &pxa25x_ssp_dma_mask,
 		.coherent_dma_mask = DMA_BIT_MASK(32),
-	पूर्ण,
+	},
 	.resource	= pxa25x_resource_ssp,
 	.num_resources	= ARRAY_SIZE(pxa25x_resource_ssp),
-पूर्ण;
+};
 
-अटल u64 pxa25x_nssp_dma_mask = DMA_BIT_MASK(32);
+static u64 pxa25x_nssp_dma_mask = DMA_BIT_MASK(32);
 
-अटल काष्ठा resource pxa25x_resource_nssp[] = अणु
-	[0] = अणु
+static struct resource pxa25x_resource_nssp[] = {
+	[0] = {
 		.start	= 0x41400000,
 		.end	= 0x4140002f,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-	[1] = अणु
+	},
+	[1] = {
 		.start	= IRQ_NSSP,
 		.end	= IRQ_NSSP,
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-काष्ठा platक्रमm_device pxa25x_device_nssp = अणु
+struct platform_device pxa25x_device_nssp = {
 	.name		= "pxa25x-nssp",
 	.id		= 1,
-	.dev		= अणु
+	.dev		= {
 		.dma_mask = &pxa25x_nssp_dma_mask,
 		.coherent_dma_mask = DMA_BIT_MASK(32),
-	पूर्ण,
+	},
 	.resource	= pxa25x_resource_nssp,
 	.num_resources	= ARRAY_SIZE(pxa25x_resource_nssp),
-पूर्ण;
+};
 
-अटल u64 pxa25x_assp_dma_mask = DMA_BIT_MASK(32);
+static u64 pxa25x_assp_dma_mask = DMA_BIT_MASK(32);
 
-अटल काष्ठा resource pxa25x_resource_assp[] = अणु
-	[0] = अणु
+static struct resource pxa25x_resource_assp[] = {
+	[0] = {
 		.start	= 0x41500000,
 		.end	= 0x4150002f,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-	[1] = अणु
+	},
+	[1] = {
 		.start	= IRQ_ASSP,
 		.end	= IRQ_ASSP,
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-काष्ठा platक्रमm_device pxa25x_device_assp = अणु
+struct platform_device pxa25x_device_assp = {
 	/* ASSP is basically equivalent to NSSP */
 	.name		= "pxa25x-nssp",
 	.id		= 2,
-	.dev		= अणु
+	.dev		= {
 		.dma_mask = &pxa25x_assp_dma_mask,
 		.coherent_dma_mask = DMA_BIT_MASK(32),
-	पूर्ण,
+	},
 	.resource	= pxa25x_resource_assp,
 	.num_resources	= ARRAY_SIZE(pxa25x_resource_assp),
-पूर्ण;
-#पूर्ण_अगर /* CONFIG_PXA25x */
+};
+#endif /* CONFIG_PXA25x */
 
-#अगर defined(CONFIG_PXA27x) || defined(CONFIG_PXA3xx)
-अटल काष्ठा resource pxa27x_resource_camera[] = अणु
-	[0] = अणु
+#if defined(CONFIG_PXA27x) || defined(CONFIG_PXA3xx)
+static struct resource pxa27x_resource_camera[] = {
+	[0] = {
 		.start	= 0x50000000,
 		.end	= 0x50000fff,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-	[1] = अणु
+	},
+	[1] = {
 		.start	= IRQ_CAMERA,
 		.end	= IRQ_CAMERA,
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल u64 pxa27x_dma_mask_camera = DMA_BIT_MASK(32);
+static u64 pxa27x_dma_mask_camera = DMA_BIT_MASK(32);
 
-अटल काष्ठा platक्रमm_device pxa27x_device_camera = अणु
+static struct platform_device pxa27x_device_camera = {
 	.name		= "pxa27x-camera",
-	.id		= 0, /* This is used to put cameras on this पूर्णांकerface */
-	.dev		= अणु
+	.id		= 0, /* This is used to put cameras on this interface */
+	.dev		= {
 		.dma_mask      		= &pxa27x_dma_mask_camera,
 		.coherent_dma_mask	= 0xffffffff,
-	पूर्ण,
+	},
 	.num_resources	= ARRAY_SIZE(pxa27x_resource_camera),
 	.resource	= pxa27x_resource_camera,
-पूर्ण;
+};
 
-व्योम __init pxa_set_camera_info(काष्ठा pxacamera_platक्रमm_data *info)
-अणु
-	काष्ठा clk *mclk;
+void __init pxa_set_camera_info(struct pxacamera_platform_data *info)
+{
+	struct clk *mclk;
 
-	/* Register a fixed-rate घड़ी क्रम camera sensors. */
-	mclk = clk_रेजिस्टर_fixed_rate(शून्य, "pxa_camera_clk", शून्य, 0,
+	/* Register a fixed-rate clock for camera sensors. */
+	mclk = clk_register_fixed_rate(NULL, "pxa_camera_clk", NULL, 0,
 					     info->mclk_10khz * 10000);
-	अगर (!IS_ERR(mclk))
-		clkdev_create(mclk, "mclk", शून्य);
-	pxa_रेजिस्टर_device(&pxa27x_device_camera, info);
-पूर्ण
+	if (!IS_ERR(mclk))
+		clkdev_create(mclk, "mclk", NULL);
+	pxa_register_device(&pxa27x_device_camera, info);
+}
 
-अटल u64 pxa27x_ohci_dma_mask = DMA_BIT_MASK(32);
+static u64 pxa27x_ohci_dma_mask = DMA_BIT_MASK(32);
 
-अटल काष्ठा resource pxa27x_resource_ohci[] = अणु
-	[0] = अणु
+static struct resource pxa27x_resource_ohci[] = {
+	[0] = {
 		.start  = 0x4C000000,
 		.end    = 0x4C00ff6f,
 		.flags  = IORESOURCE_MEM,
-	पूर्ण,
-	[1] = अणु
+	},
+	[1] = {
 		.start  = IRQ_USBH1,
 		.end    = IRQ_USBH1,
 		.flags  = IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-काष्ठा platक्रमm_device pxa27x_device_ohci = अणु
+struct platform_device pxa27x_device_ohci = {
 	.name		= "pxa27x-ohci",
 	.id		= -1,
-	.dev		= अणु
+	.dev		= {
 		.dma_mask = &pxa27x_ohci_dma_mask,
 		.coherent_dma_mask = DMA_BIT_MASK(32),
-	पूर्ण,
+	},
 	.num_resources  = ARRAY_SIZE(pxa27x_resource_ohci),
 	.resource       = pxa27x_resource_ohci,
-पूर्ण;
+};
 
-व्योम __init pxa_set_ohci_info(काष्ठा pxaohci_platक्रमm_data *info)
-अणु
-	pxa_रेजिस्टर_device(&pxa27x_device_ohci, info);
-पूर्ण
-#पूर्ण_अगर /* CONFIG_PXA27x || CONFIG_PXA3xx */
+void __init pxa_set_ohci_info(struct pxaohci_platform_data *info)
+{
+	pxa_register_device(&pxa27x_device_ohci, info);
+}
+#endif /* CONFIG_PXA27x || CONFIG_PXA3xx */
 
-#अगर defined(CONFIG_PXA27x) || defined(CONFIG_PXA3xx)
-अटल काष्ठा resource pxa27x_resource_keypad[] = अणु
-	[0] = अणु
+#if defined(CONFIG_PXA27x) || defined(CONFIG_PXA3xx)
+static struct resource pxa27x_resource_keypad[] = {
+	[0] = {
 		.start	= 0x41500000,
 		.end	= 0x4150004c,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-	[1] = अणु
+	},
+	[1] = {
 		.start	= IRQ_KEYPAD,
 		.end	= IRQ_KEYPAD,
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-काष्ठा platक्रमm_device pxa27x_device_keypad = अणु
+struct platform_device pxa27x_device_keypad = {
 	.name		= "pxa27x-keypad",
 	.id		= -1,
 	.resource	= pxa27x_resource_keypad,
 	.num_resources	= ARRAY_SIZE(pxa27x_resource_keypad),
-पूर्ण;
+};
 
-व्योम __init pxa_set_keypad_info(काष्ठा pxa27x_keypad_platक्रमm_data *info)
-अणु
-	pxa_रेजिस्टर_device(&pxa27x_device_keypad, info);
-पूर्ण
+void __init pxa_set_keypad_info(struct pxa27x_keypad_platform_data *info)
+{
+	pxa_register_device(&pxa27x_device_keypad, info);
+}
 
-अटल u64 pxa27x_ssp1_dma_mask = DMA_BIT_MASK(32);
+static u64 pxa27x_ssp1_dma_mask = DMA_BIT_MASK(32);
 
-अटल काष्ठा resource pxa27x_resource_ssp1[] = अणु
-	[0] = अणु
+static struct resource pxa27x_resource_ssp1[] = {
+	[0] = {
 		.start	= 0x41000000,
 		.end	= 0x4100003f,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-	[1] = अणु
+	},
+	[1] = {
 		.start	= IRQ_SSP,
 		.end	= IRQ_SSP,
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-काष्ठा platक्रमm_device pxa27x_device_ssp1 = अणु
+struct platform_device pxa27x_device_ssp1 = {
 	.name		= "pxa27x-ssp",
 	.id		= 0,
-	.dev		= अणु
+	.dev		= {
 		.dma_mask = &pxa27x_ssp1_dma_mask,
 		.coherent_dma_mask = DMA_BIT_MASK(32),
-	पूर्ण,
+	},
 	.resource	= pxa27x_resource_ssp1,
 	.num_resources	= ARRAY_SIZE(pxa27x_resource_ssp1),
-पूर्ण;
+};
 
-अटल u64 pxa27x_ssp2_dma_mask = DMA_BIT_MASK(32);
+static u64 pxa27x_ssp2_dma_mask = DMA_BIT_MASK(32);
 
-अटल काष्ठा resource pxa27x_resource_ssp2[] = अणु
-	[0] = अणु
+static struct resource pxa27x_resource_ssp2[] = {
+	[0] = {
 		.start	= 0x41700000,
 		.end	= 0x4170003f,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-	[1] = अणु
+	},
+	[1] = {
 		.start	= IRQ_SSP2,
 		.end	= IRQ_SSP2,
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-काष्ठा platक्रमm_device pxa27x_device_ssp2 = अणु
+struct platform_device pxa27x_device_ssp2 = {
 	.name		= "pxa27x-ssp",
 	.id		= 1,
-	.dev		= अणु
+	.dev		= {
 		.dma_mask = &pxa27x_ssp2_dma_mask,
 		.coherent_dma_mask = DMA_BIT_MASK(32),
-	पूर्ण,
+	},
 	.resource	= pxa27x_resource_ssp2,
 	.num_resources	= ARRAY_SIZE(pxa27x_resource_ssp2),
-पूर्ण;
+};
 
-अटल u64 pxa27x_ssp3_dma_mask = DMA_BIT_MASK(32);
+static u64 pxa27x_ssp3_dma_mask = DMA_BIT_MASK(32);
 
-अटल काष्ठा resource pxa27x_resource_ssp3[] = अणु
-	[0] = अणु
+static struct resource pxa27x_resource_ssp3[] = {
+	[0] = {
 		.start	= 0x41900000,
 		.end	= 0x4190003f,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-	[1] = अणु
+	},
+	[1] = {
 		.start	= IRQ_SSP3,
 		.end	= IRQ_SSP3,
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-काष्ठा platक्रमm_device pxa27x_device_ssp3 = अणु
+struct platform_device pxa27x_device_ssp3 = {
 	.name		= "pxa27x-ssp",
 	.id		= 2,
-	.dev		= अणु
+	.dev		= {
 		.dma_mask = &pxa27x_ssp3_dma_mask,
 		.coherent_dma_mask = DMA_BIT_MASK(32),
-	पूर्ण,
+	},
 	.resource	= pxa27x_resource_ssp3,
 	.num_resources	= ARRAY_SIZE(pxa27x_resource_ssp3),
-पूर्ण;
+};
 
-अटल काष्ठा resource pxa27x_resource_pwm0[] = अणु
-	[0] = अणु
+static struct resource pxa27x_resource_pwm0[] = {
+	[0] = {
 		.start	= 0x40b00000,
 		.end	= 0x40b0001f,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-काष्ठा platक्रमm_device pxa27x_device_pwm0 = अणु
+struct platform_device pxa27x_device_pwm0 = {
 	.name		= "pxa27x-pwm",
 	.id		= 0,
 	.resource	= pxa27x_resource_pwm0,
 	.num_resources	= ARRAY_SIZE(pxa27x_resource_pwm0),
-पूर्ण;
+};
 
-अटल काष्ठा resource pxa27x_resource_pwm1[] = अणु
-	[0] = अणु
+static struct resource pxa27x_resource_pwm1[] = {
+	[0] = {
 		.start	= 0x40c00000,
 		.end	= 0x40c0001f,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-काष्ठा platक्रमm_device pxa27x_device_pwm1 = अणु
+struct platform_device pxa27x_device_pwm1 = {
 	.name		= "pxa27x-pwm",
 	.id		= 1,
 	.resource	= pxa27x_resource_pwm1,
 	.num_resources	= ARRAY_SIZE(pxa27x_resource_pwm1),
-पूर्ण;
-#पूर्ण_अगर /* CONFIG_PXA27x || CONFIG_PXA3xx */
+};
+#endif /* CONFIG_PXA27x || CONFIG_PXA3xx */
 
-#अगर_घोषित CONFIG_PXA3xx
-अटल काष्ठा resource pxa3xx_resources_mci2[] = अणु
-	[0] = अणु
+#ifdef CONFIG_PXA3xx
+static struct resource pxa3xx_resources_mci2[] = {
+	[0] = {
 		.start	= 0x42000000,
 		.end	= 0x42000fff,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-	[1] = अणु
+	},
+	[1] = {
 		.start	= IRQ_MMC2,
 		.end	= IRQ_MMC2,
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-काष्ठा platक्रमm_device pxa3xx_device_mci2 = अणु
+struct platform_device pxa3xx_device_mci2 = {
 	.name		= "pxa2xx-mci",
 	.id		= 1,
-	.dev		= अणु
+	.dev		= {
 		.dma_mask = &pxamci_dmamask,
 		.coherent_dma_mask =	0xffffffff,
-	पूर्ण,
+	},
 	.num_resources	= ARRAY_SIZE(pxa3xx_resources_mci2),
 	.resource	= pxa3xx_resources_mci2,
-पूर्ण;
+};
 
-व्योम __init pxa3xx_set_mci2_info(काष्ठा pxamci_platक्रमm_data *info)
-अणु
-	pxa_रेजिस्टर_device(&pxa3xx_device_mci2, info);
-पूर्ण
+void __init pxa3xx_set_mci2_info(struct pxamci_platform_data *info)
+{
+	pxa_register_device(&pxa3xx_device_mci2, info);
+}
 
-अटल काष्ठा resource pxa3xx_resources_mci3[] = अणु
-	[0] = अणु
+static struct resource pxa3xx_resources_mci3[] = {
+	[0] = {
 		.start	= 0x42500000,
 		.end	= 0x42500fff,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-	[1] = अणु
+	},
+	[1] = {
 		.start	= IRQ_MMC3,
 		.end	= IRQ_MMC3,
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-काष्ठा platक्रमm_device pxa3xx_device_mci3 = अणु
+struct platform_device pxa3xx_device_mci3 = {
 	.name		= "pxa2xx-mci",
 	.id		= 2,
-	.dev		= अणु
+	.dev		= {
 		.dma_mask = &pxamci_dmamask,
 		.coherent_dma_mask = 0xffffffff,
-	पूर्ण,
+	},
 	.num_resources	= ARRAY_SIZE(pxa3xx_resources_mci3),
 	.resource	= pxa3xx_resources_mci3,
-पूर्ण;
+};
 
-व्योम __init pxa3xx_set_mci3_info(काष्ठा pxamci_platक्रमm_data *info)
-अणु
-	pxa_रेजिस्टर_device(&pxa3xx_device_mci3, info);
-पूर्ण
+void __init pxa3xx_set_mci3_info(struct pxamci_platform_data *info)
+{
+	pxa_register_device(&pxa3xx_device_mci3, info);
+}
 
-अटल काष्ठा resource pxa3xx_resources_gcu[] = अणु
-	अणु
+static struct resource pxa3xx_resources_gcu[] = {
+	{
 		.start	= 0x54000000,
 		.end	= 0x54000fff,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-	अणु
+	},
+	{
 		.start	= IRQ_GCU,
 		.end	= IRQ_GCU,
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल u64 pxa3xx_gcu_dmamask = DMA_BIT_MASK(32);
+static u64 pxa3xx_gcu_dmamask = DMA_BIT_MASK(32);
 
-काष्ठा platक्रमm_device pxa3xx_device_gcu = अणु
+struct platform_device pxa3xx_device_gcu = {
 	.name		= "pxa3xx-gcu",
 	.id		= -1,
 	.num_resources	= ARRAY_SIZE(pxa3xx_resources_gcu),
 	.resource	= pxa3xx_resources_gcu,
-	.dev		= अणु
+	.dev		= {
 		.dma_mask = &pxa3xx_gcu_dmamask,
 		.coherent_dma_mask = 0xffffffff,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-#पूर्ण_अगर /* CONFIG_PXA3xx */
+#endif /* CONFIG_PXA3xx */
 
-#अगर defined(CONFIG_PXA3xx)
-अटल काष्ठा resource pxa3xx_resources_i2c_घातer[] = अणु
-	अणु
+#if defined(CONFIG_PXA3xx)
+static struct resource pxa3xx_resources_i2c_power[] = {
+	{
 		.start  = 0x40f500c0,
 		.end    = 0x40f500d3,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण, अणु
+	}, {
 		.start	= IRQ_PWRI2C,
 		.end	= IRQ_PWRI2C,
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-काष्ठा platक्रमm_device pxa3xx_device_i2c_घातer = अणु
+struct platform_device pxa3xx_device_i2c_power = {
 	.name		= "pxa3xx-pwri2c",
 	.id		= 1,
-	.resource	= pxa3xx_resources_i2c_घातer,
-	.num_resources	= ARRAY_SIZE(pxa3xx_resources_i2c_घातer),
-पूर्ण;
+	.resource	= pxa3xx_resources_i2c_power,
+	.num_resources	= ARRAY_SIZE(pxa3xx_resources_i2c_power),
+};
 
-अटल काष्ठा resource pxa3xx_resources_nand[] = अणु
-	[0] = अणु
+static struct resource pxa3xx_resources_nand[] = {
+	[0] = {
 		.start	= 0x43100000,
 		.end	= 0x43100053,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-	[1] = अणु
-		.start	= IRQ_न_अंकD,
-		.end	= IRQ_न_अंकD,
+	},
+	[1] = {
+		.start	= IRQ_NAND,
+		.end	= IRQ_NAND,
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल u64 pxa3xx_nand_dma_mask = DMA_BIT_MASK(32);
+static u64 pxa3xx_nand_dma_mask = DMA_BIT_MASK(32);
 
-काष्ठा platक्रमm_device pxa3xx_device_nand = अणु
+struct platform_device pxa3xx_device_nand = {
 	.name		= "pxa3xx-nand",
 	.id		= -1,
-	.dev		= अणु
+	.dev		= {
 		.dma_mask = &pxa3xx_nand_dma_mask,
 		.coherent_dma_mask = DMA_BIT_MASK(32),
-	पूर्ण,
+	},
 	.num_resources	= ARRAY_SIZE(pxa3xx_resources_nand),
 	.resource	= pxa3xx_resources_nand,
-पूर्ण;
+};
 
-व्योम __init pxa3xx_set_nand_info(काष्ठा pxa3xx_nand_platक्रमm_data *info)
-अणु
-	pxa_रेजिस्टर_device(&pxa3xx_device_nand, info);
-पूर्ण
+void __init pxa3xx_set_nand_info(struct pxa3xx_nand_platform_data *info)
+{
+	pxa_register_device(&pxa3xx_device_nand, info);
+}
 
-अटल u64 pxa3xx_ssp4_dma_mask = DMA_BIT_MASK(32);
+static u64 pxa3xx_ssp4_dma_mask = DMA_BIT_MASK(32);
 
-अटल काष्ठा resource pxa3xx_resource_ssp4[] = अणु
-	[0] = अणु
+static struct resource pxa3xx_resource_ssp4[] = {
+	[0] = {
 		.start	= 0x41a00000,
 		.end	= 0x41a0003f,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-	[1] = अणु
+	},
+	[1] = {
 		.start	= IRQ_SSP4,
 		.end	= IRQ_SSP4,
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /*
  * PXA3xx SSP is basically equivalent to PXA27x.
- * However, we need to रेजिस्टर the device by the correct name in order to
- * make the driver set the correct पूर्णांकernal type, hence we provide specअगरic
- * platक्रमm_devices क्रम each of them.
+ * However, we need to register the device by the correct name in order to
+ * make the driver set the correct internal type, hence we provide specific
+ * platform_devices for each of them.
  */
-काष्ठा platक्रमm_device pxa3xx_device_ssp1 = अणु
+struct platform_device pxa3xx_device_ssp1 = {
 	.name		= "pxa3xx-ssp",
 	.id		= 0,
-	.dev		= अणु
+	.dev		= {
 		.dma_mask = &pxa27x_ssp1_dma_mask,
 		.coherent_dma_mask = DMA_BIT_MASK(32),
-	पूर्ण,
+	},
 	.resource	= pxa27x_resource_ssp1,
 	.num_resources	= ARRAY_SIZE(pxa27x_resource_ssp1),
-पूर्ण;
+};
 
-काष्ठा platक्रमm_device pxa3xx_device_ssp2 = अणु
+struct platform_device pxa3xx_device_ssp2 = {
 	.name		= "pxa3xx-ssp",
 	.id		= 1,
-	.dev		= अणु
+	.dev		= {
 		.dma_mask = &pxa27x_ssp2_dma_mask,
 		.coherent_dma_mask = DMA_BIT_MASK(32),
-	पूर्ण,
+	},
 	.resource	= pxa27x_resource_ssp2,
 	.num_resources	= ARRAY_SIZE(pxa27x_resource_ssp2),
-पूर्ण;
+};
 
-काष्ठा platक्रमm_device pxa3xx_device_ssp3 = अणु
+struct platform_device pxa3xx_device_ssp3 = {
 	.name		= "pxa3xx-ssp",
 	.id		= 2,
-	.dev		= अणु
+	.dev		= {
 		.dma_mask = &pxa27x_ssp3_dma_mask,
 		.coherent_dma_mask = DMA_BIT_MASK(32),
-	पूर्ण,
+	},
 	.resource	= pxa27x_resource_ssp3,
 	.num_resources	= ARRAY_SIZE(pxa27x_resource_ssp3),
-पूर्ण;
+};
 
-काष्ठा platक्रमm_device pxa3xx_device_ssp4 = अणु
+struct platform_device pxa3xx_device_ssp4 = {
 	.name		= "pxa3xx-ssp",
 	.id		= 3,
-	.dev		= अणु
+	.dev		= {
 		.dma_mask = &pxa3xx_ssp4_dma_mask,
 		.coherent_dma_mask = DMA_BIT_MASK(32),
-	पूर्ण,
+	},
 	.resource	= pxa3xx_resource_ssp4,
 	.num_resources	= ARRAY_SIZE(pxa3xx_resource_ssp4),
-पूर्ण;
-#पूर्ण_अगर /* CONFIG_PXA3xx */
+};
+#endif /* CONFIG_PXA3xx */
 
-काष्ठा resource pxa_resource_gpio[] = अणु
-	अणु
+struct resource pxa_resource_gpio[] = {
+	{
 		.start	= 0x40e00000,
 		.end	= 0x40e0ffff,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण, अणु
+	}, {
 		.start	= IRQ_GPIO0,
 		.end	= IRQ_GPIO0,
 		.name	= "gpio0",
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण, अणु
+	}, {
 		.start	= IRQ_GPIO1,
 		.end	= IRQ_GPIO1,
 		.name	= "gpio1",
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण, अणु
+	}, {
 		.start	= IRQ_GPIO_2_x,
 		.end	= IRQ_GPIO_2_x,
 		.name	= "gpio_mux",
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-काष्ठा platक्रमm_device pxa25x_device_gpio = अणु
-#अगर_घोषित CONFIG_CPU_PXA26x
+struct platform_device pxa25x_device_gpio = {
+#ifdef CONFIG_CPU_PXA26x
 	.name		= "pxa26x-gpio",
-#अन्यथा
+#else
 	.name		= "pxa25x-gpio",
-#पूर्ण_अगर
+#endif
 	.id		= -1,
 	.num_resources	= ARRAY_SIZE(pxa_resource_gpio),
 	.resource	= pxa_resource_gpio,
-पूर्ण;
+};
 
-काष्ठा platक्रमm_device pxa27x_device_gpio = अणु
+struct platform_device pxa27x_device_gpio = {
 	.name		= "pxa27x-gpio",
 	.id		= -1,
 	.num_resources	= ARRAY_SIZE(pxa_resource_gpio),
 	.resource	= pxa_resource_gpio,
-पूर्ण;
+};
 
-काष्ठा platक्रमm_device pxa3xx_device_gpio = अणु
+struct platform_device pxa3xx_device_gpio = {
 	.name		= "pxa3xx-gpio",
 	.id		= -1,
 	.num_resources	= ARRAY_SIZE(pxa_resource_gpio),
 	.resource	= pxa_resource_gpio,
-पूर्ण;
+};
 
-काष्ठा platक्रमm_device pxa93x_device_gpio = अणु
+struct platform_device pxa93x_device_gpio = {
 	.name		= "pxa93x-gpio",
 	.id		= -1,
 	.num_resources	= ARRAY_SIZE(pxa_resource_gpio),
 	.resource	= pxa_resource_gpio,
-पूर्ण;
+};
 
-/* pxa2xx-spi platक्रमm-device ID equals respective SSP platक्रमm-device ID + 1.
+/* pxa2xx-spi platform-device ID equals respective SSP platform-device ID + 1.
  * See comment in arch/arm/mach-pxa/ssp.c::ssp_probe() */
-व्योम __init pxa2xx_set_spi_info(अचिन्हित id, काष्ठा pxa2xx_spi_controller *info)
-अणु
-	काष्ठा platक्रमm_device *pd;
+void __init pxa2xx_set_spi_info(unsigned id, struct pxa2xx_spi_controller *info)
+{
+	struct platform_device *pd;
 
-	pd = platक्रमm_device_alloc("pxa2xx-spi", id);
-	अगर (pd == शून्य) अणु
-		prपूर्णांकk(KERN_ERR "pxa2xx-spi: failed to allocate device id %d\n",
+	pd = platform_device_alloc("pxa2xx-spi", id);
+	if (pd == NULL) {
+		printk(KERN_ERR "pxa2xx-spi: failed to allocate device id %d\n",
 		       id);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	pd->dev.platक्रमm_data = info;
-	platक्रमm_device_add(pd);
-पूर्ण
+	pd->dev.platform_data = info;
+	platform_device_add(pd);
+}
 
-अटल काष्ठा resource pxa_dma_resource[] = अणु
-	[0] = अणु
+static struct resource pxa_dma_resource[] = {
+	[0] = {
 		.start	= 0x40000000,
 		.end	= 0x4000ffff,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-	[1] = अणु
+	},
+	[1] = {
 		.start	= IRQ_DMA,
 		.end	= IRQ_DMA,
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल u64 pxadma_dmamask = 0xffffffffUL;
+static u64 pxadma_dmamask = 0xffffffffUL;
 
-अटल काष्ठा platक्रमm_device pxa2xx_pxa_dma = अणु
+static struct platform_device pxa2xx_pxa_dma = {
 	.name		= "pxa-dma",
 	.id		= 0,
-	.dev		= अणु
+	.dev		= {
 		.dma_mask = &pxadma_dmamask,
 		.coherent_dma_mask = 0xffffffff,
-	पूर्ण,
+	},
 	.num_resources	= ARRAY_SIZE(pxa_dma_resource),
 	.resource	= pxa_dma_resource,
-पूर्ण;
+};
 
-व्योम __init pxa2xx_set_dmac_info(काष्ठा mmp_dma_platdata *dma_pdata)
-अणु
-	pxa_रेजिस्टर_device(&pxa2xx_pxa_dma, dma_pdata);
-पूर्ण
+void __init pxa2xx_set_dmac_info(struct mmp_dma_platdata *dma_pdata)
+{
+	pxa_register_device(&pxa2xx_pxa_dma, dma_pdata);
+}

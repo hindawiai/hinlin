@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * DMA memory management क्रम framework level HCD code (hc_driver)
+ * DMA memory management for framework level HCD code (hc_driver)
  *
  * This implementation plugs in through generic "usb_bus" level methods,
  * and should work with all USB controllers, regardless of bus type.
@@ -9,17 +8,17 @@
  * Released under the GPLv2 only.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/device.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/dmapool.h>
-#समावेश <linux/genभाग.स>
-#समावेश <linux/usb.h>
-#समावेश <linux/usb/hcd.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/device.h>
+#include <linux/mm.h>
+#include <linux/io.h>
+#include <linux/dma-mapping.h>
+#include <linux/dmapool.h>
+#include <linux/genalloc.h>
+#include <linux/usb.h>
+#include <linux/usb/hcd.h>
 
 
 /*
@@ -27,25 +26,25 @@
  */
 
 /* FIXME tune these based on pool statistics ... */
-अटल माप_प्रकार pool_max[HCD_BUFFER_POOLS] = अणु
+static size_t pool_max[HCD_BUFFER_POOLS] = {
 	32, 128, 512, 2048,
-पूर्ण;
+};
 
-व्योम __init usb_init_pool_max(व्योम)
-अणु
+void __init usb_init_pool_max(void)
+{
 	/*
 	 * The pool_max values must never be smaller than
 	 * ARCH_KMALLOC_MINALIGN.
 	 */
-	अगर (ARCH_KMALLOC_MINALIGN <= 32)
+	if (ARCH_KMALLOC_MINALIGN <= 32)
 		;			/* Original value is okay */
-	अन्यथा अगर (ARCH_KMALLOC_MINALIGN <= 64)
+	else if (ARCH_KMALLOC_MINALIGN <= 64)
 		pool_max[0] = 64;
-	अन्यथा अगर (ARCH_KMALLOC_MINALIGN <= 128)
+	else if (ARCH_KMALLOC_MINALIGN <= 128)
 		pool_max[0] = 0;	/* Don't use this pool */
-	अन्यथा
-		BUILD_BUG();		/* We करोn't allow this */
-पूर्ण
+	else
+		BUILD_BUG();		/* We don't allow this */
+}
 
 /* SETUP primitives */
 
@@ -61,30 +60,30 @@
  *
  * Call hcd_buffer_destroy() to clean up after using those pools.
  *
- * Return: 0 अगर successful. A negative त्रुटि_सं value otherwise.
+ * Return: 0 if successful. A negative errno value otherwise.
  */
-पूर्णांक hcd_buffer_create(काष्ठा usb_hcd *hcd)
-अणु
-	अक्षर		name[16];
-	पूर्णांक		i, size;
+int hcd_buffer_create(struct usb_hcd *hcd)
+{
+	char		name[16];
+	int		i, size;
 
-	अगर (hcd->localmem_pool || !hcd_uses_dma(hcd))
-		वापस 0;
+	if (hcd->localmem_pool || !hcd_uses_dma(hcd))
+		return 0;
 
-	क्रम (i = 0; i < HCD_BUFFER_POOLS; i++) अणु
+	for (i = 0; i < HCD_BUFFER_POOLS; i++) {
 		size = pool_max[i];
-		अगर (!size)
-			जारी;
-		snम_लिखो(name, माप(name), "buffer-%d", size);
+		if (!size)
+			continue;
+		snprintf(name, sizeof(name), "buffer-%d", size);
 		hcd->pool[i] = dma_pool_create(name, hcd->self.sysdev,
 				size, size, 0);
-		अगर (!hcd->pool[i]) अणु
+		if (!hcd->pool[i]) {
 			hcd_buffer_destroy(hcd);
-			वापस -ENOMEM;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return -ENOMEM;
+		}
+	}
+	return 0;
+}
 
 
 /**
@@ -93,83 +92,83 @@
  *
  * Context: task context, might sleep
  *
- * This मुक्तs the buffer pools created by hcd_buffer_create().
+ * This frees the buffer pools created by hcd_buffer_create().
  */
-व्योम hcd_buffer_destroy(काष्ठा usb_hcd *hcd)
-अणु
-	पूर्णांक i;
+void hcd_buffer_destroy(struct usb_hcd *hcd)
+{
+	int i;
 
-	अगर (!IS_ENABLED(CONFIG_HAS_DMA))
-		वापस;
+	if (!IS_ENABLED(CONFIG_HAS_DMA))
+		return;
 
-	क्रम (i = 0; i < HCD_BUFFER_POOLS; i++) अणु
+	for (i = 0; i < HCD_BUFFER_POOLS; i++) {
 		dma_pool_destroy(hcd->pool[i]);
-		hcd->pool[i] = शून्य;
-	पूर्ण
-पूर्ण
+		hcd->pool[i] = NULL;
+	}
+}
 
 
-/* someबार alloc/मुक्त could use kदो_स्मृति with GFP_DMA, क्रम
- * better sharing and to leverage mm/slab.c पूर्णांकelligence.
+/* sometimes alloc/free could use kmalloc with GFP_DMA, for
+ * better sharing and to leverage mm/slab.c intelligence.
  */
 
-व्योम *hcd_buffer_alloc(
-	काष्ठा usb_bus		*bus,
-	माप_प्रकार			size,
+void *hcd_buffer_alloc(
+	struct usb_bus		*bus,
+	size_t			size,
 	gfp_t			mem_flags,
 	dma_addr_t		*dma
 )
-अणु
-	काष्ठा usb_hcd		*hcd = bus_to_hcd(bus);
-	पूर्णांक			i;
+{
+	struct usb_hcd		*hcd = bus_to_hcd(bus);
+	int			i;
 
-	अगर (size == 0)
-		वापस शून्य;
+	if (size == 0)
+		return NULL;
 
-	अगर (hcd->localmem_pool)
-		वापस gen_pool_dma_alloc(hcd->localmem_pool, size, dma);
+	if (hcd->localmem_pool)
+		return gen_pool_dma_alloc(hcd->localmem_pool, size, dma);
 
 	/* some USB hosts just use PIO */
-	अगर (!hcd_uses_dma(hcd)) अणु
+	if (!hcd_uses_dma(hcd)) {
 		*dma = ~(dma_addr_t) 0;
-		वापस kदो_स्मृति(size, mem_flags);
-	पूर्ण
+		return kmalloc(size, mem_flags);
+	}
 
-	क्रम (i = 0; i < HCD_BUFFER_POOLS; i++) अणु
-		अगर (size <= pool_max[i])
-			वापस dma_pool_alloc(hcd->pool[i], mem_flags, dma);
-	पूर्ण
-	वापस dma_alloc_coherent(hcd->self.sysdev, size, dma, mem_flags);
-पूर्ण
+	for (i = 0; i < HCD_BUFFER_POOLS; i++) {
+		if (size <= pool_max[i])
+			return dma_pool_alloc(hcd->pool[i], mem_flags, dma);
+	}
+	return dma_alloc_coherent(hcd->self.sysdev, size, dma, mem_flags);
+}
 
-व्योम hcd_buffer_मुक्त(
-	काष्ठा usb_bus		*bus,
-	माप_प्रकार			size,
-	व्योम			*addr,
+void hcd_buffer_free(
+	struct usb_bus		*bus,
+	size_t			size,
+	void			*addr,
 	dma_addr_t		dma
 )
-अणु
-	काष्ठा usb_hcd		*hcd = bus_to_hcd(bus);
-	पूर्णांक			i;
+{
+	struct usb_hcd		*hcd = bus_to_hcd(bus);
+	int			i;
 
-	अगर (!addr)
-		वापस;
+	if (!addr)
+		return;
 
-	अगर (hcd->localmem_pool) अणु
-		gen_pool_मुक्त(hcd->localmem_pool, (अचिन्हित दीर्घ)addr, size);
-		वापस;
-	पूर्ण
+	if (hcd->localmem_pool) {
+		gen_pool_free(hcd->localmem_pool, (unsigned long)addr, size);
+		return;
+	}
 
-	अगर (!hcd_uses_dma(hcd)) अणु
-		kमुक्त(addr);
-		वापस;
-	पूर्ण
+	if (!hcd_uses_dma(hcd)) {
+		kfree(addr);
+		return;
+	}
 
-	क्रम (i = 0; i < HCD_BUFFER_POOLS; i++) अणु
-		अगर (size <= pool_max[i]) अणु
-			dma_pool_मुक्त(hcd->pool[i], addr, dma);
-			वापस;
-		पूर्ण
-	पूर्ण
-	dma_मुक्त_coherent(hcd->self.sysdev, size, addr, dma);
-पूर्ण
+	for (i = 0; i < HCD_BUFFER_POOLS; i++) {
+		if (size <= pool_max[i]) {
+			dma_pool_free(hcd->pool[i], addr, dma);
+			return;
+		}
+	}
+	dma_free_coherent(hcd->self.sysdev, size, addr, dma);
+}

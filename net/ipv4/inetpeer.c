@@ -1,216 +1,215 @@
-<शैली गुरु>
 /*
- *		INETPEER - A storage क्रम permanent inक्रमmation about peers
+ *		INETPEER - A storage for permanent information about peers
  *
  *  This source is covered by the GNU GPL, the same as all kernel sources.
  *
  *  Authors:	Andrey V. Savochkin <saw@msu.ru>
  */
 
-#समावेश <linux/cache.h>
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/अक्रमom.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/समय.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/net.h>
-#समावेश <linux/workqueue.h>
-#समावेश <net/ip.h>
-#समावेश <net/inetpeer.h>
-#समावेश <net/secure_seq.h>
+#include <linux/cache.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/slab.h>
+#include <linux/interrupt.h>
+#include <linux/spinlock.h>
+#include <linux/random.h>
+#include <linux/timer.h>
+#include <linux/time.h>
+#include <linux/kernel.h>
+#include <linux/mm.h>
+#include <linux/net.h>
+#include <linux/workqueue.h>
+#include <net/ip.h>
+#include <net/inetpeer.h>
+#include <net/secure_seq.h>
 
 /*
  *  Theory of operations.
- *  We keep one entry क्रम each peer IP address.  The nodes contains दीर्घ-living
- *  inक्रमmation about the peer which करोesn't depend on routes.
+ *  We keep one entry for each peer IP address.  The nodes contains long-living
+ *  information about the peer which doesn't depend on routes.
  *
- *  Nodes are हटाओd only when reference counter goes to 0.
- *  When it's happened the node may be हटाओd when a sufficient amount of
- *  समय has been passed since its last use.  The less-recently-used entry can
- *  also be हटाओd अगर the pool is overloaded i.e. अगर the total amount of
+ *  Nodes are removed only when reference counter goes to 0.
+ *  When it's happened the node may be removed when a sufficient amount of
+ *  time has been passed since its last use.  The less-recently-used entry can
+ *  also be removed if the pool is overloaded i.e. if the total amount of
  *  entries is greater-or-equal than the threshold.
  *
  *  Node pool is organised as an RB tree.
- *  Such an implementation has been chosen not just क्रम fun.  It's a way to
+ *  Such an implementation has been chosen not just for fun.  It's a way to
  *  prevent easy and efficient DoS attacks by creating hash collisions.  A huge
- *  amount of दीर्घ living nodes in a single hash slot would signअगरicantly delay
- *  lookups perक्रमmed with disabled BHs.
+ *  amount of long living nodes in a single hash slot would significantly delay
+ *  lookups performed with disabled BHs.
  *
  *  Serialisation issues.
  *  1.  Nodes may appear in the tree only with the pool lock held.
  *  2.  Nodes may disappear from the tree only with the pool lock held
  *      AND reference count being 0.
- *  3.  Global variable peer_total is modअगरied under the pool lock.
- *  4.  काष्ठा inet_peer fields modअगरication:
+ *  3.  Global variable peer_total is modified under the pool lock.
+ *  4.  struct inet_peer fields modification:
  *		rb_node: pool lock
- *		refcnt: atomically against modअगरications on other CPU;
+ *		refcnt: atomically against modifications on other CPU;
  *		   usually under some other lock to prevent node disappearing
  *		daddr: unchangeable
  */
 
-अटल काष्ठा kmem_cache *peer_cachep __ro_after_init;
+static struct kmem_cache *peer_cachep __ro_after_init;
 
-व्योम inet_peer_base_init(काष्ठा inet_peer_base *bp)
-अणु
+void inet_peer_base_init(struct inet_peer_base *bp)
+{
 	bp->rb_root = RB_ROOT;
 	seqlock_init(&bp->lock);
 	bp->total = 0;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(inet_peer_base_init);
 
-#घोषणा PEER_MAX_GC 32
+#define PEER_MAX_GC 32
 
-/* Exported क्रम sysctl_net_ipv4.  */
-पूर्णांक inet_peer_threshold __पढ़ो_mostly;	/* start to throw entries more
+/* Exported for sysctl_net_ipv4.  */
+int inet_peer_threshold __read_mostly;	/* start to throw entries more
 					 * aggressively at this stage */
-पूर्णांक inet_peer_mपूर्णांकtl __पढ़ो_mostly = 120 * HZ;	/* TTL under high load: 120 sec */
-पूर्णांक inet_peer_maxttl __पढ़ो_mostly = 10 * 60 * HZ;	/* usual समय to live: 10 min */
+int inet_peer_minttl __read_mostly = 120 * HZ;	/* TTL under high load: 120 sec */
+int inet_peer_maxttl __read_mostly = 10 * 60 * HZ;	/* usual time to live: 10 min */
 
 /* Called from ip_output.c:ip_init  */
-व्योम __init inet_initpeers(व्योम)
-अणु
+void __init inet_initpeers(void)
+{
 	u64 nr_entries;
 
 	 /* 1% of physical memory */
-	nr_entries = भाग64_ul((u64)totalram_pages() << PAGE_SHIFT,
-			      100 * L1_CACHE_ALIGN(माप(काष्ठा inet_peer)));
+	nr_entries = div64_ul((u64)totalram_pages() << PAGE_SHIFT,
+			      100 * L1_CACHE_ALIGN(sizeof(struct inet_peer)));
 
 	inet_peer_threshold = clamp_val(nr_entries, 4096, 65536 + 128);
 
 	peer_cachep = kmem_cache_create("inet_peer_cache",
-			माप(काष्ठा inet_peer),
+			sizeof(struct inet_peer),
 			0, SLAB_HWCACHE_ALIGN | SLAB_PANIC,
-			शून्य);
-पूर्ण
+			NULL);
+}
 
-/* Called with rcu_पढ़ो_lock() or base->lock held */
-अटल काष्ठा inet_peer *lookup(स्थिर काष्ठा inetpeer_addr *daddr,
-				काष्ठा inet_peer_base *base,
-				अचिन्हित पूर्णांक seq,
-				काष्ठा inet_peer *gc_stack[],
-				अचिन्हित पूर्णांक *gc_cnt,
-				काष्ठा rb_node **parent_p,
-				काष्ठा rb_node ***pp_p)
-अणु
-	काष्ठा rb_node **pp, *parent, *next;
-	काष्ठा inet_peer *p;
+/* Called with rcu_read_lock() or base->lock held */
+static struct inet_peer *lookup(const struct inetpeer_addr *daddr,
+				struct inet_peer_base *base,
+				unsigned int seq,
+				struct inet_peer *gc_stack[],
+				unsigned int *gc_cnt,
+				struct rb_node **parent_p,
+				struct rb_node ***pp_p)
+{
+	struct rb_node **pp, *parent, *next;
+	struct inet_peer *p;
 
 	pp = &base->rb_root.rb_node;
-	parent = शून्य;
-	जबतक (1) अणु
-		पूर्णांक cmp;
+	parent = NULL;
+	while (1) {
+		int cmp;
 
 		next = rcu_dereference_raw(*pp);
-		अगर (!next)
-			अवरोध;
+		if (!next)
+			break;
 		parent = next;
-		p = rb_entry(parent, काष्ठा inet_peer, rb_node);
+		p = rb_entry(parent, struct inet_peer, rb_node);
 		cmp = inetpeer_addr_cmp(daddr, &p->daddr);
-		अगर (cmp == 0) अणु
-			अगर (!refcount_inc_not_zero(&p->refcnt))
-				अवरोध;
-			वापस p;
-		पूर्ण
-		अगर (gc_stack) अणु
-			अगर (*gc_cnt < PEER_MAX_GC)
+		if (cmp == 0) {
+			if (!refcount_inc_not_zero(&p->refcnt))
+				break;
+			return p;
+		}
+		if (gc_stack) {
+			if (*gc_cnt < PEER_MAX_GC)
 				gc_stack[(*gc_cnt)++] = p;
-		पूर्ण अन्यथा अगर (unlikely(पढ़ो_seqretry(&base->lock, seq))) अणु
-			अवरोध;
-		पूर्ण
-		अगर (cmp == -1)
+		} else if (unlikely(read_seqretry(&base->lock, seq))) {
+			break;
+		}
+		if (cmp == -1)
 			pp = &next->rb_left;
-		अन्यथा
+		else
 			pp = &next->rb_right;
-	पूर्ण
+	}
 	*parent_p = parent;
 	*pp_p = pp;
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम inetpeer_मुक्त_rcu(काष्ठा rcu_head *head)
-अणु
-	kmem_cache_मुक्त(peer_cachep, container_of(head, काष्ठा inet_peer, rcu));
-पूर्ण
+static void inetpeer_free_rcu(struct rcu_head *head)
+{
+	kmem_cache_free(peer_cachep, container_of(head, struct inet_peer, rcu));
+}
 
-/* perक्रमm garbage collect on all items stacked during a lookup */
-अटल व्योम inet_peer_gc(काष्ठा inet_peer_base *base,
-			 काष्ठा inet_peer *gc_stack[],
-			 अचिन्हित पूर्णांक gc_cnt)
-अणु
-	काष्ठा inet_peer *p;
+/* perform garbage collect on all items stacked during a lookup */
+static void inet_peer_gc(struct inet_peer_base *base,
+			 struct inet_peer *gc_stack[],
+			 unsigned int gc_cnt)
+{
+	struct inet_peer *p;
 	__u32 delta, ttl;
-	पूर्णांक i;
+	int i;
 
-	अगर (base->total >= inet_peer_threshold)
+	if (base->total >= inet_peer_threshold)
 		ttl = 0; /* be aggressive */
-	अन्यथा
+	else
 		ttl = inet_peer_maxttl
-				- (inet_peer_maxttl - inet_peer_mपूर्णांकtl) / HZ *
+				- (inet_peer_maxttl - inet_peer_minttl) / HZ *
 					base->total / inet_peer_threshold * HZ;
-	क्रम (i = 0; i < gc_cnt; i++) अणु
+	for (i = 0; i < gc_cnt; i++) {
 		p = gc_stack[i];
 
 		/* The READ_ONCE() pairs with the WRITE_ONCE()
 		 * in inet_putpeer()
 		 */
-		delta = (__u32)jअगरfies - READ_ONCE(p->dसमय);
+		delta = (__u32)jiffies - READ_ONCE(p->dtime);
 
-		अगर (delta < ttl || !refcount_dec_अगर_one(&p->refcnt))
-			gc_stack[i] = शून्य;
-	पूर्ण
-	क्रम (i = 0; i < gc_cnt; i++) अणु
+		if (delta < ttl || !refcount_dec_if_one(&p->refcnt))
+			gc_stack[i] = NULL;
+	}
+	for (i = 0; i < gc_cnt; i++) {
 		p = gc_stack[i];
-		अगर (p) अणु
+		if (p) {
 			rb_erase(&p->rb_node, &base->rb_root);
 			base->total--;
-			call_rcu(&p->rcu, inetpeer_मुक्त_rcu);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			call_rcu(&p->rcu, inetpeer_free_rcu);
+		}
+	}
+}
 
-काष्ठा inet_peer *inet_getpeer(काष्ठा inet_peer_base *base,
-			       स्थिर काष्ठा inetpeer_addr *daddr,
-			       पूर्णांक create)
-अणु
-	काष्ठा inet_peer *p, *gc_stack[PEER_MAX_GC];
-	काष्ठा rb_node **pp, *parent;
-	अचिन्हित पूर्णांक gc_cnt, seq;
-	पूर्णांक invalidated;
+struct inet_peer *inet_getpeer(struct inet_peer_base *base,
+			       const struct inetpeer_addr *daddr,
+			       int create)
+{
+	struct inet_peer *p, *gc_stack[PEER_MAX_GC];
+	struct rb_node **pp, *parent;
+	unsigned int gc_cnt, seq;
+	int invalidated;
 
 	/* Attempt a lockless lookup first.
-	 * Because of a concurrent ग_लिखोr, we might not find an existing entry.
+	 * Because of a concurrent writer, we might not find an existing entry.
 	 */
-	rcu_पढ़ो_lock();
-	seq = पढ़ो_seqbegin(&base->lock);
-	p = lookup(daddr, base, seq, शून्य, &gc_cnt, &parent, &pp);
-	invalidated = पढ़ो_seqretry(&base->lock, seq);
-	rcu_पढ़ो_unlock();
+	rcu_read_lock();
+	seq = read_seqbegin(&base->lock);
+	p = lookup(daddr, base, seq, NULL, &gc_cnt, &parent, &pp);
+	invalidated = read_seqretry(&base->lock, seq);
+	rcu_read_unlock();
 
-	अगर (p)
-		वापस p;
+	if (p)
+		return p;
 
-	/* If no ग_लिखोr did a change during our lookup, we can वापस early. */
-	अगर (!create && !invalidated)
-		वापस शून्य;
+	/* If no writer did a change during our lookup, we can return early. */
+	if (!create && !invalidated)
+		return NULL;
 
-	/* retry an exact lookup, taking the lock beक्रमe.
+	/* retry an exact lookup, taking the lock before.
 	 * At least, nodes should be hot in our cache.
 	 */
-	parent = शून्य;
-	ग_लिखो_seqlock_bh(&base->lock);
+	parent = NULL;
+	write_seqlock_bh(&base->lock);
 
 	gc_cnt = 0;
 	p = lookup(daddr, base, seq, gc_stack, &gc_cnt, &parent, &pp);
-	अगर (!p && create) अणु
+	if (!p && create) {
 		p = kmem_cache_alloc(peer_cachep, GFP_ATOMIC);
-		अगर (p) अणु
+		if (p) {
 			p->daddr = *daddr;
-			p->dसमय = (__u32)jअगरfies;
+			p->dtime = (__u32)jiffies;
 			refcount_set(&p->refcnt, 2);
 			atomic_set(&p->rid, 0);
 			p->metrics[RTAX_LOCK-1] = INETPEER_METRICS_NEW;
@@ -219,43 +218,43 @@ EXPORT_SYMBOL_GPL(inet_peer_base_init);
 			/* 60*HZ is arbitrary, but chosen enough high so that the first
 			 * calculation of tokens is at its maximum.
 			 */
-			p->rate_last = jअगरfies - 60*HZ;
+			p->rate_last = jiffies - 60*HZ;
 
 			rb_link_node(&p->rb_node, parent, pp);
 			rb_insert_color(&p->rb_node, &base->rb_root);
 			base->total++;
-		पूर्ण
-	पूर्ण
-	अगर (gc_cnt)
+		}
+	}
+	if (gc_cnt)
 		inet_peer_gc(base, gc_stack, gc_cnt);
-	ग_लिखो_sequnlock_bh(&base->lock);
+	write_sequnlock_bh(&base->lock);
 
-	वापस p;
-पूर्ण
+	return p;
+}
 EXPORT_SYMBOL_GPL(inet_getpeer);
 
-व्योम inet_putpeer(काष्ठा inet_peer *p)
-अणु
+void inet_putpeer(struct inet_peer *p)
+{
 	/* The WRITE_ONCE() pairs with itself (we run lockless)
 	 * and the READ_ONCE() in inet_peer_gc()
 	 */
-	WRITE_ONCE(p->dसमय, (__u32)jअगरfies);
+	WRITE_ONCE(p->dtime, (__u32)jiffies);
 
-	अगर (refcount_dec_and_test(&p->refcnt))
-		call_rcu(&p->rcu, inetpeer_मुक्त_rcu);
-पूर्ण
+	if (refcount_dec_and_test(&p->refcnt))
+		call_rcu(&p->rcu, inetpeer_free_rcu);
+}
 EXPORT_SYMBOL_GPL(inet_putpeer);
 
 /*
- *	Check transmit rate limitation क्रम given message.
- *	The rate inक्रमmation is held in the inet_peer entries now.
- *	This function is generic and could be used क्रम other purposes
+ *	Check transmit rate limitation for given message.
+ *	The rate information is held in the inet_peer entries now.
+ *	This function is generic and could be used for other purposes
  *	too. It uses a Token bucket filter as suggested by Alexey Kuznetsov.
  *
- *	Note that the same inet_peer fields are modअगरied by functions in
- *	route.c too, but these work क्रम packet destinations जबतक xrlim_allow
- *	works क्रम icmp destinations. This means the rate limiting inक्रमmation
- *	क्रम one "ip object" is shared - and these ICMPs are twice limited:
+ *	Note that the same inet_peer fields are modified by functions in
+ *	route.c too, but these work for packet destinations while xrlim_allow
+ *	works for icmp destinations. This means the rate limiting information
+ *	for one "ip object" is shared - and these ICMPs are twice limited:
  *	by source and by destination.
  *
  *	RFC 1812: 4.3.2.8 SHOULD be able to limit error message rate
@@ -263,43 +262,43 @@ EXPORT_SYMBOL_GPL(inet_putpeer);
  *
  * 	Shared between ICMPv4 and ICMPv6.
  */
-#घोषणा XRLIM_BURST_FACTOR 6
-bool inet_peer_xrlim_allow(काष्ठा inet_peer *peer, पूर्णांक समयout)
-अणु
-	अचिन्हित दीर्घ now, token;
+#define XRLIM_BURST_FACTOR 6
+bool inet_peer_xrlim_allow(struct inet_peer *peer, int timeout)
+{
+	unsigned long now, token;
 	bool rc = false;
 
-	अगर (!peer)
-		वापस true;
+	if (!peer)
+		return true;
 
 	token = peer->rate_tokens;
-	now = jअगरfies;
+	now = jiffies;
 	token += now - peer->rate_last;
 	peer->rate_last = now;
-	अगर (token > XRLIM_BURST_FACTOR * समयout)
-		token = XRLIM_BURST_FACTOR * समयout;
-	अगर (token >= समयout) अणु
-		token -= समयout;
+	if (token > XRLIM_BURST_FACTOR * timeout)
+		token = XRLIM_BURST_FACTOR * timeout;
+	if (token >= timeout) {
+		token -= timeout;
 		rc = true;
-	पूर्ण
+	}
 	peer->rate_tokens = token;
-	वापस rc;
-पूर्ण
+	return rc;
+}
 EXPORT_SYMBOL(inet_peer_xrlim_allow);
 
-व्योम inetpeer_invalidate_tree(काष्ठा inet_peer_base *base)
-अणु
-	काष्ठा rb_node *p = rb_first(&base->rb_root);
+void inetpeer_invalidate_tree(struct inet_peer_base *base)
+{
+	struct rb_node *p = rb_first(&base->rb_root);
 
-	जबतक (p) अणु
-		काष्ठा inet_peer *peer = rb_entry(p, काष्ठा inet_peer, rb_node);
+	while (p) {
+		struct inet_peer *peer = rb_entry(p, struct inet_peer, rb_node);
 
 		p = rb_next(p);
 		rb_erase(&peer->rb_node, &base->rb_root);
 		inet_putpeer(peer);
 		cond_resched();
-	पूर्ण
+	}
 
 	base->total = 0;
-पूर्ण
+}
 EXPORT_SYMBOL(inetpeer_invalidate_tree);

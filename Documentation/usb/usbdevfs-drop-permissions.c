@@ -1,121 +1,120 @@
-<शैली गुरु>
-#समावेश <sys/ioctl.h>
-#समावेश <sys/types.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <fcntl.h>
-#समावेश <मानकपन.स>
-#समावेश <त्रुटिसं.स>
-#समावेश <माला.स>
-#समावेश <पूर्णांकtypes.h>
-#समावेश <unistd.h>
+#include <sys/ioctl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <errno.h>
+#include <string.h>
+#include <inttypes.h>
+#include <unistd.h>
 
-#समावेश <linux/usbdevice_fs.h>
+#include <linux/usbdevice_fs.h>
 
 /* For building without an updated set of headers */
-#अगर_अघोषित USBDEVFS_DROP_PRIVILEGES
-#घोषणा USBDEVFS_DROP_PRIVILEGES		_IOW('U', 30, __u32)
-#घोषणा USBDEVFS_CAP_DROP_PRIVILEGES		0x40
-#पूर्ण_अगर
+#ifndef USBDEVFS_DROP_PRIVILEGES
+#define USBDEVFS_DROP_PRIVILEGES		_IOW('U', 30, __u32)
+#define USBDEVFS_CAP_DROP_PRIVILEGES		0x40
+#endif
 
-व्योम drop_privileges(पूर्णांक fd, uपूर्णांक32_t mask)
-अणु
-	पूर्णांक res;
+void drop_privileges(int fd, uint32_t mask)
+{
+	int res;
 
 	res = ioctl(fd, USBDEVFS_DROP_PRIVILEGES, &mask);
-	अगर (res)
-		म_लिखो("ERROR: USBDEVFS_DROP_PRIVILEGES returned %d\n", res);
-	अन्यथा
-		म_लिखो("OK: privileges dropped!\n");
-पूर्ण
+	if (res)
+		printf("ERROR: USBDEVFS_DROP_PRIVILEGES returned %d\n", res);
+	else
+		printf("OK: privileges dropped!\n");
+}
 
-व्योम reset_device(पूर्णांक fd)
-अणु
-	पूर्णांक res;
+void reset_device(int fd)
+{
+	int res;
 
 	res = ioctl(fd, USBDEVFS_RESET);
-	अगर (!res)
-		म_लिखो("OK: USBDEVFS_RESET succeeded\n");
-	अन्यथा
-		म_लिखो("ERROR: reset failed! (%d - %s)\n",
-		       -res, म_त्रुटि(-res));
-पूर्ण
+	if (!res)
+		printf("OK: USBDEVFS_RESET succeeded\n");
+	else
+		printf("ERROR: reset failed! (%d - %s)\n",
+		       -res, strerror(-res));
+}
 
-व्योम claim_some_पूर्णांकf(पूर्णांक fd)
-अणु
-	पूर्णांक i, res;
+void claim_some_intf(int fd)
+{
+	int i, res;
 
-	क्रम (i = 0; i < 4; i++) अणु
+	for (i = 0; i < 4; i++) {
 		res = ioctl(fd, USBDEVFS_CLAIMINTERFACE, &i);
-		अगर (!res)
-			म_लिखो("OK: claimed if %d\n", i);
-		अन्यथा
-			म_लिखो("ERROR claiming if %d (%d - %s)\n",
-			       i, -res, म_त्रुटि(-res));
-	पूर्ण
-पूर्ण
+		if (!res)
+			printf("OK: claimed if %d\n", i);
+		else
+			printf("ERROR claiming if %d (%d - %s)\n",
+			       i, -res, strerror(-res));
+	}
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
-अणु
-	uपूर्णांक32_t mask, caps;
-	पूर्णांक c, fd;
+int main(int argc, char *argv[])
+{
+	uint32_t mask, caps;
+	int c, fd;
 
-	fd = खोलो(argv[1], O_RDWR);
-	अगर (fd < 0) अणु
-		म_लिखो("Failed to open file\n");
-		जाओ err_fd;
-	पूर्ण
+	fd = open(argv[1], O_RDWR);
+	if (fd < 0) {
+		printf("Failed to open file\n");
+		goto err_fd;
+	}
 
 	/*
-	 * check अगर dropping privileges is supported,
-	 * bail on प्रणालीs where the capability is not present
+	 * check if dropping privileges is supported,
+	 * bail on systems where the capability is not present
 	 */
 	ioctl(fd, USBDEVFS_GET_CAPABILITIES, &caps);
-	अगर (!(caps & USBDEVFS_CAP_DROP_PRIVILEGES)) अणु
-		म_लिखो("DROP_PRIVILEGES not supported\n");
-		जाओ err;
-	पूर्ण
+	if (!(caps & USBDEVFS_CAP_DROP_PRIVILEGES)) {
+		printf("DROP_PRIVILEGES not supported\n");
+		goto err;
+	}
 
 	/*
 	 * Drop privileges but keep the ability to claim all
-	 * मुक्त पूर्णांकerfaces (i.e., those not used by kernel drivers)
+	 * free interfaces (i.e., those not used by kernel drivers)
 	 */
 	drop_privileges(fd, -1U);
 
-	म_लिखो("Available options:\n"
+	printf("Available options:\n"
 		"[0] Exit now\n"
 		"[1] Reset device. Should fail if device is in use\n"
 		"[2] Claim 4 interfaces. Should succeed where not in use\n"
 		"[3] Narrow interface permission mask\n"
 		"Which option shall I run?: ");
 
-	जबतक (म_पूछो("%d", &c) == 1) अणु
-		चयन (c) अणु
-		हाल 0:
-			जाओ निकास;
-		हाल 1:
+	while (scanf("%d", &c) == 1) {
+		switch (c) {
+		case 0:
+			goto exit;
+		case 1:
 			reset_device(fd);
-			अवरोध;
-		हाल 2:
-			claim_some_पूर्णांकf(fd);
-			अवरोध;
-		हाल 3:
-			म_लिखो("Insert new mask: ");
-			म_पूछो("%x", &mask);
+			break;
+		case 2:
+			claim_some_intf(fd);
+			break;
+		case 3:
+			printf("Insert new mask: ");
+			scanf("%x", &mask);
 			drop_privileges(fd, mask);
-			अवरोध;
-		शेष:
-			म_लिखो("I don't recognize that\n");
-		पूर्ण
+			break;
+		default:
+			printf("I don't recognize that\n");
+		}
 
-		म_लिखो("Which test shall I run next?: ");
-	पूर्ण
+		printf("Which test shall I run next?: ");
+	}
 
-निकास:
-	बंद(fd);
-	वापस 0;
+exit:
+	close(fd);
+	return 0;
 
 err:
-	बंद(fd);
+	close(fd);
 err_fd:
-	वापस 1;
-पूर्ण
+	return 1;
+}

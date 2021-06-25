@@ -1,22 +1,21 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2016 Freescale Semiconductor, Inc.
  * Copyright 2017-2018 NXP
  * Copyright (C) 2018 Pengutronix, Lucas Stach <kernel@pengutronix.de>
  */
 
-#समावेश <linux/err.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/pinctrl/pinctrl.h>
+#include <linux/err.h>
+#include <linux/init.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/pinctrl/pinctrl.h>
 
-#समावेश "pinctrl-imx.h"
+#include "pinctrl-imx.h"
 
-क्रमागत imx8mq_pads अणु
+enum imx8mq_pads {
 	MX8MQ_PAD_RESERVE0 = 0,
 	MX8MQ_PAD_RESERVE1 = 1,
 	MX8MQ_PAD_RESERVE2 = 2,
@@ -78,25 +77,25 @@
 	MX8MQ_IOMUXC_SD2_DATA3 = 58,
 	MX8MQ_IOMUXC_SD2_RESET_B = 59,
 	MX8MQ_IOMUXC_SD2_WP = 60,
-	MX8MQ_IOMUXC_न_अंकD_ALE = 61,
-	MX8MQ_IOMUXC_न_अंकD_CE0_B = 62,
-	MX8MQ_IOMUXC_न_अंकD_CE1_B = 63,
-	MX8MQ_IOMUXC_न_अंकD_CE2_B = 64,
-	MX8MQ_IOMUXC_न_अंकD_CE3_B = 65,
-	MX8MQ_IOMUXC_न_अंकD_CLE = 66,
-	MX8MQ_IOMUXC_न_अंकD_DATA00 = 67,
-	MX8MQ_IOMUXC_न_अंकD_DATA01 = 68,
-	MX8MQ_IOMUXC_न_अंकD_DATA02 = 69,
-	MX8MQ_IOMUXC_न_अंकD_DATA03 = 70,
-	MX8MQ_IOMUXC_न_अंकD_DATA04 = 71,
-	MX8MQ_IOMUXC_न_अंकD_DATA05 = 72,
-	MX8MQ_IOMUXC_न_अंकD_DATA06 = 73,
-	MX8MQ_IOMUXC_न_अंकD_DATA07 = 74,
-	MX8MQ_IOMUXC_न_अंकD_DQS = 75,
-	MX8MQ_IOMUXC_न_अंकD_RE_B = 76,
-	MX8MQ_IOMUXC_न_अंकD_READY_B = 77,
-	MX8MQ_IOMUXC_न_अंकD_WE_B = 78,
-	MX8MQ_IOMUXC_न_अंकD_WP_B = 79,
+	MX8MQ_IOMUXC_NAND_ALE = 61,
+	MX8MQ_IOMUXC_NAND_CE0_B = 62,
+	MX8MQ_IOMUXC_NAND_CE1_B = 63,
+	MX8MQ_IOMUXC_NAND_CE2_B = 64,
+	MX8MQ_IOMUXC_NAND_CE3_B = 65,
+	MX8MQ_IOMUXC_NAND_CLE = 66,
+	MX8MQ_IOMUXC_NAND_DATA00 = 67,
+	MX8MQ_IOMUXC_NAND_DATA01 = 68,
+	MX8MQ_IOMUXC_NAND_DATA02 = 69,
+	MX8MQ_IOMUXC_NAND_DATA03 = 70,
+	MX8MQ_IOMUXC_NAND_DATA04 = 71,
+	MX8MQ_IOMUXC_NAND_DATA05 = 72,
+	MX8MQ_IOMUXC_NAND_DATA06 = 73,
+	MX8MQ_IOMUXC_NAND_DATA07 = 74,
+	MX8MQ_IOMUXC_NAND_DQS = 75,
+	MX8MQ_IOMUXC_NAND_RE_B = 76,
+	MX8MQ_IOMUXC_NAND_READY_B = 77,
+	MX8MQ_IOMUXC_NAND_WE_B = 78,
+	MX8MQ_IOMUXC_NAND_WP_B = 79,
 	MX8MQ_IOMUXC_SAI5_RXFS = 80,
 	MX8MQ_IOMUXC_SAI5_RXC = 81,
 	MX8MQ_IOMUXC_SAI5_RXD0 = 82,
@@ -166,10 +165,10 @@
 	MX8MQ_IOMUXC_UART3_TXD = 146,
 	MX8MQ_IOMUXC_UART4_RXD = 147,
 	MX8MQ_IOMUXC_UART4_TXD = 148,
-पूर्ण;
+};
 
-/* Pad names क्रम the pinmux subप्रणाली */
-अटल स्थिर काष्ठा pinctrl_pin_desc imx8mq_pinctrl_pads[] = अणु
+/* Pad names for the pinmux subsystem */
+static const struct pinctrl_pin_desc imx8mq_pinctrl_pads[] = {
 	IMX_PINCTRL_PIN(MX8MQ_PAD_RESERVE0),
 	IMX_PINCTRL_PIN(MX8MQ_PAD_RESERVE1),
 	IMX_PINCTRL_PIN(MX8MQ_PAD_RESERVE2),
@@ -231,25 +230,25 @@
 	IMX_PINCTRL_PIN(MX8MQ_IOMUXC_SD2_DATA3),
 	IMX_PINCTRL_PIN(MX8MQ_IOMUXC_SD2_RESET_B),
 	IMX_PINCTRL_PIN(MX8MQ_IOMUXC_SD2_WP),
-	IMX_PINCTRL_PIN(MX8MQ_IOMUXC_न_अंकD_ALE),
-	IMX_PINCTRL_PIN(MX8MQ_IOMUXC_न_अंकD_CE0_B),
-	IMX_PINCTRL_PIN(MX8MQ_IOMUXC_न_अंकD_CE1_B),
-	IMX_PINCTRL_PIN(MX8MQ_IOMUXC_न_अंकD_CE2_B),
-	IMX_PINCTRL_PIN(MX8MQ_IOMUXC_न_अंकD_CE3_B),
-	IMX_PINCTRL_PIN(MX8MQ_IOMUXC_न_अंकD_CLE),
-	IMX_PINCTRL_PIN(MX8MQ_IOMUXC_न_अंकD_DATA00),
-	IMX_PINCTRL_PIN(MX8MQ_IOMUXC_न_अंकD_DATA01),
-	IMX_PINCTRL_PIN(MX8MQ_IOMUXC_न_अंकD_DATA02),
-	IMX_PINCTRL_PIN(MX8MQ_IOMUXC_न_अंकD_DATA03),
-	IMX_PINCTRL_PIN(MX8MQ_IOMUXC_न_अंकD_DATA04),
-	IMX_PINCTRL_PIN(MX8MQ_IOMUXC_न_अंकD_DATA05),
-	IMX_PINCTRL_PIN(MX8MQ_IOMUXC_न_अंकD_DATA06),
-	IMX_PINCTRL_PIN(MX8MQ_IOMUXC_न_अंकD_DATA07),
-	IMX_PINCTRL_PIN(MX8MQ_IOMUXC_न_अंकD_DQS),
-	IMX_PINCTRL_PIN(MX8MQ_IOMUXC_न_अंकD_RE_B),
-	IMX_PINCTRL_PIN(MX8MQ_IOMUXC_न_अंकD_READY_B),
-	IMX_PINCTRL_PIN(MX8MQ_IOMUXC_न_अंकD_WE_B),
-	IMX_PINCTRL_PIN(MX8MQ_IOMUXC_न_अंकD_WP_B),
+	IMX_PINCTRL_PIN(MX8MQ_IOMUXC_NAND_ALE),
+	IMX_PINCTRL_PIN(MX8MQ_IOMUXC_NAND_CE0_B),
+	IMX_PINCTRL_PIN(MX8MQ_IOMUXC_NAND_CE1_B),
+	IMX_PINCTRL_PIN(MX8MQ_IOMUXC_NAND_CE2_B),
+	IMX_PINCTRL_PIN(MX8MQ_IOMUXC_NAND_CE3_B),
+	IMX_PINCTRL_PIN(MX8MQ_IOMUXC_NAND_CLE),
+	IMX_PINCTRL_PIN(MX8MQ_IOMUXC_NAND_DATA00),
+	IMX_PINCTRL_PIN(MX8MQ_IOMUXC_NAND_DATA01),
+	IMX_PINCTRL_PIN(MX8MQ_IOMUXC_NAND_DATA02),
+	IMX_PINCTRL_PIN(MX8MQ_IOMUXC_NAND_DATA03),
+	IMX_PINCTRL_PIN(MX8MQ_IOMUXC_NAND_DATA04),
+	IMX_PINCTRL_PIN(MX8MQ_IOMUXC_NAND_DATA05),
+	IMX_PINCTRL_PIN(MX8MQ_IOMUXC_NAND_DATA06),
+	IMX_PINCTRL_PIN(MX8MQ_IOMUXC_NAND_DATA07),
+	IMX_PINCTRL_PIN(MX8MQ_IOMUXC_NAND_DQS),
+	IMX_PINCTRL_PIN(MX8MQ_IOMUXC_NAND_RE_B),
+	IMX_PINCTRL_PIN(MX8MQ_IOMUXC_NAND_READY_B),
+	IMX_PINCTRL_PIN(MX8MQ_IOMUXC_NAND_WE_B),
+	IMX_PINCTRL_PIN(MX8MQ_IOMUXC_NAND_WP_B),
 	IMX_PINCTRL_PIN(MX8MQ_IOMUXC_SAI5_RXFS),
 	IMX_PINCTRL_PIN(MX8MQ_IOMUXC_SAI5_RXC),
 	IMX_PINCTRL_PIN(MX8MQ_IOMUXC_SAI5_RXD0),
@@ -319,39 +318,39 @@
 	IMX_PINCTRL_PIN(MX8MQ_IOMUXC_UART3_TXD),
 	IMX_PINCTRL_PIN(MX8MQ_IOMUXC_UART4_RXD),
 	IMX_PINCTRL_PIN(MX8MQ_IOMUXC_UART4_TXD),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा imx_pinctrl_soc_info imx8mq_pinctrl_info = अणु
+static const struct imx_pinctrl_soc_info imx8mq_pinctrl_info = {
 	.pins = imx8mq_pinctrl_pads,
 	.npins = ARRAY_SIZE(imx8mq_pinctrl_pads),
 	.gpr_compatible = "fsl,imx8mq-iomuxc-gpr",
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id imx8mq_pinctrl_of_match[] = अणु
-	अणु .compatible = "fsl,imx8mq-iomuxc", .data = &imx8mq_pinctrl_info, पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+static const struct of_device_id imx8mq_pinctrl_of_match[] = {
+	{ .compatible = "fsl,imx8mq-iomuxc", .data = &imx8mq_pinctrl_info, },
+	{ /* sentinel */ }
+};
 MODULE_DEVICE_TABLE(of, imx8mq_pinctrl_of_match);
 
-अटल पूर्णांक imx8mq_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	वापस imx_pinctrl_probe(pdev, &imx8mq_pinctrl_info);
-पूर्ण
+static int imx8mq_pinctrl_probe(struct platform_device *pdev)
+{
+	return imx_pinctrl_probe(pdev, &imx8mq_pinctrl_info);
+}
 
-अटल काष्ठा platक्रमm_driver imx8mq_pinctrl_driver = अणु
-	.driver = अणु
+static struct platform_driver imx8mq_pinctrl_driver = {
+	.driver = {
 		.name = "imx8mq-pinctrl",
 		.of_match_table = imx8mq_pinctrl_of_match,
 		.pm = &imx_pinctrl_pm_ops,
 		.suppress_bind_attrs = true,
-	पूर्ण,
+	},
 	.probe = imx8mq_pinctrl_probe,
-पूर्ण;
+};
 
-अटल पूर्णांक __init imx8mq_pinctrl_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&imx8mq_pinctrl_driver);
-पूर्ण
+static int __init imx8mq_pinctrl_init(void)
+{
+	return platform_driver_register(&imx8mq_pinctrl_driver);
+}
 arch_initcall(imx8mq_pinctrl_init);
 
 MODULE_AUTHOR("Lucas Stach <l.stach@pengutronix.de>");

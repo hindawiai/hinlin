@@ -1,58 +1,57 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *  linux/fs/ext4/hash.c
  *
- * Copyright (C) 2002 by Theoकरोre Ts'o
+ * Copyright (C) 2002 by Theodore Ts'o
  */
 
-#समावेश <linux/fs.h>
-#समावेश <linux/unicode.h>
-#समावेश <linux/compiler.h>
-#समावेश <linux/bitops.h>
-#समावेश "ext4.h"
+#include <linux/fs.h>
+#include <linux/unicode.h>
+#include <linux/compiler.h>
+#include <linux/bitops.h>
+#include "ext4.h"
 
-#घोषणा DELTA 0x9E3779B9
+#define DELTA 0x9E3779B9
 
-अटल व्योम TEA_transक्रमm(__u32 buf[4], __u32 स्थिर in[])
-अणु
+static void TEA_transform(__u32 buf[4], __u32 const in[])
+{
 	__u32	sum = 0;
 	__u32	b0 = buf[0], b1 = buf[1];
 	__u32	a = in[0], b = in[1], c = in[2], d = in[3];
-	पूर्णांक	n = 16;
+	int	n = 16;
 
-	करो अणु
+	do {
 		sum += DELTA;
 		b0 += ((b1 << 4)+a) ^ (b1+sum) ^ ((b1 >> 5)+b);
 		b1 += ((b0 << 4)+c) ^ (b0+sum) ^ ((b0 >> 5)+d);
-	पूर्ण जबतक (--n);
+	} while (--n);
 
 	buf[0] += b0;
 	buf[1] += b1;
-पूर्ण
+}
 
 /* F, G and H are basic MD4 functions: selection, majority, parity */
-#घोषणा F(x, y, z) ((z) ^ ((x) & ((y) ^ (z))))
-#घोषणा G(x, y, z) (((x) & (y)) + (((x) ^ (y)) & (z)))
-#घोषणा H(x, y, z) ((x) ^ (y) ^ (z))
+#define F(x, y, z) ((z) ^ ((x) & ((y) ^ (z))))
+#define G(x, y, z) (((x) & (y)) + (((x) ^ (y)) & (z)))
+#define H(x, y, z) ((x) ^ (y) ^ (z))
 
 /*
- * The generic round function.  The application is so specअगरic that
- * we करोn't bother protecting all the arguments with parens, as is generally
+ * The generic round function.  The application is so specific that
+ * we don't bother protecting all the arguments with parens, as is generally
  * good macro practice, in favor of extra legibility.
  * Rotation is separate from addition to prevent recomputation
  */
-#घोषणा ROUND(f, a, b, c, d, x, s)	\
+#define ROUND(f, a, b, c, d, x, s)	\
 	(a += f(b, c, d) + x, a = rol32(a, s))
-#घोषणा K1 0
-#घोषणा K2 013240474631UL
-#घोषणा K3 015666365641UL
+#define K1 0
+#define K2 013240474631UL
+#define K3 015666365641UL
 
 /*
- * Basic cut-करोwn MD4 transक्रमm.  Returns only 32 bits of result.
+ * Basic cut-down MD4 transform.  Returns only 32 bits of result.
  */
-अटल __u32 half_md4_transक्रमm(__u32 buf[4], __u32 स्थिर in[8])
-अणु
+static __u32 half_md4_transform(__u32 buf[4], __u32 const in[8])
+{
 	__u32 a = buf[0], b = buf[1], c = buf[2], d = buf[3];
 
 	/* Round 1 */
@@ -90,231 +89,231 @@
 	buf[2] += c;
 	buf[3] += d;
 
-	वापस buf[1]; /* "most hashed" word */
-पूर्ण
-#अघोषित ROUND
-#अघोषित K1
-#अघोषित K2
-#अघोषित K3
-#अघोषित F
-#अघोषित G
-#अघोषित H
+	return buf[1]; /* "most hashed" word */
+}
+#undef ROUND
+#undef K1
+#undef K2
+#undef K3
+#undef F
+#undef G
+#undef H
 
 /* The old legacy hash */
-अटल __u32 dx_hack_hash_अचिन्हित(स्थिर अक्षर *name, पूर्णांक len)
-अणु
+static __u32 dx_hack_hash_unsigned(const char *name, int len)
+{
 	__u32 hash, hash0 = 0x12a3fe2d, hash1 = 0x37abe8f9;
-	स्थिर अचिन्हित अक्षर *ucp = (स्थिर अचिन्हित अक्षर *) name;
+	const unsigned char *ucp = (const unsigned char *) name;
 
-	जबतक (len--) अणु
-		hash = hash1 + (hash0 ^ (((पूर्णांक) *ucp++) * 7152373));
+	while (len--) {
+		hash = hash1 + (hash0 ^ (((int) *ucp++) * 7152373));
 
-		अगर (hash & 0x80000000)
+		if (hash & 0x80000000)
 			hash -= 0x7fffffff;
 		hash1 = hash0;
 		hash0 = hash;
-	पूर्ण
-	वापस hash0 << 1;
-पूर्ण
+	}
+	return hash0 << 1;
+}
 
-अटल __u32 dx_hack_hash_चिन्हित(स्थिर अक्षर *name, पूर्णांक len)
-अणु
+static __u32 dx_hack_hash_signed(const char *name, int len)
+{
 	__u32 hash, hash0 = 0x12a3fe2d, hash1 = 0x37abe8f9;
-	स्थिर चिन्हित अक्षर *scp = (स्थिर चिन्हित अक्षर *) name;
+	const signed char *scp = (const signed char *) name;
 
-	जबतक (len--) अणु
-		hash = hash1 + (hash0 ^ (((पूर्णांक) *scp++) * 7152373));
+	while (len--) {
+		hash = hash1 + (hash0 ^ (((int) *scp++) * 7152373));
 
-		अगर (hash & 0x80000000)
+		if (hash & 0x80000000)
 			hash -= 0x7fffffff;
 		hash1 = hash0;
 		hash0 = hash;
-	पूर्ण
-	वापस hash0 << 1;
-पूर्ण
+	}
+	return hash0 << 1;
+}
 
-अटल व्योम str2hashbuf_चिन्हित(स्थिर अक्षर *msg, पूर्णांक len, __u32 *buf, पूर्णांक num)
-अणु
+static void str2hashbuf_signed(const char *msg, int len, __u32 *buf, int num)
+{
 	__u32	pad, val;
-	पूर्णांक	i;
-	स्थिर चिन्हित अक्षर *scp = (स्थिर चिन्हित अक्षर *) msg;
+	int	i;
+	const signed char *scp = (const signed char *) msg;
 
 	pad = (__u32)len | ((__u32)len << 8);
 	pad |= pad << 16;
 
 	val = pad;
-	अगर (len > num*4)
+	if (len > num*4)
 		len = num * 4;
-	क्रम (i = 0; i < len; i++) अणु
-		val = ((पूर्णांक) scp[i]) + (val << 8);
-		अगर ((i % 4) == 3) अणु
+	for (i = 0; i < len; i++) {
+		val = ((int) scp[i]) + (val << 8);
+		if ((i % 4) == 3) {
 			*buf++ = val;
 			val = pad;
 			num--;
-		पूर्ण
-	पूर्ण
-	अगर (--num >= 0)
+		}
+	}
+	if (--num >= 0)
 		*buf++ = val;
-	जबतक (--num >= 0)
+	while (--num >= 0)
 		*buf++ = pad;
-पूर्ण
+}
 
-अटल व्योम str2hashbuf_अचिन्हित(स्थिर अक्षर *msg, पूर्णांक len, __u32 *buf, पूर्णांक num)
-अणु
+static void str2hashbuf_unsigned(const char *msg, int len, __u32 *buf, int num)
+{
 	__u32	pad, val;
-	पूर्णांक	i;
-	स्थिर अचिन्हित अक्षर *ucp = (स्थिर अचिन्हित अक्षर *) msg;
+	int	i;
+	const unsigned char *ucp = (const unsigned char *) msg;
 
 	pad = (__u32)len | ((__u32)len << 8);
 	pad |= pad << 16;
 
 	val = pad;
-	अगर (len > num*4)
+	if (len > num*4)
 		len = num * 4;
-	क्रम (i = 0; i < len; i++) अणु
-		val = ((पूर्णांक) ucp[i]) + (val << 8);
-		अगर ((i % 4) == 3) अणु
+	for (i = 0; i < len; i++) {
+		val = ((int) ucp[i]) + (val << 8);
+		if ((i % 4) == 3) {
 			*buf++ = val;
 			val = pad;
 			num--;
-		पूर्ण
-	पूर्ण
-	अगर (--num >= 0)
+		}
+	}
+	if (--num >= 0)
 		*buf++ = val;
-	जबतक (--num >= 0)
+	while (--num >= 0)
 		*buf++ = pad;
-पूर्ण
+}
 
 /*
- * Returns the hash of a filename.  If len is 0 and name is शून्य, then
+ * Returns the hash of a filename.  If len is 0 and name is NULL, then
  * this function can be used to test whether or not a hash version is
  * supported.
  *
- * The seed is an 4 दीर्घword (32 bits) "secret" which can be used to
- * uniquअगरy a hash.  If the seed is all zero's, then some शेष seed
+ * The seed is an 4 longword (32 bits) "secret" which can be used to
+ * uniquify a hash.  If the seed is all zero's, then some default seed
  * may be used.
  *
- * A particular hash version specअगरies whether or not the seed is
- * represented, and whether or not the वापसed hash is 32 bits or 64
- * bits.  32 bit hashes will वापस 0 क्रम the minor hash.
+ * A particular hash version specifies whether or not the seed is
+ * represented, and whether or not the returned hash is 32 bits or 64
+ * bits.  32 bit hashes will return 0 for the minor hash.
  */
-अटल पूर्णांक __ext4fs_dirhash(स्थिर काष्ठा inode *dir, स्थिर अक्षर *name, पूर्णांक len,
-			    काष्ठा dx_hash_info *hinfo)
-अणु
+static int __ext4fs_dirhash(const struct inode *dir, const char *name, int len,
+			    struct dx_hash_info *hinfo)
+{
 	__u32	hash;
 	__u32	minor_hash = 0;
-	स्थिर अक्षर	*p;
-	पूर्णांक		i;
+	const char	*p;
+	int		i;
 	__u32		in[8], buf[4];
-	व्योम		(*str2hashbuf)(स्थिर अक्षर *, पूर्णांक, __u32 *, पूर्णांक) =
-				str2hashbuf_चिन्हित;
+	void		(*str2hashbuf)(const char *, int, __u32 *, int) =
+				str2hashbuf_signed;
 
-	/* Initialize the शेष seed क्रम the hash checksum functions */
+	/* Initialize the default seed for the hash checksum functions */
 	buf[0] = 0x67452301;
 	buf[1] = 0xefcdab89;
 	buf[2] = 0x98badcfe;
 	buf[3] = 0x10325476;
 
-	/* Check to see अगर the seed is all zero's */
-	अगर (hinfo->seed) अणु
-		क्रम (i = 0; i < 4; i++) अणु
-			अगर (hinfo->seed[i]) अणु
-				स_नकल(buf, hinfo->seed, माप(buf));
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+	/* Check to see if the seed is all zero's */
+	if (hinfo->seed) {
+		for (i = 0; i < 4; i++) {
+			if (hinfo->seed[i]) {
+				memcpy(buf, hinfo->seed, sizeof(buf));
+				break;
+			}
+		}
+	}
 
-	चयन (hinfo->hash_version) अणु
-	हाल DX_HASH_LEGACY_UNSIGNED:
-		hash = dx_hack_hash_अचिन्हित(name, len);
-		अवरोध;
-	हाल DX_HASH_LEGACY:
-		hash = dx_hack_hash_चिन्हित(name, len);
-		अवरोध;
-	हाल DX_HASH_HALF_MD4_UNSIGNED:
-		str2hashbuf = str2hashbuf_अचिन्हित;
+	switch (hinfo->hash_version) {
+	case DX_HASH_LEGACY_UNSIGNED:
+		hash = dx_hack_hash_unsigned(name, len);
+		break;
+	case DX_HASH_LEGACY:
+		hash = dx_hack_hash_signed(name, len);
+		break;
+	case DX_HASH_HALF_MD4_UNSIGNED:
+		str2hashbuf = str2hashbuf_unsigned;
 		fallthrough;
-	हाल DX_HASH_HALF_MD4:
+	case DX_HASH_HALF_MD4:
 		p = name;
-		जबतक (len > 0) अणु
+		while (len > 0) {
 			(*str2hashbuf)(p, len, in, 8);
-			half_md4_transक्रमm(buf, in);
+			half_md4_transform(buf, in);
 			len -= 32;
 			p += 32;
-		पूर्ण
+		}
 		minor_hash = buf[2];
 		hash = buf[1];
-		अवरोध;
-	हाल DX_HASH_TEA_UNSIGNED:
-		str2hashbuf = str2hashbuf_अचिन्हित;
+		break;
+	case DX_HASH_TEA_UNSIGNED:
+		str2hashbuf = str2hashbuf_unsigned;
 		fallthrough;
-	हाल DX_HASH_TEA:
+	case DX_HASH_TEA:
 		p = name;
-		जबतक (len > 0) अणु
+		while (len > 0) {
 			(*str2hashbuf)(p, len, in, 4);
-			TEA_transक्रमm(buf, in);
+			TEA_transform(buf, in);
 			len -= 16;
 			p += 16;
-		पूर्ण
+		}
 		hash = buf[0];
 		minor_hash = buf[1];
-		अवरोध;
-	हाल DX_HASH_SIPHASH:
-	अणु
-		काष्ठा qstr qname = QSTR_INIT(name, len);
+		break;
+	case DX_HASH_SIPHASH:
+	{
+		struct qstr qname = QSTR_INIT(name, len);
 		__u64	combined_hash;
 
-		अगर (fscrypt_has_encryption_key(dir)) अणु
+		if (fscrypt_has_encryption_key(dir)) {
 			combined_hash = fscrypt_fname_siphash(dir, &qname);
-		पूर्ण अन्यथा अणु
+		} else {
 			ext4_warning_inode(dir, "Siphash requires key");
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 
 		hash = (__u32)(combined_hash >> 32);
 		minor_hash = (__u32)combined_hash;
-		अवरोध;
-	पूर्ण
-	शेष:
+		break;
+	}
+	default:
 		hinfo->hash = 0;
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 	hash = hash & ~1;
-	अगर (hash == (EXT4_HTREE_खातापूर्ण_32BIT << 1))
-		hash = (EXT4_HTREE_खातापूर्ण_32BIT - 1) << 1;
+	if (hash == (EXT4_HTREE_EOF_32BIT << 1))
+		hash = (EXT4_HTREE_EOF_32BIT - 1) << 1;
 	hinfo->hash = hash;
 	hinfo->minor_hash = minor_hash;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक ext4fs_dirhash(स्थिर काष्ठा inode *dir, स्थिर अक्षर *name, पूर्णांक len,
-		   काष्ठा dx_hash_info *hinfo)
-अणु
-#अगर_घोषित CONFIG_UNICODE
-	स्थिर काष्ठा unicode_map *um = dir->i_sb->s_encoding;
-	पूर्णांक r, dlen;
-	अचिन्हित अक्षर *buff;
-	काष्ठा qstr qstr = अणु.name = name, .len = len पूर्ण;
+int ext4fs_dirhash(const struct inode *dir, const char *name, int len,
+		   struct dx_hash_info *hinfo)
+{
+#ifdef CONFIG_UNICODE
+	const struct unicode_map *um = dir->i_sb->s_encoding;
+	int r, dlen;
+	unsigned char *buff;
+	struct qstr qstr = {.name = name, .len = len };
 
-	अगर (len && IS_CASEFOLDED(dir) && um &&
-	   (!IS_ENCRYPTED(dir) || fscrypt_has_encryption_key(dir))) अणु
-		buff = kzalloc(माप(अक्षर) * PATH_MAX, GFP_KERNEL);
-		अगर (!buff)
-			वापस -ENOMEM;
+	if (len && IS_CASEFOLDED(dir) && um &&
+	   (!IS_ENCRYPTED(dir) || fscrypt_has_encryption_key(dir))) {
+		buff = kzalloc(sizeof(char) * PATH_MAX, GFP_KERNEL);
+		if (!buff)
+			return -ENOMEM;
 
-		dlen = utf8_हालfold(um, &qstr, buff, PATH_MAX);
-		अगर (dlen < 0) अणु
-			kमुक्त(buff);
-			जाओ opaque_seq;
-		पूर्ण
+		dlen = utf8_casefold(um, &qstr, buff, PATH_MAX);
+		if (dlen < 0) {
+			kfree(buff);
+			goto opaque_seq;
+		}
 
 		r = __ext4fs_dirhash(dir, buff, dlen, hinfo);
 
-		kमुक्त(buff);
-		वापस r;
-	पूर्ण
+		kfree(buff);
+		return r;
+	}
 opaque_seq:
-#पूर्ण_अगर
-	वापस __ext4fs_dirhash(dir, name, len, hinfo);
-पूर्ण
+#endif
+	return __ext4fs_dirhash(dir, name, len, hinfo);
+}

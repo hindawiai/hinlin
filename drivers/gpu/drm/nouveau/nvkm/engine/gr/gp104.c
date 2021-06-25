@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2018 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,13 +19,13 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#समावेश "gf100.h"
-#समावेश "ctxgf100.h"
+#include "gf100.h"
+#include "ctxgf100.h"
 
-#समावेश <nvअगर/class.h>
+#include <nvif/class.h>
 
-अटल स्थिर काष्ठा gf100_gr_func
-gp104_gr = अणु
+static const struct gf100_gr_func
+gp104_gr = {
 	.oneinit_tiles = gm200_gr_oneinit_tiles,
 	.oneinit_sm_id = gm200_gr_oneinit_sm_id,
 	.init = gf100_gr_init,
@@ -51,14 +50,14 @@ gp104_gr = अणु
 	.ppc_nr = 3,
 	.grctx = &gp104_grctx,
 	.zbc = &gp102_gr_zbc,
-	.sclass = अणु
-		अणु -1, -1, FERMI_TWOD_A पूर्ण,
-		अणु -1, -1, KEPLER_INLINE_TO_MEMORY_B पूर्ण,
-		अणु -1, -1, PASCAL_B, &gf100_fermi पूर्ण,
-		अणु -1, -1, PASCAL_COMPUTE_B पूर्ण,
-		अणुपूर्ण
-	पूर्ण
-पूर्ण;
+	.sclass = {
+		{ -1, -1, FERMI_TWOD_A },
+		{ -1, -1, KEPLER_INLINE_TO_MEMORY_B },
+		{ -1, -1, PASCAL_B, &gf100_fermi },
+		{ -1, -1, PASCAL_COMPUTE_B },
+		{}
+	}
+};
 
 MODULE_FIRMWARE("nvidia/gp104/gr/fecs_bl.bin");
 MODULE_FIRMWARE("nvidia/gp104/gr/fecs_inst.bin");
@@ -86,15 +85,15 @@ MODULE_FIRMWARE("nvidia/gp106/gr/sw_nonctx.bin");
 MODULE_FIRMWARE("nvidia/gp106/gr/sw_bundle_init.bin");
 MODULE_FIRMWARE("nvidia/gp106/gr/sw_method_init.bin");
 
-अटल स्थिर काष्ठा gf100_gr_fwअगर
-gp104_gr_fwअगर[] = अणु
-	अणु  0, gm200_gr_load, &gp104_gr, &gm200_gr_fecs_acr, &gm200_gr_gpccs_acr पूर्ण,
-	अणु -1, gm200_gr_nofw पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct gf100_gr_fwif
+gp104_gr_fwif[] = {
+	{  0, gm200_gr_load, &gp104_gr, &gm200_gr_fecs_acr, &gm200_gr_gpccs_acr },
+	{ -1, gm200_gr_nofw },
+	{}
+};
 
-पूर्णांक
-gp104_gr_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst, काष्ठा nvkm_gr **pgr)
-अणु
-	वापस gf100_gr_new_(gp104_gr_fwअगर, device, type, inst, pgr);
-पूर्ण
+int
+gp104_gr_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst, struct nvkm_gr **pgr)
+{
+	return gf100_gr_new_(gp104_gr_fwif, device, type, inst, pgr);
+}

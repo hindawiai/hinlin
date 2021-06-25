@@ -1,8 +1,7 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित USX2YHWDEP_H
-#घोषणा USX2YHWDEP_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef USX2YHWDEP_H
+#define USX2YHWDEP_H
 
-पूर्णांक usX2Y_hwdep_new(काष्ठा snd_card *card, काष्ठा usb_device* device);
+int usX2Y_hwdep_new(struct snd_card *card, struct usb_device* device);
 
-#पूर्ण_अगर
+#endif

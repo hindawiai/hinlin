@@ -1,97 +1,96 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2015 Etnaviv Project
  */
 
-#समावेश <drm/drm_file.h>
-#समावेश <linux/dma-fence-array.h>
-#समावेश <linux/file.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/dma-resv.h>
-#समावेश <linux/sync_file.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/vदो_स्मृति.h>
+#include <drm/drm_file.h>
+#include <linux/dma-fence-array.h>
+#include <linux/file.h>
+#include <linux/pm_runtime.h>
+#include <linux/dma-resv.h>
+#include <linux/sync_file.h>
+#include <linux/uaccess.h>
+#include <linux/vmalloc.h>
 
-#समावेश "etnaviv_cmdbuf.h"
-#समावेश "etnaviv_drv.h"
-#समावेश "etnaviv_gpu.h"
-#समावेश "etnaviv_gem.h"
-#समावेश "etnaviv_perfmon.h"
-#समावेश "etnaviv_sched.h"
+#include "etnaviv_cmdbuf.h"
+#include "etnaviv_drv.h"
+#include "etnaviv_gpu.h"
+#include "etnaviv_gem.h"
+#include "etnaviv_perfmon.h"
+#include "etnaviv_sched.h"
 
 /*
  * Cmdstream submission:
  */
 
-#घोषणा BO_INVALID_FLAGS ~(ETNA_SUBMIT_BO_READ | ETNA_SUBMIT_BO_WRITE)
-/* make sure these करोn't conflict w/ ETNAVIV_SUBMIT_BO_x */
-#घोषणा BO_LOCKED   0x4000
-#घोषणा BO_PINNED   0x2000
+#define BO_INVALID_FLAGS ~(ETNA_SUBMIT_BO_READ | ETNA_SUBMIT_BO_WRITE)
+/* make sure these don't conflict w/ ETNAVIV_SUBMIT_BO_x */
+#define BO_LOCKED   0x4000
+#define BO_PINNED   0x2000
 
-अटल काष्ठा etnaviv_gem_submit *submit_create(काष्ठा drm_device *dev,
-		काष्ठा etnaviv_gpu *gpu, माप_प्रकार nr_bos, माप_प्रकार nr_pmrs)
-अणु
-	काष्ठा etnaviv_gem_submit *submit;
-	माप_प्रकार sz = size_vकाष्ठा(nr_bos, माप(submit->bos[0]), माप(*submit));
+static struct etnaviv_gem_submit *submit_create(struct drm_device *dev,
+		struct etnaviv_gpu *gpu, size_t nr_bos, size_t nr_pmrs)
+{
+	struct etnaviv_gem_submit *submit;
+	size_t sz = size_vstruct(nr_bos, sizeof(submit->bos[0]), sizeof(*submit));
 
 	submit = kzalloc(sz, GFP_KERNEL);
-	अगर (!submit)
-		वापस शून्य;
+	if (!submit)
+		return NULL;
 
-	submit->pmrs = kसुस्मृति(nr_pmrs, माप(काष्ठा etnaviv_perfmon_request),
+	submit->pmrs = kcalloc(nr_pmrs, sizeof(struct etnaviv_perfmon_request),
 			       GFP_KERNEL);
-	अगर (!submit->pmrs) अणु
-		kमुक्त(submit);
-		वापस शून्य;
-	पूर्ण
+	if (!submit->pmrs) {
+		kfree(submit);
+		return NULL;
+	}
 	submit->nr_pmrs = nr_pmrs;
 
 	submit->gpu = gpu;
 	kref_init(&submit->refcount);
 
-	वापस submit;
-पूर्ण
+	return submit;
+}
 
-अटल पूर्णांक submit_lookup_objects(काष्ठा etnaviv_gem_submit *submit,
-	काष्ठा drm_file *file, काष्ठा drm_etnaviv_gem_submit_bo *submit_bos,
-	अचिन्हित nr_bos)
-अणु
-	काष्ठा drm_etnaviv_gem_submit_bo *bo;
-	अचिन्हित i;
-	पूर्णांक ret = 0;
+static int submit_lookup_objects(struct etnaviv_gem_submit *submit,
+	struct drm_file *file, struct drm_etnaviv_gem_submit_bo *submit_bos,
+	unsigned nr_bos)
+{
+	struct drm_etnaviv_gem_submit_bo *bo;
+	unsigned i;
+	int ret = 0;
 
 	spin_lock(&file->table_lock);
 
-	क्रम (i = 0, bo = submit_bos; i < nr_bos; i++, bo++) अणु
-		काष्ठा drm_gem_object *obj;
+	for (i = 0, bo = submit_bos; i < nr_bos; i++, bo++) {
+		struct drm_gem_object *obj;
 
-		अगर (bo->flags & BO_INVALID_FLAGS) अणु
+		if (bo->flags & BO_INVALID_FLAGS) {
 			DRM_ERROR("invalid flags: %x\n", bo->flags);
 			ret = -EINVAL;
-			जाओ out_unlock;
-		पूर्ण
+			goto out_unlock;
+		}
 
 		submit->bos[i].flags = bo->flags;
-		अगर (submit->flags & ETNA_SUBMIT_SOFTPIN) अणु
-			अगर (bo->presumed < ETNAVIV_SOFTPIN_START_ADDRESS) अणु
+		if (submit->flags & ETNA_SUBMIT_SOFTPIN) {
+			if (bo->presumed < ETNAVIV_SOFTPIN_START_ADDRESS) {
 				DRM_ERROR("invalid softpin address\n");
 				ret = -EINVAL;
-				जाओ out_unlock;
-			पूर्ण
+				goto out_unlock;
+			}
 			submit->bos[i].va = bo->presumed;
-		पूर्ण
+		}
 
-		/* normally use drm_gem_object_lookup(), but क्रम bulk lookup
+		/* normally use drm_gem_object_lookup(), but for bulk lookup
 		 * all under single table_lock just hit object_idr directly:
 		 */
 		obj = idr_find(&file->object_idr, bo->handle);
-		अगर (!obj) अणु
+		if (!obj) {
 			DRM_ERROR("invalid handle %u at index %u\n",
 				  bo->handle, i);
 			ret = -EINVAL;
-			जाओ out_unlock;
-		पूर्ण
+			goto out_unlock;
+		}
 
 		/*
 		 * Take a refcount on the object. The file table lock
@@ -100,437 +99,437 @@
 		drm_gem_object_get(obj);
 
 		submit->bos[i].obj = to_etnaviv_bo(obj);
-	पूर्ण
+	}
 
 out_unlock:
 	submit->nr_bos = i;
 	spin_unlock(&file->table_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम submit_unlock_object(काष्ठा etnaviv_gem_submit *submit, पूर्णांक i)
-अणु
-	अगर (submit->bos[i].flags & BO_LOCKED) अणु
-		काष्ठा drm_gem_object *obj = &submit->bos[i].obj->base;
+static void submit_unlock_object(struct etnaviv_gem_submit *submit, int i)
+{
+	if (submit->bos[i].flags & BO_LOCKED) {
+		struct drm_gem_object *obj = &submit->bos[i].obj->base;
 
 		dma_resv_unlock(obj->resv);
 		submit->bos[i].flags &= ~BO_LOCKED;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक submit_lock_objects(काष्ठा etnaviv_gem_submit *submit,
-		काष्ठा ww_acquire_ctx *ticket)
-अणु
-	पूर्णांक contended, slow_locked = -1, i, ret = 0;
+static int submit_lock_objects(struct etnaviv_gem_submit *submit,
+		struct ww_acquire_ctx *ticket)
+{
+	int contended, slow_locked = -1, i, ret = 0;
 
 retry:
-	क्रम (i = 0; i < submit->nr_bos; i++) अणु
-		काष्ठा drm_gem_object *obj = &submit->bos[i].obj->base;
+	for (i = 0; i < submit->nr_bos; i++) {
+		struct drm_gem_object *obj = &submit->bos[i].obj->base;
 
-		अगर (slow_locked == i)
+		if (slow_locked == i)
 			slow_locked = -1;
 
 		contended = i;
 
-		अगर (!(submit->bos[i].flags & BO_LOCKED)) अणु
-			ret = dma_resv_lock_पूर्णांकerruptible(obj->resv, ticket);
-			अगर (ret == -EALREADY)
+		if (!(submit->bos[i].flags & BO_LOCKED)) {
+			ret = dma_resv_lock_interruptible(obj->resv, ticket);
+			if (ret == -EALREADY)
 				DRM_ERROR("BO at index %u already on submit list\n",
 					  i);
-			अगर (ret)
-				जाओ fail;
+			if (ret)
+				goto fail;
 			submit->bos[i].flags |= BO_LOCKED;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	ww_acquire_करोne(ticket);
+	ww_acquire_done(ticket);
 
-	वापस 0;
+	return 0;
 
 fail:
-	क्रम (; i >= 0; i--)
+	for (; i >= 0; i--)
 		submit_unlock_object(submit, i);
 
-	अगर (slow_locked > 0)
+	if (slow_locked > 0)
 		submit_unlock_object(submit, slow_locked);
 
-	अगर (ret == -EDEADLK) अणु
-		काष्ठा drm_gem_object *obj;
+	if (ret == -EDEADLK) {
+		struct drm_gem_object *obj;
 
 		obj = &submit->bos[contended].obj->base;
 
 		/* we lost out in a seqno race, lock and retry.. */
-		ret = dma_resv_lock_slow_पूर्णांकerruptible(obj->resv, ticket);
-		अगर (!ret) अणु
+		ret = dma_resv_lock_slow_interruptible(obj->resv, ticket);
+		if (!ret) {
 			submit->bos[contended].flags |= BO_LOCKED;
 			slow_locked = contended;
-			जाओ retry;
-		पूर्ण
-	पूर्ण
+			goto retry;
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक submit_fence_sync(काष्ठा etnaviv_gem_submit *submit)
-अणु
-	पूर्णांक i, ret = 0;
+static int submit_fence_sync(struct etnaviv_gem_submit *submit)
+{
+	int i, ret = 0;
 
-	क्रम (i = 0; i < submit->nr_bos; i++) अणु
-		काष्ठा etnaviv_gem_submit_bo *bo = &submit->bos[i];
-		काष्ठा dma_resv *robj = bo->obj->base.resv;
+	for (i = 0; i < submit->nr_bos; i++) {
+		struct etnaviv_gem_submit_bo *bo = &submit->bos[i];
+		struct dma_resv *robj = bo->obj->base.resv;
 
-		अगर (!(bo->flags & ETNA_SUBMIT_BO_WRITE)) अणु
+		if (!(bo->flags & ETNA_SUBMIT_BO_WRITE)) {
 			ret = dma_resv_reserve_shared(robj, 1);
-			अगर (ret)
-				वापस ret;
-		पूर्ण
+			if (ret)
+				return ret;
+		}
 
-		अगर (submit->flags & ETNA_SUBMIT_NO_IMPLICIT)
-			जारी;
+		if (submit->flags & ETNA_SUBMIT_NO_IMPLICIT)
+			continue;
 
-		अगर (bo->flags & ETNA_SUBMIT_BO_WRITE) अणु
+		if (bo->flags & ETNA_SUBMIT_BO_WRITE) {
 			ret = dma_resv_get_fences_rcu(robj, &bo->excl,
 								&bo->nr_shared,
 								&bo->shared);
-			अगर (ret)
-				वापस ret;
-		पूर्ण अन्यथा अणु
+			if (ret)
+				return ret;
+		} else {
 			bo->excl = dma_resv_get_excl_rcu(robj);
-		पूर्ण
+		}
 
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम submit_attach_object_fences(काष्ठा etnaviv_gem_submit *submit)
-अणु
-	पूर्णांक i;
+static void submit_attach_object_fences(struct etnaviv_gem_submit *submit)
+{
+	int i;
 
-	क्रम (i = 0; i < submit->nr_bos; i++) अणु
-		काष्ठा drm_gem_object *obj = &submit->bos[i].obj->base;
+	for (i = 0; i < submit->nr_bos; i++) {
+		struct drm_gem_object *obj = &submit->bos[i].obj->base;
 
-		अगर (submit->bos[i].flags & ETNA_SUBMIT_BO_WRITE)
+		if (submit->bos[i].flags & ETNA_SUBMIT_BO_WRITE)
 			dma_resv_add_excl_fence(obj->resv,
 							  submit->out_fence);
-		अन्यथा
+		else
 			dma_resv_add_shared_fence(obj->resv,
 							    submit->out_fence);
 
 		submit_unlock_object(submit, i);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक submit_pin_objects(काष्ठा etnaviv_gem_submit *submit)
-अणु
-	पूर्णांक i, ret = 0;
+static int submit_pin_objects(struct etnaviv_gem_submit *submit)
+{
+	int i, ret = 0;
 
-	क्रम (i = 0; i < submit->nr_bos; i++) अणु
-		काष्ठा etnaviv_gem_object *etnaviv_obj = submit->bos[i].obj;
-		काष्ठा etnaviv_vram_mapping *mapping;
+	for (i = 0; i < submit->nr_bos; i++) {
+		struct etnaviv_gem_object *etnaviv_obj = submit->bos[i].obj;
+		struct etnaviv_vram_mapping *mapping;
 
 		mapping = etnaviv_gem_mapping_get(&etnaviv_obj->base,
 						  submit->mmu_context,
 						  submit->bos[i].va);
-		अगर (IS_ERR(mapping)) अणु
+		if (IS_ERR(mapping)) {
 			ret = PTR_ERR(mapping);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर ((submit->flags & ETNA_SUBMIT_SOFTPIN) &&
-		     submit->bos[i].va != mapping->iova) अणु
+		if ((submit->flags & ETNA_SUBMIT_SOFTPIN) &&
+		     submit->bos[i].va != mapping->iova) {
 			etnaviv_gem_mapping_unreference(mapping);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		atomic_inc(&etnaviv_obj->gpu_active);
 
 		submit->bos[i].flags |= BO_PINNED;
 		submit->bos[i].mapping = mapping;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक submit_bo(काष्ठा etnaviv_gem_submit *submit, u32 idx,
-	काष्ठा etnaviv_gem_submit_bo **bo)
-अणु
-	अगर (idx >= submit->nr_bos) अणु
+static int submit_bo(struct etnaviv_gem_submit *submit, u32 idx,
+	struct etnaviv_gem_submit_bo **bo)
+{
+	if (idx >= submit->nr_bos) {
 		DRM_ERROR("invalid buffer index: %u (out of %u)\n",
 				idx, submit->nr_bos);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	*bo = &submit->bos[idx];
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* process the reloc's and patch up the cmdstream as needed: */
-अटल पूर्णांक submit_reloc(काष्ठा etnaviv_gem_submit *submit, व्योम *stream,
-		u32 size, स्थिर काष्ठा drm_etnaviv_gem_submit_reloc *relocs,
+static int submit_reloc(struct etnaviv_gem_submit *submit, void *stream,
+		u32 size, const struct drm_etnaviv_gem_submit_reloc *relocs,
 		u32 nr_relocs)
-अणु
+{
 	u32 i, last_offset = 0;
 	u32 *ptr = stream;
-	पूर्णांक ret;
+	int ret;
 
-	/* Submits using softpin करोn't blend with relocs */
-	अगर ((submit->flags & ETNA_SUBMIT_SOFTPIN) && nr_relocs != 0)
-		वापस -EINVAL;
+	/* Submits using softpin don't blend with relocs */
+	if ((submit->flags & ETNA_SUBMIT_SOFTPIN) && nr_relocs != 0)
+		return -EINVAL;
 
-	क्रम (i = 0; i < nr_relocs; i++) अणु
-		स्थिर काष्ठा drm_etnaviv_gem_submit_reloc *r = relocs + i;
-		काष्ठा etnaviv_gem_submit_bo *bo;
+	for (i = 0; i < nr_relocs; i++) {
+		const struct drm_etnaviv_gem_submit_reloc *r = relocs + i;
+		struct etnaviv_gem_submit_bo *bo;
 		u32 off;
 
-		अगर (unlikely(r->flags)) अणु
+		if (unlikely(r->flags)) {
 			DRM_ERROR("invalid reloc flags\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगर (r->submit_offset % 4) अणु
+		if (r->submit_offset % 4) {
 			DRM_ERROR("non-aligned reloc offset: %u\n",
 				  r->submit_offset);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		/* offset in dwords: */
 		off = r->submit_offset / 4;
 
-		अगर ((off >= size ) ||
-				(off < last_offset)) अणु
+		if ((off >= size ) ||
+				(off < last_offset)) {
 			DRM_ERROR("invalid offset %u at reloc %u\n", off, i);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		ret = submit_bo(submit, r->reloc_idx, &bo);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-		अगर (r->reloc_offset > bo->obj->base.size - माप(*ptr)) अणु
+		if (r->reloc_offset > bo->obj->base.size - sizeof(*ptr)) {
 			DRM_ERROR("relocation %u outside object\n", i);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		ptr[off] = bo->mapping->iova + r->reloc_offset;
 
 		last_offset = off;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक submit_perfmon_validate(काष्ठा etnaviv_gem_submit *submit,
-		u32 exec_state, स्थिर काष्ठा drm_etnaviv_gem_submit_pmr *pmrs)
-अणु
+static int submit_perfmon_validate(struct etnaviv_gem_submit *submit,
+		u32 exec_state, const struct drm_etnaviv_gem_submit_pmr *pmrs)
+{
 	u32 i;
 
-	क्रम (i = 0; i < submit->nr_pmrs; i++) अणु
-		स्थिर काष्ठा drm_etnaviv_gem_submit_pmr *r = pmrs + i;
-		काष्ठा etnaviv_gem_submit_bo *bo;
-		पूर्णांक ret;
+	for (i = 0; i < submit->nr_pmrs; i++) {
+		const struct drm_etnaviv_gem_submit_pmr *r = pmrs + i;
+		struct etnaviv_gem_submit_bo *bo;
+		int ret;
 
-		ret = submit_bo(submit, r->पढ़ो_idx, &bo);
-		अगर (ret)
-			वापस ret;
+		ret = submit_bo(submit, r->read_idx, &bo);
+		if (ret)
+			return ret;
 
-		/* at offset 0 a sequence number माला_लो stored used क्रम userspace sync */
-		अगर (r->पढ़ो_offset == 0) अणु
+		/* at offset 0 a sequence number gets stored used for userspace sync */
+		if (r->read_offset == 0) {
 			DRM_ERROR("perfmon request: offset is 0");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगर (r->पढ़ो_offset >= bo->obj->base.size - माप(u32)) अणु
+		if (r->read_offset >= bo->obj->base.size - sizeof(u32)) {
 			DRM_ERROR("perfmon request: offset %u outside object", i);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगर (r->flags & ~(ETNA_PM_PROCESS_PRE | ETNA_PM_PROCESS_POST)) अणु
+		if (r->flags & ~(ETNA_PM_PROCESS_PRE | ETNA_PM_PROCESS_POST)) {
 			DRM_ERROR("perfmon request: flags are not valid");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगर (etnaviv_pm_req_validate(r, exec_state)) अणु
+		if (etnaviv_pm_req_validate(r, exec_state)) {
 			DRM_ERROR("perfmon request: domain or signal not valid");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		submit->pmrs[i].flags = r->flags;
-		submit->pmrs[i].करोमुख्य = r->करोमुख्य;
-		submit->pmrs[i].संकेत = r->संकेत;
+		submit->pmrs[i].domain = r->domain;
+		submit->pmrs[i].signal = r->signal;
 		submit->pmrs[i].sequence = r->sequence;
-		submit->pmrs[i].offset = r->पढ़ो_offset;
+		submit->pmrs[i].offset = r->read_offset;
 		submit->pmrs[i].bo_vma = etnaviv_gem_vmap(&bo->obj->base);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम submit_cleanup(काष्ठा kref *kref)
-अणु
-	काष्ठा etnaviv_gem_submit *submit =
-			container_of(kref, काष्ठा etnaviv_gem_submit, refcount);
-	अचिन्हित i;
+static void submit_cleanup(struct kref *kref)
+{
+	struct etnaviv_gem_submit *submit =
+			container_of(kref, struct etnaviv_gem_submit, refcount);
+	unsigned i;
 
-	अगर (submit->runसमय_resumed)
-		pm_runसमय_put_स्वतःsuspend(submit->gpu->dev);
+	if (submit->runtime_resumed)
+		pm_runtime_put_autosuspend(submit->gpu->dev);
 
-	अगर (submit->cmdbuf.suballoc)
-		etnaviv_cmdbuf_मुक्त(&submit->cmdbuf);
+	if (submit->cmdbuf.suballoc)
+		etnaviv_cmdbuf_free(&submit->cmdbuf);
 
-	अगर (submit->mmu_context)
+	if (submit->mmu_context)
 		etnaviv_iommu_context_put(submit->mmu_context);
 
-	अगर (submit->prev_mmu_context)
+	if (submit->prev_mmu_context)
 		etnaviv_iommu_context_put(submit->prev_mmu_context);
 
-	क्रम (i = 0; i < submit->nr_bos; i++) अणु
-		काष्ठा etnaviv_gem_object *etnaviv_obj = submit->bos[i].obj;
+	for (i = 0; i < submit->nr_bos; i++) {
+		struct etnaviv_gem_object *etnaviv_obj = submit->bos[i].obj;
 
 		/* unpin all objects */
-		अगर (submit->bos[i].flags & BO_PINNED) अणु
+		if (submit->bos[i].flags & BO_PINNED) {
 			etnaviv_gem_mapping_unreference(submit->bos[i].mapping);
 			atomic_dec(&etnaviv_obj->gpu_active);
-			submit->bos[i].mapping = शून्य;
+			submit->bos[i].mapping = NULL;
 			submit->bos[i].flags &= ~BO_PINNED;
-		पूर्ण
+		}
 
-		/* अगर the GPU submit failed, objects might still be locked */
+		/* if the GPU submit failed, objects might still be locked */
 		submit_unlock_object(submit, i);
 		drm_gem_object_put(&etnaviv_obj->base);
-	पूर्ण
+	}
 
 	wake_up_all(&submit->gpu->fence_event);
 
-	अगर (submit->in_fence)
+	if (submit->in_fence)
 		dma_fence_put(submit->in_fence);
-	अगर (submit->out_fence) अणु
-		/* first हटाओ from IDR, so fence can not be found anymore */
+	if (submit->out_fence) {
+		/* first remove from IDR, so fence can not be found anymore */
 		mutex_lock(&submit->gpu->fence_lock);
-		idr_हटाओ(&submit->gpu->fence_idr, submit->out_fence_id);
+		idr_remove(&submit->gpu->fence_idr, submit->out_fence_id);
 		mutex_unlock(&submit->gpu->fence_lock);
 		dma_fence_put(submit->out_fence);
-	पूर्ण
-	kमुक्त(submit->pmrs);
-	kमुक्त(submit);
-पूर्ण
+	}
+	kfree(submit->pmrs);
+	kfree(submit);
+}
 
-व्योम etnaviv_submit_put(काष्ठा etnaviv_gem_submit *submit)
-अणु
+void etnaviv_submit_put(struct etnaviv_gem_submit *submit)
+{
 	kref_put(&submit->refcount, submit_cleanup);
-पूर्ण
+}
 
-पूर्णांक etnaviv_ioctl_gem_submit(काष्ठा drm_device *dev, व्योम *data,
-		काष्ठा drm_file *file)
-अणु
-	काष्ठा etnaviv_file_निजी *ctx = file->driver_priv;
-	काष्ठा etnaviv_drm_निजी *priv = dev->dev_निजी;
-	काष्ठा drm_etnaviv_gem_submit *args = data;
-	काष्ठा drm_etnaviv_gem_submit_reloc *relocs;
-	काष्ठा drm_etnaviv_gem_submit_pmr *pmrs;
-	काष्ठा drm_etnaviv_gem_submit_bo *bos;
-	काष्ठा etnaviv_gem_submit *submit;
-	काष्ठा etnaviv_gpu *gpu;
-	काष्ठा sync_file *sync_file = शून्य;
-	काष्ठा ww_acquire_ctx ticket;
-	पूर्णांक out_fence_fd = -1;
-	व्योम *stream;
-	पूर्णांक ret;
+int etnaviv_ioctl_gem_submit(struct drm_device *dev, void *data,
+		struct drm_file *file)
+{
+	struct etnaviv_file_private *ctx = file->driver_priv;
+	struct etnaviv_drm_private *priv = dev->dev_private;
+	struct drm_etnaviv_gem_submit *args = data;
+	struct drm_etnaviv_gem_submit_reloc *relocs;
+	struct drm_etnaviv_gem_submit_pmr *pmrs;
+	struct drm_etnaviv_gem_submit_bo *bos;
+	struct etnaviv_gem_submit *submit;
+	struct etnaviv_gpu *gpu;
+	struct sync_file *sync_file = NULL;
+	struct ww_acquire_ctx ticket;
+	int out_fence_fd = -1;
+	void *stream;
+	int ret;
 
-	अगर (args->pipe >= ETNA_MAX_PIPES)
-		वापस -EINVAL;
+	if (args->pipe >= ETNA_MAX_PIPES)
+		return -EINVAL;
 
 	gpu = priv->gpu[args->pipe];
-	अगर (!gpu)
-		वापस -ENXIO;
+	if (!gpu)
+		return -ENXIO;
 
-	अगर (args->stream_size % 4) अणु
+	if (args->stream_size % 4) {
 		DRM_ERROR("non-aligned cmdstream buffer size: %u\n",
 			  args->stream_size);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (args->exec_state != ETNA_PIPE_3D &&
+	if (args->exec_state != ETNA_PIPE_3D &&
 	    args->exec_state != ETNA_PIPE_2D &&
-	    args->exec_state != ETNA_PIPE_VG) अणु
+	    args->exec_state != ETNA_PIPE_VG) {
 		DRM_ERROR("invalid exec_state: 0x%x\n", args->exec_state);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (args->flags & ~ETNA_SUBMIT_FLAGS) अणु
+	if (args->flags & ~ETNA_SUBMIT_FLAGS) {
 		DRM_ERROR("invalid flags: 0x%x\n", args->flags);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर ((args->flags & ETNA_SUBMIT_SOFTPIN) &&
-	    priv->mmu_global->version != ETNAVIV_IOMMU_V2) अणु
+	if ((args->flags & ETNA_SUBMIT_SOFTPIN) &&
+	    priv->mmu_global->version != ETNAVIV_IOMMU_V2) {
 		DRM_ERROR("softpin requested on incompatible MMU\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/*
 	 * Copy the command submission and bo array to kernel space in
-	 * one go, and करो this outside of any locks.
+	 * one go, and do this outside of any locks.
 	 */
-	bos = kvदो_स्मृति_array(args->nr_bos, माप(*bos), GFP_KERNEL);
-	relocs = kvदो_स्मृति_array(args->nr_relocs, माप(*relocs), GFP_KERNEL);
-	pmrs = kvदो_स्मृति_array(args->nr_pmrs, माप(*pmrs), GFP_KERNEL);
-	stream = kvदो_स्मृति_array(1, args->stream_size, GFP_KERNEL);
-	अगर (!bos || !relocs || !pmrs || !stream) अणु
+	bos = kvmalloc_array(args->nr_bos, sizeof(*bos), GFP_KERNEL);
+	relocs = kvmalloc_array(args->nr_relocs, sizeof(*relocs), GFP_KERNEL);
+	pmrs = kvmalloc_array(args->nr_pmrs, sizeof(*pmrs), GFP_KERNEL);
+	stream = kvmalloc_array(1, args->stream_size, GFP_KERNEL);
+	if (!bos || !relocs || !pmrs || !stream) {
 		ret = -ENOMEM;
-		जाओ err_submit_cmds;
-	पूर्ण
+		goto err_submit_cmds;
+	}
 
 	ret = copy_from_user(bos, u64_to_user_ptr(args->bos),
-			     args->nr_bos * माप(*bos));
-	अगर (ret) अणु
+			     args->nr_bos * sizeof(*bos));
+	if (ret) {
 		ret = -EFAULT;
-		जाओ err_submit_cmds;
-	पूर्ण
+		goto err_submit_cmds;
+	}
 
 	ret = copy_from_user(relocs, u64_to_user_ptr(args->relocs),
-			     args->nr_relocs * माप(*relocs));
-	अगर (ret) अणु
+			     args->nr_relocs * sizeof(*relocs));
+	if (ret) {
 		ret = -EFAULT;
-		जाओ err_submit_cmds;
-	पूर्ण
+		goto err_submit_cmds;
+	}
 
 	ret = copy_from_user(pmrs, u64_to_user_ptr(args->pmrs),
-			     args->nr_pmrs * माप(*pmrs));
-	अगर (ret) अणु
+			     args->nr_pmrs * sizeof(*pmrs));
+	if (ret) {
 		ret = -EFAULT;
-		जाओ err_submit_cmds;
-	पूर्ण
+		goto err_submit_cmds;
+	}
 
 	ret = copy_from_user(stream, u64_to_user_ptr(args->stream),
 			     args->stream_size);
-	अगर (ret) अणु
+	if (ret) {
 		ret = -EFAULT;
-		जाओ err_submit_cmds;
-	पूर्ण
+		goto err_submit_cmds;
+	}
 
-	अगर (args->flags & ETNA_SUBMIT_FENCE_FD_OUT) अणु
+	if (args->flags & ETNA_SUBMIT_FENCE_FD_OUT) {
 		out_fence_fd = get_unused_fd_flags(O_CLOEXEC);
-		अगर (out_fence_fd < 0) अणु
+		if (out_fence_fd < 0) {
 			ret = out_fence_fd;
-			जाओ err_submit_cmds;
-		पूर्ण
-	पूर्ण
+			goto err_submit_cmds;
+		}
+	}
 
 	ww_acquire_init(&ticket, &reservation_ww_class);
 
 	submit = submit_create(dev, gpu, args->nr_bos, args->nr_pmrs);
-	अगर (!submit) अणु
+	if (!submit) {
 		ret = -ENOMEM;
-		जाओ err_submit_ww_acquire;
-	पूर्ण
+		goto err_submit_ww_acquire;
+	}
 
 	ret = etnaviv_cmdbuf_init(priv->cmdbuf_suballoc, &submit->cmdbuf,
 				  ALIGN(args->stream_size, 8) + 8);
-	अगर (ret)
-		जाओ err_submit_objects;
+	if (ret)
+		goto err_submit_objects;
 
 	submit->ctx = file->driver_priv;
 	etnaviv_iommu_context_get(submit->ctx->mmu);
@@ -539,67 +538,67 @@ fail:
 	submit->flags = args->flags;
 
 	ret = submit_lookup_objects(submit, file, bos, args->nr_bos);
-	अगर (ret)
-		जाओ err_submit_objects;
+	if (ret)
+		goto err_submit_objects;
 
-	अगर ((priv->mmu_global->version != ETNAVIV_IOMMU_V2) &&
+	if ((priv->mmu_global->version != ETNAVIV_IOMMU_V2) &&
 	    !etnaviv_cmd_validate_one(gpu, stream, args->stream_size / 4,
-				      relocs, args->nr_relocs)) अणु
+				      relocs, args->nr_relocs)) {
 		ret = -EINVAL;
-		जाओ err_submit_objects;
-	पूर्ण
+		goto err_submit_objects;
+	}
 
-	अगर (args->flags & ETNA_SUBMIT_FENCE_FD_IN) अणु
+	if (args->flags & ETNA_SUBMIT_FENCE_FD_IN) {
 		submit->in_fence = sync_file_get_fence(args->fence_fd);
-		अगर (!submit->in_fence) अणु
+		if (!submit->in_fence) {
 			ret = -EINVAL;
-			जाओ err_submit_objects;
-		पूर्ण
-	पूर्ण
+			goto err_submit_objects;
+		}
+	}
 
 	ret = submit_pin_objects(submit);
-	अगर (ret)
-		जाओ err_submit_objects;
+	if (ret)
+		goto err_submit_objects;
 
 	ret = submit_reloc(submit, stream, args->stream_size / 4,
 			   relocs, args->nr_relocs);
-	अगर (ret)
-		जाओ err_submit_objects;
+	if (ret)
+		goto err_submit_objects;
 
 	ret = submit_perfmon_validate(submit, args->exec_state, pmrs);
-	अगर (ret)
-		जाओ err_submit_objects;
+	if (ret)
+		goto err_submit_objects;
 
-	स_नकल(submit->cmdbuf.vaddr, stream, args->stream_size);
+	memcpy(submit->cmdbuf.vaddr, stream, args->stream_size);
 
 	ret = submit_lock_objects(submit, &ticket);
-	अगर (ret)
-		जाओ err_submit_objects;
+	if (ret)
+		goto err_submit_objects;
 
 	ret = submit_fence_sync(submit);
-	अगर (ret)
-		जाओ err_submit_objects;
+	if (ret)
+		goto err_submit_objects;
 
 	ret = etnaviv_sched_push_job(&ctx->sched_entity[args->pipe], submit);
-	अगर (ret)
-		जाओ err_submit_objects;
+	if (ret)
+		goto err_submit_objects;
 
 	submit_attach_object_fences(submit);
 
-	अगर (args->flags & ETNA_SUBMIT_FENCE_FD_OUT) अणु
+	if (args->flags & ETNA_SUBMIT_FENCE_FD_OUT) {
 		/*
 		 * This can be improved: ideally we want to allocate the sync
-		 * file beक्रमe kicking off the GPU job and just attach the
+		 * file before kicking off the GPU job and just attach the
 		 * fence to the sync file here, eliminating the ENOMEM
 		 * possibility at this stage.
 		 */
 		sync_file = sync_file_create(submit->out_fence);
-		अगर (!sync_file) अणु
+		if (!sync_file) {
 			ret = -ENOMEM;
-			जाओ err_submit_objects;
-		पूर्ण
+			goto err_submit_objects;
+		}
 		fd_install(out_fence_fd, sync_file->file);
-	पूर्ण
+	}
 
 	args->fence_fd = out_fence_fd;
 	args->fence = submit->out_fence_id;
@@ -611,16 +610,16 @@ err_submit_ww_acquire:
 	ww_acquire_fini(&ticket);
 
 err_submit_cmds:
-	अगर (ret && (out_fence_fd >= 0))
+	if (ret && (out_fence_fd >= 0))
 		put_unused_fd(out_fence_fd);
-	अगर (stream)
-		kvमुक्त(stream);
-	अगर (bos)
-		kvमुक्त(bos);
-	अगर (relocs)
-		kvमुक्त(relocs);
-	अगर (pmrs)
-		kvमुक्त(pmrs);
+	if (stream)
+		kvfree(stream);
+	if (bos)
+		kvfree(bos);
+	if (relocs)
+		kvfree(relocs);
+	if (pmrs)
+		kvfree(pmrs);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 //
 // extcon-ptn5150.c - PTN5150 CC logic extcon driver to support USB detection
 //
@@ -8,270 +7,270 @@
 // Author: Vijai Kumar K <vijaikumar.kanagarajan@gmail.com>
 // Copyright (c) 2020 Krzysztof Kozlowski <krzk@kernel.org>
 
-#समावेश <linux/bitfield.h>
-#समावेश <linux/err.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/extcon-provider.h>
-#समावेश <linux/gpio/consumer.h>
+#include <linux/bitfield.h>
+#include <linux/err.h>
+#include <linux/i2c.h>
+#include <linux/interrupt.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/regmap.h>
+#include <linux/slab.h>
+#include <linux/extcon-provider.h>
+#include <linux/gpio/consumer.h>
 
-/* PTN5150 रेजिस्टरs */
-#घोषणा PTN5150_REG_DEVICE_ID			0x01
-#घोषणा PTN5150_REG_CONTROL			0x02
-#घोषणा PTN5150_REG_INT_STATUS			0x03
-#घोषणा PTN5150_REG_CC_STATUS			0x04
-#घोषणा PTN5150_REG_CON_DET			0x09
-#घोषणा PTN5150_REG_VCONN_STATUS		0x0a
-#घोषणा PTN5150_REG_RESET			0x0b
-#घोषणा PTN5150_REG_INT_MASK			0x18
-#घोषणा PTN5150_REG_INT_REG_STATUS		0x19
-#घोषणा PTN5150_REG_END				PTN5150_REG_INT_REG_STATUS
+/* PTN5150 registers */
+#define PTN5150_REG_DEVICE_ID			0x01
+#define PTN5150_REG_CONTROL			0x02
+#define PTN5150_REG_INT_STATUS			0x03
+#define PTN5150_REG_CC_STATUS			0x04
+#define PTN5150_REG_CON_DET			0x09
+#define PTN5150_REG_VCONN_STATUS		0x0a
+#define PTN5150_REG_RESET			0x0b
+#define PTN5150_REG_INT_MASK			0x18
+#define PTN5150_REG_INT_REG_STATUS		0x19
+#define PTN5150_REG_END				PTN5150_REG_INT_REG_STATUS
 
-#घोषणा PTN5150_DFP_ATTACHED			0x1
-#घोषणा PTN5150_UFP_ATTACHED			0x2
+#define PTN5150_DFP_ATTACHED			0x1
+#define PTN5150_UFP_ATTACHED			0x2
 
-/* Define PTN5150 MASK/SHIFT स्थिरant */
-#घोषणा PTN5150_REG_DEVICE_ID_VERSION		GENMASK(7, 3)
-#घोषणा PTN5150_REG_DEVICE_ID_VENDOR		GENMASK(2, 0)
+/* Define PTN5150 MASK/SHIFT constant */
+#define PTN5150_REG_DEVICE_ID_VERSION		GENMASK(7, 3)
+#define PTN5150_REG_DEVICE_ID_VENDOR		GENMASK(2, 0)
 
-#घोषणा PTN5150_REG_CC_PORT_ATTACHMENT		GENMASK(4, 2)
-#घोषणा PTN5150_REG_CC_VBUS_DETECTION		BIT(7)
-#घोषणा PTN5150_REG_INT_CABLE_ATTACH_MASK	BIT(0)
-#घोषणा PTN5150_REG_INT_CABLE_DETACH_MASK	BIT(1)
+#define PTN5150_REG_CC_PORT_ATTACHMENT		GENMASK(4, 2)
+#define PTN5150_REG_CC_VBUS_DETECTION		BIT(7)
+#define PTN5150_REG_INT_CABLE_ATTACH_MASK	BIT(0)
+#define PTN5150_REG_INT_CABLE_DETACH_MASK	BIT(1)
 
-काष्ठा ptn5150_info अणु
-	काष्ठा device *dev;
-	काष्ठा extcon_dev *edev;
-	काष्ठा i2c_client *i2c;
-	काष्ठा regmap *regmap;
-	काष्ठा gpio_desc *पूर्णांक_gpiod;
-	काष्ठा gpio_desc *vbus_gpiod;
-	पूर्णांक irq;
-	काष्ठा work_काष्ठा irq_work;
-	काष्ठा mutex mutex;
-पूर्ण;
+struct ptn5150_info {
+	struct device *dev;
+	struct extcon_dev *edev;
+	struct i2c_client *i2c;
+	struct regmap *regmap;
+	struct gpio_desc *int_gpiod;
+	struct gpio_desc *vbus_gpiod;
+	int irq;
+	struct work_struct irq_work;
+	struct mutex mutex;
+};
 
 /* List of detectable cables */
-अटल स्थिर अचिन्हित पूर्णांक ptn5150_extcon_cable[] = अणु
+static const unsigned int ptn5150_extcon_cable[] = {
 	EXTCON_USB,
 	EXTCON_USB_HOST,
 	EXTCON_NONE,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा regmap_config ptn5150_regmap_config = अणु
+static const struct regmap_config ptn5150_regmap_config = {
 	.reg_bits	= 8,
 	.val_bits	= 8,
-	.max_रेजिस्टर	= PTN5150_REG_END,
-पूर्ण;
+	.max_register	= PTN5150_REG_END,
+};
 
-अटल व्योम ptn5150_check_state(काष्ठा ptn5150_info *info)
-अणु
-	अचिन्हित पूर्णांक port_status, reg_data, vbus;
-	पूर्णांक ret;
+static void ptn5150_check_state(struct ptn5150_info *info)
+{
+	unsigned int port_status, reg_data, vbus;
+	int ret;
 
-	ret = regmap_पढ़ो(info->regmap, PTN5150_REG_CC_STATUS, &reg_data);
-	अगर (ret) अणु
+	ret = regmap_read(info->regmap, PTN5150_REG_CC_STATUS, &reg_data);
+	if (ret) {
 		dev_err(info->dev, "failed to read CC STATUS %d\n", ret);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	port_status = FIELD_GET(PTN5150_REG_CC_PORT_ATTACHMENT, reg_data);
 
-	चयन (port_status) अणु
-	हाल PTN5150_DFP_ATTACHED:
+	switch (port_status) {
+	case PTN5150_DFP_ATTACHED:
 		extcon_set_state_sync(info->edev, EXTCON_USB_HOST, false);
 		gpiod_set_value_cansleep(info->vbus_gpiod, 0);
 		extcon_set_state_sync(info->edev, EXTCON_USB, true);
-		अवरोध;
-	हाल PTN5150_UFP_ATTACHED:
+		break;
+	case PTN5150_UFP_ATTACHED:
 		extcon_set_state_sync(info->edev, EXTCON_USB, false);
 		vbus = FIELD_GET(PTN5150_REG_CC_VBUS_DETECTION, reg_data);
-		अगर (vbus)
+		if (vbus)
 			gpiod_set_value_cansleep(info->vbus_gpiod, 0);
-		अन्यथा
+		else
 			gpiod_set_value_cansleep(info->vbus_gpiod, 1);
 
 		extcon_set_state_sync(info->edev, EXTCON_USB_HOST, true);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 
-अटल व्योम ptn5150_irq_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा ptn5150_info *info = container_of(work,
-			काष्ठा ptn5150_info, irq_work);
-	पूर्णांक ret = 0;
-	अचिन्हित पूर्णांक पूर्णांक_status;
+static void ptn5150_irq_work(struct work_struct *work)
+{
+	struct ptn5150_info *info = container_of(work,
+			struct ptn5150_info, irq_work);
+	int ret = 0;
+	unsigned int int_status;
 
-	अगर (!info->edev)
-		वापस;
+	if (!info->edev)
+		return;
 
 	mutex_lock(&info->mutex);
 
-	/* Clear पूर्णांकerrupt. Read would clear the रेजिस्टर */
-	ret = regmap_पढ़ो(info->regmap, PTN5150_REG_INT_STATUS, &पूर्णांक_status);
-	अगर (ret) अणु
+	/* Clear interrupt. Read would clear the register */
+	ret = regmap_read(info->regmap, PTN5150_REG_INT_STATUS, &int_status);
+	if (ret) {
 		dev_err(info->dev, "failed to read INT STATUS %d\n", ret);
 		mutex_unlock(&info->mutex);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (पूर्णांक_status) अणु
-		अचिन्हित पूर्णांक cable_attach;
+	if (int_status) {
+		unsigned int cable_attach;
 
-		cable_attach = पूर्णांक_status & PTN5150_REG_INT_CABLE_ATTACH_MASK;
-		अगर (cable_attach) अणु
+		cable_attach = int_status & PTN5150_REG_INT_CABLE_ATTACH_MASK;
+		if (cable_attach) {
 			ptn5150_check_state(info);
-		पूर्ण अन्यथा अणु
+		} else {
 			extcon_set_state_sync(info->edev,
 					EXTCON_USB_HOST, false);
 			extcon_set_state_sync(info->edev,
 					EXTCON_USB, false);
 			gpiod_set_value_cansleep(info->vbus_gpiod, 0);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* Clear पूर्णांकerrupt. Read would clear the रेजिस्टर */
-	ret = regmap_पढ़ो(info->regmap, PTN5150_REG_INT_REG_STATUS,
-			&पूर्णांक_status);
-	अगर (ret) अणु
+	/* Clear interrupt. Read would clear the register */
+	ret = regmap_read(info->regmap, PTN5150_REG_INT_REG_STATUS,
+			&int_status);
+	if (ret) {
 		dev_err(info->dev,
 			"failed to read INT REG STATUS %d\n", ret);
 		mutex_unlock(&info->mutex);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	mutex_unlock(&info->mutex);
-पूर्ण
+}
 
 
-अटल irqवापस_t ptn5150_irq_handler(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा ptn5150_info *info = data;
+static irqreturn_t ptn5150_irq_handler(int irq, void *data)
+{
+	struct ptn5150_info *info = data;
 
 	schedule_work(&info->irq_work);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक ptn5150_init_dev_type(काष्ठा ptn5150_info *info)
-अणु
-	अचिन्हित पूर्णांक reg_data, venकरोr_id, version_id;
-	पूर्णांक ret;
+static int ptn5150_init_dev_type(struct ptn5150_info *info)
+{
+	unsigned int reg_data, vendor_id, version_id;
+	int ret;
 
-	ret = regmap_पढ़ो(info->regmap, PTN5150_REG_DEVICE_ID, &reg_data);
-	अगर (ret) अणु
+	ret = regmap_read(info->regmap, PTN5150_REG_DEVICE_ID, &reg_data);
+	if (ret) {
 		dev_err(info->dev, "failed to read DEVICE_ID %d\n", ret);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	venकरोr_id = FIELD_GET(PTN5150_REG_DEVICE_ID_VENDOR, reg_data);
+	vendor_id = FIELD_GET(PTN5150_REG_DEVICE_ID_VENDOR, reg_data);
 	version_id = FIELD_GET(PTN5150_REG_DEVICE_ID_VERSION, reg_data);
 	dev_dbg(info->dev, "Device type: version: 0x%x, vendor: 0x%x\n",
-		version_id, venकरोr_id);
+		version_id, vendor_id);
 
-	/* Clear any existing पूर्णांकerrupts */
-	ret = regmap_पढ़ो(info->regmap, PTN5150_REG_INT_STATUS, &reg_data);
-	अगर (ret) अणु
+	/* Clear any existing interrupts */
+	ret = regmap_read(info->regmap, PTN5150_REG_INT_STATUS, &reg_data);
+	if (ret) {
 		dev_err(info->dev,
 			"failed to read PTN5150_REG_INT_STATUS %d\n",
 			ret);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ret = regmap_पढ़ो(info->regmap, PTN5150_REG_INT_REG_STATUS, &reg_data);
-	अगर (ret) अणु
+	ret = regmap_read(info->regmap, PTN5150_REG_INT_REG_STATUS, &reg_data);
+	if (ret) {
 		dev_err(info->dev,
 			"failed to read PTN5150_REG_INT_REG_STATUS %d\n", ret);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ptn5150_i2c_probe(काष्ठा i2c_client *i2c)
-अणु
-	काष्ठा device *dev = &i2c->dev;
-	काष्ठा device_node *np = i2c->dev.of_node;
-	काष्ठा ptn5150_info *info;
-	पूर्णांक ret;
+static int ptn5150_i2c_probe(struct i2c_client *i2c)
+{
+	struct device *dev = &i2c->dev;
+	struct device_node *np = i2c->dev.of_node;
+	struct ptn5150_info *info;
+	int ret;
 
-	अगर (!np)
-		वापस -EINVAL;
+	if (!np)
+		return -EINVAL;
 
-	info = devm_kzalloc(&i2c->dev, माप(*info), GFP_KERNEL);
-	अगर (!info)
-		वापस -ENOMEM;
+	info = devm_kzalloc(&i2c->dev, sizeof(*info), GFP_KERNEL);
+	if (!info)
+		return -ENOMEM;
 	i2c_set_clientdata(i2c, info);
 
 	info->dev = &i2c->dev;
 	info->i2c = i2c;
 	info->vbus_gpiod = devm_gpiod_get(&i2c->dev, "vbus", GPIOD_OUT_LOW);
-	अगर (IS_ERR(info->vbus_gpiod)) अणु
+	if (IS_ERR(info->vbus_gpiod)) {
 		ret = PTR_ERR(info->vbus_gpiod);
-		अगर (ret == -ENOENT) अणु
+		if (ret == -ENOENT) {
 			dev_info(dev, "No VBUS GPIO, ignoring VBUS control\n");
-			info->vbus_gpiod = शून्य;
-		पूर्ण अन्यथा अणु
-			वापस dev_err_probe(dev, ret, "failed to get VBUS GPIO\n");
-		पूर्ण
-	पूर्ण
+			info->vbus_gpiod = NULL;
+		} else {
+			return dev_err_probe(dev, ret, "failed to get VBUS GPIO\n");
+		}
+	}
 
 	mutex_init(&info->mutex);
 
 	INIT_WORK(&info->irq_work, ptn5150_irq_work);
 
 	info->regmap = devm_regmap_init_i2c(i2c, &ptn5150_regmap_config);
-	अगर (IS_ERR(info->regmap)) अणु
-		वापस dev_err_probe(info->dev, PTR_ERR(info->regmap),
+	if (IS_ERR(info->regmap)) {
+		return dev_err_probe(info->dev, PTR_ERR(info->regmap),
 				     "failed to allocate register map\n");
-	पूर्ण
+	}
 
-	अगर (i2c->irq > 0) अणु
+	if (i2c->irq > 0) {
 		info->irq = i2c->irq;
-	पूर्ण अन्यथा अणु
-		info->पूर्णांक_gpiod = devm_gpiod_get(&i2c->dev, "int", GPIOD_IN);
-		अगर (IS_ERR(info->पूर्णांक_gpiod)) अणु
-			वापस dev_err_probe(dev, PTR_ERR(info->पूर्णांक_gpiod),
+	} else {
+		info->int_gpiod = devm_gpiod_get(&i2c->dev, "int", GPIOD_IN);
+		if (IS_ERR(info->int_gpiod)) {
+			return dev_err_probe(dev, PTR_ERR(info->int_gpiod),
 					     "failed to get INT GPIO\n");
-		पूर्ण
+		}
 
-		info->irq = gpiod_to_irq(info->पूर्णांक_gpiod);
-		अगर (info->irq < 0) अणु
+		info->irq = gpiod_to_irq(info->int_gpiod);
+		if (info->irq < 0) {
 			dev_err(dev, "failed to get INTB IRQ\n");
-			वापस info->irq;
-		पूर्ण
-	पूर्ण
+			return info->irq;
+		}
+	}
 
-	ret = devm_request_thपढ़ोed_irq(dev, info->irq, शून्य,
+	ret = devm_request_threaded_irq(dev, info->irq, NULL,
 					ptn5150_irq_handler,
 					IRQF_TRIGGER_FALLING |
 					IRQF_ONESHOT,
 					i2c->name, info);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "failed to request handler for INTB IRQ\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* Allocate extcon device */
 	info->edev = devm_extcon_dev_allocate(info->dev, ptn5150_extcon_cable);
-	अगर (IS_ERR(info->edev)) अणु
+	if (IS_ERR(info->edev)) {
 		dev_err(info->dev, "failed to allocate memory for extcon\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	/* Register extcon device */
-	ret = devm_extcon_dev_रेजिस्टर(info->dev, info->edev);
-	अगर (ret) अणु
+	ret = devm_extcon_dev_register(info->dev, info->edev);
+	if (ret) {
 		dev_err(info->dev, "failed to register extcon device\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	extcon_set_property_capability(info->edev, EXTCON_USB,
 					EXTCON_PROP_USB_VBUS);
@@ -280,42 +279,42 @@
 	extcon_set_property_capability(info->edev, EXTCON_USB_HOST,
 					EXTCON_PROP_USB_TYPEC_POLARITY);
 
-	/* Initialize PTN5150 device and prपूर्णांक venकरोr id and version id */
+	/* Initialize PTN5150 device and print vendor id and version id */
 	ret = ptn5150_init_dev_type(info);
-	अगर (ret)
-		वापस -EINVAL;
+	if (ret)
+		return -EINVAL;
 
 	/*
-	 * Update current extcon state अगर क्रम example OTG connection was there
-	 * beक्रमe the probe
+	 * Update current extcon state if for example OTG connection was there
+	 * before the probe
 	 */
 	mutex_lock(&info->mutex);
 	ptn5150_check_state(info);
 	mutex_unlock(&info->mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id ptn5150_dt_match[] = अणु
-	अणु .compatible = "nxp,ptn5150" पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct of_device_id ptn5150_dt_match[] = {
+	{ .compatible = "nxp,ptn5150" },
+	{ },
+};
 MODULE_DEVICE_TABLE(of, ptn5150_dt_match);
 
-अटल स्थिर काष्ठा i2c_device_id ptn5150_i2c_id[] = अणु
-	अणु "ptn5150", 0 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id ptn5150_i2c_id[] = {
+	{ "ptn5150", 0 },
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, ptn5150_i2c_id);
 
-अटल काष्ठा i2c_driver ptn5150_i2c_driver = अणु
-	.driver		= अणु
+static struct i2c_driver ptn5150_i2c_driver = {
+	.driver		= {
 		.name	= "ptn5150",
 		.of_match_table = ptn5150_dt_match,
-	पूर्ण,
+	},
 	.probe_new	= ptn5150_i2c_probe,
 	.id_table = ptn5150_i2c_id,
-पूर्ण;
+};
 module_i2c_driver(ptn5150_i2c_driver);
 
 MODULE_DESCRIPTION("NXP PTN5150 CC logic Extcon driver");

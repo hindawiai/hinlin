@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * HiSilicon SoC Hardware event counters support
  *
@@ -9,116 +8,116 @@
  *
  * This code is based on the uncore PMUs like arm-cci and arm-ccn.
  */
-#अगर_अघोषित __HISI_UNCORE_PMU_H__
-#घोषणा __HISI_UNCORE_PMU_H__
+#ifndef __HISI_UNCORE_PMU_H__
+#define __HISI_UNCORE_PMU_H__
 
-#समावेश <linux/bitfield.h>
-#समावेश <linux/cpumask.h>
-#समावेश <linux/device.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/perf_event.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/types.h>
+#include <linux/bitfield.h>
+#include <linux/cpumask.h>
+#include <linux/device.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/perf_event.h>
+#include <linux/platform_device.h>
+#include <linux/types.h>
 
-#अघोषित pr_fmt
-#घोषणा pr_fmt(fmt)     "hisi_pmu: " fmt
+#undef pr_fmt
+#define pr_fmt(fmt)     "hisi_pmu: " fmt
 
-#घोषणा HISI_PMU_V2		0x30
-#घोषणा HISI_MAX_COUNTERS 0x10
-#घोषणा to_hisi_pmu(p)	(container_of(p, काष्ठा hisi_pmu, pmu))
+#define HISI_PMU_V2		0x30
+#define HISI_MAX_COUNTERS 0x10
+#define to_hisi_pmu(p)	(container_of(p, struct hisi_pmu, pmu))
 
-#घोषणा HISI_PMU_ATTR(_name, _func, _config)				\
-	(&((काष्ठा dev_ext_attribute[]) अणु				\
-		अणु __ATTR(_name, 0444, _func, शून्य), (व्योम *)_config पूर्ण   \
-	पूर्ण)[0].attr.attr)
+#define HISI_PMU_ATTR(_name, _func, _config)				\
+	(&((struct dev_ext_attribute[]) {				\
+		{ __ATTR(_name, 0444, _func, NULL), (void *)_config }   \
+	})[0].attr.attr)
 
-#घोषणा HISI_PMU_FORMAT_ATTR(_name, _config)		\
-	HISI_PMU_ATTR(_name, hisi_क्रमmat_sysfs_show, (व्योम *)_config)
-#घोषणा HISI_PMU_EVENT_ATTR(_name, _config)		\
-	HISI_PMU_ATTR(_name, hisi_event_sysfs_show, (अचिन्हित दीर्घ)_config)
+#define HISI_PMU_FORMAT_ATTR(_name, _config)		\
+	HISI_PMU_ATTR(_name, hisi_format_sysfs_show, (void *)_config)
+#define HISI_PMU_EVENT_ATTR(_name, _config)		\
+	HISI_PMU_ATTR(_name, hisi_event_sysfs_show, (unsigned long)_config)
 
-#घोषणा HISI_PMU_EVENT_ATTR_EXTRACTOR(name, config, hi, lo)        \
-	अटल अंतरभूत u32 hisi_get_##name(काष्ठा perf_event *event)            \
-	अणु                                                                  \
-		वापस FIELD_GET(GENMASK_ULL(hi, lo), event->attr.config);  \
-	पूर्ण
+#define HISI_PMU_EVENT_ATTR_EXTRACTOR(name, config, hi, lo)        \
+	static inline u32 hisi_get_##name(struct perf_event *event)            \
+	{                                                                  \
+		return FIELD_GET(GENMASK_ULL(hi, lo), event->attr.config);  \
+	}
 
-काष्ठा hisi_pmu;
+struct hisi_pmu;
 
-काष्ठा hisi_uncore_ops अणु
-	व्योम (*ग_लिखो_evtype)(काष्ठा hisi_pmu *, पूर्णांक, u32);
-	पूर्णांक (*get_event_idx)(काष्ठा perf_event *);
-	u64 (*पढ़ो_counter)(काष्ठा hisi_pmu *, काष्ठा hw_perf_event *);
-	व्योम (*ग_लिखो_counter)(काष्ठा hisi_pmu *, काष्ठा hw_perf_event *, u64);
-	व्योम (*enable_counter)(काष्ठा hisi_pmu *, काष्ठा hw_perf_event *);
-	व्योम (*disable_counter)(काष्ठा hisi_pmu *, काष्ठा hw_perf_event *);
-	व्योम (*enable_counter_पूर्णांक)(काष्ठा hisi_pmu *, काष्ठा hw_perf_event *);
-	व्योम (*disable_counter_पूर्णांक)(काष्ठा hisi_pmu *, काष्ठा hw_perf_event *);
-	व्योम (*start_counters)(काष्ठा hisi_pmu *);
-	व्योम (*stop_counters)(काष्ठा hisi_pmu *);
-	u32 (*get_पूर्णांक_status)(काष्ठा hisi_pmu *hisi_pmu);
-	व्योम (*clear_पूर्णांक_status)(काष्ठा hisi_pmu *hisi_pmu, पूर्णांक idx);
-	व्योम (*enable_filter)(काष्ठा perf_event *event);
-	व्योम (*disable_filter)(काष्ठा perf_event *event);
-पूर्ण;
+struct hisi_uncore_ops {
+	void (*write_evtype)(struct hisi_pmu *, int, u32);
+	int (*get_event_idx)(struct perf_event *);
+	u64 (*read_counter)(struct hisi_pmu *, struct hw_perf_event *);
+	void (*write_counter)(struct hisi_pmu *, struct hw_perf_event *, u64);
+	void (*enable_counter)(struct hisi_pmu *, struct hw_perf_event *);
+	void (*disable_counter)(struct hisi_pmu *, struct hw_perf_event *);
+	void (*enable_counter_int)(struct hisi_pmu *, struct hw_perf_event *);
+	void (*disable_counter_int)(struct hisi_pmu *, struct hw_perf_event *);
+	void (*start_counters)(struct hisi_pmu *);
+	void (*stop_counters)(struct hisi_pmu *);
+	u32 (*get_int_status)(struct hisi_pmu *hisi_pmu);
+	void (*clear_int_status)(struct hisi_pmu *hisi_pmu, int idx);
+	void (*enable_filter)(struct perf_event *event);
+	void (*disable_filter)(struct perf_event *event);
+};
 
-काष्ठा hisi_pmu_hwevents अणु
-	काष्ठा perf_event *hw_events[HISI_MAX_COUNTERS];
+struct hisi_pmu_hwevents {
+	struct perf_event *hw_events[HISI_MAX_COUNTERS];
 	DECLARE_BITMAP(used_mask, HISI_MAX_COUNTERS);
-	स्थिर काष्ठा attribute_group **attr_groups;
-पूर्ण;
+	const struct attribute_group **attr_groups;
+};
 
-/* Generic pmu काष्ठा क्रम dअगरferent pmu types */
-काष्ठा hisi_pmu अणु
-	काष्ठा pmu pmu;
-	स्थिर काष्ठा hisi_uncore_ops *ops;
-	काष्ठा hisi_pmu_hwevents pmu_events;
+/* Generic pmu struct for different pmu types */
+struct hisi_pmu {
+	struct pmu pmu;
+	const struct hisi_uncore_ops *ops;
+	struct hisi_pmu_hwevents pmu_events;
 	/* associated_cpus: All CPUs associated with the PMU */
 	cpumask_t associated_cpus;
-	/* CPU used क्रम counting */
-	पूर्णांक on_cpu;
-	पूर्णांक irq;
-	काष्ठा device *dev;
-	काष्ठा hlist_node node;
-	पूर्णांक sccl_id;
-	पूर्णांक ccl_id;
-	व्योम __iomem *base;
+	/* CPU used for counting */
+	int on_cpu;
+	int irq;
+	struct device *dev;
+	struct hlist_node node;
+	int sccl_id;
+	int ccl_id;
+	void __iomem *base;
 	/* the ID of the PMU modules */
 	u32 index_id;
 	/* For DDRC PMU v2: each DDRC has more than one DMC */
 	u32 sub_id;
-	पूर्णांक num_counters;
-	पूर्णांक counter_bits;
+	int num_counters;
+	int counter_bits;
 	/* check event code range */
-	पूर्णांक check_event;
-	u32 identअगरier;
-पूर्ण;
+	int check_event;
+	u32 identifier;
+};
 
-पूर्णांक hisi_uncore_pmu_get_event_idx(काष्ठा perf_event *event);
-व्योम hisi_uncore_pmu_पढ़ो(काष्ठा perf_event *event);
-पूर्णांक hisi_uncore_pmu_add(काष्ठा perf_event *event, पूर्णांक flags);
-व्योम hisi_uncore_pmu_del(काष्ठा perf_event *event, पूर्णांक flags);
-व्योम hisi_uncore_pmu_start(काष्ठा perf_event *event, पूर्णांक flags);
-व्योम hisi_uncore_pmu_stop(काष्ठा perf_event *event, पूर्णांक flags);
-व्योम hisi_uncore_pmu_set_event_period(काष्ठा perf_event *event);
-व्योम hisi_uncore_pmu_event_update(काष्ठा perf_event *event);
-पूर्णांक hisi_uncore_pmu_event_init(काष्ठा perf_event *event);
-व्योम hisi_uncore_pmu_enable(काष्ठा pmu *pmu);
-व्योम hisi_uncore_pmu_disable(काष्ठा pmu *pmu);
-sमाप_प्रकार hisi_event_sysfs_show(काष्ठा device *dev,
-			      काष्ठा device_attribute *attr, अक्षर *buf);
-sमाप_प्रकार hisi_क्रमmat_sysfs_show(काष्ठा device *dev,
-			       काष्ठा device_attribute *attr, अक्षर *buf);
-sमाप_प्रकार hisi_cpumask_sysfs_show(काष्ठा device *dev,
-				काष्ठा device_attribute *attr, अक्षर *buf);
-पूर्णांक hisi_uncore_pmu_online_cpu(अचिन्हित पूर्णांक cpu, काष्ठा hlist_node *node);
-पूर्णांक hisi_uncore_pmu_offline_cpu(अचिन्हित पूर्णांक cpu, काष्ठा hlist_node *node);
+int hisi_uncore_pmu_get_event_idx(struct perf_event *event);
+void hisi_uncore_pmu_read(struct perf_event *event);
+int hisi_uncore_pmu_add(struct perf_event *event, int flags);
+void hisi_uncore_pmu_del(struct perf_event *event, int flags);
+void hisi_uncore_pmu_start(struct perf_event *event, int flags);
+void hisi_uncore_pmu_stop(struct perf_event *event, int flags);
+void hisi_uncore_pmu_set_event_period(struct perf_event *event);
+void hisi_uncore_pmu_event_update(struct perf_event *event);
+int hisi_uncore_pmu_event_init(struct perf_event *event);
+void hisi_uncore_pmu_enable(struct pmu *pmu);
+void hisi_uncore_pmu_disable(struct pmu *pmu);
+ssize_t hisi_event_sysfs_show(struct device *dev,
+			      struct device_attribute *attr, char *buf);
+ssize_t hisi_format_sysfs_show(struct device *dev,
+			       struct device_attribute *attr, char *buf);
+ssize_t hisi_cpumask_sysfs_show(struct device *dev,
+				struct device_attribute *attr, char *buf);
+int hisi_uncore_pmu_online_cpu(unsigned int cpu, struct hlist_node *node);
+int hisi_uncore_pmu_offline_cpu(unsigned int cpu, struct hlist_node *node);
 
-sमाप_प्रकार hisi_uncore_pmu_identअगरier_attr_show(काष्ठा device *dev,
-					     काष्ठा device_attribute *attr,
-					     अक्षर *page);
-पूर्णांक hisi_uncore_pmu_init_irq(काष्ठा hisi_pmu *hisi_pmu,
-			     काष्ठा platक्रमm_device *pdev);
+ssize_t hisi_uncore_pmu_identifier_attr_show(struct device *dev,
+					     struct device_attribute *attr,
+					     char *page);
+int hisi_uncore_pmu_init_irq(struct hisi_pmu *hisi_pmu,
+			     struct platform_device *pdev);
 
-#पूर्ण_अगर /* __HISI_UNCORE_PMU_H__ */
+#endif /* __HISI_UNCORE_PMU_H__ */

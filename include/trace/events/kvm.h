@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर !defined(_TRACE_KVM_MAIN_H) || defined(TRACE_HEADER_MULTI_READ)
-#घोषणा _TRACE_KVM_MAIN_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#if !defined(_TRACE_KVM_MAIN_H) || defined(TRACE_HEADER_MULTI_READ)
+#define _TRACE_KVM_MAIN_H
 
-#समावेश <linux/tracepoपूर्णांक.h>
+#include <linux/tracepoint.h>
 
-#अघोषित TRACE_SYSTEM
-#घोषणा TRACE_SYSTEM kvm
+#undef TRACE_SYSTEM
+#define TRACE_SYSTEM kvm
 
-#घोषणा ERSN(x) अणु KVM_EXIT_##x, "KVM_EXIT_" #x पूर्ण
+#define ERSN(x) { KVM_EXIT_##x, "KVM_EXIT_" #x }
 
-#घोषणा kvm_trace_निकास_reason						\
+#define kvm_trace_exit_reason						\
 	ERSN(UNKNOWN), ERSN(EXCEPTION), ERSN(IO), ERSN(HYPERCALL),	\
 	ERSN(DEBUG), ERSN(HLT), ERSN(MMIO), ERSN(IRQ_WINDOW_OPEN),	\
 	ERSN(SHUTDOWN), ERSN(FAIL_ENTRY), ERSN(INTR), ERSN(SET_TPR),	\
@@ -20,58 +19,58 @@
 	ERSN(SYSTEM_EVENT), ERSN(S390_STSI), ERSN(IOAPIC_EOI),          \
 	ERSN(HYPERV), ERSN(ARM_NISV), ERSN(X86_RDMSR), ERSN(X86_WRMSR)
 
-TRACE_EVENT(kvm_userspace_निकास,
-	    TP_PROTO(__u32 reason, पूर्णांक त्रुटि_सं),
-	    TP_ARGS(reason, त्रुटि_सं),
+TRACE_EVENT(kvm_userspace_exit,
+	    TP_PROTO(__u32 reason, int errno),
+	    TP_ARGS(reason, errno),
 
 	TP_STRUCT__entry(
 		__field(	__u32,		reason		)
-		__field(	पूर्णांक,		त्रुटि_सं		)
+		__field(	int,		errno		)
 	),
 
 	TP_fast_assign(
 		__entry->reason		= reason;
-		__entry->त्रुटि_सं		= त्रुटि_सं;
+		__entry->errno		= errno;
 	),
 
-	TP_prपूर्णांकk("reason %s (%d)",
-		  __entry->त्रुटि_सं < 0 ?
-		  (__entry->त्रुटि_सं == -EINTR ? "restart" : "error") :
-		  __prपूर्णांक_symbolic(__entry->reason, kvm_trace_निकास_reason),
-		  __entry->त्रुटि_सं < 0 ? -__entry->त्रुटि_सं : __entry->reason)
+	TP_printk("reason %s (%d)",
+		  __entry->errno < 0 ?
+		  (__entry->errno == -EINTR ? "restart" : "error") :
+		  __print_symbolic(__entry->reason, kvm_trace_exit_reason),
+		  __entry->errno < 0 ? -__entry->errno : __entry->reason)
 );
 
 TRACE_EVENT(kvm_vcpu_wakeup,
-	    TP_PROTO(__u64 ns, bool रुकोed, bool valid),
-	    TP_ARGS(ns, रुकोed, valid),
+	    TP_PROTO(__u64 ns, bool waited, bool valid),
+	    TP_ARGS(ns, waited, valid),
 
 	TP_STRUCT__entry(
 		__field(	__u64,		ns		)
-		__field(	bool,		रुकोed		)
+		__field(	bool,		waited		)
 		__field(	bool,		valid		)
 	),
 
 	TP_fast_assign(
 		__entry->ns		= ns;
-		__entry->रुकोed		= रुकोed;
+		__entry->waited		= waited;
 		__entry->valid		= valid;
 	),
 
-	TP_prपूर्णांकk("%s time %lld ns, polling %s",
-		  __entry->रुकोed ? "wait" : "poll",
+	TP_printk("%s time %lld ns, polling %s",
+		  __entry->waited ? "wait" : "poll",
 		  __entry->ns,
 		  __entry->valid ? "valid" : "invalid")
 );
 
-#अगर defined(CONFIG_HAVE_KVM_IRQFD)
+#if defined(CONFIG_HAVE_KVM_IRQFD)
 TRACE_EVENT(kvm_set_irq,
-	TP_PROTO(अचिन्हित पूर्णांक gsi, पूर्णांक level, पूर्णांक irq_source_id),
+	TP_PROTO(unsigned int gsi, int level, int irq_source_id),
 	TP_ARGS(gsi, level, irq_source_id),
 
 	TP_STRUCT__entry(
-		__field(	अचिन्हित पूर्णांक,	gsi		)
-		__field(	पूर्णांक,		level		)
-		__field(	पूर्णांक,		irq_source_id	)
+		__field(	unsigned int,	gsi		)
+		__field(	int,		level		)
+		__field(	int,		irq_source_id	)
 	),
 
 	TP_fast_assign(
@@ -80,29 +79,29 @@ TRACE_EVENT(kvm_set_irq,
 		__entry->irq_source_id	= irq_source_id;
 	),
 
-	TP_prपूर्णांकk("gsi %u level %d source %d",
+	TP_printk("gsi %u level %d source %d",
 		  __entry->gsi, __entry->level, __entry->irq_source_id)
 );
-#पूर्ण_अगर /* defined(CONFIG_HAVE_KVM_IRQFD) */
+#endif /* defined(CONFIG_HAVE_KVM_IRQFD) */
 
-#अगर defined(__KVM_HAVE_IOAPIC)
-#घोषणा kvm_deliver_mode		\
-	अणु0x0, "Fixed"पूर्ण,			\
-	अणु0x1, "LowPrio"पूर्ण,		\
-	अणु0x2, "SMI"पूर्ण,			\
-	अणु0x3, "Res3"पूर्ण,			\
-	अणु0x4, "NMI"पूर्ण,			\
-	अणु0x5, "INIT"पूर्ण,			\
-	अणु0x6, "SIPI"पूर्ण,			\
-	अणु0x7, "ExtINT"पूर्ण
+#if defined(__KVM_HAVE_IOAPIC)
+#define kvm_deliver_mode		\
+	{0x0, "Fixed"},			\
+	{0x1, "LowPrio"},		\
+	{0x2, "SMI"},			\
+	{0x3, "Res3"},			\
+	{0x4, "NMI"},			\
+	{0x5, "INIT"},			\
+	{0x6, "SIPI"},			\
+	{0x7, "ExtINT"}
 
 TRACE_EVENT(kvm_ioapic_set_irq,
-	    TP_PROTO(__u64 e, पूर्णांक pin, bool coalesced),
+	    TP_PROTO(__u64 e, int pin, bool coalesced),
 	    TP_ARGS(e, pin, coalesced),
 
 	TP_STRUCT__entry(
 		__field(	__u64,		e		)
-		__field(	पूर्णांक,		pin		)
+		__field(	int,		pin		)
 		__field(	bool,		coalesced	)
 	),
 
@@ -112,9 +111,9 @@ TRACE_EVENT(kvm_ioapic_set_irq,
 		__entry->coalesced	= coalesced;
 	),
 
-	TP_prपूर्णांकk("pin %u dst %x vec %u (%s|%s|%s%s)%s",
+	TP_printk("pin %u dst %x vec %u (%s|%s|%s%s)%s",
 		  __entry->pin, (u8)(__entry->e >> 56), (u8)__entry->e,
-		  __prपूर्णांक_symbolic((__entry->e >> 8 & 0x7), kvm_deliver_mode),
+		  __print_symbolic((__entry->e >> 8 & 0x7), kvm_deliver_mode),
 		  (__entry->e & (1<<11)) ? "logical" : "physical",
 		  (__entry->e & (1<<15)) ? "level" : "edge",
 		  (__entry->e & (1<<16)) ? "|masked" : "",
@@ -133,9 +132,9 @@ TRACE_EVENT(kvm_ioapic_delayed_eoi_inj,
 		__entry->e		= e;
 	),
 
-	TP_prपूर्णांकk("dst %x vec %u (%s|%s|%s%s)",
+	TP_printk("dst %x vec %u (%s|%s|%s%s)",
 		  (u8)(__entry->e >> 56), (u8)__entry->e,
-		  __prपूर्णांक_symbolic((__entry->e >> 8 & 0x7), kvm_deliver_mode),
+		  __print_symbolic((__entry->e >> 8 & 0x7), kvm_deliver_mode),
 		  (__entry->e & (1<<11)) ? "logical" : "physical",
 		  (__entry->e & (1<<15)) ? "level" : "edge",
 		  (__entry->e & (1<<16)) ? "|masked" : "")
@@ -155,39 +154,39 @@ TRACE_EVENT(kvm_msi_set_irq,
 		__entry->data		= data;
 	),
 
-	TP_prपूर्णांकk("dst %llx vec %u (%s|%s|%s%s)",
+	TP_printk("dst %llx vec %u (%s|%s|%s%s)",
 		  (u8)(__entry->address >> 12) | ((__entry->address >> 32) & 0xffffff00),
 		  (u8)__entry->data,
-		  __prपूर्णांक_symbolic((__entry->data >> 8 & 0x7), kvm_deliver_mode),
+		  __print_symbolic((__entry->data >> 8 & 0x7), kvm_deliver_mode),
 		  (__entry->address & (1<<2)) ? "logical" : "physical",
 		  (__entry->data & (1<<15)) ? "level" : "edge",
 		  (__entry->address & (1<<3)) ? "|rh" : "")
 );
 
-#घोषणा kvm_irqchips						\
-	अणुKVM_IRQCHIP_PIC_MASTER,	"PIC master"पूर्ण,		\
-	अणुKVM_IRQCHIP_PIC_SLAVE,		"PIC slave"पूर्ण,		\
-	अणुKVM_IRQCHIP_IOAPIC,		"IOAPIC"पूर्ण
+#define kvm_irqchips						\
+	{KVM_IRQCHIP_PIC_MASTER,	"PIC master"},		\
+	{KVM_IRQCHIP_PIC_SLAVE,		"PIC slave"},		\
+	{KVM_IRQCHIP_IOAPIC,		"IOAPIC"}
 
-#पूर्ण_अगर /* defined(__KVM_HAVE_IOAPIC) */
+#endif /* defined(__KVM_HAVE_IOAPIC) */
 
-#अगर defined(CONFIG_HAVE_KVM_IRQFD)
+#if defined(CONFIG_HAVE_KVM_IRQFD)
 
-#अगर_घोषित kvm_irqchips
-#घोषणा kvm_ack_irq_string "irqchip %s pin %u"
-#घोषणा kvm_ack_irq_parm  __prपूर्णांक_symbolic(__entry->irqchip, kvm_irqchips), __entry->pin
-#अन्यथा
-#घोषणा kvm_ack_irq_string "irqchip %d pin %u"
-#घोषणा kvm_ack_irq_parm  __entry->irqchip, __entry->pin
-#पूर्ण_अगर
+#ifdef kvm_irqchips
+#define kvm_ack_irq_string "irqchip %s pin %u"
+#define kvm_ack_irq_parm  __print_symbolic(__entry->irqchip, kvm_irqchips), __entry->pin
+#else
+#define kvm_ack_irq_string "irqchip %d pin %u"
+#define kvm_ack_irq_parm  __entry->irqchip, __entry->pin
+#endif
 
 TRACE_EVENT(kvm_ack_irq,
-	TP_PROTO(अचिन्हित पूर्णांक irqchip, अचिन्हित पूर्णांक pin),
+	TP_PROTO(unsigned int irqchip, unsigned int pin),
 	TP_ARGS(irqchip, pin),
 
 	TP_STRUCT__entry(
-		__field(	अचिन्हित पूर्णांक,	irqchip		)
-		__field(	अचिन्हित पूर्णांक,	pin		)
+		__field(	unsigned int,	irqchip		)
+		__field(	unsigned int,	pin		)
 	),
 
 	TP_fast_assign(
@@ -195,24 +194,24 @@ TRACE_EVENT(kvm_ack_irq,
 		__entry->pin		= pin;
 	),
 
-	TP_prपूर्णांकk(kvm_ack_irq_string, kvm_ack_irq_parm)
+	TP_printk(kvm_ack_irq_string, kvm_ack_irq_parm)
 );
 
-#पूर्ण_अगर /* defined(CONFIG_HAVE_KVM_IRQFD) */
+#endif /* defined(CONFIG_HAVE_KVM_IRQFD) */
 
 
 
-#घोषणा KVM_TRACE_MMIO_READ_UNSATISFIED 0
-#घोषणा KVM_TRACE_MMIO_READ 1
-#घोषणा KVM_TRACE_MMIO_WRITE 2
+#define KVM_TRACE_MMIO_READ_UNSATISFIED 0
+#define KVM_TRACE_MMIO_READ 1
+#define KVM_TRACE_MMIO_WRITE 2
 
-#घोषणा kvm_trace_symbol_mmio \
-	अणु KVM_TRACE_MMIO_READ_UNSATISFIED, "unsatisfied-read" पूर्ण, \
-	अणु KVM_TRACE_MMIO_READ, "read" पूर्ण, \
-	अणु KVM_TRACE_MMIO_WRITE, "write" पूर्ण
+#define kvm_trace_symbol_mmio \
+	{ KVM_TRACE_MMIO_READ_UNSATISFIED, "unsatisfied-read" }, \
+	{ KVM_TRACE_MMIO_READ, "read" }, \
+	{ KVM_TRACE_MMIO_WRITE, "write" }
 
 TRACE_EVENT(kvm_mmio,
-	TP_PROTO(पूर्णांक type, पूर्णांक len, u64 gpa, व्योम *val),
+	TP_PROTO(int type, int len, u64 gpa, void *val),
 	TP_ARGS(type, len, gpa, val),
 
 	TP_STRUCT__entry(
@@ -227,22 +226,22 @@ TRACE_EVENT(kvm_mmio,
 		__entry->len		= len;
 		__entry->gpa		= gpa;
 		__entry->val		= 0;
-		अगर (val)
-			स_नकल(&__entry->val, val,
-			       min_t(u32, माप(__entry->val), len));
+		if (val)
+			memcpy(&__entry->val, val,
+			       min_t(u32, sizeof(__entry->val), len));
 	),
 
-	TP_prपूर्णांकk("mmio %s len %u gpa 0x%llx val 0x%llx",
-		  __prपूर्णांक_symbolic(__entry->type, kvm_trace_symbol_mmio),
+	TP_printk("mmio %s len %u gpa 0x%llx val 0x%llx",
+		  __print_symbolic(__entry->type, kvm_trace_symbol_mmio),
 		  __entry->len, __entry->gpa, __entry->val)
 );
 
-#घोषणा kvm_fpu_load_symbol	\
-	अणु0, "unload"पूर्ण,		\
-	अणु1, "load"पूर्ण
+#define kvm_fpu_load_symbol	\
+	{0, "unload"},		\
+	{1, "load"}
 
 TRACE_EVENT(kvm_fpu,
-	TP_PROTO(पूर्णांक load),
+	TP_PROTO(int load),
 	TP_ARGS(load),
 
 	TP_STRUCT__entry(
@@ -253,10 +252,10 @@ TRACE_EVENT(kvm_fpu,
 		__entry->load		= load;
 	),
 
-	TP_prपूर्णांकk("%s", __prपूर्णांक_symbolic(__entry->load, kvm_fpu_load_symbol))
+	TP_printk("%s", __print_symbolic(__entry->load, kvm_fpu_load_symbol))
 );
 
-#अगर_घोषित CONFIG_KVM_ASYNC_PF
+#ifdef CONFIG_KVM_ASYNC_PF
 DECLARE_EVENT_CLASS(kvm_async_get_page_class,
 
 	TP_PROTO(u64 gva, u64 gfn),
@@ -273,7 +272,7 @@ DECLARE_EVENT_CLASS(kvm_async_get_page_class,
 		__entry->gfn = gfn;
 	),
 
-	TP_prपूर्णांकk("gva = %#llx, gfn = %#llx", __entry->gva, __entry->gfn)
+	TP_printk("gva = %#llx, gfn = %#llx", __entry->gva, __entry->gfn)
 );
 
 DEFINE_EVENT(kvm_async_get_page_class, kvm_try_async_get_page,
@@ -283,14 +282,14 @@ DEFINE_EVENT(kvm_async_get_page_class, kvm_try_async_get_page,
 	TP_ARGS(gva, gfn)
 );
 
-DEFINE_EVENT(kvm_async_get_page_class, kvm_async_pf_द्विगुनfault,
+DEFINE_EVENT(kvm_async_get_page_class, kvm_async_pf_doublefault,
 
 	TP_PROTO(u64 gva, u64 gfn),
 
 	TP_ARGS(gva, gfn)
 );
 
-DECLARE_EVENT_CLASS(kvm_async_pf_nopresent_पढ़ोy,
+DECLARE_EVENT_CLASS(kvm_async_pf_nopresent_ready,
 
 	TP_PROTO(u64 token, u64 gva),
 
@@ -306,18 +305,18 @@ DECLARE_EVENT_CLASS(kvm_async_pf_nopresent_पढ़ोy,
 		__entry->gva = gva;
 	),
 
-	TP_prपूर्णांकk("token %#llx gva %#llx", __entry->token, __entry->gva)
+	TP_printk("token %#llx gva %#llx", __entry->token, __entry->gva)
 
 );
 
-DEFINE_EVENT(kvm_async_pf_nopresent_पढ़ोy, kvm_async_pf_not_present,
+DEFINE_EVENT(kvm_async_pf_nopresent_ready, kvm_async_pf_not_present,
 
 	TP_PROTO(u64 token, u64 gva),
 
 	TP_ARGS(token, gva)
 );
 
-DEFINE_EVENT(kvm_async_pf_nopresent_पढ़ोy, kvm_async_pf_पढ़ोy,
+DEFINE_EVENT(kvm_async_pf_nopresent_ready, kvm_async_pf_ready,
 
 	TP_PROTO(u64 token, u64 gva),
 
@@ -326,11 +325,11 @@ DEFINE_EVENT(kvm_async_pf_nopresent_पढ़ोy, kvm_async_pf_पढ़ोy,
 
 TRACE_EVENT(
 	kvm_async_pf_completed,
-	TP_PROTO(अचिन्हित दीर्घ address, u64 gva),
+	TP_PROTO(unsigned long address, u64 gva),
 	TP_ARGS(address, gva),
 
 	TP_STRUCT__entry(
-		__field(अचिन्हित दीर्घ, address)
+		__field(unsigned long, address)
 		__field(u64, gva)
 		),
 
@@ -339,22 +338,22 @@ TRACE_EVENT(
 		__entry->gva = gva;
 		),
 
-	TP_prपूर्णांकk("gva %#llx address %#lx",  __entry->gva,
+	TP_printk("gva %#llx address %#lx",  __entry->gva,
 		  __entry->address)
 );
 
-#पूर्ण_अगर
+#endif
 
 TRACE_EVENT(kvm_halt_poll_ns,
-	TP_PROTO(bool grow, अचिन्हित पूर्णांक vcpu_id, अचिन्हित पूर्णांक new,
-		 अचिन्हित पूर्णांक old),
+	TP_PROTO(bool grow, unsigned int vcpu_id, unsigned int new,
+		 unsigned int old),
 	TP_ARGS(grow, vcpu_id, new, old),
 
 	TP_STRUCT__entry(
 		__field(bool, grow)
-		__field(अचिन्हित पूर्णांक, vcpu_id)
-		__field(अचिन्हित पूर्णांक, new)
-		__field(अचिन्हित पूर्णांक, old)
+		__field(unsigned int, vcpu_id)
+		__field(unsigned int, new)
+		__field(unsigned int, old)
 	),
 
 	TP_fast_assign(
@@ -364,24 +363,24 @@ TRACE_EVENT(kvm_halt_poll_ns,
 		__entry->old            = old;
 	),
 
-	TP_prपूर्णांकk("vcpu %u: halt_poll_ns %u (%s %u)",
+	TP_printk("vcpu %u: halt_poll_ns %u (%s %u)",
 			__entry->vcpu_id,
 			__entry->new,
 			__entry->grow ? "grow" : "shrink",
 			__entry->old)
 );
 
-#घोषणा trace_kvm_halt_poll_ns_grow(vcpu_id, new, old) \
+#define trace_kvm_halt_poll_ns_grow(vcpu_id, new, old) \
 	trace_kvm_halt_poll_ns(true, vcpu_id, new, old)
-#घोषणा trace_kvm_halt_poll_ns_shrink(vcpu_id, new, old) \
+#define trace_kvm_halt_poll_ns_shrink(vcpu_id, new, old) \
 	trace_kvm_halt_poll_ns(false, vcpu_id, new, old)
 
 TRACE_EVENT(kvm_dirty_ring_push,
-	TP_PROTO(काष्ठा kvm_dirty_ring *ring, u32 slot, u64 offset),
+	TP_PROTO(struct kvm_dirty_ring *ring, u32 slot, u64 offset),
 	TP_ARGS(ring, slot, offset),
 
 	TP_STRUCT__entry(
-		__field(पूर्णांक, index)
+		__field(int, index)
 		__field(u32, dirty_index)
 		__field(u32, reset_index)
 		__field(u32, slot)
@@ -396,7 +395,7 @@ TRACE_EVENT(kvm_dirty_ring_push,
 		__entry->offset         = offset;
 	),
 
-	TP_prपूर्णांकk("ring %d: dirty 0x%x reset 0x%x "
+	TP_printk("ring %d: dirty 0x%x reset 0x%x "
 		  "slot %u offset 0x%llx (used %u)",
 		  __entry->index, __entry->dirty_index,
 		  __entry->reset_index,  __entry->slot, __entry->offset,
@@ -404,11 +403,11 @@ TRACE_EVENT(kvm_dirty_ring_push,
 );
 
 TRACE_EVENT(kvm_dirty_ring_reset,
-	TP_PROTO(काष्ठा kvm_dirty_ring *ring),
+	TP_PROTO(struct kvm_dirty_ring *ring),
 	TP_ARGS(ring),
 
 	TP_STRUCT__entry(
-		__field(पूर्णांक, index)
+		__field(int, index)
 		__field(u32, dirty_index)
 		__field(u32, reset_index)
 	),
@@ -419,33 +418,33 @@ TRACE_EVENT(kvm_dirty_ring_reset,
 		__entry->reset_index    = ring->reset_index;
 	),
 
-	TP_prपूर्णांकk("ring %d: dirty 0x%x reset 0x%x (used %u)",
+	TP_printk("ring %d: dirty 0x%x reset 0x%x (used %u)",
 		  __entry->index, __entry->dirty_index, __entry->reset_index,
 		  __entry->dirty_index - __entry->reset_index)
 );
 
-TRACE_EVENT(kvm_dirty_ring_निकास,
-	TP_PROTO(काष्ठा kvm_vcpu *vcpu),
+TRACE_EVENT(kvm_dirty_ring_exit,
+	TP_PROTO(struct kvm_vcpu *vcpu),
 	TP_ARGS(vcpu),
 
 	TP_STRUCT__entry(
-	    __field(पूर्णांक, vcpu_id)
+	    __field(int, vcpu_id)
 	),
 
 	TP_fast_assign(
 	    __entry->vcpu_id = vcpu->vcpu_id;
 	),
 
-	TP_prपूर्णांकk("vcpu %d", __entry->vcpu_id)
+	TP_printk("vcpu %d", __entry->vcpu_id)
 );
 
 TRACE_EVENT(kvm_unmap_hva_range,
-	TP_PROTO(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end),
+	TP_PROTO(unsigned long start, unsigned long end),
 	TP_ARGS(start, end),
 
 	TP_STRUCT__entry(
-		__field(	अचिन्हित दीर्घ,	start		)
-		__field(	अचिन्हित दीर्घ,	end		)
+		__field(	unsigned long,	start		)
+		__field(	unsigned long,	end		)
 	),
 
 	TP_fast_assign(
@@ -453,32 +452,32 @@ TRACE_EVENT(kvm_unmap_hva_range,
 		__entry->end		= end;
 	),
 
-	TP_prपूर्णांकk("mmu notifier unmap range: %#016lx -- %#016lx",
+	TP_printk("mmu notifier unmap range: %#016lx -- %#016lx",
 		  __entry->start, __entry->end)
 );
 
 TRACE_EVENT(kvm_set_spte_hva,
-	TP_PROTO(अचिन्हित दीर्घ hva),
+	TP_PROTO(unsigned long hva),
 	TP_ARGS(hva),
 
 	TP_STRUCT__entry(
-		__field(	अचिन्हित दीर्घ,	hva		)
+		__field(	unsigned long,	hva		)
 	),
 
 	TP_fast_assign(
 		__entry->hva		= hva;
 	),
 
-	TP_prपूर्णांकk("mmu notifier set pte hva: %#016lx", __entry->hva)
+	TP_printk("mmu notifier set pte hva: %#016lx", __entry->hva)
 );
 
 TRACE_EVENT(kvm_age_hva,
-	TP_PROTO(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end),
+	TP_PROTO(unsigned long start, unsigned long end),
 	TP_ARGS(start, end),
 
 	TP_STRUCT__entry(
-		__field(	अचिन्हित दीर्घ,	start		)
-		__field(	अचिन्हित दीर्घ,	end		)
+		__field(	unsigned long,	start		)
+		__field(	unsigned long,	end		)
 	),
 
 	TP_fast_assign(
@@ -486,26 +485,26 @@ TRACE_EVENT(kvm_age_hva,
 		__entry->end		= end;
 	),
 
-	TP_prपूर्णांकk("mmu notifier age hva: %#016lx -- %#016lx",
+	TP_printk("mmu notifier age hva: %#016lx -- %#016lx",
 		  __entry->start, __entry->end)
 );
 
 TRACE_EVENT(kvm_test_age_hva,
-	TP_PROTO(अचिन्हित दीर्घ hva),
+	TP_PROTO(unsigned long hva),
 	TP_ARGS(hva),
 
 	TP_STRUCT__entry(
-		__field(	अचिन्हित दीर्घ,	hva		)
+		__field(	unsigned long,	hva		)
 	),
 
 	TP_fast_assign(
 		__entry->hva		= hva;
 	),
 
-	TP_prपूर्णांकk("mmu notifier test age hva: %#016lx", __entry->hva)
+	TP_printk("mmu notifier test age hva: %#016lx", __entry->hva)
 );
 
-#पूर्ण_अगर /* _TRACE_KVM_MAIN_H */
+#endif /* _TRACE_KVM_MAIN_H */
 
 /* This part must be outside protection */
-#समावेश <trace/define_trace.h>
+#include <trace/define_trace.h>

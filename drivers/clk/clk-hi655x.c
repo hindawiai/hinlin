@@ -1,117 +1,116 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Clock driver क्रम Hi655x
+ * Clock driver for Hi655x
  *
  * Copyright (c) 2017, Linaro Ltd.
  *
  * Author: Daniel Lezcano <daniel.lezcano@linaro.org>
  */
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/mfd/core.h>
-#समावेश <linux/mfd/hi655x-pmic.h>
+#include <linux/clk-provider.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/regmap.h>
+#include <linux/slab.h>
+#include <linux/mfd/core.h>
+#include <linux/mfd/hi655x-pmic.h>
 
-#घोषणा HI655X_CLK_BASE	HI655X_BUS_ADDR(0x1c)
-#घोषणा HI655X_CLK_SET	BIT(6)
+#define HI655X_CLK_BASE	HI655X_BUS_ADDR(0x1c)
+#define HI655X_CLK_SET	BIT(6)
 
-काष्ठा hi655x_clk अणु
-	काष्ठा hi655x_pmic *hi655x;
-	काष्ठा clk_hw       clk_hw;
-पूर्ण;
+struct hi655x_clk {
+	struct hi655x_pmic *hi655x;
+	struct clk_hw       clk_hw;
+};
 
-अटल अचिन्हित दीर्घ hi655x_clk_recalc_rate(काष्ठा clk_hw *hw,
-					    अचिन्हित दीर्घ parent_rate)
-अणु
-	वापस 32768;
-पूर्ण
+static unsigned long hi655x_clk_recalc_rate(struct clk_hw *hw,
+					    unsigned long parent_rate)
+{
+	return 32768;
+}
 
-अटल पूर्णांक hi655x_clk_enable(काष्ठा clk_hw *hw, bool enable)
-अणु
-	काष्ठा hi655x_clk *hi655x_clk =
-		container_of(hw, काष्ठा hi655x_clk, clk_hw);
+static int hi655x_clk_enable(struct clk_hw *hw, bool enable)
+{
+	struct hi655x_clk *hi655x_clk =
+		container_of(hw, struct hi655x_clk, clk_hw);
 
-	काष्ठा hi655x_pmic *hi655x = hi655x_clk->hi655x;
+	struct hi655x_pmic *hi655x = hi655x_clk->hi655x;
 
-	वापस regmap_update_bits(hi655x->regmap, HI655X_CLK_BASE,
+	return regmap_update_bits(hi655x->regmap, HI655X_CLK_BASE,
 				  HI655X_CLK_SET, enable ? HI655X_CLK_SET : 0);
-पूर्ण
+}
 
-अटल पूर्णांक hi655x_clk_prepare(काष्ठा clk_hw *hw)
-अणु
-	वापस hi655x_clk_enable(hw, true);
-पूर्ण
+static int hi655x_clk_prepare(struct clk_hw *hw)
+{
+	return hi655x_clk_enable(hw, true);
+}
 
-अटल व्योम hi655x_clk_unprepare(काष्ठा clk_hw *hw)
-अणु
+static void hi655x_clk_unprepare(struct clk_hw *hw)
+{
 	hi655x_clk_enable(hw, false);
-पूर्ण
+}
 
-अटल पूर्णांक hi655x_clk_is_prepared(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा hi655x_clk *hi655x_clk =
-		container_of(hw, काष्ठा hi655x_clk, clk_hw);
-	काष्ठा hi655x_pmic *hi655x = hi655x_clk->hi655x;
-	पूर्णांक ret;
-	uपूर्णांक32_t val;
+static int hi655x_clk_is_prepared(struct clk_hw *hw)
+{
+	struct hi655x_clk *hi655x_clk =
+		container_of(hw, struct hi655x_clk, clk_hw);
+	struct hi655x_pmic *hi655x = hi655x_clk->hi655x;
+	int ret;
+	uint32_t val;
 
-	ret = regmap_पढ़ो(hi655x->regmap, HI655X_CLK_BASE, &val);
-	अगर (ret < 0)
-		वापस ret;
+	ret = regmap_read(hi655x->regmap, HI655X_CLK_BASE, &val);
+	if (ret < 0)
+		return ret;
 
-	वापस val & HI655X_CLK_BASE;
-पूर्ण
+	return val & HI655X_CLK_BASE;
+}
 
-अटल स्थिर काष्ठा clk_ops hi655x_clk_ops = अणु
+static const struct clk_ops hi655x_clk_ops = {
 	.prepare     = hi655x_clk_prepare,
 	.unprepare   = hi655x_clk_unprepare,
 	.is_prepared = hi655x_clk_is_prepared,
 	.recalc_rate = hi655x_clk_recalc_rate,
-पूर्ण;
+};
 
-अटल पूर्णांक hi655x_clk_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *parent = pdev->dev.parent;
-	काष्ठा hi655x_pmic *hi655x = dev_get_drvdata(parent);
-	काष्ठा hi655x_clk *hi655x_clk;
-	स्थिर अक्षर *clk_name = "hi655x-clk";
-	काष्ठा clk_init_data init = अणु
+static int hi655x_clk_probe(struct platform_device *pdev)
+{
+	struct device *parent = pdev->dev.parent;
+	struct hi655x_pmic *hi655x = dev_get_drvdata(parent);
+	struct hi655x_clk *hi655x_clk;
+	const char *clk_name = "hi655x-clk";
+	struct clk_init_data init = {
 		.name = clk_name,
 		.ops = &hi655x_clk_ops
-	पूर्ण;
-	पूर्णांक ret;
+	};
+	int ret;
 
-	hi655x_clk = devm_kzalloc(&pdev->dev, माप(*hi655x_clk), GFP_KERNEL);
-	अगर (!hi655x_clk)
-		वापस -ENOMEM;
+	hi655x_clk = devm_kzalloc(&pdev->dev, sizeof(*hi655x_clk), GFP_KERNEL);
+	if (!hi655x_clk)
+		return -ENOMEM;
 
-	of_property_पढ़ो_string_index(parent->of_node, "clock-output-names",
+	of_property_read_string_index(parent->of_node, "clock-output-names",
 				      0, &clk_name);
 
 	hi655x_clk->clk_hw.init	= &init;
 	hi655x_clk->hi655x	= hi655x;
 
-	platक्रमm_set_drvdata(pdev, hi655x_clk);
+	platform_set_drvdata(pdev, hi655x_clk);
 
-	ret = devm_clk_hw_रेजिस्टर(&pdev->dev, &hi655x_clk->clk_hw);
-	अगर (ret)
-		वापस ret;
+	ret = devm_clk_hw_register(&pdev->dev, &hi655x_clk->clk_hw);
+	if (ret)
+		return ret;
 
-	वापस devm_of_clk_add_hw_provider(&pdev->dev, of_clk_hw_simple_get,
+	return devm_of_clk_add_hw_provider(&pdev->dev, of_clk_hw_simple_get,
 					   &hi655x_clk->clk_hw);
-पूर्ण
+}
 
-अटल काष्ठा platक्रमm_driver hi655x_clk_driver = अणु
+static struct platform_driver hi655x_clk_driver = {
 	.probe =  hi655x_clk_probe,
-	.driver		= अणु
+	.driver		= {
 		.name	= "hi655x-clk",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(hi655x_clk_driver);
+module_platform_driver(hi655x_clk_driver);
 
 MODULE_DESCRIPTION("Clk driver for the hi655x series PMICs");
 MODULE_AUTHOR("Daniel Lezcano <daniel.lezcano@linaro.org>");

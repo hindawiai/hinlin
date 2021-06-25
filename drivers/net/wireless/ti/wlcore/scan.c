@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * This file is part of wl1271
  *
@@ -8,249 +7,249 @@
  * Contact: Luciano Coelho <luciano.coelho@nokia.com>
  */
 
-#समावेश <linux/ieee80211.h>
-#समावेश <linux/pm_runसमय.स>
+#include <linux/ieee80211.h>
+#include <linux/pm_runtime.h>
 
-#समावेश "wlcore.h"
-#समावेश "debug.h"
-#समावेश "cmd.h"
-#समावेश "scan.h"
-#समावेश "acx.h"
-#समावेश "tx.h"
+#include "wlcore.h"
+#include "debug.h"
+#include "cmd.h"
+#include "scan.h"
+#include "acx.h"
+#include "tx.h"
 
-व्योम wl1271_scan_complete_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा delayed_work *dwork;
-	काष्ठा wl1271 *wl;
-	काष्ठा wl12xx_vअगर *wlvअगर;
-	काष्ठा cfg80211_scan_info info = अणु
-		.पातed = false,
-	पूर्ण;
-	पूर्णांक ret;
+void wl1271_scan_complete_work(struct work_struct *work)
+{
+	struct delayed_work *dwork;
+	struct wl1271 *wl;
+	struct wl12xx_vif *wlvif;
+	struct cfg80211_scan_info info = {
+		.aborted = false,
+	};
+	int ret;
 
 	dwork = to_delayed_work(work);
-	wl = container_of(dwork, काष्ठा wl1271, scan_complete_work);
+	wl = container_of(dwork, struct wl1271, scan_complete_work);
 
 	wl1271_debug(DEBUG_SCAN, "Scanning complete");
 
 	mutex_lock(&wl->mutex);
 
-	अगर (unlikely(wl->state != WLCORE_STATE_ON))
-		जाओ out;
+	if (unlikely(wl->state != WLCORE_STATE_ON))
+		goto out;
 
-	अगर (wl->scan.state == WL1271_SCAN_STATE_IDLE)
-		जाओ out;
+	if (wl->scan.state == WL1271_SCAN_STATE_IDLE)
+		goto out;
 
-	wlvअगर = wl->scan_wlvअगर;
+	wlvif = wl->scan_wlvif;
 
 	/*
-	 * Rearm the tx watchकरोg just beक्रमe idling scan. This
-	 * prevents just-finished scans from triggering the watchकरोg
+	 * Rearm the tx watchdog just before idling scan. This
+	 * prevents just-finished scans from triggering the watchdog
 	 */
-	wl12xx_rearm_tx_watchकरोg_locked(wl);
+	wl12xx_rearm_tx_watchdog_locked(wl);
 
 	wl->scan.state = WL1271_SCAN_STATE_IDLE;
-	स_रखो(wl->scan.scanned_ch, 0, माप(wl->scan.scanned_ch));
-	wl->scan.req = शून्य;
-	wl->scan_wlvअगर = शून्य;
+	memset(wl->scan.scanned_ch, 0, sizeof(wl->scan.scanned_ch));
+	wl->scan.req = NULL;
+	wl->scan_wlvif = NULL;
 
-	ret = pm_runसमय_get_sync(wl->dev);
-	अगर (ret < 0) अणु
-		pm_runसमय_put_noidle(wl->dev);
-		जाओ out;
-	पूर्ण
+	ret = pm_runtime_get_sync(wl->dev);
+	if (ret < 0) {
+		pm_runtime_put_noidle(wl->dev);
+		goto out;
+	}
 
-	अगर (test_bit(WLVIF_FLAG_STA_ASSOCIATED, &wlvअगर->flags)) अणु
-		/* restore hardware connection monitoring ढाँचा */
-		wl1271_cmd_build_ap_probe_req(wl, wlvअगर, wlvअगर->probereq);
-	पूर्ण
+	if (test_bit(WLVIF_FLAG_STA_ASSOCIATED, &wlvif->flags)) {
+		/* restore hardware connection monitoring template */
+		wl1271_cmd_build_ap_probe_req(wl, wlvif, wlvif->probereq);
+	}
 
-	अगर (wl->scan.failed) अणु
+	if (wl->scan.failed) {
 		wl1271_info("Scan completed due to error.");
 		wl12xx_queue_recovery_work(wl);
-	पूर्ण
+	}
 
-	wlcore_cmd_regकरोमुख्य_config_locked(wl);
+	wlcore_cmd_regdomain_config_locked(wl);
 
-	pm_runसमय_mark_last_busy(wl->dev);
-	pm_runसमय_put_स्वतःsuspend(wl->dev);
+	pm_runtime_mark_last_busy(wl->dev);
+	pm_runtime_put_autosuspend(wl->dev);
 
 	ieee80211_scan_completed(wl->hw, &info);
 
 out:
 	mutex_unlock(&wl->mutex);
 
-पूर्ण
+}
 
-अटल व्योम wlcore_started_vअगरs_iter(व्योम *data, u8 *mac,
-				     काष्ठा ieee80211_vअगर *vअगर)
-अणु
-	काष्ठा wl12xx_vअगर *wlvअगर = wl12xx_vअगर_to_data(vअगर);
+static void wlcore_started_vifs_iter(void *data, u8 *mac,
+				     struct ieee80211_vif *vif)
+{
+	struct wl12xx_vif *wlvif = wl12xx_vif_to_data(vif);
 	bool active = false;
-	पूर्णांक *count = (पूर्णांक *)data;
+	int *count = (int *)data;
 
 	/*
-	 * count active पूर्णांकerfaces according to पूर्णांकerface type.
-	 * checking only bss_conf.idle is bad क्रम some हालs, e.g.
-	 * we करोn't want to count sta in p2p_find as active पूर्णांकerface.
+	 * count active interfaces according to interface type.
+	 * checking only bss_conf.idle is bad for some cases, e.g.
+	 * we don't want to count sta in p2p_find as active interface.
 	 */
-	चयन (wlvअगर->bss_type) अणु
-	हाल BSS_TYPE_STA_BSS:
-		अगर (test_bit(WLVIF_FLAG_STA_ASSOCIATED, &wlvअगर->flags))
+	switch (wlvif->bss_type) {
+	case BSS_TYPE_STA_BSS:
+		if (test_bit(WLVIF_FLAG_STA_ASSOCIATED, &wlvif->flags))
 			active = true;
-		अवरोध;
+		break;
 
-	हाल BSS_TYPE_AP_BSS:
-		अगर (wlvअगर->wl->active_sta_count > 0)
+	case BSS_TYPE_AP_BSS:
+		if (wlvif->wl->active_sta_count > 0)
 			active = true;
-		अवरोध;
+		break;
 
-	शेष:
-		अवरोध;
-	पूर्ण
+	default:
+		break;
+	}
 
-	अगर (active)
+	if (active)
 		(*count)++;
-पूर्ण
+}
 
-अटल पूर्णांक wlcore_count_started_vअगरs(काष्ठा wl1271 *wl)
-अणु
-	पूर्णांक count = 0;
+static int wlcore_count_started_vifs(struct wl1271 *wl)
+{
+	int count = 0;
 
-	ieee80211_iterate_active_पूर्णांकerfaces_atomic(wl->hw,
+	ieee80211_iterate_active_interfaces_atomic(wl->hw,
 					IEEE80211_IFACE_ITER_RESUME_ALL,
-					wlcore_started_vअगरs_iter, &count);
-	वापस count;
-पूर्ण
+					wlcore_started_vifs_iter, &count);
+	return count;
+}
 
-अटल पूर्णांक
-wlcore_scan_get_channels(काष्ठा wl1271 *wl,
-			 काष्ठा ieee80211_channel *req_channels[],
+static int
+wlcore_scan_get_channels(struct wl1271 *wl,
+			 struct ieee80211_channel *req_channels[],
 			 u32 n_channels,
 			 u32 n_ssids,
-			 काष्ठा conn_scan_ch_params *channels,
+			 struct conn_scan_ch_params *channels,
 			 u32 band, bool radar, bool passive,
-			 पूर्णांक start, पूर्णांक max_channels,
+			 int start, int max_channels,
 			 u8 *n_pactive_ch,
-			 पूर्णांक scan_type)
-अणु
-	पूर्णांक i, j;
+			 int scan_type)
+{
+	int i, j;
 	u32 flags;
-	bool क्रमce_passive = !n_ssids;
-	u32 min_dwell_समय_active, max_dwell_समय_active;
-	u32 dwell_समय_passive, dwell_समय_dfs;
+	bool force_passive = !n_ssids;
+	u32 min_dwell_time_active, max_dwell_time_active;
+	u32 dwell_time_passive, dwell_time_dfs;
 
-	/* configure dwell बार according to scan type */
-	अगर (scan_type == SCAN_TYPE_SEARCH) अणु
-		काष्ठा conf_scan_settings *c = &wl->conf.scan;
-		bool active_vअगर_exists = !!wlcore_count_started_vअगरs(wl);
+	/* configure dwell times according to scan type */
+	if (scan_type == SCAN_TYPE_SEARCH) {
+		struct conf_scan_settings *c = &wl->conf.scan;
+		bool active_vif_exists = !!wlcore_count_started_vifs(wl);
 
-		min_dwell_समय_active = active_vअगर_exists ?
-			c->min_dwell_समय_active :
-			c->min_dwell_समय_active_दीर्घ;
-		max_dwell_समय_active = active_vअगर_exists ?
-			c->max_dwell_समय_active :
-			c->max_dwell_समय_active_दीर्घ;
-		dwell_समय_passive = c->dwell_समय_passive;
-		dwell_समय_dfs = c->dwell_समय_dfs;
-	पूर्ण अन्यथा अणु
-		काष्ठा conf_sched_scan_settings *c = &wl->conf.sched_scan;
+		min_dwell_time_active = active_vif_exists ?
+			c->min_dwell_time_active :
+			c->min_dwell_time_active_long;
+		max_dwell_time_active = active_vif_exists ?
+			c->max_dwell_time_active :
+			c->max_dwell_time_active_long;
+		dwell_time_passive = c->dwell_time_passive;
+		dwell_time_dfs = c->dwell_time_dfs;
+	} else {
+		struct conf_sched_scan_settings *c = &wl->conf.sched_scan;
 		u32 delta_per_probe;
 
-		अगर (band == NL80211_BAND_5GHZ)
-			delta_per_probe = c->dwell_समय_delta_per_probe_5;
-		अन्यथा
-			delta_per_probe = c->dwell_समय_delta_per_probe;
+		if (band == NL80211_BAND_5GHZ)
+			delta_per_probe = c->dwell_time_delta_per_probe_5;
+		else
+			delta_per_probe = c->dwell_time_delta_per_probe;
 
-		min_dwell_समय_active = c->base_dwell_समय +
+		min_dwell_time_active = c->base_dwell_time +
 			 n_ssids * c->num_probe_reqs * delta_per_probe;
 
-		max_dwell_समय_active = min_dwell_समय_active +
-					c->max_dwell_समय_delta;
-		dwell_समय_passive = c->dwell_समय_passive;
-		dwell_समय_dfs = c->dwell_समय_dfs;
-	पूर्ण
-	min_dwell_समय_active = DIV_ROUND_UP(min_dwell_समय_active, 1000);
-	max_dwell_समय_active = DIV_ROUND_UP(max_dwell_समय_active, 1000);
-	dwell_समय_passive = DIV_ROUND_UP(dwell_समय_passive, 1000);
-	dwell_समय_dfs = DIV_ROUND_UP(dwell_समय_dfs, 1000);
+		max_dwell_time_active = min_dwell_time_active +
+					c->max_dwell_time_delta;
+		dwell_time_passive = c->dwell_time_passive;
+		dwell_time_dfs = c->dwell_time_dfs;
+	}
+	min_dwell_time_active = DIV_ROUND_UP(min_dwell_time_active, 1000);
+	max_dwell_time_active = DIV_ROUND_UP(max_dwell_time_active, 1000);
+	dwell_time_passive = DIV_ROUND_UP(dwell_time_passive, 1000);
+	dwell_time_dfs = DIV_ROUND_UP(dwell_time_dfs, 1000);
 
-	क्रम (i = 0, j = start;
+	for (i = 0, j = start;
 	     i < n_channels && j < max_channels;
-	     i++) अणु
+	     i++) {
 		flags = req_channels[i]->flags;
 
-		अगर (क्रमce_passive)
+		if (force_passive)
 			flags |= IEEE80211_CHAN_NO_IR;
 
-		अगर ((req_channels[i]->band == band) &&
+		if ((req_channels[i]->band == band) &&
 		    !(flags & IEEE80211_CHAN_DISABLED) &&
 		    (!!(flags & IEEE80211_CHAN_RADAR) == radar) &&
-		    /* अगर radar is set, we ignore the passive flag */
+		    /* if radar is set, we ignore the passive flag */
 		    (radar ||
-		     !!(flags & IEEE80211_CHAN_NO_IR) == passive)) अणु
-			अगर (flags & IEEE80211_CHAN_RADAR) अणु
+		     !!(flags & IEEE80211_CHAN_NO_IR) == passive)) {
+			if (flags & IEEE80211_CHAN_RADAR) {
 				channels[j].flags |= SCAN_CHANNEL_FLAGS_DFS;
 
 				channels[j].passive_duration =
-					cpu_to_le16(dwell_समय_dfs);
-			पूर्ण अन्यथा अणु
+					cpu_to_le16(dwell_time_dfs);
+			} else {
 				channels[j].passive_duration =
-					cpu_to_le16(dwell_समय_passive);
-			पूर्ण
+					cpu_to_le16(dwell_time_passive);
+			}
 
 			channels[j].min_duration =
-				cpu_to_le16(min_dwell_समय_active);
+				cpu_to_le16(min_dwell_time_active);
 			channels[j].max_duration =
-				cpu_to_le16(max_dwell_समय_active);
+				cpu_to_le16(max_dwell_time_active);
 
-			channels[j].tx_घातer_att = req_channels[i]->max_घातer;
+			channels[j].tx_power_att = req_channels[i]->max_power;
 			channels[j].channel = req_channels[i]->hw_value;
 
-			अगर (n_pactive_ch &&
+			if (n_pactive_ch &&
 			    (band == NL80211_BAND_2GHZ) &&
 			    (channels[j].channel >= 12) &&
 			    (channels[j].channel <= 14) &&
 			    (flags & IEEE80211_CHAN_NO_IR) &&
-			    !क्रमce_passive) अणु
+			    !force_passive) {
 				/* pactive channels treated as DFS */
 				channels[j].flags = SCAN_CHANNEL_FLAGS_DFS;
 
 				/*
-				 * n_pactive_ch is counted करोwn from the end of
+				 * n_pactive_ch is counted down from the end of
 				 * the passive channel list
 				 */
 				(*n_pactive_ch)++;
 				wl1271_debug(DEBUG_SCAN, "n_pactive_ch = %d",
 					     *n_pactive_ch);
-			पूर्ण
+			}
 
 			wl1271_debug(DEBUG_SCAN, "freq %d, ch. %d, flags 0x%x, power %d, min/max_dwell %d/%d%s%s",
 				     req_channels[i]->center_freq,
 				     req_channels[i]->hw_value,
 				     req_channels[i]->flags,
-				     req_channels[i]->max_घातer,
-				     min_dwell_समय_active,
-				     max_dwell_समय_active,
+				     req_channels[i]->max_power,
+				     min_dwell_time_active,
+				     max_dwell_time_active,
 				     flags & IEEE80211_CHAN_RADAR ?
 					", DFS" : "",
 				     flags & IEEE80211_CHAN_NO_IR ?
 					", NO-IR" : "");
 			j++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस j - start;
-पूर्ण
+	return j - start;
+}
 
 bool
-wlcore_set_scan_chan_params(काष्ठा wl1271 *wl,
-			    काष्ठा wlcore_scan_channels *cfg,
-			    काष्ठा ieee80211_channel *channels[],
+wlcore_set_scan_chan_params(struct wl1271 *wl,
+			    struct wlcore_scan_channels *cfg,
+			    struct ieee80211_channel *channels[],
 			    u32 n_channels,
 			    u32 n_ssids,
-			    पूर्णांक scan_type)
-अणु
+			    int scan_type)
+{
 	u8 n_pactive_ch = 0;
 
 	cfg->passive[0] =
@@ -324,158 +323,158 @@ wlcore_set_scan_chan_params(काष्ठा wl1271 *wl,
 		     cfg->active[1], cfg->passive[1]);
 	wl1271_debug(DEBUG_SCAN, "    DFS: %d", cfg->dfs);
 
-	वापस  cfg->passive[0] || cfg->active[0] ||
+	return  cfg->passive[0] || cfg->active[0] ||
 		cfg->passive[1] || cfg->active[1] || cfg->dfs ||
 		cfg->passive[2] || cfg->active[2];
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(wlcore_set_scan_chan_params);
 
-पूर्णांक wlcore_scan(काष्ठा wl1271 *wl, काष्ठा ieee80211_vअगर *vअगर,
-		स्थिर u8 *ssid, माप_प्रकार ssid_len,
-		काष्ठा cfg80211_scan_request *req)
-अणु
-	काष्ठा wl12xx_vअगर *wlvअगर = wl12xx_vअगर_to_data(vअगर);
+int wlcore_scan(struct wl1271 *wl, struct ieee80211_vif *vif,
+		const u8 *ssid, size_t ssid_len,
+		struct cfg80211_scan_request *req)
+{
+	struct wl12xx_vif *wlvif = wl12xx_vif_to_data(vif);
 
 	/*
-	 * cfg80211 should guarantee that we करोn't get more channels
-	 * than what we have रेजिस्टरed.
+	 * cfg80211 should guarantee that we don't get more channels
+	 * than what we have registered.
 	 */
 	BUG_ON(req->n_channels > WL1271_MAX_CHANNELS);
 
-	अगर (wl->scan.state != WL1271_SCAN_STATE_IDLE)
-		वापस -EBUSY;
+	if (wl->scan.state != WL1271_SCAN_STATE_IDLE)
+		return -EBUSY;
 
 	wl->scan.state = WL1271_SCAN_STATE_2GHZ_ACTIVE;
 
-	अगर (ssid_len && ssid) अणु
+	if (ssid_len && ssid) {
 		wl->scan.ssid_len = ssid_len;
-		स_नकल(wl->scan.ssid, ssid, ssid_len);
-	पूर्ण अन्यथा अणु
+		memcpy(wl->scan.ssid, ssid, ssid_len);
+	} else {
 		wl->scan.ssid_len = 0;
-	पूर्ण
+	}
 
-	wl->scan_wlvअगर = wlvअगर;
+	wl->scan_wlvif = wlvif;
 	wl->scan.req = req;
-	स_रखो(wl->scan.scanned_ch, 0, माप(wl->scan.scanned_ch));
+	memset(wl->scan.scanned_ch, 0, sizeof(wl->scan.scanned_ch));
 
-	/* we assume failure so that समयout scenarios are handled correctly */
+	/* we assume failure so that timeout scenarios are handled correctly */
 	wl->scan.failed = true;
 	ieee80211_queue_delayed_work(wl->hw, &wl->scan_complete_work,
-				     msecs_to_jअगरfies(WL1271_SCAN_TIMEOUT));
+				     msecs_to_jiffies(WL1271_SCAN_TIMEOUT));
 
-	wl->ops->scan_start(wl, wlvअगर, req);
+	wl->ops->scan_start(wl, wlvif, req);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 /* Returns the scan type to be used or a negative value on error */
-पूर्णांक
-wlcore_scan_sched_scan_ssid_list(काष्ठा wl1271 *wl,
-				 काष्ठा wl12xx_vअगर *wlvअगर,
-				 काष्ठा cfg80211_sched_scan_request *req)
-अणु
-	काष्ठा wl1271_cmd_sched_scan_ssid_list *cmd = शून्य;
-	काष्ठा cfg80211_match_set *sets = req->match_sets;
-	काष्ठा cfg80211_ssid *ssids = req->ssids;
-	पूर्णांक ret = 0, type, i, j, n_match_ssids = 0;
+int
+wlcore_scan_sched_scan_ssid_list(struct wl1271 *wl,
+				 struct wl12xx_vif *wlvif,
+				 struct cfg80211_sched_scan_request *req)
+{
+	struct wl1271_cmd_sched_scan_ssid_list *cmd = NULL;
+	struct cfg80211_match_set *sets = req->match_sets;
+	struct cfg80211_ssid *ssids = req->ssids;
+	int ret = 0, type, i, j, n_match_ssids = 0;
 
 	wl1271_debug((DEBUG_CMD | DEBUG_SCAN), "cmd sched scan ssid list");
 
 	/* count the match sets that contain SSIDs */
-	क्रम (i = 0; i < req->n_match_sets; i++)
-		अगर (sets[i].ssid.ssid_len > 0)
+	for (i = 0; i < req->n_match_sets; i++)
+		if (sets[i].ssid.ssid_len > 0)
 			n_match_ssids++;
 
 	/* No filter, no ssids or only bcast ssid */
-	अगर (!n_match_ssids &&
+	if (!n_match_ssids &&
 	    (!req->n_ssids ||
-	     (req->n_ssids == 1 && req->ssids[0].ssid_len == 0))) अणु
+	     (req->n_ssids == 1 && req->ssids[0].ssid_len == 0))) {
 		type = SCAN_SSID_FILTER_ANY;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (!cmd) अणु
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (!cmd) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	cmd->role_id = wlvअगर->role_id;
-	अगर (!n_match_ssids) अणु
+	cmd->role_id = wlvif->role_id;
+	if (!n_match_ssids) {
 		/* No filter, with ssids */
 		type = SCAN_SSID_FILTER_DISABLED;
 
-		क्रम (i = 0; i < req->n_ssids; i++) अणु
+		for (i = 0; i < req->n_ssids; i++) {
 			cmd->ssids[cmd->n_ssids].type = (ssids[i].ssid_len) ?
 				SCAN_SSID_TYPE_HIDDEN : SCAN_SSID_TYPE_PUBLIC;
 			cmd->ssids[cmd->n_ssids].len = ssids[i].ssid_len;
-			स_नकल(cmd->ssids[cmd->n_ssids].ssid, ssids[i].ssid,
+			memcpy(cmd->ssids[cmd->n_ssids].ssid, ssids[i].ssid,
 			       ssids[i].ssid_len);
 			cmd->n_ssids++;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		type = SCAN_SSID_FILTER_LIST;
 
 		/* Add all SSIDs from the filters */
-		क्रम (i = 0; i < req->n_match_sets; i++) अणु
+		for (i = 0; i < req->n_match_sets; i++) {
 			/* ignore sets without SSIDs */
-			अगर (!sets[i].ssid.ssid_len)
-				जारी;
+			if (!sets[i].ssid.ssid_len)
+				continue;
 
 			cmd->ssids[cmd->n_ssids].type = SCAN_SSID_TYPE_PUBLIC;
 			cmd->ssids[cmd->n_ssids].len = sets[i].ssid.ssid_len;
-			स_नकल(cmd->ssids[cmd->n_ssids].ssid,
+			memcpy(cmd->ssids[cmd->n_ssids].ssid,
 			       sets[i].ssid.ssid, sets[i].ssid.ssid_len);
 			cmd->n_ssids++;
-		पूर्ण
-		अगर ((req->n_ssids > 1) ||
-		    (req->n_ssids == 1 && req->ssids[0].ssid_len > 0)) अणु
+		}
+		if ((req->n_ssids > 1) ||
+		    (req->n_ssids == 1 && req->ssids[0].ssid_len > 0)) {
 			/*
 			 * Mark all the SSIDs passed in the SSID list as HIDDEN,
 			 * so they're used in probe requests.
 			 */
-			क्रम (i = 0; i < req->n_ssids; i++) अणु
-				अगर (!req->ssids[i].ssid_len)
-					जारी;
+			for (i = 0; i < req->n_ssids; i++) {
+				if (!req->ssids[i].ssid_len)
+					continue;
 
-				क्रम (j = 0; j < cmd->n_ssids; j++)
-					अगर ((req->ssids[i].ssid_len ==
+				for (j = 0; j < cmd->n_ssids; j++)
+					if ((req->ssids[i].ssid_len ==
 					     cmd->ssids[j].len) &&
-					    !स_भेद(req->ssids[i].ssid,
+					    !memcmp(req->ssids[i].ssid,
 						   cmd->ssids[j].ssid,
-						   req->ssids[i].ssid_len)) अणु
+						   req->ssids[i].ssid_len)) {
 						cmd->ssids[j].type =
 							SCAN_SSID_TYPE_HIDDEN;
-						अवरोध;
-					पूर्ण
-				/* Fail अगर SSID isn't present in the filters */
-				अगर (j == cmd->n_ssids) अणु
+						break;
+					}
+				/* Fail if SSID isn't present in the filters */
+				if (j == cmd->n_ssids) {
 					ret = -EINVAL;
-					जाओ out_मुक्त;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
+					goto out_free;
+				}
+			}
+		}
+	}
 
 	ret = wl1271_cmd_send(wl, CMD_CONNECTION_SCAN_SSID_CFG, cmd,
-			      माप(*cmd), 0);
-	अगर (ret < 0) अणु
+			      sizeof(*cmd), 0);
+	if (ret < 0) {
 		wl1271_error("cmd sched scan ssid list failed");
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
-out_मुक्त:
-	kमुक्त(cmd);
+out_free:
+	kfree(cmd);
 out:
-	अगर (ret < 0)
-		वापस ret;
-	वापस type;
-पूर्ण
+	if (ret < 0)
+		return ret;
+	return type;
+}
 EXPORT_SYMBOL_GPL(wlcore_scan_sched_scan_ssid_list);
 
-व्योम wlcore_scan_sched_scan_results(काष्ठा wl1271 *wl)
-अणु
+void wlcore_scan_sched_scan_results(struct wl1271 *wl)
+{
 	wl1271_debug(DEBUG_SCAN, "got periodic scan results");
 
 	ieee80211_sched_scan_results(wl->hw);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(wlcore_scan_sched_scan_results);

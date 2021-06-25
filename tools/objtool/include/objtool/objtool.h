@@ -1,34 +1,33 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2020 Matt Helsley <mhelsley@vmware.com>
  */
 
-#अगर_अघोषित _OBJTOOL_H
-#घोषणा _OBJTOOL_H
+#ifndef _OBJTOOL_H
+#define _OBJTOOL_H
 
-#समावेश <stdbool.h>
-#समावेश <linux/list.h>
-#समावेश <linux/hashtable.h>
+#include <stdbool.h>
+#include <linux/list.h>
+#include <linux/hashtable.h>
 
-#समावेश <objtool/elf.h>
+#include <objtool/elf.h>
 
-#घोषणा __weak __attribute__((weak))
+#define __weak __attribute__((weak))
 
-काष्ठा objtool_file अणु
-	काष्ठा elf *elf;
-	काष्ठा list_head insn_list;
+struct objtool_file {
+	struct elf *elf;
+	struct list_head insn_list;
 	DECLARE_HASHTABLE(insn_hash, 20);
-	काष्ठा list_head retpoline_call_list;
-	काष्ठा list_head अटल_call_list;
-	काष्ठा list_head mcount_loc_list;
-	bool ignore_unreachables, c_file, hपूर्णांकs, rodata;
-पूर्ण;
+	struct list_head retpoline_call_list;
+	struct list_head static_call_list;
+	struct list_head mcount_loc_list;
+	bool ignore_unreachables, c_file, hints, rodata;
+};
 
-काष्ठा objtool_file *objtool_खोलो_पढ़ो(स्थिर अक्षर *_objname);
+struct objtool_file *objtool_open_read(const char *_objname);
 
-पूर्णांक check(काष्ठा objtool_file *file);
-पूर्णांक orc_dump(स्थिर अक्षर *objname);
-पूर्णांक orc_create(काष्ठा objtool_file *file);
+int check(struct objtool_file *file);
+int orc_dump(const char *objname);
+int orc_create(struct objtool_file *file);
 
-#पूर्ण_अगर /* _OBJTOOL_H */
+#endif /* _OBJTOOL_H */

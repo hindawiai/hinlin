@@ -1,53 +1,52 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * arch/sh/kernel/cpu/घड़ी.c - SuperH घड़ी framework
+ * arch/sh/kernel/cpu/clock.c - SuperH clock framework
  *
  *  Copyright (C) 2005 - 2009  Paul Mundt
  *
- * This घड़ी framework is derived from the OMAP version by:
+ * This clock framework is derived from the OMAP version by:
  *
  *	Copyright (C) 2004 - 2008 Nokia Corporation
  *	Written by Tuukka Tikkanen <tuukka.tikkanen@elektrobit.com>
  *
- *  Modअगरied क्रम omap shared घड़ी framework by Tony Lindgren <tony@atomide.com>
+ *  Modified for omap shared clock framework by Tony Lindgren <tony@atomide.com>
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/clk.h>
-#समावेश <यंत्र/घड़ी.h>
-#समावेश <यंत्र/machvec.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/clk.h>
+#include <asm/clock.h>
+#include <asm/machvec.h>
 
-पूर्णांक __init clk_init(व्योम)
-अणु
-	पूर्णांक ret;
+int __init clk_init(void)
+{
+	int ret;
 
-#अगर_अघोषित CONFIG_COMMON_CLK
+#ifndef CONFIG_COMMON_CLK
 	ret = arch_clk_init();
-	अगर (unlikely(ret)) अणु
+	if (unlikely(ret)) {
 		pr_err("%s: CPU clock registration failed.\n", __func__);
-		वापस ret;
-	पूर्ण
-#पूर्ण_अगर
+		return ret;
+	}
+#endif
 
-	अगर (sh_mv.mv_clk_init) अणु
+	if (sh_mv.mv_clk_init) {
 		ret = sh_mv.mv_clk_init();
-		अगर (unlikely(ret)) अणु
+		if (unlikely(ret)) {
 			pr_err("%s: machvec clock initialization failed.\n",
 			       __func__);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-#अगर_अघोषित CONFIG_COMMON_CLK
-	/* Kick the child घड़ीs.. */
-	recalculate_root_घड़ीs();
+#ifndef CONFIG_COMMON_CLK
+	/* Kick the child clocks.. */
+	recalculate_root_clocks();
 
-	/* Enable the necessary init घड़ीs */
-	clk_enable_init_घड़ीs();
-#पूर्ण_अगर
+	/* Enable the necessary init clocks */
+	clk_enable_init_clocks();
+#endif
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 

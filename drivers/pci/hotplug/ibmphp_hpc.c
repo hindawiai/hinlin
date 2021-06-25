@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * IBM Hot Plug Controller Driver
  *
@@ -14,154 +13,154 @@
  *
  */
 
-#समावेश <linux/रुको.h>
-#समावेश <linux/समय.स>
-#समावेश <linux/completion.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/init.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश "ibmphp.h"
+#include <linux/wait.h>
+#include <linux/time.h>
+#include <linux/completion.h>
+#include <linux/delay.h>
+#include <linux/module.h>
+#include <linux/pci.h>
+#include <linux/init.h>
+#include <linux/mutex.h>
+#include <linux/sched.h>
+#include <linux/kthread.h>
+#include "ibmphp.h"
 
-अटल पूर्णांक to_debug = 0;
-#घोषणा debug_polling(fmt, arg...)	करो अणु अगर (to_debug) debug(fmt, arg); पूर्ण जबतक (0)
+static int to_debug = 0;
+#define debug_polling(fmt, arg...)	do { if (to_debug) debug(fmt, arg); } while (0)
 
 //----------------------------------------------------------------------------
-// समयout values
+// timeout values
 //----------------------------------------------------------------------------
-#घोषणा CMD_COMPLETE_TOUT_SEC	60	// give HPC 60 sec to finish cmd
-#घोषणा HPC_CTLR_WORKING_TOUT	60	// give HPC 60 sec to finish cmd
-#घोषणा HPC_GETACCESS_TIMEOUT	60	// seconds
-#घोषणा POLL_INTERVAL_SEC	2	// poll HPC every 2 seconds
-#घोषणा POLL_LATCH_CNT		5	// poll latch 5 बार, then poll slots
+#define CMD_COMPLETE_TOUT_SEC	60	// give HPC 60 sec to finish cmd
+#define HPC_CTLR_WORKING_TOUT	60	// give HPC 60 sec to finish cmd
+#define HPC_GETACCESS_TIMEOUT	60	// seconds
+#define POLL_INTERVAL_SEC	2	// poll HPC every 2 seconds
+#define POLL_LATCH_CNT		5	// poll latch 5 times, then poll slots
 
 //----------------------------------------------------------------------------
 // Winnipeg Architected Register Offsets
 //----------------------------------------------------------------------------
-#घोषणा WPG_I2CMBUFL_OFFSET	0x08	// I2C Message Buffer Low
-#घोषणा WPG_I2CMOSUP_OFFSET	0x10	// I2C Master Operation Setup Reg
-#घोषणा WPG_I2CMCNTL_OFFSET	0x20	// I2C Master Control Register
-#घोषणा WPG_I2CPARM_OFFSET	0x40	// I2C Parameter Register
-#घोषणा WPG_I2CSTAT_OFFSET	0x70	// I2C Status Register
+#define WPG_I2CMBUFL_OFFSET	0x08	// I2C Message Buffer Low
+#define WPG_I2CMOSUP_OFFSET	0x10	// I2C Master Operation Setup Reg
+#define WPG_I2CMCNTL_OFFSET	0x20	// I2C Master Control Register
+#define WPG_I2CPARM_OFFSET	0x40	// I2C Parameter Register
+#define WPG_I2CSTAT_OFFSET	0x70	// I2C Status Register
 
 //----------------------------------------------------------------------------
-// Winnipeg Store Type commands (Add this commands to the रेजिस्टर offset)
+// Winnipeg Store Type commands (Add this commands to the register offset)
 //----------------------------------------------------------------------------
-#घोषणा WPG_I2C_AND		0x1000	// I2C AND operation
-#घोषणा WPG_I2C_OR		0x2000	// I2C OR operation
+#define WPG_I2C_AND		0x1000	// I2C AND operation
+#define WPG_I2C_OR		0x2000	// I2C OR operation
 
 //----------------------------------------------------------------------------
-// Command set क्रम I2C Master Operation Setup Register
+// Command set for I2C Master Operation Setup Register
 //----------------------------------------------------------------------------
-#घोषणा WPG_READATADDR_MASK	0x00010000	// पढ़ो,bytes,I2C shअगरted,index
-#घोषणा WPG_WRITEATADDR_MASK	0x40010000	// ग_लिखो,bytes,I2C shअगरted,index
-#घोषणा WPG_READसूचीECT_MASK	0x10010000
-#घोषणा WPG_WRITEसूचीECT_MASK	0x60010000
+#define WPG_READATADDR_MASK	0x00010000	// read,bytes,I2C shifted,index
+#define WPG_WRITEATADDR_MASK	0x40010000	// write,bytes,I2C shifted,index
+#define WPG_READDIRECT_MASK	0x10010000
+#define WPG_WRITEDIRECT_MASK	0x60010000
 
 
 //----------------------------------------------------------------------------
-// bit masks क्रम I2C Master Control Register
+// bit masks for I2C Master Control Register
 //----------------------------------------------------------------------------
-#घोषणा WPG_I2CMCNTL_STARTOP_MASK	0x00000002	// Start the Operation
+#define WPG_I2CMCNTL_STARTOP_MASK	0x00000002	// Start the Operation
 
 //----------------------------------------------------------------------------
 //
 //----------------------------------------------------------------------------
-#घोषणा WPG_I2C_IOREMAP_SIZE	0x2044	// size of linear address पूर्णांकerval
+#define WPG_I2C_IOREMAP_SIZE	0x2044	// size of linear address interval
 
 //----------------------------------------------------------------------------
 // command index
 //----------------------------------------------------------------------------
-#घोषणा WPG_1ST_SLOT_INDEX	0x01	// index - 1st slot क्रम ctlr
-#घोषणा WPG_CTLR_INDEX		0x0F	// index - ctlr
-#घोषणा WPG_1ST_EXTSLOT_INDEX	0x10	// index - 1st ext slot क्रम ctlr
-#घोषणा WPG_1ST_BUS_INDEX	0x1F	// index - 1st bus क्रम ctlr
+#define WPG_1ST_SLOT_INDEX	0x01	// index - 1st slot for ctlr
+#define WPG_CTLR_INDEX		0x0F	// index - ctlr
+#define WPG_1ST_EXTSLOT_INDEX	0x10	// index - 1st ext slot for ctlr
+#define WPG_1ST_BUS_INDEX	0x1F	// index - 1st bus for ctlr
 
 //----------------------------------------------------------------------------
 // macro utilities
 //----------------------------------------------------------------------------
-// अगर bits 20,22,25,26,27,29,30 are OFF वापस 1
-#घोषणा HPC_I2CSTATUS_CHECK(s)	((u8)((s & 0x00000A76) ? 0 : 1))
+// if bits 20,22,25,26,27,29,30 are OFF return 1
+#define HPC_I2CSTATUS_CHECK(s)	((u8)((s & 0x00000A76) ? 0 : 1))
 
 //----------------------------------------------------------------------------
 // global variables
 //----------------------------------------------------------------------------
-अटल DEFINE_MUTEX(sem_hpcaccess);	// lock access to HPC
-अटल DEFINE_MUTEX(operations_mutex);	// lock all operations and
-					// access to data काष्ठाures
-अटल DECLARE_COMPLETION(निकास_complete); // make sure polling thपढ़ो goes away
-अटल काष्ठा task_काष्ठा *ibmphp_poll_thपढ़ो;
+static DEFINE_MUTEX(sem_hpcaccess);	// lock access to HPC
+static DEFINE_MUTEX(operations_mutex);	// lock all operations and
+					// access to data structures
+static DECLARE_COMPLETION(exit_complete); // make sure polling thread goes away
+static struct task_struct *ibmphp_poll_thread;
 //----------------------------------------------------------------------------
 // local function prototypes
 //----------------------------------------------------------------------------
-अटल u8 i2c_ctrl_पढ़ो(काष्ठा controller *, व्योम __iomem *, u8);
-अटल u8 i2c_ctrl_ग_लिखो(काष्ठा controller *, व्योम __iomem *, u8, u8);
-अटल u8 hpc_ग_लिखोcmdtoindex(u8, u8);
-अटल u8 hpc_पढ़ोcmdtoindex(u8, u8);
-अटल व्योम get_hpc_access(व्योम);
-अटल व्योम मुक्त_hpc_access(व्योम);
-अटल पूर्णांक poll_hpc(व्योम *data);
-अटल पूर्णांक process_changeinstatus(काष्ठा slot *, काष्ठा slot *);
-अटल पूर्णांक process_changeinlatch(u8, u8, काष्ठा controller *);
-अटल पूर्णांक hpc_रुको_ctlr_notworking(पूर्णांक, काष्ठा controller *, व्योम __iomem *, u8 *);
+static u8 i2c_ctrl_read(struct controller *, void __iomem *, u8);
+static u8 i2c_ctrl_write(struct controller *, void __iomem *, u8, u8);
+static u8 hpc_writecmdtoindex(u8, u8);
+static u8 hpc_readcmdtoindex(u8, u8);
+static void get_hpc_access(void);
+static void free_hpc_access(void);
+static int poll_hpc(void *data);
+static int process_changeinstatus(struct slot *, struct slot *);
+static int process_changeinlatch(u8, u8, struct controller *);
+static int hpc_wait_ctlr_notworking(int, struct controller *, void __iomem *, u8 *);
 //----------------------------------------------------------------------------
 
 
 /*----------------------------------------------------------------------
-* Name:    i2c_ctrl_पढ़ो
+* Name:    i2c_ctrl_read
 *
-* Action:  पढ़ो from HPC over I2C
+* Action:  read from HPC over I2C
 *
 *---------------------------------------------------------------------*/
-अटल u8 i2c_ctrl_पढ़ो(काष्ठा controller *ctlr_ptr, व्योम __iomem *WPGBbar, u8 index)
-अणु
+static u8 i2c_ctrl_read(struct controller *ctlr_ptr, void __iomem *WPGBbar, u8 index)
+{
 	u8 status;
-	पूर्णांक i;
-	व्योम __iomem *wpg_addr;	// base addr + offset
-	अचिन्हित दीर्घ wpg_data;	// data to/from WPG LOHI क्रमmat
-	अचिन्हित दीर्घ ultemp;
-	अचिन्हित दीर्घ data;	// actual data HILO क्रमmat
+	int i;
+	void __iomem *wpg_addr;	// base addr + offset
+	unsigned long wpg_data;	// data to/from WPG LOHI format
+	unsigned long ultemp;
+	unsigned long data;	// actual data HILO format
 
 	debug_polling("%s - Entry WPGBbar[%p] index[%x] \n", __func__, WPGBbar, index);
 
 	//--------------------------------------------------------------------
 	// READ - step 1
-	// पढ़ो at address, byte length, I2C address (shअगरted), index
-	// or पढ़ो direct, byte length, index
-	अगर (ctlr_ptr->ctlr_type == 0x02) अणु
+	// read at address, byte length, I2C address (shifted), index
+	// or read direct, byte length, index
+	if (ctlr_ptr->ctlr_type == 0x02) {
 		data = WPG_READATADDR_MASK;
 		// fill in I2C address
-		ultemp = (अचिन्हित दीर्घ)ctlr_ptr->u.wpeg_ctlr.i2c_addr;
+		ultemp = (unsigned long)ctlr_ptr->u.wpeg_ctlr.i2c_addr;
 		ultemp = ultemp >> 1;
 		data |= (ultemp << 8);
 
 		// fill in index
-		data |= (अचिन्हित दीर्घ)index;
-	पूर्ण अन्यथा अगर (ctlr_ptr->ctlr_type == 0x04) अणु
-		data = WPG_READसूचीECT_MASK;
+		data |= (unsigned long)index;
+	} else if (ctlr_ptr->ctlr_type == 0x04) {
+		data = WPG_READDIRECT_MASK;
 
 		// fill in index
-		ultemp = (अचिन्हित दीर्घ)index;
+		ultemp = (unsigned long)index;
 		ultemp = ultemp << 8;
 		data |= ultemp;
-	पूर्ण अन्यथा अणु
+	} else {
 		err("this controller type is not supported \n");
-		वापस HPC_ERROR;
-	पूर्ण
+		return HPC_ERROR;
+	}
 
-	wpg_data = swab32(data);	// swap data beक्रमe writing
+	wpg_data = swab32(data);	// swap data before writing
 	wpg_addr = WPGBbar + WPG_I2CMOSUP_OFFSET;
-	ग_लिखोl(wpg_data, wpg_addr);
+	writel(wpg_data, wpg_addr);
 
 	//--------------------------------------------------------------------
 	// READ - step 2 : clear the message buffer
 	data = 0x00000000;
 	wpg_data = swab32(data);
 	wpg_addr = WPGBbar + WPG_I2CMBUFL_OFFSET;
-	ग_लिखोl(wpg_data, wpg_addr);
+	writel(wpg_data, wpg_addr);
 
 	//--------------------------------------------------------------------
 	// READ - step 3 : issue start operation, I2C master control bit 30:ON
@@ -169,110 +168,110 @@
 	data = WPG_I2CMCNTL_STARTOP_MASK;
 	wpg_data = swab32(data);
 	wpg_addr = WPGBbar + WPG_I2CMCNTL_OFFSET + WPG_I2C_OR;
-	ग_लिखोl(wpg_data, wpg_addr);
+	writel(wpg_data, wpg_addr);
 
 	//--------------------------------------------------------------------
-	// READ - step 4 : रुको until start operation bit clears
+	// READ - step 4 : wait until start operation bit clears
 	i = CMD_COMPLETE_TOUT_SEC;
-	जबतक (i) अणु
+	while (i) {
 		msleep(10);
 		wpg_addr = WPGBbar + WPG_I2CMCNTL_OFFSET;
-		wpg_data = पढ़ोl(wpg_addr);
+		wpg_data = readl(wpg_addr);
 		data = swab32(wpg_data);
-		अगर (!(data & WPG_I2CMCNTL_STARTOP_MASK))
-			अवरोध;
+		if (!(data & WPG_I2CMCNTL_STARTOP_MASK))
+			break;
 		i--;
-	पूर्ण
-	अगर (i == 0) अणु
+	}
+	if (i == 0) {
 		debug("%s - Error : WPG timeout\n", __func__);
-		वापस HPC_ERROR;
-	पूर्ण
+		return HPC_ERROR;
+	}
 	//--------------------------------------------------------------------
-	// READ - step 5 : पढ़ो I2C status रेजिस्टर
+	// READ - step 5 : read I2C status register
 	i = CMD_COMPLETE_TOUT_SEC;
-	जबतक (i) अणु
+	while (i) {
 		msleep(10);
 		wpg_addr = WPGBbar + WPG_I2CSTAT_OFFSET;
-		wpg_data = पढ़ोl(wpg_addr);
+		wpg_data = readl(wpg_addr);
 		data = swab32(wpg_data);
-		अगर (HPC_I2CSTATUS_CHECK(data))
-			अवरोध;
+		if (HPC_I2CSTATUS_CHECK(data))
+			break;
 		i--;
-	पूर्ण
-	अगर (i == 0) अणु
+	}
+	if (i == 0) {
 		debug("ctrl_read - Exit Error:I2C timeout\n");
-		वापस HPC_ERROR;
-	पूर्ण
+		return HPC_ERROR;
+	}
 
 	//--------------------------------------------------------------------
 	// READ - step 6 : get DATA
 	wpg_addr = WPGBbar + WPG_I2CMBUFL_OFFSET;
-	wpg_data = पढ़ोl(wpg_addr);
+	wpg_data = readl(wpg_addr);
 	data = swab32(wpg_data);
 
 	status = (u8) data;
 
 	debug_polling("%s - Exit index[%x] status[%x]\n", __func__, index, status);
 
-	वापस (status);
-पूर्ण
+	return (status);
+}
 
 /*----------------------------------------------------------------------
-* Name:    i2c_ctrl_ग_लिखो
+* Name:    i2c_ctrl_write
 *
-* Action:  ग_लिखो to HPC over I2C
+* Action:  write to HPC over I2C
 *
 * Return   0 or error codes
 *---------------------------------------------------------------------*/
-अटल u8 i2c_ctrl_ग_लिखो(काष्ठा controller *ctlr_ptr, व्योम __iomem *WPGBbar, u8 index, u8 cmd)
-अणु
+static u8 i2c_ctrl_write(struct controller *ctlr_ptr, void __iomem *WPGBbar, u8 index, u8 cmd)
+{
 	u8 rc;
-	व्योम __iomem *wpg_addr;	// base addr + offset
-	अचिन्हित दीर्घ wpg_data;	// data to/from WPG LOHI क्रमmat
-	अचिन्हित दीर्घ ultemp;
-	अचिन्हित दीर्घ data;	// actual data HILO क्रमmat
-	पूर्णांक i;
+	void __iomem *wpg_addr;	// base addr + offset
+	unsigned long wpg_data;	// data to/from WPG LOHI format
+	unsigned long ultemp;
+	unsigned long data;	// actual data HILO format
+	int i;
 
 	debug_polling("%s - Entry WPGBbar[%p] index[%x] cmd[%x]\n", __func__, WPGBbar, index, cmd);
 
 	rc = 0;
 	//--------------------------------------------------------------------
 	// WRITE - step 1
-	// ग_लिखो at address, byte length, I2C address (shअगरted), index
-	// or ग_लिखो direct, byte length, index
+	// write at address, byte length, I2C address (shifted), index
+	// or write direct, byte length, index
 	data = 0x00000000;
 
-	अगर (ctlr_ptr->ctlr_type == 0x02) अणु
+	if (ctlr_ptr->ctlr_type == 0x02) {
 		data = WPG_WRITEATADDR_MASK;
 		// fill in I2C address
-		ultemp = (अचिन्हित दीर्घ)ctlr_ptr->u.wpeg_ctlr.i2c_addr;
+		ultemp = (unsigned long)ctlr_ptr->u.wpeg_ctlr.i2c_addr;
 		ultemp = ultemp >> 1;
 		data |= (ultemp << 8);
 
 		// fill in index
-		data |= (अचिन्हित दीर्घ)index;
-	पूर्ण अन्यथा अगर (ctlr_ptr->ctlr_type == 0x04) अणु
-		data = WPG_WRITEसूचीECT_MASK;
+		data |= (unsigned long)index;
+	} else if (ctlr_ptr->ctlr_type == 0x04) {
+		data = WPG_WRITEDIRECT_MASK;
 
 		// fill in index
-		ultemp = (अचिन्हित दीर्घ)index;
+		ultemp = (unsigned long)index;
 		ultemp = ultemp << 8;
 		data |= ultemp;
-	पूर्ण अन्यथा अणु
+	} else {
 		err("this controller type is not supported \n");
-		वापस HPC_ERROR;
-	पूर्ण
+		return HPC_ERROR;
+	}
 
-	wpg_data = swab32(data);	// swap data beक्रमe writing
+	wpg_data = swab32(data);	// swap data before writing
 	wpg_addr = WPGBbar + WPG_I2CMOSUP_OFFSET;
-	ग_लिखोl(wpg_data, wpg_addr);
+	writel(wpg_data, wpg_addr);
 
 	//--------------------------------------------------------------------
 	// WRITE - step 2 : clear the message buffer
-	data = 0x00000000 | (अचिन्हित दीर्घ)cmd;
+	data = 0x00000000 | (unsigned long)cmd;
 	wpg_data = swab32(data);
 	wpg_addr = WPGBbar + WPG_I2CMBUFL_OFFSET;
-	ग_लिखोl(wpg_data, wpg_addr);
+	writel(wpg_data, wpg_addr);
 
 	//--------------------------------------------------------------------
 	// WRITE - step 3 : issue start operation,I2C master control bit 30:ON
@@ -280,51 +279,51 @@
 	data = WPG_I2CMCNTL_STARTOP_MASK;
 	wpg_data = swab32(data);
 	wpg_addr = WPGBbar + WPG_I2CMCNTL_OFFSET + WPG_I2C_OR;
-	ग_लिखोl(wpg_data, wpg_addr);
+	writel(wpg_data, wpg_addr);
 
 	//--------------------------------------------------------------------
-	// WRITE - step 4 : रुको until start operation bit clears
+	// WRITE - step 4 : wait until start operation bit clears
 	i = CMD_COMPLETE_TOUT_SEC;
-	जबतक (i) अणु
+	while (i) {
 		msleep(10);
 		wpg_addr = WPGBbar + WPG_I2CMCNTL_OFFSET;
-		wpg_data = पढ़ोl(wpg_addr);
+		wpg_data = readl(wpg_addr);
 		data = swab32(wpg_data);
-		अगर (!(data & WPG_I2CMCNTL_STARTOP_MASK))
-			अवरोध;
+		if (!(data & WPG_I2CMCNTL_STARTOP_MASK))
+			break;
 		i--;
-	पूर्ण
-	अगर (i == 0) अणु
+	}
+	if (i == 0) {
 		debug("%s - Exit Error:WPG timeout\n", __func__);
 		rc = HPC_ERROR;
-	पूर्ण
+	}
 
 	//--------------------------------------------------------------------
-	// WRITE - step 5 : पढ़ो I2C status रेजिस्टर
+	// WRITE - step 5 : read I2C status register
 	i = CMD_COMPLETE_TOUT_SEC;
-	जबतक (i) अणु
+	while (i) {
 		msleep(10);
 		wpg_addr = WPGBbar + WPG_I2CSTAT_OFFSET;
-		wpg_data = पढ़ोl(wpg_addr);
+		wpg_data = readl(wpg_addr);
 		data = swab32(wpg_data);
-		अगर (HPC_I2CSTATUS_CHECK(data))
-			अवरोध;
+		if (HPC_I2CSTATUS_CHECK(data))
+			break;
 		i--;
-	पूर्ण
-	अगर (i == 0) अणु
+	}
+	if (i == 0) {
 		debug("ctrl_read - Error : I2C timeout\n");
 		rc = HPC_ERROR;
-	पूर्ण
+	}
 
 	debug_polling("%s Exit rc[%x]\n", __func__, rc);
-	वापस (rc);
-पूर्ण
+	return (rc);
+}
 
 //------------------------------------------------------------
 //  Read from ISA type HPC
 //------------------------------------------------------------
-अटल u8 isa_ctrl_पढ़ो(काष्ठा controller *ctlr_ptr, u8 offset)
-अणु
+static u8 isa_ctrl_read(struct controller *ctlr_ptr, u8 offset)
+{
 	u16 start_address;
 	u16 end_address;
 	u8 data;
@@ -332,212 +331,212 @@
 	start_address = ctlr_ptr->u.isa_ctlr.io_start;
 	end_address = ctlr_ptr->u.isa_ctlr.io_end;
 	data = inb(start_address + offset);
-	वापस data;
-पूर्ण
+	return data;
+}
 
 //--------------------------------------------------------------
 // Write to ISA type HPC
 //--------------------------------------------------------------
-अटल व्योम isa_ctrl_ग_लिखो(काष्ठा controller *ctlr_ptr, u8 offset, u8 data)
-अणु
+static void isa_ctrl_write(struct controller *ctlr_ptr, u8 offset, u8 data)
+{
 	u16 start_address;
 	u16 port_address;
 
 	start_address = ctlr_ptr->u.isa_ctlr.io_start;
 	port_address = start_address + (u16) offset;
 	outb(data, port_address);
-पूर्ण
+}
 
-अटल u8 pci_ctrl_पढ़ो(काष्ठा controller *ctrl, u8 offset)
-अणु
+static u8 pci_ctrl_read(struct controller *ctrl, u8 offset)
+{
 	u8 data = 0x00;
 	debug("inside pci_ctrl_read\n");
-	अगर (ctrl->ctrl_dev)
-		pci_पढ़ो_config_byte(ctrl->ctrl_dev, HPC_PCI_OFFSET + offset, &data);
-	वापस data;
-पूर्ण
+	if (ctrl->ctrl_dev)
+		pci_read_config_byte(ctrl->ctrl_dev, HPC_PCI_OFFSET + offset, &data);
+	return data;
+}
 
-अटल u8 pci_ctrl_ग_लिखो(काष्ठा controller *ctrl, u8 offset, u8 data)
-अणु
+static u8 pci_ctrl_write(struct controller *ctrl, u8 offset, u8 data)
+{
 	u8 rc = -ENODEV;
 	debug("inside pci_ctrl_write\n");
-	अगर (ctrl->ctrl_dev) अणु
-		pci_ग_लिखो_config_byte(ctrl->ctrl_dev, HPC_PCI_OFFSET + offset, data);
+	if (ctrl->ctrl_dev) {
+		pci_write_config_byte(ctrl->ctrl_dev, HPC_PCI_OFFSET + offset, data);
 		rc = 0;
-	पूर्ण
-	वापस rc;
-पूर्ण
+	}
+	return rc;
+}
 
-अटल u8 ctrl_पढ़ो(काष्ठा controller *ctlr, व्योम __iomem *base, u8 offset)
-अणु
+static u8 ctrl_read(struct controller *ctlr, void __iomem *base, u8 offset)
+{
 	u8 rc;
-	चयन (ctlr->ctlr_type) अणु
-	हाल 0:
-		rc = isa_ctrl_पढ़ो(ctlr, offset);
-		अवरोध;
-	हाल 1:
-		rc = pci_ctrl_पढ़ो(ctlr, offset);
-		अवरोध;
-	हाल 2:
-	हाल 4:
-		rc = i2c_ctrl_पढ़ो(ctlr, base, offset);
-		अवरोध;
-	शेष:
-		वापस -ENODEV;
-	पूर्ण
-	वापस rc;
-पूर्ण
+	switch (ctlr->ctlr_type) {
+	case 0:
+		rc = isa_ctrl_read(ctlr, offset);
+		break;
+	case 1:
+		rc = pci_ctrl_read(ctlr, offset);
+		break;
+	case 2:
+	case 4:
+		rc = i2c_ctrl_read(ctlr, base, offset);
+		break;
+	default:
+		return -ENODEV;
+	}
+	return rc;
+}
 
-अटल u8 ctrl_ग_लिखो(काष्ठा controller *ctlr, व्योम __iomem *base, u8 offset, u8 data)
-अणु
+static u8 ctrl_write(struct controller *ctlr, void __iomem *base, u8 offset, u8 data)
+{
 	u8 rc = 0;
-	चयन (ctlr->ctlr_type) अणु
-	हाल 0:
-		isa_ctrl_ग_लिखो(ctlr, offset, data);
-		अवरोध;
-	हाल 1:
-		rc = pci_ctrl_ग_लिखो(ctlr, offset, data);
-		अवरोध;
-	हाल 2:
-	हाल 4:
-		rc = i2c_ctrl_ग_लिखो(ctlr, base, offset, data);
-		अवरोध;
-	शेष:
-		वापस -ENODEV;
-	पूर्ण
-	वापस rc;
-पूर्ण
+	switch (ctlr->ctlr_type) {
+	case 0:
+		isa_ctrl_write(ctlr, offset, data);
+		break;
+	case 1:
+		rc = pci_ctrl_write(ctlr, offset, data);
+		break;
+	case 2:
+	case 4:
+		rc = i2c_ctrl_write(ctlr, base, offset, data);
+		break;
+	default:
+		return -ENODEV;
+	}
+	return rc;
+}
 /*----------------------------------------------------------------------
-* Name:    hpc_ग_लिखोcmdtoindex()
+* Name:    hpc_writecmdtoindex()
 *
-* Action:  convert a ग_लिखो command to proper index within a controller
+* Action:  convert a write command to proper index within a controller
 *
 * Return   index, HPC_ERROR
 *---------------------------------------------------------------------*/
-अटल u8 hpc_ग_लिखोcmdtoindex(u8 cmd, u8 index)
-अणु
+static u8 hpc_writecmdtoindex(u8 cmd, u8 index)
+{
 	u8 rc;
 
-	चयन (cmd) अणु
-	हाल HPC_CTLR_ENABLEIRQ:	// 0x00.N.15
-	हाल HPC_CTLR_CLEARIRQ:	// 0x06.N.15
-	हाल HPC_CTLR_RESET:	// 0x07.N.15
-	हाल HPC_CTLR_IRQSTEER:	// 0x08.N.15
-	हाल HPC_CTLR_DISABLEIRQ:	// 0x01.N.15
-	हाल HPC_ALLSLOT_ON:	// 0x11.N.15
-	हाल HPC_ALLSLOT_OFF:	// 0x12.N.15
+	switch (cmd) {
+	case HPC_CTLR_ENABLEIRQ:	// 0x00.N.15
+	case HPC_CTLR_CLEARIRQ:	// 0x06.N.15
+	case HPC_CTLR_RESET:	// 0x07.N.15
+	case HPC_CTLR_IRQSTEER:	// 0x08.N.15
+	case HPC_CTLR_DISABLEIRQ:	// 0x01.N.15
+	case HPC_ALLSLOT_ON:	// 0x11.N.15
+	case HPC_ALLSLOT_OFF:	// 0x12.N.15
 		rc = 0x0F;
-		अवरोध;
+		break;
 
-	हाल HPC_SLOT_OFF:	// 0x02.Y.0-14
-	हाल HPC_SLOT_ON:	// 0x03.Y.0-14
-	हाल HPC_SLOT_ATTNOFF:	// 0x04.N.0-14
-	हाल HPC_SLOT_ATTNON:	// 0x05.N.0-14
-	हाल HPC_SLOT_BLINKLED:	// 0x13.N.0-14
+	case HPC_SLOT_OFF:	// 0x02.Y.0-14
+	case HPC_SLOT_ON:	// 0x03.Y.0-14
+	case HPC_SLOT_ATTNOFF:	// 0x04.N.0-14
+	case HPC_SLOT_ATTNON:	// 0x05.N.0-14
+	case HPC_SLOT_BLINKLED:	// 0x13.N.0-14
 		rc = index;
-		अवरोध;
+		break;
 
-	हाल HPC_BUS_33CONVMODE:
-	हाल HPC_BUS_66CONVMODE:
-	हाल HPC_BUS_66PCIXMODE:
-	हाल HPC_BUS_100PCIXMODE:
-	हाल HPC_BUS_133PCIXMODE:
+	case HPC_BUS_33CONVMODE:
+	case HPC_BUS_66CONVMODE:
+	case HPC_BUS_66PCIXMODE:
+	case HPC_BUS_100PCIXMODE:
+	case HPC_BUS_133PCIXMODE:
 		rc = index + WPG_1ST_BUS_INDEX - 1;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		err("hpc_writecmdtoindex - Error invalid cmd[%x]\n", cmd);
 		rc = HPC_ERROR;
-	पूर्ण
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*----------------------------------------------------------------------
-* Name:    hpc_पढ़ोcmdtoindex()
+* Name:    hpc_readcmdtoindex()
 *
-* Action:  convert a पढ़ो command to proper index within a controller
+* Action:  convert a read command to proper index within a controller
 *
 * Return   index, HPC_ERROR
 *---------------------------------------------------------------------*/
-अटल u8 hpc_पढ़ोcmdtoindex(u8 cmd, u8 index)
-अणु
+static u8 hpc_readcmdtoindex(u8 cmd, u8 index)
+{
 	u8 rc;
 
-	चयन (cmd) अणु
-	हाल READ_CTLRSTATUS:
+	switch (cmd) {
+	case READ_CTLRSTATUS:
 		rc = 0x0F;
-		अवरोध;
-	हाल READ_SLOTSTATUS:
-	हाल READ_ALLSTAT:
+		break;
+	case READ_SLOTSTATUS:
+	case READ_ALLSTAT:
 		rc = index;
-		अवरोध;
-	हाल READ_EXTSLOTSTATUS:
+		break;
+	case READ_EXTSLOTSTATUS:
 		rc = index + WPG_1ST_EXTSLOT_INDEX;
-		अवरोध;
-	हाल READ_BUSSTATUS:
+		break;
+	case READ_BUSSTATUS:
 		rc = index + WPG_1ST_BUS_INDEX - 1;
-		अवरोध;
-	हाल READ_SLOTLATCHLOWREG:
+		break;
+	case READ_SLOTLATCHLOWREG:
 		rc = 0x28;
-		अवरोध;
-	हाल READ_REVLEVEL:
+		break;
+	case READ_REVLEVEL:
 		rc = 0x25;
-		अवरोध;
-	हाल READ_HPCOPTIONS:
+		break;
+	case READ_HPCOPTIONS:
 		rc = 0x27;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		rc = HPC_ERROR;
-	पूर्ण
-	वापस rc;
-पूर्ण
+	}
+	return rc;
+}
 
 /*----------------------------------------------------------------------
-* Name:    HPCपढ़ोslot()
+* Name:    HPCreadslot()
 *
 * Action:  issue a READ command to HPC
 *
-* Input:   pslot   - cannot be शून्य क्रम READ_ALLSTAT
-*          pstatus - can be शून्य क्रम READ_ALLSTAT
+* Input:   pslot   - cannot be NULL for READ_ALLSTAT
+*          pstatus - can be NULL for READ_ALLSTAT
 *
 * Return   0 or error codes
 *---------------------------------------------------------------------*/
-पूर्णांक ibmphp_hpc_पढ़ोslot(काष्ठा slot *pslot, u8 cmd, u8 *pstatus)
-अणु
-	व्योम __iomem *wpg_bbar = शून्य;
-	काष्ठा controller *ctlr_ptr;
+int ibmphp_hpc_readslot(struct slot *pslot, u8 cmd, u8 *pstatus)
+{
+	void __iomem *wpg_bbar = NULL;
+	struct controller *ctlr_ptr;
 	u8 index, status;
-	पूर्णांक rc = 0;
-	पूर्णांक busindex;
+	int rc = 0;
+	int busindex;
 
 	debug_polling("%s - Entry pslot[%p] cmd[%x] pstatus[%p]\n", __func__, pslot, cmd, pstatus);
 
-	अगर ((pslot == शून्य)
-	    || ((pstatus == शून्य) && (cmd != READ_ALLSTAT) && (cmd != READ_BUSSTATUS))) अणु
+	if ((pslot == NULL)
+	    || ((pstatus == NULL) && (cmd != READ_ALLSTAT) && (cmd != READ_BUSSTATUS))) {
 		rc = -EINVAL;
 		err("%s - Error invalid pointer, rc[%d]\n", __func__, rc);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
-	अगर (cmd == READ_BUSSTATUS) अणु
+	if (cmd == READ_BUSSTATUS) {
 		busindex = ibmphp_get_bus_index(pslot->bus);
-		अगर (busindex < 0) अणु
+		if (busindex < 0) {
 			rc = -EINVAL;
 			err("%s - Exit Error:invalid bus, rc[%d]\n", __func__, rc);
-			वापस rc;
-		पूर्ण अन्यथा
+			return rc;
+		} else
 			index = (u8) busindex;
-	पूर्ण अन्यथा
+	} else
 		index = pslot->ctlr_index;
 
-	index = hpc_पढ़ोcmdtoindex(cmd, index);
+	index = hpc_readcmdtoindex(cmd, index);
 
-	अगर (index == HPC_ERROR) अणु
+	if (index == HPC_ERROR) {
 		rc = -EINVAL;
 		err("%s - Exit Error:invalid index, rc[%d]\n", __func__, rc);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
 	ctlr_ptr = pslot->ctrl;
 
@@ -546,138 +545,138 @@
 	//--------------------------------------------------------------------
 	// map physical address to logical address
 	//--------------------------------------------------------------------
-	अगर ((ctlr_ptr->ctlr_type == 2) || (ctlr_ptr->ctlr_type == 4))
+	if ((ctlr_ptr->ctlr_type == 2) || (ctlr_ptr->ctlr_type == 4))
 		wpg_bbar = ioremap(ctlr_ptr->u.wpeg_ctlr.wpegbbar, WPG_I2C_IOREMAP_SIZE);
 
 	//--------------------------------------------------------------------
-	// check controller status beक्रमe पढ़ोing
+	// check controller status before reading
 	//--------------------------------------------------------------------
-	rc = hpc_रुको_ctlr_notworking(HPC_CTLR_WORKING_TOUT, ctlr_ptr, wpg_bbar, &status);
-	अगर (!rc) अणु
-		चयन (cmd) अणु
-		हाल READ_ALLSTAT:
-			// update the slot काष्ठाure
+	rc = hpc_wait_ctlr_notworking(HPC_CTLR_WORKING_TOUT, ctlr_ptr, wpg_bbar, &status);
+	if (!rc) {
+		switch (cmd) {
+		case READ_ALLSTAT:
+			// update the slot structure
 			pslot->ctrl->status = status;
-			pslot->status = ctrl_पढ़ो(ctlr_ptr, wpg_bbar, index);
-			rc = hpc_रुको_ctlr_notworking(HPC_CTLR_WORKING_TOUT, ctlr_ptr, wpg_bbar,
+			pslot->status = ctrl_read(ctlr_ptr, wpg_bbar, index);
+			rc = hpc_wait_ctlr_notworking(HPC_CTLR_WORKING_TOUT, ctlr_ptr, wpg_bbar,
 						       &status);
-			अगर (!rc)
-				pslot->ext_status = ctrl_पढ़ो(ctlr_ptr, wpg_bbar, index + WPG_1ST_EXTSLOT_INDEX);
+			if (!rc)
+				pslot->ext_status = ctrl_read(ctlr_ptr, wpg_bbar, index + WPG_1ST_EXTSLOT_INDEX);
 
-			अवरोध;
+			break;
 
-		हाल READ_SLOTSTATUS:
-			// DO NOT update the slot काष्ठाure
-			*pstatus = ctrl_पढ़ो(ctlr_ptr, wpg_bbar, index);
-			अवरोध;
+		case READ_SLOTSTATUS:
+			// DO NOT update the slot structure
+			*pstatus = ctrl_read(ctlr_ptr, wpg_bbar, index);
+			break;
 
-		हाल READ_EXTSLOTSTATUS:
-			// DO NOT update the slot काष्ठाure
-			*pstatus = ctrl_पढ़ो(ctlr_ptr, wpg_bbar, index);
-			अवरोध;
+		case READ_EXTSLOTSTATUS:
+			// DO NOT update the slot structure
+			*pstatus = ctrl_read(ctlr_ptr, wpg_bbar, index);
+			break;
 
-		हाल READ_CTLRSTATUS:
-			// DO NOT update the slot काष्ठाure
+		case READ_CTLRSTATUS:
+			// DO NOT update the slot structure
 			*pstatus = status;
-			अवरोध;
+			break;
 
-		हाल READ_BUSSTATUS:
-			pslot->busstatus = ctrl_पढ़ो(ctlr_ptr, wpg_bbar, index);
-			अवरोध;
-		हाल READ_REVLEVEL:
-			*pstatus = ctrl_पढ़ो(ctlr_ptr, wpg_bbar, index);
-			अवरोध;
-		हाल READ_HPCOPTIONS:
-			*pstatus = ctrl_पढ़ो(ctlr_ptr, wpg_bbar, index);
-			अवरोध;
-		हाल READ_SLOTLATCHLOWREG:
-			// DO NOT update the slot काष्ठाure
-			*pstatus = ctrl_पढ़ो(ctlr_ptr, wpg_bbar, index);
-			अवरोध;
+		case READ_BUSSTATUS:
+			pslot->busstatus = ctrl_read(ctlr_ptr, wpg_bbar, index);
+			break;
+		case READ_REVLEVEL:
+			*pstatus = ctrl_read(ctlr_ptr, wpg_bbar, index);
+			break;
+		case READ_HPCOPTIONS:
+			*pstatus = ctrl_read(ctlr_ptr, wpg_bbar, index);
+			break;
+		case READ_SLOTLATCHLOWREG:
+			// DO NOT update the slot structure
+			*pstatus = ctrl_read(ctlr_ptr, wpg_bbar, index);
+			break;
 
 			// Not used
-		हाल READ_ALLSLOT:
-			list_क्रम_each_entry(pslot, &ibmphp_slot_head,
-					    ibm_slot_list) अणु
+		case READ_ALLSLOT:
+			list_for_each_entry(pslot, &ibmphp_slot_head,
+					    ibm_slot_list) {
 				index = pslot->ctlr_index;
-				rc = hpc_रुको_ctlr_notworking(HPC_CTLR_WORKING_TOUT, ctlr_ptr,
+				rc = hpc_wait_ctlr_notworking(HPC_CTLR_WORKING_TOUT, ctlr_ptr,
 								wpg_bbar, &status);
-				अगर (!rc) अणु
-					pslot->status = ctrl_पढ़ो(ctlr_ptr, wpg_bbar, index);
-					rc = hpc_रुको_ctlr_notworking(HPC_CTLR_WORKING_TOUT,
+				if (!rc) {
+					pslot->status = ctrl_read(ctlr_ptr, wpg_bbar, index);
+					rc = hpc_wait_ctlr_notworking(HPC_CTLR_WORKING_TOUT,
 									ctlr_ptr, wpg_bbar, &status);
-					अगर (!rc)
+					if (!rc)
 						pslot->ext_status =
-						    ctrl_पढ़ो(ctlr_ptr, wpg_bbar,
+						    ctrl_read(ctlr_ptr, wpg_bbar,
 								index + WPG_1ST_EXTSLOT_INDEX);
-				पूर्ण अन्यथा अणु
+				} else {
 					err("%s - Error ctrl_read failed\n", __func__);
 					rc = -EINVAL;
-					अवरोध;
-				पूर्ण
-			पूर्ण
-			अवरोध;
-		शेष:
+					break;
+				}
+			}
+			break;
+		default:
 			rc = -EINVAL;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	//--------------------------------------------------------------------
 	// cleanup
 	//--------------------------------------------------------------------
 
-	// हटाओ physical to logical address mapping
-	अगर ((ctlr_ptr->ctlr_type == 2) || (ctlr_ptr->ctlr_type == 4))
+	// remove physical to logical address mapping
+	if ((ctlr_ptr->ctlr_type == 2) || (ctlr_ptr->ctlr_type == 4))
 		iounmap(wpg_bbar);
 
-	मुक्त_hpc_access();
+	free_hpc_access();
 
 	debug_polling("%s - Exit rc[%d]\n", __func__, rc);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*----------------------------------------------------------------------
-* Name:    ibmphp_hpc_ग_लिखोslot()
+* Name:    ibmphp_hpc_writeslot()
 *
 * Action: issue a WRITE command to HPC
 *---------------------------------------------------------------------*/
-पूर्णांक ibmphp_hpc_ग_लिखोslot(काष्ठा slot *pslot, u8 cmd)
-अणु
-	व्योम __iomem *wpg_bbar = शून्य;
-	काष्ठा controller *ctlr_ptr;
+int ibmphp_hpc_writeslot(struct slot *pslot, u8 cmd)
+{
+	void __iomem *wpg_bbar = NULL;
+	struct controller *ctlr_ptr;
 	u8 index, status;
-	पूर्णांक busindex;
-	u8 करोne;
-	पूर्णांक rc = 0;
-	पूर्णांक समयout;
+	int busindex;
+	u8 done;
+	int rc = 0;
+	int timeout;
 
 	debug_polling("%s - Entry pslot[%p] cmd[%x]\n", __func__, pslot, cmd);
-	अगर (pslot == शून्य) अणु
+	if (pslot == NULL) {
 		rc = -EINVAL;
 		err("%s - Error Exit rc[%d]\n", __func__, rc);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
-	अगर ((cmd == HPC_BUS_33CONVMODE) || (cmd == HPC_BUS_66CONVMODE) ||
+	if ((cmd == HPC_BUS_33CONVMODE) || (cmd == HPC_BUS_66CONVMODE) ||
 		(cmd == HPC_BUS_66PCIXMODE) || (cmd == HPC_BUS_100PCIXMODE) ||
-		(cmd == HPC_BUS_133PCIXMODE)) अणु
+		(cmd == HPC_BUS_133PCIXMODE)) {
 		busindex = ibmphp_get_bus_index(pslot->bus);
-		अगर (busindex < 0) अणु
+		if (busindex < 0) {
 			rc = -EINVAL;
 			err("%s - Exit Error:invalid bus, rc[%d]\n", __func__, rc);
-			वापस rc;
-		पूर्ण अन्यथा
+			return rc;
+		} else
 			index = (u8) busindex;
-	पूर्ण अन्यथा
+	} else
 		index = pslot->ctlr_index;
 
-	index = hpc_ग_लिखोcmdtoindex(cmd, index);
+	index = hpc_writecmdtoindex(cmd, index);
 
-	अगर (index == HPC_ERROR) अणु
+	if (index == HPC_ERROR) {
 		rc = -EINVAL;
 		err("%s - Error Exit rc[%d]\n", __func__, rc);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
 	ctlr_ptr = pslot->ctrl;
 
@@ -686,200 +685,200 @@
 	//--------------------------------------------------------------------
 	// map physical address to logical address
 	//--------------------------------------------------------------------
-	अगर ((ctlr_ptr->ctlr_type == 2) || (ctlr_ptr->ctlr_type == 4)) अणु
+	if ((ctlr_ptr->ctlr_type == 2) || (ctlr_ptr->ctlr_type == 4)) {
 		wpg_bbar = ioremap(ctlr_ptr->u.wpeg_ctlr.wpegbbar, WPG_I2C_IOREMAP_SIZE);
 
 		debug("%s - ctlr id[%x] physical[%lx] logical[%lx] i2c[%x]\n", __func__,
-		ctlr_ptr->ctlr_id, (uदीर्घ) (ctlr_ptr->u.wpeg_ctlr.wpegbbar), (uदीर्घ) wpg_bbar,
+		ctlr_ptr->ctlr_id, (ulong) (ctlr_ptr->u.wpeg_ctlr.wpegbbar), (ulong) wpg_bbar,
 		ctlr_ptr->u.wpeg_ctlr.i2c_addr);
-	पूर्ण
+	}
 	//--------------------------------------------------------------------
-	// check controller status beक्रमe writing
+	// check controller status before writing
 	//--------------------------------------------------------------------
-	rc = hpc_रुको_ctlr_notworking(HPC_CTLR_WORKING_TOUT, ctlr_ptr, wpg_bbar, &status);
-	अगर (!rc) अणु
+	rc = hpc_wait_ctlr_notworking(HPC_CTLR_WORKING_TOUT, ctlr_ptr, wpg_bbar, &status);
+	if (!rc) {
 
-		ctrl_ग_लिखो(ctlr_ptr, wpg_bbar, index, cmd);
+		ctrl_write(ctlr_ptr, wpg_bbar, index, cmd);
 
 		//--------------------------------------------------------------------
 		// check controller is still not working on the command
 		//--------------------------------------------------------------------
-		समयout = CMD_COMPLETE_TOUT_SEC;
-		करोne = 0;
-		जबतक (!करोne) अणु
-			rc = hpc_रुको_ctlr_notworking(HPC_CTLR_WORKING_TOUT, ctlr_ptr, wpg_bbar,
+		timeout = CMD_COMPLETE_TOUT_SEC;
+		done = 0;
+		while (!done) {
+			rc = hpc_wait_ctlr_notworking(HPC_CTLR_WORKING_TOUT, ctlr_ptr, wpg_bbar,
 							&status);
-			अगर (!rc) अणु
-				अगर (NEEDTOCHECK_CMDSTATUS(cmd)) अणु
-					अगर (CTLR_FINISHED(status) == HPC_CTLR_FINISHED_YES)
-						करोne = 1;
-				पूर्ण अन्यथा
-					करोne = 1;
-			पूर्ण
-			अगर (!करोne) अणु
+			if (!rc) {
+				if (NEEDTOCHECK_CMDSTATUS(cmd)) {
+					if (CTLR_FINISHED(status) == HPC_CTLR_FINISHED_YES)
+						done = 1;
+				} else
+					done = 1;
+			}
+			if (!done) {
 				msleep(1000);
-				अगर (समयout < 1) अणु
-					करोne = 1;
+				if (timeout < 1) {
+					done = 1;
 					err("%s - Error command complete timeout\n", __func__);
 					rc = -EFAULT;
-				पूर्ण अन्यथा
-					समयout--;
-			पूर्ण
-		पूर्ण
+				} else
+					timeout--;
+			}
+		}
 		ctlr_ptr->status = status;
-	पूर्ण
+	}
 	// cleanup
 
-	// हटाओ physical to logical address mapping
-	अगर ((ctlr_ptr->ctlr_type == 2) || (ctlr_ptr->ctlr_type == 4))
+	// remove physical to logical address mapping
+	if ((ctlr_ptr->ctlr_type == 2) || (ctlr_ptr->ctlr_type == 4))
 		iounmap(wpg_bbar);
-	मुक्त_hpc_access();
+	free_hpc_access();
 
 	debug_polling("%s - Exit rc[%d]\n", __func__, rc);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*----------------------------------------------------------------------
 * Name:    get_hpc_access()
 *
-* Action: make sure only one process can access HPC at one समय
+* Action: make sure only one process can access HPC at one time
 *---------------------------------------------------------------------*/
-अटल व्योम get_hpc_access(व्योम)
-अणु
+static void get_hpc_access(void)
+{
 	mutex_lock(&sem_hpcaccess);
-पूर्ण
+}
 
 /*----------------------------------------------------------------------
-* Name:    मुक्त_hpc_access()
+* Name:    free_hpc_access()
 *---------------------------------------------------------------------*/
-व्योम मुक्त_hpc_access(व्योम)
-अणु
+void free_hpc_access(void)
+{
 	mutex_unlock(&sem_hpcaccess);
-पूर्ण
+}
 
 /*----------------------------------------------------------------------
 * Name:    ibmphp_lock_operations()
 *
-* Action: make sure only one process can change the data काष्ठाure
+* Action: make sure only one process can change the data structure
 *---------------------------------------------------------------------*/
-व्योम ibmphp_lock_operations(व्योम)
-अणु
+void ibmphp_lock_operations(void)
+{
 	mutex_lock(&operations_mutex);
 	to_debug = 1;
-पूर्ण
+}
 
 /*----------------------------------------------------------------------
 * Name:    ibmphp_unlock_operations()
 *---------------------------------------------------------------------*/
-व्योम ibmphp_unlock_operations(व्योम)
-अणु
+void ibmphp_unlock_operations(void)
+{
 	debug("%s - Entry\n", __func__);
 	mutex_unlock(&operations_mutex);
 	to_debug = 0;
 	debug("%s - Exit\n", __func__);
-पूर्ण
+}
 
 /*----------------------------------------------------------------------
 * Name:    poll_hpc()
 *---------------------------------------------------------------------*/
-#घोषणा POLL_LATCH_REGISTER	0
-#घोषणा POLL_SLOTS		1
-#घोषणा POLL_SLEEP		2
-अटल पूर्णांक poll_hpc(व्योम *data)
-अणु
-	काष्ठा slot myslot;
-	काष्ठा slot *pslot = शून्य;
-	पूर्णांक rc;
-	पूर्णांक poll_state = POLL_LATCH_REGISTER;
+#define POLL_LATCH_REGISTER	0
+#define POLL_SLOTS		1
+#define POLL_SLEEP		2
+static int poll_hpc(void *data)
+{
+	struct slot myslot;
+	struct slot *pslot = NULL;
+	int rc;
+	int poll_state = POLL_LATCH_REGISTER;
 	u8 oldlatchlow = 0x00;
 	u8 curlatchlow = 0x00;
-	पूर्णांक poll_count = 0;
+	int poll_count = 0;
 	u8 ctrl_count = 0x00;
 
 	debug("%s - Entry\n", __func__);
 
-	जबतक (!kthपढ़ो_should_stop()) अणु
-		/* try to get the lock to करो some kind of hardware access */
+	while (!kthread_should_stop()) {
+		/* try to get the lock to do some kind of hardware access */
 		mutex_lock(&operations_mutex);
 
-		चयन (poll_state) अणु
-		हाल POLL_LATCH_REGISTER:
+		switch (poll_state) {
+		case POLL_LATCH_REGISTER:
 			oldlatchlow = curlatchlow;
 			ctrl_count = 0x00;
-			list_क्रम_each_entry(pslot, &ibmphp_slot_head,
-					    ibm_slot_list) अणु
-				अगर (ctrl_count >= ibmphp_get_total_controllers())
-					अवरोध;
-				अगर (pslot->ctrl->ctlr_relative_id == ctrl_count) अणु
+			list_for_each_entry(pslot, &ibmphp_slot_head,
+					    ibm_slot_list) {
+				if (ctrl_count >= ibmphp_get_total_controllers())
+					break;
+				if (pslot->ctrl->ctlr_relative_id == ctrl_count) {
 					ctrl_count++;
-					अगर (READ_SLOT_LATCH(pslot->ctrl)) अणु
-						rc = ibmphp_hpc_पढ़ोslot(pslot,
+					if (READ_SLOT_LATCH(pslot->ctrl)) {
+						rc = ibmphp_hpc_readslot(pslot,
 									  READ_SLOTLATCHLOWREG,
 									  &curlatchlow);
-						अगर (oldlatchlow != curlatchlow)
+						if (oldlatchlow != curlatchlow)
 							process_changeinlatch(oldlatchlow,
 									       curlatchlow,
 									       pslot->ctrl);
-					पूर्ण
-				पूर्ण
-			पूर्ण
+					}
+				}
+			}
 			++poll_count;
 			poll_state = POLL_SLEEP;
-			अवरोध;
-		हाल POLL_SLOTS:
-			list_क्रम_each_entry(pslot, &ibmphp_slot_head,
-					    ibm_slot_list) अणु
+			break;
+		case POLL_SLOTS:
+			list_for_each_entry(pslot, &ibmphp_slot_head,
+					    ibm_slot_list) {
 				// make a copy of the old status
-				स_नकल((व्योम *) &myslot, (व्योम *) pslot,
-					माप(काष्ठा slot));
-				rc = ibmphp_hpc_पढ़ोslot(pslot, READ_ALLSTAT, शून्य);
-				अगर ((myslot.status != pslot->status)
+				memcpy((void *) &myslot, (void *) pslot,
+					sizeof(struct slot));
+				rc = ibmphp_hpc_readslot(pslot, READ_ALLSTAT, NULL);
+				if ((myslot.status != pslot->status)
 				    || (myslot.ext_status != pslot->ext_status))
 					process_changeinstatus(pslot, &myslot);
-			पूर्ण
+			}
 			ctrl_count = 0x00;
-			list_क्रम_each_entry(pslot, &ibmphp_slot_head,
-					    ibm_slot_list) अणु
-				अगर (ctrl_count >= ibmphp_get_total_controllers())
-					अवरोध;
-				अगर (pslot->ctrl->ctlr_relative_id == ctrl_count) अणु
+			list_for_each_entry(pslot, &ibmphp_slot_head,
+					    ibm_slot_list) {
+				if (ctrl_count >= ibmphp_get_total_controllers())
+					break;
+				if (pslot->ctrl->ctlr_relative_id == ctrl_count) {
 					ctrl_count++;
-					अगर (READ_SLOT_LATCH(pslot->ctrl))
-						rc = ibmphp_hpc_पढ़ोslot(pslot,
+					if (READ_SLOT_LATCH(pslot->ctrl))
+						rc = ibmphp_hpc_readslot(pslot,
 									  READ_SLOTLATCHLOWREG,
 									  &curlatchlow);
-				पूर्ण
-			पूर्ण
+				}
+			}
 			++poll_count;
 			poll_state = POLL_SLEEP;
-			अवरोध;
-		हाल POLL_SLEEP:
-			/* करोn't sleep with a lock on the hardware */
+			break;
+		case POLL_SLEEP:
+			/* don't sleep with a lock on the hardware */
 			mutex_unlock(&operations_mutex);
 			msleep(POLL_INTERVAL_SEC * 1000);
 
-			अगर (kthपढ़ो_should_stop())
-				जाओ out_sleep;
+			if (kthread_should_stop())
+				goto out_sleep;
 
 			mutex_lock(&operations_mutex);
 
-			अगर (poll_count >= POLL_LATCH_CNT) अणु
+			if (poll_count >= POLL_LATCH_CNT) {
 				poll_count = 0;
 				poll_state = POLL_SLOTS;
-			पूर्ण अन्यथा
+			} else
 				poll_state = POLL_LATCH_REGISTER;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		/* give up the hardware semaphore */
 		mutex_unlock(&operations_mutex);
-		/* sleep क्रम a लघु समय just क्रम good measure */
+		/* sleep for a short time just for good measure */
 out_sleep:
 		msleep(100);
-	पूर्ण
-	complete(&निकास_complete);
+	}
+	complete(&exit_complete);
 	debug("%s - Exit\n", __func__);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /*----------------------------------------------------------------------
@@ -887,7 +886,7 @@ out_sleep:
 *
 * Action:  compare old and new slot status, process the change in status
 *
-* Input:   poपूर्णांकer to slot काष्ठा, old slot काष्ठा
+* Input:   pointer to slot struct, old slot struct
 *
 * Return   0 or error codes
 * Value:
@@ -897,201 +896,201 @@ out_sleep:
 *
 * Notes:
 *---------------------------------------------------------------------*/
-अटल पूर्णांक process_changeinstatus(काष्ठा slot *pslot, काष्ठा slot *poldslot)
-अणु
+static int process_changeinstatus(struct slot *pslot, struct slot *poldslot)
+{
 	u8 status;
-	पूर्णांक rc = 0;
+	int rc = 0;
 	u8 disable = 0;
 	u8 update = 0;
 
 	debug("process_changeinstatus - Entry pslot[%p], poldslot[%p]\n", pslot, poldslot);
 
 	// bit 0 - HPC_SLOT_POWER
-	अगर ((pslot->status & 0x01) != (poldslot->status & 0x01))
+	if ((pslot->status & 0x01) != (poldslot->status & 0x01))
 		update = 1;
 
 	// bit 1 - HPC_SLOT_CONNECT
 	// ignore
 
 	// bit 2 - HPC_SLOT_ATTN
-	अगर ((pslot->status & 0x04) != (poldslot->status & 0x04))
+	if ((pslot->status & 0x04) != (poldslot->status & 0x04))
 		update = 1;
 
 	// bit 3 - HPC_SLOT_PRSNT2
 	// bit 4 - HPC_SLOT_PRSNT1
-	अगर (((pslot->status & 0x08) != (poldslot->status & 0x08))
+	if (((pslot->status & 0x08) != (poldslot->status & 0x08))
 		|| ((pslot->status & 0x10) != (poldslot->status & 0x10)))
 		update = 1;
 
 	// bit 5 - HPC_SLOT_PWRGD
-	अगर ((pslot->status & 0x20) != (poldslot->status & 0x20))
+	if ((pslot->status & 0x20) != (poldslot->status & 0x20))
 		// OFF -> ON: ignore, ON -> OFF: disable slot
-		अगर ((poldslot->status & 0x20) && (SLOT_CONNECT(poldslot->status) == HPC_SLOT_CONNECTED) && (SLOT_PRESENT(poldslot->status)))
+		if ((poldslot->status & 0x20) && (SLOT_CONNECT(poldslot->status) == HPC_SLOT_CONNECTED) && (SLOT_PRESENT(poldslot->status)))
 			disable = 1;
 
 	// bit 6 - HPC_SLOT_BUS_SPEED
 	// ignore
 
 	// bit 7 - HPC_SLOT_LATCH
-	अगर ((pslot->status & 0x80) != (poldslot->status & 0x80)) अणु
+	if ((pslot->status & 0x80) != (poldslot->status & 0x80)) {
 		update = 1;
 		// OPEN -> CLOSE
-		अगर (pslot->status & 0x80) अणु
-			अगर (SLOT_PWRGD(pslot->status)) अणु
-				// घातer goes on and off after closing latch
-				// check again to make sure घातer is still ON
+		if (pslot->status & 0x80) {
+			if (SLOT_PWRGD(pslot->status)) {
+				// power goes on and off after closing latch
+				// check again to make sure power is still ON
 				msleep(1000);
-				rc = ibmphp_hpc_पढ़ोslot(pslot, READ_SLOTSTATUS, &status);
-				अगर (SLOT_PWRGD(status))
+				rc = ibmphp_hpc_readslot(pslot, READ_SLOTSTATUS, &status);
+				if (SLOT_PWRGD(status))
 					update = 1;
-				अन्यथा	// overग_लिखो घातer in pslot to OFF
+				else	// overwrite power in pslot to OFF
 					pslot->status &= ~HPC_SLOT_POWER;
-			पूर्ण
-		पूर्ण
+			}
+		}
 		// CLOSE -> OPEN
-		अन्यथा अगर ((SLOT_PWRGD(poldslot->status) == HPC_SLOT_PWRGD_GOOD)
-			&& (SLOT_CONNECT(poldslot->status) == HPC_SLOT_CONNECTED) && (SLOT_PRESENT(poldslot->status))) अणु
+		else if ((SLOT_PWRGD(poldslot->status) == HPC_SLOT_PWRGD_GOOD)
+			&& (SLOT_CONNECT(poldslot->status) == HPC_SLOT_CONNECTED) && (SLOT_PRESENT(poldslot->status))) {
 			disable = 1;
-		पूर्ण
-		// अन्यथा - ignore
-	पूर्ण
+		}
+		// else - ignore
+	}
 	// bit 4 - HPC_SLOT_BLINK_ATTN
-	अगर ((pslot->ext_status & 0x08) != (poldslot->ext_status & 0x08))
+	if ((pslot->ext_status & 0x08) != (poldslot->ext_status & 0x08))
 		update = 1;
 
-	अगर (disable) अणु
+	if (disable) {
 		debug("process_changeinstatus - disable slot\n");
 		pslot->flag = 0;
-		rc = ibmphp_करो_disable_slot(pslot);
-	पूर्ण
+		rc = ibmphp_do_disable_slot(pslot);
+	}
 
-	अगर (update || disable)
+	if (update || disable)
 		ibmphp_update_slot_info(pslot);
 
 	debug("%s - Exit rc[%d] disable[%x] update[%x]\n", __func__, rc, disable, update);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*----------------------------------------------------------------------
 * Name:    process_changeinlatch
 *
 * Action:  compare old and new latch reg status, process the change
 *
-* Input:   old and current latch रेजिस्टर status
+* Input:   old and current latch register status
 *
 * Return   0 or error codes
 * Value:
 *---------------------------------------------------------------------*/
-अटल पूर्णांक process_changeinlatch(u8 old, u8 new, काष्ठा controller *ctrl)
-अणु
-	काष्ठा slot myslot, *pslot;
+static int process_changeinlatch(u8 old, u8 new, struct controller *ctrl)
+{
+	struct slot myslot, *pslot;
 	u8 i;
 	u8 mask;
-	पूर्णांक rc = 0;
+	int rc = 0;
 
 	debug("%s - Entry old[%x], new[%x]\n", __func__, old, new);
-	// bit 0 reserved, 0 is LSB, check bit 1-6 क्रम 6 slots
+	// bit 0 reserved, 0 is LSB, check bit 1-6 for 6 slots
 
-	क्रम (i = ctrl->starting_slot_num; i <= ctrl->ending_slot_num; i++) अणु
+	for (i = ctrl->starting_slot_num; i <= ctrl->ending_slot_num; i++) {
 		mask = 0x01 << i;
-		अगर ((mask & old) != (mask & new)) अणु
+		if ((mask & old) != (mask & new)) {
 			pslot = ibmphp_get_slot_from_physical_num(i);
-			अगर (pslot) अणु
-				स_नकल((व्योम *) &myslot, (व्योम *) pslot, माप(काष्ठा slot));
-				rc = ibmphp_hpc_पढ़ोslot(pslot, READ_ALLSTAT, शून्य);
+			if (pslot) {
+				memcpy((void *) &myslot, (void *) pslot, sizeof(struct slot));
+				rc = ibmphp_hpc_readslot(pslot, READ_ALLSTAT, NULL);
 				debug("%s - call process_changeinstatus for slot[%d]\n", __func__, i);
 				process_changeinstatus(pslot, &myslot);
-			पूर्ण अन्यथा अणु
+			} else {
 				rc = -EINVAL;
 				err("%s - Error bad pointer for slot[%d]\n", __func__, i);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 	debug("%s - Exit rc[%d]\n", __func__, rc);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*----------------------------------------------------------------------
-* Name:    ibmphp_hpc_start_poll_thपढ़ो
+* Name:    ibmphp_hpc_start_poll_thread
 *
-* Action:  start polling thपढ़ो
+* Action:  start polling thread
 *---------------------------------------------------------------------*/
-पूर्णांक __init ibmphp_hpc_start_poll_thपढ़ो(व्योम)
-अणु
+int __init ibmphp_hpc_start_poll_thread(void)
+{
 	debug("%s - Entry\n", __func__);
 
-	ibmphp_poll_thपढ़ो = kthपढ़ो_run(poll_hpc, शून्य, "hpc_poll");
-	अगर (IS_ERR(ibmphp_poll_thपढ़ो)) अणु
+	ibmphp_poll_thread = kthread_run(poll_hpc, NULL, "hpc_poll");
+	if (IS_ERR(ibmphp_poll_thread)) {
 		err("%s - Error, thread not started\n", __func__);
-		वापस PTR_ERR(ibmphp_poll_thपढ़ो);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return PTR_ERR(ibmphp_poll_thread);
+	}
+	return 0;
+}
 
 /*----------------------------------------------------------------------
-* Name:    ibmphp_hpc_stop_poll_thपढ़ो
+* Name:    ibmphp_hpc_stop_poll_thread
 *
-* Action:  stop polling thपढ़ो and cleanup
+* Action:  stop polling thread and cleanup
 *---------------------------------------------------------------------*/
-व्योम __निकास ibmphp_hpc_stop_poll_thपढ़ो(व्योम)
-अणु
+void __exit ibmphp_hpc_stop_poll_thread(void)
+{
 	debug("%s - Entry\n", __func__);
 
-	kthपढ़ो_stop(ibmphp_poll_thपढ़ो);
+	kthread_stop(ibmphp_poll_thread);
 	debug("before locking operations\n");
 	ibmphp_lock_operations();
 	debug("after locking operations\n");
 
-	// रुको क्रम poll thपढ़ो to निकास
+	// wait for poll thread to exit
 	debug("before exit_complete down\n");
-	रुको_क्रम_completion(&निकास_complete);
+	wait_for_completion(&exit_complete);
 	debug("after exit_completion down\n");
 
 	// cleanup
 	debug("before free_hpc_access\n");
-	मुक्त_hpc_access();
+	free_hpc_access();
 	debug("after free_hpc_access\n");
 	ibmphp_unlock_operations();
 	debug("after unlock operations\n");
 
 	debug("%s - Exit\n", __func__);
-पूर्ण
+}
 
 /*----------------------------------------------------------------------
-* Name:    hpc_रुको_ctlr_notworking
+* Name:    hpc_wait_ctlr_notworking
 *
-* Action:  रुको until the controller is in a not working state
+* Action:  wait until the controller is in a not working state
 *
 * Return   0, HPC_ERROR
 * Value:
 *---------------------------------------------------------------------*/
-अटल पूर्णांक hpc_रुको_ctlr_notworking(पूर्णांक समयout, काष्ठा controller *ctlr_ptr, व्योम __iomem *wpg_bbar,
+static int hpc_wait_ctlr_notworking(int timeout, struct controller *ctlr_ptr, void __iomem *wpg_bbar,
 				    u8 *pstatus)
-अणु
-	पूर्णांक rc = 0;
-	u8 करोne = 0;
+{
+	int rc = 0;
+	u8 done = 0;
 
-	debug_polling("hpc_wait_ctlr_notworking - Entry timeout[%d]\n", समयout);
+	debug_polling("hpc_wait_ctlr_notworking - Entry timeout[%d]\n", timeout);
 
-	जबतक (!करोne) अणु
-		*pstatus = ctrl_पढ़ो(ctlr_ptr, wpg_bbar, WPG_CTLR_INDEX);
-		अगर (*pstatus == HPC_ERROR) अणु
+	while (!done) {
+		*pstatus = ctrl_read(ctlr_ptr, wpg_bbar, WPG_CTLR_INDEX);
+		if (*pstatus == HPC_ERROR) {
 			rc = HPC_ERROR;
-			करोne = 1;
-		पूर्ण
-		अगर (CTLR_WORKING(*pstatus) == HPC_CTLR_WORKING_NO)
-			करोne = 1;
-		अगर (!करोne) अणु
+			done = 1;
+		}
+		if (CTLR_WORKING(*pstatus) == HPC_CTLR_WORKING_NO)
+			done = 1;
+		if (!done) {
 			msleep(1000);
-			अगर (समयout < 1) अणु
-				करोne = 1;
+			if (timeout < 1) {
+				done = 1;
 				err("HPCreadslot - Error ctlr timeout\n");
 				rc = HPC_ERROR;
-			पूर्ण अन्यथा
-				समयout--;
-		पूर्ण
-	पूर्ण
+			} else
+				timeout--;
+		}
+	}
 	debug_polling("hpc_wait_ctlr_notworking - Exit rc[%x] status[%x]\n", rc, *pstatus);
-	वापस rc;
-पूर्ण
+	return rc;
+}

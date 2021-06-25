@@ -1,7 +1,6 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Linux network driver क्रम QLogic BR-series Converged Network Adapter.
+ * Linux network driver for QLogic BR-series Converged Network Adapter.
  */
 /*
  * Copyright (c) 2005-2014 Brocade Communications Systems, Inc.
@@ -9,15 +8,15 @@
  * All rights reserved
  * www.qlogic.com
  */
-#अगर_अघोषित __BFA_DEFS_STATUS_H__
-#घोषणा __BFA_DEFS_STATUS_H__
+#ifndef __BFA_DEFS_STATUS_H__
+#define __BFA_DEFS_STATUS_H__
 
-/* API status वापस values
+/* API status return values
  *
- * NOTE: The error msgs are स्वतः generated from the comments. Only singe line
+ * NOTE: The error msgs are auto generated from the comments. Only singe line
  * comments are supported
  */
-क्रमागत bfa_status अणु
+enum bfa_status {
 	BFA_STATUS_OK = 0,
 	BFA_STATUS_FAILED = 1,
 	BFA_STATUS_EINVAL = 2,
@@ -97,7 +96,7 @@
 	BFA_STATUS_PORT_NOT_INITED = 76,
 	BFA_STATUS_RPSC_ENABLED = 77,
 	BFA_STATUS_ENOFSAVE = 78,
-	BFA_STATUS_BAD_खाता = 79,
+	BFA_STATUS_BAD_FILE = 79,
 	BFA_STATUS_RLIM_EN = 80,
 	BFA_STATUS_RLIM_DIS = 81,
 	BFA_STATUS_IOC_DISABLED = 82,
@@ -123,7 +122,7 @@
 	BFA_STATUS_IM_FW_UPDATE_FAIL = 102,
 	BFA_STATUS_PORTLOG_ENABLED = 103,
 	BFA_STATUS_PORTLOG_DISABLED = 104,
-	BFA_STATUS_खाता_NOT_FOUND = 105,
+	BFA_STATUS_FILE_NOT_FOUND = 105,
 	BFA_STATUS_QOS_FC_ONLY = 106,
 	BFA_STATUS_RLIM_FC_ONLY = 107,
 	BFA_STATUS_CT_SPD = 108,
@@ -175,7 +174,7 @@
 	BFA_STATUS_PBC = 154,
 	BFA_STATUS_DEVID_MISSING = 155,
 	BFA_STATUS_BAD_FWCFG = 156,
-	BFA_STATUS_CREATE_खाता = 157,
+	BFA_STATUS_CREATE_FILE = 157,
 	BFA_STATUS_INVALID_VENDOR = 158,
 	BFA_STATUS_SFP_NOT_READY = 159,
 	BFA_STATUS_FLASH_UNINIT = 160,
@@ -193,17 +192,17 @@
 	BFA_STATUS_IM_VLAN_OVER_TEAM_DELETE_FAILED = 172,
 	BFA_STATUS_ETHBOOT_ENABLED = 173,
 	BFA_STATUS_ETHBOOT_DISABLED = 174,
-	BFA_STATUS_IOPROखाता_OFF = 175,
+	BFA_STATUS_IOPROFILE_OFF = 175,
 	BFA_STATUS_NO_PORT_INSTANCE = 176,
 	BFA_STATUS_BOOT_CODE_TIMEDOUT = 177,
 	BFA_STATUS_NO_VPORT_LOCK = 178,
 	BFA_STATUS_VPORT_NO_CNFG = 179,
 	BFA_STATUS_MAX_VAL
-पूर्ण;
+};
 
-क्रमागत bfa_eproto_status अणु
+enum bfa_eproto_status {
 	BFA_EPROTO_BAD_ACCEPT = 0,
 	BFA_EPROTO_UNKNOWN_RSP = 1
-पूर्ण;
+};
 
-#पूर्ण_अगर /* __BFA_DEFS_STATUS_H__ */
+#endif /* __BFA_DEFS_STATUS_H__ */

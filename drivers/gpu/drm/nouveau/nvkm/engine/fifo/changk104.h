@@ -1,55 +1,54 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
-#अगर_अघोषित __GK104_FIFO_CHAN_H__
-#घोषणा __GK104_FIFO_CHAN_H__
-#घोषणा gk104_fअगरo_chan(p) container_of((p), काष्ठा gk104_fअगरo_chan, base)
-#समावेश "chan.h"
-#समावेश "gk104.h"
+/* SPDX-License-Identifier: MIT */
+#ifndef __GK104_FIFO_CHAN_H__
+#define __GK104_FIFO_CHAN_H__
+#define gk104_fifo_chan(p) container_of((p), struct gk104_fifo_chan, base)
+#include "chan.h"
+#include "gk104.h"
 
-काष्ठा gk104_fअगरo_chan अणु
-	काष्ठा nvkm_fअगरo_chan base;
-	काष्ठा gk104_fअगरo *fअगरo;
-	पूर्णांक runl;
+struct gk104_fifo_chan {
+	struct nvkm_fifo_chan base;
+	struct gk104_fifo *fifo;
+	int runl;
 
-	काष्ठा nvkm_fअगरo_cgrp *cgrp;
-	काष्ठा list_head head;
-	bool समाप्तed;
+	struct nvkm_fifo_cgrp *cgrp;
+	struct list_head head;
+	bool killed;
 
-	काष्ठा nvkm_memory *mthd;
+	struct nvkm_memory *mthd;
 
-#घोषणा GK104_FIFO_ENGN_SW 15
-	काष्ठा gk104_fअगरo_engn अणु
-		काष्ठा nvkm_gpuobj *inst;
-		काष्ठा nvkm_vma *vma;
-	पूर्ण engn[NVKM_FIFO_ENGN_NR];
-पूर्ण;
+#define GK104_FIFO_ENGN_SW 15
+	struct gk104_fifo_engn {
+		struct nvkm_gpuobj *inst;
+		struct nvkm_vma *vma;
+	} engn[NVKM_FIFO_ENGN_NR];
+};
 
-बाह्य स्थिर काष्ठा nvkm_fअगरo_chan_func gk104_fअगरo_gpfअगरo_func;
+extern const struct nvkm_fifo_chan_func gk104_fifo_gpfifo_func;
 
-पूर्णांक gk104_fअगरo_gpfअगरo_new(काष्ठा gk104_fअगरo *, स्थिर काष्ठा nvkm_oclass *,
-			  व्योम *data, u32 size, काष्ठा nvkm_object **);
-व्योम *gk104_fअगरo_gpfअगरo_dtor(काष्ठा nvkm_fअगरo_chan *);
-व्योम gk104_fअगरo_gpfअगरo_init(काष्ठा nvkm_fअगरo_chan *);
-व्योम gk104_fअगरo_gpfअगरo_fini(काष्ठा nvkm_fअगरo_chan *);
-काष्ठा gk104_fअगरo_engn *gk104_fअगरo_gpfअगरo_engine(काष्ठा gk104_fअगरo_chan *, काष्ठा nvkm_engine *);
-पूर्णांक gk104_fअगरo_gpfअगरo_engine_ctor(काष्ठा nvkm_fअगरo_chan *, काष्ठा nvkm_engine *,
-				  काष्ठा nvkm_object *);
-व्योम gk104_fअगरo_gpfअगरo_engine_dtor(काष्ठा nvkm_fअगरo_chan *,
-				   काष्ठा nvkm_engine *);
-पूर्णांक gk104_fअगरo_gpfअगरo_kick(काष्ठा gk104_fअगरo_chan *);
-पूर्णांक gk104_fअगरo_gpfअगरo_kick_locked(काष्ठा gk104_fअगरo_chan *);
+int gk104_fifo_gpfifo_new(struct gk104_fifo *, const struct nvkm_oclass *,
+			  void *data, u32 size, struct nvkm_object **);
+void *gk104_fifo_gpfifo_dtor(struct nvkm_fifo_chan *);
+void gk104_fifo_gpfifo_init(struct nvkm_fifo_chan *);
+void gk104_fifo_gpfifo_fini(struct nvkm_fifo_chan *);
+struct gk104_fifo_engn *gk104_fifo_gpfifo_engine(struct gk104_fifo_chan *, struct nvkm_engine *);
+int gk104_fifo_gpfifo_engine_ctor(struct nvkm_fifo_chan *, struct nvkm_engine *,
+				  struct nvkm_object *);
+void gk104_fifo_gpfifo_engine_dtor(struct nvkm_fifo_chan *,
+				   struct nvkm_engine *);
+int gk104_fifo_gpfifo_kick(struct gk104_fifo_chan *);
+int gk104_fifo_gpfifo_kick_locked(struct gk104_fifo_chan *);
 
-पूर्णांक gv100_fअगरo_gpfअगरo_new(काष्ठा gk104_fअगरo *, स्थिर काष्ठा nvkm_oclass *,
-			  व्योम *data, u32 size, काष्ठा nvkm_object **);
-पूर्णांक gv100_fअगरo_gpfअगरo_new_(स्थिर काष्ठा nvkm_fअगरo_chan_func *,
-			   काष्ठा gk104_fअगरo *, u64 *, u16 *, u64, u64, u64,
-			   u64 *, bool, u32 *, स्थिर काष्ठा nvkm_oclass *,
-			   काष्ठा nvkm_object **);
-पूर्णांक gv100_fअगरo_gpfअगरo_engine_init(काष्ठा nvkm_fअगरo_chan *,
-				  काष्ठा nvkm_engine *);
-पूर्णांक gv100_fअगरo_gpfअगरo_engine_fini(काष्ठा nvkm_fअगरo_chan *,
-				  काष्ठा nvkm_engine *, bool);
+int gv100_fifo_gpfifo_new(struct gk104_fifo *, const struct nvkm_oclass *,
+			  void *data, u32 size, struct nvkm_object **);
+int gv100_fifo_gpfifo_new_(const struct nvkm_fifo_chan_func *,
+			   struct gk104_fifo *, u64 *, u16 *, u64, u64, u64,
+			   u64 *, bool, u32 *, const struct nvkm_oclass *,
+			   struct nvkm_object **);
+int gv100_fifo_gpfifo_engine_init(struct nvkm_fifo_chan *,
+				  struct nvkm_engine *);
+int gv100_fifo_gpfifo_engine_fini(struct nvkm_fifo_chan *,
+				  struct nvkm_engine *, bool);
 
-पूर्णांक tu102_fअगरo_gpfअगरo_new(काष्ठा gk104_fअगरo *, स्थिर काष्ठा nvkm_oclass *,
-			  व्योम *data, u32 size, काष्ठा nvkm_object **);
-#पूर्ण_अगर
+int tu102_fifo_gpfifo_new(struct gk104_fifo *, const struct nvkm_oclass *,
+			  void *data, u32 size, struct nvkm_object **);
+#endif

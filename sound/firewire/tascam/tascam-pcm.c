@@ -1,290 +1,289 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * tascam-pcm.c - a part of driver क्रम TASCAM FireWire series
+ * tascam-pcm.c - a part of driver for TASCAM FireWire series
  *
  * Copyright (c) 2015 Takashi Sakamoto
  */
 
-#समावेश "tascam.h"
+#include "tascam.h"
 
-अटल पूर्णांक pcm_init_hw_params(काष्ठा snd_tscm *tscm,
-			      काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा snd_pcm_hardware *hw = &runसमय->hw;
-	काष्ठा amdtp_stream *stream;
-	अचिन्हित पूर्णांक pcm_channels;
+static int pcm_init_hw_params(struct snd_tscm *tscm,
+			      struct snd_pcm_substream *substream)
+{
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct snd_pcm_hardware *hw = &runtime->hw;
+	struct amdtp_stream *stream;
+	unsigned int pcm_channels;
 
-	अगर (substream->stream == SNDRV_PCM_STREAM_CAPTURE) अणु
-		runसमय->hw.क्रमmats = SNDRV_PCM_FMTBIT_S32;
+	if (substream->stream == SNDRV_PCM_STREAM_CAPTURE) {
+		runtime->hw.formats = SNDRV_PCM_FMTBIT_S32;
 		stream = &tscm->tx_stream;
 		pcm_channels = tscm->spec->pcm_capture_analog_channels;
-	पूर्ण अन्यथा अणु
-		runसमय->hw.क्रमmats = SNDRV_PCM_FMTBIT_S32;
+	} else {
+		runtime->hw.formats = SNDRV_PCM_FMTBIT_S32;
 		stream = &tscm->rx_stream;
 		pcm_channels = tscm->spec->pcm_playback_analog_channels;
-	पूर्ण
+	}
 
-	अगर (tscm->spec->has_adat)
+	if (tscm->spec->has_adat)
 		pcm_channels += 8;
-	अगर (tscm->spec->has_spdअगर)
+	if (tscm->spec->has_spdif)
 		pcm_channels += 2;
-	runसमय->hw.channels_min = runसमय->hw.channels_max = pcm_channels;
+	runtime->hw.channels_min = runtime->hw.channels_max = pcm_channels;
 
 	hw->rates = SNDRV_PCM_RATE_44100 |
 		    SNDRV_PCM_RATE_48000 |
 		    SNDRV_PCM_RATE_88200 |
 		    SNDRV_PCM_RATE_96000;
-	snd_pcm_limit_hw_rates(runसमय);
+	snd_pcm_limit_hw_rates(runtime);
 
-	वापस amdtp_tscm_add_pcm_hw_स्थिरraपूर्णांकs(stream, runसमय);
-पूर्ण
+	return amdtp_tscm_add_pcm_hw_constraints(stream, runtime);
+}
 
-अटल पूर्णांक pcm_खोलो(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_tscm *tscm = substream->निजी_data;
-	काष्ठा amdtp_करोमुख्य *d = &tscm->करोमुख्य;
-	क्रमागत snd_tscm_घड़ी घड़ी;
-	पूर्णांक err;
+static int pcm_open(struct snd_pcm_substream *substream)
+{
+	struct snd_tscm *tscm = substream->private_data;
+	struct amdtp_domain *d = &tscm->domain;
+	enum snd_tscm_clock clock;
+	int err;
 
 	err = snd_tscm_stream_lock_try(tscm);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	err = pcm_init_hw_params(tscm, substream);
-	अगर (err < 0)
-		जाओ err_locked;
+	if (err < 0)
+		goto err_locked;
 
-	err = snd_tscm_stream_get_घड़ी(tscm, &घड़ी);
-	अगर (err < 0)
-		जाओ err_locked;
+	err = snd_tscm_stream_get_clock(tscm, &clock);
+	if (err < 0)
+		goto err_locked;
 
 	mutex_lock(&tscm->mutex);
 
-	// When source of घड़ी is not पूर्णांकernal or any stream is reserved क्रम
+	// When source of clock is not internal or any stream is reserved for
 	// transmission of PCM frames, the available sampling rate is limited
 	// at current one.
-	अगर (घड़ी != SND_TSCM_CLOCK_INTERNAL || tscm->substreams_counter > 0) अणु
-		अचिन्हित पूर्णांक frames_per_period = d->events_per_period;
-		अचिन्हित पूर्णांक frames_per_buffer = d->events_per_buffer;
-		अचिन्हित पूर्णांक rate;
+	if (clock != SND_TSCM_CLOCK_INTERNAL || tscm->substreams_counter > 0) {
+		unsigned int frames_per_period = d->events_per_period;
+		unsigned int frames_per_buffer = d->events_per_buffer;
+		unsigned int rate;
 
 		err = snd_tscm_stream_get_rate(tscm, &rate);
-		अगर (err < 0) अणु
+		if (err < 0) {
 			mutex_unlock(&tscm->mutex);
-			जाओ err_locked;
-		पूर्ण
-		substream->runसमय->hw.rate_min = rate;
-		substream->runसमय->hw.rate_max = rate;
+			goto err_locked;
+		}
+		substream->runtime->hw.rate_min = rate;
+		substream->runtime->hw.rate_max = rate;
 
-		err = snd_pcm_hw_स्थिरraपूर्णांक_minmax(substream->runसमय,
+		err = snd_pcm_hw_constraint_minmax(substream->runtime,
 					SNDRV_PCM_HW_PARAM_PERIOD_SIZE,
 					frames_per_period, frames_per_period);
-		अगर (err < 0) अणु
+		if (err < 0) {
 			mutex_unlock(&tscm->mutex);
-			जाओ err_locked;
-		पूर्ण
+			goto err_locked;
+		}
 
-		err = snd_pcm_hw_स्थिरraपूर्णांक_minmax(substream->runसमय,
+		err = snd_pcm_hw_constraint_minmax(substream->runtime,
 					SNDRV_PCM_HW_PARAM_BUFFER_SIZE,
 					frames_per_buffer, frames_per_buffer);
-		अगर (err < 0) अणु
+		if (err < 0) {
 			mutex_unlock(&tscm->mutex);
-			जाओ err_locked;
-		पूर्ण
-	पूर्ण
+			goto err_locked;
+		}
+	}
 
 	mutex_unlock(&tscm->mutex);
 
 	snd_pcm_set_sync(substream);
 
-	वापस 0;
+	return 0;
 err_locked:
 	snd_tscm_stream_lock_release(tscm);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक pcm_बंद(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_tscm *tscm = substream->निजी_data;
+static int pcm_close(struct snd_pcm_substream *substream)
+{
+	struct snd_tscm *tscm = substream->private_data;
 
 	snd_tscm_stream_lock_release(tscm);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pcm_hw_params(काष्ठा snd_pcm_substream *substream,
-			 काष्ठा snd_pcm_hw_params *hw_params)
-अणु
-	काष्ठा snd_tscm *tscm = substream->निजी_data;
-	पूर्णांक err = 0;
+static int pcm_hw_params(struct snd_pcm_substream *substream,
+			 struct snd_pcm_hw_params *hw_params)
+{
+	struct snd_tscm *tscm = substream->private_data;
+	int err = 0;
 
-	अगर (substream->runसमय->status->state == SNDRV_PCM_STATE_OPEN) अणु
-		अचिन्हित पूर्णांक rate = params_rate(hw_params);
-		अचिन्हित पूर्णांक frames_per_period = params_period_size(hw_params);
-		अचिन्हित पूर्णांक frames_per_buffer = params_buffer_size(hw_params);
+	if (substream->runtime->status->state == SNDRV_PCM_STATE_OPEN) {
+		unsigned int rate = params_rate(hw_params);
+		unsigned int frames_per_period = params_period_size(hw_params);
+		unsigned int frames_per_buffer = params_buffer_size(hw_params);
 
 		mutex_lock(&tscm->mutex);
 		err = snd_tscm_stream_reserve_duplex(tscm, rate,
 					frames_per_period, frames_per_buffer);
-		अगर (err >= 0)
+		if (err >= 0)
 			++tscm->substreams_counter;
 		mutex_unlock(&tscm->mutex);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक pcm_hw_मुक्त(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_tscm *tscm = substream->निजी_data;
+static int pcm_hw_free(struct snd_pcm_substream *substream)
+{
+	struct snd_tscm *tscm = substream->private_data;
 
 	mutex_lock(&tscm->mutex);
 
-	अगर (substream->runसमय->status->state != SNDRV_PCM_STATE_OPEN)
+	if (substream->runtime->status->state != SNDRV_PCM_STATE_OPEN)
 		--tscm->substreams_counter;
 
 	snd_tscm_stream_stop_duplex(tscm);
 
 	mutex_unlock(&tscm->mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pcm_capture_prepare(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_tscm *tscm = substream->निजी_data;
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	पूर्णांक err;
+static int pcm_capture_prepare(struct snd_pcm_substream *substream)
+{
+	struct snd_tscm *tscm = substream->private_data;
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	int err;
 
 	mutex_lock(&tscm->mutex);
 
-	err = snd_tscm_stream_start_duplex(tscm, runसमय->rate);
-	अगर (err >= 0)
+	err = snd_tscm_stream_start_duplex(tscm, runtime->rate);
+	if (err >= 0)
 		amdtp_stream_pcm_prepare(&tscm->tx_stream);
 
 	mutex_unlock(&tscm->mutex);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक pcm_playback_prepare(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_tscm *tscm = substream->निजी_data;
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	पूर्णांक err;
+static int pcm_playback_prepare(struct snd_pcm_substream *substream)
+{
+	struct snd_tscm *tscm = substream->private_data;
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	int err;
 
 	mutex_lock(&tscm->mutex);
 
-	err = snd_tscm_stream_start_duplex(tscm, runसमय->rate);
-	अगर (err >= 0)
+	err = snd_tscm_stream_start_duplex(tscm, runtime->rate);
+	if (err >= 0)
 		amdtp_stream_pcm_prepare(&tscm->rx_stream);
 
 	mutex_unlock(&tscm->mutex);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक pcm_capture_trigger(काष्ठा snd_pcm_substream *substream, पूर्णांक cmd)
-अणु
-	काष्ठा snd_tscm *tscm = substream->निजी_data;
+static int pcm_capture_trigger(struct snd_pcm_substream *substream, int cmd)
+{
+	struct snd_tscm *tscm = substream->private_data;
 
-	चयन (cmd) अणु
-	हाल SNDRV_PCM_TRIGGER_START:
+	switch (cmd) {
+	case SNDRV_PCM_TRIGGER_START:
 		amdtp_stream_pcm_trigger(&tscm->tx_stream, substream);
-		अवरोध;
-	हाल SNDRV_PCM_TRIGGER_STOP:
-		amdtp_stream_pcm_trigger(&tscm->tx_stream, शून्य);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	case SNDRV_PCM_TRIGGER_STOP:
+		amdtp_stream_pcm_trigger(&tscm->tx_stream, NULL);
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pcm_playback_trigger(काष्ठा snd_pcm_substream *substream, पूर्णांक cmd)
-अणु
-	काष्ठा snd_tscm *tscm = substream->निजी_data;
+static int pcm_playback_trigger(struct snd_pcm_substream *substream, int cmd)
+{
+	struct snd_tscm *tscm = substream->private_data;
 
-	चयन (cmd) अणु
-	हाल SNDRV_PCM_TRIGGER_START:
+	switch (cmd) {
+	case SNDRV_PCM_TRIGGER_START:
 		amdtp_stream_pcm_trigger(&tscm->rx_stream, substream);
-		अवरोध;
-	हाल SNDRV_PCM_TRIGGER_STOP:
-		amdtp_stream_pcm_trigger(&tscm->rx_stream, शून्य);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	case SNDRV_PCM_TRIGGER_STOP:
+		amdtp_stream_pcm_trigger(&tscm->rx_stream, NULL);
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल snd_pcm_uframes_t pcm_capture_poपूर्णांकer(काष्ठा snd_pcm_substream *sbstrm)
-अणु
-	काष्ठा snd_tscm *tscm = sbstrm->निजी_data;
+static snd_pcm_uframes_t pcm_capture_pointer(struct snd_pcm_substream *sbstrm)
+{
+	struct snd_tscm *tscm = sbstrm->private_data;
 
-	वापस amdtp_करोमुख्य_stream_pcm_poपूर्णांकer(&tscm->करोमुख्य, &tscm->tx_stream);
-पूर्ण
+	return amdtp_domain_stream_pcm_pointer(&tscm->domain, &tscm->tx_stream);
+}
 
-अटल snd_pcm_uframes_t pcm_playback_poपूर्णांकer(काष्ठा snd_pcm_substream *sbstrm)
-अणु
-	काष्ठा snd_tscm *tscm = sbstrm->निजी_data;
+static snd_pcm_uframes_t pcm_playback_pointer(struct snd_pcm_substream *sbstrm)
+{
+	struct snd_tscm *tscm = sbstrm->private_data;
 
-	वापस amdtp_करोमुख्य_stream_pcm_poपूर्णांकer(&tscm->करोमुख्य, &tscm->rx_stream);
-पूर्ण
+	return amdtp_domain_stream_pcm_pointer(&tscm->domain, &tscm->rx_stream);
+}
 
-अटल पूर्णांक pcm_capture_ack(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_tscm *tscm = substream->निजी_data;
+static int pcm_capture_ack(struct snd_pcm_substream *substream)
+{
+	struct snd_tscm *tscm = substream->private_data;
 
-	वापस amdtp_करोमुख्य_stream_pcm_ack(&tscm->करोमुख्य, &tscm->tx_stream);
-पूर्ण
+	return amdtp_domain_stream_pcm_ack(&tscm->domain, &tscm->tx_stream);
+}
 
-अटल पूर्णांक pcm_playback_ack(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_tscm *tscm = substream->निजी_data;
+static int pcm_playback_ack(struct snd_pcm_substream *substream)
+{
+	struct snd_tscm *tscm = substream->private_data;
 
-	वापस amdtp_करोमुख्य_stream_pcm_ack(&tscm->करोमुख्य, &tscm->rx_stream);
-पूर्ण
+	return amdtp_domain_stream_pcm_ack(&tscm->domain, &tscm->rx_stream);
+}
 
-पूर्णांक snd_tscm_create_pcm_devices(काष्ठा snd_tscm *tscm)
-अणु
-	अटल स्थिर काष्ठा snd_pcm_ops capture_ops = अणु
-		.खोलो		= pcm_खोलो,
-		.बंद		= pcm_बंद,
+int snd_tscm_create_pcm_devices(struct snd_tscm *tscm)
+{
+	static const struct snd_pcm_ops capture_ops = {
+		.open		= pcm_open,
+		.close		= pcm_close,
 		.hw_params	= pcm_hw_params,
-		.hw_मुक्त	= pcm_hw_मुक्त,
+		.hw_free	= pcm_hw_free,
 		.prepare	= pcm_capture_prepare,
 		.trigger	= pcm_capture_trigger,
-		.poपूर्णांकer	= pcm_capture_poपूर्णांकer,
+		.pointer	= pcm_capture_pointer,
 		.ack		= pcm_capture_ack,
-	पूर्ण;
-	अटल स्थिर काष्ठा snd_pcm_ops playback_ops = अणु
-		.खोलो		= pcm_खोलो,
-		.बंद		= pcm_बंद,
+	};
+	static const struct snd_pcm_ops playback_ops = {
+		.open		= pcm_open,
+		.close		= pcm_close,
 		.hw_params	= pcm_hw_params,
-		.hw_मुक्त	= pcm_hw_मुक्त,
+		.hw_free	= pcm_hw_free,
 		.prepare	= pcm_playback_prepare,
 		.trigger	= pcm_playback_trigger,
-		.poपूर्णांकer	= pcm_playback_poपूर्णांकer,
+		.pointer	= pcm_playback_pointer,
 		.ack		= pcm_playback_ack,
-	पूर्ण;
-	काष्ठा snd_pcm *pcm;
-	पूर्णांक err;
+	};
+	struct snd_pcm *pcm;
+	int err;
 
 	err = snd_pcm_new(tscm->card, tscm->card->driver, 0, 1, 1, &pcm);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	pcm->निजी_data = tscm;
-	snम_लिखो(pcm->name, माप(pcm->name),
-		 "%s PCM", tscm->card->लघुname);
+	pcm->private_data = tscm;
+	snprintf(pcm->name, sizeof(pcm->name),
+		 "%s PCM", tscm->card->shortname);
 	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_PLAYBACK, &playback_ops);
 	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_CAPTURE, &capture_ops);
-	snd_pcm_set_managed_buffer_all(pcm, SNDRV_DMA_TYPE_VMALLOC, शून्य, 0, 0);
+	snd_pcm_set_managed_buffer_all(pcm, SNDRV_DMA_TYPE_VMALLOC, NULL, 0, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
 * ***************************************************************************
 * Marvell Armada-3700 Serial Driver
@@ -8,829 +7,829 @@
 * ***************************************************************************
 */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/console.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/device.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/iopoll.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/serial.h>
-#समावेश <linux/serial_core.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/tty.h>
-#समावेश <linux/tty_flip.h>
+#include <linux/clk.h>
+#include <linux/console.h>
+#include <linux/delay.h>
+#include <linux/device.h>
+#include <linux/init.h>
+#include <linux/io.h>
+#include <linux/iopoll.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/of_device.h>
+#include <linux/of_irq.h>
+#include <linux/of_platform.h>
+#include <linux/platform_device.h>
+#include <linux/serial.h>
+#include <linux/serial_core.h>
+#include <linux/slab.h>
+#include <linux/tty.h>
+#include <linux/tty_flip.h>
 
 /* Register Map */
-#घोषणा UART_STD_RBR		0x00
-#घोषणा UART_EXT_RBR		0x18
+#define UART_STD_RBR		0x00
+#define UART_EXT_RBR		0x18
 
-#घोषणा UART_STD_TSH		0x04
-#घोषणा UART_EXT_TSH		0x1C
+#define UART_STD_TSH		0x04
+#define UART_EXT_TSH		0x1C
 
-#घोषणा UART_STD_CTRL1		0x08
-#घोषणा UART_EXT_CTRL1		0x04
-#घोषणा  CTRL_SOFT_RST		BIT(31)
-#घोषणा  CTRL_TXFIFO_RST	BIT(15)
-#घोषणा  CTRL_RXFIFO_RST	BIT(14)
-#घोषणा  CTRL_SND_BRK_SEQ	BIT(11)
-#घोषणा  CTRL_BRK_DET_INT	BIT(3)
-#घोषणा  CTRL_FRM_ERR_INT	BIT(2)
-#घोषणा  CTRL_PAR_ERR_INT	BIT(1)
-#घोषणा  CTRL_OVR_ERR_INT	BIT(0)
-#घोषणा  CTRL_BRK_INT		(CTRL_BRK_DET_INT | CTRL_FRM_ERR_INT | \
+#define UART_STD_CTRL1		0x08
+#define UART_EXT_CTRL1		0x04
+#define  CTRL_SOFT_RST		BIT(31)
+#define  CTRL_TXFIFO_RST	BIT(15)
+#define  CTRL_RXFIFO_RST	BIT(14)
+#define  CTRL_SND_BRK_SEQ	BIT(11)
+#define  CTRL_BRK_DET_INT	BIT(3)
+#define  CTRL_FRM_ERR_INT	BIT(2)
+#define  CTRL_PAR_ERR_INT	BIT(1)
+#define  CTRL_OVR_ERR_INT	BIT(0)
+#define  CTRL_BRK_INT		(CTRL_BRK_DET_INT | CTRL_FRM_ERR_INT | \
 				CTRL_PAR_ERR_INT | CTRL_OVR_ERR_INT)
 
-#घोषणा UART_STD_CTRL2		UART_STD_CTRL1
-#घोषणा UART_EXT_CTRL2		0x20
-#घोषणा  CTRL_STD_TX_RDY_INT	BIT(5)
-#घोषणा  CTRL_EXT_TX_RDY_INT	BIT(6)
-#घोषणा  CTRL_STD_RX_RDY_INT	BIT(4)
-#घोषणा  CTRL_EXT_RX_RDY_INT	BIT(5)
+#define UART_STD_CTRL2		UART_STD_CTRL1
+#define UART_EXT_CTRL2		0x20
+#define  CTRL_STD_TX_RDY_INT	BIT(5)
+#define  CTRL_EXT_TX_RDY_INT	BIT(6)
+#define  CTRL_STD_RX_RDY_INT	BIT(4)
+#define  CTRL_EXT_RX_RDY_INT	BIT(5)
 
-#घोषणा UART_STAT		0x0C
-#घोषणा  STAT_TX_FIFO_EMP	BIT(13)
-#घोषणा  STAT_TX_FIFO_FUL	BIT(11)
-#घोषणा  STAT_TX_EMP		BIT(6)
-#घोषणा  STAT_STD_TX_RDY	BIT(5)
-#घोषणा  STAT_EXT_TX_RDY	BIT(15)
-#घोषणा  STAT_STD_RX_RDY	BIT(4)
-#घोषणा  STAT_EXT_RX_RDY	BIT(14)
-#घोषणा  STAT_BRK_DET		BIT(3)
-#घोषणा  STAT_FRM_ERR		BIT(2)
-#घोषणा  STAT_PAR_ERR		BIT(1)
-#घोषणा  STAT_OVR_ERR		BIT(0)
-#घोषणा  STAT_BRK_ERR		(STAT_BRK_DET | STAT_FRM_ERR \
+#define UART_STAT		0x0C
+#define  STAT_TX_FIFO_EMP	BIT(13)
+#define  STAT_TX_FIFO_FUL	BIT(11)
+#define  STAT_TX_EMP		BIT(6)
+#define  STAT_STD_TX_RDY	BIT(5)
+#define  STAT_EXT_TX_RDY	BIT(15)
+#define  STAT_STD_RX_RDY	BIT(4)
+#define  STAT_EXT_RX_RDY	BIT(14)
+#define  STAT_BRK_DET		BIT(3)
+#define  STAT_FRM_ERR		BIT(2)
+#define  STAT_PAR_ERR		BIT(1)
+#define  STAT_OVR_ERR		BIT(0)
+#define  STAT_BRK_ERR		(STAT_BRK_DET | STAT_FRM_ERR \
 				 | STAT_PAR_ERR | STAT_OVR_ERR)
 
-#घोषणा UART_BRDV		0x10
-#घोषणा  BRDV_BAUD_MASK         0x3FF
+#define UART_BRDV		0x10
+#define  BRDV_BAUD_MASK         0x3FF
 
-#घोषणा UART_OSAMP		0x14
-#घोषणा  OSAMP_DEFAULT_DIVISOR	16
-#घोषणा  OSAMP_DIVISORS_MASK	0x3F3F3F3F
+#define UART_OSAMP		0x14
+#define  OSAMP_DEFAULT_DIVISOR	16
+#define  OSAMP_DIVISORS_MASK	0x3F3F3F3F
 
-#घोषणा MVEBU_NR_UARTS		2
+#define MVEBU_NR_UARTS		2
 
-#घोषणा MVEBU_UART_TYPE		"mvebu-uart"
-#घोषणा DRIVER_NAME		"mvebu_serial"
+#define MVEBU_UART_TYPE		"mvebu-uart"
+#define DRIVER_NAME		"mvebu_serial"
 
-क्रमागत अणु
+enum {
 	/* Either there is only one summed IRQ... */
 	UART_IRQ_SUM = 0,
-	/* ...or there are two separate IRQ क्रम RX and TX */
+	/* ...or there are two separate IRQ for RX and TX */
 	UART_RX_IRQ = 0,
 	UART_TX_IRQ,
 	UART_IRQ_COUNT
-पूर्ण;
+};
 
-/* Diverging रेजिस्टर offsets */
-काष्ठा uart_regs_layout अणु
-	अचिन्हित पूर्णांक rbr;
-	अचिन्हित पूर्णांक tsh;
-	अचिन्हित पूर्णांक ctrl;
-	अचिन्हित पूर्णांक पूर्णांकr;
-पूर्ण;
+/* Diverging register offsets */
+struct uart_regs_layout {
+	unsigned int rbr;
+	unsigned int tsh;
+	unsigned int ctrl;
+	unsigned int intr;
+};
 
 /* Diverging flags */
-काष्ठा uart_flags अणु
-	अचिन्हित पूर्णांक ctrl_tx_rdy_पूर्णांक;
-	अचिन्हित पूर्णांक ctrl_rx_rdy_पूर्णांक;
-	अचिन्हित पूर्णांक stat_tx_rdy;
-	अचिन्हित पूर्णांक stat_rx_rdy;
-पूर्ण;
+struct uart_flags {
+	unsigned int ctrl_tx_rdy_int;
+	unsigned int ctrl_rx_rdy_int;
+	unsigned int stat_tx_rdy;
+	unsigned int stat_rx_rdy;
+};
 
-/* Driver data, a काष्ठाure क्रम each UART port */
-काष्ठा mvebu_uart_driver_data अणु
+/* Driver data, a structure for each UART port */
+struct mvebu_uart_driver_data {
 	bool is_ext;
-	काष्ठा uart_regs_layout regs;
-	काष्ठा uart_flags flags;
-पूर्ण;
+	struct uart_regs_layout regs;
+	struct uart_flags flags;
+};
 
-/* Saved रेजिस्टरs during suspend */
-काष्ठा mvebu_uart_pm_regs अणु
-	अचिन्हित पूर्णांक rbr;
-	अचिन्हित पूर्णांक tsh;
-	अचिन्हित पूर्णांक ctrl;
-	अचिन्हित पूर्णांक पूर्णांकr;
-	अचिन्हित पूर्णांक stat;
-	अचिन्हित पूर्णांक brdv;
-	अचिन्हित पूर्णांक osamp;
-पूर्ण;
+/* Saved registers during suspend */
+struct mvebu_uart_pm_regs {
+	unsigned int rbr;
+	unsigned int tsh;
+	unsigned int ctrl;
+	unsigned int intr;
+	unsigned int stat;
+	unsigned int brdv;
+	unsigned int osamp;
+};
 
-/* MVEBU UART driver काष्ठाure */
-काष्ठा mvebu_uart अणु
-	काष्ठा uart_port *port;
-	काष्ठा clk *clk;
-	पूर्णांक irq[UART_IRQ_COUNT];
-	अचिन्हित अक्षर __iomem *nb;
-	काष्ठा mvebu_uart_driver_data *data;
-#अगर defined(CONFIG_PM)
-	काष्ठा mvebu_uart_pm_regs pm_regs;
-#पूर्ण_अगर /* CONFIG_PM */
-पूर्ण;
+/* MVEBU UART driver structure */
+struct mvebu_uart {
+	struct uart_port *port;
+	struct clk *clk;
+	int irq[UART_IRQ_COUNT];
+	unsigned char __iomem *nb;
+	struct mvebu_uart_driver_data *data;
+#if defined(CONFIG_PM)
+	struct mvebu_uart_pm_regs pm_regs;
+#endif /* CONFIG_PM */
+};
 
-अटल काष्ठा mvebu_uart *to_mvuart(काष्ठा uart_port *port)
-अणु
-	वापस (काष्ठा mvebu_uart *)port->निजी_data;
-पूर्ण
+static struct mvebu_uart *to_mvuart(struct uart_port *port)
+{
+	return (struct mvebu_uart *)port->private_data;
+}
 
-#घोषणा IS_EXTENDED(port) (to_mvuart(port)->data->is_ext)
+#define IS_EXTENDED(port) (to_mvuart(port)->data->is_ext)
 
-#घोषणा UART_RBR(port) (to_mvuart(port)->data->regs.rbr)
-#घोषणा UART_TSH(port) (to_mvuart(port)->data->regs.tsh)
-#घोषणा UART_CTRL(port) (to_mvuart(port)->data->regs.ctrl)
-#घोषणा UART_INTR(port) (to_mvuart(port)->data->regs.पूर्णांकr)
+#define UART_RBR(port) (to_mvuart(port)->data->regs.rbr)
+#define UART_TSH(port) (to_mvuart(port)->data->regs.tsh)
+#define UART_CTRL(port) (to_mvuart(port)->data->regs.ctrl)
+#define UART_INTR(port) (to_mvuart(port)->data->regs.intr)
 
-#घोषणा CTRL_TX_RDY_INT(port) (to_mvuart(port)->data->flags.ctrl_tx_rdy_पूर्णांक)
-#घोषणा CTRL_RX_RDY_INT(port) (to_mvuart(port)->data->flags.ctrl_rx_rdy_पूर्णांक)
-#घोषणा STAT_TX_RDY(port) (to_mvuart(port)->data->flags.stat_tx_rdy)
-#घोषणा STAT_RX_RDY(port) (to_mvuart(port)->data->flags.stat_rx_rdy)
+#define CTRL_TX_RDY_INT(port) (to_mvuart(port)->data->flags.ctrl_tx_rdy_int)
+#define CTRL_RX_RDY_INT(port) (to_mvuart(port)->data->flags.ctrl_rx_rdy_int)
+#define STAT_TX_RDY(port) (to_mvuart(port)->data->flags.stat_tx_rdy)
+#define STAT_RX_RDY(port) (to_mvuart(port)->data->flags.stat_rx_rdy)
 
-अटल काष्ठा uart_port mvebu_uart_ports[MVEBU_NR_UARTS];
+static struct uart_port mvebu_uart_ports[MVEBU_NR_UARTS];
 
 /* Core UART Driver Operations */
-अटल अचिन्हित पूर्णांक mvebu_uart_tx_empty(काष्ठा uart_port *port)
-अणु
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक st;
+static unsigned int mvebu_uart_tx_empty(struct uart_port *port)
+{
+	unsigned long flags;
+	unsigned int st;
 
 	spin_lock_irqsave(&port->lock, flags);
-	st = पढ़ोl(port->membase + UART_STAT);
+	st = readl(port->membase + UART_STAT);
 	spin_unlock_irqrestore(&port->lock, flags);
 
-	वापस (st & STAT_TX_FIFO_EMP) ? TIOCSER_TEMT : 0;
-पूर्ण
+	return (st & STAT_TX_FIFO_EMP) ? TIOCSER_TEMT : 0;
+}
 
-अटल अचिन्हित पूर्णांक mvebu_uart_get_mctrl(काष्ठा uart_port *port)
-अणु
-	वापस TIOCM_CTS | TIOCM_DSR | TIOCM_CAR;
-पूर्ण
+static unsigned int mvebu_uart_get_mctrl(struct uart_port *port)
+{
+	return TIOCM_CTS | TIOCM_DSR | TIOCM_CAR;
+}
 
-अटल व्योम mvebu_uart_set_mctrl(काष्ठा uart_port *port,
-				 अचिन्हित पूर्णांक mctrl)
-अणु
+static void mvebu_uart_set_mctrl(struct uart_port *port,
+				 unsigned int mctrl)
+{
 /*
- * Even अगर we करो not support configuring the modem control lines, this
+ * Even if we do not support configuring the modem control lines, this
  * function must be proided to the serial core
  */
-पूर्ण
+}
 
-अटल व्योम mvebu_uart_stop_tx(काष्ठा uart_port *port)
-अणु
-	अचिन्हित पूर्णांक ctl = पढ़ोl(port->membase + UART_INTR(port));
+static void mvebu_uart_stop_tx(struct uart_port *port)
+{
+	unsigned int ctl = readl(port->membase + UART_INTR(port));
 
 	ctl &= ~CTRL_TX_RDY_INT(port);
-	ग_लिखोl(ctl, port->membase + UART_INTR(port));
-पूर्ण
+	writel(ctl, port->membase + UART_INTR(port));
+}
 
-अटल व्योम mvebu_uart_start_tx(काष्ठा uart_port *port)
-अणु
-	अचिन्हित पूर्णांक ctl;
-	काष्ठा circ_buf *xmit = &port->state->xmit;
+static void mvebu_uart_start_tx(struct uart_port *port)
+{
+	unsigned int ctl;
+	struct circ_buf *xmit = &port->state->xmit;
 
-	अगर (IS_EXTENDED(port) && !uart_circ_empty(xmit)) अणु
-		ग_लिखोl(xmit->buf[xmit->tail], port->membase + UART_TSH(port));
+	if (IS_EXTENDED(port) && !uart_circ_empty(xmit)) {
+		writel(xmit->buf[xmit->tail], port->membase + UART_TSH(port));
 		xmit->tail = (xmit->tail + 1) & (UART_XMIT_SIZE - 1);
 		port->icount.tx++;
-	पूर्ण
+	}
 
-	ctl = पढ़ोl(port->membase + UART_INTR(port));
+	ctl = readl(port->membase + UART_INTR(port));
 	ctl |= CTRL_TX_RDY_INT(port);
-	ग_लिखोl(ctl, port->membase + UART_INTR(port));
-पूर्ण
+	writel(ctl, port->membase + UART_INTR(port));
+}
 
-अटल व्योम mvebu_uart_stop_rx(काष्ठा uart_port *port)
-अणु
-	अचिन्हित पूर्णांक ctl;
+static void mvebu_uart_stop_rx(struct uart_port *port)
+{
+	unsigned int ctl;
 
-	ctl = पढ़ोl(port->membase + UART_CTRL(port));
+	ctl = readl(port->membase + UART_CTRL(port));
 	ctl &= ~CTRL_BRK_INT;
-	ग_लिखोl(ctl, port->membase + UART_CTRL(port));
+	writel(ctl, port->membase + UART_CTRL(port));
 
-	ctl = पढ़ोl(port->membase + UART_INTR(port));
+	ctl = readl(port->membase + UART_INTR(port));
 	ctl &= ~CTRL_RX_RDY_INT(port);
-	ग_लिखोl(ctl, port->membase + UART_INTR(port));
-पूर्ण
+	writel(ctl, port->membase + UART_INTR(port));
+}
 
-अटल व्योम mvebu_uart_अवरोध_ctl(काष्ठा uart_port *port, पूर्णांक brk)
-अणु
-	अचिन्हित पूर्णांक ctl;
-	अचिन्हित दीर्घ flags;
+static void mvebu_uart_break_ctl(struct uart_port *port, int brk)
+{
+	unsigned int ctl;
+	unsigned long flags;
 
 	spin_lock_irqsave(&port->lock, flags);
-	ctl = पढ़ोl(port->membase + UART_CTRL(port));
-	अगर (brk == -1)
+	ctl = readl(port->membase + UART_CTRL(port));
+	if (brk == -1)
 		ctl |= CTRL_SND_BRK_SEQ;
-	अन्यथा
+	else
 		ctl &= ~CTRL_SND_BRK_SEQ;
-	ग_लिखोl(ctl, port->membase + UART_CTRL(port));
+	writel(ctl, port->membase + UART_CTRL(port));
 	spin_unlock_irqrestore(&port->lock, flags);
-पूर्ण
+}
 
-अटल व्योम mvebu_uart_rx_अक्षरs(काष्ठा uart_port *port, अचिन्हित पूर्णांक status)
-अणु
-	काष्ठा tty_port *tport = &port->state->port;
-	अचिन्हित अक्षर ch = 0;
-	अक्षर flag = 0;
+static void mvebu_uart_rx_chars(struct uart_port *port, unsigned int status)
+{
+	struct tty_port *tport = &port->state->port;
+	unsigned char ch = 0;
+	char flag = 0;
 
-	करो अणु
-		अगर (status & STAT_RX_RDY(port)) अणु
-			ch = पढ़ोl(port->membase + UART_RBR(port));
+	do {
+		if (status & STAT_RX_RDY(port)) {
+			ch = readl(port->membase + UART_RBR(port));
 			ch &= 0xff;
 			flag = TTY_NORMAL;
 			port->icount.rx++;
 
-			अगर (status & STAT_PAR_ERR)
+			if (status & STAT_PAR_ERR)
 				port->icount.parity++;
-		पूर्ण
+		}
 
-		अगर (status & STAT_BRK_DET) अणु
+		if (status & STAT_BRK_DET) {
 			port->icount.brk++;
 			status &= ~(STAT_FRM_ERR | STAT_PAR_ERR);
-			अगर (uart_handle_अवरोध(port))
-				जाओ ignore_अक्षर;
-		पूर्ण
+			if (uart_handle_break(port))
+				goto ignore_char;
+		}
 
-		अगर (status & STAT_OVR_ERR)
+		if (status & STAT_OVR_ERR)
 			port->icount.overrun++;
 
-		अगर (status & STAT_FRM_ERR)
+		if (status & STAT_FRM_ERR)
 			port->icount.frame++;
 
-		अगर (uart_handle_sysrq_अक्षर(port, ch))
-			जाओ ignore_अक्षर;
+		if (uart_handle_sysrq_char(port, ch))
+			goto ignore_char;
 
-		अगर (status & port->ignore_status_mask & STAT_PAR_ERR)
+		if (status & port->ignore_status_mask & STAT_PAR_ERR)
 			status &= ~STAT_RX_RDY(port);
 
-		status &= port->पढ़ो_status_mask;
+		status &= port->read_status_mask;
 
-		अगर (status & STAT_PAR_ERR)
+		if (status & STAT_PAR_ERR)
 			flag = TTY_PARITY;
 
 		status &= ~port->ignore_status_mask;
 
-		अगर (status & STAT_RX_RDY(port))
-			tty_insert_flip_अक्षर(tport, ch, flag);
+		if (status & STAT_RX_RDY(port))
+			tty_insert_flip_char(tport, ch, flag);
 
-		अगर (status & STAT_BRK_DET)
-			tty_insert_flip_अक्षर(tport, 0, TTY_BREAK);
+		if (status & STAT_BRK_DET)
+			tty_insert_flip_char(tport, 0, TTY_BREAK);
 
-		अगर (status & STAT_FRM_ERR)
-			tty_insert_flip_अक्षर(tport, 0, TTY_FRAME);
+		if (status & STAT_FRM_ERR)
+			tty_insert_flip_char(tport, 0, TTY_FRAME);
 
-		अगर (status & STAT_OVR_ERR)
-			tty_insert_flip_अक्षर(tport, 0, TTY_OVERRUN);
+		if (status & STAT_OVR_ERR)
+			tty_insert_flip_char(tport, 0, TTY_OVERRUN);
 
-ignore_अक्षर:
-		status = पढ़ोl(port->membase + UART_STAT);
-	पूर्ण जबतक (status & (STAT_RX_RDY(port) | STAT_BRK_DET));
+ignore_char:
+		status = readl(port->membase + UART_STAT);
+	} while (status & (STAT_RX_RDY(port) | STAT_BRK_DET));
 
 	tty_flip_buffer_push(tport);
-पूर्ण
+}
 
-अटल व्योम mvebu_uart_tx_अक्षरs(काष्ठा uart_port *port, अचिन्हित पूर्णांक status)
-अणु
-	काष्ठा circ_buf *xmit = &port->state->xmit;
-	अचिन्हित पूर्णांक count;
-	अचिन्हित पूर्णांक st;
+static void mvebu_uart_tx_chars(struct uart_port *port, unsigned int status)
+{
+	struct circ_buf *xmit = &port->state->xmit;
+	unsigned int count;
+	unsigned int st;
 
-	अगर (port->x_अक्षर) अणु
-		ग_लिखोl(port->x_अक्षर, port->membase + UART_TSH(port));
+	if (port->x_char) {
+		writel(port->x_char, port->membase + UART_TSH(port));
 		port->icount.tx++;
-		port->x_अक्षर = 0;
-		वापस;
-	पूर्ण
+		port->x_char = 0;
+		return;
+	}
 
-	अगर (uart_circ_empty(xmit) || uart_tx_stopped(port)) अणु
+	if (uart_circ_empty(xmit) || uart_tx_stopped(port)) {
 		mvebu_uart_stop_tx(port);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	क्रम (count = 0; count < port->fअगरosize; count++) अणु
-		ग_लिखोl(xmit->buf[xmit->tail], port->membase + UART_TSH(port));
+	for (count = 0; count < port->fifosize; count++) {
+		writel(xmit->buf[xmit->tail], port->membase + UART_TSH(port));
 		xmit->tail = (xmit->tail + 1) & (UART_XMIT_SIZE - 1);
 		port->icount.tx++;
 
-		अगर (uart_circ_empty(xmit))
-			अवरोध;
+		if (uart_circ_empty(xmit))
+			break;
 
-		st = पढ़ोl(port->membase + UART_STAT);
-		अगर (st & STAT_TX_FIFO_FUL)
-			अवरोध;
-	पूर्ण
+		st = readl(port->membase + UART_STAT);
+		if (st & STAT_TX_FIFO_FUL)
+			break;
+	}
 
-	अगर (uart_circ_अक्षरs_pending(xmit) < WAKEUP_CHARS)
-		uart_ग_लिखो_wakeup(port);
+	if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
+		uart_write_wakeup(port);
 
-	अगर (uart_circ_empty(xmit))
+	if (uart_circ_empty(xmit))
 		mvebu_uart_stop_tx(port);
-पूर्ण
+}
 
-अटल irqवापस_t mvebu_uart_isr(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा uart_port *port = (काष्ठा uart_port *)dev_id;
-	अचिन्हित पूर्णांक st = पढ़ोl(port->membase + UART_STAT);
+static irqreturn_t mvebu_uart_isr(int irq, void *dev_id)
+{
+	struct uart_port *port = (struct uart_port *)dev_id;
+	unsigned int st = readl(port->membase + UART_STAT);
 
-	अगर (st & (STAT_RX_RDY(port) | STAT_OVR_ERR | STAT_FRM_ERR |
+	if (st & (STAT_RX_RDY(port) | STAT_OVR_ERR | STAT_FRM_ERR |
 		  STAT_BRK_DET))
-		mvebu_uart_rx_अक्षरs(port, st);
+		mvebu_uart_rx_chars(port, st);
 
-	अगर (st & STAT_TX_RDY(port))
-		mvebu_uart_tx_अक्षरs(port, st);
+	if (st & STAT_TX_RDY(port))
+		mvebu_uart_tx_chars(port, st);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t mvebu_uart_rx_isr(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा uart_port *port = (काष्ठा uart_port *)dev_id;
-	अचिन्हित पूर्णांक st = पढ़ोl(port->membase + UART_STAT);
+static irqreturn_t mvebu_uart_rx_isr(int irq, void *dev_id)
+{
+	struct uart_port *port = (struct uart_port *)dev_id;
+	unsigned int st = readl(port->membase + UART_STAT);
 
-	अगर (st & (STAT_RX_RDY(port) | STAT_OVR_ERR | STAT_FRM_ERR |
+	if (st & (STAT_RX_RDY(port) | STAT_OVR_ERR | STAT_FRM_ERR |
 			STAT_BRK_DET))
-		mvebu_uart_rx_अक्षरs(port, st);
+		mvebu_uart_rx_chars(port, st);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t mvebu_uart_tx_isr(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा uart_port *port = (काष्ठा uart_port *)dev_id;
-	अचिन्हित पूर्णांक st = पढ़ोl(port->membase + UART_STAT);
+static irqreturn_t mvebu_uart_tx_isr(int irq, void *dev_id)
+{
+	struct uart_port *port = (struct uart_port *)dev_id;
+	unsigned int st = readl(port->membase + UART_STAT);
 
-	अगर (st & STAT_TX_RDY(port))
-		mvebu_uart_tx_अक्षरs(port, st);
+	if (st & STAT_TX_RDY(port))
+		mvebu_uart_tx_chars(port, st);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक mvebu_uart_startup(काष्ठा uart_port *port)
-अणु
-	काष्ठा mvebu_uart *mvuart = to_mvuart(port);
-	अचिन्हित पूर्णांक ctl;
-	पूर्णांक ret;
+static int mvebu_uart_startup(struct uart_port *port)
+{
+	struct mvebu_uart *mvuart = to_mvuart(port);
+	unsigned int ctl;
+	int ret;
 
-	ग_लिखोl(CTRL_TXFIFO_RST | CTRL_RXFIFO_RST,
+	writel(CTRL_TXFIFO_RST | CTRL_RXFIFO_RST,
 	       port->membase + UART_CTRL(port));
 	udelay(1);
 
-	/* Clear the error bits of state रेजिस्टर beक्रमe IRQ request */
-	ret = पढ़ोl(port->membase + UART_STAT);
+	/* Clear the error bits of state register before IRQ request */
+	ret = readl(port->membase + UART_STAT);
 	ret |= STAT_BRK_ERR;
-	ग_लिखोl(ret, port->membase + UART_STAT);
+	writel(ret, port->membase + UART_STAT);
 
-	ग_लिखोl(CTRL_BRK_INT, port->membase + UART_CTRL(port));
+	writel(CTRL_BRK_INT, port->membase + UART_CTRL(port));
 
-	ctl = पढ़ोl(port->membase + UART_INTR(port));
+	ctl = readl(port->membase + UART_INTR(port));
 	ctl |= CTRL_RX_RDY_INT(port);
-	ग_लिखोl(ctl, port->membase + UART_INTR(port));
+	writel(ctl, port->membase + UART_INTR(port));
 
-	अगर (!mvuart->irq[UART_TX_IRQ]) अणु
-		/* Old bindings with just one पूर्णांकerrupt (UART0 only) */
+	if (!mvuart->irq[UART_TX_IRQ]) {
+		/* Old bindings with just one interrupt (UART0 only) */
 		ret = devm_request_irq(port->dev, mvuart->irq[UART_IRQ_SUM],
 				       mvebu_uart_isr, port->irqflags,
 				       dev_name(port->dev), port);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(port->dev, "unable to request IRQ %d\n",
 				mvuart->irq[UART_IRQ_SUM]);
-			वापस ret;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		/* New bindings with an IRQ क्रम RX and TX (both UART) */
+			return ret;
+		}
+	} else {
+		/* New bindings with an IRQ for RX and TX (both UART) */
 		ret = devm_request_irq(port->dev, mvuart->irq[UART_RX_IRQ],
 				       mvebu_uart_rx_isr, port->irqflags,
 				       dev_name(port->dev), port);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(port->dev, "unable to request IRQ %d\n",
 				mvuart->irq[UART_RX_IRQ]);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
 		ret = devm_request_irq(port->dev, mvuart->irq[UART_TX_IRQ],
 				       mvebu_uart_tx_isr, port->irqflags,
 				       dev_name(port->dev),
 				       port);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(port->dev, "unable to request IRQ %d\n",
 				mvuart->irq[UART_TX_IRQ]);
-			devm_मुक्त_irq(port->dev, mvuart->irq[UART_RX_IRQ],
+			devm_free_irq(port->dev, mvuart->irq[UART_RX_IRQ],
 				      port);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mvebu_uart_shutकरोwn(काष्ठा uart_port *port)
-अणु
-	काष्ठा mvebu_uart *mvuart = to_mvuart(port);
+static void mvebu_uart_shutdown(struct uart_port *port)
+{
+	struct mvebu_uart *mvuart = to_mvuart(port);
 
-	ग_लिखोl(0, port->membase + UART_INTR(port));
+	writel(0, port->membase + UART_INTR(port));
 
-	अगर (!mvuart->irq[UART_TX_IRQ]) अणु
-		devm_मुक्त_irq(port->dev, mvuart->irq[UART_IRQ_SUM], port);
-	पूर्ण अन्यथा अणु
-		devm_मुक्त_irq(port->dev, mvuart->irq[UART_RX_IRQ], port);
-		devm_मुक्त_irq(port->dev, mvuart->irq[UART_TX_IRQ], port);
-	पूर्ण
-पूर्ण
+	if (!mvuart->irq[UART_TX_IRQ]) {
+		devm_free_irq(port->dev, mvuart->irq[UART_IRQ_SUM], port);
+	} else {
+		devm_free_irq(port->dev, mvuart->irq[UART_RX_IRQ], port);
+		devm_free_irq(port->dev, mvuart->irq[UART_TX_IRQ], port);
+	}
+}
 
-अटल पूर्णांक mvebu_uart_baud_rate_set(काष्ठा uart_port *port, अचिन्हित पूर्णांक baud)
-अणु
-	काष्ठा mvebu_uart *mvuart = to_mvuart(port);
-	अचिन्हित पूर्णांक d_भागisor, m_भागisor;
+static int mvebu_uart_baud_rate_set(struct uart_port *port, unsigned int baud)
+{
+	struct mvebu_uart *mvuart = to_mvuart(port);
+	unsigned int d_divisor, m_divisor;
 	u32 brdv, osamp;
 
-	अगर (IS_ERR(mvuart->clk))
-		वापस -PTR_ERR(mvuart->clk);
+	if (IS_ERR(mvuart->clk))
+		return -PTR_ERR(mvuart->clk);
 
 	/*
-	 * The baudrate is derived from the UART घड़ी thanks to two भागisors:
-	 *   > D ("baud generator"): can भागide the घड़ी from 2 to 2^10 - 1.
-	 *   > M ("fractional divisor"): allows a better accuracy क्रम
+	 * The baudrate is derived from the UART clock thanks to two divisors:
+	 *   > D ("baud generator"): can divide the clock from 2 to 2^10 - 1.
+	 *   > M ("fractional divisor"): allows a better accuracy for
 	 *     baudrates higher than 230400.
 	 *
 	 * As the derivation of M is rather complicated, the code sticks to its
-	 * शेष value (x16) when all the prescalers are zeroed, and only
+	 * default value (x16) when all the prescalers are zeroed, and only
 	 * makes use of D to configure the desired baudrate.
 	 */
-	m_भागisor = OSAMP_DEFAULT_DIVISOR;
-	d_भागisor = DIV_ROUND_UP(port->uartclk, baud * m_भागisor);
+	m_divisor = OSAMP_DEFAULT_DIVISOR;
+	d_divisor = DIV_ROUND_UP(port->uartclk, baud * m_divisor);
 
-	brdv = पढ़ोl(port->membase + UART_BRDV);
+	brdv = readl(port->membase + UART_BRDV);
 	brdv &= ~BRDV_BAUD_MASK;
-	brdv |= d_भागisor;
-	ग_लिखोl(brdv, port->membase + UART_BRDV);
+	brdv |= d_divisor;
+	writel(brdv, port->membase + UART_BRDV);
 
-	osamp = पढ़ोl(port->membase + UART_OSAMP);
+	osamp = readl(port->membase + UART_OSAMP);
 	osamp &= ~OSAMP_DIVISORS_MASK;
-	ग_लिखोl(osamp, port->membase + UART_OSAMP);
+	writel(osamp, port->membase + UART_OSAMP);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mvebu_uart_set_termios(काष्ठा uart_port *port,
-				   काष्ठा ktermios *termios,
-				   काष्ठा ktermios *old)
-अणु
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक baud;
+static void mvebu_uart_set_termios(struct uart_port *port,
+				   struct ktermios *termios,
+				   struct ktermios *old)
+{
+	unsigned long flags;
+	unsigned int baud;
 
 	spin_lock_irqsave(&port->lock, flags);
 
-	port->पढ़ो_status_mask = STAT_RX_RDY(port) | STAT_OVR_ERR |
+	port->read_status_mask = STAT_RX_RDY(port) | STAT_OVR_ERR |
 		STAT_TX_RDY(port) | STAT_TX_FIFO_FUL;
 
-	अगर (termios->c_अगरlag & INPCK)
-		port->पढ़ो_status_mask |= STAT_FRM_ERR | STAT_PAR_ERR;
+	if (termios->c_iflag & INPCK)
+		port->read_status_mask |= STAT_FRM_ERR | STAT_PAR_ERR;
 
 	port->ignore_status_mask = 0;
-	अगर (termios->c_अगरlag & IGNPAR)
+	if (termios->c_iflag & IGNPAR)
 		port->ignore_status_mask |=
 			STAT_FRM_ERR | STAT_PAR_ERR | STAT_OVR_ERR;
 
-	अगर ((termios->c_cflag & CREAD) == 0)
+	if ((termios->c_cflag & CREAD) == 0)
 		port->ignore_status_mask |= STAT_RX_RDY(port) | STAT_BRK_ERR;
 
 	/*
-	 * Maximum achievable frequency with simple baudrate भागisor is 230400.
+	 * Maximum achievable frequency with simple baudrate divisor is 230400.
 	 * Since the error per bit frame would be of more than 15%, achieving
-	 * higher frequencies would require to implement the fractional भागisor
+	 * higher frequencies would require to implement the fractional divisor
 	 * feature.
 	 */
 	baud = uart_get_baud_rate(port, termios, old, 0, 230400);
-	अगर (mvebu_uart_baud_rate_set(port, baud)) अणु
-		/* No घड़ी available, baudrate cannot be changed */
-		अगर (old)
-			baud = uart_get_baud_rate(port, old, शून्य, 0, 230400);
-	पूर्ण अन्यथा अणु
+	if (mvebu_uart_baud_rate_set(port, baud)) {
+		/* No clock available, baudrate cannot be changed */
+		if (old)
+			baud = uart_get_baud_rate(port, old, NULL, 0, 230400);
+	} else {
 		tty_termios_encode_baud_rate(termios, baud, baud);
-		uart_update_समयout(port, termios->c_cflag, baud);
-	पूर्ण
+		uart_update_timeout(port, termios->c_cflag, baud);
+	}
 
 	/* Only the following flag changes are supported */
-	अगर (old) अणु
-		termios->c_अगरlag &= INPCK | IGNPAR;
-		termios->c_अगरlag |= old->c_अगरlag & ~(INPCK | IGNPAR);
+	if (old) {
+		termios->c_iflag &= INPCK | IGNPAR;
+		termios->c_iflag |= old->c_iflag & ~(INPCK | IGNPAR);
 		termios->c_cflag &= CREAD | CBAUD;
 		termios->c_cflag |= old->c_cflag & ~(CREAD | CBAUD);
 		termios->c_cflag |= CS8;
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&port->lock, flags);
-पूर्ण
+}
 
-अटल स्थिर अक्षर *mvebu_uart_type(काष्ठा uart_port *port)
-अणु
-	वापस MVEBU_UART_TYPE;
-पूर्ण
+static const char *mvebu_uart_type(struct uart_port *port)
+{
+	return MVEBU_UART_TYPE;
+}
 
-अटल व्योम mvebu_uart_release_port(काष्ठा uart_port *port)
-अणु
-	/* Nothing to करो here */
-पूर्ण
+static void mvebu_uart_release_port(struct uart_port *port)
+{
+	/* Nothing to do here */
+}
 
-अटल पूर्णांक mvebu_uart_request_port(काष्ठा uart_port *port)
-अणु
-	वापस 0;
-पूर्ण
+static int mvebu_uart_request_port(struct uart_port *port)
+{
+	return 0;
+}
 
-#अगर_घोषित CONFIG_CONSOLE_POLL
-अटल पूर्णांक mvebu_uart_get_poll_अक्षर(काष्ठा uart_port *port)
-अणु
-	अचिन्हित पूर्णांक st = पढ़ोl(port->membase + UART_STAT);
+#ifdef CONFIG_CONSOLE_POLL
+static int mvebu_uart_get_poll_char(struct uart_port *port)
+{
+	unsigned int st = readl(port->membase + UART_STAT);
 
-	अगर (!(st & STAT_RX_RDY(port)))
-		वापस NO_POLL_CHAR;
+	if (!(st & STAT_RX_RDY(port)))
+		return NO_POLL_CHAR;
 
-	वापस पढ़ोl(port->membase + UART_RBR(port));
-पूर्ण
+	return readl(port->membase + UART_RBR(port));
+}
 
-अटल व्योम mvebu_uart_put_poll_अक्षर(काष्ठा uart_port *port, अचिन्हित अक्षर c)
-अणु
-	अचिन्हित पूर्णांक st;
+static void mvebu_uart_put_poll_char(struct uart_port *port, unsigned char c)
+{
+	unsigned int st;
 
-	क्रम (;;) अणु
-		st = पढ़ोl(port->membase + UART_STAT);
+	for (;;) {
+		st = readl(port->membase + UART_STAT);
 
-		अगर (!(st & STAT_TX_FIFO_FUL))
-			अवरोध;
+		if (!(st & STAT_TX_FIFO_FUL))
+			break;
 
 		udelay(1);
-	पूर्ण
+	}
 
-	ग_लिखोl(c, port->membase + UART_TSH(port));
-पूर्ण
-#पूर्ण_अगर
+	writel(c, port->membase + UART_TSH(port));
+}
+#endif
 
-अटल स्थिर काष्ठा uart_ops mvebu_uart_ops = अणु
+static const struct uart_ops mvebu_uart_ops = {
 	.tx_empty	= mvebu_uart_tx_empty,
 	.set_mctrl	= mvebu_uart_set_mctrl,
 	.get_mctrl	= mvebu_uart_get_mctrl,
 	.stop_tx	= mvebu_uart_stop_tx,
 	.start_tx	= mvebu_uart_start_tx,
 	.stop_rx	= mvebu_uart_stop_rx,
-	.अवरोध_ctl	= mvebu_uart_अवरोध_ctl,
+	.break_ctl	= mvebu_uart_break_ctl,
 	.startup	= mvebu_uart_startup,
-	.shutकरोwn	= mvebu_uart_shutकरोwn,
+	.shutdown	= mvebu_uart_shutdown,
 	.set_termios	= mvebu_uart_set_termios,
 	.type		= mvebu_uart_type,
 	.release_port	= mvebu_uart_release_port,
 	.request_port	= mvebu_uart_request_port,
-#अगर_घोषित CONFIG_CONSOLE_POLL
-	.poll_get_अक्षर	= mvebu_uart_get_poll_अक्षर,
-	.poll_put_अक्षर	= mvebu_uart_put_poll_अक्षर,
-#पूर्ण_अगर
-पूर्ण;
+#ifdef CONFIG_CONSOLE_POLL
+	.poll_get_char	= mvebu_uart_get_poll_char,
+	.poll_put_char	= mvebu_uart_put_poll_char,
+#endif
+};
 
 /* Console Driver Operations  */
 
-#अगर_घोषित CONFIG_SERIAL_MVEBU_CONSOLE
+#ifdef CONFIG_SERIAL_MVEBU_CONSOLE
 /* Early Console */
-अटल व्योम mvebu_uart_अ_दो(काष्ठा uart_port *port, पूर्णांक c)
-अणु
-	अचिन्हित पूर्णांक st;
+static void mvebu_uart_putc(struct uart_port *port, int c)
+{
+	unsigned int st;
 
-	क्रम (;;) अणु
-		st = पढ़ोl(port->membase + UART_STAT);
-		अगर (!(st & STAT_TX_FIFO_FUL))
-			अवरोध;
-	पूर्ण
+	for (;;) {
+		st = readl(port->membase + UART_STAT);
+		if (!(st & STAT_TX_FIFO_FUL))
+			break;
+	}
 
 	/* At early stage, DT is not parsed yet, only use UART0 */
-	ग_लिखोl(c, port->membase + UART_STD_TSH);
+	writel(c, port->membase + UART_STD_TSH);
 
-	क्रम (;;) अणु
-		st = पढ़ोl(port->membase + UART_STAT);
-		अगर (st & STAT_TX_FIFO_EMP)
-			अवरोध;
-	पूर्ण
-पूर्ण
+	for (;;) {
+		st = readl(port->membase + UART_STAT);
+		if (st & STAT_TX_FIFO_EMP)
+			break;
+	}
+}
 
-अटल व्योम mvebu_uart_अ_दो_early_ग_लिखो(काष्ठा console *con,
-					स्थिर अक्षर *s,
-					अचिन्हित n)
-अणु
-	काष्ठा earlycon_device *dev = con->data;
+static void mvebu_uart_putc_early_write(struct console *con,
+					const char *s,
+					unsigned n)
+{
+	struct earlycon_device *dev = con->data;
 
-	uart_console_ग_लिखो(&dev->port, s, n, mvebu_uart_अ_दो);
-पूर्ण
+	uart_console_write(&dev->port, s, n, mvebu_uart_putc);
+}
 
-अटल पूर्णांक __init
-mvebu_uart_early_console_setup(काष्ठा earlycon_device *device,
-			       स्थिर अक्षर *opt)
-अणु
-	अगर (!device->port.membase)
-		वापस -ENODEV;
+static int __init
+mvebu_uart_early_console_setup(struct earlycon_device *device,
+			       const char *opt)
+{
+	if (!device->port.membase)
+		return -ENODEV;
 
-	device->con->ग_लिखो = mvebu_uart_अ_दो_early_ग_लिखो;
+	device->con->write = mvebu_uart_putc_early_write;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 EARLYCON_DECLARE(ar3700_uart, mvebu_uart_early_console_setup);
 OF_EARLYCON_DECLARE(ar3700_uart, "marvell,armada-3700-uart",
 		    mvebu_uart_early_console_setup);
 
-अटल व्योम रुको_क्रम_xmitr(काष्ठा uart_port *port)
-अणु
+static void wait_for_xmitr(struct uart_port *port)
+{
 	u32 val;
 
-	पढ़ोl_poll_समयout_atomic(port->membase + UART_STAT, val,
+	readl_poll_timeout_atomic(port->membase + UART_STAT, val,
 				  (val & STAT_TX_RDY(port)), 1, 10000);
-पूर्ण
+}
 
-अटल व्योम रुको_क्रम_xmite(काष्ठा uart_port *port)
-अणु
+static void wait_for_xmite(struct uart_port *port)
+{
 	u32 val;
 
-	पढ़ोl_poll_समयout_atomic(port->membase + UART_STAT, val,
+	readl_poll_timeout_atomic(port->membase + UART_STAT, val,
 				  (val & STAT_TX_EMP), 1, 10000);
-पूर्ण
+}
 
-अटल व्योम mvebu_uart_console_अक्षर_दो(काष्ठा uart_port *port, पूर्णांक ch)
-अणु
-	रुको_क्रम_xmitr(port);
-	ग_लिखोl(ch, port->membase + UART_TSH(port));
-पूर्ण
+static void mvebu_uart_console_putchar(struct uart_port *port, int ch)
+{
+	wait_for_xmitr(port);
+	writel(ch, port->membase + UART_TSH(port));
+}
 
-अटल व्योम mvebu_uart_console_ग_लिखो(काष्ठा console *co, स्थिर अक्षर *s,
-				     अचिन्हित पूर्णांक count)
-अणु
-	काष्ठा uart_port *port = &mvebu_uart_ports[co->index];
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक ier, पूर्णांकr, ctl;
-	पूर्णांक locked = 1;
+static void mvebu_uart_console_write(struct console *co, const char *s,
+				     unsigned int count)
+{
+	struct uart_port *port = &mvebu_uart_ports[co->index];
+	unsigned long flags;
+	unsigned int ier, intr, ctl;
+	int locked = 1;
 
-	अगर (oops_in_progress)
+	if (oops_in_progress)
 		locked = spin_trylock_irqsave(&port->lock, flags);
-	अन्यथा
+	else
 		spin_lock_irqsave(&port->lock, flags);
 
-	ier = पढ़ोl(port->membase + UART_CTRL(port)) & CTRL_BRK_INT;
-	पूर्णांकr = पढ़ोl(port->membase + UART_INTR(port)) &
+	ier = readl(port->membase + UART_CTRL(port)) & CTRL_BRK_INT;
+	intr = readl(port->membase + UART_INTR(port)) &
 		(CTRL_RX_RDY_INT(port) | CTRL_TX_RDY_INT(port));
-	ग_लिखोl(0, port->membase + UART_CTRL(port));
-	ग_लिखोl(0, port->membase + UART_INTR(port));
+	writel(0, port->membase + UART_CTRL(port));
+	writel(0, port->membase + UART_INTR(port));
 
-	uart_console_ग_लिखो(port, s, count, mvebu_uart_console_अक्षर_दो);
+	uart_console_write(port, s, count, mvebu_uart_console_putchar);
 
-	रुको_क्रम_xmite(port);
+	wait_for_xmite(port);
 
-	अगर (ier)
-		ग_लिखोl(ier, port->membase + UART_CTRL(port));
+	if (ier)
+		writel(ier, port->membase + UART_CTRL(port));
 
-	अगर (पूर्णांकr) अणु
-		ctl = पूर्णांकr | पढ़ोl(port->membase + UART_INTR(port));
-		ग_लिखोl(ctl, port->membase + UART_INTR(port));
-	पूर्ण
+	if (intr) {
+		ctl = intr | readl(port->membase + UART_INTR(port));
+		writel(ctl, port->membase + UART_INTR(port));
+	}
 
-	अगर (locked)
+	if (locked)
 		spin_unlock_irqrestore(&port->lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक mvebu_uart_console_setup(काष्ठा console *co, अक्षर *options)
-अणु
-	काष्ठा uart_port *port;
-	पूर्णांक baud = 9600;
-	पूर्णांक bits = 8;
-	पूर्णांक parity = 'n';
-	पूर्णांक flow = 'n';
+static int mvebu_uart_console_setup(struct console *co, char *options)
+{
+	struct uart_port *port;
+	int baud = 9600;
+	int bits = 8;
+	int parity = 'n';
+	int flow = 'n';
 
-	अगर (co->index < 0 || co->index >= MVEBU_NR_UARTS)
-		वापस -EINVAL;
+	if (co->index < 0 || co->index >= MVEBU_NR_UARTS)
+		return -EINVAL;
 
 	port = &mvebu_uart_ports[co->index];
 
-	अगर (!port->mapbase || !port->membase) अणु
+	if (!port->mapbase || !port->membase) {
 		pr_debug("console on ttyMV%i not present\n", co->index);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (options)
+	if (options)
 		uart_parse_options(options, &baud, &parity, &bits, &flow);
 
-	वापस uart_set_options(port, co, baud, parity, bits, flow);
-पूर्ण
+	return uart_set_options(port, co, baud, parity, bits, flow);
+}
 
-अटल काष्ठा uart_driver mvebu_uart_driver;
+static struct uart_driver mvebu_uart_driver;
 
-अटल काष्ठा console mvebu_uart_console = अणु
+static struct console mvebu_uart_console = {
 	.name	= "ttyMV",
-	.ग_लिखो	= mvebu_uart_console_ग_लिखो,
+	.write	= mvebu_uart_console_write,
 	.device	= uart_console_device,
 	.setup	= mvebu_uart_console_setup,
 	.flags	= CON_PRINTBUFFER,
 	.index	= -1,
 	.data	= &mvebu_uart_driver,
-पूर्ण;
+};
 
-अटल पूर्णांक __init mvebu_uart_console_init(व्योम)
-अणु
-	रेजिस्टर_console(&mvebu_uart_console);
-	वापस 0;
-पूर्ण
+static int __init mvebu_uart_console_init(void)
+{
+	register_console(&mvebu_uart_console);
+	return 0;
+}
 
 console_initcall(mvebu_uart_console_init);
 
 
-#पूर्ण_अगर /* CONFIG_SERIAL_MVEBU_CONSOLE */
+#endif /* CONFIG_SERIAL_MVEBU_CONSOLE */
 
-अटल काष्ठा uart_driver mvebu_uart_driver = अणु
+static struct uart_driver mvebu_uart_driver = {
 	.owner			= THIS_MODULE,
 	.driver_name		= DRIVER_NAME,
 	.dev_name		= "ttyMV",
 	.nr			= MVEBU_NR_UARTS,
-#अगर_घोषित CONFIG_SERIAL_MVEBU_CONSOLE
+#ifdef CONFIG_SERIAL_MVEBU_CONSOLE
 	.cons			= &mvebu_uart_console,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-#अगर defined(CONFIG_PM)
-अटल पूर्णांक mvebu_uart_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा mvebu_uart *mvuart = dev_get_drvdata(dev);
-	काष्ठा uart_port *port = mvuart->port;
+#if defined(CONFIG_PM)
+static int mvebu_uart_suspend(struct device *dev)
+{
+	struct mvebu_uart *mvuart = dev_get_drvdata(dev);
+	struct uart_port *port = mvuart->port;
 
 	uart_suspend_port(&mvebu_uart_driver, port);
 
-	mvuart->pm_regs.rbr = पढ़ोl(port->membase + UART_RBR(port));
-	mvuart->pm_regs.tsh = पढ़ोl(port->membase + UART_TSH(port));
-	mvuart->pm_regs.ctrl = पढ़ोl(port->membase + UART_CTRL(port));
-	mvuart->pm_regs.पूर्णांकr = पढ़ोl(port->membase + UART_INTR(port));
-	mvuart->pm_regs.stat = पढ़ोl(port->membase + UART_STAT);
-	mvuart->pm_regs.brdv = पढ़ोl(port->membase + UART_BRDV);
-	mvuart->pm_regs.osamp = पढ़ोl(port->membase + UART_OSAMP);
+	mvuart->pm_regs.rbr = readl(port->membase + UART_RBR(port));
+	mvuart->pm_regs.tsh = readl(port->membase + UART_TSH(port));
+	mvuart->pm_regs.ctrl = readl(port->membase + UART_CTRL(port));
+	mvuart->pm_regs.intr = readl(port->membase + UART_INTR(port));
+	mvuart->pm_regs.stat = readl(port->membase + UART_STAT);
+	mvuart->pm_regs.brdv = readl(port->membase + UART_BRDV);
+	mvuart->pm_regs.osamp = readl(port->membase + UART_OSAMP);
 
 	device_set_wakeup_enable(dev, true);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mvebu_uart_resume(काष्ठा device *dev)
-अणु
-	काष्ठा mvebu_uart *mvuart = dev_get_drvdata(dev);
-	काष्ठा uart_port *port = mvuart->port;
+static int mvebu_uart_resume(struct device *dev)
+{
+	struct mvebu_uart *mvuart = dev_get_drvdata(dev);
+	struct uart_port *port = mvuart->port;
 
-	ग_लिखोl(mvuart->pm_regs.rbr, port->membase + UART_RBR(port));
-	ग_लिखोl(mvuart->pm_regs.tsh, port->membase + UART_TSH(port));
-	ग_लिखोl(mvuart->pm_regs.ctrl, port->membase + UART_CTRL(port));
-	ग_लिखोl(mvuart->pm_regs.पूर्णांकr, port->membase + UART_INTR(port));
-	ग_लिखोl(mvuart->pm_regs.stat, port->membase + UART_STAT);
-	ग_लिखोl(mvuart->pm_regs.brdv, port->membase + UART_BRDV);
-	ग_लिखोl(mvuart->pm_regs.osamp, port->membase + UART_OSAMP);
+	writel(mvuart->pm_regs.rbr, port->membase + UART_RBR(port));
+	writel(mvuart->pm_regs.tsh, port->membase + UART_TSH(port));
+	writel(mvuart->pm_regs.ctrl, port->membase + UART_CTRL(port));
+	writel(mvuart->pm_regs.intr, port->membase + UART_INTR(port));
+	writel(mvuart->pm_regs.stat, port->membase + UART_STAT);
+	writel(mvuart->pm_regs.brdv, port->membase + UART_BRDV);
+	writel(mvuart->pm_regs.osamp, port->membase + UART_OSAMP);
 
 	uart_resume_port(&mvebu_uart_driver, port);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops mvebu_uart_pm_ops = अणु
+static const struct dev_pm_ops mvebu_uart_pm_ops = {
 	.suspend        = mvebu_uart_suspend,
 	.resume         = mvebu_uart_resume,
-पूर्ण;
-#पूर्ण_अगर /* CONFIG_PM */
+};
+#endif /* CONFIG_PM */
 
-अटल स्थिर काष्ठा of_device_id mvebu_uart_of_match[];
+static const struct of_device_id mvebu_uart_of_match[];
 
 /* Counter to keep track of each UART port id when not using CONFIG_OF */
-अटल पूर्णांक uart_num_counter;
+static int uart_num_counter;
 
-अटल पूर्णांक mvebu_uart_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा resource *reg = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	स्थिर काष्ठा of_device_id *match = of_match_device(mvebu_uart_of_match,
+static int mvebu_uart_probe(struct platform_device *pdev)
+{
+	struct resource *reg = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	const struct of_device_id *match = of_match_device(mvebu_uart_of_match,
 							   &pdev->dev);
-	काष्ठा uart_port *port;
-	काष्ठा mvebu_uart *mvuart;
-	पूर्णांक id, irq;
+	struct uart_port *port;
+	struct mvebu_uart *mvuart;
+	int id, irq;
 
-	अगर (!reg) अणु
+	if (!reg) {
 		dev_err(&pdev->dev, "no registers defined\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* Assume that all UART ports have a DT alias or none has */
 	id = of_alias_get_id(pdev->dev.of_node, "serial");
-	अगर (!pdev->dev.of_node || id < 0)
+	if (!pdev->dev.of_node || id < 0)
 		pdev->id = uart_num_counter++;
-	अन्यथा
+	else
 		pdev->id = id;
 
-	अगर (pdev->id >= MVEBU_NR_UARTS) अणु
+	if (pdev->id >= MVEBU_NR_UARTS) {
 		dev_err(&pdev->dev, "cannot have more than %d UART ports\n",
 			MVEBU_NR_UARTS);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	port = &mvebu_uart_ports[pdev->id];
 
@@ -839,16 +838,16 @@ console_initcall(mvebu_uart_console_init);
 	port->dev        = &pdev->dev;
 	port->type       = PORT_MVEBU;
 	port->ops        = &mvebu_uart_ops;
-	port->regshअगरt   = 0;
+	port->regshift   = 0;
 
-	port->fअगरosize   = 32;
+	port->fifosize   = 32;
 	port->iotype     = UPIO_MEM32;
 	port->flags      = UPF_FIXED_PORT;
 	port->line       = pdev->id;
 
 	/*
-	 * IRQ number is not stored in this काष्ठाure because we may have two of
-	 * them per port (RX and TX). Instead, use the driver UART काष्ठाure
+	 * IRQ number is not stored in this structure because we may have two of
+	 * them per port (RX and TX). Instead, use the driver UART structure
 	 * array so called ->irq[].
 	 */
 	port->irq        = 0;
@@ -856,132 +855,132 @@ console_initcall(mvebu_uart_console_init);
 	port->mapbase    = reg->start;
 
 	port->membase = devm_ioremap_resource(&pdev->dev, reg);
-	अगर (IS_ERR(port->membase))
-		वापस PTR_ERR(port->membase);
+	if (IS_ERR(port->membase))
+		return PTR_ERR(port->membase);
 
-	mvuart = devm_kzalloc(&pdev->dev, माप(काष्ठा mvebu_uart),
+	mvuart = devm_kzalloc(&pdev->dev, sizeof(struct mvebu_uart),
 			      GFP_KERNEL);
-	अगर (!mvuart)
-		वापस -ENOMEM;
+	if (!mvuart)
+		return -ENOMEM;
 
 	/* Get controller data depending on the compatible string */
-	mvuart->data = (काष्ठा mvebu_uart_driver_data *)match->data;
+	mvuart->data = (struct mvebu_uart_driver_data *)match->data;
 	mvuart->port = port;
 
-	port->निजी_data = mvuart;
-	platक्रमm_set_drvdata(pdev, mvuart);
+	port->private_data = mvuart;
+	platform_set_drvdata(pdev, mvuart);
 
-	/* Get fixed घड़ी frequency */
-	mvuart->clk = devm_clk_get(&pdev->dev, शून्य);
-	अगर (IS_ERR(mvuart->clk)) अणु
-		अगर (PTR_ERR(mvuart->clk) == -EPROBE_DEFER)
-			वापस PTR_ERR(mvuart->clk);
+	/* Get fixed clock frequency */
+	mvuart->clk = devm_clk_get(&pdev->dev, NULL);
+	if (IS_ERR(mvuart->clk)) {
+		if (PTR_ERR(mvuart->clk) == -EPROBE_DEFER)
+			return PTR_ERR(mvuart->clk);
 
-		अगर (IS_EXTENDED(port)) अणु
+		if (IS_EXTENDED(port)) {
 			dev_err(&pdev->dev, "unable to get UART clock\n");
-			वापस PTR_ERR(mvuart->clk);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (!clk_prepare_enable(mvuart->clk))
+			return PTR_ERR(mvuart->clk);
+		}
+	} else {
+		if (!clk_prepare_enable(mvuart->clk))
 			port->uartclk = clk_get_rate(mvuart->clk);
-	पूर्ण
+	}
 
-	/* Manage पूर्णांकerrupts */
-	अगर (platक्रमm_irq_count(pdev) == 1) अणु
+	/* Manage interrupts */
+	if (platform_irq_count(pdev) == 1) {
 		/* Old bindings: no name on the single unamed UART0 IRQ */
-		irq = platक्रमm_get_irq(pdev, 0);
-		अगर (irq < 0)
-			वापस irq;
+		irq = platform_get_irq(pdev, 0);
+		if (irq < 0)
+			return irq;
 
 		mvuart->irq[UART_IRQ_SUM] = irq;
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
-		 * New bindings: named पूर्णांकerrupts (RX, TX) क्रम both UARTS,
-		 * only make use of uart-rx and uart-tx पूर्णांकerrupts, करो not use
+		 * New bindings: named interrupts (RX, TX) for both UARTS,
+		 * only make use of uart-rx and uart-tx interrupts, do not use
 		 * uart-sum of UART0 port.
 		 */
-		irq = platक्रमm_get_irq_byname(pdev, "uart-rx");
-		अगर (irq < 0)
-			वापस irq;
+		irq = platform_get_irq_byname(pdev, "uart-rx");
+		if (irq < 0)
+			return irq;
 
 		mvuart->irq[UART_RX_IRQ] = irq;
 
-		irq = platक्रमm_get_irq_byname(pdev, "uart-tx");
-		अगर (irq < 0)
-			वापस irq;
+		irq = platform_get_irq_byname(pdev, "uart-tx");
+		if (irq < 0)
+			return irq;
 
 		mvuart->irq[UART_TX_IRQ] = irq;
-	पूर्ण
+	}
 
 	/* UART Soft Reset*/
-	ग_लिखोl(CTRL_SOFT_RST, port->membase + UART_CTRL(port));
+	writel(CTRL_SOFT_RST, port->membase + UART_CTRL(port));
 	udelay(1);
-	ग_लिखोl(0, port->membase + UART_CTRL(port));
+	writel(0, port->membase + UART_CTRL(port));
 
-	वापस uart_add_one_port(&mvebu_uart_driver, port);
-पूर्ण
+	return uart_add_one_port(&mvebu_uart_driver, port);
+}
 
-अटल काष्ठा mvebu_uart_driver_data uart_std_driver_data = अणु
+static struct mvebu_uart_driver_data uart_std_driver_data = {
 	.is_ext = false,
 	.regs.rbr = UART_STD_RBR,
 	.regs.tsh = UART_STD_TSH,
 	.regs.ctrl = UART_STD_CTRL1,
-	.regs.पूर्णांकr = UART_STD_CTRL2,
-	.flags.ctrl_tx_rdy_पूर्णांक = CTRL_STD_TX_RDY_INT,
-	.flags.ctrl_rx_rdy_पूर्णांक = CTRL_STD_RX_RDY_INT,
+	.regs.intr = UART_STD_CTRL2,
+	.flags.ctrl_tx_rdy_int = CTRL_STD_TX_RDY_INT,
+	.flags.ctrl_rx_rdy_int = CTRL_STD_RX_RDY_INT,
 	.flags.stat_tx_rdy = STAT_STD_TX_RDY,
 	.flags.stat_rx_rdy = STAT_STD_RX_RDY,
-पूर्ण;
+};
 
-अटल काष्ठा mvebu_uart_driver_data uart_ext_driver_data = अणु
+static struct mvebu_uart_driver_data uart_ext_driver_data = {
 	.is_ext = true,
 	.regs.rbr = UART_EXT_RBR,
 	.regs.tsh = UART_EXT_TSH,
 	.regs.ctrl = UART_EXT_CTRL1,
-	.regs.पूर्णांकr = UART_EXT_CTRL2,
-	.flags.ctrl_tx_rdy_पूर्णांक = CTRL_EXT_TX_RDY_INT,
-	.flags.ctrl_rx_rdy_पूर्णांक = CTRL_EXT_RX_RDY_INT,
+	.regs.intr = UART_EXT_CTRL2,
+	.flags.ctrl_tx_rdy_int = CTRL_EXT_TX_RDY_INT,
+	.flags.ctrl_rx_rdy_int = CTRL_EXT_RX_RDY_INT,
 	.flags.stat_tx_rdy = STAT_EXT_TX_RDY,
 	.flags.stat_rx_rdy = STAT_EXT_RX_RDY,
-पूर्ण;
+};
 
-/* Match table क्रम of_platक्रमm binding */
-अटल स्थिर काष्ठा of_device_id mvebu_uart_of_match[] = अणु
-	अणु
+/* Match table for of_platform binding */
+static const struct of_device_id mvebu_uart_of_match[] = {
+	{
 		.compatible = "marvell,armada-3700-uart",
-		.data = (व्योम *)&uart_std_driver_data,
-	पूर्ण,
-	अणु
+		.data = (void *)&uart_std_driver_data,
+	},
+	{
 		.compatible = "marvell,armada-3700-uart-ext",
-		.data = (व्योम *)&uart_ext_driver_data,
-	पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+		.data = (void *)&uart_ext_driver_data,
+	},
+	{}
+};
 
-अटल काष्ठा platक्रमm_driver mvebu_uart_platक्रमm_driver = अणु
+static struct platform_driver mvebu_uart_platform_driver = {
 	.probe	= mvebu_uart_probe,
-	.driver	= अणु
+	.driver	= {
 		.name  = "mvebu-uart",
 		.of_match_table = of_match_ptr(mvebu_uart_of_match),
 		.suppress_bind_attrs = true,
-#अगर defined(CONFIG_PM)
+#if defined(CONFIG_PM)
 		.pm	= &mvebu_uart_pm_ops,
-#पूर्ण_अगर /* CONFIG_PM */
-	पूर्ण,
-पूर्ण;
+#endif /* CONFIG_PM */
+	},
+};
 
-अटल पूर्णांक __init mvebu_uart_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init mvebu_uart_init(void)
+{
+	int ret;
 
-	ret = uart_रेजिस्टर_driver(&mvebu_uart_driver);
-	अगर (ret)
-		वापस ret;
+	ret = uart_register_driver(&mvebu_uart_driver);
+	if (ret)
+		return ret;
 
-	ret = platक्रमm_driver_रेजिस्टर(&mvebu_uart_platक्रमm_driver);
-	अगर (ret)
-		uart_unरेजिस्टर_driver(&mvebu_uart_driver);
+	ret = platform_driver_register(&mvebu_uart_platform_driver);
+	if (ret)
+		uart_unregister_driver(&mvebu_uart_driver);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 arch_initcall(mvebu_uart_init);

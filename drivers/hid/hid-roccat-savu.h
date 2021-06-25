@@ -1,31 +1,30 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
-#अगर_अघोषित __HID_ROCCAT_SAVU_H
-#घोषणा __HID_ROCCAT_SAVU_H
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+#ifndef __HID_ROCCAT_SAVU_H
+#define __HID_ROCCAT_SAVU_H
 
 /*
- * Copyright (c) 2012 Stefan Achatz <erazor_de@users.sourceक्रमge.net>
+ * Copyright (c) 2012 Stefan Achatz <erazor_de@users.sourceforge.net>
  */
 
 /*
  */
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-काष्ठा savu_mouse_report_special अणु
-	uपूर्णांक8_t report_number; /* always 3 */
-	uपूर्णांक8_t zero;
-	uपूर्णांक8_t type;
-	uपूर्णांक8_t data[2];
-पूर्ण __packed;
+struct savu_mouse_report_special {
+	uint8_t report_number; /* always 3 */
+	uint8_t zero;
+	uint8_t type;
+	uint8_t data[2];
+} __packed;
 
-क्रमागत अणु
+enum {
 	SAVU_MOUSE_REPORT_NUMBER_SPECIAL = 3,
-पूर्ण;
+};
 
-क्रमागत savu_mouse_report_button_types अणु
+enum savu_mouse_report_button_types {
 	/* data1 = new profile range 1-5 */
-	SAVU_MOUSE_REPORT_BUTTON_TYPE_PROखाता = 0x20,
+	SAVU_MOUSE_REPORT_BUTTON_TYPE_PROFILE = 0x20,
 
 	/* data1 = button number range 1-24; data2 = action */
 	SAVU_MOUSE_REPORT_BUTTON_TYPE_QUICKLAUNCH = 0x60,
@@ -43,11 +42,11 @@
 	 * data2 = action
 	 */
 	SAVU_MOUSE_REPORT_BUTTON_TYPE_MULTIMEDIA = 0xf0,
-पूर्ण;
+};
 
-काष्ठा savu_roccat_report अणु
-	uपूर्णांक8_t type;
-	uपूर्णांक8_t data[2];
-पूर्ण __packed;
+struct savu_roccat_report {
+	uint8_t type;
+	uint8_t data[2];
+} __packed;
 
-#पूर्ण_अगर
+#endif

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /**
  * extcon-qcom-spmi-misc.c - Qualcomm USB extcon driver to support USB ID
  *			and VBUS detection based on extcon-usb-gpio.c.
@@ -8,212 +7,212 @@
  * Stephen Boyd <stephen.boyd@linaro.org>
  */
 
-#समावेश <linux/devm-helpers.h>
-#समावेश <linux/extcon-provider.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mod_devicetable.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/workqueue.h>
+#include <linux/devm-helpers.h>
+#include <linux/extcon-provider.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/mod_devicetable.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
+#include <linux/workqueue.h>
 
-#घोषणा USB_ID_DEBOUNCE_MS	5	/* ms */
+#define USB_ID_DEBOUNCE_MS	5	/* ms */
 
-काष्ठा qcom_usb_extcon_info अणु
-	काष्ठा extcon_dev *edev;
-	पूर्णांक id_irq;
-	पूर्णांक vbus_irq;
-	काष्ठा delayed_work wq_detcable;
-	अचिन्हित दीर्घ debounce_jअगरfies;
-पूर्ण;
+struct qcom_usb_extcon_info {
+	struct extcon_dev *edev;
+	int id_irq;
+	int vbus_irq;
+	struct delayed_work wq_detcable;
+	unsigned long debounce_jiffies;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक qcom_usb_extcon_cable[] = अणु
+static const unsigned int qcom_usb_extcon_cable[] = {
 	EXTCON_USB,
 	EXTCON_USB_HOST,
 	EXTCON_NONE,
-पूर्ण;
+};
 
-अटल व्योम qcom_usb_extcon_detect_cable(काष्ठा work_काष्ठा *work)
-अणु
+static void qcom_usb_extcon_detect_cable(struct work_struct *work)
+{
 	bool state = false;
-	पूर्णांक ret;
-	जोड़ extcon_property_value val;
-	काष्ठा qcom_usb_extcon_info *info = container_of(to_delayed_work(work),
-						    काष्ठा qcom_usb_extcon_info,
+	int ret;
+	union extcon_property_value val;
+	struct qcom_usb_extcon_info *info = container_of(to_delayed_work(work),
+						    struct qcom_usb_extcon_info,
 						    wq_detcable);
 
-	अगर (info->id_irq > 0) अणु
+	if (info->id_irq > 0) {
 		/* check ID and update cable state */
 		ret = irq_get_irqchip_state(info->id_irq,
 				IRQCHIP_STATE_LINE_LEVEL, &state);
-		अगर (ret)
-			वापस;
+		if (ret)
+			return;
 
-		अगर (!state) अणु
-			val.पूर्णांकval = true;
+		if (!state) {
+			val.intval = true;
 			extcon_set_property(info->edev, EXTCON_USB_HOST,
 						EXTCON_PROP_USB_SS, val);
-		पूर्ण
+		}
 		extcon_set_state_sync(info->edev, EXTCON_USB_HOST, !state);
-	पूर्ण
+	}
 
-	अगर (info->vbus_irq > 0) अणु
+	if (info->vbus_irq > 0) {
 		/* check VBUS and update cable state */
 		ret = irq_get_irqchip_state(info->vbus_irq,
 				IRQCHIP_STATE_LINE_LEVEL, &state);
-		अगर (ret)
-			वापस;
+		if (ret)
+			return;
 
-		अगर (state) अणु
-			val.पूर्णांकval = true;
+		if (state) {
+			val.intval = true;
 			extcon_set_property(info->edev, EXTCON_USB,
 						EXTCON_PROP_USB_SS, val);
-		पूर्ण
+		}
 		extcon_set_state_sync(info->edev, EXTCON_USB, state);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल irqवापस_t qcom_usb_irq_handler(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा qcom_usb_extcon_info *info = dev_id;
+static irqreturn_t qcom_usb_irq_handler(int irq, void *dev_id)
+{
+	struct qcom_usb_extcon_info *info = dev_id;
 
-	queue_delayed_work(प्रणाली_घातer_efficient_wq, &info->wq_detcable,
-			   info->debounce_jअगरfies);
+	queue_delayed_work(system_power_efficient_wq, &info->wq_detcable,
+			   info->debounce_jiffies);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक qcom_usb_extcon_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा qcom_usb_extcon_info *info;
-	पूर्णांक ret;
+static int qcom_usb_extcon_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct qcom_usb_extcon_info *info;
+	int ret;
 
-	info = devm_kzalloc(dev, माप(*info), GFP_KERNEL);
-	अगर (!info)
-		वापस -ENOMEM;
+	info = devm_kzalloc(dev, sizeof(*info), GFP_KERNEL);
+	if (!info)
+		return -ENOMEM;
 
 	info->edev = devm_extcon_dev_allocate(dev, qcom_usb_extcon_cable);
-	अगर (IS_ERR(info->edev)) अणु
+	if (IS_ERR(info->edev)) {
 		dev_err(dev, "failed to allocate extcon device\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	ret = devm_extcon_dev_रेजिस्टर(dev, info->edev);
-	अगर (ret < 0) अणु
+	ret = devm_extcon_dev_register(dev, info->edev);
+	if (ret < 0) {
 		dev_err(dev, "failed to register extcon device\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = extcon_set_property_capability(info->edev,
 			EXTCON_USB, EXTCON_PROP_USB_SS);
 	ret |= extcon_set_property_capability(info->edev,
 			EXTCON_USB_HOST, EXTCON_PROP_USB_SS);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "failed to register extcon props rc=%d\n",
 						ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	info->debounce_jअगरfies = msecs_to_jअगरfies(USB_ID_DEBOUNCE_MS);
+	info->debounce_jiffies = msecs_to_jiffies(USB_ID_DEBOUNCE_MS);
 
-	ret = devm_delayed_work_स्वतःcancel(dev, &info->wq_detcable,
+	ret = devm_delayed_work_autocancel(dev, &info->wq_detcable,
 					   qcom_usb_extcon_detect_cable);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	info->id_irq = platक्रमm_get_irq_byname(pdev, "usb_id");
-	अगर (info->id_irq > 0) अणु
-		ret = devm_request_thपढ़ोed_irq(dev, info->id_irq, शून्य,
+	info->id_irq = platform_get_irq_byname(pdev, "usb_id");
+	if (info->id_irq > 0) {
+		ret = devm_request_threaded_irq(dev, info->id_irq, NULL,
 					qcom_usb_irq_handler,
 					IRQF_TRIGGER_RISING |
 					IRQF_TRIGGER_FALLING | IRQF_ONESHOT,
 					pdev->name, info);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(dev, "failed to request handler for ID IRQ\n");
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	info->vbus_irq = platक्रमm_get_irq_byname(pdev, "usb_vbus");
-	अगर (info->vbus_irq > 0) अणु
-		ret = devm_request_thपढ़ोed_irq(dev, info->vbus_irq, शून्य,
+	info->vbus_irq = platform_get_irq_byname(pdev, "usb_vbus");
+	if (info->vbus_irq > 0) {
+		ret = devm_request_threaded_irq(dev, info->vbus_irq, NULL,
 					qcom_usb_irq_handler,
 					IRQF_TRIGGER_RISING |
 					IRQF_TRIGGER_FALLING | IRQF_ONESHOT,
 					pdev->name, info);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(dev, "failed to request handler for VBUS IRQ\n");
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	अगर (info->id_irq < 0 && info->vbus_irq < 0) अणु
+	if (info->id_irq < 0 && info->vbus_irq < 0) {
 		dev_err(dev, "ID and VBUS IRQ not found\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	platक्रमm_set_drvdata(pdev, info);
+	platform_set_drvdata(pdev, info);
 	device_init_wakeup(dev, 1);
 
-	/* Perक्रमm initial detection */
+	/* Perform initial detection */
 	qcom_usb_extcon_detect_cable(&info->wq_detcable.work);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक qcom_usb_extcon_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा qcom_usb_extcon_info *info = dev_get_drvdata(dev);
-	पूर्णांक ret = 0;
+#ifdef CONFIG_PM_SLEEP
+static int qcom_usb_extcon_suspend(struct device *dev)
+{
+	struct qcom_usb_extcon_info *info = dev_get_drvdata(dev);
+	int ret = 0;
 
-	अगर (device_may_wakeup(dev)) अणु
-		अगर (info->id_irq > 0)
+	if (device_may_wakeup(dev)) {
+		if (info->id_irq > 0)
 			ret = enable_irq_wake(info->id_irq);
-		अगर (info->vbus_irq > 0)
+		if (info->vbus_irq > 0)
 			ret = enable_irq_wake(info->vbus_irq);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक qcom_usb_extcon_resume(काष्ठा device *dev)
-अणु
-	काष्ठा qcom_usb_extcon_info *info = dev_get_drvdata(dev);
-	पूर्णांक ret = 0;
+static int qcom_usb_extcon_resume(struct device *dev)
+{
+	struct qcom_usb_extcon_info *info = dev_get_drvdata(dev);
+	int ret = 0;
 
-	अगर (device_may_wakeup(dev)) अणु
-		अगर (info->id_irq > 0)
+	if (device_may_wakeup(dev)) {
+		if (info->id_irq > 0)
 			ret = disable_irq_wake(info->id_irq);
-		अगर (info->vbus_irq > 0)
+		if (info->vbus_irq > 0)
 			ret = disable_irq_wake(info->vbus_irq);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
-#पूर्ण_अगर
+	return ret;
+}
+#endif
 
-अटल SIMPLE_DEV_PM_OPS(qcom_usb_extcon_pm_ops,
+static SIMPLE_DEV_PM_OPS(qcom_usb_extcon_pm_ops,
 			 qcom_usb_extcon_suspend, qcom_usb_extcon_resume);
 
-अटल स्थिर काष्ठा of_device_id qcom_usb_extcon_dt_match[] = अणु
-	अणु .compatible = "qcom,pm8941-misc", पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id qcom_usb_extcon_dt_match[] = {
+	{ .compatible = "qcom,pm8941-misc", },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, qcom_usb_extcon_dt_match);
 
-अटल काष्ठा platक्रमm_driver qcom_usb_extcon_driver = अणु
+static struct platform_driver qcom_usb_extcon_driver = {
 	.probe		= qcom_usb_extcon_probe,
-	.driver		= अणु
+	.driver		= {
 		.name	= "extcon-pm8941-misc",
 		.pm	= &qcom_usb_extcon_pm_ops,
 		.of_match_table = qcom_usb_extcon_dt_match,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(qcom_usb_extcon_driver);
+	},
+};
+module_platform_driver(qcom_usb_extcon_driver);
 
 MODULE_DESCRIPTION("QCOM USB ID extcon driver");
 MODULE_AUTHOR("Stephen Boyd <stephen.boyd@linaro.org>");

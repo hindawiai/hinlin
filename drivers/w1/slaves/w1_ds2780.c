@@ -1,160 +1,159 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * 1-Wire implementation क्रम the ds2780 chip
+ * 1-Wire implementation for the ds2780 chip
  *
  * Copyright (C) 2010 Indesign, LLC
  *
- * Author: Clअगरton Barnes <cabarnes@indesign-llc.com>
+ * Author: Clifton Barnes <cabarnes@indesign-llc.com>
  *
  * Based on w1-ds2760 driver
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/device.h>
-#समावेश <linux/types.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/idr.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/device.h>
+#include <linux/types.h>
+#include <linux/platform_device.h>
+#include <linux/mutex.h>
+#include <linux/idr.h>
 
-#समावेश <linux/w1.h>
+#include <linux/w1.h>
 
-#समावेश "w1_ds2780.h"
+#include "w1_ds2780.h"
 
-#घोषणा W1_FAMILY_DS2780	0x32
+#define W1_FAMILY_DS2780	0x32
 
-अटल पूर्णांक w1_ds2780_करो_io(काष्ठा device *dev, अक्षर *buf, पूर्णांक addr,
-			माप_प्रकार count, पूर्णांक io)
-अणु
-	काष्ठा w1_slave *sl = container_of(dev, काष्ठा w1_slave, dev);
+static int w1_ds2780_do_io(struct device *dev, char *buf, int addr,
+			size_t count, int io)
+{
+	struct w1_slave *sl = container_of(dev, struct w1_slave, dev);
 
-	अगर (addr > DS2780_DATA_SIZE || addr < 0)
-		वापस 0;
+	if (addr > DS2780_DATA_SIZE || addr < 0)
+		return 0;
 
-	count = min_t(पूर्णांक, count, DS2780_DATA_SIZE - addr);
+	count = min_t(int, count, DS2780_DATA_SIZE - addr);
 
-	अगर (w1_reset_select_slave(sl) == 0) अणु
-		अगर (io) अणु
-			w1_ग_लिखो_8(sl->master, W1_DS2780_WRITE_DATA);
-			w1_ग_लिखो_8(sl->master, addr);
-			w1_ग_लिखो_block(sl->master, buf, count);
-		पूर्ण अन्यथा अणु
-			w1_ग_लिखो_8(sl->master, W1_DS2780_READ_DATA);
-			w1_ग_लिखो_8(sl->master, addr);
-			count = w1_पढ़ो_block(sl->master, buf, count);
-		पूर्ण
-	पूर्ण
+	if (w1_reset_select_slave(sl) == 0) {
+		if (io) {
+			w1_write_8(sl->master, W1_DS2780_WRITE_DATA);
+			w1_write_8(sl->master, addr);
+			w1_write_block(sl->master, buf, count);
+		} else {
+			w1_write_8(sl->master, W1_DS2780_READ_DATA);
+			w1_write_8(sl->master, addr);
+			count = w1_read_block(sl->master, buf, count);
+		}
+	}
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-पूर्णांक w1_ds2780_io(काष्ठा device *dev, अक्षर *buf, पूर्णांक addr, माप_प्रकार count,
-			पूर्णांक io)
-अणु
-	काष्ठा w1_slave *sl = container_of(dev, काष्ठा w1_slave, dev);
-	पूर्णांक ret;
+int w1_ds2780_io(struct device *dev, char *buf, int addr, size_t count,
+			int io)
+{
+	struct w1_slave *sl = container_of(dev, struct w1_slave, dev);
+	int ret;
 
-	अगर (!dev)
-		वापस -ENODEV;
+	if (!dev)
+		return -ENODEV;
 
 	mutex_lock(&sl->master->bus_mutex);
 
-	ret = w1_ds2780_करो_io(dev, buf, addr, count, io);
+	ret = w1_ds2780_do_io(dev, buf, addr, count, io);
 
 	mutex_unlock(&sl->master->bus_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(w1_ds2780_io);
 
-पूर्णांक w1_ds2780_eeprom_cmd(काष्ठा device *dev, पूर्णांक addr, पूर्णांक cmd)
-अणु
-	काष्ठा w1_slave *sl = container_of(dev, काष्ठा w1_slave, dev);
+int w1_ds2780_eeprom_cmd(struct device *dev, int addr, int cmd)
+{
+	struct w1_slave *sl = container_of(dev, struct w1_slave, dev);
 
-	अगर (!dev)
-		वापस -EINVAL;
+	if (!dev)
+		return -EINVAL;
 
 	mutex_lock(&sl->master->bus_mutex);
 
-	अगर (w1_reset_select_slave(sl) == 0) अणु
-		w1_ग_लिखो_8(sl->master, cmd);
-		w1_ग_लिखो_8(sl->master, addr);
-	पूर्ण
+	if (w1_reset_select_slave(sl) == 0) {
+		w1_write_8(sl->master, cmd);
+		w1_write_8(sl->master, addr);
+	}
 
 	mutex_unlock(&sl->master->bus_mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(w1_ds2780_eeprom_cmd);
 
-अटल sमाप_प्रकार w1_slave_पढ़ो(काष्ठा file *filp, काष्ठा kobject *kobj,
-			     काष्ठा bin_attribute *bin_attr, अक्षर *buf,
-			     loff_t off, माप_प्रकार count)
-अणु
-	काष्ठा device *dev = kobj_to_dev(kobj);
-	वापस w1_ds2780_io(dev, buf, off, count, 0);
-पूर्ण
+static ssize_t w1_slave_read(struct file *filp, struct kobject *kobj,
+			     struct bin_attribute *bin_attr, char *buf,
+			     loff_t off, size_t count)
+{
+	struct device *dev = kobj_to_dev(kobj);
+	return w1_ds2780_io(dev, buf, off, count, 0);
+}
 
-अटल BIN_ATTR_RO(w1_slave, DS2780_DATA_SIZE);
+static BIN_ATTR_RO(w1_slave, DS2780_DATA_SIZE);
 
-अटल काष्ठा bin_attribute *w1_ds2780_bin_attrs[] = अणु
+static struct bin_attribute *w1_ds2780_bin_attrs[] = {
 	&bin_attr_w1_slave,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group w1_ds2780_group = अणु
+static const struct attribute_group w1_ds2780_group = {
 	.bin_attrs = w1_ds2780_bin_attrs,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा attribute_group *w1_ds2780_groups[] = अणु
+static const struct attribute_group *w1_ds2780_groups[] = {
 	&w1_ds2780_group,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल पूर्णांक w1_ds2780_add_slave(काष्ठा w1_slave *sl)
-अणु
-	पूर्णांक ret;
-	काष्ठा platक्रमm_device *pdev;
+static int w1_ds2780_add_slave(struct w1_slave *sl)
+{
+	int ret;
+	struct platform_device *pdev;
 
-	pdev = platक्रमm_device_alloc("ds2780-battery", PLATFORM_DEVID_AUTO);
-	अगर (!pdev)
-		वापस -ENOMEM;
+	pdev = platform_device_alloc("ds2780-battery", PLATFORM_DEVID_AUTO);
+	if (!pdev)
+		return -ENOMEM;
 	pdev->dev.parent = &sl->dev;
 
-	ret = platक्रमm_device_add(pdev);
-	अगर (ret)
-		जाओ pdev_add_failed;
+	ret = platform_device_add(pdev);
+	if (ret)
+		goto pdev_add_failed;
 
 	dev_set_drvdata(&sl->dev, pdev);
 
-	वापस 0;
+	return 0;
 
 pdev_add_failed:
-	platक्रमm_device_put(pdev);
+	platform_device_put(pdev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम w1_ds2780_हटाओ_slave(काष्ठा w1_slave *sl)
-अणु
-	काष्ठा platक्रमm_device *pdev = dev_get_drvdata(&sl->dev);
+static void w1_ds2780_remove_slave(struct w1_slave *sl)
+{
+	struct platform_device *pdev = dev_get_drvdata(&sl->dev);
 
-	platक्रमm_device_unरेजिस्टर(pdev);
-पूर्ण
+	platform_device_unregister(pdev);
+}
 
-अटल स्थिर काष्ठा w1_family_ops w1_ds2780_fops = अणु
+static const struct w1_family_ops w1_ds2780_fops = {
 	.add_slave    = w1_ds2780_add_slave,
-	.हटाओ_slave = w1_ds2780_हटाओ_slave,
+	.remove_slave = w1_ds2780_remove_slave,
 	.groups       = w1_ds2780_groups,
-पूर्ण;
+};
 
-अटल काष्ठा w1_family w1_ds2780_family = अणु
+static struct w1_family w1_ds2780_family = {
 	.fid = W1_FAMILY_DS2780,
 	.fops = &w1_ds2780_fops,
-पूर्ण;
+};
 module_w1_family(w1_ds2780_family);
 
 MODULE_AUTHOR("Clifton Barnes <cabarnes@indesign-llc.com>");
 MODULE_DESCRIPTION("1-wire Driver for Maxim/Dallas DS2780 Stand-Alone Fuel Gauge IC");
 MODULE_LICENSE("GPL");
-MODULE_ALIAS("w1-family-" __stringअगरy(W1_FAMILY_DS2780));
+MODULE_ALIAS("w1-family-" __stringify(W1_FAMILY_DS2780));

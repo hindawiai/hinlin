@@ -1,240 +1,239 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2000-2003,2005 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
-#अगर_अघोषित	__XFS_INODE_FORK_H__
-#घोषणा	__XFS_INODE_FORK_H__
+#ifndef	__XFS_INODE_FORK_H__
+#define	__XFS_INODE_FORK_H__
 
-काष्ठा xfs_inode_log_item;
-काष्ठा xfs_dinode;
-
-/*
- * File incore extent inक्रमmation, present क्रम each of data & attr विभाजनs.
- */
-काष्ठा xfs_अगरork अणु
-	पूर्णांक64_t			अगर_bytes;	/* bytes in अगर_u1 */
-	काष्ठा xfs_btree_block	*अगर_broot;	/* file's incore btree root */
-	अचिन्हित पूर्णांक		अगर_seq;		/* विभाजन mod counter */
-	पूर्णांक			अगर_height;	/* height of the extent tree */
-	जोड़ अणु
-		व्योम		*अगर_root;	/* extent tree root */
-		अक्षर		*अगर_data;	/* अंतरभूत file data */
-	पूर्ण अगर_u1;
-	लघु			अगर_broot_bytes;	/* bytes allocated क्रम root */
-	पूर्णांक8_t			अगर_क्रमmat;	/* क्रमmat of this विभाजन */
-	xfs_extnum_t		अगर_nextents;	/* # of extents in this विभाजन */
-पूर्ण;
+struct xfs_inode_log_item;
+struct xfs_dinode;
 
 /*
- * Worst-हाल increase in the विभाजन extent count when we're adding a single
- * extent to a विभाजन and there's no possibility of splitting an existing mapping.
+ * File incore extent information, present for each of data & attr forks.
  */
-#घोषणा XFS_IEXT_ADD_NOSPLIT_CNT	(1)
+struct xfs_ifork {
+	int64_t			if_bytes;	/* bytes in if_u1 */
+	struct xfs_btree_block	*if_broot;	/* file's incore btree root */
+	unsigned int		if_seq;		/* fork mod counter */
+	int			if_height;	/* height of the extent tree */
+	union {
+		void		*if_root;	/* extent tree root */
+		char		*if_data;	/* inline file data */
+	} if_u1;
+	short			if_broot_bytes;	/* bytes allocated for root */
+	int8_t			if_format;	/* format of this fork */
+	xfs_extnum_t		if_nextents;	/* # of extents in this fork */
+};
+
+/*
+ * Worst-case increase in the fork extent count when we're adding a single
+ * extent to a fork and there's no possibility of splitting an existing mapping.
+ */
+#define XFS_IEXT_ADD_NOSPLIT_CNT	(1)
 
 /*
  * Punching out an extent from the middle of an existing extent can cause the
  * extent count to increase by 1.
  * i.e. | Old extent | Hole | Old extent |
  */
-#घोषणा XFS_IEXT_PUNCH_HOLE_CNT		(1)
+#define XFS_IEXT_PUNCH_HOLE_CNT		(1)
 
 /*
  * Directory entry addition can cause the following,
- * 1. Data block can be added/हटाओd.
+ * 1. Data block can be added/removed.
  *    A new extent can cause extent count to increase by 1.
- * 2. Free disk block can be added/हटाओd.
- *    Same behaviour as described above क्रम Data block.
+ * 2. Free disk block can be added/removed.
+ *    Same behaviour as described above for Data block.
  * 3. Dabtree blocks.
  *    XFS_DA_NODE_MAXDEPTH blocks can be added. Each of these can be new
  *    extents. Hence extent count can increase by XFS_DA_NODE_MAXDEPTH.
  */
-#घोषणा XFS_IEXT_सूची_MANIP_CNT(mp) \
+#define XFS_IEXT_DIR_MANIP_CNT(mp) \
 	((XFS_DA_NODE_MAXDEPTH + 1 + 1) * (mp)->m_dir_geo->fsbcount)
 
 /*
  * Adding/removing an xattr can cause XFS_DA_NODE_MAXDEPTH extents to
- * be added. One extra extent क्रम dabtree in हाल a local attr is
- * large enough to cause a द्विगुन split.  It can also cause extent
+ * be added. One extra extent for dabtree in case a local attr is
+ * large enough to cause a double split.  It can also cause extent
  * count to increase proportional to the size of a remote xattr's
  * value.
  */
-#घोषणा XFS_IEXT_ATTR_MANIP_CNT(rmt_blks) \
+#define XFS_IEXT_ATTR_MANIP_CNT(rmt_blks) \
 	(XFS_DA_NODE_MAXDEPTH + max(1, rmt_blks))
 
 /*
- * A ग_लिखो to a sub-पूर्णांकerval of an existing unwritten extent causes the original
- * extent to be split पूर्णांकo 3 extents
+ * A write to a sub-interval of an existing unwritten extent causes the original
+ * extent to be split into 3 extents
  * i.e. | Unwritten | Real | Unwritten |
  * Hence extent count can increase by 2.
  */
-#घोषणा XFS_IEXT_WRITE_UNWRITTEN_CNT	(2)
+#define XFS_IEXT_WRITE_UNWRITTEN_CNT	(2)
 
 
 /*
- * Moving an extent to data विभाजन can cause a sub-पूर्णांकerval of an existing extent
+ * Moving an extent to data fork can cause a sub-interval of an existing extent
  * to be unmapped. This will increase extent count by 1. Mapping in the new
  * extent can increase the extent count by 1 again i.e.
  * | Old extent | New extent | Old extent |
  * Hence number of extents increases by 2.
  */
-#घोषणा XFS_IEXT_REFLINK_END_COW_CNT	(2)
+#define XFS_IEXT_REFLINK_END_COW_CNT	(2)
 
 /*
- * Removing an initial range of source/करोnor file's extent and adding a new
- * extent (from करोnor/source file) in its place will cause extent count to
+ * Removing an initial range of source/donor file's extent and adding a new
+ * extent (from donor/source file) in its place will cause extent count to
  * increase by 1.
  */
-#घोषणा XFS_IEXT_SWAP_RMAP_CNT		(1)
+#define XFS_IEXT_SWAP_RMAP_CNT		(1)
 
 /*
  * Fork handling.
  */
 
-#घोषणा XFS_IFORK_Q(ip)			((ip)->i_विभाजनoff != 0)
-#घोषणा XFS_IFORK_BOFF(ip)		((पूर्णांक)((ip)->i_विभाजनoff << 3))
+#define XFS_IFORK_Q(ip)			((ip)->i_forkoff != 0)
+#define XFS_IFORK_BOFF(ip)		((int)((ip)->i_forkoff << 3))
 
-#घोषणा XFS_IFORK_PTR(ip,w)		\
+#define XFS_IFORK_PTR(ip,w)		\
 	((w) == XFS_DATA_FORK ? \
 		&(ip)->i_df : \
 		((w) == XFS_ATTR_FORK ? \
 			(ip)->i_afp : \
 			(ip)->i_cowfp))
-#घोषणा XFS_IFORK_DSIZE(ip) \
+#define XFS_IFORK_DSIZE(ip) \
 	(XFS_IFORK_Q(ip) ? XFS_IFORK_BOFF(ip) : XFS_LITINO((ip)->i_mount))
-#घोषणा XFS_IFORK_ASIZE(ip) \
+#define XFS_IFORK_ASIZE(ip) \
 	(XFS_IFORK_Q(ip) ? XFS_LITINO((ip)->i_mount) - XFS_IFORK_BOFF(ip) : 0)
-#घोषणा XFS_IFORK_SIZE(ip,w) \
+#define XFS_IFORK_SIZE(ip,w) \
 	((w) == XFS_DATA_FORK ? \
 		XFS_IFORK_DSIZE(ip) : \
 		((w) == XFS_ATTR_FORK ? \
 			XFS_IFORK_ASIZE(ip) : \
 			0))
-#घोषणा XFS_IFORK_MAXEXT(ip, w) \
-	(XFS_IFORK_SIZE(ip, w) / माप(xfs_bmbt_rec_t))
+#define XFS_IFORK_MAXEXT(ip, w) \
+	(XFS_IFORK_SIZE(ip, w) / sizeof(xfs_bmbt_rec_t))
 
-अटल अंतरभूत bool xfs_अगरork_has_extents(काष्ठा xfs_अगरork *अगरp)
-अणु
-	वापस अगरp->अगर_क्रमmat == XFS_DINODE_FMT_EXTENTS ||
-		अगरp->अगर_क्रमmat == XFS_DINODE_FMT_BTREE;
-पूर्ण
+static inline bool xfs_ifork_has_extents(struct xfs_ifork *ifp)
+{
+	return ifp->if_format == XFS_DINODE_FMT_EXTENTS ||
+		ifp->if_format == XFS_DINODE_FMT_BTREE;
+}
 
-अटल अंतरभूत xfs_extnum_t xfs_अगरork_nextents(काष्ठा xfs_अगरork *अगरp)
-अणु
-	अगर (!अगरp)
-		वापस 0;
-	वापस अगरp->अगर_nextents;
-पूर्ण
+static inline xfs_extnum_t xfs_ifork_nextents(struct xfs_ifork *ifp)
+{
+	if (!ifp)
+		return 0;
+	return ifp->if_nextents;
+}
 
-अटल अंतरभूत पूर्णांक8_t xfs_अगरork_क्रमmat(काष्ठा xfs_अगरork *अगरp)
-अणु
-	अगर (!अगरp)
-		वापस XFS_DINODE_FMT_EXTENTS;
-	वापस अगरp->अगर_क्रमmat;
-पूर्ण
+static inline int8_t xfs_ifork_format(struct xfs_ifork *ifp)
+{
+	if (!ifp)
+		return XFS_DINODE_FMT_EXTENTS;
+	return ifp->if_format;
+}
 
-काष्ठा xfs_अगरork *xfs_अगरork_alloc(क्रमागत xfs_dinode_fmt क्रमmat,
+struct xfs_ifork *xfs_ifork_alloc(enum xfs_dinode_fmt format,
 				xfs_extnum_t nextents);
-काष्ठा xfs_अगरork *xfs_iext_state_to_विभाजन(काष्ठा xfs_inode *ip, पूर्णांक state);
+struct xfs_ifork *xfs_iext_state_to_fork(struct xfs_inode *ip, int state);
 
-पूर्णांक		xfs_अगरormat_data_विभाजन(काष्ठा xfs_inode *, काष्ठा xfs_dinode *);
-पूर्णांक		xfs_अगरormat_attr_विभाजन(काष्ठा xfs_inode *, काष्ठा xfs_dinode *);
-व्योम		xfs_अगरlush_विभाजन(काष्ठा xfs_inode *, काष्ठा xfs_dinode *,
-				काष्ठा xfs_inode_log_item *, पूर्णांक);
-व्योम		xfs_idestroy_विभाजन(काष्ठा xfs_अगरork *अगरp);
-व्योम		xfs_idata_पुनः_स्मृति(काष्ठा xfs_inode *ip, पूर्णांक64_t byte_dअगरf,
-				पूर्णांक whichविभाजन);
-व्योम		xfs_iroot_पुनः_स्मृति(काष्ठा xfs_inode *, पूर्णांक, पूर्णांक);
-पूर्णांक		xfs_iपढ़ो_extents(काष्ठा xfs_trans *, काष्ठा xfs_inode *, पूर्णांक);
-पूर्णांक		xfs_iextents_copy(काष्ठा xfs_inode *, काष्ठा xfs_bmbt_rec *,
-				  पूर्णांक);
-व्योम		xfs_init_local_विभाजन(काष्ठा xfs_inode *ip, पूर्णांक whichविभाजन,
-				स्थिर व्योम *data, पूर्णांक64_t size);
+int		xfs_iformat_data_fork(struct xfs_inode *, struct xfs_dinode *);
+int		xfs_iformat_attr_fork(struct xfs_inode *, struct xfs_dinode *);
+void		xfs_iflush_fork(struct xfs_inode *, struct xfs_dinode *,
+				struct xfs_inode_log_item *, int);
+void		xfs_idestroy_fork(struct xfs_ifork *ifp);
+void		xfs_idata_realloc(struct xfs_inode *ip, int64_t byte_diff,
+				int whichfork);
+void		xfs_iroot_realloc(struct xfs_inode *, int, int);
+int		xfs_iread_extents(struct xfs_trans *, struct xfs_inode *, int);
+int		xfs_iextents_copy(struct xfs_inode *, struct xfs_bmbt_rec *,
+				  int);
+void		xfs_init_local_fork(struct xfs_inode *ip, int whichfork,
+				const void *data, int64_t size);
 
-xfs_extnum_t	xfs_iext_count(काष्ठा xfs_अगरork *अगरp);
-व्योम		xfs_iext_insert(काष्ठा xfs_inode *, काष्ठा xfs_iext_cursor *cur,
-			काष्ठा xfs_bmbt_irec *, पूर्णांक);
-व्योम		xfs_iext_हटाओ(काष्ठा xfs_inode *, काष्ठा xfs_iext_cursor *,
-			पूर्णांक);
-व्योम		xfs_iext_destroy(काष्ठा xfs_अगरork *);
+xfs_extnum_t	xfs_iext_count(struct xfs_ifork *ifp);
+void		xfs_iext_insert(struct xfs_inode *, struct xfs_iext_cursor *cur,
+			struct xfs_bmbt_irec *, int);
+void		xfs_iext_remove(struct xfs_inode *, struct xfs_iext_cursor *,
+			int);
+void		xfs_iext_destroy(struct xfs_ifork *);
 
-bool		xfs_iext_lookup_extent(काष्ठा xfs_inode *ip,
-			काष्ठा xfs_अगरork *अगरp, xfs_fileoff_t bno,
-			काष्ठा xfs_iext_cursor *cur,
-			काष्ठा xfs_bmbt_irec *gotp);
-bool		xfs_iext_lookup_extent_beक्रमe(काष्ठा xfs_inode *ip,
-			काष्ठा xfs_अगरork *अगरp, xfs_fileoff_t *end,
-			काष्ठा xfs_iext_cursor *cur,
-			काष्ठा xfs_bmbt_irec *gotp);
-bool		xfs_iext_get_extent(काष्ठा xfs_अगरork *अगरp,
-			काष्ठा xfs_iext_cursor *cur,
-			काष्ठा xfs_bmbt_irec *gotp);
-व्योम		xfs_iext_update_extent(काष्ठा xfs_inode *ip, पूर्णांक state,
-			काष्ठा xfs_iext_cursor *cur,
-			काष्ठा xfs_bmbt_irec *gotp);
+bool		xfs_iext_lookup_extent(struct xfs_inode *ip,
+			struct xfs_ifork *ifp, xfs_fileoff_t bno,
+			struct xfs_iext_cursor *cur,
+			struct xfs_bmbt_irec *gotp);
+bool		xfs_iext_lookup_extent_before(struct xfs_inode *ip,
+			struct xfs_ifork *ifp, xfs_fileoff_t *end,
+			struct xfs_iext_cursor *cur,
+			struct xfs_bmbt_irec *gotp);
+bool		xfs_iext_get_extent(struct xfs_ifork *ifp,
+			struct xfs_iext_cursor *cur,
+			struct xfs_bmbt_irec *gotp);
+void		xfs_iext_update_extent(struct xfs_inode *ip, int state,
+			struct xfs_iext_cursor *cur,
+			struct xfs_bmbt_irec *gotp);
 
-व्योम		xfs_iext_first(काष्ठा xfs_अगरork *, काष्ठा xfs_iext_cursor *);
-व्योम		xfs_iext_last(काष्ठा xfs_अगरork *, काष्ठा xfs_iext_cursor *);
-व्योम		xfs_iext_next(काष्ठा xfs_अगरork *, काष्ठा xfs_iext_cursor *);
-व्योम		xfs_iext_prev(काष्ठा xfs_अगरork *, काष्ठा xfs_iext_cursor *);
+void		xfs_iext_first(struct xfs_ifork *, struct xfs_iext_cursor *);
+void		xfs_iext_last(struct xfs_ifork *, struct xfs_iext_cursor *);
+void		xfs_iext_next(struct xfs_ifork *, struct xfs_iext_cursor *);
+void		xfs_iext_prev(struct xfs_ifork *, struct xfs_iext_cursor *);
 
-अटल अंतरभूत bool xfs_iext_next_extent(काष्ठा xfs_अगरork *अगरp,
-		काष्ठा xfs_iext_cursor *cur, काष्ठा xfs_bmbt_irec *gotp)
-अणु
-	xfs_iext_next(अगरp, cur);
-	वापस xfs_iext_get_extent(अगरp, cur, gotp);
-पूर्ण
+static inline bool xfs_iext_next_extent(struct xfs_ifork *ifp,
+		struct xfs_iext_cursor *cur, struct xfs_bmbt_irec *gotp)
+{
+	xfs_iext_next(ifp, cur);
+	return xfs_iext_get_extent(ifp, cur, gotp);
+}
 
-अटल अंतरभूत bool xfs_iext_prev_extent(काष्ठा xfs_अगरork *अगरp,
-		काष्ठा xfs_iext_cursor *cur, काष्ठा xfs_bmbt_irec *gotp)
-अणु
-	xfs_iext_prev(अगरp, cur);
-	वापस xfs_iext_get_extent(अगरp, cur, gotp);
-पूर्ण
+static inline bool xfs_iext_prev_extent(struct xfs_ifork *ifp,
+		struct xfs_iext_cursor *cur, struct xfs_bmbt_irec *gotp)
+{
+	xfs_iext_prev(ifp, cur);
+	return xfs_iext_get_extent(ifp, cur, gotp);
+}
 
 /*
  * Return the extent after cur in gotp without updating the cursor.
  */
-अटल अंतरभूत bool xfs_iext_peek_next_extent(काष्ठा xfs_अगरork *अगरp,
-		काष्ठा xfs_iext_cursor *cur, काष्ठा xfs_bmbt_irec *gotp)
-अणु
-	काष्ठा xfs_iext_cursor ncur = *cur;
+static inline bool xfs_iext_peek_next_extent(struct xfs_ifork *ifp,
+		struct xfs_iext_cursor *cur, struct xfs_bmbt_irec *gotp)
+{
+	struct xfs_iext_cursor ncur = *cur;
 
-	xfs_iext_next(अगरp, &ncur);
-	वापस xfs_iext_get_extent(अगरp, &ncur, gotp);
-पूर्ण
+	xfs_iext_next(ifp, &ncur);
+	return xfs_iext_get_extent(ifp, &ncur, gotp);
+}
 
 /*
- * Return the extent beक्रमe cur in gotp without updating the cursor.
+ * Return the extent before cur in gotp without updating the cursor.
  */
-अटल अंतरभूत bool xfs_iext_peek_prev_extent(काष्ठा xfs_अगरork *अगरp,
-		काष्ठा xfs_iext_cursor *cur, काष्ठा xfs_bmbt_irec *gotp)
-अणु
-	काष्ठा xfs_iext_cursor ncur = *cur;
+static inline bool xfs_iext_peek_prev_extent(struct xfs_ifork *ifp,
+		struct xfs_iext_cursor *cur, struct xfs_bmbt_irec *gotp)
+{
+	struct xfs_iext_cursor ncur = *cur;
 
-	xfs_iext_prev(अगरp, &ncur);
-	वापस xfs_iext_get_extent(अगरp, &ncur, gotp);
-पूर्ण
+	xfs_iext_prev(ifp, &ncur);
+	return xfs_iext_get_extent(ifp, &ncur, gotp);
+}
 
-#घोषणा क्रम_each_xfs_iext(अगरp, ext, got)		\
-	क्रम (xfs_iext_first((अगरp), (ext));		\
-	     xfs_iext_get_extent((अगरp), (ext), (got));	\
-	     xfs_iext_next((अगरp), (ext)))
+#define for_each_xfs_iext(ifp, ext, got)		\
+	for (xfs_iext_first((ifp), (ext));		\
+	     xfs_iext_get_extent((ifp), (ext), (got));	\
+	     xfs_iext_next((ifp), (ext)))
 
-बाह्य काष्ठा kmem_zone	*xfs_अगरork_zone;
+extern struct kmem_zone	*xfs_ifork_zone;
 
-बाह्य व्योम xfs_अगरork_init_cow(काष्ठा xfs_inode *ip);
+extern void xfs_ifork_init_cow(struct xfs_inode *ip);
 
-पूर्णांक xfs_अगरork_verअगरy_local_data(काष्ठा xfs_inode *ip);
-पूर्णांक xfs_अगरork_verअगरy_local_attr(काष्ठा xfs_inode *ip);
-पूर्णांक xfs_iext_count_may_overflow(काष्ठा xfs_inode *ip, पूर्णांक whichविभाजन,
-		पूर्णांक nr_to_add);
+int xfs_ifork_verify_local_data(struct xfs_inode *ip);
+int xfs_ifork_verify_local_attr(struct xfs_inode *ip);
+int xfs_iext_count_may_overflow(struct xfs_inode *ip, int whichfork,
+		int nr_to_add);
 
-/* वापसs true अगर the विभाजन has extents but they are not पढ़ो in yet. */
-अटल अंतरभूत bool xfs_need_iपढ़ो_extents(काष्ठा xfs_अगरork *अगरp)
-अणु
-	वापस अगरp->अगर_क्रमmat == XFS_DINODE_FMT_BTREE && अगरp->अगर_height == 0;
-पूर्ण
+/* returns true if the fork has extents but they are not read in yet. */
+static inline bool xfs_need_iread_extents(struct xfs_ifork *ifp)
+{
+	return ifp->if_format == XFS_DINODE_FMT_BTREE && ifp->if_height == 0;
+}
 
-#पूर्ण_अगर	/* __XFS_INODE_FORK_H__ */
+#endif	/* __XFS_INODE_FORK_H__ */

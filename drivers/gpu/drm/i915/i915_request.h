@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
- * Copyright तऊ 2008-2018 Intel Corporation
+ * Copyright © 2008-2018 Intel Corporation
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -23,65 +22,65 @@
  *
  */
 
-#अगर_अघोषित I915_REQUEST_H
-#घोषणा I915_REQUEST_H
+#ifndef I915_REQUEST_H
+#define I915_REQUEST_H
 
-#समावेश <linux/dma-fence.h>
-#समावेश <linux/hrसमयr.h>
-#समावेश <linux/irq_work.h>
-#समावेश <linux/llist.h>
-#समावेश <linux/lockdep.h>
+#include <linux/dma-fence.h>
+#include <linux/hrtimer.h>
+#include <linux/irq_work.h>
+#include <linux/llist.h>
+#include <linux/lockdep.h>
 
-#समावेश "gem/i915_gem_context_types.h"
-#समावेश "gt/intel_context_types.h"
-#समावेश "gt/intel_engine_types.h"
-#समावेश "gt/intel_timeline_types.h"
+#include "gem/i915_gem_context_types.h"
+#include "gt/intel_context_types.h"
+#include "gt/intel_engine_types.h"
+#include "gt/intel_timeline_types.h"
 
-#समावेश "i915_gem.h"
-#समावेश "i915_scheduler.h"
-#समावेश "i915_selftest.h"
-#समावेश "i915_sw_fence.h"
+#include "i915_gem.h"
+#include "i915_scheduler.h"
+#include "i915_selftest.h"
+#include "i915_sw_fence.h"
 
-#समावेश <uapi/drm/i915_drm.h>
+#include <uapi/drm/i915_drm.h>
 
-काष्ठा drm_file;
-काष्ठा drm_i915_gem_object;
-काष्ठा drm_prपूर्णांकer;
-काष्ठा i915_request;
+struct drm_file;
+struct drm_i915_gem_object;
+struct drm_printer;
+struct i915_request;
 
-काष्ठा i915_capture_list अणु
-	काष्ठा i915_capture_list *next;
-	काष्ठा i915_vma *vma;
-पूर्ण;
+struct i915_capture_list {
+	struct i915_capture_list *next;
+	struct i915_vma *vma;
+};
 
-#घोषणा RQ_TRACE(rq, fmt, ...) करो अणु					\
-	स्थिर काष्ठा i915_request *rq__ = (rq);				\
+#define RQ_TRACE(rq, fmt, ...) do {					\
+	const struct i915_request *rq__ = (rq);				\
 	ENGINE_TRACE(rq__->engine, "fence %llx:%lld, current %d " fmt,	\
 		     rq__->fence.context, rq__->fence.seqno,		\
 		     hwsp_seqno(rq__), ##__VA_ARGS__);			\
-पूर्ण जबतक (0)
+} while (0)
 
-क्रमागत अणु
+enum {
 	/*
 	 * I915_FENCE_FLAG_ACTIVE - this request is currently submitted to HW.
 	 *
 	 * Set by __i915_request_submit() on handing over to HW, and cleared
-	 * by __i915_request_unsubmit() अगर we preempt this request.
+	 * by __i915_request_unsubmit() if we preempt this request.
 	 *
-	 * Finally cleared क्रम consistency on retiring the request, when
-	 * we know the HW is no दीर्घer running this request.
+	 * Finally cleared for consistency on retiring the request, when
+	 * we know the HW is no longer running this request.
 	 *
 	 * See i915_request_is_active()
 	 */
 	I915_FENCE_FLAG_ACTIVE = DMA_FENCE_FLAG_USER_BITS,
 
 	/*
-	 * I915_FENCE_FLAG_PQUEUE - this request is पढ़ोy क्रम execution
+	 * I915_FENCE_FLAG_PQUEUE - this request is ready for execution
 	 *
-	 * Using the scheduler, when a request is पढ़ोy क्रम execution it is put
-	 * पूर्णांकo the priority queue, and हटाओd from that queue when transferred
+	 * Using the scheduler, when a request is ready for execution it is put
+	 * into the priority queue, and removed from that queue when transferred
 	 * to the HW runlists. We want to track its membership within the
-	 * priority queue so that we can easily check beक्रमe rescheduling.
+	 * priority queue so that we can easily check before rescheduling.
 	 *
 	 * See i915_request_in_priority_queue()
 	 */
@@ -96,23 +95,23 @@
 
 	/*
 	 * I915_FENCE_FLAG_INITIAL_BREADCRUMB - this request has the initial
-	 * bपढ़ोcrumb that marks the end of semaphore रुकोs and start of the
+	 * breadcrumb that marks the end of semaphore waits and start of the
 	 * user payload.
 	 */
 	I915_FENCE_FLAG_INITIAL_BREADCRUMB,
 
 	/*
-	 * I915_FENCE_FLAG_SIGNAL - this request is currently on संकेत_list
+	 * I915_FENCE_FLAG_SIGNAL - this request is currently on signal_list
 	 *
-	 * Internal bookkeeping used by the bपढ़ोcrumb code to track when
-	 * a request is on the various संकेत_list.
+	 * Internal bookkeeping used by the breadcrumb code to track when
+	 * a request is on the various signal_list.
 	 */
 	I915_FENCE_FLAG_SIGNAL,
 
 	/*
 	 * I915_FENCE_FLAG_NOPREEMPT - this request should not be preempted
 	 *
-	 * The execution of some requests should not be पूर्णांकerrupted. This is
+	 * The execution of some requests should not be interrupted. This is
 	 * a sensitive operation as it makes the request super important,
 	 * blocking other higher priority work. Abuse of this flag will
 	 * lead to quality of service issues.
@@ -126,119 +125,119 @@
 	 * submission queue. As it will be the only request in-flight, upon
 	 * execution all other active requests will have been preempted and
 	 * unsubmitted. This preemptive pulse is used to re-evaluate the
-	 * in-flight requests, particularly in हालs where an active context
+	 * in-flight requests, particularly in cases where an active context
 	 * is banned and those active requests need to be cancelled.
 	 */
 	I915_FENCE_FLAG_SENTINEL,
 
 	/*
-	 * I915_FENCE_FLAG_BOOST - upघड़ी the gpu क्रम this request
+	 * I915_FENCE_FLAG_BOOST - upclock the gpu for this request
 	 *
 	 * Some requests are more important than others! In particular, a
-	 * request that the user is रुकोing on is typically required क्रम
-	 * पूर्णांकeractive latency, क्रम which we want to minimise by upघड़ीing
+	 * request that the user is waiting on is typically required for
+	 * interactive latency, for which we want to minimise by upclocking
 	 * the GPU. Here we track such boost requests on a per-request basis.
 	 */
 	I915_FENCE_FLAG_BOOST,
-पूर्ण;
+};
 
 /**
- * Request queue काष्ठाure.
+ * Request queue structure.
  *
  * The request queue allows us to note sequence numbers that have been emitted
  * and may be associated with active buffers to be retired.
  *
- * By keeping this list, we can aव्योम having to करो questionable sequence
- * number comparisons on buffer last_पढ़ो|ग_लिखो_seqno. It also allows an
- * emission समय to be associated with the request क्रम tracking how far ahead
+ * By keeping this list, we can avoid having to do questionable sequence
+ * number comparisons on buffer last_read|write_seqno. It also allows an
+ * emission time to be associated with the request for tracking how far ahead
  * of the GPU the submission is.
  *
- * When modअगरying this काष्ठाure be very aware that we perक्रमm a lockless
- * RCU lookup of it that may race against पुनः_स्मृतिation of the काष्ठा
- * from the slab मुक्तlist. We पूर्णांकentionally करो not zero the काष्ठाure on
- * allocation so that the lookup can use the dangling poपूर्णांकers (and is
- * cogniscent that those poपूर्णांकers may be wrong). Instead, everything that
- * needs to be initialised must be करोne so explicitly.
+ * When modifying this structure be very aware that we perform a lockless
+ * RCU lookup of it that may race against reallocation of the struct
+ * from the slab freelist. We intentionally do not zero the structure on
+ * allocation so that the lookup can use the dangling pointers (and is
+ * cogniscent that those pointers may be wrong). Instead, everything that
+ * needs to be initialised must be done so explicitly.
  *
  * The requests are reference counted.
  */
-काष्ठा i915_request अणु
-	काष्ठा dma_fence fence;
+struct i915_request {
+	struct dma_fence fence;
 	spinlock_t lock;
 
 	/**
 	 * Context and ring buffer related to this request
 	 * Contexts are refcounted, so when this request is associated with a
 	 * context, we must increment the context's refcount, to guarantee that
-	 * it persists जबतक any request is linked to it. Requests themselves
-	 * are also refcounted, so the request will only be मुक्तd when the last
+	 * it persists while any request is linked to it. Requests themselves
+	 * are also refcounted, so the request will only be freed when the last
 	 * reference to it is dismissed, and the code in
-	 * i915_request_मुक्त() will then decrement the refcount on the
+	 * i915_request_free() will then decrement the refcount on the
 	 * context.
 	 */
-	काष्ठा पूर्णांकel_engine_cs *engine;
-	काष्ठा पूर्णांकel_context *context;
-	काष्ठा पूर्णांकel_ring *ring;
-	काष्ठा पूर्णांकel_समयline __rcu *समयline;
+	struct intel_engine_cs *engine;
+	struct intel_context *context;
+	struct intel_ring *ring;
+	struct intel_timeline __rcu *timeline;
 
-	काष्ठा list_head संकेत_link;
-	काष्ठा llist_node संकेत_node;
+	struct list_head signal_link;
+	struct llist_node signal_node;
 
 	/*
 	 * The rcu epoch of when this request was allocated. Used to judiciously
 	 * apply backpressure on future allocations to ensure that under
-	 * mempressure there is sufficient RCU ticks क्रम us to reclaim our
-	 * RCU रक्षित sद_असल.
+	 * mempressure there is sufficient RCU ticks for us to reclaim our
+	 * RCU protected slabs.
 	 */
-	अचिन्हित दीर्घ rcustate;
+	unsigned long rcustate;
 
 	/*
-	 * We pin the समयline->mutex जबतक स्थिरructing the request to
-	 * ensure that no caller accidentally drops it during स्थिरruction.
-	 * The समयline->mutex must be held to ensure that only this caller
-	 * can use the ring and manipulate the associated समयline during
-	 * स्थिरruction.
+	 * We pin the timeline->mutex while constructing the request to
+	 * ensure that no caller accidentally drops it during construction.
+	 * The timeline->mutex must be held to ensure that only this caller
+	 * can use the ring and manipulate the associated timeline during
+	 * construction.
 	 */
-	काष्ठा pin_cookie cookie;
+	struct pin_cookie cookie;
 
 	/*
-	 * Fences क्रम the various phases in the request's lअगरeसमय.
+	 * Fences for the various phases in the request's lifetime.
 	 *
-	 * The submit fence is used to aरुको upon all of the request's
-	 * dependencies. When it is संकेतed, the request is पढ़ोy to run.
-	 * It is used by the driver to then queue the request क्रम execution.
+	 * The submit fence is used to await upon all of the request's
+	 * dependencies. When it is signaled, the request is ready to run.
+	 * It is used by the driver to then queue the request for execution.
 	 */
-	काष्ठा i915_sw_fence submit;
-	जोड़ अणु
-		रुको_queue_entry_t submitq;
-		काष्ठा i915_sw_dma_fence_cb dmaq;
-		काष्ठा i915_request_duration_cb अणु
-			काष्ठा dma_fence_cb cb;
-			kसमय_प्रकार emitted;
-		पूर्ण duration;
-	पूर्ण;
-	काष्ठा llist_head execute_cb;
-	काष्ठा i915_sw_fence semaphore;
+	struct i915_sw_fence submit;
+	union {
+		wait_queue_entry_t submitq;
+		struct i915_sw_dma_fence_cb dmaq;
+		struct i915_request_duration_cb {
+			struct dma_fence_cb cb;
+			ktime_t emitted;
+		} duration;
+	};
+	struct llist_head execute_cb;
+	struct i915_sw_fence semaphore;
 
 	/*
-	 * A list of everyone we रुको upon, and everyone who रुकोs upon us.
-	 * Even though we will not be submitted to the hardware beक्रमe the
-	 * submit fence is संकेतed (it रुकोs क्रम all बाह्यal events as well
+	 * A list of everyone we wait upon, and everyone who waits upon us.
+	 * Even though we will not be submitted to the hardware before the
+	 * submit fence is signaled (it waits for all external events as well
 	 * as our own requests), the scheduler still needs to know the
-	 * dependency tree क्रम the lअगरeसमय of the request (from execbuf
-	 * to retirement), i.e. bidirectional dependency inक्रमmation क्रम the
-	 * request not tied to inभागidual fences.
+	 * dependency tree for the lifetime of the request (from execbuf
+	 * to retirement), i.e. bidirectional dependency information for the
+	 * request not tied to individual fences.
 	 */
-	काष्ठा i915_sched_node sched;
-	काष्ठा i915_dependency dep;
-	पूर्णांकel_engine_mask_t execution_mask;
+	struct i915_sched_node sched;
+	struct i915_dependency dep;
+	intel_engine_mask_t execution_mask;
 
 	/*
-	 * A convenience poपूर्णांकer to the current bपढ़ोcrumb value stored in
-	 * the HW status page (or our समयline's local equivalent). The full
-	 * path would be rq->hw_context->ring->समयline->hwsp_seqno.
+	 * A convenience pointer to the current breadcrumb value stored in
+	 * the HW status page (or our timeline's local equivalent). The full
+	 * path would be rq->hw_context->ring->timeline->hwsp_seqno.
 	 */
-	स्थिर u32 *hwsp_seqno;
+	const u32 *hwsp_seqno;
 
 	/** Position in the ring of the start of the request */
 	u32 head;
@@ -259,387 +258,387 @@
 	/** Position in the ring of the end of any workarounds after the tail */
 	u32 wa_tail;
 
-	/** Pपुनः_स्मृतिate space in the ring क्रम the emitting the request */
+	/** Preallocate space in the ring for the emitting the request */
 	u32 reserved_space;
 
-	/** Batch buffer related to this request अगर any (used क्रम
+	/** Batch buffer related to this request if any (used for
 	 * error state dump only).
 	 */
-	काष्ठा i915_vma *batch;
+	struct i915_vma *batch;
 	/**
 	 * Additional buffers requested by userspace to be captured upon
-	 * a GPU hang. The vma/obj on this list are रक्षित by their
+	 * a GPU hang. The vma/obj on this list are protected by their
 	 * active reference - all objects on this list must also be
 	 * on the active_list (of their final request).
 	 */
-	काष्ठा i915_capture_list *capture_list;
+	struct i915_capture_list *capture_list;
 
-	/** Time at which this request was emitted, in jअगरfies. */
-	अचिन्हित दीर्घ emitted_jअगरfies;
+	/** Time at which this request was emitted, in jiffies. */
+	unsigned long emitted_jiffies;
 
-	/** समयline->request entry क्रम this request */
-	काष्ठा list_head link;
+	/** timeline->request entry for this request */
+	struct list_head link;
 
-	/** Watchकरोg support fields. */
-	काष्ठा i915_request_watchकरोg अणु
-		काष्ठा llist_node link;
-		काष्ठा hrसमयr समयr;
-	पूर्ण watchकरोg;
+	/** Watchdog support fields. */
+	struct i915_request_watchdog {
+		struct llist_node link;
+		struct hrtimer timer;
+	} watchdog;
 
-	I915_SELFTEST_DECLARE(काष्ठा अणु
-		काष्ठा list_head link;
-		अचिन्हित दीर्घ delay;
-	पूर्ण mock;)
-पूर्ण;
+	I915_SELFTEST_DECLARE(struct {
+		struct list_head link;
+		unsigned long delay;
+	} mock;)
+};
 
-#घोषणा I915_FENCE_GFP (GFP_KERNEL | __GFP_RETRY_MAYFAIL | __GFP_NOWARN)
+#define I915_FENCE_GFP (GFP_KERNEL | __GFP_RETRY_MAYFAIL | __GFP_NOWARN)
 
-बाह्य स्थिर काष्ठा dma_fence_ops i915_fence_ops;
+extern const struct dma_fence_ops i915_fence_ops;
 
-अटल अंतरभूत bool dma_fence_is_i915(स्थिर काष्ठा dma_fence *fence)
-अणु
-	वापस fence->ops == &i915_fence_ops;
-पूर्ण
+static inline bool dma_fence_is_i915(const struct dma_fence *fence)
+{
+	return fence->ops == &i915_fence_ops;
+}
 
-काष्ठा kmem_cache *i915_request_slab_cache(व्योम);
+struct kmem_cache *i915_request_slab_cache(void);
 
-काष्ठा i915_request * __must_check
-__i915_request_create(काष्ठा पूर्णांकel_context *ce, gfp_t gfp);
-काष्ठा i915_request * __must_check
-i915_request_create(काष्ठा पूर्णांकel_context *ce);
+struct i915_request * __must_check
+__i915_request_create(struct intel_context *ce, gfp_t gfp);
+struct i915_request * __must_check
+i915_request_create(struct intel_context *ce);
 
-व्योम __i915_request_skip(काष्ठा i915_request *rq);
-bool i915_request_set_error_once(काष्ठा i915_request *rq, पूर्णांक error);
-काष्ठा i915_request *i915_request_mark_eio(काष्ठा i915_request *rq);
+void __i915_request_skip(struct i915_request *rq);
+bool i915_request_set_error_once(struct i915_request *rq, int error);
+struct i915_request *i915_request_mark_eio(struct i915_request *rq);
 
-काष्ठा i915_request *__i915_request_commit(काष्ठा i915_request *request);
-व्योम __i915_request_queue(काष्ठा i915_request *rq,
-			  स्थिर काष्ठा i915_sched_attr *attr);
-व्योम __i915_request_queue_bh(काष्ठा i915_request *rq);
+struct i915_request *__i915_request_commit(struct i915_request *request);
+void __i915_request_queue(struct i915_request *rq,
+			  const struct i915_sched_attr *attr);
+void __i915_request_queue_bh(struct i915_request *rq);
 
-bool i915_request_retire(काष्ठा i915_request *rq);
-व्योम i915_request_retire_upto(काष्ठा i915_request *rq);
+bool i915_request_retire(struct i915_request *rq);
+void i915_request_retire_upto(struct i915_request *rq);
 
-अटल अंतरभूत काष्ठा i915_request *
-to_request(काष्ठा dma_fence *fence)
-अणु
-	/* We assume that शून्य fence/request are पूर्णांकeroperable */
-	BUILD_BUG_ON(दुरत्व(काष्ठा i915_request, fence) != 0);
+static inline struct i915_request *
+to_request(struct dma_fence *fence)
+{
+	/* We assume that NULL fence/request are interoperable */
+	BUILD_BUG_ON(offsetof(struct i915_request, fence) != 0);
 	GEM_BUG_ON(fence && !dma_fence_is_i915(fence));
-	वापस container_of(fence, काष्ठा i915_request, fence);
-पूर्ण
+	return container_of(fence, struct i915_request, fence);
+}
 
-अटल अंतरभूत काष्ठा i915_request *
-i915_request_get(काष्ठा i915_request *rq)
-अणु
-	वापस to_request(dma_fence_get(&rq->fence));
-पूर्ण
+static inline struct i915_request *
+i915_request_get(struct i915_request *rq)
+{
+	return to_request(dma_fence_get(&rq->fence));
+}
 
-अटल अंतरभूत काष्ठा i915_request *
-i915_request_get_rcu(काष्ठा i915_request *rq)
-अणु
-	वापस to_request(dma_fence_get_rcu(&rq->fence));
-पूर्ण
+static inline struct i915_request *
+i915_request_get_rcu(struct i915_request *rq)
+{
+	return to_request(dma_fence_get_rcu(&rq->fence));
+}
 
-अटल अंतरभूत व्योम
-i915_request_put(काष्ठा i915_request *rq)
-अणु
+static inline void
+i915_request_put(struct i915_request *rq)
+{
 	dma_fence_put(&rq->fence);
-पूर्ण
+}
 
-पूर्णांक i915_request_aरुको_object(काष्ठा i915_request *to,
-			      काष्ठा drm_i915_gem_object *obj,
-			      bool ग_लिखो);
-पूर्णांक i915_request_aरुको_dma_fence(काष्ठा i915_request *rq,
-				 काष्ठा dma_fence *fence);
-पूर्णांक i915_request_aरुको_execution(काष्ठा i915_request *rq,
-				 काष्ठा dma_fence *fence,
-				 व्योम (*hook)(काष्ठा i915_request *rq,
-					      काष्ठा dma_fence *संकेत));
+int i915_request_await_object(struct i915_request *to,
+			      struct drm_i915_gem_object *obj,
+			      bool write);
+int i915_request_await_dma_fence(struct i915_request *rq,
+				 struct dma_fence *fence);
+int i915_request_await_execution(struct i915_request *rq,
+				 struct dma_fence *fence,
+				 void (*hook)(struct i915_request *rq,
+					      struct dma_fence *signal));
 
-व्योम i915_request_add(काष्ठा i915_request *rq);
+void i915_request_add(struct i915_request *rq);
 
-bool __i915_request_submit(काष्ठा i915_request *request);
-व्योम i915_request_submit(काष्ठा i915_request *request);
+bool __i915_request_submit(struct i915_request *request);
+void i915_request_submit(struct i915_request *request);
 
-व्योम __i915_request_unsubmit(काष्ठा i915_request *request);
-व्योम i915_request_unsubmit(काष्ठा i915_request *request);
+void __i915_request_unsubmit(struct i915_request *request);
+void i915_request_unsubmit(struct i915_request *request);
 
-व्योम i915_request_cancel(काष्ठा i915_request *rq, पूर्णांक error);
+void i915_request_cancel(struct i915_request *rq, int error);
 
-दीर्घ i915_request_रुको(काष्ठा i915_request *rq,
-		       अचिन्हित पूर्णांक flags,
-		       दीर्घ समयout)
+long i915_request_wait(struct i915_request *rq,
+		       unsigned int flags,
+		       long timeout)
 	__attribute__((nonnull(1)));
-#घोषणा I915_WAIT_INTERRUPTIBLE	BIT(0)
-#घोषणा I915_WAIT_PRIORITY	BIT(1) /* small priority bump क्रम the request */
-#घोषणा I915_WAIT_ALL		BIT(2) /* used by i915_gem_object_रुको() */
+#define I915_WAIT_INTERRUPTIBLE	BIT(0)
+#define I915_WAIT_PRIORITY	BIT(1) /* small priority bump for the request */
+#define I915_WAIT_ALL		BIT(2) /* used by i915_gem_object_wait() */
 
-व्योम i915_request_show(काष्ठा drm_prपूर्णांकer *m,
-		       स्थिर काष्ठा i915_request *rq,
-		       स्थिर अक्षर *prefix,
-		       पूर्णांक indent);
+void i915_request_show(struct drm_printer *m,
+		       const struct i915_request *rq,
+		       const char *prefix,
+		       int indent);
 
-अटल अंतरभूत bool i915_request_संकेतed(स्थिर काष्ठा i915_request *rq)
-अणु
-	/* The request may live दीर्घer than its HWSP, so check flags first! */
-	वापस test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &rq->fence.flags);
-पूर्ण
+static inline bool i915_request_signaled(const struct i915_request *rq)
+{
+	/* The request may live longer than its HWSP, so check flags first! */
+	return test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &rq->fence.flags);
+}
 
-अटल अंतरभूत bool i915_request_is_active(स्थिर काष्ठा i915_request *rq)
-अणु
-	वापस test_bit(I915_FENCE_FLAG_ACTIVE, &rq->fence.flags);
-पूर्ण
+static inline bool i915_request_is_active(const struct i915_request *rq)
+{
+	return test_bit(I915_FENCE_FLAG_ACTIVE, &rq->fence.flags);
+}
 
-अटल अंतरभूत bool i915_request_in_priority_queue(स्थिर काष्ठा i915_request *rq)
-अणु
-	वापस test_bit(I915_FENCE_FLAG_PQUEUE, &rq->fence.flags);
-पूर्ण
+static inline bool i915_request_in_priority_queue(const struct i915_request *rq)
+{
+	return test_bit(I915_FENCE_FLAG_PQUEUE, &rq->fence.flags);
+}
 
-अटल अंतरभूत bool
-i915_request_has_initial_bपढ़ोcrumb(स्थिर काष्ठा i915_request *rq)
-अणु
-	वापस test_bit(I915_FENCE_FLAG_INITIAL_BREADCRUMB, &rq->fence.flags);
-पूर्ण
+static inline bool
+i915_request_has_initial_breadcrumb(const struct i915_request *rq)
+{
+	return test_bit(I915_FENCE_FLAG_INITIAL_BREADCRUMB, &rq->fence.flags);
+}
 
 /**
- * Returns true अगर seq1 is later than seq2.
+ * Returns true if seq1 is later than seq2.
  */
-अटल अंतरभूत bool i915_seqno_passed(u32 seq1, u32 seq2)
-अणु
-	वापस (s32)(seq1 - seq2) >= 0;
-पूर्ण
+static inline bool i915_seqno_passed(u32 seq1, u32 seq2)
+{
+	return (s32)(seq1 - seq2) >= 0;
+}
 
-अटल अंतरभूत u32 __hwsp_seqno(स्थिर काष्ठा i915_request *rq)
-अणु
-	स्थिर u32 *hwsp = READ_ONCE(rq->hwsp_seqno);
+static inline u32 __hwsp_seqno(const struct i915_request *rq)
+{
+	const u32 *hwsp = READ_ONCE(rq->hwsp_seqno);
 
-	वापस READ_ONCE(*hwsp);
-पूर्ण
+	return READ_ONCE(*hwsp);
+}
 
 /**
- * hwsp_seqno - the current bपढ़ोcrumb value in the HW status page
+ * hwsp_seqno - the current breadcrumb value in the HW status page
  * @rq: the request, to chase the relevant HW status page
  *
  * The emphasis in naming here is that hwsp_seqno() is not a property of the
  * request, but an indication of the current HW state (associated with this
  * request). Its value will change as the GPU executes more requests.
  *
- * Returns the current bपढ़ोcrumb value in the associated HW status page (or
- * the local समयline's equivalent) क्रम this request. The request itself
- * has the associated bपढ़ोcrumb value of rq->fence.seqno, when the HW
- * status page has that bपढ़ोcrumb or later, this request is complete.
+ * Returns the current breadcrumb value in the associated HW status page (or
+ * the local timeline's equivalent) for this request. The request itself
+ * has the associated breadcrumb value of rq->fence.seqno, when the HW
+ * status page has that breadcrumb or later, this request is complete.
  */
-अटल अंतरभूत u32 hwsp_seqno(स्थिर काष्ठा i915_request *rq)
-अणु
+static inline u32 hwsp_seqno(const struct i915_request *rq)
+{
 	u32 seqno;
 
-	rcu_पढ़ो_lock(); /* the HWSP may be मुक्तd at runसमय */
+	rcu_read_lock(); /* the HWSP may be freed at runtime */
 	seqno = __hwsp_seqno(rq);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस seqno;
-पूर्ण
+	return seqno;
+}
 
-अटल अंतरभूत bool __i915_request_has_started(स्थिर काष्ठा i915_request *rq)
-अणु
-	वापस i915_seqno_passed(__hwsp_seqno(rq), rq->fence.seqno - 1);
-पूर्ण
+static inline bool __i915_request_has_started(const struct i915_request *rq)
+{
+	return i915_seqno_passed(__hwsp_seqno(rq), rq->fence.seqno - 1);
+}
 
 /**
- * i915_request_started - check अगर the request has begun being executed
+ * i915_request_started - check if the request has begun being executed
  * @rq: the request
  *
- * If the समयline is not using initial bपढ़ोcrumbs, a request is
- * considered started अगर the previous request on its समयline (i.e.
- * context) has been संकेतed.
+ * If the timeline is not using initial breadcrumbs, a request is
+ * considered started if the previous request on its timeline (i.e.
+ * context) has been signaled.
  *
- * If the समयline is using semaphores, it will also be emitting an
- * "initial breadcrumb" after the semaphores are complete and just beक्रमe
- * it began executing the user payload. A request can thereक्रमe be active
- * on the HW and not yet started as it is still busyरुकोing on its
+ * If the timeline is using semaphores, it will also be emitting an
+ * "initial breadcrumb" after the semaphores are complete and just before
+ * it began executing the user payload. A request can therefore be active
+ * on the HW and not yet started as it is still busywaiting on its
  * dependencies (via HW semaphores).
  *
- * If the request has started, its dependencies will have been संकेतed
+ * If the request has started, its dependencies will have been signaled
  * (either by fences or by semaphores) and it will have begun processing
  * the user payload.
  *
- * However, even अगर a request has started, it may have been preempted and
- * so no दीर्घer active, or it may have alपढ़ोy completed.
+ * However, even if a request has started, it may have been preempted and
+ * so no longer active, or it may have already completed.
  *
  * See also i915_request_is_active().
  *
- * Returns true अगर the request has begun executing the user payload, or
+ * Returns true if the request has begun executing the user payload, or
  * has completed:
  */
-अटल अंतरभूत bool i915_request_started(स्थिर काष्ठा i915_request *rq)
-अणु
+static inline bool i915_request_started(const struct i915_request *rq)
+{
 	bool result;
 
-	अगर (i915_request_संकेतed(rq))
-		वापस true;
+	if (i915_request_signaled(rq))
+		return true;
 
 	result = true;
-	rcu_पढ़ो_lock(); /* the HWSP may be मुक्तd at runसमय */
-	अगर (likely(!i915_request_संकेतed(rq)))
+	rcu_read_lock(); /* the HWSP may be freed at runtime */
+	if (likely(!i915_request_signaled(rq)))
 		/* Remember: started but may have since been preempted! */
 		result = __i915_request_has_started(rq);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /**
- * i915_request_is_running - check अगर the request may actually be executing
+ * i915_request_is_running - check if the request may actually be executing
  * @rq: the request
  *
- * Returns true अगर the request is currently submitted to hardware, has passed
- * its start poपूर्णांक (i.e. the context is setup and not busyरुकोing). Note that
- * it may no दीर्घer be running by the समय the function वापसs!
+ * Returns true if the request is currently submitted to hardware, has passed
+ * its start point (i.e. the context is setup and not busywaiting). Note that
+ * it may no longer be running by the time the function returns!
  */
-अटल अंतरभूत bool i915_request_is_running(स्थिर काष्ठा i915_request *rq)
-अणु
+static inline bool i915_request_is_running(const struct i915_request *rq)
+{
 	bool result;
 
-	अगर (!i915_request_is_active(rq))
-		वापस false;
+	if (!i915_request_is_active(rq))
+		return false;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	result = __i915_request_has_started(rq) && i915_request_is_active(rq);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /**
- * i915_request_is_पढ़ोy - check अगर the request is पढ़ोy क्रम execution
+ * i915_request_is_ready - check if the request is ready for execution
  * @rq: the request
  *
- * Upon स्थिरruction, the request is inकाष्ठाed to रुको upon various
- * संकेतs beक्रमe it is पढ़ोy to be executed by the HW. That is, we करो
- * not want to start execution and पढ़ो data beक्रमe it is written. In practice,
- * this is controlled with a mixture of पूर्णांकerrupts and semaphores. Once
+ * Upon construction, the request is instructed to wait upon various
+ * signals before it is ready to be executed by the HW. That is, we do
+ * not want to start execution and read data before it is written. In practice,
+ * this is controlled with a mixture of interrupts and semaphores. Once
  * the submit fence is completed, the backend scheduler will place the
- * request पूर्णांकo its queue and from there submit it क्रम execution. So we
- * can detect when a request is eligible क्रम execution (and is under control
+ * request into its queue and from there submit it for execution. So we
+ * can detect when a request is eligible for execution (and is under control
  * of the scheduler) by querying where it is in any of the scheduler's lists.
  *
- * Returns true अगर the request is पढ़ोy क्रम execution (it may be inflight),
+ * Returns true if the request is ready for execution (it may be inflight),
  * false otherwise.
  */
-अटल अंतरभूत bool i915_request_is_पढ़ोy(स्थिर काष्ठा i915_request *rq)
-अणु
-	वापस !list_empty(&rq->sched.link);
-पूर्ण
+static inline bool i915_request_is_ready(const struct i915_request *rq)
+{
+	return !list_empty(&rq->sched.link);
+}
 
-अटल अंतरभूत bool __i915_request_is_complete(स्थिर काष्ठा i915_request *rq)
-अणु
-	वापस i915_seqno_passed(__hwsp_seqno(rq), rq->fence.seqno);
-पूर्ण
+static inline bool __i915_request_is_complete(const struct i915_request *rq)
+{
+	return i915_seqno_passed(__hwsp_seqno(rq), rq->fence.seqno);
+}
 
-अटल अंतरभूत bool i915_request_completed(स्थिर काष्ठा i915_request *rq)
-अणु
+static inline bool i915_request_completed(const struct i915_request *rq)
+{
 	bool result;
 
-	अगर (i915_request_संकेतed(rq))
-		वापस true;
+	if (i915_request_signaled(rq))
+		return true;
 
 	result = true;
-	rcu_पढ़ो_lock(); /* the HWSP may be मुक्तd at runसमय */
-	अगर (likely(!i915_request_संकेतed(rq)))
+	rcu_read_lock(); /* the HWSP may be freed at runtime */
+	if (likely(!i915_request_signaled(rq)))
 		result = __i915_request_is_complete(rq);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल अंतरभूत व्योम i915_request_mark_complete(काष्ठा i915_request *rq)
-अणु
+static inline void i915_request_mark_complete(struct i915_request *rq)
+{
 	WRITE_ONCE(rq->hwsp_seqno, /* decouple from HWSP */
 		   (u32 *)&rq->fence.seqno);
-पूर्ण
+}
 
-अटल अंतरभूत bool i915_request_has_रुकोboost(स्थिर काष्ठा i915_request *rq)
-अणु
-	वापस test_bit(I915_FENCE_FLAG_BOOST, &rq->fence.flags);
-पूर्ण
+static inline bool i915_request_has_waitboost(const struct i915_request *rq)
+{
+	return test_bit(I915_FENCE_FLAG_BOOST, &rq->fence.flags);
+}
 
-अटल अंतरभूत bool i915_request_has_nopreempt(स्थिर काष्ठा i915_request *rq)
-अणु
+static inline bool i915_request_has_nopreempt(const struct i915_request *rq)
+{
 	/* Preemption should only be disabled very rarely */
-	वापस unlikely(test_bit(I915_FENCE_FLAG_NOPREEMPT, &rq->fence.flags));
-पूर्ण
+	return unlikely(test_bit(I915_FENCE_FLAG_NOPREEMPT, &rq->fence.flags));
+}
 
-अटल अंतरभूत bool i915_request_has_sentinel(स्थिर काष्ठा i915_request *rq)
-अणु
-	वापस unlikely(test_bit(I915_FENCE_FLAG_SENTINEL, &rq->fence.flags));
-पूर्ण
+static inline bool i915_request_has_sentinel(const struct i915_request *rq)
+{
+	return unlikely(test_bit(I915_FENCE_FLAG_SENTINEL, &rq->fence.flags));
+}
 
-अटल अंतरभूत bool i915_request_on_hold(स्थिर काष्ठा i915_request *rq)
-अणु
-	वापस unlikely(test_bit(I915_FENCE_FLAG_HOLD, &rq->fence.flags));
-पूर्ण
+static inline bool i915_request_on_hold(const struct i915_request *rq)
+{
+	return unlikely(test_bit(I915_FENCE_FLAG_HOLD, &rq->fence.flags));
+}
 
-अटल अंतरभूत व्योम i915_request_set_hold(काष्ठा i915_request *rq)
-अणु
+static inline void i915_request_set_hold(struct i915_request *rq)
+{
 	set_bit(I915_FENCE_FLAG_HOLD, &rq->fence.flags);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम i915_request_clear_hold(काष्ठा i915_request *rq)
-अणु
+static inline void i915_request_clear_hold(struct i915_request *rq)
+{
 	clear_bit(I915_FENCE_FLAG_HOLD, &rq->fence.flags);
-पूर्ण
+}
 
-अटल अंतरभूत काष्ठा पूर्णांकel_समयline *
-i915_request_समयline(स्थिर काष्ठा i915_request *rq)
-अणु
-	/* Valid only जबतक the request is being स्थिरructed (or retired). */
-	वापस rcu_dereference_रक्षित(rq->समयline,
-					 lockdep_is_held(&rcu_access_poपूर्णांकer(rq->समयline)->mutex));
-पूर्ण
+static inline struct intel_timeline *
+i915_request_timeline(const struct i915_request *rq)
+{
+	/* Valid only while the request is being constructed (or retired). */
+	return rcu_dereference_protected(rq->timeline,
+					 lockdep_is_held(&rcu_access_pointer(rq->timeline)->mutex));
+}
 
-अटल अंतरभूत काष्ठा i915_gem_context *
-i915_request_gem_context(स्थिर काष्ठा i915_request *rq)
-अणु
-	/* Valid only जबतक the request is being स्थिरructed (or retired). */
-	वापस rcu_dereference_रक्षित(rq->context->gem_context, true);
-पूर्ण
+static inline struct i915_gem_context *
+i915_request_gem_context(const struct i915_request *rq)
+{
+	/* Valid only while the request is being constructed (or retired). */
+	return rcu_dereference_protected(rq->context->gem_context, true);
+}
 
-अटल अंतरभूत काष्ठा पूर्णांकel_समयline *
-i915_request_active_समयline(स्थिर काष्ठा i915_request *rq)
-अणु
+static inline struct intel_timeline *
+i915_request_active_timeline(const struct i915_request *rq)
+{
 	/*
-	 * When in use during submission, we are रक्षित by a guarantee that
-	 * the context/समयline is pinned and must reमुख्य pinned until after
+	 * When in use during submission, we are protected by a guarantee that
+	 * the context/timeline is pinned and must remain pinned until after
 	 * this submission.
 	 */
-	वापस rcu_dereference_रक्षित(rq->समयline,
+	return rcu_dereference_protected(rq->timeline,
 					 lockdep_is_held(&rq->engine->active.lock));
-पूर्ण
+}
 
-अटल अंतरभूत u32
-i915_request_active_seqno(स्थिर काष्ठा i915_request *rq)
-अणु
+static inline u32
+i915_request_active_seqno(const struct i915_request *rq)
+{
 	u32 hwsp_phys_base =
-		page_mask_bits(i915_request_active_समयline(rq)->hwsp_offset);
+		page_mask_bits(i915_request_active_timeline(rq)->hwsp_offset);
 	u32 hwsp_relative_offset = offset_in_page(rq->hwsp_seqno);
 
 	/*
 	 * Because of wraparound, we cannot simply take tl->hwsp_offset,
-	 * but instead use the fact that the relative क्रम vaddr is the
-	 * offset as क्रम hwsp_offset. Take the top bits from tl->hwsp_offset
+	 * but instead use the fact that the relative for vaddr is the
+	 * offset as for hwsp_offset. Take the top bits from tl->hwsp_offset
 	 * and combine them with the relative offset in rq->hwsp_seqno.
 	 *
-	 * As rw->hwsp_seqno is rewritten when संकेतed, this only works
-	 * when the request isn't संकेतed yet, but at that poपूर्णांक you
-	 * no दीर्घer need the offset.
+	 * As rw->hwsp_seqno is rewritten when signaled, this only works
+	 * when the request isn't signaled yet, but at that point you
+	 * no longer need the offset.
 	 */
 
-	वापस hwsp_phys_base + hwsp_relative_offset;
-पूर्ण
+	return hwsp_phys_base + hwsp_relative_offset;
+}
 
 bool
-i915_request_active_engine(काष्ठा i915_request *rq,
-			   काष्ठा पूर्णांकel_engine_cs **active);
+i915_request_active_engine(struct i915_request *rq,
+			   struct intel_engine_cs **active);
 
-#पूर्ण_अगर /* I915_REQUEST_H */
+#endif /* I915_REQUEST_H */

@@ -1,64 +1,63 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (LGPL-2.1 OR BSD-2-Clause)
+// SPDX-License-Identifier: (LGPL-2.1 OR BSD-2-Clause)
 
 /*
- * BTF-to-C dumper test क्रम topological sorting of dependent काष्ठाs.
+ * BTF-to-C dumper test for topological sorting of dependent structs.
  *
  * Copyright (c) 2019 Facebook
  */
 /* ----- START-EXPECTED-OUTPUT ----- */
-काष्ठा s1 अणुपूर्ण;
+struct s1 {};
 
-काष्ठा s3;
+struct s3;
 
-काष्ठा s4;
+struct s4;
 
-काष्ठा s2 अणु
-	काष्ठा s2 *s2;
-	काष्ठा s3 *s3;
-	काष्ठा s4 *s4;
-पूर्ण;
+struct s2 {
+	struct s2 *s2;
+	struct s3 *s3;
+	struct s4 *s4;
+};
 
-काष्ठा s3 अणु
-	काष्ठा s1 s1;
-	काष्ठा s2 s2;
-पूर्ण;
+struct s3 {
+	struct s1 s1;
+	struct s2 s2;
+};
 
-काष्ठा s4 अणु
-	काष्ठा s1 s1;
-	काष्ठा s3 s3;
-पूर्ण;
+struct s4 {
+	struct s1 s1;
+	struct s3 s3;
+};
 
-काष्ठा list_head अणु
-	काष्ठा list_head *next;
-	काष्ठा list_head *prev;
-पूर्ण;
+struct list_head {
+	struct list_head *next;
+	struct list_head *prev;
+};
 
-काष्ठा hlist_node अणु
-	काष्ठा hlist_node *next;
-	काष्ठा hlist_node **pprev;
-पूर्ण;
+struct hlist_node {
+	struct hlist_node *next;
+	struct hlist_node **pprev;
+};
 
-काष्ठा hlist_head अणु
-	काष्ठा hlist_node *first;
-पूर्ण;
+struct hlist_head {
+	struct hlist_node *first;
+};
 
-काष्ठा callback_head अणु
-	काष्ठा callback_head *next;
-	व्योम (*func)(काष्ठा callback_head *);
-पूर्ण;
+struct callback_head {
+	struct callback_head *next;
+	void (*func)(struct callback_head *);
+};
 
-काष्ठा root_काष्ठा अणु
-	काष्ठा s4 s4;
-	काष्ठा list_head l;
-	काष्ठा hlist_node n;
-	काष्ठा hlist_head h;
-	काष्ठा callback_head cb;
-पूर्ण;
+struct root_struct {
+	struct s4 s4;
+	struct list_head l;
+	struct hlist_node n;
+	struct hlist_head h;
+	struct callback_head cb;
+};
 
 /*------ END-EXPECTED-OUTPUT ------ */
 
-पूर्णांक f(काष्ठा root_काष्ठा *root)
-अणु
-	वापस 0;
-पूर्ण
+int f(struct root_struct *root)
+{
+	return 0;
+}

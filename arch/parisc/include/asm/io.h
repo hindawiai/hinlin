@@ -1,322 +1,321 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_IO_H
-#घोषणा _ASM_IO_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_IO_H
+#define _ASM_IO_H
 
-#समावेश <linux/types.h>
-#समावेश <linux/pgtable.h>
+#include <linux/types.h>
+#include <linux/pgtable.h>
 
-#घोषणा virt_to_phys(a) ((अचिन्हित दीर्घ)__pa(a))
-#घोषणा phys_to_virt(a) __va(a)
-#घोषणा virt_to_bus virt_to_phys
-#घोषणा bus_to_virt phys_to_virt
+#define virt_to_phys(a) ((unsigned long)__pa(a))
+#define phys_to_virt(a) __va(a)
+#define virt_to_bus virt_to_phys
+#define bus_to_virt phys_to_virt
 
-अटल अंतरभूत अचिन्हित दीर्घ isa_bus_to_virt(अचिन्हित दीर्घ addr) अणु
+static inline unsigned long isa_bus_to_virt(unsigned long addr) {
 	BUG();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ isa_virt_to_bus(व्योम *addr) अणु
+static inline unsigned long isa_virt_to_bus(void *addr) {
 	BUG();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Memory mapped I/O
  *
- * पढ़ोX()/ग_लिखोX() करो byteswapping and take an ioremapped address
- * __raw_पढ़ोX()/__raw_ग_लिखोX() करोn't byteswap and take an ioremapped address.
- * gsc_*() करोn't byteswap and operate on physical addresses;
+ * readX()/writeX() do byteswapping and take an ioremapped address
+ * __raw_readX()/__raw_writeX() don't byteswap and take an ioremapped address.
+ * gsc_*() don't byteswap and operate on physical addresses;
  *   eg dev->hpa or 0xfee00000.
  */
 
-अटल अंतरभूत अचिन्हित अक्षर gsc_पढ़ोb(अचिन्हित दीर्घ addr)
-अणु
-	दीर्घ flags;
-	अचिन्हित अक्षर ret;
+static inline unsigned char gsc_readb(unsigned long addr)
+{
+	long flags;
+	unsigned char ret;
 
-	__यंत्र__ __अस्थिर__(
+	__asm__ __volatile__(
 	"	rsm	%3,%0\n"
 	"	ldbx	0(%2),%1\n"
 	"	mtsm	%0\n"
 	: "=&r" (flags), "=r" (ret) : "r" (addr), "i" (PSW_SM_D) );
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत अचिन्हित लघु gsc_पढ़ोw(अचिन्हित दीर्घ addr)
-अणु
-	दीर्घ flags;
-	अचिन्हित लघु ret;
+static inline unsigned short gsc_readw(unsigned long addr)
+{
+	long flags;
+	unsigned short ret;
 
-	__यंत्र__ __अस्थिर__(
+	__asm__ __volatile__(
 	"	rsm	%3,%0\n"
 	"	ldhx	0(%2),%1\n"
 	"	mtsm	%0\n"
 	: "=&r" (flags), "=r" (ret) : "r" (addr), "i" (PSW_SM_D) );
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक gsc_पढ़ोl(अचिन्हित दीर्घ addr)
-अणु
+static inline unsigned int gsc_readl(unsigned long addr)
+{
 	u32 ret;
 
-	__यंत्र__ __अस्थिर__(
+	__asm__ __volatile__(
 	"	ldwax	0(%1),%0\n"
 	: "=r" (ret) : "r" (addr) );
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ दीर्घ gsc_पढ़ोq(अचिन्हित दीर्घ addr)
-अणु
-	अचिन्हित दीर्घ दीर्घ ret;
+static inline unsigned long long gsc_readq(unsigned long addr)
+{
+	unsigned long long ret;
 
-#अगर_घोषित CONFIG_64BIT
-	__यंत्र__ __अस्थिर__(
+#ifdef CONFIG_64BIT
+	__asm__ __volatile__(
 	"	ldda	0(%1),%0\n"
 	:  "=r" (ret) : "r" (addr) );
-#अन्यथा
-	/* two पढ़ोs may have side effects.. */
-	ret = ((u64) gsc_पढ़ोl(addr)) << 32;
-	ret |= gsc_पढ़ोl(addr+4);
-#पूर्ण_अगर
-	वापस ret;
-पूर्ण
+#else
+	/* two reads may have side effects.. */
+	ret = ((u64) gsc_readl(addr)) << 32;
+	ret |= gsc_readl(addr+4);
+#endif
+	return ret;
+}
 
-अटल अंतरभूत व्योम gsc_ग_लिखोb(अचिन्हित अक्षर val, अचिन्हित दीर्घ addr)
-अणु
-	दीर्घ flags;
-	__यंत्र__ __अस्थिर__(
+static inline void gsc_writeb(unsigned char val, unsigned long addr)
+{
+	long flags;
+	__asm__ __volatile__(
 	"	rsm	%3,%0\n"
 	"	stbs	%1,0(%2)\n"
 	"	mtsm	%0\n"
 	: "=&r" (flags) :  "r" (val), "r" (addr), "i" (PSW_SM_D) );
-पूर्ण
+}
 
-अटल अंतरभूत व्योम gsc_ग_लिखोw(अचिन्हित लघु val, अचिन्हित दीर्घ addr)
-अणु
-	दीर्घ flags;
-	__यंत्र__ __अस्थिर__(
+static inline void gsc_writew(unsigned short val, unsigned long addr)
+{
+	long flags;
+	__asm__ __volatile__(
 	"	rsm	%3,%0\n"
 	"	sths	%1,0(%2)\n"
 	"	mtsm	%0\n"
 	: "=&r" (flags) :  "r" (val), "r" (addr), "i" (PSW_SM_D) );
-पूर्ण
+}
 
-अटल अंतरभूत व्योम gsc_ग_लिखोl(अचिन्हित पूर्णांक val, अचिन्हित दीर्घ addr)
-अणु
-	__यंत्र__ __अस्थिर__(
+static inline void gsc_writel(unsigned int val, unsigned long addr)
+{
+	__asm__ __volatile__(
 	"	stwas	%0,0(%1)\n"
 	: :  "r" (val), "r" (addr) );
-पूर्ण
+}
 
-अटल अंतरभूत व्योम gsc_ग_लिखोq(अचिन्हित दीर्घ दीर्घ val, अचिन्हित दीर्घ addr)
-अणु
-#अगर_घोषित CONFIG_64BIT
-	__यंत्र__ __अस्थिर__(
+static inline void gsc_writeq(unsigned long long val, unsigned long addr)
+{
+#ifdef CONFIG_64BIT
+	__asm__ __volatile__(
 	"	stda	%0,0(%1)\n"
 	: :  "r" (val), "r" (addr) );
-#अन्यथा
-	/* two ग_लिखोs may have side effects.. */
-	gsc_ग_लिखोl(val >> 32, addr);
-	gsc_ग_लिखोl(val, addr+4);
-#पूर्ण_अगर
-पूर्ण
+#else
+	/* two writes may have side effects.. */
+	gsc_writel(val >> 32, addr);
+	gsc_writel(val, addr+4);
+#endif
+}
 
 /*
- * The standard PCI ioremap पूर्णांकerfaces
+ * The standard PCI ioremap interfaces
  */
-व्योम __iomem *ioremap(अचिन्हित दीर्घ offset, अचिन्हित दीर्घ size);
-#घोषणा ioremap_wc			ioremap
-#घोषणा ioremap_uc			ioremap
+void __iomem *ioremap(unsigned long offset, unsigned long size);
+#define ioremap_wc			ioremap
+#define ioremap_uc			ioremap
 
-बाह्य व्योम iounmap(स्थिर अस्थिर व्योम __iomem *addr);
+extern void iounmap(const volatile void __iomem *addr);
 
-अटल अंतरभूत अचिन्हित अक्षर __raw_पढ़ोb(स्थिर अस्थिर व्योम __iomem *addr)
-अणु
-	वापस (*(अस्थिर अचिन्हित अक्षर __क्रमce *) (addr));
-पूर्ण
-अटल अंतरभूत अचिन्हित लघु __raw_पढ़ोw(स्थिर अस्थिर व्योम __iomem *addr)
-अणु
-	वापस *(अस्थिर अचिन्हित लघु __क्रमce *) addr;
-पूर्ण
-अटल अंतरभूत अचिन्हित पूर्णांक __raw_पढ़ोl(स्थिर अस्थिर व्योम __iomem *addr)
-अणु
-	वापस *(अस्थिर अचिन्हित पूर्णांक __क्रमce *) addr;
-पूर्ण
-अटल अंतरभूत अचिन्हित दीर्घ दीर्घ __raw_पढ़ोq(स्थिर अस्थिर व्योम __iomem *addr)
-अणु
-	वापस *(अस्थिर अचिन्हित दीर्घ दीर्घ __क्रमce *) addr;
-पूर्ण
+static inline unsigned char __raw_readb(const volatile void __iomem *addr)
+{
+	return (*(volatile unsigned char __force *) (addr));
+}
+static inline unsigned short __raw_readw(const volatile void __iomem *addr)
+{
+	return *(volatile unsigned short __force *) addr;
+}
+static inline unsigned int __raw_readl(const volatile void __iomem *addr)
+{
+	return *(volatile unsigned int __force *) addr;
+}
+static inline unsigned long long __raw_readq(const volatile void __iomem *addr)
+{
+	return *(volatile unsigned long long __force *) addr;
+}
 
-अटल अंतरभूत व्योम __raw_ग_लिखोb(अचिन्हित अक्षर b, अस्थिर व्योम __iomem *addr)
-अणु
-	*(अस्थिर अचिन्हित अक्षर __क्रमce *) addr = b;
-पूर्ण
-अटल अंतरभूत व्योम __raw_ग_लिखोw(अचिन्हित लघु b, अस्थिर व्योम __iomem *addr)
-अणु
-	*(अस्थिर अचिन्हित लघु __क्रमce *) addr = b;
-पूर्ण
-अटल अंतरभूत व्योम __raw_ग_लिखोl(अचिन्हित पूर्णांक b, अस्थिर व्योम __iomem *addr)
-अणु
-	*(अस्थिर अचिन्हित पूर्णांक __क्रमce *) addr = b;
-पूर्ण
-अटल अंतरभूत व्योम __raw_ग_लिखोq(अचिन्हित दीर्घ दीर्घ b, अस्थिर व्योम __iomem *addr)
-अणु
-	*(अस्थिर अचिन्हित दीर्घ दीर्घ __क्रमce *) addr = b;
-पूर्ण
+static inline void __raw_writeb(unsigned char b, volatile void __iomem *addr)
+{
+	*(volatile unsigned char __force *) addr = b;
+}
+static inline void __raw_writew(unsigned short b, volatile void __iomem *addr)
+{
+	*(volatile unsigned short __force *) addr = b;
+}
+static inline void __raw_writel(unsigned int b, volatile void __iomem *addr)
+{
+	*(volatile unsigned int __force *) addr = b;
+}
+static inline void __raw_writeq(unsigned long long b, volatile void __iomem *addr)
+{
+	*(volatile unsigned long long __force *) addr = b;
+}
 
-अटल अंतरभूत अचिन्हित अक्षर पढ़ोb(स्थिर अस्थिर व्योम __iomem *addr)
-अणु
-	वापस __raw_पढ़ोb(addr);
-पूर्ण
-अटल अंतरभूत अचिन्हित लघु पढ़ोw(स्थिर अस्थिर व्योम __iomem *addr)
-अणु
-	वापस le16_to_cpu((__le16 __क्रमce) __raw_पढ़ोw(addr));
-पूर्ण
-अटल अंतरभूत अचिन्हित पूर्णांक पढ़ोl(स्थिर अस्थिर व्योम __iomem *addr)
-अणु
-	वापस le32_to_cpu((__le32 __क्रमce) __raw_पढ़ोl(addr));
-पूर्ण
-अटल अंतरभूत अचिन्हित दीर्घ दीर्घ पढ़ोq(स्थिर अस्थिर व्योम __iomem *addr)
-अणु
-	वापस le64_to_cpu((__le64 __क्रमce) __raw_पढ़ोq(addr));
-पूर्ण
+static inline unsigned char readb(const volatile void __iomem *addr)
+{
+	return __raw_readb(addr);
+}
+static inline unsigned short readw(const volatile void __iomem *addr)
+{
+	return le16_to_cpu((__le16 __force) __raw_readw(addr));
+}
+static inline unsigned int readl(const volatile void __iomem *addr)
+{
+	return le32_to_cpu((__le32 __force) __raw_readl(addr));
+}
+static inline unsigned long long readq(const volatile void __iomem *addr)
+{
+	return le64_to_cpu((__le64 __force) __raw_readq(addr));
+}
 
-अटल अंतरभूत व्योम ग_लिखोb(अचिन्हित अक्षर b, अस्थिर व्योम __iomem *addr)
-अणु
-	__raw_ग_लिखोb(b, addr);
-पूर्ण
-अटल अंतरभूत व्योम ग_लिखोw(अचिन्हित लघु w, अस्थिर व्योम __iomem *addr)
-अणु
-	__raw_ग_लिखोw((__u16 __क्रमce) cpu_to_le16(w), addr);
-पूर्ण
-अटल अंतरभूत व्योम ग_लिखोl(अचिन्हित पूर्णांक l, अस्थिर व्योम __iomem *addr)
-अणु
-	__raw_ग_लिखोl((__u32 __क्रमce) cpu_to_le32(l), addr);
-पूर्ण
-अटल अंतरभूत व्योम ग_लिखोq(अचिन्हित दीर्घ दीर्घ q, अस्थिर व्योम __iomem *addr)
-अणु
-	__raw_ग_लिखोq((__u64 __क्रमce) cpu_to_le64(q), addr);
-पूर्ण
+static inline void writeb(unsigned char b, volatile void __iomem *addr)
+{
+	__raw_writeb(b, addr);
+}
+static inline void writew(unsigned short w, volatile void __iomem *addr)
+{
+	__raw_writew((__u16 __force) cpu_to_le16(w), addr);
+}
+static inline void writel(unsigned int l, volatile void __iomem *addr)
+{
+	__raw_writel((__u32 __force) cpu_to_le32(l), addr);
+}
+static inline void writeq(unsigned long long q, volatile void __iomem *addr)
+{
+	__raw_writeq((__u64 __force) cpu_to_le64(q), addr);
+}
 
-#घोषणा	पढ़ोb	पढ़ोb
-#घोषणा	पढ़ोw	पढ़ोw
-#घोषणा	पढ़ोl	पढ़ोl
-#घोषणा पढ़ोq	पढ़ोq
-#घोषणा ग_लिखोb	ग_लिखोb
-#घोषणा ग_लिखोw	ग_लिखोw
-#घोषणा ग_लिखोl	ग_लिखोl
-#घोषणा ग_लिखोq	ग_लिखोq
+#define	readb	readb
+#define	readw	readw
+#define	readl	readl
+#define readq	readq
+#define writeb	writeb
+#define writew	writew
+#define writel	writel
+#define writeq	writeq
 
-#घोषणा पढ़ोb_relaxed(addr)	पढ़ोb(addr)
-#घोषणा पढ़ोw_relaxed(addr)	पढ़ोw(addr)
-#घोषणा पढ़ोl_relaxed(addr)	पढ़ोl(addr)
-#घोषणा पढ़ोq_relaxed(addr)	पढ़ोq(addr)
-#घोषणा ग_लिखोb_relaxed(b, addr)	ग_लिखोb(b, addr)
-#घोषणा ग_लिखोw_relaxed(w, addr)	ग_लिखोw(w, addr)
-#घोषणा ग_लिखोl_relaxed(l, addr)	ग_लिखोl(l, addr)
-#घोषणा ग_लिखोq_relaxed(q, addr)	ग_लिखोq(q, addr)
+#define readb_relaxed(addr)	readb(addr)
+#define readw_relaxed(addr)	readw(addr)
+#define readl_relaxed(addr)	readl(addr)
+#define readq_relaxed(addr)	readq(addr)
+#define writeb_relaxed(b, addr)	writeb(b, addr)
+#define writew_relaxed(w, addr)	writew(w, addr)
+#define writel_relaxed(l, addr)	writel(l, addr)
+#define writeq_relaxed(q, addr)	writeq(q, addr)
 
-व्योम स_रखो_io(अस्थिर व्योम __iomem *addr, अचिन्हित अक्षर val, पूर्णांक count);
-व्योम स_नकल_fromio(व्योम *dst, स्थिर अस्थिर व्योम __iomem *src, पूर्णांक count);
-व्योम स_नकल_toio(अस्थिर व्योम __iomem *dst, स्थिर व्योम *src, पूर्णांक count);
+void memset_io(volatile void __iomem *addr, unsigned char val, int count);
+void memcpy_fromio(void *dst, const volatile void __iomem *src, int count);
+void memcpy_toio(volatile void __iomem *dst, const void *src, int count);
 
 /* Port-space IO */
 
-#घोषणा inb_p inb
-#घोषणा inw_p inw
-#घोषणा inl_p inl
-#घोषणा outb_p outb
-#घोषणा outw_p outw
-#घोषणा outl_p outl
+#define inb_p inb
+#define inw_p inw
+#define inl_p inl
+#define outb_p outb
+#define outw_p outw
+#define outl_p outl
 
-बाह्य अचिन्हित अक्षर eisa_in8(अचिन्हित लघु port);
-बाह्य अचिन्हित लघु eisa_in16(अचिन्हित लघु port);
-बाह्य अचिन्हित पूर्णांक eisa_in32(अचिन्हित लघु port);
-बाह्य व्योम eisa_out8(अचिन्हित अक्षर data, अचिन्हित लघु port);
-बाह्य व्योम eisa_out16(अचिन्हित लघु data, अचिन्हित लघु port);
-बाह्य व्योम eisa_out32(अचिन्हित पूर्णांक data, अचिन्हित लघु port);
+extern unsigned char eisa_in8(unsigned short port);
+extern unsigned short eisa_in16(unsigned short port);
+extern unsigned int eisa_in32(unsigned short port);
+extern void eisa_out8(unsigned char data, unsigned short port);
+extern void eisa_out16(unsigned short data, unsigned short port);
+extern void eisa_out32(unsigned int data, unsigned short port);
 
-#अगर defined(CONFIG_PCI)
-बाह्य अचिन्हित अक्षर inb(पूर्णांक addr);
-बाह्य अचिन्हित लघु inw(पूर्णांक addr);
-बाह्य अचिन्हित पूर्णांक inl(पूर्णांक addr);
+#if defined(CONFIG_PCI)
+extern unsigned char inb(int addr);
+extern unsigned short inw(int addr);
+extern unsigned int inl(int addr);
 
-बाह्य व्योम outb(अचिन्हित अक्षर b, पूर्णांक addr);
-बाह्य व्योम outw(अचिन्हित लघु b, पूर्णांक addr);
-बाह्य व्योम outl(अचिन्हित पूर्णांक b, पूर्णांक addr);
-#या_अगर defined(CONFIG_EISA)
-#घोषणा inb eisa_in8
-#घोषणा inw eisa_in16
-#घोषणा inl eisa_in32
-#घोषणा outb eisa_out8
-#घोषणा outw eisa_out16
-#घोषणा outl eisa_out32
-#अन्यथा
-अटल अंतरभूत अक्षर inb(अचिन्हित दीर्घ addr)
-अणु
+extern void outb(unsigned char b, int addr);
+extern void outw(unsigned short b, int addr);
+extern void outl(unsigned int b, int addr);
+#elif defined(CONFIG_EISA)
+#define inb eisa_in8
+#define inw eisa_in16
+#define inl eisa_in32
+#define outb eisa_out8
+#define outw eisa_out16
+#define outl eisa_out32
+#else
+static inline char inb(unsigned long addr)
+{
 	BUG();
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल अंतरभूत लघु inw(अचिन्हित दीर्घ addr)
-अणु
+static inline short inw(unsigned long addr)
+{
 	BUG();
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल अंतरभूत पूर्णांक inl(अचिन्हित दीर्घ addr)
-अणु
+static inline int inl(unsigned long addr)
+{
 	BUG();
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-#घोषणा outb(x, y)	BUG()
-#घोषणा outw(x, y)	BUG()
-#घोषणा outl(x, y)	BUG()
-#पूर्ण_अगर
+#define outb(x, y)	BUG()
+#define outw(x, y)	BUG()
+#define outl(x, y)	BUG()
+#endif
 
 /*
  * String versions of in/out ops:
  */
-बाह्य व्योम insb (अचिन्हित दीर्घ port, व्योम *dst, अचिन्हित दीर्घ count);
-बाह्य व्योम insw (अचिन्हित दीर्घ port, व्योम *dst, अचिन्हित दीर्घ count);
-बाह्य व्योम insl (अचिन्हित दीर्घ port, व्योम *dst, अचिन्हित दीर्घ count);
-बाह्य व्योम outsb (अचिन्हित दीर्घ port, स्थिर व्योम *src, अचिन्हित दीर्घ count);
-बाह्य व्योम outsw (अचिन्हित दीर्घ port, स्थिर व्योम *src, अचिन्हित दीर्घ count);
-बाह्य व्योम outsl (अचिन्हित दीर्घ port, स्थिर व्योम *src, अचिन्हित दीर्घ count);
+extern void insb (unsigned long port, void *dst, unsigned long count);
+extern void insw (unsigned long port, void *dst, unsigned long count);
+extern void insl (unsigned long port, void *dst, unsigned long count);
+extern void outsb (unsigned long port, const void *src, unsigned long count);
+extern void outsw (unsigned long port, const void *src, unsigned long count);
+extern void outsl (unsigned long port, const void *src, unsigned long count);
 
 
 /* IO Port space is :      BBiiii   where BB is HBA number. */
-#घोषणा IO_SPACE_LIMIT 0x00ffffff
+#define IO_SPACE_LIMIT 0x00ffffff
 
 /* PA machines have an MM I/O space from 0xf0000000-0xffffffff in 32
  * bit mode and from 0xfffffffff0000000-0xfffffffffffffff in 64 bit
  * mode (essentially just sign extending.  This macro takes in a 32
- * bit I/O address (still with the leading f) and outमाला_दो the correct
- * value क्रम either 32 or 64 bit mode */
-#घोषणा F_EXTEND(x) ((अचिन्हित दीर्घ)((x) | (0xffffffff00000000ULL)))
+ * bit I/O address (still with the leading f) and outputs the correct
+ * value for either 32 or 64 bit mode */
+#define F_EXTEND(x) ((unsigned long)((x) | (0xffffffff00000000ULL)))
 
-#घोषणा ioपढ़ो64 ioपढ़ो64
-#घोषणा ioपढ़ो64be ioपढ़ो64be
-#घोषणा ioग_लिखो64 ioग_लिखो64
-#घोषणा ioग_लिखो64be ioग_लिखो64be
-बाह्य u64 ioपढ़ो64(स्थिर व्योम __iomem *addr);
-बाह्य u64 ioपढ़ो64be(स्थिर व्योम __iomem *addr);
-बाह्य व्योम ioग_लिखो64(u64 val, व्योम __iomem *addr);
-बाह्य व्योम ioग_लिखो64be(u64 val, व्योम __iomem *addr);
+#define ioread64 ioread64
+#define ioread64be ioread64be
+#define iowrite64 iowrite64
+#define iowrite64be iowrite64be
+extern u64 ioread64(const void __iomem *addr);
+extern u64 ioread64be(const void __iomem *addr);
+extern void iowrite64(u64 val, void __iomem *addr);
+extern void iowrite64be(u64 val, void __iomem *addr);
 
-#समावेश <यंत्र-generic/iomap.h>
+#include <asm-generic/iomap.h>
 
 /*
- * Convert a physical poपूर्णांकer to a भव kernel poपूर्णांकer क्रम /dev/mem
+ * Convert a physical pointer to a virtual kernel pointer for /dev/mem
  * access
  */
-#घोषणा xlate_dev_mem_ptr(p)	__va(p)
+#define xlate_dev_mem_ptr(p)	__va(p)
 
-बाह्य पूर्णांक devmem_is_allowed(अचिन्हित दीर्घ pfn);
+extern int devmem_is_allowed(unsigned long pfn);
 
-#पूर्ण_अगर
+#endif

@@ -1,12 +1,11 @@
-<शैली गुरु>
 /* Copyright 2012-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,16 +22,16 @@
  *
  */
 
-#अगर_अघोषित __DC_MEM_INPUT_DCN10_H__
-#घोषणा __DC_MEM_INPUT_DCN10_H__
+#ifndef __DC_MEM_INPUT_DCN10_H__
+#define __DC_MEM_INPUT_DCN10_H__
 
-#समावेश "hubp.h"
+#include "hubp.h"
 
-#घोषणा TO_DCN10_HUBP(hubp)\
-	container_of(hubp, काष्ठा dcn10_hubp, base)
+#define TO_DCN10_HUBP(hubp)\
+	container_of(hubp, struct dcn10_hubp, base)
 
-/* Register address initialization macro क्रम all ASICs (including those with reduced functionality) */
-#घोषणा HUBP_REG_LIST_DCN(id)\
+/* Register address initialization macro for all ASICs (including those with reduced functionality) */
+#define HUBP_REG_LIST_DCN(id)\
 	SRI(DCHUBP_CNTL, HUBP, id),\
 	SRI(HUBPREQ_DEBUG_DB, HUBP, id),\
 	SRI(HUBPREQ_DEBUG, HUBP, id),\
@@ -106,15 +105,15 @@
 	SRI(DCN_CUR0_TTU_CNTL1, HUBPREQ, id),\
 	SRI(HUBP_CLK_CNTL, HUBP, id)
 
-/* Register address initialization macro क्रम ASICs with VM */
-#घोषणा HUBP_REG_LIST_DCN_VM(id)\
+/* Register address initialization macro for ASICs with VM */
+#define HUBP_REG_LIST_DCN_VM(id)\
 	SRI(NOM_PARAMETERS_0, HUBPREQ, id),\
 	SRI(NOM_PARAMETERS_1, HUBPREQ, id),\
 	SRI(NOM_PARAMETERS_2, HUBPREQ, id),\
 	SRI(NOM_PARAMETERS_3, HUBPREQ, id),\
 	SRI(DCN_VM_MX_L1_TLB_CNTL, HUBPREQ, id)
 
-#घोषणा HUBP_REG_LIST_DCN10(id)\
+#define HUBP_REG_LIST_DCN10(id)\
 	HUBP_REG_LIST_DCN(id),\
 	HUBP_REG_LIST_DCN_VM(id),\
 	SRI(PREFETCH_SETTINS, HUBPREQ, id),\
@@ -142,120 +141,120 @@
 	SRI(CURSOR_HOT_SPOT, CURSOR, id), \
 	SRI(CURSOR_DST_OFFSET, CURSOR, id)
 
-#घोषणा HUBP_COMMON_REG_VARIABLE_LIST \
-	uपूर्णांक32_t DCHUBP_CNTL; \
-	uपूर्णांक32_t HUBPREQ_DEBUG_DB; \
-	uपूर्णांक32_t HUBPREQ_DEBUG; \
-	uपूर्णांक32_t DCSURF_ADDR_CONFIG; \
-	uपूर्णांक32_t DCSURF_TILING_CONFIG; \
-	uपूर्णांक32_t DCSURF_SURFACE_PITCH; \
-	uपूर्णांक32_t DCSURF_SURFACE_PITCH_C; \
-	uपूर्णांक32_t DCSURF_SURFACE_CONFIG; \
-	uपूर्णांक32_t DCSURF_FLIP_CONTROL; \
-	uपूर्णांक32_t DCSURF_PRI_VIEWPORT_DIMENSION; \
-	uपूर्णांक32_t DCSURF_PRI_VIEWPORT_START; \
-	uपूर्णांक32_t DCSURF_SEC_VIEWPORT_DIMENSION; \
-	uपूर्णांक32_t DCSURF_SEC_VIEWPORT_START; \
-	uपूर्णांक32_t DCSURF_PRI_VIEWPORT_DIMENSION_C; \
-	uपूर्णांक32_t DCSURF_PRI_VIEWPORT_START_C; \
-	uपूर्णांक32_t DCSURF_SEC_VIEWPORT_DIMENSION_C; \
-	uपूर्णांक32_t DCSURF_SEC_VIEWPORT_START_C; \
-	uपूर्णांक32_t DCSURF_PRIMARY_SURFACE_ADDRESS_HIGH; \
-	uपूर्णांक32_t DCSURF_PRIMARY_SURFACE_ADDRESS; \
-	uपूर्णांक32_t DCSURF_SECONDARY_SURFACE_ADDRESS_HIGH; \
-	uपूर्णांक32_t DCSURF_SECONDARY_SURFACE_ADDRESS; \
-	uपूर्णांक32_t DCSURF_PRIMARY_META_SURFACE_ADDRESS_HIGH; \
-	uपूर्णांक32_t DCSURF_PRIMARY_META_SURFACE_ADDRESS; \
-	uपूर्णांक32_t DCSURF_SECONDARY_META_SURFACE_ADDRESS_HIGH; \
-	uपूर्णांक32_t DCSURF_SECONDARY_META_SURFACE_ADDRESS; \
-	uपूर्णांक32_t DCSURF_PRIMARY_SURFACE_ADDRESS_HIGH_C; \
-	uपूर्णांक32_t DCSURF_PRIMARY_SURFACE_ADDRESS_C; \
-	uपूर्णांक32_t DCSURF_SECONDARY_SURFACE_ADDRESS_HIGH_C; \
-	uपूर्णांक32_t DCSURF_SECONDARY_SURFACE_ADDRESS_C; \
-	uपूर्णांक32_t DCSURF_PRIMARY_META_SURFACE_ADDRESS_HIGH_C; \
-	uपूर्णांक32_t DCSURF_PRIMARY_META_SURFACE_ADDRESS_C; \
-	uपूर्णांक32_t DCSURF_SECONDARY_META_SURFACE_ADDRESS_HIGH_C; \
-	uपूर्णांक32_t DCSURF_SECONDARY_META_SURFACE_ADDRESS_C; \
-	uपूर्णांक32_t DCSURF_SURFACE_INUSE; \
-	uपूर्णांक32_t DCSURF_SURFACE_INUSE_HIGH; \
-	uपूर्णांक32_t DCSURF_SURFACE_INUSE_C; \
-	uपूर्णांक32_t DCSURF_SURFACE_INUSE_HIGH_C; \
-	uपूर्णांक32_t DCSURF_SURFACE_EARLIEST_INUSE; \
-	uपूर्णांक32_t DCSURF_SURFACE_EARLIEST_INUSE_HIGH; \
-	uपूर्णांक32_t DCSURF_SURFACE_EARLIEST_INUSE_C; \
-	uपूर्णांक32_t DCSURF_SURFACE_EARLIEST_INUSE_HIGH_C; \
-	uपूर्णांक32_t DCSURF_SURFACE_CONTROL; \
-	uपूर्णांक32_t DCSURF_SURFACE_FLIP_INTERRUPT; \
-	uपूर्णांक32_t HUBPRET_CONTROL; \
-	uपूर्णांक32_t DCN_EXPANSION_MODE; \
-	uपूर्णांक32_t DCHUBP_REQ_SIZE_CONFIG; \
-	uपूर्णांक32_t DCHUBP_REQ_SIZE_CONFIG_C; \
-	uपूर्णांक32_t BLANK_OFFSET_0; \
-	uपूर्णांक32_t BLANK_OFFSET_1; \
-	uपूर्णांक32_t DST_DIMENSIONS; \
-	uपूर्णांक32_t DST_AFTER_SCALER; \
-	uपूर्णांक32_t PREFETCH_SETTINS; \
-	uपूर्णांक32_t PREFETCH_SETTINGS; \
-	uपूर्णांक32_t VBLANK_PARAMETERS_0; \
-	uपूर्णांक32_t REF_FREQ_TO_PIX_FREQ; \
-	uपूर्णांक32_t VBLANK_PARAMETERS_1; \
-	uपूर्णांक32_t VBLANK_PARAMETERS_3; \
-	uपूर्णांक32_t NOM_PARAMETERS_0; \
-	uपूर्णांक32_t NOM_PARAMETERS_1; \
-	uपूर्णांक32_t NOM_PARAMETERS_4; \
-	uपूर्णांक32_t NOM_PARAMETERS_5; \
-	uपूर्णांक32_t PER_LINE_DELIVERY_PRE; \
-	uपूर्णांक32_t PER_LINE_DELIVERY; \
-	uपूर्णांक32_t PREFETCH_SETTINS_C; \
-	uपूर्णांक32_t PREFETCH_SETTINGS_C; \
-	uपूर्णांक32_t VBLANK_PARAMETERS_2; \
-	uपूर्णांक32_t VBLANK_PARAMETERS_4; \
-	uपूर्णांक32_t NOM_PARAMETERS_2; \
-	uपूर्णांक32_t NOM_PARAMETERS_3; \
-	uपूर्णांक32_t NOM_PARAMETERS_6; \
-	uपूर्णांक32_t NOM_PARAMETERS_7; \
-	uपूर्णांक32_t DCN_TTU_QOS_WM; \
-	uपूर्णांक32_t DCN_GLOBAL_TTU_CNTL; \
-	uपूर्णांक32_t DCN_SURF0_TTU_CNTL0; \
-	uपूर्णांक32_t DCN_SURF0_TTU_CNTL1; \
-	uपूर्णांक32_t DCN_SURF1_TTU_CNTL0; \
-	uपूर्णांक32_t DCN_SURF1_TTU_CNTL1; \
-	uपूर्णांक32_t DCN_CUR0_TTU_CNTL0; \
-	uपूर्णांक32_t DCN_CUR0_TTU_CNTL1; \
-	uपूर्णांक32_t DCN_VM_CONTEXT0_PAGE_TABLE_BASE_ADDR_MSB; \
-	uपूर्णांक32_t DCN_VM_CONTEXT0_PAGE_TABLE_BASE_ADDR_LSB; \
-	uपूर्णांक32_t DCN_VM_CONTEXT0_PAGE_TABLE_START_ADDR_MSB; \
-	uपूर्णांक32_t DCN_VM_CONTEXT0_PAGE_TABLE_START_ADDR_LSB; \
-	uपूर्णांक32_t DCN_VM_CONTEXT0_PAGE_TABLE_END_ADDR_MSB; \
-	uपूर्णांक32_t DCN_VM_CONTEXT0_PAGE_TABLE_END_ADDR_LSB; \
-	uपूर्णांक32_t DCN_VM_CONTEXT0_PROTECTION_FAULT_DEFAULT_ADDR_MSB; \
-	uपूर्णांक32_t DCN_VM_CONTEXT0_PROTECTION_FAULT_DEFAULT_ADDR_LSB; \
-	uपूर्णांक32_t DCN_VM_MX_L1_TLB_CNTL; \
-	uपूर्णांक32_t DCN_VM_SYSTEM_APERTURE_DEFAULT_ADDR_MSB; \
-	uपूर्णांक32_t DCN_VM_SYSTEM_APERTURE_DEFAULT_ADDR_LSB; \
-	uपूर्णांक32_t DCN_VM_SYSTEM_APERTURE_LOW_ADDR_MSB; \
-	uपूर्णांक32_t DCN_VM_SYSTEM_APERTURE_LOW_ADDR_LSB; \
-	uपूर्णांक32_t DCN_VM_SYSTEM_APERTURE_HIGH_ADDR_MSB; \
-	uपूर्णांक32_t DCN_VM_SYSTEM_APERTURE_HIGH_ADDR_LSB; \
-	uपूर्णांक32_t DCN_VM_SYSTEM_APERTURE_LOW_ADDR; \
-	uपूर्णांक32_t DCN_VM_SYSTEM_APERTURE_HIGH_ADDR; \
-	uपूर्णांक32_t CURSOR_SETTINS; \
-	uपूर्णांक32_t CURSOR_SETTINGS; \
-	uपूर्णांक32_t CURSOR_SURFACE_ADDRESS_HIGH; \
-	uपूर्णांक32_t CURSOR_SURFACE_ADDRESS; \
-	uपूर्णांक32_t CURSOR_SIZE; \
-	uपूर्णांक32_t CURSOR_CONTROL; \
-	uपूर्णांक32_t CURSOR_POSITION; \
-	uपूर्णांक32_t CURSOR_HOT_SPOT; \
-	uपूर्णांक32_t CURSOR_DST_OFFSET; \
-	uपूर्णांक32_t HUBP_CLK_CNTL
+#define HUBP_COMMON_REG_VARIABLE_LIST \
+	uint32_t DCHUBP_CNTL; \
+	uint32_t HUBPREQ_DEBUG_DB; \
+	uint32_t HUBPREQ_DEBUG; \
+	uint32_t DCSURF_ADDR_CONFIG; \
+	uint32_t DCSURF_TILING_CONFIG; \
+	uint32_t DCSURF_SURFACE_PITCH; \
+	uint32_t DCSURF_SURFACE_PITCH_C; \
+	uint32_t DCSURF_SURFACE_CONFIG; \
+	uint32_t DCSURF_FLIP_CONTROL; \
+	uint32_t DCSURF_PRI_VIEWPORT_DIMENSION; \
+	uint32_t DCSURF_PRI_VIEWPORT_START; \
+	uint32_t DCSURF_SEC_VIEWPORT_DIMENSION; \
+	uint32_t DCSURF_SEC_VIEWPORT_START; \
+	uint32_t DCSURF_PRI_VIEWPORT_DIMENSION_C; \
+	uint32_t DCSURF_PRI_VIEWPORT_START_C; \
+	uint32_t DCSURF_SEC_VIEWPORT_DIMENSION_C; \
+	uint32_t DCSURF_SEC_VIEWPORT_START_C; \
+	uint32_t DCSURF_PRIMARY_SURFACE_ADDRESS_HIGH; \
+	uint32_t DCSURF_PRIMARY_SURFACE_ADDRESS; \
+	uint32_t DCSURF_SECONDARY_SURFACE_ADDRESS_HIGH; \
+	uint32_t DCSURF_SECONDARY_SURFACE_ADDRESS; \
+	uint32_t DCSURF_PRIMARY_META_SURFACE_ADDRESS_HIGH; \
+	uint32_t DCSURF_PRIMARY_META_SURFACE_ADDRESS; \
+	uint32_t DCSURF_SECONDARY_META_SURFACE_ADDRESS_HIGH; \
+	uint32_t DCSURF_SECONDARY_META_SURFACE_ADDRESS; \
+	uint32_t DCSURF_PRIMARY_SURFACE_ADDRESS_HIGH_C; \
+	uint32_t DCSURF_PRIMARY_SURFACE_ADDRESS_C; \
+	uint32_t DCSURF_SECONDARY_SURFACE_ADDRESS_HIGH_C; \
+	uint32_t DCSURF_SECONDARY_SURFACE_ADDRESS_C; \
+	uint32_t DCSURF_PRIMARY_META_SURFACE_ADDRESS_HIGH_C; \
+	uint32_t DCSURF_PRIMARY_META_SURFACE_ADDRESS_C; \
+	uint32_t DCSURF_SECONDARY_META_SURFACE_ADDRESS_HIGH_C; \
+	uint32_t DCSURF_SECONDARY_META_SURFACE_ADDRESS_C; \
+	uint32_t DCSURF_SURFACE_INUSE; \
+	uint32_t DCSURF_SURFACE_INUSE_HIGH; \
+	uint32_t DCSURF_SURFACE_INUSE_C; \
+	uint32_t DCSURF_SURFACE_INUSE_HIGH_C; \
+	uint32_t DCSURF_SURFACE_EARLIEST_INUSE; \
+	uint32_t DCSURF_SURFACE_EARLIEST_INUSE_HIGH; \
+	uint32_t DCSURF_SURFACE_EARLIEST_INUSE_C; \
+	uint32_t DCSURF_SURFACE_EARLIEST_INUSE_HIGH_C; \
+	uint32_t DCSURF_SURFACE_CONTROL; \
+	uint32_t DCSURF_SURFACE_FLIP_INTERRUPT; \
+	uint32_t HUBPRET_CONTROL; \
+	uint32_t DCN_EXPANSION_MODE; \
+	uint32_t DCHUBP_REQ_SIZE_CONFIG; \
+	uint32_t DCHUBP_REQ_SIZE_CONFIG_C; \
+	uint32_t BLANK_OFFSET_0; \
+	uint32_t BLANK_OFFSET_1; \
+	uint32_t DST_DIMENSIONS; \
+	uint32_t DST_AFTER_SCALER; \
+	uint32_t PREFETCH_SETTINS; \
+	uint32_t PREFETCH_SETTINGS; \
+	uint32_t VBLANK_PARAMETERS_0; \
+	uint32_t REF_FREQ_TO_PIX_FREQ; \
+	uint32_t VBLANK_PARAMETERS_1; \
+	uint32_t VBLANK_PARAMETERS_3; \
+	uint32_t NOM_PARAMETERS_0; \
+	uint32_t NOM_PARAMETERS_1; \
+	uint32_t NOM_PARAMETERS_4; \
+	uint32_t NOM_PARAMETERS_5; \
+	uint32_t PER_LINE_DELIVERY_PRE; \
+	uint32_t PER_LINE_DELIVERY; \
+	uint32_t PREFETCH_SETTINS_C; \
+	uint32_t PREFETCH_SETTINGS_C; \
+	uint32_t VBLANK_PARAMETERS_2; \
+	uint32_t VBLANK_PARAMETERS_4; \
+	uint32_t NOM_PARAMETERS_2; \
+	uint32_t NOM_PARAMETERS_3; \
+	uint32_t NOM_PARAMETERS_6; \
+	uint32_t NOM_PARAMETERS_7; \
+	uint32_t DCN_TTU_QOS_WM; \
+	uint32_t DCN_GLOBAL_TTU_CNTL; \
+	uint32_t DCN_SURF0_TTU_CNTL0; \
+	uint32_t DCN_SURF0_TTU_CNTL1; \
+	uint32_t DCN_SURF1_TTU_CNTL0; \
+	uint32_t DCN_SURF1_TTU_CNTL1; \
+	uint32_t DCN_CUR0_TTU_CNTL0; \
+	uint32_t DCN_CUR0_TTU_CNTL1; \
+	uint32_t DCN_VM_CONTEXT0_PAGE_TABLE_BASE_ADDR_MSB; \
+	uint32_t DCN_VM_CONTEXT0_PAGE_TABLE_BASE_ADDR_LSB; \
+	uint32_t DCN_VM_CONTEXT0_PAGE_TABLE_START_ADDR_MSB; \
+	uint32_t DCN_VM_CONTEXT0_PAGE_TABLE_START_ADDR_LSB; \
+	uint32_t DCN_VM_CONTEXT0_PAGE_TABLE_END_ADDR_MSB; \
+	uint32_t DCN_VM_CONTEXT0_PAGE_TABLE_END_ADDR_LSB; \
+	uint32_t DCN_VM_CONTEXT0_PROTECTION_FAULT_DEFAULT_ADDR_MSB; \
+	uint32_t DCN_VM_CONTEXT0_PROTECTION_FAULT_DEFAULT_ADDR_LSB; \
+	uint32_t DCN_VM_MX_L1_TLB_CNTL; \
+	uint32_t DCN_VM_SYSTEM_APERTURE_DEFAULT_ADDR_MSB; \
+	uint32_t DCN_VM_SYSTEM_APERTURE_DEFAULT_ADDR_LSB; \
+	uint32_t DCN_VM_SYSTEM_APERTURE_LOW_ADDR_MSB; \
+	uint32_t DCN_VM_SYSTEM_APERTURE_LOW_ADDR_LSB; \
+	uint32_t DCN_VM_SYSTEM_APERTURE_HIGH_ADDR_MSB; \
+	uint32_t DCN_VM_SYSTEM_APERTURE_HIGH_ADDR_LSB; \
+	uint32_t DCN_VM_SYSTEM_APERTURE_LOW_ADDR; \
+	uint32_t DCN_VM_SYSTEM_APERTURE_HIGH_ADDR; \
+	uint32_t CURSOR_SETTINS; \
+	uint32_t CURSOR_SETTINGS; \
+	uint32_t CURSOR_SURFACE_ADDRESS_HIGH; \
+	uint32_t CURSOR_SURFACE_ADDRESS; \
+	uint32_t CURSOR_SIZE; \
+	uint32_t CURSOR_CONTROL; \
+	uint32_t CURSOR_POSITION; \
+	uint32_t CURSOR_HOT_SPOT; \
+	uint32_t CURSOR_DST_OFFSET; \
+	uint32_t HUBP_CLK_CNTL
 
-#घोषणा HUBP_SF(reg_name, field_name, post_fix)\
+#define HUBP_SF(reg_name, field_name, post_fix)\
 	.field_name = reg_name ## __ ## field_name ## post_fix
 
-/* Mask/shअगरt काष्ठा generation macro क्रम all ASICs (including those with reduced functionality) */
+/* Mask/shift struct generation macro for all ASICs (including those with reduced functionality) */
 /*1.x, 2.x, and 3.x*/
-#घोषणा HUBP_MASK_SH_LIST_DCN_SHARE_COMMON(mask_sh)\
+#define HUBP_MASK_SH_LIST_DCN_SHARE_COMMON(mask_sh)\
 	HUBP_SF(HUBP0_DCHUBP_CNTL, HUBP_BLANK_EN, mask_sh),\
 	HUBP_SF(HUBP0_DCHUBP_CNTL, HUBP_TTU_DISABLE, mask_sh),\
 	HUBP_SF(HUBP0_DCHUBP_CNTL, HUBP_UNDERFLOW_STATUS, mask_sh),\
@@ -388,18 +387,18 @@
 	HUBP_SF(HUBPREQ0_DCN_SURF0_TTU_CNTL1, REFCYC_PER_REQ_DELIVERY_PRE, mask_sh),\
 	HUBP_SF(HUBP0_HUBP_CLK_CNTL, HUBP_CLOCK_ENABLE, mask_sh)
 /*2.x and 1.x only*/
-#घोषणा HUBP_MASK_SH_LIST_DCN_COMMON(mask_sh)\
+#define HUBP_MASK_SH_LIST_DCN_COMMON(mask_sh)\
 	HUBP_MASK_SH_LIST_DCN_SHARE_COMMON(mask_sh),\
 	HUBP_SF(HUBP0_DCSURF_TILING_CONFIG, RB_ALIGNED, mask_sh),\
 	HUBP_SF(HUBP0_DCHUBP_REQ_SIZE_CONFIG, MPTE_GROUP_SIZE, mask_sh),\
 	HUBP_SF(HUBP0_DCHUBP_REQ_SIZE_CONFIG_C, MPTE_GROUP_SIZE_C, mask_sh)
 
 /*2.x and 1.x only*/
-#घोषणा HUBP_MASK_SH_LIST_DCN(mask_sh)\
+#define HUBP_MASK_SH_LIST_DCN(mask_sh)\
 	HUBP_MASK_SH_LIST_DCN_COMMON(mask_sh)
 
-/* Mask/shअगरt काष्ठा generation macro क्रम ASICs with VM */
-#घोषणा HUBP_MASK_SH_LIST_DCN_VM(mask_sh)\
+/* Mask/shift struct generation macro for ASICs with VM */
+#define HUBP_MASK_SH_LIST_DCN_VM(mask_sh)\
 	HUBP_SF(HUBPREQ0_NOM_PARAMETERS_0, DST_Y_PER_PTE_ROW_NOM_L, mask_sh),\
 	HUBP_SF(HUBPREQ0_NOM_PARAMETERS_1, REFCYC_PER_PTE_GROUP_NOM_L, mask_sh),\
 	HUBP_SF(HUBPREQ0_NOM_PARAMETERS_2, DST_Y_PER_PTE_ROW_NOM_C, mask_sh),\
@@ -411,7 +410,7 @@
 	HUBP_SF(HUBPREQ0_DCN_CUR0_TTU_CNTL0, QoS_RAMP_DISABLE, mask_sh),\
 	HUBP_SF(HUBPREQ0_DCN_CUR0_TTU_CNTL1, REFCYC_PER_REQ_DELIVERY_PRE, mask_sh)
 
-#घोषणा HUBP_MASK_SH_LIST_DCN10(mask_sh)\
+#define HUBP_MASK_SH_LIST_DCN10(mask_sh)\
 	HUBP_MASK_SH_LIST_DCN(mask_sh),\
 	HUBP_MASK_SH_LIST_DCN_VM(mask_sh),\
 	HUBP_SF(HUBP0_DCSURF_SURFACE_CONFIG, ROTATION_ANGLE, mask_sh),\
@@ -452,7 +451,7 @@
 	HUBP_SF(CURSOR0_CURSOR_HOT_SPOT, CURSOR_HOT_SPOT_Y, mask_sh), \
 	HUBP_SF(CURSOR0_CURSOR_DST_OFFSET, CURSOR_DST_X_OFFSET, mask_sh)
 
-#घोषणा DCN_HUBP_REG_FIELD_BASE_LIST(type) \
+#define DCN_HUBP_REG_FIELD_BASE_LIST(type) \
 	type HUBP_BLANK_EN;\
 	type HUBP_DISABLE;\
 	type HUBP_TTU_DISABLE;\
@@ -619,9 +618,9 @@
 	type DCN_VM_SYSTEM_APERTURE_DEFAULT_SYSTEM;\
 	type DCN_VM_SYSTEM_APERTURE_DEFAULT_ADDR_MSB;\
 	type DCN_VM_SYSTEM_APERTURE_DEFAULT_ADDR_LSB;\
-	/* toकरो:  get these from GVM instead of पढ़ोing रेजिस्टरs ourselves */\
-	type PAGE_सूचीECTORY_ENTRY_HI32;\
-	type PAGE_सूचीECTORY_ENTRY_LO32;\
+	/* todo:  get these from GVM instead of reading registers ourselves */\
+	type PAGE_DIRECTORY_ENTRY_HI32;\
+	type PAGE_DIRECTORY_ENTRY_LO32;\
 	type LOGICAL_PAGE_NUMBER_HI4;\
 	type LOGICAL_PAGE_NUMBER_LO32;\
 	type PHYSICAL_PAGE_ADDR_HI4;\
@@ -647,141 +646,141 @@
 	type CURSOR_DST_X_OFFSET; \
 	type OUTPUT_FP
 
-#घोषणा DCN_HUBP_REG_FIELD_LIST(type) \
+#define DCN_HUBP_REG_FIELD_LIST(type) \
 	DCN_HUBP_REG_FIELD_BASE_LIST(type);\
 	type ALPHA_PLANE_EN
 
-काष्ठा dcn_mi_रेजिस्टरs अणु
+struct dcn_mi_registers {
 	HUBP_COMMON_REG_VARIABLE_LIST;
-पूर्ण;
+};
 
-काष्ठा dcn_mi_shअगरt अणु
-	DCN_HUBP_REG_FIELD_LIST(uपूर्णांक8_t);
-पूर्ण;
+struct dcn_mi_shift {
+	DCN_HUBP_REG_FIELD_LIST(uint8_t);
+};
 
-काष्ठा dcn_mi_mask अणु
-	DCN_HUBP_REG_FIELD_LIST(uपूर्णांक32_t);
-पूर्ण;
+struct dcn_mi_mask {
+	DCN_HUBP_REG_FIELD_LIST(uint32_t);
+};
 
-काष्ठा dcn_hubp_state अणु
-	काष्ठा _vcs_dpi_display_dlg_regs_st dlg_attr;
-	काष्ठा _vcs_dpi_display_ttu_regs_st ttu_attr;
-	काष्ठा _vcs_dpi_display_rq_regs_st rq_regs;
-	uपूर्णांक32_t pixel_क्रमmat;
-	uपूर्णांक32_t inuse_addr_hi;
-	uपूर्णांक32_t inuse_addr_lo;
-	uपूर्णांक32_t viewport_width;
-	uपूर्णांक32_t viewport_height;
-	uपूर्णांक32_t rotation_angle;
-	uपूर्णांक32_t h_mirror_en;
-	uपूर्णांक32_t sw_mode;
-	uपूर्णांक32_t dcc_en;
-	uपूर्णांक32_t blank_en;
-	uपूर्णांक32_t घड़ी_en;
-	uपूर्णांक32_t underflow_status;
-	uपूर्णांक32_t ttu_disable;
-	uपूर्णांक32_t min_ttu_vblank;
-	uपूर्णांक32_t qos_level_low_wm;
-	uपूर्णांक32_t qos_level_high_wm;
-पूर्ण;
+struct dcn_hubp_state {
+	struct _vcs_dpi_display_dlg_regs_st dlg_attr;
+	struct _vcs_dpi_display_ttu_regs_st ttu_attr;
+	struct _vcs_dpi_display_rq_regs_st rq_regs;
+	uint32_t pixel_format;
+	uint32_t inuse_addr_hi;
+	uint32_t inuse_addr_lo;
+	uint32_t viewport_width;
+	uint32_t viewport_height;
+	uint32_t rotation_angle;
+	uint32_t h_mirror_en;
+	uint32_t sw_mode;
+	uint32_t dcc_en;
+	uint32_t blank_en;
+	uint32_t clock_en;
+	uint32_t underflow_status;
+	uint32_t ttu_disable;
+	uint32_t min_ttu_vblank;
+	uint32_t qos_level_low_wm;
+	uint32_t qos_level_high_wm;
+};
 
-काष्ठा dcn10_hubp अणु
-	काष्ठा hubp base;
-	काष्ठा dcn_hubp_state state;
-	स्थिर काष्ठा dcn_mi_रेजिस्टरs *hubp_regs;
-	स्थिर काष्ठा dcn_mi_shअगरt *hubp_shअगरt;
-	स्थिर काष्ठा dcn_mi_mask *hubp_mask;
-पूर्ण;
+struct dcn10_hubp {
+	struct hubp base;
+	struct dcn_hubp_state state;
+	const struct dcn_mi_registers *hubp_regs;
+	const struct dcn_mi_shift *hubp_shift;
+	const struct dcn_mi_mask *hubp_mask;
+};
 
-व्योम hubp1_program_surface_config(
-	काष्ठा hubp *hubp,
-	क्रमागत surface_pixel_क्रमmat क्रमmat,
-	जोड़ dc_tiling_info *tiling_info,
-	काष्ठा plane_size *plane_size,
-	क्रमागत dc_rotation_angle rotation,
-	काष्ठा dc_plane_dcc_param *dcc,
+void hubp1_program_surface_config(
+	struct hubp *hubp,
+	enum surface_pixel_format format,
+	union dc_tiling_info *tiling_info,
+	struct plane_size *plane_size,
+	enum dc_rotation_angle rotation,
+	struct dc_plane_dcc_param *dcc,
 	bool horizontal_mirror,
-	अचिन्हित पूर्णांक compat_level);
+	unsigned int compat_level);
 
-व्योम hubp1_program_deadline(
-		काष्ठा hubp *hubp,
-		काष्ठा _vcs_dpi_display_dlg_regs_st *dlg_attr,
-		काष्ठा _vcs_dpi_display_ttu_regs_st *ttu_attr);
+void hubp1_program_deadline(
+		struct hubp *hubp,
+		struct _vcs_dpi_display_dlg_regs_st *dlg_attr,
+		struct _vcs_dpi_display_ttu_regs_st *ttu_attr);
 
-व्योम hubp1_program_requestor(
-		काष्ठा hubp *hubp,
-		काष्ठा _vcs_dpi_display_rq_regs_st *rq_regs);
+void hubp1_program_requestor(
+		struct hubp *hubp,
+		struct _vcs_dpi_display_rq_regs_st *rq_regs);
 
-व्योम hubp1_program_pixel_क्रमmat(
-	काष्ठा hubp *hubp,
-	क्रमागत surface_pixel_क्रमmat क्रमmat);
+void hubp1_program_pixel_format(
+	struct hubp *hubp,
+	enum surface_pixel_format format);
 
-व्योम hubp1_program_size(
-	काष्ठा hubp *hubp,
-	क्रमागत surface_pixel_क्रमmat क्रमmat,
-	स्थिर काष्ठा plane_size *plane_size,
-	काष्ठा dc_plane_dcc_param *dcc);
+void hubp1_program_size(
+	struct hubp *hubp,
+	enum surface_pixel_format format,
+	const struct plane_size *plane_size,
+	struct dc_plane_dcc_param *dcc);
 
-व्योम hubp1_program_rotation(
-	काष्ठा hubp *hubp,
-	क्रमागत dc_rotation_angle rotation,
+void hubp1_program_rotation(
+	struct hubp *hubp,
+	enum dc_rotation_angle rotation,
 	bool horizontal_mirror);
 
-व्योम hubp1_program_tiling(
-	काष्ठा hubp *hubp,
-	स्थिर जोड़ dc_tiling_info *info,
-	स्थिर क्रमागत surface_pixel_क्रमmat pixel_क्रमmat);
+void hubp1_program_tiling(
+	struct hubp *hubp,
+	const union dc_tiling_info *info,
+	const enum surface_pixel_format pixel_format);
 
-व्योम hubp1_dcc_control(काष्ठा hubp *hubp,
+void hubp1_dcc_control(struct hubp *hubp,
 		bool enable,
-		क्रमागत hubp_ind_block_size independent_64b_blks);
+		enum hubp_ind_block_size independent_64b_blks);
 
 bool hubp1_program_surface_flip_and_addr(
-	काष्ठा hubp *hubp,
-	स्थिर काष्ठा dc_plane_address *address,
+	struct hubp *hubp,
+	const struct dc_plane_address *address,
 	bool flip_immediate);
 
-bool hubp1_is_flip_pending(काष्ठा hubp *hubp);
+bool hubp1_is_flip_pending(struct hubp *hubp);
 
-व्योम hubp1_cursor_set_attributes(
-		काष्ठा hubp *hubp,
-		स्थिर काष्ठा dc_cursor_attributes *attr);
+void hubp1_cursor_set_attributes(
+		struct hubp *hubp,
+		const struct dc_cursor_attributes *attr);
 
-व्योम hubp1_cursor_set_position(
-		काष्ठा hubp *hubp,
-		स्थिर काष्ठा dc_cursor_position *pos,
-		स्थिर काष्ठा dc_cursor_mi_param *param);
+void hubp1_cursor_set_position(
+		struct hubp *hubp,
+		const struct dc_cursor_position *pos,
+		const struct dc_cursor_mi_param *param);
 
-व्योम hubp1_set_blank(काष्ठा hubp *hubp, bool blank);
+void hubp1_set_blank(struct hubp *hubp, bool blank);
 
-व्योम min_set_viewport(काष्ठा hubp *hubp,
-		स्थिर काष्ठा rect *viewport,
-		स्थिर काष्ठा rect *viewport_c);
+void min_set_viewport(struct hubp *hubp,
+		const struct rect *viewport,
+		const struct rect *viewport_c);
 
-व्योम hubp1_clk_cntl(काष्ठा hubp *hubp, bool enable);
-व्योम hubp1_vtg_sel(काष्ठा hubp *hubp, uपूर्णांक32_t otg_inst);
+void hubp1_clk_cntl(struct hubp *hubp, bool enable);
+void hubp1_vtg_sel(struct hubp *hubp, uint32_t otg_inst);
 
-व्योम dcn10_hubp_स्थिरruct(
-	काष्ठा dcn10_hubp *hubp1,
-	काष्ठा dc_context *ctx,
-	uपूर्णांक32_t inst,
-	स्थिर काष्ठा dcn_mi_रेजिस्टरs *hubp_regs,
-	स्थिर काष्ठा dcn_mi_shअगरt *hubp_shअगरt,
-	स्थिर काष्ठा dcn_mi_mask *hubp_mask);
+void dcn10_hubp_construct(
+	struct dcn10_hubp *hubp1,
+	struct dc_context *ctx,
+	uint32_t inst,
+	const struct dcn_mi_registers *hubp_regs,
+	const struct dcn_mi_shift *hubp_shift,
+	const struct dcn_mi_mask *hubp_mask);
 
-व्योम hubp1_पढ़ो_state(काष्ठा hubp *hubp);
-व्योम hubp1_clear_underflow(काष्ठा hubp *hubp);
+void hubp1_read_state(struct hubp *hubp);
+void hubp1_clear_underflow(struct hubp *hubp);
 
-क्रमागत cursor_pitch hubp1_get_cursor_pitch(अचिन्हित पूर्णांक pitch);
+enum cursor_pitch hubp1_get_cursor_pitch(unsigned int pitch);
 
-व्योम hubp1_vपढ़ोy_workaround(काष्ठा hubp *hubp,
-		काष्ठा _vcs_dpi_display_pipe_dest_params_st *pipe_dest);
+void hubp1_vready_workaround(struct hubp *hubp,
+		struct _vcs_dpi_display_pipe_dest_params_st *pipe_dest);
 
-व्योम hubp1_init(काष्ठा hubp *hubp);
-व्योम hubp1_पढ़ो_state_common(काष्ठा hubp *hubp);
-bool hubp1_in_blank(काष्ठा hubp *hubp);
-व्योम hubp1_soft_reset(काष्ठा hubp *hubp, bool reset);
+void hubp1_init(struct hubp *hubp);
+void hubp1_read_state_common(struct hubp *hubp);
+bool hubp1_in_blank(struct hubp *hubp);
+void hubp1_soft_reset(struct hubp *hubp, bool reset);
 
-व्योम hubp1_set_flip_पूर्णांक(काष्ठा hubp *hubp);
+void hubp1_set_flip_int(struct hubp *hubp);
 
-#पूर्ण_अगर
+#endif

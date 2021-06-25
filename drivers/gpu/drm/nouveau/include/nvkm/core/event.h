@@ -1,36 +1,35 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
-#अगर_अघोषित __NVKM_EVENT_H__
-#घोषणा __NVKM_EVENT_H__
-#समावेश <core/os.h>
-काष्ठा nvkm_notअगरy;
-काष्ठा nvkm_object;
+/* SPDX-License-Identifier: MIT */
+#ifndef __NVKM_EVENT_H__
+#define __NVKM_EVENT_H__
+#include <core/os.h>
+struct nvkm_notify;
+struct nvkm_object;
 
-काष्ठा nvkm_event अणु
-	स्थिर काष्ठा nvkm_event_func *func;
+struct nvkm_event {
+	const struct nvkm_event_func *func;
 
-	पूर्णांक types_nr;
-	पूर्णांक index_nr;
+	int types_nr;
+	int index_nr;
 
 	spinlock_t refs_lock;
 	spinlock_t list_lock;
-	काष्ठा list_head list;
-	पूर्णांक *refs;
-पूर्ण;
+	struct list_head list;
+	int *refs;
+};
 
-काष्ठा nvkm_event_func अणु
-	पूर्णांक  (*ctor)(काष्ठा nvkm_object *, व्योम *data, u32 size,
-		     काष्ठा nvkm_notअगरy *);
-	व्योम (*send)(व्योम *data, u32 size, काष्ठा nvkm_notअगरy *);
-	व्योम (*init)(काष्ठा nvkm_event *, पूर्णांक type, पूर्णांक index);
-	व्योम (*fini)(काष्ठा nvkm_event *, पूर्णांक type, पूर्णांक index);
-पूर्ण;
+struct nvkm_event_func {
+	int  (*ctor)(struct nvkm_object *, void *data, u32 size,
+		     struct nvkm_notify *);
+	void (*send)(void *data, u32 size, struct nvkm_notify *);
+	void (*init)(struct nvkm_event *, int type, int index);
+	void (*fini)(struct nvkm_event *, int type, int index);
+};
 
-पूर्णांक  nvkm_event_init(स्थिर काष्ठा nvkm_event_func *func, पूर्णांक types_nr,
-		     पूर्णांक index_nr, काष्ठा nvkm_event *);
-व्योम nvkm_event_fini(काष्ठा nvkm_event *);
-व्योम nvkm_event_get(काष्ठा nvkm_event *, u32 types, पूर्णांक index);
-व्योम nvkm_event_put(काष्ठा nvkm_event *, u32 types, पूर्णांक index);
-व्योम nvkm_event_send(काष्ठा nvkm_event *, u32 types, पूर्णांक index,
-		     व्योम *data, u32 size);
-#पूर्ण_अगर
+int  nvkm_event_init(const struct nvkm_event_func *func, int types_nr,
+		     int index_nr, struct nvkm_event *);
+void nvkm_event_fini(struct nvkm_event *);
+void nvkm_event_get(struct nvkm_event *, u32 types, int index);
+void nvkm_event_put(struct nvkm_event *, u32 types, int index);
+void nvkm_event_send(struct nvkm_event *, u32 types, int index,
+		     void *data, u32 size);
+#endif

@@ -1,18 +1,17 @@
-<शैली गुरु>
 /* r128_cce.c -- ATI Rage 128 driver -*- linux-c -*-
  * Created: Wed Apr  5 19:24:19 2000 by kevin@precisioninsight.com
  */
 /*
  * Copyright 2000 Precision Insight, Inc., Cedar Park, Texas.
- * Copyright 2000 VA Linux Systems, Inc., Sunnyvale, Calअगरornia.
+ * Copyright 2000 VA Linux Systems, Inc., Sunnyvale, California.
  * All Rights Reserved.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -30,211 +29,211 @@
  *    Gareth Hughes <gareth@valinux.com>
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/firmware.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/uaccess.h>
+#include <linux/delay.h>
+#include <linux/dma-mapping.h>
+#include <linux/firmware.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
+#include <linux/uaccess.h>
 
-#समावेश <drm/drm_agpsupport.h>
-#समावेश <drm/drm_device.h>
-#समावेश <drm/drm_file.h>
-#समावेश <drm/drm_irq.h>
-#समावेश <drm/drm_prपूर्णांक.h>
-#समावेश <drm/r128_drm.h>
+#include <drm/drm_agpsupport.h>
+#include <drm/drm_device.h>
+#include <drm/drm_file.h>
+#include <drm/drm_irq.h>
+#include <drm/drm_print.h>
+#include <drm/r128_drm.h>
 
-#समावेश "r128_drv.h"
+#include "r128_drv.h"
 
-#घोषणा R128_FIFO_DEBUG		0
+#define R128_FIFO_DEBUG		0
 
-#घोषणा FIRMWARE_NAME		"r128/r128_cce.bin"
+#define FIRMWARE_NAME		"r128/r128_cce.bin"
 
 MODULE_FIRMWARE(FIRMWARE_NAME);
 
-अटल पूर्णांक R128_READ_PLL(काष्ठा drm_device *dev, पूर्णांक addr)
-अणु
-	drm_r128_निजी_t *dev_priv = dev->dev_निजी;
+static int R128_READ_PLL(struct drm_device *dev, int addr)
+{
+	drm_r128_private_t *dev_priv = dev->dev_private;
 
 	R128_WRITE8(R128_CLOCK_CNTL_INDEX, addr & 0x1f);
-	वापस R128_READ(R128_CLOCK_CNTL_DATA);
-पूर्ण
+	return R128_READ(R128_CLOCK_CNTL_DATA);
+}
 
-#अगर R128_FIFO_DEBUG
-अटल व्योम r128_status(drm_r128_निजी_t *dev_priv)
-अणु
-	prपूर्णांकk("GUI_STAT           = 0x%08x\n",
-	       (अचिन्हित पूर्णांक)R128_READ(R128_GUI_STAT));
-	prपूर्णांकk("PM4_STAT           = 0x%08x\n",
-	       (अचिन्हित पूर्णांक)R128_READ(R128_PM4_STAT));
-	prपूर्णांकk("PM4_BUFFER_DL_WPTR = 0x%08x\n",
-	       (अचिन्हित पूर्णांक)R128_READ(R128_PM4_BUFFER_DL_WPTR));
-	prपूर्णांकk("PM4_BUFFER_DL_RPTR = 0x%08x\n",
-	       (अचिन्हित पूर्णांक)R128_READ(R128_PM4_BUFFER_DL_RPTR));
-	prपूर्णांकk("PM4_MICRO_CNTL     = 0x%08x\n",
-	       (अचिन्हित पूर्णांक)R128_READ(R128_PM4_MICRO_CNTL));
-	prपूर्णांकk("PM4_BUFFER_CNTL    = 0x%08x\n",
-	       (अचिन्हित पूर्णांक)R128_READ(R128_PM4_BUFFER_CNTL));
-पूर्ण
-#पूर्ण_अगर
+#if R128_FIFO_DEBUG
+static void r128_status(drm_r128_private_t *dev_priv)
+{
+	printk("GUI_STAT           = 0x%08x\n",
+	       (unsigned int)R128_READ(R128_GUI_STAT));
+	printk("PM4_STAT           = 0x%08x\n",
+	       (unsigned int)R128_READ(R128_PM4_STAT));
+	printk("PM4_BUFFER_DL_WPTR = 0x%08x\n",
+	       (unsigned int)R128_READ(R128_PM4_BUFFER_DL_WPTR));
+	printk("PM4_BUFFER_DL_RPTR = 0x%08x\n",
+	       (unsigned int)R128_READ(R128_PM4_BUFFER_DL_RPTR));
+	printk("PM4_MICRO_CNTL     = 0x%08x\n",
+	       (unsigned int)R128_READ(R128_PM4_MICRO_CNTL));
+	printk("PM4_BUFFER_CNTL    = 0x%08x\n",
+	       (unsigned int)R128_READ(R128_PM4_BUFFER_CNTL));
+}
+#endif
 
 /* ================================================================
  * Engine, FIFO control
  */
 
-अटल पूर्णांक r128_करो_pixcache_flush(drm_r128_निजी_t *dev_priv)
-अणु
-	u32 पंचांगp;
-	पूर्णांक i;
+static int r128_do_pixcache_flush(drm_r128_private_t *dev_priv)
+{
+	u32 tmp;
+	int i;
 
-	पंचांगp = R128_READ(R128_PC_NGUI_CTLSTAT) | R128_PC_FLUSH_ALL;
-	R128_WRITE(R128_PC_NGUI_CTLSTAT, पंचांगp);
+	tmp = R128_READ(R128_PC_NGUI_CTLSTAT) | R128_PC_FLUSH_ALL;
+	R128_WRITE(R128_PC_NGUI_CTLSTAT, tmp);
 
-	क्रम (i = 0; i < dev_priv->usec_समयout; i++) अणु
-		अगर (!(R128_READ(R128_PC_NGUI_CTLSTAT) & R128_PC_BUSY))
-			वापस 0;
+	for (i = 0; i < dev_priv->usec_timeout; i++) {
+		if (!(R128_READ(R128_PC_NGUI_CTLSTAT) & R128_PC_BUSY))
+			return 0;
 		udelay(1);
-	पूर्ण
+	}
 
-#अगर R128_FIFO_DEBUG
+#if R128_FIFO_DEBUG
 	DRM_ERROR("failed!\n");
-#पूर्ण_अगर
-	वापस -EBUSY;
-पूर्ण
+#endif
+	return -EBUSY;
+}
 
-अटल पूर्णांक r128_करो_रुको_क्रम_fअगरo(drm_r128_निजी_t *dev_priv, पूर्णांक entries)
-अणु
-	पूर्णांक i;
+static int r128_do_wait_for_fifo(drm_r128_private_t *dev_priv, int entries)
+{
+	int i;
 
-	क्रम (i = 0; i < dev_priv->usec_समयout; i++) अणु
-		पूर्णांक slots = R128_READ(R128_GUI_STAT) & R128_GUI_FIFOCNT_MASK;
-		अगर (slots >= entries)
-			वापस 0;
+	for (i = 0; i < dev_priv->usec_timeout; i++) {
+		int slots = R128_READ(R128_GUI_STAT) & R128_GUI_FIFOCNT_MASK;
+		if (slots >= entries)
+			return 0;
 		udelay(1);
-	पूर्ण
+	}
 
-#अगर R128_FIFO_DEBUG
+#if R128_FIFO_DEBUG
 	DRM_ERROR("failed!\n");
-#पूर्ण_अगर
-	वापस -EBUSY;
-पूर्ण
+#endif
+	return -EBUSY;
+}
 
-अटल पूर्णांक r128_करो_रुको_क्रम_idle(drm_r128_निजी_t *dev_priv)
-अणु
-	पूर्णांक i, ret;
+static int r128_do_wait_for_idle(drm_r128_private_t *dev_priv)
+{
+	int i, ret;
 
-	ret = r128_करो_रुको_क्रम_fअगरo(dev_priv, 64);
-	अगर (ret)
-		वापस ret;
+	ret = r128_do_wait_for_fifo(dev_priv, 64);
+	if (ret)
+		return ret;
 
-	क्रम (i = 0; i < dev_priv->usec_समयout; i++) अणु
-		अगर (!(R128_READ(R128_GUI_STAT) & R128_GUI_ACTIVE)) अणु
-			r128_करो_pixcache_flush(dev_priv);
-			वापस 0;
-		पूर्ण
+	for (i = 0; i < dev_priv->usec_timeout; i++) {
+		if (!(R128_READ(R128_GUI_STAT) & R128_GUI_ACTIVE)) {
+			r128_do_pixcache_flush(dev_priv);
+			return 0;
+		}
 		udelay(1);
-	पूर्ण
+	}
 
-#अगर R128_FIFO_DEBUG
+#if R128_FIFO_DEBUG
 	DRM_ERROR("failed!\n");
-#पूर्ण_अगर
-	वापस -EBUSY;
-पूर्ण
+#endif
+	return -EBUSY;
+}
 
 /* ================================================================
  * CCE control, initialization
  */
 
-/* Load the microcode क्रम the CCE */
-अटल पूर्णांक r128_cce_load_microcode(drm_r128_निजी_t *dev_priv)
-अणु
-	काष्ठा platक्रमm_device *pdev;
-	स्थिर काष्ठा firmware *fw;
-	स्थिर __be32 *fw_data;
-	पूर्णांक rc, i;
+/* Load the microcode for the CCE */
+static int r128_cce_load_microcode(drm_r128_private_t *dev_priv)
+{
+	struct platform_device *pdev;
+	const struct firmware *fw;
+	const __be32 *fw_data;
+	int rc, i;
 
 	DRM_DEBUG("\n");
 
-	pdev = platक्रमm_device_रेजिस्टर_simple("r128_cce", 0, शून्य, 0);
-	अगर (IS_ERR(pdev)) अणु
+	pdev = platform_device_register_simple("r128_cce", 0, NULL, 0);
+	if (IS_ERR(pdev)) {
 		pr_err("r128_cce: Failed to register firmware\n");
-		वापस PTR_ERR(pdev);
-	पूर्ण
+		return PTR_ERR(pdev);
+	}
 	rc = request_firmware(&fw, FIRMWARE_NAME, &pdev->dev);
-	platक्रमm_device_unरेजिस्टर(pdev);
-	अगर (rc) अणु
+	platform_device_unregister(pdev);
+	if (rc) {
 		pr_err("r128_cce: Failed to load firmware \"%s\"\n",
 		       FIRMWARE_NAME);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
-	अगर (fw->size != 256 * 8) अणु
+	if (fw->size != 256 * 8) {
 		pr_err("r128_cce: Bogus length %zu in firmware \"%s\"\n",
 		       fw->size, FIRMWARE_NAME);
 		rc = -EINVAL;
-		जाओ out_release;
-	पूर्ण
+		goto out_release;
+	}
 
-	r128_करो_रुको_क्रम_idle(dev_priv);
+	r128_do_wait_for_idle(dev_priv);
 
-	fw_data = (स्थिर __be32 *)fw->data;
+	fw_data = (const __be32 *)fw->data;
 	R128_WRITE(R128_PM4_MICROCODE_ADDR, 0);
-	क्रम (i = 0; i < 256; i++) अणु
+	for (i = 0; i < 256; i++) {
 		R128_WRITE(R128_PM4_MICROCODE_DATAH,
 			   be32_to_cpup(&fw_data[i * 2]));
 		R128_WRITE(R128_PM4_MICROCODE_DATAL,
 			   be32_to_cpup(&fw_data[i * 2 + 1]));
-	पूर्ण
+	}
 
 out_release:
 	release_firmware(fw);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /* Flush any pending commands to the CCE.  This should only be used just
- * prior to a रुको क्रम idle, as it inक्रमms the engine that the command
+ * prior to a wait for idle, as it informs the engine that the command
  * stream is ending.
  */
-अटल व्योम r128_करो_cce_flush(drm_r128_निजी_t *dev_priv)
-अणु
-	u32 पंचांगp;
+static void r128_do_cce_flush(drm_r128_private_t *dev_priv)
+{
+	u32 tmp;
 
-	पंचांगp = R128_READ(R128_PM4_BUFFER_DL_WPTR) | R128_PM4_BUFFER_DL_DONE;
-	R128_WRITE(R128_PM4_BUFFER_DL_WPTR, पंचांगp);
-पूर्ण
+	tmp = R128_READ(R128_PM4_BUFFER_DL_WPTR) | R128_PM4_BUFFER_DL_DONE;
+	R128_WRITE(R128_PM4_BUFFER_DL_WPTR, tmp);
+}
 
-/* Wait क्रम the CCE to go idle.
+/* Wait for the CCE to go idle.
  */
-पूर्णांक r128_करो_cce_idle(drm_r128_निजी_t *dev_priv)
-अणु
-	पूर्णांक i;
+int r128_do_cce_idle(drm_r128_private_t *dev_priv)
+{
+	int i;
 
-	क्रम (i = 0; i < dev_priv->usec_समयout; i++) अणु
-		अगर (GET_RING_HEAD(dev_priv) == dev_priv->ring.tail) अणु
-			पूर्णांक pm4stat = R128_READ(R128_PM4_STAT);
-			अगर (((pm4stat & R128_PM4_FIFOCNT_MASK) >=
-			     dev_priv->cce_fअगरo_size) &&
+	for (i = 0; i < dev_priv->usec_timeout; i++) {
+		if (GET_RING_HEAD(dev_priv) == dev_priv->ring.tail) {
+			int pm4stat = R128_READ(R128_PM4_STAT);
+			if (((pm4stat & R128_PM4_FIFOCNT_MASK) >=
+			     dev_priv->cce_fifo_size) &&
 			    !(pm4stat & (R128_PM4_BUSY |
-					 R128_PM4_GUI_ACTIVE))) अणु
-				वापस r128_करो_pixcache_flush(dev_priv);
-			पूर्ण
-		पूर्ण
+					 R128_PM4_GUI_ACTIVE))) {
+				return r128_do_pixcache_flush(dev_priv);
+			}
+		}
 		udelay(1);
-	पूर्ण
+	}
 
-#अगर R128_FIFO_DEBUG
+#if R128_FIFO_DEBUG
 	DRM_ERROR("failed!\n");
 	r128_status(dev_priv);
-#पूर्ण_अगर
-	वापस -EBUSY;
-पूर्ण
+#endif
+	return -EBUSY;
+}
 
 /* Start the Concurrent Command Engine.
  */
-अटल व्योम r128_करो_cce_start(drm_r128_निजी_t *dev_priv)
-अणु
-	r128_करो_रुको_क्रम_idle(dev_priv);
+static void r128_do_cce_start(drm_r128_private_t *dev_priv)
+{
+	r128_do_wait_for_idle(dev_priv);
 
 	R128_WRITE(R128_PM4_BUFFER_CNTL,
 		   dev_priv->cce_mode | dev_priv->ring.size_l2qw
@@ -243,42 +242,42 @@ out_release:
 	R128_WRITE(R128_PM4_MICRO_CNTL, R128_PM4_MICRO_FREERUN);
 
 	dev_priv->cce_running = 1;
-पूर्ण
+}
 
 /* Reset the Concurrent Command Engine.  This will not flush any pending
- * commands, so you must रुको क्रम the CCE command stream to complete
- * beक्रमe calling this routine.
+ * commands, so you must wait for the CCE command stream to complete
+ * before calling this routine.
  */
-अटल व्योम r128_करो_cce_reset(drm_r128_निजी_t *dev_priv)
-अणु
+static void r128_do_cce_reset(drm_r128_private_t *dev_priv)
+{
 	R128_WRITE(R128_PM4_BUFFER_DL_WPTR, 0);
 	R128_WRITE(R128_PM4_BUFFER_DL_RPTR, 0);
 	dev_priv->ring.tail = 0;
-पूर्ण
+}
 
 /* Stop the Concurrent Command Engine.  This will not flush any pending
- * commands, so you must flush the command stream and रुको क्रम the CCE
- * to go idle beक्रमe calling this routine.
+ * commands, so you must flush the command stream and wait for the CCE
+ * to go idle before calling this routine.
  */
-अटल व्योम r128_करो_cce_stop(drm_r128_निजी_t *dev_priv)
-अणु
+static void r128_do_cce_stop(drm_r128_private_t *dev_priv)
+{
 	R128_WRITE(R128_PM4_MICRO_CNTL, 0);
 	R128_WRITE(R128_PM4_BUFFER_CNTL,
 		   R128_PM4_NONPM4 | R128_PM4_BUFFER_CNTL_NOUPDATE);
 
 	dev_priv->cce_running = 0;
-पूर्ण
+}
 
-/* Reset the engine.  This will stop the CCE अगर it is running.
+/* Reset the engine.  This will stop the CCE if it is running.
  */
-अटल पूर्णांक r128_करो_engine_reset(काष्ठा drm_device *dev)
-अणु
-	drm_r128_निजी_t *dev_priv = dev->dev_निजी;
-	u32 घड़ी_cntl_index, mclk_cntl, gen_reset_cntl;
+static int r128_do_engine_reset(struct drm_device *dev)
+{
+	drm_r128_private_t *dev_priv = dev->dev_private;
+	u32 clock_cntl_index, mclk_cntl, gen_reset_cntl;
 
-	r128_करो_pixcache_flush(dev_priv);
+	r128_do_pixcache_flush(dev_priv);
 
-	घड़ी_cntl_index = R128_READ(R128_CLOCK_CNTL_INDEX);
+	clock_cntl_index = R128_READ(R128_CLOCK_CNTL_INDEX);
 	mclk_cntl = R128_READ_PLL(dev, R128_MCLK_CNTL);
 
 	R128_WRITE_PLL(R128_MCLK_CNTL,
@@ -286,46 +285,46 @@ out_release:
 
 	gen_reset_cntl = R128_READ(R128_GEN_RESET_CNTL);
 
-	/* Taken from the sample code - करो not change */
+	/* Taken from the sample code - do not change */
 	R128_WRITE(R128_GEN_RESET_CNTL, gen_reset_cntl | R128_SOFT_RESET_GUI);
 	R128_READ(R128_GEN_RESET_CNTL);
 	R128_WRITE(R128_GEN_RESET_CNTL, gen_reset_cntl & ~R128_SOFT_RESET_GUI);
 	R128_READ(R128_GEN_RESET_CNTL);
 
 	R128_WRITE_PLL(R128_MCLK_CNTL, mclk_cntl);
-	R128_WRITE(R128_CLOCK_CNTL_INDEX, घड़ी_cntl_index);
+	R128_WRITE(R128_CLOCK_CNTL_INDEX, clock_cntl_index);
 	R128_WRITE(R128_GEN_RESET_CNTL, gen_reset_cntl);
 
 	/* Reset the CCE ring */
-	r128_करो_cce_reset(dev_priv);
+	r128_do_cce_reset(dev_priv);
 
-	/* The CCE is no दीर्घer running after an engine reset */
+	/* The CCE is no longer running after an engine reset */
 	dev_priv->cce_running = 0;
 
 	/* Reset any pending vertex, indirect buffers */
-	r128_मुक्तlist_reset(dev);
+	r128_freelist_reset(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम r128_cce_init_ring_buffer(काष्ठा drm_device *dev,
-				      drm_r128_निजी_t *dev_priv)
-अणु
+static void r128_cce_init_ring_buffer(struct drm_device *dev,
+				      drm_r128_private_t *dev_priv)
+{
 	u32 ring_start;
-	u32 पंचांगp;
+	u32 tmp;
 
 	DRM_DEBUG("\n");
 
 	/* The manual (p. 2) says this address is in "VM space".  This
 	 * means it's an offset from the start of AGP space.
 	 */
-#अगर IS_ENABLED(CONFIG_AGP)
-	अगर (!dev_priv->is_pci)
+#if IS_ENABLED(CONFIG_AGP)
+	if (!dev_priv->is_pci)
 		ring_start = dev_priv->cce_ring->offset - dev->agp->base;
-	अन्यथा
-#पूर्ण_अगर
+	else
+#endif
 		ring_start = dev_priv->cce_ring->offset -
-		    (अचिन्हित दीर्घ)dev->sg->भव;
+		    (unsigned long)dev->sg->virtual;
 
 	R128_WRITE(R128_PM4_BUFFER_OFFSET, ring_start | R128_AGP_OFFSET);
 
@@ -339,47 +338,47 @@ out_release:
 		   | ((R128_WATERMARK_N / 4) << R128_WMC_SHIFT)
 		   | ((R128_WATERMARK_K / 64) << R128_WB_WM_SHIFT));
 
-	/* Force पढ़ो.  Why?  Because it's in the examples... */
+	/* Force read.  Why?  Because it's in the examples... */
 	R128_READ(R128_PM4_BUFFER_ADDR);
 
 	/* Turn on bus mastering */
-	पंचांगp = R128_READ(R128_BUS_CNTL) & ~R128_BUS_MASTER_DIS;
-	R128_WRITE(R128_BUS_CNTL, पंचांगp);
-पूर्ण
+	tmp = R128_READ(R128_BUS_CNTL) & ~R128_BUS_MASTER_DIS;
+	R128_WRITE(R128_BUS_CNTL, tmp);
+}
 
-अटल पूर्णांक r128_करो_init_cce(काष्ठा drm_device *dev, drm_r128_init_t *init)
-अणु
-	drm_r128_निजी_t *dev_priv;
-	पूर्णांक rc;
+static int r128_do_init_cce(struct drm_device *dev, drm_r128_init_t *init)
+{
+	drm_r128_private_t *dev_priv;
+	int rc;
 
 	DRM_DEBUG("\n");
 
-	अगर (dev->dev_निजी) अणु
+	if (dev->dev_private) {
 		DRM_DEBUG("called when already initialized\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	dev_priv = kzalloc(माप(drm_r128_निजी_t), GFP_KERNEL);
-	अगर (dev_priv == शून्य)
-		वापस -ENOMEM;
+	dev_priv = kzalloc(sizeof(drm_r128_private_t), GFP_KERNEL);
+	if (dev_priv == NULL)
+		return -ENOMEM;
 
 	dev_priv->is_pci = init->is_pci;
 
-	अगर (dev_priv->is_pci && !dev->sg) अणु
+	if (dev_priv->is_pci && !dev->sg) {
 		DRM_ERROR("PCI GART memory not allocated!\n");
-		dev->dev_निजी = (व्योम *)dev_priv;
-		r128_करो_cleanup_cce(dev);
-		वापस -EINVAL;
-	पूर्ण
+		dev->dev_private = (void *)dev_priv;
+		r128_do_cleanup_cce(dev);
+		return -EINVAL;
+	}
 
-	dev_priv->usec_समयout = init->usec_समयout;
-	अगर (dev_priv->usec_समयout < 1 ||
-	    dev_priv->usec_समयout > R128_MAX_USEC_TIMEOUT) अणु
+	dev_priv->usec_timeout = init->usec_timeout;
+	if (dev_priv->usec_timeout < 1 ||
+	    dev_priv->usec_timeout > R128_MAX_USEC_TIMEOUT) {
 		DRM_DEBUG("TIMEOUT problem!\n");
-		dev->dev_निजी = (व्योम *)dev_priv;
-		r128_करो_cleanup_cce(dev);
-		वापस -EINVAL;
-	पूर्ण
+		dev->dev_private = (void *)dev_priv;
+		r128_do_cleanup_cce(dev);
+		return -EINVAL;
+	}
 
 	dev_priv->cce_mode = init->cce_mode;
 
@@ -387,65 +386,65 @@ out_release:
 	 */
 	atomic_set(&dev_priv->idle_count, 0);
 
-	/* We करोn't support anything other than bus-mastering ring mode,
-	 * but the ring can be in either AGP or PCI space क्रम the ring
-	 * पढ़ो poपूर्णांकer.
+	/* We don't support anything other than bus-mastering ring mode,
+	 * but the ring can be in either AGP or PCI space for the ring
+	 * read pointer.
 	 */
-	अगर ((init->cce_mode != R128_PM4_192BM) &&
+	if ((init->cce_mode != R128_PM4_192BM) &&
 	    (init->cce_mode != R128_PM4_128BM_64INDBM) &&
 	    (init->cce_mode != R128_PM4_64BM_128INDBM) &&
-	    (init->cce_mode != R128_PM4_64BM_64VCBM_64INDBM)) अणु
+	    (init->cce_mode != R128_PM4_64BM_64VCBM_64INDBM)) {
 		DRM_DEBUG("Bad cce_mode!\n");
-		dev->dev_निजी = (व्योम *)dev_priv;
-		r128_करो_cleanup_cce(dev);
-		वापस -EINVAL;
-	पूर्ण
+		dev->dev_private = (void *)dev_priv;
+		r128_do_cleanup_cce(dev);
+		return -EINVAL;
+	}
 
-	चयन (init->cce_mode) अणु
-	हाल R128_PM4_NONPM4:
-		dev_priv->cce_fअगरo_size = 0;
-		अवरोध;
-	हाल R128_PM4_192PIO:
-	हाल R128_PM4_192BM:
-		dev_priv->cce_fअगरo_size = 192;
-		अवरोध;
-	हाल R128_PM4_128PIO_64INDBM:
-	हाल R128_PM4_128BM_64INDBM:
-		dev_priv->cce_fअगरo_size = 128;
-		अवरोध;
-	हाल R128_PM4_64PIO_128INDBM:
-	हाल R128_PM4_64BM_128INDBM:
-	हाल R128_PM4_64PIO_64VCBM_64INDBM:
-	हाल R128_PM4_64BM_64VCBM_64INDBM:
-	हाल R128_PM4_64PIO_64VCPIO_64INDPIO:
-		dev_priv->cce_fअगरo_size = 64;
-		अवरोध;
-	पूर्ण
+	switch (init->cce_mode) {
+	case R128_PM4_NONPM4:
+		dev_priv->cce_fifo_size = 0;
+		break;
+	case R128_PM4_192PIO:
+	case R128_PM4_192BM:
+		dev_priv->cce_fifo_size = 192;
+		break;
+	case R128_PM4_128PIO_64INDBM:
+	case R128_PM4_128BM_64INDBM:
+		dev_priv->cce_fifo_size = 128;
+		break;
+	case R128_PM4_64PIO_128INDBM:
+	case R128_PM4_64BM_128INDBM:
+	case R128_PM4_64PIO_64VCBM_64INDBM:
+	case R128_PM4_64BM_64VCBM_64INDBM:
+	case R128_PM4_64PIO_64VCPIO_64INDPIO:
+		dev_priv->cce_fifo_size = 64;
+		break;
+	}
 
-	चयन (init->fb_bpp) अणु
-	हाल 16:
+	switch (init->fb_bpp) {
+	case 16:
 		dev_priv->color_fmt = R128_DATATYPE_RGB565;
-		अवरोध;
-	हाल 32:
-	शेष:
+		break;
+	case 32:
+	default:
 		dev_priv->color_fmt = R128_DATATYPE_ARGB8888;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	dev_priv->front_offset = init->front_offset;
 	dev_priv->front_pitch = init->front_pitch;
 	dev_priv->back_offset = init->back_offset;
 	dev_priv->back_pitch = init->back_pitch;
 
-	चयन (init->depth_bpp) अणु
-	हाल 16:
+	switch (init->depth_bpp) {
+	case 16:
 		dev_priv->depth_fmt = R128_DATATYPE_RGB565;
-		अवरोध;
-	हाल 24:
-	हाल 32:
-	शेष:
+		break;
+	case 24:
+	case 32:
+	default:
 		dev_priv->depth_fmt = R128_DATATYPE_ARGB8888;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	dev_priv->depth_offset = init->depth_offset;
 	dev_priv->depth_pitch = init->depth_pitch;
 	dev_priv->span_offset = init->span_offset;
@@ -460,97 +459,97 @@ out_release:
 	dev_priv->span_pitch_offset_c = (((dev_priv->depth_pitch / 8) << 21) |
 					 (dev_priv->span_offset >> 5));
 
-	dev_priv->sarea = drm_legacy_माला_लोarea(dev);
-	अगर (!dev_priv->sarea) अणु
+	dev_priv->sarea = drm_legacy_getsarea(dev);
+	if (!dev_priv->sarea) {
 		DRM_ERROR("could not find sarea!\n");
-		dev->dev_निजी = (व्योम *)dev_priv;
-		r128_करो_cleanup_cce(dev);
-		वापस -EINVAL;
-	पूर्ण
+		dev->dev_private = (void *)dev_priv;
+		r128_do_cleanup_cce(dev);
+		return -EINVAL;
+	}
 
 	dev_priv->mmio = drm_legacy_findmap(dev, init->mmio_offset);
-	अगर (!dev_priv->mmio) अणु
+	if (!dev_priv->mmio) {
 		DRM_ERROR("could not find mmio region!\n");
-		dev->dev_निजी = (व्योम *)dev_priv;
-		r128_करो_cleanup_cce(dev);
-		वापस -EINVAL;
-	पूर्ण
+		dev->dev_private = (void *)dev_priv;
+		r128_do_cleanup_cce(dev);
+		return -EINVAL;
+	}
 	dev_priv->cce_ring = drm_legacy_findmap(dev, init->ring_offset);
-	अगर (!dev_priv->cce_ring) अणु
+	if (!dev_priv->cce_ring) {
 		DRM_ERROR("could not find cce ring region!\n");
-		dev->dev_निजी = (व्योम *)dev_priv;
-		r128_करो_cleanup_cce(dev);
-		वापस -EINVAL;
-	पूर्ण
+		dev->dev_private = (void *)dev_priv;
+		r128_do_cleanup_cce(dev);
+		return -EINVAL;
+	}
 	dev_priv->ring_rptr = drm_legacy_findmap(dev, init->ring_rptr_offset);
-	अगर (!dev_priv->ring_rptr) अणु
+	if (!dev_priv->ring_rptr) {
 		DRM_ERROR("could not find ring read pointer!\n");
-		dev->dev_निजी = (व्योम *)dev_priv;
-		r128_करो_cleanup_cce(dev);
-		वापस -EINVAL;
-	पूर्ण
+		dev->dev_private = (void *)dev_priv;
+		r128_do_cleanup_cce(dev);
+		return -EINVAL;
+	}
 	dev->agp_buffer_token = init->buffers_offset;
 	dev->agp_buffer_map = drm_legacy_findmap(dev, init->buffers_offset);
-	अगर (!dev->agp_buffer_map) अणु
+	if (!dev->agp_buffer_map) {
 		DRM_ERROR("could not find dma buffer region!\n");
-		dev->dev_निजी = (व्योम *)dev_priv;
-		r128_करो_cleanup_cce(dev);
-		वापस -EINVAL;
-	पूर्ण
+		dev->dev_private = (void *)dev_priv;
+		r128_do_cleanup_cce(dev);
+		return -EINVAL;
+	}
 
-	अगर (!dev_priv->is_pci) अणु
+	if (!dev_priv->is_pci) {
 		dev_priv->agp_textures =
 		    drm_legacy_findmap(dev, init->agp_textures_offset);
-		अगर (!dev_priv->agp_textures) अणु
+		if (!dev_priv->agp_textures) {
 			DRM_ERROR("could not find agp texture region!\n");
-			dev->dev_निजी = (व्योम *)dev_priv;
-			r128_करो_cleanup_cce(dev);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			dev->dev_private = (void *)dev_priv;
+			r128_do_cleanup_cce(dev);
+			return -EINVAL;
+		}
+	}
 
 	dev_priv->sarea_priv =
 	    (drm_r128_sarea_t *) ((u8 *) dev_priv->sarea->handle +
 				  init->sarea_priv_offset);
 
-#अगर IS_ENABLED(CONFIG_AGP)
-	अगर (!dev_priv->is_pci) अणु
+#if IS_ENABLED(CONFIG_AGP)
+	if (!dev_priv->is_pci) {
 		drm_legacy_ioremap_wc(dev_priv->cce_ring, dev);
 		drm_legacy_ioremap_wc(dev_priv->ring_rptr, dev);
 		drm_legacy_ioremap_wc(dev->agp_buffer_map, dev);
-		अगर (!dev_priv->cce_ring->handle ||
+		if (!dev_priv->cce_ring->handle ||
 		    !dev_priv->ring_rptr->handle ||
-		    !dev->agp_buffer_map->handle) अणु
+		    !dev->agp_buffer_map->handle) {
 			DRM_ERROR("Could not ioremap agp regions!\n");
-			dev->dev_निजी = (व्योम *)dev_priv;
-			r128_करो_cleanup_cce(dev);
-			वापस -ENOMEM;
-		पूर्ण
-	पूर्ण अन्यथा
-#पूर्ण_अगर
-	अणु
+			dev->dev_private = (void *)dev_priv;
+			r128_do_cleanup_cce(dev);
+			return -ENOMEM;
+		}
+	} else
+#endif
+	{
 		dev_priv->cce_ring->handle =
-			(व्योम *)(अचिन्हित दीर्घ)dev_priv->cce_ring->offset;
+			(void *)(unsigned long)dev_priv->cce_ring->offset;
 		dev_priv->ring_rptr->handle =
-			(व्योम *)(अचिन्हित दीर्घ)dev_priv->ring_rptr->offset;
+			(void *)(unsigned long)dev_priv->ring_rptr->offset;
 		dev->agp_buffer_map->handle =
-			(व्योम *)(अचिन्हित दीर्घ)dev->agp_buffer_map->offset;
-	पूर्ण
+			(void *)(unsigned long)dev->agp_buffer_map->offset;
+	}
 
-#अगर IS_ENABLED(CONFIG_AGP)
-	अगर (!dev_priv->is_pci)
+#if IS_ENABLED(CONFIG_AGP)
+	if (!dev_priv->is_pci)
 		dev_priv->cce_buffers_offset = dev->agp->base;
-	अन्यथा
-#पूर्ण_अगर
-		dev_priv->cce_buffers_offset = (अचिन्हित दीर्घ)dev->sg->भव;
+	else
+#endif
+		dev_priv->cce_buffers_offset = (unsigned long)dev->sg->virtual;
 
 	dev_priv->ring.start = (u32 *) dev_priv->cce_ring->handle;
 	dev_priv->ring.end = ((u32 *) dev_priv->cce_ring->handle
-			      + init->ring_size / माप(u32));
+			      + init->ring_size / sizeof(u32));
 	dev_priv->ring.size = init->ring_size;
 	dev_priv->ring.size_l2qw = order_base_2(init->ring_size / 8);
 
-	dev_priv->ring.tail_mask = (dev_priv->ring.size / माप(u32)) - 1;
+	dev_priv->ring.tail_mask = (dev_priv->ring.size / sizeof(u32)) - 1;
 
 	dev_priv->ring.high_mark = 128;
 
@@ -560,127 +559,127 @@ out_release:
 	dev_priv->sarea_priv->last_dispatch = 0;
 	R128_WRITE(R128_LAST_DISPATCH_REG, dev_priv->sarea_priv->last_dispatch);
 
-#अगर IS_ENABLED(CONFIG_AGP)
-	अगर (dev_priv->is_pci) अणु
-#पूर्ण_अगर
+#if IS_ENABLED(CONFIG_AGP)
+	if (dev_priv->is_pci) {
+#endif
 		dev_priv->gart_info.table_mask = DMA_BIT_MASK(32);
 		dev_priv->gart_info.gart_table_location = DRM_ATI_GART_MAIN;
 		dev_priv->gart_info.table_size = R128_PCIGART_TABLE_SIZE;
-		dev_priv->gart_info.addr = शून्य;
+		dev_priv->gart_info.addr = NULL;
 		dev_priv->gart_info.bus_addr = 0;
-		dev_priv->gart_info.gart_reg_अगर = DRM_ATI_GART_PCI;
+		dev_priv->gart_info.gart_reg_if = DRM_ATI_GART_PCI;
 		rc = drm_ati_pcigart_init(dev, &dev_priv->gart_info);
-		अगर (rc) अणु
+		if (rc) {
 			DRM_ERROR("failed to init PCI GART!\n");
-			dev->dev_निजी = (व्योम *)dev_priv;
-			r128_करो_cleanup_cce(dev);
-			वापस rc;
-		पूर्ण
+			dev->dev_private = (void *)dev_priv;
+			r128_do_cleanup_cce(dev);
+			return rc;
+		}
 		R128_WRITE(R128_PCI_GART_PAGE, dev_priv->gart_info.bus_addr);
-#अगर IS_ENABLED(CONFIG_AGP)
-	पूर्ण
-#पूर्ण_अगर
+#if IS_ENABLED(CONFIG_AGP)
+	}
+#endif
 
 	r128_cce_init_ring_buffer(dev, dev_priv);
 	rc = r128_cce_load_microcode(dev_priv);
 
-	dev->dev_निजी = (व्योम *)dev_priv;
+	dev->dev_private = (void *)dev_priv;
 
-	r128_करो_engine_reset(dev);
+	r128_do_engine_reset(dev);
 
-	अगर (rc) अणु
+	if (rc) {
 		DRM_ERROR("Failed to load firmware!\n");
-		r128_करो_cleanup_cce(dev);
-	पूर्ण
+		r128_do_cleanup_cce(dev);
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-पूर्णांक r128_करो_cleanup_cce(काष्ठा drm_device *dev)
-अणु
+int r128_do_cleanup_cce(struct drm_device *dev)
+{
 
-	/* Make sure पूर्णांकerrupts are disabled here because the uninstall ioctl
-	 * may not have been called from userspace and after dev_निजी
-	 * is मुक्तd, it's too late.
+	/* Make sure interrupts are disabled here because the uninstall ioctl
+	 * may not have been called from userspace and after dev_private
+	 * is freed, it's too late.
 	 */
-	अगर (dev->irq_enabled)
+	if (dev->irq_enabled)
 		drm_irq_uninstall(dev);
 
-	अगर (dev->dev_निजी) अणु
-		drm_r128_निजी_t *dev_priv = dev->dev_निजी;
+	if (dev->dev_private) {
+		drm_r128_private_t *dev_priv = dev->dev_private;
 
-#अगर IS_ENABLED(CONFIG_AGP)
-		अगर (!dev_priv->is_pci) अणु
-			अगर (dev_priv->cce_ring != शून्य)
-				drm_legacy_ioremapमुक्त(dev_priv->cce_ring, dev);
-			अगर (dev_priv->ring_rptr != शून्य)
-				drm_legacy_ioremapमुक्त(dev_priv->ring_rptr, dev);
-			अगर (dev->agp_buffer_map != शून्य) अणु
-				drm_legacy_ioremapमुक्त(dev->agp_buffer_map, dev);
-				dev->agp_buffer_map = शून्य;
-			पूर्ण
-		पूर्ण अन्यथा
-#पूर्ण_अगर
-		अणु
-			अगर (dev_priv->gart_info.bus_addr)
-				अगर (!drm_ati_pcigart_cleanup(dev,
+#if IS_ENABLED(CONFIG_AGP)
+		if (!dev_priv->is_pci) {
+			if (dev_priv->cce_ring != NULL)
+				drm_legacy_ioremapfree(dev_priv->cce_ring, dev);
+			if (dev_priv->ring_rptr != NULL)
+				drm_legacy_ioremapfree(dev_priv->ring_rptr, dev);
+			if (dev->agp_buffer_map != NULL) {
+				drm_legacy_ioremapfree(dev->agp_buffer_map, dev);
+				dev->agp_buffer_map = NULL;
+			}
+		} else
+#endif
+		{
+			if (dev_priv->gart_info.bus_addr)
+				if (!drm_ati_pcigart_cleanup(dev,
 							&dev_priv->gart_info))
 					DRM_ERROR
 					    ("failed to cleanup PCI GART!\n");
-		पूर्ण
+		}
 
-		kमुक्त(dev->dev_निजी);
-		dev->dev_निजी = शून्य;
-	पूर्ण
+		kfree(dev->dev_private);
+		dev->dev_private = NULL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक r128_cce_init(काष्ठा drm_device *dev, व्योम *data, काष्ठा drm_file *file_priv)
-अणु
+int r128_cce_init(struct drm_device *dev, void *data, struct drm_file *file_priv)
+{
 	drm_r128_init_t *init = data;
 
 	DRM_DEBUG("\n");
 
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
 
-	चयन (init->func) अणु
-	हाल R128_INIT_CCE:
-		वापस r128_करो_init_cce(dev, init);
-	हाल R128_CLEANUP_CCE:
-		वापस r128_करो_cleanup_cce(dev);
-	पूर्ण
+	switch (init->func) {
+	case R128_INIT_CCE:
+		return r128_do_init_cce(dev, init);
+	case R128_CLEANUP_CCE:
+		return r128_do_cleanup_cce(dev);
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-पूर्णांक r128_cce_start(काष्ठा drm_device *dev, व्योम *data, काष्ठा drm_file *file_priv)
-अणु
-	drm_r128_निजी_t *dev_priv = dev->dev_निजी;
+int r128_cce_start(struct drm_device *dev, void *data, struct drm_file *file_priv)
+{
+	drm_r128_private_t *dev_priv = dev->dev_private;
 	DRM_DEBUG("\n");
 
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
 
 	DEV_INIT_TEST_WITH_RETURN(dev_priv);
 
-	अगर (dev_priv->cce_running || dev_priv->cce_mode == R128_PM4_NONPM4) अणु
+	if (dev_priv->cce_running || dev_priv->cce_mode == R128_PM4_NONPM4) {
 		DRM_DEBUG("while CCE running\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	r128_करो_cce_start(dev_priv);
+	r128_do_cce_start(dev_priv);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Stop the CCE.  The engine must have been idled beक्रमe calling this
+/* Stop the CCE.  The engine must have been idled before calling this
  * routine.
  */
-पूर्णांक r128_cce_stop(काष्ठा drm_device *dev, व्योम *data, काष्ठा drm_file *file_priv)
-अणु
-	drm_r128_निजी_t *dev_priv = dev->dev_निजी;
+int r128_cce_stop(struct drm_device *dev, void *data, struct drm_file *file_priv)
+{
+	drm_r128_private_t *dev_priv = dev->dev_private;
 	drm_r128_cce_stop_t *stop = data;
-	पूर्णांक ret;
+	int ret;
 	DRM_DEBUG("\n");
 
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
@@ -688,117 +687,117 @@ out_release:
 	DEV_INIT_TEST_WITH_RETURN(dev_priv);
 
 	/* Flush any pending CCE commands.  This ensures any outstanding
-	 * commands are exectuted by the engine beक्रमe we turn it off.
+	 * commands are exectuted by the engine before we turn it off.
 	 */
-	अगर (stop->flush)
-		r128_करो_cce_flush(dev_priv);
+	if (stop->flush)
+		r128_do_cce_flush(dev_priv);
 
-	/* If we fail to make the engine go idle, we वापस an error
+	/* If we fail to make the engine go idle, we return an error
 	 * code so that the DRM ioctl wrapper can try again.
 	 */
-	अगर (stop->idle) अणु
-		ret = r128_करो_cce_idle(dev_priv);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+	if (stop->idle) {
+		ret = r128_do_cce_idle(dev_priv);
+		if (ret)
+			return ret;
+	}
 
 	/* Finally, we can turn off the CCE.  If the engine isn't idle,
 	 * we will get some dropped triangles as they won't be fully
-	 * rendered beक्रमe the CCE is shut करोwn.
+	 * rendered before the CCE is shut down.
 	 */
-	r128_करो_cce_stop(dev_priv);
+	r128_do_cce_stop(dev_priv);
 
 	/* Reset the engine */
-	r128_करो_engine_reset(dev);
+	r128_do_engine_reset(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Just reset the CCE ring.  Called as part of an X Server engine reset.
  */
-पूर्णांक r128_cce_reset(काष्ठा drm_device *dev, व्योम *data, काष्ठा drm_file *file_priv)
-अणु
-	drm_r128_निजी_t *dev_priv = dev->dev_निजी;
+int r128_cce_reset(struct drm_device *dev, void *data, struct drm_file *file_priv)
+{
+	drm_r128_private_t *dev_priv = dev->dev_private;
 	DRM_DEBUG("\n");
 
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
 
 	DEV_INIT_TEST_WITH_RETURN(dev_priv);
 
-	r128_करो_cce_reset(dev_priv);
+	r128_do_cce_reset(dev_priv);
 
-	/* The CCE is no दीर्घer running after an engine reset */
+	/* The CCE is no longer running after an engine reset */
 	dev_priv->cce_running = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक r128_cce_idle(काष्ठा drm_device *dev, व्योम *data, काष्ठा drm_file *file_priv)
-अणु
-	drm_r128_निजी_t *dev_priv = dev->dev_निजी;
+int r128_cce_idle(struct drm_device *dev, void *data, struct drm_file *file_priv)
+{
+	drm_r128_private_t *dev_priv = dev->dev_private;
 	DRM_DEBUG("\n");
 
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
 
 	DEV_INIT_TEST_WITH_RETURN(dev_priv);
 
-	अगर (dev_priv->cce_running)
-		r128_करो_cce_flush(dev_priv);
+	if (dev_priv->cce_running)
+		r128_do_cce_flush(dev_priv);
 
-	वापस r128_करो_cce_idle(dev_priv);
-पूर्ण
+	return r128_do_cce_idle(dev_priv);
+}
 
-पूर्णांक r128_engine_reset(काष्ठा drm_device *dev, व्योम *data, काष्ठा drm_file *file_priv)
-अणु
+int r128_engine_reset(struct drm_device *dev, void *data, struct drm_file *file_priv)
+{
 	DRM_DEBUG("\n");
 
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
 
-	DEV_INIT_TEST_WITH_RETURN(dev->dev_निजी);
+	DEV_INIT_TEST_WITH_RETURN(dev->dev_private);
 
-	वापस r128_करो_engine_reset(dev);
-पूर्ण
+	return r128_do_engine_reset(dev);
+}
 
-पूर्णांक r128_fullscreen(काष्ठा drm_device *dev, व्योम *data, काष्ठा drm_file *file_priv)
-अणु
-	वापस -EINVAL;
-पूर्ण
+int r128_fullscreen(struct drm_device *dev, void *data, struct drm_file *file_priv)
+{
+	return -EINVAL;
+}
 
 /* ================================================================
  * Freelist management
  */
-#घोषणा R128_BUFFER_USED	0xffffffff
-#घोषणा R128_BUFFER_FREE	0
+#define R128_BUFFER_USED	0xffffffff
+#define R128_BUFFER_FREE	0
 
-#अगर 0
-अटल पूर्णांक r128_मुक्तlist_init(काष्ठा drm_device *dev)
-अणु
-	काष्ठा drm_device_dma *dma = dev->dma;
-	drm_r128_निजी_t *dev_priv = dev->dev_निजी;
-	काष्ठा drm_buf *buf;
+#if 0
+static int r128_freelist_init(struct drm_device *dev)
+{
+	struct drm_device_dma *dma = dev->dma;
+	drm_r128_private_t *dev_priv = dev->dev_private;
+	struct drm_buf *buf;
 	drm_r128_buf_priv_t *buf_priv;
-	drm_r128_मुक्तlist_t *entry;
-	पूर्णांक i;
+	drm_r128_freelist_t *entry;
+	int i;
 
-	dev_priv->head = kzalloc(माप(drm_r128_मुक्तlist_t), GFP_KERNEL);
-	अगर (dev_priv->head == शून्य)
-		वापस -ENOMEM;
+	dev_priv->head = kzalloc(sizeof(drm_r128_freelist_t), GFP_KERNEL);
+	if (dev_priv->head == NULL)
+		return -ENOMEM;
 
 	dev_priv->head->age = R128_BUFFER_USED;
 
-	क्रम (i = 0; i < dma->buf_count; i++) अणु
+	for (i = 0; i < dma->buf_count; i++) {
 		buf = dma->buflist[i];
-		buf_priv = buf->dev_निजी;
+		buf_priv = buf->dev_private;
 
-		entry = kदो_स्मृति(माप(drm_r128_मुक्तlist_t), GFP_KERNEL);
-		अगर (!entry)
-			वापस -ENOMEM;
+		entry = kmalloc(sizeof(drm_r128_freelist_t), GFP_KERNEL);
+		if (!entry)
+			return -ENOMEM;
 
 		entry->age = R128_BUFFER_FREE;
 		entry->buf = buf;
 		entry->prev = dev_priv->head;
 		entry->next = dev_priv->head->next;
-		अगर (!entry->next)
+		if (!entry->next)
 			dev_priv->tail = entry;
 
 		buf_priv->discard = 0;
@@ -807,140 +806,140 @@ out_release:
 
 		dev_priv->head->next = entry;
 
-		अगर (dev_priv->head->next)
+		if (dev_priv->head->next)
 			dev_priv->head->next->prev = entry;
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-अटल काष्ठा drm_buf *r128_मुक्तlist_get(काष्ठा drm_device * dev)
-अणु
-	काष्ठा drm_device_dma *dma = dev->dma;
-	drm_r128_निजी_t *dev_priv = dev->dev_निजी;
+static struct drm_buf *r128_freelist_get(struct drm_device * dev)
+{
+	struct drm_device_dma *dma = dev->dma;
+	drm_r128_private_t *dev_priv = dev->dev_private;
 	drm_r128_buf_priv_t *buf_priv;
-	काष्ठा drm_buf *buf;
-	पूर्णांक i, t;
+	struct drm_buf *buf;
+	int i, t;
 
-	/* FIXME: Optimize -- use मुक्तlist code */
+	/* FIXME: Optimize -- use freelist code */
 
-	क्रम (i = 0; i < dma->buf_count; i++) अणु
+	for (i = 0; i < dma->buf_count; i++) {
 		buf = dma->buflist[i];
-		buf_priv = buf->dev_निजी;
-		अगर (!buf->file_priv)
-			वापस buf;
-	पूर्ण
+		buf_priv = buf->dev_private;
+		if (!buf->file_priv)
+			return buf;
+	}
 
-	क्रम (t = 0; t < dev_priv->usec_समयout; t++) अणु
-		u32 करोne_age = R128_READ(R128_LAST_DISPATCH_REG);
+	for (t = 0; t < dev_priv->usec_timeout; t++) {
+		u32 done_age = R128_READ(R128_LAST_DISPATCH_REG);
 
-		क्रम (i = 0; i < dma->buf_count; i++) अणु
+		for (i = 0; i < dma->buf_count; i++) {
 			buf = dma->buflist[i];
-			buf_priv = buf->dev_निजी;
-			अगर (buf->pending && buf_priv->age <= करोne_age) अणु
+			buf_priv = buf->dev_private;
+			if (buf->pending && buf_priv->age <= done_age) {
 				/* The buffer has been processed, so it
 				 * can now be used.
 				 */
 				buf->pending = 0;
-				वापस buf;
-			पूर्ण
-		पूर्ण
+				return buf;
+			}
+		}
 		udelay(1);
-	पूर्ण
+	}
 
 	DRM_DEBUG("returning NULL!\n");
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-व्योम r128_मुक्तlist_reset(काष्ठा drm_device *dev)
-अणु
-	काष्ठा drm_device_dma *dma = dev->dma;
-	पूर्णांक i;
+void r128_freelist_reset(struct drm_device *dev)
+{
+	struct drm_device_dma *dma = dev->dma;
+	int i;
 
-	क्रम (i = 0; i < dma->buf_count; i++) अणु
-		काष्ठा drm_buf *buf = dma->buflist[i];
-		drm_r128_buf_priv_t *buf_priv = buf->dev_निजी;
+	for (i = 0; i < dma->buf_count; i++) {
+		struct drm_buf *buf = dma->buflist[i];
+		drm_r128_buf_priv_t *buf_priv = buf->dev_private;
 		buf_priv->age = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* ================================================================
  * CCE command submission
  */
 
-पूर्णांक r128_रुको_ring(drm_r128_निजी_t *dev_priv, पूर्णांक n)
-अणु
+int r128_wait_ring(drm_r128_private_t *dev_priv, int n)
+{
 	drm_r128_ring_buffer_t *ring = &dev_priv->ring;
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < dev_priv->usec_समयout; i++) अणु
+	for (i = 0; i < dev_priv->usec_timeout; i++) {
 		r128_update_ring_snapshot(dev_priv);
-		अगर (ring->space >= n)
-			वापस 0;
+		if (ring->space >= n)
+			return 0;
 		udelay(1);
-	पूर्ण
+	}
 
 	/* FIXME: This is being ignored... */
 	DRM_ERROR("failed!\n");
-	वापस -EBUSY;
-पूर्ण
+	return -EBUSY;
+}
 
-अटल पूर्णांक r128_cce_get_buffers(काष्ठा drm_device *dev,
-				काष्ठा drm_file *file_priv,
-				काष्ठा drm_dma *d)
-अणु
-	पूर्णांक i;
-	काष्ठा drm_buf *buf;
+static int r128_cce_get_buffers(struct drm_device *dev,
+				struct drm_file *file_priv,
+				struct drm_dma *d)
+{
+	int i;
+	struct drm_buf *buf;
 
-	क्रम (i = d->granted_count; i < d->request_count; i++) अणु
-		buf = r128_मुक्तlist_get(dev);
-		अगर (!buf)
-			वापस -EAGAIN;
+	for (i = d->granted_count; i < d->request_count; i++) {
+		buf = r128_freelist_get(dev);
+		if (!buf)
+			return -EAGAIN;
 
 		buf->file_priv = file_priv;
 
-		अगर (copy_to_user(&d->request_indices[i], &buf->idx,
-				     माप(buf->idx)))
-			वापस -EFAULT;
-		अगर (copy_to_user(&d->request_sizes[i], &buf->total,
-				     माप(buf->total)))
-			वापस -EFAULT;
+		if (copy_to_user(&d->request_indices[i], &buf->idx,
+				     sizeof(buf->idx)))
+			return -EFAULT;
+		if (copy_to_user(&d->request_sizes[i], &buf->total,
+				     sizeof(buf->total)))
+			return -EFAULT;
 
 		d->granted_count++;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-पूर्णांक r128_cce_buffers(काष्ठा drm_device *dev, व्योम *data, काष्ठा drm_file *file_priv)
-अणु
-	काष्ठा drm_device_dma *dma = dev->dma;
-	पूर्णांक ret = 0;
-	काष्ठा drm_dma *d = data;
+int r128_cce_buffers(struct drm_device *dev, void *data, struct drm_file *file_priv)
+{
+	struct drm_device_dma *dma = dev->dma;
+	int ret = 0;
+	struct drm_dma *d = data;
 
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
 
-	/* Please करोn't send us buffers.
+	/* Please don't send us buffers.
 	 */
-	अगर (d->send_count != 0) अणु
+	if (d->send_count != 0) {
 		DRM_ERROR("Process %d trying to send %d buffers via drmDMA\n",
 			  task_pid_nr(current), d->send_count);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* We'll send you buffers.
 	 */
-	अगर (d->request_count < 0 || d->request_count > dma->buf_count) अणु
+	if (d->request_count < 0 || d->request_count > dma->buf_count) {
 		DRM_ERROR("Process %d trying to get %d buffers (of %d max)\n",
 			  task_pid_nr(current), d->request_count, dma->buf_count);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	d->granted_count = 0;
 
-	अगर (d->request_count)
+	if (d->request_count)
 		ret = r128_cce_get_buffers(dev, file_priv, d);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

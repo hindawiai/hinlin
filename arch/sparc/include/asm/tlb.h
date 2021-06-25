@@ -1,10 +1,9 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित ___ASM_SPARC_TLB_H
-#घोषणा ___ASM_SPARC_TLB_H
-#अगर defined(__sparc__) && defined(__arch64__)
-#समावेश <यंत्र/tlb_64.h>
-#अन्यथा
-#समावेश <यंत्र/tlb_32.h>
-#पूर्ण_अगर
-#पूर्ण_अगर
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef ___ASM_SPARC_TLB_H
+#define ___ASM_SPARC_TLB_H
+#if defined(__sparc__) && defined(__arch64__)
+#include <asm/tlb_64.h>
+#else
+#include <asm/tlb_32.h>
+#endif
+#endif

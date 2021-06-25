@@ -1,150 +1,149 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2012 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
-#घोषणा _XMIT_OSDEP_C_
+#define _XMIT_OSDEP_C_
 
-#समावेश <osdep_service.h>
-#समावेश <drv_types.h>
+#include <osdep_service.h>
+#include <drv_types.h>
 
-#समावेश <wअगरi.h>
-#समावेश <mlme_osdep.h>
-#समावेश <xmit_osdep.h>
-#समावेश <osdep_पूर्णांकf.h>
+#include <wifi.h>
+#include <mlme_osdep.h>
+#include <xmit_osdep.h>
+#include <osdep_intf.h>
 
-पूर्णांक rtw_os_xmit_resource_alloc(काष्ठा xmit_buf *pxmitbuf, u32 alloc_sz)
-अणु
-	पूर्णांक i;
+int rtw_os_xmit_resource_alloc(struct xmit_buf *pxmitbuf, u32 alloc_sz)
+{
+	int i;
 
 	pxmitbuf->pallocated_buf = kzalloc(alloc_sz, GFP_KERNEL);
-	अगर (!pxmitbuf->pallocated_buf)
-		वापस _FAIL;
+	if (!pxmitbuf->pallocated_buf)
+		return _FAIL;
 
 	pxmitbuf->pbuf = PTR_ALIGN(pxmitbuf->pallocated_buf, XMITBUF_ALIGN_SZ);
 
-	क्रम (i = 0; i < 8; i++) अणु
+	for (i = 0; i < 8; i++) {
 		pxmitbuf->pxmit_urb[i] = usb_alloc_urb(0, GFP_KERNEL);
-		अगर (!pxmitbuf->pxmit_urb[i]) अणु
+		if (!pxmitbuf->pxmit_urb[i]) {
 			DBG_88E("pxmitbuf->pxmit_urb[i]==NULL");
-			वापस _FAIL;
-		पूर्ण
-	पूर्ण
-	वापस _SUCCESS;
-पूर्ण
+			return _FAIL;
+		}
+	}
+	return _SUCCESS;
+}
 
-व्योम rtw_os_xmit_resource_मुक्त(काष्ठा xmit_buf *pxmitbuf)
-अणु
-	पूर्णांक i;
+void rtw_os_xmit_resource_free(struct xmit_buf *pxmitbuf)
+{
+	int i;
 
-	क्रम (i = 0; i < 8; i++)
-		usb_मुक्त_urb(pxmitbuf->pxmit_urb[i]);
+	for (i = 0; i < 8; i++)
+		usb_free_urb(pxmitbuf->pxmit_urb[i]);
 
-	kमुक्त(pxmitbuf->pallocated_buf);
-पूर्ण
+	kfree(pxmitbuf->pallocated_buf);
+}
 
-#घोषणा WMM_XMIT_THRESHOLD	(NR_XMITFRAME * 2 / 5)
+#define WMM_XMIT_THRESHOLD	(NR_XMITFRAME * 2 / 5)
 
-व्योम rtw_os_pkt_complete(काष्ठा adapter *padapter, काष्ठा sk_buff *pkt)
-अणु
+void rtw_os_pkt_complete(struct adapter *padapter, struct sk_buff *pkt)
+{
 	u16 queue;
-	काष्ठा xmit_priv *pxmitpriv = &padapter->xmitpriv;
+	struct xmit_priv *pxmitpriv = &padapter->xmitpriv;
 
 	queue = skb_get_queue_mapping(pkt);
-	अगर (padapter->registrypriv.wअगरi_spec) अणु
-		अगर (__netअगर_subqueue_stopped(padapter->pnetdev, queue) &&
+	if (padapter->registrypriv.wifi_spec) {
+		if (__netif_subqueue_stopped(padapter->pnetdev, queue) &&
 		    (pxmitpriv->hwxmits[queue].accnt < WMM_XMIT_THRESHOLD))
-			netअगर_wake_subqueue(padapter->pnetdev, queue);
-	पूर्ण अन्यथा अणु
-		अगर (__netअगर_subqueue_stopped(padapter->pnetdev, queue))
-			netअगर_wake_subqueue(padapter->pnetdev, queue);
-	पूर्ण
+			netif_wake_subqueue(padapter->pnetdev, queue);
+	} else {
+		if (__netif_subqueue_stopped(padapter->pnetdev, queue))
+			netif_wake_subqueue(padapter->pnetdev, queue);
+	}
 
-	dev_kमुक्त_skb_any(pkt);
-पूर्ण
+	dev_kfree_skb_any(pkt);
+}
 
-व्योम rtw_os_xmit_complete(काष्ठा adapter *padapter, काष्ठा xmit_frame *pxframe)
-अणु
-	अगर (pxframe->pkt)
+void rtw_os_xmit_complete(struct adapter *padapter, struct xmit_frame *pxframe)
+{
+	if (pxframe->pkt)
 		rtw_os_pkt_complete(padapter, pxframe->pkt);
-	pxframe->pkt = शून्य;
-पूर्ण
+	pxframe->pkt = NULL;
+}
 
-व्योम rtw_os_xmit_schedule(काष्ठा adapter *padapter)
-अणु
-	काष्ठा xmit_priv *pxmitpriv;
+void rtw_os_xmit_schedule(struct adapter *padapter)
+{
+	struct xmit_priv *pxmitpriv;
 
-	अगर (!padapter)
-		वापस;
+	if (!padapter)
+		return;
 
 	pxmitpriv = &padapter->xmitpriv;
 
 	spin_lock_bh(&pxmitpriv->lock);
 
-	अगर (rtw_txframes_pending(padapter))
+	if (rtw_txframes_pending(padapter))
 		tasklet_hi_schedule(&pxmitpriv->xmit_tasklet);
 
 	spin_unlock_bh(&pxmitpriv->lock);
-पूर्ण
+}
 
-अटल व्योम rtw_check_xmit_resource(काष्ठा adapter *padapter,
-				    काष्ठा sk_buff *pkt)
-अणु
-	काष्ठा xmit_priv *pxmitpriv = &padapter->xmitpriv;
+static void rtw_check_xmit_resource(struct adapter *padapter,
+				    struct sk_buff *pkt)
+{
+	struct xmit_priv *pxmitpriv = &padapter->xmitpriv;
 	u16 queue;
 
 	queue = skb_get_queue_mapping(pkt);
-	अगर (padapter->registrypriv.wअगरi_spec) अणु
-		/* No मुक्त space क्रम Tx, tx_worker is too slow */
-		अगर (pxmitpriv->hwxmits[queue].accnt > WMM_XMIT_THRESHOLD)
-			netअगर_stop_subqueue(padapter->pnetdev, queue);
-	पूर्ण अन्यथा अणु
-		अगर (pxmitpriv->मुक्त_xmitframe_cnt <= 4) अणु
-			अगर (!netअगर_tx_queue_stopped(netdev_get_tx_queue(padapter->pnetdev, queue)))
-				netअगर_stop_subqueue(padapter->pnetdev, queue);
-		पूर्ण
-	पूर्ण
-पूर्ण
+	if (padapter->registrypriv.wifi_spec) {
+		/* No free space for Tx, tx_worker is too slow */
+		if (pxmitpriv->hwxmits[queue].accnt > WMM_XMIT_THRESHOLD)
+			netif_stop_subqueue(padapter->pnetdev, queue);
+	} else {
+		if (pxmitpriv->free_xmitframe_cnt <= 4) {
+			if (!netif_tx_queue_stopped(netdev_get_tx_queue(padapter->pnetdev, queue)))
+				netif_stop_subqueue(padapter->pnetdev, queue);
+		}
+	}
+}
 
-अटल पूर्णांक rtw_mlcst2unicst(काष्ठा adapter *padapter, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा sta_priv *pstapriv = &padapter->stapriv;
-	काष्ठा xmit_priv *pxmitpriv = &padapter->xmitpriv;
-	काष्ठा list_head *phead, *plist;
-	काष्ठा sk_buff *newskb;
-	काष्ठा sta_info *psta = शून्य;
+static int rtw_mlcst2unicst(struct adapter *padapter, struct sk_buff *skb)
+{
+	struct sta_priv *pstapriv = &padapter->stapriv;
+	struct xmit_priv *pxmitpriv = &padapter->xmitpriv;
+	struct list_head *phead, *plist;
+	struct sk_buff *newskb;
+	struct sta_info *psta = NULL;
 	s32 res;
 
 	spin_lock_bh(&pstapriv->asoc_list_lock);
 	phead = &pstapriv->asoc_list;
 	plist = phead->next;
 
-	/* मुक्त sta asoc_queue */
-	जबतक (phead != plist) अणु
-		psta = container_of(plist, काष्ठा sta_info, asoc_list);
+	/* free sta asoc_queue */
+	while (phead != plist) {
+		psta = container_of(plist, struct sta_info, asoc_list);
 
 		plist = plist->next;
 
-		/* aव्योम come from STA1 and send back STA1 */
-		अगर (!स_भेद(psta->hwaddr, &skb->data[6], 6))
-			जारी;
+		/* avoid come from STA1 and send back STA1 */
+		if (!memcmp(psta->hwaddr, &skb->data[6], 6))
+			continue;
 
 		newskb = skb_copy(skb, GFP_ATOMIC);
 
-		अगर (newskb) अणु
-			स_नकल(newskb->data, psta->hwaddr, 6);
+		if (newskb) {
+			memcpy(newskb->data, psta->hwaddr, 6);
 			res = rtw_xmit(padapter, &newskb);
-			अगर (res < 0) अणु
+			if (res < 0) {
 				DBG_88E("%s()-%d: rtw_xmit() return error!\n",
 					__func__, __LINE__);
 				pxmitpriv->tx_drop++;
-				dev_kमुक्त_skb_any(newskb);
-			पूर्ण अन्यथा अणु
+				dev_kfree_skb_any(newskb);
+			} else {
 				pxmitpriv->tx_pkts++;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			DBG_88E("%s-%d: skb_copy() failed!\n",
 				__func__, __LINE__);
 			pxmitpriv->tx_drop++;
@@ -154,57 +153,57 @@
 			/* Caller shall tx this multicast frame
 			 * via normal way.
 			 */
-			वापस false;
-		पूर्ण
-	पूर्ण
+			return false;
+		}
+	}
 
 	spin_unlock_bh(&pstapriv->asoc_list_lock);
-	dev_kमुक्त_skb_any(skb);
-	वापस true;
-पूर्ण
+	dev_kfree_skb_any(skb);
+	return true;
+}
 
-पूर्णांक rtw_xmit_entry(काष्ठा sk_buff *pkt, काष्ठा net_device *pnetdev)
-अणु
-	काष्ठा adapter *padapter = netdev_priv(pnetdev);
-	काष्ठा xmit_priv *pxmitpriv = &padapter->xmitpriv;
-	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
+int rtw_xmit_entry(struct sk_buff *pkt, struct net_device *pnetdev)
+{
+	struct adapter *padapter = netdev_priv(pnetdev);
+	struct xmit_priv *pxmitpriv = &padapter->xmitpriv;
+	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
 	s32 res = 0;
 
 	RT_TRACE(_module_rtl871x_mlme_c_, _drv_info_, ("+xmit_enry\n"));
 
-	अगर (!rtw_अगर_up(padapter)) अणु
+	if (!rtw_if_up(padapter)) {
 		RT_TRACE(_module_xmit_osdep_c_, _drv_err_,
 			 ("%s: rtw_if_up fail\n", __func__));
-		जाओ drop_packet;
-	पूर्ण
+		goto drop_packet;
+	}
 
 	rtw_check_xmit_resource(padapter, pkt);
 
-	अगर (!rtw_mc2u_disable && check_fwstate(pmlmepriv, WIFI_AP_STATE) &&
+	if (!rtw_mc2u_disable && check_fwstate(pmlmepriv, WIFI_AP_STATE) &&
 	    (IP_MCAST_MAC(pkt->data) || ICMPV6_MCAST_MAC(pkt->data)) &&
-	    (padapter->registrypriv.wअगरi_spec == 0)) अणु
-		अगर (pxmitpriv->मुक्त_xmitframe_cnt > NR_XMITFRAME / 4) अणु
+	    (padapter->registrypriv.wifi_spec == 0)) {
+		if (pxmitpriv->free_xmitframe_cnt > NR_XMITFRAME / 4) {
 			res = rtw_mlcst2unicst(padapter, pkt);
-			अगर (res)
-				जाओ निकास;
-		पूर्ण
-	पूर्ण
+			if (res)
+				goto exit;
+		}
+	}
 
 	res = rtw_xmit(padapter, &pkt);
-	अगर (res < 0)
-		जाओ drop_packet;
+	if (res < 0)
+		goto drop_packet;
 
 	pxmitpriv->tx_pkts++;
 	RT_TRACE(_module_xmit_osdep_c_, _drv_info_,
 		 ("%s: tx_pkts=%d\n", __func__, (u32)pxmitpriv->tx_pkts));
-	जाओ निकास;
+	goto exit;
 
 drop_packet:
 	pxmitpriv->tx_drop++;
-	dev_kमुक्त_skb_any(pkt);
+	dev_kfree_skb_any(pkt);
 	RT_TRACE(_module_xmit_osdep_c_, _drv_notice_,
 		 ("%s: drop, tx_drop=%d\n", __func__, (u32)pxmitpriv->tx_drop));
 
-निकास:
-	वापस NETDEV_TX_OK;
-पूर्ण
+exit:
+	return NETDEV_TX_OK;
+}

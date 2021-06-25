@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,52 +21,52 @@
  *
  */
 
-#समावेश "hwmgr.h"
-#समावेश "vega20_hwmgr.h"
-#समावेश "vega20_powertune.h"
-#समावेश "vega20_smumgr.h"
-#समावेश "vega20_ppsmc.h"
-#समावेश "vega20_inc.h"
-#समावेश "pp_debug.h"
+#include "hwmgr.h"
+#include "vega20_hwmgr.h"
+#include "vega20_powertune.h"
+#include "vega20_smumgr.h"
+#include "vega20_ppsmc.h"
+#include "vega20_inc.h"
+#include "pp_debug.h"
 
-पूर्णांक vega20_set_घातer_limit(काष्ठा pp_hwmgr *hwmgr, uपूर्णांक32_t n)
-अणु
-	काष्ठा vega20_hwmgr *data =
-			(काष्ठा vega20_hwmgr *)(hwmgr->backend);
+int vega20_set_power_limit(struct pp_hwmgr *hwmgr, uint32_t n)
+{
+	struct vega20_hwmgr *data =
+			(struct vega20_hwmgr *)(hwmgr->backend);
 
-	अगर (data->smu_features[GNLD_PPT].enabled)
-		वापस smum_send_msg_to_smc_with_parameter(hwmgr,
+	if (data->smu_features[GNLD_PPT].enabled)
+		return smum_send_msg_to_smc_with_parameter(hwmgr,
 				PPSMC_MSG_SetPptLimit, n,
-				शून्य);
+				NULL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक vega20_validate_घातer_level_request(काष्ठा pp_hwmgr *hwmgr,
-		uपूर्णांक32_t tdp_percentage_adjusपंचांगent, uपूर्णांक32_t tdp_असलolute_value_adjusपंचांगent)
-अणु
-	वापस (tdp_percentage_adjusपंचांगent > hwmgr->platक्रमm_descriptor.TDPLimit) ? -1 : 0;
-पूर्ण
+int vega20_validate_power_level_request(struct pp_hwmgr *hwmgr,
+		uint32_t tdp_percentage_adjustment, uint32_t tdp_absolute_value_adjustment)
+{
+	return (tdp_percentage_adjustment > hwmgr->platform_descriptor.TDPLimit) ? -1 : 0;
+}
 
-अटल पूर्णांक vega20_set_overdrive_target_percentage(काष्ठा pp_hwmgr *hwmgr,
-		uपूर्णांक32_t adjust_percent)
-अणु
-	वापस smum_send_msg_to_smc_with_parameter(hwmgr,
+static int vega20_set_overdrive_target_percentage(struct pp_hwmgr *hwmgr,
+		uint32_t adjust_percent)
+{
+	return smum_send_msg_to_smc_with_parameter(hwmgr,
 			PPSMC_MSG_OverDriveSetPercentage, adjust_percent,
-			शून्य);
-पूर्ण
+			NULL);
+}
 
-पूर्णांक vega20_घातer_control_set_level(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	पूर्णांक adjust_percent, result = 0;
+int vega20_power_control_set_level(struct pp_hwmgr *hwmgr)
+{
+	int adjust_percent, result = 0;
 
-	अगर (PP_CAP(PHM_Platक्रमmCaps_PowerContainment)) अणु
+	if (PP_CAP(PHM_PlatformCaps_PowerContainment)) {
 		adjust_percent =
-				hwmgr->platक्रमm_descriptor.TDPAdjusपंचांगentPolarity ?
-				hwmgr->platक्रमm_descriptor.TDPAdjusपंचांगent :
-				(-1 * hwmgr->platक्रमm_descriptor.TDPAdjusपंचांगent);
+				hwmgr->platform_descriptor.TDPAdjustmentPolarity ?
+				hwmgr->platform_descriptor.TDPAdjustment :
+				(-1 * hwmgr->platform_descriptor.TDPAdjustment);
 		result = vega20_set_overdrive_target_percentage(hwmgr,
-				(uपूर्णांक32_t)adjust_percent);
-	पूर्ण
-	वापस result;
-पूर्ण
+				(uint32_t)adjust_percent);
+	}
+	return result;
+}

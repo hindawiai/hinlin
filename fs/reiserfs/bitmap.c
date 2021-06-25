@@ -1,248 +1,247 @@
-<शैली गुरु>
 /*
  * Copyright 2000 by Hans Reiser, licensing governed by reiserfs/README
  */
-/* Reiserfs block (de)allocator, biपंचांगap-based. */
+/* Reiserfs block (de)allocator, bitmap-based. */
 
-#समावेश <linux/समय.स>
-#समावेश "reiserfs.h"
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/buffer_head.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/quotaops.h>
-#समावेश <linux/seq_file.h>
+#include <linux/time.h>
+#include "reiserfs.h"
+#include <linux/errno.h>
+#include <linux/buffer_head.h>
+#include <linux/kernel.h>
+#include <linux/pagemap.h>
+#include <linux/vmalloc.h>
+#include <linux/quotaops.h>
+#include <linux/seq_file.h>
 
-#घोषणा PREALLOCATION_SIZE 9
+#define PREALLOCATION_SIZE 9
 
-/* dअगरferent reiserfs block allocator options */
+/* different reiserfs block allocator options */
 
-#घोषणा SB_ALLOC_OPTS(s) (REISERFS_SB(s)->s_alloc_options.bits)
+#define SB_ALLOC_OPTS(s) (REISERFS_SB(s)->s_alloc_options.bits)
 
-#घोषणा  _ALLOC_concentrating_क्रमmatted_nodes 0
-#घोषणा  _ALLOC_displacing_large_files 1
-#घोषणा  _ALLOC_displacing_new_packing_localities 2
-#घोषणा  _ALLOC_old_hashed_relocation 3
-#घोषणा  _ALLOC_new_hashed_relocation 4
-#घोषणा  _ALLOC_skip_busy 5
-#घोषणा  _ALLOC_displace_based_on_dirid 6
-#घोषणा  _ALLOC_hashed_क्रमmatted_nodes 7
-#घोषणा  _ALLOC_old_way 8
-#घोषणा  _ALLOC_hundredth_slices 9
-#घोषणा  _ALLOC_dirid_groups 10
-#घोषणा  _ALLOC_oid_groups 11
-#घोषणा  _ALLOC_packing_groups 12
+#define  _ALLOC_concentrating_formatted_nodes 0
+#define  _ALLOC_displacing_large_files 1
+#define  _ALLOC_displacing_new_packing_localities 2
+#define  _ALLOC_old_hashed_relocation 3
+#define  _ALLOC_new_hashed_relocation 4
+#define  _ALLOC_skip_busy 5
+#define  _ALLOC_displace_based_on_dirid 6
+#define  _ALLOC_hashed_formatted_nodes 7
+#define  _ALLOC_old_way 8
+#define  _ALLOC_hundredth_slices 9
+#define  _ALLOC_dirid_groups 10
+#define  _ALLOC_oid_groups 11
+#define  _ALLOC_packing_groups 12
 
-#घोषणा  concentrating_क्रमmatted_nodes(s)	test_bit(_ALLOC_concentrating_क्रमmatted_nodes, &SB_ALLOC_OPTS(s))
-#घोषणा  displacing_large_files(s)		test_bit(_ALLOC_displacing_large_files, &SB_ALLOC_OPTS(s))
-#घोषणा  displacing_new_packing_localities(s)	test_bit(_ALLOC_displacing_new_packing_localities, &SB_ALLOC_OPTS(s))
+#define  concentrating_formatted_nodes(s)	test_bit(_ALLOC_concentrating_formatted_nodes, &SB_ALLOC_OPTS(s))
+#define  displacing_large_files(s)		test_bit(_ALLOC_displacing_large_files, &SB_ALLOC_OPTS(s))
+#define  displacing_new_packing_localities(s)	test_bit(_ALLOC_displacing_new_packing_localities, &SB_ALLOC_OPTS(s))
 
-#घोषणा SET_OPTION(optname) \
-   करो अणु \
+#define SET_OPTION(optname) \
+   do { \
 	reiserfs_info(s, "block allocator option \"%s\" is set", #optname); \
 	set_bit(_ALLOC_ ## optname , &SB_ALLOC_OPTS(s)); \
-    पूर्ण जबतक(0)
-#घोषणा TEST_OPTION(optname, s) \
+    } while(0)
+#define TEST_OPTION(optname, s) \
     test_bit(_ALLOC_ ## optname , &SB_ALLOC_OPTS(s))
 
-अटल अंतरभूत व्योम get_bit_address(काष्ठा super_block *s,
+static inline void get_bit_address(struct super_block *s,
 				   b_blocknr_t block,
-				   अचिन्हित पूर्णांक *bmap_nr,
-				   अचिन्हित पूर्णांक *offset)
-अणु
+				   unsigned int *bmap_nr,
+				   unsigned int *offset)
+{
 	/*
-	 * It is in the biपंचांगap block number equal to the block
-	 * number भागided by the number of bits in a block.
+	 * It is in the bitmap block number equal to the block
+	 * number divided by the number of bits in a block.
 	 */
 	*bmap_nr = block >> (s->s_blocksize_bits + 3);
-	/* Within that biपंचांगap block it is located at bit offset *offset. */
+	/* Within that bitmap block it is located at bit offset *offset. */
 	*offset = block & ((s->s_blocksize << 3) - 1);
-पूर्ण
+}
 
-पूर्णांक is_reusable(काष्ठा super_block *s, b_blocknr_t block, पूर्णांक bit_value)
-अणु
-	अचिन्हित पूर्णांक bmap, offset;
-	अचिन्हित पूर्णांक bmap_count = reiserfs_bmap_count(s);
+int is_reusable(struct super_block *s, b_blocknr_t block, int bit_value)
+{
+	unsigned int bmap, offset;
+	unsigned int bmap_count = reiserfs_bmap_count(s);
 
-	अगर (block == 0 || block >= SB_BLOCK_COUNT(s)) अणु
+	if (block == 0 || block >= SB_BLOCK_COUNT(s)) {
 		reiserfs_error(s, "vs-4010",
 			       "block number is out of range %lu (%u)",
 			       block, SB_BLOCK_COUNT(s));
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	get_bit_address(s, block, &bmap, &offset);
 
 	/*
-	 * Old क्रमmat fileप्रणाली? Unlikely, but the biपंचांगaps are all
-	 * up front so we need to account क्रम it.
+	 * Old format filesystem? Unlikely, but the bitmaps are all
+	 * up front so we need to account for it.
 	 */
-	अगर (unlikely(test_bit(REISERFS_OLD_FORMAT,
-			      &REISERFS_SB(s)->s_properties))) अणु
+	if (unlikely(test_bit(REISERFS_OLD_FORMAT,
+			      &REISERFS_SB(s)->s_properties))) {
 		b_blocknr_t bmap1 = REISERFS_SB(s)->s_sbh->b_blocknr + 1;
-		अगर (block >= bmap1 &&
-		    block <= bmap1 + bmap_count) अणु
+		if (block >= bmap1 &&
+		    block <= bmap1 + bmap_count) {
 			reiserfs_error(s, "vs-4019", "bitmap block %lu(%u) "
 				       "can't be freed or reused",
 				       block, bmap_count);
-			वापस 0;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (offset == 0) अणु
+			return 0;
+		}
+	} else {
+		if (offset == 0) {
 			reiserfs_error(s, "vs-4020", "bitmap block %lu(%u) "
 				       "can't be freed or reused",
 				       block, bmap_count);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
-	अगर (bmap >= bmap_count) अणु
+	if (bmap >= bmap_count) {
 		reiserfs_error(s, "vs-4030", "bitmap for requested block "
 			       "is out of range: block=%lu, bitmap_nr=%u",
 			       block, bmap);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (bit_value == 0 && block == SB_ROOT_BLOCK(s)) अणु
+	if (bit_value == 0 && block == SB_ROOT_BLOCK(s)) {
 		reiserfs_error(s, "vs-4050", "this is root block (%u), "
 			       "it must be busy", SB_ROOT_BLOCK(s));
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /*
- * Searches in journal काष्ठाures क्रम a given block number (bmap, off).
- * If block is found in reiserfs journal it suggests next मुक्त block
+ * Searches in journal structures for a given block number (bmap, off).
+ * If block is found in reiserfs journal it suggests next free block
  * candidate to test.
  */
-अटल अंतरभूत पूर्णांक is_block_in_journal(काष्ठा super_block *s, अचिन्हित पूर्णांक bmap,
-				      पूर्णांक off, पूर्णांक *next)
-अणु
-	b_blocknr_t पंचांगp;
+static inline int is_block_in_journal(struct super_block *s, unsigned int bmap,
+				      int off, int *next)
+{
+	b_blocknr_t tmp;
 
-	अगर (reiserfs_in_journal(s, bmap, off, 1, &पंचांगp)) अणु
-		अगर (पंचांगp) अणु	/* hपूर्णांक supplied */
-			*next = पंचांगp;
-			PROC_INFO_INC(s, scan_biपंचांगap.in_journal_hपूर्णांक);
-		पूर्ण अन्यथा अणु
-			(*next) = off + 1;  /* inc offset to aव्योम looping. */
-			PROC_INFO_INC(s, scan_biपंचांगap.in_journal_nohपूर्णांक);
-		पूर्ण
-		PROC_INFO_INC(s, scan_biपंचांगap.retry);
-		वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	if (reiserfs_in_journal(s, bmap, off, 1, &tmp)) {
+		if (tmp) {	/* hint supplied */
+			*next = tmp;
+			PROC_INFO_INC(s, scan_bitmap.in_journal_hint);
+		} else {
+			(*next) = off + 1;  /* inc offset to avoid looping. */
+			PROC_INFO_INC(s, scan_bitmap.in_journal_nohint);
+		}
+		PROC_INFO_INC(s, scan_bitmap.retry);
+		return 1;
+	}
+	return 0;
+}
 
 /*
- * Searches क्रम a winकरोw of zero bits with given minimum and maximum
- * lengths in one biपंचांगap block
+ * Searches for a window of zero bits with given minimum and maximum
+ * lengths in one bitmap block
  */
-अटल पूर्णांक scan_biपंचांगap_block(काष्ठा reiserfs_transaction_handle *th,
-			     अचिन्हित पूर्णांक bmap_n, पूर्णांक *beg, पूर्णांक boundary,
-			     पूर्णांक min, पूर्णांक max, पूर्णांक unfm)
-अणु
-	काष्ठा super_block *s = th->t_super;
-	काष्ठा reiserfs_biपंचांगap_info *bi = &SB_AP_BITMAP(s)[bmap_n];
-	काष्ठा buffer_head *bh;
-	पूर्णांक end, next;
-	पूर्णांक org = *beg;
+static int scan_bitmap_block(struct reiserfs_transaction_handle *th,
+			     unsigned int bmap_n, int *beg, int boundary,
+			     int min, int max, int unfm)
+{
+	struct super_block *s = th->t_super;
+	struct reiserfs_bitmap_info *bi = &SB_AP_BITMAP(s)[bmap_n];
+	struct buffer_head *bh;
+	int end, next;
+	int org = *beg;
 
 	BUG_ON(!th->t_trans_id);
 	RFALSE(bmap_n >= reiserfs_bmap_count(s), "Bitmap %u is out of "
 	       "range (0..%u)", bmap_n, reiserfs_bmap_count(s) - 1);
-	PROC_INFO_INC(s, scan_biपंचांगap.bmap);
+	PROC_INFO_INC(s, scan_bitmap.bmap);
 
-	अगर (!bi) अणु
+	if (!bi) {
 		reiserfs_error(s, "jdm-4055", "NULL bitmap info pointer "
 			       "for bitmap %d", bmap_n);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	bh = reiserfs_पढ़ो_biपंचांगap_block(s, bmap_n);
-	अगर (bh == शून्य)
-		वापस 0;
+	bh = reiserfs_read_bitmap_block(s, bmap_n);
+	if (bh == NULL)
+		return 0;
 
-	जबतक (1) अणु
+	while (1) {
 cont:
-		अगर (bi->मुक्त_count < min) अणु
-			brअन्यथा(bh);
-			वापस 0;	/* No मुक्त blocks in this biपंचांगap */
-		पूर्ण
+		if (bi->free_count < min) {
+			brelse(bh);
+			return 0;	/* No free blocks in this bitmap */
+		}
 
-		/* search क्रम a first zero bit -- beginning of a winकरोw */
+		/* search for a first zero bit -- beginning of a window */
 		*beg = reiserfs_find_next_zero_le_bit
-		    ((अचिन्हित दीर्घ *)(bh->b_data), boundary, *beg);
+		    ((unsigned long *)(bh->b_data), boundary, *beg);
 
 		/*
-		 * search क्रम a zero bit fails or the rest of biपंचांगap block
-		 * cannot contain a zero winकरोw of minimum size
+		 * search for a zero bit fails or the rest of bitmap block
+		 * cannot contain a zero window of minimum size
 		 */
-		अगर (*beg + min > boundary) अणु
-			brअन्यथा(bh);
-			वापस 0;
-		पूर्ण
+		if (*beg + min > boundary) {
+			brelse(bh);
+			return 0;
+		}
 
-		अगर (unfm && is_block_in_journal(s, bmap_n, *beg, beg))
-			जारी;
+		if (unfm && is_block_in_journal(s, bmap_n, *beg, beg))
+			continue;
 		/* first zero bit found; we check next bits */
-		क्रम (end = *beg + 1;; end++) अणु
-			अगर (end >= *beg + max || end >= boundary
-			    || reiserfs_test_le_bit(end, bh->b_data)) अणु
+		for (end = *beg + 1;; end++) {
+			if (end >= *beg + max || end >= boundary
+			    || reiserfs_test_le_bit(end, bh->b_data)) {
 				next = end;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
 			/*
-			 * finding the other end of zero bit winकरोw requires
-			 * looking पूर्णांकo journal काष्ठाures (in हाल of
-			 * searching क्रम मुक्त blocks क्रम unक्रमmatted nodes)
+			 * finding the other end of zero bit window requires
+			 * looking into journal structures (in case of
+			 * searching for free blocks for unformatted nodes)
 			 */
-			अगर (unfm && is_block_in_journal(s, bmap_n, end, &next))
-				अवरोध;
-		पूर्ण
+			if (unfm && is_block_in_journal(s, bmap_n, end, &next))
+				break;
+		}
 
 		/*
-		 * now (*beg) poपूर्णांकs to beginning of zero bits winकरोw,
-		 * (end) poपूर्णांकs to one bit after the winकरोw end
+		 * now (*beg) points to beginning of zero bits window,
+		 * (end) points to one bit after the window end
 		 */
 
-		/* found winकरोw of proper size */
-		अगर (end - *beg >= min) अणु
-			पूर्णांक i;
-			reiserfs_prepare_क्रम_journal(s, bh, 1);
+		/* found window of proper size */
+		if (end - *beg >= min) {
+			int i;
+			reiserfs_prepare_for_journal(s, bh, 1);
 			/*
 			 * try to set all blocks used checking are
-			 * they still मुक्त
+			 * they still free
 			 */
-			क्रम (i = *beg; i < end; i++) अणु
+			for (i = *beg; i < end; i++) {
 				/* Don't check in journal again. */
-				अगर (reiserfs_test_and_set_le_bit
-				    (i, bh->b_data)) अणु
+				if (reiserfs_test_and_set_le_bit
+				    (i, bh->b_data)) {
 					/*
-					 * bit was set by another process जबतक
-					 * we slept in prepare_क्रम_journal()
+					 * bit was set by another process while
+					 * we slept in prepare_for_journal()
 					 */
-					PROC_INFO_INC(s, scan_biपंचांगap.stolen);
+					PROC_INFO_INC(s, scan_bitmap.stolen);
 
 					/*
-					 * we can जारी with smaller set
-					 * of allocated blocks, अगर length of
+					 * we can continue with smaller set
+					 * of allocated blocks, if length of
 					 * this set is more or equal to `min'
 					 */
-					अगर (i >= *beg + min) अणु
+					if (i >= *beg + min) {
 						end = i;
-						अवरोध;
-					पूर्ण
+						break;
+					}
 
 					/*
 					 * otherwise we clear all bit
 					 * were set ...
 					 */
-					जबतक (--i >= *beg)
+					while (--i >= *beg)
 						reiserfs_clear_le_bit
 						    (i, bh->b_data);
 					reiserfs_restore_prepared_buffer(s, bh);
@@ -252,1226 +251,1226 @@ cont:
 					 * Search again in current block
 					 * from beginning
 					 */
-					जाओ cont;
-				पूर्ण
-			पूर्ण
-			bi->मुक्त_count -= (end - *beg);
+					goto cont;
+				}
+			}
+			bi->free_count -= (end - *beg);
 			journal_mark_dirty(th, bh);
-			brअन्यथा(bh);
+			brelse(bh);
 
-			/* मुक्त block count calculation */
-			reiserfs_prepare_क्रम_journal(s, SB_BUFFER_WITH_SB(s),
+			/* free block count calculation */
+			reiserfs_prepare_for_journal(s, SB_BUFFER_WITH_SB(s),
 						     1);
 			PUT_SB_FREE_BLOCKS(s, SB_FREE_BLOCKS(s) - (end - *beg));
 			journal_mark_dirty(th, SB_BUFFER_WITH_SB(s));
 
-			वापस end - (*beg);
-		पूर्ण अन्यथा अणु
+			return end - (*beg);
+		} else {
 			*beg = next;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल पूर्णांक bmap_hash_id(काष्ठा super_block *s, u32 id)
-अणु
-	अक्षर *hash_in = शून्य;
-	अचिन्हित दीर्घ hash;
-	अचिन्हित bm;
+static int bmap_hash_id(struct super_block *s, u32 id)
+{
+	char *hash_in = NULL;
+	unsigned long hash;
+	unsigned bm;
 
-	अगर (id <= 2) अणु
+	if (id <= 2) {
 		bm = 1;
-	पूर्ण अन्यथा अणु
-		hash_in = (अक्षर *)(&id);
+	} else {
+		hash_in = (char *)(&id);
 		hash = keyed_hash(hash_in, 4);
 		bm = hash % reiserfs_bmap_count(s);
-		अगर (!bm)
+		if (!bm)
 			bm = 1;
-	पूर्ण
+	}
 	/* this can only be true when SB_BMAP_NR = 1 */
-	अगर (bm >= reiserfs_bmap_count(s))
+	if (bm >= reiserfs_bmap_count(s))
 		bm = 0;
-	वापस bm;
-पूर्ण
+	return bm;
+}
 
 /*
- * hashes the id and then वापसs > 0 अगर the block group क्रम the
+ * hashes the id and then returns > 0 if the block group for the
  * corresponding hash is full
  */
-अटल अंतरभूत पूर्णांक block_group_used(काष्ठा super_block *s, u32 id)
-अणु
-	पूर्णांक bm = bmap_hash_id(s, id);
-	काष्ठा reiserfs_biपंचांगap_info *info = &SB_AP_BITMAP(s)[bm];
+static inline int block_group_used(struct super_block *s, u32 id)
+{
+	int bm = bmap_hash_id(s, id);
+	struct reiserfs_bitmap_info *info = &SB_AP_BITMAP(s)[bm];
 
 	/*
-	 * If we करोn't have cached information on this bitmap block, we're
+	 * If we don't have cached information on this bitmap block, we're
 	 * going to have to load it later anyway. Loading it here allows us
-	 * to make a better decision. This favors दीर्घ-term perक्रमmance gain
-	 * with a better on-disk layout vs. a लघु term gain of skipping the
-	 * पढ़ो and potentially having a bad placement.
+	 * to make a better decision. This favors long-term performance gain
+	 * with a better on-disk layout vs. a short term gain of skipping the
+	 * read and potentially having a bad placement.
 	 */
-	अगर (info->मुक्त_count == अच_पूर्णांक_उच्च) अणु
-		काष्ठा buffer_head *bh = reiserfs_पढ़ो_biपंचांगap_block(s, bm);
-		brअन्यथा(bh);
-	पूर्ण
+	if (info->free_count == UINT_MAX) {
+		struct buffer_head *bh = reiserfs_read_bitmap_block(s, bm);
+		brelse(bh);
+	}
 
-	अगर (info->मुक्त_count > ((s->s_blocksize << 3) * 60 / 100)) अणु
-		वापस 0;
-	पूर्ण
-	वापस 1;
-पूर्ण
+	if (info->free_count > ((s->s_blocksize << 3) * 60 / 100)) {
+		return 0;
+	}
+	return 1;
+}
 
 /*
- * the packing is वापसed in disk byte order
+ * the packing is returned in disk byte order
  */
-__le32 reiserfs_choose_packing(काष्ठा inode * dir)
-अणु
+__le32 reiserfs_choose_packing(struct inode * dir)
+{
 	__le32 packing;
-	अगर (TEST_OPTION(packing_groups, dir->i_sb)) अणु
+	if (TEST_OPTION(packing_groups, dir->i_sb)) {
 		u32 parent_dir = le32_to_cpu(INODE_PKEY(dir)->k_dir_id);
 		/*
 		 * some versions of reiserfsck expect packing locality 1 to be
 		 * special
 		 */
-		अगर (parent_dir == 1 || block_group_used(dir->i_sb, parent_dir))
+		if (parent_dir == 1 || block_group_used(dir->i_sb, parent_dir))
 			packing = INODE_PKEY(dir)->k_objectid;
-		अन्यथा
+		else
 			packing = INODE_PKEY(dir)->k_dir_id;
-	पूर्ण अन्यथा
+	} else
 		packing = INODE_PKEY(dir)->k_objectid;
-	वापस packing;
-पूर्ण
+	return packing;
+}
 
 /*
- * Tries to find contiguous zero bit winकरोw (given size) in given region of
- * biपंचांगap and place new blocks there. Returns number of allocated blocks.
+ * Tries to find contiguous zero bit window (given size) in given region of
+ * bitmap and place new blocks there. Returns number of allocated blocks.
  */
-अटल पूर्णांक scan_biपंचांगap(काष्ठा reiserfs_transaction_handle *th,
+static int scan_bitmap(struct reiserfs_transaction_handle *th,
 		       b_blocknr_t * start, b_blocknr_t finish,
-		       पूर्णांक min, पूर्णांक max, पूर्णांक unfm, sector_t file_block)
-अणु
-	पूर्णांक nr_allocated = 0;
-	काष्ठा super_block *s = th->t_super;
-	अचिन्हित पूर्णांक bm, off;
-	अचिन्हित पूर्णांक end_bm, end_off;
-	अचिन्हित पूर्णांक off_max = s->s_blocksize << 3;
+		       int min, int max, int unfm, sector_t file_block)
+{
+	int nr_allocated = 0;
+	struct super_block *s = th->t_super;
+	unsigned int bm, off;
+	unsigned int end_bm, end_off;
+	unsigned int off_max = s->s_blocksize << 3;
 
 	BUG_ON(!th->t_trans_id);
-	PROC_INFO_INC(s, scan_biपंचांगap.call);
+	PROC_INFO_INC(s, scan_bitmap.call);
 
-	/* No poपूर्णांक in looking क्रम more मुक्त blocks */
-	अगर (SB_FREE_BLOCKS(s) <= 0)
-		वापस 0;
+	/* No point in looking for more free blocks */
+	if (SB_FREE_BLOCKS(s) <= 0)
+		return 0;
 
 	get_bit_address(s, *start, &bm, &off);
 	get_bit_address(s, finish, &end_bm, &end_off);
-	अगर (bm > reiserfs_bmap_count(s))
-		वापस 0;
-	अगर (end_bm > reiserfs_bmap_count(s))
+	if (bm > reiserfs_bmap_count(s))
+		return 0;
+	if (end_bm > reiserfs_bmap_count(s))
 		end_bm = reiserfs_bmap_count(s);
 
 	/*
-	 * When the biपंचांगap is more than 10% मुक्त, anyone can allocate.
-	 * When it's less than 10% मुक्त, only files that alपढ़ोy use the
-	 * biपंचांगap are allowed. Once we pass 80% full, this restriction
-	 * is lअगरted.
+	 * When the bitmap is more than 10% free, anyone can allocate.
+	 * When it's less than 10% free, only files that already use the
+	 * bitmap are allowed. Once we pass 80% full, this restriction
+	 * is lifted.
 	 *
-	 * We करो this so that files that grow later still have space बंद to
+	 * We do this so that files that grow later still have space close to
 	 * their original allocation. This improves locality, and presumably
-	 * perक्रमmance as a result.
+	 * performance as a result.
 	 *
-	 * This is only an allocation policy and करोes not make up क्रम getting a
-	 * bad hपूर्णांक. Decent hपूर्णांकing must be implemented क्रम this to work well.
+	 * This is only an allocation policy and does not make up for getting a
+	 * bad hint. Decent hinting must be implemented for this to work well.
 	 */
-	अगर (TEST_OPTION(skip_busy, s)
-	    && SB_FREE_BLOCKS(s) > SB_BLOCK_COUNT(s) / 20) अणु
-		क्रम (; bm < end_bm; bm++, off = 0) अणु
-			अगर ((off && (!unfm || (file_block != 0)))
-			    || SB_AP_BITMAP(s)[bm].मुक्त_count >
+	if (TEST_OPTION(skip_busy, s)
+	    && SB_FREE_BLOCKS(s) > SB_BLOCK_COUNT(s) / 20) {
+		for (; bm < end_bm; bm++, off = 0) {
+			if ((off && (!unfm || (file_block != 0)))
+			    || SB_AP_BITMAP(s)[bm].free_count >
 			    (s->s_blocksize << 3) / 10)
 				nr_allocated =
-				    scan_biपंचांगap_block(th, bm, &off, off_max,
+				    scan_bitmap_block(th, bm, &off, off_max,
 						      min, max, unfm);
-			अगर (nr_allocated)
-				जाओ ret;
-		पूर्ण
+			if (nr_allocated)
+				goto ret;
+		}
 		/* we know from above that start is a reasonable number */
 		get_bit_address(s, *start, &bm, &off);
-	पूर्ण
+	}
 
-	क्रम (; bm < end_bm; bm++, off = 0) अणु
+	for (; bm < end_bm; bm++, off = 0) {
 		nr_allocated =
-		    scan_biपंचांगap_block(th, bm, &off, off_max, min, max, unfm);
-		अगर (nr_allocated)
-			जाओ ret;
-	पूर्ण
+		    scan_bitmap_block(th, bm, &off, off_max, min, max, unfm);
+		if (nr_allocated)
+			goto ret;
+	}
 
 	nr_allocated =
-	    scan_biपंचांगap_block(th, bm, &off, end_off + 1, min, max, unfm);
+	    scan_bitmap_block(th, bm, &off, end_off + 1, min, max, unfm);
 
 ret:
 	*start = bm * off_max + off;
-	वापस nr_allocated;
+	return nr_allocated;
 
-पूर्ण
+}
 
-अटल व्योम _reiserfs_मुक्त_block(काष्ठा reiserfs_transaction_handle *th,
-				 काष्ठा inode *inode, b_blocknr_t block,
-				 पूर्णांक क्रम_unक्रमmatted)
-अणु
-	काष्ठा super_block *s = th->t_super;
-	काष्ठा reiserfs_super_block *rs;
-	काष्ठा buffer_head *sbh, *bmbh;
-	काष्ठा reiserfs_biपंचांगap_info *apbi;
-	अचिन्हित पूर्णांक nr, offset;
+static void _reiserfs_free_block(struct reiserfs_transaction_handle *th,
+				 struct inode *inode, b_blocknr_t block,
+				 int for_unformatted)
+{
+	struct super_block *s = th->t_super;
+	struct reiserfs_super_block *rs;
+	struct buffer_head *sbh, *bmbh;
+	struct reiserfs_bitmap_info *apbi;
+	unsigned int nr, offset;
 
 	BUG_ON(!th->t_trans_id);
-	PROC_INFO_INC(s, मुक्त_block);
+	PROC_INFO_INC(s, free_block);
 	rs = SB_DISK_SUPER_BLOCK(s);
 	sbh = SB_BUFFER_WITH_SB(s);
 	apbi = SB_AP_BITMAP(s);
 
 	get_bit_address(s, block, &nr, &offset);
 
-	अगर (nr >= reiserfs_bmap_count(s)) अणु
+	if (nr >= reiserfs_bmap_count(s)) {
 		reiserfs_error(s, "vs-4075", "block %lu is out of range",
 			       block);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	bmbh = reiserfs_पढ़ो_biपंचांगap_block(s, nr);
-	अगर (!bmbh)
-		वापस;
+	bmbh = reiserfs_read_bitmap_block(s, nr);
+	if (!bmbh)
+		return;
 
-	reiserfs_prepare_क्रम_journal(s, bmbh, 1);
+	reiserfs_prepare_for_journal(s, bmbh, 1);
 
-	/* clear bit क्रम the given block in bit map */
-	अगर (!reiserfs_test_and_clear_le_bit(offset, bmbh->b_data)) अणु
+	/* clear bit for the given block in bit map */
+	if (!reiserfs_test_and_clear_le_bit(offset, bmbh->b_data)) {
 		reiserfs_error(s, "vs-4080",
 			       "block %lu: bit already cleared", block);
-	पूर्ण
-	apbi[nr].मुक्त_count++;
+	}
+	apbi[nr].free_count++;
 	journal_mark_dirty(th, bmbh);
-	brअन्यथा(bmbh);
+	brelse(bmbh);
 
-	reiserfs_prepare_क्रम_journal(s, sbh, 1);
+	reiserfs_prepare_for_journal(s, sbh, 1);
 	/* update super block */
-	set_sb_मुक्त_blocks(rs, sb_मुक्त_blocks(rs) + 1);
+	set_sb_free_blocks(rs, sb_free_blocks(rs) + 1);
 
 	journal_mark_dirty(th, sbh);
-	अगर (क्रम_unक्रमmatted) अणु
-		पूर्णांक depth = reiserfs_ग_लिखो_unlock_nested(s);
-		dquot_मुक्त_block_nodirty(inode, 1);
-		reiserfs_ग_लिखो_lock_nested(s, depth);
-	पूर्ण
-पूर्ण
+	if (for_unformatted) {
+		int depth = reiserfs_write_unlock_nested(s);
+		dquot_free_block_nodirty(inode, 1);
+		reiserfs_write_lock_nested(s, depth);
+	}
+}
 
-व्योम reiserfs_मुक्त_block(काष्ठा reiserfs_transaction_handle *th,
-			 काष्ठा inode *inode, b_blocknr_t block,
-			 पूर्णांक क्रम_unक्रमmatted)
-अणु
-	काष्ठा super_block *s = th->t_super;
+void reiserfs_free_block(struct reiserfs_transaction_handle *th,
+			 struct inode *inode, b_blocknr_t block,
+			 int for_unformatted)
+{
+	struct super_block *s = th->t_super;
 
 	BUG_ON(!th->t_trans_id);
 	RFALSE(!s, "vs-4061: trying to free block on nonexistent device");
-	अगर (!is_reusable(s, block, 1))
-		वापस;
+	if (!is_reusable(s, block, 1))
+		return;
 
-	अगर (block > sb_block_count(REISERFS_SB(s)->s_rs)) अणु
+	if (block > sb_block_count(REISERFS_SB(s)->s_rs)) {
 		reiserfs_error(th->t_super, "bitmap-4072",
 			       "Trying to free block outside file system "
 			       "boundaries (%lu > %lu)",
 			       block, sb_block_count(REISERFS_SB(s)->s_rs));
-		वापस;
-	पूर्ण
-	/* mark it beक्रमe we clear it, just in हाल */
-	journal_mark_मुक्तd(th, s, block);
-	_reiserfs_मुक्त_block(th, inode, block, क्रम_unक्रमmatted);
-पूर्ण
+		return;
+	}
+	/* mark it before we clear it, just in case */
+	journal_mark_freed(th, s, block);
+	_reiserfs_free_block(th, inode, block, for_unformatted);
+}
 
-/* pपुनः_स्मृतिated blocks करोn't need to be run through journal_mark_मुक्तd */
-अटल व्योम reiserfs_मुक्त_pपुनः_स्मृति_block(काष्ठा reiserfs_transaction_handle *th,
-					 काष्ठा inode *inode, b_blocknr_t block)
-अणु
+/* preallocated blocks don't need to be run through journal_mark_freed */
+static void reiserfs_free_prealloc_block(struct reiserfs_transaction_handle *th,
+					 struct inode *inode, b_blocknr_t block)
+{
 	BUG_ON(!th->t_trans_id);
 	RFALSE(!th->t_super,
 	       "vs-4060: trying to free block on nonexistent device");
-	अगर (!is_reusable(th->t_super, block, 1))
-		वापस;
-	_reiserfs_मुक्त_block(th, inode, block, 1);
-पूर्ण
+	if (!is_reusable(th->t_super, block, 1))
+		return;
+	_reiserfs_free_block(th, inode, block, 1);
+}
 
-अटल व्योम __discard_pपुनः_स्मृति(काष्ठा reiserfs_transaction_handle *th,
-			       काष्ठा reiserfs_inode_info *ei)
-अणु
-	अचिन्हित दीर्घ save = ei->i_pपुनः_स्मृति_block;
-	पूर्णांक dirty = 0;
-	काष्ठा inode *inode = &ei->vfs_inode;
+static void __discard_prealloc(struct reiserfs_transaction_handle *th,
+			       struct reiserfs_inode_info *ei)
+{
+	unsigned long save = ei->i_prealloc_block;
+	int dirty = 0;
+	struct inode *inode = &ei->vfs_inode;
 
 	BUG_ON(!th->t_trans_id);
-#अगर_घोषित CONFIG_REISERFS_CHECK
-	अगर (ei->i_pपुनः_स्मृति_count < 0)
+#ifdef CONFIG_REISERFS_CHECK
+	if (ei->i_prealloc_count < 0)
 		reiserfs_error(th->t_super, "zam-4001",
 			       "inode has negative prealloc blocks count.");
-#पूर्ण_अगर
-	जबतक (ei->i_pपुनः_स्मृति_count > 0) अणु
-		b_blocknr_t block_to_मुक्त;
+#endif
+	while (ei->i_prealloc_count > 0) {
+		b_blocknr_t block_to_free;
 
 		/*
-		 * reiserfs_मुक्त_pपुनः_स्मृति_block can drop the ग_लिखो lock,
-		 * which could allow another caller to मुक्त the same block.
-		 * We can protect against it by modअगरying the pपुनः_स्मृति
-		 * state beक्रमe calling it.
+		 * reiserfs_free_prealloc_block can drop the write lock,
+		 * which could allow another caller to free the same block.
+		 * We can protect against it by modifying the prealloc
+		 * state before calling it.
 		 */
-		block_to_मुक्त = ei->i_pपुनः_स्मृति_block++;
-		ei->i_pपुनः_स्मृति_count--;
-		reiserfs_मुक्त_pपुनः_स्मृति_block(th, inode, block_to_मुक्त);
+		block_to_free = ei->i_prealloc_block++;
+		ei->i_prealloc_count--;
+		reiserfs_free_prealloc_block(th, inode, block_to_free);
 		dirty = 1;
-	पूर्ण
-	अगर (dirty)
+	}
+	if (dirty)
 		reiserfs_update_sd(th, inode);
-	ei->i_pपुनः_स्मृति_block = save;
-	list_del_init(&ei->i_pपुनः_स्मृति_list);
-पूर्ण
+	ei->i_prealloc_block = save;
+	list_del_init(&ei->i_prealloc_list);
+}
 
-/* FIXME: It should be अंतरभूत function */
-व्योम reiserfs_discard_pपुनः_स्मृति(काष्ठा reiserfs_transaction_handle *th,
-			       काष्ठा inode *inode)
-अणु
-	काष्ठा reiserfs_inode_info *ei = REISERFS_I(inode);
-
-	BUG_ON(!th->t_trans_id);
-	अगर (ei->i_pपुनः_स्मृति_count)
-		__discard_pपुनः_स्मृति(th, ei);
-पूर्ण
-
-व्योम reiserfs_discard_all_pपुनः_स्मृति(काष्ठा reiserfs_transaction_handle *th)
-अणु
-	काष्ठा list_head *plist = &SB_JOURNAL(th->t_super)->j_pपुनः_स्मृति_list;
+/* FIXME: It should be inline function */
+void reiserfs_discard_prealloc(struct reiserfs_transaction_handle *th,
+			       struct inode *inode)
+{
+	struct reiserfs_inode_info *ei = REISERFS_I(inode);
 
 	BUG_ON(!th->t_trans_id);
-	जबतक (!list_empty(plist)) अणु
-		काष्ठा reiserfs_inode_info *ei;
-		ei = list_entry(plist->next, काष्ठा reiserfs_inode_info,
-				i_pपुनः_स्मृति_list);
-#अगर_घोषित CONFIG_REISERFS_CHECK
-		अगर (!ei->i_pपुनः_स्मृति_count) अणु
+	if (ei->i_prealloc_count)
+		__discard_prealloc(th, ei);
+}
+
+void reiserfs_discard_all_prealloc(struct reiserfs_transaction_handle *th)
+{
+	struct list_head *plist = &SB_JOURNAL(th->t_super)->j_prealloc_list;
+
+	BUG_ON(!th->t_trans_id);
+	while (!list_empty(plist)) {
+		struct reiserfs_inode_info *ei;
+		ei = list_entry(plist->next, struct reiserfs_inode_info,
+				i_prealloc_list);
+#ifdef CONFIG_REISERFS_CHECK
+		if (!ei->i_prealloc_count) {
 			reiserfs_error(th->t_super, "zam-4001",
 				       "inode is in prealloc list but has "
 				       "no preallocated blocks.");
-		पूर्ण
-#पूर्ण_अगर
-		__discard_pपुनः_स्मृति(th, ei);
-	पूर्ण
-पूर्ण
+		}
+#endif
+		__discard_prealloc(th, ei);
+	}
+}
 
-व्योम reiserfs_init_alloc_options(काष्ठा super_block *s)
-अणु
+void reiserfs_init_alloc_options(struct super_block *s)
+{
 	set_bit(_ALLOC_skip_busy, &SB_ALLOC_OPTS(s));
 	set_bit(_ALLOC_dirid_groups, &SB_ALLOC_OPTS(s));
 	set_bit(_ALLOC_packing_groups, &SB_ALLOC_OPTS(s));
-पूर्ण
+}
 
 /* block allocator related options are parsed here */
-पूर्णांक reiserfs_parse_alloc_options(काष्ठा super_block *s, अक्षर *options)
-अणु
-	अक्षर *this_अक्षर, *value;
+int reiserfs_parse_alloc_options(struct super_block *s, char *options)
+{
+	char *this_char, *value;
 
-	/* clear शेष settings */
+	/* clear default settings */
 	REISERFS_SB(s)->s_alloc_options.bits = 0;
 
-	जबतक ((this_अक्षर = strsep(&options, ":")) != शून्य) अणु
-		अगर ((value = म_अक्षर(this_अक्षर, '=')) != शून्य)
+	while ((this_char = strsep(&options, ":")) != NULL) {
+		if ((value = strchr(this_char, '=')) != NULL)
 			*value++ = 0;
 
-		अगर (!म_भेद(this_अक्षर, "concentrating_formatted_nodes")) अणु
-			पूर्णांक temp;
-			SET_OPTION(concentrating_क्रमmatted_nodes);
+		if (!strcmp(this_char, "concentrating_formatted_nodes")) {
+			int temp;
+			SET_OPTION(concentrating_formatted_nodes);
 			temp = (value
-				&& *value) ? simple_म_से_अदीर्घ(value, &value,
+				&& *value) ? simple_strtoul(value, &value,
 							    0) : 10;
-			अगर (temp <= 0 || temp > 100) अणु
+			if (temp <= 0 || temp > 100) {
 				REISERFS_SB(s)->s_alloc_options.border = 10;
-			पूर्ण अन्यथा अणु
+			} else {
 				REISERFS_SB(s)->s_alloc_options.border =
 				    100 / temp;
-			पूर्ण
-			जारी;
-		पूर्ण
-		अगर (!म_भेद(this_अक्षर, "displacing_large_files")) अणु
+			}
+			continue;
+		}
+		if (!strcmp(this_char, "displacing_large_files")) {
 			SET_OPTION(displacing_large_files);
 			REISERFS_SB(s)->s_alloc_options.large_file_size =
 			    (value
-			     && *value) ? simple_म_से_अदीर्घ(value, &value, 0) : 16;
-			जारी;
-		पूर्ण
-		अगर (!म_भेद(this_अक्षर, "displacing_new_packing_localities")) अणु
+			     && *value) ? simple_strtoul(value, &value, 0) : 16;
+			continue;
+		}
+		if (!strcmp(this_char, "displacing_new_packing_localities")) {
 			SET_OPTION(displacing_new_packing_localities);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (!म_भेद(this_अक्षर, "old_hashed_relocation")) अणु
+		if (!strcmp(this_char, "old_hashed_relocation")) {
 			SET_OPTION(old_hashed_relocation);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (!म_भेद(this_अक्षर, "new_hashed_relocation")) अणु
+		if (!strcmp(this_char, "new_hashed_relocation")) {
 			SET_OPTION(new_hashed_relocation);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (!म_भेद(this_अक्षर, "dirid_groups")) अणु
+		if (!strcmp(this_char, "dirid_groups")) {
 			SET_OPTION(dirid_groups);
-			जारी;
-		पूर्ण
-		अगर (!म_भेद(this_अक्षर, "oid_groups")) अणु
+			continue;
+		}
+		if (!strcmp(this_char, "oid_groups")) {
 			SET_OPTION(oid_groups);
-			जारी;
-		पूर्ण
-		अगर (!म_भेद(this_अक्षर, "packing_groups")) अणु
+			continue;
+		}
+		if (!strcmp(this_char, "packing_groups")) {
 			SET_OPTION(packing_groups);
-			जारी;
-		पूर्ण
-		अगर (!म_भेद(this_अक्षर, "hashed_formatted_nodes")) अणु
-			SET_OPTION(hashed_क्रमmatted_nodes);
-			जारी;
-		पूर्ण
+			continue;
+		}
+		if (!strcmp(this_char, "hashed_formatted_nodes")) {
+			SET_OPTION(hashed_formatted_nodes);
+			continue;
+		}
 
-		अगर (!म_भेद(this_अक्षर, "skip_busy")) अणु
+		if (!strcmp(this_char, "skip_busy")) {
 			SET_OPTION(skip_busy);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (!म_भेद(this_अक्षर, "hundredth_slices")) अणु
+		if (!strcmp(this_char, "hundredth_slices")) {
 			SET_OPTION(hundredth_slices);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (!म_भेद(this_अक्षर, "old_way")) अणु
+		if (!strcmp(this_char, "old_way")) {
 			SET_OPTION(old_way);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (!म_भेद(this_अक्षर, "displace_based_on_dirid")) अणु
+		if (!strcmp(this_char, "displace_based_on_dirid")) {
 			SET_OPTION(displace_based_on_dirid);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (!म_भेद(this_अक्षर, "preallocmin")) अणु
-			REISERFS_SB(s)->s_alloc_options.pपुनः_स्मृतिmin =
+		if (!strcmp(this_char, "preallocmin")) {
+			REISERFS_SB(s)->s_alloc_options.preallocmin =
 			    (value
-			     && *value) ? simple_म_से_अदीर्घ(value, &value, 0) : 4;
-			जारी;
-		पूर्ण
+			     && *value) ? simple_strtoul(value, &value, 0) : 4;
+			continue;
+		}
 
-		अगर (!म_भेद(this_अक्षर, "preallocsize")) अणु
-			REISERFS_SB(s)->s_alloc_options.pपुनः_स्मृतिsize =
+		if (!strcmp(this_char, "preallocsize")) {
+			REISERFS_SB(s)->s_alloc_options.preallocsize =
 			    (value
-			     && *value) ? simple_म_से_अदीर्घ(value, &value,
+			     && *value) ? simple_strtoul(value, &value,
 							 0) :
 			    PREALLOCATION_SIZE;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		reiserfs_warning(s, "zam-4001", "unknown option - %s",
-				 this_अक्षर);
-		वापस 1;
-	पूर्ण
+				 this_char);
+		return 1;
+	}
 
 	reiserfs_info(s, "allocator options = [%08x]\n", SB_ALLOC_OPTS(s));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम prपूर्णांक_sep(काष्ठा seq_file *seq, पूर्णांक *first)
-अणु
-	अगर (!*first)
-		seq_माला_दो(seq, ":");
-	अन्यथा
+static void print_sep(struct seq_file *seq, int *first)
+{
+	if (!*first)
+		seq_puts(seq, ":");
+	else
 		*first = 0;
-पूर्ण
+}
 
-व्योम show_alloc_options(काष्ठा seq_file *seq, काष्ठा super_block *s)
-अणु
-	पूर्णांक first = 1;
+void show_alloc_options(struct seq_file *seq, struct super_block *s)
+{
+	int first = 1;
 
-	अगर (SB_ALLOC_OPTS(s) == ((1 << _ALLOC_skip_busy) |
+	if (SB_ALLOC_OPTS(s) == ((1 << _ALLOC_skip_busy) |
 		(1 << _ALLOC_dirid_groups) | (1 << _ALLOC_packing_groups)))
-		वापस;
+		return;
 
-	seq_माला_दो(seq, ",alloc=");
+	seq_puts(seq, ",alloc=");
 
-	अगर (TEST_OPTION(concentrating_क्रमmatted_nodes, s)) अणु
-		prपूर्णांक_sep(seq, &first);
-		अगर (REISERFS_SB(s)->s_alloc_options.border != 10) अणु
-			seq_म_लिखो(seq, "concentrating_formatted_nodes=%d",
+	if (TEST_OPTION(concentrating_formatted_nodes, s)) {
+		print_sep(seq, &first);
+		if (REISERFS_SB(s)->s_alloc_options.border != 10) {
+			seq_printf(seq, "concentrating_formatted_nodes=%d",
 				100 / REISERFS_SB(s)->s_alloc_options.border);
-		पूर्ण अन्यथा
-			seq_माला_दो(seq, "concentrating_formatted_nodes");
-	पूर्ण
-	अगर (TEST_OPTION(displacing_large_files, s)) अणु
-		prपूर्णांक_sep(seq, &first);
-		अगर (REISERFS_SB(s)->s_alloc_options.large_file_size != 16) अणु
-			seq_म_लिखो(seq, "displacing_large_files=%lu",
+		} else
+			seq_puts(seq, "concentrating_formatted_nodes");
+	}
+	if (TEST_OPTION(displacing_large_files, s)) {
+		print_sep(seq, &first);
+		if (REISERFS_SB(s)->s_alloc_options.large_file_size != 16) {
+			seq_printf(seq, "displacing_large_files=%lu",
 			    REISERFS_SB(s)->s_alloc_options.large_file_size);
-		पूर्ण अन्यथा
-			seq_माला_दो(seq, "displacing_large_files");
-	पूर्ण
-	अगर (TEST_OPTION(displacing_new_packing_localities, s)) अणु
-		prपूर्णांक_sep(seq, &first);
-		seq_माला_दो(seq, "displacing_new_packing_localities");
-	पूर्ण
-	अगर (TEST_OPTION(old_hashed_relocation, s)) अणु
-		prपूर्णांक_sep(seq, &first);
-		seq_माला_दो(seq, "old_hashed_relocation");
-	पूर्ण
-	अगर (TEST_OPTION(new_hashed_relocation, s)) अणु
-		prपूर्णांक_sep(seq, &first);
-		seq_माला_दो(seq, "new_hashed_relocation");
-	पूर्ण
-	अगर (TEST_OPTION(dirid_groups, s)) अणु
-		prपूर्णांक_sep(seq, &first);
-		seq_माला_दो(seq, "dirid_groups");
-	पूर्ण
-	अगर (TEST_OPTION(oid_groups, s)) अणु
-		prपूर्णांक_sep(seq, &first);
-		seq_माला_दो(seq, "oid_groups");
-	पूर्ण
-	अगर (TEST_OPTION(packing_groups, s)) अणु
-		prपूर्णांक_sep(seq, &first);
-		seq_माला_दो(seq, "packing_groups");
-	पूर्ण
-	अगर (TEST_OPTION(hashed_क्रमmatted_nodes, s)) अणु
-		prपूर्णांक_sep(seq, &first);
-		seq_माला_दो(seq, "hashed_formatted_nodes");
-	पूर्ण
-	अगर (TEST_OPTION(skip_busy, s)) अणु
-		prपूर्णांक_sep(seq, &first);
-		seq_माला_दो(seq, "skip_busy");
-	पूर्ण
-	अगर (TEST_OPTION(hundredth_slices, s)) अणु
-		prपूर्णांक_sep(seq, &first);
-		seq_माला_दो(seq, "hundredth_slices");
-	पूर्ण
-	अगर (TEST_OPTION(old_way, s)) अणु
-		prपूर्णांक_sep(seq, &first);
-		seq_माला_दो(seq, "old_way");
-	पूर्ण
-	अगर (TEST_OPTION(displace_based_on_dirid, s)) अणु
-		prपूर्णांक_sep(seq, &first);
-		seq_माला_दो(seq, "displace_based_on_dirid");
-	पूर्ण
-	अगर (REISERFS_SB(s)->s_alloc_options.pपुनः_स्मृतिmin != 0) अणु
-		prपूर्णांक_sep(seq, &first);
-		seq_म_लिखो(seq, "preallocmin=%d",
-				REISERFS_SB(s)->s_alloc_options.pपुनः_स्मृतिmin);
-	पूर्ण
-	अगर (REISERFS_SB(s)->s_alloc_options.pपुनः_स्मृतिsize != 17) अणु
-		prपूर्णांक_sep(seq, &first);
-		seq_म_लिखो(seq, "preallocsize=%d",
-				REISERFS_SB(s)->s_alloc_options.pपुनः_स्मृतिsize);
-	पूर्ण
-पूर्ण
+		} else
+			seq_puts(seq, "displacing_large_files");
+	}
+	if (TEST_OPTION(displacing_new_packing_localities, s)) {
+		print_sep(seq, &first);
+		seq_puts(seq, "displacing_new_packing_localities");
+	}
+	if (TEST_OPTION(old_hashed_relocation, s)) {
+		print_sep(seq, &first);
+		seq_puts(seq, "old_hashed_relocation");
+	}
+	if (TEST_OPTION(new_hashed_relocation, s)) {
+		print_sep(seq, &first);
+		seq_puts(seq, "new_hashed_relocation");
+	}
+	if (TEST_OPTION(dirid_groups, s)) {
+		print_sep(seq, &first);
+		seq_puts(seq, "dirid_groups");
+	}
+	if (TEST_OPTION(oid_groups, s)) {
+		print_sep(seq, &first);
+		seq_puts(seq, "oid_groups");
+	}
+	if (TEST_OPTION(packing_groups, s)) {
+		print_sep(seq, &first);
+		seq_puts(seq, "packing_groups");
+	}
+	if (TEST_OPTION(hashed_formatted_nodes, s)) {
+		print_sep(seq, &first);
+		seq_puts(seq, "hashed_formatted_nodes");
+	}
+	if (TEST_OPTION(skip_busy, s)) {
+		print_sep(seq, &first);
+		seq_puts(seq, "skip_busy");
+	}
+	if (TEST_OPTION(hundredth_slices, s)) {
+		print_sep(seq, &first);
+		seq_puts(seq, "hundredth_slices");
+	}
+	if (TEST_OPTION(old_way, s)) {
+		print_sep(seq, &first);
+		seq_puts(seq, "old_way");
+	}
+	if (TEST_OPTION(displace_based_on_dirid, s)) {
+		print_sep(seq, &first);
+		seq_puts(seq, "displace_based_on_dirid");
+	}
+	if (REISERFS_SB(s)->s_alloc_options.preallocmin != 0) {
+		print_sep(seq, &first);
+		seq_printf(seq, "preallocmin=%d",
+				REISERFS_SB(s)->s_alloc_options.preallocmin);
+	}
+	if (REISERFS_SB(s)->s_alloc_options.preallocsize != 17) {
+		print_sep(seq, &first);
+		seq_printf(seq, "preallocsize=%d",
+				REISERFS_SB(s)->s_alloc_options.preallocsize);
+	}
+}
 
-अटल अंतरभूत व्योम new_hashed_relocation(reiserfs_blocknr_hपूर्णांक_t * hपूर्णांक)
-अणु
-	अक्षर *hash_in;
+static inline void new_hashed_relocation(reiserfs_blocknr_hint_t * hint)
+{
+	char *hash_in;
 
-	अगर (hपूर्णांक->क्रमmatted_node) अणु
-		hash_in = (अक्षर *)&hपूर्णांक->key.k_dir_id;
-	पूर्ण अन्यथा अणु
-		अगर (!hपूर्णांक->inode) अणु
-			/*hपूर्णांक->search_start = hपूर्णांक->beg;*/
-			hash_in = (अक्षर *)&hपूर्णांक->key.k_dir_id;
-		पूर्ण अन्यथा
-		    अगर (TEST_OPTION(displace_based_on_dirid, hपूर्णांक->th->t_super))
-			hash_in = (अक्षर *)(&INODE_PKEY(hपूर्णांक->inode)->k_dir_id);
-		अन्यथा
+	if (hint->formatted_node) {
+		hash_in = (char *)&hint->key.k_dir_id;
+	} else {
+		if (!hint->inode) {
+			/*hint->search_start = hint->beg;*/
+			hash_in = (char *)&hint->key.k_dir_id;
+		} else
+		    if (TEST_OPTION(displace_based_on_dirid, hint->th->t_super))
+			hash_in = (char *)(&INODE_PKEY(hint->inode)->k_dir_id);
+		else
 			hash_in =
-			    (अक्षर *)(&INODE_PKEY(hपूर्णांक->inode)->k_objectid);
-	पूर्ण
+			    (char *)(&INODE_PKEY(hint->inode)->k_objectid);
+	}
 
-	hपूर्णांक->search_start =
-	    hपूर्णांक->beg + keyed_hash(hash_in, 4) % (hपूर्णांक->end - hपूर्णांक->beg);
-पूर्ण
+	hint->search_start =
+	    hint->beg + keyed_hash(hash_in, 4) % (hint->end - hint->beg);
+}
 
 /*
- * Relocation based on dirid, hashing them पूर्णांकo a given biपंचांगap block
+ * Relocation based on dirid, hashing them into a given bitmap block
  * files. Formatted nodes are unaffected, a separate policy covers them
  */
-अटल व्योम dirid_groups(reiserfs_blocknr_hपूर्णांक_t * hपूर्णांक)
-अणु
-	अचिन्हित दीर्घ hash;
+static void dirid_groups(reiserfs_blocknr_hint_t * hint)
+{
+	unsigned long hash;
 	__u32 dirid = 0;
-	पूर्णांक bm = 0;
-	काष्ठा super_block *sb = hपूर्णांक->th->t_super;
+	int bm = 0;
+	struct super_block *sb = hint->th->t_super;
 
-	अगर (hपूर्णांक->inode)
-		dirid = le32_to_cpu(INODE_PKEY(hपूर्णांक->inode)->k_dir_id);
-	अन्यथा अगर (hपूर्णांक->क्रमmatted_node)
-		dirid = hपूर्णांक->key.k_dir_id;
+	if (hint->inode)
+		dirid = le32_to_cpu(INODE_PKEY(hint->inode)->k_dir_id);
+	else if (hint->formatted_node)
+		dirid = hint->key.k_dir_id;
 
-	अगर (dirid) अणु
+	if (dirid) {
 		bm = bmap_hash_id(sb, dirid);
 		hash = bm * (sb->s_blocksize << 3);
 		/* give a portion of the block group to metadata */
-		अगर (hपूर्णांक->inode)
+		if (hint->inode)
 			hash += sb->s_blocksize / 2;
-		hपूर्णांक->search_start = hash;
-	पूर्ण
-पूर्ण
+		hint->search_start = hash;
+	}
+}
 
 /*
- * Relocation based on oid, hashing them पूर्णांकo a given biपंचांगap block
+ * Relocation based on oid, hashing them into a given bitmap block
  * files. Formatted nodes are unaffected, a separate policy covers them
  */
-अटल व्योम oid_groups(reiserfs_blocknr_hपूर्णांक_t * hपूर्णांक)
-अणु
-	अगर (hपूर्णांक->inode) अणु
-		अचिन्हित दीर्घ hash;
+static void oid_groups(reiserfs_blocknr_hint_t * hint)
+{
+	if (hint->inode) {
+		unsigned long hash;
 		__u32 oid;
 		__u32 dirid;
-		पूर्णांक bm;
+		int bm;
 
-		dirid = le32_to_cpu(INODE_PKEY(hपूर्णांक->inode)->k_dir_id);
+		dirid = le32_to_cpu(INODE_PKEY(hint->inode)->k_dir_id);
 
 		/*
-		 * keep the root dir and it's first set of subdirs बंद to
+		 * keep the root dir and it's first set of subdirs close to
 		 * the start of the disk
 		 */
-		अगर (dirid <= 2)
-			hash = (hपूर्णांक->inode->i_sb->s_blocksize << 3);
-		अन्यथा अणु
-			oid = le32_to_cpu(INODE_PKEY(hपूर्णांक->inode)->k_objectid);
-			bm = bmap_hash_id(hपूर्णांक->inode->i_sb, oid);
-			hash = bm * (hपूर्णांक->inode->i_sb->s_blocksize << 3);
-		पूर्ण
-		hपूर्णांक->search_start = hash;
-	पूर्ण
-पूर्ण
+		if (dirid <= 2)
+			hash = (hint->inode->i_sb->s_blocksize << 3);
+		else {
+			oid = le32_to_cpu(INODE_PKEY(hint->inode)->k_objectid);
+			bm = bmap_hash_id(hint->inode->i_sb, oid);
+			hash = bm * (hint->inode->i_sb->s_blocksize << 3);
+		}
+		hint->search_start = hash;
+	}
+}
 
 /*
- * वापसs 1 अगर it finds an indirect item and माला_लो valid hपूर्णांक info
+ * returns 1 if it finds an indirect item and gets valid hint info
  * from it, otherwise 0
  */
-अटल पूर्णांक get_left_neighbor(reiserfs_blocknr_hपूर्णांक_t * hपूर्णांक)
-अणु
-	काष्ठा treepath *path;
-	काष्ठा buffer_head *bh;
-	काष्ठा item_head *ih;
-	पूर्णांक pos_in_item;
+static int get_left_neighbor(reiserfs_blocknr_hint_t * hint)
+{
+	struct treepath *path;
+	struct buffer_head *bh;
+	struct item_head *ih;
+	int pos_in_item;
 	__le32 *item;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	/*
-	 * reiserfs code can call this function w/o poपूर्णांकer to path
-	 * काष्ठाure supplied; then we rely on supplied search_start
+	 * reiserfs code can call this function w/o pointer to path
+	 * structure supplied; then we rely on supplied search_start
 	 */
-	अगर (!hपूर्णांक->path)
-		वापस 0;
+	if (!hint->path)
+		return 0;
 
-	path = hपूर्णांक->path;
+	path = hint->path;
 	bh = get_last_bh(path);
 	RFALSE(!bh, "green-4002: Illegal path specified to get_left_neighbor");
 	ih = tp_item_head(path);
 	pos_in_item = path->pos_in_item;
 	item = tp_item_body(path);
 
-	hपूर्णांक->search_start = bh->b_blocknr;
+	hint->search_start = bh->b_blocknr;
 
 	/*
-	 * क्रम indirect item: go to left and look क्रम the first non-hole entry
+	 * for indirect item: go to left and look for the first non-hole entry
 	 * in the indirect item
 	 */
-	अगर (!hपूर्णांक->क्रमmatted_node && is_indirect_le_ih(ih)) अणु
-		अगर (pos_in_item == I_UNFM_NUM(ih))
+	if (!hint->formatted_node && is_indirect_le_ih(ih)) {
+		if (pos_in_item == I_UNFM_NUM(ih))
 			pos_in_item--;
-		जबतक (pos_in_item >= 0) अणु
-			पूर्णांक t = get_block_num(item, pos_in_item);
-			अगर (t) अणु
-				hपूर्णांक->search_start = t;
+		while (pos_in_item >= 0) {
+			int t = get_block_num(item, pos_in_item);
+			if (t) {
+				hint->search_start = t;
 				ret = 1;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			pos_in_item--;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* करोes result value fit पूर्णांकo specअगरied region? */
-	वापस ret;
-पूर्ण
+	/* does result value fit into specified region? */
+	return ret;
+}
 
 /*
- * should be, अगर क्रमmatted node, then try to put on first part of the device
- * specअगरied as number of percent with mount option device, अन्यथा try to put
- * on last of device.  This is not to say it is good code to करो so,
+ * should be, if formatted node, then try to put on first part of the device
+ * specified as number of percent with mount option device, else try to put
+ * on last of device.  This is not to say it is good code to do so,
  * but the effect should be measured.
  */
-अटल अंतरभूत व्योम set_border_in_hपूर्णांक(काष्ठा super_block *s,
-				      reiserfs_blocknr_hपूर्णांक_t * hपूर्णांक)
-अणु
+static inline void set_border_in_hint(struct super_block *s,
+				      reiserfs_blocknr_hint_t * hint)
+{
 	b_blocknr_t border =
 	    SB_BLOCK_COUNT(s) / REISERFS_SB(s)->s_alloc_options.border;
 
-	अगर (hपूर्णांक->क्रमmatted_node)
-		hपूर्णांक->end = border - 1;
-	अन्यथा
-		hपूर्णांक->beg = border;
-पूर्ण
+	if (hint->formatted_node)
+		hint->end = border - 1;
+	else
+		hint->beg = border;
+}
 
-अटल अंतरभूत व्योम displace_large_file(reiserfs_blocknr_hपूर्णांक_t * hपूर्णांक)
-अणु
-	अगर (TEST_OPTION(displace_based_on_dirid, hपूर्णांक->th->t_super))
-		hपूर्णांक->search_start =
-		    hपूर्णांक->beg +
-		    keyed_hash((अक्षर *)(&INODE_PKEY(hपूर्णांक->inode)->k_dir_id),
-			       4) % (hपूर्णांक->end - hपूर्णांक->beg);
-	अन्यथा
-		hपूर्णांक->search_start =
-		    hपूर्णांक->beg +
-		    keyed_hash((अक्षर *)(&INODE_PKEY(hपूर्णांक->inode)->k_objectid),
-			       4) % (hपूर्णांक->end - hपूर्णांक->beg);
-पूर्ण
+static inline void displace_large_file(reiserfs_blocknr_hint_t * hint)
+{
+	if (TEST_OPTION(displace_based_on_dirid, hint->th->t_super))
+		hint->search_start =
+		    hint->beg +
+		    keyed_hash((char *)(&INODE_PKEY(hint->inode)->k_dir_id),
+			       4) % (hint->end - hint->beg);
+	else
+		hint->search_start =
+		    hint->beg +
+		    keyed_hash((char *)(&INODE_PKEY(hint->inode)->k_objectid),
+			       4) % (hint->end - hint->beg);
+}
 
-अटल अंतरभूत व्योम hash_क्रमmatted_node(reiserfs_blocknr_hपूर्णांक_t * hपूर्णांक)
-अणु
-	अक्षर *hash_in;
+static inline void hash_formatted_node(reiserfs_blocknr_hint_t * hint)
+{
+	char *hash_in;
 
-	अगर (!hपूर्णांक->inode)
-		hash_in = (अक्षर *)&hपूर्णांक->key.k_dir_id;
-	अन्यथा अगर (TEST_OPTION(displace_based_on_dirid, hपूर्णांक->th->t_super))
-		hash_in = (अक्षर *)(&INODE_PKEY(hपूर्णांक->inode)->k_dir_id);
-	अन्यथा
-		hash_in = (अक्षर *)(&INODE_PKEY(hपूर्णांक->inode)->k_objectid);
+	if (!hint->inode)
+		hash_in = (char *)&hint->key.k_dir_id;
+	else if (TEST_OPTION(displace_based_on_dirid, hint->th->t_super))
+		hash_in = (char *)(&INODE_PKEY(hint->inode)->k_dir_id);
+	else
+		hash_in = (char *)(&INODE_PKEY(hint->inode)->k_objectid);
 
-	hपूर्णांक->search_start =
-	    hपूर्णांक->beg + keyed_hash(hash_in, 4) % (hपूर्णांक->end - hपूर्णांक->beg);
-पूर्ण
+	hint->search_start =
+	    hint->beg + keyed_hash(hash_in, 4) % (hint->end - hint->beg);
+}
 
-अटल अंतरभूत पूर्णांक
-this_blocknr_allocation_would_make_it_a_large_file(reiserfs_blocknr_hपूर्णांक_t *
-						   hपूर्णांक)
-अणु
-	वापस hपूर्णांक->block ==
-	    REISERFS_SB(hपूर्णांक->th->t_super)->s_alloc_options.large_file_size;
-पूर्ण
+static inline int
+this_blocknr_allocation_would_make_it_a_large_file(reiserfs_blocknr_hint_t *
+						   hint)
+{
+	return hint->block ==
+	    REISERFS_SB(hint->th->t_super)->s_alloc_options.large_file_size;
+}
 
-#अगर_घोषित DISPLACE_NEW_PACKING_LOCALITIES
-अटल अंतरभूत व्योम displace_new_packing_locality(reiserfs_blocknr_hपूर्णांक_t * hपूर्णांक)
-अणु
-	काष्ठा in_core_key *key = &hपूर्णांक->key;
+#ifdef DISPLACE_NEW_PACKING_LOCALITIES
+static inline void displace_new_packing_locality(reiserfs_blocknr_hint_t * hint)
+{
+	struct in_core_key *key = &hint->key;
 
-	hपूर्णांक->th->displace_new_blocks = 0;
-	hपूर्णांक->search_start =
-	    hपूर्णांक->beg + keyed_hash((अक्षर *)(&key->k_objectid),
-				   4) % (hपूर्णांक->end - hपूर्णांक->beg);
-पूर्ण
-#पूर्ण_अगर
+	hint->th->displace_new_blocks = 0;
+	hint->search_start =
+	    hint->beg + keyed_hash((char *)(&key->k_objectid),
+				   4) % (hint->end - hint->beg);
+}
+#endif
 
-अटल अंतरभूत पूर्णांक old_hashed_relocation(reiserfs_blocknr_hपूर्णांक_t * hपूर्णांक)
-अणु
+static inline int old_hashed_relocation(reiserfs_blocknr_hint_t * hint)
+{
 	b_blocknr_t border;
 	u32 hash_in;
 
-	अगर (hपूर्णांक->क्रमmatted_node || hपूर्णांक->inode == शून्य) अणु
-		वापस 0;
-	पूर्ण
+	if (hint->formatted_node || hint->inode == NULL) {
+		return 0;
+	}
 
-	hash_in = le32_to_cpu((INODE_PKEY(hपूर्णांक->inode))->k_dir_id);
+	hash_in = le32_to_cpu((INODE_PKEY(hint->inode))->k_dir_id);
 	border =
-	    hपूर्णांक->beg + (u32) keyed_hash(((अक्षर *)(&hash_in)),
-					 4) % (hपूर्णांक->end - hपूर्णांक->beg - 1);
-	अगर (border > hपूर्णांक->search_start)
-		hपूर्णांक->search_start = border;
+	    hint->beg + (u32) keyed_hash(((char *)(&hash_in)),
+					 4) % (hint->end - hint->beg - 1);
+	if (border > hint->search_start)
+		hint->search_start = border;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल अंतरभूत पूर्णांक old_way(reiserfs_blocknr_hपूर्णांक_t * hपूर्णांक)
-अणु
+static inline int old_way(reiserfs_blocknr_hint_t * hint)
+{
 	b_blocknr_t border;
 
-	अगर (hपूर्णांक->क्रमmatted_node || hपूर्णांक->inode == शून्य) अणु
-		वापस 0;
-	पूर्ण
+	if (hint->formatted_node || hint->inode == NULL) {
+		return 0;
+	}
 
 	border =
-	    hपूर्णांक->beg +
-	    le32_to_cpu(INODE_PKEY(hपूर्णांक->inode)->k_dir_id) % (hपूर्णांक->end -
-							      hपूर्णांक->beg);
-	अगर (border > hपूर्णांक->search_start)
-		hपूर्णांक->search_start = border;
+	    hint->beg +
+	    le32_to_cpu(INODE_PKEY(hint->inode)->k_dir_id) % (hint->end -
+							      hint->beg);
+	if (border > hint->search_start)
+		hint->search_start = border;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल अंतरभूत व्योम hundredth_slices(reiserfs_blocknr_hपूर्णांक_t * hपूर्णांक)
-अणु
-	काष्ठा in_core_key *key = &hपूर्णांक->key;
+static inline void hundredth_slices(reiserfs_blocknr_hint_t * hint)
+{
+	struct in_core_key *key = &hint->key;
 	b_blocknr_t slice_start;
 
 	slice_start =
-	    (keyed_hash((अक्षर *)(&key->k_dir_id), 4) % 100) * (hपूर्णांक->end / 100);
-	अगर (slice_start > hपूर्णांक->search_start
-	    || slice_start + (hपूर्णांक->end / 100) <= hपूर्णांक->search_start) अणु
-		hपूर्णांक->search_start = slice_start;
-	पूर्ण
-पूर्ण
+	    (keyed_hash((char *)(&key->k_dir_id), 4) % 100) * (hint->end / 100);
+	if (slice_start > hint->search_start
+	    || slice_start + (hint->end / 100) <= hint->search_start) {
+		hint->search_start = slice_start;
+	}
+}
 
-अटल व्योम determine_search_start(reiserfs_blocknr_hपूर्णांक_t * hपूर्णांक,
-				   पूर्णांक amount_needed)
-अणु
-	काष्ठा super_block *s = hपूर्णांक->th->t_super;
-	पूर्णांक unfm_hपूर्णांक;
+static void determine_search_start(reiserfs_blocknr_hint_t * hint,
+				   int amount_needed)
+{
+	struct super_block *s = hint->th->t_super;
+	int unfm_hint;
 
-	hपूर्णांक->beg = 0;
-	hपूर्णांक->end = SB_BLOCK_COUNT(s) - 1;
+	hint->beg = 0;
+	hint->end = SB_BLOCK_COUNT(s) - 1;
 
-	/* This is क्रमmer border algorithm. Now with tunable border offset */
-	अगर (concentrating_क्रमmatted_nodes(s))
-		set_border_in_hपूर्णांक(s, hपूर्णांक);
+	/* This is former border algorithm. Now with tunable border offset */
+	if (concentrating_formatted_nodes(s))
+		set_border_in_hint(s, hint);
 
-#अगर_घोषित DISPLACE_NEW_PACKING_LOCALITIES
+#ifdef DISPLACE_NEW_PACKING_LOCALITIES
 	/*
 	 * whenever we create a new directory, we displace it.  At first
-	 * we will hash क्रम location, later we might look क्रम a moderately
-	 * empty place क्रम it
+	 * we will hash for location, later we might look for a moderately
+	 * empty place for it
 	 */
-	अगर (displacing_new_packing_localities(s)
-	    && hपूर्णांक->th->displace_new_blocks) अणु
-		displace_new_packing_locality(hपूर्णांक);
+	if (displacing_new_packing_localities(s)
+	    && hint->th->displace_new_blocks) {
+		displace_new_packing_locality(hint);
 
 		/*
-		 * we करो not जारी determine_search_start,
-		 * अगर new packing locality is being displaced
+		 * we do not continue determine_search_start,
+		 * if new packing locality is being displaced
 		 */
-		वापस;
-	पूर्ण
-#पूर्ण_अगर
+		return;
+	}
+#endif
 
 	/*
-	 * all persons should feel encouraged to add more special हालs
+	 * all persons should feel encouraged to add more special cases
 	 * here and test them
 	 */
 
-	अगर (displacing_large_files(s) && !hपूर्णांक->क्रमmatted_node
-	    && this_blocknr_allocation_would_make_it_a_large_file(hपूर्णांक)) अणु
-		displace_large_file(hपूर्णांक);
-		वापस;
-	पूर्ण
+	if (displacing_large_files(s) && !hint->formatted_node
+	    && this_blocknr_allocation_would_make_it_a_large_file(hint)) {
+		displace_large_file(hint);
+		return;
+	}
 
 	/*
-	 * अगर none of our special हालs is relevant, use the left
-	 * neighbor in the tree order of the new node we are allocating क्रम
+	 * if none of our special cases is relevant, use the left
+	 * neighbor in the tree order of the new node we are allocating for
 	 */
-	अगर (hपूर्णांक->क्रमmatted_node && TEST_OPTION(hashed_क्रमmatted_nodes, s)) अणु
-		hash_क्रमmatted_node(hपूर्णांक);
-		वापस;
-	पूर्ण
+	if (hint->formatted_node && TEST_OPTION(hashed_formatted_nodes, s)) {
+		hash_formatted_node(hint);
+		return;
+	}
 
-	unfm_hपूर्णांक = get_left_neighbor(hपूर्णांक);
+	unfm_hint = get_left_neighbor(hint);
 
 	/*
-	 * Mimic old block allocator behaviour, that is अगर VFS allowed क्रम
-	 * pपुनः_स्मृतिation, new blocks are displaced based on directory ID.
-	 * Also, अगर suggested search_start is less than last pपुनः_स्मृतिated
+	 * Mimic old block allocator behaviour, that is if VFS allowed for
+	 * preallocation, new blocks are displaced based on directory ID.
+	 * Also, if suggested search_start is less than last preallocated
 	 * block, we start searching from it, assuming that HDD dataflow
-	 * is faster in क्रमward direction
+	 * is faster in forward direction
 	 */
-	अगर (TEST_OPTION(old_way, s)) अणु
-		अगर (!hपूर्णांक->क्रमmatted_node) अणु
-			अगर (!reiserfs_hashed_relocation(s))
-				old_way(hपूर्णांक);
-			अन्यथा अगर (!reiserfs_no_unhashed_relocation(s))
-				old_hashed_relocation(hपूर्णांक);
+	if (TEST_OPTION(old_way, s)) {
+		if (!hint->formatted_node) {
+			if (!reiserfs_hashed_relocation(s))
+				old_way(hint);
+			else if (!reiserfs_no_unhashed_relocation(s))
+				old_hashed_relocation(hint);
 
-			अगर (hपूर्णांक->inode
-			    && hपूर्णांक->search_start <
-			    REISERFS_I(hपूर्णांक->inode)->i_pपुनः_स्मृति_block)
-				hपूर्णांक->search_start =
-				    REISERFS_I(hपूर्णांक->inode)->i_pपुनः_स्मृति_block;
-		पूर्ण
-		वापस;
-	पूर्ण
+			if (hint->inode
+			    && hint->search_start <
+			    REISERFS_I(hint->inode)->i_prealloc_block)
+				hint->search_start =
+				    REISERFS_I(hint->inode)->i_prealloc_block;
+		}
+		return;
+	}
 
 	/* This is an approach proposed by Hans */
-	अगर (TEST_OPTION(hundredth_slices, s)
-	    && !(displacing_large_files(s) && !hपूर्णांक->क्रमmatted_node)) अणु
-		hundredth_slices(hपूर्णांक);
-		वापस;
-	पूर्ण
+	if (TEST_OPTION(hundredth_slices, s)
+	    && !(displacing_large_files(s) && !hint->formatted_node)) {
+		hundredth_slices(hint);
+		return;
+	}
 
-	/* old_hashed_relocation only works on unक्रमmatted */
-	अगर (!unfm_hपूर्णांक && !hपूर्णांक->क्रमmatted_node &&
-	    TEST_OPTION(old_hashed_relocation, s)) अणु
-		old_hashed_relocation(hपूर्णांक);
-	पूर्ण
+	/* old_hashed_relocation only works on unformatted */
+	if (!unfm_hint && !hint->formatted_node &&
+	    TEST_OPTION(old_hashed_relocation, s)) {
+		old_hashed_relocation(hint);
+	}
 
-	/* new_hashed_relocation works with both क्रमmatted/unक्रमmatted nodes */
-	अगर ((!unfm_hपूर्णांक || hपूर्णांक->क्रमmatted_node) &&
-	    TEST_OPTION(new_hashed_relocation, s)) अणु
-		new_hashed_relocation(hपूर्णांक);
-	पूर्ण
+	/* new_hashed_relocation works with both formatted/unformatted nodes */
+	if ((!unfm_hint || hint->formatted_node) &&
+	    TEST_OPTION(new_hashed_relocation, s)) {
+		new_hashed_relocation(hint);
+	}
 
-	/* dirid grouping works only on unक्रमmatted nodes */
-	अगर (!unfm_hपूर्णांक && !hपूर्णांक->क्रमmatted_node && TEST_OPTION(dirid_groups, s)) अणु
-		dirid_groups(hपूर्णांक);
-	पूर्ण
-#अगर_घोषित DISPLACE_NEW_PACKING_LOCALITIES
-	अगर (hपूर्णांक->क्रमmatted_node && TEST_OPTION(dirid_groups, s)) अणु
-		dirid_groups(hपूर्णांक);
-	पूर्ण
-#पूर्ण_अगर
+	/* dirid grouping works only on unformatted nodes */
+	if (!unfm_hint && !hint->formatted_node && TEST_OPTION(dirid_groups, s)) {
+		dirid_groups(hint);
+	}
+#ifdef DISPLACE_NEW_PACKING_LOCALITIES
+	if (hint->formatted_node && TEST_OPTION(dirid_groups, s)) {
+		dirid_groups(hint);
+	}
+#endif
 
-	/* oid grouping works only on unक्रमmatted nodes */
-	अगर (!unfm_hपूर्णांक && !hपूर्णांक->क्रमmatted_node && TEST_OPTION(oid_groups, s)) अणु
-		oid_groups(hपूर्णांक);
-	पूर्ण
-	वापस;
-पूर्ण
+	/* oid grouping works only on unformatted nodes */
+	if (!unfm_hint && !hint->formatted_node && TEST_OPTION(oid_groups, s)) {
+		oid_groups(hint);
+	}
+	return;
+}
 
-अटल पूर्णांक determine_pपुनः_स्मृति_size(reiserfs_blocknr_hपूर्णांक_t * hपूर्णांक)
-अणु
+static int determine_prealloc_size(reiserfs_blocknr_hint_t * hint)
+{
 	/* make minimum size a mount option and benchmark both ways */
-	/* we pपुनः_स्मृतिate blocks only क्रम regular files, specअगरic size */
-	/* benchmark pपुनः_स्मृतिating always and see what happens */
+	/* we preallocate blocks only for regular files, specific size */
+	/* benchmark preallocating always and see what happens */
 
-	hपूर्णांक->pपुनः_स्मृति_size = 0;
+	hint->prealloc_size = 0;
 
-	अगर (!hपूर्णांक->क्रमmatted_node && hपूर्णांक->pपुनः_स्मृतिate) अणु
-		अगर (S_ISREG(hपूर्णांक->inode->i_mode) && !IS_PRIVATE(hपूर्णांक->inode)
-		    && hपूर्णांक->inode->i_size >=
-		    REISERFS_SB(hपूर्णांक->th->t_super)->s_alloc_options.
-		    pपुनः_स्मृतिmin * hपूर्णांक->inode->i_sb->s_blocksize)
-			hपूर्णांक->pपुनः_स्मृति_size =
-			    REISERFS_SB(hपूर्णांक->th->t_super)->s_alloc_options.
-			    pपुनः_स्मृतिsize - 1;
-	पूर्ण
-	वापस CARRY_ON;
-पूर्ण
+	if (!hint->formatted_node && hint->preallocate) {
+		if (S_ISREG(hint->inode->i_mode) && !IS_PRIVATE(hint->inode)
+		    && hint->inode->i_size >=
+		    REISERFS_SB(hint->th->t_super)->s_alloc_options.
+		    preallocmin * hint->inode->i_sb->s_blocksize)
+			hint->prealloc_size =
+			    REISERFS_SB(hint->th->t_super)->s_alloc_options.
+			    preallocsize - 1;
+	}
+	return CARRY_ON;
+}
 
-अटल अंतरभूत पूर्णांक allocate_without_wrapping_disk(reiserfs_blocknr_hपूर्णांक_t * hपूर्णांक,
+static inline int allocate_without_wrapping_disk(reiserfs_blocknr_hint_t * hint,
 						 b_blocknr_t * new_blocknrs,
 						 b_blocknr_t start,
-						 b_blocknr_t finish, पूर्णांक min,
-						 पूर्णांक amount_needed,
-						 पूर्णांक pपुनः_स्मृति_size)
-अणु
-	पूर्णांक rest = amount_needed;
-	पूर्णांक nr_allocated;
+						 b_blocknr_t finish, int min,
+						 int amount_needed,
+						 int prealloc_size)
+{
+	int rest = amount_needed;
+	int nr_allocated;
 
-	जबतक (rest > 0 && start <= finish) अणु
-		nr_allocated = scan_biपंचांगap(hपूर्णांक->th, &start, finish, min,
-					   rest + pपुनः_स्मृति_size,
-					   !hपूर्णांक->क्रमmatted_node, hपूर्णांक->block);
+	while (rest > 0 && start <= finish) {
+		nr_allocated = scan_bitmap(hint->th, &start, finish, min,
+					   rest + prealloc_size,
+					   !hint->formatted_node, hint->block);
 
-		अगर (nr_allocated == 0)	/* no new blocks allocated, वापस */
-			अवरोध;
+		if (nr_allocated == 0)	/* no new blocks allocated, return */
+			break;
 
-		/* fill मुक्त_blocknrs array first */
-		जबतक (rest > 0 && nr_allocated > 0) अणु
+		/* fill free_blocknrs array first */
+		while (rest > 0 && nr_allocated > 0) {
 			*new_blocknrs++ = start++;
 			rest--;
 			nr_allocated--;
-		पूर्ण
+		}
 
-		/* करो we have something to fill pपुनः_स्मृति. array also ? */
-		अगर (nr_allocated > 0) अणु
+		/* do we have something to fill prealloc. array also ? */
+		if (nr_allocated > 0) {
 			/*
-			 * it means pपुनः_स्मृति_size was greater that 0 and
-			 * we करो pपुनः_स्मृतिation
+			 * it means prealloc_size was greater that 0 and
+			 * we do preallocation
 			 */
-			list_add(&REISERFS_I(hपूर्णांक->inode)->i_pपुनः_स्मृति_list,
-				 &SB_JOURNAL(hपूर्णांक->th->t_super)->
-				 j_pपुनः_स्मृति_list);
-			REISERFS_I(hपूर्णांक->inode)->i_pपुनः_स्मृति_block = start;
-			REISERFS_I(hपूर्णांक->inode)->i_pपुनः_स्मृति_count =
+			list_add(&REISERFS_I(hint->inode)->i_prealloc_list,
+				 &SB_JOURNAL(hint->th->t_super)->
+				 j_prealloc_list);
+			REISERFS_I(hint->inode)->i_prealloc_block = start;
+			REISERFS_I(hint->inode)->i_prealloc_count =
 			    nr_allocated;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	वापस (amount_needed - rest);
-पूर्ण
+	return (amount_needed - rest);
+}
 
-अटल अंतरभूत पूर्णांक blocknrs_and_pपुनः_स्मृति_arrays_from_search_start
-    (reiserfs_blocknr_hपूर्णांक_t * hपूर्णांक, b_blocknr_t * new_blocknrs,
-     पूर्णांक amount_needed) अणु
-	काष्ठा super_block *s = hपूर्णांक->th->t_super;
-	b_blocknr_t start = hपूर्णांक->search_start;
+static inline int blocknrs_and_prealloc_arrays_from_search_start
+    (reiserfs_blocknr_hint_t * hint, b_blocknr_t * new_blocknrs,
+     int amount_needed) {
+	struct super_block *s = hint->th->t_super;
+	b_blocknr_t start = hint->search_start;
 	b_blocknr_t finish = SB_BLOCK_COUNT(s) - 1;
-	पूर्णांक passno = 0;
-	पूर्णांक nr_allocated = 0;
-	पूर्णांक depth;
+	int passno = 0;
+	int nr_allocated = 0;
+	int depth;
 
-	determine_pपुनः_स्मृति_size(hपूर्णांक);
-	अगर (!hपूर्णांक->क्रमmatted_node) अणु
-		पूर्णांक quota_ret;
-#अगर_घोषित REISERQUOTA_DEBUG
+	determine_prealloc_size(hint);
+	if (!hint->formatted_node) {
+		int quota_ret;
+#ifdef REISERQUOTA_DEBUG
 		reiserfs_debug(s, REISERFS_DEBUG_CODE,
 			       "reiserquota: allocating %d blocks id=%u",
-			       amount_needed, hपूर्णांक->inode->i_uid);
-#पूर्ण_अगर
-		depth = reiserfs_ग_लिखो_unlock_nested(s);
+			       amount_needed, hint->inode->i_uid);
+#endif
+		depth = reiserfs_write_unlock_nested(s);
 		quota_ret =
-		    dquot_alloc_block_nodirty(hपूर्णांक->inode, amount_needed);
-		अगर (quota_ret) अणु	/* Quota exceeded? */
-			reiserfs_ग_लिखो_lock_nested(s, depth);
-			वापस QUOTA_EXCEEDED;
-		पूर्ण
-		अगर (hपूर्णांक->pपुनः_स्मृतिate && hपूर्णांक->pपुनः_स्मृति_size) अणु
-#अगर_घोषित REISERQUOTA_DEBUG
+		    dquot_alloc_block_nodirty(hint->inode, amount_needed);
+		if (quota_ret) {	/* Quota exceeded? */
+			reiserfs_write_lock_nested(s, depth);
+			return QUOTA_EXCEEDED;
+		}
+		if (hint->preallocate && hint->prealloc_size) {
+#ifdef REISERQUOTA_DEBUG
 			reiserfs_debug(s, REISERFS_DEBUG_CODE,
 				       "reiserquota: allocating (prealloc) %d blocks id=%u",
-				       hपूर्णांक->pपुनः_स्मृति_size, hपूर्णांक->inode->i_uid);
-#पूर्ण_अगर
-			quota_ret = dquot_pपुनः_स्मृति_block_nodirty(hपूर्णांक->inode,
-							 hपूर्णांक->pपुनः_स्मृति_size);
-			अगर (quota_ret)
-				hपूर्णांक->pपुनः_स्मृतिate = hपूर्णांक->pपुनः_स्मृति_size = 0;
-		पूर्ण
-		/* क्रम unक्रमmatted nodes, क्रमce large allocations */
-		reiserfs_ग_लिखो_lock_nested(s, depth);
-	पूर्ण
+				       hint->prealloc_size, hint->inode->i_uid);
+#endif
+			quota_ret = dquot_prealloc_block_nodirty(hint->inode,
+							 hint->prealloc_size);
+			if (quota_ret)
+				hint->preallocate = hint->prealloc_size = 0;
+		}
+		/* for unformatted nodes, force large allocations */
+		reiserfs_write_lock_nested(s, depth);
+	}
 
-	करो अणु
-		चयन (passno++) अणु
-		हाल 0:	/* Search from hपूर्णांक->search_start to end of disk */
-			start = hपूर्णांक->search_start;
+	do {
+		switch (passno++) {
+		case 0:	/* Search from hint->search_start to end of disk */
+			start = hint->search_start;
 			finish = SB_BLOCK_COUNT(s) - 1;
-			अवरोध;
-		हाल 1:	/* Search from hपूर्णांक->beg to hपूर्णांक->search_start */
-			start = hपूर्णांक->beg;
-			finish = hपूर्णांक->search_start;
-			अवरोध;
-		हाल 2:	/* Last chance: Search from 0 to hपूर्णांक->beg */
+			break;
+		case 1:	/* Search from hint->beg to hint->search_start */
+			start = hint->beg;
+			finish = hint->search_start;
+			break;
+		case 2:	/* Last chance: Search from 0 to hint->beg */
 			start = 0;
-			finish = hपूर्णांक->beg;
-			अवरोध;
-		शेष:
+			finish = hint->beg;
+			break;
+		default:
 			/* We've tried searching everywhere, not enough space */
 			/* Free the blocks */
-			अगर (!hपूर्णांक->क्रमmatted_node) अणु
-#अगर_घोषित REISERQUOTA_DEBUG
+			if (!hint->formatted_node) {
+#ifdef REISERQUOTA_DEBUG
 				reiserfs_debug(s, REISERFS_DEBUG_CODE,
 					       "reiserquota: freeing (nospace) %d blocks id=%u",
 					       amount_needed +
-					       hपूर्णांक->pपुनः_स्मृति_size -
+					       hint->prealloc_size -
 					       nr_allocated,
-					       hपूर्णांक->inode->i_uid);
-#पूर्ण_अगर
+					       hint->inode->i_uid);
+#endif
 				/* Free not allocated blocks */
-				depth = reiserfs_ग_लिखो_unlock_nested(s);
-				dquot_मुक्त_block_nodirty(hपूर्णांक->inode,
-					amount_needed + hपूर्णांक->pपुनः_स्मृति_size -
+				depth = reiserfs_write_unlock_nested(s);
+				dquot_free_block_nodirty(hint->inode,
+					amount_needed + hint->prealloc_size -
 					nr_allocated);
-				reiserfs_ग_लिखो_lock_nested(s, depth);
-			पूर्ण
-			जबतक (nr_allocated--)
-				reiserfs_मुक्त_block(hपूर्णांक->th, hपूर्णांक->inode,
+				reiserfs_write_lock_nested(s, depth);
+			}
+			while (nr_allocated--)
+				reiserfs_free_block(hint->th, hint->inode,
 						    new_blocknrs[nr_allocated],
-						    !hपूर्णांक->क्रमmatted_node);
+						    !hint->formatted_node);
 
-			वापस NO_DISK_SPACE;
-		पूर्ण
-	पूर्ण जबतक ((nr_allocated += allocate_without_wrapping_disk(hपूर्णांक,
+			return NO_DISK_SPACE;
+		}
+	} while ((nr_allocated += allocate_without_wrapping_disk(hint,
 								 new_blocknrs +
 								 nr_allocated,
 								 start, finish,
 								 1,
 								 amount_needed -
 								 nr_allocated,
-								 hपूर्णांक->
-								 pपुनः_स्मृति_size))
+								 hint->
+								 prealloc_size))
 		 < amount_needed);
-	अगर (!hपूर्णांक->क्रमmatted_node &&
-	    amount_needed + hपूर्णांक->pपुनः_स्मृति_size >
-	    nr_allocated + REISERFS_I(hपूर्णांक->inode)->i_pपुनः_स्मृति_count) अणु
-		/* Some of pपुनः_स्मृतिation blocks were not allocated */
-#अगर_घोषित REISERQUOTA_DEBUG
+	if (!hint->formatted_node &&
+	    amount_needed + hint->prealloc_size >
+	    nr_allocated + REISERFS_I(hint->inode)->i_prealloc_count) {
+		/* Some of preallocation blocks were not allocated */
+#ifdef REISERQUOTA_DEBUG
 		reiserfs_debug(s, REISERFS_DEBUG_CODE,
 			       "reiserquota: freeing (failed prealloc) %d blocks id=%u",
-			       amount_needed + hपूर्णांक->pपुनः_स्मृति_size -
+			       amount_needed + hint->prealloc_size -
 			       nr_allocated -
-			       REISERFS_I(hपूर्णांक->inode)->i_pपुनः_स्मृति_count,
-			       hपूर्णांक->inode->i_uid);
-#पूर्ण_अगर
+			       REISERFS_I(hint->inode)->i_prealloc_count,
+			       hint->inode->i_uid);
+#endif
 
-		depth = reiserfs_ग_लिखो_unlock_nested(s);
-		dquot_मुक्त_block_nodirty(hपूर्णांक->inode, amount_needed +
-					 hपूर्णांक->pपुनः_स्मृति_size - nr_allocated -
-					 REISERFS_I(hपूर्णांक->inode)->
-					 i_pपुनः_स्मृति_count);
-		reiserfs_ग_लिखो_lock_nested(s, depth);
-	पूर्ण
+		depth = reiserfs_write_unlock_nested(s);
+		dquot_free_block_nodirty(hint->inode, amount_needed +
+					 hint->prealloc_size - nr_allocated -
+					 REISERFS_I(hint->inode)->
+					 i_prealloc_count);
+		reiserfs_write_lock_nested(s, depth);
+	}
 
-	वापस CARRY_ON;
-पूर्ण
+	return CARRY_ON;
+}
 
-/* grab new blocknrs from pपुनः_स्मृतिated list */
-/* वापस amount still needed after using them */
-अटल पूर्णांक use_pपुनः_स्मृतिated_list_अगर_available(reiserfs_blocknr_hपूर्णांक_t * hपूर्णांक,
+/* grab new blocknrs from preallocated list */
+/* return amount still needed after using them */
+static int use_preallocated_list_if_available(reiserfs_blocknr_hint_t * hint,
 					      b_blocknr_t * new_blocknrs,
-					      पूर्णांक amount_needed)
-अणु
-	काष्ठा inode *inode = hपूर्णांक->inode;
+					      int amount_needed)
+{
+	struct inode *inode = hint->inode;
 
-	अगर (REISERFS_I(inode)->i_pपुनः_स्मृति_count > 0) अणु
-		जबतक (amount_needed) अणु
+	if (REISERFS_I(inode)->i_prealloc_count > 0) {
+		while (amount_needed) {
 
-			*new_blocknrs++ = REISERFS_I(inode)->i_pपुनः_स्मृति_block++;
-			REISERFS_I(inode)->i_pपुनः_स्मृति_count--;
+			*new_blocknrs++ = REISERFS_I(inode)->i_prealloc_block++;
+			REISERFS_I(inode)->i_prealloc_count--;
 
 			amount_needed--;
 
-			अगर (REISERFS_I(inode)->i_pपुनः_स्मृति_count <= 0) अणु
-				list_del(&REISERFS_I(inode)->i_pपुनः_स्मृति_list);
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	/* वापस amount still needed after using pपुनः_स्मृतिated blocks */
-	वापस amount_needed;
-पूर्ण
+			if (REISERFS_I(inode)->i_prealloc_count <= 0) {
+				list_del(&REISERFS_I(inode)->i_prealloc_list);
+				break;
+			}
+		}
+	}
+	/* return amount still needed after using preallocated blocks */
+	return amount_needed;
+}
 
-पूर्णांक reiserfs_allocate_blocknrs(reiserfs_blocknr_hपूर्णांक_t *hपूर्णांक,
+int reiserfs_allocate_blocknrs(reiserfs_blocknr_hint_t *hint,
 			       b_blocknr_t *new_blocknrs,
-			       पूर्णांक amount_needed,
-			       /* Amount of blocks we have alपढ़ोy reserved */
-			       पूर्णांक reserved_by_us)
-अणु
-	पूर्णांक initial_amount_needed = amount_needed;
-	पूर्णांक ret;
-	काष्ठा super_block *s = hपूर्णांक->th->t_super;
+			       int amount_needed,
+			       /* Amount of blocks we have already reserved */
+			       int reserved_by_us)
+{
+	int initial_amount_needed = amount_needed;
+	int ret;
+	struct super_block *s = hint->th->t_super;
 
-	/* Check अगर there is enough space, taking पूर्णांकo account reserved space */
-	अगर (SB_FREE_BLOCKS(s) - REISERFS_SB(s)->reserved_blocks <
+	/* Check if there is enough space, taking into account reserved space */
+	if (SB_FREE_BLOCKS(s) - REISERFS_SB(s)->reserved_blocks <
 	    amount_needed - reserved_by_us)
-		वापस NO_DISK_SPACE;
-	/* should this be अगर !hपूर्णांक->inode &&  hपूर्णांक->pपुनः_स्मृतिate? */
-	/* करो you mean hपूर्णांक->क्रमmatted_node can be हटाओd ? - Zam */
+		return NO_DISK_SPACE;
+	/* should this be if !hint->inode &&  hint->preallocate? */
+	/* do you mean hint->formatted_node can be removed ? - Zam */
 	/*
-	 * hपूर्णांक->क्रमmatted_node cannot be हटाओd because we try to access
-	 * inode inक्रमmation here, and there is often no inode associated with
+	 * hint->formatted_node cannot be removed because we try to access
+	 * inode information here, and there is often no inode associated with
 	 * metadata allocations - green
 	 */
 
-	अगर (!hपूर्णांक->क्रमmatted_node && hपूर्णांक->pपुनः_स्मृतिate) अणु
-		amount_needed = use_pपुनः_स्मृतिated_list_अगर_available
-		    (hपूर्णांक, new_blocknrs, amount_needed);
+	if (!hint->formatted_node && hint->preallocate) {
+		amount_needed = use_preallocated_list_if_available
+		    (hint, new_blocknrs, amount_needed);
 
 		/*
 		 * We have all the block numbers we need from the
-		 * pपुनः_स्मृति list
+		 * prealloc list
 		 */
-		अगर (amount_needed == 0)
-			वापस CARRY_ON;
+		if (amount_needed == 0)
+			return CARRY_ON;
 		new_blocknrs += (initial_amount_needed - amount_needed);
-	पूर्ण
+	}
 
-	/* find search start and save it in hपूर्णांक काष्ठाure */
-	determine_search_start(hपूर्णांक, amount_needed);
-	अगर (hपूर्णांक->search_start >= SB_BLOCK_COUNT(s))
-		hपूर्णांक->search_start = SB_BLOCK_COUNT(s) - 1;
+	/* find search start and save it in hint structure */
+	determine_search_start(hint, amount_needed);
+	if (hint->search_start >= SB_BLOCK_COUNT(s))
+		hint->search_start = SB_BLOCK_COUNT(s) - 1;
 
-	/* allocation itself; fill new_blocknrs and pपुनः_स्मृतिation arrays */
-	ret = blocknrs_and_pपुनः_स्मृति_arrays_from_search_start
-	    (hपूर्णांक, new_blocknrs, amount_needed);
+	/* allocation itself; fill new_blocknrs and preallocation arrays */
+	ret = blocknrs_and_prealloc_arrays_from_search_start
+	    (hint, new_blocknrs, amount_needed);
 
 	/*
-	 * We used pपुनः_स्मृति. list to fill (partially) new_blocknrs array.
-	 * If final allocation fails we need to वापस blocks back to
-	 * pपुनः_स्मृति. list or just मुक्त them. -- Zam (I chose second
+	 * We used prealloc. list to fill (partially) new_blocknrs array.
+	 * If final allocation fails we need to return blocks back to
+	 * prealloc. list or just free them. -- Zam (I chose second
 	 * variant)
 	 */
-	अगर (ret != CARRY_ON) अणु
-		जबतक (amount_needed++ < initial_amount_needed) अणु
-			reiserfs_मुक्त_block(hपूर्णांक->th, hपूर्णांक->inode,
+	if (ret != CARRY_ON) {
+		while (amount_needed++ < initial_amount_needed) {
+			reiserfs_free_block(hint->th, hint->inode,
 					    *(--new_blocknrs), 1);
-		पूर्ण
-	पूर्ण
-	वापस ret;
-पूर्ण
+		}
+	}
+	return ret;
+}
 
-व्योम reiserfs_cache_biपंचांगap_metadata(काष्ठा super_block *sb,
-                                    काष्ठा buffer_head *bh,
-                                    काष्ठा reiserfs_biपंचांगap_info *info)
-अणु
-	अचिन्हित दीर्घ *cur = (अचिन्हित दीर्घ *)(bh->b_data + bh->b_size);
+void reiserfs_cache_bitmap_metadata(struct super_block *sb,
+                                    struct buffer_head *bh,
+                                    struct reiserfs_bitmap_info *info)
+{
+	unsigned long *cur = (unsigned long *)(bh->b_data + bh->b_size);
 
 	/* The first bit must ALWAYS be 1 */
-	अगर (!reiserfs_test_le_bit(0, (अचिन्हित दीर्घ *)bh->b_data))
+	if (!reiserfs_test_le_bit(0, (unsigned long *)bh->b_data))
 		reiserfs_error(sb, "reiserfs-2025", "bitmap block %lu is "
 			       "corrupted: first bit must be 1", bh->b_blocknr);
 
-	info->मुक्त_count = 0;
+	info->free_count = 0;
 
-	जबतक (--cur >= (अचिन्हित दीर्घ *)bh->b_data) अणु
-		/* 0 and ~0 are special, we can optimize क्रम them */
-		अगर (*cur == 0)
-			info->मुक्त_count += BITS_PER_LONG;
-		अन्यथा अगर (*cur != ~0L)	/* A mix, investigate */
-			info->मुक्त_count += BITS_PER_LONG - hweight_दीर्घ(*cur);
-	पूर्ण
-पूर्ण
+	while (--cur >= (unsigned long *)bh->b_data) {
+		/* 0 and ~0 are special, we can optimize for them */
+		if (*cur == 0)
+			info->free_count += BITS_PER_LONG;
+		else if (*cur != ~0L)	/* A mix, investigate */
+			info->free_count += BITS_PER_LONG - hweight_long(*cur);
+	}
+}
 
-काष्ठा buffer_head *reiserfs_पढ़ो_biपंचांगap_block(काष्ठा super_block *sb,
-                                               अचिन्हित पूर्णांक biपंचांगap)
-अणु
-	b_blocknr_t block = (sb->s_blocksize << 3) * biपंचांगap;
-	काष्ठा reiserfs_biपंचांगap_info *info = SB_AP_BITMAP(sb) + biपंचांगap;
-	काष्ठा buffer_head *bh;
+struct buffer_head *reiserfs_read_bitmap_block(struct super_block *sb,
+                                               unsigned int bitmap)
+{
+	b_blocknr_t block = (sb->s_blocksize << 3) * bitmap;
+	struct reiserfs_bitmap_info *info = SB_AP_BITMAP(sb) + bitmap;
+	struct buffer_head *bh;
 
 	/*
-	 * Way old क्रमmat fileप्रणालीs had the biपंचांगaps packed up front.
-	 * I करोubt there are any of these left, but just in हाल...
+	 * Way old format filesystems had the bitmaps packed up front.
+	 * I doubt there are any of these left, but just in case...
 	 */
-	अगर (unlikely(test_bit(REISERFS_OLD_FORMAT,
+	if (unlikely(test_bit(REISERFS_OLD_FORMAT,
 			      &REISERFS_SB(sb)->s_properties)))
-		block = REISERFS_SB(sb)->s_sbh->b_blocknr + 1 + biपंचांगap;
-	अन्यथा अगर (biपंचांगap == 0)
+		block = REISERFS_SB(sb)->s_sbh->b_blocknr + 1 + bitmap;
+	else if (bitmap == 0)
 		block = (REISERFS_DISK_OFFSET_IN_BYTES >> sb->s_blocksize_bits) + 1;
 
-	bh = sb_bपढ़ो(sb, block);
-	अगर (bh == शून्य)
+	bh = sb_bread(sb, block);
+	if (bh == NULL)
 		reiserfs_warning(sb, "sh-2029: %s: bitmap block (#%u) "
 		                 "reading failed", __func__, block);
-	अन्यथा अणु
-		अगर (buffer_locked(bh)) अणु
-			पूर्णांक depth;
-			PROC_INFO_INC(sb, scan_biपंचांगap.रुको);
-			depth = reiserfs_ग_लिखो_unlock_nested(sb);
-			__रुको_on_buffer(bh);
-			reiserfs_ग_लिखो_lock_nested(sb, depth);
-		पूर्ण
+	else {
+		if (buffer_locked(bh)) {
+			int depth;
+			PROC_INFO_INC(sb, scan_bitmap.wait);
+			depth = reiserfs_write_unlock_nested(sb);
+			__wait_on_buffer(bh);
+			reiserfs_write_lock_nested(sb, depth);
+		}
 		BUG_ON(!buffer_uptodate(bh));
-		BUG_ON(atomic_पढ़ो(&bh->b_count) == 0);
+		BUG_ON(atomic_read(&bh->b_count) == 0);
 
-		अगर (info->मुक्त_count == अच_पूर्णांक_उच्च)
-			reiserfs_cache_biपंचांगap_metadata(sb, bh, info);
-	पूर्ण
+		if (info->free_count == UINT_MAX)
+			reiserfs_cache_bitmap_metadata(sb, bh, info);
+	}
 
-	वापस bh;
-पूर्ण
+	return bh;
+}
 
-पूर्णांक reiserfs_init_biपंचांगap_cache(काष्ठा super_block *sb)
-अणु
-	काष्ठा reiserfs_biपंचांगap_info *biपंचांगap;
-	अचिन्हित पूर्णांक bmap_nr = reiserfs_bmap_count(sb);
+int reiserfs_init_bitmap_cache(struct super_block *sb)
+{
+	struct reiserfs_bitmap_info *bitmap;
+	unsigned int bmap_nr = reiserfs_bmap_count(sb);
 
-	biपंचांगap = vदो_स्मृति(array_size(bmap_nr, माप(*biपंचांगap)));
-	अगर (biपंचांगap == शून्य)
-		वापस -ENOMEM;
+	bitmap = vmalloc(array_size(bmap_nr, sizeof(*bitmap)));
+	if (bitmap == NULL)
+		return -ENOMEM;
 
-	स_रखो(biपंचांगap, 0xff, माप(*biपंचांगap) * bmap_nr);
+	memset(bitmap, 0xff, sizeof(*bitmap) * bmap_nr);
 
-	SB_AP_BITMAP(sb) = biपंचांगap;
+	SB_AP_BITMAP(sb) = bitmap;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम reiserfs_मुक्त_biपंचांगap_cache(काष्ठा super_block *sb)
-अणु
-	अगर (SB_AP_BITMAP(sb)) अणु
-		vमुक्त(SB_AP_BITMAP(sb));
-		SB_AP_BITMAP(sb) = शून्य;
-	पूर्ण
-पूर्ण
+void reiserfs_free_bitmap_cache(struct super_block *sb)
+{
+	if (SB_AP_BITMAP(sb)) {
+		vfree(SB_AP_BITMAP(sb));
+		SB_AP_BITMAP(sb) = NULL;
+	}
+}

@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Mutexes: blocking mutual exclusion locks
  *
@@ -7,24 +6,24 @@
  *
  *  Copyright (C) 2004, 2005, 2006 Red Hat, Inc., Ingo Molnar <mingo@redhat.com>
  *
- * This file contains mutex debugging related पूर्णांकernal declarations,
- * prototypes and अंतरभूत functions, क्रम the CONFIG_DEBUG_MUTEXES हाल.
+ * This file contains mutex debugging related internal declarations,
+ * prototypes and inline functions, for the CONFIG_DEBUG_MUTEXES case.
  * More details are in kernel/mutex-debug.c.
  */
 
 /*
- * This must be called with lock->रुको_lock held.
+ * This must be called with lock->wait_lock held.
  */
-बाह्य व्योम debug_mutex_lock_common(काष्ठा mutex *lock,
-				    काष्ठा mutex_रुकोer *रुकोer);
-बाह्य व्योम debug_mutex_wake_रुकोer(काष्ठा mutex *lock,
-				    काष्ठा mutex_रुकोer *रुकोer);
-बाह्य व्योम debug_mutex_मुक्त_रुकोer(काष्ठा mutex_रुकोer *रुकोer);
-बाह्य व्योम debug_mutex_add_रुकोer(काष्ठा mutex *lock,
-				   काष्ठा mutex_रुकोer *रुकोer,
-				   काष्ठा task_काष्ठा *task);
-बाह्य व्योम debug_mutex_हटाओ_रुकोer(काष्ठा mutex *lock, काष्ठा mutex_रुकोer *रुकोer,
-				काष्ठा task_काष्ठा *task);
-बाह्य व्योम debug_mutex_unlock(काष्ठा mutex *lock);
-बाह्य व्योम debug_mutex_init(काष्ठा mutex *lock, स्थिर अक्षर *name,
-			     काष्ठा lock_class_key *key);
+extern void debug_mutex_lock_common(struct mutex *lock,
+				    struct mutex_waiter *waiter);
+extern void debug_mutex_wake_waiter(struct mutex *lock,
+				    struct mutex_waiter *waiter);
+extern void debug_mutex_free_waiter(struct mutex_waiter *waiter);
+extern void debug_mutex_add_waiter(struct mutex *lock,
+				   struct mutex_waiter *waiter,
+				   struct task_struct *task);
+extern void debug_mutex_remove_waiter(struct mutex *lock, struct mutex_waiter *waiter,
+				struct task_struct *task);
+extern void debug_mutex_unlock(struct mutex *lock);
+extern void debug_mutex_init(struct mutex *lock, const char *name,
+			     struct lock_class_key *key);

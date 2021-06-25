@@ -1,42 +1,41 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Samsung EXYNOS4x12 FIMC-IS (Imaging Subप्रणाली) driver
+ * Samsung EXYNOS4x12 FIMC-IS (Imaging Subsystem) driver
  *
  * Copyright (C) 2013 Samsung Electronics Co., Ltd.
  * Sylwester Nawrocki <s.nawrocki@samsung.com>
  */
-#अगर_अघोषित FIMC_ISP_VIDEO__
-#घोषणा FIMC_ISP_VIDEO__
+#ifndef FIMC_ISP_VIDEO__
+#define FIMC_ISP_VIDEO__
 
-#समावेश <media/videobuf2-v4l2.h>
-#समावेश "fimc-isp.h"
+#include <media/videobuf2-v4l2.h>
+#include "fimc-isp.h"
 
-#अगर_घोषित CONFIG_VIDEO_EXYNOS4_ISP_DMA_CAPTURE
-पूर्णांक fimc_isp_video_device_रेजिस्टर(काष्ठा fimc_isp *isp,
-				काष्ठा v4l2_device *v4l2_dev,
-				क्रमागत v4l2_buf_type type);
+#ifdef CONFIG_VIDEO_EXYNOS4_ISP_DMA_CAPTURE
+int fimc_isp_video_device_register(struct fimc_isp *isp,
+				struct v4l2_device *v4l2_dev,
+				enum v4l2_buf_type type);
 
-व्योम fimc_isp_video_device_unरेजिस्टर(काष्ठा fimc_isp *isp,
-				क्रमागत v4l2_buf_type type);
+void fimc_isp_video_device_unregister(struct fimc_isp *isp,
+				enum v4l2_buf_type type);
 
-व्योम fimc_isp_video_irq_handler(काष्ठा fimc_is *is);
-#अन्यथा
-अटल अंतरभूत व्योम fimc_isp_video_irq_handler(काष्ठा fimc_is *is)
-अणु
-पूर्ण
+void fimc_isp_video_irq_handler(struct fimc_is *is);
+#else
+static inline void fimc_isp_video_irq_handler(struct fimc_is *is)
+{
+}
 
-अटल अंतरभूत पूर्णांक fimc_isp_video_device_रेजिस्टर(काष्ठा fimc_isp *isp,
-						काष्ठा v4l2_device *v4l2_dev,
-						क्रमागत v4l2_buf_type type)
-अणु
-	वापस 0;
-पूर्ण
+static inline int fimc_isp_video_device_register(struct fimc_isp *isp,
+						struct v4l2_device *v4l2_dev,
+						enum v4l2_buf_type type)
+{
+	return 0;
+}
 
-व्योम fimc_isp_video_device_unरेजिस्टर(काष्ठा fimc_isp *isp,
-				क्रमागत v4l2_buf_type type)
-अणु
-पूर्ण
-#पूर्ण_अगर /* !CONFIG_VIDEO_EXYNOS4_ISP_DMA_CAPTURE */
+void fimc_isp_video_device_unregister(struct fimc_isp *isp,
+				enum v4l2_buf_type type)
+{
+}
+#endif /* !CONFIG_VIDEO_EXYNOS4_ISP_DMA_CAPTURE */
 
-#पूर्ण_अगर /* FIMC_ISP_VIDEO__ */
+#endif /* FIMC_ISP_VIDEO__ */

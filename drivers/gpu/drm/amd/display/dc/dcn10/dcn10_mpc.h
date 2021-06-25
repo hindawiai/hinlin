@@ -1,12 +1,11 @@
-<शैली गुरु>
 /* Copyright 2012-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,15 +22,15 @@
  *
  */
 
-#अगर_अघोषित __DC_MPCC_DCN10_H__
-#घोषणा __DC_MPCC_DCN10_H__
+#ifndef __DC_MPCC_DCN10_H__
+#define __DC_MPCC_DCN10_H__
 
-#समावेश "mpc.h"
+#include "mpc.h"
 
-#घोषणा TO_DCN10_MPC(mpc_base) \
-	container_of(mpc_base, काष्ठा dcn10_mpc, base)
+#define TO_DCN10_MPC(mpc_base) \
+	container_of(mpc_base, struct dcn10_mpc, base)
 
-#घोषणा MPC_COMMON_REG_LIST_DCN1_0(inst) \
+#define MPC_COMMON_REG_LIST_DCN1_0(inst) \
 	SRII(MPCC_TOP_SEL, MPCC, inst),\
 	SRII(MPCC_BOT_SEL, MPCC, inst),\
 	SRII(MPCC_CONTROL, MPCC, inst),\
@@ -43,25 +42,25 @@
 	SRII(MPCC_SM_CONTROL, MPCC, inst),\
 	SRII(MPCC_UPDATE_LOCK_SEL, MPCC, inst)
 
-#घोषणा MPC_OUT_MUX_COMMON_REG_LIST_DCN1_0(inst) \
+#define MPC_OUT_MUX_COMMON_REG_LIST_DCN1_0(inst) \
 	SRII(MUX, MPC_OUT, inst),\
 	VUPDATE_SRII(CUR, VUPDATE_LOCK_SET, inst)
 
-#घोषणा MPC_COMMON_REG_VARIABLE_LIST \
-	uपूर्णांक32_t MPCC_TOP_SEL[MAX_MPCC]; \
-	uपूर्णांक32_t MPCC_BOT_SEL[MAX_MPCC]; \
-	uपूर्णांक32_t MPCC_CONTROL[MAX_MPCC]; \
-	uपूर्णांक32_t MPCC_STATUS[MAX_MPCC]; \
-	uपूर्णांक32_t MPCC_OPP_ID[MAX_MPCC]; \
-	uपूर्णांक32_t MPCC_BG_G_Y[MAX_MPCC]; \
-	uपूर्णांक32_t MPCC_BG_R_CR[MAX_MPCC]; \
-	uपूर्णांक32_t MPCC_BG_B_CB[MAX_MPCC]; \
-	uपूर्णांक32_t MPCC_SM_CONTROL[MAX_MPCC]; \
-	uपूर्णांक32_t MUX[MAX_OPP]; \
-	uपूर्णांक32_t MPCC_UPDATE_LOCK_SEL[MAX_MPCC]; \
-	uपूर्णांक32_t CUR[MAX_OPP];
+#define MPC_COMMON_REG_VARIABLE_LIST \
+	uint32_t MPCC_TOP_SEL[MAX_MPCC]; \
+	uint32_t MPCC_BOT_SEL[MAX_MPCC]; \
+	uint32_t MPCC_CONTROL[MAX_MPCC]; \
+	uint32_t MPCC_STATUS[MAX_MPCC]; \
+	uint32_t MPCC_OPP_ID[MAX_MPCC]; \
+	uint32_t MPCC_BG_G_Y[MAX_MPCC]; \
+	uint32_t MPCC_BG_R_CR[MAX_MPCC]; \
+	uint32_t MPCC_BG_B_CB[MAX_MPCC]; \
+	uint32_t MPCC_SM_CONTROL[MAX_MPCC]; \
+	uint32_t MUX[MAX_OPP]; \
+	uint32_t MPCC_UPDATE_LOCK_SEL[MAX_MPCC]; \
+	uint32_t CUR[MAX_OPP];
 
-#घोषणा MPC_COMMON_MASK_SH_LIST_DCN1_0(mask_sh)\
+#define MPC_COMMON_MASK_SH_LIST_DCN1_0(mask_sh)\
 	SF(MPCC0_MPCC_TOP_SEL, MPCC_TOP_SEL, mask_sh),\
 	SF(MPCC0_MPCC_BOT_SEL, MPCC_BOT_SEL, mask_sh),\
 	SF(MPCC0_MPCC_CONTROL, MPCC_MODE, mask_sh),\
@@ -85,7 +84,7 @@
 	SF(MPC_OUT0_MUX, MPC_OUT_MUX, mask_sh),\
 	SF(MPCC0_MPCC_UPDATE_LOCK_SEL, MPCC_UPDATE_LOCK_SEL, mask_sh)
 
-#घोषणा MPC_REG_FIELD_LIST(type) \
+#define MPC_REG_FIELD_LIST(type) \
 	type MPCC_TOP_SEL;\
 	type MPCC_BOT_SEL;\
 	type MPCC_MODE;\
@@ -110,96 +109,96 @@
 	type MPCC_UPDATE_LOCK_SEL;\
 	type CUR_VUPDATE_LOCK_SET;
 
-काष्ठा dcn_mpc_रेजिस्टरs अणु
+struct dcn_mpc_registers {
 	MPC_COMMON_REG_VARIABLE_LIST
-पूर्ण;
+};
 
-काष्ठा dcn_mpc_shअगरt अणु
-	MPC_REG_FIELD_LIST(uपूर्णांक8_t)
-पूर्ण;
+struct dcn_mpc_shift {
+	MPC_REG_FIELD_LIST(uint8_t)
+};
 
-काष्ठा dcn_mpc_mask अणु
-	MPC_REG_FIELD_LIST(uपूर्णांक32_t)
-पूर्ण;
+struct dcn_mpc_mask {
+	MPC_REG_FIELD_LIST(uint32_t)
+};
 
-काष्ठा dcn10_mpc अणु
-	काष्ठा mpc base;
+struct dcn10_mpc {
+	struct mpc base;
 
-	पूर्णांक mpcc_in_use_mask;
-	पूर्णांक num_mpcc;
-	स्थिर काष्ठा dcn_mpc_रेजिस्टरs *mpc_regs;
-	स्थिर काष्ठा dcn_mpc_shअगरt *mpc_shअगरt;
-	स्थिर काष्ठा dcn_mpc_mask *mpc_mask;
-पूर्ण;
+	int mpcc_in_use_mask;
+	int num_mpcc;
+	const struct dcn_mpc_registers *mpc_regs;
+	const struct dcn_mpc_shift *mpc_shift;
+	const struct dcn_mpc_mask *mpc_mask;
+};
 
-व्योम dcn10_mpc_स्थिरruct(काष्ठा dcn10_mpc *mpcc10,
-	काष्ठा dc_context *ctx,
-	स्थिर काष्ठा dcn_mpc_रेजिस्टरs *mpc_regs,
-	स्थिर काष्ठा dcn_mpc_shअगरt *mpc_shअगरt,
-	स्थिर काष्ठा dcn_mpc_mask *mpc_mask,
-	पूर्णांक num_mpcc);
+void dcn10_mpc_construct(struct dcn10_mpc *mpcc10,
+	struct dc_context *ctx,
+	const struct dcn_mpc_registers *mpc_regs,
+	const struct dcn_mpc_shift *mpc_shift,
+	const struct dcn_mpc_mask *mpc_mask,
+	int num_mpcc);
 
-काष्ठा mpcc *mpc1_insert_plane(
-	काष्ठा mpc *mpc,
-	काष्ठा mpc_tree *tree,
-	काष्ठा mpcc_blnd_cfg *blnd_cfg,
-	काष्ठा mpcc_sm_cfg *sm_cfg,
-	काष्ठा mpcc *insert_above_mpcc,
-	पूर्णांक dpp_id,
-	पूर्णांक mpcc_id);
+struct mpcc *mpc1_insert_plane(
+	struct mpc *mpc,
+	struct mpc_tree *tree,
+	struct mpcc_blnd_cfg *blnd_cfg,
+	struct mpcc_sm_cfg *sm_cfg,
+	struct mpcc *insert_above_mpcc,
+	int dpp_id,
+	int mpcc_id);
 
-व्योम mpc1_हटाओ_mpcc(
-	काष्ठा mpc *mpc,
-	काष्ठा mpc_tree *tree,
-	काष्ठा mpcc *mpcc);
+void mpc1_remove_mpcc(
+	struct mpc *mpc,
+	struct mpc_tree *tree,
+	struct mpcc *mpcc);
 
-व्योम mpc1_mpc_init(
-	काष्ठा mpc *mpc);
+void mpc1_mpc_init(
+	struct mpc *mpc);
 
-व्योम mpc1_mpc_init_single_inst(
-	काष्ठा mpc *mpc,
-	अचिन्हित पूर्णांक mpcc_id);
+void mpc1_mpc_init_single_inst(
+	struct mpc *mpc,
+	unsigned int mpcc_id);
 
-व्योम mpc1_निश्चित_idle_mpcc(
-	काष्ठा mpc *mpc,
-	पूर्णांक id);
+void mpc1_assert_idle_mpcc(
+	struct mpc *mpc,
+	int id);
 
-व्योम mpc1_set_bg_color(
-	काष्ठा mpc *mpc,
-	काष्ठा tg_color *bg_color,
-	पूर्णांक id);
+void mpc1_set_bg_color(
+	struct mpc *mpc,
+	struct tg_color *bg_color,
+	int id);
 
-व्योम mpc1_update_stereo_mix(
-	काष्ठा mpc *mpc,
-	काष्ठा mpcc_sm_cfg *sm_cfg,
-	पूर्णांक mpcc_id);
+void mpc1_update_stereo_mix(
+	struct mpc *mpc,
+	struct mpcc_sm_cfg *sm_cfg,
+	int mpcc_id);
 
 bool mpc1_is_mpcc_idle(
-	काष्ठा mpc *mpc,
-	पूर्णांक mpcc_id);
+	struct mpc *mpc,
+	int mpcc_id);
 
-व्योम mpc1_निश्चित_mpcc_idle_beक्रमe_connect(
-	काष्ठा mpc *mpc,
-	पूर्णांक mpcc_id);
+void mpc1_assert_mpcc_idle_before_connect(
+	struct mpc *mpc,
+	int mpcc_id);
 
-व्योम mpc1_init_mpcc_list_from_hw(
-	काष्ठा mpc *mpc,
-	काष्ठा mpc_tree *tree);
+void mpc1_init_mpcc_list_from_hw(
+	struct mpc *mpc,
+	struct mpc_tree *tree);
 
-काष्ठा mpcc *mpc1_get_mpcc(
-	काष्ठा mpc *mpc,
-	पूर्णांक mpcc_id);
+struct mpcc *mpc1_get_mpcc(
+	struct mpc *mpc,
+	int mpcc_id);
 
-काष्ठा mpcc *mpc1_get_mpcc_क्रम_dpp(
-	काष्ठा mpc_tree *tree,
-	पूर्णांक dpp_id);
+struct mpcc *mpc1_get_mpcc_for_dpp(
+	struct mpc_tree *tree,
+	int dpp_id);
 
-व्योम mpc1_पढ़ो_mpcc_state(
-		काष्ठा mpc *mpc,
-		पूर्णांक mpcc_inst,
-		काष्ठा mpcc_state *s);
+void mpc1_read_mpcc_state(
+		struct mpc *mpc,
+		int mpcc_inst,
+		struct mpcc_state *s);
 
-व्योम mpc1_cursor_lock(काष्ठा mpc *mpc, पूर्णांक opp_id, bool lock);
+void mpc1_cursor_lock(struct mpc *mpc, int opp_id, bool lock);
 
-अचिन्हित पूर्णांक mpc1_get_mpc_out_mux(काष्ठा mpc *mpc, पूर्णांक opp_id);
-#पूर्ण_अगर
+unsigned int mpc1_get_mpc_out_mux(struct mpc *mpc, int opp_id);
+#endif

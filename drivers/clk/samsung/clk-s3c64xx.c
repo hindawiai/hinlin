@@ -1,67 +1,66 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2013 Tomasz Figa <tomasz.figa at gmail.com>
  *
- * Common Clock Framework support क्रम all S3C64xx SoCs.
+ * Common Clock Framework support for all S3C64xx SoCs.
 */
 
-#समावेश <linux/slab.h>
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/clk/samsung.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
+#include <linux/slab.h>
+#include <linux/clk-provider.h>
+#include <linux/clk/samsung.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
 
-#समावेश <dt-bindings/घड़ी/samsung,s3c64xx-घड़ी.h>
+#include <dt-bindings/clock/samsung,s3c64xx-clock.h>
 
-#समावेश "clk.h"
-#समावेश "clk-pll.h"
+#include "clk.h"
+#include "clk-pll.h"
 
-/* S3C64xx घड़ी controller रेजिस्टर offsets. */
-#घोषणा APLL_LOCK		0x000
-#घोषणा MPLL_LOCK		0x004
-#घोषणा EPLL_LOCK		0x008
-#घोषणा APLL_CON		0x00c
-#घोषणा MPLL_CON		0x010
-#घोषणा EPLL_CON0		0x014
-#घोषणा EPLL_CON1		0x018
-#घोषणा CLK_SRC			0x01c
-#घोषणा CLK_DIV0		0x020
-#घोषणा CLK_DIV1		0x024
-#घोषणा CLK_DIV2		0x028
-#घोषणा HCLK_GATE		0x030
-#घोषणा PCLK_GATE		0x034
-#घोषणा SCLK_GATE		0x038
-#घोषणा MEM0_GATE		0x03c
-#घोषणा CLK_SRC2		0x10c
-#घोषणा OTHERS			0x900
+/* S3C64xx clock controller register offsets. */
+#define APLL_LOCK		0x000
+#define MPLL_LOCK		0x004
+#define EPLL_LOCK		0x008
+#define APLL_CON		0x00c
+#define MPLL_CON		0x010
+#define EPLL_CON0		0x014
+#define EPLL_CON1		0x018
+#define CLK_SRC			0x01c
+#define CLK_DIV0		0x020
+#define CLK_DIV1		0x024
+#define CLK_DIV2		0x028
+#define HCLK_GATE		0x030
+#define PCLK_GATE		0x034
+#define SCLK_GATE		0x038
+#define MEM0_GATE		0x03c
+#define CLK_SRC2		0x10c
+#define OTHERS			0x900
 
-/* Helper macros to define घड़ी arrays. */
-#घोषणा FIXED_RATE_CLOCKS(name)	\
-		अटल काष्ठा samsung_fixed_rate_घड़ी name[]
-#घोषणा MUX_CLOCKS(name)	\
-		अटल काष्ठा samsung_mux_घड़ी name[]
-#घोषणा DIV_CLOCKS(name)	\
-		अटल काष्ठा samsung_भाग_घड़ी name[]
-#घोषणा GATE_CLOCKS(name)	\
-		अटल काष्ठा samsung_gate_घड़ी name[]
+/* Helper macros to define clock arrays. */
+#define FIXED_RATE_CLOCKS(name)	\
+		static struct samsung_fixed_rate_clock name[]
+#define MUX_CLOCKS(name)	\
+		static struct samsung_mux_clock name[]
+#define DIV_CLOCKS(name)	\
+		static struct samsung_div_clock name[]
+#define GATE_CLOCKS(name)	\
+		static struct samsung_gate_clock name[]
 
-/* Helper macros क्रम gate types present on S3C64xx. */
-#घोषणा GATE_BUS(_id, cname, pname, o, b) \
+/* Helper macros for gate types present on S3C64xx. */
+#define GATE_BUS(_id, cname, pname, o, b) \
 		GATE(_id, cname, pname, o, b, 0, 0)
-#घोषणा GATE_SCLK(_id, cname, pname, o, b) \
+#define GATE_SCLK(_id, cname, pname, o, b) \
 		GATE(_id, cname, pname, o, b, CLK_SET_RATE_PARENT, 0)
-#घोषणा GATE_ON(_id, cname, pname, o, b) \
+#define GATE_ON(_id, cname, pname, o, b) \
 		GATE(_id, cname, pname, o, b, CLK_IGNORE_UNUSED, 0)
 
-अटल व्योम __iomem *reg_base;
-अटल bool is_s3c6400;
+static void __iomem *reg_base;
+static bool is_s3c6400;
 
 /*
- * List of controller रेजिस्टरs to be saved and restored during
+ * List of controller registers to be saved and restored during
  * a suspend/resume cycle.
  */
-अटल अचिन्हित दीर्घ s3c64xx_clk_regs[] __initdata = अणु
+static unsigned long s3c64xx_clk_regs[] __initdata = {
 	APLL_LOCK,
 	MPLL_LOCK,
 	EPLL_LOCK,
@@ -76,53 +75,53 @@
 	HCLK_GATE,
 	PCLK_GATE,
 	SCLK_GATE,
-पूर्ण;
+};
 
-अटल अचिन्हित दीर्घ s3c6410_clk_regs[] __initdata = अणु
+static unsigned long s3c6410_clk_regs[] __initdata = {
 	CLK_SRC2,
 	MEM0_GATE,
-पूर्ण;
+};
 
-/* List of parent घड़ीs common क्रम all S3C64xx SoCs. */
-PNAME(spi_mmc_p)	= अणु "mout_epll", "dout_mpll", "fin_pll", "clk27m" पूर्ण;
-PNAME(uart_p)		= अणु "mout_epll", "dout_mpll" पूर्ण;
-PNAME(audio0_p)		= अणु "mout_epll", "dout_mpll", "fin_pll", "iiscdclk0",
-				"pcmcdclk0", "none", "none", "none" पूर्ण;
-PNAME(audio1_p)		= अणु "mout_epll", "dout_mpll", "fin_pll", "iiscdclk1",
-				"pcmcdclk0", "none", "none", "none" पूर्ण;
-PNAME(mfc_p)		= अणु "hclkx2", "mout_epll" पूर्ण;
-PNAME(apll_p)		= अणु "fin_pll", "fout_apll" पूर्ण;
-PNAME(mpll_p)		= अणु "fin_pll", "fout_mpll" पूर्ण;
-PNAME(epll_p)		= अणु "fin_pll", "fout_epll" पूर्ण;
-PNAME(hclkx2_p)		= अणु "mout_mpll", "mout_apll" पूर्ण;
+/* List of parent clocks common for all S3C64xx SoCs. */
+PNAME(spi_mmc_p)	= { "mout_epll", "dout_mpll", "fin_pll", "clk27m" };
+PNAME(uart_p)		= { "mout_epll", "dout_mpll" };
+PNAME(audio0_p)		= { "mout_epll", "dout_mpll", "fin_pll", "iiscdclk0",
+				"pcmcdclk0", "none", "none", "none" };
+PNAME(audio1_p)		= { "mout_epll", "dout_mpll", "fin_pll", "iiscdclk1",
+				"pcmcdclk0", "none", "none", "none" };
+PNAME(mfc_p)		= { "hclkx2", "mout_epll" };
+PNAME(apll_p)		= { "fin_pll", "fout_apll" };
+PNAME(mpll_p)		= { "fin_pll", "fout_mpll" };
+PNAME(epll_p)		= { "fin_pll", "fout_epll" };
+PNAME(hclkx2_p)		= { "mout_mpll", "mout_apll" };
 
-/* S3C6400-specअगरic parent घड़ीs. */
-PNAME(scaler_lcd_p6400)	= अणु "mout_epll", "dout_mpll", "none", "none" पूर्ण;
-PNAME(irda_p6400)	= अणु "mout_epll", "dout_mpll", "none", "clk48m" पूर्ण;
-PNAME(uhost_p6400)	= अणु "clk48m", "mout_epll", "dout_mpll", "none" पूर्ण;
+/* S3C6400-specific parent clocks. */
+PNAME(scaler_lcd_p6400)	= { "mout_epll", "dout_mpll", "none", "none" };
+PNAME(irda_p6400)	= { "mout_epll", "dout_mpll", "none", "clk48m" };
+PNAME(uhost_p6400)	= { "clk48m", "mout_epll", "dout_mpll", "none" };
 
-/* S3C6410-specअगरic parent घड़ीs. */
-PNAME(clk27_p6410)	= अणु "clk27m", "fin_pll" पूर्ण;
-PNAME(scaler_lcd_p6410)	= अणु "mout_epll", "dout_mpll", "fin_pll", "none" पूर्ण;
-PNAME(irda_p6410)	= अणु "mout_epll", "dout_mpll", "fin_pll", "clk48m" पूर्ण;
-PNAME(uhost_p6410)	= अणु "clk48m", "mout_epll", "dout_mpll", "fin_pll" पूर्ण;
-PNAME(audio2_p6410)	= अणु "mout_epll", "dout_mpll", "fin_pll", "iiscdclk2",
-				"pcmcdclk1", "none", "none", "none" पूर्ण;
+/* S3C6410-specific parent clocks. */
+PNAME(clk27_p6410)	= { "clk27m", "fin_pll" };
+PNAME(scaler_lcd_p6410)	= { "mout_epll", "dout_mpll", "fin_pll", "none" };
+PNAME(irda_p6410)	= { "mout_epll", "dout_mpll", "fin_pll", "clk48m" };
+PNAME(uhost_p6410)	= { "clk48m", "mout_epll", "dout_mpll", "fin_pll" };
+PNAME(audio2_p6410)	= { "mout_epll", "dout_mpll", "fin_pll", "iiscdclk2",
+				"pcmcdclk1", "none", "none", "none" };
 
-/* Fixed rate घड़ीs generated outside the SoC. */
-FIXED_RATE_CLOCKS(s3c64xx_fixed_rate_ext_clks) __initdata = अणु
-	FRATE(0, "fin_pll", शून्य, 0, 0),
-	FRATE(0, "xusbxti", शून्य, 0, 0),
-पूर्ण;
+/* Fixed rate clocks generated outside the SoC. */
+FIXED_RATE_CLOCKS(s3c64xx_fixed_rate_ext_clks) __initdata = {
+	FRATE(0, "fin_pll", NULL, 0, 0),
+	FRATE(0, "xusbxti", NULL, 0, 0),
+};
 
-/* Fixed rate घड़ीs generated inside the SoC. */
-FIXED_RATE_CLOCKS(s3c64xx_fixed_rate_clks) __initdata = अणु
-	FRATE(CLK27M, "clk27m", शून्य, 0, 27000000),
-	FRATE(CLK48M, "clk48m", शून्य, 0, 48000000),
-पूर्ण;
+/* Fixed rate clocks generated inside the SoC. */
+FIXED_RATE_CLOCKS(s3c64xx_fixed_rate_clks) __initdata = {
+	FRATE(CLK27M, "clk27m", NULL, 0, 27000000),
+	FRATE(CLK48M, "clk48m", NULL, 0, 48000000),
+};
 
-/* List of घड़ी muxes present on all S3C64xx SoCs. */
-MUX_CLOCKS(s3c64xx_mux_clks) __initdata = अणु
+/* List of clock muxes present on all S3C64xx SoCs. */
+MUX_CLOCKS(s3c64xx_mux_clks) __initdata = {
 	MUX_F(0, "mout_syncmux", hclkx2_p, OTHERS, 6, 1, 0, CLK_MUX_READ_ONLY),
 	MUX(MOUT_APLL, "mout_apll", apll_p, CLK_SRC, 0, 1),
 	MUX(MOUT_MPLL, "mout_mpll", mpll_p, CLK_SRC, 1, 1),
@@ -136,18 +135,18 @@ MUX_CLOCKS(s3c64xx_mux_clks) __initdata = अणु
 	MUX(MOUT_MMC0, "mout_mmc0", spi_mmc_p, CLK_SRC, 18, 2),
 	MUX(MOUT_MMC1, "mout_mmc1", spi_mmc_p, CLK_SRC, 20, 2),
 	MUX(MOUT_MMC2, "mout_mmc2", spi_mmc_p, CLK_SRC, 22, 2),
-पूर्ण;
+};
 
-/* List of घड़ी muxes present on S3C6400. */
-MUX_CLOCKS(s3c6400_mux_clks) __initdata = अणु
+/* List of clock muxes present on S3C6400. */
+MUX_CLOCKS(s3c6400_mux_clks) __initdata = {
 	MUX(MOUT_UHOST, "mout_uhost", uhost_p6400, CLK_SRC, 5, 2),
 	MUX(MOUT_IRDA, "mout_irda", irda_p6400, CLK_SRC, 24, 2),
 	MUX(MOUT_LCD, "mout_lcd", scaler_lcd_p6400, CLK_SRC, 26, 2),
 	MUX(MOUT_SCALER, "mout_scaler", scaler_lcd_p6400, CLK_SRC, 28, 2),
-पूर्ण;
+};
 
-/* List of घड़ी muxes present on S3C6410. */
-MUX_CLOCKS(s3c6410_mux_clks) __initdata = अणु
+/* List of clock muxes present on S3C6410. */
+MUX_CLOCKS(s3c6410_mux_clks) __initdata = {
 	MUX(MOUT_UHOST, "mout_uhost", uhost_p6410, CLK_SRC, 5, 2),
 	MUX(MOUT_IRDA, "mout_irda", irda_p6410, CLK_SRC, 24, 2),
 	MUX(MOUT_LCD, "mout_lcd", scaler_lcd_p6410, CLK_SRC, 26, 2),
@@ -155,10 +154,10 @@ MUX_CLOCKS(s3c6410_mux_clks) __initdata = अणु
 	MUX(MOUT_DAC27, "mout_dac27", clk27_p6410, CLK_SRC, 30, 1),
 	MUX(MOUT_TV27, "mout_tv27", clk27_p6410, CLK_SRC, 31, 1),
 	MUX(MOUT_AUDIO2, "mout_audio2", audio2_p6410, CLK_SRC2, 0, 3),
-पूर्ण;
+};
 
-/* List of घड़ी भागiders present on all S3C64xx SoCs. */
-DIV_CLOCKS(s3c64xx_भाग_clks) __initdata = अणु
+/* List of clock dividers present on all S3C64xx SoCs. */
+DIV_CLOCKS(s3c64xx_div_clks) __initdata = {
 	DIV(DOUT_MPLL, "dout_mpll", "mout_mpll", CLK_DIV0, 4, 1),
 	DIV(HCLKX2, "hclkx2", "mout_syncmux", CLK_DIV0, 9, 3),
 	DIV(HCLK, "hclk", "hclkx2", CLK_DIV0, 8, 1),
@@ -179,22 +178,22 @@ DIV_CLOCKS(s3c64xx_भाग_clks) __initdata = अणु
 	DIV(DOUT_AUDIO1, "dout_audio1", "mout_audio1", CLK_DIV2, 12, 4),
 	DIV(DOUT_UART, "dout_uart", "mout_uart", CLK_DIV2, 16, 4),
 	DIV(DOUT_IRDA, "dout_irda", "mout_irda", CLK_DIV2, 20, 4),
-पूर्ण;
+};
 
-/* List of घड़ी भागiders present on S3C6400. */
-DIV_CLOCKS(s3c6400_भाग_clks) __initdata = अणु
+/* List of clock dividers present on S3C6400. */
+DIV_CLOCKS(s3c6400_div_clks) __initdata = {
 	DIV(ARMCLK, "armclk", "mout_apll", CLK_DIV0, 0, 3),
-पूर्ण;
+};
 
-/* List of घड़ी भागiders present on S3C6410. */
-DIV_CLOCKS(s3c6410_भाग_clks) __initdata = अणु
+/* List of clock dividers present on S3C6410. */
+DIV_CLOCKS(s3c6410_div_clks) __initdata = {
 	DIV(ARMCLK, "armclk", "mout_apll", CLK_DIV0, 0, 4),
 	DIV(DOUT_FIMC, "dout_fimc", "hclk", CLK_DIV1, 24, 4),
 	DIV(DOUT_AUDIO2, "dout_audio2", "mout_audio2", CLK_DIV2, 24, 4),
-पूर्ण;
+};
 
-/* List of घड़ी gates present on all S3C64xx SoCs. */
-GATE_CLOCKS(s3c64xx_gate_clks) __initdata = अणु
+/* List of clock gates present on all S3C64xx SoCs. */
+GATE_CLOCKS(s3c64xx_gate_clks) __initdata = {
 	GATE_BUS(HCLK_UHOST, "hclk_uhost", "hclk", HCLK_GATE, 29),
 	GATE_BUS(HCLK_SECUR, "hclk_secur", "hclk", HCLK_GATE, 28),
 	GATE_BUS(HCLK_SDMA1, "hclk_sdma1", "hclk", HCLK_GATE, 27),
@@ -271,16 +270,16 @@ GATE_CLOCKS(s3c64xx_gate_clks) __initdata = अणु
 	GATE_SCLK(SCLK_MFC, "sclk_mfc", "dout_mfc", SCLK_GATE, 3),
 	GATE_SCLK(SCLK_CAM, "sclk_cam", "dout_cam", SCLK_GATE, 2),
 	GATE_SCLK(SCLK_JPEG, "sclk_jpeg", "dout_jpeg", SCLK_GATE, 1),
-पूर्ण;
+};
 
-/* List of घड़ी gates present on S3C6400. */
-GATE_CLOCKS(s3c6400_gate_clks) __initdata = अणु
+/* List of clock gates present on S3C6400. */
+GATE_CLOCKS(s3c6400_gate_clks) __initdata = {
 	GATE_ON(HCLK_DDR0, "hclk_ddr0", "hclk", HCLK_GATE, 23),
-	GATE_SCLK(SCLK_ONEन_अंकD, "sclk_onenand", "parent", SCLK_GATE, 4),
-पूर्ण;
+	GATE_SCLK(SCLK_ONENAND, "sclk_onenand", "parent", SCLK_GATE, 4),
+};
 
-/* List of घड़ी gates present on S3C6410. */
-GATE_CLOCKS(s3c6410_gate_clks) __initdata = अणु
+/* List of clock gates present on S3C6410. */
+GATE_CLOCKS(s3c6410_gate_clks) __initdata = {
 	GATE_BUS(HCLK_3DSE, "hclk_3dse", "hclk", HCLK_GATE, 31),
 	GATE_ON(HCLK_IROM, "hclk_irom", "hclk", HCLK_GATE, 25),
 	GATE_ON(HCLK_MEM1, "hclk_mem1", "hclk", HCLK_GATE, 22),
@@ -291,34 +290,34 @@ GATE_CLOCKS(s3c6410_gate_clks) __initdata = अणु
 	GATE_SCLK(SCLK_FIMC, "sclk_fimc", "dout_fimc", SCLK_GATE, 13),
 	GATE_SCLK(SCLK_AUDIO2, "sclk_audio2", "dout_audio2", SCLK_GATE, 11),
 	GATE_BUS(MEM0_CFCON, "mem0_cfcon", "hclk_mem0", MEM0_GATE, 5),
-	GATE_BUS(MEM0_ONEन_अंकD1, "mem0_onenand1", "hclk_mem0", MEM0_GATE, 4),
-	GATE_BUS(MEM0_ONEन_अंकD0, "mem0_onenand0", "hclk_mem0", MEM0_GATE, 3),
+	GATE_BUS(MEM0_ONENAND1, "mem0_onenand1", "hclk_mem0", MEM0_GATE, 4),
+	GATE_BUS(MEM0_ONENAND0, "mem0_onenand0", "hclk_mem0", MEM0_GATE, 3),
 	GATE_BUS(MEM0_NFCON, "mem0_nfcon", "hclk_mem0", MEM0_GATE, 2),
 	GATE_ON(MEM0_SROM, "mem0_srom", "hclk_mem0", MEM0_GATE, 1),
-पूर्ण;
+};
 
-/* List of PLL घड़ीs. */
-अटल काष्ठा samsung_pll_घड़ी s3c64xx_pll_clks[] __initdata = अणु
+/* List of PLL clocks. */
+static struct samsung_pll_clock s3c64xx_pll_clks[] __initdata = {
 	PLL(pll_6552, FOUT_APLL, "fout_apll", "fin_pll",
-					APLL_LOCK, APLL_CON, शून्य),
+					APLL_LOCK, APLL_CON, NULL),
 	PLL(pll_6552, FOUT_MPLL, "fout_mpll", "fin_pll",
-					MPLL_LOCK, MPLL_CON, शून्य),
+					MPLL_LOCK, MPLL_CON, NULL),
 	PLL(pll_6553, FOUT_EPLL, "fout_epll", "fin_pll",
-					EPLL_LOCK, EPLL_CON0, शून्य),
-पूर्ण;
+					EPLL_LOCK, EPLL_CON0, NULL),
+};
 
-/* Aliases क्रम common s3c64xx घड़ीs. */
-अटल काष्ठा samsung_घड़ी_alias s3c64xx_घड़ी_aliases[] = अणु
-	ALIAS(FOUT_APLL, शून्य, "fout_apll"),
-	ALIAS(FOUT_MPLL, शून्य, "fout_mpll"),
-	ALIAS(FOUT_EPLL, शून्य, "fout_epll"),
-	ALIAS(MOUT_EPLL, शून्य, "mout_epll"),
-	ALIAS(DOUT_MPLL, शून्य, "dout_mpll"),
-	ALIAS(HCLKX2, शून्य, "hclk2"),
-	ALIAS(HCLK, शून्य, "hclk"),
-	ALIAS(PCLK, शून्य, "pclk"),
-	ALIAS(PCLK, शून्य, "clk_uart_baud2"),
-	ALIAS(ARMCLK, शून्य, "armclk"),
+/* Aliases for common s3c64xx clocks. */
+static struct samsung_clock_alias s3c64xx_clock_aliases[] = {
+	ALIAS(FOUT_APLL, NULL, "fout_apll"),
+	ALIAS(FOUT_MPLL, NULL, "fout_mpll"),
+	ALIAS(FOUT_EPLL, NULL, "fout_epll"),
+	ALIAS(MOUT_EPLL, NULL, "mout_epll"),
+	ALIAS(DOUT_MPLL, NULL, "dout_mpll"),
+	ALIAS(HCLKX2, NULL, "hclk2"),
+	ALIAS(HCLK, NULL, "hclk"),
+	ALIAS(PCLK, NULL, "pclk"),
+	ALIAS(PCLK, NULL, "clk_uart_baud2"),
+	ALIAS(ARMCLK, NULL, "armclk"),
 	ALIAS(HCLK_UHOST, "s3c2410-ohci", "usb-host"),
 	ALIAS(HCLK_USB, "s3c-hsotg", "otg"),
 	ALIAS(HCLK_HSMMC2, "s3c-sdhci.2", "hsmmc"),
@@ -341,9 +340,9 @@ GATE_CLOCKS(s3c6410_gate_clks) __initdata = अणु
 	ALIAS(PCLK_KEYPAD, "samsung-keypad", "keypad"),
 	ALIAS(PCLK_PCM1, "samsung-pcm.1", "pcm"),
 	ALIAS(PCLK_PCM0, "samsung-pcm.0", "pcm"),
-	ALIAS(PCLK_PWM, शून्य, "timers"),
+	ALIAS(PCLK_PWM, NULL, "timers"),
 	ALIAS(PCLK_RTC, "s3c64xx-rtc", "rtc"),
-	ALIAS(PCLK_WDT, शून्य, "watchdog"),
+	ALIAS(PCLK_WDT, NULL, "watchdog"),
 	ALIAS(PCLK_UART3, "s3c6400-uart.3", "uart"),
 	ALIAS(PCLK_UART2, "s3c6400-uart.2", "uart"),
 	ALIAS(PCLK_UART1, "s3c6400-uart.1", "uart"),
@@ -360,98 +359,98 @@ GATE_CLOCKS(s3c6410_gate_clks) __initdata = अणु
 	ALIAS(SCLK_AUDIO1, "samsung-i2s.1", "audio-bus"),
 	ALIAS(SCLK_AUDIO0, "samsung-pcm.0", "audio-bus"),
 	ALIAS(SCLK_AUDIO0, "samsung-i2s.0", "audio-bus"),
-	ALIAS(SCLK_UART, शून्य, "clk_uart_baud3"),
+	ALIAS(SCLK_UART, NULL, "clk_uart_baud3"),
 	ALIAS(SCLK_CAM, "s3c-camif", "camera"),
-पूर्ण;
+};
 
-/* Aliases क्रम s3c6400-specअगरic घड़ीs. */
-अटल काष्ठा samsung_घड़ी_alias s3c6400_घड़ी_aliases[] = अणु
+/* Aliases for s3c6400-specific clocks. */
+static struct samsung_clock_alias s3c6400_clock_aliases[] = {
 	/* Nothing to place here yet. */
-पूर्ण;
+};
 
-/* Aliases क्रम s3c6410-specअगरic घड़ीs. */
-अटल काष्ठा samsung_घड़ी_alias s3c6410_घड़ी_aliases[] = अणु
+/* Aliases for s3c6410-specific clocks. */
+static struct samsung_clock_alias s3c6410_clock_aliases[] = {
 	ALIAS(PCLK_IIC1, "s3c2440-i2c.1", "i2c"),
 	ALIAS(PCLK_IIS2, "samsung-i2s.2", "iis"),
 	ALIAS(SCLK_FIMC, "s3c-camif", "fimc"),
 	ALIAS(SCLK_AUDIO2, "samsung-i2s.2", "audio-bus"),
-	ALIAS(MEM0_SROM, शून्य, "srom"),
-पूर्ण;
+	ALIAS(MEM0_SROM, NULL, "srom"),
+};
 
-अटल व्योम __init s3c64xx_clk_रेजिस्टर_fixed_ext(
-				काष्ठा samsung_clk_provider *ctx,
-				अचिन्हित दीर्घ fin_pll_f,
-				अचिन्हित दीर्घ xusbxti_f)
-अणु
+static void __init s3c64xx_clk_register_fixed_ext(
+				struct samsung_clk_provider *ctx,
+				unsigned long fin_pll_f,
+				unsigned long xusbxti_f)
+{
 	s3c64xx_fixed_rate_ext_clks[0].fixed_rate = fin_pll_f;
 	s3c64xx_fixed_rate_ext_clks[1].fixed_rate = xusbxti_f;
-	samsung_clk_रेजिस्टर_fixed_rate(ctx, s3c64xx_fixed_rate_ext_clks,
+	samsung_clk_register_fixed_rate(ctx, s3c64xx_fixed_rate_ext_clks,
 				ARRAY_SIZE(s3c64xx_fixed_rate_ext_clks));
-पूर्ण
+}
 
-/* Register s3c64xx घड़ीs. */
-व्योम __init s3c64xx_clk_init(काष्ठा device_node *np, अचिन्हित दीर्घ xtal_f,
-			     अचिन्हित दीर्घ xusbxti_f, bool s3c6400,
-			     व्योम __iomem *base)
-अणु
-	काष्ठा samsung_clk_provider *ctx;
+/* Register s3c64xx clocks. */
+void __init s3c64xx_clk_init(struct device_node *np, unsigned long xtal_f,
+			     unsigned long xusbxti_f, bool s3c6400,
+			     void __iomem *base)
+{
+	struct samsung_clk_provider *ctx;
 
 	reg_base = base;
 	is_s3c6400 = s3c6400;
 
-	अगर (np) अणु
+	if (np) {
 		reg_base = of_iomap(np, 0);
-		अगर (!reg_base)
+		if (!reg_base)
 			panic("%s: failed to map registers\n", __func__);
-	पूर्ण
+	}
 
 	ctx = samsung_clk_init(np, reg_base, NR_CLKS);
 
-	/* Register बाह्यal घड़ीs. */
-	अगर (!np)
-		s3c64xx_clk_रेजिस्टर_fixed_ext(ctx, xtal_f, xusbxti_f);
+	/* Register external clocks. */
+	if (!np)
+		s3c64xx_clk_register_fixed_ext(ctx, xtal_f, xusbxti_f);
 
 	/* Register PLLs. */
-	samsung_clk_रेजिस्टर_pll(ctx, s3c64xx_pll_clks,
+	samsung_clk_register_pll(ctx, s3c64xx_pll_clks,
 				ARRAY_SIZE(s3c64xx_pll_clks), reg_base);
 
-	/* Register common पूर्णांकernal घड़ीs. */
-	samsung_clk_रेजिस्टर_fixed_rate(ctx, s3c64xx_fixed_rate_clks,
+	/* Register common internal clocks. */
+	samsung_clk_register_fixed_rate(ctx, s3c64xx_fixed_rate_clks,
 					ARRAY_SIZE(s3c64xx_fixed_rate_clks));
-	samsung_clk_रेजिस्टर_mux(ctx, s3c64xx_mux_clks,
+	samsung_clk_register_mux(ctx, s3c64xx_mux_clks,
 					ARRAY_SIZE(s3c64xx_mux_clks));
-	samsung_clk_रेजिस्टर_भाग(ctx, s3c64xx_भाग_clks,
-					ARRAY_SIZE(s3c64xx_भाग_clks));
-	samsung_clk_रेजिस्टर_gate(ctx, s3c64xx_gate_clks,
+	samsung_clk_register_div(ctx, s3c64xx_div_clks,
+					ARRAY_SIZE(s3c64xx_div_clks));
+	samsung_clk_register_gate(ctx, s3c64xx_gate_clks,
 					ARRAY_SIZE(s3c64xx_gate_clks));
 
-	/* Register SoC-specअगरic घड़ीs. */
-	अगर (is_s3c6400) अणु
-		samsung_clk_रेजिस्टर_mux(ctx, s3c6400_mux_clks,
+	/* Register SoC-specific clocks. */
+	if (is_s3c6400) {
+		samsung_clk_register_mux(ctx, s3c6400_mux_clks,
 					ARRAY_SIZE(s3c6400_mux_clks));
-		samsung_clk_रेजिस्टर_भाग(ctx, s3c6400_भाग_clks,
-					ARRAY_SIZE(s3c6400_भाग_clks));
-		samsung_clk_रेजिस्टर_gate(ctx, s3c6400_gate_clks,
+		samsung_clk_register_div(ctx, s3c6400_div_clks,
+					ARRAY_SIZE(s3c6400_div_clks));
+		samsung_clk_register_gate(ctx, s3c6400_gate_clks,
 					ARRAY_SIZE(s3c6400_gate_clks));
-		samsung_clk_रेजिस्टर_alias(ctx, s3c6400_घड़ी_aliases,
-					ARRAY_SIZE(s3c6400_घड़ी_aliases));
-	पूर्ण अन्यथा अणु
-		samsung_clk_रेजिस्टर_mux(ctx, s3c6410_mux_clks,
+		samsung_clk_register_alias(ctx, s3c6400_clock_aliases,
+					ARRAY_SIZE(s3c6400_clock_aliases));
+	} else {
+		samsung_clk_register_mux(ctx, s3c6410_mux_clks,
 					ARRAY_SIZE(s3c6410_mux_clks));
-		samsung_clk_रेजिस्टर_भाग(ctx, s3c6410_भाग_clks,
-					ARRAY_SIZE(s3c6410_भाग_clks));
-		samsung_clk_रेजिस्टर_gate(ctx, s3c6410_gate_clks,
+		samsung_clk_register_div(ctx, s3c6410_div_clks,
+					ARRAY_SIZE(s3c6410_div_clks));
+		samsung_clk_register_gate(ctx, s3c6410_gate_clks,
 					ARRAY_SIZE(s3c6410_gate_clks));
-		samsung_clk_रेजिस्टर_alias(ctx, s3c6410_घड़ी_aliases,
-					ARRAY_SIZE(s3c6410_घड़ी_aliases));
-	पूर्ण
+		samsung_clk_register_alias(ctx, s3c6410_clock_aliases,
+					ARRAY_SIZE(s3c6410_clock_aliases));
+	}
 
-	samsung_clk_रेजिस्टर_alias(ctx, s3c64xx_घड़ी_aliases,
-					ARRAY_SIZE(s3c64xx_घड़ी_aliases));
+	samsung_clk_register_alias(ctx, s3c64xx_clock_aliases,
+					ARRAY_SIZE(s3c64xx_clock_aliases));
 
 	samsung_clk_sleep_init(reg_base, s3c64xx_clk_regs,
 			       ARRAY_SIZE(s3c64xx_clk_regs));
-	अगर (!is_s3c6400)
+	if (!is_s3c6400)
 		samsung_clk_sleep_init(reg_base, s3c6410_clk_regs,
 				       ARRAY_SIZE(s3c6410_clk_regs));
 
@@ -462,16 +461,16 @@ GATE_CLOCKS(s3c6410_gate_clks) __initdata = अणु
 		is_s3c6400 ? "S3C6400" : "S3C6410",
 		_get_rate("fout_apll"),	_get_rate("fout_mpll"),
 		_get_rate("fout_epll"), _get_rate("armclk"));
-पूर्ण
+}
 
-अटल व्योम __init s3c6400_clk_init(काष्ठा device_node *np)
-अणु
-	s3c64xx_clk_init(np, 0, 0, true, शून्य);
-पूर्ण
+static void __init s3c6400_clk_init(struct device_node *np)
+{
+	s3c64xx_clk_init(np, 0, 0, true, NULL);
+}
 CLK_OF_DECLARE(s3c6400_clk, "samsung,s3c6400-clock", s3c6400_clk_init);
 
-अटल व्योम __init s3c6410_clk_init(काष्ठा device_node *np)
-अणु
-	s3c64xx_clk_init(np, 0, 0, false, शून्य);
-पूर्ण
+static void __init s3c6410_clk_init(struct device_node *np)
+{
+	s3c64xx_clk_init(np, 0, 0, false, NULL);
+}
 CLK_OF_DECLARE(s3c6410_clk, "samsung,s3c6410-clock", s3c6410_clk_init);

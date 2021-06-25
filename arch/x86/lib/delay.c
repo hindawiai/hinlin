@@ -1,48 +1,47 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- *	Precise Delay Loops क्रम i386
+ *	Precise Delay Loops for i386
  *
  *	Copyright (C) 1993 Linus Torvalds
  *	Copyright (C) 1997 Martin Mares <mj@atrey.karlin.mff.cuni.cz>
- *	Copyright (C) 2008 Jiri Hladky <hladky _करोt_ jiri _at_ gmail _करोt_ com>
+ *	Copyright (C) 2008 Jiri Hladky <hladky _dot_ jiri _at_ gmail _dot_ com>
  *
- *	The __delay function must _NOT_ be अंतरभूतd as its execution समय
+ *	The __delay function must _NOT_ be inlined as its execution time
  *	depends wildly on alignment on many x86 processors. The additional
  *	jump magic is needed to get the timing stable on all the CPU's
  *	we have to worry about.
  */
 
-#समावेश <linux/export.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/समयx.h>
-#समावेश <linux/preempt.h>
-#समावेश <linux/delay.h>
+#include <linux/export.h>
+#include <linux/sched.h>
+#include <linux/timex.h>
+#include <linux/preempt.h>
+#include <linux/delay.h>
 
-#समावेश <यंत्र/processor.h>
-#समावेश <यंत्र/delay.h>
-#समावेश <यंत्र/समयr.h>
-#समावेश <यंत्र/mरुको.h>
+#include <asm/processor.h>
+#include <asm/delay.h>
+#include <asm/timer.h>
+#include <asm/mwait.h>
 
-#अगर_घोषित CONFIG_SMP
-# include <यंत्र/smp.h>
-#पूर्ण_अगर
+#ifdef CONFIG_SMP
+# include <asm/smp.h>
+#endif
 
-अटल व्योम delay_loop(u64 __loops);
+static void delay_loop(u64 __loops);
 
 /*
  * Calibration and selection of the delay mechanism happens only once
  * during boot.
  */
-अटल व्योम (*delay_fn)(u64) __ro_after_init = delay_loop;
-अटल व्योम (*delay_halt_fn)(u64 start, u64 cycles) __ro_after_init;
+static void (*delay_fn)(u64) __ro_after_init = delay_loop;
+static void (*delay_halt_fn)(u64 start, u64 cycles) __ro_after_init;
 
 /* simple loop based delay: */
-अटल व्योम delay_loop(u64 __loops)
-अणु
-	अचिन्हित दीर्घ loops = (अचिन्हित दीर्घ)__loops;
+static void delay_loop(u64 __loops)
+{
+	unsigned long loops = (unsigned long)__loops;
 
-	यंत्र अस्थिर(
+	asm volatile(
 		"	test %0,%0	\n"
 		"	jz 3f		\n"
 		"	jmp 1f		\n"
@@ -55,24 +54,24 @@
 		"	jnz 2b		\n"
 		"3:	dec %0		\n"
 
-		: /* we करोn't need output */
+		: /* we don't need output */
 		:"a" (loops)
 	);
-पूर्ण
+}
 
 /* TSC based delay: */
-अटल व्योम delay_tsc(u64 cycles)
-अणु
-	u64 bघड़ी, now;
-	पूर्णांक cpu;
+static void delay_tsc(u64 cycles)
+{
+	u64 bclock, now;
+	int cpu;
 
 	preempt_disable();
 	cpu = smp_processor_id();
-	bघड़ी = rdtsc_ordered();
-	क्रम (;;) अणु
+	bclock = rdtsc_ordered();
+	for (;;) {
 		now = rdtsc_ordered();
-		अगर ((now - bघड़ी) >= cycles)
-			अवरोध;
+		if ((now - bclock) >= cycles)
+			break;
 
 		/* Allow RT tasks to run */
 		preempt_enable();
@@ -82,29 +81,29 @@
 		/*
 		 * It is possible that we moved to another CPU, and
 		 * since TSC's are per-cpu we need to calculate
-		 * that. The delay must guarantee that we रुको "at
-		 * least" the amount of समय. Being moved to another
-		 * CPU could make the रुको दीर्घer but we just need to
-		 * make sure we रुकोed दीर्घ enough. Rebalance the
-		 * counter क्रम this CPU.
+		 * that. The delay must guarantee that we wait "at
+		 * least" the amount of time. Being moved to another
+		 * CPU could make the wait longer but we just need to
+		 * make sure we waited long enough. Rebalance the
+		 * counter for this CPU.
 		 */
-		अगर (unlikely(cpu != smp_processor_id())) अणु
-			cycles -= (now - bघड़ी);
+		if (unlikely(cpu != smp_processor_id())) {
+			cycles -= (now - bclock);
 			cpu = smp_processor_id();
-			bघड़ी = rdtsc_ordered();
-		पूर्ण
-	पूर्ण
+			bclock = rdtsc_ordered();
+		}
+	}
 	preempt_enable();
-पूर्ण
+}
 
 /*
- * On Intel the TPAUSE inकाष्ठाion रुकोs until any of:
+ * On Intel the TPAUSE instruction waits until any of:
  * 1) the TSC counter exceeds the value provided in EDX:EAX
- * 2) global समयout in IA32_UMWAIT_CONTROL is exceeded
- * 3) an बाह्यal पूर्णांकerrupt occurs
+ * 2) global timeout in IA32_UMWAIT_CONTROL is exceeded
+ * 3) an external interrupt occurs
  */
-अटल व्योम delay_halt_tछोड़ो(u64 start, u64 cycles)
-अणु
+static void delay_halt_tpause(u64 start, u64 cycles)
+{
 	u64 until = start + cycles;
 	u32 eax, edx;
 
@@ -112,121 +111,121 @@
 	edx = upper_32_bits(until);
 
 	/*
-	 * Hard code the deeper (C0.2) sleep state because निकास latency is
+	 * Hard code the deeper (C0.2) sleep state because exit latency is
 	 * small compared to the "microseconds" that usleep() will delay.
 	 */
-	__tछोड़ो(TPAUSE_C02_STATE, edx, eax);
-पूर्ण
+	__tpause(TPAUSE_C02_STATE, edx, eax);
+}
 
 /*
- * On some AMD platक्रमms, MWAITX has a configurable 32-bit समयr, that
+ * On some AMD platforms, MWAITX has a configurable 32-bit timer, that
  * counts with TSC frequency. The input value is the number of TSC cycles
- * to रुको. MWAITX will also निकास when the समयr expires.
+ * to wait. MWAITX will also exit when the timer expires.
  */
-अटल व्योम delay_halt_mरुकोx(u64 unused, u64 cycles)
-अणु
+static void delay_halt_mwaitx(u64 unused, u64 cycles)
+{
 	u64 delay;
 
 	delay = min_t(u64, MWAITX_MAX_WAIT_CYCLES, cycles);
 	/*
-	 * Use cpu_tss_rw as a cacheline-aligned, selकरोmly accessed per-cpu
+	 * Use cpu_tss_rw as a cacheline-aligned, seldomly accessed per-cpu
 	 * variable as the monitor target.
 	 */
 	 __monitorx(raw_cpu_ptr(&cpu_tss_rw), 0, 0);
 
 	/*
-	 * AMD, like Intel, supports the EAX hपूर्णांक and EAX=0xf means, करो not
+	 * AMD, like Intel, supports the EAX hint and EAX=0xf means, do not
 	 * enter any deep C-state and we use it here in delay() to minimize
 	 * wakeup latency.
 	 */
-	__mरुकोx(MWAITX_DISABLE_CSTATES, delay, MWAITX_ECX_TIMER_ENABLE);
-पूर्ण
+	__mwaitx(MWAITX_DISABLE_CSTATES, delay, MWAITX_ECX_TIMER_ENABLE);
+}
 
 /*
- * Call a venकरोr specअगरic function to delay क्रम a given amount of समय. Because
- * these functions may वापस earlier than requested, check क्रम actual elapsed
- * समय and call again until करोne.
+ * Call a vendor specific function to delay for a given amount of time. Because
+ * these functions may return earlier than requested, check for actual elapsed
+ * time and call again until done.
  */
-अटल व्योम delay_halt(u64 __cycles)
-अणु
+static void delay_halt(u64 __cycles)
+{
 	u64 start, end, cycles = __cycles;
 
 	/*
-	 * Timer value of 0 causes MWAITX to रुको indefinitely, unless there
+	 * Timer value of 0 causes MWAITX to wait indefinitely, unless there
 	 * is a store on the memory monitored by MONITORX.
 	 */
-	अगर (!cycles)
-		वापस;
+	if (!cycles)
+		return;
 
 	start = rdtsc_ordered();
 
-	क्रम (;;) अणु
+	for (;;) {
 		delay_halt_fn(start, cycles);
 		end = rdtsc_ordered();
 
-		अगर (cycles <= end - start)
-			अवरोध;
+		if (cycles <= end - start)
+			break;
 
 		cycles -= end - start;
 		start = end;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम __init use_tsc_delay(व्योम)
-अणु
-	अगर (delay_fn == delay_loop)
+void __init use_tsc_delay(void)
+{
+	if (delay_fn == delay_loop)
 		delay_fn = delay_tsc;
-पूर्ण
+}
 
-व्योम __init use_tछोड़ो_delay(व्योम)
-अणु
-	delay_halt_fn = delay_halt_tछोड़ो;
+void __init use_tpause_delay(void)
+{
+	delay_halt_fn = delay_halt_tpause;
 	delay_fn = delay_halt;
-पूर्ण
+}
 
-व्योम use_mरुकोx_delay(व्योम)
-अणु
-	delay_halt_fn = delay_halt_mरुकोx;
+void use_mwaitx_delay(void)
+{
+	delay_halt_fn = delay_halt_mwaitx;
 	delay_fn = delay_halt;
-पूर्ण
+}
 
-पूर्णांक पढ़ो_current_समयr(अचिन्हित दीर्घ *समयr_val)
-अणु
-	अगर (delay_fn == delay_tsc) अणु
-		*समयr_val = rdtsc();
-		वापस 0;
-	पूर्ण
-	वापस -1;
-पूर्ण
+int read_current_timer(unsigned long *timer_val)
+{
+	if (delay_fn == delay_tsc) {
+		*timer_val = rdtsc();
+		return 0;
+	}
+	return -1;
+}
 
-व्योम __delay(अचिन्हित दीर्घ loops)
-अणु
+void __delay(unsigned long loops)
+{
 	delay_fn(loops);
-पूर्ण
+}
 EXPORT_SYMBOL(__delay);
 
-noअंतरभूत व्योम __स्थिर_udelay(अचिन्हित दीर्घ xloops)
-अणु
-	अचिन्हित दीर्घ lpj = this_cpu_पढ़ो(cpu_info.loops_per_jअगरfy) ? : loops_per_jअगरfy;
-	पूर्णांक d0;
+noinline void __const_udelay(unsigned long xloops)
+{
+	unsigned long lpj = this_cpu_read(cpu_info.loops_per_jiffy) ? : loops_per_jiffy;
+	int d0;
 
 	xloops *= 4;
-	यंत्र("mull %%edx"
+	asm("mull %%edx"
 		:"=d" (xloops), "=&a" (d0)
 		:"1" (xloops), "0" (lpj * (HZ / 4)));
 
 	__delay(++xloops);
-पूर्ण
-EXPORT_SYMBOL(__स्थिर_udelay);
+}
+EXPORT_SYMBOL(__const_udelay);
 
-व्योम __udelay(अचिन्हित दीर्घ usecs)
-अणु
-	__स्थिर_udelay(usecs * 0x000010c7); /* 2**32 / 1000000 (rounded up) */
-पूर्ण
+void __udelay(unsigned long usecs)
+{
+	__const_udelay(usecs * 0x000010c7); /* 2**32 / 1000000 (rounded up) */
+}
 EXPORT_SYMBOL(__udelay);
 
-व्योम __ndelay(अचिन्हित दीर्घ nsecs)
-अणु
-	__स्थिर_udelay(nsecs * 0x00005); /* 2**32 / 1000000000 (rounded up) */
-पूर्ण
+void __ndelay(unsigned long nsecs)
+{
+	__const_udelay(nsecs * 0x00005); /* 2**32 / 1000000000 (rounded up) */
+}
 EXPORT_SYMBOL(__ndelay);

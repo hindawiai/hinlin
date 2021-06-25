@@ -1,630 +1,629 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2017 NVIDIA CORPORATION.  All rights reserved.
  */
 
-#समावेश <linux/iommu.h>
+#include <linux/iommu.h>
 
-#समावेश <drm/drm_atomic.h>
-#समावेश <drm/drm_atomic_helper.h>
-#समावेश <drm/drm_fourcc.h>
-#समावेश <drm/drm_gem_atomic_helper.h>
-#समावेश <drm/drm_plane_helper.h>
+#include <drm/drm_atomic.h>
+#include <drm/drm_atomic_helper.h>
+#include <drm/drm_fourcc.h>
+#include <drm/drm_gem_atomic_helper.h>
+#include <drm/drm_plane_helper.h>
 
-#समावेश "dc.h"
-#समावेश "plane.h"
+#include "dc.h"
+#include "plane.h"
 
-अटल व्योम tegra_plane_destroy(काष्ठा drm_plane *plane)
-अणु
-	काष्ठा tegra_plane *p = to_tegra_plane(plane);
+static void tegra_plane_destroy(struct drm_plane *plane)
+{
+	struct tegra_plane *p = to_tegra_plane(plane);
 
 	drm_plane_cleanup(plane);
-	kमुक्त(p);
-पूर्ण
+	kfree(p);
+}
 
-अटल व्योम tegra_plane_reset(काष्ठा drm_plane *plane)
-अणु
-	काष्ठा tegra_plane *p = to_tegra_plane(plane);
-	काष्ठा tegra_plane_state *state;
-	अचिन्हित पूर्णांक i;
+static void tegra_plane_reset(struct drm_plane *plane)
+{
+	struct tegra_plane *p = to_tegra_plane(plane);
+	struct tegra_plane_state *state;
+	unsigned int i;
 
-	अगर (plane->state)
+	if (plane->state)
 		__drm_atomic_helper_plane_destroy_state(plane->state);
 
-	kमुक्त(plane->state);
-	plane->state = शून्य;
+	kfree(plane->state);
+	plane->state = NULL;
 
-	state = kzalloc(माप(*state), GFP_KERNEL);
-	अगर (state) अणु
+	state = kzalloc(sizeof(*state), GFP_KERNEL);
+	if (state) {
 		plane->state = &state->base;
 		plane->state->plane = plane;
 		plane->state->zpos = p->index;
 		plane->state->normalized_zpos = p->index;
 
-		क्रम (i = 0; i < 3; i++)
+		for (i = 0; i < 3; i++)
 			state->iova[i] = DMA_MAPPING_ERROR;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल काष्ठा drm_plane_state *
-tegra_plane_atomic_duplicate_state(काष्ठा drm_plane *plane)
-अणु
-	काष्ठा tegra_plane_state *state = to_tegra_plane_state(plane->state);
-	काष्ठा tegra_plane_state *copy;
-	अचिन्हित पूर्णांक i;
+static struct drm_plane_state *
+tegra_plane_atomic_duplicate_state(struct drm_plane *plane)
+{
+	struct tegra_plane_state *state = to_tegra_plane_state(plane->state);
+	struct tegra_plane_state *copy;
+	unsigned int i;
 
-	copy = kदो_स्मृति(माप(*copy), GFP_KERNEL);
-	अगर (!copy)
-		वापस शून्य;
+	copy = kmalloc(sizeof(*copy), GFP_KERNEL);
+	if (!copy)
+		return NULL;
 
 	__drm_atomic_helper_plane_duplicate_state(plane, &copy->base);
 	copy->tiling = state->tiling;
-	copy->क्रमmat = state->क्रमmat;
+	copy->format = state->format;
 	copy->swap = state->swap;
 	copy->reflect_x = state->reflect_x;
 	copy->reflect_y = state->reflect_y;
 	copy->opaque = state->opaque;
 
-	क्रम (i = 0; i < 2; i++)
+	for (i = 0; i < 2; i++)
 		copy->blending[i] = state->blending[i];
 
-	क्रम (i = 0; i < 3; i++) अणु
+	for (i = 0; i < 3; i++) {
 		copy->iova[i] = DMA_MAPPING_ERROR;
-		copy->sgt[i] = शून्य;
-	पूर्ण
+		copy->sgt[i] = NULL;
+	}
 
-	वापस &copy->base;
-पूर्ण
+	return &copy->base;
+}
 
-अटल व्योम tegra_plane_atomic_destroy_state(काष्ठा drm_plane *plane,
-					     काष्ठा drm_plane_state *state)
-अणु
+static void tegra_plane_atomic_destroy_state(struct drm_plane *plane,
+					     struct drm_plane_state *state)
+{
 	__drm_atomic_helper_plane_destroy_state(state);
-	kमुक्त(state);
-पूर्ण
+	kfree(state);
+}
 
-अटल bool tegra_plane_supports_sector_layout(काष्ठा drm_plane *plane)
-अणु
-	काष्ठा drm_crtc *crtc;
+static bool tegra_plane_supports_sector_layout(struct drm_plane *plane)
+{
+	struct drm_crtc *crtc;
 
-	drm_क्रम_each_crtc(crtc, plane->dev) अणु
-		अगर (plane->possible_crtcs & drm_crtc_mask(crtc)) अणु
-			काष्ठा tegra_dc *dc = to_tegra_dc(crtc);
+	drm_for_each_crtc(crtc, plane->dev) {
+		if (plane->possible_crtcs & drm_crtc_mask(crtc)) {
+			struct tegra_dc *dc = to_tegra_dc(crtc);
 
-			अगर (!dc->soc->supports_sector_layout)
-				वापस false;
-		पूर्ण
-	पूर्ण
+			if (!dc->soc->supports_sector_layout)
+				return false;
+		}
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool tegra_plane_क्रमmat_mod_supported(काष्ठा drm_plane *plane,
-					     uपूर्णांक32_t क्रमmat,
-					     uपूर्णांक64_t modअगरier)
-अणु
-	स्थिर काष्ठा drm_क्रमmat_info *info = drm_क्रमmat_info(क्रमmat);
+static bool tegra_plane_format_mod_supported(struct drm_plane *plane,
+					     uint32_t format,
+					     uint64_t modifier)
+{
+	const struct drm_format_info *info = drm_format_info(format);
 
-	अगर (modअगरier == DRM_FORMAT_MOD_LINEAR)
-		वापस true;
+	if (modifier == DRM_FORMAT_MOD_LINEAR)
+		return true;
 
-	/* check क्रम the sector layout bit */
-	अगर ((modअगरier >> 56) == DRM_FORMAT_MOD_VENDOR_NVIDIA) अणु
-		अगर (modअगरier & DRM_FORMAT_MOD_NVIDIA_SECTOR_LAYOUT) अणु
-			अगर (!tegra_plane_supports_sector_layout(plane))
-				वापस false;
-		पूर्ण
-	पूर्ण
+	/* check for the sector layout bit */
+	if ((modifier >> 56) == DRM_FORMAT_MOD_VENDOR_NVIDIA) {
+		if (modifier & DRM_FORMAT_MOD_NVIDIA_SECTOR_LAYOUT) {
+			if (!tegra_plane_supports_sector_layout(plane))
+				return false;
+		}
+	}
 
-	अगर (info->num_planes == 1)
-		वापस true;
+	if (info->num_planes == 1)
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-स्थिर काष्ठा drm_plane_funcs tegra_plane_funcs = अणु
+const struct drm_plane_funcs tegra_plane_funcs = {
 	.update_plane = drm_atomic_helper_update_plane,
 	.disable_plane = drm_atomic_helper_disable_plane,
 	.destroy = tegra_plane_destroy,
 	.reset = tegra_plane_reset,
 	.atomic_duplicate_state = tegra_plane_atomic_duplicate_state,
 	.atomic_destroy_state = tegra_plane_atomic_destroy_state,
-	.क्रमmat_mod_supported = tegra_plane_क्रमmat_mod_supported,
-पूर्ण;
+	.format_mod_supported = tegra_plane_format_mod_supported,
+};
 
-अटल पूर्णांक tegra_dc_pin(काष्ठा tegra_dc *dc, काष्ठा tegra_plane_state *state)
-अणु
-	काष्ठा iommu_करोमुख्य *करोमुख्य = iommu_get_करोमुख्य_क्रम_dev(dc->dev);
-	अचिन्हित पूर्णांक i;
-	पूर्णांक err;
+static int tegra_dc_pin(struct tegra_dc *dc, struct tegra_plane_state *state)
+{
+	struct iommu_domain *domain = iommu_get_domain_for_dev(dc->dev);
+	unsigned int i;
+	int err;
 
-	क्रम (i = 0; i < state->base.fb->क्रमmat->num_planes; i++) अणु
-		काष्ठा tegra_bo *bo = tegra_fb_get_plane(state->base.fb, i);
+	for (i = 0; i < state->base.fb->format->num_planes; i++) {
+		struct tegra_bo *bo = tegra_fb_get_plane(state->base.fb, i);
 		dma_addr_t phys_addr, *phys;
-		काष्ठा sg_table *sgt;
+		struct sg_table *sgt;
 
 		/*
-		 * If we're not attached to a करोमुख्य, we alपढ़ोy stored the
+		 * If we're not attached to a domain, we already stored the
 		 * physical address when the buffer was allocated. If we're
 		 * part of a group that's shared between all display
-		 * controllers, we've also alपढ़ोy mapped the framebuffer
-		 * through the SMMU. In both हालs we can लघु-circuit the
+		 * controllers, we've also already mapped the framebuffer
+		 * through the SMMU. In both cases we can short-circuit the
 		 * code below and retrieve the stored IOV address.
 		 */
-		अगर (!करोमुख्य || dc->client.group)
+		if (!domain || dc->client.group)
 			phys = &phys_addr;
-		अन्यथा
-			phys = शून्य;
+		else
+			phys = NULL;
 
 		sgt = host1x_bo_pin(dc->dev, &bo->base, phys);
-		अगर (IS_ERR(sgt)) अणु
+		if (IS_ERR(sgt)) {
 			err = PTR_ERR(sgt);
-			जाओ unpin;
-		पूर्ण
+			goto unpin;
+		}
 
-		अगर (sgt) अणु
+		if (sgt) {
 			err = dma_map_sgtable(dc->dev, sgt, DMA_TO_DEVICE, 0);
-			अगर (err)
-				जाओ unpin;
+			if (err)
+				goto unpin;
 
 			/*
 			 * The display controller needs contiguous memory, so
-			 * fail अगर the buffer is discontiguous and we fail to
+			 * fail if the buffer is discontiguous and we fail to
 			 * map its SG table to a single contiguous chunk of
-			 * I/O भव memory.
+			 * I/O virtual memory.
 			 */
-			अगर (sgt->nents > 1) अणु
+			if (sgt->nents > 1) {
 				err = -EINVAL;
-				जाओ unpin;
-			पूर्ण
+				goto unpin;
+			}
 
 			state->iova[i] = sg_dma_address(sgt->sgl);
 			state->sgt[i] = sgt;
-		पूर्ण अन्यथा अणु
+		} else {
 			state->iova[i] = phys_addr;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
+	return 0;
 
 unpin:
 	dev_err(dc->dev, "failed to map plane %u: %d\n", i, err);
 
-	जबतक (i--) अणु
-		काष्ठा tegra_bo *bo = tegra_fb_get_plane(state->base.fb, i);
-		काष्ठा sg_table *sgt = state->sgt[i];
+	while (i--) {
+		struct tegra_bo *bo = tegra_fb_get_plane(state->base.fb, i);
+		struct sg_table *sgt = state->sgt[i];
 
-		अगर (sgt)
+		if (sgt)
 			dma_unmap_sgtable(dc->dev, sgt, DMA_TO_DEVICE, 0);
 
 		host1x_bo_unpin(dc->dev, &bo->base, sgt);
 		state->iova[i] = DMA_MAPPING_ERROR;
-		state->sgt[i] = शून्य;
-	पूर्ण
+		state->sgt[i] = NULL;
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम tegra_dc_unpin(काष्ठा tegra_dc *dc, काष्ठा tegra_plane_state *state)
-अणु
-	अचिन्हित पूर्णांक i;
+static void tegra_dc_unpin(struct tegra_dc *dc, struct tegra_plane_state *state)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < state->base.fb->क्रमmat->num_planes; i++) अणु
-		काष्ठा tegra_bo *bo = tegra_fb_get_plane(state->base.fb, i);
-		काष्ठा sg_table *sgt = state->sgt[i];
+	for (i = 0; i < state->base.fb->format->num_planes; i++) {
+		struct tegra_bo *bo = tegra_fb_get_plane(state->base.fb, i);
+		struct sg_table *sgt = state->sgt[i];
 
-		अगर (sgt)
+		if (sgt)
 			dma_unmap_sgtable(dc->dev, sgt, DMA_TO_DEVICE, 0);
 
 		host1x_bo_unpin(dc->dev, &bo->base, sgt);
 		state->iova[i] = DMA_MAPPING_ERROR;
-		state->sgt[i] = शून्य;
-	पूर्ण
-पूर्ण
+		state->sgt[i] = NULL;
+	}
+}
 
-पूर्णांक tegra_plane_prepare_fb(काष्ठा drm_plane *plane,
-			   काष्ठा drm_plane_state *state)
-अणु
-	काष्ठा tegra_dc *dc = to_tegra_dc(state->crtc);
+int tegra_plane_prepare_fb(struct drm_plane *plane,
+			   struct drm_plane_state *state)
+{
+	struct tegra_dc *dc = to_tegra_dc(state->crtc);
 
-	अगर (!state->fb)
-		वापस 0;
+	if (!state->fb)
+		return 0;
 
 	drm_gem_plane_helper_prepare_fb(plane, state);
 
-	वापस tegra_dc_pin(dc, to_tegra_plane_state(state));
-पूर्ण
+	return tegra_dc_pin(dc, to_tegra_plane_state(state));
+}
 
-व्योम tegra_plane_cleanup_fb(काष्ठा drm_plane *plane,
-			    काष्ठा drm_plane_state *state)
-अणु
-	काष्ठा tegra_dc *dc = to_tegra_dc(state->crtc);
+void tegra_plane_cleanup_fb(struct drm_plane *plane,
+			    struct drm_plane_state *state)
+{
+	struct tegra_dc *dc = to_tegra_dc(state->crtc);
 
-	अगर (dc)
+	if (dc)
 		tegra_dc_unpin(dc, to_tegra_plane_state(state));
-पूर्ण
+}
 
-पूर्णांक tegra_plane_state_add(काष्ठा tegra_plane *plane,
-			  काष्ठा drm_plane_state *state)
-अणु
-	काष्ठा drm_crtc_state *crtc_state;
-	काष्ठा tegra_dc_state *tegra;
-	पूर्णांक err;
+int tegra_plane_state_add(struct tegra_plane *plane,
+			  struct drm_plane_state *state)
+{
+	struct drm_crtc_state *crtc_state;
+	struct tegra_dc_state *tegra;
+	int err;
 
 	/* Propagate errors from allocation or locking failures. */
 	crtc_state = drm_atomic_get_crtc_state(state->state, state->crtc);
-	अगर (IS_ERR(crtc_state))
-		वापस PTR_ERR(crtc_state);
+	if (IS_ERR(crtc_state))
+		return PTR_ERR(crtc_state);
 
-	/* Check plane state क्रम visibility and calculate clipping bounds */
+	/* Check plane state for visibility and calculate clipping bounds */
 	err = drm_atomic_helper_check_plane_state(state, crtc_state,
-						  0, पूर्णांक_उच्च, true, true);
-	अगर (err < 0)
-		वापस err;
+						  0, INT_MAX, true, true);
+	if (err < 0)
+		return err;
 
 	tegra = to_dc_state(crtc_state);
 
 	tegra->planes |= WIN_A_ACT_REQ << plane->index;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक tegra_plane_क्रमmat(u32 fourcc, u32 *क्रमmat, u32 *swap)
-अणु
+int tegra_plane_format(u32 fourcc, u32 *format, u32 *swap)
+{
 	/* assume no swapping of fetched data */
-	अगर (swap)
+	if (swap)
 		*swap = BYTE_SWAP_NOSWAP;
 
-	चयन (fourcc) अणु
-	हाल DRM_FORMAT_ARGB4444:
-		*क्रमmat = WIN_COLOR_DEPTH_B4G4R4A4;
-		अवरोध;
+	switch (fourcc) {
+	case DRM_FORMAT_ARGB4444:
+		*format = WIN_COLOR_DEPTH_B4G4R4A4;
+		break;
 
-	हाल DRM_FORMAT_ARGB1555:
-		*क्रमmat = WIN_COLOR_DEPTH_B5G5R5A1;
-		अवरोध;
+	case DRM_FORMAT_ARGB1555:
+		*format = WIN_COLOR_DEPTH_B5G5R5A1;
+		break;
 
-	हाल DRM_FORMAT_RGB565:
-		*क्रमmat = WIN_COLOR_DEPTH_B5G6R5;
-		अवरोध;
+	case DRM_FORMAT_RGB565:
+		*format = WIN_COLOR_DEPTH_B5G6R5;
+		break;
 
-	हाल DRM_FORMAT_RGBA5551:
-		*क्रमmat = WIN_COLOR_DEPTH_A1B5G5R5;
-		अवरोध;
+	case DRM_FORMAT_RGBA5551:
+		*format = WIN_COLOR_DEPTH_A1B5G5R5;
+		break;
 
-	हाल DRM_FORMAT_ARGB8888:
-		*क्रमmat = WIN_COLOR_DEPTH_B8G8R8A8;
-		अवरोध;
+	case DRM_FORMAT_ARGB8888:
+		*format = WIN_COLOR_DEPTH_B8G8R8A8;
+		break;
 
-	हाल DRM_FORMAT_ABGR8888:
-		*क्रमmat = WIN_COLOR_DEPTH_R8G8B8A8;
-		अवरोध;
+	case DRM_FORMAT_ABGR8888:
+		*format = WIN_COLOR_DEPTH_R8G8B8A8;
+		break;
 
-	हाल DRM_FORMAT_ABGR4444:
-		*क्रमmat = WIN_COLOR_DEPTH_R4G4B4A4;
-		अवरोध;
+	case DRM_FORMAT_ABGR4444:
+		*format = WIN_COLOR_DEPTH_R4G4B4A4;
+		break;
 
-	हाल DRM_FORMAT_ABGR1555:
-		*क्रमmat = WIN_COLOR_DEPTH_R5G5B5A;
-		अवरोध;
+	case DRM_FORMAT_ABGR1555:
+		*format = WIN_COLOR_DEPTH_R5G5B5A;
+		break;
 
-	हाल DRM_FORMAT_BGRA5551:
-		*क्रमmat = WIN_COLOR_DEPTH_AR5G5B5;
-		अवरोध;
+	case DRM_FORMAT_BGRA5551:
+		*format = WIN_COLOR_DEPTH_AR5G5B5;
+		break;
 
-	हाल DRM_FORMAT_XRGB1555:
-		*क्रमmat = WIN_COLOR_DEPTH_B5G5R5X1;
-		अवरोध;
+	case DRM_FORMAT_XRGB1555:
+		*format = WIN_COLOR_DEPTH_B5G5R5X1;
+		break;
 
-	हाल DRM_FORMAT_RGBX5551:
-		*क्रमmat = WIN_COLOR_DEPTH_X1B5G5R5;
-		अवरोध;
+	case DRM_FORMAT_RGBX5551:
+		*format = WIN_COLOR_DEPTH_X1B5G5R5;
+		break;
 
-	हाल DRM_FORMAT_XBGR1555:
-		*क्रमmat = WIN_COLOR_DEPTH_R5G5B5X1;
-		अवरोध;
+	case DRM_FORMAT_XBGR1555:
+		*format = WIN_COLOR_DEPTH_R5G5B5X1;
+		break;
 
-	हाल DRM_FORMAT_BGRX5551:
-		*क्रमmat = WIN_COLOR_DEPTH_X1R5G5B5;
-		अवरोध;
+	case DRM_FORMAT_BGRX5551:
+		*format = WIN_COLOR_DEPTH_X1R5G5B5;
+		break;
 
-	हाल DRM_FORMAT_BGR565:
-		*क्रमmat = WIN_COLOR_DEPTH_R5G6B5;
-		अवरोध;
+	case DRM_FORMAT_BGR565:
+		*format = WIN_COLOR_DEPTH_R5G6B5;
+		break;
 
-	हाल DRM_FORMAT_BGRA8888:
-		*क्रमmat = WIN_COLOR_DEPTH_A8R8G8B8;
-		अवरोध;
+	case DRM_FORMAT_BGRA8888:
+		*format = WIN_COLOR_DEPTH_A8R8G8B8;
+		break;
 
-	हाल DRM_FORMAT_RGBA8888:
-		*क्रमmat = WIN_COLOR_DEPTH_A8B8G8R8;
-		अवरोध;
+	case DRM_FORMAT_RGBA8888:
+		*format = WIN_COLOR_DEPTH_A8B8G8R8;
+		break;
 
-	हाल DRM_FORMAT_XRGB8888:
-		*क्रमmat = WIN_COLOR_DEPTH_B8G8R8X8;
-		अवरोध;
+	case DRM_FORMAT_XRGB8888:
+		*format = WIN_COLOR_DEPTH_B8G8R8X8;
+		break;
 
-	हाल DRM_FORMAT_XBGR8888:
-		*क्रमmat = WIN_COLOR_DEPTH_R8G8B8X8;
-		अवरोध;
+	case DRM_FORMAT_XBGR8888:
+		*format = WIN_COLOR_DEPTH_R8G8B8X8;
+		break;
 
-	हाल DRM_FORMAT_UYVY:
-		*क्रमmat = WIN_COLOR_DEPTH_YCbCr422;
-		अवरोध;
+	case DRM_FORMAT_UYVY:
+		*format = WIN_COLOR_DEPTH_YCbCr422;
+		break;
 
-	हाल DRM_FORMAT_YUYV:
-		अगर (!swap)
-			वापस -EINVAL;
+	case DRM_FORMAT_YUYV:
+		if (!swap)
+			return -EINVAL;
 
-		*क्रमmat = WIN_COLOR_DEPTH_YCbCr422;
+		*format = WIN_COLOR_DEPTH_YCbCr422;
 		*swap = BYTE_SWAP_SWAP2;
-		अवरोध;
+		break;
 
-	हाल DRM_FORMAT_YUV420:
-		*क्रमmat = WIN_COLOR_DEPTH_YCbCr420P;
-		अवरोध;
+	case DRM_FORMAT_YUV420:
+		*format = WIN_COLOR_DEPTH_YCbCr420P;
+		break;
 
-	हाल DRM_FORMAT_YUV422:
-		*क्रमmat = WIN_COLOR_DEPTH_YCbCr422P;
-		अवरोध;
+	case DRM_FORMAT_YUV422:
+		*format = WIN_COLOR_DEPTH_YCbCr422P;
+		break;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-bool tegra_plane_क्रमmat_is_yuv(अचिन्हित पूर्णांक क्रमmat, bool *planar)
-अणु
-	चयन (क्रमmat) अणु
-	हाल WIN_COLOR_DEPTH_YCbCr422:
-	हाल WIN_COLOR_DEPTH_YUV422:
-		अगर (planar)
+bool tegra_plane_format_is_yuv(unsigned int format, bool *planar)
+{
+	switch (format) {
+	case WIN_COLOR_DEPTH_YCbCr422:
+	case WIN_COLOR_DEPTH_YUV422:
+		if (planar)
 			*planar = false;
 
-		वापस true;
+		return true;
 
-	हाल WIN_COLOR_DEPTH_YCbCr420P:
-	हाल WIN_COLOR_DEPTH_YUV420P:
-	हाल WIN_COLOR_DEPTH_YCbCr422P:
-	हाल WIN_COLOR_DEPTH_YUV422P:
-	हाल WIN_COLOR_DEPTH_YCbCr422R:
-	हाल WIN_COLOR_DEPTH_YUV422R:
-	हाल WIN_COLOR_DEPTH_YCbCr422RA:
-	हाल WIN_COLOR_DEPTH_YUV422RA:
-		अगर (planar)
+	case WIN_COLOR_DEPTH_YCbCr420P:
+	case WIN_COLOR_DEPTH_YUV420P:
+	case WIN_COLOR_DEPTH_YCbCr422P:
+	case WIN_COLOR_DEPTH_YUV422P:
+	case WIN_COLOR_DEPTH_YCbCr422R:
+	case WIN_COLOR_DEPTH_YUV422R:
+	case WIN_COLOR_DEPTH_YCbCr422RA:
+	case WIN_COLOR_DEPTH_YUV422RA:
+		if (planar)
 			*planar = true;
 
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	अगर (planar)
+	if (planar)
 		*planar = false;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल bool __drm_क्रमmat_has_alpha(u32 क्रमmat)
-अणु
-	चयन (क्रमmat) अणु
-	हाल DRM_FORMAT_ARGB1555:
-	हाल DRM_FORMAT_RGBA5551:
-	हाल DRM_FORMAT_ABGR8888:
-	हाल DRM_FORMAT_ARGB8888:
-		वापस true;
-	पूर्ण
+static bool __drm_format_has_alpha(u32 format)
+{
+	switch (format) {
+	case DRM_FORMAT_ARGB1555:
+	case DRM_FORMAT_RGBA5551:
+	case DRM_FORMAT_ABGR8888:
+	case DRM_FORMAT_ARGB8888:
+		return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल पूर्णांक tegra_plane_क्रमmat_get_alpha(अचिन्हित पूर्णांक opaque,
-					अचिन्हित पूर्णांक *alpha)
-अणु
-	अगर (tegra_plane_क्रमmat_is_yuv(opaque, शून्य)) अणु
+static int tegra_plane_format_get_alpha(unsigned int opaque,
+					unsigned int *alpha)
+{
+	if (tegra_plane_format_is_yuv(opaque, NULL)) {
 		*alpha = opaque;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	चयन (opaque) अणु
-	हाल WIN_COLOR_DEPTH_B5G5R5X1:
+	switch (opaque) {
+	case WIN_COLOR_DEPTH_B5G5R5X1:
 		*alpha = WIN_COLOR_DEPTH_B5G5R5A1;
-		वापस 0;
+		return 0;
 
-	हाल WIN_COLOR_DEPTH_X1B5G5R5:
+	case WIN_COLOR_DEPTH_X1B5G5R5:
 		*alpha = WIN_COLOR_DEPTH_A1B5G5R5;
-		वापस 0;
+		return 0;
 
-	हाल WIN_COLOR_DEPTH_R8G8B8X8:
+	case WIN_COLOR_DEPTH_R8G8B8X8:
 		*alpha = WIN_COLOR_DEPTH_R8G8B8A8;
-		वापस 0;
+		return 0;
 
-	हाल WIN_COLOR_DEPTH_B8G8R8X8:
+	case WIN_COLOR_DEPTH_B8G8R8X8:
 		*alpha = WIN_COLOR_DEPTH_B8G8R8A8;
-		वापस 0;
+		return 0;
 
-	हाल WIN_COLOR_DEPTH_B5G6R5:
+	case WIN_COLOR_DEPTH_B5G6R5:
 		*alpha = opaque;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
 /*
- * This is applicable to Tegra20 and Tegra30 only where the opaque क्रमmats can
- * be emulated using the alpha क्रमmats and alpha blending disabled.
+ * This is applicable to Tegra20 and Tegra30 only where the opaque formats can
+ * be emulated using the alpha formats and alpha blending disabled.
  */
-अटल पूर्णांक tegra_plane_setup_opacity(काष्ठा tegra_plane *tegra,
-				     काष्ठा tegra_plane_state *state)
-अणु
-	अचिन्हित पूर्णांक क्रमmat;
-	पूर्णांक err;
+static int tegra_plane_setup_opacity(struct tegra_plane *tegra,
+				     struct tegra_plane_state *state)
+{
+	unsigned int format;
+	int err;
 
-	चयन (state->क्रमmat) अणु
-	हाल WIN_COLOR_DEPTH_B5G5R5A1:
-	हाल WIN_COLOR_DEPTH_A1B5G5R5:
-	हाल WIN_COLOR_DEPTH_R8G8B8A8:
-	हाल WIN_COLOR_DEPTH_B8G8R8A8:
+	switch (state->format) {
+	case WIN_COLOR_DEPTH_B5G5R5A1:
+	case WIN_COLOR_DEPTH_A1B5G5R5:
+	case WIN_COLOR_DEPTH_R8G8B8A8:
+	case WIN_COLOR_DEPTH_B8G8R8A8:
 		state->opaque = false;
-		अवरोध;
+		break;
 
-	शेष:
-		err = tegra_plane_क्रमmat_get_alpha(state->क्रमmat, &क्रमmat);
-		अगर (err < 0)
-			वापस err;
+	default:
+		err = tegra_plane_format_get_alpha(state->format, &format);
+		if (err < 0)
+			return err;
 
-		state->क्रमmat = क्रमmat;
+		state->format = format;
 		state->opaque = true;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tegra_plane_check_transparency(काष्ठा tegra_plane *tegra,
-					  काष्ठा tegra_plane_state *state)
-अणु
-	काष्ठा drm_plane_state *old, *plane_state;
-	काष्ठा drm_plane *plane;
+static int tegra_plane_check_transparency(struct tegra_plane *tegra,
+					  struct tegra_plane_state *state)
+{
+	struct drm_plane_state *old, *plane_state;
+	struct drm_plane *plane;
 
 	old = drm_atomic_get_old_plane_state(state->base.state, &tegra->base);
 
-	/* check अगर zpos / transparency changed */
-	अगर (old->normalized_zpos == state->base.normalized_zpos &&
+	/* check if zpos / transparency changed */
+	if (old->normalized_zpos == state->base.normalized_zpos &&
 	    to_tegra_plane_state(old)->opaque == state->opaque)
-		वापस 0;
+		return 0;
 
-	/* include all sibling planes पूर्णांकo this commit */
-	drm_क्रम_each_plane(plane, tegra->base.dev) अणु
-		काष्ठा tegra_plane *p = to_tegra_plane(plane);
+	/* include all sibling planes into this commit */
+	drm_for_each_plane(plane, tegra->base.dev) {
+		struct tegra_plane *p = to_tegra_plane(plane);
 
-		/* skip this plane and planes on dअगरferent CRTCs */
-		अगर (p == tegra || p->dc != tegra->dc)
-			जारी;
+		/* skip this plane and planes on different CRTCs */
+		if (p == tegra || p->dc != tegra->dc)
+			continue;
 
 		plane_state = drm_atomic_get_plane_state(state->base.state,
 							 plane);
-		अगर (IS_ERR(plane_state))
-			वापस PTR_ERR(plane_state);
-	पूर्ण
+		if (IS_ERR(plane_state))
+			return PTR_ERR(plane_state);
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल अचिन्हित पूर्णांक tegra_plane_get_overlap_index(काष्ठा tegra_plane *plane,
-						  काष्ठा tegra_plane *other)
-अणु
-	अचिन्हित पूर्णांक index = 0, i;
+static unsigned int tegra_plane_get_overlap_index(struct tegra_plane *plane,
+						  struct tegra_plane *other)
+{
+	unsigned int index = 0, i;
 
 	WARN_ON(plane == other);
 
-	क्रम (i = 0; i < 3; i++) अणु
-		अगर (i == plane->index)
-			जारी;
+	for (i = 0; i < 3; i++) {
+		if (i == plane->index)
+			continue;
 
-		अगर (i == other->index)
-			अवरोध;
+		if (i == other->index)
+			break;
 
 		index++;
-	पूर्ण
+	}
 
-	वापस index;
-पूर्ण
+	return index;
+}
 
-अटल व्योम tegra_plane_update_transparency(काष्ठा tegra_plane *tegra,
-					    काष्ठा tegra_plane_state *state)
-अणु
-	काष्ठा drm_plane_state *new;
-	काष्ठा drm_plane *plane;
-	अचिन्हित पूर्णांक i;
+static void tegra_plane_update_transparency(struct tegra_plane *tegra,
+					    struct tegra_plane_state *state)
+{
+	struct drm_plane_state *new;
+	struct drm_plane *plane;
+	unsigned int i;
 
-	क्रम_each_new_plane_in_state(state->base.state, plane, new, i) अणु
-		काष्ठा tegra_plane *p = to_tegra_plane(plane);
-		अचिन्हित index;
+	for_each_new_plane_in_state(state->base.state, plane, new, i) {
+		struct tegra_plane *p = to_tegra_plane(plane);
+		unsigned index;
 
-		/* skip this plane and planes on dअगरferent CRTCs */
-		अगर (p == tegra || p->dc != tegra->dc)
-			जारी;
+		/* skip this plane and planes on different CRTCs */
+		if (p == tegra || p->dc != tegra->dc)
+			continue;
 
 		index = tegra_plane_get_overlap_index(tegra, p);
 
-		अगर (new->fb && __drm_क्रमmat_has_alpha(new->fb->क्रमmat->क्रमmat))
+		if (new->fb && __drm_format_has_alpha(new->fb->format->format))
 			state->blending[index].alpha = true;
-		अन्यथा
+		else
 			state->blending[index].alpha = false;
 
-		अगर (new->normalized_zpos > state->base.normalized_zpos)
+		if (new->normalized_zpos > state->base.normalized_zpos)
 			state->blending[index].top = true;
-		अन्यथा
+		else
 			state->blending[index].top = false;
 
 		/*
 		 * Missing framebuffer means that plane is disabled, in this
-		 * हाल mark B / C winकरोw as top to be able to dअगरferentiate
-		 * winकरोws indices order in regards to zPos क्रम the middle
-		 * winकरोw X / Y रेजिस्टरs programming.
+		 * case mark B / C window as top to be able to differentiate
+		 * windows indices order in regards to zPos for the middle
+		 * window X / Y registers programming.
 		 */
-		अगर (!new->fb)
+		if (!new->fb)
 			state->blending[index].top = (index == 1);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक tegra_plane_setup_transparency(काष्ठा tegra_plane *tegra,
-					  काष्ठा tegra_plane_state *state)
-अणु
-	काष्ठा tegra_plane_state *tegra_state;
-	काष्ठा drm_plane_state *new;
-	काष्ठा drm_plane *plane;
-	पूर्णांक err;
+static int tegra_plane_setup_transparency(struct tegra_plane *tegra,
+					  struct tegra_plane_state *state)
+{
+	struct tegra_plane_state *tegra_state;
+	struct drm_plane_state *new;
+	struct drm_plane *plane;
+	int err;
 
 	/*
 	 * If planes zpos / transparency changed, sibling planes blending
-	 * state may require adjusपंचांगent and in this हाल they will be included
-	 * पूर्णांकo this atom commit, otherwise blending state is unchanged.
+	 * state may require adjustment and in this case they will be included
+	 * into this atom commit, otherwise blending state is unchanged.
 	 */
 	err = tegra_plane_check_transparency(tegra, state);
-	अगर (err <= 0)
-		वापस err;
+	if (err <= 0)
+		return err;
 
 	/*
 	 * All planes are now in the atomic state, walk them up and update
-	 * transparency state क्रम each plane.
+	 * transparency state for each plane.
 	 */
-	drm_क्रम_each_plane(plane, tegra->base.dev) अणु
-		काष्ठा tegra_plane *p = to_tegra_plane(plane);
+	drm_for_each_plane(plane, tegra->base.dev) {
+		struct tegra_plane *p = to_tegra_plane(plane);
 
-		/* skip planes on dअगरferent CRTCs */
-		अगर (p->dc != tegra->dc)
-			जारी;
+		/* skip planes on different CRTCs */
+		if (p->dc != tegra->dc)
+			continue;
 
 		new = drm_atomic_get_new_plane_state(state->base.state, plane);
 		tegra_state = to_tegra_plane_state(new);
 
 		/*
-		 * There is no need to update blending state क्रम the disabled
+		 * There is no need to update blending state for the disabled
 		 * plane.
 		 */
-		अगर (new->fb)
+		if (new->fb)
 			tegra_plane_update_transparency(p, tegra_state);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक tegra_plane_setup_legacy_state(काष्ठा tegra_plane *tegra,
-				   काष्ठा tegra_plane_state *state)
-अणु
-	पूर्णांक err;
+int tegra_plane_setup_legacy_state(struct tegra_plane *tegra,
+				   struct tegra_plane_state *state)
+{
+	int err;
 
 	err = tegra_plane_setup_opacity(tegra, state);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	err = tegra_plane_setup_transparency(tegra, state);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

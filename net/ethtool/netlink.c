@@ -1,237 +1,236 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 
-#समावेश <net/sock.h>
-#समावेश <linux/ethtool_netlink.h>
-#समावेश "netlink.h"
+#include <net/sock.h>
+#include <linux/ethtool_netlink.h>
+#include "netlink.h"
 
-अटल काष्ठा genl_family ethtool_genl_family;
+static struct genl_family ethtool_genl_family;
 
-अटल bool ethnl_ok __पढ़ो_mostly;
-अटल u32 ethnl_bcast_seq;
+static bool ethnl_ok __read_mostly;
+static u32 ethnl_bcast_seq;
 
-#घोषणा ETHTOOL_FLAGS_BASIC (ETHTOOL_FLAG_COMPACT_BITSETS |	\
+#define ETHTOOL_FLAGS_BASIC (ETHTOOL_FLAG_COMPACT_BITSETS |	\
 			     ETHTOOL_FLAG_OMIT_REPLY)
-#घोषणा ETHTOOL_FLAGS_STATS (ETHTOOL_FLAGS_BASIC | ETHTOOL_FLAG_STATS)
+#define ETHTOOL_FLAGS_STATS (ETHTOOL_FLAGS_BASIC | ETHTOOL_FLAG_STATS)
 
-स्थिर काष्ठा nla_policy ethnl_header_policy[] = अणु
-	[ETHTOOL_A_HEADER_DEV_INDEX]	= अणु .type = NLA_U32 पूर्ण,
-	[ETHTOOL_A_HEADER_DEV_NAME]	= अणु .type = NLA_NUL_STRING,
-					    .len = ALTIFNAMSIZ - 1 पूर्ण,
+const struct nla_policy ethnl_header_policy[] = {
+	[ETHTOOL_A_HEADER_DEV_INDEX]	= { .type = NLA_U32 },
+	[ETHTOOL_A_HEADER_DEV_NAME]	= { .type = NLA_NUL_STRING,
+					    .len = ALTIFNAMSIZ - 1 },
 	[ETHTOOL_A_HEADER_FLAGS]	= NLA_POLICY_MASK(NLA_U32,
 							  ETHTOOL_FLAGS_BASIC),
-पूर्ण;
+};
 
-स्थिर काष्ठा nla_policy ethnl_header_policy_stats[] = अणु
-	[ETHTOOL_A_HEADER_DEV_INDEX]	= अणु .type = NLA_U32 पूर्ण,
-	[ETHTOOL_A_HEADER_DEV_NAME]	= अणु .type = NLA_NUL_STRING,
-					    .len = ALTIFNAMSIZ - 1 पूर्ण,
+const struct nla_policy ethnl_header_policy_stats[] = {
+	[ETHTOOL_A_HEADER_DEV_INDEX]	= { .type = NLA_U32 },
+	[ETHTOOL_A_HEADER_DEV_NAME]	= { .type = NLA_NUL_STRING,
+					    .len = ALTIFNAMSIZ - 1 },
 	[ETHTOOL_A_HEADER_FLAGS]	= NLA_POLICY_MASK(NLA_U32,
 							  ETHTOOL_FLAGS_STATS),
-पूर्ण;
+};
 
 /**
  * ethnl_parse_header_dev_get() - parse request header
- * @req_info:    काष्ठाure to put results पूर्णांकo
+ * @req_info:    structure to put results into
  * @header:      nest attribute with request header
  * @net:         request netns
- * @extack:      netlink extack क्रम error reporting
- * @require_dev: fail अगर no device identअगरied in header
+ * @extack:      netlink extack for error reporting
+ * @require_dev: fail if no device identified in header
  *
- * Parse request header in nested attribute @nest and माला_दो results पूर्णांकo
- * the काष्ठाure poपूर्णांकed to by @req_info. Extack from @info is used क्रम error
- * reporting. If req_info->dev is not null on वापस, reference to it has
- * been taken. If error is वापसed, *req_info is null initialized and no
+ * Parse request header in nested attribute @nest and puts results into
+ * the structure pointed to by @req_info. Extack from @info is used for error
+ * reporting. If req_info->dev is not null on return, reference to it has
+ * been taken. If error is returned, *req_info is null initialized and no
  * reference is held.
  *
  * Return: 0 on success or negative error code
  */
-पूर्णांक ethnl_parse_header_dev_get(काष्ठा ethnl_req_info *req_info,
-			       स्थिर काष्ठा nlattr *header, काष्ठा net *net,
-			       काष्ठा netlink_ext_ack *extack, bool require_dev)
-अणु
-	काष्ठा nlattr *tb[ARRAY_SIZE(ethnl_header_policy)];
-	स्थिर काष्ठा nlattr *devname_attr;
-	काष्ठा net_device *dev = शून्य;
+int ethnl_parse_header_dev_get(struct ethnl_req_info *req_info,
+			       const struct nlattr *header, struct net *net,
+			       struct netlink_ext_ack *extack, bool require_dev)
+{
+	struct nlattr *tb[ARRAY_SIZE(ethnl_header_policy)];
+	const struct nlattr *devname_attr;
+	struct net_device *dev = NULL;
 	u32 flags = 0;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!header) अणु
+	if (!header) {
 		NL_SET_ERR_MSG(extack, "request header missing");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	/* No validation here, command policy should have a nested policy set
-	 * क्रम the header, thereक्रमe validation should have alपढ़ोy been करोne.
+	 * for the header, therefore validation should have already been done.
 	 */
 	ret = nla_parse_nested(tb, ARRAY_SIZE(ethnl_header_policy) - 1, header,
-			       शून्य, extack);
-	अगर (ret < 0)
-		वापस ret;
-	अगर (tb[ETHTOOL_A_HEADER_FLAGS])
+			       NULL, extack);
+	if (ret < 0)
+		return ret;
+	if (tb[ETHTOOL_A_HEADER_FLAGS])
 		flags = nla_get_u32(tb[ETHTOOL_A_HEADER_FLAGS]);
 
 	devname_attr = tb[ETHTOOL_A_HEADER_DEV_NAME];
-	अगर (tb[ETHTOOL_A_HEADER_DEV_INDEX]) अणु
-		u32 अगरindex = nla_get_u32(tb[ETHTOOL_A_HEADER_DEV_INDEX]);
+	if (tb[ETHTOOL_A_HEADER_DEV_INDEX]) {
+		u32 ifindex = nla_get_u32(tb[ETHTOOL_A_HEADER_DEV_INDEX]);
 
-		dev = dev_get_by_index(net, अगरindex);
-		अगर (!dev) अणु
+		dev = dev_get_by_index(net, ifindex);
+		if (!dev) {
 			NL_SET_ERR_MSG_ATTR(extack,
 					    tb[ETHTOOL_A_HEADER_DEV_INDEX],
 					    "no device matches ifindex");
-			वापस -ENODEV;
-		पूर्ण
-		/* अगर both अगरindex and अगरname are passed, they must match */
-		अगर (devname_attr &&
-		    म_भेदन(dev->name, nla_data(devname_attr), IFNAMSIZ)) अणु
+			return -ENODEV;
+		}
+		/* if both ifindex and ifname are passed, they must match */
+		if (devname_attr &&
+		    strncmp(dev->name, nla_data(devname_attr), IFNAMSIZ)) {
 			dev_put(dev);
 			NL_SET_ERR_MSG_ATTR(extack, header,
 					    "ifindex and name do not match");
-			वापस -ENODEV;
-		पूर्ण
-	पूर्ण अन्यथा अगर (devname_attr) अणु
+			return -ENODEV;
+		}
+	} else if (devname_attr) {
 		dev = dev_get_by_name(net, nla_data(devname_attr));
-		अगर (!dev) अणु
+		if (!dev) {
 			NL_SET_ERR_MSG_ATTR(extack, devname_attr,
 					    "no device matches name");
-			वापस -ENODEV;
-		पूर्ण
-	पूर्ण अन्यथा अगर (require_dev) अणु
+			return -ENODEV;
+		}
+	} else if (require_dev) {
 		NL_SET_ERR_MSG_ATTR(extack, header,
 				    "neither ifindex nor name specified");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (dev && !netअगर_device_present(dev)) अणु
+	if (dev && !netif_device_present(dev)) {
 		dev_put(dev);
 		NL_SET_ERR_MSG(extack, "device not present");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	req_info->dev = dev;
 	req_info->flags = flags;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * ethnl_fill_reply_header() - Put common header पूर्णांकo a reply message
+ * ethnl_fill_reply_header() - Put common header into a reply message
  * @skb:      skb with the message
  * @dev:      network device to describe in header
- * @attrtype: attribute type to use क्रम the nest
+ * @attrtype: attribute type to use for the nest
  *
  * Create a nested attribute with attributes describing given network device.
  *
  * Return: 0 on success, error value (-EMSGSIZE only) on error
  */
-पूर्णांक ethnl_fill_reply_header(काष्ठा sk_buff *skb, काष्ठा net_device *dev,
+int ethnl_fill_reply_header(struct sk_buff *skb, struct net_device *dev,
 			    u16 attrtype)
-अणु
-	काष्ठा nlattr *nest;
+{
+	struct nlattr *nest;
 
-	अगर (!dev)
-		वापस 0;
+	if (!dev)
+		return 0;
 	nest = nla_nest_start(skb, attrtype);
-	अगर (!nest)
-		वापस -EMSGSIZE;
+	if (!nest)
+		return -EMSGSIZE;
 
-	अगर (nla_put_u32(skb, ETHTOOL_A_HEADER_DEV_INDEX, (u32)dev->अगरindex) ||
+	if (nla_put_u32(skb, ETHTOOL_A_HEADER_DEV_INDEX, (u32)dev->ifindex) ||
 	    nla_put_string(skb, ETHTOOL_A_HEADER_DEV_NAME, dev->name))
-		जाओ nla_put_failure;
-	/* If more attributes are put पूर्णांकo reply header, ethnl_header_size()
-	 * must be updated to account क्रम them.
+		goto nla_put_failure;
+	/* If more attributes are put into reply header, ethnl_header_size()
+	 * must be updated to account for them.
 	 */
 
 	nla_nest_end(skb, nest);
-	वापस 0;
+	return 0;
 
 nla_put_failure:
 	nla_nest_cancel(skb, nest);
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
 /**
- * ethnl_reply_init() - Create skb क्रम a reply and fill device identअगरication
+ * ethnl_reply_init() - Create skb for a reply and fill device identification
  * @payload:      payload length (without netlink and genetlink header)
  * @dev:          device the reply is about (may be null)
- * @cmd:          ETHTOOL_MSG_* message type क्रम reply
- * @hdr_attrtype: attribute type क्रम common header
+ * @cmd:          ETHTOOL_MSG_* message type for reply
+ * @hdr_attrtype: attribute type for common header
  * @info:         genetlink info of the received packet we respond to
- * @ehdrp:        place to store payload poपूर्णांकer वापसed by genlmsg_new()
+ * @ehdrp:        place to store payload pointer returned by genlmsg_new()
  *
- * Return: poपूर्णांकer to allocated skb on success, शून्य on error
+ * Return: pointer to allocated skb on success, NULL on error
  */
-काष्ठा sk_buff *ethnl_reply_init(माप_प्रकार payload, काष्ठा net_device *dev, u8 cmd,
-				 u16 hdr_attrtype, काष्ठा genl_info *info,
-				 व्योम **ehdrp)
-अणु
-	काष्ठा sk_buff *skb;
+struct sk_buff *ethnl_reply_init(size_t payload, struct net_device *dev, u8 cmd,
+				 u16 hdr_attrtype, struct genl_info *info,
+				 void **ehdrp)
+{
+	struct sk_buff *skb;
 
 	skb = genlmsg_new(payload, GFP_KERNEL);
-	अगर (!skb)
-		जाओ err;
+	if (!skb)
+		goto err;
 	*ehdrp = genlmsg_put_reply(skb, info, &ethtool_genl_family, 0, cmd);
-	अगर (!*ehdrp)
-		जाओ err_मुक्त;
+	if (!*ehdrp)
+		goto err_free;
 
-	अगर (dev) अणु
-		पूर्णांक ret;
+	if (dev) {
+		int ret;
 
 		ret = ethnl_fill_reply_header(skb, dev, hdr_attrtype);
-		अगर (ret < 0)
-			जाओ err_मुक्त;
-	पूर्ण
-	वापस skb;
+		if (ret < 0)
+			goto err_free;
+	}
+	return skb;
 
-err_मुक्त:
-	nlmsg_मुक्त(skb);
+err_free:
+	nlmsg_free(skb);
 err:
-	अगर (info)
+	if (info)
 		GENL_SET_ERR_MSG(info, "failed to setup reply message");
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-व्योम *ethnl_dump_put(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb, u8 cmd)
-अणु
-	वापस genlmsg_put(skb, NETLINK_CB(cb->skb).portid, cb->nlh->nlmsg_seq,
+void *ethnl_dump_put(struct sk_buff *skb, struct netlink_callback *cb, u8 cmd)
+{
+	return genlmsg_put(skb, NETLINK_CB(cb->skb).portid, cb->nlh->nlmsg_seq,
 			   &ethtool_genl_family, 0, cmd);
-पूर्ण
+}
 
-व्योम *ethnl_bcasपंचांगsg_put(काष्ठा sk_buff *skb, u8 cmd)
-अणु
-	वापस genlmsg_put(skb, 0, ++ethnl_bcast_seq, &ethtool_genl_family, 0,
+void *ethnl_bcastmsg_put(struct sk_buff *skb, u8 cmd)
+{
+	return genlmsg_put(skb, 0, ++ethnl_bcast_seq, &ethtool_genl_family, 0,
 			   cmd);
-पूर्ण
+}
 
-पूर्णांक ethnl_multicast(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
-अणु
-	वापस genlmsg_multicast_netns(&ethtool_genl_family, dev_net(dev), skb,
+int ethnl_multicast(struct sk_buff *skb, struct net_device *dev)
+{
+	return genlmsg_multicast_netns(&ethtool_genl_family, dev_net(dev), skb,
 				       0, ETHNL_MCGRP_MONITOR, GFP_KERNEL);
-पूर्ण
+}
 
 /* GET request helpers */
 
 /**
- * काष्ठा ethnl_dump_ctx - context काष्ठाure क्रम generic dumpit() callback
+ * struct ethnl_dump_ctx - context structure for generic dumpit() callback
  * @ops:        request ops of currently processed message type
  * @req_info:   parsed request header of processed request
  * @reply_data: data needed to compose the reply
  * @pos_hash:   saved iteration position - hashbucket
  * @pos_idx:    saved iteration position - index
  *
- * These parameters are kept in काष्ठा netlink_callback as context preserved
- * between iterations. They are initialized by ethnl_शेष_start() and used
- * in ethnl_शेष_dumpit() and ethnl_शेष_करोne().
+ * These parameters are kept in struct netlink_callback as context preserved
+ * between iterations. They are initialized by ethnl_default_start() and used
+ * in ethnl_default_dumpit() and ethnl_default_done().
  */
-काष्ठा ethnl_dump_ctx अणु
-	स्थिर काष्ठा ethnl_request_ops	*ops;
-	काष्ठा ethnl_req_info		*req_info;
-	काष्ठा ethnl_reply_data		*reply_data;
-	पूर्णांक				pos_hash;
-	पूर्णांक				pos_idx;
-पूर्ण;
+struct ethnl_dump_ctx {
+	const struct ethnl_request_ops	*ops;
+	struct ethnl_req_info		*req_info;
+	struct ethnl_reply_data		*reply_data;
+	int				pos_hash;
+	int				pos_idx;
+};
 
-अटल स्थिर काष्ठा ethnl_request_ops *
-ethnl_शेष_requests[__ETHTOOL_MSG_USER_CNT] = अणु
+static const struct ethnl_request_ops *
+ethnl_default_requests[__ETHTOOL_MSG_USER_CNT] = {
 	[ETHTOOL_MSG_STRSET_GET]	= &ethnl_strset_request_ops,
 	[ETHTOOL_MSG_LINKINFO_GET]	= &ethnl_linkinfo_request_ops,
 	[ETHTOOL_MSG_LINKMODES_GET]	= &ethnl_linkmodes_request_ops,
@@ -243,197 +242,197 @@ ethnl_शेष_requests[__ETHTOOL_MSG_USER_CNT] = अणु
 	[ETHTOOL_MSG_RINGS_GET]		= &ethnl_rings_request_ops,
 	[ETHTOOL_MSG_CHANNELS_GET]	= &ethnl_channels_request_ops,
 	[ETHTOOL_MSG_COALESCE_GET]	= &ethnl_coalesce_request_ops,
-	[ETHTOOL_MSG_PAUSE_GET]		= &ethnl_छोड़ो_request_ops,
+	[ETHTOOL_MSG_PAUSE_GET]		= &ethnl_pause_request_ops,
 	[ETHTOOL_MSG_EEE_GET]		= &ethnl_eee_request_ops,
 	[ETHTOOL_MSG_FEC_GET]		= &ethnl_fec_request_ops,
 	[ETHTOOL_MSG_TSINFO_GET]	= &ethnl_tsinfo_request_ops,
 	[ETHTOOL_MSG_MODULE_EEPROM_GET]	= &ethnl_module_eeprom_request_ops,
 	[ETHTOOL_MSG_STATS_GET]		= &ethnl_stats_request_ops,
-पूर्ण;
+};
 
-अटल काष्ठा ethnl_dump_ctx *ethnl_dump_context(काष्ठा netlink_callback *cb)
-अणु
-	वापस (काष्ठा ethnl_dump_ctx *)cb->ctx;
-पूर्ण
+static struct ethnl_dump_ctx *ethnl_dump_context(struct netlink_callback *cb)
+{
+	return (struct ethnl_dump_ctx *)cb->ctx;
+}
 
 /**
- * ethnl_शेष_parse() - Parse request message
- * @req_info:    poपूर्णांकer to काष्ठाure to put data पूर्णांकo
+ * ethnl_default_parse() - Parse request message
+ * @req_info:    pointer to structure to put data into
  * @tb:		 parsed attributes
  * @net:         request netns
- * @request_ops: काष्ठा request_ops क्रम request type
- * @extack:      netlink extack क्रम error reporting
- * @require_dev: fail अगर no device identअगरied in header
+ * @request_ops: struct request_ops for request type
+ * @extack:      netlink extack for error reporting
+ * @require_dev: fail if no device identified in header
  *
- * Parse universal request header and call request specअगरic ->parse_request()
- * callback (अगर defined) to parse the rest of the message.
+ * Parse universal request header and call request specific ->parse_request()
+ * callback (if defined) to parse the rest of the message.
  *
  * Return: 0 on success or negative error code
  */
-अटल पूर्णांक ethnl_शेष_parse(काष्ठा ethnl_req_info *req_info,
-			       काष्ठा nlattr **tb, काष्ठा net *net,
-			       स्थिर काष्ठा ethnl_request_ops *request_ops,
-			       काष्ठा netlink_ext_ack *extack, bool require_dev)
-अणु
-	पूर्णांक ret;
+static int ethnl_default_parse(struct ethnl_req_info *req_info,
+			       struct nlattr **tb, struct net *net,
+			       const struct ethnl_request_ops *request_ops,
+			       struct netlink_ext_ack *extack, bool require_dev)
+{
+	int ret;
 
 	ret = ethnl_parse_header_dev_get(req_info, tb[request_ops->hdr_attr],
 					 net, extack, require_dev);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	अगर (request_ops->parse_request) अणु
+	if (request_ops->parse_request) {
 		ret = request_ops->parse_request(req_info, tb, extack);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
+		if (ret < 0)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * ethnl_init_reply_data() - Initialize reply data क्रम GET request
- * @reply_data: poपूर्णांकer to embedded काष्ठा ethnl_reply_data
- * @ops:        instance of काष्ठा ethnl_request_ops describing the layout
- * @dev:        network device to initialize the reply क्रम
+ * ethnl_init_reply_data() - Initialize reply data for GET request
+ * @reply_data: pointer to embedded struct ethnl_reply_data
+ * @ops:        instance of struct ethnl_request_ops describing the layout
+ * @dev:        network device to initialize the reply for
  *
  * Fills the reply data part with zeros and sets the dev member. Must be called
- * beक्रमe calling the ->fill_reply() callback (क्रम each iteration when handling
+ * before calling the ->fill_reply() callback (for each iteration when handling
  * dump requests).
  */
-अटल व्योम ethnl_init_reply_data(काष्ठा ethnl_reply_data *reply_data,
-				  स्थिर काष्ठा ethnl_request_ops *ops,
-				  काष्ठा net_device *dev)
-अणु
-	स_रखो(reply_data, 0, ops->reply_data_size);
+static void ethnl_init_reply_data(struct ethnl_reply_data *reply_data,
+				  const struct ethnl_request_ops *ops,
+				  struct net_device *dev)
+{
+	memset(reply_data, 0, ops->reply_data_size);
 	reply_data->dev = dev;
-पूर्ण
+}
 
-/* शेष ->करोit() handler क्रम GET type requests */
-अटल पूर्णांक ethnl_शेष_करोit(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
-अणु
-	काष्ठा ethnl_reply_data *reply_data = शून्य;
-	काष्ठा ethnl_req_info *req_info = शून्य;
-	स्थिर u8 cmd = info->genlhdr->cmd;
-	स्थिर काष्ठा ethnl_request_ops *ops;
-	काष्ठा sk_buff *rskb;
-	व्योम *reply_payload;
-	पूर्णांक reply_len;
-	पूर्णांक ret;
+/* default ->doit() handler for GET type requests */
+static int ethnl_default_doit(struct sk_buff *skb, struct genl_info *info)
+{
+	struct ethnl_reply_data *reply_data = NULL;
+	struct ethnl_req_info *req_info = NULL;
+	const u8 cmd = info->genlhdr->cmd;
+	const struct ethnl_request_ops *ops;
+	struct sk_buff *rskb;
+	void *reply_payload;
+	int reply_len;
+	int ret;
 
-	ops = ethnl_शेष_requests[cmd];
-	अगर (WARN_ONCE(!ops, "cmd %u has no ethnl_request_ops\n", cmd))
-		वापस -EOPNOTSUPP;
+	ops = ethnl_default_requests[cmd];
+	if (WARN_ONCE(!ops, "cmd %u has no ethnl_request_ops\n", cmd))
+		return -EOPNOTSUPP;
 	req_info = kzalloc(ops->req_info_size, GFP_KERNEL);
-	अगर (!req_info)
-		वापस -ENOMEM;
-	reply_data = kदो_स्मृति(ops->reply_data_size, GFP_KERNEL);
-	अगर (!reply_data) अणु
-		kमुक्त(req_info);
-		वापस -ENOMEM;
-	पूर्ण
+	if (!req_info)
+		return -ENOMEM;
+	reply_data = kmalloc(ops->reply_data_size, GFP_KERNEL);
+	if (!reply_data) {
+		kfree(req_info);
+		return -ENOMEM;
+	}
 
-	ret = ethnl_शेष_parse(req_info, info->attrs, genl_info_net(info),
-				  ops, info->extack, !ops->allow_nodev_करो);
-	अगर (ret < 0)
-		जाओ err_dev;
+	ret = ethnl_default_parse(req_info, info->attrs, genl_info_net(info),
+				  ops, info->extack, !ops->allow_nodev_do);
+	if (ret < 0)
+		goto err_dev;
 	ethnl_init_reply_data(reply_data, ops, req_info->dev);
 
 	rtnl_lock();
 	ret = ops->prepare_data(req_info, reply_data, info);
 	rtnl_unlock();
-	अगर (ret < 0)
-		जाओ err_cleanup;
+	if (ret < 0)
+		goto err_cleanup;
 	ret = ops->reply_size(req_info, reply_data);
-	अगर (ret < 0)
-		जाओ err_cleanup;
+	if (ret < 0)
+		goto err_cleanup;
 	reply_len = ret + ethnl_reply_header_size();
 	ret = -ENOMEM;
 	rskb = ethnl_reply_init(reply_len, req_info->dev, ops->reply_cmd,
 				ops->hdr_attr, info, &reply_payload);
-	अगर (!rskb)
-		जाओ err_cleanup;
+	if (!rskb)
+		goto err_cleanup;
 	ret = ops->fill_reply(rskb, req_info, reply_data);
-	अगर (ret < 0)
-		जाओ err_msg;
-	अगर (ops->cleanup_data)
+	if (ret < 0)
+		goto err_msg;
+	if (ops->cleanup_data)
 		ops->cleanup_data(reply_data);
 
 	genlmsg_end(rskb, reply_payload);
-	अगर (req_info->dev)
+	if (req_info->dev)
 		dev_put(req_info->dev);
-	kमुक्त(reply_data);
-	kमुक्त(req_info);
-	वापस genlmsg_reply(rskb, info);
+	kfree(reply_data);
+	kfree(req_info);
+	return genlmsg_reply(rskb, info);
 
 err_msg:
 	WARN_ONCE(ret == -EMSGSIZE, "calculated message payload length (%d) not sufficient\n", reply_len);
-	nlmsg_मुक्त(rskb);
+	nlmsg_free(rskb);
 err_cleanup:
-	अगर (ops->cleanup_data)
+	if (ops->cleanup_data)
 		ops->cleanup_data(reply_data);
 err_dev:
-	अगर (req_info->dev)
+	if (req_info->dev)
 		dev_put(req_info->dev);
-	kमुक्त(reply_data);
-	kमुक्त(req_info);
-	वापस ret;
-पूर्ण
+	kfree(reply_data);
+	kfree(req_info);
+	return ret;
+}
 
-अटल पूर्णांक ethnl_शेष_dump_one(काष्ठा sk_buff *skb, काष्ठा net_device *dev,
-				  स्थिर काष्ठा ethnl_dump_ctx *ctx,
-				  काष्ठा netlink_callback *cb)
-अणु
-	व्योम *ehdr;
-	पूर्णांक ret;
+static int ethnl_default_dump_one(struct sk_buff *skb, struct net_device *dev,
+				  const struct ethnl_dump_ctx *ctx,
+				  struct netlink_callback *cb)
+{
+	void *ehdr;
+	int ret;
 
 	ehdr = genlmsg_put(skb, NETLINK_CB(cb->skb).portid, cb->nlh->nlmsg_seq,
 			   &ethtool_genl_family, NLM_F_MULTI,
 			   ctx->ops->reply_cmd);
-	अगर (!ehdr)
-		वापस -EMSGSIZE;
+	if (!ehdr)
+		return -EMSGSIZE;
 
 	ethnl_init_reply_data(ctx->reply_data, ctx->ops, dev);
 	rtnl_lock();
-	ret = ctx->ops->prepare_data(ctx->req_info, ctx->reply_data, शून्य);
+	ret = ctx->ops->prepare_data(ctx->req_info, ctx->reply_data, NULL);
 	rtnl_unlock();
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 	ret = ethnl_fill_reply_header(skb, dev, ctx->ops->hdr_attr);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 	ret = ctx->ops->fill_reply(skb, ctx->req_info, ctx->reply_data);
 
 out:
-	अगर (ctx->ops->cleanup_data)
+	if (ctx->ops->cleanup_data)
 		ctx->ops->cleanup_data(ctx->reply_data);
-	ctx->reply_data->dev = शून्य;
-	अगर (ret < 0)
+	ctx->reply_data->dev = NULL;
+	if (ret < 0)
 		genlmsg_cancel(skb, ehdr);
-	अन्यथा
+	else
 		genlmsg_end(skb, ehdr);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* Default ->dumpit() handler क्रम GET requests. Device iteration copied from
- * rtnl_dump_अगरinfo(); we have to be more careful about device hashtable
+/* Default ->dumpit() handler for GET requests. Device iteration copied from
+ * rtnl_dump_ifinfo(); we have to be more careful about device hashtable
  * persistence as we cannot guarantee to hold RTNL lock through the whole
- * function as rtnetnlink करोes.
+ * function as rtnetnlink does.
  */
-अटल पूर्णांक ethnl_शेष_dumpit(काष्ठा sk_buff *skb,
-				काष्ठा netlink_callback *cb)
-अणु
-	काष्ठा ethnl_dump_ctx *ctx = ethnl_dump_context(cb);
-	काष्ठा net *net = sock_net(skb->sk);
-	पूर्णांक s_idx = ctx->pos_idx;
-	पूर्णांक h, idx = 0;
-	पूर्णांक ret = 0;
+static int ethnl_default_dumpit(struct sk_buff *skb,
+				struct netlink_callback *cb)
+{
+	struct ethnl_dump_ctx *ctx = ethnl_dump_context(cb);
+	struct net *net = sock_net(skb->sk);
+	int s_idx = ctx->pos_idx;
+	int h, idx = 0;
+	int ret = 0;
 
 	rtnl_lock();
-	क्रम (h = ctx->pos_hash; h < NETDEV_HASHENTRIES; h++, s_idx = 0) अणु
-		काष्ठा hlist_head *head;
-		काष्ठा net_device *dev;
-		अचिन्हित पूर्णांक seq;
+	for (h = ctx->pos_hash; h < NETDEV_HASHENTRIES; h++, s_idx = 0) {
+		struct hlist_head *head;
+		struct net_device *dev;
+		unsigned int seq;
 
 		head = &net->dev_index_head[h];
 
@@ -441,32 +440,32 @@ restart_chain:
 		seq = net->dev_base_seq;
 		cb->seq = seq;
 		idx = 0;
-		hlist_क्रम_each_entry(dev, head, index_hlist) अणु
-			अगर (idx < s_idx)
-				जाओ cont;
+		hlist_for_each_entry(dev, head, index_hlist) {
+			if (idx < s_idx)
+				goto cont;
 			dev_hold(dev);
 			rtnl_unlock();
 
-			ret = ethnl_शेष_dump_one(skb, dev, ctx, cb);
+			ret = ethnl_default_dump_one(skb, dev, ctx, cb);
 			dev_put(dev);
-			अगर (ret < 0) अणु
-				अगर (ret == -EOPNOTSUPP)
-					जाओ lock_and_cont;
-				अगर (likely(skb->len))
+			if (ret < 0) {
+				if (ret == -EOPNOTSUPP)
+					goto lock_and_cont;
+				if (likely(skb->len))
 					ret = skb->len;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 lock_and_cont:
 			rtnl_lock();
-			अगर (net->dev_base_seq != seq) अणु
+			if (net->dev_base_seq != seq) {
 				s_idx = idx + 1;
-				जाओ restart_chain;
-			पूर्ण
+				goto restart_chain;
+			}
 cont:
 			idx++;
-		पूर्ण
+		}
 
-	पूर्ण
+	}
 	rtnl_unlock();
 
 out:
@@ -474,47 +473,47 @@ out:
 	ctx->pos_idx = idx;
 	nl_dump_check_consistent(cb, nlmsg_hdr(skb));
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* generic ->start() handler क्रम GET requests */
-अटल पूर्णांक ethnl_शेष_start(काष्ठा netlink_callback *cb)
-अणु
-	स्थिर काष्ठा genl_dumpit_info *info = genl_dumpit_info(cb);
-	काष्ठा ethnl_dump_ctx *ctx = ethnl_dump_context(cb);
-	काष्ठा ethnl_reply_data *reply_data;
-	स्थिर काष्ठा ethnl_request_ops *ops;
-	काष्ठा ethnl_req_info *req_info;
-	काष्ठा genlmsghdr *ghdr;
-	पूर्णांक ret;
+/* generic ->start() handler for GET requests */
+static int ethnl_default_start(struct netlink_callback *cb)
+{
+	const struct genl_dumpit_info *info = genl_dumpit_info(cb);
+	struct ethnl_dump_ctx *ctx = ethnl_dump_context(cb);
+	struct ethnl_reply_data *reply_data;
+	const struct ethnl_request_ops *ops;
+	struct ethnl_req_info *req_info;
+	struct genlmsghdr *ghdr;
+	int ret;
 
-	BUILD_BUG_ON(माप(*ctx) > माप(cb->ctx));
+	BUILD_BUG_ON(sizeof(*ctx) > sizeof(cb->ctx));
 
 	ghdr = nlmsg_data(cb->nlh);
-	ops = ethnl_शेष_requests[ghdr->cmd];
-	अगर (WARN_ONCE(!ops, "cmd %u has no ethnl_request_ops\n", ghdr->cmd))
-		वापस -EOPNOTSUPP;
+	ops = ethnl_default_requests[ghdr->cmd];
+	if (WARN_ONCE(!ops, "cmd %u has no ethnl_request_ops\n", ghdr->cmd))
+		return -EOPNOTSUPP;
 	req_info = kzalloc(ops->req_info_size, GFP_KERNEL);
-	अगर (!req_info)
-		वापस -ENOMEM;
-	reply_data = kदो_स्मृति(ops->reply_data_size, GFP_KERNEL);
-	अगर (!reply_data) अणु
+	if (!req_info)
+		return -ENOMEM;
+	reply_data = kmalloc(ops->reply_data_size, GFP_KERNEL);
+	if (!reply_data) {
 		ret = -ENOMEM;
-		जाओ मुक्त_req_info;
-	पूर्ण
+		goto free_req_info;
+	}
 
-	ret = ethnl_शेष_parse(req_info, info->attrs, sock_net(cb->skb->sk),
+	ret = ethnl_default_parse(req_info, info->attrs, sock_net(cb->skb->sk),
 				  ops, cb->extack, false);
-	अगर (req_info->dev) अणु
-		/* We ignore device specअगरication in dump requests but as the
-		 * same parser as क्रम non-dump (करोit) requests is used, it
-		 * would take reference to the device अगर it finds one
+	if (req_info->dev) {
+		/* We ignore device specification in dump requests but as the
+		 * same parser as for non-dump (doit) requests is used, it
+		 * would take reference to the device if it finds one
 		 */
 		dev_put(req_info->dev);
-		req_info->dev = शून्य;
-	पूर्ण
-	अगर (ret < 0)
-		जाओ मुक्त_reply_data;
+		req_info->dev = NULL;
+	}
+	if (ret < 0)
+		goto free_reply_data;
 
 	ctx->ops = ops;
 	ctx->req_info = req_info;
@@ -522,29 +521,29 @@ out:
 	ctx->pos_hash = 0;
 	ctx->pos_idx = 0;
 
-	वापस 0;
+	return 0;
 
-मुक्त_reply_data:
-	kमुक्त(reply_data);
-मुक्त_req_info:
-	kमुक्त(req_info);
+free_reply_data:
+	kfree(reply_data);
+free_req_info:
+	kfree(req_info);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* शेष ->करोne() handler क्रम GET requests */
-अटल पूर्णांक ethnl_शेष_करोne(काष्ठा netlink_callback *cb)
-अणु
-	काष्ठा ethnl_dump_ctx *ctx = ethnl_dump_context(cb);
+/* default ->done() handler for GET requests */
+static int ethnl_default_done(struct netlink_callback *cb)
+{
+	struct ethnl_dump_ctx *ctx = ethnl_dump_context(cb);
 
-	kमुक्त(ctx->reply_data);
-	kमुक्त(ctx->req_info);
+	kfree(ctx->reply_data);
+	kfree(ctx->req_info);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा ethnl_request_ops *
-ethnl_शेष_notअगरy_ops[ETHTOOL_MSG_KERNEL_MAX + 1] = अणु
+static const struct ethnl_request_ops *
+ethnl_default_notify_ops[ETHTOOL_MSG_KERNEL_MAX + 1] = {
 	[ETHTOOL_MSG_LINKINFO_NTF]	= &ethnl_linkinfo_request_ops,
 	[ETHTOOL_MSG_LINKMODES_NTF]	= &ethnl_linkmodes_request_ops,
 	[ETHTOOL_MSG_DEBUG_NTF]		= &ethnl_debug_request_ops,
@@ -554,413 +553,413 @@ ethnl_शेष_notअगरy_ops[ETHTOOL_MSG_KERNEL_MAX + 1] = अणु
 	[ETHTOOL_MSG_RINGS_NTF]		= &ethnl_rings_request_ops,
 	[ETHTOOL_MSG_CHANNELS_NTF]	= &ethnl_channels_request_ops,
 	[ETHTOOL_MSG_COALESCE_NTF]	= &ethnl_coalesce_request_ops,
-	[ETHTOOL_MSG_PAUSE_NTF]		= &ethnl_छोड़ो_request_ops,
+	[ETHTOOL_MSG_PAUSE_NTF]		= &ethnl_pause_request_ops,
 	[ETHTOOL_MSG_EEE_NTF]		= &ethnl_eee_request_ops,
 	[ETHTOOL_MSG_FEC_NTF]		= &ethnl_fec_request_ops,
-पूर्ण;
+};
 
-/* शेष notअगरication handler */
-अटल व्योम ethnl_शेष_notअगरy(काष्ठा net_device *dev, अचिन्हित पूर्णांक cmd,
-				 स्थिर व्योम *data)
-अणु
-	काष्ठा ethnl_reply_data *reply_data;
-	स्थिर काष्ठा ethnl_request_ops *ops;
-	काष्ठा ethnl_req_info *req_info;
-	काष्ठा sk_buff *skb;
-	व्योम *reply_payload;
-	पूर्णांक reply_len;
-	पूर्णांक ret;
+/* default notification handler */
+static void ethnl_default_notify(struct net_device *dev, unsigned int cmd,
+				 const void *data)
+{
+	struct ethnl_reply_data *reply_data;
+	const struct ethnl_request_ops *ops;
+	struct ethnl_req_info *req_info;
+	struct sk_buff *skb;
+	void *reply_payload;
+	int reply_len;
+	int ret;
 
-	अगर (WARN_ONCE(cmd > ETHTOOL_MSG_KERNEL_MAX ||
-		      !ethnl_शेष_notअगरy_ops[cmd],
+	if (WARN_ONCE(cmd > ETHTOOL_MSG_KERNEL_MAX ||
+		      !ethnl_default_notify_ops[cmd],
 		      "unexpected notification type %u\n", cmd))
-		वापस;
-	ops = ethnl_शेष_notअगरy_ops[cmd];
+		return;
+	ops = ethnl_default_notify_ops[cmd];
 	req_info = kzalloc(ops->req_info_size, GFP_KERNEL);
-	अगर (!req_info)
-		वापस;
-	reply_data = kदो_स्मृति(ops->reply_data_size, GFP_KERNEL);
-	अगर (!reply_data) अणु
-		kमुक्त(req_info);
-		वापस;
-	पूर्ण
+	if (!req_info)
+		return;
+	reply_data = kmalloc(ops->reply_data_size, GFP_KERNEL);
+	if (!reply_data) {
+		kfree(req_info);
+		return;
+	}
 
 	req_info->dev = dev;
 	req_info->flags |= ETHTOOL_FLAG_COMPACT_BITSETS;
 
 	ethnl_init_reply_data(reply_data, ops, dev);
-	ret = ops->prepare_data(req_info, reply_data, शून्य);
-	अगर (ret < 0)
-		जाओ err_cleanup;
+	ret = ops->prepare_data(req_info, reply_data, NULL);
+	if (ret < 0)
+		goto err_cleanup;
 	ret = ops->reply_size(req_info, reply_data);
-	अगर (ret < 0)
-		जाओ err_cleanup;
+	if (ret < 0)
+		goto err_cleanup;
 	reply_len = ret + ethnl_reply_header_size();
 	ret = -ENOMEM;
 	skb = genlmsg_new(reply_len, GFP_KERNEL);
-	अगर (!skb)
-		जाओ err_cleanup;
-	reply_payload = ethnl_bcasपंचांगsg_put(skb, cmd);
-	अगर (!reply_payload)
-		जाओ err_skb;
+	if (!skb)
+		goto err_cleanup;
+	reply_payload = ethnl_bcastmsg_put(skb, cmd);
+	if (!reply_payload)
+		goto err_skb;
 	ret = ethnl_fill_reply_header(skb, dev, ops->hdr_attr);
-	अगर (ret < 0)
-		जाओ err_msg;
+	if (ret < 0)
+		goto err_msg;
 	ret = ops->fill_reply(skb, req_info, reply_data);
-	अगर (ret < 0)
-		जाओ err_msg;
-	अगर (ops->cleanup_data)
+	if (ret < 0)
+		goto err_msg;
+	if (ops->cleanup_data)
 		ops->cleanup_data(reply_data);
 
 	genlmsg_end(skb, reply_payload);
-	kमुक्त(reply_data);
-	kमुक्त(req_info);
+	kfree(reply_data);
+	kfree(req_info);
 	ethnl_multicast(skb, dev);
-	वापस;
+	return;
 
 err_msg:
 	WARN_ONCE(ret == -EMSGSIZE,
 		  "calculated message payload length (%d) not sufficient\n",
 		  reply_len);
 err_skb:
-	nlmsg_मुक्त(skb);
+	nlmsg_free(skb);
 err_cleanup:
-	अगर (ops->cleanup_data)
+	if (ops->cleanup_data)
 		ops->cleanup_data(reply_data);
-	kमुक्त(reply_data);
-	kमुक्त(req_info);
-	वापस;
-पूर्ण
+	kfree(reply_data);
+	kfree(req_info);
+	return;
+}
 
-/* notअगरications */
+/* notifications */
 
-प्रकार व्योम (*ethnl_notअगरy_handler_t)(काष्ठा net_device *dev, अचिन्हित पूर्णांक cmd,
-				       स्थिर व्योम *data);
+typedef void (*ethnl_notify_handler_t)(struct net_device *dev, unsigned int cmd,
+				       const void *data);
 
-अटल स्थिर ethnl_notअगरy_handler_t ethnl_notअगरy_handlers[] = अणु
-	[ETHTOOL_MSG_LINKINFO_NTF]	= ethnl_शेष_notअगरy,
-	[ETHTOOL_MSG_LINKMODES_NTF]	= ethnl_शेष_notअगरy,
-	[ETHTOOL_MSG_DEBUG_NTF]		= ethnl_शेष_notअगरy,
-	[ETHTOOL_MSG_WOL_NTF]		= ethnl_शेष_notअगरy,
-	[ETHTOOL_MSG_FEATURES_NTF]	= ethnl_शेष_notअगरy,
-	[ETHTOOL_MSG_PRIVFLAGS_NTF]	= ethnl_शेष_notअगरy,
-	[ETHTOOL_MSG_RINGS_NTF]		= ethnl_शेष_notअगरy,
-	[ETHTOOL_MSG_CHANNELS_NTF]	= ethnl_शेष_notअगरy,
-	[ETHTOOL_MSG_COALESCE_NTF]	= ethnl_शेष_notअगरy,
-	[ETHTOOL_MSG_PAUSE_NTF]		= ethnl_शेष_notअगरy,
-	[ETHTOOL_MSG_EEE_NTF]		= ethnl_शेष_notअगरy,
-	[ETHTOOL_MSG_FEC_NTF]		= ethnl_शेष_notअगरy,
-पूर्ण;
+static const ethnl_notify_handler_t ethnl_notify_handlers[] = {
+	[ETHTOOL_MSG_LINKINFO_NTF]	= ethnl_default_notify,
+	[ETHTOOL_MSG_LINKMODES_NTF]	= ethnl_default_notify,
+	[ETHTOOL_MSG_DEBUG_NTF]		= ethnl_default_notify,
+	[ETHTOOL_MSG_WOL_NTF]		= ethnl_default_notify,
+	[ETHTOOL_MSG_FEATURES_NTF]	= ethnl_default_notify,
+	[ETHTOOL_MSG_PRIVFLAGS_NTF]	= ethnl_default_notify,
+	[ETHTOOL_MSG_RINGS_NTF]		= ethnl_default_notify,
+	[ETHTOOL_MSG_CHANNELS_NTF]	= ethnl_default_notify,
+	[ETHTOOL_MSG_COALESCE_NTF]	= ethnl_default_notify,
+	[ETHTOOL_MSG_PAUSE_NTF]		= ethnl_default_notify,
+	[ETHTOOL_MSG_EEE_NTF]		= ethnl_default_notify,
+	[ETHTOOL_MSG_FEC_NTF]		= ethnl_default_notify,
+};
 
-व्योम ethtool_notअगरy(काष्ठा net_device *dev, अचिन्हित पूर्णांक cmd, स्थिर व्योम *data)
-अणु
-	अगर (unlikely(!ethnl_ok))
-		वापस;
+void ethtool_notify(struct net_device *dev, unsigned int cmd, const void *data)
+{
+	if (unlikely(!ethnl_ok))
+		return;
 	ASSERT_RTNL();
 
-	अगर (likely(cmd < ARRAY_SIZE(ethnl_notअगरy_handlers) &&
-		   ethnl_notअगरy_handlers[cmd]))
-		ethnl_notअगरy_handlers[cmd](dev, cmd, data);
-	अन्यथा
+	if (likely(cmd < ARRAY_SIZE(ethnl_notify_handlers) &&
+		   ethnl_notify_handlers[cmd]))
+		ethnl_notify_handlers[cmd](dev, cmd, data);
+	else
 		WARN_ONCE(1, "notification %u not implemented (dev=%s)\n",
 			  cmd, netdev_name(dev));
-पूर्ण
-EXPORT_SYMBOL(ethtool_notअगरy);
+}
+EXPORT_SYMBOL(ethtool_notify);
 
-अटल व्योम ethnl_notअगरy_features(काष्ठा netdev_notअगरier_info *info)
-अणु
-	काष्ठा net_device *dev = netdev_notअगरier_info_to_dev(info);
+static void ethnl_notify_features(struct netdev_notifier_info *info)
+{
+	struct net_device *dev = netdev_notifier_info_to_dev(info);
 
-	ethtool_notअगरy(dev, ETHTOOL_MSG_FEATURES_NTF, शून्य);
-पूर्ण
+	ethtool_notify(dev, ETHTOOL_MSG_FEATURES_NTF, NULL);
+}
 
-अटल पूर्णांक ethnl_netdev_event(काष्ठा notअगरier_block *this, अचिन्हित दीर्घ event,
-			      व्योम *ptr)
-अणु
-	चयन (event) अणु
-	हाल NETDEV_FEAT_CHANGE:
-		ethnl_notअगरy_features(ptr);
-		अवरोध;
-	पूर्ण
+static int ethnl_netdev_event(struct notifier_block *this, unsigned long event,
+			      void *ptr)
+{
+	switch (event) {
+	case NETDEV_FEAT_CHANGE:
+		ethnl_notify_features(ptr);
+		break;
+	}
 
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
-अटल काष्ठा notअगरier_block ethnl_netdev_notअगरier = अणु
-	.notअगरier_call = ethnl_netdev_event,
-पूर्ण;
+static struct notifier_block ethnl_netdev_notifier = {
+	.notifier_call = ethnl_netdev_event,
+};
 
 /* genetlink setup */
 
-अटल स्थिर काष्ठा genl_ops ethtool_genl_ops[] = अणु
-	अणु
+static const struct genl_ops ethtool_genl_ops[] = {
+	{
 		.cmd	= ETHTOOL_MSG_STRSET_GET,
-		.करोit	= ethnl_शेष_करोit,
-		.start	= ethnl_शेष_start,
-		.dumpit	= ethnl_शेष_dumpit,
-		.करोne	= ethnl_शेष_करोne,
+		.doit	= ethnl_default_doit,
+		.start	= ethnl_default_start,
+		.dumpit	= ethnl_default_dumpit,
+		.done	= ethnl_default_done,
 		.policy = ethnl_strset_get_policy,
 		.maxattr = ARRAY_SIZE(ethnl_strset_get_policy) - 1,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd	= ETHTOOL_MSG_LINKINFO_GET,
-		.करोit	= ethnl_शेष_करोit,
-		.start	= ethnl_शेष_start,
-		.dumpit	= ethnl_शेष_dumpit,
-		.करोne	= ethnl_शेष_करोne,
+		.doit	= ethnl_default_doit,
+		.start	= ethnl_default_start,
+		.dumpit	= ethnl_default_dumpit,
+		.done	= ethnl_default_done,
 		.policy = ethnl_linkinfo_get_policy,
 		.maxattr = ARRAY_SIZE(ethnl_linkinfo_get_policy) - 1,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd	= ETHTOOL_MSG_LINKINFO_SET,
 		.flags	= GENL_UNS_ADMIN_PERM,
-		.करोit	= ethnl_set_linkinfo,
+		.doit	= ethnl_set_linkinfo,
 		.policy = ethnl_linkinfo_set_policy,
 		.maxattr = ARRAY_SIZE(ethnl_linkinfo_set_policy) - 1,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd	= ETHTOOL_MSG_LINKMODES_GET,
-		.करोit	= ethnl_शेष_करोit,
-		.start	= ethnl_शेष_start,
-		.dumpit	= ethnl_शेष_dumpit,
-		.करोne	= ethnl_शेष_करोne,
+		.doit	= ethnl_default_doit,
+		.start	= ethnl_default_start,
+		.dumpit	= ethnl_default_dumpit,
+		.done	= ethnl_default_done,
 		.policy = ethnl_linkmodes_get_policy,
 		.maxattr = ARRAY_SIZE(ethnl_linkmodes_get_policy) - 1,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd	= ETHTOOL_MSG_LINKMODES_SET,
 		.flags	= GENL_UNS_ADMIN_PERM,
-		.करोit	= ethnl_set_linkmodes,
+		.doit	= ethnl_set_linkmodes,
 		.policy = ethnl_linkmodes_set_policy,
 		.maxattr = ARRAY_SIZE(ethnl_linkmodes_set_policy) - 1,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd	= ETHTOOL_MSG_LINKSTATE_GET,
-		.करोit	= ethnl_शेष_करोit,
-		.start	= ethnl_शेष_start,
-		.dumpit	= ethnl_शेष_dumpit,
-		.करोne	= ethnl_शेष_करोne,
+		.doit	= ethnl_default_doit,
+		.start	= ethnl_default_start,
+		.dumpit	= ethnl_default_dumpit,
+		.done	= ethnl_default_done,
 		.policy = ethnl_linkstate_get_policy,
 		.maxattr = ARRAY_SIZE(ethnl_linkstate_get_policy) - 1,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd	= ETHTOOL_MSG_DEBUG_GET,
-		.करोit	= ethnl_शेष_करोit,
-		.start	= ethnl_शेष_start,
-		.dumpit	= ethnl_शेष_dumpit,
-		.करोne	= ethnl_शेष_करोne,
+		.doit	= ethnl_default_doit,
+		.start	= ethnl_default_start,
+		.dumpit	= ethnl_default_dumpit,
+		.done	= ethnl_default_done,
 		.policy = ethnl_debug_get_policy,
 		.maxattr = ARRAY_SIZE(ethnl_debug_get_policy) - 1,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd	= ETHTOOL_MSG_DEBUG_SET,
 		.flags	= GENL_UNS_ADMIN_PERM,
-		.करोit	= ethnl_set_debug,
+		.doit	= ethnl_set_debug,
 		.policy = ethnl_debug_set_policy,
 		.maxattr = ARRAY_SIZE(ethnl_debug_set_policy) - 1,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd	= ETHTOOL_MSG_WOL_GET,
 		.flags	= GENL_UNS_ADMIN_PERM,
-		.करोit	= ethnl_शेष_करोit,
-		.start	= ethnl_शेष_start,
-		.dumpit	= ethnl_शेष_dumpit,
-		.करोne	= ethnl_शेष_करोne,
+		.doit	= ethnl_default_doit,
+		.start	= ethnl_default_start,
+		.dumpit	= ethnl_default_dumpit,
+		.done	= ethnl_default_done,
 		.policy = ethnl_wol_get_policy,
 		.maxattr = ARRAY_SIZE(ethnl_wol_get_policy) - 1,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd	= ETHTOOL_MSG_WOL_SET,
 		.flags	= GENL_UNS_ADMIN_PERM,
-		.करोit	= ethnl_set_wol,
+		.doit	= ethnl_set_wol,
 		.policy = ethnl_wol_set_policy,
 		.maxattr = ARRAY_SIZE(ethnl_wol_set_policy) - 1,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd	= ETHTOOL_MSG_FEATURES_GET,
-		.करोit	= ethnl_शेष_करोit,
-		.start	= ethnl_शेष_start,
-		.dumpit	= ethnl_शेष_dumpit,
-		.करोne	= ethnl_शेष_करोne,
+		.doit	= ethnl_default_doit,
+		.start	= ethnl_default_start,
+		.dumpit	= ethnl_default_dumpit,
+		.done	= ethnl_default_done,
 		.policy = ethnl_features_get_policy,
 		.maxattr = ARRAY_SIZE(ethnl_features_get_policy) - 1,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd	= ETHTOOL_MSG_FEATURES_SET,
 		.flags	= GENL_UNS_ADMIN_PERM,
-		.करोit	= ethnl_set_features,
+		.doit	= ethnl_set_features,
 		.policy = ethnl_features_set_policy,
 		.maxattr = ARRAY_SIZE(ethnl_features_set_policy) - 1,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd	= ETHTOOL_MSG_PRIVFLAGS_GET,
-		.करोit	= ethnl_शेष_करोit,
-		.start	= ethnl_शेष_start,
-		.dumpit	= ethnl_शेष_dumpit,
-		.करोne	= ethnl_शेष_करोne,
+		.doit	= ethnl_default_doit,
+		.start	= ethnl_default_start,
+		.dumpit	= ethnl_default_dumpit,
+		.done	= ethnl_default_done,
 		.policy = ethnl_privflags_get_policy,
 		.maxattr = ARRAY_SIZE(ethnl_privflags_get_policy) - 1,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd	= ETHTOOL_MSG_PRIVFLAGS_SET,
 		.flags	= GENL_UNS_ADMIN_PERM,
-		.करोit	= ethnl_set_privflags,
+		.doit	= ethnl_set_privflags,
 		.policy = ethnl_privflags_set_policy,
 		.maxattr = ARRAY_SIZE(ethnl_privflags_set_policy) - 1,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd	= ETHTOOL_MSG_RINGS_GET,
-		.करोit	= ethnl_शेष_करोit,
-		.start	= ethnl_शेष_start,
-		.dumpit	= ethnl_शेष_dumpit,
-		.करोne	= ethnl_शेष_करोne,
+		.doit	= ethnl_default_doit,
+		.start	= ethnl_default_start,
+		.dumpit	= ethnl_default_dumpit,
+		.done	= ethnl_default_done,
 		.policy = ethnl_rings_get_policy,
 		.maxattr = ARRAY_SIZE(ethnl_rings_get_policy) - 1,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd	= ETHTOOL_MSG_RINGS_SET,
 		.flags	= GENL_UNS_ADMIN_PERM,
-		.करोit	= ethnl_set_rings,
+		.doit	= ethnl_set_rings,
 		.policy = ethnl_rings_set_policy,
 		.maxattr = ARRAY_SIZE(ethnl_rings_set_policy) - 1,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd	= ETHTOOL_MSG_CHANNELS_GET,
-		.करोit	= ethnl_शेष_करोit,
-		.start	= ethnl_शेष_start,
-		.dumpit	= ethnl_शेष_dumpit,
-		.करोne	= ethnl_शेष_करोne,
+		.doit	= ethnl_default_doit,
+		.start	= ethnl_default_start,
+		.dumpit	= ethnl_default_dumpit,
+		.done	= ethnl_default_done,
 		.policy = ethnl_channels_get_policy,
 		.maxattr = ARRAY_SIZE(ethnl_channels_get_policy) - 1,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd	= ETHTOOL_MSG_CHANNELS_SET,
 		.flags	= GENL_UNS_ADMIN_PERM,
-		.करोit	= ethnl_set_channels,
+		.doit	= ethnl_set_channels,
 		.policy = ethnl_channels_set_policy,
 		.maxattr = ARRAY_SIZE(ethnl_channels_set_policy) - 1,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd	= ETHTOOL_MSG_COALESCE_GET,
-		.करोit	= ethnl_शेष_करोit,
-		.start	= ethnl_शेष_start,
-		.dumpit	= ethnl_शेष_dumpit,
-		.करोne	= ethnl_शेष_करोne,
+		.doit	= ethnl_default_doit,
+		.start	= ethnl_default_start,
+		.dumpit	= ethnl_default_dumpit,
+		.done	= ethnl_default_done,
 		.policy = ethnl_coalesce_get_policy,
 		.maxattr = ARRAY_SIZE(ethnl_coalesce_get_policy) - 1,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd	= ETHTOOL_MSG_COALESCE_SET,
 		.flags	= GENL_UNS_ADMIN_PERM,
-		.करोit	= ethnl_set_coalesce,
+		.doit	= ethnl_set_coalesce,
 		.policy = ethnl_coalesce_set_policy,
 		.maxattr = ARRAY_SIZE(ethnl_coalesce_set_policy) - 1,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd	= ETHTOOL_MSG_PAUSE_GET,
-		.करोit	= ethnl_शेष_करोit,
-		.start	= ethnl_शेष_start,
-		.dumpit	= ethnl_शेष_dumpit,
-		.करोne	= ethnl_शेष_करोne,
-		.policy = ethnl_छोड़ो_get_policy,
-		.maxattr = ARRAY_SIZE(ethnl_छोड़ो_get_policy) - 1,
-	पूर्ण,
-	अणु
+		.doit	= ethnl_default_doit,
+		.start	= ethnl_default_start,
+		.dumpit	= ethnl_default_dumpit,
+		.done	= ethnl_default_done,
+		.policy = ethnl_pause_get_policy,
+		.maxattr = ARRAY_SIZE(ethnl_pause_get_policy) - 1,
+	},
+	{
 		.cmd	= ETHTOOL_MSG_PAUSE_SET,
 		.flags	= GENL_UNS_ADMIN_PERM,
-		.करोit	= ethnl_set_छोड़ो,
-		.policy = ethnl_छोड़ो_set_policy,
-		.maxattr = ARRAY_SIZE(ethnl_छोड़ो_set_policy) - 1,
-	पूर्ण,
-	अणु
+		.doit	= ethnl_set_pause,
+		.policy = ethnl_pause_set_policy,
+		.maxattr = ARRAY_SIZE(ethnl_pause_set_policy) - 1,
+	},
+	{
 		.cmd	= ETHTOOL_MSG_EEE_GET,
-		.करोit	= ethnl_शेष_करोit,
-		.start	= ethnl_शेष_start,
-		.dumpit	= ethnl_शेष_dumpit,
-		.करोne	= ethnl_शेष_करोne,
+		.doit	= ethnl_default_doit,
+		.start	= ethnl_default_start,
+		.dumpit	= ethnl_default_dumpit,
+		.done	= ethnl_default_done,
 		.policy = ethnl_eee_get_policy,
 		.maxattr = ARRAY_SIZE(ethnl_eee_get_policy) - 1,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd	= ETHTOOL_MSG_EEE_SET,
 		.flags	= GENL_UNS_ADMIN_PERM,
-		.करोit	= ethnl_set_eee,
+		.doit	= ethnl_set_eee,
 		.policy = ethnl_eee_set_policy,
 		.maxattr = ARRAY_SIZE(ethnl_eee_set_policy) - 1,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd	= ETHTOOL_MSG_TSINFO_GET,
-		.करोit	= ethnl_शेष_करोit,
-		.start	= ethnl_शेष_start,
-		.dumpit	= ethnl_शेष_dumpit,
-		.करोne	= ethnl_शेष_करोne,
+		.doit	= ethnl_default_doit,
+		.start	= ethnl_default_start,
+		.dumpit	= ethnl_default_dumpit,
+		.done	= ethnl_default_done,
 		.policy = ethnl_tsinfo_get_policy,
 		.maxattr = ARRAY_SIZE(ethnl_tsinfo_get_policy) - 1,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd	= ETHTOOL_MSG_CABLE_TEST_ACT,
 		.flags	= GENL_UNS_ADMIN_PERM,
-		.करोit	= ethnl_act_cable_test,
+		.doit	= ethnl_act_cable_test,
 		.policy = ethnl_cable_test_act_policy,
 		.maxattr = ARRAY_SIZE(ethnl_cable_test_act_policy) - 1,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd	= ETHTOOL_MSG_CABLE_TEST_TDR_ACT,
 		.flags	= GENL_UNS_ADMIN_PERM,
-		.करोit	= ethnl_act_cable_test_tdr,
+		.doit	= ethnl_act_cable_test_tdr,
 		.policy = ethnl_cable_test_tdr_act_policy,
 		.maxattr = ARRAY_SIZE(ethnl_cable_test_tdr_act_policy) - 1,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd	= ETHTOOL_MSG_TUNNEL_INFO_GET,
-		.करोit	= ethnl_tunnel_info_करोit,
+		.doit	= ethnl_tunnel_info_doit,
 		.start	= ethnl_tunnel_info_start,
 		.dumpit	= ethnl_tunnel_info_dumpit,
 		.policy = ethnl_tunnel_info_get_policy,
 		.maxattr = ARRAY_SIZE(ethnl_tunnel_info_get_policy) - 1,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd	= ETHTOOL_MSG_FEC_GET,
-		.करोit	= ethnl_शेष_करोit,
-		.start	= ethnl_शेष_start,
-		.dumpit	= ethnl_शेष_dumpit,
-		.करोne	= ethnl_शेष_करोne,
+		.doit	= ethnl_default_doit,
+		.start	= ethnl_default_start,
+		.dumpit	= ethnl_default_dumpit,
+		.done	= ethnl_default_done,
 		.policy = ethnl_fec_get_policy,
 		.maxattr = ARRAY_SIZE(ethnl_fec_get_policy) - 1,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd	= ETHTOOL_MSG_FEC_SET,
 		.flags	= GENL_UNS_ADMIN_PERM,
-		.करोit	= ethnl_set_fec,
+		.doit	= ethnl_set_fec,
 		.policy = ethnl_fec_set_policy,
 		.maxattr = ARRAY_SIZE(ethnl_fec_set_policy) - 1,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd	= ETHTOOL_MSG_MODULE_EEPROM_GET,
 		.flags  = GENL_UNS_ADMIN_PERM,
-		.करोit	= ethnl_शेष_करोit,
-		.start	= ethnl_शेष_start,
-		.dumpit	= ethnl_शेष_dumpit,
-		.करोne	= ethnl_शेष_करोne,
+		.doit	= ethnl_default_doit,
+		.start	= ethnl_default_start,
+		.dumpit	= ethnl_default_dumpit,
+		.done	= ethnl_default_done,
 		.policy = ethnl_module_eeprom_get_policy,
 		.maxattr = ARRAY_SIZE(ethnl_module_eeprom_get_policy) - 1,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd	= ETHTOOL_MSG_STATS_GET,
-		.करोit	= ethnl_शेष_करोit,
-		.start	= ethnl_शेष_start,
-		.dumpit	= ethnl_शेष_dumpit,
-		.करोne	= ethnl_शेष_करोne,
+		.doit	= ethnl_default_doit,
+		.start	= ethnl_default_start,
+		.dumpit	= ethnl_default_dumpit,
+		.done	= ethnl_default_done,
 		.policy = ethnl_stats_get_policy,
 		.maxattr = ARRAY_SIZE(ethnl_stats_get_policy) - 1,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा genl_multicast_group ethtool_nl_mcgrps[] = अणु
-	[ETHNL_MCGRP_MONITOR] = अणु .name = ETHTOOL_MCGRP_MONITOR_NAME पूर्ण,
-पूर्ण;
+static const struct genl_multicast_group ethtool_nl_mcgrps[] = {
+	[ETHNL_MCGRP_MONITOR] = { .name = ETHTOOL_MCGRP_MONITOR_NAME },
+};
 
-अटल काष्ठा genl_family ethtool_genl_family __ro_after_init = अणु
+static struct genl_family ethtool_genl_family __ro_after_init = {
 	.name		= ETHTOOL_GENL_NAME,
 	.version	= ETHTOOL_GENL_VERSION,
 	.netnsok	= true,
@@ -969,22 +968,22 @@ EXPORT_SYMBOL(ethtool_notअगरy);
 	.n_ops		= ARRAY_SIZE(ethtool_genl_ops),
 	.mcgrps		= ethtool_nl_mcgrps,
 	.n_mcgrps	= ARRAY_SIZE(ethtool_nl_mcgrps),
-पूर्ण;
+};
 
 /* module setup */
 
-अटल पूर्णांक __init ethnl_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init ethnl_init(void)
+{
+	int ret;
 
-	ret = genl_रेजिस्टर_family(&ethtool_genl_family);
-	अगर (WARN(ret < 0, "ethtool: genetlink family registration failed"))
-		वापस ret;
+	ret = genl_register_family(&ethtool_genl_family);
+	if (WARN(ret < 0, "ethtool: genetlink family registration failed"))
+		return ret;
 	ethnl_ok = true;
 
-	ret = रेजिस्टर_netdevice_notअगरier(&ethnl_netdev_notअगरier);
+	ret = register_netdevice_notifier(&ethnl_netdev_notifier);
 	WARN(ret < 0, "ethtool: net device notifier registration failed");
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 subsys_initcall(ethnl_init);

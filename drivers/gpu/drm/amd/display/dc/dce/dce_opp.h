@@ -1,12 +1,11 @@
-<शैली गुरु>
 /* Copyright 2012-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,25 +22,25 @@
  *
  */
 
-#अगर_अघोषित __DC_OPP_DCE_H__
-#घोषणा __DC_OPP_DCE_H__
+#ifndef __DC_OPP_DCE_H__
+#define __DC_OPP_DCE_H__
 
-#समावेश "dc_types.h"
-#समावेश "opp.h"
-#समावेश "core_types.h"
+#include "dc_types.h"
+#include "opp.h"
+#include "core_types.h"
 
-#घोषणा FROM_DCE11_OPP(opp)\
-	container_of(opp, काष्ठा dce110_opp, base)
+#define FROM_DCE11_OPP(opp)\
+	container_of(opp, struct dce110_opp, base)
 
-क्रमागत dce110_opp_reg_type अणु
+enum dce110_opp_reg_type {
 	DCE110_OPP_REG_DCP = 0,
 	DCE110_OPP_REG_DCFE,
 	DCE110_OPP_REG_FMT,
 
 	DCE110_OPP_REG_MAX
-पूर्ण;
+};
 
-#घोषणा OPP_COMMON_REG_LIST_BASE(id) \
+#define OPP_COMMON_REG_LIST_BASE(id) \
 	SRI(FMT_DYNAMIC_EXP_CNTL, FMT, id), \
 	SRI(FMT_BIT_DEPTH_CONTROL, FMT, id), \
 	SRI(FMT_CONTROL, FMT, id), \
@@ -53,37 +52,37 @@
 	SRI(FMT_CLAMP_COMPONENT_G, FMT, id), \
 	SRI(FMT_CLAMP_COMPONENT_B, FMT, id)
 
-#घोषणा OPP_DCE_80_REG_LIST(id) \
+#define OPP_DCE_80_REG_LIST(id) \
 	OPP_COMMON_REG_LIST_BASE(id), \
 	SRI(FMT_TEMPORAL_DITHER_PATTERN_CONTROL, FMT, id), \
 	SRI(FMT_TEMPORAL_DITHER_PROGRAMMABLE_PATTERN_S_MATRIX, FMT, id), \
 	SRI(FMT_TEMPORAL_DITHER_PROGRAMMABLE_PATTERN_T_MATRIX, FMT, id)
 
-#घोषणा OPP_DCE_100_REG_LIST(id) \
+#define OPP_DCE_100_REG_LIST(id) \
 	OPP_COMMON_REG_LIST_BASE(id), \
 	SRI(FMT_TEMPORAL_DITHER_PATTERN_CONTROL, FMT, id), \
 	SRI(FMT_TEMPORAL_DITHER_PROGRAMMABLE_PATTERN_S_MATRIX, FMT, id), \
 	SRI(FMT_TEMPORAL_DITHER_PROGRAMMABLE_PATTERN_T_MATRIX, FMT, id)
 
-#घोषणा OPP_DCE_110_REG_LIST(id) \
+#define OPP_DCE_110_REG_LIST(id) \
 	OPP_COMMON_REG_LIST_BASE(id), \
 	SRI(FMT_TEMPORAL_DITHER_PATTERN_CONTROL, FMT, id), \
 	SRI(FMT_TEMPORAL_DITHER_PROGRAMMABLE_PATTERN_S_MATRIX, FMT, id), \
 	SRI(FMT_TEMPORAL_DITHER_PROGRAMMABLE_PATTERN_T_MATRIX, FMT, id)
 
-#घोषणा OPP_DCE_112_REG_LIST(id) \
+#define OPP_DCE_112_REG_LIST(id) \
 	OPP_COMMON_REG_LIST_BASE(id), \
 	SRI(FMT_TEMPORAL_DITHER_PATTERN_CONTROL, FMT, id), \
 	SRI(FMT_TEMPORAL_DITHER_PROGRAMMABLE_PATTERN_S_MATRIX, FMT, id), \
 	SRI(FMT_TEMPORAL_DITHER_PROGRAMMABLE_PATTERN_T_MATRIX, FMT, id), \
 	SRI(CONTROL, FMT_MEMORY, id)
 
-#घोषणा OPP_DCE_120_REG_LIST(id) \
+#define OPP_DCE_120_REG_LIST(id) \
 	OPP_COMMON_REG_LIST_BASE(id), \
 	SRI(CONTROL, FMT_MEMORY, id)
 
-#अगर defined(CONFIG_DRM_AMD_DC_SI)
-#घोषणा OPP_DCE_60_REG_LIST(id) \
+#if defined(CONFIG_DRM_AMD_DC_SI)
+#define OPP_DCE_60_REG_LIST(id) \
 	SRI(FMT_DYNAMIC_EXP_CNTL, FMT, id), \
 	SRI(FMT_BIT_DEPTH_CONTROL, FMT, id), \
 	SRI(FMT_CONTROL, FMT, id), \
@@ -91,12 +90,12 @@
 	SRI(FMT_DITHER_RAND_G_SEED, FMT, id), \
 	SRI(FMT_DITHER_RAND_B_SEED, FMT, id), \
 	SRI(FMT_CLAMP_CNTL, FMT, id)
-#पूर्ण_अगर
+#endif
 
-#घोषणा OPP_SF(reg_name, field_name, post_fix)\
+#define OPP_SF(reg_name, field_name, post_fix)\
 	.field_name = reg_name ## __ ## field_name ## post_fix
 
-#घोषणा OPP_COMMON_MASK_SH_LIST_DCE_COMMON_BASE(mask_sh)\
+#define OPP_COMMON_MASK_SH_LIST_DCE_COMMON_BASE(mask_sh)\
 	OPP_SF(FMT_DYNAMIC_EXP_CNTL, FMT_DYNAMIC_EXP_EN, mask_sh),\
 	OPP_SF(FMT_DYNAMIC_EXP_CNTL, FMT_DYNAMIC_EXP_MODE, mask_sh),\
 	OPP_SF(FMT_BIT_DEPTH_CONTROL, FMT_TRUNCATE_EN, mask_sh),\
@@ -132,19 +131,19 @@
 	OPP_SF(FMT_CONTROL, FMT_SUBSAMPLING_MODE, mask_sh),\
 	OPP_SF(FMT_CONTROL, FMT_SUBSAMPLING_ORDER, mask_sh)
 
-#घोषणा OPP_COMMON_MASK_SH_LIST_DCE_110(mask_sh)\
+#define OPP_COMMON_MASK_SH_LIST_DCE_110(mask_sh)\
 	OPP_COMMON_MASK_SH_LIST_DCE_COMMON_BASE(mask_sh),\
 	OPP_SF(FMT_CONTROL, FMT_SPATIAL_DITHER_FRAME_COUNTER_MAX, mask_sh),\
 	OPP_SF(FMT_CONTROL, FMT_SPATIAL_DITHER_FRAME_COUNTER_BIT_SWAP, mask_sh),\
 	OPP_SF(FMT_CONTROL, FMT_STEREOSYNC_OVERRIDE, mask_sh)
 
-#घोषणा OPP_COMMON_MASK_SH_LIST_DCE_100(mask_sh)\
+#define OPP_COMMON_MASK_SH_LIST_DCE_100(mask_sh)\
 	OPP_COMMON_MASK_SH_LIST_DCE_COMMON_BASE(mask_sh),\
 	OPP_SF(FMT_CONTROL, FMT_SPATIAL_DITHER_FRAME_COUNTER_MAX, mask_sh),\
 	OPP_SF(FMT_CONTROL, FMT_SPATIAL_DITHER_FRAME_COUNTER_BIT_SWAP, mask_sh),\
 	OPP_SF(FMT_CONTROL, FMT_STEREOSYNC_OVERRIDE, mask_sh)
 
-#घोषणा OPP_COMMON_MASK_SH_LIST_DCE_112(mask_sh)\
+#define OPP_COMMON_MASK_SH_LIST_DCE_112(mask_sh)\
 	OPP_COMMON_MASK_SH_LIST_DCE_COMMON_BASE(mask_sh),\
 	OPP_SF(FMT_MEMORY0_CONTROL, FMT420_MEM0_SOURCE_SEL, mask_sh),\
 	OPP_SF(FMT_MEMORY0_CONTROL, FMT420_MEM0_PWR_FORCE, mask_sh),\
@@ -155,10 +154,10 @@
 	OPP_SF(FMT_CONTROL, FMT_SPATIAL_DITHER_FRAME_COUNTER_BIT_SWAP, mask_sh),\
 	OPP_SF(FMT_CONTROL, FMT_STEREOSYNC_OVERRIDE, mask_sh)
 
-#घोषणा OPP_COMMON_MASK_SH_LIST_DCE_80(mask_sh)\
+#define OPP_COMMON_MASK_SH_LIST_DCE_80(mask_sh)\
 	OPP_COMMON_MASK_SH_LIST_DCE_COMMON_BASE(mask_sh)
 
-#घोषणा OPP_COMMON_MASK_SH_LIST_DCE_120(mask_sh)\
+#define OPP_COMMON_MASK_SH_LIST_DCE_120(mask_sh)\
 	OPP_SF(FMT0_FMT_DYNAMIC_EXP_CNTL, FMT_DYNAMIC_EXP_EN, mask_sh),\
 	OPP_SF(FMT0_FMT_DYNAMIC_EXP_CNTL, FMT_DYNAMIC_EXP_MODE, mask_sh),\
 	OPP_SF(FMT0_FMT_BIT_DEPTH_CONTROL, FMT_TRUNCATE_EN, mask_sh),\
@@ -203,8 +202,8 @@
 	OPP_SF(FMT0_FMT_CONTROL, FMT_SUBSAMPLING_ORDER, mask_sh),\
 	OPP_SF(FMT0_FMT_CONTROL, FMT_CBCR_BIT_REDUCTION_BYPASS, mask_sh)
 
-#अगर defined(CONFIG_DRM_AMD_DC_SI)
-#घोषणा OPP_COMMON_MASK_SH_LIST_DCE_60(mask_sh)\
+#if defined(CONFIG_DRM_AMD_DC_SI)
+#define OPP_COMMON_MASK_SH_LIST_DCE_60(mask_sh)\
 	OPP_SF(FMT_DYNAMIC_EXP_CNTL, FMT_DYNAMIC_EXP_EN, mask_sh),\
 	OPP_SF(FMT_DYNAMIC_EXP_CNTL, FMT_DYNAMIC_EXP_MODE, mask_sh),\
 	OPP_SF(FMT_BIT_DEPTH_CONTROL, FMT_TRUNCATE_EN, mask_sh),\
@@ -229,9 +228,9 @@
 	OPP_SF(FMT_CLAMP_CNTL, FMT_CLAMP_DATA_EN, mask_sh),\
 	OPP_SF(FMT_CLAMP_CNTL, FMT_CLAMP_COLOR_FORMAT, mask_sh),\
 	OPP_SF(FMT_CONTROL, FMT_PIXEL_ENCODING, mask_sh)
-#पूर्ण_अगर
+#endif
 
-#घोषणा OPP_REG_FIELD_LIST(type) \
+#define OPP_REG_FIELD_LIST(type) \
 	type FMT_DYNAMIC_EXP_EN; \
 	type FMT_DYNAMIC_EXP_MODE; \
 	type FMT_TRUNCATE_EN; \
@@ -275,84 +274,84 @@
 	type FMT_SUBSAMPLING_MODE; \
 	type FMT_CBCR_BIT_REDUCTION_BYPASS;\
 
-काष्ठा dce_opp_shअगरt अणु
-	OPP_REG_FIELD_LIST(uपूर्णांक8_t)
-पूर्ण;
+struct dce_opp_shift {
+	OPP_REG_FIELD_LIST(uint8_t)
+};
 
-काष्ठा dce_opp_mask अणु
-	OPP_REG_FIELD_LIST(uपूर्णांक32_t)
-पूर्ण;
+struct dce_opp_mask {
+	OPP_REG_FIELD_LIST(uint32_t)
+};
 
-काष्ठा dce_opp_रेजिस्टरs अणु
-	uपूर्णांक32_t FMT_DYNAMIC_EXP_CNTL;
-	uपूर्णांक32_t FMT_BIT_DEPTH_CONTROL;
-	uपूर्णांक32_t FMT_CONTROL;
-	uपूर्णांक32_t FMT_DITHER_RAND_R_SEED;
-	uपूर्णांक32_t FMT_DITHER_RAND_G_SEED;
-	uपूर्णांक32_t FMT_DITHER_RAND_B_SEED;
-	uपूर्णांक32_t FMT_TEMPORAL_DITHER_PATTERN_CONTROL;
-	uपूर्णांक32_t FMT_TEMPORAL_DITHER_PROGRAMMABLE_PATTERN_S_MATRIX;
-	uपूर्णांक32_t FMT_TEMPORAL_DITHER_PROGRAMMABLE_PATTERN_T_MATRIX;
-	uपूर्णांक32_t CONTROL;
-	uपूर्णांक32_t FMT_CLAMP_CNTL;
-	uपूर्णांक32_t FMT_CLAMP_COMPONENT_R;
-	uपूर्णांक32_t FMT_CLAMP_COMPONENT_G;
-	uपूर्णांक32_t FMT_CLAMP_COMPONENT_B;
-पूर्ण;
+struct dce_opp_registers {
+	uint32_t FMT_DYNAMIC_EXP_CNTL;
+	uint32_t FMT_BIT_DEPTH_CONTROL;
+	uint32_t FMT_CONTROL;
+	uint32_t FMT_DITHER_RAND_R_SEED;
+	uint32_t FMT_DITHER_RAND_G_SEED;
+	uint32_t FMT_DITHER_RAND_B_SEED;
+	uint32_t FMT_TEMPORAL_DITHER_PATTERN_CONTROL;
+	uint32_t FMT_TEMPORAL_DITHER_PROGRAMMABLE_PATTERN_S_MATRIX;
+	uint32_t FMT_TEMPORAL_DITHER_PROGRAMMABLE_PATTERN_T_MATRIX;
+	uint32_t CONTROL;
+	uint32_t FMT_CLAMP_CNTL;
+	uint32_t FMT_CLAMP_COMPONENT_R;
+	uint32_t FMT_CLAMP_COMPONENT_G;
+	uint32_t FMT_CLAMP_COMPONENT_B;
+};
 
 /* OPP RELATED */
-#घोषणा TO_DCE110_OPP(opp)\
-	container_of(opp, काष्ठा dce110_opp, base)
+#define TO_DCE110_OPP(opp)\
+	container_of(opp, struct dce110_opp, base)
 
-काष्ठा dce110_opp अणु
-	काष्ठा output_pixel_processor base;
-	स्थिर काष्ठा dce_opp_रेजिस्टरs *regs;
-	स्थिर काष्ठा dce_opp_shअगरt *opp_shअगरt;
-	स्थिर काष्ठा dce_opp_mask *opp_mask;
-पूर्ण;
+struct dce110_opp {
+	struct output_pixel_processor base;
+	const struct dce_opp_registers *regs;
+	const struct dce_opp_shift *opp_shift;
+	const struct dce_opp_mask *opp_mask;
+};
 
-व्योम dce110_opp_स्थिरruct(काष्ठा dce110_opp *opp110,
-	काष्ठा dc_context *ctx,
-	uपूर्णांक32_t inst,
-	स्थिर काष्ठा dce_opp_रेजिस्टरs *regs,
-	स्थिर काष्ठा dce_opp_shअगरt *opp_shअगरt,
-	स्थिर काष्ठा dce_opp_mask *opp_mask);
+void dce110_opp_construct(struct dce110_opp *opp110,
+	struct dc_context *ctx,
+	uint32_t inst,
+	const struct dce_opp_registers *regs,
+	const struct dce_opp_shift *opp_shift,
+	const struct dce_opp_mask *opp_mask);
 
-#अगर defined(CONFIG_DRM_AMD_DC_SI)
-व्योम dce60_opp_स्थिरruct(काष्ठा dce110_opp *opp110,
-	काष्ठा dc_context *ctx,
-	uपूर्णांक32_t inst,
-	स्थिर काष्ठा dce_opp_रेजिस्टरs *regs,
-	स्थिर काष्ठा dce_opp_shअगरt *opp_shअगरt,
-	स्थिर काष्ठा dce_opp_mask *opp_mask);
-#पूर्ण_अगर
+#if defined(CONFIG_DRM_AMD_DC_SI)
+void dce60_opp_construct(struct dce110_opp *opp110,
+	struct dc_context *ctx,
+	uint32_t inst,
+	const struct dce_opp_registers *regs,
+	const struct dce_opp_shift *opp_shift,
+	const struct dce_opp_mask *opp_mask);
+#endif
 
-व्योम dce110_opp_destroy(काष्ठा output_pixel_processor **opp);
+void dce110_opp_destroy(struct output_pixel_processor **opp);
 
 
 
 /* FORMATTER RELATED */
-व्योम dce110_opp_program_bit_depth_reduction(
-	काष्ठा output_pixel_processor *opp,
-	स्थिर काष्ठा bit_depth_reduction_params *params);
+void dce110_opp_program_bit_depth_reduction(
+	struct output_pixel_processor *opp,
+	const struct bit_depth_reduction_params *params);
 
-व्योम dce110_opp_program_clamping_and_pixel_encoding(
-	काष्ठा output_pixel_processor *opp,
-	स्थिर काष्ठा clamping_and_pixel_encoding_params *params);
+void dce110_opp_program_clamping_and_pixel_encoding(
+	struct output_pixel_processor *opp,
+	const struct clamping_and_pixel_encoding_params *params);
 
-व्योम dce110_opp_set_dyn_expansion(
-	काष्ठा output_pixel_processor *opp,
-	क्रमागत dc_color_space color_sp,
-	क्रमागत dc_color_depth color_dpth,
-	क्रमागत संकेत_type संकेत);
+void dce110_opp_set_dyn_expansion(
+	struct output_pixel_processor *opp,
+	enum dc_color_space color_sp,
+	enum dc_color_depth color_dpth,
+	enum signal_type signal);
 
-व्योम dce110_opp_program_fmt(
-	काष्ठा output_pixel_processor *opp,
-	काष्ठा bit_depth_reduction_params *fmt_bit_depth,
-	काष्ठा clamping_and_pixel_encoding_params *clamping);
+void dce110_opp_program_fmt(
+	struct output_pixel_processor *opp,
+	struct bit_depth_reduction_params *fmt_bit_depth,
+	struct clamping_and_pixel_encoding_params *clamping);
 
-व्योम dce110_opp_set_clamping(
-	काष्ठा dce110_opp *opp110,
-	स्थिर काष्ठा clamping_and_pixel_encoding_params *params);
+void dce110_opp_set_clamping(
+	struct dce110_opp *opp110,
+	const struct clamping_and_pixel_encoding_params *params);
 
-#पूर्ण_अगर
+#endif

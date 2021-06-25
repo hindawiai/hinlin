@@ -1,192 +1,191 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2012-2014 The Linux Foundation. All rights reserved.
  */
 
-#अगर_अघोषित _LINUX_IOPOLL_H
-#घोषणा _LINUX_IOPOLL_H
+#ifndef _LINUX_IOPOLL_H
+#define _LINUX_IOPOLL_H
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/types.h>
-#समावेश <linux/kसमय.स>
-#समावेश <linux/delay.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/पन.स>
+#include <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/ktime.h>
+#include <linux/delay.h>
+#include <linux/errno.h>
+#include <linux/io.h>
 
 /**
- * पढ़ो_poll_समयout - Periodically poll an address until a condition is
- *			met or a समयout occurs
+ * read_poll_timeout - Periodically poll an address until a condition is
+ *			met or a timeout occurs
  * @op: accessor function (takes @args as its arguments)
- * @val: Variable to पढ़ो the value पूर्णांकo
+ * @val: Variable to read the value into
  * @cond: Break condition (usually involving @val)
- * @sleep_us: Maximum समय to sleep between पढ़ोs in us (0
+ * @sleep_us: Maximum time to sleep between reads in us (0
  *            tight-loops).  Should be less than ~20ms since usleep_range
- *            is used (see Documentation/समयrs/समयrs-howto.rst).
- * @समयout_us: Timeout in us, 0 means never समयout
- * @sleep_beक्रमe_पढ़ो: अगर it is true, sleep @sleep_us beक्रमe पढ़ो.
- * @args: arguments क्रम @op poll
+ *            is used (see Documentation/timers/timers-howto.rst).
+ * @timeout_us: Timeout in us, 0 means never timeout
+ * @sleep_before_read: if it is true, sleep @sleep_us before read.
+ * @args: arguments for @op poll
  *
- * Returns 0 on success and -ETIMEDOUT upon a समयout. In either
- * हाल, the last पढ़ो value at @args is stored in @val. Must not
- * be called from atomic context अगर sleep_us or समयout_us are used.
+ * Returns 0 on success and -ETIMEDOUT upon a timeout. In either
+ * case, the last read value at @args is stored in @val. Must not
+ * be called from atomic context if sleep_us or timeout_us are used.
  *
  * When available, you'll probably want to use one of the specialized
  * macros defined below rather than this macro directly.
  */
-#घोषणा पढ़ो_poll_समयout(op, val, cond, sleep_us, समयout_us, \
-				sleep_beक्रमe_पढ़ो, args...) \
-(अणु \
-	u64 __समयout_us = (समयout_us); \
-	अचिन्हित दीर्घ __sleep_us = (sleep_us); \
-	kसमय_प्रकार __समयout = kसमय_add_us(kसमय_get(), __समयout_us); \
-	might_sleep_अगर((__sleep_us) != 0); \
-	अगर (sleep_beक्रमe_पढ़ो && __sleep_us) \
+#define read_poll_timeout(op, val, cond, sleep_us, timeout_us, \
+				sleep_before_read, args...) \
+({ \
+	u64 __timeout_us = (timeout_us); \
+	unsigned long __sleep_us = (sleep_us); \
+	ktime_t __timeout = ktime_add_us(ktime_get(), __timeout_us); \
+	might_sleep_if((__sleep_us) != 0); \
+	if (sleep_before_read && __sleep_us) \
 		usleep_range((__sleep_us >> 2) + 1, __sleep_us); \
-	क्रम (;;) अणु \
+	for (;;) { \
 		(val) = op(args); \
-		अगर (cond) \
-			अवरोध; \
-		अगर (__समयout_us && \
-		    kसमय_compare(kसमय_get(), __समयout) > 0) अणु \
+		if (cond) \
+			break; \
+		if (__timeout_us && \
+		    ktime_compare(ktime_get(), __timeout) > 0) { \
 			(val) = op(args); \
-			अवरोध; \
-		पूर्ण \
-		अगर (__sleep_us) \
+			break; \
+		} \
+		if (__sleep_us) \
 			usleep_range((__sleep_us >> 2) + 1, __sleep_us); \
-	पूर्ण \
+	} \
 	(cond) ? 0 : -ETIMEDOUT; \
-पूर्ण)
+})
 
 /**
- * पढ़ो_poll_समयout_atomic - Periodically poll an address until a condition is
- * 				met or a समयout occurs
+ * read_poll_timeout_atomic - Periodically poll an address until a condition is
+ * 				met or a timeout occurs
  * @op: accessor function (takes @args as its arguments)
- * @val: Variable to पढ़ो the value पूर्णांकo
+ * @val: Variable to read the value into
  * @cond: Break condition (usually involving @val)
- * @delay_us: Time to udelay between पढ़ोs in us (0 tight-loops).  Should
+ * @delay_us: Time to udelay between reads in us (0 tight-loops).  Should
  *            be less than ~10us since udelay is used (see
- *            Documentation/समयrs/समयrs-howto.rst).
- * @समयout_us: Timeout in us, 0 means never समयout
- * @delay_beक्रमe_पढ़ो: अगर it is true, delay @delay_us beक्रमe पढ़ो.
- * @args: arguments क्रम @op poll
+ *            Documentation/timers/timers-howto.rst).
+ * @timeout_us: Timeout in us, 0 means never timeout
+ * @delay_before_read: if it is true, delay @delay_us before read.
+ * @args: arguments for @op poll
  *
- * Returns 0 on success and -ETIMEDOUT upon a समयout. In either
- * हाल, the last पढ़ो value at @args is stored in @val.
+ * Returns 0 on success and -ETIMEDOUT upon a timeout. In either
+ * case, the last read value at @args is stored in @val.
  *
  * When available, you'll probably want to use one of the specialized
  * macros defined below rather than this macro directly.
  */
-#घोषणा पढ़ो_poll_समयout_atomic(op, val, cond, delay_us, समयout_us, \
-					delay_beक्रमe_पढ़ो, args...) \
-(अणु \
-	u64 __समयout_us = (समयout_us); \
-	अचिन्हित दीर्घ __delay_us = (delay_us); \
-	kसमय_प्रकार __समयout = kसमय_add_us(kसमय_get(), __समयout_us); \
-	अगर (delay_beक्रमe_पढ़ो && __delay_us) \
+#define read_poll_timeout_atomic(op, val, cond, delay_us, timeout_us, \
+					delay_before_read, args...) \
+({ \
+	u64 __timeout_us = (timeout_us); \
+	unsigned long __delay_us = (delay_us); \
+	ktime_t __timeout = ktime_add_us(ktime_get(), __timeout_us); \
+	if (delay_before_read && __delay_us) \
 		udelay(__delay_us); \
-	क्रम (;;) अणु \
+	for (;;) { \
 		(val) = op(args); \
-		अगर (cond) \
-			अवरोध; \
-		अगर (__समयout_us && \
-		    kसमय_compare(kसमय_get(), __समयout) > 0) अणु \
+		if (cond) \
+			break; \
+		if (__timeout_us && \
+		    ktime_compare(ktime_get(), __timeout) > 0) { \
 			(val) = op(args); \
-			अवरोध; \
-		पूर्ण \
-		अगर (__delay_us) \
+			break; \
+		} \
+		if (__delay_us) \
 			udelay(__delay_us); \
-	पूर्ण \
+	} \
 	(cond) ? 0 : -ETIMEDOUT; \
-पूर्ण)
+})
 
 /**
- * पढ़ोx_poll_समयout - Periodically poll an address until a condition is met or a समयout occurs
+ * readx_poll_timeout - Periodically poll an address until a condition is met or a timeout occurs
  * @op: accessor function (takes @addr as its only argument)
  * @addr: Address to poll
- * @val: Variable to पढ़ो the value पूर्णांकo
+ * @val: Variable to read the value into
  * @cond: Break condition (usually involving @val)
- * @sleep_us: Maximum समय to sleep between पढ़ोs in us (0
+ * @sleep_us: Maximum time to sleep between reads in us (0
  *            tight-loops).  Should be less than ~20ms since usleep_range
- *            is used (see Documentation/समयrs/समयrs-howto.rst).
- * @समयout_us: Timeout in us, 0 means never समयout
+ *            is used (see Documentation/timers/timers-howto.rst).
+ * @timeout_us: Timeout in us, 0 means never timeout
  *
- * Returns 0 on success and -ETIMEDOUT upon a समयout. In either
- * हाल, the last पढ़ो value at @addr is stored in @val. Must not
- * be called from atomic context अगर sleep_us or समयout_us are used.
+ * Returns 0 on success and -ETIMEDOUT upon a timeout. In either
+ * case, the last read value at @addr is stored in @val. Must not
+ * be called from atomic context if sleep_us or timeout_us are used.
  *
  * When available, you'll probably want to use one of the specialized
  * macros defined below rather than this macro directly.
  */
-#घोषणा पढ़ोx_poll_समयout(op, addr, val, cond, sleep_us, समयout_us)	\
-	पढ़ो_poll_समयout(op, val, cond, sleep_us, समयout_us, false, addr)
+#define readx_poll_timeout(op, addr, val, cond, sleep_us, timeout_us)	\
+	read_poll_timeout(op, val, cond, sleep_us, timeout_us, false, addr)
 
 /**
- * पढ़ोx_poll_समयout_atomic - Periodically poll an address until a condition is met or a समयout occurs
+ * readx_poll_timeout_atomic - Periodically poll an address until a condition is met or a timeout occurs
  * @op: accessor function (takes @addr as its only argument)
  * @addr: Address to poll
- * @val: Variable to पढ़ो the value पूर्णांकo
+ * @val: Variable to read the value into
  * @cond: Break condition (usually involving @val)
- * @delay_us: Time to udelay between पढ़ोs in us (0 tight-loops).  Should
+ * @delay_us: Time to udelay between reads in us (0 tight-loops).  Should
  *            be less than ~10us since udelay is used (see
- *            Documentation/समयrs/समयrs-howto.rst).
- * @समयout_us: Timeout in us, 0 means never समयout
+ *            Documentation/timers/timers-howto.rst).
+ * @timeout_us: Timeout in us, 0 means never timeout
  *
- * Returns 0 on success and -ETIMEDOUT upon a समयout. In either
- * हाल, the last पढ़ो value at @addr is stored in @val.
+ * Returns 0 on success and -ETIMEDOUT upon a timeout. In either
+ * case, the last read value at @addr is stored in @val.
  *
  * When available, you'll probably want to use one of the specialized
  * macros defined below rather than this macro directly.
  */
-#घोषणा पढ़ोx_poll_समयout_atomic(op, addr, val, cond, delay_us, समयout_us) \
-	पढ़ो_poll_समयout_atomic(op, val, cond, delay_us, समयout_us, false, addr)
+#define readx_poll_timeout_atomic(op, addr, val, cond, delay_us, timeout_us) \
+	read_poll_timeout_atomic(op, val, cond, delay_us, timeout_us, false, addr)
 
-#घोषणा पढ़ोb_poll_समयout(addr, val, cond, delay_us, समयout_us) \
-	पढ़ोx_poll_समयout(पढ़ोb, addr, val, cond, delay_us, समयout_us)
+#define readb_poll_timeout(addr, val, cond, delay_us, timeout_us) \
+	readx_poll_timeout(readb, addr, val, cond, delay_us, timeout_us)
 
-#घोषणा पढ़ोb_poll_समयout_atomic(addr, val, cond, delay_us, समयout_us) \
-	पढ़ोx_poll_समयout_atomic(पढ़ोb, addr, val, cond, delay_us, समयout_us)
+#define readb_poll_timeout_atomic(addr, val, cond, delay_us, timeout_us) \
+	readx_poll_timeout_atomic(readb, addr, val, cond, delay_us, timeout_us)
 
-#घोषणा पढ़ोw_poll_समयout(addr, val, cond, delay_us, समयout_us) \
-	पढ़ोx_poll_समयout(पढ़ोw, addr, val, cond, delay_us, समयout_us)
+#define readw_poll_timeout(addr, val, cond, delay_us, timeout_us) \
+	readx_poll_timeout(readw, addr, val, cond, delay_us, timeout_us)
 
-#घोषणा पढ़ोw_poll_समयout_atomic(addr, val, cond, delay_us, समयout_us) \
-	पढ़ोx_poll_समयout_atomic(पढ़ोw, addr, val, cond, delay_us, समयout_us)
+#define readw_poll_timeout_atomic(addr, val, cond, delay_us, timeout_us) \
+	readx_poll_timeout_atomic(readw, addr, val, cond, delay_us, timeout_us)
 
-#घोषणा पढ़ोl_poll_समयout(addr, val, cond, delay_us, समयout_us) \
-	पढ़ोx_poll_समयout(पढ़ोl, addr, val, cond, delay_us, समयout_us)
+#define readl_poll_timeout(addr, val, cond, delay_us, timeout_us) \
+	readx_poll_timeout(readl, addr, val, cond, delay_us, timeout_us)
 
-#घोषणा पढ़ोl_poll_समयout_atomic(addr, val, cond, delay_us, समयout_us) \
-	पढ़ोx_poll_समयout_atomic(पढ़ोl, addr, val, cond, delay_us, समयout_us)
+#define readl_poll_timeout_atomic(addr, val, cond, delay_us, timeout_us) \
+	readx_poll_timeout_atomic(readl, addr, val, cond, delay_us, timeout_us)
 
-#घोषणा पढ़ोq_poll_समयout(addr, val, cond, delay_us, समयout_us) \
-	पढ़ोx_poll_समयout(पढ़ोq, addr, val, cond, delay_us, समयout_us)
+#define readq_poll_timeout(addr, val, cond, delay_us, timeout_us) \
+	readx_poll_timeout(readq, addr, val, cond, delay_us, timeout_us)
 
-#घोषणा पढ़ोq_poll_समयout_atomic(addr, val, cond, delay_us, समयout_us) \
-	पढ़ोx_poll_समयout_atomic(पढ़ोq, addr, val, cond, delay_us, समयout_us)
+#define readq_poll_timeout_atomic(addr, val, cond, delay_us, timeout_us) \
+	readx_poll_timeout_atomic(readq, addr, val, cond, delay_us, timeout_us)
 
-#घोषणा पढ़ोb_relaxed_poll_समयout(addr, val, cond, delay_us, समयout_us) \
-	पढ़ोx_poll_समयout(पढ़ोb_relaxed, addr, val, cond, delay_us, समयout_us)
+#define readb_relaxed_poll_timeout(addr, val, cond, delay_us, timeout_us) \
+	readx_poll_timeout(readb_relaxed, addr, val, cond, delay_us, timeout_us)
 
-#घोषणा पढ़ोb_relaxed_poll_समयout_atomic(addr, val, cond, delay_us, समयout_us) \
-	पढ़ोx_poll_समयout_atomic(पढ़ोb_relaxed, addr, val, cond, delay_us, समयout_us)
+#define readb_relaxed_poll_timeout_atomic(addr, val, cond, delay_us, timeout_us) \
+	readx_poll_timeout_atomic(readb_relaxed, addr, val, cond, delay_us, timeout_us)
 
-#घोषणा पढ़ोw_relaxed_poll_समयout(addr, val, cond, delay_us, समयout_us) \
-	पढ़ोx_poll_समयout(पढ़ोw_relaxed, addr, val, cond, delay_us, समयout_us)
+#define readw_relaxed_poll_timeout(addr, val, cond, delay_us, timeout_us) \
+	readx_poll_timeout(readw_relaxed, addr, val, cond, delay_us, timeout_us)
 
-#घोषणा पढ़ोw_relaxed_poll_समयout_atomic(addr, val, cond, delay_us, समयout_us) \
-	पढ़ोx_poll_समयout_atomic(पढ़ोw_relaxed, addr, val, cond, delay_us, समयout_us)
+#define readw_relaxed_poll_timeout_atomic(addr, val, cond, delay_us, timeout_us) \
+	readx_poll_timeout_atomic(readw_relaxed, addr, val, cond, delay_us, timeout_us)
 
-#घोषणा पढ़ोl_relaxed_poll_समयout(addr, val, cond, delay_us, समयout_us) \
-	पढ़ोx_poll_समयout(पढ़ोl_relaxed, addr, val, cond, delay_us, समयout_us)
+#define readl_relaxed_poll_timeout(addr, val, cond, delay_us, timeout_us) \
+	readx_poll_timeout(readl_relaxed, addr, val, cond, delay_us, timeout_us)
 
-#घोषणा पढ़ोl_relaxed_poll_समयout_atomic(addr, val, cond, delay_us, समयout_us) \
-	पढ़ोx_poll_समयout_atomic(पढ़ोl_relaxed, addr, val, cond, delay_us, समयout_us)
+#define readl_relaxed_poll_timeout_atomic(addr, val, cond, delay_us, timeout_us) \
+	readx_poll_timeout_atomic(readl_relaxed, addr, val, cond, delay_us, timeout_us)
 
-#घोषणा पढ़ोq_relaxed_poll_समयout(addr, val, cond, delay_us, समयout_us) \
-	पढ़ोx_poll_समयout(पढ़ोq_relaxed, addr, val, cond, delay_us, समयout_us)
+#define readq_relaxed_poll_timeout(addr, val, cond, delay_us, timeout_us) \
+	readx_poll_timeout(readq_relaxed, addr, val, cond, delay_us, timeout_us)
 
-#घोषणा पढ़ोq_relaxed_poll_समयout_atomic(addr, val, cond, delay_us, समयout_us) \
-	पढ़ोx_poll_समयout_atomic(पढ़ोq_relaxed, addr, val, cond, delay_us, समयout_us)
+#define readq_relaxed_poll_timeout_atomic(addr, val, cond, delay_us, timeout_us) \
+	readx_poll_timeout_atomic(readq_relaxed, addr, val, cond, delay_us, timeout_us)
 
-#पूर्ण_अगर /* _LINUX_IOPOLL_H */
+#endif /* _LINUX_IOPOLL_H */

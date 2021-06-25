@@ -1,166 +1,165 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2010-2011 Canonical Ltd <jeremy.kerr@canonical.com>
  * Copyright (C) 2011-2012 Mike Turquette, Linaro Ltd <mturquette@linaro.org>
  *
- * Gated घड़ी implementation
+ * Gated clock implementation
  */
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/err.h>
-#समावेश <linux/माला.स>
+#include <linux/clk-provider.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/io.h>
+#include <linux/err.h>
+#include <linux/string.h>
 
 /**
- * DOC: basic gatable घड़ी which can gate and ungate it's ouput
+ * DOC: basic gatable clock which can gate and ungate it's ouput
  *
- * Traits of this घड़ी:
+ * Traits of this clock:
  * prepare - clk_(un)prepare only ensures parent is (un)prepared
  * enable - clk_enable and clk_disable are functional & control gating
  * rate - inherits rate from parent.  No clk_set_rate support
  * parent - fixed parent.  No clk_set_parent support
  */
 
-अटल अंतरभूत u32 clk_gate_पढ़ोl(काष्ठा clk_gate *gate)
-अणु
-	अगर (gate->flags & CLK_GATE_BIG_ENDIAN)
-		वापस ioपढ़ो32be(gate->reg);
+static inline u32 clk_gate_readl(struct clk_gate *gate)
+{
+	if (gate->flags & CLK_GATE_BIG_ENDIAN)
+		return ioread32be(gate->reg);
 
-	वापस पढ़ोl(gate->reg);
-पूर्ण
+	return readl(gate->reg);
+}
 
-अटल अंतरभूत व्योम clk_gate_ग_लिखोl(काष्ठा clk_gate *gate, u32 val)
-अणु
-	अगर (gate->flags & CLK_GATE_BIG_ENDIAN)
-		ioग_लिखो32be(val, gate->reg);
-	अन्यथा
-		ग_लिखोl(val, gate->reg);
-पूर्ण
+static inline void clk_gate_writel(struct clk_gate *gate, u32 val)
+{
+	if (gate->flags & CLK_GATE_BIG_ENDIAN)
+		iowrite32be(val, gate->reg);
+	else
+		writel(val, gate->reg);
+}
 
 /*
  * It works on following logic:
  *
- * For enabling घड़ी, enable = 1
+ * For enabling clock, enable = 1
  *	set2dis = 1	-> clear bit	-> set = 0
  *	set2dis = 0	-> set bit	-> set = 1
  *
- * For disabling घड़ी, enable = 0
+ * For disabling clock, enable = 0
  *	set2dis = 1	-> set bit	-> set = 1
  *	set2dis = 0	-> clear bit	-> set = 0
  *
  * So, result is always: enable xor set2dis.
  */
-अटल व्योम clk_gate_endisable(काष्ठा clk_hw *hw, पूर्णांक enable)
-अणु
-	काष्ठा clk_gate *gate = to_clk_gate(hw);
-	पूर्णांक set = gate->flags & CLK_GATE_SET_TO_DISABLE ? 1 : 0;
-	अचिन्हित दीर्घ flags;
+static void clk_gate_endisable(struct clk_hw *hw, int enable)
+{
+	struct clk_gate *gate = to_clk_gate(hw);
+	int set = gate->flags & CLK_GATE_SET_TO_DISABLE ? 1 : 0;
+	unsigned long flags;
 	u32 reg;
 
 	set ^= enable;
 
-	अगर (gate->lock)
+	if (gate->lock)
 		spin_lock_irqsave(gate->lock, flags);
-	अन्यथा
+	else
 		__acquire(gate->lock);
 
-	अगर (gate->flags & CLK_GATE_HIWORD_MASK) अणु
+	if (gate->flags & CLK_GATE_HIWORD_MASK) {
 		reg = BIT(gate->bit_idx + 16);
-		अगर (set)
+		if (set)
 			reg |= BIT(gate->bit_idx);
-	पूर्ण अन्यथा अणु
-		reg = clk_gate_पढ़ोl(gate);
+	} else {
+		reg = clk_gate_readl(gate);
 
-		अगर (set)
+		if (set)
 			reg |= BIT(gate->bit_idx);
-		अन्यथा
+		else
 			reg &= ~BIT(gate->bit_idx);
-	पूर्ण
+	}
 
-	clk_gate_ग_लिखोl(gate, reg);
+	clk_gate_writel(gate, reg);
 
-	अगर (gate->lock)
+	if (gate->lock)
 		spin_unlock_irqrestore(gate->lock, flags);
-	अन्यथा
+	else
 		__release(gate->lock);
-पूर्ण
+}
 
-अटल पूर्णांक clk_gate_enable(काष्ठा clk_hw *hw)
-अणु
+static int clk_gate_enable(struct clk_hw *hw)
+{
 	clk_gate_endisable(hw, 1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम clk_gate_disable(काष्ठा clk_hw *hw)
-अणु
+static void clk_gate_disable(struct clk_hw *hw)
+{
 	clk_gate_endisable(hw, 0);
-पूर्ण
+}
 
-पूर्णांक clk_gate_is_enabled(काष्ठा clk_hw *hw)
-अणु
+int clk_gate_is_enabled(struct clk_hw *hw)
+{
 	u32 reg;
-	काष्ठा clk_gate *gate = to_clk_gate(hw);
+	struct clk_gate *gate = to_clk_gate(hw);
 
-	reg = clk_gate_पढ़ोl(gate);
+	reg = clk_gate_readl(gate);
 
-	/* अगर a set bit disables this clk, flip it beक्रमe masking */
-	अगर (gate->flags & CLK_GATE_SET_TO_DISABLE)
+	/* if a set bit disables this clk, flip it before masking */
+	if (gate->flags & CLK_GATE_SET_TO_DISABLE)
 		reg ^= BIT(gate->bit_idx);
 
 	reg &= BIT(gate->bit_idx);
 
-	वापस reg ? 1 : 0;
-पूर्ण
+	return reg ? 1 : 0;
+}
 EXPORT_SYMBOL_GPL(clk_gate_is_enabled);
 
-स्थिर काष्ठा clk_ops clk_gate_ops = अणु
+const struct clk_ops clk_gate_ops = {
 	.enable = clk_gate_enable,
 	.disable = clk_gate_disable,
 	.is_enabled = clk_gate_is_enabled,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(clk_gate_ops);
 
-काष्ठा clk_hw *__clk_hw_रेजिस्टर_gate(काष्ठा device *dev,
-		काष्ठा device_node *np, स्थिर अक्षर *name,
-		स्थिर अक्षर *parent_name, स्थिर काष्ठा clk_hw *parent_hw,
-		स्थिर काष्ठा clk_parent_data *parent_data,
-		अचिन्हित दीर्घ flags,
-		व्योम __iomem *reg, u8 bit_idx,
+struct clk_hw *__clk_hw_register_gate(struct device *dev,
+		struct device_node *np, const char *name,
+		const char *parent_name, const struct clk_hw *parent_hw,
+		const struct clk_parent_data *parent_data,
+		unsigned long flags,
+		void __iomem *reg, u8 bit_idx,
 		u8 clk_gate_flags, spinlock_t *lock)
-अणु
-	काष्ठा clk_gate *gate;
-	काष्ठा clk_hw *hw;
-	काष्ठा clk_init_data init = अणुपूर्ण;
-	पूर्णांक ret = -EINVAL;
+{
+	struct clk_gate *gate;
+	struct clk_hw *hw;
+	struct clk_init_data init = {};
+	int ret = -EINVAL;
 
-	अगर (clk_gate_flags & CLK_GATE_HIWORD_MASK) अणु
-		अगर (bit_idx > 15) अणु
+	if (clk_gate_flags & CLK_GATE_HIWORD_MASK) {
+		if (bit_idx > 15) {
 			pr_err("gate bit exceeds LOWORD field\n");
-			वापस ERR_PTR(-EINVAL);
-		पूर्ण
-	पूर्ण
+			return ERR_PTR(-EINVAL);
+		}
+	}
 
 	/* allocate the gate */
-	gate = kzalloc(माप(*gate), GFP_KERNEL);
-	अगर (!gate)
-		वापस ERR_PTR(-ENOMEM);
+	gate = kzalloc(sizeof(*gate), GFP_KERNEL);
+	if (!gate)
+		return ERR_PTR(-ENOMEM);
 
 	init.name = name;
 	init.ops = &clk_gate_ops;
 	init.flags = flags;
-	init.parent_names = parent_name ? &parent_name : शून्य;
-	init.parent_hws = parent_hw ? &parent_hw : शून्य;
+	init.parent_names = parent_name ? &parent_name : NULL;
+	init.parent_hws = parent_hw ? &parent_hw : NULL;
 	init.parent_data = parent_data;
-	अगर (parent_name || parent_hw || parent_data)
+	if (parent_name || parent_hw || parent_data)
 		init.num_parents = 1;
-	अन्यथा
+	else
 		init.num_parents = 0;
 
-	/* काष्ठा clk_gate assignments */
+	/* struct clk_gate assignments */
 	gate->reg = reg;
 	gate->bit_idx = bit_idx;
 	gate->flags = clk_gate_flags;
@@ -168,58 +167,58 @@ EXPORT_SYMBOL_GPL(clk_gate_ops);
 	gate->hw.init = &init;
 
 	hw = &gate->hw;
-	अगर (dev || !np)
-		ret = clk_hw_रेजिस्टर(dev, hw);
-	अन्यथा अगर (np)
-		ret = of_clk_hw_रेजिस्टर(np, hw);
-	अगर (ret) अणु
-		kमुक्त(gate);
+	if (dev || !np)
+		ret = clk_hw_register(dev, hw);
+	else if (np)
+		ret = of_clk_hw_register(np, hw);
+	if (ret) {
+		kfree(gate);
 		hw = ERR_PTR(ret);
-	पूर्ण
+	}
 
-	वापस hw;
+	return hw;
 
-पूर्ण
-EXPORT_SYMBOL_GPL(__clk_hw_रेजिस्टर_gate);
+}
+EXPORT_SYMBOL_GPL(__clk_hw_register_gate);
 
-काष्ठा clk *clk_रेजिस्टर_gate(काष्ठा device *dev, स्थिर अक्षर *name,
-		स्थिर अक्षर *parent_name, अचिन्हित दीर्घ flags,
-		व्योम __iomem *reg, u8 bit_idx,
+struct clk *clk_register_gate(struct device *dev, const char *name,
+		const char *parent_name, unsigned long flags,
+		void __iomem *reg, u8 bit_idx,
 		u8 clk_gate_flags, spinlock_t *lock)
-अणु
-	काष्ठा clk_hw *hw;
+{
+	struct clk_hw *hw;
 
-	hw = clk_hw_रेजिस्टर_gate(dev, name, parent_name, flags, reg,
+	hw = clk_hw_register_gate(dev, name, parent_name, flags, reg,
 				  bit_idx, clk_gate_flags, lock);
-	अगर (IS_ERR(hw))
-		वापस ERR_CAST(hw);
-	वापस hw->clk;
-पूर्ण
-EXPORT_SYMBOL_GPL(clk_रेजिस्टर_gate);
+	if (IS_ERR(hw))
+		return ERR_CAST(hw);
+	return hw->clk;
+}
+EXPORT_SYMBOL_GPL(clk_register_gate);
 
-व्योम clk_unरेजिस्टर_gate(काष्ठा clk *clk)
-अणु
-	काष्ठा clk_gate *gate;
-	काष्ठा clk_hw *hw;
+void clk_unregister_gate(struct clk *clk)
+{
+	struct clk_gate *gate;
+	struct clk_hw *hw;
 
 	hw = __clk_get_hw(clk);
-	अगर (!hw)
-		वापस;
+	if (!hw)
+		return;
 
 	gate = to_clk_gate(hw);
 
-	clk_unरेजिस्टर(clk);
-	kमुक्त(gate);
-पूर्ण
-EXPORT_SYMBOL_GPL(clk_unरेजिस्टर_gate);
+	clk_unregister(clk);
+	kfree(gate);
+}
+EXPORT_SYMBOL_GPL(clk_unregister_gate);
 
-व्योम clk_hw_unरेजिस्टर_gate(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_gate *gate;
+void clk_hw_unregister_gate(struct clk_hw *hw)
+{
+	struct clk_gate *gate;
 
 	gate = to_clk_gate(hw);
 
-	clk_hw_unरेजिस्टर(hw);
-	kमुक्त(gate);
-पूर्ण
-EXPORT_SYMBOL_GPL(clk_hw_unरेजिस्टर_gate);
+	clk_hw_unregister(hw);
+	kfree(gate);
+}
+EXPORT_SYMBOL_GPL(clk_hw_unregister_gate);

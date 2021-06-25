@@ -1,7 +1,6 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_IA64_MMU_CONTEXT_H
-#घोषणा _ASM_IA64_MMU_CONTEXT_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_IA64_MMU_CONTEXT_H
+#define _ASM_IA64_MMU_CONTEXT_H
 
 /*
  * Copyright (C) 1998-2002 Hewlett-Packard Co
@@ -10,125 +9,125 @@
 
 /*
  * Routines to manage the allocation of task context numbers.  Task context
- * numbers are used to reduce or eliminate the need to perक्रमm TLB flushes
- * due to context चयनes.  Context numbers are implemented using ia-64
- * region ids.  Since the IA-64 TLB करोes not consider the region number when
- * perक्रमming a TLB lookup, we need to assign a unique region id to each
- * region in a process.  We use the least signअगरicant three bits in aregion
- * id क्रम this purpose.
+ * numbers are used to reduce or eliminate the need to perform TLB flushes
+ * due to context switches.  Context numbers are implemented using ia-64
+ * region ids.  Since the IA-64 TLB does not consider the region number when
+ * performing a TLB lookup, we need to assign a unique region id to each
+ * region in a process.  We use the least significant three bits in aregion
+ * id for this purpose.
  */
 
-#घोषणा IA64_REGION_ID_KERNEL	0 /* the kernel's region id (tlb.c depends on this being 0) */
+#define IA64_REGION_ID_KERNEL	0 /* the kernel's region id (tlb.c depends on this being 0) */
 
-#घोषणा ia64_rid(ctx,addr)	(((ctx) << 3) | (addr >> 61))
+#define ia64_rid(ctx,addr)	(((ctx) << 3) | (addr >> 61))
 
-# include <यंत्र/page.h>
-# अगरndef __ASSEMBLY__
+# include <asm/page.h>
+# ifndef __ASSEMBLY__
 
-#समावेश <linux/compiler.h>
-#समावेश <linux/percpu.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/mm_types.h>
-#समावेश <linux/spinlock.h>
+#include <linux/compiler.h>
+#include <linux/percpu.h>
+#include <linux/sched.h>
+#include <linux/mm_types.h>
+#include <linux/spinlock.h>
 
-#समावेश <यंत्र/processor.h>
-#समावेश <यंत्र-generic/mm_hooks.h>
+#include <asm/processor.h>
+#include <asm-generic/mm_hooks.h>
 
-काष्ठा ia64_ctx अणु
+struct ia64_ctx {
 	spinlock_t lock;
-	अचिन्हित पूर्णांक next;	/* next context number to use */
-	अचिन्हित पूर्णांक limit;     /* available मुक्त range */
-	अचिन्हित पूर्णांक max_ctx;   /* max. context value supported by all CPUs */
+	unsigned int next;	/* next context number to use */
+	unsigned int limit;     /* available free range */
+	unsigned int max_ctx;   /* max. context value supported by all CPUs */
 				/* call wrap_mmu_context when next >= max */
-	अचिन्हित दीर्घ *biपंचांगap;  /* biपंचांगap size is max_ctx+1 */
-	अचिन्हित दीर्घ *flushmap;/* pending rid to be flushed */
-पूर्ण;
+	unsigned long *bitmap;  /* bitmap size is max_ctx+1 */
+	unsigned long *flushmap;/* pending rid to be flushed */
+};
 
-बाह्य काष्ठा ia64_ctx ia64_ctx;
+extern struct ia64_ctx ia64_ctx;
 DECLARE_PER_CPU(u8, ia64_need_tlb_flush);
 
-बाह्य व्योम mmu_context_init (व्योम);
-बाह्य व्योम wrap_mmu_context (काष्ठा mm_काष्ठा *mm);
+extern void mmu_context_init (void);
+extern void wrap_mmu_context (struct mm_struct *mm);
 
 /*
  * When the context counter wraps around all TLBs need to be flushed because
- * an old context number might have been reused. This is संकेतled by the
+ * an old context number might have been reused. This is signalled by the
  * ia64_need_tlb_flush per-CPU variable, which is checked in the routine
  * below. Called by activate_mm(). <efocht@ess.nec.de>
  */
-अटल अंतरभूत व्योम
-delayed_tlb_flush (व्योम)
-अणु
-	बाह्य व्योम local_flush_tlb_all (व्योम);
-	अचिन्हित दीर्घ flags;
+static inline void
+delayed_tlb_flush (void)
+{
+	extern void local_flush_tlb_all (void);
+	unsigned long flags;
 
-	अगर (unlikely(__ia64_per_cpu_var(ia64_need_tlb_flush))) अणु
+	if (unlikely(__ia64_per_cpu_var(ia64_need_tlb_flush))) {
 		spin_lock_irqsave(&ia64_ctx.lock, flags);
-		अगर (__ia64_per_cpu_var(ia64_need_tlb_flush)) अणु
+		if (__ia64_per_cpu_var(ia64_need_tlb_flush)) {
 			local_flush_tlb_all();
 			__ia64_per_cpu_var(ia64_need_tlb_flush) = 0;
-		पूर्ण
+		}
 		spin_unlock_irqrestore(&ia64_ctx.lock, flags);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत nv_mm_context_t
-get_mmu_context (काष्ठा mm_काष्ठा *mm)
-अणु
-	अचिन्हित दीर्घ flags;
+static inline nv_mm_context_t
+get_mmu_context (struct mm_struct *mm)
+{
+	unsigned long flags;
 	nv_mm_context_t context = mm->context;
 
-	अगर (likely(context))
-		जाओ out;
+	if (likely(context))
+		goto out;
 
 	spin_lock_irqsave(&ia64_ctx.lock, flags);
 	/* re-check, now that we've got the lock: */
 	context = mm->context;
-	अगर (context == 0) अणु
+	if (context == 0) {
 		cpumask_clear(mm_cpumask(mm));
-		अगर (ia64_ctx.next >= ia64_ctx.limit) अणु
-			ia64_ctx.next = find_next_zero_bit(ia64_ctx.biपंचांगap,
+		if (ia64_ctx.next >= ia64_ctx.limit) {
+			ia64_ctx.next = find_next_zero_bit(ia64_ctx.bitmap,
 					ia64_ctx.max_ctx, ia64_ctx.next);
-			ia64_ctx.limit = find_next_bit(ia64_ctx.biपंचांगap,
+			ia64_ctx.limit = find_next_bit(ia64_ctx.bitmap,
 					ia64_ctx.max_ctx, ia64_ctx.next);
-			अगर (ia64_ctx.next >= ia64_ctx.max_ctx)
+			if (ia64_ctx.next >= ia64_ctx.max_ctx)
 				wrap_mmu_context(mm);
-		पूर्ण
+		}
 		mm->context = context = ia64_ctx.next++;
-		__set_bit(context, ia64_ctx.biपंचांगap);
-	पूर्ण
+		__set_bit(context, ia64_ctx.bitmap);
+	}
 	spin_unlock_irqrestore(&ia64_ctx.lock, flags);
 out:
 	/*
-	 * Ensure we're not starting to use "context" beक्रमe any old
+	 * Ensure we're not starting to use "context" before any old
 	 * uses of it are gone from our TLB.
 	 */
 	delayed_tlb_flush();
 
-	वापस context;
-पूर्ण
+	return context;
+}
 
 /*
  * Initialize context number to some sane value.  MM is guaranteed to be a
- * bअक्रम-new address-space, so no TLB flushing is needed, ever.
+ * brand-new address-space, so no TLB flushing is needed, ever.
  */
-#घोषणा init_new_context init_new_context
-अटल अंतरभूत पूर्णांक
-init_new_context (काष्ठा task_काष्ठा *p, काष्ठा mm_काष्ठा *mm)
-अणु
+#define init_new_context init_new_context
+static inline int
+init_new_context (struct task_struct *p, struct mm_struct *mm)
+{
 	mm->context = 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत व्योम
+static inline void
 reload_context (nv_mm_context_t context)
-अणु
-	अचिन्हित दीर्घ rid;
-	अचिन्हित दीर्घ rid_incr = 0;
-	अचिन्हित दीर्घ rr0, rr1, rr2, rr3, rr4, old_rr4;
+{
+	unsigned long rid;
+	unsigned long rid_incr = 0;
+	unsigned long rr0, rr1, rr2, rr3, rr4, old_rr4;
 
 	old_rr4 = ia64_get_rr(RGN_BASE(RGN_HPAGE));
-	rid = context << 3;	/* make space क्रम encoding the region number */
+	rid = context << 3;	/* make space for encoding the region number */
 	rid_incr = 1 << 8;
 
 	/* encode the region id, preferred page size, and VHPT enable bit: */
@@ -137,56 +136,56 @@ reload_context (nv_mm_context_t context)
 	rr2 = rr0 + 2*rid_incr;
 	rr3 = rr0 + 3*rid_incr;
 	rr4 = rr0 + 4*rid_incr;
-#अगर_घोषित  CONFIG_HUGETLB_PAGE
+#ifdef  CONFIG_HUGETLB_PAGE
 	rr4 = (rr4 & (~(0xfcUL))) | (old_rr4 & 0xfc);
 
-#  अगर RGN_HPAGE != 4
+#  if RGN_HPAGE != 4
 #    error "reload_context assumes RGN_HPAGE is 4"
-#  endअगर
-#पूर्ण_अगर
+#  endif
+#endif
 
 	ia64_set_rr0_to_rr4(rr0, rr1, rr2, rr3, rr4);
 	ia64_srlz_i();			/* srlz.i implies srlz.d */
-पूर्ण
+}
 
 /*
  * Must be called with preemption off
  */
-अटल अंतरभूत व्योम
-activate_context (काष्ठा mm_काष्ठा *mm)
-अणु
+static inline void
+activate_context (struct mm_struct *mm)
+{
 	nv_mm_context_t context;
 
-	करो अणु
+	do {
 		context = get_mmu_context(mm);
-		अगर (!cpumask_test_cpu(smp_processor_id(), mm_cpumask(mm)))
+		if (!cpumask_test_cpu(smp_processor_id(), mm_cpumask(mm)))
 			cpumask_set_cpu(smp_processor_id(), mm_cpumask(mm));
 		reload_context(context);
 		/*
-		 * in the unlikely event of a TLB-flush by another thपढ़ो,
-		 * reकरो the load.
+		 * in the unlikely event of a TLB-flush by another thread,
+		 * redo the load.
 		 */
-	पूर्ण जबतक (unlikely(context != mm->context));
-पूर्ण
+	} while (unlikely(context != mm->context));
+}
 
 /*
  * Switch from address space PREV to address space NEXT.
  */
-#घोषणा activate_mm activate_mm
-अटल अंतरभूत व्योम
-activate_mm (काष्ठा mm_काष्ठा *prev, काष्ठा mm_काष्ठा *next)
-अणु
+#define activate_mm activate_mm
+static inline void
+activate_mm (struct mm_struct *prev, struct mm_struct *next)
+{
 	/*
-	 * We may get पूर्णांकerrupts here, but that's OK because पूर्णांकerrupt
+	 * We may get interrupts here, but that's OK because interrupt
 	 * handlers cannot touch user-space.
 	 */
 	ia64_set_kr(IA64_KR_PT_BASE, __pa(next->pgd));
 	activate_context(next);
-पूर्ण
+}
 
-#घोषणा चयन_mm(prev_mm,next_mm,next_task)	activate_mm(prev_mm, next_mm)
+#define switch_mm(prev_mm,next_mm,next_task)	activate_mm(prev_mm, next_mm)
 
-#समावेश <यंत्र-generic/mmu_context.h>
+#include <asm-generic/mmu_context.h>
 
-# endअगर /* ! __ASSEMBLY__ */
-#पूर्ण_अगर /* _ASM_IA64_MMU_CONTEXT_H */
+# endif /* ! __ASSEMBLY__ */
+#endif /* _ASM_IA64_MMU_CONTEXT_H */

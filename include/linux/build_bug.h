@@ -1,81 +1,80 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_BUILD_BUG_H
-#घोषणा _LINUX_BUILD_BUG_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_BUILD_BUG_H
+#define _LINUX_BUILD_BUG_H
 
-#समावेश <linux/compiler.h>
+#include <linux/compiler.h>
 
-#अगर_घोषित __CHECKER__
-#घोषणा BUILD_BUG_ON_ZERO(e) (0)
-#अन्यथा /* __CHECKER__ */
+#ifdef __CHECKER__
+#define BUILD_BUG_ON_ZERO(e) (0)
+#else /* __CHECKER__ */
 /*
- * Force a compilation error अगर condition is true, but also produce a
- * result (of value 0 and type पूर्णांक), so the expression can be used
- * e.g. in a काष्ठाure initializer (or where-ever अन्यथा comma expressions
+ * Force a compilation error if condition is true, but also produce a
+ * result (of value 0 and type int), so the expression can be used
+ * e.g. in a structure initializer (or where-ever else comma expressions
  * aren't permitted).
  */
-#घोषणा BUILD_BUG_ON_ZERO(e) ((पूर्णांक)(माप(काष्ठा अणु पूर्णांक:(-!!(e)); पूर्ण)))
-#पूर्ण_अगर /* __CHECKER__ */
+#define BUILD_BUG_ON_ZERO(e) ((int)(sizeof(struct { int:(-!!(e)); })))
+#endif /* __CHECKER__ */
 
-/* Force a compilation error अगर a स्थिरant expression is not a घातer of 2 */
-#घोषणा __BUILD_BUG_ON_NOT_POWER_OF_2(n)	\
+/* Force a compilation error if a constant expression is not a power of 2 */
+#define __BUILD_BUG_ON_NOT_POWER_OF_2(n)	\
 	BUILD_BUG_ON(((n) & ((n) - 1)) != 0)
-#घोषणा BUILD_BUG_ON_NOT_POWER_OF_2(n)			\
+#define BUILD_BUG_ON_NOT_POWER_OF_2(n)			\
 	BUILD_BUG_ON((n) == 0 || (((n) & ((n) - 1)) != 0))
 
 /*
  * BUILD_BUG_ON_INVALID() permits the compiler to check the validity of the
- * expression but aव्योमs the generation of any code, even अगर that expression
+ * expression but avoids the generation of any code, even if that expression
  * has side-effects.
  */
-#घोषणा BUILD_BUG_ON_INVALID(e) ((व्योम)(माप((__क्रमce दीर्घ)(e))))
+#define BUILD_BUG_ON_INVALID(e) ((void)(sizeof((__force long)(e))))
 
 /**
- * BUILD_BUG_ON_MSG - अवरोध compile अगर a condition is true & emit supplied
+ * BUILD_BUG_ON_MSG - break compile if a condition is true & emit supplied
  *		      error message.
  * @condition: the condition which the compiler should know is false.
  *
- * See BUILD_BUG_ON क्रम description.
+ * See BUILD_BUG_ON for description.
  */
-#घोषणा BUILD_BUG_ON_MSG(cond, msg) compileसमय_निश्चित(!(cond), msg)
+#define BUILD_BUG_ON_MSG(cond, msg) compiletime_assert(!(cond), msg)
 
 /**
- * BUILD_BUG_ON - अवरोध compile अगर a condition is true.
+ * BUILD_BUG_ON - break compile if a condition is true.
  * @condition: the condition which the compiler should know is false.
  *
- * If you have some code which relies on certain स्थिरants being equal, or
- * some other compile-समय-evaluated condition, you should use BUILD_BUG_ON to
- * detect अगर someone changes it.
+ * If you have some code which relies on certain constants being equal, or
+ * some other compile-time-evaluated condition, you should use BUILD_BUG_ON to
+ * detect if someone changes it.
  */
-#घोषणा BUILD_BUG_ON(condition) \
+#define BUILD_BUG_ON(condition) \
 	BUILD_BUG_ON_MSG(condition, "BUILD_BUG_ON failed: " #condition)
 
 /**
- * BUILD_BUG - अवरोध compile अगर used.
+ * BUILD_BUG - break compile if used.
  *
  * If you have some code that you expect the compiler to eliminate at
- * build समय, you should use BUILD_BUG to detect अगर it is
+ * build time, you should use BUILD_BUG to detect if it is
  * unexpectedly used.
  */
-#घोषणा BUILD_BUG() BUILD_BUG_ON_MSG(1, "BUILD_BUG failed")
+#define BUILD_BUG() BUILD_BUG_ON_MSG(1, "BUILD_BUG failed")
 
 /**
- * अटल_निश्चित - check पूर्णांकeger स्थिरant expression at build समय
+ * static_assert - check integer constant expression at build time
  *
- * अटल_निश्चित() is a wrapper क्रम the C11 _Static_निश्चित, with a
- * little macro magic to make the message optional (शेषing to the
- * stringअगरication of the tested expression).
+ * static_assert() is a wrapper for the C11 _Static_assert, with a
+ * little macro magic to make the message optional (defaulting to the
+ * stringification of the tested expression).
  *
- * Contrary to BUILD_BUG_ON(), अटल_निश्चित() can be used at global
- * scope, but requires the expression to be an पूर्णांकeger स्थिरant
- * expression (i.e., it is not enough that __builtin_स्थिरant_p() is
- * true क्रम expr).
+ * Contrary to BUILD_BUG_ON(), static_assert() can be used at global
+ * scope, but requires the expression to be an integer constant
+ * expression (i.e., it is not enough that __builtin_constant_p() is
+ * true for expr).
  *
- * Also note that BUILD_BUG_ON() fails the build अगर the condition is
- * true, जबतक अटल_निश्चित() fails the build अगर the expression is
+ * Also note that BUILD_BUG_ON() fails the build if the condition is
+ * true, while static_assert() fails the build if the expression is
  * false.
  */
-#घोषणा अटल_निश्चित(expr, ...) __अटल_निश्चित(expr, ##__VA_ARGS__, #expr)
-#घोषणा __अटल_निश्चित(expr, msg, ...) _Static_निश्चित(expr, msg)
+#define static_assert(expr, ...) __static_assert(expr, ##__VA_ARGS__, #expr)
+#define __static_assert(expr, msg, ...) _Static_assert(expr, msg)
 
-#पूर्ण_अगर	/* _LINUX_BUILD_BUG_H */
+#endif	/* _LINUX_BUILD_BUG_H */

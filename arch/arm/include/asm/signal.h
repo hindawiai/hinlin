@@ -1,26 +1,25 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASMARM_SIGNAL_H
-#घोषणा _ASMARM_SIGNAL_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASMARM_SIGNAL_H
+#define _ASMARM_SIGNAL_H
 
-#समावेश <uapi/यंत्र/संकेत.स>
+#include <uapi/asm/signal.h>
 
-/* Most things should be clean enough to redefine this at will, अगर care
+/* Most things should be clean enough to redefine this at will, if care
    is taken to make libc match.  */
 
-#घोषणा _NSIG		64
-#घोषणा _NSIG_BPW	32
-#घोषणा _NSIG_WORDS	(_NSIG / _NSIG_BPW)
+#define _NSIG		64
+#define _NSIG_BPW	32
+#define _NSIG_WORDS	(_NSIG / _NSIG_BPW)
 
-प्रकार अचिन्हित दीर्घ old_sigset_t;		/* at least 32 bits */
+typedef unsigned long old_sigset_t;		/* at least 32 bits */
 
-प्रकार काष्ठा अणु
-	अचिन्हित दीर्घ sig[_NSIG_WORDS];
-पूर्ण sigset_t;
+typedef struct {
+	unsigned long sig[_NSIG_WORDS];
+} sigset_t;
 
-#घोषणा __ARCH_UAPI_SA_FLAGS	(SA_THIRTYTWO | SA_RESTORER)
+#define __ARCH_UAPI_SA_FLAGS	(SA_THIRTYTWO | SA_RESTORER)
 
-#घोषणा __ARCH_HAS_SA_RESTORER
+#define __ARCH_HAS_SA_RESTORER
 
-#समावेश <यंत्र/sigcontext.h>
-#पूर्ण_अगर
+#include <asm/sigcontext.h>
+#endif

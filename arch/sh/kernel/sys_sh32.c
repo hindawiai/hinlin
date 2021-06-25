@@ -1,62 +1,61 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/sched.h>
-#समावेश <linux/sched/task_stack.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/sem.h>
-#समावेश <linux/msg.h>
-#समावेश <linux/shm.h>
-#समावेश <linux/स्थिति.स>
-#समावेश <linux/syscalls.h>
-#समावेश <linux/mman.h>
-#समावेश <linux/file.h>
-#समावेश <linux/module.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/ipc.h>
-#समावेश <यंत्र/cacheflush.h>
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/unistd.h>
-#समावेश <यंत्र/syscalls.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/errno.h>
+#include <linux/sched.h>
+#include <linux/sched/task_stack.h>
+#include <linux/mm.h>
+#include <linux/smp.h>
+#include <linux/sem.h>
+#include <linux/msg.h>
+#include <linux/shm.h>
+#include <linux/stat.h>
+#include <linux/syscalls.h>
+#include <linux/mman.h>
+#include <linux/file.h>
+#include <linux/module.h>
+#include <linux/fs.h>
+#include <linux/ipc.h>
+#include <asm/cacheflush.h>
+#include <linux/uaccess.h>
+#include <asm/unistd.h>
+#include <asm/syscalls.h>
 
 /*
- * sys_pipe() is the normal C calling standard क्रम creating
- * a pipe. It's not the way Unix traditionally करोes this, though.
+ * sys_pipe() is the normal C calling standard for creating
+ * a pipe. It's not the way Unix traditionally does this, though.
  */
-यंत्रlinkage पूर्णांक sys_sh_pipe(व्योम)
-अणु
-	पूर्णांक fd[2];
-	पूर्णांक error;
+asmlinkage int sys_sh_pipe(void)
+{
+	int fd[2];
+	int error;
 
-	error = करो_pipe_flags(fd, 0);
-	अगर (!error) अणु
+	error = do_pipe_flags(fd, 0);
+	if (!error) {
 		current_pt_regs()->regs[1] = fd[1];
-		वापस fd[0];
-	पूर्ण
-	वापस error;
-पूर्ण
+		return fd[0];
+	}
+	return error;
+}
 
-यंत्रlinkage sमाप_प्रकार sys_pपढ़ो_wrapper(अचिन्हित पूर्णांक fd, अक्षर __user *buf,
-			     माप_प्रकार count, दीर्घ dummy, loff_t pos)
-अणु
-	वापस ksys_pपढ़ो64(fd, buf, count, pos);
-पूर्ण
+asmlinkage ssize_t sys_pread_wrapper(unsigned int fd, char __user *buf,
+			     size_t count, long dummy, loff_t pos)
+{
+	return ksys_pread64(fd, buf, count, pos);
+}
 
-यंत्रlinkage sमाप_प्रकार sys_pग_लिखो_wrapper(अचिन्हित पूर्णांक fd, स्थिर अक्षर __user *buf,
-			      माप_प्रकार count, दीर्घ dummy, loff_t pos)
-अणु
-	वापस ksys_pग_लिखो64(fd, buf, count, pos);
-पूर्ण
+asmlinkage ssize_t sys_pwrite_wrapper(unsigned int fd, const char __user *buf,
+			      size_t count, long dummy, loff_t pos)
+{
+	return ksys_pwrite64(fd, buf, count, pos);
+}
 
-यंत्रlinkage पूर्णांक sys_fadvise64_64_wrapper(पूर्णांक fd, u32 offset0, u32 offset1,
-				u32 len0, u32 len1, पूर्णांक advice)
-अणु
-#अगर_घोषित  __LITTLE_ENDIAN__
-	वापस ksys_fadvise64_64(fd, (u64)offset1 << 32 | offset0,
+asmlinkage int sys_fadvise64_64_wrapper(int fd, u32 offset0, u32 offset1,
+				u32 len0, u32 len1, int advice)
+{
+#ifdef  __LITTLE_ENDIAN__
+	return ksys_fadvise64_64(fd, (u64)offset1 << 32 | offset0,
 				 (u64)len1 << 32 | len0, advice);
-#अन्यथा
-	वापस ksys_fadvise64_64(fd, (u64)offset0 << 32 | offset1,
+#else
+	return ksys_fadvise64_64(fd, (u64)offset0 << 32 | offset1,
 				 (u64)len0 << 32 | len1, advice);
-#पूर्ण_अगर
-पूर्ण
+#endif
+}

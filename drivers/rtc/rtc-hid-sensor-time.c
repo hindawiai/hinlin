@@ -1,17 +1,16 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * HID Sensor Time Driver
  * Copyright (c) 2012, Alexander Holler.
  */
-#समावेश <linux/device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/module.h>
-#समावेश <linux/hid-sensor-hub.h>
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/rtc.h>
+#include <linux/device.h>
+#include <linux/platform_device.h>
+#include <linux/module.h>
+#include <linux/hid-sensor-hub.h>
+#include <linux/iio/iio.h>
+#include <linux/rtc.h>
 
-क्रमागत hid_समय_channel अणु
+enum hid_time_channel {
 	CHANNEL_SCAN_INDEX_YEAR,
 	CHANNEL_SCAN_INDEX_MONTH,
 	CHANNEL_SCAN_INDEX_DAY,
@@ -19,312 +18,312 @@
 	CHANNEL_SCAN_INDEX_MINUTE,
 	CHANNEL_SCAN_INDEX_SECOND,
 	TIME_RTC_CHANNEL_MAX,
-पूर्ण;
+};
 
-काष्ठा hid_समय_state अणु
-	काष्ठा hid_sensor_hub_callbacks callbacks;
-	काष्ठा hid_sensor_common common_attributes;
-	काष्ठा hid_sensor_hub_attribute_info info[TIME_RTC_CHANNEL_MAX];
-	काष्ठा rtc_समय last_समय;
-	spinlock_t lock_last_समय;
-	काष्ठा completion comp_last_समय;
-	काष्ठा rtc_समय समय_buf;
-	काष्ठा rtc_device *rtc;
-पूर्ण;
+struct hid_time_state {
+	struct hid_sensor_hub_callbacks callbacks;
+	struct hid_sensor_common common_attributes;
+	struct hid_sensor_hub_attribute_info info[TIME_RTC_CHANNEL_MAX];
+	struct rtc_time last_time;
+	spinlock_t lock_last_time;
+	struct completion comp_last_time;
+	struct rtc_time time_buf;
+	struct rtc_device *rtc;
+};
 
-अटल स्थिर u32 hid_समय_addresses[TIME_RTC_CHANNEL_MAX] = अणु
+static const u32 hid_time_addresses[TIME_RTC_CHANNEL_MAX] = {
 	HID_USAGE_SENSOR_TIME_YEAR,
 	HID_USAGE_SENSOR_TIME_MONTH,
 	HID_USAGE_SENSOR_TIME_DAY,
 	HID_USAGE_SENSOR_TIME_HOUR,
 	HID_USAGE_SENSOR_TIME_MINUTE,
 	HID_USAGE_SENSOR_TIME_SECOND,
-पूर्ण;
+};
 
-/* Channel names क्रम verbose error messages */
-अटल स्थिर अक्षर * स्थिर hid_समय_channel_names[TIME_RTC_CHANNEL_MAX] = अणु
+/* Channel names for verbose error messages */
+static const char * const hid_time_channel_names[TIME_RTC_CHANNEL_MAX] = {
 	"year", "month", "day", "hour", "minute", "second",
-पूर्ण;
+};
 
 /* Callback handler to send event after all samples are received and captured */
-अटल पूर्णांक hid_समय_proc_event(काष्ठा hid_sensor_hub_device *hsdev,
-				अचिन्हित usage_id, व्योम *priv)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा hid_समय_state *समय_state = platक्रमm_get_drvdata(priv);
+static int hid_time_proc_event(struct hid_sensor_hub_device *hsdev,
+				unsigned usage_id, void *priv)
+{
+	unsigned long flags;
+	struct hid_time_state *time_state = platform_get_drvdata(priv);
 
-	spin_lock_irqsave(&समय_state->lock_last_समय, flags);
-	समय_state->last_समय = समय_state->समय_buf;
-	spin_unlock_irqrestore(&समय_state->lock_last_समय, flags);
-	complete(&समय_state->comp_last_समय);
-	वापस 0;
-पूर्ण
+	spin_lock_irqsave(&time_state->lock_last_time, flags);
+	time_state->last_time = time_state->time_buf;
+	spin_unlock_irqrestore(&time_state->lock_last_time, flags);
+	complete(&time_state->comp_last_time);
+	return 0;
+}
 
-अटल u32 hid_समय_value(माप_प्रकार raw_len, अक्षर *raw_data)
-अणु
-	चयन (raw_len) अणु
-	हाल 1:
-		वापस *(u8 *)raw_data;
-	हाल 2:
-		वापस *(u16 *)raw_data;
-	हाल 4:
-		वापस *(u32 *)raw_data;
-	शेष:
-		वापस (u32)(~0U); /* 0xff... or -1 to denote an error */
-	पूर्ण
-पूर्ण
+static u32 hid_time_value(size_t raw_len, char *raw_data)
+{
+	switch (raw_len) {
+	case 1:
+		return *(u8 *)raw_data;
+	case 2:
+		return *(u16 *)raw_data;
+	case 4:
+		return *(u32 *)raw_data;
+	default:
+		return (u32)(~0U); /* 0xff... or -1 to denote an error */
+	}
+}
 
-अटल पूर्णांक hid_समय_capture_sample(काष्ठा hid_sensor_hub_device *hsdev,
-				अचिन्हित usage_id, माप_प्रकार raw_len,
-				अक्षर *raw_data, व्योम *priv)
-अणु
-	काष्ठा hid_समय_state *समय_state = platक्रमm_get_drvdata(priv);
-	काष्ठा rtc_समय *समय_buf = &समय_state->समय_buf;
+static int hid_time_capture_sample(struct hid_sensor_hub_device *hsdev,
+				unsigned usage_id, size_t raw_len,
+				char *raw_data, void *priv)
+{
+	struct hid_time_state *time_state = platform_get_drvdata(priv);
+	struct rtc_time *time_buf = &time_state->time_buf;
 
-	चयन (usage_id) अणु
-	हाल HID_USAGE_SENSOR_TIME_YEAR:
+	switch (usage_id) {
+	case HID_USAGE_SENSOR_TIME_YEAR:
 		/*
-		 * The draft क्रम HID-sensors (HUTRR39) currently करोesn't define
-		 * the range क्रम the year attribute. Thereक्रम we support
-		 * 8 bit (0-99) and 16 or 32 bits (full) as size क्रम the year.
+		 * The draft for HID-sensors (HUTRR39) currently doesn't define
+		 * the range for the year attribute. Therefor we support
+		 * 8 bit (0-99) and 16 or 32 bits (full) as size for the year.
 		 */
-		अगर (raw_len == 1) अणु
-			समय_buf->पंचांग_year = *(u8 *)raw_data;
-			अगर (समय_buf->पंचांग_year < 70)
+		if (raw_len == 1) {
+			time_buf->tm_year = *(u8 *)raw_data;
+			if (time_buf->tm_year < 70)
 				/* assume we are in 1970...2069 */
-				समय_buf->पंचांग_year += 100;
-		पूर्ण अन्यथा
-			समय_buf->पंचांग_year =
-				(पूर्णांक)hid_समय_value(raw_len, raw_data)-1900;
-		अवरोध;
-	हाल HID_USAGE_SENSOR_TIME_MONTH:
+				time_buf->tm_year += 100;
+		} else
+			time_buf->tm_year =
+				(int)hid_time_value(raw_len, raw_data)-1900;
+		break;
+	case HID_USAGE_SENSOR_TIME_MONTH:
 		/* sensors are sending the month as 1-12, we need 0-11 */
-		समय_buf->पंचांग_mon = (पूर्णांक)hid_समय_value(raw_len, raw_data)-1;
-		अवरोध;
-	हाल HID_USAGE_SENSOR_TIME_DAY:
-		समय_buf->पंचांग_mday = (पूर्णांक)hid_समय_value(raw_len, raw_data);
-		अवरोध;
-	हाल HID_USAGE_SENSOR_TIME_HOUR:
-		समय_buf->पंचांग_hour = (पूर्णांक)hid_समय_value(raw_len, raw_data);
-		अवरोध;
-	हाल HID_USAGE_SENSOR_TIME_MINUTE:
-		समय_buf->पंचांग_min = (पूर्णांक)hid_समय_value(raw_len, raw_data);
-		अवरोध;
-	हाल HID_USAGE_SENSOR_TIME_SECOND:
-		समय_buf->पंचांग_sec = (पूर्णांक)hid_समय_value(raw_len, raw_data);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		time_buf->tm_mon = (int)hid_time_value(raw_len, raw_data)-1;
+		break;
+	case HID_USAGE_SENSOR_TIME_DAY:
+		time_buf->tm_mday = (int)hid_time_value(raw_len, raw_data);
+		break;
+	case HID_USAGE_SENSOR_TIME_HOUR:
+		time_buf->tm_hour = (int)hid_time_value(raw_len, raw_data);
+		break;
+	case HID_USAGE_SENSOR_TIME_MINUTE:
+		time_buf->tm_min = (int)hid_time_value(raw_len, raw_data);
+		break;
+	case HID_USAGE_SENSOR_TIME_SECOND:
+		time_buf->tm_sec = (int)hid_time_value(raw_len, raw_data);
+		break;
+	default:
+		return -EINVAL;
+	}
+	return 0;
+}
 
 /* small helper, haven't found any other way */
-अटल स्थिर अक्षर *hid_समय_attrib_name(u32 attrib_id)
-अणु
-	अटल स्थिर अक्षर unknown[] = "unknown";
-	अचिन्हित i;
+static const char *hid_time_attrib_name(u32 attrib_id)
+{
+	static const char unknown[] = "unknown";
+	unsigned i;
 
-	क्रम (i = 0; i < TIME_RTC_CHANNEL_MAX; ++i) अणु
-		अगर (hid_समय_addresses[i] == attrib_id)
-			वापस hid_समय_channel_names[i];
-	पूर्ण
-	वापस unknown; /* should never happen */
-पूर्ण
+	for (i = 0; i < TIME_RTC_CHANNEL_MAX; ++i) {
+		if (hid_time_addresses[i] == attrib_id)
+			return hid_time_channel_names[i];
+	}
+	return unknown; /* should never happen */
+}
 
-अटल पूर्णांक hid_समय_parse_report(काष्ठा platक्रमm_device *pdev,
-				काष्ठा hid_sensor_hub_device *hsdev,
-				अचिन्हित usage_id,
-				काष्ठा hid_समय_state *समय_state)
-अणु
-	पूर्णांक report_id, i;
+static int hid_time_parse_report(struct platform_device *pdev,
+				struct hid_sensor_hub_device *hsdev,
+				unsigned usage_id,
+				struct hid_time_state *time_state)
+{
+	int report_id, i;
 
-	क्रम (i = 0; i < TIME_RTC_CHANNEL_MAX; ++i)
-		अगर (sensor_hub_input_get_attribute_info(hsdev,
+	for (i = 0; i < TIME_RTC_CHANNEL_MAX; ++i)
+		if (sensor_hub_input_get_attribute_info(hsdev,
 				HID_INPUT_REPORT, usage_id,
-				hid_समय_addresses[i],
-				&समय_state->info[i]) < 0)
-			वापस -EINVAL;
-	/* Check the (needed) attributes क्रम sanity */
-	report_id = समय_state->info[0].report_id;
-	अगर (report_id < 0) अणु
+				hid_time_addresses[i],
+				&time_state->info[i]) < 0)
+			return -EINVAL;
+	/* Check the (needed) attributes for sanity */
+	report_id = time_state->info[0].report_id;
+	if (report_id < 0) {
 		dev_err(&pdev->dev, "bad report ID!\n");
-		वापस -EINVAL;
-	पूर्ण
-	क्रम (i = 0; i < TIME_RTC_CHANNEL_MAX; ++i) अणु
-		अगर (समय_state->info[i].report_id != report_id) अणु
+		return -EINVAL;
+	}
+	for (i = 0; i < TIME_RTC_CHANNEL_MAX; ++i) {
+		if (time_state->info[i].report_id != report_id) {
 			dev_err(&pdev->dev,
 				"not all needed attributes inside the same report!\n");
-			वापस -EINVAL;
-		पूर्ण
-		अगर (समय_state->info[i].size == 3 ||
-				समय_state->info[i].size > 4) अणु
+			return -EINVAL;
+		}
+		if (time_state->info[i].size == 3 ||
+				time_state->info[i].size > 4) {
 			dev_err(&pdev->dev,
 				"attribute '%s' not 8, 16 or 32 bits wide!\n",
-				hid_समय_attrib_name(
-					समय_state->info[i].attrib_id));
-			वापस -EINVAL;
-		पूर्ण
-		अगर (समय_state->info[i].units !=
+				hid_time_attrib_name(
+					time_state->info[i].attrib_id));
+			return -EINVAL;
+		}
+		if (time_state->info[i].units !=
 				HID_USAGE_SENSOR_UNITS_NOT_SPECIFIED &&
 				/* allow attribute seconds with unit seconds */
-				!(समय_state->info[i].attrib_id ==
+				!(time_state->info[i].attrib_id ==
 				HID_USAGE_SENSOR_TIME_SECOND &&
-				समय_state->info[i].units ==
-				HID_USAGE_SENSOR_UNITS_SECOND)) अणु
+				time_state->info[i].units ==
+				HID_USAGE_SENSOR_UNITS_SECOND)) {
 			dev_err(&pdev->dev,
 				"attribute '%s' hasn't a unit of type 'none'!\n",
-				hid_समय_attrib_name(
-					समय_state->info[i].attrib_id));
-			वापस -EINVAL;
-		पूर्ण
-		अगर (समय_state->info[i].unit_expo) अणु
+				hid_time_attrib_name(
+					time_state->info[i].attrib_id));
+			return -EINVAL;
+		}
+		if (time_state->info[i].unit_expo) {
 			dev_err(&pdev->dev,
 				"attribute '%s' hasn't a unit exponent of 1!\n",
-				hid_समय_attrib_name(
-					समय_state->info[i].attrib_id));
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+				hid_time_attrib_name(
+					time_state->info[i].attrib_id));
+			return -EINVAL;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hid_rtc_पढ़ो_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा hid_समय_state *समय_state = dev_get_drvdata(dev);
-	पूर्णांक ret;
+static int hid_rtc_read_time(struct device *dev, struct rtc_time *tm)
+{
+	unsigned long flags;
+	struct hid_time_state *time_state = dev_get_drvdata(dev);
+	int ret;
 
-	reinit_completion(&समय_state->comp_last_समय);
+	reinit_completion(&time_state->comp_last_time);
 	/* get a report with all values through requesting one value */
-	sensor_hub_input_attr_get_raw_value(समय_state->common_attributes.hsdev,
-			HID_USAGE_SENSOR_TIME, hid_समय_addresses[0],
-			समय_state->info[0].report_id, SENSOR_HUB_SYNC, false);
-	/* रुको क्रम all values (event) */
-	ret = रुको_क्रम_completion_समाप्तable_समयout(
-			&समय_state->comp_last_समय, HZ*6);
-	अगर (ret > 0) अणु
+	sensor_hub_input_attr_get_raw_value(time_state->common_attributes.hsdev,
+			HID_USAGE_SENSOR_TIME, hid_time_addresses[0],
+			time_state->info[0].report_id, SENSOR_HUB_SYNC, false);
+	/* wait for all values (event) */
+	ret = wait_for_completion_killable_timeout(
+			&time_state->comp_last_time, HZ*6);
+	if (ret > 0) {
 		/* no error */
-		spin_lock_irqsave(&समय_state->lock_last_समय, flags);
-		*पंचांग = समय_state->last_समय;
-		spin_unlock_irqrestore(&समय_state->lock_last_समय, flags);
-		वापस 0;
-	पूर्ण
-	अगर (!ret)
-		वापस -EIO; /* समयouted */
-	वापस ret; /* समाप्तed (-ERESTARTSYS) */
-पूर्ण
+		spin_lock_irqsave(&time_state->lock_last_time, flags);
+		*tm = time_state->last_time;
+		spin_unlock_irqrestore(&time_state->lock_last_time, flags);
+		return 0;
+	}
+	if (!ret)
+		return -EIO; /* timeouted */
+	return ret; /* killed (-ERESTARTSYS) */
+}
 
-अटल स्थिर काष्ठा rtc_class_ops hid_समय_rtc_ops = अणु
-	.पढ़ो_समय = hid_rtc_पढ़ो_समय,
-पूर्ण;
+static const struct rtc_class_ops hid_time_rtc_ops = {
+	.read_time = hid_rtc_read_time,
+};
 
-अटल पूर्णांक hid_समय_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा hid_sensor_hub_device *hsdev = dev_get_platdata(&pdev->dev);
-	काष्ठा hid_समय_state *समय_state = devm_kzalloc(&pdev->dev,
-		माप(काष्ठा hid_समय_state), GFP_KERNEL);
+static int hid_time_probe(struct platform_device *pdev)
+{
+	int ret = 0;
+	struct hid_sensor_hub_device *hsdev = dev_get_platdata(&pdev->dev);
+	struct hid_time_state *time_state = devm_kzalloc(&pdev->dev,
+		sizeof(struct hid_time_state), GFP_KERNEL);
 
-	अगर (समय_state == शून्य)
-		वापस -ENOMEM;
+	if (time_state == NULL)
+		return -ENOMEM;
 
-	platक्रमm_set_drvdata(pdev, समय_state);
+	platform_set_drvdata(pdev, time_state);
 
-	spin_lock_init(&समय_state->lock_last_समय);
-	init_completion(&समय_state->comp_last_समय);
-	समय_state->common_attributes.hsdev = hsdev;
-	समय_state->common_attributes.pdev = pdev;
+	spin_lock_init(&time_state->lock_last_time);
+	init_completion(&time_state->comp_last_time);
+	time_state->common_attributes.hsdev = hsdev;
+	time_state->common_attributes.pdev = pdev;
 
 	ret = hid_sensor_parse_common_attributes(hsdev,
 				HID_USAGE_SENSOR_TIME,
-				&समय_state->common_attributes,
-				शून्य,
+				&time_state->common_attributes,
+				NULL,
 				0);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "failed to setup common attributes!\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = hid_समय_parse_report(pdev, hsdev, HID_USAGE_SENSOR_TIME,
-					समय_state);
-	अगर (ret) अणु
+	ret = hid_time_parse_report(pdev, hsdev, HID_USAGE_SENSOR_TIME,
+					time_state);
+	if (ret) {
 		dev_err(&pdev->dev, "failed to setup attributes!\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	समय_state->callbacks.send_event = hid_समय_proc_event;
-	समय_state->callbacks.capture_sample = hid_समय_capture_sample;
-	समय_state->callbacks.pdev = pdev;
-	ret = sensor_hub_रेजिस्टर_callback(hsdev, HID_USAGE_SENSOR_TIME,
-					&समय_state->callbacks);
-	अगर (ret < 0) अणु
+	time_state->callbacks.send_event = hid_time_proc_event;
+	time_state->callbacks.capture_sample = hid_time_capture_sample;
+	time_state->callbacks.pdev = pdev;
+	ret = sensor_hub_register_callback(hsdev, HID_USAGE_SENSOR_TIME,
+					&time_state->callbacks);
+	if (ret < 0) {
 		dev_err(&pdev->dev, "register callback failed!\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = sensor_hub_device_खोलो(hsdev);
-	अगर (ret) अणु
+	ret = sensor_hub_device_open(hsdev);
+	if (ret) {
 		dev_err(&pdev->dev, "failed to open sensor hub device!\n");
-		जाओ err_खोलो;
-	पूर्ण
+		goto err_open;
+	}
 
 	/*
-	 * Enable HID input processing early in order to be able to पढ़ो the
-	 * घड़ी alपढ़ोy in devm_rtc_device_रेजिस्टर().
+	 * Enable HID input processing early in order to be able to read the
+	 * clock already in devm_rtc_device_register().
 	 */
 	hid_device_io_start(hsdev->hdev);
 
-	समय_state->rtc = devm_rtc_device_रेजिस्टर(&pdev->dev,
-					"hid-sensor-time", &hid_समय_rtc_ops,
+	time_state->rtc = devm_rtc_device_register(&pdev->dev,
+					"hid-sensor-time", &hid_time_rtc_ops,
 					THIS_MODULE);
 
-	अगर (IS_ERR(समय_state->rtc)) अणु
+	if (IS_ERR(time_state->rtc)) {
 		hid_device_io_stop(hsdev->hdev);
-		ret = PTR_ERR(समय_state->rtc);
-		समय_state->rtc = शून्य;
+		ret = PTR_ERR(time_state->rtc);
+		time_state->rtc = NULL;
 		dev_err(&pdev->dev, "rtc device register failed!\n");
-		जाओ err_rtc;
-	पूर्ण
+		goto err_rtc;
+	}
 
-	वापस ret;
+	return ret;
 
 err_rtc:
-	sensor_hub_device_बंद(hsdev);
-err_खोलो:
-	sensor_hub_हटाओ_callback(hsdev, HID_USAGE_SENSOR_TIME);
-	वापस ret;
-पूर्ण
+	sensor_hub_device_close(hsdev);
+err_open:
+	sensor_hub_remove_callback(hsdev, HID_USAGE_SENSOR_TIME);
+	return ret;
+}
 
-अटल पूर्णांक hid_समय_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा hid_sensor_hub_device *hsdev = dev_get_platdata(&pdev->dev);
+static int hid_time_remove(struct platform_device *pdev)
+{
+	struct hid_sensor_hub_device *hsdev = dev_get_platdata(&pdev->dev);
 
-	sensor_hub_device_बंद(hsdev);
-	sensor_hub_हटाओ_callback(hsdev, HID_USAGE_SENSOR_TIME);
+	sensor_hub_device_close(hsdev);
+	sensor_hub_remove_callback(hsdev, HID_USAGE_SENSOR_TIME);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा platक्रमm_device_id hid_समय_ids[] = अणु
-	अणु
-		/* Format: HID-SENSOR-usage_id_in_hex_lowerहाल */
+static const struct platform_device_id hid_time_ids[] = {
+	{
+		/* Format: HID-SENSOR-usage_id_in_hex_lowercase */
 		.name = "HID-SENSOR-2000a0",
-	पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
-MODULE_DEVICE_TABLE(platक्रमm, hid_समय_ids);
+	},
+	{ /* sentinel */ }
+};
+MODULE_DEVICE_TABLE(platform, hid_time_ids);
 
-अटल काष्ठा platक्रमm_driver hid_समय_platक्रमm_driver = अणु
-	.id_table = hid_समय_ids,
-	.driver = अणु
+static struct platform_driver hid_time_platform_driver = {
+	.id_table = hid_time_ids,
+	.driver = {
 		.name	= KBUILD_MODNAME,
-	पूर्ण,
-	.probe		= hid_समय_probe,
-	.हटाओ		= hid_समय_हटाओ,
-पूर्ण;
-module_platक्रमm_driver(hid_समय_platक्रमm_driver);
+	},
+	.probe		= hid_time_probe,
+	.remove		= hid_time_remove,
+};
+module_platform_driver(hid_time_platform_driver);
 
 MODULE_DESCRIPTION("HID Sensor Time");
 MODULE_AUTHOR("Alexander Holler <holler@ahsoftware.de>");

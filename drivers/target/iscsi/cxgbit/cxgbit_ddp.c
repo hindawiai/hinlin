@@ -1,81 +1,80 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2016 Chelsio Communications, Inc.
  */
 
-#समावेश "cxgbit.h"
+#include "cxgbit.h"
 
-अटल व्योम
-cxgbit_set_one_ppod(काष्ठा cxgbi_pagepod *ppod,
-		    काष्ठा cxgbi_task_tag_info *ttinfo,
-		    काष्ठा scatterlist **sg_pp, अचिन्हित पूर्णांक *sg_off)
-अणु
-	काष्ठा scatterlist *sg = sg_pp ? *sg_pp : शून्य;
-	अचिन्हित पूर्णांक offset = sg_off ? *sg_off : 0;
+static void
+cxgbit_set_one_ppod(struct cxgbi_pagepod *ppod,
+		    struct cxgbi_task_tag_info *ttinfo,
+		    struct scatterlist **sg_pp, unsigned int *sg_off)
+{
+	struct scatterlist *sg = sg_pp ? *sg_pp : NULL;
+	unsigned int offset = sg_off ? *sg_off : 0;
 	dma_addr_t addr = 0UL;
-	अचिन्हित पूर्णांक len = 0;
-	पूर्णांक i;
+	unsigned int len = 0;
+	int i;
 
-	स_नकल(ppod, &ttinfo->hdr, माप(काष्ठा cxgbi_pagepod_hdr));
+	memcpy(ppod, &ttinfo->hdr, sizeof(struct cxgbi_pagepod_hdr));
 
-	अगर (sg) अणु
+	if (sg) {
 		addr = sg_dma_address(sg);
 		len = sg_dma_len(sg);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < PPOD_PAGES_MAX; i++) अणु
-		अगर (sg) अणु
+	for (i = 0; i < PPOD_PAGES_MAX; i++) {
+		if (sg) {
 			ppod->addr[i] = cpu_to_be64(addr + offset);
 			offset += PAGE_SIZE;
-			अगर (offset == (len + sg->offset)) अणु
+			if (offset == (len + sg->offset)) {
 				offset = 0;
 				sg = sg_next(sg);
-				अगर (sg) अणु
+				if (sg) {
 					addr = sg_dma_address(sg);
 					len = sg_dma_len(sg);
-				पूर्ण
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				}
+			}
+		} else {
 			ppod->addr[i] = 0ULL;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/*
-	 * the fअगरth address needs to be repeated in the next ppod, so करो
+	 * the fifth address needs to be repeated in the next ppod, so do
 	 * not move sg
 	 */
-	अगर (sg_pp) अणु
+	if (sg_pp) {
 		*sg_pp = sg;
 		*sg_off = offset;
-	पूर्ण
+	}
 
-	अगर (offset == len) अणु
+	if (offset == len) {
 		offset = 0;
-		अगर (sg) अणु
+		if (sg) {
 			sg = sg_next(sg);
-			अगर (sg)
+			if (sg)
 				addr = sg_dma_address(sg);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	ppod->addr[i] = sg ? cpu_to_be64(addr + offset) : 0ULL;
-पूर्ण
+}
 
-अटल काष्ठा sk_buff *
-cxgbit_ppod_init_idata(काष्ठा cxgbit_device *cdev, काष्ठा cxgbi_ppm *ppm,
-		       अचिन्हित पूर्णांक idx, अचिन्हित पूर्णांक npods, अचिन्हित पूर्णांक tid)
-अणु
-	काष्ठा ulp_mem_io *req;
-	काष्ठा ulptx_idata *idata;
-	अचिन्हित पूर्णांक pm_addr = (idx << PPOD_SIZE_SHIFT) + ppm->llimit;
-	अचिन्हित पूर्णांक dlen = npods << PPOD_SIZE_SHIFT;
-	अचिन्हित पूर्णांक wr_len = roundup(माप(काष्ठा ulp_mem_io) +
-				माप(काष्ठा ulptx_idata) + dlen, 16);
-	काष्ठा sk_buff *skb;
+static struct sk_buff *
+cxgbit_ppod_init_idata(struct cxgbit_device *cdev, struct cxgbi_ppm *ppm,
+		       unsigned int idx, unsigned int npods, unsigned int tid)
+{
+	struct ulp_mem_io *req;
+	struct ulptx_idata *idata;
+	unsigned int pm_addr = (idx << PPOD_SIZE_SHIFT) + ppm->llimit;
+	unsigned int dlen = npods << PPOD_SIZE_SHIFT;
+	unsigned int wr_len = roundup(sizeof(struct ulp_mem_io) +
+				sizeof(struct ulptx_idata) + dlen, 16);
+	struct sk_buff *skb;
 
 	skb  = alloc_skb(wr_len, GFP_KERNEL);
-	अगर (!skb)
-		वापस शून्य;
+	if (!skb)
+		return NULL;
 
 	req = __skb_put(skb, wr_len);
 	INIT_ULPTX_WR(req, wr_len, 0, tid);
@@ -86,160 +85,160 @@ cxgbit_ppod_init_idata(काष्ठा cxgbit_device *cdev, काष्ठ�
 		T5_ULP_MEMIO_IMM_V(1));
 	req->dlen = htonl(ULP_MEMIO_DATA_LEN_V(dlen >> 5));
 	req->lock_addr = htonl(ULP_MEMIO_ADDR_V(pm_addr >> 5));
-	req->len16 = htonl(DIV_ROUND_UP(wr_len - माप(req->wr), 16));
+	req->len16 = htonl(DIV_ROUND_UP(wr_len - sizeof(req->wr), 16));
 
-	idata = (काष्ठा ulptx_idata *)(req + 1);
+	idata = (struct ulptx_idata *)(req + 1);
 	idata->cmd_more = htonl(ULPTX_CMD_V(ULP_TX_SC_IMM));
 	idata->len = htonl(dlen);
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-अटल पूर्णांक
-cxgbit_ppod_ग_लिखो_idata(काष्ठा cxgbi_ppm *ppm, काष्ठा cxgbit_sock *csk,
-			काष्ठा cxgbi_task_tag_info *ttinfo, अचिन्हित पूर्णांक idx,
-			अचिन्हित पूर्णांक npods, काष्ठा scatterlist **sg_pp,
-			अचिन्हित पूर्णांक *sg_off)
-अणु
-	काष्ठा cxgbit_device *cdev = csk->com.cdev;
-	काष्ठा sk_buff *skb;
-	काष्ठा ulp_mem_io *req;
-	काष्ठा ulptx_idata *idata;
-	काष्ठा cxgbi_pagepod *ppod;
-	अचिन्हित पूर्णांक i;
+static int
+cxgbit_ppod_write_idata(struct cxgbi_ppm *ppm, struct cxgbit_sock *csk,
+			struct cxgbi_task_tag_info *ttinfo, unsigned int idx,
+			unsigned int npods, struct scatterlist **sg_pp,
+			unsigned int *sg_off)
+{
+	struct cxgbit_device *cdev = csk->com.cdev;
+	struct sk_buff *skb;
+	struct ulp_mem_io *req;
+	struct ulptx_idata *idata;
+	struct cxgbi_pagepod *ppod;
+	unsigned int i;
 
 	skb = cxgbit_ppod_init_idata(cdev, ppm, idx, npods, csk->tid);
-	अगर (!skb)
-		वापस -ENOMEM;
+	if (!skb)
+		return -ENOMEM;
 
-	req = (काष्ठा ulp_mem_io *)skb->data;
-	idata = (काष्ठा ulptx_idata *)(req + 1);
-	ppod = (काष्ठा cxgbi_pagepod *)(idata + 1);
+	req = (struct ulp_mem_io *)skb->data;
+	idata = (struct ulptx_idata *)(req + 1);
+	ppod = (struct cxgbi_pagepod *)(idata + 1);
 
-	क्रम (i = 0; i < npods; i++, ppod++)
+	for (i = 0; i < npods; i++, ppod++)
 		cxgbit_set_one_ppod(ppod, ttinfo, sg_pp, sg_off);
 
 	__skb_queue_tail(&csk->ppodq, skb);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-cxgbit_ddp_set_map(काष्ठा cxgbi_ppm *ppm, काष्ठा cxgbit_sock *csk,
-		   काष्ठा cxgbi_task_tag_info *ttinfo)
-अणु
-	अचिन्हित पूर्णांक pidx = ttinfo->idx;
-	अचिन्हित पूर्णांक npods = ttinfo->npods;
-	अचिन्हित पूर्णांक i, cnt;
-	काष्ठा scatterlist *sg = ttinfo->sgl;
-	अचिन्हित पूर्णांक offset = 0;
-	पूर्णांक ret = 0;
+static int
+cxgbit_ddp_set_map(struct cxgbi_ppm *ppm, struct cxgbit_sock *csk,
+		   struct cxgbi_task_tag_info *ttinfo)
+{
+	unsigned int pidx = ttinfo->idx;
+	unsigned int npods = ttinfo->npods;
+	unsigned int i, cnt;
+	struct scatterlist *sg = ttinfo->sgl;
+	unsigned int offset = 0;
+	int ret = 0;
 
-	क्रम (i = 0; i < npods; i += cnt, pidx += cnt) अणु
+	for (i = 0; i < npods; i += cnt, pidx += cnt) {
 		cnt = npods - i;
 
-		अगर (cnt > ULPMEM_IDATA_MAX_NPPODS)
+		if (cnt > ULPMEM_IDATA_MAX_NPPODS)
 			cnt = ULPMEM_IDATA_MAX_NPPODS;
 
-		ret = cxgbit_ppod_ग_लिखो_idata(ppm, csk, ttinfo, pidx, cnt,
+		ret = cxgbit_ppod_write_idata(ppm, csk, ttinfo, pidx, cnt,
 					      &sg, &offset);
-		अगर (ret < 0)
-			अवरोध;
-	पूर्ण
+		if (ret < 0)
+			break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक cxgbit_ddp_sgl_check(काष्ठा scatterlist *sg,
-				अचिन्हित पूर्णांक nents)
-अणु
-	अचिन्हित पूर्णांक last_sgidx = nents - 1;
-	अचिन्हित पूर्णांक i;
+static int cxgbit_ddp_sgl_check(struct scatterlist *sg,
+				unsigned int nents)
+{
+	unsigned int last_sgidx = nents - 1;
+	unsigned int i;
 
-	क्रम (i = 0; i < nents; i++, sg = sg_next(sg)) अणु
-		अचिन्हित पूर्णांक len = sg->length + sg->offset;
+	for (i = 0; i < nents; i++, sg = sg_next(sg)) {
+		unsigned int len = sg->length + sg->offset;
 
-		अगर ((sg->offset & 0x3) || (i && sg->offset) ||
-		    ((i != last_sgidx) && (len != PAGE_SIZE))) अणु
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+		if ((sg->offset & 0x3) || (i && sg->offset) ||
+		    ((i != last_sgidx) && (len != PAGE_SIZE))) {
+			return -EINVAL;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-cxgbit_ddp_reserve(काष्ठा cxgbit_sock *csk, काष्ठा cxgbi_task_tag_info *ttinfo,
-		   अचिन्हित पूर्णांक xferlen)
-अणु
-	काष्ठा cxgbit_device *cdev = csk->com.cdev;
-	काष्ठा cxgbi_ppm *ppm = cdev2ppm(cdev);
-	काष्ठा scatterlist *sgl = ttinfo->sgl;
-	अचिन्हित पूर्णांक sgcnt = ttinfo->nents;
-	अचिन्हित पूर्णांक sg_offset = sgl->offset;
-	पूर्णांक ret;
+static int
+cxgbit_ddp_reserve(struct cxgbit_sock *csk, struct cxgbi_task_tag_info *ttinfo,
+		   unsigned int xferlen)
+{
+	struct cxgbit_device *cdev = csk->com.cdev;
+	struct cxgbi_ppm *ppm = cdev2ppm(cdev);
+	struct scatterlist *sgl = ttinfo->sgl;
+	unsigned int sgcnt = ttinfo->nents;
+	unsigned int sg_offset = sgl->offset;
+	int ret;
 
-	अगर ((xferlen < DDP_THRESHOLD) || (!sgcnt)) अणु
+	if ((xferlen < DDP_THRESHOLD) || (!sgcnt)) {
 		pr_debug("ppm 0x%p, pgidx %u, xfer %u, sgcnt %u, NO ddp.\n",
-			 ppm, ppm->tक्रमmat.pgsz_idx_dflt,
+			 ppm, ppm->tformat.pgsz_idx_dflt,
 			 xferlen, ttinfo->nents);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (cxgbit_ddp_sgl_check(sgl, sgcnt) < 0)
-		वापस -EINVAL;
+	if (cxgbit_ddp_sgl_check(sgl, sgcnt) < 0)
+		return -EINVAL;
 
 	ttinfo->nr_pages = (xferlen + sgl->offset +
 			    (1 << PAGE_SHIFT) - 1) >> PAGE_SHIFT;
 
 	/*
-	 * the ddp tag will be used क्रम the ttt in the outgoing r2t pdu
+	 * the ddp tag will be used for the ttt in the outgoing r2t pdu
 	 */
 	ret = cxgbi_ppm_ppods_reserve(ppm, ttinfo->nr_pages, 0, &ttinfo->idx,
 				      &ttinfo->tag, 0);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 	ttinfo->npods = ret;
 
 	sgl->offset = 0;
 	ret = dma_map_sg(&ppm->pdev->dev, sgl, sgcnt, DMA_FROM_DEVICE);
 	sgl->offset = sg_offset;
-	अगर (!ret) अणु
+	if (!ret) {
 		pr_debug("%s: 0x%x, xfer %u, sgl %u dma mapping err.\n",
 			 __func__, 0, xferlen, sgcnt);
-		जाओ rel_ppods;
-	पूर्ण
+		goto rel_ppods;
+	}
 
 	cxgbi_ppm_make_ppod_hdr(ppm, ttinfo->tag, csk->tid, sgl->offset,
 				xferlen, &ttinfo->hdr);
 
 	ret = cxgbit_ddp_set_map(ppm, csk, ttinfo);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		__skb_queue_purge(&csk->ppodq);
 		dma_unmap_sg(&ppm->pdev->dev, sgl, sgcnt, DMA_FROM_DEVICE);
-		जाओ rel_ppods;
-	पूर्ण
+		goto rel_ppods;
+	}
 
-	वापस 0;
+	return 0;
 
 rel_ppods:
 	cxgbi_ppm_ppod_release(ppm, ttinfo->idx);
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-व्योम
-cxgbit_get_r2t_ttt(काष्ठा iscsi_conn *conn, काष्ठा iscsi_cmd *cmd,
-		   काष्ठा iscsi_r2t *r2t)
-अणु
-	काष्ठा cxgbit_sock *csk = conn->context;
-	काष्ठा cxgbit_device *cdev = csk->com.cdev;
-	काष्ठा cxgbit_cmd *ccmd = iscsit_priv_cmd(cmd);
-	काष्ठा cxgbi_task_tag_info *ttinfo = &ccmd->ttinfo;
-	पूर्णांक ret = -EINVAL;
+void
+cxgbit_get_r2t_ttt(struct iscsi_conn *conn, struct iscsi_cmd *cmd,
+		   struct iscsi_r2t *r2t)
+{
+	struct cxgbit_sock *csk = conn->context;
+	struct cxgbit_device *cdev = csk->com.cdev;
+	struct cxgbit_cmd *ccmd = iscsit_priv_cmd(cmd);
+	struct cxgbi_task_tag_info *ttinfo = &ccmd->ttinfo;
+	int ret = -EINVAL;
 
-	अगर ((!ccmd->setup_ddp) ||
+	if ((!ccmd->setup_ddp) ||
 	    (!test_bit(CSK_DDP_ENABLE, &csk->com.flags)))
-		जाओ out;
+		goto out;
 
 	ccmd->setup_ddp = false;
 
@@ -247,84 +246,84 @@ cxgbit_get_r2t_ttt(काष्ठा iscsi_conn *conn, काष्ठा iscsi
 	ttinfo->nents = cmd->se_cmd.t_data_nents;
 
 	ret = cxgbit_ddp_reserve(csk, ttinfo, cmd->se_cmd.data_length);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		pr_debug("csk 0x%p, cmd 0x%p, xfer len %u, sgcnt %u no ddp.\n",
 			 csk, cmd, cmd->se_cmd.data_length, ttinfo->nents);
 
-		ttinfo->sgl = शून्य;
+		ttinfo->sgl = NULL;
 		ttinfo->nents = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		ccmd->release = true;
-	पूर्ण
+	}
 out:
 	pr_debug("cdev 0x%p, cmd 0x%p, tag 0x%x\n", cdev, cmd, ttinfo->tag);
 	r2t->targ_xfer_tag = ttinfo->tag;
-पूर्ण
+}
 
-व्योम cxgbit_unmap_cmd(काष्ठा iscsi_conn *conn, काष्ठा iscsi_cmd *cmd)
-अणु
-	काष्ठा cxgbit_cmd *ccmd = iscsit_priv_cmd(cmd);
+void cxgbit_unmap_cmd(struct iscsi_conn *conn, struct iscsi_cmd *cmd)
+{
+	struct cxgbit_cmd *ccmd = iscsit_priv_cmd(cmd);
 
-	अगर (ccmd->release) अणु
-		काष्ठा cxgbi_task_tag_info *ttinfo = &ccmd->ttinfo;
+	if (ccmd->release) {
+		struct cxgbi_task_tag_info *ttinfo = &ccmd->ttinfo;
 
-		अगर (ttinfo->sgl) अणु
-			काष्ठा cxgbit_sock *csk = conn->context;
-			काष्ठा cxgbit_device *cdev = csk->com.cdev;
-			काष्ठा cxgbi_ppm *ppm = cdev2ppm(cdev);
+		if (ttinfo->sgl) {
+			struct cxgbit_sock *csk = conn->context;
+			struct cxgbit_device *cdev = csk->com.cdev;
+			struct cxgbi_ppm *ppm = cdev2ppm(cdev);
 
-			/* Abort the TCP conn अगर DDP is not complete to
-			 * aव्योम any possibility of DDP after मुक्तing
+			/* Abort the TCP conn if DDP is not complete to
+			 * avoid any possibility of DDP after freeing
 			 * the cmd.
 			 */
-			अगर (unlikely(cmd->ग_लिखो_data_करोne !=
+			if (unlikely(cmd->write_data_done !=
 				     cmd->se_cmd.data_length))
-				cxgbit_पात_conn(csk);
+				cxgbit_abort_conn(csk);
 
 			cxgbi_ppm_ppod_release(ppm, ttinfo->idx);
 
 			dma_unmap_sg(&ppm->pdev->dev, ttinfo->sgl,
 				     ttinfo->nents, DMA_FROM_DEVICE);
-		पूर्ण अन्यथा अणु
+		} else {
 			put_page(sg_page(&ccmd->sg));
-		पूर्ण
+		}
 
 		ccmd->release = false;
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक cxgbit_ddp_init(काष्ठा cxgbit_device *cdev)
-अणु
-	काष्ठा cxgb4_lld_info *lldi = &cdev->lldi;
-	काष्ठा net_device *ndev = cdev->lldi.ports[0];
-	काष्ठा cxgbi_tag_क्रमmat tक्रमmat;
-	पूर्णांक ret, i;
+int cxgbit_ddp_init(struct cxgbit_device *cdev)
+{
+	struct cxgb4_lld_info *lldi = &cdev->lldi;
+	struct net_device *ndev = cdev->lldi.ports[0];
+	struct cxgbi_tag_format tformat;
+	int ret, i;
 
-	अगर (!lldi->vr->iscsi.size) अणु
+	if (!lldi->vr->iscsi.size) {
 		pr_warn("%s, iscsi NOT enabled, check config!\n", ndev->name);
-		वापस -EACCES;
-	पूर्ण
+		return -EACCES;
+	}
 
-	स_रखो(&tक्रमmat, 0, माप(काष्ठा cxgbi_tag_क्रमmat));
-	क्रम (i = 0; i < 4; i++)
-		tक्रमmat.pgsz_order[i] = (lldi->iscsi_pgsz_order >> (i << 3))
+	memset(&tformat, 0, sizeof(struct cxgbi_tag_format));
+	for (i = 0; i < 4; i++)
+		tformat.pgsz_order[i] = (lldi->iscsi_pgsz_order >> (i << 3))
 					 & 0xF;
-	cxgbi_tagmask_check(lldi->iscsi_tagmask, &tक्रमmat);
+	cxgbi_tagmask_check(lldi->iscsi_tagmask, &tformat);
 
 	ret = cxgbi_ppm_init(lldi->iscsi_ppm, cdev->lldi.ports[0],
-			     cdev->lldi.pdev, &cdev->lldi, &tक्रमmat,
+			     cdev->lldi.pdev, &cdev->lldi, &tformat,
 			     lldi->vr->iscsi.size, lldi->iscsi_llimit,
 			     lldi->vr->iscsi.start, 2,
 			     lldi->vr->ppod_edram.start,
 			     lldi->vr->ppod_edram.size);
-	अगर (ret >= 0) अणु
-		काष्ठा cxgbi_ppm *ppm = (काष्ठा cxgbi_ppm *)(*lldi->iscsi_ppm);
+	if (ret >= 0) {
+		struct cxgbi_ppm *ppm = (struct cxgbi_ppm *)(*lldi->iscsi_ppm);
 
-		अगर ((ppm->tक्रमmat.pgsz_idx_dflt < DDP_PGIDX_MAX) &&
+		if ((ppm->tformat.pgsz_idx_dflt < DDP_PGIDX_MAX) &&
 		    (ppm->ppmax >= 1024))
 			set_bit(CDEV_DDP_ENABLE, &cdev->flags);
 		ret = 0;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

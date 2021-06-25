@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * rionet - Ethernet driver over RapidIO messaging services
  *
@@ -7,146 +6,146 @@
  * Matt Porter <mporter@kernel.crashing.org>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/rपन.स>
-#समावेश <linux/rio_drv.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/rio_ids.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/dma-mapping.h>
+#include <linux/delay.h>
+#include <linux/rio.h>
+#include <linux/rio_drv.h>
+#include <linux/slab.h>
+#include <linux/rio_ids.h>
 
-#समावेश <linux/netdevice.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/crc32.h>
-#समावेश <linux/ethtool.h>
-#समावेश <linux/reboot.h>
+#include <linux/netdevice.h>
+#include <linux/etherdevice.h>
+#include <linux/skbuff.h>
+#include <linux/crc32.h>
+#include <linux/ethtool.h>
+#include <linux/reboot.h>
 
-#घोषणा DRV_NAME        "rionet"
-#घोषणा DRV_VERSION     "0.3"
-#घोषणा DRV_AUTHOR      "Matt Porter <mporter@kernel.crashing.org>"
-#घोषणा DRV_DESC        "Ethernet over RapidIO"
+#define DRV_NAME        "rionet"
+#define DRV_VERSION     "0.3"
+#define DRV_AUTHOR      "Matt Porter <mporter@kernel.crashing.org>"
+#define DRV_DESC        "Ethernet over RapidIO"
 
 MODULE_AUTHOR(DRV_AUTHOR);
 MODULE_DESCRIPTION(DRV_DESC);
 MODULE_LICENSE("GPL");
 
-#घोषणा RIONET_DEFAULT_MSGLEVEL \
+#define RIONET_DEFAULT_MSGLEVEL \
 			(NETIF_MSG_DRV          | \
 			 NETIF_MSG_LINK         | \
 			 NETIF_MSG_RX_ERR       | \
 			 NETIF_MSG_TX_ERR)
 
-#घोषणा RIONET_DOORBELL_JOIN	0x1000
-#घोषणा RIONET_DOORBELL_LEAVE	0x1001
+#define RIONET_DOORBELL_JOIN	0x1000
+#define RIONET_DOORBELL_LEAVE	0x1001
 
-#घोषणा RIONET_MAILBOX		0
+#define RIONET_MAILBOX		0
 
-#घोषणा RIONET_TX_RING_SIZE	CONFIG_RIONET_TX_SIZE
-#घोषणा RIONET_RX_RING_SIZE	CONFIG_RIONET_RX_SIZE
-#घोषणा RIONET_MAX_NETS		8
-#घोषणा RIONET_MSG_SIZE         RIO_MAX_MSG_SIZE
-#घोषणा RIONET_MAX_MTU          (RIONET_MSG_SIZE - ETH_HLEN)
+#define RIONET_TX_RING_SIZE	CONFIG_RIONET_TX_SIZE
+#define RIONET_RX_RING_SIZE	CONFIG_RIONET_RX_SIZE
+#define RIONET_MAX_NETS		8
+#define RIONET_MSG_SIZE         RIO_MAX_MSG_SIZE
+#define RIONET_MAX_MTU          (RIONET_MSG_SIZE - ETH_HLEN)
 
-काष्ठा rionet_निजी अणु
-	काष्ठा rio_mport *mport;
-	काष्ठा sk_buff *rx_skb[RIONET_RX_RING_SIZE];
-	काष्ठा sk_buff *tx_skb[RIONET_TX_RING_SIZE];
-	पूर्णांक rx_slot;
-	पूर्णांक tx_slot;
-	पूर्णांक tx_cnt;
-	पूर्णांक ack_slot;
+struct rionet_private {
+	struct rio_mport *mport;
+	struct sk_buff *rx_skb[RIONET_RX_RING_SIZE];
+	struct sk_buff *tx_skb[RIONET_TX_RING_SIZE];
+	int rx_slot;
+	int tx_slot;
+	int tx_cnt;
+	int ack_slot;
 	spinlock_t lock;
 	spinlock_t tx_lock;
 	u32 msg_enable;
-	bool खोलो;
-पूर्ण;
+	bool open;
+};
 
-काष्ठा rionet_peer अणु
-	काष्ठा list_head node;
-	काष्ठा rio_dev *rdev;
-	काष्ठा resource *res;
-पूर्ण;
+struct rionet_peer {
+	struct list_head node;
+	struct rio_dev *rdev;
+	struct resource *res;
+};
 
-काष्ठा rionet_net अणु
-	काष्ठा net_device *ndev;
-	काष्ठा list_head peers;
+struct rionet_net {
+	struct net_device *ndev;
+	struct list_head peers;
 	spinlock_t lock;	/* net info access lock */
-	काष्ठा rio_dev **active;
-	पूर्णांक nact;	/* number of active peers */
-पूर्ण;
+	struct rio_dev **active;
+	int nact;	/* number of active peers */
+};
 
-अटल काष्ठा rionet_net nets[RIONET_MAX_NETS];
+static struct rionet_net nets[RIONET_MAX_NETS];
 
-#घोषणा is_rionet_capable(src_ops, dst_ops)			\
+#define is_rionet_capable(src_ops, dst_ops)			\
 			((src_ops & RIO_SRC_OPS_DATA_MSG) &&	\
 			 (dst_ops & RIO_DST_OPS_DATA_MSG) &&	\
 			 (src_ops & RIO_SRC_OPS_DOORBELL) &&	\
 			 (dst_ops & RIO_DST_OPS_DOORBELL))
-#घोषणा dev_rionet_capable(dev) \
+#define dev_rionet_capable(dev) \
 	is_rionet_capable(dev->src_ops, dev->dst_ops)
 
-#घोषणा RIONET_MAC_MATCH(x)	(!स_भेद((x), "\00\01\00\01", 4))
-#घोषणा RIONET_GET_DESTID(x)	((*((u8 *)x + 4) << 8) | *((u8 *)x + 5))
+#define RIONET_MAC_MATCH(x)	(!memcmp((x), "\00\01\00\01", 4))
+#define RIONET_GET_DESTID(x)	((*((u8 *)x + 4) << 8) | *((u8 *)x + 5))
 
-अटल पूर्णांक rionet_rx_clean(काष्ठा net_device *ndev)
-अणु
-	पूर्णांक i;
-	पूर्णांक error = 0;
-	काष्ठा rionet_निजी *rnet = netdev_priv(ndev);
-	व्योम *data;
+static int rionet_rx_clean(struct net_device *ndev)
+{
+	int i;
+	int error = 0;
+	struct rionet_private *rnet = netdev_priv(ndev);
+	void *data;
 
 	i = rnet->rx_slot;
 
-	करो अणु
-		अगर (!rnet->rx_skb[i])
-			जारी;
+	do {
+		if (!rnet->rx_skb[i])
+			continue;
 
-		अगर (!(data = rio_get_inb_message(rnet->mport, RIONET_MAILBOX)))
-			अवरोध;
+		if (!(data = rio_get_inb_message(rnet->mport, RIONET_MAILBOX)))
+			break;
 
 		rnet->rx_skb[i]->data = data;
 		skb_put(rnet->rx_skb[i], RIO_MAX_MSG_SIZE);
 		rnet->rx_skb[i]->protocol =
 		    eth_type_trans(rnet->rx_skb[i], ndev);
-		error = netअगर_rx(rnet->rx_skb[i]);
+		error = netif_rx(rnet->rx_skb[i]);
 
-		अगर (error == NET_RX_DROP) अणु
+		if (error == NET_RX_DROP) {
 			ndev->stats.rx_dropped++;
-		पूर्ण अन्यथा अणु
+		} else {
 			ndev->stats.rx_packets++;
 			ndev->stats.rx_bytes += RIO_MAX_MSG_SIZE;
-		पूर्ण
+		}
 
-	पूर्ण जबतक ((i = (i + 1) % RIONET_RX_RING_SIZE) != rnet->rx_slot);
+	} while ((i = (i + 1) % RIONET_RX_RING_SIZE) != rnet->rx_slot);
 
-	वापस i;
-पूर्ण
+	return i;
+}
 
-अटल व्योम rionet_rx_fill(काष्ठा net_device *ndev, पूर्णांक end)
-अणु
-	पूर्णांक i;
-	काष्ठा rionet_निजी *rnet = netdev_priv(ndev);
+static void rionet_rx_fill(struct net_device *ndev, int end)
+{
+	int i;
+	struct rionet_private *rnet = netdev_priv(ndev);
 
 	i = rnet->rx_slot;
-	करो अणु
+	do {
 		rnet->rx_skb[i] = dev_alloc_skb(RIO_MAX_MSG_SIZE);
 
-		अगर (!rnet->rx_skb[i])
-			अवरोध;
+		if (!rnet->rx_skb[i])
+			break;
 
 		rio_add_inb_buffer(rnet->mport, RIONET_MAILBOX,
 				   rnet->rx_skb[i]->data);
-	पूर्ण जबतक ((i = (i + 1) % RIONET_RX_RING_SIZE) != end);
+	} while ((i = (i + 1) % RIONET_RX_RING_SIZE) != end);
 
 	rnet->rx_slot = i;
-पूर्ण
+}
 
-अटल पूर्णांक rionet_queue_tx_msg(काष्ठा sk_buff *skb, काष्ठा net_device *ndev,
-			       काष्ठा rio_dev *rdev)
-अणु
-	काष्ठा rionet_निजी *rnet = netdev_priv(ndev);
+static int rionet_queue_tx_msg(struct sk_buff *skb, struct net_device *ndev,
+			       struct rio_dev *rdev)
+{
+	struct rionet_private *rnet = netdev_priv(ndev);
 
 	rio_add_outb_message(rnet->mport, rdev, 0, skb->data, skb->len);
 	rnet->tx_skb[rnet->tx_slot] = skb;
@@ -154,194 +153,194 @@ MODULE_LICENSE("GPL");
 	ndev->stats.tx_packets++;
 	ndev->stats.tx_bytes += skb->len;
 
-	अगर (++rnet->tx_cnt == RIONET_TX_RING_SIZE)
-		netअगर_stop_queue(ndev);
+	if (++rnet->tx_cnt == RIONET_TX_RING_SIZE)
+		netif_stop_queue(ndev);
 
 	++rnet->tx_slot;
 	rnet->tx_slot &= (RIONET_TX_RING_SIZE - 1);
 
-	अगर (netअगर_msg_tx_queued(rnet))
-		prपूर्णांकk(KERN_INFO "%s: queued skb len %8.8x\n", DRV_NAME,
+	if (netif_msg_tx_queued(rnet))
+		printk(KERN_INFO "%s: queued skb len %8.8x\n", DRV_NAME,
 		       skb->len);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल netdev_tx_t rionet_start_xmit(काष्ठा sk_buff *skb,
-				     काष्ठा net_device *ndev)
-अणु
-	पूर्णांक i;
-	काष्ठा rionet_निजी *rnet = netdev_priv(ndev);
-	काष्ठा ethhdr *eth = (काष्ठा ethhdr *)skb->data;
+static netdev_tx_t rionet_start_xmit(struct sk_buff *skb,
+				     struct net_device *ndev)
+{
+	int i;
+	struct rionet_private *rnet = netdev_priv(ndev);
+	struct ethhdr *eth = (struct ethhdr *)skb->data;
 	u16 destid;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक add_num = 1;
+	unsigned long flags;
+	int add_num = 1;
 
 	spin_lock_irqsave(&rnet->tx_lock, flags);
 
-	अगर (is_multicast_ether_addr(eth->h_dest))
+	if (is_multicast_ether_addr(eth->h_dest))
 		add_num = nets[rnet->mport->id].nact;
 
-	अगर ((rnet->tx_cnt + add_num) > RIONET_TX_RING_SIZE) अणु
-		netअगर_stop_queue(ndev);
+	if ((rnet->tx_cnt + add_num) > RIONET_TX_RING_SIZE) {
+		netif_stop_queue(ndev);
 		spin_unlock_irqrestore(&rnet->tx_lock, flags);
-		prपूर्णांकk(KERN_ERR "%s: BUG! Tx Ring full when queue awake!\n",
+		printk(KERN_ERR "%s: BUG! Tx Ring full when queue awake!\n",
 		       ndev->name);
-		वापस NETDEV_TX_BUSY;
-	पूर्ण
+		return NETDEV_TX_BUSY;
+	}
 
-	अगर (is_multicast_ether_addr(eth->h_dest)) अणु
-		पूर्णांक count = 0;
+	if (is_multicast_ether_addr(eth->h_dest)) {
+		int count = 0;
 
-		क्रम (i = 0; i < RIO_MAX_ROUTE_ENTRIES(rnet->mport->sys_size);
+		for (i = 0; i < RIO_MAX_ROUTE_ENTRIES(rnet->mport->sys_size);
 				i++)
-			अगर (nets[rnet->mport->id].active[i]) अणु
+			if (nets[rnet->mport->id].active[i]) {
 				rionet_queue_tx_msg(skb, ndev,
 					nets[rnet->mport->id].active[i]);
-				अगर (count)
+				if (count)
 					refcount_inc(&skb->users);
 				count++;
-			पूर्ण
-	पूर्ण अन्यथा अगर (RIONET_MAC_MATCH(eth->h_dest)) अणु
+			}
+	} else if (RIONET_MAC_MATCH(eth->h_dest)) {
 		destid = RIONET_GET_DESTID(eth->h_dest);
-		अगर (nets[rnet->mport->id].active[destid])
+		if (nets[rnet->mport->id].active[destid])
 			rionet_queue_tx_msg(skb, ndev,
 					nets[rnet->mport->id].active[destid]);
-		अन्यथा अणु
+		else {
 			/*
-			 * If the target device was हटाओd from the list of
+			 * If the target device was removed from the list of
 			 * active peers but we still have TX packets targeting
 			 * it just report sending a packet to the target
 			 * (without actual packet transfer).
 			 */
 			ndev->stats.tx_packets++;
 			ndev->stats.tx_bytes += skb->len;
-			dev_kमुक्त_skb_any(skb);
-		पूर्ण
-	पूर्ण
+			dev_kfree_skb_any(skb);
+		}
+	}
 
 	spin_unlock_irqrestore(&rnet->tx_lock, flags);
 
-	वापस NETDEV_TX_OK;
-पूर्ण
+	return NETDEV_TX_OK;
+}
 
-अटल व्योम rionet_dbell_event(काष्ठा rio_mport *mport, व्योम *dev_id, u16 sid, u16 tid,
+static void rionet_dbell_event(struct rio_mport *mport, void *dev_id, u16 sid, u16 tid,
 			       u16 info)
-अणु
-	काष्ठा net_device *ndev = dev_id;
-	काष्ठा rionet_निजी *rnet = netdev_priv(ndev);
-	काष्ठा rionet_peer *peer;
-	अचिन्हित अक्षर netid = rnet->mport->id;
+{
+	struct net_device *ndev = dev_id;
+	struct rionet_private *rnet = netdev_priv(ndev);
+	struct rionet_peer *peer;
+	unsigned char netid = rnet->mport->id;
 
-	अगर (netअगर_msg_पूर्णांकr(rnet))
-		prपूर्णांकk(KERN_INFO "%s: doorbell sid %4.4x tid %4.4x info %4.4x",
+	if (netif_msg_intr(rnet))
+		printk(KERN_INFO "%s: doorbell sid %4.4x tid %4.4x info %4.4x",
 		       DRV_NAME, sid, tid, info);
-	अगर (info == RIONET_DOORBELL_JOIN) अणु
-		अगर (!nets[netid].active[sid]) अणु
+	if (info == RIONET_DOORBELL_JOIN) {
+		if (!nets[netid].active[sid]) {
 			spin_lock(&nets[netid].lock);
-			list_क्रम_each_entry(peer, &nets[netid].peers, node) अणु
-				अगर (peer->rdev->destid == sid) अणु
+			list_for_each_entry(peer, &nets[netid].peers, node) {
+				if (peer->rdev->destid == sid) {
 					nets[netid].active[sid] = peer->rdev;
 					nets[netid].nact++;
-				पूर्ण
-			पूर्ण
+				}
+			}
 			spin_unlock(&nets[netid].lock);
 
-			rio_mport_send_करोorbell(mport, sid,
+			rio_mport_send_doorbell(mport, sid,
 						RIONET_DOORBELL_JOIN);
-		पूर्ण
-	पूर्ण अन्यथा अगर (info == RIONET_DOORBELL_LEAVE) अणु
+		}
+	} else if (info == RIONET_DOORBELL_LEAVE) {
 		spin_lock(&nets[netid].lock);
-		अगर (nets[netid].active[sid]) अणु
-			nets[netid].active[sid] = शून्य;
+		if (nets[netid].active[sid]) {
+			nets[netid].active[sid] = NULL;
 			nets[netid].nact--;
-		पूर्ण
+		}
 		spin_unlock(&nets[netid].lock);
-	पूर्ण अन्यथा अणु
-		अगर (netअगर_msg_पूर्णांकr(rnet))
-			prपूर्णांकk(KERN_WARNING "%s: unhandled doorbell\n",
+	} else {
+		if (netif_msg_intr(rnet))
+			printk(KERN_WARNING "%s: unhandled doorbell\n",
 			       DRV_NAME);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम rionet_inb_msg_event(काष्ठा rio_mport *mport, व्योम *dev_id, पूर्णांक mbox, पूर्णांक slot)
-अणु
-	पूर्णांक n;
-	काष्ठा net_device *ndev = dev_id;
-	काष्ठा rionet_निजी *rnet = netdev_priv(ndev);
+static void rionet_inb_msg_event(struct rio_mport *mport, void *dev_id, int mbox, int slot)
+{
+	int n;
+	struct net_device *ndev = dev_id;
+	struct rionet_private *rnet = netdev_priv(ndev);
 
-	अगर (netअगर_msg_पूर्णांकr(rnet))
-		prपूर्णांकk(KERN_INFO "%s: inbound message event, mbox %d slot %d\n",
+	if (netif_msg_intr(rnet))
+		printk(KERN_INFO "%s: inbound message event, mbox %d slot %d\n",
 		       DRV_NAME, mbox, slot);
 
 	spin_lock(&rnet->lock);
-	अगर ((n = rionet_rx_clean(ndev)) != rnet->rx_slot)
+	if ((n = rionet_rx_clean(ndev)) != rnet->rx_slot)
 		rionet_rx_fill(ndev, n);
 	spin_unlock(&rnet->lock);
-पूर्ण
+}
 
-अटल व्योम rionet_outb_msg_event(काष्ठा rio_mport *mport, व्योम *dev_id, पूर्णांक mbox, पूर्णांक slot)
-अणु
-	काष्ठा net_device *ndev = dev_id;
-	काष्ठा rionet_निजी *rnet = netdev_priv(ndev);
+static void rionet_outb_msg_event(struct rio_mport *mport, void *dev_id, int mbox, int slot)
+{
+	struct net_device *ndev = dev_id;
+	struct rionet_private *rnet = netdev_priv(ndev);
 
 	spin_lock(&rnet->tx_lock);
 
-	अगर (netअगर_msg_पूर्णांकr(rnet))
-		prपूर्णांकk(KERN_INFO
+	if (netif_msg_intr(rnet))
+		printk(KERN_INFO
 		       "%s: outbound message event, mbox %d slot %d\n",
 		       DRV_NAME, mbox, slot);
 
-	जबतक (rnet->tx_cnt && (rnet->ack_slot != slot)) अणु
+	while (rnet->tx_cnt && (rnet->ack_slot != slot)) {
 		/* dma unmap single */
-		dev_kमुक्त_skb_irq(rnet->tx_skb[rnet->ack_slot]);
-		rnet->tx_skb[rnet->ack_slot] = शून्य;
+		dev_kfree_skb_irq(rnet->tx_skb[rnet->ack_slot]);
+		rnet->tx_skb[rnet->ack_slot] = NULL;
 		++rnet->ack_slot;
 		rnet->ack_slot &= (RIONET_TX_RING_SIZE - 1);
 		rnet->tx_cnt--;
-	पूर्ण
+	}
 
-	अगर (rnet->tx_cnt < RIONET_TX_RING_SIZE)
-		netअगर_wake_queue(ndev);
+	if (rnet->tx_cnt < RIONET_TX_RING_SIZE)
+		netif_wake_queue(ndev);
 
 	spin_unlock(&rnet->tx_lock);
-पूर्ण
+}
 
-अटल पूर्णांक rionet_खोलो(काष्ठा net_device *ndev)
-अणु
-	पूर्णांक i, rc = 0;
-	काष्ठा rionet_peer *peer;
-	काष्ठा rionet_निजी *rnet = netdev_priv(ndev);
-	अचिन्हित अक्षर netid = rnet->mport->id;
-	अचिन्हित दीर्घ flags;
+static int rionet_open(struct net_device *ndev)
+{
+	int i, rc = 0;
+	struct rionet_peer *peer;
+	struct rionet_private *rnet = netdev_priv(ndev);
+	unsigned char netid = rnet->mport->id;
+	unsigned long flags;
 
-	अगर (netअगर_msg_अगरup(rnet))
-		prपूर्णांकk(KERN_INFO "%s: open\n", DRV_NAME);
+	if (netif_msg_ifup(rnet))
+		printk(KERN_INFO "%s: open\n", DRV_NAME);
 
-	अगर ((rc = rio_request_inb_dbell(rnet->mport,
-					(व्योम *)ndev,
+	if ((rc = rio_request_inb_dbell(rnet->mport,
+					(void *)ndev,
 					RIONET_DOORBELL_JOIN,
 					RIONET_DOORBELL_LEAVE,
 					rionet_dbell_event)) < 0)
-		जाओ out;
+		goto out;
 
-	अगर ((rc = rio_request_inb_mbox(rnet->mport,
-				       (व्योम *)ndev,
+	if ((rc = rio_request_inb_mbox(rnet->mport,
+				       (void *)ndev,
 				       RIONET_MAILBOX,
 				       RIONET_RX_RING_SIZE,
 				       rionet_inb_msg_event)) < 0)
-		जाओ out;
+		goto out;
 
-	अगर ((rc = rio_request_outb_mbox(rnet->mport,
-					(व्योम *)ndev,
+	if ((rc = rio_request_outb_mbox(rnet->mport,
+					(void *)ndev,
 					RIONET_MAILBOX,
 					RIONET_TX_RING_SIZE,
 					rionet_outb_msg_event)) < 0)
-		जाओ out;
+		goto out;
 
 	/* Initialize inbound message ring */
-	क्रम (i = 0; i < RIONET_RX_RING_SIZE; i++)
-		rnet->rx_skb[i] = शून्य;
+	for (i = 0; i < RIONET_RX_RING_SIZE; i++)
+		rnet->rx_skb[i] = NULL;
 	rnet->rx_slot = 0;
 	rionet_rx_fill(ndev, 0);
 
@@ -349,48 +348,48 @@ MODULE_LICENSE("GPL");
 	rnet->tx_cnt = 0;
 	rnet->ack_slot = 0;
 
-	netअगर_carrier_on(ndev);
-	netअगर_start_queue(ndev);
+	netif_carrier_on(ndev);
+	netif_start_queue(ndev);
 
 	spin_lock_irqsave(&nets[netid].lock, flags);
-	list_क्रम_each_entry(peer, &nets[netid].peers, node) अणु
+	list_for_each_entry(peer, &nets[netid].peers, node) {
 		/* Send a join message */
-		rio_send_करोorbell(peer->rdev, RIONET_DOORBELL_JOIN);
-	पूर्ण
+		rio_send_doorbell(peer->rdev, RIONET_DOORBELL_JOIN);
+	}
 	spin_unlock_irqrestore(&nets[netid].lock, flags);
-	rnet->खोलो = true;
+	rnet->open = true;
 
       out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक rionet_बंद(काष्ठा net_device *ndev)
-अणु
-	काष्ठा rionet_निजी *rnet = netdev_priv(ndev);
-	काष्ठा rionet_peer *peer;
-	अचिन्हित अक्षर netid = rnet->mport->id;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक i;
+static int rionet_close(struct net_device *ndev)
+{
+	struct rionet_private *rnet = netdev_priv(ndev);
+	struct rionet_peer *peer;
+	unsigned char netid = rnet->mport->id;
+	unsigned long flags;
+	int i;
 
-	अगर (netअगर_msg_अगरup(rnet))
-		prपूर्णांकk(KERN_INFO "%s: close %s\n", DRV_NAME, ndev->name);
+	if (netif_msg_ifup(rnet))
+		printk(KERN_INFO "%s: close %s\n", DRV_NAME, ndev->name);
 
-	netअगर_stop_queue(ndev);
-	netअगर_carrier_off(ndev);
-	rnet->खोलो = false;
+	netif_stop_queue(ndev);
+	netif_carrier_off(ndev);
+	rnet->open = false;
 
-	क्रम (i = 0; i < RIONET_RX_RING_SIZE; i++)
-		kमुक्त_skb(rnet->rx_skb[i]);
+	for (i = 0; i < RIONET_RX_RING_SIZE; i++)
+		kfree_skb(rnet->rx_skb[i]);
 
 	spin_lock_irqsave(&nets[netid].lock, flags);
-	list_क्रम_each_entry(peer, &nets[netid].peers, node) अणु
-		अगर (nets[netid].active[peer->rdev->destid]) अणु
-			rio_send_करोorbell(peer->rdev, RIONET_DOORBELL_LEAVE);
-			nets[netid].active[peer->rdev->destid] = शून्य;
-		पूर्ण
-		अगर (peer->res)
+	list_for_each_entry(peer, &nets[netid].peers, node) {
+		if (nets[netid].active[peer->rdev->destid]) {
+			rio_send_doorbell(peer->rdev, RIONET_DOORBELL_LEAVE);
+			nets[netid].active[peer->rdev->destid] = NULL;
+		}
+		if (peer->res)
 			rio_release_outb_dbell(peer->rdev, peer->res);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&nets[netid].lock, flags);
 
 	rio_release_inb_dbell(rnet->mport, RIONET_DOORBELL_JOIN,
@@ -398,109 +397,109 @@ MODULE_LICENSE("GPL");
 	rio_release_inb_mbox(rnet->mport, RIONET_MAILBOX);
 	rio_release_outb_mbox(rnet->mport, RIONET_MAILBOX);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम rionet_हटाओ_dev(काष्ठा device *dev, काष्ठा subsys_पूर्णांकerface *sअगर)
-अणु
-	काष्ठा rio_dev *rdev = to_rio_dev(dev);
-	अचिन्हित अक्षर netid = rdev->net->hport->id;
-	काष्ठा rionet_peer *peer;
-	पूर्णांक state, found = 0;
-	अचिन्हित दीर्घ flags;
+static void rionet_remove_dev(struct device *dev, struct subsys_interface *sif)
+{
+	struct rio_dev *rdev = to_rio_dev(dev);
+	unsigned char netid = rdev->net->hport->id;
+	struct rionet_peer *peer;
+	int state, found = 0;
+	unsigned long flags;
 
-	अगर (!dev_rionet_capable(rdev))
-		वापस;
+	if (!dev_rionet_capable(rdev))
+		return;
 
 	spin_lock_irqsave(&nets[netid].lock, flags);
-	list_क्रम_each_entry(peer, &nets[netid].peers, node) अणु
-		अगर (peer->rdev == rdev) अणु
+	list_for_each_entry(peer, &nets[netid].peers, node) {
+		if (peer->rdev == rdev) {
 			list_del(&peer->node);
-			अगर (nets[netid].active[rdev->destid]) अणु
-				state = atomic_पढ़ो(&rdev->state);
-				अगर (state != RIO_DEVICE_GONE &&
-				    state != RIO_DEVICE_INITIALIZING) अणु
-					rio_send_करोorbell(rdev,
+			if (nets[netid].active[rdev->destid]) {
+				state = atomic_read(&rdev->state);
+				if (state != RIO_DEVICE_GONE &&
+				    state != RIO_DEVICE_INITIALIZING) {
+					rio_send_doorbell(rdev,
 							RIONET_DOORBELL_LEAVE);
-				पूर्ण
-				nets[netid].active[rdev->destid] = शून्य;
+				}
+				nets[netid].active[rdev->destid] = NULL;
 				nets[netid].nact--;
-			पूर्ण
+			}
 			found = 1;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	spin_unlock_irqrestore(&nets[netid].lock, flags);
 
-	अगर (found) अणु
-		अगर (peer->res)
+	if (found) {
+		if (peer->res)
 			rio_release_outb_dbell(rdev, peer->res);
-		kमुक्त(peer);
-	पूर्ण
-पूर्ण
+		kfree(peer);
+	}
+}
 
-अटल व्योम rionet_get_drvinfo(काष्ठा net_device *ndev,
-			       काष्ठा ethtool_drvinfo *info)
-अणु
-	काष्ठा rionet_निजी *rnet = netdev_priv(ndev);
+static void rionet_get_drvinfo(struct net_device *ndev,
+			       struct ethtool_drvinfo *info)
+{
+	struct rionet_private *rnet = netdev_priv(ndev);
 
-	strlcpy(info->driver, DRV_NAME, माप(info->driver));
-	strlcpy(info->version, DRV_VERSION, माप(info->version));
-	strlcpy(info->fw_version, "n/a", माप(info->fw_version));
-	strlcpy(info->bus_info, rnet->mport->name, माप(info->bus_info));
-पूर्ण
+	strlcpy(info->driver, DRV_NAME, sizeof(info->driver));
+	strlcpy(info->version, DRV_VERSION, sizeof(info->version));
+	strlcpy(info->fw_version, "n/a", sizeof(info->fw_version));
+	strlcpy(info->bus_info, rnet->mport->name, sizeof(info->bus_info));
+}
 
-अटल u32 rionet_get_msglevel(काष्ठा net_device *ndev)
-अणु
-	काष्ठा rionet_निजी *rnet = netdev_priv(ndev);
+static u32 rionet_get_msglevel(struct net_device *ndev)
+{
+	struct rionet_private *rnet = netdev_priv(ndev);
 
-	वापस rnet->msg_enable;
-पूर्ण
+	return rnet->msg_enable;
+}
 
-अटल व्योम rionet_set_msglevel(काष्ठा net_device *ndev, u32 value)
-अणु
-	काष्ठा rionet_निजी *rnet = netdev_priv(ndev);
+static void rionet_set_msglevel(struct net_device *ndev, u32 value)
+{
+	struct rionet_private *rnet = netdev_priv(ndev);
 
 	rnet->msg_enable = value;
-पूर्ण
+}
 
-अटल स्थिर काष्ठा ethtool_ops rionet_ethtool_ops = अणु
+static const struct ethtool_ops rionet_ethtool_ops = {
 	.get_drvinfo = rionet_get_drvinfo,
 	.get_msglevel = rionet_get_msglevel,
 	.set_msglevel = rionet_set_msglevel,
 	.get_link = ethtool_op_get_link,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा net_device_ops rionet_netdev_ops = अणु
-	.nकरो_खोलो		= rionet_खोलो,
-	.nकरो_stop		= rionet_बंद,
-	.nकरो_start_xmit		= rionet_start_xmit,
-	.nकरो_validate_addr	= eth_validate_addr,
-	.nकरो_set_mac_address	= eth_mac_addr,
-पूर्ण;
+static const struct net_device_ops rionet_netdev_ops = {
+	.ndo_open		= rionet_open,
+	.ndo_stop		= rionet_close,
+	.ndo_start_xmit		= rionet_start_xmit,
+	.ndo_validate_addr	= eth_validate_addr,
+	.ndo_set_mac_address	= eth_mac_addr,
+};
 
-अटल पूर्णांक rionet_setup_netdev(काष्ठा rio_mport *mport, काष्ठा net_device *ndev)
-अणु
-	पूर्णांक rc = 0;
-	काष्ठा rionet_निजी *rnet;
+static int rionet_setup_netdev(struct rio_mport *mport, struct net_device *ndev)
+{
+	int rc = 0;
+	struct rionet_private *rnet;
 	u16 device_id;
-	स्थिर माप_प्रकार rionet_active_bytes = माप(व्योम *) *
+	const size_t rionet_active_bytes = sizeof(void *) *
 				RIO_MAX_ROUTE_ENTRIES(mport->sys_size);
 
-	nets[mport->id].active = (काष्ठा rio_dev **)__get_मुक्त_pages(GFP_KERNEL,
+	nets[mport->id].active = (struct rio_dev **)__get_free_pages(GFP_KERNEL,
 						get_order(rionet_active_bytes));
-	अगर (!nets[mport->id].active) अणु
+	if (!nets[mport->id].active) {
 		rc = -ENOMEM;
-		जाओ out;
-	पूर्ण
-	स_रखो((व्योम *)nets[mport->id].active, 0, rionet_active_bytes);
+		goto out;
+	}
+	memset((void *)nets[mport->id].active, 0, rionet_active_bytes);
 
-	/* Set up निजी area */
+	/* Set up private area */
 	rnet = netdev_priv(ndev);
 	rnet->mport = mport;
-	rnet->खोलो = false;
+	rnet->open = false;
 
-	/* Set the शेष MAC address */
+	/* Set the default MAC address */
 	device_id = rio_local_get_device_id(mport);
 	ndev->dev_addr[0] = 0x00;
 	ndev->dev_addr[1] = 0x01;
@@ -523,14 +522,14 @@ MODULE_LICENSE("GPL");
 
 	rnet->msg_enable = RIONET_DEFAULT_MSGLEVEL;
 
-	rc = रेजिस्टर_netdev(ndev);
-	अगर (rc != 0) अणु
-		मुक्त_pages((अचिन्हित दीर्घ)nets[mport->id].active,
+	rc = register_netdev(ndev);
+	if (rc != 0) {
+		free_pages((unsigned long)nets[mport->id].active,
 			   get_order(rionet_active_bytes));
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	prपूर्णांकk(KERN_INFO "%s: %s %s Version %s, MAC %pM, %s\n",
+	printk(KERN_INFO "%s: %s %s Version %s, MAC %pM, %s\n",
 	       ndev->name,
 	       DRV_NAME,
 	       DRV_DESC,
@@ -539,84 +538,84 @@ MODULE_LICENSE("GPL");
 	       mport->name);
 
       out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक rionet_add_dev(काष्ठा device *dev, काष्ठा subsys_पूर्णांकerface *sअगर)
-अणु
-	पूर्णांक rc = -ENODEV;
+static int rionet_add_dev(struct device *dev, struct subsys_interface *sif)
+{
+	int rc = -ENODEV;
 	u32 lsrc_ops, ldst_ops;
-	काष्ठा rionet_peer *peer;
-	काष्ठा net_device *ndev = शून्य;
-	काष्ठा rio_dev *rdev = to_rio_dev(dev);
-	अचिन्हित अक्षर netid = rdev->net->hport->id;
+	struct rionet_peer *peer;
+	struct net_device *ndev = NULL;
+	struct rio_dev *rdev = to_rio_dev(dev);
+	unsigned char netid = rdev->net->hport->id;
 
-	अगर (netid >= RIONET_MAX_NETS)
-		वापस rc;
+	if (netid >= RIONET_MAX_NETS)
+		return rc;
 
 	/*
-	 * If first समय through this net, make sure local device is rionet
+	 * If first time through this net, make sure local device is rionet
 	 * capable and setup netdev (this step will be skipped in later probes
 	 * on the same net).
 	 */
-	अगर (!nets[netid].ndev) अणु
-		rio_local_पढ़ो_config_32(rdev->net->hport, RIO_SRC_OPS_CAR,
+	if (!nets[netid].ndev) {
+		rio_local_read_config_32(rdev->net->hport, RIO_SRC_OPS_CAR,
 					 &lsrc_ops);
-		rio_local_पढ़ो_config_32(rdev->net->hport, RIO_DST_OPS_CAR,
+		rio_local_read_config_32(rdev->net->hport, RIO_DST_OPS_CAR,
 					 &ldst_ops);
-		अगर (!is_rionet_capable(lsrc_ops, ldst_ops)) अणु
-			prपूर्णांकk(KERN_ERR
+		if (!is_rionet_capable(lsrc_ops, ldst_ops)) {
+			printk(KERN_ERR
 			       "%s: local device %s is not network capable\n",
 			       DRV_NAME, rdev->net->hport->name);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		/* Allocate our net_device काष्ठाure */
-		ndev = alloc_etherdev(माप(काष्ठा rionet_निजी));
-		अगर (ndev == शून्य) अणु
+		/* Allocate our net_device structure */
+		ndev = alloc_etherdev(sizeof(struct rionet_private));
+		if (ndev == NULL) {
 			rc = -ENOMEM;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		rc = rionet_setup_netdev(rdev->net->hport, ndev);
-		अगर (rc) अणु
-			prपूर्णांकk(KERN_ERR "%s: failed to setup netdev (rc=%d)\n",
+		if (rc) {
+			printk(KERN_ERR "%s: failed to setup netdev (rc=%d)\n",
 			       DRV_NAME, rc);
-			मुक्त_netdev(ndev);
-			जाओ out;
-		पूर्ण
+			free_netdev(ndev);
+			goto out;
+		}
 
 		INIT_LIST_HEAD(&nets[netid].peers);
 		spin_lock_init(&nets[netid].lock);
 		nets[netid].nact = 0;
 		nets[netid].ndev = ndev;
-	पूर्ण
+	}
 
 	/*
-	 * If the remote device has mailbox/करोorbell capabilities,
+	 * If the remote device has mailbox/doorbell capabilities,
 	 * add it to the peer list.
 	 */
-	अगर (dev_rionet_capable(rdev)) अणु
-		काष्ठा rionet_निजी *rnet;
-		अचिन्हित दीर्घ flags;
+	if (dev_rionet_capable(rdev)) {
+		struct rionet_private *rnet;
+		unsigned long flags;
 
 		rnet = netdev_priv(nets[netid].ndev);
 
-		peer = kzalloc(माप(*peer), GFP_KERNEL);
-		अगर (!peer) अणु
+		peer = kzalloc(sizeof(*peer), GFP_KERNEL);
+		if (!peer) {
 			rc = -ENOMEM;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		peer->rdev = rdev;
 		peer->res = rio_request_outb_dbell(peer->rdev,
 						RIONET_DOORBELL_JOIN,
 						RIONET_DOORBELL_LEAVE);
-		अगर (!peer->res) अणु
+		if (!peer->res) {
 			pr_err("%s: error requesting doorbells\n", DRV_NAME);
-			kमुक्त(peer);
+			kfree(peer);
 			rc = -ENOMEM;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		spin_lock_irqsave(&nets[netid].lock, flags);
 		list_add_tail(&peer->node, &nets[netid].peers);
@@ -624,49 +623,49 @@ MODULE_LICENSE("GPL");
 		pr_debug("%s: %s add peer %s\n",
 			 DRV_NAME, __func__, rio_name(rdev));
 
-		/* If netdev is alपढ़ोy खोलोed, send join request to new peer */
-		अगर (rnet->खोलो)
-			rio_send_करोorbell(peer->rdev, RIONET_DOORBELL_JOIN);
-	पूर्ण
+		/* If netdev is already opened, send join request to new peer */
+		if (rnet->open)
+			rio_send_doorbell(peer->rdev, RIONET_DOORBELL_JOIN);
+	}
 
-	वापस 0;
+	return 0;
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक rionet_shutकरोwn(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ code,
-			   व्योम *unused)
-अणु
-	काष्ठा rionet_peer *peer;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक i;
+static int rionet_shutdown(struct notifier_block *nb, unsigned long code,
+			   void *unused)
+{
+	struct rionet_peer *peer;
+	unsigned long flags;
+	int i;
 
 	pr_debug("%s: %s\n", DRV_NAME, __func__);
 
-	क्रम (i = 0; i < RIONET_MAX_NETS; i++) अणु
-		अगर (!nets[i].ndev)
-			जारी;
+	for (i = 0; i < RIONET_MAX_NETS; i++) {
+		if (!nets[i].ndev)
+			continue;
 
 		spin_lock_irqsave(&nets[i].lock, flags);
-		list_क्रम_each_entry(peer, &nets[i].peers, node) अणु
-			अगर (nets[i].active[peer->rdev->destid]) अणु
-				rio_send_करोorbell(peer->rdev,
+		list_for_each_entry(peer, &nets[i].peers, node) {
+			if (nets[i].active[peer->rdev->destid]) {
+				rio_send_doorbell(peer->rdev,
 						  RIONET_DOORBELL_LEAVE);
-				nets[i].active[peer->rdev->destid] = शून्य;
-			पूर्ण
-		पूर्ण
+				nets[i].active[peer->rdev->destid] = NULL;
+			}
+		}
 		spin_unlock_irqrestore(&nets[i].lock, flags);
-	पूर्ण
+	}
 
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
-अटल व्योम rionet_हटाओ_mport(काष्ठा device *dev,
-				काष्ठा class_पूर्णांकerface *class_पूर्णांकf)
-अणु
-	काष्ठा rio_mport *mport = to_rio_mport(dev);
-	काष्ठा net_device *ndev;
-	पूर्णांक id = mport->id;
+static void rionet_remove_mport(struct device *dev,
+				struct class_interface *class_intf)
+{
+	struct rio_mport *mport = to_rio_mport(dev);
+	struct net_device *ndev;
+	int id = mport->id;
 
 	pr_debug("%s %s\n", __func__, mport->name);
 
@@ -675,74 +674,74 @@ out:
 	WARN(!nets[id].ndev, "%s called for mport without NDEV\n",
 	     __func__);
 
-	अगर (nets[id].ndev) अणु
+	if (nets[id].ndev) {
 		ndev = nets[id].ndev;
-		netअगर_stop_queue(ndev);
-		unरेजिस्टर_netdev(ndev);
+		netif_stop_queue(ndev);
+		unregister_netdev(ndev);
 
-		मुक्त_pages((अचिन्हित दीर्घ)nets[id].active,
-			   get_order(माप(व्योम *) *
+		free_pages((unsigned long)nets[id].active,
+			   get_order(sizeof(void *) *
 			   RIO_MAX_ROUTE_ENTRIES(mport->sys_size)));
-		nets[id].active = शून्य;
-		मुक्त_netdev(ndev);
-		nets[id].ndev = शून्य;
-	पूर्ण
-पूर्ण
+		nets[id].active = NULL;
+		free_netdev(ndev);
+		nets[id].ndev = NULL;
+	}
+}
 
-#अगर_घोषित MODULE
-अटल काष्ठा rio_device_id rionet_id_table[] = अणु
-	अणुRIO_DEVICE(RIO_ANY_ID, RIO_ANY_ID)पूर्ण,
-	अणु 0, पूर्ण	/* terminate list */
-पूर्ण;
+#ifdef MODULE
+static struct rio_device_id rionet_id_table[] = {
+	{RIO_DEVICE(RIO_ANY_ID, RIO_ANY_ID)},
+	{ 0, }	/* terminate list */
+};
 
 MODULE_DEVICE_TABLE(rapidio, rionet_id_table);
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा subsys_पूर्णांकerface rionet_पूर्णांकerface = अणु
+static struct subsys_interface rionet_interface = {
 	.name		= "rionet",
 	.subsys		= &rio_bus_type,
 	.add_dev	= rionet_add_dev,
-	.हटाओ_dev	= rionet_हटाओ_dev,
-पूर्ण;
+	.remove_dev	= rionet_remove_dev,
+};
 
-अटल काष्ठा notअगरier_block rionet_notअगरier = अणु
-	.notअगरier_call = rionet_shutकरोwn,
-पूर्ण;
+static struct notifier_block rionet_notifier = {
+	.notifier_call = rionet_shutdown,
+};
 
-/* the rio_mport_पूर्णांकerface is used to handle local mport devices */
-अटल काष्ठा class_पूर्णांकerface rio_mport_पूर्णांकerface __refdata = अणु
+/* the rio_mport_interface is used to handle local mport devices */
+static struct class_interface rio_mport_interface __refdata = {
 	.class = &rio_mport_class,
-	.add_dev = शून्य,
-	.हटाओ_dev = rionet_हटाओ_mport,
-पूर्ण;
+	.add_dev = NULL,
+	.remove_dev = rionet_remove_mport,
+};
 
-अटल पूर्णांक __init rionet_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init rionet_init(void)
+{
+	int ret;
 
-	ret = रेजिस्टर_reboot_notअगरier(&rionet_notअगरier);
-	अगर (ret) अणु
+	ret = register_reboot_notifier(&rionet_notifier);
+	if (ret) {
 		pr_err("%s: failed to register reboot notifier (err=%d)\n",
 		       DRV_NAME, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = class_पूर्णांकerface_रेजिस्टर(&rio_mport_पूर्णांकerface);
-	अगर (ret) अणु
+	ret = class_interface_register(&rio_mport_interface);
+	if (ret) {
 		pr_err("%s: class_interface_register error: %d\n",
 		       DRV_NAME, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस subsys_पूर्णांकerface_रेजिस्टर(&rionet_पूर्णांकerface);
-पूर्ण
+	return subsys_interface_register(&rionet_interface);
+}
 
-अटल व्योम __निकास rionet_निकास(व्योम)
-अणु
-	unरेजिस्टर_reboot_notअगरier(&rionet_notअगरier);
-	subsys_पूर्णांकerface_unरेजिस्टर(&rionet_पूर्णांकerface);
-	class_पूर्णांकerface_unरेजिस्टर(&rio_mport_पूर्णांकerface);
-पूर्ण
+static void __exit rionet_exit(void)
+{
+	unregister_reboot_notifier(&rionet_notifier);
+	subsys_interface_unregister(&rionet_interface);
+	class_interface_unregister(&rio_mport_interface);
+}
 
 late_initcall(rionet_init);
-module_निकास(rionet_निकास);
+module_exit(rionet_exit);

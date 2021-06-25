@@ -1,269 +1,268 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *  linux/fs/affs/file.c
  *
  *  (c) 1996  Hans-Joachim Widmaier - Rewritten
  *
- *  (C) 1993  Ray Burr - Modअगरied क्रम Amiga FFS fileप्रणाली.
+ *  (C) 1993  Ray Burr - Modified for Amiga FFS filesystem.
  *
- *  (C) 1992  Eric Youngdale Modअगरied क्रम ISO 9660 fileप्रणाली.
+ *  (C) 1992  Eric Youngdale Modified for ISO 9660 filesystem.
  *
- *  (C) 1991  Linus Torvalds - minix fileप्रणाली
+ *  (C) 1991  Linus Torvalds - minix filesystem
  *
  *  affs regular file handling primitives
  */
 
-#समावेश <linux/uपन.स>
-#समावेश <linux/blkdev.h>
-#समावेश "affs.h"
+#include <linux/uio.h>
+#include <linux/blkdev.h>
+#include "affs.h"
 
-अटल काष्ठा buffer_head *affs_get_extblock_slow(काष्ठा inode *inode, u32 ext);
+static struct buffer_head *affs_get_extblock_slow(struct inode *inode, u32 ext);
 
-अटल पूर्णांक
-affs_file_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
-अणु
+static int
+affs_file_open(struct inode *inode, struct file *filp)
+{
 	pr_debug("open(%lu,%d)\n",
-		 inode->i_ino, atomic_पढ़ो(&AFFS_I(inode)->i_खोलोcnt));
-	atomic_inc(&AFFS_I(inode)->i_खोलोcnt);
-	वापस 0;
-पूर्ण
+		 inode->i_ino, atomic_read(&AFFS_I(inode)->i_opencnt));
+	atomic_inc(&AFFS_I(inode)->i_opencnt);
+	return 0;
+}
 
-अटल पूर्णांक
-affs_file_release(काष्ठा inode *inode, काष्ठा file *filp)
-अणु
+static int
+affs_file_release(struct inode *inode, struct file *filp)
+{
 	pr_debug("release(%lu, %d)\n",
-		 inode->i_ino, atomic_पढ़ो(&AFFS_I(inode)->i_खोलोcnt));
+		 inode->i_ino, atomic_read(&AFFS_I(inode)->i_opencnt));
 
-	अगर (atomic_dec_and_test(&AFFS_I(inode)->i_खोलोcnt)) अणु
+	if (atomic_dec_and_test(&AFFS_I(inode)->i_opencnt)) {
 		inode_lock(inode);
-		अगर (inode->i_size != AFFS_I(inode)->mmu_निजी)
+		if (inode->i_size != AFFS_I(inode)->mmu_private)
 			affs_truncate(inode);
-		affs_मुक्त_pपुनः_स्मृति(inode);
+		affs_free_prealloc(inode);
 		inode_unlock(inode);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-affs_grow_extcache(काष्ठा inode *inode, u32 lc_idx)
-अणु
-	काष्ठा super_block	*sb = inode->i_sb;
-	काष्ठा buffer_head	*bh;
+static int
+affs_grow_extcache(struct inode *inode, u32 lc_idx)
+{
+	struct super_block	*sb = inode->i_sb;
+	struct buffer_head	*bh;
 	u32 lc_max;
-	पूर्णांक i, j, key;
+	int i, j, key;
 
-	अगर (!AFFS_I(inode)->i_lc) अणु
-		अक्षर *ptr = (अक्षर *)get_zeroed_page(GFP_NOFS);
-		अगर (!ptr)
-			वापस -ENOMEM;
+	if (!AFFS_I(inode)->i_lc) {
+		char *ptr = (char *)get_zeroed_page(GFP_NOFS);
+		if (!ptr)
+			return -ENOMEM;
 		AFFS_I(inode)->i_lc = (u32 *)ptr;
-		AFFS_I(inode)->i_ac = (काष्ठा affs_ext_key *)(ptr + AFFS_CACHE_SIZE / 2);
-	पूर्ण
+		AFFS_I(inode)->i_ac = (struct affs_ext_key *)(ptr + AFFS_CACHE_SIZE / 2);
+	}
 
-	lc_max = AFFS_LC_SIZE << AFFS_I(inode)->i_lc_shअगरt;
+	lc_max = AFFS_LC_SIZE << AFFS_I(inode)->i_lc_shift;
 
-	अगर (AFFS_I(inode)->i_extcnt > lc_max) अणु
-		u32 lc_shअगरt, lc_mask, पंचांगp, off;
+	if (AFFS_I(inode)->i_extcnt > lc_max) {
+		u32 lc_shift, lc_mask, tmp, off;
 
 		/* need to recalculate linear cache, start from old size */
-		lc_shअगरt = AFFS_I(inode)->i_lc_shअगरt;
-		पंचांगp = (AFFS_I(inode)->i_extcnt / AFFS_LC_SIZE) >> lc_shअगरt;
-		क्रम (; पंचांगp; पंचांगp >>= 1)
-			lc_shअगरt++;
-		lc_mask = (1 << lc_shअगरt) - 1;
+		lc_shift = AFFS_I(inode)->i_lc_shift;
+		tmp = (AFFS_I(inode)->i_extcnt / AFFS_LC_SIZE) >> lc_shift;
+		for (; tmp; tmp >>= 1)
+			lc_shift++;
+		lc_mask = (1 << lc_shift) - 1;
 
-		/* fix idx and old size to new shअगरt */
-		lc_idx >>= (lc_shअगरt - AFFS_I(inode)->i_lc_shअगरt);
-		AFFS_I(inode)->i_lc_size >>= (lc_shअगरt - AFFS_I(inode)->i_lc_shअगरt);
+		/* fix idx and old size to new shift */
+		lc_idx >>= (lc_shift - AFFS_I(inode)->i_lc_shift);
+		AFFS_I(inode)->i_lc_size >>= (lc_shift - AFFS_I(inode)->i_lc_shift);
 
 		/* first shrink old cache to make more space */
-		off = 1 << (lc_shअगरt - AFFS_I(inode)->i_lc_shअगरt);
-		क्रम (i = 1, j = off; j < AFFS_LC_SIZE; i++, j += off)
+		off = 1 << (lc_shift - AFFS_I(inode)->i_lc_shift);
+		for (i = 1, j = off; j < AFFS_LC_SIZE; i++, j += off)
 			AFFS_I(inode)->i_ac[i] = AFFS_I(inode)->i_ac[j];
 
-		AFFS_I(inode)->i_lc_shअगरt = lc_shअगरt;
+		AFFS_I(inode)->i_lc_shift = lc_shift;
 		AFFS_I(inode)->i_lc_mask = lc_mask;
-	पूर्ण
+	}
 
 	/* fill cache to the needed index */
 	i = AFFS_I(inode)->i_lc_size;
 	AFFS_I(inode)->i_lc_size = lc_idx + 1;
-	क्रम (; i <= lc_idx; i++) अणु
-		अगर (!i) अणु
+	for (; i <= lc_idx; i++) {
+		if (!i) {
 			AFFS_I(inode)->i_lc[0] = inode->i_ino;
-			जारी;
-		पूर्ण
+			continue;
+		}
 		key = AFFS_I(inode)->i_lc[i - 1];
 		j = AFFS_I(inode)->i_lc_mask + 1;
 		// unlock cache
-		क्रम (; j > 0; j--) अणु
-			bh = affs_bपढ़ो(sb, key);
-			अगर (!bh)
-				जाओ err;
+		for (; j > 0; j--) {
+			bh = affs_bread(sb, key);
+			if (!bh)
+				goto err;
 			key = be32_to_cpu(AFFS_TAIL(sb, bh)->extension);
-			affs_brअन्यथा(bh);
-		पूर्ण
+			affs_brelse(bh);
+		}
 		// lock cache
 		AFFS_I(inode)->i_lc[i] = key;
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 err:
 	// lock cache
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
-अटल काष्ठा buffer_head *
-affs_alloc_extblock(काष्ठा inode *inode, काष्ठा buffer_head *bh, u32 ext)
-अणु
-	काष्ठा super_block *sb = inode->i_sb;
-	काष्ठा buffer_head *new_bh;
-	u32 blocknr, पंचांगp;
+static struct buffer_head *
+affs_alloc_extblock(struct inode *inode, struct buffer_head *bh, u32 ext)
+{
+	struct super_block *sb = inode->i_sb;
+	struct buffer_head *new_bh;
+	u32 blocknr, tmp;
 
 	blocknr = affs_alloc_block(inode, bh->b_blocknr);
-	अगर (!blocknr)
-		वापस ERR_PTR(-ENOSPC);
+	if (!blocknr)
+		return ERR_PTR(-ENOSPC);
 
 	new_bh = affs_getzeroblk(sb, blocknr);
-	अगर (!new_bh) अणु
-		affs_मुक्त_block(sb, blocknr);
-		वापस ERR_PTR(-EIO);
-	पूर्ण
+	if (!new_bh) {
+		affs_free_block(sb, blocknr);
+		return ERR_PTR(-EIO);
+	}
 
 	AFFS_HEAD(new_bh)->ptype = cpu_to_be32(T_LIST);
 	AFFS_HEAD(new_bh)->key = cpu_to_be32(blocknr);
-	AFFS_TAIL(sb, new_bh)->stype = cpu_to_be32(ST_खाता);
+	AFFS_TAIL(sb, new_bh)->stype = cpu_to_be32(ST_FILE);
 	AFFS_TAIL(sb, new_bh)->parent = cpu_to_be32(inode->i_ino);
 	affs_fix_checksum(sb, new_bh);
 
 	mark_buffer_dirty_inode(new_bh, inode);
 
-	पंचांगp = be32_to_cpu(AFFS_TAIL(sb, bh)->extension);
-	अगर (पंचांगp)
-		affs_warning(sb, "alloc_ext", "previous extension set (%x)", पंचांगp);
+	tmp = be32_to_cpu(AFFS_TAIL(sb, bh)->extension);
+	if (tmp)
+		affs_warning(sb, "alloc_ext", "previous extension set (%x)", tmp);
 	AFFS_TAIL(sb, bh)->extension = cpu_to_be32(blocknr);
-	affs_adjust_checksum(bh, blocknr - पंचांगp);
+	affs_adjust_checksum(bh, blocknr - tmp);
 	mark_buffer_dirty_inode(bh, inode);
 
 	AFFS_I(inode)->i_extcnt++;
 	mark_inode_dirty(inode);
 
-	वापस new_bh;
-पूर्ण
+	return new_bh;
+}
 
-अटल अंतरभूत काष्ठा buffer_head *
-affs_get_extblock(काष्ठा inode *inode, u32 ext)
-अणु
-	/* अंतरभूत the simplest हाल: same extended block as last समय */
-	काष्ठा buffer_head *bh = AFFS_I(inode)->i_ext_bh;
-	अगर (ext == AFFS_I(inode)->i_ext_last)
+static inline struct buffer_head *
+affs_get_extblock(struct inode *inode, u32 ext)
+{
+	/* inline the simplest case: same extended block as last time */
+	struct buffer_head *bh = AFFS_I(inode)->i_ext_bh;
+	if (ext == AFFS_I(inode)->i_ext_last)
 		get_bh(bh);
-	अन्यथा
-		/* we have to करो more (not अंतरभूतd) */
+	else
+		/* we have to do more (not inlined) */
 		bh = affs_get_extblock_slow(inode, ext);
 
-	वापस bh;
-पूर्ण
+	return bh;
+}
 
-अटल काष्ठा buffer_head *
-affs_get_extblock_slow(काष्ठा inode *inode, u32 ext)
-अणु
-	काष्ठा super_block *sb = inode->i_sb;
-	काष्ठा buffer_head *bh;
+static struct buffer_head *
+affs_get_extblock_slow(struct inode *inode, u32 ext)
+{
+	struct super_block *sb = inode->i_sb;
+	struct buffer_head *bh;
 	u32 ext_key;
 	u32 lc_idx, lc_off, ac_idx;
-	u32 पंचांगp, idx;
+	u32 tmp, idx;
 
-	अगर (ext == AFFS_I(inode)->i_ext_last + 1) अणु
-		/* पढ़ो the next extended block from the current one */
+	if (ext == AFFS_I(inode)->i_ext_last + 1) {
+		/* read the next extended block from the current one */
 		bh = AFFS_I(inode)->i_ext_bh;
 		ext_key = be32_to_cpu(AFFS_TAIL(sb, bh)->extension);
-		अगर (ext < AFFS_I(inode)->i_extcnt)
-			जाओ पढ़ो_ext;
+		if (ext < AFFS_I(inode)->i_extcnt)
+			goto read_ext;
 		BUG_ON(ext > AFFS_I(inode)->i_extcnt);
 		bh = affs_alloc_extblock(inode, bh, ext);
-		अगर (IS_ERR(bh))
-			वापस bh;
-		जाओ store_ext;
-	पूर्ण
+		if (IS_ERR(bh))
+			return bh;
+		goto store_ext;
+	}
 
-	अगर (ext == 0) अणु
+	if (ext == 0) {
 		/* we seek back to the file header block */
 		ext_key = inode->i_ino;
-		जाओ पढ़ो_ext;
-	पूर्ण
+		goto read_ext;
+	}
 
-	अगर (ext >= AFFS_I(inode)->i_extcnt) अणु
-		काष्ठा buffer_head *prev_bh;
+	if (ext >= AFFS_I(inode)->i_extcnt) {
+		struct buffer_head *prev_bh;
 
 		/* allocate a new extended block */
 		BUG_ON(ext > AFFS_I(inode)->i_extcnt);
 
 		/* get previous extended block */
 		prev_bh = affs_get_extblock(inode, ext - 1);
-		अगर (IS_ERR(prev_bh))
-			वापस prev_bh;
+		if (IS_ERR(prev_bh))
+			return prev_bh;
 		bh = affs_alloc_extblock(inode, prev_bh, ext);
-		affs_brअन्यथा(prev_bh);
-		अगर (IS_ERR(bh))
-			वापस bh;
-		जाओ store_ext;
-	पूर्ण
+		affs_brelse(prev_bh);
+		if (IS_ERR(bh))
+			return bh;
+		goto store_ext;
+	}
 
 again:
-	/* check अगर there is an extended cache and whether it's large enough */
-	lc_idx = ext >> AFFS_I(inode)->i_lc_shअगरt;
+	/* check if there is an extended cache and whether it's large enough */
+	lc_idx = ext >> AFFS_I(inode)->i_lc_shift;
 	lc_off = ext & AFFS_I(inode)->i_lc_mask;
 
-	अगर (lc_idx >= AFFS_I(inode)->i_lc_size) अणु
-		पूर्णांक err;
+	if (lc_idx >= AFFS_I(inode)->i_lc_size) {
+		int err;
 
 		err = affs_grow_extcache(inode, lc_idx);
-		अगर (err)
-			वापस ERR_PTR(err);
-		जाओ again;
-	पूर्ण
+		if (err)
+			return ERR_PTR(err);
+		goto again;
+	}
 
 	/* every n'th key we find in the linear cache */
-	अगर (!lc_off) अणु
+	if (!lc_off) {
 		ext_key = AFFS_I(inode)->i_lc[lc_idx];
-		जाओ पढ़ो_ext;
-	पूर्ण
+		goto read_ext;
+	}
 
 	/* maybe it's still in the associative cache */
 	ac_idx = (ext - lc_idx - 1) & AFFS_AC_MASK;
-	अगर (AFFS_I(inode)->i_ac[ac_idx].ext == ext) अणु
+	if (AFFS_I(inode)->i_ac[ac_idx].ext == ext) {
 		ext_key = AFFS_I(inode)->i_ac[ac_idx].key;
-		जाओ पढ़ो_ext;
-	पूर्ण
+		goto read_ext;
+	}
 
 	/* try to find one of the previous extended blocks */
-	पंचांगp = ext;
+	tmp = ext;
 	idx = ac_idx;
-	जबतक (--पंचांगp, --lc_off > 0) अणु
+	while (--tmp, --lc_off > 0) {
 		idx = (idx - 1) & AFFS_AC_MASK;
-		अगर (AFFS_I(inode)->i_ac[idx].ext == पंचांगp) अणु
+		if (AFFS_I(inode)->i_ac[idx].ext == tmp) {
 			ext_key = AFFS_I(inode)->i_ac[idx].key;
-			जाओ find_ext;
-		पूर्ण
-	पूर्ण
+			goto find_ext;
+		}
+	}
 
 	/* fall back to the linear cache */
 	ext_key = AFFS_I(inode)->i_lc[lc_idx];
 find_ext:
-	/* पढ़ो all extended blocks until we find the one we need */
+	/* read all extended blocks until we find the one we need */
 	//unlock cache
-	करो अणु
-		bh = affs_bपढ़ो(sb, ext_key);
-		अगर (!bh)
-			जाओ err_bपढ़ो;
+	do {
+		bh = affs_bread(sb, ext_key);
+		if (!bh)
+			goto err_bread;
 		ext_key = be32_to_cpu(AFFS_TAIL(sb, bh)->extension);
-		affs_brअन्यथा(bh);
-		पंचांगp++;
-	पूर्ण जबतक (पंचांगp < ext);
+		affs_brelse(bh);
+		tmp++;
+	} while (tmp < ext);
 	//lock cache
 
 	/* store it in the associative cache */
@@ -271,44 +270,44 @@ find_ext:
 	AFFS_I(inode)->i_ac[ac_idx].ext = ext;
 	AFFS_I(inode)->i_ac[ac_idx].key = ext_key;
 
-पढ़ो_ext:
-	/* finally पढ़ो the right extended block */
+read_ext:
+	/* finally read the right extended block */
 	//unlock cache
-	bh = affs_bपढ़ो(sb, ext_key);
-	अगर (!bh)
-		जाओ err_bपढ़ो;
+	bh = affs_bread(sb, ext_key);
+	if (!bh)
+		goto err_bread;
 	//lock cache
 
 store_ext:
 	/* release old cached extended block and store the new one */
-	affs_brअन्यथा(AFFS_I(inode)->i_ext_bh);
+	affs_brelse(AFFS_I(inode)->i_ext_bh);
 	AFFS_I(inode)->i_ext_last = ext;
 	AFFS_I(inode)->i_ext_bh = bh;
 	get_bh(bh);
 
-	वापस bh;
+	return bh;
 
-err_bपढ़ो:
-	affs_brअन्यथा(bh);
-	वापस ERR_PTR(-EIO);
-पूर्ण
+err_bread:
+	affs_brelse(bh);
+	return ERR_PTR(-EIO);
+}
 
-अटल पूर्णांक
-affs_get_block(काष्ठा inode *inode, sector_t block, काष्ठा buffer_head *bh_result, पूर्णांक create)
-अणु
-	काष्ठा super_block	*sb = inode->i_sb;
-	काष्ठा buffer_head	*ext_bh;
+static int
+affs_get_block(struct inode *inode, sector_t block, struct buffer_head *bh_result, int create)
+{
+	struct super_block	*sb = inode->i_sb;
+	struct buffer_head	*ext_bh;
 	u32			 ext;
 
 	pr_debug("%s(%lu, %llu)\n", __func__, inode->i_ino,
-		 (अचिन्हित दीर्घ दीर्घ)block);
+		 (unsigned long long)block);
 
 	BUG_ON(block > (sector_t)0x7fffffffUL);
 
-	अगर (block >= AFFS_I(inode)->i_blkcnt) अणु
-		अगर (block > AFFS_I(inode)->i_blkcnt || !create)
-			जाओ err_big;
-	पूर्ण अन्यथा
+	if (block >= AFFS_I(inode)->i_blkcnt) {
+		if (block > AFFS_I(inode)->i_blkcnt || !create)
+			goto err_big;
+	} else
 		create = 0;
 
 	//lock cache
@@ -317,394 +316,394 @@ affs_get_block(काष्ठा inode *inode, sector_t block, काष्ठ�
 	ext = (u32)block / AFFS_SB(sb)->s_hashsize;
 	block -= ext * AFFS_SB(sb)->s_hashsize;
 	ext_bh = affs_get_extblock(inode, ext);
-	अगर (IS_ERR(ext_bh))
-		जाओ err_ext;
+	if (IS_ERR(ext_bh))
+		goto err_ext;
 	map_bh(bh_result, sb, (sector_t)be32_to_cpu(AFFS_BLOCK(sb, ext_bh, block)));
 
-	अगर (create) अणु
+	if (create) {
 		u32 blocknr = affs_alloc_block(inode, ext_bh->b_blocknr);
-		अगर (!blocknr)
-			जाओ err_alloc;
+		if (!blocknr)
+			goto err_alloc;
 		set_buffer_new(bh_result);
-		AFFS_I(inode)->mmu_निजी += AFFS_SB(sb)->s_data_blksize;
+		AFFS_I(inode)->mmu_private += AFFS_SB(sb)->s_data_blksize;
 		AFFS_I(inode)->i_blkcnt++;
 
 		/* store new block */
-		अगर (bh_result->b_blocknr)
+		if (bh_result->b_blocknr)
 			affs_warning(sb, "get_block",
 				     "block already set (%llx)",
-				     (अचिन्हित दीर्घ दीर्घ)bh_result->b_blocknr);
+				     (unsigned long long)bh_result->b_blocknr);
 		AFFS_BLOCK(sb, ext_bh, block) = cpu_to_be32(blocknr);
 		AFFS_HEAD(ext_bh)->block_count = cpu_to_be32(block + 1);
 		affs_adjust_checksum(ext_bh, blocknr - bh_result->b_blocknr + 1);
 		bh_result->b_blocknr = blocknr;
 
-		अगर (!block) अणु
-			/* insert first block पूर्णांकo header block */
-			u32 पंचांगp = be32_to_cpu(AFFS_HEAD(ext_bh)->first_data);
-			अगर (पंचांगp)
-				affs_warning(sb, "get_block", "first block already set (%d)", पंचांगp);
+		if (!block) {
+			/* insert first block into header block */
+			u32 tmp = be32_to_cpu(AFFS_HEAD(ext_bh)->first_data);
+			if (tmp)
+				affs_warning(sb, "get_block", "first block already set (%d)", tmp);
 			AFFS_HEAD(ext_bh)->first_data = cpu_to_be32(blocknr);
-			affs_adjust_checksum(ext_bh, blocknr - पंचांगp);
-		पूर्ण
-	पूर्ण
+			affs_adjust_checksum(ext_bh, blocknr - tmp);
+		}
+	}
 
-	affs_brअन्यथा(ext_bh);
+	affs_brelse(ext_bh);
 	//unlock cache
 	affs_unlock_ext(inode);
-	वापस 0;
+	return 0;
 
 err_big:
 	affs_error(inode->i_sb, "get_block", "strange block request %llu",
-		   (अचिन्हित दीर्घ दीर्घ)block);
-	वापस -EIO;
+		   (unsigned long long)block);
+	return -EIO;
 err_ext:
 	// unlock cache
 	affs_unlock_ext(inode);
-	वापस PTR_ERR(ext_bh);
+	return PTR_ERR(ext_bh);
 err_alloc:
-	brअन्यथा(ext_bh);
+	brelse(ext_bh);
 	clear_buffer_mapped(bh_result);
-	bh_result->b_bdev = शून्य;
+	bh_result->b_bdev = NULL;
 	// unlock cache
 	affs_unlock_ext(inode);
-	वापस -ENOSPC;
-पूर्ण
+	return -ENOSPC;
+}
 
-अटल पूर्णांक affs_ग_लिखोpage(काष्ठा page *page, काष्ठा ग_लिखोback_control *wbc)
-अणु
-	वापस block_ग_लिखो_full_page(page, affs_get_block, wbc);
-पूर्ण
+static int affs_writepage(struct page *page, struct writeback_control *wbc)
+{
+	return block_write_full_page(page, affs_get_block, wbc);
+}
 
-अटल पूर्णांक affs_पढ़ोpage(काष्ठा file *file, काष्ठा page *page)
-अणु
-	वापस block_पढ़ो_full_page(page, affs_get_block);
-पूर्ण
+static int affs_readpage(struct file *file, struct page *page)
+{
+	return block_read_full_page(page, affs_get_block);
+}
 
-अटल व्योम affs_ग_लिखो_failed(काष्ठा address_space *mapping, loff_t to)
-अणु
-	काष्ठा inode *inode = mapping->host;
+static void affs_write_failed(struct address_space *mapping, loff_t to)
+{
+	struct inode *inode = mapping->host;
 
-	अगर (to > inode->i_size) अणु
+	if (to > inode->i_size) {
 		truncate_pagecache(inode, inode->i_size);
 		affs_truncate(inode);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल sमाप_प्रकार
-affs_direct_IO(काष्ठा kiocb *iocb, काष्ठा iov_iter *iter)
-अणु
-	काष्ठा file *file = iocb->ki_filp;
-	काष्ठा address_space *mapping = file->f_mapping;
-	काष्ठा inode *inode = mapping->host;
-	माप_प्रकार count = iov_iter_count(iter);
+static ssize_t
+affs_direct_IO(struct kiocb *iocb, struct iov_iter *iter)
+{
+	struct file *file = iocb->ki_filp;
+	struct address_space *mapping = file->f_mapping;
+	struct inode *inode = mapping->host;
+	size_t count = iov_iter_count(iter);
 	loff_t offset = iocb->ki_pos;
-	sमाप_प्रकार ret;
+	ssize_t ret;
 
-	अगर (iov_iter_rw(iter) == WRITE) अणु
+	if (iov_iter_rw(iter) == WRITE) {
 		loff_t size = offset + count;
 
-		अगर (AFFS_I(inode)->mmu_निजी < size)
-			वापस 0;
-	पूर्ण
+		if (AFFS_I(inode)->mmu_private < size)
+			return 0;
+	}
 
 	ret = blockdev_direct_IO(iocb, inode, iter, affs_get_block);
-	अगर (ret < 0 && iov_iter_rw(iter) == WRITE)
-		affs_ग_लिखो_failed(mapping, offset + count);
-	वापस ret;
-पूर्ण
+	if (ret < 0 && iov_iter_rw(iter) == WRITE)
+		affs_write_failed(mapping, offset + count);
+	return ret;
+}
 
-अटल पूर्णांक affs_ग_लिखो_begin(काष्ठा file *file, काष्ठा address_space *mapping,
-			loff_t pos, अचिन्हित len, अचिन्हित flags,
-			काष्ठा page **pagep, व्योम **fsdata)
-अणु
-	पूर्णांक ret;
+static int affs_write_begin(struct file *file, struct address_space *mapping,
+			loff_t pos, unsigned len, unsigned flags,
+			struct page **pagep, void **fsdata)
+{
+	int ret;
 
-	*pagep = शून्य;
-	ret = cont_ग_लिखो_begin(file, mapping, pos, len, flags, pagep, fsdata,
+	*pagep = NULL;
+	ret = cont_write_begin(file, mapping, pos, len, flags, pagep, fsdata,
 				affs_get_block,
-				&AFFS_I(mapping->host)->mmu_निजी);
-	अगर (unlikely(ret))
-		affs_ग_लिखो_failed(mapping, pos + len);
+				&AFFS_I(mapping->host)->mmu_private);
+	if (unlikely(ret))
+		affs_write_failed(mapping, pos + len);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक affs_ग_लिखो_end(काष्ठा file *file, काष्ठा address_space *mapping,
-			  loff_t pos, अचिन्हित पूर्णांक len, अचिन्हित पूर्णांक copied,
-			  काष्ठा page *page, व्योम *fsdata)
-अणु
-	काष्ठा inode *inode = mapping->host;
-	पूर्णांक ret;
+static int affs_write_end(struct file *file, struct address_space *mapping,
+			  loff_t pos, unsigned int len, unsigned int copied,
+			  struct page *page, void *fsdata)
+{
+	struct inode *inode = mapping->host;
+	int ret;
 
-	ret = generic_ग_लिखो_end(file, mapping, pos, len, copied, page, fsdata);
+	ret = generic_write_end(file, mapping, pos, len, copied, page, fsdata);
 
-	/* Clear Archived bit on file ग_लिखोs, as AmigaOS would करो */
-	अगर (AFFS_I(inode)->i_protect & FIBF_ARCHIVED) अणु
+	/* Clear Archived bit on file writes, as AmigaOS would do */
+	if (AFFS_I(inode)->i_protect & FIBF_ARCHIVED) {
 		AFFS_I(inode)->i_protect &= ~FIBF_ARCHIVED;
 		mark_inode_dirty(inode);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sector_t _affs_bmap(काष्ठा address_space *mapping, sector_t block)
-अणु
-	वापस generic_block_bmap(mapping,block,affs_get_block);
-पूर्ण
+static sector_t _affs_bmap(struct address_space *mapping, sector_t block)
+{
+	return generic_block_bmap(mapping,block,affs_get_block);
+}
 
-स्थिर काष्ठा address_space_operations affs_aops = अणु
-	.पढ़ोpage = affs_पढ़ोpage,
-	.ग_लिखोpage = affs_ग_लिखोpage,
-	.ग_लिखो_begin = affs_ग_लिखो_begin,
-	.ग_लिखो_end = affs_ग_लिखो_end,
+const struct address_space_operations affs_aops = {
+	.readpage = affs_readpage,
+	.writepage = affs_writepage,
+	.write_begin = affs_write_begin,
+	.write_end = affs_write_end,
 	.direct_IO = affs_direct_IO,
 	.bmap = _affs_bmap
-पूर्ण;
+};
 
-अटल अंतरभूत काष्ठा buffer_head *
-affs_bपढ़ो_ino(काष्ठा inode *inode, पूर्णांक block, पूर्णांक create)
-अणु
-	काष्ठा buffer_head *bh, पंचांगp_bh;
-	पूर्णांक err;
+static inline struct buffer_head *
+affs_bread_ino(struct inode *inode, int block, int create)
+{
+	struct buffer_head *bh, tmp_bh;
+	int err;
 
-	पंचांगp_bh.b_state = 0;
-	err = affs_get_block(inode, block, &पंचांगp_bh, create);
-	अगर (!err) अणु
-		bh = affs_bपढ़ो(inode->i_sb, पंचांगp_bh.b_blocknr);
-		अगर (bh) अणु
-			bh->b_state |= पंचांगp_bh.b_state;
-			वापस bh;
-		पूर्ण
+	tmp_bh.b_state = 0;
+	err = affs_get_block(inode, block, &tmp_bh, create);
+	if (!err) {
+		bh = affs_bread(inode->i_sb, tmp_bh.b_blocknr);
+		if (bh) {
+			bh->b_state |= tmp_bh.b_state;
+			return bh;
+		}
 		err = -EIO;
-	पूर्ण
-	वापस ERR_PTR(err);
-पूर्ण
+	}
+	return ERR_PTR(err);
+}
 
-अटल अंतरभूत काष्ठा buffer_head *
-affs_getzeroblk_ino(काष्ठा inode *inode, पूर्णांक block)
-अणु
-	काष्ठा buffer_head *bh, पंचांगp_bh;
-	पूर्णांक err;
+static inline struct buffer_head *
+affs_getzeroblk_ino(struct inode *inode, int block)
+{
+	struct buffer_head *bh, tmp_bh;
+	int err;
 
-	पंचांगp_bh.b_state = 0;
-	err = affs_get_block(inode, block, &पंचांगp_bh, 1);
-	अगर (!err) अणु
-		bh = affs_getzeroblk(inode->i_sb, पंचांगp_bh.b_blocknr);
-		अगर (bh) अणु
-			bh->b_state |= पंचांगp_bh.b_state;
-			वापस bh;
-		पूर्ण
+	tmp_bh.b_state = 0;
+	err = affs_get_block(inode, block, &tmp_bh, 1);
+	if (!err) {
+		bh = affs_getzeroblk(inode->i_sb, tmp_bh.b_blocknr);
+		if (bh) {
+			bh->b_state |= tmp_bh.b_state;
+			return bh;
+		}
 		err = -EIO;
-	पूर्ण
-	वापस ERR_PTR(err);
-पूर्ण
+	}
+	return ERR_PTR(err);
+}
 
-अटल अंतरभूत काष्ठा buffer_head *
-affs_getemptyblk_ino(काष्ठा inode *inode, पूर्णांक block)
-अणु
-	काष्ठा buffer_head *bh, पंचांगp_bh;
-	पूर्णांक err;
+static inline struct buffer_head *
+affs_getemptyblk_ino(struct inode *inode, int block)
+{
+	struct buffer_head *bh, tmp_bh;
+	int err;
 
-	पंचांगp_bh.b_state = 0;
-	err = affs_get_block(inode, block, &पंचांगp_bh, 1);
-	अगर (!err) अणु
-		bh = affs_getemptyblk(inode->i_sb, पंचांगp_bh.b_blocknr);
-		अगर (bh) अणु
-			bh->b_state |= पंचांगp_bh.b_state;
-			वापस bh;
-		पूर्ण
+	tmp_bh.b_state = 0;
+	err = affs_get_block(inode, block, &tmp_bh, 1);
+	if (!err) {
+		bh = affs_getemptyblk(inode->i_sb, tmp_bh.b_blocknr);
+		if (bh) {
+			bh->b_state |= tmp_bh.b_state;
+			return bh;
+		}
 		err = -EIO;
-	पूर्ण
-	वापस ERR_PTR(err);
-पूर्ण
+	}
+	return ERR_PTR(err);
+}
 
-अटल पूर्णांक
-affs_करो_पढ़ोpage_ofs(काष्ठा page *page, अचिन्हित to, पूर्णांक create)
-अणु
-	काष्ठा inode *inode = page->mapping->host;
-	काष्ठा super_block *sb = inode->i_sb;
-	काष्ठा buffer_head *bh;
-	अक्षर *data;
-	अचिन्हित pos = 0;
+static int
+affs_do_readpage_ofs(struct page *page, unsigned to, int create)
+{
+	struct inode *inode = page->mapping->host;
+	struct super_block *sb = inode->i_sb;
+	struct buffer_head *bh;
+	char *data;
+	unsigned pos = 0;
 	u32 bidx, boff, bsize;
-	u32 पंचांगp;
+	u32 tmp;
 
 	pr_debug("%s(%lu, %ld, 0, %d)\n", __func__, inode->i_ino,
 		 page->index, to);
 	BUG_ON(to > PAGE_SIZE);
 	bsize = AFFS_SB(sb)->s_data_blksize;
-	पंचांगp = page->index << PAGE_SHIFT;
-	bidx = पंचांगp / bsize;
-	boff = पंचांगp % bsize;
+	tmp = page->index << PAGE_SHIFT;
+	bidx = tmp / bsize;
+	boff = tmp % bsize;
 
-	जबतक (pos < to) अणु
-		bh = affs_bपढ़ो_ino(inode, bidx, create);
-		अगर (IS_ERR(bh))
-			वापस PTR_ERR(bh);
-		पंचांगp = min(bsize - boff, to - pos);
-		BUG_ON(pos + पंचांगp > to || पंचांगp > bsize);
+	while (pos < to) {
+		bh = affs_bread_ino(inode, bidx, create);
+		if (IS_ERR(bh))
+			return PTR_ERR(bh);
+		tmp = min(bsize - boff, to - pos);
+		BUG_ON(pos + tmp > to || tmp > bsize);
 		data = kmap_atomic(page);
-		स_नकल(data + pos, AFFS_DATA(bh) + boff, पंचांगp);
+		memcpy(data + pos, AFFS_DATA(bh) + boff, tmp);
 		kunmap_atomic(data);
-		affs_brअन्यथा(bh);
+		affs_brelse(bh);
 		bidx++;
-		pos += पंचांगp;
+		pos += tmp;
 		boff = 0;
-	पूर्ण
+	}
 	flush_dcache_page(page);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-affs_extent_file_ofs(काष्ठा inode *inode, u32 newsize)
-अणु
-	काष्ठा super_block *sb = inode->i_sb;
-	काष्ठा buffer_head *bh, *prev_bh;
+static int
+affs_extent_file_ofs(struct inode *inode, u32 newsize)
+{
+	struct super_block *sb = inode->i_sb;
+	struct buffer_head *bh, *prev_bh;
 	u32 bidx, boff;
 	u32 size, bsize;
-	u32 पंचांगp;
+	u32 tmp;
 
 	pr_debug("%s(%lu, %d)\n", __func__, inode->i_ino, newsize);
 	bsize = AFFS_SB(sb)->s_data_blksize;
-	bh = शून्य;
-	size = AFFS_I(inode)->mmu_निजी;
+	bh = NULL;
+	size = AFFS_I(inode)->mmu_private;
 	bidx = size / bsize;
 	boff = size % bsize;
-	अगर (boff) अणु
-		bh = affs_bपढ़ो_ino(inode, bidx, 0);
-		अगर (IS_ERR(bh))
-			वापस PTR_ERR(bh);
-		पंचांगp = min(bsize - boff, newsize - size);
-		BUG_ON(boff + पंचांगp > bsize || पंचांगp > bsize);
-		स_रखो(AFFS_DATA(bh) + boff, 0, पंचांगp);
-		be32_add_cpu(&AFFS_DATA_HEAD(bh)->size, पंचांगp);
+	if (boff) {
+		bh = affs_bread_ino(inode, bidx, 0);
+		if (IS_ERR(bh))
+			return PTR_ERR(bh);
+		tmp = min(bsize - boff, newsize - size);
+		BUG_ON(boff + tmp > bsize || tmp > bsize);
+		memset(AFFS_DATA(bh) + boff, 0, tmp);
+		be32_add_cpu(&AFFS_DATA_HEAD(bh)->size, tmp);
 		affs_fix_checksum(sb, bh);
 		mark_buffer_dirty_inode(bh, inode);
-		size += पंचांगp;
+		size += tmp;
 		bidx++;
-	पूर्ण अन्यथा अगर (bidx) अणु
-		bh = affs_bपढ़ो_ino(inode, bidx - 1, 0);
-		अगर (IS_ERR(bh))
-			वापस PTR_ERR(bh);
-	पूर्ण
+	} else if (bidx) {
+		bh = affs_bread_ino(inode, bidx - 1, 0);
+		if (IS_ERR(bh))
+			return PTR_ERR(bh);
+	}
 
-	जबतक (size < newsize) अणु
+	while (size < newsize) {
 		prev_bh = bh;
 		bh = affs_getzeroblk_ino(inode, bidx);
-		अगर (IS_ERR(bh))
-			जाओ out;
-		पंचांगp = min(bsize, newsize - size);
-		BUG_ON(पंचांगp > bsize);
+		if (IS_ERR(bh))
+			goto out;
+		tmp = min(bsize, newsize - size);
+		BUG_ON(tmp > bsize);
 		AFFS_DATA_HEAD(bh)->ptype = cpu_to_be32(T_DATA);
 		AFFS_DATA_HEAD(bh)->key = cpu_to_be32(inode->i_ino);
 		AFFS_DATA_HEAD(bh)->sequence = cpu_to_be32(bidx);
-		AFFS_DATA_HEAD(bh)->size = cpu_to_be32(पंचांगp);
+		AFFS_DATA_HEAD(bh)->size = cpu_to_be32(tmp);
 		affs_fix_checksum(sb, bh);
 		bh->b_state &= ~(1UL << BH_New);
 		mark_buffer_dirty_inode(bh, inode);
-		अगर (prev_bh) अणु
-			u32 पंचांगp_next = be32_to_cpu(AFFS_DATA_HEAD(prev_bh)->next);
+		if (prev_bh) {
+			u32 tmp_next = be32_to_cpu(AFFS_DATA_HEAD(prev_bh)->next);
 
-			अगर (पंचांगp_next)
+			if (tmp_next)
 				affs_warning(sb, "extent_file_ofs",
 					     "next block already set for %d (%d)",
-					     bidx, पंचांगp_next);
+					     bidx, tmp_next);
 			AFFS_DATA_HEAD(prev_bh)->next = cpu_to_be32(bh->b_blocknr);
-			affs_adjust_checksum(prev_bh, bh->b_blocknr - पंचांगp_next);
+			affs_adjust_checksum(prev_bh, bh->b_blocknr - tmp_next);
 			mark_buffer_dirty_inode(prev_bh, inode);
-			affs_brअन्यथा(prev_bh);
-		पूर्ण
+			affs_brelse(prev_bh);
+		}
 		size += bsize;
 		bidx++;
-	पूर्ण
-	affs_brअन्यथा(bh);
-	inode->i_size = AFFS_I(inode)->mmu_निजी = newsize;
-	वापस 0;
+	}
+	affs_brelse(bh);
+	inode->i_size = AFFS_I(inode)->mmu_private = newsize;
+	return 0;
 
 out:
-	inode->i_size = AFFS_I(inode)->mmu_निजी = newsize;
-	वापस PTR_ERR(bh);
-पूर्ण
+	inode->i_size = AFFS_I(inode)->mmu_private = newsize;
+	return PTR_ERR(bh);
+}
 
-अटल पूर्णांक
-affs_पढ़ोpage_ofs(काष्ठा file *file, काष्ठा page *page)
-अणु
-	काष्ठा inode *inode = page->mapping->host;
+static int
+affs_readpage_ofs(struct file *file, struct page *page)
+{
+	struct inode *inode = page->mapping->host;
 	u32 to;
-	पूर्णांक err;
+	int err;
 
 	pr_debug("%s(%lu, %ld)\n", __func__, inode->i_ino, page->index);
 	to = PAGE_SIZE;
-	अगर (((page->index + 1) << PAGE_SHIFT) > inode->i_size) अणु
+	if (((page->index + 1) << PAGE_SHIFT) > inode->i_size) {
 		to = inode->i_size & ~PAGE_MASK;
-		स_रखो(page_address(page) + to, 0, PAGE_SIZE - to);
-	पूर्ण
+		memset(page_address(page) + to, 0, PAGE_SIZE - to);
+	}
 
-	err = affs_करो_पढ़ोpage_ofs(page, to, 0);
-	अगर (!err)
+	err = affs_do_readpage_ofs(page, to, 0);
+	if (!err)
 		SetPageUptodate(page);
 	unlock_page(page);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक affs_ग_लिखो_begin_ofs(काष्ठा file *file, काष्ठा address_space *mapping,
-				loff_t pos, अचिन्हित len, अचिन्हित flags,
-				काष्ठा page **pagep, व्योम **fsdata)
-अणु
-	काष्ठा inode *inode = mapping->host;
-	काष्ठा page *page;
+static int affs_write_begin_ofs(struct file *file, struct address_space *mapping,
+				loff_t pos, unsigned len, unsigned flags,
+				struct page **pagep, void **fsdata)
+{
+	struct inode *inode = mapping->host;
+	struct page *page;
 	pgoff_t index;
-	पूर्णांक err = 0;
+	int err = 0;
 
 	pr_debug("%s(%lu, %llu, %llu)\n", __func__, inode->i_ino, pos,
 		 pos + len);
-	अगर (pos > AFFS_I(inode)->mmu_निजी) अणु
-		/* XXX: this probably leaves a too-big i_size in हाल of
-		 * failure. Should really be updating i_size at ग_लिखो_end समय
+	if (pos > AFFS_I(inode)->mmu_private) {
+		/* XXX: this probably leaves a too-big i_size in case of
+		 * failure. Should really be updating i_size at write_end time
 		 */
 		err = affs_extent_file_ofs(inode, pos);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
 	index = pos >> PAGE_SHIFT;
-	page = grab_cache_page_ग_लिखो_begin(mapping, index, flags);
-	अगर (!page)
-		वापस -ENOMEM;
+	page = grab_cache_page_write_begin(mapping, index, flags);
+	if (!page)
+		return -ENOMEM;
 	*pagep = page;
 
-	अगर (PageUptodate(page))
-		वापस 0;
+	if (PageUptodate(page))
+		return 0;
 
-	/* XXX: inefficient but safe in the face of लघु ग_लिखोs */
-	err = affs_करो_पढ़ोpage_ofs(page, PAGE_SIZE, 1);
-	अगर (err) अणु
+	/* XXX: inefficient but safe in the face of short writes */
+	err = affs_do_readpage_ofs(page, PAGE_SIZE, 1);
+	if (err) {
 		unlock_page(page);
 		put_page(page);
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
-अटल पूर्णांक affs_ग_लिखो_end_ofs(काष्ठा file *file, काष्ठा address_space *mapping,
-				loff_t pos, अचिन्हित len, अचिन्हित copied,
-				काष्ठा page *page, व्योम *fsdata)
-अणु
-	काष्ठा inode *inode = mapping->host;
-	काष्ठा super_block *sb = inode->i_sb;
-	काष्ठा buffer_head *bh, *prev_bh;
-	अक्षर *data;
+static int affs_write_end_ofs(struct file *file, struct address_space *mapping,
+				loff_t pos, unsigned len, unsigned copied,
+				struct page *page, void *fsdata)
+{
+	struct inode *inode = mapping->host;
+	struct super_block *sb = inode->i_sb;
+	struct buffer_head *bh, *prev_bh;
+	char *data;
 	u32 bidx, boff, bsize;
-	अचिन्हित from, to;
-	u32 पंचांगp;
-	पूर्णांक written;
+	unsigned from, to;
+	u32 tmp;
+	int written;
 
 	from = pos & (PAGE_SIZE - 1);
 	to = from + len;
 	/*
-	 * XXX: not sure अगर this can handle लघु copies (len < copied), but
-	 * we करोn't have to, because the page should always be uptodate here,
-	 * due to ग_लिखो_begin.
+	 * XXX: not sure if this can handle short copies (len < copied), but
+	 * we don't have to, because the page should always be uptodate here,
+	 * due to write_begin.
 	 */
 
 	pr_debug("%s(%lu, %llu, %llu)\n", __func__, inode->i_ino, pos,
@@ -712,298 +711,298 @@ affs_पढ़ोpage_ofs(काष्ठा file *file, काष्ठा page
 	bsize = AFFS_SB(sb)->s_data_blksize;
 	data = page_address(page);
 
-	bh = शून्य;
+	bh = NULL;
 	written = 0;
-	पंचांगp = (page->index << PAGE_SHIFT) + from;
-	bidx = पंचांगp / bsize;
-	boff = पंचांगp % bsize;
-	अगर (boff) अणु
-		bh = affs_bपढ़ो_ino(inode, bidx, 0);
-		अगर (IS_ERR(bh)) अणु
+	tmp = (page->index << PAGE_SHIFT) + from;
+	bidx = tmp / bsize;
+	boff = tmp % bsize;
+	if (boff) {
+		bh = affs_bread_ino(inode, bidx, 0);
+		if (IS_ERR(bh)) {
 			written = PTR_ERR(bh);
-			जाओ err_first_bh;
-		पूर्ण
-		पंचांगp = min(bsize - boff, to - from);
-		BUG_ON(boff + पंचांगp > bsize || पंचांगp > bsize);
-		स_नकल(AFFS_DATA(bh) + boff, data + from, पंचांगp);
-		be32_add_cpu(&AFFS_DATA_HEAD(bh)->size, पंचांगp);
+			goto err_first_bh;
+		}
+		tmp = min(bsize - boff, to - from);
+		BUG_ON(boff + tmp > bsize || tmp > bsize);
+		memcpy(AFFS_DATA(bh) + boff, data + from, tmp);
+		be32_add_cpu(&AFFS_DATA_HEAD(bh)->size, tmp);
 		affs_fix_checksum(sb, bh);
 		mark_buffer_dirty_inode(bh, inode);
-		written += पंचांगp;
-		from += पंचांगp;
+		written += tmp;
+		from += tmp;
 		bidx++;
-	पूर्ण अन्यथा अगर (bidx) अणु
-		bh = affs_bपढ़ो_ino(inode, bidx - 1, 0);
-		अगर (IS_ERR(bh)) अणु
+	} else if (bidx) {
+		bh = affs_bread_ino(inode, bidx - 1, 0);
+		if (IS_ERR(bh)) {
 			written = PTR_ERR(bh);
-			जाओ err_first_bh;
-		पूर्ण
-	पूर्ण
-	जबतक (from + bsize <= to) अणु
+			goto err_first_bh;
+		}
+	}
+	while (from + bsize <= to) {
 		prev_bh = bh;
 		bh = affs_getemptyblk_ino(inode, bidx);
-		अगर (IS_ERR(bh))
-			जाओ err_bh;
-		स_नकल(AFFS_DATA(bh), data + from, bsize);
-		अगर (buffer_new(bh)) अणु
+		if (IS_ERR(bh))
+			goto err_bh;
+		memcpy(AFFS_DATA(bh), data + from, bsize);
+		if (buffer_new(bh)) {
 			AFFS_DATA_HEAD(bh)->ptype = cpu_to_be32(T_DATA);
 			AFFS_DATA_HEAD(bh)->key = cpu_to_be32(inode->i_ino);
 			AFFS_DATA_HEAD(bh)->sequence = cpu_to_be32(bidx);
 			AFFS_DATA_HEAD(bh)->size = cpu_to_be32(bsize);
 			AFFS_DATA_HEAD(bh)->next = 0;
 			bh->b_state &= ~(1UL << BH_New);
-			अगर (prev_bh) अणु
-				u32 पंचांगp_next = be32_to_cpu(AFFS_DATA_HEAD(prev_bh)->next);
+			if (prev_bh) {
+				u32 tmp_next = be32_to_cpu(AFFS_DATA_HEAD(prev_bh)->next);
 
-				अगर (पंचांगp_next)
+				if (tmp_next)
 					affs_warning(sb, "commit_write_ofs",
 						     "next block already set for %d (%d)",
-						     bidx, पंचांगp_next);
+						     bidx, tmp_next);
 				AFFS_DATA_HEAD(prev_bh)->next = cpu_to_be32(bh->b_blocknr);
-				affs_adjust_checksum(prev_bh, bh->b_blocknr - पंचांगp_next);
+				affs_adjust_checksum(prev_bh, bh->b_blocknr - tmp_next);
 				mark_buffer_dirty_inode(prev_bh, inode);
-			पूर्ण
-		पूर्ण
-		affs_brअन्यथा(prev_bh);
+			}
+		}
+		affs_brelse(prev_bh);
 		affs_fix_checksum(sb, bh);
 		mark_buffer_dirty_inode(bh, inode);
 		written += bsize;
 		from += bsize;
 		bidx++;
-	पूर्ण
-	अगर (from < to) अणु
+	}
+	if (from < to) {
 		prev_bh = bh;
-		bh = affs_bपढ़ो_ino(inode, bidx, 1);
-		अगर (IS_ERR(bh))
-			जाओ err_bh;
-		पंचांगp = min(bsize, to - from);
-		BUG_ON(पंचांगp > bsize);
-		स_नकल(AFFS_DATA(bh), data + from, पंचांगp);
-		अगर (buffer_new(bh)) अणु
+		bh = affs_bread_ino(inode, bidx, 1);
+		if (IS_ERR(bh))
+			goto err_bh;
+		tmp = min(bsize, to - from);
+		BUG_ON(tmp > bsize);
+		memcpy(AFFS_DATA(bh), data + from, tmp);
+		if (buffer_new(bh)) {
 			AFFS_DATA_HEAD(bh)->ptype = cpu_to_be32(T_DATA);
 			AFFS_DATA_HEAD(bh)->key = cpu_to_be32(inode->i_ino);
 			AFFS_DATA_HEAD(bh)->sequence = cpu_to_be32(bidx);
-			AFFS_DATA_HEAD(bh)->size = cpu_to_be32(पंचांगp);
+			AFFS_DATA_HEAD(bh)->size = cpu_to_be32(tmp);
 			AFFS_DATA_HEAD(bh)->next = 0;
 			bh->b_state &= ~(1UL << BH_New);
-			अगर (prev_bh) अणु
-				u32 पंचांगp_next = be32_to_cpu(AFFS_DATA_HEAD(prev_bh)->next);
+			if (prev_bh) {
+				u32 tmp_next = be32_to_cpu(AFFS_DATA_HEAD(prev_bh)->next);
 
-				अगर (पंचांगp_next)
+				if (tmp_next)
 					affs_warning(sb, "commit_write_ofs",
 						     "next block already set for %d (%d)",
-						     bidx, पंचांगp_next);
+						     bidx, tmp_next);
 				AFFS_DATA_HEAD(prev_bh)->next = cpu_to_be32(bh->b_blocknr);
-				affs_adjust_checksum(prev_bh, bh->b_blocknr - पंचांगp_next);
+				affs_adjust_checksum(prev_bh, bh->b_blocknr - tmp_next);
 				mark_buffer_dirty_inode(prev_bh, inode);
-			पूर्ण
-		पूर्ण अन्यथा अगर (be32_to_cpu(AFFS_DATA_HEAD(bh)->size) < पंचांगp)
-			AFFS_DATA_HEAD(bh)->size = cpu_to_be32(पंचांगp);
-		affs_brअन्यथा(prev_bh);
+			}
+		} else if (be32_to_cpu(AFFS_DATA_HEAD(bh)->size) < tmp)
+			AFFS_DATA_HEAD(bh)->size = cpu_to_be32(tmp);
+		affs_brelse(prev_bh);
 		affs_fix_checksum(sb, bh);
 		mark_buffer_dirty_inode(bh, inode);
-		written += पंचांगp;
-		from += पंचांगp;
+		written += tmp;
+		from += tmp;
 		bidx++;
-	पूर्ण
+	}
 	SetPageUptodate(page);
 
-करोne:
-	affs_brअन्यथा(bh);
-	पंचांगp = (page->index << PAGE_SHIFT) + from;
-	अगर (पंचांगp > inode->i_size)
-		inode->i_size = AFFS_I(inode)->mmu_निजी = पंचांगp;
+done:
+	affs_brelse(bh);
+	tmp = (page->index << PAGE_SHIFT) + from;
+	if (tmp > inode->i_size)
+		inode->i_size = AFFS_I(inode)->mmu_private = tmp;
 
-	/* Clear Archived bit on file ग_लिखोs, as AmigaOS would करो */
-	अगर (AFFS_I(inode)->i_protect & FIBF_ARCHIVED) अणु
+	/* Clear Archived bit on file writes, as AmigaOS would do */
+	if (AFFS_I(inode)->i_protect & FIBF_ARCHIVED) {
 		AFFS_I(inode)->i_protect &= ~FIBF_ARCHIVED;
 		mark_inode_dirty(inode);
-	पूर्ण
+	}
 
 err_first_bh:
 	unlock_page(page);
 	put_page(page);
 
-	वापस written;
+	return written;
 
 err_bh:
 	bh = prev_bh;
-	अगर (!written)
+	if (!written)
 		written = PTR_ERR(bh);
-	जाओ करोne;
-पूर्ण
+	goto done;
+}
 
-स्थिर काष्ठा address_space_operations affs_aops_ofs = अणु
-	.पढ़ोpage = affs_पढ़ोpage_ofs,
-	//.ग_लिखोpage = affs_ग_लिखोpage_ofs,
-	.ग_लिखो_begin = affs_ग_लिखो_begin_ofs,
-	.ग_लिखो_end = affs_ग_लिखो_end_ofs
-पूर्ण;
+const struct address_space_operations affs_aops_ofs = {
+	.readpage = affs_readpage_ofs,
+	//.writepage = affs_writepage_ofs,
+	.write_begin = affs_write_begin_ofs,
+	.write_end = affs_write_end_ofs
+};
 
-/* Free any pपुनः_स्मृतिated blocks. */
+/* Free any preallocated blocks. */
 
-व्योम
-affs_मुक्त_pपुनः_स्मृति(काष्ठा inode *inode)
-अणु
-	काष्ठा super_block *sb = inode->i_sb;
+void
+affs_free_prealloc(struct inode *inode)
+{
+	struct super_block *sb = inode->i_sb;
 
 	pr_debug("free_prealloc(ino=%lu)\n", inode->i_ino);
 
-	जबतक (AFFS_I(inode)->i_pa_cnt) अणु
+	while (AFFS_I(inode)->i_pa_cnt) {
 		AFFS_I(inode)->i_pa_cnt--;
-		affs_मुक्त_block(sb, ++AFFS_I(inode)->i_lastalloc);
-	पूर्ण
-पूर्ण
+		affs_free_block(sb, ++AFFS_I(inode)->i_lastalloc);
+	}
+}
 
 /* Truncate (or enlarge) a file to the requested size. */
 
-व्योम
-affs_truncate(काष्ठा inode *inode)
-अणु
-	काष्ठा super_block *sb = inode->i_sb;
+void
+affs_truncate(struct inode *inode)
+{
+	struct super_block *sb = inode->i_sb;
 	u32 ext, ext_key;
 	u32 last_blk, blkcnt, blk;
 	u32 size;
-	काष्ठा buffer_head *ext_bh;
-	पूर्णांक i;
+	struct buffer_head *ext_bh;
+	int i;
 
 	pr_debug("truncate(inode=%lu, oldsize=%llu, newsize=%llu)\n",
-		 inode->i_ino, AFFS_I(inode)->mmu_निजी, inode->i_size);
+		 inode->i_ino, AFFS_I(inode)->mmu_private, inode->i_size);
 
 	last_blk = 0;
 	ext = 0;
-	अगर (inode->i_size) अणु
+	if (inode->i_size) {
 		last_blk = ((u32)inode->i_size - 1) / AFFS_SB(sb)->s_data_blksize;
 		ext = last_blk / AFFS_SB(sb)->s_hashsize;
-	पूर्ण
+	}
 
-	अगर (inode->i_size > AFFS_I(inode)->mmu_निजी) अणु
-		काष्ठा address_space *mapping = inode->i_mapping;
-		काष्ठा page *page;
-		व्योम *fsdata;
+	if (inode->i_size > AFFS_I(inode)->mmu_private) {
+		struct address_space *mapping = inode->i_mapping;
+		struct page *page;
+		void *fsdata;
 		loff_t isize = inode->i_size;
-		पूर्णांक res;
+		int res;
 
-		res = mapping->a_ops->ग_लिखो_begin(शून्य, mapping, isize, 0, 0, &page, &fsdata);
-		अगर (!res)
-			res = mapping->a_ops->ग_लिखो_end(शून्य, mapping, isize, 0, 0, page, fsdata);
-		अन्यथा
-			inode->i_size = AFFS_I(inode)->mmu_निजी;
+		res = mapping->a_ops->write_begin(NULL, mapping, isize, 0, 0, &page, &fsdata);
+		if (!res)
+			res = mapping->a_ops->write_end(NULL, mapping, isize, 0, 0, page, fsdata);
+		else
+			inode->i_size = AFFS_I(inode)->mmu_private;
 		mark_inode_dirty(inode);
-		वापस;
-	पूर्ण अन्यथा अगर (inode->i_size == AFFS_I(inode)->mmu_निजी)
-		वापस;
+		return;
+	} else if (inode->i_size == AFFS_I(inode)->mmu_private)
+		return;
 
 	// lock cache
 	ext_bh = affs_get_extblock(inode, ext);
-	अगर (IS_ERR(ext_bh)) अणु
+	if (IS_ERR(ext_bh)) {
 		affs_warning(sb, "truncate",
 			     "unexpected read error for ext block %u (%ld)",
 			     ext, PTR_ERR(ext_bh));
-		वापस;
-	पूर्ण
-	अगर (AFFS_I(inode)->i_lc) अणु
+		return;
+	}
+	if (AFFS_I(inode)->i_lc) {
 		/* clear linear cache */
-		i = (ext + 1) >> AFFS_I(inode)->i_lc_shअगरt;
-		अगर (AFFS_I(inode)->i_lc_size > i) अणु
+		i = (ext + 1) >> AFFS_I(inode)->i_lc_shift;
+		if (AFFS_I(inode)->i_lc_size > i) {
 			AFFS_I(inode)->i_lc_size = i;
-			क्रम (; i < AFFS_LC_SIZE; i++)
+			for (; i < AFFS_LC_SIZE; i++)
 				AFFS_I(inode)->i_lc[i] = 0;
-		पूर्ण
+		}
 		/* clear associative cache */
-		क्रम (i = 0; i < AFFS_AC_SIZE; i++)
-			अगर (AFFS_I(inode)->i_ac[i].ext >= ext)
+		for (i = 0; i < AFFS_AC_SIZE; i++)
+			if (AFFS_I(inode)->i_ac[i].ext >= ext)
 				AFFS_I(inode)->i_ac[i].ext = 0;
-	पूर्ण
+	}
 	ext_key = be32_to_cpu(AFFS_TAIL(sb, ext_bh)->extension);
 
 	blkcnt = AFFS_I(inode)->i_blkcnt;
 	i = 0;
 	blk = last_blk;
-	अगर (inode->i_size) अणु
+	if (inode->i_size) {
 		i = last_blk % AFFS_SB(sb)->s_hashsize + 1;
 		blk++;
-	पूर्ण अन्यथा
+	} else
 		AFFS_HEAD(ext_bh)->first_data = 0;
 	AFFS_HEAD(ext_bh)->block_count = cpu_to_be32(i);
 	size = AFFS_SB(sb)->s_hashsize;
-	अगर (size > blkcnt - blk + i)
+	if (size > blkcnt - blk + i)
 		size = blkcnt - blk + i;
-	क्रम (; i < size; i++, blk++) अणु
-		affs_मुक्त_block(sb, be32_to_cpu(AFFS_BLOCK(sb, ext_bh, i)));
+	for (; i < size; i++, blk++) {
+		affs_free_block(sb, be32_to_cpu(AFFS_BLOCK(sb, ext_bh, i)));
 		AFFS_BLOCK(sb, ext_bh, i) = 0;
-	पूर्ण
+	}
 	AFFS_TAIL(sb, ext_bh)->extension = 0;
 	affs_fix_checksum(sb, ext_bh);
 	mark_buffer_dirty_inode(ext_bh, inode);
-	affs_brअन्यथा(ext_bh);
+	affs_brelse(ext_bh);
 
-	अगर (inode->i_size) अणु
+	if (inode->i_size) {
 		AFFS_I(inode)->i_blkcnt = last_blk + 1;
 		AFFS_I(inode)->i_extcnt = ext + 1;
-		अगर (affs_test_opt(AFFS_SB(sb)->s_flags, SF_OFS)) अणु
-			काष्ठा buffer_head *bh = affs_bपढ़ो_ino(inode, last_blk, 0);
-			u32 पंचांगp;
-			अगर (IS_ERR(bh)) अणु
+		if (affs_test_opt(AFFS_SB(sb)->s_flags, SF_OFS)) {
+			struct buffer_head *bh = affs_bread_ino(inode, last_blk, 0);
+			u32 tmp;
+			if (IS_ERR(bh)) {
 				affs_warning(sb, "truncate",
 					     "unexpected read error for last block %u (%ld)",
 					     ext, PTR_ERR(bh));
-				वापस;
-			पूर्ण
-			पंचांगp = be32_to_cpu(AFFS_DATA_HEAD(bh)->next);
+				return;
+			}
+			tmp = be32_to_cpu(AFFS_DATA_HEAD(bh)->next);
 			AFFS_DATA_HEAD(bh)->next = 0;
-			affs_adjust_checksum(bh, -पंचांगp);
-			affs_brअन्यथा(bh);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			affs_adjust_checksum(bh, -tmp);
+			affs_brelse(bh);
+		}
+	} else {
 		AFFS_I(inode)->i_blkcnt = 0;
 		AFFS_I(inode)->i_extcnt = 1;
-	पूर्ण
-	AFFS_I(inode)->mmu_निजी = inode->i_size;
+	}
+	AFFS_I(inode)->mmu_private = inode->i_size;
 	// unlock cache
 
-	जबतक (ext_key) अणु
-		ext_bh = affs_bपढ़ो(sb, ext_key);
+	while (ext_key) {
+		ext_bh = affs_bread(sb, ext_key);
 		size = AFFS_SB(sb)->s_hashsize;
-		अगर (size > blkcnt - blk)
+		if (size > blkcnt - blk)
 			size = blkcnt - blk;
-		क्रम (i = 0; i < size; i++, blk++)
-			affs_मुक्त_block(sb, be32_to_cpu(AFFS_BLOCK(sb, ext_bh, i)));
-		affs_मुक्त_block(sb, ext_key);
+		for (i = 0; i < size; i++, blk++)
+			affs_free_block(sb, be32_to_cpu(AFFS_BLOCK(sb, ext_bh, i)));
+		affs_free_block(sb, ext_key);
 		ext_key = be32_to_cpu(AFFS_TAIL(sb, ext_bh)->extension);
-		affs_brअन्यथा(ext_bh);
-	पूर्ण
-	affs_मुक्त_pपुनः_स्मृति(inode);
-पूर्ण
+		affs_brelse(ext_bh);
+	}
+	affs_free_prealloc(inode);
+}
 
-पूर्णांक affs_file_fsync(काष्ठा file *filp, loff_t start, loff_t end, पूर्णांक datasync)
-अणु
-	काष्ठा inode *inode = filp->f_mapping->host;
-	पूर्णांक ret, err;
+int affs_file_fsync(struct file *filp, loff_t start, loff_t end, int datasync)
+{
+	struct inode *inode = filp->f_mapping->host;
+	int ret, err;
 
-	err = file_ग_लिखो_and_रुको_range(filp, start, end);
-	अगर (err)
-		वापस err;
+	err = file_write_and_wait_range(filp, start, end);
+	if (err)
+		return err;
 
 	inode_lock(inode);
-	ret = ग_लिखो_inode_now(inode, 0);
+	ret = write_inode_now(inode, 0);
 	err = sync_blockdev(inode->i_sb->s_bdev);
-	अगर (!ret)
+	if (!ret)
 		ret = err;
 	inode_unlock(inode);
-	वापस ret;
-पूर्ण
-स्थिर काष्ठा file_operations affs_file_operations = अणु
+	return ret;
+}
+const struct file_operations affs_file_operations = {
 	.llseek		= generic_file_llseek,
-	.पढ़ो_iter	= generic_file_पढ़ो_iter,
-	.ग_लिखो_iter	= generic_file_ग_लिखो_iter,
+	.read_iter	= generic_file_read_iter,
+	.write_iter	= generic_file_write_iter,
 	.mmap		= generic_file_mmap,
-	.खोलो		= affs_file_खोलो,
+	.open		= affs_file_open,
 	.release	= affs_file_release,
 	.fsync		= affs_file_fsync,
-	.splice_पढ़ो	= generic_file_splice_पढ़ो,
-पूर्ण;
+	.splice_read	= generic_file_splice_read,
+};
 
-स्थिर काष्ठा inode_operations affs_file_inode_operations = अणु
-	.setattr	= affs_notअगरy_change,
-पूर्ण;
+const struct inode_operations affs_file_inode_operations = {
+	.setattr	= affs_notify_change,
+};

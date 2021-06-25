@@ -1,101 +1,100 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /* Copyright (c) 2015-2018, The Linux Foundation. All rights reserved.
  */
 
-#अगर_अघोषित _DPU_HW_DSPP_H
-#घोषणा _DPU_HW_DSPP_H
+#ifndef _DPU_HW_DSPP_H
+#define _DPU_HW_DSPP_H
 
-#समावेश "dpu_hw_blk.h"
+#include "dpu_hw_blk.h"
 
-काष्ठा dpu_hw_dspp;
+struct dpu_hw_dspp;
 
 /**
- * काष्ठा dpu_hw_pcc_coeff - PCC coefficient काष्ठाure क्रम each color
+ * struct dpu_hw_pcc_coeff - PCC coefficient structure for each color
  *                            component.
  * @r: red coefficient.
  * @g: green coefficient.
  * @b: blue coefficient.
  */
 
-काष्ठा dpu_hw_pcc_coeff अणु
+struct dpu_hw_pcc_coeff {
 	__u32 r;
 	__u32 g;
 	__u32 b;
-पूर्ण;
+};
 
 /**
- * काष्ठा dpu_hw_pcc - pcc feature काष्ठाure
+ * struct dpu_hw_pcc - pcc feature structure
  * @r: red coefficients.
  * @g: green coefficients.
  * @b: blue coefficients.
  */
-काष्ठा dpu_hw_pcc_cfg अणु
-	काष्ठा dpu_hw_pcc_coeff r;
-	काष्ठा dpu_hw_pcc_coeff g;
-	काष्ठा dpu_hw_pcc_coeff b;
-पूर्ण;
+struct dpu_hw_pcc_cfg {
+	struct dpu_hw_pcc_coeff r;
+	struct dpu_hw_pcc_coeff g;
+	struct dpu_hw_pcc_coeff b;
+};
 
 /**
- * काष्ठा dpu_hw_dspp_ops - पूर्णांकerface to the dspp hardware driver functions
- * Caller must call the init function to get the dspp context क्रम each dspp
- * Assumption is these functions will be called after घड़ीs are enabled
+ * struct dpu_hw_dspp_ops - interface to the dspp hardware driver functions
+ * Caller must call the init function to get the dspp context for each dspp
+ * Assumption is these functions will be called after clocks are enabled
  */
-काष्ठा dpu_hw_dspp_ops अणु
+struct dpu_hw_dspp_ops {
 	/**
 	 * setup_pcc - setup dspp pcc
-	 * @ctx: Poपूर्णांकer to dspp context
-	 * @cfg: Poपूर्णांकer to configuration
+	 * @ctx: Pointer to dspp context
+	 * @cfg: Pointer to configuration
 	 */
-	व्योम (*setup_pcc)(काष्ठा dpu_hw_dspp *ctx, काष्ठा dpu_hw_pcc_cfg *cfg);
+	void (*setup_pcc)(struct dpu_hw_dspp *ctx, struct dpu_hw_pcc_cfg *cfg);
 
-पूर्ण;
+};
 
 /**
- * काष्ठा dpu_hw_dspp - dspp description
- * @base: Hardware block base काष्ठाure
+ * struct dpu_hw_dspp - dspp description
+ * @base: Hardware block base structure
  * @hw: Block hardware details
  * @idx: DSPP index
- * @cap: Poपूर्णांकer to layer_cfg
- * @ops: Poपूर्णांकer to operations possible क्रम this DSPP
+ * @cap: Pointer to layer_cfg
+ * @ops: Pointer to operations possible for this DSPP
  */
-काष्ठा dpu_hw_dspp अणु
-	काष्ठा dpu_hw_blk base;
-	काष्ठा dpu_hw_blk_reg_map hw;
+struct dpu_hw_dspp {
+	struct dpu_hw_blk base;
+	struct dpu_hw_blk_reg_map hw;
 
 	/* dspp */
-	पूर्णांक idx;
-	स्थिर काष्ठा dpu_dspp_cfg *cap;
+	int idx;
+	const struct dpu_dspp_cfg *cap;
 
 	/* Ops */
-	काष्ठा dpu_hw_dspp_ops ops;
-पूर्ण;
+	struct dpu_hw_dspp_ops ops;
+};
 
 /**
  * dpu_hw_dspp - convert base object dpu_hw_base to container
- * @hw: Poपूर्णांकer to base hardware block
- * वापस: Poपूर्णांकer to hardware block container
+ * @hw: Pointer to base hardware block
+ * return: Pointer to hardware block container
  */
-अटल अंतरभूत काष्ठा dpu_hw_dspp *to_dpu_hw_dspp(काष्ठा dpu_hw_blk *hw)
-अणु
-	वापस container_of(hw, काष्ठा dpu_hw_dspp, base);
-पूर्ण
+static inline struct dpu_hw_dspp *to_dpu_hw_dspp(struct dpu_hw_blk *hw)
+{
+	return container_of(hw, struct dpu_hw_dspp, base);
+}
 
 /**
  * dpu_hw_dspp_init - initializes the dspp hw driver object.
- * should be called once beक्रमe accessing every dspp.
- * @idx:  DSPP index क्रम which driver object is required
- * @addr: Mapped रेजिस्टर io address of MDP
- * @Return: poपूर्णांकer to काष्ठाure or ERR_PTR
+ * should be called once before accessing every dspp.
+ * @idx:  DSPP index for which driver object is required
+ * @addr: Mapped register io address of MDP
+ * @Return: pointer to structure or ERR_PTR
  */
-काष्ठा dpu_hw_dspp *dpu_hw_dspp_init(क्रमागत dpu_dspp idx,
-	व्योम __iomem *addr, स्थिर काष्ठा dpu_mdss_cfg *m);
+struct dpu_hw_dspp *dpu_hw_dspp_init(enum dpu_dspp idx,
+	void __iomem *addr, const struct dpu_mdss_cfg *m);
 
 /**
  * dpu_hw_dspp_destroy(): Destroys DSPP driver context
- * @dspp: Poपूर्णांकer to DSPP driver context
+ * @dspp: Pointer to DSPP driver context
  */
-व्योम dpu_hw_dspp_destroy(काष्ठा dpu_hw_dspp *dspp);
+void dpu_hw_dspp_destroy(struct dpu_hw_dspp *dspp);
 
-#पूर्ण_अगर /*_DPU_HW_DSPP_H */
+#endif /*_DPU_HW_DSPP_H */
 

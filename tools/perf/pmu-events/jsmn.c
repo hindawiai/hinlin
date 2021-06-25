@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2010 Serge A. Zaitsev
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a copy
- * of this software and associated करोcumentation files (the "Software"), to deal
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
- * to use, copy, modअगरy, merge, publish, distribute, sublicense, and/or sell
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
- * furnished to करो so, subject to the following conditions:
+ * furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,295 +19,295 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  *
- * Slightly modअगरied by AK to not assume 0 terminated input.
+ * Slightly modified by AK to not assume 0 terminated input.
  */
 
-#समावेश <मानककोष.स>
-#समावेश "jsmn.h"
+#include <stdlib.h>
+#include "jsmn.h"
 
 /*
  * Allocates a fresh unused token from the token pool.
  */
-अटल jsmntok_t *jsmn_alloc_token(jsmn_parser *parser,
-				   jsmntok_t *tokens, माप_प्रकार num_tokens)
-अणु
+static jsmntok_t *jsmn_alloc_token(jsmn_parser *parser,
+				   jsmntok_t *tokens, size_t num_tokens)
+{
 	jsmntok_t *tok;
 
-	अगर ((अचिन्हित)parser->toknext >= num_tokens)
-		वापस शून्य;
+	if ((unsigned)parser->toknext >= num_tokens)
+		return NULL;
 	tok = &tokens[parser->toknext++];
 	tok->start = tok->end = -1;
 	tok->size = 0;
-	वापस tok;
-पूर्ण
+	return tok;
+}
 
 /*
  * Fills token type and boundaries.
  */
-अटल व्योम jsmn_fill_token(jsmntok_t *token, jsmntype_t type,
-			    पूर्णांक start, पूर्णांक end)
-अणु
+static void jsmn_fill_token(jsmntok_t *token, jsmntype_t type,
+			    int start, int end)
+{
 	token->type = type;
 	token->start = start;
 	token->end = end;
 	token->size = 0;
-पूर्ण
+}
 
 /*
  * Fills next available token with JSON primitive.
  */
-अटल jsmnerr_t jsmn_parse_primitive(jsmn_parser *parser, स्थिर अक्षर *js,
-				      माप_प्रकार len,
-				      jsmntok_t *tokens, माप_प्रकार num_tokens)
-अणु
+static jsmnerr_t jsmn_parse_primitive(jsmn_parser *parser, const char *js,
+				      size_t len,
+				      jsmntok_t *tokens, size_t num_tokens)
+{
 	jsmntok_t *token;
-	पूर्णांक start;
+	int start;
 
 	start = parser->pos;
 
-	क्रम (; parser->pos < len; parser->pos++) अणु
-		चयन (js[parser->pos]) अणु
-#अगर_अघोषित JSMN_STRICT
+	for (; parser->pos < len; parser->pos++) {
+		switch (js[parser->pos]) {
+#ifndef JSMN_STRICT
 		/*
 		 * In strict mode primitive must be followed by ","
 		 * or "}" or "]"
 		 */
-		हाल ':':
-#पूर्ण_अगर
-		हाल '\t':
-		हाल '\r':
-		हाल '\n':
-		हाल ' ':
-		हाल ',':
-		हाल ']':
-		हाल '}':
-			जाओ found;
-		शेष:
-			अवरोध;
-		पूर्ण
-		अगर (js[parser->pos] < 32 || js[parser->pos] >= 127) अणु
+		case ':':
+#endif
+		case '\t':
+		case '\r':
+		case '\n':
+		case ' ':
+		case ',':
+		case ']':
+		case '}':
+			goto found;
+		default:
+			break;
+		}
+		if (js[parser->pos] < 32 || js[parser->pos] >= 127) {
 			parser->pos = start;
-			वापस JSMN_ERROR_INVAL;
-		पूर्ण
-	पूर्ण
-#अगर_घोषित JSMN_STRICT
+			return JSMN_ERROR_INVAL;
+		}
+	}
+#ifdef JSMN_STRICT
 	/*
 	 * In strict mode primitive must be followed by a
 	 * comma/object/array.
 	 */
 	parser->pos = start;
-	वापस JSMN_ERROR_PART;
-#पूर्ण_अगर
+	return JSMN_ERROR_PART;
+#endif
 
 found:
 	token = jsmn_alloc_token(parser, tokens, num_tokens);
-	अगर (token == शून्य) अणु
+	if (token == NULL) {
 		parser->pos = start;
-		वापस JSMN_ERROR_NOMEM;
-	पूर्ण
+		return JSMN_ERROR_NOMEM;
+	}
 	jsmn_fill_token(token, JSMN_PRIMITIVE, start, parser->pos);
 	parser->pos--; /* parent sees closing brackets */
-	वापस JSMN_SUCCESS;
-पूर्ण
+	return JSMN_SUCCESS;
+}
 
 /*
  * Fills next token with JSON string.
  */
-अटल jsmnerr_t jsmn_parse_string(jsmn_parser *parser, स्थिर अक्षर *js,
-				   माप_प्रकार len,
-				   jsmntok_t *tokens, माप_प्रकार num_tokens)
-अणु
+static jsmnerr_t jsmn_parse_string(jsmn_parser *parser, const char *js,
+				   size_t len,
+				   jsmntok_t *tokens, size_t num_tokens)
+{
 	jsmntok_t *token;
-	पूर्णांक start = parser->pos;
+	int start = parser->pos;
 
 	/* Skip starting quote */
 	parser->pos++;
 
-	क्रम (; parser->pos < len; parser->pos++) अणु
-		अक्षर c = js[parser->pos];
+	for (; parser->pos < len; parser->pos++) {
+		char c = js[parser->pos];
 
 		/* Quote: end of string */
-		अगर (c == '\"') अणु
+		if (c == '\"') {
 			token = jsmn_alloc_token(parser, tokens, num_tokens);
-			अगर (token == शून्य) अणु
+			if (token == NULL) {
 				parser->pos = start;
-				वापस JSMN_ERROR_NOMEM;
-			पूर्ण
+				return JSMN_ERROR_NOMEM;
+			}
 			jsmn_fill_token(token, JSMN_STRING, start+1,
 					parser->pos);
-			वापस JSMN_SUCCESS;
-		पूर्ण
+			return JSMN_SUCCESS;
+		}
 
 		/* Backslash: Quoted symbol expected */
-		अगर (c == '\\') अणु
+		if (c == '\\') {
 			parser->pos++;
-			चयन (js[parser->pos]) अणु
+			switch (js[parser->pos]) {
 				/* Allowed escaped symbols */
-			हाल '\"':
-			हाल '/':
-			हाल '\\':
-			हाल 'b':
-			हाल 'f':
-			हाल 'r':
-			हाल 'n':
-			हाल 't':
-				अवरोध;
+			case '\"':
+			case '/':
+			case '\\':
+			case 'b':
+			case 'f':
+			case 'r':
+			case 'n':
+			case 't':
+				break;
 				/* Allows escaped symbol \uXXXX */
-			हाल 'u':
+			case 'u':
 				/* TODO */
-				अवरोध;
+				break;
 				/* Unexpected symbol */
-			शेष:
+			default:
 				parser->pos = start;
-				वापस JSMN_ERROR_INVAL;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				return JSMN_ERROR_INVAL;
+			}
+		}
+	}
 	parser->pos = start;
-	वापस JSMN_ERROR_PART;
-पूर्ण
+	return JSMN_ERROR_PART;
+}
 
 /*
  * Parse JSON string and fill tokens.
  */
-jsmnerr_t jsmn_parse(jsmn_parser *parser, स्थिर अक्षर *js, माप_प्रकार len,
-		     jsmntok_t *tokens, अचिन्हित पूर्णांक num_tokens)
-अणु
+jsmnerr_t jsmn_parse(jsmn_parser *parser, const char *js, size_t len,
+		     jsmntok_t *tokens, unsigned int num_tokens)
+{
 	jsmnerr_t r;
-	पूर्णांक i;
+	int i;
 	jsmntok_t *token;
 
-	क्रम (; parser->pos < len; parser->pos++) अणु
-		अक्षर c;
+	for (; parser->pos < len; parser->pos++) {
+		char c;
 		jsmntype_t type;
 
 		c = js[parser->pos];
-		चयन (c) अणु
-		हाल '{':
-		हाल '[':
+		switch (c) {
+		case '{':
+		case '[':
 			token = jsmn_alloc_token(parser, tokens, num_tokens);
-			अगर (token == शून्य)
-				वापस JSMN_ERROR_NOMEM;
-			अगर (parser->toksuper != -1)
+			if (token == NULL)
+				return JSMN_ERROR_NOMEM;
+			if (parser->toksuper != -1)
 				tokens[parser->toksuper].size++;
 			token->type = (c == '{' ? JSMN_OBJECT : JSMN_ARRAY);
 			token->start = parser->pos;
 			parser->toksuper = parser->toknext - 1;
-			अवरोध;
-		हाल '}':
-		हाल ']':
+			break;
+		case '}':
+		case ']':
 			type = (c == '}' ? JSMN_OBJECT : JSMN_ARRAY);
-			क्रम (i = parser->toknext - 1; i >= 0; i--) अणु
+			for (i = parser->toknext - 1; i >= 0; i--) {
 				token = &tokens[i];
-				अगर (token->start != -1 && token->end == -1) अणु
-					अगर (token->type != type)
-						वापस JSMN_ERROR_INVAL;
+				if (token->start != -1 && token->end == -1) {
+					if (token->type != type)
+						return JSMN_ERROR_INVAL;
 					parser->toksuper = -1;
 					token->end = parser->pos + 1;
-					अवरोध;
-				पूर्ण
-			पूर्ण
-			/* Error अगर unmatched closing bracket */
-			अगर (i == -1)
-				वापस JSMN_ERROR_INVAL;
-			क्रम (; i >= 0; i--) अणु
+					break;
+				}
+			}
+			/* Error if unmatched closing bracket */
+			if (i == -1)
+				return JSMN_ERROR_INVAL;
+			for (; i >= 0; i--) {
 				token = &tokens[i];
-				अगर (token->start != -1 && token->end == -1) अणु
+				if (token->start != -1 && token->end == -1) {
 					parser->toksuper = i;
-					अवरोध;
-				पूर्ण
-			पूर्ण
-			अवरोध;
-		हाल '\"':
+					break;
+				}
+			}
+			break;
+		case '\"':
 			r = jsmn_parse_string(parser, js, len, tokens,
 					      num_tokens);
-			अगर (r < 0)
-				वापस r;
-			अगर (parser->toksuper != -1)
+			if (r < 0)
+				return r;
+			if (parser->toksuper != -1)
 				tokens[parser->toksuper].size++;
-			अवरोध;
-		हाल '\t':
-		हाल '\r':
-		हाल '\n':
-		हाल ':':
-		हाल ',':
-		हाल ' ':
-			अवरोध;
-#अगर_घोषित JSMN_STRICT
+			break;
+		case '\t':
+		case '\r':
+		case '\n':
+		case ':':
+		case ',':
+		case ' ':
+			break;
+#ifdef JSMN_STRICT
 			/*
 			 * In strict mode primitives are:
 			 * numbers and booleans.
 			 */
-		हाल '-':
-		हाल '0':
-		हाल '1':
-		हाल '2':
-		हाल '3':
-		हाल '4':
-		हाल '5':
-		हाल '6':
-		हाल '7':
-		हाल '8':
-		हाल '9':
-		हाल 't':
-		हाल 'f':
-		हाल 'n':
-#अन्यथा
+		case '-':
+		case '0':
+		case '1':
+		case '2':
+		case '3':
+		case '4':
+		case '5':
+		case '6':
+		case '7':
+		case '8':
+		case '9':
+		case 't':
+		case 'f':
+		case 'n':
+#else
 			/*
 			 * In non-strict mode every unquoted value
 			 * is a primitive.
 			 */
 			/*FALL THROUGH */
-		शेष:
-#पूर्ण_अगर
+		default:
+#endif
 			r = jsmn_parse_primitive(parser, js, len, tokens,
 						 num_tokens);
-			अगर (r < 0)
-				वापस r;
-			अगर (parser->toksuper != -1)
+			if (r < 0)
+				return r;
+			if (parser->toksuper != -1)
 				tokens[parser->toksuper].size++;
-			अवरोध;
+			break;
 
-#अगर_घोषित JSMN_STRICT
-			/* Unexpected अक्षर in strict mode */
-		शेष:
-			वापस JSMN_ERROR_INVAL;
-#पूर्ण_अगर
-		पूर्ण
-	पूर्ण
+#ifdef JSMN_STRICT
+			/* Unexpected char in strict mode */
+		default:
+			return JSMN_ERROR_INVAL;
+#endif
+		}
+	}
 
-	क्रम (i = parser->toknext - 1; i >= 0; i--) अणु
-		/* Unmatched खोलोed object or array */
-		अगर (tokens[i].start != -1 && tokens[i].end == -1)
-			वापस JSMN_ERROR_PART;
-	पूर्ण
+	for (i = parser->toknext - 1; i >= 0; i--) {
+		/* Unmatched opened object or array */
+		if (tokens[i].start != -1 && tokens[i].end == -1)
+			return JSMN_ERROR_PART;
+	}
 
-	वापस JSMN_SUCCESS;
-पूर्ण
+	return JSMN_SUCCESS;
+}
 
 /*
  * Creates a new parser based over a given  buffer with an array of tokens
  * available.
  */
-व्योम jsmn_init(jsmn_parser *parser)
-अणु
+void jsmn_init(jsmn_parser *parser)
+{
 	parser->pos = 0;
 	parser->toknext = 0;
 	parser->toksuper = -1;
-पूर्ण
+}
 
-स्थिर अक्षर *jsmn_म_त्रुटि(jsmnerr_t err)
-अणु
-	चयन (err) अणु
-	हाल JSMN_ERROR_NOMEM:
-		वापस "No enough tokens";
-	हाल JSMN_ERROR_INVAL:
-		वापस "Invalid character inside JSON string";
-	हाल JSMN_ERROR_PART:
-		वापस "The string is not a full JSON packet, more bytes expected";
-	हाल JSMN_SUCCESS:
-		वापस "Success";
-	शेष:
-		वापस "Unknown json error";
-	पूर्ण
-पूर्ण
+const char *jsmn_strerror(jsmnerr_t err)
+{
+	switch (err) {
+	case JSMN_ERROR_NOMEM:
+		return "No enough tokens";
+	case JSMN_ERROR_INVAL:
+		return "Invalid character inside JSON string";
+	case JSMN_ERROR_PART:
+		return "The string is not a full JSON packet, more bytes expected";
+	case JSMN_SUCCESS:
+		return "Success";
+	default:
+		return "Unknown json error";
+	}
+}

@@ -1,82 +1,81 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* sunvdc.c: Sun LDOM Virtual Disk Client.
  *
  * Copyright (C) 2007, 2008 David S. Miller <davem@davemloft.net>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/types.h>
-#समावेश <linux/blk-mq.h>
-#समावेश <linux/hdreg.h>
-#समावेश <linux/genhd.h>
-#समावेश <linux/cdrom.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/completion.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/init.h>
-#समावेश <linux/list.h>
-#समावेश <linux/scatterlist.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/blk-mq.h>
+#include <linux/hdreg.h>
+#include <linux/genhd.h>
+#include <linux/cdrom.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
+#include <linux/completion.h>
+#include <linux/delay.h>
+#include <linux/init.h>
+#include <linux/list.h>
+#include <linux/scatterlist.h>
 
-#समावेश <यंत्र/vपन.स>
-#समावेश <यंत्र/ldc.h>
+#include <asm/vio.h>
+#include <asm/ldc.h>
 
-#घोषणा DRV_MODULE_NAME		"sunvdc"
-#घोषणा PFX DRV_MODULE_NAME	": "
-#घोषणा DRV_MODULE_VERSION	"1.2"
-#घोषणा DRV_MODULE_RELDATE	"November 24, 2014"
+#define DRV_MODULE_NAME		"sunvdc"
+#define PFX DRV_MODULE_NAME	": "
+#define DRV_MODULE_VERSION	"1.2"
+#define DRV_MODULE_RELDATE	"November 24, 2014"
 
-अटल अक्षर version[] =
+static char version[] =
 	DRV_MODULE_NAME ".c:v" DRV_MODULE_VERSION " (" DRV_MODULE_RELDATE ")\n";
 MODULE_AUTHOR("David S. Miller (davem@davemloft.net)");
 MODULE_DESCRIPTION("Sun LDOM virtual disk client driver");
 MODULE_LICENSE("GPL");
 MODULE_VERSION(DRV_MODULE_VERSION);
 
-#घोषणा VDC_TX_RING_SIZE	512
-#घोषणा VDC_DEFAULT_BLK_SIZE	512
+#define VDC_TX_RING_SIZE	512
+#define VDC_DEFAULT_BLK_SIZE	512
 
-#घोषणा MAX_XFER_BLKS		(128 * 1024)
-#घोषणा MAX_XFER_SIZE		(MAX_XFER_BLKS / VDC_DEFAULT_BLK_SIZE)
-#घोषणा MAX_RING_COOKIES	((MAX_XFER_BLKS / PAGE_SIZE) + 2)
+#define MAX_XFER_BLKS		(128 * 1024)
+#define MAX_XFER_SIZE		(MAX_XFER_BLKS / VDC_DEFAULT_BLK_SIZE)
+#define MAX_RING_COOKIES	((MAX_XFER_BLKS / PAGE_SIZE) + 2)
 
-#घोषणा WAITING_FOR_LINK_UP	0x01
-#घोषणा WAITING_FOR_TX_SPACE	0x02
-#घोषणा WAITING_FOR_GEN_CMD	0x04
-#घोषणा WAITING_FOR_ANY		-1
+#define WAITING_FOR_LINK_UP	0x01
+#define WAITING_FOR_TX_SPACE	0x02
+#define WAITING_FOR_GEN_CMD	0x04
+#define WAITING_FOR_ANY		-1
 
-#घोषणा	VDC_MAX_RETRIES	10
+#define	VDC_MAX_RETRIES	10
 
-अटल काष्ठा workqueue_काष्ठा *sunvdc_wq;
+static struct workqueue_struct *sunvdc_wq;
 
-काष्ठा vdc_req_entry अणु
-	काष्ठा request		*req;
-पूर्ण;
+struct vdc_req_entry {
+	struct request		*req;
+};
 
-काष्ठा vdc_port अणु
-	काष्ठा vio_driver_state	vio;
+struct vdc_port {
+	struct vio_driver_state	vio;
 
-	काष्ठा gendisk		*disk;
+	struct gendisk		*disk;
 
-	काष्ठा vdc_completion	*cmp;
+	struct vdc_completion	*cmp;
 
 	u64			req_id;
 	u64			seq;
-	काष्ठा vdc_req_entry	rq_arr[VDC_TX_RING_SIZE];
+	struct vdc_req_entry	rq_arr[VDC_TX_RING_SIZE];
 
-	अचिन्हित दीर्घ		ring_cookies;
+	unsigned long		ring_cookies;
 
 	u64			max_xfer_size;
 	u32			vdisk_block_size;
 	u32			drain;
 
-	u64			ldc_समयout;
-	काष्ठा delayed_work	ldc_reset_समयr_work;
-	काष्ठा work_काष्ठा	ldc_reset_work;
+	u64			ldc_timeout;
+	struct delayed_work	ldc_reset_timer_work;
+	struct work_struct	ldc_reset_work;
 
-	/* The server fills these in क्रम us in the disk attribute
+	/* The server fills these in for us in the disk attribute
 	 * ACK packet.
 	 */
 	u64			operations;
@@ -85,147 +84,147 @@ MODULE_VERSION(DRV_MODULE_VERSION);
 	u8			vdisk_mtype;
 	u32			vdisk_phys_blksz;
 
-	काष्ठा blk_mq_tag_set	tag_set;
+	struct blk_mq_tag_set	tag_set;
 
-	अक्षर			disk_name[32];
-पूर्ण;
+	char			disk_name[32];
+};
 
-अटल व्योम vdc_ldc_reset(काष्ठा vdc_port *port);
-अटल व्योम vdc_ldc_reset_work(काष्ठा work_काष्ठा *work);
-अटल व्योम vdc_ldc_reset_समयr_work(काष्ठा work_काष्ठा *work);
+static void vdc_ldc_reset(struct vdc_port *port);
+static void vdc_ldc_reset_work(struct work_struct *work);
+static void vdc_ldc_reset_timer_work(struct work_struct *work);
 
-अटल अंतरभूत काष्ठा vdc_port *to_vdc_port(काष्ठा vio_driver_state *vio)
-अणु
-	वापस container_of(vio, काष्ठा vdc_port, vio);
-पूर्ण
+static inline struct vdc_port *to_vdc_port(struct vio_driver_state *vio)
+{
+	return container_of(vio, struct vdc_port, vio);
+}
 
 /* Ordered from largest major to lowest */
-अटल काष्ठा vio_version vdc_versions[] = अणु
-	अणु .major = 1, .minor = 2 पूर्ण,
-	अणु .major = 1, .minor = 1 पूर्ण,
-	अणु .major = 1, .minor = 0 पूर्ण,
-पूर्ण;
+static struct vio_version vdc_versions[] = {
+	{ .major = 1, .minor = 2 },
+	{ .major = 1, .minor = 1 },
+	{ .major = 1, .minor = 0 },
+};
 
-अटल अंतरभूत पूर्णांक vdc_version_supported(काष्ठा vdc_port *port,
+static inline int vdc_version_supported(struct vdc_port *port,
 					u16 major, u16 minor)
-अणु
-	वापस port->vio.ver.major == major && port->vio.ver.minor >= minor;
-पूर्ण
+{
+	return port->vio.ver.major == major && port->vio.ver.minor >= minor;
+}
 
-#घोषणा VDCBLK_NAME	"vdisk"
-अटल पूर्णांक vdc_major;
-#घोषणा PARTITION_SHIFT	3
+#define VDCBLK_NAME	"vdisk"
+static int vdc_major;
+#define PARTITION_SHIFT	3
 
-अटल अंतरभूत u32 vdc_tx_dring_avail(काष्ठा vio_dring_state *dr)
-अणु
-	वापस vio_dring_avail(dr, VDC_TX_RING_SIZE);
-पूर्ण
+static inline u32 vdc_tx_dring_avail(struct vio_dring_state *dr)
+{
+	return vio_dring_avail(dr, VDC_TX_RING_SIZE);
+}
 
-अटल पूर्णांक vdc_getgeo(काष्ठा block_device *bdev, काष्ठा hd_geometry *geo)
-अणु
-	काष्ठा gendisk *disk = bdev->bd_disk;
+static int vdc_getgeo(struct block_device *bdev, struct hd_geometry *geo)
+{
+	struct gendisk *disk = bdev->bd_disk;
 	sector_t nsect = get_capacity(disk);
 	sector_t cylinders = nsect;
 
 	geo->heads = 0xff;
 	geo->sectors = 0x3f;
-	sector_भाग(cylinders, geo->heads * geo->sectors);
+	sector_div(cylinders, geo->heads * geo->sectors);
 	geo->cylinders = cylinders;
-	अगर ((sector_t)(geo->cylinders + 1) * geo->heads * geo->sectors < nsect)
+	if ((sector_t)(geo->cylinders + 1) * geo->heads * geo->sectors < nsect)
 		geo->cylinders = 0xffff;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Add ioctl/CDROM_GET_CAPABILITY to support cdrom_id in udev
  * when vdisk_mtype is VD_MEDIA_TYPE_CD or VD_MEDIA_TYPE_DVD.
- * Needed to be able to install inside an lकरोm from an iso image.
+ * Needed to be able to install inside an ldom from an iso image.
  */
-अटल पूर्णांक vdc_ioctl(काष्ठा block_device *bdev, भ_शेषe_t mode,
-		     अचिन्हित command, अचिन्हित दीर्घ argument)
-अणु
-	पूर्णांक i;
-	काष्ठा gendisk *disk;
+static int vdc_ioctl(struct block_device *bdev, fmode_t mode,
+		     unsigned command, unsigned long argument)
+{
+	int i;
+	struct gendisk *disk;
 
-	चयन (command) अणु
-	हाल CDROMMULTISESSION:
+	switch (command) {
+	case CDROMMULTISESSION:
 		pr_debug(PFX "Multisession CDs not supported\n");
-		क्रम (i = 0; i < माप(काष्ठा cdrom_multisession); i++)
-			अगर (put_user(0, (अक्षर __user *)(argument + i)))
-				वापस -EFAULT;
-		वापस 0;
+		for (i = 0; i < sizeof(struct cdrom_multisession); i++)
+			if (put_user(0, (char __user *)(argument + i)))
+				return -EFAULT;
+		return 0;
 
-	हाल CDROM_GET_CAPABILITY:
+	case CDROM_GET_CAPABILITY:
 		disk = bdev->bd_disk;
 
-		अगर (bdev->bd_disk && (disk->flags & GENHD_FL_CD))
-			वापस 0;
-		वापस -EINVAL;
+		if (bdev->bd_disk && (disk->flags & GENHD_FL_CD))
+			return 0;
+		return -EINVAL;
 
-	शेष:
+	default:
 		pr_debug(PFX "ioctl %08x not supported\n", command);
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+		return -EINVAL;
+	}
+}
 
-अटल स्थिर काष्ठा block_device_operations vdc_fops = अणु
+static const struct block_device_operations vdc_fops = {
 	.owner		= THIS_MODULE,
 	.getgeo		= vdc_getgeo,
 	.ioctl		= vdc_ioctl,
 	.compat_ioctl	= blkdev_compat_ptr_ioctl,
-पूर्ण;
+};
 
-अटल व्योम vdc_blk_queue_start(काष्ठा vdc_port *port)
-अणु
-	काष्ठा vio_dring_state *dr = &port->vio.drings[VIO_DRIVER_TX_RING];
+static void vdc_blk_queue_start(struct vdc_port *port)
+{
+	struct vio_dring_state *dr = &port->vio.drings[VIO_DRIVER_TX_RING];
 
 	/* restart blk queue when ring is half emptied. also called after
-	 * handshake completes, so check क्रम initial handshake beक्रमe we've
+	 * handshake completes, so check for initial handshake before we've
 	 * allocated a disk.
 	 */
-	अगर (port->disk && vdc_tx_dring_avail(dr) * 100 / VDC_TX_RING_SIZE >= 50)
+	if (port->disk && vdc_tx_dring_avail(dr) * 100 / VDC_TX_RING_SIZE >= 50)
 		blk_mq_start_stopped_hw_queues(port->disk->queue, true);
-पूर्ण
+}
 
-अटल व्योम vdc_finish(काष्ठा vio_driver_state *vio, पूर्णांक err, पूर्णांक रुकोing_क्रम)
-अणु
-	अगर (vio->cmp &&
-	    (रुकोing_क्रम == -1 ||
-	     vio->cmp->रुकोing_क्रम == रुकोing_क्रम)) अणु
+static void vdc_finish(struct vio_driver_state *vio, int err, int waiting_for)
+{
+	if (vio->cmp &&
+	    (waiting_for == -1 ||
+	     vio->cmp->waiting_for == waiting_for)) {
 		vio->cmp->err = err;
 		complete(&vio->cmp->com);
-		vio->cmp = शून्य;
-	पूर्ण
-पूर्ण
+		vio->cmp = NULL;
+	}
+}
 
-अटल व्योम vdc_handshake_complete(काष्ठा vio_driver_state *vio)
-अणु
-	काष्ठा vdc_port *port = to_vdc_port(vio);
+static void vdc_handshake_complete(struct vio_driver_state *vio)
+{
+	struct vdc_port *port = to_vdc_port(vio);
 
-	cancel_delayed_work(&port->ldc_reset_समयr_work);
+	cancel_delayed_work(&port->ldc_reset_timer_work);
 	vdc_finish(vio, 0, WAITING_FOR_LINK_UP);
 	vdc_blk_queue_start(port);
-पूर्ण
+}
 
-अटल पूर्णांक vdc_handle_unknown(काष्ठा vdc_port *port, व्योम *arg)
-अणु
-	काष्ठा vio_msg_tag *pkt = arg;
+static int vdc_handle_unknown(struct vdc_port *port, void *arg)
+{
+	struct vio_msg_tag *pkt = arg;
 
-	prपूर्णांकk(KERN_ERR PFX "Received unknown msg [%02x:%02x:%04x:%08x]\n",
+	printk(KERN_ERR PFX "Received unknown msg [%02x:%02x:%04x:%08x]\n",
 	       pkt->type, pkt->stype, pkt->stype_env, pkt->sid);
-	prपूर्णांकk(KERN_ERR PFX "Resetting connection.\n");
+	printk(KERN_ERR PFX "Resetting connection.\n");
 
 	ldc_disconnect(port->vio.lp);
 
-	वापस -ECONNRESET;
-पूर्ण
+	return -ECONNRESET;
+}
 
-अटल पूर्णांक vdc_send_attr(काष्ठा vio_driver_state *vio)
-अणु
-	काष्ठा vdc_port *port = to_vdc_port(vio);
-	काष्ठा vio_disk_attr_info pkt;
+static int vdc_send_attr(struct vio_driver_state *vio)
+{
+	struct vdc_port *port = to_vdc_port(vio);
+	struct vio_disk_attr_info pkt;
 
-	स_रखो(&pkt, 0, माप(pkt));
+	memset(&pkt, 0, sizeof(pkt));
 
 	pkt.tag.type = VIO_TYPE_CTRL;
 	pkt.tag.stype = VIO_SUBTYPE_INFO;
@@ -239,13 +238,13 @@ MODULE_VERSION(DRV_MODULE_VERSION);
 	viodbg(HS, "SEND ATTR xfer_mode[0x%x] blksz[%u] max_xfer[%llu]\n",
 	       pkt.xfer_mode, pkt.vdisk_block_size, pkt.max_xfer_size);
 
-	वापस vio_ldc_send(&port->vio, &pkt, माप(pkt));
-पूर्ण
+	return vio_ldc_send(&port->vio, &pkt, sizeof(pkt));
+}
 
-अटल पूर्णांक vdc_handle_attr(काष्ठा vio_driver_state *vio, व्योम *arg)
-अणु
-	काष्ठा vdc_port *port = to_vdc_port(vio);
-	काष्ठा vio_disk_attr_info *pkt = arg;
+static int vdc_handle_attr(struct vio_driver_state *vio, void *arg)
+{
+	struct vdc_port *port = to_vdc_port(vio);
+	struct vio_disk_attr_info *pkt = arg;
 
 	viodbg(HS, "GOT ATTR stype[0x%x] ops[%llx] disk_size[%llu] disk_type[%x] "
 	       "mtype[0x%x] xfer_mode[0x%x] blksz[%u] max_xfer[%llu]\n",
@@ -254,240 +253,240 @@ MODULE_VERSION(DRV_MODULE_VERSION);
 	       pkt->xfer_mode, pkt->vdisk_block_size,
 	       pkt->max_xfer_size);
 
-	अगर (pkt->tag.stype == VIO_SUBTYPE_ACK) अणु
-		चयन (pkt->vdisk_type) अणु
-		हाल VD_DISK_TYPE_DISK:
-		हाल VD_DISK_TYPE_SLICE:
-			अवरोध;
+	if (pkt->tag.stype == VIO_SUBTYPE_ACK) {
+		switch (pkt->vdisk_type) {
+		case VD_DISK_TYPE_DISK:
+		case VD_DISK_TYPE_SLICE:
+			break;
 
-		शेष:
-			prपूर्णांकk(KERN_ERR PFX "%s: Bogus vdisk_type 0x%x\n",
+		default:
+			printk(KERN_ERR PFX "%s: Bogus vdisk_type 0x%x\n",
 			       vio->name, pkt->vdisk_type);
-			वापस -ECONNRESET;
-		पूर्ण
+			return -ECONNRESET;
+		}
 
-		अगर (pkt->vdisk_block_size > port->vdisk_block_size) अणु
-			prपूर्णांकk(KERN_ERR PFX "%s: BLOCK size increased "
+		if (pkt->vdisk_block_size > port->vdisk_block_size) {
+			printk(KERN_ERR PFX "%s: BLOCK size increased "
 			       "%u --> %u\n",
 			       vio->name,
 			       port->vdisk_block_size, pkt->vdisk_block_size);
-			वापस -ECONNRESET;
-		पूर्ण
+			return -ECONNRESET;
+		}
 
 		port->operations = pkt->operations;
 		port->vdisk_type = pkt->vdisk_type;
-		अगर (vdc_version_supported(port, 1, 1)) अणु
+		if (vdc_version_supported(port, 1, 1)) {
 			port->vdisk_size = pkt->vdisk_size;
 			port->vdisk_mtype = pkt->vdisk_mtype;
-		पूर्ण
-		अगर (pkt->max_xfer_size < port->max_xfer_size)
+		}
+		if (pkt->max_xfer_size < port->max_xfer_size)
 			port->max_xfer_size = pkt->max_xfer_size;
 		port->vdisk_block_size = pkt->vdisk_block_size;
 
 		port->vdisk_phys_blksz = VDC_DEFAULT_BLK_SIZE;
-		अगर (vdc_version_supported(port, 1, 2))
+		if (vdc_version_supported(port, 1, 2))
 			port->vdisk_phys_blksz = pkt->phys_block_size;
 
-		वापस 0;
-	पूर्ण अन्यथा अणु
-		prपूर्णांकk(KERN_ERR PFX "%s: Attribute NACK\n", vio->name);
+		return 0;
+	} else {
+		printk(KERN_ERR PFX "%s: Attribute NACK\n", vio->name);
 
-		वापस -ECONNRESET;
-	पूर्ण
-पूर्ण
+		return -ECONNRESET;
+	}
+}
 
-अटल व्योम vdc_end_special(काष्ठा vdc_port *port, काष्ठा vio_disk_desc *desc)
-अणु
-	पूर्णांक err = desc->status;
+static void vdc_end_special(struct vdc_port *port, struct vio_disk_desc *desc)
+{
+	int err = desc->status;
 
 	vdc_finish(&port->vio, -err, WAITING_FOR_GEN_CMD);
-पूर्ण
+}
 
-अटल व्योम vdc_end_one(काष्ठा vdc_port *port, काष्ठा vio_dring_state *dr,
-			अचिन्हित पूर्णांक index)
-अणु
-	काष्ठा vio_disk_desc *desc = vio_dring_entry(dr, index);
-	काष्ठा vdc_req_entry *rqe = &port->rq_arr[index];
-	काष्ठा request *req;
+static void vdc_end_one(struct vdc_port *port, struct vio_dring_state *dr,
+			unsigned int index)
+{
+	struct vio_disk_desc *desc = vio_dring_entry(dr, index);
+	struct vdc_req_entry *rqe = &port->rq_arr[index];
+	struct request *req;
 
-	अगर (unlikely(desc->hdr.state != VIO_DESC_DONE))
-		वापस;
+	if (unlikely(desc->hdr.state != VIO_DESC_DONE))
+		return;
 
 	ldc_unmap(port->vio.lp, desc->cookies, desc->ncookies);
 	desc->hdr.state = VIO_DESC_FREE;
 	dr->cons = vio_dring_next(dr, index);
 
 	req = rqe->req;
-	अगर (req == शून्य) अणु
+	if (req == NULL) {
 		vdc_end_special(port, desc);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	rqe->req = शून्य;
+	rqe->req = NULL;
 
 	blk_mq_end_request(req, desc->status ? BLK_STS_IOERR : 0);
 
 	vdc_blk_queue_start(port);
-पूर्ण
+}
 
-अटल पूर्णांक vdc_ack(काष्ठा vdc_port *port, व्योम *msgbuf)
-अणु
-	काष्ठा vio_dring_state *dr = &port->vio.drings[VIO_DRIVER_TX_RING];
-	काष्ठा vio_dring_data *pkt = msgbuf;
+static int vdc_ack(struct vdc_port *port, void *msgbuf)
+{
+	struct vio_dring_state *dr = &port->vio.drings[VIO_DRIVER_TX_RING];
+	struct vio_dring_data *pkt = msgbuf;
 
-	अगर (unlikely(pkt->dring_ident != dr->ident ||
+	if (unlikely(pkt->dring_ident != dr->ident ||
 		     pkt->start_idx != pkt->end_idx ||
 		     pkt->start_idx >= VDC_TX_RING_SIZE))
-		वापस 0;
+		return 0;
 
 	vdc_end_one(port, dr, pkt->start_idx);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vdc_nack(काष्ठा vdc_port *port, व्योम *msgbuf)
-अणु
+static int vdc_nack(struct vdc_port *port, void *msgbuf)
+{
 	/* XXX Implement me XXX */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम vdc_event(व्योम *arg, पूर्णांक event)
-अणु
-	काष्ठा vdc_port *port = arg;
-	काष्ठा vio_driver_state *vio = &port->vio;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक err;
+static void vdc_event(void *arg, int event)
+{
+	struct vdc_port *port = arg;
+	struct vio_driver_state *vio = &port->vio;
+	unsigned long flags;
+	int err;
 
 	spin_lock_irqsave(&vio->lock, flags);
 
-	अगर (unlikely(event == LDC_EVENT_RESET)) अणु
+	if (unlikely(event == LDC_EVENT_RESET)) {
 		vio_link_state_change(vio, event);
 		queue_work(sunvdc_wq, &port->ldc_reset_work);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (unlikely(event == LDC_EVENT_UP)) अणु
+	if (unlikely(event == LDC_EVENT_UP)) {
 		vio_link_state_change(vio, event);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (unlikely(event != LDC_EVENT_DATA_READY)) अणु
+	if (unlikely(event != LDC_EVENT_DATA_READY)) {
 		pr_warn(PFX "Unexpected LDC event %d\n", event);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	err = 0;
-	जबतक (1) अणु
-		जोड़ अणु
-			काष्ठा vio_msg_tag tag;
+	while (1) {
+		union {
+			struct vio_msg_tag tag;
 			u64 raw[8];
-		पूर्ण msgbuf;
+		} msgbuf;
 
-		err = ldc_पढ़ो(vio->lp, &msgbuf, माप(msgbuf));
-		अगर (unlikely(err < 0)) अणु
-			अगर (err == -ECONNRESET)
+		err = ldc_read(vio->lp, &msgbuf, sizeof(msgbuf));
+		if (unlikely(err < 0)) {
+			if (err == -ECONNRESET)
 				vio_conn_reset(vio);
-			अवरोध;
-		पूर्ण
-		अगर (err == 0)
-			अवरोध;
+			break;
+		}
+		if (err == 0)
+			break;
 		viodbg(DATA, "TAG [%02x:%02x:%04x:%08x]\n",
 		       msgbuf.tag.type,
 		       msgbuf.tag.stype,
 		       msgbuf.tag.stype_env,
 		       msgbuf.tag.sid);
 		err = vio_validate_sid(vio, &msgbuf.tag);
-		अगर (err < 0)
-			अवरोध;
+		if (err < 0)
+			break;
 
-		अगर (likely(msgbuf.tag.type == VIO_TYPE_DATA)) अणु
-			अगर (msgbuf.tag.stype == VIO_SUBTYPE_ACK)
+		if (likely(msgbuf.tag.type == VIO_TYPE_DATA)) {
+			if (msgbuf.tag.stype == VIO_SUBTYPE_ACK)
 				err = vdc_ack(port, &msgbuf);
-			अन्यथा अगर (msgbuf.tag.stype == VIO_SUBTYPE_NACK)
+			else if (msgbuf.tag.stype == VIO_SUBTYPE_NACK)
 				err = vdc_nack(port, &msgbuf);
-			अन्यथा
+			else
 				err = vdc_handle_unknown(port, &msgbuf);
-		पूर्ण अन्यथा अगर (msgbuf.tag.type == VIO_TYPE_CTRL) अणु
+		} else if (msgbuf.tag.type == VIO_TYPE_CTRL) {
 			err = vio_control_pkt_engine(vio, &msgbuf);
-		पूर्ण अन्यथा अणु
+		} else {
 			err = vdc_handle_unknown(port, &msgbuf);
-		पूर्ण
-		अगर (err < 0)
-			अवरोध;
-	पूर्ण
-	अगर (err < 0)
+		}
+		if (err < 0)
+			break;
+	}
+	if (err < 0)
 		vdc_finish(&port->vio, err, WAITING_FOR_ANY);
 out:
 	spin_unlock_irqrestore(&vio->lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक __vdc_tx_trigger(काष्ठा vdc_port *port)
-अणु
-	काष्ठा vio_dring_state *dr = &port->vio.drings[VIO_DRIVER_TX_RING];
-	काष्ठा vio_dring_data hdr = अणु
-		.tag = अणु
+static int __vdc_tx_trigger(struct vdc_port *port)
+{
+	struct vio_dring_state *dr = &port->vio.drings[VIO_DRIVER_TX_RING];
+	struct vio_dring_data hdr = {
+		.tag = {
 			.type		= VIO_TYPE_DATA,
 			.stype		= VIO_SUBTYPE_INFO,
 			.stype_env	= VIO_DRING_DATA,
 			.sid		= vio_send_sid(&port->vio),
-		पूर्ण,
+		},
 		.dring_ident		= dr->ident,
 		.start_idx		= dr->prod,
 		.end_idx		= dr->prod,
-	पूर्ण;
-	पूर्णांक err, delay;
-	पूर्णांक retries = 0;
+	};
+	int err, delay;
+	int retries = 0;
 
 	hdr.seq = dr->snd_nxt;
 	delay = 1;
-	करो अणु
-		err = vio_ldc_send(&port->vio, &hdr, माप(hdr));
-		अगर (err > 0) अणु
+	do {
+		err = vio_ldc_send(&port->vio, &hdr, sizeof(hdr));
+		if (err > 0) {
 			dr->snd_nxt++;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		udelay(delay);
-		अगर ((delay <<= 1) > 128)
+		if ((delay <<= 1) > 128)
 			delay = 128;
-		अगर (retries++ > VDC_MAX_RETRIES)
-			अवरोध;
-	पूर्ण जबतक (err == -EAGAIN);
+		if (retries++ > VDC_MAX_RETRIES)
+			break;
+	} while (err == -EAGAIN);
 
-	अगर (err == -ENOTCONN)
+	if (err == -ENOTCONN)
 		vdc_ldc_reset(port);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक __send_request(काष्ठा request *req)
-अणु
-	काष्ठा vdc_port *port = req->rq_disk->निजी_data;
-	काष्ठा vio_dring_state *dr = &port->vio.drings[VIO_DRIVER_TX_RING];
-	काष्ठा scatterlist sg[MAX_RING_COOKIES];
-	काष्ठा vdc_req_entry *rqe;
-	काष्ठा vio_disk_desc *desc;
-	अचिन्हित पूर्णांक map_perm;
-	पूर्णांक nsg, err, i;
+static int __send_request(struct request *req)
+{
+	struct vdc_port *port = req->rq_disk->private_data;
+	struct vio_dring_state *dr = &port->vio.drings[VIO_DRIVER_TX_RING];
+	struct scatterlist sg[MAX_RING_COOKIES];
+	struct vdc_req_entry *rqe;
+	struct vio_disk_desc *desc;
+	unsigned int map_perm;
+	int nsg, err, i;
 	u64 len;
 	u8 op;
 
-	अगर (WARN_ON(port->ring_cookies > MAX_RING_COOKIES))
-		वापस -EINVAL;
+	if (WARN_ON(port->ring_cookies > MAX_RING_COOKIES))
+		return -EINVAL;
 
-	map_perm = LDC_MAP_SHADOW | LDC_MAP_सूचीECT | LDC_MAP_IO;
+	map_perm = LDC_MAP_SHADOW | LDC_MAP_DIRECT | LDC_MAP_IO;
 
-	अगर (rq_data_dir(req) == READ) अणु
+	if (rq_data_dir(req) == READ) {
 		map_perm |= LDC_MAP_W;
 		op = VD_OP_BREAD;
-	पूर्ण अन्यथा अणु
+	} else {
 		map_perm |= LDC_MAP_R;
 		op = VD_OP_BWRITE;
-	पूर्ण
+	}
 
 	sg_init_table(sg, port->ring_cookies);
 	nsg = blk_rq_map_sg(req->q, req, sg);
 
 	len = 0;
-	क्रम (i = 0; i < nsg; i++)
+	for (i = 0; i < nsg; i++)
 		len += sg[i].length;
 
 	desc = vio_dring_cur(dr);
@@ -495,10 +494,10 @@ out:
 	err = ldc_map_sg(port->vio.lp, sg, nsg,
 			 desc->cookies, port->ring_cookies,
 			 map_perm);
-	अगर (err < 0) अणु
-		prपूर्णांकk(KERN_ERR PFX "ldc_map_sg() failure, err=%d.\n", err);
-		वापस err;
-	पूर्ण
+	if (err < 0) {
+		printk(KERN_ERR PFX "ldc_map_sg() failure, err=%d.\n", err);
+		return err;
+	}
 
 	rqe = &port->rq_arr[dr->prod];
 	rqe->req = req;
@@ -506,39 +505,39 @@ out:
 	desc->hdr.ack = VIO_ACK_ENABLE;
 	desc->req_id = port->req_id;
 	desc->operation = op;
-	अगर (port->vdisk_type == VD_DISK_TYPE_DISK) अणु
+	if (port->vdisk_type == VD_DISK_TYPE_DISK) {
 		desc->slice = 0xff;
-	पूर्ण अन्यथा अणु
+	} else {
 		desc->slice = 0;
-	पूर्ण
+	}
 	desc->status = ~0;
 	desc->offset = (blk_rq_pos(req) << 9) / port->vdisk_block_size;
 	desc->size = len;
 	desc->ncookies = err;
 
-	/* This has to be a non-SMP ग_लिखो barrier because we are writing
+	/* This has to be a non-SMP write barrier because we are writing
 	 * to memory which is shared with the peer LDOM.
 	 */
 	wmb();
 	desc->hdr.state = VIO_DESC_READY;
 
 	err = __vdc_tx_trigger(port);
-	अगर (err < 0) अणु
-		prपूर्णांकk(KERN_ERR PFX "vdc_tx_trigger() failure, err=%d\n", err);
-	पूर्ण अन्यथा अणु
+	if (err < 0) {
+		printk(KERN_ERR PFX "vdc_tx_trigger() failure, err=%d\n", err);
+	} else {
 		port->req_id++;
 		dr->prod = vio_dring_next(dr, dr->prod);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल blk_status_t vdc_queue_rq(काष्ठा blk_mq_hw_ctx *hctx,
-				 स्थिर काष्ठा blk_mq_queue_data *bd)
-अणु
-	काष्ठा vdc_port *port = hctx->queue->queuedata;
-	काष्ठा vio_dring_state *dr;
-	अचिन्हित दीर्घ flags;
+static blk_status_t vdc_queue_rq(struct blk_mq_hw_ctx *hctx,
+				 const struct blk_mq_queue_data *bd)
+{
+	struct vdc_port *port = hctx->queue->queuedata;
+	struct vio_dring_state *dr;
+	unsigned long flags;
 
 	dr = &port->vio.drings[VIO_DRIVER_TX_RING];
 
@@ -549,107 +548,107 @@ out:
 	/*
 	 * Doing drain, just end the request in error
 	 */
-	अगर (unlikely(port->drain)) अणु
+	if (unlikely(port->drain)) {
 		spin_unlock_irqrestore(&port->vio.lock, flags);
-		वापस BLK_STS_IOERR;
-	पूर्ण
+		return BLK_STS_IOERR;
+	}
 
-	अगर (unlikely(vdc_tx_dring_avail(dr) < 1)) अणु
+	if (unlikely(vdc_tx_dring_avail(dr) < 1)) {
 		spin_unlock_irqrestore(&port->vio.lock, flags);
 		blk_mq_stop_hw_queue(hctx);
-		वापस BLK_STS_DEV_RESOURCE;
-	पूर्ण
+		return BLK_STS_DEV_RESOURCE;
+	}
 
-	अगर (__send_request(bd->rq) < 0) अणु
+	if (__send_request(bd->rq) < 0) {
 		spin_unlock_irqrestore(&port->vio.lock, flags);
-		वापस BLK_STS_IOERR;
-	पूर्ण
+		return BLK_STS_IOERR;
+	}
 
 	spin_unlock_irqrestore(&port->vio.lock, flags);
-	वापस BLK_STS_OK;
-पूर्ण
+	return BLK_STS_OK;
+}
 
-अटल पूर्णांक generic_request(काष्ठा vdc_port *port, u8 op, व्योम *buf, पूर्णांक len)
-अणु
-	काष्ठा vio_dring_state *dr;
-	काष्ठा vio_completion comp;
-	काष्ठा vio_disk_desc *desc;
-	अचिन्हित पूर्णांक map_perm;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक op_len, err;
-	व्योम *req_buf;
+static int generic_request(struct vdc_port *port, u8 op, void *buf, int len)
+{
+	struct vio_dring_state *dr;
+	struct vio_completion comp;
+	struct vio_disk_desc *desc;
+	unsigned int map_perm;
+	unsigned long flags;
+	int op_len, err;
+	void *req_buf;
 
-	अगर (!(((u64)1 << (u64)op) & port->operations))
-		वापस -EOPNOTSUPP;
+	if (!(((u64)1 << (u64)op) & port->operations))
+		return -EOPNOTSUPP;
 
-	चयन (op) अणु
-	हाल VD_OP_BREAD:
-	हाल VD_OP_BWRITE:
-	शेष:
-		वापस -EINVAL;
+	switch (op) {
+	case VD_OP_BREAD:
+	case VD_OP_BWRITE:
+	default:
+		return -EINVAL;
 
-	हाल VD_OP_FLUSH:
+	case VD_OP_FLUSH:
 		op_len = 0;
 		map_perm = 0;
-		अवरोध;
+		break;
 
-	हाल VD_OP_GET_WCE:
-		op_len = माप(u32);
+	case VD_OP_GET_WCE:
+		op_len = sizeof(u32);
 		map_perm = LDC_MAP_W;
-		अवरोध;
+		break;
 
-	हाल VD_OP_SET_WCE:
-		op_len = माप(u32);
+	case VD_OP_SET_WCE:
+		op_len = sizeof(u32);
 		map_perm = LDC_MAP_R;
-		अवरोध;
+		break;
 
-	हाल VD_OP_GET_VTOC:
-		op_len = माप(काष्ठा vio_disk_vtoc);
+	case VD_OP_GET_VTOC:
+		op_len = sizeof(struct vio_disk_vtoc);
 		map_perm = LDC_MAP_W;
-		अवरोध;
+		break;
 
-	हाल VD_OP_SET_VTOC:
-		op_len = माप(काष्ठा vio_disk_vtoc);
+	case VD_OP_SET_VTOC:
+		op_len = sizeof(struct vio_disk_vtoc);
 		map_perm = LDC_MAP_R;
-		अवरोध;
+		break;
 
-	हाल VD_OP_GET_DISKGEOM:
-		op_len = माप(काष्ठा vio_disk_geom);
+	case VD_OP_GET_DISKGEOM:
+		op_len = sizeof(struct vio_disk_geom);
 		map_perm = LDC_MAP_W;
-		अवरोध;
+		break;
 
-	हाल VD_OP_SET_DISKGEOM:
-		op_len = माप(काष्ठा vio_disk_geom);
+	case VD_OP_SET_DISKGEOM:
+		op_len = sizeof(struct vio_disk_geom);
 		map_perm = LDC_MAP_R;
-		अवरोध;
+		break;
 
-	हाल VD_OP_SCSICMD:
+	case VD_OP_SCSICMD:
 		op_len = 16;
 		map_perm = LDC_MAP_RW;
-		अवरोध;
+		break;
 
-	हाल VD_OP_GET_DEVID:
-		op_len = माप(काष्ठा vio_disk_devid);
+	case VD_OP_GET_DEVID:
+		op_len = sizeof(struct vio_disk_devid);
 		map_perm = LDC_MAP_W;
-		अवरोध;
+		break;
 
-	हाल VD_OP_GET_EFI:
-	हाल VD_OP_SET_EFI:
-		वापस -EOPNOTSUPP;
-	पूर्ण
+	case VD_OP_GET_EFI:
+	case VD_OP_SET_EFI:
+		return -EOPNOTSUPP;
+	}
 
-	map_perm |= LDC_MAP_SHADOW | LDC_MAP_सूचीECT | LDC_MAP_IO;
+	map_perm |= LDC_MAP_SHADOW | LDC_MAP_DIRECT | LDC_MAP_IO;
 
 	op_len = (op_len + 7) & ~7;
 	req_buf = kzalloc(op_len, GFP_KERNEL);
-	अगर (!req_buf)
-		वापस -ENOMEM;
+	if (!req_buf)
+		return -ENOMEM;
 
-	अगर (len > op_len)
+	if (len > op_len)
 		len = op_len;
 
-	अगर (map_perm & LDC_MAP_R)
-		स_नकल(req_buf, buf, len);
+	if (map_perm & LDC_MAP_R)
+		memcpy(req_buf, buf, len);
 
 	spin_lock_irqsave(&port->vio.lock, flags);
 
@@ -663,14 +662,14 @@ out:
 	err = ldc_map_single(port->vio.lp, req_buf, op_len,
 			     desc->cookies, port->ring_cookies,
 			     map_perm);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		spin_unlock_irqrestore(&port->vio.lock, flags);
-		kमुक्त(req_buf);
-		वापस err;
-	पूर्ण
+		kfree(req_buf);
+		return err;
+	}
 
 	init_completion(&comp.com);
-	comp.रुकोing_क्रम = WAITING_FOR_GEN_CMD;
+	comp.waiting_for = WAITING_FOR_GEN_CMD;
 	port->vio.cmp = &comp;
 
 	desc->hdr.ack = VIO_ACK_ENABLE;
@@ -682,52 +681,52 @@ out:
 	desc->size = op_len;
 	desc->ncookies = err;
 
-	/* This has to be a non-SMP ग_लिखो barrier because we are writing
+	/* This has to be a non-SMP write barrier because we are writing
 	 * to memory which is shared with the peer LDOM.
 	 */
 	wmb();
 	desc->hdr.state = VIO_DESC_READY;
 
 	err = __vdc_tx_trigger(port);
-	अगर (err >= 0) अणु
+	if (err >= 0) {
 		port->req_id++;
 		dr->prod = vio_dring_next(dr, dr->prod);
 		spin_unlock_irqrestore(&port->vio.lock, flags);
 
-		रुको_क्रम_completion(&comp.com);
+		wait_for_completion(&comp.com);
 		err = comp.err;
-	पूर्ण अन्यथा अणु
-		port->vio.cmp = शून्य;
+	} else {
+		port->vio.cmp = NULL;
 		spin_unlock_irqrestore(&port->vio.lock, flags);
-	पूर्ण
+	}
 
-	अगर (map_perm & LDC_MAP_W)
-		स_नकल(buf, req_buf, len);
+	if (map_perm & LDC_MAP_W)
+		memcpy(buf, req_buf, len);
 
-	kमुक्त(req_buf);
+	kfree(req_buf);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक vdc_alloc_tx_ring(काष्ठा vdc_port *port)
-अणु
-	काष्ठा vio_dring_state *dr = &port->vio.drings[VIO_DRIVER_TX_RING];
-	अचिन्हित दीर्घ len, entry_size;
-	पूर्णांक ncookies;
-	व्योम *dring;
+static int vdc_alloc_tx_ring(struct vdc_port *port)
+{
+	struct vio_dring_state *dr = &port->vio.drings[VIO_DRIVER_TX_RING];
+	unsigned long len, entry_size;
+	int ncookies;
+	void *dring;
 
-	entry_size = माप(काष्ठा vio_disk_desc) +
-		(माप(काष्ठा ldc_trans_cookie) * port->ring_cookies);
+	entry_size = sizeof(struct vio_disk_desc) +
+		(sizeof(struct ldc_trans_cookie) * port->ring_cookies);
 	len = (VDC_TX_RING_SIZE * entry_size);
 
 	ncookies = VIO_MAX_RING_COOKIES;
 	dring = ldc_alloc_exp_dring(port->vio.lp, len,
 				    dr->cookies, &ncookies,
 				    (LDC_MAP_SHADOW |
-				     LDC_MAP_सूचीECT |
+				     LDC_MAP_DIRECT |
 				     LDC_MAP_RW));
-	अगर (IS_ERR(dring))
-		वापस PTR_ERR(dring);
+	if (IS_ERR(dring))
+		return PTR_ERR(dring);
 
 	dr->base = dring;
 	dr->entry_size = entry_size;
@@ -736,122 +735,122 @@ out:
 	dr->pending = VDC_TX_RING_SIZE;
 	dr->ncookies = ncookies;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम vdc_मुक्त_tx_ring(काष्ठा vdc_port *port)
-अणु
-	काष्ठा vio_dring_state *dr = &port->vio.drings[VIO_DRIVER_TX_RING];
+static void vdc_free_tx_ring(struct vdc_port *port)
+{
+	struct vio_dring_state *dr = &port->vio.drings[VIO_DRIVER_TX_RING];
 
-	अगर (dr->base) अणु
-		ldc_मुक्त_exp_dring(port->vio.lp, dr->base,
+	if (dr->base) {
+		ldc_free_exp_dring(port->vio.lp, dr->base,
 				   (dr->entry_size * dr->num_entries),
 				   dr->cookies, dr->ncookies);
-		dr->base = शून्य;
+		dr->base = NULL;
 		dr->entry_size = 0;
 		dr->num_entries = 0;
 		dr->pending = 0;
 		dr->ncookies = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक vdc_port_up(काष्ठा vdc_port *port)
-अणु
-	काष्ठा vio_completion comp;
+static int vdc_port_up(struct vdc_port *port)
+{
+	struct vio_completion comp;
 
 	init_completion(&comp.com);
 	comp.err = 0;
-	comp.रुकोing_क्रम = WAITING_FOR_LINK_UP;
+	comp.waiting_for = WAITING_FOR_LINK_UP;
 	port->vio.cmp = &comp;
 
 	vio_port_up(&port->vio);
-	रुको_क्रम_completion(&comp.com);
-	वापस comp.err;
-पूर्ण
+	wait_for_completion(&comp.com);
+	return comp.err;
+}
 
-अटल व्योम vdc_port_करोwn(काष्ठा vdc_port *port)
-अणु
+static void vdc_port_down(struct vdc_port *port)
+{
 	ldc_disconnect(port->vio.lp);
 	ldc_unbind(port->vio.lp);
-	vdc_मुक्त_tx_ring(port);
-	vio_ldc_मुक्त(&port->vio);
-पूर्ण
+	vdc_free_tx_ring(port);
+	vio_ldc_free(&port->vio);
+}
 
-अटल स्थिर काष्ठा blk_mq_ops vdc_mq_ops = अणु
+static const struct blk_mq_ops vdc_mq_ops = {
 	.queue_rq	= vdc_queue_rq,
-पूर्ण;
+};
 
-अटल व्योम cleanup_queue(काष्ठा request_queue *q)
-अणु
-	काष्ठा vdc_port *port = q->queuedata;
+static void cleanup_queue(struct request_queue *q)
+{
+	struct vdc_port *port = q->queuedata;
 
 	blk_cleanup_queue(q);
-	blk_mq_मुक्त_tag_set(&port->tag_set);
-पूर्ण
+	blk_mq_free_tag_set(&port->tag_set);
+}
 
-अटल काष्ठा request_queue *init_queue(काष्ठा vdc_port *port)
-अणु
-	काष्ठा request_queue *q;
+static struct request_queue *init_queue(struct vdc_port *port)
+{
+	struct request_queue *q;
 
 	q = blk_mq_init_sq_queue(&port->tag_set, &vdc_mq_ops, VDC_TX_RING_SIZE,
 					BLK_MQ_F_SHOULD_MERGE);
-	अगर (IS_ERR(q))
-		वापस q;
+	if (IS_ERR(q))
+		return q;
 
 	q->queuedata = port;
-	वापस q;
-पूर्ण
+	return q;
+}
 
-अटल पूर्णांक probe_disk(काष्ठा vdc_port *port)
-अणु
-	काष्ठा request_queue *q;
-	काष्ठा gendisk *g;
-	पूर्णांक err;
+static int probe_disk(struct vdc_port *port)
+{
+	struct request_queue *q;
+	struct gendisk *g;
+	int err;
 
 	err = vdc_port_up(port);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* Using version 1.2 means vdisk_phys_blksz should be set unless the
-	 * disk is reserved by another प्रणाली.
+	 * disk is reserved by another system.
 	 */
-	अगर (vdc_version_supported(port, 1, 2) && !port->vdisk_phys_blksz)
-		वापस -ENODEV;
+	if (vdc_version_supported(port, 1, 2) && !port->vdisk_phys_blksz)
+		return -ENODEV;
 
-	अगर (vdc_version_supported(port, 1, 1)) अणु
-		/* vdisk_size should be set during the handshake, अगर it wasn't
-		 * then the underlying disk is reserved by another प्रणाली
+	if (vdc_version_supported(port, 1, 1)) {
+		/* vdisk_size should be set during the handshake, if it wasn't
+		 * then the underlying disk is reserved by another system
 		 */
-		अगर (port->vdisk_size == -1)
-			वापस -ENODEV;
-	पूर्ण अन्यथा अणु
-		काष्ठा vio_disk_geom geom;
+		if (port->vdisk_size == -1)
+			return -ENODEV;
+	} else {
+		struct vio_disk_geom geom;
 
 		err = generic_request(port, VD_OP_GET_DISKGEOM,
-				      &geom, माप(geom));
-		अगर (err < 0) अणु
-			prपूर्णांकk(KERN_ERR PFX "VD_OP_GET_DISKGEOM returns "
+				      &geom, sizeof(geom));
+		if (err < 0) {
+			printk(KERN_ERR PFX "VD_OP_GET_DISKGEOM returns "
 			       "error %d\n", err);
-			वापस err;
-		पूर्ण
+			return err;
+		}
 		port->vdisk_size = ((u64)geom.num_cyl *
 				    (u64)geom.num_hd *
 				    (u64)geom.num_sec);
-	पूर्ण
+	}
 
 	q = init_queue(port);
-	अगर (IS_ERR(q)) अणु
-		prपूर्णांकk(KERN_ERR PFX "%s: Could not allocate queue.\n",
+	if (IS_ERR(q)) {
+		printk(KERN_ERR PFX "%s: Could not allocate queue.\n",
 		       port->vio.name);
-		वापस PTR_ERR(q);
-	पूर्ण
+		return PTR_ERR(q);
+	}
 	g = alloc_disk(1 << PARTITION_SHIFT);
-	अगर (!g) अणु
-		prपूर्णांकk(KERN_ERR PFX "%s: Could not allocate gendisk.\n",
+	if (!g) {
+		printk(KERN_ERR PFX "%s: Could not allocate gendisk.\n",
 		       port->vio.name);
 		cleanup_queue(q);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	port->disk = g;
 
@@ -863,35 +862,35 @@ out:
 	blk_queue_max_hw_sectors(q, port->max_xfer_size);
 	g->major = vdc_major;
 	g->first_minor = port->vio.vdev->dev_no << PARTITION_SHIFT;
-	म_नकल(g->disk_name, port->disk_name);
+	strcpy(g->disk_name, port->disk_name);
 
 	g->fops = &vdc_fops;
 	g->queue = q;
-	g->निजी_data = port;
+	g->private_data = port;
 
 	set_capacity(g, port->vdisk_size);
 
-	अगर (vdc_version_supported(port, 1, 1)) अणु
-		चयन (port->vdisk_mtype) अणु
-		हाल VD_MEDIA_TYPE_CD:
+	if (vdc_version_supported(port, 1, 1)) {
+		switch (port->vdisk_mtype) {
+		case VD_MEDIA_TYPE_CD:
 			pr_info(PFX "Virtual CDROM %s\n", port->disk_name);
 			g->flags |= GENHD_FL_CD;
 			g->flags |= GENHD_FL_REMOVABLE;
 			set_disk_ro(g, 1);
-			अवरोध;
+			break;
 
-		हाल VD_MEDIA_TYPE_DVD:
+		case VD_MEDIA_TYPE_DVD:
 			pr_info(PFX "Virtual DVD %s\n", port->disk_name);
 			g->flags |= GENHD_FL_CD;
 			g->flags |= GENHD_FL_REMOVABLE;
 			set_disk_ro(g, 1);
-			अवरोध;
+			break;
 
-		हाल VD_MEDIA_TYPE_FIXED:
+		case VD_MEDIA_TYPE_FIXED:
 			pr_info(PFX "Virtual Hard disk %s\n", port->disk_name);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	blk_queue_physical_block_size(q, port->vdisk_phys_blksz);
 
@@ -900,154 +899,154 @@ out:
 	       port->vdisk_size, (port->vdisk_size >> (20 - 9)),
 	       port->vio.ver.major, port->vio.ver.minor);
 
-	device_add_disk(&port->vio.vdev->dev, g, शून्य);
+	device_add_disk(&port->vio.vdev->dev, g, NULL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा ldc_channel_config vdc_ldc_cfg = अणु
+static struct ldc_channel_config vdc_ldc_cfg = {
 	.event		= vdc_event,
 	.mtu		= 64,
 	.mode		= LDC_MODE_UNRELIABLE,
-पूर्ण;
+};
 
-अटल काष्ठा vio_driver_ops vdc_vio_ops = अणु
+static struct vio_driver_ops vdc_vio_ops = {
 	.send_attr		= vdc_send_attr,
 	.handle_attr		= vdc_handle_attr,
 	.handshake_complete	= vdc_handshake_complete,
-पूर्ण;
+};
 
-अटल व्योम prपूर्णांक_version(व्योम)
-अणु
-	अटल पूर्णांक version_prपूर्णांकed;
+static void print_version(void)
+{
+	static int version_printed;
 
-	अगर (version_prपूर्णांकed++ == 0)
-		prपूर्णांकk(KERN_INFO "%s", version);
-पूर्ण
+	if (version_printed++ == 0)
+		printk(KERN_INFO "%s", version);
+}
 
-काष्ठा vdc_check_port_data अणु
-	पूर्णांक	dev_no;
-	अक्षर	*type;
-पूर्ण;
+struct vdc_check_port_data {
+	int	dev_no;
+	char	*type;
+};
 
-अटल पूर्णांक vdc_device_probed(काष्ठा device *dev, व्योम *arg)
-अणु
-	काष्ठा vio_dev *vdev = to_vio_dev(dev);
-	काष्ठा vdc_check_port_data *port_data;
+static int vdc_device_probed(struct device *dev, void *arg)
+{
+	struct vio_dev *vdev = to_vio_dev(dev);
+	struct vdc_check_port_data *port_data;
 
-	port_data = (काष्ठा vdc_check_port_data *)arg;
+	port_data = (struct vdc_check_port_data *)arg;
 
-	अगर ((vdev->dev_no == port_data->dev_no) &&
-	    (!(म_भेद((अक्षर *)&vdev->type, port_data->type))) &&
-		dev_get_drvdata(dev)) अणु
-		/* This device has alपढ़ोy been configured
+	if ((vdev->dev_no == port_data->dev_no) &&
+	    (!(strcmp((char *)&vdev->type, port_data->type))) &&
+		dev_get_drvdata(dev)) {
+		/* This device has already been configured
 		 * by vdc_port_probe()
 		 */
-		वापस 1;
-	पूर्ण अन्यथा अणु
-		वापस 0;
-	पूर्ण
-पूर्ण
+		return 1;
+	} else {
+		return 0;
+	}
+}
 
 /* Determine whether the VIO device is part of an mpgroup
- * by locating all the भव-device-port nodes associated
- * with the parent भव-device node क्रम the VIO device
+ * by locating all the virtual-device-port nodes associated
+ * with the parent virtual-device node for the VIO device
  * and checking whether any of these nodes are vdc-ports
- * which have alपढ़ोy been configured.
+ * which have already been configured.
  *
- * Returns true अगर this device is part of an mpgroup and has
- * alपढ़ोy been probed.
+ * Returns true if this device is part of an mpgroup and has
+ * already been probed.
  */
-अटल bool vdc_port_mpgroup_check(काष्ठा vio_dev *vdev)
-अणु
-	काष्ठा vdc_check_port_data port_data;
-	काष्ठा device *dev;
+static bool vdc_port_mpgroup_check(struct vio_dev *vdev)
+{
+	struct vdc_check_port_data port_data;
+	struct device *dev;
 
 	port_data.dev_no = vdev->dev_no;
-	port_data.type = (अक्षर *)&vdev->type;
+	port_data.type = (char *)&vdev->type;
 
 	dev = device_find_child(vdev->dev.parent, &port_data,
 				vdc_device_probed);
 
-	अगर (dev)
-		वापस true;
+	if (dev)
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल पूर्णांक vdc_port_probe(काष्ठा vio_dev *vdev, स्थिर काष्ठा vio_device_id *id)
-अणु
-	काष्ठा mdesc_handle *hp;
-	काष्ठा vdc_port *port;
-	पूर्णांक err;
-	स्थिर u64 *ldc_समयout;
+static int vdc_port_probe(struct vio_dev *vdev, const struct vio_device_id *id)
+{
+	struct mdesc_handle *hp;
+	struct vdc_port *port;
+	int err;
+	const u64 *ldc_timeout;
 
-	prपूर्णांक_version();
+	print_version();
 
 	hp = mdesc_grab();
 
 	err = -ENODEV;
-	अगर ((vdev->dev_no << PARTITION_SHIFT) & ~(u64)MINORMASK) अणु
-		prपूर्णांकk(KERN_ERR PFX "Port id [%llu] too large.\n",
+	if ((vdev->dev_no << PARTITION_SHIFT) & ~(u64)MINORMASK) {
+		printk(KERN_ERR PFX "Port id [%llu] too large.\n",
 		       vdev->dev_no);
-		जाओ err_out_release_mdesc;
-	पूर्ण
+		goto err_out_release_mdesc;
+	}
 
-	/* Check अगर this device is part of an mpgroup */
-	अगर (vdc_port_mpgroup_check(vdev)) अणु
-		prपूर्णांकk(KERN_WARNING
+	/* Check if this device is part of an mpgroup */
+	if (vdc_port_mpgroup_check(vdev)) {
+		printk(KERN_WARNING
 			"VIO: Ignoring extra vdisk port %s",
 			dev_name(&vdev->dev));
-		जाओ err_out_release_mdesc;
-	पूर्ण
+		goto err_out_release_mdesc;
+	}
 
-	port = kzalloc(माप(*port), GFP_KERNEL);
+	port = kzalloc(sizeof(*port), GFP_KERNEL);
 	err = -ENOMEM;
-	अगर (!port) अणु
-		prपूर्णांकk(KERN_ERR PFX "Cannot allocate vdc_port.\n");
-		जाओ err_out_release_mdesc;
-	पूर्ण
+	if (!port) {
+		printk(KERN_ERR PFX "Cannot allocate vdc_port.\n");
+		goto err_out_release_mdesc;
+	}
 
-	अगर (vdev->dev_no >= 26)
-		snम_लिखो(port->disk_name, माप(port->disk_name),
+	if (vdev->dev_no >= 26)
+		snprintf(port->disk_name, sizeof(port->disk_name),
 			 VDCBLK_NAME "%c%c",
-			 'a' + ((पूर्णांक)vdev->dev_no / 26) - 1,
-			 'a' + ((पूर्णांक)vdev->dev_no % 26));
-	अन्यथा
-		snम_लिखो(port->disk_name, माप(port->disk_name),
-			 VDCBLK_NAME "%c", 'a' + ((पूर्णांक)vdev->dev_no % 26));
+			 'a' + ((int)vdev->dev_no / 26) - 1,
+			 'a' + ((int)vdev->dev_no % 26));
+	else
+		snprintf(port->disk_name, sizeof(port->disk_name),
+			 VDCBLK_NAME "%c", 'a' + ((int)vdev->dev_no % 26));
 	port->vdisk_size = -1;
 
-	/* Actual wall समय may be द्विगुन due to करो_generic_file_पढ़ो() करोing
-	 * a पढ़ोahead I/O first, and once that fails it will try to पढ़ो a
+	/* Actual wall time may be double due to do_generic_file_read() doing
+	 * a readahead I/O first, and once that fails it will try to read a
 	 * single page.
 	 */
-	ldc_समयout = mdesc_get_property(hp, vdev->mp, "vdc-timeout", शून्य);
-	port->ldc_समयout = ldc_समयout ? *ldc_समयout : 0;
-	INIT_DELAYED_WORK(&port->ldc_reset_समयr_work, vdc_ldc_reset_समयr_work);
+	ldc_timeout = mdesc_get_property(hp, vdev->mp, "vdc-timeout", NULL);
+	port->ldc_timeout = ldc_timeout ? *ldc_timeout : 0;
+	INIT_DELAYED_WORK(&port->ldc_reset_timer_work, vdc_ldc_reset_timer_work);
 	INIT_WORK(&port->ldc_reset_work, vdc_ldc_reset_work);
 
 	err = vio_driver_init(&port->vio, vdev, VDEV_DISK,
 			      vdc_versions, ARRAY_SIZE(vdc_versions),
 			      &vdc_vio_ops, port->disk_name);
-	अगर (err)
-		जाओ err_out_मुक्त_port;
+	if (err)
+		goto err_out_free_port;
 
 	port->vdisk_block_size = VDC_DEFAULT_BLK_SIZE;
 	port->max_xfer_size = MAX_XFER_SIZE;
 	port->ring_cookies = MAX_RING_COOKIES;
 
 	err = vio_ldc_alloc(&port->vio, &vdc_ldc_cfg, port);
-	अगर (err)
-		जाओ err_out_मुक्त_port;
+	if (err)
+		goto err_out_free_port;
 
 	err = vdc_alloc_tx_ring(port);
-	अगर (err)
-		जाओ err_out_मुक्त_ldc;
+	if (err)
+		goto err_out_free_ldc;
 
 	err = probe_disk(port);
-	अगर (err)
-		जाओ err_out_मुक्त_tx_ring;
+	if (err)
+		goto err_out_free_tx_ring;
 
 	/* Note that the device driver_data is used to determine
 	 * whether the port has been probed.
@@ -1056,208 +1055,208 @@ out:
 
 	mdesc_release(hp);
 
-	वापस 0;
+	return 0;
 
-err_out_मुक्त_tx_ring:
-	vdc_मुक्त_tx_ring(port);
+err_out_free_tx_ring:
+	vdc_free_tx_ring(port);
 
-err_out_मुक्त_ldc:
-	vio_ldc_मुक्त(&port->vio);
+err_out_free_ldc:
+	vio_ldc_free(&port->vio);
 
-err_out_मुक्त_port:
-	kमुक्त(port);
+err_out_free_port:
+	kfree(port);
 
 err_out_release_mdesc:
 	mdesc_release(hp);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक vdc_port_हटाओ(काष्ठा vio_dev *vdev)
-अणु
-	काष्ठा vdc_port *port = dev_get_drvdata(&vdev->dev);
+static int vdc_port_remove(struct vio_dev *vdev)
+{
+	struct vdc_port *port = dev_get_drvdata(&vdev->dev);
 
-	अगर (port) अणु
+	if (port) {
 		blk_mq_stop_hw_queues(port->disk->queue);
 
 		flush_work(&port->ldc_reset_work);
-		cancel_delayed_work_sync(&port->ldc_reset_समयr_work);
-		del_समयr_sync(&port->vio.समयr);
+		cancel_delayed_work_sync(&port->ldc_reset_timer_work);
+		del_timer_sync(&port->vio.timer);
 
 		del_gendisk(port->disk);
 		cleanup_queue(port->disk->queue);
 		put_disk(port->disk);
-		port->disk = शून्य;
+		port->disk = NULL;
 
-		vdc_मुक्त_tx_ring(port);
-		vio_ldc_मुक्त(&port->vio);
+		vdc_free_tx_ring(port);
+		vio_ldc_free(&port->vio);
 
-		dev_set_drvdata(&vdev->dev, शून्य);
+		dev_set_drvdata(&vdev->dev, NULL);
 
-		kमुक्त(port);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		kfree(port);
+	}
+	return 0;
+}
 
-अटल व्योम vdc_requeue_inflight(काष्ठा vdc_port *port)
-अणु
-	काष्ठा vio_dring_state *dr = &port->vio.drings[VIO_DRIVER_TX_RING];
+static void vdc_requeue_inflight(struct vdc_port *port)
+{
+	struct vio_dring_state *dr = &port->vio.drings[VIO_DRIVER_TX_RING];
 	u32 idx;
 
-	क्रम (idx = dr->cons; idx != dr->prod; idx = vio_dring_next(dr, idx)) अणु
-		काष्ठा vio_disk_desc *desc = vio_dring_entry(dr, idx);
-		काष्ठा vdc_req_entry *rqe = &port->rq_arr[idx];
-		काष्ठा request *req;
+	for (idx = dr->cons; idx != dr->prod; idx = vio_dring_next(dr, idx)) {
+		struct vio_disk_desc *desc = vio_dring_entry(dr, idx);
+		struct vdc_req_entry *rqe = &port->rq_arr[idx];
+		struct request *req;
 
 		ldc_unmap(port->vio.lp, desc->cookies, desc->ncookies);
 		desc->hdr.state = VIO_DESC_FREE;
 		dr->cons = vio_dring_next(dr, idx);
 
 		req = rqe->req;
-		अगर (req == शून्य) अणु
+		if (req == NULL) {
 			vdc_end_special(port, desc);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		rqe->req = शून्य;
+		rqe->req = NULL;
 		blk_mq_requeue_request(req, false);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम vdc_queue_drain(काष्ठा vdc_port *port)
-अणु
-	काष्ठा request_queue *q = port->disk->queue;
+static void vdc_queue_drain(struct vdc_port *port)
+{
+	struct request_queue *q = port->disk->queue;
 
 	/*
-	 * Mark the queue as draining, then मुक्तze/quiesce to ensure
-	 * that all existing requests are seen in ->queue_rq() and समाप्तed
+	 * Mark the queue as draining, then freeze/quiesce to ensure
+	 * that all existing requests are seen in ->queue_rq() and killed
 	 */
 	port->drain = 1;
 	spin_unlock_irq(&port->vio.lock);
 
-	blk_mq_मुक्तze_queue(q);
+	blk_mq_freeze_queue(q);
 	blk_mq_quiesce_queue(q);
 
 	spin_lock_irq(&port->vio.lock);
 	port->drain = 0;
 	blk_mq_unquiesce_queue(q);
-	blk_mq_unमुक्तze_queue(q);
-पूर्ण
+	blk_mq_unfreeze_queue(q);
+}
 
-अटल व्योम vdc_ldc_reset_समयr_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा vdc_port *port;
-	काष्ठा vio_driver_state *vio;
+static void vdc_ldc_reset_timer_work(struct work_struct *work)
+{
+	struct vdc_port *port;
+	struct vio_driver_state *vio;
 
-	port = container_of(work, काष्ठा vdc_port, ldc_reset_समयr_work.work);
+	port = container_of(work, struct vdc_port, ldc_reset_timer_work.work);
 	vio = &port->vio;
 
 	spin_lock_irq(&vio->lock);
-	अगर (!(port->vपन.सs_state & VIO_HS_COMPLETE)) अणु
+	if (!(port->vio.hs_state & VIO_HS_COMPLETE)) {
 		pr_warn(PFX "%s ldc down %llu seconds, draining queue\n",
-			port->disk_name, port->ldc_समयout);
+			port->disk_name, port->ldc_timeout);
 		vdc_queue_drain(port);
 		vdc_blk_queue_start(port);
-	पूर्ण
+	}
 	spin_unlock_irq(&vio->lock);
-पूर्ण
+}
 
-अटल व्योम vdc_ldc_reset_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा vdc_port *port;
-	काष्ठा vio_driver_state *vio;
-	अचिन्हित दीर्घ flags;
+static void vdc_ldc_reset_work(struct work_struct *work)
+{
+	struct vdc_port *port;
+	struct vio_driver_state *vio;
+	unsigned long flags;
 
-	port = container_of(work, काष्ठा vdc_port, ldc_reset_work);
+	port = container_of(work, struct vdc_port, ldc_reset_work);
 	vio = &port->vio;
 
 	spin_lock_irqsave(&vio->lock, flags);
 	vdc_ldc_reset(port);
 	spin_unlock_irqrestore(&vio->lock, flags);
-पूर्ण
+}
 
-अटल व्योम vdc_ldc_reset(काष्ठा vdc_port *port)
-अणु
-	पूर्णांक err;
+static void vdc_ldc_reset(struct vdc_port *port)
+{
+	int err;
 
-	निश्चित_spin_locked(&port->vio.lock);
+	assert_spin_locked(&port->vio.lock);
 
 	pr_warn(PFX "%s ldc link reset\n", port->disk_name);
 	blk_mq_stop_hw_queues(port->disk->queue);
 	vdc_requeue_inflight(port);
-	vdc_port_करोwn(port);
+	vdc_port_down(port);
 
 	err = vio_ldc_alloc(&port->vio, &vdc_ldc_cfg, port);
-	अगर (err) अणु
+	if (err) {
 		pr_err(PFX "%s vio_ldc_alloc:%d\n", port->disk_name, err);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	err = vdc_alloc_tx_ring(port);
-	अगर (err) अणु
+	if (err) {
 		pr_err(PFX "%s vio_alloc_tx_ring:%d\n", port->disk_name, err);
-		जाओ err_मुक्त_ldc;
-	पूर्ण
+		goto err_free_ldc;
+	}
 
-	अगर (port->ldc_समयout)
-		mod_delayed_work(प्रणाली_wq, &port->ldc_reset_समयr_work,
-			  round_jअगरfies(jअगरfies + HZ * port->ldc_समयout));
-	mod_समयr(&port->vio.समयr, round_jअगरfies(jअगरfies + HZ));
-	वापस;
+	if (port->ldc_timeout)
+		mod_delayed_work(system_wq, &port->ldc_reset_timer_work,
+			  round_jiffies(jiffies + HZ * port->ldc_timeout));
+	mod_timer(&port->vio.timer, round_jiffies(jiffies + HZ));
+	return;
 
-err_मुक्त_ldc:
-	vio_ldc_मुक्त(&port->vio);
-पूर्ण
+err_free_ldc:
+	vio_ldc_free(&port->vio);
+}
 
-अटल स्थिर काष्ठा vio_device_id vdc_port_match[] = अणु
-	अणु
+static const struct vio_device_id vdc_port_match[] = {
+	{
 		.type = "vdc-port",
-	पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+	},
+	{},
+};
 MODULE_DEVICE_TABLE(vio, vdc_port_match);
 
-अटल काष्ठा vio_driver vdc_port_driver = अणु
+static struct vio_driver vdc_port_driver = {
 	.id_table	= vdc_port_match,
 	.probe		= vdc_port_probe,
-	.हटाओ		= vdc_port_हटाओ,
+	.remove		= vdc_port_remove,
 	.name		= "vdc_port",
-पूर्ण;
+};
 
-अटल पूर्णांक __init vdc_init(व्योम)
-अणु
-	पूर्णांक err;
+static int __init vdc_init(void)
+{
+	int err;
 
 	sunvdc_wq = alloc_workqueue("sunvdc", 0, 0);
-	अगर (!sunvdc_wq)
-		वापस -ENOMEM;
+	if (!sunvdc_wq)
+		return -ENOMEM;
 
-	err = रेजिस्टर_blkdev(0, VDCBLK_NAME);
-	अगर (err < 0)
-		जाओ out_मुक्त_wq;
+	err = register_blkdev(0, VDCBLK_NAME);
+	if (err < 0)
+		goto out_free_wq;
 
 	vdc_major = err;
 
-	err = vio_रेजिस्टर_driver(&vdc_port_driver);
-	अगर (err)
-		जाओ out_unरेजिस्टर_blkdev;
+	err = vio_register_driver(&vdc_port_driver);
+	if (err)
+		goto out_unregister_blkdev;
 
-	वापस 0;
+	return 0;
 
-out_unरेजिस्टर_blkdev:
-	unरेजिस्टर_blkdev(vdc_major, VDCBLK_NAME);
+out_unregister_blkdev:
+	unregister_blkdev(vdc_major, VDCBLK_NAME);
 	vdc_major = 0;
 
-out_मुक्त_wq:
+out_free_wq:
 	destroy_workqueue(sunvdc_wq);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम __निकास vdc_निकास(व्योम)
-अणु
-	vio_unरेजिस्टर_driver(&vdc_port_driver);
-	unरेजिस्टर_blkdev(vdc_major, VDCBLK_NAME);
+static void __exit vdc_exit(void)
+{
+	vio_unregister_driver(&vdc_port_driver);
+	unregister_blkdev(vdc_major, VDCBLK_NAME);
 	destroy_workqueue(sunvdc_wq);
-पूर्ण
+}
 
 module_init(vdc_init);
-module_निकास(vdc_निकास);
+module_exit(vdc_exit);

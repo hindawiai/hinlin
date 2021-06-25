@@ -1,95 +1,94 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (GPL-2.0 OR MIT)
+// SPDX-License-Identifier: (GPL-2.0 OR MIT)
 /*
- * SerDes PHY driver क्रम Microsemi Ocelot
+ * SerDes PHY driver for Microsemi Ocelot
  *
  * Copyright (c) 2018 Microsemi
  *
  */
 
-#समावेश <linux/err.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/phy.h>
-#समावेश <linux/phy/phy.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regmap.h>
-#समावेश <soc/mscc/ocelot_hsपन.स>
-#समावेश <dt-bindings/phy/phy-ocelot-serdes.h>
+#include <linux/err.h>
+#include <linux/mfd/syscon.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_platform.h>
+#include <linux/phy.h>
+#include <linux/phy/phy.h>
+#include <linux/platform_device.h>
+#include <linux/regmap.h>
+#include <soc/mscc/ocelot_hsio.h>
+#include <dt-bindings/phy/phy-ocelot-serdes.h>
 
-काष्ठा serdes_ctrl अणु
-	काष्ठा regmap		*regs;
-	काष्ठा device		*dev;
-	काष्ठा phy		*phys[SERDES_MAX];
-पूर्ण;
+struct serdes_ctrl {
+	struct regmap		*regs;
+	struct device		*dev;
+	struct phy		*phys[SERDES_MAX];
+};
 
-काष्ठा serdes_macro अणु
+struct serdes_macro {
 	u8			idx;
 	/* Not used when in QSGMII or PCIe mode */
-	पूर्णांक			port;
-	काष्ठा serdes_ctrl	*ctrl;
-पूर्ण;
+	int			port;
+	struct serdes_ctrl	*ctrl;
+};
 
-#घोषणा MCB_S6G_CFG_TIMEOUT     50
+#define MCB_S6G_CFG_TIMEOUT     50
 
-अटल पूर्णांक __serdes_ग_लिखो_mcb_s6g(काष्ठा regmap *regmap, u8 macro, u32 op)
-अणु
-	अचिन्हित पूर्णांक regval = 0;
+static int __serdes_write_mcb_s6g(struct regmap *regmap, u8 macro, u32 op)
+{
+	unsigned int regval = 0;
 
-	regmap_ग_लिखो(regmap, HSIO_MCB_S6G_ADDR_CFG, op |
+	regmap_write(regmap, HSIO_MCB_S6G_ADDR_CFG, op |
 		     HSIO_MCB_S6G_ADDR_CFG_SERDES6G_ADDR(BIT(macro)));
 
-	वापस regmap_पढ़ो_poll_समयout(regmap, HSIO_MCB_S6G_ADDR_CFG, regval,
+	return regmap_read_poll_timeout(regmap, HSIO_MCB_S6G_ADDR_CFG, regval,
 					(regval & op) != op, 100,
 					MCB_S6G_CFG_TIMEOUT * 1000);
-पूर्ण
+}
 
-अटल पूर्णांक serdes_commit_mcb_s6g(काष्ठा regmap *regmap, u8 macro)
-अणु
-	वापस __serdes_ग_लिखो_mcb_s6g(regmap, macro,
+static int serdes_commit_mcb_s6g(struct regmap *regmap, u8 macro)
+{
+	return __serdes_write_mcb_s6g(regmap, macro,
 		HSIO_MCB_S6G_ADDR_CFG_SERDES6G_WR_ONE_SHOT);
-पूर्ण
+}
 
-अटल पूर्णांक serdes_update_mcb_s6g(काष्ठा regmap *regmap, u8 macro)
-अणु
-	वापस __serdes_ग_लिखो_mcb_s6g(regmap, macro,
+static int serdes_update_mcb_s6g(struct regmap *regmap, u8 macro)
+{
+	return __serdes_write_mcb_s6g(regmap, macro,
 		HSIO_MCB_S6G_ADDR_CFG_SERDES6G_RD_ONE_SHOT);
-पूर्ण
+}
 
-अटल पूर्णांक serdes_init_s6g(काष्ठा regmap *regmap, u8 serdes, पूर्णांक mode)
-अणु
+static int serdes_init_s6g(struct regmap *regmap, u8 serdes, int mode)
+{
 	u32 pll_fsm_ctrl_data;
 	u32 ob_ena1v_mode;
 	u32 des_bw_ana;
 	u32 ob_ena_cas;
-	u32 अगर_mode;
+	u32 if_mode;
 	u32 ob_lev;
 	u32 qrate;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (mode == PHY_INTERFACE_MODE_QSGMII) अणु
+	if (mode == PHY_INTERFACE_MODE_QSGMII) {
 		pll_fsm_ctrl_data = 120;
 		ob_ena1v_mode = 0;
 		ob_ena_cas = 0;
 		des_bw_ana = 5;
 		ob_lev = 24;
-		अगर_mode = 3;
+		if_mode = 3;
 		qrate = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		pll_fsm_ctrl_data = 60;
 		ob_ena1v_mode = 1;
 		ob_ena_cas = 2;
 		des_bw_ana = 3;
 		ob_lev = 48;
-		अगर_mode = 1;
+		if_mode = 1;
 		qrate = 1;
-	पूर्ण
+	}
 
 	ret = serdes_update_mcb_s6g(regmap, serdes);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* Test pattern */
 
@@ -145,8 +144,8 @@
 			   HSIO_S6G_MISC_CFG_LANE_RST);
 
 	ret = serdes_commit_mcb_s6g(regmap, serdes);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* OB + DES + IB + SER CFG */
 	regmap_update_bits(regmap, HSIO_S6G_OB_CFG,
@@ -191,7 +190,7 @@
 			   HSIO_S6G_PLL_CFG_PLL_DIV4 |
 			   HSIO_S6G_PLL_CFG_PLL_ENA_ROT |
 			   HSIO_S6G_PLL_CFG_PLL_FSM_CTRL_DATA_M |
-			   HSIO_S6G_PLL_CFG_PLL_ROT_सूची |
+			   HSIO_S6G_PLL_CFG_PLL_ROT_DIR |
 			   HSIO_S6G_PLL_CFG_PLL_ROT_FRQ,
 			   HSIO_S6G_PLL_CFG_PLL_FSM_CTRL_DATA
 			   (pll_fsm_ctrl_data));
@@ -209,7 +208,7 @@
 			   HSIO_S6G_COMMON_CFG_SYS_RST |
 			   HSIO_S6G_COMMON_CFG_ENA_LANE |
 			   (qrate ? HSIO_S6G_COMMON_CFG_QRATE : 0) |
-			   HSIO_S6G_COMMON_CFG_IF_MODE(अगर_mode));
+			   HSIO_S6G_COMMON_CFG_IF_MODE(if_mode));
 
 	regmap_update_bits(regmap, HSIO_S6G_MISC_CFG,
 			   HSIO_S6G_MISC_CFG_LANE_RST |
@@ -221,18 +220,18 @@
 
 
 	ret = serdes_commit_mcb_s6g(regmap, serdes);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	regmap_update_bits(regmap, HSIO_S6G_PLL_CFG,
 			   HSIO_S6G_PLL_CFG_PLL_FSM_ENA,
 			   HSIO_S6G_PLL_CFG_PLL_FSM_ENA);
 
 	ret = serdes_commit_mcb_s6g(regmap, serdes);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* Wait क्रम PLL bringup */
+	/* Wait for PLL bringup */
 	msleep(20);
 
 	regmap_update_bits(regmap, HSIO_S6G_IB_CFG,
@@ -243,10 +242,10 @@
 			   HSIO_S6G_MISC_CFG_LANE_RST, 0);
 
 	ret = serdes_commit_mcb_s6g(regmap, serdes);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* Wait क्रम calibration */
+	/* Wait for calibration */
 	msleep(60);
 
 	regmap_update_bits(regmap, HSIO_S6G_IB_CFG,
@@ -261,42 +260,42 @@
 
 	/* IB CFG */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा MCB_S1G_CFG_TIMEOUT     50
+#define MCB_S1G_CFG_TIMEOUT     50
 
-अटल पूर्णांक __serdes_ग_लिखो_mcb_s1g(काष्ठा regmap *regmap, u8 macro, u32 op)
-अणु
-	अचिन्हित पूर्णांक regval;
+static int __serdes_write_mcb_s1g(struct regmap *regmap, u8 macro, u32 op)
+{
+	unsigned int regval;
 
-	regmap_ग_लिखो(regmap, HSIO_MCB_S1G_ADDR_CFG, op |
+	regmap_write(regmap, HSIO_MCB_S1G_ADDR_CFG, op |
 		     HSIO_MCB_S1G_ADDR_CFG_SERDES1G_ADDR(BIT(macro)));
 
-	वापस regmap_पढ़ो_poll_समयout(regmap, HSIO_MCB_S1G_ADDR_CFG, regval,
+	return regmap_read_poll_timeout(regmap, HSIO_MCB_S1G_ADDR_CFG, regval,
 					(regval & op) != op, 100,
 					MCB_S1G_CFG_TIMEOUT * 1000);
-पूर्ण
+}
 
-अटल पूर्णांक serdes_commit_mcb_s1g(काष्ठा regmap *regmap, u8 macro)
-अणु
-	वापस __serdes_ग_लिखो_mcb_s1g(regmap, macro,
+static int serdes_commit_mcb_s1g(struct regmap *regmap, u8 macro)
+{
+	return __serdes_write_mcb_s1g(regmap, macro,
 		HSIO_MCB_S1G_ADDR_CFG_SERDES1G_WR_ONE_SHOT);
-पूर्ण
+}
 
-अटल पूर्णांक serdes_update_mcb_s1g(काष्ठा regmap *regmap, u8 macro)
-अणु
-	वापस __serdes_ग_लिखो_mcb_s1g(regmap, macro,
+static int serdes_update_mcb_s1g(struct regmap *regmap, u8 macro)
+{
+	return __serdes_write_mcb_s1g(regmap, macro,
 		HSIO_MCB_S1G_ADDR_CFG_SERDES1G_RD_ONE_SHOT);
-पूर्ण
+}
 
-अटल पूर्णांक serdes_init_s1g(काष्ठा regmap *regmap, u8 serdes)
-अणु
-	पूर्णांक ret;
+static int serdes_init_s1g(struct regmap *regmap, u8 serdes)
+{
+	int ret;
 
 	ret = serdes_update_mcb_s1g(regmap, serdes);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	regmap_update_bits(regmap, HSIO_S1G_COMMON_CFG,
 			   HSIO_S1G_COMMON_CFG_SYS_RST |
@@ -317,8 +316,8 @@
 			   HSIO_S1G_MISC_CFG_LANE_RST);
 
 	ret = serdes_commit_mcb_s1g(regmap, serdes);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	regmap_update_bits(regmap, HSIO_S1G_COMMON_CFG,
 			   HSIO_S1G_COMMON_CFG_SYS_RST,
@@ -328,36 +327,36 @@
 			   HSIO_S1G_MISC_CFG_LANE_RST, 0);
 
 	ret = serdes_commit_mcb_s1g(regmap, serdes);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा serdes_mux अणु
+struct serdes_mux {
 	u8			idx;
 	u8			port;
-	क्रमागत phy_mode		mode;
-	पूर्णांक			submode;
+	enum phy_mode		mode;
+	int			submode;
 	u32			mask;
 	u32			mux;
-पूर्ण;
+};
 
-#घोषणा SERDES_MUX(_idx, _port, _mode, _submode, _mask, _mux) अणु \
+#define SERDES_MUX(_idx, _port, _mode, _submode, _mask, _mux) { \
 	.idx = _idx,						\
 	.port = _port,						\
 	.mode = _mode,						\
 	.submode = _submode,					\
 	.mask = _mask,						\
 	.mux = _mux,						\
-पूर्ण
+}
 
-#घोषणा SERDES_MUX_SGMII(i, p, m, c) \
+#define SERDES_MUX_SGMII(i, p, m, c) \
 	SERDES_MUX(i, p, PHY_MODE_ETHERNET, PHY_INTERFACE_MODE_SGMII, m, c)
-#घोषणा SERDES_MUX_QSGMII(i, p, m, c) \
+#define SERDES_MUX_QSGMII(i, p, m, c) \
 	SERDES_MUX(i, p, PHY_MODE_ETHERNET, PHY_INTERFACE_MODE_QSGMII, m, c)
 
-अटल स्थिर काष्ठा serdes_mux ocelot_serdes_muxes[] = अणु
+static const struct serdes_mux ocelot_serdes_muxes[] = {
 	SERDES_MUX_SGMII(SERDES1G(0), 0, 0, 0),
 	SERDES_MUX_SGMII(SERDES1G(1), 1, HSIO_HW_CFG_DEV1G_5_MODE, 0),
 	SERDES_MUX_SGMII(SERDES1G(1), 5, HSIO_HW_CFG_QSGMII_ENA |
@@ -394,93 +393,93 @@
 			 HSIO_HW_CFG_DEV2G5_10_MODE, 0),
 	SERDES_MUX(SERDES6G(2), 10, PHY_MODE_PCIE, 0, HSIO_HW_CFG_PCIE_ENA,
 		   HSIO_HW_CFG_PCIE_ENA),
-पूर्ण;
+};
 
-अटल पूर्णांक serdes_set_mode(काष्ठा phy *phy, क्रमागत phy_mode mode, पूर्णांक submode)
-अणु
-	काष्ठा serdes_macro *macro = phy_get_drvdata(phy);
-	अचिन्हित पूर्णांक i;
-	पूर्णांक ret;
+static int serdes_set_mode(struct phy *phy, enum phy_mode mode, int submode)
+{
+	struct serdes_macro *macro = phy_get_drvdata(phy);
+	unsigned int i;
+	int ret;
 
 	/* As of now only PHY_MODE_ETHERNET is supported */
-	अगर (mode != PHY_MODE_ETHERNET)
-		वापस -EOPNOTSUPP;
+	if (mode != PHY_MODE_ETHERNET)
+		return -EOPNOTSUPP;
 
-	क्रम (i = 0; i < ARRAY_SIZE(ocelot_serdes_muxes); i++) अणु
-		अगर (macro->idx != ocelot_serdes_muxes[i].idx ||
+	for (i = 0; i < ARRAY_SIZE(ocelot_serdes_muxes); i++) {
+		if (macro->idx != ocelot_serdes_muxes[i].idx ||
 		    mode != ocelot_serdes_muxes[i].mode ||
 		    submode != ocelot_serdes_muxes[i].submode)
-			जारी;
+			continue;
 
-		अगर (submode != PHY_INTERFACE_MODE_QSGMII &&
+		if (submode != PHY_INTERFACE_MODE_QSGMII &&
 		    macro->port != ocelot_serdes_muxes[i].port)
-			जारी;
+			continue;
 
 		ret = regmap_update_bits(macro->ctrl->regs, HSIO_HW_CFG,
 					 ocelot_serdes_muxes[i].mask,
 					 ocelot_serdes_muxes[i].mux);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-		अगर (macro->idx <= SERDES1G_MAX)
-			वापस serdes_init_s1g(macro->ctrl->regs, macro->idx);
-		अन्यथा अगर (macro->idx <= SERDES6G_MAX)
-			वापस serdes_init_s6g(macro->ctrl->regs,
+		if (macro->idx <= SERDES1G_MAX)
+			return serdes_init_s1g(macro->ctrl->regs, macro->idx);
+		else if (macro->idx <= SERDES6G_MAX)
+			return serdes_init_s6g(macro->ctrl->regs,
 					       macro->idx - (SERDES1G_MAX + 1),
 					       ocelot_serdes_muxes[i].submode);
 
 		/* PCIe not supported yet */
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल स्थिर काष्ठा phy_ops serdes_ops = अणु
+static const struct phy_ops serdes_ops = {
 	.set_mode	= serdes_set_mode,
 	.owner		= THIS_MODULE,
-पूर्ण;
+};
 
-अटल काष्ठा phy *serdes_simple_xlate(काष्ठा device *dev,
-				       काष्ठा of_phandle_args *args)
-अणु
-	काष्ठा serdes_ctrl *ctrl = dev_get_drvdata(dev);
-	अचिन्हित पूर्णांक port, idx, i;
+static struct phy *serdes_simple_xlate(struct device *dev,
+				       struct of_phandle_args *args)
+{
+	struct serdes_ctrl *ctrl = dev_get_drvdata(dev);
+	unsigned int port, idx, i;
 
-	अगर (args->args_count != 2)
-		वापस ERR_PTR(-EINVAL);
+	if (args->args_count != 2)
+		return ERR_PTR(-EINVAL);
 
 	port = args->args[0];
 	idx = args->args[1];
 
-	क्रम (i = 0; i < SERDES_MAX; i++) अणु
-		काष्ठा serdes_macro *macro = phy_get_drvdata(ctrl->phys[i]);
+	for (i = 0; i < SERDES_MAX; i++) {
+		struct serdes_macro *macro = phy_get_drvdata(ctrl->phys[i]);
 
-		अगर (idx != macro->idx)
-			जारी;
+		if (idx != macro->idx)
+			continue;
 
 		/* SERDES6G(0) is the only SerDes capable of QSGMII */
-		अगर (idx != SERDES6G(0) && macro->port >= 0)
-			वापस ERR_PTR(-EBUSY);
+		if (idx != SERDES6G(0) && macro->port >= 0)
+			return ERR_PTR(-EBUSY);
 
 		macro->port = port;
-		वापस ctrl->phys[i];
-	पूर्ण
+		return ctrl->phys[i];
+	}
 
-	वापस ERR_PTR(-ENODEV);
-पूर्ण
+	return ERR_PTR(-ENODEV);
+}
 
-अटल पूर्णांक serdes_phy_create(काष्ठा serdes_ctrl *ctrl, u8 idx, काष्ठा phy **phy)
-अणु
-	काष्ठा serdes_macro *macro;
+static int serdes_phy_create(struct serdes_ctrl *ctrl, u8 idx, struct phy **phy)
+{
+	struct serdes_macro *macro;
 
-	*phy = devm_phy_create(ctrl->dev, शून्य, &serdes_ops);
-	अगर (IS_ERR(*phy))
-		वापस PTR_ERR(*phy);
+	*phy = devm_phy_create(ctrl->dev, NULL, &serdes_ops);
+	if (IS_ERR(*phy))
+		return PTR_ERR(*phy);
 
-	macro = devm_kzalloc(ctrl->dev, माप(*macro), GFP_KERNEL);
-	अगर (!macro)
-		वापस -ENOMEM;
+	macro = devm_kzalloc(ctrl->dev, sizeof(*macro), GFP_KERNEL);
+	if (!macro)
+		return -ENOMEM;
 
 	macro->idx = idx;
 	macro->ctrl = ctrl;
@@ -488,54 +487,54 @@
 
 	phy_set_drvdata(*phy, macro);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक serdes_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा phy_provider *provider;
-	काष्ठा serdes_ctrl *ctrl;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक ret;
+static int serdes_probe(struct platform_device *pdev)
+{
+	struct phy_provider *provider;
+	struct serdes_ctrl *ctrl;
+	unsigned int i;
+	int ret;
 
-	ctrl = devm_kzalloc(&pdev->dev, माप(*ctrl), GFP_KERNEL);
-	अगर (!ctrl)
-		वापस -ENOMEM;
+	ctrl = devm_kzalloc(&pdev->dev, sizeof(*ctrl), GFP_KERNEL);
+	if (!ctrl)
+		return -ENOMEM;
 
 	ctrl->dev = &pdev->dev;
 	ctrl->regs = syscon_node_to_regmap(pdev->dev.parent->of_node);
-	अगर (IS_ERR(ctrl->regs))
-		वापस PTR_ERR(ctrl->regs);
+	if (IS_ERR(ctrl->regs))
+		return PTR_ERR(ctrl->regs);
 
-	क्रम (i = 0; i < SERDES_MAX; i++) अणु
+	for (i = 0; i < SERDES_MAX; i++) {
 		ret = serdes_phy_create(ctrl, i, &ctrl->phys[i]);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	dev_set_drvdata(&pdev->dev, ctrl);
 
-	provider = devm_of_phy_provider_रेजिस्टर(ctrl->dev,
+	provider = devm_of_phy_provider_register(ctrl->dev,
 						 serdes_simple_xlate);
 
-	वापस PTR_ERR_OR_ZERO(provider);
-पूर्ण
+	return PTR_ERR_OR_ZERO(provider);
+}
 
-अटल स्थिर काष्ठा of_device_id serdes_ids[] = अणु
-	अणु .compatible = "mscc,vsc7514-serdes", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id serdes_ids[] = {
+	{ .compatible = "mscc,vsc7514-serdes", },
+	{},
+};
 MODULE_DEVICE_TABLE(of, serdes_ids);
 
-अटल काष्ठा platक्रमm_driver mscc_ocelot_serdes = अणु
+static struct platform_driver mscc_ocelot_serdes = {
 	.probe		= serdes_probe,
-	.driver		= अणु
+	.driver		= {
 		.name	= "mscc,ocelot-serdes",
 		.of_match_table = of_match_ptr(serdes_ids),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(mscc_ocelot_serdes);
+module_platform_driver(mscc_ocelot_serdes);
 
 MODULE_AUTHOR("Quentin Schulz <quentin.schulz@bootlin.com>");
 MODULE_DESCRIPTION("SerDes driver for Microsemi Ocelot");

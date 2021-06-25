@@ -1,25 +1,24 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- *  HID driver क्रम UC-Logic devices not fully compliant with HID standard
+ *  HID driver for UC-Logic devices not fully compliant with HID standard
  *  - tablet initialization and parameter retrieval
  *
  *  Copyright (c) 2018 Nikolai Kondrashov
  */
 
 /*
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
  * Software Foundation; either version 2 of the License, or (at your option)
  * any later version.
  */
 
-#समावेश "hid-uclogic-params.h"
-#समावेश "hid-uclogic-rdesc.h"
-#समावेश "usbhid/usbhid.h"
-#समावेश "hid-ids.h"
-#समावेश <linux/प्रकार.स>
-#समावेश <यंत्र/unaligned.h>
+#include "hid-uclogic-params.h"
+#include "hid-uclogic-rdesc.h"
+#include "usbhid/usbhid.h"
+#include "hid-ids.h"
+#include <linux/ctype.h>
+#include <asm/unaligned.h>
 
 /**
  * uclogic_params_pen_inrange_to_str() - Convert a pen in-range reporting type
@@ -28,155 +27,155 @@
  * @inrange:	The in-range reporting type to convert.
  *
  * Returns:
- *	The string representing the type, or शून्य अगर the type is unknown.
+ *	The string representing the type, or NULL if the type is unknown.
  */
-स्थिर अक्षर *uclogic_params_pen_inrange_to_str(
-			क्रमागत uclogic_params_pen_inrange inrange)
-अणु
-	चयन (inrange) अणु
-	हाल UCLOGIC_PARAMS_PEN_INRANGE_NORMAL:
-		वापस "normal";
-	हाल UCLOGIC_PARAMS_PEN_INRANGE_INVERTED:
-		वापस "inverted";
-	हाल UCLOGIC_PARAMS_PEN_INRANGE_NONE:
-		वापस "none";
-	शेष:
-		वापस शून्य;
-	पूर्ण
-पूर्ण
+const char *uclogic_params_pen_inrange_to_str(
+			enum uclogic_params_pen_inrange inrange)
+{
+	switch (inrange) {
+	case UCLOGIC_PARAMS_PEN_INRANGE_NORMAL:
+		return "normal";
+	case UCLOGIC_PARAMS_PEN_INRANGE_INVERTED:
+		return "inverted";
+	case UCLOGIC_PARAMS_PEN_INRANGE_NONE:
+		return "none";
+	default:
+		return NULL;
+	}
+}
 
 /**
  * uclogic_params_get_str_desc - retrieve a string descriptor from a HID
- * device पूर्णांकerface, putting it पूर्णांकo a kदो_स्मृति-allocated buffer as is, without
- * अक्षरacter encoding conversion.
+ * device interface, putting it into a kmalloc-allocated buffer as is, without
+ * character encoding conversion.
  *
- * @pbuf:	Location क्रम the kदो_स्मृति-allocated buffer poपूर्णांकer containing
- *		the retrieved descriptor. Not modअगरied in हाल of error.
- *		Can be शून्य to have retrieved descriptor discarded.
- * @hdev:	The HID device of the tablet पूर्णांकerface to retrieve the string
- *		descriptor from. Cannot be शून्य.
+ * @pbuf:	Location for the kmalloc-allocated buffer pointer containing
+ *		the retrieved descriptor. Not modified in case of error.
+ *		Can be NULL to have retrieved descriptor discarded.
+ * @hdev:	The HID device of the tablet interface to retrieve the string
+ *		descriptor from. Cannot be NULL.
  * @idx:	Index of the string descriptor to request from the device.
  * @len:	Length of the buffer to allocate and the data to retrieve.
  *
  * Returns:
  *	number of bytes retrieved (<= len),
- *	-EPIPE, अगर the descriptor was not found, or
- *	another negative त्रुटि_सं code in हाल of other error.
+ *	-EPIPE, if the descriptor was not found, or
+ *	another negative errno code in case of other error.
  */
-अटल पूर्णांक uclogic_params_get_str_desc(__u8 **pbuf, काष्ठा hid_device *hdev,
-					__u8 idx, माप_प्रकार len)
-अणु
-	पूर्णांक rc;
-	काष्ठा usb_device *udev = hid_to_usb_dev(hdev);
-	__u8 *buf = शून्य;
+static int uclogic_params_get_str_desc(__u8 **pbuf, struct hid_device *hdev,
+					__u8 idx, size_t len)
+{
+	int rc;
+	struct usb_device *udev = hid_to_usb_dev(hdev);
+	__u8 *buf = NULL;
 
 	/* Check arguments */
-	अगर (hdev == शून्य) अणु
+	if (hdev == NULL) {
 		rc = -EINVAL;
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 
-	buf = kदो_स्मृति(len, GFP_KERNEL);
-	अगर (buf == शून्य) अणु
+	buf = kmalloc(len, GFP_KERNEL);
+	if (buf == NULL) {
 		rc = -ENOMEM;
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 
 	rc = usb_control_msg(udev, usb_rcvctrlpipe(udev, 0),
-				USB_REQ_GET_DESCRIPTOR, USB_सूची_IN,
+				USB_REQ_GET_DESCRIPTOR, USB_DIR_IN,
 				(USB_DT_STRING << 8) + idx,
 				0x0409, buf, len,
 				USB_CTRL_GET_TIMEOUT);
-	अगर (rc == -EPIPE) अणु
+	if (rc == -EPIPE) {
 		hid_dbg(hdev, "string descriptor #%hhu not found\n", idx);
-		जाओ cleanup;
-	पूर्ण अन्यथा अगर (rc < 0) अणु
+		goto cleanup;
+	} else if (rc < 0) {
 		hid_err(hdev,
 			"failed retrieving string descriptor #%u: %d\n",
 			idx, rc);
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 
-	अगर (pbuf != शून्य) अणु
+	if (pbuf != NULL) {
 		*pbuf = buf;
-		buf = शून्य;
-	पूर्ण
+		buf = NULL;
+	}
 
 cleanup:
-	kमुक्त(buf);
-	वापस rc;
-पूर्ण
+	kfree(buf);
+	return rc;
+}
 
 /**
- * uclogic_params_pen_cleanup - मुक्त resources used by काष्ठा
- * uclogic_params_pen (tablet पूर्णांकerface's pen input parameters).
+ * uclogic_params_pen_cleanup - free resources used by struct
+ * uclogic_params_pen (tablet interface's pen input parameters).
  * Can be called repeatedly.
  *
- * @pen:	Pen input parameters to cleanup. Cannot be शून्य.
+ * @pen:	Pen input parameters to cleanup. Cannot be NULL.
  */
-अटल व्योम uclogic_params_pen_cleanup(काष्ठा uclogic_params_pen *pen)
-अणु
-	kमुक्त(pen->desc_ptr);
-	स_रखो(pen, 0, माप(*pen));
-पूर्ण
+static void uclogic_params_pen_cleanup(struct uclogic_params_pen *pen)
+{
+	kfree(pen->desc_ptr);
+	memset(pen, 0, sizeof(*pen));
+}
 
 /**
- * uclogic_params_pen_init_v1() - initialize tablet पूर्णांकerface pen
+ * uclogic_params_pen_init_v1() - initialize tablet interface pen
  * input and retrieve its parameters from the device, using v1 protocol.
  *
- * @pen:	Poपूर्णांकer to the pen parameters to initialize (to be
- *		cleaned up with uclogic_params_pen_cleanup()). Not modअगरied in
- *		हाल of error, or अगर parameters are not found. Cannot be शून्य.
- * @pfound:	Location क्रम a flag which is set to true अगर the parameters
- *		were found, and to false अगर not (e.g. device was
- *		incompatible). Not modअगरied in हाल of error. Cannot be शून्य.
- * @hdev:	The HID device of the tablet पूर्णांकerface to initialize and get
- *		parameters from. Cannot be शून्य.
+ * @pen:	Pointer to the pen parameters to initialize (to be
+ *		cleaned up with uclogic_params_pen_cleanup()). Not modified in
+ *		case of error, or if parameters are not found. Cannot be NULL.
+ * @pfound:	Location for a flag which is set to true if the parameters
+ *		were found, and to false if not (e.g. device was
+ *		incompatible). Not modified in case of error. Cannot be NULL.
+ * @hdev:	The HID device of the tablet interface to initialize and get
+ *		parameters from. Cannot be NULL.
  *
  * Returns:
- *	Zero, अगर successful. A negative त्रुटि_सं code on error.
+ *	Zero, if successful. A negative errno code on error.
  */
-अटल पूर्णांक uclogic_params_pen_init_v1(काष्ठा uclogic_params_pen *pen,
+static int uclogic_params_pen_init_v1(struct uclogic_params_pen *pen,
 				      bool *pfound,
-				      काष्ठा hid_device *hdev)
-अणु
-	पूर्णांक rc;
+				      struct hid_device *hdev)
+{
+	int rc;
 	bool found = false;
-	/* Buffer क्रम (part of) the string descriptor */
-	__u8 *buf = शून्य;
+	/* Buffer for (part of) the string descriptor */
+	__u8 *buf = NULL;
 	/* Minimum descriptor length required, maximum seen so far is 18 */
-	स्थिर पूर्णांक len = 12;
+	const int len = 12;
 	s32 resolution;
-	/* Pen report descriptor ढाँचा parameters */
+	/* Pen report descriptor template parameters */
 	s32 desc_params[UCLOGIC_RDESC_PEN_PH_ID_NUM];
-	__u8 *desc_ptr = शून्य;
+	__u8 *desc_ptr = NULL;
 
 	/* Check arguments */
-	अगर (pen == शून्य || pfound == शून्य || hdev == शून्य) अणु
+	if (pen == NULL || pfound == NULL || hdev == NULL) {
 		rc = -EINVAL;
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 
 	/*
 	 * Read string descriptor containing pen input parameters.
-	 * The specअगरic string descriptor and data were discovered by snअगरfing
-	 * the Winकरोws driver traffic.
+	 * The specific string descriptor and data were discovered by sniffing
+	 * the Windows driver traffic.
 	 * NOTE: This enables fully-functional tablet mode.
 	 */
 	rc = uclogic_params_get_str_desc(&buf, hdev, 100, len);
-	अगर (rc == -EPIPE) अणु
+	if (rc == -EPIPE) {
 		hid_dbg(hdev,
 			"string descriptor with pen parameters not found, assuming not compatible\n");
-		जाओ finish;
-	पूर्ण अन्यथा अगर (rc < 0) अणु
+		goto finish;
+	} else if (rc < 0) {
 		hid_err(hdev, "failed retrieving pen parameters: %d\n", rc);
-		जाओ cleanup;
-	पूर्ण अन्यथा अगर (rc != len) अणु
+		goto cleanup;
+	} else if (rc != len) {
 		hid_dbg(hdev,
 			"string descriptor with pen parameters has invalid length (got %d, expected %d), assuming not compatible\n",
 			rc, len);
-		जाओ finish;
-	पूर्ण
+		goto finish;
+	}
 
 	/*
 	 * Fill report descriptor parameters from the string descriptor
@@ -188,39 +187,39 @@ cleanup:
 	desc_params[UCLOGIC_RDESC_PEN_PH_ID_PRESSURE_LM] =
 		get_unaligned_le16(buf + 8);
 	resolution = get_unaligned_le16(buf + 10);
-	अगर (resolution == 0) अणु
+	if (resolution == 0) {
 		desc_params[UCLOGIC_RDESC_PEN_PH_ID_X_PM] = 0;
 		desc_params[UCLOGIC_RDESC_PEN_PH_ID_Y_PM] = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		desc_params[UCLOGIC_RDESC_PEN_PH_ID_X_PM] =
 			desc_params[UCLOGIC_RDESC_PEN_PH_ID_X_LM] * 1000 /
 			resolution;
 		desc_params[UCLOGIC_RDESC_PEN_PH_ID_Y_PM] =
 			desc_params[UCLOGIC_RDESC_PEN_PH_ID_Y_LM] * 1000 /
 			resolution;
-	पूर्ण
-	kमुक्त(buf);
-	buf = शून्य;
+	}
+	kfree(buf);
+	buf = NULL;
 
 	/*
 	 * Generate pen report descriptor
 	 */
-	desc_ptr = uclogic_rdesc_ढाँचा_apply(
-				uclogic_rdesc_pen_v1_ढाँचा_arr,
-				uclogic_rdesc_pen_v1_ढाँचा_size,
+	desc_ptr = uclogic_rdesc_template_apply(
+				uclogic_rdesc_pen_v1_template_arr,
+				uclogic_rdesc_pen_v1_template_size,
 				desc_params, ARRAY_SIZE(desc_params));
-	अगर (desc_ptr == शून्य) अणु
+	if (desc_ptr == NULL) {
 		rc = -ENOMEM;
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 
 	/*
 	 * Fill-in the parameters
 	 */
-	स_रखो(pen, 0, माप(*pen));
+	memset(pen, 0, sizeof(*pen));
 	pen->desc_ptr = desc_ptr;
-	desc_ptr = शून्य;
-	pen->desc_size = uclogic_rdesc_pen_v1_ढाँचा_size;
+	desc_ptr = NULL;
+	pen->desc_size = uclogic_rdesc_pen_v1_template_size;
 	pen->id = UCLOGIC_RDESC_PEN_V1_ID;
 	pen->inrange = UCLOGIC_PARAMS_PEN_INRANGE_INVERTED;
 	found = true;
@@ -228,99 +227,99 @@ finish:
 	*pfound = found;
 	rc = 0;
 cleanup:
-	kमुक्त(desc_ptr);
-	kमुक्त(buf);
-	वापस rc;
-पूर्ण
+	kfree(desc_ptr);
+	kfree(buf);
+	return rc;
+}
 
 /**
  * uclogic_params_get_le24() - get a 24-bit little-endian number from a
  * buffer.
  *
- * @p:	The poपूर्णांकer to the number buffer.
+ * @p:	The pointer to the number buffer.
  *
  * Returns:
  *	The retrieved number
  */
-अटल s32 uclogic_params_get_le24(स्थिर व्योम *p)
-अणु
-	स्थिर __u8 *b = p;
-	वापस b[0] | (b[1] << 8UL) | (b[2] << 16UL);
-पूर्ण
+static s32 uclogic_params_get_le24(const void *p)
+{
+	const __u8 *b = p;
+	return b[0] | (b[1] << 8UL) | (b[2] << 16UL);
+}
 
 /**
- * uclogic_params_pen_init_v2() - initialize tablet पूर्णांकerface pen
+ * uclogic_params_pen_init_v2() - initialize tablet interface pen
  * input and retrieve its parameters from the device, using v2 protocol.
  *
- * @pen:	Poपूर्णांकer to the pen parameters to initialize (to be
- *		cleaned up with uclogic_params_pen_cleanup()). Not modअगरied in
- *		हाल of error, or अगर parameters are not found. Cannot be शून्य.
- * @pfound:	Location क्रम a flag which is set to true अगर the parameters
- *		were found, and to false अगर not (e.g. device was
- *		incompatible). Not modअगरied in हाल of error. Cannot be शून्य.
- * @hdev:	The HID device of the tablet पूर्णांकerface to initialize and get
- *		parameters from. Cannot be शून्य.
+ * @pen:	Pointer to the pen parameters to initialize (to be
+ *		cleaned up with uclogic_params_pen_cleanup()). Not modified in
+ *		case of error, or if parameters are not found. Cannot be NULL.
+ * @pfound:	Location for a flag which is set to true if the parameters
+ *		were found, and to false if not (e.g. device was
+ *		incompatible). Not modified in case of error. Cannot be NULL.
+ * @hdev:	The HID device of the tablet interface to initialize and get
+ *		parameters from. Cannot be NULL.
  *
  * Returns:
- *	Zero, अगर successful. A negative त्रुटि_सं code on error.
+ *	Zero, if successful. A negative errno code on error.
  */
-अटल पूर्णांक uclogic_params_pen_init_v2(काष्ठा uclogic_params_pen *pen,
+static int uclogic_params_pen_init_v2(struct uclogic_params_pen *pen,
 					bool *pfound,
-					काष्ठा hid_device *hdev)
-अणु
-	पूर्णांक rc;
+					struct hid_device *hdev)
+{
+	int rc;
 	bool found = false;
-	/* Buffer क्रम (part of) the string descriptor */
-	__u8 *buf = शून्य;
+	/* Buffer for (part of) the string descriptor */
+	__u8 *buf = NULL;
 	/* Descriptor length required */
-	स्थिर पूर्णांक len = 18;
+	const int len = 18;
 	s32 resolution;
-	/* Pen report descriptor ढाँचा parameters */
+	/* Pen report descriptor template parameters */
 	s32 desc_params[UCLOGIC_RDESC_PEN_PH_ID_NUM];
-	__u8 *desc_ptr = शून्य;
+	__u8 *desc_ptr = NULL;
 
 	/* Check arguments */
-	अगर (pen == शून्य || pfound == शून्य || hdev == शून्य) अणु
+	if (pen == NULL || pfound == NULL || hdev == NULL) {
 		rc = -EINVAL;
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 
 	/*
 	 * Read string descriptor containing pen input parameters.
-	 * The specअगरic string descriptor and data were discovered by snअगरfing
-	 * the Winकरोws driver traffic.
+	 * The specific string descriptor and data were discovered by sniffing
+	 * the Windows driver traffic.
 	 * NOTE: This enables fully-functional tablet mode.
 	 */
 	rc = uclogic_params_get_str_desc(&buf, hdev, 200, len);
-	अगर (rc == -EPIPE) अणु
+	if (rc == -EPIPE) {
 		hid_dbg(hdev,
 			"string descriptor with pen parameters not found, assuming not compatible\n");
-		जाओ finish;
-	पूर्ण अन्यथा अगर (rc < 0) अणु
+		goto finish;
+	} else if (rc < 0) {
 		hid_err(hdev, "failed retrieving pen parameters: %d\n", rc);
-		जाओ cleanup;
-	पूर्ण अन्यथा अगर (rc != len) अणु
+		goto cleanup;
+	} else if (rc != len) {
 		hid_dbg(hdev,
 			"string descriptor with pen parameters has invalid length (got %d, expected %d), assuming not compatible\n",
 			rc, len);
-		जाओ finish;
-	पूर्ण अन्यथा अणु
-		माप_प्रकार i;
+		goto finish;
+	} else {
+		size_t i;
 		/*
 		 * Check it's not just a catch-all UTF-16LE-encoded ASCII
-		 * string (such as the model name) some tablets put पूर्णांकo all
+		 * string (such as the model name) some tablets put into all
 		 * unknown string descriptors.
 		 */
-		क्रम (i = 2;
+		for (i = 2;
 		     i < len &&
 			(buf[i] >= 0x20 && buf[i] < 0x7f && buf[i + 1] == 0);
 		     i += 2);
-		अगर (i >= len) अणु
+		if (i >= len) {
 			hid_dbg(hdev,
 				"string descriptor with pen parameters seems to contain only text, assuming not compatible\n");
-			जाओ finish;
-		पूर्ण
-	पूर्ण
+			goto finish;
+		}
+	}
 
 	/*
 	 * Fill report descriptor parameters from the string descriptor
@@ -332,39 +331,39 @@ cleanup:
 	desc_params[UCLOGIC_RDESC_PEN_PH_ID_PRESSURE_LM] =
 		get_unaligned_le16(buf + 8);
 	resolution = get_unaligned_le16(buf + 10);
-	अगर (resolution == 0) अणु
+	if (resolution == 0) {
 		desc_params[UCLOGIC_RDESC_PEN_PH_ID_X_PM] = 0;
 		desc_params[UCLOGIC_RDESC_PEN_PH_ID_Y_PM] = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		desc_params[UCLOGIC_RDESC_PEN_PH_ID_X_PM] =
 			desc_params[UCLOGIC_RDESC_PEN_PH_ID_X_LM] * 1000 /
 			resolution;
 		desc_params[UCLOGIC_RDESC_PEN_PH_ID_Y_PM] =
 			desc_params[UCLOGIC_RDESC_PEN_PH_ID_Y_LM] * 1000 /
 			resolution;
-	पूर्ण
-	kमुक्त(buf);
-	buf = शून्य;
+	}
+	kfree(buf);
+	buf = NULL;
 
 	/*
 	 * Generate pen report descriptor
 	 */
-	desc_ptr = uclogic_rdesc_ढाँचा_apply(
-				uclogic_rdesc_pen_v2_ढाँचा_arr,
-				uclogic_rdesc_pen_v2_ढाँचा_size,
+	desc_ptr = uclogic_rdesc_template_apply(
+				uclogic_rdesc_pen_v2_template_arr,
+				uclogic_rdesc_pen_v2_template_size,
 				desc_params, ARRAY_SIZE(desc_params));
-	अगर (desc_ptr == शून्य) अणु
+	if (desc_ptr == NULL) {
 		rc = -ENOMEM;
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 
 	/*
 	 * Fill-in the parameters
 	 */
-	स_रखो(pen, 0, माप(*pen));
+	memset(pen, 0, sizeof(*pen));
 	pen->desc_ptr = desc_ptr;
-	desc_ptr = शून्य;
-	pen->desc_size = uclogic_rdesc_pen_v2_ढाँचा_size;
+	desc_ptr = NULL;
+	pen->desc_size = uclogic_rdesc_pen_v2_template_size;
 	pen->id = UCLOGIC_RDESC_PEN_V2_ID;
 	pen->inrange = UCLOGIC_PARAMS_PEN_INRANGE_NONE;
 	pen->fragmented_hires = true;
@@ -373,391 +372,391 @@ finish:
 	*pfound = found;
 	rc = 0;
 cleanup:
-	kमुक्त(desc_ptr);
-	kमुक्त(buf);
-	वापस rc;
-पूर्ण
+	kfree(desc_ptr);
+	kfree(buf);
+	return rc;
+}
 
 /**
- * uclogic_params_frame_cleanup - मुक्त resources used by काष्ठा
- * uclogic_params_frame (tablet पूर्णांकerface's frame controls input parameters).
+ * uclogic_params_frame_cleanup - free resources used by struct
+ * uclogic_params_frame (tablet interface's frame controls input parameters).
  * Can be called repeatedly.
  *
- * @frame:	Frame controls input parameters to cleanup. Cannot be शून्य.
+ * @frame:	Frame controls input parameters to cleanup. Cannot be NULL.
  */
-अटल व्योम uclogic_params_frame_cleanup(काष्ठा uclogic_params_frame *frame)
-अणु
-	kमुक्त(frame->desc_ptr);
-	स_रखो(frame, 0, माप(*frame));
-पूर्ण
+static void uclogic_params_frame_cleanup(struct uclogic_params_frame *frame)
+{
+	kfree(frame->desc_ptr);
+	memset(frame, 0, sizeof(*frame));
+}
 
 /**
  * uclogic_params_frame_init_with_desc() - initialize tablet's frame control
- * parameters with a अटल report descriptor.
+ * parameters with a static report descriptor.
  *
- * @frame:	Poपूर्णांकer to the frame parameters to initialize (to be cleaned
- *		up with uclogic_params_frame_cleanup()). Not modअगरied in हाल
- *		of error. Cannot be शून्य.
- * @desc_ptr:	Report descriptor poपूर्णांकer. Can be शून्य, अगर desc_size is zero.
+ * @frame:	Pointer to the frame parameters to initialize (to be cleaned
+ *		up with uclogic_params_frame_cleanup()). Not modified in case
+ *		of error. Cannot be NULL.
+ * @desc_ptr:	Report descriptor pointer. Can be NULL, if desc_size is zero.
  * @desc_size:	Report descriptor size.
- * @id:		Report ID used क्रम frame reports, अगर they should be tweaked,
- *		zero अगर not.
+ * @id:		Report ID used for frame reports, if they should be tweaked,
+ *		zero if not.
  *
  * Returns:
- *	Zero, अगर successful. A negative त्रुटि_सं code on error.
+ *	Zero, if successful. A negative errno code on error.
  */
-अटल पूर्णांक uclogic_params_frame_init_with_desc(
-					काष्ठा uclogic_params_frame *frame,
-					स्थिर __u8 *desc_ptr,
-					माप_प्रकार desc_size,
-					अचिन्हित पूर्णांक id)
-अणु
+static int uclogic_params_frame_init_with_desc(
+					struct uclogic_params_frame *frame,
+					const __u8 *desc_ptr,
+					size_t desc_size,
+					unsigned int id)
+{
 	__u8 *copy_desc_ptr;
 
-	अगर (frame == शून्य || (desc_ptr == शून्य && desc_size != 0))
-		वापस -EINVAL;
+	if (frame == NULL || (desc_ptr == NULL && desc_size != 0))
+		return -EINVAL;
 
 	copy_desc_ptr = kmemdup(desc_ptr, desc_size, GFP_KERNEL);
-	अगर (copy_desc_ptr == शून्य)
-		वापस -ENOMEM;
+	if (copy_desc_ptr == NULL)
+		return -ENOMEM;
 
-	स_रखो(frame, 0, माप(*frame));
+	memset(frame, 0, sizeof(*frame));
 	frame->desc_ptr = copy_desc_ptr;
 	frame->desc_size = desc_size;
 	frame->id = id;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * uclogic_params_frame_init_v1_buttonpad() - initialize असलtract buttonpad
- * on a v1 tablet पूर्णांकerface.
+ * uclogic_params_frame_init_v1_buttonpad() - initialize abstract buttonpad
+ * on a v1 tablet interface.
  *
- * @frame:	Poपूर्णांकer to the frame parameters to initialize (to be cleaned
- *		up with uclogic_params_frame_cleanup()). Not modअगरied in हाल
- *		of error, or अगर parameters are not found. Cannot be शून्य.
- * @pfound:	Location क्रम a flag which is set to true अगर the parameters
- *		were found, and to false अगर not (e.g. device was
- *		incompatible). Not modअगरied in हाल of error. Cannot be शून्य.
- * @hdev:	The HID device of the tablet पूर्णांकerface to initialize and get
- *		parameters from. Cannot be शून्य.
+ * @frame:	Pointer to the frame parameters to initialize (to be cleaned
+ *		up with uclogic_params_frame_cleanup()). Not modified in case
+ *		of error, or if parameters are not found. Cannot be NULL.
+ * @pfound:	Location for a flag which is set to true if the parameters
+ *		were found, and to false if not (e.g. device was
+ *		incompatible). Not modified in case of error. Cannot be NULL.
+ * @hdev:	The HID device of the tablet interface to initialize and get
+ *		parameters from. Cannot be NULL.
  *
  * Returns:
- *	Zero, अगर successful. A negative त्रुटि_सं code on error.
+ *	Zero, if successful. A negative errno code on error.
  */
-अटल पूर्णांक uclogic_params_frame_init_v1_buttonpad(
-					काष्ठा uclogic_params_frame *frame,
+static int uclogic_params_frame_init_v1_buttonpad(
+					struct uclogic_params_frame *frame,
 					bool *pfound,
-					काष्ठा hid_device *hdev)
-अणु
-	पूर्णांक rc;
+					struct hid_device *hdev)
+{
+	int rc;
 	bool found = false;
-	काष्ठा usb_device *usb_dev = hid_to_usb_dev(hdev);
-	अक्षर *str_buf = शून्य;
-	स्थिर माप_प्रकार str_len = 16;
+	struct usb_device *usb_dev = hid_to_usb_dev(hdev);
+	char *str_buf = NULL;
+	const size_t str_len = 16;
 
 	/* Check arguments */
-	अगर (frame == शून्य || pfound == शून्य || hdev == शून्य) अणु
+	if (frame == NULL || pfound == NULL || hdev == NULL) {
 		rc = -EINVAL;
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 
 	/*
 	 * Enable generic button mode
 	 */
 	str_buf = kzalloc(str_len, GFP_KERNEL);
-	अगर (str_buf == शून्य) अणु
+	if (str_buf == NULL) {
 		rc = -ENOMEM;
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 
 	rc = usb_string(usb_dev, 123, str_buf, str_len);
-	अगर (rc == -EPIPE) अणु
+	if (rc == -EPIPE) {
 		hid_dbg(hdev,
 			"generic button -enabling string descriptor not found\n");
-	पूर्ण अन्यथा अगर (rc < 0) अणु
-		जाओ cleanup;
-	पूर्ण अन्यथा अगर (म_भेदन(str_buf, "HK On", rc) != 0) अणु
+	} else if (rc < 0) {
+		goto cleanup;
+	} else if (strncmp(str_buf, "HK On", rc) != 0) {
 		hid_dbg(hdev,
 			"invalid response to enabling generic buttons: \"%s\"\n",
 			str_buf);
-	पूर्ण अन्यथा अणु
+	} else {
 		hid_dbg(hdev, "generic buttons enabled\n");
 		rc = uclogic_params_frame_init_with_desc(
 				frame,
 				uclogic_rdesc_buttonpad_v1_arr,
 				uclogic_rdesc_buttonpad_v1_size,
 				UCLOGIC_RDESC_BUTTONPAD_V1_ID);
-		अगर (rc != 0)
-			जाओ cleanup;
+		if (rc != 0)
+			goto cleanup;
 		found = true;
-	पूर्ण
+	}
 
 	*pfound = found;
 	rc = 0;
 cleanup:
-	kमुक्त(str_buf);
-	वापस rc;
-पूर्ण
+	kfree(str_buf);
+	return rc;
+}
 
 /**
- * uclogic_params_cleanup - मुक्त resources used by काष्ठा uclogic_params
- * (tablet पूर्णांकerface's parameters).
+ * uclogic_params_cleanup - free resources used by struct uclogic_params
+ * (tablet interface's parameters).
  * Can be called repeatedly.
  *
- * @params:	Input parameters to cleanup. Cannot be शून्य.
+ * @params:	Input parameters to cleanup. Cannot be NULL.
  */
-व्योम uclogic_params_cleanup(काष्ठा uclogic_params *params)
-अणु
-	अगर (!params->invalid) अणु
-		kमुक्त(params->desc_ptr);
-		अगर (!params->pen_unused)
+void uclogic_params_cleanup(struct uclogic_params *params)
+{
+	if (!params->invalid) {
+		kfree(params->desc_ptr);
+		if (!params->pen_unused)
 			uclogic_params_pen_cleanup(&params->pen);
 		uclogic_params_frame_cleanup(&params->frame);
-		स_रखो(params, 0, माप(*params));
-	पूर्ण
-पूर्ण
+		memset(params, 0, sizeof(*params));
+	}
+}
 
 /**
- * uclogic_params_get_desc() - Get a replacement report descriptor क्रम a
- *                             tablet's पूर्णांकerface.
+ * uclogic_params_get_desc() - Get a replacement report descriptor for a
+ *                             tablet's interface.
  *
- * @params:	The parameters of a tablet पूर्णांकerface to get report
- *		descriptor क्रम. Cannot be शून्य.
- * @pdesc:	Location क्रम the resulting, kदो_स्मृति-allocated report
- *		descriptor poपूर्णांकer, or क्रम शून्य, अगर there's no replacement
- *		report descriptor. Not modअगरied in हाल of error. Cannot be
- *		शून्य.
- * @psize:	Location क्रम the resulting report descriptor size, not set अगर
- *		there's no replacement report descriptor. Not modअगरied in हाल
- *		of error. Cannot be शून्य.
+ * @params:	The parameters of a tablet interface to get report
+ *		descriptor for. Cannot be NULL.
+ * @pdesc:	Location for the resulting, kmalloc-allocated report
+ *		descriptor pointer, or for NULL, if there's no replacement
+ *		report descriptor. Not modified in case of error. Cannot be
+ *		NULL.
+ * @psize:	Location for the resulting report descriptor size, not set if
+ *		there's no replacement report descriptor. Not modified in case
+ *		of error. Cannot be NULL.
  *
  * Returns:
- *	Zero, अगर successful.
- *	-EINVAL, अगर invalid arguments are supplied.
- *	-ENOMEM, अगर failed to allocate memory.
+ *	Zero, if successful.
+ *	-EINVAL, if invalid arguments are supplied.
+ *	-ENOMEM, if failed to allocate memory.
  */
-पूर्णांक uclogic_params_get_desc(स्थिर काष्ठा uclogic_params *params,
+int uclogic_params_get_desc(const struct uclogic_params *params,
 				__u8 **pdesc,
-				अचिन्हित पूर्णांक *psize)
-अणु
+				unsigned int *psize)
+{
 	bool common_present;
 	bool pen_present;
 	bool frame_present;
-	अचिन्हित पूर्णांक size;
-	__u8 *desc = शून्य;
+	unsigned int size;
+	__u8 *desc = NULL;
 
 	/* Check arguments */
-	अगर (params == शून्य || pdesc == शून्य || psize == शून्य)
-		वापस -EINVAL;
+	if (params == NULL || pdesc == NULL || psize == NULL)
+		return -EINVAL;
 
 	size = 0;
 
-	common_present = (params->desc_ptr != शून्य);
-	pen_present = (!params->pen_unused && params->pen.desc_ptr != शून्य);
-	frame_present = (params->frame.desc_ptr != शून्य);
+	common_present = (params->desc_ptr != NULL);
+	pen_present = (!params->pen_unused && params->pen.desc_ptr != NULL);
+	frame_present = (params->frame.desc_ptr != NULL);
 
-	अगर (common_present)
+	if (common_present)
 		size += params->desc_size;
-	अगर (pen_present)
+	if (pen_present)
 		size += params->pen.desc_size;
-	अगर (frame_present)
+	if (frame_present)
 		size += params->frame.desc_size;
 
-	अगर (common_present || pen_present || frame_present) अणु
+	if (common_present || pen_present || frame_present) {
 		__u8 *p;
 
-		desc = kदो_स्मृति(size, GFP_KERNEL);
-		अगर (desc == शून्य)
-			वापस -ENOMEM;
+		desc = kmalloc(size, GFP_KERNEL);
+		if (desc == NULL)
+			return -ENOMEM;
 		p = desc;
 
-		अगर (common_present) अणु
-			स_नकल(p, params->desc_ptr,
+		if (common_present) {
+			memcpy(p, params->desc_ptr,
 				params->desc_size);
 			p += params->desc_size;
-		पूर्ण
-		अगर (pen_present) अणु
-			स_नकल(p, params->pen.desc_ptr,
+		}
+		if (pen_present) {
+			memcpy(p, params->pen.desc_ptr,
 				params->pen.desc_size);
 			p += params->pen.desc_size;
-		पूर्ण
-		अगर (frame_present) अणु
-			स_नकल(p, params->frame.desc_ptr,
+		}
+		if (frame_present) {
+			memcpy(p, params->frame.desc_ptr,
 				params->frame.desc_size);
 			p += params->frame.desc_size;
-		पूर्ण
+		}
 
 		WARN_ON(p != desc + size);
 
 		*psize = size;
-	पूर्ण
+	}
 
 	*pdesc = desc;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * uclogic_params_init_invalid() - initialize tablet पूर्णांकerface parameters,
- * specअगरying the पूर्णांकerface is invalid.
+ * uclogic_params_init_invalid() - initialize tablet interface parameters,
+ * specifying the interface is invalid.
  *
  * @params:		Parameters to initialize (to be cleaned with
- *			uclogic_params_cleanup()). Cannot be शून्य.
+ *			uclogic_params_cleanup()). Cannot be NULL.
  */
-अटल व्योम uclogic_params_init_invalid(काष्ठा uclogic_params *params)
-अणु
+static void uclogic_params_init_invalid(struct uclogic_params *params)
+{
 	params->invalid = true;
-पूर्ण
+}
 
 /**
- * uclogic_params_init_with_opt_desc() - initialize tablet पूर्णांकerface
- * parameters with an optional replacement report descriptor. Only modअगरy
- * report descriptor, अगर the original report descriptor matches the expected
+ * uclogic_params_init_with_opt_desc() - initialize tablet interface
+ * parameters with an optional replacement report descriptor. Only modify
+ * report descriptor, if the original report descriptor matches the expected
  * size.
  *
  * @params:		Parameters to initialize (to be cleaned with
- *			uclogic_params_cleanup()). Not modअगरied in हाल of
- *			error. Cannot be शून्य.
- * @hdev:		The HID device of the tablet पूर्णांकerface create the
- *			parameters क्रम. Cannot be शून्य.
+ *			uclogic_params_cleanup()). Not modified in case of
+ *			error. Cannot be NULL.
+ * @hdev:		The HID device of the tablet interface create the
+ *			parameters for. Cannot be NULL.
  * @orig_desc_size:	Expected size of the original report descriptor to
  *			be replaced.
- * @desc_ptr:		Poपूर्णांकer to the replacement report descriptor.
- *			Can be शून्य, अगर desc_size is zero.
+ * @desc_ptr:		Pointer to the replacement report descriptor.
+ *			Can be NULL, if desc_size is zero.
  * @desc_size:		Size of the replacement report descriptor.
  *
  * Returns:
- *	Zero, अगर successful. -EINVAL अगर an invalid argument was passed.
- *	-ENOMEM, अगर failed to allocate memory.
+ *	Zero, if successful. -EINVAL if an invalid argument was passed.
+ *	-ENOMEM, if failed to allocate memory.
  */
-अटल पूर्णांक uclogic_params_init_with_opt_desc(काष्ठा uclogic_params *params,
-					     काष्ठा hid_device *hdev,
-					     अचिन्हित पूर्णांक orig_desc_size,
+static int uclogic_params_init_with_opt_desc(struct uclogic_params *params,
+					     struct hid_device *hdev,
+					     unsigned int orig_desc_size,
 					     __u8 *desc_ptr,
-					     अचिन्हित पूर्णांक desc_size)
-अणु
-	__u8 *desc_copy_ptr = शून्य;
-	अचिन्हित पूर्णांक desc_copy_size;
-	पूर्णांक rc;
+					     unsigned int desc_size)
+{
+	__u8 *desc_copy_ptr = NULL;
+	unsigned int desc_copy_size;
+	int rc;
 
 	/* Check arguments */
-	अगर (params == शून्य || hdev == शून्य ||
-	    (desc_ptr == शून्य && desc_size != 0)) अणु
+	if (params == NULL || hdev == NULL ||
+	    (desc_ptr == NULL && desc_size != 0)) {
 		rc = -EINVAL;
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 
-	/* Replace report descriptor, अगर it matches */
-	अगर (hdev->dev_rsize == orig_desc_size) अणु
+	/* Replace report descriptor, if it matches */
+	if (hdev->dev_rsize == orig_desc_size) {
 		hid_dbg(hdev,
 			"device report descriptor matches the expected size, replacing\n");
 		desc_copy_ptr = kmemdup(desc_ptr, desc_size, GFP_KERNEL);
-		अगर (desc_copy_ptr == शून्य) अणु
+		if (desc_copy_ptr == NULL) {
 			rc = -ENOMEM;
-			जाओ cleanup;
-		पूर्ण
+			goto cleanup;
+		}
 		desc_copy_size = desc_size;
-	पूर्ण अन्यथा अणु
+	} else {
 		hid_dbg(hdev,
 			"device report descriptor doesn't match the expected size (%u != %u), preserving\n",
 			hdev->dev_rsize, orig_desc_size);
-		desc_copy_ptr = शून्य;
+		desc_copy_ptr = NULL;
 		desc_copy_size = 0;
-	पूर्ण
+	}
 
 	/* Output parameters */
-	स_रखो(params, 0, माप(*params));
+	memset(params, 0, sizeof(*params));
 	params->desc_ptr = desc_copy_ptr;
-	desc_copy_ptr = शून्य;
+	desc_copy_ptr = NULL;
 	params->desc_size = desc_copy_size;
 
 	rc = 0;
 cleanup:
-	kमुक्त(desc_copy_ptr);
-	वापस rc;
-पूर्ण
+	kfree(desc_copy_ptr);
+	return rc;
+}
 
 /**
- * uclogic_params_init_with_pen_unused() - initialize tablet पूर्णांकerface
+ * uclogic_params_init_with_pen_unused() - initialize tablet interface
  * parameters preserving original reports and generic HID processing, but
  * disabling pen usage.
  *
  * @params:		Parameters to initialize (to be cleaned with
- *			uclogic_params_cleanup()). Not modअगरied in हाल of
- *			error. Cannot be शून्य.
+ *			uclogic_params_cleanup()). Not modified in case of
+ *			error. Cannot be NULL.
  */
-अटल व्योम uclogic_params_init_with_pen_unused(काष्ठा uclogic_params *params)
-अणु
-	स_रखो(params, 0, माप(*params));
+static void uclogic_params_init_with_pen_unused(struct uclogic_params *params)
+{
+	memset(params, 0, sizeof(*params));
 	params->pen_unused = true;
-पूर्ण
+}
 
 /**
- * uclogic_params_huion_init() - initialize a Huion tablet पूर्णांकerface and discover
+ * uclogic_params_huion_init() - initialize a Huion tablet interface and discover
  * its parameters.
  *
  * @params:	Parameters to fill in (to be cleaned with
- *		uclogic_params_cleanup()). Not modअगरied in हाल of error.
- *		Cannot be शून्य.
- * @hdev:	The HID device of the tablet पूर्णांकerface to initialize and get
- *		parameters from. Cannot be शून्य.
+ *		uclogic_params_cleanup()). Not modified in case of error.
+ *		Cannot be NULL.
+ * @hdev:	The HID device of the tablet interface to initialize and get
+ *		parameters from. Cannot be NULL.
  *
  * Returns:
- *	Zero, अगर successful. A negative त्रुटि_सं code on error.
+ *	Zero, if successful. A negative errno code on error.
  */
-अटल पूर्णांक uclogic_params_huion_init(काष्ठा uclogic_params *params,
-				     काष्ठा hid_device *hdev)
-अणु
-	पूर्णांक rc;
-	काष्ठा usb_device *udev = hid_to_usb_dev(hdev);
-	काष्ठा usb_पूर्णांकerface *अगरace = to_usb_पूर्णांकerface(hdev->dev.parent);
-	__u8 bInterfaceNumber = अगरace->cur_altsetting->desc.bInterfaceNumber;
+static int uclogic_params_huion_init(struct uclogic_params *params,
+				     struct hid_device *hdev)
+{
+	int rc;
+	struct usb_device *udev = hid_to_usb_dev(hdev);
+	struct usb_interface *iface = to_usb_interface(hdev->dev.parent);
+	__u8 bInterfaceNumber = iface->cur_altsetting->desc.bInterfaceNumber;
 	bool found;
 	/* The resulting parameters (noop) */
-	काष्ठा uclogic_params p = अणु0, पूर्ण;
-	अटल स्थिर अक्षर transition_ver[] = "HUION_T153_160607";
-	अक्षर *ver_ptr = शून्य;
-	स्थिर माप_प्रकार ver_len = माप(transition_ver) + 1;
+	struct uclogic_params p = {0, };
+	static const char transition_ver[] = "HUION_T153_160607";
+	char *ver_ptr = NULL;
+	const size_t ver_len = sizeof(transition_ver) + 1;
 
 	/* Check arguments */
-	अगर (params == शून्य || hdev == शून्य) अणु
+	if (params == NULL || hdev == NULL) {
 		rc = -EINVAL;
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 
-	/* If it's not a pen पूर्णांकerface */
-	अगर (bInterfaceNumber != 0) अणु
-		/* TODO: Consider marking the पूर्णांकerface invalid */
+	/* If it's not a pen interface */
+	if (bInterfaceNumber != 0) {
+		/* TODO: Consider marking the interface invalid */
 		uclogic_params_init_with_pen_unused(&p);
-		जाओ output;
-	पूर्ण
+		goto output;
+	}
 
 	/* Try to get firmware version */
 	ver_ptr = kzalloc(ver_len, GFP_KERNEL);
-	अगर (ver_ptr == शून्य) अणु
+	if (ver_ptr == NULL) {
 		rc = -ENOMEM;
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 	rc = usb_string(udev, 201, ver_ptr, ver_len);
-	अगर (rc == -EPIPE) अणु
+	if (rc == -EPIPE) {
 		*ver_ptr = '\0';
-	पूर्ण अन्यथा अगर (rc < 0) अणु
+	} else if (rc < 0) {
 		hid_err(hdev,
 			"failed retrieving Huion firmware version: %d\n", rc);
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 
 	/* If this is a transition firmware */
-	अगर (म_भेद(ver_ptr, transition_ver) == 0) अणु
+	if (strcmp(ver_ptr, transition_ver) == 0) {
 		hid_dbg(hdev,
 			"transition firmware detected, not probing pen v2 parameters\n");
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Try to probe v2 pen parameters */
 		rc = uclogic_params_pen_init_v2(&p.pen, &found, hdev);
-		अगर (rc != 0) अणु
+		if (rc != 0) {
 			hid_err(hdev,
 				"failed probing pen v2 parameters: %d\n", rc);
-			जाओ cleanup;
-		पूर्ण अन्यथा अगर (found) अणु
+			goto cleanup;
+		} else if (found) {
 			hid_dbg(hdev, "pen v2 parameters found\n");
 			/* Create v2 buttonpad parameters */
 			rc = uclogic_params_frame_init_with_desc(
@@ -765,365 +764,365 @@ cleanup:
 					uclogic_rdesc_buttonpad_v2_arr,
 					uclogic_rdesc_buttonpad_v2_size,
 					UCLOGIC_RDESC_BUTTONPAD_V2_ID);
-			अगर (rc != 0) अणु
+			if (rc != 0) {
 				hid_err(hdev,
 					"failed creating v2 buttonpad parameters: %d\n",
 					rc);
-				जाओ cleanup;
-			पूर्ण
-			/* Set biपंचांगask marking frame reports in pen reports */
+				goto cleanup;
+			}
+			/* Set bitmask marking frame reports in pen reports */
 			p.pen_frame_flag = 0x20;
-			जाओ output;
-		पूर्ण
+			goto output;
+		}
 		hid_dbg(hdev, "pen v2 parameters not found\n");
-	पूर्ण
+	}
 
 	/* Try to probe v1 pen parameters */
 	rc = uclogic_params_pen_init_v1(&p.pen, &found, hdev);
-	अगर (rc != 0) अणु
+	if (rc != 0) {
 		hid_err(hdev,
 			"failed probing pen v1 parameters: %d\n", rc);
-		जाओ cleanup;
-	पूर्ण अन्यथा अगर (found) अणु
+		goto cleanup;
+	} else if (found) {
 		hid_dbg(hdev, "pen v1 parameters found\n");
 		/* Try to probe v1 buttonpad */
 		rc = uclogic_params_frame_init_v1_buttonpad(
 						&p.frame,
 						&found, hdev);
-		अगर (rc != 0) अणु
+		if (rc != 0) {
 			hid_err(hdev, "v1 buttonpad probing failed: %d\n", rc);
-			जाओ cleanup;
-		पूर्ण
+			goto cleanup;
+		}
 		hid_dbg(hdev, "buttonpad v1 parameters%s found\n",
 			(found ? "" : " not"));
-		अगर (found) अणु
-			/* Set biपंचांगask marking frame reports */
+		if (found) {
+			/* Set bitmask marking frame reports */
 			p.pen_frame_flag = 0x20;
-		पूर्ण
-		जाओ output;
-	पूर्ण
+		}
+		goto output;
+	}
 	hid_dbg(hdev, "pen v1 parameters not found\n");
 
 	uclogic_params_init_invalid(&p);
 
 output:
 	/* Output parameters */
-	स_नकल(params, &p, माप(*params));
-	स_रखो(&p, 0, माप(p));
+	memcpy(params, &p, sizeof(*params));
+	memset(&p, 0, sizeof(p));
 	rc = 0;
 cleanup:
-	kमुक्त(ver_ptr);
+	kfree(ver_ptr);
 	uclogic_params_cleanup(&p);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
- * uclogic_params_init() - initialize a tablet पूर्णांकerface and discover its
+ * uclogic_params_init() - initialize a tablet interface and discover its
  * parameters.
  *
  * @params:	Parameters to fill in (to be cleaned with
- *		uclogic_params_cleanup()). Not modअगरied in हाल of error.
- *		Cannot be शून्य.
- * @hdev:	The HID device of the tablet पूर्णांकerface to initialize and get
- *		parameters from. Cannot be शून्य. Must be using the USB low-level
+ *		uclogic_params_cleanup()). Not modified in case of error.
+ *		Cannot be NULL.
+ * @hdev:	The HID device of the tablet interface to initialize and get
+ *		parameters from. Cannot be NULL. Must be using the USB low-level
  *		driver, i.e. be an actual USB tablet.
  *
  * Returns:
- *	Zero, अगर successful. A negative त्रुटि_सं code on error.
+ *	Zero, if successful. A negative errno code on error.
  */
-पूर्णांक uclogic_params_init(काष्ठा uclogic_params *params,
-			काष्ठा hid_device *hdev)
-अणु
-	पूर्णांक rc;
-	काष्ठा usb_device *udev = hid_to_usb_dev(hdev);
+int uclogic_params_init(struct uclogic_params *params,
+			struct hid_device *hdev)
+{
+	int rc;
+	struct usb_device *udev = hid_to_usb_dev(hdev);
 	__u8  bNumInterfaces = udev->config->desc.bNumInterfaces;
-	काष्ठा usb_पूर्णांकerface *अगरace = to_usb_पूर्णांकerface(hdev->dev.parent);
-	__u8 bInterfaceNumber = अगरace->cur_altsetting->desc.bInterfaceNumber;
+	struct usb_interface *iface = to_usb_interface(hdev->dev.parent);
+	__u8 bInterfaceNumber = iface->cur_altsetting->desc.bInterfaceNumber;
 	bool found;
 	/* The resulting parameters (noop) */
-	काष्ठा uclogic_params p = अणु0, पूर्ण;
+	struct uclogic_params p = {0, };
 
 	/* Check arguments */
-	अगर (params == शून्य || hdev == शून्य ||
-	    !hid_is_using_ll_driver(hdev, &usb_hid_driver)) अणु
+	if (params == NULL || hdev == NULL ||
+	    !hid_is_using_ll_driver(hdev, &usb_hid_driver)) {
 		rc = -EINVAL;
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 
 	/*
-	 * Set replacement report descriptor अगर the original matches the
-	 * specअगरied size. Otherwise keep पूर्णांकerface unchanged.
+	 * Set replacement report descriptor if the original matches the
+	 * specified size. Otherwise keep interface unchanged.
 	 */
-#घोषणा WITH_OPT_DESC(_orig_desc_token, _new_desc_token) \
+#define WITH_OPT_DESC(_orig_desc_token, _new_desc_token) \
 	uclogic_params_init_with_opt_desc(                  \
 		&p, hdev,                                   \
 		UCLOGIC_RDESC_##_orig_desc_token##_SIZE,    \
 		uclogic_rdesc_##_new_desc_token##_arr,      \
 		uclogic_rdesc_##_new_desc_token##_size)
 
-#घोषणा VID_PID(_vid, _pid) \
+#define VID_PID(_vid, _pid) \
 	(((__u32)(_vid) << 16) | ((__u32)(_pid) & U16_MAX))
 
 	/*
-	 * Handle specअगरic पूर्णांकerfaces क्रम specअगरic tablets.
+	 * Handle specific interfaces for specific tablets.
 	 *
 	 * Observe the following logic:
 	 *
-	 * If the पूर्णांकerface is recognized as producing certain useful input:
-	 *	Mark पूर्णांकerface as valid.
-	 *	Output पूर्णांकerface parameters.
-	 * Else, अगर the पूर्णांकerface is recognized as *not* producing any useful
+	 * If the interface is recognized as producing certain useful input:
+	 *	Mark interface as valid.
+	 *	Output interface parameters.
+	 * Else, if the interface is recognized as *not* producing any useful
 	 * input:
-	 *	Mark पूर्णांकerface as invalid.
+	 *	Mark interface as invalid.
 	 * Else:
-	 *	Mark पूर्णांकerface as valid.
+	 *	Mark interface as valid.
 	 *	Output noop parameters.
 	 *
-	 * Rule of thumb: it is better to disable a broken पूर्णांकerface than let
+	 * Rule of thumb: it is better to disable a broken interface than let
 	 *		  it spew garbage input.
 	 */
 
-	चयन (VID_PID(hdev->venकरोr, hdev->product)) अणु
-	हाल VID_PID(USB_VENDOR_ID_UCLOGIC,
+	switch (VID_PID(hdev->vendor, hdev->product)) {
+	case VID_PID(USB_VENDOR_ID_UCLOGIC,
 		     USB_DEVICE_ID_UCLOGIC_TABLET_PF1209):
 		rc = WITH_OPT_DESC(PF1209_ORIG, pf1209_fixed);
-		अगर (rc != 0)
-			जाओ cleanup;
-		अवरोध;
-	हाल VID_PID(USB_VENDOR_ID_UCLOGIC,
+		if (rc != 0)
+			goto cleanup;
+		break;
+	case VID_PID(USB_VENDOR_ID_UCLOGIC,
 		     USB_DEVICE_ID_UCLOGIC_TABLET_WP4030U):
 		rc = WITH_OPT_DESC(WPXXXXU_ORIG, wp4030u_fixed);
-		अगर (rc != 0)
-			जाओ cleanup;
-		अवरोध;
-	हाल VID_PID(USB_VENDOR_ID_UCLOGIC,
+		if (rc != 0)
+			goto cleanup;
+		break;
+	case VID_PID(USB_VENDOR_ID_UCLOGIC,
 		     USB_DEVICE_ID_UCLOGIC_TABLET_WP5540U):
-		अगर (hdev->dev_rsize == UCLOGIC_RDESC_WP5540U_V2_ORIG_SIZE) अणु
-			अगर (bInterfaceNumber == 0) अणु
+		if (hdev->dev_rsize == UCLOGIC_RDESC_WP5540U_V2_ORIG_SIZE) {
+			if (bInterfaceNumber == 0) {
 				/* Try to probe v1 pen parameters */
 				rc = uclogic_params_pen_init_v1(&p.pen,
 								&found, hdev);
-				अगर (rc != 0) अणु
+				if (rc != 0) {
 					hid_err(hdev,
 						"pen probing failed: %d\n",
 						rc);
-					जाओ cleanup;
-				पूर्ण
-				अगर (!found) अणु
+					goto cleanup;
+				}
+				if (!found) {
 					hid_warn(hdev,
 						 "pen parameters not found");
-				पूर्ण
-			पूर्ण अन्यथा अणु
+				}
+			} else {
 				uclogic_params_init_invalid(&p);
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			rc = WITH_OPT_DESC(WPXXXXU_ORIG, wp5540u_fixed);
-			अगर (rc != 0)
-				जाओ cleanup;
-		पूर्ण
-		अवरोध;
-	हाल VID_PID(USB_VENDOR_ID_UCLOGIC,
+			if (rc != 0)
+				goto cleanup;
+		}
+		break;
+	case VID_PID(USB_VENDOR_ID_UCLOGIC,
 		     USB_DEVICE_ID_UCLOGIC_TABLET_WP8060U):
 		rc = WITH_OPT_DESC(WPXXXXU_ORIG, wp8060u_fixed);
-		अगर (rc != 0)
-			जाओ cleanup;
-		अवरोध;
-	हाल VID_PID(USB_VENDOR_ID_UCLOGIC,
+		if (rc != 0)
+			goto cleanup;
+		break;
+	case VID_PID(USB_VENDOR_ID_UCLOGIC,
 		     USB_DEVICE_ID_UCLOGIC_TABLET_WP1062):
 		rc = WITH_OPT_DESC(WP1062_ORIG, wp1062_fixed);
-		अगर (rc != 0)
-			जाओ cleanup;
-		अवरोध;
-	हाल VID_PID(USB_VENDOR_ID_UCLOGIC,
+		if (rc != 0)
+			goto cleanup;
+		break;
+	case VID_PID(USB_VENDOR_ID_UCLOGIC,
 		     USB_DEVICE_ID_UCLOGIC_WIRELESS_TABLET_TWHL850):
-		चयन (bInterfaceNumber) अणु
-		हाल 0:
+		switch (bInterfaceNumber) {
+		case 0:
 			rc = WITH_OPT_DESC(TWHL850_ORIG0, twhl850_fixed0);
-			अगर (rc != 0)
-				जाओ cleanup;
-			अवरोध;
-		हाल 1:
+			if (rc != 0)
+				goto cleanup;
+			break;
+		case 1:
 			rc = WITH_OPT_DESC(TWHL850_ORIG1, twhl850_fixed1);
-			अगर (rc != 0)
-				जाओ cleanup;
-			अवरोध;
-		हाल 2:
+			if (rc != 0)
+				goto cleanup;
+			break;
+		case 2:
 			rc = WITH_OPT_DESC(TWHL850_ORIG2, twhl850_fixed2);
-			अगर (rc != 0)
-				जाओ cleanup;
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल VID_PID(USB_VENDOR_ID_UCLOGIC,
+			if (rc != 0)
+				goto cleanup;
+			break;
+		}
+		break;
+	case VID_PID(USB_VENDOR_ID_UCLOGIC,
 		     USB_DEVICE_ID_UCLOGIC_TABLET_TWHA60):
 		/*
-		 * If it is not a three-पूर्णांकerface version, which is known to
+		 * If it is not a three-interface version, which is known to
 		 * respond to initialization.
 		 */
-		अगर (bNumInterfaces != 3) अणु
-			चयन (bInterfaceNumber) अणु
-			हाल 0:
+		if (bNumInterfaces != 3) {
+			switch (bInterfaceNumber) {
+			case 0:
 				rc = WITH_OPT_DESC(TWHA60_ORIG0,
 							twha60_fixed0);
-				अगर (rc != 0)
-					जाओ cleanup;
-				अवरोध;
-			हाल 1:
+				if (rc != 0)
+					goto cleanup;
+				break;
+			case 1:
 				rc = WITH_OPT_DESC(TWHA60_ORIG1,
 							twha60_fixed1);
-				अगर (rc != 0)
-					जाओ cleanup;
-				अवरोध;
-			पूर्ण
-			अवरोध;
-		पूर्ण
+				if (rc != 0)
+					goto cleanup;
+				break;
+			}
+			break;
+		}
 		fallthrough;
-	हाल VID_PID(USB_VENDOR_ID_HUION,
+	case VID_PID(USB_VENDOR_ID_HUION,
 		     USB_DEVICE_ID_HUION_TABLET):
-	हाल VID_PID(USB_VENDOR_ID_HUION,
+	case VID_PID(USB_VENDOR_ID_HUION,
 		     USB_DEVICE_ID_HUION_HS64):
-	हाल VID_PID(USB_VENDOR_ID_UCLOGIC,
+	case VID_PID(USB_VENDOR_ID_UCLOGIC,
 		     USB_DEVICE_ID_HUION_TABLET):
-	हाल VID_PID(USB_VENDOR_ID_UCLOGIC,
+	case VID_PID(USB_VENDOR_ID_UCLOGIC,
 		     USB_DEVICE_ID_YIYNOVA_TABLET):
-	हाल VID_PID(USB_VENDOR_ID_UCLOGIC,
+	case VID_PID(USB_VENDOR_ID_UCLOGIC,
 		     USB_DEVICE_ID_UCLOGIC_UGEE_TABLET_81):
-	हाल VID_PID(USB_VENDOR_ID_UCLOGIC,
+	case VID_PID(USB_VENDOR_ID_UCLOGIC,
 		     USB_DEVICE_ID_UCLOGIC_DRAWIMAGE_G3):
-	हाल VID_PID(USB_VENDOR_ID_UCLOGIC,
+	case VID_PID(USB_VENDOR_ID_UCLOGIC,
 		     USB_DEVICE_ID_UCLOGIC_UGEE_TABLET_45):
-	हाल VID_PID(USB_VENDOR_ID_UCLOGIC,
+	case VID_PID(USB_VENDOR_ID_UCLOGIC,
 		     USB_DEVICE_ID_UCLOGIC_UGEE_TABLET_47):
 		rc = uclogic_params_huion_init(&p, hdev);
-		अगर (rc != 0)
-			जाओ cleanup;
-		अवरोध;
-	हाल VID_PID(USB_VENDOR_ID_UGTIZER,
+		if (rc != 0)
+			goto cleanup;
+		break;
+	case VID_PID(USB_VENDOR_ID_UGTIZER,
 		     USB_DEVICE_ID_UGTIZER_TABLET_GP0610):
-	हाल VID_PID(USB_VENDOR_ID_UGTIZER,
+	case VID_PID(USB_VENDOR_ID_UGTIZER,
 		     USB_DEVICE_ID_UGTIZER_TABLET_GT5040):
-	हाल VID_PID(USB_VENDOR_ID_UGEE,
+	case VID_PID(USB_VENDOR_ID_UGEE,
 		     USB_DEVICE_ID_UGEE_XPPEN_TABLET_G540):
-	हाल VID_PID(USB_VENDOR_ID_UGEE,
+	case VID_PID(USB_VENDOR_ID_UGEE,
 		     USB_DEVICE_ID_UGEE_XPPEN_TABLET_G640):
-	हाल VID_PID(USB_VENDOR_ID_UGEE,
+	case VID_PID(USB_VENDOR_ID_UGEE,
 		     USB_DEVICE_ID_UGEE_TABLET_RAINBOW_CV720):
-		/* If this is the pen पूर्णांकerface */
-		अगर (bInterfaceNumber == 1) अणु
+		/* If this is the pen interface */
+		if (bInterfaceNumber == 1) {
 			/* Probe v1 pen parameters */
 			rc = uclogic_params_pen_init_v1(&p.pen, &found, hdev);
-			अगर (rc != 0) अणु
+			if (rc != 0) {
 				hid_err(hdev, "pen probing failed: %d\n", rc);
-				जाओ cleanup;
-			पूर्ण
-			अगर (!found) अणु
+				goto cleanup;
+			}
+			if (!found) {
 				hid_warn(hdev, "pen parameters not found");
 				uclogic_params_init_invalid(&p);
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			/* TODO: Consider marking the पूर्णांकerface invalid */
+			}
+		} else {
+			/* TODO: Consider marking the interface invalid */
 			uclogic_params_init_with_pen_unused(&p);
-		पूर्ण
-		अवरोध;
-	हाल VID_PID(USB_VENDOR_ID_UGEE,
+		}
+		break;
+	case VID_PID(USB_VENDOR_ID_UGEE,
 		     USB_DEVICE_ID_UGEE_XPPEN_TABLET_DECO01):
-		/* If this is the pen and frame पूर्णांकerface */
-		अगर (bInterfaceNumber == 1) अणु
+		/* If this is the pen and frame interface */
+		if (bInterfaceNumber == 1) {
 			/* Probe v1 pen parameters */
 			rc = uclogic_params_pen_init_v1(&p.pen, &found, hdev);
-			अगर (rc != 0) अणु
+			if (rc != 0) {
 				hid_err(hdev, "pen probing failed: %d\n", rc);
-				जाओ cleanup;
-			पूर्ण
+				goto cleanup;
+			}
 			/* Initialize frame parameters */
 			rc = uclogic_params_frame_init_with_desc(
 				&p.frame,
 				uclogic_rdesc_xppen_deco01_frame_arr,
 				uclogic_rdesc_xppen_deco01_frame_size,
 				0);
-			अगर (rc != 0)
-				जाओ cleanup;
-		पूर्ण अन्यथा अणु
-			/* TODO: Consider marking the पूर्णांकerface invalid */
+			if (rc != 0)
+				goto cleanup;
+		} else {
+			/* TODO: Consider marking the interface invalid */
 			uclogic_params_init_with_pen_unused(&p);
-		पूर्ण
-		अवरोध;
-	हाल VID_PID(USB_VENDOR_ID_TRUST,
+		}
+		break;
+	case VID_PID(USB_VENDOR_ID_TRUST,
 		     USB_DEVICE_ID_TRUST_PANORA_TABLET):
-	हाल VID_PID(USB_VENDOR_ID_UGEE,
+	case VID_PID(USB_VENDOR_ID_UGEE,
 		     USB_DEVICE_ID_UGEE_TABLET_G5):
-		/* Ignore non-pen पूर्णांकerfaces */
-		अगर (bInterfaceNumber != 1) अणु
+		/* Ignore non-pen interfaces */
+		if (bInterfaceNumber != 1) {
 			uclogic_params_init_invalid(&p);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		rc = uclogic_params_pen_init_v1(&p.pen, &found, hdev);
-		अगर (rc != 0) अणु
+		if (rc != 0) {
 			hid_err(hdev, "pen probing failed: %d\n", rc);
-			जाओ cleanup;
-		पूर्ण अन्यथा अगर (found) अणु
+			goto cleanup;
+		} else if (found) {
 			rc = uclogic_params_frame_init_with_desc(
 				&p.frame,
 				uclogic_rdesc_ugee_g5_frame_arr,
 				uclogic_rdesc_ugee_g5_frame_size,
 				UCLOGIC_RDESC_UGEE_G5_FRAME_ID);
-			अगर (rc != 0) अणु
+			if (rc != 0) {
 				hid_err(hdev,
 					"failed creating buttonpad parameters: %d\n",
 					rc);
-				जाओ cleanup;
-			पूर्ण
+				goto cleanup;
+			}
 			p.frame.re_lsb =
 				UCLOGIC_RDESC_UGEE_G5_FRAME_RE_LSB;
 			p.frame.dev_id_byte =
 				UCLOGIC_RDESC_UGEE_G5_FRAME_DEV_ID_BYTE;
-		पूर्ण अन्यथा अणु
+		} else {
 			hid_warn(hdev, "pen parameters not found");
 			uclogic_params_init_invalid(&p);
-		पूर्ण
+		}
 
-		अवरोध;
-	हाल VID_PID(USB_VENDOR_ID_UGEE,
+		break;
+	case VID_PID(USB_VENDOR_ID_UGEE,
 		     USB_DEVICE_ID_UGEE_TABLET_EX07S):
-		/* Ignore non-pen पूर्णांकerfaces */
-		अगर (bInterfaceNumber != 1) अणु
+		/* Ignore non-pen interfaces */
+		if (bInterfaceNumber != 1) {
 			uclogic_params_init_invalid(&p);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		rc = uclogic_params_pen_init_v1(&p.pen, &found, hdev);
-		अगर (rc != 0) अणु
+		if (rc != 0) {
 			hid_err(hdev, "pen probing failed: %d\n", rc);
-			जाओ cleanup;
-		पूर्ण अन्यथा अगर (found) अणु
+			goto cleanup;
+		} else if (found) {
 			rc = uclogic_params_frame_init_with_desc(
 				&p.frame,
 				uclogic_rdesc_ugee_ex07_buttonpad_arr,
 				uclogic_rdesc_ugee_ex07_buttonpad_size,
 				0);
-			अगर (rc != 0) अणु
+			if (rc != 0) {
 				hid_err(hdev,
 					"failed creating buttonpad parameters: %d\n",
 					rc);
-				जाओ cleanup;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				goto cleanup;
+			}
+		} else {
 			hid_warn(hdev, "pen parameters not found");
 			uclogic_params_init_invalid(&p);
-		पूर्ण
+		}
 
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-#अघोषित VID_PID
-#अघोषित WITH_OPT_DESC
+#undef VID_PID
+#undef WITH_OPT_DESC
 
 	/* Output parameters */
-	स_नकल(params, &p, माप(*params));
-	स_रखो(&p, 0, माप(p));
+	memcpy(params, &p, sizeof(*params));
+	memset(&p, 0, sizeof(p));
 	rc = 0;
 cleanup:
 	uclogic_params_cleanup(&p);
-	वापस rc;
-पूर्ण
+	return rc;
+}

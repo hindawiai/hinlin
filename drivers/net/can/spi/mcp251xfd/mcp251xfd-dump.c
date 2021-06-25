@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 //
 // mcp251xfd - Microchip MCP251xFD Family CAN controller driver
 //
@@ -8,50 +7,50 @@
 // Copyright (C) 2015-2018 Etnaviv Project
 //
 
-#समावेश <linux/devcoredump.h>
+#include <linux/devcoredump.h>
 
-#समावेश "mcp251xfd.h"
-#समावेश "mcp251xfd-dump.h"
+#include "mcp251xfd.h"
+#include "mcp251xfd-dump.h"
 
-काष्ठा mcp251xfd_dump_iter अणु
-	व्योम *start;
-	काष्ठा mcp251xfd_dump_object_header *hdr;
-	व्योम *data;
-पूर्ण;
+struct mcp251xfd_dump_iter {
+	void *start;
+	struct mcp251xfd_dump_object_header *hdr;
+	void *data;
+};
 
-काष्ठा mcp251xfd_dump_reg_space अणु
+struct mcp251xfd_dump_reg_space {
 	u16 base;
 	u16 size;
-पूर्ण;
+};
 
-काष्ठा mcp251xfd_dump_ring अणु
-	क्रमागत mcp251xfd_dump_object_ring_key key;
+struct mcp251xfd_dump_ring {
+	enum mcp251xfd_dump_object_ring_key key;
 	u32 val;
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mcp251xfd_dump_reg_space mcp251xfd_dump_reg_space[] = अणु
-	अणु
+static const struct mcp251xfd_dump_reg_space mcp251xfd_dump_reg_space[] = {
+	{
 		.base = MCP251XFD_REG_CON,
 		.size = MCP251XFD_REG_FLTOBJ(32) - MCP251XFD_REG_CON,
-	पूर्ण, अणु
+	}, {
 		.base = MCP251XFD_RAM_START,
 		.size = MCP251XFD_RAM_SIZE,
-	पूर्ण, अणु
+	}, {
 		.base = MCP251XFD_REG_OSC,
 		.size = MCP251XFD_REG_DEVID - MCP251XFD_REG_OSC,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल व्योम mcp251xfd_dump_header(काष्ठा mcp251xfd_dump_iter *iter,
-				  क्रमागत mcp251xfd_dump_object_type object_type,
-				  स्थिर व्योम *data_end)
-अणु
-	काष्ठा mcp251xfd_dump_object_header *hdr = iter->hdr;
-	अचिन्हित पूर्णांक len;
+static void mcp251xfd_dump_header(struct mcp251xfd_dump_iter *iter,
+				  enum mcp251xfd_dump_object_type object_type,
+				  const void *data_end)
+{
+	struct mcp251xfd_dump_object_header *hdr = iter->hdr;
+	unsigned int len;
 
 	len = data_end - iter->data;
-	अगर (!len)
-		वापस;
+	if (!len)
+		return;
 
 	hdr->magic = cpu_to_le32(MCP251XFD_DUMP_MAGIC);
 	hdr->type = cpu_to_le32(object_type);
@@ -60,222 +59,222 @@
 
 	iter->hdr++;
 	iter->data += len;
-पूर्ण
+}
 
-अटल व्योम mcp251xfd_dump_रेजिस्टरs(स्थिर काष्ठा mcp251xfd_priv *priv,
-				     काष्ठा mcp251xfd_dump_iter *iter)
-अणु
-	स्थिर पूर्णांक val_bytes = regmap_get_val_bytes(priv->map_rx);
-	काष्ठा mcp251xfd_dump_object_reg *reg = iter->data;
-	अचिन्हित पूर्णांक i, j;
-	पूर्णांक err;
+static void mcp251xfd_dump_registers(const struct mcp251xfd_priv *priv,
+				     struct mcp251xfd_dump_iter *iter)
+{
+	const int val_bytes = regmap_get_val_bytes(priv->map_rx);
+	struct mcp251xfd_dump_object_reg *reg = iter->data;
+	unsigned int i, j;
+	int err;
 
-	क्रम (i = 0; i < ARRAY_SIZE(mcp251xfd_dump_reg_space); i++) अणु
-		स्थिर काष्ठा mcp251xfd_dump_reg_space *reg_space;
-		व्योम *buf;
+	for (i = 0; i < ARRAY_SIZE(mcp251xfd_dump_reg_space); i++) {
+		const struct mcp251xfd_dump_reg_space *reg_space;
+		void *buf;
 
 		reg_space = &mcp251xfd_dump_reg_space[i];
 
-		buf = kदो_स्मृति(reg_space->size, GFP_KERNEL);
-		अगर (!buf)
-			जाओ out;
+		buf = kmalloc(reg_space->size, GFP_KERNEL);
+		if (!buf)
+			goto out;
 
-		err = regmap_bulk_पढ़ो(priv->map_reg, reg_space->base,
+		err = regmap_bulk_read(priv->map_reg, reg_space->base,
 				       buf, reg_space->size / val_bytes);
-		अगर (err) अणु
-			kमुक्त(buf);
-			जारी;
-		पूर्ण
+		if (err) {
+			kfree(buf);
+			continue;
+		}
 
-		क्रम (j = 0; j < reg_space->size; j += माप(u32), reg++) अणु
+		for (j = 0; j < reg_space->size; j += sizeof(u32), reg++) {
 			reg->reg = cpu_to_le32(reg_space->base + j);
 			reg->val = cpu_to_le32p(buf + j);
-		पूर्ण
+		}
 
-		kमुक्त(buf);
-	पूर्ण
+		kfree(buf);
+	}
 
  out:
 	mcp251xfd_dump_header(iter, MCP251XFD_DUMP_OBJECT_TYPE_REG, reg);
-पूर्ण
+}
 
-अटल व्योम mcp251xfd_dump_ring(काष्ठा mcp251xfd_dump_iter *iter,
-				क्रमागत mcp251xfd_dump_object_type object_type,
-				स्थिर काष्ठा mcp251xfd_dump_ring *dump_ring,
-				अचिन्हित पूर्णांक len)
-अणु
-	काष्ठा mcp251xfd_dump_object_reg *reg = iter->data;
-	अचिन्हित पूर्णांक i;
+static void mcp251xfd_dump_ring(struct mcp251xfd_dump_iter *iter,
+				enum mcp251xfd_dump_object_type object_type,
+				const struct mcp251xfd_dump_ring *dump_ring,
+				unsigned int len)
+{
+	struct mcp251xfd_dump_object_reg *reg = iter->data;
+	unsigned int i;
 
-	क्रम (i = 0; i < len; i++, reg++) अणु
+	for (i = 0; i < len; i++, reg++) {
 		reg->reg = cpu_to_le32(dump_ring[i].key);
 		reg->val = cpu_to_le32(dump_ring[i].val);
-	पूर्ण
+	}
 
 	mcp251xfd_dump_header(iter, object_type, reg);
-पूर्ण
+}
 
-अटल व्योम mcp251xfd_dump_tef_ring(स्थिर काष्ठा mcp251xfd_priv *priv,
-				    काष्ठा mcp251xfd_dump_iter *iter)
-अणु
-	स्थिर काष्ठा mcp251xfd_tef_ring *tef = priv->tef;
-	स्थिर काष्ठा mcp251xfd_tx_ring *tx = priv->tx;
-	स्थिर काष्ठा mcp251xfd_dump_ring dump_ring[] = अणु
-		अणु
+static void mcp251xfd_dump_tef_ring(const struct mcp251xfd_priv *priv,
+				    struct mcp251xfd_dump_iter *iter)
+{
+	const struct mcp251xfd_tef_ring *tef = priv->tef;
+	const struct mcp251xfd_tx_ring *tx = priv->tx;
+	const struct mcp251xfd_dump_ring dump_ring[] = {
+		{
 			.key = MCP251XFD_DUMP_OBJECT_RING_KEY_HEAD,
 			.val = tef->head,
-		पूर्ण, अणु
+		}, {
 			.key = MCP251XFD_DUMP_OBJECT_RING_KEY_TAIL,
 			.val = tef->tail,
-		पूर्ण, अणु
+		}, {
 			.key = MCP251XFD_DUMP_OBJECT_RING_KEY_BASE,
 			.val = 0,
-		पूर्ण, अणु
+		}, {
 			.key = MCP251XFD_DUMP_OBJECT_RING_KEY_NR,
 			.val = 0,
-		पूर्ण, अणु
+		}, {
 			.key = MCP251XFD_DUMP_OBJECT_RING_KEY_FIFO_NR,
 			.val = 0,
-		पूर्ण, अणु
+		}, {
 			.key = MCP251XFD_DUMP_OBJECT_RING_KEY_OBJ_NUM,
 			.val = tx->obj_num,
-		पूर्ण, अणु
+		}, {
 			.key = MCP251XFD_DUMP_OBJECT_RING_KEY_OBJ_SIZE,
-			.val = माप(काष्ठा mcp251xfd_hw_tef_obj),
-		पूर्ण,
-	पूर्ण;
+			.val = sizeof(struct mcp251xfd_hw_tef_obj),
+		},
+	};
 
 	mcp251xfd_dump_ring(iter, MCP251XFD_DUMP_OBJECT_TYPE_TEF,
 			    dump_ring, ARRAY_SIZE(dump_ring));
-पूर्ण
+}
 
-अटल व्योम mcp251xfd_dump_rx_ring_one(स्थिर काष्ठा mcp251xfd_priv *priv,
-				       काष्ठा mcp251xfd_dump_iter *iter,
-				       स्थिर काष्ठा mcp251xfd_rx_ring *rx)
-अणु
-	स्थिर काष्ठा mcp251xfd_dump_ring dump_ring[] = अणु
-		अणु
+static void mcp251xfd_dump_rx_ring_one(const struct mcp251xfd_priv *priv,
+				       struct mcp251xfd_dump_iter *iter,
+				       const struct mcp251xfd_rx_ring *rx)
+{
+	const struct mcp251xfd_dump_ring dump_ring[] = {
+		{
 			.key = MCP251XFD_DUMP_OBJECT_RING_KEY_HEAD,
 			.val = rx->head,
-		पूर्ण, अणु
+		}, {
 			.key = MCP251XFD_DUMP_OBJECT_RING_KEY_TAIL,
 			.val = rx->tail,
-		पूर्ण, अणु
+		}, {
 			.key = MCP251XFD_DUMP_OBJECT_RING_KEY_BASE,
 			.val = rx->base,
-		पूर्ण, अणु
+		}, {
 			.key = MCP251XFD_DUMP_OBJECT_RING_KEY_NR,
 			.val = rx->nr,
-		पूर्ण, अणु
+		}, {
 			.key = MCP251XFD_DUMP_OBJECT_RING_KEY_FIFO_NR,
-			.val = rx->fअगरo_nr,
-		पूर्ण, अणु
+			.val = rx->fifo_nr,
+		}, {
 			.key = MCP251XFD_DUMP_OBJECT_RING_KEY_OBJ_NUM,
 			.val = rx->obj_num,
-		पूर्ण, अणु
+		}, {
 			.key = MCP251XFD_DUMP_OBJECT_RING_KEY_OBJ_SIZE,
 			.val = rx->obj_size,
-		पूर्ण,
-	पूर्ण;
+		},
+	};
 
 	mcp251xfd_dump_ring(iter, MCP251XFD_DUMP_OBJECT_TYPE_RX,
 			    dump_ring, ARRAY_SIZE(dump_ring));
-पूर्ण
+}
 
-अटल व्योम mcp251xfd_dump_rx_ring(स्थिर काष्ठा mcp251xfd_priv *priv,
-				   काष्ठा mcp251xfd_dump_iter *iter)
-अणु
-	काष्ठा mcp251xfd_rx_ring *rx_ring;
-	अचिन्हित पूर्णांक i;
+static void mcp251xfd_dump_rx_ring(const struct mcp251xfd_priv *priv,
+				   struct mcp251xfd_dump_iter *iter)
+{
+	struct mcp251xfd_rx_ring *rx_ring;
+	unsigned int i;
 
-	mcp251xfd_क्रम_each_rx_ring(priv, rx_ring, i)
+	mcp251xfd_for_each_rx_ring(priv, rx_ring, i)
 		mcp251xfd_dump_rx_ring_one(priv, iter, rx_ring);
-पूर्ण
+}
 
-अटल व्योम mcp251xfd_dump_tx_ring(स्थिर काष्ठा mcp251xfd_priv *priv,
-				   काष्ठा mcp251xfd_dump_iter *iter)
-अणु
-	स्थिर काष्ठा mcp251xfd_tx_ring *tx = priv->tx;
-	स्थिर काष्ठा mcp251xfd_dump_ring dump_ring[] = अणु
-		अणु
+static void mcp251xfd_dump_tx_ring(const struct mcp251xfd_priv *priv,
+				   struct mcp251xfd_dump_iter *iter)
+{
+	const struct mcp251xfd_tx_ring *tx = priv->tx;
+	const struct mcp251xfd_dump_ring dump_ring[] = {
+		{
 			.key = MCP251XFD_DUMP_OBJECT_RING_KEY_HEAD,
 			.val = tx->head,
-		पूर्ण, अणु
+		}, {
 			.key = MCP251XFD_DUMP_OBJECT_RING_KEY_TAIL,
 			.val = tx->tail,
-		पूर्ण, अणु
+		}, {
 			.key = MCP251XFD_DUMP_OBJECT_RING_KEY_BASE,
 			.val = tx->base,
-		पूर्ण, अणु
+		}, {
 			.key = MCP251XFD_DUMP_OBJECT_RING_KEY_NR,
 			.val = 0,
-		पूर्ण, अणु
+		}, {
 			.key = MCP251XFD_DUMP_OBJECT_RING_KEY_FIFO_NR,
 			.val = MCP251XFD_TX_FIFO,
-		पूर्ण, अणु
+		}, {
 			.key = MCP251XFD_DUMP_OBJECT_RING_KEY_OBJ_NUM,
 			.val = tx->obj_num,
-		पूर्ण, अणु
+		}, {
 			.key = MCP251XFD_DUMP_OBJECT_RING_KEY_OBJ_SIZE,
 			.val = tx->obj_size,
-		पूर्ण,
-	पूर्ण;
+		},
+	};
 
 	mcp251xfd_dump_ring(iter, MCP251XFD_DUMP_OBJECT_TYPE_TX,
 			    dump_ring, ARRAY_SIZE(dump_ring));
-पूर्ण
+}
 
-अटल व्योम mcp251xfd_dump_end(स्थिर काष्ठा mcp251xfd_priv *priv,
-			       काष्ठा mcp251xfd_dump_iter *iter)
-अणु
-	काष्ठा mcp251xfd_dump_object_header *hdr = iter->hdr;
+static void mcp251xfd_dump_end(const struct mcp251xfd_priv *priv,
+			       struct mcp251xfd_dump_iter *iter)
+{
+	struct mcp251xfd_dump_object_header *hdr = iter->hdr;
 
 	hdr->magic = cpu_to_le32(MCP251XFD_DUMP_MAGIC);
 	hdr->type = cpu_to_le32(MCP251XFD_DUMP_OBJECT_TYPE_END);
 	hdr->offset = cpu_to_le32(0);
 	hdr->len = cpu_to_le32(0);
 
-	/* provoke शून्य poपूर्णांकer access, अगर used after END object */
-	iter->hdr = शून्य;
-पूर्ण
+	/* provoke NULL pointer access, if used after END object */
+	iter->hdr = NULL;
+}
 
-व्योम mcp251xfd_dump(स्थिर काष्ठा mcp251xfd_priv *priv)
-अणु
-	काष्ठा mcp251xfd_dump_iter iter;
-	अचिन्हित पूर्णांक rings_num, obj_num;
-	अचिन्हित पूर्णांक file_size = 0;
-	अचिन्हित पूर्णांक i;
+void mcp251xfd_dump(const struct mcp251xfd_priv *priv)
+{
+	struct mcp251xfd_dump_iter iter;
+	unsigned int rings_num, obj_num;
+	unsigned int file_size = 0;
+	unsigned int i;
 
-	/* रेजिस्टर space + end marker */
+	/* register space + end marker */
 	obj_num = 2;
 
-	/* रेजिस्टर space */
-	क्रम (i = 0; i < ARRAY_SIZE(mcp251xfd_dump_reg_space); i++)
-		file_size += mcp251xfd_dump_reg_space[i].size / माप(u32) *
-			माप(काष्ठा mcp251xfd_dump_object_reg);
+	/* register space */
+	for (i = 0; i < ARRAY_SIZE(mcp251xfd_dump_reg_space); i++)
+		file_size += mcp251xfd_dump_reg_space[i].size / sizeof(u32) *
+			sizeof(struct mcp251xfd_dump_object_reg);
 
 	/* TEF ring, RX ring, TX rings */
 	rings_num = 1 + priv->rx_ring_num + 1;
 	obj_num += rings_num;
 	file_size += rings_num * __MCP251XFD_DUMP_OBJECT_RING_KEY_MAX  *
-		माप(काष्ठा mcp251xfd_dump_object_reg);
+		sizeof(struct mcp251xfd_dump_object_reg);
 
 	/* size of the headers */
-	file_size += माप(*iter.hdr) * obj_num;
+	file_size += sizeof(*iter.hdr) * obj_num;
 
-	/* allocate the file in vदो_स्मृति memory, it's likely to be big */
-	iter.start = __vदो_स्मृति(file_size, GFP_KERNEL | __GFP_NOWARN |
+	/* allocate the file in vmalloc memory, it's likely to be big */
+	iter.start = __vmalloc(file_size, GFP_KERNEL | __GFP_NOWARN |
 			       __GFP_ZERO | __GFP_NORETRY);
-	अगर (!iter.start) अणु
+	if (!iter.start) {
 		netdev_warn(priv->ndev, "Failed to allocate devcoredump file.\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* poपूर्णांक the data member after the headers */
+	/* point the data member after the headers */
 	iter.hdr = iter.start;
 	iter.data = &iter.hdr[obj_num];
 
-	mcp251xfd_dump_रेजिस्टरs(priv, &iter);
+	mcp251xfd_dump_registers(priv, &iter);
 	mcp251xfd_dump_tef_ring(priv, &iter);
 	mcp251xfd_dump_rx_ring(priv, &iter);
 	mcp251xfd_dump_tx_ring(priv, &iter);
@@ -283,4 +282,4 @@
 
 	dev_coredumpv(&priv->spi->dev, iter.start,
 		      iter.data - iter.start, GFP_KERNEL);
-पूर्ण
+}

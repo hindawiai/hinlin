@@ -1,172 +1,171 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2015 Dmitry Eremin-Solenikov
  * Copyright (C) 1999-2001 Nicolas Pitre
  *
- * Generic IRQ handling क्रम the SA11x0.
+ * Generic IRQ handling for the SA11x0.
  */
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/irq.h>
-#समावेश <linux/irqकरोमुख्य.h>
-#समावेश <linux/syscore_ops.h>
-#समावेश <linux/irqchip/irq-sa11x0.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/irq.h>
+#include <linux/irqdomain.h>
+#include <linux/syscore_ops.h>
+#include <linux/irqchip/irq-sa11x0.h>
 
-#समावेश <soc/sa1100/pwer.h>
+#include <soc/sa1100/pwer.h>
 
-#समावेश <यंत्र/exception.h>
+#include <asm/exception.h>
 
-#घोषणा ICIP	0x00  /* IC IRQ Pending reg. */
-#घोषणा ICMR	0x04  /* IC Mask Reg.        */
-#घोषणा ICLR	0x08  /* IC Level Reg.       */
-#घोषणा ICCR	0x0C  /* IC Control Reg.     */
-#घोषणा ICFP	0x10  /* IC FIQ Pending reg. */
-#घोषणा ICPR	0x20  /* IC Pending Reg.     */
+#define ICIP	0x00  /* IC IRQ Pending reg. */
+#define ICMR	0x04  /* IC Mask Reg.        */
+#define ICLR	0x08  /* IC Level Reg.       */
+#define ICCR	0x0C  /* IC Control Reg.     */
+#define ICFP	0x10  /* IC FIQ Pending reg. */
+#define ICPR	0x20  /* IC Pending Reg.     */
 
-अटल व्योम __iomem *iobase;
+static void __iomem *iobase;
 
 /*
- * We करोn't need to ACK IRQs on the SA1100 unless they're GPIOs
- * this is क्रम पूर्णांकernal IRQs i.e. from IRQ LCD to RTCAlrm.
+ * We don't need to ACK IRQs on the SA1100 unless they're GPIOs
+ * this is for internal IRQs i.e. from IRQ LCD to RTCAlrm.
  */
-अटल व्योम sa1100_mask_irq(काष्ठा irq_data *d)
-अणु
+static void sa1100_mask_irq(struct irq_data *d)
+{
 	u32 reg;
 
-	reg = पढ़ोl_relaxed(iobase + ICMR);
+	reg = readl_relaxed(iobase + ICMR);
 	reg &= ~BIT(d->hwirq);
-	ग_लिखोl_relaxed(reg, iobase + ICMR);
-पूर्ण
+	writel_relaxed(reg, iobase + ICMR);
+}
 
-अटल व्योम sa1100_unmask_irq(काष्ठा irq_data *d)
-अणु
+static void sa1100_unmask_irq(struct irq_data *d)
+{
 	u32 reg;
 
-	reg = पढ़ोl_relaxed(iobase + ICMR);
+	reg = readl_relaxed(iobase + ICMR);
 	reg |= BIT(d->hwirq);
-	ग_लिखोl_relaxed(reg, iobase + ICMR);
-पूर्ण
+	writel_relaxed(reg, iobase + ICMR);
+}
 
-अटल पूर्णांक sa1100_set_wake(काष्ठा irq_data *d, अचिन्हित पूर्णांक on)
-अणु
-	वापस sa11x0_sc_set_wake(d->hwirq, on);
-पूर्ण
+static int sa1100_set_wake(struct irq_data *d, unsigned int on)
+{
+	return sa11x0_sc_set_wake(d->hwirq, on);
+}
 
-अटल काष्ठा irq_chip sa1100_normal_chip = अणु
+static struct irq_chip sa1100_normal_chip = {
 	.name		= "SC",
 	.irq_ack	= sa1100_mask_irq,
 	.irq_mask	= sa1100_mask_irq,
 	.irq_unmask	= sa1100_unmask_irq,
 	.irq_set_wake	= sa1100_set_wake,
-पूर्ण;
+};
 
-अटल पूर्णांक sa1100_normal_irqकरोमुख्य_map(काष्ठा irq_करोमुख्य *d,
-		अचिन्हित पूर्णांक irq, irq_hw_number_t hwirq)
-अणु
+static int sa1100_normal_irqdomain_map(struct irq_domain *d,
+		unsigned int irq, irq_hw_number_t hwirq)
+{
 	irq_set_chip_and_handler(irq, &sa1100_normal_chip,
 				 handle_level_irq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा irq_करोमुख्य_ops sa1100_normal_irqकरोमुख्य_ops = अणु
-	.map = sa1100_normal_irqकरोमुख्य_map,
-	.xlate = irq_करोमुख्य_xlate_onetwocell,
-पूर्ण;
+static const struct irq_domain_ops sa1100_normal_irqdomain_ops = {
+	.map = sa1100_normal_irqdomain_map,
+	.xlate = irq_domain_xlate_onetwocell,
+};
 
-अटल काष्ठा irq_करोमुख्य *sa1100_normal_irqकरोमुख्य;
+static struct irq_domain *sa1100_normal_irqdomain;
 
-अटल काष्ठा sa1100irq_state अणु
-	अचिन्हित पूर्णांक	saved;
-	अचिन्हित पूर्णांक	icmr;
-	अचिन्हित पूर्णांक	iclr;
-	अचिन्हित पूर्णांक	iccr;
-पूर्ण sa1100irq_state;
+static struct sa1100irq_state {
+	unsigned int	saved;
+	unsigned int	icmr;
+	unsigned int	iclr;
+	unsigned int	iccr;
+} sa1100irq_state;
 
-अटल पूर्णांक sa1100irq_suspend(व्योम)
-अणु
-	काष्ठा sa1100irq_state *st = &sa1100irq_state;
+static int sa1100irq_suspend(void)
+{
+	struct sa1100irq_state *st = &sa1100irq_state;
 
 	st->saved = 1;
-	st->icmr = पढ़ोl_relaxed(iobase + ICMR);
-	st->iclr = पढ़ोl_relaxed(iobase + ICLR);
-	st->iccr = पढ़ोl_relaxed(iobase + ICCR);
+	st->icmr = readl_relaxed(iobase + ICMR);
+	st->iclr = readl_relaxed(iobase + ICLR);
+	st->iccr = readl_relaxed(iobase + ICCR);
 
 	/*
-	 * Disable all GPIO-based पूर्णांकerrupts.
+	 * Disable all GPIO-based interrupts.
 	 */
-	ग_लिखोl_relaxed(st->icmr & 0xfffff000, iobase + ICMR);
+	writel_relaxed(st->icmr & 0xfffff000, iobase + ICMR);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम sa1100irq_resume(व्योम)
-अणु
-	काष्ठा sa1100irq_state *st = &sa1100irq_state;
+static void sa1100irq_resume(void)
+{
+	struct sa1100irq_state *st = &sa1100irq_state;
 
-	अगर (st->saved) अणु
-		ग_लिखोl_relaxed(st->iccr, iobase + ICCR);
-		ग_लिखोl_relaxed(st->iclr, iobase + ICLR);
+	if (st->saved) {
+		writel_relaxed(st->iccr, iobase + ICCR);
+		writel_relaxed(st->iclr, iobase + ICLR);
 
-		ग_लिखोl_relaxed(st->icmr, iobase + ICMR);
-	पूर्ण
-पूर्ण
+		writel_relaxed(st->icmr, iobase + ICMR);
+	}
+}
 
-अटल काष्ठा syscore_ops sa1100irq_syscore_ops = अणु
+static struct syscore_ops sa1100irq_syscore_ops = {
 	.suspend	= sa1100irq_suspend,
 	.resume		= sa1100irq_resume,
-पूर्ण;
+};
 
-अटल पूर्णांक __init sa1100irq_init_devicefs(व्योम)
-अणु
-	रेजिस्टर_syscore_ops(&sa1100irq_syscore_ops);
-	वापस 0;
-पूर्ण
+static int __init sa1100irq_init_devicefs(void)
+{
+	register_syscore_ops(&sa1100irq_syscore_ops);
+	return 0;
+}
 
 device_initcall(sa1100irq_init_devicefs);
 
-अटल यंत्रlinkage व्योम __exception_irq_entry
-sa1100_handle_irq(काष्ठा pt_regs *regs)
-अणु
-	uपूर्णांक32_t icip, icmr, mask;
+static asmlinkage void __exception_irq_entry
+sa1100_handle_irq(struct pt_regs *regs)
+{
+	uint32_t icip, icmr, mask;
 
-	करो अणु
-		icip = पढ़ोl_relaxed(iobase + ICIP);
-		icmr = पढ़ोl_relaxed(iobase + ICMR);
+	do {
+		icip = readl_relaxed(iobase + ICIP);
+		icmr = readl_relaxed(iobase + ICMR);
 		mask = icip & icmr;
 
-		अगर (mask == 0)
-			अवरोध;
+		if (mask == 0)
+			break;
 
-		handle_करोमुख्य_irq(sa1100_normal_irqकरोमुख्य,
+		handle_domain_irq(sa1100_normal_irqdomain,
 				ffs(mask) - 1, regs);
-	पूर्ण जबतक (1);
-पूर्ण
+	} while (1);
+}
 
-व्योम __init sa11x0_init_irq_nodt(पूर्णांक irq_start, resource_माप_प्रकार io_start)
-अणु
+void __init sa11x0_init_irq_nodt(int irq_start, resource_size_t io_start)
+{
 	iobase = ioremap(io_start, SZ_64K);
-	अगर (WARN_ON(!iobase))
-		वापस;
+	if (WARN_ON(!iobase))
+		return;
 
 	/* disable all IRQs */
-	ग_लिखोl_relaxed(0, iobase + ICMR);
+	writel_relaxed(0, iobase + ICMR);
 
 	/* all IRQs are IRQ, not FIQ */
-	ग_लिखोl_relaxed(0, iobase + ICLR);
+	writel_relaxed(0, iobase + ICLR);
 
 	/*
-	 * Whatever the करोc says, this has to be set क्रम the रुको-on-irq
-	 * inकाष्ठाion to work... on a SA1100 rev 9 at least.
+	 * Whatever the doc says, this has to be set for the wait-on-irq
+	 * instruction to work... on a SA1100 rev 9 at least.
 	 */
-	ग_लिखोl_relaxed(1, iobase + ICCR);
+	writel_relaxed(1, iobase + ICCR);
 
-	sa1100_normal_irqकरोमुख्य = irq_करोमुख्य_add_simple(शून्य,
+	sa1100_normal_irqdomain = irq_domain_add_simple(NULL,
 			32, irq_start,
-			&sa1100_normal_irqकरोमुख्य_ops, शून्य);
+			&sa1100_normal_irqdomain_ops, NULL);
 
 	set_handle_irq(sa1100_handle_irq);
-पूर्ण
+}

@@ -1,61 +1,60 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * POWER Data Stream Control Register (DSCR) SPR test
  *
- * This test modअगरies the DSCR value through both the SPR number
- * based mtspr inकाष्ठाion and then makes sure that the same is
- * reflected through mfspr inकाष्ठाion using either of the SPR
+ * This test modifies the DSCR value through both the SPR number
+ * based mtspr instruction and then makes sure that the same is
+ * reflected through mfspr instruction using either of the SPR
  * numbers.
  *
- * When using the privilege state SPR, the inकाष्ठाions such as
+ * When using the privilege state SPR, the instructions such as
  * mfspr or mtspr are priviledged and the kernel emulates them
- * क्रम us. Inकाष्ठाions using problem state SPR can be exuecuted
- * directly without any emulation अगर the HW supports them. Else
+ * for us. Instructions using problem state SPR can be exuecuted
+ * directly without any emulation if the HW supports them. Else
  * they also get emulated by the kernel.
  *
- * Copyright 2013, Anton Blanअक्षरd, IBM Corporation.
+ * Copyright 2013, Anton Blanchard, IBM Corporation.
  * Copyright 2015, Anshuman Khandual, IBM Corporation.
  */
-#समावेश "dscr.h"
+#include "dscr.h"
 
-अटल पूर्णांक check_dscr(अक्षर *str)
-अणु
-	अचिन्हित दीर्घ cur_dscr, cur_dscr_usr;
+static int check_dscr(char *str)
+{
+	unsigned long cur_dscr, cur_dscr_usr;
 
 	cur_dscr = get_dscr();
 	cur_dscr_usr = get_dscr_usr();
-	अगर (cur_dscr != cur_dscr_usr) अणु
-		म_लिखो("%s set, kernel get %lx != user get %lx\n",
+	if (cur_dscr != cur_dscr_usr) {
+		printf("%s set, kernel get %lx != user get %lx\n",
 					str, cur_dscr, cur_dscr_usr);
-		वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return 1;
+	}
+	return 0;
+}
 
-पूर्णांक dscr_user(व्योम)
-अणु
-	पूर्णांक i;
+int dscr_user(void)
+{
+	int i;
 
 	SKIP_IF(!have_hwcap2(PPC_FEATURE2_DSCR));
 
 	check_dscr("");
 
-	क्रम (i = 0; i < COUNT; i++) अणु
+	for (i = 0; i < COUNT; i++) {
 		set_dscr(i);
-		अगर (check_dscr("kernel"))
-			वापस 1;
-	पूर्ण
+		if (check_dscr("kernel"))
+			return 1;
+	}
 
-	क्रम (i = 0; i < COUNT; i++) अणु
+	for (i = 0; i < COUNT; i++) {
 		set_dscr_usr(i);
-		अगर (check_dscr("user"))
-			वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (check_dscr("user"))
+			return 1;
+	}
+	return 0;
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
-अणु
-	वापस test_harness(dscr_user, "dscr_user_test");
-पूर्ण
+int main(int argc, char *argv[])
+{
+	return test_harness(dscr_user, "dscr_user_test");
+}

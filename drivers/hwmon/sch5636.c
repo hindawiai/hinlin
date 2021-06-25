@@ -1,282 +1,281 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /***************************************************************************
  *   Copyright (C) 2011-2012 Hans de Goede <hdegoede@redhat.com>           *
  *                                                                         *
  ***************************************************************************/
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/hwmon.h>
-#समावेश <linux/hwmon-sysfs.h>
-#समावेश <linux/err.h>
-#समावेश <linux/mutex.h>
-#समावेश "sch56xx-common.h"
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/jiffies.h>
+#include <linux/platform_device.h>
+#include <linux/hwmon.h>
+#include <linux/hwmon-sysfs.h>
+#include <linux/err.h>
+#include <linux/mutex.h>
+#include "sch56xx-common.h"
 
-#घोषणा DRVNAME "sch5636"
-#घोषणा DEVNAME "theseus" /* We only support one model क्रम now */
+#define DRVNAME "sch5636"
+#define DEVNAME "theseus" /* We only support one model for now */
 
-#घोषणा SCH5636_REG_FUJITSU_ID		0x780
-#घोषणा SCH5636_REG_FUJITSU_REV		0x783
+#define SCH5636_REG_FUJITSU_ID		0x780
+#define SCH5636_REG_FUJITSU_REV		0x783
 
-#घोषणा SCH5636_NO_INS			5
-#घोषणा SCH5636_NO_TEMPS		16
-#घोषणा SCH5636_NO_FANS			8
+#define SCH5636_NO_INS			5
+#define SCH5636_NO_TEMPS		16
+#define SCH5636_NO_FANS			8
 
-अटल स्थिर u16 SCH5636_REG_IN_VAL[SCH5636_NO_INS] = अणु
-	0x22, 0x23, 0x24, 0x25, 0x189 पूर्ण;
-अटल स्थिर u16 SCH5636_REG_IN_FACTORS[SCH5636_NO_INS] = अणु
-	4400, 1500, 4000, 4400, 16000 पूर्ण;
-अटल स्थिर अक्षर * स्थिर SCH5636_IN_LABELS[SCH5636_NO_INS] = अणु
-	"3.3V", "VREF", "VBAT", "3.3AUX", "12V" पूर्ण;
+static const u16 SCH5636_REG_IN_VAL[SCH5636_NO_INS] = {
+	0x22, 0x23, 0x24, 0x25, 0x189 };
+static const u16 SCH5636_REG_IN_FACTORS[SCH5636_NO_INS] = {
+	4400, 1500, 4000, 4400, 16000 };
+static const char * const SCH5636_IN_LABELS[SCH5636_NO_INS] = {
+	"3.3V", "VREF", "VBAT", "3.3AUX", "12V" };
 
-अटल स्थिर u16 SCH5636_REG_TEMP_VAL[SCH5636_NO_TEMPS] = अणु
+static const u16 SCH5636_REG_TEMP_VAL[SCH5636_NO_TEMPS] = {
 	0x2B, 0x26, 0x27, 0x28, 0x29, 0x2A, 0x180, 0x181,
-	0x85, 0x86, 0x87, 0x88, 0x89, 0x8A, 0x8B, 0x8C पूर्ण;
-#घोषणा SCH5636_REG_TEMP_CTRL(i)	(0x790 + (i))
-#घोषणा SCH5636_TEMP_WORKING		0x01
-#घोषणा SCH5636_TEMP_ALARM		0x02
-#घोषणा SCH5636_TEMP_DEACTIVATED	0x80
+	0x85, 0x86, 0x87, 0x88, 0x89, 0x8A, 0x8B, 0x8C };
+#define SCH5636_REG_TEMP_CTRL(i)	(0x790 + (i))
+#define SCH5636_TEMP_WORKING		0x01
+#define SCH5636_TEMP_ALARM		0x02
+#define SCH5636_TEMP_DEACTIVATED	0x80
 
-अटल स्थिर u16 SCH5636_REG_FAN_VAL[SCH5636_NO_FANS] = अणु
-	0x2C, 0x2E, 0x30, 0x32, 0x62, 0x64, 0x66, 0x68 पूर्ण;
-#घोषणा SCH5636_REG_FAN_CTRL(i)		(0x880 + (i))
+static const u16 SCH5636_REG_FAN_VAL[SCH5636_NO_FANS] = {
+	0x2C, 0x2E, 0x30, 0x32, 0x62, 0x64, 0x66, 0x68 };
+#define SCH5636_REG_FAN_CTRL(i)		(0x880 + (i))
 /* FAULT in datasheet, but acts as an alarm */
-#घोषणा SCH5636_FAN_ALARM		0x04
-#घोषणा SCH5636_FAN_NOT_PRESENT		0x08
-#घोषणा SCH5636_FAN_DEACTIVATED		0x80
+#define SCH5636_FAN_ALARM		0x04
+#define SCH5636_FAN_NOT_PRESENT		0x08
+#define SCH5636_FAN_DEACTIVATED		0x80
 
 
-काष्ठा sch5636_data अणु
-	अचिन्हित लघु addr;
-	काष्ठा device *hwmon_dev;
-	काष्ठा sch56xx_watchकरोg_data *watchकरोg;
+struct sch5636_data {
+	unsigned short addr;
+	struct device *hwmon_dev;
+	struct sch56xx_watchdog_data *watchdog;
 
-	काष्ठा mutex update_lock;
-	अक्षर valid;			/* !=0 अगर following fields are valid */
-	अचिन्हित दीर्घ last_updated;	/* In jअगरfies */
+	struct mutex update_lock;
+	char valid;			/* !=0 if following fields are valid */
+	unsigned long last_updated;	/* In jiffies */
 	u8 in[SCH5636_NO_INS];
 	u8 temp_val[SCH5636_NO_TEMPS];
 	u8 temp_ctrl[SCH5636_NO_TEMPS];
 	u16 fan_val[SCH5636_NO_FANS];
 	u8 fan_ctrl[SCH5636_NO_FANS];
-पूर्ण;
+};
 
-अटल काष्ठा sch5636_data *sch5636_update_device(काष्ठा device *dev)
-अणु
-	काष्ठा sch5636_data *data = dev_get_drvdata(dev);
-	काष्ठा sch5636_data *ret = data;
-	पूर्णांक i, val;
+static struct sch5636_data *sch5636_update_device(struct device *dev)
+{
+	struct sch5636_data *data = dev_get_drvdata(dev);
+	struct sch5636_data *ret = data;
+	int i, val;
 
 	mutex_lock(&data->update_lock);
 
-	/* Cache the values क्रम 1 second */
-	अगर (data->valid && !समय_after(jअगरfies, data->last_updated + HZ))
-		जाओ पात;
+	/* Cache the values for 1 second */
+	if (data->valid && !time_after(jiffies, data->last_updated + HZ))
+		goto abort;
 
-	क्रम (i = 0; i < SCH5636_NO_INS; i++) अणु
-		val = sch56xx_पढ़ो_भव_reg(data->addr,
+	for (i = 0; i < SCH5636_NO_INS; i++) {
+		val = sch56xx_read_virtual_reg(data->addr,
 					       SCH5636_REG_IN_VAL[i]);
-		अगर (unlikely(val < 0)) अणु
+		if (unlikely(val < 0)) {
 			ret = ERR_PTR(val);
-			जाओ पात;
-		पूर्ण
+			goto abort;
+		}
 		data->in[i] = val;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < SCH5636_NO_TEMPS; i++) अणु
-		अगर (data->temp_ctrl[i] & SCH5636_TEMP_DEACTIVATED)
-			जारी;
+	for (i = 0; i < SCH5636_NO_TEMPS; i++) {
+		if (data->temp_ctrl[i] & SCH5636_TEMP_DEACTIVATED)
+			continue;
 
-		val = sch56xx_पढ़ो_भव_reg(data->addr,
+		val = sch56xx_read_virtual_reg(data->addr,
 					       SCH5636_REG_TEMP_VAL[i]);
-		अगर (unlikely(val < 0)) अणु
+		if (unlikely(val < 0)) {
 			ret = ERR_PTR(val);
-			जाओ पात;
-		पूर्ण
+			goto abort;
+		}
 		data->temp_val[i] = val;
 
-		val = sch56xx_पढ़ो_भव_reg(data->addr,
+		val = sch56xx_read_virtual_reg(data->addr,
 					       SCH5636_REG_TEMP_CTRL(i));
-		अगर (unlikely(val < 0)) अणु
+		if (unlikely(val < 0)) {
 			ret = ERR_PTR(val);
-			जाओ पात;
-		पूर्ण
+			goto abort;
+		}
 		data->temp_ctrl[i] = val;
-		/* Alarms need to be explicitly ग_लिखो-cleared */
-		अगर (val & SCH5636_TEMP_ALARM) अणु
-			sch56xx_ग_लिखो_भव_reg(data->addr,
+		/* Alarms need to be explicitly write-cleared */
+		if (val & SCH5636_TEMP_ALARM) {
+			sch56xx_write_virtual_reg(data->addr,
 						SCH5636_REG_TEMP_CTRL(i), val);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	क्रम (i = 0; i < SCH5636_NO_FANS; i++) अणु
-		अगर (data->fan_ctrl[i] & SCH5636_FAN_DEACTIVATED)
-			जारी;
+	for (i = 0; i < SCH5636_NO_FANS; i++) {
+		if (data->fan_ctrl[i] & SCH5636_FAN_DEACTIVATED)
+			continue;
 
-		val = sch56xx_पढ़ो_भव_reg16(data->addr,
+		val = sch56xx_read_virtual_reg16(data->addr,
 						 SCH5636_REG_FAN_VAL[i]);
-		अगर (unlikely(val < 0)) अणु
+		if (unlikely(val < 0)) {
 			ret = ERR_PTR(val);
-			जाओ पात;
-		पूर्ण
+			goto abort;
+		}
 		data->fan_val[i] = val;
 
-		val = sch56xx_पढ़ो_भव_reg(data->addr,
+		val = sch56xx_read_virtual_reg(data->addr,
 					       SCH5636_REG_FAN_CTRL(i));
-		अगर (unlikely(val < 0)) अणु
+		if (unlikely(val < 0)) {
 			ret = ERR_PTR(val);
-			जाओ पात;
-		पूर्ण
+			goto abort;
+		}
 		data->fan_ctrl[i] = val;
-		/* Alarms need to be explicitly ग_लिखो-cleared */
-		अगर (val & SCH5636_FAN_ALARM) अणु
-			sch56xx_ग_लिखो_भव_reg(data->addr,
+		/* Alarms need to be explicitly write-cleared */
+		if (val & SCH5636_FAN_ALARM) {
+			sch56xx_write_virtual_reg(data->addr,
 						SCH5636_REG_FAN_CTRL(i), val);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	data->last_updated = jअगरfies;
+	data->last_updated = jiffies;
 	data->valid = 1;
-पात:
+abort:
 	mutex_unlock(&data->update_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक reg_to_rpm(u16 reg)
-अणु
-	अगर (reg == 0)
-		वापस -EIO;
-	अगर (reg == 0xffff)
-		वापस 0;
+static int reg_to_rpm(u16 reg)
+{
+	if (reg == 0)
+		return -EIO;
+	if (reg == 0xffff)
+		return 0;
 
-	वापस 5400540 / reg;
-पूर्ण
+	return 5400540 / reg;
+}
 
-अटल sमाप_प्रकार name_show(काष्ठा device *dev, काष्ठा device_attribute *devattr,
-			 अक्षर *buf)
-अणु
-	वापस sysfs_emit(buf, "%s\n", DEVNAME);
-पूर्ण
+static ssize_t name_show(struct device *dev, struct device_attribute *devattr,
+			 char *buf)
+{
+	return sysfs_emit(buf, "%s\n", DEVNAME);
+}
 
-अटल sमाप_प्रकार in_value_show(काष्ठा device *dev,
-			     काष्ठा device_attribute *devattr, अक्षर *buf)
-अणु
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
-	काष्ठा sch5636_data *data = sch5636_update_device(dev);
-	पूर्णांक val;
+static ssize_t in_value_show(struct device *dev,
+			     struct device_attribute *devattr, char *buf)
+{
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	struct sch5636_data *data = sch5636_update_device(dev);
+	int val;
 
-	अगर (IS_ERR(data))
-		वापस PTR_ERR(data);
+	if (IS_ERR(data))
+		return PTR_ERR(data);
 
 	val = DIV_ROUND_CLOSEST(
 		data->in[attr->index] * SCH5636_REG_IN_FACTORS[attr->index],
 		255);
-	वापस sysfs_emit(buf, "%d\n", val);
-पूर्ण
+	return sysfs_emit(buf, "%d\n", val);
+}
 
-अटल sमाप_प्रकार in_label_show(काष्ठा device *dev,
-			     काष्ठा device_attribute *devattr, अक्षर *buf)
-अणु
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+static ssize_t in_label_show(struct device *dev,
+			     struct device_attribute *devattr, char *buf)
+{
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
 
-	वापस sysfs_emit(buf, "%s\n",
+	return sysfs_emit(buf, "%s\n",
 			  SCH5636_IN_LABELS[attr->index]);
-पूर्ण
+}
 
-अटल sमाप_प्रकार temp_value_show(काष्ठा device *dev,
-			       काष्ठा device_attribute *devattr, अक्षर *buf)
-अणु
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
-	काष्ठा sch5636_data *data = sch5636_update_device(dev);
-	पूर्णांक val;
+static ssize_t temp_value_show(struct device *dev,
+			       struct device_attribute *devattr, char *buf)
+{
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	struct sch5636_data *data = sch5636_update_device(dev);
+	int val;
 
-	अगर (IS_ERR(data))
-		वापस PTR_ERR(data);
+	if (IS_ERR(data))
+		return PTR_ERR(data);
 
 	val = (data->temp_val[attr->index] - 64) * 1000;
-	वापस sysfs_emit(buf, "%d\n", val);
-पूर्ण
+	return sysfs_emit(buf, "%d\n", val);
+}
 
-अटल sमाप_प्रकार temp_fault_show(काष्ठा device *dev,
-			       काष्ठा device_attribute *devattr, अक्षर *buf)
-अणु
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
-	काष्ठा sch5636_data *data = sch5636_update_device(dev);
-	पूर्णांक val;
+static ssize_t temp_fault_show(struct device *dev,
+			       struct device_attribute *devattr, char *buf)
+{
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	struct sch5636_data *data = sch5636_update_device(dev);
+	int val;
 
-	अगर (IS_ERR(data))
-		वापस PTR_ERR(data);
+	if (IS_ERR(data))
+		return PTR_ERR(data);
 
 	val = (data->temp_ctrl[attr->index] & SCH5636_TEMP_WORKING) ? 0 : 1;
-	वापस sysfs_emit(buf, "%d\n", val);
-पूर्ण
+	return sysfs_emit(buf, "%d\n", val);
+}
 
-अटल sमाप_प्रकार temp_alarm_show(काष्ठा device *dev,
-			       काष्ठा device_attribute *devattr, अक्षर *buf)
-अणु
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
-	काष्ठा sch5636_data *data = sch5636_update_device(dev);
-	पूर्णांक val;
+static ssize_t temp_alarm_show(struct device *dev,
+			       struct device_attribute *devattr, char *buf)
+{
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	struct sch5636_data *data = sch5636_update_device(dev);
+	int val;
 
-	अगर (IS_ERR(data))
-		वापस PTR_ERR(data);
+	if (IS_ERR(data))
+		return PTR_ERR(data);
 
 	val = (data->temp_ctrl[attr->index] & SCH5636_TEMP_ALARM) ? 1 : 0;
-	वापस sysfs_emit(buf, "%d\n", val);
-पूर्ण
+	return sysfs_emit(buf, "%d\n", val);
+}
 
-अटल sमाप_प्रकार fan_value_show(काष्ठा device *dev,
-			      काष्ठा device_attribute *devattr, अक्षर *buf)
-अणु
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
-	काष्ठा sch5636_data *data = sch5636_update_device(dev);
-	पूर्णांक val;
+static ssize_t fan_value_show(struct device *dev,
+			      struct device_attribute *devattr, char *buf)
+{
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	struct sch5636_data *data = sch5636_update_device(dev);
+	int val;
 
-	अगर (IS_ERR(data))
-		वापस PTR_ERR(data);
+	if (IS_ERR(data))
+		return PTR_ERR(data);
 
 	val = reg_to_rpm(data->fan_val[attr->index]);
-	अगर (val < 0)
-		वापस val;
+	if (val < 0)
+		return val;
 
-	वापस sysfs_emit(buf, "%d\n", val);
-पूर्ण
+	return sysfs_emit(buf, "%d\n", val);
+}
 
-अटल sमाप_प्रकार fan_fault_show(काष्ठा device *dev,
-			      काष्ठा device_attribute *devattr, अक्षर *buf)
-अणु
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
-	काष्ठा sch5636_data *data = sch5636_update_device(dev);
-	पूर्णांक val;
+static ssize_t fan_fault_show(struct device *dev,
+			      struct device_attribute *devattr, char *buf)
+{
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	struct sch5636_data *data = sch5636_update_device(dev);
+	int val;
 
-	अगर (IS_ERR(data))
-		वापस PTR_ERR(data);
+	if (IS_ERR(data))
+		return PTR_ERR(data);
 
 	val = (data->fan_ctrl[attr->index] & SCH5636_FAN_NOT_PRESENT) ? 1 : 0;
-	वापस sysfs_emit(buf, "%d\n", val);
-पूर्ण
+	return sysfs_emit(buf, "%d\n", val);
+}
 
-अटल sमाप_प्रकार fan_alarm_show(काष्ठा device *dev,
-			      काष्ठा device_attribute *devattr, अक्षर *buf)
-अणु
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
-	काष्ठा sch5636_data *data = sch5636_update_device(dev);
-	पूर्णांक val;
+static ssize_t fan_alarm_show(struct device *dev,
+			      struct device_attribute *devattr, char *buf)
+{
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	struct sch5636_data *data = sch5636_update_device(dev);
+	int val;
 
-	अगर (IS_ERR(data))
-		वापस PTR_ERR(data);
+	if (IS_ERR(data))
+		return PTR_ERR(data);
 
 	val = (data->fan_ctrl[attr->index] & SCH5636_FAN_ALARM) ? 1 : 0;
-	वापस sysfs_emit(buf, "%d\n", val);
-पूर्ण
+	return sysfs_emit(buf, "%d\n", val);
+}
 
-अटल काष्ठा sensor_device_attribute sch5636_attr[] = अणु
+static struct sensor_device_attribute sch5636_attr[] = {
 	SENSOR_ATTR_RO(name, name, 0),
 	SENSOR_ATTR_RO(in0_input, in_value, 0),
 	SENSOR_ATTR_RO(in0_label, in_label, 0),
@@ -288,9 +287,9 @@
 	SENSOR_ATTR_RO(in3_label, in_label, 3),
 	SENSOR_ATTR_RO(in4_input, in_value, 4),
 	SENSOR_ATTR_RO(in4_label, in_label, 4),
-पूर्ण;
+};
 
-अटल काष्ठा sensor_device_attribute sch5636_temp_attr[] = अणु
+static struct sensor_device_attribute sch5636_temp_attr[] = {
 	SENSOR_ATTR_RO(temp1_input, temp_value, 0),
 	SENSOR_ATTR_RO(temp1_fault, temp_fault, 0),
 	SENSOR_ATTR_RO(temp1_alarm, temp_alarm, 0),
@@ -339,9 +338,9 @@
 	SENSOR_ATTR_RO(temp16_input, temp_value, 15),
 	SENSOR_ATTR_RO(temp16_fault, temp_fault, 15),
 	SENSOR_ATTR_RO(temp16_alarm, temp_alarm, 15),
-पूर्ण;
+};
 
-अटल काष्ठा sensor_device_attribute sch5636_fan_attr[] = अणु
+static struct sensor_device_attribute sch5636_fan_attr[] = {
 	SENSOR_ATTR_RO(fan1_input, fan_value, 0),
 	SENSOR_ATTR_RO(fan1_fault, fan_fault, 0),
 	SENSOR_ATTR_RO(fan1_alarm, fan_alarm, 0),
@@ -366,156 +365,156 @@
 	SENSOR_ATTR_RO(fan8_input, fan_value, 7),
 	SENSOR_ATTR_RO(fan8_fault, fan_fault, 7),
 	SENSOR_ATTR_RO(fan8_alarm, fan_alarm, 7),
-पूर्ण;
+};
 
-अटल पूर्णांक sch5636_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा sch5636_data *data = platक्रमm_get_drvdata(pdev);
-	पूर्णांक i;
+static int sch5636_remove(struct platform_device *pdev)
+{
+	struct sch5636_data *data = platform_get_drvdata(pdev);
+	int i;
 
-	अगर (data->watchकरोg)
-		sch56xx_watchकरोg_unरेजिस्टर(data->watchकरोg);
+	if (data->watchdog)
+		sch56xx_watchdog_unregister(data->watchdog);
 
-	अगर (data->hwmon_dev)
-		hwmon_device_unरेजिस्टर(data->hwmon_dev);
+	if (data->hwmon_dev)
+		hwmon_device_unregister(data->hwmon_dev);
 
-	क्रम (i = 0; i < ARRAY_SIZE(sch5636_attr); i++)
-		device_हटाओ_file(&pdev->dev, &sch5636_attr[i].dev_attr);
+	for (i = 0; i < ARRAY_SIZE(sch5636_attr); i++)
+		device_remove_file(&pdev->dev, &sch5636_attr[i].dev_attr);
 
-	क्रम (i = 0; i < SCH5636_NO_TEMPS * 3; i++)
-		device_हटाओ_file(&pdev->dev,
+	for (i = 0; i < SCH5636_NO_TEMPS * 3; i++)
+		device_remove_file(&pdev->dev,
 				   &sch5636_temp_attr[i].dev_attr);
 
-	क्रम (i = 0; i < SCH5636_NO_FANS * 3; i++)
-		device_हटाओ_file(&pdev->dev,
+	for (i = 0; i < SCH5636_NO_FANS * 3; i++)
+		device_remove_file(&pdev->dev,
 				   &sch5636_fan_attr[i].dev_attr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sch5636_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा sch5636_data *data;
-	पूर्णांक i, err, val, revision[2];
-	अक्षर id[4];
+static int sch5636_probe(struct platform_device *pdev)
+{
+	struct sch5636_data *data;
+	int i, err, val, revision[2];
+	char id[4];
 
-	data = devm_kzalloc(&pdev->dev, माप(काष्ठा sch5636_data),
+	data = devm_kzalloc(&pdev->dev, sizeof(struct sch5636_data),
 			    GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	if (!data)
+		return -ENOMEM;
 
-	data->addr = platक्रमm_get_resource(pdev, IORESOURCE_IO, 0)->start;
+	data->addr = platform_get_resource(pdev, IORESOURCE_IO, 0)->start;
 	mutex_init(&data->update_lock);
-	platक्रमm_set_drvdata(pdev, data);
+	platform_set_drvdata(pdev, data);
 
-	क्रम (i = 0; i < 3; i++) अणु
-		val = sch56xx_पढ़ो_भव_reg(data->addr,
+	for (i = 0; i < 3; i++) {
+		val = sch56xx_read_virtual_reg(data->addr,
 					       SCH5636_REG_FUJITSU_ID + i);
-		अगर (val < 0) अणु
+		if (val < 0) {
 			pr_err("Could not read Fujitsu id byte at %#x\n",
 				SCH5636_REG_FUJITSU_ID + i);
 			err = val;
-			जाओ error;
-		पूर्ण
+			goto error;
+		}
 		id[i] = val;
-	पूर्ण
+	}
 	id[i] = '\0';
 
-	अगर (म_भेद(id, "THS")) अणु
+	if (strcmp(id, "THS")) {
 		pr_err("Unknown Fujitsu id: %02x%02x%02x\n",
 		       id[0], id[1], id[2]);
 		err = -ENODEV;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	क्रम (i = 0; i < 2; i++) अणु
-		val = sch56xx_पढ़ो_भव_reg(data->addr,
+	for (i = 0; i < 2; i++) {
+		val = sch56xx_read_virtual_reg(data->addr,
 					       SCH5636_REG_FUJITSU_REV + i);
-		अगर (val < 0) अणु
+		if (val < 0) {
 			err = val;
-			जाओ error;
-		पूर्ण
+			goto error;
+		}
 		revision[i] = val;
-	पूर्ण
+	}
 	pr_info("Found %s chip at %#hx, revision: %d.%02d\n", DEVNAME,
 		data->addr, revision[0], revision[1]);
 
-	/* Read all temp + fan ctrl रेजिस्टरs to determine which are active */
-	क्रम (i = 0; i < SCH5636_NO_TEMPS; i++) अणु
-		val = sch56xx_पढ़ो_भव_reg(data->addr,
+	/* Read all temp + fan ctrl registers to determine which are active */
+	for (i = 0; i < SCH5636_NO_TEMPS; i++) {
+		val = sch56xx_read_virtual_reg(data->addr,
 					       SCH5636_REG_TEMP_CTRL(i));
-		अगर (unlikely(val < 0)) अणु
+		if (unlikely(val < 0)) {
 			err = val;
-			जाओ error;
-		पूर्ण
+			goto error;
+		}
 		data->temp_ctrl[i] = val;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < SCH5636_NO_FANS; i++) अणु
-		val = sch56xx_पढ़ो_भव_reg(data->addr,
+	for (i = 0; i < SCH5636_NO_FANS; i++) {
+		val = sch56xx_read_virtual_reg(data->addr,
 					       SCH5636_REG_FAN_CTRL(i));
-		अगर (unlikely(val < 0)) अणु
+		if (unlikely(val < 0)) {
 			err = val;
-			जाओ error;
-		पूर्ण
+			goto error;
+		}
 		data->fan_ctrl[i] = val;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(sch5636_attr); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(sch5636_attr); i++) {
 		err = device_create_file(&pdev->dev,
 					 &sch5636_attr[i].dev_attr);
-		अगर (err)
-			जाओ error;
-	पूर्ण
+		if (err)
+			goto error;
+	}
 
-	क्रम (i = 0; i < (SCH5636_NO_TEMPS * 3); i++) अणु
-		अगर (data->temp_ctrl[i/3] & SCH5636_TEMP_DEACTIVATED)
-			जारी;
+	for (i = 0; i < (SCH5636_NO_TEMPS * 3); i++) {
+		if (data->temp_ctrl[i/3] & SCH5636_TEMP_DEACTIVATED)
+			continue;
 
 		err = device_create_file(&pdev->dev,
 					&sch5636_temp_attr[i].dev_attr);
-		अगर (err)
-			जाओ error;
-	पूर्ण
+		if (err)
+			goto error;
+	}
 
-	क्रम (i = 0; i < (SCH5636_NO_FANS * 3); i++) अणु
-		अगर (data->fan_ctrl[i/3] & SCH5636_FAN_DEACTIVATED)
-			जारी;
+	for (i = 0; i < (SCH5636_NO_FANS * 3); i++) {
+		if (data->fan_ctrl[i/3] & SCH5636_FAN_DEACTIVATED)
+			continue;
 
 		err = device_create_file(&pdev->dev,
 					&sch5636_fan_attr[i].dev_attr);
-		अगर (err)
-			जाओ error;
-	पूर्ण
+		if (err)
+			goto error;
+	}
 
-	data->hwmon_dev = hwmon_device_रेजिस्टर(&pdev->dev);
-	अगर (IS_ERR(data->hwmon_dev)) अणु
+	data->hwmon_dev = hwmon_device_register(&pdev->dev);
+	if (IS_ERR(data->hwmon_dev)) {
 		err = PTR_ERR(data->hwmon_dev);
-		data->hwmon_dev = शून्य;
-		जाओ error;
-	पूर्ण
+		data->hwmon_dev = NULL;
+		goto error;
+	}
 
-	/* Note failing to रेजिस्टर the watchकरोg is not a fatal error */
-	data->watchकरोg = sch56xx_watchकरोg_रेजिस्टर(&pdev->dev, data->addr,
+	/* Note failing to register the watchdog is not a fatal error */
+	data->watchdog = sch56xx_watchdog_register(&pdev->dev, data->addr,
 					(revision[0] << 8) | revision[1],
 					&data->update_lock, 0);
 
-	वापस 0;
+	return 0;
 
 error:
-	sch5636_हटाओ(pdev);
-	वापस err;
-पूर्ण
+	sch5636_remove(pdev);
+	return err;
+}
 
-अटल काष्ठा platक्रमm_driver sch5636_driver = अणु
-	.driver = अणु
+static struct platform_driver sch5636_driver = {
+	.driver = {
 		.name	= DRVNAME,
-	पूर्ण,
+	},
 	.probe		= sch5636_probe,
-	.हटाओ		= sch5636_हटाओ,
-पूर्ण;
+	.remove		= sch5636_remove,
+};
 
-module_platक्रमm_driver(sch5636_driver);
+module_platform_driver(sch5636_driver);
 
 MODULE_DESCRIPTION("SMSC SCH5636 Hardware Monitoring Driver");
 MODULE_AUTHOR("Hans de Goede <hdegoede@redhat.com>");

@@ -1,131 +1,130 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * linux/include/linux/समयcounter.h
+ * linux/include/linux/timecounter.h
  *
  * based on code that migrated away from
- * linux/include/linux/घड़ीsource.h
+ * linux/include/linux/clocksource.h
  */
-#अगर_अघोषित _LINUX_TIMECOUNTER_H
-#घोषणा _LINUX_TIMECOUNTER_H
+#ifndef _LINUX_TIMECOUNTER_H
+#define _LINUX_TIMECOUNTER_H
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-/* simplअगरy initialization of mask field */
-#घोषणा CYCLECOUNTER_MASK(bits) (u64)((bits) < 64 ? ((1ULL<<(bits))-1) : -1)
+/* simplify initialization of mask field */
+#define CYCLECOUNTER_MASK(bits) (u64)((bits) < 64 ? ((1ULL<<(bits))-1) : -1)
 
 /**
- * काष्ठा cyclecounter - hardware असलtraction क्रम a मुक्त running counter
- *	Provides completely state-मुक्त accessors to the underlying hardware.
- *	Depending on which hardware it पढ़ोs, the cycle counter may wrap
- *	around quickly. Locking rules (अगर necessary) have to be defined
- *	by the implementor and user of specअगरic instances of this API.
+ * struct cyclecounter - hardware abstraction for a free running counter
+ *	Provides completely state-free accessors to the underlying hardware.
+ *	Depending on which hardware it reads, the cycle counter may wrap
+ *	around quickly. Locking rules (if necessary) have to be defined
+ *	by the implementor and user of specific instances of this API.
  *
- * @पढ़ो:		वापसs the current cycle value
- * @mask:		biपंचांगask क्रम two's complement
+ * @read:		returns the current cycle value
+ * @mask:		bitmask for two's complement
  *			subtraction of non 64 bit counters,
  *			see CYCLECOUNTER_MASK() helper macro
  * @mult:		cycle to nanosecond multiplier
- * @shअगरt:		cycle to nanosecond भागisor (घातer of two)
+ * @shift:		cycle to nanosecond divisor (power of two)
  */
-काष्ठा cyclecounter अणु
-	u64 (*पढ़ो)(स्थिर काष्ठा cyclecounter *cc);
+struct cyclecounter {
+	u64 (*read)(const struct cyclecounter *cc);
 	u64 mask;
 	u32 mult;
-	u32 shअगरt;
-पूर्ण;
+	u32 shift;
+};
 
 /**
- * काष्ठा समयcounter - layer above a %काष्ठा cyclecounter which counts nanoseconds
- *	Contains the state needed by समयcounter_पढ़ो() to detect
+ * struct timecounter - layer above a %struct cyclecounter which counts nanoseconds
+ *	Contains the state needed by timecounter_read() to detect
  *	cycle counter wrap around. Initialize with
- *	समयcounter_init(). Also used to convert cycle counts पूर्णांकo the
- *	corresponding nanosecond counts with समयcounter_cyc2समय(). Users
- *	of this code are responsible क्रम initializing the underlying
- *	cycle counter hardware, locking issues and पढ़ोing the समय
+ *	timecounter_init(). Also used to convert cycle counts into the
+ *	corresponding nanosecond counts with timecounter_cyc2time(). Users
+ *	of this code are responsible for initializing the underlying
+ *	cycle counter hardware, locking issues and reading the time
  *	more often than the cycle counter wraps around. The nanosecond
  *	counter will only wrap around after ~585 years.
  *
  * @cc:			the cycle counter used by this instance
  * @cycle_last:		most recent cycle counter value seen by
- *			समयcounter_पढ़ो()
+ *			timecounter_read()
  * @nsec:		continuously increasing count
- * @mask:		bit mask क्रम मुख्यtaining the 'frac' field
+ * @mask:		bit mask for maintaining the 'frac' field
  * @frac:		accumulated fractional nanoseconds
  */
-काष्ठा समयcounter अणु
-	स्थिर काष्ठा cyclecounter *cc;
+struct timecounter {
+	const struct cyclecounter *cc;
 	u64 cycle_last;
 	u64 nsec;
 	u64 mask;
 	u64 frac;
-पूर्ण;
+};
 
 /**
  * cyclecounter_cyc2ns - converts cycle counter cycles to nanoseconds
- * @cc:		Poपूर्णांकer to cycle counter.
+ * @cc:		Pointer to cycle counter.
  * @cycles:	Cycles
- * @mask:	bit mask क्रम मुख्यtaining the 'frac' field
- * @frac:	poपूर्णांकer to storage क्रम the fractional nanoseconds.
+ * @mask:	bit mask for maintaining the 'frac' field
+ * @frac:	pointer to storage for the fractional nanoseconds.
  */
-अटल अंतरभूत u64 cyclecounter_cyc2ns(स्थिर काष्ठा cyclecounter *cc,
+static inline u64 cyclecounter_cyc2ns(const struct cyclecounter *cc,
 				      u64 cycles, u64 mask, u64 *frac)
-अणु
+{
 	u64 ns = (u64) cycles;
 
 	ns = (ns * cc->mult) + *frac;
 	*frac = ns & mask;
-	वापस ns >> cc->shअगरt;
-पूर्ण
+	return ns >> cc->shift;
+}
 
 /**
- * समयcounter_adjसमय - Shअगरts the समय of the घड़ी.
+ * timecounter_adjtime - Shifts the time of the clock.
  * @delta:	Desired change in nanoseconds.
  */
-अटल अंतरभूत व्योम समयcounter_adjसमय(काष्ठा समयcounter *tc, s64 delta)
-अणु
+static inline void timecounter_adjtime(struct timecounter *tc, s64 delta)
+{
 	tc->nsec += delta;
-पूर्ण
+}
 
 /**
- * समयcounter_init - initialize a समय counter
- * @tc:			Poपूर्णांकer to समय counter which is to be initialized/reset
- * @cc:			A cycle counter, पढ़ोy to be used.
- * @start_tstamp:	Arbitrary initial समय stamp.
+ * timecounter_init - initialize a time counter
+ * @tc:			Pointer to time counter which is to be initialized/reset
+ * @cc:			A cycle counter, ready to be used.
+ * @start_tstamp:	Arbitrary initial time stamp.
  *
- * After this call the current cycle रेजिस्टर (roughly) corresponds to
- * the initial समय stamp. Every call to समयcounter_पढ़ो() increments
- * the समय stamp counter by the number of elapsed nanoseconds.
+ * After this call the current cycle register (roughly) corresponds to
+ * the initial time stamp. Every call to timecounter_read() increments
+ * the time stamp counter by the number of elapsed nanoseconds.
  */
-बाह्य व्योम समयcounter_init(काष्ठा समयcounter *tc,
-			     स्थिर काष्ठा cyclecounter *cc,
+extern void timecounter_init(struct timecounter *tc,
+			     const struct cyclecounter *cc,
 			     u64 start_tstamp);
 
 /**
- * समयcounter_पढ़ो - वापस nanoseconds elapsed since समयcounter_init()
- *                    plus the initial समय stamp
- * @tc:          Poपूर्णांकer to समय counter.
+ * timecounter_read - return nanoseconds elapsed since timecounter_init()
+ *                    plus the initial time stamp
+ * @tc:          Pointer to time counter.
  *
- * In other words, keeps track of समय since the same epoch as
- * the function which generated the initial समय stamp.
+ * In other words, keeps track of time since the same epoch as
+ * the function which generated the initial time stamp.
  */
-बाह्य u64 समयcounter_पढ़ो(काष्ठा समयcounter *tc);
+extern u64 timecounter_read(struct timecounter *tc);
 
 /**
- * समयcounter_cyc2समय - convert a cycle counter to same
- *                        समय base as values वापसed by
- *                        समयcounter_पढ़ो()
- * @tc:		Poपूर्णांकer to समय counter.
- * @cycle_tstamp:	a value वापसed by tc->cc->पढ़ो()
+ * timecounter_cyc2time - convert a cycle counter to same
+ *                        time base as values returned by
+ *                        timecounter_read()
+ * @tc:		Pointer to time counter.
+ * @cycle_tstamp:	a value returned by tc->cc->read()
  *
- * Cycle counts that are converted correctly as दीर्घ as they
- * fall पूर्णांकo the पूर्णांकerval [-1/2 max cycle count, +1/2 max cycle count],
+ * Cycle counts that are converted correctly as long as they
+ * fall into the interval [-1/2 max cycle count, +1/2 max cycle count],
  * with "max cycle count" == cs->mask+1.
  *
  * This allows conversion of cycle counter values which were generated
  * in the past.
  */
-बाह्य u64 समयcounter_cyc2समय(स्थिर काष्ठा समयcounter *tc,
+extern u64 timecounter_cyc2time(const struct timecounter *tc,
 				u64 cycle_tstamp);
 
-#पूर्ण_अगर
+#endif

@@ -1,3 +1,2 @@
-<शैली गुरु>
-#समावेश "generated/map-shift.h"
-#समावेश "../../../../include/linux/xarray.h"
+#include "generated/map-shift.h"
+#include "../../../../include/linux/xarray.h"

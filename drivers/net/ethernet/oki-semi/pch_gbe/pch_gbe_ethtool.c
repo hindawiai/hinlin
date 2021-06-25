@@ -1,34 +1,33 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 1999 - 2010 Intel Corporation.
  * Copyright (C) 2010 OKI SEMICONDUCTOR Co., LTD.
  *
  * This code was derived from the Intel e1000e Linux driver.
  */
-#समावेश "pch_gbe.h"
-#समावेश "pch_gbe_phy.h"
+#include "pch_gbe.h"
+#include "pch_gbe_phy.h"
 
 /*
- * pch_gbe_stats - Stats item inक्रमmation
+ * pch_gbe_stats - Stats item information
  */
-काष्ठा pch_gbe_stats अणु
-	अक्षर string[ETH_GSTRING_LEN];
-	माप_प्रकार size;
-	माप_प्रकार offset;
-पूर्ण;
+struct pch_gbe_stats {
+	char string[ETH_GSTRING_LEN];
+	size_t size;
+	size_t offset;
+};
 
-#घोषणा PCH_GBE_STAT(m)						\
-अणु								\
+#define PCH_GBE_STAT(m)						\
+{								\
 	.string = #m,						\
-	.size = माप_field(काष्ठा pch_gbe_hw_stats, m),	\
-	.offset = दुरत्व(काष्ठा pch_gbe_hw_stats, m),		\
-पूर्ण
+	.size = sizeof_field(struct pch_gbe_hw_stats, m),	\
+	.offset = offsetof(struct pch_gbe_hw_stats, m),		\
+}
 
 /*
- * pch_gbe_gstrings_stats - ethtool inक्रमmation status name list
+ * pch_gbe_gstrings_stats - ethtool information status name list
  */
-अटल स्थिर काष्ठा pch_gbe_stats pch_gbe_gstrings_stats[] = अणु
+static const struct pch_gbe_stats pch_gbe_gstrings_stats[] = {
 	PCH_GBE_STAT(rx_packets),
 	PCH_GBE_STAT(tx_packets),
 	PCH_GBE_STAT(rx_bytes),
@@ -43,37 +42,37 @@
 	PCH_GBE_STAT(rx_frame_errors),
 	PCH_GBE_STAT(rx_alloc_buff_failed),
 	PCH_GBE_STAT(tx_length_errors),
-	PCH_GBE_STAT(tx_पातed_errors),
+	PCH_GBE_STAT(tx_aborted_errors),
 	PCH_GBE_STAT(tx_carrier_errors),
-	PCH_GBE_STAT(tx_समयout_count),
+	PCH_GBE_STAT(tx_timeout_count),
 	PCH_GBE_STAT(tx_restart_count),
-	PCH_GBE_STAT(पूर्णांकr_rx_dsc_empty_count),
-	PCH_GBE_STAT(पूर्णांकr_rx_frame_err_count),
-	PCH_GBE_STAT(पूर्णांकr_rx_fअगरo_err_count),
-	PCH_GBE_STAT(पूर्णांकr_rx_dma_err_count),
-	PCH_GBE_STAT(पूर्णांकr_tx_fअगरo_err_count),
-	PCH_GBE_STAT(पूर्णांकr_tx_dma_err_count),
-	PCH_GBE_STAT(पूर्णांकr_tcpip_err_count)
-पूर्ण;
+	PCH_GBE_STAT(intr_rx_dsc_empty_count),
+	PCH_GBE_STAT(intr_rx_frame_err_count),
+	PCH_GBE_STAT(intr_rx_fifo_err_count),
+	PCH_GBE_STAT(intr_rx_dma_err_count),
+	PCH_GBE_STAT(intr_tx_fifo_err_count),
+	PCH_GBE_STAT(intr_tx_dma_err_count),
+	PCH_GBE_STAT(intr_tcpip_err_count)
+};
 
-#घोषणा PCH_GBE_QUEUE_STATS_LEN 0
-#घोषणा PCH_GBE_GLOBAL_STATS_LEN	ARRAY_SIZE(pch_gbe_gstrings_stats)
-#घोषणा PCH_GBE_STATS_LEN (PCH_GBE_GLOBAL_STATS_LEN + PCH_GBE_QUEUE_STATS_LEN)
+#define PCH_GBE_QUEUE_STATS_LEN 0
+#define PCH_GBE_GLOBAL_STATS_LEN	ARRAY_SIZE(pch_gbe_gstrings_stats)
+#define PCH_GBE_STATS_LEN (PCH_GBE_GLOBAL_STATS_LEN + PCH_GBE_QUEUE_STATS_LEN)
 
-#घोषणा PCH_GBE_MAC_REGS_LEN    (माप(काष्ठा pch_gbe_regs) / 4)
-#घोषणा PCH_GBE_REGS_LEN        (PCH_GBE_MAC_REGS_LEN + PCH_GBE_PHY_REGS_LEN)
+#define PCH_GBE_MAC_REGS_LEN    (sizeof(struct pch_gbe_regs) / 4)
+#define PCH_GBE_REGS_LEN        (PCH_GBE_MAC_REGS_LEN + PCH_GBE_PHY_REGS_LEN)
 /**
- * pch_gbe_get_link_ksettings - Get device-specअगरic settings
- * @netdev: Network पूर्णांकerface device काष्ठाure
+ * pch_gbe_get_link_ksettings - Get device-specific settings
+ * @netdev: Network interface device structure
  * @ecmd:   Ethtool command
  * Returns:
  *	0:			Successful.
  *	Negative value:		Failed.
  */
-अटल पूर्णांक pch_gbe_get_link_ksettings(काष्ठा net_device *netdev,
-				      काष्ठा ethtool_link_ksettings *ecmd)
-अणु
-	काष्ठा pch_gbe_adapter *adapter = netdev_priv(netdev);
+static int pch_gbe_get_link_ksettings(struct net_device *netdev,
+				      struct ethtool_link_ksettings *ecmd)
+{
+	struct pch_gbe_adapter *adapter = netdev_priv(netdev);
 	u32 supported, advertising;
 
 	mii_ethtool_get_link_ksettings(&adapter->mii, ecmd);
@@ -91,235 +90,235 @@
 	ethtool_convert_legacy_u32_to_link_mode(ecmd->link_modes.advertising,
 						advertising);
 
-	अगर (!netअगर_carrier_ok(adapter->netdev))
+	if (!netif_carrier_ok(adapter->netdev))
 		ecmd->base.speed = SPEED_UNKNOWN;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * pch_gbe_set_link_ksettings - Set device-specअगरic settings
- * @netdev: Network पूर्णांकerface device काष्ठाure
+ * pch_gbe_set_link_ksettings - Set device-specific settings
+ * @netdev: Network interface device structure
  * @ecmd:   Ethtool command
  * Returns:
  *	0:			Successful.
  *	Negative value:		Failed.
  */
-अटल पूर्णांक pch_gbe_set_link_ksettings(काष्ठा net_device *netdev,
-				      स्थिर काष्ठा ethtool_link_ksettings *ecmd)
-अणु
-	काष्ठा pch_gbe_adapter *adapter = netdev_priv(netdev);
-	काष्ठा pch_gbe_hw *hw = &adapter->hw;
-	काष्ठा ethtool_link_ksettings copy_ecmd;
+static int pch_gbe_set_link_ksettings(struct net_device *netdev,
+				      const struct ethtool_link_ksettings *ecmd)
+{
+	struct pch_gbe_adapter *adapter = netdev_priv(netdev);
+	struct pch_gbe_hw *hw = &adapter->hw;
+	struct ethtool_link_ksettings copy_ecmd;
 	u32 speed = ecmd->base.speed;
 	u32 advertising;
-	पूर्णांक ret;
+	int ret;
 
-	pch_gbe_phy_ग_लिखो_reg_miic(hw, MII_BMCR, BMCR_RESET);
+	pch_gbe_phy_write_reg_miic(hw, MII_BMCR, BMCR_RESET);
 
-	स_नकल(&copy_ecmd, ecmd, माप(*ecmd));
+	memcpy(&copy_ecmd, ecmd, sizeof(*ecmd));
 
 	/* when set_settings() is called with a ethtool_cmd previously
-	 * filled by get_settings() on a करोwn link, speed is -1: */
-	अगर (speed == अच_पूर्णांक_उच्च) अणु
+	 * filled by get_settings() on a down link, speed is -1: */
+	if (speed == UINT_MAX) {
 		speed = SPEED_1000;
 		copy_ecmd.base.speed = speed;
 		copy_ecmd.base.duplex = DUPLEX_FULL;
-	पूर्ण
+	}
 	ret = mii_ethtool_set_link_ksettings(&adapter->mii, &copy_ecmd);
-	अगर (ret) अणु
+	if (ret) {
 		netdev_err(netdev, "Error: mii_ethtool_set_link_ksettings\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	hw->mac.link_speed = speed;
 	hw->mac.link_duplex = copy_ecmd.base.duplex;
 	ethtool_convert_link_mode_to_legacy_u32(
 		&advertising, copy_ecmd.link_modes.advertising);
-	hw->phy.स्वतःneg_advertised = advertising;
-	hw->mac.स्वतःneg = copy_ecmd.base.स्वतःneg;
+	hw->phy.autoneg_advertised = advertising;
+	hw->mac.autoneg = copy_ecmd.base.autoneg;
 
 	/* reset the link */
-	अगर (netअगर_running(adapter->netdev)) अणु
-		pch_gbe_करोwn(adapter);
+	if (netif_running(adapter->netdev)) {
+		pch_gbe_down(adapter);
 		ret = pch_gbe_up(adapter);
-	पूर्ण अन्यथा अणु
+	} else {
 		pch_gbe_reset(adapter);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
 /**
- * pch_gbe_get_regs_len - Report the size of device रेजिस्टरs
- * @netdev: Network पूर्णांकerface device काष्ठाure
- * Returns: the size of device रेजिस्टरs.
+ * pch_gbe_get_regs_len - Report the size of device registers
+ * @netdev: Network interface device structure
+ * Returns: the size of device registers.
  */
-अटल पूर्णांक pch_gbe_get_regs_len(काष्ठा net_device *netdev)
-अणु
-	वापस PCH_GBE_REGS_LEN * (पूर्णांक)माप(u32);
-पूर्ण
+static int pch_gbe_get_regs_len(struct net_device *netdev)
+{
+	return PCH_GBE_REGS_LEN * (int)sizeof(u32);
+}
 
 /**
- * pch_gbe_get_drvinfo - Report driver inक्रमmation
- * @netdev:  Network पूर्णांकerface device काष्ठाure
- * @drvinfo: Driver inक्रमmation काष्ठाure
+ * pch_gbe_get_drvinfo - Report driver information
+ * @netdev:  Network interface device structure
+ * @drvinfo: Driver information structure
  */
-अटल व्योम pch_gbe_get_drvinfo(काष्ठा net_device *netdev,
-				 काष्ठा ethtool_drvinfo *drvinfo)
-अणु
-	काष्ठा pch_gbe_adapter *adapter = netdev_priv(netdev);
+static void pch_gbe_get_drvinfo(struct net_device *netdev,
+				 struct ethtool_drvinfo *drvinfo)
+{
+	struct pch_gbe_adapter *adapter = netdev_priv(netdev);
 
-	strlcpy(drvinfo->driver, KBUILD_MODNAME, माप(drvinfo->driver));
-	strlcpy(drvinfo->version, pch_driver_version, माप(drvinfo->version));
+	strlcpy(drvinfo->driver, KBUILD_MODNAME, sizeof(drvinfo->driver));
+	strlcpy(drvinfo->version, pch_driver_version, sizeof(drvinfo->version));
 	strlcpy(drvinfo->bus_info, pci_name(adapter->pdev),
-		माप(drvinfo->bus_info));
-पूर्ण
+		sizeof(drvinfo->bus_info));
+}
 
 /**
- * pch_gbe_get_regs - Get device रेजिस्टरs
- * @netdev: Network पूर्णांकerface device काष्ठाure
- * @regs:   Ethtool रेजिस्टर काष्ठाure
- * @p:      Buffer poपूर्णांकer of पढ़ो device रेजिस्टर date
+ * pch_gbe_get_regs - Get device registers
+ * @netdev: Network interface device structure
+ * @regs:   Ethtool register structure
+ * @p:      Buffer pointer of read device register date
  */
-अटल व्योम pch_gbe_get_regs(काष्ठा net_device *netdev,
-				काष्ठा ethtool_regs *regs, व्योम *p)
-अणु
-	काष्ठा pch_gbe_adapter *adapter = netdev_priv(netdev);
-	काष्ठा pch_gbe_hw *hw = &adapter->hw;
-	काष्ठा pci_dev *pdev = adapter->pdev;
+static void pch_gbe_get_regs(struct net_device *netdev,
+				struct ethtool_regs *regs, void *p)
+{
+	struct pch_gbe_adapter *adapter = netdev_priv(netdev);
+	struct pch_gbe_hw *hw = &adapter->hw;
+	struct pci_dev *pdev = adapter->pdev;
 	u32 *regs_buff = p;
-	u16 i, पंचांगp;
+	u16 i, tmp;
 
 	regs->version = 0x1000000 | (__u32)pdev->revision << 16 | pdev->device;
-	क्रम (i = 0; i < PCH_GBE_MAC_REGS_LEN; i++)
-		*regs_buff++ = ioपढ़ो32(&hw->reg->INT_ST + i);
-	/* PHY रेजिस्टर */
-	क्रम (i = 0; i < PCH_GBE_PHY_REGS_LEN; i++) अणु
-		pch_gbe_phy_पढ़ो_reg_miic(&adapter->hw, i, &पंचांगp);
-		*regs_buff++ = पंचांगp;
-	पूर्ण
-पूर्ण
+	for (i = 0; i < PCH_GBE_MAC_REGS_LEN; i++)
+		*regs_buff++ = ioread32(&hw->reg->INT_ST + i);
+	/* PHY register */
+	for (i = 0; i < PCH_GBE_PHY_REGS_LEN; i++) {
+		pch_gbe_phy_read_reg_miic(&adapter->hw, i, &tmp);
+		*regs_buff++ = tmp;
+	}
+}
 
 /**
  * pch_gbe_get_wol - Report whether Wake-on-Lan is enabled
- * @netdev: Network पूर्णांकerface device काष्ठाure
- * @wol:    Wake-on-Lan inक्रमmation
+ * @netdev: Network interface device structure
+ * @wol:    Wake-on-Lan information
  */
-अटल व्योम pch_gbe_get_wol(काष्ठा net_device *netdev,
-				काष्ठा ethtool_wolinfo *wol)
-अणु
-	काष्ठा pch_gbe_adapter *adapter = netdev_priv(netdev);
+static void pch_gbe_get_wol(struct net_device *netdev,
+				struct ethtool_wolinfo *wol)
+{
+	struct pch_gbe_adapter *adapter = netdev_priv(netdev);
 
 	wol->supported = WAKE_UCAST | WAKE_MCAST | WAKE_BCAST | WAKE_MAGIC;
 	wol->wolopts = 0;
 
-	अगर ((adapter->wake_up_evt & PCH_GBE_WLC_IND))
+	if ((adapter->wake_up_evt & PCH_GBE_WLC_IND))
 		wol->wolopts |= WAKE_UCAST;
-	अगर ((adapter->wake_up_evt & PCH_GBE_WLC_MLT))
+	if ((adapter->wake_up_evt & PCH_GBE_WLC_MLT))
 		wol->wolopts |= WAKE_MCAST;
-	अगर ((adapter->wake_up_evt & PCH_GBE_WLC_BR))
+	if ((adapter->wake_up_evt & PCH_GBE_WLC_BR))
 		wol->wolopts |= WAKE_BCAST;
-	अगर ((adapter->wake_up_evt & PCH_GBE_WLC_MP))
+	if ((adapter->wake_up_evt & PCH_GBE_WLC_MP))
 		wol->wolopts |= WAKE_MAGIC;
-पूर्ण
+}
 
 /**
  * pch_gbe_set_wol - Turn Wake-on-Lan on or off
- * @netdev: Network पूर्णांकerface device काष्ठाure
- * @wol:    Poपूर्णांकer of wake-on-Lan inक्रमmation straucture
+ * @netdev: Network interface device structure
+ * @wol:    Pointer of wake-on-Lan information straucture
  * Returns:
  *	0:			Successful.
  *	Negative value:		Failed.
  */
-अटल पूर्णांक pch_gbe_set_wol(काष्ठा net_device *netdev,
-				काष्ठा ethtool_wolinfo *wol)
-अणु
-	काष्ठा pch_gbe_adapter *adapter = netdev_priv(netdev);
+static int pch_gbe_set_wol(struct net_device *netdev,
+				struct ethtool_wolinfo *wol)
+{
+	struct pch_gbe_adapter *adapter = netdev_priv(netdev);
 
-	अगर ((wol->wolopts & (WAKE_PHY | WAKE_ARP | WAKE_MAGICSECURE)))
-		वापस -EOPNOTSUPP;
+	if ((wol->wolopts & (WAKE_PHY | WAKE_ARP | WAKE_MAGICSECURE)))
+		return -EOPNOTSUPP;
 	/* these settings will always override what we currently have */
 	adapter->wake_up_evt = 0;
 
-	अगर ((wol->wolopts & WAKE_UCAST))
+	if ((wol->wolopts & WAKE_UCAST))
 		adapter->wake_up_evt |= PCH_GBE_WLC_IND;
-	अगर ((wol->wolopts & WAKE_MCAST))
+	if ((wol->wolopts & WAKE_MCAST))
 		adapter->wake_up_evt |= PCH_GBE_WLC_MLT;
-	अगर ((wol->wolopts & WAKE_BCAST))
+	if ((wol->wolopts & WAKE_BCAST))
 		adapter->wake_up_evt |= PCH_GBE_WLC_BR;
-	अगर ((wol->wolopts & WAKE_MAGIC))
+	if ((wol->wolopts & WAKE_MAGIC))
 		adapter->wake_up_evt |= PCH_GBE_WLC_MP;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * pch_gbe_nway_reset - Restart स्वतःnegotiation
- * @netdev: Network पूर्णांकerface device काष्ठाure
+ * pch_gbe_nway_reset - Restart autonegotiation
+ * @netdev: Network interface device structure
  * Returns:
  *	0:			Successful.
  *	Negative value:		Failed.
  */
-अटल पूर्णांक pch_gbe_nway_reset(काष्ठा net_device *netdev)
-अणु
-	काष्ठा pch_gbe_adapter *adapter = netdev_priv(netdev);
+static int pch_gbe_nway_reset(struct net_device *netdev)
+{
+	struct pch_gbe_adapter *adapter = netdev_priv(netdev);
 
-	वापस mii_nway_restart(&adapter->mii);
-पूर्ण
+	return mii_nway_restart(&adapter->mii);
+}
 
 /**
  * pch_gbe_get_ringparam - Report ring sizes
- * @netdev:  Network पूर्णांकerface device काष्ठाure
- * @ring:    Ring param काष्ठाure
+ * @netdev:  Network interface device structure
+ * @ring:    Ring param structure
  */
-अटल व्योम pch_gbe_get_ringparam(काष्ठा net_device *netdev,
-					काष्ठा ethtool_ringparam *ring)
-अणु
-	काष्ठा pch_gbe_adapter *adapter = netdev_priv(netdev);
-	काष्ठा pch_gbe_tx_ring *txdr = adapter->tx_ring;
-	काष्ठा pch_gbe_rx_ring *rxdr = adapter->rx_ring;
+static void pch_gbe_get_ringparam(struct net_device *netdev,
+					struct ethtool_ringparam *ring)
+{
+	struct pch_gbe_adapter *adapter = netdev_priv(netdev);
+	struct pch_gbe_tx_ring *txdr = adapter->tx_ring;
+	struct pch_gbe_rx_ring *rxdr = adapter->rx_ring;
 
 	ring->rx_max_pending = PCH_GBE_MAX_RXD;
 	ring->tx_max_pending = PCH_GBE_MAX_TXD;
 	ring->rx_pending = rxdr->count;
 	ring->tx_pending = txdr->count;
-पूर्ण
+}
 
 /**
  * pch_gbe_set_ringparam - Set ring sizes
- * @netdev:  Network पूर्णांकerface device काष्ठाure
- * @ring:    Ring param काष्ठाure
+ * @netdev:  Network interface device structure
+ * @ring:    Ring param structure
  * Returns
  *	0:			Successful.
  *	Negative value:		Failed.
  */
-अटल पूर्णांक pch_gbe_set_ringparam(काष्ठा net_device *netdev,
-					काष्ठा ethtool_ringparam *ring)
-अणु
-	काष्ठा pch_gbe_adapter *adapter = netdev_priv(netdev);
-	काष्ठा pch_gbe_tx_ring *txdr, *tx_old;
-	काष्ठा pch_gbe_rx_ring *rxdr, *rx_old;
-	पूर्णांक tx_ring_size, rx_ring_size;
-	पूर्णांक err = 0;
+static int pch_gbe_set_ringparam(struct net_device *netdev,
+					struct ethtool_ringparam *ring)
+{
+	struct pch_gbe_adapter *adapter = netdev_priv(netdev);
+	struct pch_gbe_tx_ring *txdr, *tx_old;
+	struct pch_gbe_rx_ring *rxdr, *rx_old;
+	int tx_ring_size, rx_ring_size;
+	int err = 0;
 
-	अगर ((ring->rx_mini_pending) || (ring->rx_jumbo_pending))
-		वापस -EINVAL;
-	tx_ring_size = (पूर्णांक)माप(काष्ठा pch_gbe_tx_ring);
-	rx_ring_size = (पूर्णांक)माप(काष्ठा pch_gbe_rx_ring);
+	if ((ring->rx_mini_pending) || (ring->rx_jumbo_pending))
+		return -EINVAL;
+	tx_ring_size = (int)sizeof(struct pch_gbe_tx_ring);
+	rx_ring_size = (int)sizeof(struct pch_gbe_rx_ring);
 
-	अगर ((netअगर_running(adapter->netdev)))
-		pch_gbe_करोwn(adapter);
+	if ((netif_running(adapter->netdev)))
+		pch_gbe_down(adapter);
 	tx_old = adapter->tx_ring;
 	rx_old = adapter->rx_ring;
 
 	txdr = kzalloc(tx_ring_size, GFP_KERNEL);
-	अगर (!txdr) अणु
+	if (!txdr) {
 		err = -ENOMEM;
-		जाओ err_alloc_tx;
-	पूर्ण
+		goto err_alloc_tx;
+	}
 	rxdr = kzalloc(rx_ring_size, GFP_KERNEL);
-	अगर (!rxdr) अणु
+	if (!rxdr) {
 		err = -ENOMEM;
-		जाओ err_alloc_rx;
-	पूर्ण
+		goto err_alloc_rx;
+	}
 	adapter->tx_ring = txdr;
 	adapter->rx_ring = rxdr;
 
@@ -331,157 +330,157 @@
 		clamp_val(ring->tx_pending, PCH_GBE_MIN_RXD, PCH_GBE_MAX_RXD);
 	txdr->count = roundup(txdr->count, PCH_GBE_TX_DESC_MULTIPLE);
 
-	अगर ((netअगर_running(adapter->netdev))) अणु
-		/* Try to get new resources beक्रमe deleting old */
+	if ((netif_running(adapter->netdev))) {
+		/* Try to get new resources before deleting old */
 		err = pch_gbe_setup_rx_resources(adapter, adapter->rx_ring);
-		अगर (err)
-			जाओ err_setup_rx;
+		if (err)
+			goto err_setup_rx;
 		err = pch_gbe_setup_tx_resources(adapter, adapter->tx_ring);
-		अगर (err)
-			जाओ err_setup_tx;
-		pch_gbe_मुक्त_rx_resources(adapter, rx_old);
-		pch_gbe_मुक्त_tx_resources(adapter, tx_old);
-		kमुक्त(tx_old);
-		kमुक्त(rx_old);
+		if (err)
+			goto err_setup_tx;
+		pch_gbe_free_rx_resources(adapter, rx_old);
+		pch_gbe_free_tx_resources(adapter, tx_old);
+		kfree(tx_old);
+		kfree(rx_old);
 		adapter->rx_ring = rxdr;
 		adapter->tx_ring = txdr;
 		err = pch_gbe_up(adapter);
-	पूर्ण
-	वापस err;
+	}
+	return err;
 
 err_setup_tx:
-	pch_gbe_मुक्त_rx_resources(adapter, adapter->rx_ring);
+	pch_gbe_free_rx_resources(adapter, adapter->rx_ring);
 err_setup_rx:
 	adapter->rx_ring = rx_old;
 	adapter->tx_ring = tx_old;
-	kमुक्त(rxdr);
+	kfree(rxdr);
 err_alloc_rx:
-	kमुक्त(txdr);
+	kfree(txdr);
 err_alloc_tx:
-	अगर (netअगर_running(adapter->netdev))
+	if (netif_running(adapter->netdev))
 		pch_gbe_up(adapter);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /**
- * pch_gbe_get_छोड़ोparam - Report छोड़ो parameters
- * @netdev:  Network पूर्णांकerface device काष्ठाure
- * @छोड़ो:   Pause parameters काष्ठाure
+ * pch_gbe_get_pauseparam - Report pause parameters
+ * @netdev:  Network interface device structure
+ * @pause:   Pause parameters structure
  */
-अटल व्योम pch_gbe_get_छोड़ोparam(काष्ठा net_device *netdev,
-				       काष्ठा ethtool_छोड़ोparam *छोड़ो)
-अणु
-	काष्ठा pch_gbe_adapter *adapter = netdev_priv(netdev);
-	काष्ठा pch_gbe_hw *hw = &adapter->hw;
+static void pch_gbe_get_pauseparam(struct net_device *netdev,
+				       struct ethtool_pauseparam *pause)
+{
+	struct pch_gbe_adapter *adapter = netdev_priv(netdev);
+	struct pch_gbe_hw *hw = &adapter->hw;
 
-	छोड़ो->स्वतःneg =
-	    ((hw->mac.fc_स्वतःneg) ? AUTONEG_ENABLE : AUTONEG_DISABLE);
+	pause->autoneg =
+	    ((hw->mac.fc_autoneg) ? AUTONEG_ENABLE : AUTONEG_DISABLE);
 
-	अगर (hw->mac.fc == PCH_GBE_FC_RX_PAUSE) अणु
-		छोड़ो->rx_छोड़ो = 1;
-	पूर्ण अन्यथा अगर (hw->mac.fc == PCH_GBE_FC_TX_PAUSE) अणु
-		छोड़ो->tx_छोड़ो = 1;
-	पूर्ण अन्यथा अगर (hw->mac.fc == PCH_GBE_FC_FULL) अणु
-		छोड़ो->rx_छोड़ो = 1;
-		छोड़ो->tx_छोड़ो = 1;
-	पूर्ण
-पूर्ण
+	if (hw->mac.fc == PCH_GBE_FC_RX_PAUSE) {
+		pause->rx_pause = 1;
+	} else if (hw->mac.fc == PCH_GBE_FC_TX_PAUSE) {
+		pause->tx_pause = 1;
+	} else if (hw->mac.fc == PCH_GBE_FC_FULL) {
+		pause->rx_pause = 1;
+		pause->tx_pause = 1;
+	}
+}
 
 /**
- * pch_gbe_set_छोड़ोparam - Set छोड़ो parameters
- * @netdev:  Network पूर्णांकerface device काष्ठाure
- * @छोड़ो:   Pause parameters काष्ठाure
+ * pch_gbe_set_pauseparam - Set pause parameters
+ * @netdev:  Network interface device structure
+ * @pause:   Pause parameters structure
  * Returns:
  *	0:			Successful.
  *	Negative value:		Failed.
  */
-अटल पूर्णांक pch_gbe_set_छोड़ोparam(काष्ठा net_device *netdev,
-				       काष्ठा ethtool_छोड़ोparam *छोड़ो)
-अणु
-	काष्ठा pch_gbe_adapter *adapter = netdev_priv(netdev);
-	काष्ठा pch_gbe_hw *hw = &adapter->hw;
-	पूर्णांक ret = 0;
+static int pch_gbe_set_pauseparam(struct net_device *netdev,
+				       struct ethtool_pauseparam *pause)
+{
+	struct pch_gbe_adapter *adapter = netdev_priv(netdev);
+	struct pch_gbe_hw *hw = &adapter->hw;
+	int ret = 0;
 
-	hw->mac.fc_स्वतःneg = छोड़ो->स्वतःneg;
-	अगर ((छोड़ो->rx_छोड़ो) && (छोड़ो->tx_छोड़ो))
+	hw->mac.fc_autoneg = pause->autoneg;
+	if ((pause->rx_pause) && (pause->tx_pause))
 		hw->mac.fc = PCH_GBE_FC_FULL;
-	अन्यथा अगर ((छोड़ो->rx_छोड़ो) && (!छोड़ो->tx_छोड़ो))
+	else if ((pause->rx_pause) && (!pause->tx_pause))
 		hw->mac.fc = PCH_GBE_FC_RX_PAUSE;
-	अन्यथा अगर ((!छोड़ो->rx_छोड़ो) && (छोड़ो->tx_छोड़ो))
+	else if ((!pause->rx_pause) && (pause->tx_pause))
 		hw->mac.fc = PCH_GBE_FC_TX_PAUSE;
-	अन्यथा अगर ((!छोड़ो->rx_छोड़ो) && (!छोड़ो->tx_छोड़ो))
+	else if ((!pause->rx_pause) && (!pause->tx_pause))
 		hw->mac.fc = PCH_GBE_FC_NONE;
 
-	अगर (hw->mac.fc_स्वतःneg == AUTONEG_ENABLE) अणु
-		अगर ((netअगर_running(adapter->netdev))) अणु
-			pch_gbe_करोwn(adapter);
+	if (hw->mac.fc_autoneg == AUTONEG_ENABLE) {
+		if ((netif_running(adapter->netdev))) {
+			pch_gbe_down(adapter);
 			ret = pch_gbe_up(adapter);
-		पूर्ण अन्यथा अणु
+		} else {
 			pch_gbe_reset(adapter);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		ret = pch_gbe_mac_क्रमce_mac_fc(hw);
-	पूर्ण
-	वापस ret;
-पूर्ण
+		}
+	} else {
+		ret = pch_gbe_mac_force_mac_fc(hw);
+	}
+	return ret;
+}
 
 /**
  * pch_gbe_get_strings - Return a set of strings that describe the requested
  *			 objects
- * @netdev:    Network पूर्णांकerface device काष्ठाure
+ * @netdev:    Network interface device structure
  * @stringset: Select the stringset. [ETH_SS_TEST] [ETH_SS_STATS]
- * @data:      Poपूर्णांकer of पढ़ो string data.
+ * @data:      Pointer of read string data.
  */
-अटल व्योम pch_gbe_get_strings(काष्ठा net_device *netdev, u32 stringset,
+static void pch_gbe_get_strings(struct net_device *netdev, u32 stringset,
 					u8 *data)
-अणु
+{
 	u8 *p = data;
-	पूर्णांक i;
+	int i;
 
-	चयन (stringset) अणु
-	हाल (u32) ETH_SS_STATS:
-		क्रम (i = 0; i < PCH_GBE_GLOBAL_STATS_LEN; i++) अणु
-			स_नकल(p, pch_gbe_gstrings_stats[i].string,
+	switch (stringset) {
+	case (u32) ETH_SS_STATS:
+		for (i = 0; i < PCH_GBE_GLOBAL_STATS_LEN; i++) {
+			memcpy(p, pch_gbe_gstrings_stats[i].string,
 			       ETH_GSTRING_LEN);
 			p += ETH_GSTRING_LEN;
-		पूर्ण
-		अवरोध;
-	पूर्ण
-पूर्ण
+		}
+		break;
+	}
+}
 
 /**
  * pch_gbe_get_ethtool_stats - Return statistics about the device
- * @netdev: Network पूर्णांकerface device काष्ठाure
- * @stats:  Ethtool statue काष्ठाure
- * @data:   Poपूर्णांकer of पढ़ो status area
+ * @netdev: Network interface device structure
+ * @stats:  Ethtool statue structure
+ * @data:   Pointer of read status area
  */
-अटल व्योम pch_gbe_get_ethtool_stats(काष्ठा net_device *netdev,
-				  काष्ठा ethtool_stats *stats, u64 *data)
-अणु
-	काष्ठा pch_gbe_adapter *adapter = netdev_priv(netdev);
-	पूर्णांक i;
-	स्थिर काष्ठा pch_gbe_stats *gstats = pch_gbe_gstrings_stats;
-	अक्षर *hw_stats = (अक्षर *)&adapter->stats;
+static void pch_gbe_get_ethtool_stats(struct net_device *netdev,
+				  struct ethtool_stats *stats, u64 *data)
+{
+	struct pch_gbe_adapter *adapter = netdev_priv(netdev);
+	int i;
+	const struct pch_gbe_stats *gstats = pch_gbe_gstrings_stats;
+	char *hw_stats = (char *)&adapter->stats;
 
 	pch_gbe_update_stats(adapter);
-	क्रम (i = 0; i < PCH_GBE_GLOBAL_STATS_LEN; i++) अणु
-		अक्षर *p = hw_stats + gstats->offset;
-		data[i] = gstats->size == माप(u64) ? *(u64 *)p:(*(u32 *)p);
+	for (i = 0; i < PCH_GBE_GLOBAL_STATS_LEN; i++) {
+		char *p = hw_stats + gstats->offset;
+		data[i] = gstats->size == sizeof(u64) ? *(u64 *)p:(*(u32 *)p);
 		gstats++;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक pch_gbe_get_sset_count(काष्ठा net_device *netdev, पूर्णांक sset)
-अणु
-	चयन (sset) अणु
-	हाल ETH_SS_STATS:
-		वापस PCH_GBE_STATS_LEN;
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+static int pch_gbe_get_sset_count(struct net_device *netdev, int sset)
+{
+	switch (sset) {
+	case ETH_SS_STATS:
+		return PCH_GBE_STATS_LEN;
+	default:
+		return -EOPNOTSUPP;
+	}
+}
 
-अटल स्थिर काष्ठा ethtool_ops pch_gbe_ethtool_ops = अणु
+static const struct ethtool_ops pch_gbe_ethtool_ops = {
 	.get_drvinfo = pch_gbe_get_drvinfo,
 	.get_regs_len = pch_gbe_get_regs_len,
 	.get_regs = pch_gbe_get_regs,
@@ -491,16 +490,16 @@ err_alloc_tx:
 	.get_link = ethtool_op_get_link,
 	.get_ringparam = pch_gbe_get_ringparam,
 	.set_ringparam = pch_gbe_set_ringparam,
-	.get_छोड़ोparam = pch_gbe_get_छोड़ोparam,
-	.set_छोड़ोparam = pch_gbe_set_छोड़ोparam,
+	.get_pauseparam = pch_gbe_get_pauseparam,
+	.set_pauseparam = pch_gbe_set_pauseparam,
 	.get_strings = pch_gbe_get_strings,
 	.get_ethtool_stats = pch_gbe_get_ethtool_stats,
 	.get_sset_count = pch_gbe_get_sset_count,
 	.get_link_ksettings = pch_gbe_get_link_ksettings,
 	.set_link_ksettings = pch_gbe_set_link_ksettings,
-पूर्ण;
+};
 
-व्योम pch_gbe_set_ethtool_ops(काष्ठा net_device *netdev)
-अणु
+void pch_gbe_set_ethtool_ops(struct net_device *netdev)
+{
 	netdev->ethtool_ops = &pch_gbe_ethtool_ops;
-पूर्ण
+}

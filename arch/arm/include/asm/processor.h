@@ -1,137 +1,136 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- *  arch/arm/include/यंत्र/processor.h
+ *  arch/arm/include/asm/processor.h
  *
  *  Copyright (C) 1995-1999 Russell King
  */
 
-#अगर_अघोषित __ASM_ARM_PROCESSOR_H
-#घोषणा __ASM_ARM_PROCESSOR_H
+#ifndef __ASM_ARM_PROCESSOR_H
+#define __ASM_ARM_PROCESSOR_H
 
-#अगर_घोषित __KERNEL__
+#ifdef __KERNEL__
 
-#समावेश <यंत्र/hw_अवरोधpoपूर्णांक.h>
-#समावेश <यंत्र/ptrace.h>
-#समावेश <यंत्र/types.h>
-#समावेश <यंत्र/unअगरied.h>
-#समावेश <यंत्र/vdso/processor.h>
+#include <asm/hw_breakpoint.h>
+#include <asm/ptrace.h>
+#include <asm/types.h>
+#include <asm/unified.h>
+#include <asm/vdso/processor.h>
 
-#अगर_घोषित __KERNEL__
-#घोषणा STACK_TOP	((current->personality & ADDR_LIMIT_32BIT) ? \
+#ifdef __KERNEL__
+#define STACK_TOP	((current->personality & ADDR_LIMIT_32BIT) ? \
 			 TASK_SIZE : TASK_SIZE_26)
-#घोषणा STACK_TOP_MAX	TASK_SIZE
-#पूर्ण_अगर
+#define STACK_TOP_MAX	TASK_SIZE
+#endif
 
-काष्ठा debug_info अणु
-#अगर_घोषित CONFIG_HAVE_HW_BREAKPOINT
-	काष्ठा perf_event	*hbp[ARM_MAX_HBP_SLOTS];
-#पूर्ण_अगर
-पूर्ण;
+struct debug_info {
+#ifdef CONFIG_HAVE_HW_BREAKPOINT
+	struct perf_event	*hbp[ARM_MAX_HBP_SLOTS];
+#endif
+};
 
-काष्ठा thपढ़ो_काष्ठा अणु
+struct thread_struct {
 							/* fault info	  */
-	अचिन्हित दीर्घ		address;
-	अचिन्हित दीर्घ		trap_no;
-	अचिन्हित दीर्घ		error_code;
+	unsigned long		address;
+	unsigned long		trap_no;
+	unsigned long		error_code;
 							/* debugging	  */
-	काष्ठा debug_info	debug;
-पूर्ण;
+	struct debug_info	debug;
+};
 
 /*
- * Everything usercopied to/from thपढ़ो_काष्ठा is अटलally-sized, so
+ * Everything usercopied to/from thread_struct is statically-sized, so
  * no hardened usercopy whitelist is needed.
  */
-अटल अंतरभूत व्योम arch_thपढ़ो_काष्ठा_whitelist(अचिन्हित दीर्घ *offset,
-						अचिन्हित दीर्घ *size)
-अणु
+static inline void arch_thread_struct_whitelist(unsigned long *offset,
+						unsigned long *size)
+{
 	*offset = *size = 0;
-पूर्ण
+}
 
-#घोषणा INIT_THREAD  अणु	पूर्ण
+#define INIT_THREAD  {	}
 
-#घोषणा start_thपढ़ो(regs,pc,sp)					\
-(अणु									\
-	अचिन्हित दीर्घ r7, r8, r9;					\
+#define start_thread(regs,pc,sp)					\
+({									\
+	unsigned long r7, r8, r9;					\
 									\
-	अगर (IS_ENABLED(CONFIG_BINFMT_ELF_FDPIC)) अणु			\
+	if (IS_ENABLED(CONFIG_BINFMT_ELF_FDPIC)) {			\
 		r7 = regs->ARM_r7;					\
 		r8 = regs->ARM_r8;					\
 		r9 = regs->ARM_r9;					\
-	पूर्ण								\
-	स_रखो(regs->uregs, 0, माप(regs->uregs));			\
-	अगर (IS_ENABLED(CONFIG_BINFMT_ELF_FDPIC) &&			\
-	    current->personality & FDPIC_FUNCPTRS) अणु			\
+	}								\
+	memset(regs->uregs, 0, sizeof(regs->uregs));			\
+	if (IS_ENABLED(CONFIG_BINFMT_ELF_FDPIC) &&			\
+	    current->personality & FDPIC_FUNCPTRS) {			\
 		regs->ARM_r7 = r7;					\
 		regs->ARM_r8 = r8;					\
 		regs->ARM_r9 = r9;					\
 		regs->ARM_r10 = current->mm->start_data;		\
-	पूर्ण अन्यथा अगर (!IS_ENABLED(CONFIG_MMU))				\
+	} else if (!IS_ENABLED(CONFIG_MMU))				\
 		regs->ARM_r10 = current->mm->start_data;		\
-	अगर (current->personality & ADDR_LIMIT_32BIT)			\
+	if (current->personality & ADDR_LIMIT_32BIT)			\
 		regs->ARM_cpsr = USR_MODE;				\
-	अन्यथा								\
+	else								\
 		regs->ARM_cpsr = USR26_MODE;				\
-	अगर (elf_hwcap & HWCAP_THUMB && pc & 1)				\
+	if (elf_hwcap & HWCAP_THUMB && pc & 1)				\
 		regs->ARM_cpsr |= PSR_T_BIT;				\
 	regs->ARM_cpsr |= PSR_ENDSTATE;					\
 	regs->ARM_pc = pc & ~1;		/* pc */			\
 	regs->ARM_sp = sp;		/* sp */			\
-पूर्ण)
+})
 
 /* Forward declaration, a strange C thing */
-काष्ठा task_काष्ठा;
+struct task_struct;
 
-/* Free all resources held by a thपढ़ो. */
-बाह्य व्योम release_thपढ़ो(काष्ठा task_काष्ठा *);
+/* Free all resources held by a thread. */
+extern void release_thread(struct task_struct *);
 
-अचिन्हित दीर्घ get_wchan(काष्ठा task_काष्ठा *p);
+unsigned long get_wchan(struct task_struct *p);
 
-#घोषणा task_pt_regs(p) \
-	((काष्ठा pt_regs *)(THREAD_START_SP + task_stack_page(p)) - 1)
+#define task_pt_regs(p) \
+	((struct pt_regs *)(THREAD_START_SP + task_stack_page(p)) - 1)
 
-#घोषणा KSTK_EIP(tsk)	task_pt_regs(tsk)->ARM_pc
-#घोषणा KSTK_ESP(tsk)	task_pt_regs(tsk)->ARM_sp
+#define KSTK_EIP(tsk)	task_pt_regs(tsk)->ARM_pc
+#define KSTK_ESP(tsk)	task_pt_regs(tsk)->ARM_sp
 
-#अगर_घोषित CONFIG_SMP
-#घोषणा __ALT_SMP_ASM(smp, up)						\
+#ifdef CONFIG_SMP
+#define __ALT_SMP_ASM(smp, up)						\
 	"9998:	" smp "\n"						\
 	"	.pushsection \".alt.smp.init\", \"a\"\n"		\
 	"	.long	9998b - .\n"					\
 	"	" up "\n"						\
 	"	.popsection\n"
-#अन्यथा
-#घोषणा __ALT_SMP_ASM(smp, up)	up
-#पूर्ण_अगर
+#else
+#define __ALT_SMP_ASM(smp, up)	up
+#endif
 
 /*
  * Prefetching support - only ARMv5.
  */
-#अगर __LINUX_ARM_ARCH__ >= 5
+#if __LINUX_ARM_ARCH__ >= 5
 
-#घोषणा ARCH_HAS_PREFETCH
-अटल अंतरभूत व्योम prefetch(स्थिर व्योम *ptr)
-अणु
-	__यंत्र__ __अस्थिर__(
+#define ARCH_HAS_PREFETCH
+static inline void prefetch(const void *ptr)
+{
+	__asm__ __volatile__(
 		"pld\t%a0"
 		:: "p" (ptr));
-पूर्ण
+}
 
-#अगर __LINUX_ARM_ARCH__ >= 7 && defined(CONFIG_SMP)
-#घोषणा ARCH_HAS_PREFETCHW
-अटल अंतरभूत व्योम prefetchw(स्थिर व्योम *ptr)
-अणु
-	__यंत्र__ __अस्थिर__(
+#if __LINUX_ARM_ARCH__ >= 7 && defined(CONFIG_SMP)
+#define ARCH_HAS_PREFETCHW
+static inline void prefetchw(const void *ptr)
+{
+	__asm__ __volatile__(
 		".arch_extension	mp\n"
 		__ALT_SMP_ASM(
 			"pldw\t%a0",
 			"pld\t%a0"
 		)
 		:: "p" (ptr));
-पूर्ण
-#पूर्ण_अगर
-#पूर्ण_अगर
+}
+#endif
+#endif
 
-#पूर्ण_अगर
+#endif
 
-#पूर्ण_अगर /* __ASM_ARM_PROCESSOR_H */
+#endif /* __ASM_ARM_PROCESSOR_H */

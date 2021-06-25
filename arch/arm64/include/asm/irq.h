@@ -1,22 +1,21 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ASM_IRQ_H
-#घोषणा __ASM_IRQ_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ASM_IRQ_H
+#define __ASM_IRQ_H
 
-#अगर_अघोषित __ASSEMBLER__
+#ifndef __ASSEMBLER__
 
-#समावेश <यंत्र-generic/irq.h>
+#include <asm-generic/irq.h>
 
-काष्ठा pt_regs;
+struct pt_regs;
 
-पूर्णांक set_handle_irq(व्योम (*handle_irq)(काष्ठा pt_regs *));
-#घोषणा set_handle_irq	set_handle_irq
-पूर्णांक set_handle_fiq(व्योम (*handle_fiq)(काष्ठा pt_regs *));
+int set_handle_irq(void (*handle_irq)(struct pt_regs *));
+#define set_handle_irq	set_handle_irq
+int set_handle_fiq(void (*handle_fiq)(struct pt_regs *));
 
-अटल अंतरभूत पूर्णांक nr_legacy_irqs(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+static inline int nr_legacy_irqs(void)
+{
+	return 0;
+}
 
-#पूर्ण_अगर /* !__ASSEMBLER__ */
-#पूर्ण_अगर
+#endif /* !__ASSEMBLER__ */
+#endif

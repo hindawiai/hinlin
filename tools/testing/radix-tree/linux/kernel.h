@@ -1,27 +1,26 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _KERNEL_H
-#घोषणा _KERNEL_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _KERNEL_H
+#define _KERNEL_H
 
-#समावेश "../../include/linux/kernel.h"
-#समावेश <माला.स>
-#समावेश <मानकपन.स>
-#समावेश <सीमा.स>
+#include "../../include/linux/kernel.h"
+#include <string.h>
+#include <stdio.h>
+#include <limits.h>
 
-#समावेश <linux/compiler.h>
-#समावेश <linux/err.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/log2.h>
-#समावेश "../../../include/linux/kconfig.h"
+#include <linux/compiler.h>
+#include <linux/err.h>
+#include <linux/bitops.h>
+#include <linux/log2.h>
+#include "../../../include/linux/kconfig.h"
 
-#घोषणा prपूर्णांकk म_लिखो
-#घोषणा pr_info prपूर्णांकk
-#घोषणा pr_debug prपूर्णांकk
-#घोषणा pr_cont prपूर्णांकk
+#define printk printf
+#define pr_info printk
+#define pr_debug printk
+#define pr_cont printk
 
-#घोषणा __acquires(x)
-#घोषणा __releases(x)
-#घोषणा __must_hold(x)
+#define __acquires(x)
+#define __releases(x)
+#define __must_hold(x)
 
-#घोषणा EXPORT_PER_CPU_SYMBOL_GPL(x)
-#पूर्ण_अगर /* _KERNEL_H */
+#define EXPORT_PER_CPU_SYMBOL_GPL(x)
+#endif /* _KERNEL_H */

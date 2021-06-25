@@ -1,95 +1,94 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित _UAPI__CRAMFS_H
-#घोषणा _UAPI__CRAMFS_H
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef _UAPI__CRAMFS_H
+#define _UAPI__CRAMFS_H
 
-#समावेश <linux/types.h>
-#समावेश <linux/magic.h>
+#include <linux/types.h>
+#include <linux/magic.h>
 
-#घोषणा CRAMFS_SIGNATURE	"Compressed ROMFS"
+#define CRAMFS_SIGNATURE	"Compressed ROMFS"
 
 /*
- * Width of various bitfields in काष्ठा cramfs_inode.
+ * Width of various bitfields in struct cramfs_inode.
  * Primarily used to generate warnings in mkcramfs.
  */
-#घोषणा CRAMFS_MODE_WIDTH 16
-#घोषणा CRAMFS_UID_WIDTH 16
-#घोषणा CRAMFS_SIZE_WIDTH 24
-#घोषणा CRAMFS_GID_WIDTH 8
-#घोषणा CRAMFS_NAMELEN_WIDTH 6
-#घोषणा CRAMFS_OFFSET_WIDTH 26
+#define CRAMFS_MODE_WIDTH 16
+#define CRAMFS_UID_WIDTH 16
+#define CRAMFS_SIZE_WIDTH 24
+#define CRAMFS_GID_WIDTH 8
+#define CRAMFS_NAMELEN_WIDTH 6
+#define CRAMFS_OFFSET_WIDTH 26
 
 /*
- * Since inode.namelen is a अचिन्हित 6-bit number, the maximum cramfs
+ * Since inode.namelen is a unsigned 6-bit number, the maximum cramfs
  * path length is 63 << 2 = 252.
  */
-#घोषणा CRAMFS_MAXPATHLEN (((1 << CRAMFS_NAMELEN_WIDTH) - 1) << 2)
+#define CRAMFS_MAXPATHLEN (((1 << CRAMFS_NAMELEN_WIDTH) - 1) << 2)
 
 /*
  * Reasonably terse representation of the inode data.
  */
-काष्ठा cramfs_inode अणु
+struct cramfs_inode {
 	__u32 mode:CRAMFS_MODE_WIDTH, uid:CRAMFS_UID_WIDTH;
-	/* SIZE क्रम device files is i_rdev */
+	/* SIZE for device files is i_rdev */
 	__u32 size:CRAMFS_SIZE_WIDTH, gid:CRAMFS_GID_WIDTH;
-	/* NAMELEN is the length of the file name, भागided by 4 and
-           rounded up.  (cramfs करोesn't support hard links.) */
+	/* NAMELEN is the length of the file name, divided by 4 and
+           rounded up.  (cramfs doesn't support hard links.) */
 	/* OFFSET: For symlinks and non-empty regular files, this
-	   contains the offset (भागided by 4) of the file data in
-	   compressed क्रमm (starting with an array of block poपूर्णांकers;
+	   contains the offset (divided by 4) of the file data in
+	   compressed form (starting with an array of block pointers;
 	   see README).  For non-empty directories it is the offset
-	   (भागided by 4) of the inode of the first file in that
-	   directory.  For anything अन्यथा, offset is zero. */
+	   (divided by 4) of the inode of the first file in that
+	   directory.  For anything else, offset is zero. */
 	__u32 namelen:CRAMFS_NAMELEN_WIDTH, offset:CRAMFS_OFFSET_WIDTH;
-पूर्ण;
+};
 
-काष्ठा cramfs_info अणु
+struct cramfs_info {
 	__u32 crc;
 	__u32 edition;
 	__u32 blocks;
 	__u32 files;
-पूर्ण;
+};
 
 /*
- * Superblock inक्रमmation at the beginning of the FS.
+ * Superblock information at the beginning of the FS.
  */
-काष्ठा cramfs_super अणु
-	__u32 magic;			/* 0x28cd3d45 - अक्रमom number */
+struct cramfs_super {
+	__u32 magic;			/* 0x28cd3d45 - random number */
 	__u32 size;			/* length in bytes */
 	__u32 flags;			/* feature flags */
-	__u32 future;			/* reserved क्रम future use */
+	__u32 future;			/* reserved for future use */
 	__u8 signature[16];		/* "Compressed ROMFS" */
-	काष्ठा cramfs_info fsid;	/* unique fileप्रणाली info */
+	struct cramfs_info fsid;	/* unique filesystem info */
 	__u8 name[16];			/* user-defined name */
-	काष्ठा cramfs_inode root;	/* root inode data */
-पूर्ण;
+	struct cramfs_inode root;	/* root inode data */
+};
 
 /*
  * Feature flags
  *
- * 0x00000000 - 0x000000ff: features that work क्रम all past kernels
- * 0x00000100 - 0xffffffff: features that करोn't work क्रम past kernels
+ * 0x00000000 - 0x000000ff: features that work for all past kernels
+ * 0x00000100 - 0xffffffff: features that don't work for past kernels
  */
-#घोषणा CRAMFS_FLAG_FSID_VERSION_2	0x00000001	/* fsid version #2 */
-#घोषणा CRAMFS_FLAG_SORTED_सूचीS		0x00000002	/* sorted dirs */
-#घोषणा CRAMFS_FLAG_HOLES		0x00000100	/* support क्रम holes */
-#घोषणा CRAMFS_FLAG_WRONG_SIGNATURE	0x00000200	/* reserved */
-#घोषणा CRAMFS_FLAG_SHIFTED_ROOT_OFFSET	0x00000400	/* shअगरted root fs */
-#घोषणा CRAMFS_FLAG_EXT_BLOCK_POINTERS	0x00000800	/* block poपूर्णांकer extensions */
+#define CRAMFS_FLAG_FSID_VERSION_2	0x00000001	/* fsid version #2 */
+#define CRAMFS_FLAG_SORTED_DIRS		0x00000002	/* sorted dirs */
+#define CRAMFS_FLAG_HOLES		0x00000100	/* support for holes */
+#define CRAMFS_FLAG_WRONG_SIGNATURE	0x00000200	/* reserved */
+#define CRAMFS_FLAG_SHIFTED_ROOT_OFFSET	0x00000400	/* shifted root fs */
+#define CRAMFS_FLAG_EXT_BLOCK_POINTERS	0x00000800	/* block pointer extensions */
 
 /*
  * Valid values in super.flags.  Currently we refuse to mount
- * अगर (flags & ~CRAMFS_SUPPORTED_FLAGS).  Maybe that should be
+ * if (flags & ~CRAMFS_SUPPORTED_FLAGS).  Maybe that should be
  * changed to test super.future instead.
  */
-#घोषणा CRAMFS_SUPPORTED_FLAGS	( 0x000000ff \
+#define CRAMFS_SUPPORTED_FLAGS	( 0x000000ff \
 				| CRAMFS_FLAG_HOLES \
 				| CRAMFS_FLAG_WRONG_SIGNATURE \
 				| CRAMFS_FLAG_SHIFTED_ROOT_OFFSET \
 				| CRAMFS_FLAG_EXT_BLOCK_POINTERS )
 
 /*
- * Block poपूर्णांकer flags
+ * Block pointer flags
  *
  * The maximum block offset that needs to be represented is roughly:
  *
@@ -97,18 +96,18 @@
  *   (1 << CRAMFS_SIZE_WIDTH) / PAGE_SIZE * (4 + PAGE_SIZE)
  *   = 0x11004000
  *
- * That leaves room क्रम 3 flag bits in the block poपूर्णांकer table.
+ * That leaves room for 3 flag bits in the block pointer table.
  */
-#घोषणा CRAMFS_BLK_FLAG_UNCOMPRESSED	(1 << 31)
-#घोषणा CRAMFS_BLK_FLAG_सूचीECT_PTR	(1 << 30)
+#define CRAMFS_BLK_FLAG_UNCOMPRESSED	(1 << 31)
+#define CRAMFS_BLK_FLAG_DIRECT_PTR	(1 << 30)
 
-#घोषणा CRAMFS_BLK_FLAGS	( CRAMFS_BLK_FLAG_UNCOMPRESSED \
-				| CRAMFS_BLK_FLAG_सूचीECT_PTR )
+#define CRAMFS_BLK_FLAGS	( CRAMFS_BLK_FLAG_UNCOMPRESSED \
+				| CRAMFS_BLK_FLAG_DIRECT_PTR )
 
 /*
  * Direct blocks are at least 4-byte aligned.
- * Poपूर्णांकers to direct blocks are shअगरted करोwn by 2 bits.
+ * Pointers to direct blocks are shifted down by 2 bits.
  */
-#घोषणा CRAMFS_BLK_सूचीECT_PTR_SHIFT	2
+#define CRAMFS_BLK_DIRECT_PTR_SHIFT	2
 
-#पूर्ण_अगर /* _UAPI__CRAMFS_H */
+#endif /* _UAPI__CRAMFS_H */

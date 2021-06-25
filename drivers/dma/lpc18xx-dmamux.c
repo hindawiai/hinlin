@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * DMA Router driver क्रम LPC18xx/43xx DMA MUX
+ * DMA Router driver for LPC18xx/43xx DMA MUX
  *
  * Copyright (C) 2015 Joachim Eastwood <manabian@gmail.com>
  *
@@ -10,86 +9,86 @@
  *   Author: Peter Ujfalusi <peter.ujfalusi@ti.com>
  */
 
-#समावेश <linux/err.h>
-#समावेश <linux/init.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/of_dma.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/spinlock.h>
+#include <linux/err.h>
+#include <linux/init.h>
+#include <linux/mfd/syscon.h>
+#include <linux/of_device.h>
+#include <linux/of_dma.h>
+#include <linux/regmap.h>
+#include <linux/spinlock.h>
 
-/* CREG रेजिस्टर offset and macros क्रम mux manipulation */
-#घोषणा LPC18XX_CREG_DMAMUX		0x11c
-#घोषणा LPC18XX_DMAMUX_VAL(v, n)	((v) << (n * 2))
-#घोषणा LPC18XX_DMAMUX_MASK(n)		(0x3 << (n * 2))
-#घोषणा LPC18XX_DMAMUX_MAX_VAL		0x3
+/* CREG register offset and macros for mux manipulation */
+#define LPC18XX_CREG_DMAMUX		0x11c
+#define LPC18XX_DMAMUX_VAL(v, n)	((v) << (n * 2))
+#define LPC18XX_DMAMUX_MASK(n)		(0x3 << (n * 2))
+#define LPC18XX_DMAMUX_MAX_VAL		0x3
 
-काष्ठा lpc18xx_dmamux अणु
+struct lpc18xx_dmamux {
 	u32 value;
 	bool busy;
-पूर्ण;
+};
 
-काष्ठा lpc18xx_dmamux_data अणु
-	काष्ठा dma_router dmarouter;
-	काष्ठा lpc18xx_dmamux *muxes;
+struct lpc18xx_dmamux_data {
+	struct dma_router dmarouter;
+	struct lpc18xx_dmamux *muxes;
 	u32 dma_master_requests;
 	u32 dma_mux_requests;
-	काष्ठा regmap *reg;
+	struct regmap *reg;
 	spinlock_t lock;
-पूर्ण;
+};
 
-अटल व्योम lpc18xx_dmamux_मुक्त(काष्ठा device *dev, व्योम *route_data)
-अणु
-	काष्ठा lpc18xx_dmamux_data *dmamux = dev_get_drvdata(dev);
-	काष्ठा lpc18xx_dmamux *mux = route_data;
-	अचिन्हित दीर्घ flags;
+static void lpc18xx_dmamux_free(struct device *dev, void *route_data)
+{
+	struct lpc18xx_dmamux_data *dmamux = dev_get_drvdata(dev);
+	struct lpc18xx_dmamux *mux = route_data;
+	unsigned long flags;
 
 	spin_lock_irqsave(&dmamux->lock, flags);
 	mux->busy = false;
 	spin_unlock_irqrestore(&dmamux->lock, flags);
-पूर्ण
+}
 
-अटल व्योम *lpc18xx_dmamux_reserve(काष्ठा of_phandle_args *dma_spec,
-				    काष्ठा of_dma *ofdma)
-अणु
-	काष्ठा platक्रमm_device *pdev = of_find_device_by_node(ofdma->of_node);
-	काष्ठा lpc18xx_dmamux_data *dmamux = platक्रमm_get_drvdata(pdev);
-	अचिन्हित दीर्घ flags;
-	अचिन्हित mux;
+static void *lpc18xx_dmamux_reserve(struct of_phandle_args *dma_spec,
+				    struct of_dma *ofdma)
+{
+	struct platform_device *pdev = of_find_device_by_node(ofdma->of_node);
+	struct lpc18xx_dmamux_data *dmamux = platform_get_drvdata(pdev);
+	unsigned long flags;
+	unsigned mux;
 
-	अगर (dma_spec->args_count != 3) अणु
+	if (dma_spec->args_count != 3) {
 		dev_err(&pdev->dev, "invalid number of dma mux args\n");
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
 	mux = dma_spec->args[0];
-	अगर (mux >= dmamux->dma_master_requests) अणु
+	if (mux >= dmamux->dma_master_requests) {
 		dev_err(&pdev->dev, "invalid mux number: %d\n",
 			dma_spec->args[0]);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	अगर (dma_spec->args[1] > LPC18XX_DMAMUX_MAX_VAL) अणु
+	if (dma_spec->args[1] > LPC18XX_DMAMUX_MAX_VAL) {
 		dev_err(&pdev->dev, "invalid dma mux value: %d\n",
 			dma_spec->args[1]);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	/* The of_node_put() will be करोne in the core क्रम the node */
+	/* The of_node_put() will be done in the core for the node */
 	dma_spec->np = of_parse_phandle(ofdma->of_node, "dma-masters", 0);
-	अगर (!dma_spec->np) अणु
+	if (!dma_spec->np) {
 		dev_err(&pdev->dev, "can't get dma master\n");
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
 	spin_lock_irqsave(&dmamux->lock, flags);
-	अगर (dmamux->muxes[mux].busy) अणु
+	if (dmamux->muxes[mux].busy) {
 		spin_unlock_irqrestore(&dmamux->lock, flags);
 		dev_err(&pdev->dev, "dma request %u busy with %u.%u\n",
 			mux, mux, dmamux->muxes[mux].value);
 		of_node_put(dma_spec->np);
-		वापस ERR_PTR(-EBUSY);
-	पूर्ण
+		return ERR_PTR(-EBUSY);
+	}
 
 	dmamux->muxes[mux].busy = true;
 	dmamux->muxes[mux].value = dma_spec->args[1];
@@ -105,76 +104,76 @@
 	dev_dbg(&pdev->dev, "mapping dmamux %u.%u to dma request %u\n", mux,
 		dmamux->muxes[mux].value, mux);
 
-	वापस &dmamux->muxes[mux];
-पूर्ण
+	return &dmamux->muxes[mux];
+}
 
-अटल पूर्णांक lpc18xx_dmamux_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device_node *dma_np, *np = pdev->dev.of_node;
-	काष्ठा lpc18xx_dmamux_data *dmamux;
-	पूर्णांक ret;
+static int lpc18xx_dmamux_probe(struct platform_device *pdev)
+{
+	struct device_node *dma_np, *np = pdev->dev.of_node;
+	struct lpc18xx_dmamux_data *dmamux;
+	int ret;
 
-	dmamux = devm_kzalloc(&pdev->dev, माप(*dmamux), GFP_KERNEL);
-	अगर (!dmamux)
-		वापस -ENOMEM;
+	dmamux = devm_kzalloc(&pdev->dev, sizeof(*dmamux), GFP_KERNEL);
+	if (!dmamux)
+		return -ENOMEM;
 
 	dmamux->reg = syscon_regmap_lookup_by_compatible("nxp,lpc1850-creg");
-	अगर (IS_ERR(dmamux->reg)) अणु
+	if (IS_ERR(dmamux->reg)) {
 		dev_err(&pdev->dev, "syscon lookup failed\n");
-		वापस PTR_ERR(dmamux->reg);
-	पूर्ण
+		return PTR_ERR(dmamux->reg);
+	}
 
-	ret = of_property_पढ़ो_u32(np, "dma-requests",
+	ret = of_property_read_u32(np, "dma-requests",
 				   &dmamux->dma_mux_requests);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "missing dma-requests property\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	dma_np = of_parse_phandle(np, "dma-masters", 0);
-	अगर (!dma_np) अणु
+	if (!dma_np) {
 		dev_err(&pdev->dev, "can't get dma master\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	ret = of_property_पढ़ो_u32(dma_np, "dma-requests",
+	ret = of_property_read_u32(dma_np, "dma-requests",
 				   &dmamux->dma_master_requests);
 	of_node_put(dma_np);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "missing master dma-requests property\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	dmamux->muxes = devm_kसुस्मृति(&pdev->dev, dmamux->dma_master_requests,
-				     माप(काष्ठा lpc18xx_dmamux),
+	dmamux->muxes = devm_kcalloc(&pdev->dev, dmamux->dma_master_requests,
+				     sizeof(struct lpc18xx_dmamux),
 				     GFP_KERNEL);
-	अगर (!dmamux->muxes)
-		वापस -ENOMEM;
+	if (!dmamux->muxes)
+		return -ENOMEM;
 
 	spin_lock_init(&dmamux->lock);
-	platक्रमm_set_drvdata(pdev, dmamux);
+	platform_set_drvdata(pdev, dmamux);
 	dmamux->dmarouter.dev = &pdev->dev;
-	dmamux->dmarouter.route_मुक्त = lpc18xx_dmamux_मुक्त;
+	dmamux->dmarouter.route_free = lpc18xx_dmamux_free;
 
-	वापस of_dma_router_रेजिस्टर(np, lpc18xx_dmamux_reserve,
+	return of_dma_router_register(np, lpc18xx_dmamux_reserve,
 				      &dmamux->dmarouter);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा of_device_id lpc18xx_dmamux_match[] = अणु
-	अणु .compatible = "nxp,lpc1850-dmamux" पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id lpc18xx_dmamux_match[] = {
+	{ .compatible = "nxp,lpc1850-dmamux" },
+	{},
+};
 
-अटल काष्ठा platक्रमm_driver lpc18xx_dmamux_driver = अणु
+static struct platform_driver lpc18xx_dmamux_driver = {
 	.probe	= lpc18xx_dmamux_probe,
-	.driver = अणु
+	.driver = {
 		.name = "lpc18xx-dmamux",
 		.of_match_table = lpc18xx_dmamux_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init lpc18xx_dmamux_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&lpc18xx_dmamux_driver);
-पूर्ण
+static int __init lpc18xx_dmamux_init(void)
+{
+	return platform_driver_register(&lpc18xx_dmamux_driver);
+}
 arch_initcall(lpc18xx_dmamux_init);

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * AD5415, AD5426, AD5429, AD5432, AD5439, AD5443, AD5449 Digital to Analog
  * Converter driver.
@@ -8,196 +7,196 @@
  *  Author: Lars-Peter Clausen <lars@metafoo.de>
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/err.h>
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/spi/spi.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/sysfs.h>
-#समावेश <linux/regulator/consumer.h>
-#समावेश <यंत्र/unaligned.h>
+#include <linux/device.h>
+#include <linux/err.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/spi/spi.h>
+#include <linux/slab.h>
+#include <linux/sysfs.h>
+#include <linux/regulator/consumer.h>
+#include <asm/unaligned.h>
 
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/iio/sysfs.h>
+#include <linux/iio/iio.h>
+#include <linux/iio/sysfs.h>
 
-#समावेश <linux/platक्रमm_data/ad5449.h>
+#include <linux/platform_data/ad5449.h>
 
-#घोषणा AD5449_MAX_CHANNELS		2
-#घोषणा AD5449_MAX_VREFS		2
+#define AD5449_MAX_CHANNELS		2
+#define AD5449_MAX_VREFS		2
 
-#घोषणा AD5449_CMD_NOOP			0x0
-#घोषणा AD5449_CMD_LOAD_AND_UPDATE(x)	(0x1 + (x) * 3)
-#घोषणा AD5449_CMD_READ(x)		(0x2 + (x) * 3)
-#घोषणा AD5449_CMD_LOAD(x)		(0x3 + (x) * 3)
-#घोषणा AD5449_CMD_CTRL			13
+#define AD5449_CMD_NOOP			0x0
+#define AD5449_CMD_LOAD_AND_UPDATE(x)	(0x1 + (x) * 3)
+#define AD5449_CMD_READ(x)		(0x2 + (x) * 3)
+#define AD5449_CMD_LOAD(x)		(0x3 + (x) * 3)
+#define AD5449_CMD_CTRL			13
 
-#घोषणा AD5449_CTRL_SDO_OFFSET		10
-#घोषणा AD5449_CTRL_DAISY_CHAIN		BIT(9)
-#घोषणा AD5449_CTRL_HCLR_TO_MIDSCALE	BIT(8)
-#घोषणा AD5449_CTRL_SAMPLE_RISING	BIT(7)
+#define AD5449_CTRL_SDO_OFFSET		10
+#define AD5449_CTRL_DAISY_CHAIN		BIT(9)
+#define AD5449_CTRL_HCLR_TO_MIDSCALE	BIT(8)
+#define AD5449_CTRL_SAMPLE_RISING	BIT(7)
 
 /**
- * काष्ठा ad5449_chip_info - chip specअगरic inक्रमmation
- * @channels:		Channel specअगरication
+ * struct ad5449_chip_info - chip specific information
+ * @channels:		Channel specification
  * @num_channels:	Number of channels
- * @has_ctrl:		Chip has a control रेजिस्टर
+ * @has_ctrl:		Chip has a control register
  */
-काष्ठा ad5449_chip_info अणु
-	स्थिर काष्ठा iio_chan_spec *channels;
-	अचिन्हित पूर्णांक num_channels;
+struct ad5449_chip_info {
+	const struct iio_chan_spec *channels;
+	unsigned int num_channels;
 	bool has_ctrl;
-पूर्ण;
+};
 
 /**
- * काष्ठा ad5449 - driver instance specअगरic data
- * @spi:		the SPI device क्रम this driver instance
- * @chip_info:		chip model specअगरic स्थिरants, available modes etc
+ * struct ad5449 - driver instance specific data
+ * @spi:		the SPI device for this driver instance
+ * @chip_info:		chip model specific constants, available modes etc
  * @vref_reg:		vref supply regulators
- * @has_sकरो:		whether the SDO line is connected
- * @dac_cache:		Cache क्रम the DAC values
+ * @has_sdo:		whether the SDO line is connected
+ * @dac_cache:		Cache for the DAC values
  * @data:		spi transfer buffers
  * @lock:		lock to protect the data buffer during SPI ops
  */
-काष्ठा ad5449 अणु
-	काष्ठा spi_device		*spi;
-	स्थिर काष्ठा ad5449_chip_info	*chip_info;
-	काष्ठा regulator_bulk_data	vref_reg[AD5449_MAX_VREFS];
-	काष्ठा mutex			lock;
+struct ad5449 {
+	struct spi_device		*spi;
+	const struct ad5449_chip_info	*chip_info;
+	struct regulator_bulk_data	vref_reg[AD5449_MAX_VREFS];
+	struct mutex			lock;
 
-	bool has_sकरो;
-	uपूर्णांक16_t dac_cache[AD5449_MAX_CHANNELS];
+	bool has_sdo;
+	uint16_t dac_cache[AD5449_MAX_CHANNELS];
 
 	/*
-	 * DMA (thus cache coherency मुख्यtenance) requires the
+	 * DMA (thus cache coherency maintenance) requires the
 	 * transfer buffers to live in their own cache lines.
 	 */
 	__be16 data[2] ____cacheline_aligned;
-पूर्ण;
+};
 
-क्रमागत ad5449_type अणु
+enum ad5449_type {
 	ID_AD5426,
 	ID_AD5429,
 	ID_AD5432,
 	ID_AD5439,
 	ID_AD5443,
 	ID_AD5449,
-पूर्ण;
+};
 
-अटल पूर्णांक ad5449_ग_लिखो(काष्ठा iio_dev *indio_dev, अचिन्हित पूर्णांक addr,
-	अचिन्हित पूर्णांक val)
-अणु
-	काष्ठा ad5449 *st = iio_priv(indio_dev);
-	पूर्णांक ret;
+static int ad5449_write(struct iio_dev *indio_dev, unsigned int addr,
+	unsigned int val)
+{
+	struct ad5449 *st = iio_priv(indio_dev);
+	int ret;
 
 	mutex_lock(&st->lock);
 	st->data[0] = cpu_to_be16((addr << 12) | val);
-	ret = spi_ग_लिखो(st->spi, st->data, 2);
+	ret = spi_write(st->spi, st->data, 2);
 	mutex_unlock(&st->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ad5449_पढ़ो(काष्ठा iio_dev *indio_dev, अचिन्हित पूर्णांक addr,
-	अचिन्हित पूर्णांक *val)
-अणु
-	काष्ठा ad5449 *st = iio_priv(indio_dev);
-	पूर्णांक ret;
-	काष्ठा spi_transfer t[] = अणु
-		अणु
+static int ad5449_read(struct iio_dev *indio_dev, unsigned int addr,
+	unsigned int *val)
+{
+	struct ad5449 *st = iio_priv(indio_dev);
+	int ret;
+	struct spi_transfer t[] = {
+		{
 			.tx_buf = &st->data[0],
 			.len = 2,
 			.cs_change = 1,
-		पूर्ण, अणु
+		}, {
 			.tx_buf = &st->data[1],
 			.rx_buf = &st->data[1],
 			.len = 2,
-		पूर्ण,
-	पूर्ण;
+		},
+	};
 
 	mutex_lock(&st->lock);
 	st->data[0] = cpu_to_be16(addr << 12);
 	st->data[1] = cpu_to_be16(AD5449_CMD_NOOP);
 
 	ret = spi_sync_transfer(st->spi, t, ARRAY_SIZE(t));
-	अगर (ret < 0)
-		जाओ out_unlock;
+	if (ret < 0)
+		goto out_unlock;
 
 	*val = be16_to_cpu(st->data[1]);
 
 out_unlock:
 	mutex_unlock(&st->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ad5449_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
-	काष्ठा iio_chan_spec स्थिर *chan, पूर्णांक *val, पूर्णांक *val2, दीर्घ info)
-अणु
-	काष्ठा ad5449 *st = iio_priv(indio_dev);
-	काष्ठा regulator_bulk_data *reg;
-	पूर्णांक scale_uv;
-	पूर्णांक ret;
+static int ad5449_read_raw(struct iio_dev *indio_dev,
+	struct iio_chan_spec const *chan, int *val, int *val2, long info)
+{
+	struct ad5449 *st = iio_priv(indio_dev);
+	struct regulator_bulk_data *reg;
+	int scale_uv;
+	int ret;
 
-	चयन (info) अणु
-	हाल IIO_CHAN_INFO_RAW:
-		अगर (st->has_sकरो) अणु
-			ret = ad5449_पढ़ो(indio_dev,
+	switch (info) {
+	case IIO_CHAN_INFO_RAW:
+		if (st->has_sdo) {
+			ret = ad5449_read(indio_dev,
 				AD5449_CMD_READ(chan->address), val);
-			अगर (ret)
-				वापस ret;
+			if (ret)
+				return ret;
 			*val &= 0xfff;
-		पूर्ण अन्यथा अणु
+		} else {
 			*val = st->dac_cache[chan->address];
-		पूर्ण
+		}
 
-		वापस IIO_VAL_INT;
-	हाल IIO_CHAN_INFO_SCALE:
+		return IIO_VAL_INT;
+	case IIO_CHAN_INFO_SCALE:
 		reg = &st->vref_reg[chan->channel];
 		scale_uv = regulator_get_voltage(reg->consumer);
-		अगर (scale_uv < 0)
-			वापस scale_uv;
+		if (scale_uv < 0)
+			return scale_uv;
 
 		*val = scale_uv / 1000;
 		*val2 = chan->scan_type.realbits;
 
-		वापस IIO_VAL_FRACTIONAL_LOG2;
-	शेष:
-		अवरोध;
-	पूर्ण
+		return IIO_VAL_FRACTIONAL_LOG2;
+	default:
+		break;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक ad5449_ग_लिखो_raw(काष्ठा iio_dev *indio_dev,
-	काष्ठा iio_chan_spec स्थिर *chan, पूर्णांक val, पूर्णांक val2, दीर्घ info)
-अणु
-	काष्ठा ad5449 *st = iio_priv(indio_dev);
-	पूर्णांक ret;
+static int ad5449_write_raw(struct iio_dev *indio_dev,
+	struct iio_chan_spec const *chan, int val, int val2, long info)
+{
+	struct ad5449 *st = iio_priv(indio_dev);
+	int ret;
 
-	चयन (info) अणु
-	हाल IIO_CHAN_INFO_RAW:
-		अगर (val < 0 || val >= (1 << chan->scan_type.realbits))
-			वापस -EINVAL;
+	switch (info) {
+	case IIO_CHAN_INFO_RAW:
+		if (val < 0 || val >= (1 << chan->scan_type.realbits))
+			return -EINVAL;
 
-		ret = ad5449_ग_लिखो(indio_dev,
+		ret = ad5449_write(indio_dev,
 			AD5449_CMD_LOAD_AND_UPDATE(chan->address),
-			val << chan->scan_type.shअगरt);
-		अगर (ret == 0)
+			val << chan->scan_type.shift);
+		if (ret == 0)
 			st->dac_cache[chan->address] = val;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EINVAL;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा iio_info ad5449_info = अणु
-	.पढ़ो_raw = ad5449_पढ़ो_raw,
-	.ग_लिखो_raw = ad5449_ग_लिखो_raw,
-पूर्ण;
+static const struct iio_info ad5449_info = {
+	.read_raw = ad5449_read_raw,
+	.write_raw = ad5449_write_raw,
+};
 
-#घोषणा AD5449_CHANNEL(chan, bits) अणु				\
+#define AD5449_CHANNEL(chan, bits) {				\
 	.type = IIO_VOLTAGE,					\
 	.indexed = 1,						\
 	.output = 1,						\
@@ -205,80 +204,80 @@ out_unlock:
 	.info_mask_separate = BIT(IIO_CHAN_INFO_RAW) |		\
 		BIT(IIO_CHAN_INFO_SCALE),			\
 	.address = (chan),					\
-	.scan_type = अणु						\
+	.scan_type = {						\
 		.sign = 'u',					\
 		.realbits = (bits),				\
 		.storagebits = 16,				\
-		.shअगरt = 12 - (bits),				\
-	पूर्ण,							\
-पूर्ण
+		.shift = 12 - (bits),				\
+	},							\
+}
 
-#घोषणा DECLARE_AD5449_CHANNELS(name, bits) \
-स्थिर काष्ठा iio_chan_spec name[] = अणु \
+#define DECLARE_AD5449_CHANNELS(name, bits) \
+const struct iio_chan_spec name[] = { \
 	AD5449_CHANNEL(0, bits), \
 	AD5449_CHANNEL(1, bits), \
-पूर्ण
+}
 
-अटल DECLARE_AD5449_CHANNELS(ad5429_channels, 8);
-अटल DECLARE_AD5449_CHANNELS(ad5439_channels, 10);
-अटल DECLARE_AD5449_CHANNELS(ad5449_channels, 12);
+static DECLARE_AD5449_CHANNELS(ad5429_channels, 8);
+static DECLARE_AD5449_CHANNELS(ad5439_channels, 10);
+static DECLARE_AD5449_CHANNELS(ad5449_channels, 12);
 
-अटल स्थिर काष्ठा ad5449_chip_info ad5449_chip_info[] = अणु
-	[ID_AD5426] = अणु
+static const struct ad5449_chip_info ad5449_chip_info[] = {
+	[ID_AD5426] = {
 		.channels = ad5429_channels,
 		.num_channels = 1,
 		.has_ctrl = false,
-	पूर्ण,
-	[ID_AD5429] = अणु
+	},
+	[ID_AD5429] = {
 		.channels = ad5429_channels,
 		.num_channels = 2,
 		.has_ctrl = true,
-	पूर्ण,
-	[ID_AD5432] = अणु
+	},
+	[ID_AD5432] = {
 		.channels = ad5439_channels,
 		.num_channels = 1,
 		.has_ctrl = false,
-	पूर्ण,
-	[ID_AD5439] = अणु
+	},
+	[ID_AD5439] = {
 		.channels = ad5439_channels,
 		.num_channels = 2,
 		.has_ctrl = true,
-	पूर्ण,
-	[ID_AD5443] = अणु
+	},
+	[ID_AD5443] = {
 		.channels = ad5449_channels,
 		.num_channels = 1,
 		.has_ctrl = false,
-	पूर्ण,
-	[ID_AD5449] = अणु
+	},
+	[ID_AD5449] = {
 		.channels = ad5449_channels,
 		.num_channels = 2,
 		.has_ctrl = true,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर अक्षर *ad5449_vref_name(काष्ठा ad5449 *st, पूर्णांक n)
-अणु
-	अगर (st->chip_info->num_channels == 1)
-		वापस "VREF";
+static const char *ad5449_vref_name(struct ad5449 *st, int n)
+{
+	if (st->chip_info->num_channels == 1)
+		return "VREF";
 
-	अगर (n == 0)
-		वापस "VREFA";
-	अन्यथा
-		वापस "VREFB";
-पूर्ण
+	if (n == 0)
+		return "VREFA";
+	else
+		return "VREFB";
+}
 
-अटल पूर्णांक ad5449_spi_probe(काष्ठा spi_device *spi)
-अणु
-	काष्ठा ad5449_platक्रमm_data *pdata = spi->dev.platक्रमm_data;
-	स्थिर काष्ठा spi_device_id *id = spi_get_device_id(spi);
-	काष्ठा iio_dev *indio_dev;
-	काष्ठा ad5449 *st;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक ret;
+static int ad5449_spi_probe(struct spi_device *spi)
+{
+	struct ad5449_platform_data *pdata = spi->dev.platform_data;
+	const struct spi_device_id *id = spi_get_device_id(spi);
+	struct iio_dev *indio_dev;
+	struct ad5449 *st;
+	unsigned int i;
+	int ret;
 
-	indio_dev = devm_iio_device_alloc(&spi->dev, माप(*st));
-	अगर (indio_dev == शून्य)
-		वापस -ENOMEM;
+	indio_dev = devm_iio_device_alloc(&spi->dev, sizeof(*st));
+	if (indio_dev == NULL)
+		return -ENOMEM;
 
 	st = iio_priv(indio_dev);
 	spi_set_drvdata(spi, indio_dev);
@@ -286,83 +285,83 @@ out_unlock:
 	st->chip_info = &ad5449_chip_info[id->driver_data];
 	st->spi = spi;
 
-	क्रम (i = 0; i < st->chip_info->num_channels; ++i)
+	for (i = 0; i < st->chip_info->num_channels; ++i)
 		st->vref_reg[i].supply = ad5449_vref_name(st, i);
 
 	ret = devm_regulator_bulk_get(&spi->dev, st->chip_info->num_channels,
 				st->vref_reg);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = regulator_bulk_enable(st->chip_info->num_channels, st->vref_reg);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	indio_dev->name = id->name;
 	indio_dev->info = &ad5449_info;
-	indio_dev->modes = INDIO_सूचीECT_MODE;
+	indio_dev->modes = INDIO_DIRECT_MODE;
 	indio_dev->channels = st->chip_info->channels;
 	indio_dev->num_channels = st->chip_info->num_channels;
 
 	mutex_init(&st->lock);
 
-	अगर (st->chip_info->has_ctrl) अणु
-		अचिन्हित पूर्णांक ctrl = 0x00;
-		अगर (pdata) अणु
-			अगर (pdata->hardware_clear_to_midscale)
+	if (st->chip_info->has_ctrl) {
+		unsigned int ctrl = 0x00;
+		if (pdata) {
+			if (pdata->hardware_clear_to_midscale)
 				ctrl |= AD5449_CTRL_HCLR_TO_MIDSCALE;
-			ctrl |= pdata->sकरो_mode << AD5449_CTRL_SDO_OFFSET;
-			st->has_sकरो = pdata->sकरो_mode != AD5449_SDO_DISABLED;
-		पूर्ण अन्यथा अणु
-			st->has_sकरो = true;
-		पूर्ण
-		ad5449_ग_लिखो(indio_dev, AD5449_CMD_CTRL, ctrl);
-	पूर्ण
+			ctrl |= pdata->sdo_mode << AD5449_CTRL_SDO_OFFSET;
+			st->has_sdo = pdata->sdo_mode != AD5449_SDO_DISABLED;
+		} else {
+			st->has_sdo = true;
+		}
+		ad5449_write(indio_dev, AD5449_CMD_CTRL, ctrl);
+	}
 
-	ret = iio_device_रेजिस्टर(indio_dev);
-	अगर (ret)
-		जाओ error_disable_reg;
+	ret = iio_device_register(indio_dev);
+	if (ret)
+		goto error_disable_reg;
 
-	वापस 0;
+	return 0;
 
 error_disable_reg:
 	regulator_bulk_disable(st->chip_info->num_channels, st->vref_reg);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ad5449_spi_हटाओ(काष्ठा spi_device *spi)
-अणु
-	काष्ठा iio_dev *indio_dev = spi_get_drvdata(spi);
-	काष्ठा ad5449 *st = iio_priv(indio_dev);
+static int ad5449_spi_remove(struct spi_device *spi)
+{
+	struct iio_dev *indio_dev = spi_get_drvdata(spi);
+	struct ad5449 *st = iio_priv(indio_dev);
 
-	iio_device_unरेजिस्टर(indio_dev);
+	iio_device_unregister(indio_dev);
 
 	regulator_bulk_disable(st->chip_info->num_channels, st->vref_reg);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा spi_device_id ad5449_spi_ids[] = अणु
-	अणु "ad5415", ID_AD5449 पूर्ण,
-	अणु "ad5426", ID_AD5426 पूर्ण,
-	अणु "ad5429", ID_AD5429 पूर्ण,
-	अणु "ad5432", ID_AD5432 पूर्ण,
-	अणु "ad5439", ID_AD5439 पूर्ण,
-	अणु "ad5443", ID_AD5443 पूर्ण,
-	अणु "ad5449", ID_AD5449 पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct spi_device_id ad5449_spi_ids[] = {
+	{ "ad5415", ID_AD5449 },
+	{ "ad5426", ID_AD5426 },
+	{ "ad5429", ID_AD5429 },
+	{ "ad5432", ID_AD5432 },
+	{ "ad5439", ID_AD5439 },
+	{ "ad5443", ID_AD5443 },
+	{ "ad5449", ID_AD5449 },
+	{}
+};
 MODULE_DEVICE_TABLE(spi, ad5449_spi_ids);
 
-अटल काष्ठा spi_driver ad5449_spi_driver = अणु
-	.driver = अणु
+static struct spi_driver ad5449_spi_driver = {
+	.driver = {
 		.name = "ad5449",
-	पूर्ण,
+	},
 	.probe = ad5449_spi_probe,
-	.हटाओ = ad5449_spi_हटाओ,
+	.remove = ad5449_spi_remove,
 	.id_table = ad5449_spi_ids,
-पूर्ण;
+};
 module_spi_driver(ad5449_spi_driver);
 
 MODULE_AUTHOR("Lars-Peter Clausen <lars@metafoo.de>");

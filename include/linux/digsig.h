@@ -1,61 +1,60 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2011 Nokia Corporation
  * Copyright (C) 2011 Intel Corporation
  *
  * Author:
  * Dmitry Kasatkin <dmitry.kasatkin@nokia.com>
- *                 <dmitry.kasatkin@पूर्णांकel.com>
+ *                 <dmitry.kasatkin@intel.com>
  */
 
-#अगर_अघोषित _DIGSIG_H
-#घोषणा _DIGSIG_H
+#ifndef _DIGSIG_H
+#define _DIGSIG_H
 
-#समावेश <linux/key.h>
+#include <linux/key.h>
 
-क्रमागत pubkey_algo अणु
+enum pubkey_algo {
 	PUBKEY_ALGO_RSA,
 	PUBKEY_ALGO_MAX,
-पूर्ण;
+};
 
-क्रमागत digest_algo अणु
+enum digest_algo {
 	DIGEST_ALGO_SHA1,
 	DIGEST_ALGO_SHA256,
 	DIGEST_ALGO_MAX
-पूर्ण;
+};
 
-काष्ठा pubkey_hdr अणु
-	uपूर्णांक8_t		version;	/* key क्रमmat version */
-	uपूर्णांक32_t	बारtamp;	/* key made, always 0 क्रम now */
-	uपूर्णांक8_t		algo;
-	uपूर्णांक8_t		nmpi;
-	अक्षर		mpi[];
-पूर्ण __packed;
+struct pubkey_hdr {
+	uint8_t		version;	/* key format version */
+	uint32_t	timestamp;	/* key made, always 0 for now */
+	uint8_t		algo;
+	uint8_t		nmpi;
+	char		mpi[];
+} __packed;
 
-काष्ठा signature_hdr अणु
-	uपूर्णांक8_t		version;	/* signature क्रमmat version */
-	uपूर्णांक32_t	बारtamp;	/* signature made */
-	uपूर्णांक8_t		algo;
-	uपूर्णांक8_t		hash;
-	uपूर्णांक8_t		keyid[8];
-	uपूर्णांक8_t		nmpi;
-	अक्षर		mpi[];
-पूर्ण __packed;
+struct signature_hdr {
+	uint8_t		version;	/* signature format version */
+	uint32_t	timestamp;	/* signature made */
+	uint8_t		algo;
+	uint8_t		hash;
+	uint8_t		keyid[8];
+	uint8_t		nmpi;
+	char		mpi[];
+} __packed;
 
-#अगर defined(CONFIG_SIGNATURE) || defined(CONFIG_SIGNATURE_MODULE)
+#if defined(CONFIG_SIGNATURE) || defined(CONFIG_SIGNATURE_MODULE)
 
-पूर्णांक digsig_verअगरy(काष्ठा key *keyring, स्थिर अक्षर *sig, पूर्णांक siglen,
-					स्थिर अक्षर *digest, पूर्णांक digestlen);
+int digsig_verify(struct key *keyring, const char *sig, int siglen,
+					const char *digest, int digestlen);
 
-#अन्यथा
+#else
 
-अटल अंतरभूत पूर्णांक digsig_verअगरy(काष्ठा key *keyring, स्थिर अक्षर *sig,
-				पूर्णांक siglen, स्थिर अक्षर *digest, पूर्णांक digestlen)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+static inline int digsig_verify(struct key *keyring, const char *sig,
+				int siglen, const char *digest, int digestlen)
+{
+	return -EOPNOTSUPP;
+}
 
-#पूर्ण_अगर /* CONFIG_SIGNATURE */
+#endif /* CONFIG_SIGNATURE */
 
-#पूर्ण_अगर /* _DIGSIG_H */
+#endif /* _DIGSIG_H */

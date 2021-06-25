@@ -1,169 +1,168 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
 /*
  * Handles hot and cold plug of persistent memory regions on pseries.
  */
 
-#घोषणा pr_fmt(fmt)     "pseries-pmem: " fmt
+#define pr_fmt(fmt)     "pseries-pmem: " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/sched.h>	/* क्रम idle_task_निकास */
-#समावेश <linux/sched/hotplug.h>
-#समावेश <linux/cpu.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/slab.h>
-#समावेश <यंत्र/prom.h>
-#समावेश <यंत्र/rtas.h>
-#समावेश <यंत्र/firmware.h>
-#समावेश <यंत्र/machdep.h>
-#समावेश <यंत्र/vdso_datapage.h>
-#समावेश <यंत्र/plpar_wrappers.h>
-#समावेश <यंत्र/topology.h>
+#include <linux/kernel.h>
+#include <linux/interrupt.h>
+#include <linux/delay.h>
+#include <linux/sched.h>	/* for idle_task_exit */
+#include <linux/sched/hotplug.h>
+#include <linux/cpu.h>
+#include <linux/of.h>
+#include <linux/of_platform.h>
+#include <linux/slab.h>
+#include <asm/prom.h>
+#include <asm/rtas.h>
+#include <asm/firmware.h>
+#include <asm/machdep.h>
+#include <asm/vdso_datapage.h>
+#include <asm/plpar_wrappers.h>
+#include <asm/topology.h>
 
-#समावेश "pseries.h"
+#include "pseries.h"
 
-अटल काष्ठा device_node *pmem_node;
+static struct device_node *pmem_node;
 
-अटल sमाप_प्रकार pmem_drc_add_node(u32 drc_index)
-अणु
-	काष्ठा device_node *dn;
-	पूर्णांक rc;
+static ssize_t pmem_drc_add_node(u32 drc_index)
+{
+	struct device_node *dn;
+	int rc;
 
 	pr_debug("Attempting to add pmem node, drc index: %x\n", drc_index);
 
 	rc = dlpar_acquire_drc(drc_index);
-	अगर (rc) अणु
+	if (rc) {
 		pr_err("Failed to acquire DRC, rc: %d, drc index: %x\n",
 			rc, drc_index);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	dn = dlpar_configure_connector(cpu_to_be32(drc_index), pmem_node);
-	अगर (!dn) अणु
+	if (!dn) {
 		pr_err("configure-connector failed for drc %x\n", drc_index);
 		dlpar_release_drc(drc_index);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* NB: The of reconfig notअगरier creates platक्रमm device from the node */
+	/* NB: The of reconfig notifier creates platform device from the node */
 	rc = dlpar_attach_node(dn, pmem_node);
-	अगर (rc) अणु
+	if (rc) {
 		pr_err("Failed to attach node %pOF, rc: %d, drc index: %x\n",
 			dn, rc, drc_index);
 
-		अगर (dlpar_release_drc(drc_index))
-			dlpar_मुक्त_cc_nodes(dn);
+		if (dlpar_release_drc(drc_index))
+			dlpar_free_cc_nodes(dn);
 
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
 	pr_info("Successfully added %pOF, drc index: %x\n", dn, drc_index);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार pmem_drc_हटाओ_node(u32 drc_index)
-अणु
-	काष्ठा device_node *dn;
-	uपूर्णांक32_t index;
-	पूर्णांक rc;
+static ssize_t pmem_drc_remove_node(u32 drc_index)
+{
+	struct device_node *dn;
+	uint32_t index;
+	int rc;
 
-	क्रम_each_child_of_node(pmem_node, dn) अणु
-		अगर (of_property_पढ़ो_u32(dn, "ibm,my-drc-index", &index))
-			जारी;
-		अगर (index == drc_index)
-			अवरोध;
-	पूर्ण
+	for_each_child_of_node(pmem_node, dn) {
+		if (of_property_read_u32(dn, "ibm,my-drc-index", &index))
+			continue;
+		if (index == drc_index)
+			break;
+	}
 
-	अगर (!dn) अणु
+	if (!dn) {
 		pr_err("Attempting to remove unused DRC index %x\n", drc_index);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	pr_debug("Attempting to remove %pOF, drc index: %x\n", dn, drc_index);
 
-	/* * NB: tears करोwn the ibm,pmemory device as a side-effect */
+	/* * NB: tears down the ibm,pmemory device as a side-effect */
 	rc = dlpar_detach_node(dn);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	rc = dlpar_release_drc(drc_index);
-	अगर (rc) अणु
+	if (rc) {
 		pr_err("Failed to release drc (%x) for CPU %pOFn, rc: %d\n",
 			drc_index, dn, rc);
 		dlpar_attach_node(dn, pmem_node);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
 	pr_info("Successfully removed PMEM with drc index: %x\n", drc_index);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक dlpar_hp_pmem(काष्ठा pseries_hp_errorlog *hp_elog)
-अणु
+int dlpar_hp_pmem(struct pseries_hp_errorlog *hp_elog)
+{
 	u32 drc_index;
-	पूर्णांक rc;
+	int rc;
 
-	/* slim chance, but we might get a hotplug event जबतक booting */
-	अगर (!pmem_node)
-		pmem_node = of_find_node_by_type(शून्य, "ibm,persistent-memory");
-	अगर (!pmem_node) अणु
+	/* slim chance, but we might get a hotplug event while booting */
+	if (!pmem_node)
+		pmem_node = of_find_node_by_type(NULL, "ibm,persistent-memory");
+	if (!pmem_node) {
 		pr_err("Hotplug event for a pmem device, but none exists\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (hp_elog->id_type != PSERIES_HP_ELOG_ID_DRC_INDEX) अणु
+	if (hp_elog->id_type != PSERIES_HP_ELOG_ID_DRC_INDEX) {
 		pr_err("Unsupported hotplug event type %d\n",
 				hp_elog->id_type);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	drc_index = hp_elog->_drc_u.drc_index;
 
 	lock_device_hotplug();
 
-	अगर (hp_elog->action == PSERIES_HP_ELOG_ACTION_ADD) अणु
+	if (hp_elog->action == PSERIES_HP_ELOG_ACTION_ADD) {
 		rc = pmem_drc_add_node(drc_index);
-	पूर्ण अन्यथा अगर (hp_elog->action == PSERIES_HP_ELOG_ACTION_REMOVE) अणु
-		rc = pmem_drc_हटाओ_node(drc_index);
-	पूर्ण अन्यथा अणु
+	} else if (hp_elog->action == PSERIES_HP_ELOG_ACTION_REMOVE) {
+		rc = pmem_drc_remove_node(drc_index);
+	} else {
 		pr_err("Unsupported hotplug action (%d)\n", hp_elog->action);
 		rc = -EINVAL;
-	पूर्ण
+	}
 
 	unlock_device_hotplug();
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल स्थिर काष्ठा of_device_id drc_pmem_match[] = अणु
-	अणु .type = "ibm,persistent-memory", पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id drc_pmem_match[] = {
+	{ .type = "ibm,persistent-memory", },
+	{}
+};
 
-अटल पूर्णांक pseries_pmem_init(व्योम)
-अणु
+static int pseries_pmem_init(void)
+{
 	/*
 	 * Only supported on POWER8 and above.
 	 */
-	अगर (!cpu_has_feature(CPU_FTR_ARCH_207S))
-		वापस 0;
+	if (!cpu_has_feature(CPU_FTR_ARCH_207S))
+		return 0;
 
-	pmem_node = of_find_node_by_type(शून्य, "ibm,persistent-memory");
-	अगर (!pmem_node)
-		वापस 0;
+	pmem_node = of_find_node_by_type(NULL, "ibm,persistent-memory");
+	if (!pmem_node)
+		return 0;
 
 	/*
-	 * The generic OF bus probe/populate handles creating platक्रमm devices
-	 * from the child (ibm,pmemory) nodes. The generic code रेजिस्टरs an of
-	 * reconfig notअगरier to handle the hot-add/हटाओ हालs too.
+	 * The generic OF bus probe/populate handles creating platform devices
+	 * from the child (ibm,pmemory) nodes. The generic code registers an of
+	 * reconfig notifier to handle the hot-add/remove cases too.
 	 */
-	of_platक्रमm_bus_probe(pmem_node, drc_pmem_match, शून्य);
+	of_platform_bus_probe(pmem_node, drc_pmem_match, NULL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 machine_arch_initcall(pseries, pseries_pmem_init);

@@ -1,15 +1,14 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Definitions क्रम the Intel पूर्णांकegrated DMA 64-bit
+ * Definitions for the Intel integrated DMA 64-bit
  *
  * Copyright (C) 2019 Intel Corporation
  */
 
-#अगर_अघोषित __LINUX_DMA_IDMA64_H__
-#घोषणा __LINUX_DMA_IDMA64_H__
+#ifndef __LINUX_DMA_IDMA64_H__
+#define __LINUX_DMA_IDMA64_H__
 
-/* Platक्रमm driver name */
-#घोषणा LPSS_IDMA64_DRIVER_NAME		"idma64"
+/* Platform driver name */
+#define LPSS_IDMA64_DRIVER_NAME		"idma64"
 
-#पूर्ण_अगर /* __LINUX_DMA_IDMA64_H__ */
+#endif /* __LINUX_DMA_IDMA64_H__ */

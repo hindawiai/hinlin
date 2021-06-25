@@ -1,53 +1,52 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Stacktrace support क्रम Hexagon
+ * Stacktrace support for Hexagon
  *
  * Copyright (c) 2010-2011, The Linux Foundation. All rights reserved.
  */
 
-#समावेश <linux/sched.h>
-#समावेश <linux/sched/task_stack.h>
-#समावेश <linux/stacktrace.h>
-#समावेश <linux/thपढ़ो_info.h>
-#समावेश <linux/module.h>
+#include <linux/sched.h>
+#include <linux/sched/task_stack.h>
+#include <linux/stacktrace.h>
+#include <linux/thread_info.h>
+#include <linux/module.h>
 
-काष्ठा stackframe अणु
-	अचिन्हित दीर्घ fp;
-	अचिन्हित दीर्घ rets;
-पूर्ण;
+struct stackframe {
+	unsigned long fp;
+	unsigned long rets;
+};
 
 /*
- * Save stack-backtrace addresses पूर्णांकo a stack_trace buffer.
+ * Save stack-backtrace addresses into a stack_trace buffer.
  */
-व्योम save_stack_trace(काष्ठा stack_trace *trace)
-अणु
-	अचिन्हित दीर्घ low, high;
-	अचिन्हित दीर्घ fp;
-	काष्ठा stackframe *frame;
-	पूर्णांक skip = trace->skip;
+void save_stack_trace(struct stack_trace *trace)
+{
+	unsigned long low, high;
+	unsigned long fp;
+	struct stackframe *frame;
+	int skip = trace->skip;
 
-	low = (अचिन्हित दीर्घ)task_stack_page(current);
+	low = (unsigned long)task_stack_page(current);
 	high = low + THREAD_SIZE;
-	fp = (अचिन्हित दीर्घ)__builtin_frame_address(0);
+	fp = (unsigned long)__builtin_frame_address(0);
 
-	जबतक (fp >= low && fp <= (high - माप(*frame))) अणु
-		frame = (काष्ठा stackframe *)fp;
+	while (fp >= low && fp <= (high - sizeof(*frame))) {
+		frame = (struct stackframe *)fp;
 
-		अगर (skip) अणु
+		if (skip) {
 			skip--;
-		पूर्ण अन्यथा अणु
+		} else {
 			trace->entries[trace->nr_entries++] = frame->rets;
-			अगर (trace->nr_entries >= trace->max_entries)
-				अवरोध;
-		पूर्ण
+			if (trace->nr_entries >= trace->max_entries)
+				break;
+		}
 
 		/*
 		 * The next frame must be at a higher address than the
 		 * current frame.
 		 */
-		low = fp + माप(*frame);
+		low = fp + sizeof(*frame);
 		fp = frame->fp;
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL_GPL(save_stack_trace);

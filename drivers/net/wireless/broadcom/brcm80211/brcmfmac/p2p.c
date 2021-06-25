@@ -1,158 +1,157 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: ISC
+// SPDX-License-Identifier: ISC
 /*
  * Copyright (c) 2012 Broadcom Corporation
  */
-#समावेश <linux/slab.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/rtnetlink.h>
-#समावेश <net/cfg80211.h>
+#include <linux/slab.h>
+#include <linux/netdevice.h>
+#include <linux/etherdevice.h>
+#include <linux/rtnetlink.h>
+#include <net/cfg80211.h>
 
-#समावेश <brcmu_wअगरi.h>
-#समावेश <brcmu_utils.h>
-#समावेश <defs.h>
-#समावेश "core.h"
-#समावेश "debug.h"
-#समावेश "fwil.h"
-#समावेश "fwil_types.h"
-#समावेश "p2p.h"
-#समावेश "cfg80211.h"
-#समावेश "feature.h"
+#include <brcmu_wifi.h>
+#include <brcmu_utils.h>
+#include <defs.h>
+#include "core.h"
+#include "debug.h"
+#include "fwil.h"
+#include "fwil_types.h"
+#include "p2p.h"
+#include "cfg80211.h"
+#include "feature.h"
 
-/* parameters used क्रम p2p escan */
-#घोषणा P2PAPI_SCAN_NPROBES 1
-#घोषणा P2PAPI_SCAN_DWELL_TIME_MS 80
-#घोषणा P2PAPI_SCAN_SOCIAL_DWELL_TIME_MS 40
-#घोषणा P2PAPI_SCAN_HOME_TIME_MS 60
-#घोषणा P2PAPI_SCAN_NPROBS_TIME_MS 30
-#घोषणा P2PAPI_SCAN_AF_SEARCH_DWELL_TIME_MS 100
-#घोषणा WL_SCAN_CONNECT_DWELL_TIME_MS 200
-#घोषणा WL_SCAN_JOIN_PROBE_INTERVAL_MS 20
+/* parameters used for p2p escan */
+#define P2PAPI_SCAN_NPROBES 1
+#define P2PAPI_SCAN_DWELL_TIME_MS 80
+#define P2PAPI_SCAN_SOCIAL_DWELL_TIME_MS 40
+#define P2PAPI_SCAN_HOME_TIME_MS 60
+#define P2PAPI_SCAN_NPROBS_TIME_MS 30
+#define P2PAPI_SCAN_AF_SEARCH_DWELL_TIME_MS 100
+#define WL_SCAN_CONNECT_DWELL_TIME_MS 200
+#define WL_SCAN_JOIN_PROBE_INTERVAL_MS 20
 
-#घोषणा BRCMF_P2P_WILDCARD_SSID		"DIRECT-"
-#घोषणा BRCMF_P2P_WILDCARD_SSID_LEN	(माप(BRCMF_P2P_WILDCARD_SSID) - 1)
+#define BRCMF_P2P_WILDCARD_SSID		"DIRECT-"
+#define BRCMF_P2P_WILDCARD_SSID_LEN	(sizeof(BRCMF_P2P_WILDCARD_SSID) - 1)
 
-#घोषणा SOCIAL_CHAN_1		1
-#घोषणा SOCIAL_CHAN_2		6
-#घोषणा SOCIAL_CHAN_3		11
-#घोषणा IS_P2P_SOCIAL_CHANNEL(channel) ((channel == SOCIAL_CHAN_1) || \
+#define SOCIAL_CHAN_1		1
+#define SOCIAL_CHAN_2		6
+#define SOCIAL_CHAN_3		11
+#define IS_P2P_SOCIAL_CHANNEL(channel) ((channel == SOCIAL_CHAN_1) || \
 					 (channel == SOCIAL_CHAN_2) || \
 					 (channel == SOCIAL_CHAN_3))
-#घोषणा BRCMF_P2P_TEMP_CHAN	SOCIAL_CHAN_3
-#घोषणा SOCIAL_CHAN_CNT		3
-#घोषणा AF_PEER_SEARCH_CNT	2
+#define BRCMF_P2P_TEMP_CHAN	SOCIAL_CHAN_3
+#define SOCIAL_CHAN_CNT		3
+#define AF_PEER_SEARCH_CNT	2
 
-#घोषणा BRCMF_SCB_TIMEOUT_VALUE	20
+#define BRCMF_SCB_TIMEOUT_VALUE	20
 
-#घोषणा P2P_VER			9	/* P2P version: 9=WiFi P2P v1.0 */
-#घोषणा P2P_PUB_AF_CATEGORY	0x04
-#घोषणा P2P_PUB_AF_ACTION	0x09
-#घोषणा P2P_AF_CATEGORY		0x7f
-#घोषणा P2P_OUI			"\x50\x6F\x9A"	/* P2P OUI */
-#घोषणा P2P_OUI_LEN		3		/* P2P OUI length */
+#define P2P_VER			9	/* P2P version: 9=WiFi P2P v1.0 */
+#define P2P_PUB_AF_CATEGORY	0x04
+#define P2P_PUB_AF_ACTION	0x09
+#define P2P_AF_CATEGORY		0x7f
+#define P2P_OUI			"\x50\x6F\x9A"	/* P2P OUI */
+#define P2P_OUI_LEN		3		/* P2P OUI length */
 
 /* Action Frame Constants */
-#घोषणा DOT11_ACTION_HDR_LEN	2	/* action frame category + action */
-#घोषणा DOT11_ACTION_CAT_OFF	0	/* category offset */
-#घोषणा DOT11_ACTION_ACT_OFF	1	/* action offset */
+#define DOT11_ACTION_HDR_LEN	2	/* action frame category + action */
+#define DOT11_ACTION_CAT_OFF	0	/* category offset */
+#define DOT11_ACTION_ACT_OFF	1	/* action offset */
 
-#घोषणा P2P_AF_DWELL_TIME		200
-#घोषणा P2P_AF_MIN_DWELL_TIME		100
-#घोषणा P2P_AF_MED_DWELL_TIME		400
-#घोषणा P2P_AF_LONG_DWELL_TIME		1000
-#घोषणा P2P_AF_TX_MAX_RETRY		5
-#घोषणा P2P_AF_MAX_WAIT_TIME		msecs_to_jअगरfies(2000)
-#घोषणा P2P_INVALID_CHANNEL		-1
-#घोषणा P2P_CHANNEL_SYNC_RETRY		5
-#घोषणा P2P_AF_FRM_SCAN_MAX_WAIT	msecs_to_jअगरfies(450)
-#घोषणा P2P_DEFAULT_SLEEP_TIME_VSDB	200
-#घोषणा P2P_AF_RETRY_DELAY_TIME		40
+#define P2P_AF_DWELL_TIME		200
+#define P2P_AF_MIN_DWELL_TIME		100
+#define P2P_AF_MED_DWELL_TIME		400
+#define P2P_AF_LONG_DWELL_TIME		1000
+#define P2P_AF_TX_MAX_RETRY		5
+#define P2P_AF_MAX_WAIT_TIME		msecs_to_jiffies(2000)
+#define P2P_INVALID_CHANNEL		-1
+#define P2P_CHANNEL_SYNC_RETRY		5
+#define P2P_AF_FRM_SCAN_MAX_WAIT	msecs_to_jiffies(450)
+#define P2P_DEFAULT_SLEEP_TIME_VSDB	200
+#define P2P_AF_RETRY_DELAY_TIME		40
 
 /* WiFi P2P Public Action Frame OUI Subtypes */
-#घोषणा P2P_PAF_GON_REQ		0	/* Group Owner Negotiation Req */
-#घोषणा P2P_PAF_GON_RSP		1	/* Group Owner Negotiation Rsp */
-#घोषणा P2P_PAF_GON_CONF	2	/* Group Owner Negotiation Confirm */
-#घोषणा P2P_PAF_INVITE_REQ	3	/* P2P Invitation Request */
-#घोषणा P2P_PAF_INVITE_RSP	4	/* P2P Invitation Response */
-#घोषणा P2P_PAF_DEVDIS_REQ	5	/* Device Discoverability Request */
-#घोषणा P2P_PAF_DEVDIS_RSP	6	/* Device Discoverability Response */
-#घोषणा P2P_PAF_PROVDIS_REQ	7	/* Provision Discovery Request */
-#घोषणा P2P_PAF_PROVDIS_RSP	8	/* Provision Discovery Response */
-#घोषणा P2P_PAF_SUBTYPE_INVALID	255	/* Invalid Subtype */
+#define P2P_PAF_GON_REQ		0	/* Group Owner Negotiation Req */
+#define P2P_PAF_GON_RSP		1	/* Group Owner Negotiation Rsp */
+#define P2P_PAF_GON_CONF	2	/* Group Owner Negotiation Confirm */
+#define P2P_PAF_INVITE_REQ	3	/* P2P Invitation Request */
+#define P2P_PAF_INVITE_RSP	4	/* P2P Invitation Response */
+#define P2P_PAF_DEVDIS_REQ	5	/* Device Discoverability Request */
+#define P2P_PAF_DEVDIS_RSP	6	/* Device Discoverability Response */
+#define P2P_PAF_PROVDIS_REQ	7	/* Provision Discovery Request */
+#define P2P_PAF_PROVDIS_RSP	8	/* Provision Discovery Response */
+#define P2P_PAF_SUBTYPE_INVALID	255	/* Invalid Subtype */
 
 /* WiFi P2P Action Frame OUI Subtypes */
-#घोषणा P2P_AF_NOTICE_OF_ABSENCE	0	/* Notice of Absence */
-#घोषणा P2P_AF_PRESENCE_REQ		1	/* P2P Presence Request */
-#घोषणा P2P_AF_PRESENCE_RSP		2	/* P2P Presence Response */
-#घोषणा P2P_AF_GO_DISC_REQ		3	/* GO Discoverability Request */
+#define P2P_AF_NOTICE_OF_ABSENCE	0	/* Notice of Absence */
+#define P2P_AF_PRESENCE_REQ		1	/* P2P Presence Request */
+#define P2P_AF_PRESENCE_RSP		2	/* P2P Presence Response */
+#define P2P_AF_GO_DISC_REQ		3	/* GO Discoverability Request */
 
 /* P2P Service Discovery related */
-#घोषणा P2PSD_ACTION_CATEGORY		0x04	/* Public action frame */
-#घोषणा P2PSD_ACTION_ID_GAS_IREQ	0x0a	/* GAS Initial Request AF */
-#घोषणा P2PSD_ACTION_ID_GAS_IRESP	0x0b	/* GAS Initial Response AF */
-#घोषणा P2PSD_ACTION_ID_GAS_CREQ	0x0c	/* GAS Comback Request AF */
-#घोषणा P2PSD_ACTION_ID_GAS_CRESP	0x0d	/* GAS Comback Response AF */
+#define P2PSD_ACTION_CATEGORY		0x04	/* Public action frame */
+#define P2PSD_ACTION_ID_GAS_IREQ	0x0a	/* GAS Initial Request AF */
+#define P2PSD_ACTION_ID_GAS_IRESP	0x0b	/* GAS Initial Response AF */
+#define P2PSD_ACTION_ID_GAS_CREQ	0x0c	/* GAS Comback Request AF */
+#define P2PSD_ACTION_ID_GAS_CRESP	0x0d	/* GAS Comback Response AF */
 
-#घोषणा BRCMF_P2P_DISABLE_TIMEOUT	msecs_to_jअगरfies(500)
+#define BRCMF_P2P_DISABLE_TIMEOUT	msecs_to_jiffies(500)
 
-/* Mask क्रम retry counter of custom dwell समय */
-#घोषणा CUSTOM_RETRY_MASK 0xff000000
+/* Mask for retry counter of custom dwell time */
+#define CUSTOM_RETRY_MASK 0xff000000
 /**
- * काष्ठा brcmf_p2p_disc_st_le - set discovery state in firmware.
+ * struct brcmf_p2p_disc_st_le - set discovery state in firmware.
  *
- * @state: requested discovery state (see क्रमागत brcmf_p2p_disc_state).
- * @chspec: channel parameter क्रम %WL_P2P_DISC_ST_LISTEN state.
- * @dwell: dwell समय in ms क्रम %WL_P2P_DISC_ST_LISTEN state.
+ * @state: requested discovery state (see enum brcmf_p2p_disc_state).
+ * @chspec: channel parameter for %WL_P2P_DISC_ST_LISTEN state.
+ * @dwell: dwell time in ms for %WL_P2P_DISC_ST_LISTEN state.
  */
-काष्ठा brcmf_p2p_disc_st_le अणु
+struct brcmf_p2p_disc_st_le {
 	u8 state;
 	__le16 chspec;
 	__le16 dwell;
-पूर्ण;
+};
 
 /**
- * क्रमागत brcmf_p2p_disc_state - P2P discovery state values
+ * enum brcmf_p2p_disc_state - P2P discovery state values
  *
  * @WL_P2P_DISC_ST_SCAN: P2P discovery with wildcard SSID and P2P IE.
- * @WL_P2P_DISC_ST_LISTEN: P2P discovery off-channel क्रम specअगरied समय.
+ * @WL_P2P_DISC_ST_LISTEN: P2P discovery off-channel for specified time.
  * @WL_P2P_DISC_ST_SEARCH: P2P discovery with P2P wildcard SSID and P2P IE.
  */
-क्रमागत brcmf_p2p_disc_state अणु
+enum brcmf_p2p_disc_state {
 	WL_P2P_DISC_ST_SCAN,
 	WL_P2P_DISC_ST_LISTEN,
 	WL_P2P_DISC_ST_SEARCH
-पूर्ण;
+};
 
 /**
- * काष्ठा brcmf_p2p_scan_le - P2P specअगरic scan request.
+ * struct brcmf_p2p_scan_le - P2P specific scan request.
  *
  * @type: type of scan method requested (values: 'E' or 'S').
  * @reserved: reserved (ignored).
- * @eparams: parameters used क्रम type 'E'.
- * @sparams: parameters used क्रम type 'S'.
+ * @eparams: parameters used for type 'E'.
+ * @sparams: parameters used for type 'S'.
  */
-काष्ठा brcmf_p2p_scan_le अणु
+struct brcmf_p2p_scan_le {
 	u8 type;
 	u8 reserved[3];
-	जोड़ अणु
-		काष्ठा brcmf_escan_params_le eparams;
-		काष्ठा brcmf_scan_params_le sparams;
-	पूर्ण;
-पूर्ण;
+	union {
+		struct brcmf_escan_params_le eparams;
+		struct brcmf_scan_params_le sparams;
+	};
+};
 
 /**
- * काष्ठा brcmf_p2p_pub_act_frame - WiFi P2P Public Action Frame
+ * struct brcmf_p2p_pub_act_frame - WiFi P2P Public Action Frame
  *
  * @category: P2P_PUB_AF_CATEGORY
  * @action: P2P_PUB_AF_ACTION
  * @oui: P2P_OUI
  * @oui_type: OUI type - P2P_VER
  * @subtype: OUI subtype - P2P_TYPE_*
- * @dialog_token: nonzero, identअगरies req/rsp transaction
- * @elts: Variable length inक्रमmation elements.
+ * @dialog_token: nonzero, identifies req/rsp transaction
+ * @elts: Variable length information elements.
  */
-काष्ठा brcmf_p2p_pub_act_frame अणु
+struct brcmf_p2p_pub_act_frame {
 	u8	category;
 	u8	action;
 	u8	oui[3];
@@ -160,544 +159,544 @@
 	u8	subtype;
 	u8	dialog_token;
 	u8	elts[1];
-पूर्ण;
+};
 
 /**
- * काष्ठा brcmf_p2p_action_frame - WiFi P2P Action Frame
+ * struct brcmf_p2p_action_frame - WiFi P2P Action Frame
  *
  * @category: P2P_AF_CATEGORY
  * @oui: OUI - P2P_OUI
  * @type: OUI Type - P2P_VER
  * @subtype: OUI Subtype - P2P_AF_*
- * @dialog_token: nonzero, identअगरies req/resp tranaction
- * @elts: Variable length inक्रमmation elements.
+ * @dialog_token: nonzero, identifies req/resp tranaction
+ * @elts: Variable length information elements.
  */
-काष्ठा brcmf_p2p_action_frame अणु
+struct brcmf_p2p_action_frame {
 	u8	category;
 	u8	oui[3];
 	u8	type;
 	u8	subtype;
 	u8	dialog_token;
 	u8	elts[1];
-पूर्ण;
+};
 
 /**
- * काष्ठा brcmf_p2psd_gas_pub_act_frame - Wi-Fi GAS Public Action Frame
+ * struct brcmf_p2psd_gas_pub_act_frame - Wi-Fi GAS Public Action Frame
  *
  * @category: 0x04 Public Action Frame
  * @action: 0x6c Advertisement Protocol
- * @dialog_token: nonzero, identअगरies req/rsp transaction
+ * @dialog_token: nonzero, identifies req/rsp transaction
  * @query_data: Query Data. SD gas ireq SD gas iresp
  */
-काष्ठा brcmf_p2psd_gas_pub_act_frame अणु
+struct brcmf_p2psd_gas_pub_act_frame {
 	u8	category;
 	u8	action;
 	u8	dialog_token;
 	u8	query_data[1];
-पूर्ण;
+};
 
 /**
- * काष्ठा brcmf_config_af_params - Action Frame Parameters क्रम tx.
+ * struct brcmf_config_af_params - Action Frame Parameters for tx.
  *
  * @mpc_onoff: To make sure to send successfully action frame, we have to
- *             turn off mpc  0: off, 1: on,  (-1): करो nothing
+ *             turn off mpc  0: off, 1: on,  (-1): do nothing
  * @search_channel: 1: search peer's channel to send af
- * @extra_listen: keep the dwell समय to get af response frame.
+ * @extra_listen: keep the dwell time to get af response frame.
  */
-काष्ठा brcmf_config_af_params अणु
+struct brcmf_config_af_params {
 	s32 mpc_onoff;
 	bool search_channel;
 	bool extra_listen;
-पूर्ण;
+};
 
 /**
- * brcmf_p2p_is_pub_action() - true अगर p2p खुला type frame.
+ * brcmf_p2p_is_pub_action() - true if p2p public type frame.
  *
  * @frame: action frame data.
  * @frame_len: length of action frame data.
  *
- * Determine अगर action frame is p2p खुला action type
+ * Determine if action frame is p2p public action type
  */
-अटल bool brcmf_p2p_is_pub_action(व्योम *frame, u32 frame_len)
-अणु
-	काष्ठा brcmf_p2p_pub_act_frame *pact_frm;
+static bool brcmf_p2p_is_pub_action(void *frame, u32 frame_len)
+{
+	struct brcmf_p2p_pub_act_frame *pact_frm;
 
-	अगर (frame == शून्य)
-		वापस false;
+	if (frame == NULL)
+		return false;
 
-	pact_frm = (काष्ठा brcmf_p2p_pub_act_frame *)frame;
-	अगर (frame_len < माप(काष्ठा brcmf_p2p_pub_act_frame) - 1)
-		वापस false;
+	pact_frm = (struct brcmf_p2p_pub_act_frame *)frame;
+	if (frame_len < sizeof(struct brcmf_p2p_pub_act_frame) - 1)
+		return false;
 
-	अगर (pact_frm->category == P2P_PUB_AF_CATEGORY &&
+	if (pact_frm->category == P2P_PUB_AF_CATEGORY &&
 	    pact_frm->action == P2P_PUB_AF_ACTION &&
 	    pact_frm->oui_type == P2P_VER &&
-	    स_भेद(pact_frm->oui, P2P_OUI, P2P_OUI_LEN) == 0)
-		वापस true;
+	    memcmp(pact_frm->oui, P2P_OUI, P2P_OUI_LEN) == 0)
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /**
- * brcmf_p2p_is_p2p_action() - true अगर p2p action type frame.
+ * brcmf_p2p_is_p2p_action() - true if p2p action type frame.
  *
  * @frame: action frame data.
  * @frame_len: length of action frame data.
  *
- * Determine अगर action frame is p2p action type
+ * Determine if action frame is p2p action type
  */
-अटल bool brcmf_p2p_is_p2p_action(व्योम *frame, u32 frame_len)
-अणु
-	काष्ठा brcmf_p2p_action_frame *act_frm;
+static bool brcmf_p2p_is_p2p_action(void *frame, u32 frame_len)
+{
+	struct brcmf_p2p_action_frame *act_frm;
 
-	अगर (frame == शून्य)
-		वापस false;
+	if (frame == NULL)
+		return false;
 
-	act_frm = (काष्ठा brcmf_p2p_action_frame *)frame;
-	अगर (frame_len < माप(काष्ठा brcmf_p2p_action_frame) - 1)
-		वापस false;
+	act_frm = (struct brcmf_p2p_action_frame *)frame;
+	if (frame_len < sizeof(struct brcmf_p2p_action_frame) - 1)
+		return false;
 
-	अगर (act_frm->category == P2P_AF_CATEGORY &&
+	if (act_frm->category == P2P_AF_CATEGORY &&
 	    act_frm->type  == P2P_VER &&
-	    स_भेद(act_frm->oui, P2P_OUI, P2P_OUI_LEN) == 0)
-		वापस true;
+	    memcmp(act_frm->oui, P2P_OUI, P2P_OUI_LEN) == 0)
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /**
- * brcmf_p2p_is_gas_action() - true अगर p2p gas action type frame.
+ * brcmf_p2p_is_gas_action() - true if p2p gas action type frame.
  *
  * @frame: action frame data.
  * @frame_len: length of action frame data.
  *
- * Determine अगर action frame is p2p gas action type
+ * Determine if action frame is p2p gas action type
  */
-अटल bool brcmf_p2p_is_gas_action(व्योम *frame, u32 frame_len)
-अणु
-	काष्ठा brcmf_p2psd_gas_pub_act_frame *sd_act_frm;
+static bool brcmf_p2p_is_gas_action(void *frame, u32 frame_len)
+{
+	struct brcmf_p2psd_gas_pub_act_frame *sd_act_frm;
 
-	अगर (frame == शून्य)
-		वापस false;
+	if (frame == NULL)
+		return false;
 
-	sd_act_frm = (काष्ठा brcmf_p2psd_gas_pub_act_frame *)frame;
-	अगर (frame_len < माप(काष्ठा brcmf_p2psd_gas_pub_act_frame) - 1)
-		वापस false;
+	sd_act_frm = (struct brcmf_p2psd_gas_pub_act_frame *)frame;
+	if (frame_len < sizeof(struct brcmf_p2psd_gas_pub_act_frame) - 1)
+		return false;
 
-	अगर (sd_act_frm->category != P2PSD_ACTION_CATEGORY)
-		वापस false;
+	if (sd_act_frm->category != P2PSD_ACTION_CATEGORY)
+		return false;
 
-	अगर (sd_act_frm->action == P2PSD_ACTION_ID_GAS_IREQ ||
+	if (sd_act_frm->action == P2PSD_ACTION_ID_GAS_IREQ ||
 	    sd_act_frm->action == P2PSD_ACTION_ID_GAS_IRESP ||
 	    sd_act_frm->action == P2PSD_ACTION_ID_GAS_CREQ ||
 	    sd_act_frm->action == P2PSD_ACTION_ID_GAS_CRESP)
-		वापस true;
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /**
- * brcmf_p2p_prपूर्णांक_actframe() - debug prपूर्णांक routine.
+ * brcmf_p2p_print_actframe() - debug print routine.
  *
  * @tx: Received or to be transmitted
  * @frame: action frame data.
  * @frame_len: length of action frame data.
  *
- * Prपूर्णांक inक्रमmation about the p2p action frame
+ * Print information about the p2p action frame
  */
 
-#अगर_घोषित DEBUG
+#ifdef DEBUG
 
-अटल व्योम brcmf_p2p_prपूर्णांक_actframe(bool tx, व्योम *frame, u32 frame_len)
-अणु
-	काष्ठा brcmf_p2p_pub_act_frame *pact_frm;
-	काष्ठा brcmf_p2p_action_frame *act_frm;
-	काष्ठा brcmf_p2psd_gas_pub_act_frame *sd_act_frm;
+static void brcmf_p2p_print_actframe(bool tx, void *frame, u32 frame_len)
+{
+	struct brcmf_p2p_pub_act_frame *pact_frm;
+	struct brcmf_p2p_action_frame *act_frm;
+	struct brcmf_p2psd_gas_pub_act_frame *sd_act_frm;
 
-	अगर (!frame || frame_len <= 2)
-		वापस;
+	if (!frame || frame_len <= 2)
+		return;
 
-	अगर (brcmf_p2p_is_pub_action(frame, frame_len)) अणु
-		pact_frm = (काष्ठा brcmf_p2p_pub_act_frame *)frame;
-		चयन (pact_frm->subtype) अणु
-		हाल P2P_PAF_GON_REQ:
+	if (brcmf_p2p_is_pub_action(frame, frame_len)) {
+		pact_frm = (struct brcmf_p2p_pub_act_frame *)frame;
+		switch (pact_frm->subtype) {
+		case P2P_PAF_GON_REQ:
 			brcmf_dbg(TRACE, "%s P2P Group Owner Negotiation Req Frame\n",
 				  (tx) ? "TX" : "RX");
-			अवरोध;
-		हाल P2P_PAF_GON_RSP:
+			break;
+		case P2P_PAF_GON_RSP:
 			brcmf_dbg(TRACE, "%s P2P Group Owner Negotiation Rsp Frame\n",
 				  (tx) ? "TX" : "RX");
-			अवरोध;
-		हाल P2P_PAF_GON_CONF:
+			break;
+		case P2P_PAF_GON_CONF:
 			brcmf_dbg(TRACE, "%s P2P Group Owner Negotiation Confirm Frame\n",
 				  (tx) ? "TX" : "RX");
-			अवरोध;
-		हाल P2P_PAF_INVITE_REQ:
+			break;
+		case P2P_PAF_INVITE_REQ:
 			brcmf_dbg(TRACE, "%s P2P Invitation Request  Frame\n",
 				  (tx) ? "TX" : "RX");
-			अवरोध;
-		हाल P2P_PAF_INVITE_RSP:
+			break;
+		case P2P_PAF_INVITE_RSP:
 			brcmf_dbg(TRACE, "%s P2P Invitation Response Frame\n",
 				  (tx) ? "TX" : "RX");
-			अवरोध;
-		हाल P2P_PAF_DEVDIS_REQ:
+			break;
+		case P2P_PAF_DEVDIS_REQ:
 			brcmf_dbg(TRACE, "%s P2P Device Discoverability Request Frame\n",
 				  (tx) ? "TX" : "RX");
-			अवरोध;
-		हाल P2P_PAF_DEVDIS_RSP:
+			break;
+		case P2P_PAF_DEVDIS_RSP:
 			brcmf_dbg(TRACE, "%s P2P Device Discoverability Response Frame\n",
 				  (tx) ? "TX" : "RX");
-			अवरोध;
-		हाल P2P_PAF_PROVDIS_REQ:
+			break;
+		case P2P_PAF_PROVDIS_REQ:
 			brcmf_dbg(TRACE, "%s P2P Provision Discovery Request Frame\n",
 				  (tx) ? "TX" : "RX");
-			अवरोध;
-		हाल P2P_PAF_PROVDIS_RSP:
+			break;
+		case P2P_PAF_PROVDIS_RSP:
 			brcmf_dbg(TRACE, "%s P2P Provision Discovery Response Frame\n",
 				  (tx) ? "TX" : "RX");
-			अवरोध;
-		शेष:
+			break;
+		default:
 			brcmf_dbg(TRACE, "%s Unknown P2P Public Action Frame\n",
 				  (tx) ? "TX" : "RX");
-			अवरोध;
-		पूर्ण
-	पूर्ण अन्यथा अगर (brcmf_p2p_is_p2p_action(frame, frame_len)) अणु
-		act_frm = (काष्ठा brcmf_p2p_action_frame *)frame;
-		चयन (act_frm->subtype) अणु
-		हाल P2P_AF_NOTICE_OF_ABSENCE:
+			break;
+		}
+	} else if (brcmf_p2p_is_p2p_action(frame, frame_len)) {
+		act_frm = (struct brcmf_p2p_action_frame *)frame;
+		switch (act_frm->subtype) {
+		case P2P_AF_NOTICE_OF_ABSENCE:
 			brcmf_dbg(TRACE, "%s P2P Notice of Absence Frame\n",
 				  (tx) ? "TX" : "RX");
-			अवरोध;
-		हाल P2P_AF_PRESENCE_REQ:
+			break;
+		case P2P_AF_PRESENCE_REQ:
 			brcmf_dbg(TRACE, "%s P2P Presence Request Frame\n",
 				  (tx) ? "TX" : "RX");
-			अवरोध;
-		हाल P2P_AF_PRESENCE_RSP:
+			break;
+		case P2P_AF_PRESENCE_RSP:
 			brcmf_dbg(TRACE, "%s P2P Presence Response Frame\n",
 				  (tx) ? "TX" : "RX");
-			अवरोध;
-		हाल P2P_AF_GO_DISC_REQ:
+			break;
+		case P2P_AF_GO_DISC_REQ:
 			brcmf_dbg(TRACE, "%s P2P Discoverability Request Frame\n",
 				  (tx) ? "TX" : "RX");
-			अवरोध;
-		शेष:
+			break;
+		default:
 			brcmf_dbg(TRACE, "%s Unknown P2P Action Frame\n",
 				  (tx) ? "TX" : "RX");
-		पूर्ण
+		}
 
-	पूर्ण अन्यथा अगर (brcmf_p2p_is_gas_action(frame, frame_len)) अणु
-		sd_act_frm = (काष्ठा brcmf_p2psd_gas_pub_act_frame *)frame;
-		चयन (sd_act_frm->action) अणु
-		हाल P2PSD_ACTION_ID_GAS_IREQ:
+	} else if (brcmf_p2p_is_gas_action(frame, frame_len)) {
+		sd_act_frm = (struct brcmf_p2psd_gas_pub_act_frame *)frame;
+		switch (sd_act_frm->action) {
+		case P2PSD_ACTION_ID_GAS_IREQ:
 			brcmf_dbg(TRACE, "%s P2P GAS Initial Request\n",
 				  (tx) ? "TX" : "RX");
-			अवरोध;
-		हाल P2PSD_ACTION_ID_GAS_IRESP:
+			break;
+		case P2PSD_ACTION_ID_GAS_IRESP:
 			brcmf_dbg(TRACE, "%s P2P GAS Initial Response\n",
 				  (tx) ? "TX" : "RX");
-			अवरोध;
-		हाल P2PSD_ACTION_ID_GAS_CREQ:
+			break;
+		case P2PSD_ACTION_ID_GAS_CREQ:
 			brcmf_dbg(TRACE, "%s P2P GAS Comback Request\n",
 				  (tx) ? "TX" : "RX");
-			अवरोध;
-		हाल P2PSD_ACTION_ID_GAS_CRESP:
+			break;
+		case P2PSD_ACTION_ID_GAS_CRESP:
 			brcmf_dbg(TRACE, "%s P2P GAS Comback Response\n",
 				  (tx) ? "TX" : "RX");
-			अवरोध;
-		शेष:
+			break;
+		default:
 			brcmf_dbg(TRACE, "%s Unknown P2P GAS Frame\n",
 				  (tx) ? "TX" : "RX");
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			break;
+		}
+	}
+}
 
-#अन्यथा
+#else
 
-अटल व्योम brcmf_p2p_prपूर्णांक_actframe(bool tx, व्योम *frame, u32 frame_len)
-अणु
-पूर्ण
+static void brcmf_p2p_print_actframe(bool tx, void *frame, u32 frame_len)
+{
+}
 
-#पूर्ण_अगर
+#endif
 
 
 /**
- * brcmf_p2p_set_firmware() - prepare firmware क्रम peer-to-peer operation.
+ * brcmf_p2p_set_firmware() - prepare firmware for peer-to-peer operation.
  *
- * @अगरp: अगरp to use क्रम iovars (primary).
- * @p2p_mac: mac address to configure क्रम p2p_da_override
+ * @ifp: ifp to use for iovars (primary).
+ * @p2p_mac: mac address to configure for p2p_da_override
  */
-अटल पूर्णांक brcmf_p2p_set_firmware(काष्ठा brcmf_अगर *अगरp, u8 *p2p_mac)
-अणु
-	काष्ठा brcmf_pub *drvr = अगरp->drvr;
+static int brcmf_p2p_set_firmware(struct brcmf_if *ifp, u8 *p2p_mac)
+{
+	struct brcmf_pub *drvr = ifp->drvr;
 	s32 ret = 0;
 
-	brcmf_fil_cmd_पूर्णांक_set(अगरp, BRCMF_C_DOWN, 1);
-	brcmf_fil_iovar_पूर्णांक_set(अगरp, "apsta", 1);
-	brcmf_fil_cmd_पूर्णांक_set(अगरp, BRCMF_C_UP, 1);
+	brcmf_fil_cmd_int_set(ifp, BRCMF_C_DOWN, 1);
+	brcmf_fil_iovar_int_set(ifp, "apsta", 1);
+	brcmf_fil_cmd_int_set(ifp, BRCMF_C_UP, 1);
 
-	/* In हाल of COB type, firmware has शेष mac address
+	/* In case of COB type, firmware has default mac address
 	 * After Initializing firmware, we have to set current mac address to
-	 * firmware क्रम P2P device address. This must be करोne with discovery
+	 * firmware for P2P device address. This must be done with discovery
 	 * disabled.
 	 */
-	brcmf_fil_iovar_पूर्णांक_set(अगरp, "p2p_disc", 0);
+	brcmf_fil_iovar_int_set(ifp, "p2p_disc", 0);
 
-	ret = brcmf_fil_iovar_data_set(अगरp, "p2p_da_override", p2p_mac,
+	ret = brcmf_fil_iovar_data_set(ifp, "p2p_da_override", p2p_mac,
 				       ETH_ALEN);
-	अगर (ret)
+	if (ret)
 		bphy_err(drvr, "failed to update device address ret %d\n", ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * brcmf_p2p_generate_bss_mac() - derive mac addresses क्रम P2P.
+ * brcmf_p2p_generate_bss_mac() - derive mac addresses for P2P.
  *
- * @p2p: P2P specअगरic data.
+ * @p2p: P2P specific data.
  * @dev_addr: optional device address.
  *
- * P2P needs mac addresses क्रम P2P device and पूर्णांकerface. If no device
- * address it specअगरied, these are derived from a अक्रमom ethernet
+ * P2P needs mac addresses for P2P device and interface. If no device
+ * address it specified, these are derived from a random ethernet
  * address.
  */
-अटल व्योम brcmf_p2p_generate_bss_mac(काष्ठा brcmf_p2p_info *p2p, u8 *dev_addr)
-अणु
-	काष्ठा brcmf_अगर *pri_अगरp = p2p->bss_idx[P2PAPI_BSSCFG_PRIMARY].vअगर->अगरp;
-	bool अक्रमom_addr = false;
+static void brcmf_p2p_generate_bss_mac(struct brcmf_p2p_info *p2p, u8 *dev_addr)
+{
+	struct brcmf_if *pri_ifp = p2p->bss_idx[P2PAPI_BSSCFG_PRIMARY].vif->ifp;
+	bool random_addr = false;
 	bool local_admin = false;
 
-	अगर (!dev_addr || is_zero_ether_addr(dev_addr)) अणु
-		/* If the primary पूर्णांकerface address is alपढ़ोy locally
-		 * administered, create a new अक्रमom address.
+	if (!dev_addr || is_zero_ether_addr(dev_addr)) {
+		/* If the primary interface address is already locally
+		 * administered, create a new random address.
 		 */
-		अगर (pri_अगरp->mac_addr[0] & 0x02) अणु
-			अक्रमom_addr = true;
-		पूर्ण अन्यथा अणु
-			dev_addr = pri_अगरp->mac_addr;
+		if (pri_ifp->mac_addr[0] & 0x02) {
+			random_addr = true;
+		} else {
+			dev_addr = pri_ifp->mac_addr;
 			local_admin = true;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* Generate the P2P Device Address obtaining a अक्रमom ethernet
+	/* Generate the P2P Device Address obtaining a random ethernet
 	 * address with the locally administered bit set.
 	 */
-	अगर (अक्रमom_addr)
-		eth_अक्रमom_addr(p2p->dev_addr);
-	अन्यथा
-		स_नकल(p2p->dev_addr, dev_addr, ETH_ALEN);
+	if (random_addr)
+		eth_random_addr(p2p->dev_addr);
+	else
+		memcpy(p2p->dev_addr, dev_addr, ETH_ALEN);
 
-	अगर (local_admin)
+	if (local_admin)
 		p2p->dev_addr[0] |= 0x02;
 
 	/* Generate the P2P Interface Address.  If the discovery and connection
 	 * BSSCFGs need to simultaneously co-exist, then this address must be
-	 * dअगरferent from the P2P Device Address, but also locally administered.
+	 * different from the P2P Device Address, but also locally administered.
 	 */
-	स_नकल(p2p->conn_पूर्णांक_addr, p2p->dev_addr, ETH_ALEN);
-	p2p->conn_पूर्णांक_addr[0] |= 0x02;
-	p2p->conn_पूर्णांक_addr[4] ^= 0x80;
+	memcpy(p2p->conn_int_addr, p2p->dev_addr, ETH_ALEN);
+	p2p->conn_int_addr[0] |= 0x02;
+	p2p->conn_int_addr[4] ^= 0x80;
 
-	स_नकल(p2p->conn2_पूर्णांक_addr, p2p->dev_addr, ETH_ALEN);
-	p2p->conn2_पूर्णांक_addr[0] |= 0x02;
-	p2p->conn2_पूर्णांक_addr[4] ^= 0x90;
-पूर्ण
+	memcpy(p2p->conn2_int_addr, p2p->dev_addr, ETH_ALEN);
+	p2p->conn2_int_addr[0] |= 0x02;
+	p2p->conn2_int_addr[4] ^= 0x90;
+}
 
 /**
  * brcmf_p2p_scan_is_p2p_request() - is cfg80211 scan request a P2P scan.
  *
  * @request: the scan request as received from cfg80211.
  *
- * वापसs true अगर one of the ssids in the request matches the
- * P2P wildcard ssid; otherwise वापसs false.
+ * returns true if one of the ssids in the request matches the
+ * P2P wildcard ssid; otherwise returns false.
  */
-अटल bool brcmf_p2p_scan_is_p2p_request(काष्ठा cfg80211_scan_request *request)
-अणु
-	काष्ठा cfg80211_ssid *ssids = request->ssids;
-	पूर्णांक i;
+static bool brcmf_p2p_scan_is_p2p_request(struct cfg80211_scan_request *request)
+{
+	struct cfg80211_ssid *ssids = request->ssids;
+	int i;
 
-	क्रम (i = 0; i < request->n_ssids; i++) अणु
-		अगर (ssids[i].ssid_len != BRCMF_P2P_WILDCARD_SSID_LEN)
-			जारी;
+	for (i = 0; i < request->n_ssids; i++) {
+		if (ssids[i].ssid_len != BRCMF_P2P_WILDCARD_SSID_LEN)
+			continue;
 
 		brcmf_dbg(INFO, "comparing ssid \"%s\"", ssids[i].ssid);
-		अगर (!स_भेद(BRCMF_P2P_WILDCARD_SSID, ssids[i].ssid,
+		if (!memcmp(BRCMF_P2P_WILDCARD_SSID, ssids[i].ssid,
 			    BRCMF_P2P_WILDCARD_SSID_LEN))
-			वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+			return true;
+	}
+	return false;
+}
 
 /**
  * brcmf_p2p_set_discover_state - set discover state in firmware.
  *
- * @अगरp: low-level पूर्णांकerface object.
+ * @ifp: low-level interface object.
  * @state: discover state to set.
- * @chanspec: channel parameters (क्रम state @WL_P2P_DISC_ST_LISTEN only).
- * @listen_ms: duration to listen (क्रम state @WL_P2P_DISC_ST_LISTEN only).
+ * @chanspec: channel parameters (for state @WL_P2P_DISC_ST_LISTEN only).
+ * @listen_ms: duration to listen (for state @WL_P2P_DISC_ST_LISTEN only).
  */
-अटल s32 brcmf_p2p_set_discover_state(काष्ठा brcmf_अगर *अगरp, u8 state,
+static s32 brcmf_p2p_set_discover_state(struct brcmf_if *ifp, u8 state,
 					u16 chanspec, u16 listen_ms)
-अणु
-	काष्ठा brcmf_p2p_disc_st_le discover_state;
+{
+	struct brcmf_p2p_disc_st_le discover_state;
 	s32 ret = 0;
 	brcmf_dbg(TRACE, "enter\n");
 
 	discover_state.state = state;
 	discover_state.chspec = cpu_to_le16(chanspec);
 	discover_state.dwell = cpu_to_le16(listen_ms);
-	ret = brcmf_fil_bsscfg_data_set(अगरp, "p2p_state", &discover_state,
-					माप(discover_state));
-	वापस ret;
-पूर्ण
+	ret = brcmf_fil_bsscfg_data_set(ifp, "p2p_state", &discover_state,
+					sizeof(discover_state));
+	return ret;
+}
 
 /**
  * brcmf_p2p_deinit_discovery() - disable P2P device discovery.
  *
- * @p2p: P2P specअगरic data.
+ * @p2p: P2P specific data.
  *
  * Resets the discovery state and disables it in firmware.
  */
-अटल s32 brcmf_p2p_deinit_discovery(काष्ठा brcmf_p2p_info *p2p)
-अणु
-	काष्ठा brcmf_cfg80211_vअगर *vअगर;
+static s32 brcmf_p2p_deinit_discovery(struct brcmf_p2p_info *p2p)
+{
+	struct brcmf_cfg80211_vif *vif;
 
 	brcmf_dbg(TRACE, "enter\n");
 
 	/* Set the discovery state to SCAN */
-	vअगर = p2p->bss_idx[P2PAPI_BSSCFG_DEVICE].vअगर;
-	(व्योम)brcmf_p2p_set_discover_state(vअगर->अगरp, WL_P2P_DISC_ST_SCAN, 0, 0);
+	vif = p2p->bss_idx[P2PAPI_BSSCFG_DEVICE].vif;
+	(void)brcmf_p2p_set_discover_state(vif->ifp, WL_P2P_DISC_ST_SCAN, 0, 0);
 
 	/* Disable P2P discovery in the firmware */
-	vअगर = p2p->bss_idx[P2PAPI_BSSCFG_PRIMARY].vअगर;
-	(व्योम)brcmf_fil_iovar_पूर्णांक_set(vअगर->अगरp, "p2p_disc", 0);
+	vif = p2p->bss_idx[P2PAPI_BSSCFG_PRIMARY].vif;
+	(void)brcmf_fil_iovar_int_set(vif->ifp, "p2p_disc", 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * brcmf_p2p_enable_discovery() - initialize and configure discovery.
  *
- * @p2p: P2P specअगरic data.
+ * @p2p: P2P specific data.
  *
- * Initializes the discovery device and configure the भव पूर्णांकerface.
+ * Initializes the discovery device and configure the virtual interface.
  */
-अटल पूर्णांक brcmf_p2p_enable_discovery(काष्ठा brcmf_p2p_info *p2p)
-अणु
-	काष्ठा brcmf_pub *drvr = p2p->cfg->pub;
-	काष्ठा brcmf_cfg80211_vअगर *vअगर;
+static int brcmf_p2p_enable_discovery(struct brcmf_p2p_info *p2p)
+{
+	struct brcmf_pub *drvr = p2p->cfg->pub;
+	struct brcmf_cfg80211_vif *vif;
 	s32 ret = 0;
 
 	brcmf_dbg(TRACE, "enter\n");
-	vअगर = p2p->bss_idx[P2PAPI_BSSCFG_DEVICE].vअगर;
-	अगर (!vअगर) अणु
+	vif = p2p->bss_idx[P2PAPI_BSSCFG_DEVICE].vif;
+	if (!vif) {
 		bphy_err(drvr, "P2P config device not available\n");
 		ret = -EPERM;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	अगर (test_bit(BRCMF_P2P_STATUS_ENABLED, &p2p->status)) अणु
+	if (test_bit(BRCMF_P2P_STATUS_ENABLED, &p2p->status)) {
 		brcmf_dbg(INFO, "P2P config device already configured\n");
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	/* Re-initialize P2P Discovery in the firmware */
-	vअगर = p2p->bss_idx[P2PAPI_BSSCFG_PRIMARY].vअगर;
-	ret = brcmf_fil_iovar_पूर्णांक_set(vअगर->अगरp, "p2p_disc", 1);
-	अगर (ret < 0) अणु
+	vif = p2p->bss_idx[P2PAPI_BSSCFG_PRIMARY].vif;
+	ret = brcmf_fil_iovar_int_set(vif->ifp, "p2p_disc", 1);
+	if (ret < 0) {
 		bphy_err(drvr, "set p2p_disc error\n");
-		जाओ निकास;
-	पूर्ण
-	vअगर = p2p->bss_idx[P2PAPI_BSSCFG_DEVICE].vअगर;
-	ret = brcmf_p2p_set_discover_state(vअगर->अगरp, WL_P2P_DISC_ST_SCAN, 0, 0);
-	अगर (ret < 0) अणु
+		goto exit;
+	}
+	vif = p2p->bss_idx[P2PAPI_BSSCFG_DEVICE].vif;
+	ret = brcmf_p2p_set_discover_state(vif->ifp, WL_P2P_DISC_ST_SCAN, 0, 0);
+	if (ret < 0) {
 		bphy_err(drvr, "unable to set WL_P2P_DISC_ST_SCAN\n");
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	/*
 	 * Set wsec to any non-zero value in the discovery bsscfg
 	 * to ensure our P2P probe responses have the privacy bit
 	 * set in the 802.11 WPA IE. Some peer devices may not
-	 * initiate WPS with us अगर this bit is not set.
+	 * initiate WPS with us if this bit is not set.
 	 */
-	ret = brcmf_fil_bsscfg_पूर्णांक_set(vअगर->अगरp, "wsec", AES_ENABLED);
-	अगर (ret < 0) अणु
+	ret = brcmf_fil_bsscfg_int_set(vif->ifp, "wsec", AES_ENABLED);
+	if (ret < 0) {
 		bphy_err(drvr, "wsec error %d\n", ret);
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	set_bit(BRCMF_P2P_STATUS_ENABLED, &p2p->status);
-निकास:
-	वापस ret;
-पूर्ण
+exit:
+	return ret;
+}
 
 /**
  * brcmf_p2p_escan() - initiate a P2P scan.
  *
- * @p2p: P2P specअगरic data.
+ * @p2p: P2P specific data.
  * @num_chans: number of channels to scan.
- * @chanspecs: channel parameters क्रम @num_chans channels.
+ * @chanspecs: channel parameters for @num_chans channels.
  * @search_state: P2P discover state to use.
  * @bss_type: type of P2P bss.
  */
-अटल s32 brcmf_p2p_escan(काष्ठा brcmf_p2p_info *p2p, u32 num_chans,
+static s32 brcmf_p2p_escan(struct brcmf_p2p_info *p2p, u32 num_chans,
 			   u16 chanspecs[], s32 search_state,
-			   क्रमागत p2p_bss_type bss_type)
-अणु
-	काष्ठा brcmf_pub *drvr = p2p->cfg->pub;
+			   enum p2p_bss_type bss_type)
+{
+	struct brcmf_pub *drvr = p2p->cfg->pub;
 	s32 ret = 0;
-	s32 memsize = दुरत्व(काष्ठा brcmf_p2p_scan_le,
+	s32 memsize = offsetof(struct brcmf_p2p_scan_le,
 			       eparams.params_le.channel_list);
 	s32 nprobes;
 	s32 active;
 	u32 i;
 	u8 *memblk;
-	काष्ठा brcmf_cfg80211_vअगर *vअगर;
-	काष्ठा brcmf_p2p_scan_le *p2p_params;
-	काष्ठा brcmf_scan_params_le *sparams;
+	struct brcmf_cfg80211_vif *vif;
+	struct brcmf_p2p_scan_le *p2p_params;
+	struct brcmf_scan_params_le *sparams;
 
-	memsize += num_chans * माप(__le16);
+	memsize += num_chans * sizeof(__le16);
 	memblk = kzalloc(memsize, GFP_KERNEL);
-	अगर (!memblk)
-		वापस -ENOMEM;
+	if (!memblk)
+		return -ENOMEM;
 
-	vअगर = p2p->bss_idx[bss_type].vअगर;
-	अगर (vअगर == शून्य) अणु
+	vif = p2p->bss_idx[bss_type].vif;
+	if (vif == NULL) {
 		bphy_err(drvr, "no vif for bss type %d\n", bss_type);
 		ret = -EINVAL;
-		जाओ निकास;
-	पूर्ण
-	p2p_params = (काष्ठा brcmf_p2p_scan_le *)memblk;
+		goto exit;
+	}
+	p2p_params = (struct brcmf_p2p_scan_le *)memblk;
 	sparams = &p2p_params->eparams.params_le;
 
-	चयन (search_state) अणु
-	हाल WL_P2P_DISC_ST_SEARCH:
+	switch (search_state) {
+	case WL_P2P_DISC_ST_SEARCH:
 		/*
-		 * If we in SEARCH STATE, we करोn't need to set SSID explictly
-		 * because करोngle use P2P WILDCARD पूर्णांकernally by शेष, use
-		 * null ssid, which it is alपढ़ोy due to kzalloc.
+		 * If we in SEARCH STATE, we don't need to set SSID explictly
+		 * because dongle use P2P WILDCARD internally by default, use
+		 * null ssid, which it is already due to kzalloc.
 		 */
-		अवरोध;
-	हाल WL_P2P_DISC_ST_SCAN:
+		break;
+	case WL_P2P_DISC_ST_SCAN:
 		/*
 		 * wpa_supplicant has p2p_find command with type social or
 		 * progressive. For progressive, we need to set the ssid to
-		 * P2P WILDCARD because we just करो broadcast scan unless
+		 * P2P WILDCARD because we just do broadcast scan unless
 		 * setting SSID.
 		 */
 		sparams->ssid_le.SSID_len =
 				cpu_to_le32(BRCMF_P2P_WILDCARD_SSID_LEN);
-		स_नकल(sparams->ssid_le.SSID, BRCMF_P2P_WILDCARD_SSID,
+		memcpy(sparams->ssid_le.SSID, BRCMF_P2P_WILDCARD_SSID,
 		       BRCMF_P2P_WILDCARD_SSID_LEN);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		bphy_err(drvr, " invalid search state %d\n", search_state);
 		ret = -EINVAL;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	brcmf_p2p_set_discover_state(vअगर->अगरp, search_state, 0, 0);
+	brcmf_p2p_set_discover_state(vif->ifp, search_state, 0, 0);
 
 	/*
 	 * set p2p scan parameters.
@@ -709,174 +708,174 @@
 	sparams->scan_type = BRCMF_SCANTYPE_ACTIVE;
 
 	eth_broadcast_addr(sparams->bssid);
-	sparams->home_समय = cpu_to_le32(P2PAPI_SCAN_HOME_TIME_MS);
+	sparams->home_time = cpu_to_le32(P2PAPI_SCAN_HOME_TIME_MS);
 
 	/*
 	 * SOCIAL_CHAN_CNT + 1 takes care of the Progressive scan
 	 * supported by the supplicant.
 	 */
-	अगर (num_chans == SOCIAL_CHAN_CNT || num_chans == (SOCIAL_CHAN_CNT + 1))
+	if (num_chans == SOCIAL_CHAN_CNT || num_chans == (SOCIAL_CHAN_CNT + 1))
 		active = P2PAPI_SCAN_SOCIAL_DWELL_TIME_MS;
-	अन्यथा अगर (num_chans == AF_PEER_SEARCH_CNT)
+	else if (num_chans == AF_PEER_SEARCH_CNT)
 		active = P2PAPI_SCAN_AF_SEARCH_DWELL_TIME_MS;
-	अन्यथा अगर (brcmf_get_vअगर_state_any(p2p->cfg, BRCMF_VIF_STATUS_CONNECTED))
+	else if (brcmf_get_vif_state_any(p2p->cfg, BRCMF_VIF_STATUS_CONNECTED))
 		active = -1;
-	अन्यथा
+	else
 		active = P2PAPI_SCAN_DWELL_TIME_MS;
 
-	/* Override scan params to find a peer क्रम a connection */
-	अगर (num_chans == 1) अणु
+	/* Override scan params to find a peer for a connection */
+	if (num_chans == 1) {
 		active = WL_SCAN_CONNECT_DWELL_TIME_MS;
 		/* WAR to sync with presence period of VSDB GO.
 		 * send probe request more frequently
 		 */
 		nprobes = active / WL_SCAN_JOIN_PROBE_INTERVAL_MS;
-	पूर्ण अन्यथा अणु
+	} else {
 		nprobes = active / P2PAPI_SCAN_NPROBS_TIME_MS;
-	पूर्ण
+	}
 
-	अगर (nprobes <= 0)
+	if (nprobes <= 0)
 		nprobes = 1;
 
 	brcmf_dbg(INFO, "nprobes # %d, active_time %d\n", nprobes, active);
-	sparams->active_समय = cpu_to_le32(active);
+	sparams->active_time = cpu_to_le32(active);
 	sparams->nprobes = cpu_to_le32(nprobes);
-	sparams->passive_समय = cpu_to_le32(-1);
+	sparams->passive_time = cpu_to_le32(-1);
 	sparams->channel_num = cpu_to_le32(num_chans &
 					   BRCMF_SCAN_PARAMS_COUNT_MASK);
-	क्रम (i = 0; i < num_chans; i++)
+	for (i = 0; i < num_chans; i++)
 		sparams->channel_list[i] = cpu_to_le16(chanspecs[i]);
 
-	/* set the escan specअगरic parameters */
+	/* set the escan specific parameters */
 	p2p_params->eparams.version = cpu_to_le32(BRCMF_ESCAN_REQ_VERSION);
 	p2p_params->eparams.action =  cpu_to_le16(WL_ESCAN_ACTION_START);
 	p2p_params->eparams.sync_id = cpu_to_le16(0x1234);
-	/* perक्रमm p2p scan on primary device */
-	ret = brcmf_fil_bsscfg_data_set(vअगर->अगरp, "p2p_scan", memblk, memsize);
-	अगर (!ret)
+	/* perform p2p scan on primary device */
+	ret = brcmf_fil_bsscfg_data_set(vif->ifp, "p2p_scan", memblk, memsize);
+	if (!ret)
 		set_bit(BRCMF_SCAN_STATUS_BUSY, &p2p->cfg->scan_status);
-निकास:
-	kमुक्त(memblk);
-	वापस ret;
-पूर्ण
+exit:
+	kfree(memblk);
+	return ret;
+}
 
 /**
- * brcmf_p2p_run_escan() - escan callback क्रम peer-to-peer.
+ * brcmf_p2p_run_escan() - escan callback for peer-to-peer.
  *
- * @cfg: driver निजी data क्रम cfg80211 पूर्णांकerface.
- * @अगरp: पूर्णांकerface control.
+ * @cfg: driver private data for cfg80211 interface.
+ * @ifp: interface control.
  * @request: scan request from cfg80211.
  *
  * Determines the P2P discovery state based to scan request parameters and
  * validates the channels in the request.
  */
-अटल s32 brcmf_p2p_run_escan(काष्ठा brcmf_cfg80211_info *cfg,
-			       काष्ठा brcmf_अगर *अगरp,
-			       काष्ठा cfg80211_scan_request *request)
-अणु
-	काष्ठा brcmf_p2p_info *p2p = &cfg->p2p;
-	काष्ठा brcmf_pub *drvr = cfg->pub;
+static s32 brcmf_p2p_run_escan(struct brcmf_cfg80211_info *cfg,
+			       struct brcmf_if *ifp,
+			       struct cfg80211_scan_request *request)
+{
+	struct brcmf_p2p_info *p2p = &cfg->p2p;
+	struct brcmf_pub *drvr = cfg->pub;
 	s32 err = 0;
 	s32 search_state = WL_P2P_DISC_ST_SCAN;
-	काष्ठा brcmf_cfg80211_vअगर *vअगर;
-	काष्ठा net_device *dev = शून्य;
-	पूर्णांक i, num_nodfs = 0;
+	struct brcmf_cfg80211_vif *vif;
+	struct net_device *dev = NULL;
+	int i, num_nodfs = 0;
 	u16 *chanspecs;
 
 	brcmf_dbg(TRACE, "enter\n");
 
-	अगर (!request) अणु
+	if (!request) {
 		err = -EINVAL;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	अगर (request->n_channels) अणु
-		chanspecs = kसुस्मृति(request->n_channels, माप(*chanspecs),
+	if (request->n_channels) {
+		chanspecs = kcalloc(request->n_channels, sizeof(*chanspecs),
 				    GFP_KERNEL);
-		अगर (!chanspecs) अणु
+		if (!chanspecs) {
 			err = -ENOMEM;
-			जाओ निकास;
-		पूर्ण
-		vअगर = p2p->bss_idx[P2PAPI_BSSCFG_CONNECTION].vअगर;
-		अगर (vअगर)
-			dev = vअगर->wdev.netdev;
-		अगर (request->n_channels == 3 &&
+			goto exit;
+		}
+		vif = p2p->bss_idx[P2PAPI_BSSCFG_CONNECTION].vif;
+		if (vif)
+			dev = vif->wdev.netdev;
+		if (request->n_channels == 3 &&
 		    request->channels[0]->hw_value == SOCIAL_CHAN_1 &&
 		    request->channels[1]->hw_value == SOCIAL_CHAN_2 &&
-		    request->channels[2]->hw_value == SOCIAL_CHAN_3) अणु
+		    request->channels[2]->hw_value == SOCIAL_CHAN_3) {
 			/* SOCIAL CHANNELS 1, 6, 11 */
 			search_state = WL_P2P_DISC_ST_SEARCH;
 			brcmf_dbg(INFO, "P2P SEARCH PHASE START\n");
-		पूर्ण अन्यथा अगर (dev != शून्य &&
-			   vअगर->wdev.अगरtype == NL80211_IFTYPE_P2P_GO) अणु
-			/* If you are alपढ़ोy a GO, then करो SEARCH only */
+		} else if (dev != NULL &&
+			   vif->wdev.iftype == NL80211_IFTYPE_P2P_GO) {
+			/* If you are already a GO, then do SEARCH only */
 			brcmf_dbg(INFO, "Already a GO. Do SEARCH Only\n");
 			search_state = WL_P2P_DISC_ST_SEARCH;
-		पूर्ण अन्यथा अणु
+		} else {
 			brcmf_dbg(INFO, "P2P SCAN STATE START\n");
-		पूर्ण
+		}
 
 		/*
 		 * no P2P scanning on passive or DFS channels.
 		 */
-		क्रम (i = 0; i < request->n_channels; i++) अणु
-			काष्ठा ieee80211_channel *chan = request->channels[i];
+		for (i = 0; i < request->n_channels; i++) {
+			struct ieee80211_channel *chan = request->channels[i];
 
-			अगर (chan->flags & (IEEE80211_CHAN_RADAR |
+			if (chan->flags & (IEEE80211_CHAN_RADAR |
 					   IEEE80211_CHAN_NO_IR))
-				जारी;
+				continue;
 
 			chanspecs[i] = channel_to_chanspec(&p2p->cfg->d11inf,
 							   chan);
 			brcmf_dbg(INFO, "%d: chan=%d, channel spec=%x\n",
 				  num_nodfs, chan->hw_value, chanspecs[i]);
 			num_nodfs++;
-		पूर्ण
+		}
 		err = brcmf_p2p_escan(p2p, num_nodfs, chanspecs, search_state,
 				      P2PAPI_BSSCFG_DEVICE);
-		kमुक्त(chanspecs);
-	पूर्ण
-निकास:
-	अगर (err)
+		kfree(chanspecs);
+	}
+exit:
+	if (err)
 		bphy_err(drvr, "error (%d)\n", err);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 
 /**
  * brcmf_p2p_find_listen_channel() - find listen channel in ie string.
  *
- * @ie: string of inक्रमmation elements.
+ * @ie: string of information elements.
  * @ie_len: length of string.
  *
- * Scan ie क्रम p2p ie and look क्रम attribute 6 channel. If available determine
- * channel and वापस it.
+ * Scan ie for p2p ie and look for attribute 6 channel. If available determine
+ * channel and return it.
  */
-अटल s32 brcmf_p2p_find_listen_channel(स्थिर u8 *ie, u32 ie_len)
-अणु
+static s32 brcmf_p2p_find_listen_channel(const u8 *ie, u32 ie_len)
+{
 	u8 channel_ie[5];
 	s32 listen_channel;
 	s32 err;
 
 	err = cfg80211_get_p2p_attr(ie, ie_len,
 				    IEEE80211_P2P_ATTR_LISTEN_CHANNEL,
-				    channel_ie, माप(channel_ie));
-	अगर (err < 0)
-		वापस err;
+				    channel_ie, sizeof(channel_ie));
+	if (err < 0)
+		return err;
 
-	/* listen channel subel length क्रमmat:     */
+	/* listen channel subel length format:     */
 	/* 3(country) + 1(op. class) + 1(chan num) */
 	listen_channel = (s32)channel_ie[3 + 1];
 
-	अगर (listen_channel == SOCIAL_CHAN_1 ||
+	if (listen_channel == SOCIAL_CHAN_1 ||
 	    listen_channel == SOCIAL_CHAN_2 ||
-	    listen_channel == SOCIAL_CHAN_3) अणु
+	    listen_channel == SOCIAL_CHAN_3) {
 		brcmf_dbg(INFO, "Found my Listen Channel %d\n", listen_channel);
-		वापस listen_channel;
-	पूर्ण
+		return listen_channel;
+	}
 
-	वापस -EPERM;
-पूर्ण
+	return -EPERM;
+}
 
 
 /**
@@ -884,25 +883,25 @@
  *
  * @wiphy: wiphy device.
  * @request: scan request from cfg80211.
- * @vअगर: vअगर on which scan request is to be executed.
+ * @vif: vif on which scan request is to be executed.
  *
- * Prepare the scan appropriately क्रम type of scan requested. Overrides the
- * escan .run() callback क्रम peer-to-peer scanning.
+ * Prepare the scan appropriately for type of scan requested. Overrides the
+ * escan .run() callback for peer-to-peer scanning.
  */
-पूर्णांक brcmf_p2p_scan_prep(काष्ठा wiphy *wiphy,
-			काष्ठा cfg80211_scan_request *request,
-			काष्ठा brcmf_cfg80211_vअगर *vअगर)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
-	काष्ठा brcmf_p2p_info *p2p = &cfg->p2p;
-	पूर्णांक err;
+int brcmf_p2p_scan_prep(struct wiphy *wiphy,
+			struct cfg80211_scan_request *request,
+			struct brcmf_cfg80211_vif *vif)
+{
+	struct brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
+	struct brcmf_p2p_info *p2p = &cfg->p2p;
+	int err;
 
-	अगर (brcmf_p2p_scan_is_p2p_request(request)) अणु
+	if (brcmf_p2p_scan_is_p2p_request(request)) {
 		/* find my listen channel */
 		err = brcmf_p2p_find_listen_channel(request->ie,
 						    request->ie_len);
-		अगर (err < 0)
-			वापस err;
+		if (err < 0)
+			return err;
 
 		p2p->afx_hdl.my_listen_chan = err;
 
@@ -910,74 +909,74 @@
 		brcmf_dbg(INFO, "P2P: GO_NEG_PHASE status cleared\n");
 
 		err = brcmf_p2p_enable_discovery(p2p);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
 		/* override .run_escan() callback. */
 		cfg->escan_info.run = brcmf_p2p_run_escan;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 
 /**
  * brcmf_p2p_discover_listen() - set firmware to discover listen state.
  *
  * @p2p: p2p device.
- * @channel: channel nr क्रम discover listen.
- * @duration: समय in ms to stay on channel.
+ * @channel: channel nr for discover listen.
+ * @duration: time in ms to stay on channel.
  *
  */
-अटल s32
-brcmf_p2p_discover_listen(काष्ठा brcmf_p2p_info *p2p, u16 channel, u32 duration)
-अणु
-	काष्ठा brcmf_pub *drvr = p2p->cfg->pub;
-	काष्ठा brcmf_cfg80211_vअगर *vअगर;
-	काष्ठा brcmu_chan ch;
+static s32
+brcmf_p2p_discover_listen(struct brcmf_p2p_info *p2p, u16 channel, u32 duration)
+{
+	struct brcmf_pub *drvr = p2p->cfg->pub;
+	struct brcmf_cfg80211_vif *vif;
+	struct brcmu_chan ch;
 	s32 err = 0;
 
-	vअगर = p2p->bss_idx[P2PAPI_BSSCFG_DEVICE].vअगर;
-	अगर (!vअगर) अणु
+	vif = p2p->bss_idx[P2PAPI_BSSCFG_DEVICE].vif;
+	if (!vif) {
 		bphy_err(drvr, "Discovery is not set, so we have nothing to do\n");
 		err = -EPERM;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	अगर (test_bit(BRCMF_P2P_STATUS_DISCOVER_LISTEN, &p2p->status)) अणु
+	if (test_bit(BRCMF_P2P_STATUS_DISCOVER_LISTEN, &p2p->status)) {
 		bphy_err(drvr, "Previous LISTEN is not completed yet\n");
-		/* WAR: prevent cookie mismatch in wpa_supplicant वापस OK */
-		जाओ निकास;
-	पूर्ण
+		/* WAR: prevent cookie mismatch in wpa_supplicant return OK */
+		goto exit;
+	}
 
 	ch.chnum = channel;
 	ch.bw = BRCMU_CHAN_BW_20;
 	p2p->cfg->d11inf.encchspec(&ch);
-	err = brcmf_p2p_set_discover_state(vअगर->अगरp, WL_P2P_DISC_ST_LISTEN,
+	err = brcmf_p2p_set_discover_state(vif->ifp, WL_P2P_DISC_ST_LISTEN,
 					   ch.chspec, (u16)duration);
-	अगर (!err) अणु
+	if (!err) {
 		set_bit(BRCMF_P2P_STATUS_DISCOVER_LISTEN, &p2p->status);
-		p2p->reमुख्य_on_channel_cookie++;
-	पूर्ण
-निकास:
-	वापस err;
-पूर्ण
+		p2p->remain_on_channel_cookie++;
+	}
+exit:
+	return err;
+}
 
 
 /**
- * brcmf_p2p_reमुख्य_on_channel() - put device on channel and stay there.
+ * brcmf_p2p_remain_on_channel() - put device on channel and stay there.
  *
  * @wiphy: wiphy device.
  * @wdev: wireless device.
  * @channel: channel to stay on.
- * @duration: समय in ms to reमुख्य on channel.
+ * @duration: time in ms to remain on channel.
  * @cookie: cookie.
  */
-पूर्णांक brcmf_p2p_reमुख्य_on_channel(काष्ठा wiphy *wiphy, काष्ठा wireless_dev *wdev,
-				काष्ठा ieee80211_channel *channel,
-				अचिन्हित पूर्णांक duration, u64 *cookie)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
-	काष्ठा brcmf_p2p_info *p2p = &cfg->p2p;
+int brcmf_p2p_remain_on_channel(struct wiphy *wiphy, struct wireless_dev *wdev,
+				struct ieee80211_channel *channel,
+				unsigned int duration, u64 *cookie)
+{
+	struct brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
+	struct brcmf_p2p_info *p2p = &cfg->p2p;
 	s32 err;
 	u16 channel_nr;
 
@@ -986,223 +985,223 @@ brcmf_p2p_discover_listen(काष्ठा brcmf_p2p_info *p2p, u16 channel, u
 		  duration);
 
 	err = brcmf_p2p_enable_discovery(p2p);
-	अगर (err)
-		जाओ निकास;
+	if (err)
+		goto exit;
 	err = brcmf_p2p_discover_listen(p2p, channel_nr, duration);
-	अगर (err)
-		जाओ निकास;
+	if (err)
+		goto exit;
 
-	स_नकल(&p2p->reमुख्य_on_channel, channel, माप(*channel));
-	*cookie = p2p->reमुख्य_on_channel_cookie;
-	cfg80211_पढ़ोy_on_channel(wdev, *cookie, channel, duration, GFP_KERNEL);
+	memcpy(&p2p->remain_on_channel, channel, sizeof(*channel));
+	*cookie = p2p->remain_on_channel_cookie;
+	cfg80211_ready_on_channel(wdev, *cookie, channel, duration, GFP_KERNEL);
 
-निकास:
-	वापस err;
-पूर्ण
+exit:
+	return err;
+}
 
 
 /**
- * brcmf_p2p_notअगरy_listen_complete() - p2p listen has completed.
+ * brcmf_p2p_notify_listen_complete() - p2p listen has completed.
  *
- * @अगरp: पूर्णांकerfac control.
- * @e: event message. Not used, to make it usable क्रम fweh event dispatcher.
+ * @ifp: interfac control.
+ * @e: event message. Not used, to make it usable for fweh event dispatcher.
  * @data: payload of message. Not used.
  *
  */
-पूर्णांक brcmf_p2p_notअगरy_listen_complete(काष्ठा brcmf_अगर *अगरp,
-				     स्थिर काष्ठा brcmf_event_msg *e,
-				     व्योम *data)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = अगरp->drvr->config;
-	काष्ठा brcmf_p2p_info *p2p = &cfg->p2p;
+int brcmf_p2p_notify_listen_complete(struct brcmf_if *ifp,
+				     const struct brcmf_event_msg *e,
+				     void *data)
+{
+	struct brcmf_cfg80211_info *cfg = ifp->drvr->config;
+	struct brcmf_p2p_info *p2p = &cfg->p2p;
 
 	brcmf_dbg(TRACE, "Enter\n");
-	अगर (test_and_clear_bit(BRCMF_P2P_STATUS_DISCOVER_LISTEN,
-			       &p2p->status)) अणु
-		अगर (test_and_clear_bit(BRCMF_P2P_STATUS_WAITING_NEXT_AF_LISTEN,
-				       &p2p->status)) अणु
+	if (test_and_clear_bit(BRCMF_P2P_STATUS_DISCOVER_LISTEN,
+			       &p2p->status)) {
+		if (test_and_clear_bit(BRCMF_P2P_STATUS_WAITING_NEXT_AF_LISTEN,
+				       &p2p->status)) {
 			clear_bit(BRCMF_P2P_STATUS_WAITING_NEXT_ACT_FRAME,
 				  &p2p->status);
 			brcmf_dbg(INFO, "Listen DONE, wake up wait_next_af\n");
-			complete(&p2p->रुको_next_af);
-		पूर्ण
+			complete(&p2p->wait_next_af);
+		}
 
-		cfg80211_reमुख्य_on_channel_expired(&अगरp->vअगर->wdev,
-						   p2p->reमुख्य_on_channel_cookie,
-						   &p2p->reमुख्य_on_channel,
+		cfg80211_remain_on_channel_expired(&ifp->vif->wdev,
+						   p2p->remain_on_channel_cookie,
+						   &p2p->remain_on_channel,
 						   GFP_KERNEL);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 
 /**
- * brcmf_p2p_cancel_reमुख्य_on_channel() - cancel p2p listen state.
+ * brcmf_p2p_cancel_remain_on_channel() - cancel p2p listen state.
  *
- * @अगरp: पूर्णांकerfac control.
+ * @ifp: interfac control.
  *
  */
-व्योम brcmf_p2p_cancel_reमुख्य_on_channel(काष्ठा brcmf_अगर *अगरp)
-अणु
-	अगर (!अगरp)
-		वापस;
-	brcmf_p2p_set_discover_state(अगरp, WL_P2P_DISC_ST_SCAN, 0, 0);
-	brcmf_p2p_notअगरy_listen_complete(अगरp, शून्य, शून्य);
-पूर्ण
+void brcmf_p2p_cancel_remain_on_channel(struct brcmf_if *ifp)
+{
+	if (!ifp)
+		return;
+	brcmf_p2p_set_discover_state(ifp, WL_P2P_DISC_ST_SCAN, 0, 0);
+	brcmf_p2p_notify_listen_complete(ifp, NULL, NULL);
+}
 
 
 /**
- * brcmf_p2p_act_frm_search() - search function क्रम action frame.
+ * brcmf_p2p_act_frm_search() - search function for action frame.
  *
  * @p2p: p2p device.
- * @channel: channel on which action frame is to be trयंत्रitted.
+ * @channel: channel on which action frame is to be trasmitted.
  *
  * search function to reach at common channel to send action frame. When
  * channel is 0 then all social channels will be used to send af
  */
-अटल s32 brcmf_p2p_act_frm_search(काष्ठा brcmf_p2p_info *p2p, u16 channel)
-अणु
-	काष्ठा brcmf_pub *drvr = p2p->cfg->pub;
+static s32 brcmf_p2p_act_frm_search(struct brcmf_p2p_info *p2p, u16 channel)
+{
+	struct brcmf_pub *drvr = p2p->cfg->pub;
 	s32 err;
 	u32 channel_cnt;
-	u16 *शेष_chan_list;
+	u16 *default_chan_list;
 	u32 i;
-	काष्ठा brcmu_chan ch;
+	struct brcmu_chan ch;
 
 	brcmf_dbg(TRACE, "Enter\n");
 
-	अगर (channel)
+	if (channel)
 		channel_cnt = AF_PEER_SEARCH_CNT;
-	अन्यथा
+	else
 		channel_cnt = SOCIAL_CHAN_CNT;
-	शेष_chan_list = kसुस्मृति(channel_cnt, माप(*शेष_chan_list),
+	default_chan_list = kcalloc(channel_cnt, sizeof(*default_chan_list),
 				    GFP_KERNEL);
-	अगर (शेष_chan_list == शून्य) अणु
+	if (default_chan_list == NULL) {
 		bphy_err(drvr, "channel list allocation failed\n");
 		err = -ENOMEM;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 	ch.bw = BRCMU_CHAN_BW_20;
-	अगर (channel) अणु
+	if (channel) {
 		ch.chnum = channel;
 		p2p->cfg->d11inf.encchspec(&ch);
 		/* insert same channel to the chan_list */
-		क्रम (i = 0; i < channel_cnt; i++)
-			शेष_chan_list[i] = ch.chspec;
-	पूर्ण अन्यथा अणु
+		for (i = 0; i < channel_cnt; i++)
+			default_chan_list[i] = ch.chspec;
+	} else {
 		ch.chnum = SOCIAL_CHAN_1;
 		p2p->cfg->d11inf.encchspec(&ch);
-		शेष_chan_list[0] = ch.chspec;
+		default_chan_list[0] = ch.chspec;
 		ch.chnum = SOCIAL_CHAN_2;
 		p2p->cfg->d11inf.encchspec(&ch);
-		शेष_chan_list[1] = ch.chspec;
+		default_chan_list[1] = ch.chspec;
 		ch.chnum = SOCIAL_CHAN_3;
 		p2p->cfg->d11inf.encchspec(&ch);
-		शेष_chan_list[2] = ch.chspec;
-	पूर्ण
-	err = brcmf_p2p_escan(p2p, channel_cnt, शेष_chan_list,
+		default_chan_list[2] = ch.chspec;
+	}
+	err = brcmf_p2p_escan(p2p, channel_cnt, default_chan_list,
 			      WL_P2P_DISC_ST_SEARCH, P2PAPI_BSSCFG_DEVICE);
-	kमुक्त(शेष_chan_list);
-निकास:
-	वापस err;
-पूर्ण
+	kfree(default_chan_list);
+exit:
+	return err;
+}
 
 
 /**
- * brcmf_p2p_afx_handler() - afx worker thपढ़ो.
+ * brcmf_p2p_afx_handler() - afx worker thread.
  *
  * @work:
  *
  */
-अटल व्योम brcmf_p2p_afx_handler(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा afx_hdl *afx_hdl = container_of(work, काष्ठा afx_hdl, afx_work);
-	काष्ठा brcmf_p2p_info *p2p = container_of(afx_hdl,
-						  काष्ठा brcmf_p2p_info,
+static void brcmf_p2p_afx_handler(struct work_struct *work)
+{
+	struct afx_hdl *afx_hdl = container_of(work, struct afx_hdl, afx_work);
+	struct brcmf_p2p_info *p2p = container_of(afx_hdl,
+						  struct brcmf_p2p_info,
 						  afx_hdl);
-	काष्ठा brcmf_pub *drvr = p2p->cfg->pub;
+	struct brcmf_pub *drvr = p2p->cfg->pub;
 	s32 err;
 
-	अगर (!afx_hdl->is_active)
-		वापस;
+	if (!afx_hdl->is_active)
+		return;
 
-	अगर (afx_hdl->is_listen && afx_hdl->my_listen_chan)
+	if (afx_hdl->is_listen && afx_hdl->my_listen_chan)
 		/* 100ms ~ 300ms */
 		err = brcmf_p2p_discover_listen(p2p, afx_hdl->my_listen_chan,
-						100 * (1 + pअक्रमom_u32() % 3));
-	अन्यथा
+						100 * (1 + prandom_u32() % 3));
+	else
 		err = brcmf_p2p_act_frm_search(p2p, afx_hdl->peer_listen_chan);
 
-	अगर (err) अणु
+	if (err) {
 		bphy_err(drvr, "ERROR occurred! value is (%d)\n", err);
-		अगर (test_bit(BRCMF_P2P_STATUS_FINDING_COMMON_CHANNEL,
+		if (test_bit(BRCMF_P2P_STATUS_FINDING_COMMON_CHANNEL,
 			     &p2p->status))
 			complete(&afx_hdl->act_frm_scan);
-	पूर्ण
-पूर्ण
+	}
+}
 
 
 /**
  * brcmf_p2p_af_searching_channel() - search channel.
  *
- * @p2p: p2p device info काष्ठा.
+ * @p2p: p2p device info struct.
  *
  */
-अटल s32 brcmf_p2p_af_searching_channel(काष्ठा brcmf_p2p_info *p2p)
-अणु
-	काष्ठा afx_hdl *afx_hdl = &p2p->afx_hdl;
-	काष्ठा brcmf_cfg80211_vअगर *pri_vअगर;
+static s32 brcmf_p2p_af_searching_channel(struct brcmf_p2p_info *p2p)
+{
+	struct afx_hdl *afx_hdl = &p2p->afx_hdl;
+	struct brcmf_cfg80211_vif *pri_vif;
 	s32 retry;
 
 	brcmf_dbg(TRACE, "Enter\n");
 
-	pri_vअगर = p2p->bss_idx[P2PAPI_BSSCFG_PRIMARY].vअगर;
+	pri_vif = p2p->bss_idx[P2PAPI_BSSCFG_PRIMARY].vif;
 
 	reinit_completion(&afx_hdl->act_frm_scan);
 	set_bit(BRCMF_P2P_STATUS_FINDING_COMMON_CHANNEL, &p2p->status);
 	afx_hdl->is_active = true;
 	afx_hdl->peer_chan = P2P_INVALID_CHANNEL;
 
-	/* Loop to रुको until we find a peer's channel or the
+	/* Loop to wait until we find a peer's channel or the
 	 * pending action frame tx is cancelled.
 	 */
 	retry = 0;
-	जबतक ((retry < P2P_CHANNEL_SYNC_RETRY) &&
-	       (afx_hdl->peer_chan == P2P_INVALID_CHANNEL)) अणु
+	while ((retry < P2P_CHANNEL_SYNC_RETRY) &&
+	       (afx_hdl->peer_chan == P2P_INVALID_CHANNEL)) {
 		afx_hdl->is_listen = false;
 		brcmf_dbg(TRACE, "Scheduling action frame for sending.. (%d)\n",
 			  retry);
 		/* search peer on peer's listen channel */
 		schedule_work(&afx_hdl->afx_work);
-		रुको_क्रम_completion_समयout(&afx_hdl->act_frm_scan,
+		wait_for_completion_timeout(&afx_hdl->act_frm_scan,
 					    P2P_AF_FRM_SCAN_MAX_WAIT);
-		अगर ((afx_hdl->peer_chan != P2P_INVALID_CHANNEL) ||
+		if ((afx_hdl->peer_chan != P2P_INVALID_CHANNEL) ||
 		    (!test_bit(BRCMF_P2P_STATUS_FINDING_COMMON_CHANNEL,
 			       &p2p->status)))
-			अवरोध;
+			break;
 
-		अगर (afx_hdl->my_listen_chan) अणु
+		if (afx_hdl->my_listen_chan) {
 			brcmf_dbg(TRACE, "Scheduling listen peer, channel=%d\n",
 				  afx_hdl->my_listen_chan);
 			/* listen on my listen channel */
 			afx_hdl->is_listen = true;
 			schedule_work(&afx_hdl->afx_work);
-			रुको_क्रम_completion_समयout(&afx_hdl->act_frm_scan,
+			wait_for_completion_timeout(&afx_hdl->act_frm_scan,
 						    P2P_AF_FRM_SCAN_MAX_WAIT);
-		पूर्ण
-		अगर ((afx_hdl->peer_chan != P2P_INVALID_CHANNEL) ||
+		}
+		if ((afx_hdl->peer_chan != P2P_INVALID_CHANNEL) ||
 		    (!test_bit(BRCMF_P2P_STATUS_FINDING_COMMON_CHANNEL,
 			       &p2p->status)))
-			अवरोध;
+			break;
 		retry++;
 
-		/* अगर sta is connected or connecting, sleep क्रम a जबतक beक्रमe
+		/* if sta is connected or connecting, sleep for a while before
 		 * retry af tx or finding a peer
 		 */
-		अगर (test_bit(BRCMF_VIF_STATUS_CONNECTED, &pri_vअगर->sme_state) ||
-		    test_bit(BRCMF_VIF_STATUS_CONNECTING, &pri_vअगर->sme_state))
+		if (test_bit(BRCMF_VIF_STATUS_CONNECTED, &pri_vif->sme_state) ||
+		    test_bit(BRCMF_VIF_STATUS_CONNECTING, &pri_vif->sme_state))
 			msleep(P2P_DEFAULT_SLEEP_TIME_VSDB);
-	पूर्ण
+	}
 
 	brcmf_dbg(TRACE, "Completed search/listen peer_chan=%d\n",
 		  afx_hdl->peer_chan);
@@ -1210,542 +1209,542 @@ brcmf_p2p_discover_listen(काष्ठा brcmf_p2p_info *p2p, u16 channel, u
 
 	clear_bit(BRCMF_P2P_STATUS_FINDING_COMMON_CHANNEL, &p2p->status);
 
-	वापस afx_hdl->peer_chan;
-पूर्ण
+	return afx_hdl->peer_chan;
+}
 
 
 /**
- * brcmf_p2p_scan_finding_common_channel() - was escan used क्रम finding channel
+ * brcmf_p2p_scan_finding_common_channel() - was escan used for finding channel
  *
- * @cfg: common configuration काष्ठा.
- * @bi: bss info काष्ठा, result from scan.
+ * @cfg: common configuration struct.
+ * @bi: bss info struct, result from scan.
  *
  */
-bool brcmf_p2p_scan_finding_common_channel(काष्ठा brcmf_cfg80211_info *cfg,
-					   काष्ठा brcmf_bss_info_le *bi)
+bool brcmf_p2p_scan_finding_common_channel(struct brcmf_cfg80211_info *cfg,
+					   struct brcmf_bss_info_le *bi)
 
-अणु
-	काष्ठा brcmf_p2p_info *p2p = &cfg->p2p;
-	काष्ठा afx_hdl *afx_hdl = &p2p->afx_hdl;
-	काष्ठा brcmu_chan ch;
+{
+	struct brcmf_p2p_info *p2p = &cfg->p2p;
+	struct afx_hdl *afx_hdl = &p2p->afx_hdl;
+	struct brcmu_chan ch;
 	u8 *ie;
 	s32 err;
 	u8 p2p_dev_addr[ETH_ALEN];
 
-	अगर (!test_bit(BRCMF_P2P_STATUS_FINDING_COMMON_CHANNEL, &p2p->status))
-		वापस false;
+	if (!test_bit(BRCMF_P2P_STATUS_FINDING_COMMON_CHANNEL, &p2p->status))
+		return false;
 
-	अगर (bi == शून्य) अणु
+	if (bi == NULL) {
 		brcmf_dbg(TRACE, "ACTION FRAME SCAN Done\n");
-		अगर (afx_hdl->peer_chan == P2P_INVALID_CHANNEL)
+		if (afx_hdl->peer_chan == P2P_INVALID_CHANNEL)
 			complete(&afx_hdl->act_frm_scan);
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
 	ie = ((u8 *)bi) + le16_to_cpu(bi->ie_offset);
-	स_रखो(p2p_dev_addr, 0, माप(p2p_dev_addr));
+	memset(p2p_dev_addr, 0, sizeof(p2p_dev_addr));
 	err = cfg80211_get_p2p_attr(ie, le32_to_cpu(bi->ie_length),
 				    IEEE80211_P2P_ATTR_DEVICE_INFO,
-				    p2p_dev_addr, माप(p2p_dev_addr));
-	अगर (err < 0)
+				    p2p_dev_addr, sizeof(p2p_dev_addr));
+	if (err < 0)
 		err = cfg80211_get_p2p_attr(ie, le32_to_cpu(bi->ie_length),
 					    IEEE80211_P2P_ATTR_DEVICE_ID,
-					    p2p_dev_addr, माप(p2p_dev_addr));
-	अगर ((err >= 0) &&
-	    (ether_addr_equal(p2p_dev_addr, afx_hdl->tx_dst_addr))) अणु
-		अगर (!bi->ctl_ch) अणु
+					    p2p_dev_addr, sizeof(p2p_dev_addr));
+	if ((err >= 0) &&
+	    (ether_addr_equal(p2p_dev_addr, afx_hdl->tx_dst_addr))) {
+		if (!bi->ctl_ch) {
 			ch.chspec = le16_to_cpu(bi->chanspec);
 			cfg->d11inf.decchspec(&ch);
 			bi->ctl_ch = ch.control_ch_num;
-		पूर्ण
+		}
 		afx_hdl->peer_chan = bi->ctl_ch;
 		brcmf_dbg(TRACE, "ACTION FRAME SCAN : Peer %pM found, channel : %d\n",
 			  afx_hdl->tx_dst_addr, afx_hdl->peer_chan);
 		complete(&afx_hdl->act_frm_scan);
-	पूर्ण
-	वापस true;
-पूर्ण
+	}
+	return true;
+}
 
 /**
- * brcmf_p2p_पात_action_frame() - पात action frame.
+ * brcmf_p2p_abort_action_frame() - abort action frame.
  *
- * @cfg: common configuration काष्ठा.
+ * @cfg: common configuration struct.
  *
  */
-अटल s32 brcmf_p2p_पात_action_frame(काष्ठा brcmf_cfg80211_info *cfg)
-अणु
-	काष्ठा brcmf_p2p_info *p2p = &cfg->p2p;
-	काष्ठा brcmf_cfg80211_vअगर *vअगर;
+static s32 brcmf_p2p_abort_action_frame(struct brcmf_cfg80211_info *cfg)
+{
+	struct brcmf_p2p_info *p2p = &cfg->p2p;
+	struct brcmf_cfg80211_vif *vif;
 	s32 err;
-	s32 पूर्णांक_val = 1;
+	s32 int_val = 1;
 
 	brcmf_dbg(TRACE, "Enter\n");
 
-	vअगर = p2p->bss_idx[P2PAPI_BSSCFG_DEVICE].vअगर;
-	err = brcmf_fil_bsscfg_data_set(vअगर->अगरp, "actframe_abort", &पूर्णांक_val,
-					माप(s32));
-	अगर (err)
+	vif = p2p->bss_idx[P2PAPI_BSSCFG_DEVICE].vif;
+	err = brcmf_fil_bsscfg_data_set(vif->ifp, "actframe_abort", &int_val,
+					sizeof(s32));
+	if (err)
 		brcmf_err(" aborting action frame has failed (%d)\n", err);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /**
- * brcmf_p2p_stop_रुको_next_action_frame() - finish scan अगर af tx complete.
+ * brcmf_p2p_stop_wait_next_action_frame() - finish scan if af tx complete.
  *
- * @cfg: common configuration काष्ठा.
+ * @cfg: common configuration struct.
  *
  */
-अटल व्योम
-brcmf_p2p_stop_रुको_next_action_frame(काष्ठा brcmf_cfg80211_info *cfg)
-अणु
-	काष्ठा brcmf_p2p_info *p2p = &cfg->p2p;
-	काष्ठा brcmf_अगर *अगरp = p2p->bss_idx[P2PAPI_BSSCFG_PRIMARY].vअगर->अगरp;
+static void
+brcmf_p2p_stop_wait_next_action_frame(struct brcmf_cfg80211_info *cfg)
+{
+	struct brcmf_p2p_info *p2p = &cfg->p2p;
+	struct brcmf_if *ifp = p2p->bss_idx[P2PAPI_BSSCFG_PRIMARY].vif->ifp;
 	s32 err;
 
-	अगर (test_bit(BRCMF_P2P_STATUS_SENDING_ACT_FRAME, &p2p->status) &&
+	if (test_bit(BRCMF_P2P_STATUS_SENDING_ACT_FRAME, &p2p->status) &&
 	    (test_bit(BRCMF_P2P_STATUS_ACTION_TX_COMPLETED, &p2p->status) ||
-	     test_bit(BRCMF_P2P_STATUS_ACTION_TX_NOACK, &p2p->status))) अणु
+	     test_bit(BRCMF_P2P_STATUS_ACTION_TX_NOACK, &p2p->status))) {
 		brcmf_dbg(TRACE, "*** Wake UP ** abort actframe iovar\n");
-		/* अगर channel is not zero, "actfame" uses off channel scan.
-		 * So पात scan क्रम off channel completion.
+		/* if channel is not zero, "actfame" uses off channel scan.
+		 * So abort scan for off channel completion.
 		 */
-		अगर (p2p->af_sent_channel) अणु
-			/* पात actframe using actframe_पात or पात scan */
-			err = brcmf_p2p_पात_action_frame(cfg);
-			अगर (err)
-				brcmf_notअगरy_escan_complete(cfg, अगरp, true,
+		if (p2p->af_sent_channel) {
+			/* abort actframe using actframe_abort or abort scan */
+			err = brcmf_p2p_abort_action_frame(cfg);
+			if (err)
+				brcmf_notify_escan_complete(cfg, ifp, true,
 							    true);
-		पूर्ण
-	पूर्ण अन्यथा अगर (test_bit(BRCMF_P2P_STATUS_WAITING_NEXT_AF_LISTEN,
-			    &p2p->status)) अणु
+		}
+	} else if (test_bit(BRCMF_P2P_STATUS_WAITING_NEXT_AF_LISTEN,
+			    &p2p->status)) {
 		brcmf_dbg(TRACE, "*** Wake UP ** abort listen for next af frame\n");
-		/* So पात scan to cancel listen */
-		brcmf_notअगरy_escan_complete(cfg, अगरp, true, true);
-	पूर्ण
-पूर्ण
+		/* So abort scan to cancel listen */
+		brcmf_notify_escan_complete(cfg, ifp, true, true);
+	}
+}
 
 
 /**
- * brcmf_p2p_gon_req_collision() - Check अगर go negotiaton collission
+ * brcmf_p2p_gon_req_collision() - Check if go negotiaton collission
  *
- * @p2p: p2p device info काष्ठा.
+ * @p2p: p2p device info struct.
  * @mac: MAC address.
  *
- * वापस true अगर recevied action frame is to be dropped.
+ * return true if recevied action frame is to be dropped.
  */
-अटल bool
-brcmf_p2p_gon_req_collision(काष्ठा brcmf_p2p_info *p2p, u8 *mac)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = p2p->cfg;
-	काष्ठा brcmf_अगर *अगरp;
+static bool
+brcmf_p2p_gon_req_collision(struct brcmf_p2p_info *p2p, u8 *mac)
+{
+	struct brcmf_cfg80211_info *cfg = p2p->cfg;
+	struct brcmf_if *ifp;
 
 	brcmf_dbg(TRACE, "Enter\n");
 
-	अगर (!test_bit(BRCMF_P2P_STATUS_WAITING_NEXT_ACT_FRAME, &p2p->status) ||
+	if (!test_bit(BRCMF_P2P_STATUS_WAITING_NEXT_ACT_FRAME, &p2p->status) ||
 	    !p2p->gon_req_action)
-		वापस false;
+		return false;
 
 	brcmf_dbg(TRACE, "GO Negotiation Request COLLISION !!!\n");
-	/* अगर sa(peer) addr is less than da(my) addr, then this device
+	/* if sa(peer) addr is less than da(my) addr, then this device
 	 * process peer's gon request and block to send gon req.
-	 * अगर not (sa addr > da addr),
+	 * if not (sa addr > da addr),
 	 * this device will process gon request and drop gon req of peer.
 	 */
-	अगरp = p2p->bss_idx[P2PAPI_BSSCFG_DEVICE].vअगर->अगरp;
-	अगर (स_भेद(mac, अगरp->mac_addr, ETH_ALEN) < 0) अणु
+	ifp = p2p->bss_idx[P2PAPI_BSSCFG_DEVICE].vif->ifp;
+	if (memcmp(mac, ifp->mac_addr, ETH_ALEN) < 0) {
 		brcmf_dbg(INFO, "Block transmit gon req !!!\n");
 		p2p->block_gon_req_tx = true;
-		/* अगर we are finding a common channel क्रम sending af,
-		 * करो not scan more to block to send current gon req
+		/* if we are finding a common channel for sending af,
+		 * do not scan more to block to send current gon req
 		 */
-		अगर (test_and_clear_bit(BRCMF_P2P_STATUS_FINDING_COMMON_CHANNEL,
+		if (test_and_clear_bit(BRCMF_P2P_STATUS_FINDING_COMMON_CHANNEL,
 				       &p2p->status))
 			complete(&p2p->afx_hdl.act_frm_scan);
-		अगर (test_and_clear_bit(BRCMF_P2P_STATUS_WAITING_NEXT_ACT_FRAME,
+		if (test_and_clear_bit(BRCMF_P2P_STATUS_WAITING_NEXT_ACT_FRAME,
 				       &p2p->status))
-			brcmf_p2p_stop_रुको_next_action_frame(cfg);
-		वापस false;
-	पूर्ण
+			brcmf_p2p_stop_wait_next_action_frame(cfg);
+		return false;
+	}
 
 	/* drop gon request of peer to process gon request by this device. */
 	brcmf_dbg(INFO, "Drop received gon req !!!\n");
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 
 /**
- * brcmf_p2p_notअगरy_action_frame_rx() - received action frame.
+ * brcmf_p2p_notify_action_frame_rx() - received action frame.
  *
- * @अगरp: पूर्णांकerfac control.
- * @e: event message. Not used, to make it usable क्रम fweh event dispatcher.
+ * @ifp: interfac control.
+ * @e: event message. Not used, to make it usable for fweh event dispatcher.
  * @data: payload of message, containing action frame data.
  *
  */
-पूर्णांक brcmf_p2p_notअगरy_action_frame_rx(काष्ठा brcmf_अगर *अगरp,
-				     स्थिर काष्ठा brcmf_event_msg *e,
-				     व्योम *data)
-अणु
-	काष्ठा brcmf_pub *drvr = अगरp->drvr;
-	काष्ठा brcmf_cfg80211_info *cfg = drvr->config;
-	काष्ठा brcmf_p2p_info *p2p = &cfg->p2p;
-	काष्ठा afx_hdl *afx_hdl = &p2p->afx_hdl;
-	काष्ठा wireless_dev *wdev;
-	u32 mgmt_frame_len = e->datalen - माप(काष्ठा brcmf_rx_mgmt_data);
-	काष्ठा brcmf_rx_mgmt_data *rxframe = (काष्ठा brcmf_rx_mgmt_data *)data;
+int brcmf_p2p_notify_action_frame_rx(struct brcmf_if *ifp,
+				     const struct brcmf_event_msg *e,
+				     void *data)
+{
+	struct brcmf_pub *drvr = ifp->drvr;
+	struct brcmf_cfg80211_info *cfg = drvr->config;
+	struct brcmf_p2p_info *p2p = &cfg->p2p;
+	struct afx_hdl *afx_hdl = &p2p->afx_hdl;
+	struct wireless_dev *wdev;
+	u32 mgmt_frame_len = e->datalen - sizeof(struct brcmf_rx_mgmt_data);
+	struct brcmf_rx_mgmt_data *rxframe = (struct brcmf_rx_mgmt_data *)data;
 	u8 *frame = (u8 *)(rxframe + 1);
-	काष्ठा brcmf_p2p_pub_act_frame *act_frm;
-	काष्ठा brcmf_p2psd_gas_pub_act_frame *sd_act_frm;
-	काष्ठा brcmu_chan ch;
-	काष्ठा ieee80211_mgmt *mgmt_frame;
+	struct brcmf_p2p_pub_act_frame *act_frm;
+	struct brcmf_p2psd_gas_pub_act_frame *sd_act_frm;
+	struct brcmu_chan ch;
+	struct ieee80211_mgmt *mgmt_frame;
 	s32 freq;
 	u16 mgmt_type;
 	u8 action;
 
-	अगर (e->datalen < माप(*rxframe)) अणु
+	if (e->datalen < sizeof(*rxframe)) {
 		brcmf_dbg(SCAN, "Event data to small. Ignore\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	ch.chspec = be16_to_cpu(rxframe->chanspec);
 	cfg->d11inf.decchspec(&ch);
-	/* Check अगर wpa_supplicant has रेजिस्टरed क्रम this frame */
-	brcmf_dbg(INFO, "ifp->vif->mgmt_rx_reg %04x\n", अगरp->vअगर->mgmt_rx_reg);
+	/* Check if wpa_supplicant has registered for this frame */
+	brcmf_dbg(INFO, "ifp->vif->mgmt_rx_reg %04x\n", ifp->vif->mgmt_rx_reg);
 	mgmt_type = (IEEE80211_STYPE_ACTION & IEEE80211_FCTL_STYPE) >> 4;
-	अगर ((अगरp->vअगर->mgmt_rx_reg & BIT(mgmt_type)) == 0)
-		वापस 0;
+	if ((ifp->vif->mgmt_rx_reg & BIT(mgmt_type)) == 0)
+		return 0;
 
-	brcmf_p2p_prपूर्णांक_actframe(false, frame, mgmt_frame_len);
+	brcmf_p2p_print_actframe(false, frame, mgmt_frame_len);
 
 	action = P2P_PAF_SUBTYPE_INVALID;
-	अगर (brcmf_p2p_is_pub_action(frame, mgmt_frame_len)) अणु
-		act_frm = (काष्ठा brcmf_p2p_pub_act_frame *)frame;
+	if (brcmf_p2p_is_pub_action(frame, mgmt_frame_len)) {
+		act_frm = (struct brcmf_p2p_pub_act_frame *)frame;
 		action = act_frm->subtype;
-		अगर ((action == P2P_PAF_GON_REQ) &&
-		    (brcmf_p2p_gon_req_collision(p2p, (u8 *)e->addr))) अणु
-			अगर (test_bit(BRCMF_P2P_STATUS_FINDING_COMMON_CHANNEL,
+		if ((action == P2P_PAF_GON_REQ) &&
+		    (brcmf_p2p_gon_req_collision(p2p, (u8 *)e->addr))) {
+			if (test_bit(BRCMF_P2P_STATUS_FINDING_COMMON_CHANNEL,
 				     &p2p->status) &&
-			    (ether_addr_equal(afx_hdl->tx_dst_addr, e->addr))) अणु
+			    (ether_addr_equal(afx_hdl->tx_dst_addr, e->addr))) {
 				afx_hdl->peer_chan = ch.control_ch_num;
 				brcmf_dbg(INFO, "GON request: Peer found, channel=%d\n",
 					  afx_hdl->peer_chan);
 				complete(&afx_hdl->act_frm_scan);
-			पूर्ण
-			वापस 0;
-		पूर्ण
+			}
+			return 0;
+		}
 		/* After complete GO Negotiation, roll back to mpc mode */
-		अगर ((action == P2P_PAF_GON_CONF) ||
+		if ((action == P2P_PAF_GON_CONF) ||
 		    (action == P2P_PAF_PROVDIS_RSP))
-			brcmf_set_mpc(अगरp, 1);
-		अगर (action == P2P_PAF_GON_CONF) अणु
+			brcmf_set_mpc(ifp, 1);
+		if (action == P2P_PAF_GON_CONF) {
 			brcmf_dbg(TRACE, "P2P: GO_NEG_PHASE status cleared\n");
 			clear_bit(BRCMF_P2P_STATUS_GO_NEG_PHASE, &p2p->status);
-		पूर्ण
-	पूर्ण अन्यथा अगर (brcmf_p2p_is_gas_action(frame, mgmt_frame_len)) अणु
-		sd_act_frm = (काष्ठा brcmf_p2psd_gas_pub_act_frame *)frame;
+		}
+	} else if (brcmf_p2p_is_gas_action(frame, mgmt_frame_len)) {
+		sd_act_frm = (struct brcmf_p2psd_gas_pub_act_frame *)frame;
 		action = sd_act_frm->action;
-	पूर्ण
+	}
 
-	अगर (test_bit(BRCMF_P2P_STATUS_WAITING_NEXT_ACT_FRAME, &p2p->status) &&
-	    (p2p->next_af_subtype == action)) अणु
+	if (test_bit(BRCMF_P2P_STATUS_WAITING_NEXT_ACT_FRAME, &p2p->status) &&
+	    (p2p->next_af_subtype == action)) {
 		brcmf_dbg(TRACE, "We got a right next frame! (%d)\n", action);
 		clear_bit(BRCMF_P2P_STATUS_WAITING_NEXT_ACT_FRAME,
 			  &p2p->status);
-		/* Stop रुकोing क्रम next AF. */
-		brcmf_p2p_stop_रुको_next_action_frame(cfg);
-	पूर्ण
+		/* Stop waiting for next AF. */
+		brcmf_p2p_stop_wait_next_action_frame(cfg);
+	}
 
-	mgmt_frame = kzalloc(दुरत्व(काष्ठा ieee80211_mgmt, u) +
+	mgmt_frame = kzalloc(offsetof(struct ieee80211_mgmt, u) +
 			     mgmt_frame_len, GFP_KERNEL);
-	अगर (!mgmt_frame) अणु
+	if (!mgmt_frame) {
 		bphy_err(drvr, "No memory available for action frame\n");
-		वापस -ENOMEM;
-	पूर्ण
-	स_नकल(mgmt_frame->da, अगरp->mac_addr, ETH_ALEN);
-	brcmf_fil_cmd_data_get(अगरp, BRCMF_C_GET_BSSID, mgmt_frame->bssid,
+		return -ENOMEM;
+	}
+	memcpy(mgmt_frame->da, ifp->mac_addr, ETH_ALEN);
+	brcmf_fil_cmd_data_get(ifp, BRCMF_C_GET_BSSID, mgmt_frame->bssid,
 			       ETH_ALEN);
-	स_नकल(mgmt_frame->sa, e->addr, ETH_ALEN);
+	memcpy(mgmt_frame->sa, e->addr, ETH_ALEN);
 	mgmt_frame->frame_control = cpu_to_le16(IEEE80211_STYPE_ACTION);
-	स_नकल(&mgmt_frame->u, frame, mgmt_frame_len);
-	mgmt_frame_len += दुरत्व(काष्ठा ieee80211_mgmt, u);
+	memcpy(&mgmt_frame->u, frame, mgmt_frame_len);
+	mgmt_frame_len += offsetof(struct ieee80211_mgmt, u);
 
 	freq = ieee80211_channel_to_frequency(ch.control_ch_num,
 					      ch.band == BRCMU_CHAN_BAND_2G ?
 					      NL80211_BAND_2GHZ :
 					      NL80211_BAND_5GHZ);
 
-	wdev = &अगरp->vअगर->wdev;
+	wdev = &ifp->vif->wdev;
 	cfg80211_rx_mgmt(wdev, freq, 0, (u8 *)mgmt_frame, mgmt_frame_len, 0);
 
-	kमुक्त(mgmt_frame);
-	वापस 0;
-पूर्ण
+	kfree(mgmt_frame);
+	return 0;
+}
 
 
 /**
- * brcmf_p2p_notअगरy_action_tx_complete() - transmit action frame complete
+ * brcmf_p2p_notify_action_tx_complete() - transmit action frame complete
  *
- * @अगरp: पूर्णांकerfac control.
- * @e: event message. Not used, to make it usable क्रम fweh event dispatcher.
+ * @ifp: interfac control.
+ * @e: event message. Not used, to make it usable for fweh event dispatcher.
  * @data: not used.
  *
  */
-पूर्णांक brcmf_p2p_notअगरy_action_tx_complete(काष्ठा brcmf_अगर *अगरp,
-					स्थिर काष्ठा brcmf_event_msg *e,
-					व्योम *data)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = अगरp->drvr->config;
-	काष्ठा brcmf_p2p_info *p2p = &cfg->p2p;
+int brcmf_p2p_notify_action_tx_complete(struct brcmf_if *ifp,
+					const struct brcmf_event_msg *e,
+					void *data)
+{
+	struct brcmf_cfg80211_info *cfg = ifp->drvr->config;
+	struct brcmf_p2p_info *p2p = &cfg->p2p;
 
 	brcmf_dbg(INFO, "Enter: event %s, status=%d\n",
 		  e->event_code == BRCMF_E_ACTION_FRAME_OFF_CHAN_COMPLETE ?
 		  "ACTION_FRAME_OFF_CHAN_COMPLETE" : "ACTION_FRAME_COMPLETE",
 		  e->status);
 
-	अगर (!test_bit(BRCMF_P2P_STATUS_SENDING_ACT_FRAME, &p2p->status))
-		वापस 0;
+	if (!test_bit(BRCMF_P2P_STATUS_SENDING_ACT_FRAME, &p2p->status))
+		return 0;
 
-	अगर (e->event_code == BRCMF_E_ACTION_FRAME_COMPLETE) अणु
-		अगर (e->status == BRCMF_E_STATUS_SUCCESS) अणु
+	if (e->event_code == BRCMF_E_ACTION_FRAME_COMPLETE) {
+		if (e->status == BRCMF_E_STATUS_SUCCESS) {
 			set_bit(BRCMF_P2P_STATUS_ACTION_TX_COMPLETED,
 				&p2p->status);
-			अगर (!p2p->रुको_क्रम_offchan_complete)
-				complete(&p2p->send_af_करोne);
-		पूर्ण अन्यथा अणु
+			if (!p2p->wait_for_offchan_complete)
+				complete(&p2p->send_af_done);
+		} else {
 			set_bit(BRCMF_P2P_STATUS_ACTION_TX_NOACK, &p2p->status);
-			/* If there is no ack, we करोn't need to रुको क्रम
+			/* If there is no ack, we don't need to wait for
 			 * WLC_E_ACTION_FRAME_OFFCHAN_COMPLETE event
 			 */
-			brcmf_p2p_stop_रुको_next_action_frame(cfg);
-		पूर्ण
+			brcmf_p2p_stop_wait_next_action_frame(cfg);
+		}
 
-	पूर्ण अन्यथा अणु
-		complete(&p2p->send_af_करोne);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	} else {
+		complete(&p2p->send_af_done);
+	}
+	return 0;
+}
 
 
 /**
  * brcmf_p2p_tx_action_frame() - send action frame over fil.
  *
- * @p2p: p2p info काष्ठा क्रम vअगर.
+ * @p2p: p2p info struct for vif.
  * @af_params: action frame data/info.
  *
- * Send an action frame immediately without करोing channel synchronization.
+ * Send an action frame immediately without doing channel synchronization.
  *
- * This function रुकोs क्रम a completion event beक्रमe वापसing.
+ * This function waits for a completion event before returning.
  * The WLC_E_ACTION_FRAME_COMPLETE event will be received when the action
  * frame is transmitted.
  */
-अटल s32 brcmf_p2p_tx_action_frame(काष्ठा brcmf_p2p_info *p2p,
-				     काष्ठा brcmf_fil_af_params_le *af_params)
-अणु
-	काष्ठा brcmf_pub *drvr = p2p->cfg->pub;
-	काष्ठा brcmf_cfg80211_vअगर *vअगर;
-	काष्ठा brcmf_p2p_action_frame *p2p_af;
+static s32 brcmf_p2p_tx_action_frame(struct brcmf_p2p_info *p2p,
+				     struct brcmf_fil_af_params_le *af_params)
+{
+	struct brcmf_pub *drvr = p2p->cfg->pub;
+	struct brcmf_cfg80211_vif *vif;
+	struct brcmf_p2p_action_frame *p2p_af;
 	s32 err = 0;
 
 	brcmf_dbg(TRACE, "Enter\n");
 
-	reinit_completion(&p2p->send_af_करोne);
+	reinit_completion(&p2p->send_af_done);
 	clear_bit(BRCMF_P2P_STATUS_ACTION_TX_COMPLETED, &p2p->status);
 	clear_bit(BRCMF_P2P_STATUS_ACTION_TX_NOACK, &p2p->status);
 
-	/* check अगर it is a p2p_presence response */
-	p2p_af = (काष्ठा brcmf_p2p_action_frame *)af_params->action_frame.data;
-	अगर (p2p_af->subtype == P2P_AF_PRESENCE_RSP)
-		vअगर = p2p->bss_idx[P2PAPI_BSSCFG_CONNECTION].vअगर;
-	अन्यथा
-		vअगर = p2p->bss_idx[P2PAPI_BSSCFG_DEVICE].vअगर;
+	/* check if it is a p2p_presence response */
+	p2p_af = (struct brcmf_p2p_action_frame *)af_params->action_frame.data;
+	if (p2p_af->subtype == P2P_AF_PRESENCE_RSP)
+		vif = p2p->bss_idx[P2PAPI_BSSCFG_CONNECTION].vif;
+	else
+		vif = p2p->bss_idx[P2PAPI_BSSCFG_DEVICE].vif;
 
-	err = brcmf_fil_bsscfg_data_set(vअगर->अगरp, "actframe", af_params,
-					माप(*af_params));
-	अगर (err) अणु
+	err = brcmf_fil_bsscfg_data_set(vif->ifp, "actframe", af_params,
+					sizeof(*af_params));
+	if (err) {
 		bphy_err(drvr, " sending action frame has failed\n");
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	p2p->af_sent_channel = le32_to_cpu(af_params->channel);
-	p2p->af_tx_sent_jअगरfies = jअगरfies;
+	p2p->af_tx_sent_jiffies = jiffies;
 
-	अगर (test_bit(BRCMF_P2P_STATUS_DISCOVER_LISTEN, &p2p->status) &&
+	if (test_bit(BRCMF_P2P_STATUS_DISCOVER_LISTEN, &p2p->status) &&
 	    p2p->af_sent_channel ==
-	    ieee80211_frequency_to_channel(p2p->reमुख्य_on_channel.center_freq))
-		p2p->रुको_क्रम_offchan_complete = false;
-	अन्यथा
-		p2p->रुको_क्रम_offchan_complete = true;
+	    ieee80211_frequency_to_channel(p2p->remain_on_channel.center_freq))
+		p2p->wait_for_offchan_complete = false;
+	else
+		p2p->wait_for_offchan_complete = true;
 
 	brcmf_dbg(TRACE, "Waiting for %s tx completion event\n",
-		  (p2p->रुको_क्रम_offchan_complete) ?
+		  (p2p->wait_for_offchan_complete) ?
 		   "off-channel" : "on-channel");
 
-	रुको_क्रम_completion_समयout(&p2p->send_af_करोne, P2P_AF_MAX_WAIT_TIME);
+	wait_for_completion_timeout(&p2p->send_af_done, P2P_AF_MAX_WAIT_TIME);
 
-	अगर (test_bit(BRCMF_P2P_STATUS_ACTION_TX_COMPLETED, &p2p->status)) अणु
+	if (test_bit(BRCMF_P2P_STATUS_ACTION_TX_COMPLETED, &p2p->status)) {
 		brcmf_dbg(TRACE, "TX action frame operation is success\n");
-	पूर्ण अन्यथा अणु
+	} else {
 		err = -EIO;
 		brcmf_dbg(TRACE, "TX action frame operation has failed\n");
-	पूर्ण
-	/* clear status bit क्रम action tx */
+	}
+	/* clear status bit for action tx */
 	clear_bit(BRCMF_P2P_STATUS_ACTION_TX_COMPLETED, &p2p->status);
 	clear_bit(BRCMF_P2P_STATUS_ACTION_TX_NOACK, &p2p->status);
 
-निकास:
-	वापस err;
-पूर्ण
+exit:
+	return err;
+}
 
 
 /**
- * brcmf_p2p_pub_af_tx() - खुला action frame tx routine.
+ * brcmf_p2p_pub_af_tx() - public action frame tx routine.
  *
- * @cfg: driver निजी data क्रम cfg80211 पूर्णांकerface.
+ * @cfg: driver private data for cfg80211 interface.
  * @af_params: action frame data/info.
- * @config_af_params: configuration data क्रम action frame.
+ * @config_af_params: configuration data for action frame.
  *
- * routine which transmits ation frame खुला type.
+ * routine which transmits ation frame public type.
  */
-अटल s32 brcmf_p2p_pub_af_tx(काष्ठा brcmf_cfg80211_info *cfg,
-			       काष्ठा brcmf_fil_af_params_le *af_params,
-			       काष्ठा brcmf_config_af_params *config_af_params)
-अणु
-	काष्ठा brcmf_p2p_info *p2p = &cfg->p2p;
-	काष्ठा brcmf_pub *drvr = cfg->pub;
-	काष्ठा brcmf_fil_action_frame_le *action_frame;
-	काष्ठा brcmf_p2p_pub_act_frame *act_frm;
+static s32 brcmf_p2p_pub_af_tx(struct brcmf_cfg80211_info *cfg,
+			       struct brcmf_fil_af_params_le *af_params,
+			       struct brcmf_config_af_params *config_af_params)
+{
+	struct brcmf_p2p_info *p2p = &cfg->p2p;
+	struct brcmf_pub *drvr = cfg->pub;
+	struct brcmf_fil_action_frame_le *action_frame;
+	struct brcmf_p2p_pub_act_frame *act_frm;
 	s32 err = 0;
 	u16 ie_len;
 
 	action_frame = &af_params->action_frame;
-	act_frm = (काष्ठा brcmf_p2p_pub_act_frame *)(action_frame->data);
+	act_frm = (struct brcmf_p2p_pub_act_frame *)(action_frame->data);
 
 	config_af_params->extra_listen = true;
 
-	चयन (act_frm->subtype) अणु
-	हाल P2P_PAF_GON_REQ:
+	switch (act_frm->subtype) {
+	case P2P_PAF_GON_REQ:
 		brcmf_dbg(TRACE, "P2P: GO_NEG_PHASE status set\n");
 		set_bit(BRCMF_P2P_STATUS_GO_NEG_PHASE, &p2p->status);
 		config_af_params->mpc_onoff = 0;
 		config_af_params->search_channel = true;
 		p2p->next_af_subtype = act_frm->subtype + 1;
 		p2p->gon_req_action = true;
-		/* increase dwell समय to रुको क्रम RESP frame */
-		af_params->dwell_समय = cpu_to_le32(P2P_AF_MED_DWELL_TIME);
-		अवरोध;
-	हाल P2P_PAF_GON_RSP:
+		/* increase dwell time to wait for RESP frame */
+		af_params->dwell_time = cpu_to_le32(P2P_AF_MED_DWELL_TIME);
+		break;
+	case P2P_PAF_GON_RSP:
 		p2p->next_af_subtype = act_frm->subtype + 1;
-		/* increase dwell समय to रुको क्रम CONF frame */
-		af_params->dwell_समय = cpu_to_le32(P2P_AF_MED_DWELL_TIME);
-		अवरोध;
-	हाल P2P_PAF_GON_CONF:
+		/* increase dwell time to wait for CONF frame */
+		af_params->dwell_time = cpu_to_le32(P2P_AF_MED_DWELL_TIME);
+		break;
+	case P2P_PAF_GON_CONF:
 		/* If we reached till GO Neg confirmation reset the filter */
 		brcmf_dbg(TRACE, "P2P: GO_NEG_PHASE status cleared\n");
 		clear_bit(BRCMF_P2P_STATUS_GO_NEG_PHASE, &p2p->status);
-		/* turn on mpc again अगर go nego is करोne */
+		/* turn on mpc again if go nego is done */
 		config_af_params->mpc_onoff = 1;
-		/* minimize dwell समय */
-		af_params->dwell_समय = cpu_to_le32(P2P_AF_MIN_DWELL_TIME);
+		/* minimize dwell time */
+		af_params->dwell_time = cpu_to_le32(P2P_AF_MIN_DWELL_TIME);
 		config_af_params->extra_listen = false;
-		अवरोध;
-	हाल P2P_PAF_INVITE_REQ:
+		break;
+	case P2P_PAF_INVITE_REQ:
 		config_af_params->search_channel = true;
 		p2p->next_af_subtype = act_frm->subtype + 1;
-		/* increase dwell समय */
-		af_params->dwell_समय = cpu_to_le32(P2P_AF_MED_DWELL_TIME);
-		अवरोध;
-	हाल P2P_PAF_INVITE_RSP:
-		/* minimize dwell समय */
-		af_params->dwell_समय = cpu_to_le32(P2P_AF_MIN_DWELL_TIME);
+		/* increase dwell time */
+		af_params->dwell_time = cpu_to_le32(P2P_AF_MED_DWELL_TIME);
+		break;
+	case P2P_PAF_INVITE_RSP:
+		/* minimize dwell time */
+		af_params->dwell_time = cpu_to_le32(P2P_AF_MIN_DWELL_TIME);
 		config_af_params->extra_listen = false;
-		अवरोध;
-	हाल P2P_PAF_DEVDIS_REQ:
+		break;
+	case P2P_PAF_DEVDIS_REQ:
 		config_af_params->search_channel = true;
 		p2p->next_af_subtype = act_frm->subtype + 1;
-		/* maximize dwell समय to रुको क्रम RESP frame */
-		af_params->dwell_समय = cpu_to_le32(P2P_AF_LONG_DWELL_TIME);
-		अवरोध;
-	हाल P2P_PAF_DEVDIS_RSP:
-		/* minimize dwell समय */
-		af_params->dwell_समय = cpu_to_le32(P2P_AF_MIN_DWELL_TIME);
+		/* maximize dwell time to wait for RESP frame */
+		af_params->dwell_time = cpu_to_le32(P2P_AF_LONG_DWELL_TIME);
+		break;
+	case P2P_PAF_DEVDIS_RSP:
+		/* minimize dwell time */
+		af_params->dwell_time = cpu_to_le32(P2P_AF_MIN_DWELL_TIME);
 		config_af_params->extra_listen = false;
-		अवरोध;
-	हाल P2P_PAF_PROVDIS_REQ:
+		break;
+	case P2P_PAF_PROVDIS_REQ:
 		ie_len = le16_to_cpu(action_frame->len) -
-			 दुरत्व(काष्ठा brcmf_p2p_pub_act_frame, elts);
-		अगर (cfg80211_get_p2p_attr(&act_frm->elts[0], ie_len,
+			 offsetof(struct brcmf_p2p_pub_act_frame, elts);
+		if (cfg80211_get_p2p_attr(&act_frm->elts[0], ie_len,
 					  IEEE80211_P2P_ATTR_GROUP_ID,
-					  शून्य, 0) < 0)
+					  NULL, 0) < 0)
 			config_af_params->search_channel = true;
 		config_af_params->mpc_onoff = 0;
 		p2p->next_af_subtype = act_frm->subtype + 1;
-		/* increase dwell समय to रुको क्रम RESP frame */
-		af_params->dwell_समय = cpu_to_le32(P2P_AF_MED_DWELL_TIME);
-		अवरोध;
-	हाल P2P_PAF_PROVDIS_RSP:
+		/* increase dwell time to wait for RESP frame */
+		af_params->dwell_time = cpu_to_le32(P2P_AF_MED_DWELL_TIME);
+		break;
+	case P2P_PAF_PROVDIS_RSP:
 		/* wpa_supplicant send go nego req right after prov disc */
 		p2p->next_af_subtype = P2P_PAF_GON_REQ;
-		/* increase dwell समय to MED level */
-		af_params->dwell_समय = cpu_to_le32(P2P_AF_MED_DWELL_TIME);
+		/* increase dwell time to MED level */
+		af_params->dwell_time = cpu_to_le32(P2P_AF_MED_DWELL_TIME);
 		config_af_params->extra_listen = false;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		bphy_err(drvr, "Unknown p2p pub act frame subtype: %d\n",
 			 act_frm->subtype);
 		err = -EINVAL;
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
-अटल bool brcmf_p2p_check_dwell_overflow(u32 requested_dwell,
-					   अचिन्हित दीर्घ dwell_jअगरfies)
-अणु
-	अगर ((requested_dwell & CUSTOM_RETRY_MASK) &&
-	    (jअगरfies_to_msecs(jअगरfies - dwell_jअगरfies) >
-	    (requested_dwell & ~CUSTOM_RETRY_MASK))) अणु
+static bool brcmf_p2p_check_dwell_overflow(u32 requested_dwell,
+					   unsigned long dwell_jiffies)
+{
+	if ((requested_dwell & CUSTOM_RETRY_MASK) &&
+	    (jiffies_to_msecs(jiffies - dwell_jiffies) >
+	    (requested_dwell & ~CUSTOM_RETRY_MASK))) {
 		brcmf_err("Action frame TX retry time over dwell time!\n");
-		वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+		return true;
+	}
+	return false;
+}
 /**
  * brcmf_p2p_send_action_frame() - send action frame .
  *
- * @cfg: driver निजी data क्रम cfg80211 पूर्णांकerface.
+ * @cfg: driver private data for cfg80211 interface.
  * @ndev: net device to transmit on.
- * @af_params: configuration data क्रम action frame.
+ * @af_params: configuration data for action frame.
  */
-bool brcmf_p2p_send_action_frame(काष्ठा brcmf_cfg80211_info *cfg,
-				 काष्ठा net_device *ndev,
-				 काष्ठा brcmf_fil_af_params_le *af_params)
-अणु
-	काष्ठा brcmf_p2p_info *p2p = &cfg->p2p;
-	काष्ठा brcmf_अगर *अगरp = netdev_priv(ndev);
-	काष्ठा brcmf_fil_action_frame_le *action_frame;
-	काष्ठा brcmf_config_af_params config_af_params;
-	काष्ठा afx_hdl *afx_hdl = &p2p->afx_hdl;
-	काष्ठा brcmf_pub *drvr = cfg->pub;
+bool brcmf_p2p_send_action_frame(struct brcmf_cfg80211_info *cfg,
+				 struct net_device *ndev,
+				 struct brcmf_fil_af_params_le *af_params)
+{
+	struct brcmf_p2p_info *p2p = &cfg->p2p;
+	struct brcmf_if *ifp = netdev_priv(ndev);
+	struct brcmf_fil_action_frame_le *action_frame;
+	struct brcmf_config_af_params config_af_params;
+	struct afx_hdl *afx_hdl = &p2p->afx_hdl;
+	struct brcmf_pub *drvr = cfg->pub;
 	u16 action_frame_len;
 	bool ack = false;
 	u8 category;
 	u8 action;
 	s32 tx_retry;
-	s32 extra_listen_समय;
-	uपूर्णांक delta_ms;
-	अचिन्हित दीर्घ dwell_jअगरfies = 0;
+	s32 extra_listen_time;
+	uint delta_ms;
+	unsigned long dwell_jiffies = 0;
 	bool dwell_overflow = false;
 
-	u32 requested_dwell = le32_to_cpu(af_params->dwell_समय);
+	u32 requested_dwell = le32_to_cpu(af_params->dwell_time);
 	action_frame = &af_params->action_frame;
 	action_frame_len = le16_to_cpu(action_frame->len);
 
-	brcmf_p2p_prपूर्णांक_actframe(true, action_frame->data, action_frame_len);
+	brcmf_p2p_print_actframe(true, action_frame->data, action_frame_len);
 
-	/* Add the शेष dwell समय. Dwell समय to stay off-channel */
-	/* to रुको क्रम a response action frame after transmitting an  */
+	/* Add the default dwell time. Dwell time to stay off-channel */
+	/* to wait for a response action frame after transmitting an  */
 	/* GO Negotiation action frame                                */
-	af_params->dwell_समय = cpu_to_le32(P2P_AF_DWELL_TIME);
+	af_params->dwell_time = cpu_to_le32(P2P_AF_DWELL_TIME);
 
 	category = action_frame->data[DOT11_ACTION_CAT_OFF];
 	action = action_frame->data[DOT11_ACTION_ACT_OFF];
@@ -1759,188 +1758,188 @@ bool brcmf_p2p_send_action_frame(काष्ठा brcmf_cfg80211_info *cfg,
 	config_af_params.search_channel = false;
 	config_af_params.extra_listen = false;
 
-	अगर (brcmf_p2p_is_pub_action(action_frame->data, action_frame_len)) अणु
-		/* p2p खुला action frame process */
-		अगर (brcmf_p2p_pub_af_tx(cfg, af_params, &config_af_params)) अणु
+	if (brcmf_p2p_is_pub_action(action_frame->data, action_frame_len)) {
+		/* p2p public action frame process */
+		if (brcmf_p2p_pub_af_tx(cfg, af_params, &config_af_params)) {
 			/* Just send unknown subtype frame with */
-			/* शेष parameters.                  */
+			/* default parameters.                  */
 			bphy_err(drvr, "P2P Public action frame, unknown subtype.\n");
-		पूर्ण
-	पूर्ण अन्यथा अगर (brcmf_p2p_is_gas_action(action_frame->data,
-					   action_frame_len)) अणु
+		}
+	} else if (brcmf_p2p_is_gas_action(action_frame->data,
+					   action_frame_len)) {
 		/* service discovery process */
-		अगर (action == P2PSD_ACTION_ID_GAS_IREQ ||
-		    action == P2PSD_ACTION_ID_GAS_CREQ) अणु
+		if (action == P2PSD_ACTION_ID_GAS_IREQ ||
+		    action == P2PSD_ACTION_ID_GAS_CREQ) {
 			/* configure service discovery query frame */
 			config_af_params.search_channel = true;
 
 			/* save next af suptype to cancel */
-			/* reमुख्यing dwell समय           */
+			/* remaining dwell time           */
 			p2p->next_af_subtype = action + 1;
 
-			af_params->dwell_समय =
+			af_params->dwell_time =
 				cpu_to_le32(P2P_AF_MED_DWELL_TIME);
-		पूर्ण अन्यथा अगर (action == P2PSD_ACTION_ID_GAS_IRESP ||
-			   action == P2PSD_ACTION_ID_GAS_CRESP) अणु
+		} else if (action == P2PSD_ACTION_ID_GAS_IRESP ||
+			   action == P2PSD_ACTION_ID_GAS_CRESP) {
 			/* configure service discovery response frame */
-			af_params->dwell_समय =
+			af_params->dwell_time =
 				cpu_to_le32(P2P_AF_MIN_DWELL_TIME);
-		पूर्ण अन्यथा अणु
+		} else {
 			bphy_err(drvr, "Unknown action type: %d\n", action);
-			जाओ निकास;
-		पूर्ण
-	पूर्ण अन्यथा अगर (brcmf_p2p_is_p2p_action(action_frame->data,
-					   action_frame_len)) अणु
-		/* करो not configure anything. it will be */
-		/* sent with a शेष configuration     */
-	पूर्ण अन्यथा अणु
+			goto exit;
+		}
+	} else if (brcmf_p2p_is_p2p_action(action_frame->data,
+					   action_frame_len)) {
+		/* do not configure anything. it will be */
+		/* sent with a default configuration     */
+	} else {
 		bphy_err(drvr, "Unknown Frame: category 0x%x, action 0x%x\n",
 			 category, action);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	/* अगर connecting on primary अगरace, sleep क्रम a जबतक beक्रमe sending
-	 * af tx क्रम VSDB
+	/* if connecting on primary iface, sleep for a while before sending
+	 * af tx for VSDB
 	 */
-	अगर (test_bit(BRCMF_VIF_STATUS_CONNECTING,
-		     &p2p->bss_idx[P2PAPI_BSSCFG_PRIMARY].vअगर->sme_state))
+	if (test_bit(BRCMF_VIF_STATUS_CONNECTING,
+		     &p2p->bss_idx[P2PAPI_BSSCFG_PRIMARY].vif->sme_state))
 		msleep(50);
 
-	/* अगर scan is ongoing, पात current scan. */
-	अगर (test_bit(BRCMF_SCAN_STATUS_BUSY, &cfg->scan_status))
-		brcmf_पात_scanning(cfg);
+	/* if scan is ongoing, abort current scan. */
+	if (test_bit(BRCMF_SCAN_STATUS_BUSY, &cfg->scan_status))
+		brcmf_abort_scanning(cfg);
 
-	स_नकल(afx_hdl->tx_dst_addr, action_frame->da, ETH_ALEN);
+	memcpy(afx_hdl->tx_dst_addr, action_frame->da, ETH_ALEN);
 
 	/* To make sure to send successfully action frame, turn off mpc */
-	अगर (config_af_params.mpc_onoff == 0)
-		brcmf_set_mpc(अगरp, 0);
+	if (config_af_params.mpc_onoff == 0)
+		brcmf_set_mpc(ifp, 0);
 
-	/* set status and destination address beक्रमe sending af */
-	अगर (p2p->next_af_subtype != P2P_PAF_SUBTYPE_INVALID) अणु
-		/* set status to cancel the reमुख्यed dwell समय in rx process */
+	/* set status and destination address before sending af */
+	if (p2p->next_af_subtype != P2P_PAF_SUBTYPE_INVALID) {
+		/* set status to cancel the remained dwell time in rx process */
 		set_bit(BRCMF_P2P_STATUS_WAITING_NEXT_ACT_FRAME, &p2p->status);
-	पूर्ण
+	}
 
 	p2p->af_sent_channel = 0;
 	set_bit(BRCMF_P2P_STATUS_SENDING_ACT_FRAME, &p2p->status);
 	/* validate channel and p2p ies */
-	अगर (config_af_params.search_channel &&
+	if (config_af_params.search_channel &&
 	    IS_P2P_SOCIAL_CHANNEL(le32_to_cpu(af_params->channel)) &&
-	    p2p->bss_idx[P2PAPI_BSSCFG_DEVICE].vअगर->saved_ie.probe_req_ie_len) अणु
+	    p2p->bss_idx[P2PAPI_BSSCFG_DEVICE].vif->saved_ie.probe_req_ie_len) {
 		afx_hdl = &p2p->afx_hdl;
 		afx_hdl->peer_listen_chan = le32_to_cpu(af_params->channel);
 
-		अगर (brcmf_p2p_af_searching_channel(p2p) ==
-							P2P_INVALID_CHANNEL) अणु
+		if (brcmf_p2p_af_searching_channel(p2p) ==
+							P2P_INVALID_CHANNEL) {
 			bphy_err(drvr, "Couldn't find peer's channel.\n");
-			जाओ निकास;
-		पूर्ण
+			goto exit;
+		}
 
-		/* Abort scan even क्रम VSDB scenarios. Scan माला_लो पातed in
+		/* Abort scan even for VSDB scenarios. Scan gets aborted in
 		 * firmware but after the check of piggyback algorithm. To take
-		 * care of current piggback algo, lets पात the scan here
+		 * care of current piggback algo, lets abort the scan here
 		 * itself.
 		 */
-		brcmf_notअगरy_escan_complete(cfg, अगरp, true, true);
+		brcmf_notify_escan_complete(cfg, ifp, true, true);
 
 		/* update channel */
 		af_params->channel = cpu_to_le32(afx_hdl->peer_chan);
-	पूर्ण
-	dwell_jअगरfies = jअगरfies;
+	}
+	dwell_jiffies = jiffies;
 	dwell_overflow = brcmf_p2p_check_dwell_overflow(requested_dwell,
-							dwell_jअगरfies);
+							dwell_jiffies);
 
 	tx_retry = 0;
-	जबतक (!p2p->block_gon_req_tx &&
+	while (!p2p->block_gon_req_tx &&
 	       (!ack) && (tx_retry < P2P_AF_TX_MAX_RETRY) &&
-		!dwell_overflow) अणु
-		अगर (af_params->channel)
+		!dwell_overflow) {
+		if (af_params->channel)
 			msleep(P2P_AF_RETRY_DELAY_TIME);
 
 		ack = !brcmf_p2p_tx_action_frame(p2p, af_params);
 		tx_retry++;
 		dwell_overflow = brcmf_p2p_check_dwell_overflow(requested_dwell,
-								dwell_jअगरfies);
-	पूर्ण
-	अगर (!ack) अणु
+								dwell_jiffies);
+	}
+	if (!ack) {
 		bphy_err(drvr, "Failed to send Action Frame(retry %d)\n",
 			 tx_retry);
 		clear_bit(BRCMF_P2P_STATUS_GO_NEG_PHASE, &p2p->status);
-	पूर्ण
+	}
 
-निकास:
+exit:
 	clear_bit(BRCMF_P2P_STATUS_SENDING_ACT_FRAME, &p2p->status);
 
-	/* WAR: someबार करोngle करोes not keep the dwell समय of 'actframe'.
-	 * अगर we coundn't get the next action response frame and करोngle करोes
-	 * not keep the dwell समय, go to listen state again to get next action
+	/* WAR: sometimes dongle does not keep the dwell time of 'actframe'.
+	 * if we coundn't get the next action response frame and dongle does
+	 * not keep the dwell time, go to listen state again to get next action
 	 * response frame.
 	 */
-	अगर (ack && config_af_params.extra_listen && !p2p->block_gon_req_tx &&
+	if (ack && config_af_params.extra_listen && !p2p->block_gon_req_tx &&
 	    test_bit(BRCMF_P2P_STATUS_WAITING_NEXT_ACT_FRAME, &p2p->status) &&
-	    p2p->af_sent_channel == afx_hdl->my_listen_chan) अणु
-		delta_ms = jअगरfies_to_msecs(jअगरfies - p2p->af_tx_sent_jअगरfies);
-		अगर (le32_to_cpu(af_params->dwell_समय) > delta_ms)
-			extra_listen_समय = le32_to_cpu(af_params->dwell_समय) -
+	    p2p->af_sent_channel == afx_hdl->my_listen_chan) {
+		delta_ms = jiffies_to_msecs(jiffies - p2p->af_tx_sent_jiffies);
+		if (le32_to_cpu(af_params->dwell_time) > delta_ms)
+			extra_listen_time = le32_to_cpu(af_params->dwell_time) -
 					    delta_ms;
-		अन्यथा
-			extra_listen_समय = 0;
-		अगर (extra_listen_समय > 50) अणु
+		else
+			extra_listen_time = 0;
+		if (extra_listen_time > 50) {
 			set_bit(BRCMF_P2P_STATUS_WAITING_NEXT_AF_LISTEN,
 				&p2p->status);
 			brcmf_dbg(INFO, "Wait more time! actual af time:%d, calculated extra listen:%d\n",
-				  le32_to_cpu(af_params->dwell_समय),
-				  extra_listen_समय);
-			extra_listen_समय += 100;
-			अगर (!brcmf_p2p_discover_listen(p2p,
+				  le32_to_cpu(af_params->dwell_time),
+				  extra_listen_time);
+			extra_listen_time += 100;
+			if (!brcmf_p2p_discover_listen(p2p,
 						       p2p->af_sent_channel,
-						       extra_listen_समय)) अणु
-				अचिन्हित दीर्घ duration;
+						       extra_listen_time)) {
+				unsigned long duration;
 
-				extra_listen_समय += 100;
-				duration = msecs_to_jअगरfies(extra_listen_समय);
-				रुको_क्रम_completion_समयout(&p2p->रुको_next_af,
+				extra_listen_time += 100;
+				duration = msecs_to_jiffies(extra_listen_time);
+				wait_for_completion_timeout(&p2p->wait_next_af,
 							    duration);
-			पूर्ण
+			}
 			clear_bit(BRCMF_P2P_STATUS_WAITING_NEXT_AF_LISTEN,
 				  &p2p->status);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (p2p->block_gon_req_tx) अणु
-		/* अगर ack is true, supplicant will रुको more समय(100ms).
-		 * so we will वापस it as a success to get more समय .
+	if (p2p->block_gon_req_tx) {
+		/* if ack is true, supplicant will wait more time(100ms).
+		 * so we will return it as a success to get more time .
 		 */
 		p2p->block_gon_req_tx = false;
 		ack = true;
-	पूर्ण
+	}
 
 	clear_bit(BRCMF_P2P_STATUS_WAITING_NEXT_ACT_FRAME, &p2p->status);
-	/* अगर all करोne, turn mpc on again */
-	अगर (config_af_params.mpc_onoff == 1)
-		brcmf_set_mpc(अगरp, 1);
+	/* if all done, turn mpc on again */
+	if (config_af_params.mpc_onoff == 1)
+		brcmf_set_mpc(ifp, 1);
 
-	वापस ack;
-पूर्ण
+	return ack;
+}
 
 /**
- * brcmf_p2p_notअगरy_rx_mgmt_p2p_probereq() - Event handler क्रम p2p probe req.
+ * brcmf_p2p_notify_rx_mgmt_p2p_probereq() - Event handler for p2p probe req.
  *
- * @अगरp: पूर्णांकerface poपूर्णांकer क्रम which event was received.
+ * @ifp: interface pointer for which event was received.
  * @e: even message.
  * @data: payload of event message (probe request).
  */
-s32 brcmf_p2p_notअगरy_rx_mgmt_p2p_probereq(काष्ठा brcmf_अगर *अगरp,
-					  स्थिर काष्ठा brcmf_event_msg *e,
-					  व्योम *data)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = अगरp->drvr->config;
-	काष्ठा brcmf_p2p_info *p2p = &cfg->p2p;
-	काष्ठा afx_hdl *afx_hdl = &p2p->afx_hdl;
-	काष्ठा brcmf_cfg80211_vअगर *vअगर = अगरp->vअगर;
-	काष्ठा brcmf_rx_mgmt_data *rxframe = (काष्ठा brcmf_rx_mgmt_data *)data;
-	काष्ठा brcmu_chan ch;
+s32 brcmf_p2p_notify_rx_mgmt_p2p_probereq(struct brcmf_if *ifp,
+					  const struct brcmf_event_msg *e,
+					  void *data)
+{
+	struct brcmf_cfg80211_info *cfg = ifp->drvr->config;
+	struct brcmf_p2p_info *p2p = &cfg->p2p;
+	struct afx_hdl *afx_hdl = &p2p->afx_hdl;
+	struct brcmf_cfg80211_vif *vif = ifp->vif;
+	struct brcmf_rx_mgmt_data *rxframe = (struct brcmf_rx_mgmt_data *)data;
+	struct brcmu_chan ch;
 	u8 *mgmt_frame;
 	u32 mgmt_frame_len;
 	s32 freq;
@@ -1949,595 +1948,595 @@ s32 brcmf_p2p_notअगरy_rx_mgmt_p2p_probereq(काष्ठा brcmf_अग
 	brcmf_dbg(INFO, "Enter: event %d reason %d\n", e->event_code,
 		  e->reason);
 
-	अगर (e->datalen < माप(*rxframe)) अणु
+	if (e->datalen < sizeof(*rxframe)) {
 		brcmf_dbg(SCAN, "Event data to small. Ignore\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	ch.chspec = be16_to_cpu(rxframe->chanspec);
 	cfg->d11inf.decchspec(&ch);
 
-	अगर (test_bit(BRCMF_P2P_STATUS_FINDING_COMMON_CHANNEL, &p2p->status) &&
-	    (ether_addr_equal(afx_hdl->tx_dst_addr, e->addr))) अणु
+	if (test_bit(BRCMF_P2P_STATUS_FINDING_COMMON_CHANNEL, &p2p->status) &&
+	    (ether_addr_equal(afx_hdl->tx_dst_addr, e->addr))) {
 		afx_hdl->peer_chan = ch.control_ch_num;
 		brcmf_dbg(INFO, "PROBE REQUEST: Peer found, channel=%d\n",
 			  afx_hdl->peer_chan);
 		complete(&afx_hdl->act_frm_scan);
-	पूर्ण
+	}
 
-	/* Firmware sends us two proberesponses क्रम each idx one. At the */
+	/* Firmware sends us two proberesponses for each idx one. At the */
 	/* moment anything but bsscfgidx 0 is passed up to supplicant    */
-	अगर (e->bsscfgidx == 0)
-		वापस 0;
+	if (e->bsscfgidx == 0)
+		return 0;
 
 	/* Filter any P2P probe reqs arriving during the GO-NEG Phase */
-	अगर (test_bit(BRCMF_P2P_STATUS_GO_NEG_PHASE, &p2p->status)) अणु
+	if (test_bit(BRCMF_P2P_STATUS_GO_NEG_PHASE, &p2p->status)) {
 		brcmf_dbg(INFO, "Filtering P2P probe_req in GO-NEG phase\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	/* Check अगर wpa_supplicant has रेजिस्टरed क्रम this frame */
-	brcmf_dbg(INFO, "vif->mgmt_rx_reg %04x\n", vअगर->mgmt_rx_reg);
+	/* Check if wpa_supplicant has registered for this frame */
+	brcmf_dbg(INFO, "vif->mgmt_rx_reg %04x\n", vif->mgmt_rx_reg);
 	mgmt_type = (IEEE80211_STYPE_PROBE_REQ & IEEE80211_FCTL_STYPE) >> 4;
-	अगर ((vअगर->mgmt_rx_reg & BIT(mgmt_type)) == 0)
-		वापस 0;
+	if ((vif->mgmt_rx_reg & BIT(mgmt_type)) == 0)
+		return 0;
 
 	mgmt_frame = (u8 *)(rxframe + 1);
-	mgmt_frame_len = e->datalen - माप(*rxframe);
+	mgmt_frame_len = e->datalen - sizeof(*rxframe);
 	freq = ieee80211_channel_to_frequency(ch.control_ch_num,
 					      ch.band == BRCMU_CHAN_BAND_2G ?
 					      NL80211_BAND_2GHZ :
 					      NL80211_BAND_5GHZ);
 
-	cfg80211_rx_mgmt(&vअगर->wdev, freq, 0, mgmt_frame, mgmt_frame_len, 0);
+	cfg80211_rx_mgmt(&vif->wdev, freq, 0, mgmt_frame, mgmt_frame_len, 0);
 
 	brcmf_dbg(INFO, "mgmt_frame_len (%d) , e->datalen (%d), chanspec (%04x), freq (%d)\n",
 		  mgmt_frame_len, e->datalen, ch.chspec, freq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /**
  * brcmf_p2p_get_current_chanspec() - Get current operation channel.
  *
- * @p2p: P2P specअगरic data.
- * @chanspec: chanspec to be वापसed.
+ * @p2p: P2P specific data.
+ * @chanspec: chanspec to be returned.
  */
-अटल व्योम brcmf_p2p_get_current_chanspec(काष्ठा brcmf_p2p_info *p2p,
+static void brcmf_p2p_get_current_chanspec(struct brcmf_p2p_info *p2p,
 					   u16 *chanspec)
-अणु
-	काष्ठा brcmf_अगर *अगरp;
+{
+	struct brcmf_if *ifp;
 	u8 mac_addr[ETH_ALEN];
-	काष्ठा brcmu_chan ch;
-	काष्ठा brcmf_bss_info_le *bi;
+	struct brcmu_chan ch;
+	struct brcmf_bss_info_le *bi;
 	u8 *buf;
 
-	अगरp = p2p->bss_idx[P2PAPI_BSSCFG_PRIMARY].vअगर->अगरp;
+	ifp = p2p->bss_idx[P2PAPI_BSSCFG_PRIMARY].vif->ifp;
 
-	अगर (brcmf_fil_cmd_data_get(अगरp, BRCMF_C_GET_BSSID, mac_addr,
-				   ETH_ALEN) == 0) अणु
+	if (brcmf_fil_cmd_data_get(ifp, BRCMF_C_GET_BSSID, mac_addr,
+				   ETH_ALEN) == 0) {
 		buf = kzalloc(WL_BSS_INFO_MAX, GFP_KERNEL);
-		अगर (buf != शून्य) अणु
+		if (buf != NULL) {
 			*(__le32 *)buf = cpu_to_le32(WL_BSS_INFO_MAX);
-			अगर (brcmf_fil_cmd_data_get(अगरp, BRCMF_C_GET_BSS_INFO,
-						   buf, WL_BSS_INFO_MAX) == 0) अणु
-				bi = (काष्ठा brcmf_bss_info_le *)(buf + 4);
+			if (brcmf_fil_cmd_data_get(ifp, BRCMF_C_GET_BSS_INFO,
+						   buf, WL_BSS_INFO_MAX) == 0) {
+				bi = (struct brcmf_bss_info_le *)(buf + 4);
 				*chanspec = le16_to_cpu(bi->chanspec);
-				kमुक्त(buf);
-				वापस;
-			पूर्ण
-			kमुक्त(buf);
-		पूर्ण
-	पूर्ण
-	/* Use शेष channel क्रम P2P */
+				kfree(buf);
+				return;
+			}
+			kfree(buf);
+		}
+	}
+	/* Use default channel for P2P */
 	ch.chnum = BRCMF_P2P_TEMP_CHAN;
 	ch.bw = BRCMU_CHAN_BW_20;
 	p2p->cfg->d11inf.encchspec(&ch);
 	*chanspec = ch.chspec;
-पूर्ण
+}
 
 /**
  * Change a P2P Role.
- * @cfg: driver निजी data क्रम cfg80211 पूर्णांकerface.
- * @अगर_type: पूर्णांकerface type.
- * Returns 0 अगर success.
+ * @cfg: driver private data for cfg80211 interface.
+ * @if_type: interface type.
+ * Returns 0 if success.
  */
-पूर्णांक brcmf_p2p_अगरchange(काष्ठा brcmf_cfg80211_info *cfg,
-		       क्रमागत brcmf_fil_p2p_अगर_types अगर_type)
-अणु
-	काष्ठा brcmf_p2p_info *p2p = &cfg->p2p;
-	काष्ठा brcmf_pub *drvr = cfg->pub;
-	काष्ठा brcmf_cfg80211_vअगर *vअगर;
-	काष्ठा brcmf_fil_p2p_अगर_le अगर_request;
+int brcmf_p2p_ifchange(struct brcmf_cfg80211_info *cfg,
+		       enum brcmf_fil_p2p_if_types if_type)
+{
+	struct brcmf_p2p_info *p2p = &cfg->p2p;
+	struct brcmf_pub *drvr = cfg->pub;
+	struct brcmf_cfg80211_vif *vif;
+	struct brcmf_fil_p2p_if_le if_request;
 	s32 err;
 	u16 chanspec;
 
 	brcmf_dbg(TRACE, "Enter\n");
 
-	vअगर = p2p->bss_idx[P2PAPI_BSSCFG_PRIMARY].vअगर;
-	अगर (!vअगर) अणु
+	vif = p2p->bss_idx[P2PAPI_BSSCFG_PRIMARY].vif;
+	if (!vif) {
 		bphy_err(drvr, "vif for P2PAPI_BSSCFG_PRIMARY does not exist\n");
-		वापस -EPERM;
-	पूर्ण
-	brcmf_notअगरy_escan_complete(cfg, vअगर->अगरp, true, true);
-	vअगर = p2p->bss_idx[P2PAPI_BSSCFG_CONNECTION].vअगर;
-	अगर (!vअगर) अणु
+		return -EPERM;
+	}
+	brcmf_notify_escan_complete(cfg, vif->ifp, true, true);
+	vif = p2p->bss_idx[P2PAPI_BSSCFG_CONNECTION].vif;
+	if (!vif) {
 		bphy_err(drvr, "vif for P2PAPI_BSSCFG_CONNECTION does not exist\n");
-		वापस -EPERM;
-	पूर्ण
-	brcmf_set_mpc(vअगर->अगरp, 0);
+		return -EPERM;
+	}
+	brcmf_set_mpc(vif->ifp, 0);
 
-	/* In concurrency हाल, STA may be alपढ़ोy associated in a particular */
-	/* channel. so retrieve the current channel of primary पूर्णांकerface and  */
-	/* then start the भव पूर्णांकerface on that.                          */
+	/* In concurrency case, STA may be already associated in a particular */
+	/* channel. so retrieve the current channel of primary interface and  */
+	/* then start the virtual interface on that.                          */
 	brcmf_p2p_get_current_chanspec(p2p, &chanspec);
 
-	अगर_request.type = cpu_to_le16((u16)अगर_type);
-	अगर_request.chspec = cpu_to_le16(chanspec);
-	स_नकल(अगर_request.addr, p2p->conn_पूर्णांक_addr, माप(अगर_request.addr));
+	if_request.type = cpu_to_le16((u16)if_type);
+	if_request.chspec = cpu_to_le16(chanspec);
+	memcpy(if_request.addr, p2p->conn_int_addr, sizeof(if_request.addr));
 
-	brcmf_cfg80211_arm_vअगर_event(cfg, vअगर);
-	err = brcmf_fil_iovar_data_set(vअगर->अगरp, "p2p_ifupd", &अगर_request,
-				       माप(अगर_request));
-	अगर (err) अणु
+	brcmf_cfg80211_arm_vif_event(cfg, vif);
+	err = brcmf_fil_iovar_data_set(vif->ifp, "p2p_ifupd", &if_request,
+				       sizeof(if_request));
+	if (err) {
 		bphy_err(drvr, "p2p_ifupd FAILED, err=%d\n", err);
-		brcmf_cfg80211_arm_vअगर_event(cfg, शून्य);
-		वापस err;
-	पूर्ण
-	err = brcmf_cfg80211_रुको_vअगर_event(cfg, BRCMF_E_IF_CHANGE,
+		brcmf_cfg80211_arm_vif_event(cfg, NULL);
+		return err;
+	}
+	err = brcmf_cfg80211_wait_vif_event(cfg, BRCMF_E_IF_CHANGE,
 					    BRCMF_VIF_EVENT_TIMEOUT);
-	brcmf_cfg80211_arm_vअगर_event(cfg, शून्य);
-	अगर (!err)  अणु
+	brcmf_cfg80211_arm_vif_event(cfg, NULL);
+	if (!err)  {
 		bphy_err(drvr, "No BRCMF_E_IF_CHANGE event received\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	err = brcmf_fil_cmd_पूर्णांक_set(vअगर->अगरp, BRCMF_C_SET_SCB_TIMEOUT,
+	err = brcmf_fil_cmd_int_set(vif->ifp, BRCMF_C_SET_SCB_TIMEOUT,
 				    BRCMF_SCB_TIMEOUT_VALUE);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक brcmf_p2p_request_p2p_अगर(काष्ठा brcmf_p2p_info *p2p,
-				    काष्ठा brcmf_अगर *अगरp, u8 ea[ETH_ALEN],
-				    क्रमागत brcmf_fil_p2p_अगर_types अगरtype)
-अणु
-	काष्ठा brcmf_fil_p2p_अगर_le अगर_request;
-	पूर्णांक err;
+static int brcmf_p2p_request_p2p_if(struct brcmf_p2p_info *p2p,
+				    struct brcmf_if *ifp, u8 ea[ETH_ALEN],
+				    enum brcmf_fil_p2p_if_types iftype)
+{
+	struct brcmf_fil_p2p_if_le if_request;
+	int err;
 	u16 chanspec;
 
-	/* we need a शेष channel */
+	/* we need a default channel */
 	brcmf_p2p_get_current_chanspec(p2p, &chanspec);
 
 	/* fill the firmware request */
-	स_नकल(अगर_request.addr, ea, ETH_ALEN);
-	अगर_request.type = cpu_to_le16((u16)अगरtype);
-	अगर_request.chspec = cpu_to_le16(chanspec);
+	memcpy(if_request.addr, ea, ETH_ALEN);
+	if_request.type = cpu_to_le16((u16)iftype);
+	if_request.chspec = cpu_to_le16(chanspec);
 
-	err = brcmf_fil_iovar_data_set(अगरp, "p2p_ifadd", &अगर_request,
-				       माप(अगर_request));
+	err = brcmf_fil_iovar_data_set(ifp, "p2p_ifadd", &if_request,
+				       sizeof(if_request));
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक brcmf_p2p_disable_p2p_अगर(काष्ठा brcmf_cfg80211_vअगर *vअगर)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = wdev_to_cfg(&vअगर->wdev);
-	काष्ठा net_device *pri_ndev = cfg_to_ndev(cfg);
-	काष्ठा brcmf_अगर *अगरp = netdev_priv(pri_ndev);
-	u8 *addr = vअगर->wdev.netdev->dev_addr;
+static int brcmf_p2p_disable_p2p_if(struct brcmf_cfg80211_vif *vif)
+{
+	struct brcmf_cfg80211_info *cfg = wdev_to_cfg(&vif->wdev);
+	struct net_device *pri_ndev = cfg_to_ndev(cfg);
+	struct brcmf_if *ifp = netdev_priv(pri_ndev);
+	u8 *addr = vif->wdev.netdev->dev_addr;
 
-	वापस brcmf_fil_iovar_data_set(अगरp, "p2p_ifdis", addr, ETH_ALEN);
-पूर्ण
+	return brcmf_fil_iovar_data_set(ifp, "p2p_ifdis", addr, ETH_ALEN);
+}
 
-अटल पूर्णांक brcmf_p2p_release_p2p_अगर(काष्ठा brcmf_cfg80211_vअगर *vअगर)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = wdev_to_cfg(&vअगर->wdev);
-	काष्ठा net_device *pri_ndev = cfg_to_ndev(cfg);
-	काष्ठा brcmf_अगर *अगरp = netdev_priv(pri_ndev);
-	u8 *addr = vअगर->wdev.netdev->dev_addr;
+static int brcmf_p2p_release_p2p_if(struct brcmf_cfg80211_vif *vif)
+{
+	struct brcmf_cfg80211_info *cfg = wdev_to_cfg(&vif->wdev);
+	struct net_device *pri_ndev = cfg_to_ndev(cfg);
+	struct brcmf_if *ifp = netdev_priv(pri_ndev);
+	u8 *addr = vif->wdev.netdev->dev_addr;
 
-	वापस brcmf_fil_iovar_data_set(अगरp, "p2p_ifdel", addr, ETH_ALEN);
-पूर्ण
+	return brcmf_fil_iovar_data_set(ifp, "p2p_ifdel", addr, ETH_ALEN);
+}
 
 /**
- * brcmf_p2p_create_p2pdev() - create a P2P_DEVICE भव पूर्णांकerface.
+ * brcmf_p2p_create_p2pdev() - create a P2P_DEVICE virtual interface.
  *
- * @p2p: P2P specअगरic data.
- * @wiphy: wiphy device of new पूर्णांकerface.
- * @addr: mac address क्रम this new पूर्णांकerface.
+ * @p2p: P2P specific data.
+ * @wiphy: wiphy device of new interface.
+ * @addr: mac address for this new interface.
  */
-अटल काष्ठा wireless_dev *brcmf_p2p_create_p2pdev(काष्ठा brcmf_p2p_info *p2p,
-						    काष्ठा wiphy *wiphy,
+static struct wireless_dev *brcmf_p2p_create_p2pdev(struct brcmf_p2p_info *p2p,
+						    struct wiphy *wiphy,
 						    u8 *addr)
-अणु
-	काष्ठा brcmf_pub *drvr = p2p->cfg->pub;
-	काष्ठा brcmf_cfg80211_vअगर *p2p_vअगर;
-	काष्ठा brcmf_अगर *p2p_अगरp;
-	काष्ठा brcmf_अगर *pri_अगरp;
-	पूर्णांक err;
+{
+	struct brcmf_pub *drvr = p2p->cfg->pub;
+	struct brcmf_cfg80211_vif *p2p_vif;
+	struct brcmf_if *p2p_ifp;
+	struct brcmf_if *pri_ifp;
+	int err;
 	u32 bsscfgidx;
 
-	अगर (p2p->bss_idx[P2PAPI_BSSCFG_DEVICE].vअगर)
-		वापस ERR_PTR(-ENOSPC);
+	if (p2p->bss_idx[P2PAPI_BSSCFG_DEVICE].vif)
+		return ERR_PTR(-ENOSPC);
 
-	p2p_vअगर = brcmf_alloc_vअगर(p2p->cfg, NL80211_IFTYPE_P2P_DEVICE);
-	अगर (IS_ERR(p2p_vअगर)) अणु
+	p2p_vif = brcmf_alloc_vif(p2p->cfg, NL80211_IFTYPE_P2P_DEVICE);
+	if (IS_ERR(p2p_vif)) {
 		bphy_err(drvr, "could not create discovery vif\n");
-		वापस (काष्ठा wireless_dev *)p2p_vअगर;
-	पूर्ण
+		return (struct wireless_dev *)p2p_vif;
+	}
 
-	pri_अगरp = p2p->bss_idx[P2PAPI_BSSCFG_PRIMARY].vअगर->अगरp;
+	pri_ifp = p2p->bss_idx[P2PAPI_BSSCFG_PRIMARY].vif->ifp;
 
-	/* firmware requires unique mac address क्रम p2pdev पूर्णांकerface */
-	अगर (addr && ether_addr_equal(addr, pri_अगरp->mac_addr)) अणु
+	/* firmware requires unique mac address for p2pdev interface */
+	if (addr && ether_addr_equal(addr, pri_ifp->mac_addr)) {
 		bphy_err(drvr, "discovery vif must be different from primary interface\n");
 		err = -EINVAL;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	brcmf_p2p_generate_bss_mac(p2p, addr);
-	brcmf_p2p_set_firmware(pri_अगरp, p2p->dev_addr);
+	brcmf_p2p_set_firmware(pri_ifp, p2p->dev_addr);
 
-	brcmf_cfg80211_arm_vअगर_event(p2p->cfg, p2p_vअगर);
-	brcmf_fweh_p2pdev_setup(pri_अगरp, true);
+	brcmf_cfg80211_arm_vif_event(p2p->cfg, p2p_vif);
+	brcmf_fweh_p2pdev_setup(pri_ifp, true);
 
 	/* Initialize P2P Discovery in the firmware */
-	err = brcmf_fil_iovar_पूर्णांक_set(pri_अगरp, "p2p_disc", 1);
-	अगर (err < 0) अणु
+	err = brcmf_fil_iovar_int_set(pri_ifp, "p2p_disc", 1);
+	if (err < 0) {
 		bphy_err(drvr, "set p2p_disc error\n");
-		brcmf_fweh_p2pdev_setup(pri_अगरp, false);
-		brcmf_cfg80211_arm_vअगर_event(p2p->cfg, शून्य);
-		जाओ fail;
-	पूर्ण
+		brcmf_fweh_p2pdev_setup(pri_ifp, false);
+		brcmf_cfg80211_arm_vif_event(p2p->cfg, NULL);
+		goto fail;
+	}
 
-	/* रुको क्रम firmware event */
-	err = brcmf_cfg80211_रुको_vअगर_event(p2p->cfg, BRCMF_E_IF_ADD,
+	/* wait for firmware event */
+	err = brcmf_cfg80211_wait_vif_event(p2p->cfg, BRCMF_E_IF_ADD,
 					    BRCMF_VIF_EVENT_TIMEOUT);
-	brcmf_cfg80211_arm_vअगर_event(p2p->cfg, शून्य);
-	brcmf_fweh_p2pdev_setup(pri_अगरp, false);
-	अगर (!err) अणु
+	brcmf_cfg80211_arm_vif_event(p2p->cfg, NULL);
+	brcmf_fweh_p2pdev_setup(pri_ifp, false);
+	if (!err) {
 		bphy_err(drvr, "timeout occurred\n");
 		err = -EIO;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	/* discovery पूर्णांकerface created */
-	p2p_अगरp = p2p_vअगर->अगरp;
-	p2p->bss_idx[P2PAPI_BSSCFG_DEVICE].vअगर = p2p_vअगर;
-	स_नकल(p2p_अगरp->mac_addr, p2p->dev_addr, ETH_ALEN);
-	स_नकल(&p2p_vअगर->wdev.address, p2p->dev_addr, माप(p2p->dev_addr));
+	/* discovery interface created */
+	p2p_ifp = p2p_vif->ifp;
+	p2p->bss_idx[P2PAPI_BSSCFG_DEVICE].vif = p2p_vif;
+	memcpy(p2p_ifp->mac_addr, p2p->dev_addr, ETH_ALEN);
+	memcpy(&p2p_vif->wdev.address, p2p->dev_addr, sizeof(p2p->dev_addr));
 
-	/* verअगरy bsscfg index क्रम P2P discovery */
-	err = brcmf_fil_iovar_पूर्णांक_get(pri_अगरp, "p2p_dev", &bsscfgidx);
-	अगर (err < 0) अणु
+	/* verify bsscfg index for P2P discovery */
+	err = brcmf_fil_iovar_int_get(pri_ifp, "p2p_dev", &bsscfgidx);
+	if (err < 0) {
 		bphy_err(drvr, "retrieving discover bsscfg index failed\n");
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	WARN_ON(p2p_अगरp->bsscfgidx != bsscfgidx);
+	WARN_ON(p2p_ifp->bsscfgidx != bsscfgidx);
 
-	init_completion(&p2p->send_af_करोne);
+	init_completion(&p2p->send_af_done);
 	INIT_WORK(&p2p->afx_hdl.afx_work, brcmf_p2p_afx_handler);
 	init_completion(&p2p->afx_hdl.act_frm_scan);
-	init_completion(&p2p->रुको_next_af);
+	init_completion(&p2p->wait_next_af);
 
-	वापस &p2p_vअगर->wdev;
+	return &p2p_vif->wdev;
 
 fail:
-	brcmf_मुक्त_vअगर(p2p_vअगर);
-	वापस ERR_PTR(err);
-पूर्ण
+	brcmf_free_vif(p2p_vif);
+	return ERR_PTR(err);
+}
 
-अटल पूर्णांक brcmf_p2p_get_conn_idx(काष्ठा brcmf_cfg80211_info *cfg)
-अणु
-	पूर्णांक i;
-	काष्ठा brcmf_अगर *अगरp = netdev_priv(cfg_to_ndev(cfg));
+static int brcmf_p2p_get_conn_idx(struct brcmf_cfg80211_info *cfg)
+{
+	int i;
+	struct brcmf_if *ifp = netdev_priv(cfg_to_ndev(cfg));
 
-	अगर (!अगरp)
-		वापस -ENODEV;
+	if (!ifp)
+		return -ENODEV;
 
-	क्रम (i = P2PAPI_BSSCFG_CONNECTION; i < P2PAPI_BSSCFG_MAX; i++) अणु
-		अगर (!cfg->p2p.bss_idx[i].vअगर) अणु
-			अगर (i == P2PAPI_BSSCFG_CONNECTION2 &&
-			    !(brcmf_feat_is_enabled(अगरp, BRCMF_FEAT_RSDB))) अणु
+	for (i = P2PAPI_BSSCFG_CONNECTION; i < P2PAPI_BSSCFG_MAX; i++) {
+		if (!cfg->p2p.bss_idx[i].vif) {
+			if (i == P2PAPI_BSSCFG_CONNECTION2 &&
+			    !(brcmf_feat_is_enabled(ifp, BRCMF_FEAT_RSDB))) {
 				brcmf_err("Multi p2p not supported");
-				वापस -EIO;
-			पूर्ण
-			वापस i;
-		पूर्ण
-	पूर्ण
-	वापस -EIO;
-पूर्ण
+				return -EIO;
+			}
+			return i;
+		}
+	}
+	return -EIO;
+}
 
 /**
- * brcmf_p2p_add_vअगर() - create a new P2P भव पूर्णांकerface.
+ * brcmf_p2p_add_vif() - create a new P2P virtual interface.
  *
- * @wiphy: wiphy device of new पूर्णांकerface.
- * @name: name of the new पूर्णांकerface.
- * @name_assign_type: origin of the पूर्णांकerface name
- * @type: nl80211 पूर्णांकerface type.
- * @params: contains mac address क्रम P2P device.
+ * @wiphy: wiphy device of new interface.
+ * @name: name of the new interface.
+ * @name_assign_type: origin of the interface name
+ * @type: nl80211 interface type.
+ * @params: contains mac address for P2P device.
  */
-काष्ठा wireless_dev *brcmf_p2p_add_vअगर(काष्ठा wiphy *wiphy, स्थिर अक्षर *name,
-				       अचिन्हित अक्षर name_assign_type,
-				       क्रमागत nl80211_अगरtype type,
-				       काष्ठा vअगर_params *params)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
-	काष्ठा brcmf_अगर *अगरp = netdev_priv(cfg_to_ndev(cfg));
-	काष्ठा brcmf_pub *drvr = cfg->pub;
-	काष्ठा brcmf_cfg80211_vअगर *vअगर;
-	क्रमागत brcmf_fil_p2p_अगर_types अगरtype;
-	पूर्णांक err = 0;
-	पूर्णांक connidx;
-	u8 *p2p_पूर्णांकf_addr;
+struct wireless_dev *brcmf_p2p_add_vif(struct wiphy *wiphy, const char *name,
+				       unsigned char name_assign_type,
+				       enum nl80211_iftype type,
+				       struct vif_params *params)
+{
+	struct brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
+	struct brcmf_if *ifp = netdev_priv(cfg_to_ndev(cfg));
+	struct brcmf_pub *drvr = cfg->pub;
+	struct brcmf_cfg80211_vif *vif;
+	enum brcmf_fil_p2p_if_types iftype;
+	int err = 0;
+	int connidx;
+	u8 *p2p_intf_addr;
 
-	अगर (brcmf_cfg80211_vअगर_event_armed(cfg))
-		वापस ERR_PTR(-EBUSY);
+	if (brcmf_cfg80211_vif_event_armed(cfg))
+		return ERR_PTR(-EBUSY);
 
 	brcmf_dbg(INFO, "adding vif \"%s\" (type=%d)\n", name, type);
 
-	चयन (type) अणु
-	हाल NL80211_IFTYPE_P2P_CLIENT:
-		अगरtype = BRCMF_FIL_P2P_IF_CLIENT;
-		अवरोध;
-	हाल NL80211_IFTYPE_P2P_GO:
-		अगरtype = BRCMF_FIL_P2P_IF_GO;
-		अवरोध;
-	हाल NL80211_IFTYPE_P2P_DEVICE:
-		वापस brcmf_p2p_create_p2pdev(&cfg->p2p, wiphy,
+	switch (type) {
+	case NL80211_IFTYPE_P2P_CLIENT:
+		iftype = BRCMF_FIL_P2P_IF_CLIENT;
+		break;
+	case NL80211_IFTYPE_P2P_GO:
+		iftype = BRCMF_FIL_P2P_IF_GO;
+		break;
+	case NL80211_IFTYPE_P2P_DEVICE:
+		return brcmf_p2p_create_p2pdev(&cfg->p2p, wiphy,
 					       params->macaddr);
-	शेष:
-		वापस ERR_PTR(-EOPNOTSUPP);
-	पूर्ण
+	default:
+		return ERR_PTR(-EOPNOTSUPP);
+	}
 
-	vअगर = brcmf_alloc_vअगर(cfg, type);
-	अगर (IS_ERR(vअगर))
-		वापस (काष्ठा wireless_dev *)vअगर;
-	brcmf_cfg80211_arm_vअगर_event(cfg, vअगर);
+	vif = brcmf_alloc_vif(cfg, type);
+	if (IS_ERR(vif))
+		return (struct wireless_dev *)vif;
+	brcmf_cfg80211_arm_vif_event(cfg, vif);
 
 	connidx = brcmf_p2p_get_conn_idx(cfg);
 
-	अगर (connidx == P2PAPI_BSSCFG_CONNECTION)
-		p2p_पूर्णांकf_addr = cfg->p2p.conn_पूर्णांक_addr;
-	अन्यथा अगर (connidx == P2PAPI_BSSCFG_CONNECTION2)
-		p2p_पूर्णांकf_addr = cfg->p2p.conn2_पूर्णांक_addr;
-	अन्यथा
+	if (connidx == P2PAPI_BSSCFG_CONNECTION)
+		p2p_intf_addr = cfg->p2p.conn_int_addr;
+	else if (connidx == P2PAPI_BSSCFG_CONNECTION2)
+		p2p_intf_addr = cfg->p2p.conn2_int_addr;
+	else
 		err = -EINVAL;
 
-	अगर (!err)
-		err =  brcmf_p2p_request_p2p_अगर(&cfg->p2p, अगरp,
-						p2p_पूर्णांकf_addr, अगरtype);
+	if (!err)
+		err =  brcmf_p2p_request_p2p_if(&cfg->p2p, ifp,
+						p2p_intf_addr, iftype);
 
-	अगर (err) अणु
+	if (err) {
 		brcmf_err("request p2p interface failed\n");
-		brcmf_cfg80211_arm_vअगर_event(cfg, शून्य);
-		जाओ fail;
-	पूर्ण
+		brcmf_cfg80211_arm_vif_event(cfg, NULL);
+		goto fail;
+	}
 
-	/* रुको क्रम firmware event */
-	err = brcmf_cfg80211_रुको_vअगर_event(cfg, BRCMF_E_IF_ADD,
+	/* wait for firmware event */
+	err = brcmf_cfg80211_wait_vif_event(cfg, BRCMF_E_IF_ADD,
 					    BRCMF_VIF_EVENT_TIMEOUT);
-	brcmf_cfg80211_arm_vअगर_event(cfg, शून्य);
-	अगर (!err) अणु
+	brcmf_cfg80211_arm_vif_event(cfg, NULL);
+	if (!err) {
 		bphy_err(drvr, "timeout occurred\n");
 		err = -EIO;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	/* पूर्णांकerface created in firmware */
-	अगरp = vअगर->अगरp;
-	अगर (!अगरp) अणु
+	/* interface created in firmware */
+	ifp = vif->ifp;
+	if (!ifp) {
 		bphy_err(drvr, "no if pointer provided\n");
 		err = -ENOENT;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	म_नकलन(अगरp->ndev->name, name, माप(अगरp->ndev->name) - 1);
-	अगरp->ndev->name_assign_type = name_assign_type;
-	err = brcmf_net_attach(अगरp, true);
-	अगर (err) अणु
+	strncpy(ifp->ndev->name, name, sizeof(ifp->ndev->name) - 1);
+	ifp->ndev->name_assign_type = name_assign_type;
+	err = brcmf_net_attach(ifp, true);
+	if (err) {
 		bphy_err(drvr, "Registering netdevice failed\n");
-		मुक्त_netdev(अगरp->ndev);
-		जाओ fail;
-	पूर्ण
+		free_netdev(ifp->ndev);
+		goto fail;
+	}
 
-	cfg->p2p.bss_idx[connidx].vअगर = vअगर;
-	/* Disable firmware roaming क्रम P2P पूर्णांकerface  */
-	brcmf_fil_iovar_पूर्णांक_set(अगरp, "roam_off", 1);
-	अगर (अगरtype == BRCMF_FIL_P2P_IF_GO) अणु
-		/* set station समयout क्रम p2p */
-		brcmf_fil_cmd_पूर्णांक_set(अगरp, BRCMF_C_SET_SCB_TIMEOUT,
+	cfg->p2p.bss_idx[connidx].vif = vif;
+	/* Disable firmware roaming for P2P interface  */
+	brcmf_fil_iovar_int_set(ifp, "roam_off", 1);
+	if (iftype == BRCMF_FIL_P2P_IF_GO) {
+		/* set station timeout for p2p */
+		brcmf_fil_cmd_int_set(ifp, BRCMF_C_SET_SCB_TIMEOUT,
 				      BRCMF_SCB_TIMEOUT_VALUE);
-	पूर्ण
-	वापस &अगरp->vअगर->wdev;
+	}
+	return &ifp->vif->wdev;
 
 fail:
-	brcmf_मुक्त_vअगर(vअगर);
-	वापस ERR_PTR(err);
-पूर्ण
+	brcmf_free_vif(vif);
+	return ERR_PTR(err);
+}
 
 /**
- * brcmf_p2p_del_vअगर() - delete a P2P भव पूर्णांकerface.
+ * brcmf_p2p_del_vif() - delete a P2P virtual interface.
  *
- * @wiphy: wiphy device of पूर्णांकerface.
- * @wdev: wireless device of पूर्णांकerface.
+ * @wiphy: wiphy device of interface.
+ * @wdev: wireless device of interface.
  */
-पूर्णांक brcmf_p2p_del_vअगर(काष्ठा wiphy *wiphy, काष्ठा wireless_dev *wdev)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
-	काष्ठा brcmf_p2p_info *p2p = &cfg->p2p;
-	काष्ठा brcmf_cfg80211_vअगर *vअगर;
-	क्रमागत nl80211_अगरtype अगरtype;
-	bool रुको_क्रम_disable = false;
-	पूर्णांक err;
+int brcmf_p2p_del_vif(struct wiphy *wiphy, struct wireless_dev *wdev)
+{
+	struct brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
+	struct brcmf_p2p_info *p2p = &cfg->p2p;
+	struct brcmf_cfg80211_vif *vif;
+	enum nl80211_iftype iftype;
+	bool wait_for_disable = false;
+	int err;
 
 	brcmf_dbg(TRACE, "delete P2P vif\n");
-	vअगर = container_of(wdev, काष्ठा brcmf_cfg80211_vअगर, wdev);
+	vif = container_of(wdev, struct brcmf_cfg80211_vif, wdev);
 
-	अगरtype = vअगर->wdev.अगरtype;
-	brcmf_cfg80211_arm_vअगर_event(cfg, vअगर);
-	चयन (अगरtype) अणु
-	हाल NL80211_IFTYPE_P2P_CLIENT:
-		अगर (test_bit(BRCMF_VIF_STATUS_DISCONNECTING, &vअगर->sme_state))
-			रुको_क्रम_disable = true;
-		अवरोध;
+	iftype = vif->wdev.iftype;
+	brcmf_cfg80211_arm_vif_event(cfg, vif);
+	switch (iftype) {
+	case NL80211_IFTYPE_P2P_CLIENT:
+		if (test_bit(BRCMF_VIF_STATUS_DISCONNECTING, &vif->sme_state))
+			wait_for_disable = true;
+		break;
 
-	हाल NL80211_IFTYPE_P2P_GO:
-		अगर (!brcmf_p2p_disable_p2p_अगर(vअगर))
-			रुको_क्रम_disable = true;
-		अवरोध;
+	case NL80211_IFTYPE_P2P_GO:
+		if (!brcmf_p2p_disable_p2p_if(vif))
+			wait_for_disable = true;
+		break;
 
-	हाल NL80211_IFTYPE_P2P_DEVICE:
-		अगर (!p2p->bss_idx[P2PAPI_BSSCFG_DEVICE].vअगर)
-			वापस 0;
-		brcmf_p2p_cancel_reमुख्य_on_channel(vअगर->अगरp);
+	case NL80211_IFTYPE_P2P_DEVICE:
+		if (!p2p->bss_idx[P2PAPI_BSSCFG_DEVICE].vif)
+			return 0;
+		brcmf_p2p_cancel_remain_on_channel(vif->ifp);
 		brcmf_p2p_deinit_discovery(p2p);
-		अवरोध;
+		break;
 
-	शेष:
-		वापस -ENOTSUPP;
-	पूर्ण
+	default:
+		return -ENOTSUPP;
+	}
 
 	clear_bit(BRCMF_P2P_STATUS_GO_NEG_PHASE, &p2p->status);
 	brcmf_dbg(INFO, "P2P: GO_NEG_PHASE status cleared\n");
 
-	अगर (रुको_क्रम_disable)
-		रुको_क्रम_completion_समयout(&cfg->vअगर_disabled,
+	if (wait_for_disable)
+		wait_for_completion_timeout(&cfg->vif_disabled,
 					    BRCMF_P2P_DISABLE_TIMEOUT);
 
 	err = 0;
-	अगर (अगरtype != NL80211_IFTYPE_P2P_DEVICE) अणु
-		brcmf_vअगर_clear_mgmt_ies(vअगर);
-		err = brcmf_p2p_release_p2p_अगर(vअगर);
-	पूर्ण
-	अगर (!err) अणु
-		/* रुको क्रम firmware event */
-		err = brcmf_cfg80211_रुको_vअगर_event(cfg, BRCMF_E_IF_DEL,
+	if (iftype != NL80211_IFTYPE_P2P_DEVICE) {
+		brcmf_vif_clear_mgmt_ies(vif);
+		err = brcmf_p2p_release_p2p_if(vif);
+	}
+	if (!err) {
+		/* wait for firmware event */
+		err = brcmf_cfg80211_wait_vif_event(cfg, BRCMF_E_IF_DEL,
 						    BRCMF_VIF_EVENT_TIMEOUT);
-		अगर (!err)
+		if (!err)
 			err = -EIO;
-		अन्यथा
+		else
 			err = 0;
-	पूर्ण
-	brcmf_हटाओ_पूर्णांकerface(vअगर->अगरp, true);
+	}
+	brcmf_remove_interface(vif->ifp, true);
 
-	brcmf_cfg80211_arm_vअगर_event(cfg, शून्य);
-	अगर (अगरtype != NL80211_IFTYPE_P2P_DEVICE)
-		p2p->bss_idx[P2PAPI_BSSCFG_CONNECTION].vअगर = शून्य;
+	brcmf_cfg80211_arm_vif_event(cfg, NULL);
+	if (iftype != NL80211_IFTYPE_P2P_DEVICE)
+		p2p->bss_idx[P2PAPI_BSSCFG_CONNECTION].vif = NULL;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम brcmf_p2p_अगरp_हटाओd(काष्ठा brcmf_अगर *अगरp, bool locked)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg;
-	काष्ठा brcmf_cfg80211_vअगर *vअगर;
+void brcmf_p2p_ifp_removed(struct brcmf_if *ifp, bool locked)
+{
+	struct brcmf_cfg80211_info *cfg;
+	struct brcmf_cfg80211_vif *vif;
 
 	brcmf_dbg(INFO, "P2P: device interface removed\n");
-	vअगर = अगरp->vअगर;
-	cfg = wdev_to_cfg(&vअगर->wdev);
-	cfg->p2p.bss_idx[P2PAPI_BSSCFG_DEVICE].vअगर = शून्य;
-	अगर (!locked) अणु
+	vif = ifp->vif;
+	cfg = wdev_to_cfg(&vif->wdev);
+	cfg->p2p.bss_idx[P2PAPI_BSSCFG_DEVICE].vif = NULL;
+	if (!locked) {
 		rtnl_lock();
 		wiphy_lock(cfg->wiphy);
-		cfg80211_unरेजिस्टर_wdev(&vअगर->wdev);
+		cfg80211_unregister_wdev(&vif->wdev);
 		wiphy_unlock(cfg->wiphy);
 		rtnl_unlock();
-	पूर्ण अन्यथा अणु
-		cfg80211_unरेजिस्टर_wdev(&vअगर->wdev);
-	पूर्ण
-	brcmf_मुक्त_vअगर(vअगर);
-पूर्ण
+	} else {
+		cfg80211_unregister_wdev(&vif->wdev);
+	}
+	brcmf_free_vif(vif);
+}
 
-पूर्णांक brcmf_p2p_start_device(काष्ठा wiphy *wiphy, काष्ठा wireless_dev *wdev)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
-	काष्ठा brcmf_p2p_info *p2p = &cfg->p2p;
-	काष्ठा brcmf_cfg80211_vअगर *vअगर;
-	पूर्णांक err;
+int brcmf_p2p_start_device(struct wiphy *wiphy, struct wireless_dev *wdev)
+{
+	struct brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
+	struct brcmf_p2p_info *p2p = &cfg->p2p;
+	struct brcmf_cfg80211_vif *vif;
+	int err;
 
-	vअगर = container_of(wdev, काष्ठा brcmf_cfg80211_vअगर, wdev);
+	vif = container_of(wdev, struct brcmf_cfg80211_vif, wdev);
 	mutex_lock(&cfg->usr_sync);
 	err = brcmf_p2p_enable_discovery(p2p);
-	अगर (!err)
-		set_bit(BRCMF_VIF_STATUS_READY, &vअगर->sme_state);
+	if (!err)
+		set_bit(BRCMF_VIF_STATUS_READY, &vif->sme_state);
 	mutex_unlock(&cfg->usr_sync);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम brcmf_p2p_stop_device(काष्ठा wiphy *wiphy, काष्ठा wireless_dev *wdev)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
-	काष्ठा brcmf_p2p_info *p2p = &cfg->p2p;
-	काष्ठा brcmf_cfg80211_vअगर *vअगर;
+void brcmf_p2p_stop_device(struct wiphy *wiphy, struct wireless_dev *wdev)
+{
+	struct brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
+	struct brcmf_p2p_info *p2p = &cfg->p2p;
+	struct brcmf_cfg80211_vif *vif;
 
-	vअगर = container_of(wdev, काष्ठा brcmf_cfg80211_vअगर, wdev);
-	/* This call can be result of the unरेजिस्टर_wdev call. In that हाल
-	 * we करोnt want to करो anything anymore. Just वापस. The config vअगर
-	 * will have been cleared at this poपूर्णांक.
+	vif = container_of(wdev, struct brcmf_cfg80211_vif, wdev);
+	/* This call can be result of the unregister_wdev call. In that case
+	 * we dont want to do anything anymore. Just return. The config vif
+	 * will have been cleared at this point.
 	 */
-	अगर (p2p->bss_idx[P2PAPI_BSSCFG_DEVICE].vअगर == vअगर) अणु
+	if (p2p->bss_idx[P2PAPI_BSSCFG_DEVICE].vif == vif) {
 		mutex_lock(&cfg->usr_sync);
 		/* Set the discovery state to SCAN */
-		(व्योम)brcmf_p2p_set_discover_state(vअगर->अगरp,
+		(void)brcmf_p2p_set_discover_state(vif->ifp,
 						   WL_P2P_DISC_ST_SCAN, 0, 0);
-		brcmf_पात_scanning(cfg);
-		clear_bit(BRCMF_VIF_STATUS_READY, &vअगर->sme_state);
+		brcmf_abort_scanning(cfg);
+		clear_bit(BRCMF_VIF_STATUS_READY, &vif->sme_state);
 		mutex_unlock(&cfg->usr_sync);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * brcmf_p2p_attach() - attach क्रम P2P.
+ * brcmf_p2p_attach() - attach for P2P.
  *
- * @cfg: driver निजी data क्रम cfg80211 पूर्णांकerface.
- * @p2pdev_क्रमced: create p2p device पूर्णांकerface at attach.
+ * @cfg: driver private data for cfg80211 interface.
+ * @p2pdev_forced: create p2p device interface at attach.
  */
-s32 brcmf_p2p_attach(काष्ठा brcmf_cfg80211_info *cfg, bool p2pdev_क्रमced)
-अणु
-	काष्ठा brcmf_pub *drvr = cfg->pub;
-	काष्ठा brcmf_p2p_info *p2p;
-	काष्ठा brcmf_अगर *pri_अगरp;
+s32 brcmf_p2p_attach(struct brcmf_cfg80211_info *cfg, bool p2pdev_forced)
+{
+	struct brcmf_pub *drvr = cfg->pub;
+	struct brcmf_p2p_info *p2p;
+	struct brcmf_if *pri_ifp;
 	s32 err = 0;
-	व्योम *err_ptr;
+	void *err_ptr;
 
 	p2p = &cfg->p2p;
 	p2p->cfg = cfg;
 
-	pri_अगरp = brcmf_get_अगरp(cfg->pub, 0);
-	p2p->bss_idx[P2PAPI_BSSCFG_PRIMARY].vअगर = pri_अगरp->vअगर;
+	pri_ifp = brcmf_get_ifp(cfg->pub, 0);
+	p2p->bss_idx[P2PAPI_BSSCFG_PRIMARY].vif = pri_ifp->vif;
 
-	अगर (p2pdev_क्रमced) अणु
-		err_ptr = brcmf_p2p_create_p2pdev(p2p, शून्य, शून्य);
-		अगर (IS_ERR(err_ptr)) अणु
+	if (p2pdev_forced) {
+		err_ptr = brcmf_p2p_create_p2pdev(p2p, NULL, NULL);
+		if (IS_ERR(err_ptr)) {
 			bphy_err(drvr, "P2P device creation failed.\n");
 			err = PTR_ERR(err_ptr);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		p2p->p2pdev_dynamically = true;
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
 /**
  * brcmf_p2p_detach() - detach P2P.
  *
- * @p2p: P2P specअगरic data.
+ * @p2p: P2P specific data.
  */
-व्योम brcmf_p2p_detach(काष्ठा brcmf_p2p_info *p2p)
-अणु
-	काष्ठा brcmf_cfg80211_vअगर *vअगर;
+void brcmf_p2p_detach(struct brcmf_p2p_info *p2p)
+{
+	struct brcmf_cfg80211_vif *vif;
 
-	vअगर = p2p->bss_idx[P2PAPI_BSSCFG_DEVICE].vअगर;
-	अगर (vअगर != शून्य) अणु
-		brcmf_p2p_cancel_reमुख्य_on_channel(vअगर->अगरp);
+	vif = p2p->bss_idx[P2PAPI_BSSCFG_DEVICE].vif;
+	if (vif != NULL) {
+		brcmf_p2p_cancel_remain_on_channel(vif->ifp);
 		brcmf_p2p_deinit_discovery(p2p);
-		brcmf_हटाओ_पूर्णांकerface(vअगर->अगरp, false);
-	पूर्ण
+		brcmf_remove_interface(vif->ifp, false);
+	}
 	/* just set it all to zero */
-	स_रखो(p2p, 0, माप(*p2p));
-पूर्ण
+	memset(p2p, 0, sizeof(*p2p));
+}
 

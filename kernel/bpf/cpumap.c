@@ -1,194 +1,193 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* bpf/cpumap.c
  *
  * Copyright (c) 2017 Jesper Dangaard Brouer, Red Hat Inc.
  */
 
-/* The 'cpumap' is primarily used as a backend map क्रम XDP BPF helper
- * call bpf_redirect_map() and XDP_REसूचीECT action, like 'devmap'.
+/* The 'cpumap' is primarily used as a backend map for XDP BPF helper
+ * call bpf_redirect_map() and XDP_REDIRECT action, like 'devmap'.
  *
  * Unlike devmap which redirects XDP frames out another NIC device,
  * this map type redirects raw XDP frames to another CPU.  The remote
- * CPU will करो SKB-allocation and call the normal network stack.
+ * CPU will do SKB-allocation and call the normal network stack.
  *
  * This is a scalability and isolation mechanism, that allow
  * separating the early driver network XDP layer, from the rest of the
- * netstack, and assigning dedicated CPUs क्रम this stage.  This
- * basically allows क्रम 10G wirespeed pre-filtering via bpf.
+ * netstack, and assigning dedicated CPUs for this stage.  This
+ * basically allows for 10G wirespeed pre-filtering via bpf.
  */
-#समावेश <linux/bpf.h>
-#समावेश <linux/filter.h>
-#समावेश <linux/ptr_ring.h>
-#समावेश <net/xdp.h>
+#include <linux/bpf.h>
+#include <linux/filter.h>
+#include <linux/ptr_ring.h>
+#include <net/xdp.h>
 
-#समावेश <linux/sched.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/capability.h>
-#समावेश <trace/events/xdp.h>
+#include <linux/sched.h>
+#include <linux/workqueue.h>
+#include <linux/kthread.h>
+#include <linux/capability.h>
+#include <trace/events/xdp.h>
 
-#समावेश <linux/netdevice.h>   /* netअगर_receive_skb_list */
-#समावेश <linux/etherdevice.h> /* eth_type_trans */
+#include <linux/netdevice.h>   /* netif_receive_skb_list */
+#include <linux/etherdevice.h> /* eth_type_trans */
 
 /* General idea: XDP packets getting XDP redirected to another CPU,
- * will maximum be stored/queued क्रम one driver ->poll() call.  It is
+ * will maximum be stored/queued for one driver ->poll() call.  It is
  * guaranteed that queueing the frame and the flush operation happen on
  * same CPU.  Thus, cpu_map_flush operation can deduct via this_cpu_ptr()
  * which queue in bpf_cpu_map_entry contains packets.
  */
 
-#घोषणा CPU_MAP_BULK_SIZE 8  /* 8 == one cacheline on 64-bit archs */
-काष्ठा bpf_cpu_map_entry;
-काष्ठा bpf_cpu_map;
+#define CPU_MAP_BULK_SIZE 8  /* 8 == one cacheline on 64-bit archs */
+struct bpf_cpu_map_entry;
+struct bpf_cpu_map;
 
-काष्ठा xdp_bulk_queue अणु
-	व्योम *q[CPU_MAP_BULK_SIZE];
-	काष्ठा list_head flush_node;
-	काष्ठा bpf_cpu_map_entry *obj;
-	अचिन्हित पूर्णांक count;
-पूर्ण;
+struct xdp_bulk_queue {
+	void *q[CPU_MAP_BULK_SIZE];
+	struct list_head flush_node;
+	struct bpf_cpu_map_entry *obj;
+	unsigned int count;
+};
 
-/* Struct क्रम every remote "destination" CPU in map */
-काष्ठा bpf_cpu_map_entry अणु
-	u32 cpu;    /* kthपढ़ो CPU and map index */
-	पूर्णांक map_id; /* Back reference to map */
+/* Struct for every remote "destination" CPU in map */
+struct bpf_cpu_map_entry {
+	u32 cpu;    /* kthread CPU and map index */
+	int map_id; /* Back reference to map */
 
 	/* XDP can run multiple RX-ring queues, need __percpu enqueue store */
-	काष्ठा xdp_bulk_queue __percpu *bulkq;
+	struct xdp_bulk_queue __percpu *bulkq;
 
-	काष्ठा bpf_cpu_map *cmap;
+	struct bpf_cpu_map *cmap;
 
-	/* Queue with potential multi-producers, and single-consumer kthपढ़ो */
-	काष्ठा ptr_ring *queue;
-	काष्ठा task_काष्ठा *kthपढ़ो;
+	/* Queue with potential multi-producers, and single-consumer kthread */
+	struct ptr_ring *queue;
+	struct task_struct *kthread;
 
-	काष्ठा bpf_cpumap_val value;
-	काष्ठा bpf_prog *prog;
+	struct bpf_cpumap_val value;
+	struct bpf_prog *prog;
 
-	atomic_t refcnt; /* Control when this काष्ठा can be मुक्त'ed */
-	काष्ठा rcu_head rcu;
+	atomic_t refcnt; /* Control when this struct can be free'ed */
+	struct rcu_head rcu;
 
-	काष्ठा work_काष्ठा kthपढ़ो_stop_wq;
-पूर्ण;
+	struct work_struct kthread_stop_wq;
+};
 
-काष्ठा bpf_cpu_map अणु
-	काष्ठा bpf_map map;
-	/* Below members specअगरic क्रम map type */
-	काष्ठा bpf_cpu_map_entry **cpu_map;
-पूर्ण;
+struct bpf_cpu_map {
+	struct bpf_map map;
+	/* Below members specific for map type */
+	struct bpf_cpu_map_entry **cpu_map;
+};
 
-अटल DEFINE_PER_CPU(काष्ठा list_head, cpu_map_flush_list);
+static DEFINE_PER_CPU(struct list_head, cpu_map_flush_list);
 
-अटल काष्ठा bpf_map *cpu_map_alloc(जोड़ bpf_attr *attr)
-अणु
+static struct bpf_map *cpu_map_alloc(union bpf_attr *attr)
+{
 	u32 value_size = attr->value_size;
-	काष्ठा bpf_cpu_map *cmap;
-	पूर्णांक err = -ENOMEM;
+	struct bpf_cpu_map *cmap;
+	int err = -ENOMEM;
 
-	अगर (!bpf_capable())
-		वापस ERR_PTR(-EPERM);
+	if (!bpf_capable())
+		return ERR_PTR(-EPERM);
 
 	/* check sanity of attributes */
-	अगर (attr->max_entries == 0 || attr->key_size != 4 ||
-	    (value_size != दुरत्वend(काष्ठा bpf_cpumap_val, qsize) &&
-	     value_size != दुरत्वend(काष्ठा bpf_cpumap_val, bpf_prog.fd)) ||
+	if (attr->max_entries == 0 || attr->key_size != 4 ||
+	    (value_size != offsetofend(struct bpf_cpumap_val, qsize) &&
+	     value_size != offsetofend(struct bpf_cpumap_val, bpf_prog.fd)) ||
 	    attr->map_flags & ~BPF_F_NUMA_NODE)
-		वापस ERR_PTR(-EINVAL);
+		return ERR_PTR(-EINVAL);
 
-	cmap = kzalloc(माप(*cmap), GFP_USER | __GFP_ACCOUNT);
-	अगर (!cmap)
-		वापस ERR_PTR(-ENOMEM);
+	cmap = kzalloc(sizeof(*cmap), GFP_USER | __GFP_ACCOUNT);
+	if (!cmap)
+		return ERR_PTR(-ENOMEM);
 
 	bpf_map_init_from_attr(&cmap->map, attr);
 
 	/* Pre-limit array size based on NR_CPUS, not final CPU check */
-	अगर (cmap->map.max_entries > NR_CPUS) अणु
+	if (cmap->map.max_entries > NR_CPUS) {
 		err = -E2BIG;
-		जाओ मुक्त_cmap;
-	पूर्ण
+		goto free_cmap;
+	}
 
-	/* Alloc array क्रम possible remote "destination" CPUs */
+	/* Alloc array for possible remote "destination" CPUs */
 	cmap->cpu_map = bpf_map_area_alloc(cmap->map.max_entries *
-					   माप(काष्ठा bpf_cpu_map_entry *),
+					   sizeof(struct bpf_cpu_map_entry *),
 					   cmap->map.numa_node);
-	अगर (!cmap->cpu_map)
-		जाओ मुक्त_cmap;
+	if (!cmap->cpu_map)
+		goto free_cmap;
 
-	वापस &cmap->map;
-मुक्त_cmap:
-	kमुक्त(cmap);
-	वापस ERR_PTR(err);
-पूर्ण
+	return &cmap->map;
+free_cmap:
+	kfree(cmap);
+	return ERR_PTR(err);
+}
 
-अटल व्योम get_cpu_map_entry(काष्ठा bpf_cpu_map_entry *rcpu)
-अणु
+static void get_cpu_map_entry(struct bpf_cpu_map_entry *rcpu)
+{
 	atomic_inc(&rcpu->refcnt);
-पूर्ण
+}
 
 /* called from workqueue, to workaround syscall using preempt_disable */
-अटल व्योम cpu_map_kthपढ़ो_stop(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा bpf_cpu_map_entry *rcpu;
+static void cpu_map_kthread_stop(struct work_struct *work)
+{
+	struct bpf_cpu_map_entry *rcpu;
 
-	rcpu = container_of(work, काष्ठा bpf_cpu_map_entry, kthपढ़ो_stop_wq);
+	rcpu = container_of(work, struct bpf_cpu_map_entry, kthread_stop_wq);
 
-	/* Wait क्रम flush in __cpu_map_entry_मुक्त(), via full RCU barrier,
-	 * as it रुकोs until all in-flight call_rcu() callbacks complete.
+	/* Wait for flush in __cpu_map_entry_free(), via full RCU barrier,
+	 * as it waits until all in-flight call_rcu() callbacks complete.
 	 */
 	rcu_barrier();
 
-	/* kthपढ़ो_stop will wake_up_process and रुको क्रम it to complete */
-	kthपढ़ो_stop(rcpu->kthपढ़ो);
-पूर्ण
+	/* kthread_stop will wake_up_process and wait for it to complete */
+	kthread_stop(rcpu->kthread);
+}
 
-अटल व्योम __cpu_map_ring_cleanup(काष्ठा ptr_ring *ring)
-अणु
-	/* The tear-करोwn procedure should have made sure that queue is
+static void __cpu_map_ring_cleanup(struct ptr_ring *ring)
+{
+	/* The tear-down procedure should have made sure that queue is
 	 * empty.  See __cpu_map_entry_replace() and work-queue
-	 * invoked cpu_map_kthपढ़ो_stop(). Catch any broken behaviour
+	 * invoked cpu_map_kthread_stop(). Catch any broken behaviour
 	 * gracefully and warn once.
 	 */
-	काष्ठा xdp_frame *xdpf;
+	struct xdp_frame *xdpf;
 
-	जबतक ((xdpf = ptr_ring_consume(ring)))
-		अगर (WARN_ON_ONCE(xdpf))
-			xdp_वापस_frame(xdpf);
-पूर्ण
+	while ((xdpf = ptr_ring_consume(ring)))
+		if (WARN_ON_ONCE(xdpf))
+			xdp_return_frame(xdpf);
+}
 
-अटल व्योम put_cpu_map_entry(काष्ठा bpf_cpu_map_entry *rcpu)
-अणु
-	अगर (atomic_dec_and_test(&rcpu->refcnt)) अणु
-		अगर (rcpu->prog)
+static void put_cpu_map_entry(struct bpf_cpu_map_entry *rcpu)
+{
+	if (atomic_dec_and_test(&rcpu->refcnt)) {
+		if (rcpu->prog)
 			bpf_prog_put(rcpu->prog);
-		/* The queue should be empty at this poपूर्णांक */
+		/* The queue should be empty at this point */
 		__cpu_map_ring_cleanup(rcpu->queue);
-		ptr_ring_cleanup(rcpu->queue, शून्य);
-		kमुक्त(rcpu->queue);
-		kमुक्त(rcpu);
-	पूर्ण
-पूर्ण
+		ptr_ring_cleanup(rcpu->queue, NULL);
+		kfree(rcpu->queue);
+		kfree(rcpu);
+	}
+}
 
-अटल पूर्णांक cpu_map_bpf_prog_run_xdp(काष्ठा bpf_cpu_map_entry *rcpu,
-				    व्योम **frames, पूर्णांक n,
-				    काष्ठा xdp_cpumap_stats *stats)
-अणु
-	काष्ठा xdp_rxq_info rxq;
-	काष्ठा xdp_buff xdp;
-	पूर्णांक i, nframes = 0;
+static int cpu_map_bpf_prog_run_xdp(struct bpf_cpu_map_entry *rcpu,
+				    void **frames, int n,
+				    struct xdp_cpumap_stats *stats)
+{
+	struct xdp_rxq_info rxq;
+	struct xdp_buff xdp;
+	int i, nframes = 0;
 
-	अगर (!rcpu->prog)
-		वापस n;
+	if (!rcpu->prog)
+		return n;
 
-	rcu_पढ़ो_lock_bh();
+	rcu_read_lock_bh();
 
-	xdp_set_वापस_frame_no_direct();
+	xdp_set_return_frame_no_direct();
 	xdp.rxq = &rxq;
 
-	क्रम (i = 0; i < n; i++) अणु
-		काष्ठा xdp_frame *xdpf = frames[i];
+	for (i = 0; i < n; i++) {
+		struct xdp_frame *xdpf = frames[i];
 		u32 act;
-		पूर्णांक err;
+		int err;
 
 		rxq.dev = xdpf->dev_rx;
 		rxq.mem = xdpf->mem;
@@ -197,419 +196,419 @@
 		xdp_convert_frame_to_buff(xdpf, &xdp);
 
 		act = bpf_prog_run_xdp(rcpu->prog, &xdp);
-		चयन (act) अणु
-		हाल XDP_PASS:
+		switch (act) {
+		case XDP_PASS:
 			err = xdp_update_frame_from_buff(&xdp, xdpf);
-			अगर (err < 0) अणु
-				xdp_वापस_frame(xdpf);
+			if (err < 0) {
+				xdp_return_frame(xdpf);
 				stats->drop++;
-			पूर्ण अन्यथा अणु
+			} else {
 				frames[nframes++] = xdpf;
 				stats->pass++;
-			पूर्ण
-			अवरोध;
-		हाल XDP_REसूचीECT:
-			err = xdp_करो_redirect(xdpf->dev_rx, &xdp,
+			}
+			break;
+		case XDP_REDIRECT:
+			err = xdp_do_redirect(xdpf->dev_rx, &xdp,
 					      rcpu->prog);
-			अगर (unlikely(err)) अणु
-				xdp_वापस_frame(xdpf);
+			if (unlikely(err)) {
+				xdp_return_frame(xdpf);
 				stats->drop++;
-			पूर्ण अन्यथा अणु
+			} else {
 				stats->redirect++;
-			पूर्ण
-			अवरोध;
-		शेष:
+			}
+			break;
+		default:
 			bpf_warn_invalid_xdp_action(act);
 			fallthrough;
-		हाल XDP_DROP:
-			xdp_वापस_frame(xdpf);
+		case XDP_DROP:
+			xdp_return_frame(xdpf);
 			stats->drop++;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (stats->redirect)
-		xdp_करो_flush_map();
+	if (stats->redirect)
+		xdp_do_flush_map();
 
-	xdp_clear_वापस_frame_no_direct();
+	xdp_clear_return_frame_no_direct();
 
-	rcu_पढ़ो_unlock_bh(); /* resched poपूर्णांक, may call करो_softirq() */
+	rcu_read_unlock_bh(); /* resched point, may call do_softirq() */
 
-	वापस nframes;
-पूर्ण
+	return nframes;
+}
 
-#घोषणा CPUMAP_BATCH 8
+#define CPUMAP_BATCH 8
 
-अटल पूर्णांक cpu_map_kthपढ़ो_run(व्योम *data)
-अणु
-	काष्ठा bpf_cpu_map_entry *rcpu = data;
+static int cpu_map_kthread_run(void *data)
+{
+	struct bpf_cpu_map_entry *rcpu = data;
 
 	set_current_state(TASK_INTERRUPTIBLE);
 
-	/* When kthपढ़ो gives stop order, then rcpu have been disconnected
-	 * from map, thus no new packets can enter. Reमुख्यing in-flight
+	/* When kthread gives stop order, then rcpu have been disconnected
+	 * from map, thus no new packets can enter. Remaining in-flight
 	 * per CPU stored packets are flushed to this queue.  Wait honoring
-	 * kthपढ़ो_stop संकेत until queue is empty.
+	 * kthread_stop signal until queue is empty.
 	 */
-	जबतक (!kthपढ़ो_should_stop() || !__ptr_ring_empty(rcpu->queue)) अणु
-		काष्ठा xdp_cpumap_stats stats = अणुपूर्ण; /* zero stats */
-		अचिन्हित पूर्णांक kmem_alloc_drops = 0, sched = 0;
+	while (!kthread_should_stop() || !__ptr_ring_empty(rcpu->queue)) {
+		struct xdp_cpumap_stats stats = {}; /* zero stats */
+		unsigned int kmem_alloc_drops = 0, sched = 0;
 		gfp_t gfp = __GFP_ZERO | GFP_ATOMIC;
-		व्योम *frames[CPUMAP_BATCH];
-		व्योम *skbs[CPUMAP_BATCH];
-		पूर्णांक i, n, m, nframes;
+		void *frames[CPUMAP_BATCH];
+		void *skbs[CPUMAP_BATCH];
+		int i, n, m, nframes;
 		LIST_HEAD(list);
 
 		/* Release CPU reschedule checks */
-		अगर (__ptr_ring_empty(rcpu->queue)) अणु
+		if (__ptr_ring_empty(rcpu->queue)) {
 			set_current_state(TASK_INTERRUPTIBLE);
-			/* Recheck to aव्योम lost wake-up */
-			अगर (__ptr_ring_empty(rcpu->queue)) अणु
+			/* Recheck to avoid lost wake-up */
+			if (__ptr_ring_empty(rcpu->queue)) {
 				schedule();
 				sched = 1;
-			पूर्ण अन्यथा अणु
+			} else {
 				__set_current_state(TASK_RUNNING);
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			sched = cond_resched();
-		पूर्ण
+		}
 
 		/*
 		 * The bpf_cpu_map_entry is single consumer, with this
-		 * kthपढ़ो CPU pinned. Lockless access to ptr_ring
+		 * kthread CPU pinned. Lockless access to ptr_ring
 		 * consume side valid as no-resize allowed of queue.
 		 */
 		n = __ptr_ring_consume_batched(rcpu->queue, frames,
 					       CPUMAP_BATCH);
-		क्रम (i = 0; i < n; i++) अणु
-			व्योम *f = frames[i];
-			काष्ठा page *page = virt_to_page(f);
+		for (i = 0; i < n; i++) {
+			void *f = frames[i];
+			struct page *page = virt_to_page(f);
 
-			/* Bring काष्ठा page memory area to curr CPU. Read by
-			 * build_skb_around via page_is_pfmeदो_स्मृति(), and when
-			 * मुक्तd written by page_frag_मुक्त call.
+			/* Bring struct page memory area to curr CPU. Read by
+			 * build_skb_around via page_is_pfmemalloc(), and when
+			 * freed written by page_frag_free call.
 			 */
 			prefetchw(page);
-		पूर्ण
+		}
 
 		/* Support running another XDP prog on this CPU */
 		nframes = cpu_map_bpf_prog_run_xdp(rcpu, frames, n, &stats);
-		अगर (nframes) अणु
+		if (nframes) {
 			m = kmem_cache_alloc_bulk(skbuff_head_cache, gfp, nframes, skbs);
-			अगर (unlikely(m == 0)) अणु
-				क्रम (i = 0; i < nframes; i++)
-					skbs[i] = शून्य; /* effect: xdp_वापस_frame */
+			if (unlikely(m == 0)) {
+				for (i = 0; i < nframes; i++)
+					skbs[i] = NULL; /* effect: xdp_return_frame */
 				kmem_alloc_drops += nframes;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		local_bh_disable();
-		क्रम (i = 0; i < nframes; i++) अणु
-			काष्ठा xdp_frame *xdpf = frames[i];
-			काष्ठा sk_buff *skb = skbs[i];
+		for (i = 0; i < nframes; i++) {
+			struct xdp_frame *xdpf = frames[i];
+			struct sk_buff *skb = skbs[i];
 
 			skb = __xdp_build_skb_from_frame(xdpf, skb,
 							 xdpf->dev_rx);
-			अगर (!skb) अणु
-				xdp_वापस_frame(xdpf);
-				जारी;
-			पूर्ण
+			if (!skb) {
+				xdp_return_frame(xdpf);
+				continue;
+			}
 
 			list_add_tail(&skb->list, &list);
-		पूर्ण
-		netअगर_receive_skb_list(&list);
+		}
+		netif_receive_skb_list(&list);
 
-		/* Feedback loop via tracepoपूर्णांक */
-		trace_xdp_cpumap_kthपढ़ो(rcpu->map_id, n, kmem_alloc_drops,
+		/* Feedback loop via tracepoint */
+		trace_xdp_cpumap_kthread(rcpu->map_id, n, kmem_alloc_drops,
 					 sched, &stats);
 
-		local_bh_enable(); /* resched poपूर्णांक, may call करो_softirq() */
-	पूर्ण
+		local_bh_enable(); /* resched point, may call do_softirq() */
+	}
 	__set_current_state(TASK_RUNNING);
 
 	put_cpu_map_entry(rcpu);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-bool cpu_map_prog_allowed(काष्ठा bpf_map *map)
-अणु
-	वापस map->map_type == BPF_MAP_TYPE_CPUMAP &&
-	       map->value_size != दुरत्वend(काष्ठा bpf_cpumap_val, qsize);
-पूर्ण
+bool cpu_map_prog_allowed(struct bpf_map *map)
+{
+	return map->map_type == BPF_MAP_TYPE_CPUMAP &&
+	       map->value_size != offsetofend(struct bpf_cpumap_val, qsize);
+}
 
-अटल पूर्णांक __cpu_map_load_bpf_program(काष्ठा bpf_cpu_map_entry *rcpu, पूर्णांक fd)
-अणु
-	काष्ठा bpf_prog *prog;
+static int __cpu_map_load_bpf_program(struct bpf_cpu_map_entry *rcpu, int fd)
+{
+	struct bpf_prog *prog;
 
 	prog = bpf_prog_get_type(fd, BPF_PROG_TYPE_XDP);
-	अगर (IS_ERR(prog))
-		वापस PTR_ERR(prog);
+	if (IS_ERR(prog))
+		return PTR_ERR(prog);
 
-	अगर (prog->expected_attach_type != BPF_XDP_CPUMAP) अणु
+	if (prog->expected_attach_type != BPF_XDP_CPUMAP) {
 		bpf_prog_put(prog);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	rcpu->value.bpf_prog.id = prog->aux->id;
 	rcpu->prog = prog;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा bpf_cpu_map_entry *
-__cpu_map_entry_alloc(काष्ठा bpf_map *map, काष्ठा bpf_cpumap_val *value,
+static struct bpf_cpu_map_entry *
+__cpu_map_entry_alloc(struct bpf_map *map, struct bpf_cpumap_val *value,
 		      u32 cpu)
-अणु
-	पूर्णांक numa, err, i, fd = value->bpf_prog.fd;
+{
+	int numa, err, i, fd = value->bpf_prog.fd;
 	gfp_t gfp = GFP_KERNEL | __GFP_NOWARN;
-	काष्ठा bpf_cpu_map_entry *rcpu;
-	काष्ठा xdp_bulk_queue *bq;
+	struct bpf_cpu_map_entry *rcpu;
+	struct xdp_bulk_queue *bq;
 
 	/* Have map->numa_node, but choose node of redirect target CPU */
 	numa = cpu_to_node(cpu);
 
-	rcpu = bpf_map_kदो_स्मृति_node(map, माप(*rcpu), gfp | __GFP_ZERO, numa);
-	अगर (!rcpu)
-		वापस शून्य;
+	rcpu = bpf_map_kmalloc_node(map, sizeof(*rcpu), gfp | __GFP_ZERO, numa);
+	if (!rcpu)
+		return NULL;
 
 	/* Alloc percpu bulkq */
-	rcpu->bulkq = bpf_map_alloc_percpu(map, माप(*rcpu->bulkq),
-					   माप(व्योम *), gfp);
-	अगर (!rcpu->bulkq)
-		जाओ मुक्त_rcu;
+	rcpu->bulkq = bpf_map_alloc_percpu(map, sizeof(*rcpu->bulkq),
+					   sizeof(void *), gfp);
+	if (!rcpu->bulkq)
+		goto free_rcu;
 
-	क्रम_each_possible_cpu(i) अणु
+	for_each_possible_cpu(i) {
 		bq = per_cpu_ptr(rcpu->bulkq, i);
 		bq->obj = rcpu;
-	पूर्ण
+	}
 
 	/* Alloc queue */
-	rcpu->queue = bpf_map_kदो_स्मृति_node(map, माप(*rcpu->queue), gfp,
+	rcpu->queue = bpf_map_kmalloc_node(map, sizeof(*rcpu->queue), gfp,
 					   numa);
-	अगर (!rcpu->queue)
-		जाओ मुक्त_bulkq;
+	if (!rcpu->queue)
+		goto free_bulkq;
 
 	err = ptr_ring_init(rcpu->queue, value->qsize, gfp);
-	अगर (err)
-		जाओ मुक्त_queue;
+	if (err)
+		goto free_queue;
 
 	rcpu->cpu    = cpu;
 	rcpu->map_id = map->id;
 	rcpu->value.qsize  = value->qsize;
 
-	अगर (fd > 0 && __cpu_map_load_bpf_program(rcpu, fd))
-		जाओ मुक्त_ptr_ring;
+	if (fd > 0 && __cpu_map_load_bpf_program(rcpu, fd))
+		goto free_ptr_ring;
 
-	/* Setup kthपढ़ो */
-	rcpu->kthपढ़ो = kthपढ़ो_create_on_node(cpu_map_kthपढ़ो_run, rcpu, numa,
+	/* Setup kthread */
+	rcpu->kthread = kthread_create_on_node(cpu_map_kthread_run, rcpu, numa,
 					       "cpumap/%d/map:%d", cpu,
 					       map->id);
-	अगर (IS_ERR(rcpu->kthपढ़ो))
-		जाओ मुक्त_prog;
+	if (IS_ERR(rcpu->kthread))
+		goto free_prog;
 
-	get_cpu_map_entry(rcpu); /* 1-refcnt क्रम being in cmap->cpu_map[] */
-	get_cpu_map_entry(rcpu); /* 1-refcnt क्रम kthपढ़ो */
+	get_cpu_map_entry(rcpu); /* 1-refcnt for being in cmap->cpu_map[] */
+	get_cpu_map_entry(rcpu); /* 1-refcnt for kthread */
 
-	/* Make sure kthपढ़ो runs on a single CPU */
-	kthपढ़ो_bind(rcpu->kthपढ़ो, cpu);
-	wake_up_process(rcpu->kthपढ़ो);
+	/* Make sure kthread runs on a single CPU */
+	kthread_bind(rcpu->kthread, cpu);
+	wake_up_process(rcpu->kthread);
 
-	वापस rcpu;
+	return rcpu;
 
-मुक्त_prog:
-	अगर (rcpu->prog)
+free_prog:
+	if (rcpu->prog)
 		bpf_prog_put(rcpu->prog);
-मुक्त_ptr_ring:
-	ptr_ring_cleanup(rcpu->queue, शून्य);
-मुक्त_queue:
-	kमुक्त(rcpu->queue);
-मुक्त_bulkq:
-	मुक्त_percpu(rcpu->bulkq);
-मुक्त_rcu:
-	kमुक्त(rcpu);
-	वापस शून्य;
-पूर्ण
+free_ptr_ring:
+	ptr_ring_cleanup(rcpu->queue, NULL);
+free_queue:
+	kfree(rcpu->queue);
+free_bulkq:
+	free_percpu(rcpu->bulkq);
+free_rcu:
+	kfree(rcpu);
+	return NULL;
+}
 
-अटल व्योम __cpu_map_entry_मुक्त(काष्ठा rcu_head *rcu)
-अणु
-	काष्ठा bpf_cpu_map_entry *rcpu;
+static void __cpu_map_entry_free(struct rcu_head *rcu)
+{
+	struct bpf_cpu_map_entry *rcpu;
 
 	/* This cpu_map_entry have been disconnected from map and one
 	 * RCU grace-period have elapsed.  Thus, XDP cannot queue any
 	 * new packets and cannot change/set flush_needed that can
 	 * find this entry.
 	 */
-	rcpu = container_of(rcu, काष्ठा bpf_cpu_map_entry, rcu);
+	rcpu = container_of(rcu, struct bpf_cpu_map_entry, rcu);
 
-	मुक्त_percpu(rcpu->bulkq);
-	/* Cannot kthपढ़ो_stop() here, last put मुक्त rcpu resources */
+	free_percpu(rcpu->bulkq);
+	/* Cannot kthread_stop() here, last put free rcpu resources */
 	put_cpu_map_entry(rcpu);
-पूर्ण
+}
 
-/* After xchg poपूर्णांकer to bpf_cpu_map_entry, use the call_rcu() to
+/* After xchg pointer to bpf_cpu_map_entry, use the call_rcu() to
  * ensure any driver rcu critical sections have completed, but this
- * करोes not guarantee a flush has happened yet. Because driver side
- * rcu_पढ़ो_lock/unlock only protects the running XDP program.  The
- * atomic xchg and शून्य-ptr check in __cpu_map_flush() makes sure a
- * pending flush op करोesn't fail.
+ * does not guarantee a flush has happened yet. Because driver side
+ * rcu_read_lock/unlock only protects the running XDP program.  The
+ * atomic xchg and NULL-ptr check in __cpu_map_flush() makes sure a
+ * pending flush op doesn't fail.
  *
- * The bpf_cpu_map_entry is still used by the kthपढ़ो, and there can
+ * The bpf_cpu_map_entry is still used by the kthread, and there can
  * still be pending packets (in queue and percpu bulkq).  A refcnt
- * makes sure to last user (kthपढ़ो_stop vs. call_rcu) मुक्त memory
+ * makes sure to last user (kthread_stop vs. call_rcu) free memory
  * resources.
  *
- * The rcu callback __cpu_map_entry_मुक्त flush reमुख्यing packets in
+ * The rcu callback __cpu_map_entry_free flush remaining packets in
  * percpu bulkq to queue.  Due to caller map_delete_elem() disable
- * preemption, cannot call kthपढ़ो_stop() to make sure queue is empty.
- * Instead a work_queue is started क्रम stopping kthपढ़ो,
- * cpu_map_kthपढ़ो_stop, which रुकोs क्रम an RCU grace period beक्रमe
- * stopping kthपढ़ो, emptying the queue.
+ * preemption, cannot call kthread_stop() to make sure queue is empty.
+ * Instead a work_queue is started for stopping kthread,
+ * cpu_map_kthread_stop, which waits for an RCU grace period before
+ * stopping kthread, emptying the queue.
  */
-अटल व्योम __cpu_map_entry_replace(काष्ठा bpf_cpu_map *cmap,
-				    u32 key_cpu, काष्ठा bpf_cpu_map_entry *rcpu)
-अणु
-	काष्ठा bpf_cpu_map_entry *old_rcpu;
+static void __cpu_map_entry_replace(struct bpf_cpu_map *cmap,
+				    u32 key_cpu, struct bpf_cpu_map_entry *rcpu)
+{
+	struct bpf_cpu_map_entry *old_rcpu;
 
 	old_rcpu = xchg(&cmap->cpu_map[key_cpu], rcpu);
-	अगर (old_rcpu) अणु
-		call_rcu(&old_rcpu->rcu, __cpu_map_entry_मुक्त);
-		INIT_WORK(&old_rcpu->kthपढ़ो_stop_wq, cpu_map_kthपढ़ो_stop);
-		schedule_work(&old_rcpu->kthपढ़ो_stop_wq);
-	पूर्ण
-पूर्ण
+	if (old_rcpu) {
+		call_rcu(&old_rcpu->rcu, __cpu_map_entry_free);
+		INIT_WORK(&old_rcpu->kthread_stop_wq, cpu_map_kthread_stop);
+		schedule_work(&old_rcpu->kthread_stop_wq);
+	}
+}
 
-अटल पूर्णांक cpu_map_delete_elem(काष्ठा bpf_map *map, व्योम *key)
-अणु
-	काष्ठा bpf_cpu_map *cmap = container_of(map, काष्ठा bpf_cpu_map, map);
+static int cpu_map_delete_elem(struct bpf_map *map, void *key)
+{
+	struct bpf_cpu_map *cmap = container_of(map, struct bpf_cpu_map, map);
 	u32 key_cpu = *(u32 *)key;
 
-	अगर (key_cpu >= map->max_entries)
-		वापस -EINVAL;
+	if (key_cpu >= map->max_entries)
+		return -EINVAL;
 
 	/* notice caller map_delete_elem() use preempt_disable() */
-	__cpu_map_entry_replace(cmap, key_cpu, शून्य);
-	वापस 0;
-पूर्ण
+	__cpu_map_entry_replace(cmap, key_cpu, NULL);
+	return 0;
+}
 
-अटल पूर्णांक cpu_map_update_elem(काष्ठा bpf_map *map, व्योम *key, व्योम *value,
+static int cpu_map_update_elem(struct bpf_map *map, void *key, void *value,
 			       u64 map_flags)
-अणु
-	काष्ठा bpf_cpu_map *cmap = container_of(map, काष्ठा bpf_cpu_map, map);
-	काष्ठा bpf_cpumap_val cpumap_value = अणुपूर्ण;
-	काष्ठा bpf_cpu_map_entry *rcpu;
+{
+	struct bpf_cpu_map *cmap = container_of(map, struct bpf_cpu_map, map);
+	struct bpf_cpumap_val cpumap_value = {};
+	struct bpf_cpu_map_entry *rcpu;
 	/* Array index key correspond to CPU number */
 	u32 key_cpu = *(u32 *)key;
 
-	स_नकल(&cpumap_value, value, map->value_size);
+	memcpy(&cpumap_value, value, map->value_size);
 
-	अगर (unlikely(map_flags > BPF_EXIST))
-		वापस -EINVAL;
-	अगर (unlikely(key_cpu >= cmap->map.max_entries))
-		वापस -E2BIG;
-	अगर (unlikely(map_flags == BPF_NOEXIST))
-		वापस -EEXIST;
-	अगर (unlikely(cpumap_value.qsize > 16384)) /* sanity limit on qsize */
-		वापस -EOVERFLOW;
+	if (unlikely(map_flags > BPF_EXIST))
+		return -EINVAL;
+	if (unlikely(key_cpu >= cmap->map.max_entries))
+		return -E2BIG;
+	if (unlikely(map_flags == BPF_NOEXIST))
+		return -EEXIST;
+	if (unlikely(cpumap_value.qsize > 16384)) /* sanity limit on qsize */
+		return -EOVERFLOW;
 
 	/* Make sure CPU is a valid possible cpu */
-	अगर (key_cpu >= nr_cpumask_bits || !cpu_possible(key_cpu))
-		वापस -ENODEV;
+	if (key_cpu >= nr_cpumask_bits || !cpu_possible(key_cpu))
+		return -ENODEV;
 
-	अगर (cpumap_value.qsize == 0) अणु
-		rcpu = शून्य; /* Same as deleting */
-	पूर्ण अन्यथा अणु
+	if (cpumap_value.qsize == 0) {
+		rcpu = NULL; /* Same as deleting */
+	} else {
 		/* Updating qsize cause re-allocation of bpf_cpu_map_entry */
 		rcpu = __cpu_map_entry_alloc(map, &cpumap_value, key_cpu);
-		अगर (!rcpu)
-			वापस -ENOMEM;
+		if (!rcpu)
+			return -ENOMEM;
 		rcpu->cmap = cmap;
-	पूर्ण
-	rcu_पढ़ो_lock();
+	}
+	rcu_read_lock();
 	__cpu_map_entry_replace(cmap, key_cpu, rcpu);
-	rcu_पढ़ो_unlock();
-	वापस 0;
-पूर्ण
+	rcu_read_unlock();
+	return 0;
+}
 
-अटल व्योम cpu_map_मुक्त(काष्ठा bpf_map *map)
-अणु
-	काष्ठा bpf_cpu_map *cmap = container_of(map, काष्ठा bpf_cpu_map, map);
+static void cpu_map_free(struct bpf_map *map)
+{
+	struct bpf_cpu_map *cmap = container_of(map, struct bpf_cpu_map, map);
 	u32 i;
 
-	/* At this poपूर्णांक bpf_prog->aux->refcnt == 0 and this map->refcnt == 0,
+	/* At this point bpf_prog->aux->refcnt == 0 and this map->refcnt == 0,
 	 * so the bpf programs (can be more than one that used this map) were
-	 * disconnected from events. Wait क्रम outstanding critical sections in
+	 * disconnected from events. Wait for outstanding critical sections in
 	 * these programs to complete. The rcu critical section only guarantees
-	 * no further "XDP/bpf-side" पढ़ोs against bpf_cpu_map->cpu_map.
-	 * It करोes __not__ ensure pending flush operations (अगर any) are
+	 * no further "XDP/bpf-side" reads against bpf_cpu_map->cpu_map.
+	 * It does __not__ ensure pending flush operations (if any) are
 	 * complete.
 	 */
 
 	synchronize_rcu();
 
 	/* For cpu_map the remote CPUs can still be using the entries
-	 * (काष्ठा bpf_cpu_map_entry).
+	 * (struct bpf_cpu_map_entry).
 	 */
-	क्रम (i = 0; i < cmap->map.max_entries; i++) अणु
-		काष्ठा bpf_cpu_map_entry *rcpu;
+	for (i = 0; i < cmap->map.max_entries; i++) {
+		struct bpf_cpu_map_entry *rcpu;
 
 		rcpu = READ_ONCE(cmap->cpu_map[i]);
-		अगर (!rcpu)
-			जारी;
+		if (!rcpu)
+			continue;
 
 		/* bq flush and cleanup happens after RCU grace-period */
-		__cpu_map_entry_replace(cmap, i, शून्य); /* call_rcu */
-	पूर्ण
-	bpf_map_area_मुक्त(cmap->cpu_map);
-	kमुक्त(cmap);
-पूर्ण
+		__cpu_map_entry_replace(cmap, i, NULL); /* call_rcu */
+	}
+	bpf_map_area_free(cmap->cpu_map);
+	kfree(cmap);
+}
 
-अटल व्योम *__cpu_map_lookup_elem(काष्ठा bpf_map *map, u32 key)
-अणु
-	काष्ठा bpf_cpu_map *cmap = container_of(map, काष्ठा bpf_cpu_map, map);
-	काष्ठा bpf_cpu_map_entry *rcpu;
+static void *__cpu_map_lookup_elem(struct bpf_map *map, u32 key)
+{
+	struct bpf_cpu_map *cmap = container_of(map, struct bpf_cpu_map, map);
+	struct bpf_cpu_map_entry *rcpu;
 
-	अगर (key >= map->max_entries)
-		वापस शून्य;
+	if (key >= map->max_entries)
+		return NULL;
 
 	rcpu = READ_ONCE(cmap->cpu_map[key]);
-	वापस rcpu;
-पूर्ण
+	return rcpu;
+}
 
-अटल व्योम *cpu_map_lookup_elem(काष्ठा bpf_map *map, व्योम *key)
-अणु
-	काष्ठा bpf_cpu_map_entry *rcpu =
+static void *cpu_map_lookup_elem(struct bpf_map *map, void *key)
+{
+	struct bpf_cpu_map_entry *rcpu =
 		__cpu_map_lookup_elem(map, *(u32 *)key);
 
-	वापस rcpu ? &rcpu->value : शून्य;
-पूर्ण
+	return rcpu ? &rcpu->value : NULL;
+}
 
-अटल पूर्णांक cpu_map_get_next_key(काष्ठा bpf_map *map, व्योम *key, व्योम *next_key)
-अणु
-	काष्ठा bpf_cpu_map *cmap = container_of(map, काष्ठा bpf_cpu_map, map);
+static int cpu_map_get_next_key(struct bpf_map *map, void *key, void *next_key)
+{
+	struct bpf_cpu_map *cmap = container_of(map, struct bpf_cpu_map, map);
 	u32 index = key ? *(u32 *)key : U32_MAX;
 	u32 *next = next_key;
 
-	अगर (index >= cmap->map.max_entries) अणु
+	if (index >= cmap->map.max_entries) {
 		*next = 0;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (index == cmap->map.max_entries - 1)
-		वापस -ENOENT;
+	if (index == cmap->map.max_entries - 1)
+		return -ENOENT;
 	*next = index + 1;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cpu_map_redirect(काष्ठा bpf_map *map, u32 अगरindex, u64 flags)
-अणु
-	वापस __bpf_xdp_redirect_map(map, अगरindex, flags, __cpu_map_lookup_elem);
-पूर्ण
+static int cpu_map_redirect(struct bpf_map *map, u32 ifindex, u64 flags)
+{
+	return __bpf_xdp_redirect_map(map, ifindex, flags, __cpu_map_lookup_elem);
+}
 
-अटल पूर्णांक cpu_map_btf_id;
-स्थिर काष्ठा bpf_map_ops cpu_map_ops = अणु
+static int cpu_map_btf_id;
+const struct bpf_map_ops cpu_map_ops = {
 	.map_meta_equal		= bpf_map_meta_equal,
 	.map_alloc		= cpu_map_alloc,
-	.map_मुक्त		= cpu_map_मुक्त,
+	.map_free		= cpu_map_free,
 	.map_delete_elem	= cpu_map_delete_elem,
 	.map_update_elem	= cpu_map_update_elem,
 	.map_lookup_elem	= cpu_map_lookup_elem,
@@ -618,104 +617,104 @@ __cpu_map_entry_alloc(काष्ठा bpf_map *map, काष्ठा bpf_cp
 	.map_btf_name		= "bpf_cpu_map",
 	.map_btf_id		= &cpu_map_btf_id,
 	.map_redirect		= cpu_map_redirect,
-पूर्ण;
+};
 
-अटल व्योम bq_flush_to_queue(काष्ठा xdp_bulk_queue *bq)
-अणु
-	काष्ठा bpf_cpu_map_entry *rcpu = bq->obj;
-	अचिन्हित पूर्णांक processed = 0, drops = 0;
-	स्थिर पूर्णांक to_cpu = rcpu->cpu;
-	काष्ठा ptr_ring *q;
-	पूर्णांक i;
+static void bq_flush_to_queue(struct xdp_bulk_queue *bq)
+{
+	struct bpf_cpu_map_entry *rcpu = bq->obj;
+	unsigned int processed = 0, drops = 0;
+	const int to_cpu = rcpu->cpu;
+	struct ptr_ring *q;
+	int i;
 
-	अगर (unlikely(!bq->count))
-		वापस;
+	if (unlikely(!bq->count))
+		return;
 
 	q = rcpu->queue;
 	spin_lock(&q->producer_lock);
 
-	क्रम (i = 0; i < bq->count; i++) अणु
-		काष्ठा xdp_frame *xdpf = bq->q[i];
-		पूर्णांक err;
+	for (i = 0; i < bq->count; i++) {
+		struct xdp_frame *xdpf = bq->q[i];
+		int err;
 
 		err = __ptr_ring_produce(q, xdpf);
-		अगर (err) अणु
+		if (err) {
 			drops++;
-			xdp_वापस_frame_rx_napi(xdpf);
-		पूर्ण
+			xdp_return_frame_rx_napi(xdpf);
+		}
 		processed++;
-	पूर्ण
+	}
 	bq->count = 0;
 	spin_unlock(&q->producer_lock);
 
 	__list_del_clearprev(&bq->flush_node);
 
-	/* Feedback loop via tracepoपूर्णांकs */
+	/* Feedback loop via tracepoints */
 	trace_xdp_cpumap_enqueue(rcpu->map_id, processed, drops, to_cpu);
-पूर्ण
+}
 
-/* Runs under RCU-पढ़ो-side, plus in softirq under NAPI protection.
+/* Runs under RCU-read-side, plus in softirq under NAPI protection.
  * Thus, safe percpu variable access.
  */
-अटल व्योम bq_enqueue(काष्ठा bpf_cpu_map_entry *rcpu, काष्ठा xdp_frame *xdpf)
-अणु
-	काष्ठा list_head *flush_list = this_cpu_ptr(&cpu_map_flush_list);
-	काष्ठा xdp_bulk_queue *bq = this_cpu_ptr(rcpu->bulkq);
+static void bq_enqueue(struct bpf_cpu_map_entry *rcpu, struct xdp_frame *xdpf)
+{
+	struct list_head *flush_list = this_cpu_ptr(&cpu_map_flush_list);
+	struct xdp_bulk_queue *bq = this_cpu_ptr(rcpu->bulkq);
 
-	अगर (unlikely(bq->count == CPU_MAP_BULK_SIZE))
+	if (unlikely(bq->count == CPU_MAP_BULK_SIZE))
 		bq_flush_to_queue(bq);
 
-	/* Notice, xdp_buff/page MUST be queued here, दीर्घ enough क्रम
+	/* Notice, xdp_buff/page MUST be queued here, long enough for
 	 * driver to code invoking us to finished, due to driver
 	 * (e.g. ixgbe) recycle tricks based on page-refcnt.
 	 *
-	 * Thus, incoming xdp_frame is always queued here (अन्यथा we race
-	 * with another CPU on page-refcnt and reमुख्यing driver code).
-	 * Queue समय is very लघु, as driver will invoke flush
+	 * Thus, incoming xdp_frame is always queued here (else we race
+	 * with another CPU on page-refcnt and remaining driver code).
+	 * Queue time is very short, as driver will invoke flush
 	 * operation, when completing napi->poll call.
 	 */
 	bq->q[bq->count++] = xdpf;
 
-	अगर (!bq->flush_node.prev)
+	if (!bq->flush_node.prev)
 		list_add(&bq->flush_node, flush_list);
-पूर्ण
+}
 
-पूर्णांक cpu_map_enqueue(काष्ठा bpf_cpu_map_entry *rcpu, काष्ठा xdp_buff *xdp,
-		    काष्ठा net_device *dev_rx)
-अणु
-	काष्ठा xdp_frame *xdpf;
+int cpu_map_enqueue(struct bpf_cpu_map_entry *rcpu, struct xdp_buff *xdp,
+		    struct net_device *dev_rx)
+{
+	struct xdp_frame *xdpf;
 
 	xdpf = xdp_convert_buff_to_frame(xdp);
-	अगर (unlikely(!xdpf))
-		वापस -EOVERFLOW;
+	if (unlikely(!xdpf))
+		return -EOVERFLOW;
 
-	/* Info needed when स्थिरructing SKB on remote CPU */
+	/* Info needed when constructing SKB on remote CPU */
 	xdpf->dev_rx = dev_rx;
 
 	bq_enqueue(rcpu, xdpf);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम __cpu_map_flush(व्योम)
-अणु
-	काष्ठा list_head *flush_list = this_cpu_ptr(&cpu_map_flush_list);
-	काष्ठा xdp_bulk_queue *bq, *पंचांगp;
+void __cpu_map_flush(void)
+{
+	struct list_head *flush_list = this_cpu_ptr(&cpu_map_flush_list);
+	struct xdp_bulk_queue *bq, *tmp;
 
-	list_क्रम_each_entry_safe(bq, पंचांगp, flush_list, flush_node) अणु
+	list_for_each_entry_safe(bq, tmp, flush_list, flush_node) {
 		bq_flush_to_queue(bq);
 
-		/* If alपढ़ोy running, costs spin_lock_irqsave + smb_mb */
-		wake_up_process(bq->obj->kthपढ़ो);
-	पूर्ण
-पूर्ण
+		/* If already running, costs spin_lock_irqsave + smb_mb */
+		wake_up_process(bq->obj->kthread);
+	}
+}
 
-अटल पूर्णांक __init cpu_map_init(व्योम)
-अणु
-	पूर्णांक cpu;
+static int __init cpu_map_init(void)
+{
+	int cpu;
 
-	क्रम_each_possible_cpu(cpu)
+	for_each_possible_cpu(cpu)
 		INIT_LIST_HEAD(&per_cpu(cpu_map_flush_list, cpu));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 subsys_initcall(cpu_map_init);

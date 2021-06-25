@@ -1,141 +1,140 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * gpiolib support क्रम Wolfson Arizona class devices
+ * gpiolib support for Wolfson Arizona class devices
  *
  * Copyright 2012 Wolfson Microelectronics PLC.
  *
- * Author: Mark Brown <broonie@खोलोsource.wolfsonmicro.com>
+ * Author: Mark Brown <broonie@opensource.wolfsonmicro.com>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
-#समावेश <linux/gpio/driver.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/seq_file.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/module.h>
+#include <linux/gpio/driver.h>
+#include <linux/platform_device.h>
+#include <linux/pm_runtime.h>
+#include <linux/seq_file.h>
 
-#समावेश <linux/mfd/arizona/core.h>
-#समावेश <linux/mfd/arizona/pdata.h>
-#समावेश <linux/mfd/arizona/रेजिस्टरs.h>
+#include <linux/mfd/arizona/core.h>
+#include <linux/mfd/arizona/pdata.h>
+#include <linux/mfd/arizona/registers.h>
 
-काष्ठा arizona_gpio अणु
-	काष्ठा arizona *arizona;
-	काष्ठा gpio_chip gpio_chip;
-पूर्ण;
+struct arizona_gpio {
+	struct arizona *arizona;
+	struct gpio_chip gpio_chip;
+};
 
-अटल पूर्णांक arizona_gpio_direction_in(काष्ठा gpio_chip *chip, अचिन्हित offset)
-अणु
-	काष्ठा arizona_gpio *arizona_gpio = gpiochip_get_data(chip);
-	काष्ठा arizona *arizona = arizona_gpio->arizona;
+static int arizona_gpio_direction_in(struct gpio_chip *chip, unsigned offset)
+{
+	struct arizona_gpio *arizona_gpio = gpiochip_get_data(chip);
+	struct arizona *arizona = arizona_gpio->arizona;
 	bool persistent = gpiochip_line_is_persistent(chip, offset);
 	bool change;
-	पूर्णांक ret;
+	int ret;
 
 	ret = regmap_update_bits_check(arizona->regmap,
 				       ARIZONA_GPIO1_CTRL + offset,
-				       ARIZONA_GPN_सूची, ARIZONA_GPN_सूची,
+				       ARIZONA_GPN_DIR, ARIZONA_GPN_DIR,
 				       &change);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	अगर (change && persistent) अणु
-		pm_runसमय_mark_last_busy(chip->parent);
-		pm_runसमय_put_स्वतःsuspend(chip->parent);
-	पूर्ण
+	if (change && persistent) {
+		pm_runtime_mark_last_busy(chip->parent);
+		pm_runtime_put_autosuspend(chip->parent);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक arizona_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित offset)
-अणु
-	काष्ठा arizona_gpio *arizona_gpio = gpiochip_get_data(chip);
-	काष्ठा arizona *arizona = arizona_gpio->arizona;
-	अचिन्हित पूर्णांक reg, val;
-	पूर्णांक ret;
+static int arizona_gpio_get(struct gpio_chip *chip, unsigned offset)
+{
+	struct arizona_gpio *arizona_gpio = gpiochip_get_data(chip);
+	struct arizona *arizona = arizona_gpio->arizona;
+	unsigned int reg, val;
+	int ret;
 
 	reg = ARIZONA_GPIO1_CTRL + offset;
-	ret = regmap_पढ़ो(arizona->regmap, reg, &val);
-	अगर (ret < 0)
-		वापस ret;
+	ret = regmap_read(arizona->regmap, reg, &val);
+	if (ret < 0)
+		return ret;
 
-	/* Resume to पढ़ो actual रेजिस्टरs क्रम input pins */
-	अगर (val & ARIZONA_GPN_सूची) अणु
-		ret = pm_runसमय_get_sync(chip->parent);
-		अगर (ret < 0) अणु
+	/* Resume to read actual registers for input pins */
+	if (val & ARIZONA_GPN_DIR) {
+		ret = pm_runtime_get_sync(chip->parent);
+		if (ret < 0) {
 			dev_err(chip->parent, "Failed to resume: %d\n", ret);
-			pm_runसमय_put_स्वतःsuspend(chip->parent);
-			वापस ret;
-		पूर्ण
+			pm_runtime_put_autosuspend(chip->parent);
+			return ret;
+		}
 
-		/* Register is cached, drop it to ensure a physical पढ़ो */
+		/* Register is cached, drop it to ensure a physical read */
 		ret = regcache_drop_region(arizona->regmap, reg, reg);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(chip->parent, "Failed to drop cache: %d\n",
 				ret);
-			pm_runसमय_put_स्वतःsuspend(chip->parent);
-			वापस ret;
-		पूर्ण
+			pm_runtime_put_autosuspend(chip->parent);
+			return ret;
+		}
 
-		ret = regmap_पढ़ो(arizona->regmap, reg, &val);
-		अगर (ret < 0) अणु
-			pm_runसमय_put_स्वतःsuspend(chip->parent);
-			वापस ret;
-		पूर्ण
+		ret = regmap_read(arizona->regmap, reg, &val);
+		if (ret < 0) {
+			pm_runtime_put_autosuspend(chip->parent);
+			return ret;
+		}
 
-		pm_runसमय_mark_last_busy(chip->parent);
-		pm_runसमय_put_स्वतःsuspend(chip->parent);
-	पूर्ण
+		pm_runtime_mark_last_busy(chip->parent);
+		pm_runtime_put_autosuspend(chip->parent);
+	}
 
-	अगर (val & ARIZONA_GPN_LVL)
-		वापस 1;
-	अन्यथा
-		वापस 0;
-पूर्ण
+	if (val & ARIZONA_GPN_LVL)
+		return 1;
+	else
+		return 0;
+}
 
-अटल पूर्णांक arizona_gpio_direction_out(काष्ठा gpio_chip *chip,
-				     अचिन्हित offset, पूर्णांक value)
-अणु
-	काष्ठा arizona_gpio *arizona_gpio = gpiochip_get_data(chip);
-	काष्ठा arizona *arizona = arizona_gpio->arizona;
+static int arizona_gpio_direction_out(struct gpio_chip *chip,
+				     unsigned offset, int value)
+{
+	struct arizona_gpio *arizona_gpio = gpiochip_get_data(chip);
+	struct arizona *arizona = arizona_gpio->arizona;
 	bool persistent = gpiochip_line_is_persistent(chip, offset);
-	अचिन्हित पूर्णांक val;
-	पूर्णांक ret;
+	unsigned int val;
+	int ret;
 
-	ret = regmap_पढ़ो(arizona->regmap, ARIZONA_GPIO1_CTRL + offset, &val);
-	अगर (ret < 0)
-		वापस ret;
+	ret = regmap_read(arizona->regmap, ARIZONA_GPIO1_CTRL + offset, &val);
+	if (ret < 0)
+		return ret;
 
-	अगर ((val & ARIZONA_GPN_सूची) && persistent) अणु
-		ret = pm_runसमय_get_sync(chip->parent);
-		अगर (ret < 0) अणु
+	if ((val & ARIZONA_GPN_DIR) && persistent) {
+		ret = pm_runtime_get_sync(chip->parent);
+		if (ret < 0) {
 			dev_err(chip->parent, "Failed to resume: %d\n", ret);
-			pm_runसमय_put(chip->parent);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			pm_runtime_put(chip->parent);
+			return ret;
+		}
+	}
 
-	अगर (value)
+	if (value)
 		value = ARIZONA_GPN_LVL;
 
-	वापस regmap_update_bits(arizona->regmap, ARIZONA_GPIO1_CTRL + offset,
-				  ARIZONA_GPN_सूची | ARIZONA_GPN_LVL, value);
-पूर्ण
+	return regmap_update_bits(arizona->regmap, ARIZONA_GPIO1_CTRL + offset,
+				  ARIZONA_GPN_DIR | ARIZONA_GPN_LVL, value);
+}
 
-अटल व्योम arizona_gpio_set(काष्ठा gpio_chip *chip, अचिन्हित offset, पूर्णांक value)
-अणु
-	काष्ठा arizona_gpio *arizona_gpio = gpiochip_get_data(chip);
-	काष्ठा arizona *arizona = arizona_gpio->arizona;
+static void arizona_gpio_set(struct gpio_chip *chip, unsigned offset, int value)
+{
+	struct arizona_gpio *arizona_gpio = gpiochip_get_data(chip);
+	struct arizona *arizona = arizona_gpio->arizona;
 
-	अगर (value)
+	if (value)
 		value = ARIZONA_GPN_LVL;
 
 	regmap_update_bits(arizona->regmap, ARIZONA_GPIO1_CTRL + offset,
 			   ARIZONA_GPN_LVL, value);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा gpio_chip ढाँचा_chip = अणु
+static const struct gpio_chip template_chip = {
 	.label			= "arizona",
 	.owner			= THIS_MODULE,
 	.direction_input	= arizona_gpio_direction_in,
@@ -143,71 +142,71 @@
 	.direction_output	= arizona_gpio_direction_out,
 	.set			= arizona_gpio_set,
 	.can_sleep		= true,
-पूर्ण;
+};
 
-अटल पूर्णांक arizona_gpio_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा arizona *arizona = dev_get_drvdata(pdev->dev.parent);
-	काष्ठा arizona_pdata *pdata = &arizona->pdata;
-	काष्ठा arizona_gpio *arizona_gpio;
-	पूर्णांक ret;
+static int arizona_gpio_probe(struct platform_device *pdev)
+{
+	struct arizona *arizona = dev_get_drvdata(pdev->dev.parent);
+	struct arizona_pdata *pdata = &arizona->pdata;
+	struct arizona_gpio *arizona_gpio;
+	int ret;
 
-	arizona_gpio = devm_kzalloc(&pdev->dev, माप(*arizona_gpio),
+	arizona_gpio = devm_kzalloc(&pdev->dev, sizeof(*arizona_gpio),
 				    GFP_KERNEL);
-	अगर (!arizona_gpio)
-		वापस -ENOMEM;
+	if (!arizona_gpio)
+		return -ENOMEM;
 
 	arizona_gpio->arizona = arizona;
-	arizona_gpio->gpio_chip = ढाँचा_chip;
+	arizona_gpio->gpio_chip = template_chip;
 	arizona_gpio->gpio_chip.parent = &pdev->dev;
-#अगर_घोषित CONFIG_OF_GPIO
+#ifdef CONFIG_OF_GPIO
 	arizona_gpio->gpio_chip.of_node = arizona->dev->of_node;
-#पूर्ण_अगर
+#endif
 
-	चयन (arizona->type) अणु
-	हाल WM5102:
-	हाल WM5110:
-	हाल WM8280:
-	हाल WM8997:
-	हाल WM8998:
-	हाल WM1814:
+	switch (arizona->type) {
+	case WM5102:
+	case WM5110:
+	case WM8280:
+	case WM8997:
+	case WM8998:
+	case WM1814:
 		arizona_gpio->gpio_chip.ngpio = 5;
-		अवरोध;
-	हाल WM1831:
-	हाल CS47L24:
+		break;
+	case WM1831:
+	case CS47L24:
 		arizona_gpio->gpio_chip.ngpio = 2;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(&pdev->dev, "Unknown chip variant %d\n",
 			arizona->type);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (pdata->gpio_base)
+	if (pdata->gpio_base)
 		arizona_gpio->gpio_chip.base = pdata->gpio_base;
-	अन्यथा
+	else
 		arizona_gpio->gpio_chip.base = -1;
 
-	pm_runसमय_enable(&pdev->dev);
+	pm_runtime_enable(&pdev->dev);
 
 	ret = devm_gpiochip_add_data(&pdev->dev, &arizona_gpio->gpio_chip,
 				     arizona_gpio);
-	अगर (ret < 0) अणु
-		pm_runसमय_disable(&pdev->dev);
+	if (ret < 0) {
+		pm_runtime_disable(&pdev->dev);
 		dev_err(&pdev->dev, "Could not register gpiochip, %d\n",
 			ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver arizona_gpio_driver = अणु
+static struct platform_driver arizona_gpio_driver = {
 	.driver.name	= "arizona-gpio",
 	.probe		= arizona_gpio_probe,
-पूर्ण;
+};
 
-module_platक्रमm_driver(arizona_gpio_driver);
+module_platform_driver(arizona_gpio_driver);
 
 MODULE_AUTHOR("Mark Brown <broonie@opensource.wolfsonmicro.com>");
 MODULE_DESCRIPTION("GPIO interface for Arizona devices");
